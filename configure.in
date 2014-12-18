@@ -17,7 +17,7 @@ dnl Read the Autoconf manual for details.
 dnl
 m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 
-AC_INIT([PostgreSQL], [9.5devel], [pgsql-bugs@postgresql.org])
+AC_INIT([nstore], [0.0], [nstore-dev@cs.cmu.edu])
 
 m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.69], [], [m4_fatal([Autoconf version 2.69 is required.
 Untested combinations of 'autoconf' and PostgreSQL versions are not
@@ -58,30 +58,19 @@ PGAC_ARG_REQ(with, template, [NAME], [override operating system template],
 # --with-template not given
 
 case $host_os in
-     aix*) template=aix ;;
-  cygwin*) template=cygwin ;;
   darwin*) template=darwin ;;
-dragonfly*) template=netbsd ;;
- freebsd*) template=freebsd ;;
-    hpux*) template=hpux ;;
  linux*|gnu*|k*bsd*-gnu)
            template=linux ;;
-   mingw*) template=win32 ;;
-  netbsd*) template=netbsd ;;
- openbsd*) template=openbsd ;;
-     sco*) template=sco ;;
- solaris*) template=solaris ;;
-   sysv5*) template=unixware ;;
 esac
 
   if test x"$template" = x"" ; then
     AC_MSG_ERROR([[
 *******************************************************************
-PostgreSQL has apparently not been ported to your platform yet.
+N-Store has apparently not been ported to your platform yet.
 To try a manual configuration, look into the src/template directory
 for a similar platform and use the '--with-template=' option.
 
-Please also contact <pgsql-bugs@postgresql.org> to see about
+Please also contact <nstore-dev@cs.cmu.edu> to see about
 rectifying this.  Include the above 'checking host system type...'
 line.
 *******************************************************************
@@ -579,35 +568,6 @@ if test "$enable_thread_safety" = yes; then
 fi
 AC_MSG_RESULT([$enable_thread_safety])
 AC_SUBST(enable_thread_safety)
-
-#
-# Optionally build Tcl modules (PL/Tcl)
-#
-AC_MSG_CHECKING([whether to build with Tcl])
-PGAC_ARG_BOOL(with, tcl, no, [build Tcl modules (PL/Tcl)])
-AC_MSG_RESULT([$with_tcl])
-AC_SUBST([with_tcl])
-
-# We see if the path to the Tcl/Tk configuration scripts is specified.
-# This will override the use of tclsh to find the paths to search.
-
-PGAC_ARG_REQ(with, tclconfig, [DIR], [tclConfig.sh is in DIR])
-
-#
-# Optionally build Perl modules (PL/Perl)
-#
-AC_MSG_CHECKING([whether to build Perl modules])
-PGAC_ARG_BOOL(with, perl, no, [build Perl modules (PL/Perl)])
-AC_MSG_RESULT([$with_perl])
-AC_SUBST(with_perl)
-
-#
-# Optionally build Python modules (PL/Python)
-#
-AC_MSG_CHECKING([whether to build Python modules])
-PGAC_ARG_BOOL(with, python, no, [build Python modules (PL/Python)])
-AC_MSG_RESULT([$with_python])
-AC_SUBST(with_python)
 
 #
 # GSSAPI
@@ -1821,51 +1781,6 @@ AC_DEFINE_UNQUOTED(MEMSET_LOOP_LIMIT, ${MEMSET_LOOP_LIMIT}, [Define bytes to use
 
 if test "$enable_nls" = yes ; then
   PGAC_CHECK_GETTEXT
-fi
-
-# Check for Tcl configuration script tclConfig.sh
-if test "$with_tcl" = yes; then
-    PGAC_PATH_TCLCONFIGSH([$with_tclconfig])
-    PGAC_EVAL_TCLCONFIGSH([$TCL_CONFIG_SH],
-                          [TCL_INCLUDE_SPEC,TCL_LIB_FILE,TCL_LIBS,TCL_LIB_SPEC,TCL_SHARED_BUILD])
-    AC_SUBST(TCL_SHLIB_LD_LIBS)dnl don't want to double-evaluate that one
-    # now that we have TCL_INCLUDE_SPEC, we can check for <tcl.h>
-    ac_save_CPPFLAGS=$CPPFLAGS
-    CPPFLAGS="$TCL_INCLUDE_SPEC $CPPFLAGS"
-    AC_CHECK_HEADER(tcl.h, [], [AC_MSG_ERROR([header file <tcl.h> is required for Tcl])])
-    CPPFLAGS=$ac_save_CPPFLAGS
-fi
-
-# check for <perl.h>
-if test "$with_perl" = yes; then
-  ac_save_CPPFLAGS=$CPPFLAGS
-  CPPFLAGS="$CPPFLAGS -I$perl_archlibexp/CORE"
-  AC_CHECK_HEADER(perl.h, [], [AC_MSG_ERROR([header file <perl.h> is required for Perl])],
-                  [#include <EXTERN.h>])
-  # While we're at it, check that we can link to libperl.
-  # On most platforms, if perl.h is there then libperl.so will be too, but at
-  # this writing Debian packages them separately.  There is no known reason to
-  # waste cycles on separate probes for the Tcl or Python libraries, though.
-  pgac_save_LIBS=$LIBS
-  LIBS="$perl_embed_ldflags"
-  AC_MSG_CHECKING([for libperl])
-  AC_TRY_LINK([
-#include <EXTERN.h>
-#include <perl.h>
-],  [perl_alloc();],
-    [AC_MSG_RESULT(yes)],
-    [AC_MSG_RESULT(no)
-     AC_MSG_ERROR([libperl library is required for Perl])])
-  LIBS=$pgac_save_LIBS
-  CPPFLAGS=$ac_save_CPPFLAGS
-fi
-
-# check for <Python.h>
-if test "$with_python" = yes; then
-  ac_save_CPPFLAGS=$CPPFLAGS
-  CPPFLAGS="$python_includespec $CPPFLAGS"
-  AC_CHECK_HEADER(Python.h, [], [AC_MSG_ERROR([header file <Python.h> is required for Python])])
-  CPPFLAGS=$ac_save_CPPFLAGS
 fi
 
 #

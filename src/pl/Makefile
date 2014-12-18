@@ -26,11 +26,5 @@ else
 ALWAYS_SUBDIRS += plpython
 endif
 
-ifeq ($(with_tcl), yes)
-SUBDIRS += tcl
-else
-ALWAYS_SUBDIRS += tcl
-endif
-
 $(recurse)
 $(recurse_always)

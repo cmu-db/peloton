@@ -35,3 +35,6 @@ lib*.pc
 /pgsql.sln.cache
 /Debug/
 /Release/
+
+# Local 
+/build/

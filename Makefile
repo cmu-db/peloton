@@ -31,6 +31,6 @@ all check install installdirs installcheck installcheck-parallel uninstall clean
 	   echo "Using GNU make found at $${GMAKE}"; \
 	   $${GMAKE} $@ ; \
 	 else \
-	   echo "You must use GNU make to build PostgreSQL." ; \
+	   echo "You must use GNU make to build nstore." ; \
 	   false; \
 	 fi
