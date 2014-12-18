@@ -1,6 +1,6 @@
 # N-Store 
 
-DBMS designed for non-volatile memory(NVM).
+DBMS designed for non-volatile memory (NVM).
 
 ## Dependencies
 
