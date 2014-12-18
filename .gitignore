@@ -38,5 +38,4 @@ lib*.pc
 
 # Local 
 /build/
-configure
 autom4te.cache/
