@@ -1,0 +1,5 @@
+# pgcrypto extension
+comment = 'cryptographic functions'
+default_version = '1.2'
+module_pathname = '$libdir/pgcrypto'
+relocatable = true
