@@ -39,3 +39,7 @@ lib*.pc
 # Local 
 /build/
 autom4te.cache/
+GTAGS
+GRTAGS
+GPATH
+data/

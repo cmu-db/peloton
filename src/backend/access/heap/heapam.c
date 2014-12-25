@@ -39,6 +39,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/heap_manager.h"
 #include "access/heapam_xlog.h"
 #include "access/hio.h"
 #include "access/multixact.h"
@@ -1204,6 +1205,8 @@ heap_open(Oid relationId, LOCKMODE lockmode)
 
 	r = relation_open(relationId, lockmode);
 
+	elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(r) );
+
 	if (r->rd_rel->relkind == RELKIND_INDEX)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -1298,6 +1301,8 @@ HeapScanDesc
 heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key)
 {
+	elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
+
 	return heap_beginscan_internal(relation, snapshot, nkeys, key,
 								   true, true, false, false);
 }
@@ -1482,6 +1487,8 @@ heap_getnext(HeapScanDesc scan, ScanDirection direction)
 
 	HEAPDEBUG_1;				/* heap_getnext( info ) */
 
+	elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(scan->rs_rd) );
+
 	if (scan->rs_pageatatime)
 		heapgettup_pagemode(scan, direction,
 							scan->rs_nkeys, scan->rs_key);
@@ -1557,6 +1564,8 @@ heap_fetch(Relation relation,
 	Page		page;
 	OffsetNumber offnum;
 	bool		valid;
+
+	elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
 
 	/*
 	 * Fetch and pin the appropriate page of the relation.
@@ -1688,6 +1697,8 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 	bool		at_chain_start;
 	bool		valid;
 	bool		skip;
+
+	elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
 
 	/* If this is not the first call, previous call returned a (live!) tuple */
 	if (all_dead)
@@ -1826,6 +1837,8 @@ heap_hot_search(ItemPointer tid, Relation relation, Snapshot snapshot,
 	bool		result;
 	Buffer		buffer;
 	HeapTupleData heapTuple;
+
+	elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
@@ -2064,6 +2077,8 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	Buffer		buffer;
 	Buffer		vmbuffer = InvalidBuffer;
 	bool		all_visible_cleared = false;
+
+	elog(WARNING, "%s %d [  %s ]", __FILE__, __LINE__, __func__);
 
 	/*
 	 * Fill in tuple header fields, assign an OID, and toast the tuple if

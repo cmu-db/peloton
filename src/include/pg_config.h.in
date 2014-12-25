@@ -108,6 +108,9 @@
 /* Define to 1 if you have the <crypt.h> header file. */
 #undef HAVE_CRYPT_H
 
+/* define if the compiler supports basic C++11 syntax */
+#undef HAVE_CXX11
+
 /* Define to 1 if you have the declaration of `fdatasync', and to 0 if you
    don't. */
 #undef HAVE_DECL_FDATASYNC

@@ -17,7 +17,7 @@ dnl Read the Autoconf manual for details.
 dnl
 m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 
-AC_INIT([nstore], [0.0], [nstore-dev@cs.cmu.edu])
+AC_INIT([nstore], [0.1], [nstore-dev@cs.cmu.edu])
 
 m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.69], [], [m4_fatal([Autoconf version 2.69 is required.
 Untested combinations of 'autoconf' and PostgreSQL versions are not
@@ -1883,11 +1883,28 @@ tr '.' '	' |
 $AWK '{printf "%d%02d%02d", $1, $2, (NF >= 3) ? $3 : 0}'`"]
 AC_DEFINE_UNQUOTED(PG_VERSION_NUM, $PG_VERSION_NUM, [PostgreSQL version as a number])
 
+# XXX C++ setup
+CXXFLAGS = $CFLAGS
+
+# check for C++ preprocessor and compiler
+AC_PROG_CXXCPP
+AC_PROG_CXX
+
+# use the C++ compiler for the following checks
+AC_LANG([C++])
+
+# Checks for header files.
+AC_HEADER_STDC
+
+# turn on c++11
+AX_CXX_COMPILE_STDCXX_11(noext)
+LIBS="$LIBS -lstdc++"
 
 # Begin output steps
 
 AC_MSG_NOTICE([using compiler=$cc_string])
 AC_MSG_NOTICE([using CFLAGS=$CFLAGS])
+AC_MSG_NOTICE([using CXXFLAGS=$CXXFLAGS])
 AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
 AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
 
