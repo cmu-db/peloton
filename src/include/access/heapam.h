@@ -71,6 +71,19 @@ typedef struct HeapUpdateFailureData
 	CommandId	cmax;
 } HeapUpdateFailureData;
 
+#define heap_close(r,l)  relation_close(r,l)
+
+/* struct definition appears in relscan.h */
+typedef struct HeapScanDescData *HeapScanDesc;
+
+/*
+ * HeapScanIsValid
+ *		True iff the heap scan is valid.
+ */
+#define HeapScanIsValid(scan) PointerIsValid(scan)
+
+/* Backend implementations */
+#include "access/heap_fs.h"
 
 /* ----------------
  *		function prototypes for heap access method
@@ -92,17 +105,6 @@ extern Relation heap_open(Oid relationId, LOCKMODE lockmode);
 extern Relation heap_openrv(const RangeVar *relation, LOCKMODE lockmode);
 extern Relation heap_openrv_extended(const RangeVar *relation,
 					 LOCKMODE lockmode, bool missing_ok);
-
-#define heap_close(r,l)  relation_close(r,l)
-
-/* struct definition appears in relscan.h */
-typedef struct HeapScanDescData *HeapScanDesc;
-
-/*
- * HeapScanIsValid
- *		True iff the heap scan is valid.
- */
-#define HeapScanIsValid(scan) PointerIsValid(scan)
 
 extern HeapScanDesc heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key);
@@ -163,7 +165,6 @@ extern void simple_heap_update(Relation relation, ItemPointer otid,
 
 extern void heap_sync(Relation relation);
 
-/* in heap/pruneheap.c */
 extern void heap_page_prune_opt(Relation relation, Buffer buffer);
 extern int heap_page_prune(Relation relation, Buffer buffer,
 				TransactionId OldestXmin,
@@ -174,7 +175,6 @@ extern void heap_page_prune_execute(Buffer buffer,
 						OffsetNumber *nowunused, int nunused);
 extern void heap_get_root_tuples(Page page, OffsetNumber *root_offsets);
 
-/* in heap/syncscan.c */
 extern void ss_report_location(Relation rel, BlockNumber location);
 extern BlockNumber ss_get_location(Relation rel, BlockNumber relnblocks);
 extern void SyncScanShmemInit(void);

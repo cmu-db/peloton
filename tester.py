@@ -28,7 +28,7 @@ PG_CTL = "pg_ctl"
 PSQL = "psql"
 
 PG_DATA_DIR = BASE_DIR + "/data"
-LOG_FILE_NAME = BASE_DIR + "/data/log/setup.log"
+LOG_FILE_NAME = BASE_DIR + "/setup.log"
 
 
 # PG

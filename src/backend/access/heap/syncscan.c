@@ -120,7 +120,7 @@ static BlockNumber ss_search(RelFileNode relfilenode,
  * SyncScanShmemSize --- report amount of shared memory space needed
  */
 Size
-SyncScanShmemSize(void)
+fs_SyncScanShmemSize(void)
 {
 	return SizeOfScanLocations(SYNC_SCAN_NELEM);
 }
@@ -129,7 +129,7 @@ SyncScanShmemSize(void)
  * SyncScanShmemInit --- initialize this module's shared memory
  */
 void
-SyncScanShmemInit(void)
+fs_SyncScanShmemInit(void)
 {
 	int			i;
 	bool		found;
@@ -247,7 +247,7 @@ ss_search(RelFileNode relfilenode, BlockNumber location, bool set)
  * is guaranteed less than relnblocks (assuming that's > 0).
  */
 BlockNumber
-ss_get_location(Relation rel, BlockNumber relnblocks)
+fs_ss_get_location(Relation rel, BlockNumber relnblocks)
 {
 	BlockNumber startloc;
 
@@ -282,7 +282,7 @@ ss_get_location(Relation rel, BlockNumber relnblocks)
  * same relfilenode.
  */
 void
-ss_report_location(Relation rel, BlockNumber location)
+fs_ss_report_location(Relation rel, BlockNumber location)
 {
 #ifdef TRACE_SYNCSCAN
 	if (trace_syncscan)

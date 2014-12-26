@@ -65,11 +65,13 @@ typedef struct RelationAmInfo
 
 // Storage backend information
 enum storage_backend_type{
-	FS,
-	DRAM,
-	DRAM_NVM,
-	DRAM_NVM_FS
+	STORAGE_BACKEND_FS,
+	STORAGE_BACKEND_DRAM,
+	STORAGE_BACKEND_DRAM_NVM,
+	STORAGE_BACKEND_DRAM_NVM_FS
 };
+
+#define STORAGE_BACKEND_DEFAULT STORAGE_BACKEND_FS
 
 /*
  * Here are the contents of a relation cache entry.
