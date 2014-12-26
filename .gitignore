@@ -37,7 +37,7 @@ lib*.pc
 /Release/
 
 # Local 
-/build/
+/z_build/
 autom4te.cache/
 GTAGS
 GRTAGS

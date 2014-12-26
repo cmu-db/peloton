@@ -109,6 +109,8 @@ if __name__ == '__main__':
                         help='start PG', action='store_true')
     parser.add_argument('-k', '--kill',
                         help='kill PG', action='store_true')
+    parser.add_argument('-o', '--only_build',
+                        help='only build PG', action='store_true')
 
     args = parser.parse_args()
 
@@ -133,7 +135,8 @@ if __name__ == '__main__':
     if args.kill:
         pg_ctl_mode = 3  # kill mode
 
-    execute_pg_ctl(pg_ctl_mode)
+    if args.only_build is False:
+        execute_pg_ctl(pg_ctl_mode)
 
     # PSQL
     terminal_mode = False

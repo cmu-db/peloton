@@ -1775,6 +1775,11 @@ RelationIdGetRelation(Oid relationId)
 	 * it.
 	 */
 	rd = RelationBuildDesc(relationId, true);
+
+	// Change backend info
+	if(!IsCatalogRelation(rd))
+		rd->rd_storage_backend = DRAM_NVM;
+
 	if (RelationIsValid(rd))
 		RelationIncrementReferenceCount(rd);
 	return rd;

@@ -1179,6 +1179,9 @@ relation_close(Relation relation, LOCKMODE lockmode)
 {
 	LockRelId	relid = relation->rd_lockInfo.lockRelId;
 
+	if(!IsCatalogRelation(relation))
+		elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
+
 	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
 
 	/* The relcache does the real work... */
@@ -1205,7 +1208,10 @@ heap_open(Oid relationId, LOCKMODE lockmode)
 
 	r = relation_open(relationId, lockmode);
 
-	elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(r) );
+	if(!IsCatalogRelation(r)){
+		elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(r) );
+		elog(WARNING, "Backend : %d ", r->rd_storage_backend);
+	}
 
 	if (r->rd_rel->relkind == RELKIND_INDEX)
 		ereport(ERROR,
@@ -1301,7 +1307,8 @@ HeapScanDesc
 heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key)
 {
-	elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
+	if(!IsCatalogRelation(relation))
+		elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
 
 	return heap_beginscan_internal(relation, snapshot, nkeys, key,
 								   true, true, false, false);
@@ -1487,7 +1494,8 @@ heap_getnext(HeapScanDesc scan, ScanDirection direction)
 
 	HEAPDEBUG_1;				/* heap_getnext( info ) */
 
-	elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(scan->rs_rd) );
+	if(!IsCatalogRelation(scan->rs_rd))
+		elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(scan->rs_rd) );
 
 	if (scan->rs_pageatatime)
 		heapgettup_pagemode(scan, direction,
@@ -1698,7 +1706,8 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 	bool		valid;
 	bool		skip;
 
-	elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
+	if(!IsCatalogRelation(relation))
+		elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
 
 	/* If this is not the first call, previous call returned a (live!) tuple */
 	if (all_dead)
@@ -1838,7 +1847,8 @@ heap_hot_search(ItemPointer tid, Relation relation, Snapshot snapshot,
 	Buffer		buffer;
 	HeapTupleData heapTuple;
 
-	elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
+	if(!IsCatalogRelation(relation))
+		elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
@@ -2078,7 +2088,8 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	Buffer		vmbuffer = InvalidBuffer;
 	bool		all_visible_cleared = false;
 
-	elog(WARNING, "%s %d [  %s ]", __FILE__, __LINE__, __func__);
+	if(!IsCatalogRelation(relation))
+		elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
 
 	/*
 	 * Fill in tuple header fields, assign an OID, and toast the tuple if

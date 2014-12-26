@@ -63,6 +63,13 @@ typedef struct RelationAmInfo
 	FmgrInfo	amcanreturn;
 } RelationAmInfo;
 
+// Storage backend information
+enum storage_backend_type{
+	FS,
+	DRAM,
+	DRAM_NVM,
+	DRAM_NVM_FS
+};
 
 /*
  * Here are the contents of a relation cache entry.
@@ -185,6 +192,9 @@ typedef struct RelationData
 
 	/* use "struct" here to avoid needing to include pgstat.h: */
 	struct PgStat_TableStatus *pgstat_info;		/* statistics collection area */
+
+	// Backend information
+	enum storage_backend_type rd_storage_backend;
 } RelationData;
 
 /*
