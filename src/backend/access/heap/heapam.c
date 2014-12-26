@@ -151,6 +151,21 @@ static const f_heapam f_heapam_backends[] = {
 	  fs_simple_heap_update, fs_heap_sync, fs_heap_page_prune_opt, fs_heap_page_prune,
 	  fs_heap_page_prune_execute, fs_heap_get_root_tuples, fs_ss_report_location,
 	  fs_ss_get_location, fs_SyncScanShmemInit, fs_SyncScanShmemSize
+	},
+	/* VM */
+	{ vm_relation_open, vm_try_relation_open, vm_relation_openrv,
+	  vm_relation_openrv_extended, vm_relation_close, vm_heap_open,
+	  vm_heap_openrv, vm_heap_openrv_extended, vm_heap_beginscan,
+	  vm_heap_beginscan_catalog, vm_heap_beginscan_strat, vm_heap_beginscan_bm,
+	  vm_heap_setscanlimits, vm_heap_rescan, vm_heap_endscan, vm_heap_getnext,
+	  vm_heap_fetch, vm_heap_hot_search_buffer, vm_heap_hot_search,
+	  vm_heap_get_latest_tid, vm_GetBulkInsertState, vm_FreeBulkInsertState,
+	  vm_heap_insert, vm_heap_multi_insert, vm_heap_delete, vm_heap_update,
+	  vm_heap_lock_tuple, vm_heap_inplace_update, vm_heap_freeze_tuple,
+	  vm_heap_tuple_needs_freeze, vm_simple_heap_insert, vm_simple_heap_delete,
+	  vm_simple_heap_update, vm_heap_sync, vm_heap_page_prune_opt, vm_heap_page_prune,
+	  vm_heap_page_prune_execute, vm_heap_get_root_tuples, vm_ss_report_location,
+	  vm_ss_get_location, vm_SyncScanShmemInit, vm_SyncScanShmemSize
 	}
 };
 

@@ -1777,8 +1777,8 @@ RelationIdGetRelation(Oid relationId)
 	rd = RelationBuildDesc(relationId, true);
 
 	// Change backend info
-	//if(!IsCatalogRelation(rd))
-	//	rd->rd_storage_backend = STORAGE_BACKEND_DEFAULT;
+	if(!IsCatalogRelation(rd))
+		rd->rd_storage_backend = STORAGE_BACKEND_VM;
 
 	if (RelationIsValid(rd))
 		RelationIncrementReferenceCount(rd);
