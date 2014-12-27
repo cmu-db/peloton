@@ -106,4 +106,9 @@ extern BlockNumber vm_ss_get_location(Relation rel, BlockNumber relnblocks);
 extern void vm_SyncScanShmemInit(void);
 extern Size vm_SyncScanShmemSize(void);
 
+
+// Helpers
+
+extern void vm_relation_allocate(Relation rd);
+
 #endif   /* HEAP_VM_H */

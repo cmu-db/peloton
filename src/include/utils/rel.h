@@ -195,8 +195,14 @@ typedef struct RelationData
 	/* use "struct" here to avoid needing to include pgstat.h: */
 	struct PgStat_TableStatus *pgstat_info;		/* statistics collection area */
 
-	// Backend information
+	// backend information
 	enum storage_backend_type rd_storage_backend;
+
+	// status of rd storage initialization
+	bool rd_init_storage;
+
+	// length of the tuple
+	Size rd_tuplen;
 } RelationData;
 
 /*

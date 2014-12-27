@@ -17,6 +17,13 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/block_io.h"
+
+
+void vm_relation_allocate(Relation rd)
+{
+	RelationAllocateBlock(rd);
+}
 
 Relation vm_relation_open(Oid relationId, LOCKMODE lockmode)
 {
@@ -74,6 +81,9 @@ HeapScanDesc vm_heap_beginscan(Relation relation, Snapshot snapshot,
 	return NULL;
 }
 
+
+// SCAN
+
 HeapScanDesc vm_heap_beginscan_catalog(Relation relation, int nkeys,
 									   ScanKey key)
 {
@@ -117,6 +127,8 @@ void vm_heap_endscan(HeapScanDesc scan)
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
+// FETCH
+
 HeapTuple vm_heap_getnext(HeapScanDesc scan, ScanDirection direction)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
@@ -154,6 +166,8 @@ void vm_heap_get_latest_tid(Relation relation, Snapshot snapshot,
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
+// INSERT
+
 BulkInsertState vm_GetBulkInsertState(void)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
@@ -178,6 +192,7 @@ void vm_heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
+// DELETE
 
 HTSU_Result vm_heap_delete(Relation relation, ItemPointer tid,
 						   CommandId cid, Snapshot crosscheck, bool wait,
@@ -187,6 +202,7 @@ HTSU_Result vm_heap_delete(Relation relation, ItemPointer tid,
 	return HeapTupleInvisible;
 }
 
+// UPDATE
 
 HTSU_Result vm_heap_update(Relation relation, ItemPointer otid,
 						   HeapTuple newtup,
@@ -197,6 +213,7 @@ HTSU_Result vm_heap_update(Relation relation, ItemPointer otid,
 	return HeapTupleInvisible;
 }
 
+// LOCK
 
 HTSU_Result vm_heap_lock_tuple(Relation relation, HeapTuple tuple,
 							   CommandId cid, LockTupleMode mode, LockWaitPolicy wait_policy,
@@ -213,6 +230,8 @@ void vm_heap_inplace_update(Relation relation, HeapTuple tuple)
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
+// FREEZE
+
 bool vm_heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 						  TransactionId cutoff_multi)
 {
@@ -226,6 +245,8 @@ bool vm_heap_tuple_needs_freeze(HeapTupleHeader tuple, TransactionId cutoff_xid,
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 	return false;
 }
+
+// WRAPPERS
 
 Oid	vm_simple_heap_insert(Relation relation, HeapTuple tup)
 {
@@ -244,10 +265,14 @@ void vm_simple_heap_update(Relation relation, ItemPointer otid,
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
+// SYNC
+
 void vm_heap_sync(Relation relation)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
+
+// PAGE
 
 void vm_heap_page_prune_opt(Relation relation, Buffer buffer)
 {
@@ -274,6 +299,8 @@ void vm_heap_get_root_tuples(Page page, OffsetNumber *root_offsets)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
+
+// SYNC SCAN
 
 void vm_ss_report_location(Relation rel, BlockNumber location)
 {

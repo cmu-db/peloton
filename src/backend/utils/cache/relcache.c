@@ -284,6 +284,8 @@ static void RelationCacheInitFileRemoveInDir(const char *tblspcpath);
 static void unlink_initfile(const char *initfilename);
 
 
+static void RelationInitStorage(Relation rd);
+
 /*
  *		ScanPgRelation
  *
@@ -1722,6 +1724,22 @@ formrdesc(const char *relationName, Oid relationReltype,
  */
 
 /*
+ *      RelationInitVMStorage
+ *
+ *      Initialize the storage requirements for VM relations
+ */
+static void
+RelationInitStorage(Relation rd){
+
+	// Set backend
+	rd->rd_storage_backend = STORAGE_BACKEND_VM;
+
+	// Invoke backend function
+	if(rd->rd_init_storage == false)
+		vm_relation_allocate(rd);
+}
+
+/*
  *		RelationIdGetRelation
  *
  *		Lookup a reldesc by OID; make one if not already in cache.
@@ -1777,8 +1795,9 @@ RelationIdGetRelation(Oid relationId)
 	rd = RelationBuildDesc(relationId, true);
 
 	// Change backend info
-	if(!IsCatalogRelation(rd))
-		rd->rd_storage_backend = STORAGE_BACKEND_VM;
+	if(!IsCatalogRelation(rd)){
+		RelationInitStorage(rd);
+	}
 
 	if (RelationIsValid(rd))
 		RelationIncrementReferenceCount(rd);

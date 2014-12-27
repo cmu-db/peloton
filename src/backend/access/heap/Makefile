@@ -12,6 +12,6 @@ subdir = src/backend/access/heap
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = heapam.o heap_fs.o heap_vm.o hio.o pruneheap.o rewriteheap.o syncscan.o tuptoaster.o visibilitymap.o
+OBJS = heapam.o heap_fs.o heap_vm.o block_io.o hio.o pruneheap.o rewriteheap.o syncscan.o tuptoaster.o visibilitymap.o
 
 include $(top_srcdir)/src/backend/common.mk
