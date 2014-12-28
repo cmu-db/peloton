@@ -1732,7 +1732,7 @@ static void
 RelationInitStorage(Relation rd){
 
 	// Set backend
-	rd->rd_storage_backend = STORAGE_BACKEND_VM;
+	rd->rd_block_backend = STORAGE_BACKEND_VM;
 
 	// Invoke backend function
 	if(rd->rd_init_storage == false)

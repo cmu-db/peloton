@@ -13,11 +13,14 @@
 
 #include "access/heapam.h"
 #include "access/htup.h"
+#include "utils/rel.h"
 #include "utils/relcache.h"
 #include "storage/buf.h"
 
 #define BLOCK_FIXED_LENGTH_SIZE 100             /* In terms of number of tuples */
 #define BLOCK_VARIABLE_LENGTH_SIZE 1024 * 16    /* Raw size in bytes */
+
+#define BLOCK_POINTER_SIZE  8  /* 8 bytes */
 
 /*
  * Possible block types.
@@ -25,20 +28,27 @@
 typedef enum RelationBlockType
 {
 	/* Used to store fixed-length tuples */
-	RelationFixedBlock,
+	RELATION_FIXED_BLOCK_TYPE,
 	/* Used to store variable-length attributes */
-	RelationVariableBlock
+	RELATION_VARIABLE_BLOCK_TYPE
 } RelationBlockType;
 
 /* RelationBlock structure */
 typedef struct RelationBlockData{
-	Size relblocklen;
 
 	RelationBlockType relblocktype;
+
+	RelationBlockBackend relblockbackend;
+
+	void *relblockdata;
+
+	Size relblocklen;
 } RelationBlockData;
 
 typedef RelationBlockData* RelationBlock;
 
-extern void RelationAllocateBlock(Relation relation);
+extern void RelationInitAllocateBlock(Relation relation);
+
+extern void PrintAllRelationBlocks(Relation relation);
 
 #endif   /* BLOCK_IO_H */

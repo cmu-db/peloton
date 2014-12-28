@@ -64,12 +64,11 @@ typedef struct RelationAmInfo
 } RelationAmInfo;
 
 // Storage backend information
-enum storage_backend_type{
+typedef enum storage_backend_type{
 	STORAGE_BACKEND_FS,
 	STORAGE_BACKEND_VM,
-	STORAGE_BACKEND_VM_NVM,
-	STORAGE_BACKEND_VM_NVM_FS
-};
+	STORAGE_BACKEND_NVM
+} RelationBlockBackend;
 
 #define STORAGE_BACKEND_DEFAULT STORAGE_BACKEND_FS
 
@@ -195,14 +194,24 @@ typedef struct RelationData
 	/* use "struct" here to avoid needing to include pgstat.h: */
 	struct PgStat_TableStatus *pgstat_info;		/* statistics collection area */
 
+	/* VM/NVM storage information */
+
 	// backend information
-	enum storage_backend_type rd_storage_backend;
+	enum storage_backend_type rd_block_backend;
 
 	// status of rd storage initialization
 	bool rd_init_storage;
 
 	// length of the tuple
 	Size rd_tuplen;
+
+	// relation blocks on VM
+	List* rd_fixed_blocks_on_VM;
+	List* rd_variable_blocks_on_VM;
+
+	// relation blocks on NVM
+	List* rd_fixed_blocks_on_NVM;
+	List* rd_variable_blocks_on_NVM;
 } RelationData;
 
 /*
