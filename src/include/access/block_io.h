@@ -11,9 +11,8 @@
 #ifndef BLOCK_IO_H
 #define BLOCK_IO_H
 
-#include "access/heapam.h"
+#include "postgres.h"
 #include "access/htup.h"
-#include "utils/rel.h"
 #include "utils/relcache.h"
 #include "storage/buf.h"
 
@@ -22,33 +21,19 @@
 
 #define BLOCK_POINTER_SIZE  8  /* 8 bytes */
 
-/*
- * Possible block types.
- */
-typedef enum RelationBlockType
-{
-	/* Used to store fixed-length tuples */
-	RELATION_FIXED_BLOCK_TYPE,
-	/* Used to store variable-length attributes */
-	RELATION_VARIABLE_BLOCK_TYPE
-} RelationBlockType;
+// Storage backend information
+typedef enum RelationBlockBackend{
+	STORAGE_BACKEND_FS,
+	STORAGE_BACKEND_VM,
+	STORAGE_BACKEND_NVM
+} RelationBlockBackend;
 
-/* RelationBlock structure */
-typedef struct RelationBlockData{
+#define STORAGE_BACKEND_DEFAULT STORAGE_BACKEND_FS
 
-	RelationBlockType relblocktype;
+extern void RelationInit(Relation relation);
 
-	RelationBlockBackend relblockbackend;
+extern void PrintAllRelationBlocks(Oid relationId);
 
-	void *relblockdata;
-
-	Size relblocklen;
-} RelationBlockData;
-
-typedef RelationBlockData* RelationBlock;
-
-extern void RelationInitAllocateBlock(Relation relation);
-
-extern void PrintAllRelationBlocks(Relation relation);
+extern Size RelationGetTupleLen(Relation relation);
 
 #endif   /* BLOCK_IO_H */

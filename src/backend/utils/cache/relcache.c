@@ -1731,12 +1731,10 @@ formrdesc(const char *relationName, Oid relationReltype,
 static void
 RelationInitStorage(Relation rd){
 
-	// Set backend
-	rd->rd_block_backend = STORAGE_BACKEND_VM;
+	elog(WARNING, "Relation INIT STORAGE   :: %p %s OID :: [  %d  ]", rd, RelationGetRelationName(rd),
+		 RelationGetRelid(rd));
 
-	// Invoke backend function
-	if(rd->rd_init_storage == false)
-		vm_relation_allocate(rd);
+	vm_relation_allocate(rd);
 }
 
 /*
@@ -1796,6 +1794,7 @@ RelationIdGetRelation(Oid relationId)
 
 	// Change backend info
 	if(!IsCatalogRelation(rd)){
+		rd->rd_storage_backend = STORAGE_BACKEND_VM;
 		RelationInitStorage(rd);
 	}
 
