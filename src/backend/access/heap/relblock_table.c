@@ -15,6 +15,8 @@
 #include "postgres.h"
 
 #include "access/relblock.h"
+#include <sys/types.h>
+#include <unistd.h>
 
 HTAB *SharedRelBlockHash = NULL;
 
@@ -106,6 +108,7 @@ int RelBlockTableInsert(RelBlockTag *tagPtr, uint32 hashcode,
 	if (found)					/* found something already in the table */
 		return -1;
 
+	result->pid = getpid();
 	result->relblockinfo = relblockinfo;
 
 	return 0;
@@ -141,10 +144,17 @@ void RelBlockTablePrint()
 
 	hash_seq_init(&status, SharedRelBlockHash);
 
+	elog(WARNING, "--------------------------------------------------------------");
 	while ((entry = (RelBlockLookupEnt *) hash_seq_search(&status)) != NULL)
 	{
-		Assert(entry != NULL);
-		Assert(entry->relblockinfo != NULL);
-		elog(WARNING, "RelBlockEntry :: %p relid :: %d", entry, entry->relblockinfo->relid);
+		if(entry->relblockinfo != NULL)
+		{
+			elog(WARNING, "RelBlockEntry :: relid : %d pid : %d relblockinfo : %p", entry->relblockinfo->relid, entry->pid, entry->relblockinfo);
+		}
+		else
+		{
+			elog(WARNING, "RelBlockEntry :: pid : %d relblockinfo : %p", entry->pid, entry->relblockinfo);
+		}
 	}
+	elog(WARNING, "--------------------------------------------------------------");
 }

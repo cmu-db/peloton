@@ -75,6 +75,12 @@ typedef struct RelBlockTag{
 
 /* Entry for RelBlock Lookup Table */
 typedef struct RelBlockLookupEnt{
+	/*
+	  XXX Payload required to handle a weird hash function issue in
+	  dynahash.c; otherwise the keys don't collide
+	*/
+	int               payload;
+	int               pid;
 	RelationBlockInfo relblockinfo;
 } RelBlockLookupEnt;
 
