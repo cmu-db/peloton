@@ -54,6 +54,23 @@ MemoryContext CurTransactionContext = NULL;
 /* This is a transient link to the active portal's memory context: */
 MemoryContext PortalContext = NULL;
 
+/* Shared memory context. It is a copy of the memory context routines
+   with locking and calls to "malloc" and friends replaced with calls to
+   the OSSP MM shared memory library.
+
+   The TopSharedMemoryContext must be initilized prior to fork
+   (i.e. by the postmaster) via a call to SHMContextInit
+   and can be destroyed at postmaster exit via a call to SHMContextShutdown
+*/
+MemoryContext TopSharedMemoryContext = NULL;
+
+/*
+  Subcontext of the TopSharedMemoryContext for each query that is
+  passed between the frontend and backend.  Memory ownership is
+  passed between processes by handing off this context.
+*/
+MemoryContext shmQueryContext = NULL;
+
 static void MemoryContextStatsInternal(MemoryContext context, int level);
 
 /*

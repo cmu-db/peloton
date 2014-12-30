@@ -14,7 +14,6 @@
 #ifndef REL_H
 #define REL_H
 
-#include "access/block_io.h"
 #include "access/tupdesc.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_class.h"
@@ -63,6 +62,14 @@ typedef struct RelationAmInfo
 	FmgrInfo	amrestrpos;
 	FmgrInfo	amcanreturn;
 } RelationAmInfo;
+
+
+// RelationBlock storage information
+typedef enum RelationBlockBackend{
+    STORAGE_BACKEND_FS,
+    STORAGE_BACKEND_VM,
+    STORAGE_BACKEND_NVM
+} RelationBlockBackend;
 
 /*
  * Here are the contents of a relation cache entry.
@@ -186,8 +193,26 @@ typedef struct RelationData
 	/* use "struct" here to avoid needing to include pgstat.h: */
 	struct PgStat_TableStatus *pgstat_info;		/* statistics collection area */
 
-	/* storage information */
-	enum RelationBlockBackend rd_storage_backend;
+	/* VM/NVM storage information */
+
+	// backend information
+	RelationBlockBackend rd_storage_backend;
+
+	// status of rd storage initialization
+	bool rd_init_storage;
+
+	// length of the tuple
+	Size rd_tuplen;
+
+	// relation blocks on VM
+	void* rd_fixed_blocks_on_VM[50];
+	int rd_num_fixed_blocks_on_VM;
+
+    //List* rd_variable_blocks_on_VM;
+
+	// relation blocks on NVM
+	//List* rd_fixed_blocks_on_NVM;
+	//List* rd_variable_blocks_on_NVM;
 } RelationData;
 
 /*

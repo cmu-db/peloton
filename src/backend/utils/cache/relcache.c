@@ -1731,8 +1731,8 @@ formrdesc(const char *relationName, Oid relationReltype,
 static void
 RelationInitStorage(Relation rd){
 
-	elog(WARNING, "Relation INIT STORAGE   :: %p %s OID :: [  %d  ]", rd, RelationGetRelationName(rd),
-		 RelationGetRelid(rd));
+	// Set backend
+	rd->rd_storage_backend = STORAGE_BACKEND_VM;
 
 	vm_relation_allocate(rd);
 }

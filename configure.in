@@ -1900,6 +1900,9 @@ AC_HEADER_STDC
 AX_CXX_COMPILE_STDCXX_11(noext)
 LIBS="$LIBS -lstdc++"
 
+# Require mm lib
+AC_CHECK_LIB(mm, [main], [], [AC_MSG_ERROR([library mm is required])])
+
 # Begin output steps
 
 AC_MSG_NOTICE([using compiler=$cc_string])
@@ -1908,6 +1911,7 @@ AC_MSG_NOTICE([using CXXFLAGS=$CXXFLAGS])
 AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
 AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
 
+#
 # prepare build tree if outside source tree
 # Note 1: test -ef might not exist, but it's more reliable than `pwd`.
 # Note 2: /bin/pwd might be better than shell's built-in at getting

@@ -2426,6 +2426,52 @@ fi
   as_fn_set_status $ac_retval
 
 } # ac_fn_cxx_try_run
+
+# ac_fn_cxx_try_link LINENO
+# -------------------------
+# Try to link conftest.$ac_ext, and return whether this succeeded.
+ac_fn_cxx_try_link ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  rm -f conftest.$ac_objext conftest$ac_exeext
+  if { { ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
+$as_echo "$ac_try_echo"; } >&5
+  (eval "$ac_link") 2>conftest.err
+  ac_status=$?
+  if test -s conftest.err; then
+    grep -v '^ *+' conftest.err >conftest.er1
+    cat conftest.er1 >&5
+    mv -f conftest.er1 conftest.err
+  fi
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; } && {
+	 test -z "$ac_cxx_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext && {
+	 test "$cross_compiling" = yes ||
+	 test -x conftest$ac_exeext
+       }; then :
+  ac_retval=0
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_retval=1
+fi
+  # Delete the IPA/IPO (Inter Procedural Analysis/Optimization) information
+  # created by the PGI compiler (conftest_ipa8_conftest.oo), as it would
+  # interfere with the next link command; also delete a directory that is
+  # left behind by Apple's compiler.  We do this before executing the actions.
+  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+  as_fn_set_status $ac_retval
+
+} # ac_fn_cxx_try_link
 cat >config.log <<_ACEOF
 This file contains any messages produced by compilers while
 running configure, to aid debugging if configure makes a mistake.
@@ -5334,130 +5380,6 @@ $as_echo "#define ENABLE_THREAD_SAFETY 1" >>confdefs.h
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_thread_safety" >&5
 $as_echo "$enable_thread_safety" >&6; }
-
-
-#
-# Optionally build Tcl modules (PL/Tcl)
-#
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with Tcl" >&5
-$as_echo_n "checking whether to build with Tcl... " >&6; }
-
-
-
-# Check whether --with-tcl was given.
-if test "${with_tcl+set}" = set; then :
-  withval=$with_tcl;
-  case $withval in
-    yes)
-      :
-      ;;
-    no)
-      :
-      ;;
-    *)
-      as_fn_error $? "no argument expected for --with-tcl option" "$LINENO" 5
-      ;;
-  esac
-
-else
-  with_tcl=no
-
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_tcl" >&5
-$as_echo "$with_tcl" >&6; }
-
-
-# We see if the path to the Tcl/Tk configuration scripts is specified.
-# This will override the use of tclsh to find the paths to search.
-
-
-
-
-# Check whether --with-tclconfig was given.
-if test "${with_tclconfig+set}" = set; then :
-  withval=$with_tclconfig;
-  case $withval in
-    yes)
-      as_fn_error $? "argument required for --with-tclconfig option" "$LINENO" 5
-      ;;
-    no)
-      as_fn_error $? "argument required for --with-tclconfig option" "$LINENO" 5
-      ;;
-    *)
-
-      ;;
-  esac
-
-fi
-
-
-
-#
-# Optionally build Perl modules (PL/Perl)
-#
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build Perl modules" >&5
-$as_echo_n "checking whether to build Perl modules... " >&6; }
-
-
-
-# Check whether --with-perl was given.
-if test "${with_perl+set}" = set; then :
-  withval=$with_perl;
-  case $withval in
-    yes)
-      :
-      ;;
-    no)
-      :
-      ;;
-    *)
-      as_fn_error $? "no argument expected for --with-perl option" "$LINENO" 5
-      ;;
-  esac
-
-else
-  with_perl=no
-
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_perl" >&5
-$as_echo "$with_perl" >&6; }
-
-
-#
-# Optionally build Python modules (PL/Python)
-#
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build Python modules" >&5
-$as_echo_n "checking whether to build Python modules... " >&6; }
-
-
-
-# Check whether --with-python was given.
-if test "${with_python+set}" = set; then :
-  withval=$with_python;
-  case $withval in
-    yes)
-      :
-      ;;
-    no)
-      :
-      ;;
-    *)
-      as_fn_error $? "no argument expected for --with-python option" "$LINENO" 5
-      ;;
-  esac
-
-else
-  with_python=no
-
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_python" >&5
-$as_echo "$with_python" >&6; }
 
 
 #
@@ -15963,6 +15885,49 @@ $as_echo "#define HAVE_CXX11 1" >>confdefs.h
   fi
 
 LIBS="$LIBS -lstdc++"
+
+# Require mm lib
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lmm" >&5
+$as_echo_n "checking for main in -lmm... " >&6; }
+if ${ac_cv_lib_mm_main+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmm  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+return main ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_mm_main=yes
+else
+  ac_cv_lib_mm_main=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mm_main" >&5
+$as_echo "$ac_cv_lib_mm_main" >&6; }
+if test "x$ac_cv_lib_mm_main" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBMM 1
+_ACEOF
+
+  LIBS="-lmm $LIBS"
+
+else
+  as_fn_error $? "library mm is required" "$LINENO" 5
+fi
+
 
 # Begin output steps
 
