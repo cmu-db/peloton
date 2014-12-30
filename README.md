@@ -11,6 +11,7 @@ DBMS designed for non-volatile memory (NVM).
 - **libreadline-dev** 
 - **zlib**
 - **perl (5.8+)**
+- **libmm-dev**
 
 ## Setup
         

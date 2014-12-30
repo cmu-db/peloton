@@ -17,8 +17,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "access/block_io.h"
-
+#include "access/relblock.h"
 
 void vm_relation_allocate(Relation rd)
 {
@@ -186,6 +185,7 @@ Oid vm_heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 				   int options, BulkInsertState bistate)
 {
 	elog(WARNING, "Relation Insert :: %s", RelationGetRelationName(relation));
+	RelationAllocateBlock(relation, relation->rd_storage_backend, RELATION_FIXED_BLOCK_TYPE);
 	PrintAllRelationBlocks(relation);
 
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);

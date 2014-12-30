@@ -92,6 +92,14 @@ main(int argc, char *argv[])
 	 */
 	MemoryContextInit();
 
+	// Init SHM context here as well
+	if (!TopSharedMemoryContext)
+	{
+		SHMContextInit();
+		Assert(TopSharedMemoryContext != NULL);
+		SHMContextStats(TopSharedMemoryContext);
+	}
+
 	/*
 	 * Set up locale information from environment.  Note that LC_CTYPE and
 	 * LC_COLLATE will be overridden later from pg_control if we are in an

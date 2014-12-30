@@ -17,8 +17,8 @@
 #ifndef MEMUTILS_H
 #define MEMUTILS_H
 
+#include <mm.h>
 #include "nodes/memnodes.h"
-
 
 /*
  * MaxAllocSize, MaxAllocHugeSize
@@ -84,6 +84,9 @@ extern PGDLLIMPORT MemoryContext CurTransactionContext;
 /* This is a transient link to the active portal's memory context: */
 extern PGDLLIMPORT MemoryContext PortalContext;
 
+/* Custom shared memory context */
+extern PGDLLIMPORT MemoryContext TopSharedMemoryContext;
+//extern DLLIMPORT MemoryContext shmQueryContext;
 
 /*
  * Memory-context-type-independent functions in mcxt.c
@@ -146,5 +149,35 @@ extern MemoryContext AllocSetContextCreate(MemoryContext parent,
 #define ALLOCSET_SMALL_MINSIZE	 0
 #define ALLOCSET_SMALL_INITSIZE  (1 * 1024)
 #define ALLOCSET_SMALL_MAXSIZE	 (8 * 1024)
+
+/* shared memory context management functions */
+
+extern MM  *mm_query_segment;
+
+extern void SHMContextShutdown(void);
+extern void SHMContextInit(void);
+extern void SHMContextReset(MemoryContext context);
+extern void SHMContextDelete(MemoryContext context);
+extern void SHMContextResetChildren(MemoryContext context);
+extern void SHMContextDeleteChildren(MemoryContext context);
+extern void SHMContextResetAndDeleteChildren(MemoryContext context);
+extern void SHMContextStats(MemoryContext context);
+extern void SHMContextCheck(MemoryContext context);
+extern bool SHMContextContains(MemoryContext context, void *pointer);
+extern MemoryContext SHMContextCreate(NodeTag tag, Size size,
+									  MemoryContextMethods *methods,
+									  MemoryContext parent,
+									  const char *name,
+									  MM * shmcxt);
+
+struct SHMcxtstate
+{
+    int         refcount;
+};
+
+
+MM         *SHMFindMMContext(MemoryContext ac);
+
+#define SHMPointerIsValid(pointer) ((void*)(pointer) != NULL)
 
 #endif   /* MEMUTILS_H */

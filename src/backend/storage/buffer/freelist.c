@@ -17,7 +17,7 @@
 
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
-
+#include "access/relblock.h"
 
 /*
  * The shared freelist control information.
@@ -363,6 +363,9 @@ StrategyInitialize(bool init)
 	 * NBuffers + NUM_BUFFER_PARTITIONS entries.
 	 */
 	InitBufTable(NBuffers + NUM_BUFFER_PARTITIONS);
+
+	/* Initialize the shared relblock lookup hashtable. */
+	InitRelBlockTable(NUM_REL_BLOCK_ENTRIES);
 
 	/*
 	 * Get or create the shared strategy control block

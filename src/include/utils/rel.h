@@ -197,7 +197,7 @@ typedef struct RelationData
 	/* VM/NVM storage information */
 
 	// backend information
-	enum storage_backend_type rd_block_backend;
+	enum storage_backend_type rd_storage_backend;
 
 	// status of rd storage initialization
 	bool rd_init_storage;
@@ -206,12 +206,14 @@ typedef struct RelationData
 	Size rd_tuplen;
 
 	// relation blocks on VM
-	List* rd_fixed_blocks_on_VM;
-	List* rd_variable_blocks_on_VM;
+	void* rd_fixed_blocks_on_VM[50];
+	int rd_num_fixed_blocks_on_VM;
+
+    //List* rd_variable_blocks_on_VM;
 
 	// relation blocks on NVM
-	List* rd_fixed_blocks_on_NVM;
-	List* rd_variable_blocks_on_NVM;
+	//List* rd_fixed_blocks_on_NVM;
+	//List* rd_variable_blocks_on_NVM;
 } RelationData;
 
 /*
