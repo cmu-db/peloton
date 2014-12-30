@@ -21,8 +21,7 @@ HTAB *SharedRelBlockHash = NULL;
 /*
  * Estimate space needed for mapping hashtable
  */
-Size
-RelBlockTableShmemSize(int size)
+Size RelBlockTableShmemSize(int size)
 {
 	return hash_estimate_size(size, sizeof(RelBlockLookupEnt));
 }
@@ -30,8 +29,7 @@ RelBlockTableShmemSize(int size)
 /*
  * Initialize shmem hash table for mapping entries
  */
-void
-InitRelBlockTable(int size)
+void InitRelBlockTable(int size)
 {
 	HASHCTL hash_ctl;
 
@@ -58,8 +56,7 @@ InitRelBlockTable(int size)
  * in order to determine which buffer partition to lock, and we don't want
  * to do the hash computation twice (hash_any is a bit slow).
  */
-uint32
-RelBlockTableHashCode(RelBlockTag *tagPtr)
+uint32 RelBlockTableHashCode(RelBlockTag *tagPtr)
 {
 	return get_hash_value(SharedRelBlockHash, (void *) tagPtr);
 }
@@ -68,8 +65,7 @@ RelBlockTableHashCode(RelBlockTag *tagPtr)
  * RelBlockTableLookup
  *		Lookup the given RelBlockTag; return RelBlockLookupEnt, or NULL if not found
  */
-RelBlockLookupEnt *
-RelBlockTableLookup(RelBlockTag *tagPtr, uint32 hashcode)
+RelBlockLookupEnt * RelBlockTableLookup(RelBlockTag *tagPtr, uint32 hashcode)
 {
 	RelBlockLookupEnt *result;
 
@@ -91,16 +87,14 @@ RelBlockTableLookup(RelBlockTag *tagPtr, uint32 hashcode)
  *		Insert a hashtable entry for given tag and PID,
  *		unless an entry already exists for that tag
  *
- * Returns -1 on successful insertion.  If a conflicting entry exists
- * already, returns the PID in that entry.
+ * Returns 0 on successful insertion.  If a conflicting entry exists
+ * already, -1.
  */
-int
-RelBlockTableInsert(RelBlockTag *tagPtr, uint32 hashcode, int pid)
+int RelBlockTableInsert(RelBlockTag *tagPtr, uint32 hashcode,
+						RelationBlockInfo relblockinfo)
 {
 	RelBlockLookupEnt *result;
 	bool		found;
-
-	Assert(pid >= 0);		/* -1 is reserved for not-in-table */
 
 	result = (RelBlockLookupEnt *)
 		hash_search_with_hash_value(SharedRelBlockHash,
@@ -110,19 +104,18 @@ RelBlockTableInsert(RelBlockTag *tagPtr, uint32 hashcode, int pid)
 									&found);
 
 	if (found)					/* found something already in the table */
-		return result->pid;
+		return -1;
 
-	result->pid = pid;
+	result->relblockinfo = relblockinfo;
 
-	return -1;
+	return 0;
 }
 
 /*
  * RelBlockTableDelete
  *		Delete the hashtable entry for given tag (which must exist)
  */
-void
-RelBlockTableDelete(RelBlockTag *tagPtr, uint32 hashcode)
+void RelBlockTableDelete(RelBlockTag *tagPtr, uint32 hashcode)
 {
 	RelBlockLookupEnt *result;
 
@@ -141,8 +134,7 @@ RelBlockTableDelete(RelBlockTag *tagPtr, uint32 hashcode)
  * RelBlockPrint
  *		Display the hashtable
  */
-void
-RelBlockTablePrint()
+void RelBlockTablePrint()
 {
 	HASH_SEQ_STATUS status;
 	RelBlockLookupEnt *entry;
@@ -151,6 +143,8 @@ RelBlockTablePrint()
 
 	while ((entry = (RelBlockLookupEnt *) hash_seq_search(&status)) != NULL)
 	{
-		elog(WARNING, "Entry :: %p pid : %d", entry, entry->pid);
+		Assert(entry != NULL);
+		Assert(entry->relblockinfo != NULL);
+		elog(WARNING, "RelBlockEntry :: %p relid :: %d", entry, entry->relblockinfo->relid);
 	}
 }

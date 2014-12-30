@@ -14,6 +14,7 @@
 #ifndef REL_H
 #define REL_H
 
+#include "access/relblock.h"
 #include "access/tupdesc.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_class.h"
@@ -25,7 +26,6 @@
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
 #include "utils/reltrigger.h"
-
 
 /*
  * LockRelId and LockInfo really belong to lmgr.h, but it's more convenient
@@ -62,14 +62,6 @@ typedef struct RelationAmInfo
 	FmgrInfo	amrestrpos;
 	FmgrInfo	amcanreturn;
 } RelationAmInfo;
-
-
-// RelationBlock storage information
-typedef enum RelationBlockBackend{
-    STORAGE_BACKEND_FS,
-    STORAGE_BACKEND_VM,
-    STORAGE_BACKEND_NVM
-} RelationBlockBackend;
 
 /*
  * Here are the contents of a relation cache entry.
@@ -193,26 +185,14 @@ typedef struct RelationData
 	/* use "struct" here to avoid needing to include pgstat.h: */
 	struct PgStat_TableStatus *pgstat_info;		/* statistics collection area */
 
-	/* VM/NVM storage information */
-
-	// backend information
+	/* backend information */
 	RelationBlockBackend rd_storage_backend;
 
-	// status of rd storage initialization
-	bool rd_init_storage;
-
-	// length of the tuple
+	/* length of the tuple */
 	Size rd_tuplen;
 
-	// relation blocks on VM
-	void* rd_fixed_blocks_on_VM[50];
-	int rd_num_fixed_blocks_on_VM;
-
-    //List* rd_variable_blocks_on_VM;
-
-	// relation blocks on NVM
-	//List* rd_fixed_blocks_on_NVM;
-	//List* rd_variable_blocks_on_NVM;
+	/* relation block info */
+	RelationBlockInfo rd_relblock_info;
 } RelationData;
 
 /*

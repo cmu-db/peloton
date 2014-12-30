@@ -16,12 +16,12 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
+#include "utils/rel.h"
 #include "access/relblock.h"
 
 void vm_relation_allocate(Relation rd)
 {
-	RelationInitAllocateBlock(rd);
+	RelationInitBlockTableEntry(rd);
 }
 
 Relation vm_relation_open(Oid relationId, LOCKMODE lockmode)
@@ -77,7 +77,7 @@ HeapScanDesc vm_heap_beginscan(Relation relation, Snapshot snapshot,
 							   int nkeys, ScanKey key)
 {
 	elog(WARNING, "BEGIN SCAN :: %s", RelationGetRelationName(relation));
-	PrintAllRelationBlocks(RelationGetRelid(relation));
+	PrintAllRelationBlocks(relation);
 
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 	return NULL;
