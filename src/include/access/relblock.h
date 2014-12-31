@@ -53,6 +53,18 @@ typedef struct RelationBlockData
 
 typedef RelationBlockData* RelationBlock;
 
+/* RelationColumnGroup structure */
+typedef struct RelationColumnGroupData
+{
+	/* Id */
+	int cg_id;
+	/* Size of slot in CG */
+	Size cg_size;
+	/* Starting attr in CG */
+	int cg_start_attr_id;
+} RelationColumnGroupData;
+
+typedef RelationColumnGroupData* RelationColumnGroup;
 
 typedef struct RelationBlockInfoData
 {
@@ -68,7 +80,8 @@ typedef struct RelationBlockInfoData
 	List *rel_variable_blocks_on_NVM;
 
 	/* column groups */
-	int  *rel_column_group;
+	int  *rel_attr_group;
+	List *rel_column_groups;
 } RelationBlockInfoData;
 
 typedef RelationBlockInfoData* RelationBlockInfo;

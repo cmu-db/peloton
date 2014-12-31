@@ -140,11 +140,16 @@ Size ComputeTupleLen(Relation relation)
 
 void ComputeColumnGroups(Relation relation, RelationBlockInfo relblockinfo)
 {
-	int* rel_column_group = NULL;
-	int num_column_groups = -1;
-	Size tuplen, column_group_size;
-	int attr_itr, nattrs, column_group_id;
+	int     * rel_attr_group = NULL;
+	int       num_column_groups = -1;
+	Size      tuplen;
+	Size      column_group_size;
+	int       attr_itr, nattrs;
+	int       column_group_id;
+	int       column_group_start_attr_id;
 	TupleDesc tupdesc;
+	RelationColumnGroup rel_column_group;
+	ListCell *lc;
 
 	tuplen = relblockinfo->reltuplen;
 	tupdesc = RelationGetDescr(relation);
@@ -154,12 +159,16 @@ void ComputeColumnGroups(Relation relation, RelationBlockInfo relblockinfo)
 	if(tuplen % RELBLOCK_CACHELINE_SIZE != 0)
 		num_column_groups += 1;
 
-	elog(WARNING, "Column Groups %d", num_column_groups);
+	elog(WARNING, "# of Column Groups : %d", num_column_groups);
 
-	rel_column_group = (int *) palloc(sizeof(int) * num_column_groups);
+	rel_attr_group = (int *) palloc(sizeof(int) * num_column_groups);
 
 	column_group_id   = 0;
 	column_group_size = 0;
+	column_group_start_attr_id = 0;
+
+	// Go over all attributes splitting at cache-line granularity and
+	// record the column group information in the given relblockinfo structure
 	for(attr_itr = 0 ; attr_itr < nattrs ; attr_itr++)
 	{
 		Form_pg_attribute attr = tupdesc->attrs[attr_itr];
@@ -176,15 +185,47 @@ void ComputeColumnGroups(Relation relation, RelationBlockInfo relblockinfo)
 		column_group_size += attr_size;
 		if(column_group_size > RELBLOCK_CACHELINE_SIZE)
 		{
+			rel_column_group = (RelationColumnGroup) palloc(sizeof(RelationColumnGroupData));
+
+			// add column group info
+			rel_column_group->cg_id = column_group_id;
+			rel_column_group->cg_size = column_group_size - attr_size;
+			rel_column_group->cg_start_attr_id = column_group_start_attr_id;
+
+			elog(WARNING, "Column Group %d : Size %zd Start attr %d", column_group_id,
+				 column_group_size, column_group_start_attr_id);
+
 			column_group_id += 1;
 			column_group_size = attr_size;
+			column_group_start_attr_id = attr_itr;
+
+			relblockinfo->rel_column_groups = lappend(relblockinfo->rel_column_groups, rel_column_group);
 		}
 
-		rel_column_group[attr_itr] = column_group_id;
+		rel_attr_group[attr_itr] = column_group_id;
 		elog(WARNING, "Attribute %d : Column Group %d", attr_itr, column_group_id);
 	}
 
-	relblockinfo->rel_column_group = rel_column_group;
+	// last column group info
+	rel_column_group = (RelationColumnGroup) palloc(sizeof(RelationColumnGroupData));
+
+	rel_column_group->cg_id = column_group_id;
+	rel_column_group->cg_size = column_group_size;
+	rel_column_group->cg_start_attr_id = column_group_start_attr_id;
+	relblockinfo->rel_column_groups = lappend(relblockinfo->rel_column_groups, rel_column_group);
+
+	relblockinfo->rel_attr_group = rel_attr_group;
+
+	elog(WARNING, "--------------------------------------------");
+	foreach (lc, relblockinfo->rel_column_groups)
+	{
+		RelationColumnGroup relcolumngroup = lfirst(lc);
+		if(relcolumngroup != NULL)
+			elog(WARNING, "[ %d %zd %d ]", relcolumngroup->cg_id, relcolumngroup->cg_size,
+				 relcolumngroup->cg_start_attr_id );
+	}
+	elog(WARNING, "--------------------------------------------");
+
 }
 
 void PrintAllRelationBlocks(Relation relation)
@@ -265,7 +306,7 @@ void RelationInitBlockTableEntry(Relation relation)
 			elog(ERROR, "relblockinfo should not be %p", entry->relblockinfo);
 		}
 
-        // cache value in relation
+		// cache value in relation
 		relation->rd_relblock_info = entry->relblockinfo;
 	}
 	else
