@@ -29,14 +29,14 @@ void PrintTupleDesc(TupleDesc tupdesc);
 
 Size ComputeTupleLen(Relation relation);
 
-void PrintRelationBlocks(Relation relation, RelationBlockBackend relblockbackend,
-						 RelationBlockType relblocktype);
+void PrintRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
+							RelationBlockType relblocktype);
 
 void RelationAllocateBlock(Relation relation, RelationBlockBackend relblockbackend,
 						   RelationBlockType relblocktype);
 
-void** GetRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
-							RelationBlockType relblocktype);
+List** GetRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
+						   RelationBlockType relblocktype);
 
 void PrintTupleDesc(TupleDesc tupdesc)
 {
@@ -54,58 +54,55 @@ void PrintTupleDesc(TupleDesc tupdesc)
 	}
 }
 
-void** GetRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
-							RelationBlockType relblocktype)
+List** GetRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
+						   RelationBlockType relblocktype)
 {
-	void       **blockList = NULL;
+	List       **blockListPtr = NULL;
 
-	/*
 	// Pick relevant list based on backend and block type
-	if(relblockbackend == STORAGE_BACKEND_VM){
-	if(relblocktype == RELATION_FIXED_BLOCK_TYPE)
-	blockList = &relation->rd_fixed_blocks_on_VM;
-	else if(relblocktype == RELATION_VARIABLE_BLOCK_TYPE)
-	blockList = &relation->rd_variable_blocks_on_VM;
+	if(relblockbackend == STORAGE_BACKEND_VM)
+	{
+		if(relblocktype == RELATION_FIXED_BLOCK_TYPE)
+			blockListPtr = &relation->rd_relblock_info->rel_fixed_blocks_on_VM;
+		else if(relblocktype == RELATION_VARIABLE_BLOCK_TYPE)
+			blockListPtr = &relation->rd_relblock_info->rel_variable_blocks_on_VM;
 	}
-	else if(relblockbackend == STORAGE_BACKEND_NVM){
-	if(relblocktype == RELATION_FIXED_BLOCK_TYPE)
-	blockList = &relation->rd_fixed_blocks_on_NVM;
-	else if(relblocktype == RELATION_VARIABLE_BLOCK_TYPE)
-	blockList = &relation->rd_variable_blocks_on_NVM;
+	else if(relblockbackend == STORAGE_BACKEND_NVM)
+	{
+		if(relblocktype == RELATION_FIXED_BLOCK_TYPE)
+			blockListPtr = &relation->rd_relblock_info->rel_fixed_blocks_on_NVM;
+		else if(relblocktype == RELATION_VARIABLE_BLOCK_TYPE)
+			blockListPtr = &relation->rd_relblock_info->rel_variable_blocks_on_NVM;
 	}
-	*/
 
-	return blockList;
+	if(blockListPtr == NULL)
+	{
+		elog(ERROR, "blockListPtr must not be %p", blockListPtr);
+	}
+
+	return blockListPtr;
 }
 
-void PrintRelationBlocks(Relation relation, RelationBlockBackend relblockbackend,
-						 RelationBlockType relblocktype)
+void PrintRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
+							RelationBlockType relblocktype)
 {
-	/*
-	  List       **blockList = NULL;
-	  ListCell   *l = NULL;
+	List       **blockListPtr = NULL;
+	List        *blockList = NULL;
+	ListCell    *l = NULL;
 
-	  blockList = GetRelationBlockList( relation, relblockbackend, relblocktype);
+	blockListPtr = GetRelationBlockList(relation, relblockbackend, relblocktype);
+	blockList = *blockListPtr;
 
-	  if(blockList == NULL)
-	  {
-	  //elog(WARNING, "blockList is NULL");
-	  return;
-	  }
-	*/
+	elog(WARNING, "PR BLOCK :: Backend : %d Type : %d List : %p", relblockbackend, relblocktype, blockList);
 
-	//elog(WARNING, "PR_BLOCK :: Backend : %d Type : %d", relblockbackend, relblocktype);
+	foreach (l, blockList)
+	{
+		RelationBlock relblock = lfirst(l);
+		elog(WARNING, "[ %p ] ->", relblock);
 
-	/*
-	  foreach (l, (*blockList))
-	  {
-	  RelationBlock relblock = lfirst(l);
-	  elog(WARNING, "[ %p ] ->", relblock);
-
-	  if(relblock != NULL)
-	  elog(WARNING, "%zd %p", relblock->relblocklen, relblock->relblockdata);
-	  }*/
-
+		//if(relblock != NULL)
+		//	elog(WARNING, "%zd %p", relblock->relblocklen, relblock->relblockdata);
+	}
 }
 
 
@@ -149,8 +146,8 @@ void PrintAllRelationBlocks(Relation relation)
 {
 	elog(WARNING, "--------------------------------------------");
 	elog(WARNING, "PID :: %d", getpid());
-	elog(WARNING, "ALL_BLOCKS :: relation :: %p %s", relation, RelationGetRelationName(relation));
-	PrintRelationBlocks(relation, STORAGE_BACKEND_VM, RELATION_FIXED_BLOCK_TYPE);
+	elog(WARNING, "ALL_BLOCKS :: relation :: %d %s", RelationGetRelid(relation), RelationGetRelationName(relation));
+	PrintRelationBlockList(relation, STORAGE_BACKEND_VM, RELATION_FIXED_BLOCK_TYPE);
 	elog(WARNING, "--------------------------------------------\n");
 }
 
@@ -162,6 +159,7 @@ void RelationAllocateBlock(Relation relation, RelationBlockBackend relblockbacke
 	RelationBlock relblock;
 	MemoryContext oldcxt;
 	void          *blockData = NULL;
+	List          **blockListPtr = NULL;
 
 	tuplen = ComputeTupleLen(relation);
 	//elog(WARNING, "tuplen : %zd", tuplen);
@@ -183,7 +181,12 @@ void RelationAllocateBlock(Relation relation, RelationBlockBackend relblockbacke
 	elog(WARNING, "RelationBlock Size : %zd Backend : %d Type : %d", relblock->relblocklen,
 		 relblock->relblockbackend, relblock->relblocktype);
 
+	blockListPtr = GetRelationBlockList(relation, relblockbackend, relblocktype);
+
+	elog(WARNING, "Appending to list : %p", *blockListPtr);
+
 	// Append here within TSMC
+	*blockListPtr = lappend(*blockListPtr, relblock);
 
 	RelBlockTablePrint();
 
@@ -210,14 +213,14 @@ void RelationInitBlockTableEntry(Relation relation)
 
 	if(entry != NULL)
 	{
-		elog(WARNING, "RelationInitBlockTableEntry :: entry already exists %p", entry);
+		elog(WARNING, "InitBlockTableEntry :: entry already exists %p", entry);
 
 		// cache value in relation
 		relation->rd_relblock_info = entry->relblockinfo;
 	}
 	else
 	{
-		elog(WARNING, "RelationInitBlockTableEntry :: entry not found inserting with hash_value :: %u", hash_value);
+		elog(WARNING, "InitBlockTableEntry :: entry not found inserting with hash_value :: %u", hash_value);
 
 		// Allocate new entry in TSMC
 		oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
@@ -228,7 +231,7 @@ void RelationInitBlockTableEntry(Relation relation)
 		ret_id = RelBlockTableInsert(&relblocktag, hash_value, relblockinfo);
 		if(ret_id != 0)
 		{
-			elog(WARNING, "RelationInitBlockTableEntry :: entry cannot be inserted");
+			elog(WARNING, "InitBlockTableEntry :: entry cannot be inserted");
 		}
 
 		// cache value in relation
