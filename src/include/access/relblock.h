@@ -19,8 +19,10 @@
 #define BLOCK_FIXED_LENGTH_SIZE 100             /* In terms of number of tuples */
 #define BLOCK_VARIABLE_LENGTH_SIZE 1024 * 16    /* Raw size in bytes */
 
-#define BLOCK_POINTER_SIZE  8  /* 8 bytes */
-#define NUM_REL_BLOCK_ENTRIES 1000
+#define BLOCK_POINTER_SIZE  8                   /* 8 bytes */
+#define NUM_REL_BLOCK_ENTRIES 1000              /* Entries in shared rel block table */
+
+#define RELBLOCK_CACHELINE_SIZE   16             /* 64 bytes */
 
 // RelationBlock storage information
 typedef enum RelationBlockBackend{
@@ -51,17 +53,22 @@ typedef struct RelationBlockData
 
 typedef RelationBlockData* RelationBlock;
 
+
 typedef struct RelationBlockInfoData
 {
 	Oid relid;
+	Size reltuplen;
 
 	/* relation blocks on VM */
-	List* rel_fixed_blocks_on_VM;
-	List* rel_variable_blocks_on_VM;
+	List *rel_fixed_blocks_on_VM;
+	List *rel_variable_blocks_on_VM;
 
 	/* relation blocks on NVM */
-	List* rel_fixed_blocks_on_NVM;
-	List* rel_variable_blocks_on_NVM;
+	List *rel_fixed_blocks_on_NVM;
+	List *rel_variable_blocks_on_NVM;
+
+	/* column groups */
+	int  *rel_column_group;
 } RelationBlockInfoData;
 
 typedef RelationBlockInfoData* RelationBlockInfo;

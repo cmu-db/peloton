@@ -29,6 +29,8 @@ void PrintTupleDesc(TupleDesc tupdesc);
 
 Size ComputeTupleLen(Relation relation);
 
+void ComputeColumnGroups(Relation relation, RelationBlockInfo relblockinfo);
+
 void PrintRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
 							RelationBlockType relblocktype);
 
@@ -36,7 +38,7 @@ void RelationAllocateBlock(Relation relation, RelationBlockBackend relblockbacke
 						   RelationBlockType relblocktype);
 
 List** GetRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
-						   RelationBlockType relblocktype);
+							RelationBlockType relblocktype);
 
 void PrintTupleDesc(TupleDesc tupdesc)
 {
@@ -55,7 +57,7 @@ void PrintTupleDesc(TupleDesc tupdesc)
 }
 
 List** GetRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
-						   RelationBlockType relblocktype)
+							RelationBlockType relblocktype)
 {
 	List       **blockListPtr = NULL;
 
@@ -108,16 +110,13 @@ void PrintRelationBlockList(Relation relation, RelationBlockBackend relblockback
 
 Size ComputeTupleLen(Relation relation)
 {
-	Size      tuplen = relation->rd_tuplen;
+	Size      tuplen;
 	TupleDesc tupdesc;
 	int       i;
 
-	// Check if already computed
-	if(tuplen != 0)
-		return tuplen;
-
+	tuplen = relation->rd_relblock_info->reltuplen;
 	tupdesc = RelationGetDescr(relation);
-	//PrintTupleDesc(tupdesc);
+	PrintTupleDesc(tupdesc);
 
 	tuplen = 0;
 	for (i = 0; i < tupdesc->natts; i++)
@@ -136,17 +135,64 @@ Size ComputeTupleLen(Relation relation)
 
 	}
 
-	// Store for future use
-	relation->rd_tuplen = tuplen;
-
 	return tuplen;
+}
+
+void ComputeColumnGroups(Relation relation, RelationBlockInfo relblockinfo)
+{
+	int* rel_column_group = NULL;
+	int num_column_groups = -1;
+	Size tuplen, column_group_size;
+	int attr_itr, nattrs, column_group_id;
+	TupleDesc tupdesc;
+
+	tuplen = relblockinfo->reltuplen;
+	tupdesc = RelationGetDescr(relation);
+	nattrs = RelationGetNumberOfAttributes(relation);
+
+	num_column_groups = tuplen / RELBLOCK_CACHELINE_SIZE;
+	if(tuplen % RELBLOCK_CACHELINE_SIZE != 0)
+		num_column_groups += 1;
+
+	elog(WARNING, "Column Groups %d", num_column_groups);
+
+	rel_column_group = (int *) palloc(sizeof(int) * num_column_groups);
+
+	column_group_id   = 0;
+	column_group_size = 0;
+	for(attr_itr = 0 ; attr_itr < nattrs ; attr_itr++)
+	{
+		Form_pg_attribute attr = tupdesc->attrs[attr_itr];
+		Size attr_size;
+
+		if(attr->attlen != -1)
+			attr_size = attr->attlen;
+		else if(attr->atttypmod != -1)
+			attr_size = BLOCK_POINTER_SIZE;
+		else
+			elog(ERROR, "type not supported : %s %3d %3d %3d", NameStr(attr->attname),
+				 attr->atttypid, attr->attlen, attr->atttypmod);
+
+		column_group_size += attr_size;
+		if(column_group_size > RELBLOCK_CACHELINE_SIZE)
+		{
+			column_group_id += 1;
+			column_group_size = attr_size;
+		}
+
+		rel_column_group[attr_itr] = column_group_id;
+		elog(WARNING, "Attribute %d : Column Group %d", attr_itr, column_group_id);
+	}
+
+	relblockinfo->rel_column_group = rel_column_group;
 }
 
 void PrintAllRelationBlocks(Relation relation)
 {
 	elog(WARNING, "--------------------------------------------");
 	elog(WARNING, "PID :: %d", getpid());
-	elog(WARNING, "ALL_BLOCKS :: relation :: %d %s", RelationGetRelid(relation), RelationGetRelationName(relation));
+	elog(WARNING, "ALL_BLOCKS :: relation :: %d %s", RelationGetRelid(relation),
+		 RelationGetRelationName(relation));
 	PrintRelationBlockList(relation, STORAGE_BACKEND_VM, RELATION_FIXED_BLOCK_TYPE);
 	elog(WARNING, "--------------------------------------------\n");
 }
@@ -161,9 +207,7 @@ void RelationAllocateBlock(Relation relation, RelationBlockBackend relblockbacke
 	void          *blockData = NULL;
 	List          **blockListPtr = NULL;
 
-	tuplen = ComputeTupleLen(relation);
-	//elog(WARNING, "tuplen : %zd", tuplen);
-
+	tuplen = relation->rd_relblock_info->reltuplen;
 	if(relblocktype == RELATION_FIXED_BLOCK_TYPE)
 		blockSize = tuplen * BLOCK_FIXED_LENGTH_SIZE;
 	else if(relblocktype == RELATION_VARIABLE_BLOCK_TYPE)
@@ -203,6 +247,7 @@ void RelationInitBlockTableEntry(Relation relation)
 	RelationBlockInfo relblockinfo;
 	MemoryContext oldcxt;
 	int           ret_id;
+	Size          tuplen;
 
 	// key
 	relid = RelationGetRelid(relation);
@@ -215,7 +260,12 @@ void RelationInitBlockTableEntry(Relation relation)
 	{
 		elog(WARNING, "InitBlockTableEntry :: entry already exists %p", entry);
 
-		// cache value in relation
+		if(entry->relblockinfo == NULL)
+		{
+			elog(ERROR, "relblockinfo should not be %p", entry->relblockinfo);
+		}
+
+        // cache value in relation
 		relation->rd_relblock_info = entry->relblockinfo;
 	}
 	else
@@ -225,8 +275,15 @@ void RelationInitBlockTableEntry(Relation relation)
 		// Allocate new entry in TSMC
 		oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
 
+		tuplen = ComputeTupleLen(relation);
+		elog(WARNING, "tuplen : %zd", tuplen);
+
 		relblockinfo = (RelationBlockInfo) palloc(sizeof(RelationBlockInfoData));
 		relblockinfo->relid = relid;
+		relblockinfo->reltuplen = tuplen;
+
+		// Column group information
+		ComputeColumnGroups(relation, relblockinfo);
 
 		ret_id = RelBlockTableInsert(&relblocktag, hash_value, relblockinfo);
 		if(ret_id != 0)

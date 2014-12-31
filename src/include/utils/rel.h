@@ -188,9 +188,6 @@ typedef struct RelationData
 	/* backend information */
 	RelationBlockBackend rd_storage_backend;
 
-	/* length of the tuple */
-	Size rd_tuplen;
-
 	/* relation block info */
 	RelationBlockInfo rd_relblock_info;
 } RelationData;
