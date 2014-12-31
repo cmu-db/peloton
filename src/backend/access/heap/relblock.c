@@ -25,18 +25,16 @@
 
 // Internal helper functions
 
+void PrintAllRelationBlocks(Relation relation);
+void RelationAllocateBlock(Relation relation, RelationBlockBackend relblockbackend,
+								  RelationBlockType relblocktype);
 void PrintTupleDesc(TupleDesc tupdesc);
-
 Size ComputeTupleLen(Relation relation);
-
 void ComputeColumnGroups(Relation relation, RelationBlockInfo relblockinfo);
-
 void PrintRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
 							RelationBlockType relblocktype);
-
 void RelationAllocateBlock(Relation relation, RelationBlockBackend relblockbackend,
 						   RelationBlockType relblocktype);
-
 List** GetRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
 							RelationBlockType relblocktype);
 
@@ -116,7 +114,7 @@ Size ComputeTupleLen(Relation relation)
 
 	tuplen = relation->rd_relblock_info->reltuplen;
 	tupdesc = RelationGetDescr(relation);
-	PrintTupleDesc(tupdesc);
+	//PrintTupleDesc(tupdesc);
 
 	tuplen = 0;
 	for (i = 0; i < tupdesc->natts; i++)
@@ -149,7 +147,7 @@ void ComputeColumnGroups(Relation relation, RelationBlockInfo relblockinfo)
 	int       column_group_start_attr_id;
 	TupleDesc tupdesc;
 	RelationColumnGroup rel_column_group;
-	ListCell *lc;
+	//ListCell *lc;
 
 	tuplen = relblockinfo->reltuplen;
 	tupdesc = RelationGetDescr(relation);
@@ -159,7 +157,7 @@ void ComputeColumnGroups(Relation relation, RelationBlockInfo relblockinfo)
 	if(tuplen % RELBLOCK_CACHELINE_SIZE != 0)
 		num_column_groups += 1;
 
-	elog(WARNING, "# of Column Groups : %d", num_column_groups);
+	//elog(WARNING, "# of Column Groups : %d", num_column_groups);
 
 	rel_attr_group = (int *) palloc(sizeof(int) * num_column_groups);
 
@@ -192,8 +190,8 @@ void ComputeColumnGroups(Relation relation, RelationBlockInfo relblockinfo)
 			rel_column_group->cg_size = column_group_size - attr_size;
 			rel_column_group->cg_start_attr_id = column_group_start_attr_id;
 
-			elog(WARNING, "Column Group %d : Size %zd Start attr %d", column_group_id,
-				 column_group_size, column_group_start_attr_id);
+			//elog(WARNING, "Column Group %d : Size %zd Start attr %d", column_group_id,
+			//	 column_group_size, column_group_start_attr_id);
 
 			column_group_id += 1;
 			column_group_size = attr_size;
@@ -203,7 +201,7 @@ void ComputeColumnGroups(Relation relation, RelationBlockInfo relblockinfo)
 		}
 
 		rel_attr_group[attr_itr] = column_group_id;
-		elog(WARNING, "Attribute %d : Column Group %d", attr_itr, column_group_id);
+		//elog(WARNING, "Attribute %d : Column Group %d", attr_itr, column_group_id);
 	}
 
 	// last column group info
@@ -216,7 +214,8 @@ void ComputeColumnGroups(Relation relation, RelationBlockInfo relblockinfo)
 
 	relblockinfo->rel_attr_group = rel_attr_group;
 
-	elog(WARNING, "--------------------------------------------");
+	/*
+	// display column group info
 	foreach (lc, relblockinfo->rel_column_groups)
 	{
 		RelationColumnGroup relcolumngroup = lfirst(lc);
@@ -224,8 +223,7 @@ void ComputeColumnGroups(Relation relation, RelationBlockInfo relblockinfo)
 			elog(WARNING, "[ %d %zd %d ]", relcolumngroup->cg_id, relcolumngroup->cg_size,
 				 relcolumngroup->cg_start_attr_id );
 	}
-	elog(WARNING, "--------------------------------------------");
-
+	*/
 }
 
 void PrintAllRelationBlocks(Relation relation)
@@ -275,7 +273,6 @@ void RelationAllocateBlock(Relation relation, RelationBlockBackend relblockbacke
 
 	RelBlockTablePrint();
 
-	SHMContextStats(TopSharedMemoryContext);
 	MemoryContextSwitchTo(oldcxt);
 }
 
@@ -299,7 +296,7 @@ void RelationInitBlockTableEntry(Relation relation)
 
 	if(entry != NULL)
 	{
-		elog(WARNING, "InitBlockTableEntry :: entry already exists %p", entry);
+		//elog(WARNING, "InitBlockTableEntry :: entry already exists %p", entry);
 
 		if(entry->relblockinfo == NULL)
 		{
@@ -311,13 +308,13 @@ void RelationInitBlockTableEntry(Relation relation)
 	}
 	else
 	{
-		elog(WARNING, "InitBlockTableEntry :: entry not found inserting with hash_value :: %u", hash_value);
+		//elog(WARNING, "InitBlockTableEntry :: entry not found inserting with hash_value :: %u", hash_value);
 
 		// Allocate new entry in TSMC
 		oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
 
 		tuplen = ComputeTupleLen(relation);
-		elog(WARNING, "tuplen : %zd", tuplen);
+		//elog(WARNING, "tuplen : %zd", tuplen);
 
 		relblockinfo = (RelationBlockInfo) palloc(sizeof(RelationBlockInfoData));
 		relblockinfo->relid = relid;
@@ -335,7 +332,15 @@ void RelationInitBlockTableEntry(Relation relation)
 		// cache value in relation
 		relation->rd_relblock_info = relblockinfo;
 
-		SHMContextStats(TopSharedMemoryContext);
 		MemoryContextSwitchTo(oldcxt);
 	}
+}
+
+Oid RelationBlockInsertTuple(Relation relation, HeapTuple tup)
+{
+	Oid ret_id;
+
+	elog(WARNING, "Relation Insert :: %s", RelationGetRelationName(relation));
+
+	return ret_id;
 }

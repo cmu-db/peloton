@@ -341,9 +341,6 @@ relation_close(Relation relation, LOCKMODE lockmode)
 {
 	LockRelId	relid = relation->rd_lockInfo.lockRelId;
 
-	if(!IsCatalogRelation(relation))
-		elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
-
 	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
 
 	/* The relcache does the real work... */
@@ -370,10 +367,12 @@ heap_open(Oid relationId, LOCKMODE lockmode)
 
 	r = relation_open(relationId, lockmode);
 
+	/*
 	if(!IsCatalogRelation(r)){
 		elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(r) );
 		elog(WARNING, "Backend : %d ", r->rd_storage_backend);
 	}
+	*/
 
 	if (r->rd_rel->relkind == RELKIND_INDEX)
 		ereport(ERROR,

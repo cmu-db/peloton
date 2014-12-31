@@ -77,7 +77,6 @@ HeapScanDesc vm_heap_beginscan(Relation relation, Snapshot snapshot,
 							   int nkeys, ScanKey key)
 {
 	elog(WARNING, "BEGIN SCAN :: %s", RelationGetRelationName(relation));
-	PrintAllRelationBlocks(relation);
 
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 	return NULL;
@@ -184,12 +183,12 @@ void vm_FreeBulkInsertState(BulkInsertState bistate)
 Oid vm_heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 				   int options, BulkInsertState bistate)
 {
-	elog(WARNING, "Relation Insert :: %s", RelationGetRelationName(relation));
-	RelationAllocateBlock(relation, relation->rd_storage_backend, RELATION_FIXED_BLOCK_TYPE);
-	PrintAllRelationBlocks(relation);
+	Oid ret_id;
+
+	ret_id =  RelationBlockInsertTuple(relation, tup);
 
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
-	return -1;
+	return ret_id;
 }
 
 void vm_heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,

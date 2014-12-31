@@ -108,9 +108,7 @@ extern HTAB *SharedRelBlockHash;
 
 /* relblock.c */
 extern void RelationInitBlockTableEntry(Relation relation);
-extern void PrintAllRelationBlocks(Relation relation);
-extern void RelationAllocateBlock(Relation relation, RelationBlockBackend relblockbackend,
-								  RelationBlockType relblocktype);
+extern Oid  RelationBlockInsertTuple(Relation relation, HeapTuple tup);
 
 /* relblock_table.c */
 extern Size RelBlockTableShmemSize(int size);
