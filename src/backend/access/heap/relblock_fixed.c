@@ -21,7 +21,6 @@
 #include "storage/bufmgr.h"
 
 // Internal helper functions
-
 List** GetRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
 							RelationBlockType relblocktype);
 void PrintRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
@@ -30,6 +29,12 @@ void PrintAllRelationBlocks(Relation relation);
 
 RelationBlock RelationAllocateFixedLengthBlock(Relation relation,
 											   RelationBlockBackend relblockbackend);
+
+RelationBlock GetFixedLengthBlockWithFreeSlot(Relation relation,
+											  RelationBlockBackend relblockbackend);
+
+off_t GetFixedLengthSlotInBlock(RelationBlock relblock);
+bool ReleaseFixedLengthSlotInBlock(RelationBlock relblock, off_t slot_id);
 
 List** GetRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
 							RelationBlockType relblocktype)
@@ -148,14 +153,64 @@ RelationBlock RelationAllocateFixedLengthBlock(Relation relation,
 	return relblock;
 }
 
-off_t GetFixedLengthSlot(Relation relation, RelationBlockBackend relblockbackend)
+off_t GetFixedLengthSlotInBlock(RelationBlock relblock)
 {
-	off_t        relblock_offset = -1;
+	off_t  slot_itr;
+	int    free_slots = relblock->rb_free_slots ;
+	bool  *slotmap = relblock->rb_slotmap;
+
+	if(free_slots == 0)
+	{
+		elog(ERROR, "No free slots in block %p", relblock);
+		return -1;
+	}
+
+	// Update bitmap and free slot counter
+	for(slot_itr = 0 ; slot_itr < NUM_REL_BLOCK_ENTRIES ; slot_itr++)
+	{
+		if(slotmap[slot_itr] == false)
+		{
+			slotmap[slot_itr] = true;
+			relblock->rb_free_slots -= 1;
+			break;
+		}
+	}
+
+	if(slot_itr == NUM_REL_BLOCK_ENTRIES)
+	{
+		elog(ERROR, "No free slots in block %p", relblock);
+		return -1;
+	}
+
+	return slot_itr;
+}
+
+bool ReleaseFixedLengthSlotInBlock(RelationBlock relblock, off_t slot_id)
+{
+	bool  *slotmap = relblock->rb_slotmap;
+
+	// Check if id makes sense
+	if(slot_id < 0 || slot_id > NUM_REL_BLOCK_ENTRIES)
+		return false;
+
+	// Update bitmap and free slot counter
+	slotmap[slot_id] = false;
+	relblock->rb_free_slots += 1;
+
+	// XXX should we release the block if all slots are empty ?
+
+	return true;
+}
+
+
+RelationBlock GetFixedLengthBlockWithFreeSlot(Relation relation,
+											  RelationBlockBackend relblockbackend)
+{
 	List       **blockListPtr = NULL;
 	List        *blockList = NULL;
 	ListCell    *l = NULL;
-	bool        blockfound;
 	RelationBlock relblock = NULL;
+	bool        blockfound;
 
 	blockListPtr = GetRelationBlockList(relation, relblockbackend, RELATION_FIXED_BLOCK_TYPE);
 
@@ -187,10 +242,21 @@ off_t GetFixedLengthSlot(Relation relation, RelationBlockBackend relblockbackend
 		}
 	}
 
+	return relblock;
+}
+
+off_t GetFixedLengthSlot(Relation relation,	RelationBlockBackend relblockbackend)
+{
+	off_t        relblock_offset = -1;
+	RelationBlock relblock = NULL;
+
+	relblock = GetFixedLengthBlockWithFreeSlot(relation, relblockbackend);
+
 	/* Must have found the required block */
 
-	elog(WARNING, "FL block :: Size : %zd Backend : %d Type : %d Free slots : %d", relblock->rb_size,
-		 relblock->rb_backend, relblock->rb_type, relblock->rb_free_slots);
+	relblock_offset = GetFixedLengthSlotInBlock(relblock);
+	elog(WARNING, "FL block :: Size : %zd Free slots : %d", relblock->rb_size, relblock->rb_free_slots);
+
 
 	return relblock_offset;
 }
