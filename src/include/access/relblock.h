@@ -45,12 +45,22 @@ typedef enum RelationBlockType
 /* RelationBlock structure */
 typedef struct RelationBlockData
 {
-	RelationBlockType relblocktype;
-	RelationBlockBackend relblockbackend;
-	void *relblockdata;
-	Size relblocklen;
-} RelationBlockData;
+	RelationBlockType rb_type;
+	RelationBlockBackend rb_backend;
+	Size rb_size;
 
+	/* For fixed-length blocks */
+	List *rb_cg_locations;
+	// Keep these in sync
+	bool *rb_slotmap;
+	int rb_free_slots;
+
+	/* For variable-length blocks */
+	void *rb_location;
+	// Keep these in sync
+	void *rb_start_scan;
+	Size rb_freespace;
+} RelationBlockData;
 typedef RelationBlockData* RelationBlock;
 
 /* RelationColumnGroup structure */
@@ -63,7 +73,6 @@ typedef struct RelationColumnGroupData
 	/* Starting attr in CG */
 	int cg_start_attr_id;
 } RelationColumnGroupData;
-
 typedef RelationColumnGroupData* RelationColumnGroup;
 
 typedef struct RelationBlockInfoData
@@ -83,10 +92,9 @@ typedef struct RelationBlockInfoData
 	int  *rel_attr_group;
 	List *rel_column_groups;
 } RelationBlockInfoData;
-
 typedef RelationBlockInfoData* RelationBlockInfo;
 
-/* HTAB */
+/* RelBlock HTAB */
 
 /* Key for RelBlock Lookup Table */
 typedef struct RelBlockTag{
@@ -96,8 +104,9 @@ typedef struct RelBlockTag{
 /* Entry for RelBlock Lookup Table */
 typedef struct RelBlockLookupEnt{
 	/*
-	  XXX Payload required to handle a weird hash function issue in
-	  dynahash.c; otherwise the keys don't collide
+	  XXX Payload required to handle a weird hash
+	  function issue in dynahash.c;
+	  otherwise the keys don't collide
 	*/
 	int               payload;
 	int               pid;
@@ -118,5 +127,12 @@ extern RelBlockLookupEnt *RelBlockTableLookup(RelBlockTag *tagPtr, uint32 hashco
 extern int	RelBlockTableInsert(RelBlockTag *tagPtr, uint32 hashcode, RelationBlockInfo relblockinfo);
 extern void RelBlockTableDelete(RelBlockTag *tagPtr, uint32 hashcode);
 extern void RelBlockTablePrint();
+
+/* relblock_fixed.c */
+extern off_t GetFixedLengthSlot(Relation relation, RelationBlockBackend relblockbackend);
+
+/* relblock_varlen.c */
+extern void *GetVariableLengthSlot(Relation relation, Size size);
+
 
 #endif   /* RELBLOCK_IO_H */
