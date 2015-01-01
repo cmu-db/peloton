@@ -26,9 +26,9 @@
 
 // RelationBlock storage information
 typedef enum RelationBlockBackend{
-    STORAGE_BACKEND_FS,
-    STORAGE_BACKEND_VM,
-    STORAGE_BACKEND_NVM
+	STORAGE_BACKEND_FS,
+	STORAGE_BACKEND_VM,
+	STORAGE_BACKEND_NVM
 } RelationBlockBackend;
 
 #define STORAGE_BACKEND_DEFAULT STORAGE_BACKEND_FS
@@ -59,7 +59,7 @@ typedef struct RelationBlockData
 	void *rb_location;
 	// Keep these in sync
 	void *rb_start_scan;
-	Size rb_freespace;
+	Size rb_free_space;
 } RelationBlockData;
 typedef RelationBlockData* RelationBlock;
 
@@ -118,13 +118,16 @@ extern HTAB *SharedRelBlockHash;
 /* relblock.c */
 extern void RelationInitBlockTableEntry(Relation relation);
 extern Oid  RelationBlockInsertTuple(Relation relation, HeapTuple tup);
+extern List** GetRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
+								   RelationBlockType relblocktype);
 
 /* relblock_table.c */
 extern Size RelBlockTableShmemSize(int size);
 extern void InitRelBlockTable(int size);
 extern uint32 RelBlockTableHashCode(RelBlockTag *tagPtr);
 extern RelBlockLookupEnt *RelBlockTableLookup(RelBlockTag *tagPtr, uint32 hashcode);
-extern int	RelBlockTableInsert(RelBlockTag *tagPtr, uint32 hashcode, RelationBlockInfo relblockinfo);
+extern int	RelBlockTableInsert(RelBlockTag *tagPtr, uint32 hashcode,
+								RelationBlockInfo relblockinfo);
 extern void RelBlockTableDelete(RelBlockTag *tagPtr, uint32 hashcode);
 extern void RelBlockTablePrint();
 
@@ -132,7 +135,8 @@ extern void RelBlockTablePrint();
 extern off_t GetFixedLengthSlot(Relation relation, RelationBlockBackend relblockbackend);
 
 /* relblock_varlen.c */
-extern void *GetVariableLengthSlot(Relation relation, Size size);
+extern void *GetVariableLengthSlot(Relation relation, RelationBlockBackend relblockbackend,
+								   Size allocation_size);
 
 
 #endif   /* RELBLOCK_IO_H */

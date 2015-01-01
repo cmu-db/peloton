@@ -29,6 +29,39 @@ void PrintTupleDesc(TupleDesc tupdesc);
 Size ComputeTupleLen(Relation relation);
 void ComputeColumnGroups(Relation relation, RelationBlockInfo relblockinfo);
 
+void PrintRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
+							RelationBlockType relblocktype);
+void PrintAllRelationBlocks(Relation relation);
+
+List** GetRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
+							RelationBlockType relblocktype)
+{
+	List       **blockListPtr = NULL;
+
+	// Pick relevant list based on backend and block type
+	if(relblockbackend == STORAGE_BACKEND_VM)
+	{
+		if(relblocktype == RELATION_FIXED_BLOCK_TYPE)
+			blockListPtr = &relation->rd_relblock_info->rel_fixed_blocks_on_VM;
+		else if(relblocktype == RELATION_VARIABLE_BLOCK_TYPE)
+			blockListPtr = &relation->rd_relblock_info->rel_variable_blocks_on_VM;
+	}
+	else if(relblockbackend == STORAGE_BACKEND_NVM)
+	{
+		if(relblocktype == RELATION_FIXED_BLOCK_TYPE)
+			blockListPtr = &relation->rd_relblock_info->rel_fixed_blocks_on_NVM;
+		else if(relblocktype == RELATION_VARIABLE_BLOCK_TYPE)
+			blockListPtr = &relation->rd_relblock_info->rel_variable_blocks_on_NVM;
+	}
+
+	if(blockListPtr == NULL)
+	{
+		elog(ERROR, "blockListPtr must not be %p", blockListPtr);
+	}
+
+	return blockListPtr;
+}
+
 void PrintTupleDesc(TupleDesc tupdesc)
 {
 	int i;
@@ -229,15 +262,47 @@ Oid RelationBlockInsertTuple(Relation relation, HeapTuple tup)
 {
 	Oid ret_id = -1;
 	off_t relblock_offset = -1;
-	void *pool_location = NULL;
+	void *relblock_location = NULL;
 
 	elog(WARNING, "Relation Insert :: %s", RelationGetRelationName(relation));
 
 	// Find free slot for fixed-length fields
-	relblock_offset = GetFixedLengthSlot(relation, STORAGE_BACKEND_VM);
+	//relblock_offset = GetFixedLengthSlot(relation, STORAGE_BACKEND_VM);
 
 	// Find free slot for variable-length fields
-	pool_location = GetVariableLengthSlot(relation, 100);
+	relblock_location = GetVariableLengthSlot(relation, STORAGE_BACKEND_VM, 100);
 
 	return ret_id;
+}
+
+void PrintRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
+							RelationBlockType relblocktype)
+{
+	List       **blockListPtr = NULL;
+	List        *blockList = NULL;
+	ListCell    *l = NULL;
+
+	blockListPtr = GetRelationBlockList(relation, relblockbackend, relblocktype);
+	blockList = *blockListPtr;
+
+	elog(WARNING, "PR BLOCK :: Backend : %d Type : %d List : %p", relblockbackend, relblocktype, blockList);
+
+	foreach (l, blockList)
+	{
+		RelationBlock relblock = lfirst(l);
+		elog(WARNING, "[ %p ] ->", relblock);
+
+		//if(relblock != NULL)
+		//	elog(WARNING, "%zd %p", relblock->relblocklen, relblock->relblockdata);
+	}
+}
+
+void PrintAllRelationBlocks(Relation relation)
+{
+	elog(WARNING, "--------------------------------------------");
+	elog(WARNING, "PID :: %d", getpid());
+	elog(WARNING, "ALL_BLOCKS :: relation :: %d %s", RelationGetRelid(relation),
+		 RelationGetRelationName(relation));
+	PrintRelationBlockList(relation, STORAGE_BACKEND_VM, RELATION_FIXED_BLOCK_TYPE);
+	elog(WARNING, "--------------------------------------------\n");
 }

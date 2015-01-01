@@ -21,12 +21,6 @@
 #include "storage/bufmgr.h"
 
 // Internal helper functions
-List** GetRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
-							RelationBlockType relblocktype);
-void PrintRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
-							RelationBlockType relblocktype);
-void PrintAllRelationBlocks(Relation relation);
-
 RelationBlock RelationAllocateFixedLengthBlock(Relation relation,
 											   RelationBlockBackend relblockbackend);
 
@@ -35,67 +29,6 @@ RelationBlock GetFixedLengthBlockWithFreeSlot(Relation relation,
 
 off_t GetFixedLengthSlotInBlock(RelationBlock relblock);
 bool ReleaseFixedLengthSlotInBlock(RelationBlock relblock, off_t slot_id);
-
-List** GetRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
-							RelationBlockType relblocktype)
-{
-	List       **blockListPtr = NULL;
-
-	// Pick relevant list based on backend and block type
-	if(relblockbackend == STORAGE_BACKEND_VM)
-	{
-		if(relblocktype == RELATION_FIXED_BLOCK_TYPE)
-			blockListPtr = &relation->rd_relblock_info->rel_fixed_blocks_on_VM;
-		else if(relblocktype == RELATION_VARIABLE_BLOCK_TYPE)
-			blockListPtr = &relation->rd_relblock_info->rel_variable_blocks_on_VM;
-	}
-	else if(relblockbackend == STORAGE_BACKEND_NVM)
-	{
-		if(relblocktype == RELATION_FIXED_BLOCK_TYPE)
-			blockListPtr = &relation->rd_relblock_info->rel_fixed_blocks_on_NVM;
-		else if(relblocktype == RELATION_VARIABLE_BLOCK_TYPE)
-			blockListPtr = &relation->rd_relblock_info->rel_variable_blocks_on_NVM;
-	}
-
-	if(blockListPtr == NULL)
-	{
-		elog(ERROR, "blockListPtr must not be %p", blockListPtr);
-	}
-
-	return blockListPtr;
-}
-
-void PrintRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
-							RelationBlockType relblocktype)
-{
-	List       **blockListPtr = NULL;
-	List        *blockList = NULL;
-	ListCell    *l = NULL;
-
-	blockListPtr = GetRelationBlockList(relation, relblockbackend, relblocktype);
-	blockList = *blockListPtr;
-
-	elog(WARNING, "PR BLOCK :: Backend : %d Type : %d List : %p", relblockbackend, relblocktype, blockList);
-
-	foreach (l, blockList)
-	{
-		RelationBlock relblock = lfirst(l);
-		elog(WARNING, "[ %p ] ->", relblock);
-
-		//if(relblock != NULL)
-		//	elog(WARNING, "%zd %p", relblock->relblocklen, relblock->relblockdata);
-	}
-}
-
-void PrintAllRelationBlocks(Relation relation)
-{
-	elog(WARNING, "--------------------------------------------");
-	elog(WARNING, "PID :: %d", getpid());
-	elog(WARNING, "ALL_BLOCKS :: relation :: %d %s", RelationGetRelid(relation),
-		 RelationGetRelationName(relation));
-	PrintRelationBlockList(relation, STORAGE_BACKEND_VM, RELATION_FIXED_BLOCK_TYPE);
-	elog(WARNING, "--------------------------------------------\n");
-}
 
 RelationBlock RelationAllocateFixedLengthBlock(Relation relation,
 											   RelationBlockBackend relblockbackend)
@@ -229,7 +162,7 @@ RelationBlock GetFixedLengthBlockWithFreeSlot(Relation relation,
 		{
 			relblock = lfirst(l);
 
-			if(relblock->rb_free_slots != 0)
+			if(relblock->rb_free_slots > 0)
 			{
 				blockfound = true;
 				break;
