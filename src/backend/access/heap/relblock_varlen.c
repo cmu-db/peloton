@@ -20,10 +20,9 @@
 #include "utils/memutils.h"
 #include "storage/bufmgr.h"
 
-#define RELBLOCK_VARLEN_HEADER_SIZE     4   /* 4 bytes */
+#include <math.h>
 
 // Internal helper functions
-unsigned int RoundUpToNextPowerOfTwo(unsigned int x);
 Size GetAllocationSize(Size size);
 
 RelationBlock RelationAllocateVariableLengthBlock(Relation relation,
@@ -35,17 +34,7 @@ RelationBlock GetVariableLengthBlockWithFreeSpace(Relation relation,
 void *GetVariableLengthSlotInBlock(RelationBlock relblock, Size allocation_size);
 bool ReleaseVariableLengthSlotInBlock(RelationBlock relblock, void *location);
 
-unsigned int RoundUpToNextPowerOfTwo(unsigned int x)
-{
-	x--;
-	x |= x >> 1;  // handle  2 bit numbers
-	x |= x >> 2;  // handle  4 bit numbers
-	x |= x >> 4;  // handle  8 bit numbers
-	x |= x >> 8;  // handle 16 bit numbers
-	x |= x >> 16; // handle 32 bit numbers
-	x++;
-	return x;
-}
+void PrintAllSlotsInVariableLengthBlock(RelationBlock relblock);
 
 RelationBlock RelationAllocateVariableLengthBlock(Relation relation,
 												  RelationBlockBackend relblockbackend)
@@ -53,6 +42,8 @@ RelationBlock RelationAllocateVariableLengthBlock(Relation relation,
 	MemoryContext oldcxt;
 	RelationBlock     relblock = NULL;
 	List          **blockListPtr = NULL;
+	void           *relblockdata = NULL;
+	RelBlockVarlenHeader   slot_header = NULL;
 
 	// Allocate block in TSM context
 	oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
@@ -60,9 +51,19 @@ RelationBlock RelationAllocateVariableLengthBlock(Relation relation,
 	relblock = (RelationBlock) palloc(sizeof(RelationBlockData));
 	relblock->rb_type = RELATION_VARIABLE_BLOCK_TYPE;
 	relblock->rb_backend = relblockbackend;
-	relblock->rb_size = BLOCK_VARIABLE_LENGTH_SIZE;
 
-	relblock->rb_location = (void *) palloc(BLOCK_VARIABLE_LENGTH_SIZE);
+
+	relblockdata = (void *) palloc(BLOCK_VARIABLE_LENGTH_SIZE);
+	relblock->rb_location = relblockdata;
+
+	// setup block header
+	slot_header = relblockdata;
+
+	slot_header->vb_slot_status = false;
+	slot_header->vb_slot_length = BLOCK_VARIABLE_LENGTH_SIZE;
+	slot_header->vb_prev_slot_length = 0;
+
+	relblock->rb_size = BLOCK_VARIABLE_LENGTH_SIZE;
 	relblock->rb_free_space = BLOCK_VARIABLE_LENGTH_SIZE;
 
 	elog(WARNING, "RelationBlock Size : %zd Backend : %d Type : %d", relblock->rb_size,
@@ -76,38 +77,87 @@ RelationBlock RelationAllocateVariableLengthBlock(Relation relation,
 	return relblock;
 }
 
+void PrintAllSlotsInVariableLengthBlock(RelationBlock relblock)
+{
+	RelBlockVarlenHeader block_begin = NULL, block_end = NULL;
+	RelBlockVarlenHeader slot_itr = NULL;
+	Size    slot_size = -1;
+
+	block_begin = relblock->rb_location;
+	block_end = block_begin + relblock->rb_size;
+
+	for(slot_itr = block_begin ; slot_itr < block_end ; )
+	{
+		slot_size = slot_itr->vb_slot_length;
+
+		elog(WARNING, "Slot :: Status : %d Size : %d Prev Size : %d",
+			 slot_itr->vb_slot_status, slot_itr->vb_slot_length, slot_itr->vb_prev_slot_length);
+
+		slot_itr += slot_size;
+	}
+}
+
 void *GetVariableLengthSlotInBlock(RelationBlock relblock, Size allocation_size)
 {
-	/*
-	off_t  slot_itr;
-	int    free_slots = relblock->rb_free_slots ;
-	bool  *slotmap = relblock->rb_slotmap;
+	RelBlockVarlenHeader block_begin = NULL, block_end = NULL;
+	RelBlockVarlenHeader slot_itr = NULL, next_slot = NULL;
+	Size    slot_size = -1;
+	void  *location = NULL;
 
-	if(free_slots == 0)
+	if(relblock->rb_free_space == 0)
 	{
-		elog(ERROR, "No free slots in block %p", relblock);
-		return -1;
+		elog(ERROR, "No free space in block %p", relblock);
+		return NULL;
 	}
 
-	// Update bitmap and free slot counter
-	for(slot_itr = 0 ; slot_itr < NUM_REL_BLOCK_ENTRIES ; slot_itr++)
+	block_begin = relblock->rb_location;
+	block_end = block_begin + relblock->rb_size;
+
+	// Go over all slots to find the required slot
+	for(slot_itr = block_begin ; slot_itr < block_end ; )
 	{
-		if(slotmap[slot_itr] == false)
+		slot_size = slot_itr->vb_slot_length;
+
+		if(slot_itr->vb_slot_status == false)
 		{
-			slotmap[slot_itr] = true;
-			relblock->rb_free_slots -= 1;
-			break;
+			if(slot_size > allocation_size)
+			{
+				slot_itr->vb_slot_status = true;
+				slot_itr->vb_slot_length = allocation_size;
+
+				// update newly created slot
+				next_slot = slot_itr + allocation_size;
+				next_slot->vb_slot_length = slot_size - allocation_size;
+				next_slot->vb_prev_slot_length = allocation_size;
+
+				relblock->rb_free_space -= allocation_size;
+				break;
+			}
+			else if(slot_size == allocation_size)
+			{
+				// just update current slot
+				slot_itr->vb_slot_status = true;
+				slot_itr->vb_slot_length = allocation_size;
+
+				relblock->rb_free_space -= allocation_size;
+				break;
+			}
 		}
+
+		slot_itr += slot_size;
 	}
 
-	if(slot_itr == NUM_REL_BLOCK_ENTRIES)
+	PrintAllSlotsInVariableLengthBlock(relblock);
+
+	if(slot_itr >= block_end)
 	{
-		elog(ERROR, "No free slots in block %p", relblock);
-		return -1;
+		elog(ERROR, "No free space in block %p", relblock);
+		return NULL;
 	}
-	*/
 
-q	return NULL;
+	location = slot_itr + RELBLOCK_VARLEN_HEADER_SIZE;
+
+	return location;
 }
 
 bool ReleaseVariableLengthSlotInBlock(RelationBlock relblock, void *location)
@@ -153,6 +203,7 @@ RelationBlock GetVariableLengthBlockWithFreeSpace(Relation relation,
 		foreach (l, blockList)
 		{
 			relblock = lfirst(l);
+			elog(WARNING, "Free space : %zd", relblock->rb_free_space);
 
 			if(relblock->rb_free_space > allocation_size)
 			{
@@ -172,8 +223,6 @@ RelationBlock GetVariableLengthBlockWithFreeSpace(Relation relation,
 
 Size GetAllocationSize(Size size)
 {
-	Size allocation_size = -1;
-
 	if(size <= 0)
 	{
 		elog(ERROR, "Requested size : %zd", size);
@@ -182,11 +231,10 @@ Size GetAllocationSize(Size size)
 
 	// add space for mm header
 	size += RELBLOCK_VARLEN_HEADER_SIZE;
-	allocation_size = RoundUpToNextPowerOfTwo(size);
 
-	elog(WARNING, "Allocation request size : %zd", allocation_size);
+	elog(WARNING, "Allocation request size : %zd", size);
 
-	return allocation_size;
+	return size;
 }
 
 void *GetVariableLengthSlot(Relation relation,	RelationBlockBackend relblockbackend,
@@ -203,7 +251,9 @@ void *GetVariableLengthSlot(Relation relation,	RelationBlockBackend relblockback
 	/* Must have found the required block */
 
 	elog(WARNING, "VL block :: Size : %zd Free space : %zd", relblock->rb_size,	relblock->rb_free_space);
-	location = GetVariableLengthSlotInBlock(relblock);
+
+	location = GetVariableLengthSlotInBlock(relblock, allocation_size);
+	elog(WARNING, "VL block :: Location : %p", location);
 
 	return location;
 }

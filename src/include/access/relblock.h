@@ -8,8 +8,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef RELBLOCK_IO_H
-#define RELBLOCK_IO_H
+#ifndef RELBLOCK_H
+#define RELBLOCK_H
 
 #include "access/htup.h"
 #include "utils/relcache.h"
@@ -17,12 +17,12 @@
 #include "access/heapam.h"
 
 #define BLOCK_FIXED_LENGTH_SIZE 100             /* In terms of number of tuples */
-#define BLOCK_VARIABLE_LENGTH_SIZE 1024 * 16    /* Raw size in bytes */
+#define BLOCK_VARIABLE_LENGTH_SIZE 1024*32      /* Raw size in bytes (Must be < 2^16)*/
 
 #define BLOCK_POINTER_SIZE  8                   /* 8 bytes */
 #define NUM_REL_BLOCK_ENTRIES 1000              /* Entries in shared rel block table */
 
-#define RELBLOCK_CACHELINE_SIZE   16             /* 64 bytes */
+#define RELBLOCK_CACHELINE_SIZE   16            /* 64 bytes */
 
 // RelationBlock storage information
 typedef enum RelationBlockBackend{
@@ -115,6 +115,19 @@ typedef struct RelBlockLookupEnt{
 
 extern HTAB *SharedRelBlockHash;
 
+/* Variable-length block header */
+typedef struct RelBlockVarlenHeaderData{
+	/* occupied status for the slot */
+	bool vb_slot_status;
+	/* length of the slot */
+	uint16 vb_slot_length;
+	/* length of the previous slot */
+	uint16 vb_prev_slot_length;
+} RelBlockVarlenHeaderData;
+typedef RelBlockVarlenHeaderData* RelBlockVarlenHeader;
+
+#define RELBLOCK_VARLEN_HEADER_SIZE     8   /* 8 bytes */
+
 /* relblock.c */
 extern void RelationInitBlockTableEntry(Relation relation);
 extern Oid  RelationBlockInsertTuple(Relation relation, HeapTuple tup);
@@ -139,4 +152,4 @@ extern void *GetVariableLengthSlot(Relation relation, RelationBlockBackend relbl
 								   Size allocation_size);
 
 
-#endif   /* RELBLOCK_IO_H */
+#endif   /* RELBLOCK_H */
