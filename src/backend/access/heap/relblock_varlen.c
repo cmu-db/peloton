@@ -32,9 +32,12 @@ RelationBlock GetVariableLengthBlockWithFreeSpace(Relation relation,
 												  Size allocation_size);
 
 void *GetVariableLengthSlotInBlock(RelationBlock relblock, Size allocation_size);
-bool ReleaseVariableLengthSlotInBlock(RelationBlock relblock, void *location);
 
+RelationBlock GetVariableLengthBlockContainingSlot(Relation relation, RelationBlockBackend relblockbackend,
+												   void *location);
 void PrintAllSlotsInVariableLengthBlock(RelationBlock relblock);
+
+bool CheckVariableLengthBlock(RelationBlock relblock);
 
 RelationBlock RelationAllocateVariableLengthBlock(Relation relation,
 												  RelationBlockBackend relblockbackend)
@@ -127,6 +130,7 @@ void *GetVariableLengthSlotInBlock(RelationBlock relblock, Size allocation_size)
 
 				// update newly created slot
 				next_slot = slot_itr + allocation_size;
+				next_slot->vb_slot_status = false;
 				next_slot->vb_slot_length = slot_size - allocation_size;
 				next_slot->vb_prev_slot_length = allocation_size;
 
@@ -147,34 +151,159 @@ void *GetVariableLengthSlotInBlock(RelationBlock relblock, Size allocation_size)
 		slot_itr += slot_size;
 	}
 
-	PrintAllSlotsInVariableLengthBlock(relblock);
-
 	if(slot_itr >= block_end)
 	{
 		elog(ERROR, "No free space in block %p", relblock);
 		return NULL;
 	}
 
-	location = slot_itr + RELBLOCK_VARLEN_HEADER_SIZE;
+	location = (void *) slot_itr + RELBLOCK_VARLEN_HEADER_SIZE;
+
+	if(CheckVariableLengthBlock(relblock) != true)
+	{
+		elog(ERROR, "Sanity tests failed");
+	}
 
 	return location;
 }
 
-bool ReleaseVariableLengthSlotInBlock(RelationBlock relblock, void *location)
+RelationBlock GetVariableLengthBlockContainingSlot(Relation relation, RelationBlockBackend relblockbackend,
+												   void *location)
 {
-	/*
-	  bool  *slotmap = relblock->rb_slotmap;
+	RelBlockVarlenHeader block_begin = NULL, block_end = NULL;
+	List       **blockListPtr = NULL;
+	List        *blockList = NULL;
+	ListCell    *l = NULL;
+	RelationBlock relblock = NULL;
+	bool        blockfound;
 
-	  // Check if id makes sense
-	  if(slot_id < 0 || slot_id > NUM_REL_BLOCK_ENTRIES)
-	  return false;
+	blockListPtr = GetRelationBlockList(relation, relblockbackend, RELATION_VARIABLE_BLOCK_TYPE);
 
-	  // Update bitmap and free slot counter
-	  slotmap[slot_id] = false;
-	  relblock->rb_free_slots += 1;
-	*/
+	/* empty block list */
+	if(*blockListPtr == NULL)
+	{
+		return NULL;
+	}
+	else
+	{
+		blockList = *blockListPtr;
+		blockfound = false;
 
-	return true;
+		/* check for a block containing location */
+		foreach (l, blockList)
+		{
+			relblock = lfirst(l);
+
+			block_begin = relblock->rb_location;
+			block_end = block_begin + relblock->rb_size;
+
+			if(location > (void *) block_begin && location < (void *) block_end)
+			{
+				blockfound = true;
+				break;
+			}
+		}
+
+		if(blockfound == false)
+		{
+			return NULL;
+		}
+	}
+
+	return relblock;
+}
+
+void ReleaseVariableLengthSlot(Relation relation, RelationBlockBackend relblockbackend,
+							   void *location)
+{
+	RelBlockVarlenHeader cur_slot = NULL, next_slot = NULL, prev_slot = NULL, next_next_slot = NULL;
+	RelBlockVarlenHeader block_begin = NULL, block_end = NULL;
+	Size    slot_length, prev_slot_length, slot_size = -1;
+	bool merge_prev_slot = false, merge_next_slot = false;
+	RelationBlock relblock;
+
+	// Find the relevant relation block
+	relblock = GetVariableLengthBlockContainingSlot(relation, relblockbackend, location);
+
+	if(relblock == NULL)
+	{
+		elog(ERROR, "No block found containing location %p", location);
+	}
+
+	cur_slot = location - RELBLOCK_VARLEN_HEADER_SIZE;
+
+	//elog(WARNING, "Cur slot : status %d length %d ", cur_slot->vb_slot_status,
+	//	 cur_slot->vb_slot_length);
+
+	slot_length = cur_slot->vb_slot_length;
+	prev_slot_length = cur_slot->vb_prev_slot_length;
+
+	// Check if prev and/or next slots can be merged with cur slot
+	if(prev_slot_length != 0)
+		prev_slot = cur_slot - prev_slot_length;
+
+	block_begin = relblock->rb_location;
+	block_end = block_begin + relblock->rb_size;
+	next_slot = cur_slot + cur_slot->vb_slot_length;
+
+	if(next_slot >= block_end)
+		next_slot = NULL;
+
+	if(prev_slot != NULL && prev_slot->vb_slot_status == false)
+		merge_prev_slot = true;
+
+	if(next_slot != NULL && next_slot->vb_slot_status == false)
+		merge_next_slot = true;
+
+	//elog(WARNING, "Merge prev slot : %d  Merge next slot : %d", merge_prev_slot, merge_next_slot);
+
+	// Case - 1
+	if(merge_prev_slot == false && merge_next_slot == false)
+	{
+		slot_size = slot_length;
+
+		cur_slot->vb_slot_status = false;
+	}
+	// Case - 2
+	else if(merge_prev_slot == true && merge_next_slot == false)
+	{
+		slot_size = slot_length + prev_slot->vb_slot_length;
+
+		prev_slot->vb_slot_length = slot_size;
+		next_slot->vb_prev_slot_length = slot_size;
+	}
+	// Case - 3
+	else if(merge_prev_slot == false && merge_next_slot == true)
+	{
+		slot_size = slot_length + next_slot->vb_slot_length;
+
+		cur_slot->vb_slot_status = false;
+		cur_slot->vb_slot_length = slot_size;
+
+		next_next_slot = next_slot + next_slot->vb_slot_length;
+		if(next_next_slot < block_end)
+			next_next_slot->vb_prev_slot_length = slot_size;
+	}
+	// Case - 4
+	else
+	{
+		slot_size = prev_slot->vb_slot_length + slot_length +
+			next_slot->vb_slot_length;
+
+		prev_slot->vb_slot_length = slot_size;
+
+		next_next_slot = next_slot + next_slot->vb_slot_length;
+		if(next_next_slot < block_end)
+			next_next_slot->vb_prev_slot_length = slot_size;
+	}
+
+	// Update block free space
+	relblock->rb_free_space += slot_length;
+
+	if(CheckVariableLengthBlock(relblock) != true)
+	{
+		elog(ERROR, "Sanity tests failed");
+	}
 }
 
 RelationBlock GetVariableLengthBlockWithFreeSpace(Relation relation,
@@ -203,7 +332,7 @@ RelationBlock GetVariableLengthBlockWithFreeSpace(Relation relation,
 		foreach (l, blockList)
 		{
 			relblock = lfirst(l);
-			elog(WARNING, "Free space : %zd", relblock->rb_free_space);
+			//elog(WARNING, "Free space : %zd", relblock->rb_free_space);
 
 			if(relblock->rb_free_space > allocation_size)
 			{
@@ -213,9 +342,7 @@ RelationBlock GetVariableLengthBlockWithFreeSpace(Relation relation,
 		}
 
 		if(blockfound == false)
-		{
 			relblock = RelationAllocateVariableLengthBlock(relation, relblockbackend);
-		}
 	}
 
 	return relblock;
@@ -231,10 +358,71 @@ Size GetAllocationSize(Size size)
 
 	// add space for mm header
 	size += RELBLOCK_VARLEN_HEADER_SIZE;
-
-	elog(WARNING, "Allocation request size : %zd", size);
-
 	return size;
+}
+
+bool CheckVariableLengthBlock(RelationBlock relblock)
+{
+	RelBlockVarlenHeader block_begin = NULL, block_end = NULL;
+	RelBlockVarlenHeader slot_itr = NULL, next_slot = NULL;
+	Size    slot_size = -1;
+	bool    slot_status;
+	Size    free_space = 0;
+
+	if(relblock->rb_free_space < 0 || relblock->rb_free_space > relblock->rb_size)
+	{
+		elog(WARNING, "free space not valid : free space %zd size : %zd",
+			 relblock->rb_free_space, relblock->rb_size);
+		return false;
+	}
+
+	block_begin = relblock->rb_location;
+	block_end = block_begin + relblock->rb_size;
+
+	// Go over all slots and run sanity tests on each slot
+	for(slot_itr = block_begin ; slot_itr < block_end ; )
+	{
+		slot_size = slot_itr->vb_slot_length;
+		slot_status = slot_itr->vb_slot_status;
+
+		if(slot_status == false)
+			free_space += slot_size;
+
+		if(slot_size < 0 || slot_size > relblock->rb_size)
+		{
+			elog(WARNING, "slot size not valid %zd", slot_size);
+			return false;
+		}
+
+		// Parse next slot
+		next_slot = slot_itr + slot_size;
+		if(next_slot >= block_end)
+			break;
+
+		if(next_slot->vb_prev_slot_length != slot_size)
+		{
+			elog(WARNING, "next slot prev size does not match : actual %d expected %zd",
+				 next_slot->vb_prev_slot_length, slot_size);
+			return false;
+		}
+
+		if(slot_status == false && next_slot->vb_slot_status == false)
+		{
+			elog(WARNING, "two consecutive empty slots");
+			return false;
+		}
+
+		slot_itr += slot_size;
+	}
+
+	if(free_space != relblock->rb_free_space)
+	{
+		elog(WARNING, "free space tally does not match : actual %zd  expected %zd",
+			 free_space, relblock->rb_free_space);
+		return false;
+	}
+
+	return true;
 }
 
 void *GetVariableLengthSlot(Relation relation,	RelationBlockBackend relblockbackend,
@@ -249,11 +437,9 @@ void *GetVariableLengthSlot(Relation relation,	RelationBlockBackend relblockback
 	relblock = GetVariableLengthBlockWithFreeSpace(relation, relblockbackend, allocation_size);
 
 	/* Must have found the required block */
-
 	elog(WARNING, "VL block :: Size : %zd Free space : %zd", relblock->rb_size,	relblock->rb_free_space);
 
 	location = GetVariableLengthSlotInBlock(relblock, allocation_size);
-	elog(WARNING, "VL block :: Location : %p", location);
 
 	return location;
 }

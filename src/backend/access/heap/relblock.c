@@ -271,7 +271,9 @@ Oid RelationBlockInsertTuple(Relation relation, HeapTuple tup)
 
 	// Find free slot for variable-length fields
 	relblock_location = GetVariableLengthSlot(relation, STORAGE_BACKEND_VM, 100);
+
 	relblock_location = GetVariableLengthSlot(relation, STORAGE_BACKEND_VM, 10000);
+	ReleaseVariableLengthSlot(relation, STORAGE_BACKEND_VM, relblock_location);
 
 	return ret_id;
 }

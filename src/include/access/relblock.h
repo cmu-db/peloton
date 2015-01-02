@@ -150,6 +150,7 @@ extern off_t GetFixedLengthSlot(Relation relation, RelationBlockBackend relblock
 /* relblock_varlen.c */
 extern void *GetVariableLengthSlot(Relation relation, RelationBlockBackend relblockbackend,
 								   Size allocation_size);
-
+extern void  ReleaseVariableLengthSlot(Relation relation, RelationBlockBackend relblockbackend,
+									   void *location);
 
 #endif   /* RELBLOCK_H */
