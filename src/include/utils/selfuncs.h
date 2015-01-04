@@ -206,4 +206,10 @@ extern Selectivity scalararraysel_containment(PlannerInfo *root,
 extern Datum arraycontsel(PG_FUNCTION_ARGS);
 extern Datum arraycontjoinsel(PG_FUNCTION_ARGS);
 
+/* Support routines */
+
+extern double convert_numeric_to_scalar(Datum value, Oid typid);
+extern char *convert_string_datum(Datum value, Oid typid);
+extern double convert_timevalue_to_scalar(Datum value, Oid typid);
+
 #endif   /* SELFUNCS_H */

@@ -436,9 +436,6 @@ void *GetVariableLengthSlot(Relation relation,	RelationBlockBackend relblockback
 
 	relblock = GetVariableLengthBlockWithFreeSpace(relation, relblockbackend, allocation_size);
 
-	/* Must have found the required block */
-	elog(WARNING, "VL block :: Size : %zd Free space : %zd", relblock->rb_size,	relblock->rb_free_space);
-
 	location = GetVariableLengthSlotInBlock(relblock, allocation_size);
 
 	return location;

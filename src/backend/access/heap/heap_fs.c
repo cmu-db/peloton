@@ -81,8 +81,6 @@ static HeapScanDesc fs_heap_beginscan_internal(Relation relation,
 						int nkeys, ScanKey key,
 						bool allow_strat, bool allow_sync,
 						bool is_bitmapscan, bool temp_snap);
-static HeapTuple fs_heap_prepare_insert(Relation relation, HeapTuple tup,
-					TransactionId xid, CommandId cid, int options);
 static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
 				Buffer newbuf, HeapTuple oldtup,
 				HeapTuple newtup, HeapTuple old_key_tup,
@@ -1947,7 +1945,7 @@ fs_heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 * Note: below this point, heaptup is the data we actually intend to store
 	 * into the relation; tup is the caller's original untoasted data.
 	 */
-	heaptup = fs_heap_prepare_insert(relation, tup, xid, cid, options);
+	heaptup = heap_prepare_insert(relation, tup, xid, cid, options);
 
 	/*
 	 * We're about to do the actual insert -- but check for conflict first, to
@@ -2100,8 +2098,8 @@ fs_heap_insert(Relation relation, HeapTuple tup, CommandId cid,
  * tuple if not. Note that in any case, the header fields are also set in
  * the original tuple.
  */
-static HeapTuple
-fs_heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
+HeapTuple
+heap_prepare_insert(Relation relation, HeapTuple tup, TransactionId xid,
 					CommandId cid, int options)
 {
 	if (relation->rd_rel->relhasoids)
@@ -2189,7 +2187,7 @@ fs_heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 	/* Toast and set header data in all the tuples */
 	heaptuples = palloc(ntuples * sizeof(HeapTuple));
 	for (i = 0; i < ntuples; i++)
-		heaptuples[i] = fs_heap_prepare_insert(relation, tuples[i],
+		heaptuples[i] = heap_prepare_insert(relation, tuples[i],
 											xid, cid, options);
 
 	/*

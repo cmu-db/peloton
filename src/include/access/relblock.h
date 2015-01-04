@@ -128,11 +128,19 @@ typedef RelBlockVarlenHeaderData* RelBlockVarlenHeader;
 
 #define RELBLOCK_VARLEN_HEADER_SIZE     8   /* 8 bytes */
 
+typedef struct RelBlockLocation
+{
+	RelationBlock rb_location;
+	off_t rb_offset;
+} RelBlockLocation;
+
 /* relblock.c */
 extern void RelationInitBlockTableEntry(Relation relation);
-extern Oid  RelationBlockInsertTuple(Relation relation, HeapTuple tup);
 extern List** GetRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
 								   RelationBlockType relblocktype);
+
+extern Oid  RelationBlockInsertTuple(Relation relation, HeapTuple tup, CommandId cid,
+									 int options, BulkInsertState bistate);
 
 /* relblock_table.c */
 extern Size RelBlockTableShmemSize(int size);
@@ -145,7 +153,7 @@ extern void RelBlockTableDelete(RelBlockTag *tagPtr, uint32 hashcode);
 extern void RelBlockTablePrint();
 
 /* relblock_fixed.c */
-extern off_t GetFixedLengthSlot(Relation relation, RelationBlockBackend relblockbackend);
+extern RelBlockLocation GetFixedLengthSlot(Relation relation, RelationBlockBackend relblockbackend);
 
 /* relblock_varlen.c */
 extern void *GetVariableLengthSlot(Relation relation, RelationBlockBackend relblockbackend,

@@ -67,7 +67,7 @@ RelationBlock RelationAllocateFixedLengthBlock(Relation relation,
 
 		blockData = (void *) palloc(cg_block_size);
 
-		elog(WARNING, "CG size : %zd", cg_block_size);
+		elog(WARNING, "CG size : %zd location : %p", cg_block_size, blockData);
 
 		// Append cg block to cg locations
 		relblock->rb_cg_locations = lappend(relblock->rb_cg_locations, blockData);
@@ -77,6 +77,7 @@ RelationBlock RelationAllocateFixedLengthBlock(Relation relation,
 		 relblock->rb_backend, relblock->rb_type);
 
 	blockListPtr = GetRelationBlockList(relation, relblockbackend, RELATION_FIXED_BLOCK_TYPE);
+
 	*blockListPtr = lappend(*blockListPtr, relblock);
 
 	RelBlockTablePrint();
@@ -178,18 +179,18 @@ RelationBlock GetFixedLengthBlockWithFreeSlot(Relation relation,
 	return relblock;
 }
 
-off_t GetFixedLengthSlot(Relation relation,	RelationBlockBackend relblockbackend)
+RelBlockLocation GetFixedLengthSlot(Relation relation, RelationBlockBackend relblockbackend)
 {
 	off_t        relblock_offset = -1;
 	RelationBlock relblock = NULL;
+	RelBlockLocation location;
 
 	relblock = GetFixedLengthBlockWithFreeSlot(relation, relblockbackend);
 
-	/* Must have found the required block */
-
 	relblock_offset = GetFixedLengthSlotInBlock(relblock);
-	elog(WARNING, "FL block :: Size : %zd Free slots : %d", relblock->rb_size, relblock->rb_free_slots);
 
+	location.rb_location = relblock;
+	location.rb_offset = relblock_offset;
 
-	return relblock_offset;
+	return location;
 }

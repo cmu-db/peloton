@@ -1795,6 +1795,7 @@ RelationIdGetRelation(Oid relationId)
 	// Change backend info
 	if(!IsCatalogRelation(rd)){
 		rd->rd_storage_backend = STORAGE_BACKEND_VM;
+		rd->rd_rel->relhasoids = true;
 		RelationInitStorage(rd);
 	}
 

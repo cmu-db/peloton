@@ -162,7 +162,7 @@ static double eqjoinsel_semi(Oid operator,
 static bool convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 				  Datum lobound, Datum hibound, Oid boundstypid,
 				  double *scaledlobound, double *scaledhibound);
-static double convert_numeric_to_scalar(Datum value, Oid typid);
+//static double convert_numeric_to_scalar(Datum value, Oid typid);
 static void convert_string_to_scalar(char *value,
 						 double *scaledvalue,
 						 char *lobound,
@@ -179,8 +179,8 @@ static double convert_one_string_to_scalar(char *value,
 							 int rangelo, int rangehi);
 static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 							int rangelo, int rangehi);
-static char *convert_string_datum(Datum value, Oid typid);
-static double convert_timevalue_to_scalar(Datum value, Oid typid);
+//static char *convert_string_datum(Datum value, Oid typid);
+//static double convert_timevalue_to_scalar(Datum value, Oid typid);
 static void examine_simple_variable(PlannerInfo *root, Var *var,
 						VariableStatData *vardata);
 static bool get_variable_range(PlannerInfo *root, VariableStatData *vardata,
@@ -3693,7 +3693,7 @@ convert_to_scalar(Datum value, Oid valuetypid, double *scaledvalue,
 /*
  * Do convert_to_scalar()'s work for any numeric data type.
  */
-static double
+double
 convert_numeric_to_scalar(Datum value, Oid typid)
 {
 	switch (typid)
@@ -3878,7 +3878,7 @@ convert_one_string_to_scalar(char *value, int rangelo, int rangehi)
  * When using a non-C locale, we must pass the string through strxfrm()
  * before continuing, so as to generate correct locale-specific results.
  */
-static char *
+char *
 convert_string_datum(Datum value, Oid typid)
 {
 	char	   *val;
@@ -4065,7 +4065,7 @@ convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 /*
  * Do convert_to_scalar()'s work for any timevalue data type.
  */
-static double
+double
 convert_timevalue_to_scalar(Datum value, Oid typid)
 {
 	switch (typid)

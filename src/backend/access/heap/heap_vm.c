@@ -183,12 +183,11 @@ void vm_FreeBulkInsertState(BulkInsertState bistate)
 Oid vm_heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 				   int options, BulkInsertState bistate)
 {
-	Oid ret_id;
+	Oid ret_val;
 
-	ret_id =  RelationBlockInsertTuple(relation, tup);
+	ret_val =  RelationBlockInsertTuple(relation, tup, cid, options, bistate);
 
-	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
-	return ret_id;
+	return ret_val;
 }
 
 void vm_heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
