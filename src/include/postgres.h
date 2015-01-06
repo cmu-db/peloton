@@ -688,4 +688,10 @@ extern void ExceptionalCondition(const char *conditionName,
 					 const char *errorType,
 			 const char *fileName, int lineNumber) __attribute__((noreturn));
 
+
+/*
+ * Print backtrace
+ */
+extern void pg_backtrace_print();
+
 #endif   /* POSTGRES_H */

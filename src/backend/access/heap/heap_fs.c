@@ -76,11 +76,6 @@
 bool		synchronize_seqscans = true;
 
 
-static HeapScanDesc fs_heap_beginscan_internal(Relation relation,
-						Snapshot snapshot,
-						int nkeys, ScanKey key,
-						bool allow_strat, bool allow_sync,
-						bool is_bitmapscan, bool temp_snap);
 static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
 				Buffer newbuf, HeapTuple oldtup,
 				HeapTuple newtup, HeapTuple old_key_tup,
@@ -1157,10 +1152,7 @@ HeapScanDesc
 fs_heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key)
 {
-	if(!IsCatalogRelation(relation))
-		elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
-
-	return fs_heap_beginscan_internal(relation, snapshot, nkeys, key,
+	return heap_beginscan_internal(relation, snapshot, nkeys, key,
 								   true, true, false, false);
 }
 
@@ -1170,7 +1162,7 @@ fs_heap_beginscan_catalog(Relation relation, int nkeys, ScanKey key)
 	Oid			relid = RelationGetRelid(relation);
 	Snapshot	snapshot = RegisterSnapshot(GetCatalogSnapshot(relid));
 
-	return fs_heap_beginscan_internal(relation, snapshot, nkeys, key,
+	return heap_beginscan_internal(relation, snapshot, nkeys, key,
 								   true, true, false, true);
 }
 
@@ -1179,7 +1171,7 @@ fs_heap_beginscan_strat(Relation relation, Snapshot snapshot,
 					 int nkeys, ScanKey key,
 					 bool allow_strat, bool allow_sync)
 {
-	return fs_heap_beginscan_internal(relation, snapshot, nkeys, key,
+	return heap_beginscan_internal(relation, snapshot, nkeys, key,
 								   allow_strat, allow_sync, false, false);
 }
 
@@ -1187,12 +1179,12 @@ HeapScanDesc
 fs_heap_beginscan_bm(Relation relation, Snapshot snapshot,
 				  int nkeys, ScanKey key)
 {
-	return fs_heap_beginscan_internal(relation, snapshot, nkeys, key,
+	return heap_beginscan_internal(relation, snapshot, nkeys, key,
 								   false, false, true, false);
 }
 
-static HeapScanDesc
-fs_heap_beginscan_internal(Relation relation, Snapshot snapshot,
+HeapScanDesc
+heap_beginscan_internal(Relation relation, Snapshot snapshot,
 						int nkeys, ScanKey key,
 						bool allow_strat, bool allow_sync,
 						bool is_bitmapscan, bool temp_snap)

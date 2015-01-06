@@ -44,3 +44,4 @@ GRTAGS
 GPATH
 data/
 /setup.log
+citus/

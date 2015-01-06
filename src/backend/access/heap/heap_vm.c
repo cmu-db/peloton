@@ -16,8 +16,13 @@
  */
 #include "postgres.h"
 
-#include "utils/rel.h"
 #include "access/relblock.h"
+#include "access/relscan.h"
+#include "pgstat.h"
+#include "storage/bufmgr.h"
+#include "utils/rel.h"
+#include "utils/snapmgr.h"
+#include "access/heapam.h"
 
 void vm_relation_allocate(Relation rd)
 {
@@ -78,8 +83,8 @@ HeapScanDesc vm_heap_beginscan(Relation relation, Snapshot snapshot,
 {
 	elog(WARNING, "BEGIN SCAN :: %s", RelationGetRelationName(relation));
 
-	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
-	return NULL;
+	return heap_beginscan_internal(relation, snapshot, nkeys, key,
+								   true, true, false, false);
 }
 
 
@@ -122,18 +127,92 @@ void vm_heap_rescan(HeapScanDesc scan, ScanKey key)
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
-
 void vm_heap_endscan(HeapScanDesc scan)
 {
-	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
+/* Note: no locking manipulations needed */
+
+	elog(WARNING, "END SCAN");
+
+/*
+ * unpin scan buffers
+ */
+	if (BufferIsValid(scan->rs_cbuf))
+		ReleaseBuffer(scan->rs_cbuf);
+
+/*
+ * decrement relation reference count and free scan descriptor storage
+ */
+	RelationDecrementReferenceCount(scan->rs_rd);
+
+	if (scan->rs_key)
+		pfree(scan->rs_key);
+
+	if (scan->rs_strategy != NULL)
+		FreeAccessStrategy(scan->rs_strategy);
+
+	if (scan->rs_temp_snap)
+		UnregisterSnapshot(scan->rs_snapshot);
+
+	pfree(scan);
 }
 
 // FETCH
 
+/* ----------------
+ *		heap_getnext	- retrieve next tuple in scan
+ *
+ *		Fix to work with index relations.
+ *		We don't return the buffer anymore, but you can get it from the
+ *		returned HeapTuple.
+ * ----------------
+ */
+
+#ifdef HEAPDEBUGALL
+#define HEAPDEBUG_1 \
+	elog(DEBUG2, "vm_heap_getnext([%s,nkeys=%d],dir=%d) called", \
+		 RelationGetRelationName(scan->rs_rd), scan->rs_nkeys, (int) direction)
+#define HEAPDEBUG_2 \
+	elog(DEBUG2, "vm_heap_getnext returning EOS")
+#define HEAPDEBUG_3 \
+	elog(DEBUG2, "vm_heap_getnext returning tuple")
+#else
+#define HEAPDEBUG_1
+#define HEAPDEBUG_2
+#define HEAPDEBUG_3
+#endif   /* !defined(HEAPDEBUGALL) */
+
+
 HeapTuple vm_heap_getnext(HeapScanDesc scan, ScanDirection direction)
 {
-	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
-	return NULL;
+	/* Note: no locking manipulations needed */
+
+	HEAPDEBUG_1;				/* heap_getnext( info ) */
+
+	elog(WARNING, "vm_heapgettup");
+
+	/*
+	if (scan->rs_pageatatime)
+		vm_heapgettup_pagemode(scan, direction,
+							scan->rs_nkeys, scan->rs_key);
+	else
+		vm_heapgettup(scan, direction, scan->rs_nkeys, scan->rs_key);
+	*/
+
+	if (scan->rs_ctup.t_data == NULL)
+	{
+		HEAPDEBUG_2;			/* heap_getnext returning EOS */
+		return NULL;
+	}
+
+	/*
+	 * if we get here it means we have a new current scan tuple, so point to
+	 * the proper return buffer and return the tuple.
+	 */
+	HEAPDEBUG_3;				/* heap_getnext returning tuple */
+
+	pgstat_count_heap_getnext(scan->rs_rd);
+
+	return &(scan->rs_ctup);
 }
 
 bool vm_heap_fetch(Relation relation, Snapshot snapshot,

@@ -367,13 +367,6 @@ heap_open(Oid relationId, LOCKMODE lockmode)
 
 	r = relation_open(relationId, lockmode);
 
-	/*
-	if(!IsCatalogRelation(r)){
-		elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(r) );
-		elog(WARNING, "Backend : %d ", r->rd_storage_backend);
-	}
-	*/
-
 	if (r->rd_rel->relkind == RELKIND_INDEX)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),

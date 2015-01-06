@@ -23,7 +23,6 @@
 #include "utils/relcache.h"
 #include "utils/snapshot.h"
 
-
 /* "options" flag bits for heap_insert */
 #define HEAP_INSERT_SKIP_WAL	0x0001
 #define HEAP_INSERT_SKIP_FSM	0x0002
@@ -186,6 +185,12 @@ extern Size SyncScanShmemSize(void);
 
 extern HeapTuple heap_prepare_insert(Relation relation, HeapTuple tup,
 									 TransactionId xid, CommandId cid, int options);
+
+extern HeapScanDesc heap_beginscan_internal(Relation relation,
+											Snapshot snapshot,
+											int nkeys, ScanKey key,
+											bool allow_strat, bool allow_sync,
+											bool is_bitmapscan, bool temp_snap);
 
 
 #endif   /* HEAPAM_H */
