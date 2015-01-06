@@ -497,7 +497,7 @@ ExecBuildProjectionInfo(List *targetList,
 						ExprContext *econtext,
 						TupleTableSlot *slot,
 						TupleDesc inputDesc,
-						EState *state)
+						EState *estate)
 {
 	ProjectionInfo *projInfo = makeNode(ProjectionInfo);
 	int			len = ExecTargetListLength(targetList);
@@ -510,18 +510,14 @@ ExecBuildProjectionInfo(List *targetList,
 	bool		directMap;
 	ListCell   *tl;
 
-	int        *selectVars;
-	int         numSelectVars;
-
 	projInfo->pi_exprContext = econtext;
 	projInfo->pi_slot = slot;
 
 	/* since these are all int arrays, we need do just one palloc */
-	workspace = (int *) palloc(len * 4 * sizeof(int));
+	workspace = (int *) palloc(len * 3 * sizeof(int));
 	projInfo->pi_varSlotOffsets = varSlotOffsets = workspace;
 	projInfo->pi_varNumbers = varNumbers = workspace + len;
 	projInfo->pi_varOutputCols = varOutputCols = workspace + len * 2;
-	projInfo->pi_selectVars = selectVars = workspace + len * 3;
 	projInfo->pi_lastInnerVar = 0;
 	projInfo->pi_lastOuterVar = 0;
 	projInfo->pi_lastScanVar = 0;
@@ -535,7 +531,6 @@ ExecBuildProjectionInfo(List *targetList,
 	 */
 	exprlist = NIL;
 	numSimpleVars = 0;
-	numSelectVars = 0;
 	directMap = true;
 	foreach(tl, targetList)
 	{
@@ -596,8 +591,8 @@ ExecBuildProjectionInfo(List *targetList,
 			}
 			numSimpleVars++;
 
-			selectVars[numSelectVars] = variable->varattno;
-			numSelectVars++;
+			// Append att to global projection context
+			estate->es_selectVars = lappend_int(estate->es_selectVars, variable->varattno);
 		}
 		else
 		{
@@ -610,10 +605,6 @@ ExecBuildProjectionInfo(List *targetList,
 	projInfo->pi_targetlist = exprlist;
 	projInfo->pi_numSimpleVars = numSimpleVars;
 	projInfo->pi_directMap = directMap;
-	projInfo->pi_numSelectVars = numSelectVars;
-
-	// Set the global projection context
-	state->es_projInfo = projInfo;
 
 	if (exprlist == NIL)
 		projInfo->pi_itemIsDone = NULL; /* not needed */

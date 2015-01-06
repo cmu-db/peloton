@@ -184,10 +184,8 @@ void vm_heap_endscan(HeapScanDesc scan)
 
 HeapTuple vm_heap_getnext(HeapScanDesc scan, ScanDirection direction)
 {
-	ProjectionInfo *projInfo;
-	int         numSelectVars;
-	int		   *selectVars;
-	int         attnum;
+	List       *selectVars;
+	ListCell   *l;
 
     /* Note: no locking manipulations needed */
 
@@ -196,20 +194,15 @@ HeapTuple vm_heap_getnext(HeapScanDesc scan, ScanDirection direction)
 	elog(WARNING, "vm_heapgettup");
 
 	// Display targetlist
-	projInfo = scan->rs_projInfo;
+	selectVars = scan->rs_selectVars;
 
-	if(projInfo != NULL)
+	foreach(l, selectVars)
 	{
-		numSelectVars = projInfo->pi_numSelectVars;
-		selectVars = projInfo->pi_selectVars;
+		int attnum = lfirst_int(l);
 
-		elog(WARNING, "# of Attrs : %d", numSelectVars);
-
-		for(attnum = 0; attnum < numSelectVars ; attnum++)
-		{
-			elog(WARNING, "Attnum %d", selectVars[attnum]);
-		}
+		elog(WARNING, "attnum %d", attnum);
 	}
+
 
 	return NULL;
 

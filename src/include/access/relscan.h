@@ -55,7 +55,7 @@ typedef struct HeapScanDescData
 	OffsetNumber rs_vistuples[MaxHeapTuplesPerPage];	/* their offsets */
 
 	// XXX Shared context
-	ProjectionInfo *rs_projInfo;
+	List *rs_selectVars;
 }	HeapScanDescData;
 
 /*

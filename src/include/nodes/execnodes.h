@@ -244,10 +244,6 @@ typedef struct ProjectionInfo
 	int			pi_lastInnerVar;
 	int			pi_lastOuterVar;
 	int			pi_lastScanVar;
-
-	// XXX selective tuple fetch
-	int			pi_numSelectVars;
-	int        *pi_selectVars;
 } ProjectionInfo;
 
 /* ----------------
@@ -413,7 +409,7 @@ typedef struct EState
 	bool	   *es_epqScanDone; /* true if EPQ tuple has been fetched */
 
 	// XXX Shared context
-	ProjectionInfo *es_projInfo;
+	List       *es_selectVars;
 } EState;
 
 /*
