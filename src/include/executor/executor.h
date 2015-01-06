@@ -337,9 +337,10 @@ extern void ExecAssignResultType(PlanState *planstate, TupleDesc tupDesc);
 extern void ExecAssignResultTypeFromTL(PlanState *planstate);
 extern TupleDesc ExecGetResultType(PlanState *planstate);
 extern ProjectionInfo *ExecBuildProjectionInfo(List *targetList,
-						ExprContext *econtext,
-						TupleTableSlot *slot,
-						TupleDesc inputDesc);
+											   ExprContext *econtext,
+											   TupleTableSlot *slot,
+											   TupleDesc inputDesc,
+											   EState *state);
 extern void ExecAssignProjectionInfo(PlanState *planstate,
 						 TupleDesc inputDesc);
 extern void ExecFreeExprContext(PlanState *planstate);

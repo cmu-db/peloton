@@ -58,6 +58,9 @@ SeqNext(SeqScanState *node)
 	direction = estate->es_direction;
 	slot = node->ss_ScanTupleSlot;
 
+	// Pass on projection info
+	scandesc->rs_projInfo = estate->es_projInfo;
+
 	/*
 	 * get the next tuple from the table
 	 */

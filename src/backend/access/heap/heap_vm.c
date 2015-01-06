@@ -184,11 +184,34 @@ void vm_heap_endscan(HeapScanDesc scan)
 
 HeapTuple vm_heap_getnext(HeapScanDesc scan, ScanDirection direction)
 {
-	/* Note: no locking manipulations needed */
+	ProjectionInfo *projInfo;
+	int         numSelectVars;
+	int		   *selectVars;
+	int         attnum;
+
+    /* Note: no locking manipulations needed */
 
 	HEAPDEBUG_1;				/* heap_getnext( info ) */
 
 	elog(WARNING, "vm_heapgettup");
+
+	// Display targetlist
+	projInfo = scan->rs_projInfo;
+
+	if(projInfo != NULL)
+	{
+		numSelectVars = projInfo->pi_numSelectVars;
+		selectVars = projInfo->pi_selectVars;
+
+		elog(WARNING, "# of Attrs : %d", numSelectVars);
+
+		for(attnum = 0; attnum < numSelectVars ; attnum++)
+		{
+			elog(WARNING, "Attnum %d", selectVars[attnum]);
+		}
+	}
+
+	return NULL;
 
 	/*
 	if (scan->rs_pageatatime)
@@ -212,7 +235,7 @@ HeapTuple vm_heap_getnext(HeapScanDesc scan, ScanDirection direction)
 
 	pgstat_count_heap_getnext(scan->rs_rd);
 
-	return &(scan->rs_ctup);
+    return &(scan->rs_ctup);
 }
 
 bool vm_heap_fetch(Relation relation, Snapshot snapshot,

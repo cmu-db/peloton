@@ -1880,7 +1880,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		peraggstate->evalproj = ExecBuildProjectionInfo(aggrefstate->args,
 														aggstate->tmpcontext,
 														peraggstate->evalslot,
-														NULL);
+														NULL,
+														estate);
 
 		/*
 		 * If we're doing either DISTINCT or ORDER BY for a plain agg, then we

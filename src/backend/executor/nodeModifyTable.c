@@ -1222,7 +1222,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 			rliststate = (List *) ExecInitExpr((Expr *) rlist, &mtstate->ps);
 			resultRelInfo->ri_projectReturning =
 				ExecBuildProjectionInfo(rliststate, econtext, slot,
-									 resultRelInfo->ri_RelationDesc->rd_att);
+										resultRelInfo->ri_RelationDesc->rd_att,
+										estate);
 			resultRelInfo++;
 		}
 	}

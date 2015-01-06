@@ -19,7 +19,7 @@
 #include "access/htup_details.h"
 #include "access/itup.h"
 #include "access/tupdesc.h"
-
+#include "nodes/execnodes.h"
 
 typedef struct HeapScanDescData
 {
@@ -53,6 +53,9 @@ typedef struct HeapScanDescData
 	int			rs_cindex;		/* current tuple's index in vistuples */
 	int			rs_ntuples;		/* number of visible tuples on page */
 	OffsetNumber rs_vistuples[MaxHeapTuplesPerPage];	/* their offsets */
+
+	// XXX Shared context
+	ProjectionInfo *rs_projInfo;
 }	HeapScanDescData;
 
 /*
