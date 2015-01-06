@@ -130,8 +130,10 @@ typedef RelBlockVarlenHeaderData* RelBlockVarlenHeader;
 
 typedef struct RelBlockLocation
 {
+	/* location of block */
 	RelationBlock rb_location;
-	off_t rb_offset;
+	/* offset of slot within block (starts from 1) */
+	OffsetNumber rb_offset;
 } RelBlockLocation;
 
 /* relblock.c */

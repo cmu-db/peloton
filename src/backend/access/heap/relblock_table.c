@@ -35,7 +35,7 @@ void InitRelBlockTable(int size)
 {
 	HASHCTL hash_ctl;
 
-	elog(WARNING, "RelBlockInfoTable INIT");
+	//elog(WARNING, "RelBlockInfoTable INIT");
 
 	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = sizeof(RelBlockTag);
@@ -46,7 +46,7 @@ void InitRelBlockTable(int size)
 									   &hash_ctl,
 									   HASH_ELEM | HASH_BLOBS);
 
-	elog(WARNING, "Shared RelBlockBlock Hash :: %p", SharedRelBlockHash);
+	//elog(WARNING, "Shared RelBlockBlock Hash :: %p", SharedRelBlockHash);
 }
 
 /*

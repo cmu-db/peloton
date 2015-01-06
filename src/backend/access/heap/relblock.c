@@ -366,10 +366,11 @@ void RelationBlockPutHeapTuple(Relation relation, HeapTuple tuple)
 	bool		slow = false;	/* can we use/set attcacheoff? */
 	Datum       value;
 
-	RelBlockLocation slot;
-	RelationBlock  relblock;
+	RelBlockLocation  slot;
+	RelationBlock     relblock;
 	RelationBlockInfo relblockinfo;
-	off_t          relblock_offset;
+	OffsetNumber      relblock_itr;
+	int               relblock_offset;
 
 	int        column_group_id, prev_column_group_id = -1;
 	void      *column_group_location = NULL;
@@ -384,7 +385,8 @@ void RelationBlockPutHeapTuple(Relation relation, HeapTuple tuple)
 	slot = GetFixedLengthSlot(relation, STORAGE_BACKEND_VM);
 
 	relblock = slot.rb_location;
-	relblock_offset = slot.rb_offset;
+	relblock_itr = slot.rb_offset;
+	relblock_offset = relblock_itr - 1;
 
 	relblockinfo = relation->rd_relblock_info;
 

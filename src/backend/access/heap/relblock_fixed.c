@@ -27,8 +27,8 @@ RelationBlock RelationAllocateFixedLengthBlock(Relation relation,
 RelationBlock GetFixedLengthBlockWithFreeSlot(Relation relation,
 											  RelationBlockBackend relblockbackend);
 
-off_t GetFixedLengthSlotInBlock(RelationBlock relblock);
-bool ReleaseFixedLengthSlotInBlock(RelationBlock relblock, off_t slot_id);
+OffsetNumber GetFixedLengthSlotInBlock(RelationBlock relblock);
+bool ReleaseFixedLengthSlotInBlock(RelationBlock relblock, OffsetNumber slot_id);
 
 RelationBlock RelationAllocateFixedLengthBlock(Relation relation,
 											   RelationBlockBackend relblockbackend)
@@ -87,24 +87,26 @@ RelationBlock RelationAllocateFixedLengthBlock(Relation relation,
 	return relblock;
 }
 
-off_t GetFixedLengthSlotInBlock(RelationBlock relblock)
+OffsetNumber GetFixedLengthSlotInBlock(RelationBlock relblock)
 {
-	off_t  slot_itr;
+	OffsetNumber  slot_itr = InvalidOffsetNumber;
+	int    slot_offset;
 	int    free_slots = relblock->rb_free_slots ;
 	bool  *slotmap = relblock->rb_slotmap;
 
 	if(free_slots == 0)
 	{
 		elog(ERROR, "No free slots in block %p", relblock);
-		return -1;
+		return InvalidOffsetNumber;
 	}
 
 	// Update bitmap and free slot counter
-	for(slot_itr = 0 ; slot_itr < NUM_REL_BLOCK_ENTRIES ; slot_itr++)
+	for(slot_itr = FirstOffsetNumber ; slot_itr <= NUM_REL_BLOCK_ENTRIES ; slot_itr++)
 	{
-		if(slotmap[slot_itr] == false)
+		slot_offset = slot_itr - 1;
+		if(slotmap[slot_offset] == false)
 		{
-			slotmap[slot_itr] = true;
+			slotmap[slot_offset] = true;
 			relblock->rb_free_slots -= 1;
 			break;
 		}
@@ -113,22 +115,23 @@ off_t GetFixedLengthSlotInBlock(RelationBlock relblock)
 	if(slot_itr == NUM_REL_BLOCK_ENTRIES)
 	{
 		elog(ERROR, "No free slots in block %p", relblock);
-		return -1;
+		return InvalidOffsetNumber;
 	}
 
 	return slot_itr;
 }
 
-bool ReleaseFixedLengthSlotInBlock(RelationBlock relblock, off_t slot_id)
+bool ReleaseFixedLengthSlotInBlock(RelationBlock relblock, OffsetNumber slot_id)
 {
 	bool  *slotmap = relblock->rb_slotmap;
+	int   slot_offset = slot_id - 1;
 
 	// Check if id makes sense
-	if(slot_id < 0 || slot_id > NUM_REL_BLOCK_ENTRIES)
+	if(slot_id == InvalidOffsetNumber || slot_id > NUM_REL_BLOCK_ENTRIES)
 		return false;
 
 	// Update bitmap and free slot counter
-	slotmap[slot_id] = false;
+	slotmap[slot_offset] = false;
 	relblock->rb_free_slots += 1;
 
 	// XXX should we release the block if all slots are empty ?
@@ -181,8 +184,8 @@ RelationBlock GetFixedLengthBlockWithFreeSlot(Relation relation,
 
 RelBlockLocation GetFixedLengthSlot(Relation relation, RelationBlockBackend relblockbackend)
 {
-	off_t        relblock_offset = -1;
-	RelationBlock relblock = NULL;
+	OffsetNumber     relblock_offset = InvalidOffsetNumber;
+	RelationBlock    relblock = NULL;
 	RelBlockLocation location;
 
 	relblock = GetFixedLengthBlockWithFreeSlot(relation, relblockbackend);

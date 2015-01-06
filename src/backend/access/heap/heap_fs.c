@@ -1927,9 +1927,6 @@ fs_heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	Buffer		vmbuffer = InvalidBuffer;
 	bool		all_visible_cleared = false;
 
-	if(!IsCatalogRelation(relation))
-		elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
-
 	/*
 	 * Fill in tuple header fields, assign an OID, and toast the tuple if
 	 * necessary.
