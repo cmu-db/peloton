@@ -31,15 +31,18 @@
 
 // Internal helper functions
 
+void PrintTuple(HeapTuple tup, TupleDesc tupdesc);
 void PrintTupleDesc(TupleDesc tupdesc);
 Size ComputeTupleLen(Relation relation);
 void ComputeColumnGroups(Relation relation, RelationBlockInfo relblockinfo);
 void PrintRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
 							RelationBlockType relblocktype);
 void PrintAllRelationBlocks(Relation relation);
-void RelationBlockPutHeapTuple(Relation relation, HeapTuple heaptup);
-void ConvertToScalar(Datum value, Oid valuetypid);
 
+void RelationBlockPutHeapTuple(Relation relation, HeapTuple heaptup);
+HeapTuple RelationBlockGetHeapTuple(RelationBlock relblock, OffsetNumber offset);
+
+void ConvertToScalar(Datum value, Oid valuetypid);
 
 void ConvertToScalar(Datum value, Oid valuetypid)
 {
@@ -132,6 +135,25 @@ List** GetRelationBlockList(Relation relation, RelationBlockBackend relblockback
 	}
 
 	return blockListPtr;
+}
+
+void PrintTuple(HeapTuple tuple, TupleDesc tupdesc)
+{
+	Form_pg_attribute *att = tupdesc->attrs;
+	int             natts = tupdesc->natts;
+	int             attnum;
+	Datum           value;
+	bool            isnull;
+
+	elog(WARNING, "PrintTuple");
+
+	for (attnum = 1; attnum <= natts; attnum++)
+	{
+		Form_pg_attribute thisatt = att[attnum-1];
+
+		value = heap_getattr(tuple, attnum, tupdesc, &isnull);
+		ConvertToScalar(value, thisatt->atttypid);
+	}
 }
 
 void PrintTupleDesc(TupleDesc tupdesc)
@@ -279,7 +301,7 @@ void RelationInitBlockTableEntry(Relation relation)
 
 	if(entry != NULL)
 	{
-		//elog(WARNING, "InitBlockTableEntry :: entry already exists %p", entry);
+		elog(WARNING, "InitBlockTableEntry :: entry already exists %p", entry);
 
 		if(entry->relblockinfo == NULL)
 		{
@@ -291,7 +313,7 @@ void RelationInitBlockTableEntry(Relation relation)
 	}
 	else
 	{
-		//elog(WARNING, "InitBlockTableEntry :: entry not found inserting with hash_value :: %u", hash_value);
+		elog(WARNING, "InitBlockTableEntry :: entry not found inserting with hash_value :: %u", hash_value);
 
 		// Allocate new entry in TSM context
 		oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
@@ -351,6 +373,24 @@ void PrintAllRelationBlocks(Relation relation)
 	elog(WARNING, "--------------------------------------------\n");
 }
 
+HeapTuple RelationBlockGetHeapTuple(RelationBlock relblock, OffsetNumber offset)
+{
+	HeapTuple  tuple;
+	/*
+	Datum      *values;
+	bool       *isnull;
+
+	values = (Datum *) palloc(natts * sizeof(Datum));
+	isnull  = (bool  *) palloc(natts * sizeof(bool));
+
+	// Form tuple copy
+	//tuple = heap_form_tuple(tupleDesc, values, isnull);
+	//PrintTuple(tuple, tupleDesc);
+	*/
+
+	return tuple;
+}
+
 // Based on heap_deform_tuple
 void RelationBlockPutHeapTuple(Relation relation, HeapTuple tuple)
 {
@@ -390,7 +430,10 @@ void RelationBlockPutHeapTuple(Relation relation, HeapTuple tuple)
 
 	relblockinfo = relation->rd_relblock_info;
 
-	// Storing data in slot
+	// Copy tuple header into slot
+	memcpy(&(relblock->rb_tuple_headers[relblock_offset]), tup, sizeof(HeapTupleHeaderData));
+
+	// Copy tuple data into slot
 	tp = (char *) tup + tup->t_hoff;
 	off = 0;
 
@@ -463,12 +506,11 @@ void RelationBlockPutHeapTuple(Relation relation, HeapTuple tuple)
 		{
 			memcpy(location, tp + off, field_len);
 
-			value = fetchatt(thisatt, location);
-			ConvertToScalar(value, thisatt->atttypid);
+			//value = fetchatt(thisatt, location);
 		}
 		else
 		{
-			valstr_len = strlen(tp + off)+1;
+			valstr_len = strlen(tp + off) + 1;
 
 			// Find free slot for variable-length fields
 			varlena_location = GetVariableLengthSlot(relation, STORAGE_BACKEND_VM, valstr_len);
@@ -477,16 +519,16 @@ void RelationBlockPutHeapTuple(Relation relation, HeapTuple tuple)
 			// Store varlena pointer in slot
 			memcpy(location, &varlena_location, BLOCK_POINTER_SIZE);
 
-			value = fetchatt(thisatt, ((char *) *(char **)location));
-			ConvertToScalar(value, thisatt->atttypid);
+			//value = fetchatt(thisatt, ((char *) *(char **)location));
 		}
-
 
 		off = att_addlength_pointer(off, thisatt->attlen, tp + off);
 
 		if (thisatt->attlen <= 0)
 			slow = true;		/* can't use attcacheoff anymore */
 	}
+
+	PrintTuple(tuple, tupleDesc);
 }
 
 Oid  RelationBlockInsertTuple(Relation relation, HeapTuple tup, CommandId cid,

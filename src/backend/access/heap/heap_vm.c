@@ -21,6 +21,7 @@
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/predicate.h"
+#include "storage/smgr.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 #include "access/heapam.h"
@@ -28,6 +29,25 @@
 void vm_relation_allocate(Relation rd)
 {
 	RelationInitBlockTableEntry(rd);
+}
+
+BlockNumber vm_nblocks(Relation rd)
+{
+	BlockNumber numBlks = 0;
+	RelationBlockInfo relblockinfo;
+
+	relblockinfo = rd->rd_relblock_info;
+
+	if(relblockinfo != NULL)
+	{
+		// Count blocks on VM and NVM
+		numBlks += list_length(relblockinfo->rel_fixed_blocks_on_VM);
+		numBlks += list_length(relblockinfo->rel_fixed_blocks_on_NVM);
+	}
+
+	elog(WARNING, "vm_nbocks : %d", numBlks);
+
+	return numBlks;
 }
 
 Relation vm_relation_open(Oid relationId, LOCKMODE lockmode)
@@ -129,20 +149,6 @@ void vm_heap_setscanlimits(HeapScanDesc scan, BlockNumber startBlk,
  *		tuple as indicated by "dir"; return the next tuple in scan->rs_ctup,
  *		or set scan->rs_ctup.t_data = NULL if no more tuples.
  *
- * dir == NoMovementScanDirection means "re-fetch the tuple indicated
- * by scan->rs_ctup".
- *
- * Note: the reason nkeys/key are passed separately, even though they are
- * kept in the scan descriptor, is that the caller may not want us to check
- * the scankeys.
- *
- * Note: when we fall off the end of the scan in either direction, we
- * reset rs_inited.  This means that a further request with the same
- * scan direction will restart the scan, which is a bit odd, but a
- * request with the opposite scan direction will start a fresh scan
- * in the proper direction.  The latter is required behavior for cursors,
- * while the former case is generally undefined behavior in Postgres
- * so we don't care too much.
  * ----------------
  */
 static void
@@ -154,17 +160,26 @@ vm_heapgettup(HeapScanDesc scan,
 	HeapTuple	tuple = &(scan->rs_ctup);
 	Snapshot	snapshot = scan->rs_snapshot;
 	bool		backward = ScanDirectionIsBackward(dir);
+
 	BlockNumber page;
-	bool		finished;
 	Page		dp;
+
+	//RelBlockLocation location;
+	//RelationBlock    block;
+	OffsetNumber     lineoff;
+
+	bool		finished;
 	int			lines;
-	OffsetNumber lineoff;
 	int			linesleft;
 	ItemId		lpp;
 
-	elog(WARNING, "scan cbuf     : %d", scan->rs_cbuf);
-	elog(WARNING, "scan nblocks  : %d", scan->rs_nblocks);
-	elog(WARNING, "scan backward : %d", backward);
+	elog(WARNING, "scan inited      : %d", scan->rs_inited);
+	elog(WARNING, "scan cblock      : %d", scan->rs_cblock);
+	elog(WARNING, "scan startblock  : %d", scan->rs_startblock);
+	elog(WARNING, "scan nblocks     : %d", scan->rs_nblocks);
+	elog(WARNING, "scan backward    : %d", backward);
+
+	return;
 
 	/*
 	 * calculate next starting lineoff, given scan direction
@@ -195,7 +210,7 @@ vm_heapgettup(HeapScanDesc scan,
 				OffsetNumberNext(ItemPointerGetOffsetNumber(&(tuple->t_self)));
 		}
 
-		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
+		//LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
 		dp = (Page) BufferGetPage(scan->rs_cbuf);
 		lines = PageGetMaxOffsetNumber(dp);

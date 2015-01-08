@@ -54,8 +54,12 @@ RelationBlock RelationAllocateFixedLengthBlock(Relation relation,
 	relblock->rb_type = RELATION_FIXED_BLOCK_TYPE;
 	relblock->rb_backend = relblockbackend;
 
+	// bitmap tracking slot status
 	relblock->rb_slotmap = (bool *) palloc0(NUM_REL_BLOCK_ENTRIES);
+	// free slot counter
 	relblock->rb_free_slots = NUM_REL_BLOCK_ENTRIES;
+	// tuple headers
+	relblock->rb_tuple_headers = (HeapTupleHeader *) palloc(NUM_REL_BLOCK_ENTRIES);
 
 	foreach(l, rel_column_groups)
 	{

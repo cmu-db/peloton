@@ -54,6 +54,7 @@ typedef struct RelationBlockData
 	// Keep these in sync
 	bool *rb_slotmap;
 	int rb_free_slots;
+	HeapTupleHeaderData *rb_tuple_headers;
 
 	/* For variable-length blocks */
 	void *rb_location;

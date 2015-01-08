@@ -2403,10 +2403,21 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 BlockNumber
 RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 {
-	/* Open it at the smgr level if not already done */
-	RelationOpenSmgr(relation);
+	BlockNumber numBlks;
 
-	return smgrnblocks(relation->rd_smgr, forkNum);
+	if(relation->rd_storage_backend == STORAGE_BACKEND_VM)
+	{
+		numBlks = vm_nblocks(relation);
+	}
+	else
+	{
+		/* Open it at the smgr level if not already done */
+		RelationOpenSmgr(relation);
+
+		numBlks = smgrnblocks(relation->rd_smgr, forkNum);
+	}
+
+	return numBlks;
 }
 
 /*
