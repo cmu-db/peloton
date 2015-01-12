@@ -186,10 +186,10 @@ typedef struct RelationData
 	struct PgStat_TableStatus *pgstat_info;		/* statistics collection area */
 
 	/* backend information */
-	RelationBlockBackend rd_storage_backend;
+	RelBlockBackend rd_storage_backend;
 
 	/* relation block info */
-	RelationBlockInfo rd_relblock_info;
+	RelBlockInfo rd_relblock_info;
 } RelationData;
 
 /*
@@ -200,7 +200,7 @@ typedef struct RelationData
  * be applied to relations that use this format or a superset for
  * private options data.
  */
- /* autovacuum-related reloptions. */
+/* autovacuum-related reloptions. */
 typedef struct AutoVacOpts
 {
 	bool		enabled;
@@ -234,22 +234,22 @@ typedef struct StdRdOptions
  * RelationGetFillFactor
  *		Returns the relation's fillfactor.  Note multiple eval of argument!
  */
-#define RelationGetFillFactor(relation, defaultff) \
-	((relation)->rd_options ? \
+#define RelationGetFillFactor(relation, defaultff)						\
+	((relation)->rd_options ?											\
 	 ((StdRdOptions *) (relation)->rd_options)->fillfactor : (defaultff))
 
 /*
  * RelationGetTargetPageUsage
  *		Returns the relation's desired space usage per page in bytes.
  */
-#define RelationGetTargetPageUsage(relation, defaultff) \
+#define RelationGetTargetPageUsage(relation, defaultff)			\
 	(BLCKSZ * RelationGetFillFactor(relation, defaultff) / 100)
 
 /*
  * RelationGetTargetPageFreeSpace
  *		Returns the relation's desired freespace per page in bytes.
  */
-#define RelationGetTargetPageFreeSpace(relation, defaultff) \
+#define RelationGetTargetPageFreeSpace(relation, defaultff)				\
 	(BLCKSZ * (100 - RelationGetFillFactor(relation, defaultff)) / 100)
 
 /*
@@ -257,8 +257,8 @@ typedef struct StdRdOptions
  *		Returns whether the relation should be treated as a catalog table
  *		from the pov of logical decoding.  Note multiple eval or argument!
  */
-#define RelationIsUsedAsCatalogTable(relation)	\
-	((relation)->rd_options ?				\
+#define RelationIsUsedAsCatalogTable(relation)							\
+	((relation)->rd_options ?											\
 	 ((StdRdOptions *) (relation)->rd_options)->user_catalog_table : false)
 
 
@@ -278,8 +278,8 @@ typedef struct ViewOptions
  *		Returns whether the relation is security view, or not.  Note multiple
  *		eval of argument!
  */
-#define RelationIsSecurityView(relation)	\
-	((relation)->rd_options ?				\
+#define RelationIsSecurityView(relation)								\
+	((relation)->rd_options ?											\
 	 ((ViewOptions *) (relation)->rd_options)->security_barrier : false)
 
 /*
@@ -287,8 +287,8 @@ typedef struct ViewOptions
  *		Returns true if the relation is a view defined with either the local
  *		or the cascaded check option.  Note multiple eval of argument!
  */
-#define RelationHasCheckOption(relation)									\
-	((relation)->rd_options &&												\
+#define RelationHasCheckOption(relation)								\
+	((relation)->rd_options &&											\
 	 ((ViewOptions *) (relation)->rd_options)->check_option_offset != 0)
 
 /*
@@ -296,11 +296,11 @@ typedef struct ViewOptions
  *		Returns true if the relation is a view defined with the local check
  *		option.  Note multiple eval of argument!
  */
-#define RelationHasLocalCheckOption(relation)								\
-	((relation)->rd_options &&												\
-	 ((ViewOptions *) (relation)->rd_options)->check_option_offset != 0 ?	\
-	 strcmp((char *) (relation)->rd_options +								\
-			((ViewOptions *) (relation)->rd_options)->check_option_offset,	\
+#define RelationHasLocalCheckOption(relation)							\
+	((relation)->rd_options &&											\
+	 ((ViewOptions *) (relation)->rd_options)->check_option_offset != 0 ? \
+	 strcmp((char *) (relation)->rd_options +							\
+			((ViewOptions *) (relation)->rd_options)->check_option_offset, \
 			"local") == 0 : false)
 
 /*
@@ -308,11 +308,11 @@ typedef struct ViewOptions
  *		Returns true if the relation is a view defined with the cascaded check
  *		option.  Note multiple eval of argument!
  */
-#define RelationHasCascadedCheckOption(relation)							\
-	((relation)->rd_options &&												\
-	 ((ViewOptions *) (relation)->rd_options)->check_option_offset != 0 ?	\
-	 strcmp((char *) (relation)->rd_options +								\
-			((ViewOptions *) (relation)->rd_options)->check_option_offset,	\
+#define RelationHasCascadedCheckOption(relation)						\
+	((relation)->rd_options &&											\
+	 ((ViewOptions *) (relation)->rd_options)->check_option_offset != 0 ? \
+	 strcmp((char *) (relation)->rd_options +							\
+			((ViewOptions *) (relation)->rd_options)->check_option_offset, \
 			"cascaded") == 0 : false)
 
 
@@ -332,15 +332,15 @@ typedef struct ViewOptions
  *		Assumes relation descriptor is valid.
  */
 #define RelationHasReferenceCountZero(relation) \
-		((bool)((relation)->rd_refcnt == 0))
+	((bool)((relation)->rd_refcnt == 0))
 
-/*
- * RelationGetForm
- *		Returns pg_class tuple for a relation.
- *
- * Note:
- *		Assumes relation descriptor is valid.
- */
+  /*
+   * RelationGetForm
+   *		Returns pg_class tuple for a relation.
+   *
+   * Note:
+   *		Assumes relation descriptor is valid.
+   */
 #define RelationGetForm(relation) ((relation)->rd_rel)
 
 /*
@@ -367,14 +367,14 @@ typedef struct ViewOptions
  *
  * Note that the name is only unique within the containing namespace.
  */
-#define RelationGetRelationName(relation) \
+#define RelationGetRelationName(relation)		\
 	(NameStr((relation)->rd_rel->relname))
 
 /*
  * RelationGetNamespace
  *		Returns the rel's namespace OID.
  */
-#define RelationGetNamespace(relation) \
+#define RelationGetNamespace(relation)			\
 	((relation)->rd_rel->relnamespace)
 
 /*
@@ -384,16 +384,16 @@ typedef struct ViewOptions
  * NB: this is only meaningful for relkinds that have storage, else it
  * will misleadingly say "true".
  */
-#define RelationIsMapped(relation) \
+#define RelationIsMapped(relation)					\
 	((relation)->rd_rel->relfilenode == InvalidOid)
 
 /*
  * RelationOpenSmgr
  *		Open the relation at the smgr level, if not already done.
  */
-#define RelationOpenSmgr(relation) \
-	do { \
-		if ((relation)->rd_smgr == NULL) \
+#define RelationOpenSmgr(relation)										\
+	do {																\
+		if ((relation)->rd_smgr == NULL)								\
 			smgrsetowner(&((relation)->rd_smgr), smgropen((relation)->rd_node, (relation)->rd_backend)); \
 	} while (0)
 
@@ -403,13 +403,13 @@ typedef struct ViewOptions
  *
  * Note: smgrclose should unhook from owner pointer, hence the Assert.
  */
-#define RelationCloseSmgr(relation) \
-	do { \
-		if ((relation)->rd_smgr != NULL) \
-		{ \
-			smgrclose((relation)->rd_smgr); \
-			Assert((relation)->rd_smgr == NULL); \
-		} \
+#define RelationCloseSmgr(relation)					\
+	do {											\
+		if ((relation)->rd_smgr != NULL)			\
+		{											\
+			smgrclose((relation)->rd_smgr);			\
+			Assert((relation)->rd_smgr == NULL);	\
+		}											\
 	} while (0)
 
 /*
@@ -419,31 +419,31 @@ typedef struct ViewOptions
  * Returns InvalidBlockNumber if there is no current target block.  Note
  * that the target block status is discarded on any smgr-level invalidation.
  */
-#define RelationGetTargetBlock(relation) \
+#define RelationGetTargetBlock(relation)								\
 	( (relation)->rd_smgr != NULL ? (relation)->rd_smgr->smgr_targblock : InvalidBlockNumber )
 
 /*
  * RelationSetTargetBlock
  *		Set relation's current insertion target block.
  */
-#define RelationSetTargetBlock(relation, targblock) \
-	do { \
-		RelationOpenSmgr(relation); \
-		(relation)->rd_smgr->smgr_targblock = (targblock); \
+#define RelationSetTargetBlock(relation, targblock)			\
+	do {													\
+		RelationOpenSmgr(relation);							\
+		(relation)->rd_smgr->smgr_targblock = (targblock);	\
 	} while (0)
 
 /*
  * RelationNeedsWAL
  *		True if relation needs WAL.
  */
-#define RelationNeedsWAL(relation) \
+#define RelationNeedsWAL(relation)										\
 	((relation)->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT)
 
 /*
  * RelationUsesLocalBuffers
  *		True if relation's pages are stored in local buffers.
  */
-#define RelationUsesLocalBuffers(relation) \
+#define RelationUsesLocalBuffers(relation)						\
 	((relation)->rd_rel->relpersistence == RELPERSISTENCE_TEMP)
 
 /*
@@ -454,8 +454,8 @@ typedef struct ViewOptions
  *
  * Beware of multiple eval of argument
  */
-#define RELATION_IS_LOCAL(relation) \
-	((relation)->rd_islocaltemp || \
+#define RELATION_IS_LOCAL(relation)							\
+	((relation)->rd_islocaltemp ||							\
 	 (relation)->rd_createSubid != InvalidSubTransactionId)
 
 /*
@@ -464,8 +464,8 @@ typedef struct ViewOptions
  *
  * Beware of multiple eval of argument
  */
-#define RELATION_IS_OTHER_TEMP(relation) \
-	((relation)->rd_rel->relpersistence == RELPERSISTENCE_TEMP && \
+#define RELATION_IS_OTHER_TEMP(relation)							\
+	((relation)->rd_rel->relpersistence == RELPERSISTENCE_TEMP &&	\
 	 !(relation)->rd_islocaltemp)
 
 
@@ -490,9 +490,9 @@ typedef struct ViewOptions
  *		True if we need to log enough information to have access via
  *		decoding snapshot.
  */
-#define RelationIsAccessibleInLogicalDecoding(relation) \
-	(XLogLogicalInfoActive() && \
-	 RelationNeedsWAL(relation) && \
+#define RelationIsAccessibleInLogicalDecoding(relation)					\
+	(XLogLogicalInfoActive() &&											\
+	 RelationNeedsWAL(relation) &&										\
 	 (IsCatalogRelation(relation) || RelationIsUsedAsCatalogTable(relation)))
 
 /*
@@ -506,9 +506,9 @@ typedef struct ViewOptions
  * log information for user defined catalog tables since they presumably are
  * interesting to the user...
  */
-#define RelationIsLogicallyLogged(relation) \
-	(XLogLogicalInfoActive() && \
-	 RelationNeedsWAL(relation) && \
+#define RelationIsLogicallyLogged(relation)		\
+	(XLogLogicalInfoActive() &&					\
+	 RelationNeedsWAL(relation) &&				\
 	 !IsCatalogRelation(relation))
 
 /* routines in utils/cache/relcache.c */

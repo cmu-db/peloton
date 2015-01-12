@@ -32,9 +32,9 @@
 extern MemoryContext
 SHMAllocSetContextCreate(MemoryContext parent,
 						 const char *name,
-						 Size minContextSize,
-						 Size initBlockSize,
-						 Size maxBlockSize,
+						 Size min_context_size,
+						 Size init_block_size,
+						 Size max_block_size,
 						 MM * shmcxt);
 
 
@@ -252,11 +252,6 @@ SHMContextStats(MemoryContext context)
 {
 	MemoryContext child;
 	MM		   *mmcxt = SHMFindMMContext(context);
-
-	MemoryContext oldctx;
-	void *tmp_ptr;
-
-	elog(WARNING, "MM  ::::::::: %p ", mmcxt);
 
 	mm_lock(mmcxt, MM_LOCK_RW);
 	AssertArg(MemoryContextIsValid(context));

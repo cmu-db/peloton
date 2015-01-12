@@ -29,7 +29,7 @@ typedef enum RelationBlockBackend{
 	STORAGE_BACKEND_FS,
 	STORAGE_BACKEND_VM,
 	STORAGE_BACKEND_NVM
-} RelationBlockBackend;
+} RelBlockBackend;
 
 #define STORAGE_BACKEND_DEFAULT STORAGE_BACKEND_FS
 
@@ -40,46 +40,48 @@ typedef enum RelationBlockType
 	RELATION_FIXED_BLOCK_TYPE,
 	/* Used to store variable-length attributes */
 	RELATION_VARIABLE_BLOCK_TYPE
-} RelationBlockType;
+} RelBlockType;
 
 /* RelationBlock structure */
-typedef struct RelationBlockData
+typedef struct RelBlockData
 {
-	RelationBlockType rb_type;
-	RelationBlockBackend rb_backend;
+	RelBlockType rb_type;
+	RelBlockBackend rb_backend;
 	Size rb_size;
 
 	/* For fixed-length blocks */
-	List *rb_cg_locations;
+	List *rb_tile_locations;
+
 	// Keep these in sync
-	bool *rb_slotmap;
+	bool *rb_slot_bitmap;
 	int rb_free_slots;
-	HeapTupleHeaderData *rb_tuple_headers;
+	HeapTupleHeader *rb_tuple_headers;
 
 	/* For variable-length blocks */
 	void *rb_location;
 	// Keep these in sync
-	void *rb_start_scan;
 	Size rb_free_space;
-} RelationBlockData;
-typedef RelationBlockData* RelationBlock;
 
-/* RelationColumnGroup structure */
-typedef struct RelationColumnGroupData
+} RelBlockData;
+typedef RelBlockData* RelBlock;
+
+/* Tile information */
+typedef struct RelTileData
 {
 	/* Id */
-	int cg_id;
-	/* Size of slot in CG */
-	Size cg_size;
-	/* Starting attr in CG */
-	int cg_start_attr_id;
-} RelationColumnGroupData;
-typedef RelationColumnGroupData* RelationColumnGroup;
+	int tile_id;
+	/* Size of slot in tile */
+	Size tile_size;
+	/* Starting attr in tile */
+	int tile_start_attr_id;
 
-typedef struct RelationBlockInfoData
+} RelTileData;
+typedef RelTileData* RelTile;
+
+typedef struct RelBlockInfoData
 {
-	Oid relid;
-	Size reltuplen;
+	Oid rel_id;
+	Size rel_tuple_len;
 
 	/* relation blocks on VM */
 	List *rel_fixed_blocks_on_VM;
@@ -92,8 +94,8 @@ typedef struct RelationBlockInfoData
 	/* column groups */
 	int  *rel_attr_group;
 	List *rel_column_groups;
-} RelationBlockInfoData;
-typedef RelationBlockInfoData* RelationBlockInfo;
+} RelBlockInfoData;
+typedef RelBlockInfoData* RelBlockInfo;
 
 /* RelBlock HTAB */
 
@@ -105,25 +107,29 @@ typedef struct RelBlockTag{
 /* Entry for RelBlock Lookup Table */
 typedef struct RelBlockLookupEnt{
 	/*
-	  XXX Payload required to handle a weird hash
-	  function issue in dynahash.c;
+	  XXX Payload required to handle a weird hash function issue in dynahash.c;
 	  otherwise the keys don't collide
 	*/
 	int               payload;
+
 	int               pid;
-	RelationBlockInfo relblockinfo;
+	RelBlockInfo      rel_block_info;
 } RelBlockLookupEnt;
 
-extern HTAB *SharedRelBlockHash;
+extern HTAB *Shared_Rel_Block_Hash_Table;
 
 /* Variable-length block header */
 typedef struct RelBlockVarlenHeaderData{
+
 	/* occupied status for the slot */
 	bool vb_slot_status;
+
 	/* length of the slot */
 	uint16 vb_slot_length;
+
 	/* length of the previous slot */
 	uint16 vb_prev_slot_length;
+
 } RelBlockVarlenHeaderData;
 typedef RelBlockVarlenHeaderData* RelBlockVarlenHeader;
 
@@ -132,36 +138,39 @@ typedef RelBlockVarlenHeaderData* RelBlockVarlenHeader;
 typedef struct RelBlockLocation
 {
 	/* location of block */
-	RelationBlock rb_location;
+	RelBlock rb_location;
+
 	/* offset of slot within block (starts from 1) */
 	OffsetNumber rb_offset;
+
 } RelBlockLocation;
 
 /* relblock.c */
-extern void RelationInitBlockTableEntry(Relation relation);
-extern List** GetRelationBlockList(Relation relation, RelationBlockBackend relblockbackend,
-								   RelationBlockType relblocktype);
+extern void RelInitBlockTableEntry(Relation relation);
+extern List** GetRelBlockList(Relation relation, RelBlockBackend relblockbackend,
+							  RelBlockType relblocktype);
 
-extern Oid  RelationBlockInsertTuple(Relation relation, HeapTuple tup, CommandId cid,
-									 int options, BulkInsertState bistate);
+extern Oid  RelBlockInsertTuple(Relation relation, HeapTuple tup, CommandId cid,
+								int options, BulkInsertState bistate);
 
 /* relblock_table.c */
-extern Size RelBlockTableShmemSize(int size);
-extern void InitRelBlockTable(int size);
+extern Size RelBlockTableShmemSize(Size size);
+extern void InitRelBlockTable(Size size);
+
 extern uint32 RelBlockTableHashCode(RelBlockTag *tagPtr);
 extern RelBlockLookupEnt *RelBlockTableLookup(RelBlockTag *tagPtr, uint32 hashcode);
 extern int	RelBlockTableInsert(RelBlockTag *tagPtr, uint32 hashcode,
-								RelationBlockInfo relblockinfo);
+								RelBlockInfo relblockinfo);
 extern void RelBlockTableDelete(RelBlockTag *tagPtr, uint32 hashcode);
 extern void RelBlockTablePrint();
 
 /* relblock_fixed.c */
-extern RelBlockLocation GetFixedLengthSlot(Relation relation, RelationBlockBackend relblockbackend);
+extern RelBlockLocation GetFixedLengthSlot(Relation relation, RelBlockBackend relblockbackend);
 
 /* relblock_varlen.c */
-extern void *GetVariableLengthSlot(Relation relation, RelationBlockBackend relblockbackend,
+extern void *GetVariableLengthSlot(Relation relation, RelBlockBackend relblockbackend,
 								   Size allocation_size);
-extern void  ReleaseVariableLengthSlot(Relation relation, RelationBlockBackend relblockbackend,
+extern void  ReleaseVariableLengthSlot(Relation relation, RelBlockBackend relblockbackend,
 									   void *location);
 
 #endif   /* RELBLOCK_H */

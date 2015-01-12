@@ -45,3 +45,5 @@ GPATH
 data/
 /setup.log
 citus/
+.cproject
+.project

@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * heap_vm.c
- *	  heap backend for vm
+ *	  heap backend for memory
  *
  *
  * IDENTIFICATION
@@ -9,8 +9,7 @@
  *
  *
  * NOTES
- *	  This file contains the heap_ routines for relations stored in
- *    volatile memory (DRAM)
+ *	  This file contains the heap routines for relations stored in memory
  *
  *-------------------------------------------------------------------------
  */
@@ -28,26 +27,26 @@
 
 void vm_relation_allocate(Relation rd)
 {
-	RelationInitBlockTableEntry(rd);
+	RelInitBlockTableEntry(rd);
 }
 
 BlockNumber vm_nblocks(Relation rd)
 {
-	BlockNumber numBlks = 0;
-	RelationBlockInfo relblockinfo;
+	BlockNumber num_blocks = 0;
+	RelBlockInfo rel_block_info;
 
-	relblockinfo = rd->rd_relblock_info;
+	rel_block_info = rd->rd_relblock_info;
 
-	if(relblockinfo != NULL)
+	if(rel_block_info != NULL)
 	{
 		// Count blocks on VM and NVM
-		numBlks += list_length(relblockinfo->rel_fixed_blocks_on_VM);
-		numBlks += list_length(relblockinfo->rel_fixed_blocks_on_NVM);
+		num_blocks += list_length(rel_block_info->rel_fixed_blocks_on_VM);
+		num_blocks += list_length(rel_block_info->rel_fixed_blocks_on_NVM);
 	}
 
-	elog(WARNING, "vm_nbocks : %d", numBlks);
+	elog(WARNING, "vm_nbocks : %d", num_blocks);
 
-	return numBlks;
+	return num_blocks;
 }
 
 Relation vm_relation_open(Oid relationId, LOCKMODE lockmode)
@@ -153,9 +152,9 @@ void vm_heap_setscanlimits(HeapScanDesc scan, BlockNumber startBlk,
  */
 static void
 vm_heapgettup(HeapScanDesc scan,
-		   ScanDirection dir,
-		   int nkeys,
-		   ScanKey key)
+			  ScanDirection dir,
+			  int nkeys,
+			  ScanKey key)
 {
 	HeapTuple	tuple = &(scan->rs_ctup);
 	Snapshot	snapshot = scan->rs_snapshot;
@@ -285,7 +284,7 @@ vm_heapgettup(HeapScanDesc scan,
 
 		page = ItemPointerGetBlockNumber(&(tuple->t_self));
 		//if (page != scan->rs_cblock)
-			//fs_heapgetpage(scan, page);
+		//fs_heapgetpage(scan, page);
 
 		/* Since the tuple was previously fetched, needn't lock page here */
 		dp = (Page) BufferGetPage(scan->rs_cbuf);
@@ -576,7 +575,7 @@ Oid vm_heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 {
 	Oid ret_val;
 
-	ret_val =  RelationBlockInsertTuple(relation, tup, cid, options, bistate);
+	ret_val =  RelBlockInsertTuple(relation, tup, cid, options, bistate);
 
 	return ret_val;
 }

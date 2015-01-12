@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
- * relblock_utils.c
- *	  relblock utilities
+ * rel_block_utils.c
+ *	  relation block utilities
  *
  * Portions Copyright (c) 2014-2015, Carnegie Mellon University
  * Portions Copyright (c) 1996-2014, PostgreSQL Global Development Group
@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/access/heap/relblock_utils.c
+ *	  src/backend/access/heap/rel_block_utils.c
  *
  *-------------------------------------------------------------------------
  */

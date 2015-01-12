@@ -199,9 +199,9 @@ static MemoryContextMethods SHMAllocSetMethods = {
 MemoryContext
 SHMAllocSetContextCreate(MemoryContext parent,
 						 const char *name,
-						 Size minContextSize,
-						 Size initBlockSize,
-						 Size maxBlockSize,
+						 Size min_context_size,
+						 Size init_block_size,
+						 Size max_block_size,
 						 MM * shmcxt);
 
 /* ----------
@@ -266,9 +266,9 @@ SHMAllocSetFreeIndex(Size size)
 MemoryContext
 SHMAllocSetContextCreate(MemoryContext parent,
 						 const char *name,
-						 Size minContextSize,
-						 Size initBlockSize,
-						 Size maxBlockSize,
+						 Size min_context_size,
+						 Size init_block_size,
+						 Size max_block_size,
 						 MM * shmcxt)
 {
 	SHMAllocSet context;
@@ -285,21 +285,21 @@ SHMAllocSetContextCreate(MemoryContext parent,
 	 *
 	 * We somewhat arbitrarily enforce a minimum 1K block size.
 	 */
-	initBlockSize = MAXALIGN(initBlockSize);
-	if (initBlockSize < 1024)
-		initBlockSize = 1024;
-	maxBlockSize = MAXALIGN(maxBlockSize);
-	if (maxBlockSize < initBlockSize)
-		maxBlockSize = initBlockSize;
-	context->initBlockSize = initBlockSize;
-	context->maxBlockSize = maxBlockSize;
+	init_block_size = MAXALIGN(init_block_size);
+	if (init_block_size < 1024)
+		init_block_size = 1024;
+	max_block_size = MAXALIGN(max_block_size);
+	if (max_block_size < init_block_size)
+		max_block_size = init_block_size;
+	context->initBlockSize = init_block_size;
+	context->maxBlockSize = max_block_size;
 
 	/*
 	 * Grab always-allocated space, if requested
 	 */
-	if (minContextSize > SHMALLOC_BLOCKHDRSZ + SHMALLOC_CHUNKHDRSZ)
+	if (min_context_size > SHMALLOC_BLOCKHDRSZ + SHMALLOC_CHUNKHDRSZ)
 	{
-		Size		blksize = MAXALIGN(minContextSize);
+		Size		blksize = MAXALIGN(min_context_size);
 		SHMAllocBlock block;
 
 		block = (SHMAllocBlock) mm_malloc(shmcxt, blksize);
@@ -307,7 +307,7 @@ SHMAllocSetContextCreate(MemoryContext parent,
 		{
 			MemoryContextStats(TopMemoryContext);
 			elog(ERROR, "Memory exhausted in SHMAllocSetContextCreate(%lu)",
-				 (unsigned long) minContextSize);
+				 (unsigned long) min_context_size);
 		}
 		block->aset = context;
 		block->freeptr = ((char *) block) + SHMALLOC_BLOCKHDRSZ;
@@ -1029,9 +1029,9 @@ SHMAllocSetStats(MemoryContext context, int level)
 		}
 	}
 	elog(WARNING,
-			"%s: %ld total in %ld blocks; %ld free (%ld chunks); %ld used\n",
-			set->header.name, totalspace, nblocks, freespace, nchunks,
-			totalspace - freespace);
+		 "%s: %ld total in %ld blocks; %ld free (%ld chunks); %ld used\n",
+		 set->header.name, totalspace, nblocks, freespace, nchunks,
+		 totalspace - freespace);
 	mm_unlock(mmcxt);
 }
 

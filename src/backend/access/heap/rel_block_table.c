@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * relblock_table.c
+ * rel_block_table.c
  *	  routines for mapping RelBlockTags to relation blocks.
  *
  * Note: the routines in this file do no locking of their own.  The caller
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  src/backend/storage/buffer/relblock_table.c
+ *	  src/backend/storage/buffer/rel_block_table.c
  *
  *-------------------------------------------------------------------------
  */
@@ -18,12 +18,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-HTAB *SharedRelBlockHash = NULL;
+HTAB *Shared_Rel_Block_Hash_Table = NULL;
 
 /*
  * Estimate space needed for mapping hashtable
  */
-Size RelBlockTableShmemSize(int size)
+Size RelBlockTableShmemSize(Size size)
 {
 	return hash_estimate_size(size, sizeof(RelBlockLookupEnt));
 }
@@ -31,7 +31,7 @@ Size RelBlockTableShmemSize(int size)
 /*
  * Initialize shmem hash table for mapping entries
  */
-void InitRelBlockTable(int size)
+void InitRelBlockTable(Size size)
 {
 	HASHCTL hash_ctl;
 
@@ -41,10 +41,10 @@ void InitRelBlockTable(int size)
 	hash_ctl.keysize = sizeof(RelBlockTag);
 	hash_ctl.entrysize = sizeof(RelBlockLookupEnt);
 
-	SharedRelBlockHash = ShmemInitHash("Shared RelBlock Lookup Table",
-									   size, size,
-									   &hash_ctl,
-									   HASH_ELEM | HASH_BLOBS);
+	Shared_Rel_Block_Hash_Table = ShmemInitHash("Shared RelBlock Lookup Table",
+												size, size,
+												&hash_ctl,
+												HASH_ELEM | HASH_BLOBS);
 
 	//elog(WARNING, "Shared RelBlockBlock Hash :: %p", SharedRelBlockHash);
 }
@@ -60,7 +60,7 @@ void InitRelBlockTable(int size)
  */
 uint32 RelBlockTableHashCode(RelBlockTag *tagPtr)
 {
-	return get_hash_value(SharedRelBlockHash, (void *) tagPtr);
+	return get_hash_value(Shared_Rel_Block_Hash_Table, (void *) tagPtr);
 }
 
 /*
@@ -72,7 +72,7 @@ RelBlockLookupEnt * RelBlockTableLookup(RelBlockTag *tagPtr, uint32 hashcode)
 	RelBlockLookupEnt *result;
 
 	result = (RelBlockLookupEnt *)
-		hash_search_with_hash_value(SharedRelBlockHash,
+		hash_search_with_hash_value(Shared_Rel_Block_Hash_Table,
 									(void *) tagPtr,
 									hashcode,
 									HASH_FIND,
@@ -93,13 +93,13 @@ RelBlockLookupEnt * RelBlockTableLookup(RelBlockTag *tagPtr, uint32 hashcode)
  * already, -1.
  */
 int RelBlockTableInsert(RelBlockTag *tagPtr, uint32 hashcode,
-						RelationBlockInfo relblockinfo)
+						RelBlockInfo relblockinfo)
 {
 	RelBlockLookupEnt *result;
 	bool		found;
 
 	result = (RelBlockLookupEnt *)
-		hash_search_with_hash_value(SharedRelBlockHash,
+		hash_search_with_hash_value(Shared_Rel_Block_Hash_Table,
 									(void *) tagPtr,
 									hashcode,
 									HASH_ENTER,
@@ -109,7 +109,7 @@ int RelBlockTableInsert(RelBlockTag *tagPtr, uint32 hashcode,
 		return -1;
 
 	result->pid = getpid();
-	result->relblockinfo = relblockinfo;
+	result->rel_block_info = relblockinfo;
 
 	return 0;
 }
@@ -123,7 +123,7 @@ void RelBlockTableDelete(RelBlockTag *tagPtr, uint32 hashcode)
 	RelBlockLookupEnt *result;
 
 	result = (RelBlockLookupEnt *)
-		hash_search_with_hash_value(SharedRelBlockHash,
+		hash_search_with_hash_value(Shared_Rel_Block_Hash_Table,
 									(void *) tagPtr,
 									hashcode,
 									HASH_REMOVE,
@@ -142,18 +142,20 @@ void RelBlockTablePrint()
 	HASH_SEQ_STATUS status;
 	RelBlockLookupEnt *entry;
 
-	hash_seq_init(&status, SharedRelBlockHash);
+	hash_seq_init(&status, Shared_Rel_Block_Hash_Table);
 
 	elog(WARNING, "--------------------------------------------------------------");
 	while ((entry = (RelBlockLookupEnt *) hash_seq_search(&status)) != NULL)
 	{
-		if(entry->relblockinfo != NULL)
+		if(entry->rel_block_info != NULL)
 		{
-			elog(WARNING, "RelBlockEntry :: relid : %d pid : %d relblockinfo : %p", entry->relblockinfo->relid, entry->pid, entry->relblockinfo);
+			elog(WARNING, "RelBlockEntry :: relid : %d pid : %d relblockinfo : %p",
+				 entry->rel_block_info->rel_id, entry->pid, entry->rel_block_info);
 		}
 		else
 		{
-			elog(WARNING, "RelBlockEntry :: pid : %d relblockinfo : %p", entry->pid, entry->relblockinfo);
+			elog(WARNING, "RelBlockEntry :: pid : %d relblockinfo : %p",
+				 entry->pid, entry->rel_block_info);
 		}
 	}
 	elog(WARNING, "--------------------------------------------------------------");
