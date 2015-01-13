@@ -12,7 +12,7 @@
 
 #include "postgres.h"
 
-#include "access/relblock.h"
+#include "access/rel_block.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "utils/palloc.h"
@@ -41,7 +41,7 @@ RelBlock RelAllocateFixedLengthBlock(Relation relation)
 	List         **block_list_ptr = NULL;
 	ListCell     *l = NULL;
 
-	rel_info = relation->rd_relblock_info;
+	rel_info = relation->rd_rel_info;
 	rel_tiles = rel_info->rel_tile_to_attrs_map;
 
 	// Allocate block in TSM context

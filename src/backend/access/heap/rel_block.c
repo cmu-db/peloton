@@ -14,7 +14,7 @@
 
 #include "access/heapam.h"
 #include "access/htup_details.h"
-#include "access/relblock.h"
+#include "access/rel_block.h"
 #include "access/xact.h"
 #include "catalog/pg_type.h"
 #include "pgstat.h"
@@ -114,9 +114,9 @@ List** GetRelBlockList(Relation relation, RelBlockType relblocktype)
 
 	// Pick relevant list based on backend and block type
 	if(relblocktype == RELATION_FIXED_BLOCK_TYPE)
-		block_list_ptr = &relation->rd_relblock_info->rel_fixed_length_blocks;
+		block_list_ptr = &relation->rd_rel_info->rel_fl_blocks;
 	else if(relblocktype == RELATION_VARIABLE_BLOCK_TYPE)
-		block_list_ptr = &relation->rd_relblock_info->rel_variable_length_blocks;
+		block_list_ptr = &relation->rd_rel_info->rel_vl_blocks;
 
 	if(block_list_ptr == NULL)
 	{
@@ -167,7 +167,7 @@ Size ComputeTupleLen(Relation relation)
 	TupleDesc tup_desc;
 	int       i;
 
-	tup_len = relation->rd_relblock_info->rel_tuple_len;
+	tup_len = relation->rd_rel_info->rel_tuple_len;
 	tup_desc = RelationGetDescr(relation);
 	//PrintTupleDesc(tupdesc);
 
@@ -298,7 +298,7 @@ void RelInitBlockTableEntry(Relation relation)
 		}
 
 		// cache value in relation
-		relation->rd_relblock_info = entry->rel_info;
+		relation->rd_rel_info = entry->rel_info;
 	}
 	else
 	{
@@ -324,7 +324,7 @@ void RelInitBlockTableEntry(Relation relation)
 		}
 
 		// cache value in relation
-		relation->rd_relblock_info = rel_block_info;
+		relation->rd_rel_info = rel_block_info;
 
 		MemoryContextSwitchTo(oldcxt);
 	}
@@ -417,7 +417,7 @@ void RelBlockPutHeapTuple(Relation relation, HeapTuple tuple)
 	rel_block_itr = slot.rb_offset;
 	rel_block_offset = rel_block_itr - 1;
 
-	rel_block_info = relation->rd_relblock_info;
+	rel_block_info = relation->rd_rel_info;
 
 	// Copy tuple header into slot
 	memcpy(&(rel_block->rb_tuple_headers[rel_block_offset]), tup_header,

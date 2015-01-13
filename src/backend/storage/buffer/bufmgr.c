@@ -57,7 +57,7 @@
 #define BufferGetLSN(bufHdr)	(PageGetLSN(BufHdrGetBlock(bufHdr)))
 
 /* Note: this macro only works on local buffers, not shared ones! */
-#define LocalBufHdrGetBlock(bufHdr) \
+#define LocalBufHdrGetBlock(bufHdr)						\
 	LocalBufferBlockPointers[-((bufHdr)->buf_id + 2)]
 
 /* Bits in SyncOneBuffer's return value */
@@ -359,22 +359,22 @@ ForgetPrivateRefCountEntry(PrivateRefCountEntry *ref)
  *		NOTE: what we check here is that *this* backend holds a pin on
  *		the buffer.  We do not care whether some other backend does.
  */
-#define BufferIsPinned(bufnum) \
-( \
-	!BufferIsValid(bufnum) ? \
-		false \
-	: \
-		BufferIsLocal(bufnum) ? \
-			(LocalRefCount[-(bufnum) - 1] > 0) \
-		: \
-	(GetPrivateRefCount(bufnum) > 0) \
-)
+#define BufferIsPinned(bufnum)					\
+	(											\
+		!BufferIsValid(bufnum) ?				\
+		false									\
+		:										\
+		BufferIsLocal(bufnum) ?					\
+		(LocalRefCount[-(bufnum) - 1] > 0)		\
+		:										\
+		(GetPrivateRefCount(bufnum) > 0)		\
+		)
 
 
 static Buffer ReadBuffer_common(SMgrRelation reln, char relpersistence,
-				  ForkNumber forkNum, BlockNumber blockNum,
-				  ReadBufferMode mode, BufferAccessStrategy strategy,
-				  bool *hit);
+								ForkNumber forkNum, BlockNumber blockNum,
+								ReadBufferMode mode, BufferAccessStrategy strategy,
+								bool *hit);
 static bool PinBuffer(volatile BufferDesc *buf, BufferAccessStrategy strategy);
 static void PinBuffer_Locked(volatile BufferDesc *buf);
 static void UnpinBuffer(volatile BufferDesc *buf, bool fixOwner);
@@ -383,15 +383,15 @@ static int	SyncOneBuffer(int buf_id, bool skip_recently_used);
 static void WaitIO(volatile BufferDesc *buf);
 static bool StartBufferIO(volatile BufferDesc *buf, bool forInput);
 static void TerminateBufferIO(volatile BufferDesc *buf, bool clear_dirty,
-				  int set_flag_bits);
+							  int set_flag_bits);
 static void shared_buffer_write_error_callback(void *arg);
 static void local_buffer_write_error_callback(void *arg);
 static volatile BufferDesc *BufferAlloc(SMgrRelation smgr,
-			char relpersistence,
-			ForkNumber forkNum,
-			BlockNumber blockNum,
-			BufferAccessStrategy strategy,
-			bool *foundPtr);
+										char relpersistence,
+										ForkNumber forkNum,
+										BlockNumber blockNum,
+										BufferAccessStrategy strategy,
+										bool *foundPtr);
 static void FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln);
 static void AtProcExit_Buffers(int code, Datum arg);
 static void CheckForBufferLeaks(void);
@@ -422,7 +422,7 @@ PrefetchBuffer(Relation reln, ForkNumber forkNum, BlockNumber blockNum)
 		if (RELATION_IS_OTHER_TEMP(reln))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("cannot access temporary tables of other sessions")));
+					 errmsg("cannot access temporary tables of other sessions")));
 
 		/* pass it off to localbuf.c */
 		LocalPrefetchBuffer(reln->rd_smgr, forkNum, blockNum);
@@ -684,9 +684,9 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		bufBlock = isLocalBuf ? LocalBufHdrGetBlock(bufHdr) : BufHdrGetBlock(bufHdr);
 		if (!PageIsNew((Page) bufBlock))
 			ereport(ERROR,
-			 (errmsg("unexpected data beyond EOF in block %u of relation %s",
-					 blockNum, relpath(smgr->smgr_rnode, forkNum)),
-			  errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
+					(errmsg("unexpected data beyond EOF in block %u of relation %s",
+							blockNum, relpath(smgr->smgr_rnode, forkNum)),
+					 errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
 
 		/*
 		 * We *must* do smgrextend before succeeding, else the page will not
@@ -751,7 +751,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		else
 		{
 			instr_time	io_start,
-						io_time;
+				io_time;
 
 			if (track_io_timing)
 				INSTR_TIME_SET_CURRENT(io_start);
@@ -991,17 +991,17 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 
 				/* OK, do the I/O */
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_START(forkNum, blockNum,
-											   smgr->smgr_rnode.node.spcNode,
-												smgr->smgr_rnode.node.dbNode,
-											  smgr->smgr_rnode.node.relNode);
+														  smgr->smgr_rnode.node.spcNode,
+														  smgr->smgr_rnode.node.dbNode,
+														  smgr->smgr_rnode.node.relNode);
 
 				FlushBuffer(buf, NULL);
 				LWLockRelease(buf->content_lock);
 
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_DONE(forkNum, blockNum,
-											   smgr->smgr_rnode.node.spcNode,
-												smgr->smgr_rnode.node.dbNode,
-											  smgr->smgr_rnode.node.relNode);
+														 smgr->smgr_rnode.node.spcNode,
+														 smgr->smgr_rnode.node.dbNode,
+														 smgr->smgr_rnode.node.relNode);
 			}
 			else
 			{
@@ -2284,7 +2284,7 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 	XLogRecPtr	recptr;
 	ErrorContextCallback errcallback;
 	instr_time	io_start,
-				io_time;
+		io_time;
 	Block		bufBlock;
 	char	   *bufToWrite;
 
@@ -2403,21 +2403,10 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 BlockNumber
 RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 {
-	BlockNumber numBlks;
+	/* Open it at the smgr level if not already done */
+	RelationOpenSmgr(relation);
 
-	if(relation->rd_storage_backend == STORAGE_BACKEND_MM)
-	{
-		numBlks = mm_nblocks(relation);
-	}
-	else
-	{
-		/* Open it at the smgr level if not already done */
-		RelationOpenSmgr(relation);
-
-		numBlks = smgrnblocks(relation->rd_smgr, forkNum);
-	}
-
-	return numBlks;
+	return smgrnblocks(relation->rd_smgr, forkNum);
 }
 
 /*
@@ -2565,7 +2554,7 @@ void
 DropRelFileNodesAllBuffers(RelFileNodeBackend *rnodes, int nnodes)
 {
 	int			i,
-				n = 0;
+		n = 0;
 	RelFileNode *nodes;
 	bool		use_bsearch;
 
@@ -2713,7 +2702,7 @@ PrintBufferDescs(void)
 			 "[%02d] (freeNext=%d, rel=%s, "
 			 "blockNum=%u, flags=0x%x, refcount=%u %d)",
 			 i, buf->freeNext,
-		  relpathbackend(buf->tag.rnode, InvalidBackendId, buf->tag.forkNum),
+			 relpathbackend(buf->tag.rnode, InvalidBackendId, buf->tag.forkNum),
 			 buf->tag.blockNum, buf->flags,
 			 buf->refcount, GetPrivateRefCount(i));
 	}

@@ -54,8 +54,11 @@ typedef struct HeapScanDescData
 	int			rs_ntuples;		/* number of visible tuples on page */
 	OffsetNumber rs_vistuples[MaxHeapTuplesPerPage];	/* their offsets */
 
-	// XXX Shared context
-	List *rs_selectVars;
+	// MM backend context
+	List       *rs_select_vars;
+	RelBlock    rs_cblock_location;
+	OffsetNumber  rs_cblock_offset;
+
 }	HeapScanDescData;
 
 /*

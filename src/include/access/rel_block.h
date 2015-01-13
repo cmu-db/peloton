@@ -1,15 +1,15 @@
 /*-------------------------------------------------------------------------
  *
- * relblock.h
+ * rel_block.h
  *	  N-Store relation block definitions.
  *
  *
- * src/include/access/relblock.h
+ * src/include/access/rel_block.h
  *
  *-------------------------------------------------------------------------
  */
-#ifndef RELBLOCK_H
-#define RELBLOCK_H
+#ifndef REL_BLOCK_H
+#define REL_BLOCK_H
 
 #include "access/htup.h"
 #include "utils/relcache.h"
@@ -17,7 +17,7 @@
 #include "access/heapam.h"
 
 #define BLOCK_FIXED_LENGTH_SIZE 100             /* In terms of number of tuples */
-#define BLOCK_VARIABLE_LENGTH_SIZE 1024*32      /* Raw size in bytes (Must be < 2^16)*/
+#define BLOCK_VARIABLE_LENGTH_SIZE 1024*32      /* Raw size in bytes */
 
 #define BLOCK_POINTER_SIZE  8                   /* 8 bytes */
 #define NUM_REL_BLOCK_ENTRIES 1000              /* Entries in shared rel block table */
@@ -48,7 +48,7 @@ typedef enum RelBlockType
 /* Relation Block Information */
 typedef struct RelBlockData
 {
-	RelBlockType rb_type;
+	RelBlockType rb_type; 
 	Size rb_size;
 
 	/* For fixed-length blocks */
@@ -89,9 +89,9 @@ typedef struct RelInfoData
 	Oid rel_id;
 	Size rel_tuple_len;
 
-	/* relation blocks */
-	List *rel_fixed_length_blocks;
-	List *rel_variable_length_blocks;
+	/* relation blocks -fixed and variable length */
+	List *rel_fl_blocks;
+	List *rel_vl_blocks;
 
 	/* relation tile information */
 	int  *rel_attr_to_tile_map;
@@ -172,4 +172,4 @@ extern TupleLocation GetFixedLengthSlot(Relation relation);
 extern void *GetVariableLengthSlot(Relation relation, Size allocation_size);
 extern void  ReleaseVariableLengthSlot(Relation relation, void *location);
 
-#endif   /* RELBLOCK_H */
+#endif   /* REL_BLOCK_H */

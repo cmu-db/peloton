@@ -14,7 +14,7 @@
 #ifndef REL_H
 #define REL_H
 
-#include "access/relblock.h"
+#include "access/rel_block.h"
 #include "access/tupdesc.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_class.h"
@@ -189,7 +189,7 @@ typedef struct RelationData
 	RelBackend rd_storage_backend;
 
 	/* relation block info */
-	RelInfo rd_relblock_info;
+	RelInfo rd_rel_info;
 } RelationData;
 
 /*
