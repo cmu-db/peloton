@@ -20,27 +20,20 @@
 #include "utils/memutils.h"
 #include "storage/bufmgr.h"
 
-#include <math.h>
-
 // Internal helper functions
 Size GetAllocationSize(Size size);
 
-RelBlock RelAllocateVariableLengthBlock(Relation relation,
-										RelBlockBackend relblockbackend);
-RelBlock GetVariableLengthBlockWithFreeSpace(Relation relation,
-											 RelBlockBackend relblockbackend,
-											 Size allocation_size);
+RelBlock RelAllocateVariableLengthBlock(Relation relation);
+RelBlock GetVariableLengthBlockWithFreeSpace(Relation relation, Size allocation_size);
 
 void *GetVariableLengthSlotInBlock(RelBlock relblock, Size allocation_size);
 
-RelBlock GetVariableLengthBlockContainingSlot(Relation relation, RelBlockBackend relblockbackend,
-											  void *location);
+RelBlock GetVariableLengthBlockContainingSlot(Relation relation, void *location);
 void PrintAllSlotsInVariableLengthBlock(RelBlock relblock);
 
 bool CheckVariableLengthBlock(RelBlock relblock);
 
-RelBlock RelAllocateVariableLengthBlock(Relation relation,
-										RelBlockBackend relblockbackend)
+RelBlock RelAllocateVariableLengthBlock(Relation relation)
 {
 	MemoryContext oldcxt;
 	RelBlock     rel_block = NULL;
@@ -53,7 +46,6 @@ RelBlock RelAllocateVariableLengthBlock(Relation relation,
 
 	rel_block = (RelBlock) palloc(sizeof(RelBlockData));
 	rel_block->rb_type = RELATION_VARIABLE_BLOCK_TYPE;
-	rel_block->rb_backend = relblockbackend;
 
 
 	rel_block_data = (void *) palloc(BLOCK_VARIABLE_LENGTH_SIZE);
@@ -69,10 +61,10 @@ RelBlock RelAllocateVariableLengthBlock(Relation relation,
 	rel_block->rb_size = BLOCK_VARIABLE_LENGTH_SIZE;
 	rel_block->rb_free_space = BLOCK_VARIABLE_LENGTH_SIZE;
 
-	elog(WARNING, "RelationBlock Size : %zd Backend : %d Type : %d", rel_block->rb_size,
-		 rel_block->rb_backend, rel_block->rb_type);
+	elog(WARNING, "RelationBlock Size : %zd Type : %d", rel_block->rb_size,
+		 rel_block->rb_type);
 
-	block_list_ptr = GetRelBlockList(relation, relblockbackend, RELATION_VARIABLE_BLOCK_TYPE);
+	block_list_ptr = GetRelBlockList(relation, RELATION_VARIABLE_BLOCK_TYPE);
 	*block_list_ptr = lappend(*block_list_ptr, rel_block);
 
 	MemoryContextSwitchTo(oldcxt);
@@ -167,8 +159,7 @@ void *GetVariableLengthSlotInBlock(RelBlock relblock, Size allocation_size)
 	return location;
 }
 
-RelBlock GetVariableLengthBlockContainingSlot(Relation relation, RelBlockBackend relblockbackend,
-											  void *location)
+RelBlock GetVariableLengthBlockContainingSlot(Relation relation, void *location)
 {
 	RelBlockVarlenHeader block_begin = NULL, block_end = NULL;
 	List       **block_list_ptr = NULL;
@@ -177,7 +168,7 @@ RelBlock GetVariableLengthBlockContainingSlot(Relation relation, RelBlockBackend
 	RelBlock    rel_block = NULL;
 	bool        block_found;
 
-	block_list_ptr = GetRelBlockList(relation, relblockbackend, RELATION_VARIABLE_BLOCK_TYPE);
+	block_list_ptr = GetRelBlockList(relation, RELATION_VARIABLE_BLOCK_TYPE);
 
 	/* empty block list */
 	if(*block_list_ptr == NULL)
@@ -213,8 +204,7 @@ RelBlock GetVariableLengthBlockContainingSlot(Relation relation, RelBlockBackend
 	return rel_block;
 }
 
-void ReleaseVariableLengthSlot(Relation relation, RelBlockBackend relblockbackend,
-							   void *location)
+void ReleaseVariableLengthSlot(Relation relation, void *location)
 {
 	RelBlockVarlenHeader cur_slot = NULL, next_slot = NULL, prev_slot = NULL, next_next_slot = NULL;
 	RelBlockVarlenHeader block_begin = NULL, block_end = NULL;
@@ -223,7 +213,7 @@ void ReleaseVariableLengthSlot(Relation relation, RelBlockBackend relblockbacken
 	RelBlock relblock;
 
 	// Find the relevant relation block
-	relblock = GetVariableLengthBlockContainingSlot(relation, relblockbackend, location);
+	relblock = GetVariableLengthBlockContainingSlot(relation, location);
 
 	if(relblock == NULL)
 	{
@@ -306,9 +296,7 @@ void ReleaseVariableLengthSlot(Relation relation, RelBlockBackend relblockbacken
 	}
 }
 
-RelBlock GetVariableLengthBlockWithFreeSpace(Relation relation,
-											 RelBlockBackend relblockbackend,
-											 Size allocation_size)
+RelBlock GetVariableLengthBlockWithFreeSpace(Relation relation, Size allocation_size)
 {
 	List       **block_list_ptr = NULL;
 	List        *block_list = NULL;
@@ -316,12 +304,12 @@ RelBlock GetVariableLengthBlockWithFreeSpace(Relation relation,
 	RelBlock    rel_block = NULL;
 	bool        block_found;
 
-	block_list_ptr = GetRelBlockList(relation, relblockbackend, RELATION_VARIABLE_BLOCK_TYPE);
+	block_list_ptr = GetRelBlockList(relation, RELATION_VARIABLE_BLOCK_TYPE);
 
 	/* empty block list */
 	if(*block_list_ptr == NULL)
 	{
-		rel_block = RelAllocateVariableLengthBlock(relation, relblockbackend);
+		rel_block = RelAllocateVariableLengthBlock(relation);
 	}
 	else
 	{
@@ -342,7 +330,7 @@ RelBlock GetVariableLengthBlockWithFreeSpace(Relation relation,
 		}
 
 		if(block_found == false)
-			rel_block = RelAllocateVariableLengthBlock(relation, relblockbackend);
+			rel_block = RelAllocateVariableLengthBlock(relation);
 	}
 
 	return rel_block;
@@ -425,8 +413,7 @@ bool CheckVariableLengthBlock(RelBlock relblock)
 	return true;
 }
 
-void *GetVariableLengthSlot(Relation relation,	RelBlockBackend relblockbackend,
-							Size size)
+void *GetVariableLengthSlot(Relation relation, Size size)
 {
 	void *location = NULL;
 	Size  allocation_size = -1;
@@ -434,7 +421,7 @@ void *GetVariableLengthSlot(Relation relation,	RelBlockBackend relblockbackend,
 
 	allocation_size = GetAllocationSize(size);
 
-	rel_block = GetVariableLengthBlockWithFreeSpace(relation, relblockbackend, allocation_size);
+	rel_block = GetVariableLengthBlockWithFreeSpace(relation, allocation_size);
 
 	location = GetVariableLengthSlotInBlock(rel_block, allocation_size);
 

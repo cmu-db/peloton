@@ -1,10 +1,10 @@
 /*-------------------------------------------------------------------------
  *
- * relblock_io.h
- *	  POSTGRES relation block io utilities definitions.
+ * relblock.h
+ *	  N-Store relation block definitions.
  *
  *
- * src/include/access/relblock_io.h
+ * src/include/access/relblock.h
  *
  *-------------------------------------------------------------------------
  */
@@ -24,17 +24,20 @@
 
 #define RELBLOCK_CACHELINE_SIZE   16            /* 64 bytes */
 
-// RelationBlock storage information
-typedef enum RelationBlockBackend{
+// Relation storage backend type
+typedef enum RelBackend{
 	STORAGE_BACKEND_FS,
-	STORAGE_BACKEND_VM,
-	STORAGE_BACKEND_NVM
-} RelBlockBackend;
+	STORAGE_BACKEND_MM,
+} RelBackend;
 
 #define STORAGE_BACKEND_DEFAULT STORAGE_BACKEND_FS
 
+///////////////////////////////////////////////////////////////////////////////
+// RELATION BLOCK INFORMATION
+///////////////////////////////////////////////////////////////////////////////
+
 /* Possible block types */
-typedef enum RelationBlockType
+typedef enum RelBlockType
 {
 	/* Used to store fixed-length tuples */
 	RELATION_FIXED_BLOCK_TYPE,
@@ -42,11 +45,10 @@ typedef enum RelationBlockType
 	RELATION_VARIABLE_BLOCK_TYPE
 } RelBlockType;
 
-/* RelationBlock structure */
+/* Relation Block Information */
 typedef struct RelBlockData
 {
 	RelBlockType rb_type;
-	RelBlockBackend rb_backend;
 	Size rb_size;
 
 	/* For fixed-length blocks */
@@ -65,6 +67,10 @@ typedef struct RelBlockData
 } RelBlockData;
 typedef RelBlockData* RelBlock;
 
+///////////////////////////////////////////////////////////////////////////////
+// RELATION INFORMATION
+///////////////////////////////////////////////////////////////////////////////
+
 /* Tile information */
 typedef struct RelTileData
 {
@@ -78,77 +84,72 @@ typedef struct RelTileData
 } RelTileData;
 typedef RelTileData* RelTile;
 
-typedef struct RelBlockInfoData
+typedef struct RelInfoData
 {
 	Oid rel_id;
 	Size rel_tuple_len;
 
-	/* relation blocks on VM */
-	List *rel_fixed_blocks_on_VM;
-	List *rel_variable_blocks_on_VM;
+	/* relation blocks */
+	List *rel_fixed_length_blocks;
+	List *rel_variable_length_blocks;
 
-	/* relation blocks on NVM */
-	List *rel_fixed_blocks_on_NVM;
-	List *rel_variable_blocks_on_NVM;
+	/* relation tile information */
+	int  *rel_attr_to_tile_map;
+	List *rel_tile_to_attrs_map;
+} RelInfoData;
+typedef RelInfoData* RelInfo;
 
-	/* column groups */
-	int  *rel_attr_group;
-	List *rel_column_groups;
-} RelBlockInfoData;
-typedef RelBlockInfoData* RelBlockInfo;
-
-/* RelBlock HTAB */
+///////////////////////////////////////////////////////////////////////////////
+// Relation Info Hash Table ( Relation -> Relation Info )
+///////////////////////////////////////////////////////////////////////////////
 
 /* Key for RelBlock Lookup Table */
-typedef struct RelBlockTag{
-	Oid       relid;
-} RelBlockTag;
+typedef struct RelInfoTag{
+	Oid       rel_id;
+} RelInfoTag;
 
 /* Entry for RelBlock Lookup Table */
 typedef struct RelBlockLookupEnt{
-	/*
-	  XXX Payload required to handle a weird hash function issue in dynahash.c;
-	  otherwise the keys don't collide
-	*/
+	// XXX Payload required to handle a hash function issue in dynahash.c
 	int               payload;
-
 	int               pid;
-	RelBlockInfo      rel_block_info;
-} RelBlockLookupEnt;
+	RelInfo           rel_info;
+} RelInfoLookupEnt;
 
-extern HTAB *Shared_Rel_Block_Hash_Table;
+extern HTAB *Shared_Rel_Info_Hash_Table;
+
+///////////////////////////////////////////////////////////////////////////////
+// Variable Length Block
+///////////////////////////////////////////////////////////////////////////////
 
 /* Variable-length block header */
 typedef struct RelBlockVarlenHeaderData{
-
 	/* occupied status for the slot */
 	bool vb_slot_status;
-
 	/* length of the slot */
 	uint16 vb_slot_length;
-
 	/* length of the previous slot */
 	uint16 vb_prev_slot_length;
-
 } RelBlockVarlenHeaderData;
 typedef RelBlockVarlenHeaderData* RelBlockVarlenHeader;
 
 #define RELBLOCK_VARLEN_HEADER_SIZE     8   /* 8 bytes */
 
-typedef struct RelBlockLocation
+///////////////////////////////////////////////////////////////////////////////
+// Location
+///////////////////////////////////////////////////////////////////////////////
+
+typedef struct TupleLocation
 {
 	/* location of block */
 	RelBlock rb_location;
-
 	/* offset of slot within block (starts from 1) */
 	OffsetNumber rb_offset;
-
-} RelBlockLocation;
+} TupleLocation;
 
 /* relblock.c */
 extern void RelInitBlockTableEntry(Relation relation);
-extern List** GetRelBlockList(Relation relation, RelBlockBackend relblockbackend,
-							  RelBlockType relblocktype);
+extern List** GetRelBlockList(Relation relation, RelBlockType relblocktype);
 
 extern Oid  RelBlockInsertTuple(Relation relation, HeapTuple tup, CommandId cid,
 								int options, BulkInsertState bistate);
@@ -157,20 +158,18 @@ extern Oid  RelBlockInsertTuple(Relation relation, HeapTuple tup, CommandId cid,
 extern Size RelBlockTableShmemSize(Size size);
 extern void InitRelBlockTable(Size size);
 
-extern uint32 RelBlockTableHashCode(RelBlockTag *tagPtr);
-extern RelBlockLookupEnt *RelBlockTableLookup(RelBlockTag *tagPtr, uint32 hashcode);
-extern int	RelBlockTableInsert(RelBlockTag *tagPtr, uint32 hashcode,
-								RelBlockInfo relblockinfo);
-extern void RelBlockTableDelete(RelBlockTag *tagPtr, uint32 hashcode);
+extern uint32 RelBlockTableHashCode(RelInfoTag *tagPtr);
+extern RelInfoLookupEnt *RelBlockTableLookup(RelInfoTag *tagPtr, uint32 hashcode);
+extern int	RelBlockTableInsert(RelInfoTag *tagPtr, uint32 hashcode,
+								RelInfo relblockinfo);
+extern void RelBlockTableDelete(RelInfoTag *tagPtr, uint32 hashcode);
 extern void RelBlockTablePrint();
 
 /* relblock_fixed.c */
-extern RelBlockLocation GetFixedLengthSlot(Relation relation, RelBlockBackend relblockbackend);
+extern TupleLocation GetFixedLengthSlot(Relation relation);
 
 /* relblock_varlen.c */
-extern void *GetVariableLengthSlot(Relation relation, RelBlockBackend relblockbackend,
-								   Size allocation_size);
-extern void  ReleaseVariableLengthSlot(Relation relation, RelBlockBackend relblockbackend,
-									   void *location);
+extern void *GetVariableLengthSlot(Relation relation, Size allocation_size);
+extern void  ReleaseVariableLengthSlot(Relation relation, void *location);
 
 #endif   /* RELBLOCK_H */

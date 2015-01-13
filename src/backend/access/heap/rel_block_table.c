@@ -18,14 +18,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-HTAB *Shared_Rel_Block_Hash_Table = NULL;
+HTAB *Shared_Rel_Info_Hash_Table = NULL;
 
 /*
  * Estimate space needed for mapping hashtable
  */
 Size RelBlockTableShmemSize(Size size)
 {
-	return hash_estimate_size(size, sizeof(RelBlockLookupEnt));
+	return hash_estimate_size(size, sizeof(RelInfoLookupEnt));
 }
 
 /*
@@ -38,10 +38,10 @@ void InitRelBlockTable(Size size)
 	//elog(WARNING, "RelBlockInfoTable INIT");
 
 	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
-	hash_ctl.keysize = sizeof(RelBlockTag);
-	hash_ctl.entrysize = sizeof(RelBlockLookupEnt);
+	hash_ctl.keysize = sizeof(RelInfoTag);
+	hash_ctl.entrysize = sizeof(RelInfoLookupEnt);
 
-	Shared_Rel_Block_Hash_Table = ShmemInitHash("Shared RelBlock Lookup Table",
+	Shared_Rel_Info_Hash_Table = ShmemInitHash("Shared RelBlock Lookup Table",
 												size, size,
 												&hash_ctl,
 												HASH_ELEM | HASH_BLOBS);
@@ -58,21 +58,21 @@ void InitRelBlockTable(Size size)
  * in order to determine which buffer partition to lock, and we don't want
  * to do the hash computation twice (hash_any is a bit slow).
  */
-uint32 RelBlockTableHashCode(RelBlockTag *tagPtr)
+uint32 RelBlockTableHashCode(RelInfoTag *tagPtr)
 {
-	return get_hash_value(Shared_Rel_Block_Hash_Table, (void *) tagPtr);
+	return get_hash_value(Shared_Rel_Info_Hash_Table, (void *) tagPtr);
 }
 
 /*
  * RelBlockTableLookup
  *		Lookup the given RelBlockTag; return RelBlockLookupEnt, or NULL if not found
  */
-RelBlockLookupEnt * RelBlockTableLookup(RelBlockTag *tagPtr, uint32 hashcode)
+RelInfoLookupEnt * RelBlockTableLookup(RelInfoTag *tagPtr, uint32 hashcode)
 {
-	RelBlockLookupEnt *result;
+	RelInfoLookupEnt *result;
 
-	result = (RelBlockLookupEnt *)
-		hash_search_with_hash_value(Shared_Rel_Block_Hash_Table,
+	result = (RelInfoLookupEnt *)
+		hash_search_with_hash_value(Shared_Rel_Info_Hash_Table,
 									(void *) tagPtr,
 									hashcode,
 									HASH_FIND,
@@ -92,14 +92,14 @@ RelBlockLookupEnt * RelBlockTableLookup(RelBlockTag *tagPtr, uint32 hashcode)
  * Returns 0 on successful insertion.  If a conflicting entry exists
  * already, -1.
  */
-int RelBlockTableInsert(RelBlockTag *tagPtr, uint32 hashcode,
-						RelBlockInfo relblockinfo)
+int RelBlockTableInsert(RelInfoTag *tagPtr, uint32 hashcode,
+						RelInfo relblockinfo)
 {
-	RelBlockLookupEnt *result;
+	RelInfoLookupEnt *result;
 	bool		found;
 
-	result = (RelBlockLookupEnt *)
-		hash_search_with_hash_value(Shared_Rel_Block_Hash_Table,
+	result = (RelInfoLookupEnt *)
+		hash_search_with_hash_value(Shared_Rel_Info_Hash_Table,
 									(void *) tagPtr,
 									hashcode,
 									HASH_ENTER,
@@ -109,7 +109,7 @@ int RelBlockTableInsert(RelBlockTag *tagPtr, uint32 hashcode,
 		return -1;
 
 	result->pid = getpid();
-	result->rel_block_info = relblockinfo;
+	result->rel_info = relblockinfo;
 
 	return 0;
 }
@@ -118,19 +118,19 @@ int RelBlockTableInsert(RelBlockTag *tagPtr, uint32 hashcode,
  * RelBlockTableDelete
  *		Delete the hashtable entry for given tag (which must exist)
  */
-void RelBlockTableDelete(RelBlockTag *tagPtr, uint32 hashcode)
+void RelBlockTableDelete(RelInfoTag *tagPtr, uint32 hashcode)
 {
-	RelBlockLookupEnt *result;
+	RelInfoLookupEnt *result;
 
-	result = (RelBlockLookupEnt *)
-		hash_search_with_hash_value(Shared_Rel_Block_Hash_Table,
+	result = (RelInfoLookupEnt *)
+		hash_search_with_hash_value(Shared_Rel_Info_Hash_Table,
 									(void *) tagPtr,
 									hashcode,
 									HASH_REMOVE,
 									NULL);
 
 	if (!result)				/* shouldn't happen */
-		elog(ERROR, "shared relblock hash table corrupted");
+		elog(ERROR, "shared rel info hash table corrupted");
 }
 
 /*
@@ -140,22 +140,22 @@ void RelBlockTableDelete(RelBlockTag *tagPtr, uint32 hashcode)
 void RelBlockTablePrint()
 {
 	HASH_SEQ_STATUS status;
-	RelBlockLookupEnt *entry;
+	RelInfoLookupEnt *entry;
 
-	hash_seq_init(&status, Shared_Rel_Block_Hash_Table);
+	hash_seq_init(&status, Shared_Rel_Info_Hash_Table);
 
 	elog(WARNING, "--------------------------------------------------------------");
-	while ((entry = (RelBlockLookupEnt *) hash_seq_search(&status)) != NULL)
+	while ((entry = (RelInfoLookupEnt *) hash_seq_search(&status)) != NULL)
 	{
-		if(entry->rel_block_info != NULL)
+		if(entry->rel_info != NULL)
 		{
-			elog(WARNING, "RelBlockEntry :: relid : %d pid : %d relblockinfo : %p",
-				 entry->rel_block_info->rel_id, entry->pid, entry->rel_block_info);
+			elog(WARNING, "RelBlockEntry :: relid : %d pid : %d rel_info : %p",
+				 entry->rel_info->rel_id, entry->pid, entry->rel_info);
 		}
 		else
 		{
-			elog(WARNING, "RelBlockEntry :: pid : %d relblockinfo : %p",
-				 entry->pid, entry->rel_block_info);
+			elog(WARNING, "RelBlockEntry :: pid : %d rel_info : %p",
+				 entry->pid, entry->rel_info);
 		}
 	}
 	elog(WARNING, "--------------------------------------------------------------");

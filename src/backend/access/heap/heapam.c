@@ -137,7 +137,7 @@ typedef struct f_heapam
 } f_heapam;
 
 static const f_heapam f_heapam_backends[] = {
-	/* file system */
+	/* FS */
 	{ fs_relation_open, fs_try_relation_open, fs_relation_openrv,
 	  fs_relation_openrv_extended, fs_relation_close, fs_heap_open,
 	  fs_heap_openrv, fs_heap_openrv_extended, fs_heap_beginscan,
@@ -152,20 +152,20 @@ static const f_heapam f_heapam_backends[] = {
 	  fs_heap_page_prune_execute, fs_heap_get_root_tuples, fs_ss_report_location,
 	  fs_ss_get_location, fs_SyncScanShmemInit, fs_SyncScanShmemSize
 	},
-	/* VM */
-	{ vm_relation_open, vm_try_relation_open, vm_relation_openrv,
-	  vm_relation_openrv_extended, vm_relation_close, vm_heap_open,
-	  vm_heap_openrv, vm_heap_openrv_extended, vm_heap_beginscan,
-	  vm_heap_beginscan_catalog, vm_heap_beginscan_strat, vm_heap_beginscan_bm,
-	  vm_heap_setscanlimits, vm_heap_rescan, vm_heap_endscan, vm_heap_getnext,
-	  vm_heap_fetch, vm_heap_hot_search_buffer, vm_heap_hot_search,
-	  vm_heap_get_latest_tid, vm_GetBulkInsertState, vm_FreeBulkInsertState,
-	  vm_heap_insert, vm_heap_multi_insert, vm_heap_delete, vm_heap_update,
-	  vm_heap_lock_tuple, vm_heap_inplace_update, vm_heap_freeze_tuple,
-	  vm_heap_tuple_needs_freeze, vm_simple_heap_insert, vm_simple_heap_delete,
-	  vm_simple_heap_update, vm_heap_sync, vm_heap_page_prune_opt, vm_heap_page_prune,
-	  vm_heap_page_prune_execute, vm_heap_get_root_tuples, vm_ss_report_location,
-	  vm_ss_get_location, vm_SyncScanShmemInit, vm_SyncScanShmemSize
+	/* MM */
+	{ mm_relation_open, mm_try_relation_open, mm_relation_openrv,
+	  mm_relation_openrv_extended, mm_relation_close, mm_heap_open,
+	  mm_heap_openrv, mm_heap_openrv_extended, mm_heap_beginscan,
+	  mm_heap_beginscan_catalog, mm_heap_beginscan_strat, mm_heap_beginscan_bm,
+	  mm_heap_setscanlimits, mm_heap_rescan, mm_heap_endscan, mm_heap_getnext,
+	  mm_heap_fetch, mm_heap_hot_search_buffer, mm_heap_hot_search,
+	  mm_heap_get_latest_tid, mm_GetBulkInsertState, mm_FreeBulkInsertState,
+	  mm_heap_insert, mm_heap_multi_insert, mm_heap_delete, mm_heap_update,
+	  mm_heap_lock_tuple, mm_heap_inplace_update, mm_heap_freeze_tuple,
+	  mm_heap_tuple_needs_freeze, mm_simple_heap_insert, mm_simple_heap_delete,
+	  mm_simple_heap_update, mm_heap_sync, mm_heap_page_prune_opt, mm_heap_page_prune,
+	  mm_heap_page_prune_execute, mm_heap_get_root_tuples, mm_ss_report_location,
+	  mm_ss_get_location, mm_SyncScanShmemInit, mm_SyncScanShmemSize
 	}
 };
 

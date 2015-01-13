@@ -2405,9 +2405,9 @@ RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 {
 	BlockNumber numBlks;
 
-	if(relation->rd_storage_backend == STORAGE_BACKEND_VM)
+	if(relation->rd_storage_backend == STORAGE_BACKEND_MM)
 	{
-		numBlks = vm_nblocks(relation);
+		numBlks = mm_nblocks(relation);
 	}
 	else
 	{

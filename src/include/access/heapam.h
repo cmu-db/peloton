@@ -83,7 +83,7 @@ typedef struct HeapScanDescData *HeapScanDesc;
 
 /* Backend implementations */
 #include "access/heap_fs.h"
-#include "access/heap_vm.h"
+#include "access/heap_mm.h"
 
 /* ----------------
  *		function prototypes for heap access method

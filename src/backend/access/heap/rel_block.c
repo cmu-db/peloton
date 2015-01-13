@@ -34,10 +34,9 @@
 void PrintTuple(HeapTuple tup, TupleDesc tupdesc);
 void PrintTupleDesc(TupleDesc tupdesc);
 Size ComputeTupleLen(Relation relation);
-void ComputeTiles(Relation relation, RelBlockInfo relblockinfo);
+void ComputeTiles(Relation relation, RelInfo relblockinfo);
 
-void PrintRelBlockList(Relation relation, RelBlockBackend relblockbackend,
-					   RelBlockType relblocktype);
+void PrintRelBlockList(Relation relation, RelBlockType relblocktype);
 void PrintAllRelBlocks(Relation relation);
 
 void RelBlockPutHeapTuple(Relation relation, HeapTuple heaptup);
@@ -109,30 +108,19 @@ void ConvertToScalar(Datum value, Oid valuetypid)
 
 }
 
-List** GetRelBlockList(Relation relation, RelBlockBackend relblockbackend,
-					   RelBlockType relblocktype)
+List** GetRelBlockList(Relation relation, RelBlockType relblocktype)
 {
 	List       **block_list_ptr = NULL;
 
 	// Pick relevant list based on backend and block type
-	if(relblockbackend == STORAGE_BACKEND_VM)
-	{
-		if(relblocktype == RELATION_FIXED_BLOCK_TYPE)
-			block_list_ptr = &relation->rd_relblock_info->rel_fixed_blocks_on_VM;
-		else if(relblocktype == RELATION_VARIABLE_BLOCK_TYPE)
-			block_list_ptr = &relation->rd_relblock_info->rel_variable_blocks_on_VM;
-	}
-	else if(relblockbackend == STORAGE_BACKEND_NVM)
-	{
-		if(relblocktype == RELATION_FIXED_BLOCK_TYPE)
-			block_list_ptr = &relation->rd_relblock_info->rel_fixed_blocks_on_NVM;
-		else if(relblocktype == RELATION_VARIABLE_BLOCK_TYPE)
-			block_list_ptr = &relation->rd_relblock_info->rel_variable_blocks_on_NVM;
-	}
+	if(relblocktype == RELATION_FIXED_BLOCK_TYPE)
+		block_list_ptr = &relation->rd_relblock_info->rel_fixed_length_blocks;
+	else if(relblocktype == RELATION_VARIABLE_BLOCK_TYPE)
+		block_list_ptr = &relation->rd_relblock_info->rel_variable_length_blocks;
 
 	if(block_list_ptr == NULL)
 	{
-		elog(ERROR, "blockListPtr must not be %p", block_list_ptr);
+		elog(ERROR, "block_list_ptr must not be %p", block_list_ptr);
 	}
 
 	return block_list_ptr;
@@ -203,7 +191,7 @@ Size ComputeTupleLen(Relation relation)
 	return tup_len;
 }
 
-void ComputeTiles(Relation relation, RelBlockInfo relblockinfo)
+void ComputeTiles(Relation relation, RelInfo relblockinfo)
 {
 	int      *rel_attr_group = NULL;
 	int       num_tiles = -1;
@@ -263,7 +251,7 @@ void ComputeTiles(Relation relation, RelBlockInfo relblockinfo)
 			tile_size = attr_size;
 			tile_start_attr_id = attr_itr;
 
-			relblockinfo->rel_column_groups = lappend(relblockinfo->rel_column_groups, rel_tile);
+			relblockinfo->rel_tile_to_attrs_map = lappend(relblockinfo->rel_tile_to_attrs_map, rel_tile);
 		}
 
 		rel_attr_group[attr_itr] = tile_id;
@@ -276,26 +264,26 @@ void ComputeTiles(Relation relation, RelBlockInfo relblockinfo)
 	rel_tile->tile_id = tile_id;
 	rel_tile->tile_size = tile_size;
 	rel_tile->tile_start_attr_id = tile_start_attr_id;
-	relblockinfo->rel_column_groups = lappend(relblockinfo->rel_column_groups, rel_tile);
+	relblockinfo->rel_tile_to_attrs_map = lappend(relblockinfo->rel_tile_to_attrs_map, rel_tile);
 
-	relblockinfo->rel_attr_group = rel_attr_group;
+	relblockinfo->rel_attr_to_tile_map = rel_attr_group;
 
 }
 
 void RelInitBlockTableEntry(Relation relation)
 {
-	RelBlockTag        rel_block_tag;
-	RelBlockLookupEnt *entry;
+	RelInfoTag        rel_block_tag;
+	RelInfoLookupEnt *entry;
 	Oid                rel_id;
 	uint32             hash_value;
-	RelBlockInfo       rel_block_info;
+	RelInfo       rel_block_info;
 	MemoryContext      oldcxt;
 	int                ret_id;
 	Size               tup_len;
 
 	// key
 	rel_id = RelationGetRelid(relation);
-	rel_block_tag.relid = rel_id;
+	rel_block_tag.rel_id = rel_id;
 	hash_value = RelBlockTableHashCode(&rel_block_tag);
 
 	entry = RelBlockTableLookup(&rel_block_tag, hash_value);
@@ -304,13 +292,13 @@ void RelInitBlockTableEntry(Relation relation)
 	{
 		elog(WARNING, "InitBlockTableEntry :: entry already exists %p", entry);
 
-		if(entry->rel_block_info == NULL)
+		if(entry->rel_info == NULL)
 		{
-			elog(ERROR, "relblockinfo should not be %p", entry->rel_block_info);
+			elog(ERROR, "relblockinfo should not be %p", entry->rel_info);
 		}
 
 		// cache value in relation
-		relation->rd_relblock_info = entry->rel_block_info;
+		relation->rd_relblock_info = entry->rel_info;
 	}
 	else
 	{
@@ -322,7 +310,7 @@ void RelInitBlockTableEntry(Relation relation)
 		tup_len = ComputeTupleLen(relation);
 		//elog(WARNING, "tuplen : %zd", tuplen);
 
-		rel_block_info = (RelBlockInfo) palloc(sizeof(RelBlockInfoData));
+		rel_block_info = (RelInfo) palloc(sizeof(RelInfoData));
 		rel_block_info->rel_id = rel_id;
 		rel_block_info->rel_tuple_len = tup_len;
 
@@ -342,17 +330,16 @@ void RelInitBlockTableEntry(Relation relation)
 	}
 }
 
-void PrintRelBlockList(Relation relation, RelBlockBackend relblockbackend,
-					   RelBlockType relblocktype)
+void PrintRelBlockList(Relation relation, RelBlockType relblocktype)
 {
 	List       **block_list_ptr = NULL;
 	List        *block_list = NULL;
 	ListCell    *l = NULL;
 
-	block_list_ptr = GetRelBlockList(relation, relblockbackend, relblocktype);
+	block_list_ptr = GetRelBlockList(relation, relblocktype);
 	block_list = *block_list_ptr;
 
-	elog(WARNING, "PR BLOCK :: Backend : %d Type : %d List : %p", relblockbackend, relblocktype, block_list);
+	elog(WARNING, "PR BLOCK :: Type : %d List : %p", relblocktype, block_list);
 
 	foreach (l, block_list)
 	{
@@ -370,7 +357,7 @@ void PrintAllRelBlocks(Relation relation)
 	elog(WARNING, "PID :: %d", getpid());
 	elog(WARNING, "ALL_BLOCKS :: relation :: %d %s", RelationGetRelid(relation),
 		 RelationGetRelationName(relation));
-	PrintRelBlockList(relation, STORAGE_BACKEND_VM, RELATION_FIXED_BLOCK_TYPE);
+	PrintRelBlockList(relation, RELATION_FIXED_BLOCK_TYPE);
 	elog(WARNING, "--------------------------------------------\n");
 }
 
@@ -408,9 +395,9 @@ void RelBlockPutHeapTuple(Relation relation, HeapTuple tuple)
 	bool		slow = false;			/* can we use/set attcacheoff? */
 	Datum       value;
 
-	RelBlockLocation  slot;
+	TupleLocation  slot;
 	RelBlock          rel_block;
-	RelBlockInfo      rel_block_info;
+	RelInfo      rel_block_info;
 	OffsetNumber      rel_block_itr;
 	int               rel_block_offset;
 
@@ -424,7 +411,7 @@ void RelBlockPutHeapTuple(Relation relation, HeapTuple tuple)
 	Size       val_str_len = 0;
 
 	// Find free slot for fixed-length fields
-	slot = GetFixedLengthSlot(relation, STORAGE_BACKEND_VM);
+	slot = GetFixedLengthSlot(relation);
 
 	rel_block = slot.rb_location;
 	rel_block_itr = slot.rb_offset;
@@ -446,12 +433,12 @@ void RelBlockPutHeapTuple(Relation relation, HeapTuple tuple)
 		att_len = thisatt->attlen;
 
 		// Find relevant column group
-		tile_id = rel_block_info->rel_attr_group[attnum];
+		tile_id = rel_block_info->rel_attr_to_tile_map[attnum];
 
 		if(tile_id != prev_tile_id)
 		{
 			prev_tile_id = tile_id;
-			rel_tile = list_nth(rel_block_info->rel_column_groups, tile_id);
+			rel_tile = list_nth(rel_block_info->rel_tile_to_attrs_map, tile_id);
 			tile_size = rel_tile->tile_size;
 			tile_location = list_nth(rel_block->rb_tile_locations, tile_id);
 			tile_tuple_offset = 0;
@@ -516,7 +503,7 @@ void RelBlockPutHeapTuple(Relation relation, HeapTuple tuple)
 			val_str_len = strlen(tp + off) + 1;
 
 			// Find free slot for variable-length fields
-			varlena_location = GetVariableLengthSlot(relation, STORAGE_BACKEND_VM, val_str_len);
+			varlena_location = GetVariableLengthSlot(relation, val_str_len);
 			memcpy(varlena_location, tp + off, val_str_len);
 
 			// Store varlena pointer in slot

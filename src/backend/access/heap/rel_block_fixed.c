@@ -21,38 +21,34 @@
 #include "storage/bufmgr.h"
 
 // Internal helper functions
-RelBlock RelAllocateFixedLengthBlock(Relation relation,
-									 RelBlockBackend relblockbackend);
+RelBlock RelAllocateFixedLengthBlock(Relation relation);
 
-RelBlock GetFixedLengthBlockWithFreeSlot(Relation relation,
-										 RelBlockBackend relblockbackend);
+RelBlock GetFixedLengthBlockWithFreeSlot(Relation relation);
 
 OffsetNumber GetFixedLengthSlotInBlock(RelBlock relblock);
 bool ReleaseFixedLengthSlotInBlock(RelBlock relblock, OffsetNumber slot_id);
 
-RelBlock RelAllocateFixedLengthBlock(Relation relation,
-									 RelBlockBackend relblockbackend)
+RelBlock RelAllocateFixedLengthBlock(Relation relation)
 {
 	MemoryContext oldcxt;
 	RelBlock     rel_block = NULL;
-	RelBlockInfo rel_block_info = NULL;
+	RelInfo      rel_info = NULL;
 	RelTile      rel_tile = NULL;
 	Size         tile_size = -1;
 	Size         tile_tup_size = -1;
 	List         *rel_tiles;
 	void         *tile_data = NULL;
-	List         **block_list = NULL;
+	List         **block_list_ptr = NULL;
 	ListCell     *l = NULL;
 
-	rel_block_info = relation->rd_relblock_info;
-	rel_tiles = rel_block_info->rel_column_groups;
+	rel_info = relation->rd_relblock_info;
+	rel_tiles = rel_info->rel_tile_to_attrs_map;
 
 	// Allocate block in TSM context
 	oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
 
 	rel_block = (RelBlock) palloc(sizeof(RelBlockData));
 	rel_block->rb_type = RELATION_FIXED_BLOCK_TYPE;
-	rel_block->rb_backend = relblockbackend;
 
 	// bitmap tracking slot status
 	rel_block->rb_slot_bitmap = (bool *) palloc0(NUM_REL_BLOCK_ENTRIES);
@@ -73,16 +69,15 @@ RelBlock RelAllocateFixedLengthBlock(Relation relation,
 
 		elog(WARNING, "CG size : %zd location : %p", tile_size, tile_data);
 
-		// Append cg block to cg locations
+		// Append tile to fixed-length block
 		rel_block->rb_tile_locations = lappend(rel_block->rb_tile_locations, tile_data);
 	}
 
-	elog(WARNING, "RelationBlock Size : %zd Backend : %d Type : %d", rel_block->rb_size,
-		 rel_block->rb_backend, rel_block->rb_type);
+	elog(WARNING, "RelationBlock Size : %zd Type : %d", rel_block->rb_size,
+		 rel_block->rb_type);
 
-	block_list = GetRelBlockList(relation, relblockbackend, RELATION_FIXED_BLOCK_TYPE);
-
-	*block_list = lappend(*block_list, rel_block);
+	block_list_ptr = GetRelBlockList(relation, RELATION_FIXED_BLOCK_TYPE);
+	*block_list_ptr = lappend(*block_list_ptr, rel_block);
 
 	RelBlockTablePrint();
 
@@ -144,8 +139,7 @@ bool ReleaseFixedLengthSlotInBlock(RelBlock relblock, OffsetNumber slot_id)
 }
 
 
-RelBlock GetFixedLengthBlockWithFreeSlot(Relation relation,
-										 RelBlockBackend relblockbackend)
+RelBlock GetFixedLengthBlockWithFreeSlot(Relation relation)
 {
 	List       **block_list_ptr = NULL;
 	List        *block_list = NULL;
@@ -153,12 +147,12 @@ RelBlock GetFixedLengthBlockWithFreeSlot(Relation relation,
 	RelBlock    rel_block = NULL;
 	bool        block_found;
 
-	block_list_ptr = GetRelBlockList(relation, relblockbackend, RELATION_FIXED_BLOCK_TYPE);
+	block_list_ptr = GetRelBlockList(relation, RELATION_FIXED_BLOCK_TYPE);
 
 	/* empty block list */
 	if(*block_list_ptr == NULL)
 	{
-		rel_block = RelAllocateFixedLengthBlock(relation, relblockbackend);
+		rel_block = RelAllocateFixedLengthBlock(relation);
 	}
 	else
 	{
@@ -179,20 +173,20 @@ RelBlock GetFixedLengthBlockWithFreeSlot(Relation relation,
 
 		if(block_found == false)
 		{
-			rel_block = RelAllocateFixedLengthBlock(relation, relblockbackend);
+			rel_block = RelAllocateFixedLengthBlock(relation);
 		}
 	}
 
 	return rel_block;
 }
 
-RelBlockLocation GetFixedLengthSlot(Relation relation, RelBlockBackend relblockbackend)
+TupleLocation GetFixedLengthSlot(Relation relation)
 {
 	OffsetNumber     relblock_offset = InvalidOffsetNumber;
 	RelBlock         rel_block = NULL;
-	RelBlockLocation location;
+	TupleLocation location;
 
-	rel_block = GetFixedLengthBlockWithFreeSlot(relation, relblockbackend);
+	rel_block = GetFixedLengthBlockWithFreeSlot(relation);
 
 	relblock_offset = GetFixedLengthSlotInBlock(rel_block);
 

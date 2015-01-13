@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * heap_vm.c
+ * heap_mm.c
  *	  heap backend for memory
  *
  *
  * IDENTIFICATION
- *	  src/backend/access/heap/heap_vm.c
+ *	  src/backend/access/heap/heap_mm.c
  *
  *
  * NOTES
@@ -25,80 +25,78 @@
 #include "utils/snapmgr.h"
 #include "access/heapam.h"
 
-void vm_relation_allocate(Relation rd)
+void mm_relation_allocate(Relation rd)
 {
 	RelInitBlockTableEntry(rd);
 }
 
-BlockNumber vm_nblocks(Relation rd)
+BlockNumber mm_nblocks(Relation rd)
 {
 	BlockNumber num_blocks = 0;
-	RelBlockInfo rel_block_info;
+	RelInfo rel_block_info;
 
 	rel_block_info = rd->rd_relblock_info;
 
 	if(rel_block_info != NULL)
 	{
-		// Count blocks on VM and NVM
-		num_blocks += list_length(rel_block_info->rel_fixed_blocks_on_VM);
-		num_blocks += list_length(rel_block_info->rel_fixed_blocks_on_NVM);
+		num_blocks = list_length(rel_block_info->rel_fixed_length_blocks);
 	}
 
-	elog(WARNING, "vm_nbocks : %d", num_blocks);
+	elog(WARNING, "mm_nbocks : %d", num_blocks);
 
 	return num_blocks;
 }
 
-Relation vm_relation_open(Oid relationId, LOCKMODE lockmode)
+Relation mm_relation_open(Oid relationId, LOCKMODE lockmode)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 	return NULL;
 }
 
-Relation vm_try_relation_open(Oid relationId, LOCKMODE lockmode)
+Relation mm_try_relation_open(Oid relationId, LOCKMODE lockmode)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 	return NULL;
 }
 
-Relation vm_relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
+Relation mm_relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 	return NULL;
 }
 
-Relation vm_relation_openrv_extended(const RangeVar *relation,
+Relation mm_relation_openrv_extended(const RangeVar *relation,
 									 LOCKMODE lockmode, bool missing_ok)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 	return NULL;
 }
 
-void vm_relation_close(Relation relation, LOCKMODE lockmode)
+void mm_relation_close(Relation relation, LOCKMODE lockmode)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
-Relation vm_heap_open(Oid relationId, LOCKMODE lockmode)
-{
-	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
-	return NULL;
-}
-
-Relation vm_heap_openrv(const RangeVar *relation, LOCKMODE lockmode)
+Relation mm_heap_open(Oid relationId, LOCKMODE lockmode)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 	return NULL;
 }
 
-Relation vm_heap_openrv_extended(const RangeVar *relation,
+Relation mm_heap_openrv(const RangeVar *relation, LOCKMODE lockmode)
+{
+	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
+	return NULL;
+}
+
+Relation mm_heap_openrv_extended(const RangeVar *relation,
 								 LOCKMODE lockmode, bool missing_ok)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 	return NULL;
 }
 
-HeapScanDesc vm_heap_beginscan(Relation relation, Snapshot snapshot,
+HeapScanDesc mm_heap_beginscan(Relation relation, Snapshot snapshot,
 							   int nkeys, ScanKey key)
 {
 	elog(WARNING, "BEGIN SCAN :: %s", RelationGetRelationName(relation));
@@ -110,7 +108,7 @@ HeapScanDesc vm_heap_beginscan(Relation relation, Snapshot snapshot,
 
 // SCAN
 
-HeapScanDesc vm_heap_beginscan_catalog(Relation relation, int nkeys,
+HeapScanDesc mm_heap_beginscan_catalog(Relation relation, int nkeys,
 									   ScanKey key)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
@@ -118,7 +116,7 @@ HeapScanDesc vm_heap_beginscan_catalog(Relation relation, int nkeys,
 }
 
 
-HeapScanDesc vm_heap_beginscan_strat(Relation relation, Snapshot snapshot,
+HeapScanDesc mm_heap_beginscan_strat(Relation relation, Snapshot snapshot,
 									 int nkeys, ScanKey key,
 									 bool allow_strat, bool allow_sync)
 {
@@ -127,7 +125,7 @@ HeapScanDesc vm_heap_beginscan_strat(Relation relation, Snapshot snapshot,
 }
 
 
-HeapScanDesc vm_heap_beginscan_bm(Relation relation, Snapshot snapshot,
+HeapScanDesc mm_heap_beginscan_bm(Relation relation, Snapshot snapshot,
 								  int nkeys, ScanKey key)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
@@ -135,14 +133,14 @@ HeapScanDesc vm_heap_beginscan_bm(Relation relation, Snapshot snapshot,
 }
 
 
-void vm_heap_setscanlimits(HeapScanDesc scan, BlockNumber startBlk,
+void mm_heap_setscanlimits(HeapScanDesc scan, BlockNumber startBlk,
 						   BlockNumber endBlk)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
 /* ----------------
- *		vm_heapgettup - fetch next heap tuple
+ *		mm_heapgettup - fetch next heap tuple
  *
  *		Initialize the scan if not already done; then advance to the next
  *		tuple as indicated by "dir"; return the next tuple in scan->rs_ctup,
@@ -151,7 +149,7 @@ void vm_heap_setscanlimits(HeapScanDesc scan, BlockNumber startBlk,
  * ----------------
  */
 static void
-vm_heapgettup(HeapScanDesc scan,
+mm_heapgettup(HeapScanDesc scan,
 			  ScanDirection dir,
 			  int nkeys,
 			  ScanKey key)
@@ -428,12 +426,12 @@ vm_heapgettup(HeapScanDesc scan,
 }
 
 
-void vm_heap_rescan(HeapScanDesc scan, ScanKey key)
+void mm_heap_rescan(HeapScanDesc scan, ScanKey key)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
-void vm_heap_endscan(HeapScanDesc scan)
+void mm_heap_endscan(HeapScanDesc scan)
 {
 /* Note: no locking manipulations needed */
 
@@ -475,12 +473,12 @@ void vm_heap_endscan(HeapScanDesc scan)
 
 #ifdef HEAPDEBUGALL
 #define HEAPDEBUG_1														\
-	elog(DEBUG2, "vm_heap_getnext([%s,nkeys=%d],dir=%d) called",		\
+	elog(DEBUG2, "mm_heap_getnext([%s,nkeys=%d],dir=%d) called",		\
 		 RelationGetRelationName(scan->rs_rd), scan->rs_nkeys, (int) direction)
 #define HEAPDEBUG_2									\
-	elog(DEBUG2, "vm_heap_getnext returning EOS")
+	elog(DEBUG2, "mm_heap_getnext returning EOS")
 #define HEAPDEBUG_3									\
-	elog(DEBUG2, "vm_heap_getnext returning tuple")
+	elog(DEBUG2, "mm_heap_getnext returning tuple")
 #else
 #define HEAPDEBUG_1
 #define HEAPDEBUG_2
@@ -488,7 +486,7 @@ void vm_heap_endscan(HeapScanDesc scan)
 #endif   /* !defined(HEAPDEBUGALL) */
 
 
-HeapTuple vm_heap_getnext(HeapScanDesc scan, ScanDirection direction)
+HeapTuple mm_heap_getnext(HeapScanDesc scan, ScanDirection direction)
 {
 	List       *selectVars;
 	ListCell   *l;
@@ -497,7 +495,7 @@ HeapTuple vm_heap_getnext(HeapScanDesc scan, ScanDirection direction)
 
 	HEAPDEBUG_1;				/* heap_getnext( info ) */
 
-	elog(WARNING, "vm_heapgettup");
+	elog(WARNING, "mm_heapgettup");
 	selectVars = scan->rs_selectVars;
 
 	foreach(l, selectVars)
@@ -506,7 +504,7 @@ HeapTuple vm_heap_getnext(HeapScanDesc scan, ScanDirection direction)
 		elog(WARNING, "attnum %d", attnum);
 	}
 
-	vm_heapgettup(scan, direction, scan->rs_nkeys, scan->rs_key);
+	mm_heapgettup(scan, direction, scan->rs_nkeys, scan->rs_key);
 
 
 	if (scan->rs_ctup.t_data == NULL)
@@ -526,7 +524,7 @@ HeapTuple vm_heap_getnext(HeapScanDesc scan, ScanDirection direction)
 	return &(scan->rs_ctup);
 }
 
-bool vm_heap_fetch(Relation relation, Snapshot snapshot,
+bool mm_heap_fetch(Relation relation, Snapshot snapshot,
 				   HeapTuple tuple, Buffer *userbuf, bool keep_buf,
 				   Relation stats_relation)
 {
@@ -535,7 +533,7 @@ bool vm_heap_fetch(Relation relation, Snapshot snapshot,
 }
 
 
-bool vm_heap_hot_search_buffer(ItemPointer tid, Relation relation,
+bool mm_heap_hot_search_buffer(ItemPointer tid, Relation relation,
 							   Buffer buffer, Snapshot snapshot, HeapTuple heapTuple,
 							   bool *all_dead, bool first_call)
 {
@@ -544,14 +542,14 @@ bool vm_heap_hot_search_buffer(ItemPointer tid, Relation relation,
 }
 
 
-bool vm_heap_hot_search(ItemPointer tid, Relation relation,
+bool mm_heap_hot_search(ItemPointer tid, Relation relation,
 						Snapshot snapshot, bool *all_dead)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 	return false;
 }
 
-void vm_heap_get_latest_tid(Relation relation, Snapshot snapshot,
+void mm_heap_get_latest_tid(Relation relation, Snapshot snapshot,
 							ItemPointer tid)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
@@ -559,18 +557,18 @@ void vm_heap_get_latest_tid(Relation relation, Snapshot snapshot,
 
 // INSERT
 
-BulkInsertState vm_GetBulkInsertState(void)
+BulkInsertState mm_GetBulkInsertState(void)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 	return NULL;
 }
 
-void vm_FreeBulkInsertState(BulkInsertState bistate)
+void mm_FreeBulkInsertState(BulkInsertState bistate)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
-Oid vm_heap_insert(Relation relation, HeapTuple tup, CommandId cid,
+Oid mm_heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 				   int options, BulkInsertState bistate)
 {
 	Oid ret_val;
@@ -580,7 +578,7 @@ Oid vm_heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	return ret_val;
 }
 
-void vm_heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
+void mm_heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 						  CommandId cid, int options, BulkInsertState bistate)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
@@ -588,7 +586,7 @@ void vm_heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 
 // DELETE
 
-HTSU_Result vm_heap_delete(Relation relation, ItemPointer tid,
+HTSU_Result mm_heap_delete(Relation relation, ItemPointer tid,
 						   CommandId cid, Snapshot crosscheck, bool wait,
 						   HeapUpdateFailureData *hufd)
 {
@@ -598,7 +596,7 @@ HTSU_Result vm_heap_delete(Relation relation, ItemPointer tid,
 
 // UPDATE
 
-HTSU_Result vm_heap_update(Relation relation, ItemPointer otid,
+HTSU_Result mm_heap_update(Relation relation, ItemPointer otid,
 						   HeapTuple newtup,
 						   CommandId cid, Snapshot crosscheck, bool wait,
 						   HeapUpdateFailureData *hufd, LockTupleMode *lockmode)
@@ -609,7 +607,7 @@ HTSU_Result vm_heap_update(Relation relation, ItemPointer otid,
 
 // LOCK
 
-HTSU_Result vm_heap_lock_tuple(Relation relation, HeapTuple tuple,
+HTSU_Result mm_heap_lock_tuple(Relation relation, HeapTuple tuple,
 							   CommandId cid, LockTupleMode mode, LockWaitPolicy wait_policy,
 							   bool follow_update,
 							   Buffer *buffer, HeapUpdateFailureData *hufd)
@@ -619,21 +617,21 @@ HTSU_Result vm_heap_lock_tuple(Relation relation, HeapTuple tuple,
 }
 
 
-void vm_heap_inplace_update(Relation relation, HeapTuple tuple)
+void mm_heap_inplace_update(Relation relation, HeapTuple tuple)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
 // FREEZE
 
-bool vm_heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
+bool mm_heap_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 						  TransactionId cutoff_multi)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 	return false;
 }
 
-bool vm_heap_tuple_needs_freeze(HeapTupleHeader tuple, TransactionId cutoff_xid,
+bool mm_heap_tuple_needs_freeze(HeapTupleHeader tuple, TransactionId cutoff_xid,
 								MultiXactId cutoff_multi, Buffer buf)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
@@ -642,18 +640,18 @@ bool vm_heap_tuple_needs_freeze(HeapTupleHeader tuple, TransactionId cutoff_xid,
 
 // WRAPPERS
 
-Oid	vm_simple_heap_insert(Relation relation, HeapTuple tup)
+Oid	mm_simple_heap_insert(Relation relation, HeapTuple tup)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 	return -1;
 }
 
-void vm_simple_heap_delete(Relation relation, ItemPointer tid)
+void mm_simple_heap_delete(Relation relation, ItemPointer tid)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
-void vm_simple_heap_update(Relation relation, ItemPointer otid,
+void mm_simple_heap_update(Relation relation, ItemPointer otid,
 						   HeapTuple tup)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
@@ -661,19 +659,19 @@ void vm_simple_heap_update(Relation relation, ItemPointer otid,
 
 // SYNC
 
-void vm_heap_sync(Relation relation)
+void mm_heap_sync(Relation relation)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
 // PAGE
 
-void vm_heap_page_prune_opt(Relation relation, Buffer buffer)
+void mm_heap_page_prune_opt(Relation relation, Buffer buffer)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
-int vm_heap_page_prune(Relation relation, Buffer buffer,
+int mm_heap_page_prune(Relation relation, Buffer buffer,
 					   TransactionId OldestXmin,
 					   bool report_stats, TransactionId *latestRemovedXid)
 {
@@ -681,7 +679,7 @@ int vm_heap_page_prune(Relation relation, Buffer buffer,
 	return -1;
 }
 
-void vm_heap_page_prune_execute(Buffer buffer,
+void mm_heap_page_prune_execute(Buffer buffer,
 								OffsetNumber *redirected, int nredirected,
 								OffsetNumber *nowdead, int ndead,
 								OffsetNumber *nowunused, int nunused)
@@ -689,30 +687,30 @@ void vm_heap_page_prune_execute(Buffer buffer,
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
-void vm_heap_get_root_tuples(Page page, OffsetNumber *root_offsets)
+void mm_heap_get_root_tuples(Page page, OffsetNumber *root_offsets)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
 // SYNC SCAN
 
-void vm_ss_report_location(Relation rel, BlockNumber location)
+void mm_ss_report_location(Relation rel, BlockNumber location)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
-BlockNumber vm_ss_get_location(Relation rel, BlockNumber relnblocks)
+BlockNumber mm_ss_get_location(Relation rel, BlockNumber relnblocks)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 	return -1;
 }
 
-void vm_SyncScanShmemInit(void)
+void mm_SyncScanShmemInit(void)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 }
 
-Size vm_SyncScanShmemSize(void)
+Size mm_SyncScanShmemSize(void)
 {
 	elog(ERROR, "%s %d %s : function not implemented", __FILE__, __LINE__, __func__);
 	return -1;

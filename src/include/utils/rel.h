@@ -186,10 +186,10 @@ typedef struct RelationData
 	struct PgStat_TableStatus *pgstat_info;		/* statistics collection area */
 
 	/* backend information */
-	RelBlockBackend rd_storage_backend;
+	RelBackend rd_storage_backend;
 
 	/* relation block info */
-	RelBlockInfo rd_relblock_info;
+	RelInfo rd_relblock_info;
 } RelationData;
 
 /*
