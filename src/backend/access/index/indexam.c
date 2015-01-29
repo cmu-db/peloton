@@ -509,9 +509,6 @@ index_fetch_heap(IndexScanDesc scan)
 	bool		all_dead = false;
 	bool		got_heap_tuple;
 
-	if(!IsCatalogRelation(scan->heapRelation))
-		elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(scan->heapRelation) );
-
 	/* We can skip the buffer-switching logic if we're in mid-HOT chain. */
 	if (!scan->xs_continue_hot)
 	{

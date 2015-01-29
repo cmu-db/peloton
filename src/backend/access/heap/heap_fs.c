@@ -1412,8 +1412,6 @@ fs_heap_fetch(Relation relation,
 	OffsetNumber offnum;
 	bool		valid;
 
-	elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
-
 	/*
 	 * Fetch and pin the appropriate page of the relation.
 	 */
@@ -1544,9 +1542,6 @@ fs_heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 	bool		at_chain_start;
 	bool		valid;
 	bool		skip;
-
-	if(!IsCatalogRelation(relation))
-		elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
 
 	/* If this is not the first call, previous call returned a (live!) tuple */
 	if (all_dead)
@@ -1685,9 +1680,6 @@ fs_heap_hot_search(ItemPointer tid, Relation relation, Snapshot snapshot,
 	bool		result;
 	Buffer		buffer;
 	HeapTupleData heapTuple;
-
-	if(!IsCatalogRelation(relation))
-		elog(WARNING, "%s %d [  %s ] : %s", __FILE__, __LINE__, __func__, RelationGetRelationName(relation) );
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
