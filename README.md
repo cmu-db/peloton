@@ -16,7 +16,6 @@ DBMS designed for non-volatile memory (NVM).
 ## Setup
         
 ```
-    ./bootstrap
     ./configure
     make
     make install
