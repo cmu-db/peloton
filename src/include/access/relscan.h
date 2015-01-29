@@ -18,6 +18,7 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/itup.h"
+#include "access/rel_block.h"
 #include "access/tupdesc.h"
 #include "nodes/execnodes.h"
 

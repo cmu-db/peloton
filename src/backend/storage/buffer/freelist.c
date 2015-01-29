@@ -17,7 +17,7 @@
 
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
-#include "access/relblock.h"
+#include "access/rel_block.h"
 
 /*
  * The shared freelist control information.

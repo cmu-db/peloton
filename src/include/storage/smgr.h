@@ -142,7 +142,4 @@ extern Datum smgrin(PG_FUNCTION_ARGS);
 extern Datum smgreq(PG_FUNCTION_ARGS);
 extern Datum smgrne(PG_FUNCTION_ARGS);
 
-/* relblock.c */
-extern BlockNumber vm_nblocks(Relation rd);
-
 #endif   /* SMGR_H */
