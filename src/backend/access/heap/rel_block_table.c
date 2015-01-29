@@ -14,7 +14,7 @@
  */
 #include "postgres.h"
 
-#include "access/relblock.h"
+#include "access/rel_block.h"
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -93,7 +93,7 @@ RelInfoLookupEnt * RelBlockTableLookup(RelInfoTag *tagPtr, uint32 hashcode)
  * already, -1.
  */
 int RelBlockTableInsert(RelInfoTag *tagPtr, uint32 hashcode,
-						RelInfo relblockinfo)
+						RelInfo rel_info)
 {
 	RelInfoLookupEnt *result;
 	bool		found;
@@ -109,7 +109,7 @@ int RelBlockTableInsert(RelInfoTag *tagPtr, uint32 hashcode,
 		return -1;
 
 	result->pid = getpid();
-	result->rel_info = relblockinfo;
+	result->rel_info = rel_info;
 
 	return 0;
 }

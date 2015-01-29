@@ -25,8 +25,8 @@ RelBlock RelAllocateFixedLengthBlock(Relation relation);
 
 RelBlock GetFixedLengthBlockWithFreeSlot(Relation relation);
 
-OffsetNumber GetFixedLengthSlotInBlock(RelBlock relblock);
-bool ReleaseFixedLengthSlotInBlock(RelBlock relblock, OffsetNumber slot_id);
+OffsetNumber GetFixedLengthSlotInBlock(RelBlock rel_block);
+bool ReleaseFixedLengthSlotInBlock(RelBlock rel_block, OffsetNumber slot_id);
 
 RelBlock RelAllocateFixedLengthBlock(Relation relation)
 {
@@ -86,16 +86,44 @@ RelBlock RelAllocateFixedLengthBlock(Relation relation)
 	return rel_block;
 }
 
-OffsetNumber GetFixedLengthSlotInBlock(RelBlock relblock)
+OffsetNumber GetNextTupleInBlock(RelBlock rel_block, OffsetNumber start)
+{
+	OffsetNumber  slot_itr = start;
+	int    slot_offset;
+	bool  *slot_bitmap = rel_block->rb_slot_bitmap;
+
+	if(start == InvalidOffsetNumber)
+		start = FirstOffsetNumber;
+
+	// Find next slot in block after start
+	for(; slot_itr <= NUM_REL_BLOCK_ENTRIES ; slot_itr++)
+	{
+		slot_offset = slot_itr - 1;
+		if(slot_bitmap[slot_offset] == true)
+			break;
+	}
+
+	elog(WARNING, "Slots :: block %p offset %d", rel_block, slot_itr);
+
+	if(slot_itr == NUM_REL_BLOCK_ENTRIES)
+	{
+		elog(WARNING, "No more slots in block %p", rel_block);
+		return InvalidOffsetNumber;
+	}
+
+	return slot_itr;
+}
+
+OffsetNumber GetFixedLengthSlotInBlock(RelBlock rel_block)
 {
 	OffsetNumber  slot_itr = InvalidOffsetNumber;
 	int    slot_offset;
-	int    free_slots = relblock->rb_free_slots ;
-	bool  *slot_bitmap = relblock->rb_slot_bitmap;
+	int    free_slots = rel_block->rb_free_slots ;
+	bool  *slot_bitmap = rel_block->rb_slot_bitmap;
 
 	if(free_slots == 0)
 	{
-		elog(ERROR, "No free slots in block %p", relblock);
+		elog(ERROR, "No free slots in block %p", rel_block);
 		return InvalidOffsetNumber;
 	}
 
@@ -106,23 +134,23 @@ OffsetNumber GetFixedLengthSlotInBlock(RelBlock relblock)
 		if(slot_bitmap[slot_offset] == false)
 		{
 			slot_bitmap[slot_offset] = true;
-			relblock->rb_free_slots -= 1;
+			rel_block->rb_free_slots -= 1;
 			break;
 		}
 	}
 
 	if(slot_itr == NUM_REL_BLOCK_ENTRIES)
 	{
-		elog(ERROR, "No free slots in block %p", relblock);
+		elog(ERROR, "No free slots in block %p", rel_block);
 		return InvalidOffsetNumber;
 	}
 
 	return slot_itr;
 }
 
-bool ReleaseFixedLengthSlotInBlock(RelBlock relblock, OffsetNumber slot_id)
+bool ReleaseFixedLengthSlotInBlock(RelBlock rel_block, OffsetNumber slot_id)
 {
-	bool  *slotmap = relblock->rb_slot_bitmap;
+	bool  *slotmap = rel_block->rb_slot_bitmap;
 	int   slot_offset = slot_id - 1;
 
 	// Check if id makes sense
@@ -131,7 +159,7 @@ bool ReleaseFixedLengthSlotInBlock(RelBlock relblock, OffsetNumber slot_id)
 
 	// Update bitmap and free slot counter
 	slotmap[slot_offset] = false;
-	relblock->rb_free_slots += 1;
+	rel_block->rb_free_slots += 1;
 
 	// XXX should we release the block if all slots are empty ?
 
@@ -182,16 +210,16 @@ RelBlock GetFixedLengthBlockWithFreeSlot(Relation relation)
 
 TupleLocation GetFixedLengthSlot(Relation relation)
 {
-	OffsetNumber     relblock_offset = InvalidOffsetNumber;
+	OffsetNumber     rel_block_offset = InvalidOffsetNumber;
 	RelBlock         rel_block = NULL;
 	TupleLocation location;
 
 	rel_block = GetFixedLengthBlockWithFreeSlot(relation);
 
-	relblock_offset = GetFixedLengthSlotInBlock(rel_block);
+	rel_block_offset = GetFixedLengthSlotInBlock(rel_block);
 
 	location.rb_location = rel_block;
-	location.rb_offset = relblock_offset;
+	location.rb_offset = rel_block_offset;
 
 	return location;
 }

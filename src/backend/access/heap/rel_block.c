@@ -34,13 +34,10 @@
 void PrintTuple(HeapTuple tup, TupleDesc tupdesc);
 void PrintTupleDesc(TupleDesc tupdesc);
 Size ComputeTupleLen(Relation relation);
-void ComputeTiles(Relation relation, RelInfo relblockinfo);
+void ComputeTiles(Relation relation, RelInfo rel_blockinfo);
 
-void PrintRelBlockList(Relation relation, RelBlockType relblocktype);
+void PrintRelBlockList(Relation relation, RelBlockType rel_blocktype);
 void PrintAllRelBlocks(Relation relation);
-
-void RelBlockPutHeapTuple(Relation relation, HeapTuple heaptup);
-HeapTuple RelBlockGetHeapTuple(RelBlock relblock, OffsetNumber offset);
 
 void ConvertToScalar(Datum value, Oid valuetypid);
 
@@ -108,14 +105,14 @@ void ConvertToScalar(Datum value, Oid valuetypid)
 
 }
 
-List** GetRelBlockList(Relation relation, RelBlockType relblocktype)
+List** GetRelBlockList(Relation relation, RelBlockType rel_blocktype)
 {
 	List       **block_list_ptr = NULL;
 
 	// Pick relevant list based on backend and block type
-	if(relblocktype == RELATION_FIXED_BLOCK_TYPE)
+	if(rel_blocktype == RELATION_FIXED_BLOCK_TYPE)
 		block_list_ptr = &relation->rd_rel_info->rel_fl_blocks;
-	else if(relblocktype == RELATION_VARIABLE_BLOCK_TYPE)
+	else if(rel_blocktype == RELATION_VARIABLE_BLOCK_TYPE)
 		block_list_ptr = &relation->rd_rel_info->rel_vl_blocks;
 
 	if(block_list_ptr == NULL)
@@ -191,7 +188,7 @@ Size ComputeTupleLen(Relation relation)
 	return tup_len;
 }
 
-void ComputeTiles(Relation relation, RelInfo relblockinfo)
+void ComputeTiles(Relation relation, RelInfo rel_blockinfo)
 {
 	int      *rel_attr_group = NULL;
 	int       num_tiles = -1;
@@ -203,7 +200,7 @@ void ComputeTiles(Relation relation, RelInfo relblockinfo)
 	TupleDesc tup_desc;
 	RelTile   rel_tile;
 
-	tuplen = relblockinfo->rel_tuple_len;
+	tuplen = rel_blockinfo->rel_tuple_len;
 	tup_desc = RelationGetDescr(relation);
 	nattrs = RelationGetNumberOfAttributes(relation);
 
@@ -220,7 +217,7 @@ void ComputeTiles(Relation relation, RelInfo relblockinfo)
 	tile_start_attr_id = 0;
 
 	// Go over all attributes splitting at cache-line granularity and
-	// record the column group information in the given relblockinfo structure
+	// record the column group information in the given rel_blockinfo structure
 	for(attr_itr = 0 ; attr_itr < nattrs ; attr_itr++)
 	{
 		Form_pg_attribute attr = tup_desc->attrs[attr_itr];
@@ -251,7 +248,7 @@ void ComputeTiles(Relation relation, RelInfo relblockinfo)
 			tile_size = attr_size;
 			tile_start_attr_id = attr_itr;
 
-			relblockinfo->rel_tile_to_attrs_map = lappend(relblockinfo->rel_tile_to_attrs_map, rel_tile);
+			rel_blockinfo->rel_tile_to_attrs_map = lappend(rel_blockinfo->rel_tile_to_attrs_map, rel_tile);
 		}
 
 		rel_attr_group[attr_itr] = tile_id;
@@ -264,9 +261,9 @@ void ComputeTiles(Relation relation, RelInfo relblockinfo)
 	rel_tile->tile_id = tile_id;
 	rel_tile->tile_size = tile_size;
 	rel_tile->tile_start_attr_id = tile_start_attr_id;
-	relblockinfo->rel_tile_to_attrs_map = lappend(relblockinfo->rel_tile_to_attrs_map, rel_tile);
+	rel_blockinfo->rel_tile_to_attrs_map = lappend(rel_blockinfo->rel_tile_to_attrs_map, rel_tile);
 
-	relblockinfo->rel_attr_to_tile_map = rel_attr_group;
+	rel_blockinfo->rel_attr_to_tile_map = rel_attr_group;
 
 }
 
@@ -294,7 +291,7 @@ void RelInitBlockTableEntry(Relation relation)
 
 		if(entry->rel_info == NULL)
 		{
-			elog(ERROR, "relblockinfo should not be %p", entry->rel_info);
+			elog(ERROR, "rel_blockinfo should not be %p", entry->rel_info);
 		}
 
 		// cache value in relation
@@ -330,24 +327,24 @@ void RelInitBlockTableEntry(Relation relation)
 	}
 }
 
-void PrintRelBlockList(Relation relation, RelBlockType relblocktype)
+void PrintRelBlockList(Relation relation, RelBlockType rel_blocktype)
 {
 	List       **block_list_ptr = NULL;
 	List        *block_list = NULL;
 	ListCell    *l = NULL;
 
-	block_list_ptr = GetRelBlockList(relation, relblocktype);
+	block_list_ptr = GetRelBlockList(relation, rel_blocktype);
 	block_list = *block_list_ptr;
 
-	elog(WARNING, "PR BLOCK :: Type : %d List : %p", relblocktype, block_list);
+	elog(WARNING, "PR BLOCK :: Type : %d List : %p", rel_blocktype, block_list);
 
 	foreach (l, block_list)
 	{
 		RelBlock rel_block = lfirst(l);
 		elog(WARNING, "[ %p ] ->", rel_block);
 
-		//if(relblock != NULL)
-		//	elog(WARNING, "%zd %p", relblock->relblocklen, relblock->relblockdata);
+		//if(rel_block != NULL)
+		//	elog(WARNING, "%zd %p", rel_block->rel_blocklen, rel_block->rel_blockdata);
 	}
 }
 
@@ -361,7 +358,7 @@ void PrintAllRelBlocks(Relation relation)
 	elog(WARNING, "--------------------------------------------\n");
 }
 
-HeapTuple RelBlockGetHeapTuple(RelBlock relblock, OffsetNumber offset)
+HeapTuple RelBlockGetHeapTuple(RelBlock rel_block, OffsetNumber offset)
 {
 	HeapTuple  tuple;
 

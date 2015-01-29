@@ -17,11 +17,13 @@
 
 #include "access/rel_block.h"
 #include "access/relscan.h"
+#include "access/valid.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/predicate.h"
 #include "storage/smgr.h"
 #include "utils/rel.h"
+#include "utils/tqual.h"
 #include "utils/snapmgr.h"
 #include "access/heapam.h"
 
@@ -168,21 +170,23 @@ mm_heapgettup(HeapScanDesc scan,
 	RelInfo          rel_info;
 	List            *rel_fl_blocks;
 
-	bool		finished;
-
 	elog(WARNING, "scan inited      : %d", scan->rs_inited);
 	elog(WARNING, "scan cblock      : %d", scan->rs_cblock);
 	elog(WARNING, "scan nblocks     : %d", scan->rs_nblocks);
 	elog(WARNING, "scan backward    : %d", backward);
 
-	return;
-
+	/* TODO ::
 	// Set up scan
 	if (ScanDirectionIsForward(dir))
 	{
+		elog(WARNING, "Forward scan");
+
 		if (!scan->rs_inited)
 		{
 			// return null immediately if relation is empty
+			relation = scan->rs_rd;
+			scan->rs_nblocks = mm_nblocks(relation);
+
 			if (scan->rs_nblocks == 0)
 			{
 				tuple->t_data = NULL;
@@ -190,13 +194,14 @@ mm_heapgettup(HeapScanDesc scan,
 			}
 
 			// first block
-			relation = scan->rs_rd;
 			rel_info = relation->rd_rel_info;
 			rel_fl_blocks = rel_info->rel_fl_blocks;
 
 			scan->rs_cblock = 0 ;
-			scan->rs_nblocks = mm_nblocks(relation);
-			scan->rs_cblock_location = linitial(rel_fl_blocks);
+			scan->rs_rblock = list_nth(rel_fl_blocks, scan->rs_cblock);
+			scan->rs_rblock_offset = InvalidOffsetNumber;
+
+			elog(WARNING, "Finished init");
 
 			scan->rs_inited = true;
 		}
@@ -208,6 +213,8 @@ mm_heapgettup(HeapScanDesc scan,
 	}
 	else
 	{
+		elog(WARNING, "No movement scan");
+
 		// ``no movement'' scan direction: refetch prior tuple
 		if (!scan->rs_inited)
 		{
@@ -215,59 +222,70 @@ mm_heapgettup(HeapScanDesc scan,
 			return;
 		}
 
-		// Since the tuple was previously fetched, needn't lock page here
-
-		//tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
-		//tuple->t_len = ItemIdGetLength(lpp);
+		tuple = RelBlockGetHeapTuple(scan->rs_rblock, scan->rs_rblock_offset);
 
 		return;
 	}
 
-	/*
-	 * advance the scan until we find a qualifying tuple or run out of stuff
-	 * to scan
-	 */
+	// advance the scan until we find a qualifying tuple or run out of stuff
+	// to scan
 	for (;;)
 	{
 		bool  valid = false;
 
-		//scan->rs_cblock_offset = GetNextSlotInBlock(scan->rs_cblock);
+		// Keep track of next tuple to fetch
+		scan->rs_rblock_offset = GetNextTupleInBlock(scan->rs_rblock, scan->rs_rblock_offset);
 
-		//tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
-		//tuple->t_len = ItemIdGetLength(lpp);
-		//ItemPointerSet(&(tuple->t_self), page, lineoff);
+		elog(WARNING, "Offset %d", scan->rs_rblock_offset);
 
-		/*
-		 * if current tuple qualifies, return it.
-		 */
-		//valid = HeapTupleSatisfiesVisibility(tuple,
-		//									 snapshot,
-		//									 scan->rs_cbuf);
+		if(scan->rs_rblock_offset == InvalidOffsetNumber)
+		{
+			// Go to next block
+			if(scan->rs_cblock < scan->rs_nblocks)
+			{
+				elog(WARNING, "Go to next block");
+				scan->rs_cblock += 1;
+
+				relation = scan->rs_rd;
+				rel_info = relation->rd_rel_info;
+				rel_fl_blocks = rel_info->rel_fl_blocks;
+
+				scan->rs_rblock = list_nth(rel_fl_blocks, scan->rs_cblock);
+				scan->rs_rblock_offset = InvalidOffsetNumber;
+			}
+			// return NULL if we've exhausted all the pages
+			else
+			{
+				scan->rs_cbuf = InvalidBuffer;
+				scan->rs_cblock = InvalidBlockNumber;
+				tuple->t_data = NULL;
+				scan->rs_inited = false;
+				return;
+			}
+		}
+
+		elog(WARNING, "GetHeapTuple");
+
+		tuple = RelBlockGetHeapTuple(scan->rs_rblock, scan->rs_rblock_offset);
+
+		elog(WARNING, "Visibility check");
+
+		// if current tuple qualifies, return it.
+		valid = HeapTupleSatisfiesVisibility(tuple, snapshot, InvalidBuffer);
+
+		elog(WARNING, "Checkforserializableconflictout");
 
 		CheckForSerializableConflictOut(valid, scan->rs_rd, tuple,
 										scan->rs_cbuf, snapshot);
 
-		//if (valid && key != NULL)
-		//	HeapKeyTest(tuple, RelationGetDescr(scan->rs_rd),
-		//				nkeys, key, valid);
+		if (valid && key != NULL)
+			HeapKeyTest(tuple, RelationGetDescr(scan->rs_rd),
+						nkeys, key, valid);
 
-		if (valid)
-		{
-			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
-			return;
-		}
-
-		// return NULL if we've exhausted all the pages
-		if (finished)
-		{
-			scan->rs_cbuf = InvalidBuffer;
-			scan->rs_cblock = InvalidBlockNumber;
-			tuple->t_data = NULL;
-			scan->rs_inited = false;
-			return;
-		}
-
+		elog(WARNING, "HeapKeyTest");
 	}
+	*/
+
 }
 
 

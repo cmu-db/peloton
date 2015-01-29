@@ -151,6 +151,9 @@ typedef struct TupleLocation
 extern void RelInitBlockTableEntry(Relation relation);
 extern List** GetRelBlockList(Relation relation, RelBlockType relblocktype);
 
+extern void RelBlockPutHeapTuple(Relation relation, HeapTuple heaptup);
+extern HeapTuple RelBlockGetHeapTuple(RelBlock relblock, OffsetNumber offset);
+
 extern Oid  RelBlockInsertTuple(Relation relation, HeapTuple tup, CommandId cid,
 								int options, BulkInsertState bistate);
 
@@ -167,6 +170,7 @@ extern void RelBlockTablePrint();
 
 /* relblock_fixed.c */
 extern TupleLocation GetFixedLengthSlot(Relation relation);
+extern OffsetNumber GetNextTupleInBlock(RelBlock rel_block, OffsetNumber start);
 
 /* relblock_varlen.c */
 extern void *GetVariableLengthSlot(Relation relation, Size allocation_size);

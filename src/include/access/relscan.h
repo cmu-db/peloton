@@ -56,8 +56,8 @@ typedef struct HeapScanDescData
 
 	// MM backend context
 	List       *rs_select_vars;
-	RelBlock    rs_cblock_location;
-	OffsetNumber  rs_cblock_offset;
+	RelBlock    rs_rblock;
+	OffsetNumber  rs_rblock_offset;
 
 }	HeapScanDescData;
 
