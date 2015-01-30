@@ -23,7 +23,6 @@ DBMS designed for non-volatile memory (NVM).
 
 ## Test
 
-
 ```
     make check
 ```
