@@ -926,8 +926,8 @@ lookup_collation_cache(Oid collation, bool set_flags)
 bool
 lc_collate_is_c(Oid collation)
 {
-	// XXX Disable collation
-	return true;
+	// TODO :: Disable collation
+	//return true;
 
 	/*
 	 * If we're asked about "collation 0", return false, so that the code will
