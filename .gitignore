@@ -1,0 +1,14 @@
+# autotools-generated files
+config/
+configure
+config-h.in
+autom4te.cache
+*Makefile.in
+*Makefile
+libtool
+
+# build products
+*.o
+*.lo
+*.la
+*~
