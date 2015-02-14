@@ -1,4 +1,6 @@
-# autotools-generated files
+# -------------------------------
+# Autotools artifacts
+# -------------------------------
 config/
 configure
 config-h.in
@@ -6,9 +8,37 @@ autom4te.cache
 *Makefile.in
 *Makefile
 libtool
+aclocal.m4
 
-# build products
+# -------------------------------
+# Build artifacts
+# -------------------------------
+build/
 *.o
 *.lo
 *.la
 *~
+*.pdf
+*.swp
+
+# -------------------------------
+## Kate Swap Files
+## -------------------------------
+*.kate-swp
+.#kate-*
+
+## -------------------------------
+## Backup artifacts
+## -------------------------------
+~*
+*~
+
+# -------------------------------
+# Eclipse files
+# -------------------------------
+.wtpmodules
+.classpath
+.project
+.cproject
+.settings
+
