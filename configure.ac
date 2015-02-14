@@ -22,7 +22,7 @@ ACX_PTHREAD([], [AC_MSG_ERROR([failed to find pthreads])])
 
 AC_LANG([C++])
 
-# turn on c++11
+# G++ C++11
 AX_CXX_COMPILE_STDCXX_11(noext)
 
 #BOOST_REQUIRE([1.45])
@@ -31,10 +31,24 @@ AX_CXX_COMPILE_STDCXX_11(noext)
 #BOOST_THREADS
 #BOOST_SERIALIZATION
 
-AC_CONFIG_FILES([Makefile
-                 src/Makefile
-                 test/Makefile])                  
-                
+######################################################################
+# DOXYGEN SUPPORT
+######################################################################
+DX_HTML_FEATURE(ON)
+DX_CHM_FEATURE(OFF)
+DX_CHI_FEATURE(OFF)
+DX_MAN_FEATURE(OFF)
+DX_RTF_FEATURE(OFF)
+DX_XML_FEATURE(OFF)
+DX_PDF_FEATURE(OFF)
+DX_PS_FEATURE(OFF)
+DX_INIT_DOXYGEN([$PACKAGE_NAME], [doc/doxygen.cfg], [doc])
+
 #[test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h.in])
-AC_OUTPUT
-# @end 2
+
+ AC_CONFIG_FILES([Makefile
+                  src/Makefile
+                  test/Makefile])            
+
+                  AC_OUTPUT
+                  # @end 2

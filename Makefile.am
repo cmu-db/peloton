@@ -2,9 +2,12 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS	 = -I m4
 
-SUBDIRS = src \
+include $(top_srcdir)/doc/doxygen.am
+
+# the subdirectories of the project 
+SUBDIRS = \
+		  src \
 		  test
 
-# add autogen on distribution
-EXTRA_DIST = bootstrap
-
+# add files in the distribution
+EXTRA_DIST = bootstrap $(top_srcdir)/doc/doxygen.cfg
