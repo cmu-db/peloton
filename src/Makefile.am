@@ -1,9 +1,8 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
-SRC=
+AM_CXXFLAGS = $(WARN_CXXFLAGS)
 
-OBJS=
+bin_PROGRAMS = main
 
-all: $(OBJS)
-
-
+main_SOURCES = main.cc \
+			   func.cc

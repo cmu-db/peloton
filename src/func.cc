@@ -26,12 +26,9 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>
 #include "func.h"
 
-int main()
+int func(int d1, int d2)
 {
-    std::cout << "Result of func(5,6): " << func(5,6) << std::endl;
-
-    return 0;
+    return d1;
 }

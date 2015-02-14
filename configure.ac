@@ -48,7 +48,10 @@ DX_INIT_DOXYGEN([$PACKAGE_NAME], [doc/doxygen.cfg], [doc])
 
  AC_CONFIG_FILES([Makefile
                   src/Makefile
-                  test/Makefile])            
+                  test/Makefile
+                  third_party/Makefile
+                  third_party/gtest/Makefile
+                  ])            
 
                   AC_OUTPUT
                   # @end 2

@@ -7,6 +7,7 @@ include $(top_srcdir)/doc/doxygen.am
 # the subdirectories of the project 
 SUBDIRS = \
 		  src \
+		  third_party \
 		  test
 
 # add files in the distribution

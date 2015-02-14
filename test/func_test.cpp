@@ -26,12 +26,9 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>
 #include "func.h"
+#include "gtest/gtest.h"
 
-int main()
-{
-    std::cout << "Result of func(5,6): " << func(5,6) << std::endl;
-
-    return 0;
+TEST(TestCase1, Test1) {
+    EXPECT_EQ(1, func(1,2));
 }
