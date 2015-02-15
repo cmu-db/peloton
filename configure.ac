@@ -16,14 +16,11 @@ ACX_PTHREAD([], [AC_MSG_ERROR([failed to find pthreads])])
 
 AC_LANG([C++])
 AC_PROG_CXX([clang++])
+AC_SUBST([AM_CXXFLAGS], '-std=c++11 -stdlib=libc++')
 
-if test -z $CXXFLAGS; then
-    CXXFLAGS='-std=c++11 -stdlib=libc++'
-fi
-
-# G++ C++11
-#AX_CXX_COMPILE_STDCXX_11(noext)
-
+######################################################################
+# BOOST
+######################################################################
 #BOOST_REQUIRE([1.45])
 #BOOST_SYSTEM
 #BOOST_ASIO
@@ -46,10 +43,10 @@ DX_INIT_DOXYGEN([$PACKAGE_NAME], [doc/doxygen.cfg], [doc])
 #[test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h.in])
 
  AC_CONFIG_FILES([Makefile
-                  src/Makefile
-                  test/Makefile
                   third_party/Makefile
                   third_party/gtest/Makefile
+                  src/Makefile
+                  test/Makefile
                   ])            
 
                   AC_OUTPUT
