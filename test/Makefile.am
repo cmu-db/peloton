@@ -2,9 +2,9 @@
 
 AM_CPPFLAGS = -isystem $(top_srcdir)/third_party/gtest/include -I$(top_srcdir)/src $(GTEST_CPPFLAGS)
 AM_CXXFLAGS = $(GTEST_CXXFLAGS)
-AM_LDFLAGS = $(GTEST_LDFLAGS) $(GTEST_LIBS) \
-	     $(top_srcdir)/third_party/gtest/lib/libgtest_main.la \
-	     $(top_srcdir)/third_party/gtest/lib/libgtest.la
+AM_LDFLAGS = $(GTEST_LDFLAGS) $(GTEST_LIBS) -pthread \
+	     $(top_builddir)/third_party/gtest/lib/libgtest_main.la \
+	     $(top_builddir)/third_party/gtest/lib/libgtest.la
 
 # TESTS -- Programs run automatically by "make check"
 

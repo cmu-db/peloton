@@ -6,24 +6,23 @@ AC_CONFIG_HEADERS([config.h:config-h.in])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_INIT_AUTOMAKE([1.0 foreign])
+AM_INIT_AUTOMAKE([1.0 foreign subdir-objects])
 
-AC_PROG_CC
-
-if test -z $CXXFLAGS; then
-    CXXFLAGS='-ggdb -O3'
-fi
-
-AC_PROG_CXX
+AC_PROG_CC([clang])
 AC_PROG_LIBTOOL
-
+ 
 # Check for pthreads (uses m4/acx_pthread.m4).
 ACX_PTHREAD([], [AC_MSG_ERROR([failed to find pthreads])])
 
 AC_LANG([C++])
+AC_PROG_CXX([clang++])
+
+if test -z $CXXFLAGS; then
+    CXXFLAGS='-std=c++11 -stdlib=libc++'
+fi
 
 # G++ C++11
-AX_CXX_COMPILE_STDCXX_11(noext)
+#AX_CXX_COMPILE_STDCXX_11(noext)
 
 #BOOST_REQUIRE([1.45])
 #BOOST_SYSTEM
