@@ -29,7 +29,7 @@
 #include <iostream>
 #include "func.h"
 
-int main()
+int abc()
 {
     std::cout << "Result of func(5,6): " << func(5,6) << std::endl;
 

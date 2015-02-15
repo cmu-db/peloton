@@ -4,6 +4,8 @@ AM_CPPFLAGS = -I$(srcdir)/parser
 AM_CXXFLAGS = -std=c++11 -Wall -Wextra -fcolor-diagnostics 
 AM_LDFLAGS  = $(PTHREAD_CFLAGS) 
 
+SUBDIRS = parser
+
 bin_PROGRAMS = main
 
 main_SOURCES = main.cc \

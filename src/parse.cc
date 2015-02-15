@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#include "third_party/parser/SQLParser.h"
+#include "SQLParser.h"
 
 using namespace hsql;
 
