@@ -4,7 +4,7 @@ ACLOCAL_AMFLAGS	 = -I m4
 
 include $(top_srcdir)/doc/doxygen.am
 
-# the subdirectories of the project 
+# subdirectories of the project 
 SUBDIRS = \
 		  src \
 		  third_party \
