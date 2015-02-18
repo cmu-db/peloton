@@ -3,8 +3,8 @@
 AM_CPPFLAGS = -isystem $(top_srcdir)/third_party/gtest/include -I$(top_srcdir)/src $(GTEST_CPPFLAGS)
 AM_CXXFLAGS = $(GTEST_CXXFLAGS)
 AM_LDFLAGS = $(GTEST_LDFLAGS) $(GTEST_LIBS) -pthread \
-	     $(top_builddir)/third_party/gtest/lib/libgtest_main.la \
-	     $(top_builddir)/third_party/gtest/lib/libgtest.la
+			 $(top_builddir)/third_party/gtest/lib/libgtest_main.la \
+			 $(top_builddir)/third_party/gtest/lib/libgtest.la
 
 # TESTS -- Programs run automatically by "make check"
 
@@ -16,4 +16,4 @@ TESTS += func_test
 check_PROGRAMS += func_test
 
 func_test_SOURCES = func_test.cpp
-func_test_LDADD = $(top_builddir)/src/func.o
+func_test_LDADD = $(top_builddir)/src/backend/tester.o

@@ -1,13 +1,16 @@
+
+
+#include "SQLParser.h"
+
 #include <iostream>
 #include <string>
 
-#include "SQLParser.h"
 
 namespace nstore {
 
 namespace parser {
 
-int parse_sql_string() {
+int ParseSQLString() {
 
 	while (1) {
 		std::string sql_stmt;

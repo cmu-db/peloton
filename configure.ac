@@ -42,12 +42,12 @@ DX_INIT_DOXYGEN([$PACKAGE_NAME], [doc/doxygen.cfg], [doc])
 
 #[test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h.in])
 
- AC_CONFIG_FILES([Makefile
-                  third_party/Makefile
-                  third_party/gtest/Makefile
-                  src/Makefile
-                  test/Makefile
-                  ])            
+AC_CONFIG_FILES([Makefile
+                 third_party/Makefile
+                 third_party/gtest/Makefile
+                 src/Makefile
+                 test/Makefile
+                 ])
 
-                  AC_OUTPUT
-                  # @end 2
+AC_OUTPUT
+# @end 2
