@@ -21,10 +21,9 @@ AC_SUBST([AM_CXXFLAGS], '-std=c++11 -stdlib=libc++')
 ######################################################################
 # BOOST
 ######################################################################
-#BOOST_REQUIRE([1.45])
-#BOOST_SYSTEM
-#BOOST_ASIO
-#BOOST_THREADS
+BOOST_REQUIRE([1.45])
+BOOST_SYSTEM
+BOOST_ASIO
 #BOOST_SERIALIZATION
 
 ######################################################################
