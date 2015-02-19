@@ -1,8 +1,8 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
-AM_CPPFLAGS = $(nstore_INCLUDES)
+AM_CPPFLAGS = $(nstore_INCLUDES) $(third_party_INCLUDES)
 AM_CXXFLAGS = -std=c++11 -Wall -Wextra -fcolor-diagnostics 
-AM_LDFLAGS  = $(PTHREAD_CFLAGS) 
+AM_LDFLAGS  = $(PTHREAD_CFLAGS) -lboost_system 
 
 bin_PROGRAMS = nstore
 
@@ -29,18 +29,32 @@ nstore_INCLUDES = \
 				  -I$(srcdir)/storage
 
 ######################################################################
+# THIRD-PARTY INCLUDES
+######################################################################
+third_party_INCLUDES = \
+					   -I$(top_srcdir)/third_party 
+
+######################################################################
 # BACKEND
 ######################################################################
 backend_FILES = \
-				backend/nstore.cc \
-				backend/tester.cc \
-				backend/parser.cc 
+				backend/nstore.cpp \
+				backend/tester.cpp \
+				backend/parser.cpp 
 ######################################################################
 # CATALOG
 ######################################################################
 catalog_FILES = \
 				catalog/abstract_tuple_schema.cpp \
 				catalog/tuple_schema.cpp
+
+######################################################################
+# COMMON
+######################################################################
+common_FILES = \
+			   common/value.cpp \
+			   common/types.cpp \
+			   common/varlen.cpp  
 
 ######################################################################
 # EXECUTOR
