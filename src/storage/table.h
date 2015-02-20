@@ -15,14 +15,14 @@
 namespace nstore {
 namespace storage {
 
-#include "abstract_tuple.h"
+#include "tuple.h"
 
-class AbstractTable	{
+class Table	{
 	class AbstractTuple;
 	class TuplePointer;
 
 public:
-	virtual ~AbstractTable();
+	virtual ~Table();
 
 	virtual bool insertTuple(AbstractTuple &source) = 0;
 	virtual bool updateTuple(AbstractTuple &source, AbstractTuple &target, bool updatesIndexes) = 0;

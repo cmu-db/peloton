@@ -45,8 +45,7 @@ backend_FILES = \
 # CATALOG
 ######################################################################
 catalog_FILES = \
-				catalog/abstract_tuple_schema.cpp \
-				catalog/tuple_schema.cpp
+				catalog/tuple_schema.cpp 
 
 ######################################################################
 # COMMON
@@ -65,7 +64,7 @@ executor_FILES =
 # STORAGE
 ######################################################################
 storage_FILES = \
-				storage/abstract_tuple.cpp
+				storage/tuple.cpp
 
 ######################################################################
 # PARSER
