@@ -12,35 +12,34 @@
 
 #pragma once
 
-#include "../common/value.h"
-#include "catalog/abstract_tuple_schema.h"
+#include "catalog/tuple_schema.h"
+#include "common/value.h"
 #include "common/types.h"
 
 namespace nstore {
 namespace storage {
 
-class AbstractTuple	{
+class Tuple	{
 	friend class TupleSchema;
-	friend class catalog::AbstractTupleSchema;
+	friend class catalog::TupleSchema;
 
 public:
-	virtual ~AbstractTuple();
+	virtual ~Tuple();
 
 	void SetField(const int column_id, Value value);
 
 	Value GetField(const int column_id);
 
-	catalog::AbstractTupleSchema *GetTupleSchema();
+	catalog::TupleSchema *GetTupleSchema();
 
 protected:
 	char *tuple_data;
-	const catalog::AbstractTupleSchema *tuple_schema;
+	const catalog::TupleSchema *tuple_schema;
 
 private:
 
 	inline char *GetFieldPtr(const uint32_t column_id) {
-		return &tuple_data[tuple_schema->GetColumnOffset(column_id) +
-						   tuple_schema->GetTupleHeaderSize()];
+		return &tuple_data[tuple_schema->Offset(column_id)];
 	}
 
 };

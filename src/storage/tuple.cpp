@@ -10,20 +10,20 @@
 *-------------------------------------------------------------------------
 */
 
-#include "storage/abstract_tuple.h"
+#include "tuple.h"
 
 namespace nstore {
 namespace storage {
 
-void AbstractTuple::SetField(const int column_id, Value value){
-	const ValueType type = tuple_schema->GetColumnType(column_id);
+void Tuple::SetField(const int column_id, Value value){
+	const ValueType type = tuple_schema->Type(column_id);
 
 	value = value.CastAs(type);
 
-	const bool is_inlined = tuple_schema->GetColumnIsInlined(column_id);
+	const bool is_inlined = tuple_schema->IsInlined(column_id);
 	char *field_ptr = GetFieldPtr(column_id);
 
-	const int32_t column_length = tuple_schema->GetColumnFixedLength(column_id);
+	const int32_t column_length = tuple_schema->FixedLength(column_id);
 
 	value.Serialize(field_ptr, is_inlined, column_length);
 }
