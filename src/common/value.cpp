@@ -10,7 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "common/value.h"
+#include "value.h"
 
 #include <cstdio>
 #include <cstring>
@@ -18,9 +18,9 @@
 
 namespace nstore {
 
-// For x<op>y where x is an integer,
-// promote x and y to s_intPromotionTable[y]
-ValueType Value::s_intPromotionTable[] = {
+/// For x <op> y where x is an integer,
+/// promote x and y to s_intPromotionTable[y]
+ValueType Value::IntPromotionTable[] = {
 		VALUE_TYPE_INVALID,   // 0 invalid
 		VALUE_TYPE_NULL,      // 1 null
 		VALUE_TYPE_INVALID,   // 2 <unused>
@@ -44,9 +44,9 @@ ValueType Value::s_intPromotionTable[] = {
 		VALUE_TYPE_INVALID,   // 24 address
 };
 
-// for x<op>y where x is a double
-// promote x and y to s_doublePromotionTable[y]
-ValueType Value::s_doublePromotionTable[] = {
+/// For x <op> y where x is a double
+/// promote x and y to s_doublePromotionTable[y]
+ValueType Value::DoublePromotionTable[] = {
 		VALUE_TYPE_INVALID,   // 0 invalid
 		VALUE_TYPE_NULL,      // 1 null
 		VALUE_TYPE_INVALID,   // 2 <unused>
@@ -70,9 +70,9 @@ ValueType Value::s_doublePromotionTable[] = {
 		VALUE_TYPE_INVALID,   // 24 address
 };
 
-// for x<op>y where x is a decimal
+// for x <op> y where x is a decimal
 // promote x and y to s_decimalPromotionTable[y]
-ValueType Value::s_decimalPromotionTable[] = {
+ValueType Value::DecimalPromotionTable[] = {
 		VALUE_TYPE_INVALID,   // 0 invalid
 		VALUE_TYPE_NULL,      // 1 null
 		VALUE_TYPE_INVALID,   // 2 <unused>
@@ -85,82 +85,86 @@ ValueType Value::s_decimalPromotionTable[] = {
 		VALUE_TYPE_INVALID,   // 9 varchar
 		VALUE_TYPE_INVALID,   // 10 <unused>
 		VALUE_TYPE_DECIMAL,   // 11 timestamp
+
 		// 12 - 21 unused. ick.
 		VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
 		VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
 		VALUE_TYPE_INVALID, VALUE_TYPE_INVALID,
+
 		VALUE_TYPE_DECIMAL,   // 22 decimal
 		VALUE_TYPE_INVALID,   // 23 boolean
 		VALUE_TYPE_INVALID,   // 24 address
 };
 
-TTInt Value::s_maxDecimal("9999999999"   //10 digits
-		"9999999999"   //20 digits
-		"9999999999"   //30 digits
+TTInt Value::MaxDecimal(
+		"9999999999"   	//10 digits
+		"9999999999"   	//20 digits
+		"9999999999"   	//30 digits
 		"99999999");    //38 digits
 
-TTInt Value::s_minDecimal("-9999999999"   //10 digits
+TTInt Value::MinDecimal(
+		"-9999999999"  //10 digits
 		"9999999999"   //20 digits
 		"9999999999"   //30 digits
-		"99999999");    //38 digits
+		"99999999");   //38 digits
 
-/*
- * Produce a debugging string describing an Value.
- */
-std::string Value::debug() const {
-	const ValueType type = getValueType();
-	if (isNull()) {
+/// Produce a debugging string describing an Value.
+std::string Value::Debug() const {
+	const ValueType type = GetValueType();
+
+	if (IsNull()) {
 		return "<NULL>";
 	}
+
 	std::ostringstream buffer;
 	std::string out_val;
 	const char* ptr;
 	int64_t addr;
-	buffer << getTypeName(type) << "::";
+
+	buffer << GetTypeName(type) << "::";
 	switch (type) {
 	case VALUE_TYPE_TINYINT:
-		buffer << static_cast<int32_t>(getTinyInt()); break;
+		buffer << static_cast<int32_t>(GetTinyInt()); break;
 	case VALUE_TYPE_SMALLINT:
-		buffer << getSmallInt(); break;
+		buffer << GetSmallInt(); break;
 	case VALUE_TYPE_INTEGER:
-		buffer << getInteger(); break;
+		buffer << GetInteger(); break;
 	case VALUE_TYPE_BIGINT:
 	case VALUE_TYPE_TIMESTAMP:
-		buffer << getBigInt();
+		buffer << GetBigInt();
 		break;
 	case VALUE_TYPE_DOUBLE:
-		buffer << getDouble();
+		buffer << GetDouble();
 		break;
 	case VALUE_TYPE_VARCHAR:
-		ptr = reinterpret_cast<const char*>(getObjectValue());
+		ptr = reinterpret_cast<const char*>(GetObjectValue());
 		addr = reinterpret_cast<int64_t>(ptr);
-		out_val = std::string(ptr, getObjectLength());
-		buffer << "[" << getObjectLength() << "]";
+		out_val = std::string(ptr, GetObjectLength());
+		buffer << "[" << GetObjectLength() << "]";
 		buffer << "\"" << out_val << "\"[@" << addr << "]";
 		break;
 	case VALUE_TYPE_VARBINARY:
-		ptr = reinterpret_cast<const char*>(getObjectValue());
+		ptr = reinterpret_cast<const char*>(GetObjectValue());
 		addr = reinterpret_cast<int64_t>(ptr);
-		out_val = std::string(ptr, getObjectLength());
-		buffer << "[" << getObjectLength() << "]";
+		out_val = std::string(ptr, GetObjectLength());
+		buffer << "[" << GetObjectLength() << "]";
 		buffer << "-bin[@" << addr << "]";
 		break;
 	case VALUE_TYPE_DECIMAL:
-		buffer << createStringFromDecimal();
+		buffer << CreateStringFromDecimal();
 		break;
 	default:
 		throw UnknownTypeException((int)type, "unknown type");
 	}
+
 	std::string ret(buffer.str());
 	return (ret);
 }
 
 
-/*
- * Convert ValueType to a string. One might say that,
- * strictly speaking, this has no business here.
- */
-std::string Value::getTypeName(ValueType type) {
+/// Convert ValueType to a string. One might say that,
+/// strictly speaking, this has no business here.
+std::string Value::GetTypeName(ValueType type) {
 	std::string ret;
 	switch (type) {
 	case (VALUE_TYPE_TINYINT):
@@ -211,20 +215,18 @@ std::string Value::getTypeName(ValueType type) {
 	return (ret);
 }
 
-/**
- * Serialize sign and value using radix point (no exponent).
- */
-std::string Value::createStringFromDecimal() const {
-	assert(!isNull());
+/// Serialize sign and value using radix point (no exponent).
+std::string Value::CreateStringFromDecimal() const {
+	assert(!IsNull());
 	std::ostringstream buffer;
-	TTInt scaledValue = getDecimal();
+	TTInt scaledValue = GetDecimal();
 	if (scaledValue.IsSign()) {
 		buffer << '-';
 	}
 	TTInt whole(scaledValue);
 	TTInt fractional(scaledValue);
-	whole /= Value::kMaxScaleFactor;
-	fractional %= Value::kMaxScaleFactor;
+	whole /= Value::max_decimal_scale_factor;
+	fractional %= Value::max_decimal_scale_factor;
 	if (whole.IsSign()) {
 		whole.ChangeSign();
 	}
@@ -234,17 +236,15 @@ std::string Value::createStringFromDecimal() const {
 		fractional.ChangeSign();
 	}
 	std::string fractionalString = fractional.ToString(10);
-	for (int ii = static_cast<int>(fractionalString.size()); ii < Value::kMaxDecScale; ii++) {
+	for (int ii = static_cast<int>(fractionalString.size()); ii < Value::max_decimal_scale; ii++) {
 		buffer << '0';
 	}
 	buffer << fractionalString;
 	return buffer.str();
 }
 
-/**
- *   set a decimal value from a serialized representation
- */
-void Value::createDecimalFromString(const std::string &txt) {
+/// Set a decimal value from a serialized representation
+void Value::CreateDecimalFromString(const std::string &txt) {
 	if (txt.length() == 0) {
 		throw DecimalException("Empty string provided");
 	}
@@ -253,9 +253,7 @@ void Value::createDecimalFromString(const std::string &txt) {
 		setSign = true;
 	}
 
-	/**
-	 * Check for invalid characters
-	 */
+	/// Check for invalid characters
 	for (int ii = (setSign ? 1 : 0); ii < static_cast<int>(txt.size()); ii++) {
 		if ((txt[ii] < '0' || txt[ii] > '9') && txt[ii] != '.') {
 			char message[4096];
@@ -277,8 +275,8 @@ void Value::createDecimalFromString(const std::string &txt) {
 		if (setSign) {
 			whole.SetSign();
 		}
-		whole *= kMaxScaleFactor;
-		getDecimal() = whole;
+		whole *= max_decimal_scale_factor;
+		GetDecimal() = whole;
 		return;
 	}
 
@@ -298,89 +296,89 @@ void Value::createDecimalFromString(const std::string &txt) {
 		throw DecimalException("Maximum scale exceeded. "
 				"Maximum of 12 digits to the right of the decimal point");
 	}
-	while(fractionalString.size() < Value::kMaxDecScale) {
+	while(fractionalString.size() < Value::max_decimal_scale) {
 		fractionalString.push_back('0');
 	}
 	TTInt fractional(fractionalString);
 
-	whole *= kMaxScaleFactor;
+	whole *= max_decimal_scale_factor;
 	whole += fractional;
 
 	if (setSign) {
 		whole.SetSign();
 	}
 
-	getDecimal() = whole;
+	GetDecimal() = whole;
 }
 
 
-/*
+/**
  * Avoid scaling both sides if possible. E.g, don't turn dec * 2 into
  * (dec * 2*kMaxScale*E-12). Then the result of simple multiplication
  * is a*b*E-24 and have to further multiply to get back to the assumed
  * E-12, which can overflow unnecessarily at the middle step.
  */
-Value Value::opMultiplyDecimals(const Value &lhs, const Value &rhs) const {
-	if ((lhs.getValueType() != VALUE_TYPE_DECIMAL) &&
-			(rhs.getValueType() != VALUE_TYPE_DECIMAL))
+Value Value::OpMultiplyDecimals(const Value &lhs, const Value &rhs) const {
+	if ((lhs.GetValueType() != VALUE_TYPE_DECIMAL) &&
+			(rhs.GetValueType() != VALUE_TYPE_DECIMAL))
 	{
 		throw DecimalException("No decimal Value in decimal multiply.");
 	}
 
-	if (lhs.isNull() || rhs.isNull()) {
+	if (lhs.IsNull() || rhs.IsNull()) {
 		TTInt retval;
 		retval.SetMin();
-		return getDecimalValue( retval );
+		return GetDecimalValue( retval );
 	}
 
-	if ((lhs.getValueType() == VALUE_TYPE_DECIMAL) &&
-			(rhs.getValueType() == VALUE_TYPE_DECIMAL))
+	if ((lhs.GetValueType() == VALUE_TYPE_DECIMAL) &&
+			(rhs.GetValueType() == VALUE_TYPE_DECIMAL))
 	{
 		TTLInt calc;
-		calc.FromInt(lhs.getDecimal());
-		calc *= rhs.getDecimal();
-		calc /= Value::kMaxScaleFactor;
+		calc.FromInt(lhs.GetDecimal());
+		calc *= rhs.GetDecimal();
+		calc /= Value::max_decimal_scale_factor;
 		TTInt retval;
-		if (retval.FromInt(calc)  || retval > Value::s_maxDecimal || retval < s_minDecimal) {
+		if (retval.FromInt(calc)  || retval > Value::MaxDecimal || retval < MinDecimal) {
 			char message[4096];
 			snprintf(message, 4096, "Attempted to multiply %s by %s causing overflow/underflow. Unscaled result was %s",
-					lhs.createStringFromDecimal().c_str(), rhs.createStringFromDecimal().c_str(),
+					lhs.CreateStringFromDecimal().c_str(), rhs.CreateStringFromDecimal().c_str(),
 					calc.ToString(10).c_str());
 		}
-		return getDecimalValue(retval);
-	} else if  (lhs.getValueType() != VALUE_TYPE_DECIMAL)
+		return GetDecimalValue(retval);
+	} else if  (lhs.GetValueType() != VALUE_TYPE_DECIMAL)
 	{
 		TTLInt calc;
-		calc.FromInt(rhs.getDecimal());
-		calc *= lhs.castAsDecimalAndGetValue();
-		calc /= Value::kMaxScaleFactor;
+		calc.FromInt(rhs.GetDecimal());
+		calc *= lhs.CastAsDecimalAndGetValue();
+		calc /= Value::max_decimal_scale_factor;
 		TTInt retval;
 		retval.FromInt(calc);
-		if (retval.FromInt(calc)  || retval > Value::s_maxDecimal || retval < s_minDecimal) {
+		if (retval.FromInt(calc)  || retval > Value::MaxDecimal || retval < MinDecimal) {
 			char message[4096];
 			snprintf(message, 4096, "Attempted to multiply %s by %s causing overflow/underflow. Unscaled result was %s",
-					lhs.createStringFromDecimal().c_str(), rhs.createStringFromDecimal().c_str(),
+					lhs.CreateStringFromDecimal().c_str(), rhs.CreateStringFromDecimal().c_str(),
 					calc.ToString(10).c_str());
 			throw DecimalException(message);
 		}
-		return getDecimalValue(retval);
+		return GetDecimalValue(retval);
 	}
 	else
 	{
 		TTLInt calc;
-		calc.FromInt(lhs.getDecimal());
-		calc *= rhs.castAsDecimalAndGetValue();
-		calc /= Value::kMaxScaleFactor;
+		calc.FromInt(lhs.GetDecimal());
+		calc *= rhs.CastAsDecimalAndGetValue();
+		calc /= Value::max_decimal_scale_factor;
 		TTInt retval;
 		retval.FromInt(calc);
-		if (retval.FromInt(calc)  || retval > Value::s_maxDecimal || retval < s_minDecimal) {
+		if (retval.FromInt(calc)  || retval > Value::MaxDecimal || retval < MinDecimal) {
 			char message[4096];
 			snprintf(message, 4096, "Attempted to multiply %s by %s causing overflow/underflow. Unscaled result was %s",
-					lhs.createStringFromDecimal().c_str(), rhs.createStringFromDecimal().c_str(),
+					lhs.CreateStringFromDecimal().c_str(), rhs.CreateStringFromDecimal().c_str(),
 					calc.ToString(10).c_str());
 			throw DecimalException(message);
 		}
-		return getDecimalValue(retval);
+		return GetDecimalValue(retval);
 	}
 }
 
@@ -396,38 +394,37 @@ Value Value::opMultiplyDecimals(const Value &lhs, const Value &rhs) const {
  *   (6) sum the scaled quotient and remainder.
  *   (7) construct the final decimal.
  */
-
-Value Value::opDivideDecimals(const Value lhs, const Value rhs) const {
-	if ((lhs.getValueType() != VALUE_TYPE_DECIMAL) ||
-			(rhs.getValueType() != VALUE_TYPE_DECIMAL))
+Value Value::OpDivideDecimals(const Value lhs, const Value rhs) const {
+	if ((lhs.GetValueType() != VALUE_TYPE_DECIMAL) ||
+			(rhs.GetValueType() != VALUE_TYPE_DECIMAL))
 	{
 		throw DecimalException("Non-decimal Value in decimal subtract.");
 	}
 
-	if (lhs.isNull() || rhs.isNull()) {
+	if (lhs.IsNull() || rhs.IsNull()) {
 		TTInt retval;
 		retval.SetMin();
-		return getDecimalValue( retval );
+		return GetDecimalValue( retval );
 	}
 
 	TTLInt calc;
-	calc.FromInt(lhs.getDecimal());
-	calc *= Value::kMaxScaleFactor;
-	if (calc.Div(rhs.getDecimal())) {
+	calc.FromInt(lhs.GetDecimal());
+	calc *= Value::max_decimal_scale_factor;
+	if (calc.Div(rhs.GetDecimal())) {
 		char message[4096];
 		snprintf( message, 4096, "Attempted to divide %s by %s causing overflow/underflow (or divide by zero)",
-				lhs.createStringFromDecimal().c_str(), rhs.createStringFromDecimal().c_str());
+				lhs.CreateStringFromDecimal().c_str(), rhs.CreateStringFromDecimal().c_str());
 		throw DecimalException(message);
 	}
 	TTInt retval;
-	if (retval.FromInt(calc)  || retval > Value::s_maxDecimal || retval < s_minDecimal) {
+	if (retval.FromInt(calc)  || retval > Value::MaxDecimal || retval < MinDecimal) {
 		char message[4096];
 		snprintf( message, 4096, "Attempted to divide %s by %s causing overflow. Unscaled result was %s",
-				lhs.createStringFromDecimal().c_str(), rhs.createStringFromDecimal().c_str(),
+				lhs.CreateStringFromDecimal().c_str(), rhs.CreateStringFromDecimal().c_str(),
 				calc.ToString(10).c_str());
 		throw DecimalException(message);
 	}
-	return getDecimalValue(retval);
+	return GetDecimalValue(retval);
 }
 
 
