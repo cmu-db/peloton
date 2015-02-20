@@ -12,9 +12,9 @@
 
 #pragma once
 
+#include "../common/value.h"
 #include "catalog/abstract_tuple_schema.h"
 #include "common/types.h"
-#include "common/value.h"
 
 namespace nstore {
 namespace storage {
