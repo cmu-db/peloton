@@ -10,6 +10,8 @@
  *-------------------------------------------------------------------------
  */
 
+#pragma once
+
 #include <cassert>
 #include <cfloat>
 #include <climits>
@@ -55,6 +57,8 @@ typedef ttmath::Int<2> TTInt;
 /// Long integer with space for multiplication and division without carry/overflow
 typedef ttmath::Int<4> TTLInt;
 
+class ValuePeeker;
+
 /**
  * A class to wrap all scalar values regardless of type and storage.
  *
@@ -69,6 +73,8 @@ typedef ttmath::Int<4> TTLInt;
  * perform the correct Casting and error checking.
  */
 class Value {
+	friend class ValuePeeker;
+	friend class ValueFactory;
 
 public:
 	/// Create a default Value
@@ -183,6 +189,18 @@ public:
 	 *  */
 	int Compare(const Value rhs) const;
 
+	inline bool operator==(const Value &other) const {
+		if (this->Compare(other) == 0) {
+			return true;
+		}
+
+		return false;
+	}
+
+	inline bool operator!=(const Value &other) const {
+		return !(*this == other);
+	}
+
 	/// Return a boolean Value with the comparison result
 	Value OpEquals(const Value rhs) const;
 	Value OpNotEquals(const Value rhs) const;
@@ -221,7 +239,7 @@ public:
 	void HashCombine(std::size_t &seed) const;
 
 	/// Return a string full of arcane and wonder.
-	std::string Debug() const;
+	std::string ToString() const;
 
 	/// Functor comparator for use with std::set
 	struct ltValue {
@@ -309,7 +327,7 @@ private:
 	}
 
 	//===--------------------------------------------------------------------===//
-	// Core data members and their accessors
+	// Data members and their accessors
 	//===--------------------------------------------------------------------===//
 
 	/**
@@ -346,7 +364,7 @@ private:
 		return value_type;
 	}
 
-	void SetSourceInlined(bool sourceInlined){
+	void IsInlined(bool sourceInlined){
 		is_inlined = sourceInlined;
 	}
 
@@ -1498,7 +1516,7 @@ private:
 		const int32_t length = static_cast<int32_t>(value.length() / 2);
 
 		boost::shared_array<unsigned char> buf(new unsigned char[length]);
-		hexDecodeToBinary(buf.get(), value.c_str());
+		HexDecodeToBinary(buf.get(), value.c_str());
 
 		const int8_t lengthLength = GetAppropriateObjectLengthLength(length);
 		const int32_t minLength = length + lengthLength;
@@ -1572,7 +1590,7 @@ private:
 			if (objectLength > max_length) {
 				char msg[1024];
 				snprintf(msg, 1024, "Object exceeds specified size. Size is %d and max is %d", objectLength, max_length);
-				throw Exception(msg);
+				throw ObjectSizeException(msg);
 			}
 			if (is_inlined)
 			{
@@ -1592,7 +1610,7 @@ private:
 };
 
 //===--------------------------------------------------------------------===//
-// Methods implementations
+// Implementation
 //===--------------------------------------------------------------------===//
 
 /**
@@ -2185,12 +2203,13 @@ inline const Value Value::Deserialize(const void *storage,
 	{
 		//Potentially non-inlined type requires special handling
 		char* data = NULL;
+
 		if (is_inlined) {
 			//If it is inlined the storage area contains the actual data so copy a reference
 			//to the storage area
 			*reinterpret_cast<void**>(retval.value_data) = const_cast<void*>(storage);
 			data = *reinterpret_cast<char**>(retval.value_data);
-			retval.SetSourceInlined(true);
+			retval.IsInlined(true);
 		} else {
 			//If it isn't inlined the storage area contains a pointer to the
 			// StringRef object containing the string's memory
@@ -2205,6 +2224,7 @@ inline const Value Value::Deserialize(const void *storage,
 				data = sref->Get();
 			}
 		}
+
 		const int32_t length = GetObjectLengthFromLocation(data);
 		//std::cout << "Value::deserializeFromTupleStorage: length: " << length << std::endl;
 		retval.SetObjectLength(length);

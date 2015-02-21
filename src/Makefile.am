@@ -1,7 +1,7 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
 AM_CPPFLAGS = $(nstore_INCLUDES) 
-AM_CXXFLAGS = -std=c++11 -Wall -Wextra -fcolor-diagnostics 
+AM_CXXFLAGS = -std=c++11 -g3 -Wall -Wextra -fcolor-diagnostics 
 AM_LDFLAGS  = -lboost_system 
 
 ######################################################################
