@@ -13,6 +13,7 @@
 #pragma once
 
 #include <string>
+#include <cstdint>
 
 namespace nstore {
 
@@ -71,6 +72,9 @@ enum ValueType {
 };
 
 std::string GetTypeName(ValueType type);
+
+/// Works only for fixed-length types
+std::size_t GetFixedLengthTypeSize(ValueType type);
 
 bool IsNumeric(ValueType type);
 
