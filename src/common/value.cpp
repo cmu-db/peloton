@@ -109,7 +109,7 @@ TTInt Value::MinDecimal(
 		"99999999");   //38 digits
 
 /// Produce a debugging string describing an Value.
-std::string Value::Debug() const {
+std::string Value::ToString() const {
 	const ValueType type = GetValueType();
 
 	if (IsNull()) {

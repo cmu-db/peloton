@@ -127,7 +127,7 @@ ValueType StringToValue(std::string str ){
 
 
 /** takes in 0-F, returns 0-15 */
-int32_t hexCharToInt(char c) {
+int32_t HexCharToInt(char c) {
 	c = static_cast<char>(toupper(c));
 	if ((c < '0' || c > '9') && (c < 'A' || c > 'F')) {
 		return -1;
@@ -142,15 +142,15 @@ int32_t hexCharToInt(char c) {
 	return retval;
 }
 
-bool hexDecodeToBinary(unsigned char *bufferdst, const char *hexString) {
+bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString) {
 	assert (hexString);
 	size_t len = strlen(hexString);
 	if ((len % 2) != 0)
 		return false;
 	uint32_t i;
 	for (i = 0; i < len / 2; i++) {
-		int32_t high = hexCharToInt(hexString[i * 2]);
-		int32_t low = hexCharToInt(hexString[i * 2 + 1]);
+		int32_t high = HexCharToInt(hexString[i * 2]);
+		int32_t low = HexCharToInt(hexString[i * 2 + 1]);
 		if ((high == -1) || (low == -1))
 			return false;
 		int32_t result = high * 16 + low;

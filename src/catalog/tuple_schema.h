@@ -33,7 +33,6 @@ public:
 	ColumnInfo(ValueType column_type, uint32_t column_length, bool allow_null,
 			bool is_inlined)
 : type(column_type), offset(0), allow_null(allow_null), is_inlined(is_inlined){
-
 		if(is_inlined){
 			fixed_length = column_length;
 			variable_length = 0;
@@ -42,7 +41,6 @@ public:
 			fixed_length = sizeof(uintptr_t);
 			variable_length = column_length;
 		}
-
 	}
 
 	/// Compare two column info objects
@@ -76,7 +74,7 @@ public:
 	}
 
 	/// Get a string representation for debugging
-	std::string ToString() const;
+	friend std::ostream& operator<< (std::ostream& os, const ColumnInfo& column_info);
 
 	//===--------------------------------------------------------------------===//
 	// Data members
@@ -147,19 +145,20 @@ public:
 	// Schema accessors
 	//===--------------------------------------------------------------------===//
 
-	inline uint32_t Offset(const uint32_t column_id) const {
+	inline uint32_t GetOffset(const uint32_t column_id) const {
 		return columns[column_id].offset;
 	}
 
-	inline ValueType Type(const uint32_t column_id) const {
+	inline ValueType GetType(const uint32_t column_id) const {
 		return columns[column_id].type;
 	}
 
-	inline uint32_t FixedLength(const uint32_t column_id) const {
+	/// Returns fixed length
+	inline uint32_t GetLength(const uint32_t column_id) const {
 		return columns[column_id].fixed_length;
 	}
 
-	inline uint32_t VariableLength(const uint32_t column_id) const {
+	inline uint32_t GetVariableLength(const uint32_t column_id) const {
 		return columns[column_id].variable_length;
 	}
 
@@ -173,13 +172,25 @@ public:
 		return columns[column_id].is_inlined;
 	}
 
+	const ColumnInfo GetColumnInfo(const uint32_t column_id) const {
+		return columns[column_id];
+	}
+
+	int GetUninlinedColumnIndex(const int column_id) const {
+		return uninlined_columns[column_id];
+	}
+
 	/// Return the number of columns in the schema for the tuple.
-	inline uint16_t ColumnCount() const {
-		return columns.size();
+	inline uint16_t GetColumnCount() const {
+		return column_count;
+	}
+
+	uint16_t GetUninlinedColumnCount() const {
+		return uninlined_column_count;
 	}
 
 	/// Return the number of bytes used by one tuple.
-	inline uint32_t TupleLength() const {
+	inline uint32_t GetLength() const {
 		return length;
 	}
 
@@ -188,30 +199,27 @@ public:
 		return is_inlined;
 	}
 
-	uint16_t UninlinedObjectColumnCount() const {
-		return uninlined_column_count;
-	}
-
-	/// Get a string representation of this schema for debugging
-	std::string ToString() const;
-
-	//===--------------------------------------------------------------------===//
-	// Column info accessors
-	//===--------------------------------------------------------------------===//
-
-	const ColumnInfo GetColumnInfo(const uint32_t column_id) const {
-		return columns[column_id];
-	}
+	/// Get a string representation of this schema
+	friend std::ostream& operator<<(std::ostream& os, const TupleSchema& schema);
 
 private:
+	// size of fixed length columns
 	uint32_t length;
 
+	// all inlined and uninlined columns in the tuple
 	std::vector<ColumnInfo> columns;
+
+	// keeps track of unlined columns
+	std::vector<int> uninlined_columns;
+
+	// keep these in sync with the vectors above
+	uint32_t column_count;
+
+	uint32_t uninlined_column_count;
 
 	/// are all columns inlined
 	bool is_inlined;
 
-	uint32_t uninlined_column_count;
 };
 
 } // End catalog namespace

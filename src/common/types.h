@@ -78,9 +78,9 @@ std::size_t GetFixedLengthTypeSize(ValueType type);
 
 bool IsNumeric(ValueType type);
 
-int32_t hexCharToInt(char c);
+int32_t HexCharToInt(char c);
 
-bool hexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
+bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
 std::string ValueToString(ValueType type);
 

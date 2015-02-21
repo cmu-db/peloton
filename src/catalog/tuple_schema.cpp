@@ -24,7 +24,6 @@ void TupleSchema::CreateTupleSchema(const std::vector<ValueType> column_types,
 		const std::vector<bool> allow_null,
 		const std::vector<bool> _is_inlined) {
 	bool tuple_is_inlined = true;
-	uint32_t uninlined_columns = 0;
 	uint32_t num_columns = column_types.size();
 	uint32_t column_offset = 0;
 
@@ -38,17 +37,19 @@ void TupleSchema::CreateTupleSchema(const std::vector<ValueType> column_types,
 
 		column_offset += column_info.fixed_length;
 
+		columns.push_back(column_info);
+
 		if(_is_inlined[column_itr] == false){
 			tuple_is_inlined = false;
-			uninlined_columns++;
+			uninlined_columns.push_back(column_itr);
 		}
-
-		columns.push_back(column_info);
 	}
 
 	length = column_offset;
 	is_inlined = tuple_is_inlined;
-	uninlined_column_count = uninlined_columns;
+
+	column_count = columns.size();
+	uninlined_column_count = uninlined_columns.size();
 }
 
 /// Construct schema from vector of ColumnInfo
@@ -58,25 +59,26 @@ TupleSchema::TupleSchema(const std::vector<ColumnInfo> columns){
 	std::vector<ValueType> column_types;
 	std::vector<uint32_t> column_lengths;
 	std::vector<bool> allow_null;
-	std::vector<bool> _is_inlined;
+	std::vector<bool> is_inlined;
 
 	for (uint32_t column_itr = 0; column_itr < column_count; column_itr++) {
 		column_types.push_back(columns[column_itr].type);
-		column_lengths.push_back(columns[column_itr].fixed_length);
+
+		if(columns[column_itr].is_inlined)
+			column_lengths.push_back(columns[column_itr].fixed_length);
+		else
+			column_lengths.push_back(columns[column_itr].variable_length);
+
 		allow_null.push_back(columns[column_itr].allow_null);
-		_is_inlined.push_back(columns[column_itr].is_inlined);
+		is_inlined.push_back(columns[column_itr].is_inlined);
 	}
 
-	length = 0;
-	is_inlined = false;
-	uninlined_column_count = 0;
-
-	CreateTupleSchema(column_types, column_lengths, allow_null, _is_inlined);
+	CreateTupleSchema(column_types, column_lengths, allow_null, is_inlined);
 }
 
 /// Copy schema
 TupleSchema* TupleSchema::CopyTupleSchema(const TupleSchema	*schema) {
-	uint32_t column_count = schema->ColumnCount();
+	uint32_t column_count = schema->GetColumnCount();
 	std::vector<uint32_t> set;
 
 	for (uint32_t column_itr = 0; column_itr < column_count; column_itr++)
@@ -88,7 +90,7 @@ TupleSchema* TupleSchema::CopyTupleSchema(const TupleSchema	*schema) {
 /// Copy subset of columns in the given schema
 TupleSchema* TupleSchema::CopyTupleSchema(const TupleSchema *schema,
 		const std::vector<uint32_t>& set){
-	uint32_t column_count = schema->ColumnCount();
+	uint32_t column_count = schema->GetColumnCount();
 	std::vector<ColumnInfo> columns;
 
 	for (uint32_t column_itr = 0; column_itr < column_count; column_itr++) {
@@ -107,8 +109,8 @@ TupleSchema* TupleSchema::AppendTupleSchema(const TupleSchema *first, const Tupl
 	uint32_t column_count1, column_count2;
 	std::vector<uint32_t> set1, set2;
 
-	column_count1 = first->ColumnCount();
-	column_count2 = second->ColumnCount();
+	column_count1 = first->GetColumnCount();
+	column_count2 = second->GetColumnCount();
 
 	for (uint32_t column_itr = 0; column_itr < column_count1; column_itr++)
 		set1.push_back(column_itr);
@@ -125,8 +127,8 @@ TupleSchema* TupleSchema::AppendTupleSchema(const TupleSchema *first,
 	uint32_t column_count1, column_count2;
 	std::vector<ColumnInfo> columns;
 
-	column_count1 = first->ColumnCount();
-	column_count2 = second->ColumnCount();
+	column_count1 = first->GetColumnCount();
+	column_count2 = second->GetColumnCount();
 
 	for (uint32_t column_itr = 0; column_itr < column_count1; column_itr++) {
 		// If column exists in first set
@@ -148,47 +150,42 @@ TupleSchema* TupleSchema::AppendTupleSchema(const TupleSchema *first,
 }
 
 /// Get a string representation
-std::string ColumnInfo::ToString() const{
-	std::ostringstream buffer;
+std::ostream& operator<< (std::ostream& os, const ColumnInfo& column_info){
+	os << " type = " << GetTypeName(column_info.type) << "," <<
+			" offset = " << column_info.offset << "," <<
+			" fixed length = " << column_info.fixed_length << "," <<
+			" variable length = " << column_info.variable_length << "," <<
+			" nullable = " << column_info.allow_null <<
+			" inlined = " << column_info.is_inlined << std::endl;
 
-	buffer << " type = " << GetTypeName(type) << "," <<
-			" offset = " << offset << "," <<
-			" length = " << fixed_length << "," <<
-			" allow_null = " << allow_null <<
-			" is_inlined = " << is_inlined << std::endl;
-
-	std::string ret(buffer.str());
-	return ret;
+	return os;
 }
 
 /// Get a string representation of this schema for debugging
-std::string TupleSchema::ToString() const{
-	std::ostringstream buffer;
+std::ostream& operator<< (std::ostream& os, const TupleSchema& schema){
+	os << "Schema :: " <<
+			" column_count = " << schema.column_count <<
+			" is_inlined = " << schema.is_inlined << "," <<
+			" length = " << schema.length << "," <<
+			" uninlined_column_count = " << schema.uninlined_column_count << std::endl;
 
-	buffer << "Schema :: " <<
-			" column_count = " << ColumnCount() <<
-			" is_inlined = " << is_inlined << "," <<
-			" length = " << length << "," <<
-			" uninlined_column_count = " << uninlined_column_count << std::endl;
-
-	for (uint32_t column_itr = 0; column_itr < ColumnCount(); column_itr++) {
-		buffer << " Column " << column_itr << " :: " << columns[column_itr].ToString();
+	for (uint32_t column_itr = 0; column_itr < schema.column_count; column_itr++) {
+		os << " Column " << column_itr << " :: " << schema.columns[column_itr];
 	}
 
-	std::string ret(buffer.str());
-	return ret;
+	return os;
 }
 
 /// Compare two schemas
 bool TupleSchema::operator== (const TupleSchema &other) const {
 
-	if (other.ColumnCount() != ColumnCount() ||
-			other.UninlinedObjectColumnCount() != UninlinedObjectColumnCount() ||
+	if (other.GetColumnCount() != GetColumnCount() ||
+			other.GetUninlinedColumnCount() != GetUninlinedColumnCount() ||
 			other.IsInlined() != IsInlined()) {
 		return false;
 	}
 
-	for (int column_itr = 0; column_itr < other.ColumnCount(); column_itr++) {
+	for (int column_itr = 0; column_itr < other.GetColumnCount(); column_itr++) {
 		const ColumnInfo& column_info = other.GetColumnInfo(column_itr);
 		const ColumnInfo& other_column_info = GetColumnInfo(column_itr);
 
