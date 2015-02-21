@@ -21,7 +21,7 @@
 
 namespace nstore {
 
-static const size_t TEMP_POOL_CHUNK_SIZE = 256 * 1024; // 256 KB
+static const size_t TEMP_POOL_CHUNK_SIZE = 1024 * 1024; // 1 MB
 
 //===--------------------------------------------------------------------===//
 // Chunk of memory allocated on the heap
@@ -104,7 +104,7 @@ public:
 		Chunk *currentChunk = &chunks[current_chunk_index];
 		if (size > currentChunk->m_size - currentChunk->m_offset) {
 
-			/// Not enough space. Check if it is greater then our allocation size.
+			/// Not enough space. Check if it is greater than our allocation size.
 			if (size > allocation_size) {
 
 				/// Allocate an oversize chunk that will not be reused.
@@ -117,11 +117,13 @@ public:
 
 			/// Check if there is an already allocated chunk we can use.
 			current_chunk_index++;
+
 			if (current_chunk_index < chunks.size()) {
 				currentChunk = &chunks[current_chunk_index];
 				currentChunk->m_offset = size;
 				return currentChunk->m_chunkData;
-			} else {
+			}
+			else {
 				/// Need to allocate a new chunk
 				char *storage = new char[allocation_size];
 				chunks.push_back(Chunk(allocation_size, storage));
@@ -151,7 +153,6 @@ public:
 	}
 
 	inline void Purge() {
-
 		/// Erase any oversize chunks that were allocated
 		const std::size_t numOversizeChunks = oversize_chunks.size();
 		for (std::size_t ii = 0; ii < numOversizeChunks; ii++) {
