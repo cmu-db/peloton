@@ -19,69 +19,93 @@
 namespace nstore {
 namespace catalog {
 
+//===--------------------------------------------------------------------===//
+// Column Information
+//===--------------------------------------------------------------------===//
+
+class ColumnInfo {
+	ColumnInfo() = delete;
+	ColumnInfo &operator=(const ColumnInfo &) = delete;
+
+public:
+
+	// Configures all members except offset
+	ColumnInfo(ValueType column_type, uint32_t column_length, bool allow_null,
+			bool is_inlined)
+: type(column_type), offset(0), allow_null(allow_null), is_inlined(is_inlined){
+
+		if(is_inlined){
+			fixed_length = column_length;
+			variable_length = 0;
+		}
+		else{
+			fixed_length = sizeof(uintptr_t);
+			variable_length = column_length;
+		}
+
+	}
+
+	/// Compare two column info objects
+	bool operator== (const ColumnInfo &other) const {
+		if (other.allow_null != allow_null || other.type != type ||
+				other.is_inlined != is_inlined) {
+			return false;
+		}
+
+		return true;
+	}
+
+	bool operator!= (const ColumnInfo &other) const {
+		return !(*this == other);
+	}
+
+	// Configure offset as well
+	ColumnInfo(ValueType column_type, uint32_t column_offset, uint32_t column_length,
+			bool allow_null, bool is_inlined)
+: type(column_type), offset(column_offset), allow_null(allow_null),
+  is_inlined(is_inlined){
+
+		if(is_inlined){
+			fixed_length = column_length;
+			variable_length = 0;
+		}
+		else{
+			fixed_length = sizeof(uintptr_t);
+			variable_length = column_length;
+		}
+	}
+
+	/// Get a string representation for debugging
+	std::string ToString() const;
+
+	//===--------------------------------------------------------------------===//
+	// Data members
+	//===--------------------------------------------------------------------===//
+
+	/// type of column
+	ValueType type;
+
+	/// offset of column in tuple
+	uint32_t offset;
+
+	/// if the column is not inlined, this is set to pointer size
+	/// else, it is set to length of the fixed length column
+	uint32_t fixed_length;
+
+	/// if the column is inlined, this is set to 0
+	/// else, it is set to length of the variable length column
+	uint32_t variable_length;
+
+	bool allow_null;
+	bool is_inlined;
+};
+
+//===--------------------------------------------------------------------===//
+// Tuple Schema
+//===--------------------------------------------------------------------===//
+
 class TupleSchema	{
-
-	//===--------------------------------------------------------------------===//
-	// Column Information
-	//===--------------------------------------------------------------------===//
-
-	class ColumnInfo {
-		ColumnInfo() = delete;
-		ColumnInfo &operator=(const ColumnInfo &) = delete;
-
-	public:
-
-		ColumnInfo(ValueType column_type,
-				uint32_t column_offset,
-				uint32_t column_length,
-				bool allow_null,
-				bool is_inlined)
-	: type(column_type),
-	  offset(column_offset),
-	  allow_null(allow_null),
-	  is_inlined(is_inlined){
-
-			if(is_inlined){
-				fixed_length = column_length;
-				variable_length = 0;
-			}
-			else{
-				fixed_length = sizeof(uintptr_t);
-				variable_length = column_length;
-			}
-		}
-
-		/// Compare two column info objects
-		bool operator== (const ColumnInfo &other) const {
-			if (other.allow_null != allow_null || other.type != type ||
-					other.is_inlined != is_inlined) {
-				return false;
-			}
-
-			return true;
-		}
-
-		bool operator!= (const ColumnInfo &other) const {
-		    return !(*this == other);
-		}
-
-		/// type of column
-		ValueType type;
-
-		/// offset of column in tuple
-		uint32_t offset;
-
-		/// if the column is not inlined, this is set to pointer size
-		/// else, it is set to length of the fixed length column
-		uint32_t fixed_length;
-
-		/// if the column is inlined, this is set to 0
-		/// else, it is set to length of the variable length column
-		uint32_t variable_length;
-
-		char allow_null;
-		bool is_inlined;
-	};
+	friend class ColumnInfo;
 
 public:
 	TupleSchema() = delete;
@@ -94,10 +118,13 @@ public:
 	//===--------------------------------------------------------------------===//
 
 	/// Construct schema
-	TupleSchema(const std::vector<ValueType> column_types,
+	void CreateTupleSchema(const std::vector<ValueType> column_types,
 			const std::vector<uint32_t> column_lengths,
 			const std::vector<bool> allow_null,
 			const std::vector<bool> is_inlined);
+
+	/// Construct schema from vector of ColumnInfo
+	TupleSchema(const std::vector<ColumnInfo> columns);
 
 	/// Copy schema
 	static TupleSchema *CopyTupleSchema(const TupleSchema *schema);
@@ -113,7 +140,8 @@ public:
 			const TupleSchema *second, const std::vector<uint32_t>& second_set);
 
 	/// Compare two schemas
-	bool operator== (TupleSchema &other);
+	bool operator== (const TupleSchema &other) const;
+	bool operator!= (const TupleSchema &other) const;
 
 	//===--------------------------------------------------------------------===//
 	// Schema accessors

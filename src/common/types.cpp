@@ -45,6 +45,27 @@ std::string GetTypeName(ValueType type) {
 	return (ret);
 }
 
+/// Works only for fixed-length types
+std::size_t GetFixedLengthTypeSize(ValueType type) {
+	switch (type) {
+	case (VALUE_TYPE_TINYINT):		return 1;
+	case (VALUE_TYPE_SMALLINT):		return 2;
+	case (VALUE_TYPE_INTEGER):		return 4;
+	case (VALUE_TYPE_BIGINT):		return 8;
+	case (VALUE_TYPE_DOUBLE):		return 8;
+	case (VALUE_TYPE_VARCHAR):		return 0;
+	case (VALUE_TYPE_VARBINARY):	return 0;
+	case (VALUE_TYPE_TIMESTAMP):	return 8;
+	case (VALUE_TYPE_DECIMAL):		return 0;
+	case (VALUE_TYPE_INVALID):		return 0;
+	case (VALUE_TYPE_NULL):			return 0;
+	default: {
+		return 0;
+	}
+	}
+}
+
+
 std::string ValueToString(ValueType type){
 	switch (type) {
 	case VALUE_TYPE_INVALID:
