@@ -38,7 +38,8 @@ enum ExceptionType {
 	EXCEPTION_TYPE_MISMATCH_TYPE = 5,				// type mismatch
 	EXCEPTION_TYPE_DIVIDE_BY_ZERO = 6,				// divide by 0
 	EXCEPTION_TYPE_OBJECT_SIZE = 7,					// object size exceeded
-	EXCEPTION_TYPE_INCOMPATIBLE_TYPE = 8			// incompatible for operation
+	EXCEPTION_TYPE_INCOMPATIBLE_TYPE = 8,			// incompatible for operation
+	EXCEPTION_TYPE_SERIALIZATION = 9			    // serialization
 };
 
 class Exception {
@@ -238,6 +239,14 @@ public:
 	}
 };
 
+class SerializationException : Exception {
+	SerializationException() = delete;
+
+public:
+	SerializationException(std::string msg) :
+		Exception(EXCEPTION_TYPE_SERIALIZATION, msg){
+	}
+};
 
 
 } // End nstore namespace

@@ -76,6 +76,10 @@ public:
 
 	/// Deletes tuple data (not schema)
 	~Tuple() {
+		// first free all uninlined data
+		FreeColumns();
+
+		/// then delete the actual data
 		delete tuple_data;
 	}
 
