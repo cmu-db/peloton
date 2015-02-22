@@ -18,6 +18,9 @@
 #include <cstdlib>
 #include <cassert>
 #include <stdexcept>
+#include <execinfo.h>
+#include <errno.h>
+#include <cxxabi.h>
 
 namespace nstore {
 
@@ -35,18 +38,95 @@ enum ExceptionType {
 	EXCEPTION_TYPE_MISMATCH_TYPE = 5,				// type mismatch
 	EXCEPTION_TYPE_DIVIDE_BY_ZERO = 6,				// divide by 0
 	EXCEPTION_TYPE_OBJECT_SIZE = 7,					// object size exceeded
-	EXCEPTION_TYPE_INCOMPATIBLE_TYPE = 8			// incompatible for operation
+	EXCEPTION_TYPE_INCOMPATIBLE_TYPE = 8,			// incompatible for operation
+	EXCEPTION_TYPE_SERIALIZATION = 9			    // serialization
 };
 
 class Exception {
 public:
 
 	Exception(std::string message) {
+		// print stack trace
+		PrintStackTrace();
 		throw std::runtime_error(message);
 	}
 
 	Exception(ExceptionType exception_type, std::string message){
+		PrintStackTrace();
 		throw std::runtime_error(std::to_string(exception_type) + " " +	message);
+	}
+
+	// Based on :: http://panthema.net/2008/0901-stacktrace-demangled/
+	void PrintStackTrace(FILE *out = stderr, unsigned int max_frames = 63){
+		fprintf(out, "Stack Trace:\n");
+
+		/// storage array for stack trace address data
+		void* addrlist[max_frames+1];
+
+		/// retrieve current stack addresses
+		int addrlen = backtrace(addrlist, sizeof(addrlist) / sizeof(void*));
+
+		if (addrlen == 0) {
+			fprintf(out, "  <empty, possibly corrupt>\n");
+			return;
+		}
+
+		/// resolve addresses into strings containing "filename(function+address)",
+		/// this array must be free()-ed
+		char** symbol_list = backtrace_symbols(addrlist, addrlen);
+
+		/// allocate string which will be filled with the demangled function name
+		size_t func_name_size = 1024;
+		char* func_name = (char*) malloc(func_name_size);
+
+		/// iterate over the returned symbol lines. skip the first, it is the
+		/// address of this function.
+		for (int i = 1; i < addrlen; i++){
+			char *begin_name = 0, *begin_offset = 0, *end_offset = 0;
+
+			/// find parentheses and +address offset surrounding the mangled name:
+			/// ./module(function+0x15c) [0x8048a6d]
+			for (char *p = symbol_list[i]; *p; ++p){
+				if (*p == '(')
+					begin_name = p;
+				else if (*p == '+')
+					begin_offset = p;
+				else if (*p == ')' && begin_offset) {
+					end_offset = p;
+					break;
+				}
+			}
+
+			if (begin_name && begin_offset && end_offset && begin_name < begin_offset){
+				*begin_name++ = '\0';
+				*begin_offset++ = '\0';
+				*end_offset = '\0';
+
+				/// mangled name is now in [begin_name, begin_offset) and caller
+				/// offset in [begin_offset, end_offset). now apply  __cxa_demangle():
+				int status;
+				char* ret = abi::__cxa_demangle(begin_name, func_name, &func_name_size, &status);
+				if (status == 0) {
+					func_name = ret; // use possibly realloc()-ed string
+					fprintf(out, "  %s : %s+%s\n",
+							symbol_list[i], func_name, begin_offset);
+				}
+				else {
+					/// demangling failed. Output function name as a C function with
+					/// no arguments.
+					fprintf(out, "  %s : %s()+%s\n",
+							symbol_list[i], begin_name, begin_offset);
+				}
+			}
+			else
+			{
+				/// couldn't parse the line ? print the whole line.
+				fprintf(out, "  %s\n", symbol_list[i]);
+			}
+		}
+
+		free(func_name);
+		free(symbol_list);
 	}
 
 };
@@ -159,6 +239,14 @@ public:
 	}
 };
 
+class SerializationException : Exception {
+	SerializationException() = delete;
+
+public:
+	SerializationException(std::string msg) :
+		Exception(EXCEPTION_TYPE_SERIALIZATION, msg){
+	}
+};
 
 
 } // End nstore namespace
