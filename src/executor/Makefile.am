@@ -4,6 +4,8 @@
 # EXECUTOR
 ######################################################################
 
-executor_FILES = 
+executor_FILES = #\
+                #executor/abstract_plan_node.cpp
  
-executor_INCLUDES = 
+executor_INCLUDES = #\
+                    #-I$(srcdir)/executor

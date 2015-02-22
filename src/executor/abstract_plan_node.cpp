@@ -1,13 +1,14 @@
-//TODO include tile header file
+#include "abstract_plan_node.h"
 
 namespace nstore {
+namespace executor {
 
 bool AbstractPlanNode::init() {
     //TODO Insert any code common to all plan nodes here.
     p_init();
 }
 
-Tile AbstractPlanNode::getNextTile() {
+storage::Tile *AbstractPlanNode::getNextTile() {
     //TODO Insert any code common to all plan nodes here.
     return p_getNextTile();
 }
@@ -17,4 +18,5 @@ void AbstractPlanNode::cleanup() {
     p_cleanup();
 }
 
+} // namespace executor
 } // namespace nstore
