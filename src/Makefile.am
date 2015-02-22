@@ -10,6 +10,7 @@ AM_LDFLAGS  = -lboost_system
 include $(srcdir)/backend/Makefile.am
 include $(srcdir)/catalog/Makefile.am
 include $(srcdir)/common/Makefile.am
+include $(srcdir)/executor/Makefile.am
 include $(srcdir)/parser/Makefile.am
 include $(srcdir)/storage/Makefile.am
 

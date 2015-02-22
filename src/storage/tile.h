@@ -81,10 +81,6 @@ public:
 		return active_tuple_count;
 	}
 
-	virtual int64_t GetTotalSize() const {
-		return tile_size;
-	}
-
 	int64_t GetOccupiedSize() const {
 		return active_tuple_count * temp_tuple.Length();
 	}
@@ -119,12 +115,12 @@ public:
 	int GetColumnIndex(const std::string &name) const;
 
 	/// Only inlined data
-	uint32_t Tile::GetSize() const {
+	uint32_t GetSize() const {
 		return tile_size ;
 	}
 
 	/// Both inlined and uninlined data
-	uint32_t Tile::GetTotalSize() const {
+	uint32_t GetTotalSize() const {
 		return tile_size + uninlined_data_size ;
 	}
 
