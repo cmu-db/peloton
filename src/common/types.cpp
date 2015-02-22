@@ -22,32 +22,20 @@ namespace nstore {
 //===--------------------------------------------------------------------===//
 
 std::string GetTypeName(ValueType type) {
-
 	std::string ret;
 
 	switch (type) {
-	case (VALUE_TYPE_TINYINT):
-														return "tinyint";
-	case (VALUE_TYPE_SMALLINT):
-														return "smallint";
-	case (VALUE_TYPE_INTEGER):
-														return "integer";
-	case (VALUE_TYPE_BIGINT):
-														return "bigint";
-	case (VALUE_TYPE_DOUBLE):
-														return "double";
-	case (VALUE_TYPE_VARCHAR):
-														return "varchar";
-	case (VALUE_TYPE_VARBINARY):
-														return "varbinary";
-	case (VALUE_TYPE_TIMESTAMP):
-														return "timestamp";
-	case (VALUE_TYPE_DECIMAL):
-														return "decimal";
-	case (VALUE_TYPE_INVALID):
-														return "INVALID";
-	case (VALUE_TYPE_NULL):
-														return "NULL";
+	case (VALUE_TYPE_TINYINT):		return "tinyint";
+	case (VALUE_TYPE_SMALLINT):		return "smallint";
+	case (VALUE_TYPE_INTEGER):		return "integer";
+	case (VALUE_TYPE_BIGINT):		return "bigint";
+	case (VALUE_TYPE_DOUBLE):		return "double";
+	case (VALUE_TYPE_VARCHAR):		return "varchar";
+	case (VALUE_TYPE_VARBINARY):	return "varbinary";
+	case (VALUE_TYPE_TIMESTAMP):	return "timestamp";
+	case (VALUE_TYPE_DECIMAL):		return "decimal";
+	case (VALUE_TYPE_INVALID):		return "INVALID";
+	case (VALUE_TYPE_NULL):			return "NULL";
 	default: {
 		char buffer[32];
 		snprintf(buffer, 32, "UNKNOWN[%d]", type);
@@ -56,6 +44,27 @@ std::string GetTypeName(ValueType type) {
 	}
 	return (ret);
 }
+
+/// Works only for fixed-length types
+std::size_t GetFixedLengthTypeSize(ValueType type) {
+	switch (type) {
+	case (VALUE_TYPE_TINYINT):		return 1;
+	case (VALUE_TYPE_SMALLINT):		return 2;
+	case (VALUE_TYPE_INTEGER):		return 4;
+	case (VALUE_TYPE_BIGINT):		return 8;
+	case (VALUE_TYPE_DOUBLE):		return 8;
+	case (VALUE_TYPE_VARCHAR):		return 0;
+	case (VALUE_TYPE_VARBINARY):	return 0;
+	case (VALUE_TYPE_TIMESTAMP):	return 8;
+	case (VALUE_TYPE_DECIMAL):		return 0;
+	case (VALUE_TYPE_INVALID):		return 0;
+	case (VALUE_TYPE_NULL):			return 0;
+	default: {
+		return 0;
+	}
+	}
+}
+
 
 std::string ValueToString(ValueType type){
 	switch (type) {
@@ -118,7 +127,7 @@ ValueType StringToValue(std::string str ){
 
 
 /** takes in 0-F, returns 0-15 */
-int32_t hexCharToInt(char c) {
+int32_t HexCharToInt(char c) {
 	c = static_cast<char>(toupper(c));
 	if ((c < '0' || c > '9') && (c < 'A' || c > 'F')) {
 		return -1;
@@ -133,15 +142,15 @@ int32_t hexCharToInt(char c) {
 	return retval;
 }
 
-bool hexDecodeToBinary(unsigned char *bufferdst, const char *hexString) {
+bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString) {
 	assert (hexString);
 	size_t len = strlen(hexString);
 	if ((len % 2) != 0)
 		return false;
 	uint32_t i;
 	for (i = 0; i < len / 2; i++) {
-		int32_t high = hexCharToInt(hexString[i * 2]);
-		int32_t low = hexCharToInt(hexString[i * 2 + 1]);
+		int32_t high = HexCharToInt(hexString[i * 2]);
+		int32_t low = HexCharToInt(hexString[i * 2 + 1]);
 		if ((high == -1) || (low == -1))
 			return false;
 		int32_t result = high * 16 + low;
