@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "catalog/tuple_schema.h"
 #include "common/value.h"
 #include "common/value_peeker.h"
@@ -63,12 +65,12 @@ public:
 	}
 
 	/// Setup the tuple given a schema
-	inline Tuple(const catalog::TupleSchema *schema) : tuple_schema(schema), tuple_data(NULL) {
+	inline Tuple(std::shared_ptr<catalog::TupleSchema> schema) : tuple_schema(schema), tuple_data(NULL) {
 		assert(tuple_schema);
 	}
 
 	/// Setup the tuple given a schema and allocate space
-	inline Tuple(const catalog::TupleSchema *schema, bool allocate) : tuple_schema(schema) {
+	inline Tuple(std::shared_ptr<catalog::TupleSchema> schema, bool allocate) : tuple_schema(schema) {
 		assert(tuple_schema);
 		if(allocate)
 			tuple_data = new char[tuple_schema->GetLength()];
@@ -77,14 +79,15 @@ public:
 	/// Deletes tuple data (not schema)
 	~Tuple() {
 		// first free all uninlined data
-		FreeColumns();
+		if(tuple_schema && tuple_schema->IsInlined() == false)
+			FreeColumns();
 
 		/// then delete the actual data
 		delete tuple_data;
 	}
 
 	/// Setup the tuple given the specified data location and schema
-	Tuple(char *data, const catalog::TupleSchema *schema);
+	Tuple(char *data, std::shared_ptr<catalog::TupleSchema> schema);
 
 	/// Assignment operator
 	Tuple& operator=(const Tuple &rhs);
@@ -114,6 +117,7 @@ public:
 	inline const Value GetValue(const int column_id) const {
 		assert(tuple_schema);
 		assert(tuple_data);
+
 		assert(column_id < tuple_schema->GetColumnCount());
 		//assert(IsAlive());
 
@@ -164,7 +168,7 @@ public:
 		return tuple_schema->GetType(column_id);
 	}
 
-	inline const catalog::TupleSchema* GetSchema() const {
+	inline std::shared_ptr<catalog::TupleSchema> GetSchema() const {
 		return tuple_schema;
 	}
 
@@ -306,7 +310,7 @@ private:
 	//===--------------------------------------------------------------------===//
 
 	/// The types of the columns in the tuple
-	const catalog::TupleSchema *tuple_schema;
+	std::shared_ptr<catalog::TupleSchema> tuple_schema;
 
 	/// The tuple data, padded at the front by the TUPLE_HEADER
 	char *tuple_data;
@@ -332,7 +336,7 @@ private:
 //===--------------------------------------------------------------------===//
 
 /// Setup the tuple given the specified data location and schema
-inline Tuple::Tuple(char *data, const catalog::TupleSchema *schema) {
+inline Tuple::Tuple(char *data, std::shared_ptr<catalog::TupleSchema> schema) {
 	assert(data);
 	assert(schema);
 
@@ -385,7 +389,7 @@ inline void Tuple::CopyForInsert(const Tuple &source, Pool *pool) {
 	assert(tuple_data);
 
 	const bool is_inlined = tuple_schema->IsInlined();
-	const catalog::TupleSchema *source_schema = source.tuple_schema;
+	std::shared_ptr<catalog::TupleSchema> source_schema = source.tuple_schema;
 	const bool o_is_inlined = source_schema->IsInlined();
 	const uint16_t uninlineable_column_count =
 			tuple_schema->GetUninlinedColumnCount();
@@ -506,9 +510,9 @@ inline void Tuple::Copy(const Tuple &source) {
 	assert(tuple_data);
 
 	const uint16_t column_count = tuple_schema->GetColumnCount();
-	const bool IsInlined = tuple_schema->IsInlined();
-	const catalog::TupleSchema *sourceSchema = source.tuple_schema;
-	const bool oAllowInlinedObjects = sourceSchema->IsInlined();
+	const bool is_inlined = tuple_schema->IsInlined();
+	std::shared_ptr<catalog::TupleSchema> source_schema = source.tuple_schema;
+	const bool o_is_inlined = source_schema->IsInlined();
 
 #ifndef NDEBUG
 	if (!CompatibleForCopy(source)) {
@@ -520,7 +524,7 @@ inline void Tuple::Copy(const Tuple &source) {
 	}
 #endif
 
-	if (IsInlined == oAllowInlinedObjects) {
+	if (is_inlined == o_is_inlined) {
 		/// copy the data AND the header
 		::memcpy(tuple_data, source.tuple_data,
 				tuple_schema->GetLength() + TUPLE_HEADER_SIZE);
@@ -528,7 +532,7 @@ inline void Tuple::Copy(const Tuple &source) {
 	else {
 		/// Can't copy the string ptr from the other tuple if the
 		/// string is inlined into the tuple
-		assert(!(!IsInlined && oAllowInlinedObjects));
+		assert(!(!is_inlined && o_is_inlined));
 
 		for (uint16_t column_itr = 0; column_itr < column_count; column_itr++) {
 			SetValue(column_itr, source.GetValue(column_itr));

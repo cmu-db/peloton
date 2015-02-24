@@ -12,6 +12,8 @@
 
 #include "gtest/gtest.h"
 
+#include <memory>
+
 #include "storage/tuple.h"
 #include "common/value_factory.h"
 
@@ -29,9 +31,9 @@ TEST(TupleTests, BasicTest) {
 	columns.push_back(column2);
 	columns.push_back(column3);
 
-	catalog::TupleSchema *schema = new catalog::TupleSchema(columns);
+	std::shared_ptr<catalog::TupleSchema> schema(new catalog::TupleSchema(columns));
 
-	storage::Tuple *tuple = new storage::Tuple(schema, true);
+	std::shared_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
 
 	tuple->SetValue(0, ValueFactory::GetIntegerValue(23));
 	tuple->SetValue(1, ValueFactory::GetIntegerValue(45));
@@ -44,9 +46,6 @@ TEST(TupleTests, BasicTest) {
 	tuple->SetValue(2, ValueFactory::GetTinyIntValue(2));
 
 	EXPECT_EQ(tuple->GetValue(2), ValueFactory::GetTinyIntValue(2));
-
-	delete schema;
-	delete tuple;
 }
 
 TEST(TupleTests, VarcharTest) {
@@ -62,9 +61,9 @@ TEST(TupleTests, VarcharTest) {
 	columns.push_back(column3);
 	columns.push_back(column4);
 
-	catalog::TupleSchema *schema = new catalog::TupleSchema(columns);
+	std::shared_ptr<catalog::TupleSchema> schema(new catalog::TupleSchema(columns));
 
-	storage::Tuple *tuple = new storage::Tuple(schema, true);
+	std::shared_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
 
 	tuple->SetValue(0, ValueFactory::GetIntegerValue(23));
 	tuple->SetValue(1, ValueFactory::GetIntegerValue(45));
@@ -77,9 +76,6 @@ TEST(TupleTests, VarcharTest) {
 	EXPECT_NE(tuple->GetValue(3), ValueFactory::GetStringValue("hello hello world"));
 
 	//std::cout << tuple->ToString("table_name");
-
-	delete schema;
-	delete tuple;
 }
 
 } // End nstore namespace
