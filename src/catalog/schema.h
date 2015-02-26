@@ -99,17 +99,14 @@ public:
 };
 
 //===--------------------------------------------------------------------===//
-// Tuple Schema
+// Schema
 //===--------------------------------------------------------------------===//
 
-class TupleSchema	{
+class Schema	{
 	friend class ColumnInfo;
 
 public:
-	TupleSchema() = delete;
-	TupleSchema(const TupleSchema &) = delete;
-	TupleSchema(TupleSchema &&) = delete;
-	TupleSchema &operator=(const TupleSchema &) = delete;
+	Schema() = delete;
 
 	//===--------------------------------------------------------------------===//
 	// Static factory methods to construct schema objects
@@ -122,24 +119,24 @@ public:
 			const std::vector<bool> is_inlined);
 
 	/// Construct schema from vector of ColumnInfo
-	TupleSchema(const std::vector<ColumnInfo> columns);
+	Schema(const std::vector<ColumnInfo> columns);
 
 	/// Copy schema
-	static TupleSchema *CopyTupleSchema(const TupleSchema *schema);
+	static Schema *CopySchema(const Schema *schema);
 
 	/// Copy subset of columns in the given schema
-	static TupleSchema *CopyTupleSchema(const TupleSchema *schema, const std::vector<uint32_t>& set);
+	static Schema *CopySchema(const Schema *schema, const std::vector<uint32_t>& set);
 
 	/// Append two schema objects
-	static TupleSchema *AppendTupleSchema(const TupleSchema *first, const TupleSchema *second);
+	static Schema *AppendSchema(const Schema *first, const Schema *second);
 
 	/// Append subset of columns in the two given schemas
-	static TupleSchema *AppendTupleSchema(const TupleSchema *first, const std::vector<uint32_t>& first_set,
-			const TupleSchema *second, const std::vector<uint32_t>& second_set);
+	static Schema *AppendSchema(const Schema *first, const std::vector<uint32_t>& first_set,
+			const Schema *second, const std::vector<uint32_t>& second_set);
 
 	/// Compare two schemas
-	bool operator== (const TupleSchema &other) const;
-	bool operator!= (const TupleSchema &other) const;
+	bool operator== (const Schema &other) const;
+	bool operator!= (const Schema &other) const;
 
 	//===--------------------------------------------------------------------===//
 	// Schema accessors
@@ -181,11 +178,11 @@ public:
 	}
 
 	/// Return the number of columns in the schema for the tuple.
-	inline uint16_t GetColumnCount() const {
+	inline int GetColumnCount() const {
 		return column_count;
 	}
 
-	uint16_t GetUninlinedColumnCount() const {
+	int GetUninlinedColumnCount() const {
 		return uninlined_column_count;
 	}
 
@@ -200,7 +197,7 @@ public:
 	}
 
 	/// Get a string representation of this schema
-	friend std::ostream& operator<<(std::ostream& os, const TupleSchema& schema);
+	friend std::ostream& operator<<(std::ostream& os, const Schema& schema);
 
 private:
 	// size of fixed length columns
@@ -213,9 +210,9 @@ private:
 	std::vector<int> uninlined_columns;
 
 	// keep these in sync with the vectors above
-	uint32_t column_count;
+	int column_count;
 
-	uint32_t uninlined_column_count;
+	int uninlined_column_count;
 
 	/// are all columns inlined
 	bool is_inlined;

@@ -46,7 +46,7 @@ std::string GetTypeName(ValueType type) {
 }
 
 /// Works only for fixed-length types
-std::size_t GetFixedLengthTypeSize(ValueType type) {
+std::size_t GetTypeSize(ValueType type) {
 	switch (type) {
 	case (VALUE_TYPE_TINYINT):		return 1;
 	case (VALUE_TYPE_SMALLINT):		return 2;

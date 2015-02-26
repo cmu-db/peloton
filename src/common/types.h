@@ -14,6 +14,7 @@
 
 #include <string>
 #include <cstdint>
+#include <climits>
 
 namespace nstore {
 
@@ -49,6 +50,13 @@ namespace nstore {
 #define VALUE_COMPARE_EQUAL 		  0
 #define VALUE_COMPARE_GREATERTHAN 	  1
 
+//===--------------------------------------------------------------------===//
+// Other Constants
+//===--------------------------------------------------------------------===//
+
+#define VARCHAR_LENGTH_SHORT 	16
+#define VARCHAR_LENGTH_MID  	256
+#define VARCHAR_LENGTH_LONG  	4096
 
 //===--------------------------------------------------------------------===//
 // ENUM types
@@ -71,19 +79,37 @@ enum ValueType {
 	VALUE_TYPE_VARBINARY = 25, 	// variable length bytes
 };
 
+//===--------------------------------------------------------------------===//
+// Type definitions.
+//===--------------------------------------------------------------------===//
+
+// ------------------------------------------------------------------
+// ObjectId is a fundamental type in nstore
+// ------------------------------------------------------------------
+
+typedef uint32_t Oid;
+
+#define InvalidOid (Oid(0))
+
+#define OID_MAX UINT_MAX
+
+
+//===--------------------------------------------------------------------===//
+// Type utilities
+//===--------------------------------------------------------------------===//
+
 std::string GetTypeName(ValueType type);
-
-/// Works only for fixed-length types
-std::size_t GetFixedLengthTypeSize(ValueType type);
-
-bool IsNumeric(ValueType type);
-
-int32_t HexCharToInt(char c);
-
-bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
 std::string ValueToString(ValueType type);
 
 ValueType StringToValue(std::string str );
+
+/// Works only for fixed-length types
+std::size_t GetTypeSize(ValueType type);
+
+bool IsNumeric(ValueType type);
+
+bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
+
 
 } // End nstore namespace
