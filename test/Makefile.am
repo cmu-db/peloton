@@ -24,7 +24,7 @@ func_test_LDADD = \
 
 tuple_test_SOURCES = tuple_test.cpp
 tuple_test_LDADD = \
-				   $(obj_DIR)/catalog/tuple_schema.o \
+				   $(obj_DIR)/catalog/schema.o \
 				   $(obj_DIR)/common/types.o \
 				   $(obj_DIR)/common/value.o \
 				   $(obj_DIR)/common/varlen.o \
@@ -32,5 +32,5 @@ tuple_test_LDADD = \
 
 tuple_schema_test_SOURCES = tuple_schema_test.cpp
 tuple_schema_test_LDADD = \
-						  $(obj_DIR)/catalog/tuple_schema.o \
+						  $(obj_DIR)/catalog/schema.o \
 						  $(obj_DIR)/common/types.o 

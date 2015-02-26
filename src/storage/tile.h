@@ -12,8 +12,10 @@
 
 #pragma once
 
-#include "catalog/tuple_schema.h"
+#include "../catalog/schema.h"
 #include "storage/tuple.h"
+
+//#include "storage/tile_stats.h"
 
 namespace nstore {
 namespace storage {
@@ -46,9 +48,11 @@ const int MAX_TEMP_TILE_MEMORY = 1024 * 1024 * 100; // 100 MB
  * Tile objects including derived classes are only instantiated via TileFactory.
  */
 
+class TileIterator;
+
 class Tile {
-	class TileIterator;
-	class TileStats;
+	friend class TileIterator;
+	//friend class TileStats;
 
 	Tile() = delete;
 	Tile(Tile const&) = delete;
@@ -128,17 +132,15 @@ public:
 	virtual bool operator== (const Tile &other) const;
 	virtual bool operator!= (const Tile &other) const;
 
-	virtual TileStats GetTileStats();
+	virtual TileIterator GetTileIterator();
 
-	TileIterator TileIterator() {
-		return TileIterator(this);
-	}
+	//virtual TileStats* GetTileStats();
 
 	//===--------------------------------------------------------------------===//
 	// Columns
 	//===--------------------------------------------------------------------===//
 
-	inline const catalog::TupleSchema* GetSchema() const {
+	inline const catalog::Schema* GetSchema() const {
 		return schema;
 	};
 
@@ -179,16 +181,14 @@ public:
 	 * Used for initial data loading.
 	 * @param allow_export if false, export enabled is overriden for this load.
 	 */
-	void DeserializeTuplesFrom(bool allow_export, SerializeInput &serialize_in,
-			Pool *pool = NULL);
+	void DeserializeTuplesFrom(SerializeInput &serialize_in, Pool *pool = NULL);
 
 	/**
 	 * Loads only tuple data and assumes there is no schema present.
 	 * Used for recovery where the schema is not sent.
 	 * @param allow_export if false, export enabled is overriden for this load.
 	 */
-	void DeserializeTuplesFromWithoutHeader(bool allow_export, SerializeInput &input,
-			Pool *pool = NULL);
+	void DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool = NULL);
 
 	Pool* GetPool(){
 		return (pool);
@@ -197,7 +197,7 @@ public:
 protected:
 
 	/// Tile creator
-	Tile(catalog::TupleSchema *tuple_schema, int tuple_count,
+	Tile(catalog::Schema *tuple_schema, int tuple_count,
 			const std::vector<std::string>& columns, bool own_schema);
 
 	/// Reset tile
@@ -232,28 +232,28 @@ protected:
 	Tuple temp_target1, temp_target2;
 
 	/// tile schema
-	catalog::TupleSchema *schema;
+	catalog::Schema *schema;
 
 	/// do we need to free this in destructor ?
 	bool own_schema;
 
 	/// allocated tuples
-	uint32_t allocated_tuple_count;
+	int allocated_tuple_count;
 
 	/// active tuples
-	uint32_t active_tuple_count;
+	int active_tuple_count;
 
 	/// next free slot iterator
-	uint32_t next_tuple_itr;
+	int next_tuple_itr;
 
 	/// tile reference count
-	uint32_t tile_ref_count;
+	int tile_ref_count;
 
 	/// number of columns in tile
-	uint32_t column_count;
+	int column_count;
 
 	/// length of tuple in tile
-	uint32_t tuple_length;
+	int tuple_length;
 
 	/// size of the tile (only inlined data)
 	int tile_size;
@@ -298,7 +298,6 @@ inline int Tile::GetTupleIndex(const char* tuple_address) const{
 	if((tuple_address < data) || (tuple_address >= (data + tile_size)))
 		return -1;
 
-	char* addr = data;
 	int tuple_id = 0;
 
 	/// check if address is at an offset that is an integral multiple of tuple length

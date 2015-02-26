@@ -15,20 +15,20 @@
 #include <cstdio>
 
 
-#include "catalog/tuple_schema.h"
 #include "common/exception.h"
 #include "common/pool.h"
 #include "common/serializer.h"
+#include "catalog/schema.h"
 #include "storage/tile.h"
 #include "storage/tuple.h"
+#include "storage/tile_iterator.h"
 
 //#include "indexes/tableindex.h"
-//#include "storage/tableiterator.h"
 
 namespace nstore {
 namespace storage {
 
-Tile::Tile(catalog::TupleSchema *tuple_schema, int tuple_count,
+Tile::Tile(catalog::Schema *tuple_schema, int tuple_count,
 		const std::vector<std::string>& _columns, bool _own_schema)
 : data(NULL),
   pool(NULL),
@@ -63,7 +63,7 @@ Tile::Tile(catalog::TupleSchema *tuple_schema, int tuple_count,
 		pool = new Pool();
 
 	// allocate other tuples
-	temp_tuple = new Tuple(tuple_schema, true);
+	temp_tuple = Tuple(tuple_schema, true);
 
 	temp_target1 = Tuple(tuple_schema, true);
 	temp_target2 = Tuple(tuple_schema, true);
@@ -72,11 +72,6 @@ Tile::Tile(catalog::TupleSchema *tuple_schema, int tuple_count,
 Tile::~Tile() {
 	/// not all tables are reference counted but this should be invariant
 	assert(tile_ref_count == 0);
-
-	/// release tuple space
-	delete temp_tuple;
-	delete temp_target1;
-	delete temp_target2;
 
 	/// reclaim the tile memory (only inlined data)
 	delete data;
@@ -110,7 +105,7 @@ bool Tile::NextFreeTuple(Tuple *tuple) {
 		free_tuple_slots.pop_back();
 		assert (column_count == tuple->GetColumnCount());
 
-		tuple->move(ret);
+		tuple->Move(ret);
 		return true;
 	}
 
@@ -125,7 +120,7 @@ bool Tile::NextFreeTuple(Tuple *tuple) {
 	assert (next_tuple_itr < allocated_tuple_count);
 	assert (column_count == tuple->GetColumnCount());
 
-	tuple->move(GetTupleLocation((int) next_tuple_itr));
+	tuple->Move(GetTupleLocation((int) next_tuple_itr));
 	++next_tuple_itr;
 
 	return true;
@@ -162,7 +157,7 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 	os << "===========================================================\n";
 	os << "\tDATA\n";
 
-	TileIterator tile_itr(this);
+	TileIterator tile_itr(tile);
 	Tuple tuple(tile.schema);
 
 	if (tile.active_tuple_count == 0) {
@@ -170,11 +165,13 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 	}
 	else {
 		std::string last_tuple = "";
-		while (tile_itr.next(tuple)) {
+
+		while (tile_itr.Next(tuple)) {
 			if (tuple.IsAlive()) {
 				os << "\t" << tuple << "\n";
 			}
 		}
+
 	}
 
 	os << "===========================================================\n";
@@ -208,10 +205,10 @@ bool Tile::SerializeTo(SerializeOutput &output) {
 	output.WriteInt(static_cast<int32_t>(active_tuple_count));
 
 	int64_t written_count = 0;
-	TileIterator tile_itr(this);
+	TileIterator tile_itr(*this);
 	Tuple tuple(schema);
 
-	while (tile_itr.next(tuple)) {
+	while (tile_itr.Next(tuple)) {
 		tuple.SerializeTo(output);
 		++written_count;
 	}
@@ -307,8 +304,7 @@ bool Tile::SerializeTuplesTo(SerializeOutput &output, Tuple *tuples, int num_tup
 	return true;
 }
 
-void Tile::DeserializeTuplesFrom(bool allow_export, SerializeInput &input,
-		Pool *pool) {
+void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
 	/*
 	 * Directly receives a Tile buffer.
 	 * [00 01]   [02 03]   [04 .. 0x]
@@ -332,7 +328,7 @@ void Tile::DeserializeTuplesFrom(bool allow_export, SerializeInput &input,
 
 	/// Store the following information so that we can provide them to the user on failure
 	ValueType types[column_count];
-	std::string names[column_count];
+	std::vector<std::string> names;
 
 	/// Skip the column types
 	for (int column_itr = 0; column_itr < column_count; ++column_itr) {
@@ -341,7 +337,7 @@ void Tile::DeserializeTuplesFrom(bool allow_export, SerializeInput &input,
 
 	/// Skip the column names
 	for (int column_itr = 0; column_itr < column_count; ++column_itr) {
-		names[column_itr] = input.ReadTextString();
+		names.push_back(input.ReadTextString());
 	}
 
 	/// Check if the column count matches what the temp table is expecting
@@ -350,7 +346,7 @@ void Tile::DeserializeTuplesFrom(bool allow_export, SerializeInput &input,
 		std::stringstream message(std::stringstream::in | std::stringstream::out);
 
 		message << "Column count mismatch. Expecting "	<< schema->GetColumnCount()
-				<< ", but " << column_count << " given" << std::endl;
+						<< ", but " << column_count << " given" << std::endl;
 		message << "Expecting the following columns:" << std::endl;
 		message << columns.size() << std::endl;
 		message << "The following columns are given:" << std::endl;
@@ -364,11 +360,10 @@ void Tile::DeserializeTuplesFrom(bool allow_export, SerializeInput &input,
 	}
 
 	/// Use the deserialization routine skipping header
-	DeserializeTuplesFromWithoutHeader(allow_export, input, pool);
+	DeserializeTuplesFromWithoutHeader(input, pool);
 }
 
-void Tile::DeserializeTuplesFromWithoutHeader(bool allow_export, SerializeInput &input,
-		Pool *pool) {
+void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool) {
 	int tuple_count = input.ReadInt();
 	assert(tuple_count >= 0);
 
@@ -376,7 +371,7 @@ void Tile::DeserializeTuplesFromWithoutHeader(bool allow_export, SerializeInput 
 	assert(tuple_count <= (allocated_tuple_count - next_tuple_itr + 1));
 
 	for (int tuple_itr = 0; tuple_itr < tuple_count; ++tuple_itr) {
-		temp_target1.move(GetTupleLocation((int) next_tuple_itr + tuple_itr));
+		temp_target1.Move(GetTupleLocation((int) next_tuple_itr + tuple_itr));
 
 		temp_target1.SetDeletedFalse();
 		temp_target1.SetDirtyFalse();
@@ -404,18 +399,18 @@ bool Tile::operator== (const Tile &other) const {
 	if (!(database_id == other.database_id))
 		return false;
 
-	const catalog::TupleSchema *other_schema = other.schema();
-	if ((!schema == (*other_schema)))
+	catalog::Schema *other_schema = other.schema;
+	if (*schema != *other_schema)
 		return false;
 
-	TileIterator tile_itr(this);
+	TileIterator tile_itr(*this);
 	TileIterator other_tile_itr(other);
 
 	Tuple tuple(schema);
 	Tuple other_tuple(other_schema);
 
-	while(tile_itr.next(tuple)) {
-		if (!(other_tile_itr.next(other_tuple)))
+	while(tile_itr.Next(tuple)) {
+		if (!(other_tile_itr.Next(other_tuple)))
 			return false;
 
 		if (!(tuple == other_tuple))
@@ -429,9 +424,13 @@ bool Tile::operator!= (const Tile &other) const {
 	return !(*this == other);
 }
 
-TileStats* Tile::GetTileStats() {
-	return NULL;
+TileIterator Tile::GetTileIterator() {
+	return TileIterator(*this);
 }
+
+//TileStats* Tile::GetTileStats() {
+//	return NULL;
+//}
 
 
 } // End storage namespace

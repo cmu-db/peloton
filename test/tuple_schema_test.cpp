@@ -12,7 +12,7 @@
 
 #include "gtest/gtest.h"
 
-#include "catalog/tuple_schema.h"
+#include "../src/catalog/schema.h"
 
 namespace nstore {
 
@@ -20,9 +20,9 @@ TEST(TupleSchemaTests, ColumnInfoTest) {
 
 	std::vector<catalog::ColumnInfo> columns;
 
-	catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetFixedLengthTypeSize(VALUE_TYPE_INTEGER), false, true);
-	catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetFixedLengthTypeSize(VALUE_TYPE_INTEGER), false, true);
-	catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetFixedLengthTypeSize(VALUE_TYPE_TINYINT), false, true);
+	catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+	catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+	catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), false, true);
 
 	columns.push_back(column1);
 	columns.push_back(column2);
@@ -35,9 +35,9 @@ TEST(TupleSchemaTests, ColumnInfoTest) {
 TEST(TupleSchemaTests, TupleSchemaTest) {
 	std::vector<catalog::ColumnInfo> columns;
 
-	catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetFixedLengthTypeSize(VALUE_TYPE_INTEGER), false, true);
-	catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetFixedLengthTypeSize(VALUE_TYPE_INTEGER), false, true);
-	catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetFixedLengthTypeSize(VALUE_TYPE_TINYINT), false, true);
+	catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+	catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+	catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), false, true);
 	catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 24, false, false);
 
 	columns.push_back(column1);
@@ -45,14 +45,14 @@ TEST(TupleSchemaTests, TupleSchemaTest) {
 	columns.push_back(column3);
 	columns.push_back(column4);
 
-	catalog::TupleSchema schema1(columns);
+	catalog::Schema schema1(columns);
 	std::cout << schema1;
 
-	catalog::TupleSchema schema2(columns);
+	catalog::Schema schema2(columns);
 	EXPECT_EQ(schema1, schema2);
 
 	std::vector<uint32_t> subset { 0, 2};
-	catalog::TupleSchema *schema3 = catalog::TupleSchema::CopyTupleSchema(&schema2, subset);
+	catalog::Schema *schema3 = catalog::Schema::CopySchema(&schema2, subset);
 	std::cout << (*schema3);
 
 	EXPECT_NE(schema1, (*schema3));
