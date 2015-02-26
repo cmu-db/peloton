@@ -1,11 +1,10 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
  
 ######################################################################
-# EXECUTOR
+# PLANNODE
 ######################################################################
 
-executor_FILES = \
-                executor/abstract_executor.cpp
+plannode_FILES =
  
-executor_INCLUDES = \
-                    -I$(srcdir)/executor
+plannode_INCLUDES = \
+                    -I$(srcdir)/plannode
