@@ -10,16 +10,15 @@
  *-------------------------------------------------------------------------
  */
 
-#include "tuple_schema.h"
-
 #include <algorithm>
 #include <sstream>
+#include "schema.h"
 
 namespace nstore {
 namespace catalog {
 
 /// Helper function for creating TupleSchema
-void TupleSchema::CreateTupleSchema(const std::vector<ValueType> column_types,
+void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
 		const std::vector<uint32_t> column_lengths,
 		const std::vector<bool> allow_null,
 		const std::vector<bool> _is_inlined) {
@@ -53,7 +52,7 @@ void TupleSchema::CreateTupleSchema(const std::vector<ValueType> column_types,
 }
 
 /// Construct schema from vector of ColumnInfo
-TupleSchema::TupleSchema(const std::vector<ColumnInfo> columns){
+Schema::Schema(const std::vector<ColumnInfo> columns){
 	uint32_t column_count = columns.size();
 
 	std::vector<ValueType> column_types;
@@ -77,18 +76,18 @@ TupleSchema::TupleSchema(const std::vector<ColumnInfo> columns){
 }
 
 /// Copy schema
-TupleSchema* TupleSchema::CopyTupleSchema(const TupleSchema	*schema) {
+Schema* Schema::CopySchema(const Schema	*schema) {
 	uint32_t column_count = schema->GetColumnCount();
 	std::vector<uint32_t> set;
 
 	for (uint32_t column_itr = 0; column_itr < column_count; column_itr++)
 		set.push_back(column_itr);
 
-	return CopyTupleSchema(schema, set);
+	return CopySchema(schema, set);
 }
 
 /// Copy subset of columns in the given schema
-TupleSchema* TupleSchema::CopyTupleSchema(const TupleSchema *schema,
+Schema* Schema::CopySchema(const Schema *schema,
 		const std::vector<uint32_t>& set){
 	uint32_t column_count = schema->GetColumnCount();
 	std::vector<ColumnInfo> columns;
@@ -100,12 +99,12 @@ TupleSchema* TupleSchema::CopyTupleSchema(const TupleSchema *schema,
 		}
 	}
 
-	TupleSchema *ret_schema = new TupleSchema(columns);
+	Schema *ret_schema = new Schema(columns);
 	return ret_schema;
 }
 
 /// Append two schema objects
-TupleSchema* TupleSchema::AppendTupleSchema(const TupleSchema *first, const TupleSchema *second){
+Schema* Schema::AppendSchema(const Schema *first, const Schema *second){
 	uint32_t column_count1, column_count2;
 	std::vector<uint32_t> set1, set2;
 
@@ -117,13 +116,13 @@ TupleSchema* TupleSchema::AppendTupleSchema(const TupleSchema *first, const Tupl
 	for (uint32_t column_itr = 0; column_itr < column_count2; column_itr++)
 		set2.push_back(column_itr);
 
-	return AppendTupleSchema(first, set1, second, set2);
+	return AppendSchema(first, set1, second, set2);
 }
 
 /// Append subset of columns in the two given schemas
-TupleSchema* TupleSchema::AppendTupleSchema(const TupleSchema *first,
+Schema* Schema::AppendSchema(const Schema *first,
 		const std::vector<uint32_t>& first_set,
-		const TupleSchema *second, const std::vector<uint32_t>& second_set) {
+		const Schema *second, const std::vector<uint32_t>& second_set) {
 	uint32_t column_count1, column_count2;
 	std::vector<ColumnInfo> columns;
 
@@ -144,7 +143,7 @@ TupleSchema* TupleSchema::AppendTupleSchema(const TupleSchema *first,
 		}
 	}
 
-	TupleSchema *ret_schema = new TupleSchema(columns);
+	Schema *ret_schema = new Schema(columns);
 
 	return ret_schema;
 }
@@ -162,14 +161,14 @@ std::ostream& operator<< (std::ostream& os, const ColumnInfo& column_info){
 }
 
 /// Get a string representation of this schema for debugging
-std::ostream& operator<< (std::ostream& os, const TupleSchema& schema){
+std::ostream& operator<< (std::ostream& os, const Schema& schema){
 	os << "Schema :: " <<
 			" column_count = " << schema.column_count <<
 			" is_inlined = " << schema.is_inlined << "," <<
 			" length = " << schema.length << "," <<
 			" uninlined_column_count = " << schema.uninlined_column_count << std::endl;
 
-	for (uint32_t column_itr = 0; column_itr < schema.column_count; column_itr++) {
+	for (int column_itr = 0; column_itr < schema.column_count; column_itr++) {
 		os << " Column " << column_itr << " :: " << schema.columns[column_itr];
 	}
 
@@ -177,7 +176,7 @@ std::ostream& operator<< (std::ostream& os, const TupleSchema& schema){
 }
 
 /// Compare two schemas
-bool TupleSchema::operator== (const TupleSchema &other) const {
+bool Schema::operator== (const Schema &other) const {
 
 	if (other.GetColumnCount() != GetColumnCount() ||
 			other.GetUninlinedColumnCount() != GetUninlinedColumnCount() ||
@@ -197,7 +196,7 @@ bool TupleSchema::operator== (const TupleSchema &other) const {
 	return true;
 }
 
-bool TupleSchema::operator!= (const TupleSchema &other) const {
+bool Schema::operator!= (const Schema &other) const {
 	return !(*this == other);
 }
 

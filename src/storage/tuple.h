@@ -14,7 +14,7 @@
 
 #include <memory>
 
-#include "catalog/tuple_schema.h"
+#include "../catalog/schema.h"
 #include "common/value.h"
 #include "common/value_peeker.h"
 #include "common/types.h"
@@ -49,8 +49,9 @@ namespace storage {
 #define MIGRATED_MASK 4
 
 class Tuple {
-	friend class catalog::TupleSchema;
+	friend class catalog::Schema;
 	friend class ValuePeeker;
+	friend class Tile;
 
 	class TableColumn;
 
@@ -65,12 +66,12 @@ public:
 	}
 
 	/// Setup the tuple given a schema
-	inline Tuple(std::shared_ptr<catalog::TupleSchema> schema) : tuple_schema(schema), tuple_data(NULL) {
+	inline Tuple(catalog::Schema *schema) : tuple_schema(schema), tuple_data(NULL) {
 		assert(tuple_schema);
 	}
 
 	/// Setup the tuple given a schema and allocate space
-	inline Tuple(std::shared_ptr<catalog::TupleSchema> schema, bool allocate) : tuple_schema(schema) {
+	inline Tuple(catalog::Schema *schema, bool allocate) : tuple_schema(schema) {
 		assert(tuple_schema);
 		if(allocate)
 			tuple_data = new char[tuple_schema->GetLength()];
@@ -87,7 +88,7 @@ public:
 	}
 
 	/// Setup the tuple given the specified data location and schema
-	Tuple(char *data, std::shared_ptr<catalog::TupleSchema> schema);
+	Tuple(char *data, catalog::Schema *schema);
 
 	/// Assignment operator
 	Tuple& operator=(const Tuple &rhs);
@@ -102,6 +103,20 @@ public:
 	void Copy(const Tuple &source);
 	void CopyForInsert(const Tuple &source, Pool *pool = NULL);
 	void CopyForUpdate(const Tuple &source, Pool *pool = NULL);
+
+	/**
+	 * Set the tuple to point toward a given address in a table's
+	 * backing store
+	 */
+	inline void Move(void *address) {
+		assert(tuple_schema);
+		tuple_data = reinterpret_cast<char*> (address);
+	}
+
+	inline void MoveNoHeader(void *address) {
+		assert(tuple_schema);
+		tuple_data = reinterpret_cast<char*> (address) - TUPLE_HEADER_SIZE;
+	}
 
 	bool operator==(const Tuple &other) const;
 	bool operator!=(const Tuple &other) const;
@@ -168,7 +183,7 @@ public:
 		return tuple_schema->GetType(column_id);
 	}
 
-	inline std::shared_ptr<catalog::TupleSchema> GetSchema() const {
+	inline catalog::Schema *GetSchema() const {
 		return tuple_schema;
 	}
 
@@ -310,7 +325,7 @@ private:
 	//===--------------------------------------------------------------------===//
 
 	/// The types of the columns in the tuple
-	std::shared_ptr<catalog::TupleSchema> tuple_schema;
+	catalog::Schema *tuple_schema;
 
 	/// The tuple data, padded at the front by the TUPLE_HEADER
 	char *tuple_data;
@@ -336,7 +351,7 @@ private:
 //===--------------------------------------------------------------------===//
 
 /// Setup the tuple given the specified data location and schema
-inline Tuple::Tuple(char *data, std::shared_ptr<catalog::TupleSchema> schema) {
+inline Tuple::Tuple(char *data, catalog::Schema *schema) {
 	assert(data);
 	assert(schema);
 
@@ -389,7 +404,7 @@ inline void Tuple::CopyForInsert(const Tuple &source, Pool *pool) {
 	assert(tuple_data);
 
 	const bool is_inlined = tuple_schema->IsInlined();
-	std::shared_ptr<catalog::TupleSchema> source_schema = source.tuple_schema;
+	catalog::Schema *source_schema = source.tuple_schema;
 	const bool o_is_inlined = source_schema->IsInlined();
 	const uint16_t uninlineable_column_count =
 			tuple_schema->GetUninlinedColumnCount();
@@ -511,7 +526,7 @@ inline void Tuple::Copy(const Tuple &source) {
 
 	const uint16_t column_count = tuple_schema->GetColumnCount();
 	const bool is_inlined = tuple_schema->IsInlined();
-	std::shared_ptr<catalog::TupleSchema> source_schema = source.tuple_schema;
+	catalog::Schema *source_schema = source.tuple_schema;
 	const bool o_is_inlined = source_schema->IsInlined();
 
 #ifndef NDEBUG
@@ -635,7 +650,7 @@ inline void Tuple::SerializeToExport(ExportSerializeOutput &output, int colOffse
 
 	for (int column_itr = 0; column_itr < column_count; column_itr++) {
 		// NULL doesn't produce any bytes for the Value
-	    // Handle it here to consolidate manipulation of the nullarray.
+		// Handle it here to consolidate manipulation of the nullarray.
 		if (IsNull(column_itr)) {
 			// turn on relevant bit in nullArray
 			int byte = (colOffset + column_itr) >> 3;
