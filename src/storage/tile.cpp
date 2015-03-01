@@ -29,10 +29,10 @@ namespace nstore {
 namespace storage {
 
 Tile::Tile(catalog::Schema *tuple_schema, int tuple_count,
-		const std::vector<std::string>& _columns, bool _own_schema)
+		const std::vector<std::string>& _columns_names, bool _own_schema)
 : data(NULL),
   pool(NULL),
-  columns(_columns),
+  column_names(_columns_names),
   schema(tuple_schema),
   own_schema(_own_schema),
   allocated_tuple_count(0),
@@ -128,7 +128,7 @@ bool Tile::NextFreeTuple(Tuple *tuple) {
 
 int Tile::GetColumnIndex(const std::string &name) const {
 	for (int column_itr = 0, cnt = column_count; column_itr < cnt; column_itr++) {
-		if (columns[column_itr].compare(name) == 0) {
+		if (column_names[column_itr].compare(name) == 0) {
 			return column_itr;
 		}
 	}
@@ -143,7 +143,8 @@ int Tile::GetColumnIndex(const std::string &name) const {
 /// Get a string representation of this tile
 std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 
-	os << tile.database_id << " " << tile.table_id << " " << tile.tile_group_id << " :\n";
+	os << "\tDB Id:  "<< tile.database_id << "\t Table Id:  " << tile.table_id
+			<< "\t Tile Group Id:  " << tile.tile_group_id << " \n";
 	os << "\tAllocated Tuples:  " << tile.allocated_tuple_count << "\n";
 	os << "\tDeleted Tuples:    " << tile.free_tuple_slots.size() << "\n";
 	os << "\tNumber of Columns: " << tile.GetColumnCount() << "\n";
@@ -151,7 +152,7 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 	/// Columns
 	os << "===========================================================\n";
 	os << "\tCOLUMNS\n";
-	os << tile.schema;
+	os << (*tile.schema);
 
 	/// Tuples
 	os << "===========================================================\n";
@@ -348,7 +349,7 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
 		message << "Column count mismatch. Expecting "	<< schema->GetColumnCount()
 						<< ", but " << column_count << " given" << std::endl;
 		message << "Expecting the following columns:" << std::endl;
-		message << columns.size() << std::endl;
+		message << column_names.size() << std::endl;
 		message << "The following columns are given:" << std::endl;
 
 		for (int i = 0; i < column_count; i++) {

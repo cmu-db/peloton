@@ -73,14 +73,16 @@ public:
 	/// Setup the tuple given a schema and allocate space
 	inline Tuple(catalog::Schema *schema, bool allocate) : tuple_schema(schema) {
 		assert(tuple_schema);
-		if(allocate)
+		if(allocate) {
 			tuple_data = new char[tuple_schema->GetLength()];
+			SetDeletedTrue();
+		}
 	}
 
 	/// Deletes tuple data (not schema)
 	~Tuple() {
 		// first free all uninlined data
-		if(tuple_schema && tuple_schema->IsInlined() == false)
+		if(tuple_data && IsAlive() && tuple_schema && tuple_schema->IsInlined() == false)
 			FreeColumns();
 
 		/// then delete the actual data

@@ -31,7 +31,7 @@ class Tile;
  * TileIterator is a small and copiable object.
  * You can copy it, not passing a pointer of it.
  */
-class TileIterator : public Iterator {
+class TileIterator : public Iterator<Tuple> {
 	TileIterator() = delete;
 
 public:
