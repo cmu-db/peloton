@@ -64,11 +64,11 @@ public:
 	// Operations and stats
 	//===--------------------------------------------------------------------===//
 
-	virtual bool InsertTuple(Tuple &source) = 0;
-	virtual bool UpdateTuple(Tuple &source, Tuple &target, bool update_indexes) = 0;
-	virtual bool DeleteTuple(Tuple &tuple, bool free_uninlined_columns) = 0;
+	//virtual bool InsertTuple(Tuple &source) = 0;
+	//virtual bool UpdateTuple(Tuple &source, Tuple &target, bool update_indexes) = 0;
+	//virtual bool DeleteTuple(Tuple &tuple, bool free_uninlined_columns) = 0;
 
-	virtual void DeleteAllTuples(bool freeAllocatedStrings) = 0;
+	//virtual void DeleteAllTuples(bool freeAllocatedStrings) = 0;
 
 	Tuple& TempTuple() {
 		assert(!temp_tuple.IsNull());
@@ -145,7 +145,7 @@ public:
 	};
 
 	inline const std::string& GetColumnName(int index) const {
-		return columns[index];
+		return column_names[index];
 	}
 
 	inline int GetColumnCount() const {
@@ -153,14 +153,14 @@ public:
 	};
 
 	const std::vector<std::string> GetColumns() const {
-		return columns;
+		return column_names;
 	}
 
 	//===--------------------------------------------------------------------===//
 	// Utilities
 	//===--------------------------------------------------------------------===//
 
-	virtual std::string TileType() const = 0;
+	//virtual std::string TileType() const = 0;
 
 	/// Get a string representation of this tile
 	friend std::ostream& operator<<(std::ostream& os, const Tile& tile);
@@ -194,11 +194,11 @@ public:
 		return (pool);
 	}
 
-protected:
-
 	/// Tile creator
 	Tile(catalog::Schema *tuple_schema, int tuple_count,
-			const std::vector<std::string>& columns, bool own_schema);
+			const std::vector<std::string>& column_names, bool own_schema);
+
+protected:
 
 	/// Reset tile
 	void Reset();
@@ -223,7 +223,7 @@ protected:
 	Pool *pool;
 
 	/// column header
-	std::vector<std::string> columns;
+	std::vector<std::string> column_names;
 
 	/// reusable temp tuple
 	Tuple temp_tuple;
