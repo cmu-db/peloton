@@ -14,7 +14,6 @@
 
 #include "catalog/schema.h"
 #include "storage/tile.h"
-#include "storage/physical_tile.h"
 #include "storage/backend.h"
 #include "storage/volatile_backend.h"
 
@@ -30,18 +29,18 @@ public:
 	TileFactory();
 	virtual ~TileFactory();
 
-	static PhysicalTile *GetPhysicalTile(catalog::Schema* schema,
+	static Tile *GetTile(catalog::Schema* schema,
 			int tuple_count, const std::vector<std::string>& column_names,
 			const bool owns_tuple_schema, int tile_size);
 
-	static PhysicalTile *GetPhysicalTile(Oid database_id, Oid table_id, Oid tile_group_id,
+	static Tile *GetTile(Oid database_id, Oid table_id, Oid tile_group_id, Oid tile_id,
 			Backend* backend, catalog::Schema* schema, int tuple_count,
 			const std::vector<std::string>& column_names,
 			const bool owns_tuple_schema, int tile_size);
 
 private:
 
-	static void InitCommon(PhysicalTile *tile, Oid database_id, Oid table_id,
+	static void InitCommon(Tile *tile, Oid database_id, Oid table_id,
 			Oid tile_group_id, catalog::Schema* schema,
 			const std::vector<std::string>& column_names,
 			const bool owns_tuple_schema, int tile_size);
