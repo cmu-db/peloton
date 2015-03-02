@@ -15,7 +15,7 @@
 #include <iostream>
 
 #include "common/iterator.h"
-#include "storage/tile.h"
+#include "storage/physical_tile.h"
 
 namespace nstore {
 namespace storage {
@@ -24,18 +24,18 @@ namespace storage {
 // Tile Iterator
 //===--------------------------------------------------------------------===//
 
-class Tile;
+class PhysicalTile;
 
 /**
  * Iterator for table which neglects deleted tuples.
  * TileIterator is a small and copiable object.
  * You can copy it, not passing a pointer of it.
  */
-class TileIterator : public Iterator {
+class TileIterator : public Iterator<Tuple> {
 	TileIterator() = delete;
 
 public:
-	TileIterator(const Tile& tile) :
+	TileIterator(const PhysicalTile& tile) :
 		tile(tile),
 		tile_itr(tile.data) {
 	}
@@ -60,7 +60,7 @@ private:
 	bool ContinuationPredicate();
 
 	/// Base tile
-	const Tile& tile;
+	const PhysicalTile& tile;
 
 	/// Iterator over tile data
 	char *tile_itr;

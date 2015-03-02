@@ -21,7 +21,7 @@ namespace nstore {
 // Type utilities
 //===--------------------------------------------------------------------===//
 
-std::string GetTypeName(ValueType type) {
+std::string GetValueTypeName(ValueType type) {
 	std::string ret;
 
 	switch (type) {
@@ -44,6 +44,39 @@ std::string GetTypeName(ValueType type) {
 	}
 	return (ret);
 }
+
+std::string GetBackendTypeName(BackendType type) {
+	std::string ret;
+
+	switch (type) {
+	case (BACKEND_TYPE_VM):			return "volatile";
+	case (BACKEND_TYPE_NVM):		return "non-volatile";
+	case (BACKEND_TYPE_INVALID):	return "INVALID";
+	default: {
+		char buffer[32];
+		snprintf(buffer, 32, "UNKNOWN[%d]", type);
+		ret = buffer;
+	}
+	}
+	return (ret);
+}
+
+std::string GetTileTypeName(TileType type) {
+	std::string ret;
+
+	switch (type) {
+	case (TILE_TYPE_PHYSICAL):		return "physical";
+	case (TILE_TYPE_LOGICAL):		return "logical";
+	case (TILE_TYPE_INVALID):		return "INVALID";
+	default: {
+		char buffer[32];
+		snprintf(buffer, 32, "UNKNOWN[%d]", type);
+		ret = buffer;
+	}
+	}
+	return (ret);
+}
+
 
 /// Works only for fixed-length types
 std::size_t GetTypeSize(ValueType type) {
