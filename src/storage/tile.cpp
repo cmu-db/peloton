@@ -40,7 +40,7 @@ Tile::Tile(Backend* _backend, catalog::Schema *tuple_schema, int tuple_count,
   next_tuple_itr(0),
   tile_ref_count(0),
   column_count(tuple_schema->GetColumnCount()),
-  tuple_length(tuple_schema->GetLength()),
+  tuple_length(tuple_schema->GetLength() + TUPLE_HEADER_SIZE),
   uninlined_data_size(0),
   tile_id(InvalidOid),
   tile_group_id(InvalidOid),
@@ -50,24 +50,23 @@ Tile::Tile(Backend* _backend, catalog::Schema *tuple_schema, int tuple_count,
   column_header_size(-1) {
 	assert(tuple_count > 0);
 
-	size_t _tile_size = tuple_count * tuple_length;
+	tile_size = tuple_count * tuple_length;
 
 	/// allocate tuple storage space for inlined data
-	data = (char *) backend->Allocate(_tile_size);
+	data = (char *) backend->Allocate(tile_size);
 	assert(data != NULL);
 
-	tile_size = _tile_size;
+	/// initialize it
+	std::memset(data, 0, tile_size);
 	allocated_tuple_count = tuple_count;
 
 	// allocate default pool if schema not inlined
 	if(schema->IsInlined() == false)
 		pool = new Pool(backend);
 
-	// allocate other tuples
+	// allocate temp tuple
 	temp_tuple = Tuple(tuple_schema, true);
 
-	temp_target1 = Tuple(tuple_schema, true);
-	temp_target2 = Tuple(tuple_schema, true);
 }
 
 Tile::~Tile() {
@@ -91,21 +90,42 @@ Tile::~Tile() {
 	if (column_header)
 		delete column_header;
 	column_header = NULL;
+
+	/// clean up temp tuple
+	temp_tuple.SetNull();
 }
 
-bool Tile::InsertTuple(Tuple &source) {
+bool Tile::InsertTuple(int tuple_slot_id, Tuple *tuple) {
+	/// Find slot location
+	char *location = tuple_slot_id * tuple_length + data;
+
+	std::memcpy(location, tuple->tuple_data, tuple_length);
+
+	active_tuple_count++;
+
+	temp_tuple.Move(location);
+	temp_tuple.SetAlive();
+
 	return true;
 }
 
-bool Tile::UpdateTuple(Tuple &source, Tuple &target, bool update_indexes) {
-	return true;
-}
+bool Tile::DeleteTuple(int tuple_slot_id, bool free_uninlined_data) {
+	/// Find slot location
+	char *location = tuple_slot_id * tuple_length + data;
 
-bool Tile::DeleteTuple(Tuple &tuple, bool free_uninlined_columns) {
-	return true;
-}
+	/// Release unlined columns
+	if(free_uninlined_data) {
 
-void Tile::DeleteAllTuples(bool freeAllocatedStrings) {
+		temp_tuple.Move(location);
+		temp_tuple.FreeUninlinedData();
+	}
+
+	// Clean it up
+	std::memset(location, 0, tuple_length);
+
+	active_tuple_count--;
+
+	return true;
 }
 
 
@@ -116,10 +136,10 @@ void Tile::DeleteAllTuples(bool freeAllocatedStrings) {
 bool Tile::NextFreeTuple(Tuple *tuple) {
 
 	/// First check whether we have any slots in our freelist
-	if (!free_tuple_slots.empty()) {
+	if (!free_slots.empty()) {
 		//TRACE("GRABBED FREE TUPLE!\n");
-		char* ret = free_tuple_slots.back();
-		free_tuple_slots.pop_back();
+		char* ret = free_slots.back();
+		free_slots.pop_back();
 		assert (column_count == tuple->GetColumnCount());
 
 		tuple->Move(ret);
@@ -166,7 +186,7 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 	os << "\tTile Type: " << tile.GetTileType() << "\t Backend type: " <<
 			tile.backend->GetBackendType() << "\n";
 	os << "\tAllocated Tuples:  " << tile.allocated_tuple_count << "\n";
-	os << "\tDeleted Tuples:    " << tile.free_tuple_slots.size() << "\n";
+	os << "\tDeleted Tuples:    " << tile.free_slots.size() << "\n";
 	os << "\tNumber of Columns: " << tile.GetColumnCount() << "\n";
 
 	/// Columns
@@ -188,14 +208,13 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 		std::string last_tuple = "";
 
 		while (tile_itr.Next(tuple)) {
-			if (tuple.IsAlive()) {
-				os << "\t" << tuple << "\n";
-			}
+			os << "\t" << tuple;
 		}
-
 	}
 
 	os << "===========================================================\n";
+
+	tuple.SetNull();
 
 	return os;
 }
@@ -233,6 +252,8 @@ bool Tile::SerializeTo(SerializeOutput &output) {
 		tuple.SerializeTo(output);
 		++written_count;
 	}
+
+	tuple.SetNull();
 
 	assert(written_count == active_tuple_count);
 
@@ -402,11 +423,11 @@ void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool)
 	assert(tuple_count <= (allocated_tuple_count - next_tuple_itr + 1));
 
 	for (int tuple_itr = 0; tuple_itr < tuple_count; ++tuple_itr) {
-		temp_target1.Move(GetTupleLocation((int) next_tuple_itr + tuple_itr));
+		temp_tuple.Move(GetTupleLocation((int) next_tuple_itr + tuple_itr));
 
-		temp_target1.SetDeletedFalse();
-		temp_target1.SetDirtyFalse();
-		temp_target1.DeserializeFrom(input, pool);
+		temp_tuple.SetDead();
+		temp_tuple.SetClean();
+		temp_tuple.DeserializeFrom(input, pool);
 
 		//TRACE("Loaded new tuple #%02d\n%s", tuple_itr, temp_target1.debug(Name()).c_str());
 	}
@@ -447,6 +468,9 @@ bool Tile::operator== (const Tile &other) const {
 		if (!(tuple == other_tuple))
 			return false;
 	}
+
+	tuple.SetNull();
+	other_tuple.SetNull();
 
 	return true;
 }

@@ -6,7 +6,7 @@ namespace executor {
 bool AbstractExecutor::Init() {
 	//TODO Insert any code common to all executors here.
 
-	Init();
+	return Init();
 }
 
 storage::Tile *AbstractExecutor::GetNextTile() {

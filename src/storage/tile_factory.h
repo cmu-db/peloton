@@ -31,19 +31,19 @@ public:
 
 	static Tile *GetTile(catalog::Schema* schema,
 			int tuple_count, const std::vector<std::string>& column_names,
-			const bool owns_tuple_schema, int tile_size);
+			const bool owns_tuple_schema);
 
 	static Tile *GetTile(Oid database_id, Oid table_id, Oid tile_group_id, Oid tile_id,
 			Backend* backend, catalog::Schema* schema, int tuple_count,
 			const std::vector<std::string>& column_names,
-			const bool owns_tuple_schema, int tile_size);
+			const bool owns_tuple_schema);
 
 private:
 
 	static void InitCommon(Tile *tile, Oid database_id, Oid table_id,
 			Oid tile_group_id, catalog::Schema* schema,
 			const std::vector<std::string>& column_names,
-			const bool owns_tuple_schema, int tile_size);
+			const bool owns_tuple_schema);
 
 };
 

@@ -26,11 +26,6 @@ namespace storage {
 // Tile
 //===--------------------------------------------------------------------===//
 
-// type name, offset, name length
-const size_t COLUMN_DESCRIPTOR_SIZE = 1 + 4 + 4;
-
-const int MAX_TEMP_TILE_MEMORY = 1024 * 1024 * 100; // 100 MB
-
 class TileIterator;
 
 /**
@@ -70,13 +65,12 @@ public:
 	// Operations and stats
 	//===--------------------------------------------------------------------===//
 
-	bool InsertTuple(Tuple &source);
-	bool UpdateTuple(Tuple &source, Tuple &target, bool update_indexes);
-	bool DeleteTuple(Tuple &tuple, bool free_uninlined_columns);
-	void DeleteAllTuples(bool freeAllocatedStrings);
+	bool InsertTuple(int tuple_slot_id, Tuple *tuple);
+
+	bool DeleteTuple(int tuple_slot_id, bool free_uninlined_columns);
 
 	Tuple& TempTuple() {
-		assert(!temp_tuple.IsNull());
+		//assert(!temp_tuple.IsNull());
 		return temp_tuple;
 	}
 
@@ -226,9 +220,6 @@ protected:
 	/// reusable temp tuple
 	Tuple temp_tuple;
 
-	/// not temp tuples. These are for internal use.
-	Tuple temp_target1, temp_target2;
-
 	/// tile schema
 	catalog::Schema *schema;
 
@@ -262,7 +253,7 @@ protected:
 	 * (before used_tuples index) and also deleted.
 	 * NOTE THAT THESE ARE NOT THE ONLY FREE TUPLES.
 	 */
-	std::vector<char*> free_tuple_slots;
+	std::vector<char*> free_slots;
 
 	/// Catalog information
 	Oid tile_id;
@@ -302,14 +293,14 @@ inline int Tile::GetTupleOffset(const char* tuple_address) const{
 }
 
 inline void Tile::DeleteTupleStorage(Tuple &tuple) {
-	tuple.SetDeletedTrue(); // does NOT free uninlined data
+	tuple.SetAlive(); // does NOT free uninlined data
 
-	tuple.FreeColumns();
+	tuple.FreeUninlinedData();
 
 	// add tuple slot to the free list
 	active_tuple_count--;
 
-	free_tuple_slots.push_back(tuple.Location());
+	free_slots.push_back(tuple.Location());
 }
 
 } // End storage namespace

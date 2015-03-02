@@ -77,8 +77,6 @@ bool TileIterator::HasNext() {
 
 bool TileIterator::Next(Tuple &out) {
 	while (ContinuationPredicate()) {
-
-		assert(out.GetColumnCount() == tile.GetColumnCount());
 		out.Move(tile_itr);
 
 		tile_itr += tile.tuple_length;
