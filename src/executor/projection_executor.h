@@ -5,14 +5,21 @@
 namespace nstore {
 namespace executor {
 
+//===--------------------------------------------------------------------===//
+// Projection Executor
+//===--------------------------------------------------------------------===//
+
 class ProjectionExecutor : public AbstractExecutor {
   public:
-    ProjectionExecutor(AbstractPlanNode *abstract_node) :
-        AbstractExecutor(abstract_node) {};
-  protected:
-    bool p_init();
-    bool p_getNextTile();
-    void p_cleanup();
+    ProjectionExecutor(planner::AbstractPlanNode *abstract_node) :
+        AbstractExecutor(abstract_node) {
+    }
+
+    bool Init();
+
+    bool GetNextTile();
+
+    void CleanUp();
 };
 
 } // namespace executor

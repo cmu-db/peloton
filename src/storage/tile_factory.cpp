@@ -17,23 +17,25 @@ namespace nstore {
 namespace storage {
 
 /// Uses volatile backend and default catalog information
-PhysicalTile* TileFactory::GetPhysicalTile(catalog::Schema* schema, int tuple_count,
+Tile* TileFactory::GetTile(catalog::Schema* schema, int tuple_count,
 		const std::vector<std::string>& column_names,
 		const bool owns_tuple_schema, int tile_size) {
 
 	Backend* backend = new storage::VolatileBackend();
 
-	return TileFactory::GetPhysicalTile(0, 0, 0, backend, schema, tuple_count, column_names,
-			owns_tuple_schema, tile_size);
+	return TileFactory::GetTile(InvalidOid, InvalidOid,
+			InvalidOid, InvalidOid, backend, schema, tuple_count,
+			column_names, owns_tuple_schema, tile_size);
 }
 
 
-PhysicalTile* TileFactory::GetPhysicalTile(Oid database_id, Oid table_id,
-		Oid tile_group_id, Backend* backend, catalog::Schema* schema, int tuple_count,
+Tile* TileFactory::GetTile(Oid database_id, Oid table_id,
+		Oid tile_group_id, Oid tile_id,
+		Backend* backend, catalog::Schema* schema, int tuple_count,
 		const std::vector<std::string>& column_names,
 		const bool owns_tuple_schema, int tile_size) {
 
-	PhysicalTile *tile = new PhysicalTile(backend, schema, tuple_count, column_names,
+	Tile *tile = new Tile(backend, schema, tuple_count, column_names,
 			owns_tuple_schema);
 
 	TileFactory::InitCommon(tile, database_id, table_id, tile_group_id,
@@ -44,7 +46,7 @@ PhysicalTile* TileFactory::GetPhysicalTile(Oid database_id, Oid table_id,
 	return tile;
 }
 
-void TileFactory::InitCommon(PhysicalTile *tile, Oid database_id, Oid table_id,
+void TileFactory::InitCommon(Tile *tile, Oid database_id, Oid table_id,
 		Oid tile_group_id, catalog::Schema* schema, const std::vector<std::string>& column_names,
 		const bool owns_tuple_schema, int tile_size) {
 

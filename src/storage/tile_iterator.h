@@ -15,7 +15,7 @@
 #include <iostream>
 
 #include "common/iterator.h"
-#include "storage/physical_tile.h"
+#include "storage/tile.h"
 
 namespace nstore {
 namespace storage {
@@ -35,7 +35,7 @@ class TileIterator : public Iterator<Tuple> {
 	TileIterator() = delete;
 
 public:
-	TileIterator(const PhysicalTile& tile) :
+	TileIterator(const Tile& tile) :
 		tile(tile),
 		tile_itr(tile.data) {
 	}
@@ -60,7 +60,7 @@ private:
 	bool ContinuationPredicate();
 
 	/// Base tile
-	const PhysicalTile& tile;
+	const Tile& tile;
 
 	/// Iterator over tile data
 	char *tile_itr;
