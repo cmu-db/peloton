@@ -63,7 +63,7 @@ namespace nstore {
 //===--------------------------------------------------------------------===//
 
 enum ValueType {
-	VALUE_TYPE_INVALID = 0, 	// invalid type
+	VALUE_TYPE_INVALID = 0, 	// invalid value type
 	VALUE_TYPE_NULL = 1, 		// NULL type
 
 	VALUE_TYPE_TINYINT = 3, 	// 1 byte integer
@@ -77,6 +77,20 @@ enum ValueType {
 	VALUE_TYPE_BOOLEAN = 23,
 	VALUE_TYPE_ADDRESS = 24,
 	VALUE_TYPE_VARBINARY = 25, 	// variable length bytes
+};
+
+enum TileType {
+	TILE_TYPE_INVALID = 0, 		// invalid tile type
+
+	TILE_TYPE_PHYSICAL = 1, 	// physical
+	TILE_TYPE_LOGICAL = 2 		// logical
+};
+
+enum BackendType {
+	BACKEND_TYPE_INVALID = 0, 		// invalid backend type
+
+	BACKEND_TYPE_VM = 1, 			// on volatile memory
+	BACKEND_TYPE_NVM = 2 			// on non-volatile memory
 };
 
 //===--------------------------------------------------------------------===//
@@ -98,7 +112,11 @@ typedef uint32_t Oid;
 // Type utilities
 //===--------------------------------------------------------------------===//
 
-std::string GetTypeName(ValueType type);
+std::string GetValueTypeName(ValueType type);
+
+std::string GetBackendTypeName(BackendType type);
+
+std::string GetTileTypeName(TileType type);
 
 std::string ValueToString(ValueType type);
 

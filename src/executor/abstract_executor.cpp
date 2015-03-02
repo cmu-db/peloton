@@ -1,5 +1,7 @@
 #include "abstract_executor.h"
 
+#include "executor/abstract_plan_node.h"
+
 namespace nstore {
 namespace executor {
 

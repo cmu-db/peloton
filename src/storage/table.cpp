@@ -16,12 +16,9 @@ namespace nstore {
 namespace storage {
 
 Table::Table() {
-	// TODO Auto-generated constructor stub
-
 }
 
 Table::~Table() {
-	// TODO Auto-generated destructor stub
 }
 
 } // End storage namespace

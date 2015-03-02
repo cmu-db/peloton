@@ -78,8 +78,6 @@ TEST(TupleTests, VarcharTest) {
 	EXPECT_EQ(tuple->GetValue(3), ValueFactory::GetStringValue("hi joy !"));
 	EXPECT_NE(tuple->GetValue(3), ValueFactory::GetStringValue("hello hello world"));
 
-	//std::cout << tuple->ToString("table_name");
-
 	delete tuple;
 	delete schema;
 }

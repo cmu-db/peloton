@@ -25,7 +25,8 @@ namespace storage {
 std::ostream& operator<< (std::ostream& os, const Tuple& tuple){
 	if (tuple.IsAlive() == false) {
 		os << " <DELETED>";
-	} else {
+	}
+	else {
 		int column_count = tuple.GetColumnCount();
 		for (int column_itr = 0; column_itr < column_count; column_itr++) {
 			os << "(";

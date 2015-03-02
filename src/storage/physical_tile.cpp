@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * tile.cpp
+ * physical_tile.cpp
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/storage/tile.cpp
+ * /n-store/src/storage/physical_tile.cpp
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include "common/pool.h"
 #include "common/serializer.h"
 #include "catalog/schema.h"
-#include "storage/tile.h"
+#include "storage/physical_tile.h"
 #include "storage/tuple.h"
 #include "storage/tile_iterator.h"
 
@@ -28,11 +28,12 @@
 namespace nstore {
 namespace storage {
 
-Tile::Tile(catalog::Schema *tuple_schema, int tuple_count,
-		const std::vector<std::string>& _columns, bool _own_schema)
-: data(NULL),
+PhysicalTile::PhysicalTile(Backend* _backend, catalog::Schema *tuple_schema, int tuple_count,
+		const std::vector<std::string>& _columns_names, bool _own_schema)
+: backend(_backend),
+  data(NULL),
   pool(NULL),
-  columns(_columns),
+  column_names(_columns_names),
   schema(tuple_schema),
   own_schema(_own_schema),
   allocated_tuple_count(0),
@@ -52,7 +53,7 @@ Tile::Tile(catalog::Schema *tuple_schema, int tuple_count,
 	size_t _tile_size = tuple_count * tuple_length;
 
 	/// allocate tuple storage space for inlined data
-	data = new char[_tile_size];
+	data = (char *) backend->Allocate(_tile_size);
 	assert(data != NULL);
 
 	tile_size = _tile_size;
@@ -60,7 +61,7 @@ Tile::Tile(catalog::Schema *tuple_schema, int tuple_count,
 
 	// allocate default pool if schema not inlined
 	if(schema->IsInlined() == false)
-		pool = new Pool();
+		pool = new Pool(backend);
 
 	// allocate other tuples
 	temp_tuple = Tuple(tuple_schema, true);
@@ -69,12 +70,12 @@ Tile::Tile(catalog::Schema *tuple_schema, int tuple_count,
 	temp_target2 = Tuple(tuple_schema, true);
 }
 
-Tile::~Tile() {
+PhysicalTile::~PhysicalTile() {
 	/// not all tables are reference counted but this should be invariant
 	assert(tile_ref_count == 0);
 
 	/// reclaim the tile memory (only inlined data)
-	delete data;
+	backend->Free(data);
 	data = NULL;
 
 	/// release pool storage if schema not inlined
@@ -92,11 +93,27 @@ Tile::~Tile() {
 	column_header = NULL;
 }
 
+bool PhysicalTile::InsertTuple(Tuple &source) {
+	return true;
+}
+
+bool PhysicalTile::UpdateTuple(Tuple &source, Tuple &target, bool update_indexes) {
+	return true;
+}
+
+bool PhysicalTile::DeleteTuple(Tuple &tuple, bool free_uninlined_columns) {
+	return true;
+}
+
+void PhysicalTile::DeleteAllTuples(bool freeAllocatedStrings) {
+}
+
+
 //===--------------------------------------------------------------------===//
 // Tuples
 //===--------------------------------------------------------------------===//
 
-bool Tile::NextFreeTuple(Tuple *tuple) {
+bool PhysicalTile::NextFreeTuple(Tuple *tuple) {
 
 	/// First check whether we have any slots in our freelist
 	if (!free_tuple_slots.empty()) {
@@ -126,9 +143,9 @@ bool Tile::NextFreeTuple(Tuple *tuple) {
 	return true;
 }
 
-int Tile::GetColumnIndex(const std::string &name) const {
+int PhysicalTile::GetColumnOffset(const std::string &name) const {
 	for (int column_itr = 0, cnt = column_count; column_itr < cnt; column_itr++) {
-		if (columns[column_itr].compare(name) == 0) {
+		if (column_names[column_itr].compare(name) == 0) {
 			return column_itr;
 		}
 	}
@@ -141,9 +158,12 @@ int Tile::GetColumnIndex(const std::string &name) const {
 //===--------------------------------------------------------------------===//
 
 /// Get a string representation of this tile
-std::ostream& operator<<(std::ostream& os, const Tile& tile) {
+std::ostream& operator<<(std::ostream& os, const PhysicalTile& tile) {
 
-	os << tile.database_id << " " << tile.table_id << " " << tile.tile_group_id << " :\n";
+	os << "\tDB Id:  "<< tile.database_id << "\t Table Id:  " << tile.table_id
+			<< "\t Tile Group Id:  " << tile.tile_group_id << "\n";
+	os << "\tTile Type: " << tile.GetTileType() << "\t Backend type: " <<
+			tile.backend->GetBackendType() << "\n";
 	os << "\tAllocated Tuples:  " << tile.allocated_tuple_count << "\n";
 	os << "\tDeleted Tuples:    " << tile.free_tuple_slots.size() << "\n";
 	os << "\tNumber of Columns: " << tile.GetColumnCount() << "\n";
@@ -151,7 +171,7 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 	/// Columns
 	os << "===========================================================\n";
 	os << "\tCOLUMNS\n";
-	os << tile.schema;
+	os << (*tile.schema);
 
 	/// Tuples
 	os << "===========================================================\n";
@@ -183,7 +203,7 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 // Serialization/Deserialization
 //===--------------------------------------------------------------------===//
 
-bool Tile::SerializeTo(SerializeOutput &output) {
+bool PhysicalTile::SerializeTo(SerializeOutput &output) {
 	/**
 	 * The table is serialized as:
 	 *
@@ -223,7 +243,7 @@ bool Tile::SerializeTo(SerializeOutput &output) {
 	return true;
 }
 
-bool Tile::SerializeHeaderTo(SerializeOutput &output) {
+bool PhysicalTile::SerializeHeaderTo(SerializeOutput &output) {
 	std::size_t start;
 
 	/// Use the cache if possible
@@ -283,7 +303,7 @@ bool Tile::SerializeHeaderTo(SerializeOutput &output) {
 }
 
 ///  Serialized only the tuples specified, along with header.
-bool Tile::SerializeTuplesTo(SerializeOutput &output, Tuple *tuples, int num_tuples) {
+bool PhysicalTile::SerializeTuplesTo(SerializeOutput &output, Tuple *tuples, int num_tuples) {
 	std::size_t pos = output.Position();
 	output.WriteInt(-1);
 
@@ -304,9 +324,14 @@ bool Tile::SerializeTuplesTo(SerializeOutput &output, Tuple *tuples, int num_tup
 	return true;
 }
 
-void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
+/**
+ * Loads only tuple data, not schema, from the serialized tile.
+ * Used for initial data loading.
+ * @param allow_export if false, export enabled is overriden for this load.
+ */
+void PhysicalTile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
 	/*
-	 * Directly receives a Tile buffer.
+	 * Directly receives a PhysicalTile buffer.
 	 * [00 01]   [02 03]   [04 .. 0x]
 	 * rowstart  colcount  colcount * 1 byte (column types)
 	 *
@@ -346,14 +371,14 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
 		std::stringstream message(std::stringstream::in | std::stringstream::out);
 
 		message << "Column count mismatch. Expecting "	<< schema->GetColumnCount()
-						<< ", but " << column_count << " given" << std::endl;
+										<< ", but " << column_count << " given" << std::endl;
 		message << "Expecting the following columns:" << std::endl;
-		message << columns.size() << std::endl;
+		message << column_names.size() << std::endl;
 		message << "The following columns are given:" << std::endl;
 
 		for (int i = 0; i < column_count; i++) {
 			message << "column " << i << ": " << names[i] << ", type = "
-					<< GetTypeName(types[i]) << std::endl;
+					<< GetValueTypeName(types[i]) << std::endl;
 		}
 
 		throw SerializationException(message.str());
@@ -363,7 +388,12 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
 	DeserializeTuplesFromWithoutHeader(input, pool);
 }
 
-void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool) {
+/**
+ * Loads only tuple data and assumes there is no schema present.
+ * Used for recovery where the schema is not sent.
+ * @param allow_export if false, export enabled is overriden for this load.
+ */
+void PhysicalTile::DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool) {
 	int tuple_count = input.ReadInt();
 	assert(tuple_count >= 0);
 
@@ -389,7 +419,7 @@ void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool)
 //===--------------------------------------------------------------------===//
 
 /// Compare two tiles (expensive !)
-bool Tile::operator== (const Tile &other) const {
+bool PhysicalTile::operator== (const PhysicalTile &other) const {
 	if (!(GetColumnCount() == other.GetColumnCount()))
 		return false;
 
@@ -420,19 +450,22 @@ bool Tile::operator== (const Tile &other) const {
 	return true;
 }
 
-bool Tile::operator!= (const Tile &other) const {
+bool PhysicalTile::operator!= (const PhysicalTile &other) const {
 	return !(*this == other);
 }
 
-TileIterator Tile::GetTileIterator() {
+TileIterator PhysicalTile::GetIterator() {
 	return TileIterator(*this);
 }
 
-//TileStats* Tile::GetTileStats() {
+//PhysicalTileStats* PhysicalTile::GetPhysicalTileStats() {
 //	return NULL;
 //}
 
 
 } // End storage namespace
 } // End nstore namespace
+
+
+
 
