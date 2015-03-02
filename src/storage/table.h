@@ -19,7 +19,17 @@
 namespace nstore {
 namespace storage {
 
-/*
+//===--------------------------------------------------------------------===//
+// Table
+//===--------------------------------------------------------------------===//
+
+/**
+ * Represents a group of tile groups logically vertically contiguous.
+ *
+ * <Tile Group 1>
+ * <Tile Group 2>
+ * ...
+ * <Tile Group n>
  *
  */
 class Table {
@@ -38,6 +48,20 @@ public:
 	Tuple TempTuple();
 
 	void Reset(Table t);
+
+protected:
+
+	//===--------------------------------------------------------------------===//
+	// Data members
+	//===--------------------------------------------------------------------===//
+
+	/// set of tile groups
+	std::vector<TileGroup*> tiles;
+
+	/// Catalog information
+	Oid table_id;
+	Oid database_id;
+
 };
 
 } // End storage namespace
