@@ -1,4 +1,4 @@
-# TODO Remove baseTiles duplicatePreventerHack
+# TODO Don't allow duplicate base tables.
 # TODO Don't access internals of tile from join operator
 
 def mult(L):
@@ -34,8 +34,6 @@ class Tile:
         self.validBits = []
         self.schema = []
 
-        self.duplicatePreventerHack = {}
-
     def setData(self, data):
         assert self.isPhysicalTile
         self.data = data
@@ -45,11 +43,7 @@ class Tile:
     
     def addBaseTile(self, baseTile):
         assert not self.isPhysicalTile
-        if baseTile not in self.duplicatePreventerHack:
-            self.baseTiles.append(baseTile)
-            self.duplicatePreventerHack[baseTile] = None
-            return True
-        return False
+        self.baseTiles.append(baseTile)
 
     def setValidBits(self, validBits):
         # Ensure that number of valid bits is the same as the total
@@ -78,7 +72,6 @@ class Tile:
 
     def getField(self, row, col):
         assert row < len(self.validBits)
-        print col, self.schema
         assert col < len(self.schema)
 
         if not self.validBits[row]:
@@ -94,7 +87,6 @@ class Tile:
         # Compute which row in the base tile this row refers to.
         baseTileRow = validBitsBijection(row, baseTileIndex, self.baseTiles)
 
-        print "Getting field from base tile ", baseTileIndex
         return self.baseTiles[baseTileIndex].getField(
             baseTileRow, baseTileColumn)
             
@@ -113,8 +105,8 @@ def addSchema(newTile, oldTile):
         if not oldTile.isPhysicalTile:
             # Sanity check. We use -1 for physical tile schemas.
             assert baseTileIndex >= 0
-            if newTile.addBaseTile(oldTile.getBaseTile(baseTileIndex)):
-                currentIndex += 1
+            currentIndex += 1
+            newTile.addBaseTile(oldTile.getBaseTile(baseTileIndex))
 
     if oldTile.isPhysicalTile:
         newTile.addBaseTile(oldTile)
