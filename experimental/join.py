@@ -1,3 +1,5 @@
+# Very hacky proof of concept for bitset join (late materialization).
+
 # TODO Don't allow duplicate base tables.
 # TODO Don't access internals of tile from join operator
 
@@ -9,7 +11,8 @@ def mult(L):
 def validBitsBijection(row, tileIndex, tiles):
     baseTileRow = row
     for i in xrange(1, tileIndex + 1):
-        baseTileRow %= tiles[i].size()
+        # Inefficient! Precompute suffix multiples.
+        baseTileRow %= mult([t.size() for t in tiles[i:]])
 
     baseTileRow /= mult([t.size() for t in tiles[tileIndex+1:]])
 
@@ -97,16 +100,25 @@ def printTile(tile):
         print '\n'
 
 # Helper for join...
+# Very hacky.
 def addSchema(newTile, oldTile):
-    currentIndex = len(newTile.getBaseTiles())
+    currentIndex = len(newTile.getBaseTiles()) - 1
     newTileSchema = newTile.getSchema()
+    prevBaseTileIndex = -1
     for (baseTileIndex, baseTileCol) in oldTile.getSchema():
-        newTileSchema.append((currentIndex, baseTileCol))
         if not oldTile.isPhysicalTile:
             # Sanity check. We use -1 for physical tile schemas.
             assert baseTileIndex >= 0
-            currentIndex += 1
-            newTile.addBaseTile(oldTile.getBaseTile(baseTileIndex))
+            # We assume schema tuples of the same base tiles are contiguous.
+            # Hacky assumption.
+            if prevBaseTileIndex != baseTileIndex:
+                currentIndex += 1
+                prevBaseTileIndex = baseTileIndex
+                newTile.addBaseTile(oldTile.getBaseTile(baseTileIndex))
+            newTileSchema.append((currentIndex, baseTileCol))
+        else:
+            assert baseTileIndex == -1
+            newTileSchema.append((currentIndex+1, baseTileCol))
 
     if oldTile.isPhysicalTile:
         newTile.addBaseTile(oldTile)
@@ -155,8 +167,9 @@ data3 = [[7], [8], [9]]
 baseTile3.setData(data3)
 
 logicalTile1 = join(baseTile2, baseTile3)
-printTile(logicalTile1)
 
 logicalTile2 = join(baseTile1, logicalTile1)
-print logicalTile2.schema
-printTile(logicalTile2)
+
+logicalTile3 = join(baseTile1, baseTile2)
+logicalTile4 = join(logicalTile3, baseTile3)
+printTile(logicalTile4)
