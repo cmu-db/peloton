@@ -56,9 +56,23 @@ TEST(TileTests, BasicTest) {
 	column_names.push_back("COL 3");
 	column_names.push_back("COL 4");
 
-	storage::PhysicalTile *tile = storage::TileFactory::GetPhysicalTile(schema, 2, column_names, true, 100);
+	storage::Tile *tile = storage::TileFactory::GetTile(schema, 3, column_names, true);
+
+	tile->InsertTuple(0, tuple1);
+	tile->InsertTuple(1, tuple2);
+	tile->InsertTuple(2, tuple2);
 
 	std::cout << (*tile);
+
+	tile->DeleteTuple(2, false);
+	tile->InsertTuple(2, tuple1);
+	tile->DeleteTuple(0, false);
+
+	std::cout << (*tile);
+
+	delete tuple1;
+	delete tuple2;
+	delete tile;
 }
 
 } // End nstore namespace

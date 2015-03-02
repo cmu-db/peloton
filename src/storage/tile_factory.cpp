@@ -19,13 +19,13 @@ namespace storage {
 /// Uses volatile backend and default catalog information
 Tile* TileFactory::GetTile(catalog::Schema* schema, int tuple_count,
 		const std::vector<std::string>& column_names,
-		const bool owns_tuple_schema, int tile_size) {
+		const bool owns_tuple_schema) {
 
 	Backend* backend = new storage::VolatileBackend();
 
 	return TileFactory::GetTile(InvalidOid, InvalidOid,
 			InvalidOid, InvalidOid, backend, schema, tuple_count,
-			column_names, owns_tuple_schema, tile_size);
+			column_names, owns_tuple_schema);
 }
 
 
@@ -33,13 +33,13 @@ Tile* TileFactory::GetTile(Oid database_id, Oid table_id,
 		Oid tile_group_id, Oid tile_id,
 		Backend* backend, catalog::Schema* schema, int tuple_count,
 		const std::vector<std::string>& column_names,
-		const bool owns_tuple_schema, int tile_size) {
+		const bool owns_tuple_schema) {
 
 	Tile *tile = new Tile(backend, schema, tuple_count, column_names,
 			owns_tuple_schema);
 
 	TileFactory::InitCommon(tile, database_id, table_id, tile_group_id,
-			schema, column_names, owns_tuple_schema, tile_size);
+			schema, column_names, owns_tuple_schema);
 
 	// initialize tile stats
 
@@ -48,7 +48,7 @@ Tile* TileFactory::GetTile(Oid database_id, Oid table_id,
 
 void TileFactory::InitCommon(Tile *tile, Oid database_id, Oid table_id,
 		Oid tile_group_id, catalog::Schema* schema, const std::vector<std::string>& column_names,
-		const bool owns_tuple_schema, int tile_size) {
+		const bool owns_tuple_schema) {
 
 	tile->database_id = database_id;
 	tile->tile_group_id = tile_group_id;
@@ -58,7 +58,6 @@ void TileFactory::InitCommon(Tile *tile, Oid database_id, Oid table_id,
 	tile->column_names = column_names;
 	tile->own_schema = owns_tuple_schema;
 
-	tile->tile_size = tile_size;
 }
 
 

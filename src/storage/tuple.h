@@ -44,7 +44,7 @@ namespace storage {
 
 #define TUPLE_HEADER_SIZE 1
 
-#define DELETED_MASK 1
+#define ALIVE_MASK 1
 #define DIRTY_MASK 2
 #define MIGRATED_MASK 4
 
@@ -52,9 +52,6 @@ class Tuple {
 	friend class catalog::Schema;
 	friend class ValuePeeker;
 	friend class Tile;
-	friend class PhysicalTile;
-
-	class TableColumn;
 
 public:
 
@@ -76,16 +73,12 @@ public:
 		assert(tuple_schema);
 		if(allocate) {
 			tuple_data = new char[tuple_schema->GetLength()];
-			SetDeletedTrue();
+			SetAlive();
 		}
 	}
 
-	/// Deletes tuple data (not schema)
+	/// Deletes tuple data (not schema or uninlined data)
 	~Tuple() {
-		// first free all uninlined data
-		if(tuple_data && IsAlive() && tuple_schema && tuple_schema->IsInlined() == false)
-			FreeColumns();
-
 		/// then delete the actual data
 		delete tuple_data;
 	}
@@ -97,7 +90,7 @@ public:
 	Tuple& operator=(const Tuple &rhs);
 
 	// Only release the space taken up by columns
-	inline void FreeColumns();
+	inline void FreeUninlinedData();
 
 	/// Copy values from one tuple into another (uses memcpy)
 	/// (expensive) verify assumptions for copy
@@ -112,7 +105,7 @@ public:
 	 * backing store
 	 */
 	inline void Move(void *address) {
-		assert(tuple_schema);
+		//assert(tuple_schema);
 		tuple_data = reinterpret_cast<char*> (address);
 	}
 
@@ -167,12 +160,11 @@ public:
 
 	/// Is the tuple dead or alive ?
 	inline bool IsAlive() const {
-		return (*(reinterpret_cast<const char*>(tuple_data)) & DELETED_MASK)
-				== 0 ? true : false;
+		return (*(reinterpret_cast<const char*>(tuple_data)) & ALIVE_MASK) == 1 ? true : false;
 	}
 
 	/// Is the column value null ?
-	inline bool IsNull(const int column_id) const {
+	inline bool IsNull(const uint64_t column_id) const {
 		return GetValue(column_id).IsNull();
 	}
 
@@ -204,6 +196,10 @@ public:
 
 	/// this does set NULL in addition to clear string count.
 	void SetAllNulls();
+
+	void SetNull() {
+		tuple_data = NULL;
+	}
 
 	/**
 	 * Determine the maximum number of bytes when serialized for Export.
@@ -302,23 +298,20 @@ protected:
 	//===--------------------------------------------------------------------===//
 
 	/// Treat the first "Value" as a boolean flag
-	inline void SetDeletedTrue() {
-		*(reinterpret_cast<char*>(tuple_data)) |=
-				static_cast<char>(DELETED_MASK);
+	inline void SetAlive() {
+		*(reinterpret_cast<char*>(tuple_data)) |= static_cast<char>(ALIVE_MASK);
 	}
 
-	inline void SetDeletedFalse() {
-		*(reinterpret_cast<char*>(tuple_data)) &=
-				static_cast<char>(~DELETED_MASK);
+	inline void SetDead() {
+		*(reinterpret_cast<char*>(tuple_data)) &= static_cast<char>(~ALIVE_MASK);
 	}
 
-	inline void SetDirtyTrue() {
+	inline void SetDirty() {
 		*(reinterpret_cast<char*>(tuple_data)) |= static_cast<char>(DIRTY_MASK);
 	}
 
-	inline void SetDirtyFalse() {
-		*(reinterpret_cast<char*>(tuple_data)) &=
-				static_cast<char>(~DIRTY_MASK);
+	inline void SetClean() {
+		*(reinterpret_cast<char*>(tuple_data)) &= static_cast<char>(~DIRTY_MASK);
 	}
 
 private:
@@ -738,7 +731,7 @@ inline size_t Tuple::HashCode() const {
 }
 
 /// Release to the heap any memory allocated for any uninlined columns.
-inline void Tuple::FreeColumns() {
+inline void Tuple::FreeUninlinedData() {
 	const uint16_t unlinlined_column_count = tuple_schema->GetUninlinedColumnCount();
 
 	for (int column_itr = 0; column_itr < unlinlined_column_count; column_itr++) {

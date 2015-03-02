@@ -23,6 +23,10 @@ namespace nstore {
 namespace storage {
 
 std::ostream& operator<< (std::ostream& os, const Tuple& tuple){
+
+	uint64_t address_num = (uint64_t) tuple.Location();
+	os << " @" << address_num << " ";
+
 	if (tuple.IsAlive() == false) {
 		os << " <DELETED>";
 	}
@@ -39,9 +43,6 @@ std::ostream& operator<< (std::ostream& os, const Tuple& tuple){
 			os << ")";
 		}
 	}
-
-	uint64_t address_num = (uint64_t) tuple.Location();
-	os << " @" << address_num;
 
 	os << std::endl;
 

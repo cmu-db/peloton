@@ -41,7 +41,7 @@ public:
 	bool UpdateTuple(Tuple &source, Tuple &target, bool update_indexes);
 	bool DeleteTuple(Tuple &tuple, bool free_uninlined_columns);
 
-	void DeleteAllTuples(bool freeAllocatedStrings);
+	void DeleteAllTuples(bool free_uninlined_data);
 
 protected:
 
