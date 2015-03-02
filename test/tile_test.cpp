@@ -14,7 +14,7 @@
 
 #include "../src/catalog/schema.h"
 
-#include "storage/tile.h"
+#include "storage/tile_factory.h"
 #include "storage/tuple.h"
 #include "common/value_factory.h"
 
@@ -56,7 +56,7 @@ TEST(TileTests, BasicTest) {
 	column_names.push_back("COL 3");
 	column_names.push_back("COL 4");
 
-	storage::Tile *tile = new storage::Tile(schema, 2, column_names, true);
+	storage::PhysicalTile *tile = storage::TileFactory::GetPhysicalTile(schema, 2, column_names, true, 100);
 
 	std::cout << (*tile);
 }

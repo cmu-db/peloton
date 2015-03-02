@@ -8,7 +8,7 @@ bool AbstractPlanNode::init() {
     p_init();
 }
 
-storage::Tile *AbstractPlanNode::getNextTile() {
+storage::Physical_Tile *AbstractPlanNode::getNextTile() {
     //TODO Insert any code common to all plan nodes here.
     return p_getNextTile();
 }

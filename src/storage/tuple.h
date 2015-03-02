@@ -52,6 +52,7 @@ class Tuple {
 	friend class catalog::Schema;
 	friend class ValuePeeker;
 	friend class Tile;
+	friend class PhysicalTile;
 
 	class TableColumn;
 

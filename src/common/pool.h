@@ -19,6 +19,8 @@
 #include <climits>
 #include <string.h>
 
+#include "storage/backend.h"
+
 namespace nstore {
 
 static const size_t TEMP_POOL_CHUNK_SIZE = 1024 * 1024; // 1 MB
@@ -29,20 +31,20 @@ static const size_t TEMP_POOL_CHUNK_SIZE = 1024 * 1024; // 1 MB
 
 class Chunk {
 public:
-	Chunk(): m_offset(0), m_size(0), m_chunkData(NULL){
+	Chunk(): offset(0), size(0), chunk_data(NULL){
 	}
 
 	inline Chunk(uint64_t size, void *chunkData)
-	: m_offset(0), m_size(size), m_chunkData(static_cast<char*>(chunkData))	{
+	: offset(0), size(size), chunk_data(static_cast<char*>(chunkData))	{
 	}
 
 	int64_t getSize() const	{
-		return static_cast<int64_t>(m_size);
+		return static_cast<int64_t>(size);
 	}
 
-	uint64_t m_offset;
-	uint64_t m_size;
-	char *m_chunkData;
+	uint64_t offset;
+	uint64_t size;
+	char *chunk_data;
 };
 
 /// Find next higher power of two
@@ -66,34 +68,39 @@ inline T nexthigher(T k) {
  * calling purge.
  */
 class Pool {
+	Pool() = delete;
 	Pool(const Pool&) = delete;
 	Pool& operator=(const Pool&) = delete;
 
 public:
 
-	Pool() :
-		allocation_size(TEMP_POOL_CHUNK_SIZE), max_chunk_count(1), current_chunk_index(0){
+	Pool(storage::Backend *_backend) :
+		backend(_backend),
+		allocation_size(TEMP_POOL_CHUNK_SIZE),
+		max_chunk_count(1),
+		current_chunk_index(0){
 		Init();
 	}
 
-	Pool(uint64_t allocationSize, uint64_t maxChunkCount) :
-		allocation_size(allocationSize),
-		max_chunk_count(static_cast<std::size_t>(maxChunkCount)),
+	Pool(storage::Backend *_backend, uint64_t allocation_size, uint64_t max_chunk_count) :
+		backend(_backend),
+		allocation_size(allocation_size),
+		max_chunk_count(static_cast<std::size_t>(max_chunk_count)),
 		current_chunk_index(0){
 		Init();
 	}
 
 	void Init() {
-		char *storage = new char[allocation_size];
+		char *storage = (char *) backend->Allocate(allocation_size);
 		chunks.push_back(Chunk(allocation_size, storage));
 	}
 
 	~Pool() {
 		for (std::size_t ii = 0; ii < chunks.size(); ii++) {
-			delete [] chunks[ii].m_chunkData;
+			backend->Free(chunks[ii].chunk_data);
 		}
 		for (std::size_t ii = 0; ii < oversize_chunks.size(); ii++) {
-			delete [] oversize_chunks[ii].m_chunkData;
+			backend->Free(oversize_chunks[ii].chunk_data);
 		}
 	}
 
@@ -101,47 +108,47 @@ public:
 	inline void* Allocate(std::size_t size) {
 
 		/// See if there is space in the current chunk
-		Chunk *currentChunk = &chunks[current_chunk_index];
-		if (size > currentChunk->m_size - currentChunk->m_offset) {
+		Chunk *current_chunk = &chunks[current_chunk_index];
+		if (size > current_chunk->size - current_chunk->offset) {
 
 			/// Not enough space. Check if it is greater than our allocation size.
 			if (size > allocation_size) {
 
 				/// Allocate an oversize chunk that will not be reused.
-				char *storage = new char[size];
+				char *storage = (char *) backend->Allocate(size);
 				oversize_chunks.push_back(Chunk(nexthigher(size), storage));
 				Chunk &newChunk = oversize_chunks.back();
-				newChunk.m_offset = size;
-				return newChunk.m_chunkData;
+				newChunk.offset = size;
+				return newChunk.chunk_data;
 			}
 
 			/// Check if there is an already allocated chunk we can use.
 			current_chunk_index++;
 
 			if (current_chunk_index < chunks.size()) {
-				currentChunk = &chunks[current_chunk_index];
-				currentChunk->m_offset = size;
-				return currentChunk->m_chunkData;
+				current_chunk = &chunks[current_chunk_index];
+				current_chunk->offset = size;
+				return current_chunk->chunk_data;
 			}
 			else {
 				/// Need to allocate a new chunk
-				char *storage = new char[allocation_size];
+				char *storage = (char *) backend->Allocate(allocation_size);
 				chunks.push_back(Chunk(allocation_size, storage));
-				Chunk &newChunk = chunks.back();
-				newChunk.m_offset = size;
-				return newChunk.m_chunkData;
+				Chunk &new_chunk = chunks.back();
+				new_chunk.offset = size;
+				return new_chunk.chunk_data;
 			}
 		}
 
 		/// Get the offset into the current chunk. Then increment the
 		/// offset counter by the amount being allocated.
-		void *retval = currentChunk->m_chunkData + currentChunk->m_offset;
-		currentChunk->m_offset += size;
+		void *retval = current_chunk->chunk_data + current_chunk->offset;
+		current_chunk->offset += size;
 
 		///	Ensure 8 byte alignment of future allocations
-		currentChunk->m_offset += (8 - (currentChunk->m_offset % 8));
-		if (currentChunk->m_offset > currentChunk->m_size) {
-			currentChunk->m_offset = currentChunk->m_size;
+		current_chunk->offset += (8 - (current_chunk->offset % 8));
+		if (current_chunk->offset > current_chunk->size) {
+			current_chunk->offset = current_chunk->size;
 		}
 
 		return retval;
@@ -156,25 +163,25 @@ public:
 		/// Erase any oversize chunks that were allocated
 		const std::size_t numOversizeChunks = oversize_chunks.size();
 		for (std::size_t ii = 0; ii < numOversizeChunks; ii++) {
-			delete [] oversize_chunks[ii].m_chunkData;
+			backend->Free(oversize_chunks[ii].chunk_data);
 		}
 		oversize_chunks.clear();
 
 		/// Set the current chunk to the first in the list
 		current_chunk_index = 0;
-		std::size_t numChunks = chunks.size();
+		std::size_t num_chunks = chunks.size();
 
 		/// If more then maxChunkCount chunks are allocated erase all extra chunks
-		if (numChunks > max_chunk_count) {
-			for (std::size_t ii = max_chunk_count; ii < numChunks; ii++) {
-				delete []chunks[ii].m_chunkData;
+		if (num_chunks > max_chunk_count) {
+			for (std::size_t ii = max_chunk_count; ii < num_chunks; ii++) {
+				backend->Free(chunks[ii].chunk_data);
 			}
 			chunks.resize(max_chunk_count);
 		}
 
-		numChunks = chunks.size();
-		for (std::size_t ii = 0; ii < numChunks; ii++) {
-			chunks[ii].m_offset = 0;
+		num_chunks = chunks.size();
+		for (std::size_t ii = 0; ii < num_chunks; ii++) {
+			chunks[ii].offset = 0;
 		}
 	}
 
@@ -190,6 +197,9 @@ public:
 	}
 
 private:
+
+	/// Location of pool on storage
+	storage::Backend *backend;
 
 	const uint64_t allocation_size;
 	std::size_t max_chunk_count;
