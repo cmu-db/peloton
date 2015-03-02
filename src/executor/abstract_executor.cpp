@@ -3,19 +3,24 @@
 namespace nstore {
 namespace executor {
 
-bool AbstractExecutor::init() {
-    //TODO Insert any code common to all executors here.
-    p_init();
+bool AbstractExecutor::Init() {
+	//TODO Insert any code common to all executors here.
+
+	Init();
 }
 
-storage::Tile *AbstractExecutor::getNextTile() {
-    //TODO Insert any code common to all executors here.
-    return p_getNextTile();
+storage::Tile *AbstractExecutor::GetNextTile() {
+
+	//TODO Insert any code common to all executors here.
+
+	return GetNextTile();
 }
 
-void AbstractExecutor::cleanup() {
-    //TODO Insert any code common to all executors here.
-    p_cleanup();
+void AbstractExecutor::CleanUp() {
+
+	//TODO Insert any code common to all executors here.
+
+	CleanUp();
 }
 
 } // namespace executor
