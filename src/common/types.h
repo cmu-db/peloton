@@ -15,6 +15,7 @@
 #include <string>
 #include <cstdint>
 #include <climits>
+#include <limits>
 
 namespace nstore {
 
@@ -101,11 +102,11 @@ enum BackendType {
 // ObjectId is a fundamental type in nstore
 // ------------------------------------------------------------------
 
-typedef uint32_t Oid;
+typedef uint64_t Oid;
 
-#define InvalidOid (Oid(0))
+static const Oid INVALID_OID = 0;
 
-#define OID_MAX UINT_MAX
+static const Oid MAX_OID = std::numeric_limits<Oid>::max();
 
 
 //===--------------------------------------------------------------------===//

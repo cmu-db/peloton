@@ -40,12 +40,12 @@ Tile::Tile(Backend* _backend, catalog::Schema *tuple_schema, int tuple_count,
   next_tuple_itr(0),
   tile_ref_count(0),
   column_count(tuple_schema->GetColumnCount()),
-  tuple_length(tuple_schema->GetLength() + TUPLE_HEADER_SIZE),
+  tuple_length(tuple_schema->GetLength()),
   uninlined_data_size(0),
-  tile_id(InvalidOid),
-  tile_group_id(InvalidOid),
-  table_id(InvalidOid),
-  database_id(InvalidOid),
+  tile_id(INVALID_OID),
+  tile_group_id(INVALID_OID),
+  table_id(INVALID_OID),
+  database_id(INVALID_OID),
   column_header(NULL),
   column_header_size(-1) {
 	assert(tuple_count > 0);
@@ -104,7 +104,6 @@ bool Tile::InsertTuple(int tuple_slot_id, Tuple *tuple) {
 	active_tuple_count++;
 
 	temp_tuple.Move(location);
-	temp_tuple.SetAlive();
 
 	return true;
 }
@@ -424,11 +423,7 @@ void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool)
 
 	for (int tuple_itr = 0; tuple_itr < tuple_count; ++tuple_itr) {
 		temp_tuple.Move(GetTupleLocation((int) next_tuple_itr + tuple_itr));
-
-		temp_tuple.SetDead();
-		temp_tuple.SetClean();
 		temp_tuple.DeserializeFrom(input, pool);
-
 		//TRACE("Loaded new tuple #%02d\n%s", tuple_itr, temp_target1.debug(Name()).c_str());
 	}
 

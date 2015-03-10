@@ -107,7 +107,7 @@ public:
 	}
 
 	int64_t GetOccupiedSize() const {
-		return active_tuple_count * temp_tuple.Length();
+		return active_tuple_count * temp_tuple.GetLength();
 	}
 
 	//===--------------------------------------------------------------------===//
@@ -290,17 +290,6 @@ inline int Tile::GetTupleOffset(const char* tuple_address) const{
 		return tuple_id;
 
 	return -1;
-}
-
-inline void Tile::DeleteTupleStorage(Tuple &tuple) {
-	tuple.SetAlive(); // does NOT free uninlined data
-
-	tuple.FreeUninlinedData();
-
-	// add tuple slot to the free list
-	active_tuple_count--;
-
-	free_slots.push_back(tuple.Location());
 }
 
 } // End storage namespace
