@@ -82,9 +82,9 @@ bool TileIterator::Next(Tuple &out) {
 		tile_itr += tile.tuple_length;
 
 		/// Return this tuple only when this tuple is not marked as deleted.
-		if (out.IsAlive()) {
-			return true;
-		}
+		//if (out.IsVisible()) {
+		return true;
+		//}
 	}
 
 	return false;

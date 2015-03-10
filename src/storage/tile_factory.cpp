@@ -23,8 +23,8 @@ Tile* TileFactory::GetTile(catalog::Schema* schema, int tuple_count,
 
 	Backend* backend = new storage::VolatileBackend();
 
-	return TileFactory::GetTile(InvalidOid, InvalidOid,
-			InvalidOid, InvalidOid, backend, schema, tuple_count,
+	return TileFactory::GetTile(INVALID_OID, INVALID_OID,
+			INVALID_OID, INVALID_OID, backend, schema, tuple_count,
 			column_names, owns_tuple_schema);
 }
 
