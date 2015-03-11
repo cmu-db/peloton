@@ -14,13 +14,11 @@
 
 #include "catalog/schema.h"
 #include "storage/backend.h"
-#include "storage/tile_header.h"
 #include "storage/tuple.h"
+#include "storage/tile_group_header.h"
 #include "storage/vm_backend.h"
 
 #include <mutex>
-
-//#include "storage/tile_stats.h"
 
 namespace nstore {
 namespace storage {
@@ -35,18 +33,18 @@ class TileIterator;
 /**
  * Represents a Tile.
  *
- *	 next_slot : location of next empty slot (atomic).
- *
  *   temp_tuple: when a transaction is inserting a new tuple, this tuple
  *     object is used as a reusable value-holder for the new tuple.
  *     In this way, we don't have to allocate a temporary tuple each time.
  *
  * Tiles are only instantiated via TileFactory.
+ *
+ * NOTE: MVCC is implemented on the shared TileGroupHeader.
  */
 class Tile {
-	friend class TileIterator;
 	friend class TileFactory;
-	friend class TileHeader;
+	friend class TileIterator;
+	friend class TileGroupHeader;
 
 
 	Tile() = delete;
@@ -55,7 +53,7 @@ class Tile {
 public:
 
 	// Tile creator
-	Tile(TileHeader* tile_header, Backend* backend, catalog::Schema *tuple_schema,
+	Tile(TileGroupHeader* tile_header, Backend* backend, catalog::Schema *tuple_schema,
 			int tuple_count, const std::vector<std::string>& column_names, bool own_schema);
 
 	~Tile();
@@ -154,7 +152,7 @@ protected:
 	// Data members
 	//===--------------------------------------------------------------------===//
 
-	// backend
+	// storage backend
 	Backend *backend;
 
 	// set of fixed-length tuple slots
@@ -175,6 +173,7 @@ protected:
 	// do we own the schema ?
 	bool own_schema;
 
+	// number of tuple slots allocated
 	id_t num_tuple_slots;
 
 	// number of columns
@@ -204,12 +203,12 @@ protected:
 	 * NOTE : Tiles don't keep track of number of occupied slots.
 	 * This is maintained by shared Tile Header.
 	 */
-	TileHeader *tile_header;
+	TileGroupHeader *tile_group_header;
 };
 
 // Returns a pointer to the tuple requested. No checks are done that the index is valid.
 inline char* Tile::GetTupleLocation(const id_t tuple_slot_id) const {
-	char *tuple_location = data + ((tuple_slot_id % num_tuple_slots) * tuple_length);
+	char *tuple_location = data + (tuple_slot_id * tuple_length);
 
 	return tuple_location;
 }
@@ -255,14 +254,14 @@ public:
 	}
 
 	static Tile *GetTile(id_t database_id, id_t table_id, id_t tile_group_id, id_t tile_id,
-			TileHeader* tile_header, catalog::Schema* schema, Backend* backend,
+			TileGroupHeader* tile_header, catalog::Schema* schema, Backend* backend,
 			int tuple_count,
 			const std::vector<std::string>& column_names,
 			const bool owns_tuple_schema) {
 
 		// create tile header if passed one is NULL
 		if(tile_header == NULL)
-			tile_header = new TileHeader(backend, tuple_count);
+			tile_header = new TileGroupHeader(backend, tuple_count);
 
 		Tile *tile = new Tile(tile_header, backend, schema, tuple_count, column_names,
 				owns_tuple_schema);

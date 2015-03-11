@@ -23,12 +23,10 @@
 #include "storage/tile.h"
 #include "storage/tile_iterator.h"
 
-//#include "indexes/tableindex.h"
-
 namespace nstore {
 namespace storage {
 
-Tile::Tile(TileHeader* _tile_header, Backend* _backend, catalog::Schema *tuple_schema,
+Tile::Tile(TileGroupHeader* _tile_header, Backend* _backend, catalog::Schema *tuple_schema,
 		int tuple_count, const std::vector<std::string>& _columns_names, bool _own_schema)
 : backend(_backend),
   data(NULL),
@@ -46,16 +44,16 @@ Tile::Tile(TileHeader* _tile_header, Backend* _backend, catalog::Schema *tuple_s
   database_id(INVALID_ID),
   column_header(NULL),
   column_header_size(INVALID_ID),
-  tile_header(_tile_header){
+  tile_group_header(_tile_header){
 	assert(tuple_count > 0);
 
 	tile_size = tuple_count * tuple_length;
 
-	/// allocate tuple storage space for inlined data
+	// allocate tuple storage space for inlined data
 	data = (char *) backend->Allocate(tile_size);
 	assert(data != NULL);
 
-	/// initialize it
+	// initialize it
 	std::memset(data, 0, tile_size);
 	num_tuple_slots = tuple_count;
 
@@ -69,31 +67,31 @@ Tile::Tile(TileHeader* _tile_header, Backend* _backend, catalog::Schema *tuple_s
 }
 
 Tile::~Tile() {
-	/// reclaim the tile memory (only inlined data)
+	// reclaim the tile memory (only inlined data)
 	backend->Free(data);
 	data = NULL;
 
-	/// release pool storage if schema not inlined
+	// release pool storage if schema not inlined
 	if(schema->IsInlined() == false)
 		delete pool;
 	pool = NULL;
 
-	/// release schema if owned. Do this at the end.
+	// release schema if owned. Do this at the end.
 	if(own_schema)
 		delete schema;
 
-	/// clear any cached column headers
+	// clear any cached column headers
 	if (column_header)
 		delete column_header;
 	column_header = NULL;
 
-	/// clean up temp tuple
+	// clean up temp tuple
 	temp_tuple.SetNull();
 }
 
 bool Tile::InsertTuple(const id_t tuple_slot_id, Tuple *tuple) {
 
-	/// Find slot location
+	// Find slot location
 	char *location = tuple_slot_id * tuple_length + data;
 
 	std::memcpy(location, tuple->tuple_data, tuple_length);
@@ -120,7 +118,7 @@ int Tile::GetColumnOffset(const std::string &name) const {
 // Utilities
 //===--------------------------------------------------------------------===//
 
-/// Get a string representation of this tile
+// Get a string representation of this tile
 std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 
 	os << "\tDB Id:  "<< tile.database_id << "\t Table Id:  " << tile.table_id
@@ -130,16 +128,16 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 	os << "\tAllocated Tuples:  " << tile.num_tuple_slots << "\n";
 	os << "\tNumber of Columns: " << tile.GetColumnCount() << "\n";
 
-	/// Columns
+	// Columns
 	os << "===========================================================\n";
 	os << "\tCOLUMNS\n";
 	os << (*tile.schema);
 
-	/// Tuples
+	// Tuples
 	os << "===========================================================\n";
 	os << "\tDATA\n";
 
-	TileIterator tile_itr(tile);
+	TileIterator tile_itr(&tile);
 	Tuple tuple(tile.schema);
 
 	std::string last_tuple = "";
@@ -169,19 +167,19 @@ bool Tile::SerializeTo(SerializeOutput &output, id_t num_tuples) {
 	 *
 	 */
 
-	/// A placeholder for the total table size written at the end
+	// A placeholder for the total table size written at the end
 	std::size_t pos = output.Position();
 	output.WriteInt(-1);
 
-	/// Serialize the header
+	// Serialize the header
 	if (!SerializeHeaderTo(output))
 		return false;
 
-	/// Active tuple count
+	// Active tuple count
 	output.WriteInt(static_cast<int>(num_tuples));
 
 	id_t written_count = 0;
-	TileIterator tile_itr(*this);
+	TileIterator tile_itr(this);
 	Tuple tuple(schema);
 
 	while (tile_itr.Next(tuple) && written_count < num_tuples) {
@@ -193,7 +191,7 @@ bool Tile::SerializeTo(SerializeOutput &output, id_t num_tuples) {
 
 	assert(written_count == num_tuples);
 
-	/// Length prefix is non-inclusive
+	// Length prefix is non-inclusive
 	int32_t sz = static_cast<int32_t>(output.Position() - pos - sizeof(int32_t));
 	assert(sz > 0);
 	output.WriteIntAt(pos, sz);
@@ -204,7 +202,7 @@ bool Tile::SerializeTo(SerializeOutput &output, id_t num_tuples) {
 bool Tile::SerializeHeaderTo(SerializeOutput &output) {
 	std::size_t start;
 
-	/// Use the cache if possible
+	// Use the cache if possible
 	if (column_header != NULL) {
 		assert(column_header_size != INVALID_ID);
 		output.WriteBytes(column_header, column_header_size);
@@ -213,60 +211,60 @@ bool Tile::SerializeHeaderTo(SerializeOutput &output) {
 
 	assert(column_header_size == INVALID_ID);
 
-	/// Skip header position
+	// Skip header position
 	start = output.Position();
 	output.WriteInt(-1);
 
-	/// Status code
+	// Status code
 	output.WriteByte(-128);
 
-	/// Column counts as a short
+	// Column counts as a short
 	output.WriteShort(static_cast<int16_t>(column_count));
 
-	/// Write an array of column types as bytes
+	// Write an array of column types as bytes
 	for (id_t column_itr = 0; column_itr < column_count; ++column_itr) {
 		ValueType type = schema->GetType(column_itr);
 		output.WriteByte(static_cast<int8_t>(type));
 	}
 
-	/// Write the array of column names as strings
-	/// NOTE: strings are ASCII only in metadata (UTF-8 in table storage)
+	// Write the array of column names as strings
+	// NOTE: strings are ASCII only in metadata (UTF-8 in table storage)
 	for (id_t column_itr = 0; column_itr < column_count; ++column_itr) {
 
-		/// Column name: Write (offset, length) for column definition, and string to string table
+		// Column name: Write (offset, length) for column definition, and string to string table
 		const std::string& name = GetColumnName(column_itr);
 
-		/// Column names can't be null, so length must be >= 0
+		// Column names can't be null, so length must be >= 0
 		int32_t length = static_cast<int32_t>(name.size());
 		assert(length >= 0);
 
-		/// this is standard string serialization for voltdb
+		// this is standard string serialization for voltdb
 		output.WriteInt(length);
 		output.WriteBytes(name.data(), length);
 	}
 
-	/// Write the header size which is a non-inclusive int
+	// Write the header size which is a non-inclusive int
 	size_t Position = output.Position();
 	column_header_size = static_cast<int32_t>(Position - start);
 
 	int32_t non_inclusive_header_size = static_cast<int32_t>(column_header_size - sizeof(int32_t));
 	output.WriteIntAt(start, non_inclusive_header_size);
 
-	/// Cache the column header
+	// Cache the column header
 	column_header = new char[column_header_size];
 	memcpy(column_header, static_cast<const char*>(output.Data()) + start, column_header_size);
 
 	return true;
 }
 
-///  Serialized only the tuples specified, along with header.
+//  Serialized only the tuples specified, along with header.
 bool Tile::SerializeTuplesTo(SerializeOutput &output, Tuple *tuples, int num_tuples) {
 	std::size_t pos = output.Position();
 	output.WriteInt(-1);
 
 	assert(!tuples[0].IsNull());
 
-	/// Serialize the header
+	// Serialize the header
 	if (!SerializeHeaderTo(output))
 		return false;
 
@@ -275,7 +273,7 @@ bool Tile::SerializeTuplesTo(SerializeOutput &output, Tuple *tuples, int num_tup
 		tuples[tuple_itr].SerializeTo(output);
 	}
 
-	/// Length prefix is non-inclusive
+	// Length prefix is non-inclusive
 	output.WriteIntAt(pos, static_cast<int32_t>(output.Position() - pos - sizeof(int32_t)));
 
 	return true;
@@ -308,27 +306,27 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
 	int16_t column_count = input.ReadShort();
 	assert(column_count >= 0);
 
-	/// Store the following information so that we can provide them to the user on failure
+	// Store the following information so that we can provide them to the user on failure
 	ValueType types[column_count];
 	std::vector<std::string> names;
 
-	/// Skip the column types
+	// Skip the column types
 	for (int column_itr = 0; column_itr < column_count; ++column_itr) {
 		types[column_itr] = (ValueType) input.ReadEnumInSingleByte();
 	}
 
-	/// Skip the column names
+	// Skip the column names
 	for (int column_itr = 0; column_itr < column_count; ++column_itr) {
 		names.push_back(input.ReadTextString());
 	}
 
-	/// Check if the column count matches what the temp table is expecting
+	// Check if the column count matches what the temp table is expecting
 	if (column_count != schema->GetColumnCount()) {
 
 		std::stringstream message(std::stringstream::in | std::stringstream::out);
 
 		message << "Column count mismatch. Expecting "	<< schema->GetColumnCount()
-														<< ", but " << column_count << " given" << std::endl;
+																<< ", but " << column_count << " given" << std::endl;
 		message << "Expecting the following columns:" << std::endl;
 		message << column_names.size() << std::endl;
 		message << "The following columns are given:" << std::endl;
@@ -341,7 +339,7 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
 		throw SerializationException(message.str());
 	}
 
-	/// Use the deserialization routine skipping header
+	// Use the deserialization routine skipping header
 	DeserializeTuplesFromWithoutHeader(input, pool);
 }
 
@@ -354,7 +352,7 @@ void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool)
 	id_t tuple_count = input.ReadInt();
 	assert(tuple_count >= 0);
 
-	/// First, check if we have required space
+	// First, check if we have required space
 	assert(tuple_count <= num_tuple_slots);
 
 	for (id_t tuple_itr = 0; tuple_itr < tuple_count; ++tuple_itr) {
@@ -369,7 +367,7 @@ void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool)
 // Utilities
 //===--------------------------------------------------------------------===//
 
-/// Compare two tiles (expensive !)
+// Compare two tiles (expensive !)
 bool Tile::operator== (const Tile &other) const {
 	if (!(GetColumnCount() == other.GetColumnCount()))
 		return false;
@@ -381,8 +379,8 @@ bool Tile::operator== (const Tile &other) const {
 	if (*schema != *other_schema)
 		return false;
 
-	TileIterator tile_itr(*this);
-	TileIterator other_tile_itr(other);
+	TileIterator tile_itr(this);
+	TileIterator other_tile_itr(&other);
 
 	Tuple tuple(schema);
 	Tuple other_tuple(other_schema);
@@ -406,7 +404,7 @@ bool Tile::operator!= (const Tile &other) const {
 }
 
 TileIterator Tile::GetIterator() {
-	return TileIterator(*this);
+	return TileIterator(this);
 }
 
 //TileStats* Tile::GetTileStats() {

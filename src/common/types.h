@@ -93,7 +93,7 @@ enum BackendType {
 
 typedef uint64_t id_t;
 
-static const id_t INVALID_ID = 0;
+static const id_t INVALID_ID = -1;
 
 static const id_t MAX_ID = std::numeric_limits<id_t>::max();
 
