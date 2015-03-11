@@ -15,7 +15,6 @@
 #include <memory>
 
 #include "storage/tuple.h"
-#include "common/value_factory.h"
 
 namespace nstore {
 
@@ -47,6 +46,8 @@ TEST(TupleTests, BasicTest) {
 
 	EXPECT_EQ(tuple->GetValue(2), ValueFactory::GetTinyIntValue(2));
 
+	std::cout << (*tuple);
+
 	delete tuple;
 	delete schema;
 }
@@ -74,9 +75,13 @@ TEST(TupleTests, VarcharTest) {
 	tuple->SetValue(3, ValueFactory::GetStringValue("hello hello world"));
 	EXPECT_EQ(tuple->GetValue(3), ValueFactory::GetStringValue("hello hello world"));
 
+	std::cout << (*tuple);
+
 	tuple->SetValue(3, ValueFactory::GetStringValue("hi joy !"));
 	EXPECT_EQ(tuple->GetValue(3), ValueFactory::GetStringValue("hi joy !"));
 	EXPECT_NE(tuple->GetValue(3), ValueFactory::GetStringValue("hello hello world"));
+
+	std::cout << (*tuple);
 
 	delete tuple;
 	delete schema;

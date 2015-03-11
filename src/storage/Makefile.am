@@ -6,7 +6,8 @@
 
 storage_FILES = \
 				storage/tuple.cpp \
-				storage/tile.cpp 
+				storage/tile.cpp \
+				storage/tile_group.cpp
 
 storage_INCLUDES = \
 				   -I$(srcdir)/storage    
