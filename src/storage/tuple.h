@@ -105,11 +105,6 @@ public:
 		return tuple_schema->GetLength();
 	}
 
-	// Is the tuple visible ?
-	inline bool IsVisible() const {
-		return true;
-	}
-
 	// Is the column value null ?
 	inline bool IsNull(const uint64_t column_id) const {
 		return GetValue(column_id).IsNull();

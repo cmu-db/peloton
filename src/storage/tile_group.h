@@ -11,7 +11,8 @@
 */
 
 #include "storage/tile.h"
-#include "storage/tile_header.h"
+#include "storage/tile_group_header.h"
+#include "storage/tile_group_iterator.h"
 
 namespace nstore {
 namespace storage {
@@ -20,10 +21,14 @@ namespace storage {
 // Tile Group
 //===--------------------------------------------------------------------===//
 
+class TileGroupIterator;
+
 /**
  * Represents a group of tiles logically horizontally contiguous.
  *
  * < <Tile 1> <Tile 2> .. <Tile n> >
+ *
+ * Look at TileGroupHeader for MVCC implementation.
  *
  */
 class TileGroup {
@@ -36,18 +41,7 @@ public:
 	// Utilities
 	//===--------------------------------------------------------------------===//
 
-	/// MVCC in tile header
-
 	bool InsertTuple(Tuple &source);
-
-	int64_t GetOccupiedSize() const {
-		return next_tuple_slot;
-	}
-
-	// active tuples in tile
-	int64_t GetActiveTupleCount() const {
-		return next_tuple_slot;
-	}
 
 protected:
 
@@ -55,18 +49,16 @@ protected:
 	// Data members
 	//===--------------------------------------------------------------------===//
 
-	/// set of tiles
+	// set of tiles
 	std::vector<Tile*> tiles;
 
-	TileHeader* tile_header;
+	TileGroupHeader* tile_header;
 
-	/// Catalog information
-	Oid tile_group_id;
-	Oid table_id;
-	Oid database_id;
+	// Catalog information
+	id_t tile_group_id;
+	id_t table_id;
+	id_t database_id;
 
-	// next free slot iterator
-	id_t next_tuple_slot;
 };
 
 } // End storage namespace
