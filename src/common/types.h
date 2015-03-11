@@ -80,13 +80,6 @@ enum ValueType {
 	VALUE_TYPE_VARBINARY = 25, 	// variable length bytes
 };
 
-enum TileType {
-	TILE_TYPE_INVALID = 0, 		// invalid tile type
-
-	TILE_TYPE_PHYSICAL = 1, 	// physical
-	TILE_TYPE_LOGICAL = 2 		// logical
-};
-
 enum BackendType {
 	BACKEND_TYPE_INVALID = 0, 		// invalid backend type
 
@@ -98,15 +91,11 @@ enum BackendType {
 // Type definitions.
 //===--------------------------------------------------------------------===//
 
-// ------------------------------------------------------------------
-// ObjectId is a fundamental type in nstore
-// ------------------------------------------------------------------
+typedef uint64_t id_t;
 
-typedef uint64_t Oid;
+static const id_t INVALID_ID = -1;
 
-static const Oid INVALID_OID = 0;
-
-static const Oid MAX_OID = std::numeric_limits<Oid>::max();
+static const id_t MAX_ID = std::numeric_limits<id_t>::max();
 
 
 //===--------------------------------------------------------------------===//
@@ -116,8 +105,6 @@ static const Oid MAX_OID = std::numeric_limits<Oid>::max();
 std::string GetValueTypeName(ValueType type);
 
 std::string GetBackendTypeName(BackendType type);
-
-std::string GetTileTypeName(TileType type);
 
 std::string ValueToString(ValueType type);
 

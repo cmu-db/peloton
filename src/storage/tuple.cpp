@@ -23,7 +23,7 @@ namespace nstore {
 namespace storage {
 
 // Set all columns by value into this tuple.
- void Tuple::SetValueAllocate(const int column_id,
+ void Tuple::SetValueAllocate(const id_t column_id,
 		Value value, Pool *dataPool) {
 	assert(tuple_schema);
 	assert(tuple_data);
@@ -453,13 +453,13 @@ namespace storage {
 	return HashCode(seed);
 }
 
- char* Tuple::GetDataPtr(const int column_id) {
+ char* Tuple::GetDataPtr(const id_t column_id) {
 	assert(tuple_schema);
 	assert(tuple_data);
 	return &tuple_data[tuple_schema->GetOffset(column_id)];
 }
 
- const char* Tuple::GetDataPtr(const int column_id) const {
+ const char* Tuple::GetDataPtr(const id_t column_id) const {
 	assert(tuple_schema);
 	assert(tuple_data);
 	return &tuple_data[tuple_schema->GetOffset(column_id)];
