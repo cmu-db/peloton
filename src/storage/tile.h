@@ -12,10 +12,11 @@
 
 #pragma once
 
-#include "../catalog/schema.h"
-#include "storage/tuple.h"
-#include "storage/tile.h"
+#include "catalog/schema.h"
 #include "storage/backend.h"
+#include "storage/tile_header.h"
+#include "storage/tuple.h"
+#include "storage/vm_backend.h"
 
 #include <mutex>
 
@@ -29,6 +30,7 @@ namespace storage {
 //===--------------------------------------------------------------------===//
 
 class TileIterator;
+//class TileStats;
 
 /**
  * Represents a Tile.
@@ -44,7 +46,8 @@ class TileIterator;
 class Tile {
 	friend class TileIterator;
 	friend class TileFactory;
-	//friend class TileStats;
+	friend class TileHeader;
+
 
 	Tile() = delete;
 	Tile(Tile const&) = delete;
@@ -52,8 +55,8 @@ class Tile {
 public:
 
 	// Tile creator
-	Tile(Backend* backend, catalog::Schema *tuple_schema, int tuple_count,
-			const std::vector<std::string>& column_names, bool own_schema);
+	Tile(TileHeader* tile_header, Backend* backend, catalog::Schema *tuple_schema,
+			int tuple_count, const std::vector<std::string>& column_names, bool own_schema);
 
 	~Tile();
 
@@ -68,14 +71,9 @@ public:
 		return temp_tuple;
 	}
 
-	// allocated tuples in tile
+	// allocated tuple slots
 	int64_t GetAllocatedTupleCount() const {
-		return max_tuple_slots;
-	}
-
-	// active tuples in tile
-	int64_t GetActiveTupleCount() const {
-		return next_tuple_slot;
+		return num_tuple_slots;
 	}
 
 	int GetTupleOffset(const char *tuple_address) const;
@@ -98,10 +96,6 @@ public:
 	// Both inlined and uninlined data
 	uint32_t GetSize() const {
 		return tile_size + uninlined_data_size ;
-	}
-
-	int64_t GetOccupiedSize() const {
-		return next_tuple_slot * temp_tuple.GetLength();
 	}
 
 	//===--------------------------------------------------------------------===//
@@ -141,7 +135,7 @@ public:
 	// Serialization/Deserialization
 	//===--------------------------------------------------------------------===//
 
-	bool SerializeTo(SerializeOutput &output);
+	bool SerializeTo(SerializeOutput &output, id_t num_tuples);
 	bool SerializeHeaderTo(SerializeOutput &output);
 	bool SerializeTuplesTo(SerializeOutput &output, Tuple *tuples, int num_tuples);
 
@@ -181,7 +175,7 @@ protected:
 	// do we own the schema ?
 	bool own_schema;
 
-	id_t max_tuple_slots;
+	id_t num_tuple_slots;
 
 	// number of columns
 	id_t column_count;
@@ -206,13 +200,16 @@ protected:
 
 	id_t column_header_size;
 
-	// next free slot iterator
-	id_t next_tuple_slot;
+	/**
+	 * NOTE : Tiles don't keep track of number of occupied slots.
+	 * This is maintained by shared Tile Header.
+	 */
+	TileHeader *tile_header;
 };
 
 // Returns a pointer to the tuple requested. No checks are done that the index is valid.
 inline char* Tile::GetTupleLocation(const id_t tuple_slot_id) const {
-	char *tuple_location = data + ((tuple_slot_id % max_tuple_slots) * tuple_length);
+	char *tuple_location = data + ((tuple_slot_id % num_tuple_slots) * tuple_length);
 
 	return tuple_location;
 }
@@ -235,6 +232,67 @@ inline int Tile::GetTupleOffset(const char* tuple_address) const{
 
 	return -1;
 }
+
+
+//===--------------------------------------------------------------------===//
+// Tile factory
+//===--------------------------------------------------------------------===//
+
+class TileFactory {
+public:
+	TileFactory();
+	virtual ~TileFactory();
+
+	static Tile *GetTile(catalog::Schema* schema, int tuple_count,
+			const std::vector<std::string>& column_names,
+			const bool owns_tuple_schema){
+
+		Backend* backend = new storage::VMBackend();
+
+		return TileFactory::GetTile(INVALID_ID, INVALID_ID, INVALID_ID, INVALID_ID,
+				NULL, schema, backend, tuple_count,
+				column_names, owns_tuple_schema);
+	}
+
+	static Tile *GetTile(id_t database_id, id_t table_id, id_t tile_group_id, id_t tile_id,
+			TileHeader* tile_header, catalog::Schema* schema, Backend* backend,
+			int tuple_count,
+			const std::vector<std::string>& column_names,
+			const bool owns_tuple_schema) {
+
+		// create tile header if passed one is NULL
+		if(tile_header == NULL)
+			tile_header = new TileHeader(backend, tuple_count);
+
+		Tile *tile = new Tile(tile_header, backend, schema, tuple_count, column_names,
+				owns_tuple_schema);
+
+		TileFactory::InitCommon(tile, database_id, table_id, tile_group_id, tile_id,
+				schema, column_names, owns_tuple_schema);
+
+		// initialize tile stats
+
+		return tile;
+	}
+
+private:
+
+	static void InitCommon(Tile *tile, id_t database_id, id_t table_id, id_t tile_id,
+			id_t tile_group_id, catalog::Schema* schema, const std::vector<std::string>& column_names,
+			const bool owns_tuple_schema) {
+
+		tile->database_id = database_id;
+		tile->tile_group_id = tile_group_id;
+		tile->table_id = table_id;
+		tile->tile_id = tile_id;
+
+		tile->schema = schema;
+		tile->column_names = column_names;
+		tile->own_schema = owns_tuple_schema;
+
+	}
+
+};
 
 } // End storage namespace
 } // End nstore namespace

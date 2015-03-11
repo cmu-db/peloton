@@ -43,6 +43,5 @@ tile_test_LDADD = \
 				   $(obj_DIR)/common/value.o \
 				   $(obj_DIR)/common/varlen.o \
 				   $(obj_DIR)/storage/tuple.o \
-				   $(obj_DIR)/storage/tile.o \
-				   $(obj_DIR)/storage/tile_factory.o  
+				   $(obj_DIR)/storage/tile.o 
 						  

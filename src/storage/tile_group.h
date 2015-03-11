@@ -11,6 +11,7 @@
 */
 
 #include "storage/tile.h"
+#include "storage/tile_header.h"
 
 namespace nstore {
 namespace storage {
@@ -35,13 +36,18 @@ public:
 	// Utilities
 	//===--------------------------------------------------------------------===//
 
-	/// MVCC on the primary tile
+	/// MVCC in tile header
 
 	bool InsertTuple(Tuple &source);
-	bool UpdateTuple(Tuple &source, Tuple &target, bool update_indexes);
-	bool DeleteTuple(Tuple &tuple, bool free_uninlined_columns);
 
-	void DeleteAllTuples(bool free_uninlined_data);
+	int64_t GetOccupiedSize() const {
+		return next_tuple_slot;
+	}
+
+	// active tuples in tile
+	int64_t GetActiveTupleCount() const {
+		return next_tuple_slot;
+	}
 
 protected:
 
@@ -52,11 +58,15 @@ protected:
 	/// set of tiles
 	std::vector<Tile*> tiles;
 
+	TileHeader* tile_header;
+
 	/// Catalog information
 	Oid tile_group_id;
 	Oid table_id;
 	Oid database_id;
 
+	// next free slot iterator
+	id_t next_tuple_slot;
 };
 
 } // End storage namespace
