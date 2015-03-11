@@ -17,6 +17,11 @@
 #include "storage/tuple.h"
 
 namespace nstore {
+namespace test {
+
+//===--------------------------------------------------------------------===//
+// Tuple Tests
+//===--------------------------------------------------------------------===//
 
 TEST(TupleTests, BasicTest) {
 
@@ -87,5 +92,6 @@ TEST(TupleTests, VarcharTest) {
 	delete schema;
 }
 
+} // End test namespace
 } // End nstore namespace
 

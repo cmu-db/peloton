@@ -124,17 +124,20 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 	os << "\t-----------------------------------------------------------\n";
 
 	os << "\tTILE\n";
-	os << "\tDB Id:  "<< tile.database_id << "\t Table Id:  " << tile.table_id
-			<< "\t Tile Group Id:  " << tile.tile_group_id
-			<< "\t Tile Id:  " << tile.tile_id << "\n";
-	os <<  "\t Backend type: " << tile.backend->GetBackendType() << "\n";
-	os << "\tAllocated Tuples:  " << tile.num_tuple_slots << "\n";
-	os << "\tNumber of Columns: " << tile.GetColumnCount() << "\n";
+	os << "\tCatalog ::"
+			<< " Backend: " << tile.backend->GetBackendType()
+			<< " DB: "<< tile.database_id << " Table: " << tile.table_id
+			<< " Tile Group:  " << tile.tile_group_id
+			<< " Tile:  " << tile.tile_id
+			<< "\n";
+
+	os << "\tActive Tuples:  " << tile.tile_group_header->GetActiveTupleCount()
+			<< " out of " << tile.num_tuple_slots  <<" slots\n";
 
 	// Columns
-	os << "\t-----------------------------------------------------------\n";
-	os << "\tSCHEMA\n";
-	os << (*tile.schema);
+	// os << "\t-----------------------------------------------------------\n";
+	// os << "\tSCHEMA\n";
+	// os << (*tile.schema);
 
 	// Tuples
 	os << "\t-----------------------------------------------------------\n";

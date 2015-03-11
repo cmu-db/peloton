@@ -15,6 +15,11 @@
 #include "catalog/schema.h"
 
 namespace nstore {
+namespace test {
+
+//===--------------------------------------------------------------------===//
+// Tuple Schema Tests
+//===--------------------------------------------------------------------===//
 
 TEST(TupleSchemaTests, ColumnInfoTest) {
 
@@ -58,5 +63,6 @@ TEST(TupleSchemaTests, TupleSchemaTest) {
 	EXPECT_NE(schema1, (*schema3));
 }
 
+} // End test namespace
 } // End nstore namespace
 

@@ -66,14 +66,15 @@ public:
 	// Get a string representation of this tile group
 	friend std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group);
 
+	id_t GetActiveTupleCount() const {
+		return tile_group_header->GetActiveTupleCount();
+	}
+
 protected:
 
 	//===--------------------------------------------------------------------===//
 	// Data members
 	//===--------------------------------------------------------------------===//
-
-	// storage backend
-	Backend *backend;
 
 	// set of tiles
 	std::vector<Tile*> tiles;
@@ -115,7 +116,7 @@ public:
 		if(backend == nullptr)
 			backend = new storage::VMBackend();
 
-		return TileGroupFactory::GetTileGroup(INVALID_ID, INVALID_ID, INVALID_ID,
+		return TileGroupFactory::GetTileGroup(INVALID_CATALOG_ID, INVALID_CATALOG_ID, INVALID_CATALOG_ID,
 				nullptr, schemas, backend, tuple_count, column_names, owns_tuple_schema);
 	}
 
