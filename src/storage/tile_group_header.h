@@ -47,18 +47,17 @@ public:
 		backend(_backend),
 		data(NULL),
 		num_tuple_slots(tuple_count),
-		next_tuple_slot(0),
-		tile_header_lock(tile_header_mutex) {
+		next_tuple_slot(0) {
 
 		header_size = num_tuple_slots * header_entry_size;
 
-		/// allocate storage space for header
+		// allocate storage space for header
 		data = (char *) backend->Allocate(header_size);
 		assert(data != NULL);
 	}
 
 	~TileGroupHeader() {
-		/// reclaim the space
+		// reclaim the space
 		backend->Free(data);
 		data = NULL;
 	}
@@ -66,14 +65,14 @@ public:
 	id_t GetNextEmptyTupleSlot() {
 		id_t tuple_slot_id = INVALID_ID;
 
-		//tile_header_lock.lock();
+		{
+			std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
 
-		if(next_tuple_slot < num_tuple_slots - 1) {
-			tuple_slot_id = next_tuple_slot;
-			next_tuple_slot++;
+			if(next_tuple_slot < num_tuple_slots - 1) {
+				tuple_slot_id = next_tuple_slot;
+				next_tuple_slot++;
+			}
 		}
-
-		//tile_header_lock.unlock();
 
 		return tuple_slot_id;
 	}
@@ -116,9 +115,7 @@ public:
 		bool activated = (at_timestamp >= GetBeginTimeStamp(tuple_slot_id));
 		bool invalidated = (at_timestamp <= GetEndTimeStamp(tuple_slot_id));
 
-		std::cout << "Own :: " << own << " " <<
-				"Activated :: " << activated <<
-				"Invalidated :: " << invalidated << "\n";
+		std::cout << "Own :: " << own << " " << "Activated :: " << activated << "Invalidated :: " << invalidated << "\n";
 
 		// Visible iff Past Insert || Own Insert
 		if((!own && activated && !invalidated) || (own && !activated && !invalidated))
@@ -152,8 +149,6 @@ private:
 
 	// synch helpers
 	std::mutex tile_header_mutex;
-
-	std::unique_lock<std::mutex> tile_header_lock;
 };
 
 

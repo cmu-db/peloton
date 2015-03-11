@@ -121,6 +121,9 @@ int Tile::GetColumnOffset(const std::string &name) const {
 // Get a string representation of this tile
 std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 
+	os << "\t-----------------------------------------------------------\n";
+
+	os << "\tTILE\n";
 	os << "\tDB Id:  "<< tile.database_id << "\t Table Id:  " << tile.table_id
 			<< "\t Tile Group Id:  " << tile.tile_group_id
 			<< "\t Tile Id:  " << tile.tile_id << "\n";
@@ -129,12 +132,12 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 	os << "\tNumber of Columns: " << tile.GetColumnCount() << "\n";
 
 	// Columns
-	os << "===========================================================\n";
-	os << "\tCOLUMNS\n";
+	os << "\t-----------------------------------------------------------\n";
+	os << "\tSCHEMA\n";
 	os << (*tile.schema);
 
 	// Tuples
-	os << "===========================================================\n";
+	os << "\t-----------------------------------------------------------\n";
 	os << "\tDATA\n";
 
 	TileIterator tile_itr(&tile);
@@ -146,7 +149,7 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 		os << "\t" << tuple;
 	}
 
-	os << "===========================================================\n";
+	os << "\t-----------------------------------------------------------\n";
 
 	tuple.SetNull();
 

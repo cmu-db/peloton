@@ -37,7 +37,6 @@ public:
 		tuple_length(tile->tuple_length){
 
 		tile_group_header = tile->tile_group_header;
-
 	}
 
 	TileIterator(const TileIterator& other) :
@@ -70,8 +69,8 @@ private:
 };
 
 bool TileIterator::HasNext() {
-	std::cout << "Tile Itr :: " << tile_itr << " Active   :: " <<
-			tile_group_header->GetActiveTupleCount() << "\n";
+	//std::cout << "Tile Itr :: " << tile_itr << " Active   :: " <<
+	//		tile_group_header->GetActiveTupleCount() << "\n";
 
 	// Scan until active tuples
 	return (tile_itr < tile_group_header->GetActiveTupleCount());

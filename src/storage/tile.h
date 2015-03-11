@@ -137,8 +137,8 @@ public:
 	bool SerializeHeaderTo(SerializeOutput &output);
 	bool SerializeTuplesTo(SerializeOutput &output, Tuple *tuples, int num_tuples);
 
-	void DeserializeTuplesFrom(SerializeInput &serialize_in, Pool *pool = NULL);
-	void DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool = NULL);
+	void DeserializeTuplesFrom(SerializeInput &serialize_in, Pool *pool = nullptr);
+	void DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool = nullptr);
 
 	Pool* GetPool(){
 		return (pool);
@@ -243,17 +243,18 @@ public:
 	virtual ~TileFactory();
 
 	static Tile *GetTile(catalog::Schema* schema,
-			Backend* backend,
 			int tuple_count,
 			const std::vector<std::string>& column_names,
-			const bool owns_tuple_schema){
+			const bool owns_tuple_schema,
+			TileGroupHeader* tile_header = nullptr,
+			Backend* backend = nullptr){
 
 		// create backend if needed
-		if(backend == NULL)
+		if(backend == nullptr)
 			backend = new storage::VMBackend();
 
 		return TileFactory::GetTile(INVALID_ID, INVALID_ID, INVALID_ID, INVALID_ID,
-				NULL, schema, backend, tuple_count,
+				tile_header, schema, backend, tuple_count,
 				column_names, owns_tuple_schema);
 	}
 
@@ -268,8 +269,8 @@ public:
 			const std::vector<std::string>& column_names,
 			const bool owns_tuple_schema) {
 
-		// create tile header if passed one is NULL
-		if(tile_header == NULL)
+		// create tile header if needed
+		if(tile_header == nullptr)
 			tile_header = new TileGroupHeader(backend, tuple_count);
 
 		Tile *tile = new Tile(tile_header, backend, schema, tuple_count, column_names,
@@ -277,8 +278,6 @@ public:
 
 		TileFactory::InitCommon(tile, database_id, table_id, tile_group_id, tile_id,
 				schema, column_names, owns_tuple_schema);
-
-		// initialize tile stats
 
 		return tile;
 	}

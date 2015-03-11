@@ -75,10 +75,10 @@ TEST(TileGroupTests, BasicTest) {
 
 	// TILE GROUP
 
-	storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, NULL, 4, column_names, true);
+	storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 4, column_names, true);
 
-	std::cout << (*tile_group);
-
+	tile_group->InsertTuple(*tuple1);
+	tile_group->InsertTuple(*tuple2);
 	tile_group->InsertTuple(*tuple1);
 
 	std::cout << (*tile_group);

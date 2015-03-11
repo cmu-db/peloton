@@ -52,7 +52,7 @@ TEST(TileTests, BasicTest) {
 	column_names.push_back("COL 3");
 	column_names.push_back("COL 4");
 
-	storage::Tile *tile = storage::TileFactory::GetTile(schema, NULL, 6, column_names, true);
+	storage::Tile *tile = storage::TileFactory::GetTile(schema, 6, column_names, true);
 
 	tile->InsertTuple(0, tuple1);
 	tile->InsertTuple(1, tuple2);

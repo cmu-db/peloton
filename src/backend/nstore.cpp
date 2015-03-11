@@ -12,6 +12,12 @@
 
 #include "nstore.h"
 
+#include <stdio.h>
+#include <execinfo.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 namespace nstore {
 
 static void usage_exit() {
@@ -28,6 +34,20 @@ static struct option opts[] = {
 		{ "filesystem-path", optional_argument, NULL, 'f' },
 		{ NULL, 0, NULL, 0 }
 };
+
+
+void handler(int sig) {
+  void *array[10];
+  size_t size;
+
+  // get void*'s for all entries on the stack
+  size = backtrace(array, 10);
+
+  // print out all the frames to stderr
+  fprintf(stderr, "Error: signal %d:\n", sig);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
+  exit(1);
+}
 
 static void parse_arguments(int argc, char* argv[], configuration& config) {
 	// Parse arguments
@@ -66,6 +86,8 @@ static void parse_arguments(int argc, char* argv[], configuration& config) {
 
 int main(int argc, char **argv) {
 	const char* path = "/mnt/pmfs/n-store/zfile";
+
+	signal(SIGSEGV, nstore::handler);   // install our handler
 
 	nstore::configuration state;
 
