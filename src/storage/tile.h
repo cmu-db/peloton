@@ -253,7 +253,7 @@ public:
 		if(backend == nullptr)
 			backend = new storage::VMBackend();
 
-		return TileFactory::GetTile(INVALID_ID, INVALID_ID, INVALID_ID, INVALID_ID,
+		return TileFactory::GetTile(INVALID_CATALOG_ID, INVALID_CATALOG_ID, INVALID_CATALOG_ID, INVALID_CATALOG_ID,
 				tile_header, schema, backend, tuple_count,
 				column_names, owns_tuple_schema);
 	}

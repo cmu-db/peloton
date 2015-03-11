@@ -21,8 +21,7 @@ TileGroup::TileGroup(TileGroupHeader* _tile_group_header,
 		int tuple_count,
 		const std::vector<std::vector<std::string> >& column_names,
 		bool own_schema)
-: backend(_backend),
-  tile_group_header(_tile_group_header),
+: tile_group_header(_tile_group_header),
   num_tuple_slots(tuple_count),
   tile_schemas(schemas),
   tile_group_id(INVALID_ID),
@@ -34,7 +33,7 @@ TileGroup::TileGroup(TileGroupHeader* _tile_group_header,
 	for(id_t tile_itr = 0 ; tile_itr < tile_count ; tile_itr++){
 		Tile * tile = storage::TileFactory::GetTile(tile_schemas[tile_itr],
 				tuple_count, column_names[tile_itr], own_schema,
-				tile_group_header, backend);
+				tile_group_header, _backend);
 
 		tiles.push_back(tile);
 	}
@@ -63,10 +62,10 @@ bool TileGroup::InsertTuple(Tuple &source) {
 
 		for(id_t tile_column_itr = 0 ; tile_column_itr < tile_column_count ; tile_column_itr++){
 			tuple->SetValue(tile_column_itr, source.GetValue(column_itr));
+			column_itr++;
 		}
 
 		tiles[tile_itr]->InsertTuple(tuple_slot_id, tuple);
-		column_itr++;
 	}
 
 	return true;
@@ -83,10 +82,13 @@ std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group) {
 	os << "====================================================================================================\n";
 
 	os << "TILE GROUP :\n";
-	os << "\tDB Id:  "<< tile_group.database_id << "\t Table Id:  " << tile_group.table_id
-			<< "\t Tile Group Id:  " << tile_group.tile_group_id << "\n";
-	os <<  "\tBackend type: " << tile_group.backend->GetBackendType() << "\n";
-	os << "\tAllocated Tuples:  " << tile_group.num_tuple_slots << "\n";
+	os << "\tCatalog ::"
+			<< " DB: "<< tile_group.database_id << " Table: " << tile_group.table_id
+			<< " Tile Group:  " << tile_group.tile_group_id
+			<< "\n";
+
+	os << "\tActive Tuples:  " << tile_group.tile_group_header->GetActiveTupleCount()
+			<< " out of " << tile_group.num_tuple_slots  <<" slots\n";
 
 	for(id_t tile_itr = 0 ; tile_itr < tile_group.tile_count ; tile_itr++){
 		os << (*tile_group.tiles[tile_itr]);

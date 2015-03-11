@@ -15,6 +15,11 @@
 #include "storage/tile.h"
 
 namespace nstore {
+namespace test {
+
+//===--------------------------------------------------------------------===//
+// Tile Tests
+//===--------------------------------------------------------------------===//
 
 TEST(TileTests, BasicTest) {
 
@@ -69,6 +74,7 @@ TEST(TileTests, BasicTest) {
 	delete tile;
 }
 
+} // End test namespace
 } // End nstore namespace
 
 
