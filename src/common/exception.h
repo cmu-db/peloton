@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <iostream>
+
 #include "common/types.h"
 
 #include <cstdio>
@@ -21,6 +23,7 @@
 #include <execinfo.h>
 #include <errno.h>
 #include <cxxabi.h>
+#include <signal.h>
 
 namespace nstore {
 
@@ -47,13 +50,61 @@ public:
 
 	Exception(std::string message) {
 		// print stack trace
-		PrintStackTrace();
-		throw std::runtime_error(message);
+		//PrintStackTrace();
+
+		std::string exception_message =
+				"============================================================================\n"
+				"\tMessage :: " +	message + "\n"
+				"============================================================================\n";
+		std::cerr << exception_message;
+
+		// TODO: raise HELL for now
+		raise(SIGSEGV);
+		throw std::runtime_error(exception_message);
 	}
 
 	Exception(ExceptionType exception_type, std::string message){
-		PrintStackTrace();
-		throw std::runtime_error(std::to_string(exception_type) + " " +	message);
+		// print stack trace
+		//PrintStackTrace();
+
+		std::string exception_message =
+				"============================================================================\n"
+				"\tException Type :: " + ExpectionTypeToString(exception_type) + "\n\tMessage :: " +	message + "\n"
+				"============================================================================\n";
+
+		std::cerr << exception_message;
+
+		// TODO: raise HELL for now
+		raise(SIGSEGV);
+		throw std::runtime_error(exception_message);
+	}
+
+	std::string ExpectionTypeToString(ExceptionType type){
+		switch (type) {
+		case EXCEPTION_TYPE_INVALID:
+			return "Invalid";
+		case EXCEPTION_TYPE_OUT_OF_RANGE:
+			return "Out of Range";
+		case EXCEPTION_TYPE_CONVERSION:
+			return "Conversion";
+		case EXCEPTION_TYPE_UNKNOWN_TYPE:
+			return "Unknown Type";
+		case EXCEPTION_TYPE_DECIMAL:
+			return "Decimal";
+		case EXCEPTION_TYPE_MISMATCH_TYPE:
+			return "Mismatch Type";
+		case EXCEPTION_TYPE_DIVIDE_BY_ZERO:
+			return "Divede by Zero";
+		case EXCEPTION_TYPE_OBJECT_SIZE:
+			return "Object Size";
+		case EXCEPTION_TYPE_INCOMPATIBLE_TYPE:
+			return "Incompatible type";
+		case EXCEPTION_TYPE_SERIALIZATION:
+			return "Serialization";
+
+		default:
+			return "Unknown";
+		}
 	}
 
 	// Based on :: http://panthema.net/2008/0901-stacktrace-demangled/
@@ -141,7 +192,7 @@ class CastException : Exception {
 public:
 	CastException(const ValueType origType, const ValueType newType) :
 		Exception(EXCEPTION_TYPE_CONVERSION,
-				"Type " + ValueToString(origType) + "can't be cast as " + ValueToString(newType)){
+				"Type " + ValueToString(origType) + " can't be cast as " + ValueToString(newType)){
 	}
 
 };
@@ -152,14 +203,14 @@ class ValueOutOfRangeException : Exception {
 public:
 	ValueOutOfRangeException(const int64_t value, const ValueType origType, const ValueType newType) :
 		Exception(EXCEPTION_TYPE_CONVERSION,
-				"Type " +ValueToString(origType) + "with value " + std::to_string((intmax_t)value) +
+				"Type " +	ValueToString(origType) + " with value " + std::to_string((intmax_t)value) +
 				" can't be cast as %s because the value is out of range for the destination type " +
 				ValueToString(newType)){
 	}
 
 	ValueOutOfRangeException(const double value, const ValueType origType, const ValueType newType) :
 		Exception(EXCEPTION_TYPE_CONVERSION,
-				"Type " +ValueToString(origType) + "with value " + std::to_string(value) +
+				"Type " +	ValueToString(origType) + " with value " + std::to_string(value) +
 				" can't be cast as %s because the value is out of range for the destination type " +
 				ValueToString(newType)){
 	}
@@ -199,7 +250,7 @@ class TypeMismatchException : Exception {
 public:
 	TypeMismatchException(std::string msg, const ValueType type_1, const ValueType type_2) :
 		Exception(EXCEPTION_TYPE_MISMATCH_TYPE,
-				"Type " +ValueToString(type_1) + " does not match with " + ValueToString(type_2) + msg){
+				"Type " + ValueToString(type_1) + " does not match with " + ValueToString(type_2) + msg){
 	}
 };
 

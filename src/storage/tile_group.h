@@ -106,17 +106,17 @@ public:
 	virtual ~TileGroupFactory();
 
 	static TileGroup *GetTileGroup(const std::vector<catalog::Schema*>& schemas,
-			Backend* backend,
 			int tuple_count,
 			const std::vector<std::vector<std::string> >& column_names,
-			const bool owns_tuple_schema){
+			const bool owns_tuple_schema,
+			Backend* backend = nullptr){
 
 		// create backend if needed
-		if(backend == NULL)
+		if(backend == nullptr)
 			backend = new storage::VMBackend();
 
 		return TileGroupFactory::GetTileGroup(INVALID_ID, INVALID_ID, INVALID_ID,
-				NULL, schemas, backend, tuple_count, column_names, owns_tuple_schema);
+				nullptr, schemas, backend, tuple_count, column_names, owns_tuple_schema);
 	}
 
 	static TileGroup *GetTileGroup(id_t database_id,
@@ -130,7 +130,7 @@ public:
 			const bool owns_tuple_schema) {
 
 		// create tile header if needed
-		if(tile_header == NULL)
+		if(tile_header == nullptr)
 			tile_header = new TileGroupHeader(backend, tuple_count);
 
 		TileGroup *tile_group = new TileGroup(tile_header, backend, schemas, tuple_count,

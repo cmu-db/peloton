@@ -162,14 +162,14 @@ std::ostream& operator<< (std::ostream& os, const ColumnInfo& column_info){
 
 /// Get a string representation of this schema for debugging
 std::ostream& operator<< (std::ostream& os, const Schema& schema){
-	os << "Schema :: " <<
+	os << "\tSchema :: " <<
 			" column_count = " << schema.column_count <<
 			" is_inlined = " << schema.is_inlined << "," <<
 			" length = " << schema.length << "," <<
 			" uninlined_column_count = " << schema.uninlined_column_count << std::endl;
 
 	for (int column_itr = 0; column_itr < schema.column_count; column_itr++) {
-		os << " Column " << column_itr << " :: " << schema.columns[column_itr];
+		os << "\t Column " << column_itr << " :: " << schema.columns[column_itr];
 	}
 
 	return os;
