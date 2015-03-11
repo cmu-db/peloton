@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
- *
- * tile_iterator.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/storage/tile_iterator.h
- *
- *-------------------------------------------------------------------------
- */
+*
+* table_iterator.h
+* file description
+*
+* Copyright(c) 2015, CMU
+*
+* /n-store/src/storage/table_iterator.h
+*
+*-------------------------------------------------------------------------
+*/
 
 #pragma once
 
@@ -23,8 +23,6 @@ namespace storage {
 //===--------------------------------------------------------------------===//
 // Tile Iterator
 //===--------------------------------------------------------------------===//
-
-class PhysicalTile;
 
 /**
  * Iterator for table which neglects deleted tuples.
@@ -97,3 +95,6 @@ const char* TileIterator::GetLocation() const {
 
 } // End storage namespace
 } // End nstore namespace
+
+
+

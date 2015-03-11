@@ -18,14 +18,14 @@ namespace nstore {
 namespace storage {
 
 //===--------------------------------------------------------------------===//
-// NonVolatile Backend (NVM)
+// NVM Backend (Non-volatile memory)
 //===--------------------------------------------------------------------===//
 
 
-class NonVolatileBackend : public Backend {
+class NVMBackend : public Backend {
 
 public:
-	virtual ~NonVolatileBackend(){};
+	virtual ~NVMBackend(){};
 
 	void* Allocate(size_t size) {
 		return ::operator new(size);

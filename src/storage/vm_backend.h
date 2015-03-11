@@ -18,14 +18,14 @@ namespace nstore {
 namespace storage {
 
 //===--------------------------------------------------------------------===//
-// Volatile Backend
+// VM Backend
 //===--------------------------------------------------------------------===//
 
 
-class VolatileBackend : public Backend {
+class VMBackend : public Backend {
 
 public:
-	virtual ~VolatileBackend(){};
+	virtual ~VMBackend(){};
 
 	void* Allocate(size_t size) {
 		return ::operator new(size);
@@ -35,7 +35,7 @@ public:
 		::operator delete(ptr);
 	}
 
-	void Sync(void* ptr)  {
+	void Sync(void* ptr __attribute__((unused)))  {
 		// does nothing
 	}
 

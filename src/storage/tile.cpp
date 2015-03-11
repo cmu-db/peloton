@@ -20,22 +20,23 @@
 #include "common/serializer.h"
 #include "catalog/schema.h"
 #include "storage/tuple.h"
-#include "tile_iterator.h"
+#include "storage/tile.h"
+#include "storage/tile_iterator.h"
 
 //#include "indexes/tableindex.h"
 
 namespace nstore {
 namespace storage {
 
-Tile::Tile(Backend* _backend, catalog::Schema *tuple_schema, int tuple_count,
-		const std::vector<std::string>& _columns_names, bool _own_schema)
+Tile::Tile(TileHeader* _tile_header, Backend* _backend, catalog::Schema *tuple_schema,
+		int tuple_count, const std::vector<std::string>& _columns_names, bool _own_schema)
 : backend(_backend),
   data(NULL),
   pool(NULL),
   column_names(_columns_names),
   schema(tuple_schema),
   own_schema(_own_schema),
-  max_tuple_slots(0),
+  num_tuple_slots(0),
   column_count(tuple_schema->GetColumnCount()),
   tuple_length(tuple_schema->GetLength()),
   uninlined_data_size(0),
@@ -45,7 +46,7 @@ Tile::Tile(Backend* _backend, catalog::Schema *tuple_schema, int tuple_count,
   database_id(INVALID_ID),
   column_header(NULL),
   column_header_size(INVALID_ID),
-  next_tuple_slot(0){
+  tile_header(_tile_header){
 	assert(tuple_count > 0);
 
 	tile_size = tuple_count * tuple_length;
@@ -56,7 +57,7 @@ Tile::Tile(Backend* _backend, catalog::Schema *tuple_schema, int tuple_count,
 
 	/// initialize it
 	std::memset(data, 0, tile_size);
-	max_tuple_slots = tuple_count;
+	num_tuple_slots = tuple_count;
 
 	// allocate default pool if schema not inlined
 	if(schema->IsInlined() == false)
@@ -97,8 +98,6 @@ bool Tile::InsertTuple(const id_t tuple_slot_id, Tuple *tuple) {
 
 	std::memcpy(location, tuple->tuple_data, tuple_length);
 
-	next_tuple_slot = std::max(next_tuple_slot, tuple_slot_id + 1);
-
 	return true;
 }
 
@@ -128,8 +127,7 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 			<< "\t Tile Group Id:  " << tile.tile_group_id
 			<< "\t Tile Id:  " << tile.tile_id << "\n";
 	os <<  "\t Backend type: " << tile.backend->GetBackendType() << "\n";
-	os << "\tMax Tuples:  " << tile.max_tuple_slots << "\n";
-	os << "\tAllocated Tuples:    " << tile.next_tuple_slot << "\n";
+	os << "\tAllocated Tuples:  " << tile.num_tuple_slots << "\n";
 	os << "\tNumber of Columns: " << tile.GetColumnCount() << "\n";
 
 	/// Columns
@@ -144,15 +142,10 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 	TileIterator tile_itr(tile);
 	Tuple tuple(tile.schema);
 
-	if (tile.next_tuple_slot == 0) {
-		os << "\t<NONE>\n";
-	}
-	else {
-		std::string last_tuple = "";
+	std::string last_tuple = "";
 
-		while (tile_itr.Next(tuple)) {
-			os << "\t" << tuple;
-		}
+	while (tile_itr.Next(tuple)) {
+		os << "\t" << tuple;
 	}
 
 	os << "===========================================================\n";
@@ -166,7 +159,7 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 // Serialization/Deserialization
 //===--------------------------------------------------------------------===//
 
-bool Tile::SerializeTo(SerializeOutput &output) {
+bool Tile::SerializeTo(SerializeOutput &output, id_t num_tuples) {
 	/**
 	 * The table is serialized as:
 	 *
@@ -185,20 +178,20 @@ bool Tile::SerializeTo(SerializeOutput &output) {
 		return false;
 
 	/// Active tuple count
-	output.WriteInt(static_cast<int>(next_tuple_slot));
+	output.WriteInt(static_cast<int>(num_tuples));
 
 	id_t written_count = 0;
 	TileIterator tile_itr(*this);
 	Tuple tuple(schema);
 
-	while (tile_itr.Next(tuple)) {
+	while (tile_itr.Next(tuple) && written_count < num_tuples) {
 		tuple.SerializeTo(output);
 		++written_count;
 	}
 
 	tuple.SetNull();
 
-	assert(written_count == next_tuple_slot);
+	assert(written_count == num_tuples);
 
 	/// Length prefix is non-inclusive
 	int32_t sz = static_cast<int32_t>(output.Position() - pos - sizeof(int32_t));
@@ -335,7 +328,7 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
 		std::stringstream message(std::stringstream::in | std::stringstream::out);
 
 		message << "Column count mismatch. Expecting "	<< schema->GetColumnCount()
-										<< ", but " << column_count << " given" << std::endl;
+														<< ", but " << column_count << " given" << std::endl;
 		message << "Expecting the following columns:" << std::endl;
 		message << column_names.size() << std::endl;
 		message << "The following columns are given:" << std::endl;
@@ -362,15 +355,14 @@ void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool)
 	assert(tuple_count >= 0);
 
 	/// First, check if we have required space
-	assert(tuple_count <= (max_tuple_slots - next_tuple_slot + 1));
+	assert(tuple_count <= num_tuple_slots);
 
 	for (id_t tuple_itr = 0; tuple_itr < tuple_count; ++tuple_itr) {
-		temp_tuple.Move(GetTupleLocation((int) next_tuple_slot + tuple_itr));
+		temp_tuple.Move(GetTupleLocation(tuple_itr));
 		temp_tuple.DeserializeFrom(input, pool);
 		//TRACE("Loaded new tuple #%02d\n%s", tuple_itr, temp_target1.debug(Name()).c_str());
 	}
 
-	next_tuple_slot += tuple_count;
 }
 
 //===--------------------------------------------------------------------===//
@@ -380,9 +372,6 @@ void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool)
 /// Compare two tiles (expensive !)
 bool Tile::operator== (const Tile &other) const {
 	if (!(GetColumnCount() == other.GetColumnCount()))
-		return false;
-
-	if (!(GetActiveTupleCount() == other.GetActiveTupleCount()))
 		return false;
 
 	if (!(database_id == other.database_id))

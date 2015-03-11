@@ -14,7 +14,7 @@
 
 #include "../src/catalog/schema.h"
 
-#include "storage/tile_factory.h"
+#include "storage/tile.h"
 #include "storage/tuple.h"
 #include "common/value_factory.h"
 
