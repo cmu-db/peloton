@@ -96,10 +96,10 @@ public:
 
 	// Get the value of a specified column (const)
 	// (expensive) checks the schema to see how to return the Value.
-	inline const Value GetValue(const int column_id) const;
+	inline const Value GetValue(const id_t column_id) const;
 
 	// Set appropriate column in tuple
-	void SetValue(const int column_id, Value value);
+	void SetValue(const id_t column_id, Value value);
 
 	inline int GetLength() const {
 		return tuple_schema->GetLength();
@@ -166,7 +166,7 @@ public:
 	 * It is also possible to provide NULL for stringPool in which case
 	 * the strings will be allocated on the heap.
 	 */
-	void SetValueAllocate(const int column_id, Value value, Pool *dataPool);
+	void SetValueAllocate(const id_t column_id, Value value, Pool *dataPool);
 
 	//===--------------------------------------------------------------------===//
 	// Serialization utilities
@@ -188,9 +188,9 @@ public:
 
 private:
 
-	char* GetDataPtr(const int column_id);
+	char* GetDataPtr(const id_t column_id);
 
-	const char* GetDataPtr(const int column_id) const;
+	const char* GetDataPtr(const id_t column_id) const;
 
 	//===--------------------------------------------------------------------===//
 	// Data members
@@ -225,7 +225,7 @@ inline Tuple& Tuple::operator=(const Tuple &rhs) {
 
 // Get the value of a specified column (const)
 // (expensive) checks the schema to see how to return the Value.
-inline const Value Tuple::GetValue(const int column_id) const {
+inline const Value Tuple::GetValue(const id_t column_id) const {
 	assert(tuple_schema);
 	assert(tuple_data);
 
@@ -238,7 +238,7 @@ inline const Value Tuple::GetValue(const int column_id) const {
 }
 
 // Set scalars by value and uninlined columns by reference into this tuple.
-inline void Tuple::SetValue(const int column_id, Value value) {
+inline void Tuple::SetValue(const id_t column_id, Value value) {
 	assert(tuple_schema);
 	assert(tuple_data);
 

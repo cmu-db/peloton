@@ -64,9 +64,7 @@ TEST(TileTests, BasicTest) {
 
 	std::cout << (*tile);
 
-	tile->DeleteTuple(2, false);
 	tile->InsertTuple(2, tuple1);
-	tile->DeleteTuple(0, false);
 
 	std::cout << (*tile);
 

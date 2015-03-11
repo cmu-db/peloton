@@ -35,19 +35,17 @@ Tile::Tile(Backend* _backend, catalog::Schema *tuple_schema, int tuple_count,
   column_names(_columns_names),
   schema(tuple_schema),
   own_schema(_own_schema),
-  allocated_tuple_count(0),
-  active_tuple_count(0),
-  next_tuple_itr(0),
-  tile_ref_count(0),
+  max_tuple_slots(0),
   column_count(tuple_schema->GetColumnCount()),
   tuple_length(tuple_schema->GetLength()),
   uninlined_data_size(0),
-  tile_id(INVALID_OID),
-  tile_group_id(INVALID_OID),
-  table_id(INVALID_OID),
-  database_id(INVALID_OID),
+  tile_id(INVALID_ID),
+  tile_group_id(INVALID_ID),
+  table_id(INVALID_ID),
+  database_id(INVALID_ID),
   column_header(NULL),
-  column_header_size(-1) {
+  column_header_size(INVALID_ID),
+  next_tuple_slot(0){
 	assert(tuple_count > 0);
 
 	tile_size = tuple_count * tuple_length;
@@ -58,7 +56,7 @@ Tile::Tile(Backend* _backend, catalog::Schema *tuple_schema, int tuple_count,
 
 	/// initialize it
 	std::memset(data, 0, tile_size);
-	allocated_tuple_count = tuple_count;
+	max_tuple_slots = tuple_count;
 
 	// allocate default pool if schema not inlined
 	if(schema->IsInlined() == false)
@@ -70,9 +68,6 @@ Tile::Tile(Backend* _backend, catalog::Schema *tuple_schema, int tuple_count,
 }
 
 Tile::~Tile() {
-	/// not all tables are reference counted but this should be invariant
-	assert(tile_ref_count == 0);
-
 	/// reclaim the tile memory (only inlined data)
 	backend->Free(data);
 	data = NULL;
@@ -95,34 +90,14 @@ Tile::~Tile() {
 	temp_tuple.SetNull();
 }
 
-bool Tile::InsertTuple(int tuple_slot_id, Tuple *tuple) {
+bool Tile::InsertTuple(const id_t tuple_slot_id, Tuple *tuple) {
+
 	/// Find slot location
 	char *location = tuple_slot_id * tuple_length + data;
 
 	std::memcpy(location, tuple->tuple_data, tuple_length);
 
-	active_tuple_count++;
-
-	temp_tuple.Move(location);
-
-	return true;
-}
-
-bool Tile::DeleteTuple(int tuple_slot_id, bool free_uninlined_data) {
-	/// Find slot location
-	char *location = tuple_slot_id * tuple_length + data;
-
-	/// Release unlined columns
-	if(free_uninlined_data) {
-
-		temp_tuple.Move(location);
-		temp_tuple.FreeUninlinedData();
-	}
-
-	// Clean it up
-	std::memset(location, 0, tuple_length);
-
-	active_tuple_count--;
+	next_tuple_slot = std::max(next_tuple_slot, tuple_slot_id + 1);
 
 	return true;
 }
@@ -131,36 +106,6 @@ bool Tile::DeleteTuple(int tuple_slot_id, bool free_uninlined_data) {
 //===--------------------------------------------------------------------===//
 // Tuples
 //===--------------------------------------------------------------------===//
-
-bool Tile::NextFreeTuple(Tuple *tuple) {
-
-	/// First check whether we have any slots in our freelist
-	if (!free_slots.empty()) {
-		//TRACE("GRABBED FREE TUPLE!\n");
-		char* ret = free_slots.back();
-		free_slots.pop_back();
-		assert (column_count == tuple->GetColumnCount());
-
-		tuple->Move(ret);
-		return true;
-	}
-
-	/// If there are no free tuple slots, we need to grab another chunk of memory
-	// Allocate a new set of tuples
-	if (next_tuple_itr >= allocated_tuple_count) {
-		return false;
-	}
-
-	/// TODO: Multi-threaded accesses ?
-	/// Grab free tuple slot
-	assert (next_tuple_itr < allocated_tuple_count);
-	assert (column_count == tuple->GetColumnCount());
-
-	tuple->Move(GetTupleLocation((int) next_tuple_itr));
-	++next_tuple_itr;
-
-	return true;
-}
 
 int Tile::GetColumnOffset(const std::string &name) const {
 	for (int column_itr = 0, cnt = column_count; column_itr < cnt; column_itr++) {
@@ -182,10 +127,9 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 	os << "\tDB Id:  "<< tile.database_id << "\t Table Id:  " << tile.table_id
 			<< "\t Tile Group Id:  " << tile.tile_group_id
 			<< "\t Tile Id:  " << tile.tile_id << "\n";
-	os << "\tTile Type: " << tile.GetTileType() << "\t Backend type: " <<
-			tile.backend->GetBackendType() << "\n";
-	os << "\tAllocated Tuples:  " << tile.allocated_tuple_count << "\n";
-	os << "\tDeleted Tuples:    " << tile.free_slots.size() << "\n";
+	os <<  "\t Backend type: " << tile.backend->GetBackendType() << "\n";
+	os << "\tMax Tuples:  " << tile.max_tuple_slots << "\n";
+	os << "\tAllocated Tuples:    " << tile.next_tuple_slot << "\n";
 	os << "\tNumber of Columns: " << tile.GetColumnCount() << "\n";
 
 	/// Columns
@@ -200,7 +144,7 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 	TileIterator tile_itr(tile);
 	Tuple tuple(tile.schema);
 
-	if (tile.active_tuple_count == 0) {
+	if (tile.next_tuple_slot == 0) {
 		os << "\t<NONE>\n";
 	}
 	else {
@@ -241,9 +185,9 @@ bool Tile::SerializeTo(SerializeOutput &output) {
 		return false;
 
 	/// Active tuple count
-	output.WriteInt(static_cast<int32_t>(active_tuple_count));
+	output.WriteInt(static_cast<int>(next_tuple_slot));
 
-	int64_t written_count = 0;
+	id_t written_count = 0;
 	TileIterator tile_itr(*this);
 	Tuple tuple(schema);
 
@@ -254,7 +198,7 @@ bool Tile::SerializeTo(SerializeOutput &output) {
 
 	tuple.SetNull();
 
-	assert(written_count == active_tuple_count);
+	assert(written_count == next_tuple_slot);
 
 	/// Length prefix is non-inclusive
 	int32_t sz = static_cast<int32_t>(output.Position() - pos - sizeof(int32_t));
@@ -269,13 +213,12 @@ bool Tile::SerializeHeaderTo(SerializeOutput &output) {
 
 	/// Use the cache if possible
 	if (column_header != NULL) {
-		assert(column_header_size != -1);
+		assert(column_header_size != INVALID_ID);
 		output.WriteBytes(column_header, column_header_size);
 		return true;
 	}
 
-	assert(column_header_size == -1);
-
+	assert(column_header_size == INVALID_ID);
 
 	/// Skip header position
 	start = output.Position();
@@ -288,14 +231,14 @@ bool Tile::SerializeHeaderTo(SerializeOutput &output) {
 	output.WriteShort(static_cast<int16_t>(column_count));
 
 	/// Write an array of column types as bytes
-	for (int column_itr = 0; column_itr < column_count; ++column_itr) {
+	for (id_t column_itr = 0; column_itr < column_count; ++column_itr) {
 		ValueType type = schema->GetType(column_itr);
 		output.WriteByte(static_cast<int8_t>(type));
 	}
 
 	/// Write the array of column names as strings
 	/// NOTE: strings are ASCII only in metadata (UTF-8 in table storage)
-	for (int column_itr = 0; column_itr < column_count; ++column_itr) {
+	for (id_t column_itr = 0; column_itr < column_count; ++column_itr) {
 
 		/// Column name: Write (offset, length) for column definition, and string to string table
 		const std::string& name = GetColumnName(column_itr);
@@ -415,20 +358,19 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
  * @param allow_export if false, export enabled is overriden for this load.
  */
 void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool) {
-	int tuple_count = input.ReadInt();
+	id_t tuple_count = input.ReadInt();
 	assert(tuple_count >= 0);
 
 	/// First, check if we have required space
-	assert(tuple_count <= (allocated_tuple_count - next_tuple_itr + 1));
+	assert(tuple_count <= (max_tuple_slots - next_tuple_slot + 1));
 
-	for (int tuple_itr = 0; tuple_itr < tuple_count; ++tuple_itr) {
-		temp_tuple.Move(GetTupleLocation((int) next_tuple_itr + tuple_itr));
+	for (id_t tuple_itr = 0; tuple_itr < tuple_count; ++tuple_itr) {
+		temp_tuple.Move(GetTupleLocation((int) next_tuple_slot + tuple_itr));
 		temp_tuple.DeserializeFrom(input, pool);
 		//TRACE("Loaded new tuple #%02d\n%s", tuple_itr, temp_target1.debug(Name()).c_str());
 	}
 
-	active_tuple_count += tuple_count;
-	next_tuple_itr += tuple_count;
+	next_tuple_slot += tuple_count;
 }
 
 //===--------------------------------------------------------------------===//
