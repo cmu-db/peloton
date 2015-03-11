@@ -13,7 +13,8 @@ AM_LDFLAGS = $(GTEST_LDFLAGS) $(GTEST_LIBS) -pthread \
 check_PROGRAMS = func_test \
 				 tuple_test \
 				 tuple_schema_test \
-				 tile_test
+				 tile_test \
+				 tile_group_test
 
 TESTS = $(check_PROGRAMS)
 
@@ -44,4 +45,13 @@ tile_test_LDADD = \
 				   $(obj_DIR)/common/varlen.o \
 				   $(obj_DIR)/storage/tuple.o \
 				   $(obj_DIR)/storage/tile.o 
-						  
+
+tile_group_test_SOURCES = tile_group_test.cpp
+tile_group_test_LDADD = \
+				   $(obj_DIR)/catalog/schema.o \
+				   $(obj_DIR)/common/types.o \
+				   $(obj_DIR)/common/value.o \
+				   $(obj_DIR)/common/varlen.o \
+				   $(obj_DIR)/storage/tuple.o \
+				   $(obj_DIR)/storage/tile.o \
+				   $(obj_DIR)/storage/tile_group.o

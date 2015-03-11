@@ -58,8 +58,6 @@ public:
 	id_t GetLocation() const;
 
 private:
-	bool ContinuationPredicate();
-
 	// Base tile data
 	char* data;
 
@@ -71,21 +69,19 @@ private:
 	id_t tuple_length;
 };
 
-bool TileIterator::ContinuationPredicate() {
-	// Scan until active tuples
+bool TileIterator::HasNext() {
+	std::cout << "Tile Itr :: " << tile_itr << " Active   :: " <<
+			tile_group_header->GetActiveTupleCount() << "\n";
 
+	// Scan until active tuples
 	return (tile_itr < tile_group_header->GetActiveTupleCount());
 }
 
-bool TileIterator::HasNext() {
-	return ContinuationPredicate();
-}
-
 bool TileIterator::Next(Tuple &out) {
-	while (ContinuationPredicate()) {
+	if(HasNext()) {
 		out.Move(data + (tile_itr * tuple_length));
-
 		tile_itr++;
+		return true;
 	}
 
 	return false;

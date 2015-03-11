@@ -242,19 +242,28 @@ public:
 	TileFactory();
 	virtual ~TileFactory();
 
-	static Tile *GetTile(catalog::Schema* schema, int tuple_count,
+	static Tile *GetTile(catalog::Schema* schema,
+			Backend* backend,
+			int tuple_count,
 			const std::vector<std::string>& column_names,
 			const bool owns_tuple_schema){
 
-		Backend* backend = new storage::VMBackend();
+		// create backend if needed
+		if(backend == NULL)
+			backend = new storage::VMBackend();
 
 		return TileFactory::GetTile(INVALID_ID, INVALID_ID, INVALID_ID, INVALID_ID,
 				NULL, schema, backend, tuple_count,
 				column_names, owns_tuple_schema);
 	}
 
-	static Tile *GetTile(id_t database_id, id_t table_id, id_t tile_group_id, id_t tile_id,
-			TileGroupHeader* tile_header, catalog::Schema* schema, Backend* backend,
+	static Tile *GetTile(id_t database_id,
+			id_t table_id,
+			id_t tile_group_id,
+			id_t tile_id,
+			TileGroupHeader* tile_header,
+			catalog::Schema* schema,
+			Backend* backend,
 			int tuple_count,
 			const std::vector<std::string>& column_names,
 			const bool owns_tuple_schema) {
@@ -276,8 +285,13 @@ public:
 
 private:
 
-	static void InitCommon(Tile *tile, id_t database_id, id_t table_id, id_t tile_id,
-			id_t tile_group_id, catalog::Schema* schema, const std::vector<std::string>& column_names,
+	static void InitCommon(Tile *tile,
+			id_t database_id,
+			id_t table_id,
+			id_t tile_id,
+			id_t tile_group_id,
+			catalog::Schema* schema,
+			const std::vector<std::string>& column_names,
 			const bool owns_tuple_schema) {
 
 		tile->database_id = database_id;

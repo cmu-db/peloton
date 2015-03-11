@@ -66,14 +66,14 @@ public:
 	id_t GetNextEmptyTupleSlot() {
 		id_t tuple_slot_id = INVALID_ID;
 
-		tile_header_lock.lock();
+		//tile_header_lock.lock();
 
 		if(next_tuple_slot < num_tuple_slots - 1) {
 			tuple_slot_id = next_tuple_slot;
 			next_tuple_slot++;
 		}
 
-		tile_header_lock.unlock();
+		//tile_header_lock.unlock();
 
 		return tuple_slot_id;
 	}
