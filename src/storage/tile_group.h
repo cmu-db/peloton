@@ -10,7 +10,10 @@
  *-------------------------------------------------------------------------
  */
 
+#pragma once
+
 #include "storage/tile.h"
+#include "storage/tile_factory.h"
 #include "storage/tile_group_header.h"
 
 #include <cassert>
@@ -71,6 +74,9 @@ public:
 
 	// returns tuples present in tile and are visible to transaction at this time stamp
 	Tile* ScanTuples(txn_id_t transaction_id, id_t tile_id, cid_t at_cid);
+
+	// delete tuple at given slot if it is not already locked
+	bool DeleteTuple(txn_id_t transaction_id, id_t tuple_slot_id);
 
 	//===--------------------------------------------------------------------===//
 	// Utilities

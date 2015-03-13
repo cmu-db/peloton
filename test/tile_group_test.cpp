@@ -238,15 +238,23 @@ TEST(TileGroupTests, MVCCInsert) {
 	header->SetBeginCommitId(0, cid1);
 	header->SetBeginCommitId(2, cid1);
 
-	std::cout << (*tile_group);
-
 	// SELECT
-	storage::Tuple *result = tile_group->SelectTuple(txn_id2, 1, 1, cid2);
-
-	PrettyPrinter::PrintTuple(result);
+	storage::Tuple *result = nullptr;
+	result = tile_group->SelectTuple(txn_id2, 1, 1, cid2);
 
 	// SCAN
-	storage::Tile *scan = tile_group->ScanTuples(txn_id2, 1, cid2);
+	storage::Tile *scan = nullptr;
+	scan = tile_group->ScanTuples(txn_id2, 1, cid2);
+
+	PrettyPrinter::PrintTile(scan);
+
+	// DELETE
+	tile_group->DeleteTuple(cid2, 2);
+
+	txn_id_t txn_id3 = GetTransactionId();
+	cid_t cid3 = GetCommitId();
+
+	scan = tile_group->ScanTuples(txn_id3, 1, cid3);
 
 	PrettyPrinter::PrintTile(scan);
 

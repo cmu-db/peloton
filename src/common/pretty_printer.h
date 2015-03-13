@@ -14,6 +14,7 @@
 
 #include "storage/tuple.h"
 #include "storage/tile.h"
+#include "storage/tile_group.h"
 
 namespace nstore {
 
@@ -42,6 +43,16 @@ public:
 		else
 			std::cout << "[ nullptr tile ]\n";
 	}
+
+	// pretty print tile group pointers
+	static void PrintTileGroup(storage::TileGroup *source) {
+		if (source != nullptr)
+			std::cout << (*source);
+		else
+			std::cout << "[ nullptr tile group ]\n";
+	}
+
+
 
 };
 

@@ -10,6 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
+#include "common/synch.h"
 #include "storage/tile_group.h"
 
 namespace nstore {
@@ -153,6 +154,17 @@ Tile *TileGroup::ScanTuples(txn_id_t transaction_id, id_t tile_id, cid_t at_cid)
 	return nullptr;
 }
 
+// delete tuple at given slot if it is not already locked
+bool TileGroup::DeleteTuple(txn_id_t transaction_id, id_t tuple_slot_id) {
+
+	// compare and exchange the end commit id
+	if (atomic_cas<txn_id_t>(tile_group_header->GetEndCommitIdLocation(tuple_slot_id), MAX_CID, transaction_id)) {
+		return true;
+	}
+
+	return false;
+}
+
 
 //===--------------------------------------------------------------------===//
 // Utilities
@@ -171,7 +183,7 @@ std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group) {
 			<< "\n";
 
 	os << "\tActive Tuples:  " << tile_group.tile_group_header->GetActiveTupleCount()
-											<< " out of " << tile_group.num_tuple_slots  <<" slots\n";
+													<< " out of " << tile_group.num_tuple_slots  <<" slots\n";
 
 	for(id_t tile_itr = 0 ; tile_itr < tile_group.tile_count ; tile_itr++){
 		os << (*tile_group.tiles[tile_itr]);
