@@ -34,16 +34,26 @@ public:
 	TileIterator(const Tile* tile) :
 		data(tile->data),
 		tile_itr(0),
-		tuple_length(tile->tuple_length){
+		tuple_length(tile->tuple_length),
+		is_static(false),
+		static_tuple_count(0) {
 
 		tile_group_header = tile->tile_group_header;
+
+		// determine if tile is static
+		if(tile_group_header == nullptr) {
+			is_static = true;
+			static_tuple_count = tile->GetAllocatedTupleCount();
+		}
 	}
 
 	TileIterator(const TileIterator& other) :
 		data(other.data),
 		tile_group_header(other.tile_group_header),
 		tile_itr(other.tile_itr),
-		tuple_length(other.tuple_length){
+		tuple_length(other.tuple_length),
+		is_static(other.is_static),
+		static_tuple_count(other.static_tuple_count) {
 	}
 
 	/**
@@ -66,20 +76,36 @@ private:
 	id_t tile_itr;
 
 	id_t tuple_length;
+
+	// Is it static ?
+	bool is_static;
+
+	// static tuple count
+	id_t static_tuple_count;
 };
 
 bool TileIterator::HasNext() {
-	//std::cout << "Tile Itr :: " << tile_itr << " Active   :: " <<
-	//		tile_group_header->GetActiveTupleCount() << "\n";
 
 	// Scan until active tuples
-	return (tile_itr < tile_group_header->GetActiveTupleCount());
+	if(is_static == false) {
+		//std::cout << "Tile Itr :: " << tile_itr << " Active   :: "
+		//		<< tile_group_header->GetActiveTupleCount() << "\n";
+
+		return (tile_itr < tile_group_header->GetActiveTupleCount());
+	}
+	else {
+		//std::cout << "Tile Itr :: " << tile_itr << " Active   :: "
+		//		<< static_tuple_count << "\n";
+
+		return (tile_itr < static_tuple_count);
+	}
 }
 
 bool TileIterator::Next(Tuple &out) {
 	if(HasNext()) {
 		out.Move(data + (tile_itr * tuple_length));
 		tile_itr++;
+
 		return true;
 	}
 

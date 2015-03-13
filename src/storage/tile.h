@@ -59,15 +59,14 @@ public:
 	~Tile();
 
 	//===--------------------------------------------------------------------===//
-	// Operations and stats
+	// Operations
 	//===--------------------------------------------------------------------===//
 
-	bool InsertTuple(const id_t tuple_slot_id, Tuple *tuple);
-
-	Tuple& TempTuple() {
-		//assert(!temp_tuple.IsNull());
-		return temp_tuple;
-	}
+	/**
+	 * Insert tuple at slot
+	 * NOTE : No checks, must be at valid slot.
+	 */
+	void InsertTuple(const id_t tuple_slot_id, Tuple *tuple);
 
 	// allocated tuple slots
 	int64_t GetAllocatedTupleCount() const {
@@ -77,6 +76,12 @@ public:
 	int GetTupleOffset(const char *tuple_address) const;
 
 	int GetColumnOffset(const std::string &name) const;
+
+	/**
+	 * Returns tuple present at slot
+	 * NOTE : No checks, must be at valid slot and must exist.
+	 */
+	Tuple *GetTuple(const id_t tuple_slot_id);
 
 	//===--------------------------------------------------------------------===//
 	// Size Stats
@@ -100,19 +105,23 @@ public:
 	// Columns
 	//===--------------------------------------------------------------------===//
 
-	const catalog::Schema* GetSchema() const {
+	catalog::Schema* GetSchema() const {
 		return schema;
 	};
 
-	const std::string& GetColumnName(int index) const {
-		return column_names[index];
+	const std::string& GetColumnName(const id_t column_index) const {
+		return column_names[column_index];
+	}
+
+	const std::vector<std::string>& GetColumnNames() const {
+		return column_names;
 	}
 
 	int GetColumnCount() const {
 		return column_count;
 	};
 
-	const std::vector<std::string> GetColumns() const {
+	std::vector<std::string> GetColumns() const {
 		return column_names;
 	}
 
@@ -140,7 +149,7 @@ public:
 	void DeserializeTuplesFrom(SerializeInput &serialize_in, Pool *pool = nullptr);
 	void DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool = nullptr);
 
-	Pool* GetPool(){
+	Pool *GetPool(){
 		return (pool);
 	}
 
@@ -163,9 +172,6 @@ protected:
 
 	// column header
 	std::vector<std::string> column_names;
-
-	// reusable temp tuple
-	Tuple temp_tuple;
 
 	// tile schema
 	catalog::Schema *schema;
@@ -207,7 +213,7 @@ protected:
 };
 
 // Returns a pointer to the tuple requested. No checks are done that the index is valid.
-inline char* Tile::GetTupleLocation(const id_t tuple_slot_id) const {
+inline char *Tile::GetTupleLocation(const id_t tuple_slot_id) const {
 	char *tuple_location = data + (tuple_slot_id * tuple_length);
 
 	return tuple_location;
@@ -253,24 +259,47 @@ public:
 		if(backend == nullptr)
 			backend = new storage::VMBackend();
 
-		return TileFactory::GetTile(INVALID_CATALOG_ID, INVALID_CATALOG_ID, INVALID_CATALOG_ID, INVALID_CATALOG_ID,
+		return TileFactory::GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
 				tile_header, schema, backend, tuple_count,
 				column_names, owns_tuple_schema);
 	}
 
-	static Tile *GetTile(id_t database_id,
-			id_t table_id,
-			id_t tile_group_id,
-			id_t tile_id,
+	/**
+	 * STATIC TILE
+	 *
+	 * Fixed # of slots, all are active
+	 * No tile group header
+	 */
+	static Tile *GetStaticTile(catalog::Schema* schema,
+			int tuple_count,
+			const std::vector<std::string>& column_names,
+			const bool owns_tuple_schema,
+			TileGroupHeader* tile_header = nullptr,
+			Backend* backend = nullptr){
+
+		// create backend if needed
+		if(backend == nullptr)
+			backend = new storage::VMBackend();
+
+		return TileFactory::GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+				tile_header, schema, backend, tuple_count,
+				column_names, owns_tuple_schema, true);
+	}
+
+	static Tile *GetTile(oid_t database_id,
+			oid_t table_id,
+			oid_t tile_group_id,
+			oid_t tile_id,
 			TileGroupHeader* tile_header,
 			catalog::Schema* schema,
 			Backend* backend,
 			int tuple_count,
 			const std::vector<std::string>& column_names,
-			const bool owns_tuple_schema) {
+			const bool owns_tuple_schema,
+			const bool static_tile = false) {
 
-		// create tile header if needed
-		if(tile_header == nullptr)
+		// create tile header if this is not a static tile and is needed
+		if(tile_header == nullptr && static_tile == false)
 			tile_header = new TileGroupHeader(backend, tuple_count);
 
 		Tile *tile = new Tile(tile_header, backend, schema, tuple_count, column_names,
@@ -285,10 +314,10 @@ public:
 private:
 
 	static void InitCommon(Tile *tile,
-			id_t database_id,
-			id_t table_id,
-			id_t tile_id,
-			id_t tile_group_id,
+			oid_t database_id,
+			oid_t table_id,
+			oid_t tile_id,
+			oid_t tile_group_id,
 			catalog::Schema* schema,
 			const std::vector<std::string>& column_names,
 			const bool owns_tuple_schema) {

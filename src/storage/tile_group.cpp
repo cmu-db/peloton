@@ -40,8 +40,16 @@ TileGroup::TileGroup(TileGroupHeader* _tile_group_header,
 
 }
 
+//===--------------------------------------------------------------------===//
+// Operations
+//===--------------------------------------------------------------------===//
 
-bool TileGroup::InsertTuple(Tuple &source) {
+/**
+ * Grab next slot (thread-safe) and fill in the tuple
+ *
+ * Returns slot where inserted (INVALID_ID if not inserted)
+ */
+id_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
 
 	id_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
 
@@ -49,7 +57,7 @@ bool TileGroup::InsertTuple(Tuple &source) {
 
 	// No more slots
 	if(tuple_slot_id == INVALID_ID)
-		return false;
+		return tuple_slot_id;
 
 	id_t tile_column_count;
 	id_t column_itr = 0;
@@ -58,18 +66,93 @@ bool TileGroup::InsertTuple(Tuple &source) {
 		catalog::Schema *schema = tile_schemas[tile_itr];
 		tile_column_count = schema->GetColumnCount();
 
-		storage::Tuple *tuple = new storage::Tuple(schema, true);
+		storage::Tuple *tile_tuple = new storage::Tuple(schema, true);
 
 		for(id_t tile_column_itr = 0 ; tile_column_itr < tile_column_count ; tile_column_itr++){
-			tuple->SetValue(tile_column_itr, source.GetValue(column_itr));
+			tile_tuple->SetValue(tile_column_itr, tuple->GetValue(column_itr));
 			column_itr++;
 		}
 
-		tiles[tile_itr]->InsertTuple(tuple_slot_id, tuple);
+		tiles[tile_itr]->InsertTuple(tuple_slot_id, tile_tuple);
+
+		// Set MVCC info
+		tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
+		tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_ID);
+		tile_group_header->SetEndCommitId(tuple_slot_id, MAX_ID);
 	}
 
-	return true;
+	return tuple_slot_id;
 }
+
+/**
+ * Return tuple at given tile slot if it exists and is visible.
+ *
+ * USED FOR POINT LOOKUPS
+ */
+Tuple *TileGroup::SelectTuple(txn_id_t transaction_id, id_t tile_id, id_t tuple_slot_id, cid_t at_cid) {
+	assert(tile_id < tile_count);
+	assert(tuple_slot_id < num_tuple_slots);
+
+	// is it within bounds ?
+	if(tuple_slot_id >= GetActiveTupleCount())
+		return nullptr;
+
+	// is it visible to transaction ?
+	if(tile_group_header->IsVisible(tuple_slot_id, transaction_id, at_cid)){
+		return tiles[tile_id]->GetTuple(tuple_slot_id);
+	}
+
+	return nullptr;
+}
+
+/**
+ * Return tuples in tile that exist and are visible.
+ *
+ * USED FOR SEQUENTIAL SCANS
+ */
+Tile *TileGroup::ScanTuples(txn_id_t transaction_id, id_t tile_id, cid_t at_cid) {
+	assert(tile_id < tile_count);
+
+	id_t active_tuple_count = GetActiveTupleCount();
+
+	// does it have tuples ?
+	if(active_tuple_count == 0)
+		return nullptr;
+
+	Tuple *tuple = nullptr;
+	std::vector<Tuple *> tuples;
+
+	// else go over all tuples
+	for(id_t tile_itr = 0 ; tile_itr < active_tuple_count ; tile_itr++){
+
+		// is tuple at this slot visible to transaction ?
+		if(tile_group_header->IsVisible(tile_itr, transaction_id, at_cid)){
+			tuple = tiles[tile_id]->GetTuple(tile_itr);
+
+			tuples.push_back(tuple);
+		}
+	}
+
+	// create a new tile and insert these tuples
+	id_t tuple_count = tuples.size();
+
+	if(tuple_count > 0) {
+		storage::Tile *tile = storage::TileFactory::GetStaticTile(tiles[tile_id]->GetSchema(),
+				tuple_count, tiles[tile_id]->GetColumnNames(), true);
+
+		id_t tuple_slot_id = 0;
+
+		for(auto tuple : tuples) {
+			tile->InsertTuple(tuple_slot_id, tuple);
+			tuple_slot_id++;
+		}
+
+		return tile;
+	}
+
+	return nullptr;
+}
+
 
 //===--------------------------------------------------------------------===//
 // Utilities
@@ -88,7 +171,7 @@ std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group) {
 			<< "\n";
 
 	os << "\tActive Tuples:  " << tile_group.tile_group_header->GetActiveTupleCount()
-			<< " out of " << tile_group.num_tuple_slots  <<" slots\n";
+											<< " out of " << tile_group.num_tuple_slots  <<" slots\n";
 
 	for(id_t tile_itr = 0 ; tile_itr < tile_group.tile_count ; tile_itr++){
 		os << (*tile_group.tiles[tile_itr]);

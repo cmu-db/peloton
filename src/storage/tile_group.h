@@ -13,6 +13,8 @@
 #include "storage/tile.h"
 #include "storage/tile_group_header.h"
 
+#include <cassert>
+
 namespace nstore {
 namespace storage {
 
@@ -58,16 +60,31 @@ public:
 	}
 
 	//===--------------------------------------------------------------------===//
-	// Utilities
+	// Operations
 	//===--------------------------------------------------------------------===//
 
-	bool InsertTuple(Tuple &source);
+	// insert tuple at next available slot in tile if a slot exists
+	id_t InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
+
+	// returns tuple at given slot if it exists and is visible to transaction at this time stamp
+	Tuple* SelectTuple(txn_id_t transaction_id, id_t tile_id, id_t tuple_slot_id, cid_t at_cid);
+
+	// returns tuples present in tile and are visible to transaction at this time stamp
+	Tile* ScanTuples(txn_id_t transaction_id, id_t tile_id, cid_t at_cid);
+
+	//===--------------------------------------------------------------------===//
+	// Utilities
+	//===--------------------------------------------------------------------===//
 
 	// Get a string representation of this tile group
 	friend std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group);
 
 	id_t GetActiveTupleCount() const {
 		return tile_group_header->GetActiveTupleCount();
+	}
+
+	TileGroupHeader *GetHeader() const{
+		return tile_group_header;
 	}
 
 protected:
@@ -116,13 +133,13 @@ public:
 		if(backend == nullptr)
 			backend = new storage::VMBackend();
 
-		return TileGroupFactory::GetTileGroup(INVALID_CATALOG_ID, INVALID_CATALOG_ID, INVALID_CATALOG_ID,
+		return TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
 				nullptr, schemas, backend, tuple_count, column_names, owns_tuple_schema);
 	}
 
-	static TileGroup *GetTileGroup(id_t database_id,
-			id_t table_id,
-			id_t tile_group_id,
+	static TileGroup *GetTileGroup(oid_t database_id,
+			oid_t table_id,
+			oid_t tile_group_id,
 			TileGroupHeader* tile_header,
 			const std::vector<catalog::Schema*>& schemas,
 			Backend* backend,
@@ -145,9 +162,9 @@ public:
 private:
 
 	static void InitCommon(TileGroup *tile_group,
-			id_t database_id,
-			id_t table_id,
-			id_t tile_group_id) {
+			oid_t database_id,
+			oid_t table_id,
+			oid_t tile_group_id) {
 
 		tile_group->database_id = database_id;
 		tile_group->tile_group_id = tile_group_id;

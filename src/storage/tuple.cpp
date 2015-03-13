@@ -23,7 +23,7 @@ namespace nstore {
 namespace storage {
 
 // Set all columns by value into this tuple.
- void Tuple::SetValueAllocate(const id_t column_id,
+void Tuple::SetValueAllocate(const id_t column_id,
 		Value value, Pool *dataPool) {
 	assert(tuple_schema);
 	assert(tuple_data);
@@ -41,7 +41,7 @@ namespace storage {
 }
 
 // For an insert, the copy should do an allocation for all uninlinable columns
- void Tuple::CopyForInsert(const Tuple &source, Pool *pool) {
+void Tuple::CopyForInsert(const Tuple &source, Pool *pool) {
 	assert(tuple_schema);
 	assert(source.tuple_schema);
 	assert(source.tuple_data);
@@ -50,8 +50,7 @@ namespace storage {
 	const bool is_inlined = tuple_schema->IsInlined();
 	catalog::Schema *source_schema = source.tuple_schema;
 	const bool o_is_inlined = source_schema->IsInlined();
-	const uint16_t uninlineable_column_count =
-			tuple_schema->GetUninlinedColumnCount();
+	const uint16_t uninlineable_column_count = tuple_schema->GetUninlinedColumnCount();
 
 #ifndef NDEBUG
 	if (!CompatibleForCopy(source)) {
@@ -72,7 +71,7 @@ namespace storage {
 		 * that are not uninlineable strings.
 		 **/
 		if (uninlineable_column_count > 0) {
-			// copy the data AND the header
+			// copy the data
 			::memcpy(tuple_data, source.tuple_data, tuple_schema->GetLength());
 
 			// Copy each uninlined column doing an allocation for copies.
@@ -83,11 +82,9 @@ namespace storage {
 				SetValueAllocate(unlineable_column_id,
 						source.GetValue(unlineable_column_id), pool);
 			}
-
-			tuple_data[0] = source.tuple_data[0];
 		}
 		else {
-			// copy the data AND the header
+			// copy the data
 			::memcpy(tuple_data, source.tuple_data, tuple_schema->GetLength());
 		}
 	} else {
@@ -99,14 +96,12 @@ namespace storage {
 		for (uint16_t column_itr = 0; column_itr < ColumnCount; column_itr++) {
 			SetValueAllocate(column_itr, source.GetValue(column_itr), pool);
 		}
-
-		tuple_data[0] = source.tuple_data[0];
 	}
 }
 
 // For an update, the copy should only do an allocation for a string
 // if the source and destination pointers are different.
- void Tuple::CopyForUpdate(const Tuple &source, Pool *pool) {
+void Tuple::CopyForUpdate(const Tuple &source, Pool *pool) {
 	assert(tuple_schema);
 	assert(tuple_schema == source.tuple_schema);
 
@@ -151,8 +146,6 @@ namespace storage {
 				SetValueAllocate(column_itr, source.GetValue(column_itr), pool);
 			}
 		}
-
-		tuple_data[0] = source.tuple_data[0];
 	}
 	else {
 		// copy the data AND the header
@@ -160,7 +153,7 @@ namespace storage {
 	}
 }
 
- void Tuple::Copy(const Tuple &source) {
+void Tuple::Copy(const Tuple &source) {
 	assert(tuple_schema);
 	assert(source.tuple_schema);
 	assert(source.tuple_data);
@@ -193,8 +186,6 @@ namespace storage {
 		for (uint16_t column_itr = 0; column_itr < column_count; column_itr++) {
 			SetValue(column_itr, source.GetValue(column_itr));
 		}
-
-		tuple_data[0] = source.tuple_data[0];
 	}
 }
 
@@ -203,7 +194,7 @@ namespace storage {
  * Excludes the bytes required by the row header (which includes
  * the null bit indicators) and ignores the width of metadata columns.
  */
- size_t Tuple::ExportSerializationSize() const {
+size_t Tuple::ExportSerializationSize() const {
 	size_t bytes = 0;
 	int column_count = GetColumnCount();
 
@@ -246,7 +237,7 @@ namespace storage {
 
 
 // Return the amount of memory allocated for non-inlined objects
- size_t Tuple::GetUninlinedMemorySize() const {
+size_t Tuple::GetUninlinedMemorySize() const {
 	size_t bytes = 0;
 	int column_count = GetColumnCount();
 
@@ -270,7 +261,7 @@ namespace storage {
 }
 
 
- void Tuple::DeserializeFrom(SerializeInput &input, Pool *dataPool) {
+void Tuple::DeserializeFrom(SerializeInput &input, Pool *dataPool) {
 	assert(tuple_schema);
 	assert(tuple_data);
 
@@ -298,7 +289,7 @@ namespace storage {
 	}
 }
 
- int64_t Tuple::DeserializeWithHeaderFrom(SerializeInput &input) {
+int64_t Tuple::DeserializeWithHeaderFrom(SerializeInput &input) {
 
 	int64_t total_bytes_deserialized = 0;
 
@@ -323,7 +314,7 @@ namespace storage {
 	return total_bytes_deserialized;
 }
 
- void Tuple::SerializeWithHeaderTo(SerializeOutput &output) {
+void Tuple::SerializeWithHeaderTo(SerializeOutput &output) {
 	assert(tuple_schema);
 	assert(tuple_data);
 
@@ -343,7 +334,7 @@ namespace storage {
 	output.WriteIntAt(start, serialized_size);
 }
 
- void Tuple::SerializeTo(SerializeOutput &output) {
+void Tuple::SerializeTo(SerializeOutput &output) {
 	size_t start = output.ReserveBytes(4);
 	const int column_count = tuple_schema->GetColumnCount();
 
@@ -355,7 +346,7 @@ namespace storage {
 	output.WriteIntAt(start, static_cast<int32_t>(output.Position() - start - sizeof(int32_t)));
 }
 
- void Tuple::SerializeToExport(ExportSerializeOutput &output, int colOffset, uint8_t *null_array) {
+void Tuple::SerializeToExport(ExportSerializeOutput &output, int colOffset, uint8_t *null_array) {
 	const int column_count = GetColumnCount();
 
 	for (int column_itr = 0; column_itr < column_count; column_itr++) {
@@ -374,7 +365,7 @@ namespace storage {
 	}
 }
 
- bool Tuple::operator==(const Tuple &other) const {
+bool Tuple::operator==(const Tuple &other) const {
 	if (tuple_schema != other.tuple_schema) {
 		return false;
 	}
@@ -382,11 +373,11 @@ namespace storage {
 	return EqualsNoSchemaCheck(other);
 }
 
- bool Tuple::operator!=(const Tuple &other) const {
+bool Tuple::operator!=(const Tuple &other) const {
 	return !(*this == other);
 }
 
- bool Tuple::EqualsNoSchemaCheck(const Tuple &other) const {
+bool Tuple::EqualsNoSchemaCheck(const Tuple &other) const {
 	const int column_count = tuple_schema->GetColumnCount();
 
 	for (int column_itr = 0; column_itr < column_count; column_itr++) {
@@ -400,7 +391,7 @@ namespace storage {
 	return true;
 }
 
- void Tuple::SetAllNulls() {
+void Tuple::SetAllNulls() {
 	assert(tuple_schema);
 	assert(tuple_data);
 	const int column_count = tuple_schema->GetColumnCount();
@@ -411,7 +402,7 @@ namespace storage {
 	}
 }
 
- int Tuple::Compare(const Tuple &other) const {
+int Tuple::Compare(const Tuple &other) const {
 	int diff;
 	const int column_count = tuple_schema->GetColumnCount();
 
@@ -429,7 +420,7 @@ namespace storage {
 }
 
 // Release to the heap any memory allocated for any uninlined columns.
- void Tuple::FreeUninlinedData() {
+void Tuple::FreeUninlinedData() {
 	const uint16_t unlinlined_column_count = tuple_schema->GetUninlinedColumnCount();
 
 	for (int column_itr = 0; column_itr < unlinlined_column_count; column_itr++) {
@@ -437,7 +428,7 @@ namespace storage {
 	}
 }
 
- size_t Tuple::HashCode(size_t seed) const {
+size_t Tuple::HashCode(size_t seed) const {
 	const int column_count = tuple_schema->GetColumnCount();
 
 	for (int column_itr = 0; column_itr < column_count; column_itr++) {
@@ -448,18 +439,18 @@ namespace storage {
 	return seed;
 }
 
- size_t Tuple::HashCode() const {
+size_t Tuple::HashCode() const {
 	size_t seed = 0;
 	return HashCode(seed);
 }
 
- char* Tuple::GetDataPtr(const id_t column_id) {
+char* Tuple::GetDataPtr(const id_t column_id) {
 	assert(tuple_schema);
 	assert(tuple_data);
 	return &tuple_data[tuple_schema->GetOffset(column_id)];
 }
 
- const char* Tuple::GetDataPtr(const id_t column_id) const {
+const char* Tuple::GetDataPtr(const id_t column_id) const {
 	assert(tuple_schema);
 	assert(tuple_data);
 	return &tuple_data[tuple_schema->GetOffset(column_id)];
@@ -468,7 +459,7 @@ namespace storage {
 // Hasher
 struct TupleHasher: std::unary_function<Tuple, std::size_t> {
 	// Generate a 64-bit number for the key value
-	 size_t operator()(Tuple tuple) const {
+	size_t operator()(Tuple tuple) const {
 		return tuple.HashCode();
 	}
 };
@@ -476,7 +467,7 @@ struct TupleHasher: std::unary_function<Tuple, std::size_t> {
 // Equality operator
 class TupleEqualityChecker {
 public:
-	 bool operator()(const Tuple lhs, const Tuple rhs) const {
+	bool operator()(const Tuple lhs, const Tuple rhs) const {
 		return lhs.EqualsNoSchemaCheck(rhs);
 	}
 };
@@ -505,6 +496,10 @@ std::ostream& operator<< (std::ostream& os, const Tuple& tuple){
 
 
 bool Tuple::CompatibleForCopy(const Tuple &source) {
+
+	// fast check
+	if(tuple_schema == source.tuple_schema)
+		return true;
 
 	if (tuple_schema->GetColumnCount() != source.tuple_schema->GetColumnCount()) {
 		//ERROR("Can not copy tuple: incompatible column count.");

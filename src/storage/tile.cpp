@@ -60,10 +60,6 @@ Tile::Tile(TileGroupHeader* _tile_header, Backend* _backend, catalog::Schema *tu
 	// allocate default pool if schema not inlined
 	if(schema->IsInlined() == false)
 		pool = new Pool(backend);
-
-	// allocate temp tuple
-	temp_tuple = Tuple(tuple_schema, true);
-
 }
 
 Tile::~Tile() {
@@ -85,24 +81,39 @@ Tile::~Tile() {
 		delete column_header;
 	column_header = NULL;
 
-	// clean up temp tuple
-	temp_tuple.SetNull();
-}
-
-bool Tile::InsertTuple(const id_t tuple_slot_id, Tuple *tuple) {
-
-	// Find slot location
-	char *location = tuple_slot_id * tuple_length + data;
-
-	std::memcpy(location, tuple->tuple_data, tuple_length);
-
-	return true;
 }
 
 
 //===--------------------------------------------------------------------===//
 // Tuples
 //===--------------------------------------------------------------------===//
+
+/**
+ * Insert tuple at slot
+ * NOTE : No checks, must be at valid slot.
+ */
+void Tile::InsertTuple(const id_t tuple_slot_id, Tuple *tuple) {
+	// Find slot location
+	char *location = tuple_slot_id * tuple_length + data;
+
+	std::memcpy(location, tuple->tuple_data, tuple_length);
+}
+
+/**
+ * Returns tuple present at slot
+ * NOTE : No checks, must be at valid slot and must exist.
+ */
+Tuple *Tile::GetTuple(const id_t tuple_slot_id) {
+
+	storage::Tuple *tuple = new storage::Tuple(schema, true);
+	storage::Tuple *source = new storage::Tuple(schema);
+	source->Move(GetTupleLocation(tuple_slot_id));
+
+	tuple->CopyForInsert((*source), pool);
+
+	return tuple;
+}
+
 
 int Tile::GetColumnOffset(const std::string &name) const {
 	for (int column_itr = 0, cnt = column_count; column_itr < cnt; column_itr++) {
@@ -131,8 +142,14 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 			<< " Tile:  " << tile.tile_id
 			<< "\n";
 
-	os << "\tActive Tuples:  " << tile.tile_group_header->GetActiveTupleCount()
-			<< " out of " << tile.num_tuple_slots  <<" slots\n";
+	// Is it a dynamic tile or static tile ?
+	if(tile.tile_group_header != nullptr) {
+		os << "\tActive Tuples:  " << tile.tile_group_header->GetActiveTupleCount()
+					<< " out of " << tile.num_tuple_slots  <<" slots\n";
+	}
+	else {
+		os << "\tActive Tuples:  " << tile.num_tuple_slots  <<" slots\n";
+	}
 
 	// Columns
 	// os << "\t-----------------------------------------------------------\n";
@@ -332,7 +349,7 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
 		std::stringstream message(std::stringstream::in | std::stringstream::out);
 
 		message << "Column count mismatch. Expecting "	<< schema->GetColumnCount()
-																<< ", but " << column_count << " given" << std::endl;
+																		<< ", but " << column_count << " given" << std::endl;
 		message << "Expecting the following columns:" << std::endl;
 		message << column_names.size() << std::endl;
 		message << "The following columns are given:" << std::endl;
@@ -360,10 +377,11 @@ void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool)
 
 	// First, check if we have required space
 	assert(tuple_count <= num_tuple_slots);
+	storage::Tuple *temp_tuple = new storage::Tuple(schema, true);
 
 	for (id_t tuple_itr = 0; tuple_itr < tuple_count; ++tuple_itr) {
-		temp_tuple.Move(GetTupleLocation(tuple_itr));
-		temp_tuple.DeserializeFrom(input, pool);
+		temp_tuple->Move(GetTupleLocation(tuple_itr));
+		temp_tuple->DeserializeFrom(input, pool);
 		//TRACE("Loaded new tuple #%02d\n%s", tuple_itr, temp_target1.debug(Name()).c_str());
 	}
 
