@@ -85,6 +85,8 @@ public:
 	// MVCC utilities
 	//===--------------------------------------------------------------------===//
 
+	// Getters
+
 	inline txn_id_t GetTransactionId(const id_t tuple_slot_id) const {
 		return *((txn_id_t*)( data + (tuple_slot_id * header_entry_size)));
 	}
@@ -96,6 +98,22 @@ public:
 	inline cid_t GetEndCommitId(const id_t tuple_slot_id) const {
 		return *((cid_t*)( data + (tuple_slot_id * header_entry_size) + 2 * sizeof(id_t) ));
 	}
+
+	// Getters for addresses
+
+	inline txn_id_t *GetTransactionIdLocation(const id_t tuple_slot_id) const {
+		return ((txn_id_t*)( data + (tuple_slot_id * header_entry_size)));
+	}
+
+	inline cid_t *GetBeginCommitIdLocation(const id_t tuple_slot_id) const {
+		return ((cid_t*)( data + (tuple_slot_id * header_entry_size) + sizeof(id_t) ));
+	}
+
+	inline cid_t *GetEndCommitIdLocation(const id_t tuple_slot_id) const {
+		return ((cid_t*)( data + (tuple_slot_id * header_entry_size) + 2 * sizeof(id_t) ));
+	}
+
+	// Setters
 
 	inline void SetTransactionId(const id_t tuple_slot_id, txn_id_t transaction_id) {
 		*((txn_id_t*)( data + (tuple_slot_id * header_entry_size))) = transaction_id;
@@ -109,22 +127,26 @@ public:
 		*((cid_t*)( data + (tuple_slot_id * header_entry_size) + 2 * sizeof(cid_t))) = end_cid;
 	}
 
+	// Visibility check
+
 	bool IsVisible(const id_t tuple_slot_id, txn_id_t txn_id, cid_t at_cid) {
 
 		bool own = (txn_id == GetTransactionId(tuple_slot_id));
 		bool activated = (at_cid >= GetBeginCommitId(tuple_slot_id));
 		bool invalidated = (at_cid >= GetEndCommitId(tuple_slot_id));
 
-		std::cout << "Txn     :: txn_id : " << txn_id
-				<< " cid : " << at_cid << "\n";
+		std::cout << "-----------------------------------------------------------\n";
+		std::cout << "Slot :: " << tuple_slot_id
+				<< " Txn     :: txn_id : " << txn_id << " cid : " << at_cid << "\n";
 
 		std::cout << "Slot    :: txn_id : " << GetTransactionId(tuple_slot_id)
-				<< " begin cid : " << GetBeginCommitId(tuple_slot_id) << " "
-				<< " end cid : " << GetEndCommitId(tuple_slot_id) << "\n";
+						<< " begin cid : " << GetBeginCommitId(tuple_slot_id) << " "
+						<< " end cid : " << GetEndCommitId(tuple_slot_id) << "\n";
 
-		std::cout << "MVCC    :: own : " << own << " "
-				<< " activated : " << activated
+		std::cout << "MVCC    :: own : " << own << " activated : " << activated
 				<< " invalidated : " << invalidated << "\n";
+
+		std::cout << "-----------------------------------------------------------\n";
 
 		// Visible iff past Insert || Own Insert
 		if((!own && activated && !invalidated) || (own && !activated && !invalidated))
