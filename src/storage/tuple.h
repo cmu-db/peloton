@@ -47,6 +47,12 @@ public:
 		assert(tuple_schema);
 	}
 
+	// Setup the tuple given a schema and location
+	inline Tuple(catalog::Schema *schema, char* data) : tuple_schema(schema), tuple_data(data) {
+		assert(tuple_schema);
+		assert(tuple_data);
+	}
+
 	// Setup the tuple given a schema and allocate space
 	inline Tuple(catalog::Schema *schema, bool allocate) : tuple_schema(schema) {
 		assert(tuple_schema);
@@ -67,16 +73,7 @@ public:
 	// Assignment operator
 	Tuple& operator=(const Tuple &rhs);
 
-	// Only release the space taken up by uninlined columns
-	void FreeUninlinedData();
-
-	// Copy values from one tuple into another (uses memcpy)
-	// (expensive) verify assumptions for copy
-	bool CompatibleForCopy(const Tuple &source);
-
-	void Copy(const Tuple &source);
-	void CopyForInsert(const Tuple &source, Pool *pool = NULL);
-	void CopyForUpdate(const Tuple &source, Pool *pool = NULL);
+	void Copy(const void *source, Pool *pool = NULL);
 
 	/**
 	 * Set the tuple to point toward a given address in a table's
@@ -134,6 +131,9 @@ public:
 	inline int GetColumnCount() const {
 		return tuple_schema->GetColumnCount();
 	}
+
+	// Release to the heap any memory allocated for any uninlined columns.
+	void FreeUninlinedData();
 
 	bool EqualsNoSchemaCheck(const Tuple &other) const;
 

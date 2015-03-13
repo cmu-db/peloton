@@ -60,8 +60,8 @@ public:
 	// Configure offset as well
 	ColumnInfo(ValueType column_type, uint32_t column_offset, uint32_t column_length,
 			bool allow_null, bool is_inlined)
-: type(column_type), offset(column_offset), allow_null(allow_null),
-  is_inlined(is_inlined){
+	: type(column_type), offset(column_offset), allow_null(allow_null),
+	  is_inlined(is_inlined){
 
 		if(is_inlined){
 			fixed_length = column_length;
@@ -84,15 +84,15 @@ public:
 	ValueType type;
 
 	/// offset of column in tuple
-	uint32_t offset;
+	size_t offset;
 
 	/// if the column is not inlined, this is set to pointer size
 	/// else, it is set to length of the fixed length column
-	uint32_t fixed_length;
+	size_t fixed_length;
 
 	/// if the column is inlined, this is set to 0
 	/// else, it is set to length of the variable length column
-	uint32_t variable_length;
+	size_t variable_length;
 
 	bool allow_null;
 	bool is_inlined;
@@ -142,47 +142,47 @@ public:
 	// Schema accessors
 	//===--------------------------------------------------------------------===//
 
-	inline uint32_t GetOffset(const uint32_t column_id) const {
+	inline size_t GetOffset(const id_t column_id) const {
 		return columns[column_id].offset;
 	}
 
-	inline ValueType GetType(const uint32_t column_id) const {
+	inline ValueType GetType(const id_t column_id) const {
 		return columns[column_id].type;
 	}
 
 	/// Returns fixed length
-	inline uint32_t GetLength(const uint32_t column_id) const {
+	inline size_t GetLength(const id_t column_id) const {
 		return columns[column_id].fixed_length;
 	}
 
-	inline uint32_t GetVariableLength(const uint32_t column_id) const {
+	inline size_t GetVariableLength(const id_t column_id) const {
 		return columns[column_id].variable_length;
 	}
 
 	//// Get the nullability of the column at a given index.
-	inline bool AllowNull(const uint32_t column_id) const {
+	inline bool AllowNull(const id_t column_id) const {
 		return columns[column_id].allow_null;
 	}
 
 
-	inline bool IsInlined(const uint32_t column_id) const {
+	inline bool IsInlined(const id_t column_id) const {
 		return columns[column_id].is_inlined;
 	}
 
-	const ColumnInfo GetColumnInfo(const uint32_t column_id) const {
+	const ColumnInfo GetColumnInfo(const id_t column_id) const {
 		return columns[column_id];
 	}
 
-	int GetUninlinedColumnIndex(const int column_id) const {
+	id_t GetUninlinedColumnIndex(const id_t column_id) const {
 		return uninlined_columns[column_id];
 	}
 
 	/// Return the number of columns in the schema for the tuple.
-	inline int GetColumnCount() const {
+	inline id_t GetColumnCount() const {
 		return column_count;
 	}
 
-	int GetUninlinedColumnCount() const {
+	id_t GetUninlinedColumnCount() const {
 		return uninlined_column_count;
 	}
 
@@ -201,18 +201,18 @@ public:
 
 private:
 	// size of fixed length columns
-	uint32_t length;
+	size_t length;
 
 	// all inlined and uninlined columns in the tuple
 	std::vector<ColumnInfo> columns;
 
 	// keeps track of unlined columns
-	std::vector<int> uninlined_columns;
+	std::vector<id_t> uninlined_columns;
 
 	// keep these in sync with the vectors above
-	int column_count;
+	id_t column_count;
 
-	int uninlined_column_count;
+	id_t uninlined_column_count;
 
 	/// are all columns inlined
 	bool is_inlined;

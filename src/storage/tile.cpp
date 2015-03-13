@@ -106,17 +106,15 @@ void Tile::InsertTuple(const id_t tuple_slot_id, Tuple *tuple) {
 Tuple *Tile::GetTuple(const id_t tuple_slot_id) {
 
 	storage::Tuple *tuple = new storage::Tuple(schema, true);
-	storage::Tuple *source = new storage::Tuple(schema);
-	source->Move(GetTupleLocation(tuple_slot_id));
 
-	tuple->CopyForInsert((*source), pool);
+	tuple->Copy(GetTupleLocation(tuple_slot_id), pool);
 
 	return tuple;
 }
 
 
 int Tile::GetColumnOffset(const std::string &name) const {
-	for (int column_itr = 0, cnt = column_count; column_itr < cnt; column_itr++) {
+	for (id_t column_itr = 0, cnt = column_count; column_itr < cnt; column_itr++) {
 		if (column_names[column_itr].compare(name) == 0) {
 			return column_itr;
 		}
@@ -326,7 +324,7 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
 	input.ReadInt(); // rowstart
 	input.ReadByte();
 
-	int16_t column_count = input.ReadShort();
+	id_t column_count = input.ReadShort();
 	assert(column_count >= 0);
 
 	// Store the following information so that we can provide them to the user on failure
@@ -334,12 +332,12 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
 	std::vector<std::string> names;
 
 	// Skip the column types
-	for (int column_itr = 0; column_itr < column_count; ++column_itr) {
+	for (id_t column_itr = 0; column_itr < column_count; ++column_itr) {
 		types[column_itr] = (ValueType) input.ReadEnumInSingleByte();
 	}
 
 	// Skip the column names
-	for (int column_itr = 0; column_itr < column_count; ++column_itr) {
+	for (id_t column_itr = 0; column_itr < column_count; ++column_itr) {
 		names.push_back(input.ReadTextString());
 	}
 
@@ -354,9 +352,9 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
 		message << column_names.size() << std::endl;
 		message << "The following columns are given:" << std::endl;
 
-		for (int i = 0; i < column_count; i++) {
-			message << "column " << i << ": " << names[i] << ", type = "
-					<< GetValueTypeName(types[i]) << std::endl;
+		for (id_t column_itr = 0; column_itr < column_count; column_itr++) {
+			message << "column " << column_itr << ": " << names[column_itr] << ", type = "
+					<< GetValueTypeName(types[column_itr]) << std::endl;
 		}
 
 		throw SerializationException(message.str());
