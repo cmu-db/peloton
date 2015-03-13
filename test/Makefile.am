@@ -54,4 +54,5 @@ tile_group_test_LDADD = \
 				   $(obj_DIR)/common/varlen.o \
 				   $(obj_DIR)/storage/tuple.o \
 				   $(obj_DIR)/storage/tile.o \
-				   $(obj_DIR)/storage/tile_group.o
+				   $(obj_DIR)/storage/tile_group.o \
+				   $(obj_DIR)/storage/tile_group_header.o

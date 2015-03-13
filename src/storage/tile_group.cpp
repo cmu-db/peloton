@@ -158,7 +158,8 @@ Tile *TileGroup::ScanTuples(txn_id_t transaction_id, id_t tile_id, cid_t at_cid)
 bool TileGroup::DeleteTuple(txn_id_t transaction_id, id_t tuple_slot_id) {
 
 	// compare and exchange the end commit id
-	if (atomic_cas<txn_id_t>(tile_group_header->GetEndCommitIdLocation(tuple_slot_id), MAX_CID, transaction_id)) {
+	if (atomic_cas<txn_id_t>(tile_group_header->GetEndCommitIdLocation(tuple_slot_id),
+			MAX_CID, transaction_id)) {
 		return true;
 	}
 

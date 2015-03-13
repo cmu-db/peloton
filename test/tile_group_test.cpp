@@ -235,18 +235,30 @@ TEST(TileGroupTests, MVCCInsert) {
 
 	storage::TileGroupHeader *header = tile_group->GetHeader();
 
-	header->SetBeginCommitId(0, cid1);
-	header->SetBeginCommitId(2, cid1);
-
 	// SELECT
+
 	storage::Tuple *result = nullptr;
 	result = tile_group->SelectTuple(txn_id2, 1, 1, cid2);
 
+	EXPECT_EQ(result, nullptr);
+
+	header->SetBeginCommitId(0, cid1);
+	header->SetBeginCommitId(2, cid1);
+
+	result = tile_group->SelectTuple(txn_id2, 1, 1, cid2);
+
+	EXPECT_EQ(result, nullptr);
+
+	result = tile_group->SelectTuple(txn_id2, 1, 0, cid2);
+
+	EXPECT_NE(result, nullptr);
+
 	// SCAN
+
 	storage::Tile *scan = nullptr;
 	scan = tile_group->ScanTuples(txn_id2, 1, cid2);
 
-	PrettyPrinter::PrintTile(scan);
+	EXPECT_EQ(scan->GetActiveTupleCount(), 2);
 
 	// DELETE
 	tile_group->DeleteTuple(cid2, 2);
@@ -256,7 +268,7 @@ TEST(TileGroupTests, MVCCInsert) {
 
 	scan = tile_group->ScanTuples(txn_id3, 1, cid3);
 
-	PrettyPrinter::PrintTile(scan);
+	EXPECT_EQ(scan->GetActiveTupleCount(), 1);
 
 }
 

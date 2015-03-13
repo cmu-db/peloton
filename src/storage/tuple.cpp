@@ -41,152 +41,36 @@ void Tuple::SetValueAllocate(const id_t column_id,
 }
 
 // For an insert, the copy should do an allocation for all uninlinable columns
-void Tuple::CopyForInsert(const Tuple &source, Pool *pool) {
+// This does not do any schema checks. They must match.
+void Tuple::Copy(const void *source, Pool *pool) {
 	assert(tuple_schema);
-	assert(source.tuple_schema);
-	assert(source.tuple_data);
 	assert(tuple_data);
 
 	const bool is_inlined = tuple_schema->IsInlined();
-	catalog::Schema *source_schema = source.tuple_schema;
-	const bool o_is_inlined = source_schema->IsInlined();
-	const uint16_t uninlineable_column_count = tuple_schema->GetUninlinedColumnCount();
+	const id_t uninlineable_column_count = tuple_schema->GetUninlinedColumnCount();
 
-#ifndef NDEBUG
-	if (!CompatibleForCopy(source)) {
-		std::ostringstream message;
-		message << "src  tuple  : " << source << std::endl;
-		message << "src schema  : " << source.tuple_schema << std::endl;
-		message << "dest schema : " << tuple_schema << std::endl;
-
-		throw Exception(message.str());
-	}
-#endif
-
-	if (is_inlined == o_is_inlined) {
-
-		/**
-		 * The source and target tuples have the same policy WRT to inlining.
-		 * A memcpy can be used to speed the process up for all columns
-		 * that are not uninlineable strings.
-		 **/
-		if (uninlineable_column_count > 0) {
-			// copy the data
-			::memcpy(tuple_data, source.tuple_data, tuple_schema->GetLength());
-
-			// Copy each uninlined column doing an allocation for copies.
-			for (uint16_t column_itr = 0; column_itr < uninlineable_column_count; column_itr++) {
-				const uint16_t unlineable_column_id =
-						tuple_schema->GetUninlinedColumnIndex(column_itr);
-
-				SetValueAllocate(unlineable_column_id,
-						source.GetValue(unlineable_column_id), pool);
-			}
-		}
-		else {
-			// copy the data
-			::memcpy(tuple_data, source.tuple_data, tuple_schema->GetLength());
-		}
-	} else {
-		// Can't copy the string ptr from the other tuple
-		// if the string is inlined into the tuple
-		assert(!(!is_inlined && o_is_inlined));
-
-		const uint16_t ColumnCount = tuple_schema->GetColumnCount();
-		for (uint16_t column_itr = 0; column_itr < ColumnCount; column_itr++) {
-			SetValueAllocate(column_itr, source.GetValue(column_itr), pool);
-		}
-	}
-}
-
-// For an update, the copy should only do an allocation for a string
-// if the source and destination pointers are different.
-void Tuple::CopyForUpdate(const Tuple &source, Pool *pool) {
-	assert(tuple_schema);
-	assert(tuple_schema == source.tuple_schema);
-
-	const int column_count = tuple_schema->GetColumnCount();
-	const uint16_t uninlineable_column_count = tuple_schema->GetUninlinedColumnCount();
-
-	/**
-	 * The source and target tuple have the same policy WRT to inlining.
-	 * as they use the same schema.
-	 */
-	if (uninlineable_column_count > 0) {
-		uint16_t uninlineable_column_itr = 0;
-		uint16_t uninlineable_column_id = tuple_schema->GetUninlinedColumnIndex(0);
-
-		/**
-		 * Copy each column doing an allocation for string copies.
-		 * Compare the source and target pointer to see if it
-		 * is changed in this update. If it is changed then free the
-		 * old string and copy/allocate the new one from the source.
-		 */
-		for (uint16_t column_itr = 0; column_itr < column_count; column_itr++) {
-			if (column_itr == uninlineable_column_id) {
-				const char *m_ptr = *reinterpret_cast<char* const *>(GetDataPtr(column_itr));
-				const char *o_ptr = *reinterpret_cast<char* const *>(source.GetDataPtr(column_itr));
-
-				if (m_ptr != o_ptr) {
-					// Make a copy of the input string. Don't need to delete the old string because
-					// that will be done by the UndoAction for the update.
-					SetValueAllocate(column_itr, source.GetValue(column_itr), pool);
-				}
-
-				uninlineable_column_itr++;
-				if (uninlineable_column_itr < uninlineable_column_count) {
-					uninlineable_column_id =
-							tuple_schema->GetUninlinedColumnIndex(uninlineable_column_itr);
-				}
-				else {
-					uninlineable_column_id = 0;
-				}
-			}
-			else {
-				SetValueAllocate(column_itr, source.GetValue(column_itr), pool);
-			}
-		}
-	}
-	else {
-		// copy the data AND the header
-		::memcpy(tuple_data, source.tuple_data, tuple_schema->GetLength());
-	}
-}
-
-void Tuple::Copy(const Tuple &source) {
-	assert(tuple_schema);
-	assert(source.tuple_schema);
-	assert(source.tuple_data);
-	assert(tuple_data);
-
-	const uint16_t column_count = tuple_schema->GetColumnCount();
-	const bool is_inlined = tuple_schema->IsInlined();
-	catalog::Schema *source_schema = source.tuple_schema;
-	const bool o_is_inlined = source_schema->IsInlined();
-
-#ifndef NDEBUG
-	if (!CompatibleForCopy(source)) {
-		std::ostringstream message;
-		message << "src  tuple: " << source << std::endl;
-		message << "src schema: " << source.tuple_schema << std::endl;
-		message << "dest schema: " << tuple_schema << std::endl;
-		throw Exception(message.str());
-	}
-#endif
-
-	if (is_inlined == o_is_inlined) {
+	if (is_inlined) {
 		// copy the data
-		::memcpy(tuple_data, source.tuple_data, tuple_schema->GetLength());
-	}
-	else {
-		// Can't copy the string ptr from the other tuple if the
-		// string is inlined into the tuple
-		assert(!(!is_inlined && o_is_inlined));
+		::memcpy(tuple_data, source, tuple_schema->GetLength());
+	} else {
+		// copy the data
+		::memcpy(tuple_data, source, tuple_schema->GetLength());
 
-		for (uint16_t column_itr = 0; column_itr < column_count; column_itr++) {
-			SetValue(column_itr, source.GetValue(column_itr));
+		// tuple wrapper around source tuple data
+		storage::Tuple *tuple = new storage::Tuple(tuple_schema, source);
+
+		// Copy each uninlined column doing an allocation for copies.
+		for (id_t column_itr = 0; column_itr < uninlineable_column_count; column_itr++) {
+			const id_t unlineable_column_id =
+					tuple_schema->GetUninlinedColumnIndex(column_itr);
+
+			SetValueAllocate(unlineable_column_id,
+					tuple->GetValue(unlineable_column_id), pool);
 		}
+
+		delete tuple;
 	}
+
 }
 
 /**
@@ -492,55 +376,6 @@ std::ostream& operator<< (std::ostream& os, const Tuple& tuple){
 	os << std::endl;
 
 	return os;
-}
-
-
-bool Tuple::CompatibleForCopy(const Tuple &source) {
-
-	// fast check
-	if(tuple_schema == source.tuple_schema)
-		return true;
-
-	if (tuple_schema->GetColumnCount() != source.tuple_schema->GetColumnCount()) {
-		//ERROR("Can not copy tuple: incompatible column count.");
-		return false;
-	}
-
-	int column_count = GetColumnCount();
-	for (int column_itr = 0; column_itr < column_count; column_itr++) {
-
-		const ValueType type = tuple_schema->GetType(column_itr);
-		const ValueType s_type = source.tuple_schema->GetType(column_itr);
-
-		if (type != s_type) {
-			//ERROR("Can not copy tuple: incompatible column types.");
-			return false;
-		}
-
-		const bool is_inlined = tuple_schema->IsInlined();
-		const bool s_is_inlined = source.tuple_schema->IsInlined();
-
-		if (is_inlined && s_is_inlined) {
-			const bool column_is_inlined = tuple_schema->IsInlined(column_itr);
-			const bool s_column_is_inlined = source.tuple_schema->IsInlined(column_itr);
-
-			if (column_is_inlined != s_column_is_inlined) {
-				//ERROR("Can not copy tuple: incompatible column inlining.");
-				return false;
-			}
-		}
-		else {
-			const int32_t m_column_length = tuple_schema->GetLength(column_itr);
-			const int32_t s_column_length = source.tuple_schema->GetLength(column_itr);
-
-			if (m_column_length < s_column_length) {
-				//ERROR("Can not copy tuple: incompatible column lengths.");
-				return false;
-			}
-		}
-	}
-
-	return true;
 }
 
 } // End storage namespace

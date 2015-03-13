@@ -168,7 +168,7 @@ std::ostream& operator<< (std::ostream& os, const Schema& schema){
 			" length = " << schema.length << "," <<
 			" uninlined_column_count = " << schema.uninlined_column_count << std::endl;
 
-	for (int column_itr = 0; column_itr < schema.column_count; column_itr++) {
+	for (id_t column_itr = 0; column_itr < schema.column_count; column_itr++) {
 		os << "\t Column " << column_itr << " :: " << schema.columns[column_itr];
 	}
 
@@ -184,7 +184,7 @@ bool Schema::operator== (const Schema &other) const {
 		return false;
 	}
 
-	for (int column_itr = 0; column_itr < other.GetColumnCount(); column_itr++) {
+	for (id_t column_itr = 0; column_itr < other.GetColumnCount(); column_itr++) {
 		const ColumnInfo& column_info = other.GetColumnInfo(column_itr);
 		const ColumnInfo& other_column_info = GetColumnInfo(column_itr);
 

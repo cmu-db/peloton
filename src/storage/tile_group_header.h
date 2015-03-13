@@ -16,6 +16,8 @@
 
 #include <atomic>
 #include <mutex>
+#include <iostream>
+#include <cassert>
 
 namespace nstore {
 namespace storage {
@@ -135,25 +137,21 @@ public:
 		bool activated = (at_cid >= GetBeginCommitId(tuple_slot_id));
 		bool invalidated = (at_cid >= GetEndCommitId(tuple_slot_id));
 
-		std::cout << "-----------------------------------------------------------\n";
-		std::cout << "Slot :: " << tuple_slot_id
-				<< " Txn     :: txn_id : " << txn_id << " cid : " << at_cid << "\n";
-
-		std::cout << "Slot    :: txn_id : " << GetTransactionId(tuple_slot_id)
-						<< " begin cid : " << GetBeginCommitId(tuple_slot_id) << " "
-						<< " end cid : " << GetEndCommitId(tuple_slot_id) << "\n";
-
-		std::cout << "MVCC    :: own : " << own << " activated : " << activated
-				<< " invalidated : " << invalidated << "\n";
-
-		std::cout << "-----------------------------------------------------------\n";
-
 		// Visible iff past Insert || Own Insert
 		if((!own && activated && !invalidated) || (own && !activated && !invalidated))
 			return true;
 
 		return false;
 	}
+
+	void PrintVisibility(txn_id_t txn_id, cid_t at_cid);
+
+	//===--------------------------------------------------------------------===//
+	// Utilities
+	//===--------------------------------------------------------------------===//
+
+	// Get a string representation of this tile
+	friend std::ostream& operator<<(std::ostream& os, const TileGroupHeader& tile_group_header);
 
 private:
 
@@ -181,6 +179,7 @@ private:
 	// synch helpers
 	std::mutex tile_header_mutex;
 };
+
 
 
 } // End storage namespace
