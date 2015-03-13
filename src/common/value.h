@@ -2232,7 +2232,7 @@ inline const Value Value::Deserialize(const void *storage,
 		break;
 	}
 	default:
-		throw IncompatibleTypeException(type, "unrecognized type '%d'");
+		throw IncompatibleTypeException(type, "unrecognized type");
 	}
 	return retval;
 }

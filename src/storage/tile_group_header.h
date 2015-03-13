@@ -45,7 +45,7 @@ public:
 
 	TileGroupHeader(Backend* _backend, int tuple_count) :
 		backend(_backend),
-		data(NULL),
+		data(nullptr),
 		num_tuple_slots(tuple_count),
 		next_tuple_slot(0) {
 
@@ -53,13 +53,13 @@ public:
 
 		// allocate storage space for header
 		data = (char *) backend->Allocate(header_size);
-		assert(data != NULL);
+		assert(data != nullptr);
 	}
 
 	~TileGroupHeader() {
 		// reclaim the space
 		backend->Free(data);
-		data = NULL;
+		data = nullptr;
 	}
 
 	id_t GetNextEmptyTupleSlot() {
@@ -68,7 +68,7 @@ public:
 		{
 			std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
 
-			if(next_tuple_slot < num_tuple_slots - 1) {
+			if(next_tuple_slot < num_tuple_slots) {
 				tuple_slot_id = next_tuple_slot;
 				next_tuple_slot++;
 			}
@@ -85,39 +85,48 @@ public:
 	// MVCC utilities
 	//===--------------------------------------------------------------------===//
 
-	inline id_t GetTransactionId(const id_t tuple_slot_id) const {
-		return *((id_t*)( data + (tuple_slot_id * header_entry_size)));
+	inline txn_id_t GetTransactionId(const id_t tuple_slot_id) const {
+		return *((txn_id_t*)( data + (tuple_slot_id * header_entry_size)));
 	}
 
-	inline id_t GetBeginTimeStamp(const id_t tuple_slot_id) const {
-		return *((id_t*)( data + (tuple_slot_id * header_entry_size) + sizeof(id_t) ));
+	inline cid_t GetBeginCommitId(const id_t tuple_slot_id) const {
+		return *((cid_t*)( data + (tuple_slot_id * header_entry_size) + sizeof(id_t) ));
 	}
 
-	inline id_t GetEndTimeStamp(const id_t tuple_slot_id) const {
-		return *((id_t*)( data + (tuple_slot_id * header_entry_size) + 2 * sizeof(id_t) ));
+	inline cid_t GetEndCommitId(const id_t tuple_slot_id) const {
+		return *((cid_t*)( data + (tuple_slot_id * header_entry_size) + 2 * sizeof(id_t) ));
 	}
 
-	inline void SetTransactionId(const id_t tuple_slot_id, id_t transaction_id) {
-		*((id_t*)( data + (tuple_slot_id * header_entry_size))) = transaction_id;
+	inline void SetTransactionId(const id_t tuple_slot_id, txn_id_t transaction_id) {
+		*((txn_id_t*)( data + (tuple_slot_id * header_entry_size))) = transaction_id;
 	}
 
-	inline void SetBeginTimeStamp(const id_t tuple_slot_id, id_t begin_timestamp) {
-		*((id_t*)( data + (tuple_slot_id * header_entry_size) + sizeof(id_t))) = begin_timestamp;
+	inline void SetBeginCommitId(const id_t tuple_slot_id, cid_t begin_cid) {
+		*((cid_t*)( data + (tuple_slot_id * header_entry_size) + sizeof(id_t))) = begin_cid;
 	}
 
-	inline void SetEndTimeStamp(const id_t tuple_slot_id, id_t end_timestamp) const {
-		*((id_t*)( data + (tuple_slot_id * header_entry_size) + 2 * sizeof(id_t))) = end_timestamp;
+	inline void SetEndCommitId(const id_t tuple_slot_id, cid_t end_cid) const {
+		*((cid_t*)( data + (tuple_slot_id * header_entry_size) + 2 * sizeof(cid_t))) = end_cid;
 	}
 
-	bool IsVisible(const id_t tuple_slot_id, id_t transaction_id, id_t at_timestamp) {
+	bool IsVisible(const id_t tuple_slot_id, txn_id_t txn_id, cid_t at_cid) {
 
-		bool own = (transaction_id == GetTransactionId(tuple_slot_id));
-		bool activated = (at_timestamp >= GetBeginTimeStamp(tuple_slot_id));
-		bool invalidated = (at_timestamp <= GetEndTimeStamp(tuple_slot_id));
+		bool own = (txn_id == GetTransactionId(tuple_slot_id));
+		bool activated = (at_cid >= GetBeginCommitId(tuple_slot_id));
+		bool invalidated = (at_cid >= GetEndCommitId(tuple_slot_id));
 
-		std::cout << "Own :: " << own << " " << "Activated :: " << activated << "Invalidated :: " << invalidated << "\n";
+		std::cout << "Txn     :: txn_id : " << txn_id
+				<< " cid : " << at_cid << "\n";
 
-		// Visible iff Past Insert || Own Insert
+		std::cout << "Slot    :: txn_id : " << GetTransactionId(tuple_slot_id)
+				<< " begin cid : " << GetBeginCommitId(tuple_slot_id) << " "
+				<< " end cid : " << GetEndCommitId(tuple_slot_id) << "\n";
+
+		std::cout << "MVCC    :: own : " << own << " "
+				<< " activated : " << activated
+				<< " invalidated : " << invalidated << "\n";
+
+		// Visible iff past Insert || Own Insert
 		if((!own && activated && !invalidated) || (own && !activated && !invalidated))
 			return true;
 

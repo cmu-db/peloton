@@ -17,6 +17,9 @@
 #include <functional>
 #include <iostream>
 
+#include "common/types.h"
+#include "common/pretty_printer.h"
+
 namespace nstore {
 namespace test {
 
@@ -51,6 +54,17 @@ uint64_t GetThreadId() {
 	id = id % MAX_THREADS;
 
 	return id;
+}
+
+std::atomic<txn_id_t> txn_id_counter(INVALID_TXN_ID);
+std::atomic<cid_t> cid_counter(INVALID_CID);
+
+txn_id_t GetTransactionId() {
+	return ++txn_id_counter;
+}
+
+cid_t GetCommitId() {
+	return ++cid_counter;
 }
 
 } // End test namespace

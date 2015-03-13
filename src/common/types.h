@@ -91,13 +91,35 @@ enum BackendType {
 // Type definitions.
 //===--------------------------------------------------------------------===//
 
+// For offsets and other similar larger domain types
+
 typedef uint64_t id_t;
 
 static const id_t INVALID_ID = -1;
 
-static const id_t INVALID_CATALOG_ID = 0;
-
 static const id_t MAX_ID = std::numeric_limits<id_t>::max();
+
+// For catalog and other similar smaller domain types
+
+typedef uint16_t oid_t;
+
+static const oid_t INVALID_OID = 0;
+
+// For transaction id
+
+typedef uint64_t txn_id_t;
+
+static const txn_id_t INVALID_TXN_ID = -1;
+
+static const txn_id_t MAX_TXN_ID = std::numeric_limits<txn_id_t>::max();
+
+// For commit id
+
+typedef uint64_t cid_t;
+
+static const cid_t INVALID_CID = -1;
+
+static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 
 
 //===--------------------------------------------------------------------===//
