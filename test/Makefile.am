@@ -1,12 +1,19 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
+# Creates the "check-valgrind" target
+@VALGRIND_CHECK_RULES@
+
+@CODE_COVERAGE_RULES@
+CODE_COVERAGE_IGNORE_PATTERN="/usr/*" "*/third_party/*" "*/test/*"
+
 AM_CPPFLAGS = -isystem $(top_srcdir)/third_party/gtest/include -I$(top_srcdir)/src \
 			  -I$(top_srcdir)/third_party \
 			  $(GTEST_CPPFLAGS)  
 
-AM_CXXFLAGS = -std=c++11 -O0 -g3 -Wall -Wextra -fcolor-diagnostics \
+AM_CXXFLAGS = -std=c++11 -O0 -g3 -Wall -Wextra -fno-strict-aliasing \
 			  $(GTEST_CXXFLAGS) \
-			  $(BOOST_CPPFLAGS)
+			  $(BOOST_CPPFLAGS) \
+			  $(CODE_COVERAGE_CFLAGS) 
 
 AM_LDFLAGS = $(GTEST_LDFLAGS) $(GTEST_LIBS) -pthread \
 			 $(top_builddir)/third_party/gtest/lib/libgtest_main.la \
@@ -16,7 +23,8 @@ AM_LDFLAGS = $(GTEST_LDFLAGS) $(GTEST_LIBS) -pthread \
 			 $(BOOST_SYSTEM) \
 			 $(BOOST_LOG_LIBS) \
 			 $(BOOST_LOG_SETUP_LIBS) \
-			 $(BOOST_THREAD_LIBS)  
+			 $(BOOST_THREAD_LIBS) \
+			 $(CODE_COVERAGE_LDFLAGS) 
 
 # TESTS -- Programs run automatically by "make check"
 # check_PROGRAMS -- Programs built by "make check" but not necessarily run

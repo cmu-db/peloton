@@ -35,4 +35,14 @@ The following instructions assume that you have installed `EGit` plug-in to enab
 2. Open the `n-store` project in Eclipse and navigate to Project ->  Properties ->  C/C++ General.
 3. Click the Formatter option in the left-hand menu, and then select the Enable project specific settings checkbox at the top of the panel. Click the Import button and then select the `eclipse-cpp-google-style.xml` file in `third_party` directory.
 
-## Test
+### Test
+
+## Coverage ::
+
+./configure --enable-code-coverage
+cd test
+make check-code-coverage
+
+## Valgrind ::
+
+make check-valgrind
