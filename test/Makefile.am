@@ -1,11 +1,22 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
 AM_CPPFLAGS = -isystem $(top_srcdir)/third_party/gtest/include -I$(top_srcdir)/src \
-			  -I$(top_srcdir)/third_party $(GTEST_CPPFLAGS)
-AM_CXXFLAGS = -std=c++11 -O0 -g3 -Wall -Wextra -fcolor-diagnostics $(GTEST_CXXFLAGS)  
+			  -I$(top_srcdir)/third_party \
+			  $(GTEST_CPPFLAGS)  
+
+AM_CXXFLAGS = -std=c++11 -O0 -g3 -Wall -Wextra -fcolor-diagnostics \
+			  $(GTEST_CXXFLAGS) \
+			  $(BOOST_CPPFLAGS)
+
 AM_LDFLAGS = $(GTEST_LDFLAGS) $(GTEST_LIBS) -pthread \
 			 $(top_builddir)/third_party/gtest/lib/libgtest_main.la \
-			 $(top_builddir)/third_party/gtest/lib/libgtest.la
+			 $(top_builddir)/third_party/gtest/lib/libgtest.la \
+			 $(BOOST_LDFLAGS) \
+			 $(BOOST_DATE_TIME_LIBS) \
+			 $(BOOST_SYSTEM) \
+			 $(BOOST_LOG_LIBS) \
+			 $(BOOST_LOG_SETUP_LIBS) \
+			 $(BOOST_THREAD_LIBS)  
 
 # TESTS -- Programs run automatically by "make check"
 # check_PROGRAMS -- Programs built by "make check" but not necessarily run
@@ -14,7 +25,8 @@ check_PROGRAMS = func_test \
 				 tuple_test \
 				 tuple_schema_test \
 				 tile_test \
-				 tile_group_test
+				 tile_group_test \
+				 logger_test
 
 TESTS = $(check_PROGRAMS)
 
@@ -56,3 +68,6 @@ tile_group_test_LDADD = \
 				   $(obj_DIR)/storage/tile.o \
 				   $(obj_DIR)/storage/tile_group.o \
 				   $(obj_DIR)/storage/tile_group_header.o
+
+logger_test_SOURCES = logger_test.cpp
+				   
