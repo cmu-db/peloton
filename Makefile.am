@@ -8,7 +8,7 @@ include $(top_srcdir)/doc/doxygen.am
 SUBDIRS = \
 		  src \
 		  third_party \
-		  test
+		  tests
 
 # add files in the distribution
 EXTRA_DIST = bootstrap $(top_srcdir)/doc/doxygen.cfg

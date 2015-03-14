@@ -19,6 +19,7 @@
 
 #include "common/types.h"
 #include "common/pretty_printer.h"
+#include "common/logger.h"
 
 namespace nstore {
 namespace test {
@@ -66,6 +67,7 @@ txn_id_t GetTransactionId() {
 cid_t GetCommitId() {
 	return ++cid_counter;
 }
+
 
 } // End test namespace
 } // End nstore namespace
