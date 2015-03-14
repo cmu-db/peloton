@@ -12,7 +12,7 @@ AC_PROG_CC([clang])
 AC_PROG_LIBTOOL
  
 # Check for pthreads (uses m4/acx_pthread.m4).
-ACX_PTHREAD([], [AC_MSG_ERROR([failed to find pthreads])])
+ACX_PTHREAD([], [AC_MSG_ERROR([Oops, we could not find pthreads in your system.])])
 
 AC_LANG([C++])
 AC_PROG_CXX([clang++])
@@ -21,10 +21,14 @@ AC_SUBST([AM_CXXFLAGS], '-std=c++11 -stdlib=libc++')
 ######################################################################
 # BOOST
 ######################################################################
-BOOST_REQUIRE([1.45])
+
+BOOST_REQUIRE(1.47)
 BOOST_SYSTEM
-BOOST_ASIO
-#BOOST_SERIALIZATION
+BOOST_DATE_TIME
+BOOST_FORMAT
+BOOST_LOG
+BOOST_LOG_SETUP
+BOOST_THREAD
 
 ######################################################################
 # DOXYGEN SUPPORT
