@@ -8,14 +8,14 @@ AC_CONFIG_MACRO_DIR([m4])
 
 AM_INIT_AUTOMAKE([1.0 foreign subdir-objects])
 
-AC_PROG_CC([clang])
+AC_PROG_CC([gcc])
 AC_PROG_LIBTOOL
  
 # Check for pthreads (uses m4/acx_pthread.m4).
 ACX_PTHREAD([], [AC_MSG_ERROR([Oops, we could not find pthreads in your system.])])
 
 AC_LANG([C++])
-AC_PROG_CXX([clang++])
+AC_PROG_CXX([g++])
 AC_SUBST([AM_CXXFLAGS], '-std=c++11 -stdlib=libc++')
 
 ######################################################################
@@ -33,6 +33,7 @@ BOOST_THREAD
 ######################################################################
 # DOXYGEN SUPPORT
 ######################################################################
+
 DX_HTML_FEATURE(ON)
 DX_CHM_FEATURE(OFF)
 DX_CHI_FEATURE(OFF)
@@ -42,6 +43,13 @@ DX_XML_FEATURE(OFF)
 DX_PDF_FEATURE(OFF)
 DX_PS_FEATURE(OFF)
 DX_INIT_DOXYGEN([$PACKAGE_NAME], [doc/doxygen.cfg], [doc])
+
+######################################################################
+# VALGRIND + GCOV
+######################################################################
+
+AX_VALGRIND_CHECK
+AX_CODE_COVERAGE
 
 #[test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h.in])
 

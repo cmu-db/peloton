@@ -1,8 +1,10 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
-AM_CPPFLAGS = $(nstore_INCLUDES)  
-AM_CXXFLAGS = -std=c++11 -O0 -g3 -Wall -Wextra -fcolor-diagnostics 
-AM_LDFLAGS  =  
+@CODE_COVERAGE_RULES@
+
+AM_CPPFLAGS = $(nstore_INCLUDES) 
+AM_CXXFLAGS = -std=c++11 -O0 -g3 -Wall -Wextra -fno-strict-aliasing $(CODE_COVERAGE_CFLAGS)
+AM_LDFLAGS  = $(CODE_COVERAGE_LDFLAGS) 
 
 ######################################################################
 # SUBDIRS
