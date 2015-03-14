@@ -59,23 +59,23 @@ tuple_schema_test_LDADD = \
 
 tile_test_SOURCES = tile_test.cpp
 tile_test_LDADD = \
-				   $(obj_DIR)/catalog/schema.o \
-				   $(obj_DIR)/common/types.o \
-				   $(obj_DIR)/common/value.o \
-				   $(obj_DIR)/common/varlen.o \
-				   $(obj_DIR)/storage/tuple.o \
-				   $(obj_DIR)/storage/tile.o 
+				  $(obj_DIR)/catalog/schema.o \
+				  $(obj_DIR)/common/types.o \
+				  $(obj_DIR)/common/value.o \
+				  $(obj_DIR)/common/varlen.o \
+				  $(obj_DIR)/storage/tuple.o \
+				  $(obj_DIR)/storage/tile.o 
 
 tile_group_test_SOURCES = tile_group_test.cpp
 tile_group_test_LDADD = \
-				   $(obj_DIR)/catalog/schema.o \
-				   $(obj_DIR)/common/types.o \
-				   $(obj_DIR)/common/value.o \
-				   $(obj_DIR)/common/varlen.o \
-				   $(obj_DIR)/storage/tuple.o \
-				   $(obj_DIR)/storage/tile.o \
-				   $(obj_DIR)/storage/tile_group.o \
-				   $(obj_DIR)/storage/tile_group_header.o
+						$(obj_DIR)/catalog/schema.o \
+						$(obj_DIR)/common/types.o \
+						$(obj_DIR)/common/value.o \
+						$(obj_DIR)/common/varlen.o \
+						$(obj_DIR)/storage/tuple.o \
+						$(obj_DIR)/storage/tile.o \
+						$(obj_DIR)/storage/tile_group.o \
+						$(obj_DIR)/storage/tile_group_header.o
 
 logger_test_SOURCES = logger_test.cpp
-				   
+

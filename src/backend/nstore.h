@@ -13,6 +13,7 @@
 #pragma once
 
 #include <getopt.h>
+#include "common/logger.h"
 
 #include <iostream>
 #include <string>
@@ -23,9 +24,9 @@ namespace nstore {
 class configuration {
 
 public:
+
 	std::string filesystem_path;
 
-	bool storage_manager_tests;
 };
 
 }

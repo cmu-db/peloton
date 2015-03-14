@@ -57,7 +57,7 @@ AC_CONFIG_FILES([Makefile
                  third_party/Makefile
                  third_party/gtest/Makefile
                  src/Makefile
-                 test/Makefile
+                 tests/Makefile
                  ])
 
 AC_OUTPUT

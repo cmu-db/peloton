@@ -3,8 +3,18 @@
 @CODE_COVERAGE_RULES@
 
 AM_CPPFLAGS = $(nstore_INCLUDES) 
-AM_CXXFLAGS = -std=c++11 -O0 -g3 -Wall -Wextra -fno-strict-aliasing $(CODE_COVERAGE_CFLAGS)
-AM_LDFLAGS  = $(CODE_COVERAGE_LDFLAGS) 
+
+AM_CXXFLAGS = -std=c++11 -O0 -g3 -Wall -Wextra -fno-strict-aliasing \
+			  $(CODE_COVERAGE_CFLAGS)
+
+AM_LDFLAGS  = $(BOOST_LDFLAGS) \
+			  $(BOOST_DATE_TIME_LIBS) \
+			  $(BOOST_SYSTEM) \
+			  $(BOOST_LOG_LIBS) \
+			  $(BOOST_LOG_SETUP_LIBS) \
+			  $(BOOST_THREAD_LIBS) \
+			  $(CODE_COVERAGE_LDFLAGS) 
+
 
 ######################################################################
 # SUBDIRS

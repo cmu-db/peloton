@@ -270,6 +270,7 @@ TEST(TileGroupTests, MVCCInsert) {
 
 	EXPECT_EQ(scan->GetActiveTupleCount(), 1);
 
+	NLOG(trace, "tile group trace message");
 }
 
 } // End test namespace
