@@ -128,7 +128,7 @@ public:
 	}
 
 	// Return the number of columns in this tuple
-	inline int GetColumnCount() const {
+	inline id_t GetColumnCount() const {
 		return tuple_schema->GetColumnCount();
 	}
 

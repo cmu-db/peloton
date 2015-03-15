@@ -361,8 +361,8 @@ std::ostream& operator<< (std::ostream& os, const Tuple& tuple){
 	uint64_t address_num = (uint64_t) tuple.Location();
 	os << " @" << address_num << " ";
 
-	int column_count = tuple.GetColumnCount();
-	for (int column_itr = 0; column_itr < column_count; column_itr++) {
+	id_t column_count = tuple.GetColumnCount();
+	for (id_t column_itr = 0; column_itr < column_count; column_itr++) {
 		os << "(";
 		if (tuple.IsNull(column_itr)) {
 			os << "<NULL>";
