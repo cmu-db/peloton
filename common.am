@@ -1,0 +1,20 @@
+## Makefile.am -- Process this file with automake to produce Makefile.in
+
+## For the "check-valgrind" target
+
+@VALGRIND_CHECK_RULES@
+
+## For the "check-code-coverage" target
+
+@CODE_COVERAGE_RULES@
+CODE_COVERAGE_IGNORE_PATTERN="/usr/*" "*/third_party/*" "*/test/*"
+
+AM_CPPFLAGS = $(nstore_INCLUDES)
+
+AM_CXXFLAGS = -std=c++11 -O0 -g3 -Wall -Wextra -fno-strict-aliasing \
+			  $(CODE_COVERAGE_CFLAGS)\
+              -fdiagnostics-color=auto 
+
+AM_LDFLAGS  = $(CODE_COVERAGE_LDFLAGS) -lpthread \
+              -lboost_date_time -lboost_log -lboost_log_setup\
+              -lboost_thread -lboost_system 

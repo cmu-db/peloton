@@ -1,12 +1,12 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
 ######################################################################
-# BACKEND
+# CATALOG
 ######################################################################
 
-backend_FILES = \
-				backend/nstore.cpp \
-				backend/parser.cpp 
+check_PROGRAMS += tuple_schema_test
 
-backend_INCLUDES = \
-				   -I$(srcdir)/backend
+tuple_schema_test_SOURCES = catalog/tuple_schema_test.cpp
+tuple_schema_test_LDADD = \
+						  $(obj_DIR)/catalog/schema.o \
+						  $(obj_DIR)/common/types.o 
