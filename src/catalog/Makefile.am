@@ -5,7 +5,8 @@
 ######################################################################
 
 catalog_FILES = \
-				catalog/schema.cpp 
+				catalog/schema.cpp \
+				catalog/transaction.cpp 
 
 catalog_INCLUDES = \
 				   -I$(srcdir)/catalog    
