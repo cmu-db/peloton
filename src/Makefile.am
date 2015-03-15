@@ -1,24 +1,12 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
-@CODE_COVERAGE_RULES@
-
-AM_CPPFLAGS = $(nstore_INCLUDES) 
-
-AM_CXXFLAGS = -std=c++11 -O0 -g3 -Wall -Wextra -fno-strict-aliasing \
-			  $(CODE_COVERAGE_CFLAGS)
-
-AM_LDFLAGS  = $(BOOST_LDFLAGS) \
-			  $(BOOST_DATE_TIME_LIBS) \
-			  $(BOOST_SYSTEM) \
-			  $(BOOST_LOG_LIBS) \
-			  $(BOOST_LOG_SETUP_LIBS) \
-			  $(BOOST_THREAD_LIBS) \
-			  $(CODE_COVERAGE_LDFLAGS) 
-
+## Common flags
+include $(top_srcdir)/common.am
 
 ######################################################################
 # SUBDIRS
 ######################################################################
+
 include $(srcdir)/backend/Makefile.am
 include $(srcdir)/catalog/Makefile.am
 include $(srcdir)/common/Makefile.am
@@ -59,5 +47,4 @@ nstore_INCLUDES = $(backend_INCLUDES) \
 # THIRD-PARTY INCLUDES
 ######################################################################
 
-third_party_INCLUDES = \
-					   -I$(top_srcdir)/third_party 
+third_party_INCLUDES = -I$(top_srcdir)/third_party 

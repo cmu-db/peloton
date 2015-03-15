@@ -29,4 +29,9 @@ public:
 
 };
 
+// sample test helper
+int SampleFunc(int a, int b) {
+	return a+b;
+}
+
 }

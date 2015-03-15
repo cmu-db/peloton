@@ -325,7 +325,7 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
 	input.ReadByte();
 
 	id_t column_count = input.ReadShort();
-	assert(column_count >= 0);
+	assert(column_count > 0);
 
 	// Store the following information so that we can provide them to the user on failure
 	ValueType types[column_count];
@@ -371,7 +371,7 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
  */
 void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool) {
 	id_t tuple_count = input.ReadInt();
-	assert(tuple_count >= 0);
+	assert(tuple_count > 0);
 
 	// First, check if we have required space
 	assert(tuple_count <= num_tuple_slots);

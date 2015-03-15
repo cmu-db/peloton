@@ -22,13 +22,7 @@ AC_SUBST([AM_CXXFLAGS], '-std=c++11 -stdlib=libc++')
 # BOOST
 ######################################################################
 
-BOOST_REQUIRE(1.47)
-BOOST_SYSTEM
-BOOST_DATE_TIME
-BOOST_FORMAT
-BOOST_LOG
-BOOST_LOG_SETUP
-BOOST_THREAD
+BOOST_REQUIRE(1.53)
 
 ######################################################################
 # DOXYGEN SUPPORT

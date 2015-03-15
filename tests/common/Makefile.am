@@ -1,12 +1,12 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
 ######################################################################
-# BACKEND
+# COMMON
 ######################################################################
 
-backend_FILES = \
-				backend/nstore.cpp \
-				backend/parser.cpp 
+check_PROGRAMS += sample_test \
+				  logger_test
 
-backend_INCLUDES = \
-				   -I$(srcdir)/backend
+sample_test_SOURCES = common/sample_test.cpp
+
+logger_test_SOURCES = common/logger_test.cpp
