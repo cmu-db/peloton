@@ -111,7 +111,7 @@ typedef uint64_t txn_id_t;
 
 static const txn_id_t INVALID_TXN_ID = -1;
 
-static const txn_id_t START_TXN_ID = 0;
+static const txn_id_t START_TXN_ID = 1;
 
 static const txn_id_t MAX_TXN_ID = std::numeric_limits<txn_id_t>::max();
 
@@ -121,7 +121,7 @@ typedef uint64_t cid_t;
 
 static const cid_t INVALID_CID = -1;
 
-static const cid_t START_CID = 0;
+static const cid_t START_CID = 1;
 
 static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 
