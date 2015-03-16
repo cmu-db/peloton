@@ -17,7 +17,9 @@
 #include <vector>
 #include <map>
 
-#include "storage/tile.h"
+#include "storage/tile_group.h"
+#include "common/exception.h"
+#include "common/logger.h"
 
 namespace nstore {
 namespace catalog {
@@ -26,7 +28,10 @@ namespace catalog {
 // Transaction
 //===--------------------------------------------------------------------===//
 
+class TransactionManager;
+
 class Transaction {
+  friend class TransactionManager;
 
   Transaction(Transaction const&) = delete;
 
@@ -34,12 +39,21 @@ class Transaction {
 
   Transaction()  :
     txn_id(INVALID_TXN_ID),
-    visible_cid(INVALID_CID),
+    cid(INVALID_CID),
+    last_cid(INVALID_CID),
     ref_count(1),
-    waiting(false),
+    waiting_to_commit(false),
     next(nullptr) {
   }
 
+  Transaction(txn_id_t txn_id, cid_t last_cid)  :
+    txn_id(txn_id),
+    cid(INVALID_CID),
+    last_cid(last_cid),
+    ref_count(1),
+    waiting_to_commit(false),
+    next(nullptr) {
+  }
 
   ~Transaction() {
     if (next != nullptr) {
@@ -48,18 +62,18 @@ class Transaction {
   }
 
   // record inserted tuple
-  void RecordInsert(const storage::Tile* tile, id_t offset);
+  void RecordInsert(const storage::TileGroup* tile, id_t offset);
 
   // record deleted tuple
-  void RecordDelete(const storage::Tile* tile, id_t offset);
+  void RecordDelete(const storage::TileGroup* tile, id_t offset);
 
-  bool HasInsertedTuples(const storage::Tile* tile) const;
+  bool HasInsertedTuples(const storage::TileGroup* tile) const;
 
-  bool HasDeletedTuples(const storage::Tile* tile) const;
+  bool HasDeletedTuples(const storage::TileGroup* tile) const;
 
-  const std::vector<id_t>& GetInsertedTuples(const storage::Tile* tile);
+  const std::map<const storage::TileGroup*, std::vector<id_t> >& GetInsertedTuples();
 
-  const std::vector<id_t>& GetDeletedTuples(const storage::Tile* tile);
+  const std::map<const storage::TileGroup*, std::vector<id_t> >& GetDeletedTuples();
 
   // maintain reference counts for transactions
   void IncrementRefCount();
@@ -78,23 +92,26 @@ class Transaction {
   // transaction id
   txn_id_t txn_id;
 
-  // visible commit id
-  cid_t visible_cid;
+  // commit id
+  cid_t cid;
+
+  // last visible commit id
+  cid_t last_cid;
 
   // references
   std::atomic<size_t> ref_count;
 
   // waiting for commit ?
-  std::atomic<bool> waiting;
+  std::atomic<bool> waiting_to_commit;
 
   // cid context
   Transaction* next __attribute__((aligned(16)));
 
   // inserted tuples in each tile
-  std::map<const storage::Tile*, std::vector<id_t> > inserted_tuples;
+  std::map<const storage::TileGroup*, std::vector<id_t> > inserted_tuples;
 
   // deleted tuples in each tile
-  std::map<const storage::Tile*, std::vector<id_t> > deleted_tuples;
+  std::map<const storage::TileGroup*, std::vector<id_t> > deleted_tuples;
 
   // synch helpers
   std::mutex txn_mutex;
@@ -109,47 +126,65 @@ class TransactionManager {
 
  public:
 
-  TransactionManager();
+  TransactionManager() {
+    next_txn_id = ATOMIC_VAR_INIT(START_TXN_ID);
+    next_cid = ATOMIC_VAR_INIT(START_CID);
 
-  ~TransactionManager();
-
-  // Singleton
-  static TransactionManager& getInstance();
+    last_txn = new Transaction();
+    last_cid = INVALID_CID;
+  }
 
   // Get next transaction id
-  txn_id_t GetNextTransactionId();
+  txn_id_t GetNextTransactionId() {
+    if (next_txn_id == MAX_TXN_ID) {
+      throw TransactionException("Txn id equals MAX_TXN_ID");
+    }
 
-  // Begin a new transaction
-  static Transaction BeginTransaction();
+    return ++next_txn_id;
+  }
 
-  static Transaction& GetTransaction(txn_id_t txn_id);
+  // Get last commit id for visibility checks
+  cid_t GetLastCommitId() {
+    return last_cid;
+  }
 
-  static std::vector<Transaction*> CommitTransaction(Transaction txn, bool group_commit = true);
+  // Get entry in table
+  Transaction *GetTransaction(txn_id_t txn_id);
 
-  static void UndoTransaction(Transaction txn);
+  std::vector<Transaction *> GetCurrentTransactions();
 
-  static bool IsValid(txn_id_t txn_id);
+  bool IsValid(txn_id_t txn_id);
 
-  static std::vector<Transaction> GetCurrentTransactions();
-
-  // Get the last valid commit id
-  txn_id_t GetLastCommitId();
-
-  void Abort();
-
-  void EndTransaction(txn_id_t txn_id, bool sync);
-
+  // Reset the manager
   void Reset();
 
-  void WaitForCurrentTransactions() const;
+  //===--------------------------------------------------------------------===//
+  // Transaction processing
+  //===--------------------------------------------------------------------===//
 
-  void CommitModifications(Transaction& txn, bool sync);
+  // Begin a new transaction
+  Transaction *BeginTransaction();
+
+  // End the transaction
+  void EndTransaction(Transaction *txn, bool sync = true);
+
+  // COMMIT
+
+  void BeginCommitPhase(Transaction *txn);
+
+  void CommitModifications(Transaction *txn, bool sync = true);
 
   void CommitPendingTransactions(std::vector<Transaction*>& txns, Transaction *txn);
 
-  Transaction* BeginCommitPhase(Transaction& txn);
+  std::vector<Transaction*> EndCommitPhase(Transaction* txn, bool sync = true);
 
-  std::vector<Transaction*> EndCommitPhase(Transaction* txns, bool sync);
+  std::vector<Transaction *> CommitTransaction(Transaction *txn, bool sync = true);
+
+  // ABORT
+
+  void AbortTransaction(Transaction *txn);
+
+  void WaitForCurrentTransactions() const;
 
  private:
 
@@ -157,7 +192,7 @@ class TransactionManager {
   // Data members
   //===--------------------------------------------------------------------===//
 
-  std::atomic<txn_id_t> txn_counter;
+  std::atomic<txn_id_t> next_txn_id;
 
   std::atomic<cid_t> next_cid;
 
@@ -166,7 +201,7 @@ class TransactionManager {
   Transaction *last_txn __attribute__((aligned(16)));
 
   // Table tracking all active transactions
-  std::map<txn_id_t, Transaction*> txn_table;
+  std::map<txn_id_t, Transaction *> txn_table;
 
   // synch helpers
   std::mutex txn_manager_mutex;

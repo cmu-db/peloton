@@ -78,8 +78,8 @@ id_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
 
 		// Set MVCC info
 		tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
-		tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_ID);
-		tile_group_header->SetEndCommitId(tuple_slot_id, MAX_ID);
+		tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
+		tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
 	}
 
 	return tuple_slot_id;

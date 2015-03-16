@@ -32,17 +32,18 @@ namespace nstore {
 //===--------------------------------------------------------------------===//
 
 enum ExceptionType {
-	EXCEPTION_TYPE_INVALID = 0, 					// invalid type
+	EXCEPTION_TYPE_INVALID = 0, 				  	// invalid type
 
 	EXCEPTION_TYPE_OUT_OF_RANGE = 1, 				// value out of range error
 	EXCEPTION_TYPE_CONVERSION = 2, 					// conversion/casting error
 	EXCEPTION_TYPE_UNKNOWN_TYPE = 3,				// unknown type
-	EXCEPTION_TYPE_DECIMAL = 4,						// decimal related
+	EXCEPTION_TYPE_DECIMAL = 4,						  // decimal related
 	EXCEPTION_TYPE_MISMATCH_TYPE = 5,				// type mismatch
-	EXCEPTION_TYPE_DIVIDE_BY_ZERO = 6,				// divide by 0
+	EXCEPTION_TYPE_DIVIDE_BY_ZERO = 6,			// divide by 0
 	EXCEPTION_TYPE_OBJECT_SIZE = 7,					// object size exceeded
-	EXCEPTION_TYPE_INCOMPATIBLE_TYPE = 8,			// incompatible for operation
-	EXCEPTION_TYPE_SERIALIZATION = 9			    // serialization
+	EXCEPTION_TYPE_INCOMPATIBLE_TYPE = 8,		// incompatible for operation
+	EXCEPTION_TYPE_SERIALIZATION = 9,			  // serialization
+	EXCEPTION_TYPE_TRANSACTION = 10         // transaction management
 };
 
 class Exception {
@@ -297,6 +298,15 @@ public:
 	SerializationException(std::string msg) :
 		Exception(EXCEPTION_TYPE_SERIALIZATION, msg){
 	}
+};
+
+class TransactionException : Exception {
+  TransactionException() = delete;
+
+public:
+  TransactionException(std::string msg) :
+    Exception(EXCEPTION_TYPE_TRANSACTION, msg){
+  }
 };
 
 

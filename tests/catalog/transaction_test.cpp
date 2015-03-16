@@ -23,11 +23,25 @@ namespace test {
 
 TEST(TransactionTests, TransactionTest) {
 
-  catalog::Transaction *txn = new catalog::Transaction();
+  catalog::TransactionManager *txn_manager = new catalog::TransactionManager();
 
-  std::cout << (*txn);
+  catalog::Transaction *txn1, *txn2, *txn3;
 
-  delete txn;
+  txn1 = txn_manager->BeginTransaction();
+  txn2 = txn_manager->BeginTransaction();
+
+  txn_manager->CommitTransaction(txn1);
+  txn_manager->EndTransaction(txn1);
+
+  txn3 = txn_manager->BeginTransaction();
+
+  std::cout << (*txn1);
+  std::cout << (*txn2);
+  std::cout << (*txn3);
+
+  delete txn1;
+  delete txn2;
+  delete txn3;
 }
 
 } // End test namespace
