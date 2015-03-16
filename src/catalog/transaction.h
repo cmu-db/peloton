@@ -130,8 +130,9 @@ class TransactionManager {
     next_txn_id = ATOMIC_VAR_INIT(START_TXN_ID);
     next_cid = ATOMIC_VAR_INIT(START_CID);
 
-    last_txn = new Transaction();
-    last_cid = INVALID_CID;
+    last_txn = new Transaction(START_TXN_ID, START_CID);
+    last_txn->cid = START_CID;
+    last_cid = START_CID;
   }
 
   // Get next transaction id
@@ -140,7 +141,7 @@ class TransactionManager {
       throw TransactionException("Txn id equals MAX_TXN_ID");
     }
 
-    return ++next_txn_id;
+    return next_txn_id++;
   }
 
   // Get last commit id for visibility checks
@@ -154,9 +155,6 @@ class TransactionManager {
   std::vector<Transaction *> GetCurrentTransactions();
 
   bool IsValid(txn_id_t txn_id);
-
-  // Reset the manager
-  void Reset();
 
   //===--------------------------------------------------------------------===//
   // Transaction processing
@@ -178,7 +176,7 @@ class TransactionManager {
 
   std::vector<Transaction*> EndCommitPhase(Transaction* txn, bool sync = true);
 
-  std::vector<Transaction *> CommitTransaction(Transaction *txn, bool sync = true);
+  void CommitTransaction(Transaction *txn, bool sync = true);
 
   // ABORT
 

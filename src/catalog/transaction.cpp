@@ -15,6 +15,7 @@
 
 #include <chrono>
 #include <thread>
+#include <iomanip>
 
 namespace nstore {
 namespace catalog {
@@ -80,10 +81,18 @@ void Transaction::DecrementRefCount() {
 
 std::ostream& operator<<(std::ostream& os, const Transaction& txn) {
 
-  os << "\t Txn :: [ ID : " << txn.txn_id
-      << " Commit ID : " << txn.cid
-      << " Last Commit ID : " << txn.last_cid
-      << " Next : " << txn.next << " ] \n";
+  os << "\tTxn :: @" <<  &txn << " ID : " << std::setw(4) << txn.txn_id
+      << " Commit ID : " << std::setw(4) << txn.cid
+      << " Last Commit ID : " << std::setw(4) << txn.last_cid;
+
+  if(txn.next == nullptr) {
+    os << " Next : " << std::setw(4) << txn.next;
+  }
+  else {
+    os << " Next : " << std::setw(4) << txn.next->txn_id;
+  }
+
+  os << " Ref count : " << std::setw(4) << txn.ref_count <<  "\n";
 
   return os;
 }
@@ -104,7 +113,6 @@ Transaction *TransactionManager::GetTransaction(txn_id_t txn_id) {
 // Begin a new transaction
 Transaction *TransactionManager::BeginTransaction(){
   Transaction *next_txn = new Transaction(GetNextTransactionId(), GetLastCommitId());
-
   return next_txn;
 }
 
@@ -131,16 +139,6 @@ void TransactionManager::EndTransaction(Transaction *txn, bool sync){
   txn_table.erase(txn->txn_id);
 }
 
-void TransactionManager::Reset(){
-  next_txn_id = ATOMIC_VAR_INIT(START_TXN_ID);
-  next_cid = ATOMIC_VAR_INIT(START_CID);
-
-  last_txn = new Transaction();
-  last_cid = INVALID_CID;
-
-  txn_table.clear();
-}
-
 //===--------------------------------------------------------------------===//
 // Commit Processing
 //===--------------------------------------------------------------------===//
@@ -150,9 +148,7 @@ void TransactionManager::BeginCommitPhase(Transaction *txn){
   // successor in the transaction list will point to us
   txn->IncrementRefCount();
 
-  for (;;) {
-
-    std::cout << "old value : " << last_txn->next << "\n";
+  while (true) {
 
     // try to append to the pending transaction list
     if (atomic_cas<Transaction *>(&last_txn->next, nullptr, txn)) {
@@ -172,9 +168,9 @@ void TransactionManager::BeginCommitPhase(Transaction *txn){
       return;
     }
 
+    // sleep for some time
     std::chrono::milliseconds sleep_time(1);
     std::this_thread::sleep_for(sleep_time);
-
   }
 
 }
@@ -220,6 +216,8 @@ void TransactionManager::CommitPendingTransactions(std::vector<Transaction *>& p
       // if that worked, add transaction to list
       pending_txns.push_back(current_txn);
 
+      std::cout << "Pending Txn  : " << current_txn->txn_id << "\n";
+
       current_txn = current_txn->next;
       continue;
     } else {
@@ -240,10 +238,14 @@ std::vector<Transaction*> TransactionManager::EndCommitPhase(Transaction * txn, 
   // try to increment last commit id
   if (atomic_cas(&last_cid, txn->cid - 1, txn->cid)) {
 
+    std::cout << "update lcid worked : " << txn->txn_id << "\n";
+
     // if that worked, commit all pending transactions
     CommitPendingTransactions(txn_list, txn);
 
   } else {
+
+    std::cout << "add to wait list : " << txn->txn_id << "\n";
 
     // it did not work, so add to waiting list
     // some other transaction with lower commit id will commit us later
@@ -268,7 +270,7 @@ std::vector<Transaction*> TransactionManager::EndCommitPhase(Transaction * txn, 
 }
 
 
-std::vector<Transaction *> TransactionManager::CommitTransaction(Transaction *txn, bool sync){
+void TransactionManager::CommitTransaction(Transaction *txn, bool sync){
   assert(txn != nullptr);
 
   // validate txn id
@@ -276,20 +278,21 @@ std::vector<Transaction *> TransactionManager::CommitTransaction(Transaction *tx
     throw TransactionException("Transaction not found in transaction table : " + std::to_string(txn->txn_id));
   }
 
-  std::cout << "begin commit phase start \n";
-
   // begin commit phase : get cid and add to transaction list
   BeginCommitPhase(txn);
-
-  std::cout << "commit modifications start \n";
 
   // commit all modifications
   CommitModifications(txn, sync);
 
-  std::cout << "end commit phase start \n";
-
   // end commit phase : increment last_cid and process pending txns if needed
-  return EndCommitPhase(txn, sync);
+  std::vector<Transaction *> committed_txns = EndCommitPhase(txn, sync);
+
+  // XXX LOG : group commit entry
+
+  // process all committed txns
+  for (auto committed_txn : committed_txns)
+    committed_txn->DecrementRefCount();
+
 }
 
 //===--------------------------------------------------------------------===//
@@ -306,7 +309,7 @@ void TransactionManager::WaitForCurrentTransactions() const{
 
 
   // block until all current txns are finished
-  for (;;) {
+  while (true) {
 
     // remove all finished txns from list
     for(auto txn_id : current_txns) {
