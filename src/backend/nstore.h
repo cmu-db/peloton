@@ -13,8 +13,6 @@
 #pragma once
 
 #include <getopt.h>
-#include "common/logger.h"
-
 #include <iostream>
 #include <string>
 #include <cstdlib>

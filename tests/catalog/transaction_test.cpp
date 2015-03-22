@@ -28,7 +28,7 @@ void TransactionTest(catalog::TransactionManager *txn_manager){
 
   uint64_t thread_id = GetThreadId();
 
-  for(id_t txn_itr = 1 ; txn_itr < 10000 ; txn_itr++) {
+  for(id_t txn_itr = 1 ; txn_itr < 100 ; txn_itr++) {
     txn1 = txn_manager->BeginTransaction();
     txn2 = txn_manager->BeginTransaction();
     txn3 = txn_manager->BeginTransaction();

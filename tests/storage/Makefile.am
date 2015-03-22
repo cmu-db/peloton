@@ -18,7 +18,7 @@ tuple_test_LDADD = \
 
 tile_test_SOURCES = storage/tile_test.cpp
 tile_test_LDADD = \
-				  $(tuple_test_LDADD) \ 
+				  $(tuple_test_LDADD) \
 				  $(obj_DIR)/storage/tile.o 
 
 tile_group_test_SOURCES = storage/tile_group_test.cpp

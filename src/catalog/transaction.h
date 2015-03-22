@@ -19,7 +19,6 @@
 
 #include "storage/tile_group.h"
 #include "common/exception.h"
-#include "common/logger.h"
 
 namespace nstore {
 namespace catalog {

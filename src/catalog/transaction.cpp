@@ -12,6 +12,7 @@
 
 #include "catalog/transaction.h"
 #include "common/synch.h"
+#include "common/logger.h"
 
 #include <chrono>
 #include <thread>
@@ -238,7 +239,7 @@ std::vector<Transaction*> TransactionManager::EndCommitPhase(Transaction * txn, 
   // try to increment last commit id
   if (atomic_cas(&last_cid, txn->cid - 1, txn->cid)) {
 
-    std::cout << "update lcid worked : " << txn->txn_id << "\n";
+    LOG4CXX_WARN(logger, "update lcid worked : " << txn->txn_id << "\n");
 
     // if that worked, commit all pending transactions
     CommitPendingTransactions(txn_list, txn);
