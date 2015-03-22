@@ -18,7 +18,7 @@ include $(srcdir)/storage/Makefile.am
 bin_PROGRAMS = nstore
 
 ######################################################################
-# N-STORE
+# N-STORE SOURCES
 ######################################################################
 
 nstore_SOURCES =  $(backend_FILES) \

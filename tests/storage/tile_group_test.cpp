@@ -269,8 +269,6 @@ TEST(TileGroupTests, MVCCInsert) {
 	scan = tile_group->ScanTuples(txn_id3, 1, cid3);
 
 	EXPECT_EQ(scan->GetActiveTupleCount(), 1);
-
-	NLOG(trace, "tile group trace message");
 }
 
 } // End test namespace

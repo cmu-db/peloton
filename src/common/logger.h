@@ -10,68 +10,48 @@
  *-------------------------------------------------------------------------
  */
 
-
 #pragma once
 
-#define BOOST_LOG_DYN_LINK 1 // necessary when linking the boost_log library dynamically
-
-#include <boost/log/core.hpp>
-#include <boost/log/trivial.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/sinks/text_file_backend.hpp>
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/log/sources/severity_logger.hpp>
-#include <boost/log/sources/record_ostream.hpp>
-#include <boost/log/support/date_time.hpp>
-
-#include <thread>
+#include <log4cxx/logger.h>
+#include <log4cxx/helpers/pool.h>
+#include <log4cxx/basicconfigurator.h>
+#include <log4cxx/fileappender.h>
+#include <log4cxx/simplelayout.h>
 
 namespace nstore {
 
-// Disable logging in production
+// Define static logger variable
+static log4cxx::LoggerPtr logger(log4cxx::Logger::getRootLogger());
 
+// Disable logging in production
 #ifdef NDEBUG
-#define NLOG(level, message)
-#else
-#define NLOG(level, message) BOOST_LOG_SEV(boost::log::trivial::logger::get(), boost::log::trivial::level) << message
+#define LOG4CXX_TRACE(logger, expression)
+#define LOG4CXX_DEBUG(logger, expression)
+#define LOG4CXX_INFO(logger, expression)
+#define LOG4CXX_WARN(logger, expression)
+#define LOG4CXX_ERROR(logger, expression)
+#define LOG4CXX_FATAL(logger, expression)
 #endif
 
 class Logger {
-	Logger(Logger const&) = delete;
-	Logger& operator=(Logger const&) = delete;
+ public:
 
-public:
+  Logger() {
+    log4cxx::FileAppender* file_appender = new
+        log4cxx::FileAppender(log4cxx::LayoutPtr(new log4cxx::SimpleLayout()), "nstore.log", false);
 
-	Logger(boost::log::trivial::severity_level level = boost::log::trivial::warning,
-	       std::string log_file_name = "nstore.log") :
-	         log_file_name(log_file_name),
-	         level(level) {
+    log4cxx::helpers::Pool p;
+    file_appender->activateOptions(p);
 
-	  boost::log::add_common_attributes();
+    log4cxx::BasicConfigurator::configure(log4cxx::AppenderPtr(file_appender));
 
-		boost::log::core::get()->set_filter(boost::log::trivial::severity >= level);
-	}
+    // Set to DEBUG level
+    log4cxx::Logger::getRootLogger()->setLevel(log4cxx::Level::getDebug());
 
-	// set severity level
-	static void SetLevel(boost::log::trivial::severity_level level) {
-		boost::log::core::get()->set_filter(boost::log::trivial::severity >= level);
-	}
+    nstore::logger = log4cxx::Logger::getLogger("logger");
+  }
 
-	// getters
 
-	std::string GetLogFileName() const {
-		return log_file_name;
-	}
-
-	boost::log::trivial::severity_level GetLevel() const {
-		return level;
-	}
-
-private:
-	std::string log_file_name;
-
-	boost::log::trivial::severity_level level;
 };
 
 

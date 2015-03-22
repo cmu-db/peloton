@@ -129,6 +129,14 @@ class Tile {
     return column_names;
   }
 
+  TileGroupHeader *GetHeader() const{
+    return tile_group_header;
+  }
+
+  Backend *GetBackend() const {
+    return backend;
+  }
+
   // Compare two tiles
   bool operator== (const Tile &other) const;
   bool operator!= (const Tile &other) const;

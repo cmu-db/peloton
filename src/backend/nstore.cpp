@@ -11,6 +11,7 @@
  */
 
 #include "nstore.h"
+#include "common/logger.h"
 
 #include <stdio.h>
 #include <execinfo.h>
@@ -68,9 +69,10 @@ int main(int argc, char **argv) {
 
 	nstore::parse_arguments(argc, argv, state);
 
+	// Start logger
 	nstore::Logger();
 
-	NLOG(warning, "Starting nstore");
+	LOG4CXX_WARN(nstore::logger, "Starting nstore");
 
 	return 0;
 }

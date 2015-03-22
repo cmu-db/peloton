@@ -24,13 +24,13 @@ namespace test {
 
 TEST(LoggerTests, BasicTest) {
 
-	Logger();
+  // Start logger
+  nstore::Logger();
 
-	Logger::SetLevel(boost::log::trivial::trace);
 
-	NLOG(trace, "trace message");
-	NLOG(warning, "warning message");
-	NLOG(error, "error message");
+	LOG4CXX_TRACE(logger, "trace message");
+	LOG4CXX_WARN(logger, "warning message");
+	LOG4CXX_ERROR(logger, "error message");
 
 }
 

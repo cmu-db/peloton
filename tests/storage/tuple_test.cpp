@@ -77,14 +77,18 @@ TEST(TupleTests, VarcharTest) {
 	tuple->SetValue(0, ValueFactory::GetIntegerValue(23));
 	tuple->SetValue(1, ValueFactory::GetIntegerValue(45));
 	tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
-	tuple->SetValue(3, ValueFactory::GetStringValue("hello hello world"));
-	EXPECT_EQ(tuple->GetValue(3), ValueFactory::GetStringValue("hello hello world"));
+
+	Value val = ValueFactory::GetStringValue("hello hello world");
+	tuple->SetValue(3, val);
+	EXPECT_EQ(tuple->GetValue(3), val);
 
 	std::cout << (*tuple);
 
-	tuple->SetValue(3, ValueFactory::GetStringValue("hi joy !"));
-	EXPECT_EQ(tuple->GetValue(3), ValueFactory::GetStringValue("hi joy !"));
-	EXPECT_NE(tuple->GetValue(3), ValueFactory::GetStringValue("hello hello world"));
+	Value val2 = ValueFactory::GetStringValue("hi joy !");
+	tuple->SetValue(3, val2);
+  EXPECT_NE(tuple->GetValue(3), val);
+	EXPECT_EQ(tuple->GetValue(3), val2);
+	val.Free();
 
 	std::cout << (*tuple);
 

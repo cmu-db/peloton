@@ -61,10 +61,10 @@ public:
 		}
 	}
 
-	// Deletes tuple data (not schema or uninlined data)
+	// Deletes tuple data (not schema)
 	~Tuple() {
 		// then delete the actual data
-		delete tuple_data;
+		delete[] tuple_data;
 	}
 
 	// Setup the tuple given the specified data location and schema

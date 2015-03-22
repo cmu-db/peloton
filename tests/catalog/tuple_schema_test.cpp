@@ -61,6 +61,8 @@ TEST(TupleSchemaTests, TupleSchemaTest) {
 	std::cout << (*schema3);
 
 	EXPECT_NE(schema1, (*schema3));
+
+	delete schema3;
 }
 
 } // End test namespace
