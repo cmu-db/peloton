@@ -1,4 +1,0 @@
-#! /bin/sh
-# bootstrap -- Use this script to create generated files from the CVS dist
-
-autoreconf -fvi
