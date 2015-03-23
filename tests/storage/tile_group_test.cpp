@@ -266,7 +266,7 @@ TEST(TileGroupTests, MVCCInsert) {
 	storage::Tile *scan = nullptr;
 	scan = tile_group->ScanTuples(txn_id2, 1, cid2);
 
-	EXPECT_EQ(scan->GetActiveTupleCount(), 2);
+	EXPECT_EQ(scan->GetActiveTupleCount(), 0);
 
 	delete scan;
 
@@ -280,7 +280,7 @@ TEST(TileGroupTests, MVCCInsert) {
 
 	scan = tile_group->ScanTuples(txn_id3, 1, cid3);
 
-	EXPECT_EQ(scan->GetActiveTupleCount(), 1);
+	EXPECT_EQ(scan->GetActiveTupleCount(), 0);
 
 	delete scan;
 
