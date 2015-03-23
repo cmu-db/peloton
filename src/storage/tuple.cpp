@@ -30,6 +30,7 @@ void Tuple::SetValueAllocate(const id_t column_id,
 
 	const ValueType type = tuple_schema->GetType(column_id);
 	value = value.CastAs(type);
+
 	const bool is_inlined = tuple_schema->IsInlined(column_id);
 	char *dataPtr = GetDataPtr(column_id);
 	int32_t column_length = tuple_schema->GetLength(column_id);
@@ -305,10 +306,13 @@ int Tuple::Compare(const Tuple &other) const {
 
 // Release to the heap any memory allocated for any uninlined columns.
 void Tuple::FreeUninlinedData() {
+  if(tuple_data == nullptr)
+    return;
+
 	const uint16_t unlinlined_column_count = tuple_schema->GetUninlinedColumnCount();
 
 	for (int column_itr = 0; column_itr < unlinlined_column_count; column_itr++) {
-		GetValue(tuple_schema->GetUninlinedColumnIndex(column_itr)).Free();
+		GetValue(tuple_schema->GetUninlinedColumnIndex(column_itr)).FreeUninlinedData();
 	}
 }
 

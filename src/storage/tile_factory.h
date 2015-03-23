@@ -36,13 +36,21 @@ public:
 			TileGroupHeader* tile_header = nullptr,
 			Backend* backend = nullptr){
 
-		// create backend if needed
-		if(backend == nullptr)
+	  bool own_backend = false;
+	  // create backend if needed
+		if(backend == nullptr) {
 			backend = new storage::VMBackend();
+      own_backend = true;
+		}
 
-		return TileFactory::GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+		Tile *tile = TileFactory::GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
 				tile_header, schema, backend, tuple_count,
 				column_names, owns_tuple_schema);
+
+	  if(own_backend == true)
+	    tile->own_backend = true;
+
+	  return tile;
 	}
 
 	static Tile *GetTile(oid_t database_id,
@@ -56,12 +64,18 @@ public:
 			const std::vector<std::string>& column_names,
 			const bool owns_tuple_schema) {
 
+    bool own_header = false;
 		// create tile header if this is not a static tile and is needed
-		if(tile_header == nullptr)
+		if(tile_header == nullptr) {
 			tile_header = new TileGroupHeader(backend, tuple_count);
+			own_header = true;
+		}
 
 		Tile *tile = new Tile(tile_header, backend, schema, tuple_count, column_names,
 				owns_tuple_schema);
+
+    if(own_header)
+      tile->own_tile_group_header = true;
 
 		TileFactory::InitCommon(tile, database_id, table_id, tile_group_id, tile_id,
 				schema, column_names, owns_tuple_schema);
@@ -77,14 +91,22 @@ public:
 			const bool owns_tuple_schema,
 			Backend* backend = nullptr){
 
+    bool own_backend = false;
 		// create backend if needed
-		if(backend == nullptr)
+		if(backend == nullptr) {
 			backend = new storage::VMBackend();
+      own_backend = true;
+    }
 
-		return TileFactory::GetStaticTile(INVALID_OID, INVALID_OID,
+		Tile *tile = TileFactory::GetStaticTile(INVALID_OID, INVALID_OID,
 				INVALID_OID, INVALID_OID,
 				schema, backend, tuple_count,
 				column_names, owns_tuple_schema);
+
+    if(own_backend == true)
+      tile->own_backend = true;
+
+		return tile;
 	}
 
 	static Tile *GetStaticTile(oid_t database_id,

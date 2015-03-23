@@ -54,12 +54,16 @@ public:
 			bool own_schema);
 
 	~TileGroup() {
-		// clean up tile group header
-		delete tile_group_header;
-
 		// clean up tiles
 		for(auto tile : tiles)
 			delete tile;
+
+    // clean up tile group header
+    delete tile_group_header;
+
+		// own backend ?
+		if(own_backend)
+		  delete backend;
 	}
 
 	//===--------------------------------------------------------------------===//
@@ -93,6 +97,10 @@ public:
 		return tile_group_header;
 	}
 
+	Pool *GetTilePool(const id_t tile_id) const {
+	  return tiles[tile_id]->GetPool();
+	}
+
 protected:
 
 	//===--------------------------------------------------------------------===//
@@ -112,6 +120,12 @@ protected:
 
 	// mapping to tile schemas
 	std::vector<catalog::Schema *> tile_schemas;
+
+	// backend
+	Backend* backend;
+
+	// own backend ?
+	bool own_backend;
 
 	// Catalog information
 	id_t tile_group_id;
@@ -135,12 +149,23 @@ public:
 			const bool owns_tuple_schema,
 			Backend* backend = nullptr){
 
+	  bool own_backend = false;
 		// create backend if needed
-		if(backend == nullptr)
+		if(backend == nullptr) {
 			backend = new storage::VMBackend();
+			own_backend = true;
+		}
 
-		return TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
+		TileGroup *group = TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
 				nullptr, schemas, backend, tuple_count, column_names, owns_tuple_schema);
+
+    group->backend = backend;
+
+		if(own_backend) {
+		  group->own_backend = true;
+		}
+
+		return group;
 	}
 
 	static TileGroup *GetTileGroup(oid_t database_id,

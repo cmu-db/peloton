@@ -20,9 +20,6 @@
 
 namespace nstore {
 
-// Define static logger variable
-static log4cxx::LoggerPtr logger(log4cxx::Logger::getRootLogger());
-
 // Disable logging in production
 #ifdef NDEBUG
 #define LOG4CXX_TRACE(logger, expression)
@@ -37,20 +34,22 @@ class Logger {
  public:
 
   Logger() {
-    log4cxx::FileAppender* file_appender = new
-        log4cxx::FileAppender(log4cxx::LayoutPtr(new log4cxx::SimpleLayout()), "nstore.log", false);
+    log4cxx::FileAppenderPtr file_appender(new log4cxx::FileAppender(
+        log4cxx::LayoutPtr(new log4cxx::SimpleLayout()), "nstore.log", false));
 
     log4cxx::helpers::Pool p;
     file_appender->activateOptions(p);
 
-    log4cxx::BasicConfigurator::configure(log4cxx::AppenderPtr(file_appender));
+    log4cxx::BasicConfigurator::configure(file_appender);
 
     // Set to DEBUG level
     log4cxx::Logger::getRootLogger()->setLevel(log4cxx::Level::getDebug());
 
-    nstore::logger = log4cxx::Logger::getLogger("logger");
+    logger = log4cxx::Logger::getLogger("logger");
   }
 
+  // Define static logger variable
+  log4cxx::LoggerPtr logger;
 
 };
 

@@ -19,7 +19,6 @@
 
 #include "common/types.h"
 #include "common/pretty_printer.h"
-#include "common/logger.h"
 
 namespace nstore {
 namespace test {
