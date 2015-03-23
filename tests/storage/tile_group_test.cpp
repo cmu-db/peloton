@@ -244,11 +244,8 @@ TEST(TileGroupTests, MVCCInsert) {
 
 	storage::TileGroupHeader *header = tile_group->GetHeader();
 
-	std::cout << (*header);
-
 	// SELECT
 
-	/*
 	storage::Tuple *result = nullptr;
 	result = tile_group->SelectTuple(txn_id2, 1, 1, cid2);
 	EXPECT_EQ(result, nullptr);
@@ -286,7 +283,6 @@ TEST(TileGroupTests, MVCCInsert) {
 	EXPECT_EQ(scan->GetActiveTupleCount(), 1);
 
 	delete scan;
-  */
 
 	delete tuple;
 	delete schema;

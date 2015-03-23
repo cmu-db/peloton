@@ -57,19 +57,18 @@ void Tuple::Copy(const void *source, Pool *pool) {
 		// copy the data
 		::memcpy(tuple_data, source, tuple_schema->GetLength());
 
-		// tuple wrapper around source tuple data
-		storage::Tuple *tuple = new storage::Tuple(tuple_schema, source);
-
 		// Copy each uninlined column doing an allocation for copies.
 		for (id_t column_itr = 0; column_itr < uninlineable_column_count; column_itr++) {
 			const id_t unlineable_column_id =
 					tuple_schema->GetUninlinedColumnIndex(column_itr);
 
-			SetValueAllocate(unlineable_column_id,
-					tuple->GetValue(unlineable_column_id), pool);
+			// Get original value from uninlined pool
+			Value value = GetValue(unlineable_column_id);
+
+			// Make a copy of the value at a new location in uninlined pool
+			SetValueAllocate(unlineable_column_id, value, pool);
 		}
 
-		delete tuple;
 	}
 
 }
