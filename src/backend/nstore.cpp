@@ -71,6 +71,8 @@ int main(int argc, char **argv) {
 
 	nstore::parse_arguments(argc, argv, state);
 
+	// Start logger
+	nstore::Logger();
 	LOG(INFO) << "Starting nstore";
 
 	return 0;
