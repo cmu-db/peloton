@@ -66,7 +66,9 @@ TEST(TileGroupTests, BasicTest) {
 
   // TILE GROUP
 
-  storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 4, column_names, true);
+  catalog::Catalog *catalog = new catalog::Catalog();
+
+  storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 4, column_names, true, catalog);
 
 	// TUPLES
 
@@ -100,6 +102,7 @@ TEST(TileGroupTests, BasicTest) {
   delete schema;
 
 	delete tile_group;
+	delete catalog;
 }
 
 void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema){
@@ -161,7 +164,9 @@ TEST(TileGroupTests, StressTest) {
 
 	// TILE GROUP
 
-	storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 10000, column_names, true);
+  catalog::Catalog *catalog = new catalog::Catalog();
+
+	storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 10000, column_names, true, catalog);
 
 	LaunchParallelTest(6, TileGroupInsert, tile_group, schema);
 
@@ -169,6 +174,7 @@ TEST(TileGroupTests, StressTest) {
 
 	delete schema;
 	delete tile_group;
+  delete catalog;
 }
 
 TEST(TileGroupTests, MVCCInsert) {
@@ -211,7 +217,9 @@ TEST(TileGroupTests, MVCCInsert) {
 
 	// TILE GROUP
 
-	storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 3, column_names, true);
+  catalog::Catalog *catalog = new catalog::Catalog();
+
+	storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 3, column_names, true, catalog);
 
 	storage::Tuple *tuple = new storage::Tuple(schema, true);
 
@@ -287,6 +295,7 @@ TEST(TileGroupTests, MVCCInsert) {
 	delete tuple;
 	delete schema;
 	delete tile_group;
+  delete catalog;
 }
 
 } // End test namespace
