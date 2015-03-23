@@ -18,6 +18,7 @@ namespace nstore {
 namespace storage {
 
 TileGroup::TileGroup(TileGroupHeader* tile_group_header,
+                     catalog::Catalog *catalog,
                      Backend* backend,
                      std::vector<catalog::Schema *> schemas,
                      int tuple_count,
@@ -36,7 +37,7 @@ TileGroup::TileGroup(TileGroupHeader* tile_group_header,
 
   for(id_t tile_itr = 0 ; tile_itr < tile_count ; tile_itr++){
 
-    oid_t tile_id = nstore::catalog::Catalog::GetNextOid();
+    oid_t tile_id = catalog->GetNextOid();
 
     Tile * tile = storage::TileFactory::GetTile(
         database_id, table_id, tile_group_id, tile_id,
@@ -44,6 +45,9 @@ TileGroup::TileGroup(TileGroupHeader* tile_group_header,
         tile_schemas[tile_itr],
         backend,
         tuple_count, column_names[tile_itr], own_schema);
+
+    // add metadata in locator
+    catalog->SetLocation(tile_id, tile);
 
     tiles.push_back(tile);
   }

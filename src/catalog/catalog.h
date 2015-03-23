@@ -13,10 +13,11 @@
 #pragma once
 
 #include <atomic>
+#include <map>
+#include <thread>
+#include <mutex>
 
 #include "common/types.h"
-
-#include "tbb/concurrent_hash_map.h"
 
 namespace nstore {
 namespace catalog {
@@ -40,22 +41,40 @@ struct ItemPointer {
 // Catalog
 //===--------------------------------------------------------------------===//
 
+
 class Catalog {
-  Catalog() = delete;
   Catalog(Catalog const&) = delete;
 
  public:
 
-  static oid_t GetNextOid(){
+  Catalog() : oid (ATOMIC_VAR_INIT(INVALID_OID)) {
+  }
+
+  oid_t GetNextOid(){
     return ++oid;
   }
 
-  static std::atomic<oid_t> oid;
+  oid_t GetOid() const{
+    return oid;
+  }
 
-  tbb::concurrent_hash_map<oid_t, void *> locator;
+  void SetLocation(oid_t oid, void *location){
+
+    {
+      std::lock_guard<std::mutex> lock(locator_mutex);
+
+      locator[oid] = location;
+    }
+
+  }
+
+ private:
+  std::atomic<oid_t> oid;
+
+  std::mutex locator_mutex;
+
+  std::map<oid_t, void*> locator;
 };
-
-std::atomic<oid_t> Catalog::oid = ATOMIC_VAR_INIT(1);
 
 
 } // End catalog namespace

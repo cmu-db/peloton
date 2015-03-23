@@ -15,6 +15,7 @@
 #include "storage/tile.h"
 #include "storage/tile_factory.h"
 #include "storage/tile_group_header.h"
+#include "catalog/catalog.h"
 
 #include <cassert>
 
@@ -47,6 +48,7 @@ public:
 
 	// Tile group constructor
 	TileGroup(TileGroupHeader* tile_header,
+	    catalog::Catalog *catalog,
 			Backend* backend,
 			std::vector<catalog::Schema *> schemas,
 			int tuple_count,
@@ -147,7 +149,8 @@ public:
 			int tuple_count,
 			const std::vector<std::vector<std::string> >& column_names,
 			const bool owns_tuple_schema,
-			Backend* backend = nullptr){
+			catalog::Catalog *catalog,
+			Backend *backend = nullptr){
 
 	  bool own_backend = false;
 		// create backend if needed
@@ -157,7 +160,7 @@ public:
 		}
 
 		TileGroup *group = TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
-				nullptr, schemas, backend, tuple_count, column_names, owns_tuple_schema);
+				nullptr, schemas, catalog, backend, tuple_count, column_names, owns_tuple_schema);
 
     group->backend = backend;
 
@@ -173,6 +176,7 @@ public:
 			oid_t tile_group_id,
 			TileGroupHeader* tile_header,
 			const std::vector<catalog::Schema*>& schemas,
+			catalog::Catalog *catalog,
 			Backend* backend,
 			int tuple_count,
 			const std::vector<std::vector<std::string> >& column_names,
@@ -182,7 +186,7 @@ public:
 		if(tile_header == nullptr)
 			tile_header = new TileGroupHeader(backend, tuple_count);
 
-		TileGroup *tile_group = new TileGroup(tile_header, backend, schemas, tuple_count,
+		TileGroup *tile_group = new TileGroup(tile_header, catalog, backend, schemas, tuple_count,
 				column_names, owns_tuple_schema);
 
 		TileGroupFactory::InitCommon(tile_group, database_id, table_id, tile_group_id);
