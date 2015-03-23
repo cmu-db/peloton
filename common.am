@@ -16,5 +16,5 @@ AM_CXXFLAGS = -std=c++11 -O0 -g3 -Wall -Wextra -fno-strict-aliasing \
 
 #              -fdiagnostics-color=auto
 
-AM_LDFLAGS  = $(CODE_COVERAGE_LDFLAGS) -lpthread -llog4cxx
+AM_LDFLAGS  = $(CODE_COVERAGE_LDFLAGS) -lpthread
              

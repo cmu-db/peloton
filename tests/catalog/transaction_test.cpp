@@ -60,6 +60,7 @@ TEST(TransactionTests, TransactionTest) {
 
   std::cout << "Current transactions count :: " << txn_manager->GetCurrentTransactions().size() << "\n";
 
+  delete txn_manager;
 }
 
 } // End test namespace

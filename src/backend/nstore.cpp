@@ -64,15 +64,14 @@ static void parse_arguments(int argc, char* argv[], configuration& config) {
 
 }
 
+INITIALIZE_EASYLOGGINGPP
+
 int main(int argc, char **argv) {
 	nstore::configuration state;
 
 	nstore::parse_arguments(argc, argv, state);
 
-	// Start logger
-	nstore::Logger();
-
-	LOG4CXX_WARN(nstore::logger, "Starting nstore");
+	LOG(INFO) << "Starting nstore";
 
 	return 0;
 }
