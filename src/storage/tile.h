@@ -133,6 +133,10 @@ class Tile {
     return backend;
   }
 
+  oid_t GetTileId() const {
+    return tile_id;
+  }
+
   // Compare two tiles
   bool operator== (const Tile &other) const;
   bool operator!= (const Tile &other) const;

@@ -68,6 +68,7 @@ class Catalog {
 
   }
 
+
  private:
   std::atomic<oid_t> oid;
 

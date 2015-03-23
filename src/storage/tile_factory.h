@@ -63,18 +63,18 @@ class TileFactory {
                        const std::vector<std::string>& column_names,
                        const bool owns_tuple_schema) {
 
-    bool own_header = false;
-    // create tile header if this is not a static tile and is needed
-    if(tile_header == nullptr) {
-      tile_header = new TileGroupHeader(backend, tuple_count);
-      own_header = true;
-    }
-
     bool own_backend = false;
     // create backend if needed
     if(backend == nullptr) {
       backend = new storage::VMBackend();
       own_backend = true;
+    }
+
+    bool own_header = false;
+    // create tile header if this is not a static tile and is needed
+    if(tile_header == nullptr) {
+      tile_header = new TileGroupHeader(backend, tuple_count);
+      own_header = true;
     }
 
     Tile *tile = new Tile(tile_header, backend, schema, tuple_count, column_names,
@@ -97,8 +97,8 @@ class TileFactory {
   static void InitCommon(Tile *tile,
                          oid_t database_id,
                          oid_t table_id,
-                         oid_t tile_id,
                          oid_t tile_group_id,
+                         oid_t tile_id,
                          catalog::Schema* schema,
                          const std::vector<std::string>& column_names,
                          const bool owns_tuple_schema) {

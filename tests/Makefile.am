@@ -27,6 +27,7 @@ check_PROGRAMS =
 ######################################################################
 include $(srcdir)/catalog/Makefile.am
 include $(srcdir)/common/Makefile.am
+include $(srcdir)/executor/Makefile.am
 include $(srcdir)/storage/Makefile.am
 
 TESTS = $(check_PROGRAMS)
