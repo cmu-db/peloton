@@ -28,9 +28,9 @@ TEST(LoggerTests, BasicTest) {
   nstore::Logger();
 
 
-	LOG4CXX_TRACE(logger, "trace message");
-	LOG4CXX_WARN(logger, "warning message");
-	LOG4CXX_ERROR(logger, "error message");
+	//LOG4CXX_TRACE(logger, "trace message");
+	//LOG4CXX_WARN(logger, "warning message");
+	//LOG4CXX_ERROR(logger, "error message");
 
 }
 

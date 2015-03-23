@@ -33,11 +33,13 @@ Tile::Tile(TileGroupHeader* _tile_header, Backend* _backend, catalog::Schema *tu
   pool(NULL),
   column_names(_columns_names),
   schema(tuple_schema),
-  own_schema(_own_schema),
   num_tuple_slots(0),
   column_count(tuple_schema->GetColumnCount()),
   tuple_length(tuple_schema->GetLength()),
   uninlined_data_size(0),
+  own_schema(_own_schema),
+  own_backend(false),
+  own_tile_group_header(false),
   tile_id(INVALID_ID),
   tile_group_id(INVALID_ID),
   table_id(INVALID_ID),
@@ -63,11 +65,15 @@ Tile::Tile(TileGroupHeader* _tile_header, Backend* _backend, catalog::Schema *tu
 }
 
 Tile::~Tile() {
-	// reclaim the tile memory (only inlined data)
+	// reclaim the tile memory (INLINED data)
 	backend->Free(data);
 	data = NULL;
 
-	// release pool storage if schema not inlined
+	// if own tile group header ?
+	if(own_tile_group_header)
+	  delete tile_group_header;
+
+	// reclaim the tile memory (UNINLINED data)
 	if(schema->IsInlined() == false)
 		delete pool;
 	pool = NULL;
@@ -80,6 +86,10 @@ Tile::~Tile() {
 	if (column_header)
 		delete column_header;
 	column_header = NULL;
+
+  // if own backend ?
+  if(own_backend)
+    delete backend;
 
 }
 

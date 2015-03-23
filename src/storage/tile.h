@@ -32,10 +32,6 @@ class TileIterator;
 /**
  * Represents a Tile.
  *
- *   temp_tuple: when a transaction is inserting a new tuple, this tuple
- *     object is used as a reusable value-holder for the new tuple.
- *     In this way, we don't have to allocate a temporary tuple each time.
- *
  * Tiles are only instantiated via TileFactory.
  *
  * NOTE: MVCC is implemented on the shared TileGroupHeader.
@@ -188,9 +184,6 @@ class Tile {
   // tile schema
   catalog::Schema *schema;
 
-  // do we own the schema ?
-  bool own_schema;
-
   // number of tuple slots allocated
   id_t num_tuple_slots;
 
@@ -205,6 +198,15 @@ class Tile {
 
   // space occupied by uninlined data
   size_t uninlined_data_size;
+
+  // do we own the schema ?
+  bool own_schema;
+
+  // do we own the backend ?
+  bool own_backend;
+
+  // do we own the group header ?
+  bool own_tile_group_header;
 
   // Catalog information
   id_t tile_id;

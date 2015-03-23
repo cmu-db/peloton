@@ -35,7 +35,7 @@ class Tuple {
 public:
 
 	// Default constructor (don't use this)
-	inline Tuple() : tuple_schema(NULL), tuple_data(NULL) {
+	inline Tuple() : tuple_schema(nullptr), tuple_data(nullptr) {
 	}
 
 	// Setup the tuple given a table
@@ -43,7 +43,7 @@ public:
 	}
 
 	// Setup the tuple given a schema
-	inline Tuple(catalog::Schema *schema) : tuple_schema(schema), tuple_data(NULL) {
+	inline Tuple(catalog::Schema *schema) : tuple_schema(schema), tuple_data(nullptr) {
 		assert(tuple_schema);
 	}
 
@@ -54,16 +54,21 @@ public:
 	}
 
 	// Setup the tuple given a schema and allocate space
-	inline Tuple(catalog::Schema *schema, bool allocate) : tuple_schema(schema) {
+	inline Tuple(catalog::Schema *schema, bool allocate) : tuple_schema(schema), tuple_data(nullptr) {
 		assert(tuple_schema);
+
 		if(allocate) {
 			tuple_data = new char[tuple_schema->GetLength()];
 		}
+
 	}
 
-	// Deletes tuple data (not schema)
+	// Deletes tuple data
+	// Does not delete either SCHEMA or UNINLINED data
+	// Tile or larger entities must take care of this
 	~Tuple() {
-		// then delete the actual data
+
+	  // delete the tuple data
 		delete[] tuple_data;
 	}
 

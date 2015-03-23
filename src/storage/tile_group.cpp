@@ -25,6 +25,8 @@ TileGroup::TileGroup(TileGroupHeader* _tile_group_header,
 : tile_group_header(_tile_group_header),
   num_tuple_slots(tuple_count),
   tile_schemas(schemas),
+  backend(nullptr),
+  own_backend(false),
   tile_group_id(INVALID_ID),
   table_id(INVALID_ID),
   database_id(INVALID_ID) {
@@ -80,6 +82,8 @@ id_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
 		tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
 		tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
 		tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
+
+		delete tile_tuple;
 	}
 
 	return tuple_slot_id;
@@ -139,13 +143,14 @@ Tile *TileGroup::ScanTuples(txn_id_t transaction_id, id_t tile_id, cid_t at_cid)
 
 	if(tuple_count > 0) {
 		storage::Tile *tile = storage::TileFactory::GetStaticTile(tiles[tile_id]->GetSchema(),
-				tuple_count, tiles[tile_id]->GetColumnNames(), true);
+				tuple_count, tiles[tile_id]->GetColumnNames(), false);
 
 		id_t tuple_slot_id = 0;
 
 		for(auto tuple : tuples) {
 			tile->InsertTuple(tuple_slot_id, tuple);
 			tuple_slot_id++;
+			delete tuple;
 		}
 
 		return tile;

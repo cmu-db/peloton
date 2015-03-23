@@ -48,21 +48,21 @@ public:
 		return Value::GetDoubleValue(value);
 	}
 
-	static inline Value GetStringValue(std::string value) {
-		return Value::GetStringValue(value);
+	static inline Value GetStringValue(std::string value, Pool *data_pool) {
+		return Value::GetStringValue(value, data_pool);
 	}
 
 	static inline Value GetNullStringValue() {
 		return Value::GetNullStringValue();
 	}
 
-	static inline Value GetBinaryValue(std::string value) {
+	static inline Value GetBinaryValue(std::string value, Pool *data_pool) {
 		/// uses hex encoding
-		return Value::GetBinaryValue(value);
+		return Value::GetBinaryValue(value, data_pool);
 	}
 
-	static inline Value GetBinaryValue(unsigned char* value, int32_t len) {
-		return Value::GetBinaryValue(value, len);
+	static inline Value GetBinaryValue(unsigned char* value, int32_t len, Pool *data_pool) {
+		return Value::GetBinaryValue(value, len, data_pool);
 	}
 
 	static inline Value GetNullBinaryValue() {

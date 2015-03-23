@@ -38,27 +38,28 @@ TEST(TileTests, BasicTest) {
 
 	catalog::Schema *schema = new catalog::Schema(columns);
 
-	storage::Tuple *tuple1 = new storage::Tuple(schema, true);
-	storage::Tuple *tuple2 = new storage::Tuple(schema, true);
+  std::vector<std::string> column_names;
+
+  column_names.push_back("COL 1");
+  column_names.push_back("COL 2");
+  column_names.push_back("COL 3");
+  column_names.push_back("COL 4");
+
+  storage::Tile *tile = storage::TileFactory::GetTile(schema, 6, column_names, true);
+
+  storage::Tuple *tuple1 = new storage::Tuple(schema, true);
+  storage::Tuple *tuple2 = new storage::Tuple(schema, true);
 
 	tuple1->SetValue(0, ValueFactory::GetIntegerValue(1));
 	tuple1->SetValue(1, ValueFactory::GetIntegerValue(1));
 	tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1));
-	tuple1->SetValue(3, ValueFactory::GetStringValue("tuple 1"));
+	tuple1->SetValue(3, ValueFactory::GetStringValue("tuple 1", tile->GetPool()));
 
 	tuple2->SetValue(0, ValueFactory::GetIntegerValue(2));
 	tuple2->SetValue(1, ValueFactory::GetIntegerValue(2));
 	tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2));
-	tuple2->SetValue(3, ValueFactory::GetStringValue("tuple 2"));
+	tuple2->SetValue(3, ValueFactory::GetStringValue("tuple 2", tile->GetPool()));
 
-	std::vector<std::string> column_names;
-
-	column_names.push_back("COL 1");
-	column_names.push_back("COL 2");
-	column_names.push_back("COL 3");
-	column_names.push_back("COL 4");
-
-	storage::Tile *tile = storage::TileFactory::GetTile(schema, 6, column_names, true);
 
 	tile->InsertTuple(0, tuple1);
 	tile->InsertTuple(1, tuple2);
