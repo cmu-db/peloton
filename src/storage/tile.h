@@ -83,6 +83,12 @@ class Tile {
    */
   Tuple *GetTuple(const id_t tuple_slot_id);
 
+  /**
+   * Returns value present at slot
+   * NOTE : No checks, must be at valid slot and must exist.
+   */
+  Value GetValue(const id_t tuple_slot_id, const id_t column_id);
+
   //===--------------------------------------------------------------------===//
   // Size Stats
   //===--------------------------------------------------------------------===//
@@ -142,10 +148,6 @@ class Tile {
   bool operator!= (const Tile &other) const;
 
   TileIterator GetIterator();
-
-  //===--------------------------------------------------------------------===//
-  // Utilities
-  //===--------------------------------------------------------------------===//
 
   // Get a string representation of this tile
   friend std::ostream& operator<<(std::ostream& os, const Tile& tile);

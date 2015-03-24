@@ -371,7 +371,7 @@ std::ostream& operator<< (std::ostream& os, const Tuple& tuple){
 			os << "<NULL>";
 		}
 		else {
-			os << tuple.GetValue(column_itr).ToString();
+			os << tuple.GetValue(column_itr);
 		}
 		os << ")";
 	}
