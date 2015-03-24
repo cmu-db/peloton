@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * physical_tile.cpp
- * file description
+ * tile.cpp
+ * the base class for all tiles
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/storage/physical_tile.cpp
+ * /n-store/src/storage/tile.cpp
  *
  *-------------------------------------------------------------------------
  */
