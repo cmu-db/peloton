@@ -18,7 +18,6 @@ namespace nstore {
 namespace executor {
 
 oid_t LogicalSchema::GetBaseTileOid(id_t column_id) {
-  assert(false);
   assert(valid_bits[column_id]);
   return base_tiles[column_id];
 }
