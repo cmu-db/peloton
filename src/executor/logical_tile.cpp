@@ -12,6 +12,7 @@
 
 
 #include "executor/logical_tile.h"
+#include "storage/tile.h"
 
 #include <iostream>
 #include <cassert>
@@ -35,11 +36,16 @@ void LogicalTile::AppendTuple(id_t offset, catalog::ItemPointer tuple) {
 }
 
 // Get the tuple from given tile at the given tuple offset
-storage::Tuple *LogicalTile::GetTuple(id_t tile_offset, id_t offset) {
-  assert(offset < tuple_set_container.size());
+storage::Tuple *LogicalTile::GetTuple(id_t tile_offset, id_t tuple_offset) {
+  assert(tuple_offset < tuple_set_container.size());
 
+  catalog::ItemPointer item_pointer = tuple_set_container[tuple_offset][tile_offset];
 
-  return nullptr;
+  storage::Tile *tile = reinterpret_cast<storage::Tile *>(catalog->locator[item_pointer.tile_id]);
+
+  storage::Tuple *tuple = tile->GetTuple(tuple_offset);
+
+  return tuple;
 }
 
 

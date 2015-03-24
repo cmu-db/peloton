@@ -13,10 +13,8 @@
 #pragma once
 
 #include <atomic>
-#include <map>
-#include <thread>
-#include <mutex>
 
+#include "tbb/concurrent_unordered_map.h"
 #include "common/types.h"
 
 namespace nstore {
@@ -41,6 +39,7 @@ struct ItemPointer {
 // Catalog
 //===--------------------------------------------------------------------===//
 
+typedef tbb::concurrent_unordered_map<oid_t, void*> locator_chm;
 
 class Catalog {
   Catalog(Catalog const&) = delete;
@@ -58,23 +57,17 @@ class Catalog {
     return oid;
   }
 
-  void SetLocation(oid_t oid, void *location){
-
-    {
-      std::lock_guard<std::mutex> lock(locator_mutex);
-
-      locator[oid] = location;
-    }
-
+  void SetLocation(const oid_t oid, void *location){
+    locator.insert(std::pair<oid_t, void*>(oid, location));
   }
 
+  //===--------------------------------------------------------------------===//
+  // Data members
+  //===--------------------------------------------------------------------===//
 
- private:
   std::atomic<oid_t> oid;
 
-  std::mutex locator_mutex;
-
-  std::map<oid_t, void*> locator;
+  locator_chm locator;
 };
 
 
