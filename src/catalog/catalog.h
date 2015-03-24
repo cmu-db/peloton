@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * storage_manager.h
+ * catalog.h
  * file description
  *
  * Copyright(c) 2015, CMU
