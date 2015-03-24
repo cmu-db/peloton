@@ -12,7 +12,8 @@ AM_CXXFLAGS +=  $(GTEST_CXXFLAGS)
 
 AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -pthread \
 			  $(top_builddir)/third_party/gtest/lib/libgtest_main.la \
-			  $(top_builddir)/third_party/gtest/lib/libgtest.la 
+			  $(top_builddir)/third_party/gtest/lib/libgtest.la \
+			  -I$(top_srcdir)/third_party
 
 # TESTS -- Programs run automatically by "make check"
 # check_PROGRAMS -- Programs built by "make check" but not necessarily run
@@ -26,6 +27,7 @@ check_PROGRAMS =
 ######################################################################
 include $(srcdir)/catalog/Makefile.am
 include $(srcdir)/common/Makefile.am
+include $(srcdir)/executor/Makefile.am
 include $(srcdir)/storage/Makefile.am
 
 TESTS = $(check_PROGRAMS)

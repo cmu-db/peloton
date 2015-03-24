@@ -19,14 +19,6 @@ AC_PROG_CXX([g++])
 AC_SUBST([AM_CXXFLAGS], '-std=c++11 -stdlib=libc++')
 
 ######################################################################
-# Log4cxx 
-######################################################################
-AC_CHECK_HEADER([log4cxx/logger.h],,
-                AC_MSG_ERROR([log4cxx/logger.h not found. Exiting.]))
-AC_CHECK_LIB([log4cxx], [main],,
-             AC_MSG_ERROR([log4cxx library not found. Exiting.]))
-
-######################################################################
 # DOXYGEN SUPPORT
 ######################################################################
 
@@ -39,6 +31,12 @@ DX_XML_FEATURE(OFF)
 DX_PDF_FEATURE(OFF)
 DX_PS_FEATURE(OFF)
 DX_INIT_DOXYGEN([$PACKAGE_NAME], [doc/doxygen.cfg], [doc])
+
+######################################################################
+# LOGGING SUPPORT
+######################################################################
+ 
+AC_CONFIG_FILES([log.conf:log.conf])
 
 ######################################################################
 # VALGRIND + GCOV

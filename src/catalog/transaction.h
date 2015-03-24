@@ -134,6 +134,12 @@ class TransactionManager {
     last_cid = START_CID;
   }
 
+  ~TransactionManager() {
+
+    // delete base txn
+    delete last_txn;
+  }
+
   // Get next transaction id
   txn_id_t GetNextTransactionId() {
     if (next_txn_id == MAX_TXN_ID) {

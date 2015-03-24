@@ -10,34 +10,47 @@
  *-------------------------------------------------------------------------
  */
 
+#include "catalog/catalog.h"
 #include "common/synch.h"
 #include "storage/tile_group.h"
 
 namespace nstore {
 namespace storage {
 
-TileGroup::TileGroup(TileGroupHeader* _tile_group_header,
-		Backend* _backend,
-		std::vector<catalog::Schema *> schemas,
-		int tuple_count,
-		const std::vector<std::vector<std::string> >& column_names,
-		bool own_schema)
-: tile_group_header(_tile_group_header),
+TileGroup::TileGroup(TileGroupHeader* tile_group_header,
+                     catalog::Catalog *catalog,
+                     Backend* backend,
+                     std::vector<catalog::Schema *> schemas,
+                     int tuple_count,
+                     const std::vector<std::vector<std::string> >& column_names,
+                     bool own_schema)
+: tile_group_header(tile_group_header),
   num_tuple_slots(tuple_count),
   tile_schemas(schemas),
+  backend(backend),
+  own_backend(false),
   tile_group_id(INVALID_ID),
   table_id(INVALID_ID),
   database_id(INVALID_ID) {
 
-	tile_count = tile_schemas.size();
+  tile_count = tile_schemas.size();
 
-	for(id_t tile_itr = 0 ; tile_itr < tile_count ; tile_itr++){
-		Tile * tile = storage::TileFactory::GetTile(tile_schemas[tile_itr],
-				tuple_count, column_names[tile_itr], own_schema,
-				tile_group_header, _backend);
+  for(id_t tile_itr = 0 ; tile_itr < tile_count ; tile_itr++){
 
-		tiles.push_back(tile);
-	}
+    oid_t tile_id = catalog->GetNextOid();
+
+    Tile * tile = storage::TileFactory::GetTile(
+        database_id, table_id, tile_group_id, tile_id,
+        tile_group_header,
+        tile_schemas[tile_itr],
+        backend,
+        tuple_count, column_names[tile_itr], own_schema);
+
+    // add metadata in locator
+    catalog->SetLocation(tile_id, tile);
+
+    tiles.push_back(tile);
+  }
 
 }
 
@@ -52,37 +65,39 @@ TileGroup::TileGroup(TileGroupHeader* _tile_group_header,
  */
 id_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
 
-	id_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
+  id_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
 
-	//std::cout << "Empty tuple slot :: " << tuple_slot_id << "\n";
+  //std::cout << "Empty tuple slot :: " << tuple_slot_id << "\n";
 
-	// No more slots
-	if(tuple_slot_id == INVALID_ID)
-		return tuple_slot_id;
+  // No more slots
+  if(tuple_slot_id == INVALID_ID)
+    return tuple_slot_id;
 
-	id_t tile_column_count;
-	id_t column_itr = 0;
+  id_t tile_column_count;
+  id_t column_itr = 0;
 
-	for(id_t tile_itr = 0 ; tile_itr < tile_count ; tile_itr++){
-		catalog::Schema *schema = tile_schemas[tile_itr];
-		tile_column_count = schema->GetColumnCount();
+  for(id_t tile_itr = 0 ; tile_itr < tile_count ; tile_itr++){
+    catalog::Schema *schema = tile_schemas[tile_itr];
+    tile_column_count = schema->GetColumnCount();
 
-		storage::Tuple *tile_tuple = new storage::Tuple(schema, true);
+    storage::Tuple *tile_tuple = new storage::Tuple(schema, true);
 
-		for(id_t tile_column_itr = 0 ; tile_column_itr < tile_column_count ; tile_column_itr++){
-			tile_tuple->SetValue(tile_column_itr, tuple->GetValue(column_itr));
-			column_itr++;
-		}
+    for(id_t tile_column_itr = 0 ; tile_column_itr < tile_column_count ; tile_column_itr++){
+      tile_tuple->SetValue(tile_column_itr, tuple->GetValue(column_itr));
+      column_itr++;
+    }
 
-		tiles[tile_itr]->InsertTuple(tuple_slot_id, tile_tuple);
+    tiles[tile_itr]->InsertTuple(tuple_slot_id, tile_tuple);
 
-		// Set MVCC info
-		tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
-		tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
-		tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
-	}
+    // Set MVCC info
+    tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
+    tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
+    tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
 
-	return tuple_slot_id;
+    delete tile_tuple;
+  }
+
+  return tuple_slot_id;
 }
 
 /**
@@ -91,19 +106,19 @@ id_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
  * USED FOR POINT LOOKUPS
  */
 Tuple *TileGroup::SelectTuple(txn_id_t transaction_id, id_t tile_id, id_t tuple_slot_id, cid_t at_cid) {
-	assert(tile_id < tile_count);
-	assert(tuple_slot_id < num_tuple_slots);
+  assert(tile_id < tile_count);
+  assert(tuple_slot_id < num_tuple_slots);
 
-	// is it within bounds ?
-	if(tuple_slot_id >= GetActiveTupleCount())
-		return nullptr;
+  // is it within bounds ?
+  if(tuple_slot_id >= GetActiveTupleCount())
+    return nullptr;
 
-	// is it visible to transaction ?
-	if(tile_group_header->IsVisible(tuple_slot_id, transaction_id, at_cid)){
-		return tiles[tile_id]->GetTuple(tuple_slot_id);
-	}
+  // is it visible to transaction ?
+  if(tile_group_header->IsVisible(tuple_slot_id, transaction_id, at_cid)){
+    return tiles[tile_id]->GetTuple(tuple_slot_id);
+  }
 
-	return nullptr;
+  return nullptr;
 }
 
 /**
@@ -112,7 +127,7 @@ Tuple *TileGroup::SelectTuple(txn_id_t transaction_id, id_t tile_id, id_t tuple_
  * USED FOR SEQUENTIAL SCANS
  */
 Tile *TileGroup::ScanTuples(txn_id_t transaction_id, id_t tile_id, cid_t at_cid) {
-	assert(tile_id < tile_count);
+  assert(tile_id < tile_count);
 
 	id_t active_tuple_count = GetActiveTupleCount();
 
@@ -138,32 +153,33 @@ Tile *TileGroup::ScanTuples(txn_id_t transaction_id, id_t tile_id, cid_t at_cid)
 	id_t tuple_count = tuples.size();
 
 	if(tuple_count > 0) {
-		storage::Tile *tile = storage::TileFactory::GetStaticTile(tiles[tile_id]->GetSchema(),
-				tuple_count, tiles[tile_id]->GetColumnNames(), true);
+		storage::Tile *tile = storage::TileFactory::GetTile(tiles[tile_id]->GetSchema(),
+				tuple_count, tiles[tile_id]->GetColumnNames(), false);
 
 		id_t tuple_slot_id = 0;
 
 		for(auto tuple : tuples) {
 			tile->InsertTuple(tuple_slot_id, tuple);
 			tuple_slot_id++;
+			delete tuple;
 		}
 
 		return tile;
 	}
 
-	return nullptr;
+  return nullptr;
 }
 
 // delete tuple at given slot if it is not already locked
 bool TileGroup::DeleteTuple(txn_id_t transaction_id, id_t tuple_slot_id) {
 
-	// compare and exchange the end commit id
-	if (atomic_cas<txn_id_t>(tile_group_header->GetEndCommitIdLocation(tuple_slot_id),
-			MAX_CID, transaction_id)) {
-		return true;
-	}
+  // compare and exchange the end commit id
+  if (atomic_cas<txn_id_t>(tile_group_header->GetEndCommitIdLocation(tuple_slot_id),
+                           MAX_CID, transaction_id)) {
+    return true;
+  }
 
-	return false;
+  return false;
 }
 
 
@@ -175,24 +191,24 @@ bool TileGroup::DeleteTuple(txn_id_t transaction_id, id_t tuple_slot_id) {
 std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group) {
 
 
-	os << "====================================================================================================\n";
+  os << "====================================================================================================\n";
 
-	os << "TILE GROUP :\n";
-	os << "\tCatalog ::"
-			<< " DB: "<< tile_group.database_id << " Table: " << tile_group.table_id
-			<< " Tile Group:  " << tile_group.tile_group_id
-			<< "\n";
+  os << "TILE GROUP :\n";
+  os << "\tCatalog ::"
+      << " DB: "<< tile_group.database_id << " Table: " << tile_group.table_id
+      << " Tile Group:  " << tile_group.tile_group_id
+      << "\n";
 
-	os << "\tActive Tuples:  " << tile_group.tile_group_header->GetActiveTupleCount()
-													<< " out of " << tile_group.num_tuple_slots  <<" slots\n";
+  os << "\tActive Tuples:  " << tile_group.tile_group_header->GetActiveTupleCount()
+													        << " out of " << tile_group.num_tuple_slots  <<" slots\n";
 
-	for(id_t tile_itr = 0 ; tile_itr < tile_group.tile_count ; tile_itr++){
-		os << (*tile_group.tiles[tile_itr]);
-	}
+  for(id_t tile_itr = 0 ; tile_itr < tile_group.tile_count ; tile_itr++){
+    os << (*tile_group.tiles[tile_itr]);
+  }
 
-	os << "====================================================================================================\n";
+  os << "====================================================================================================\n";
 
-	return os;
+  return os;
 }
 
 } // End storage namespace
