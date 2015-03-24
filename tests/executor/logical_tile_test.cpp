@@ -28,7 +28,9 @@ TEST(LogicalTileTests, BasicTest) {
 
   // LOGICAL TILE
 
-  executor::LogicalTile *logical_tile = new executor::LogicalTile(2);
+  catalog::Catalog *catalog = new catalog::Catalog();
+
+  executor::LogicalTile *logical_tile = new executor::LogicalTile(catalog, 2);
 
   catalog::ItemPointer logical_tuple1 = catalog::ItemPointer(1, 0);
   catalog::ItemPointer logical_tuple2 = catalog::ItemPointer(1, 1);
@@ -40,6 +42,7 @@ TEST(LogicalTileTests, BasicTest) {
   std::cout << (*logical_tile) << "\n";
 
   delete logical_tile;
+  delete catalog;
 
 }
 
@@ -121,7 +124,7 @@ TEST(LogicalTileTests, SinglePhysicalTileTest) {
   // LOGICAL TILE
   ////////////////////////////////////////////////////////////////
 
-  executor::LogicalTile *logical_tile = new executor::LogicalTile(1);
+  executor::LogicalTile *logical_tile = new executor::LogicalTile(catalog, 1);
 
   oid_t tile_id = tile_group->GetTileId(1);
 
@@ -138,11 +141,20 @@ TEST(LogicalTileTests, SinglePhysicalTileTest) {
 
   std::cout << (*logical_tile) << "\n";
 
+  storage::Tuple* found_tuple1 = logical_tile->GetTuple(0, 0);
+  storage::Tuple* found_tuple2 = logical_tile->GetTuple(0, 1);
+
+  std::cout << (*found_tuple1);
+  std::cout << (*found_tuple2);
+
   delete logical_tile;
 
   delete tuple1;
   delete tuple2;
   delete schema;
+
+  delete found_tuple1;
+  delete found_tuple2;
 
   delete tile_group;
   delete catalog;

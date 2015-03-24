@@ -35,8 +35,8 @@ class LogicalTile {
 
  public:
 
-  LogicalTile(id_t base_tile_count)
-  : base_tile_count(base_tile_count) {
+  LogicalTile(catalog::Catalog *catalog, id_t base_tile_count)
+ : catalog(catalog), base_tile_count(base_tile_count) {
   }
 
   // Add a tuple set to the container
@@ -56,7 +56,6 @@ class LogicalTile {
   friend std::ostream& operator<<(std::ostream& os, const LogicalTile& logical_tile);
 
  protected:
-
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
@@ -64,8 +63,12 @@ class LogicalTile {
   // container of tuple pointer sets
   std::vector<std::vector<catalog::ItemPointer> > tuple_set_container;
 
+  // catalog for tile mapping
+  catalog::Catalog *catalog;
+
   // number of base tiles
   id_t base_tile_count;
+
 };
 
 
