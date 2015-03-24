@@ -14,9 +14,9 @@
 
 #include <vector>
 
-#include "common/types.h"
 #include "catalog/catalog.h"
-#include "catalog/schema.h"
+#include "common/types.h"
+#include "executor/logical_schema.h"
 #include "storage/tuple.h"
 
 namespace nstore {
@@ -36,7 +36,7 @@ class LogicalTile {
  public:
 
   LogicalTile(catalog::Catalog *catalog, id_t base_tile_count,
-              catalog::Schema *schema, const std::vector<catalog::ItemPointer>& column_mapping)
+              LogicalSchema *schema, const std::vector<catalog::ItemPointer>& column_mapping)
  : catalog(catalog),
    base_tile_count(base_tile_count),
    schema(schema),
@@ -76,8 +76,10 @@ class LogicalTile {
   // number of base tiles
   id_t base_tile_count;
 
-  // tile schema
-  catalog::Schema *schema;
+  // logical tile schema
+  // We use a different schema representation from physical tile as they contain very different
+  // metadata.
+  LogicalSchema *schema;
 
   // column mapping
   std::vector<catalog::ItemPointer> column_mapping;
