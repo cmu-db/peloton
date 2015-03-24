@@ -29,8 +29,21 @@ TEST(LogicalTileTests, BasicTest) {
   // LOGICAL TILE
 
   catalog::Catalog *catalog = new catalog::Catalog();
+  std::vector<catalog::ItemPointer> column_mapping;
 
-  executor::LogicalTile *logical_tile = new executor::LogicalTile(catalog, 2);
+  std::vector<catalog::ColumnInfo> columns;
+
+  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+  catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+  catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), false, true);
+  catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 25, false, false);
+
+  columns.push_back(column1);
+  columns.push_back(column2);
+
+  catalog::Schema *schema = new catalog::Schema(columns);
+
+  executor::LogicalTile *logical_tile = new executor::LogicalTile(catalog, 2, schema, column_mapping);
 
   catalog::ItemPointer logical_tuple1 = catalog::ItemPointer(1, 0);
   catalog::ItemPointer logical_tuple2 = catalog::ItemPointer(1, 1);
@@ -42,11 +55,12 @@ TEST(LogicalTileTests, BasicTest) {
   std::cout << (*logical_tile) << "\n";
 
   delete logical_tile;
+  delete schema;
   delete catalog;
 
 }
 
-TEST(LogicalTileTests, TileReconstructionTest) {
+TEST(LogicalTileTests, TileMaterializationTest) {
 
   // PHYSICAL TILE
 
@@ -124,9 +138,17 @@ TEST(LogicalTileTests, TileReconstructionTest) {
   // LOGICAL TILE (1 BASE TILE)
   ////////////////////////////////////////////////////////////////
 
-  executor::LogicalTile *logical_tile = new executor::LogicalTile(catalog, 1);
 
-  oid_t tile_id = tile_group->GetTileId(1);
+  storage::Tile *base_tile = tile_group->GetTile(1);
+  oid_t tile_id = base_tile->GetTileId();
+
+  std::vector<catalog::ItemPointer> column_mapping;
+
+  id_t column_count = schema2->GetColumnCount();
+  for(id_t column_itr = 0 ; column_itr < column_count ; column_itr++)
+    column_mapping.push_back(catalog::ItemPointer(tile_id, column_itr));
+
+  executor::LogicalTile *logical_tile = new executor::LogicalTile(catalog, 1, schema2, column_mapping);
 
   catalog::ItemPointer logical_tuple1 = catalog::ItemPointer(tile_id, 0);
   catalog::ItemPointer logical_tuple2 = catalog::ItemPointer(tile_id, 1);
@@ -151,10 +173,23 @@ TEST(LogicalTileTests, TileReconstructionTest) {
   // LOGICAL TILE (2 BASE TILE)
   ////////////////////////////////////////////////////////////////
 
-  logical_tile = new executor::LogicalTile(catalog, 2);
+  storage::Tile *base_tile1 = tile_group->GetTile(0);
+  storage::Tile *base_tile2 = tile_group->GetTile(1);
 
-  oid_t tile_id1 = tile_group->GetTileId(0);
-  oid_t tile_id2 = tile_group->GetTileId(1);
+  oid_t tile_id1 = base_tile1->GetTileId();
+  oid_t tile_id2 = base_tile2->GetTileId();
+
+  column_mapping.clear();
+
+  column_count = schema1->GetColumnCount();
+  for(id_t column_itr = 0 ; column_itr < column_count ; column_itr++)
+    column_mapping.push_back(catalog::ItemPointer(tile_id1, column_itr));
+
+  column_count = schema2->GetColumnCount();
+  for(id_t column_itr = 0 ; column_itr < column_count ; column_itr++)
+    column_mapping.push_back(catalog::ItemPointer(tile_id2, column_itr));
+
+  logical_tile = new executor::LogicalTile(catalog, 2, schema, column_mapping);
 
   catalog::ItemPointer logical_tuple11 = catalog::ItemPointer(tile_id1, 0);
   catalog::ItemPointer logical_tuple12 = catalog::ItemPointer(tile_id2, 0);
@@ -174,6 +209,15 @@ TEST(LogicalTileTests, TileReconstructionTest) {
 
   EXPECT_EQ((*found_tuple21), (*found_tuple1));
   EXPECT_EQ((*found_tuple22), (*found_tuple2));
+
+  ////////////////////////////////////////////////////////////////
+  // LOGICAL TILE DISPLAY
+  ////////////////////////////////////////////////////////////////
+
+  std::cout << "Value : " << logical_tile->GetValue(0, 0, 0) << "\n";
+  std::cout << "Value : " << logical_tile->GetValue(0, 0, 1) << "\n";
+  std::cout << "Value : " << logical_tile->GetValue(1, 0, 0) << "\n";
+  std::cout << "Value : " << logical_tile->GetValue(1, 0, 1) << "\n";
 
   delete logical_tile;
 
