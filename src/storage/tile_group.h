@@ -99,6 +99,10 @@ public:
 		return tile_group_header;
 	}
 
+	Tile *GetTile(const id_t tile_id) const {
+	  return tiles[tile_id];
+	}
+
   oid_t GetTileId(const id_t tile_id) const {
     return tiles[tile_id]->GetTileId();
   }

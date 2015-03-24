@@ -238,8 +238,9 @@ public:
 	/// For boost hashing
 	void HashCombine(std::size_t &seed) const;
 
-	/// Return a string full of arcane and wonder.
-	std::string ToString() const;
+  // Get a string representation of this value
+  /// Return a string full of arcane and wonder.
+	friend std::ostream& operator<<(std::ostream& os, const Value& value);
 
 	/// Functor comparator for use with std::set
 	struct ltValue {
