@@ -46,7 +46,7 @@ TEST(LogicalTileTests, BasicTest) {
 
 }
 
-TEST(LogicalTileTests, SinglePhysicalTileTest) {
+TEST(LogicalTileTests, TileReconstructionTest) {
 
   // PHYSICAL TILE
 
@@ -121,14 +121,12 @@ TEST(LogicalTileTests, SinglePhysicalTileTest) {
 
 
   ////////////////////////////////////////////////////////////////
-  // LOGICAL TILE
+  // LOGICAL TILE (1 BASE TILE)
   ////////////////////////////////////////////////////////////////
 
   executor::LogicalTile *logical_tile = new executor::LogicalTile(catalog, 1);
 
   oid_t tile_id = tile_group->GetTileId(1);
-
-  std::cout << "Tile id :: " << tile_id << "\n";
 
   catalog::ItemPointer logical_tuple1 = catalog::ItemPointer(tile_id, 0);
   catalog::ItemPointer logical_tuple2 = catalog::ItemPointer(tile_id, 1);
@@ -149,12 +147,45 @@ TEST(LogicalTileTests, SinglePhysicalTileTest) {
 
   delete logical_tile;
 
+  ////////////////////////////////////////////////////////////////
+  // LOGICAL TILE (2 BASE TILE)
+  ////////////////////////////////////////////////////////////////
+
+  logical_tile = new executor::LogicalTile(catalog, 2);
+
+  oid_t tile_id1 = tile_group->GetTileId(0);
+  oid_t tile_id2 = tile_group->GetTileId(1);
+
+  catalog::ItemPointer logical_tuple11 = catalog::ItemPointer(tile_id1, 0);
+  catalog::ItemPointer logical_tuple12 = catalog::ItemPointer(tile_id2, 0);
+  catalog::ItemPointer logical_tuple21 = catalog::ItemPointer(tile_id1, 1);
+  catalog::ItemPointer logical_tuple22 = catalog::ItemPointer(tile_id2, 1);
+
+  tuple_set_1 = {logical_tuple11, logical_tuple12};
+  tuple_set_2 = {logical_tuple21, logical_tuple22};
+
+  logical_tile->AppendTupleSet(tuple_set_1);
+  logical_tile->AppendTupleSet(tuple_set_2);
+
+  std::cout << (*logical_tile) << "\n";
+
+  storage::Tuple* found_tuple21 = logical_tile->GetTuple(1, 0);
+  storage::Tuple* found_tuple22 = logical_tile->GetTuple(1, 1);
+
+  EXPECT_EQ((*found_tuple21), (*found_tuple1));
+  EXPECT_EQ((*found_tuple22), (*found_tuple2));
+
+  delete logical_tile;
+
   delete tuple1;
   delete tuple2;
   delete schema;
 
   delete found_tuple1;
   delete found_tuple2;
+
+  delete found_tuple21;
+  delete found_tuple22;
 
   delete tile_group;
   delete catalog;
