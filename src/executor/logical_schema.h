@@ -10,21 +10,40 @@
  *-------------------------------------------------------------------------
  */
 
- #pragma once
+#pragma once
 
- #include <utility>
- #include <vector>
+#include <bitset>
+#include <iostream>
+#include <vector>
 
- #include "common/types.h"
+#include "common/types.h"
 
- namespace nstore {
- namespace executor {
+namespace nstore {
+namespace executor {
 
- class LogicalSchema {
-  private:
-   // Pairs of base tile id and column id (in that base tile) that a given column belongs to.
-   std::vector<std::pair<oid_t, id_t> > origin_columns;
- };
+class LogicalSchema {
+ public:
+  oid_t GetBaseTileOid(id_t column_id);
+  id_t GetOriginColumnId(id_t column_id);
 
- } // namespace executor
- } // namespace nstore
+  //===--------------------------------------------------------------------===//
+  // Utilities
+  //===--------------------------------------------------------------------===//
+
+  // Get a string representation of this tile
+  friend std::ostream& operator<<(std::ostream& os, const LogicalSchema& logical_schema);
+
+ private:
+  // Oid of tile that column is from.
+  std::vector<oid_t> base_tiles;
+
+  // Original column id in base tile of column.
+  std::vector<id_t> origin_columns;
+
+  // Valid bits of columns (used to implement late-materialization for projection).
+  // We don't use std::bitset because it requires the size at compile-time.
+  std::vector<bool> valid_bits;
+};
+
+} // namespace executor
+} // namespace nstore
