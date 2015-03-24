@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "../planner/abstract_plan_node.h"
+#include "planner/abstract_plan_node.h"
 #include "storage/tile.h"
 
 namespace nstore {

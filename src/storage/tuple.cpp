@@ -30,6 +30,7 @@ void Tuple::SetValueAllocate(const id_t column_id,
 
 	const ValueType type = tuple_schema->GetType(column_id);
 	value = value.CastAs(type);
+
 	const bool is_inlined = tuple_schema->IsInlined(column_id);
 	char *dataPtr = GetDataPtr(column_id);
 	int32_t column_length = tuple_schema->GetLength(column_id);
@@ -56,19 +57,18 @@ void Tuple::Copy(const void *source, Pool *pool) {
 		// copy the data
 		::memcpy(tuple_data, source, tuple_schema->GetLength());
 
-		// tuple wrapper around source tuple data
-		storage::Tuple *tuple = new storage::Tuple(tuple_schema, source);
-
 		// Copy each uninlined column doing an allocation for copies.
 		for (id_t column_itr = 0; column_itr < uninlineable_column_count; column_itr++) {
 			const id_t unlineable_column_id =
 					tuple_schema->GetUninlinedColumnIndex(column_itr);
 
-			SetValueAllocate(unlineable_column_id,
-					tuple->GetValue(unlineable_column_id), pool);
+			// Get original value from uninlined pool
+			Value value = GetValue(unlineable_column_id);
+
+			// Make a copy of the value at a new location in uninlined pool
+			SetValueAllocate(unlineable_column_id, value, pool);
 		}
 
-		delete tuple;
 	}
 
 }
@@ -305,10 +305,13 @@ int Tuple::Compare(const Tuple &other) const {
 
 // Release to the heap any memory allocated for any uninlined columns.
 void Tuple::FreeUninlinedData() {
+  if(tuple_data == nullptr)
+    return;
+
 	const uint16_t unlinlined_column_count = tuple_schema->GetUninlinedColumnCount();
 
 	for (int column_itr = 0; column_itr < unlinlined_column_count; column_itr++) {
-		GetValue(tuple_schema->GetUninlinedColumnIndex(column_itr)).Free();
+		GetValue(tuple_schema->GetUninlinedColumnIndex(column_itr)).FreeUninlinedData();
 	}
 }
 

@@ -13,7 +13,7 @@
 
 #include "gtest/gtest.h"
 
-#include "common/logger.h"
+#include "harness.h"
 
 namespace nstore {
 namespace test {
@@ -24,13 +24,9 @@ namespace test {
 
 TEST(LoggerTests, BasicTest) {
 
-  // Start logger
-  nstore::Logger();
-
-
-	LOG4CXX_TRACE(logger, "trace message");
-	LOG4CXX_WARN(logger, "warning message");
-	LOG4CXX_ERROR(logger, "error message");
+  LOG(TRACE) << "trace message";
+	LOG(WARNING) << "warning message";
+	LOG(ERROR) << "error message";
 
 }
 

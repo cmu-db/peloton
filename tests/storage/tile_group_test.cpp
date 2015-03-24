@@ -51,6 +51,25 @@ TEST(TileGroupTests, BasicTest) {
 
 	catalog::Schema *schema = catalog::Schema::AppendSchema(schema1, schema2);
 
+  // TILES
+
+  tile_column_names.push_back("COL 1");
+  tile_column_names.push_back("COL 2");
+
+  column_names.push_back(tile_column_names);
+
+  tile_column_names.clear();
+  tile_column_names.push_back("COL 3");
+  tile_column_names.push_back("COL 4");
+
+  column_names.push_back(tile_column_names);
+
+  // TILE GROUP
+
+  catalog::Catalog *catalog = new catalog::Catalog();
+
+  storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 4, column_names, true, catalog);
+
 	// TUPLES
 
 	storage::Tuple *tuple1 = new storage::Tuple(schema, true);
@@ -59,29 +78,15 @@ TEST(TileGroupTests, BasicTest) {
 	tuple1->SetValue(0, ValueFactory::GetIntegerValue(1));
 	tuple1->SetValue(1, ValueFactory::GetIntegerValue(1));
 	tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1));
-	tuple1->SetValue(3, ValueFactory::GetStringValue("tuple 1"));
+	tuple1->SetValue(3, ValueFactory::GetStringValue("tuple 1", tile_group->GetTilePool(1)));
 
 	tuple2->SetValue(0, ValueFactory::GetIntegerValue(2));
 	tuple2->SetValue(1, ValueFactory::GetIntegerValue(2));
 	tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2));
-	tuple2->SetValue(3, ValueFactory::GetStringValue("tuple 2"));
+	tuple2->SetValue(3, ValueFactory::GetStringValue("tuple 2", tile_group->GetTilePool(1)));
 
-	// TILES
+	// TRANSACTION
 
-	tile_column_names.push_back("COL 1");
-	tile_column_names.push_back("COL 2");
-
-	column_names.push_back(tile_column_names);
-
-	tile_column_names.clear();
-	tile_column_names.push_back("COL 3");
-	tile_column_names.push_back("COL 4");
-
-	column_names.push_back(tile_column_names);
-
-	// TILE GROUP
-
-	storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 4, column_names, true);
 	txn_id_t txn_id = GetTransactionId();
 
 	EXPECT_EQ(0, tile_group->GetActiveTupleCount());
@@ -94,6 +99,10 @@ TEST(TileGroupTests, BasicTest) {
 
 	delete tuple1;
 	delete tuple2;
+  delete schema;
+
+	delete tile_group;
+	delete catalog;
 }
 
 void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema){
@@ -106,7 +115,7 @@ void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema){
 	tuple->SetValue(0, ValueFactory::GetIntegerValue(1));
 	tuple->SetValue(1, ValueFactory::GetIntegerValue(1));
 	tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
-	tuple->SetValue(3, ValueFactory::GetStringValue("thread " + std::to_string(thread_id)));
+	tuple->SetValue(3, ValueFactory::GetStringValue("thread " + std::to_string(thread_id), tile_group->GetTilePool(1)));
 
 	for(int insert_itr = 0 ; insert_itr < 1000 ; insert_itr++) {
 		tile_group->InsertTuple(txn_id, tuple);
@@ -155,11 +164,17 @@ TEST(TileGroupTests, StressTest) {
 
 	// TILE GROUP
 
-	storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 10000, column_names, true);
+  catalog::Catalog *catalog = new catalog::Catalog();
+
+	storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 10000, column_names, true, catalog);
 
 	LaunchParallelTest(6, TileGroupInsert, tile_group, schema);
 
 	EXPECT_EQ(6000, tile_group->GetActiveTupleCount());
+
+	delete schema;
+	delete tile_group;
+  delete catalog;
 }
 
 TEST(TileGroupTests, MVCCInsert) {
@@ -202,14 +217,16 @@ TEST(TileGroupTests, MVCCInsert) {
 
 	// TILE GROUP
 
-	storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 3, column_names, true);
+  catalog::Catalog *catalog = new catalog::Catalog();
+
+	storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 3, column_names, true, catalog);
 
 	storage::Tuple *tuple = new storage::Tuple(schema, true);
 
 	tuple->SetValue(0, ValueFactory::GetIntegerValue(1));
 	tuple->SetValue(1, ValueFactory::GetIntegerValue(1));
 	tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
-	tuple->SetValue(3, ValueFactory::GetStringValue("abc"));
+	tuple->SetValue(3, ValueFactory::GetStringValue("abc", tile_group->GetTilePool(1)));
 
 	id_t tuple_slot_id = INVALID_ID;
 
@@ -239,28 +256,31 @@ TEST(TileGroupTests, MVCCInsert) {
 
 	storage::Tuple *result = nullptr;
 	result = tile_group->SelectTuple(txn_id2, 1, 1, cid2);
-
 	EXPECT_EQ(result, nullptr);
 
 	header->SetBeginCommitId(0, cid1);
 	header->SetBeginCommitId(2, cid1);
 
 	result = tile_group->SelectTuple(txn_id2, 1, 1, cid2);
-
 	EXPECT_EQ(result, nullptr);
 
 	result = tile_group->SelectTuple(txn_id2, 1, 0, cid2);
-
 	EXPECT_NE(result, nullptr);
+
+	delete result;
 
 	// SCAN
 
 	storage::Tile *scan = nullptr;
 	scan = tile_group->ScanTuples(txn_id2, 1, cid2);
 
-	EXPECT_EQ(scan->GetActiveTupleCount(), 2);
+	EXPECT_EQ(scan->GetActiveTupleCount(), 0);
+
+	delete scan;
 
 	// DELETE
+
+  scan = nullptr;
 	tile_group->DeleteTuple(cid2, 2);
 
 	txn_id_t txn_id3 = GetTransactionId();
@@ -268,7 +288,14 @@ TEST(TileGroupTests, MVCCInsert) {
 
 	scan = tile_group->ScanTuples(txn_id3, 1, cid3);
 
-	EXPECT_EQ(scan->GetActiveTupleCount(), 1);
+	EXPECT_EQ(scan->GetActiveTupleCount(), 0);
+
+	delete scan;
+
+	delete tuple;
+	delete schema;
+	delete tile_group;
+  delete catalog;
 }
 
 } // End test namespace
