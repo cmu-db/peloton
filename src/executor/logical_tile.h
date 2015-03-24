@@ -35,8 +35,12 @@ class LogicalTile {
 
  public:
 
-  LogicalTile(catalog::Catalog *catalog, id_t base_tile_count)
- : catalog(catalog), base_tile_count(base_tile_count) {
+  LogicalTile(catalog::Catalog *catalog, id_t base_tile_count,
+              catalog::Schema *schema, const std::vector<catalog::ItemPointer>& column_mapping)
+ : catalog(catalog),
+   base_tile_count(base_tile_count),
+   schema(schema),
+   column_mapping(column_mapping) {
   }
 
   // Add a tuple set to the container
@@ -46,7 +50,10 @@ class LogicalTile {
   void AppendTuple(id_t offset, catalog::ItemPointer tuple);
 
   // Get the tuple from given tile at the given tuple offset
-  storage::Tuple *GetTuple(id_t tile_offset, id_t offset);
+  storage::Tuple *GetTuple(id_t tile_offset, id_t tuple_id);
+
+  // Get the value from given tile at the given tuple offset and column offset
+  Value GetValue(id_t tile_offset, id_t tuple_id, id_t column_id);
 
   //===--------------------------------------------------------------------===//
   // Utilities
@@ -68,6 +75,12 @@ class LogicalTile {
 
   // number of base tiles
   id_t base_tile_count;
+
+  // tile schema
+  catalog::Schema *schema;
+
+  // column mapping
+  std::vector<catalog::ItemPointer> column_mapping;
 
 };
 
