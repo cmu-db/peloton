@@ -87,6 +87,13 @@ enum BackendType {
 	BACKEND_TYPE_NVM = 2 			// on non-volatile memory
 };
 
+enum IndexType {
+  INDEX_TYPE_INVALID = 0,     // invalid index type
+
+  INDEX_TYPE_ORDERED_MAP = 1  // ordered map
+};
+
+
 //===--------------------------------------------------------------------===//
 // Type definitions.
 //===--------------------------------------------------------------------===//
