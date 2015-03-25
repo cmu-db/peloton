@@ -23,10 +23,12 @@ namespace executor {
 // Add a position tuple to the container.
 void LogicalTile::AppendPositionTuple(std::vector<id_t> const &tuple) {
   assert(tuple.size() == schema->NumValidCols());
+
   // First we ensure that the columns of the position tuple align with the schema.
   // (Because some columns might exist but be invalidated)
   std::vector<id_t> aligned_tuple;
   int tuple_idx = 0;
+
   for (unsigned int schema_idx = 0; schema_idx < schema->NumCols(); schema_idx++) {
     if (schema->IsValid(schema_idx)) {
       aligned_tuple.push_back(tuple[tuple_idx]);
@@ -34,6 +36,7 @@ void LogicalTile::AppendPositionTuple(std::vector<id_t> const &tuple) {
     } else {
       aligned_tuple.push_back(INVALID_ID);
     }
+
   }
 
   // Add aligned tuple to tuple list.

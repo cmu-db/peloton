@@ -27,7 +27,7 @@ namespace executor {
 //===--------------------------------------------------------------------===//
 
 /**
- * Represents a LogicalTile.
+ * @brief Represents a LogicalTile.
  *
  * Tiles are only instantiated via LogicalTileFactory.
  */
@@ -42,15 +42,11 @@ class LogicalTile {
   // Add a tuple to the container at the given offset
   void AppendPositionTuple(std::vector<id_t> const &tuple);
 
-  // Get the tuple from given tile at the given tuple offset
+  /** @brief Get the tuple from given tile at the given tuple offset */
   storage::Tuple *GetTuple(id_t column_id, id_t tuple_id);
 
   // Get the value from given tile at the given tuple offset and column offset
   Value GetValue(id_t column_id, id_t tuple_id);
-
-  //===--------------------------------------------------------------------===//
-  // Utilities
-  //===--------------------------------------------------------------------===//
 
   // Get a string representation of this tile
   friend std::ostream& operator<<(std::ostream& os, const LogicalTile& logical_tile);
@@ -70,6 +66,6 @@ class LogicalTile {
 };
 
 
-} // End executor namespace
-} // End nstore namespace
+} // namespace executor
+} // namespace nstore
 

@@ -25,22 +25,24 @@ namespace executor {
 class LogicalSchema {
  public:
   storage::Tile *GetBaseTile(id_t column_id);
+
   id_t GetOriginColumnId(id_t column_id);
+
   void AddColumn(storage::Tile *base_tile, id_t column_id);
+
   bool IsValid(id_t column_id);
+
   // Note that this includes invalidated columns.
   size_t NumCols();
+
   // Number of columns that haven't been invalidated.
   size_t NumValidCols();
-
-  //===--------------------------------------------------------------------===//
-  // Utilities
-  //===--------------------------------------------------------------------===//
 
   // Get a string representation of this tile
   friend std::ostream& operator<<(std::ostream& os, const LogicalSchema& logical_schema);
 
  private:
+
   // Pointer to tile that column is from.
   std::vector<storage::Tile *> base_tiles;
 
