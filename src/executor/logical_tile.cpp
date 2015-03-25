@@ -21,8 +21,8 @@ namespace nstore {
 namespace executor {
 
 // Add a position tuple to the container.
-void LogicalTile::AppendPositionTuple(std::vector<id_t> tuple) {
-  assert(tuple.size() <= schema->NumCols());
+void LogicalTile::AppendPositionTuple(std::vector<id_t> const &tuple) {
+  assert(tuple.size() == schema->NumValidCols());
   // First we ensure that the columns of the position tuple align with the schema.
   // (Because some columns might exist but be invalidated)
   std::vector<id_t> aligned_tuple;

@@ -30,6 +30,8 @@ class LogicalSchema {
   bool IsValid(id_t column_id);
   // Note that this includes invalidated columns.
   size_t NumCols();
+  // Number of columns that haven't been invalidated.
+  size_t NumValidCols();
 
   //===--------------------------------------------------------------------===//
   // Utilities

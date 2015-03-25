@@ -40,7 +40,7 @@ class LogicalTile {
   }
 
   // Add a tuple to the container at the given offset
-  void AppendPositionTuple(std::vector<id_t> tuple);
+  void AppendPositionTuple(std::vector<id_t> const &tuple);
 
   // Get the tuple from given tile at the given tuple offset
   storage::Tuple *GetTuple(id_t column_id, id_t tuple_id);
