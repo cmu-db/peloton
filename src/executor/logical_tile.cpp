@@ -20,52 +20,53 @@
 namespace nstore {
 namespace executor {
 
-// Add a tuple set to the container
-void LogicalTile::AppendTupleSet(std::vector<catalog::ItemPointer> tuple_set) {
-  assert(tuple_set.size() == base_tile_count);
+// Add a position tuple to the container.
+void LogicalTile::AppendPositionTuple(std::vector<id_t> tuple) {
+  assert(tuple.size() <= schema->NumCols());
+  // First we ensure that the columns of the position tuple align with the schema.
+  // (Because some columns might exist but be invalidated)
+  std::vector<id_t> aligned_tuple;
+  int tuple_idx = 0;
+  for (unsigned int schema_idx = 0; schema_idx < schema->NumCols(); schema_idx++) {
+    if (schema->IsValid(schema_idx)) {
+      aligned_tuple.push_back(tuple[tuple_idx]);
+      tuple_idx++;
+    } else {
+      aligned_tuple.push_back(INVALID_ID);
+    }
+  }
 
-  tuple_set_container.push_back(tuple_set);
-}
-
-// Add a tuple to the container at the given offset
-void LogicalTile::AppendTuple(id_t offset, catalog::ItemPointer tuple) {
-  assert(offset < tuple_set_container.size());
-
-  tuple_set_container[offset].push_back(tuple);
-
+  // Add aligned tuple to tuple list.
+  position_tuple_list.push_back(aligned_tuple);
 }
 
 // Get the tuple from given tile at the given tuple offset
-storage::Tuple *LogicalTile::GetTuple(id_t tile_offset, id_t tuple_id) {
-  assert(tuple_id < tuple_set_container.size());
+storage::Tuple *LogicalTile::GetTuple(id_t column_id, id_t tuple_id) {
+  assert(tuple_id < position_tuple_list.size());
+  assert(schema->IsValid(column_id));
 
-  catalog::ItemPointer item_pointer = tuple_set_container[tuple_id][tile_offset];
-
-  storage::Tile *tile = reinterpret_cast<storage::Tile *>(catalog->locator[item_pointer.tile_id]);
+  id_t base_tuple_id = position_tuple_list[tuple_id][column_id];
+  storage::Tile *base_tile = schema->GetBaseTile(column_id);
 
   // get a copy of the tuple from the underlying physical tile
-  storage::Tuple *tuple = tile->GetTuple(tuple_id);
+  storage::Tuple *tuple = base_tile->GetTuple(base_tuple_id);
 
   return tuple;
 }
 
 // Get the value from given tile at the given tuple offset and column offset
-Value LogicalTile::GetValue(id_t tile_offset, id_t tuple_id, id_t column_id) {
-  assert(tuple_id < tuple_set_container.size());
-  assert(column_id < column_mapping.size());
+Value LogicalTile::GetValue(id_t column_id, id_t tuple_id) {
+  assert(tuple_id < position_tuple_list.size());
+  assert(schema->IsValid(column_id));
 
-  catalog::ItemPointer item_pointer = tuple_set_container[tuple_id][tile_offset];
+  id_t base_tuple_id = position_tuple_list[tuple_id][column_id];
+  storage::Tile *base_tile = schema->GetBaseTile(column_id);
+  id_t base_column_id = schema->GetOriginColumnId(column_id);
 
-  storage::Tile *tile = reinterpret_cast<storage::Tile *>(catalog->locator[item_pointer.tile_id]);
-
-  // map logical tile's column id to the underlying physical tile's column id
-  id_t base_tile_column_id = column_mapping[column_id].offset;
-
-  Value value = tile->GetValue(tuple_id, base_tile_column_id);
+  Value value = base_tile->GetValue(base_tuple_id, base_column_id);
 
   return value;
 }
-
 
 std::ostream& operator<<(std::ostream& os, const LogicalTile& logical_tile) {
 
@@ -78,22 +79,12 @@ std::ostream& operator<<(std::ostream& os, const LogicalTile& logical_tile) {
   os << (*logical_tile.schema);
 
   os << "\t-----------------------------------------------------------\n";
-  os << "\tCOLUMN MAPPING\n";
-
-  id_t column_count = logical_tile.column_mapping.size();
-  for(id_t column_itr = 0 ; column_itr < column_count ; column_itr++) {
-    os << "\t" << column_itr << " --> "
-        << " { Tile : " << logical_tile.column_mapping[column_itr].tile_id
-        << " Column : "<< logical_tile.column_mapping[column_itr].offset << " } \n";
-  }
-
-  os << "\t-----------------------------------------------------------\n";
   os << "\tROW MAPPING\n";
 
-  for(auto tuple_set : logical_tile.tuple_set_container){
+  for(auto position_tuple : logical_tile.position_tuple_list){
     os << "\t" ;
-    for(auto tuple : tuple_set) {
-      os << " { Tile : " << tuple.tile_id << " Tuple : " << tuple.offset << " } ";
+    for(auto pos : position_tuple) {
+      os << " Position: " << pos << ", ";
     }
     os << "\n" ;
   }
