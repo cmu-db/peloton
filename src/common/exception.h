@@ -43,7 +43,8 @@ enum ExceptionType {
 	EXCEPTION_TYPE_OBJECT_SIZE = 7,					// object size exceeded
 	EXCEPTION_TYPE_INCOMPATIBLE_TYPE = 8,		// incompatible for operation
 	EXCEPTION_TYPE_SERIALIZATION = 9,			  // serialization
-	EXCEPTION_TYPE_TRANSACTION = 10         // transaction management
+	EXCEPTION_TYPE_TRANSACTION = 10,        // transaction management
+	EXCEPTION_TYPE_NOT_IMPLEMENTED = 11     // method not implemented
 };
 
 class Exception {
@@ -309,6 +310,14 @@ public:
   }
 };
 
+class NotImplementedException : Exception {
+  NotImplementedException() = delete;
+
+public:
+  NotImplementedException(std::string msg) :
+    Exception(EXCEPTION_TYPE_NOT_IMPLEMENTED, msg){
+  }
+};
 
 } // End nstore namespace
 

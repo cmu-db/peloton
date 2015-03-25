@@ -18,6 +18,7 @@
 #include "catalog/schema.h"
 #include "common/types.h"
 #include "storage/tuple.h"
+#include "common/exception.h"
 
 namespace nstore {
 namespace executor {
@@ -106,7 +107,7 @@ class Index
    * well as the key for the new entry.
    */
   virtual bool UpdateEntry(const storage::Tuple *oldTupleValue,
-                            const storage::Tuple *newTupleValue) = 0;
+                           const storage::Tuple *newTupleValue) = 0;
 
 
   virtual bool SetValue(const storage::Tuple *tuple, const void* address) = 0;
@@ -155,6 +156,77 @@ class Index
    * @return true if any entry to return, false if not.
    */
   virtual storage::Tuple NextValueAtKey() = 0;
+
+  /**
+   * sets the tuple to point the entry next to the one found by
+   * moveToKey().  calls this repeatedly to get all entries
+   * following to the search key (for range query).
+   *
+   * HOWEVER, this can't be used for partial index search. You can
+   * use this only when you in advance know that there is at least
+   * one entry that perfectly matches with the search key. In other
+   * word, this method SHOULD NOT BE USED in future because there
+   * isn't such a case for range query except for cheating case
+   * (i.e. TPCC slev which assumes there is always "OID-20" entry).
+   *
+   * @return true if any entry to return, false if not.
+   */
+  virtual bool AdvanceToNextKey()
+  {
+    throw NotImplementedException("Invoked Index virtual method advanceToNextKey which has no implementation");
+  };
+
+  /**
+   * This method moves to the first tuple equal or greater than
+   * given key.  Use this with nextValue(). This method works for
+   * partial index search where following value might not match with
+   * any entry in this index.
+   *
+   * @see searchKey the value to be searched. this is NOT tuple
+   *      data, but chosen values for this index.  So, searchKey has
+   *      to contain values in this index's entry order.
+   */
+  virtual void MoveToKeyOrGreater(const storage::Tuple *searchKey)
+  {
+    throw NotImplementedException("Invoked Index virtual method moveToKeyOrGreater which has no implementation");
+  };
+
+  /**
+   * This method moves to the first tuple greater than given key.
+   * Use this with nextValue().
+   *
+   * @see searchKey the value to be searched. this is NOT tuple
+   *      data, but chosen values for this index.  So, searchKey has
+   *      to contain values in this index's entry order.
+   */
+  virtual void MoveToGreaterThanKey(const storage::Tuple *searchKey)
+  {
+    throw NotImplementedException("Invoked Index virtual method moveToGreaterThanKey which has no implementation");
+  };
+
+  /**
+   * This method moves to the beginning or the end of the indexes.
+   * Use this with nextValue().
+   *
+   * @see begin true to move to the beginning, false to the end.
+   */
+  virtual void MoveToEnd(bool begin)
+  {
+    throw NotImplementedException("Invoked Index virtual method moveToEnd which has no implementation");
+  }
+
+  /**
+   * sets the tuple to point the entry found by
+   * moveToKeyOrGreater().  calls this repeatedly to get all entries
+   * with or following to the search key.
+   *
+   * @return true if any entry to return, false if reached the end
+   * of this index.
+   */
+  virtual storage::Tuple nextValue()
+  {
+    throw NotImplementedException("Invoked Index virtual method nextValue which has no implementation");
+  };
 
   /**
    * @return true if lhs is different from rhs in this index, which
