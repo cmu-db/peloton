@@ -102,9 +102,9 @@ enum IndexType {
 
 typedef uint64_t id_t;
 
-static const id_t INVALID_ID = -1;
+static const id_t INVALID_ID = std::numeric_limits<id_t>::max();
 
-static const id_t MAX_ID = std::numeric_limits<id_t>::max();
+static const id_t MAX_ID = std::numeric_limits<id_t>::max() - 1;
 
 // For catalog and other similar smaller domain types
 
@@ -116,7 +116,7 @@ static const oid_t INVALID_OID = 0;
 
 typedef uint64_t txn_id_t;
 
-static const txn_id_t INVALID_TXN_ID = -1;
+static const txn_id_t INVALID_TXN_ID = 0;
 
 static const txn_id_t START_TXN_ID = 1;
 
@@ -126,7 +126,7 @@ static const txn_id_t MAX_TXN_ID = std::numeric_limits<txn_id_t>::max();
 
 typedef uint64_t cid_t;
 
-static const cid_t INVALID_CID = -1;
+static const cid_t INVALID_CID = 0;
 
 static const cid_t START_CID = 1;
 
