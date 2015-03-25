@@ -17,14 +17,21 @@
 #include <vector>
 
 #include "common/types.h"
+#include "storage/tile.h"
 
 namespace nstore {
 namespace executor {
 
 class LogicalSchema {
  public:
-  oid_t GetBaseTileOid(id_t column_id);
+  storage::Tile *GetBaseTile(id_t column_id);
   id_t GetOriginColumnId(id_t column_id);
+  void AddColumn(storage::Tile *base_tile, id_t column_id);
+  bool IsValid(id_t column_id);
+  // Note that this includes invalidated columns.
+  size_t NumCols();
+  // Number of columns that haven't been invalidated.
+  size_t NumValidCols();
 
   //===--------------------------------------------------------------------===//
   // Utilities
@@ -34,8 +41,8 @@ class LogicalSchema {
   friend std::ostream& operator<<(std::ostream& os, const LogicalSchema& logical_schema);
 
  private:
-  // Oid of tile that column is from.
-  std::vector<oid_t> base_tiles;
+  // Pointer to tile that column is from.
+  std::vector<storage::Tile *> base_tiles;
 
   // Original column id in base tile of column.
   std::vector<id_t> origin_columns;
