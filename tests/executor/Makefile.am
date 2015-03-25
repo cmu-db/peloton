@@ -9,6 +9,7 @@ check_PROGRAMS += logical_tile_test
 logical_tile_test_SOURCES = executor/logical_tile_test.cpp
 logical_tile_test_LDADD = \
 						  $(obj_DIR)/common/types.o \
+						  $(obj_DIR)/executor/logical_schema.o\
 						  $(obj_DIR)/executor/logical_tile.o\
 						  $(obj_DIR)/catalog/schema.o \
 						  $(obj_DIR)/common/value.o \
