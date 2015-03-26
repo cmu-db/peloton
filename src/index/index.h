@@ -163,12 +163,12 @@ class Index
    * @see moveToKeyOrGreater(const ItemPointer *)
    * @return true if the value is found. false if not.
    */
-  virtual bool MoveToKey(const ItemPointer *search_key) = 0;
+  virtual bool MoveToKey(const storage::Tuple *search_key) = 0;
 
   /**
    * Find location of the specified tuple in the index
    */
-  virtual bool MoveToTuple(const ItemPointer *search_tuple) = 0;
+  virtual bool MoveToTuple(const storage::Tuple *search_tuple) = 0;
 
   /**
    * sets the tuple to point the entry found by moveToKey().  call

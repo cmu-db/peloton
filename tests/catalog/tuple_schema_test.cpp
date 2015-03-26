@@ -56,7 +56,7 @@ TEST(TupleSchemaTests, TupleSchemaTest) {
 	catalog::Schema schema2(columns);
 	EXPECT_EQ(schema1, schema2);
 
-	std::vector<uint32_t> subset { 0, 2};
+	std::vector<id_t> subset { 0, 2};
 	catalog::Schema *schema3 = catalog::Schema::CopySchema(&schema2, subset);
 	std::cout << (*schema3);
 

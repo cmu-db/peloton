@@ -34,6 +34,9 @@ class ArrayUniqueIndex : public Index {
   friend class IndexFactory;
 
  public:
+
+  ArrayUniqueIndex(const IndexMetadata &metadata);
+
   ~ArrayUniqueIndex();
 
   bool AddEntry(const ItemPointer *tuple);
@@ -46,9 +49,9 @@ class ArrayUniqueIndex : public Index {
 
   bool Exists(const ItemPointer* tuple);
 
-  bool MoveToKey(const ItemPointer *search_key);
+  bool MoveToKey(const storage::Tuple *search_key);
 
-  bool MoveToTuple(const ItemPointer *search_tuple);
+  bool MoveToTuple(const storage::Tuple *search_tuple);
 
   storage::Tuple *NextValueAtKey();
 
@@ -69,7 +72,6 @@ class ArrayUniqueIndex : public Index {
   }
 
  protected:
-  ArrayUniqueIndex(const IndexMetadata &metadata);
 
   void **entries;
 
