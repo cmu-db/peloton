@@ -49,6 +49,7 @@ doc/
 .settings
 
 /Debug/
+/misc/
 
 ## -------------------------------
 ## Tag files
