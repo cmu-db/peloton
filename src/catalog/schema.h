@@ -30,7 +30,7 @@ class ColumnInfo {
 public:
 
 	// Configures all members except offset
-	ColumnInfo(ValueType column_type, uint32_t column_length, bool allow_null,
+	ColumnInfo(ValueType column_type, id_t column_length, bool allow_null,
 			bool is_inlined)
 : type(column_type), offset(0), allow_null(allow_null), is_inlined(is_inlined){
 		if(is_inlined){
@@ -58,7 +58,7 @@ public:
 	}
 
 	// Configure offset as well
-	ColumnInfo(ValueType column_type, uint32_t column_offset, uint32_t column_length,
+	ColumnInfo(ValueType column_type, id_t column_offset, id_t column_length,
 			bool allow_null, bool is_inlined)
 	: type(column_type), offset(column_offset), allow_null(allow_null),
 	  is_inlined(is_inlined){
@@ -114,7 +114,7 @@ public:
 
 	/// Construct schema
 	void CreateTupleSchema(const std::vector<ValueType> column_types,
-			const std::vector<uint32_t> column_lengths,
+			const std::vector<id_t> column_lengths,
 			const std::vector<bool> allow_null,
 			const std::vector<bool> is_inlined);
 
@@ -125,14 +125,14 @@ public:
 	static Schema *CopySchema(const Schema *schema);
 
 	/// Copy subset of columns in the given schema
-	static Schema *CopySchema(const Schema *schema, const std::vector<uint32_t>& set);
+	static Schema *CopySchema(const Schema *schema, const std::vector<id_t>& set);
 
 	/// Append two schema objects
 	static Schema *AppendSchema(const Schema *first, const Schema *second);
 
 	/// Append subset of columns in the two given schemas
-	static Schema *AppendSchema(const Schema *first, const std::vector<uint32_t>& first_set,
-			const Schema *second, const std::vector<uint32_t>& second_set);
+	static Schema *AppendSchema(const Schema *first, const std::vector<id_t>& first_set,
+			const Schema *second, const std::vector<id_t>& second_set);
 
 	/// Compare two schemas
 	bool operator== (const Schema &other) const;
@@ -187,7 +187,7 @@ public:
 	}
 
 	/// Return the number of bytes used by one tuple.
-	inline uint32_t GetLength() const {
+	inline id_t GetLength() const {
 		return length;
 	}
 

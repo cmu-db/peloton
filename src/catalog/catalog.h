@@ -24,7 +24,7 @@ namespace catalog {
 // Catalog
 //===--------------------------------------------------------------------===//
 
-typedef tbb::concurrent_unordered_map<oid_t, void*> locator_chm;
+typedef tbb::concurrent_unordered_map<oid_t, void*> lookup_dir;
 
 class Catalog {
   Catalog(Catalog const&) = delete;
@@ -52,7 +52,7 @@ class Catalog {
 
   std::atomic<oid_t> oid;
 
-  locator_chm locator;
+  lookup_dir locator;
 };
 
 

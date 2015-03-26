@@ -90,7 +90,8 @@ enum BackendType {
 enum IndexType {
   INDEX_TYPE_INVALID = 0,     // invalid index type
 
-  INDEX_TYPE_ORDERED_MAP = 1  // ordered map
+  INDEX_TYPE_ARRAY = 1,       // array
+  INDEX_TYPE_ORDERED_MAP = 2  // ordered map
 };
 
 
@@ -132,6 +133,19 @@ static const cid_t START_CID = 1;
 
 static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 
+//===--------------------------------------------------------------------===//
+// ItemPointer
+//===--------------------------------------------------------------------===//
+
+struct ItemPointer {
+  oid_t block;
+  oid_t offset;
+
+  ItemPointer(oid_t block, oid_t offset)
+  : block(block), offset(offset){
+  }
+
+};
 
 //===--------------------------------------------------------------------===//
 // Type utilities

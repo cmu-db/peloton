@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "storage/backend.h"
 #include "storage/tuple.h"
@@ -88,6 +89,9 @@ class Tile {
    * NOTE : No checks, must be at valid slot and must exist.
    */
   Value GetValue(const id_t tuple_slot_id, const id_t column_id);
+
+  // Get tuple at location
+  static Tuple *GetTuple(catalog::Catalog* catalog, const ItemPointer* tuple_location);
 
   //===--------------------------------------------------------------------===//
   // Size Stats
@@ -256,6 +260,17 @@ inline int Tile::GetTupleOffset(const char* tuple_address) const{
     return tuple_id;
 
   return -1;
+}
+
+inline Tuple *Tile::GetTuple(catalog::Catalog* catalog, const ItemPointer* tuple_location) {
+
+  // Figure out tile location
+  storage::Tile *tile = (storage::Tile *) catalog->locator[tuple_location->block];
+  assert(tile);
+
+  // Look up tuple at tile
+  storage::Tuple *tile_tuple = tile->GetTuple(tuple_location->offset);
+  return tile_tuple;
 }
 
 
