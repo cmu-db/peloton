@@ -19,15 +19,15 @@ namespace catalog {
 
 /// Helper function for creating TupleSchema
 void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
-                               const std::vector<uint32_t> column_lengths,
+                               const std::vector<id_t> column_lengths,
                                const std::vector<bool> allow_null,
                                const std::vector<bool> _is_inlined) {
 
   bool tuple_is_inlined = true;
-  uint32_t num_columns = column_types.size();
-  uint32_t column_offset = 0;
+  id_t num_columns = column_types.size();
+  id_t column_offset = 0;
 
-  for(uint32_t column_itr = 0 ; column_itr < num_columns ; column_itr++)	{
+  for(id_t column_itr = 0 ; column_itr < num_columns ; column_itr++)	{
 
     ColumnInfo column_info(column_types[column_itr],
                            column_offset,
@@ -56,14 +56,14 @@ void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
 Schema::Schema(const std::vector<ColumnInfo> columns)
 : length(0),
   is_inlined(false) {
-  uint32_t column_count = columns.size();
+  id_t column_count = columns.size();
 
   std::vector<ValueType> column_types;
-  std::vector<uint32_t> column_lengths;
+  std::vector<id_t> column_lengths;
   std::vector<bool> allow_null;
   std::vector<bool> is_inlined;
 
-  for (uint32_t column_itr = 0; column_itr < column_count; column_itr++) {
+  for (id_t column_itr = 0; column_itr < column_count; column_itr++) {
     column_types.push_back(columns[column_itr].type);
 
     if(columns[column_itr].is_inlined)
@@ -80,10 +80,10 @@ Schema::Schema(const std::vector<ColumnInfo> columns)
 
 /// Copy schema
 Schema* Schema::CopySchema(const Schema	*schema) {
-  uint32_t column_count = schema->GetColumnCount();
-  std::vector<uint32_t> set;
+  id_t column_count = schema->GetColumnCount();
+  std::vector<id_t> set;
 
-  for (uint32_t column_itr = 0; column_itr < column_count; column_itr++)
+  for (id_t column_itr = 0; column_itr < column_count; column_itr++)
     set.push_back(column_itr);
 
   return CopySchema(schema, set);
@@ -91,11 +91,11 @@ Schema* Schema::CopySchema(const Schema	*schema) {
 
 /// Copy subset of columns in the given schema
 Schema* Schema::CopySchema(const Schema *schema,
-                           const std::vector<uint32_t>& set){
-  uint32_t column_count = schema->GetColumnCount();
+                           const std::vector<id_t>& set){
+  id_t column_count = schema->GetColumnCount();
   std::vector<ColumnInfo> columns;
 
-  for (uint32_t column_itr = 0; column_itr < column_count; column_itr++) {
+  for (id_t column_itr = 0; column_itr < column_count; column_itr++) {
     // If column exists in set
     if(std::find(set.begin(), set.end(), column_itr) != set.end()) {
       columns.push_back(schema->columns[column_itr]);
@@ -108,15 +108,15 @@ Schema* Schema::CopySchema(const Schema *schema,
 
 /// Append two schema objects
 Schema* Schema::AppendSchema(const Schema *first, const Schema *second){
-  uint32_t column_count1, column_count2;
-  std::vector<uint32_t> set1, set2;
+  id_t column_count1, column_count2;
+  std::vector<id_t> set1, set2;
 
   column_count1 = first->GetColumnCount();
   column_count2 = second->GetColumnCount();
 
-  for (uint32_t column_itr = 0; column_itr < column_count1; column_itr++)
+  for (id_t column_itr = 0; column_itr < column_count1; column_itr++)
     set1.push_back(column_itr);
-  for (uint32_t column_itr = 0; column_itr < column_count2; column_itr++)
+  for (id_t column_itr = 0; column_itr < column_count2; column_itr++)
     set2.push_back(column_itr);
 
   return AppendSchema(first, set1, second, set2);
@@ -124,22 +124,22 @@ Schema* Schema::AppendSchema(const Schema *first, const Schema *second){
 
 /// Append subset of columns in the two given schemas
 Schema* Schema::AppendSchema(const Schema *first,
-                             const std::vector<uint32_t>& first_set,
-                             const Schema *second, const std::vector<uint32_t>& second_set) {
-  uint32_t column_count1, column_count2;
+                             const std::vector<id_t>& first_set,
+                             const Schema *second, const std::vector<id_t>& second_set) {
+  id_t column_count1, column_count2;
   std::vector<ColumnInfo> columns;
 
   column_count1 = first->GetColumnCount();
   column_count2 = second->GetColumnCount();
 
-  for (uint32_t column_itr = 0; column_itr < column_count1; column_itr++) {
+  for (id_t column_itr = 0; column_itr < column_count1; column_itr++) {
     // If column exists in first set
     if(std::find(first_set.begin(), first_set.end(), column_itr) != first_set.end()) {
       columns.push_back(first->columns[column_itr]);
     }
   }
 
-  for (uint32_t column_itr = 0; column_itr < column_count2; column_itr++) {
+  for (id_t column_itr = 0; column_itr < column_count2; column_itr++) {
     // If column exists in second set
     if(std::find(second_set.begin(), second_set.end(), column_itr) != second_set.end()) {
       columns.push_back(second->columns[column_itr]);

@@ -15,13 +15,14 @@
 #include <vector>
 #include <string>
 
+#include "catalog/catalog.h"
 #include "catalog/schema.h"
+#include "common/exception.h"
 #include "common/types.h"
 #include "storage/tuple.h"
-#include "common/exception.h"
 
 namespace nstore {
-namespace executor {
+namespace index {
 
 //===--------------------------------------------------------------------===//
 // IndexMetadata
@@ -30,40 +31,58 @@ namespace executor {
 /**
  * Parameter for constructing Index. catalog::Schema, then key schema
  */
-struct IndexMetadata {
+class IndexMetadata {
   IndexMetadata() = delete;
 
  public:
 
   IndexMetadata(std::string identifier,
                 IndexType type,
+                catalog::Catalog *catalog,
                 catalog::Schema *tuple_schema,
+                const std::vector<id_t>& table_columns_in_key,
                 bool unique,
                 bool ints_only)
 
  : identifier(identifier),
    type(type),
+   catalog(catalog),
    tuple_schema(tuple_schema),
    key_schema(nullptr),
+   table_columns_in_key(table_columns_in_key),
    unique(unique),
    ints_only(ints_only) {
+
+    key_schema = catalog::Schema::CopySchema(tuple_schema, table_columns_in_key);
+
+  }
+
+  ~IndexMetadata() {
+    // free up key schema
+    delete key_schema;
   }
 
   void SetIndexType(IndexType _type) {
     type = _type;
   }
 
- private:
-
   std::string identifier;
 
   IndexType type;
 
+  // catalog
+  catalog::Catalog *catalog;
+
   // schema of tuple values
   catalog::Schema *tuple_schema;
 
-  // schema of key
+  // schema of keys
   catalog::Schema *key_schema;
+
+  // table columns in key schema
+  // if column "i" of table schema is present in key schema
+  // then the value "i" will be present in this vector
+  std::vector<id_t> table_columns_in_key;
 
   // unique keys ?
   bool unique;
@@ -72,6 +91,10 @@ struct IndexMetadata {
   bool ints_only;
 
 };
+
+//===--------------------------------------------------------------------===//
+// Index
+//===--------------------------------------------------------------------===//
 
 /**
  * Index class represents a secondary index on a table
@@ -88,36 +111,35 @@ class Index
   friend class IndexFactory;
 
  public:
-  virtual ~Index();
 
   /**
    * adds passed value as an index entry linked to given tuple
    */
-  virtual bool AddEntry(const storage::Tuple *tuple) = 0;
+  virtual bool AddEntry(const ItemPointer *tuple) = 0;
 
   /**
    * removes the index entry linked to given value (and tuple
    * pointer, if it's non-unique index).
    */
-  virtual bool DeleteEntry(const storage::Tuple *tuple) = 0;
+  virtual bool DeleteEntry(const ItemPointer *tuple) = 0;
 
   /**
    * removes the index entry linked to old value and re-link it to new value.
    * The address of the newTupleValue is used as the value in the index (and multimaps) as
    * well as the key for the new entry.
    */
-  virtual bool UpdateEntry(const storage::Tuple *oldTupleValue,
-                           const storage::Tuple *newTupleValue) = 0;
+  virtual bool UpdateEntry(const ItemPointer *old_tuple,
+                           const ItemPointer *new_tuple) = 0;
 
 
-  virtual bool SetValue(const storage::Tuple *tuple, const void* address) = 0;
+  virtual bool SetValue(const ItemPointer *tuple, const void* address) = 0;
 
 
   /**
    * just returns whether the value is already stored. no
    * modification occurs.
    */
-  virtual bool Exists(const storage::Tuple* values) = 0;
+  virtual bool Exists(const ItemPointer* values) = 0;
 
   /**
    * This method moves to the first tuple equal to given key.  To
@@ -138,24 +160,35 @@ class Index
    * data, but chosen values for this index. So, searchKey has to
    * contain values in this index's entry order.
    *
-   * @see moveToKeyOrGreater(const storage::Tuple *)
+   * @see moveToKeyOrGreater(const ItemPointer *)
    * @return true if the value is found. false if not.
    */
-  virtual bool MoveToKey(const storage::Tuple *searchKey) = 0;
+  virtual bool MoveToKey(const ItemPointer *search_key) = 0;
 
   /**
    * Find location of the specified tuple in the index
    */
-  virtual bool MoveToTuple(const storage::Tuple *searchTuple) = 0;
+  virtual bool MoveToTuple(const ItemPointer *search_tuple) = 0;
 
   /**
-   * sets the tuple to point the entry found by moveToKey().  calls
+   * sets the tuple to point the entry found by moveToKey().  call
    * this repeatedly to get all entries with the search key (for
    * non-unique index).
    *
-   * @return true if any entry to return, false if not.
+   * @return nullptr if next value does not exist.
    */
-  virtual storage::Tuple NextValueAtKey() = 0;
+  virtual storage::Tuple *NextValueAtKey() = 0;
+
+  /**
+   * @return true if lhs is different from rhs in this index, which
+   * means updateEntry has to follow.
+   */
+  virtual bool CheckForIndexChange(const ItemPointer *lhs,
+                                   const ItemPointer *rhs) = 0;
+
+  //===--------------------------------------------------------------------===//
+  // Advanced methods
+  //===--------------------------------------------------------------------===//
 
   /**
    * sets the tuple to point the entry next to the one found by
@@ -171,9 +204,8 @@ class Index
    *
    * @return true if any entry to return, false if not.
    */
-  virtual bool AdvanceToNextKey()
-  {
-    throw NotImplementedException("Invoked Index virtual method advanceToNextKey which has no implementation");
+  virtual bool AdvanceToNextKey() {
+    throw NotImplementedException("Invoked Index virtual method AdvanceToNextKey which has no implementation");
   };
 
   /**
@@ -186,9 +218,8 @@ class Index
    *      data, but chosen values for this index.  So, searchKey has
    *      to contain values in this index's entry order.
    */
-  virtual void MoveToKeyOrGreater(const storage::Tuple *searchKey)
-  {
-    throw NotImplementedException("Invoked Index virtual method moveToKeyOrGreater which has no implementation");
+  virtual void MoveToKeyOrGreater(__attribute__((unused)) const ItemPointer *search_key) {
+    throw NotImplementedException("Invoked Index virtual method MoveToKeyOrGreater which has no implementation");
   };
 
   /**
@@ -199,9 +230,8 @@ class Index
    *      data, but chosen values for this index.  So, searchKey has
    *      to contain values in this index's entry order.
    */
-  virtual void MoveToGreaterThanKey(const storage::Tuple *searchKey)
-  {
-    throw NotImplementedException("Invoked Index virtual method moveToGreaterThanKey which has no implementation");
+  virtual void MoveToGreaterThanKey(__attribute__((unused)) const ItemPointer *search_key) {
+    throw NotImplementedException("Invoked Index virtual method MoveToGreaterThanKey which has no implementation");
   };
 
   /**
@@ -210,9 +240,8 @@ class Index
    *
    * @see begin true to move to the beginning, false to the end.
    */
-  virtual void MoveToEnd(bool begin)
-  {
-    throw NotImplementedException("Invoked Index virtual method moveToEnd which has no implementation");
+  virtual void MoveToEnd(__attribute__((unused)) bool begin) {
+    throw NotImplementedException("Invoked Index virtual method MoveToEnd which has no implementation");
   }
 
   /**
@@ -223,17 +252,13 @@ class Index
    * @return true if any entry to return, false if reached the end
    * of this index.
    */
-  virtual storage::Tuple nextValue()
-  {
-    throw NotImplementedException("Invoked Index virtual method nextValue which has no implementation");
+  virtual storage::Tuple *NextValue() {
+    throw NotImplementedException("Invoked Index virtual method NextValue which has no implementation");
   };
 
-  /**
-   * @return true if lhs is different from rhs in this index, which
-   * means replaceEntry has to follow.
-   */
-  virtual bool CheckForIndexChange(const storage::Tuple *lhs,
-                                   const storage::Tuple *rhs) = 0;
+  //===--------------------------------------------------------------------===//
+  // Getters
+  //===--------------------------------------------------------------------===//
 
   /**
    * Currently, UniqueIndex is just a Index with additional checks.
@@ -241,7 +266,7 @@ class Index
    * performance of UniqueIndex.
    */
   inline bool IsUniqueIndex() const {
-    return is_unique_index_;
+    return is_unique_index;
   }
 
   virtual size_t GetSize() const = 0;
@@ -250,66 +275,65 @@ class Index
   // index.
   virtual int64_t GetMemoryEstimate() const = 0;
 
-  const std::vector<int>& GetColumnIndices() const {
-    return column_indices_vector_;
-  }
-
-  const std::vector<ValueType>& GetColumnTypes() const {
-    return column_types_vector_;
-  }
-
   int GetColumnCount() const {
-    return colCount_;
+    return column_count;
   }
 
   const std::string& GetName() const {
-    return name_;
+    return identifier;
   }
 
   const catalog::Schema * GetKeySchema() const {
-    return m_keySchema;
+    return key_schema;
   }
 
-  virtual std::string Debug() const;
+  // Get a string representation of this index
+  friend std::ostream& operator<<(std::ostream& os, const Index& index);
+
   virtual std::string GetTypeName() const = 0;
 
-  virtual void EnsureCapacity(uint32_t capacity) {}
+  virtual void EnsureCapacity(__attribute__((unused)) size_t capacity) {
+  }
 
-  // print out info about lookup usage
+  // Print out info about lookup usage
   virtual void PrintReport();
 
-  //TODO Useful implementation of == operator.
-  virtual bool Equals(const Index *other) const;
-
   IndexMetadata GetScheme() const {
-    return m_scheme;
+    return metadata;
   }
 
  protected:
 
   Index(const IndexMetadata &scheme);
 
-  const IndexMetadata m_scheme;
-  catalog::Schema* m_keySchema;
-  std::string name_;
-  std::vector<int> column_indices_vector_;
-  std::vector<ValueType> column_types_vector_;
-  ValueType* column_types_;
-  int colCount_;
-  bool is_unique_index_;
-  int* column_indices_;
+  //===--------------------------------------------------------------------===//
+  //  Data members
+  //===--------------------------------------------------------------------===//
 
-  // counters
-  int m_lookups;
-  int m_inserts;
-  int m_deletes;
-  int m_updates;
-  catalog::Schema *m_tupleSchema;
+  const IndexMetadata metadata;
+
+  std::string identifier;
+
+  catalog::Catalog *catalog;
+
+  catalog::Schema* key_schema;
+
+  catalog::Schema *tuple_schema;
+
+  int column_count;
+
+  bool is_unique_index;
+
+  // access counters
+  int lookup_counter;
+  int insert_counter;
+  int delete_counter;
+  int update_counter;
 
   // stats ?
 
   // index memory size
-  int64_t m_memoryEstimate;
+  int64_t memory_size_estimate;
 };
 
 } // End index namespace
