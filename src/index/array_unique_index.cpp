@@ -129,9 +129,9 @@ bool ArrayUniqueIndex::Exists(const ItemPointer* tuple) {
   return entries[key] != NULL;
 }
 
-bool ArrayUniqueIndex::MoveToKey(const ItemPointer *search_key) {
-  storage::Tuple *tile_tuple = storage::Tile::GetTuple(catalog, search_key);
-  cursor = ValuePeeker::PeekAsInteger(tile_tuple->GetValue(tile_column_id));
+bool ArrayUniqueIndex::MoveToKey(const storage::Tuple *search_key) {
+
+  cursor = ValuePeeker::PeekAsInteger(search_key->GetValue(tile_column_id));
 
   if (cursor < 0)
     return false;
@@ -141,9 +141,9 @@ bool ArrayUniqueIndex::MoveToKey(const ItemPointer *search_key) {
   return true;
 }
 
-bool ArrayUniqueIndex::MoveToTuple(const ItemPointer *search_tuple) {
-  storage::Tuple *tile_tuple = storage::Tile::GetTuple(catalog, search_tuple);
-  cursor = ValuePeeker::PeekAsInteger(tile_tuple->GetValue(tile_column_id));
+bool ArrayUniqueIndex::MoveToTuple(const storage::Tuple *search_tuple) {
+
+  cursor = ValuePeeker::PeekAsInteger(search_tuple->GetValue(tile_column_id));
 
   if (cursor < 0)
     return false;
