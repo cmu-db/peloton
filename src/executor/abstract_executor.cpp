@@ -19,25 +19,23 @@ AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *abstract_node)
 }
 
 bool AbstractExecutor::Init() {
-	//TODO Insert any code common to all executors here.
+  //TODO Insert any code common to all executors here.
 
-	return SubInit();
+  return SubInit();
 }
 
 LogicalTile *AbstractExecutor::GetNextTile() {
-
-	//TODO Insert any code common to all executors here.
+  //TODO Insert any code common to all executors here.
   //TODO In the future, we might want to pass some kind of executor state to GetNextTile.
   // e.g. params for prepared plans.
 
-	return SubGetNextTile();
+  return SubGetNextTile();
 }
 
 void AbstractExecutor::CleanUp() {
+  //TODO Insert any code common to all executors here.
 
-	//TODO Insert any code common to all executors here.
-
-	SubCleanUp();
+  SubCleanUp();
 }
 
 } // namespace executor

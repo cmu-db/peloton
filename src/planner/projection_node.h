@@ -6,17 +6,17 @@ namespace nstore {
 namespace planner {
     
 class ProjectionNode : public AbstractPlanNode {
-  public:
+ public:
 
-    const std::vector<int>& output_column_ids() const {
-        return output_column_ids_;
-    }
+  const std::vector<int>& output_column_ids() const {
+    return output_column_ids_;
+  }
 
-  private:
+ private:
 
-    // TODO For now we only store column ids. We need to import the whole expression
-    // system from voltdb to support parameterized plans and expressions..
-    std::vector<int> output_column_ids_;
+  // TODO For now we only store column ids. We need to import the whole expression
+  // system from voltdb to support parameterized plans and expressions..
+  std::vector<int> output_column_ids_;
 };
 
 } // namespace planner
