@@ -1,25 +1,29 @@
+/**
+ * @brief Header file for projection executor.
+ *
+ * Copyright(c) 2015, CMU
+ */
+
 #pragma once
 
 #include "executor/abstract_executor.h"
+#include "executor/logical_tile.h"
 
 namespace nstore {
 namespace executor {
 
-//===--------------------------------------------------------------------===//
-// Projection Executor
-//===--------------------------------------------------------------------===//
-
 class ProjectionExecutor : public AbstractExecutor {
-  public:
-    ProjectionExecutor(planner::AbstractPlanNode *abstract_node) :
-        AbstractExecutor(abstract_node) {
-    }
+ public:
+  ProjectionExecutor(planner::AbstractPlanNode *abstract_node) :
+    AbstractExecutor(abstract_node) {
+  }
 
-    bool Init();
+ protected:
+  bool SubInit();
 
-    bool GetNextTile();
+  LogicalTile *SubGetNextTile();
 
-    void CleanUp();
+  void SubCleanUp();
 };
 
 } // namespace executor

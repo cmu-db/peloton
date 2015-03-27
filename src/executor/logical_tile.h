@@ -34,10 +34,7 @@ namespace executor {
 class LogicalTile {
 
  public:
-
-  LogicalTile(LogicalSchema *schema)
- : schema(std::unique_ptr<LogicalSchema>(schema)) {
-  }
+  LogicalTile(LogicalSchema *schema);
 
   // Add a tuple to the container at the given offset
   void AppendPositionTuple(std::vector<id_t> const &tuple);
@@ -59,10 +56,10 @@ class LogicalTile {
   // logical tile schema
   // We use a different schema representation from physical tile as they contain very different
   // metadata.
-  std::unique_ptr<LogicalSchema> schema;
+  std::unique_ptr<LogicalSchema> schema_;
 
   // container of position tuples
-  std::vector<std::vector<id_t> > position_tuple_list;
+  std::vector<std::vector<id_t> > position_tuple_list_;
 };
 
 

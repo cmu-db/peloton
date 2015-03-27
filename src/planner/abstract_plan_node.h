@@ -14,17 +14,17 @@ class AbstractPlanNode {
   public:
 
 	void AddChild(AbstractPlanNode *child) {
-		children.push_back(child);
+		children_.push_back(child);
 	}
 
-	const std::vector<AbstractPlanNode *>& GetChildren() const {
-		return children;
+	const std::vector<AbstractPlanNode *>& children() const {
+		return children_;
 	}
 
   private:
 
 	/// children plan nodes in the plan tree
-    std::vector<AbstractPlanNode *> children;
+    std::vector<AbstractPlanNode *> children_;
 };
 
 } // namespace planner

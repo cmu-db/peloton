@@ -38,20 +38,23 @@ class LogicalSchema {
   // Number of columns that haven't been invalidated.
   size_t NumValidCols();
 
+  // Invalidate specified column (used by projection node).
+  void InvalidateColumn(id_t column_id); 
+
   // Get a string representation of this tile
   friend std::ostream& operator<<(std::ostream& os, const LogicalSchema& logical_schema);
 
  private:
 
   // Pointer to tile that column is from.
-  std::vector<storage::Tile *> base_tiles;
+  std::vector<storage::Tile *> base_tiles_;
 
   // Original column id in base tile of column.
-  std::vector<id_t> origin_columns;
+  std::vector<id_t> origin_columns_;
 
   // Valid bits of columns (used to implement late-materialization for projection).
   // We don't use std::bitset because it requires the size at compile-time.
-  std::vector<bool> valid_bits;
+  std::vector<bool> valid_bits_;
 };
 
 } // namespace executor
