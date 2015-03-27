@@ -8,25 +8,15 @@ namespace planner {
 class ProjectionNode : public AbstractPlanNode {
   public:
 
-    const std::vector<std::string>& OutputColumnNames() const {
-        return output_column_names;
-    }
-
-    const std::vector<ValueType>& OutputColumnTypes() const {
-        return output_column_types;
-    }
-
-    const std::vector<int32_t>& OutputColumnSizes() const {
-        return output_column_sizes;
+    const std::vector<int>& output_column_ids() const {
+        return output_column_ids_;
     }
 
   private:
 
-    std::vector<std::string> output_column_names;
-
-    std::vector<ValueType> output_column_types;
-
-    std::vector<int32_t> output_column_sizes;
+    // TODO For now we only store column ids. We need to import the whole expression
+    // system from voltdb to support parameterized plans and expressions..
+    std::vector<int> output_column_ids_;
 };
 
 } // namespace planner
