@@ -12,6 +12,7 @@
 #include "catalog/catalog.h"
 #include "storage/tuple.h"
 #include "index/index.h"
+#include "common/synch.h"
 
 #include <vector>
 #include <string>
@@ -81,6 +82,8 @@ class ArrayUniqueIndex : public Index {
   int32_t allocated_entry_count;
 
   int32_t cursor;
+
+  RWLock rwlock;
 };
 
 } // End index namespace
