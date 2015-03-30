@@ -12,6 +12,7 @@ namespace planner {
 
 class AbstractPlanNode {
  public:
+  virtual ~AbstractPlanNode() {}
 
   void AddChild(AbstractPlanNode *child) {
     children_.push_back(child);
