@@ -18,6 +18,8 @@
 #include "storage/tile.h"
 #include "storage/tile_group.h"
 
+#include <memory>
+
 namespace nstore {
 namespace test {
 
@@ -106,12 +108,14 @@ TEST(LogicalTileTests, TileMaterializationTest) {
 
   storage::Tile *base_tile = tile_group->GetTile(1);
 
-  executor::LogicalSchema *logical_schema = new executor::LogicalSchema();
+  std::unique_ptr<executor::LogicalSchema> logical_schema(
+      new executor::LogicalSchema());
   id_t column_count = schema2->GetColumnCount();
   for(id_t column_itr = 0 ; column_itr < column_count ; column_itr++)
     logical_schema->AddColumn(base_tile, column_itr);
 
-  executor::LogicalTile *logical_tile = new executor::LogicalTile(logical_schema);
+  executor::LogicalTile *logical_tile =
+      new executor::LogicalTile(std::move(logical_schema));
 
   std::vector<id_t> position_tuple1 = { 0, 0 };
   std::vector<id_t> position_tuple2 = { 1, 1 };
@@ -136,7 +140,7 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   storage::Tile *base_tile1 = tile_group->GetTile(0);
   storage::Tile *base_tile2 = tile_group->GetTile(1);
 
-  logical_schema = new executor::LogicalSchema();
+  logical_schema.reset(new executor::LogicalSchema());
 
   column_count = schema1->GetColumnCount();
   for(id_t column_itr = 0 ; column_itr < column_count ; column_itr++)
@@ -146,7 +150,7 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   for(id_t column_itr = 0 ; column_itr < column_count ; column_itr++)
     logical_schema->AddColumn(base_tile2, column_itr);
 
-  logical_tile = new executor::LogicalTile(logical_schema);
+  logical_tile = new executor::LogicalTile(std::move(logical_schema));
 
   position_tuple1 = {0, 0, 0, 0};
   position_tuple2 = {1, 1, 1, 1};

@@ -20,8 +20,12 @@
 namespace nstore {
 namespace executor {
 
-LogicalTile::LogicalTile(LogicalSchema *schema)
-  : schema_(std::unique_ptr<LogicalSchema>(schema)) {
+LogicalTile::LogicalTile(std::unique_ptr<LogicalSchema> schema)
+  : schema_(std::move(schema)) {
+}
+
+LogicalSchema *LogicalTile::schema() {
+  return schema_.get();
 }
 
 // Add a position tuple to the container.
