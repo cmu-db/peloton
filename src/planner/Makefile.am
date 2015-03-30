@@ -1,10 +1,10 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
  
 ######################################################################
-# PLANNODE
+# PLANNER
 ######################################################################
 
-plannode_FILES =
+planner_FILES =
  
-plannode_INCLUDES = \
-                    -I$(srcdir)/plannode
+planner_INCLUDES = \
+                    -I$(srcdir)/planner

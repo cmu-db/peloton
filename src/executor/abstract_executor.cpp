@@ -1,6 +1,9 @@
 /**
  * @brief Base class for all executors.
  *
+ * TODO(3/29/15): Note that this class will probably undergo many changes as
+ * we come accross implementation issues. The interface is still in flux.
+ *
  * Copyright(c) 2015, CMU
  */
 
@@ -14,28 +17,53 @@ namespace executor {
 // Abstract Executor
 //===--------------------------------------------------------------------===//
 
-AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *abstract_node)
-  : abstract_node_(abstract_node) {
+AbstractExecutor::AbstractExecutor(
+    std::unique_ptr<planner::AbstractPlanNode> abstract_node,
+    std::vector<AbstractExecutor *>& children)
+  : abstract_node_(std::move(abstract_node)),
+    children_(children) {
 }
 
+/**
+ * @brief Initializes the executor.
+ *
+ * This function executes any initialization code common to all executors.
+ * It recursively initializes all children of this executor in the execution
+ * tree. It calls SubInit() which is implemented by the subclass.
+ */
 bool AbstractExecutor::Init() {
-  //TODO Insert any code common to all executors here.
-
+  for (unsigned int i = 0; i < children_.size(); i++) {
+    children_[i]->Init();
+  }
   return SubInit();
 }
 
+/**
+ * @brief Returns next tile processed by this executor.
+ *
+ * This function is the backbone of the tile-based volcano-style execution
+ * model we are using.
+ */
 LogicalTile *AbstractExecutor::GetNextTile() {
-  //TODO Insert any code common to all executors here.
-  //TODO In the future, we might want to pass some kind of executor state to GetNextTile.
-  // e.g. params for prepared plans.
+  //TODO In the future, we might want to pass some kind of executor state to
+  // GetNextTile. e.g. params for prepared plans.
 
   return SubGetNextTile();
 }
 
+/**
+ * @brief Releases resources used by this executor.
+ * 
+ * Recursively releases resources used by children executors.
+ * TODO Who should delete the executors?
+ * TODO Why do we need a separate function to cleanup? Won't the destructor
+ * suffice?
+ */
 void AbstractExecutor::CleanUp() {
-  //TODO Insert any code common to all executors here.
-
   SubCleanUp();
+  for (unsigned int i = 0; i < children_.size(); i++) {
+    children_[i]->CleanUp();
+  }
 }
 
 } // namespace executor

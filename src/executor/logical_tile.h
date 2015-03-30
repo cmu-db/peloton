@@ -12,12 +12,12 @@
 
 #pragma once
 
-#include <memory>
-#include <vector>
-
 #include "common/types.h"
 #include "executor/logical_schema.h"
 #include "storage/tuple.h"
+
+#include <memory>
+#include <vector>
 
 namespace nstore {
 namespace executor {
@@ -34,7 +34,9 @@ namespace executor {
 class LogicalTile {
 
  public:
-  LogicalTile(LogicalSchema *schema);
+  LogicalTile(std::unique_ptr<LogicalSchema> schema);
+
+  LogicalSchema *schema();
 
   // Add a tuple to the container at the given offset
   void AppendPositionTuple(std::vector<id_t> const &tuple);
