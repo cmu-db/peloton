@@ -18,6 +18,7 @@ namespace executor {
 // Projection Executor
 //===--------------------------------------------------------------------===//
 
+/** @brief Constructor for the projection executor. */
 ProjectionExecutor::ProjectionExecutor(
     std::unique_ptr<planner::AbstractPlanNode> abstract_node,
     std::vector<AbstractExecutor *>& children)
@@ -33,13 +34,15 @@ ProjectionExecutor::ProjectionExecutor(
  * having to convert from a vector here. Depends on how we decide to
  * deal with changing of ordering of columns (see header comment).
  * Or perhaps we can get planner to give us ids we *dont* want to output.
+ *
+ * @return True on success, false otherwise.
  */
 bool ProjectionExecutor::SubInit() {
   planner::ProjectionNode *node =
       dynamic_cast<planner::ProjectionNode *>(abstract_node_.get());
   assert(node);
 
-  const std::vector<int>& ids = node->output_column_ids();
+  const std::vector<id_t>& ids = node->output_column_ids();
   assert(ids.size() > 0);
 
   output_column_ids_.insert(ids.begin(), ids.end());
@@ -49,6 +52,8 @@ bool ProjectionExecutor::SubInit() {
 /**
  * @brief Goes through each column and invalidates it if not present
  *        in output set.
+ *
+ * @return Pointer to logical tile after projection.
  */
 LogicalTile *ProjectionExecutor::SubGetNextTile() {
   assert(children_.size() == 1);

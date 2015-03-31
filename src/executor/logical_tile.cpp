@@ -1,13 +1,11 @@
-/*-------------------------------------------------------------------------
+/**
+ * @brief Implementation of logical tile.
  *
- * logical_tile.cpp
- * file description
+ * This abstraction is used to implement late materialization of tiles in the
+ * execution engine.
+ * Tiles are only instantiated via LogicalTileFactory.
  *
  * Copyright(c) 2015, CMU
- *
- * /n-store/src/executor/logical_tile.cpp
- *
- *-------------------------------------------------------------------------
  */
 
 
@@ -20,24 +18,35 @@
 namespace nstore {
 namespace executor {
 
+/** @brief Constructor for logical tile. */
 LogicalTile::LogicalTile(std::unique_ptr<LogicalSchema> schema)
   : schema_(std::move(schema)) {
 }
 
+/**
+ * @brief Returns schema of this tile.
+ *
+ * @return Pointer to logical schema of this tile.
+ */
 LogicalSchema *LogicalTile::schema() {
   return schema_.get();
 }
 
-// Add a position tuple to the container.
+/**
+ * @brief Adds a position tuple to this tile.
+ * @param tuple Vector of tuple ids (positions).
+ */
 void LogicalTile::AppendPositionTuple(std::vector<id_t> const &tuple) {
   assert(tuple.size() == schema_->NumValidCols());
 
-  // First we ensure that the columns of the position tuple align with the schema.
-  // (Because some columns might exist but be invalidated)
+  // First we ensure that the columns of the position tuple align with
+  // the schema (because some columns might exist but be invalidated).
   std::vector<id_t> aligned_tuple;
   int tuple_idx = 0;
 
-  for (unsigned int schema_idx = 0; schema_idx < schema_->NumCols(); schema_idx++) {
+  for (unsigned int schema_idx = 0;
+      schema_idx < schema_->NumCols();
+      schema_idx++) {
     if (schema_->IsValid(schema_idx)) {
       aligned_tuple.push_back(tuple[tuple_idx]);
       tuple_idx++;
@@ -51,7 +60,13 @@ void LogicalTile::AppendPositionTuple(std::vector<id_t> const &tuple) {
   position_tuple_list_.push_back(aligned_tuple);
 }
 
-// Get the tuple from given tile at the given tuple offset
+/**
+ * @brief Get the tuple from the base tile that contains the specified field.
+ * @param column_id Column id of the specified field.
+ * @param tuple_id Tuple id of the specified field (row/position).
+ *
+ * @return Pointer to copy of tuple from base tile.
+ */
 storage::Tuple *LogicalTile::GetTuple(id_t column_id, id_t tuple_id) {
   assert(tuple_id < position_tuple_list_.size());
   assert(schema_->IsValid(column_id));
@@ -59,13 +74,19 @@ storage::Tuple *LogicalTile::GetTuple(id_t column_id, id_t tuple_id) {
   id_t base_tuple_id = position_tuple_list_[tuple_id][column_id];
   storage::Tile *base_tile = schema_->GetBaseTile(column_id);
 
-  // get a copy of the tuple from the underlying physical tile
+  // Get a copy of the tuple from the underlying physical tile.
   storage::Tuple *tuple = base_tile->GetTuple(base_tuple_id);
 
   return tuple;
 }
 
-// Get the value from given tile at the given tuple offset and column offset
+/**
+ * @brief Get the value at the specified field.
+ * @param column_id Column id of the specified field.
+ * @param tuple_id Tuple id of the specified field (row/position).
+ *
+ * @return Value at the specified field.
+ */
 Value LogicalTile::GetValue(id_t column_id, id_t tuple_id) {
   assert(tuple_id < position_tuple_list_.size());
   assert(schema_->IsValid(column_id));
@@ -79,6 +100,7 @@ Value LogicalTile::GetValue(id_t column_id, id_t tuple_id) {
   return value;
 }
 
+/** @brief Returns a string representation of this tile. */
 std::ostream& operator<<(std::ostream& os, const LogicalTile& logical_tile) {
 
   os << "\t-----------------------------------------------------------\n";
@@ -104,7 +126,6 @@ std::ostream& operator<<(std::ostream& os, const LogicalTile& logical_tile) {
 
   return os;
 }
-
 
 } // End executor namespace
 } // End nstore namespace

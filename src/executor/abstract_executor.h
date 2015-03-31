@@ -28,10 +28,13 @@ class AbstractExecutor {
       std::unique_ptr<planner::AbstractPlanNode> abstract_node,
       std::vector<AbstractExecutor *>& children);
 
+  /** @brief Init function to be overriden by subclass. */
   virtual bool SubInit() = 0;
 
+  /** @brief Workhorse function to be overriden by subclass. */
   virtual LogicalTile *SubGetNextTile() = 0;
 
+  /** @brief Clean up function to be overriden by subclass. */
   virtual void SubCleanUp() = 0;
 
   /** @brief Plan node that corresponds to this executor. */
