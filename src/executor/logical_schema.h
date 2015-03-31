@@ -1,13 +1,7 @@
-/*-------------------------------------------------------------------------
- *
- * logical_schema.h
- * Schema for logical tile.
+/**
+ * @brief Header for logical schema.
  *
  * Copyright(c) 2015, CMU
- *
- * /n-store/src/executor/logical_schema.h
- *
- *-------------------------------------------------------------------------
  */
 
 #pragma once
@@ -32,28 +26,28 @@ class LogicalSchema {
 
   bool IsValid(id_t column_id);
 
-  // Note that this includes invalidated columns.
   size_t NumCols();
 
-  // Number of columns that haven't been invalidated.
   size_t NumValidCols();
 
-  // Invalidate specified column (used by projection node).
   void InvalidateColumn(id_t column_id); 
 
-  // Get a string representation of this tile
-  friend std::ostream& operator<<(std::ostream& os, const LogicalSchema& logical_schema);
+  friend std::ostream& operator<<(
+      std::ostream& os, const LogicalSchema& logical_schema);
 
  private:
-
-  // Pointer to tile that column is from.
+  /** @brief Pointers to tiles that columns are from. */
   std::vector<storage::Tile *> base_tiles_;
 
-  // Original column id in base tile of column.
+  /** @brief Original column ids in base tiles of columns. */
   std::vector<id_t> origin_columns_;
 
-  // Valid bits of columns (used to implement late-materialization for projection).
-  // We don't use std::bitset because it requires the size at compile-time.
+  /**
+   * @brief Valid bits of columns.
+   *
+   * Used to implement late-materialization for projection.
+   * We don't use std::bitset because it requires the size at compile-time.
+   */
   std::vector<bool> valid_bits_;
 };
 
