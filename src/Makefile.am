@@ -27,7 +27,6 @@ nstore_SOURCES =  $(backend_FILES) \
 				  $(common_FILES) \
 				  $(executor_FILES) \
 				  $(index_FILES) \
-				  $(planner_FILES) \
 				  $(parser_FILES) \
 				  $(planner_FILES) \
 				  $(storage_FILES)

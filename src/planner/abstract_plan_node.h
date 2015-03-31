@@ -1,3 +1,9 @@
+/**
+ * @brief Header for abstract plan node.
+ *
+ * Copyright(c) 2015, CMU
+ */
+
 #pragma once
 
 #include <cstdint>
@@ -6,24 +12,14 @@
 namespace nstore {
 namespace planner {
 
-//===--------------------------------------------------------------------===//
-// Abstract Plan Node
-//===--------------------------------------------------------------------===//
-
 class AbstractPlanNode {
  public:
-  virtual ~AbstractPlanNode() {}
-
-  void AddChild(AbstractPlanNode *child) {
-    children_.push_back(child);
-  }
-
-  const std::vector<AbstractPlanNode *>& children() const {
-    return children_;
-  }
+  virtual ~AbstractPlanNode();
+  void AddChild(AbstractPlanNode *child);
+  const std::vector<AbstractPlanNode *>& children() const;
 
  private:
-  // children plan nodes in the plan tree
+  /** @brief Children plan nodes in the plan tree. */
   std::vector<AbstractPlanNode *> children_;
 };
 

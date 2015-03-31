@@ -13,10 +13,10 @@
 namespace nstore {
 namespace executor {
 
-//===--------------------------------------------------------------------===//
-// Abstract Executor
-//===--------------------------------------------------------------------===//
-
+/**
+ * @brief This constructor should only be called in the constructors of
+ *        subclasses.
+ */
 AbstractExecutor::AbstractExecutor(
     std::unique_ptr<planner::AbstractPlanNode> abstract_node,
     std::vector<AbstractExecutor *>& children)
@@ -30,6 +30,8 @@ AbstractExecutor::AbstractExecutor(
  * This function executes any initialization code common to all executors.
  * It recursively initializes all children of this executor in the execution
  * tree. It calls SubInit() which is implemented by the subclass.
+ *
+ * @return True on success, false otherwise.
  */
 bool AbstractExecutor::Init() {
   for (unsigned int i = 0; i < children_.size(); i++) {
@@ -43,6 +45,8 @@ bool AbstractExecutor::Init() {
  *
  * This function is the backbone of the tile-based volcano-style execution
  * model we are using.
+ *
+ * @return Pointer to the logical tile processed by this executor.
  */
 LogicalTile *AbstractExecutor::GetNextTile() {
   //TODO In the future, we might want to pass some kind of executor state to
