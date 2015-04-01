@@ -15,7 +15,6 @@ namespace planner {
 }
 
 namespace executor {
-class LogicalTile;
 
 class ProjectionExecutor : public AbstractExecutor {
  public:

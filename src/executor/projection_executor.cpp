@@ -34,6 +34,7 @@ ProjectionExecutor::ProjectionExecutor(const planner::ProjectionNode *node)
  * @return True on success, false otherwise.
  */
 bool ProjectionExecutor::SubInit() {
+  assert(children_.size() == 1);
   return true;
 }
 
