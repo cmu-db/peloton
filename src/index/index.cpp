@@ -18,12 +18,12 @@ namespace nstore {
 namespace index {
 
 Index::Index(const IndexMetadata &metadata) :
-                metadata(metadata),
-                identifier(metadata.identifier),
-                catalog(metadata.catalog),
-                key_schema(metadata.key_schema),
-                tuple_schema(metadata.tuple_schema),
-                is_unique_index(metadata.unique) {
+                    metadata(metadata),
+                    identifier(metadata.identifier),
+                    catalog(metadata.catalog),
+                    key_schema(metadata.key_schema),
+                    tuple_schema(metadata.tuple_schema),
+                    unique_keys(metadata.unique_keys) {
 
   // # of columns in key
   column_count = metadata.key_schema->GetColumnCount();
@@ -31,8 +31,6 @@ Index::Index(const IndexMetadata &metadata) :
   // initialize counters
   lookup_counter = insert_counter = delete_counter = update_counter = 0;
 
-  // initialize memory size to zero
-  memory_size_estimate = 0;
 }
 
 std::ostream& operator<<(std::ostream& os, const Index& index) {
@@ -42,17 +40,16 @@ std::ostream& operator<<(std::ostream& os, const Index& index) {
   os << "\tINDEX\n";
 
   os << index.GetTypeName() << "\t(" << index.GetName() << ")";
-  os << (index.IsUniqueIndex() ? " UNIQUE " : " NON-UNIQUE") << "\n";
+  os << (index.HasUniqueKeys() ? " UNIQUE " : " NON-UNIQUE") << "\n";
 
   os << "\tValue schema : " << (*index.tuple_schema) ;
-  os << "\tSize: " << index.GetSize();
 
   os << "\t-----------------------------------------------------------\n";
 
   return os;
 }
 
-void Index::PrintReport() {
+void Index::GetInfo() const {
 
   std::cout << identifier << ",";
   std::cout << GetTypeName() << ",";
