@@ -707,14 +707,14 @@ BtMgr *bt_mgr (char *name, uint bits, uint nodemax)
   flag = PROT_READ | PROT_WRITE;
   mgr->pagezero = (BtPageZero*) mmap (0, mgr->page_size, flag, MAP_SHARED, mgr->idx, ALLOC_page << mgr->page_bits);
   if( mgr->pagezero == MAP_FAILED ) {
-    fprintf (stderr, "Unable to mmap btree page zero, error = %d\n", errno);
+    fprintf (stderr, "Unable to mmap btree page zero, error = %s\n", strerror(errno));
     return bt_mgrclose (mgr), (BtMgr *)NULL;
   }
   mlock (mgr->pagezero, mgr->page_size);
 
   mgr->hashtable = (BtHashEntry *) mmap (0, (uid)mgr->nlatchpage << mgr->page_bits, flag, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
   if( mgr->hashtable == MAP_FAILED ) {
-    fprintf (stderr, "Unable to mmap anonymous buffer pool pages, error = %d\n", errno);
+    fprintf (stderr, "Unable to mmap anonymous buffer pool pages, error = %s\n", strerror(errno));
     return bt_mgrclose (mgr), (BtMgr *)NULL;
   }
 #else

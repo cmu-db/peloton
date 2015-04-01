@@ -22,7 +22,7 @@ namespace test {
 // Index Tests
 //===--------------------------------------------------------------------===//
 
-TEST(IndexTests, ArrayUniqueIndexTest) {
+TEST(IndexTests, BtreeMultimapIndexTest) {
 
   std::vector<catalog::ColumnInfo> columns;
   std::vector<std::string> tile_column_names;
@@ -108,7 +108,6 @@ TEST(IndexTests, ArrayUniqueIndexTest) {
 
   catalog::Schema *key_schema = index_metadata.key_schema;
 
-  /*
   index::Index *index = index::IndexFactory::GetInstance(index_metadata);
 
   EXPECT_EQ(true, index != NULL);
@@ -117,14 +116,30 @@ TEST(IndexTests, ArrayUniqueIndexTest) {
 
   id_t tile_id = tile_group->GetTileId(0);
 
-  ItemPointer *item0 = new ItemPointer(tile_id, 0);
-  ItemPointer *item1 = new ItemPointer(tile_id, 1);
-  ItemPointer *item2 = new ItemPointer(tile_id, 2);
+  storage::Tuple *key0 = new storage::Tuple(key_schema, true);
+  storage::Tuple *key1 = new storage::Tuple(key_schema, true);
+  storage::Tuple *key2 = new storage::Tuple(key_schema, true);
+  storage::Tuple *keynonce = new storage::Tuple(key_schema, true);
 
-  index->InsertEntry(item0);
-  index->InsertEntry(item1);
-  index->InsertEntry(item2);
+  key0->SetValue(0, ValueFactory::GetBigIntValue(100));
+  key1->SetValue(0, ValueFactory::GetBigIntValue(200));
+  key2->SetValue(0, ValueFactory::GetBigIntValue(300));
+  keynonce->SetValue(0, ValueFactory::GetBigIntValue(400));
 
+  ItemPointer item0(tile_id, 0);
+  ItemPointer item1(tile_id, 1);
+  ItemPointer item2(tile_id, 2);
+
+  index->InsertEntry(key0, item0);
+  index->InsertEntry(key1, item1);
+  index->InsertEntry(key2, item2);
+
+  EXPECT_EQ(true, index->Exists(key0));
+  EXPECT_EQ(true, index->Exists(key1));
+  EXPECT_EQ(true, index->Exists(key2));
+  EXPECT_EQ(false, index->Exists(keynonce));
+
+  /*
   // SEARCH
 
   storage::Tuple *search_key = new storage::Tuple(key_schema, true);
@@ -154,6 +169,20 @@ TEST(IndexTests, ArrayUniqueIndexTest) {
   EXPECT_EQ(0, count);
   */
 
+  delete key0;
+  delete key1;
+  delete key2;
+  delete keynonce;
+
+  delete tuple0;
+  delete tuple1;
+  delete tuple2;
+
+  delete index;
+  delete tile_group;
+
+  delete schema;
+  delete catalog;
 }
 
 
