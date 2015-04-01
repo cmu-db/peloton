@@ -6,15 +6,20 @@
 
 #pragma once
 
-#include "common/types.h"
-#include "executor/logical_schema.h"
-#include "storage/tuple.h"
-
 #include <memory>
 #include <vector>
 
+#include "common/types.h"
+#include "common/value.h"
+
 namespace nstore {
+
+namespace storage {
+  class Tuple;
+}
+
 namespace executor {
+class LogicalSchema;
 
 class LogicalTile {
 

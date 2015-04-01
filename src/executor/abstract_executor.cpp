@@ -8,20 +8,16 @@
  */
 
 #include "executor/abstract_executor.h"
-#include "executor/logical_tile.h"
 
 namespace nstore {
 namespace executor {
 
 /**
- * @brief This constructor should only be called in the constructors of
- *        subclasses.
+ * @brief Add child executor to this executor node.
+ * @param child Child executor to add.
  */
-AbstractExecutor::AbstractExecutor(
-    std::unique_ptr<planner::AbstractPlanNode> abstract_node,
-    std::vector<AbstractExecutor *>& children)
-  : abstract_node_(std::move(abstract_node)),
-    children_(children) {
+void AbstractExecutor::AddChild(AbstractExecutor *child) {
+  children_.push_back(child);
 }
 
 /**

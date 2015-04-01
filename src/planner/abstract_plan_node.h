@@ -15,7 +15,9 @@ namespace planner {
 class AbstractPlanNode {
  public:
   virtual ~AbstractPlanNode();
+
   void AddChild(AbstractPlanNode *child);
+
   const std::vector<AbstractPlanNode *>& children() const;
 
  private:
