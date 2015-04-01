@@ -10,7 +10,6 @@
  *-------------------------------------------------------------------------
  */
 
-#include "../../src/index/btree_multimap_index.h"
 #include "gtest/gtest.h"
 #include "harness.h"
 
@@ -101,16 +100,16 @@ TEST(IndexTests, ArrayUniqueIndexTest) {
 
   table_columns_in_key.push_back(0);
 
+  index::IndexMetadata index_metadata("btree_index",
+                                      INDEX_TYPE_BTREE_MULTIMAP,
+                                      catalog, schema,
+                                      table_columns_in_key,
+                                      true);
+
+  catalog::Schema *key_schema = index_metadata.key_schema;
+
   /*
-  index::IndexMetadata *index_metadata = new index::IndexMetadata("array_unique",
-                                                                  INDEX_TYPE_ARRAY,
-                                                                  catalog, schema,
-                                                                  table_columns_in_key,
-                                                                  true, true);
-
-  catalog::Schema *key_schema = index_metadata->key_schema;
-
-  index::Index *index = new index::ArrayUniqueIndex(*index_metadata);
+  index::Index *index = index::IndexFactory::GetInstance(index_metadata);
 
   EXPECT_EQ(true, index != NULL);
 

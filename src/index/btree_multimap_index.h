@@ -13,8 +13,9 @@
 #include "common/types.h"
 #include "catalog/catalog.h"
 #include "storage/tuple.h"
+
 #include "index/index.h"
-#include "btree/concurrent_btree.h"
+#include "index/concurrent_btree.h"
 
 #include <vector>
 #include <string>
@@ -40,8 +41,6 @@ class BtreeMultimapIndex : public Index {
 
   bool DeleteEntry(storage::Tuple *key);
 
-  bool UpdateEntry(storage::Tuple *key, ItemPointer location);
-
   bool Exists(storage::Tuple *key) const;
 
   std::vector<ItemPointer> GetLocationsForKey(storage::Tuple *key) const;
@@ -61,6 +60,11 @@ class BtreeMultimapIndex : public Index {
   }
 
  protected:
+
+  // Btree manager
+  BtMgr *btree_manager;
+
+  BtDb *btree_db;
 
 };
 

@@ -129,7 +129,7 @@ public:
 	}
 
 	// Get the address of this tuple in the table's backing store
-	inline char* Location() const {
+	inline char* GetData() const {
 		return tuple_data;
 	}
 
