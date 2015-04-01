@@ -114,9 +114,6 @@ class Index
   // delete the index entry linked to given tuple
   virtual bool DeleteEntry(storage::Tuple *key) = 0;
 
-  // update the index entry linked to given tuple
-  virtual bool UpdateEntry(storage::Tuple *key, ItemPointer location) = 0;
-
   // return whether the entry is already stored in the index
   virtual bool Exists(storage::Tuple *key) const = 0;
 
