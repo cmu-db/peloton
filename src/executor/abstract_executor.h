@@ -6,14 +6,11 @@
 
 #pragma once
 
-#include "executor/logical_tile.h"
-#include "planner/abstract_plan_node.h"
-
-#include <memory>
 #include <vector>
 
 namespace nstore {
 namespace executor {
+class LogicalTile;
 
 class AbstractExecutor {
  public:
@@ -24,9 +21,7 @@ class AbstractExecutor {
   void CleanUp();
 
  protected:
-  AbstractExecutor(
-      std::unique_ptr<planner::AbstractPlanNode> abstract_node,
-      std::vector<AbstractExecutor *>& children);
+  void AddChild(AbstractExecutor *child);
 
   /** @brief Init function to be overriden by subclass. */
   virtual bool SubInit() = 0;
@@ -36,9 +31,6 @@ class AbstractExecutor {
 
   /** @brief Clean up function to be overriden by subclass. */
   virtual void SubCleanUp() = 0;
-
-  /** @brief Plan node that corresponds to this executor. */
-  std::unique_ptr<planner::AbstractPlanNode> abstract_node_;
 
   /** @brief Children nodes of this executor in the executor tree. */
   std::vector<AbstractExecutor *> children_;

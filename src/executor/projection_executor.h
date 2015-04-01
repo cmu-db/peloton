@@ -6,22 +6,20 @@
 
 #pragma once
 
-#include "common/types.h"
 #include "executor/abstract_executor.h"
-#include "executor/logical_tile.h"
-#include "planner/projection_node.h"
-
-#include <unordered_set>
-#include <vector>
 
 namespace nstore {
+
+namespace planner {
+  class ProjectionNode;
+}
+
 namespace executor {
+class LogicalTile;
 
 class ProjectionExecutor : public AbstractExecutor {
  public:
-  ProjectionExecutor(
-      std::unique_ptr<planner::AbstractPlanNode> abstract_node,
-      std::vector<AbstractExecutor *>& children);
+  ProjectionExecutor(const planner::ProjectionNode *node);
 
  protected:
   bool SubInit();
@@ -31,13 +29,8 @@ class ProjectionExecutor : public AbstractExecutor {
   void SubCleanUp();
 
  private:
-  /**
-   * @brief Set of output column ids.
-   *  
-   * Ids which are not in this set are invalidated by this executor.
-   */
-  std::unordered_set<id_t> output_column_ids_;
-    
+  /** @brief Projection node corresponding to this executor. */
+  const planner::ProjectionNode *node_;
 };
 
 } // namespace executor

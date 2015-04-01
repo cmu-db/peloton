@@ -8,12 +8,13 @@
  * Copyright(c) 2015, CMU
  */
 
-
 #include "executor/logical_tile.h"
-#include "storage/tile.h"
 
-#include <iostream>
 #include <cassert>
+#include <iostream>
+
+#include "executor/logical_schema.h"
+#include "storage/tile.h"
 
 namespace nstore {
 namespace executor {
@@ -35,6 +36,10 @@ LogicalSchema *LogicalTile::schema() {
 /**
  * @brief Adds a position tuple to this tile.
  * @param tuple Vector of tuple ids (positions).
+ *
+ * TODO Right now the caller has to ensure that the tuple is
+ * in the right order. Maybe we should create a PositionTuple class to manage
+ * that logic instead of requiring executors to be aware of this...
  */
 void LogicalTile::AppendPositionTuple(std::vector<id_t> const &tuple) {
   assert(tuple.size() == schema_->NumValidCols());

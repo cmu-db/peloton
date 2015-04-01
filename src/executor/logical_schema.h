@@ -11,9 +11,13 @@
 #include <vector>
 
 #include "common/types.h"
-#include "storage/tile.h"
 
 namespace nstore {
+
+namespace storage {
+  class Tile;
+}
+
 namespace executor {
 
 class LogicalSchema {
