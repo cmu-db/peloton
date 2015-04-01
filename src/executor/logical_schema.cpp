@@ -8,9 +8,9 @@
  * Copyright(c) 2015, CMU
  */
 
-#include <cassert>
-
 #include "executor/logical_schema.h"
+
+#include <cassert>
 
 namespace nstore {
 namespace executor {
