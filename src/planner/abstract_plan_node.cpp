@@ -9,10 +9,6 @@
 namespace nstore {
 namespace planner {
 
-//===--------------------------------------------------------------------===//
-// Abstract Plan Node
-//===--------------------------------------------------------------------===//
-
 /**
  * @brief Virtual destructor to make this class polymorphic.
  * 
