@@ -14,6 +14,7 @@
 #include <iostream>
 
 #include "index/index_factory.h"
+#include "index/btree_multimap_index.h"
 
 namespace nstore {
 namespace index {
@@ -28,9 +29,9 @@ Index *IndexFactory::GetInstance(const IndexMetadata &metadata) {
 
   std::cout << "Creating index : "<< metadata.identifier << " " << (*key_schema);
 
-  throw NotImplementedException("Unsupported Index Metadata" );
+  BtreeMultimapIndex *index = new BtreeMultimapIndex(metadata);
 
-  return nullptr;
+  return index;
 }
 
 } // End index namespace
