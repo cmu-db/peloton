@@ -9,12 +9,13 @@
 @CODE_COVERAGE_RULES@
 CODE_COVERAGE_IGNORE_PATTERN="/usr/*" "*/third_party/*" "*/test/*"
 
+## Global CFLAGS
+AM_CFLAGS = -O0 -g
 AM_CPPFLAGS = $(nstore_INCLUDES)
 
-AM_CXXFLAGS = -std=c++11 -O0 -g3 -Wall -Wextra -fno-strict-aliasing \
+AM_CXXFLAGS = -std=c++11 $(AM_CFLAGS) -Wall -Wextra -fno-strict-aliasing \
 			  $(CODE_COVERAGE_CFLAGS)
-
-#              -fdiagnostics-color=auto
+##              -fdiagnostics-color=auto
 
 AM_LDFLAGS  = $(CODE_COVERAGE_LDFLAGS) -lpthread -ltbb
              
