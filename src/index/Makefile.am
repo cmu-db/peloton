@@ -7,7 +7,7 @@
 index_FILES = \
 			  index/index.cpp \
 			  index/index_factory.cpp \
-			  index/array_unique_index.cpp
+			  index/btree_multimap_index.cpp
 
 index_INCLUDES = \
 				 -I$(srcdir)/common    
