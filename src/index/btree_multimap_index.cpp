@@ -20,8 +20,8 @@ BtreeMultimapIndex::BtreeMultimapIndex(const IndexMetadata &metadata)
 : Index(metadata) {
 
   // Start manager
-  size_t pool_size = 2 * 1024 * 1024;
-  int bits = 16;
+  size_t pool_size = 1024;
+  unsigned int bits = 16;
 
   btree_manager = bt_mgr ((char *) metadata.identifier.c_str(), bits, pool_size);
 
