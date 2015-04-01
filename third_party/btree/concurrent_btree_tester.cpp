@@ -12,6 +12,15 @@
 
 #include "concurrent_btree.h"
 
+/*
+ * USAGE :
+ *
+ * gcc -D STANDALONE -O3 threadskv8.c -lpthread
+ * ./a.out btree_file w buffer_pool_size 1024 3 src_file1
+ * ./a.out btree_file s buffer_pool_size 1024 3 src_file1
+ *
+ */
+
 #ifndef unix
 double getCpuTime(int type)
 {
