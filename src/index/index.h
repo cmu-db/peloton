@@ -121,6 +121,9 @@ class Index
   // Accessors
   //===--------------------------------------------------------------------===//
 
+  // scan all keys in the index
+  virtual std::vector<ItemPointer> Scan() const = 0;
+
   // get the locations of tuples matching given key
   virtual std::vector<ItemPointer> GetLocationsForKey(storage::Tuple *key) const = 0;
 

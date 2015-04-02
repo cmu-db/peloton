@@ -1255,18 +1255,14 @@ BTERR bt_deletekey (BtDb *bt, char *key, uint len, uint lvl)
 
   fence = slot == set->page->cnt;
 
-  printf("delete key :: slot found \n");
+  printf("Delete key :: slot found \n");
   int cmp = keycmp (ptr, key, len, bt->key_schema);
-
-  printf("cmp : %d ", cmp);
-  printf("key1 : --%s-- ", ptr->key);
-  printf("len1 : %d ", ptr->len);
-  printf("key2 : --%s-- ", key);
-  printf("len2 : %d \n", len);
 
   // if key is found delete it, otherwise ignore request
 
-  if( (found = !keycmp (ptr, key, len, bt->key_schema) ) )
+  if( (found = !keycmp (ptr, key, len, bt->key_schema) ) ) {
+    printf("slot %d slot status %d  \n", slot, slotptr(set->page, slot)->dead);
+
     if( (found = slotptr(set->page, slot)->dead == 0 ) ) {
 
       printf("key found.. deleting  \n");
@@ -1278,13 +1274,18 @@ BTERR bt_deletekey (BtDb *bt, char *key, uint len, uint lvl)
 
       // collapse empty slots beneath the fence
 
-      while( (idx = set->page->cnt - 1 ) )
+      while( (idx = set->page->cnt - 1 ) ) {
         if( slotptr(set->page, idx)->dead ) {
           *slotptr(set->page, idx) = *slotptr(set->page, idx + 1);
           memset (slotptr(set->page, set->page->cnt--), 0, sizeof(BtSlot));
-        } else
+        }
+        else {
           break;
+        }
+      }
+
     }
+  }
 
   //  did we delete a fence key in an upper level?
 
