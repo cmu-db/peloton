@@ -788,7 +788,7 @@ BtDb *bt_open (BtMgr *mgr)
 //  +1: key2 < key1
 //  as the comparison value
 
-int keycmp (BtKey* key1, unsigned char *key2, uint len2, catalog::Schema *key_schema)
+int keycmp (BtKey* key1, char *key2, uint len2, catalog::Schema *key_schema)
 {
   uint len1 = key1->len;
   int ans;
@@ -798,24 +798,20 @@ int keycmp (BtKey* key1, unsigned char *key2, uint len2, catalog::Schema *key_sc
   if( len1 < len2 )
     return -1;
 
-  storage::Tuple lhsTuple(key_schema, key1->key);
-  storage::Tuple rhsTuple(key_schema, key2);
+  storage::Tuple lhs_tuple(key_schema, key1->key);
+  storage::Tuple rhs_tuple(key_schema, key2);
 
-  std::cout << "LHS :: " << lhsTuple;
-  std::cout << "RHS :: " << rhsTuple;
+  int compare = lhs_tuple.Compare(rhs_tuple);
 
-  int compare = lhsTuple.Compare(rhsTuple);
+  lhs_tuple.Move(nullptr);
+  rhs_tuple.Move(nullptr);
 
-  std::cout << "Tuple comparison :: " << compare << std::endl;
+  // Original memcmp
+  //if(( ans = memcmp (key1->key, key2, len1 > len2 ? len2 : len1) )) {
+  //  return ans;
+  //}
 
-  if(( ans = memcmp (key1->key, key2, len1 > len2 ? len2 : len1) )) {
-    std::cout << "Memcmp:: " << ans << std::endl;
-    return ans;
-  }
-
-  std::cout << "Memcmp:: 0" << std::endl;
-
-  return 0;
+  return compare;
 }
 
 // place write, read, or parent lock on requested page_no.
@@ -927,7 +923,7 @@ int bt_newpage(BtDb *bt, BtPageSet *set, BtPage contents)
 
 //  find slot in page for given key at a given level
 
-int bt_findslot (BtPage page, unsigned char *key, uint len, catalog::Schema *key_schema)
+int bt_findslot (BtPage page, char *key, uint len, catalog::Schema *key_schema)
 {
   uint diff, higher = page->cnt, low = 1, slot;
   uint good = 0;
@@ -961,7 +957,7 @@ int bt_findslot (BtPage page, unsigned char *key, uint len, catalog::Schema *key
 //  find and load page at given level for given key
 //  leave page rd or wr locked as requested
 
-int bt_loadpage (BtDb *bt, BtPageSet *set, unsigned char *key, uint len, uint lvl, BtLock lock)
+int bt_loadpage (BtDb *bt, BtPageSet *set, char *key, uint len, uint lvl, BtLock lock)
 {
   uid page_no = ROOT_page, prevpage = 0;
   uint drill = 0xff, slot;
@@ -1085,7 +1081,7 @@ void bt_freepage (BtDb *bt, BtPageSet *set)
 
 BTERR bt_fixfence (BtDb *bt, BtPageSet *set, uint lvl)
 {
-  unsigned char leftkey[BT_keyarray], rightkey[BT_keyarray];
+  char leftkey[BT_keyarray], rightkey[BT_keyarray];
   unsigned char value[BtId];
   BtKey* ptr;
 
@@ -1168,7 +1164,7 @@ BTERR bt_collapseroot (BtDb *bt, BtPageSet *root)
 
 BTERR bt_deletepage (BtDb *bt, BtPageSet *set)
 {
-  unsigned char lowerfence[BT_keyarray], higherfence[BT_keyarray];
+  char lowerfence[BT_keyarray], higherfence[BT_keyarray];
   unsigned char value[BtId];
   uint lvl = set->page->lvl;
   BtPageSet right[1];
@@ -1249,7 +1245,7 @@ BTERR bt_deletepage (BtDb *bt, BtPageSet *set)
 //  find and delete key on page by marking delete flag bit
 //  if page becomes empty, delete it from the btree
 
-BTERR bt_deletekey (BtDb *bt, unsigned char *key, uint len, uint lvl)
+BTERR bt_deletekey (BtDb *bt, char *key, uint len, uint lvl)
 {
   uint slot, idx, found, fence;
   BtPageSet set[1];
@@ -1370,7 +1366,7 @@ uint bt_findnext (BtDb *bt, BtPageSet *set, uint slot)
 //  leaf level and return number of value bytes
 //  or (-1) if not found.  Setup key for bt_foundkey
 
-int bt_findkey (BtDb *bt, unsigned char *key, uint keylen, unsigned char *value, uint valmax)
+int bt_findkey (BtDb *bt, char *key, uint keylen, unsigned char *value, uint valmax)
 {
   BtPageSet set[1];
   uint len, slot;
@@ -1480,7 +1476,7 @@ uint bt_cleanpage(BtDb *bt, BtPageSet *set, uint keylen, uint slot, uint vallen)
 
     key = keyptr(bt->frame, cnt);
     nxt -= key->len + sizeof(BtKey);
-    memcpy ((unsigned char *)page + nxt, key, key->len + sizeof(BtKey));
+    memcpy ((char *)page + nxt, key, key->len + sizeof(BtKey));
 
     // make a librarian slot
 
@@ -1512,7 +1508,7 @@ uint bt_cleanpage(BtDb *bt, BtPageSet *set, uint keylen, uint slot, uint vallen)
 
 BTERR bt_splitroot(BtDb *bt, BtPageSet *root, BtLatchSet *right)
 {
-  unsigned char leftkey[BT_keyarray];
+  char leftkey[BT_keyarray];
   uint nxt = bt->mgr->page_size;
   unsigned char value[BtId];
   BtPageSet left[1];
@@ -1550,7 +1546,7 @@ BTERR bt_splitroot(BtDb *bt, BtPageSet *root, BtLatchSet *right)
 
   nxt -= 2 + sizeof(BtKey);
   slotptr(root->page, 2)->off = nxt;
-  ptr = (BtKey *)((unsigned char *)root->page + nxt);
+  ptr = (BtKey *)((char *)root->page + nxt);
   ptr->len = 2;
   ptr->key[0] = 0xff;
   ptr->key[1] = 0xff;
@@ -1566,7 +1562,7 @@ BTERR bt_splitroot(BtDb *bt, BtPageSet *root, BtLatchSet *right)
   ptr = (BtKey *)leftkey;
   nxt -= ptr->len + sizeof(BtKey);
   slotptr(root->page, 1)->off = nxt;
-  memcpy ((unsigned char *)root->page + nxt, leftkey, ptr->len + sizeof(BtKey));
+  memcpy ((char *)root->page + nxt, leftkey, ptr->len + sizeof(BtKey));
 
   bt_putid(root->page->right, 0);
   root->page->min = nxt;    // reset lowest used offset and key count
@@ -1614,7 +1610,7 @@ uint bt_splitpage (BtDb *bt, BtPageSet *set)
 
     key = keyptr(set->page, cnt);
     nxt -= key->len + sizeof(BtKey);
-    ptr = (BtKey*)((unsigned char *)bt->frame + nxt);
+    ptr = (BtKey*)((char *)bt->frame + nxt);
     memcpy (ptr, key, key->len + sizeof(BtKey));
 
     //  add librarian slot
@@ -1672,7 +1668,7 @@ uint bt_splitpage (BtDb *bt, BtPageSet *set)
 
     key = keyptr(bt->frame, cnt);
     nxt -= key->len + sizeof(BtKey);
-    memcpy ((unsigned char *)set->page + nxt, key, key->len + sizeof(BtKey));
+    memcpy ((char *)set->page + nxt, key, key->len + sizeof(BtKey));
 
     //  add librarian slot
 
@@ -1700,7 +1696,7 @@ uint bt_splitpage (BtDb *bt, BtPageSet *set)
 
 BTERR bt_splitkeys (BtDb *bt, BtPageSet *set, BtLatchSet *right)
 {
-  unsigned char leftkey[BT_keyarray], rightkey[BT_keyarray];
+  char leftkey[BT_keyarray], rightkey[BT_keyarray];
   unsigned char value[BtId];
   uint lvl = set->page->lvl;
   BtPage page;
@@ -1754,7 +1750,7 @@ BTERR bt_splitkeys (BtDb *bt, BtPageSet *set, BtLatchSet *right)
 //  page must already be checked for
 //  adequate space
 
-BTERR bt_insertslot (BtDb *bt, BtPageSet *set, uint slot, unsigned char *key,uint keylen, unsigned char *value, uint vallen, uint type, uint release)
+BTERR bt_insertslot (BtDb *bt, BtPageSet *set, uint slot, char *key,uint keylen, unsigned char *value, uint vallen, uint type, uint release)
 {
   uint idx, librarian;
   BtSlot *node;
@@ -1778,7 +1774,7 @@ BTERR bt_insertslot (BtDb *bt, BtPageSet *set, uint slot, unsigned char *key,uin
   // copy key onto page
 
   set->page->min -= keylen + sizeof(BtKey);
-  ptr = (BtKey*)((unsigned char *)set->page + set->page->min);
+  ptr = (BtKey*)((char *)set->page + set->page->min);
   memcpy (ptr->key, key, keylen);
   ptr->len = keylen;
 
@@ -1828,9 +1824,9 @@ BTERR bt_insertslot (BtDb *bt, BtPageSet *set, uint slot, unsigned char *key,uin
 //  Insert new key into the btree at given level.
 //  either add a new key or update/add an existing one
 
-BTERR bt_insertkey (BtDb *bt, unsigned char *key, uint keylen, uint lvl, void *value, uint vallen, uint unique)
+BTERR bt_insertkey (BtDb *bt, char *key, uint keylen, uint lvl, void *value, uint vallen, uint unique)
 {
-  unsigned char newkey[BT_keyarray];
+  char newkey[BT_keyarray];
   uint slot, len, entry;
   BtPageSet set[1];
   BtKey *ptr, *ins;
@@ -1857,7 +1853,7 @@ BTERR bt_insertkey (BtDb *bt, unsigned char *key, uint keylen, uint lvl, void *v
   else {
     type = Duplicate;
     sequence = bt_newdup (bt);
-    bt_putid (ins->key + ins->len + sizeof(BtKey), sequence);
+    bt_putid ((unsigned char *) ins->key + ins->len + sizeof(BtKey), sequence);
     ins->len += BtId;
   }
 
@@ -1943,7 +1939,7 @@ BTERR bt_insertkey (BtDb *bt, unsigned char *key, uint keylen, uint lvl, void *v
 
     set->latch->dirty = 1;
     set->page->min -= keylen + sizeof(BtKey);
-    ptr = (BtKey*)((unsigned char *)set->page + set->page->min);
+    ptr = (BtKey*)((char *)set->page + set->page->min);
     memcpy (ptr->key, key, keylen);
     ptr->len = keylen;
 
@@ -2609,7 +2605,7 @@ uint bt_nextkey (BtDb *bt, uint slot)
 
 //  cache page of keys into cursor and return starting slot for given key
 
-uint bt_startkey (BtDb *bt, unsigned char *key, uint len)
+uint bt_startkey (BtDb *bt, char *key, uint len)
 {
   BtPageSet set[1];
   uint slot;
@@ -2833,7 +2829,7 @@ uint __stdcall index_file (void *arg)
   uid next, page_no = LEAF_page;  // start on first page of leaves
   int ch, len = 0, type = 0;
   unsigned int slot;
-  unsigned char key[BT_maxkey];
+  char key[BT_maxkey];
   unsigned char txn[65536];
   ThreadArg *args = (ThreadArg*) arg;
   BtPageSet set[1];

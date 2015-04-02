@@ -362,7 +362,7 @@ public:
 std::ostream& operator<< (std::ostream& os, const Tuple& tuple){
 
 	uint64_t address_num = (uint64_t) tuple.GetData();
-	os << " @" << address_num << " ";
+	//os << " @" << address_num << " ";
 
 	id_t column_count = tuple.GetColumnCount();
 	for (id_t column_itr = 0; column_itr < column_count; column_itr++) {

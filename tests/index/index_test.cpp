@@ -115,9 +115,11 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   id_t tile_id = tile_group->GetTileId(0);
 
   storage::Tuple *key0 = new storage::Tuple(key_schema, true);
+  storage::Tuple *key1 = new storage::Tuple(key_schema, true);
   storage::Tuple *keynonce = new storage::Tuple(key_schema, true);
 
   key0->SetValue(0, ValueFactory::GetIntegerValue(100));
+  key1->SetValue(0, ValueFactory::GetIntegerValue(200));
   keynonce->SetValue(0, ValueFactory::GetIntegerValue(400));
 
   std::cout << "+++++++++++++++++++++++++++ Initial key0 :: " << (*key0);
@@ -127,8 +129,7 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   ItemPointer item2(tile_id, 2);
 
   index->InsertEntry(key0, item0);
-
-  std::cout << "+++++++++++++++++++++++++++ Looking for key :: " << (*key0);
+  index->InsertEntry(key1, item1);
 
   EXPECT_EQ(false, index->Exists(keynonce));
   EXPECT_EQ(true, index->Exists(key0));
@@ -169,6 +170,7 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   */
 
   delete key0;
+  delete key1;
   delete keynonce;
 
   delete tuple0;
