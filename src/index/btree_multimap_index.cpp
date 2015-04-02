@@ -39,7 +39,7 @@ BtreeMultimapIndex::~BtreeMultimapIndex(){
 
 bool BtreeMultimapIndex::InsertEntry(storage::Tuple *key, ItemPointer location) {
 
-  BTERR status = bt_insertkey (btree_db, key->GetData(), key->GetLength(), 0, &location, sizeof(ItemPointer), 1);
+  BTERR status = bt_insertkey (btree_db, key->GetData(), key->GetLength(), 0, &location, sizeof(ItemPointer), 0);
 
   printf("status :: %d \n", status);
 

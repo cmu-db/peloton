@@ -790,26 +790,17 @@ BtDb *bt_open (BtMgr *mgr)
 
 int keycmp (BtKey* key1, char *key2, uint len2, catalog::Schema *key_schema)
 {
-  uint len1 = key1->len;
-  int ans;
-
-  if( len1 > len2 )
-    return 1;
-  if( len1 < len2 )
-    return -1;
-
   storage::Tuple lhs_tuple(key_schema, key1->key);
   storage::Tuple rhs_tuple(key_schema, key2);
 
   int compare = lhs_tuple.Compare(rhs_tuple);
 
+  //std::cout << "LHS :: " << lhs_tuple;
+  //std::cout << "RHS :: " << rhs_tuple;
+  //std::cout << "Compare :: " << compare << "\n";
+
   lhs_tuple.Move(nullptr);
   rhs_tuple.Move(nullptr);
-
-  // Original memcmp
-  //if(( ans = memcmp (key1->key, key2, len1 > len2 ? len2 : len1) )) {
-  //  return ans;
-  //}
 
   return compare;
 }
