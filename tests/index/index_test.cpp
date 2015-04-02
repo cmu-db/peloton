@@ -122,52 +122,28 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   key1->SetValue(0, ValueFactory::GetIntegerValue(200));
   keynonce->SetValue(0, ValueFactory::GetIntegerValue(400));
 
-  std::cout << "+++++++++++++++++++++++++++ Initial key0 :: " << (*key0);
-
   ItemPointer item0(tile_id, 0);
   ItemPointer item1(tile_id, 1);
   ItemPointer item2(tile_id, 2);
 
   index->InsertEntry(key0, item0);
   index->InsertEntry(key1, item1);
+  index->InsertEntry(key1, item2);
 
   EXPECT_EQ(false, index->Exists(keynonce));
   EXPECT_EQ(true, index->Exists(key0));
 
   index->GetLocationsForKey(key0);
 
+  index->Scan();
+
   index->DeleteEntry(key0);
+  index->DeleteEntry(key1);
+  index->DeleteEntry(key1);
+
   EXPECT_EQ(false, index->Exists(key0));
 
-  /*
-  // SEARCH
-
-  storage::Tuple *search_key = new storage::Tuple(key_schema, true);
-  search_key->SetValue(0, ValueFactory::GetIntegerValue(static_cast<int32_t>(100)));
-
-  bool found = index->MoveToKey(search_key);
-  EXPECT_EQ(found, true);
-
-  storage::Tuple *search_tuple = nullptr;
-  int count = 0;
-  while ((search_tuple = index->NextValueAtKey()) != nullptr)  {
-    ++count;
-    EXPECT_TRUE(ValueFactory::GetIntegerValue(100).OpEquals(search_tuple->GetValue(0)).IsTrue());
-  }
-
-  EXPECT_EQ(1, count);
-
-  storage::Tuple *search_key2 = new storage::Tuple(key_schema, true);
-  search_key2->SetValue(0, ValueFactory::GetIntegerValue(static_cast<int32_t>(150)));
-  found = index->MoveToKey(search_key2);
-
-  count = 0;
-  while ((search_tuple = index->NextValueAtKey()) != nullptr)  {
-    ++count;
-  }
-
-  EXPECT_EQ(0, count);
-  */
+  index->Scan();
 
   delete key0;
   delete key1;
