@@ -18,7 +18,6 @@
 #include "common/value.h"
 #include "common/value_factory.h"
 #include "common/value_peeker.h"
-#include "common/logger.h"
 #include "common/types.h"
 
 namespace nstore {

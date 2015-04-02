@@ -26,6 +26,8 @@ BtreeMultimapIndex::BtreeMultimapIndex(const IndexMetadata &metadata)
   btree_manager = bt_mgr ((char *) metadata.identifier.c_str(), bits, pool_size);
 
   btree_db = bt_open (btree_manager);
+
+  btree_db->key_schema = key_schema;
 }
 
 BtreeMultimapIndex::~BtreeMultimapIndex(){
@@ -37,7 +39,9 @@ BtreeMultimapIndex::~BtreeMultimapIndex(){
 
 bool BtreeMultimapIndex::InsertEntry(storage::Tuple *key, ItemPointer location) {
 
-  BTERR status = bt_insertkey (btree_db, (unsigned char *) key->GetData(), key->GetLength(), 0, &location, sizeof(ItemPointer), 0);
+  BTERR status = bt_insertkey (btree_db, (unsigned char *) key->GetData(), key->GetLength(), 0, &location, sizeof(ItemPointer), 1);
+
+  printf("status :: %d \n", status);
 
   if(status == BTERR_ok)
     return true;
@@ -47,7 +51,11 @@ bool BtreeMultimapIndex::InsertEntry(storage::Tuple *key, ItemPointer location) 
 
 bool BtreeMultimapIndex::DeleteEntry(storage::Tuple *key){
 
+  printf("+++++++++++++++++++++++++++ Delete key :: \n");
+
   BTERR status = bt_deletekey (btree_db, (unsigned char *) key->GetData(), key->GetLength(), 0);
+
+  printf("status :: %d \n", status);
 
   if(status == BTERR_ok)
     return true;
@@ -57,16 +65,63 @@ bool BtreeMultimapIndex::DeleteEntry(storage::Tuple *key){
 
 bool BtreeMultimapIndex::Exists(storage::Tuple *key) const{
 
+  printf("+++++++++++++++++++++++++++ Exist key \n");
+
   int found = bt_findkey (btree_db, (unsigned char *) key->GetData(), key->GetLength(), nullptr, 0);
 
-  if(found != -1)
-    return true;
+  printf("found :: %d \n", found);
 
-  return false;
+  if(found == -1)
+    return false;
+
+  return true;
 }
 
 std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKey(storage::Tuple *key) const{
   std::vector<ItemPointer> result;
+
+  BtPageSet set[1];
+  BtKey *ptr;
+  BtVal *val;
+  BtDb *bt = btree_db;
+
+  int cnt = 0;
+  uid next, page_no = LEAF_page;  // start on first page of leaves
+  int len = 0;
+  unsigned int slot;
+
+  fprintf(stderr, "+++++++++++++++++++++++++++  Started scanning\n");
+  do {
+    if( (set->latch = bt_pinlatch (bt, page_no, 1) ) )
+      set->page = bt_mappage (bt, set->latch);
+    else
+      fprintf(stderr, "unable to obtain latch"), exit(1);
+    bt_lockpage (bt, BtLockRead, set->latch);
+    next = bt_getid (set->page->right);
+
+    for( slot = 0; slot++ < set->page->cnt; )
+      if( next || slot < set->page->cnt )
+        if( !slotptr(set->page, slot)->dead ) {
+          ptr = keyptr(set->page, slot);
+          len = ptr->len;
+
+          if( slotptr(set->page, slot)->type == Duplicate )
+            len -= BtId;
+
+          printf("key : ");
+          fwrite (ptr->key, len, 1, stdout);
+          val = valptr(set->page, slot);
+          printf("  val : %p ", val);
+          fwrite (val->value, val->len, 1, stdout);
+          fputc ('\n', stdout);
+          cnt++;
+        }
+
+    bt_unlockpage (bt, BtLockRead, set->latch);
+    bt_unpinlatch (set->latch);
+  } while( (page_no = next ) );
+
+  fprintf(stderr, " Total keys read %d: %d reads, %d writes\n\n", cnt, bt->reads, bt->writes);
 
   return result;
 }

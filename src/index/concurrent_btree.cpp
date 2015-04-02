@@ -12,6 +12,10 @@
 
 #include "index/concurrent_btree.h"
 
+#include <sstream>
+#include <iostream>
+
+#include "storage/tuple.h"
 
 namespace nstore {
 namespace index {
@@ -784,18 +788,32 @@ BtDb *bt_open (BtMgr *mgr)
 //  +1: key2 < key1
 //  as the comparison value
 
-int keycmp (BtKey* key1, unsigned char *key2, uint len2)
+int keycmp (BtKey* key1, unsigned char *key2, uint len2, catalog::Schema *key_schema)
 {
   uint len1 = key1->len;
   int ans;
-
-  if(( ans = memcmp (key1->key, key2, len1 > len2 ? len2 : len1) ))
-    return ans;
 
   if( len1 > len2 )
     return 1;
   if( len1 < len2 )
     return -1;
+
+  storage::Tuple lhsTuple(key_schema, key1->key);
+  storage::Tuple rhsTuple(key_schema, key2);
+
+  std::cout << "LHS :: " << lhsTuple;
+  std::cout << "RHS :: " << rhsTuple;
+
+  int compare = lhsTuple.Compare(rhsTuple);
+
+  std::cout << "Tuple comparison :: " << compare << std::endl;
+
+  if(( ans = memcmp (key1->key, key2, len1 > len2 ? len2 : len1) )) {
+    std::cout << "Memcmp:: " << ans << std::endl;
+    return ans;
+  }
+
+  std::cout << "Memcmp:: 0" << std::endl;
 
   return 0;
 }
@@ -909,7 +927,7 @@ int bt_newpage(BtDb *bt, BtPageSet *set, BtPage contents)
 
 //  find slot in page for given key at a given level
 
-int bt_findslot (BtPage page, unsigned char *key, uint len)
+int bt_findslot (BtPage page, unsigned char *key, uint len, catalog::Schema *key_schema)
 {
   uint diff, higher = page->cnt, low = 1, slot;
   uint good = 0;
@@ -929,7 +947,7 @@ int bt_findslot (BtPage page, unsigned char *key, uint len)
 
   while( (diff = higher - low ) ) {
     slot = low + ( diff >> 1 );
-    if( keycmp (keyptr(page, slot), key, len) < 0 )
+    if( keycmp (keyptr(page, slot), key, len, key_schema) < 0 )
       low = slot + 1;
     else
       higher = slot, good++;
@@ -1007,7 +1025,7 @@ int bt_loadpage (BtDb *bt, BtPageSet *set, unsigned char *key, uint len, uint lv
     //  and descend to requested level
 
     if( !set->page->kill )
-      if( (slot = bt_findslot (set->page, key, len)) ) {
+      if( (slot = bt_findslot (set->page, key, len, bt->key_schema)) ) {
         if( drill == lvl )
           return slot;
 
@@ -1250,10 +1268,22 @@ BTERR bt_deletekey (BtDb *bt, unsigned char *key, uint len, uint lvl)
 
   fence = slot == set->page->cnt;
 
+  printf("delete key :: slot found \n");
+  int cmp = keycmp (ptr, key, len, bt->key_schema);
+
+  printf("cmp : %d ", cmp);
+  printf("key1 : --%s-- ", ptr->key);
+  printf("len1 : %d ", ptr->len);
+  printf("key2 : --%s-- ", key);
+  printf("len2 : %d \n", len);
+
   // if key is found delete it, otherwise ignore request
 
-  if( (found = !keycmp (ptr, key, len) ) )
+  if( (found = !keycmp (ptr, key, len, bt->key_schema) ) )
     if( (found = slotptr(set->page, slot)->dead == 0 ) ) {
+
+      printf("key found.. deleting  \n");
+
       val = valptr(set->page,slot);
       slotptr(set->page, slot)->dead = 1;
       set->page->garbage += ptr->len + val->len + sizeof(BtKey) + sizeof(BtVal);
@@ -1295,6 +1325,7 @@ BTERR bt_deletekey (BtDb *bt, unsigned char *key, uint len, uint lvl)
   set->latch->dirty = 1;
   bt_unlockpage(bt, BtLockWrite, set->latch);
   bt_unpinlatch (set->latch);
+
   return BTERR_ok;
 }
 
@@ -1813,6 +1844,12 @@ BTERR bt_insertkey (BtDb *bt, unsigned char *key, uint keylen, uint lvl, void *v
   memcpy (ins->key, key, keylen);
   ins->len = keylen;
 
+  std::cout << "insert key :: --";
+  for (int i = 0; i < ins->len; i++) {
+    std::cout << key[i];
+  }
+  std::cout << "-- len :: " << ins->len << std::endl;
+
   // is this a non-unique index value?
 
   if( unique )
@@ -1836,11 +1873,10 @@ BTERR bt_insertkey (BtDb *bt, unsigned char *key, uint keylen, uint lvl, void *v
     // if librarian slot == found slot, advance to real slot
 
     if( slotptr(set->page, slot)->type == Librarian )
-      if( !keycmp (ptr, key, keylen) )
+      if( !keycmp (ptr, key, keylen, bt->key_schema) )
         ptr = keyptr(set->page, ++slot);
 
     len = ptr->len;
-
     if( slotptr(set->page, slot)->type == Duplicate )
       len -= BtId;
 
@@ -1848,7 +1884,7 @@ BTERR bt_insertkey (BtDb *bt, unsigned char *key, uint keylen, uint lvl, void *v
     //  check for adequate space on the page
     //  and insert the new key before slot.
 
-    if( (unique && ((len != ins->len) || (memcmp (ptr->key, ins->key, ins->len)))) || (!unique) ) {
+    if( (unique && (len != ins->len || memcmp (ptr->key, ins->key, ins->len))) || (!unique) ) {
       if( !(slot = bt_cleanpage (bt, set, ins->len, slot, vallen)) ) {
         if( !(entry = bt_splitpage (bt, set)) )
           return (BTERR)bt->err;
@@ -1858,8 +1894,12 @@ BTERR bt_insertkey (BtDb *bt, unsigned char *key, uint keylen, uint lvl, void *v
           continue;
       }
 
+      std::cout << "new key : unique : " << unique << " len : " << len << " memcmp : " << memcmp (ptr->key, ins->key, ins->len) << "\n";
+
       return bt_insertslot (bt, set, slot, ins->key, ins->len, (unsigned char *) value, vallen, type, 1);
     }
+
+    std::cout << "key exists : unique : " << unique << " len : " << len << " memcmp : " << memcmp (ptr->key, ins->key, ins->len) << "\n";
 
     // if key already exists, update value and return
 
@@ -1912,6 +1952,7 @@ BTERR bt_insertkey (BtDb *bt, unsigned char *key, uint keylen, uint lvl, void *v
     bt_unpinlatch (set->latch);
     return BTERR_ok;
   }
+
   return BTERR_ok;
 }
 
@@ -1944,7 +1985,7 @@ uint bt_atomicpage (BtDb *bt, BtPage source, AtomicTxn *locks, uint src, BtPageS
     set->latch = bt->mgr->latchsets + entry;
     set->page = bt_mappage (bt, set->latch);
 
-    if( ( slot = bt_findslot(set->page, key->key, key->len))) {
+    if( ( slot = bt_findslot(set->page, key->key, key->len, bt->key_schema))) {
       if( slotptr(set->page, slot)->type == Librarian )
         slot++;
       if( locks[src].reuse )
@@ -1999,7 +2040,7 @@ BTERR bt_atomicdelete (BtDb *bt, BtPage source, AtomicTxn *locks, uint src)
   else
     return (BTERR)(bt->err = BTERR_struct);
 
-  if( !keycmp (ptr, key->key, key->len) )
+  if( !keycmp (ptr, key->key, key->len, bt->key_schema) )
     if( !slotptr(set->page, slot)->dead )
       slotptr(set->page, slot)->dead = 1;
     else
@@ -2133,7 +2174,7 @@ int bt_atomictxn (BtDb *bt, BtPage source)
 
     for( idx = src; --idx; ) {
       key2 = keyptr (source,idx);
-      if( keycmp (key, key2->key, key2->len) < 0 ) {
+      if( keycmp (key, key2->key, key2->len, bt->key_schema) < 0 ) {
         *slotptr(source,idx+1) = *slotptr(source,idx);
         *slotptr(source,idx) = *temp;
       } else
@@ -2154,8 +2195,8 @@ int bt_atomictxn (BtDb *bt, BtPage source)
     //  note that the far right leaf page is a special case
 
     if( (samepage = src > 1) ) {
-      if( (samepage = !bt_getid(set->page->right) || keycmp (keyptr(set->page, set->page->cnt), key->key, key->len) >= 0 ) )
-        slot = bt_findslot(set->page, key->key, key->len);
+      if( (samepage = !bt_getid(set->page->right) || keycmp (keyptr(set->page, set->page->cnt), key->key, key->len, bt->key_schema) >= 0 ) )
+        slot = bt_findslot(set->page, key->key, key->len, bt->key_schema);
       else
         bt_unlockpage(bt, BtLockRead, set->latch);
     }
@@ -2187,7 +2228,7 @@ int bt_atomictxn (BtDb *bt, BtPage source)
       case Unique:
         if( !slotptr(set->page, slot)->dead )
           if( slot < set->page->cnt || bt_getid (set->page->right) )
-            if( !keycmp (ptr, key->key, key->len) ) {
+            if( !keycmp (ptr, key->key, key->len, bt->key_schema) ) {
 
               // return constraint violation if key already exists
 
