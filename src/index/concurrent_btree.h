@@ -219,7 +219,7 @@ typedef struct {
 
 typedef struct {
   unsigned char len;		// this can be changed to a ushort or uint
-  unsigned char key[0];
+  char key[0];
 } BtKey;
 
 //	the value structure also occupies space at the upper
@@ -303,7 +303,7 @@ typedef struct {
   BtPage frame;			// spare frame for the page split (never mapped)
   uid cursor_page;				// current cursor page number
   unsigned char *mem;				// frame, cursor, page memory buffer
-  unsigned char key[BT_keyarray];	// last found complete key
+  char key[BT_keyarray];	// last found complete key
   int found;				// last delete or insert was found
   int err;				// last error
   int reads, writes;		// number of reads and writes from the btree
@@ -329,11 +329,11 @@ typedef enum {
 // B-Tree functions
 extern void bt_close (BtDb *bt);
 extern BtDb *bt_open (BtMgr *mgr);
-extern BTERR bt_insertkey (BtDb *bt, unsigned char *key, uint len, uint lvl, void *value, uint vallen, uint update);
-extern BTERR  bt_deletekey (BtDb *bt, unsigned char *key, uint len, uint lvl);
-extern int bt_findkey    (BtDb *bt, unsigned char *key, uint keylen, unsigned char *value, uint valmax);
+extern BTERR bt_insertkey (BtDb *bt, char *key, uint len, uint lvl, void *value, uint vallen, uint update);
+extern BTERR  bt_deletekey (BtDb *bt, char *key, uint len, uint lvl);
+extern int bt_findkey    (BtDb *bt, char *key, uint keylen, unsigned char *value, uint valmax);
 extern BtKey *bt_foundkey (BtDb *bt);
-extern uint bt_startkey  (BtDb *bt, unsigned char *key, uint len);
+extern uint bt_startkey  (BtDb *bt, char *key, uint len);
 extern uint bt_nextkey   (BtDb *bt, uint slot);
 
 //	manager functions
@@ -393,8 +393,8 @@ extern BtVal *bt_val (BtDb *bt, uint slot);
 //	Page slots use 1 based indexing.
 
 #define slotptr(page, slot) (((BtSlot *)(page+1)) + (slot-1))
-#define keyptr(page, slot) ((BtKey*)((unsigned char*)(page) + slotptr(page, slot)->off))
-#define valptr(page, slot) ((BtVal*)(keyptr(page,slot)->key + keyptr(page,slot)->len))
+#define keyptr(page, slot) ((BtKey*)((char*)(page) + slotptr(page, slot)->off))
+#define valptr(page, slot) ((BtVal*)((unsigned char*) keyptr(page,slot)->key + keyptr(page,slot)->len))
 
 void bt_putid(unsigned char *dest, uid id);
 
@@ -481,7 +481,7 @@ BtDb *bt_open (BtMgr *mgr);
 //  -1: key2 > key1
 //  +1: key2 < key1
 //  as the comparison value
-int keycmp (BtKey* key1, unsigned char *key2, uint len2, catalog::Schema *key_schema);
+int keycmp (BtKey* key1, char *key2, uint len2, catalog::Schema *key_schema);
 
 // place write, read, or parent lock on requested page_no.
 void bt_lockpage(BtDb *bt, BtLock mode, BtLatchSet *latch);
@@ -494,11 +494,11 @@ void bt_unlockpage(BtDb *bt, BtLock mode, BtLatchSet *latch);
 int bt_newpage(BtDb *bt, BtPageSet *set, BtPage contents);
 
 //  find slot in page for given key at a given level
-int bt_findslot (BtPage page, unsigned char *key, uint len);
+int bt_findslot (BtPage page, char *key, uint len);
 
 //  find and load page at given level for given key
 //  leave page rd or wr locked as requested
-int bt_loadpage (BtDb *bt, BtPageSet *set, unsigned char *key, uint len, uint lvl, BtLock lock);
+int bt_loadpage (BtDb *bt, BtPageSet *set, char *key, uint len, uint lvl, BtLock lock);
 
 //  return page to free list
 //  page must be delete & write locked
@@ -519,7 +519,7 @@ BTERR bt_deletepage (BtDb *bt, BtPageSet *set);
 
 //  find and delete key on page by marking delete flag bit
 //  if page becomes empty, delete it from the btree
-BTERR bt_deletekey (BtDb *bt, unsigned char *key, uint len, uint lvl);
+BTERR bt_deletekey (BtDb *bt, char *key, uint len, uint lvl);
 
 BtKey *bt_foundkey (BtDb *bt);
 
@@ -529,7 +529,7 @@ uint bt_findnext (BtDb *bt, BtPageSet *set, uint slot);
 //  find unique key or first duplicate key in
 //  leaf level and return number of value bytes
 //  or (-1) if not found.  Setup key for bt_foundkey
-int bt_findkey (BtDb *bt, unsigned char *key, uint keylen, unsigned char *value, uint valmax);
+int bt_findkey (BtDb *bt, char *key, uint keylen, unsigned char *value, uint valmax);
 
 //  check page for space available,
 //  clean if necessary and return
@@ -554,11 +554,11 @@ BTERR bt_splitkeys (BtDb *bt, BtPageSet *set, BtLatchSet *right);
 //  install new key and value onto page
 //  page must already be checked for
 //  adequate space
-BTERR bt_insertslot (BtDb *bt, BtPageSet *set, uint slot, unsigned char *key,uint keylen, unsigned char *value, uint vallen, uint type, uint release);
+BTERR bt_insertslot (BtDb *bt, BtPageSet *set, uint slot, char *key,uint keylen, unsigned char *value, uint vallen, uint type, uint release);
 
 //  Insert new key into the btree at given level.
 //  either add a new key or update/add an existing one
-BTERR bt_insertkey (BtDb *bt, unsigned char *key, uint keylen, uint lvl, void *value, uint vallen, uint unique);
+BTERR bt_insertkey (BtDb *bt, char *key, uint keylen, uint lvl, void *value, uint vallen, uint unique);
 
 typedef struct {
   uint entry;     // latch table entry number
@@ -572,7 +572,7 @@ typedef struct {
   uint entry:29;    // latch table entry number
   uint type:2;    // 0 == insert, 1 == delete, 2 == free
   uint nounlock:1;  // don't unlock ParentModification
-  unsigned char leafkey[BT_keyarray];
+  char leafkey[BT_keyarray];
 } AtomicKey;
 
 //  determine actual page where key is located
@@ -610,7 +610,7 @@ uint bt_prevkey (BtDb *bt, uint slot);
 uint bt_nextkey (BtDb *bt, uint slot);
 
 //  cache page of keys into cursor and return starting slot for given key
-uint bt_startkey (BtDb *bt, unsigned char *key, uint len);
+uint bt_startkey (BtDb *bt, char *key, uint len);
 
 BtKey *bt_key(BtDb *bt, uint slot);
 

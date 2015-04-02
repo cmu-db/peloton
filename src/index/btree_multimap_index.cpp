@@ -39,7 +39,7 @@ BtreeMultimapIndex::~BtreeMultimapIndex(){
 
 bool BtreeMultimapIndex::InsertEntry(storage::Tuple *key, ItemPointer location) {
 
-  BTERR status = bt_insertkey (btree_db, (unsigned char *) key->GetData(), key->GetLength(), 0, &location, sizeof(ItemPointer), 1);
+  BTERR status = bt_insertkey (btree_db, key->GetData(), key->GetLength(), 0, &location, sizeof(ItemPointer), 1);
 
   printf("status :: %d \n", status);
 
@@ -53,7 +53,7 @@ bool BtreeMultimapIndex::DeleteEntry(storage::Tuple *key){
 
   printf("+++++++++++++++++++++++++++ Delete key :: \n");
 
-  BTERR status = bt_deletekey (btree_db, (unsigned char *) key->GetData(), key->GetLength(), 0);
+  BTERR status = bt_deletekey (btree_db, key->GetData(), key->GetLength(), 0);
 
   printf("status :: %d \n", status);
 
@@ -65,9 +65,9 @@ bool BtreeMultimapIndex::DeleteEntry(storage::Tuple *key){
 
 bool BtreeMultimapIndex::Exists(storage::Tuple *key) const{
 
-  printf("+++++++++++++++++++++++++++ Exist key \n");
+  std::cout << "+++++++++++++++++++++++++++ Exist key  :: " << (*key);
 
-  int found = bt_findkey (btree_db, (unsigned char *) key->GetData(), key->GetLength(), nullptr, 0);
+  int found = bt_findkey (btree_db, key->GetData(), key->GetLength(), nullptr, 0);
 
   printf("found :: %d \n", found);
 
@@ -89,6 +89,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKey(storage::Tuple *
   uid next, page_no = LEAF_page;  // start on first page of leaves
   int len = 0;
   unsigned int slot;
+  storage::Tuple tuple(key_schema);
 
   fprintf(stderr, "+++++++++++++++++++++++++++  Started scanning\n");
   do {
@@ -108,12 +109,8 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKey(storage::Tuple *
           if( slotptr(set->page, slot)->type == Duplicate )
             len -= BtId;
 
-          printf("key : ");
-          fwrite (ptr->key, len, 1, stdout);
-          val = valptr(set->page, slot);
-          printf("  val : %p ", val);
-          fwrite (val->value, val->len, 1, stdout);
-          fputc ('\n', stdout);
+          tuple.Move(ptr->key);
+          std::cout << tuple;
           cnt++;
         }
 
@@ -121,6 +118,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKey(storage::Tuple *
     bt_unpinlatch (set->latch);
   } while( (page_no = next ) );
 
+  tuple.Move(nullptr);
   fprintf(stderr, " Total keys read %d: %d reads, %d writes\n\n", cnt, bt->reads, bt->writes);
 
   return result;
