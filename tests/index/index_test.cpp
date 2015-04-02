@@ -139,7 +139,6 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
 
   index->DeleteEntry(key0);
   index->DeleteEntry(key1);
-  index->DeleteEntry(key1);
 
   EXPECT_EQ(false, index->Exists(key0));
 

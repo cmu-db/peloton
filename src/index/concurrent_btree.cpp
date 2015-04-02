@@ -1260,7 +1260,7 @@ BTERR bt_deletekey (BtDb *bt, char *key, uint len, uint lvl)
 
   // if key is found delete it, otherwise ignore request
 
-  if( (found = !keycmp (ptr, key, len, bt->key_schema) ) ) {
+  while( (found = !keycmp (ptr, key, len, bt->key_schema) ) ) {
     printf("slot %d slot status %d  \n", slot, slotptr(set->page, slot)->dead);
 
     if( (found = slotptr(set->page, slot)->dead == 0 ) ) {
@@ -1285,6 +1285,12 @@ BTERR bt_deletekey (BtDb *bt, char *key, uint len, uint lvl)
       }
 
     }
+
+    // FIXME: deleting all matching keys in page, not across pages
+    if(slot++ == set->page->cnt)
+      break;
+
+    ptr = keyptr(set->page, slot);
   }
 
   //  did we delete a fence key in an upper level?
