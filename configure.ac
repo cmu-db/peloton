@@ -39,6 +39,12 @@ DX_INIT_DOXYGEN([$PACKAGE_NAME], [doc/doxygen.cfg], [doc])
 AC_CONFIG_FILES([log.conf:log.conf])
 
 ######################################################################
+# GCC COLOR
+######################################################################
+
+AX_CHECK_COMPILE_FLAG([-fdiagnostics-color=auto], [CXXFLAGS="$CXXFLAGS -fdiagnostics-color=auto"])
+
+######################################################################
 # VALGRIND + GCOV
 ######################################################################
 
