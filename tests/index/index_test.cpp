@@ -147,6 +147,12 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
 
   index->GetLocationsForKeyBetween(key1, key3);
 
+  index->GetLocationsForKeyLT(key3);
+  index->GetLocationsForKeyLTE(key3);
+
+  index->GetLocationsForKeyGT(key1);
+  index->GetLocationsForKeyGTE(key1);
+
   index->Scan();
 
   index->DeleteEntry(key0);
