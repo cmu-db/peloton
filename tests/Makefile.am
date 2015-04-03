@@ -8,7 +8,7 @@ AM_CPPFLAGS += -isystem $(top_srcdir)/third_party/gtest/include \
 			   -I$(top_srcdir)/third_party \
 			   $(GTEST_CPPFLAGS)  
 
-AM_CXXFLAGS +=  $(GTEST_CXXFLAGS) 
+AM_CXXFLAGS +=  $(GTEST_CXXFLAGS) -Wno-unused-but-set-variable
 
 AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -pthread \
 			  $(top_builddir)/third_party/gtest/lib/libgtest_main.la \

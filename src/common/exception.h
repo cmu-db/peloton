@@ -61,7 +61,7 @@ public:
 		std::cerr << exception_message;
 
 		// TODO: raise HELL for now
-		raise(SIGSEGV);
+		//raise(SIGSEGV);
 		throw std::runtime_error(exception_message);
 	}
 
@@ -77,7 +77,7 @@ public:
 		std::cerr << exception_message;
 
 		// TODO: raise HELL for now
-		raise(SIGSEGV);
+		//raise(SIGSEGV);
 		throw std::runtime_error(exception_message);
 	}
 
