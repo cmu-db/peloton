@@ -1877,12 +1877,12 @@ BTERR bt_insertkey (BtDb *bt, char *key, uint keylen, uint lvl, void *value, uin
           continue;
       }
 
-      std::cout << "new key : unique : " << unique << "\n";
+      //std::cout << "new key : unique : " << unique << "\n";
 
       return bt_insertslot (bt, set, slot, ins->key, ins->len, (unsigned char *) value, vallen, type, 1);
     }
 
-    std::cout << "key exists : unique : " << unique << "\n";
+    //std::cout << "key exists : unique : " << unique << "\n";
 
     // if key already exists, update value and return
 
