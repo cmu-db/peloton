@@ -33,9 +33,9 @@ namespace storage {
  *
  * Layout :
  *
- * 	---------------------------------------------------------------------------
- *  | Txn ID (8 bytes)  | Begin TimeStamp (8 bytes) | End TimeStamp (8 bytes) |
- * 	---------------------------------------------------------------------------
+ * 	--------------------------------------------------------------------------------------------------------
+ *  | Txn ID (8 bytes)  | Begin TimeStamp (8 bytes) | End TimeStamp (8 bytes) | Prev ItemPointer (4 bytes) |
+ * 	--------------------------------------------------------------------------------------------------------
  *
  */
 
@@ -94,12 +94,16 @@ public:
 	}
 
 	inline cid_t GetBeginCommitId(const id_t tuple_slot_id) const {
-		return *((cid_t*)( data + (tuple_slot_id * header_entry_size) + sizeof(id_t) ));
+		return *((cid_t*)( data + (tuple_slot_id * header_entry_size) + sizeof(id_t)));
 	}
 
 	inline cid_t GetEndCommitId(const id_t tuple_slot_id) const {
-		return *((cid_t*)( data + (tuple_slot_id * header_entry_size) + 2 * sizeof(id_t) ));
+		return *((cid_t*)( data + (tuple_slot_id * header_entry_size) + 2 * sizeof(id_t)));
 	}
+
+  inline ItemPointer GetPrevItemPointer(const id_t tuple_slot_id) const {
+    return *((ItemPointer*)( data + (tuple_slot_id * header_entry_size) + 3 * sizeof(id_t)));
+  }
 
 	// Getters for addresses
 
@@ -129,6 +133,10 @@ public:
 		*((cid_t*)( data + (tuple_slot_id * header_entry_size) + 2 * sizeof(cid_t))) = end_cid;
 	}
 
+  inline void SetPrevItemPointer(const id_t tuple_slot_id, ItemPointer item) const {
+    *((ItemPointer*)( data + (tuple_slot_id * header_entry_size) + 3 * sizeof(cid_t))) = item;
+  }
+
 	// Visibility check
 
 	bool IsVisible(const id_t tuple_slot_id, txn_id_t txn_id, cid_t at_cid) {
@@ -156,7 +164,7 @@ public:
 private:
 
 	// header entry size is the size of the layout described above
-	static const size_t header_entry_size = 3 * sizeof(id_t);
+	static const size_t header_entry_size = 3 * sizeof(id_t) + sizeof(ItemPointer);
 
 	//===--------------------------------------------------------------------===//
 	// Data members

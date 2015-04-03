@@ -26,15 +26,19 @@ std::ostream& operator<<(std::ostream& os, const TileGroupHeader& tile_group_hea
 
 	os << "\t-----------------------------------------------------------\n";
 	os << "\tTILE GROUP HEADER \n";
-	os << "\t Transaction Id     Begin Commit Id    End Commit Id \n";
+	os << "\t Txn Id      Begin Commit Id      End Commit Id      Prev ItemPointer \n";
 
 	id_t active_tuple_slots = tile_group_header.GetActiveTupleCount();
+  ItemPointer item;
 
 	for(id_t header_itr = 0 ; header_itr < active_tuple_slots ; header_itr++){
 
-		os <<  std::setw(10) << tile_group_header.GetTransactionId(header_itr) << " " <<
-				tile_group_header.GetBeginCommitId(header_itr) << " " <<
-				tile_group_header.GetEndCommitId(header_itr) << "\n";
+		os <<  std::setw(10) << tile_group_header.GetTransactionId(header_itr) << " "
+		    << std::setw(25) << tile_group_header.GetBeginCommitId(header_itr) << " "
+		    << std::setw(25) <<	tile_group_header.GetEndCommitId(header_itr);
+
+		item = tile_group_header.GetPrevItemPointer(header_itr);
+		os << " " << std::setw(10) << item.block << " : " << item.offset << " \n";
 
 	}
 
