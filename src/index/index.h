@@ -56,8 +56,10 @@ class IndexMetadata {
   }
 
   ~IndexMetadata() {
+
     // free up key schema
-    delete key_schema;
+    //delete key_schema;
+
   }
 
   void SetIndexType(IndexType _type) {
