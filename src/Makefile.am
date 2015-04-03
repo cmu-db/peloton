@@ -17,12 +17,13 @@ include $(srcdir)/planner/Makefile.am
 include $(srcdir)/storage/Makefile.am
 
 bin_PROGRAMS = nstore
+noinst_LTLIBRARIES= libnstore.la
 
 ######################################################################
 # N-STORE SOURCES
 ######################################################################
 
-nstore_SOURCES =  $(backend_FILES) \
+common_SOURCES =  $(backend_FILES) \
 				  $(catalog_FILES) \
 				  $(common_FILES) \
 				  $(executor_FILES) \
@@ -30,6 +31,12 @@ nstore_SOURCES =  $(backend_FILES) \
 				  $(parser_FILES) \
 				  $(planner_FILES) \
 				  $(storage_FILES)
+
+libnstore_la_SOURCES = $(common_SOURCES)
+
+nstore_SOURCES = backend/nstore.cpp
+nstore_LDFLAGS = -all-static
+nstore_LDADD = libnstore.la
 
 ######################################################################
 # N-STORE INCLUDES

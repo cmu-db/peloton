@@ -102,7 +102,6 @@ TEST(TileGroupTests, BasicTest) {
 	ItemPointer item(50, 60);
 
 	header->SetPrevItemPointer(2, item);
-	std::cout << (*header);
 
 	delete tuple1;
 	delete tuple2;
