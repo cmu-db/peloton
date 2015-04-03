@@ -35,12 +35,6 @@ REDISTRIBUTION OF THIS SOFTWARE.
 
 #define _FILE_OFFSET_BITS 64
 
-#ifndef unix
-#define unix
-#define linux
-#endif
-
-#ifdef unix
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,16 +43,6 @@ REDISTRIBUTION OF THIS SOFTWARE.
 #include <sys/mman.h>
 #include <errno.h>
 #include <pthread.h>
-#else
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <fcntl.h>
-#include <process.h>
-#include <intrin.h>
-#endif
 
 #include <memory.h>
 #include <string.h>
@@ -70,12 +54,6 @@ namespace nstore {
 namespace index {
 
 typedef unsigned long long	uid;
-
-#ifndef unix
-typedef unsigned long long	off64_t;
-typedef unsigned short		ushort;
-typedef unsigned int		uint;
-#endif
 
 #define BT_ro 0x6f72	// ro
 #define BT_rw 0x7772	// rw
@@ -275,11 +253,7 @@ typedef struct {
 typedef struct {
   uint page_size;				// page size
   uint page_bits;				// page size in bits
-#ifdef unix
   int idx;
-#else
-  HANDLE idx;
-#endif
   BtPageZero *pagezero;		// mapped allocation page
   BtSpinLatch lock[1];		// allocation area lite latch
   uint latchdeployed;			// highest number of latch entries deployed
@@ -291,10 +265,6 @@ typedef struct {
   BtHashEntry *hashtable;		// the buffer pool hash table entries
   BtLatchSet *latchsets;		// mapped latch set from buffer pool
   unsigned char *pagepool;	// mapped to the buffer pool pages
-#ifndef unix
-  HANDLE halloc;				// allocation handle
-  HANDLE hpool;				// buffer pool handle
-#endif
 } BtMgr;
 
 typedef struct {
@@ -549,7 +519,7 @@ uint bt_splitpage (BtDb *bt, BtPageSet *set);
 //  fix keys for newly split page
 //  call with page locked, return
 //  unlocked
-BTERR bt_splitkeys (BtDb *bt, BtPageSet *set, BtLatchSet *right);
+BTERR bt_splitkeys (BtDb *bt, BtPageSet *set, BtLatchSet *right, uint unique);
 
 //  install new key and value onto page
 //  page must already be checked for
@@ -589,7 +559,7 @@ BTERR bt_atomicdelete (BtDb *bt, BtPage source, AtomicTxn *locks, uint src);
 //  it always contains (at least) the infinite stopper key
 //  and that all pages that don't contain any keys are
 //  deleted, or are being held under Atomic lock.
-BTERR bt_atomicfree (BtDb *bt, BtPageSet *prev);
+BTERR bt_atomicfree (BtDb *bt, BtPageSet *prev, uint unique);
 
 //  atomic modification of a batch of keys.
 
