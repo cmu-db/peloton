@@ -879,7 +879,7 @@ BTERR bt_fixfence (BtDb *bt, BtPageSet *set, uint lvl, uint unique)
   bt_putid (value, set->latch->page_no);
   ptr = (BtKey*)leftkey;
 
-  if( bt_insertkey (bt, ptr->key, ptr->len, lvl+1, value, BtId, 1) )
+  if( bt_insertkey (bt, ptr->key, ptr->len, lvl+1, value, BtId, unique) )
     return (BTERR) bt->err;
 
   //  now delete old fence key
@@ -994,7 +994,7 @@ BTERR bt_deletepage (BtDb *bt, BtPageSet *set, uint unique)
   bt_putid (value, set->latch->page_no);
   ptr = (BtKey*)higherfence;
 
-  if( bt_insertkey (bt, ptr->key, ptr->len, lvl+1, value, BtId, 1) )
+  if( bt_insertkey (bt, ptr->key, ptr->len, lvl+1, value, BtId, unique) )
     return (BTERR)bt->err;
 
   //  delete old lower key to our node
@@ -1473,7 +1473,7 @@ uint bt_splitpage (BtDb *bt, BtPageSet *set)
 //  call with page locked, return
 //  unlocked
 
-BTERR bt_splitkeys (BtDb *bt, BtPageSet *set, BtLatchSet *right)
+BTERR bt_splitkeys (BtDb *bt, BtPageSet *set, BtLatchSet *right, uint unique)
 {
   char leftkey[BT_keyarray], rightkey[BT_keyarray];
   unsigned char value[BtId];
@@ -1506,7 +1506,7 @@ BTERR bt_splitkeys (BtDb *bt, BtPageSet *set, BtLatchSet *right)
   bt_putid (value, set->latch->page_no);
   ptr = (BtKey *)leftkey;
 
-  if( bt_insertkey (bt, ptr->key, ptr->len, lvl+1, value, BtId, 1) )
+  if( bt_insertkey (bt, ptr->key, ptr->len, lvl+1, value, BtId, unique) )
     return (BTERR) bt->err;
 
   // switch fence for right block of larger keys to new right page
@@ -1514,7 +1514,7 @@ BTERR bt_splitkeys (BtDb *bt, BtPageSet *set, BtLatchSet *right)
   bt_putid (value, right->page_no);
   ptr = (BtKey *)rightkey;
 
-  if( bt_insertkey (bt, ptr->key, ptr->len, lvl+1, value, BtId, 1) )
+  if( bt_insertkey (bt, ptr->key, ptr->len, lvl+1, value, BtId, unique) )
     return (BTERR)bt->err;
 
   bt_unlockpage (bt, BtLockParent, set->latch);
@@ -1660,7 +1660,7 @@ BTERR bt_insertkey (BtDb *bt, char *key, uint keylen, uint lvl, void *value, uin
       if( !(slot = bt_cleanpage (bt, set, ins->len, slot, vallen)) ) {
         if( !(entry = bt_splitpage (bt, set)) )
           return (BTERR)bt->err;
-        else if( bt_splitkeys (bt, set, bt->mgr->latchsets + entry) )
+        else if( bt_splitkeys (bt, set, bt->mgr->latchsets + entry, unique) )
           return (BTERR)bt->err;
         else
           continue;
@@ -1702,7 +1702,7 @@ BTERR bt_insertkey (BtDb *bt, char *key, uint keylen, uint lvl, void *value, uin
     if( !(slot = bt_cleanpage (bt, set, keylen, slot, vallen)) ) {
       if( !(entry = bt_splitpage (bt, set)) )
         return (BTERR)bt->err;
-      else if( bt_splitkeys (bt, set, bt->mgr->latchsets + entry) )
+      else if( bt_splitkeys (bt, set, bt->mgr->latchsets + entry, unique) )
         return (BTERR)bt->err;
       else
         continue;
@@ -1835,7 +1835,7 @@ BTERR bt_atomicdelete (BtDb *bt, BtPage source, AtomicTxn *locks, uint src)
 //  and that all pages that don't contain any keys are
 //  deleted, or are being held under Atomic lock.
 
-BTERR bt_atomicfree (BtDb *bt, BtPageSet *prev)
+BTERR bt_atomicfree (BtDb *bt, BtPageSet *prev, uint unique)
 {
   BtPageSet right[1], temp[1];
   unsigned char value[BtId];
@@ -1873,7 +1873,7 @@ BTERR bt_atomicfree (BtDb *bt, BtPageSet *prev)
   ptr = keyptr(right->page,right->page->cnt);
   bt_putid (value, prev->latch->page_no);
 
-  if( bt_insertkey (bt, ptr->key, ptr->len, 1, value, BtId, 1) )
+  if( bt_insertkey (bt, ptr->key, ptr->len, 1, value, BtId, unique) )
     return (BTERR) bt->err;
 
   //  now that master page is in good shape we can
@@ -2240,7 +2240,7 @@ int bt_atomictxn (BtDb *bt, BtPage source, uint unique)
 
       switch( leaf->type ) {
         case 0: // insert key
-          if( bt_insertkey (bt, ptr->key, ptr->len, 1, value, BtId, 1) )
+          if( bt_insertkey (bt, ptr->key, ptr->len, 1, value, BtId, unique) )
             return -1;
 
           break;
@@ -2252,7 +2252,7 @@ int bt_atomictxn (BtDb *bt, BtPage source, uint unique)
           break;
 
         case 2: // free page
-          if( bt_atomicfree (bt, set) )
+          if( bt_atomicfree (bt, set, unique) )
             return -1;
 
           break;
@@ -2605,7 +2605,7 @@ void *index_file (void *arg){
             line++;
 
             if( !args->num ) {
-              if( bt_insertkey (bt, key, 10, 0, key + 10, len - 10, 1) )
+              if( bt_insertkey (bt, key, 10, 0, key + 10, len - 10, unique) )
                 fprintf(stderr, "Error %d Line: %d\n", bt->err, line), exit(0);
               len = 0;
               continue;
@@ -2649,7 +2649,7 @@ void *index_file (void *arg){
           {
             line++;
 
-            if( bt_insertkey (bt, key, len, 0, NULL, 0, 1) )
+            if( bt_insertkey (bt, key, len, 0, NULL, 0, unique) )
               fprintf(stderr, "Error %d Line: %d\n", bt->err, line), exit(0);
             len = 0;
           }
