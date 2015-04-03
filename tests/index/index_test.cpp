@@ -133,6 +133,7 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   EXPECT_EQ(false, index->Exists(keynonce));
   EXPECT_EQ(true, index->Exists(key0));
 
+  index->GetLocationsForKey(key1);
   index->GetLocationsForKey(key0);
 
   index->Scan();

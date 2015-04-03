@@ -329,8 +329,8 @@ typedef enum {
 // B-Tree functions
 extern void bt_close (BtDb *bt);
 extern BtDb *bt_open (BtMgr *mgr);
-extern BTERR bt_insertkey (BtDb *bt, char *key, uint len, uint lvl, void *value, uint vallen, uint update);
-extern BTERR  bt_deletekey (BtDb *bt, char *key, uint len, uint lvl);
+extern BTERR bt_insertkey (BtDb *bt, char *key, uint len, uint lvl, void *value, uint vallen, uint unique);
+extern BTERR  bt_deletekey (BtDb *bt, char *key, uint len, uint lvl, uint unique);
 extern int bt_findkey    (BtDb *bt, char *key, uint keylen, unsigned char *value, uint valmax);
 extern BtKey *bt_foundkey (BtDb *bt);
 extern uint bt_startkey  (BtDb *bt, char *key, uint len);
@@ -481,7 +481,7 @@ BtDb *bt_open (BtMgr *mgr);
 //  -1: key2 > key1
 //  +1: key2 < key1
 //  as the comparison value
-int keycmp (BtKey* key1, char *key2, uint len2, catalog::Schema *key_schema);
+int keycmp (BtKey* key1, char *key2, catalog::Schema *key_schema);
 
 // place write, read, or parent lock on requested page_no.
 void bt_lockpage(BtDb *bt, BtLock mode, BtLatchSet *latch);
@@ -498,7 +498,7 @@ int bt_findslot (BtPage page, char *key, uint len);
 
 //  find and load page at given level for given key
 //  leave page rd or wr locked as requested
-int bt_loadpage (BtDb *bt, BtPageSet *set, char *key, uint len, uint lvl, BtLock lock);
+int bt_loadpage (BtDb *bt, BtPageSet *set, char *key, uint lvl, BtLock lock);
 
 //  return page to free list
 //  page must be delete & write locked
@@ -519,7 +519,7 @@ BTERR bt_deletepage (BtDb *bt, BtPageSet *set);
 
 //  find and delete key on page by marking delete flag bit
 //  if page becomes empty, delete it from the btree
-BTERR bt_deletekey (BtDb *bt, char *key, uint len, uint lvl);
+BTERR bt_deletekey (BtDb *bt, char *key, uint lvl, uint unique);
 
 BtKey *bt_foundkey (BtDb *bt);
 
@@ -597,7 +597,7 @@ BTERR bt_atomicfree (BtDb *bt, BtPageSet *prev);
 //  otherwise return slot number
 //  causing the key constraint violation
 //  or zero on successful completion.
-int bt_atomictxn (BtDb *bt, BtPage source);
+int bt_atomictxn (BtDb *bt, BtPage source, uint unique);
 
 //  set cursor to highest slot on highest page
 uint bt_lastkey (BtDb *bt);
