@@ -48,7 +48,7 @@ public:
 		return Value::GetDoubleValue(value);
 	}
 
-	static inline Value GetStringValue(std::string value, Pool *data_pool) {
+	static inline Value GetStringValue(std::string value, Pool *data_pool = nullptr) {
 		return Value::GetStringValue(value, data_pool);
 	}
 
