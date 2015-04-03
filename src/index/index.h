@@ -40,25 +40,15 @@ class IndexMetadata {
                 IndexType type,
                 catalog::Catalog *catalog,
                 catalog::Schema *tuple_schema,
-                const std::vector<id_t>& table_columns_in_key,
+                catalog::Schema *key_schema,
                 bool unique_keys)
 
  : identifier(identifier),
    type(type),
    catalog(catalog),
    tuple_schema(tuple_schema),
-   key_schema(nullptr),
-   table_columns_in_key(table_columns_in_key),
+   key_schema(key_schema),
    unique_keys(unique_keys) {
-
-    key_schema = catalog::Schema::CopySchema(tuple_schema, table_columns_in_key);
-
-  }
-
-  ~IndexMetadata() {
-
-    // free up key schema
-    //delete key_schema;
 
   }
 

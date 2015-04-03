@@ -37,25 +37,25 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
 
   columns.push_back(column1);
   columns.push_back(column2);
+
+  catalog::Schema *key_schema = new catalog::Schema(columns);
+
   columns.push_back(column3);
   columns.push_back(column4);
 
-  catalog::Schema *schema = new catalog::Schema(columns);
+  catalog::Schema *tuple_schema = new catalog::Schema(columns);
+
   catalog::Catalog *catalog = new catalog::Catalog();
 
   // BTREE INDEX
 
-  std::vector<id_t> table_columns_in_key;
-  table_columns_in_key.push_back(0);
-  table_columns_in_key.push_back(1);
-
   index::IndexMetadata index_metadata("btree_index",
                                       INDEX_TYPE_BTREE_MULTIMAP,
-                                      catalog, schema,
-                                      table_columns_in_key,
+                                      catalog,
+                                      tuple_schema,
+                                      key_schema,
                                       true);
 
-  catalog::Schema *key_schema = index_metadata.key_schema;
 
   storage::VMBackend *backend = new storage::VMBackend();
   Pool *pool = new Pool(backend);
@@ -131,13 +131,14 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   delete key4;
   delete keynonce;
 
-  delete index;
-
   delete pool;
   delete backend;
 
-  delete schema;
+  delete tuple_schema;
+  delete key_schema;
   delete catalog;
+
+  delete index;
 }
 
 
