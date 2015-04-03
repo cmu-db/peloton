@@ -116,11 +116,17 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
 
   storage::Tuple *key0 = new storage::Tuple(key_schema, true);
   storage::Tuple *key1 = new storage::Tuple(key_schema, true);
+  storage::Tuple *key2 = new storage::Tuple(key_schema, true);
+  storage::Tuple *key3 = new storage::Tuple(key_schema, true);
+  storage::Tuple *key4 = new storage::Tuple(key_schema, true);
   storage::Tuple *keynonce = new storage::Tuple(key_schema, true);
 
   key0->SetValue(0, ValueFactory::GetIntegerValue(100));
   key1->SetValue(0, ValueFactory::GetIntegerValue(200));
-  keynonce->SetValue(0, ValueFactory::GetIntegerValue(400));
+  key2->SetValue(0, ValueFactory::GetIntegerValue(300));
+  key3->SetValue(0, ValueFactory::GetIntegerValue(400));
+  key4->SetValue(0, ValueFactory::GetIntegerValue(500));
+  keynonce->SetValue(0, ValueFactory::GetIntegerValue(1000));
 
   ItemPointer item0(tile_id, 0);
   ItemPointer item1(tile_id, 1);
@@ -129,6 +135,9 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   index->InsertEntry(key0, item0);
   index->InsertEntry(key1, item1);
   index->InsertEntry(key1, item2);
+  index->InsertEntry(key2, item1);
+  index->InsertEntry(key3, item1);
+  index->InsertEntry(key4, item1);
 
   EXPECT_EQ(false, index->Exists(keynonce));
   EXPECT_EQ(true, index->Exists(key0));
@@ -136,10 +145,15 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   index->GetLocationsForKey(key1);
   index->GetLocationsForKey(key0);
 
+  index->GetLocationsForKeyBetween(key1, key3);
+
   index->Scan();
 
   index->DeleteEntry(key0);
   index->DeleteEntry(key1);
+  index->DeleteEntry(key2);
+  index->DeleteEntry(key3);
+  index->DeleteEntry(key4);
 
   EXPECT_EQ(false, index->Exists(key0));
 
@@ -147,6 +161,9 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
 
   delete key0;
   delete key1;
+  delete key2;
+  delete key3;
+  delete key4;
   delete keynonce;
 
   delete tuple0;
