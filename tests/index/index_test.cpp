@@ -49,12 +49,8 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
 
   // BTREE INDEX
 
-  index::IndexMetadata index_metadata("btree_index",
-                                      INDEX_TYPE_BTREE_MULTIMAP,
-                                      catalog,
-                                      tuple_schema,
-                                      key_schema,
-                                      true);
+  index::IndexMetadata index_metadata("btree_index", INDEX_TYPE_BTREE_MULTIMAP,
+                                      catalog, tuple_schema, key_schema, true);
 
 
   storage::VMBackend *backend = new storage::VMBackend();

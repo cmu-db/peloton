@@ -97,6 +97,13 @@ TEST(TileGroupTests, BasicTest) {
 
 	EXPECT_EQ(3, tile_group->GetActiveTupleCount());
 
+	storage::TileGroupHeader *header = tile_group->GetHeader();
+
+	ItemPointer item(50, 60);
+
+	header->SetPrevItemPointer(2, item);
+	std::cout << (*header);
+
 	delete tuple1;
 	delete tuple2;
   delete schema;
