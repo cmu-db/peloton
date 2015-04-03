@@ -32,6 +32,9 @@ BtreeMultimapIndex::BtreeMultimapIndex(const IndexMetadata &metadata)
 
 BtreeMultimapIndex::~BtreeMultimapIndex(){
 
+  // Close db
+  bt_close (btree_db);
+
   // Close manager
   bt_mgrclose(btree_manager);
 
