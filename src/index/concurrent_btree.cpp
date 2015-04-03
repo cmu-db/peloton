@@ -41,11 +41,7 @@ uid bt_getid(unsigned char *src)
 
 uid bt_newdup (BtDb *bt)
 {
-#ifdef unix
   return __sync_fetch_and_add ((unsigned long long *) bt->mgr->pagezero->dups, 1) + 1;
-#else
-  return _InterlockedIncrement64(bt->mgr->pagezero->dups, 1);
-#endif
 }
 
 void bt_spinreleasewrite(BtSpinLatch *latch);
@@ -89,68 +85,37 @@ void WriteLock (RWLock *lock)
 {
   ushort w, r, tix;
 
-#ifdef unix
   tix = __sync_fetch_and_add ((int *) (ushort *) lock->ticket, 1);
-#else
-  tix = _InterlockedExchangeAdd16 (lock->ticket, 1);
-#endif
   // wait for our ticket to come up
 
   while( tix != lock->serving[0] )
-#ifdef unix
     sched_yield();
-#else
-  SwitchToThread ();
-#endif
 
   w = PRES | (tix & PHID);
-#ifdef  unix
   r = __sync_fetch_and_add ((int *) (ushort *) lock->rin, w);
-#else
-  r = _InterlockedExchangeAdd16 (lock->rin, w);
-#endif
+
   while( r != *lock->rout )
-#ifdef unix
     sched_yield();
-#else
-  SwitchToThread();
-#endif
 }
 
 void WriteRelease (RWLock *lock)
 {
-#ifdef unix
   __sync_fetch_and_and ((int *) (ushort *)lock->rin, ~MASK);
-#else
-  _InterlockedAnd16 (lock->rin, ~MASK);
-#endif
   lock->serving[0]++;
 }
 
 void ReadLock (RWLock *lock)
 {
   ushort w;
-#ifdef unix
   w = __sync_fetch_and_add ((int *) (ushort *) lock->rin, RINC) & MASK;
-#else
-  w = _InterlockedExchangeAdd16 (lock->rin, RINC) & MASK;
-#endif
   if( w )
     while( w == (*lock->rin & MASK) )
-#ifdef unix
       sched_yield ();
-#else
-  SwitchToThread ();
-#endif
 }
 
 void ReadRelease (RWLock *lock)
 {
-#ifdef unix
   __sync_fetch_and_add ((int *) (ushort *) lock->rout, RINC);
-#else
-  _InterlockedExchangeAdd16 (lock->rout, RINC);
-#endif
 }
 
 //  Spin Latch Manager
@@ -163,25 +128,13 @@ void bt_spinreadlock(BtSpinLatch *latch)
   ushort prev;
 
   do {
-#ifdef unix
     prev = __sync_fetch_and_add ((int *) (ushort *)latch, SHARE);
-#else
-    prev = _InterlockedExchangeAdd16((ushort *)latch, SHARE);
-#endif
     //  see if exclusive request is granted or pending
 
     if( !(prev & BOTH) )
       return;
-#ifdef unix
     prev = __sync_fetch_and_add ((int *) (ushort *)latch, -SHARE);
-#else
-    prev = _InterlockedExchangeAdd16((ushort *)latch, -SHARE);
-#endif
-#ifdef  unix
   } while( sched_yield(), 1 );
-#else
-} while( SwitchToThread(), 1 );
-#endif
 }
 
 //  wait for other read and write latches to relinquish
@@ -192,26 +145,14 @@ void bt_spinwritelock(BtSpinLatch *latch)
 
   do {
 
-#ifdef  unix
     prev = __sync_fetch_and_or((int *) (ushort *)latch, PEND | XCL);
-#else
-    prev = _InterlockedOr16((ushort *)latch, PEND | XCL);
-#endif
     if( !(prev & XCL) ) {
       if( !(prev & ~BOTH) )
         return;
       else
-#ifdef unix
         __sync_fetch_and_and ((int *) (ushort *)latch, ~XCL);
-#else
-      _InterlockedAnd16((ushort *)latch, ~XCL);
-#endif
     }
-#ifdef  unix
   } while( sched_yield(), 1 );
-#else
-} while( SwitchToThread(), 1 );
-#endif
 }
 
 //  try to obtain write lock
@@ -223,22 +164,14 @@ int bt_spinwritetry(BtSpinLatch *latch)
 {
   ushort prev;
 
-#ifdef  unix
   prev = __sync_fetch_and_or((int *) (ushort *)latch, XCL);
-#else
-  prev = _InterlockedOr16((ushort *)latch, XCL);
-#endif
   //  take write access if all bits are clear
 
   if( !(prev & XCL) ) {
     if( !(prev & ~BOTH) )
       return 1;
     else
-#ifdef unix
       __sync_fetch_and_and ((int *) (ushort *)latch, ~XCL);
-#else
-    _InterlockedAnd16((ushort *)latch, ~XCL);
-#endif
   }
 
   return 0;
@@ -248,52 +181,24 @@ int bt_spinwritetry(BtSpinLatch *latch)
 
 void bt_spinreleasewrite(BtSpinLatch *latch)
 {
-#ifdef unix
   __sync_fetch_and_and((int *) (ushort *)latch, ~BOTH);
-#else
-  _InterlockedAnd16((ushort *)latch, ~BOTH);
-#endif
 }
 
 //  decrement reader count
 
 void bt_spinreleaseread(BtSpinLatch *latch)
 {
-#ifdef unix
   __sync_fetch_and_add((int *) (ushort *)latch, -SHARE);
-#else
-  _InterlockedExchangeAdd16((ushort *)latch, -SHARE);
-#endif
 }
 
 //  read page from permanent location in Btree file
 
 BTERR bt_readpage (BtMgr *mgr, BtPage page, uid page_no)
 {
-#ifdef unix
   if( pread (mgr->idx, page, mgr->page_size, page_no << mgr->page_bits) < mgr->page_size ) {
     fprintf (stderr, "Unable to read page %.8llu errno = %d\n", page_no, errno);
     return BTERR_read;
   }
-#else
-  off64_t off = page_no << mgr->page_bits;
-
-  OVERLAPPED ovl[1];
-  uint amt[1];
-
-  memset (ovl, 0, sizeof(OVERLAPPED));
-  ovl->Offset = off;
-  ovl->OffsetHigh = off >> 32;
-
-  if( !ReadFile(mgr->idx, page, mgr->page_size, amt, ovl)) {
-    fprintf (stderr, "Unable to read page %.8x GetLastError = %d\n", page_no, GetLastError());
-    return BTERR_read;
-  }
-  if( *amt <  mgr->page_size ) {
-    fprintf (stderr, "Unable to read page %.8x GetLastError = %d\n", page_no, GetLastError());
-    return BTERR_read;
-  }
-#endif
   return BTERR_ok;
 }
 
@@ -304,23 +209,9 @@ BTERR bt_writepage (BtMgr *mgr, BtPage page, uid page_no)
 {
   off64_t off = page_no << mgr->page_bits;
 
-#ifdef unix
   if( pwrite(mgr->idx, page, mgr->page_size, off) < mgr->page_size )
     return BTERR_wrt;
-#else
-  OVERLAPPED ovl[1];
-  uint amt[1];
 
-  memset (ovl, 0, sizeof(OVERLAPPED));
-  ovl->Offset = off;
-  ovl->OffsetHigh = off >> 32;
-
-  if( !WriteFile(mgr->idx, page, mgr->page_size, amt, ovl) )
-    return BTERR_wrt;
-
-  if( *amt <  mgr->page_size )
-    return BTERR_wrt;
-#endif
   return BTERR_ok;
 }
 
@@ -357,15 +248,9 @@ BTERR bt_latchlink (BtDb *bt, uint hashidx, uint slot, uid page_no, uint loadit)
 
 void bt_unpinlatch (BtLatchSet *latch)
 {
-#ifdef unix
   if( ~latch->pin & CLOCK_bit )
     __sync_fetch_and_or((int *) &latch->pin, CLOCK_bit);
   __sync_fetch_and_add((int *) &latch->pin, -1);
-#else
-  if( ~latch->pin & CLOCK_bit )
-    _InterlockedOr16 (&latch->pin, CLOCK_bit);
-  _InterlockedDecrement16 (&latch->pin);
-#endif
 }
 
 //  return the btree cached page address
@@ -405,21 +290,13 @@ BtLatchSet *bt_pinlatch (BtDb *bt, uid page_no, uint loadit)
 
   if( slot ) {
     latch = bt->mgr->latchsets + slot;
-#ifdef unix
     __sync_fetch_and_add((int *) &latch->pin, 1);
-#else
-    _InterlockedIncrement16 (&latch->pin);
-#endif
     bt_spinreleasewrite(bt->mgr->hashtable[hashidx].latch);
     return latch;
   }
 
   //  see if there are any unused pool entries
-#ifdef unix
   slot = __sync_fetch_and_add (&bt->mgr->latchdeployed, 1) + 1;
-#else
-  slot = _InterlockedIncrement (&bt->mgr->latchdeployed);
-#endif
 
   if( slot < bt->mgr->latchtotal ) {
     latch = bt->mgr->latchsets + slot;
@@ -429,19 +306,11 @@ BtLatchSet *bt_pinlatch (BtDb *bt, uid page_no, uint loadit)
     return latch;
   }
 
-#ifdef unix
   __sync_fetch_and_add (&bt->mgr->latchdeployed, -1);
-#else
-  _InterlockedDecrement (&bt->mgr->latchdeployed);
-#endif
   //  find and reuse previous entry on victim
 
   while( 1 ) {
-#ifdef unix
     slot = __sync_fetch_and_add(&bt->mgr->latchvictim, 1);
-#else
-    slot = _InterlockedIncrement (&bt->mgr->latchvictim) - 1;
-#endif
     // try to get write lock on hash chain
     //  skip entry if not obtained
     //  or has outstanding pins
@@ -467,11 +336,7 @@ BtLatchSet *bt_pinlatch (BtDb *bt, uid page_no, uint loadit)
 
     if( latch->pin ) {
       if( latch->pin & CLOCK_bit ) {
-#ifdef unix
         __sync_fetch_and_and((int *) &latch->pin, ~CLOCK_bit);
-#else
-        _InterlockedAnd16 (&latch->pin, ~CLOCK_bit);
-#endif
       }
       bt_spinreleasewrite (bt->mgr->hashtable[idx].latch);
       continue;
@@ -530,37 +395,19 @@ void bt_mgrclose (BtMgr *mgr)
 
   fprintf(stderr, "%d buffer pool pages flushed\n", num);
 
-#ifdef unix
   munmap (mgr->hashtable, (uid)mgr->nlatchpage << mgr->page_bits);
   munmap (mgr->pagezero, mgr->page_size);
-#else
-  FlushViewOfFile(mgr->pagezero, 0);
-  UnmapViewOfFile(mgr->pagezero);
-  UnmapViewOfFile(mgr->hashtable);
-  CloseHandle(mgr->halloc);
-  CloseHandle(mgr->hpool);
-#endif
-#ifdef unix
+
   close (mgr->idx);
   free (mgr);
-#else
-  FlushFileBuffers(mgr->idx);
-  CloseHandle(mgr->idx);
-  GlobalFree (mgr);
-#endif
 }
 
 //  close and release memory
 
 void bt_close (BtDb *bt)
 {
-#ifdef unix
   if( bt->mem )
     free (bt->mem);
-#else
-  if( bt->mem)
-    VirtualFree (bt->mem, 0, MEM_RELEASE);
-#endif
   free (bt);
 }
 
@@ -593,7 +440,6 @@ BtMgr *bt_mgr (char *name, uint bits, uint nodemax)
     return (BtMgr *)NULL;
   }
 
-#ifdef unix
   mgr = (BtMgr *) calloc (1, sizeof(BtMgr));
 
   mgr->idx = open ((char*)name, O_RDWR | O_CREAT, 0666);
@@ -602,16 +448,7 @@ BtMgr *bt_mgr (char *name, uint bits, uint nodemax)
     fprintf (stderr, "Unable to open btree file\n");
     return free(mgr), (BtMgr *)NULL;
   }
-#else
-  mgr = GlobalAlloc (GMEM_FIXED|GMEM_ZEROINIT, sizeof(BtMgr));
-  attr = FILE_ATTRIBUTE_NORMAL;
-  mgr->idx = CreateFile(name, GENERIC_READ| GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, attr, NULL);
 
-  if( mgr->idx == INVALID_HANDLE_VALUE )
-    return GlobalFree(mgr), nullptr;
-#endif
-
-#ifdef unix
   pagezero = (BtPageZero *) valloc (BT_maxpage);
   *amt = 0;
 
@@ -629,17 +466,6 @@ BtMgr *bt_mgr (char *name, uint bits, uint nodemax)
       return free(mgr), free(pagezero), (BtMgr *)NULL;
   else
     initit = 1;
-#else
-  pagezero = VirtualAlloc(NULL, BT_maxpage, MEM_COMMIT, PAGE_READWRITE);
-  size = GetFileSize(mgr->idx, amt);
-
-  if( size || *amt ) {
-    if( !ReadFile(mgr->idx, (char *)pagezero, BT_minpage, amt, NULL) )
-      return bt_mgrclose (mgr), NULL;
-    bits = pagezero->alloc->bits;
-  } else
-    initit = 1;
-#endif
 
   mgr->page_size = 1 << bits;
   mgr->page_bits = bits;
@@ -700,12 +526,7 @@ BtMgr *bt_mgr (char *name, uint bits, uint nodemax)
   }
 
   mgrlatch:
-#ifdef unix
   free (pagezero);
-#else
-  VirtualFree (pagezero, 0, MEM_RELEASE);
-#endif
-#ifdef unix
   // mlock the pagezero page
 
   flag = PROT_READ | PROT_WRITE;
@@ -721,36 +542,6 @@ BtMgr *bt_mgr (char *name, uint bits, uint nodemax)
     fprintf (stderr, "Unable to mmap anonymous buffer pool pages, error = %s\n", strerror(errno));
     return bt_mgrclose (mgr), (BtMgr *)NULL;
   }
-#else
-  flag = PAGE_READWRITE;
-  mgr->halloc = CreateFileMapping(mgr->idx, NULL, flag, 0, mgr->page_size, NULL);
-  if( !mgr->halloc ) {
-    fprintf (stderr, "Unable to create page zero memory mapping, error = %d\n", GetLastError());
-    return bt_mgrclose (mgr), NULL;
-  }
-
-  flag = FILE_MAP_WRITE;
-  mgr->pagezero = MapViewOfFile(mgr->halloc, flag, 0, 0, mgr->page_size);
-  if( !mgr->pagezero ) {
-    fprintf (stderr, "Unable to map page zero, error = %d\n", GetLastError());
-    return bt_mgrclose (mgr), NULL;
-  }
-
-  flag = PAGE_READWRITE;
-  size = (uid)mgr->nlatchpage << mgr->page_bits;
-  mgr->hpool = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, flag, size >> 32, size, NULL);
-  if( !mgr->hpool ) {
-    fprintf (stderr, "Unable to create buffer pool memory mapping, error = %d\n", GetLastError());
-    return bt_mgrclose (mgr), NULL;
-  }
-
-  flag = FILE_MAP_WRITE;
-  mgr->hashtable = MapViewOfFile(mgr->pool, flag, 0, 0, size);
-  if( !mgr->hashtable ) {
-    fprintf (stderr, "Unable to map buffer pool, error = %d\n", GetLastError());
-    return bt_mgrclose (mgr), NULL;
-  }
-#endif
 
   mgr->pagepool = (unsigned char *)mgr->hashtable + ((uid)(mgr->nlatchpage - mgr->latchtotal) << mgr->page_bits);
   mgr->latchsets = (BtLatchSet *)(mgr->pagepool - (uid)mgr->latchtotal * sizeof(BtLatchSet));
@@ -767,18 +558,10 @@ BtDb *bt_open (BtMgr *mgr)
 
   memset (bt, 0, sizeof(*bt));
   bt->mgr = mgr;
-#ifdef unix
   bt->mem = (unsigned char *) valloc (2 *mgr->page_size);
-#else
-  bt->mem = VirtualAlloc(NULL, 2 * mgr->page_size, MEM_COMMIT, PAGE_READWRITE);
-#endif
   bt->frame = (BtPage)bt->mem;
   bt->cursor = (BtPage)(bt->mem + 1 * mgr->page_size);
-#ifdef unix
   bt->thread_no = __sync_fetch_and_add ((int *) (ushort *) mgr->thread_no, 1) + 1;
-#else
-  bt->thread_no = _InterlockedIncrement16(mgr->thread_no, 1);
-#endif
   return bt;
 }
 
@@ -2636,46 +2419,11 @@ BtVal *bt_val(BtDb *bt, uint slot)
  *
  */
 
-#ifndef unix
-double getCpuTime(int type)
-{
-  FILETIME crtime[1];
-  FILETIME xittime[1];
-  FILETIME systime[1];
-  FILETIME usrtime[1];
-  SYSTEMTIME timeconv[1];
-  double ans = 0;
 
-  memset (timeconv, 0, sizeof(SYSTEMTIME));
-
-  switch( type ) {
-    case 0:
-      GetSystemTimeAsFileTime (xittime);
-      FileTimeToSystemTime (xittime, timeconv);
-      ans = (double)timeconv->wDayOfWeek * 3600 * 24;
-      break;
-    case 1:
-      GetProcessTimes (GetCurrentProcess(), crtime, xittime, systime, usrtime);
-      FileTimeToSystemTime (usrtime, timeconv);
-      break;
-    case 2:
-      GetProcessTimes (GetCurrentProcess(), crtime, xittime, systime, usrtime);
-      FileTimeToSystemTime (systime, timeconv);
-      break;
-  }
-
-  ans += (double)timeconv->wHour * 3600;
-  ans += (double)timeconv->wMinute * 60;
-  ans += (double)timeconv->wSecond;
-  ans += (double)timeconv->wMilliseconds / 1000;
-  return ans;
-}
-#else
 #include <time.h>
 #include <sys/resource.h>
 
-double getCpuTime(int type)
-{
+double getCpuTime(int type) {
   struct rusage used[1];
   struct timeval tv[1];
 
@@ -2695,10 +2443,8 @@ double getCpuTime(int type)
 
   return 0;
 }
-#endif
 
-void bt_poolaudit (BtMgr *mgr)
-{
+void bt_poolaudit (BtMgr *mgr) {
   BtLatchSet *latch;
   uint slot = 0;
 
@@ -2724,8 +2470,7 @@ void bt_poolaudit (BtMgr *mgr)
   }
 }
 
-uint bt_latchaudit (BtDb *bt)
-{
+uint bt_latchaudit (BtDb *bt) {
   ushort idx, hashidx;
   uid page_no;
   BtLatchSet *latch;
@@ -2772,23 +2517,13 @@ uint bt_latchaudit (BtDb *bt)
 
   while( page_no < bt_getid(bt->mgr->pagezero->alloc->right) ) {
     uid off = page_no << bt->mgr->page_bits;
-#ifdef unix
+
     ssize_t ret = pread (bt->mgr->idx, bt->frame, bt->mgr->page_size, off);
     if(ret == -1) {
-     fprintf(stderr, "pread error \n");
-     return 0;
+      fprintf(stderr, "pread error \n");
+      return 0;
     }
-#else
-    DWORD amt[1];
 
-    SetFilePointer (bt->mgr->idx, (long)off, (long*)(&off)+1, FILE_BEGIN);
-
-    if( !ReadFile(bt->mgr->idx, bt->frame, bt->mgr->page_size, amt, NULL))
-      return bt->err = BTERR_map;
-
-    if( *amt <  bt->mgr->page_size )
-      return bt->err = BTERR_map;
-#endif
     if( !bt->frame->free && !bt->frame->lvl )
       cnt += bt->frame->act;
     page_no++;
@@ -2812,12 +2547,7 @@ typedef struct {
 //  standalone program to index file of keys
 //  then list them onto std-out
 
-#ifdef unix
-void *index_file (void *arg)
-#else
-uint __stdcall index_file (void *arg)
-#endif
-{
+void *index_file (void *arg){
   int line = 0, found = 0, cnt = 0;
   uid next, page_no = LEAF_page;  // start on first page of leaves
   int ch, len = 0, type = 0;
@@ -3026,25 +2756,16 @@ uint __stdcall index_file (void *arg)
   }
 
   bt_close (bt);
-#ifdef unix
   return NULL;
-#else
-  return 0;
-#endif
 }
 
 typedef struct timeval timer;
 
-int main_test (int argc, char **argv)
-{
+int main_test (int argc, char **argv) {
   int idx, cnt, err;
   int bits = 16;
   double start;
-#ifdef unix
   pthread_t *threads;
-#else
-  HANDLE *threads;
-#endif
   ThreadArg *args;
   uint poolsize = 0;
   float elapsed;
@@ -3077,11 +2798,7 @@ int main_test (int argc, char **argv)
     num = atoi(argv[5]);
 
   cnt = argc - 6;
-#ifdef unix
   threads = (pthread_t *) malloc (cnt * sizeof(pthread_t));
-#else
-  threads = GlobalAlloc (GMEM_FIXED|GMEM_ZEROINIT, cnt * sizeof(HANDLE));
-#endif
   args = (ThreadArg *) malloc (cnt * sizeof(ThreadArg));
 
   mgr = bt_mgr ((argv[1]), bits, poolsize);
@@ -3099,26 +2816,14 @@ int main_test (int argc, char **argv)
     args[idx].mgr = mgr;
     args[idx].num = num;
     args[idx].idx = idx;
-#ifdef unix
     if( ( err = pthread_create (threads + idx, NULL, index_file, args + idx) ) )
       fprintf(stderr, "Error creating thread %d\n", err);
-#else
-    threads[idx] = (HANDLE)_beginthreadex(NULL, 65536, index_file, args + idx, 0, NULL);
-#endif
   }
 
   //  wait for termination
 
-#ifdef unix
   for( idx = 0; idx < cnt; idx++ )
     pthread_join (threads[idx], NULL);
-#else
-  WaitForMultipleObjects (cnt, threads, TRUE, INFINITE);
-
-  for( idx = 0; idx < cnt; idx++ )
-    CloseHandle(threads[idx]);
-
-#endif
   bt_poolaudit(mgr);
   bt_mgrclose (mgr);
 
