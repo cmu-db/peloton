@@ -39,40 +39,46 @@ BtreeMultimapIndex::~BtreeMultimapIndex(){
 
 bool BtreeMultimapIndex::InsertEntry(storage::Tuple *key, ItemPointer location) {
 
+  std::cout << "+++++++++++++++++++++++++++ Insert key  :: " << (*key);
+
   BTERR status = bt_insertkey (btree_db, key->GetData(), key->GetLength(), 0, &location, sizeof(ItemPointer), 0);
 
-  printf("status :: %d \n", status);
-
-  if(status == BTERR_ok)
+  if(status == BTERR_ok) {
+    std::cout << "Inserted \n";
     return true;
+  }
 
+  std::cout << "Did not insert \n";
   return false;
 }
 
 bool BtreeMultimapIndex::DeleteEntry(storage::Tuple *key){
 
-  printf("+++++++++++++++++++++++++++ Delete key :: \n");
+  std::cout << "+++++++++++++++++++++++++++ Delete key  :: " << (*key);
 
-  BTERR status = bt_deletekey (btree_db, key->GetData(), key->GetLength(), 0);
+  BTERR status = bt_deletekey (btree_db, key->GetData(), 0, 0);
 
-  printf("status :: %d \n", status);
-
-  if(status == BTERR_ok)
+  if(status == BTERR_ok) {
+    std::cout << "Deleted \n";
     return true;
+  }
 
+  std::cout << "Did not delete\n";
   return false;
 }
 
 bool BtreeMultimapIndex::Exists(storage::Tuple *key) const{
 
-  std::cout << "+++++++++++++++++++++++++++ Exist key  :: \n" << (*key);
+  std::cout << "+++++++++++++++++++++++++++ Exist key  :: " << (*key);
 
   int found = bt_findkey (btree_db, key->GetData(), key->GetLength(), nullptr, 0);
 
-  printf("found :: %d \n", found);
-
-  if(found == -1)
+  if(found == -1) {
+    std::cout << "Does not exist \n";
     return false;
+  }
+
+  std::cout << "Exists \n";
 
   return true;
 }
@@ -107,8 +113,6 @@ std::vector<ItemPointer> BtreeMultimapIndex::Scan() const{
       if( next || slot < set->page->cnt )
         if( !slotptr(set->page, slot)->dead ) {
 
-          printf("slot %d alive \n", slot);
-
           ptr = keyptr(set->page, slot);
           len = ptr->len;
 
@@ -133,13 +137,90 @@ std::vector<ItemPointer> BtreeMultimapIndex::Scan() const{
 
   tuple.Move(nullptr);
 
-  std::cout << "Total keys read " << cnt << " reads " << bt->reads << " writes " << bt->writes << "\n";
+  std::cout << "Total keys read " << cnt << "\n";
 
   return result;
 }
 
 std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKey(storage::Tuple *key) const{
   std::vector<ItemPointer> result;
+
+  ItemPointer *item;
+
+  std::cout << "+++++++++++++++++++++++++++ Get Locations For Key  :: Unique :: \n";
+
+  // FOR UNIQUE INDEX
+  int found = bt_findkey (btree_db, key->GetData(), key->GetLength(), (unsigned char *) item, sizeof(ItemPointer));
+
+  if(found != -1)
+    std::cout << "Tuple :: " << (*key) << " block : " << item->block
+    << " offset : " << item->offset << "\n";
+
+  result.push_back(*item);
+
+  result.clear();
+
+  BtPageSet set[1];
+  uint len, slot;
+  BtKey *ptr;
+  BtVal *val;
+  uint keylen = key->GetLength();
+
+  storage::Tuple tuple(key_schema);
+
+  std::cout << "+++++++++++++++++++++++++++ Get Locations For Key  :: Multimap :: \n";
+
+  if( (slot = bt_loadpage (btree_db, set, key->GetData(), 0, BtLockRead)) ) {
+
+    do {
+      ptr = keyptr(set->page, slot);
+
+      //  skip librarian slot place holder
+
+      if( slotptr(set->page, slot)->type == Librarian )
+        ptr = keyptr(set->page, ++slot);
+
+      //  return actual key found
+
+      memcpy (btree_db->key, ptr, ptr->len + sizeof(BtKey));
+      len = ptr->len;
+
+      if( slotptr(set->page, slot)->type == Duplicate )
+        len -= BtId;
+
+      //  not there if we reach the stopper key
+
+      if( slot == set->page->cnt )
+        if( !bt_getid (set->page->right) )
+          break;
+
+      // if key exists, return >= 0 value bytes copied
+      //  otherwise return (-1)
+
+      if( slotptr(set->page, slot)->dead )
+        continue;
+
+      if( !keycmp (ptr, key->GetData(), key_schema) ) {
+        val = valptr (set->page,slot);
+
+        tuple.Move(ptr->key);
+        item = (ItemPointer *) val->value;
+
+        std::cout << "Tuple :: " << tuple << " block : " << item->block
+            << " offset : " << item->offset << "\n";
+      }
+      else {
+        break;
+      }
+
+    } while( (slot = bt_findnext (btree_db, set, slot) ));
+
+  }
+
+  tuple.Move(nullptr);
+
+  bt_unlockpage (btree_db, BtLockRead, set->latch);
+  bt_unpinlatch (set->latch);
 
   return result;
 }
