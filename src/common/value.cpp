@@ -138,10 +138,11 @@ std::ostream& operator<<(std::ostream& os, const Value& value) {
       break;
     case VALUE_TYPE_VARCHAR:
       ptr = reinterpret_cast<const char*>(value.GetObjectValue());
-      addr = reinterpret_cast<int64_t>(ptr);
+      //addr = reinterpret_cast<int64_t>(ptr);
       out_val = std::string(ptr, value.GetObjectLength());
       os << "[" << value.GetObjectLength() << "]";
-      os << "\"" << out_val << "\"[@" << addr << "]";
+      os << "\"" << out_val << "\"";
+      //os << "\"" << out_val << "\"[@" << addr << "]";
       break;
     case VALUE_TYPE_VARBINARY:
       ptr = reinterpret_cast<const char*>(value.GetObjectValue());
