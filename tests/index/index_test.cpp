@@ -32,7 +32,7 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   // SCHEMA
 
   catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
-  catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+  catalog::ColumnInfo column2(VALUE_TYPE_VARCHAR, 25, false, true);
   catalog::ColumnInfo column3(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
   catalog::ColumnInfo column4(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
 
@@ -70,6 +70,8 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 4, column_names, true, catalog);
 
+  storage::Tile *tile0 = tile_group->GetTile(0);
+
   // TUPLES
 
   storage::Tuple *tuple0 = new storage::Tuple(schema, true);
@@ -77,9 +79,16 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   storage::Tuple *tuple2 = new storage::Tuple(schema, true);
 
   for(id_t column_itr = 0; column_itr < schema->GetColumnCount(); column_itr++) {
-    tuple0->SetValue(column_itr, ValueFactory::GetIntegerValue(100 * (column_itr + 1)));
-    tuple1->SetValue(column_itr, ValueFactory::GetIntegerValue(200 * (column_itr + 1)));
-    tuple2->SetValue(column_itr, ValueFactory::GetIntegerValue(300 * (column_itr + 1)));
+    if(column_itr != 1) {
+      tuple0->SetValue(column_itr, ValueFactory::GetIntegerValue(100 * (column_itr + 1)));
+      tuple1->SetValue(column_itr, ValueFactory::GetIntegerValue(200 * (column_itr + 1)));
+      tuple2->SetValue(column_itr, ValueFactory::GetIntegerValue(300 * (column_itr + 1)));
+    }
+    else {
+      tuple0->SetValue(column_itr, ValueFactory::GetStringValue("a", tile0->GetPool()));
+      tuple1->SetValue(column_itr, ValueFactory::GetStringValue("b", tile0->GetPool()));
+      tuple2->SetValue(column_itr, ValueFactory::GetStringValue("c", tile0->GetPool()));
+    }
   }
 
   // TRANSACTION
@@ -92,11 +101,16 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
 
   EXPECT_EQ(3, tile_group->GetActiveTupleCount());
 
+  std::cout << (*tile_group);
+
   // BTREE MULTIMAP INDEX
 
   std::vector<id_t> table_columns_in_key;
 
+  // SET UP KEY
+
   table_columns_in_key.push_back(0);
+  table_columns_in_key.push_back(1);
 
   index::IndexMetadata index_metadata("btree_index",
                                       INDEX_TYPE_BTREE_MULTIMAP,
@@ -122,11 +136,18 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   storage::Tuple *keynonce = new storage::Tuple(key_schema, true);
 
   key0->SetValue(0, ValueFactory::GetIntegerValue(100));
-  key1->SetValue(0, ValueFactory::GetIntegerValue(200));
-  key2->SetValue(0, ValueFactory::GetIntegerValue(300));
+  key1->SetValue(0, ValueFactory::GetIntegerValue(100));
+  key2->SetValue(0, ValueFactory::GetIntegerValue(100));
   key3->SetValue(0, ValueFactory::GetIntegerValue(400));
   key4->SetValue(0, ValueFactory::GetIntegerValue(500));
   keynonce->SetValue(0, ValueFactory::GetIntegerValue(1000));
+
+  key0->SetValue(1, ValueFactory::GetStringValue("a", tile0->GetPool()));
+  key1->SetValue(1, ValueFactory::GetStringValue("b", tile0->GetPool()));
+  key2->SetValue(1, ValueFactory::GetStringValue("c", tile0->GetPool()));
+  key3->SetValue(1, ValueFactory::GetStringValue("d", tile0->GetPool()));
+  key4->SetValue(1, ValueFactory::GetStringValue("e", tile0->GetPool()));
+  keynonce->SetValue(1, ValueFactory::GetStringValue("f", tile0->GetPool()));
 
   ItemPointer item0(tile_id, 0);
   ItemPointer item1(tile_id, 1);
