@@ -68,6 +68,8 @@ class BtreeMultimapIndex : public Index {
 
   BtDb *btree_db;
 
+  // unique keys
+  int unique_keys;
 };
 
 } // End index namespace

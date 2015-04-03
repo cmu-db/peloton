@@ -17,6 +17,6 @@ index_test_LDADD = \
 				   $(obj_DIR)/storage/tile_group.o \
 				   $(obj_DIR)/index/index.o \
 				   $(obj_DIR)/index/concurrent_btree.o \
-				   $(obj_DIR)/index/btree_multimap_index.o \
+				   $(obj_DIR)/index/btree_index.o \
 				   $(obj_DIR)/index/index_factory.o
 

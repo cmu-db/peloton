@@ -14,7 +14,8 @@
 #include <iostream>
 
 #include "index/index_factory.h"
-#include "index/btree_multimap_index.h"
+
+#include "btree_index.h"
 
 namespace nstore {
 namespace index {

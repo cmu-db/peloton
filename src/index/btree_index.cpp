@@ -10,7 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "index/btree_multimap_index.h"
+#include "btree_index.h"
 
 namespace nstore {
 namespace index {
@@ -28,11 +28,13 @@ BtreeMultimapIndex::BtreeMultimapIndex(const IndexMetadata &metadata)
   btree_db = bt_open (btree_manager);
 
   btree_db->key_schema = key_schema;
+
+  unique_keys = metadata.unique_keys;
 }
 
 BtreeMultimapIndex::~BtreeMultimapIndex(){
 
-  // Close db
+  // Close
   bt_close (btree_db);
 
   // Close manager
@@ -42,46 +44,32 @@ BtreeMultimapIndex::~BtreeMultimapIndex(){
 
 bool BtreeMultimapIndex::InsertEntry(storage::Tuple *key, ItemPointer location) {
 
-  std::cout << "+++++++++++++++++++++++++++ Insert key  :: " << (*key);
+  BTERR status = bt_insertkey (btree_db, key->GetData(), key->GetLength(), 0, &location, sizeof(ItemPointer), unique_keys);
 
-  BTERR status = bt_insertkey (btree_db, key->GetData(), key->GetLength(), 0, &location, sizeof(ItemPointer), 0);
-
-  if(status == BTERR_ok) {
-    std::cout << "Inserted \n";
+  if(status == BTERR_ok)
     return true;
-  }
 
-  std::cout << "Did not insert \n";
   return false;
 }
 
 bool BtreeMultimapIndex::DeleteEntry(storage::Tuple *key){
 
-  std::cout << "+++++++++++++++++++++++++++ Delete key  :: " << (*key);
-
-  BTERR status = bt_deletekey (btree_db, key->GetData(), 0, 0);
+  BTERR status = bt_deletekey (btree_db, key->GetData(), 0, unique_keys);
 
   if(status == BTERR_ok) {
-    std::cout << "Deleted \n";
     return true;
   }
 
-  std::cout << "Did not delete\n";
   return false;
 }
 
 bool BtreeMultimapIndex::Exists(storage::Tuple *key) const{
 
-  std::cout << "+++++++++++++++++++++++++++ Exist key  :: " << (*key);
-
   int found = bt_findkey (btree_db, key->GetData(), key->GetLength(), nullptr, 0);
 
   if(found == -1) {
-    std::cout << "Does not exist \n";
     return false;
   }
-
-  std::cout << "Exists \n";
 
   return true;
 }
@@ -101,8 +89,6 @@ std::vector<ItemPointer> BtreeMultimapIndex::Scan() const{
 
   storage::Tuple tuple(key_schema);
   ItemPointer *item;
-
-  std::cout << "+++++++++++++++++++++++++++ Scanning  :: \n";
 
   do {
     if( (set->latch = bt_pinlatch (bt, page_no, 1) ) )
@@ -155,8 +141,6 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKey(storage::Tuple *
   ItemPointer *item;
 
   storage::Tuple tuple(key_schema);
-
-  std::cout << "+++++++++++++++++++++++++++ Get Locations For Key  :: \n";
 
   if( (slot = bt_loadpage (btree_db, set, key->GetData(), 0, BtLockRead)) ) {
 
@@ -224,8 +208,6 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyBetween(storage::
   ItemPointer *item;
 
   storage::Tuple tuple(key_schema);
-
-  std::cout << "+++++++++++++++++++++++++++ Get Locations For Key Between :: :: \n";
 
   if( (slot = bt_loadpage (btree_db, set, start->GetData(), 0, BtLockRead)) ) {
 
@@ -303,8 +285,6 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLT(storage::Tuple
   storage::Tuple tuple(key_schema);
   ItemPointer *item;
 
-  std::cout << "+++++++++++++++++++++++++++ GetLocationsForKey Less Than  :: \n";
-
   do {
     if( (set->latch = bt_pinlatch (bt, page_no, 1) ) )
       set->page = bt_mappage (bt, set->latch);
@@ -335,10 +315,6 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLT(storage::Tuple
           val = valptr(set->page, slot);
           item = (ItemPointer *) val->value;
           result.push_back(*item);
-
-          std::cout << "Tuple :: " << tuple << " block : " << item->block
-              << " offset : " << item->offset << "\n";
-
           cnt++;
         }
     }
@@ -368,8 +344,6 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLTE(storage::Tupl
 
   storage::Tuple tuple(key_schema);
   ItemPointer *item;
-
-  std::cout << "+++++++++++++++++++++++++++ GetLocationsForKey Less Than Or Equal To :: \n";
 
   do {
     if( (set->latch = bt_pinlatch (bt, page_no, 1) ) )
@@ -401,10 +375,6 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLTE(storage::Tupl
           val = valptr(set->page, slot);
           item = (ItemPointer *) val->value;
           result.push_back(*item);
-
-          std::cout << "Tuple :: " << tuple << " block : " << item->block
-              << " offset : " << item->offset << "\n";
-
           cnt++;
         }
     }
@@ -426,10 +396,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyGT(storage::Tuple
   BtKey *ptr;
   BtVal *val;
   ItemPointer *item;
-
   storage::Tuple tuple(key_schema);
-
-  std::cout << "+++++++++++++++++++++++++++ Get Locations For Key GT :: \n";
 
   if( (slot = bt_loadpage (btree_db, set, key->GetData(), 0, BtLockRead)) ) {
 
@@ -474,9 +441,6 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyGT(storage::Tuple
       item = (ItemPointer *) val->value;
       result.push_back(*item);
 
-      std::cout << "Tuple :: " << tuple << " block : " << item->block
-          << " offset : " << item->offset << "\n";
-
     } while( (slot = bt_findnext (btree_db, set, slot) ));
 
   }
@@ -499,8 +463,6 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyGTE(storage::Tupl
     ItemPointer *item;
 
     storage::Tuple tuple(key_schema);
-
-    std::cout << "+++++++++++++++++++++++++++ Get Locations For Key GTE :: \n";
 
     if( (slot = bt_loadpage (btree_db, set, key->GetData(), 0, BtLockRead)) ) {
 
@@ -541,10 +503,6 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyGTE(storage::Tupl
         tuple.Move(ptr->key);
         item = (ItemPointer *) val->value;
         result.push_back(*item);
-
-        std::cout << "Tuple :: " << tuple << " block : " << item->block
-            << " offset : " << item->offset << "\n";
-
       } while( (slot = bt_findnext (btree_db, set, slot) ));
 
     }
