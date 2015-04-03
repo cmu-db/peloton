@@ -1396,14 +1396,17 @@ int bt_findkey (BtDb *bt, char *key, uint keylen, unsigned char *value, uint val
       if( slotptr(set->page, slot)->dead )
         continue;
 
-      if( keylen == len )
-        if( !memcmp (ptr->key, key, len) ) {
+      if( keylen == len ) {
+        int compare = memcmp (ptr->key, key, len);
+
+        if( !compare ) {
           val = valptr (set->page,slot);
           if( valmax > val->len )
             valmax = val->len;
           memcpy (value, val->value, valmax);
           ret = valmax;
         }
+      }
 
       break;
 
@@ -1833,6 +1836,8 @@ BTERR bt_insertkey (BtDb *bt, char *key, uint keylen, uint lvl, void *value, uin
   memcpy (ins->key, key, keylen);
   ins->len = keylen;
 
+  ptr = nullptr;
+
   // is this a non-unique index value?
 
   if( unique )
@@ -1867,7 +1872,8 @@ BTERR bt_insertkey (BtDb *bt, char *key, uint keylen, uint lvl, void *value, uin
     //  check for adequate space on the page
     //  and insert the new key before slot.
 
-    if( (unique && (len != ins->len || memcmp (ptr->key, ins->key, ins->len))) || (!unique) ) {
+    int compare = memcmp (ptr->key, ins->key, ins->len);
+    if( (unique && (len != ins->len || compare)) || (!unique) ) {
       if( !(slot = bt_cleanpage (bt, set, ins->len, slot, vallen)) ) {
         if( !(entry = bt_splitpage (bt, set)) )
           return (BTERR)bt->err;

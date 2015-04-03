@@ -58,7 +58,8 @@ public:
 		assert(tuple_schema);
 
 		if(allocate) {
-			tuple_data = new char[tuple_schema->GetLength()];
+		  // initialize heap allocation
+			tuple_data = new char[tuple_schema->GetLength()]();
 		}
 
 	}
