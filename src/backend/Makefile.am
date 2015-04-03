@@ -5,7 +5,6 @@
 ######################################################################
 
 backend_FILES = \
-				backend/nstore.cpp \
 				backend/parser.cpp 
 
 backend_INCLUDES = \
