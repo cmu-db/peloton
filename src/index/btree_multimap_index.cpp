@@ -149,7 +149,6 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKey(storage::Tuple *
   uint len, slot;
   BtKey *ptr;
   BtVal *val;
-  uint keylen = key->GetLength();
   ItemPointer *item;
 
   storage::Tuple tuple(key_schema);
@@ -191,6 +190,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKey(storage::Tuple *
 
         tuple.Move(ptr->key);
         item = (ItemPointer *) val->value;
+        result.push_back(*item);
 
         std::cout << "Tuple :: " << tuple << " block : " << item->block
             << " offset : " << item->offset << "\n";
@@ -218,7 +218,6 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyBetween(storage::
   uint len, slot;
   BtKey *ptr;
   BtVal *val;
-  uint keylen = start->GetLength();
   ItemPointer *item;
 
   storage::Tuple tuple(key_schema);
@@ -264,6 +263,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyBetween(storage::
 
         tuple.Move(ptr->key);
         item = (ItemPointer *) val->value;
+        result.push_back(*item);
 
         std::cout << "Tuple :: " << tuple << " block : " << item->block
             << " offset : " << item->offset << "\n";
@@ -287,23 +287,270 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyBetween(storage::
 std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLT(storage::Tuple *key) const{
   std::vector<ItemPointer> result;
 
+  BtPageSet set[1];
+  BtKey *ptr;
+  BtVal *val;
+  BtDb *bt = btree_db;
+
+  int cnt = 0;
+  uid next, page_no = LEAF_page;  // start on first page of leaves
+  int len = 0;
+  unsigned int slot;
+
+  storage::Tuple tuple(key_schema);
+  ItemPointer *item;
+
+  std::cout << "+++++++++++++++++++++++++++ GetLocationsForKey Less Than  :: \n";
+
+  do {
+    if( (set->latch = bt_pinlatch (bt, page_no, 1) ) )
+      set->page = bt_mappage (bt, set->latch);
+    else
+      fprintf(stderr, "unable to obtain latch"), exit(1);
+
+    bt_lockpage (bt, BtLockRead, set->latch);
+    next = bt_getid (set->page->right);
+
+    for( slot = 0; slot++ < set->page->cnt; ) {
+      if( next || slot < set->page->cnt )
+        if( !slotptr(set->page, slot)->dead ) {
+
+          ptr = keyptr(set->page, slot);
+          len = ptr->len;
+
+          if( slotptr(set->page, slot)->type == Duplicate )
+            len -= BtId;
+
+          //===--------------------------------------------------------------------===//
+          // Comparator
+          //===--------------------------------------------------------------------===//
+
+          if( keycmp (ptr, key->GetData(), key_schema) == 0 )
+            break;
+
+          tuple.Move(ptr->key);
+          val = valptr(set->page, slot);
+          item = (ItemPointer *) val->value;
+          result.push_back(*item);
+
+          std::cout << "Tuple :: " << tuple << " block : " << item->block
+              << " offset : " << item->offset << "\n";
+
+          cnt++;
+        }
+    }
+
+    bt_unlockpage (bt, BtLockRead, set->latch);
+    bt_unpinlatch (set->latch);
+
+  } while( (page_no = next ) );
+
+  tuple.Move(nullptr);
+
   return result;
 }
 
 std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLTE(storage::Tuple *key) const{
   std::vector<ItemPointer> result;
 
+  BtPageSet set[1];
+  BtKey *ptr;
+  BtVal *val;
+  BtDb *bt = btree_db;
+
+  int cnt = 0;
+  uid next, page_no = LEAF_page;  // start on first page of leaves
+  int len = 0;
+  unsigned int slot;
+
+  storage::Tuple tuple(key_schema);
+  ItemPointer *item;
+
+  std::cout << "+++++++++++++++++++++++++++ GetLocationsForKey Less Than Or Equal To :: \n";
+
+  do {
+    if( (set->latch = bt_pinlatch (bt, page_no, 1) ) )
+      set->page = bt_mappage (bt, set->latch);
+    else
+      fprintf(stderr, "unable to obtain latch"), exit(1);
+
+    bt_lockpage (bt, BtLockRead, set->latch);
+    next = bt_getid (set->page->right);
+
+    for( slot = 0; slot++ < set->page->cnt; ) {
+      if( next || slot < set->page->cnt )
+        if( !slotptr(set->page, slot)->dead ) {
+
+          ptr = keyptr(set->page, slot);
+          len = ptr->len;
+
+          if( slotptr(set->page, slot)->type == Duplicate )
+            len -= BtId;
+
+          //===--------------------------------------------------------------------===//
+          // Comparator
+          //===--------------------------------------------------------------------===//
+
+          if( keycmp (ptr, key->GetData(), key_schema) == 1 )
+            break;
+
+          tuple.Move(ptr->key);
+          val = valptr(set->page, slot);
+          item = (ItemPointer *) val->value;
+          result.push_back(*item);
+
+          std::cout << "Tuple :: " << tuple << " block : " << item->block
+              << " offset : " << item->offset << "\n";
+
+          cnt++;
+        }
+    }
+
+    bt_unlockpage (bt, BtLockRead, set->latch);
+    bt_unpinlatch (set->latch);
+
+  } while( (page_no = next ) );
+
+  tuple.Move(nullptr);
   return result;
 }
 
 std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyGT(storage::Tuple *key) const{
   std::vector<ItemPointer> result;
 
+  BtPageSet set[1];
+  uint len, slot;
+  BtKey *ptr;
+  BtVal *val;
+  ItemPointer *item;
+
+  storage::Tuple tuple(key_schema);
+
+  std::cout << "+++++++++++++++++++++++++++ Get Locations For Key GT :: \n";
+
+  if( (slot = bt_loadpage (btree_db, set, key->GetData(), 0, BtLockRead)) ) {
+
+    do {
+      ptr = keyptr(set->page, slot);
+
+      //  skip librarian slot place holder
+
+      if( slotptr(set->page, slot)->type == Librarian )
+        ptr = keyptr(set->page, ++slot);
+
+      //  return actual key found
+
+      memcpy (btree_db->key, ptr, ptr->len + sizeof(BtKey));
+      len = ptr->len;
+
+      if( slotptr(set->page, slot)->type == Duplicate )
+        len -= BtId;
+
+      //  not there if we reach the stopper key
+
+      if( slot == set->page->cnt )
+        if( !bt_getid (set->page->right) )
+          break;
+
+      // if key exists, return >= 0 value bytes copied
+      //  otherwise return (-1)
+
+      if( slotptr(set->page, slot)->dead )
+        continue;
+
+      //===--------------------------------------------------------------------===//
+      // Comparator
+      //===--------------------------------------------------------------------===//
+
+      if( keycmp (ptr, key->GetData(), key_schema) == 0 )
+        continue;
+
+      val = valptr (set->page,slot);
+
+      tuple.Move(ptr->key);
+      item = (ItemPointer *) val->value;
+      result.push_back(*item);
+
+      std::cout << "Tuple :: " << tuple << " block : " << item->block
+          << " offset : " << item->offset << "\n";
+
+    } while( (slot = bt_findnext (btree_db, set, slot) ));
+
+  }
+
+  tuple.Move(nullptr);
+
+  bt_unlockpage (btree_db, BtLockRead, set->latch);
+  bt_unpinlatch (set->latch);
+
   return result;
 }
 
 std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyGTE(storage::Tuple *key) const{
   std::vector<ItemPointer> result;
+
+  BtPageSet set[1];
+    uint len, slot;
+    BtKey *ptr;
+    BtVal *val;
+    ItemPointer *item;
+
+    storage::Tuple tuple(key_schema);
+
+    std::cout << "+++++++++++++++++++++++++++ Get Locations For Key GTE :: \n";
+
+    if( (slot = bt_loadpage (btree_db, set, key->GetData(), 0, BtLockRead)) ) {
+
+      do {
+        ptr = keyptr(set->page, slot);
+
+        //  skip librarian slot place holder
+
+        if( slotptr(set->page, slot)->type == Librarian )
+          ptr = keyptr(set->page, ++slot);
+
+        //  return actual key found
+
+        memcpy (btree_db->key, ptr, ptr->len + sizeof(BtKey));
+        len = ptr->len;
+
+        if( slotptr(set->page, slot)->type == Duplicate )
+          len -= BtId;
+
+        //  not there if we reach the stopper key
+
+        if( slot == set->page->cnt )
+          if( !bt_getid (set->page->right) )
+            break;
+
+        // if key exists, return >= 0 value bytes copied
+        //  otherwise return (-1)
+
+        if( slotptr(set->page, slot)->dead )
+          continue;
+
+        //===--------------------------------------------------------------------===//
+        // No Comparator
+        //===--------------------------------------------------------------------===//
+
+        val = valptr (set->page,slot);
+
+        tuple.Move(ptr->key);
+        item = (ItemPointer *) val->value;
+        result.push_back(*item);
+
+        std::cout << "Tuple :: " << tuple << " block : " << item->block
+            << " offset : " << item->offset << "\n";
+
+      } while( (slot = bt_findnext (btree_db, set, slot) ));
+
+    }
+
+    tuple.Move(nullptr);
+
+    bt_unlockpage (btree_db, BtLockRead, set->latch);
+    bt_unpinlatch (set->latch);
+
 
   return result;
 }
