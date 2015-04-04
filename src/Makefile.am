@@ -11,6 +11,7 @@ include $(srcdir)/backend/Makefile.am
 include $(srcdir)/catalog/Makefile.am
 include $(srcdir)/common/Makefile.am
 include $(srcdir)/executor/Makefile.am
+include $(srcdir)/expression/Makefile.am
 include $(srcdir)/index/Makefile.am
 include $(srcdir)/parser/Makefile.am
 include $(srcdir)/planner/Makefile.am
@@ -27,6 +28,7 @@ common_SOURCES =  $(backend_FILES) \
 				  $(catalog_FILES) \
 				  $(common_FILES) \
 				  $(executor_FILES) \
+				  $(expression_FILES) \
 				  $(index_FILES) \
 				  $(parser_FILES) \
 				  $(planner_FILES) \
@@ -46,6 +48,7 @@ nstore_INCLUDES = $(backend_INCLUDES) \
 				  $(catalog_INCLUDES) \
 				  $(common_INCLUDES) \
 				  $(executor_INCLUDES) \
+				  $(expression_INCLUDES) \				  
 				  $(index_INCLUDES) \
 				  $(parser_INCLUDES) \
 				  $(planner_INCLUDES) \

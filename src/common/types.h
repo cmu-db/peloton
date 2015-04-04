@@ -60,32 +60,105 @@ namespace nstore {
 #define VARCHAR_LENGTH_LONG  	4096
 
 //===--------------------------------------------------------------------===//
-// ENUM types
+// Value types
+// This file defines all the types that we will support
+// We do not allow for user-defined types, nor do we try to do anything dynamic.
 //===--------------------------------------------------------------------===//
 
 enum ValueType {
-	VALUE_TYPE_INVALID = 0, 	// invalid value type
-	VALUE_TYPE_NULL = 1, 		// NULL type
+  VALUE_TYPE_INVALID = 0, 	// invalid value type
+  VALUE_TYPE_NULL = 1, 		// NULL type
 
-	VALUE_TYPE_TINYINT = 3, 	// 1 byte integer
-	VALUE_TYPE_SMALLINT = 4,	// 2 bytes integer
-	VALUE_TYPE_INTEGER = 5,		// 4 bytes integer
-	VALUE_TYPE_BIGINT = 6, 		// 8 bytes integer
-	VALUE_TYPE_DOUBLE = 8, 		// 8 bytes floating number
-	VALUE_TYPE_VARCHAR = 9, 	// variable length chars
-	VALUE_TYPE_TIMESTAMP = 11, 	// 8 bytes integer
-	VALUE_TYPE_DECIMAL = 22, 	// decimal(p,s)
-	VALUE_TYPE_BOOLEAN = 23,
-	VALUE_TYPE_ADDRESS = 24,
-	VALUE_TYPE_VARBINARY = 25, 	// variable length bytes
+  VALUE_TYPE_TINYINT = 3, 	// 1 byte integer
+  VALUE_TYPE_SMALLINT = 4,	// 2 bytes integer
+  VALUE_TYPE_INTEGER = 5,		// 4 bytes integer
+  VALUE_TYPE_BIGINT = 6, 		// 8 bytes integer
+  VALUE_TYPE_DOUBLE = 8, 		// 8 bytes floating number
+  VALUE_TYPE_VARCHAR = 9, 	// variable length chars
+  VALUE_TYPE_TIMESTAMP = 11, 	// 8 bytes integer
+  VALUE_TYPE_DECIMAL = 22, 	// decimal(p,s)
+  VALUE_TYPE_BOOLEAN = 23,
+  VALUE_TYPE_ADDRESS = 24,
+  VALUE_TYPE_VARBINARY = 25, 	// variable length bytes
 };
+
+//===--------------------------------------------------------------------===//
+// Predicate Expression Operation Types
+//===--------------------------------------------------------------------===//
+
+enum ExpressionType {
+  EXPRESSION_TYPE_INVALID                     = 0,
+
+  //===--------------------------------------------------------------------===//
+  // Arithmetic Operators
+  //===--------------------------------------------------------------------===//
+
+  EXPRESSION_TYPE_OPERATOR_PLUS                   = 1, // left + right (both must be number. implicitly casted)
+  EXPRESSION_TYPE_OPERATOR_MINUS                  = 2, // left - right (both must be number. implicitly casted)
+  EXPRESSION_TYPE_OPERATOR_MULTIPLY               = 3, // left * right (both must be number. implicitly casted)
+  EXPRESSION_TYPE_OPERATOR_DIVIDE                 = 4, // left / right (both must be number. implicitly casted)
+  EXPRESSION_TYPE_OPERATOR_CONCAT                 = 5, // left || right (both must be char/varchar)
+  EXPRESSION_TYPE_OPERATOR_MOD                    = 6, // left % right (both must be integer)
+  EXPRESSION_TYPE_OPERATOR_CAST                   = 7, // explicitly cast left as right (right is integer in ValueType enum)
+  EXPRESSION_TYPE_OPERATOR_NOT                    = 8, // logical not operator
+
+  //===--------------------------------------------------------------------===//
+  // Comparison Operators
+  //===--------------------------------------------------------------------===//
+
+  EXPRESSION_TYPE_COMPARE_EQUAL                   = 10, // equal operator between left and right
+  EXPRESSION_TYPE_COMPARE_NOTEQUAL                = 11, // inequal operator between left and right
+  EXPRESSION_TYPE_COMPARE_LESSTHAN                = 12, // less than operator between left and right
+  EXPRESSION_TYPE_COMPARE_GREATERTHAN             = 13, // greater than operator between left and right
+  EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO       = 14, // less than equal operator between left and right
+  EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO    = 15, // greater than equal operator between left and right
+  EXPRESSION_TYPE_COMPARE_LIKE                    = 16, // LIKE operator (left LIKE right). both children must be string.
+
+  //===--------------------------------------------------------------------===//
+  // Conjunction Operators
+  //===--------------------------------------------------------------------===//
+
+  EXPRESSION_TYPE_CONJUNCTION_AND                 = 20,
+  EXPRESSION_TYPE_CONJUNCTION_OR                  = 21,
+
+  //===--------------------------------------------------------------------===//
+  // Values
+  //===--------------------------------------------------------------------===//
+
+  EXPRESSION_TYPE_VALUE_CONSTANT                  = 30,
+  EXPRESSION_TYPE_VALUE_PARAMETER                 = 31,
+  EXPRESSION_TYPE_VALUE_TUPLE                     = 32,
+  EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS             = 33,
+  EXPRESSION_TYPE_VALUE_NULL                      = 34,
+
+  //===--------------------------------------------------------------------===//
+  // Aggregates
+  //===--------------------------------------------------------------------===//
+
+  EXPRESSION_TYPE_AGGREGATE_COUNT                 = 40,
+  EXPRESSION_TYPE_AGGREGATE_COUNT_STAR            = 41,
+  EXPRESSION_TYPE_AGGREGATE_SUM                   = 42,
+  EXPRESSION_TYPE_AGGREGATE_MIN                   = 43,
+  EXPRESSION_TYPE_AGGREGATE_MAX                   = 44,
+  EXPRESSION_TYPE_AGGREGATE_AVG                   = 45,
+  EXPRESSION_TYPE_AGGREGATE_WEIGHTED_AVG          = 46
+
+};
+
+//===--------------------------------------------------------------------===//
+// Storage Backend Types
+//===--------------------------------------------------------------------===//
 
 enum BackendType {
-	BACKEND_TYPE_INVALID = 0, 		// invalid backend type
+  BACKEND_TYPE_INVALID = 0, 		// invalid backend type
 
-	BACKEND_TYPE_VM = 1, 			// on volatile memory
-	BACKEND_TYPE_NVM = 2 			// on non-volatile memory
+  BACKEND_TYPE_VM = 1, 			// on volatile memory
+  BACKEND_TYPE_NVM = 2 			// on non-volatile memory
 };
+
+//===--------------------------------------------------------------------===//
+// Index Types
+//===--------------------------------------------------------------------===//
 
 enum IndexType {
   INDEX_TYPE_INVALID = 0,     // invalid index type
