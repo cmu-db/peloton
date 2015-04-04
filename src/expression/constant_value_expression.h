@@ -13,6 +13,10 @@ namespace expression {
 class SerializeInput;
 class SerializeOutput;
 
+//===--------------------------------------------------------------------===//
+// Constant Value Expression
+//===--------------------------------------------------------------------===//
+
 class ConstantValueExpression : public AbstractExpression {
  public:
   ConstantValueExpression(const Value &value)
@@ -21,21 +25,18 @@ class ConstantValueExpression : public AbstractExpression {
   }
 
   virtual ~ConstantValueExpression() {
-    // FIXME
-    //value.free();
+    // clean up
+    value.FreeUninlinedData();
   }
 
-  Value eval(__attribute__((unused)) const storage::Tuple *tuple1, __attribute__((unused)) const storage::Tuple *tuple2) const
-  {
-    //VOLT_TRACE ("returning constant value as Value:%s type:%d",
-    //             value.debug().c_str(), (int) this->m_type);
+  Value Evaluate(__attribute__((unused)) const storage::Tuple *tuple1, __attribute__((unused)) const storage::Tuple *tuple2) const {
     return this->value;
   }
 
-  std::string debugInfo(const std::string &spacer) const {
-    // FIXME
-    return spacer + "OptimizedConstantValueExpression:";
-    //value.debug() + "\n";
+  std::string DebugInfo(const std::string &spacer) const {
+    std::stringstream os;
+    os << spacer << "OptimizedConstantValueExpression:" << value;
+    return os.str();
   }
 
  protected:

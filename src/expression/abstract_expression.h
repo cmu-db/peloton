@@ -26,73 +26,83 @@ namespace expression {
 class SerializeInput;
 class SerializeOutput;
 
+//===--------------------------------------------------------------------===//
+// AbstractExpression
+//===--------------------------------------------------------------------===//
+
 /**
  * Predicate objects for filtering tuples during query execution.
  * These objects are stored in query plans and passed to Storage Access Manager.
  */
 
-// ------------------------------------------------------------------
-// AbstractExpression
-// Base class for all expression nodes
-// ------------------------------------------------------------------
-
 class AbstractExpression {
-  public:
-    /** destroy this node and all children */
+
+ public:
+    // destroy this node and all children
     virtual ~AbstractExpression();
 
-    virtual Value eval(const storage::Tuple *tuple1, const storage::Tuple *tuple2) const = 0;
+    virtual Value Evaluate(const storage::Tuple *tuple1, const storage::Tuple *tuple2) const = 0;
 
-    /** set parameter values for this node and its descendents */
-    virtual void substitute(const ValueArray &params);
+    // set parameter values for this node and its descendants
+    virtual void Substitute(const ValueArray &params);
 
-    /** return true if self or descendent should be substitute()'d */
-    virtual bool hasParameter() const;
+    // return true if self or descendant should be substitute()'d
+    virtual bool HasParameter() const;
 
-    /* debugging methods - some various ways to create a sring
-       describing the expression tree */
-    std::string debug() const;
-    std::string debug(bool traverse) const;
-    std::string debug(const std::string &spacer) const;
-    virtual std::string debugInfo(const std::string &spacer) const = 0;
+    /// Get a string representation for debugging
+    friend std::ostream& operator<< (std::ostream& os, const AbstractExpression& expr);
 
-    /* serialization methods. expressions are serialized in java and
-       deserialized in the execution engine during startup. */
+    std::string Debug() const;
+    std::string Debug(bool traverse) const;
+    std::string Debug(const std::string &spacer) const;
+    virtual std::string DebugInfo(const std::string &spacer) const = 0;
 
-    /** create an expression tree. call this once with the input
-        stream positioned at the root expression node */
-    static AbstractExpression* buildExpressionTree(json_spirit::Object &obj);
+    // create an expression tree. call this once with the input
+    // stream positioned at the root expression node
+    static AbstractExpression* CreateExpressionTree(json_spirit::Object &obj);
 
-    /** accessors */
-    ExpressionType getExpressionType() const {
-        return m_type;
+    // Accessors
+
+    ExpressionType GetExpressionType() const {
+        return expr_type;
     }
 
-    const AbstractExpression *getLeft() const {
-        return m_left;
+    const AbstractExpression *GetLeft() const {
+        return left_expr;
     }
 
-    const AbstractExpression *getRight() const {
-        return m_right;
+    const AbstractExpression *GetRight() const {
+        return right_expr;
     }
 
   protected:
+
     AbstractExpression();
+
     AbstractExpression(ExpressionType type);
+
     AbstractExpression(ExpressionType type,
                        AbstractExpression *left,
                        AbstractExpression *right);
 
+    //===--------------------------------------------------------------------===//
+    // Data Members
+    //===--------------------------------------------------------------------===//
+
+    // children
+    AbstractExpression *left_expr, *right_expr;
+
+    ExpressionType expr_type;
+
+    // true if we need to substitute ?
+    bool has_parameter;
+
   private:
-    static AbstractExpression* buildExpressionTree_recurse(json_spirit::Object &obj);
-    bool initParamShortCircuits();
 
-  protected:
-    AbstractExpression *m_left, *m_right;
+    static AbstractExpression* CreateExpressionTreeRecurse(json_spirit::Object &obj);
 
-    ExpressionType m_type;
+    bool InitParamShortCircuits();
 
-    bool m_hasParameter;
 };
 
 } // End expression namespace

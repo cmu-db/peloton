@@ -12,9 +12,9 @@
 
 #pragma once
 
-//
-// This is just for convenience
-//
+//===--------------------------------------------------------------------===//
+// Convenience Wrapper
+//===--------------------------------------------------------------------===//
 
 #include "comparison_expression.h"
 #include "conjunction_expression.h"
