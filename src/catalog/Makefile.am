@@ -5,6 +5,7 @@
 ######################################################################
 
 catalog_FILES = \
+				catalog/auth_program.cpp \
 				catalog/schema.cpp \
 				catalog/transaction.cpp 
 
