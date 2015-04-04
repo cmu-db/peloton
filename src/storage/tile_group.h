@@ -15,9 +15,9 @@
 #include "storage/tile.h"
 #include "storage/tile_factory.h"
 #include "storage/tile_group_header.h"
-#include "catalog/catalog.h"
-
 #include <cassert>
+
+#include "catalog/manager.h"
 
 namespace nstore {
 namespace storage {
@@ -48,7 +48,7 @@ public:
 
 	// Tile group constructor
 	TileGroup(TileGroupHeader* tile_header,
-	    catalog::Catalog *catalog,
+	    catalog::Manager *catalog,
 			Backend* backend,
 			std::vector<catalog::Schema *> schemas,
 			int tuple_count,
@@ -157,7 +157,7 @@ public:
 			int tuple_count,
 			const std::vector<std::vector<std::string> >& column_names,
 			const bool owns_tuple_schema,
-			catalog::Catalog *catalog,
+			catalog::Manager *catalog,
 			Backend *backend = nullptr){
 
 	  bool own_backend = false;
@@ -184,7 +184,7 @@ public:
 			oid_t tile_group_id,
 			TileGroupHeader* tile_header,
 			const std::vector<catalog::Schema*>& schemas,
-			catalog::Catalog *catalog,
+			catalog::Manager *catalog,
 			Backend* backend,
 			int tuple_count,
 			const std::vector<std::vector<std::string> >& column_names,

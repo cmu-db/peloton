@@ -73,7 +73,7 @@ TEST(LogicalTileTests, TileMaterializationTest) {
 
   // TILE GROUP
 
-  catalog::Catalog *catalog = new catalog::Catalog();
+  catalog::Manager *catalog = new catalog::Manager();
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 4, column_names, true, catalog);
 

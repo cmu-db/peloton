@@ -15,7 +15,7 @@
 #include <vector>
 #include <string>
 
-#include "catalog/catalog.h"
+#include "catalog/manager.h"
 #include "catalog/schema.h"
 #include "common/exception.h"
 #include "common/types.h"
@@ -38,7 +38,7 @@ class IndexMetadata {
 
   IndexMetadata(std::string identifier,
                 IndexType type,
-                catalog::Catalog *catalog,
+                catalog::Manager *catalog,
                 catalog::Schema *tuple_schema,
                 catalog::Schema *key_schema,
                 bool unique_keys)
@@ -61,7 +61,7 @@ class IndexMetadata {
   IndexType type;
 
   // catalog
-  catalog::Catalog *catalog;
+  catalog::Manager *catalog;
 
   // schema of tuple values
   catalog::Schema *tuple_schema;
@@ -183,7 +183,7 @@ class Index
 
   std::string identifier;
 
-  catalog::Catalog *catalog;
+  catalog::Manager *catalog;
 
   catalog::Schema *key_schema;
 

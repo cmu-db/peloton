@@ -21,17 +21,17 @@ namespace nstore {
 namespace catalog {
 
 //===--------------------------------------------------------------------===//
-// Catalog
+// Manager
 //===--------------------------------------------------------------------===//
 
 typedef tbb::concurrent_unordered_map<oid_t, void*> lookup_dir;
 
-class Catalog {
-  Catalog(Catalog const&) = delete;
+class Manager {
+  Manager(Manager const&) = delete;
 
  public:
 
-  Catalog() : oid (ATOMIC_VAR_INIT(INVALID_OID)) {
+  Manager() : oid (ATOMIC_VAR_INIT(INVALID_OID)) {
   }
 
   oid_t GetNextOid(){
