@@ -21,6 +21,7 @@
 
 #include "common/types.h"
 #include "common/value.h"
+#include "storage/tuple.h"
 
 namespace nstore {
 
@@ -90,14 +91,15 @@ template <typename V> class GenericValueArray {
   inline int CompareValue (const GenericValueArray &rhs) const {
     assert (size == rhs.size);
     for (int i = 0; i < size; ++i) {
-      int ret = data_[i].compare(rhs.data_[i]);
+      int ret = data_[i].Compare(rhs.data_[i]);
       if (ret != 0) return ret;
     }
     return 0;
   }
 
   // Get a string representation of this value vector
-  friend std::ostream& operator<<(std::ostream& os, const GenericValueArray<V>& vector);
+  std::string Debug() const;
+  std::string Debug(int columnCount) const;
 
  private:
   int size;
@@ -142,16 +144,30 @@ GenericValueArray<Value>::operator=(const GenericValueArray<Value> &rhs) {
   return *this;
 }
 
-template<Value>
-std::ostream& operator<<(std::ostream& os, const GenericValueArray<Value>& vector) {
+template<>
+inline std::string GenericValueArray<Value>::Debug() const {
+  std::stringstream os;
 
   os << "\t[ ";
-  for (int i = 0; i < vector.size ; i++) {
-    os << vector.data_[i] << " ";
+  for (int i = 0; i < size; i++) {
+    os << data_[i];
   }
-  os << " ]\n";
+  os << "]\n";
 
-  return os;
+  return os.str();
+}
+
+template<>
+inline std::string GenericValueArray<Value>::Debug(int column_count) const {
+  std::stringstream os;
+
+  os << "\t[ ";
+  for (int i = 0; i < column_count; i++) {
+    os << data_[i];
+  }
+  os << "]\n";
+
+  return os.str();
 }
 
 typedef GenericValueArray<Value> ValueArray;
@@ -271,8 +287,8 @@ class ValueArrayEqualityTester {
   }
 
   inline bool operator()(const ValueArray& lhs, const ValueArray& rhs) const {
-    assert (lhs.size() == rhs.size());
-    assert (lhs.size() == static_cast<int>(column_count));
+    assert (lhs.GetSize() == rhs.GetSize());
+    assert (lhs.GetSize() == static_cast<int>(column_count));
     return lhs.CompareValue(rhs) == 0;
   }
 

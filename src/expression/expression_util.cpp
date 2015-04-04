@@ -16,14 +16,13 @@
 #include "common/value_factory.h"
 #include "common/exception.h"
 #include "expression/abstract_expression.h"
-#include "expression/expressions.h"
-
 #include <cassert>
 #include <sstream>
 #include <cstdlib>
 #include <stdexcept>
 
-#include "json_spirit/json_spirit.h"
+#include "expression.h"
+#include <json_spirit.h>
 
 namespace nstore {
 namespace expression {
@@ -54,8 +53,8 @@ getGeneral(ExpressionType c,
         char message[256];
         sprintf(message, "Invalid ExpressionType '%s' called"
                 " for ComparisonExpression",
-                expressionutil::getTypeName(c).c_str());
-        throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION, message);
+                GetTypeName(c).c_str());
+        throw ExpressionException(message);
     }
 }
 
@@ -82,8 +81,8 @@ getMoreSpecialized(ExpressionType c, L* l, R* r)
     default:
         char message[256];
         sprintf(message, "Invalid ExpressionType '%s' called for"
-                " ComparisonExpression", expressionutil::getTypeName(c).c_str());
-        throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION, message);
+                " ComparisonExpression", GetTypeName(c).c_str());
+        throw ExpressionException(message);
     }
 }
 
@@ -102,10 +101,10 @@ comparisonFactory(ExpressionType c,
     //printf("%s\n", right_optimized->debug().c_str());
     //fflush(stdout);
 
-    VOLT_TRACE("comparisonFactoryHelper request:%s left:%s(%p) right:%s(%p)",
-               expressionutil::getTypeName(c).c_str(),
-               typeid(*(lc)).name(), lc,
-               typeid(*(rc)).name(), rc);
+    //VOLT_TRACE("comparisonFactoryHelper request:%s left:%s(%p) right:%s(%p)",
+    //           expressionutil::GetTypeName(c).c_str(),
+    //           typeid(*(lc)).name(), lc,
+    //           typeid(*(rc)).name(), rc);
 
     /*if (!l) {
         printf("no left\n");
@@ -175,20 +174,16 @@ operatorFactory(ExpressionType et,
        break;
 
      case (EXPRESSION_TYPE_OPERATOR_MOD):
-       throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION,
-                                     "Mod operator is not yet supported.");
+       throw ExpressionException("Mod operator is not yet supported.");
 
      case (EXPRESSION_TYPE_OPERATOR_CONCAT):
-       throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION,
-                                     "Concat operator not yet supported.");
+       throw ExpressionException("Concat operator not yet supported.");
 
      case (EXPRESSION_TYPE_OPERATOR_CAST):
-       throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION,
-                                     "Cast operator not yet supported.");
+       throw ExpressionException("Cast operator not yet supported.");
 
      default:
-       throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION,
-                                     "operator ctor helper out of sync");
+       throw ExpressionException("operator ctor helper out of sync");
    }
    return ret;
 }
@@ -197,15 +192,14 @@ operatorFactory(ExpressionType et,
  * constant value expressions templated ctors */
 AbstractExpression*
 constantValueFactory(json_spirit::Object &obj,
-                     ValueType vt, ExpressionType et,
-                     AbstractExpression *lc, AbstractExpression *rc)
+                     __attribute__((unused)) ValueType vt, __attribute__((unused)) ExpressionType et,
+                     __attribute__((unused)) AbstractExpression *lc, __attribute__((unused)) AbstractExpression *rc)
 {
     // read before ctor - can then instantiate fully init'd obj.
-    NValue newvalue;
+    Value newvalue;
     json_spirit::Value valueValue = json_spirit::find_value( obj, "VALUE");
     if (valueValue == json_spirit::Value::null) {
-        throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION,
-                                      "constantValueFactory: Could not find"
+        throw ExpressionException("constantValueFactory: Could not find"
                                       " VALUE value");
     }
 
@@ -214,51 +208,48 @@ constantValueFactory(json_spirit::Object &obj,
         std::string nullcheck = valueValue.get_str();
         if (nullcheck == "NULL")
         {
-            newvalue = NValue::getNullValue(vt);
+            newvalue = Value::GetNullValue(vt);
             return constantValueFactory(newvalue);
         }
     }
 
     switch (vt) {
     case VALUE_TYPE_INVALID:
-        throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION,
-                                      "constantValueFactory: Value type should"
+        throw ExpressionException("constantValueFactory: Value type should"
                                       " never be VALUE_TYPE_INVALID");
     case VALUE_TYPE_NULL:
-        throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION,
-                                      "constantValueFactory: And they should be"
+        throw ExpressionException("constantValueFactory: And they should be"
                                       " never be this either! VALUE_TYPE_NULL");
     case VALUE_TYPE_TINYINT:
-        newvalue = ValueFactory::getTinyIntValue(static_cast<int8_t>(valueValue.get_int64()));
+        newvalue = ValueFactory::GetTinyIntValue(static_cast<int8_t>(valueValue.get_int64()));
         break;
     case VALUE_TYPE_SMALLINT:
-        newvalue = ValueFactory::getSmallIntValue(static_cast<int16_t>(valueValue.get_int64()));
+        newvalue = ValueFactory::GetSmallIntValue(static_cast<int16_t>(valueValue.get_int64()));
         break;
     case VALUE_TYPE_INTEGER:
-        newvalue = ValueFactory::getIntegerValue(static_cast<int32_t>(valueValue.get_int64()));
+        newvalue = ValueFactory::GetIntegerValue(static_cast<int32_t>(valueValue.get_int64()));
         break;
     case VALUE_TYPE_BIGINT:
-        newvalue = ValueFactory::getBigIntValue(static_cast<int64_t>(valueValue.get_int64()));
+        newvalue = ValueFactory::GetBigIntValue(static_cast<int64_t>(valueValue.get_int64()));
         break;
     case VALUE_TYPE_DOUBLE:
-        newvalue = ValueFactory::getDoubleValue(static_cast<double>(valueValue.get_real()));
+        newvalue = ValueFactory::GetDoubleValue(static_cast<double>(valueValue.get_real()));
         break;
     case VALUE_TYPE_VARCHAR:
-        newvalue = ValueFactory::getStringValue(valueValue.get_str());
+        newvalue = ValueFactory::GetStringValue(valueValue.get_str());
         break;
     case VALUE_TYPE_VARBINARY:
     // uses hex encoding
-    newvalue = ValueFactory::getBinaryValue(valueValue.get_str());
+    newvalue = ValueFactory::GetBinaryValue(valueValue.get_str());
     break;
     case VALUE_TYPE_TIMESTAMP:
-        newvalue = ValueFactory::getTimestampValue(static_cast<int64_t>(valueValue.get_int64()));
+        newvalue = ValueFactory::GetTimestampValue(static_cast<int64_t>(valueValue.get_int64()));
         break;
     case VALUE_TYPE_DECIMAL:
-        newvalue = ValueFactory::getDecimalValueFromString(valueValue.get_str());
+        newvalue = ValueFactory::GetDecimalValueFromString(valueValue.get_str());
         break;
     default:
-        throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION,
-                                      "constantValueFactory: Unrecognized value"
+        throw ExpressionException("constantValueFactory: Unrecognized value"
                                       " type");
     }
 
@@ -268,7 +259,7 @@ constantValueFactory(json_spirit::Object &obj,
 /** provide an interface for creating constant value expressions that
  * is more useful to testcases */
 AbstractExpression *
-constantValueFactory(const NValue &newvalue)
+constantValueFactory(const Value &newvalue)
 {
     return new ConstantValueExpression(newvalue);
  /*   switch (vt) {
@@ -295,14 +286,13 @@ constantValueFactory(const NValue &newvalue)
  * parameter value expression templated ctors */
 AbstractExpression*
 parameterValueFactory(json_spirit::Object &obj,
-                      ExpressionType et,
-                      AbstractExpression *lc, AbstractExpression *rc)
+                      __attribute__((unused)) ExpressionType et,
+                      __attribute__((unused)) AbstractExpression *lc, __attribute__((unused)) AbstractExpression *rc)
 {
     // read before ctor - can then instantiate fully init'd obj.
     json_spirit::Value paramIdxValue = json_spirit::find_value( obj, "PARAM_IDX");
     if (paramIdxValue == json_spirit::Value::null) {
-        throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION,
-                                      "parameterValueFactory: Could not find"
+        throw ExpressionException("parameterValueFactory: Could not find"
                                       " PARAM_IDX value");
     }
     int param_idx = paramIdxValue.get_int();
@@ -317,8 +307,8 @@ AbstractExpression * parameterValueFactory(int idx) {
 /** convert the enumerated value type into a concrete c type for
  * tuple value expression templated ctors */
 AbstractExpression*
-tupleValueFactory(json_spirit::Object &obj, ExpressionType et,
-                  AbstractExpression *lc, AbstractExpression *rc)
+tupleValueFactory(json_spirit::Object &obj, __attribute__((unused)) ExpressionType et,
+                  __attribute__((unused)) AbstractExpression *lc, __attribute__((unused)) AbstractExpression *rc)
 {
     // read the tuple value expression specific data
     json_spirit::Value valueIdxValue =
@@ -332,23 +322,19 @@ tupleValueFactory(json_spirit::Object &obj, ExpressionType et,
 
     // verify input
     if (valueIdxValue == json_spirit::Value::null) {
-        throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION,
-                                      "tupleValueFactory: Could not find"
+        throw ExpressionException("tupleValueFactory: Could not find"
                                       " COLUMN_IDX value");
     }
     if (valueIdxValue.get_int() < 0) {
-        throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION,
-                                      "tupleValueFactory: invalid column_idx.");
+        throw ExpressionException("tupleValueFactory: invalid column_idx.");
     }
 
     if (tableName == json_spirit::Value::null) {
-        throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION,
-                                      "tupleValueFactory: no table name in TVE");
+        throw ExpressionException("tupleValueFactory: no table name in TVE");
     }
 
     if (columnName == json_spirit::Value::null) {
-        throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION,
-                                      "tupleValueFactory: no column name in"
+        throw ExpressionException("tupleValueFactory: no column name in"
                                       " TVE");
     }
 
@@ -380,15 +366,15 @@ conjunctionFactory(ExpressionType et, AbstractExpression *lc, AbstractExpression
 
 AbstractExpression*
 expressionFactory(json_spirit::Object &obj,
-                  ExpressionType et, ValueType vt, int vs,
+                  ExpressionType et, ValueType vt, __attribute__((unused)) int vs,
                   AbstractExpression* lc,
                   AbstractExpression* rc)
 {
-    VOLT_TRACE("expressionFactory request: %s(%d), %s(%d), %d, left: %p"
-               " right: %p",
-               expressionutil::getTypeName(et).c_str(), et,
-               getTypeName(vt).c_str(), vt, vs,
-               lc, rc);
+    //VOLT_TRACE("expressionFactory request: %s(%d), %s(%d), %d, left: %p"
+    //           " right: %p",
+    //           expressionutil::GetTypeName(et).c_str(), et,
+    //           getTypeName(vt).c_str(), vt, vs,
+    //           lc, rc);
 
     AbstractExpression *ret = NULL;
 
@@ -444,24 +430,21 @@ expressionFactory(json_spirit::Object &obj,
     default:
         char message[256];
         sprintf(message, "Invalid ExpressionType '%s' requested from factory",
-                expressionutil::getTypeName(et).c_str());
-        throw SerializableEEException(VOLT_EE_EXCEPTION_TYPE_EEEXCEPTION, message);
+                GetTypeName(et).c_str());
+        throw ExpressionException(message);
     }
 
     // written thusly to ease testing/inspecting return content.
-    VOLT_TRACE("Created '%s' expression %p", expressionutil::getTypeName(et).c_str(), ret);
+    //VOLT_TRACE("Created '%s' expression %p", expressionutil::GetTypeName(et).c_str(), ret);
     return ret;
 }
-
-} // namespace voltdb
-namespace expressionutil {
 
 boost::shared_array<int>
 convertIfAllTupleValues(const std::vector<AbstractExpression*> &expressions)
 {
     size_t cnt = expressions.size();
     boost::shared_array<int> ret(new int[cnt]);
-    for (int i = 0; i < cnt; ++i) {
+    for (uint32_t i = 0; i < cnt; ++i) {
         TupleValueExpressionMarker* casted=
           dynamic_cast<TupleValueExpressionMarker*>(expressions[i]);
         if (casted == NULL) {
@@ -477,7 +460,7 @@ convertIfAllParameterValues(const std::vector<AbstractExpression*> &expressions)
 {
     size_t cnt = expressions.size();
     boost::shared_array<int> ret(new int[cnt]);
-    for (int i = 0; i < cnt; ++i) {
+    for (uint32_t i = 0; i < cnt; ++i) {
         ParameterValueExpressionMarker *casted =
           dynamic_cast<ParameterValueExpressionMarker*>(expressions[i]);
         if (casted == NULL) {

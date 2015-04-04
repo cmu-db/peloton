@@ -16,6 +16,7 @@
 #include <vector>
 
 #include "common/types.h"
+#include "common/value.h"
 #include "common/value_vector.h"
 #include <json_spirit.h>
 
@@ -24,8 +25,6 @@ namespace expression {
 
 class SerializeInput;
 class SerializeOutput;
-class Value;
-class TableTuple;
 
 /**
  * Predicate objects for filtering tuples during query execution.
@@ -42,7 +41,7 @@ class AbstractExpression {
     /** destroy this node and all children */
     virtual ~AbstractExpression();
 
-    virtual Value eval(const TableTuple *tuple1, const TableTuple *tuple2) const = 0;
+    virtual Value eval(const storage::Tuple *tuple1, const storage::Tuple *tuple2) const = 0;
 
     /** set parameter values for this node and its descendents */
     virtual void substitute(const ValueArray &params);

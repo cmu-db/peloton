@@ -31,15 +31,13 @@ namespace expression {
 AbstractExpression::AbstractExpression()
 : m_left(NULL), m_right(NULL),
   m_type(EXPRESSION_TYPE_INVALID),
-  m_hasParameter(true)
-{
+  m_hasParameter(true) {
 }
 
 AbstractExpression::AbstractExpression(ExpressionType type)
 : m_left(NULL), m_right(NULL),
   m_type(type),
-  m_hasParameter(true)
-{
+  m_hasParameter(true) {
 }
 
 AbstractExpression::AbstractExpression(ExpressionType type,
@@ -47,19 +45,16 @@ AbstractExpression::AbstractExpression(ExpressionType type,
                                        AbstractExpression* right)
 : m_left(left), m_right(right),
   m_type(type),
-  m_hasParameter(true)
-{
+  m_hasParameter(true) {
 }
 
-AbstractExpression::~AbstractExpression()
-{
+AbstractExpression::~AbstractExpression() {
   delete m_left;
   delete m_right;
 }
 
-void
-AbstractExpression::substitute(const ValueArray &params)
-{
+void AbstractExpression::substitute(const ValueArray &params) {
+
   if (!m_hasParameter)
     return;
 
@@ -75,17 +70,13 @@ AbstractExpression::substitute(const ValueArray &params)
   }
 }
 
-bool
-AbstractExpression::hasParameter() const
-{
+bool AbstractExpression::hasParameter() const {
   if (m_left && m_left->hasParameter())
     return true;
   return (m_right && m_right->hasParameter());
 }
 
-bool
-AbstractExpression::initParamShortCircuits()
-{
+bool AbstractExpression::initParamShortCircuits(){
   if (m_left && m_left->hasParameter())
     return true;
   if (m_right && m_right->hasParameter())
@@ -95,23 +86,17 @@ AbstractExpression::initParamShortCircuits()
   return false;
 }
 
-std::string
-AbstractExpression::debug() const
-{
+std::string AbstractExpression::debug() const {
   std::ostringstream buffer;
   buffer << "Expression[" << ExpressionToString(getExpressionType()) << ", " << getExpressionType() << "]";
   return (buffer.str());
 }
 
-std::string
-AbstractExpression::debug(bool traverse) const
-{
+std::string AbstractExpression::debug(bool traverse) const {
   return (traverse ? debug(std::string("")) : debug());
 }
 
-std::string
-AbstractExpression::debug(const std::string &spacer) const
-{
+std::string AbstractExpression::debug(const std::string &spacer) const {
   std::ostringstream buffer;
   buffer << spacer << "+ " << debug() << "\n";
 
@@ -131,9 +116,8 @@ AbstractExpression::debug(const std::string &spacer) const
 // ------------------------------------------------------------------
 // SERIALIZATION METHODS
 // ------------------------------------------------------------------
-AbstractExpression*
-AbstractExpression::buildExpressionTree(json_spirit::Object &obj)
-{
+
+AbstractExpression* AbstractExpression::buildExpressionTree(json_spirit::Object &obj) {
   AbstractExpression * exp =
       AbstractExpression::buildExpressionTree_recurse(obj);
 
@@ -142,9 +126,7 @@ AbstractExpression::buildExpressionTree(json_spirit::Object &obj)
   return exp;
 }
 
-AbstractExpression*
-AbstractExpression::buildExpressionTree_recurse(json_spirit::Object &obj)
-{
+AbstractExpression* AbstractExpression::buildExpressionTree_recurse(json_spirit::Object &obj) {
   // build a tree recursively from the bottom upwards.
   // when the expression node is instantiated, its type,
   // value and child types will have been discovered.
@@ -170,7 +152,7 @@ AbstractExpression::buildExpressionTree_recurse(json_spirit::Object &obj)
                                                               "VALUE_TYPE");
   if (valueTypeValue == json_spirit::Value::null) {
     throw ExpressionException("AbstractExpression:: buildExpressionTree_recurse:"
-                                  " Couldn't find VALUE_TYPE value");
+        " Couldn't find VALUE_TYPE value");
   }
   std::string valueTypeString = valueTypeValue.get_str();
   value_type = StringToValue(valueTypeString);

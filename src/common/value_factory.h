@@ -56,7 +56,7 @@ public:
 		return Value::GetNullStringValue();
 	}
 
-	static inline Value GetBinaryValue(std::string value, Pool *data_pool) {
+	static inline Value GetBinaryValue(std::string value, Pool *data_pool = nullptr) {
 		/// uses hex encoding
 		return Value::GetBinaryValue(value, data_pool);
 	}

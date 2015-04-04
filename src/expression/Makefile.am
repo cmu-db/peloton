@@ -4,7 +4,9 @@
 # EXPRESSION
 ######################################################################
 
-expression_FILES =   
+expression_FILES = \
+				   expression/abstract_expression.cpp \
+				   expression/expression_util.cpp
 
 expression_INCLUDES = \
-				  -I$(srcdir)/expression    
+					  -I$(srcdir)/expression    
