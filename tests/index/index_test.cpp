@@ -45,7 +45,7 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
 
   catalog::Schema *tuple_schema = new catalog::Schema(columns);
 
-  catalog::Catalog *catalog = new catalog::Catalog();
+  catalog::Manager *catalog = new catalog::Manager();
 
   // BTREE INDEX
 

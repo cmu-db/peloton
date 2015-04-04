@@ -11,7 +11,6 @@
 #pragma once
 
 #include "common/types.h"
-#include "catalog/catalog.h"
 #include "storage/tuple.h"
 
 #include "index/index.h"
@@ -19,6 +18,7 @@
 
 #include <vector>
 #include <string>
+#include "catalog/manager.h"
 
 namespace nstore {
 namespace index {

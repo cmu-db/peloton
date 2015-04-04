@@ -10,10 +10,10 @@
  *-------------------------------------------------------------------------
  */
 
+#include "catalog/manager.h"
 #include "gtest/gtest.h"
 
 #include "harness.h"
-#include "catalog/catalog.h"
 #include "storage/tile_group.h"
 
 namespace nstore {
@@ -23,7 +23,7 @@ namespace test {
 // Catalog Tests
 //===--------------------------------------------------------------------===//
 
-void AddTileGroup(catalog::Catalog *catalog){
+void AddTileGroup(catalog::Manager *catalog){
 
   // TILES
   std::vector<std::string> tile_column_names;
@@ -54,7 +54,7 @@ void AddTileGroup(catalog::Catalog *catalog){
 
 TEST(CatalogTests, TransactionTest) {
 
-  catalog::Catalog *catalog = new catalog::Catalog();
+  catalog::Manager *catalog = new catalog::Manager();
 
   LaunchParallelTest(8, AddTileGroup, catalog);
 

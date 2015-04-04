@@ -10,15 +10,15 @@
  *-------------------------------------------------------------------------
  */
 
-#include "catalog/catalog.h"
 #include "common/synch.h"
 #include "storage/tile_group.h"
+#include "catalog/manager.h"
 
 namespace nstore {
 namespace storage {
 
 TileGroup::TileGroup(TileGroupHeader* tile_group_header,
-                     catalog::Catalog *catalog,
+                     catalog::Manager *catalog,
                      Backend* backend,
                      std::vector<catalog::Schema *> schemas,
                      int tuple_count,
