@@ -228,7 +228,7 @@ struct ItemPointer {
 // Utilities
 //===--------------------------------------------------------------------===//
 
-std::string GetValueTypeName(ValueType type);
+std::string GetTypeName(ValueType type);
 
 std::string GetBackendTypeName(BackendType type);
 

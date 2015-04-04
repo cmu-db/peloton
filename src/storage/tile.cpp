@@ -382,7 +382,7 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
 
     for (id_t column_itr = 0; column_itr < column_count; column_itr++) {
       message << "column " << column_itr << ": " << names[column_itr] << ", type = "
-          << GetValueTypeName(types[column_itr]) << std::endl;
+          << GetTypeName(types[column_itr]) << std::endl;
     }
 
     throw SerializationException(message.str());

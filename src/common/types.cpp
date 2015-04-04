@@ -21,7 +21,7 @@ namespace nstore {
 // Type utilities
 //===--------------------------------------------------------------------===//
 
-std::string GetValueTypeName(ValueType type) {
+std::string GetTypeName(ValueType type) {
   std::string ret;
 
   switch (type) {

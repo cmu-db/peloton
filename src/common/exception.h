@@ -289,7 +289,7 @@ class IncompatibleTypeException : Exception {
 
 public:
 	IncompatibleTypeException(int type, std::string msg) :
-		Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, "Incompatible type " + std::to_string(type) + msg){
+		Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE, "Incompatible type " + GetTypeName((ValueType) type) + msg){
 	}
 };
 
