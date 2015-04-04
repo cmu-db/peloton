@@ -45,7 +45,8 @@ enum ExceptionType {
 	EXCEPTION_TYPE_SERIALIZATION = 9,			  // serialization
 	EXCEPTION_TYPE_TRANSACTION = 10,        // transaction management
 	EXCEPTION_TYPE_NOT_IMPLEMENTED = 11,    // method not implemented
-  EXCEPTION_TYPE_EXPRESSION = 12          // expression parsing
+  EXCEPTION_TYPE_EXPRESSION = 12,         // expression parsing
+  EXCEPTION_TYPE_CATALOG = 13             // catalog related
 };
 
 class Exception {
@@ -56,9 +57,9 @@ public:
 		//PrintStackTrace();
 
 		std::string exception_message =
-				"============================================================================\n"
+				"\n============================================================================\n"
 				"\tMessage :: " +	message + "\n"
-				"============================================================================\n";
+				"\n============================================================================\n";
 		std::cerr << exception_message;
 
 		// TODO: raise HELL for now
@@ -71,9 +72,9 @@ public:
 		//PrintStackTrace();
 
 		std::string exception_message =
-				"============================================================================\n"
+				"\n============================================================================\n"
 				"\tException Type :: " + ExpectionTypeToString(exception_type) + "\n\tMessage :: " +	message + "\n"
-				"============================================================================\n";
+				"\n============================================================================\n";
 
 		std::cerr << exception_message;
 
@@ -328,6 +329,16 @@ public:
     Exception(EXCEPTION_TYPE_EXPRESSION, msg){
   }
 };
+
+class CatalogException : Exception {
+  CatalogException() = delete;
+
+public:
+  CatalogException(std::string msg) :
+    Exception(EXCEPTION_TYPE_CATALOG, msg){
+  }
+};
+
 
 } // End nstore namespace
 
