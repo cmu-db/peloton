@@ -44,7 +44,8 @@ enum ExceptionType {
 	EXCEPTION_TYPE_INCOMPATIBLE_TYPE = 8,		// incompatible for operation
 	EXCEPTION_TYPE_SERIALIZATION = 9,			  // serialization
 	EXCEPTION_TYPE_TRANSACTION = 10,        // transaction management
-	EXCEPTION_TYPE_NOT_IMPLEMENTED = 11     // method not implemented
+	EXCEPTION_TYPE_NOT_IMPLEMENTED = 11,    // method not implemented
+  EXCEPTION_TYPE_EXPRESSION = 12          // expression parsing
 };
 
 class Exception {
@@ -316,6 +317,15 @@ class NotImplementedException : Exception {
 public:
   NotImplementedException(std::string msg) :
     Exception(EXCEPTION_TYPE_NOT_IMPLEMENTED, msg){
+  }
+};
+
+class ExpressionException : Exception {
+  ExpressionException() = delete;
+
+public:
+  ExpressionException(std::string msg) :
+    Exception(EXCEPTION_TYPE_EXPRESSION, msg){
   }
 };
 
