@@ -43,7 +43,7 @@ namespace test {
 class AE {
  public:
   AE(ExpressionType et, ValueType vt, int vs) :
-    m_type(et), m_valueType(vt), m_valueSize(vs) , left(NULL), right(NULL) {}
+    m_type(et), m_valueType(vt), m_valueSize(vs) , left(nullptr), right(nullptr) {}
 
   virtual ~AE() {
     delete left;
@@ -86,7 +86,7 @@ class CV : public AE {
   CV(ExpressionType et, ValueType vt, int vs, int64_t v) :
     AE(et, vt, vs), m_jsontype (1), m_intValue(v)
  {
-    m_stringValue = NULL;
+    m_stringValue = nullptr;
     m_doubleValue = 0.0;
  }
 
@@ -100,7 +100,7 @@ class CV : public AE {
   CV(ExpressionType et, ValueType vt, int vs, double v) :
     AE(et, vt, vs), m_jsontype (1), m_doubleValue(v)
   {
-    m_stringValue = NULL;
+    m_stringValue = nullptr;
     m_intValue = 0;
   }
 
@@ -206,8 +206,8 @@ AE * MakeTree(AE *tree, std::queue<AE*> &q) {
 // boilerplate to turn the queue into a real AbstractExpression tree;
 //   return the generated AE tree by reference to allow deletion (the queue
 //   is emptied by the tree building process)
-expression::AbstractExpression * convertToExpression(std::queue<AE*> &e) {
-  AE *tree = MakeTree(NULL, e);
+expression::AbstractExpression * ConvertToExpression(std::queue<AE*> &e) {
+  AE *tree = MakeTree(nullptr, e);
   json_spirit::Object json = tree->SerializeValue();
   expression::AbstractExpression * exp = expression::AbstractExpression::CreateExpressionTree(json);
   delete tree;
@@ -226,9 +226,9 @@ TEST(ExpressionTest, SimpleAddition) {
   e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1, (int64_t)1));
   e.push(new AE(EXPRESSION_TYPE_OPERATOR_PLUS, VALUE_TYPE_TINYINT, 1));
   e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1, (int64_t)4));
-  std::unique_ptr<expression::AbstractExpression> testexp(convertToExpression(e));
+  std::unique_ptr<expression::AbstractExpression> testexp(ConvertToExpression(e));
 
-  Value result = testexp->Evaluate(&junk,NULL);
+  Value result = testexp->Evaluate(&junk,nullptr);
   std::cout << (*testexp);
 
   EXPECT_EQ(ValuePeeker::PeekAsBigInt(result), 5LL);
@@ -248,8 +248,8 @@ TEST(ExpressionTest, SimpleMultiplication) {
   e.push(new AE(EXPRESSION_TYPE_OPERATOR_MULTIPLY, VALUE_TYPE_TINYINT, 1));
   e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1, (int64_t)5));
 
-  std::unique_ptr<expression::AbstractExpression> e1(convertToExpression(e));
-  Value r1 = e1->Evaluate(&junk, NULL);
+  std::unique_ptr<expression::AbstractExpression> e1(ConvertToExpression(e));
+  Value r1 = e1->Evaluate(&junk, nullptr);
   std::cout << (*e1);
   EXPECT_EQ(ValuePeeker::PeekAsBigInt(r1), 25LL);
 
@@ -260,10 +260,99 @@ TEST(ExpressionTest, SimpleMultiplication) {
   e.push(new AE(EXPRESSION_TYPE_OPERATOR_PLUS, VALUE_TYPE_TINYINT, 1));
   e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1, (int64_t)3));
 
-  std::unique_ptr<expression::AbstractExpression> e2(convertToExpression(e));
-  Value r2 = e2->Evaluate(&junk,NULL);
+  std::unique_ptr<expression::AbstractExpression> e2(ConvertToExpression(e));
+  Value r2 = e2->Evaluate(&junk,nullptr);
   std::cout << (*e2);
   EXPECT_EQ(ValuePeeker::PeekAsBigInt(r2), 13LL);
+}
+
+TEST(ExpressionTest, SimpleFilter) {
+  // WHERE id = 20
+
+  // EXPRESSION
+
+  expression::TupleValueExpression *tup_val_exp =
+      new expression::TupleValueExpression(0, std::string("tablename"), std::string("colname"));
+  expression::ConstantValueExpression *const_val_exp =
+      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(20));
+  expression::ComparisonExpression<expression::CmpEq> *equal =
+      new expression::ComparisonExpression<expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp);
+
+  // TUPLE
+
+  std::vector<catalog::ColumnInfo> columns;
+
+  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+  catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+  columns.push_back(column1);
+  columns.push_back(column2);
+  catalog::Schema *schema(new catalog::Schema(columns));
+
+  storage::Tuple *tuple(new storage::Tuple(schema, true));
+
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(20));
+  tuple->SetValue(1, ValueFactory::GetIntegerValue(45));
+
+  std::cout << (*equal);
+  EXPECT_EQ(equal->Evaluate(tuple, NULL).IsTrue(), true);
+
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(50));
+  EXPECT_EQ(equal->Evaluate(tuple, NULL).IsTrue(), false);
+
+  // delete the root to destroy the full tree.
+  delete equal;
+
+  delete schema;
+  delete tuple;
+}
+
+TEST(ExpressionTest, OrFilter) {
+  // WHERE id = 20 OR id=30
+
+  expression::TupleValueExpression *tup_val_a =
+      new expression::TupleValueExpression(1, std::string("tablename"), std::string("colname"));
+  expression::ConstantValueExpression *const_val_a =
+      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(20));
+  expression::ComparisonExpression<expression::CmpEq> *comp_a =
+      new expression::ComparisonExpression<expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_a, const_val_a);
+
+  expression::TupleValueExpression *tup_val_b =
+      new expression::TupleValueExpression(1, std::string("tablename"), std::string("colname"));
+  expression::ConstantValueExpression *const_val_b =
+      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(30));
+  expression::ComparisonExpression<expression::CmpEq> *comp_b =
+      new expression::ComparisonExpression<expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_b, const_val_b);
+
+  expression::ConjunctionExpression<expression::ConjunctionOr> *predicate =
+      new expression::ConjunctionExpression<expression::ConjunctionOr>(EXPRESSION_TYPE_CONJUNCTION_OR, comp_a, comp_b);
+
+  std::cout << (*predicate);
+
+  // TUPLE
+
+  std::vector<catalog::ColumnInfo> columns;
+
+  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+  catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+  columns.push_back(column1);
+  columns.push_back(column2);
+  catalog::Schema *schema(new catalog::Schema(columns));
+
+  storage::Tuple *tuple(new storage::Tuple(schema, true));
+
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(45));
+  tuple->SetValue(1, ValueFactory::GetIntegerValue(20));
+
+  EXPECT_EQ(predicate->Evaluate(tuple, NULL).IsTrue(), true);
+
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(30));
+  EXPECT_EQ(predicate->Evaluate(tuple, NULL).IsTrue(), true);
+
+  // delete the root to cleanup the full tree
+  delete predicate;
+
+  delete schema;
+  delete tuple;
 }
 
 } // End test namespace

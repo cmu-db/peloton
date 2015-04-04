@@ -153,7 +153,7 @@ Schema* Schema::AppendSchema(const Schema *first,
 
 /// Get a string representation
 std::ostream& operator<< (std::ostream& os, const ColumnInfo& column_info){
-  os << " type = " << GetValueTypeName(column_info.type) << "," <<
+  os << " type = " << GetTypeName(column_info.type) << "," <<
       " offset = " << column_info.offset << "," <<
       " fixed length = " << column_info.fixed_length << "," <<
       " variable length = " << column_info.variable_length << "," <<
