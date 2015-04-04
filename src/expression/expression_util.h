@@ -25,39 +25,41 @@ namespace expression {
 //===--------------------------------------------------------------------===//
 
 // instantiate a typed expression
-AbstractExpression* expressionFactory(json_spirit::Object &obj,
+AbstractExpression* ExpressionFactory(json_spirit::Object &obj,
                                       ExpressionType et, ValueType vt, int vs,
                                       AbstractExpression* lc,
                                       AbstractExpression* rc);
 
 
+//===--------------------------------------------------------------------===//
+// Factories
+//===--------------------------------------------------------------------===//
+
 // Several helpers used by expressionFactory() and useful to export to testcases.
 
-AbstractExpression *comparisonFactory(ExpressionType et, AbstractExpression*, AbstractExpression*);
+AbstractExpression *ComparisonFactory(ExpressionType et, AbstractExpression*, AbstractExpression*);
 
-AbstractExpression *operatorFactory(ExpressionType et,  AbstractExpression*, AbstractExpression*);
+AbstractExpression *OperatorFactory(ExpressionType et,  AbstractExpression*, AbstractExpression*);
 
-AbstractExpression *constantValueFactory(const Value &val);
+AbstractExpression *ConstantValueFactory(const Value &val);
 
-AbstractExpression *parameterValueFactory(int idx);
+AbstractExpression *ParameterValueFactory(int idx);
 
-AbstractExpression *tupleValueFactory(int idx);
+AbstractExpression *TupleValueFactory(int idx);
 
-AbstractExpression *conjunctionFactory(ExpressionType, AbstractExpression*, AbstractExpression*);
-
-// incomparisonFactory() .. would only wrap the ctor and pass the val. vector
+AbstractExpression *ConjunctionFactory(ExpressionType, AbstractExpression*, AbstractExpression*);
 
 std::string GetTypeName(ExpressionType type);
 
 // If the passed vector contains only TupleValueExpression, it
 // returns ColumnIds of them, otherwise NULL.
 boost::shared_array<int>
-convertIfAllTupleValues(const std::vector<AbstractExpression*> &expressions);
+ConvertIfAllTupleValues(const std::vector<AbstractExpression*> &expressions);
 
 // If the passed vector contains only ParameterValueExpression, it
 // returns ParamIds of them, otherwise NULL.
 boost::shared_array<int>
-convertIfAllParameterValues(const std::vector<AbstractExpression*> &expressions);
+ConvertIfAllParameterValues(const std::vector<AbstractExpression*> &expressions);
 
 } // End expression namespace
 } // End nstore namespace
