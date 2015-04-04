@@ -1,18 +1,14 @@
+#pragma once
 
+#include "common/serializer.h"
+#include "common/value_vector.h"
 
-#ifndef HSTOREOPREATOREXPRESSION_H
-#define HSTOREOPERATOREXPRESSION_H
-
-#include "common/common.h"
-#include "common/serializeio.h"
-#include "common/valuevector.h"
-
-#include "expressions/abstractexpression.h"
+#include "expression/abstract_expression.h"
 
 #include <string>
 
-namespace voltdb {
-
+namespace nstore {
+namespace expression {
 
 /*
  * Unary operators. Currently just operator NOT.
@@ -25,9 +21,9 @@ public:
         m_left = left;
     };
 
-    NValue eval(const TableTuple *tuple1, const TableTuple *tuple2) const {
+    Value eval(const storage::Tuple *tuple1, const storage::Tuple *tuple2) const {
         assert (m_left);
-        return m_left->eval(tuple1, tuple2).op_negate();
+        return m_left->eval(tuple1, tuple2).OpNegate();
     }
 
     std::string debugInfo(const std::string &spacer) const {
@@ -46,22 +42,22 @@ private:
 
 class OpPlus {
 public:
-    inline NValue op(NValue left, NValue right) const { return left.op_add(right); }
+    inline Value op(Value left, Value right) const { return left.OpAdd(right); }
 };
 
 class OpMinus {
 public:
-    inline NValue op(NValue left, NValue right) const { return left.op_subtract(right); }
+    inline Value op(Value left, Value right) const { return left.OpSubtract(right); }
 };
 
 class OpMultiply {
 public:
-    inline NValue op(NValue left, NValue right) const { return left.op_multiply(right); }
+    inline Value op(Value left, Value right) const { return left.OpMultiply(right); }
 };
 
 class OpDivide {
 public:
-    inline NValue op(NValue left, NValue right) const { return left.op_divide(right); }
+    inline Value op(Value left, Value right) const { return left.OpDivide(right); }
 };
 
 
@@ -79,8 +75,8 @@ class OperatorExpression : public AbstractExpression {
     {
     }
 
-    NValue
-    eval(const TableTuple *tuple1, const TableTuple *tuple2) const
+    Value
+    eval(const storage::Tuple *tuple1, const storage::Tuple *tuple2) const
     {
         assert(m_left);
         assert(m_right);
@@ -95,6 +91,8 @@ private:
     OPER oper;
 };
 
+} // End expression namespace
+} // End nstore namespace
 
-}
-#endif
+
+
