@@ -225,7 +225,7 @@ struct ItemPointer {
 };
 
 //===--------------------------------------------------------------------===//
-// Type utilities
+// Utilities
 //===--------------------------------------------------------------------===//
 
 std::string GetValueTypeName(ValueType type);
@@ -243,5 +243,8 @@ bool IsNumeric(ValueType type);
 
 bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
+std::string ExpressionToString(ExpressionType type);
+
+ExpressionType StringToExpression(std::string str);
 
 } // End nstore namespace
