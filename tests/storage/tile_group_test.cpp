@@ -66,7 +66,7 @@ TEST(TileGroupTests, BasicTest) {
 
   // TILE GROUP
 
-  catalog::Catalog *catalog = new catalog::Catalog();
+  catalog::Manager *catalog = new catalog::Manager();
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 4, column_names, true, catalog);
 
@@ -170,7 +170,7 @@ TEST(TileGroupTests, StressTest) {
 
 	// TILE GROUP
 
-  catalog::Catalog *catalog = new catalog::Catalog();
+  catalog::Manager *catalog = new catalog::Manager();
 
 	storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 10000, column_names, true, catalog);
 
@@ -223,7 +223,7 @@ TEST(TileGroupTests, MVCCInsert) {
 
 	// TILE GROUP
 
-  catalog::Catalog *catalog = new catalog::Catalog();
+  catalog::Manager *catalog = new catalog::Manager();
 
 	storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 3, column_names, true, catalog);
 

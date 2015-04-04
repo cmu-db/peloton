@@ -12,13 +12,14 @@
 
 #pragma once
 
-#include "catalog/catalog.h"
 #include "catalog/schema.h"
 #include "storage/backend.h"
 #include "storage/tuple.h"
 #include "storage/tile_group_header.h"
 
 #include <mutex>
+
+#include "../catalog/manager.h"
 
 namespace nstore {
 namespace storage {
@@ -91,7 +92,7 @@ class Tile {
   Value GetValue(const id_t tuple_slot_id, const id_t column_id);
 
   // Get tuple at location
-  static Tuple *GetTuple(catalog::Catalog* catalog, const ItemPointer* tuple_location);
+  static Tuple *GetTuple(catalog::Manager* catalog, const ItemPointer* tuple_location);
 
   //===--------------------------------------------------------------------===//
   // Size Stats
@@ -262,7 +263,7 @@ inline int Tile::GetTupleOffset(const char* tuple_address) const{
   return -1;
 }
 
-inline Tuple *Tile::GetTuple(catalog::Catalog* catalog, const ItemPointer* tuple_location) {
+inline Tuple *Tile::GetTuple(catalog::Manager* catalog, const ItemPointer* tuple_location) {
 
   // Figure out tile location
   storage::Tile *tile = (storage::Tile *) catalog->locator[tuple_location->block];
