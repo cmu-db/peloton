@@ -100,8 +100,8 @@ std::ostream& operator<< (std::ostream& os, const AbstractExpression& expr) {
 
 std::string AbstractExpression::Debug() const {
   std::ostringstream os;
-  os << "Expression [" << ExpressionToString(GetExpressionType())
-          << ", " << GetExpressionType() << " ]";
+  os << "\tExpression [" << ExpressionToString(GetExpressionType())
+          << ", " << GetExpressionType() << " ]\n";
   return (os.str());
 }
 
