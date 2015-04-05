@@ -1,11 +1,10 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
- 
+
 ######################################################################
 # PARSER
 ######################################################################
 
-parser_FILES = \
-			   parser/parser.cpp
+check_PROGRAMS += parser_test
 
-parser_INCLUDES = \
-				  -I$(srcdir)/parser
+parser_test_SOURCES = parser/parser_test.cpp
+

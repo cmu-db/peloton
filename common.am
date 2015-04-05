@@ -12,10 +12,9 @@ CODE_COVERAGE_IGNORE_PATTERN="/usr/*" "*/third_party/*" "*/test/*"
 ## Global CFLAGS
 AM_CPPFLAGS = $(nstore_INCLUDES)
 
-AM_CXXFLAGS = -std=c++11 -Wall -Wextra -fno-strict-aliasing \
-              ${GDA_CLFAGS} ${TBB_CFLAGS} \
-              $(CODE_COVERAGE_CFLAGS) 
+AM_CXXFLAGS = -std=c++11 -Wall -Wextra -fno-strict-aliasing\
+               `pkg-config --cflags libgda-5.0` \
+               $(CODE_COVERAGE_CFLAGS) 
 
 AM_LDFLAGS  = $(CODE_COVERAGE_LDFLAGS) \
-              #${GDA_LIBS} ${TBB_LIBS} \
-              -lpthread
+               -lpthread
