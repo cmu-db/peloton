@@ -4,12 +4,15 @@
 # CATALOG
 ######################################################################
 
-check_PROGRAMS += tuple_schema_test \
-				  transaction_test \
-				  catalog_test
+check_PROGRAMS += catalog_test \
+				  manager_test \
+				  tuple_schema_test \
+				  transaction_test 
+
+catalog_test_SOURCES = catalog/catalog_test.cpp
+
+manager_test_SOURCES = catalog/manager_test.cpp
 
 tuple_schema_test_SOURCES = catalog/tuple_schema_test.cpp
 
 transaction_test_SOURCES = catalog/transaction_test.cpp
-
-catalog_test_SOURCES = catalog/catalog_test.cpp

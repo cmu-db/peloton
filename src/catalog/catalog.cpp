@@ -123,7 +123,7 @@ void Catalog::ExecuteOne(const std::string &stmt) {
     if (command.compare("add") == 0) {
         CatalogType *type = item->AddChild(coll, child);
         if (type == NULL) {
-            throw CatalogException("Catalog failed to add child.");
+            throw CatalogException("Catalog failed to add child. Stmt :: " + stmt);
         }
         type->added();
         ResolveUnresolvedInfo(type->GetPath());

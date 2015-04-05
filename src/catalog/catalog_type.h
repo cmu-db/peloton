@@ -68,12 +68,12 @@ class CatalogType {
 
     virtual void Update() = 0;
 
-    virtual CatalogType * AddChild(const std::string &collectionName, const std::string &name) = 0;
+    virtual CatalogType * AddChild(const std::string &collection_name, const std::string &name) = 0;
 
-    virtual CatalogType * GetChild(const std::string &collectionName, const std::string &childName) const = 0;
+    virtual CatalogType * GetChild(const std::string &collection_name, const std::string &child_name) const = 0;
 
     // returns true if a child was deleted
-    virtual bool RemoveChild(const std::string &collectionName, const std::string &childName) = 0;
+    virtual bool RemoveChild(const std::string &collection_name, const std::string &child_name) = 0;
 
 public:
 
