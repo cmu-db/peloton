@@ -20,33 +20,44 @@ class ConflictPair : public CatalogType {
     friend class Catalog;
     friend class CatalogMap<ConflictPair>;
 
-protected:
-    ConflictPair(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
-    CatalogType* m_statement0;
-    CatalogType* m_statement1;
-    CatalogMap<TableRef> m_tables;
-    bool m_alwaysConflicting;
-    int32_t m_conflictType;
-
-    virtual void update();
-
-    virtual CatalogType * addChild(const std::string &collectionName, const std::string &name);
-    virtual CatalogType * getChild(const std::string &collectionName, const std::string &childName) const;
-    virtual bool removeChild(const std::string &collectionName, const std::string &childName);
-
 public:
     ~ConflictPair();
 
     /** GETTER: The source Statement */
-    const Statement * statement0() const;
+    const Statement *GetSourceStatement() const;
+
     /** GETTER: The destination Statement */
-    const Statement * statement1() const;
+    const Statement *GetDestinationStatement() const;
+
     /** GETTER: The list of tables that caused this conflict */
-    const CatalogMap<TableRef> & tables() const;
+    const CatalogMap<TableRef>& GetTables() const;
+
     /** GETTER: If true, then this ConflictPair will always cause a conflict */
-    bool alwaysConflicting() const;
+    bool IsAlwaysConflicting() const;
+
     /** GETTER: Type of conflict (ConflictType) */
-    int32_t conflictType() const;
+    int32_t GetConflictType() const;
+
+protected:
+
+    ConflictPair(Catalog *catalog, CatalogType *parent, const std::string &path, const std::string &name);
+
+    CatalogType *m_source_statement;
+
+    CatalogType *m_destination_statement;
+
+    CatalogMap<TableRef> m_tables;
+
+    bool m_always_conflicting;
+
+    int32_t m_conflict_type;
+
+    virtual void Update();
+
+    virtual CatalogType * AddChild(const std::string &collection_name, const std::string &name);
+    virtual CatalogType * GetChild(const std::string &collection_name, const std::string &child_name) const;
+    virtual bool RemoveChild(const std::string &collection_name, const std::string &child_name);
+
 };
 
 } // End catalog namespace

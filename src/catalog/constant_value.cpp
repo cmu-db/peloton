@@ -6,9 +6,10 @@
 namespace nstore {
 namespace catalog {
 
-ConstantValue::ConstantValue(Catalog *catalog, CatalogType *parent, const string &path, const string &name)
-: CatalogType(catalog, parent, path, name)
-{
+ConstantValue::ConstantValue(Catalog *catalog, CatalogType *parent, const std::string &path, const std::string &name)
+: CatalogType(catalog, parent, path, name),
+  m_is_null(false),
+  m_type(0) {
     CatalogValue value;
     m_fields["value"] = value;
     m_fields["is_null"] = value;
@@ -18,34 +19,37 @@ ConstantValue::ConstantValue(Catalog *catalog, CatalogType *parent, const string
 ConstantValue::~ConstantValue() {
 }
 
-void ConstantValue::update() {
+void ConstantValue::Update() {
     m_value = m_fields["value"].strValue.c_str();
     m_is_null = m_fields["is_null"].intValue;
     m_type = m_fields["type"].intValue;
 }
 
-CatalogType * ConstantValue::addChild(const std::string &collectionName, const std::string &childName) {
+CatalogType * ConstantValue::AddChild(__attribute__((unused)) const std::string &collection_name,
+                                      __attribute__((unused)) const std::string &child_name) {
     return NULL;
 }
 
-CatalogType * ConstantValue::getChild(const std::string &collectionName, const std::string &childName) const {
+CatalogType * ConstantValue::GetChild(__attribute__((unused)) const std::string &collection_name,
+                                      __attribute__((unused)) const std::string &child_name) const {
     return NULL;
 }
 
-bool ConstantValue::removeChild(const std::string &collectionName, const std::string &childName) {
-    assert (m_childCollections.find(collectionName) != m_childCollections.end());
+bool ConstantValue::RemoveChild(const std::string &collection_name,
+                                __attribute__((unused)) const std::string &child_name) {
+    assert (m_childCollections.find(collection_name) != m_childCollections.end());
     return false;
 }
 
-const string & ConstantValue::value() const {
+const std::string & ConstantValue::GetValue() const {
     return m_value;
 }
 
-bool ConstantValue::is_null() const {
+bool ConstantValue::IsNull() const {
     return m_is_null;
 }
 
-int32_t ConstantValue::type() const {
+int32_t ConstantValue::GetType() const {
     return m_type;
 }
 

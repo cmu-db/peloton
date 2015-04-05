@@ -23,9 +23,9 @@ protected:
 
     virtual void Update();
 
-    virtual CatalogType * AddChild(const std::string &collectionName, const std::string &name);
-    virtual CatalogType * GetChild(const std::string &collectionName, const std::string &childName) const;
-    virtual bool RemoveChild(const std::string &collectionName, const std::string &childName);
+    virtual CatalogType * AddChild(const std::string &collection_name, const std::string &name);
+    virtual CatalogType * GetChild(const std::string &collection_name, const std::string &child_name) const;
+    virtual bool RemoveChild(const std::string &collection_name, const std::string &child_name);
 
 public:
     ~AuthProgram();

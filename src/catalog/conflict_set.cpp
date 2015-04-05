@@ -8,82 +8,84 @@
 namespace nstore {
 namespace catalog {
 
-ConflictSet::ConflictSet(Catalog *catalog, CatalogType *parent, const string &path, const string &name)
+ConflictSet::ConflictSet(Catalog *catalog, CatalogType *parent, const std::string &path, const std::string &name)
 : CatalogType(catalog, parent, path, name),
-  m_readWriteConflicts(catalog, this, path + "/" + "readWriteConflicts"), m_writeWriteConflicts(catalog, this, path + "/" + "writeWriteConflicts")
+  m_procedure(nullptr),
+  m_read_write_conflicts(catalog, this, path + "/" + "readWriteConflicts"),
+  m_write_write_conflicts(catalog, this, path + "/" + "writeWriteConflicts")
 {
     CatalogValue value;
     m_fields["procedure"] = value;
-    m_childCollections["readWriteConflicts"] = &m_readWriteConflicts;
-    m_childCollections["writeWriteConflicts"] = &m_writeWriteConflicts;
+    m_childCollections["readWriteConflicts"] = &m_read_write_conflicts;
+    m_childCollections["writeWriteConflicts"] = &m_write_write_conflicts;
 }
 
 ConflictSet::~ConflictSet() {
-    std::map<std::string, ConflictPair*>::const_iterator conflictpair_iter = m_readWriteConflicts.begin();
-    while (conflictpair_iter != m_readWriteConflicts.end()) {
+    std::map<std::string, ConflictPair*>::const_iterator conflictpair_iter = m_read_write_conflicts.begin();
+    while (conflictpair_iter != m_read_write_conflicts.end()) {
         delete conflictpair_iter->second;
         conflictpair_iter++;
     }
-    m_readWriteConflicts.clear();
+    m_read_write_conflicts.clear();
 
-    conflictpair_iter = m_writeWriteConflicts.begin();
-    while (conflictpair_iter != m_writeWriteConflicts.end()) {
+    conflictpair_iter = m_write_write_conflicts.begin();
+    while (conflictpair_iter != m_write_write_conflicts.end()) {
         delete conflictpair_iter->second;
         conflictpair_iter++;
     }
-    m_writeWriteConflicts.clear();
+    m_write_write_conflicts.clear();
 
 }
 
-void ConflictSet::update() {
+void ConflictSet::Update() {
     m_procedure = m_fields["procedure"].typeValue;
 }
 
-CatalogType * ConflictSet::addChild(const std::string &collectionName, const std::string &childName) {
-    if (collectionName.compare("readWriteConflicts") == 0) {
-        CatalogType *exists = m_readWriteConflicts.get(childName);
+CatalogType * ConflictSet::AddChild(const std::string &collection_name, const std::string &child_name) {
+    if (collection_name.compare("readWriteConflicts") == 0) {
+        CatalogType *exists = m_read_write_conflicts.get(child_name);
         if (exists)
             return NULL;
-        return m_readWriteConflicts.add(childName);
+        return m_read_write_conflicts.add(child_name);
     }
-    if (collectionName.compare("writeWriteConflicts") == 0) {
-        CatalogType *exists = m_writeWriteConflicts.get(childName);
+    if (collection_name.compare("writeWriteConflicts") == 0) {
+        CatalogType *exists = m_write_write_conflicts.get(child_name);
         if (exists)
             return NULL;
-        return m_writeWriteConflicts.add(childName);
+        return m_write_write_conflicts.add(child_name);
     }
     return NULL;
 }
 
-CatalogType * ConflictSet::getChild(const std::string &collectionName, const std::string &childName) const {
-    if (collectionName.compare("readWriteConflicts") == 0)
-        return m_readWriteConflicts.get(childName);
-    if (collectionName.compare("writeWriteConflicts") == 0)
-        return m_writeWriteConflicts.get(childName);
+CatalogType * ConflictSet::GetChild(const std::string &collection_name, const std::string &child_name) const {
+    if (collection_name.compare("readWriteConflicts") == 0)
+        return m_read_write_conflicts.get(child_name);
+    if (collection_name.compare("writeWriteConflicts") == 0)
+        return m_write_write_conflicts.get(child_name);
     return NULL;
 }
 
-bool ConflictSet::removeChild(const std::string &collectionName, const std::string &childName) {
-    assert (m_childCollections.find(collectionName) != m_childCollections.end());
-    if (collectionName.compare("readWriteConflicts") == 0) {
-        return m_readWriteConflicts.remove(childName);
+bool ConflictSet::RemoveChild(const std::string &collection_name, const std::string &child_name) {
+    assert (m_childCollections.find(collection_name) != m_childCollections.end());
+    if (collection_name.compare("readWriteConflicts") == 0) {
+        return m_read_write_conflicts.remove(child_name);
     }
-    if (collectionName.compare("writeWriteConflicts") == 0) {
-        return m_writeWriteConflicts.remove(childName);
+    if (collection_name.compare("writeWriteConflicts") == 0) {
+        return m_write_write_conflicts.remove(child_name);
     }
     return false;
 }
 
-const Procedure * ConflictSet::procedure() const {
+const Procedure * ConflictSet::GetProcedure() const {
     return dynamic_cast<Procedure*>(m_procedure);
 }
 
-const CatalogMap<ConflictPair> & ConflictSet::readWriteConflicts() const {
-    return m_readWriteConflicts;
+const CatalogMap<ConflictPair> & ConflictSet::GetReadWriteConflicts() const {
+    return m_read_write_conflicts;
 }
 
-const CatalogMap<ConflictPair> & ConflictSet::writeWriteConflicts() const {
-    return m_writeWriteConflicts;
+const CatalogMap<ConflictPair> & ConflictSet::GetWriteWriteConflicts() const {
+    return m_write_write_conflicts;
 }
 
 } // End catalog namespace

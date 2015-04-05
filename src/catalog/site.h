@@ -20,36 +20,48 @@ class Site : public CatalogType {
     friend class Catalog;
     friend class CatalogMap<Site>;
 
-protected:
-    Site(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
-    int32_t m_id;
-    CatalogType* m_host;
-    CatalogMap<Partition> m_partitions;
-    bool m_isUp;
-    int32_t m_messenger_port;
-    int32_t m_proc_port;
-
-    virtual void update();
-
-    virtual CatalogType * addChild(const std::string &collectionName, const std::string &name);
-    virtual CatalogType * getChild(const std::string &collectionName, const std::string &childName) const;
-    virtual bool removeChild(const std::string &collectionName, const std::string &childName);
-
 public:
     ~Site();
 
     /** GETTER: Site Id */
-    int32_t id() const;
+    int32_t GetId() const;
+
     /** GETTER: Which host does the site belong to? */
-    const Host * host() const;
+    const Host * GetHost() const;
+
     /** GETTER: Which logical data partition does this host process? */
-    const CatalogMap<Partition> & partitions() const;
+    const CatalogMap<Partition> & GetPartitions() const;
+
     /** GETTER: Is the site up? */
-    bool isUp() const;
+    bool IsUp() const;
+
     /** GETTER: Port used by HStoreCoordinator */
-    int32_t messenger_port() const;
+    int32_t GetMessengerPort() const;
+
     /** GETTER: Port used by VoltProcedureListener */
-    int32_t proc_port() const;
+    int32_t GetProcPort() const;
+
+protected:
+    Site(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
+
+    int32_t m_id;
+
+    CatalogType* m_host;
+
+    CatalogMap<Partition> m_partitions;
+
+    bool m_is_up;
+
+    int32_t m_messenger_port;
+
+    int32_t m_proc_port;
+
+    virtual void Update();
+
+    virtual CatalogType * AddChild(const std::string &collection_name, const std::string &name);
+    virtual CatalogType * GetChild(const std::string &collection_name, const std::string &child_name) const;
+    virtual bool RemoveChild(const std::string &collection_name, const std::string &child_name);
+
 };
 
 } // End catalog namespace

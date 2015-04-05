@@ -19,24 +19,28 @@ class ConnectorTableInfo : public CatalogType {
     friend class Catalog;
     friend class CatalogMap<ConnectorTableInfo>;
 
-protected:
-    ConnectorTableInfo(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
-    CatalogType* m_table;
-    bool m_appendOnly;
-
-    virtual void update();
-
-    virtual CatalogType * addChild(const std::string &collectionName, const std::string &name);
-    virtual CatalogType * getChild(const std::string &collectionName, const std::string &childName) const;
-    virtual bool removeChild(const std::string &collectionName, const std::string &childName);
-
 public:
     ~ConnectorTableInfo();
 
     /** GETTER: Reference to the table being ammended */
-    const Table * table() const;
+    const Table *GetTable() const;
+
     /** GETTER: True if this table is an append-only table for export. */
-    bool appendOnly() const;
+    bool IsAppendOnly() const;
+
+protected:
+    ConnectorTableInfo(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
+
+    CatalogType* m_table;
+
+    bool m_append_only;
+
+    virtual void Update();
+
+    virtual CatalogType * AddChild(const std::string &collection_name, const std::string &name);
+    virtual CatalogType * GetChild(const std::string &collection_name, const std::string &child_name) const;
+    virtual bool RemoveChild(const std::string &collection_name, const std::string &child_name);
+
 };
 
 } // End catalog namespace
