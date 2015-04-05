@@ -20,48 +20,68 @@ class Column : public CatalogType {
     friend class Catalog;
     friend class CatalogMap<Column>;
 
-protected:
-    Column(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
-    int32_t m_index;
-    int32_t m_type;
-    int32_t m_size;
-    bool m_nullable;
-    std::string m_defaultvalue;
-    int32_t m_defaulttype;
-    CatalogMap<ConstraintRef> m_constraints;
-    CatalogType* m_matview;
-    int32_t m_aggregatetype;
-    CatalogType* m_matviewsource;
-
-    virtual void update();
-
-    virtual CatalogType * addChild(const std::string &collectionName, const std::string &name);
-    virtual CatalogType * getChild(const std::string &collectionName, const std::string &childName) const;
-    virtual bool removeChild(const std::string &collectionName, const std::string &childName);
-
 public:
     ~Column();
 
     /** GETTER: The column's order in the table */
-    int32_t index() const;
+    int32_t GetIndex() const;
+
     /** GETTER: The type of the column (int/double/date/etc) */
-    int32_t type() const;
+    int32_t GetType() const;
+
     /** GETTER: (currently unused) */
-    int32_t size() const;
+    int32_t GetSize() const;
+
     /** GETTER: Is the column nullable? */
-    bool nullable() const;
+    bool IsNullable() const;
+
     /** GETTER: Default value of the column */
-    const std::string & defaultvalue() const;
+    const std::string & GetDefaultValue() const;
+
     /** GETTER: Type of the default value of the column */
-    int32_t defaulttype() const;
+    int32_t GetDefaultType() const;
+
     /** GETTER: Constraints that use this column */
-    const CatalogMap<ConstraintRef> & constraints() const;
+    const CatalogMap<ConstraintRef> & GetConstraints() const;
+
     /** GETTER: If part of a materialized view, ref of view info */
-    const MaterializedViewInfo * matview() const;
+    const MaterializedViewInfo * IsInMatView() const;
+
     /** GETTER: If part of a materialized view, represents aggregate type */
-    int32_t aggregatetype() const;
+    int32_t IsAggregateType() const;
+
     /** GETTER: If part of a materialized view, represents source column */
-    const Column * matviewsource() const;
+    const Column * IsMatViewSource() const;
+
+protected:
+    Column(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
+
+    int32_t m_index;
+
+    int32_t m_type;
+
+    int32_t m_size;
+
+    bool m_nullable;
+
+    std::string m_defaultvalue;
+
+    int32_t m_defaulttype;
+
+    CatalogMap<ConstraintRef> m_constraints;
+
+    CatalogType* m_matview;
+
+    int32_t m_aggregatetype;
+
+    CatalogType* m_matviewsource;
+
+    virtual void Update();
+
+    virtual CatalogType * AddChild(const std::string &collection_name, const std::string &name);
+    virtual CatalogType * GetChild(const std::string &collection_name, const std::string &child_name) const;
+    virtual bool RemoveChild(const std::string &collection_name, const std::string &child_name);
+
 };
 
 } // End catalog namespace

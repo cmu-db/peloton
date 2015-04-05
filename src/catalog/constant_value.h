@@ -12,33 +12,38 @@ namespace catalog {
 //===--------------------------------------------------------------------===//
 
 /**
- * What John Hugg doesn't want me to have
+ * What John Hugg doesn't want me to have :D
  */
 class ConstantValue : public CatalogType {
     friend class Catalog;
     friend class CatalogMap<ConstantValue>;
-
-protected:
-    ConstantValue(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
-    std::string m_value;
-    bool m_is_null;
-    int32_t m_type;
-
-    virtual void update();
-
-    virtual CatalogType * addChild(const std::string &collectionName, const std::string &name);
-    virtual CatalogType * getChild(const std::string &collectionName, const std::string &childName) const;
-    virtual bool removeChild(const std::string &collectionName, const std::string &childName);
-
 public:
     ~ConstantValue();
 
     /** GETTER: A string representation of the value */
-    const std::string & value() const;
+    const std::string & GetValue() const;
+
     /** GETTER: Whether the value is null */
-    bool is_null() const;
+    bool IsNull() const;
+
     /** GETTER: The type of the value (int/double/date/etc) */
-    int32_t type() const;
+    int32_t GetType() const;
+
+protected:
+    ConstantValue(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
+
+    std::string m_value;
+
+    bool m_is_null;
+
+    int32_t m_type;
+
+    virtual void Update();
+
+    virtual CatalogType * AddChild(const std::string &collection_name, const std::string &name);
+    virtual CatalogType * GetChild(const std::string &collection_name, const std::string &child_name) const;
+    virtual bool RemoveChild(const std::string &collection_name, const std::string &child_name);
+
 };
 
 } // End catalog namespace

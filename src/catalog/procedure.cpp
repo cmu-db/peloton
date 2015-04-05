@@ -14,270 +14,286 @@
 namespace nstore {
 namespace catalog {
 
-Procedure::Procedure(Catalog *catalog, CatalogType *parent, const string &path, const string &name)
+Procedure::Procedure(Catalog *catalog, CatalogType *parent, const std::string &path, const std::string &name)
 : CatalogType(catalog, parent, path, name),
-  m_authUsers(catalog, this, path + "/" + "authUsers"), m_authGroups(catalog, this, path + "/" + "authGroups"), m_authPrograms(catalog, this, path + "/" + "authPrograms"), m_statements(catalog, this, path + "/" + "statements"), m_parameters(catalog, this, path + "/" + "parameters"), m_conflicts(catalog, this, path + "/" + "conflicts")
-{
-    CatalogValue value;
-    m_fields["id"] = value;
-    m_fields["classname"] = value;
-    m_childCollections["authUsers"] = &m_authUsers;
-    m_childCollections["authGroups"] = &m_authGroups;
-    m_fields["readonly"] = value;
-    m_fields["singlepartition"] = value;
-    m_fields["everysite"] = value;
-    m_fields["systemproc"] = value;
-    m_fields["mapreduce"] = value;
-    m_fields["prefetchable"] = value;
-    m_fields["deferrable"] = value;
-    m_fields["mapInputQuery"] = value;
-    m_fields["mapEmitTable"] = value;
-    m_fields["reduceInputQuery"] = value;
-    m_fields["reduceEmitTable"] = value;
-    m_fields["hasjava"] = value;
-    m_fields["partitiontable"] = value;
-    m_fields["partitioncolumn"] = value;
-    m_fields["partitionparameter"] = value;
-    m_childCollections["authPrograms"] = &m_authPrograms;
-    m_childCollections["statements"] = &m_statements;
-    m_childCollections["parameters"] = &m_parameters;
-    m_childCollections["conflicts"] = &m_conflicts;
+  m_auth_users(catalog, this, path + "/" + "authUsers"),
+  m_auth_groups(catalog, this, path + "/" + "authGroups"),
+  m_auth_programs(catalog, this, path + "/" + "authPrograms"),
+  m_statements(catalog, this, path + "/" + "statements"),
+  m_parameters(catalog, this, path + "/" + "parameters"),
+  m_conflicts(catalog, this, path + "/" + "conflicts"),
+  m_id(0),
+  m_read_only(false),
+  m_single_partition(false),
+  m_every_site(false),
+  m_system_proc(false),
+  m_mapreduce(false),
+  m_prefetchable(false),
+  m_deferrable(false),
+  m_has_java(false),
+  m_partition_table(nullptr),
+  m_partition_column(nullptr),
+  m_partition_parameter(0) {
+  CatalogValue value;
+  m_fields["id"] = value;
+  m_fields["classname"] = value;
+  m_childCollections["authUsers"] = &m_auth_users;
+  m_childCollections["authGroups"] = &m_auth_groups;
+  m_fields["readonly"] = value;
+  m_fields["singlepartition"] = value;
+  m_fields["everysite"] = value;
+  m_fields["systemproc"] = value;
+  m_fields["mapreduce"] = value;
+  m_fields["prefetchable"] = value;
+  m_fields["deferrable"] = value;
+  m_fields["mapInputQuery"] = value;
+  m_fields["mapEmitTable"] = value;
+  m_fields["reduceInputQuery"] = value;
+  m_fields["reduceEmitTable"] = value;
+  m_fields["hasjava"] = value;
+  m_fields["partitiontable"] = value;
+  m_fields["partitioncolumn"] = value;
+  m_fields["partitionparameter"] = value;
+  m_childCollections["authPrograms"] = &m_auth_programs;
+  m_childCollections["statements"] = &m_statements;
+  m_childCollections["parameters"] = &m_parameters;
+  m_childCollections["conflicts"] = &m_conflicts;
 }
 
 Procedure::~Procedure() {
-    std::map<std::string, UserRef*>::const_iterator userref_iter = m_authUsers.begin();
-    while (userref_iter != m_authUsers.end()) {
-        delete userref_iter->second;
-        userref_iter++;
-    }
-    m_authUsers.clear();
+  std::map<std::string, UserRef*>::const_iterator userref_iter = m_auth_users.begin();
+  while (userref_iter != m_auth_users.end()) {
+    delete userref_iter->second;
+    userref_iter++;
+  }
+  m_auth_users.clear();
 
-    std::map<std::string, GroupRef*>::const_iterator groupref_iter = m_authGroups.begin();
-    while (groupref_iter != m_authGroups.end()) {
-        delete groupref_iter->second;
-        groupref_iter++;
-    }
-    m_authGroups.clear();
+  std::map<std::string, GroupRef*>::const_iterator groupref_iter = m_auth_groups.begin();
+  while (groupref_iter != m_auth_groups.end()) {
+    delete groupref_iter->second;
+    groupref_iter++;
+  }
+  m_auth_groups.clear();
 
-    std::map<std::string, AuthProgram*>::const_iterator authprogram_iter = m_authPrograms.begin();
-    while (authprogram_iter != m_authPrograms.end()) {
-        delete authprogram_iter->second;
-        authprogram_iter++;
-    }
-    m_authPrograms.clear();
+  std::map<std::string, AuthProgram*>::const_iterator authprogram_iter = m_auth_programs.begin();
+  while (authprogram_iter != m_auth_programs.end()) {
+    delete authprogram_iter->second;
+    authprogram_iter++;
+  }
+  m_auth_programs.clear();
 
-    std::map<std::string, Statement*>::const_iterator statement_iter = m_statements.begin();
-    while (statement_iter != m_statements.end()) {
-        delete statement_iter->second;
-        statement_iter++;
-    }
-    m_statements.clear();
+  std::map<std::string, Statement*>::const_iterator statement_iter = m_statements.begin();
+  while (statement_iter != m_statements.end()) {
+    delete statement_iter->second;
+    statement_iter++;
+  }
+  m_statements.clear();
 
-    std::map<std::string, ProcParameter*>::const_iterator procparameter_iter = m_parameters.begin();
-    while (procparameter_iter != m_parameters.end()) {
-        delete procparameter_iter->second;
-        procparameter_iter++;
-    }
-    m_parameters.clear();
+  std::map<std::string, ProcParameter*>::const_iterator procparameter_iter = m_parameters.begin();
+  while (procparameter_iter != m_parameters.end()) {
+    delete procparameter_iter->second;
+    procparameter_iter++;
+  }
+  m_parameters.clear();
 
-    std::map<std::string, ConflictSet*>::const_iterator conflictset_iter = m_conflicts.begin();
-    while (conflictset_iter != m_conflicts.end()) {
-        delete conflictset_iter->second;
-        conflictset_iter++;
-    }
-    m_conflicts.clear();
+  std::map<std::string, ConflictSet*>::const_iterator conflictset_iter = m_conflicts.begin();
+  while (conflictset_iter != m_conflicts.end()) {
+    delete conflictset_iter->second;
+    conflictset_iter++;
+  }
+  m_conflicts.clear();
 
 }
 
-void Procedure::update() {
-    m_id = m_fields["id"].intValue;
-    m_classname = m_fields["classname"].strValue.c_str();
-    m_readonly = m_fields["readonly"].intValue;
-    m_singlepartition = m_fields["singlepartition"].intValue;
-    m_everysite = m_fields["everysite"].intValue;
-    m_systemproc = m_fields["systemproc"].intValue;
-    m_mapreduce = m_fields["mapreduce"].intValue;
-    m_prefetchable = m_fields["prefetchable"].intValue;
-    m_deferrable = m_fields["deferrable"].intValue;
-    m_mapInputQuery = m_fields["mapInputQuery"].strValue.c_str();
-    m_mapEmitTable = m_fields["mapEmitTable"].strValue.c_str();
-    m_reduceInputQuery = m_fields["reduceInputQuery"].strValue.c_str();
-    m_reduceEmitTable = m_fields["reduceEmitTable"].strValue.c_str();
-    m_hasjava = m_fields["hasjava"].intValue;
-    m_partitiontable = m_fields["partitiontable"].typeValue;
-    m_partitioncolumn = m_fields["partitioncolumn"].typeValue;
-    m_partitionparameter = m_fields["partitionparameter"].intValue;
+void Procedure::Update() {
+  m_id = m_fields["id"].intValue;
+  m_classname = m_fields["classname"].strValue.c_str();
+  m_read_only = m_fields["readonly"].intValue;
+  m_single_partition = m_fields["singlepartition"].intValue;
+  m_every_site = m_fields["everysite"].intValue;
+  m_system_proc = m_fields["systemproc"].intValue;
+  m_mapreduce = m_fields["mapreduce"].intValue;
+  m_prefetchable = m_fields["prefetchable"].intValue;
+  m_deferrable = m_fields["deferrable"].intValue;
+  m_map_input_query = m_fields["mapInputQuery"].strValue.c_str();
+  m_map_emit_table = m_fields["mapEmitTable"].strValue.c_str();
+  m_reduce_input_query = m_fields["reduceInputQuery"].strValue.c_str();
+  m_reduce_emit_table = m_fields["reduceEmitTable"].strValue.c_str();
+  m_has_java = m_fields["hasjava"].intValue;
+  m_partition_table = m_fields["partitiontable"].typeValue;
+  m_partition_column = m_fields["partitioncolumn"].typeValue;
+  m_partition_parameter = m_fields["partitionparameter"].intValue;
 }
 
-CatalogType * Procedure::addChild(const std::string &collectionName, const std::string &childName) {
-    if (collectionName.compare("authUsers") == 0) {
-        CatalogType *exists = m_authUsers.get(childName);
-        if (exists)
-            return NULL;
-        return m_authUsers.add(childName);
-    }
-    if (collectionName.compare("authGroups") == 0) {
-        CatalogType *exists = m_authGroups.get(childName);
-        if (exists)
-            return NULL;
-        return m_authGroups.add(childName);
-    }
-    if (collectionName.compare("authPrograms") == 0) {
-        CatalogType *exists = m_authPrograms.get(childName);
-        if (exists)
-            return NULL;
-        return m_authPrograms.add(childName);
-    }
-    if (collectionName.compare("statements") == 0) {
-        CatalogType *exists = m_statements.get(childName);
-        if (exists)
-            return NULL;
-        return m_statements.add(childName);
-    }
-    if (collectionName.compare("parameters") == 0) {
-        CatalogType *exists = m_parameters.get(childName);
-        if (exists)
-            return NULL;
-        return m_parameters.add(childName);
-    }
-    if (collectionName.compare("conflicts") == 0) {
-        CatalogType *exists = m_conflicts.get(childName);
-        if (exists)
-            return NULL;
-        return m_conflicts.add(childName);
-    }
-    return NULL;
+CatalogType * Procedure::AddChild(const std::string &collection_name, const std::string &child_name) {
+  if (collection_name.compare("authUsers") == 0) {
+    CatalogType *exists = m_auth_users.get(child_name);
+    if (exists)
+      return NULL;
+    return m_auth_users.add(child_name);
+  }
+  if (collection_name.compare("authGroups") == 0) {
+    CatalogType *exists = m_auth_groups.get(child_name);
+    if (exists)
+      return NULL;
+    return m_auth_groups.add(child_name);
+  }
+  if (collection_name.compare("authPrograms") == 0) {
+    CatalogType *exists = m_auth_programs.get(child_name);
+    if (exists)
+      return NULL;
+    return m_auth_programs.add(child_name);
+  }
+  if (collection_name.compare("statements") == 0) {
+    CatalogType *exists = m_statements.get(child_name);
+    if (exists)
+      return NULL;
+    return m_statements.add(child_name);
+  }
+  if (collection_name.compare("parameters") == 0) {
+    CatalogType *exists = m_parameters.get(child_name);
+    if (exists)
+      return NULL;
+    return m_parameters.add(child_name);
+  }
+  if (collection_name.compare("conflicts") == 0) {
+    CatalogType *exists = m_conflicts.get(child_name);
+    if (exists)
+      return NULL;
+    return m_conflicts.add(child_name);
+  }
+  return NULL;
 }
 
-CatalogType * Procedure::getChild(const std::string &collectionName, const std::string &childName) const {
-    if (collectionName.compare("authUsers") == 0)
-        return m_authUsers.get(childName);
-    if (collectionName.compare("authGroups") == 0)
-        return m_authGroups.get(childName);
-    if (collectionName.compare("authPrograms") == 0)
-        return m_authPrograms.get(childName);
-    if (collectionName.compare("statements") == 0)
-        return m_statements.get(childName);
-    if (collectionName.compare("parameters") == 0)
-        return m_parameters.get(childName);
-    if (collectionName.compare("conflicts") == 0)
-        return m_conflicts.get(childName);
-    return NULL;
+CatalogType * Procedure::GetChild(const std::string &collection_name, const std::string &child_name) const {
+  if (collection_name.compare("authUsers") == 0)
+    return m_auth_users.get(child_name);
+  if (collection_name.compare("authGroups") == 0)
+    return m_auth_groups.get(child_name);
+  if (collection_name.compare("authPrograms") == 0)
+    return m_auth_programs.get(child_name);
+  if (collection_name.compare("statements") == 0)
+    return m_statements.get(child_name);
+  if (collection_name.compare("parameters") == 0)
+    return m_parameters.get(child_name);
+  if (collection_name.compare("conflicts") == 0)
+    return m_conflicts.get(child_name);
+  return NULL;
 }
 
-bool Procedure::removeChild(const std::string &collectionName, const std::string &childName) {
-    assert (m_childCollections.find(collectionName) != m_childCollections.end());
-    if (collectionName.compare("authUsers") == 0) {
-        return m_authUsers.remove(childName);
-    }
-    if (collectionName.compare("authGroups") == 0) {
-        return m_authGroups.remove(childName);
-    }
-    if (collectionName.compare("authPrograms") == 0) {
-        return m_authPrograms.remove(childName);
-    }
-    if (collectionName.compare("statements") == 0) {
-        return m_statements.remove(childName);
-    }
-    if (collectionName.compare("parameters") == 0) {
-        return m_parameters.remove(childName);
-    }
-    if (collectionName.compare("conflicts") == 0) {
-        return m_conflicts.remove(childName);
-    }
-    return false;
+bool Procedure::RemoveChild(const std::string &collection_name, const std::string &child_name) {
+  assert (m_childCollections.find(collection_name) != m_childCollections.end());
+  if (collection_name.compare("authUsers") == 0) {
+    return m_auth_users.remove(child_name);
+  }
+  if (collection_name.compare("authGroups") == 0) {
+    return m_auth_groups.remove(child_name);
+  }
+  if (collection_name.compare("authPrograms") == 0) {
+    return m_auth_programs.remove(child_name);
+  }
+  if (collection_name.compare("statements") == 0) {
+    return m_statements.remove(child_name);
+  }
+  if (collection_name.compare("parameters") == 0) {
+    return m_parameters.remove(child_name);
+  }
+  if (collection_name.compare("conflicts") == 0) {
+    return m_conflicts.remove(child_name);
+  }
+  return false;
 }
 
-int32_t Procedure::id() const {
-    return m_id;
+int32_t Procedure::GetId() const {
+  return m_id;
 }
 
-const string & Procedure::classname() const {
-    return m_classname;
+const std::string & Procedure::GetClassName() const {
+  return m_classname;
 }
 
-const CatalogMap<UserRef> & Procedure::authUsers() const {
-    return m_authUsers;
+const CatalogMap<UserRef> & Procedure::GetAuthUsers() const {
+  return m_auth_users;
 }
 
-const CatalogMap<GroupRef> & Procedure::authGroups() const {
-    return m_authGroups;
+const CatalogMap<GroupRef> & Procedure::GetAuthGroups() const {
+  return m_auth_groups;
 }
 
-bool Procedure::readonly() const {
-    return m_readonly;
+bool Procedure::IsReadOnly() const {
+  return m_read_only;
 }
 
-bool Procedure::singlepartition() const {
-    return m_singlepartition;
+bool Procedure::IsSinglePartition() const {
+  return m_single_partition;
 }
 
-bool Procedure::everysite() const {
-    return m_everysite;
+bool Procedure::IsEverySite() const {
+  return m_every_site;
 }
 
-bool Procedure::systemproc() const {
-    return m_systemproc;
+bool Procedure::IsSystemProc() const {
+  return m_system_proc;
 }
 
-bool Procedure::mapreduce() const {
-    return m_mapreduce;
+bool Procedure::IsMapreduce() const {
+  return m_mapreduce;
 }
 
-bool Procedure::prefetchable() const {
-    return m_prefetchable;
+bool Procedure::IsPrefetchable() const {
+  return m_prefetchable;
 }
 
-bool Procedure::deferrable() const {
-    return m_deferrable;
+bool Procedure::IsDeferrable() const {
+  return m_deferrable;
 }
 
-const string & Procedure::mapInputQuery() const {
-    return m_mapInputQuery;
+const std::string & Procedure::GetMapInputQuery() const {
+  return m_map_input_query;
 }
 
-const string & Procedure::mapEmitTable() const {
-    return m_mapEmitTable;
+const std::string & Procedure::GetMapEmitTable() const {
+  return m_map_emit_table;
 }
 
-const string & Procedure::reduceInputQuery() const {
-    return m_reduceInputQuery;
+const std::string & Procedure::GetReduceInputQuery() const {
+  return m_reduce_input_query;
 }
 
-const string & Procedure::reduceEmitTable() const {
-    return m_reduceEmitTable;
+const std::string & Procedure::GetReduceEmitTable() const {
+  return m_reduce_emit_table;
 }
 
-bool Procedure::hasjava() const {
-    return m_hasjava;
+bool Procedure::IsStoredProcedure() const {
+  return m_has_java;
 }
 
-const Table * Procedure::partitiontable() const {
-    return dynamic_cast<Table*>(m_partitiontable);
+const Table * Procedure::GetPartitionTable() const {
+  return dynamic_cast<Table*>(m_partition_table);
 }
 
-const Column * Procedure::partitioncolumn() const {
-    return dynamic_cast<Column*>(m_partitioncolumn);
+const Column * Procedure::GetPartitionColumn() const {
+  return dynamic_cast<Column*>(m_partition_column);
 }
 
-int32_t Procedure::partitionparameter() const {
-    return m_partitionparameter;
+int32_t Procedure::GetPartitionParameter() const {
+  return m_partition_parameter;
 }
 
-const CatalogMap<AuthProgram> & Procedure::authPrograms() const {
-    return m_authPrograms;
+const CatalogMap<AuthProgram> & Procedure::GetAuthPrograms() const {
+  return m_auth_programs;
 }
 
-const CatalogMap<Statement> & Procedure::statements() const {
-    return m_statements;
+const CatalogMap<Statement> & Procedure::GetStatements() const {
+  return m_statements;
 }
 
-const CatalogMap<ProcParameter> & Procedure::parameters() const {
-    return m_parameters;
+const CatalogMap<ProcParameter> & Procedure::GetParameters() const {
+  return m_parameters;
 }
 
-const CatalogMap<ConflictSet> & Procedure::conflicts() const {
-    return m_conflicts;
+const CatalogMap<ConflictSet> & Procedure::GetConflicts() const {
+  return m_conflicts;
 }
 
 } // End catalog namespace

@@ -14,6 +14,7 @@ namespace catalog {
 class UserRef;
 class GroupRef;
 class ConnectorTableInfo;
+
 /**
  * Export connector (ELT)
  */
@@ -21,33 +22,43 @@ class Connector : public CatalogType {
     friend class Catalog;
     friend class CatalogMap<Connector>;
 
-protected:
-    Connector(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
-    std::string m_loaderclass;
-    bool m_enabled;
-    CatalogMap<UserRef> m_authUsers;
-    CatalogMap<GroupRef> m_authGroups;
-    CatalogMap<ConnectorTableInfo> m_tableInfo;
-
-    virtual void update();
-
-    virtual CatalogType * addChild(const std::string &collectionName, const std::string &name);
-    virtual CatalogType * getChild(const std::string &collectionName, const std::string &childName) const;
-    virtual bool removeChild(const std::string &collectionName, const std::string &childName);
-
 public:
     ~Connector();
 
     /** GETTER: The class name of the connector */
-    const std::string & loaderclass() const;
+    const std::string & GetLoaderClass() const;
+
     /** GETTER: Is the connector enabled */
-    bool enabled() const;
+    bool IsEnabled() const;
+
     /** GETTER: Users authorized to invoke this procedure */
-    const CatalogMap<UserRef> & authUsers() const;
+    const CatalogMap<UserRef> & GetAuthUsers() const;
+
     /** GETTER: Groups authorized to invoke this procedure */
-    const CatalogMap<GroupRef> & authGroups() const;
+    const CatalogMap<GroupRef> & GetAuthGroups() const;
+
     /** GETTER: Per table configuration */
-    const CatalogMap<ConnectorTableInfo> & tableInfo() const;
+    const CatalogMap<ConnectorTableInfo> & GetTableInfo() const;
+
+protected:
+    Connector(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
+
+    std::string m_loader_class;
+
+    bool m_enabled;
+
+    CatalogMap<UserRef> m_auth_users;
+
+    CatalogMap<GroupRef> m_auth_groups;
+
+    CatalogMap<ConnectorTableInfo> m_table_info;
+
+    virtual void Update();
+
+    virtual CatalogType * AddChild(const std::string &collection_name, const std::string &name);
+    virtual CatalogType * GetChild(const std::string &collection_name, const std::string &child_name) const;
+    virtual bool RemoveChild(const std::string &collection_name, const std::string &child_name);
+
 };
 
 } // End catalog namespace

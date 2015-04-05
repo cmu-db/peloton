@@ -27,6 +27,36 @@ class Cluster;
 class Catalog : public CatalogType {
     friend class CatalogType;
 
+ public:
+
+     /**
+      * Create a new Catalog hierarchy.
+      */
+     Catalog();
+     virtual ~Catalog();
+
+     void PurgeDeletions();
+
+     /**
+      * Run one or more single-line catalog commands separated by newlines.
+      * See the docs for more info on catalog statements.
+      * @param stmts A string containing one or more catalog commands separated by
+      * newlines
+      */
+     void Execute(const std::string &stmts);
+
+     /** GETTER: The set of the clusters in this catalog */
+     const CatalogMap<Cluster> & GetClusters() const;
+
+     /** pass in a buffer at least half as long as the string */
+     static void HexDecodeString(const std::string &hexString, char *buffer);
+
+     /** pass in a buffer at twice as long as the string */
+     static void HexEncodeString(const char *string, char *buffer);
+
+     /** return by out-param a copy of the recently deleted paths. */
+     void GetDeletedPaths(std::vector<std::string> &deletions);
+
 protected:
     struct UnresolvedInfo {
         CatalogType * type;
@@ -44,55 +74,30 @@ protected:
     //  paths of objects recently deleted from the catalog.
     std::vector<std::string> m_deletions;
 
-    void executeOne(const std::string &stmt);
-    CatalogType * itemForRef(const std::string &ref);
-    CatalogType * itemForPath(const CatalogType *parent, const std::string &path);
-    CatalogType * itemForPathPart(const CatalogType *parent, const std::string &pathPart) const;
+    void ExecuteOne(const std::string &stmt);
+    CatalogType * ItemForRef(const std::string &ref);
+    CatalogType * ItemForPath(const CatalogType *parent, const std::string &path);
+    CatalogType * ItemForPathPart(const CatalogType *parent, const std::string &pathPart) const;
 
-    virtual void update();
-    virtual CatalogType *addChild(const std::string &collectionName, const std::string &childName);
-    virtual CatalogType *getChild(const std::string &collectionName, const std::string &childName) const;
-    virtual bool removeChild(const std::string &collectionName, const std::string &childName);
+    virtual void Update();
+    virtual CatalogType *AddChild(const std::string &collectionName, const std::string &childName);
+    virtual CatalogType *GetChild(const std::string &collectionName, const std::string &childName) const;
+    virtual bool RemoveChild(const std::string &collectionName, const std::string &childName);
 
     void RegisterGlobally(CatalogType *catObj);
     void UnregisterGlobally(CatalogType *catObj);
 
-    static std::vector<std::string> splitString(const std::string &str, char delimiter);
-    static std::vector<std::string> splitToTwoString(const std::string &str, char delimiter);
+    static std::vector<std::string> SplitString(const std::string &str, char delimiter);
+    static std::vector<std::string> SplitToTwoString(const std::string &str, char delimiter);
 
-    void addUnresolvedInfo(std::string path, CatalogType *type, std::string fieldName);
+    void AddUnresolvedInfo(std::string path, CatalogType *type, std::string fieldName);
+
 private:
-    void resolveUnresolvedInfo(std::string path);
-    void cleanupExecutionBookkeeping();
 
-public:
-    void purgeDeletions();
+    void ResolveUnresolvedInfo(std::string path);
 
-    /**
-     * Create a new Catalog hierarchy.
-     */
-    Catalog();
-    virtual ~Catalog();
+    void CleanupExecutionBookkeeping();
 
-    /**
-     * Run one or more single-line catalog commands separated by newlines.
-     * See the docs for more info on catalog statements.
-     * @param stmts A string containing one or more catalog commands separated by
-     * newlines
-     */
-    void execute(const std::string &stmts);
-
-    /** GETTER: The set of the clusters in this catalog */
-    const CatalogMap<Cluster> & clusters() const;
-
-    /** pass in a buffer at least half as long as the string */
-    static void hexDecodeString(const std::string &hexString, char *buffer);
-
-    /** pass in a buffer at twice as long as the string */
-    static void hexEncodeString(const char *string, char *buffer);
-
-    /** return by out-param a copy of the recently deleted paths. */
-    void getDeletedPaths(std::vector<std::string> &deletions);
 };
 
 } // End catalog namespace

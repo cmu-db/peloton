@@ -33,7 +33,7 @@ Catalog::~Catalog() {
 /*
  * Clear the wasAdded/wasUpdated and deletion path lists.
  */
-void Catalog::cleanupExecutionBookkeeping() {
+void Catalog::CleanupExecutionBookkeeping() {
     // sad there isn't clean syntax to for_each a map's pair->second
     boost::unordered_map<std::string, CatalogType*>::iterator iter;
     for (iter = m_allCatalogObjects.begin(); iter != m_allCatalogObjects.end(); iter++) {
@@ -43,7 +43,7 @@ void Catalog::cleanupExecutionBookkeeping() {
     m_deletions.clear();
 }
 
-void Catalog::purgeDeletions() {
+void Catalog::PurgeDeletions() {
     for (std::vector<std::string>::iterator i = m_deletions.begin();
          i != m_deletions.end();
          i++)
@@ -58,12 +58,12 @@ void Catalog::purgeDeletions() {
     m_deletions.clear();
 }
 
-void Catalog::execute(const std::string &stmts) {
-    cleanupExecutionBookkeeping();
+void Catalog::Execute(const std::string &stmts) {
+    CleanupExecutionBookkeeping();
 
-    std::vector<std::string> lines = splitString(stmts, '\n');
-    for (int32_t i = 0; i < lines.size(); ++i) {
-        executeOne(lines[i]);
+    std::vector<std::string> lines = SplitString(stmts, '\n');
+    for (uint32_t i = 0; i < lines.size(); ++i) {
+        ExecuteOne(lines[i]);
     }
 
     if (m_unresolved.size() > 0) {
@@ -109,11 +109,11 @@ static void parse(const std::string &stmt,
 /*
  * Run one catalog command.
  */
-void Catalog::executeOne(const std::string &stmt) {
+void Catalog::ExecuteOne(const std::string &stmt) {
     std::string command, ref, coll, child;
     parse(stmt, command, ref, coll, child);
 
-    CatalogType *item = itemForRef(ref);
+    CatalogType *item = ItemForRef(ref);
     if (item == NULL) {
         std::string errmsg = "Catalog reference for " + ref + " not found.";
         throw CatalogException(errmsg);
@@ -126,7 +126,7 @@ void Catalog::executeOne(const std::string &stmt) {
             throw CatalogException("Catalog failed to add child.");
         }
         type->added();
-        resolveUnresolvedInfo(type->GetPath());
+        ResolveUnresolvedInfo(type->GetPath());
     }
     else if (command.compare("set") == 0) {
         item->Set(coll, child);
@@ -148,11 +148,11 @@ void Catalog::executeOne(const std::string &stmt) {
     }
 }
 
-const CatalogMap<Cluster> & Catalog::clusters() const {
+const CatalogMap<Cluster> & Catalog::GetClusters() const {
     return m_clusters;
 }
 
-CatalogType *Catalog::itemForRef(const std::string &ref) {
+CatalogType *Catalog::ItemForRef(const std::string &ref) {
     // if it's a path
     boost::unordered_map<std::string, CatalogType*>::const_iterator iter;
     iter = m_allCatalogObjects.find(ref);
@@ -162,7 +162,7 @@ CatalogType *Catalog::itemForRef(const std::string &ref) {
         return NULL;
 }
 
-CatalogType *Catalog::itemForPath(const CatalogType *parent, const std::string &path) {
+CatalogType *Catalog::ItemForPath(const CatalogType *parent, const std::string &path) {
     std::string realpath = path;
     if (path.at(0) == '/')
         realpath = realpath.substr(1);
@@ -171,23 +171,23 @@ CatalogType *Catalog::itemForPath(const CatalogType *parent, const std::string &
     if (realpath.length() == 0)
         return this;
 
-    std::vector<std::string> parts = splitToTwoString(realpath, '/');
+    std::vector<std::string> parts = SplitToTwoString(realpath, '/');
 
     // child of root
     if (parts.size() <= 1)
-        return itemForPathPart(parent, parts[0]);
+        return ItemForPathPart(parent, parts[0]);
 
-    CatalogType *nextParent = itemForPathPart(parent, parts[0]);
+    CatalogType *nextParent = ItemForPathPart(parent, parts[0]);
     if (nextParent == NULL)
         return NULL;
-    return itemForPath(nextParent, parts[1]);
+    return ItemForPath(nextParent, parts[1]);
 }
 
-CatalogType *Catalog::itemForPathPart(const CatalogType *parent, const std::string &pathPart) const {
-    std::vector<std::string> parts = splitToTwoString(pathPart, '[');
+CatalogType *Catalog::ItemForPathPart(const CatalogType *parent, const std::string &pathPart) const {
+    std::vector<std::string> parts = SplitToTwoString(pathPart, '[');
     if (parts.size() <= 1)
         return NULL;
-    parts[1] = splitString(parts[1], ']')[0];
+    parts[1] = SplitString(parts[1], ']')[0];
     return parent->GetChild(parts[0], parts[1]);
 }
 
@@ -211,11 +211,11 @@ void Catalog::UnregisterGlobally(CatalogType *catObj) {
     }
 }
 
-void Catalog::update() {
+void Catalog::Update() {
     // nothing to do
 }
 
-std::vector<std::string> Catalog::splitString(const std::string &str, char delimiter) {
+std::vector<std::string> Catalog::SplitString(const std::string &str, char delimiter) {
     std::vector<std::string> vec;
     size_t begin = 0;
     while (true) {
@@ -231,7 +231,7 @@ std::vector<std::string> Catalog::splitString(const std::string &str, char delim
     }
     return vec;
 }
-std::vector<std::string> Catalog::splitToTwoString(const std::string &str, char delimiter) {
+std::vector<std::string> Catalog::SplitToTwoString(const std::string &str, char delimiter) {
     std::vector<std::string> vec;
     size_t end = str.find(delimiter);
     if (end == std::string::npos) {
@@ -247,7 +247,7 @@ std::vector<std::string> Catalog::splitToTwoString(const std::string &str, char 
  * Add a path to the unresolved list to be processed when
  * the referenced value appears
  */
-void Catalog::addUnresolvedInfo(std::string path, CatalogType *type, std::string fieldName) {
+void Catalog::AddUnresolvedInfo(std::string path, CatalogType *type, std::string fieldName) {
     assert(type != NULL);
 
     UnresolvedInfo ui;
@@ -262,7 +262,7 @@ void Catalog::addUnresolvedInfo(std::string path, CatalogType *type, std::string
 /*
  * Clean up any resolved binding for path.
  */
-void Catalog::resolveUnresolvedInfo(std::string path) {
+void Catalog::ResolveUnresolvedInfo(std::string path) {
     if (m_unresolved.count(path) != 0) {
         std::list<UnresolvedInfo> lui = m_unresolved[path];
         m_unresolved.erase(path);
@@ -271,13 +271,13 @@ void Catalog::resolveUnresolvedInfo(std::string path) {
             UnresolvedInfo ui = *iter;
             std::string path2 = "set " + ui.type->GetPath() + " "
               + ui.field + " " + path;
-            executeOne(path2);
+            ExecuteOne(path2);
         }
     }
 }
 
 CatalogType *
-Catalog::addChild(const std::string &collectionName, const std::string &childName) {
+Catalog::AddChild(const std::string &collectionName, const std::string &childName) {
     if (collectionName.compare("clusters") == 0) {
         CatalogType *exists = m_clusters.get(childName);
         if (exists)
@@ -289,14 +289,14 @@ Catalog::addChild(const std::string &collectionName, const std::string &childNam
 }
 
 CatalogType *
-Catalog::getChild(const std::string &collectionName, const std::string &childName) const {
+Catalog::GetChild(const std::string &collectionName, const std::string &childName) const {
     if (collectionName.compare("clusters") == 0)
         return m_clusters.get(childName);
     return NULL;
 }
 
 bool
-Catalog::removeChild(const std::string &collectionName, const std::string &childName) {
+Catalog::RemoveChild(const std::string &collectionName, const std::string &childName) {
     assert (m_childCollections.find(collectionName) != m_childCollections.end());
     if (collectionName.compare("clusters") == 0) {
         return m_clusters.remove(childName);
@@ -318,9 +318,9 @@ int32_t hexCharToInt(char c) {
 }
 
 /** pass in a buffer at least half as long as the std::string */
-void Catalog::hexDecodeString(const std::string &hexString, char *buffer) {
+void Catalog::HexDecodeString(const std::string &hexString, char *buffer) {
     assert (buffer);
-    int32_t i;
+    uint32_t i;
     for (i = 0; i < hexString.length() / 2; i++) {
         int32_t high = hexCharToInt(hexString[i * 2]);
 
@@ -333,20 +333,20 @@ void Catalog::hexDecodeString(const std::string &hexString, char *buffer) {
 }
 
 /** pass in a buffer at least twice as long as the std::string */
-void Catalog::hexEncodeString(const char *string, char *buffer) {
+void Catalog::HexEncodeString(const char *string, char *buffer) {
     assert (buffer);
-    int32_t i = 0;
+    uint32_t i = 0;
     for (; i < strlen(string); i++) {
         char ch[2];
         snprintf(ch, 2, "%x", (string[i] >> 4) & 0xF);
         buffer[i * 2] = ch[0];
-        snprintf(ch, 2, "%x", std::string[i] & 0xF);
+        snprintf(ch, 2, "%x", string[i] & 0xF);
         buffer[(i * 2) + 1] = ch[0];
     }
     buffer[i*2] = '\0';
 }
 
-void Catalog::getDeletedPaths(std::vector<std::string> &deletions) {
+void Catalog::GetDeletedPaths(std::vector<std::string> &deletions) {
     copy(m_deletions.begin(), m_deletions.end(), back_inserter(deletions));
 }
 

@@ -16,36 +16,46 @@ class ProcParameter;
  * A parameter for a parameterized SQL statement
  */
 class StmtParameter : public CatalogType {
-    friend class Catalog;
-    friend class CatalogMap<StmtParameter>;
+  friend class Catalog;
+  friend class CatalogMap<StmtParameter>;
 
-protected:
-    StmtParameter(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
-    int32_t m_sqltype;
-    int32_t m_javatype;
-    int32_t m_index;
-    CatalogType* m_procparameter;
-    int32_t m_procparameteroffset;
+ public:
+  ~StmtParameter();
 
-    virtual void update();
+  /** GETTER: The SQL type of the parameter (int/float/date/etc) */
+  int32_t GetSqlType() const;
 
-    virtual CatalogType * addChild(const std::string &collectionName, const std::string &name);
-    virtual CatalogType * getChild(const std::string &collectionName, const std::string &childName) const;
-    virtual bool removeChild(const std::string &collectionName, const std::string &childName);
+  /** GETTER: The Java class of the parameter (int/float/date/etc) */
+  int32_t GetJavaType() const;
 
-public:
-    ~StmtParameter();
+  /** GETTER: The index of the parameter in the set of statement parameters */
+  int32_t GetIndex() const;
 
-    /** GETTER: The SQL type of the parameter (int/float/date/etc) */
-    int32_t sqltype() const;
-    /** GETTER: The Java class of the parameter (int/float/date/etc) */
-    int32_t javatype() const;
-    /** GETTER: The index of the parameter in the set of statement parameters */
-    int32_t index() const;
-    /** GETTER: Reference back to original input parameter */
-    const ProcParameter * procparameter() const;
-    /** GETTER: If the ProcParameter is an array, which index in that array are we paired to */
-    int32_t procparameteroffset() const;
+  /** GETTER: Reference back to original input parameter */
+  const ProcParameter * GetProcParameter() const;
+
+  /** GETTER: If the ProcParameter is an array, which index in that array are we paired to */
+  int32_t GetProcParameterOffset() const;
+
+ protected:
+  StmtParameter(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
+
+  int32_t m_sql_type;
+
+  int32_t m_java_type;
+
+  int32_t m_index;
+
+  CatalogType* m_proc_parameter;
+
+  int32_t m_proc_parameter_offset;
+
+  virtual void Update();
+
+  virtual CatalogType * AddChild(const std::string &collection_name, const std::string &name);
+  virtual CatalogType * GetChild(const std::string &collection_name, const std::string &child_name) const;
+  virtual bool RemoveChild(const std::string &collection_name, const std::string &child_name);
+
 };
 
 } // End catalog namespace

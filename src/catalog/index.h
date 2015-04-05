@@ -16,30 +16,36 @@ class ColumnRef;
  * A index structure on a database table's columns
  */
 class Index : public CatalogType {
-    friend class Catalog;
-    friend class CatalogMap<Index>;
+  friend class Catalog;
+  friend class CatalogMap<Index>;
 
-protected:
-    Index(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
-    bool m_unique;
-    int32_t m_type;
-    CatalogMap<ColumnRef> m_columns;
+ public:
+  ~Index();
 
-    virtual void update();
+  /** GETTER: May the index contain duplicate keys? */
+  bool IsUnique() const;
 
-    virtual CatalogType * addChild(const std::string &collectionName, const std::string &name);
-    virtual CatalogType * getChild(const std::string &collectionName, const std::string &childName) const;
-    virtual bool removeChild(const std::string &collectionName, const std::string &childName);
+  /** GETTER: What data structure is the index using and what kinds of keys does it support? */
+  int32_t GetType() const;
 
-public:
-    ~Index();
+  /** GETTER: Columns referenced by the index */
+  const CatalogMap<ColumnRef> & GetColumns() const;
 
-    /** GETTER: May the index contain duplicate keys? */
-    bool unique() const;
-    /** GETTER: What data structure is the index using and what kinds of keys does it support? */
-    int32_t type() const;
-    /** GETTER: Columns referenced by the index */
-    const CatalogMap<ColumnRef> & columns() const;
+ protected:
+  Index(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
+
+  CatalogMap<ColumnRef> m_columns;
+
+  bool m_unique;
+
+  int32_t m_type;
+
+  virtual void Update();
+
+  virtual CatalogType * AddChild(const std::string &collection_name, const std::string &name);
+  virtual CatalogType * GetChild(const std::string &collection_name, const std::string &child_name) const;
+  virtual bool RemoveChild(const std::string &collection_name, const std::string &child_name);
+
 };
 
 } // End catalog namespace

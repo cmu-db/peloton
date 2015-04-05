@@ -7,35 +7,38 @@
 namespace nstore {
 namespace catalog {
 
-TableRef::TableRef(Catalog *catalog, CatalogType *parent, const string &path, const string &name)
-: CatalogType(catalog, parent, path, name)
-{
-    CatalogValue value;
-    m_fields["table"] = value;
+TableRef::TableRef(Catalog *catalog, CatalogType *parent, const std::string &path, const std::string &name)
+: CatalogType(catalog, parent, path, name),
+  m_table(nullptr) {
+  CatalogValue value;
+  m_fields["table"] = value;
 }
 
 TableRef::~TableRef() {
 }
 
-void TableRef::update() {
-    m_table = m_fields["table"].typeValue;
+void TableRef::Update() {
+  m_table = m_fields["table"].typeValue;
 }
 
-CatalogType * TableRef::addChild(const std::string &collectionName, const std::string &childName) {
-    return NULL;
+CatalogType * TableRef::AddChild(__attribute__((unused)) const std::string &collection_name,
+                                 __attribute__((unused)) const std::string &child_name) {
+  return NULL;
 }
 
-CatalogType * TableRef::getChild(const std::string &collectionName, const std::string &childName) const {
-    return NULL;
+CatalogType * TableRef::GetChild(__attribute__((unused)) const std::string &collection_name,
+                                 __attribute__((unused)) const std::string &child_name) const {
+  return NULL;
 }
 
-bool TableRef::removeChild(const std::string &collectionName, const std::string &childName) {
-    assert (m_childCollections.find(collectionName) != m_childCollections.end());
-    return false;
+bool TableRef::RemoveChild(const std::string &collection_name,
+                           __attribute__((unused)) const std::string &child_name) {
+  assert (m_childCollections.find(collection_name) != m_childCollections.end());
+  return false;
 }
 
-const Table * TableRef::table() const {
-    return dynamic_cast<Table*>(m_table);
+const Table * TableRef::GetTable() const {
+  return dynamic_cast<Table*>(m_table);
 }
 
 } // End catalog namespace

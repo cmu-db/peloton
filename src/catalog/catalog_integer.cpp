@@ -7,34 +7,37 @@ namespace nstore {
 namespace catalog {
 
 CatalogInteger::CatalogInteger(Catalog *catalog, CatalogType *parent, const std::string &path, const std::string &name)
-: CatalogType(catalog, parent, path, name)
-{
-    CatalogValue value;
-    m_fields["value"] = value;
+: CatalogType(catalog, parent, path, name),
+  m_value(0) {
+  CatalogValue value;
+  m_fields["value"] = value;
 }
 
 CatalogInteger::~CatalogInteger() {
 }
 
 void CatalogInteger::Update() {
-    m_value = m_fields["value"].intValue;
+  m_value = m_fields["value"].intValue;
 }
 
-CatalogType * CatalogInteger::AddChild(const std::string &collectionName, const std::string &childName) {
-    return NULL;
+CatalogType * CatalogInteger::AddChild(__attribute__((unused)) const std::string &collection_name,
+                                       __attribute__((unused)) const std::string &child_name) {
+  return NULL;
 }
 
-CatalogType * CatalogInteger::GetChild(const std::string &collectionName, const std::string &childName) const {
-    return NULL;
+CatalogType * CatalogInteger::GetChild(__attribute__((unused)) const std::string &collection_name,
+                                       __attribute__((unused)) const std::string &child_name) const {
+  return NULL;
 }
 
-bool CatalogInteger::RemoveChild(const std::string &collectionName, const std::string &childName) {
-    assert (m_childCollections.find(collectionName) != m_childCollections.end());
-    return false;
+bool CatalogInteger::RemoveChild(const std::string &collection_name,
+                                 __attribute__((unused)) const std::string &child_name) {
+  assert (m_childCollections.find(collection_name) != m_childCollections.end());
+  return false;
 }
 
-int32_t CatalogInteger::value() const {
-    return m_value;
+int32_t CatalogInteger::GetValue() const {
+  return m_value;
 }
 
 } // End catalog namespace

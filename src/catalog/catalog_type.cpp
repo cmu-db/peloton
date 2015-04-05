@@ -34,11 +34,11 @@ void CatalogType::Set(const std::string &field, const std::string &value) {
   if (indicator == '/') {
     //printf("Adding a path ref for %s[%s]:\n    %s\n", path().c_str(), field.c_str(), value.c_str());
     //fflush(stdout);
-    CatalogType *type = m_catalog->itemForRef(value);
+    CatalogType *type = m_catalog->ItemForRef(value);
     if (!type) {
       //printf("Adding unresolved info for path:\n    %s\n", value.c_str());
       //fflush(stdout);
-      m_catalog->addUnresolvedInfo(value, this, field);
+      m_catalog->AddUnresolvedInfo(value, this, field);
       Update();
       return;
     }
