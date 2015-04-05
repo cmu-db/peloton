@@ -4,8 +4,7 @@
 # BACKEND
 ######################################################################
 
-backend_FILES = \
-				backend/parser.cpp 
+backend_FILES = 
 
 backend_INCLUDES = \
 				   -I$(srcdir)/backend

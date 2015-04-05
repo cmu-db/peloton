@@ -15,7 +15,7 @@ AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -pthread \
 			  $(top_builddir)/third_party/gtest/lib/libgtest.la \
 			  -I$(top_srcdir)/third_party \
 			  $(top_builddir)/src/libnstore.la \
-			  -ltbb			  
+			  $(TBB_LIBS)
 
 # TESTS -- Programs run automatically by "make check"
 # check_PROGRAMS -- Programs built by "make check" but not necessarily run
