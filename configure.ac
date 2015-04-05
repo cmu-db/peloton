@@ -12,7 +12,7 @@ AC_PROG_CC([gcc])
 AC_PROG_LIBTOOL
  
 # Check for pthreads (uses m4/acx_pthread.m4).
-ACX_PTHREAD([], [AC_MSG_ERROR([Oops, we could not find pthreads in your system.])])
+ACX_PTHREAD([], [AC_MSG_ERROR([Could not find pthreads in your system.])])
 
 AC_LANG([C++])
 AC_PROG_CXX([g++])
@@ -50,6 +50,13 @@ AX_CHECK_COMPILE_FLAG([-fdiagnostics-color=auto], [CXXFLAGS="$CXXFLAGS -fdiagnos
 
 AX_VALGRIND_CHECK
 AX_CODE_COVERAGE
+
+######################################################################
+# PACKAGES
+######################################################################
+
+PKG_CHECK_MODULES([GDA], [libgda-5.0 > 1.0])
+PKG_CHECK_MODULES([TBB], [tbb > 1.0])
 
 #[test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h.in])
 

@@ -48,7 +48,7 @@ nstore_INCLUDES = $(backend_INCLUDES) \
 				  $(catalog_INCLUDES) \
 				  $(common_INCLUDES) \
 				  $(executor_INCLUDES) \
-				  $(expression_INCLUDES) \				  
+				  $(expression_INCLUDES) \
 				  $(index_INCLUDES) \
 				  $(parser_INCLUDES) \
 				  $(planner_INCLUDES) \
