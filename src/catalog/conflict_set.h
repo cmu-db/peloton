@@ -20,27 +20,33 @@ class ConflictSet : public CatalogType {
     friend class Catalog;
     friend class CatalogMap<ConflictSet>;
 
-protected:
-    ConflictSet(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
-    CatalogType* m_procedure;
-    CatalogMap<ConflictPair> m_readWriteConflicts;
-    CatalogMap<ConflictPair> m_writeWriteConflicts;
-
-    virtual void update();
-
-    virtual CatalogType * addChild(const std::string &collectionName, const std::string &name);
-    virtual CatalogType * getChild(const std::string &collectionName, const std::string &childName) const;
-    virtual bool removeChild(const std::string &collectionName, const std::string &childName);
-
 public:
     ~ConflictSet();
 
     /** GETTER: The other procedure that this conflict set is for */
-    const Procedure * procedure() const;
+    const Procedure * GetProcedure() const;
+
     /** GETTER: ConflictPairs that the parent Procedure has a read-write conflict with the target procedure */
-    const CatalogMap<ConflictPair> & readWriteConflicts() const;
+    const CatalogMap<ConflictPair> & GetReadWriteConflicts() const;
+
     /** GETTER: ConflictPairs that the parent Procedure has a write-write conflict with the target procedure */
-    const CatalogMap<ConflictPair> & writeWriteConflicts() const;
+    const CatalogMap<ConflictPair> & GetWriteWriteConflicts() const;
+
+protected:
+    ConflictSet(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
+
+    CatalogType* m_procedure;
+
+    CatalogMap<ConflictPair> m_read_write_conflicts;
+
+    CatalogMap<ConflictPair> m_write_write_conflicts;
+
+    virtual void Update();
+
+    virtual CatalogType * AddChild(const std::string &collection_name, const std::string &name);
+    virtual CatalogType * GetChild(const std::string &collection_name, const std::string &child_name) const;
+    virtual bool RemoveChild(const std::string &collection_name, const std::string &child_name);
+
 };
 
 } // End catalog namespace

@@ -18,36 +18,48 @@ class Host : public CatalogType {
     friend class Catalog;
     friend class CatalogMap<Host>;
 
-protected:
-    Host(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
-    int32_t m_id;
-    std::string m_ipaddr;
-    int32_t m_num_cpus;
-    int32_t m_corespercpu;
-    int32_t m_threadspercore;
-    int32_t m_memory;
-
-    virtual void update();
-
-    virtual CatalogType * addChild(const std::string &collectionName, const std::string &name);
-    virtual CatalogType * getChild(const std::string &collectionName, const std::string &childName) const;
-    virtual bool removeChild(const std::string &collectionName, const std::string &childName);
-
 public:
     ~Host();
 
     /** GETTER: Unique host id */
-    int32_t id() const;
+    int32_t GetId() const;
+
     /** GETTER: The ip address or hostname of the host */
-    const std::string & ipaddr() const;
+    const std::string & GetIPAddress() const;
+
     /** GETTER: The max number of cpus on this host */
-    int32_t num_cpus() const;
+    int32_t GetNumCpus() const;
+
     /** GETTER: The number of cores per CPU on this host */
-    int32_t corespercpu() const;
+    int32_t GetCoresPerCpu() const;
+
     /** GETTER: The number of threads per cores on this host */
-    int32_t threadspercore() const;
+    int32_t GetThreadsPerCore() const;
+
     /** GETTER: The amount of memory in bytes that this host has */
-    int32_t memory() const;
+    int32_t GetMemory() const;
+
+protected:
+    Host(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
+
+    int32_t m_id;
+
+    std::string m_ipaddr;
+
+    int32_t m_num_cpus;
+
+    int32_t m_cores_per_cpu;
+
+    int32_t m_threads_per_core;
+
+    int32_t m_memory;
+
+    virtual void Update();
+
+    virtual CatalogType * AddChild(const std::string &collection_name, const std::string &name);
+    virtual CatalogType * GetChild(const std::string &collection_name, const std::string &child_name) const;
+    virtual bool RemoveChild(const std::string &collection_name, const std::string &child_name);
+
 };
 
 } // End catalog namespace

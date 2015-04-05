@@ -7,35 +7,38 @@
 namespace nstore {
 namespace catalog {
 
-GroupRef::GroupRef(Catalog *catalog, CatalogType *parent, const string &path, const string &name)
-: CatalogType(catalog, parent, path, name)
-{
-    CatalogValue value;
-    m_fields["group"] = value;
+GroupRef::GroupRef(Catalog *catalog, CatalogType *parent, const std::string &path, const std::string &name)
+: CatalogType(catalog, parent, path, name),
+  m_group(nullptr) {
+  CatalogValue value;
+  m_fields["group"] = value;
 }
 
 GroupRef::~GroupRef() {
 }
 
-void GroupRef::update() {
-    m_group = m_fields["group"].typeValue;
+void GroupRef::Update() {
+  m_group = m_fields["group"].typeValue;
 }
 
-CatalogType * GroupRef::addChild(const std::string &collectionName, const std::string &childName) {
-    return NULL;
+CatalogType * GroupRef::AddChild(__attribute__((unused)) const std::string &collection_name,
+                                 __attribute__((unused)) const std::string &child_name) {
+  return NULL;
 }
 
-CatalogType * GroupRef::getChild(const std::string &collectionName, const std::string &childName) const {
-    return NULL;
+CatalogType * GroupRef::GetChild(__attribute__((unused)) const std::string &collection_name,
+                                 __attribute__((unused)) const std::string &child_name) const {
+  return NULL;
 }
 
-bool GroupRef::removeChild(const std::string &collectionName, const std::string &childName) {
-    assert (m_childCollections.find(collectionName) != m_childCollections.end());
-    return false;
+bool GroupRef::RemoveChild(const std::string &collection_name,
+                           __attribute__((unused)) const std::string &child_name) {
+  assert (m_childCollections.find(collection_name) != m_childCollections.end());
+  return false;
 }
 
-const Group * GroupRef::group() const {
-    return dynamic_cast<Group*>(m_group);
+const Group * GroupRef::GetGroup() const {
+  return dynamic_cast<Group*>(m_group);
 }
 
 } // End catalog namespace

@@ -18,16 +18,19 @@ AuthProgram::~AuthProgram() {
 void AuthProgram::Update() {
 }
 
-CatalogType * AuthProgram::AddChild(const std::string &collectionName, const std::string &childName) {
+CatalogType * AuthProgram::AddChild(__attribute__((unused)) const std::string &collection_name,
+                                    __attribute__((unused)) const std::string &child_name) {
     return NULL;
 }
 
-CatalogType * AuthProgram::GetChild(const std::string &collectionName, const std::string &childName) const {
+CatalogType * AuthProgram::GetChild(__attribute__((unused)) const std::string &collection_name,
+                                    __attribute__((unused)) const std::string &child_name) const {
     return NULL;
 }
 
-bool AuthProgram::RemoveChild(const std::string &collectionName, const std::string &childName) {
-    assert (m_childCollections.find(collectionName) != m_childCollections.end());
+bool AuthProgram::RemoveChild(const std::string &collection_name,
+                              __attribute__((unused)) const std::string &child_name) {
+    assert (m_childCollections.find(collection_name) != m_childCollections.end());
     return false;
 }
 

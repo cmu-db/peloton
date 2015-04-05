@@ -19,21 +19,22 @@ class ConstraintRef : public CatalogType {
     friend class Catalog;
     friend class CatalogMap<ConstraintRef>;
 
-protected:
-    ConstraintRef(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
-    CatalogType* m_constraint;
-
-    virtual void update();
-
-    virtual CatalogType * addChild(const std::string &collectionName, const std::string &name);
-    virtual CatalogType * getChild(const std::string &collectionName, const std::string &childName) const;
-    virtual bool removeChild(const std::string &collectionName, const std::string &childName);
-
 public:
     ~ConstraintRef();
 
     /** GETTER: The constraint that is referenced */
-    const Constraint * constraint() const;
+    const Constraint * GetConstraint() const;
+
+protected:
+    ConstraintRef(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
+    CatalogType* m_constraint;
+
+    virtual void Update();
+
+    virtual CatalogType * AddChild(const std::string &collection_name, const std::string &name);
+    virtual CatalogType * GetChild(const std::string &collection_name, const std::string &child_name) const;
+    virtual bool RemoveChild(const std::string &collection_name, const std::string &child_name);
+
 };
 
 } // End catalog namespace
