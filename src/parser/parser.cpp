@@ -22,14 +22,17 @@ namespace parser {
 void Parser::ParseSQLString(std::string query) {
 
   GdaSqlParser *parser = NULL;
-  GdaStatement *statement = NULL;
+  GdaStatement *stmt = NULL;
+  const gchar *remain;
+  GError *error = NULL;
 
-  /* Do parse SQL */
+  // create parser
   parser = gda_sql_parser_new();
-  statement = gda_sql_parser_parse_string(parser, query.c_str(), NULL, NULL);
+
+  stmt = gda_sql_parser_parse_string(parser, query.c_str(), &remain, &error);
 
   //Serialize to json
-  std::cout << gda_statement_serialize(statement) << "\n";
+  std::cout << gda_statement_serialize(stmt) << "\n";
 
 }
 
