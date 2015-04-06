@@ -31,8 +31,6 @@ void Parser::ParseSQLString(std::string query) {
   //Serialize to json
   std::cout << gda_statement_serialize(statement) << "\n";
 
-  delete parser;
-  delete statement;
 }
 
 } // End parser namespace
