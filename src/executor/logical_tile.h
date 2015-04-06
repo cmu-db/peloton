@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <memory>
 #include <vector>
 
 #include "common/types.h"
@@ -15,20 +14,21 @@
 namespace nstore {
 
 namespace storage {
+  class Tile;
   class Tuple;
 }
 
 namespace executor {
-class LogicalSchema;
 
 class LogicalTile {
 
  public:
-  LogicalTile(std::unique_ptr<LogicalSchema> schema);
+  void AddColumn(
+      storage::Tile *base_tile,
+      id_t origin_column_id,
+      unsigned int position_list_idx);
 
-  LogicalSchema *schema();
-
-  void AppendPositionTuple(std::vector<id_t> const &tuple);
+  int AddPositionList(std::vector<id_t> &&position_list);
 
   storage::Tuple *GetTuple(id_t column_id, id_t tuple_id);
 
@@ -39,20 +39,39 @@ class LogicalTile {
 
  private:
   /**
-   * @brief Schema of this logical tile.
-   *
-   * We use a different schema representation from physical tile as they
-   * contain very different metadata.
+   * @brief An entry in a schema that links a position list to a corresponding
+   *        column.
    */
-  std::unique_ptr<LogicalSchema> schema_;
+  struct ColumnPointer {
+    /** @brief Index of position list corresponding to this column. */
+    unsigned int position_list_idx;
+
+    /** @brief Pointer to base tile that column is from. */
+    storage::Tile *base_tile;
+
+    /** @brief Original column id of this column in the base tile. */
+    id_t origin_column_id;
+  };
 
   /**
-   * @brief List of positions tuples.
-   *
-   * Each position tuple contains the tuple ids of the fields in their origin
-   * base tiles.
+   * @brief Mapping of column ids in this logical tile to the underlying
+   *        position lists and columns in base tiles.
    */
-  std::vector<std::vector<id_t> > position_tuple_list_;
+  std::vector<ColumnPointer> schema_;
+
+  /**
+   * @brief Lists of position lists.
+   *
+   * Each list contains positions corresponding to particular tiles/columns.
+   */
+  std::vector<std::vector<id_t> > position_lists_;
+
+  /**
+   * @brief Bit-vector storing validity of each row in the position lists.
+   *
+   * Used to cheaply invalidate rows of positions.
+   */
+  std::vector<bool> valid_rows_;
 };
 
 

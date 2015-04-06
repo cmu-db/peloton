@@ -26,7 +26,7 @@ class AbstractExecutor {
   void CleanUp();
 
  protected:
-  AbstractExecutor(const planner::AbstractPlanNode *node);
+  explicit AbstractExecutor(const planner::AbstractPlanNode *node);
 
   template <class T> T &GetNode();
 

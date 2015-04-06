@@ -18,7 +18,7 @@ namespace executor {
 
 class MaterializationExecutor : public AbstractExecutor {
  public:
-  MaterializationExecutor(const planner::AbstractPlanNode *node);
+  explicit MaterializationExecutor(const planner::AbstractPlanNode *node);
 
  protected:
   bool SubInit();

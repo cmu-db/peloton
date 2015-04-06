@@ -6,7 +6,6 @@
 
 executor_FILES = \
 		executor/abstract_executor.cpp \
-                executor/logical_schema.cpp \
 	        executor/logical_tile.cpp \
                 executor/materialization_executor.cpp
 
