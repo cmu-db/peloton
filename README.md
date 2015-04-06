@@ -1,5 +1,5 @@
 # N-Store 
-DBMS designed for next-generation *storage technologies*, like non-volatile memory (NVM), and hybrid transaction/analytical processing (HTAP) *workloads* that enable real-time analytics.
+DBMS designed for next-generation storage technologies like non-volatile memory (NVM), and hybrid transaction/analytical processing (HTAP) workloads.
 
 ## Dependencies
 
