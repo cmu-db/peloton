@@ -13,56 +13,53 @@
 #include <cassert>
 #include <iostream>
 
-#include "executor/logical_schema.h"
+#include "common/value_factory.h"
 #include "storage/tile.h"
 
 namespace nstore {
 namespace executor {
 
-/** @brief Constructor for logical tile. */
-LogicalTile::LogicalTile(std::unique_ptr<LogicalSchema> schema)
-  : schema_(std::move(schema)) {
+/**
+ * @brief Adds column metadata to the logical tile.
+ * @param base_tile Base tile that this column is from.
+ * @param origin_column_id Original column id of this column in its base tile.
+ * @param position_list_idx Index of the position list corresponding to this
+ *        column.
+ *
+ * The position list corresponding to this column should be added
+ * before the metadata.
+ */
+void LogicalTile::AddColumn(
+    storage::Tile *base_tile,
+    id_t origin_column_id,
+    unsigned int position_list_idx) {
+  assert(position_list_idx < position_lists_.size());
+
+  ColumnPointer cp;
+  cp.base_tile = base_tile;
+  cp.origin_column_id = origin_column_id;
+  cp.position_list_idx = position_list_idx;
+  schema_.push_back(cp);
 }
 
 /**
- * @brief Returns schema of this tile.
+ * @brief Adds position list to logical tile.
+ * @param position_list Position list to be added. Note the move semantics.
  *
- * @return Pointer to logical schema of this tile.
- */
-LogicalSchema *LogicalTile::schema() {
-  return schema_.get();
-}
-
-/**
- * @brief Adds a position tuple to this tile.
- * @param tuple Vector of tuple ids (positions).
+ * The first position list to be added determines the number of rows in this
+ * logical tile.
  *
- * TODO Right now the caller has to ensure that the tuple is
- * in the right order. Maybe we should create a PositionTuple class to manage
- * that logic instead of requiring executors to be aware of this...
+ * @return Position list index of newly added list.
  */
-void LogicalTile::AppendPositionTuple(std::vector<id_t> const &tuple) {
-  assert(tuple.size() == schema_->NumValidCols());
+int LogicalTile::AddPositionList(std::vector<id_t> &&position_list) {
+  assert(position_lists_.size() == 0
+      || position_lists_[0].size() == position_list.size());
 
-  // First we ensure that the columns of the position tuple align with
-  // the schema (because some columns might exist but be invalidated).
-  std::vector<id_t> aligned_tuple;
-  int tuple_idx = 0;
-
-  for (unsigned int schema_idx = 0;
-      schema_idx < schema_->NumCols();
-      schema_idx++) {
-    if (schema_->IsValid(schema_idx)) {
-      aligned_tuple.push_back(tuple[tuple_idx]);
-      tuple_idx++;
-    } else {
-      aligned_tuple.push_back(INVALID_ID);
-    }
-
+  if (position_lists_.size() == 0) {
+    valid_rows_.resize(position_list.size(), true);
   }
-
-  // Add aligned tuple to tuple list.
-  position_tuple_list_.push_back(aligned_tuple);
+  position_lists_.push_back(std::move(position_list));  
+  return position_lists_.size() - 1;
 }
 
 /**
@@ -73,11 +70,16 @@ void LogicalTile::AppendPositionTuple(std::vector<id_t> const &tuple) {
  * @return Pointer to copy of tuple from base tile.
  */
 storage::Tuple *LogicalTile::GetTuple(id_t column_id, id_t tuple_id) {
-  assert(tuple_id < position_tuple_list_.size());
-  assert(schema_->IsValid(column_id));
+  assert(column_id < schema_.size());
+  assert(tuple_id < valid_rows_.size());
 
-  id_t base_tuple_id = position_tuple_list_[tuple_id][column_id];
-  storage::Tile *base_tile = schema_->GetBaseTile(column_id);
+  if (!valid_rows_[tuple_id]) {
+    return NULL;
+  }
+
+  ColumnPointer &cp = schema_[column_id];
+  id_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
+  storage::Tile *base_tile = cp.base_tile;
 
   // Get a copy of the tuple from the underlying physical tile.
   storage::Tuple *tuple = base_tile->GetTuple(base_tuple_id);
@@ -93,20 +95,24 @@ storage::Tuple *LogicalTile::GetTuple(id_t column_id, id_t tuple_id) {
  * @return Value at the specified field.
  */
 Value LogicalTile::GetValue(id_t column_id, id_t tuple_id) {
-  assert(tuple_id < position_tuple_list_.size());
-  assert(schema_->IsValid(column_id));
+  assert(column_id < schema_.size());
+  assert(tuple_id < valid_rows_.size());
 
-  id_t base_tuple_id = position_tuple_list_[tuple_id][column_id];
-  storage::Tile *base_tile = schema_->GetBaseTile(column_id);
-  id_t base_column_id = schema_->GetOriginColumnId(column_id);
+  if (!valid_rows_[tuple_id]) {
+    return ValueFactory::GetNullValue();
+  }
 
-  Value value = base_tile->GetValue(base_tuple_id, base_column_id);
+  ColumnPointer &cp = schema_[column_id];
+  id_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
+  storage::Tile *base_tile = cp.base_tile;
+
+  Value value = base_tile->GetValue(base_tuple_id, cp.origin_column_id);
 
   return value;
 }
 
 /** @brief Returns a string representation of this tile. */
-std::ostream& operator<<(std::ostream& os, const LogicalTile& logical_tile) {
+std::ostream& operator<<(std::ostream& os, const LogicalTile& lt) {
 
   os << "\t-----------------------------------------------------------\n";
 
@@ -114,15 +120,29 @@ std::ostream& operator<<(std::ostream& os, const LogicalTile& logical_tile) {
 
   os << "\t-----------------------------------------------------------\n";
   os << "\tSCHEMA\n";
-  os << (*logical_tile.schema_);
+  for (unsigned int i = 0; i < lt.schema_.size(); i++) {
+    const LogicalTile::ColumnPointer &cp = lt.schema_[i]; 
+    os << "Position list idx: " << cp.position_list_idx << ", "
+       << "base tile: " << cp.base_tile << ", "
+       << "origin column id: " << cp.origin_column_id << std::endl;
+  }
 
   os << "\t-----------------------------------------------------------\n";
-  os << "\tROW MAPPING\n";
+  os << "\tVALID ROWS\n";
 
-  for(auto position_tuple : logical_tile.position_tuple_list_){
+  for (unsigned int i = 0; i < lt.valid_rows_.size(); i++) {
+    os << lt.valid_rows_[i] << ", ";
+  }
+
+  os << std::endl;
+
+  os << "\t-----------------------------------------------------------\n";
+  os << "\tPOSITION LISTS\n";
+
+  for(auto position_list : lt.position_lists_){
     os << "\t" ;
-    for(auto pos : position_tuple) {
-      os << " Position: " << pos << ", ";
+    for(auto pos : position_list) {
+      os << pos << ", ";
     }
     os << "\n" ;
   }

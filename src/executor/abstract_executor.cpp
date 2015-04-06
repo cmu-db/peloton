@@ -1,9 +1,6 @@
 /**
  * @brief Base class for all executors.
  *
- * TODO(3/29/15): Note that this class will probably undergo many changes as
- * we come accross implementation issues. The interface is still in flux.
- *
  * Copyright(c) 2015, CMU
  */
 
