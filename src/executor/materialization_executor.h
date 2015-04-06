@@ -11,14 +11,14 @@
 namespace nstore {
 
 namespace planner {
-  class MaterializationNode;
+  class AbstractPlanNode;
 }
 
 namespace executor {
 
 class MaterializationExecutor : public AbstractExecutor {
  public:
-  MaterializationExecutor(const planner::MaterializationNode *node);
+  MaterializationExecutor(const planner::AbstractPlanNode *node);
 
  protected:
   bool SubInit();
@@ -26,10 +26,6 @@ class MaterializationExecutor : public AbstractExecutor {
   LogicalTile *SubGetNextTile();
 
   void SubCleanUp();
-
- private:
-  /** @brief Materialization node corresponding to this executor. */
-  const planner::MaterializationNode *node_;
 };
 
 } // namespace executor

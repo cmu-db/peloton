@@ -13,6 +13,26 @@ namespace nstore {
 namespace executor {
 
 /**
+ * @brief Constructor for AbstractExecutor.
+ * @param node Abstract plan node corresponding to this executor.
+ */
+AbstractExecutor::AbstractExecutor(const planner::AbstractPlanNode *node)
+  : node_(node) {
+}
+
+/**
+ * @brief Convenience method to return plan node corresponding to this
+ *        executor, appropriately type-casted.
+ *
+ * @return Reference to plan node.
+ */
+template <class T> T &AbstractExecutor::GetNode() {
+  T *node = dynamic_cast<T *>(node_);
+  assert(node);
+  return *node;
+}
+
+/**
  * @brief Add child executor to this executor node.
  * @param child Child executor to add.
  */

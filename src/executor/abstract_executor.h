@@ -9,6 +9,11 @@
 #include <vector>
 
 namespace nstore {
+
+namespace planner {
+  class AbstractPlanNode;
+}
+
 namespace executor {
 class LogicalTile;
 
@@ -21,6 +26,10 @@ class AbstractExecutor {
   void CleanUp();
 
  protected:
+  AbstractExecutor(const planner::AbstractPlanNode *node);
+
+  template <class T> T &GetNode();
+
   void AddChild(AbstractExecutor *child);
 
   /** @brief Init function to be overriden by subclass. */
@@ -34,6 +43,10 @@ class AbstractExecutor {
 
   /** @brief Children nodes of this executor in the executor tree. */
   std::vector<AbstractExecutor *> children_;
+
+ private:
+  /** @brief Plan node corresponding to this executor. */
+  const planner::AbstractPlanNode *node_;
 };
 
 } // namespace executor
