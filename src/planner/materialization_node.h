@@ -33,6 +33,7 @@ class MaterializationNode : public AbstractPlanNode {
    * projection node. TODO is this a good idea?
    */
   std::vector<id_t> column_ids_;
+};
 
 } // namespace planner
 } // namespace nstore

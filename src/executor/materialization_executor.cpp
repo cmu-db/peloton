@@ -12,6 +12,8 @@
 
 #include <cassert>
 
+#include "planner/materialization_node.h"
+
 namespace nstore {
 namespace executor {
 
@@ -20,8 +22,9 @@ namespace executor {
  * @param node Materialization node corresponding to this executor.
  */
 MaterializationExecutor::MaterializationExecutor(
-    const planner::MaterializationNode *node)
-  : node_(node) {}
+    const planner::AbstractPlanNode *node)
+  : AbstractExecutor(node) {
+}
 
 /**
  * @brief Nothing to init at the moment.
@@ -41,6 +44,7 @@ bool MaterializationExecutor::SubInit() {
  */
 LogicalTile *MaterializationExecutor::SubGetNextTile() {
   assert(children_.size() == 1);
+  planner::MaterializationNode &node = GetNode<planner::MaterializationNode>();
   //TODO Implement.
   return nullptr;
 }
