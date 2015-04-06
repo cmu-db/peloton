@@ -10,14 +10,15 @@
  *-------------------------------------------------------------------------
  */
 
+#include <memory>
+#include <utility>
+
 #include "gtest/gtest.h"
 
 #include "executor/logical_tile.h"
 #include "harness.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
-
-#include <memory>
 
 namespace nstore {
 namespace test {
@@ -114,20 +115,17 @@ TEST(LogicalTileTests, TileMaterializationTest) {
 
   storage::Tile *base_tile = tile_group->GetTile(1);
 
-  std::unique_ptr<executor::LogicalSchema> logical_schema(
-      new executor::LogicalSchema());
+  std::vector<id_t> position_list1 = { 0, 1 };
+  std::vector<id_t> position_list2 = { 0, 1 };
+
+  executor::LogicalTile *logical_tile = new executor::LogicalTile();
+
+  logical_tile->AddPositionList(std::move(position_list1));
+  logical_tile->AddPositionList(std::move(position_list2));
+
   id_t column_count = schema2->GetColumnCount();
   for(id_t column_itr = 0 ; column_itr < column_count ; column_itr++)
-    logical_schema->AddColumn(base_tile, column_itr);
-
-  executor::LogicalTile *logical_tile =
-      new executor::LogicalTile(std::move(logical_schema));
-
-  std::vector<id_t> position_tuple1 = { 0, 0 };
-  std::vector<id_t> position_tuple2 = { 1, 1 };
-
-  logical_tile->AppendPositionTuple(position_tuple1);
-  logical_tile->AppendPositionTuple(position_tuple2);
+    logical_tile->AddColumn(base_tile, column_itr, column_itr);
 
   std::cout << (*logical_tile) << "\n";
 
@@ -146,23 +144,25 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   storage::Tile *base_tile1 = tile_group->GetTile(0);
   storage::Tile *base_tile2 = tile_group->GetTile(1);
 
-  logical_schema.reset(new executor::LogicalSchema());
+  position_list1 = {0, 1};
+  position_list2 = {0, 1};
+  std::vector<id_t> position_list3 = {0, 1};
+  std::vector<id_t> position_list4 = {0, 1};
 
-  column_count = schema1->GetColumnCount();
-  for(id_t column_itr = 0 ; column_itr < column_count ; column_itr++)
-    logical_schema->AddColumn(base_tile1, column_itr);
+  logical_tile = new executor::LogicalTile();
 
-  column_count = schema2->GetColumnCount();
-  for(id_t column_itr = 0 ; column_itr < column_count ; column_itr++)
-    logical_schema->AddColumn(base_tile2, column_itr);
+  logical_tile->AddPositionList(std::move(position_list1));
+  logical_tile->AddPositionList(std::move(position_list2));
+  logical_tile->AddPositionList(std::move(position_list3));
+  logical_tile->AddPositionList(std::move(position_list4));
 
-  logical_tile = new executor::LogicalTile(std::move(logical_schema));
+  id_t column_count1 = schema1->GetColumnCount();
+  for(id_t column_itr = 0 ; column_itr < column_count1; column_itr++)
+    logical_tile->AddColumn(base_tile1, column_itr, column_itr);
 
-  position_tuple1 = {0, 0, 0, 0};
-  position_tuple2 = {1, 1, 1, 1};
-
-  logical_tile->AppendPositionTuple(position_tuple1);
-  logical_tile->AppendPositionTuple(position_tuple2);
+  id_t column_count2 = schema2->GetColumnCount();
+  for(id_t column_itr = 0 ; column_itr < column_count2; column_itr++)
+    logical_tile->AddColumn(base_tile2, column_itr, column_count1 + column_itr);
 
   std::cout << (*logical_tile) << "\n";
 
