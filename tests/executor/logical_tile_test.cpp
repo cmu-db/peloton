@@ -12,7 +12,6 @@
 
 #include "gtest/gtest.h"
 
-#include "executor/logical_schema.h"
 #include "executor/logical_tile.h"
 #include "harness.h"
 #include "storage/tile.h"
@@ -38,10 +37,14 @@ TEST(LogicalTileTests, TileMaterializationTest) {
 
   // SCHEMA
 
-  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
-  catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
-  catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), false, true);
-  catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 25, false, false);
+  catalog::ColumnInfo column1(
+      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+  catalog::ColumnInfo column2(
+      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+  catalog::ColumnInfo column3(
+      VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), false, true);
+  catalog::ColumnInfo column4(
+      VALUE_TYPE_VARCHAR, 25, false, false);
 
   columns.push_back(column1);
   columns.push_back(column2);
@@ -75,7 +78,8 @@ TEST(LogicalTileTests, TileMaterializationTest) {
 
   catalog::Manager *catalog = new catalog::Manager();
 
-  storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 4, column_names, true, catalog);
+  storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
+      schemas, 4, column_names, true, catalog);
 
   // TUPLES
 
@@ -85,12 +89,14 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   tuple1->SetValue(0, ValueFactory::GetIntegerValue(1));
   tuple1->SetValue(1, ValueFactory::GetIntegerValue(1));
   tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1));
-  tuple1->SetValue(3, ValueFactory::GetStringValue("tuple 1", tile_group->GetTilePool(1)));
+  tuple1->SetValue(
+      3, ValueFactory::GetStringValue("tuple 1", tile_group->GetTilePool(1)));
 
   tuple2->SetValue(0, ValueFactory::GetIntegerValue(2));
   tuple2->SetValue(1, ValueFactory::GetIntegerValue(2));
   tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2));
-  tuple2->SetValue(3, ValueFactory::GetStringValue("tuple 2", tile_group->GetTilePool(1)));
+  tuple2->SetValue(
+      3, ValueFactory::GetStringValue("tuple 2", tile_group->GetTilePool(1)));
 
   // TRANSACTION
 
