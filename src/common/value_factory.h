@@ -24,6 +24,10 @@ namespace nstore {
 class ValueFactory {
 public:
 
+        static inline Value GetInvalidValue() {
+                return Value::GetInvalidValue();
+        }
+
 	static inline Value GetTinyIntValue(int8_t value) {
 		return Value::GetTinyIntValue(value);
 	}

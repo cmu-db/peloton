@@ -1454,6 +1454,11 @@ private:
 	// Static Type Getters
 	//===--------------------------------------------------------------------===//
 
+        static Value GetInvalidValue() {
+          Value retval(VALUE_TYPE_INVALID);
+          return retval;
+        }
+
 	static Value GetTinyIntValue(int8_t value) {
 		Value retval(VALUE_TYPE_TINYINT);
 		retval.GetTinyInt() = value;

@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include "common/types.h"
@@ -25,6 +26,24 @@ class MaterializationNode : public AbstractPlanNode {
     return column_ids_;
   }
 
+  /**
+   * @brief Returns names of columns.
+   *
+   * @return Vector of names.
+   */
+   const std::vector<std::string> &column_names() const {
+     return column_names_;
+   }
+
+   /**
+    * @brief Returns schema of newly materialized tile.
+    *
+    * @return Schema of newly materialized tile.
+    */
+   const catalog::Schema &schema() const {
+    return schema_;
+   }
+
  private:
   /**
    * @brief Defines order of column ids after materialization.
@@ -33,6 +52,12 @@ class MaterializationNode : public AbstractPlanNode {
    * projection node.
    */
   std::vector<id_t> column_ids_;
+
+  /** @brief Names of the respective columns. */
+  std::vector<std::string> column_names_;
+
+  /** @brief Schema of newly materialized tile. */
+  catalog::Schema schema_;
 };
 
 } // namespace planner
