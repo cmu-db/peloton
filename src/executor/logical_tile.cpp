@@ -102,14 +102,15 @@ storage::Tuple *LogicalTile::GetTuple(id_t column_id, id_t tuple_id) {
  * @param column_id Column id of the specified field.
  * @param tuple_id Tuple id of the specified field (row/position).
  *
- * @return Value at the specified field.
+ * @return Value at the specified field,
+ *         or VALUE_TYPE_INVALID if it doesn't exist.
  */
 Value LogicalTile::GetValue(id_t column_id, id_t tuple_id) {
   assert(column_id < schema_.size());
   assert(tuple_id < valid_rows_.size());
 
   if (!valid_rows_[tuple_id]) {
-    return ValueFactory::GetNullValue();
+    return ValueFactory::GetInvalidValue();
   }
 
   ColumnPointer &cp = schema_[column_id];
@@ -127,6 +128,7 @@ Value LogicalTile::GetValue(id_t column_id, id_t tuple_id) {
  * @return Number of tuples.
  */
 int LogicalTile::NumTuples() {
+  //TODO WRONG! We want number of valid tuples.
   assert(position_lists_.size() == 0
       || valid_rows_.size() == position_lists_[0].size());
   return valid_rows_.size();
