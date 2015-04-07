@@ -36,6 +36,8 @@ class LogicalTile {
 
   Value GetValue(id_t column_id, id_t tuple_id);
 
+  int NumTuples();
+
   friend std::ostream& operator<<(
       std::ostream& os, const LogicalTile& logical_tile);
 
