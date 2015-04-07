@@ -121,6 +121,17 @@ Value LogicalTile::GetValue(id_t column_id, id_t tuple_id) {
   return value;
 }
 
+/**
+ * @brief Returns the number of tuples in this logical tile.
+ *
+ * @return Number of tuples.
+ */
+int LogicalTile::NumTuples() {
+  assert(position_lists_.size() == 0
+      || valid_rows_.size() == position_lists_[0].size());
+  return valid_rows_.size();
+}
+
 /** @brief Returns a string representation of this tile. */
 std::ostream& operator<<(std::ostream& os, const LogicalTile& lt) {
 
