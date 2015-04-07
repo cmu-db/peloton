@@ -63,6 +63,16 @@ int LogicalTile::AddPositionList(std::vector<id_t> &&position_list) {
 }
 
 /**
+ * @brief Returns base tile that the specified column was from.
+ * @param column_id Id of the specified column.
+ *
+ * @return Pointer to base tile of specified column.
+ */
+storage::Tile *LogicalTile::GetBaseTile(id_t column_id) {
+  return schema_[column_id].base_tile;
+}
+
+/**
  * @brief Get the tuple from the base tile that contains the specified field.
  * @param column_id Column id of the specified field.
  * @param tuple_id Tuple id of the specified field (row/position).
