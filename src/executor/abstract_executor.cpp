@@ -48,6 +48,7 @@ void AbstractExecutor::AddChild(AbstractExecutor *child) {
  */
 bool AbstractExecutor::Init() {
   for (unsigned int i = 0; i < children_.size(); i++) {
+    //TODO Check return value for success. Rollback on failure?
     children_[i]->Init();
   }
   return SubInit();
