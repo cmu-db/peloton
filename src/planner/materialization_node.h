@@ -21,7 +21,7 @@ class MaterializationNode : public AbstractPlanNode {
    *
    * @return Vector of column ids.
    */
-  const std::vector<id_t>& column_ids() const {
+  const std::vector<id_t> &column_ids() const {
     return column_ids_;
   }
 
@@ -30,7 +30,7 @@ class MaterializationNode : public AbstractPlanNode {
    * @brief Defines order of column ids after materialization.
    *
    * Reshuffling of column ids is handled by this node instead of the
-   * projection node. TODO is this a good idea?
+   * projection node.
    */
   std::vector<id_t> column_ids_;
 };

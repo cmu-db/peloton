@@ -30,6 +30,8 @@ class LogicalTile {
 
   int AddPositionList(std::vector<id_t> &&position_list);
 
+  storage::Tile *GetBaseTile(id_t column_id);
+
   storage::Tuple *GetTuple(id_t column_id, id_t tuple_id);
 
   Value GetValue(id_t column_id, id_t tuple_id);
