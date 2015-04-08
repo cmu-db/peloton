@@ -58,10 +58,15 @@ LogicalTile *MaterializationExecutor::SubGetNextTile() {
   }
 
   planner::MaterializationNode &node = GetNode<planner::MaterializationNode>();
+  std::unordered_map<id_t, id_t> &old_to_new_cols =
+    node.old_to_new_cols();
 
   // Generate mappings.
   std::unordered_map<storage::Tile *, std::vector<id_t> > tile_to_cols;
-  GenerateTileToColMap(node.column_ids(), source_tile.get(), tile_to_cols);
+  GenerateTileToColMap(
+      old_to_new_cols,
+      source_tile.get(),
+      tile_to_cols);
 
   // Create new physical tile.
   int num_tuples = source_tile->NumTuples();
@@ -75,7 +80,11 @@ LogicalTile *MaterializationExecutor::SubGetNextTile() {
         owns_tuple_schema));
 
   // Proceed to materialize by tile.
-  MaterializeByTiles(source_tile.get(), tile_to_cols, dest_tile.get());
+  MaterializeByTiles(
+      source_tile.get(),
+      old_to_new_cols,
+      tile_to_cols,
+      dest_tile.get());
 
   // Wrap physical tile in logical tile.
   //TODO
@@ -98,11 +107,11 @@ void MaterializationExecutor::SubCleanUp() {}
  * efficiency reasons.
  */
 void MaterializationExecutor::GenerateTileToColMap(
-    const std::vector<id_t> &column_ids,
+    std::unordered_map<id_t, id_t> &old_to_new_cols,
     LogicalTile *source_tile,
     std::unordered_map<storage::Tile *, std::vector<id_t> > &tile_to_cols) {
-  for (unsigned int i = 0; i < column_ids.size(); i++) {
-    id_t col = column_ids[i];
+  for (const auto &kv : old_to_new_cols) {
+    id_t col = kv.first;
     storage::Tile *base_tile = source_tile->GetBaseTile(col);
     std::vector<id_t> &cols_from_tile = tile_to_cols[base_tile];
     cols_from_tile.push_back(col);
@@ -118,6 +127,7 @@ void MaterializationExecutor::GenerateTileToColMap(
  */
 void MaterializationExecutor::MaterializeByTiles(
     LogicalTile *source_tile,
+    std::unordered_map<id_t, id_t> &old_to_new_cols,
     const
     std::unordered_map<storage::Tile *, std::vector<id_t> > &tile_to_cols,
     storage::Tile *dest_tile) {
@@ -126,10 +136,9 @@ void MaterializationExecutor::MaterializeByTiles(
     const std::vector<id_t> &old_column_ids = kv.second;
     for (id_t old_col_id : old_column_ids) {
       int new_tuple_id = 0;
+      int new_col_id = old_to_new_cols[old_col_id];
       for (auto old_tuple_id : *source_tile) {
         Value value = source_tile->GetValue(old_col_id, old_tuple_id);
-        //TODO Retrieve new_col_id.
-        int new_col_id = 0;
         dest_tile->SetValue(value, new_tuple_id++, new_col_id);
       }
     }
