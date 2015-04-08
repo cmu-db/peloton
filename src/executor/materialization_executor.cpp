@@ -45,7 +45,7 @@ bool MaterializationExecutor::SubInit() {
 /**
  * @brief Creates materialized physical tile from logical tile and wraps it
  *        in a new logical tile.
- * 
+ *
  * @return Pointer to logical tile containing newly materialized physical tile.
  */
 LogicalTile *MaterializationExecutor::SubGetNextTile() {

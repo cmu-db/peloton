@@ -56,6 +56,7 @@ int LogicalTile::AddPositionList(std::vector<id_t> &&position_list) {
       || position_lists_[0].size() == position_list.size());
 
   if (position_lists_.size() == 0) {
+    num_tuples_ = position_list.size();
     valid_rows_.resize(position_list.size(), true);
   }
   position_lists_.push_back(std::move(position_list));
@@ -123,15 +124,12 @@ Value LogicalTile::GetValue(id_t column_id, id_t tuple_id) {
 }
 
 /**
- * @brief Returns the number of tuples in this logical tile.
+ * @brief Returns the number of valid tuples in this logical tile.
  *
  * @return Number of tuples.
  */
 int LogicalTile::NumTuples() {
-  //TODO WRONG! We want number of valid tuples.
-  assert(position_lists_.size() == 0
-      || valid_rows_.size() == position_lists_[0].size());
-  return valid_rows_.size();
+  return num_tuples_;
 }
 
 /**
