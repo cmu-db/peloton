@@ -7,6 +7,7 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "common/types.h"
@@ -18,12 +19,13 @@ namespace planner {
 class MaterializationNode : public AbstractPlanNode {
  public:
   /**
-   * @brief Returns ordering of column ids to be used for materialization.
+   * @brief Returns mapping of old column ids to new column ids after
+   *        materialization.
    *
-   * @return Vector of column ids.
+   * @return Unordered map of old column ids to new column ids.
    */
-  const std::vector<id_t> &column_ids() const {
-    return column_ids_;
+  std::unordered_map<id_t, id_t> &old_to_new_cols() {
+    return old_to_new_cols_;
   }
 
   /**
@@ -46,12 +48,9 @@ class MaterializationNode : public AbstractPlanNode {
 
  private:
   /**
-   * @brief Defines order of column ids after materialization.
-   *
-   * Reshuffling of column ids is handled by this node instead of the
-   * projection node.
+   * @brief Mapping of old column ids to new column ids after materialization.
    */
-  std::vector<id_t> column_ids_;
+  std::unordered_map<id_t, id_t> old_to_new_cols_;
 
   /** @brief Names of the respective columns. */
   std::vector<std::string> column_names_;
