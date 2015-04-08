@@ -126,6 +126,9 @@ void MaterializationExecutor::MaterializeByTiles(
     const std::vector<id_t> &column_ids = kv.second;
     for (id_t col : column_ids) {
       //TODO
+      (void) col;
+      (void) source_tile;
+      (void) dest_tile;
     }
   }
 }

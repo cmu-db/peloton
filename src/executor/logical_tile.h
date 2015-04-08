@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <iterator>
 #include <vector>
 
 #include "common/types.h"
@@ -37,6 +38,33 @@ class LogicalTile {
   Value GetValue(id_t column_id, id_t tuple_id);
 
   int NumTuples();
+
+  /**
+   * @brief Iterates through tuples in this logical tile.
+   *
+   * This provides easy access to tuples that have not been invalidated.
+   */
+  class iterator : public std::iterator<std::input_iterator_tag, id_t> {
+   public:
+    iterator &operator++();
+
+    iterator operator++(int);
+
+    bool operator==(const iterator &rhs);
+
+    bool operator!=(const iterator &rhs);
+
+    id_t operator*();
+
+   private:
+    iterator(LogicalTile *tile);
+
+    /** @brief Keeps track of position of iterator. */
+    id_t pos_;
+
+    /** @brief Tile that this iterator is iterating over. */
+    LogicalTile *tile_;
+  };
 
   friend std::ostream& operator<<(
       std::ostream& os, const LogicalTile& logical_tile);

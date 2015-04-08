@@ -58,7 +58,7 @@ int LogicalTile::AddPositionList(std::vector<id_t> &&position_list) {
   if (position_lists_.size() == 0) {
     valid_rows_.resize(position_list.size(), true);
   }
-  position_lists_.push_back(std::move(position_list));  
+  position_lists_.push_back(std::move(position_list));
   return position_lists_.size() - 1;
 }
 
@@ -132,6 +132,72 @@ int LogicalTile::NumTuples() {
   assert(position_lists_.size() == 0
       || valid_rows_.size() == position_lists_[0].size());
   return valid_rows_.size();
+}
+
+/**
+ * @brief Constructor for iterator.
+ * @param Logical tile corresponding to this iterator.
+ */
+LogicalTile::iterator::iterator(LogicalTile *tile)
+  : pos_(0),
+    tile_(tile) {
+}
+
+/**
+ * @brief Increment operator.
+ *
+ * It ignores invalidated tuples.
+ *
+ * @return Iterator after the increment.
+ */
+LogicalTile::iterator &LogicalTile::iterator::operator++() {
+  do {
+    pos_++;
+  } while(pos_ < tile_->valid_rows_.size() && !tile_->valid_rows_[pos_]);
+
+  return *this;
+}
+
+/**
+ * @brief Increment operator.
+ *
+ * It ignores invalidated tuples.
+ *
+ * @return Iterator before the increment.
+ */
+LogicalTile::iterator LogicalTile::iterator::operator++(int) {
+  LogicalTile::iterator tmp(*this);
+  operator++();
+  return tmp;
+}
+
+/**
+ * @brief Equality operator.
+ * @param rhs The iterator to compare to.
+ *
+ * @return True if equal, false otherwise.
+ */
+bool LogicalTile::iterator::operator==(const iterator &rhs) {
+  return pos_ == rhs.pos_ && tile_ == rhs.tile_;
+}
+
+/**
+ * @brief Inequality operator.
+ * @param rhs The iterator to compare to.
+ *
+ * @return False if equal, true otherwise.
+ */
+bool LogicalTile::iterator::operator!=(const iterator &rhs) {
+  return pos_ != rhs.pos_ || tile_ != rhs.tile_;
+}
+
+/**
+ * @brief Dereference operator.
+ *
+ * @return Id of tuple that iterator is pointing at.
+ */
+id_t LogicalTile::iterator::operator*() {
+  return pos_;
 }
 
 /** @brief Returns a string representation of this tile. */
