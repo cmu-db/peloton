@@ -91,6 +91,8 @@ class Tile {
    */
   Value GetValue(const id_t tuple_slot_id, const id_t column_id);
 
+  void SetValue(Value value, const id_t tuple_slot_id, const id_t column_id);
+
   // Get tuple at location
   static Tuple *GetTuple(catalog::Manager* catalog, const ItemPointer* tuple_location);
 

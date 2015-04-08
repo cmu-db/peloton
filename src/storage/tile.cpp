@@ -140,6 +140,32 @@ Value Tile::GetValue(const id_t tuple_slot_id, const id_t column_id) {
   return Value::Deserialize(field_location, column_type, is_inlined);
 }
 
+/**
+ * Sets value at tuple slot.
+ * TODO We might want to write an iterator class to amortize the schema
+ * lookups when setting values of entire columns.
+ */
+void Tile::SetValue(
+    Value value,
+    const id_t tuple_slot_id,
+    const id_t column_id) {
+  char *tuple_location = GetTupleLocation(tuple_slot_id);
+  char *field_location =  tuple_location + schema->GetOffset(column_id);
+  const bool is_inlined = schema->IsInlined(column_id);
+  int column_length;
+  if (is_inlined) {
+    column_length = schema->GetLength(column_id);
+  } else {
+    column_length = schema->GetVariableLength(column_id);
+  }
+
+  value.SerializeWithAllocation(
+      field_location,
+      is_inlined,
+      column_length,
+      pool);
+}
+
 
 int Tile::GetColumnOffset(const std::string &name) const {
   for (id_t column_itr = 0, cnt = column_count; column_itr < cnt; column_itr++) {
