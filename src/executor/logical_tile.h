@@ -45,8 +45,8 @@ class LogicalTile {
    * This provides easy access to tuples that have not been invalidated.
    */
   class iterator : public std::iterator<std::input_iterator_tag, id_t> {
-   // It's a friend so it can call this iterator's private constructor.
-   friend class LogicalTile;
+    // It's a friend so it can call this iterator's private constructor.
+    friend class LogicalTile;
 
    public:
     iterator &operator++();
