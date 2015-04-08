@@ -104,6 +104,9 @@ class LogicalTile {
    * Used to cheaply invalidate rows of positions.
    */
   std::vector<bool> valid_rows_;
+
+  /** @brief Keeps track of the number of tuples that are still valid. */
+  int num_tuples_;
 };
 
 
