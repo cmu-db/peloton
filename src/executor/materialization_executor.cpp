@@ -117,18 +117,21 @@ void MaterializationExecutor::GenerateTileToColMap(
  * @param dest_tile New tile to copy data into.
  */
 void MaterializationExecutor::MaterializeByTiles(
-    const LogicalTile *source_tile,
+    LogicalTile *source_tile,
     const
     std::unordered_map<storage::Tile *, std::vector<id_t> > &tile_to_cols,
     storage::Tile *dest_tile) {
   for (const auto &kv : tile_to_cols) {
     // Copy over all data from each base tile.
-    const std::vector<id_t> &column_ids = kv.second;
-    for (id_t col : column_ids) {
-      //TODO
-      (void) col;
-      (void) source_tile;
-      (void) dest_tile;
+    const std::vector<id_t> &old_column_ids = kv.second;
+    for (id_t old_col_id : old_column_ids) {
+      int new_tuple_id = 0;
+      for (auto old_tuple_id : *source_tile) {
+        Value value = source_tile->GetValue(old_col_id, old_tuple_id);
+        //TODO Retrieve new_col_id.
+        int new_col_id = 0;
+        dest_tile->SetValue(value, new_tuple_id++, new_col_id);
+      }
     }
   }
 }

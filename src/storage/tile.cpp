@@ -10,18 +10,19 @@
  *-------------------------------------------------------------------------
  */
 
-#include <sstream>
+#include "storage/tile.h"
+
 #include <cassert>
 #include <cstdio>
 
+#include <sstream>
 
+#include "catalog/schema.h"
 #include "common/exception.h"
 #include "common/pool.h"
 #include "common/serializer.h"
-#include "catalog/schema.h"
-#include "storage/tuple.h"
-#include "storage/tile.h"
 #include "storage/tile_iterator.h"
+#include "storage/tuple.h"
 
 namespace nstore {
 namespace storage {
@@ -125,6 +126,8 @@ Tuple *Tile::GetTuple(const id_t tuple_slot_id) {
 /**
  * Returns value present at slot
  * NOTE : No checks, must be at valid slot and must exist.
+ * TODO We might want to write an iterator class to amortize the schema
+ * lookups when reading values of entire columns.
  */
 Value Tile::GetValue(const id_t tuple_slot_id, const id_t column_id) {
 
@@ -149,6 +152,8 @@ void Tile::SetValue(
     Value value,
     const id_t tuple_slot_id,
     const id_t column_id) {
+  assert(tuple_slot_id < num_tuple_slots);
+
   char *tuple_location = GetTupleLocation(tuple_slot_id);
   char *field_location =  tuple_location + schema->GetOffset(column_id);
   const bool is_inlined = schema->IsInlined(column_id);
