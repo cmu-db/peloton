@@ -106,6 +106,7 @@ storage::Tuple *LogicalTile::GetTuple(id_t column_id, id_t tuple_id) {
  * @return Value at the specified field,
  *         or VALUE_TYPE_INVALID if it doesn't exist.
  */
+// TODO Amortize schema lookups by using iterator instead?
 Value LogicalTile::GetValue(id_t column_id, id_t tuple_id) {
   assert(column_id < schema_.size());
   assert(tuple_id < valid_rows_.size());
@@ -133,12 +134,48 @@ int LogicalTile::NumTuples() {
 }
 
 /**
+ * @brief Returns iterator pointing to first tuple.
+ *
+ * @return iterator pointing to first tuple.
+ */
+LogicalTile::iterator LogicalTile::begin() {
+  bool begin = true;
+  return iterator(this, begin);
+}
+
+/**
+ * @brief Returns iterator indicating that we are past the last tuple.
+ *
+ * @return iterator indicating we're past the last tuple.
+ */
+LogicalTile::iterator LogicalTile::end() {
+  bool begin = false;
+  return iterator(this, begin);
+}
+
+/**
  * @brief Constructor for iterator.
  * @param Logical tile corresponding to this iterator.
+ * @param begin Specifies whether we want the iterator initialized to point
+ *              to the first tuple id, or to past-the-last tuple.
  */
-LogicalTile::iterator::iterator(LogicalTile *tile)
-  : pos_(0),
-    tile_(tile) {
+LogicalTile::iterator::iterator(LogicalTile *tile, bool begin)
+  : tile_(tile) {
+  if (!begin) {
+    pos_ = INVALID_ID;
+    return;
+  }
+
+  // Find first valid tuple.
+  pos_ = 0;
+  while(pos_ < tile_->valid_rows_.size() && !tile_->valid_rows_[pos_]) {
+    pos_++;
+  }
+
+  // If no valid tuples...
+  if (pos_ == tile_->valid_rows_.size()) {
+    pos_ = INVALID_ID;
+  }
 }
 
 /**
@@ -146,13 +183,17 @@ LogicalTile::iterator::iterator(LogicalTile *tile)
  *
  * It ignores invalidated tuples.
  *
- * @return Iterator after the increment.
+ * @return iterator after the increment.
  */
 LogicalTile::iterator &LogicalTile::iterator::operator++() {
+  // Find next valid tuple.
   do {
     pos_++;
   } while(pos_ < tile_->valid_rows_.size() && !tile_->valid_rows_[pos_]);
 
+  if (pos_ == tile_->valid_rows_.size()) {
+    pos_ = INVALID_ID;
+  }
   return *this;
 }
 
@@ -161,7 +202,7 @@ LogicalTile::iterator &LogicalTile::iterator::operator++() {
  *
  * It ignores invalidated tuples.
  *
- * @return Iterator before the increment.
+ * @return iterator before the increment.
  */
 LogicalTile::iterator LogicalTile::iterator::operator++(int) {
   LogicalTile::iterator tmp(*this);

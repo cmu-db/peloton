@@ -40,11 +40,14 @@ class LogicalTile {
   int NumTuples();
 
   /**
-   * @brief Iterates through tuples in this logical tile.
+   * @brief Iterates through tuple ids in this logical tile.
    *
    * This provides easy access to tuples that have not been invalidated.
    */
   class iterator : public std::iterator<std::input_iterator_tag, id_t> {
+   // It's a friend so it can call this iterator's private constructor.
+   friend class LogicalTile;
+
    public:
     iterator &operator++();
 
@@ -57,7 +60,7 @@ class LogicalTile {
     id_t operator*();
 
    private:
-    iterator(LogicalTile *tile);
+    iterator(LogicalTile *tile, bool begin);
 
     /** @brief Keeps track of position of iterator. */
     id_t pos_;
@@ -65,6 +68,10 @@ class LogicalTile {
     /** @brief Tile that this iterator is iterating over. */
     LogicalTile *tile_;
   };
+
+  iterator begin();
+
+  iterator end();
 
   friend std::ostream& operator<<(
       std::ostream& os, const LogicalTile& logical_tile);
