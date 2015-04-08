@@ -4,6 +4,8 @@
  * This executor also performs all functions of a projection node, in order
  * to support late materialization).
  *
+ * TODO Integrate expression system into materialization.
+ *
  * Copyright(c) 2015, CMU
  */
 
