@@ -23,6 +23,7 @@ namespace storage {
 namespace executor {
 
 class LogicalTile {
+  friend class LogicalTileFactory;
 
  public:
  ~LogicalTile();
