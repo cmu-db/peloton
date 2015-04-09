@@ -20,8 +20,21 @@ namespace nstore {
 namespace executor {
 
 /**
+ * @brief Destructor for this logical tile.
+ *
+ * Frees owned base tiles.
+ */
+LogicalTile::~LogicalTile() {
+  for (storage::Tile *base_tile : owned_base_tiles_) {
+    delete base_tile;
+  }
+}
+
+/**
  * @brief Adds column metadata to the logical tile.
  * @param base_tile Base tile that this column is from.
+ * @param own_base_tile True if the logical tile should assume ownership of
+ *                      the base tile passed in.
  * @param origin_column_id Original column id of this column in its base tile.
  * @param position_list_idx Index of the position list corresponding to this
  *        column.
@@ -31,6 +44,7 @@ namespace executor {
  */
 void LogicalTile::AddColumn(
     storage::Tile *base_tile,
+    bool own_base_tile,
     id_t origin_column_id,
     unsigned int position_list_idx) {
   assert(position_list_idx < position_lists_.size());
@@ -40,6 +54,10 @@ void LogicalTile::AddColumn(
   cp.origin_column_id = origin_column_id;
   cp.position_list_idx = position_list_idx;
   schema_.push_back(cp);
+
+  if (own_base_tile) {
+    owned_base_tiles_.insert(base_tile);
+  }
 }
 
 /**
