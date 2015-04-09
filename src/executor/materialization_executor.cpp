@@ -18,6 +18,7 @@
 
 #include "catalog/schema.h"
 #include "executor/logical_tile.h"
+#include "executor/logical_tile_factory.h"
 #include "planner/materialization_node.h"
 #include "storage/tile.h"
 #include "storage/tile_factory.h"
@@ -89,9 +90,8 @@ LogicalTile *MaterializationExecutor::SubGetNextTile() {
       dest_tile.get());
 
   // Wrap physical tile in logical tile.
-  //TODO
-
-  return nullptr;
+  bool own_base_tile = true;
+  return LogicalTileFactory::WrapBaseTile(dest_tile.release(), own_base_tile);
 }
 
 /** @brief Nothing to clean up at the moment. */
