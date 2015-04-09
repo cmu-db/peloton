@@ -16,6 +16,7 @@
 #include "gtest/gtest.h"
 
 #include "executor/logical_tile.h"
+#include "executor/logical_tile_factory.h"
 #include "harness.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
@@ -120,7 +121,8 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   std::vector<id_t> position_list1 = { 0, 1 };
   std::vector<id_t> position_list2 = { 0, 1 };
 
-  executor::LogicalTile *logical_tile = new executor::LogicalTile();
+  executor::LogicalTile *logical_tile =
+    executor::LogicalTileFactory::GetTile();
 
   logical_tile->AddPositionList(std::move(position_list1));
   logical_tile->AddPositionList(std::move(position_list2));
@@ -151,7 +153,7 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   std::vector<id_t> position_list3 = {0, 1};
   std::vector<id_t> position_list4 = {0, 1};
 
-  logical_tile = new executor::LogicalTile();
+  logical_tile = executor::LogicalTileFactory::GetTile();
 
   logical_tile->AddPositionList(std::move(position_list1));
   logical_tile->AddPositionList(std::move(position_list2));

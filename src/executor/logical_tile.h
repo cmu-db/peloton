@@ -82,6 +82,8 @@ class LogicalTile {
       std::ostream& os, const LogicalTile& logical_tile);
 
  private:
+  LogicalTile();
+
   /**
    * @brief An entry in a schema that links a position list to a corresponding
    *        column.

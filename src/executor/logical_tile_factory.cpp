@@ -51,7 +51,7 @@ LogicalTile *LogicalTileFactory::WrapBaseTile(
   new_tile->AddPositionList(std::move(position_list));
 
   // Next, we construct the schema.
-  for (id_t col_id = 0; col_id < base_tile->GetColumnCount(); col_id++) {
+  for (int col_id = 0; col_id < base_tile->GetColumnCount(); col_id++) {
     new_tile->AddColumn(
         base_tile,
         own_base_tile,
