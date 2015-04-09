@@ -20,6 +20,15 @@ namespace nstore {
 namespace executor {
 
 /**
+ * @brief Do nothing constructor.
+ *
+ * We have to implemented it to make it private. Only the LogicalTileFactory
+ * is allowed to create logical tiles.
+ */
+LogicalTile::LogicalTile() {
+}
+
+/**
  * @brief Destructor for this logical tile.
  *
  * Frees owned base tiles.
