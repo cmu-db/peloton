@@ -7,6 +7,7 @@
 #pragma once
 
 #include <iterator>
+#include <unordered_set>
 #include <vector>
 
 #include "common/types.h"
@@ -24,8 +25,11 @@ namespace executor {
 class LogicalTile {
 
  public:
+ ~LogicalTile();
+
   void AddColumn(
       storage::Tile *base_tile,
+      bool own_base_tile,
       id_t origin_column_id,
       unsigned int position_list_idx);
 
@@ -114,6 +118,9 @@ class LogicalTile {
 
   /** @brief Keeps track of the number of tuples that are still valid. */
   int num_tuples_;
+
+  /** @brief Set of base tiles owned (memory-wise) by this logical tile. */
+  std::unordered_set<storage::Tile *> owned_base_tiles_;
 };
 
 
