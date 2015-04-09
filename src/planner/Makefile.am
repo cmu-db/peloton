@@ -5,7 +5,8 @@
 ######################################################################
 
 planner_FILES = \
-                planner/abstract_plan_node.cpp
+                planner/abstract_plan_node.cpp \
+                planner/materialization_node.cpp
  
 planner_INCLUDES = \
                     -I$(srcdir)/planner
