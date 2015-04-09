@@ -139,7 +139,7 @@ void MaterializationExecutor::MaterializeByTiles(
     for (id_t old_col_id : old_column_ids) {
       int new_tuple_id = 0;
       int new_col_id = old_to_new_cols[old_col_id];
-      for (auto old_tuple_id : *source_tile) {
+      for (id_t old_tuple_id : *source_tile) {
         Value value = source_tile->GetValue(old_col_id, old_tuple_id);
         dest_tile->SetValue(value, new_tuple_id++, new_col_id);
       }
