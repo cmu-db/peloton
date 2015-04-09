@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -14,37 +15,26 @@
 #include "planner/abstract_plan_node.h"
 
 namespace nstore {
+
+namespace catalog {
+  class Schema;
+}
+
 namespace planner {
 
 class MaterializationNode : public AbstractPlanNode {
  public:
-  /**
-   * @brief Returns mapping of old column ids to new column ids after
-   *        materialization.
-   *
-   * @return Unordered map of old column ids to new column ids.
-   */
-  std::unordered_map<id_t, id_t> &old_to_new_cols() {
-    return old_to_new_cols_;
-  }
+  MaterializationNode(
+    std::vector<AbstractPlanNode *> &&children,
+    std::unordered_map<id_t, id_t> &&old_to_new_cols,
+    std::vector<std::string> &&column_names,
+    catalog::Schema *schema);
 
-  /**
-   * @brief Returns names of columns.
-   *
-   * @return Vector of names.
-   */
-   const std::vector<std::string> &column_names() const {
-     return column_names_;
-   }
+  std::unordered_map<id_t, id_t> &old_to_new_cols();
 
-   /**
-    * @brief Returns schema of newly materialized tile.
-    *
-    * @return Schema of newly materialized tile.
-    */
-   const catalog::Schema &schema() const {
-    return schema_;
-   }
+  const std::vector<std::string> &column_names() const;
+
+  const catalog::Schema &schema() const;
 
  private:
   /**
@@ -56,7 +46,7 @@ class MaterializationNode : public AbstractPlanNode {
   std::vector<std::string> column_names_;
 
   /** @brief Schema of newly materialized tile. */
-  catalog::Schema schema_;
+  std::unique_ptr<catalog::Schema> schema_;
 };
 
 } // namespace planner

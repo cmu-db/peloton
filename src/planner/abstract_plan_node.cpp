@@ -6,22 +6,25 @@
 
 #include "planner/abstract_plan_node.h"
 
+#include <utility>
+
 namespace nstore {
 namespace planner {
 
 /**
- * @brief Virtual destructor to make this class polymorphic.
- * 
- * We want to be able to downcast plan nodes using dynamic_cast.
+ * @brief Constructor for abstract plan node.
+ * @param children Vector of child nodes of this plan node.
  */
-AbstractPlanNode::~AbstractPlanNode() {}
+AbstractPlanNode::AbstractPlanNode(std::vector<AbstractPlanNode *> &&children)
+  : children_(std::move(children)) {
+}
 
 /**
- * @brief Add child node to abstract plan node.
- * @param child Child node to add to this plan node.
+ * @brief Virtual destructor to make this class polymorphic.
+ *
+ * We want to be able to downcast plan nodes using dynamic_cast.
  */
-void AbstractPlanNode::AddChild(AbstractPlanNode *child) {
-  children_.push_back(child);
+AbstractPlanNode::~AbstractPlanNode() {
 }
 
 /**
