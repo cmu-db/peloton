@@ -76,8 +76,7 @@ LogicalTile *MaterializationExecutor::SubGetNextTile() {
   bool owns_tuple_schema = true;
   std::unique_ptr<storage::Tile> dest_tile(
       storage::TileFactory::GetTile(
-        //TODO Weird interface in schema?
-        node.schema().CopySchema(&node.schema()),
+        catalog::Schema::CopySchema(&node.schema()),
         num_tuples,
         node.column_names(),
         owns_tuple_schema));
