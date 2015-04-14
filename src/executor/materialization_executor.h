@@ -30,11 +30,11 @@ class MaterializationExecutor : public AbstractExecutor {
   explicit MaterializationExecutor(const planner::AbstractPlanNode *node);
 
  protected:
-  bool SubInit();
+  bool Init();
 
-  LogicalTile *SubGetNextTile();
+  LogicalTile *GetNextTile();
 
-  void SubCleanUp();
+  bool CleanUp();
 
  private:
   void GenerateTileToColMap(

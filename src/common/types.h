@@ -167,6 +167,41 @@ enum IndexType {
   INDEX_TYPE_ORDERED_MAP = 2  // ordered map
 };
 
+//===--------------------------------------------------------------------===//
+// Plan Node Types
+//===--------------------------------------------------------------------===//
+
+enum PlanNodeType {
+    PLAN_NODE_TYPE_INVALID          = 0, // invalid plan node type
+
+    // Scan Nodes
+    PLAN_NODE_TYPE_SEQSCAN          = 10,
+    PLAN_NODE_TYPE_INDEXSCAN        = 11,
+
+    // Join Nodes
+    PLAN_NODE_TYPE_NESTLOOP         = 20,
+    PLAN_NODE_TYPE_NESTLOOPINDEX    = 21,
+
+    // Mutator Nodes
+    PLAN_NODE_TYPE_UPDATE           = 30,
+    PLAN_NODE_TYPE_INSERT           = 31,
+    PLAN_NODE_TYPE_DELETE           = 32,
+
+    // Communication Nodes
+    PLAN_NODE_TYPE_SEND             = 40,
+    PLAN_NODE_TYPE_RECEIVE          = 41,
+    PLAN_NODE_TYPE_PRINT            = 42,
+
+    // Algebra Nodes
+    PLAN_NODE_TYPE_AGGREGATE        = 50,
+    PLAN_NODE_TYPE_HASHAGGREGATE    = 51,
+    PLAN_NODE_TYPE_UNION            = 52,
+    PLAN_NODE_TYPE_ORDERBY          = 53,
+    PLAN_NODE_TYPE_PROJECTION       = 54,
+    PLAN_NODE_TYPE_MATERIALIZE      = 55,
+    PLAN_NODE_TYPE_LIMIT            = 56,
+    PLAN_NODE_TYPE_DISTINCT         = 57,
+};
 
 //===--------------------------------------------------------------------===//
 // Type definitions.
@@ -232,10 +267,6 @@ std::string GetTypeName(ValueType type);
 
 std::string GetBackendTypeName(BackendType type);
 
-std::string ValueToString(ValueType type);
-
-ValueType StringToValue(std::string str );
-
 /// Works only for fixed-length types
 std::size_t GetTypeSize(ValueType type);
 
@@ -243,8 +274,20 @@ bool IsNumeric(ValueType type);
 
 bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 
+//===--------------------------------------------------------------------===//
+// Transformers
+//===--------------------------------------------------------------------===//
+
+std::string ValueToString(ValueType type);
+
+ValueType StringToValue(std::string str );
+
 std::string ExpressionToString(ExpressionType type);
 
 ExpressionType StringToExpression(std::string str);
+
+std::string PlanNodeToString(PlanNodeType type);
+
+PlanNodeType StringToPlanNode(std::string str);
 
 } // End nstore namespace
