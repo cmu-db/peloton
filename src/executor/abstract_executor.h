@@ -18,35 +18,47 @@ namespace executor {
 class LogicalTile;
 
 class AbstractExecutor {
+
  public:
-  bool Init();
 
-  LogicalTile *GetNextTile();
+  // Executors are initialized once when the catalog is loaded
+  bool BaseInit();
 
-  void CleanUp();
+  // Invoke a plannode's associated executor
+  bool BaseExecute();
+
+  // Clean up any stuff
+  bool BaseCleanUp();
+
+  virtual ~AbstractExecutor() {}
 
  protected:
+
   explicit AbstractExecutor(const planner::AbstractPlanNode *node);
 
+  // Get associated plan node
   template <class T> T &GetNode();
 
-  void AddChild(AbstractExecutor *child);
+  // Concrete executor classes implement initialization
+  virtual bool Init() = 0;
 
-  /** @brief Init function to be overriden by subclass. */
-  virtual bool SubInit() = 0;
+  // Concrete executor classes implement execution
+  virtual bool Execute() = 0;
 
-  /** @brief Workhorse function to be overriden by subclass. */
-  virtual LogicalTile *SubGetNextTile() = 0;
-
-  /** @brief Clean up function to be overriden by subclass. */
-  virtual void SubCleanUp() = 0;
-
-  /** @brief Children nodes of this executor in the executor tree. */
-  std::vector<AbstractExecutor *> children_;
+  // clean up function to be overriden by subclass.
+  virtual bool CleanUp() = 0;
 
  private:
-  /** @brief Plan node corresponding to this executor. */
-  const planner::AbstractPlanNode *node_;
+
+  // plan node corresponding to this executor
+  const planner::AbstractPlanNode *node;
+
+  // output of execution
+  LogicalTile *output;
+
+  // execution context
+  //ExecutorContext *context;
+
 };
 
 } // namespace executor
