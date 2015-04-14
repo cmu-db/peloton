@@ -181,7 +181,7 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString) {
 }
 
 //===--------------------------------------------------------------------===//
-// Expression <--> String Utilities
+// Expression - String Utilities
 //===--------------------------------------------------------------------===//
 
 std::string ExpressionToString(ExpressionType type) {
@@ -345,6 +345,116 @@ ExpressionType StringToExpression(std::string str ) {
   }
 
   return EXPRESSION_TYPE_INVALID;
+}
+
+//===--------------------------------------------------------------------===//
+// Plan Node - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string PlanNodeToString(PlanNodeType type) {
+    switch (type) {
+    case PLAN_NODE_TYPE_INVALID: {
+        return "INVALID";
+    }
+    case PLAN_NODE_TYPE_SEQSCAN: {
+        return "SEQSCAN";
+    }
+    case PLAN_NODE_TYPE_INDEXSCAN: {
+        return "INDEXSCAN";
+    }
+    case PLAN_NODE_TYPE_NESTLOOP: {
+        return "NESTLOOP";
+    }
+    case PLAN_NODE_TYPE_NESTLOOPINDEX: {
+        return "NESTLOOPINDEX";
+    }
+    case PLAN_NODE_TYPE_UPDATE: {
+        return "UPDATE";
+    }
+    case PLAN_NODE_TYPE_INSERT: {
+        return "DELETE";
+    }
+    case PLAN_NODE_TYPE_DELETE: {
+        return "DELETE";
+    }
+    case PLAN_NODE_TYPE_SEND: {
+        return "SEND";
+    }
+    case PLAN_NODE_TYPE_RECEIVE: {
+        return "RECEIVE";
+    }
+    case PLAN_NODE_TYPE_PRINT: {
+        return "PRINT";
+    }
+    case PLAN_NODE_TYPE_AGGREGATE: {
+        return "AGGREGATE";
+    }
+    case PLAN_NODE_TYPE_HASHAGGREGATE: {
+        return "HASHAGGREGATE";
+    }
+    case PLAN_NODE_TYPE_UNION: {
+        return "UNION";
+    }
+    case PLAN_NODE_TYPE_ORDERBY: {
+        return "RECEIVE";
+    }
+    case PLAN_NODE_TYPE_PROJECTION: {
+        return "PROJECTION";
+    }
+    case PLAN_NODE_TYPE_MATERIALIZE: {
+        return "MATERIALIZE";
+    }
+    case PLAN_NODE_TYPE_LIMIT: {
+        return "LIMIT";
+    }
+    case PLAN_NODE_TYPE_DISTINCT: {
+        return "DISTINCT";
+    }
+    }
+    return "INVALID";
+}
+
+PlanNodeType StringToPlanNode(std::string str) {
+    if (str == "INVALID") {
+        return PLAN_NODE_TYPE_INVALID;
+    } else if (str == "SEQSCAN") {
+        return PLAN_NODE_TYPE_SEQSCAN;
+    } else if (str == "INDEXSCAN") {
+        return PLAN_NODE_TYPE_INDEXSCAN;
+    } else if (str == "NESTLOOP") {
+        return PLAN_NODE_TYPE_NESTLOOP;
+    } else if (str == "NESTLOOPINDEX") {
+        return PLAN_NODE_TYPE_NESTLOOPINDEX;
+    } else if (str == "UPDATE") {
+        return PLAN_NODE_TYPE_UPDATE;
+    } else if (str == "INSERT") {
+        return PLAN_NODE_TYPE_INSERT;
+    } else if (str == "DELETE") {
+        return PLAN_NODE_TYPE_DELETE;
+    } else if (str == "SEND") {
+        return PLAN_NODE_TYPE_SEND;
+    } else if (str == "RECEIVE") {
+        return PLAN_NODE_TYPE_RECEIVE;
+    } else if (str == "PRINT") {
+        return PLAN_NODE_TYPE_PRINT;
+    } else if (str == "AGGREGATE") {
+        return PLAN_NODE_TYPE_AGGREGATE;
+    } else if (str == "HASHAGGREGATE") {
+        return PLAN_NODE_TYPE_HASHAGGREGATE;
+    } else if (str == "UNION") {
+        return PLAN_NODE_TYPE_UNION;
+    } else if (str == "ORDERBY") {
+        return PLAN_NODE_TYPE_ORDERBY;
+    } else if (str == "PROJECTION") {
+        return PLAN_NODE_TYPE_PROJECTION;
+    } else if (str == "MATERIALIZE") {
+        return PLAN_NODE_TYPE_MATERIALIZE;
+    } else if (str == "LIMIT") {
+        return PLAN_NODE_TYPE_LIMIT;
+    } else if (str == "DISTINCT") {
+        return PLAN_NODE_TYPE_DISTINCT;
+    }
+    return PLAN_NODE_TYPE_INVALID;
 }
 
 } // End nstore namespace

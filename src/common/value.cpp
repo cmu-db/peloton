@@ -168,43 +168,43 @@ std::string Value::GetTypeName(ValueType type) {
   std::string ret;
   switch (type) {
     case (VALUE_TYPE_TINYINT):
-        				    ret = "tinyint";
+        ret = "tinyint";
     break;
     case (VALUE_TYPE_SMALLINT):
-        				    ret = "smallint";
+        ret = "smallint";
     break;
     case (VALUE_TYPE_INTEGER):
-        				    ret = "integer";
+        ret = "integer";
     break;
     case (VALUE_TYPE_BIGINT):
-        				    ret = "bigint";
+        ret = "bigint";
     break;
     case (VALUE_TYPE_DOUBLE):
-        				    ret = "double";
+        ret = "double";
     break;
     case (VALUE_TYPE_VARCHAR):
-        				    ret = "varchar";
+        ret = "varchar";
     break;
     case (VALUE_TYPE_VARBINARY):
-        				    ret = "varbinary";
+        ret = "varbinary";
     break;
     case (VALUE_TYPE_TIMESTAMP):
-        				    ret = "timestamp";
+        ret = "timestamp";
     break;
     case (VALUE_TYPE_DECIMAL):
-        				    ret = "decimal";
+        ret = "decimal";
     break;
     case (VALUE_TYPE_INVALID):
-        				    ret = "INVALID";
+        ret = "INVALID";
     break;
     case (VALUE_TYPE_NULL):
-        				    ret = "NULL";
+        ret = "NULL";
     break;
     case (VALUE_TYPE_BOOLEAN):
-        				    ret = "boolean";
+        ret = "boolean";
     break;
     case (VALUE_TYPE_ADDRESS):
-        				    ret = "address";
+        ret = "address";
     break;
     default: {
       char buffer[32];

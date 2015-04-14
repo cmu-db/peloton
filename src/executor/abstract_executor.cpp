@@ -14,7 +14,8 @@ namespace executor {
  * @param node Abstract plan node corresponding to this executor.
  */
 AbstractExecutor::AbstractExecutor(const planner::AbstractPlanNode *node)
-  : node_(node) {
+: node(node),
+  output(nullptr) {
 }
 
 /**
@@ -24,17 +25,9 @@ AbstractExecutor::AbstractExecutor(const planner::AbstractPlanNode *node)
  * @return Reference to plan node.
  */
 template <class T> T &AbstractExecutor::GetNode() {
-  T *node = dynamic_cast<T *>(node_);
+  T *node = dynamic_cast<T *>(node);
   assert(node);
   return *node;
-}
-
-/**
- * @brief Add child executor to this executor node.
- * @param child Child executor to add.
- */
-void AbstractExecutor::AddChild(AbstractExecutor *child) {
-  children_.push_back(child);
 }
 
 /**
@@ -46,27 +39,9 @@ void AbstractExecutor::AddChild(AbstractExecutor *child) {
  *
  * @return True on success, false otherwise.
  */
-bool AbstractExecutor::Init() {
-  for (unsigned int i = 0; i < children_.size(); i++) {
-    //TODO Check return value for success. Rollback on failure?
-    children_[i]->Init();
-  }
-  return SubInit();
-}
+bool AbstractExecutor::BaseInit() {
 
-/**
- * @brief Returns next tile processed by this executor.
- *
- * This function is the backbone of the tile-based volcano-style execution
- * model we are using.
- *
- * @return Pointer to the logical tile processed by this executor.
- */
-LogicalTile *AbstractExecutor::GetNextTile() {
-  //TODO In the future, we might want to pass some kind of executor state to
-  // GetNextTile. e.g. params for prepared plans.
-
-  return SubGetNextTile();
+  return Init();
 }
 
 /**
@@ -77,11 +52,9 @@ LogicalTile *AbstractExecutor::GetNextTile() {
  * TODO Why do we need a separate function to cleanup? Won't the destructor
  * suffice?
  */
-void AbstractExecutor::CleanUp() {
-  SubCleanUp();
-  for (unsigned int i = 0; i < children_.size(); i++) {
-    children_[i]->CleanUp();
-  }
+bool AbstractExecutor::BaseCleanUp() {
+
+  return CleanUp();
 }
 
 } // namespace executor

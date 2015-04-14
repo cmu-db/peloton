@@ -40,7 +40,7 @@ MaterializationExecutor::MaterializationExecutor(
  *
  * @return True on success, false otherwise.
  */
-bool MaterializationExecutor::SubInit() {
+bool MaterializationExecutor::Init() {
   assert(children_.size() == 1);
   return true;
 }
@@ -51,7 +51,7 @@ bool MaterializationExecutor::SubInit() {
  *
  * @return Pointer to logical tile containing newly materialized physical tile.
  */
-LogicalTile *MaterializationExecutor::SubGetNextTile() {
+LogicalTile *MaterializationExecutor::GetNextTile() {
   assert(children_.size() == 1);
 
   // Retrieve next tile.
@@ -94,7 +94,7 @@ LogicalTile *MaterializationExecutor::SubGetNextTile() {
 }
 
 /** @brief Nothing to clean up at the moment. */
-void MaterializationExecutor::SubCleanUp() {}
+void MaterializationExecutor::CleanUp() {}
 
 /**
  * @brief Generates map from each base tile to columns originally from that
