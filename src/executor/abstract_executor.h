@@ -6,8 +6,6 @@
 
 #pragma once
 
-#include <vector>
-
 namespace nstore {
 
 namespace planner {
@@ -22,13 +20,13 @@ class AbstractExecutor {
  public:
 
   // Executors are initialized once when the catalog is loaded
-  bool BaseInit();
+  bool Init();
 
   // Invoke a plannode's associated executor
-  bool BaseExecute();
+  bool Execute();
 
   // Clean up any stuff
-  bool BaseCleanUp();
+  bool CleanUp();
 
   virtual ~AbstractExecutor() {}
 
@@ -40,13 +38,13 @@ class AbstractExecutor {
   template <class T> T &GetNode();
 
   // Concrete executor classes implement initialization
-  virtual bool Init() = 0;
+  virtual bool SubInit() = 0;
 
   // Concrete executor classes implement execution
-  virtual bool Execute() = 0;
+  virtual bool SubExecute() = 0;
 
   // clean up function to be overriden by subclass.
-  virtual bool CleanUp() = 0;
+  virtual bool SubCleanUp() = 0;
 
  private:
 

@@ -17,36 +17,35 @@
 namespace nstore {
 
 namespace catalog {
-  class Schema;
+class Schema;
 }
 
 namespace planner {
 
 class MaterializationNode : public AbstractPlanNode {
  public:
-  MaterializationNode(
-    std::vector<AbstractPlanNode *> &&children,
-    std::unordered_map<id_t, id_t> &&old_to_new_cols,
-    std::vector<std::string> &&column_names,
-    catalog::Schema *schema);
 
-  std::unordered_map<id_t, id_t> &old_to_new_cols();
+  MaterializationNode(std::vector<AbstractPlanNode *> &&children,
+                      std::unordered_map<id_t, id_t> &&old_to_new_cols,
+                      std::vector<std::string> &&column_names,
+                      catalog::Schema *schema);
 
-  const std::vector<std::string> &column_names() const;
+  std::unordered_map<id_t, id_t> &GetOldToNewCols();
 
-  const catalog::Schema &schema() const;
+  const std::vector<std::string> &GetColumnNames() const;
+
+  const catalog::Schema &GetSchema() const;
 
  private:
-  /**
-   * @brief Mapping of old column ids to new column ids after materialization.
-   */
-  std::unordered_map<id_t, id_t> old_to_new_cols_;
 
-  /** @brief Names of the respective columns. */
-  std::vector<std::string> column_names_;
+  // Mapping of old column ids to new column ids after materialization.
+  std::unordered_map<id_t, id_t> m_old_to_new_cols;
 
-  /** @brief Schema of newly materialized tile. */
-  std::unique_ptr<catalog::Schema> schema_;
+  // Names of the respective columns.
+  std::vector<std::string> m_column_names;
+
+  // Schema of newly materialized tile.
+  std::unique_ptr<catalog::Schema> m_schema;
 };
 
 } // namespace planner
