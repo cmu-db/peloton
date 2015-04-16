@@ -55,11 +55,8 @@ AX_CODE_COVERAGE
 # PACKAGES
 ######################################################################
 
-PKG_CHECK_MODULES([LIBGDAMM], [libgdamm-5.0])
 PKG_CHECK_MODULES([TBB], [tbb >= 1.0.0])
 
-AC_SUBST([GDA_CFLAGS])
-AC_SUBST([GDA_LIBS])
 AC_SUBST([TBB_CFLAGS])
 AC_SUBST([TBB_LIBS])
 
