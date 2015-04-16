@@ -10,7 +10,6 @@
 #include <utility>
 
 #include "common/types.h"
-#include "executor/abstract_executor.h"
 #include "planner/abstract_plan_node.h"
 #include "planner/plan_column.h"
 #include "planner/plan_node_util.h"
@@ -38,7 +37,7 @@ AbstractPlanNode::~AbstractPlanNode() {
 
   // clean up inlined nodes
   for (auto node : inlined_nodes){
-    delete node;
+    delete node.second;
   }
 }
 
@@ -128,7 +127,7 @@ oid_t AbstractPlanNode::GetPlanNodeId() const {
   return plan_node_id;
 }
 
-void AbstractPlanNode::setExecutor(AbstractExecutor* executor_) {
+void AbstractPlanNode::SetExecutor(executor::AbstractExecutor* executor_) {
   executor = executor_;
 }
 
@@ -184,7 +183,7 @@ AbstractPlanNode* AbstractPlanNode::LoadFromJSONObject(json_spirit::Object &obj,
   }
 
   json_spirit::Array inlined_nodes = inlined_nodes_value.get_array();
-  for (int ii = 0; ii < inlined_nodes.size(); ii++) {
+  for (id_t ii = 0; ii < inlined_nodes.size(); ii++) {
     AbstractPlanNode* new_plan_node = nullptr;
     try {
       json_spirit::Object obj = inlined_nodes[ii].get_obj();
@@ -209,7 +208,7 @@ AbstractPlanNode* AbstractPlanNode::LoadFromJSONObject(json_spirit::Object &obj,
   }
 
   json_spirit::Array parent_node_ids_array = parent_node_ids_value.get_array();
-  for (int ii = 0; ii < parent_node_ids_array.size(); ii++) {
+  for (id_t ii = 0; ii < parent_node_ids_array.size(); ii++) {
     int32_t parentNodeId = (int32_t) parent_node_ids_array[ii].get_int();
     plan_node->parent_ids.push_back(parentNodeId);
   }
@@ -221,7 +220,7 @@ AbstractPlanNode* AbstractPlanNode::LoadFromJSONObject(json_spirit::Object &obj,
   }
 
   json_spirit::Array child_node_ids_array = child_node_ids_value.get_array();
-  for (int ii = 0; ii < child_node_ids_array.size(); ii++) {
+  for (id_t ii = 0; ii < child_node_ids_array.size(); ii++) {
     int32_t childNodeId = (int32_t) child_node_ids_array[ii].get_int();
     plan_node->children_ids.push_back(childNodeId);
   }
@@ -234,7 +233,7 @@ AbstractPlanNode* AbstractPlanNode::LoadFromJSONObject(json_spirit::Object &obj,
   }
 
   json_spirit::Array output_columns_array = output_columns_value.get_array();
-  for (int ii = 0; ii < output_columns_array.size(); ii++)  {
+  for (id_t ii = 0; ii < output_columns_array.size(); ii++)  {
     json_spirit::Value outputColumnValue = output_columns_array[ii];
     PlanColumn outputColumn = PlanColumn(outputColumnValue.get_obj());
     plan_node->output_column_guids.push_back(outputColumn.GetGuid());
