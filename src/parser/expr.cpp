@@ -96,8 +96,8 @@ Expr* Expr::makePlaceholder(int id) {
 Expr::~Expr() {
 	delete expr;
 	delete expr2;
-	delete name;
-	delete table;
+	free(name);
+	free(table);
 }
 
 } // End parser namespace

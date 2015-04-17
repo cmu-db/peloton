@@ -5,7 +5,7 @@ namespace nstore {
 namespace parser {
 
 TableRef::~TableRef() {
-	delete name;
+  free(name);
 	delete alias;
 	delete select;
 	delete list;

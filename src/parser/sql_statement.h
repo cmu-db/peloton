@@ -70,6 +70,11 @@ public:
 	};
 		
 	virtual ~SQLStatementList() {
+
+	  // clean up statements
+	  for(auto stmt : statements)
+	    delete stmt;
+
 		delete parser_msg;
 	}
 

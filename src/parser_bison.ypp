@@ -28,7 +28,7 @@ int yyerror(YYLTYPE* llocp, nstore::parser::SQLStatementList** result, __attribu
 
 	nstore::parser::SQLStatementList* list = new nstore::parser::SQLStatementList();
 	list->isValid = false;
-	list->parser_msg = strdup(msg);
+	//list->parser_msg = strdup(msg);
 	list->error_line = llocp->first_line;
 	list->error_col = llocp->first_column;
 

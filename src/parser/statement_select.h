@@ -82,6 +82,10 @@ struct SelectStatement : SQLStatement {
 
 	virtual ~SelectStatement() {
 		delete from_table;
+
+		for(auto expr : *select_list)
+		  delete expr;
+
 		delete select_list;
 		delete where_clause;
 		delete group_by;
