@@ -24,16 +24,16 @@ std::ostream& operator<<(std::ostream& os, const SQLStatement& stmt) {
   int indent = 1;
 
   switch(stmt._type) {
-    case kStmtSelect:
+    case STATEMENT_TYPE_SELECT:
       GetSelectStatementInfo((SelectStatement*)&stmt, indent);
       break;
-    case kStmtImport:
+    case STATEMENT_TYPE_IMPORT:
       GetImportStatementInfo((ImportStatement*)&stmt, indent);
       break;
-    case kStmtInsert:
+    case STATEMENT_TYPE_INSERT:
       GetInsertStatementInfo((InsertStatement*)&stmt, indent);
       break;
-    case kStmtCreate:
+    case STATEMENT_TYPE_CREATE:
       GetCreateStatementInfo((CreateStatement*)&stmt, indent);
       break;
     default:
@@ -50,7 +50,7 @@ std::ostream& operator<<(std::ostream& os, const SQLStatementList& stmt_list) {
       os << *stmt;
   }
   else {
-      os << "Invalid statment list \n";
+      os << "Invalid statement list \n";
   }
 
   return os;

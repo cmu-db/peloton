@@ -21,7 +21,7 @@ struct UpdateClause {
  */
 struct UpdateStatement : SQLStatement {
 	UpdateStatement() :
-		SQLStatement(kStmtUpdate),
+		SQLStatement(STATEMENT_TYPE_UPDATE),
 		table(NULL),
 		updates(NULL),
 		where(NULL) {}

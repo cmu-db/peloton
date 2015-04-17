@@ -40,7 +40,7 @@ struct CreateStatement : SQLStatement {
 	};
 
 	CreateStatement(CreateType type) :
-		SQLStatement(kStmtCreate),
+		SQLStatement(STATEMENT_TYPE_CREATE),
 		type(type),
 		if_not_exists(false),
 		columns(NULL),

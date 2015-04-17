@@ -16,7 +16,7 @@ struct InsertStatement : SQLStatement {
 	};
 
 	InsertStatement(InsertType type) :
-		SQLStatement(kStmtInsert),
+		SQLStatement(STATEMENT_TYPE_INSERT),
 		type(type),
 		table_name(NULL),
 		columns(NULL),

@@ -20,7 +20,7 @@ struct DropStatement : SQLStatement {
 
 
 	DropStatement(EntityType type) :
-		SQLStatement(kStmtDrop),
+		SQLStatement(STATEMENT_TYPE_DROP),
 		type(type),
 		name(NULL) {}
 
