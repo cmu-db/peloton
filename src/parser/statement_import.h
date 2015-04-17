@@ -17,7 +17,7 @@ struct ImportStatement : SQLStatement {
 
 
 	ImportStatement(ImportType type) :
-		SQLStatement(kStmtImport),
+		SQLStatement(STATEMENT_TYPE_IMPORT),
 		type(type),
 		file_path(NULL),
 		table_name(NULL) {};

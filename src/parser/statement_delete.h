@@ -13,7 +13,7 @@ namespace parser {
  */
 struct DeleteStatement : SQLStatement {
 	DeleteStatement() :
-		SQLStatement(kStmtDelete),
+		SQLStatement(STATEMENT_TYPE_DELETE),
 		table_name(NULL),
 		expr(NULL) {};
 

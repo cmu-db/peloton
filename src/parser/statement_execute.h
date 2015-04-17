@@ -11,7 +11,7 @@ namespace parser {
  */
 struct ExecuteStatement : SQLStatement {
 	ExecuteStatement() :
-		SQLStatement(kStmtExecute),
+		SQLStatement(STATEMENT_TYPE_EXECUTE),
 		name(NULL),
 		parameters(NULL) {}
 	
