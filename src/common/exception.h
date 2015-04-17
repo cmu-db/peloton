@@ -47,7 +47,8 @@ enum ExceptionType {
 	EXCEPTION_TYPE_NOT_IMPLEMENTED = 11,    // method not implemented
   EXCEPTION_TYPE_EXPRESSION = 12,         // expression parsing
   EXCEPTION_TYPE_CATALOG = 13,            // catalog related
-  EXCEPTION_TYPE_PLANNER = 14             // planner related
+  EXCEPTION_TYPE_PARSER = 14,             // parser related
+  EXCEPTION_TYPE_PLANNER = 15             // planner related
 };
 
 class Exception {
@@ -339,6 +340,16 @@ public:
     Exception(EXCEPTION_TYPE_CATALOG, msg){
   }
 };
+
+class ParserException : Exception {
+  ParserException() = delete;
+
+public:
+  ParserException(std::string msg) :
+    Exception(EXCEPTION_TYPE_PARSER, msg){
+  }
+};
+
 
 class PlannerException : Exception {
   PlannerException() = delete;

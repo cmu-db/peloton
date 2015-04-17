@@ -25,16 +25,16 @@ std::ostream& operator<<(std::ostream& os, const SQLStatement& stmt) {
 
   switch(stmt._type) {
     case kStmtSelect:
-      printSelectStatementInfo((SelectStatement*)&stmt, indent);
+      GetSelectStatementInfo((SelectStatement*)&stmt, indent);
       break;
     case kStmtImport:
-      printImportStatementInfo((ImportStatement*)&stmt, indent);
+      GetImportStatementInfo((ImportStatement*)&stmt, indent);
       break;
     case kStmtInsert:
-      printInsertStatementInfo((InsertStatement*)&stmt, indent);
+      GetInsertStatementInfo((InsertStatement*)&stmt, indent);
       break;
     case kStmtCreate:
-      printCreateStatementInfo((CreateStatement*)&stmt, indent);
+      GetCreateStatementInfo((CreateStatement*)&stmt, indent);
       break;
     default:
       break;
