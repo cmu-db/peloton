@@ -2,7 +2,8 @@
 
 #include <stdio.h>
 #include <vector>
-#include "expr.h"
+
+#include "expression/expression.h"
 #include "common/types.h"
 
 namespace nstore {
@@ -11,7 +12,8 @@ namespace parser {
 struct SelectStatement;
 struct JoinDefinition;
 
-//  Holds reference to tables. Can be either table names or a select statement.
+//  Holds reference to tables.
+// Can be either table names or a select statement.
 struct TableRef {
   TableRef(TableReferenceType type) :
     type(type),
@@ -47,7 +49,6 @@ struct TableRef {
   }
 };
 
-
 // Definition of a join table
 struct JoinDefinition {
   JoinDefinition() :
@@ -64,7 +65,7 @@ struct JoinDefinition {
 
   TableRef* left;
   TableRef* right;
-  Expr* condition;
+  expression::AbstractExpression* condition;
 
   JoinType type;
 };

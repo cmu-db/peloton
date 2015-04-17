@@ -19,7 +19,7 @@ typedef enum {
 } OrderType;
 
 struct OrderDescription {
-	OrderDescription(OrderType type, Expr* expr) :
+	OrderDescription(OrderType type, expression::AbstractExpression* expr) :
 		type(type),
 		expr(expr) {}
 		
@@ -28,7 +28,7 @@ struct OrderDescription {
 	}
 
 	OrderType type;
-	Expr* expr;	
+	expression::AbstractExpression* expr;
 };
 
 /**
@@ -59,8 +59,8 @@ struct GroupByDescription {
 		delete having;
 	}
 
-	std::vector<Expr*>* columns;
-	Expr* having;
+	std::vector<expression::AbstractExpression*>* columns;
+	expression::AbstractExpression* having;
 };
 
 /**
@@ -96,8 +96,8 @@ struct SelectStatement : SQLStatement {
 
 	TableRef* from_table;
 	bool select_distinct;
-	std::vector<Expr*>* select_list;
-	Expr* where_clause;	
+	std::vector<expression::AbstractExpression*>* select_list;
+	expression::AbstractExpression* where_clause;
 	GroupByDescription* group_by;
 
 	SelectStatement* union_select;
