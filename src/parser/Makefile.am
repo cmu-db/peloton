@@ -11,9 +11,9 @@ parser_FILES = \
 			   parser/sql_parser.cpp \
 			   parser/expr.cpp \
 			   parser/destruct.cpp \
-			   parser/sql_grammar_test.cpp \
-			   parser/sql_helper.cpp
-			   
+			   parser/sql_helper.cpp \
+			   parser/sql_statement.cpp
+			   			   
 AM_YFLAGS = -d
 
 parser_INCLUDES = \

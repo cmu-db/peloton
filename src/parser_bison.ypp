@@ -22,7 +22,7 @@
 using namespace std;
 using namespace nstore::parser;
 
-extern int yylex (YYSTYPE *lvalp, YYLTYPE *llocp, yyscan_t scanner);
+extern int parser_lex (YYSTYPE *lvalp, YYLTYPE *llocp, yyscan_t scanner);
 
 int yyerror(YYLTYPE* llocp, nstore::parser::SQLStatementList** result, __attribute__((unused)) yyscan_t scanner, const char *msg) {
 

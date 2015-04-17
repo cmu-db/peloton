@@ -17,6 +17,7 @@
 #include "parser_bison.h"
 
 #define TOKEN(name) { return SQL_##name; }
+#define yylex           parser_lex
 
 %}
 /***************************
