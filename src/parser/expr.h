@@ -8,8 +8,6 @@ namespace parser {
 // Helper function
 char* substr(const char* source, int from, int to);
 
-
-
 typedef enum {
 	kExprLiteralFloat,
 	kExprLiteralString,
@@ -20,7 +18,6 @@ typedef enum {
 	kExprFunctionRef,
 	kExprOperator
 } ExprType;
-
 
 typedef struct Expr Expr;
 

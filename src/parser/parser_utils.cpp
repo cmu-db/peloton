@@ -37,13 +37,13 @@ void inprintU(uint64_t val, uint num_indent) {
 
 void printTableRefInfo(TableRef* table, uint num_indent) {
   switch (table->type) {
-    case kTableName:
+    case TABLE_REFERENCE_TYPE_NAME:
       inprint(table->name, num_indent);
       break;
-    case kTableSelect:
+    case TABLE_REFERENCE_TYPE_SELECT:
       GetSelectStatementInfo(table->select, num_indent);
       break;
-    case kTableJoin:
+    case TABLE_REFERENCE_TYPE_JOIN:
       inprint("-> Join Table", num_indent);
       inprint("-> Left", num_indent+1);
       printTableRefInfo(table->join->left, num_indent+2);
@@ -52,10 +52,16 @@ void printTableRefInfo(TableRef* table, uint num_indent) {
       inprint("-> Join Condition", num_indent+1);
       GetExpressionInfo(table->join->condition, num_indent+2);
       break;
-    case kTableCrossProduct:
+    case TABLE_REFERENCE_TYPE_CROSS_PRODUCT:
       for (TableRef* tbl : *table->list) printTableRefInfo(tbl, num_indent);
       break;
+
+    case TABLE_REFERENCE_TYPE_INVALID:
+    default:
+      printf("invalid table ref type \n");
+      break;
   }
+
   if (table->alias != NULL) {
     inprint("Alias", num_indent+1);
     inprint(table->alias, num_indent+2);
