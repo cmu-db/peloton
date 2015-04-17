@@ -24,14 +24,14 @@ struct InsertStatement : SQLStatement {
 		select(NULL) {}
 	
 	virtual ~InsertStatement() {
-		delete table_name;
+		free(table_name);
 		delete columns;
 		delete values;
 		delete select;
 	}
 
 	InsertType type;
-	const char* table_name;
+	char* table_name;
 	std::vector<char*>* columns;
 	std::vector<Expr*>* values;
 	SelectStatement* select;

@@ -16,11 +16,11 @@ struct ExecuteStatement : SQLStatement {
 		parameters(NULL) {}
 	
 	virtual ~ExecuteStatement() {
-		delete name;
+	  free(name);
 		delete parameters;
 	}
 
-	const char* name;
+	char* name;
 	std::vector<Expr*>* parameters;
 };
 

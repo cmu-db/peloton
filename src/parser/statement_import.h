@@ -23,14 +23,14 @@ struct ImportStatement : SQLStatement {
 		table_name(NULL) {};
 		
 	virtual ~ImportStatement() {
-		delete file_path;
-		delete table_name;
+	  free(file_path);
+	  free(table_name);
 	}
 
 
 	ImportType type;
-	const char* file_path;
-	const char* table_name;
+	char* file_path;
+	char* table_name;
 };
 
 } // End parser namespace

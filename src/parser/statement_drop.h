@@ -25,12 +25,12 @@ struct DropStatement : SQLStatement {
 		name(NULL) {}
 
 	virtual ~DropStatement() {
-		delete name;
+	  free(name);
 	}
 
 
 	EntityType type;
-	const char* name;
+	char* name;
 };
 
 } // End parser namespace
