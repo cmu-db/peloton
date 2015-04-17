@@ -7,15 +7,15 @@ include $(top_srcdir)/common.am
 # SUBDIRS
 ######################################################################
 
-include $(srcdir)/backend/Makefile.am
-include $(srcdir)/catalog/Makefile.am
-include $(srcdir)/common/Makefile.am
-include $(srcdir)/executor/Makefile.am
-include $(srcdir)/expression/Makefile.am
-include $(srcdir)/index/Makefile.am
+#include $(srcdir)/backend/Makefile.am
+#include $(srcdir)/catalog/Makefile.am
+#include $(srcdir)/common/Makefile.am
+#include $(srcdir)/executor/Makefile.am
+#include $(srcdir)/expression/Makefile.am
+#include $(srcdir)/index/Makefile.am
 include $(srcdir)/parser/Makefile.am
-include $(srcdir)/planner/Makefile.am
-include $(srcdir)/storage/Makefile.am
+#include $(srcdir)/planner/Makefile.am
+#include $(srcdir)/storage/Makefile.am
 
 bin_PROGRAMS = nstore
 noinst_LTLIBRARIES= libnstore.la
