@@ -11,6 +11,7 @@
  */
 
 #include "sql_statement.h"
+#include "sql_helper.h"
 
 namespace nstore {
 namespace parser {
@@ -18,6 +19,25 @@ namespace parser {
 std::ostream& operator<<(std::ostream& os, const SQLStatement& stmt) {
 
   os << "\tSTMT : Type :: " << stmt._type << "\n";
+
+  int indent = 1;
+
+  switch(stmt._type) {
+    case kStmtSelect:
+      printSelectStatementInfo((SelectStatement*)&stmt, indent);
+      break;
+    case kStmtImport:
+      printImportStatementInfo((ImportStatement*)&stmt, indent);
+      break;
+    case kStmtInsert:
+      printInsertStatementInfo((InsertStatement*)&stmt, indent);
+      break;
+    case kStmtCreate:
+      printCreateStatementInfo((CreateStatement*)&stmt, indent);
+      break;
+    default:
+      break;
+  }
 
   return os;
 }
