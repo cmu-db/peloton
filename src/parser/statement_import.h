@@ -27,7 +27,6 @@ struct ImportStatement : SQLStatement {
 	  free(table_name);
 	}
 
-
 	ImportType type;
 	char* file_path;
 	char* table_name;

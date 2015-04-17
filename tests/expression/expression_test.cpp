@@ -276,7 +276,7 @@ TEST(ExpressionTest, SimpleFilter) {
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(20));
   expression::ComparisonExpression<expression::CmpEq> *equal =
-      new expression::ComparisonExpression<expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_exp, const_val_exp);
+      new expression::ComparisonExpression<expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQ, tup_val_exp, const_val_exp);
 
   // TUPLE
 
@@ -314,14 +314,14 @@ TEST(ExpressionTest, OrFilter) {
   expression::ConstantValueExpression *const_val_a =
       new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(20));
   expression::ComparisonExpression<expression::CmpEq> *comp_a =
-      new expression::ComparisonExpression<expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_a, const_val_a);
+      new expression::ComparisonExpression<expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQ, tup_val_a, const_val_a);
 
   expression::TupleValueExpression *tup_val_b =
       new expression::TupleValueExpression(1, std::string("tablename"), std::string("colname"));
   expression::ConstantValueExpression *const_val_b =
       new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(30));
   expression::ComparisonExpression<expression::CmpEq> *comp_b =
-      new expression::ComparisonExpression<expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQUAL, tup_val_b, const_val_b);
+      new expression::ComparisonExpression<expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQ, tup_val_b, const_val_b);
 
   expression::ConjunctionExpression<expression::ConjunctionOr> *predicate =
       new expression::ConjunctionExpression<expression::ConjunctionOr>(EXPRESSION_TYPE_CONJUNCTION_OR, comp_a, comp_b);

@@ -94,6 +94,7 @@ struct SelectStatement : SQLStatement {
 		delete limit;
 	}
 
+	int ival;
 	TableRef* from_table;
 	bool select_distinct;
 	std::vector<expression::AbstractExpression*>* select_list;
