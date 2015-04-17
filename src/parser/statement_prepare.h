@@ -14,7 +14,7 @@ namespace parser {
  */
 struct PrepareStatement : SQLStatement {
 	PrepareStatement() :
-		SQLStatement(kStmtPrepare),
+		SQLStatement(STATEMENT_TYPE_PREPARE),
 		name(NULL),
 		query(NULL) {}
 	

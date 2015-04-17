@@ -204,6 +204,27 @@ enum PlanNodeType {
 };
 
 //===--------------------------------------------------------------------===//
+// Statement Types
+//===--------------------------------------------------------------------===//
+
+enum StatementType {
+    STATEMENT_TYPE_INVALID          = 0, // invalid statement type
+
+    STATEMENT_TYPE_SELECT           = 1, // select statement type
+    STATEMENT_TYPE_IMPORT           = 2, // import statement type
+    STATEMENT_TYPE_INSERT           = 3, // insert statement type
+    STATEMENT_TYPE_UPDATE           = 4, // update statement type
+    STATEMENT_TYPE_DELETE           = 5, // delete statement type
+    STATEMENT_TYPE_CREATE           = 6, // create statement type
+    STATEMENT_TYPE_DROP             = 7, // drop statement type
+    STATEMENT_TYPE_PREPARE          = 8, // prepare statement type
+    STATEMENT_TYPE_EXECUTE          = 9, // execute statement type
+    STATEMENT_TYPE_EXPORT           = 10, // export statement type
+    STATEMENT_TYPE_RENAME           = 11, // rename statement type
+    STATEMENT_TYPE_ALTER            = 12  // alter statement type
+};
+
+//===--------------------------------------------------------------------===//
 // Type definitions.
 //===--------------------------------------------------------------------===//
 

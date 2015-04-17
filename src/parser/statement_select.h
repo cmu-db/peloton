@@ -71,8 +71,9 @@ struct GroupByDescription {
  */
 struct SelectStatement : SQLStatement {
 	SelectStatement() : 
-		SQLStatement(kStmtSelect),
+		SQLStatement(STATEMENT_TYPE_SELECT),
 		from_table(NULL),
+		select_distinct(false),
 		select_list(NULL),
 		where_clause(NULL),
 		group_by(NULL),
