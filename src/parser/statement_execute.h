@@ -21,7 +21,7 @@ struct ExecuteStatement : SQLStatement {
 	}
 
 	char* name;
-	std::vector<Expr*>* parameters;
+	std::vector<expression::AbstractExpression*>* parameters;
 };
 
 

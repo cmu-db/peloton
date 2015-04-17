@@ -28,6 +28,7 @@ typedef struct Expr Expr;
  * TODO: When destructing a placeholder expression, we might need to alter the placeholder_list
  */
 struct Expr {
+
 	/**
 	 * Operator types. These are important for expressions of type kExprOperator
 	 * Trivial types are those that can be described by a single character e.g:
@@ -80,38 +81,56 @@ struct Expr {
 	char op_char;
 	bool distinct;
 
-
 	/**
 	 * Convenience accessor methods
 	 */
-	inline bool isType(ExprType e_type) { return e_type == type; }
-	inline bool isLiteral() { return isType(kExprLiteralInt) || isType(kExprLiteralFloat) || isType(kExprLiteralString) || isType(kExprPlaceholder); }
-	inline bool hasAlias() { return alias != NULL; }
-	inline bool hasTable() { return table != NULL; }
-	inline char* getName() {
-		if (alias != NULL) return alias;
-		else return name;
+	inline bool IsType(ExprType e_type) {
+	  return e_type == type;
 	}
-	inline bool isSimpleOp() { return op_type == SIMPLE_OP; }
-	inline bool isSimpleOp(char op) { return isSimpleOp() && op_char == op; }
 
+	inline bool IsLiteral() {
+	  return IsType(kExprLiteralInt) || IsType(kExprLiteralFloat) || IsType(kExprLiteralString) || IsType(kExprPlaceholder);
+	}
+
+	inline bool HasAlias() {
+	  return alias != NULL;
+	}
+
+	inline bool HasTable() {
+	  return table != NULL;
+	}
+
+	inline char* GetName() {
+		if (alias != NULL)
+		  return alias;
+		else
+		  return name;
+	}
+
+	inline bool IsSimpleOp() {
+	  return op_type == SIMPLE_OP;
+	}
+
+	inline bool IsSimpleOp(char op) {
+	  return IsSimpleOp() && op_char == op;
+	}
 
 	/**
 	 * Static expression constructors
 	 */
-	static Expr* makeOpUnary(OperatorType op, Expr* expr);
-	static Expr* makeOpBinary(Expr* expr1, char op, Expr* expr2);
-	static Expr* makeOpBinary(Expr* expr1, OperatorType op, Expr* expr2);
+	static Expr* MakeOpUnary(OperatorType op, Expr* expr);
+	static Expr* MakeOpBinary(Expr* expr1, char op, Expr* expr2);
+	static Expr* MakeOpBinary(Expr* expr1, OperatorType op, Expr* expr2);
 
-	static Expr* makeLiteral(int64_t val);
-	static Expr* makeLiteral(double val);
-	static Expr* makeLiteral(char* val);
+	static Expr* MakeLiteral(int64_t val);
+	static Expr* MakeLiteral(double val);
+	static Expr* MakeLiteral(char* val);
 
-	static Expr* makeColumnRef(char* name);
-	static Expr* makeColumnRef(char* table, char* name);
-	static Expr* makeFunctionRef(char* func_name, Expr* expr, bool distinct);
+	static Expr* MakeColumnRef(char* name);
+	static Expr* MakeColumnRef(char* table, char* name);
+	static Expr* MakeFunctionRef(char* func_name, Expr* expr, bool distinct);
 
-	static Expr* makePlaceholder(int id);
+	static Expr* MakePlaceholder(int id);
 };
 
 // Zero initializes an Expr object and assigns it to a space in the heap

@@ -87,7 +87,7 @@ enum ValueType {
 //===--------------------------------------------------------------------===//
 
 enum ExpressionType {
-  EXPRESSION_TYPE_INVALID                     = 0,
+  EXPRESSION_TYPE_INVALID                         = 0,
 
   //===--------------------------------------------------------------------===//
   // Arithmetic Operators
@@ -101,6 +101,7 @@ enum ExpressionType {
   EXPRESSION_TYPE_OPERATOR_MOD                    = 6, // left % right (both must be integer)
   EXPRESSION_TYPE_OPERATOR_CAST                   = 7, // explicitly cast left as right (right is integer in ValueType enum)
   EXPRESSION_TYPE_OPERATOR_NOT                    = 8, // logical not operator
+  EXPRESSION_TYPE_OPERATOR_UNARY_MINUS            = 9, // unary minus operator
 
   //===--------------------------------------------------------------------===//
   // Comparison Operators
@@ -141,8 +142,16 @@ enum ExpressionType {
   EXPRESSION_TYPE_AGGREGATE_MIN                   = 43,
   EXPRESSION_TYPE_AGGREGATE_MAX                   = 44,
   EXPRESSION_TYPE_AGGREGATE_AVG                   = 45,
-  EXPRESSION_TYPE_AGGREGATE_WEIGHTED_AVG          = 46
+  EXPRESSION_TYPE_AGGREGATE_WEIGHTED_AVG          = 46,
 
+  //===--------------------------------------------------------------------===//
+  // Parser
+  //===--------------------------------------------------------------------===//
+
+  EXPRESSION_TYPE_STAR                            = 50,
+  EXPRESSION_TYPE_PLACEHOLDER                     = 51,
+  EXPRESSION_TYPE_COLUMN_REF                      = 52,
+  EXPRESSION_TYPE_FUNCTION_REF                    = 53
 };
 
 //===--------------------------------------------------------------------===//

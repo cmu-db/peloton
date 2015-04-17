@@ -14,10 +14,7 @@ char* substr(const char* source, int from, int to) {
 	return copy;
 }
 
-
-
-
-Expr* Expr::makeOpUnary(OperatorType op, Expr* expr) {
+Expr* Expr::MakeOpUnary(OperatorType op, Expr* expr) {
 	Expr* e = new Expr(kExprOperator);
 	e->op_type = op;
 	e->expr = expr;
@@ -25,9 +22,7 @@ Expr* Expr::makeOpUnary(OperatorType op, Expr* expr) {
 	return e;
 }
 
-
-
-Expr* Expr::makeOpBinary(Expr* expr1, OperatorType op, Expr* expr2) {
+Expr* Expr::MakeOpBinary(Expr* expr1, OperatorType op, Expr* expr2) {
 	Expr* e = new Expr(kExprOperator);
 	e->op_type = op;
 	e->op_char = 0;
@@ -36,7 +31,7 @@ Expr* Expr::makeOpBinary(Expr* expr1, OperatorType op, Expr* expr2) {
 	return e;
 }
 
-Expr* Expr::makeOpBinary(Expr* expr1, char op, Expr* expr2) {
+Expr* Expr::MakeOpBinary(Expr* expr1, char op, Expr* expr2) {
 	Expr* e = new Expr(kExprOperator);
 	e->op_type = SIMPLE_OP;
 	e->op_char = op;
@@ -45,41 +40,39 @@ Expr* Expr::makeOpBinary(Expr* expr1, char op, Expr* expr2) {
 	return e;
 }
 
-
-
-Expr* Expr::makeLiteral(int64_t val) {
+Expr* Expr::MakeLiteral(int64_t val) {
 	Expr* e = new Expr(kExprLiteralInt);
 	e->ival = val;
 	return e;
 }
 
-Expr* Expr::makeLiteral(double value) {
+Expr* Expr::MakeLiteral(double value) {
 	Expr* e = new Expr(kExprLiteralFloat);
 	e->fval = value;
 	return e;
 }
 
-Expr* Expr::makeLiteral(char* string) {
+Expr* Expr::MakeLiteral(char* string) {
 	Expr* e = new Expr(kExprLiteralString);
 	e->name = string;
 	return e;
 }
 
 
-Expr* Expr::makeColumnRef(char* name) {
+Expr* Expr::MakeColumnRef(char* name) {
 	Expr* e = new Expr(kExprColumnRef);
 	e->name = name;
 	return e;
 }
 
-Expr* Expr::makeColumnRef(char* table, char* name) {
+Expr* Expr::MakeColumnRef(char* table, char* name) {
 	Expr* e = new Expr(kExprColumnRef);
 	e->name = name;
 	e->table = table;
 	return e;
 }
 
-Expr* Expr::makeFunctionRef(char* func_name, Expr* expr, bool distinct) {
+Expr* Expr::MakeFunctionRef(char* func_name, Expr* expr, bool distinct) {
 	Expr* e = new Expr(kExprFunctionRef);
 	e->name = func_name;
 	e->expr = expr;
@@ -87,7 +80,7 @@ Expr* Expr::makeFunctionRef(char* func_name, Expr* expr, bool distinct) {
 	return e;
 }
 
-Expr* Expr::makePlaceholder(int id) {
+Expr* Expr::MakePlaceholder(int id) {
 	Expr* e = new Expr(kExprPlaceholder);
 	e->ival = id;
 	return e;
@@ -96,8 +89,8 @@ Expr* Expr::makePlaceholder(int id) {
 Expr::~Expr() {
 	delete expr;
 	delete expr2;
-	free(name);
-	free(table);
+	delete name;
+	delete table;
 }
 
 } // End parser namespace
