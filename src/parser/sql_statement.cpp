@@ -19,11 +19,11 @@ namespace parser {
 
 std::ostream& operator<<(std::ostream& os, const SQLStatement& stmt) {
 
-  os << "\tSTMT : Type :: " << stmt._type << "\n";
+  os << "\tSTMT : Type :: " << stmt.stmt_type << "\n";
 
   int indent = 1;
 
-  switch(stmt._type) {
+  switch(stmt.stmt_type) {
     case STATEMENT_TYPE_SELECT:
       GetSelectStatementInfo((SelectStatement*)&stmt, indent);
       break;
@@ -45,7 +45,7 @@ std::ostream& operator<<(std::ostream& os, const SQLStatement& stmt) {
 
 std::ostream& operator<<(std::ostream& os, const SQLStatementList& stmt_list) {
 
-  if(stmt_list.isValid) {
+  if(stmt_list.is_valid) {
     for(auto stmt : stmt_list.statements)
       os << *stmt;
   }

@@ -685,7 +685,7 @@ table_ref:
 		table_ref_atomic
 	|	table_ref_atomic ',' table_ref_commalist {
 			$3->push_back($1);
-			auto tbl = new TableRef(kTableCrossProduct);
+			auto tbl = new TableRef(nstore::TABLE_REFERENCE_TYPE_CROSS_PRODUCT);
 			tbl->list = $3;
 			$$ = tbl;
 		}
@@ -695,7 +695,7 @@ table_ref:
 table_ref_atomic:
 		table_ref_name
 	|	'(' select_statement ')' alias {
-			auto tbl = new TableRef(kTableSelect);
+			auto tbl = new TableRef(nstore::TABLE_REFERENCE_TYPE_SELECT);
 			tbl->select = $2;
 			tbl->alias = $4;
 			$$ = tbl;
@@ -712,7 +712,7 @@ table_ref_commalist:
 
 table_ref_name:
 		table_name opt_alias {
-			auto tbl = new TableRef(kTableName);
+			auto tbl = new TableRef(nstore::TABLE_REFERENCE_TYPE_NAME);
 			tbl->name = $1;
 			tbl->alias = $2;
 			$$ = tbl;
@@ -722,7 +722,7 @@ table_ref_name:
 
 table_ref_name_no_alias:
 		table_name {
-			$$ = new TableRef(kTableName);
+			$$ = new TableRef(nstore::TABLE_REFERENCE_TYPE_NAME);
 			$$->name = $1;
 		}
 	;
@@ -751,9 +751,9 @@ opt_alias:
 join_clause:
 		join_table opt_join_type JOIN join_table ON join_condition
 		{ 
-			$$ = new TableRef(kTableJoin);
+			$$ = new TableRef(nstore::TABLE_REFERENCE_TYPE_JOIN);
 			$$->join = new JoinDefinition();
-			$$->join->type = (JoinType) $2;
+			$$->join->type = (nstore::JoinType) $2;
 			$$->join->left = $1;
 			$$->join->right = $4;
 			$$->join->condition = $6;
@@ -761,18 +761,18 @@ join_clause:
 		;
 
 opt_join_type:
-		INNER 	{ $$ = kJoinInner; }
-	|	OUTER 	{ $$ = kJoinOuter; }
-	|	LEFT 	{ $$ = kJoinLeft; }
-	|	RIGHT 	{ $$ = kJoinRight; }
-	|	/* empty, default */ 	{ $$ = kJoinInner; }
+		INNER 	{ $$ = nstore::JOIN_TYPE_INNER; }
+	|	OUTER 	{ $$ = nstore::JOIN_TYPE_OUTER; }
+	|	LEFT 	{ $$ = nstore::JOIN_TYPE_LEFT; }
+	|	RIGHT 	{ $$ = nstore::JOIN_TYPE_RIGHT; }
+	|	/* empty, default */ 	{ $$ = nstore::JOIN_TYPE_INNER; }
 	;
 
 
 
 join_table:
 		'(' select_statement ')' alias {
-			auto tbl = new TableRef(kTableSelect);
+			auto tbl = new TableRef(nstore::TABLE_REFERENCE_TYPE_SELECT);
 			tbl->select = $2;
 			tbl->alias = $4;
 			$$ = tbl;
