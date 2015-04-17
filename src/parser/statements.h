@@ -1,5 +1,7 @@
 #pragma once
 
+// This is just for convenience
+
 #include "parser/statement_select.h"
 #include "parser/statement_import.h"
 #include "parser/statement_create.h"
