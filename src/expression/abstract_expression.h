@@ -75,8 +75,7 @@ class AbstractExpression {
         return right_expr;
     }
 
-    int ival;
-    char* name;
+    // Alias for the expression
     char* alias;
 
   protected:

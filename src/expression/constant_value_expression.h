@@ -39,6 +39,10 @@ class ConstantValueExpression : public AbstractExpression {
     return os.str();
   }
 
+  Value GetValue(){
+    return value;
+  }
+
  protected:
   Value value;
 };
