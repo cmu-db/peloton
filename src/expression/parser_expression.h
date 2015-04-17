@@ -25,24 +25,30 @@ namespace expression {
 
 class ParserExpression : public AbstractExpression {
  public:
-  ParserExpression(ExpressionType type, __attribute__((unused)) char* name)
- : AbstractExpression(type), ival(0) {
+  ParserExpression(ExpressionType type, char* name)
+ : AbstractExpression(type) {
+    m_name = std::string(name);
   }
 
-  ParserExpression(ExpressionType type, __attribute__((unused)) char* name, __attribute__((unused)) char* table)
- : AbstractExpression(type), ival(0) {
+  ParserExpression(ExpressionType type, char* name, char* table)
+ : AbstractExpression(type) {
+    m_name = std::string(name);
+    m_table = std::string(table);
   }
 
   ParserExpression(ExpressionType type)
- : AbstractExpression(type), ival(0) {
+ : AbstractExpression(type) {
+  }
+
+  ParserExpression(ExpressionType type, char* func_name, AbstractExpression* expr, bool distinct)
+ : AbstractExpression(type) {
+    m_name = std::string(func_name);
+    m_expr = expr;
+    m_distinct = distinct;
   }
 
   ParserExpression(ExpressionType type, int placeholder)
  : AbstractExpression(type), ival(placeholder) {
-  }
-
-  ParserExpression(ExpressionType type, __attribute__((unused)) char* func_name, __attribute__((unused)) AbstractExpression* expr, __attribute__((unused)) bool distinct)
- : AbstractExpression(type), ival(0) {
   }
 
   virtual ~ParserExpression() {
@@ -57,13 +63,27 @@ class ParserExpression : public AbstractExpression {
     return os.str();
   }
 
-  int ival;
+  const char* GetName() const {
+    return m_name.c_str();
+  }
+
+  const char* GetTable() const {
+    return m_table.c_str();
+  }
+
+  const char* GetAlias() const {
+    return m_alias.c_str();
+  }
+
+  int ival = 0;
 
  protected:
-  std::string name;
-  std::string table;
-  std::string alias;
+  std::string m_name;
+  std::string m_table;
+  std::string m_alias;
 
+  AbstractExpression* m_expr = nullptr;
+  bool m_distinct = false;
 };
 
 } // End expression namespace

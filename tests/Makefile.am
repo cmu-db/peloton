@@ -25,6 +25,7 @@ check_PROGRAMS =
 ######################################################################
 # SUBDIRS
 ######################################################################
+
 include $(srcdir)/catalog/Makefile.am
 include $(srcdir)/common/Makefile.am
 include $(srcdir)/executor/Makefile.am

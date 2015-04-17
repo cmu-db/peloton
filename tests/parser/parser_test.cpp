@@ -76,8 +76,10 @@ TEST(ParserTests, BasicTest) {
 
   // Parsing
   for(auto query : queries) {
+    std::cout << "STATEMENT :: \n";
     parser::SQLStatementList* stmt_list = parser::Parser::ParseSQLString(query.c_str());
     std::cout << (*stmt_list);
+    std::cout << "\n\n";
     delete stmt_list;
   }
 

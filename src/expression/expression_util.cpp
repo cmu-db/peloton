@@ -32,17 +32,17 @@ AbstractExpression* GetGeneral(ExpressionType c, AbstractExpression *l, Abstract
   assert (l);
   assert (r);
   switch (c) {
-    case (EXPRESSION_TYPE_COMPARE_EQUAL):
+    case (EXPRESSION_TYPE_COMPARE_EQ):
         return new ComparisonExpression<CmpEq>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
+    case (EXPRESSION_TYPE_COMPARE_NE):
         return new ComparisonExpression<CmpNe>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
+    case (EXPRESSION_TYPE_COMPARE_LT):
         return new ComparisonExpression<CmpLt>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
+    case (EXPRESSION_TYPE_COMPARE_GT):
         return new ComparisonExpression<CmpGt>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
+    case (EXPRESSION_TYPE_COMPARE_LTE):
         return new ComparisonExpression<CmpLte>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
+    case (EXPRESSION_TYPE_COMPARE_GTE):
         return new ComparisonExpression<CmpGte>(c, l, r);
     default:
       char message[256];
@@ -59,17 +59,17 @@ AbstractExpression* GetMoreSpecialized(ExpressionType c, L* l, R* r)
   assert (l);
   assert (r);
   switch (c) {
-    case (EXPRESSION_TYPE_COMPARE_EQUAL):
+    case (EXPRESSION_TYPE_COMPARE_EQ):
         return new InlinedComparisonExpression<CmpEq, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
+    case (EXPRESSION_TYPE_COMPARE_NE):
         return new InlinedComparisonExpression<CmpNe, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
+    case (EXPRESSION_TYPE_COMPARE_LT):
         return new InlinedComparisonExpression<CmpLt, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
+    case (EXPRESSION_TYPE_COMPARE_GT):
         return new InlinedComparisonExpression<CmpGt, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
+    case (EXPRESSION_TYPE_COMPARE_LTE):
         return new InlinedComparisonExpression<CmpLte, L, R>(c, l, r);
-    case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
+    case (EXPRESSION_TYPE_COMPARE_GTE):
         return new InlinedComparisonExpression<CmpGte, L, R>(c, l, r);
     default:
       char message[256];
@@ -339,12 +339,12 @@ AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
     break;
 
     // Comparisons
-    case (EXPRESSION_TYPE_COMPARE_EQUAL):
-    case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
-    case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
-    case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
-    case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
-    case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
+    case (EXPRESSION_TYPE_COMPARE_EQ):
+    case (EXPRESSION_TYPE_COMPARE_NE):
+    case (EXPRESSION_TYPE_COMPARE_LT):
+    case (EXPRESSION_TYPE_COMPARE_GT):
+    case (EXPRESSION_TYPE_COMPARE_LTE):
+    case (EXPRESSION_TYPE_COMPARE_GTE):
     case (EXPRESSION_TYPE_COMPARE_LIKE):
     ret = ComparisonFactory( et, lc, rc);
     break;
@@ -445,22 +445,22 @@ std::string GetTypeName(ExpressionType type) {
     case (EXPRESSION_TYPE_OPERATOR_NOT):
         ret = "OPERATOR_NOT";
     break;
-    case (EXPRESSION_TYPE_COMPARE_EQUAL):
+    case (EXPRESSION_TYPE_COMPARE_EQ):
         ret = "COMPARE_EQUAL";
     break;
-    case (EXPRESSION_TYPE_COMPARE_NOTEQUAL):
+    case (EXPRESSION_TYPE_COMPARE_NE):
         ret = "COMPARE_NOTEQUAL";
     break;
-    case (EXPRESSION_TYPE_COMPARE_LESSTHAN):
+    case (EXPRESSION_TYPE_COMPARE_LT):
         ret = "COMPARE_LESSTHAN";
     break;
-    case (EXPRESSION_TYPE_COMPARE_GREATERTHAN):
+    case (EXPRESSION_TYPE_COMPARE_GT):
         ret = "COMPARE_GREATERTHAN";
     break;
-    case (EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO):
+    case (EXPRESSION_TYPE_COMPARE_LTE):
         ret = "COMPARE_LESSTHANOREQUALTO";
     break;
-    case (EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO):
+    case (EXPRESSION_TYPE_COMPARE_GTE):
         ret = "COMPARE_GREATERTHANOREQUALTO";
     break;
     case (EXPRESSION_TYPE_COMPARE_LIKE):

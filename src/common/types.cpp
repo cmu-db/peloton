@@ -213,22 +213,25 @@ std::string ExpressionToString(ExpressionType type) {
     case EXPRESSION_TYPE_OPERATOR_NOT: {
       return "OPERATOR_NOT";
     }
-    case EXPRESSION_TYPE_COMPARE_EQUAL: {
+    case EXPRESSION_TYPE_OPERATOR_UNARY_MINUS: {
+      return "OPERATOR_UNARY_MINUS";
+    }
+    case EXPRESSION_TYPE_COMPARE_EQ: {
       return "COMPARE_EQUAL";
     }
-    case EXPRESSION_TYPE_COMPARE_NOTEQUAL: {
+    case EXPRESSION_TYPE_COMPARE_NE: {
       return "COMPARE_NOT_EQUAL";
     }
-    case EXPRESSION_TYPE_COMPARE_LESSTHAN: {
+    case EXPRESSION_TYPE_COMPARE_LT: {
       return "COMPARE_LESSTHAN";
     }
-    case EXPRESSION_TYPE_COMPARE_GREATERTHAN: {
+    case EXPRESSION_TYPE_COMPARE_GT: {
       return "COMPARE_GREATERTHAN";
     }
-    case EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO: {
+    case EXPRESSION_TYPE_COMPARE_LTE: {
       return "COMPARE_LESSTHANOREQUALTO";
     }
-    case EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO: {
+    case EXPRESSION_TYPE_COMPARE_GTE: {
       return "COMPARE_GREATERTHANOREQUALTO";
     }
     case EXPRESSION_TYPE_COMPARE_LIKE: {
@@ -276,6 +279,18 @@ std::string ExpressionToString(ExpressionType type) {
     case EXPRESSION_TYPE_AGGREGATE_WEIGHTED_AVG: {
       return "AGGREGATE_WEIGHTED_AVG";
     }
+    case EXPRESSION_TYPE_STAR : {
+      return "STAR";
+    }
+    case EXPRESSION_TYPE_PLACEHOLDER : {
+      return "PLACEHOLDER";
+    }
+    case EXPRESSION_TYPE_COLUMN_REF : {
+      return "COLUMN_REF";
+    }
+    case EXPRESSION_TYPE_FUNCTION_REF : {
+      return "FUNCTION_REF";
+    }
   }
   return "INVALID";
 }
@@ -300,17 +315,17 @@ ExpressionType StringToExpression(std::string str ) {
   } else if (str == "OPERATOR_NOT") {
     return EXPRESSION_TYPE_OPERATOR_NOT;
   } else if (str == "COMPARE_EQUAL") {
-    return EXPRESSION_TYPE_COMPARE_EQUAL;
+    return EXPRESSION_TYPE_COMPARE_EQ;
   } else if (str == "COMPARE_NOTEQUAL") {
-    return EXPRESSION_TYPE_COMPARE_NOTEQUAL;
+    return EXPRESSION_TYPE_COMPARE_NE;
   } else if (str == "COMPARE_LESSTHAN") {
-    return EXPRESSION_TYPE_COMPARE_LESSTHAN;
+    return EXPRESSION_TYPE_COMPARE_LT;
   } else if (str == "COMPARE_GREATERTHAN") {
-    return EXPRESSION_TYPE_COMPARE_GREATERTHAN;
+    return EXPRESSION_TYPE_COMPARE_GT;
   } else if (str == "COMPARE_LESSTHANOREQUALTO") {
-    return EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO;
+    return EXPRESSION_TYPE_COMPARE_LTE;
   } else if (str == "COMPARE_GREATERTHANOREQUALTO") {
-    return EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO;
+    return EXPRESSION_TYPE_COMPARE_GTE;
   } else if (str == "COMPARE_LIKE") {
     return EXPRESSION_TYPE_COMPARE_LIKE;
   } else if (str == "CONJUNCTION_AND") {
