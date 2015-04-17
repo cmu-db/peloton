@@ -20,7 +20,7 @@ struct PrepareStatement : SQLStatement {
 	
 	virtual ~PrepareStatement() {
 		delete query;
-		delete name;
+		free(name);
 	}
 
 	/**
@@ -41,7 +41,7 @@ struct PrepareStatement : SQLStatement {
 		for (uint i = 0; i < placeholders.size(); ++i) placeholders[i]->ival = i;
 	}
 
-	const char* name;
+	char* name;
 	SQLStatementList* query;
 	std::vector<Expr*> placeholders;
 };
