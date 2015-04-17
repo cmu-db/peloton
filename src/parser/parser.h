@@ -22,15 +22,13 @@ namespace parser {
 //===--------------------------------------------------------------------===//
 
 class Parser {
+  Parser() = delete;
 
  public:
 
   // Parse a given query
   static SQLStatementList* ParseSQLString(const char* sql);
   static SQLStatementList* ParseSQLString(const std::string& sql);
-
-private:
-  Parser();
 
 };
 
