@@ -30,6 +30,7 @@ TEST(ParserTests, BasicTest) {
 
   // SELECT statement
   queries.push_back("SELECT * FROM orders;");
+  queries.push_back("SELECT a + b FROM orders;");
   queries.push_back("SELECT a FROM foo WHERE a > 12 OR b > 3 AND NOT c LIMIT 10");
   queries.push_back("SELECT col1 AS myname, col2, 'test' FROM \"table\", foo AS t WHERE age > 12 AND zipcode = 12345 GROUP BY col1;");
   queries.push_back("SELECT * from \"table\" JOIN table2 ON a = b WHERE (b OR NOT a) AND a = 12.5");

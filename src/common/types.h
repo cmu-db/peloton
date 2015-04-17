@@ -225,6 +225,32 @@ enum StatementType {
 };
 
 //===--------------------------------------------------------------------===//
+// Join Types
+//===--------------------------------------------------------------------===//
+
+enum JoinType {
+    JOIN_TYPE_INVALID       = 0, // invalid join type
+
+    JOIN_TYPE_LEFT          = 1, // left
+    JOIN_TYPE_RIGHT         = 2, // right
+    JOIN_TYPE_INNER         = 3, // inner
+    JOIN_TYPE_OUTER         = 4  // outer
+};
+
+//===--------------------------------------------------------------------===//
+// Table Reference Types
+//===--------------------------------------------------------------------===//
+
+enum TableReferenceType {
+  TABLE_REFERENCE_TYPE_INVALID = 0, // invalid table reference type
+
+  TABLE_REFERENCE_TYPE_NAME = 1,    // table name
+  TABLE_REFERENCE_TYPE_SELECT = 2,  // output of select
+  TABLE_REFERENCE_TYPE_JOIN = 3,    // output of join
+  TABLE_REFERENCE_TYPE_CROSS_PRODUCT = 4  // out of cartesian product
+};
+
+//===--------------------------------------------------------------------===//
 // Type definitions.
 //===--------------------------------------------------------------------===//
 
