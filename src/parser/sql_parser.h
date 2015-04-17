@@ -1,8 +1,6 @@
 #pragma once
 
 #include "statements.h"
-#include "parser_bison.h"
-#include "parser_flex.h"
 
 namespace nstore {
 namespace parser {

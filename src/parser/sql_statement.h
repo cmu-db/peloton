@@ -6,6 +6,8 @@
 #pragma once
 
 #include <vector>
+#include <iostream>
+
 #include "expr.h"
 
 namespace nstore {
@@ -32,25 +34,31 @@ typedef enum {
  * @struct SQLStatement
  * @brief Base class for every SQLStatement
  */
-struct SQLStatement {
-	SQLStatement(StatementType type) :
+class SQLStatement {
+ public:
+
+  SQLStatement(StatementType type) :
 		_type(type) {};
 
 	virtual ~SQLStatement() {}
 
 	virtual StatementType type() { return _type; }
 
+
+  // Get a string representation of this statement
+  friend std::ostream& operator<<(std::ostream& os, const SQLStatement& stmt);
+
 private:
 	StatementType _type;
 };
-
 
 /**
  * @struct SQLStatementList
  * @brief Represents the result of the SQLParser. If parsing was successful it is a list of SQLStatement.
  */
-struct SQLStatementList {
+class SQLStatementList {
 public:
+
 	SQLStatementList() :
 		isValid(true),
 		parser_msg(NULL) {};
@@ -68,7 +76,10 @@ public:
 	void addStatement(SQLStatement* stmt) { statements.push_back(stmt); }
 	SQLStatement* getStatement(int id) { return statements[id]; }
 	size_t numStatements() { return statements.size(); }
-	
+
+  // Get a string representation of this statement list
+  friend std::ostream& operator<<(std::ostream& os, const SQLStatementList& stmt_list);
+
 	std::vector<SQLStatement*> statements;
 	bool isValid;
 	const char* parser_msg;
