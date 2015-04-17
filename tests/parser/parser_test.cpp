@@ -14,7 +14,6 @@
 
 #include "harness.h"
 #include "parser/parser.h"
-#include "parser/sql_parser.h"
 
 #include <vector>
 
@@ -76,7 +75,7 @@ TEST(ParserTests, BasicTest) {
 
   // Parsing
   for(auto query : queries) {
-    parser::SQLStatementList* stmt_list = parser::SQLParser::parseSQLString(query.c_str());
+    parser::SQLStatementList* stmt_list = parser::Parser::ParseSQLString(query.c_str());
     std::cout << (*stmt_list);
     delete stmt_list;
   }

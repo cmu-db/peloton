@@ -11,7 +11,8 @@
  */
 
 #include "sql_statement.h"
-#include "sql_helper.h"
+
+#include "parser_utils.h"
 
 namespace nstore {
 namespace parser {

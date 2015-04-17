@@ -2,7 +2,7 @@
 
 #include "expr.h"
 #include "sql_statement.h"
-#include "table.h"
+#include "table_ref.h"
 
 namespace nstore {
 namespace parser {

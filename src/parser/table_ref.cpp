@@ -1,5 +1,5 @@
 #include "statement_select.h"
-#include "table.h"
+#include "table_ref.h"
 
 namespace nstore {
 namespace parser {
