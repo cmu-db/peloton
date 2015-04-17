@@ -139,7 +139,11 @@ AbstractExpression *OperatorFactory(ExpressionType et, AbstractExpression *lc, A
     break;
 
     case (EXPRESSION_TYPE_OPERATOR_NOT):
-        ret = new OperatorNotExpression(lc);
+        ret = new OperatorUnaryNotExpression(lc);
+    break;
+
+    case (EXPRESSION_TYPE_OPERATOR_UNARY_MINUS):
+        ret = new OperatorUnaryMinusExpression(lc);
     break;
 
     case (EXPRESSION_TYPE_OPERATOR_MOD):

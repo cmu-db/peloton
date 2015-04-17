@@ -8,7 +8,7 @@
 namespace nstore {
 namespace parser {
 
-void printOperatorExpression(Expr* expr, uint num_indent);
+void printOperatorExpression(expression::AbstractExpression* expr, uint num_indent);
 
 const char* indent(uint num_indent) { return std::string(num_indent, '\t').c_str(); }
 void inprint(int64_t val, uint num_indent) {
@@ -68,41 +68,25 @@ void printTableRefInfo(TableRef* table, uint num_indent) {
   }
 }
 
-void printOperatorExpression(Expr* expr, uint num_indent) {
-  if (expr == NULL) { inprint("null", num_indent); return; }
-
-  switch (expr->op_type) {
-    case Expr::SIMPLE_OP: inprintC(expr->op_char, num_indent); break;
-    case Expr::AND: inprint("AND", num_indent); break;
-    case Expr::OR: inprint("OR", num_indent); break;
-    case Expr::NOT: inprint("NOT", num_indent); break;
-    default: inprintU(expr->op_type, num_indent); break;
+void printOperatorExpression(expression::AbstractExpression* expr, uint num_indent) {
+  if (expr == NULL) {
+    inprint("null", num_indent);
+    return;
   }
-  GetExpressionInfo(expr->expr, num_indent+1);
-  if (expr->expr2 != NULL) GetExpressionInfo(expr->expr2, num_indent+1);
 }
 
-void GetExpressionInfo(Expr* expr, uint num_indent) {
-  switch (expr->type) {
-    case kExprStar: inprint("*", num_indent); break;
-    case kExprColumnRef: inprint(expr->name, num_indent); break;
-    // case kExprTableColumnRef: inprint(expr->table, expr->name, num_indent); break;
-    case kExprLiteralFloat: inprint(expr->fval, num_indent); break;
-    case kExprLiteralInt: inprint(expr->ival, num_indent); break;
-    case kExprLiteralString: inprint(expr->name, num_indent); break;
-    case kExprFunctionRef: inprint(expr->name, num_indent); inprint(expr->expr->name, num_indent+1); break;
-    case kExprOperator: printOperatorExpression(expr, num_indent); break;
-    default: fprintf(stderr, "Unrecognized expression type %d\n", expr->type); return;
-  }
+void GetExpressionInfo(expression::AbstractExpression* expr, uint num_indent) {
+
   if (expr->alias != NULL) {
-    inprint("Alias", num_indent+1); inprint(expr->alias, num_indent+2);
+    inprint("Alias", num_indent+1);
+    inprint(expr->alias, num_indent+2);
   }
 }
 
 void GetSelectStatementInfo(SelectStatement* stmt, uint num_indent) {
   inprint("SelectStatement", num_indent);
   inprint("-> Fields:", num_indent+1);
-  for (Expr* expr : *stmt->select_list) GetExpressionInfo(expr, num_indent+2);
+  for (expression::AbstractExpression* expr : *stmt->select_list) GetExpressionInfo(expr, num_indent+2);
 
   inprint("-> Sources:", num_indent+1);
   printTableRefInfo(stmt->from_table, num_indent+2);
@@ -157,7 +141,7 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
   switch (stmt->type) {
     case InsertStatement::kInsertValues:
       inprint("-> Values", num_indent+1);
-      for (Expr* expr : *stmt->values) {
+      for (expression::AbstractExpression* expr : *stmt->values) {
         GetExpressionInfo(expr, num_indent+2);
       }
       break;

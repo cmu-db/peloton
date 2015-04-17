@@ -32,10 +32,12 @@ struct PrepareStatement : SQLStatement {
 	void setPlaceholders(std::vector<void*> ph) {
 		for (void* e : ph) {
 			if (e != NULL)
-				placeholders.push_back((Expr*) e);
+				placeholders.push_back((expression::ParserExpression*) e);
 		}
 		// Sort by col-id
-		std::sort(placeholders.begin(), placeholders.end(), [](Expr* i, Expr* j) -> bool { return (i->ival < j->ival); });
+		std::sort(placeholders.begin(), placeholders.end(), [](
+		    expression::ParserExpression* i, expression::ParserExpression* j) -> bool { return (i->ival < j->ival); }
+		);
 
 		// Set the placeholder id on the Expr. This replaces the previously stored column id
 		for (uint i = 0; i < placeholders.size(); ++i) placeholders[i]->ival = i;
@@ -43,7 +45,7 @@ struct PrepareStatement : SQLStatement {
 
 	char* name;
 	SQLStatementList* query;
-	std::vector<Expr*> placeholders;
+	std::vector<expression::ParserExpression*> placeholders;
 };
 
 } // End parser namespace

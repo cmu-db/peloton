@@ -33,7 +33,7 @@ struct InsertStatement : SQLStatement {
 	InsertType type;
 	char* table_name;
 	std::vector<char*>* columns;
-	std::vector<Expr*>* values;
+	std::vector<expression::AbstractExpression*>* values;
 	SelectStatement* select;
 };
 

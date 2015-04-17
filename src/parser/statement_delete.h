@@ -24,7 +24,7 @@ struct DeleteStatement : SQLStatement {
 
 
 	char* table_name;
-	Expr* expr;
+	expression::AbstractExpression* expr;
 };
 
 } // End parser namespace
