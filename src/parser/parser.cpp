@@ -16,13 +16,10 @@
 #include "parser/parser.h"
 #include "parser_bison.h"
 #include "parser_flex.h"
+#include "common/exception.h"
 
 namespace nstore {
 namespace parser {
-
-Parser::Parser() {
-  fprintf(stderr, "Parser only has static methods atm! Do not initialize!\n");
-}
 
 SQLStatementList* Parser::ParseSQLString(const char *text) {
   SQLStatementList* result;
@@ -31,7 +28,7 @@ SQLStatementList* Parser::ParseSQLString(const char *text) {
 
   if (yylex_init(&scanner)) {
     // couldn't initialize
-    fprintf(stderr, "[Error] Parser: Error when initializing lexer!\n");
+    throw ParserException("Parser :: Error when initializing lexer!\n");
     return NULL;
   }
 
