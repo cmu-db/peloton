@@ -15,10 +15,10 @@ struct ImportStatement : SQLStatement {
 		kImportTbl, // Hyrise file format
 	};
 
-
 	ImportStatement(ImportType type) :
 		SQLStatement(STATEMENT_TYPE_IMPORT),
 		type(type),
+		name(NULL),
 		file_path(NULL),
 		table_name(NULL) {};
 		
@@ -28,6 +28,7 @@ struct ImportStatement : SQLStatement {
 	}
 
 	ImportType type;
+	char* name;
 	char* file_path;
 	char* table_name;
 };

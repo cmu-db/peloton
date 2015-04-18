@@ -16,6 +16,14 @@
 #include "parser/statements.h"
 #include "parser_bison.h"
 
+char* substr(const char* source, int from, int to) {
+	int len = to-from;
+	char* copy = new char[len+1];
+	strncpy(copy, source+from, len);
+	copy[len] = '\0';
+	return copy;
+}
+
 #define TOKEN(name) { return SQL_##name; }
 #define yylex           parser_lex
 
@@ -195,7 +203,7 @@ TO			TOKEN(TO)
 
 \"[^\"\n]+\" {
 	// Crop the leading and trailing quote char
-	yylval->sval = nstore::parser::substr(yytext, 1, strlen(yytext)-1);
+	yylval->sval = substr(yytext, 1, strlen(yytext)-1);
 	return SQL_IDENTIFIER;
 }
 
@@ -207,7 +215,7 @@ TO			TOKEN(TO)
 
 '[^'\n]*' {
 	// Crop the leading and trailing quote char
-	yylval->sval = nstore::parser::substr(yytext, 1, strlen(yytext)-1);
+	yylval->sval = substr(yytext, 1, strlen(yytext)-1);
 	return SQL_STRING;
 }
 

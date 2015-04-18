@@ -78,8 +78,6 @@ void PrintOperatorExpression(const expression::AbstractExpression* expr, uint nu
     return;
   }
 
-  inprint(ExpressionToString(expr->GetExpressionType()).c_str(), num_indent);
-
   GetExpressionInfo(expr->GetLeft(), num_indent+1);
   if (expr->GetRight() != NULL)
     GetExpressionInfo(expr->GetRight(), num_indent+1);
@@ -88,6 +86,13 @@ void PrintOperatorExpression(const expression::AbstractExpression* expr, uint nu
 
 void GetExpressionInfo(const expression::AbstractExpression* expr, uint num_indent) {
 
+  if(expr == NULL) {
+      inprint("null", num_indent);
+      return;
+  }
+
+  printf("%s", indent(num_indent));
+  std::cout << "Expr Type :: " << ExpressionToString(expr->GetExpressionType()) << "\n";
 
   switch (expr->GetExpressionType()) {
     case EXPRESSION_TYPE_STAR:
@@ -99,16 +104,14 @@ void GetExpressionInfo(const expression::AbstractExpression* expr, uint num_inde
     case EXPRESSION_TYPE_VALUE_CONSTANT:
       printf("%s", indent(num_indent));
       std::cout << ((expression::ConstantValueExpression*)expr)->GetValue();
+      printf("\n");
       break;
     case EXPRESSION_TYPE_FUNCTION_REF:
       inprint(((expression::ParserExpression*)expr)->GetName(), num_indent);
       break;
-    case kExprOperator:
+    default:
       PrintOperatorExpression(expr, num_indent);
       break;
-    default:
-      fprintf(stderr, "Unrecognized expression type %d\n", expr->GetExpressionType());
-      return;
   }
 
   if (expr->alias != NULL) {
@@ -119,7 +122,8 @@ void GetExpressionInfo(const expression::AbstractExpression* expr, uint num_inde
 void GetSelectStatementInfo(SelectStatement* stmt, uint num_indent) {
   inprint("SelectStatement", num_indent);
   inprint("-> Fields:", num_indent+1);
-  for (expression::AbstractExpression* expr : *stmt->select_list) GetExpressionInfo(expr, num_indent+2);
+  for (expression::AbstractExpression* expr : *(stmt->select_list))
+    GetExpressionInfo(expr, num_indent+2);
 
   inprint("-> Sources:", num_indent+1);
   PrintTableRefInfo(stmt->from_table, num_indent+2);
@@ -145,6 +149,7 @@ void GetSelectStatementInfo(SelectStatement* stmt, uint num_indent) {
   if (stmt->limit != NULL) {
     inprint("-> Limit:", num_indent+1);
     inprint(stmt->limit->limit, num_indent+2);
+    inprint(stmt->limit->offset, num_indent+2);
   }
 }
 
@@ -160,6 +165,14 @@ void GetCreateStatementInfo(CreateStatement* stmt, uint num_indent) {
   inprint("CreateStatment", num_indent);
   inprint(stmt->table_name, num_indent+1);
   inprint(stmt->file_path, num_indent+1);
+
+  if(stmt->columns != nullptr){
+    for(ColumnDefinition *col : *(stmt->columns)) {
+      printf("%s", indent(num_indent));
+      printf("%s %d \n", col->name, col->type);
+    }
+  }
+
 }
 
 void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
@@ -172,14 +185,16 @@ void GetInsertStatementInfo(InsertStatement* stmt, uint num_indent) {
     }
   }
   switch (stmt->type) {
-    case InsertStatement::kInsertValues:
+    case INSERT_TYPE_VALUES:
       inprint("-> Values", num_indent+1);
       for (expression::AbstractExpression* expr : *stmt->values) {
         GetExpressionInfo(expr, num_indent+2);
       }
       break;
-    case InsertStatement::kInsertSelect:
+    case INSERT_TYPE_SELECT:
       GetSelectStatementInfo(stmt->select, num_indent+1);
+      break;
+    default:
       break;
   }
 

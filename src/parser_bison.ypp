@@ -336,7 +336,7 @@ import_file_type:
 	;
 
 file_path:
-		string_literal { $$ = ((ImportStatement*)$1)->file_path; }
+		string_literal { $$ = ((ImportStatement*)$1)->name; }
 	;
 
 
@@ -428,13 +428,13 @@ truncate_statement:
  ******************************/
 insert_statement:
 		INSERT INTO table_name opt_column_list VALUES '(' literal_list ')' {
-			$$ = new InsertStatement(InsertStatement::kInsertValues);
+			$$ = new InsertStatement(nstore::INSERT_TYPE_VALUES);
 			$$->table_name = $3;
 			$$->columns = $4;
 			$$->values = $7;
 		}
 	|	INSERT INTO table_name opt_column_list select_no_paren {
-			$$ = new InsertStatement(InsertStatement::kInsertSelect);
+			$$ = new InsertStatement(nstore::INSERT_TYPE_SELECT);
 			$$->table_name = $3;
 			$$->columns = $4;
 			$$->select = $5;
@@ -569,8 +569,8 @@ opt_order_type:
 
 
 opt_limit:
-		LIMIT int_literal { $$ = new LimitDescription(((SelectStatement*)$2)->ival, kNoOffset); delete $2; }
-	|	LIMIT int_literal OFFSET int_literal { $$ = new LimitDescription(((SelectStatement*)$2)->ival, ((SelectStatement*)$2)->ival); delete $2; delete $4; }
+		LIMIT int_literal { $$ = new LimitDescription($2->ival, kNoOffset); delete $2; }
+	|	LIMIT int_literal OFFSET int_literal { $$ = new LimitDescription($2->ival, $4->ival); delete $2; delete $4; }
 	|	/* empty */ { $$ = NULL; }
 	;
 
@@ -609,8 +609,8 @@ scalar_expr:
 	;
 
 unary_expr:
-		'-' expr { $$ = new nstore::expression::OperatorUnaryNotExpression($2); }
-	|	NOT expr { $$ = new nstore::expression::OperatorUnaryMinusExpression($2); }
+		'-' expr { $$ = new nstore::expression::OperatorUnaryMinusExpression($2); }
+	|	NOT expr { $$ = new nstore::expression::OperatorUnaryNotExpression($2); }
 	;
 
 binary_expr:
@@ -661,7 +661,7 @@ num_literal:
 	;
 
 int_literal:
-		INTVAL { $$ = new nstore::expression::ConstantValueExpression(nstore::ValueFactory::GetIntegerValue($1)); }
+		INTVAL { $$ = new nstore::expression::ConstantValueExpression(nstore::ValueFactory::GetIntegerValue($1)); $$->ival = $1; }
 	;
 
 star_expr:

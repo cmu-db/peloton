@@ -1,6 +1,5 @@
 #pragma once
 
-#include "expr.h"
 #include "sql_statement.h"
 #include "table_ref.h"
 
@@ -40,7 +39,8 @@ const int64_t kNoOffset = -1;
 struct LimitDescription {
 	LimitDescription(int64_t limit, int64_t offset) :
 		limit(limit),
-		offset(offset) {}
+		offset(offset) {
+	}
 
 	int64_t limit;
 	int64_t offset;	
@@ -94,7 +94,6 @@ struct SelectStatement : SQLStatement {
 		delete limit;
 	}
 
-	int ival;
 	TableRef* from_table;
 	bool select_distinct;
 	std::vector<expression::AbstractExpression*>* select_list;

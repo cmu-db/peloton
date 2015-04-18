@@ -76,7 +76,8 @@ class AbstractExpression {
     }
 
     // Alias for the expression
-    char* alias;
+    int ival = 0;
+    char* alias = nullptr;
 
   protected:
 
@@ -93,7 +94,7 @@ class AbstractExpression {
     //===--------------------------------------------------------------------===//
 
     // children
-    AbstractExpression *left_expr, *right_expr;
+    AbstractExpression *left_expr = nullptr, *right_expr = nullptr;
 
     ExpressionType expr_type;
 

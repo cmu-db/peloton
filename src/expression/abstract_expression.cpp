@@ -25,26 +25,19 @@ namespace nstore {
 namespace expression {
 
 AbstractExpression::AbstractExpression()
-: alias(nullptr),
-  left_expr(nullptr),
-  right_expr(nullptr),
-  expr_type(EXPRESSION_TYPE_INVALID),
+: expr_type(EXPRESSION_TYPE_INVALID),
   has_parameter(true){
 }
 
 AbstractExpression::AbstractExpression(ExpressionType type)
-: alias(nullptr),
-  left_expr(nullptr),
-  right_expr(nullptr),
-  expr_type(type),
+: expr_type(type),
   has_parameter(true) {
 }
 
 AbstractExpression::AbstractExpression(ExpressionType type,
                                        AbstractExpression* left,
                                        AbstractExpression* right)
-: alias(nullptr),
-  left_expr(left),
+: left_expr(left),
   right_expr(right),
   expr_type(type),
   has_parameter(true) {

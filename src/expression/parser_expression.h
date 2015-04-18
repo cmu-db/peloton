@@ -48,7 +48,8 @@ class ParserExpression : public AbstractExpression {
   }
 
   ParserExpression(ExpressionType type, int placeholder)
- : AbstractExpression(type), ival(placeholder) {
+ : AbstractExpression(type) {
+    ival = placeholder;
   }
 
   virtual ~ParserExpression() {
@@ -75,7 +76,9 @@ class ParserExpression : public AbstractExpression {
     return m_alias.c_str();
   }
 
-  int ival = 0;
+  AbstractExpression* GetExpression() const{
+    return m_expr;
+  }
 
  protected:
   std::string m_name;
