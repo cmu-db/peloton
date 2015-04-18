@@ -33,6 +33,7 @@ TEST(ParserTests, BasicTest) {
   queries.push_back("SELECT * FROM orders;");
   queries.push_back("SELECT a + b FROM orders;");
   queries.push_back("SELECT a FROM foo WHERE a > 12 OR b > 3 AND NOT c LIMIT 10");
+  queries.push_back("SELECT * FROM foo where bar = 42 ORDER BY id DESC LIMIT 23;");
 
   queries.push_back("SELECT col1 AS myname, col2, 'test' FROM \"table\", foo AS t WHERE age > 12 AND zipcode = 12345 GROUP BY col1;");
   queries.push_back("SELECT * from \"table\" JOIN table2 ON a = b WHERE (b OR NOT a) AND a = 12.5");
@@ -75,10 +76,10 @@ TEST(ParserTests, BasicTest) {
   queries.push_back("EXECUTE prep;");
 
   // Parsing
+  int ii = 0;
   for(auto query : queries) {
     parser::SQLStatementList* stmt_list = parser::Parser::ParseSQLString(query.c_str());
-    //std::cout << (*stmt_list);
-    //std::cout << "\n";
+    std::cout << ++ii << " " << (*stmt_list);
     delete stmt_list;
   }
 
@@ -143,10 +144,10 @@ TEST(ParserTests, SelectParserTest) {
   // Select List
   EXPECT_EQ(stmt->select_list->size(), 2);
   EXPECT_EQ(stmt->select_list->at(0)->GetExpressionType(), EXPRESSION_TYPE_COLUMN_REF);
-  EXPECT_STREQ(((expression::ParserExpression*)stmt->select_list->at(0))->GetName(), "customer_id");
+  EXPECT_STREQ((stmt->select_list->at(0))->GetName(), "customer_id");
   EXPECT_EQ(stmt->select_list->at(1)->GetExpressionType(), EXPRESSION_TYPE_FUNCTION_REF);
-  EXPECT_STREQ(((expression::ParserExpression*)stmt->select_list->at(1))->GetName(), "SUM");
-  EXPECT_STREQ(((expression::ParserExpression*)((expression::ParserExpression*)stmt->select_list->at(1))->GetExpression())->GetName(), "order_value");
+  EXPECT_STREQ((stmt->select_list->at(1))->GetName(), "SUM");
+  EXPECT_STREQ(((stmt->select_list->at(1))->GetExpression())->GetName(), "order_value");
 
   // Join Table
   parser::JoinDefinition* join = stmt->from_table->join;
@@ -155,20 +156,20 @@ TEST(ParserTests, SelectParserTest) {
   EXPECT_STREQ(join->left->name, "customers");
   EXPECT_STREQ(join->right->name, "orders");
   EXPECT_EQ(join->condition->GetExpressionType(), EXPRESSION_TYPE_COMPARE_EQ);
-  EXPECT_STREQ(((expression::ParserExpression*)join->condition->GetLeft())->GetName(), "customers");
-  EXPECT_STREQ(((expression::ParserExpression*)join->condition->GetLeft())->GetColumn(), "id");
-  EXPECT_STREQ(((expression::ParserExpression*)join->condition->GetRight())->GetName(), "orders");
-  EXPECT_STREQ(((expression::ParserExpression*)join->condition->GetRight())->GetColumn(), "customer_id");
+  EXPECT_STREQ(join->condition->GetLeft()->GetName(), "customers");
+  EXPECT_STREQ(join->condition->GetLeft()->GetColumn(), "id");
+  EXPECT_STREQ(join->condition->GetRight()->GetName(), "orders");
+  EXPECT_STREQ(join->condition->GetRight()->GetColumn(), "customer_id");
 
   // Group By
   EXPECT_EQ(stmt->group_by->columns->size(), 1);
-  EXPECT_STREQ(((expression::ParserExpression*)stmt->group_by->columns->at(0))->GetName(), "customer_id");
+  EXPECT_STREQ((stmt->group_by->columns->at(0))->GetName(), "customer_id");
 
   // Order By
   EXPECT_EQ(stmt->order->type, parser::kOrderDesc);
   EXPECT_EQ(stmt->order->expr->GetExpressionType(), EXPRESSION_TYPE_FUNCTION_REF);
-  EXPECT_STREQ(((expression::ParserExpression*)stmt->order->expr)->GetName(), "SUM");
-  EXPECT_STREQ(((expression::ParserExpression*)((expression::ParserExpression*)stmt->order->expr)->GetExpression())->GetName(), "order_value");
+  EXPECT_STREQ(stmt->order->expr->GetName(), "SUM");
+  EXPECT_STREQ(stmt->order->expr->GetExpression()->GetName(), "order_value");
 
   // Limit
   EXPECT_EQ(stmt->limit->limit, 5);

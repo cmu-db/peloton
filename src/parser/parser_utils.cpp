@@ -92,14 +92,14 @@ void GetExpressionInfo(const expression::AbstractExpression* expr, uint num_inde
   }
 
   printf("%s", indent(num_indent));
-  std::cout << "Expr Type :: " << ExpressionToString(expr->GetExpressionType()) << "\n";
+  std::cout << "-> Expr Type :: " << ExpressionToString(expr->GetExpressionType()) << "\n";
 
   switch (expr->GetExpressionType()) {
     case EXPRESSION_TYPE_STAR:
       inprint("*", num_indent);
       break;
     case EXPRESSION_TYPE_COLUMN_REF:
-      inprint(((expression::ParserExpression*)expr)->GetName(), num_indent);
+      inprint((expr)->GetName(), num_indent);
       break;
     case EXPRESSION_TYPE_VALUE_CONSTANT:
       printf("%s", indent(num_indent));
@@ -107,8 +107,8 @@ void GetExpressionInfo(const expression::AbstractExpression* expr, uint num_inde
       printf("\n");
       break;
     case EXPRESSION_TYPE_FUNCTION_REF:
-      inprint(((expression::ParserExpression*)expr)->GetName(), num_indent);
-      inprint(((expression::ParserExpression*)((expression::ParserExpression*)expr)->GetExpression())->GetName(), num_indent);
+      inprint(expr->GetName(), num_indent);
+      inprint(expr->GetExpression()->GetName(), num_indent);
       break;
     default:
       PrintOperatorExpression(expr, num_indent);
