@@ -65,11 +65,11 @@ class SQLStatementList {
     statements.push_back(stmt);
   }
 
-  SQLStatement* getStatement(int id) {
+  SQLStatement* GetStatement(int id) {
     return statements[id];
   }
 
-  size_t numStatements() {
+  size_t GetNumStatements() {
     return statements.size();
   }
 

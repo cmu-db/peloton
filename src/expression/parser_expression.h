@@ -30,10 +30,10 @@ class ParserExpression : public AbstractExpression {
     m_name = std::string(name);
   }
 
-  ParserExpression(ExpressionType type, char* name, char* table)
+  ParserExpression(ExpressionType type, char* name, char* column)
  : AbstractExpression(type) {
     m_name = std::string(name);
-    m_table = std::string(table);
+    m_column = std::string(column);
   }
 
   ParserExpression(ExpressionType type)
@@ -68,8 +68,8 @@ class ParserExpression : public AbstractExpression {
     return m_name.c_str();
   }
 
-  const char* GetTable() const {
-    return m_table.c_str();
+  const char* GetColumn() const {
+    return m_column.c_str();
   }
 
   const char* GetAlias() const {
@@ -82,7 +82,7 @@ class ParserExpression : public AbstractExpression {
 
  protected:
   std::string m_name;
-  std::string m_table;
+  std::string m_column;
   std::string m_alias;
 
   AbstractExpression* m_expr = nullptr;

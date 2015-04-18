@@ -14,6 +14,7 @@
 
 #include "harness.h"
 #include "parser/parser.h"
+#include "parser/parser_utils.h"
 
 #include <vector>
 
@@ -76,12 +77,104 @@ TEST(ParserTests, BasicTest) {
   // Parsing
   for(auto query : queries) {
     parser::SQLStatementList* stmt_list = parser::Parser::ParseSQLString(query.c_str());
-    std::cout << (*stmt_list);
-    std::cout << "\n";
+    //std::cout << (*stmt_list);
+    //std::cout << "\n";
     delete stmt_list;
   }
 
 }
+
+
+TEST(ParserTests, GrammarTest) {
+  std::vector<std::string> valid_queries;
+
+  valid_queries.push_back("SELECT * FROM test;");
+  valid_queries.push_back("SELECT name, address, age FROM customers WHERE age > 10 AND city = 'Berlin';");
+  valid_queries.push_back("SELECT * FROM customers JOIN orders ON customers.id = orders.customer_id ORDER BY order_value;");
+
+  for (auto query : valid_queries) {
+    parser::SQLStatementList* result = parser::Parser::ParseSQLString(query.c_str());
+    EXPECT_TRUE(result->is_valid);
+    if (!result->is_valid)
+      fprintf(stderr, "Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
+    delete result;
+  }
+
+  std::vector<std::string> faulty_queries;
+  faulty_queries.push_back("SELECT * FROM (SELECT * FROM test);"); // Missing alias for subquery
+
+  for (std::string query : faulty_queries) {
+    parser::SQLStatementList* result = parser::Parser::ParseSQLString(query.c_str());
+    EXPECT_FALSE(result->is_valid);
+    if (result->is_valid)
+      fprintf(stderr, "Parsing shouldn't have succeeded: %s\n", query.c_str());
+    delete result;
+  }
+}
+
+#define EXPECT_NULL(pointer) EXPECT_TRUE(pointer == NULL);
+#define EXPECT_NOTNULL(pointer) EXPECT_TRUE(pointer != NULL);
+
+TEST(ParserTests, SelectParserTest) {
+  std::string query = "SELECT customer_id, SUM(order_value) FROM customers JOIN orders ON customers.id = orders.customer_id GROUP BY customer_id ORDER BY SUM(order_value) DESC LIMIT 5;";
+
+  parser::SQLStatementList* list = parser::Parser::ParseSQLString(query.c_str());
+  EXPECT_TRUE(list->is_valid);
+  if (!list->is_valid)
+    fprintf(stderr, "Parsing failed: %s (%s)\n", query.c_str(), list->parser_msg);
+
+
+  EXPECT_EQ(list->GetNumStatements(), 1);
+  EXPECT_EQ(list->GetStatement(0)->GetType(), STATEMENT_TYPE_SELECT);
+
+  parser::SelectStatement* stmt = (parser::SelectStatement*) list->GetStatement(0);
+
+  EXPECT_NOTNULL(stmt->select_list);
+  EXPECT_NOTNULL(stmt->from_table);
+  EXPECT_NOTNULL(stmt->group_by);
+  EXPECT_NOTNULL(stmt->order);
+  EXPECT_NOTNULL(stmt->limit);
+
+  EXPECT_NULL(stmt->where_clause);
+  EXPECT_NULL(stmt->union_select);
+
+  parser::GetSelectStatementInfo(stmt, 1);
+
+  // Select List
+  EXPECT_EQ(stmt->select_list->size(), 2);
+  EXPECT_EQ(stmt->select_list->at(0)->GetExpressionType(), EXPRESSION_TYPE_COLUMN_REF);
+  EXPECT_STREQ(((expression::ParserExpression*)stmt->select_list->at(0))->GetName(), "customer_id");
+  EXPECT_EQ(stmt->select_list->at(1)->GetExpressionType(), EXPRESSION_TYPE_FUNCTION_REF);
+  EXPECT_STREQ(((expression::ParserExpression*)stmt->select_list->at(1))->GetName(), "SUM");
+  EXPECT_STREQ(((expression::ParserExpression*)((expression::ParserExpression*)stmt->select_list->at(1))->GetExpression())->GetName(), "order_value");
+
+  // Join Table
+  parser::JoinDefinition* join = stmt->from_table->join;
+  EXPECT_EQ(stmt->from_table->type, TABLE_REFERENCE_TYPE_JOIN);
+  EXPECT_NOTNULL(join);
+  EXPECT_STREQ(join->left->name, "customers");
+  EXPECT_STREQ(join->right->name, "orders");
+  EXPECT_EQ(join->condition->GetExpressionType(), EXPRESSION_TYPE_COMPARE_EQ);
+  EXPECT_STREQ(((expression::ParserExpression*)join->condition->GetLeft())->GetName(), "customers");
+  EXPECT_STREQ(((expression::ParserExpression*)join->condition->GetLeft())->GetColumn(), "id");
+  EXPECT_STREQ(((expression::ParserExpression*)join->condition->GetRight())->GetName(), "orders");
+  EXPECT_STREQ(((expression::ParserExpression*)join->condition->GetRight())->GetColumn(), "customer_id");
+
+  // Group By
+  EXPECT_EQ(stmt->group_by->columns->size(), 1);
+  EXPECT_STREQ(((expression::ParserExpression*)stmt->group_by->columns->at(0))->GetName(), "customer_id");
+
+  // Order By
+  EXPECT_EQ(stmt->order->type, parser::kOrderDesc);
+  EXPECT_EQ(stmt->order->expr->GetExpressionType(), EXPRESSION_TYPE_FUNCTION_REF);
+  EXPECT_STREQ(((expression::ParserExpression*)stmt->order->expr)->GetName(), "SUM");
+  EXPECT_STREQ(((expression::ParserExpression*)((expression::ParserExpression*)stmt->order->expr)->GetExpression())->GetName(), "order_value");
+
+  // Limit
+  EXPECT_EQ(stmt->limit->limit, 5);
+
+}
+
 
 } // End test namespace
 } // End nstore namespace
