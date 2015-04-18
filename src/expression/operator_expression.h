@@ -23,6 +23,7 @@ class OperatorUnaryNotExpression : public AbstractExpression {
   OperatorUnaryNotExpression(AbstractExpression *left)
  : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NOT) {
     m_left = left;
+    left_expr = left;
   };
 
   Value Evaluate(const storage::Tuple *tuple1, const storage::Tuple *tuple2) const {
@@ -45,6 +46,7 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
   OperatorUnaryMinusExpression(AbstractExpression *left)
  : AbstractExpression(EXPRESSION_TYPE_OPERATOR_UNARY_MINUS) {
     m_left = left;
+    left_expr = left;
   };
 
   Value Evaluate(const storage::Tuple *tuple1, const storage::Tuple *tuple2) const {

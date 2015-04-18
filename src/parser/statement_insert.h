@@ -10,10 +10,6 @@ namespace parser {
  * @brief Represents "INSERT INTO students VALUES ('Max', 1112233, 'Musterhausen', 2.3)"
  */
 struct InsertStatement : SQLStatement {
-	enum InsertType {
-		kInsertValues,
-		kInsertSelect
-	};
 
 	InsertStatement(InsertType type) :
 		SQLStatement(STATEMENT_TYPE_INSERT),

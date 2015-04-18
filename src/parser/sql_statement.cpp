@@ -19,7 +19,7 @@ namespace parser {
 
 std::ostream& operator<<(std::ostream& os, const SQLStatement& stmt) {
 
-  os << "\tSTMT : Type :: " << stmt.stmt_type << "\n";
+  os << "STATEMENT : Type :: " << stmt.stmt_type << "\n";
 
   int indent = 1;
 

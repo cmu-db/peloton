@@ -238,12 +238,12 @@ enum StatementType {
 //===--------------------------------------------------------------------===//
 
 enum JoinType {
-    JOIN_TYPE_INVALID       = 0, // invalid join type
+    JOIN_TYPE_INVALID               = 0, // invalid join type
 
-    JOIN_TYPE_LEFT          = 1, // left
-    JOIN_TYPE_RIGHT         = 2, // right
-    JOIN_TYPE_INNER         = 3, // inner
-    JOIN_TYPE_OUTER         = 4  // outer
+    JOIN_TYPE_LEFT                  = 1, // left
+    JOIN_TYPE_RIGHT                 = 2, // right
+    JOIN_TYPE_INNER                 = 3, // inner
+    JOIN_TYPE_OUTER                 = 4  // outer
 };
 
 //===--------------------------------------------------------------------===//
@@ -251,13 +251,25 @@ enum JoinType {
 //===--------------------------------------------------------------------===//
 
 enum TableReferenceType {
-  TABLE_REFERENCE_TYPE_INVALID = 0, // invalid table reference type
+  TABLE_REFERENCE_TYPE_INVALID       = 0, // invalid table reference type
 
-  TABLE_REFERENCE_TYPE_NAME = 1,    // table name
-  TABLE_REFERENCE_TYPE_SELECT = 2,  // output of select
-  TABLE_REFERENCE_TYPE_JOIN = 3,    // output of join
+  TABLE_REFERENCE_TYPE_NAME          = 1, // table name
+  TABLE_REFERENCE_TYPE_SELECT        = 2, // output of select
+  TABLE_REFERENCE_TYPE_JOIN          = 3, // output of join
   TABLE_REFERENCE_TYPE_CROSS_PRODUCT = 4  // out of cartesian product
 };
+
+//===--------------------------------------------------------------------===//
+// Insert Types
+//===--------------------------------------------------------------------===//
+
+enum InsertType {
+  INSERT_TYPE_INVALID                = 0,  // invalid insert type
+
+  INSERT_TYPE_VALUES                 = 1,  // values
+  INSERT_TYPE_SELECT                 = 2   // select
+};
+
 
 //===--------------------------------------------------------------------===//
 // Type definitions.
