@@ -64,29 +64,6 @@ class ParserExpression : public AbstractExpression {
     return os.str();
   }
 
-  const char* GetName() const {
-    return m_name.c_str();
-  }
-
-  const char* GetColumn() const {
-    return m_column.c_str();
-  }
-
-  const char* GetAlias() const {
-    return m_alias.c_str();
-  }
-
-  AbstractExpression* GetExpression() const{
-    return m_expr;
-  }
-
- protected:
-  std::string m_name;
-  std::string m_column;
-  std::string m_alias;
-
-  AbstractExpression* m_expr = nullptr;
-  bool m_distinct = false;
 };
 
 } // End expression namespace
