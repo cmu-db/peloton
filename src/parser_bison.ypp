@@ -137,15 +137,16 @@ struct PARSER_CUST_LTYPE {
 	bool bval;
 
 	nstore::parser::SQLStatement* statement;
-	nstore::parser::SelectStatement* 	select_stmt;
-	nstore::parser::ImportStatement* 	import_stmt;
-	nstore::parser::CreateStatement* 	create_stmt;
-	nstore::parser::InsertStatement* 	insert_stmt;
-	nstore::parser::DeleteStatement* 	delete_stmt;
-	nstore::parser::UpdateStatement* 	update_stmt;
-	nstore::parser::DropStatement*   	drop_stmt;
-	nstore::parser::PrepareStatement* prep_stmt;
-	nstore::parser::ExecuteStatement* exec_stmt;
+	nstore::parser::SelectStatement*  	  select_stmt;
+	nstore::parser::ImportStatement* 	  import_stmt;
+	nstore::parser::CreateStatement* 	  create_stmt;
+	nstore::parser::InsertStatement* 	  insert_stmt;
+	nstore::parser::DeleteStatement* 	  delete_stmt;
+	nstore::parser::UpdateStatement* 	  update_stmt;
+	nstore::parser::DropStatement*   	  drop_stmt;
+	nstore::parser::PrepareStatement*     prep_stmt;
+	nstore::parser::ExecuteStatement*     exec_stmt;
+	nstore::parser::TransactionStatement* txn_stmt;
 
 	nstore::parser::TableRef* table;
 	nstore::expression::AbstractExpression* expr;
@@ -176,15 +177,16 @@ struct PARSER_CUST_LTYPE {
 %token <uval> NOTEQUALS LESSEQ GREATEREQ
 
 /* SQL Keywords */
+%token TRANSACTION
 %token DEALLOCATE PARAMETERS INTERSECT TEMPORARY TIMESTAMP
-%token DISTINCT NVARCHAR RESTRICT TRUNCATE ANALYZE BETWEEN
+%token ROLLBACK DISTINCT NVARCHAR RESTRICT TRUNCATE ANALYZE BETWEEN
 %token CASCADE COLUMNS CONTROL DEFAULT EXECUTE EXPLAIN
 %token HISTORY INTEGER NATURAL PREPARE PRIMARY SCHEMAS
 %token SPATIAL VIRTUAL BEFORE COLUMN CREATE DELETE DIRECT
 %token DOUBLE ESCAPE EXCEPT EXISTS GLOBAL HAVING IMPORT
 %token INSERT ISNULL OFFSET RENAME SCHEMA SELECT SORTED
-%token TABLES UNIQUE UNLOAD UPDATE VALUES AFTER ALTER CROSS
-%token DELTA GROUP INDEX INNER LIMIT LOCAL MERGE MINUS ORDER
+%token COMMIT TABLES UNIQUE UNLOAD UPDATE VALUES AFTER ALTER CROSS
+%token BEGIN DELTA GROUP INDEX INNER LIMIT LOCAL MERGE MINUS ORDER
 %token OUTER RIGHT TABLE UNION USING WHERE CALL DATE DESC
 %token DROP FILE FROM FULL HASH HINT INTO JOIN LEFT LIKE
 %token LOAD NULL PART PLAN SHOW TEXT TIME VIEW WITH ADD ALL
@@ -206,6 +208,7 @@ struct PARSER_CUST_LTYPE {
 %type <delete_stmt> delete_statement truncate_statement
 %type <update_stmt> update_statement
 %type <drop_stmt>	drop_statement
+%type <txn_stmt>    transaction_statement
 %type <sval> 		table_name opt_alias alias file_path
 %type <bval> 		opt_not_exists opt_distinct
 %type <uval>		import_file_type opt_join_type column_type
@@ -288,6 +291,7 @@ preparable_statement:
 	|	update_statement { $$ = $1; }
 	|	drop_statement { $$ = $1; }
 	|	execute_statement { $$ = $1; }
+	|	transaction_statement { $$ = $1; }	
 	;
 
 
@@ -399,6 +403,29 @@ drop_statement:
 			$$ = new DropStatement(DropStatement::kPreparedStatement);
 			$$->name = $3;
 		}
+	;
+
+/******************************
+ * Transaction Statement
+ * BEGIN [ TRANSACTION ]
+ * COMMIT [ TRANSACTION ]
+ * ROLLBACK [ TRANSACTION ]
+ ******************************/
+
+transaction_statement:
+	BEGIN opt_transaction { 
+		$$ = new TransactionStatement(TransactionStatement::kBegin);
+	}
+	| COMMIT opt_transaction {
+		$$ = new TransactionStatement(TransactionStatement::kCommit);
+	}
+	| ROLLBACK opt_transaction {
+		$$ = new TransactionStatement(TransactionStatement::kRollback);
+	}
+	;
+	
+opt_transaction:
+	| TRANSACTION
 	;
 
 /******************************

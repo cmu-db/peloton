@@ -176,6 +176,40 @@ TEST(ParserTests, SelectParserTest) {
 
 }
 
+TEST(ParserTests, TransactionTest) {
+  std::vector<std::string> valid_queries;
+
+  valid_queries.push_back("BEGIN TRANSACTION;");
+  valid_queries.push_back("BEGIN;");
+  valid_queries.push_back("COMMIT TRANSACTION;");
+  valid_queries.push_back("ROLLBACK TRANSACTION;");
+
+  for (auto query : valid_queries) {
+    parser::SQLStatementList* result = parser::Parser::ParseSQLString(query.c_str());
+    EXPECT_TRUE(result->is_valid);
+    std::cout << (*result);
+    if (!result->is_valid)
+      fprintf(stderr, "Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
+    delete result;
+  }
+
+  parser::SQLStatementList* list = parser::Parser::ParseSQLString(valid_queries[0].c_str());
+  parser::TransactionStatement* stmt = (parser::TransactionStatement*) list->GetStatement(0);
+  EXPECT_EQ(list->GetStatement(0)->GetType(), STATEMENT_TYPE_TRANSACTION);
+  EXPECT_EQ(stmt->type, parser::TransactionStatement::kBegin);
+
+  list = parser::Parser::ParseSQLString(valid_queries[1].c_str());
+  stmt = (parser::TransactionStatement*) list->GetStatement(0);
+  EXPECT_EQ(stmt->type, parser::TransactionStatement::kBegin);
+
+  list = parser::Parser::ParseSQLString(valid_queries[2].c_str());
+  stmt = (parser::TransactionStatement*) list->GetStatement(0);
+  EXPECT_EQ(stmt->type, parser::TransactionStatement::kCommit);
+
+  list = parser::Parser::ParseSQLString(valid_queries[3].c_str());
+  stmt = (parser::TransactionStatement*) list->GetStatement(0);
+  EXPECT_EQ(stmt->type, parser::TransactionStatement::kRollback);
+}
 
 } // End test namespace
 } // End nstore namespace
