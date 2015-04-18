@@ -108,6 +108,7 @@ void GetExpressionInfo(const expression::AbstractExpression* expr, uint num_inde
       break;
     case EXPRESSION_TYPE_FUNCTION_REF:
       inprint(((expression::ParserExpression*)expr)->GetName(), num_indent);
+      inprint(((expression::ParserExpression*)((expression::ParserExpression*)expr)->GetExpression())->GetName(), num_indent);
       break;
     default:
       PrintOperatorExpression(expr, num_indent);
