@@ -8,7 +8,6 @@ parser_FILES = \
 			   parser_bison.ypp \
 			   parser_flex.lpp \
 			   parser/parser.cpp \
-			   parser/expr.cpp \
 			   parser/parser_utils.cpp \
 			   parser/sql_statement.cpp \
 			   parser/table_ref.cpp

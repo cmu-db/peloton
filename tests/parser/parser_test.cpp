@@ -32,6 +32,7 @@ TEST(ParserTests, BasicTest) {
   queries.push_back("SELECT * FROM orders;");
   queries.push_back("SELECT a + b FROM orders;");
   queries.push_back("SELECT a FROM foo WHERE a > 12 OR b > 3 AND NOT c LIMIT 10");
+
   queries.push_back("SELECT col1 AS myname, col2, 'test' FROM \"table\", foo AS t WHERE age > 12 AND zipcode = 12345 GROUP BY col1;");
   queries.push_back("SELECT * from \"table\" JOIN table2 ON a = b WHERE (b OR NOT a) AND a = 12.5");
   queries.push_back("(SELECT a FROM foo WHERE a > 12 OR b > 3 AND c NOT LIKE 's%' LIMIT 10);");
@@ -44,12 +45,10 @@ TEST(ParserTests, BasicTest) {
   queries.push_back("SELECT a, SUM(b) FROM t2 GROUP BY a HAVING SUM(b) > 100;");
 
   // CREATE statement
-  queries.push_back("CREATE TABLE \"table\" FROM TBL FILE 'students.tbl'");
-  queries.push_back("CREATE TABLE IF NOT EXISTS \"table\" FROM TBL FILE 'students.tbl'");
   queries.push_back("CREATE TABLE students (name TEXT, student_number INTEGER, city TEXT, grade DOUBLE)");
 
   // Multiple statements
-  queries.push_back("CREATE TABLE \"table\" FROM TBL FILE 'students.tbl'; SELECT * FROM \"table\";");
+  queries.push_back("CREATE TABLE students (name TEXT, student_number INTEGER); SELECT * FROM \"table\";");
 
   // INSERT
   queries.push_back("INSERT INTO test_table VALUES (1, 2, 'test');");
@@ -76,10 +75,9 @@ TEST(ParserTests, BasicTest) {
 
   // Parsing
   for(auto query : queries) {
-    std::cout << "STATEMENT :: \n";
     parser::SQLStatementList* stmt_list = parser::Parser::ParseSQLString(query.c_str());
     std::cout << (*stmt_list);
-    std::cout << "\n\n";
+    std::cout << "\n";
     delete stmt_list;
   }
 
