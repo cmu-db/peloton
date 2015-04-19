@@ -180,7 +180,7 @@ struct PARSER_CUST_LTYPE {
 %token TRANSACTION
 %token REFERENCES DEALLOCATE PARAMETERS INTERSECT TEMPORARY TIMESTAMP
 %token VARBINARY ROLLBACK DISTINCT NVARCHAR RESTRICT TRUNCATE ANALYZE BETWEEN BOOLEAN ADDRESS
-%token SMALLINT VARCHAR FOREIGN TINYINT CASCADE COLUMNS CONTROL DEFAULT EXECUTE EXPLAIN
+%token DATABASE SMALLINT VARCHAR FOREIGN TINYINT CASCADE COLUMNS CONTROL DEFAULT EXECUTE EXPLAIN
 %token HISTORY INTEGER NATURAL PREPARE PRIMARY SCHEMAS DECIMAL
 %token SPATIAL VIRTUAL BEFORE COLUMN CREATE DELETE DIRECT 
 %token BIGINT DOUBLE ESCAPE EXCEPT EXISTS GLOBAL HAVING IMPORT
@@ -190,7 +190,7 @@ struct PARSER_CUST_LTYPE {
 %token OUTER RIGHT TABLE UNION USING WHERE CHAR CALL DATE DESC
 %token DROP FILE FROM FULL HASH HINT INTO JOIN LEFT LIKE
 %token LOAD NULL PART PLAN SHOW TEXT TIME VIEW WITH ADD ALL
-%token AND ASC CSV FOR INT KEY NOT OFF SET TBL TOP AS BY IF
+%token AND ASC CSV FOR INT KEY NOT OFF SET TOP AS BY IF
 %token IN IS OF ON OR TO
 
 
@@ -347,20 +347,27 @@ file_path:
 /******************************
  * Create Statement
  * CREATE TABLE students (name TEXT, student_number INTEGER, city TEXT, grade DOUBLE)
- * CREATE TABLE students FROM TBL FILE 'test/students.tbl'
+ * CREATE INDEX i_security ON security (s_co_id, s_issue)
+ * CREATE DATABASE my_db
  ******************************/
 create_statement:
-		CREATE TABLE opt_not_exists table_name FROM TBL FILE file_path {
-			$$ = new CreateStatement(CreateStatement::kTableFromTbl);
-			$$->if_not_exists = $3;
-			$$->table_name = $4;
-			$$->file_path = $8;
-		}
-	|	CREATE TABLE opt_not_exists table_name '(' column_def_commalist ')' {
+		CREATE TABLE opt_not_exists table_name '(' column_def_commalist ')' {
 			$$ = new CreateStatement(CreateStatement::kTable);
 			$$->if_not_exists = $3;
-			$$->table_name = $4;
+			$$->name = $4;
 			$$->columns = $6;
+		}
+		|	CREATE DATABASE opt_not_exists IDENTIFIER {
+			$$ = new CreateStatement(CreateStatement::kDatabase);
+			$$->if_not_exists = $3;
+			$$->name = $4;
+		}
+		|	CREATE opt_unique INDEX IDENTIFIER ON table_name '(' ident_commalist ')' {
+			$$ = new CreateStatement(CreateStatement::kIndex);
+			$$->unique = $2;
+			$$->name = $4;
+			$$->table_name = $6;
+			$$->index_attrs = $8;			
 		}
 	;
 
@@ -436,6 +443,8 @@ column_type:
 /******************************
  * Drop Statement
  * DROP TABLE students;
+ * DROP DATABASE students;
+ * DROP INDEX students;
  * DEALLOCATE PREPARE stmt;
  ******************************/
 
@@ -444,7 +453,18 @@ drop_statement:
 			$$ = new DropStatement(DropStatement::kTable);
 			$$->name = $3;
 		}
-	|	DEALLOCATE PREPARE IDENTIFIER {
+		|
+		DROP DATABASE IDENTIFIER {
+			$$ = new DropStatement(DropStatement::kDatabase);
+			$$->name = $3;
+		}
+		|	
+		DROP INDEX IDENTIFIER {
+			$$ = new DropStatement(DropStatement::kIndex);
+			$$->name = $3;
+		}
+		|	
+		DEALLOCATE PREPARE IDENTIFIER {
 			$$ = new DropStatement(DropStatement::kPreparedStatement);
 			$$->name = $3;
 		}
