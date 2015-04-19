@@ -13,7 +13,6 @@
 #pragma once
 
 #include "storage/tile.h"
-#include "storage/tile_factory.h"
 #include "storage/tile_group_header.h"
 #include <cassert>
 
@@ -103,12 +102,16 @@ public:
 	  return tiles[tile_id];
 	}
 
-  oid_t GetTileId(const id_t tile_id) const {
+  id_t GetTileId(const id_t tile_id) const {
     return tiles[tile_id]->GetTileId();
   }
 
 	Pool *GetTilePool(const id_t tile_id) const {
 	  return tiles[tile_id]->GetPool();
+	}
+
+	id_t GetTileGroupId() const {
+	  return tile_group_id;
 	}
 
 protected:
@@ -131,6 +134,9 @@ protected:
 	// mapping to tile schemas
 	std::vector<catalog::Schema *> tile_schemas;
 
+	// manager
+	catalog::Manager *catalog;
+
 	// backend
 	Backend* backend;
 
@@ -144,78 +150,81 @@ protected:
 
 };
 
+
 //===--------------------------------------------------------------------===//
 // Tile Group factory
 //===--------------------------------------------------------------------===//
 
 class TileGroupFactory {
 public:
-	TileGroupFactory();
-	virtual ~TileGroupFactory();
+  TileGroupFactory();
+  virtual ~TileGroupFactory();
 
-	static TileGroup *GetTileGroup(const std::vector<catalog::Schema*>& schemas,
-			int tuple_count,
-			const std::vector<std::vector<std::string> >& column_names,
-			const bool owns_tuple_schema,
-			catalog::Manager *catalog,
-			Backend *backend = nullptr){
+  static TileGroup *GetTileGroup(const std::vector<catalog::Schema*>& schemas,
+      int tuple_count,
+      const std::vector<std::vector<std::string> >& column_names,
+      const bool owns_tuple_schema,
+      catalog::Manager *catalog,
+      Backend *backend = nullptr){
 
-	  bool own_backend = false;
-		// create backend if needed
-		if(backend == nullptr) {
-			backend = new storage::VMBackend();
-			own_backend = true;
-		}
+    bool own_backend = false;
+    // create backend if needed
+    if(backend == nullptr) {
+      backend = new storage::VMBackend();
+      own_backend = true;
+    }
 
-		TileGroup *group = TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
-				nullptr, schemas, catalog, backend, tuple_count, column_names, owns_tuple_schema);
+    TileGroup *group = TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
+        nullptr, schemas, catalog, backend, tuple_count, column_names, owns_tuple_schema);
 
     group->backend = backend;
 
-		if(own_backend) {
-		  group->own_backend = true;
-		}
+    if(own_backend) {
+      group->own_backend = true;
+    }
 
-		return group;
-	}
+    return group;
+  }
 
-	static TileGroup *GetTileGroup(oid_t database_id,
-			oid_t table_id,
-			oid_t tile_group_id,
-			TileGroupHeader* tile_header,
-			const std::vector<catalog::Schema*>& schemas,
-			catalog::Manager *catalog,
-			Backend* backend,
-			int tuple_count,
-			const std::vector<std::vector<std::string> >& column_names,
-			const bool owns_tuple_schema) {
+  static TileGroup *GetTileGroup(oid_t database_id,
+      oid_t table_id,
+      oid_t tile_group_id,
+      TileGroupHeader* tile_header,
+      const std::vector<catalog::Schema*>& schemas,
+      catalog::Manager *catalog,
+      Backend* backend,
+      int tuple_count,
+      const std::vector<std::vector<std::string> >& column_names,
+      const bool owns_tuple_schema) {
 
-		// create tile header if needed
-		if(tile_header == nullptr)
-			tile_header = new TileGroupHeader(backend, tuple_count);
+    // create tile header if needed
+    if(tile_header == nullptr)
+      tile_header = new TileGroupHeader(backend, tuple_count);
 
-		TileGroup *tile_group = new TileGroup(tile_header, catalog, backend, schemas, tuple_count,
-				column_names, owns_tuple_schema);
+    TileGroup *tile_group = new TileGroup(tile_header, catalog, backend, schemas, tuple_count,
+        column_names, owns_tuple_schema);
 
-		TileGroupFactory::InitCommon(tile_group, database_id, table_id, tile_group_id);
+    TileGroupFactory::InitCommon(tile_group, database_id, table_id, tile_group_id);
 
-		return tile_group;
-	}
+    return tile_group;
+  }
 
 private:
 
-	static void InitCommon(TileGroup *tile_group,
-			oid_t database_id,
-			oid_t table_id,
-			oid_t tile_group_id) {
+  static void InitCommon(TileGroup *tile_group,
+      oid_t database_id,
+      oid_t table_id,
+      oid_t tile_group_id) {
 
-		tile_group->database_id = database_id;
-		tile_group->tile_group_id = tile_group_id;
-		tile_group->table_id = table_id;
+    tile_group->database_id = database_id;
+    tile_group->tile_group_id = tile_group_id;
+    tile_group->table_id = table_id;
 
-	}
+  }
 
 };
+
+
 } // End storage namespace
 } // End nstore namespace
 
