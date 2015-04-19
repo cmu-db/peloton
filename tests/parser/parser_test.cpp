@@ -300,6 +300,36 @@ TEST(ParserTests, TM1Test) {
 
 }
 
+TEST(ParserTests, IndexTest) {
+
+  std::vector<std::string> queries;
+
+  queries.push_back("CREATE INDEX i_security "
+      " ON security (s_co_id, s_issue);");
+
+  queries.push_back("CREATE UNIQUE INDEX i_security "
+      " ON security (s_co_id, s_issue);");
+
+  queries.push_back("DROP INDEX i_security;");
+  queries.push_back("DROP DATABASE i_security;");
+
+  // Parsing
+  int ii = 0;
+  for(auto query : queries) {
+    parser::SQLStatementList* result = parser::Parser::ParseSQLString(query.c_str());
+
+    if (!result->is_valid)
+      fprintf(stderr, "Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
+    EXPECT_EQ(result->is_valid, true);
+
+    if(result) {
+      std::cout << ++ii << " " << (*result);
+      delete result;
+    }
+  }
+}
+
+
 } // End test namespace
 } // End nstore namespace
 

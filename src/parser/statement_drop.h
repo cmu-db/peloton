@@ -11,7 +11,8 @@ namespace parser {
  */
 struct DropStatement : SQLStatement {
 	enum EntityType {
-		kTable,
+    kDatabase,
+	  kTable,
 		kSchema,
 		kIndex,
 		kView,

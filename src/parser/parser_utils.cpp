@@ -164,7 +164,16 @@ void GetImportStatementInfo(ImportStatement* stmt, uint num_indent) {
 
 void GetCreateStatementInfo(CreateStatement* stmt, uint num_indent) {
   inprint("CreateStatment", num_indent);
-  inprint(stmt->table_name, num_indent+1);
+  inprint(stmt->name, num_indent+1);
+  inprintU(stmt->type, num_indent+1);
+
+  if(stmt->type == CreateStatement::CreateType::kIndex) {
+    printf("%s", indent(num_indent));
+    printf("INDEX : table : %s unique : %d attrs : ", stmt->table_name, stmt->unique);
+    for(auto key : *(stmt->index_attrs))
+      printf("%s ", key);
+    printf("\n");
+  }
 
   if(stmt->columns != nullptr){
     for(ColumnDefinition *col : *(stmt->columns)) {
