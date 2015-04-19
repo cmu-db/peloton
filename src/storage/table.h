@@ -44,31 +44,22 @@ class Table {
 
   // Table constructor
   Table(catalog::Manager *catalog,
-        catalog::Schema *schema,
+        const catalog::Schema& schema,
         Backend *backend,
-        id_t tuple_count,
-        bool own_backend,
-        bool own_schema)
- : catalog(catalog),
-   schema(schema),
-   backend(backend),
-   own_backend(own_backend),
-   own_schema(own_schema),
-   tuple_count(tuple_count),
+        id_t tuple_count)
+ : database_id(INVALID_ID),
    table_id(INVALID_ID),
-   database_id(INVALID_ID) {
+   backend(backend),
+   schema(schema),
+   catalog(catalog),
+   tuple_count(tuple_count) {
   }
 
   ~Table() {
+
     // clean up tile groups
     for(auto tile_group : tile_groups)
       delete tile_group;
-
-    if(own_schema)
-      delete schema;
-
-    if(own_backend)
-      delete backend;
 
   }
 
@@ -85,26 +76,23 @@ class Table {
   // Data members
   //===--------------------------------------------------------------------===//
 
-  // set of tile groups
-  std::vector<TileGroup*> tile_groups;
-
-  // manager
-  catalog::Manager *catalog;
-
-  // table schema
-  catalog::Schema* schema;
+  // Catalog information
+  id_t database_id;
+  id_t table_id;
 
   // backend
   Backend *backend;
 
-  bool own_backend;
-  bool own_schema;
+  // table schema
+  catalog::Schema schema;
+
+  // catalog manager
+  catalog::Manager *catalog;
+
+  // set of tile groups
+  std::vector<TileGroup*> tile_groups;
 
   id_t tuple_count;
-
-  // Catalog information
-  id_t table_id;
-  id_t database_id;
 
   std::mutex table_mutex;
 };
@@ -118,39 +106,13 @@ class TableFactory {
   TableFactory();
   virtual ~TableFactory();
 
-  static Table *GetTable(catalog::Manager *catalog,
-                         catalog::Schema* schema,
-                         int tuple_count,
-                         const bool own_schema,
-                         Backend* backend = nullptr){
-
-    bool own_backend = false;
-    // create backend if needed
-    if(backend == nullptr) {
-      backend = new storage::VMBackend();
-      own_backend = true;
-    }
-
-    Table *table = GetTable(INVALID_OID, catalog, schema,
-                            backend, tuple_count, own_backend, own_schema);
-
-    if(own_backend) {
-      table->own_backend = true;
-    }
-
-    return table;
-  }
-
   static Table *GetTable(oid_t database_id,
                          catalog::Manager *catalog,
-                         catalog::Schema* schema,
                          Backend* backend,
-                         int tuple_count,
-                         const bool own_backend,
-                         const bool own_schema) {
+                         catalog::Schema schema,
+                         int tuple_count) {
 
-    Table *table =  new Table(catalog,schema, backend, tuple_count,
-                              own_backend, own_schema);
+    Table *table =  new Table(catalog,schema, backend, tuple_count);
 
     table->database_id = database_id;
 

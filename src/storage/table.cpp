@@ -17,18 +17,15 @@ namespace storage {
 
 id_t Table::AddTileGroup() {
 
-  id_t tile_group_id = catalog->GetNextOid();
-  TileGroupHeader *tile_group_header = new TileGroupHeader(backend, tuple_count);
-
-  std::vector<catalog::Schema*> schemas;
+  std::vector<catalog::Schema> schemas;
   std::vector<std::vector<std::string> > column_names;
 
+  id_t tile_group_id = catalog->GetNextOid();
   schemas.push_back(schema);
 
   TileGroup* tile_group = TileGroupFactory::GetTileGroup(database_id, table_id, tile_group_id,
-                                                         tile_group_header, schemas, catalog,
-                                                         backend, tuple_count,
-                                                         column_names, own_schema);
+                                                         catalog, backend,
+                                                         schemas, tuple_count);
 
   {
     std::lock_guard<std::mutex> lock(table_mutex);
