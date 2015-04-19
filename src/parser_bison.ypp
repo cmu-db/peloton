@@ -29,7 +29,7 @@ int yyerror(YYLTYPE* llocp, nstore::parser::SQLStatementList** result, __attribu
 
 	nstore::parser::SQLStatementList* list = new nstore::parser::SQLStatementList();
 	list->is_valid = false;
-	//list->parser_msg = strdup(msg);
+	list->parser_msg = strdup(msg);
 	list->error_line = llocp->first_line;
 	list->error_col = llocp->first_column;
 
@@ -178,16 +178,16 @@ struct PARSER_CUST_LTYPE {
 
 /* SQL Keywords */
 %token TRANSACTION
-%token DEALLOCATE PARAMETERS INTERSECT TEMPORARY TIMESTAMP
-%token ROLLBACK DISTINCT NVARCHAR RESTRICT TRUNCATE ANALYZE BETWEEN
-%token CASCADE COLUMNS CONTROL DEFAULT EXECUTE EXPLAIN
-%token HISTORY INTEGER NATURAL PREPARE PRIMARY SCHEMAS
-%token SPATIAL VIRTUAL BEFORE COLUMN CREATE DELETE DIRECT
-%token DOUBLE ESCAPE EXCEPT EXISTS GLOBAL HAVING IMPORT
+%token REFERENCES DEALLOCATE PARAMETERS INTERSECT TEMPORARY TIMESTAMP
+%token VARBINARY ROLLBACK DISTINCT NVARCHAR RESTRICT TRUNCATE ANALYZE BETWEEN BOOLEAN ADDRESS
+%token SMALLINT VARCHAR FOREIGN TINYINT CASCADE COLUMNS CONTROL DEFAULT EXECUTE EXPLAIN
+%token HISTORY INTEGER NATURAL PREPARE PRIMARY SCHEMAS DECIMAL
+%token SPATIAL VIRTUAL BEFORE COLUMN CREATE DELETE DIRECT 
+%token BIGINT DOUBLE ESCAPE EXCEPT EXISTS GLOBAL HAVING IMPORT
 %token INSERT ISNULL OFFSET RENAME SCHEMA SELECT SORTED
 %token COMMIT TABLES UNIQUE UNLOAD UPDATE VALUES AFTER ALTER CROSS
-%token BEGIN DELTA GROUP INDEX INNER LIMIT LOCAL MERGE MINUS ORDER
-%token OUTER RIGHT TABLE UNION USING WHERE CALL DATE DESC
+%token FLOAT BEGIN DELTA GROUP INDEX INNER LIMIT LOCAL MERGE MINUS ORDER
+%token OUTER RIGHT TABLE UNION USING WHERE CHAR CALL DATE DESC
 %token DROP FILE FROM FULL HASH HINT INTO JOIN LEFT LIKE
 %token LOAD NULL PART PLAN SHOW TEXT TIME VIEW WITH ADD ALL
 %token AND ASC CSV FOR INT KEY NOT OFF SET TBL TOP AS BY IF
@@ -210,8 +210,8 @@ struct PARSER_CUST_LTYPE {
 %type <drop_stmt>	drop_statement
 %type <txn_stmt>    transaction_statement
 %type <sval> 		table_name opt_alias alias file_path
-%type <bval> 		opt_not_exists opt_distinct
-%type <uval>		import_file_type opt_join_type column_type
+%type <bval> 		opt_not_exists opt_distinct opt_notnull opt_primary opt_unique
+%type <uval>		import_file_type opt_join_type column_type opt_column_width
 %type <table> 		from_clause table_ref table_ref_atomic table_ref_name
 %type <table>		join_clause join_table table_ref_name_no_alias
 %type <expr> 		expr scalar_expr unary_expr binary_expr function_expr star_expr expr_alias placeholder_expr
@@ -228,7 +228,7 @@ struct PARSER_CUST_LTYPE {
 %type <expr_vec> 	expr_list select_list literal_list
 %type <table_vec> 	table_ref_commalist
 %type <update_vec>	update_clause_commalist
-%type <column_vec>	column_def_commalist
+%type <column_vec>	column_def_commalist 
 
 /******************************
  ** Token Precedence and Associativity
@@ -373,19 +373,64 @@ column_def_commalist:
 		column_def { $$ = new std::vector<ColumnDefinition*>(); $$->push_back($1); }
 	|	column_def_commalist ',' column_def { $1->push_back($3); $$ = $1; }
 	;
-
+	
 column_def:
-		IDENTIFIER column_type {
+		IDENTIFIER column_type opt_column_width opt_notnull opt_primary opt_unique {
 			$$ = new ColumnDefinition($1, (ColumnDefinition::DataType) $2);
+			$$->varlen = $3;
+			$$->not_null = $4;
+			$$->primary = $5;
+			$$->unique = $6;
 		}
+		|
+		PRIMARY KEY '(' ident_commalist ')' {
+			$$ = new ColumnDefinition(ColumnDefinition::DataType::PRIMARY);
+			$$->primary_key = $4;
+		}
+		|
+		FOREIGN KEY '(' ident_commalist ')' REFERENCES table_name '(' ident_commalist ')' {
+			$$ = new ColumnDefinition(ColumnDefinition::DataType::FOREIGN);
+			$$->foreign_key_source = $4;
+			$$->name = $7;
+			$$->foreign_key_sink = $9;
+		}
+		;
+
+opt_column_width:
+	'(' int_literal ')' { $$ = $2->ival; }
+	| /* empty */ { $$ = 0; }
+	;    
+
+opt_notnull:
+	NOT NULL { $$ = true; }
+	|  /* empty */ { $$ = false; }
 	;
 
+opt_primary:
+	PRIMARY KEY { $$ = true; }
+	|  /* empty */ { $$ = false; }
+	;
+
+opt_unique:
+	UNIQUE { $$ = true; }
+	|  /* empty */ { $$ = false; }
+	;
 
 column_type:
 		INT { $$ = ColumnDefinition::INT; }
 	|	INTEGER { $$ = ColumnDefinition::INT; }
 	|	DOUBLE { $$ = ColumnDefinition::DOUBLE; }
 	|	TEXT { $$ = ColumnDefinition::TEXT; }
+	|   CHAR { $$ = ColumnDefinition::CHAR; }
+	|   TINYINT { $$ = ColumnDefinition::TINYINT; }
+	|   SMALLINT { $$ = ColumnDefinition::SMALLINT; }
+	|	BIGINT { $$ = ColumnDefinition::BIGINT; }
+	|	FLOAT { $$ = ColumnDefinition::FLOAT; }
+	|	DECIMAL { $$ = ColumnDefinition::DECIMAL; }
+	|	BOOLEAN { $$ = ColumnDefinition::BOOLEAN; }
+	|	TIMESTAMP { $$ = ColumnDefinition::TIMESTAMP; }
+	|	VARCHAR { $$ = ColumnDefinition::VARCHAR; }
+    |   VARBINARY { $$ = ColumnDefinition::VARBINARY; }
 	;
 
 /******************************
@@ -728,7 +773,6 @@ table_ref_atomic:
 		}
 	|	join_clause
 	;
-
 
 table_ref_commalist:
 		table_ref_atomic { $$ = new std::vector<TableRef*>(); $$->push_back($1); }

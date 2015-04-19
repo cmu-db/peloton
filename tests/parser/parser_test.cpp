@@ -211,6 +211,95 @@ TEST(ParserTests, TransactionTest) {
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kRollback);
 }
 
+TEST(ParserTests, CreateTest) {
+  std::vector<std::string> queries;
+
+  queries.push_back("CREATE TABLE ACCESS_INFO ("
+      " s_id INTEGER"
+      " )");
+
+  queries.push_back("CREATE TABLE ACCESS_INFO ("
+      " s_id INTEGER PRIMARY KEY,"
+      " ai_type TINYINT NOT NULL UNIQUE"
+      " )");
+
+  queries.push_back("CREATE TABLE ACCESS_INFO ("
+      " s_id INTEGER NOT NULL,"
+      " ai_type TINYINT NOT NULL,"
+      " PRIMARY KEY (s_id, ai_type),"
+      " FOREIGN KEY (s_id) REFERENCES SUBSCRIBER (s_id)"
+      " )");
+
+  // Parsing
+  int ii = 0;
+  for(auto query : queries) {
+    parser::SQLStatementList* result = parser::Parser::ParseSQLString(query.c_str());
+
+    if (!result->is_valid)
+      fprintf(stderr, "Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
+    EXPECT_EQ(result->is_valid, true);
+
+    if(result) {
+      std::cout << ++ii << " " << (*result);
+      delete result;
+    }
+  }
+
+}
+
+TEST(ParserTests, TM1Test) {
+  std::vector<std::string> queries;
+
+
+  queries.push_back("CREATE TABLE SUBSCRIBER ("
+      " s_id INTEGER NOT NULL PRIMARY KEY,"
+      " sub_nbr VARCHAR(15) NOT NULL UNIQUE,"
+      " bit_1 TINYINT,"
+      " bit_2 TINYINT,"
+      " bit_3 TINYINT,"
+      " byte2_1 SMALLINT,"
+      " msc_location INTEGER,"
+      " vlr_location INTEGER"
+      ");");
+
+  queries.push_back("CREATE TABLE ACCESS_INFO ("
+      "     s_id INTEGER NOT NULL,"
+      "     ai_type TINYINT NOT NULL,"
+      "     data1 SMALLINT,"
+      " data2 SMALLINT,"
+      "     data3 VARCHAR(3),"
+      "     data4 VARCHAR(5),"
+      "     PRIMARY KEY(s_id, ai_type),"
+      "     FOREIGN KEY (s_id) REFERENCES SUBSCRIBER (s_id)"
+      "  );");
+
+  queries.push_back("CREATE TABLE CALL_FORWARDING ("
+      "s_id INTEGER NOT NULL,"
+      "     sf_type TINYINT NOT NULL,"
+      "     start_time TINYINT NOT NULL,"
+      "     end_time TINYINT,"
+      "     numberx VARCHAR(15),"
+      "     PRIMARY KEY (s_id, sf_type, start_time),"
+      "     FOREIGN KEY (s_id, sf_type) REFERENCES SPECIAL_FACILITY(s_id, sf_type)"
+      "  );");
+
+  // Parsing
+  int ii = 0;
+  for(auto query : queries) {
+    parser::SQLStatementList* result = parser::Parser::ParseSQLString(query.c_str());
+
+    if (!result->is_valid)
+      fprintf(stderr, "Parsing failed: %s (%s)\n", query.c_str(), result->parser_msg);
+    EXPECT_EQ(result->is_valid, true);
+
+    if(result) {
+      std::cout << ++ii << " " << (*result);
+      delete result;
+    }
+  }
+
+}
+
 } // End test namespace
 } // End nstore namespace
 
