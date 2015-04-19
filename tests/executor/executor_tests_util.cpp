@@ -14,32 +14,36 @@ namespace test {
  * @brief TODO
  */
 storage::Tile *ExecutorTestsUtil::CreateSimplePhysicalTile() {
+  // PHYSICAL TILE
+
   std::vector<catalog::ColumnInfo> columns;
   std::vector<std::string> tile_column_names;
   std::vector<std::vector<std::string> > column_names;
-  std::vector<catalog::Schema*> schemas;
+  std::vector<catalog::Schema> schemas;
 
-  // Create schema.
+  // SCHEMA
+
   catalog::ColumnInfo column1(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", false, true);
   catalog::ColumnInfo column2(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", false, true);
   catalog::ColumnInfo column3(
-      VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), false, true);
-  catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 25, false, false);
+      VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", false, true);
+  catalog::ColumnInfo column4(
+      VALUE_TYPE_VARCHAR, 25, "D", false, false);
 
   columns.push_back(column1);
   columns.push_back(column2);
 
   catalog::Schema *schema1 = new catalog::Schema(columns);
-  schemas.push_back(schema1);
+  schemas.push_back(*schema1);
 
   columns.clear();
   columns.push_back(column3);
   columns.push_back(column4);
 
   catalog::Schema *schema2 = new catalog::Schema(columns);
-  schemas.push_back(schema2);
+  schemas.push_back(*schema2);
 
   catalog::Schema *schema = catalog::Schema::AppendSchema(schema1, schema2);
 

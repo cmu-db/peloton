@@ -25,12 +25,14 @@ check_PROGRAMS =
 ######################################################################
 # SUBDIRS
 ######################################################################
+
 include $(srcdir)/catalog/Makefile.am
 include $(srcdir)/common/Makefile.am
 include $(srcdir)/executor/Makefile.am
 include $(srcdir)/expression/Makefile.am
 include $(srcdir)/index/Makefile.am
 include $(srcdir)/parser/Makefile.am
+include $(srcdir)/planner/Makefile.am
 include $(srcdir)/storage/Makefile.am
 
 TESTS = $(check_PROGRAMS)

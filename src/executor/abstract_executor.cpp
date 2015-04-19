@@ -39,22 +39,17 @@ template <class T> T &AbstractExecutor::GetNode() {
  *
  * @return True on success, false otherwise.
  */
-bool AbstractExecutor::BaseInit() {
-
-  return Init();
+bool AbstractExecutor::Init() {
+  return SubInit();
 }
 
 /**
  * @brief Releases resources used by this executor.
  * 
  * Recursively releases resources used by children executors.
- * TODO Who should delete the executors?
- * TODO Why do we need a separate function to cleanup? Won't the destructor
- * suffice?
  */
-bool AbstractExecutor::BaseCleanUp() {
-
-  return CleanUp();
+bool AbstractExecutor::CleanUp() {
+  return SubCleanUp();
 }
 
 } // namespace executor

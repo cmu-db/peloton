@@ -1,37 +1,32 @@
 /*-------------------------------------------------------------------------
  *
- * parser.h
+ * parser_test.cpp
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/parser/parser.h
+ * /n-store/tests/parser/parser_test.cpp
  *
  *-------------------------------------------------------------------------
  */
 
-#pragma once
+#include "gtest/gtest.h"
 
-#include "statements.h"
+#include "harness.h"
+#include "planner/abstract_plan_node.h"
 
 namespace nstore {
-namespace parser {
+namespace test {
 
 //===--------------------------------------------------------------------===//
-// Parser
+// Planner Tests
 //===--------------------------------------------------------------------===//
 
-class Parser {
-  Parser() = delete;
-
- public:
-
-  // Parse a given query
-  static SQLStatementList* ParseSQLString(const char* sql);
-  static SQLStatementList* ParseSQLString(const std::string& sql);
-
-};
+TEST(PlannerTests, BasicTest) {
 
 
-} // End parser namespace
+}
+
+} // End test namespace
 } // End nstore namespace
+

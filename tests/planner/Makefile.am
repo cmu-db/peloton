@@ -1,15 +1,11 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
 ######################################################################
-# STORAGE
+# PLANNER
 ######################################################################
 
-storage_FILES = \
-				storage/tuple.cpp \
-				storage/tile.cpp \
-				storage/tile_group.cpp \
-				storage/tile_group_header.cpp \
-				storage/table.cpp 
+check_PROGRAMS += planner_test
 
-storage_INCLUDES = \
-				   -I$(srcdir)/storage    
+planner_test_SOURCES = planner/planner_test.cpp
+
+planner_test_LDADD = $(LIBGDAMM_LIBS)

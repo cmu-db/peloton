@@ -40,8 +40,8 @@ MaterializationExecutor::MaterializationExecutor(
  *
  * @return True on success, false otherwise.
  */
-bool MaterializationExecutor::Init() {
-  assert(children_.size() == 1);
+bool MaterializationExecutor::SubInit() {
+  assert(children.size() == 1);
   return true;
 }
 
@@ -52,17 +52,17 @@ bool MaterializationExecutor::Init() {
  * @return Pointer to logical tile containing newly materialized physical tile.
  */
 LogicalTile *MaterializationExecutor::GetNextTile() {
-  assert(children_.size() == 1);
+  //assert(children.size() == 1);
 
   // Retrieve next tile.
-  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetNextTile());
+  std::unique_ptr<LogicalTile> source_tile(children[0]->GetNextTile());
   if (source_tile.get() == nullptr) {
     return nullptr;
   }
 
   planner::MaterializationNode &node = GetNode<planner::MaterializationNode>();
   std::unordered_map<id_t, id_t> &old_to_new_cols =
-    node.old_to_new_cols();
+    node.GetOldToNewCols();
 
   // Generate mappings.
   std::unordered_map<storage::Tile *, std::vector<id_t> > tile_to_cols;
@@ -76,9 +76,9 @@ LogicalTile *MaterializationExecutor::GetNextTile() {
   bool owns_tuple_schema = true;
   std::unique_ptr<storage::Tile> dest_tile(
       storage::TileFactory::GetTile(
-        catalog::Schema::CopySchema(&node.schema()),
+        catalog::Schema::CopySchema(&node.GetSchema()),
         num_tuples,
-        node.column_names(),
+        node.GetColumnNames(),
         owns_tuple_schema));
 
   // Proceed to materialize by tile.

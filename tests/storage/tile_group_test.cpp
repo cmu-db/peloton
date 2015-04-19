@@ -27,27 +27,27 @@ TEST(TileGroupTests, BasicTest) {
 	std::vector<catalog::ColumnInfo> columns;
 	std::vector<std::string> tile_column_names;
 	std::vector<std::vector<std::string> > column_names;
-	std::vector<catalog::Schema*> schemas;
+	std::vector<catalog::Schema> schemas;
 
 	// SCHEMA
 
-	catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
-	catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
-	catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), false, true);
-	catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 25, false, false);
+	catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", false, true);
+	catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", false, true);
+	catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", false, true);
+	catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 25, "D", false, false);
 
 	columns.push_back(column1);
 	columns.push_back(column2);
 
 	catalog::Schema *schema1 = new catalog::Schema(columns);
-	schemas.push_back(schema1);
+	schemas.push_back(*schema1);
 
 	columns.clear();
 	columns.push_back(column3);
 	columns.push_back(column4);
 
 	catalog::Schema *schema2 = new catalog::Schema(columns);
-	schemas.push_back(schema2);
+	schemas.push_back(*schema2);
 
 	catalog::Schema *schema = catalog::Schema::AppendSchema(schema1, schema2);
 
@@ -67,8 +67,10 @@ TEST(TileGroupTests, BasicTest) {
   // TILE GROUP
 
   catalog::Manager *catalog = new catalog::Manager();
+  storage::Backend *backend = new storage::VMBackend();
 
-  storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 4, column_names, true, catalog);
+  storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
+                                                                           catalog, backend, schemas, 4);
 
 	// TUPLES
 
@@ -109,6 +111,9 @@ TEST(TileGroupTests, BasicTest) {
 
 	delete tile_group;
 	delete catalog;
+	delete backend;
+	delete schema1;
+  delete schema2;
 }
 
 void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema){
@@ -135,26 +140,26 @@ TEST(TileGroupTests, StressTest) {
 	std::vector<catalog::ColumnInfo> columns;
 	std::vector<std::string> tile_column_names;
 	std::vector<std::vector<std::string> > column_names;
-	std::vector<catalog::Schema*> schemas;
+	std::vector<catalog::Schema> schemas;
 
 	// SCHEMA
-	catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
-	catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
-	catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), false, true);
-	catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 50, false, false);
+	catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", false, true);
+	catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", false, true);
+	catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", false, true);
+	catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 50, "D", false, false);
 
 	columns.push_back(column1);
 	columns.push_back(column2);
 
 	catalog::Schema *schema1 = new catalog::Schema(columns);
-	schemas.push_back(schema1);
+	schemas.push_back(*schema1);
 
 	columns.clear();
 	columns.push_back(column3);
 	columns.push_back(column4);
 
 	catalog::Schema *schema2 = new catalog::Schema(columns);
-	schemas.push_back(schema2);
+	schemas.push_back(*schema2);
 
 	catalog::Schema *schema = catalog::Schema::AppendSchema(schema1, schema2);
 
@@ -171,16 +176,21 @@ TEST(TileGroupTests, StressTest) {
 	// TILE GROUP
 
   catalog::Manager *catalog = new catalog::Manager();
+  storage::Backend *backend = new storage::VMBackend();
 
-	storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 10000, column_names, true, catalog);
+  storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
+                                                                           catalog, backend, schemas, 10000);
 
 	LaunchParallelTest(6, TileGroupInsert, tile_group, schema);
 
 	EXPECT_EQ(6000, tile_group->GetActiveTupleCount());
 
-	delete schema;
 	delete tile_group;
   delete catalog;
+  delete backend;
+  delete schema1;
+  delete schema2;
+  delete schema;
 }
 
 TEST(TileGroupTests, MVCCInsert) {
@@ -188,26 +198,26 @@ TEST(TileGroupTests, MVCCInsert) {
 	std::vector<catalog::ColumnInfo> columns;
 	std::vector<std::string> tile_column_names;
 	std::vector<std::vector<std::string> > column_names;
-	std::vector<catalog::Schema*> schemas;
+	std::vector<catalog::Schema> schemas;
 
 	// SCHEMA
-	catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
-	catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
-	catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), false, true);
-	catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 50, false, false);
+	catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", false, true);
+	catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", false, true);
+	catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", false, true);
+	catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 50, "D", false, false);
 
 	columns.push_back(column1);
 	columns.push_back(column2);
 
 	catalog::Schema *schema1 = new catalog::Schema(columns);
-	schemas.push_back(schema1);
+	schemas.push_back(*schema1);
 
 	columns.clear();
 	columns.push_back(column3);
 	columns.push_back(column4);
 
 	catalog::Schema *schema2 = new catalog::Schema(columns);
-	schemas.push_back(schema2);
+	schemas.push_back(*schema2);
 
 	catalog::Schema *schema = catalog::Schema::AppendSchema(schema1, schema2);
 
@@ -224,8 +234,10 @@ TEST(TileGroupTests, MVCCInsert) {
 	// TILE GROUP
 
   catalog::Manager *catalog = new catalog::Manager();
+  storage::Backend *backend = new storage::VMBackend();
 
-	storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 3, column_names, true, catalog);
+  storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
+                                                                           catalog, backend, schemas, 3);
 
 	storage::Tuple *tuple = new storage::Tuple(schema, true);
 
@@ -282,6 +294,7 @@ TEST(TileGroupTests, MVCCInsert) {
 
 	EXPECT_EQ(scan->GetActiveTupleCount(), 0);
 
+	delete scan->GetHeader();
 	delete scan;
 
 	// DELETE
@@ -296,12 +309,17 @@ TEST(TileGroupTests, MVCCInsert) {
 
 	EXPECT_EQ(scan->GetActiveTupleCount(), 0);
 
+  delete scan->GetHeader();
 	delete scan;
 
 	delete tuple;
 	delete schema;
 	delete tile_group;
   delete catalog;
+  delete backend;
+
+  delete schema1;
+  delete schema2;
 }
 
 } // End test namespace
