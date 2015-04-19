@@ -220,7 +220,6 @@ enum StatementType {
     STATEMENT_TYPE_INVALID          = 0, // invalid statement type
 
     STATEMENT_TYPE_SELECT           = 1, // select statement type
-    STATEMENT_TYPE_IMPORT           = 2, // import statement type
     STATEMENT_TYPE_INSERT           = 3, // insert statement type
     STATEMENT_TYPE_UPDATE           = 4, // update statement type
     STATEMENT_TYPE_DELETE           = 5, // delete statement type

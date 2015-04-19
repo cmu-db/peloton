@@ -155,13 +155,6 @@ void GetSelectStatementInfo(SelectStatement* stmt, uint num_indent) {
 }
 
 
-
-void GetImportStatementInfo(ImportStatement* stmt, uint num_indent) {
-  inprint("ImportStatment", num_indent);
-  inprint(stmt->file_path, num_indent+1);
-  inprint(stmt->table_name, num_indent+1);
-}
-
 void GetCreateStatementInfo(CreateStatement* stmt, uint num_indent) {
   inprint("CreateStatment", num_indent);
   inprint(stmt->name, num_indent+1);
