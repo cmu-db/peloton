@@ -5,10 +5,17 @@ namespace nstore {
 namespace parser {
 
 TableRef::~TableRef() {
-  delete name;
-	delete alias;
+  free(name);
+	free(alias);
+
 	delete select;
-	delete list;
+  delete join;
+
+	if(list) {
+	  for(auto ref: (*list))
+	    delete ref;
+	  delete list;
+	}
 }
 
 } // End parser namespace

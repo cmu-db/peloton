@@ -78,8 +78,21 @@ struct CreateStatement : SQLStatement {
     name(NULL) {};
 
   virtual ~CreateStatement() {
-    delete columns;
+
+    if(columns) {
+      for(auto col : *columns)
+        delete col;
+      delete columns;
+    }
+
+    if(index_attrs) {
+      for(auto attr : *index_attrs)
+        free(attr);
+      delete index_attrs;
+    }
+
     free(name);
+    free(table_name);
   }
 
   CreateType type;

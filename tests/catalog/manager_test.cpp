@@ -52,6 +52,7 @@ void AddTileGroup(catalog::Manager *catalog){
   }
 
   delete schema1;
+  delete backend;
 }
 
 

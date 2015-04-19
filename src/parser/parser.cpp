@@ -36,11 +36,12 @@ SQLStatementList* Parser::ParseSQLString(const char *text) {
 
   if (parser_parse(&result, scanner)) {
     // Returns an error stmt object
+    yy_delete_buffer(state, scanner);
+    yylex_destroy(scanner);
     return result;
   }
 
   yy_delete_buffer(state, scanner);
-
   yylex_destroy(scanner);
   return result;
 }

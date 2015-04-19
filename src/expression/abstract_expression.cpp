@@ -50,7 +50,10 @@ AbstractExpression::~AbstractExpression() {
   delete right_expr;
 
   // clean up alias
-  delete alias;
+  free(alias);
+
+  // clean up local expr
+  delete m_expr;
 }
 
 void AbstractExpression::Substitute(const ValueArray &params) {
