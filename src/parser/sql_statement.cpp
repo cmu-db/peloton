@@ -27,9 +27,6 @@ std::ostream& operator<<(std::ostream& os, const SQLStatement& stmt) {
     case STATEMENT_TYPE_SELECT:
       GetSelectStatementInfo((SelectStatement*)&stmt, indent);
       break;
-    case STATEMENT_TYPE_IMPORT:
-      GetImportStatementInfo((ImportStatement*)&stmt, indent);
-      break;
     case STATEMENT_TYPE_INSERT:
       GetInsertStatementInfo((InsertStatement*)&stmt, indent);
       break;
