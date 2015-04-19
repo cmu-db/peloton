@@ -55,7 +55,13 @@ struct GroupByDescription {
 		having(NULL) {}
 
 	~GroupByDescription() {
-		delete columns;
+
+    if(columns) {
+      for(auto col : *columns)
+        delete col;
+      delete columns;
+    }
+
 		delete having;
 	}
 
@@ -84,12 +90,16 @@ struct SelectStatement : SQLStatement {
 	virtual ~SelectStatement() {
 		delete from_table;
 
-		for(auto expr : *select_list)
-		  delete expr;
+		if(select_list) {
+		  for(auto expr : *select_list)
+		    delete expr;
+		  delete select_list;
+		}
 
-		delete select_list;
 		delete where_clause;
 		delete group_by;
+
+		delete union_select;
 		delete order;
 		delete limit;
 	}

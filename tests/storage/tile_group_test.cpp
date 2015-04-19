@@ -111,6 +111,9 @@ TEST(TileGroupTests, BasicTest) {
 
 	delete tile_group;
 	delete catalog;
+	delete backend;
+	delete schema1;
+  delete schema2;
 }
 
 void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema){
@@ -182,9 +185,12 @@ TEST(TileGroupTests, StressTest) {
 
 	EXPECT_EQ(6000, tile_group->GetActiveTupleCount());
 
-	delete schema;
 	delete tile_group;
   delete catalog;
+  delete backend;
+  delete schema1;
+  delete schema2;
+  delete schema;
 }
 
 TEST(TileGroupTests, MVCCInsert) {
@@ -288,6 +294,7 @@ TEST(TileGroupTests, MVCCInsert) {
 
 	EXPECT_EQ(scan->GetActiveTupleCount(), 0);
 
+	delete scan->GetHeader();
 	delete scan;
 
 	// DELETE
@@ -302,12 +309,17 @@ TEST(TileGroupTests, MVCCInsert) {
 
 	EXPECT_EQ(scan->GetActiveTupleCount(), 0);
 
+  delete scan->GetHeader();
 	delete scan;
 
 	delete tuple;
 	delete schema;
 	delete tile_group;
   delete catalog;
+  delete backend;
+
+  delete schema1;
+  delete schema2;
 }
 
 } // End test namespace
