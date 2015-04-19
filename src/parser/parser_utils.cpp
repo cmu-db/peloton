@@ -165,12 +165,31 @@ void GetImportStatementInfo(ImportStatement* stmt, uint num_indent) {
 void GetCreateStatementInfo(CreateStatement* stmt, uint num_indent) {
   inprint("CreateStatment", num_indent);
   inprint(stmt->table_name, num_indent+1);
-  inprint(stmt->file_path, num_indent+1);
 
   if(stmt->columns != nullptr){
     for(ColumnDefinition *col : *(stmt->columns)) {
       printf("%s", indent(num_indent));
-      printf("%s %d \n", col->name, col->type);
+
+      if(col->type == ColumnDefinition::DataType::PRIMARY){
+        printf("-> PRIMARY KEY : ");
+        for(auto key : *(col->primary_key))
+          printf("%s ", key);
+        printf("\n");
+      }
+      else if(col->type == ColumnDefinition::DataType::FOREIGN){
+        printf("-> FOREIGN KEY : References %s Source : ", col->name);
+        for(auto key : *(col->foreign_key_source))
+          printf("%s ", key);
+        printf("Sink : ");
+        for(auto key : *(col->foreign_key_sink))
+          printf("%s ", key);
+        printf("\n");
+      }
+      else {
+        printf("-> COLUMN REF : %s %d not null : %d primary : %d unique %d varlen %lu \n",
+             col->name, col->type, col->not_null, col->primary, col->unique, col->varlen);
+      }
+
     }
   }
 
