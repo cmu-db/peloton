@@ -10,22 +10,52 @@ namespace parser {
  * @brief Represents definition of a table column
  */
 struct ColumnDefinition {
-	enum DataType {
-		TEXT,
-		INT,
-		DOUBLE
-	};
+  enum DataType {
+    INVALID,
 
-	ColumnDefinition(char* name, DataType type) :
-		name(name),
-		type(type) {}
+    PRIMARY,
+    FOREIGN,
 
-	virtual ~ColumnDefinition() {
-	  free(name);
-	}
+    CHAR,
+    INT,
+    INTEGER,
+    TINYINT,
+    SMALLINT,
+    BIGINT,
+    DOUBLE,
+    FLOAT,
+    DECIMAL,
+    BOOLEAN,
+    ADDRESS,
+    TIMESTAMP,
+    TEXT,
 
-	char* name;
-	DataType type;
+    VARCHAR,
+    VARBINARY
+  };
+
+  ColumnDefinition(DataType type) :
+    type(type) {}
+
+
+  ColumnDefinition(char* name, DataType type) :
+    name(name),
+    type(type){}
+
+  virtual ~ColumnDefinition() {
+    free(name);
+  }
+
+  char* name = nullptr;
+  DataType type;
+  size_t varlen = 0;
+  bool not_null = false;
+  bool primary = false;
+  bool unique = false;
+
+  std::vector<char*>* primary_key = nullptr;
+  std::vector<char*>* foreign_key_source = nullptr;
+  std::vector<char*>* foreign_key_sink = nullptr;
 };
 
 
@@ -34,32 +64,32 @@ struct ColumnDefinition {
  * @brief Represents "CREATE TABLE students (name TEXT, student_number INTEGER, city TEXT, grade DOUBLE)"
  */
 struct CreateStatement : SQLStatement {
-	enum CreateType {
-		kTable,
-		kTableFromTbl, // Hyrise file format
-	};
+  enum CreateType {
+    kTable,
+    kTableFromTbl, // Hyrise file format
+  };
 
-	CreateStatement(CreateType type) :
-		SQLStatement(STATEMENT_TYPE_CREATE),
-		type(type),
-		if_not_exists(false),
-		columns(NULL),
-		file_path(NULL),
-		table_name(NULL) {};
+  CreateStatement(CreateType type) :
+    SQLStatement(STATEMENT_TYPE_CREATE),
+    type(type),
+    if_not_exists(false),
+    columns(NULL),
+    file_path(NULL),
+    table_name(NULL) {};
 
-	virtual ~CreateStatement() {
-		delete columns;
-		free(file_path);
-		free(table_name);
-	}
+  virtual ~CreateStatement() {
+    delete columns;
+    free(file_path);
+    free(table_name);
+  }
 
-	CreateType type;
-	bool if_not_exists;
+  CreateType type;
+  bool if_not_exists;
 
-	std::vector<ColumnDefinition*>* columns;
+  std::vector<ColumnDefinition*>* columns;
 
-	char* file_path;
-	char* table_name;
+  char* file_path;
+  char* table_name;
 };
 
 } // End parser namespace
