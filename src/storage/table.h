@@ -1,20 +1,21 @@
 /*-------------------------------------------------------------------------
-*
-* table.h
-* file description
-*
-* Copyright(c) 2015, CMU
-*
-* /n-store/src/storage/table.h
-*
-*-------------------------------------------------------------------------
-*/
+ *
+ * table.h
+ * file description
+ *
+ * Copyright(c) 2015, CMU
+ *
+ * /n-store/src/storage/table.h
+ *
+ *-------------------------------------------------------------------------
+ */
 
 #pragma once
 
-#include <string>
+#include "catalog/manager.h"
+#include "storage/tile_group.h"
 
-#include "storage/tuple.h"
+#include <string>
 
 namespace nstore {
 namespace storage {
@@ -33,34 +34,128 @@ namespace storage {
  *
  */
 class Table {
-public:
-	Table();
-	virtual ~Table();
+  friend class TileGroup;
+  friend class TableFactory;
 
-	int GetColumnCount();
+  Table() = delete;
+  Table(Table const&) = delete;
 
-	void *Get();
+ public:
 
-	std::string GetColumnName(int column_itr);
+  // Table constructor
+  Table(catalog::Manager *catalog,
+        catalog::Schema *schema,
+        Backend *backend,
+        id_t tuple_count,
+        bool own_backend,
+        bool own_schema)
+ : catalog(catalog),
+   schema(schema),
+   backend(backend),
+   own_backend(own_backend),
+   own_schema(own_schema),
+   tuple_count(tuple_count),
+   table_id(INVALID_ID),
+   database_id(INVALID_ID) {
+  }
 
-	bool InsertTuple(Tuple tuple);
+  ~Table() {
+    // clean up tile groups
+    for(auto tile_group : tile_groups)
+      delete tile_group;
 
-	Tuple TempTuple();
+    if(own_schema)
+      delete schema;
 
-	void Reset(Table t);
+    if(own_backend)
+      delete backend;
 
-protected:
+  }
 
-	//===--------------------------------------------------------------------===//
-	// Data members
-	//===--------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
+  // Operations
+  //===--------------------------------------------------------------------===//
 
-	/// set of tile groups
-	std::vector<TileGroup*> tiles;
+  // add a new tile group to table
+  id_t AddTileGroup();
 
-	/// Catalog information
-	Oid table_id;
-	Oid database_id;
+ protected:
+
+  //===--------------------------------------------------------------------===//
+  // Data members
+  //===--------------------------------------------------------------------===//
+
+  // set of tile groups
+  std::vector<TileGroup*> tile_groups;
+
+  // manager
+  catalog::Manager *catalog;
+
+  // table schema
+  catalog::Schema* schema;
+
+  // backend
+  Backend *backend;
+
+  bool own_backend;
+  bool own_schema;
+
+  id_t tuple_count;
+
+  // Catalog information
+  id_t table_id;
+  id_t database_id;
+
+  std::mutex table_mutex;
+};
+
+//===--------------------------------------------------------------------===//
+// Table factory
+//===--------------------------------------------------------------------===//
+
+class TableFactory {
+ public:
+  TableFactory();
+  virtual ~TableFactory();
+
+  static Table *GetTable(catalog::Manager *catalog,
+                         catalog::Schema* schema,
+                         int tuple_count,
+                         const bool own_schema,
+                         Backend* backend = nullptr){
+
+    bool own_backend = false;
+    // create backend if needed
+    if(backend == nullptr) {
+      backend = new storage::VMBackend();
+      own_backend = true;
+    }
+
+    Table *table = GetTable(INVALID_OID, catalog, schema,
+                            backend, tuple_count, own_backend, own_schema);
+
+    if(own_backend) {
+      table->own_backend = true;
+    }
+
+    return table;
+  }
+
+  static Table *GetTable(oid_t database_id,
+                         catalog::Manager *catalog,
+                         catalog::Schema* schema,
+                         Backend* backend,
+                         int tuple_count,
+                         const bool own_backend,
+                         const bool own_schema) {
+
+    Table *table =  new Table(catalog,schema, backend, tuple_count,
+                              own_backend, own_schema);
+
+    table->database_id = database_id;
+
+    return table;
+  }
 
 };
 

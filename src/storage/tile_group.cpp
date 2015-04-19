@@ -27,6 +27,7 @@ TileGroup::TileGroup(TileGroupHeader* tile_group_header,
 : tile_group_header(tile_group_header),
   num_tuple_slots(tuple_count),
   tile_schemas(schemas),
+  catalog(catalog),
   backend(backend),
   own_backend(false),
   tile_group_id(INVALID_ID),
@@ -44,7 +45,9 @@ TileGroup::TileGroup(TileGroupHeader* tile_group_header,
         tile_group_header,
         tile_schemas[tile_itr],
         backend,
-        tuple_count, column_names[tile_itr], own_schema);
+        tuple_count,
+        column_names[tile_itr],
+        own_schema);
 
     // add metadata in locator
     catalog->SetLocation(tile_id, tile);
