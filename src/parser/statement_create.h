@@ -66,7 +66,8 @@ struct ColumnDefinition {
 struct CreateStatement : SQLStatement {
   enum CreateType {
     kTable,
-    kTableFromTbl, // Hyrise file format
+    kDatabase,
+    kIndex
   };
 
   CreateStatement(CreateType type) :
@@ -74,22 +75,22 @@ struct CreateStatement : SQLStatement {
     type(type),
     if_not_exists(false),
     columns(NULL),
-    file_path(NULL),
-    table_name(NULL) {};
+    name(NULL) {};
 
   virtual ~CreateStatement() {
     delete columns;
-    free(file_path);
-    free(table_name);
+    free(name);
   }
 
   CreateType type;
   bool if_not_exists;
 
   std::vector<ColumnDefinition*>* columns;
+  std::vector<char*>* index_attrs = nullptr;
 
-  char* file_path;
-  char* table_name;
+  char* name;
+  char* table_name = nullptr;
+  bool unique = false;
 };
 
 } // End parser namespace
