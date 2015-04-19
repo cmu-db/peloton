@@ -27,27 +27,25 @@
 namespace nstore {
 namespace storage {
 
-Tile::Tile(TileGroupHeader* _tile_header, Backend* _backend, catalog::Schema *tuple_schema,
-           int tuple_count, const std::vector<std::string>& _columns_names, bool _own_schema)
-: backend(_backend),
-  data(NULL),
-  pool(NULL),
-  column_names(_columns_names),
-  schema(tuple_schema),
-  num_tuple_slots(0),
-  column_count(tuple_schema->GetColumnCount()),
-  tuple_length(tuple_schema->GetLength()),
-  uninlined_data_size(0),
-  own_schema(_own_schema),
-  own_backend(false),
-  own_tile_group_header(false),
-  tile_id(INVALID_ID),
-  tile_group_id(INVALID_ID),
-  table_id(INVALID_ID),
-  database_id(INVALID_ID),
-  column_header(NULL),
-  column_header_size(INVALID_ID),
-  tile_group_header(_tile_header){
+Tile::Tile(TileGroupHeader* tile_header,
+           Backend* backend,
+           const catalog::Schema& tuple_schema,
+           int tuple_count)
+:  database_id(INVALID_ID),
+   table_id(INVALID_ID),
+   tile_group_id(INVALID_ID),
+   tile_id(INVALID_ID),
+   backend(backend),
+   schema(tuple_schema),
+   data(NULL),
+   pool(NULL),
+   num_tuple_slots(tuple_count),
+   column_count(tuple_schema.GetColumnCount()),
+   tuple_length(tuple_schema.GetLength()),
+   uninlined_data_size(0),
+   column_header(NULL),
+   column_header_size(INVALID_ID),
+   tile_group_header(tile_header) {
   assert(tuple_count > 0);
 
   tile_size = tuple_count * tuple_length;
@@ -58,10 +56,9 @@ Tile::Tile(TileGroupHeader* _tile_header, Backend* _backend, catalog::Schema *tu
 
   // initialize it
   std::memset(data, 0, tile_size);
-  num_tuple_slots = tuple_count;
 
-  // allocate default pool if schema not inlined
-  if(schema->IsInlined() == false)
+  // allocate pool for blob storage if schema not inlined
+  if(schema.IsInlined() == false)
     pool = new Pool(backend);
 }
 
@@ -70,28 +67,15 @@ Tile::~Tile() {
   backend->Free(data);
   data = NULL;
 
-  // if own tile group header ?
-  if(own_tile_group_header)
-    delete tile_group_header;
-
   // reclaim the tile memory (UNINLINED data)
-  if(schema->IsInlined() == false)
+  if(schema.IsInlined() == false)
     delete pool;
   pool = NULL;
-
-  // release schema if owned. Do this at the end.
-  if(own_schema)
-    delete schema;
 
   // clear any cached column headers
   if (column_header)
     delete column_header;
   column_header = NULL;
-
-  // if own backend ?
-  if(own_backend)
-    delete backend;
-
 }
 
 
@@ -116,7 +100,7 @@ void Tile::InsertTuple(const id_t tuple_slot_id, Tuple *tuple) {
  */
 Tuple *Tile::GetTuple(const id_t tuple_slot_id) {
 
-  storage::Tuple *tuple = new storage::Tuple(schema, true);
+  storage::Tuple *tuple = new storage::Tuple(&schema, true);
 
   tuple->Copy(GetTupleLocation(tuple_slot_id), pool);
 
@@ -135,10 +119,10 @@ Value Tile::GetValue(const id_t tuple_slot_id, const id_t column_id) {
   // "Tuple::GetValue(const id_t column_id)"
 
   const char* tuple_location = GetTupleLocation(tuple_slot_id);
-  const ValueType column_type = schema->GetType(column_id);
+  const ValueType column_type = schema.GetType(column_id);
 
-  const char* field_location =  tuple_location + schema->GetOffset(column_id);
-  const bool is_inlined = schema->IsInlined(column_id);
+  const char* field_location =  tuple_location + schema.GetOffset(column_id);
+  const bool is_inlined = schema.IsInlined(column_id);
 
   return Value::Deserialize(field_location, column_type, is_inlined);
 }
@@ -155,13 +139,13 @@ void Tile::SetValue(
   assert(tuple_slot_id < num_tuple_slots);
 
   char *tuple_location = GetTupleLocation(tuple_slot_id);
-  char *field_location =  tuple_location + schema->GetOffset(column_id);
-  const bool is_inlined = schema->IsInlined(column_id);
+  char *field_location =  tuple_location + schema.GetOffset(column_id);
+  const bool is_inlined = schema.IsInlined(column_id);
   int column_length;
   if (is_inlined) {
-    column_length = schema->GetLength(column_id);
+    column_length = schema.GetLength(column_id);
   } else {
-    column_length = schema->GetVariableLength(column_id);
+    column_length = schema.GetVariableLength(column_id);
   }
 
   value.SerializeWithAllocation(
@@ -169,17 +153,6 @@ void Tile::SetValue(
       is_inlined,
       column_length,
       pool);
-}
-
-
-int Tile::GetColumnOffset(const std::string &name) const {
-  for (id_t column_itr = 0, cnt = column_count; column_itr < cnt; column_itr++) {
-    if (column_names[column_itr].compare(name) == 0) {
-      return column_itr;
-    }
-  }
-
-  return -1;
 }
 
 //===--------------------------------------------------------------------===//
@@ -202,7 +175,7 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
   // Is it a dynamic tile or static tile ?
   if(tile.tile_group_header != nullptr) {
     os << "\tActive Tuples:  " << tile.tile_group_header->GetActiveTupleCount()
-					    << " out of " << tile.num_tuple_slots  <<" slots\n";
+					            << " out of " << tile.num_tuple_slots  <<" slots\n";
   }
   else {
     os << "\tActive Tuples:  " << tile.num_tuple_slots  <<" slots\n";
@@ -218,7 +191,7 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
   os << "\tDATA\n";
 
   TileIterator tile_itr(&tile);
-  Tuple tuple(tile.schema);
+  Tuple tuple(&tile.schema);
 
   std::string last_tuple = "";
 
@@ -260,7 +233,7 @@ bool Tile::SerializeTo(SerializeOutput &output, id_t num_tuples) {
 
   id_t written_count = 0;
   TileIterator tile_itr(this);
-  Tuple tuple(schema);
+  Tuple tuple(&schema);
 
   while (tile_itr.Next(tuple) && written_count < num_tuples) {
     tuple.SerializeTo(output);
@@ -303,7 +276,7 @@ bool Tile::SerializeHeaderTo(SerializeOutput &output) {
 
   // Write an array of column types as bytes
   for (id_t column_itr = 0; column_itr < column_count; ++column_itr) {
-    ValueType type = schema->GetType(column_itr);
+    ValueType type = schema.GetType(column_itr);
     output.WriteByte(static_cast<int8_t>(type));
   }
 
@@ -401,14 +374,14 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
   }
 
   // Check if the column count matches what the temp table is expecting
-  if (column_count != schema->GetColumnCount()) {
+  if (column_count != schema.GetColumnCount()) {
 
     std::stringstream message(std::stringstream::in | std::stringstream::out);
 
-    message << "Column count mismatch. Expecting "	<< schema->GetColumnCount()
-																		    << ", but " << column_count << " given" << std::endl;
+    message << "Column count mismatch. Expecting "	<< schema.GetColumnCount()
+																		            << ", but " << column_count << " given" << std::endl;
     message << "Expecting the following columns:" << std::endl;
-    message << column_names.size() << std::endl;
+    message << schema.GetColumnCount() << std::endl;
     message << "The following columns are given:" << std::endl;
 
     for (id_t column_itr = 0; column_itr < column_count; column_itr++) {
@@ -434,7 +407,7 @@ void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool)
 
   // First, check if we have required space
   assert(tuple_count <= num_tuple_slots);
-  storage::Tuple *temp_tuple = new storage::Tuple(schema, true);
+  storage::Tuple *temp_tuple = new storage::Tuple(&schema, true);
 
   for (id_t tuple_itr = 0; tuple_itr < tuple_count; ++tuple_itr) {
     temp_tuple->Move(GetTupleLocation(tuple_itr));
@@ -456,15 +429,15 @@ bool Tile::operator== (const Tile &other) const {
   if (!(database_id == other.database_id))
     return false;
 
-  catalog::Schema *other_schema = other.schema;
-  if (*schema != *other_schema)
+  catalog::Schema other_schema = other.schema;
+  if (schema != other_schema)
     return false;
 
   TileIterator tile_itr(this);
   TileIterator other_tile_itr(&other);
 
-  Tuple tuple(schema);
-  Tuple other_tuple(other_schema);
+  Tuple tuple(&schema);
+  Tuple other_tuple(&other_schema);
 
   while(tile_itr.Next(tuple)) {
     if (!(other_tile_itr.Next(other_tuple)))

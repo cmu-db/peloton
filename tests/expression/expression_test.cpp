@@ -282,8 +282,8 @@ TEST(ExpressionTest, SimpleFilter) {
 
   std::vector<catalog::ColumnInfo> columns;
 
-  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
-  catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", false, true);
+  catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", false, true);
   columns.push_back(column1);
   columns.push_back(column2);
   catalog::Schema *schema(new catalog::Schema(columns));
@@ -332,8 +332,8 @@ TEST(ExpressionTest, OrFilter) {
 
   std::vector<catalog::ColumnInfo> columns;
 
-  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
-  catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", false, true);
+  catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", false, true);
   columns.push_back(column1);
   columns.push_back(column2);
   catalog::Schema *schema(new catalog::Schema(columns));

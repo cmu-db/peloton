@@ -32,18 +32,21 @@ void AddTileGroup(catalog::Manager *catalog){
   tile_column_names.push_back("INTEGER COL");
   column_names.push_back(tile_column_names);
 
-  std::vector<catalog::Schema*> schemas;
+  std::vector<catalog::Schema> schemas;
   std::vector<catalog::ColumnInfo> columns;
 
   // SCHEMA
-  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", false, true);
   columns.push_back(column1);
 
   catalog::Schema *schema1 = new catalog::Schema(columns);
-  schemas.push_back(schema1);
+  schemas.push_back(*schema1);
+
+  storage::Backend *backend = new storage::VMBackend();
 
   for(id_t txn_itr = 0 ; txn_itr < 100 ; txn_itr++) {
-    storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(schemas, 3, column_names, false, catalog);
+    storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
+                                                                             catalog, backend, schemas, 3);
 
     delete tile_group;
   }

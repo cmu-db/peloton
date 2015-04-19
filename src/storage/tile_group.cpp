@@ -20,19 +20,16 @@ namespace storage {
 TileGroup::TileGroup(TileGroupHeader* tile_group_header,
                      catalog::Manager *catalog,
                      Backend* backend,
-                     std::vector<catalog::Schema *> schemas,
-                     int tuple_count,
-                     const std::vector<std::vector<std::string> >& column_names,
-                     bool own_schema)
-: tile_group_header(tile_group_header),
-  num_tuple_slots(tuple_count),
+                     const std::vector<catalog::Schema>& schemas,
+                     int tuple_count)
+: database_id(INVALID_ID),
+  table_id(INVALID_ID),
+  tile_group_id(INVALID_ID),
+  backend(backend),
   tile_schemas(schemas),
   catalog(catalog),
-  backend(backend),
-  own_backend(false),
-  tile_group_id(INVALID_ID),
-  table_id(INVALID_ID),
-  database_id(INVALID_ID) {
+  tile_group_header(tile_group_header),
+  num_tuple_slots(tuple_count) {
 
   tile_count = tile_schemas.size();
 
@@ -43,11 +40,9 @@ TileGroup::TileGroup(TileGroupHeader* tile_group_header,
     Tile * tile = storage::TileFactory::GetTile(
         database_id, table_id, tile_group_id, tile_id,
         tile_group_header,
-        tile_schemas[tile_itr],
         backend,
-        tuple_count,
-        column_names[tile_itr],
-        own_schema);
+        tile_schemas[tile_itr],
+        tuple_count);
 
     // add metadata in locator
     catalog->SetLocation(tile_id, tile);
@@ -80,10 +75,10 @@ id_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
   id_t column_itr = 0;
 
   for(id_t tile_itr = 0 ; tile_itr < tile_count ; tile_itr++){
-    catalog::Schema *schema = tile_schemas[tile_itr];
-    tile_column_count = schema->GetColumnCount();
+    const catalog::Schema& schema = tile_schemas[tile_itr];
+    tile_column_count = schema.GetColumnCount();
 
-    storage::Tuple *tile_tuple = new storage::Tuple(schema, true);
+    storage::Tuple *tile_tuple = new storage::Tuple(&schema, true);
 
     for(id_t tile_column_itr = 0 ; tile_column_itr < tile_column_count ; tile_column_itr++){
       tile_tuple->SetValue(tile_column_itr, tuple->GetValue(column_itr));
@@ -132,43 +127,49 @@ Tuple *TileGroup::SelectTuple(txn_id_t transaction_id, id_t tile_id, id_t tuple_
 Tile *TileGroup::ScanTuples(txn_id_t transaction_id, id_t tile_id, cid_t at_cid) {
   assert(tile_id < tile_count);
 
-	id_t active_tuple_count = GetActiveTupleCount();
+  id_t active_tuple_count = GetActiveTupleCount();
 
-	// does it have tuples ?
-	if(active_tuple_count == 0)
-		return nullptr;
+  // does it have tuples ?
+  if(active_tuple_count == 0)
+    return nullptr;
 
-	Tuple *tuple = nullptr;
-	std::vector<Tuple *> tuples;
+  Tuple *tuple = nullptr;
+  std::vector<Tuple *> tuples;
 
-	// else go over all tuples
-	for(id_t tile_itr = 0 ; tile_itr < active_tuple_count ; tile_itr++){
+  // else go over all tuples
+  for(id_t tile_itr = 0 ; tile_itr < active_tuple_count ; tile_itr++){
 
-		// is tuple at this slot visible to transaction ?
-		if(tile_group_header->IsVisible(tile_itr, transaction_id, at_cid)){
-			tuple = tiles[tile_id]->GetTuple(tile_itr);
+    // is tuple at this slot visible to transaction ?
+    if(tile_group_header->IsVisible(tile_itr, transaction_id, at_cid)){
+      tuple = tiles[tile_id]->GetTuple(tile_itr);
 
-			tuples.push_back(tuple);
-		}
-	}
+      tuples.push_back(tuple);
+    }
+  }
 
-	// create a new tile and insert these tuples
-	id_t tuple_count = tuples.size();
+  // create a new tile and insert these tuples
+  id_t tuple_count = tuples.size();
 
-	if(tuple_count > 0) {
-		storage::Tile *tile = storage::TileFactory::GetTile(tiles[tile_id]->GetSchema(),
-				tuple_count, tiles[tile_id]->GetColumnNames(), false);
+  if(tuple_count > 0) {
+    TileGroupHeader* header = new TileGroupHeader(backend, tuple_count);
 
-		id_t tuple_slot_id = 0;
+    storage::Tile *tile = storage::TileFactory::GetTile(
+        INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+        header,
+        backend,
+        tile_schemas[tile_id],
+        tuple_count);
 
-		for(auto tuple : tuples) {
-			tile->InsertTuple(tuple_slot_id, tuple);
-			tuple_slot_id++;
-			delete tuple;
-		}
+    id_t tuple_slot_id = 0;
 
-		return tile;
-	}
+    for(auto tuple : tuples) {
+      tile->InsertTuple(tuple_slot_id, tuple);
+      tuple_slot_id++;
+      delete tuple;
+    }
+
+    return tile;
+  }
 
   return nullptr;
 }
@@ -203,7 +204,7 @@ std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group) {
       << "\n";
 
   os << "\tActive Tuples:  " << tile_group.tile_group_header->GetActiveTupleCount()
-													        << " out of " << tile_group.num_tuple_slots  <<" slots\n";
+													                                                << " out of " << tile_group.num_tuple_slots  <<" slots\n";
 
   for(id_t tile_itr = 0 ; tile_itr < tile_group.tile_count ; tile_itr++){
     os << (*tile_group.tiles[tile_itr]);
