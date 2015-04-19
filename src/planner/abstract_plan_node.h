@@ -12,13 +12,13 @@
 #include <vector>
 
 #include "catalog/database.h"
+#include "executor/abstract_executor.h"
 #include "common/types.h"
 #include <json_spirit.h>
 
 namespace nstore {
 namespace planner {
 
-class AbstractExecutor;
 class PlanColumn;
 class LogicalTile;
 class LogicalTile;
@@ -28,9 +28,13 @@ class LogicalTile;
 //===--------------------------------------------------------------------===//
 
 class AbstractPlanNode {
+ public:
+
+  AbstractPlanNode(oid_t plan_node_id);
+  AbstractPlanNode();
   virtual ~AbstractPlanNode();
 
- public:
+  explicit AbstractPlanNode(std::vector<AbstractPlanNode *> &&children);
 
   //===--------------------------------------------------------------------===//
   // Children + Parent Helpers
@@ -74,9 +78,9 @@ class AbstractPlanNode {
 
   void SetPlanNodeId(oid_t plan_node_id);
 
-  void setExecutor(AbstractExecutor* executor);
+  void SetExecutor(executor::AbstractExecutor* executor);
 
-  inline AbstractExecutor* getExecutor() const {
+  inline executor::AbstractExecutor* GetExecutor() const {
     return executor;
   }
 
@@ -98,7 +102,7 @@ class AbstractPlanNode {
   // Utilities
   //===--------------------------------------------------------------------===//
 
-  static AbstractPlanNode* LoadFromJSONObject(json_spirit::Object& obj,
+  virtual AbstractPlanNode* LoadFromJSONObject(json_spirit::Object& obj,
                                            const catalog::Database* catalog_db);
 
   virtual int GetColumnIndexFromGuid(int guid,
@@ -111,15 +115,6 @@ class AbstractPlanNode {
   std::string debug(bool traverse) const;
   std::string debug(const std::string& spacer) const;
   virtual std::string debugInfo(const std::string& spacer) const = 0;
-
- protected:
-  virtual AbstractPlanNode* LoadFromJSONObject(json_spirit::Object& obj,
-                                  const catalog::Database *catalog_db) = 0;
-
-  AbstractPlanNode(oid_t plan_node_id);
-  AbstractPlanNode();
-
-  explicit AbstractPlanNode(std::vector<AbstractPlanNode *> &&children);
 
  private:
 
@@ -135,7 +130,7 @@ class AbstractPlanNode {
 
   // We also keep a pointer to this node's executor so that we can
   // reference it quickly at runtime without having to look-up a map
-  AbstractExecutor* executor; // volatile
+  executor::AbstractExecutor* executor; // volatile
 
   // Output tile group
   // This is where we will write the results of the plan node's execution

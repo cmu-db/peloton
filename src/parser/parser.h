@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include "statements.h"
+
 namespace nstore {
 namespace parser {
 
@@ -20,11 +22,13 @@ namespace parser {
 //===--------------------------------------------------------------------===//
 
 class Parser {
+  Parser() = delete;
 
  public:
 
   // Parse a given query
-  static void ParseSQLString(std::string query);
+  static SQLStatementList* ParseSQLString(const char* sql);
+  static SQLStatementList* ParseSQLString(const std::string& sql);
 
 };
 

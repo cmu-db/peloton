@@ -60,7 +60,8 @@
 AC_DEFUN([AX_VALGRIND_CHECK],[
 	dnl Check for --enable-valgrind
 	AC_MSG_CHECKING([whether to enable Valgrind on the unit tests])
-	AC_ARG_ENABLE([valgrind],
+	AC_MSG_RESULT(yes)
+    AC_ARG_ENABLE([valgrind],
 	              [AS_HELP_STRING([--enable-valgrind], [Whether to enable Valgrind on the unit tests])],
 	              [enable_valgrind=$enableval],[enable_valgrind=])
 

@@ -43,18 +43,18 @@ public:
 	}
 
 	// Setup the tuple given a schema
-	inline Tuple(catalog::Schema *schema) : tuple_schema(schema), tuple_data(nullptr) {
+	inline Tuple(const catalog::Schema *schema) : tuple_schema(schema), tuple_data(nullptr) {
 		assert(tuple_schema);
 	}
 
 	// Setup the tuple given a schema and location
-	inline Tuple(catalog::Schema *schema, char* data) : tuple_schema(schema), tuple_data(data) {
+	inline Tuple(const catalog::Schema *schema, char* data) : tuple_schema(schema), tuple_data(data) {
 		assert(tuple_schema);
 		assert(tuple_data);
 	}
 
 	// Setup the tuple given a schema and allocate space
-	inline Tuple(catalog::Schema *schema, bool allocate) : tuple_schema(schema), tuple_data(nullptr) {
+	inline Tuple(const catalog::Schema *schema, bool allocate) : tuple_schema(schema), tuple_data(nullptr) {
 		assert(tuple_schema);
 
 		if(allocate) {
@@ -124,7 +124,7 @@ public:
 		return tuple_schema->GetType(column_id);
 	}
 
-	inline catalog::Schema *GetSchema() const {
+	inline const catalog::Schema *GetSchema() const {
 		return tuple_schema;
 	}
 
@@ -199,7 +199,7 @@ private:
 	//===--------------------------------------------------------------------===//
 
 	// The types of the columns in the tuple
-	catalog::Schema *tuple_schema;
+	const catalog::Schema *tuple_schema;
 
 	// The tuple data, padded at the front by the TUPLE_HEADER
 	char *tuple_data;

@@ -12,14 +12,15 @@
 
 #pragma once
 
+#include "catalog/manager.h"
 #include "catalog/schema.h"
 #include "storage/backend.h"
 #include "storage/tuple.h"
 #include "storage/tile_group_header.h"
+#include "storage/backend.h"
+#include "storage/vm_backend.h"
 
 #include <mutex>
-
-#include "../catalog/manager.h"
 
 namespace nstore {
 namespace storage {
@@ -50,8 +51,10 @@ class Tile {
  public:
 
   // Tile creator
-  Tile(TileGroupHeader* tile_header, Backend* backend, catalog::Schema *tuple_schema,
-       int tuple_count, const std::vector<std::string>& column_names, bool own_schema);
+  Tile(TileGroupHeader* tile_header,
+       Backend* backend,
+       const catalog::Schema& tuple_schema,
+       int tuple_count);
 
   virtual ~Tile();
 
@@ -118,25 +121,17 @@ class Tile {
   // Columns
   //===--------------------------------------------------------------------===//
 
-  catalog::Schema* GetSchema() const {
+  const catalog::Schema& GetSchema() const {
     return schema;
   };
 
-  const std::string& GetColumnName(const id_t column_index) const {
-    return column_names[column_index];
-  }
-
-  const std::vector<std::string>& GetColumnNames() const {
-    return column_names;
+  const std::string GetColumnName(const id_t column_index) const {
+    return schema.GetColumnInfo(column_index).name;
   }
 
   int GetColumnCount() const {
     return column_count;
   };
-
-  std::vector<std::string> GetColumns() const {
-    return column_names;
-  }
 
   TileGroupHeader *GetHeader() const{
     return tile_group_header;
@@ -146,7 +141,7 @@ class Tile {
     return backend;
   }
 
-  oid_t GetTileId() const {
+  id_t GetTileId() const {
     return tile_id;
   }
 
@@ -182,20 +177,23 @@ class Tile {
   // Data members
   //===--------------------------------------------------------------------===//
 
+  // Catalog information
+  id_t database_id;
+  id_t table_id;
+  id_t tile_group_id;
+  id_t tile_id;
+
   // storage backend
   Backend *backend;
+
+  // tile schema
+  catalog::Schema schema;
 
   // set of fixed-length tuple slots
   char *data;
 
   // storage pool for uninlined data
   Pool *pool;
-
-  // column header
-  std::vector<std::string> column_names;
-
-  // tile schema
-  catalog::Schema *schema;
 
   // number of tuple slots allocated
   id_t num_tuple_slots;
@@ -211,21 +209,6 @@ class Tile {
 
   // space occupied by uninlined data
   size_t uninlined_data_size;
-
-  // do we own the schema ?
-  bool own_schema;
-
-  // do we own the backend ?
-  bool own_backend;
-
-  // do we own the group header ?
-  bool own_tile_group_header;
-
-  // Catalog information
-  id_t tile_id;
-  id_t tile_group_id;
-  id_t table_id;
-  id_t database_id;
 
   // Used for serialization/deserialization
   char *column_header;
@@ -275,6 +258,47 @@ inline Tuple *Tile::GetTuple(catalog::Manager* catalog, const ItemPointer* tuple
   storage::Tuple *tile_tuple = tile->GetTuple(tuple_location->offset);
   return tile_tuple;
 }
+
+
+//===--------------------------------------------------------------------===//
+// Tile factory
+//===--------------------------------------------------------------------===//
+
+class TileFactory {
+ public:
+  TileFactory();
+  virtual ~TileFactory();
+
+  static Tile *GetTile(id_t database_id, id_t table_id, id_t tile_group_id, id_t tile_id,
+                       TileGroupHeader* tile_header,
+                       Backend* backend,
+                       const catalog::Schema& schema,
+                       int tuple_count) {
+
+    Tile *tile = new Tile(tile_header, backend, schema, tuple_count);
+
+    TileFactory::InitCommon(tile, database_id, table_id, tile_group_id, tile_id,
+                            backend, schema);
+
+    return tile;
+  }
+
+ private:
+
+  static void InitCommon(Tile *tile,
+                         id_t database_id, id_t table_id, id_t tile_group_id, id_t tile_id,
+                         Backend* backend,
+                         const catalog::Schema& schema) {
+
+    tile->database_id = database_id;
+    tile->table_id = table_id;
+    tile->tile_group_id = tile_group_id;
+    tile->tile_id = tile_id;
+    tile->backend = backend;
+    tile->schema = schema;
+  }
+
+};
 
 
 } // End storage namespace

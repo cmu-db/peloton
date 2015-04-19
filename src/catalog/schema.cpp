@@ -20,10 +20,11 @@ namespace catalog {
 /// Helper function for creating TupleSchema
 void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
                                const std::vector<id_t> column_lengths,
+                               const std::vector<std::string> column_names,
                                const std::vector<bool> allow_null,
-                               const std::vector<bool> _is_inlined) {
+                               const std::vector<bool> is_inlined) {
 
-  bool tuple_is_inlined = true;
+  bool tup_is_inlined = true;
   id_t num_columns = column_types.size();
   id_t column_offset = 0;
 
@@ -32,21 +33,22 @@ void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
     ColumnInfo column_info(column_types[column_itr],
                            column_offset,
                            column_lengths[column_itr],
+                           column_names[column_itr],
                            allow_null[column_itr],
-                           _is_inlined[column_itr]);
+                           is_inlined[column_itr]);
 
     column_offset += column_info.fixed_length;
 
     columns.push_back(column_info);
 
-    if(_is_inlined[column_itr] == false){
-      tuple_is_inlined = false;
+    if(is_inlined[column_itr] == false){
+      tup_is_inlined = false;
       uninlined_columns.push_back(column_itr);
     }
   }
 
   length = column_offset;
-  is_inlined = tuple_is_inlined;
+  tuple_is_inlined = tup_is_inlined;
 
   column_count = columns.size();
   uninlined_column_count = uninlined_columns.size();
@@ -55,11 +57,12 @@ void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
 /// Construct schema from vector of ColumnInfo
 Schema::Schema(const std::vector<ColumnInfo> columns)
 : length(0),
-  is_inlined(false) {
+  tuple_is_inlined(false) {
   id_t column_count = columns.size();
 
   std::vector<ValueType> column_types;
   std::vector<id_t> column_lengths;
+  std::vector<std::string> column_names;
   std::vector<bool> allow_null;
   std::vector<bool> is_inlined;
 
@@ -71,11 +74,12 @@ Schema::Schema(const std::vector<ColumnInfo> columns)
     else
       column_lengths.push_back(columns[column_itr].variable_length);
 
+    column_names.push_back(columns[column_itr].name);
     allow_null.push_back(columns[column_itr].allow_null);
     is_inlined.push_back(columns[column_itr].is_inlined);
   }
 
-  CreateTupleSchema(column_types, column_lengths, allow_null, is_inlined);
+  CreateTupleSchema(column_types, column_lengths, column_names, allow_null, is_inlined);
 }
 
 /// Copy schema
@@ -167,7 +171,7 @@ std::ostream& operator<< (std::ostream& os, const ColumnInfo& column_info){
 std::ostream& operator<< (std::ostream& os, const Schema& schema){
   os << "\tSchema :: " <<
       " column_count = " << schema.column_count <<
-      " is_inlined = " << schema.is_inlined << "," <<
+      " is_inlined = " << schema.tuple_is_inlined << "," <<
       " length = " << schema.length << "," <<
       " uninlined_column_count = " << schema.uninlined_column_count << std::endl;
 
