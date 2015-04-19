@@ -21,5 +21,6 @@
 #include "constant_value_expression.h"
 #include "operator_expression.h"
 #include "parameter_value_expression.h"
+#include "parser_expression.h"
 #include "tuple_address_expression.h"
 #include "tuple_value_expression.h"

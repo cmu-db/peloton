@@ -30,10 +30,10 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
 
   // SCHEMA
 
-  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
-  catalog::ColumnInfo column2(VALUE_TYPE_VARCHAR, 25, false, true);
-  catalog::ColumnInfo column3(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
-  catalog::ColumnInfo column4(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), false, true);
+  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", false, true);
+  catalog::ColumnInfo column2(VALUE_TYPE_VARCHAR, 25, "B", false, true);
+  catalog::ColumnInfo column3(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "C", false, true);
+  catalog::ColumnInfo column4(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "D", false, true);
 
   columns.push_back(column1);
   columns.push_back(column2);

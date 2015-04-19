@@ -87,7 +87,7 @@ enum ValueType {
 //===--------------------------------------------------------------------===//
 
 enum ExpressionType {
-  EXPRESSION_TYPE_INVALID                     = 0,
+  EXPRESSION_TYPE_INVALID                         = 0,
 
   //===--------------------------------------------------------------------===//
   // Arithmetic Operators
@@ -101,17 +101,18 @@ enum ExpressionType {
   EXPRESSION_TYPE_OPERATOR_MOD                    = 6, // left % right (both must be integer)
   EXPRESSION_TYPE_OPERATOR_CAST                   = 7, // explicitly cast left as right (right is integer in ValueType enum)
   EXPRESSION_TYPE_OPERATOR_NOT                    = 8, // logical not operator
+  EXPRESSION_TYPE_OPERATOR_UNARY_MINUS            = 9, // unary minus operator
 
   //===--------------------------------------------------------------------===//
   // Comparison Operators
   //===--------------------------------------------------------------------===//
 
-  EXPRESSION_TYPE_COMPARE_EQUAL                   = 10, // equal operator between left and right
-  EXPRESSION_TYPE_COMPARE_NOTEQUAL                = 11, // inequal operator between left and right
-  EXPRESSION_TYPE_COMPARE_LESSTHAN                = 12, // less than operator between left and right
-  EXPRESSION_TYPE_COMPARE_GREATERTHAN             = 13, // greater than operator between left and right
-  EXPRESSION_TYPE_COMPARE_LESSTHANOREQUALTO       = 14, // less than equal operator between left and right
-  EXPRESSION_TYPE_COMPARE_GREATERTHANOREQUALTO    = 15, // greater than equal operator between left and right
+  EXPRESSION_TYPE_COMPARE_EQ                      = 10, // equal operator between left and right
+  EXPRESSION_TYPE_COMPARE_NE                      = 11, // inequal operator between left and right
+  EXPRESSION_TYPE_COMPARE_LT                      = 12, // less than operator between left and right
+  EXPRESSION_TYPE_COMPARE_GT                      = 13, // greater than operator between left and right
+  EXPRESSION_TYPE_COMPARE_LTE                     = 14, // less than equal operator between left and right
+  EXPRESSION_TYPE_COMPARE_GTE                     = 15, // greater than equal operator between left and right
   EXPRESSION_TYPE_COMPARE_LIKE                    = 16, // LIKE operator (left LIKE right). both children must be string.
 
   //===--------------------------------------------------------------------===//
@@ -141,8 +142,16 @@ enum ExpressionType {
   EXPRESSION_TYPE_AGGREGATE_MIN                   = 43,
   EXPRESSION_TYPE_AGGREGATE_MAX                   = 44,
   EXPRESSION_TYPE_AGGREGATE_AVG                   = 45,
-  EXPRESSION_TYPE_AGGREGATE_WEIGHTED_AVG          = 46
+  EXPRESSION_TYPE_AGGREGATE_WEIGHTED_AVG          = 46,
 
+  //===--------------------------------------------------------------------===//
+  // Parser
+  //===--------------------------------------------------------------------===//
+
+  EXPRESSION_TYPE_STAR                            = 50,
+  EXPRESSION_TYPE_PLACEHOLDER                     = 51,
+  EXPRESSION_TYPE_COLUMN_REF                      = 52,
+  EXPRESSION_TYPE_FUNCTION_REF                    = 53
 };
 
 //===--------------------------------------------------------------------===//
@@ -202,6 +211,65 @@ enum PlanNodeType {
     PLAN_NODE_TYPE_LIMIT            = 56,
     PLAN_NODE_TYPE_DISTINCT         = 57,
 };
+
+//===--------------------------------------------------------------------===//
+// Statement Types
+//===--------------------------------------------------------------------===//
+
+enum StatementType {
+    STATEMENT_TYPE_INVALID          = 0, // invalid statement type
+
+    STATEMENT_TYPE_SELECT           = 1, // select statement type
+    STATEMENT_TYPE_INSERT           = 3, // insert statement type
+    STATEMENT_TYPE_UPDATE           = 4, // update statement type
+    STATEMENT_TYPE_DELETE           = 5, // delete statement type
+    STATEMENT_TYPE_CREATE           = 6, // create statement type
+    STATEMENT_TYPE_DROP             = 7, // drop statement type
+    STATEMENT_TYPE_PREPARE          = 8, // prepare statement type
+    STATEMENT_TYPE_EXECUTE          = 9, // execute statement type
+    STATEMENT_TYPE_EXPORT           = 10, // export statement type
+    STATEMENT_TYPE_RENAME           = 11, // rename statement type
+    STATEMENT_TYPE_ALTER            = 12, // alter statement type
+    STATEMENT_TYPE_TRANSACTION      = 13, // transaction statement type
+};
+
+//===--------------------------------------------------------------------===//
+// Join Types
+//===--------------------------------------------------------------------===//
+
+enum JoinType {
+    JOIN_TYPE_INVALID               = 0, // invalid join type
+
+    JOIN_TYPE_LEFT                  = 1, // left
+    JOIN_TYPE_RIGHT                 = 2, // right
+    JOIN_TYPE_INNER                 = 3, // inner
+    JOIN_TYPE_OUTER                 = 4  // outer
+};
+
+//===--------------------------------------------------------------------===//
+// Table Reference Types
+//===--------------------------------------------------------------------===//
+
+enum TableReferenceType {
+  TABLE_REFERENCE_TYPE_INVALID       = 0, // invalid table reference type
+
+  TABLE_REFERENCE_TYPE_NAME          = 1, // table name
+  TABLE_REFERENCE_TYPE_SELECT        = 2, // output of select
+  TABLE_REFERENCE_TYPE_JOIN          = 3, // output of join
+  TABLE_REFERENCE_TYPE_CROSS_PRODUCT = 4  // out of cartesian product
+};
+
+//===--------------------------------------------------------------------===//
+// Insert Types
+//===--------------------------------------------------------------------===//
+
+enum InsertType {
+  INSERT_TYPE_INVALID                = 0,  // invalid insert type
+
+  INSERT_TYPE_VALUES                 = 1,  // values
+  INSERT_TYPE_SELECT                 = 2   // select
+};
+
 
 //===--------------------------------------------------------------------===//
 // Type definitions.

@@ -20,13 +20,13 @@ namespace nstore {
 namespace test {
 
 TEST(LogicalTileTests, TileMaterializationTest) {
-
   // TILE GROUP
 
   catalog::Manager *catalog = new catalog::Manager();
+  storage::Backend *backend = new storage::VMBackend();
 
-  storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
-      schemas, 4, column_names, true, catalog);
+  storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
+                                                                           catalog, backend, schemas, 4);
 
   // TUPLES
 
@@ -142,8 +142,11 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   delete found_tuple12;
   delete found_tuple22;
 
+  delete schema1;
+  delete schema2;
   delete tile_group;
   delete catalog;
+  delete backend;
 }
 
 } // End test namespace

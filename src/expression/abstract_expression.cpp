@@ -25,16 +25,12 @@ namespace nstore {
 namespace expression {
 
 AbstractExpression::AbstractExpression()
-: left_expr(nullptr),
-  right_expr(nullptr),
-  expr_type(EXPRESSION_TYPE_INVALID),
-  has_parameter(true) {
+: expr_type(EXPRESSION_TYPE_INVALID),
+  has_parameter(true){
 }
 
 AbstractExpression::AbstractExpression(ExpressionType type)
-: left_expr(nullptr),
-  right_expr(nullptr),
-  expr_type(type),
+: expr_type(type),
   has_parameter(true) {
 }
 
@@ -53,6 +49,11 @@ AbstractExpression::~AbstractExpression() {
   delete left_expr;
   delete right_expr;
 
+  // clean up alias
+  free(alias);
+
+  // clean up local expr
+  delete m_expr;
 }
 
 void AbstractExpression::Substitute(const ValueArray &params) {

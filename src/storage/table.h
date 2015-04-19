@@ -1,20 +1,21 @@
 /*-------------------------------------------------------------------------
-*
-* table.h
-* file description
-*
-* Copyright(c) 2015, CMU
-*
-* /n-store/src/storage/table.h
-*
-*-------------------------------------------------------------------------
-*/
+ *
+ * table.h
+ * file description
+ *
+ * Copyright(c) 2015, CMU
+ *
+ * /n-store/src/storage/table.h
+ *
+ *-------------------------------------------------------------------------
+ */
 
 #pragma once
 
-#include <string>
+#include "catalog/manager.h"
+#include "storage/tile_group.h"
 
-#include "storage/tuple.h"
+#include <string>
 
 namespace nstore {
 namespace storage {
@@ -33,34 +34,90 @@ namespace storage {
  *
  */
 class Table {
-public:
-	Table();
-	virtual ~Table();
+  friend class TileGroup;
+  friend class TableFactory;
 
-	int GetColumnCount();
+  Table() = delete;
+  Table(Table const&) = delete;
 
-	void *Get();
+ public:
 
-	std::string GetColumnName(int column_itr);
+  // Table constructor
+  Table(catalog::Manager *catalog,
+        const catalog::Schema& schema,
+        Backend *backend,
+        id_t tuple_count)
+ : database_id(INVALID_ID),
+   table_id(INVALID_ID),
+   backend(backend),
+   schema(schema),
+   catalog(catalog),
+   tuple_count(tuple_count) {
+  }
 
-	bool InsertTuple(Tuple tuple);
+  ~Table() {
 
-	Tuple TempTuple();
+    // clean up tile groups
+    for(auto tile_group : tile_groups)
+      delete tile_group;
 
-	void Reset(Table t);
+  }
 
-protected:
+  //===--------------------------------------------------------------------===//
+  // Operations
+  //===--------------------------------------------------------------------===//
 
-	//===--------------------------------------------------------------------===//
-	// Data members
-	//===--------------------------------------------------------------------===//
+  // add a new tile group to table
+  id_t AddTileGroup();
 
-	/// set of tile groups
-	std::vector<TileGroup*> tiles;
+ protected:
 
-	/// Catalog information
-	Oid table_id;
-	Oid database_id;
+  //===--------------------------------------------------------------------===//
+  // Data members
+  //===--------------------------------------------------------------------===//
+
+  // Catalog information
+  id_t database_id;
+  id_t table_id;
+
+  // backend
+  Backend *backend;
+
+  // table schema
+  catalog::Schema schema;
+
+  // catalog manager
+  catalog::Manager *catalog;
+
+  // set of tile groups
+  std::vector<TileGroup*> tile_groups;
+
+  id_t tuple_count;
+
+  std::mutex table_mutex;
+};
+
+//===--------------------------------------------------------------------===//
+// Table factory
+//===--------------------------------------------------------------------===//
+
+class TableFactory {
+ public:
+  TableFactory();
+  virtual ~TableFactory();
+
+  static Table *GetTable(oid_t database_id,
+                         catalog::Manager *catalog,
+                         Backend* backend,
+                         catalog::Schema schema,
+                         int tuple_count) {
+
+    Table *table =  new Table(catalog,schema, backend, tuple_count);
+
+    table->database_id = database_id;
+
+    return table;
+  }
 
 };
 
