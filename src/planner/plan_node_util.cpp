@@ -10,13 +10,15 @@
 #include "planner/plan_node_util.h"
 #include "common/types.h"
 #include "common/exception.h"
+#include "common/logger.h"
 #include "planner/nodes.h"
 
 namespace nstore {
 namespace planner {
 
 AbstractPlanNode* GetEmptyPlanNode(PlanNodeType type) {
-  //VOLT_TRACE("Creating an empty PlanNode of type '%s'", plannodeutil::getTypeName(type).c_str());
+
+  LOG4CXX_TRACE(logger, "Creating an empty PlanNode of type : " << PlanNodeToString(type));
   AbstractPlanNode* ret = NULL;
 
   switch (type) {
@@ -70,13 +72,13 @@ AbstractPlanNode* GetEmptyPlanNode(PlanNodeType type) {
     case (PLAN_NODE_TYPE_RECEIVE):
         ret = new ReceivePlanNode();
     break;
-    */
+     */
 
     default: {
       throw PlannerException("Invalid PlanNode type : " + PlanNodeToString(type));
     }
   }
-  //VOLT_TRACE("created plannode : %s ", typeid(*ret).name());
+  LOG4CXX_TRACE(logger, "created plannode : " << typeid(*ret).name());
 
   return (ret);
 }

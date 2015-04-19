@@ -14,6 +14,7 @@
 
 #include "common/value_factory.h"
 #include "common/exception.h"
+#include "common/logger.h"
 #include "expression/abstract_expression.h"
 #include <cassert>
 #include <sstream>
@@ -316,11 +317,11 @@ AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
                                       __attribute__((unused)) int vs,
                                       AbstractExpression* lc,
                                       AbstractExpression* rc) {
-  //VOLT_TRACE("expressionFactory request: %s(%d), %s(%d), %d, left: %p"
-  //           " right: %p",
-  //           expressionutil::GetTypeName(et).c_str(), et,
-  //           getTypeName(vt).c_str(), vt, vs,
-  //           lc, rc);
+
+  LOG4CXX_TRACE(logger, "expressionFactory request: " <<
+                GetTypeName(et) << " " << et <<
+                GetTypeName(vt) << " " << vt << " " <<
+                vs << " " << "left : " << lc << "right : " << rc);
 
   AbstractExpression *ret = nullptr;
 
@@ -381,7 +382,7 @@ AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
   }
 
   // written thusly to ease testing/inspecting return content.
-  //VOLT_TRACE("Created '%s' expression %p", expressionutil::GetTypeName(et).c_str(), ret);
+  LOG4CXX_TRACE(logger, "Created " << GetTypeName(et) <<  " expression  : " << ret);
   return ret;
 }
 

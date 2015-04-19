@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "common/types.h"
+#include "common/logger.h"
 #include "planner/abstract_plan_node.h"
 #include "planner/plan_column.h"
 #include "planner/plan_node_util.h"
@@ -95,9 +96,8 @@ AbstractPlanNode* AbstractPlanNode::GetInlinePlanNodes(PlanNodeType type) const 
     ret = lookup->second;
   }
   else {
-    //VOLT_TRACE("No internal PlanNode with type '%s' is available for '%s'",
-    //           plannodeutil::getTypeName(type).c_str(),
-    //           this->debug().c_str());
+    LOG4CXX_TRACE(logger, "No internal PlanNode with type : " << PlanNodeToString(type)
+                  << " is available for " << debug() );
   }
 
   return ret;
@@ -174,7 +174,7 @@ AbstractPlanNode* AbstractPlanNode::LoadFromJSONObject(json_spirit::Object &obj,
   }
 
   plan_node->plan_node_id = (oid_t) id_value.get_int();
-  //VOLT_TRACE("Initializing PlanNode %s", node->debug().c_str());
+  LOG4CXX_TRACE(logger, "Initializing PlanNode " << plan_node->debug());
 
   json_spirit::Value inlined_nodes_value = find_value(obj,"INLINE_NODES");
   if (inlined_nodes_value == json_spirit::Value::null) {
@@ -198,7 +198,8 @@ AbstractPlanNode* AbstractPlanNode::LoadFromJSONObject(json_spirit::Object &obj,
     // TODO: if this throws, new Node can be leaked.
     // As long as newNode is not nullptr, this will not throw.
     plan_node->AddInlinePlanNode(new_plan_node);
-    //VOLT_TRACE("Adding inline PlanNode %s for %s", new_plan_node->debug().c_str(), plan_node->debug().c_str());
+    LOG4CXX_TRACE(logger, "Adding inline PlanNode " << new_plan_node->debug()
+                  << " for " << plan_node->debug());
   }
 
   json_spirit::Value parent_node_ids_value = find_value(obj, "PARENT_IDS");

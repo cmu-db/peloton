@@ -16,6 +16,7 @@
 #include "common/types.h"
 #include "common/serializer.h"
 #include "expression/expression_util.h"
+#include "common/logger.h"
 
 #include <sstream>
 #include <cassert>
@@ -63,13 +64,14 @@ void AbstractExpression::Substitute(const ValueArray &params) {
     return;
 
   // descend. nodes with parameters overload substitute()
-  //VOLT_TRACE("Substituting parameters for expression \n%s ...", debug(true).c_str());
+  LOG4CXX_TRACE(logger, "Substituting parameters for expression \n" << params.Debug());
+
   if (left_expr) {
-    //VOLT_TRACE("Substitute processing left child...");
+    LOG4CXX_TRACE(logger, "Substitute processing left child...");
     left_expr->Substitute(params);
   }
   if (right_expr) {
-    //VOLT_TRACE("Substitute processing right child...");
+    LOG4CXX_TRACE(logger, "Substitute processing right child...");
     right_expr->Substitute(params);
   }
 }
