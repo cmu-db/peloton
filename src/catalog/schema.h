@@ -177,6 +177,10 @@ public:
 		return uninlined_columns[column_id];
 	}
 
+	std::vector<ColumnInfo> GetColumns() const {
+	  return columns;
+	}
+
 	/// Return the number of columns in the schema for the tuple.
 	inline id_t GetColumnCount() const {
 		return column_count;
