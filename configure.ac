@@ -36,7 +36,8 @@ DX_INIT_DOXYGEN([$PACKAGE_NAME], [doc/doxygen.cfg], [doc])
 # LOGGING SUPPORT
 ######################################################################
  
-AC_CONFIG_FILES([log.conf:log.conf])
+AC_LOG4CXX_CHECK 
+AC_CONFIG_FILES([log4j.properties:log4j.properties])
 
 ######################################################################
 # GCC COLOR
