@@ -138,7 +138,6 @@ struct PARSER_CUST_LTYPE {
 
 	nstore::parser::SQLStatement* statement;
 	nstore::parser::SelectStatement*  	  select_stmt;
-	nstore::parser::ImportStatement* 	  import_stmt;
 	nstore::parser::CreateStatement* 	  create_stmt;
 	nstore::parser::InsertStatement* 	  insert_stmt;
 	nstore::parser::DeleteStatement* 	  delete_stmt;
@@ -183,7 +182,7 @@ struct PARSER_CUST_LTYPE {
 %token DATABASE SMALLINT VARCHAR FOREIGN TINYINT CASCADE COLUMNS CONTROL DEFAULT EXECUTE EXPLAIN
 %token HISTORY INTEGER NATURAL PREPARE PRIMARY SCHEMAS DECIMAL
 %token SPATIAL VIRTUAL BEFORE COLUMN CREATE DELETE DIRECT 
-%token BIGINT DOUBLE ESCAPE EXCEPT EXISTS GLOBAL HAVING IMPORT
+%token BIGINT DOUBLE ESCAPE EXCEPT EXISTS GLOBAL HAVING
 %token INSERT ISNULL OFFSET RENAME SCHEMA SELECT SORTED
 %token COMMIT TABLES UNIQUE UNLOAD UPDATE VALUES AFTER ALTER CROSS
 %token FLOAT BEGIN DELTA GROUP INDEX INNER LIMIT LOCAL MERGE MINUS ORDER
@@ -202,16 +201,15 @@ struct PARSER_CUST_LTYPE {
 %type <exec_stmt>	execute_statement
 %type <prep_stmt>	prepare_statement
 %type <select_stmt> select_statement select_with_paren select_no_paren select_clause
-%type <import_stmt> import_statement
 %type <create_stmt> create_statement
 %type <insert_stmt> insert_statement
 %type <delete_stmt> delete_statement truncate_statement
 %type <update_stmt> update_statement
 %type <drop_stmt>	drop_statement
 %type <txn_stmt>    transaction_statement
-%type <sval> 		table_name opt_alias alias file_path
+%type <sval> 		table_name opt_alias alias
 %type <bval> 		opt_not_exists opt_distinct opt_notnull opt_primary opt_unique
-%type <uval>		import_file_type opt_join_type column_type opt_column_width
+%type <uval>		opt_join_type column_type opt_column_width
 %type <table> 		from_clause table_ref table_ref_atomic table_ref_name
 %type <table>		join_clause join_table table_ref_name_no_alias
 %type <expr> 		expr scalar_expr unary_expr binary_expr function_expr star_expr expr_alias placeholder_expr
@@ -283,7 +281,6 @@ statement:
 
 preparable_statement:
 		select_statement { $$ = $1; }
-	|	import_statement { $$ = $1; }
 	|	create_statement { $$ = $1; }
 	|	insert_statement { $$ = $1; }
 	|	delete_statement { $$ = $1; }
@@ -321,26 +318,6 @@ execute_statement:
 			$$->name = $2;
 			$$->parameters = $4;
 		}
-	;
-
-
-/******************************
- * Import Statement
- ******************************/
-import_statement:
-		IMPORT FROM import_file_type FILE file_path INTO table_name {
-			$$ = new ImportStatement((ImportStatement::ImportType) $3);
-			$$->file_path = $5;
-			$$->table_name = $7;
-		}
-	;
-
-import_file_type:
-		CSV { $$ = ImportStatement::kImportCSV; }
-	;
-
-file_path:
-		string_literal { $$ = ((ImportStatement*)$1)->name; }
 	;
 
 
