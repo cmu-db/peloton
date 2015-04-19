@@ -85,7 +85,6 @@ TEST(ParserTests, BasicTest) {
 
 }
 
-
 TEST(ParserTests, GrammarTest) {
   std::vector<std::string> valid_queries;
 

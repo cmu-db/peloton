@@ -80,6 +80,9 @@ TEST(TileTests, BasicTest) {
 	delete tuple1;
 	delete tuple2;
 	delete tile;
+	delete header;
+	delete schema;
+	delete backend;
 }
 
 } // End test namespace

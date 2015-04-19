@@ -8,32 +8,32 @@
 namespace nstore {
 namespace parser {
 
-const char* indent(uint num_indent) {
-  return std::string(num_indent, '\t').c_str();
+std::string indent(uint num_indent) {
+  return std::string(num_indent, '\t');
 }
 
 void inprint(int64_t val, uint num_indent) {
-  printf("%s%ld  \n", indent(num_indent), val);
+  std::cout << indent(num_indent) << val << "\n";
 }
 
 void inprint(float val, uint num_indent) {
-  printf("%s%f\n", indent(num_indent), val);
+  std::cout << indent(num_indent) << val << "\n";
 }
 
 void inprint(const char* val, uint num_indent) {
-  printf("%s%s\n", indent(num_indent), val);
+  std::cout << indent(num_indent) << val << "\n";
 }
 
 void inprint(const char* val, const char* val2, uint num_indent) {
-  printf("%s%s->%s\n", indent(num_indent), val, val2);
+  std::cout << indent(num_indent) << val << "->" << val2 << "\n";
 }
 
 void inprintC(char val, uint num_indent) {
-  printf("%s%c\n", indent(num_indent), val);
+  std::cout << indent(num_indent) << val << "\n";
 }
 
 void inprintU(uint64_t val, uint num_indent) {
-  printf("%s%lu\n", indent(num_indent), val);
+  std::cout << indent(num_indent) << val << "\n";
 }
 
 void PrintTableRefInfo(TableRef* table, uint num_indent) {
@@ -91,7 +91,7 @@ void GetExpressionInfo(const expression::AbstractExpression* expr, uint num_inde
       return;
   }
 
-  printf("%s", indent(num_indent));
+  std::cout << indent(num_indent);
   std::cout << "-> Expr Type :: " << ExpressionToString(expr->GetExpressionType()) << "\n";
 
   switch (expr->GetExpressionType()) {
@@ -102,7 +102,7 @@ void GetExpressionInfo(const expression::AbstractExpression* expr, uint num_inde
       inprint((expr)->GetName(), num_indent);
       break;
     case EXPRESSION_TYPE_VALUE_CONSTANT:
-      printf("%s", indent(num_indent));
+      std::cout << indent(num_indent);
       std::cout << ((expression::ConstantValueExpression*)expr)->GetValue();
       printf("\n");
       break;
@@ -161,7 +161,7 @@ void GetCreateStatementInfo(CreateStatement* stmt, uint num_indent) {
   inprintU(stmt->type, num_indent+1);
 
   if(stmt->type == CreateStatement::CreateType::kIndex) {
-    printf("%s", indent(num_indent));
+    std::cout << indent(num_indent);
     printf("INDEX : table : %s unique : %d attrs : ", stmt->table_name, stmt->unique);
     for(auto key : *(stmt->index_attrs))
       printf("%s ", key);
@@ -170,8 +170,7 @@ void GetCreateStatementInfo(CreateStatement* stmt, uint num_indent) {
 
   if(stmt->columns != nullptr){
     for(ColumnDefinition *col : *(stmt->columns)) {
-      printf("%s", indent(num_indent));
-
+      std::cout << indent(num_indent);
       if(col->type == ColumnDefinition::DataType::PRIMARY){
         printf("-> PRIMARY KEY : ");
         for(auto key : *(col->primary_key))

@@ -155,10 +155,7 @@ Tile *TileGroup::ScanTuples(txn_id_t transaction_id, id_t tile_id, cid_t at_cid)
 
     storage::Tile *tile = storage::TileFactory::GetTile(
         INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
-        header,
-        backend,
-        tile_schemas[tile_id],
-        tuple_count);
+        header, backend, tile_schemas[tile_id], tuple_count);
 
     id_t tuple_slot_id = 0;
 

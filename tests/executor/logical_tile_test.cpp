@@ -198,8 +198,11 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   delete found_tuple12;
   delete found_tuple22;
 
+  delete schema1;
+  delete schema2;
   delete tile_group;
   delete catalog;
+  delete backend;
 }
 
 } // End test namespace
