@@ -8,15 +8,23 @@
 
 namespace nstore {
 
+namespace catalog {
+  class Manager;
+}
+
 namespace storage {
-  class Tile;
+  class Backend;
+  class TileGroup;
 }
 
 namespace test {
 
 class ExecutorTestsUtil {
  public:
-  storage::Tile *CreateSimplePhysicalTile();
+  static storage::TileGroup *CreateSimpleTileGroup(
+      catalog::Manager *manager,
+      storage::Backend *backend,
+      int tuple_count);
 };
 
 } // namespace test
