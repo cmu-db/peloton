@@ -6,4 +6,6 @@
 
 check_PROGRAMS += logical_tile_test
 
-logical_tile_test_SOURCES = executor/logical_tile_test.cpp
+logical_tile_test_SOURCES = \
+                            executor/executor_tests_util.cpp \
+                            executor/logical_tile_test.cpp
