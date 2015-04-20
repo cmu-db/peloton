@@ -3,6 +3,7 @@
 
 #include "tbb/flow_graph.h"
 
+using namespace tbb::flow::interface6;
 
 class src_body {
  public:
@@ -24,27 +25,46 @@ class src_body {
  private:
   const int my_limit;
   int my_next_value;
+};
 
+class squarer_task {
+ public:
+  int operator()(const int &v) const {
+    return v * v;
+  }
+};
+
+class cuber_task {
+ public:
+  int operator()(const int &v) const {
+    return v * v * v;
+  }
+};
+
+double sum = 0;
+
+class summer_task {
+ public:
+  int operator()(const int &v) const {
+    return sum += v * 2.0;
+  }
 };
 
 int main() {
-  int sum = 0;
 
-  tbb::flow::interface6::graph g;
+  graph g;
 
-  tbb::flow::interface6::function_node< int, int > squarer( g, tbb::flow::unlimited, [](const int &v) { return v*v;} );
+  function_node< int, int > squarer( g, tbb::flow::unlimited, squarer_task());
+  function_node< int, int > cuber( g, tbb::flow::unlimited, cuber_task() );
+  function_node< int, double > summer( g, 1, summer_task());
 
-  tbb::flow::interface6::function_node< int, int > cuber( g, tbb::flow::unlimited, [](const int &v) { return v*v*v; } );
-
-  tbb::flow::interface6::function_node< int, int > summer( g, 1, [&](const int &v ) -> int { return sum += v; } );
-
-  tbb::flow::interface6::make_edge( squarer, summer );
+  make_edge( squarer, summer );
   make_edge( cuber, summer );
 
-  tbb::flow::interface6::source_node< int > src( g, src_body(10), false );
+  source_node< int > src( g, src_body(10), false );
 
-  tbb::flow::interface6::make_edge( src, squarer );
-  tbb::flow::interface6::make_edge( src, cuber );
+  make_edge( src, squarer );
+  make_edge( src, cuber );
 
   src.activate();
 
