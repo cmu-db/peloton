@@ -108,6 +108,10 @@ class TileGroup {
     return tile_group_id;
   }
 
+  std::vector<catalog::Schema> &GetTileSchemas() {
+    return tile_schemas;
+  }
+
  protected:
 
   //===--------------------------------------------------------------------===//
