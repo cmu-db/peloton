@@ -20,6 +20,7 @@ build/
 *~
 *.pdf
 *.swp
+a.out
 
 ## -------------------------------
 ## Kate Swap Files
