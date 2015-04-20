@@ -10,14 +10,14 @@
  *-------------------------------------------------------------------------
  */
 
-#include "nstore.h"
-#include "common/logger.h"
-
 #include <stdio.h>
 #include <execinfo.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#include "nstore.h"
+#include "common/logger.h"
 
 namespace nstore {
 
@@ -64,17 +64,15 @@ static void parse_arguments(int argc, char* argv[], configuration& config) {
 
 }
 
-INITIALIZE_EASYLOGGINGPP
-
 int main(int argc, char **argv) {
 	nstore::configuration state;
 
 	nstore::parse_arguments(argc, argv, state);
 
 	// Start logger
-	nstore::Logger();
-	LOG(INFO) << "Starting nstore";
+  LOG4CXX_INFO(nstore::logger, "Starting nstore");
 
+  log4cxx::LogManager::shutdown();
 	return 0;
 }
 

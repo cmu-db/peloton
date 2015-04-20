@@ -12,29 +12,24 @@
 
 #pragma once
 
-#include "easylogging/easylogging++.h"
+#include <log4cxx/logger.h>
+#include <log4cxx/basicconfigurator.h>
+#include <log4cxx/helpers/exception.h>
+#include <log4cxx/propertyconfigurator.h>
+#include <log4cxx/logmanager.h>
 
 // Disable logging in production
 #ifdef NDEBUG
-#define ELPP_DISABLE_LOGS
+#define LOG4CXX_TRACE(logger, expression)
+#define LOG4CXX_DEBUG(logger, expression)
+#define LOG4CXX_INFO(logger, expression)
+#define LOG4CXX_WARN(logger, expression)
+#define LOG4CXX_ERROR(logger, expression)
+#define LOG4CXX_FATAL(logger, expression)
 #endif
-
-#define _ELPP_NO_DEFAULT_LOG_FILE
 
 namespace nstore {
 
-class Logger {
-
- public:
-  Logger() {
-    // Load configuration from file
-    el::Configurations conf("./log.conf");
-
-    // Reconfigure default logger
-    el::Loggers::reconfigureLogger("default", conf);
-  }
-
-};
+static log4cxx::LoggerPtr logger = log4cxx::Logger::getRootLogger();
 
 } // End nstore namespace
-
