@@ -16,4 +16,6 @@ AM_CXXFLAGS = -std=c++11 -Wall -Wextra -fno-strict-aliasing \
               $(CODE_COVERAGE_CFLAGS) $(LIBGDAMM_CFLAGS)
               
 AM_LDFLAGS  = $(CODE_COVERAGE_LDFLAGS) \
-              -lpthread
+              -lpthread \
+              -lexpat -llog4cxx -laprutil-1 -lapr-1              
+            
