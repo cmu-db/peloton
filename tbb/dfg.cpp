@@ -1,20 +1,28 @@
 #include <iostream>
 #include <cstdio>
+#include <cstdlib>
+#include <chrono>
+#include <ctime>
 
 #include "tbb/flow_graph.h"
 
 using namespace tbb::flow::interface6;
 
-class src_body {
+int size = 10000000;
+int chunk_size = 100000;
+int *data = new int[size];
+
+class table_iterator_task {
  public:
-  src_body(int l) :
-    my_limit(l),
-    my_next_value(1) {
+
+  table_iterator_task(int l) :
+    num_tilegroups(l),
+    next_tilegroup(0) {
   }
 
   bool operator()( int &v ) {
-    if ( my_next_value <= my_limit ) {
-      v = my_next_value++;
+    if ( next_tilegroup < num_tilegroups ) {
+      v = next_tilegroup++;
       return true;
     }
     else {
@@ -23,52 +31,105 @@ class src_body {
   }
 
  private:
-  const int my_limit;
-  int my_next_value;
+  const int num_tilegroups;
+  int next_tilegroup;
 };
 
-class squarer_task {
+int predicate() {
+  int sum = 0;
+  for(auto ii = 0 ; ii < 1000 ; ii++)
+    sum += ii;
+  return sum;
+}
+
+class seq_scanner_task {
  public:
-  int operator()(const int &v) const {
-    return v * v;
+  std::vector<int> operator()(const int &v) const {
+    std::vector<int> matching;
+
+    int offset = v * chunk_size;
+    int end = offset + chunk_size;
+
+    for(auto ii = offset; ii < end ; ii++)
+      if(data[ii] % 5 == 0 && predicate())
+        matching.push_back(ii);
+
+    return matching;
   }
 };
-
-class cuber_task {
- public:
-  int operator()(const int &v) const {
-    return v * v * v;
-  }
-};
-
-double sum = 0;
 
 class summer_task {
  public:
-  int operator()(const int &v) const {
-    return sum += v * 2.0;
+  int operator()(const std::vector<int>& matching) const {
+
+    long local_sum = 0;
+    for(auto ii : matching)
+      local_sum += data[ii];
+
+    return local_sum;
+  }
+};
+
+long long sum = 0;
+
+class aggregator_task {
+ public:
+  int operator()(const int& local_sum) const {
+    sum += local_sum;
+    return sum;
   }
 };
 
 int main() {
 
+  std::chrono::time_point<std::chrono::system_clock> start, end;
+  std::chrono::duration<double> elapsed_seconds;
+
+  int num_chunks = size/chunk_size;
+
+  for(auto ii = 0; ii < size; ii++)
+    data[ii] = rand()%10;
+
+  // PARALLEL
+  start = std::chrono::system_clock::now();
+
   graph g;
 
-  function_node< int, int > squarer( g, tbb::flow::unlimited, squarer_task());
-  function_node< int, int > cuber( g, tbb::flow::unlimited, cuber_task() );
-  function_node< int, double > summer( g, 1, summer_task());
+  function_node< int, int > aggregator( g, 1, aggregator_task() );
+  function_node< std::vector<int>, int > summer( g, tbb::flow::unlimited, summer_task());
+  function_node< int, std::vector<int> > seq_scanner( g, tbb::flow::unlimited, seq_scanner_task());
 
-  make_edge( squarer, summer );
-  make_edge( cuber, summer );
+  source_node< int > table_iterator( g, table_iterator_task(num_chunks), false );
 
-  source_node< int > src( g, src_body(10), false );
+  make_edge(table_iterator, seq_scanner);
+  make_edge(seq_scanner, summer);
+  make_edge(summer, aggregator);
 
-  make_edge( src, squarer );
-  make_edge( src, cuber );
-
-  src.activate();
+  table_iterator.activate();
 
   g.wait_for_all();
 
-  std::cout << "Sum is " << sum << "\n";
+  std::cout << "Parallel Sum is    : " << sum << "\n";
+
+  end = std::chrono::system_clock::now();
+  elapsed_seconds = end-start;
+  std::cout << "elapsed time: " << elapsed_seconds.count() << "s\n";
+
+  // SEQUENTIAL
+  start = std::chrono::system_clock::now();
+
+  sum = 0;
+
+  for(auto ii = 0; ii < size; ii++)
+    if(data[ii] % 5 == 0 && predicate())
+      sum *= data[ii];
+
+  std::cout << "Sequential Sum is  : " << sum << "\n";
+
+  end = std::chrono::system_clock::now();
+  elapsed_seconds = end-start;
+  std::cout << "elapsed time: " << elapsed_seconds.count() << "s\n";
+
+
+  delete[] data;
 }
