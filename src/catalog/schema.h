@@ -133,14 +133,30 @@ class Schema	{
   static Schema *CopySchema(const Schema *schema);
 
   /// Copy subset of columns in the given schema
-  static Schema *CopySchema(const Schema *schema, const std::vector<id_t>& set);
+  static Schema *CopySchema(
+      const Schema *schema,
+      const std::vector<id_t>& set);
 
   /// Append two schema objects
-  static Schema *AppendSchema(const Schema *first, const Schema *second);
+  static Schema *AppendSchema(Schema *first, Schema *second);
 
   /// Append subset of columns in the two given schemas
-  static Schema *AppendSchema(const Schema *first, const std::vector<id_t>& first_set,
-                              const Schema *second, const std::vector<id_t>& second_set);
+  static Schema *AppendSchema(
+      Schema *first,
+      std::vector<id_t>& first_set,
+      Schema *second,
+      std::vector<id_t>& second_set);
+
+  /// Append given schemas.
+  static Schema *AppendSchemaList(std::vector<Schema> &schema_list);
+
+  /// Append given schemas.
+  static Schema *AppendSchemaPtrList(const std::vector<Schema *> &schema_list);
+
+  /// Append subsets of columns in the given schemas.
+  static Schema *AppendSchemaPtrList(
+      const std::vector<Schema *> &schema_list,
+      const std::vector<std::vector<id_t> > &subsets);
 
   /// Compare two schemas
   bool operator== (const Schema &other) const;
