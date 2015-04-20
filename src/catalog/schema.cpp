@@ -10,9 +10,12 @@
  *-------------------------------------------------------------------------
  */
 
+#include "catalog/schema.h"
+
+#include <cassert>
+
 #include <algorithm>
 #include <sstream>
-#include "schema.h"
 
 namespace nstore {
 namespace catalog {
@@ -111,42 +114,66 @@ Schema* Schema::CopySchema(const Schema *schema,
 }
 
 /// Append two schema objects
-Schema* Schema::AppendSchema(const Schema *first, const Schema *second){
-  id_t column_count1, column_count2;
-  std::vector<id_t> set1, set2;
+Schema* Schema::AppendSchema(Schema *first, Schema *second){
 
-  column_count1 = first->GetColumnCount();
-  column_count2 = second->GetColumnCount();
-
-  for (id_t column_itr = 0; column_itr < column_count1; column_itr++)
-    set1.push_back(column_itr);
-  for (id_t column_itr = 0; column_itr < column_count2; column_itr++)
-    set2.push_back(column_itr);
-
-  return AppendSchema(first, set1, second, set2);
+  return AppendSchemaPtrList({first, second});
 }
 
 /// Append subset of columns in the two given schemas
-Schema* Schema::AppendSchema(const Schema *first,
-                             const std::vector<id_t>& first_set,
-                             const Schema *second, const std::vector<id_t>& second_set) {
-  id_t column_count1, column_count2;
-  std::vector<ColumnInfo> columns;
+Schema* Schema::AppendSchema(
+    Schema *first,
+    std::vector<id_t>& first_set,
+    Schema *second,
+    std::vector<id_t>& second_set) {
+  const std::vector<Schema *> schema_list({first, second});
+  const std::vector<std::vector<id_t> > subsets({first_set, second_set});
+  return AppendSchemaPtrList(schema_list, subsets);
+}
 
-  column_count1 = first->GetColumnCount();
-  column_count2 = second->GetColumnCount();
+/// Append given schemas.
+Schema *Schema::AppendSchemaList(std::vector<Schema> &schema_list) {
+  // All we do here is convert vector<Schema> to vector<Schema *>.
+  // This is a convenience function.
+  std::vector<Schema *> schema_ptr_list;
+  for (unsigned int i = 0; i < schema_list.size(); i++) {
+    schema_ptr_list.push_back(&schema_list[i]);
+  }
+  return AppendSchemaPtrList(schema_ptr_list);
+}
 
-  for (id_t column_itr = 0; column_itr < column_count1; column_itr++) {
-    // If column exists in first set
-    if(std::find(first_set.begin(), first_set.end(), column_itr) != first_set.end()) {
-      columns.push_back(first->columns[column_itr]);
+/// Append given schemas.
+Schema *Schema::AppendSchemaPtrList(const std::vector<Schema *> &schema_list) {
+  std::vector<std::vector<id_t> > subsets;
+
+  for (unsigned int i = 0; i < schema_list.size(); i++) {
+    unsigned int column_count = schema_list[i]->GetColumnCount();
+    std::vector<id_t> subset;
+    for (id_t column_itr = 0; column_itr < column_count; column_itr++) {
+      subset.push_back(column_itr);
     }
+    subsets.push_back(subset);
   }
 
-  for (id_t column_itr = 0; column_itr < column_count2; column_itr++) {
-    // If column exists in second set
-    if(std::find(second_set.begin(), second_set.end(), column_itr) != second_set.end()) {
-      columns.push_back(second->columns[column_itr]);
+  return AppendSchemaPtrList(schema_list, subsets);
+}
+
+/// Append subsets of columns in the given schemas.
+Schema *Schema::AppendSchemaPtrList(
+    const std::vector<Schema *> &schema_list,
+    const std::vector<std::vector<id_t> > &subsets) {
+  assert(schema_list.size() == subsets.size());
+
+  std::vector<ColumnInfo> columns;
+  for (unsigned int i = 0; i < schema_list.size(); i++) {
+    Schema *schema = schema_list[i];
+    const std::vector<id_t> &subset = subsets[i];
+    unsigned int column_count = schema->GetColumnCount();
+
+    for (id_t column_itr = 0; column_itr < column_count; column_itr++) {
+      // If column exists in set.
+      if(std::find(subset.begin(), subset.end(), column_itr) != subset.end()) {
+        columns.push_back(schema->columns[column_itr]);
+      }
     }
   }
 

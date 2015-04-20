@@ -33,11 +33,8 @@ TEST(LogicalTileTests, TileMaterializationTest) {
 
   // Create tuple schema from tile schemas.
   std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();
-  assert(tile_schemas.size() == 2);
-  catalog::Schema *schema1 = &tile_schemas[0];
-  catalog::Schema *schema2 = &tile_schemas[1];
   std::unique_ptr<catalog::Schema> schema(
-      catalog::Schema::AppendSchema(schema1, schema2));
+      catalog::Schema::AppendSchemaList(tile_schemas));
 
   const bool allocate = true;
   storage::Tuple tuple1(schema.get(), allocate);
@@ -81,6 +78,9 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   logical_tile->AddPositionList(std::move(position_list1));
   logical_tile->AddPositionList(std::move(position_list2));
 
+  assert(tile_schemas.size() == 2);
+  catalog::Schema *schema1 = &tile_schemas[0];
+  catalog::Schema *schema2 = &tile_schemas[1];
   id_t column_count = schema2->GetColumnCount();
   for(id_t column_itr = 0 ; column_itr < column_count ; column_itr++) {
     logical_tile->AddColumn(base_tile, own_base_tile, column_itr, column_itr);
