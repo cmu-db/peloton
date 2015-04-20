@@ -4,6 +4,7 @@
 #include <chrono>
 #include <ctime>
 
+#include "tbb/tbb.h"
 #include "tbb/flow_graph.h"
 
 using namespace tbb::flow::interface6;
@@ -80,7 +81,9 @@ class aggregator_task {
   }
 };
 
-int main() {
+void query(int n) {
+
+  std::cout << "Query :: " << n << "\n";
 
   std::chrono::time_point<std::chrono::system_clock> start, end;
   std::chrono::duration<double> elapsed_seconds;
@@ -130,6 +133,12 @@ int main() {
   elapsed_seconds = end-start;
   std::cout << "elapsed time: " << elapsed_seconds.count() << "s\n";
 
+}
+
+int main() {
+
+  // Run queries in parallel
+  tbb::parallel_for<int>( 1, 3, 1, query);
 
   delete[] data;
 }
