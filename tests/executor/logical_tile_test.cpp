@@ -1,113 +1,66 @@
-/*-------------------------------------------------------------------------
- *
- * logical_tile_test.cpp
- * file description
+/**
+ * @brief Test cases for logical tile.
  *
  * Copyright(c) 2015, CMU
- *
- * /n-store/tests/catalog/logical_tile_test.cpp
- *
- *-------------------------------------------------------------------------
  */
+
+#include "executor_tests_util.h"
 
 #include <memory>
 #include <utility>
+#include <vector>
 
 #include "gtest/gtest.h"
 
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "harness.h"
-#include "storage/tile.h"
 #include "storage/tile_group.h"
+#include "storage/tuple.h"
 
 namespace nstore {
 namespace test {
 
-//===--------------------------------------------------------------------===//
-// Logical Tile Tests
-//===--------------------------------------------------------------------===//
-
 TEST(LogicalTileTests, TileMaterializationTest) {
+  catalog::Manager manager;
+  storage::VMBackend backend;
 
-  // PHYSICAL TILE
+  std::unique_ptr<storage::TileGroup> tile_group(
+      ExecutorTestsUtil::CreateSimpleTileGroup(
+        &manager,
+        &backend,
+        4)); // Tuple count.
 
-  std::vector<catalog::ColumnInfo> columns;
-  std::vector<std::string> tile_column_names;
-  std::vector<std::vector<std::string> > column_names;
-  std::vector<catalog::Schema> schemas;
+  // Create tuple schema from tile schemas.
+  std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();
+  assert(tile_schemas.size() == 2);
+  catalog::Schema *schema1 = &tile_schemas[0];
+  catalog::Schema *schema2 = &tile_schemas[1];
+  std::unique_ptr<catalog::Schema> schema(
+      catalog::Schema::AppendSchema(schema1, schema2));
 
-  // SCHEMA
+  const bool allocate = true;
+  storage::Tuple tuple1(schema.get(), allocate);
+  storage::Tuple tuple2(schema.get(), allocate);
 
-  catalog::ColumnInfo column1(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", false, true);
-  catalog::ColumnInfo column2(
-      VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", false, true);
-  catalog::ColumnInfo column3(
-      VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", false, true);
-  catalog::ColumnInfo column4(
-      VALUE_TYPE_VARCHAR, 25, "D", false, false);
-
-  columns.push_back(column1);
-  columns.push_back(column2);
-
-  catalog::Schema *schema1 = new catalog::Schema(columns);
-  schemas.push_back(*schema1);
-
-  columns.clear();
-  columns.push_back(column3);
-  columns.push_back(column4);
-
-  catalog::Schema *schema2 = new catalog::Schema(columns);
-  schemas.push_back(*schema2);
-
-  catalog::Schema *schema = catalog::Schema::AppendSchema(schema1, schema2);
-
-  // TILES
-
-  tile_column_names.push_back("COL 1");
-  tile_column_names.push_back("COL 2");
-
-  column_names.push_back(tile_column_names);
-
-  tile_column_names.clear();
-  tile_column_names.push_back("COL 3");
-  tile_column_names.push_back("COL 4");
-
-  column_names.push_back(tile_column_names);
-
-  // TILE GROUP
-
-  catalog::Manager *catalog = new catalog::Manager();
-  storage::Backend *backend = new storage::VMBackend();
-
-  storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
-                                                                           catalog, backend, schemas, 4);
-
-  // TUPLES
-
-  storage::Tuple *tuple1 = new storage::Tuple(schema, true);
-  storage::Tuple *tuple2 = new storage::Tuple(schema, true);
-
-  tuple1->SetValue(0, ValueFactory::GetIntegerValue(1));
-  tuple1->SetValue(1, ValueFactory::GetIntegerValue(1));
-  tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1));
-  tuple1->SetValue(
+  tuple1.SetValue(0, ValueFactory::GetIntegerValue(1));
+  tuple1.SetValue(1, ValueFactory::GetIntegerValue(1));
+  tuple1.SetValue(2, ValueFactory::GetTinyIntValue(1));
+  tuple1.SetValue(
       3, ValueFactory::GetStringValue("tuple 1", tile_group->GetTilePool(1)));
 
-  tuple2->SetValue(0, ValueFactory::GetIntegerValue(2));
-  tuple2->SetValue(1, ValueFactory::GetIntegerValue(2));
-  tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2));
-  tuple2->SetValue(
+  tuple2.SetValue(0, ValueFactory::GetIntegerValue(2));
+  tuple2.SetValue(1, ValueFactory::GetIntegerValue(2));
+  tuple2.SetValue(2, ValueFactory::GetTinyIntValue(2));
+  tuple2.SetValue(
       3, ValueFactory::GetStringValue("tuple 2", tile_group->GetTilePool(1)));
 
   // TRANSACTION
-
   txn_id_t txn_id = GetTransactionId();
 
-  tile_group->InsertTuple(txn_id, tuple1);
-  tile_group->InsertTuple(txn_id, tuple2);
-  tile_group->InsertTuple(txn_id, tuple1);
+  tile_group->InsertTuple(txn_id, &tuple1);
+  tile_group->InsertTuple(txn_id, &tuple2);
+  tile_group->InsertTuple(txn_id, &tuple1);
 
 
   ////////////////////////////////////////////////////////////////
@@ -115,36 +68,37 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   ////////////////////////////////////////////////////////////////
 
   // Don't transfer ownership of any base tile to logical tile.
-  bool own_base_tile = false;
+  const bool own_base_tile = false;
 
   storage::Tile *base_tile = tile_group->GetTile(1);
 
   std::vector<id_t> position_list1 = { 0, 1 };
   std::vector<id_t> position_list2 = { 0, 1 };
 
-  executor::LogicalTile *logical_tile =
-    executor::LogicalTileFactory::GetTile();
+  std::unique_ptr<executor::LogicalTile> logical_tile(
+    executor::LogicalTileFactory::GetTile());
 
   logical_tile->AddPositionList(std::move(position_list1));
   logical_tile->AddPositionList(std::move(position_list2));
 
   id_t column_count = schema2->GetColumnCount();
-  for(id_t column_itr = 0 ; column_itr < column_count ; column_itr++)
+  for(id_t column_itr = 0 ; column_itr < column_count ; column_itr++) {
     logical_tile->AddColumn(base_tile, own_base_tile, column_itr, column_itr);
+  }
 
   std::cout << (*logical_tile) << "\n";
 
-  storage::Tuple* found_tuple1 = logical_tile->GetTuple(0, 0);
-  storage::Tuple* found_tuple2 = logical_tile->GetTuple(0, 1);
+  std::unique_ptr<storage::Tuple> found_tuple1(logical_tile->GetTuple(0, 0));
+  std::unique_ptr<storage::Tuple> found_tuple2(logical_tile->GetTuple(0, 1));
 
   std::cout << (*found_tuple1);
   std::cout << (*found_tuple2);
 
-  delete logical_tile;
-
   ////////////////////////////////////////////////////////////////
   // LOGICAL TILE (2 BASE TILE)
   ////////////////////////////////////////////////////////////////
+
+  logical_tile.reset(executor::LogicalTileFactory::GetTile());
 
   storage::Tile *base_tile1 = tile_group->GetTile(0);
   storage::Tile *base_tile2 = tile_group->GetTile(1);
@@ -154,25 +108,29 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   std::vector<id_t> position_list3 = {0, 1};
   std::vector<id_t> position_list4 = {0, 1};
 
-  logical_tile = executor::LogicalTileFactory::GetTile();
-
   logical_tile->AddPositionList(std::move(position_list1));
   logical_tile->AddPositionList(std::move(position_list2));
   logical_tile->AddPositionList(std::move(position_list3));
   logical_tile->AddPositionList(std::move(position_list4));
 
   id_t column_count1 = schema1->GetColumnCount();
-  for(id_t column_itr = 0 ; column_itr < column_count1; column_itr++)
+  for(id_t column_itr = 0 ; column_itr < column_count1; column_itr++) {
     logical_tile->AddColumn(base_tile1, own_base_tile, column_itr, column_itr);
+  }
 
   id_t column_count2 = schema2->GetColumnCount();
-  for(id_t column_itr = 0 ; column_itr < column_count2; column_itr++)
-    logical_tile->AddColumn(base_tile2, own_base_tile, column_itr, column_count1 + column_itr);
+  for(id_t column_itr = 0 ; column_itr < column_count2; column_itr++) {
+    logical_tile->AddColumn(
+        base_tile2,
+        own_base_tile,
+        column_itr,
+        column_count1 + column_itr);
+  }
 
   std::cout << (*logical_tile) << "\n";
 
-  storage::Tuple* found_tuple12 = logical_tile->GetTuple(2, 0);
-  storage::Tuple* found_tuple22 = logical_tile->GetTuple(2, 1);
+  std::unique_ptr<storage::Tuple> found_tuple12(logical_tile->GetTuple(2, 0));
+  std::unique_ptr<storage::Tuple> found_tuple22(logical_tile->GetTuple(2, 1));
 
   EXPECT_EQ((*found_tuple12), (*found_tuple1));
   EXPECT_EQ((*found_tuple22), (*found_tuple2));
@@ -185,26 +143,7 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   std::cout << "Value : " << logical_tile->GetValue(1, 0) << "\n";
   std::cout << "Value : " << logical_tile->GetValue(0, 1) << "\n";
   std::cout << "Value : " << logical_tile->GetValue(1, 1) << "\n";
-
-  delete logical_tile;
-
-  delete tuple1;
-  delete tuple2;
-  delete schema;
-
-  delete found_tuple1;
-  delete found_tuple2;
-
-  delete found_tuple12;
-  delete found_tuple22;
-
-  delete schema1;
-  delete schema2;
-  delete tile_group;
-  delete catalog;
-  delete backend;
 }
 
 } // End test namespace
 } // End nstore namespace
-
