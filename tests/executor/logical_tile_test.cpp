@@ -5,6 +5,7 @@
  */
 
 #include "executor_tests_util.h"
+#include "harness.h"
 
 #include <memory>
 #include <utility>
@@ -12,11 +13,15 @@
 
 #include "gtest/gtest.h"
 
+#include "catalog/manager.h"
+#include "catalog/schema.h"
+#include "common/types.h"
+#include "common/value_factory.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
-#include "harness.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
+#include "storage/vm_backend.h"
 
 namespace nstore {
 namespace test {
@@ -24,18 +29,19 @@ namespace test {
 TEST(LogicalTileTests, TileMaterializationTest) {
   catalog::Manager manager;
   storage::VMBackend backend;
-
+  const int tuple_count = 4;
   std::unique_ptr<storage::TileGroup> tile_group(
       ExecutorTestsUtil::CreateSimpleTileGroup(
         &manager,
         &backend,
-        4)); // Tuple count.
+        tuple_count));
 
   // Create tuple schema from tile schemas.
   std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();
   std::unique_ptr<catalog::Schema> schema(
       catalog::Schema::AppendSchemaList(tile_schemas));
 
+  // Create tuples and insert them into tile group.
   const bool allocate = true;
   storage::Tuple tuple1(schema.get(), allocate);
   storage::Tuple tuple2(schema.get(), allocate);
@@ -52,7 +58,6 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   tuple2.SetValue(
       3, ValueFactory::GetStringValue("tuple 2", tile_group->GetTilePool(1)));
 
-  // TRANSACTION
   txn_id_t txn_id = GetTransactionId();
 
   tile_group->InsertTuple(txn_id, &tuple1);

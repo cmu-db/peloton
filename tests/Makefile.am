@@ -6,7 +6,7 @@ include $(top_srcdir)/common.am
 AM_CPPFLAGS += -isystem $(top_srcdir)/third_party/gtest/include \
 			   -I$(top_srcdir)/src \
 			   -I$(top_srcdir)/third_party \
-			   $(GTEST_CPPFLAGS)  
+			   $(GTEST_CPPFLAGS)
 
 AM_CXXFLAGS +=  $(GTEST_CXXFLAGS) -Wno-unused-but-set-variable
 
