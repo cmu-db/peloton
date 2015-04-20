@@ -21,8 +21,6 @@
 #include "common/pretty_printer.h"
 #include "common/logger.h"
 
-INITIALIZE_EASYLOGGINGPP
-
 namespace nstore {
 namespace test {
 
