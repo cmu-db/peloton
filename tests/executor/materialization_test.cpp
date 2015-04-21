@@ -10,6 +10,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "gtest/gtest.h"
@@ -22,6 +23,7 @@
 #include "executor/logical_tile_factory.h"
 #include "planner/abstract_plan_node.h"
 #include "planner/materialization_node.h"
+#include "storage/tile.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
 #include "storage/vm_backend.h"
@@ -41,6 +43,10 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();
   std::unique_ptr<catalog::Schema> schema(
     catalog::Schema::AppendSchemaList(tile_schemas));
+
+  // Ensure that the tile group created by ExecutorTestsUtil is as expected.
+  assert(tile_schemas.size() == 2);
+  assert(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
   const bool allocate = true;
@@ -66,14 +72,22 @@ TEST(MaterializationTests, SingleBaseTileTest) {
       executor::LogicalTileFactory::WrapBaseTile(base_tile, own_base_tile));
 
   // Create materialization node.
-  std::vector<planner::AbstractPlanNode *> children;
+  //TODO This should be deleted soon...
+  std::unique_ptr<catalog::Schema> output_schema(catalog::Schema::CopySchema(
+      &base_tile->GetSchema()));
   std::unordered_map<id_t, id_t> old_to_new_cols;
   std::vector<std::string> column_names;
-  catalog::Schema *node_schema; //TODO Get schema from base tile.
-  (void) children;
-  (void) old_to_new_cols;
-  (void) column_names;
-  (void) node_schema;
+
+  unsigned int column_count = output_schema->GetColumnCount();
+  for (id_t col = 0; col < column_count; col++) {
+    old_to_new_cols[col] = col;
+    // TODO Why do we need to provide column names when it's alr in the schema?
+    column_names.push_back(output_schema->GetColumnInfo(col).name);
+  }
+  planner::MaterializationNode(
+      std::move(old_to_new_cols),
+      std::move(column_names),
+      output_schema.release());
 
   // Pass them through materialization executor.
   // TODO Use GMock.
