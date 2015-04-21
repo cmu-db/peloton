@@ -57,33 +57,28 @@ void hello_task(void* params) {
   struct hello_args* p = (struct hello_args*) params;
 
   printf("Hello %s, number %d\n", p->s, p->i);
-  sleep(1);
+  usleep(100);
 }
 
 TEST(SchedulerTests, MoreTests) {
-  scheduler::Scheduler *mng = NULL;
-
-  if (mng == NULL)
-    mng = new scheduler::Scheduler();
 
   int i, count = 10;
   struct hello_args hp[count];
   for (i = 0; i < count; i++) {
     hp[i].s = "World";
     hp[i].i = i;
-    mng->AddTask(&hello_task, &hp[i]);
+    scheduler::Scheduler::GetInstance().AddTask(&hello_task, &hp[i]);
   }
 
   struct hello_args hp2[count];
   for (i = 0; i < count; i++) {
     hp2[i].s = "World 2";
     hp2[i].i = i;
-    mng->AddTask(&hello_task, &hp2[i], scheduler::TASK_PRIORTY_TYPE_HIGH);
+    scheduler::Scheduler::GetInstance().AddTask(&hello_task, &hp2[i], scheduler::TASK_PRIORTY_TYPE_HIGH);
   }
 
-  mng->Wait();
+  scheduler::Scheduler::GetInstance().Wait();
 
-  delete mng;
 }
 
 } // End test namespace

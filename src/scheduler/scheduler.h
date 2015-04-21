@@ -48,8 +48,8 @@ class SchedulerState {
 class Scheduler {
 
  public:
-  Scheduler();
-  ~Scheduler();
+  // singleton
+  static Scheduler& GetInstance();
 
   // add task to queue
   void AddTask(void (*task)(void*), void *args,
@@ -59,7 +59,10 @@ class Scheduler {
   void Wait();
 
  private:
-  SchedulerState* state;
+  Scheduler();
+  ~Scheduler();
+
+  SchedulerState *state = nullptr;
 };
 
 } // namespace scheduler

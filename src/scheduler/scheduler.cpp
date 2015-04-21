@@ -21,12 +21,19 @@ namespace nstore {
 namespace scheduler {
 
 
+Scheduler& Scheduler::GetInstance() {
+  static Scheduler scheduler;
+  return scheduler;
+}
+
 Scheduler::Scheduler() {
+
   // set up state
   state = new SchedulerState();
 }
 
 Scheduler::~Scheduler() {
+
   // clean up state
   delete state;
 }
@@ -66,6 +73,7 @@ void Scheduler::Wait() {
   state->root->wait_for_all();
   state->root->increment_ref_count();
   std::cout << "End of WAIT \n";
+
 }
 
 } // namespace scheduler
