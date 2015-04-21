@@ -18,7 +18,8 @@ namespace planner {
 
 AbstractPlanNode* GetEmptyPlanNode(PlanNodeType type) {
 
-  LOG4CXX_TRACE(logger, "Creating an empty PlanNode of type : " << PlanNodeToString(type));
+  //TODO Uncomment after fixing compilation error.
+  //LOG4CXX_TRACE(logger, "Creating an empty PlanNode of type : " << PlanNodeToString(type));
   AbstractPlanNode* ret = NULL;
 
   switch (type) {
@@ -78,7 +79,8 @@ AbstractPlanNode* GetEmptyPlanNode(PlanNodeType type) {
       throw PlannerException("Invalid PlanNode type : " + PlanNodeToString(type));
     }
   }
-  LOG4CXX_TRACE(logger, "created plannode : " << typeid(*ret).name());
+  //TODO Uncomment after fixing compilation error.
+  //LOG4CXX_TRACE(logger, "created plannode : " << typeid(*ret).name());
 
   return (ret);
 }
