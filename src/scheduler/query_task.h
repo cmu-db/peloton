@@ -25,12 +25,6 @@ class QueryTask : public AbstractTask {
 
  public:
 
-  // override this function in all tasks
-  tbb::task* execute() {
-
-    return nullptr;
-  }
-
 };
 
 
