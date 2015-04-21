@@ -12,11 +12,10 @@
 
 #pragma once
 
+#include "catalog/manager.h"
 #include "storage/tile.h"
 #include "storage/tile_group_header.h"
 #include <cassert>
-
-#include "catalog/manager.h"
 
 namespace nstore {
 namespace storage {

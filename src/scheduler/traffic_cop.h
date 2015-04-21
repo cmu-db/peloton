@@ -45,16 +45,31 @@ class Payload {
 
   std::string data;
 
+  oid_t transaction_id = INVALID_OID;
+
   // type of message
   PayloadType msg_type;
 
 };
 
+
 class TrafficCop {
+
  public:
+  void Execute();
 
-  static void Execute();
+  // Singleton
+  static TrafficCop& GetInstance();
 
+ private:
+  TrafficCop() :
+    stmts_executed(0){
+  }
+
+  TrafficCop(TrafficCop const&) = delete;
+  TrafficCop& operator=(TrafficCop const&) = delete;
+
+  oid_t stmts_executed;
 };
 
 } // namespace scheduler
