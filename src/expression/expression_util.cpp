@@ -318,7 +318,7 @@ AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
                                       AbstractExpression* lc,
                                       AbstractExpression* rc) {
 
-  LOG4CXX_TRACE(logger, "expressionFactory request: " <<
+  LOG_TRACE("expressionFactory request: " <<
                 GetTypeName(et) << " " << et <<
                 GetTypeName(vt) << " " << vt << " " <<
                 vs << " " << "left : " << lc << "right : " << rc);
@@ -382,7 +382,7 @@ AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
   }
 
   // written thusly to ease testing/inspecting return content.
-  LOG4CXX_TRACE(logger, "Created " << GetTypeName(et) <<  " expression  : " << ret);
+  LOG_TRACE("Created " << GetTypeName(et) <<  " expression  : " << ret);
   return ret;
 }
 

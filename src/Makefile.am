@@ -39,7 +39,7 @@ common_SOURCES =  $(backend_FILES) \
 libnstore_la_SOURCES = $(common_SOURCES)
 
 nstore_SOURCES = backend/nstore.cpp
-nstore_LDFLAGS = $(AM_LDFLAGS)
+nstore_LDFLAGS = -all-static
 nstore_LDADD = libnstore.la
 
 ######################################################################
