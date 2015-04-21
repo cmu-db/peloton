@@ -17,20 +17,48 @@
 namespace nstore {
 namespace scheduler {
 
+class SchedulerState {
+  friend class Scheduler;
+
+ private:
+  tbb::task *root;
+
+ public:
+
+  SchedulerState() {
+    // Start root task
+    root = new(tbb::task::allocate_root()) tbb::empty_task;
+    root->increment_ref_count();
+  }
+
+  ~SchedulerState() {
+    std::cout << "Destroying root task \n";
+    root->set_ref_count(0);
+    root->destroy(*root);
+    std::cout << "Destroyed root task \n";
+  }
+
+};
+
+
 //===--------------------------------------------------------------------===//
 // Scheduler
 //===--------------------------------------------------------------------===//
 
 class Scheduler {
+
  public:
+  Scheduler();
+  ~Scheduler();
 
-  void Init();
+  // add task to queue
+  void AddTask(void (*task)(void*), void *args);
 
-  void Execute(AbstractTask *task);
+  // wait for all tasks
+  void Wait();
 
  private:
-  tbb::task_scheduler_init *tbb_scheduler;
-
+  SchedulerState* state;
 };
 
 } // namespace scheduler
