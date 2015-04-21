@@ -14,9 +14,12 @@
 
 #include "scheduler/scheduler.h"
 #include "tbb/task_scheduler_init.h"
+#include "common/exception.h"
+#include <string>
 
 namespace nstore {
 namespace scheduler {
+
 
 Scheduler::Scheduler() {
   // set up state
@@ -28,12 +31,31 @@ Scheduler::~Scheduler() {
   delete state;
 }
 
-void Scheduler::AddTask(void (*task)(void*), void *args) {
+void Scheduler::AddTask(void (*function_pointer)(void*), void *args,
+                        TaskPriorityType priority) {
 
-  tbb::task *tk = new(state->root->allocate_child()) Task(task, args);
-
+  tbb::task *tk = new(state->root->allocate_child()) Task(function_pointer, args);
   state->root->increment_ref_count();
-  state->root->enqueue(*tk);
+
+  // Enqueue task with appropriate priority
+  switch(priority) {
+    case TaskPriorityType::TASK_PRIORTY_TYPE_NORMAL:
+      state->root->enqueue(*tk);
+      break;
+
+    case TaskPriorityType::TASK_PRIORTY_TYPE_LOW:
+      state->root->enqueue(*tk, tbb::priority_low);
+      break;
+
+    case TaskPriorityType::TASK_PRIORTY_TYPE_HIGH:
+      state->root->enqueue(*tk, tbb::priority_high);
+      break;
+
+    case TaskPriorityType::TASK_PRIORTY_TYPE_INVALID:
+    default:
+      throw SchedulerException("Invalid priority type : " + std::to_string(priority));
+      break;
+  }
 
   std::cout << "Enqueued task \n";
 }
