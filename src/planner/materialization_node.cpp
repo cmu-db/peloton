@@ -14,12 +14,10 @@ namespace nstore {
 namespace planner {
 
 MaterializationNode::MaterializationNode(
-    std::vector<AbstractPlanNode *> &&children,
     std::unordered_map<id_t, id_t> &&old_to_new_cols,
     std::vector<std::string> &&column_names,
     catalog::Schema *schema)
-  : AbstractPlanNode(std::move(children)),
-    m_old_to_new_cols(std::move(old_to_new_cols)),
+  : m_old_to_new_cols(std::move(old_to_new_cols)),
     m_column_names(std::move(column_names)),
     m_schema(schema) {
 }
@@ -36,6 +34,16 @@ const catalog::Schema &MaterializationNode::GetSchema() const {
   return *m_schema;
 }
 
+PlanNodeType MaterializationNode::GetPlanNodeType() const {
+  //TODO Implement.
+  return PLAN_NODE_TYPE_INVALID;
+}
+
+std::string MaterializationNode::debugInfo(const std::string& spacer) const {
+  (void) spacer;
+  //TODO Implement.
+  return "";
+}
 
 } // namespace planner
 } // namespace nstore

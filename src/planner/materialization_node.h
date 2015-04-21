@@ -25,16 +25,20 @@ namespace planner {
 class MaterializationNode : public AbstractPlanNode {
  public:
 
-  MaterializationNode(std::vector<AbstractPlanNode *> &&children,
-                      std::unordered_map<id_t, id_t> &&old_to_new_cols,
-                      std::vector<std::string> &&column_names,
-                      catalog::Schema *schema);
+  MaterializationNode(
+      std::unordered_map<id_t, id_t> &&old_to_new_cols,
+      std::vector<std::string> &&column_names,
+      catalog::Schema *schema);
 
   std::unordered_map<id_t, id_t> &GetOldToNewCols();
 
   const std::vector<std::string> &GetColumnNames() const;
 
   const catalog::Schema &GetSchema() const;
+
+  PlanNodeType GetPlanNodeType() const;
+
+  std::string debugInfo(const std::string& spacer) const;
 
  private:
 
