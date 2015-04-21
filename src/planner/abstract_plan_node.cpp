@@ -96,7 +96,7 @@ AbstractPlanNode* AbstractPlanNode::GetInlinePlanNodes(PlanNodeType type) const 
     ret = lookup->second;
   }
   else {
-    LOG4CXX_TRACE(logger, "No internal PlanNode with type : " << PlanNodeToString(type)
+    LOG_TRACE("No internal PlanNode with type : " << PlanNodeToString(type)
                   << " is available for " << debug() );
   }
 
@@ -174,7 +174,7 @@ AbstractPlanNode* AbstractPlanNode::LoadFromJSONObject(json_spirit::Object &obj,
   }
 
   plan_node->plan_node_id = (oid_t) id_value.get_int();
-  LOG4CXX_TRACE(logger, "Initializing PlanNode " << plan_node->debug());
+  LOG_TRACE("Initializing PlanNode " << plan_node->debug());
 
   json_spirit::Value inlined_nodes_value = find_value(obj,"INLINE_NODES");
   if (inlined_nodes_value == json_spirit::Value::null) {
@@ -198,7 +198,7 @@ AbstractPlanNode* AbstractPlanNode::LoadFromJSONObject(json_spirit::Object &obj,
     // TODO: if this throws, new Node can be leaked.
     // As long as newNode is not nullptr, this will not throw.
     plan_node->AddInlinePlanNode(new_plan_node);
-    LOG4CXX_TRACE(logger, "Adding inline PlanNode " << new_plan_node->debug()
+    LOG_TRACE("Adding inline PlanNode " << new_plan_node->debug()
                   << " for " << plan_node->debug());
   }
 

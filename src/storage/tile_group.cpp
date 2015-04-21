@@ -12,13 +12,11 @@
 
 #include "common/synch.h"
 #include "storage/tile_group.h"
-#include "catalog/manager.h"
 
 namespace nstore {
 namespace storage {
 
 TileGroup::TileGroup(TileGroupHeader* tile_group_header,
-                     catalog::Manager *catalog,
                      Backend* backend,
                      const std::vector<catalog::Schema>& schemas,
                      int tuple_count)
@@ -27,7 +25,6 @@ TileGroup::TileGroup(TileGroupHeader* tile_group_header,
   tile_group_id(INVALID_ID),
   backend(backend),
   tile_schemas(schemas),
-  catalog(catalog),
   tile_group_header(tile_group_header),
   num_tuple_slots(tuple_count) {
 
@@ -35,7 +32,7 @@ TileGroup::TileGroup(TileGroupHeader* tile_group_header,
 
   for(id_t tile_itr = 0 ; tile_itr < tile_count ; tile_itr++){
 
-    oid_t tile_id = catalog->GetNextOid();
+    oid_t tile_id = catalog::Manager::GetInstance().GetNextOid();
 
     Tile * tile = storage::TileFactory::GetTile(
         database_id, table_id, tile_group_id, tile_id,
@@ -45,7 +42,7 @@ TileGroup::TileGroup(TileGroupHeader* tile_group_header,
         tuple_count);
 
     // add metadata in locator
-    catalog->SetLocation(tile_id, tile);
+    catalog::Manager::GetInstance().SetLocation(tile_id, tile);
 
     tiles.push_back(tile);
   }

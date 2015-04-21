@@ -25,7 +25,6 @@ namespace test {
  * @return Pointer to tile group.
  */
 storage::TileGroup *ExecutorTestsUtil::CreateSimpleTileGroup(
-    catalog::Manager *manager,
     storage::Backend *backend,
     int tuple_count) {
   std::vector<catalog::ColumnInfo> columns;
@@ -85,7 +84,6 @@ storage::TileGroup *ExecutorTestsUtil::CreateSimpleTileGroup(
       INVALID_OID,
       INVALID_OID,
       INVALID_OID,
-      manager,
       backend,
       schemas,
       tuple_count);

@@ -27,34 +27,34 @@ namespace catalog {
 typedef tbb::concurrent_unordered_map<oid_t, void*> lookup_dir;
 
 class Manager {
-  Manager(Manager const&) = delete;
 
  public:
 
-  Manager() : oid (ATOMIC_VAR_INIT(INVALID_OID)) {
-  }
+  // Singleton
+  static Manager& GetInstance();
 
   oid_t GetNextOid(){
     return ++oid;
   }
 
-  oid_t GetOid() const{
+  oid_t GetOid() {
     return oid;
   }
 
-  void SetLocation(const oid_t oid, void *location){
-    locator.insert(std::pair<oid_t, void*>(oid, location));
-  }
+  void SetLocation(const oid_t oid, void *location);
+
+  Manager() {}
+
+  Manager(Manager const&) = delete;
 
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
 
-  std::atomic<oid_t> oid;
+  std::atomic<oid_t> oid = ATOMIC_VAR_INIT(INVALID_OID);
 
   lookup_dir locator;
 };
-
 
 } // End catalog namespace
 } // End nstore namespace
