@@ -30,11 +30,9 @@ class LogicalTile;
 class AbstractPlanNode {
  public:
 
-  AbstractPlanNode(oid_t plan_node_id);
+  explicit AbstractPlanNode(oid_t plan_node_id);
   AbstractPlanNode();
   virtual ~AbstractPlanNode();
-
-  explicit AbstractPlanNode(std::vector<AbstractPlanNode *> &&children);
 
   //===--------------------------------------------------------------------===//
   // Children + Parent Helpers
