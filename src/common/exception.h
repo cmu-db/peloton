@@ -48,7 +48,8 @@ enum ExceptionType {
   EXCEPTION_TYPE_EXPRESSION = 12,         // expression parsing
   EXCEPTION_TYPE_CATALOG = 13,            // catalog related
   EXCEPTION_TYPE_PARSER = 14,             // parser related
-  EXCEPTION_TYPE_PLANNER = 15             // planner related
+  EXCEPTION_TYPE_PLANNER = 15,            // planner related
+  EXCEPTION_TYPE_SCHEDULER = 16           // scheduler related
 };
 
 class Exception {
@@ -114,8 +115,8 @@ public:
 	}
 
 	// Based on :: http://panthema.net/2008/0901-stacktrace-demangled/
-	void PrintStackTrace(FILE *out = stderr, unsigned int max_frames = 63){
-		fprintf(out, "Stack Trace:\n");
+	void PrintStackTrace(FILE *out = ::stderr, unsigned int max_frames = 63){
+		::fprintf(out, "Stack Trace:\n");
 
 		/// storage array for stack trace address data
 		void* addrlist[max_frames+1];
@@ -124,7 +125,7 @@ public:
 		int addrlen = backtrace(addrlist, sizeof(addrlist) / sizeof(void*));
 
 		if (addrlen == 0) {
-			fprintf(out, "  <empty, possibly corrupt>\n");
+			::fprintf(out, "  <empty, possibly corrupt>\n");
 			return;
 		}
 
@@ -165,20 +166,20 @@ public:
 				char* ret = abi::__cxa_demangle(begin_name, func_name, &func_name_size, &status);
 				if (status == 0) {
 					func_name = ret; // use possibly realloc()-ed string
-					fprintf(out, "  %s : %s+%s\n",
+					::fprintf(out, "  %s : %s+%s\n",
 							symbol_list[i], func_name, begin_offset);
 				}
 				else {
 					/// demangling failed. Output function name as a C function with
 					/// no arguments.
-					fprintf(out, "  %s : %s()+%s\n",
+				  ::fprintf(out, "  %s : %s()+%s\n",
 							symbol_list[i], begin_name, begin_offset);
 				}
 			}
 			else
 			{
 				/// couldn't parse the line ? print the whole line.
-				fprintf(out, "  %s\n", symbol_list[i]);
+			  ::fprintf(out, "  %s\n", symbol_list[i]);
 			}
 		}
 
@@ -357,6 +358,15 @@ class PlannerException : Exception {
 public:
   PlannerException(std::string msg) :
     Exception(EXCEPTION_TYPE_PLANNER, msg){
+  }
+};
+
+class SchedulerException : Exception {
+  SchedulerException() = delete;
+
+public:
+  SchedulerException(std::string msg) :
+    Exception(EXCEPTION_TYPE_SCHEDULER, msg){
   }
 };
 

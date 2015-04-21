@@ -21,6 +21,18 @@ namespace nstore {
 namespace scheduler {
 
 //===--------------------------------------------------------------------===//
+// Task Priority Types
+//===--------------------------------------------------------------------===//
+
+enum TaskPriorityType {
+    TASK_PRIORTY_TYPE_INVALID          = 0, // invalid priority
+
+    TASK_PRIORTY_TYPE_LOW              = 10,
+    TASK_PRIORTY_TYPE_NORMAL           = 11,
+    TASK_PRIORTY_TYPE_HIGH             = 12
+};
+
+//===--------------------------------------------------------------------===//
 // Task
 //===--------------------------------------------------------------------===//
 
