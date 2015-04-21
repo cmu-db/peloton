@@ -18,16 +18,30 @@
 namespace nstore {
 namespace scheduler {
 
-void Scheduler::Init() {
+Scheduler::Scheduler() {
+  // set up state
+  state = new SchedulerState();
+}
 
-  auto num_cores = tbb::task_scheduler_init::automatic;
-  tbb_scheduler = new tbb::task_scheduler_init(num_cores);
-  assert(tbb_scheduler != nullptr);
+Scheduler::~Scheduler() {
+  // clean up state
+  delete state;
+}
+
+void Scheduler::AddTask(void (*task)(void*), void *args) {
+
+  tbb::task& tk = *new(state->root->allocate_child()) AbstractTask(task, args);
+  state->root->increment_ref_count();
+  state->root->spawn(tk);
+  std::cout << "Spawned task \n";
 
 }
 
-void Scheduler::Execute(__attribute__((unused)) AbstractTask *task){
-
+void Scheduler::Wait() {
+  std::cout << "WAITING for tasks \n";
+  state->root->wait_for_all();
+  state->root->increment_ref_count();
+  std::cout << "End of WAIT \n";
 }
 
 } // namespace scheduler

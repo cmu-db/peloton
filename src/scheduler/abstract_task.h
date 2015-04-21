@@ -15,6 +15,8 @@
 #include "catalog/manager.h"
 #include "tbb/tbb.h"
 
+#include <iostream>
+
 namespace nstore {
 namespace scheduler {
 
@@ -25,12 +27,21 @@ namespace scheduler {
 class AbstractTask : public tbb::task {
 
  public:
-  AbstractTask(catalog::Manager *catalog){
-    task_id = catalog->GetNextOid();
+  AbstractTask(void (*task)(void*), void *args)
+ : task(task),
+   args(args) {
+
+    // Get a task id
+    task_id = catalog::Manager::GetNextOid();
+
   }
 
-  // override this function in all tasks
   tbb::task* execute() {
+
+    std::cout << "Starting task \n";
+    (*task)(args);
+    std::cout << "Stopping task \n";
+
     return nullptr;
   }
 
@@ -41,6 +52,8 @@ class AbstractTask : public tbb::task {
  private:
   oid_t task_id;
 
+  void (*task)(void*);
+  void *args;
 };
 
 

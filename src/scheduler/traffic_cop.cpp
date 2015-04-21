@@ -50,13 +50,14 @@ void TrafficCop::Execute() {
 
       case PAYLOAD_TYPE_STOP:
         std::cout << "Stopping server.\n";
-        exit(EXIT_SUCCESS);
+        return;
 
       case PAYLOAD_TYPE_INVALID:
       default:
         std::cout << "Unknown message type : " << msg.msg_type << "\n";
-        exit(EXIT_SUCCESS);
+        return;
     }
+
   }
 
 }
