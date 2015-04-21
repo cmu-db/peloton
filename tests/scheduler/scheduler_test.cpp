@@ -57,7 +57,7 @@ void hello_task(void* params) {
   struct hello_args* p = (struct hello_args*) params;
 
   printf("Hello %s, number %d\n", p->s, p->i);
-  //sleep(1);
+  sleep(1);
 }
 
 TEST(SchedulerTests, MoreTests) {
@@ -74,13 +74,11 @@ TEST(SchedulerTests, MoreTests) {
     mng->AddTask(&hello_task, &hp[i]);
   }
 
-  mng->Wait();
-
   struct hello_args hp2[count];
   for (i = 0; i < count; i++) {
-    hp2[i].s = "World";
+    hp2[i].s = "World 2";
     hp2[i].i = i;
-    mng->AddTask(&hello_task, &hp2[i]);
+    mng->AddTask(&hello_task, &hp2[i], scheduler::TASK_PRIORTY_TYPE_HIGH);
   }
 
   mng->Wait();
