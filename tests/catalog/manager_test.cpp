@@ -60,9 +60,9 @@ TEST(ManagerTests, TransactionTest) {
 
   LaunchParallelTest(8, AddTileGroup);
 
-  std::cout << "Catalog allocations :: " << catalog::Manager::GetOid() << "\n";
+  std::cout << "Catalog allocations :: " << catalog::Manager::GetInstance().GetOid() << "\n";
 
-  EXPECT_EQ(catalog::Manager::GetOid(), 800);
+  EXPECT_EQ(catalog::Manager::GetInstance().GetOid(), 800);
 
 }
 
