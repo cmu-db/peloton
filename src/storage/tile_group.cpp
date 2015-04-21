@@ -12,7 +12,6 @@
 
 #include "common/synch.h"
 #include "storage/tile_group.h"
-#include "catalog/manager.h"
 
 namespace nstore {
 namespace storage {
@@ -33,7 +32,7 @@ TileGroup::TileGroup(TileGroupHeader* tile_group_header,
 
   for(id_t tile_itr = 0 ; tile_itr < tile_count ; tile_itr++){
 
-    oid_t tile_id = catalog::Manager::GetNextOid();
+    oid_t tile_id = catalog::Manager::GetInstance().GetNextOid();
 
     Tile * tile = storage::TileFactory::GetTile(
         database_id, table_id, tile_group_id, tile_id,
@@ -43,7 +42,7 @@ TileGroup::TileGroup(TileGroupHeader* tile_group_header,
         tuple_count);
 
     // add metadata in locator
-    catalog::Manager::SetLocation(tile_id, tile);
+    catalog::Manager::GetInstance().SetLocation(tile_id, tile);
 
     tiles.push_back(tile);
   }

@@ -32,7 +32,7 @@ class AbstractTask : public tbb::task {
    args(args) {
 
     // Get a task id
-    task_id = catalog::Manager::GetNextOid();
+    task_id = catalog::Manager::GetInstance().GetNextOid();
 
   }
 

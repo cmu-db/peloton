@@ -22,7 +22,7 @@ namespace scheduler {
 std::istream& operator >> (std::istream& in, Payload& msg) {
 
   int type = PAYLOAD_TYPE_INVALID;
-  std::cin >> type;
+  std::cin >> type >> msg.transaction_id;
 
   std::getline (std::cin, msg.data);
   msg.msg_type = (PayloadType) type;
@@ -34,15 +34,21 @@ std::istream& operator >> (std::istream& in, Payload& msg) {
 // Traffic Cop
 //===--------------------------------------------------------------------===//
 
+TrafficCop& TrafficCop::GetInstance() {
+  static TrafficCop tcop;
+  return tcop;
+}
+
 void TrafficCop::Execute() {
   Payload msg;
 
   for(;;) {
     std::cin >> msg;
+    stmts_executed++;
 
     switch(msg.msg_type){
       case PAYLOAD_TYPE_CLIENT_REQUEST:
-        std::cout << "Request :: " << msg.data << "\n";
+        std::cout << "Txn :: " << msg.transaction_id << " Data :: " << msg.data << "\n";
 
         //LongTask* t = new( tbb::task::allocate_root() ) LongTask(hWnd);
         //tbb::task::enqueue(*t);
@@ -50,6 +56,7 @@ void TrafficCop::Execute() {
 
       case PAYLOAD_TYPE_STOP:
         std::cout << "Stopping server.\n";
+        std::cout << "Stats :: Executed statements : " << stmts_executed << "\n" ;
         return;
 
       case PAYLOAD_TYPE_INVALID:

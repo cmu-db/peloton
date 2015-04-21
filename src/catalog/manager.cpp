@@ -15,9 +15,11 @@
 namespace nstore {
 namespace catalog {
 
-std::atomic<oid_t> Manager::oid = ATOMIC_VAR_INIT(INVALID_OID);
 
-lookup_dir Manager::locator;
+Manager& Manager::GetInstance() {
+  static Manager manager;
+  return manager;
+}
 
 void Manager::SetLocation(const oid_t oid, void *location) {
   locator.insert(std::pair<oid_t, void*>(oid, location));
