@@ -65,12 +65,10 @@ TEST(TileGroupTests, BasicTest) {
   column_names.push_back(tile_column_names);
 
   // TILE GROUP
-
-  catalog::Manager *catalog = new catalog::Manager();
   storage::Backend *backend = new storage::VMBackend();
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
-                                                                           catalog, backend, schemas, 4);
+                                                                           backend, schemas, 4);
 
 	// TUPLES
 
@@ -110,7 +108,6 @@ TEST(TileGroupTests, BasicTest) {
   delete schema;
 
 	delete tile_group;
-	delete catalog;
 	delete backend;
 	delete schema1;
   delete schema2;
@@ -175,18 +172,16 @@ TEST(TileGroupTests, StressTest) {
 
 	// TILE GROUP
 
-  catalog::Manager *catalog = new catalog::Manager();
   storage::Backend *backend = new storage::VMBackend();
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
-                                                                           catalog, backend, schemas, 10000);
+                                                                           backend, schemas, 10000);
 
 	LaunchParallelTest(6, TileGroupInsert, tile_group, schema);
 
 	EXPECT_EQ(6000, tile_group->GetActiveTupleCount());
 
 	delete tile_group;
-  delete catalog;
   delete backend;
   delete schema1;
   delete schema2;
@@ -232,12 +227,10 @@ TEST(TileGroupTests, MVCCInsert) {
 	column_names.push_back(tile_column_names);
 
 	// TILE GROUP
-
-  catalog::Manager *catalog = new catalog::Manager();
   storage::Backend *backend = new storage::VMBackend();
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
-                                                                           catalog, backend, schemas, 3);
+                                                                           backend, schemas, 3);
 
 	storage::Tuple *tuple = new storage::Tuple(schema, true);
 
@@ -315,7 +308,6 @@ TEST(TileGroupTests, MVCCInsert) {
 	delete tuple;
 	delete schema;
 	delete tile_group;
-  delete catalog;
   delete backend;
 
   delete schema1;

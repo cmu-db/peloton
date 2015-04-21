@@ -38,14 +38,12 @@ class IndexMetadata {
 
   IndexMetadata(std::string identifier,
                 IndexType type,
-                catalog::Manager *catalog,
                 catalog::Schema *tuple_schema,
                 catalog::Schema *key_schema,
                 bool unique_keys)
 
  : identifier(identifier),
    type(type),
-   catalog(catalog),
    tuple_schema(tuple_schema),
    key_schema(key_schema),
    unique_keys(unique_keys) {
@@ -182,8 +180,6 @@ class Index
   const IndexMetadata metadata;
 
   std::string identifier;
-
-  catalog::Manager *catalog;
 
   catalog::Schema *key_schema;
 

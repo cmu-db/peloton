@@ -45,12 +45,11 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
 
   catalog::Schema *tuple_schema = new catalog::Schema(columns);
 
-  catalog::Manager *catalog = new catalog::Manager();
 
   // BTREE INDEX
 
   index::IndexMetadata index_metadata("btree_index", INDEX_TYPE_BTREE_MULTIMAP,
-                                      catalog, tuple_schema, key_schema, true);
+                                      tuple_schema, key_schema, true);
 
 
   storage::VMBackend *backend = new storage::VMBackend();
@@ -132,7 +131,6 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
 
   delete tuple_schema;
   delete key_schema;
-  delete catalog;
 
   delete index;
 }

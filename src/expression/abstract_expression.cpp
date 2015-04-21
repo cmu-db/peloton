@@ -64,14 +64,14 @@ void AbstractExpression::Substitute(const ValueArray &params) {
     return;
 
   // descend. nodes with parameters overload substitute()
-  LOG4CXX_TRACE(logger, "Substituting parameters for expression \n" << params.Debug());
+  LOG_TRACE("Substituting parameters for expression \n" << params.Debug());
 
   if (left_expr) {
-    LOG4CXX_TRACE(logger, "Substitute processing left child...");
+    LOG_TRACE("Substitute processing left child...");
     left_expr->Substitute(params);
   }
   if (right_expr) {
-    LOG4CXX_TRACE(logger, "Substitute processing right child...");
+    LOG_TRACE("Substitute processing right child...");
     right_expr->Substitute(params);
   }
 }
