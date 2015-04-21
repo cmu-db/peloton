@@ -13,6 +13,7 @@
 #pragma once
 
 #include "common/types.h"
+#include "tbb/concurrent_queue.h"
 
 #include <iostream>
 #include <string>
@@ -35,7 +36,7 @@ class Payload {
     msg_type(msg_type) {
   }
 
-  Payload(std::string data, PayloadType msg_type) :
+  Payload(PayloadType msg_type, std::string data) :
     data(data),
     msg_type(msg_type) {
   }
@@ -52,6 +53,8 @@ class Payload {
 
 };
 
+// Queue for transmitting results from enqueued tasks
+static tbb::concurrent_queue<Payload> responses;
 
 class TrafficCop {
 
