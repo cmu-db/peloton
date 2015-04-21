@@ -27,12 +27,10 @@ namespace nstore {
 namespace test {
 
 TEST(LogicalTileTests, TileMaterializationTest) {
-  catalog::Manager manager;
   storage::VMBackend backend;
   const int tuple_count = 4;
   std::unique_ptr<storage::TileGroup> tile_group(
       ExecutorTestsUtil::CreateSimpleTileGroup(
-        &manager,
         &backend,
         tuple_count));
 

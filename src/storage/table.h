@@ -43,15 +43,13 @@ class Table {
  public:
 
   // Table constructor
-  Table(catalog::Manager *catalog,
-        const catalog::Schema& schema,
+  Table(const catalog::Schema& schema,
         Backend *backend,
-        id_t tuple_count)
+        size_t tuple_count)
  : database_id(INVALID_ID),
    table_id(INVALID_ID),
    backend(backend),
    schema(schema),
-   catalog(catalog),
    tuple_count(tuple_count) {
   }
 
@@ -68,7 +66,7 @@ class Table {
   //===--------------------------------------------------------------------===//
 
   // add a new tile group to table
-  id_t AddTileGroup();
+  oid_t AddTileGroup();
 
  protected:
 
@@ -77,8 +75,8 @@ class Table {
   //===--------------------------------------------------------------------===//
 
   // Catalog information
-  id_t database_id;
-  id_t table_id;
+  oid_t database_id;
+  oid_t table_id;
 
   // backend
   Backend *backend;
@@ -86,13 +84,10 @@ class Table {
   // table schema
   catalog::Schema schema;
 
-  // catalog manager
-  catalog::Manager *catalog;
-
   // set of tile groups
   std::vector<TileGroup*> tile_groups;
 
-  id_t tuple_count;
+  size_t tuple_count;
 
   std::mutex table_mutex;
 };
@@ -107,12 +102,11 @@ class TableFactory {
   virtual ~TableFactory();
 
   static Table *GetTable(oid_t database_id,
-                         catalog::Manager *catalog,
                          Backend* backend,
                          catalog::Schema schema,
-                         int tuple_count) {
+                         size_t tuple_count) {
 
-    Table *table =  new Table(catalog,schema, backend, tuple_count);
+    Table *table =  new Table(schema, backend, tuple_count);
 
     table->database_id = database_id;
 

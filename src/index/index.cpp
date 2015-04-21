@@ -20,7 +20,6 @@ namespace index {
 Index::Index(const IndexMetadata &metadata) :
                     metadata(metadata),
                     identifier(metadata.identifier),
-                    catalog(metadata.catalog),
                     key_schema(metadata.key_schema),
                     tuple_schema(metadata.tuple_schema),
                     unique_keys(metadata.unique_keys) {
