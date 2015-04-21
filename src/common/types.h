@@ -270,6 +270,17 @@ enum InsertType {
   INSERT_TYPE_SELECT                 = 2   // select
 };
 
+//===--------------------------------------------------------------------===//
+// Payload Types
+//===--------------------------------------------------------------------===//
+
+enum PayloadType {
+    PAYLOAD_TYPE_INVALID              = 0,  // invalid message type
+
+    PAYLOAD_TYPE_CLIENT_REQUEST       = 1,  // request
+    PAYLOAD_TYPE_CLIENT_RESPONSE      = 2,  // response
+    PAYLOAD_TYPE_STOP                 = 3   // stop loop
+};
 
 //===--------------------------------------------------------------------===//
 // Type definitions.
