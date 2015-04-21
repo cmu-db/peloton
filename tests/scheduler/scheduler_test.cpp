@@ -36,6 +36,7 @@ TEST(SchedulerTests, BasicTest) {
       "1 200 process txn 2 query 3 \n"
       "1 200 commit txn 2 \n"
       "1 100 rollback txn 1 \n"
+      "2 100 response txn 1 \n"
       "3 0 stop the server"
   );
 
@@ -47,19 +48,16 @@ TEST(SchedulerTests, BasicTest) {
 
 // ORIGINAL METHOD
 
-void hello(char* s, int i) {
-  printf("Hello %s, number %d\n", s, i);
-  //sleep(1);
-}
-
-struct hello_params {
+struct hello_args {
   char* s;
   int i;
 };
 
 void hello_task(void* params) {
-  struct hello_params* p = (struct hello_params*) params;
-  hello(p->s, p->i);
+  struct hello_args* p = (struct hello_args*) params;
+
+  printf("Hello %s, number %d\n", p->s, p->i);
+  //sleep(1);
 }
 
 TEST(SchedulerTests, MoreTests) {
@@ -69,7 +67,7 @@ TEST(SchedulerTests, MoreTests) {
     mng = new scheduler::Scheduler();
 
   int i, count = 10;
-  struct hello_params hp[count];
+  struct hello_args hp[count];
   for (i = 0; i < count; i++) {
     hp[i].s = "World";
     hp[i].i = i;
@@ -78,7 +76,7 @@ TEST(SchedulerTests, MoreTests) {
 
   mng->Wait();
 
-  struct hello_params hp2[count];
+  struct hello_args hp2[count];
   for (i = 0; i < count; i++) {
     hp2[i].s = "World";
     hp2[i].i = i;

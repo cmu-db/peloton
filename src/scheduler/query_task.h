@@ -21,7 +21,7 @@ namespace scheduler {
 // Query Task
 //===--------------------------------------------------------------------===//
 
-class QueryTask : public AbstractTask {
+class QueryTask : public Task {
 
  public:
 

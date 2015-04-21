@@ -48,10 +48,18 @@ void TrafficCop::Execute() {
 
     switch(msg.msg_type){
       case PAYLOAD_TYPE_CLIENT_REQUEST:
-        std::cout << "Txn :: " << msg.transaction_id << " Data :: " << msg.data << "\n";
+        std::cout << "Txn :: " << msg.transaction_id << " Request :: " << msg.data << "\n";
 
-        //LongTask* t = new( tbb::task::allocate_root() ) LongTask(hWnd);
-        //tbb::task::enqueue(*t);
+        // Route it ?
+
+        break;
+
+      case PAYLOAD_TYPE_CLIENT_RESPONSE:
+
+        // Pop out the response
+        responses.try_pop(msg);
+        std::cout << "Txn :: " << msg.transaction_id << " Response :: " << msg.data << "\n";
+
         break;
 
       case PAYLOAD_TYPE_STOP:
