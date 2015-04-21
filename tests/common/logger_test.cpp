@@ -23,11 +23,10 @@ namespace test {
 
 TEST(LoggerTests, BasicTest) {
 
-  LOG4CXX_TRACE(logger, "trace message");
-  LOG4CXX_WARN(logger, "warning message");
-  LOG4CXX_ERROR(logger, "error message");
+  LOG_TRACE("trace message");
+  LOG_WARN("warning message");
+  LOG_ERROR("error message");
 
-  log4cxx::LogManager::shutdown();
 }
 
 } // End test namespace
