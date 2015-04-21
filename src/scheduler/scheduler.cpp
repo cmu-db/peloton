@@ -30,14 +30,16 @@ Scheduler::~Scheduler() {
 
 void Scheduler::AddTask(void (*task)(void*), void *args) {
 
-  tbb::task& tk = *new(state->root->allocate_child()) AbstractTask(task, args);
-  state->root->increment_ref_count();
-  state->root->spawn(tk);
-  std::cout << "Spawned task \n";
+  tbb::task *tk = new(state->root->allocate_child()) Task(task, args);
 
+  state->root->increment_ref_count();
+  state->root->enqueue(*tk);
+
+  std::cout << "Enqueued task \n";
 }
 
 void Scheduler::Wait() {
+
   std::cout << "WAITING for tasks \n";
   state->root->wait_for_all();
   state->root->increment_ref_count();

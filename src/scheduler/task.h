@@ -21,14 +21,14 @@ namespace nstore {
 namespace scheduler {
 
 //===--------------------------------------------------------------------===//
-// Abstract Task
+// Task
 //===--------------------------------------------------------------------===//
 
-class AbstractTask : public tbb::task {
+class Task : public tbb::task {
 
  public:
-  AbstractTask(void (*task)(void*), void *args)
- : task(task),
+  Task(void (*function_pointer)(void*), void *args)
+ : function_pointer(function_pointer),
    args(args) {
 
     // Get a task id
@@ -39,7 +39,7 @@ class AbstractTask : public tbb::task {
   tbb::task* execute() {
 
     std::cout << "Starting task \n";
-    (*task)(args);
+    (*function_pointer)(args);
     std::cout << "Stopping task \n";
 
     return nullptr;
@@ -52,7 +52,7 @@ class AbstractTask : public tbb::task {
  private:
   oid_t task_id;
 
-  void (*task)(void*);
+  void (*function_pointer)(void*);
   void *args;
 };
 
