@@ -8,11 +8,10 @@ DBMS designed for next-generation storage technologies like non-volatile memory 
 > - **autoconf** 
 > - **tbb** [Thread Building Blocks - Parallelism library]
 > - **json-spirit** [C++ JSON Parser/Generator]
-> - **gdamm** [C++ wrappers for GNU Data Access library]
 
 ###	Ubuntu Quick Setup
     sudo apt-get install g++ autotools-dev autoconf libtool 
-    libtbb-dev libjson-spirit-dev libgdamm5.0-dev
+    libtbb-dev libjson-spirit-dev
 
 ## Deployment
 
