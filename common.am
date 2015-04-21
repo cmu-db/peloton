@@ -13,9 +13,7 @@ CODE_COVERAGE_IGNORE_PATTERN="/usr/*" "*/third_party/*" "*/test/*"
 AM_CPPFLAGS = $(nstore_INCLUDES)
 
 AM_CXXFLAGS = -std=c++11 -Wall -Wextra -fno-strict-aliasing \
-              $(CODE_COVERAGE_CFLAGS) $(LIBGDAMM_CFLAGS)
+              $(CODE_COVERAGE_CFLAGS)
               
 AM_LDFLAGS  = $(CODE_COVERAGE_LDFLAGS) \
-              -lpthread \
-              -lexpat -llog4cxx -laprutil-1 -lapr-1              
-            
+              -lpthread 
