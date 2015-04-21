@@ -70,9 +70,8 @@ int main(int argc, char **argv) {
 	nstore::parse_arguments(argc, argv, state);
 
 	// Start logger
-  LOG4CXX_INFO(nstore::logger, "Starting nstore");
+  //LOG_INFO("Starting nstore");
 
-  log4cxx::LogManager::shutdown();
 	return 0;
 }
 

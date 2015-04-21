@@ -22,7 +22,6 @@ namespace test {
 class ExecutorTestsUtil {
  public:
   static storage::TileGroup *CreateSimpleTileGroup(
-      catalog::Manager *manager,
       storage::Backend *backend,
       int tuple_count);
 };
