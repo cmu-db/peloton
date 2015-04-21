@@ -39,7 +39,8 @@ catalog_FILES = \
 				catalog/table_ref.cpp \
 				catalog/transaction.cpp \
 				catalog/user.cpp \
-				catalog/user_ref.cpp
+				catalog/user_ref.cpp \
+				catalog/manager.cpp				
 
 catalog_INCLUDES = \
 				   -I$(srcdir)/catalog    

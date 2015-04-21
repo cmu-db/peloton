@@ -15,6 +15,7 @@ include $(srcdir)/expression/Makefile.am
 include $(srcdir)/index/Makefile.am
 include $(srcdir)/parser/Makefile.am
 include $(srcdir)/planner/Makefile.am
+include $(srcdir)/scheduler/Makefile.am
 include $(srcdir)/storage/Makefile.am
 
 bin_PROGRAMS = nstore
@@ -32,6 +33,7 @@ common_SOURCES =  $(backend_FILES) \
 				  $(index_FILES) \
 				  $(parser_FILES) \
 				  $(planner_FILES) \
+				  $(scheduler_FILES) \
 				  $(storage_FILES)
 
 libnstore_la_SOURCES = $(common_SOURCES)
@@ -53,6 +55,7 @@ nstore_INCLUDES = $(backend_INCLUDES) \
 				  $(parser_INCLUDES) \
 				  $(planner_INCLUDES) \
 				  $(storage_INCLUDES) \
+				  $(scheduler_INCLUDES) \
 				  $(third_party_INCLUDES)
 
 ######################################################################

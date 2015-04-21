@@ -47,7 +47,6 @@ class TileGroup {
 
   // Tile group constructor
   TileGroup(TileGroupHeader *tile_group_header,
-            catalog::Manager *catalog,
             Backend *backend,
             const std::vector<catalog::Schema>& schemas,
             int tuple_count);
@@ -129,9 +128,6 @@ class TileGroup {
   // mapping to tile schemas
   std::vector<catalog::Schema> tile_schemas;
 
-  // manager
-  catalog::Manager *catalog;
-
   // set of tiles
   std::vector<Tile*> tiles;
 
@@ -155,14 +151,13 @@ class TileGroupFactory {
   virtual ~TileGroupFactory();
 
   static TileGroup *GetTileGroup(oid_t database_id, oid_t table_id, oid_t tile_group_id,
-                                 catalog::Manager *catalog,
                                  Backend* backend,
                                  const std::vector<catalog::Schema>& schemas,
                                  int tuple_count) {
 
     TileGroupHeader *tile_header = new TileGroupHeader(backend, tuple_count);
 
-    TileGroup *tile_group = new TileGroup(tile_header, catalog, backend, schemas, tuple_count);
+    TileGroup *tile_group = new TileGroup(tile_header, backend, schemas, tuple_count);
 
     TileGroupFactory::InitCommon(tile_group, database_id, table_id, tile_group_id);
 

@@ -23,7 +23,7 @@ namespace test {
 // Manager Tests
 //===--------------------------------------------------------------------===//
 
-void AddTileGroup(catalog::Manager *catalog){
+void AddTileGroup(){
 
   // TILES
   std::vector<std::string> tile_column_names;
@@ -46,7 +46,7 @@ void AddTileGroup(catalog::Manager *catalog){
 
   for(id_t txn_itr = 0 ; txn_itr < 100 ; txn_itr++) {
     storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
-                                                                             catalog, backend, schemas, 3);
+                                                                             backend, schemas, 3);
 
     delete tile_group;
   }
@@ -58,15 +58,12 @@ void AddTileGroup(catalog::Manager *catalog){
 
 TEST(ManagerTests, TransactionTest) {
 
-  catalog::Manager *catalog = new catalog::Manager();
+  LaunchParallelTest(8, AddTileGroup);
 
-  LaunchParallelTest(8, AddTileGroup, catalog);
+  std::cout << "Catalog allocations :: " << catalog::Manager::GetOid() << "\n";
 
-  std::cout << "Catalog allocations :: " << catalog->GetOid() << "\n";
+  EXPECT_EQ(catalog::Manager::GetOid(), 800);
 
-  EXPECT_EQ(catalog->GetOid(), 800);
-
-  delete catalog;
 }
 
 } // End test namespace
