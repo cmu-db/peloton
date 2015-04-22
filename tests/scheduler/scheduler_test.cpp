@@ -15,6 +15,7 @@
 #include "harness.h"
 #include "scheduler/traffic_cop.h"
 #include "scheduler/scheduler.h"
+#include "parser/parser.h"
 
 #include <sstream>
 
@@ -25,7 +26,7 @@ namespace test {
 // Scheduler Tests
 //===--------------------------------------------------------------------===//
 
-TEST(SchedulerTests, BasicTest) {
+TEST(SchedulerTests, TrafficCopTest) {
 
   std::istringstream stream(
       "1 0 process txn 1 query 1 \n"
@@ -53,14 +54,16 @@ struct hello_args {
   int i;
 };
 
-void hello_task(void* params) {
+void *hello_task(void* params) {
   struct hello_args* p = (struct hello_args*) params;
 
   printf("Hello %s, number %d\n", p->s, p->i);
   usleep(100);
+
+  return nullptr;
 }
 
-TEST(SchedulerTests, MoreTests) {
+TEST(SchedulerTests, SchedulerTest) {
 
   int i, count = 10;
   struct hello_args hp[count];
@@ -77,7 +80,27 @@ TEST(SchedulerTests, MoreTests) {
     scheduler::Scheduler::GetInstance().AddTask(&hello_task, &hp2[i], scheduler::TASK_PRIORTY_TYPE_HIGH);
   }
 
+  // final wait
   scheduler::Scheduler::GetInstance().Wait();
+}
+
+TEST(SchedulerTests, ParseTest) {
+
+  parser::SQLStatementList* (*parser_func)(const char*) = &parser::Parser::ParseSQLString;
+
+  scheduler::Task *task = scheduler::Scheduler::GetInstance().AddTask((void *(*)(void*)) parser_func,
+                                              (void *) "SELECT * FROM ORDERS;");
+
+  // final wait
+  scheduler::Scheduler::GetInstance().Wait();
+
+  std::cout << "Task :: " << task << "\n";
+
+  parser::SQLStatementList* output = (parser::SQLStatementList*) task->GetOuput();
+
+  if(output != nullptr) {
+    std::cout << (*output);
+  }
 
 }
 
