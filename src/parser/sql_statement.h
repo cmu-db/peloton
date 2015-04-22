@@ -49,7 +49,7 @@ class SQLStatementList {
   SQLStatementList(SQLStatement* stmt) :
     is_valid(true),
     parser_msg(NULL) {
-    addStatement(stmt);
+    AddStatement(stmt);
   };
 
   virtual ~SQLStatementList() {
@@ -61,15 +61,19 @@ class SQLStatementList {
     delete parser_msg;
   }
 
-  void addStatement(SQLStatement* stmt) {
+  void AddStatement(SQLStatement* stmt) {
     statements.push_back(stmt);
   }
 
-  SQLStatement* GetStatement(int id) {
+  SQLStatement* GetStatement(int id) const {
     return statements[id];
   }
 
-  size_t GetNumStatements() {
+  const std::vector<SQLStatement*>& GetStatements() const {
+    return statements;
+  }
+
+  size_t GetNumStatements() const {
     return statements.size();
   }
 
