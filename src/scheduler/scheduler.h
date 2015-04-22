@@ -13,6 +13,7 @@
 #pragma once
 
 #include "task.h"
+#include "tbb/task_scheduler_init.h"
 
 namespace nstore {
 namespace scheduler {
@@ -51,16 +52,18 @@ class Scheduler {
   // singleton
   static Scheduler& GetInstance();
 
+  Scheduler();
+  ~Scheduler();
+
   // add task to queue
-  void AddTask(void (*task)(void*), void *args,
+  Task *AddTask(void *(*function_pointer)(void*), void *args,
                TaskPriorityType priority = TaskPriorityType::TASK_PRIORTY_TYPE_NORMAL);
 
   // wait for all tasks
   void Wait();
 
  private:
-  Scheduler();
-  ~Scheduler();
+  tbb::task_scheduler_init init;
 
   SchedulerState *state = nullptr;
 };

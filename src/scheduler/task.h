@@ -39,9 +39,10 @@ enum TaskPriorityType {
 class Task : public tbb::task {
 
  public:
-  Task(void (*function_pointer)(void*), void *args)
+  Task(void *(*function_pointer)(void*), void *args)
  : function_pointer(function_pointer),
-   args(args) {
+   args(args),
+   output(nullptr){
 
     // Get a task id
     task_id = catalog::Manager::GetInstance().GetNextOid();
@@ -51,7 +52,7 @@ class Task : public tbb::task {
   tbb::task* execute() {
 
     std::cout << "Starting task \n";
-    (*function_pointer)(args);
+    output = (*function_pointer)(args);
     std::cout << "Stopping task \n";
 
     return nullptr;
@@ -61,11 +62,16 @@ class Task : public tbb::task {
     return task_id;
   }
 
- private:
+  void *GetOuput() {
+    return output;
+  }
+
+ protected:
   oid_t task_id;
 
-  void (*function_pointer)(void*);
+  void *(*function_pointer)(void*);
   void *args;
+  void *output;
 };
 
 
