@@ -269,6 +269,18 @@ class TileFactory {
   TileFactory();
   virtual ~TileFactory();
 
+  //TODO This is a temporary function that leaks memory. We have to
+  // refactor Tile in order to implement "free" tiles that are used by
+  // the executor.
+  static Tile *GetFreeTile(const catalog::Schema &schema, int tuple_count) {
+    return GetTile(
+        INVALID_ID, INVALID_ID, INVALID_ID, INVALID_ID,
+        new TileGroupHeader(new VMBackend(), tuple_count),
+        new VMBackend(),
+        schema,
+        tuple_count);
+  }
+
   static Tile *GetTile(id_t database_id, id_t table_id, id_t tile_group_id, id_t tile_id,
                        TileGroupHeader* tile_header,
                        Backend* backend,

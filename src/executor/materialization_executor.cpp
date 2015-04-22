@@ -16,12 +16,10 @@
 #include <memory>
 #include <utility>
 
-#include "catalog/schema.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "planner/materialization_node.h"
 #include "storage/tile.h"
-#include "storage/tile_factory.h"
 
 namespace nstore {
 namespace executor {
@@ -41,7 +39,7 @@ MaterializationExecutor::MaterializationExecutor(
  * @return True on success, false otherwise.
  */
 bool MaterializationExecutor::SubInit() {
-  assert(children.size() == 1);
+  assert(children_.size() == 1);
   return true;
 }
 
@@ -51,18 +49,19 @@ bool MaterializationExecutor::SubInit() {
  *
  * @return Pointer to logical tile containing newly materialized physical tile.
  */
-LogicalTile *MaterializationExecutor::GetNextTile() {
-  //assert(children.size() == 1);
+LogicalTile *MaterializationExecutor::SubGetNextTile() {
+  assert(children_.size() == 1);
 
   // Retrieve next tile.
-  std::unique_ptr<LogicalTile> source_tile(children[0]->GetNextTile());
+  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetNextTile());
   if (source_tile.get() == nullptr) {
     return nullptr;
   }
 
-  planner::MaterializationNode &node = GetNode<planner::MaterializationNode>();
-  std::unordered_map<id_t, id_t> &old_to_new_cols =
-    node.GetOldToNewCols();
+  const planner::MaterializationNode &node =
+    GetNode<planner::MaterializationNode>();
+  const std::unordered_map<id_t, id_t> &old_to_new_cols =
+    node.old_to_new_cols();
 
   // Generate mappings.
   std::unordered_map<storage::Tile *, std::vector<id_t> > tile_to_cols;
@@ -72,14 +71,11 @@ LogicalTile *MaterializationExecutor::GetNextTile() {
       tile_to_cols);
 
   // Create new physical tile.
-  int num_tuples = source_tile->NumTuples();
-  bool owns_tuple_schema = true;
+  const int num_tuples = source_tile->NumTuples();
   std::unique_ptr<storage::Tile> dest_tile(
-      storage::TileFactory::GetTile(
-        catalog::Schema::CopySchema(&node.GetSchema()),
-        num_tuples,
-        node.GetColumnNames(),
-        owns_tuple_schema));
+      storage::TileFactory::GetFreeTile(
+        node.schema(),
+        num_tuples));
 
   // Proceed to materialize by tile.
   MaterializeByTiles(
@@ -94,7 +90,8 @@ LogicalTile *MaterializationExecutor::GetNextTile() {
 }
 
 /** @brief Nothing to clean up at the moment. */
-void MaterializationExecutor::CleanUp() {}
+void MaterializationExecutor::SubCleanUp() {
+}
 
 /**
  * @brief Generates map from each base tile to columns originally from that
@@ -108,7 +105,7 @@ void MaterializationExecutor::CleanUp() {}
  * efficiency reasons.
  */
 void MaterializationExecutor::GenerateTileToColMap(
-    std::unordered_map<id_t, id_t> &old_to_new_cols,
+    const std::unordered_map<id_t, id_t> &old_to_new_cols,
     LogicalTile *source_tile,
     std::unordered_map<storage::Tile *, std::vector<id_t> > &tile_to_cols) {
   for (const auto &kv : old_to_new_cols) {
@@ -128,7 +125,7 @@ void MaterializationExecutor::GenerateTileToColMap(
  */
 void MaterializationExecutor::MaterializeByTiles(
     LogicalTile *source_tile,
-    std::unordered_map<id_t, id_t> &old_to_new_cols,
+    const std::unordered_map<id_t, id_t> &old_to_new_cols,
     const
     std::unordered_map<storage::Tile *, std::vector<id_t> > &tile_to_cols,
     storage::Tile *dest_tile) {
@@ -137,7 +134,9 @@ void MaterializationExecutor::MaterializeByTiles(
     const std::vector<id_t> &old_column_ids = kv.second;
     for (id_t old_col_id : old_column_ids) {
       int new_tuple_id = 0;
-      int new_col_id = old_to_new_cols[old_col_id];
+      auto it = old_to_new_cols.find(old_col_id);
+      assert(it != old_to_new_cols.end());
+      id_t new_col_id = it->second;
       for (id_t old_tuple_id : *source_tile) {
         Value value = source_tile->GetValue(old_col_id, old_tuple_id);
         dest_tile->SetValue(value, new_tuple_id++, new_col_id);
