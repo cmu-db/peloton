@@ -43,6 +43,8 @@ void TrafficCop::Execute() {
   Payload msg;
 
   for(;;) {
+    std::cout << prompt;
+
     std::cin >> msg;
     stmts_executed++;
 
@@ -70,7 +72,7 @@ void TrafficCop::Execute() {
       case PAYLOAD_TYPE_INVALID:
       default:
         std::cout << "Unknown message type : " << msg.msg_type << "\n";
-        return;
+        break;
     }
 
   }
