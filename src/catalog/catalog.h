@@ -29,6 +29,9 @@ class Catalog : public CatalogType {
 
  public:
 
+    // Singleton
+    static Catalog& GetInstance();
+
      /**
       * Create a new Catalog hierarchy.
       */
@@ -57,7 +60,12 @@ class Catalog : public CatalogType {
      /** return by out-param a copy of the recently deleted paths. */
      void GetDeletedPaths(std::vector<std::string> &deletions);
 
-protected:
+     virtual void Update();
+     virtual CatalogType *AddChild(const std::string &collectionName, const std::string &childName);
+     virtual CatalogType *GetChild(const std::string &collectionName, const std::string &childName) const;
+     virtual bool RemoveChild(const std::string &collectionName, const std::string &childName);
+
+ protected:
     struct UnresolvedInfo {
         CatalogType * type;
         std::string field;
@@ -78,11 +86,6 @@ protected:
     CatalogType * ItemForRef(const std::string &ref);
     CatalogType * ItemForPath(const CatalogType *parent, const std::string &path);
     CatalogType * ItemForPathPart(const CatalogType *parent, const std::string &pathPart) const;
-
-    virtual void Update();
-    virtual CatalogType *AddChild(const std::string &collectionName, const std::string &childName);
-    virtual CatalogType *GetChild(const std::string &collectionName, const std::string &childName) const;
-    virtual bool RemoveChild(const std::string &collectionName, const std::string &childName);
 
     void RegisterGlobally(CatalogType *catObj);
     void UnregisterGlobally(CatalogType *catObj);

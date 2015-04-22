@@ -36,7 +36,6 @@ namespace test {
    out what's going on here .. and what the proper serialization method is.
  */
 
-
 /*
  *  Abstract expression mock object
  */
