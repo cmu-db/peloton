@@ -58,5 +58,5 @@ We use `Eclipse` for our development. The following instructions assume that you
 
 ### Valgrind ::
 
-    cd test
+    cd tests
     make check-valgrind
