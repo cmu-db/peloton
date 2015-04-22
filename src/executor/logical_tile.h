@@ -16,8 +16,8 @@
 namespace nstore {
 
 namespace storage {
-  class Tile;
-  class Tuple;
+class Tile;
+class Tuple;
 }
 
 namespace executor {
