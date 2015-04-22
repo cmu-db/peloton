@@ -15,7 +15,7 @@
 #include "harness.h"
 #include "scheduler/traffic_cop.h"
 #include "scheduler/scheduler.h"
-#include "parser/parser.h"
+#include "backend/kernel.h"
 
 #include <sstream>
 
@@ -47,60 +47,16 @@ TEST(SchedulerTests, TrafficCopTest) {
   scheduler::TrafficCop::GetInstance().Execute();
 }
 
-// ORIGINAL METHOD
+TEST(SchedulerTests, KernelTest) {
 
-struct hello_args {
-  char* s;
-  int i;
-};
+  ResultType (*kernel_func)(const char*) = &backend::Kernel::Handler;
 
-void *hello_task(void* params) {
-  struct hello_args* p = (struct hello_args*) params;
-
-  printf("Hello %s, number %d\n", p->s, p->i);
-  usleep(100);
-
-  return nullptr;
-}
-
-TEST(SchedulerTests, SchedulerTest) {
-
-  int i, count = 10;
-  struct hello_args hp[count];
-  for (i = 0; i < count; i++) {
-    hp[i].s = "World";
-    hp[i].i = i;
-    scheduler::Scheduler::GetInstance().AddTask(&hello_task, &hp[i]);
-  }
-
-  struct hello_args hp2[count];
-  for (i = 0; i < count; i++) {
-    hp2[i].s = "World 2";
-    hp2[i].i = i;
-    scheduler::Scheduler::GetInstance().AddTask(&hello_task, &hp2[i], scheduler::TASK_PRIORTY_TYPE_HIGH);
-  }
+  scheduler::Scheduler::GetInstance().AddTask((ResultType (*)(void*)) kernel_func,
+                                              (void *) "SELECT * FROM ORDERS;",
+                                              TASK_PRIORTY_TYPE_HIGH);
 
   // final wait
   scheduler::Scheduler::GetInstance().Wait();
-}
-
-TEST(SchedulerTests, ParseTest) {
-
-  parser::SQLStatementList* (*parser_func)(const char*) = &parser::Parser::ParseSQLString;
-
-  scheduler::Task *task = scheduler::Scheduler::GetInstance().AddTask((void *(*)(void*)) parser_func,
-                                              (void *) "SELECT * FROM ORDERS;");
-
-  // final wait
-  scheduler::Scheduler::GetInstance().Wait();
-
-  std::cout << "Task :: " << task << "\n";
-
-  parser::SQLStatementList* output = (parser::SQLStatementList*) task->GetOuput();
-
-  if(output != nullptr) {
-    std::cout << (*output);
-  }
 
 }
 

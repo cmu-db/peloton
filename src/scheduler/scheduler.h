@@ -56,8 +56,9 @@ class Scheduler {
   ~Scheduler();
 
   // add task to queue
-  Task *AddTask(void *(*function_pointer)(void*), void *args,
-               TaskPriorityType priority = TaskPriorityType::TASK_PRIORTY_TYPE_NORMAL);
+  void AddTask(ResultType (*function_pointer)(void*),
+               void *args,
+               TaskPriorityType priority = TASK_PRIORTY_TYPE_NORMAL);
 
   // wait for all tasks
   void Wait();
