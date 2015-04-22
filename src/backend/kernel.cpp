@@ -1,11 +1,26 @@
-#include <iostream>
-#include <cstdio>
-#include <cstdlib>
-#include <chrono>
-#include <ctime>
+/*-------------------------------------------------------------------------
+ *
+ * kernel.cpp
+ * file description
+ *
+ * Copyright(c) 2015, CMU
+ *
+ * /n-store/src/backend/kernel.cpp
+ *
+ *-------------------------------------------------------------------------
+ */
+
+
+#include "backend/kernel.h"
+
+#include "common/logger.h"
+#include "parser/parser.h"
 
 #include "tbb/tbb.h"
 #include "tbb/flow_graph.h"
+
+namespace nstore {
+namespace backend {
 
 using namespace tbb::flow::interface6;
 
@@ -81,20 +96,33 @@ class aggregator_task {
   }
 };
 
-void query(int n) {
+ResultType Kernel::Handler(const char* query) {
+  ResultType status = RESULT_TYPE_INVALID;
 
-  std::cout << "Query :: " << n << "\n";
+  std::cout << "Kernel \n";
 
-  std::chrono::time_point<std::chrono::system_clock> start, end;
-  std::chrono::duration<double> elapsed_seconds;
+  // Parse query
+  parser::SQLStatementList *result = parser::Parser::ParseSQLString(query);
+
+  if(result == nullptr || result->is_valid == false) {
+    LOG_ERROR("Parsing failed for query :: %s", query);
+    status = RESULT_TYPE_FAILURE;
+    return status;
+  }
+
+  std::cout << (*result);
+
+
+  // Validate query
+
+  // Construct query plan
+
+  // Construct execution DFG
 
   int num_chunks = size/chunk_size;
 
   for(auto ii = 0; ii < size; ii++)
     data[ii] = rand()%10;
-
-  // PARALLEL
-  start = std::chrono::system_clock::now();
 
   graph g;
 
@@ -114,31 +142,10 @@ void query(int n) {
 
   std::cout << "Parallel Sum is    : " << sum << "\n";
 
-  end = std::chrono::system_clock::now();
-  elapsed_seconds = end-start;
-  std::cout << "elapsed time: " << elapsed_seconds.count() << "s\n";
-
-  // SEQUENTIAL
-  start = std::chrono::system_clock::now();
-
-  sum = 0;
-
-  for(auto ii = 0; ii < size; ii++)
-    if(data[ii] % 5 == 0 && predicate())
-      sum *= data[ii];
-
-  std::cout << "Sequential Sum is  : " << sum << "\n";
-
-  end = std::chrono::system_clock::now();
-  elapsed_seconds = end-start;
-  std::cout << "elapsed time: " << elapsed_seconds.count() << "s\n";
-
+  status = RESULT_TYPE_SUCCESS;
+  return status;
 }
 
-int main() {
 
-  // Run queries in parallel
-  tbb::parallel_for<int>( 1, 3, 1, query);
-
-  delete[] data;
-}
+} // namespace backend
+} // namespace nstore

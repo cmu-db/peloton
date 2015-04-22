@@ -27,7 +27,7 @@ Scheduler& Scheduler::GetInstance() {
 }
 
 Scheduler::Scheduler() :
-        init(tbb::task_scheduler_init::default_num_threads()) {
+            init(tbb::task_scheduler_init::default_num_threads()) {
 
   // set up state
   state = new SchedulerState();
@@ -39,7 +39,8 @@ Scheduler::~Scheduler() {
   delete state;
 }
 
-Task* Scheduler::AddTask(void *(*function_pointer)(void*), void *args,
+void Scheduler::AddTask(ResultType (*function_pointer)(void*),
+                        void *args,
                         TaskPriorityType priority) {
 
   Task *task = new(state->root->allocate_child()) Task(function_pointer, args);
@@ -66,7 +67,6 @@ Task* Scheduler::AddTask(void *(*function_pointer)(void*), void *args,
   }
 
   std::cout << "Enqueued task \n";
-  return task;
 }
 
 void Scheduler::Wait() {
