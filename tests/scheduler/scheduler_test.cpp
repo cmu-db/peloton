@@ -48,12 +48,34 @@ TEST(SchedulerTests, TrafficCopTest) {
 }
 
 TEST(SchedulerTests, KernelTest) {
-
   ResultType (*kernel_func)(const char*) = &backend::Kernel::Handler;
 
   scheduler::Scheduler::GetInstance().AddTask((ResultType (*)(void*)) kernel_func,
-                                              (void *) "SELECT * FROM ORDERS;",
-                                              TASK_PRIORTY_TYPE_HIGH);
+                                              (void *)
+                                              "CREATE TABLE T (T_ID INTEGER NOT NULL,"
+                                              "  DESCRIPTION VARCHAR(300),"
+                                              "  PRIMARY KEY (T_ID)"
+                                              ");"
+                                              "CREATE TABLE T (T_ID INTEGER NOT NULL,"
+                                              "  DESCRIPTION VARCHAR(300),"
+                                              "  PRIMARY KEY (TX_ID)"
+                                              ");"
+                                              "CREATE TABLE IF NOT EXISTS T (T_ID INTEGER NOT NULL,"
+                                              "  DESCRIPTION VARCHAR(300),"
+                                              "  PRIMARY KEY (T_ID)"
+                                              ");"
+                                              "CREATE TABLE ACCESS_INFO ("
+                                              " s_id INTEGER NOT NULL,"
+                                              " ai_type TINYINT NOT NULL,"
+                                              " PRIMARY KEY (s_id, ai_type),"
+                                              " FOREIGN KEY (s_id) REFERENCES T (T_ID)"
+                                              " );"
+                                              "CREATE TABLE ACCESS_INFO ("
+                                              " s_id INTEGER NOT NULL,"
+                                              " ai_type TINYINT NOT NULL,"
+                                              " PRIMARY KEY (s_id, ait_type),"
+                                              " FOREIGN KEY (sx_id) REFERENCES SUBSCRIBER (s_id)"
+                                              " );");
 
   // final wait
   scheduler::Scheduler::GetInstance().Wait();

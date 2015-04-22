@@ -14,6 +14,11 @@
 namespace nstore {
 namespace catalog {
 
+Catalog& Catalog::GetInstance() {
+  static Catalog catalog;
+  return catalog;
+}
+
 Catalog::Catalog()
 : CatalogType(this, NULL, "/", "catalog"), m_clusters(this, this, "/clusters") {
     m_allCatalogObjects["/"] = this;
