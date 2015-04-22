@@ -77,17 +77,14 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   std::unique_ptr<catalog::Schema> output_schema(catalog::Schema::CopySchema(
       &base_tile->GetSchema()));
   std::unordered_map<id_t, id_t> old_to_new_cols;
-  std::vector<std::string> column_names;
 
   unsigned int column_count = output_schema->GetColumnCount();
   for (id_t col = 0; col < column_count; col++) {
+    // Create identity mapping.
     old_to_new_cols[col] = col;
-    // TODO Why do we need to provide column names when it's alr in the schema?
-    column_names.push_back(output_schema->GetColumnInfo(col).name);
   }
   planner::MaterializationNode node(
       std::move(old_to_new_cols),
-      std::move(column_names),
       output_schema.release());
 
   // Pass them through materialization executor.
