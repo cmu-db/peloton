@@ -65,10 +65,11 @@ AC_SUBST([TBB_LIBS])
 
 AC_CONFIG_FILES([Makefile
                  third_party/Makefile
-                 third_party/gtest/Makefile
                  src/Makefile
                  tests/Makefile
                  ])
+
+AC_CONFIG_SUBDIRS([third_party/gmock])
 
 AC_OUTPUT
 # @end 2
