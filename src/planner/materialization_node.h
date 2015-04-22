@@ -26,7 +26,6 @@ class MaterializationNode : public AbstractPlanNode {
  public:
   MaterializationNode(
       std::unordered_map<id_t, id_t> &&old_to_new_cols,
-      std::vector<std::string> &&column_names,
       catalog::Schema *schema);
 
   const std::unordered_map<id_t, id_t> &old_to_new_cols() const;
@@ -44,9 +43,6 @@ class MaterializationNode : public AbstractPlanNode {
    * @brief Mapping of old column ids to new column ids after materialization.
    */
   std::unordered_map<id_t, id_t> old_to_new_cols_;
-
-  /** @brief Names of the respective columns. */
-  std::vector<std::string> column_names_;
 
   /** @brief Schema of newly materialized tile. */
   std::unique_ptr<catalog::Schema> schema_;
