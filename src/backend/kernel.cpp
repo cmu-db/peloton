@@ -18,6 +18,7 @@
 
 #include "tbb/tbb.h"
 #include "tbb/flow_graph.h"
+#include "executor/executors.h"
 
 namespace nstore {
 namespace backend {
@@ -105,42 +106,47 @@ ResultType Kernel::Handler(const char* query) {
   parser::SQLStatementList *result = parser::Parser::ParseSQLString(query);
 
   if(result == nullptr || result->is_valid == false) {
-    LOG_ERROR("Parsing failed for query :: %s", query);
+    LOG_ERROR("Parsing failed for query :: %s\n"
+        "Parsing error : %s", query, result->parser_msg);
     status = RESULT_TYPE_FAILURE;
     return status;
   }
 
   std::cout << (*result);
 
+  auto statements = result->GetStatements();
+  for(auto statement : statements){
 
-  // Validate query
+    // Take of DML
+    if(statement->GetType() == STATEMENT_TYPE_CREATE) {
+      executor::CreateExecutor::Execute(statement);
+    }
 
-  // Construct query plan
+    // Validate and construct query plan
 
-  // Construct execution DFG
+    // Construct execution DFG
 
+  }
+
+  /*
   int num_chunks = size/chunk_size;
-
   for(auto ii = 0; ii < size; ii++)
     data[ii] = rand()%10;
 
   graph g;
-
   function_node< int, int > aggregator( g, 1, aggregator_task() );
   function_node< std::vector<int>, int > summer( g, tbb::flow::unlimited, summer_task());
   function_node< int, std::vector<int> > seq_scanner( g, tbb::flow::unlimited, seq_scanner_task());
-
   source_node< int > table_iterator( g, table_iterator_task(num_chunks), false );
 
   make_edge(table_iterator, seq_scanner);
   make_edge(seq_scanner, summer);
   make_edge(summer, aggregator);
-
   table_iterator.activate();
-
   g.wait_for_all();
 
   std::cout << "Parallel Sum is    : " << sum << "\n";
+  */
 
   status = RESULT_TYPE_SUCCESS;
   return status;

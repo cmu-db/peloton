@@ -145,7 +145,7 @@ TEST(ParserTests, SelectParserTest) {
   EXPECT_EQ(stmt->select_list->at(0)->GetExpressionType(), EXPRESSION_TYPE_COLUMN_REF);
   EXPECT_STREQ((stmt->select_list->at(0))->GetName(), "customer_id");
   EXPECT_EQ(stmt->select_list->at(1)->GetExpressionType(), EXPRESSION_TYPE_FUNCTION_REF);
-  EXPECT_STREQ((stmt->select_list->at(1))->GetName(), "SUM");
+  EXPECT_STREQ((stmt->select_list->at(1))->GetName(), "sum");
   EXPECT_STREQ(((stmt->select_list->at(1))->GetExpression())->GetName(), "order_value");
 
   // Join Table
@@ -167,7 +167,7 @@ TEST(ParserTests, SelectParserTest) {
   // Order By
   EXPECT_EQ(stmt->order->type, parser::kOrderDesc);
   EXPECT_EQ(stmt->order->expr->GetExpressionType(), EXPRESSION_TYPE_FUNCTION_REF);
-  EXPECT_STREQ(stmt->order->expr->GetName(), "SUM");
+  EXPECT_STREQ(stmt->order->expr->GetName(), "sum");
   EXPECT_STREQ(stmt->order->expr->GetExpression()->GetName(), "order_value");
 
   // Limit

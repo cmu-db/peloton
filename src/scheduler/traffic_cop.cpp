@@ -22,9 +22,7 @@ namespace scheduler {
 std::istream& operator >> (std::istream& in, Payload& msg) {
 
   int type = PAYLOAD_TYPE_INVALID;
-  std::cin >> type >> msg.transaction_id;
-
-  std::getline (std::cin, msg.data);
+  std::cin >> type;
   msg.msg_type = (PayloadType) type;
 
   return in;
@@ -50,6 +48,9 @@ void TrafficCop::Execute() {
 
     switch(msg.msg_type){
       case PAYLOAD_TYPE_CLIENT_REQUEST:
+
+        std::cin >> msg.transaction_id;
+        std::getline (std::cin, msg.data);
         std::cout << "Txn :: " << msg.transaction_id << " Request :: " << msg.data << "\n";
 
         // Route it ?
@@ -57,6 +58,9 @@ void TrafficCop::Execute() {
         break;
 
       case PAYLOAD_TYPE_CLIENT_RESPONSE:
+
+        std::cin >> msg.transaction_id;
+        std::getline (std::cin, msg.data);
 
         // Pop out the response
         responses.try_pop(msg);
