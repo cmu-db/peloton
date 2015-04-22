@@ -4,7 +4,8 @@
  * Copyright(c) 2015, CMU
  */
 
-#include "executor_tests_util.h"
+#include "executor/executor_tests_util.h"
+#include "executor/mock_executor.h"
 #include "harness.h"
 
 #include <memory>
@@ -89,7 +90,8 @@ TEST(MaterializationTests, SingleBaseTileTest) {
 
   // Pass them through materialization executor.
   executor::MaterializationExecutor executor(&node);
-  // TODO Use GMock.
+
+  MockExecutor child_executor;
 
   // Verify that materialized tile is correct.
   //TODO This should be moved to ExecutorTestsUtil.
