@@ -14,16 +14,14 @@ namespace planner {
 
 PlanColumn::PlanColumn(json_spirit::Object& col_object) :
                         m_col_object(col_object) {
-  bool contains_guid = false;
   bool contains_name = false;
   bool contains_type = false;
   bool contains_size = false;
   bool contains_input_column_name = false;
 
-  for (int attr = 0; attr < m_col_object.size(); attr++)
+  for (uint attr = 0; attr < m_col_object.size(); attr++)
   {
     if (m_col_object[attr].name_ == "GUID") {
-      contains_guid = true;
       m_guid = m_col_object[attr].value_.get_int();
     }
     else if (m_col_object[attr].name_ == "NAME") {

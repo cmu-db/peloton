@@ -266,7 +266,7 @@ input:
 
 statement_list:
 		statement { $$ = new SQLStatementList($1); }
-	|	statement_list ';' statement { $1->addStatement($3); $$ = $1; }
+	|	statement_list ';' statement { $1->AddStatement($3); $$ = $1; }
 	;
 
 statement:

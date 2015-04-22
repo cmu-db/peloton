@@ -60,6 +60,7 @@ class CatalogType {
     Catalog *m_catalog;
     int32_t m_relativeIndex;
 
+  public:
     CatalogType(Catalog * catalog, CatalogType * parent, const std::string &path, const std::string &name);
 
     virtual ~CatalogType();
@@ -74,8 +75,6 @@ class CatalogType {
 
     // returns true if a child was deleted
     virtual bool RemoveChild(const std::string &collection_name, const std::string &child_name) = 0;
-
-public:
 
     /**
      * Get the parent of this CatalogType instance
