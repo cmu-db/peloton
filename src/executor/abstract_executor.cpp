@@ -14,20 +14,15 @@ namespace executor {
  * @param node Abstract plan node corresponding to this executor.
  */
 AbstractExecutor::AbstractExecutor(const planner::AbstractPlanNode *node)
-: node(node),
-  output(nullptr) {
+  : node_(node) {
 }
 
 /**
- * @brief Convenience method to return plan node corresponding to this
- *        executor, appropriately type-casted.
- *
- * @return Reference to plan node.
+ * @brief Add child executor to this executor node.
+ * @param child Child executor to add.
  */
-template <class T> T &AbstractExecutor::GetNode() {
-  T *node = dynamic_cast<T *>(node);
-  assert(node);
-  return *node;
+void AbstractExecutor::AddChild(AbstractExecutor *child) {
+  children_.push_back(child);
 }
 
 /**
@@ -40,16 +35,41 @@ template <class T> T &AbstractExecutor::GetNode() {
  * @return True on success, false otherwise.
  */
 bool AbstractExecutor::Init() {
+  for (unsigned int i = 0; i < children_.size(); i++) {
+    //TODO Check return value for success. Rollback on failure?
+    children_[i]->Init();
+  }
   return SubInit();
+}
+
+/**
+ * @brief Returns next tile processed by this executor.
+ *
+ * This function is the backbone of the tile-based volcano-style execution
+ * model we are using.
+ *
+ * @return Pointer to the logical tile processed by this executor.
+ */
+LogicalTile *AbstractExecutor::GetNextTile() {
+  //TODO In the future, we might want to pass some kind of executor state to
+  // GetNextTile. e.g. params for prepared plans.
+
+  return SubGetNextTile();
 }
 
 /**
  * @brief Releases resources used by this executor.
  * 
  * Recursively releases resources used by children executors.
+ * TODO Who should delete the executors?
+ * TODO Why do we need a separate function to cleanup? Won't the destructor
+ * suffice?
  */
-bool AbstractExecutor::CleanUp() {
-  return SubCleanUp();
+void AbstractExecutor::CleanUp() {
+  SubCleanUp();
+  for (unsigned int i = 0; i < children_.size(); i++) {
+    children_[i]->CleanUp();
+  }
 }
 
 } // namespace executor

@@ -17,21 +17,22 @@ MaterializationNode::MaterializationNode(
     std::unordered_map<id_t, id_t> &&old_to_new_cols,
     std::vector<std::string> &&column_names,
     catalog::Schema *schema)
-  : m_old_to_new_cols(std::move(old_to_new_cols)),
-    m_column_names(std::move(column_names)),
-    m_schema(schema) {
+  : old_to_new_cols_(std::move(old_to_new_cols)),
+    column_names_(std::move(column_names)),
+    schema_(schema) {
 }
 
-std::unordered_map<id_t, id_t> &MaterializationNode::GetOldToNewCols() {
-  return m_old_to_new_cols;
+const std::unordered_map<id_t, id_t> &
+MaterializationNode::old_to_new_cols() const {
+  return old_to_new_cols_;
 }
 
-const std::vector<std::string> &MaterializationNode::GetColumnNames() const {
-  return m_column_names;
+const std::vector<std::string> &MaterializationNode::column_names() const {
+  return column_names_;
 }
 
-const catalog::Schema &MaterializationNode::GetSchema() const {
-  return *m_schema;
+const catalog::Schema &MaterializationNode::schema() const {
+  return *schema_;
 }
 
 PlanNodeType MaterializationNode::GetPlanNodeType() const {
