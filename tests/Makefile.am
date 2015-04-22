@@ -3,16 +3,25 @@
 ## Common flags
 include $(top_srcdir)/common.am
 
-AM_CPPFLAGS += -isystem $(top_srcdir)/third_party/gtest/include \
-			   -I$(top_srcdir)/src \
-			   -I$(top_srcdir)/third_party \
-			   $(GTEST_CPPFLAGS)
+GMOCK_DIR = third_party/gmock
+GTEST_DIR = $(GMOCK_DIR)/gtest
+
+GMOCK_SRCDIR = $(top_srcdir)/$(GMOCK_DIR)
+GMOCK_BUILDDIR = $(top_builddir)/$(GMOCK_DIR)
+
+GTEST_SRCDIR = $(top_srcdir)/$(GTEST_DIR)
+GTEST_BUILDDIR = $(top_builddir)/$(GTEST_DIR)
+
+AM_CPPFLAGS += -isystem $(GTEST_SRCDIR)/include \
+               -I$(top_srcdir)/src \
+               -I$(top_srcdir)/third_party \
+               $(GTEST_CPPFLAGS)
 
 AM_CXXFLAGS +=  $(GTEST_CXXFLAGS) -Wno-unused-but-set-variable
 
 AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -pthread \
-			  $(top_builddir)/third_party/gtest/lib/libgtest_main.la \
-			  $(top_builddir)/third_party/gtest/lib/libgtest.la \
+			  $(GTEST_BUILDDIR)/lib/libgtest_main.la \
+			  $(GTEST_BUILDDIR)/lib/libgtest.la \
 			  -I$(top_srcdir)/third_party \
 			  $(top_builddir)/src/libnstore.la \
 			  $(TBB_LIBS)
