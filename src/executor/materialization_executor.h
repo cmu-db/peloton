@@ -15,11 +15,11 @@
 namespace nstore {
 
 namespace planner {
-  class AbstractPlanNode;
+class AbstractPlanNode;
 }
 
 namespace storage {
-  class Tile;
+class Tile;
 }
 
 namespace executor {
@@ -32,17 +32,19 @@ class MaterializationExecutor : public AbstractExecutor {
  protected:
   bool SubInit();
 
-  bool SubCleanUp();
+  LogicalTile *SubGetNextTile();
+
+  void SubCleanUp();
 
  private:
   void GenerateTileToColMap(
-    std::unordered_map<id_t, id_t> &old_to_new_cols,
+    const std::unordered_map<id_t, id_t> &old_to_new_cols,
     LogicalTile *source_tile,
     std::unordered_map<storage::Tile *, std::vector<id_t> > &tile_to_cols);
 
   void MaterializeByTiles(
       LogicalTile *source_tile,
-      std::unordered_map<id_t, id_t> &old_to_new_cols,
+      const std::unordered_map<id_t, id_t> &old_to_new_cols,
       const
       std::unordered_map<storage::Tile *, std::vector<id_t> > &tile_to_cols,
       storage::Tile *dest_tile);
