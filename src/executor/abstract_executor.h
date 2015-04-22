@@ -6,57 +6,59 @@
 
 #pragma once
 
+#include <cassert>
+
+#include <vector>
+
 namespace nstore {
 
 namespace planner {
-  class AbstractPlanNode;
+class AbstractPlanNode;
 }
 
 namespace executor {
 class LogicalTile;
 
 class AbstractExecutor {
-
  public:
-
-  // Executors are initialized once when the catalog is loaded
   bool Init();
 
-  // Invoke a plannode's associated executor
-  bool Execute();
+  LogicalTile *GetNextTile();
 
-  // Clean up any stuff
-  bool CleanUp();
-
-  virtual ~AbstractExecutor() {}
+  void CleanUp();
 
  protected:
-
   explicit AbstractExecutor(const planner::AbstractPlanNode *node);
 
-  // Get associated plan node
-  template <class T> T &GetNode();
+  void AddChild(AbstractExecutor *child);
 
-  // Concrete executor classes implement initialization
+  /** @brief Init function to be overriden by subclass. */
   virtual bool SubInit() = 0;
 
-  // Concrete executor classes implement execution
-  virtual bool SubExecute() = 0;
+  /** @brief Workhorse function to be overriden by subclass. */
+  virtual LogicalTile *SubGetNextTile() = 0;
 
-  // clean up function to be overriden by subclass.
-  virtual bool SubCleanUp() = 0;
+  /** @brief Clean up function to be overriden by subclass. */
+  virtual void SubCleanUp() = 0;
+
+  /** @brief Children nodes of this executor in the executor tree. */
+  std::vector<AbstractExecutor *> children_;
+
+  /**
+   * @brief Convenience method to return plan node corresponding to this
+   *        executor, appropriately type-casted.
+   *
+   * @return Reference to plan node.
+   */
+  template <class T> const T &GetNode() {
+    const T *node = dynamic_cast<const T *>(node_);
+    assert(node);
+    return *node;
+  }
 
  private:
-
-  // plan node corresponding to this executor
-  const planner::AbstractPlanNode *node;
-
-  // output of execution
-  LogicalTile *output;
-
-  // execution context
-  //ExecutorContext *context;
-
+  /** @brief Plan node corresponding to this executor. */
+  const planner::AbstractPlanNode *node_;
 };
 
 } // namespace executor

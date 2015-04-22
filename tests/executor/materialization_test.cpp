@@ -21,6 +21,7 @@
 #include "common/value_factory.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
+#include "executor/materialization_executor.h"
 #include "planner/abstract_plan_node.h"
 #include "planner/materialization_node.h"
 #include "storage/tile.h"
@@ -71,7 +72,7 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   std::unique_ptr<executor::LogicalTile> logical_tile(
       executor::LogicalTileFactory::WrapBaseTile(base_tile, own_base_tile));
 
-  // Create materialization node.
+  // Create materialization node for this test.
   //TODO This should be deleted soon...
   std::unique_ptr<catalog::Schema> output_schema(catalog::Schema::CopySchema(
       &base_tile->GetSchema()));
@@ -84,12 +85,13 @@ TEST(MaterializationTests, SingleBaseTileTest) {
     // TODO Why do we need to provide column names when it's alr in the schema?
     column_names.push_back(output_schema->GetColumnInfo(col).name);
   }
-  planner::MaterializationNode(
+  planner::MaterializationNode node(
       std::move(old_to_new_cols),
       std::move(column_names),
       output_schema.release());
 
   // Pass them through materialization executor.
+  executor::MaterializationExecutor executor(&node);
   // TODO Use GMock.
 
   // Verify that materialized tile is correct.

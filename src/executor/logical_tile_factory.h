@@ -9,7 +9,7 @@
 namespace nstore {
 
 namespace storage {
-  class Tile;
+class Tile;
 }
 
 namespace executor {
