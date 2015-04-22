@@ -16,8 +16,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "nstore.h"
+#include "backend/nstore.h"
 #include "common/logger.h"
+#include "scheduler/traffic_cop.h"
 
 namespace nstore {
 
@@ -70,7 +71,13 @@ int main(int argc, char **argv) {
 	nstore::parse_arguments(argc, argv, state);
 
 	// Start logger
-  //LOG_INFO("Starting nstore");
+  nstore::LOG_INFO("Starting nstore.");
+
+  // Start traffic cop
+  nstore::scheduler::TrafficCop::GetInstance().Execute();
+
+  // Stop logger
+  nstore::LOG_INFO("Stopping nstore.");
 
 	return 0;
 }

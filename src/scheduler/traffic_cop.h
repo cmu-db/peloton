@@ -72,6 +72,7 @@ class TrafficCop {
   TrafficCop(TrafficCop const&) = delete;
   TrafficCop& operator=(TrafficCop const&) = delete;
 
+  const std::string prompt = "nstore => ";
   oid_t stmts_executed;
 };
 

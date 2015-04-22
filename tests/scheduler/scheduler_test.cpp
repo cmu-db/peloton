@@ -15,6 +15,7 @@
 #include "harness.h"
 #include "scheduler/traffic_cop.h"
 #include "scheduler/scheduler.h"
+#include "backend/kernel.h"
 
 #include <sstream>
 
@@ -25,7 +26,7 @@ namespace test {
 // Scheduler Tests
 //===--------------------------------------------------------------------===//
 
-TEST(SchedulerTests, BasicTest) {
+TEST(SchedulerTests, TrafficCopTest) {
 
   std::istringstream stream(
       "1 0 process txn 1 query 1 \n"
@@ -46,46 +47,17 @@ TEST(SchedulerTests, BasicTest) {
   scheduler::TrafficCop::GetInstance().Execute();
 }
 
-// ORIGINAL METHOD
+TEST(SchedulerTests, KernelTest) {
 
-struct hello_args {
-  char* s;
-  int i;
-};
+  ResultType (*kernel_func)(const char*) = &backend::Kernel::Handler;
 
-void hello_task(void* params) {
-  struct hello_args* p = (struct hello_args*) params;
+  scheduler::Scheduler::GetInstance().AddTask((ResultType (*)(void*)) kernel_func,
+                                              (void *) "SELECT * FROM ORDERS;",
+                                              TASK_PRIORTY_TYPE_HIGH);
 
-  printf("Hello %s, number %d\n", p->s, p->i);
-  //sleep(1);
-}
+  // final wait
+  scheduler::Scheduler::GetInstance().Wait();
 
-TEST(SchedulerTests, MoreTests) {
-  scheduler::Scheduler *mng = NULL;
-
-  if (mng == NULL)
-    mng = new scheduler::Scheduler();
-
-  int i, count = 10;
-  struct hello_args hp[count];
-  for (i = 0; i < count; i++) {
-    hp[i].s = "World";
-    hp[i].i = i;
-    mng->AddTask(&hello_task, &hp[i]);
-  }
-
-  mng->Wait();
-
-  struct hello_args hp2[count];
-  for (i = 0; i < count; i++) {
-    hp2[i].s = "World";
-    hp2[i].i = i;
-    mng->AddTask(&hello_task, &hp2[i]);
-  }
-
-  mng->Wait();
-
-  delete mng;
 }
 
 } // End test namespace
