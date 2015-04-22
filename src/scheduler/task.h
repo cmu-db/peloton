@@ -14,23 +14,12 @@
 
 #include "catalog/manager.h"
 #include "tbb/tbb.h"
+#include "common/types.h"
 
 #include <iostream>
 
 namespace nstore {
 namespace scheduler {
-
-//===--------------------------------------------------------------------===//
-// Task Priority Types
-//===--------------------------------------------------------------------===//
-
-enum TaskPriorityType {
-    TASK_PRIORTY_TYPE_INVALID          = 0, // invalid priority
-
-    TASK_PRIORTY_TYPE_LOW              = 10,
-    TASK_PRIORTY_TYPE_NORMAL           = 11,
-    TASK_PRIORTY_TYPE_HIGH             = 12
-};
 
 //===--------------------------------------------------------------------===//
 // Task
@@ -39,10 +28,10 @@ enum TaskPriorityType {
 class Task : public tbb::task {
 
  public:
-  Task(void *(*function_pointer)(void*), void *args)
+  Task(ResultType (*function_pointer)(void*), void *args)
  : function_pointer(function_pointer),
    args(args),
-   output(nullptr){
+   output(RESULT_TYPE_INVALID){
 
     // Get a task id
     task_id = catalog::Manager::GetInstance().GetNextOid();
@@ -62,16 +51,16 @@ class Task : public tbb::task {
     return task_id;
   }
 
-  void *GetOuput() {
+  ResultType GetOuput() {
     return output;
   }
 
  protected:
   oid_t task_id;
 
-  void *(*function_pointer)(void*);
+  ResultType (*function_pointer)(void*);
   void *args;
-  void *output;
+  ResultType output;
 };
 
 
