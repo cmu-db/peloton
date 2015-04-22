@@ -14,6 +14,7 @@
 
 #include "catalog/manager.h"
 #include "tbb/tbb.h"
+#include "common/types.h"
 
 #include <iostream>
 
@@ -27,9 +28,10 @@ namespace scheduler {
 class Task : public tbb::task {
 
  public:
-  Task(void (*function_pointer)(void*), void *args)
+  Task(ResultType (*function_pointer)(void*), void *args)
  : function_pointer(function_pointer),
-   args(args) {
+   args(args),
+   output(RESULT_TYPE_INVALID){
 
     // Get a task id
     task_id = catalog::Manager::GetInstance().GetNextOid();
@@ -39,7 +41,7 @@ class Task : public tbb::task {
   tbb::task* execute() {
 
     std::cout << "Starting task \n";
-    (*function_pointer)(args);
+    output = (*function_pointer)(args);
     std::cout << "Stopping task \n";
 
     return nullptr;
@@ -49,11 +51,16 @@ class Task : public tbb::task {
     return task_id;
   }
 
- private:
+  ResultType GetOuput() {
+    return output;
+  }
+
+ protected:
   oid_t task_id;
 
-  void (*function_pointer)(void*);
+  ResultType (*function_pointer)(void*);
   void *args;
+  ResultType output;
 };
 
 

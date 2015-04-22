@@ -1,32 +1,35 @@
 /*-------------------------------------------------------------------------
  *
- * query_task.h
+ * kernel.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/scheduler/query_task.h
+ * /n-store/src/backend/kernel.h
  *
  *-------------------------------------------------------------------------
  */
 
 #pragma once
 
-#include "parser/parser.h"
+#include "common/types.h"
 
 namespace nstore {
-namespace scheduler {
+namespace backend {
 
 //===--------------------------------------------------------------------===//
-// Query Task
+// Kernel
 //===--------------------------------------------------------------------===//
 
-class QueryTask : public Task {
+// Main handler for query
+class Kernel {
 
  public:
+
+  static ResultType Handler(const char* query);
 
 };
 
 
-} // namespace scheduler
+} // namespace backend
 } // namespace nstore

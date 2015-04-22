@@ -283,6 +283,34 @@ enum PayloadType {
 };
 
 //===--------------------------------------------------------------------===//
+// Task Priority Types
+//===--------------------------------------------------------------------===//
+
+enum TaskPriorityType {
+    TASK_PRIORTY_TYPE_INVALID          = 0, // invalid priority
+
+    TASK_PRIORTY_TYPE_LOW              = 10,
+    TASK_PRIORTY_TYPE_NORMAL           = 11,
+    TASK_PRIORTY_TYPE_HIGH             = 12
+};
+
+
+//===--------------------------------------------------------------------===//
+// Result Types
+//===--------------------------------------------------------------------===//
+
+enum ResultType {
+  RESULT_TYPE_INVALID      = 0,  // invalid result type
+
+  RESULT_TYPE_SUCCESS      = 1,
+  RESULT_TYPE_FAILURE      = 2,
+  RESULT_TYPE_ABORTED      = 3,  // aborted
+  RESULT_TYPE_NOOP         = 4,  // no op
+  RESULT_TYPE_UNKNOWN      = 5
+};
+
+
+//===--------------------------------------------------------------------===//
 // Type definitions.
 //===--------------------------------------------------------------------===//
 
