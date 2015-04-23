@@ -44,6 +44,8 @@ class LogicalTile {
 
   int NumTuples();
 
+  int NumCols();
+
   /**
    * @brief Iterates through tuple ids in this logical tile.
    *
