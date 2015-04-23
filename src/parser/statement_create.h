@@ -1,6 +1,7 @@
 #pragma once
 
-#include "sql_statement.h"
+#include "parser/sql_statement.h"
+#include "common/types.h"
 
 namespace nstore {
 namespace parser {
@@ -63,6 +64,63 @@ struct ColumnDefinition {
     }
 
     free(name);
+  }
+
+  static ValueType GetValueType(DataType type){
+    switch(type){
+      case INT:
+      case INTEGER:
+        return VALUE_TYPE_INTEGER;
+        break;
+
+      case TINYINT:
+        return VALUE_TYPE_TINYINT;
+        break;
+      case SMALLINT:
+        return VALUE_TYPE_SMALLINT;
+        break;
+      case BIGINT:
+        return VALUE_TYPE_BIGINT;
+        break;
+
+      case DOUBLE:
+      case FLOAT:
+        return VALUE_TYPE_DOUBLE;
+        break;
+
+      case DECIMAL:
+        return VALUE_TYPE_DECIMAL;
+        break;
+
+      case BOOLEAN:
+        return VALUE_TYPE_BOOLEAN;
+        break;
+
+      case ADDRESS:
+        return VALUE_TYPE_ADDRESS;
+        break;
+
+      case TIMESTAMP:
+        return VALUE_TYPE_TIMESTAMP;
+        break;
+
+      case CHAR:
+      case TEXT:
+      case VARCHAR:
+        return VALUE_TYPE_VARCHAR;
+        break;
+
+      case VARBINARY:
+        return VALUE_TYPE_VARBINARY;
+        break;
+
+      case INVALID:
+      case PRIMARY:
+      case FOREIGN:
+      default:
+        return VALUE_TYPE_INVALID;
+        break;
+    }
   }
 
   char* name = nullptr;
