@@ -20,12 +20,12 @@ MaterializationNode::MaterializationNode(
     schema_(schema) {
 }
 
-const std::unordered_map<id_t, id_t> &
+const std::unordered_map<id_t, id_t>&
 MaterializationNode::old_to_new_cols() const {
   return old_to_new_cols_;
 }
 
-const catalog::Schema &MaterializationNode::schema() const {
+const catalog::Schema& MaterializationNode::schema() const {
   return *schema_;
 }
 

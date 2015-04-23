@@ -21,6 +21,11 @@ class LogicalTile;
 
 class AbstractExecutor {
  public:
+  AbstractExecutor(const AbstractExecutor &) = delete;
+  AbstractExecutor& operator=(const AbstractExecutor &) = delete;
+  AbstractExecutor(AbstractExecutor &&) = delete;
+  AbstractExecutor& operator=(AbstractExecutor &&) = delete;
+
   bool Init();
 
   LogicalTile *GetNextTile();
@@ -45,7 +50,7 @@ class AbstractExecutor {
    *
    * @return Reference to plan node.
    */
-  template <class T> const T &GetNode() {
+  template <class T> const T& GetNode() {
     const T *node = dynamic_cast<const T *>(node_);
     assert(node);
     return *node;
