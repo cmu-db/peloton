@@ -43,7 +43,8 @@ LogicalTile *LogicalTileFactory::WrapBaseTile(
   //TODO Modify logical tile to be able to represent lazily position lists that
   // span the entire tile.
   id_t position_list_idx = 0;
-  std::vector<id_t> position_list(base_tile->GetActiveTupleCount());
+  //TODO This should be active tuple count. But how to set it? High watermark?
+  std::vector<id_t> position_list(base_tile->GetAllocatedTupleCount());
   for (id_t id = 0; id < position_list.size(); id++) {
     position_list[id] = id;
   }
