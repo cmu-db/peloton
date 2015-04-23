@@ -4,7 +4,7 @@
  * Copyright(c) 2015, CMU
  */
 
-#include "executor_tests_util.h"
+#include "executor/executor_tests_util.h"
 
 #include <memory>
 
