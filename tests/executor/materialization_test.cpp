@@ -160,7 +160,69 @@ TEST(MaterializationTests, SingleBaseTileTest) {
 }
 
 TEST(MaterializationTests, TwoBaseTilesTest) {
-  //TODO Implement test case.
+  //TODO Implement.
+  //TODO WaTeRmArK
+  storage::VMBackend backend;
+  const int tuple_count = 9;
+  std::unique_ptr<storage::TileGroup> tile_group(
+      ExecutorTestsUtil::CreateSimpleTileGroup(
+        &backend,
+        tuple_count));
+
+  PopulateTiles(tile_group.get(), tuple_count);
+
+  // Create logical tile from single base tile.
+  storage::Tile *source_base_tile = tile_group->GetTile(0);
+  const bool own_base_tile = false;
+  std::unique_ptr<executor::LogicalTile> source_tile(
+      executor::LogicalTileFactory::WrapBaseTile(
+          source_base_tile,
+          own_base_tile));
+
+  // Create materialization node for this test.
+  //TODO This should be deleted soon... Should we use default copy constructor?
+  std::unique_ptr<catalog::Schema> output_schema(catalog::Schema::CopySchema(
+      &source_base_tile->GetSchema()));
+  std::unordered_map<id_t, id_t> old_to_new_cols;
+
+  unsigned int column_count = output_schema->GetColumnCount();
+  for (id_t col = 0; col < column_count; col++) {
+    // Create identity mapping.
+    old_to_new_cols[col] = col;
+  }
+  planner::MaterializationNode node(
+      std::move(old_to_new_cols),
+      output_schema.release());
+
+  // Pass them through materialization executor.
+  executor::MaterializationExecutor executor(&node);
+  MockExecutor child_executor;
+  executor.AddChild(&child_executor);
+
+  // Uneventful init...
+  EXPECT_CALL(child_executor, SubInit())
+    .WillOnce(Return(true));
+  EXPECT_TRUE(executor.Init());
+
+  // Where the main work takes place...
+  EXPECT_CALL(child_executor, SubGetNextTile())
+    .WillOnce(Return(source_tile.release()))
+    .WillOnce(Return(nullptr));
+
+  std::unique_ptr<executor::LogicalTile> result_logical_tile(
+    executor.GetNextTile());
+  EXPECT_THAT(result_logical_tile, NotNull());
+  EXPECT_THAT(executor.GetNextTile(), IsNull());
+
+  // Verify that logical tile is only made up of a single base tile.
+  int num_cols = result_logical_tile->NumCols();
+  EXPECT_EQ(2, num_cols);
+  storage::Tile *result_base_tile = result_logical_tile->GetBaseTile(0);
+  EXPECT_THAT(result_base_tile, NotNull());
+  EXPECT_TRUE(source_base_tile != result_base_tile);
+  EXPECT_EQ(result_logical_tile->GetBaseTile(1), result_base_tile);
+
+  VerifyLeftTile(result_base_tile, result_logical_tile.get(), tuple_count);
 }
 
 } // namespace test
