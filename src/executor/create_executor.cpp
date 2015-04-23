@@ -20,27 +20,17 @@
 namespace nstore {
 namespace executor {
 
-bool CreateExecutor::has_default_db = false;
-catalog::CatalogType *CreateExecutor::cluster = nullptr;
-
 bool CreateExecutor::Execute(parser::SQLStatement *query) {
 
-  // Handle DML statements
+  // Handle DDL statements
   parser::CreateStatement* stmt = (parser::CreateStatement*) query;
 
-  // Setup default database
-
-  if(CreateExecutor::has_default_db == false) {
-    cluster = catalog::Catalog::GetInstance().AddChild("clusters", "default");
-    assert(cluster);
-    cluster->AddChild("databases", "default");
-    CreateExecutor::has_default_db = true;
-  }
+  // Get default db
+  catalog::Database* db = catalog::Catalog::GetInstance().GetDatabase("default");
 
   switch(stmt->type) {
     case parser::CreateStatement::kTable: {
-      catalog::CatalogType *database = cluster->GetChild("databases", "default");
-      assert(database);
+      assert(db);
       assert(stmt->name);
       assert(stmt->columns);
 
@@ -74,13 +64,13 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
             if(col->foreign_key_sink) {
               for(auto key : *col->foreign_key_sink) {
 
-                catalog::CatalogType *foreign_table = database->GetChild("tables", col->name);
+                catalog::Table *foreign_table = db->GetTable(col->name);
                 if(foreign_table == nullptr) {
                   LOG_ERROR("Foreign table does not exist  : %s \n", col->name);
                   return false;
                 }
 
-                if(foreign_table->GetChild("columns", key) == nullptr){
+                if(foreign_table->GetColumn(key) == nullptr){
                   LOG_ERROR("Foreign key :: sink column not in foreign table %s : %s\n", col->name, key);
                   return false;
                 }
@@ -103,22 +93,24 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
         }
       }
 
-      catalog::CatalogType *table = database->AddChild("tables", std::string(stmt->name));
-      if(table == nullptr && stmt->if_not_exists) {
+      catalog::Table *table = db->GetTable(stmt->name);
+      if(table != nullptr && stmt->if_not_exists) {
         LOG_ERROR("Table already exists  : %s \n", stmt->name);
         return false;
       }
 
       // Setup table
+      oid_t offset = 0;
       for(auto col : *stmt->columns) {
-        catalog::CatalogType *column;
+        catalog::Column *column;
 
         // Create primary keys
         if(col->type == parser::ColumnDefinition::PRIMARY) {
 
-          column = table->GetChild("columns", std::string(col->name));
-          catalog::CatalogType *constraint = column->AddChild("constraints", "PK");
-          constraint->Set("index", "index1");
+          column = table->GetColumn(col->name);
+
+          //catalog::Constraint *constraint = new catalog::Constraint("PK");
+          //column->AddConstraint(constraint);
 
           // setup index ??
         }
@@ -128,7 +120,6 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
         }
         // Create normal columns
         else {
-          column = table->AddChild("columns", std::string(col->name));
 
           ValueType type = parser::ColumnDefinition::GetValueType(col->type);
           size_t col_len = GetTypeSize(type);
@@ -137,10 +128,13 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
           if(type == VALUE_TYPE_VARCHAR || type == VALUE_TYPE_VARBINARY)
             col_len = col->varlen;
 
-          column->Set("index", "0");
-          column->Set("type", std::to_string(type));
-          column->Set("size", std::to_string(col_len));
-          column->Set("nullable", std::to_string(!col->not_null));
+          catalog::Column *column = new catalog::Column(col->name,
+                                                        type,
+                                                        offset++,
+                                                        col_len,
+                                                        !col->not_null);
+
+          column = table->AddColumn(column);
         }
       }
 
@@ -149,12 +143,15 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
     break;
 
     case parser::CreateStatement::kDatabase: {
-      catalog::CatalogType *database = cluster->AddChild("databases", std::string(stmt->name));
 
-      if(database == nullptr) {
+      catalog::Database *database = catalog::Catalog::GetInstance().GetDatabase(stmt->name);
+      if(database != nullptr) {
         LOG_ERROR("Database already exists  : %s \n", stmt->name);
         return false;
       }
+
+      database = new catalog::Database(stmt->name);
+      catalog::Catalog::GetInstance().AddDatabase(database);
 
       LOG_WARN("Created database : %s \n", stmt->name);
     }
