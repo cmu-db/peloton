@@ -7,5 +7,3 @@
 check_PROGRAMS += parser_test
 
 parser_test_SOURCES = parser/parser_test.cpp
-
-parser_test_LDADD = $(LIBGDAMM_LIBS)

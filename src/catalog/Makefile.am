@@ -5,9 +5,14 @@
 ######################################################################
 
 catalog_FILES = \
-				catalog/schema.cpp	\			
+				catalog/schema.cpp \
 				catalog/transaction.cpp \
-				catalog/manager.cpp				
+				catalog/manager.cpp \
+				catalog/constraint.cpp \
+				catalog/index.cpp \
+				catalog/column.cpp \
+				catalog/table.cpp \
+				catalog/database.cpp 
 
 catalog_INCLUDES = \
 				   -I$(srcdir)/catalog    
