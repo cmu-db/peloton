@@ -37,14 +37,13 @@ using ::testing::Return;
 namespace nstore {
 namespace test {
 
-TEST(MaterializationTests, SingleBaseTileTest) {
-  storage::VMBackend backend;
-  const int tuple_count = 9;
-  std::unique_ptr<storage::TileGroup> tile_group(
-      ExecutorTestsUtil::CreateSimpleTileGroup(
-        &backend,
-        tuple_count));
+// Utility functions.
+namespace {
 
+/**
+ * @brief TODO
+ */
+void PopulateTiles(storage::TileGroup *tile_group, int num_rows) {
   // Create tuple schema from tile schemas.
   std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();
   std::unique_ptr<catalog::Schema> schema(
@@ -57,7 +56,7 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   // Insert tuples into tile_group.
   const bool allocate = true;
   const txn_id_t txn_id = GetTransactionId();
-  for (int i = 0; i < tuple_count; i++) {
+  for (int i = 0; i < num_rows; i++) {
     storage::Tuple tuple(schema.get(), allocate);
     tuple.SetValue(0, ValueFactory::GetIntegerValue(10 * i));
     tuple.SetValue(1, ValueFactory::GetIntegerValue(10 * i + 1));
@@ -68,8 +67,43 @@ TEST(MaterializationTests, SingleBaseTileTest) {
         tile_group->GetTilePool(1)));
     tile_group->InsertTuple(txn_id, &tuple);
   }
+}
 
-  //TODO Everything above here should be refactored into executor tests util.
+/**
+ * @brief TODO
+ */
+void VerifyLeftTile(
+    storage::Tile *base_tile,
+    executor::LogicalTile *logical_tile,
+    int tuple_count) {
+  // Check that the base tile has the correct values.
+  for (int i = 0; i < tuple_count; i++) {
+    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i),
+              base_tile->GetValue(i, 0));
+    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i + 1),
+              base_tile->GetValue(i, 1));
+
+    // Double check that logical tile is functioning.
+    EXPECT_EQ(base_tile->GetValue(i, 0),
+              logical_tile->GetValue(0, i));
+    EXPECT_EQ(base_tile->GetValue(i, 1),
+              logical_tile->GetValue(1, i));
+  }
+}
+
+} // namespace
+
+// "Pass-through" test case. There is nothing to materialize as
+// there is only one base tile in the logical tile.
+TEST(MaterializationTests, SingleBaseTileTest) {
+  storage::VMBackend backend;
+  const int tuple_count = 9;
+  std::unique_ptr<storage::TileGroup> tile_group(
+      ExecutorTestsUtil::CreateSimpleTileGroup(
+        &backend,
+        tuple_count));
+
+  PopulateTiles(tile_group.get(), tuple_count);
 
   // Create logical tile from single base tile.
   storage::Tile *source_base_tile = tile_group->GetTile(0);
@@ -109,26 +143,20 @@ TEST(MaterializationTests, SingleBaseTileTest) {
     .WillOnce(Return(source_tile.release()))
     .WillOnce(Return(nullptr));
 
-  std::unique_ptr<executor::LogicalTile> result_tile(
+  std::unique_ptr<executor::LogicalTile> result_logical_tile(
     executor.GetNextTile());
-  EXPECT_THAT(result_tile, NotNull());
+  EXPECT_THAT(result_logical_tile, NotNull());
   EXPECT_THAT(executor.GetNextTile(), IsNull());
 
   // Verify that logical tile is only made up of a single base tile.
-  int num_cols = result_tile->NumCols();
+  int num_cols = result_logical_tile->NumCols();
   EXPECT_EQ(2, num_cols);
-  storage::Tile *result_base_tile = result_tile->GetBaseTile(0);
+  storage::Tile *result_base_tile = result_logical_tile->GetBaseTile(0);
   EXPECT_THAT(result_base_tile, NotNull());
   EXPECT_TRUE(source_base_tile != result_base_tile);
-  EXPECT_EQ(result_tile->GetBaseTile(1), result_base_tile);
+  EXPECT_EQ(result_logical_tile->GetBaseTile(1), result_base_tile);
 
-  // Check that the base tile has the correct values.
-  for (int i = 0; i < tuple_count; i++) {
-    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i),
-              result_base_tile->GetValue(i, 0));
-    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i + 1),
-              result_base_tile->GetValue(i, 1));
-  }
+  VerifyLeftTile(result_base_tile, result_logical_tile.get(), tuple_count);
 }
 
 TEST(MaterializationTests, TwoBaseTilesTest) {
