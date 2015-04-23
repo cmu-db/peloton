@@ -30,6 +30,10 @@
 #include "executor/mock_executor.h"
 #include "harness.h"
 
+using ::testing::IsNull;
+using ::testing::NotNull;
+using ::testing::Return;
+
 namespace nstore {
 namespace test {
 
@@ -68,15 +72,17 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   //TODO Everything above here should be refactored into executor tests util.
 
   // Create logical tile from single base tile.
-  storage::Tile *base_tile = tile_group->GetTile(0);
+  storage::Tile *source_base_tile = tile_group->GetTile(0);
   const bool own_base_tile = false;
-  std::unique_ptr<executor::LogicalTile> logical_tile(
-      executor::LogicalTileFactory::WrapBaseTile(base_tile, own_base_tile));
+  std::unique_ptr<executor::LogicalTile> source_tile(
+      executor::LogicalTileFactory::WrapBaseTile(
+          source_base_tile,
+          own_base_tile));
 
   // Create materialization node for this test.
-  //TODO This should be deleted soon...
+  //TODO This should be deleted soon... Should we use default copy constructor?
   std::unique_ptr<catalog::Schema> output_schema(catalog::Schema::CopySchema(
-      &base_tile->GetSchema()));
+      &source_base_tile->GetSchema()));
   std::unordered_map<id_t, id_t> old_to_new_cols;
 
   unsigned int column_count = output_schema->GetColumnCount();
@@ -90,11 +96,44 @@ TEST(MaterializationTests, SingleBaseTileTest) {
 
   // Pass them through materialization executor.
   executor::MaterializationExecutor executor(&node);
-
   MockExecutor child_executor;
+  executor.AddChild(&child_executor);
 
-  // Verify that materialized tile is correct.
-  //TODO This should be moved to ExecutorTestsUtil.
+  // Uneventful init...
+  EXPECT_CALL(child_executor, SubInit())
+    .WillOnce(Return(true));
+  EXPECT_TRUE(executor.Init());
+
+  // Where the main work takes place...
+  EXPECT_CALL(child_executor, SubGetNextTile())
+    .WillOnce(Return(source_tile.release()))
+    .WillOnce(Return(nullptr));
+
+  std::unique_ptr<executor::LogicalTile> result_tile(
+    executor.GetNextTile());
+  EXPECT_THAT(result_tile, NotNull());
+  EXPECT_THAT(executor.GetNextTile(), IsNull());
+
+  // Clean up to prevent memory leaks.
+  EXPECT_CALL(child_executor, SubCleanUp())
+    .Times(1);
+  executor.CleanUp();
+
+  // Verify that logical tile is only made up of a single base tile.
+  int num_cols = result_tile->NumCols();
+  EXPECT_EQ(2, num_cols);
+  storage::Tile *result_base_tile = result_tile->GetBaseTile(0);
+  EXPECT_THAT(result_base_tile, NotNull());
+  EXPECT_TRUE(source_base_tile != result_base_tile);
+  EXPECT_EQ(result_tile->GetBaseTile(1), result_base_tile);
+
+  // Check that the base tile has the correct values.
+  for (int i = 0; i < tuple_count; i++) {
+    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i),
+              result_base_tile->GetValue(i, 0));
+    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i + 1),
+              result_base_tile->GetValue(i, 1));
+  }
 }
 
 TEST(MaterializationTests, TwoBaseTilesTest) {
