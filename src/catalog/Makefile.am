@@ -5,6 +5,7 @@
 ######################################################################
 
 catalog_FILES = \
+				catalog/catalog.cpp \
 				catalog/schema.cpp \
 				catalog/transaction.cpp \
 				catalog/manager.cpp \
