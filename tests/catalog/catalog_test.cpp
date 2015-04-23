@@ -24,6 +24,11 @@ namespace test {
 // Catalog Tests
 //===--------------------------------------------------------------------===//
 
+TEST(CatalogTests, BasicTest) {
+
+  EXPECT_EQ(1, 1);
+
+}
 
 } // End test namespace
 } // End nstore namespace
