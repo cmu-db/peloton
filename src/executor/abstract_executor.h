@@ -25,8 +25,6 @@ class AbstractExecutor {
 
   LogicalTile *GetNextTile();
 
-  void CleanUp();
-
   void AddChild(AbstractExecutor *child);
 
  protected:
@@ -37,9 +35,6 @@ class AbstractExecutor {
 
   /** @brief Workhorse function to be overriden by subclass. */
   virtual LogicalTile *SubGetNextTile() = 0;
-
-  /** @brief Clean up function to be overriden by subclass. */
-  virtual void SubCleanUp() = 0;
 
   /** @brief Children nodes of this executor in the executor tree. */
   std::vector<AbstractExecutor *> children_;
