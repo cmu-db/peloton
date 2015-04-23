@@ -11,6 +11,7 @@
  */
 
 #include "common/types.h"
+#include "catalog/catalog.h"
 
 namespace nstore {
 namespace catalog {
