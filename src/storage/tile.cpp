@@ -76,6 +76,12 @@ Tile::~Tile() {
   if (column_header)
     delete column_header;
   column_header = NULL;
+
+  // Look in the tile factory class to figure out how we use own_tile.
+  // reclaim backend and header if needed
+  if(own_tile){
+    delete backend;
+  }
 }
 
 
