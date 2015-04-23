@@ -11,7 +11,6 @@
 #include <map>
 #include <vector>
 
-#include "catalog/database.h"
 #include "executor/abstract_executor.h"
 #include "common/types.h"
 #include <json_spirit.h>
@@ -104,12 +103,6 @@ class AbstractPlanNode {
   //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//
-
-  virtual AbstractPlanNode* LoadFromJSONObject(json_spirit::Object& obj,
-                                           const catalog::Database* catalog_db);
-
-  virtual int GetColumnIndexFromGuid(int guid,
-                                     const catalog::Database* db) const;
 
   // Debugging convenience methods
   friend std::ostream& operator<<(std::ostream& os, const AbstractPlanNode& node);
