@@ -34,8 +34,6 @@ class MaterializationExecutor : public AbstractExecutor {
 
   LogicalTile *SubGetNextTile();
 
-  void SubCleanUp();
-
  private:
   void GenerateTileToColMap(
     const std::unordered_map<id_t, id_t> &old_to_new_cols,
