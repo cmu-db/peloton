@@ -23,8 +23,8 @@ AM_CXXFLAGS +=  $(GTEST_CXXFLAGS) -Wno-unused-but-set-variable
 AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -pthread \
 			  $(GTEST_BUILDDIR)/lib/libgtest.la \
 			  $(GTEST_BUILDDIR)/lib/libgtest_main.la \
-                          $(GMOCK_BUILDDIR)/lib/libgmock.la \
-                          $(GMOCK_BUILDDIR)/lib/libgmock_main.la \
+			  $(GMOCK_BUILDDIR)/lib/libgmock.la \
+              $(GMOCK_BUILDDIR)/lib/libgmock_main.la \
 			  -I$(top_srcdir)/third_party \
 			  $(top_builddir)/src/libnstore.la \
 			  $(TBB_LIBS)
