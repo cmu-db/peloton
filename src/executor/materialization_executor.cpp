@@ -73,7 +73,7 @@ LogicalTile *MaterializationExecutor::SubGetNextTile() {
   // Create new physical tile.
   const int num_tuples = source_tile->NumTuples();
   std::unique_ptr<storage::Tile> dest_tile(
-      storage::TileFactory::GetFreeTile(
+      storage::TileFactory::GetTempTile(
         node.schema(),
         num_tuples));
 

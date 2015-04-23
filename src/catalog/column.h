@@ -29,12 +29,12 @@ class Column {
          ValueType type,
          oid_t offset,
          size_t size,
-         bool is_nullable)
+         bool not_null)
  : name(name),
    type(type),
    offset(offset),
    size(size),
-   is_nullable(is_nullable){
+   not_null(not_null){
   }
 
   std::string GetName() {
@@ -53,17 +53,9 @@ class Column {
     return size;
   }
 
-  bool IsNullable() const {
-    return is_nullable;
+  bool IsNotNullable() const {
+    return not_null;
   }
-
-  std::vector<Constraint*> GetConstraints() const {
-    return constraints;
-  }
-
-  bool AddConstraint(Constraint* constraint);
-  Constraint* GetConstraint(const std::string &constraint_name) const;
-  bool RemoveConstraint(const std::string &constraint_name);
 
  private:
   std::string name;
@@ -77,11 +69,9 @@ class Column {
   // Size of the column
   size_t size = 0;
 
-  // Is it nullable ?
-  bool is_nullable = false;
+  // Is it not nullable ?
+  bool not_null = false;
 
-  // constraints for column
-  std::vector<Constraint*> constraints;
 };
 
 } // End catalog namespace
