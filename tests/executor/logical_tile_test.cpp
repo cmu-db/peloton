@@ -4,9 +4,6 @@
  * Copyright(c) 2015, CMU
  */
 
-#include "executor_tests_util.h"
-#include "harness.h"
-
 #include <memory>
 #include <utility>
 #include <vector>
@@ -22,6 +19,9 @@
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
 #include "storage/vm_backend.h"
+
+#include "executor/executor_tests_util.h"
+#include "harness.h"
 
 namespace nstore {
 namespace test {

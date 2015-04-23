@@ -9,12 +9,12 @@
 namespace nstore {
 
 namespace catalog {
-  class Manager;
+class Manager;
 }
 
 namespace storage {
-  class Backend;
-  class TileGroup;
+class Backend;
+class TileGroup;
 }
 
 namespace test {
