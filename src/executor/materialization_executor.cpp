@@ -89,10 +89,6 @@ LogicalTile *MaterializationExecutor::SubGetNextTile() {
   return LogicalTileFactory::WrapBaseTile(dest_tile.release(), own_base_tile);
 }
 
-/** @brief Nothing to clean up at the moment. */
-void MaterializationExecutor::SubCleanUp() {
-}
-
 /**
  * @brief Generates map from each base tile to columns originally from that
  *        base tile to be materialized.

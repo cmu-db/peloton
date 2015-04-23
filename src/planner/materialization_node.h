@@ -24,15 +24,18 @@ namespace planner {
 
 class MaterializationNode : public AbstractPlanNode {
  public:
+  MaterializationNode(const MaterializationNode &) = delete;
+  MaterializationNode& operator=(const MaterializationNode &) = delete;
+  MaterializationNode(MaterializationNode &&) = delete;
+  MaterializationNode& operator=(MaterializationNode &&) = delete;
+
   MaterializationNode(
       std::unordered_map<id_t, id_t> &&old_to_new_cols,
       catalog::Schema *schema);
 
-  const std::unordered_map<id_t, id_t> &old_to_new_cols() const;
+  const std::unordered_map<id_t, id_t>& old_to_new_cols() const;
 
-  const std::vector<std::string> &column_names() const;
-
-  const catalog::Schema &schema() const;
+  const catalog::Schema& schema() const;
 
   PlanNodeType GetPlanNodeType() const;
 
