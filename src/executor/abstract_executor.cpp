@@ -57,20 +57,5 @@ LogicalTile *AbstractExecutor::GetNextTile() {
   return SubGetNextTile();
 }
 
-/**
- * @brief Releases resources used by this executor.
- * 
- * Recursively releases resources used by children executors.
- * TODO Who should delete the executors?
- * TODO Why do we need a separate function to cleanup? Won't the destructor
- * suffice?
- */
-void AbstractExecutor::CleanUp() {
-  SubCleanUp();
-  for (unsigned int i = 0; i < children_.size(); i++) {
-    children_[i]->CleanUp();
-  }
-}
-
 } // namespace executor
 } // namespace nstore
