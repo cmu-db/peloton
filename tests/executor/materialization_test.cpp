@@ -41,7 +41,11 @@ namespace test {
 namespace {
 
 /**
- * @brief TODO
+ * @brief Populates the tiles in the given tile-group in a specific manner.
+ * @param tile_group Tile-group to populate with values.
+ * @param num_rows Number of tuples to insert.
+ *
+ * This is a convenience function for the test cases.
  */
 void PopulateTiles(storage::TileGroup *tile_group, int num_rows) {
   // Create tuple schema from tile schemas.
@@ -66,28 +70,6 @@ void PopulateTiles(storage::TileGroup *tile_group, int num_rows) {
         ValueFactory::GetStringValue(std::to_string(10 * i + 3),
         tile_group->GetTilePool(1)));
     tile_group->InsertTuple(txn_id, &tuple);
-  }
-}
-
-/**
- * @brief TODO
- */
-void VerifyLeftTile(
-    storage::Tile *base_tile,
-    executor::LogicalTile *logical_tile,
-    int tuple_count) {
-  // Check that the base tile has the correct values.
-  for (int i = 0; i < tuple_count; i++) {
-    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i),
-              base_tile->GetValue(i, 0));
-    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i + 1),
-              base_tile->GetValue(i, 1));
-
-    // Double check that logical tile is functioning.
-    EXPECT_EQ(base_tile->GetValue(i, 0),
-              logical_tile->GetValue(0, i));
-    EXPECT_EQ(base_tile->GetValue(i, 1),
-              logical_tile->GetValue(1, i));
   }
 }
 
@@ -156,7 +138,19 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   EXPECT_TRUE(source_base_tile != result_base_tile);
   EXPECT_EQ(result_logical_tile->GetBaseTile(1), result_base_tile);
 
-  VerifyLeftTile(result_base_tile, result_logical_tile.get(), tuple_count);
+  // Check that the base tile has the correct values.
+  for (int i = 0; i < tuple_count; i++) {
+    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i),
+              result_base_tile->GetValue(i, 0));
+    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i + 1),
+              result_base_tile->GetValue(i, 1));
+
+    // Double check that logical tile is functioning.
+    EXPECT_EQ(result_base_tile->GetValue(i, 0),
+              result_logical_tile->GetValue(0, i));
+    EXPECT_EQ(result_base_tile->GetValue(i, 1),
+              result_logical_tile->GetValue(1, i));
+  }
 }
 
 TEST(MaterializationTests, TwoBaseTilesTest) {
@@ -222,7 +216,19 @@ TEST(MaterializationTests, TwoBaseTilesTest) {
   EXPECT_TRUE(source_base_tile != result_base_tile);
   EXPECT_EQ(result_logical_tile->GetBaseTile(1), result_base_tile);
 
-  VerifyLeftTile(result_base_tile, result_logical_tile.get(), tuple_count);
+  // Check that the base tile has the correct values.
+  for (int i = 0; i < tuple_count; i++) {
+    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i),
+              result_base_tile->GetValue(i, 0));
+    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i + 1),
+              result_base_tile->GetValue(i, 1));
+
+    // Double check that logical tile is functioning.
+    EXPECT_EQ(result_base_tile->GetValue(i, 0),
+              result_logical_tile->GetValue(0, i));
+    EXPECT_EQ(result_base_tile->GetValue(i, 1),
+              result_logical_tile->GetValue(1, i));
+  }
 }
 
 } // namespace test
