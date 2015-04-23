@@ -221,7 +221,7 @@ LogicalTile::iterator::iterator(LogicalTile *tile, bool begin)
  *
  * @return iterator after the increment.
  */
-LogicalTile::iterator &LogicalTile::iterator::operator++() {
+LogicalTile::iterator& LogicalTile::iterator::operator++() {
   // Find next valid tuple.
   do {
     pos_++;

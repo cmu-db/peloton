@@ -29,10 +29,15 @@ class LogicalTile;
 
 class AbstractPlanNode {
  public:
+  AbstractPlanNode(const AbstractPlanNode &) = delete;
+  AbstractPlanNode& operator=(const AbstractPlanNode &) = delete;
+  AbstractPlanNode(AbstractPlanNode &&) = delete;
+  AbstractPlanNode& operator=(AbstractPlanNode &&) = delete;
 
   explicit AbstractPlanNode(oid_t plan_node_id);
   AbstractPlanNode();
   virtual ~AbstractPlanNode();
+
 
   //===--------------------------------------------------------------------===//
   // Children + Parent Helpers
