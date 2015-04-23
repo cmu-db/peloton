@@ -25,13 +25,6 @@ class CreateExecutor {
 
   static bool Execute(parser::SQLStatement *query);
 
- private:
-
-  // created default db ?
-  static bool has_default_db;
-
-  // default db
-  static catalog::CatalogType *cluster;
 };
 
 } // namespace executor
