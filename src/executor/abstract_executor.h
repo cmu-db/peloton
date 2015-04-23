@@ -21,11 +21,14 @@ class LogicalTile;
 
 class AbstractExecutor {
  public:
+  AbstractExecutor(const AbstractExecutor &) = delete;
+  AbstractExecutor& operator=(const AbstractExecutor &) = delete;
+  AbstractExecutor(AbstractExecutor &&) = delete;
+  AbstractExecutor& operator=(AbstractExecutor &&) = delete;
+
   bool Init();
 
   LogicalTile *GetNextTile();
-
-  void CleanUp();
 
   void AddChild(AbstractExecutor *child);
 
@@ -38,9 +41,6 @@ class AbstractExecutor {
   /** @brief Workhorse function to be overriden by subclass. */
   virtual LogicalTile *SubGetNextTile() = 0;
 
-  /** @brief Clean up function to be overriden by subclass. */
-  virtual void SubCleanUp() = 0;
-
   /** @brief Children nodes of this executor in the executor tree. */
   std::vector<AbstractExecutor *> children_;
 
@@ -50,7 +50,7 @@ class AbstractExecutor {
    *
    * @return Reference to plan node.
    */
-  template <class T> const T &GetNode() {
+  template <class T> const T& GetNode() {
     const T *node = dynamic_cast<const T *>(node_);
     assert(node);
     return *node;

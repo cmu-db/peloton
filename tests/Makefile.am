@@ -20,7 +20,7 @@ AM_CPPFLAGS += -isystem $(GTEST_SRCDIR)/include \
 
 AM_CXXFLAGS +=  $(GTEST_CXXFLAGS) -Wno-unused-but-set-variable
 
-AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -pthread \
+AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -pthread -static \
 			  $(GTEST_BUILDDIR)/lib/libgtest.la \
 			  $(GTEST_BUILDDIR)/lib/libgtest_main.la \
 			  $(GMOCK_BUILDDIR)/lib/libgmock.la \

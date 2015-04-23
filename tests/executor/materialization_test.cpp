@@ -114,11 +114,6 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   EXPECT_THAT(result_tile, NotNull());
   EXPECT_THAT(executor.GetNextTile(), IsNull());
 
-  // Clean up to prevent memory leaks.
-  EXPECT_CALL(child_executor, SubCleanUp())
-    .Times(1);
-  executor.CleanUp();
-
   // Verify that logical tile is only made up of a single base tile.
   int num_cols = result_tile->NumCols();
   EXPECT_EQ(2, num_cols);
