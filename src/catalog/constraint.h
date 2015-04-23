@@ -29,6 +29,8 @@ class Column;
 
 class Constraint {
 
+ public:
+
   enum ConstraintType{
     CONSTRAINT_TYPE_INVALID = 0, // invalid
 
@@ -36,17 +38,18 @@ class Constraint {
     CONSTRAINT_TYPE_FOREIGN = 0  // foreign key
   };
 
- public:
   Constraint(std::string name,
              ConstraintType type,
              Index* index,
              Table* foreign_key_table,
-             std::vector<Column*> columns)
+             std::vector<Column*> columns,
+             std::vector<Column*> foreign_columns)
  : name(name),
    type(type),
    index(index),
    foreign_key_table(foreign_key_table),
-   columns(columns){
+   columns(columns),
+   foreign_columns(foreign_columns){
   }
 
   std::string GetName() const {
@@ -69,6 +72,10 @@ class Constraint {
     return columns;
   }
 
+  std::vector<Column*> GetForeignColumns() const {
+    return foreign_columns;
+  }
+
  private:
   std::string name;
 
@@ -81,8 +88,11 @@ class Constraint {
   // The table referenced by the foreign key (if needed)
   Table* foreign_key_table = nullptr;
 
-  // The columns in the foreign table referenced by the constraint (if needed)
+  // The columns in the table referenced by the constraint (if needed)
   std::vector<Column*> columns;
+
+  // The columns in the foreign table referenced by the constraint (if needed)
+  std::vector<Column*> foreign_columns;
 
 };
 

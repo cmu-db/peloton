@@ -220,6 +220,9 @@ class Tile {
    * This is maintained by shared Tile Header.
    */
   TileGroupHeader *tile_group_header;
+
+  // clean up later
+  bool own_tile = false;
 };
 
 // Returns a pointer to the tuple requested. No checks are done that the index is valid.
@@ -269,16 +272,23 @@ class TileFactory {
   TileFactory();
   virtual ~TileFactory();
 
-  //TODO This is a temporary function that leaks memory. We have to
+  // This is a temporary function that leaks memory. We have to
   // refactor Tile in order to implement "free" tiles that are used by
   // the executor.
-  static Tile *GetFreeTile(const catalog::Schema &schema, int tuple_count) {
-    return GetTile(
+  static Tile *GetTempTile(const catalog::Schema &schema, int tuple_count) {
+
+    Backend *backend = new VMBackend();
+    TileGroupHeader *header = nullptr; // No MVCC for these temporary tiles
+
+    Tile *tile = GetTile(
         INVALID_ID, INVALID_ID, INVALID_ID, INVALID_ID,
-        new TileGroupHeader(new VMBackend(), tuple_count),
-        new VMBackend(),
+        header, backend,
         schema,
         tuple_count);
+
+    tile->own_tile = true;
+
+    return tile;
   }
 
   static Tile *GetTile(id_t database_id, id_t table_id, id_t tile_group_id, id_t tile_id,
