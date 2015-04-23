@@ -37,7 +37,6 @@ using ::testing::Return;
 namespace nstore {
 namespace test {
 
-// Utility functions.
 namespace {
 
 /**
@@ -91,9 +90,9 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   storage::Tile *source_base_tile = tile_group->GetTile(0);
   const bool own_base_tile = false;
   std::unique_ptr<executor::LogicalTile> source_tile(
-      executor::LogicalTileFactory::WrapBaseTile(
-          source_base_tile,
-          own_base_tile));
+      executor::LogicalTileFactory::WrapBaseTiles(
+        { source_base_tile },
+        own_base_tile));
 
   // Create materialization node for this test.
   //TODO This should be deleted soon... Should we use default copy constructor?
@@ -153,9 +152,9 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   }
 }
 
-TEST(MaterializationTests, TwoBaseTilesTest) {
-  //TODO Implement.
-  //TODO WaTeRmArK
+// Materializing logical tile composed of two base tiles.
+// The materialized tile's columns are reordered as well.
+TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   storage::VMBackend backend;
   const int tuple_count = 9;
   std::unique_ptr<storage::TileGroup> tile_group(
@@ -165,18 +164,19 @@ TEST(MaterializationTests, TwoBaseTilesTest) {
 
   PopulateTiles(tile_group.get(), tuple_count);
 
-  // Create logical tile from single base tile.
-  storage::Tile *source_base_tile = tile_group->GetTile(0);
-  const bool own_base_tile = false;
+  //TODO WaTeRmArK
+  // Create logical tile from two base tiles.
+  storage::Tile *source_base_tile1 = tile_group->GetTile(0);
+  const bool own_base_tiles = false;
   std::unique_ptr<executor::LogicalTile> source_tile(
-      executor::LogicalTileFactory::WrapBaseTile(
-          source_base_tile,
-          own_base_tile));
+      executor::LogicalTileFactory::WrapBaseTiles(
+          { source_base_tile1 },
+          own_base_tiles));
 
   // Create materialization node for this test.
   //TODO This should be deleted soon... Should we use default copy constructor?
   std::unique_ptr<catalog::Schema> output_schema(catalog::Schema::CopySchema(
-      &source_base_tile->GetSchema()));
+      &source_base_tile1->GetSchema()));
   std::unordered_map<id_t, id_t> old_to_new_cols;
 
   unsigned int column_count = output_schema->GetColumnCount();
@@ -213,7 +213,6 @@ TEST(MaterializationTests, TwoBaseTilesTest) {
   EXPECT_EQ(2, num_cols);
   storage::Tile *result_base_tile = result_logical_tile->GetBaseTile(0);
   EXPECT_THAT(result_base_tile, NotNull());
-  EXPECT_TRUE(source_base_tile != result_base_tile);
   EXPECT_EQ(result_logical_tile->GetBaseTile(1), result_base_tile);
 
   // Check that the base tile has the correct values.

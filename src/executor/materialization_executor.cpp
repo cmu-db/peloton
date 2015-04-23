@@ -86,7 +86,9 @@ LogicalTile *MaterializationExecutor::SubGetNextTile() {
 
   // Wrap physical tile in logical tile.
   bool own_base_tile = true;
-  return LogicalTileFactory::WrapBaseTile(dest_tile.release(), own_base_tile);
+  return LogicalTileFactory::WrapBaseTiles(
+      { dest_tile.release() },
+      own_base_tile);
 }
 
 /**
