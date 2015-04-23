@@ -49,6 +49,10 @@ We use `Eclipse` for our development. The following instructions assume that you
 
 ## Test
 
+### Important note
+
+When running tests using make check, ensure at least one file in the tests/ directory has been modified (to trigger a rebuild).
+
 ### Code Coverage ::
 
     cd build
