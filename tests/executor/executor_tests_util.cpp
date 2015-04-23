@@ -22,6 +22,10 @@ namespace test {
  * The first two columns have INTEGER types, the last two have TINYINT
  * and VARCHAR.
  *
+ * IMPORTANT: If you modify this function, it is your responsibility to
+ *            fix any affected test cases. Test cases may be depending
+ *            on things like the specific number of tiles in this group.
+ *
  * @return Pointer to tile group.
  */
 storage::TileGroup *ExecutorTestsUtil::CreateSimpleTileGroup(
