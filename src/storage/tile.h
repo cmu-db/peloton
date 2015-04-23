@@ -272,11 +272,9 @@ class TileFactory {
   TileFactory();
   virtual ~TileFactory();
 
-  // This is a temporary function that leaks memory. We have to
-  // refactor Tile in order to implement "free" tiles that are used by
-  // the executor.
+  // Creates tile that is not attached to a tile group. For use in the
+  // executor.
   static Tile *GetTempTile(const catalog::Schema &schema, int tuple_count) {
-
     Backend *backend = new VMBackend();
     TileGroupHeader *header = nullptr; // No MVCC for these temporary tiles
 
@@ -285,7 +283,6 @@ class TileFactory {
         header, backend,
         schema,
         tuple_count);
-
     tile->own_tile = true;
 
     return tile;
