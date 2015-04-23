@@ -111,10 +111,16 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
 
       // Setup table
       for(auto col : *stmt->columns) {
+        catalog::CatalogType *column;
 
         // Create primary keys
         if(col->type == parser::ColumnDefinition::PRIMARY) {
 
+          column = table->GetChild("columns", std::string(col->name));
+          catalog::CatalogType *constraint = column->AddChild("constraints", "PK");
+          constraint->Set("index", "index1");
+
+          // setup index ??
         }
         // Create foreign keys
         else if(col->type == parser::ColumnDefinition::FOREIGN ) {
@@ -122,7 +128,19 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
         }
         // Create normal columns
         else {
-          table->AddChild("columns", std::string(col->name));
+          column = table->AddChild("columns", std::string(col->name));
+
+          ValueType type = parser::ColumnDefinition::GetValueType(col->type);
+          size_t col_len = GetTypeSize(type);
+          if(col->type == parser::ColumnDefinition::CHAR)
+            col_len = 1;
+          if(type == VALUE_TYPE_VARCHAR || type == VALUE_TYPE_VARBINARY)
+            col_len = col->varlen;
+
+          column->Set("index", "0");
+          column->Set("type", std::to_string(type));
+          column->Set("size", std::to_string(col_len));
+          column->Set("nullable", std::to_string(!col->not_null));
         }
       }
 

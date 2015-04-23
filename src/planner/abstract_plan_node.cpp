@@ -155,102 +155,6 @@ std::vector<oid_t> AbstractPlanNode::GetOutputColumnGuids() const {
 // Utilities
 //===--------------------------------------------------------------------===//
 
-AbstractPlanNode* AbstractPlanNode::LoadFromJSONObject(json_spirit::Object &obj,
-                                                       const catalog::Database *catalog_db) {
-
-  json_spirit::Value value_type = find_value(obj, "PLAN_NODE_TYPE");
-
-  if (value_type == json_spirit::Value::null){
-    throw PlannerException("AbstractPlanNode::fromJSONObject: PLAN_NODE_TYPE value is null");
-  }
-
-  std::string type_string = value_type.get_str();
-  AbstractPlanNode* plan_node = GetEmptyPlanNode(StringToPlanNode(type_string));
-
-  json_spirit::Value id_value = find_value(obj, "ID");
-  if (id_value == json_spirit::Value::null) {
-    delete plan_node;
-    throw PlannerException("AbstractPlanNode::fromJSONObject: ID value is null");
-  }
-
-  plan_node->plan_node_id = (oid_t) id_value.get_int();
-  LOG_TRACE("Initializing PlanNode " << plan_node->debug());
-
-  json_spirit::Value inlined_nodes_value = find_value(obj,"INLINE_NODES");
-  if (inlined_nodes_value == json_spirit::Value::null) {
-    delete plan_node;
-    throw PlannerException("AbstractPlanNode::fromJSONObject: INLINE_NODES value is null");
-  }
-
-  json_spirit::Array inlined_nodes = inlined_nodes_value.get_array();
-  for (id_t ii = 0; ii < inlined_nodes.size(); ii++) {
-    AbstractPlanNode* new_plan_node = nullptr;
-    try {
-      json_spirit::Object obj = inlined_nodes[ii].get_obj();
-      new_plan_node = AbstractPlanNode::LoadFromJSONObject(obj, catalog_db);
-    }
-    catch (Exception &ex) {
-      delete new_plan_node;
-      delete plan_node;
-      throw;
-    }
-
-    // TODO: if this throws, new Node can be leaked.
-    // As long as newNode is not nullptr, this will not throw.
-    plan_node->AddInlinePlanNode(new_plan_node);
-    LOG_TRACE("Adding inline PlanNode " << new_plan_node->debug()
-                  << " for " << plan_node->debug());
-  }
-
-  json_spirit::Value parent_node_ids_value = find_value(obj, "PARENT_IDS");
-  if (parent_node_ids_value == json_spirit::Value::null){
-    delete plan_node;
-    throw PlannerException("AbstractPlanNode::fromJSONObject: PARENT_IDS value is null");
-  }
-
-  json_spirit::Array parent_node_ids_array = parent_node_ids_value.get_array();
-  for (id_t ii = 0; ii < parent_node_ids_array.size(); ii++) {
-    int32_t parentNodeId = (int32_t) parent_node_ids_array[ii].get_int();
-    plan_node->parent_ids.push_back(parentNodeId);
-  }
-
-  json_spirit::Value child_node_ids_value = find_value(obj, "CHILDREN_IDS");
-  if (child_node_ids_value == json_spirit::Value::null) {
-    delete plan_node;
-    throw PlannerException("AbstractPlanNode::fromJSONObject: CHILDREN_IDS value is null");
-  }
-
-  json_spirit::Array child_node_ids_array = child_node_ids_value.get_array();
-  for (id_t ii = 0; ii < child_node_ids_array.size(); ii++) {
-    int32_t childNodeId = (int32_t) child_node_ids_array[ii].get_int();
-    plan_node->children_ids.push_back(childNodeId);
-  }
-
-  json_spirit::Value output_columns_value = find_value(obj, "OUTPUT_COLUMNS");
-  if (output_columns_value == json_spirit::Value::null) {
-    delete plan_node;
-    throw PlannerException("AbstractPlanNode::FromJSONObject:"
-        " Can't find OUTPUT_COLUMNS value");
-  }
-
-  json_spirit::Array output_columns_array = output_columns_value.get_array();
-  for (id_t ii = 0; ii < output_columns_array.size(); ii++)  {
-    json_spirit::Value outputColumnValue = output_columns_array[ii];
-    PlanColumn outputColumn = PlanColumn(outputColumnValue.get_obj());
-    plan_node->output_column_guids.push_back(outputColumn.GetGuid());
-  }
-
-  try {
-    plan_node->LoadFromJSONObject(obj, catalog_db);
-  }
-  catch (Exception &ex) {
-    delete plan_node;
-    throw;
-  }
-
-  return plan_node;
-}
-
 // Get a string representation of this plan node
 std::ostream& operator<<(std::ostream& os, const AbstractPlanNode& node) {
   os << node.debug();
@@ -297,20 +201,6 @@ std::string AbstractPlanNode::debug(const std::string& spacer) const {
     buffer << children[ctr]->debug(child_spacer);
   }
   return (buffer.str());
-}
-
-int AbstractPlanNode::GetColumnIndexFromGuid(int guid,
-                                             const catalog::Database* db) const {
-  if (children.size() != 1)  {
-    return -1;
-  }
-
-  AbstractPlanNode* child = children[0];
-  if (child == nullptr) {
-    return -1;
-  }
-
-  return child->GetColumnIndexFromGuid(guid, db);
 }
 
 } // namespace planner

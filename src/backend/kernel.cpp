@@ -18,7 +18,7 @@
 
 #include "tbb/tbb.h"
 #include "tbb/flow_graph.h"
-#include "executor/executors.h"
+//#include "executor/executors.h"
 
 namespace nstore {
 namespace backend {
@@ -119,7 +119,7 @@ ResultType Kernel::Handler(const char* query) {
 
     // Take of DML
     if(statement->GetType() == STATEMENT_TYPE_CREATE) {
-      executor::CreateExecutor::Execute(statement);
+      //executor::CreateExecutor::Execute(statement);
     }
 
     // Validate and construct query plan
