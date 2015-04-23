@@ -28,8 +28,6 @@ storage::TileGroup *ExecutorTestsUtil::CreateSimpleTileGroup(
     storage::Backend *backend,
     int tuple_count) {
   std::vector<catalog::ColumnInfo> columns;
-  std::vector<std::string> tile_column_names;
-  std::vector<std::vector<std::string> > column_names;
   std::vector<catalog::Schema> schemas;
 
   const bool allow_null = false;
@@ -70,15 +68,6 @@ storage::TileGroup *ExecutorTestsUtil::CreateSimpleTileGroup(
 
   catalog::Schema schema2(columns);
   schemas.push_back(schema2);
-
-  tile_column_names.push_back("COL 1");
-  tile_column_names.push_back("COL 2");
-  column_names.push_back(tile_column_names);
-
-  tile_column_names.clear();
-  tile_column_names.push_back("COL 3");
-  tile_column_names.push_back("COL 4");
-  column_names.push_back(tile_column_names);
 
   return storage::TileGroupFactory::GetTileGroup(
       INVALID_OID,
