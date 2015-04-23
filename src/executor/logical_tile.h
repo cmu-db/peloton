@@ -26,7 +26,12 @@ class LogicalTile {
   friend class LogicalTileFactory;
 
  public:
- ~LogicalTile();
+  LogicalTile(const LogicalTile &) = delete;
+  LogicalTile& operator=(const LogicalTile &) = delete;
+  LogicalTile(LogicalTile &&) = delete;
+  LogicalTile& operator=(LogicalTile &&) = delete;
+
+  ~LogicalTile();
 
   void AddColumn(
       storage::Tile *base_tile,
@@ -56,7 +61,7 @@ class LogicalTile {
     friend class LogicalTile;
 
    public:
-    iterator &operator++();
+    iterator& operator++();
 
     iterator operator++(int);
 

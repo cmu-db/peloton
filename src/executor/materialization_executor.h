@@ -28,6 +28,10 @@ class LogicalTile;
 class MaterializationExecutor : public AbstractExecutor {
  public:
   explicit MaterializationExecutor(const planner::AbstractPlanNode *node);
+  MaterializationExecutor(const MaterializationExecutor &) = delete;
+  MaterializationExecutor& operator=(const MaterializationExecutor &) = delete;
+  MaterializationExecutor(MaterializationExecutor &&) = delete;
+  MaterializationExecutor& operator=(MaterializationExecutor &&) = delete;
 
  protected:
   bool SubInit();
