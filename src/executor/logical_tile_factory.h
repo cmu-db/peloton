@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <vector>
+
 namespace nstore {
 
 namespace storage {
@@ -19,9 +21,9 @@ class LogicalTileFactory {
  public:
   static LogicalTile *GetTile();
 
-  static LogicalTile *WrapBaseTile(
-      storage::Tile *base_tile,
-      bool own_base_tile);
+  static LogicalTile *WrapBaseTiles(
+      const std::vector<storage::Tile *> &base_tile,
+      bool own_base_tiles);
 };
 
 } // namespace executor
