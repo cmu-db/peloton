@@ -27,10 +27,10 @@ class AbstractExecutor {
 
   void CleanUp();
 
+  void AddChild(AbstractExecutor *child);
+
  protected:
   explicit AbstractExecutor(const planner::AbstractPlanNode *node);
-
-  void AddChild(AbstractExecutor *child);
 
   /** @brief Init function to be overriden by subclass. */
   virtual bool SubInit() = 0;

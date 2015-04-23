@@ -161,6 +161,15 @@ int LogicalTile::NumTuples() {
 }
 
 /**
+ * @brief Returns the number of columns.
+ *
+ * @return Number of columns.
+ */
+int LogicalTile::NumCols() {
+  return schema_.size();
+}
+
+/**
  * @brief Returns iterator pointing to first tuple.
  *
  * @return iterator pointing to first tuple.
