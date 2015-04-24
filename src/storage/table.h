@@ -14,6 +14,7 @@
 
 #include "catalog/manager.h"
 #include "storage/tile_group.h"
+#include "storage/backend_vm.h"
 
 #include <string>
 
@@ -43,14 +44,12 @@ class Table {
  public:
 
   // Table constructor
-  Table(const catalog::Schema& schema,
-        Backend *backend,
-        size_t tuple_count)
+  Table(catalog::Schema *schema,
+        Backend *backend)
  : database_id(INVALID_ID),
    table_id(INVALID_ID),
    backend(backend),
-   schema(schema),
-   tuple_count(tuple_count) {
+   schema(schema){
   }
 
   ~Table() {
@@ -59,6 +58,16 @@ class Table {
     for(auto tile_group : tile_groups)
       delete tile_group;
 
+    // table owns its backend
+    delete backend;
+  }
+
+  catalog::Schema *GetSchema() const{
+    return schema;
+  }
+
+  Backend *GetBackend() const {
+    return backend;
   }
 
   //===--------------------------------------------------------------------===//
@@ -75,19 +84,21 @@ class Table {
   //===--------------------------------------------------------------------===//
 
   // Catalog information
-  oid_t database_id;
-  oid_t table_id;
+  id_t database_id;
+  id_t table_id;
 
   // backend
   Backend *backend;
 
   // table schema
-  catalog::Schema schema;
+  catalog::Schema *schema;
 
   // set of tile groups
   std::vector<TileGroup*> tile_groups;
 
-  size_t tuple_count;
+  // TODO need some policy ?
+  // number of tuples allocated per tilegroup for this table
+  size_t tuples_per_tilegroup = 1000;
 
   std::mutex table_mutex;
 };
@@ -102,11 +113,12 @@ class TableFactory {
   virtual ~TableFactory();
 
   static Table *GetTable(oid_t database_id,
-                         Backend* backend,
-                         catalog::Schema schema,
-                         size_t tuple_count) {
+                         catalog::Schema *schema) {
 
-    Table *table =  new Table(schema, backend, tuple_count);
+    // create a new backend
+    Backend* backend = new VMBackend();
+
+    Table *table =  new Table(schema, backend);
 
     table->database_id = database_id;
 

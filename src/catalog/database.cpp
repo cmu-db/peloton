@@ -38,6 +38,19 @@ bool Database::RemoveTable(const std::string &table_name) {
   return false;
 }
 
+std::ostream& operator<<(std::ostream& os, const Database& database) {
+
+  os << "\t-----------------------------------------------------------\n";
+  os << "\tDATABASE " << database.name << "\n\n";
+  for(auto table : database.tables) {
+    os << (*table);
+  }
+  os << "\t-----------------------------------------------------------\n";
+
+  return os;
+}
+
+
 } // End catalog namespace
 } // End nstore namespace
 

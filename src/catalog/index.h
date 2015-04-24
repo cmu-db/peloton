@@ -13,6 +13,10 @@
 #pragma once
 
 #include "common/types.h"
+#include "index/index.h"
+
+#include <vector>
+#include <iostream>
 
 namespace nstore {
 namespace catalog {
@@ -52,6 +56,17 @@ class Index {
     return columns;
   }
 
+  void SetPhysicalIndex(index::Index* index) {
+    physical_index = index;
+  }
+
+  index::Index *GetPhysicalIndex() {
+    return physical_index;
+  }
+
+  // Get a string representation of this index
+  friend std::ostream& operator<<(std::ostream& os, const Index& index);
+
  private:
   std::string name;
 
@@ -63,6 +78,10 @@ class Index {
 
   // Columns referenced by the index
   std::vector<Column*> columns;
+
+  // underlying physical index
+  index::Index* physical_index = nullptr;
+
 };
 
 } // End catalog namespace

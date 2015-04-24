@@ -13,6 +13,7 @@
 #pragma once
 
 #include "catalog/table.h"
+#include <iostream>
 
 namespace nstore {
 namespace catalog {
@@ -36,6 +37,9 @@ class Database {
   bool AddTable(Table* table);
   Table* GetTable(const std::string &table_name) const;
   bool RemoveTable(const std::string &table_name);
+
+  // Get a string representation of this database
+  friend std::ostream& operator<<(std::ostream& os, const Database& database);
 
  private:
   std::string name;

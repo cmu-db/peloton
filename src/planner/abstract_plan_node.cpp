@@ -33,9 +33,6 @@ AbstractPlanNode::AbstractPlanNode()
 }
 
 AbstractPlanNode::~AbstractPlanNode() {
-  // clean up executor
-  delete executor;
-
   // clean up inlined nodes
   for (auto node : inlined_nodes){
     delete node.second;

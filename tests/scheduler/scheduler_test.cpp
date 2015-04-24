@@ -52,6 +52,7 @@ TEST(SchedulerTests, KernelTest) {
 
   scheduler::Scheduler::GetInstance().AddTask((ResultType (*)(void*)) kernel_func,
                                               (void *)
+                                              "CREATE DATABASE TEST;"
                                               "CREATE TABLE T (T_ID INTEGER NOT NULL,"
                                               "  DESCRIPTION VARCHAR(300),"
                                               "  PRIMARY KEY (T_ID)"
@@ -75,7 +76,11 @@ TEST(SchedulerTests, KernelTest) {
                                               " ai_type TINYINT NOT NULL,"
                                               " PRIMARY KEY (s_id, ait_type),"
                                               " FOREIGN KEY (sx_id) REFERENCES SUBSCRIBER (s_id)"
-                                              " );");
+                                              " );"
+                                              "CREATE INDEX T_INDEX ON T (T_ID, DESCRIPTION);"
+                                              "CREATE INDEX T_INDEX_2 ON T (DETION);"
+                                              "CREATE INDEX XYZ_INDEX ON T ( DESCRIPTION );"
+                                              );
 
   // final wait
   scheduler::Scheduler::GetInstance().Wait();

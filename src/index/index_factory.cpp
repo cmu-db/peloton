@@ -22,11 +22,7 @@ namespace index {
 
 Index *IndexFactory::GetInstance(const IndexMetadata &metadata) {
 
-  //bool unique = metadata.unique_keys;
-  //IndexType type = metadata.type;
-
   catalog::Schema *key_schema = metadata.key_schema;
-  //const id_t key_size = key_schema->GetLength();
 
   std::cout << "Creating index : "<< metadata.identifier << " " << (*key_schema);
 
