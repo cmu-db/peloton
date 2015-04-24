@@ -35,17 +35,17 @@ class Table {
 
   ~Table(){
 
-    // clean up columns
-    for(auto col : columns)
-      delete col;
-
     // clean up indices
     for(auto index : indexes)
-      delete index;
+     delete index;
 
     // clean up constraints
     for(auto constraint : constraints)
       delete constraint;
+
+    // clean up columns
+    for(auto col : columns)
+      delete col;
 
     // clean up underlying physical table
     delete physical_table;
