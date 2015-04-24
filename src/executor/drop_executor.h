@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * create_executor.h
+ * drop_executor.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/executor/create_executor.h
+ * /n-store/src/executor/drop_executor.h
  *
  *-------------------------------------------------------------------------
  */
@@ -19,10 +19,10 @@ namespace nstore {
 namespace executor {
 
 //===--------------------------------------------------------------------===//
-// Create Statements
+// Drop Statements
 //===--------------------------------------------------------------------===//
 
-class CreateExecutor {
+class DropExecutor {
 
  public:
 
@@ -32,4 +32,3 @@ class CreateExecutor {
 
 } // namespace executor
 } // namespace nstore
-

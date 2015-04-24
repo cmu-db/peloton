@@ -18,9 +18,8 @@
 #include "storage/tuple.h"
 #include "storage/tile_group_header.h"
 #include "storage/backend.h"
-#include "storage/vm_backend.h"
-
 #include <mutex>
+#include "backend_vm.h"
 
 namespace nstore {
 namespace storage {

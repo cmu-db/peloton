@@ -1,35 +1,35 @@
 /*-------------------------------------------------------------------------
  *
- * create_executor.h
+ * executor_context.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/executor/create_executor.h
+ * /n-store/src/common/executor_context.h
  *
  *-------------------------------------------------------------------------
  */
 
 #pragma once
 
-#include "catalog/catalog.h"
-#include "parser/parser.h"
+#include "common/types.h"
 
 namespace nstore {
-namespace executor {
 
 //===--------------------------------------------------------------------===//
-// Create Statements
+// Executor Context
 //===--------------------------------------------------------------------===//
 
-class CreateExecutor {
-
+/**
+ * EE global data required by executors at runtime.
+ */
+class ExecutorContext {
  public:
 
-  static bool Execute(parser::SQLStatement *query);
+  ExecutorContext() {
+  }
 
 };
 
-} // namespace executor
-} // namespace nstore
+} // End nstore namespace
 
