@@ -84,6 +84,30 @@ bool Table::RemoveConstraint(const std::string &constraint_name) {
   return false;
 }
 
+std::ostream& operator<<(std::ostream& os, const Table& table) {
+
+  os << "\tTABLE : " << table.name << "\n";
+
+  for(auto column : table.columns) {
+    os << (*column);
+  }
+
+  os << "\n";
+
+  for(auto index : table.indexes) {
+    os << (*index);
+  }
+
+  os << "\n";
+
+  for(auto constraint : table.constraints) {
+    os << (*constraint);
+  }
+
+  return os;
+}
+
+
 } // End catalog namespace
 } // End nstore namespace
 

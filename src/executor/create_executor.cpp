@@ -10,11 +10,15 @@
  *-------------------------------------------------------------------------
  */
 
-#include "catalog/catalog.h"
 #include "executor/create_executor.h"
-#include "parser/statement_create.h"
-#include "common/logger.h"
+
+#include "catalog/catalog.h"
 #include "catalog/database.h"
+#include "common/logger.h"
+#include "common/types.h"
+#include "index/index_factory.h"
+#include "parser/statement_create.h"
+#include "storage/table.h"
 
 #include <cassert>
 #include <algorithm>
@@ -117,6 +121,7 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
       }
 
       table = new catalog::Table(stmt->name);
+      std::vector<catalog::ColumnInfo> physical_columns;
 
       oid_t offset = 0;
       oid_t constraint_id = 0;
@@ -228,7 +233,14 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
                                                         col_len,
                                                         col->not_null);
 
-          bool status = table->AddColumn(column);
+          bool varlen = false;
+          if(col->varlen != 0)
+            varlen = true;
+
+          catalog::ColumnInfo physical_column(type, col_len, col->name, !col->not_null, varlen);
+          physical_columns.push_back(physical_column);
+
+          status = table->AddColumn(column);
           if(status == false) {
             LOG_ERROR("Could not create column : %s \n", column->GetName().c_str());
             delete table;
@@ -238,9 +250,16 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
         }
       }
 
+      //===--------------------------------------------------------------------===//
+      // Physical table
+      //===--------------------------------------------------------------------===//
+
+      catalog::Schema *schema = new catalog::Schema(physical_columns);
+      storage::Table *physical_table = storage::TableFactory::GetTable(DEFAULT_DB_ID, schema);
+      table->SetPhysicalTable(physical_table);
+
       db->AddTable(table);
       LOG_WARN("Created table : %s \n", stmt->name);
-
     }
     break;
 
@@ -258,7 +277,6 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
 
       database = new catalog::Database(stmt->name);
       catalog::Catalog::GetInstance().AddDatabase(database);
-
       LOG_WARN("Created database : %s \n", stmt->name);
     }
     break;
@@ -267,8 +285,76 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
     // INDEX
     //===--------------------------------------------------------------------===//
 
-    case parser::CreateStatement::kIndex:
-      break;
+    case parser::CreateStatement::kIndex: {
+
+      //===--------------------------------------------------------------------===//
+      // Validation
+      //===--------------------------------------------------------------------===//
+
+      catalog::Table *table = db->GetTable(stmt->table_name);
+      if(table == nullptr) {
+        LOG_ERROR("Table does not exist  : %s \n", stmt->table_name);
+        return false;
+      }
+
+      if(stmt->index_attrs == nullptr) {
+        LOG_ERROR("No index attributes defined for index : %s \n", stmt->name);
+        return false;
+      }
+
+      std::vector<id_t> key_attrs;
+      std::vector<catalog::Column*> table_columns = table->GetColumns();
+      std::vector<catalog::Column*> key_columns;
+
+      for(auto key : *(stmt->index_attrs)){
+        catalog::Column *column = table->GetColumn(key);
+        if(column == nullptr) {
+          LOG_ERROR("Index attribute does not exist in table : %s %s \n", key, stmt->table_name);
+          return false;
+        }
+        else{
+          key_attrs.push_back(column->GetOffset());
+          key_columns.push_back(column);
+        }
+      }
+
+      //===--------------------------------------------------------------------===//
+      // Physical index
+      //===--------------------------------------------------------------------===//
+
+      catalog::Schema *tuple_schema = table->GetTable()->GetSchema();
+      catalog::Schema *key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+
+      index::IndexMetadata index_metadata(stmt->name,
+                                          INDEX_TYPE_BTREE_MULTIMAP,
+                                          tuple_schema,
+                                          key_schema,
+                                          stmt->unique);
+
+      index::Index *physical_index = nullptr;
+      //index::Index *physical_index = new index::IndexFactory::GetInstance(index_metadata);
+
+      catalog::Index *index = new catalog::Index(stmt->name,
+                                                 INDEX_TYPE_BTREE_MULTIMAP,
+                                                 stmt->unique,
+                                                 key_columns);
+
+      bool status = table->AddIndex(index);
+      if(status == false) {
+        LOG_ERROR("Could not create index : %s \n", stmt->name);
+        delete physical_index;
+        delete index;
+        return false;
+      }
+
+      index->SetPhysicalIndex(physical_index);
+
+      table->AddIndex(index);
+      LOG_WARN("Created index : %s \n", stmt->name);
+
+      std::cout << (*db);
+    }
+    break;
 
     default:
       std::cout << "Unknown create statement type : " << stmt->type << "\n";
