@@ -48,8 +48,11 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
 
   // BTREE INDEX
 
-  index::IndexMetadata index_metadata("btree_index", INDEX_TYPE_BTREE_MULTIMAP,
-                                      tuple_schema, key_schema, true);
+  index::IndexMetadata *index_metadata = new index::IndexMetadata("btree_index",
+                                                                  INDEX_TYPE_BTREE_MULTIMAP,
+                                                                  tuple_schema,
+                                                                  key_schema,
+                                                                  true);
 
 
   storage::VMBackend *backend = new storage::VMBackend();
@@ -130,7 +133,6 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   delete backend;
 
   delete tuple_schema;
-  delete key_schema;
 
   delete index;
 }

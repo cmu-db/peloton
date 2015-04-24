@@ -38,7 +38,7 @@ std::string GetTypeName(ValueType type) {
     case (VALUE_TYPE_NULL):			return "NULL";
     default: {
       char buffer[32];
-      snprintf(buffer, 32, "UNKNOWN[%d]", type);
+      ::snprintf(buffer, 32, "UNKNOWN[%d]", type);
       ret = buffer;
     }
   }
@@ -54,7 +54,7 @@ std::string GetBackendTypeName(BackendType type) {
     case (BACKEND_TYPE_INVALID):	return "INVALID";
     default: {
       char buffer[32];
-      snprintf(buffer, 32, "UNKNOWN[%d]", type);
+      ::snprintf(buffer, 32, "UNKNOWN[%d]", type);
       ret = buffer;
     }
   }

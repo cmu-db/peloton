@@ -50,6 +50,13 @@ class IndexMetadata {
 
   }
 
+  ~IndexMetadata(){
+    // clean up key schema
+    delete key_schema;
+
+    // no need to clean the tuple schema
+  }
+
   void SetIndexType(IndexType _type) {
     type = _type;
   }
@@ -57,9 +64,6 @@ class IndexMetadata {
   std::string identifier;
 
   IndexType type;
-
-  // catalog
-  catalog::Manager *catalog;
 
   // schema of tuple values
   catalog::Schema *tuple_schema;
@@ -92,7 +96,11 @@ class Index
 
  public:
 
-  virtual ~Index(){};
+  virtual ~Index(){
+
+    // clean up metadata
+    delete metadata;
+  }
 
   //===--------------------------------------------------------------------===//
   // Mutators
@@ -156,7 +164,7 @@ class Index
     return identifier;
   }
 
-  const catalog::Schema * GetKeySchema() const {
+  const catalog::Schema *GetKeySchema() const {
     return key_schema;
   }
 
@@ -165,19 +173,19 @@ class Index
 
   void GetInfo() const;
 
-  IndexMetadata GetMetadata() const {
+  IndexMetadata *GetMetadata() const {
     return metadata;
   }
 
  protected:
 
-  Index(const IndexMetadata &scheme);
+  Index(IndexMetadata *schema);
 
   //===--------------------------------------------------------------------===//
   //  Data members
   //===--------------------------------------------------------------------===//
 
-  const IndexMetadata metadata;
+  IndexMetadata *metadata;
 
   std::string identifier;
 

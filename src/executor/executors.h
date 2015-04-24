@@ -15,4 +15,5 @@
 // This is just for convenience
 
 #include "executor/create_executor.h"
+#include "executor/drop_executor.h"
 

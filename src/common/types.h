@@ -51,6 +51,9 @@ namespace nstore {
 #define VALUE_COMPARE_EQUAL 		  0
 #define VALUE_COMPARE_GREATERTHAN 	  1
 
+#define DEFAULT_DB_ID  12345
+#define DEFAULT_DB_NAME "default"
+
 //===--------------------------------------------------------------------===//
 // Other Constants
 //===--------------------------------------------------------------------===//

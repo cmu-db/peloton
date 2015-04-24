@@ -118,8 +118,26 @@ ResultType Kernel::Handler(const char* query) {
   for(auto statement : statements){
 
     // Take of DML
-    if(statement->GetType() == STATEMENT_TYPE_CREATE) {
-      executor::CreateExecutor::Execute(statement);
+    switch(statement->GetType()){
+
+      case STATEMENT_TYPE_CREATE:
+
+        catalog::Catalog::GetInstance().Lock();
+        executor::CreateExecutor::Execute(statement);
+        catalog::Catalog::GetInstance().Unlock();
+
+        break;
+
+      case STATEMENT_TYPE_DROP:
+
+        catalog::Catalog::GetInstance().Lock();
+        executor::DropExecutor::Execute(statement);
+        catalog::Catalog::GetInstance().Unlock();
+
+        break;
+
+      default:
+        break;
     }
 
     // Validate and construct query plan
