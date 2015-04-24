@@ -60,6 +60,7 @@ bool DropExecutor::Execute(parser::SQLStatement *query) {
       // this will also clean the underlying physical table
       delete table;
       LOG_WARN("Dropped table : %s \n", stmt->name);
+      std::cout << (*db);
       return true;
     }
     break;
