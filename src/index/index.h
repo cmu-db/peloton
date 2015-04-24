@@ -50,6 +50,13 @@ class IndexMetadata {
 
   }
 
+  ~IndexMetadata(){
+    // clean up key schema
+    delete key_schema;
+
+    // no need to clean the tuple schema
+  }
+
   void SetIndexType(IndexType _type) {
     type = _type;
   }
@@ -89,7 +96,11 @@ class Index
 
  public:
 
-  virtual ~Index(){};
+  virtual ~Index(){
+
+    // clean up metadata
+    delete metadata;
+  }
 
   //===--------------------------------------------------------------------===//
   // Mutators
@@ -162,19 +173,19 @@ class Index
 
   void GetInfo() const;
 
-  IndexMetadata GetMetadata() const {
+  IndexMetadata *GetMetadata() const {
     return metadata;
   }
 
  protected:
 
-  Index(const IndexMetadata &scheme);
+  Index(IndexMetadata *schema);
 
   //===--------------------------------------------------------------------===//
   //  Data members
   //===--------------------------------------------------------------------===//
 
-  const IndexMetadata metadata;
+  IndexMetadata *metadata;
 
   std::string identifier;
 

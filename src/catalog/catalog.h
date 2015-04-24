@@ -13,7 +13,9 @@
 #pragma once
 
 #include "catalog/database.h"
+
 #include <iostream>
+#include <mutex>
 
 namespace nstore {
 namespace catalog {
@@ -35,6 +37,12 @@ class Catalog {
     databases.push_back(db);
   }
 
+  ~Catalog() {
+    // clean up databases
+    for(auto db : databases)
+      delete db;
+  }
+
   bool AddDatabase(Database* db);
   Database* GetDatabase(const std::string &db_name) const;
   bool RemoveDatabase(const std::string &db_name);
@@ -42,10 +50,20 @@ class Catalog {
   // Get a string representation of this catalog
   friend std::ostream& operator<<(std::ostream& os, const Catalog& catalog);
 
+  void Lock(){
+    catalog_mtx.lock();
+  }
+
+  void Unlock(){
+    catalog_mtx.unlock();
+  }
+
  private:
 
   // list of databases in catalog
   std::vector<Database*> databases;
+
+  std::mutex catalog_mtx;
 
 };
 

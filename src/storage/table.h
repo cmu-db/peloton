@@ -60,6 +60,9 @@ class Table {
 
     // table owns its backend
     delete backend;
+
+    // clean up schema
+    delete schema;
   }
 
   catalog::Schema *GetSchema() const{
