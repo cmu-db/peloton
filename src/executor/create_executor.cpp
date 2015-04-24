@@ -28,11 +28,12 @@ namespace executor {
 
 bool CreateExecutor::Execute(parser::SQLStatement *query) {
 
-  // Handle DDL statements
   parser::CreateStatement* stmt = (parser::CreateStatement*) query;
 
   // Get default db
-  catalog::Database* db = catalog::Catalog::GetInstance().GetDatabase("default");
+  catalog::Database* db = catalog::Catalog::GetInstance().GetDatabase(DEFAULT_DB_NAME);
+  assert(db);
+  assert(stmt->name);
 
   switch(stmt->type) {
 
@@ -42,9 +43,6 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
 
     case parser::CreateStatement::kTable: {
       catalog::Table *table = nullptr;
-
-      assert(db);
-      assert(stmt->name);
       assert(stmt->columns);
 
       // Column names
@@ -260,6 +258,7 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
 
       db->AddTable(table);
       LOG_WARN("Created table : %s \n", stmt->name);
+      return true;
     }
     break;
 
@@ -278,6 +277,7 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
       database = new catalog::Database(stmt->name);
       catalog::Catalog::GetInstance().AddDatabase(database);
       LOG_WARN("Created database : %s \n", stmt->name);
+      return true;
     }
     break;
 
@@ -352,7 +352,7 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
       table->AddIndex(index);
       LOG_WARN("Created index : %s \n", stmt->name);
 
-      std::cout << (*db);
+      return true;
     }
     break;
 

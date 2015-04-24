@@ -16,6 +16,7 @@
 #include "scheduler/traffic_cop.h"
 #include "scheduler/scheduler.h"
 #include "backend/kernel.h"
+#include "catalog/catalog.h"
 
 #include <sstream>
 
@@ -80,6 +81,8 @@ TEST(SchedulerTests, KernelTest) {
                                               "CREATE INDEX T_INDEX ON T (T_ID, DESCRIPTION);"
                                               "CREATE INDEX T_INDEX_2 ON T (DETION);"
                                               "CREATE INDEX XYZ_INDEX ON T ( DESCRIPTION );"
+                                              "DROP INDEX T_INDEX ON T;"
+                                              "DROP TABLE T;"
                                               );
 
   // final wait

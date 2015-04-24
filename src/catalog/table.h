@@ -33,6 +33,24 @@ class Table {
  : name(name) {
   }
 
+  ~Table(){
+
+    // clean up columns
+    for(auto col : columns)
+      delete col;
+
+    // clean up indices
+    for(auto index : indexes)
+      delete index;
+
+    // clean up constraints
+    for(auto constraint : constraints)
+      delete constraint;
+
+    // clean up underlying physical table
+    delete physical_table;
+  }
+
   std::string GetName() {
     return name;
   }

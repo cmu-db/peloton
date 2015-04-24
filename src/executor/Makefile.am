@@ -9,7 +9,8 @@ executor_FILES = \
 		executor/logical_tile.cpp \
 		executor/logical_tile_factory.cpp \
 		executor/materialization_executor.cpp \
-		executor/create_executor.cpp
+		executor/create_executor.cpp \
+		executor/drop_executor.cpp
 		
 executor_INCLUDES = \
                     -I$(srcdir)/executor

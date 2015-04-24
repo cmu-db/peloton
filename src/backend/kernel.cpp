@@ -118,8 +118,17 @@ ResultType Kernel::Handler(const char* query) {
   for(auto statement : statements){
 
     // Take of DML
-    if(statement->GetType() == STATEMENT_TYPE_CREATE) {
-      executor::CreateExecutor::Execute(statement);
+    switch(statement->GetType()){
+      case STATEMENT_TYPE_CREATE:
+        executor::CreateExecutor::Execute(statement);
+        break;
+
+      case STATEMENT_TYPE_DROP:
+        executor::DropExecutor::Execute(statement);
+        break;
+
+      default:
+        break;
     }
 
     // Validate and construct query plan
