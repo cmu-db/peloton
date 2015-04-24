@@ -13,6 +13,10 @@
 #pragma once
 
 #include "common/types.h"
+#include "index/index.h"
+
+#include <vector>
+#include <iostream>
 
 namespace nstore {
 namespace catalog {
@@ -36,6 +40,14 @@ class Index {
    columns(columns){
   }
 
+  ~Index() {
+    // don't clean up columns here
+    // they will cleaned in their respective tables
+
+    // clean up underlying index
+    delete physical_index;
+  }
+
   std::string GetName() {
     return name;
   }
@@ -52,6 +64,17 @@ class Index {
     return columns;
   }
 
+  void SetPhysicalIndex(index::Index* index) {
+    physical_index = index;
+  }
+
+  index::Index *GetPhysicalIndex() {
+    return physical_index;
+  }
+
+  // Get a string representation of this index
+  friend std::ostream& operator<<(std::ostream& os, const Index& index);
+
  private:
   std::string name;
 
@@ -63,6 +86,10 @@ class Index {
 
   // Columns referenced by the index
   std::vector<Column*> columns;
+
+  // underlying physical index
+  index::Index* physical_index = nullptr;
+
 };
 
 } // End catalog namespace

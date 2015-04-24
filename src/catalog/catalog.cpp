@@ -44,5 +44,16 @@ bool Catalog::RemoveDatabase(const std::string &db_name) {
   return false;
 }
 
+std::ostream& operator<<(std::ostream& os, const Catalog& catalog) {
+
+  os << "\tCATALOG : \n";
+  for(auto db : catalog.databases) {
+    os << (*db);
+  }
+
+  return os;
+}
+
+
 } // End catalog namespace
 } // End nstore namespace

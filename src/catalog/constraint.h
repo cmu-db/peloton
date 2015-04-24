@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 namespace nstore {
 namespace catalog {
@@ -34,8 +35,8 @@ class Constraint {
   enum ConstraintType{
     CONSTRAINT_TYPE_INVALID = 0, // invalid
 
-    CONSTRAINT_TYPE_PRIMARY = 0, // primary key
-    CONSTRAINT_TYPE_FOREIGN = 0  // foreign key
+    CONSTRAINT_TYPE_PRIMARY = 1, // primary key
+    CONSTRAINT_TYPE_FOREIGN = 2  // foreign key
   };
 
   Constraint(std::string name,
@@ -75,6 +76,9 @@ class Constraint {
   std::vector<Column*> GetForeignColumns() const {
     return foreign_columns;
   }
+
+  // Get a string representation of this constraint
+  friend std::ostream& operator<<(std::ostream& os, const Constraint& constraint);
 
  private:
   std::string name;

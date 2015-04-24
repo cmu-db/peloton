@@ -309,7 +309,7 @@ TEST(ParserTests, IndexTest) {
   queries.push_back("CREATE UNIQUE INDEX i_security "
       " ON security (s_co_id, s_issue);");
 
-  queries.push_back("DROP INDEX i_security;");
+  queries.push_back("DROP INDEX i_security ON security;");
   queries.push_back("DROP DATABASE i_security;");
 
   // Parsing
