@@ -16,20 +16,20 @@ namespace nstore {
 namespace index {
 
 
-BtreeMultimapIndex::BtreeMultimapIndex(const IndexMetadata &metadata)
+BtreeMultimapIndex::BtreeMultimapIndex(IndexMetadata *metadata)
 : Index(metadata) {
 
   // Start manager
   size_t pool_size = 1024;
   unsigned int bits = 16;
 
-  btree_manager = bt_mgr ((char *) metadata.identifier.c_str(), bits, pool_size);
+  btree_manager = bt_mgr ((char *) metadata->identifier.c_str(), bits, pool_size);
 
   btree_db = bt_open (btree_manager);
 
   btree_db->key_schema = key_schema;
 
-  unique_keys = metadata.unique_keys;
+  unique_keys = metadata->unique_keys;
 }
 
 BtreeMultimapIndex::~BtreeMultimapIndex(){

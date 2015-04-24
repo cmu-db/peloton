@@ -27,7 +27,7 @@ class IndexFactory {
  public:
 
   // Get an index with required attributes
-  static Index *GetInstance(const IndexMetadata &metadata);
+  static Index *GetInstance(IndexMetadata *metadata);
 
 };
 

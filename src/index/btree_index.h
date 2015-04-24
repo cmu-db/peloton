@@ -33,7 +33,7 @@ class BtreeMultimapIndex : public Index {
 
  public:
 
-  BtreeMultimapIndex(const IndexMetadata &metadata);
+  BtreeMultimapIndex(IndexMetadata *metadata);
 
   ~BtreeMultimapIndex();
 
