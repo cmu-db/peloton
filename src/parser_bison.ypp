@@ -419,9 +419,9 @@ column_type:
 
 /******************************
  * Drop Statement
- * DROP TABLE students;
- * DROP DATABASE students;
- * DROP INDEX students;
+ * DROP TABLE student_table;
+ * DROP DATABASE student_db;
+ * DROP INDEX student_index ON student_table;
  * DEALLOCATE PREPARE stmt;
  ******************************/
 
@@ -436,9 +436,10 @@ drop_statement:
 			$$->name = $3;
 		}
 		|	
-		DROP INDEX IDENTIFIER {
+		DROP INDEX IDENTIFIER ON table_name  {
 			$$ = new DropStatement(DropStatement::kIndex);
 			$$->name = $3;
+			$$->table_name = $5;
 		}
 		|	
 		DEALLOCATE PREPARE IDENTIFIER {

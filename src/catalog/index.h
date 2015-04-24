@@ -40,6 +40,14 @@ class Index {
    columns(columns){
   }
 
+  ~Index() {
+    // don't clean up columns here
+    // they will cleaned in their respective tables
+
+    // clean up underlying index
+    delete physical_index;
+  }
+
   std::string GetName() {
     return name;
   }

@@ -30,6 +30,14 @@ class Database {
  : name(name) {
   }
 
+  ~Database() {
+
+    // clean up tables
+    for(auto table : tables)
+      delete table;
+
+  }
+
   std::string GetName() {
     return name;
   }
