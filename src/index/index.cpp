@@ -17,15 +17,15 @@
 namespace nstore {
 namespace index {
 
-Index::Index(const IndexMetadata &metadata) :
-                    metadata(metadata),
-                    identifier(metadata.identifier),
-                    key_schema(metadata.key_schema),
-                    tuple_schema(metadata.tuple_schema),
-                    unique_keys(metadata.unique_keys) {
+Index::Index(IndexMetadata *metadata)
+: metadata(metadata),
+  identifier(metadata->identifier),
+  key_schema(metadata->key_schema),
+  tuple_schema(metadata->tuple_schema),
+  unique_keys(metadata->unique_keys) {
 
   // # of columns in key
-  column_count = metadata.key_schema->GetColumnCount();
+  column_count = metadata->key_schema->GetColumnCount();
 
   // initialize counters
   lookup_counter = insert_counter = delete_counter = update_counter = 0;
