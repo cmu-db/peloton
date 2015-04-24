@@ -57,6 +57,9 @@ class Column {
     return not_null;
   }
 
+  // Get a string representation of this column
+  friend std::ostream& operator<<(std::ostream& os, const Column& column);
+
  private:
   std::string name;
 

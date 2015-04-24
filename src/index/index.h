@@ -58,9 +58,6 @@ class IndexMetadata {
 
   IndexType type;
 
-  // catalog
-  catalog::Manager *catalog;
-
   // schema of tuple values
   catalog::Schema *tuple_schema;
 
@@ -156,7 +153,7 @@ class Index
     return identifier;
   }
 
-  const catalog::Schema * GetKeySchema() const {
+  const catalog::Schema *GetKeySchema() const {
     return key_schema;
   }
 

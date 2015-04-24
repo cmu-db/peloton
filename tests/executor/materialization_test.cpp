@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "../../src/storage/backend_vm.h"
 #include "gtest/gtest.h"
 
 #include "catalog/manager.h"
@@ -24,8 +25,6 @@
 #include "storage/tile.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
-#include "storage/vm_backend.h"
-
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
 #include "harness.h"

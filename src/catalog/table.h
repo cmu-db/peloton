@@ -14,6 +14,9 @@
 
 #include "catalog/column.h"
 #include "catalog/index.h"
+#include "storage/table.h"
+
+#include <iostream>
 
 namespace nstore {
 namespace catalog {
@@ -46,6 +49,18 @@ class Table {
     return constraints;
   }
 
+  storage::Table *GetTable() const {
+    return physical_table;
+  }
+
+  void SetPhysicalTable(storage::Table* table_) {
+    physical_table = table_;
+  }
+
+  storage::Table *GetPhysicalTable() {
+    return physical_table;
+  }
+
   bool AddColumn(Column* column);
   Column* GetColumn(const std::string &column_name) const;
   bool RemoveColumn(const std::string &column_name);
@@ -58,6 +73,9 @@ class Table {
   Constraint* GetConstraint(const std::string &constraint_name) const;
   bool RemoveConstraint(const std::string &constraint_name);
 
+  // Get a string representation of this table
+  friend std::ostream& operator<<(std::ostream& os, const Table& table);
+
  private:
   std::string name;
 
@@ -69,6 +87,9 @@ class Table {
 
   // constraints for column
   std::vector<Constraint*> constraints;
+
+  // underlying physical table
+  storage::Table* physical_table = nullptr;
 };
 
 } // End catalog namespace

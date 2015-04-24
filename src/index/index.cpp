@@ -41,7 +41,7 @@ std::ostream& operator<<(std::ostream& os, const Index& index) {
   os << index.GetTypeName() << "\t(" << index.GetName() << ")";
   os << (index.HasUniqueKeys() ? " UNIQUE " : " NON-UNIQUE") << "\n";
 
-  os << "\tValue schema : " << (*index.tuple_schema) ;
+  os << "\tValue schema : " << index.tuple_schema ;
 
   os << "\t-----------------------------------------------------------\n";
 
