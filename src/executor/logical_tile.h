@@ -99,7 +99,11 @@ class LogicalTile {
     /** @brief Index of position list corresponding to this column. */
     unsigned int position_list_idx;
 
-    /** @brief Pointer to base tile that column is from. */
+    /**
+     * @brief Pointer to base tile that column is from.
+     *
+     * We use a pointer instead of the oid of the tile to minimize indirection.
+     */
     storage::Tile *base_tile;
 
     /** @brief Original column id of this column in the base tile. */
