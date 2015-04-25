@@ -14,6 +14,7 @@
 
 #include "catalog/table.h"
 #include <iostream>
+#include <mutex>
 
 namespace nstore {
 namespace catalog {
@@ -49,12 +50,21 @@ class Database {
   // Get a string representation of this database
   friend std::ostream& operator<<(std::ostream& os, const Database& database);
 
+  void Lock(){
+    database_mtx.lock();
+  }
+
+  void Unlock(){
+    database_mtx.unlock();
+  }
+
  private:
   std::string name;
 
   // tables in db
   std::vector<Table*> tables;
 
+  std::mutex database_mtx;
 };
 
 } // End catalog namespace
