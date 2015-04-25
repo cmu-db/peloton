@@ -10,7 +10,6 @@
 #include <utility>
 #include <vector>
 
-#include "../../src/storage/backend_vm.h"
 #include "gtest/gtest.h"
 
 #include "catalog/manager.h"
@@ -22,9 +21,11 @@
 #include "executor/materialization_executor.h"
 #include "planner/abstract_plan_node.h"
 #include "planner/materialization_node.h"
+#include "storage/backend_vm.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
+
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
 #include "harness.h"
@@ -51,7 +52,7 @@ void PopulateTiles(storage::TileGroup *tile_group, int num_rows) {
   std::unique_ptr<catalog::Schema> schema(
     catalog::Schema::AppendSchemaList(tile_schemas));
 
-  // Ensure that the tile group created by ExecutorTestsUtil is as expected.
+  // Ensure that the tile group is as expected.
   assert(tile_schemas.size() == 2);
   assert(schema->GetColumnCount() == 4);
 
