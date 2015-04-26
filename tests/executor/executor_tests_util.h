@@ -12,6 +12,11 @@ namespace catalog {
 class Manager;
 }
 
+namespace executor {
+class AbstractExecutor;
+class LogicalTile;
+}
+
 namespace storage {
 class Backend;
 class TileGroup;
@@ -26,6 +31,10 @@ class ExecutorTestsUtil {
       int tuple_count);
 
   static void PopulateTiles(storage::TileGroup *tile_group, int num_rows);
+
+  static executor::LogicalTile *ExecuteTile(
+      executor::AbstractExecutor *executor,
+      executor::LogicalTile *source_tile);
 };
 
 } // namespace test

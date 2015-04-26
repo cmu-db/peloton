@@ -28,9 +28,7 @@
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
 
-using ::testing::IsNull;
 using ::testing::NotNull;
-using ::testing::Return;
 
 namespace nstore {
 namespace test {
@@ -71,23 +69,10 @@ TEST(MaterializationTests, SingleBaseTileTest) {
 
   // Pass them through materialization executor.
   executor::MaterializationExecutor executor(&node);
-  MockExecutor child_executor;
-  executor.AddChild(&child_executor);
-
-  // Uneventful init...
-  EXPECT_CALL(child_executor, SubInit())
-    .WillOnce(Return(true));
-  EXPECT_TRUE(executor.Init());
-
-  // Where the main work takes place...
-  EXPECT_CALL(child_executor, SubGetNextTile())
-    .WillOnce(Return(source_logical_tile.release()))
-    .WillOnce(Return(nullptr));
-
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
-    executor.GetNextTile());
-  EXPECT_THAT(result_logical_tile, NotNull());
-  EXPECT_THAT(executor.GetNextTile(), IsNull());
+      ExecutorTestsUtil::ExecuteTile(
+        &executor,
+        source_logical_tile.release()));
 
   // Verify that logical tile is only made up of a single base tile.
   int num_cols = result_logical_tile->NumCols();
@@ -129,7 +114,7 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   const std::vector<storage::Tile *> source_base_tiles =
     { tile_group->GetTile(0), tile_group->GetTile(1) };
   const bool own_base_tiles = false;
-  std::unique_ptr<executor::LogicalTile> source_tile(
+  std::unique_ptr<executor::LogicalTile> source_logical_tile(
       executor::LogicalTileFactory::WrapBaseTiles(
           source_base_tiles,
           own_base_tiles));
@@ -155,23 +140,10 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
 
   // Pass them through materialization executor.
   executor::MaterializationExecutor executor(&node);
-  MockExecutor child_executor;
-  executor.AddChild(&child_executor);
-
-  // Uneventful init...
-  EXPECT_CALL(child_executor, SubInit())
-    .WillOnce(Return(true));
-  EXPECT_TRUE(executor.Init());
-
-  // Where the main work takes place...
-  EXPECT_CALL(child_executor, SubGetNextTile())
-    .WillOnce(Return(source_tile.release()))
-    .WillOnce(Return(nullptr));
-
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
-    executor.GetNextTile());
-  EXPECT_THAT(result_logical_tile, NotNull());
-  EXPECT_THAT(executor.GetNextTile(), IsNull());
+      ExecutorTestsUtil::ExecuteTile(
+        &executor,
+        source_logical_tile.release()));
 
   // Verify that logical tile is only made up of a single base tile.
   int num_cols = result_logical_tile->NumCols();
