@@ -42,6 +42,7 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
     //===--------------------------------------------------------------------===//
 
     case parser::CreateStatement::kTable: {
+
       catalog::Table *table = nullptr;
       assert(stmt->columns);
 
@@ -256,7 +257,21 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
       storage::Table *physical_table = storage::TableFactory::GetTable(DEFAULT_DB_ID, schema);
       table->SetPhysicalTable(physical_table);
 
-      db->AddTable(table);
+      // lock database
+      {
+        db->Lock();
+
+        bool status = db->AddTable(table);
+        if(status == false) {
+          LOG_ERROR("Could not create table : %s \n", stmt->name);
+          delete table;
+          db->Unlock();
+          return false;
+        }
+
+        db->Unlock();
+      }
+
       LOG_WARN("Created table : %s \n", stmt->name);
       return true;
     }
@@ -271,11 +286,27 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
       catalog::Database *database = catalog::Catalog::GetInstance().GetDatabase(stmt->name);
       if(database != nullptr) {
         LOG_ERROR("Database already exists  : %s \n", stmt->name);
+        catalog::Catalog::GetInstance().Unlock();
         return false;
       }
 
       database = new catalog::Database(stmt->name);
-      catalog::Catalog::GetInstance().AddDatabase(database);
+
+      // lock catalog
+      {
+        catalog::Catalog::GetInstance().Lock();
+
+        bool status = catalog::Catalog::GetInstance().AddDatabase(database);
+        if(status == false) {
+          LOG_ERROR("Could not create database : %s \n", stmt->name);
+          delete database;
+          catalog::Catalog::GetInstance().Unlock();
+          return false;
+        }
+
+        catalog::Catalog::GetInstance().Unlock();
+      }
+
       LOG_WARN("Created database : %s \n", stmt->name);
       return true;
     }
@@ -339,17 +370,24 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
                                                  stmt->unique,
                                                  key_columns);
 
-      bool status = table->AddIndex(index);
-      if(status == false) {
-        LOG_ERROR("Could not create index : %s \n", stmt->name);
-        delete physical_index;
-        delete index;
-        return false;
+      // lock table
+      {
+        table->Lock();
+
+        bool status = table->AddIndex(index);
+        if(status == false) {
+          LOG_ERROR("Could not create index : %s \n", stmt->name);
+          delete physical_index;
+          delete index;
+          table->Unlock();
+          return false;
+        }
+
+        table->Unlock();
       }
 
       index->SetPhysicalIndex(physical_index);
 
-      table->AddIndex(index);
       LOG_WARN("Created index : %s \n", stmt->name);
 
       return true;
