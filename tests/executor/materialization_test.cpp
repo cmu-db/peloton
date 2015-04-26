@@ -94,9 +94,9 @@ TEST(MaterializationTests, SingleBaseTileTest) {
 
     // Double check that logical tile is functioning.
     EXPECT_EQ(result_base_tile->GetValue(i, 0),
-              result_logical_tile->GetValue(0, i));
+              result_logical_tile->GetValue(i, 0));
     EXPECT_EQ(result_base_tile->GetValue(i, 1),
-              result_logical_tile->GetValue(1, i));
+              result_logical_tile->GetValue(i, 1));
   }
 }
 
@@ -175,11 +175,11 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
 
     // Double check that logical tile is functioning.
     EXPECT_EQ(result_base_tile->GetValue(i, 0),
-              result_logical_tile->GetValue(0, i));
+              result_logical_tile->GetValue(i, 0));
     EXPECT_EQ(result_base_tile->GetValue(i, 1),
-              result_logical_tile->GetValue(1, i));
+              result_logical_tile->GetValue(i, 1));
     EXPECT_EQ(result_base_tile->GetValue(i, 2),
-              result_logical_tile->GetValue(2, i));
+              result_logical_tile->GetValue(i, 2));
   }
 }
 
