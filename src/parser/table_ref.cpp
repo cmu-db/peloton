@@ -7,6 +7,7 @@ namespace parser {
 TableRef::~TableRef() {
   free(name);
 	free(alias);
+	free(schema);
 
 	delete select;
   delete join;

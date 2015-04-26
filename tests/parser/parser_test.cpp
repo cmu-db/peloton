@@ -31,7 +31,7 @@ TEST(ParserTests, BasicTest) {
 
   // SELECT statement
   queries.push_back("SELECT * FROM orders;");
-  queries.push_back("SELECT a + b FROM orders;");
+  queries.push_back("SELECT a FROM orders;");
   queries.push_back("SELECT a FROM foo WHERE a > 12 OR b > 3 AND NOT c LIMIT 10");
   queries.push_back("SELECT * FROM foo where bar = 42 ORDER BY id DESC LIMIT 23;");
 
@@ -100,16 +100,6 @@ TEST(ParserTests, GrammarTest) {
     delete result;
   }
 
-  std::vector<std::string> faulty_queries;
-  faulty_queries.push_back("SELECT * FROM (SELECT * FROM test);"); // Missing alias for subquery
-
-  for (std::string query : faulty_queries) {
-    parser::SQLStatementList* result = parser::Parser::ParseSQLString(query.c_str());
-    EXPECT_FALSE(result->is_valid);
-    if (result->is_valid)
-      fprintf(stderr, "Parsing shouldn't have succeeded: %s\n", query.c_str());
-    delete result;
-  }
 }
 
 #define EXPECT_NULL(pointer) EXPECT_TRUE(pointer == NULL);
@@ -137,8 +127,6 @@ TEST(ParserTests, SelectParserTest) {
 
   EXPECT_NULL(stmt->where_clause);
   EXPECT_NULL(stmt->union_select);
-
-  parser::GetSelectStatementInfo(stmt, 1);
 
   // Select List
   EXPECT_EQ(stmt->select_list->size(), 2);
@@ -173,6 +161,7 @@ TEST(ParserTests, SelectParserTest) {
   // Limit
   EXPECT_EQ(stmt->limit->limit, 5);
 
+  delete list;
 }
 
 TEST(ParserTests, TransactionTest) {
@@ -196,18 +185,22 @@ TEST(ParserTests, TransactionTest) {
   parser::TransactionStatement* stmt = (parser::TransactionStatement*) list->GetStatement(0);
   EXPECT_EQ(list->GetStatement(0)->GetType(), STATEMENT_TYPE_TRANSACTION);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kBegin);
+  delete list;
 
   list = parser::Parser::ParseSQLString(valid_queries[1].c_str());
   stmt = (parser::TransactionStatement*) list->GetStatement(0);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kBegin);
+  delete list;
 
   list = parser::Parser::ParseSQLString(valid_queries[2].c_str());
   stmt = (parser::TransactionStatement*) list->GetStatement(0);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kCommit);
+  delete list;
 
   list = parser::Parser::ParseSQLString(valid_queries[3].c_str());
   stmt = (parser::TransactionStatement*) list->GetStatement(0);
   EXPECT_EQ(stmt->type, parser::TransactionStatement::kRollback);
+  delete list;
 }
 
 TEST(ParserTests, CreateTest) {
@@ -327,7 +320,6 @@ TEST(ParserTests, IndexTest) {
     }
   }
 }
-
 
 } // End test namespace
 } // End nstore namespace

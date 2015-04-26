@@ -47,19 +47,19 @@ struct ColumnDefinition {
 
     if(primary_key) {
       for(auto key : *primary_key)
-        delete key;
+        free(key);
       delete primary_key;
     }
 
     if(foreign_key_source) {
       for(auto key : *foreign_key_source)
-        delete key;
+        free(key);
       delete foreign_key_source;
     }
 
     if(foreign_key_sink) {
       for(auto key : *foreign_key_sink)
-        delete key;
+        free(key);
       delete foreign_key_sink;
     }
 

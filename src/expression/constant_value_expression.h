@@ -22,6 +22,7 @@ class ConstantValueExpression : public AbstractExpression {
   ConstantValueExpression(const Value &value)
  : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT) {
     this->value = value;
+
   }
 
   virtual ~ConstantValueExpression() {

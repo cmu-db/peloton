@@ -58,7 +58,7 @@ class SQLStatementList {
     for(auto stmt : statements)
       delete stmt;
 
-    delete parser_msg;
+    free((char *) parser_msg);
   }
 
   void AddStatement(SQLStatement* stmt) {

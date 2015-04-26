@@ -76,32 +76,31 @@ class AbstractExpression {
     }
 
     AbstractExpression* GetExpression() const{
-      return m_expr;
+      return expr;
     }
 
     const char* GetName() const {
-      return m_name.c_str();
+      return name;
     }
 
     const char* GetColumn() const {
-      return m_column.c_str();
+      return column;
     }
 
     const char* GetAlias() const {
-      return m_alias.c_str();
+      return alias;
     }
 
     // Parser expression
 
     int ival = 0;
+    AbstractExpression* expr = nullptr;
+
+    char* name = nullptr;
+    char* column = nullptr;
     char* alias = nullptr;
-    AbstractExpression* m_expr = nullptr;
 
-    std::string m_name;
-    std::string m_column;
-    std::string m_alias;
-
-    bool m_distinct = false;
+    bool distinct = false;
 
   protected:
 
