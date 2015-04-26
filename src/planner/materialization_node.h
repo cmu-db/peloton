@@ -33,13 +33,24 @@ class MaterializationNode : public AbstractPlanNode {
       std::unordered_map<id_t, id_t> &&old_to_new_cols,
       catalog::Schema *schema);
 
-  const std::unordered_map<id_t, id_t>& old_to_new_cols() const;
+  inline const std::unordered_map<id_t, id_t>& old_to_new_cols() const {
+    return old_to_new_cols_;
+  }
 
-  const catalog::Schema& schema() const;
+  inline const catalog::Schema& schema() const {
+    return *schema_;
+  }
 
-  PlanNodeType GetPlanNodeType() const;
+  inline PlanNodeType GetPlanNodeType() const {
+    //TODO Implement.
+    return PLAN_NODE_TYPE_INVALID;
+  }
 
-  std::string debugInfo(const std::string& spacer) const;
+  inline std::string debugInfo(const std::string& spacer) const {
+    //TODO Implement.
+    (void) spacer;
+    return "";
+  }
 
  private:
   /**
