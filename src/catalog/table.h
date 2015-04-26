@@ -17,6 +17,7 @@
 #include "storage/table.h"
 
 #include <iostream>
+#include <mutex>
 
 namespace nstore {
 namespace catalog {
@@ -94,6 +95,14 @@ class Table {
   // Get a string representation of this table
   friend std::ostream& operator<<(std::ostream& os, const Table& table);
 
+  void Lock(){
+    table_mtx.lock();
+  }
+
+  void Unlock(){
+    table_mtx.unlock();
+  }
+
  private:
   std::string name;
 
@@ -108,6 +117,8 @@ class Table {
 
   // underlying physical table
   storage::Table* physical_table = nullptr;
+
+  std::mutex table_mtx;
 };
 
 } // End catalog namespace
