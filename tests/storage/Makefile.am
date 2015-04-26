@@ -12,4 +12,6 @@ tuple_test_SOURCES = storage/tuple_test.cpp
 
 tile_test_SOURCES = storage/tile_test.cpp
 
-tile_group_test_SOURCES = storage/tile_group_test.cpp
+tile_group_test_SOURCES = \
+                          harness.cpp \
+                          storage/tile_group_test.cpp

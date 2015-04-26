@@ -10,68 +10,29 @@
 #include <utility>
 #include <vector>
 
-#include "../../src/storage/backend_vm.h"
 #include "gtest/gtest.h"
 
 #include "catalog/manager.h"
 #include "catalog/schema.h"
 #include "common/types.h"
+#include "common/value.h"
 #include "common/value_factory.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/materialization_executor.h"
 #include "planner/abstract_plan_node.h"
 #include "planner/materialization_node.h"
+#include "storage/backend_vm.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
-#include "storage/tuple.h"
+
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
-#include "harness.h"
 
-using ::testing::IsNull;
 using ::testing::NotNull;
-using ::testing::Return;
 
 namespace nstore {
 namespace test {
-
-namespace {
-
-/**
- * @brief Populates the tiles in the given tile-group in a specific manner.
- * @param tile_group Tile-group to populate with values.
- * @param num_rows Number of tuples to insert.
- *
- * This is a convenience function for the test cases.
- */
-void PopulateTiles(storage::TileGroup *tile_group, int num_rows) {
-  // Create tuple schema from tile schemas.
-  std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();
-  std::unique_ptr<catalog::Schema> schema(
-    catalog::Schema::AppendSchemaList(tile_schemas));
-
-  // Ensure that the tile group created by ExecutorTestsUtil is as expected.
-  assert(tile_schemas.size() == 2);
-  assert(schema->GetColumnCount() == 4);
-
-  // Insert tuples into tile_group.
-  const bool allocate = true;
-  const txn_id_t txn_id = GetTransactionId();
-  for (int i = 0; i < num_rows; i++) {
-    storage::Tuple tuple(schema.get(), allocate);
-    tuple.SetValue(0, ValueFactory::GetIntegerValue(10 * i));
-    tuple.SetValue(1, ValueFactory::GetIntegerValue(10 * i + 1));
-    tuple.SetValue(2, ValueFactory::GetTinyIntValue(10 * i + 2));
-    tuple.SetValue(
-        3,
-        ValueFactory::GetStringValue(std::to_string(10 * i + 3),
-        tile_group->GetTilePool(1)));
-    tile_group->InsertTuple(txn_id, &tuple);
-  }
-}
-
-} // namespace
 
 // "Pass-through" test case. There is nothing to materialize as
 // there is only one base tile in the logical tile.
@@ -83,7 +44,7 @@ TEST(MaterializationTests, SingleBaseTileTest) {
         &backend,
         tuple_count));
 
-  PopulateTiles(tile_group.get(), tuple_count);
+  ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
 
   // Create logical tile from single base tile.
   storage::Tile *source_base_tile = tile_group->GetTile(0);
@@ -107,25 +68,12 @@ TEST(MaterializationTests, SingleBaseTileTest) {
       std::move(old_to_new_cols),
       output_schema.release());
 
-  // Pass them through materialization executor.
+  // Pass through materialization executor.
   executor::MaterializationExecutor executor(&node);
-  MockExecutor child_executor;
-  executor.AddChild(&child_executor);
-
-  // Uneventful init...
-  EXPECT_CALL(child_executor, SubInit())
-    .WillOnce(Return(true));
-  EXPECT_TRUE(executor.Init());
-
-  // Where the main work takes place...
-  EXPECT_CALL(child_executor, SubGetNextTile())
-    .WillOnce(Return(source_logical_tile.release()))
-    .WillOnce(Return(nullptr));
-
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
-    executor.GetNextTile());
-  EXPECT_THAT(result_logical_tile, NotNull());
-  EXPECT_THAT(executor.GetNextTile(), IsNull());
+      ExecutorTestsUtil::ExecuteTile(
+        &executor,
+        source_logical_tile.release()));
 
   // Verify that logical tile is only made up of a single base tile.
   int num_cols = result_logical_tile->NumCols();
@@ -137,16 +85,18 @@ TEST(MaterializationTests, SingleBaseTileTest) {
 
   // Check that the base tile has the correct values.
   for (int i = 0; i < tuple_count; i++) {
-    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i),
-              result_base_tile->GetValue(i, 0));
-    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i + 1),
-              result_base_tile->GetValue(i, 1));
+    EXPECT_EQ(
+        ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 0)),
+        result_base_tile->GetValue(i, 0));
+    EXPECT_EQ(
+        ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 1)),
+        result_base_tile->GetValue(i, 1));
 
     // Double check that logical tile is functioning.
     EXPECT_EQ(result_base_tile->GetValue(i, 0),
-              result_logical_tile->GetValue(0, i));
+              result_logical_tile->GetValue(i, 0));
     EXPECT_EQ(result_base_tile->GetValue(i, 1),
-              result_logical_tile->GetValue(1, i));
+              result_logical_tile->GetValue(i, 1));
   }
 }
 
@@ -161,13 +111,13 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
         &backend,
         tuple_count));
 
-  PopulateTiles(tile_group.get(), tuple_count);
+  ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
 
   // Create logical tile from two base tiles.
   const std::vector<storage::Tile *> source_base_tiles =
     { tile_group->GetTile(0), tile_group->GetTile(1) };
   const bool own_base_tiles = false;
-  std::unique_ptr<executor::LogicalTile> source_tile(
+  std::unique_ptr<executor::LogicalTile> source_logical_tile(
       executor::LogicalTileFactory::WrapBaseTiles(
           source_base_tiles,
           own_base_tiles));
@@ -191,25 +141,12 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
       std::move(old_to_new_cols),
       output_schema.release());
 
-  // Pass them through materialization executor.
+  // Pass through materialization executor.
   executor::MaterializationExecutor executor(&node);
-  MockExecutor child_executor;
-  executor.AddChild(&child_executor);
-
-  // Uneventful init...
-  EXPECT_CALL(child_executor, SubInit())
-    .WillOnce(Return(true));
-  EXPECT_TRUE(executor.Init());
-
-  // Where the main work takes place...
-  EXPECT_CALL(child_executor, SubGetNextTile())
-    .WillOnce(Return(source_tile.release()))
-    .WillOnce(Return(nullptr));
-
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
-    executor.GetNextTile());
-  EXPECT_THAT(result_logical_tile, NotNull());
-  EXPECT_THAT(executor.GetNextTile(), IsNull());
+      ExecutorTestsUtil::ExecuteTile(
+        &executor,
+        source_logical_tile.release()));
 
   // Verify that logical tile is only made up of a single base tile.
   int num_cols = result_logical_tile->NumCols();
@@ -222,25 +159,27 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   // Check that the base tile has the correct values.
   for (int i = 0; i < tuple_count; i++) {
     // Output column 2.
-    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i),
-              result_base_tile->GetValue(i, 2));
+    EXPECT_EQ(
+        ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 0)),
+        result_base_tile->GetValue(i, 2));
+
     // Output column 1.
-    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i + 1),
-              result_base_tile->GetValue(i, 1));
+    EXPECT_EQ(
+        ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 1)),
+        result_base_tile->GetValue(i, 1));
     // Output column 0.
-    Value string_value(
-        ValueFactory::GetStringValue(std::to_string(10 * i + 3)));
-    EXPECT_EQ(string_value,
-              result_base_tile->GetValue(i, 0));
+    Value string_value(ValueFactory::GetStringValue(
+          std::to_string(ExecutorTestsUtil::PopulatedValue(i, 3))));
+    EXPECT_EQ(string_value, result_base_tile->GetValue(i, 0));
     string_value.FreeUninlinedData();
 
     // Double check that logical tile is functioning.
     EXPECT_EQ(result_base_tile->GetValue(i, 0),
-              result_logical_tile->GetValue(0, i));
+              result_logical_tile->GetValue(i, 0));
     EXPECT_EQ(result_base_tile->GetValue(i, 1),
-              result_logical_tile->GetValue(1, i));
+              result_logical_tile->GetValue(i, 1));
     EXPECT_EQ(result_base_tile->GetValue(i, 2),
-              result_logical_tile->GetValue(2, i));
+              result_logical_tile->GetValue(i, 2));
   }
 }
 
