@@ -78,16 +78,16 @@ TEST(ConcatTests, TwoColsAddedTest) {
   for (int i = 0; i < tuple_count; i++) {
     EXPECT_EQ(
         ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 0)),
-        result_logical_tile->GetValue(0, i));
+        result_logical_tile->GetValue(i, 0));
     EXPECT_EQ(
         ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 1)),
-        result_logical_tile->GetValue(1, i));
+        result_logical_tile->GetValue(i, 1));
     EXPECT_EQ(
         ValueFactory::GetTinyIntValue(ExecutorTestsUtil::PopulatedValue(i, 2)),
-        result_logical_tile->GetValue(2, i));
+        result_logical_tile->GetValue(i, 2));
     Value string_value(ValueFactory::GetStringValue(
           std::to_string(ExecutorTestsUtil::PopulatedValue(i, 3))));
-    EXPECT_EQ(string_value, result_logical_tile->GetValue(3, i));
+    EXPECT_EQ(string_value, result_logical_tile->GetValue(i, 3));
     string_value.FreeUninlinedData();
   }
 }

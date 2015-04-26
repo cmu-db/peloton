@@ -127,14 +127,14 @@ storage::Tuple *LogicalTile::GetTuple(id_t column_id, id_t tuple_id) {
 
 /**
  * @brief Get the value at the specified field.
- * @param column_id Column id of the specified field.
  * @param tuple_id Tuple id of the specified field (row/position).
+ * @param column_id Column id of the specified field.
  *
  * @return Value at the specified field,
  *         or VALUE_TYPE_INVALID if it doesn't exist.
  */
 // TODO Amortize schema lookups by using iterator instead?
-Value LogicalTile::GetValue(id_t column_id, id_t tuple_id) {
+Value LogicalTile::GetValue(id_t tuple_id, id_t column_id) {
   assert(column_id < schema_.size());
   assert(tuple_id < valid_rows_.size());
 

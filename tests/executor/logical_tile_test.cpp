@@ -143,8 +143,8 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   ////////////////////////////////////////////////////////////////
 
   std::cout << "Value : " << logical_tile->GetValue(0, 0) << "\n";
-  std::cout << "Value : " << logical_tile->GetValue(1, 0) << "\n";
   std::cout << "Value : " << logical_tile->GetValue(0, 1) << "\n";
+  std::cout << "Value : " << logical_tile->GetValue(1, 0) << "\n";
   std::cout << "Value : " << logical_tile->GetValue(1, 1) << "\n";
 }
 
