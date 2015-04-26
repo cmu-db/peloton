@@ -6,6 +6,8 @@
 
 #include "gtest/gtest.h"
 
+#include "executor/executor_tests_util.h"
+
 namespace nstore {
 namespace test {
 
