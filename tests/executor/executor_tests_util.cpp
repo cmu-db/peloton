@@ -1,5 +1,14 @@
 /**
- * @brief Header file for utility functions for executor tests.
+ * @brief Implementation of utility functions for executor tests.
+ *
+ * Repeated code in many of the executor tests are factored out and placed
+ * in this util class.
+ *
+ * Note that some of the test cases are aware of implementation details
+ * of the utility functions i.e. there are implicit contracts between
+ * many of the functions here and the test cases. For example, some of the
+ * test cases make assumptions about the layout of the tile group returned by
+ * CreateSimpleTileGroup().
  *
  * Copyright(c) 2015, CMU
  */
@@ -12,7 +21,7 @@
 #include "gtest/gtest.h"
 
 #include "catalog/schema.h"
-#include "common/types.h"
+#include "common/value.h"
 #include "common/value_factory.h"
 #include "executor/abstract_executor.h"
 #include "executor/logical_tile.h"
@@ -121,13 +130,14 @@ void ExecutorTestsUtil::PopulateTiles(
   const txn_id_t txn_id = GetTransactionId();
   for (int i = 0; i < num_rows; i++) {
     storage::Tuple tuple(schema.get(), allocate);
-    tuple.SetValue(0, ValueFactory::GetIntegerValue(10 * i));
-    tuple.SetValue(1, ValueFactory::GetIntegerValue(10 * i + 1));
-    tuple.SetValue(2, ValueFactory::GetTinyIntValue(10 * i + 2));
+    tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(i, 0)));
+    tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(i, 1)));
+    tuple.SetValue(2, ValueFactory::GetTinyIntValue(PopulatedValue(i, 2)));
     tuple.SetValue(
         3,
-        ValueFactory::GetStringValue(std::to_string(10 * i + 3),
-        tile_group->GetTilePool(1)));
+        ValueFactory::GetStringValue(
+          std::to_string(PopulatedValue(i, 3)),
+          tile_group->GetTilePool(1)));
     tile_group->InsertTuple(txn_id, &tuple);
   }
 }
