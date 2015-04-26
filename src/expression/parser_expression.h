@@ -25,26 +25,26 @@ namespace expression {
 
 class ParserExpression : public AbstractExpression {
  public:
-  ParserExpression(ExpressionType type, char* name)
+  ParserExpression(ExpressionType type, char* name_)
  : AbstractExpression(type) {
-    m_name = std::string(name);
+    name = name_;
   }
 
-  ParserExpression(ExpressionType type, char* name, char* column)
+  ParserExpression(ExpressionType type, char* name_, char* column_)
  : AbstractExpression(type) {
-    m_name = std::string(name);
-    m_column = std::string(column);
+    name = name_;
+    column = column_;
   }
 
   ParserExpression(ExpressionType type)
  : AbstractExpression(type) {
   }
 
-  ParserExpression(ExpressionType type, char* func_name, AbstractExpression* expr, bool distinct)
+  ParserExpression(ExpressionType type, char* func_name_, AbstractExpression* expr_, bool distinct_)
  : AbstractExpression(type) {
-    m_name = std::string(func_name);
-    m_expr = expr;
-    m_distinct = distinct;
+    name = func_name_;
+    expr = expr_;
+    distinct = distinct_;
   }
 
   ParserExpression(ExpressionType type, int placeholder)

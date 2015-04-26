@@ -109,6 +109,7 @@ ResultType Kernel::Handler(const char* query) {
     LOG_ERROR("Parsing failed for query :: %s\n"
         "Parsing error : %s", query, result->parser_msg);
     status = RESULT_TYPE_FAILURE;
+    delete result;
     return status;
   }
 
@@ -159,6 +160,7 @@ ResultType Kernel::Handler(const char* query) {
   */
 
   status = RESULT_TYPE_SUCCESS;
+  delete result;
   return status;
 }
 
