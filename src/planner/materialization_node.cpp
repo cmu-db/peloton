@@ -35,8 +35,8 @@ PlanNodeType MaterializationNode::GetPlanNodeType() const {
 }
 
 std::string MaterializationNode::debugInfo(const std::string& spacer) const {
-  (void) spacer;
   //TODO Implement.
+  (void) spacer;
   return "";
 }
 

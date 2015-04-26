@@ -34,15 +34,24 @@ class ConcatNode : public AbstractPlanNode {
   ConcatNode(ConcatNode &&) = delete;
   ConcatNode& operator=(ConcatNode &&) = delete;
 
-  ConcatNode(std::vector<ColumnPointer> &&new_columns);
+  explicit ConcatNode(std::vector<ColumnPointer> &&new_columns)
+    : new_columns_(std::move(new_columns)) {
+  }
 
   inline const std::vector<ColumnPointer>& new_columns() const {
     return new_columns_;
   }
 
-  PlanNodeType GetPlanNodeType() const;
+  inline PlanNodeType GetPlanNodeType() const {
+    //TODO Implement.
+    return PLAN_NODE_TYPE_INVALID;
+  }
 
-  std::string debugInfo(const std::string& spacer) const;
+  std::string debugInfo(const std::string& spacer) const {
+    //TODO Implement.
+    (void) spacer;
+    return "";
+  }
 
  private:
   /** @brief Vector of new columns to add to logical tile. */
