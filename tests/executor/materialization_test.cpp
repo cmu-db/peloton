@@ -15,6 +15,7 @@
 #include "catalog/manager.h"
 #include "catalog/schema.h"
 #include "common/types.h"
+#include "common/value.h"
 #include "common/value_factory.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
@@ -169,8 +170,7 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
     // Output column 0.
     Value string_value(ValueFactory::GetStringValue(
           std::to_string(ExecutorTestsUtil::PopulatedValue(i, 3))));
-    EXPECT_EQ(string_value,
-              result_base_tile->GetValue(i, 0));
+    EXPECT_EQ(string_value, result_base_tile->GetValue(i, 0));
     string_value.FreeUninlinedData();
 
     // Double check that logical tile is functioning.
