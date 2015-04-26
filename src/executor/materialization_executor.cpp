@@ -136,7 +136,7 @@ void MaterializationExecutor::MaterializeByTiles(
       assert(it != old_to_new_cols.end());
       id_t new_col_id = it->second;
       for (id_t old_tuple_id : *source_tile) {
-        Value value = source_tile->GetValue(old_col_id, old_tuple_id);
+        Value value = source_tile->GetValue(old_tuple_id, old_col_id);
         dest_tile->SetValue(value, new_tuple_id++, new_col_id);
       }
     }

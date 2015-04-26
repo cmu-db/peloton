@@ -45,7 +45,7 @@ class LogicalTile {
 
   storage::Tuple *GetTuple(id_t column_id, id_t tuple_id);
 
-  Value GetValue(id_t column_id, id_t tuple_id);
+  Value GetValue(id_t tuple_id, id_t column_id);
 
   int NumTuples();
 
