@@ -35,6 +35,9 @@ Scheduler::Scheduler() :
 
 Scheduler::~Scheduler() {
 
+  // stop scheduler
+  init.terminate();
+
   // clean up state
   delete state;
 }
