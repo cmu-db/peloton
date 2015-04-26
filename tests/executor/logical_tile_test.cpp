@@ -15,11 +15,11 @@
 #include "common/types.h"
 #include "common/value_factory.h"
 #include "executor/logical_tile.h"
-
-#include "../../src/storage/backend_vm.h"
 #include "executor/logical_tile_factory.h"
+#include "storage/backend_vm.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
+
 #include "executor/executor_tests_util.h"
 #include "harness.h"
 

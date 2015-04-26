@@ -24,6 +24,8 @@ class ExecutorTestsUtil {
   static storage::TileGroup *CreateSimpleTileGroup(
       storage::Backend *backend,
       int tuple_count);
+
+  static void PopulateTiles(storage::TileGroup *tile_group, int num_rows);
 };
 
 } // namespace test
