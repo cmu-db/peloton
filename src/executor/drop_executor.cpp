@@ -51,16 +51,25 @@ bool DropExecutor::Execute(parser::SQLStatement *query) {
         return false;
       }
 
-      status = db->RemoveTable(stmt->name);
-      if(status == false) {
-        LOG_ERROR("Could not drop table : %s \n", stmt->name);
-        return false;
+      // lock database
+      {
+        db->Lock();
+
+        status = db->RemoveTable(stmt->name);
+        if(status == false) {
+          LOG_ERROR("Could not drop table : %s \n", stmt->name);
+          db->Unlock();
+          return false;
+        }
+
+        db->Unlock();
       }
 
       // this will also clean the underlying physical table
       delete table;
       LOG_WARN("Dropped table : %s \n", stmt->name);
       std::cout << (*db);
+
       return true;
     }
     break;
@@ -73,18 +82,28 @@ bool DropExecutor::Execute(parser::SQLStatement *query) {
       catalog::Database *database = catalog::Catalog::GetInstance().GetDatabase(stmt->name);
       if(database == nullptr) {
         LOG_ERROR("Database does not exist  : %s \n", stmt->name);
+        catalog::Catalog::GetInstance().Unlock();
         return false;
       }
 
-      status = catalog::Catalog::GetInstance().RemoveDatabase(stmt->name);
-      if(status == false) {
-        LOG_ERROR("Could not drop database : %s \n", stmt->name);
-        return false;
+      // lock catalog
+      {
+        catalog::Catalog::GetInstance().Lock();
+
+        status = catalog::Catalog::GetInstance().RemoveDatabase(stmt->name);
+        if(status == false) {
+          LOG_ERROR("Could not drop database : %s \n", stmt->name);
+          catalog::Catalog::GetInstance().Unlock();
+          return false;
+        }
+
+        catalog::Catalog::GetInstance().Unlock();
       }
 
       // clean up database
       delete database;
       LOG_WARN("Dropped database : %s \n", stmt->name);
+
       return true;
     }
     break;
@@ -107,10 +126,18 @@ bool DropExecutor::Execute(parser::SQLStatement *query) {
         return false;
       }
 
-      status = table->RemoveIndex(stmt->name);
-      if(status == false) {
-        LOG_ERROR("Could not drop index on table : %s %s \n", stmt->name, stmt->table_name);
-        return false;
+      // lock table
+      {
+        table->Lock();
+
+        status = table->RemoveIndex(stmt->name);
+        if(status == false) {
+          LOG_ERROR("Could not drop index on table : %s %s \n", stmt->name, stmt->table_name);
+          table->Unlock();
+          return false;
+        }
+
+        table->Unlock();
       }
 
       // clean up index

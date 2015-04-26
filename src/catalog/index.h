@@ -14,6 +14,7 @@
 
 #include "common/types.h"
 #include "index/index.h"
+#include <mutex>
 
 #include <vector>
 #include <iostream>
@@ -75,6 +76,14 @@ class Index {
   // Get a string representation of this index
   friend std::ostream& operator<<(std::ostream& os, const Index& index);
 
+  void Lock(){
+    index_mtx.lock();
+  }
+
+  void Unlock(){
+    index_mtx.unlock();
+  }
+
  private:
   std::string name;
 
@@ -90,6 +99,7 @@ class Index {
   // underlying physical index
   index::Index* physical_index = nullptr;
 
+  std::mutex index_mtx;
 };
 
 } // End catalog namespace

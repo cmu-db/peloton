@@ -121,19 +121,11 @@ ResultType Kernel::Handler(const char* query) {
     switch(statement->GetType()){
 
       case STATEMENT_TYPE_CREATE:
-
-        catalog::Catalog::GetInstance().Lock();
         executor::CreateExecutor::Execute(statement);
-        catalog::Catalog::GetInstance().Unlock();
-
         break;
 
       case STATEMENT_TYPE_DROP:
-
-        catalog::Catalog::GetInstance().Lock();
         executor::DropExecutor::Execute(statement);
-        catalog::Catalog::GetInstance().Unlock();
-
         break;
 
       default:
