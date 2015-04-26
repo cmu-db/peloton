@@ -67,7 +67,7 @@ TEST(MaterializationTests, SingleBaseTileTest) {
       std::move(old_to_new_cols),
       output_schema.release());
 
-  // Pass them through materialization executor.
+  // Pass through materialization executor.
   executor::MaterializationExecutor executor(&node);
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
       ExecutorTestsUtil::ExecuteTile(
@@ -138,7 +138,7 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
       std::move(old_to_new_cols),
       output_schema.release());
 
-  // Pass them through materialization executor.
+  // Pass through materialization executor.
   executor::MaterializationExecutor executor(&node);
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
       ExecutorTestsUtil::ExecuteTile(

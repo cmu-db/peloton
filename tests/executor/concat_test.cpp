@@ -10,6 +10,7 @@
 
 #include "gtest/gtest.h"
 
+#include "executor/concat_executor.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "planner/concat_node.h"
@@ -41,6 +42,8 @@ TEST(ConcatTests, TwoColsAddedTest) {
         { source_base_tile },
         own_base_tiles));
 
+  assert(source_logical_tile->NumCols() == 2);
+
   // Set up catalog to map the base tile oid to the pointer.
   auto &locator = catalog::Manager::GetInstance().locator;
   locator[1] = tile_group->GetTile(1);
@@ -58,6 +61,20 @@ TEST(ConcatTests, TwoColsAddedTest) {
 
   planner::ConcatNode node(
       std::vector<planner::ConcatNode::ColumnPointer>({ cp1, cp2 }));
+
+  // Pass through executor.
+  executor::ConcatExecutor executor(&node);
+  std::unique_ptr<executor::LogicalTile> result_logical_tile(
+      ExecutorTestsUtil::ExecuteTile(
+        &executor,
+        source_logical_tile.release()));
+
+  // Verify that logical tile has two new columns and that they have the
+  // correct values.
+  EXPECT_EQ(4, result_logical_tile->NumCols());
+  for (int i = 0; i < tuple_count; i++) {
+    //TODO Check values.
+  }
 }
 
 } // namespace test
