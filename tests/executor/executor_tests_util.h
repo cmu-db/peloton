@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "common/types.h"
+
 namespace nstore {
 
 namespace catalog {
@@ -35,6 +37,19 @@ class ExecutorTestsUtil {
   static executor::LogicalTile *ExecuteTile(
       executor::AbstractExecutor *executor,
       executor::LogicalTile *source_tile);
+
+  /**
+   * @brief Returns the value populated at the specified field.
+   * @param tuple_id Row of the specified field.
+   * @param column_id Column of the specified field.
+   *
+   * This method defines the values that are populated by PopulateTiles().
+   *
+   * @return Populated value.
+   */
+  inline static int PopulatedValue(const id_t tuple_id, const id_t column_id) {
+    return 10 * tuple_id + column_id;
+  }
 };
 
 } // namespace test

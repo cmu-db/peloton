@@ -84,10 +84,12 @@ TEST(MaterializationTests, SingleBaseTileTest) {
 
   // Check that the base tile has the correct values.
   for (int i = 0; i < tuple_count; i++) {
-    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i),
-              result_base_tile->GetValue(i, 0));
-    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i + 1),
-              result_base_tile->GetValue(i, 1));
+    EXPECT_EQ(
+        ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 0)),
+        result_base_tile->GetValue(i, 0));
+    EXPECT_EQ(
+        ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 1)),
+        result_base_tile->GetValue(i, 1));
 
     // Double check that logical tile is functioning.
     EXPECT_EQ(result_base_tile->GetValue(i, 0),
@@ -156,14 +158,17 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   // Check that the base tile has the correct values.
   for (int i = 0; i < tuple_count; i++) {
     // Output column 2.
-    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i),
-              result_base_tile->GetValue(i, 2));
+    EXPECT_EQ(
+        ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 0)),
+        result_base_tile->GetValue(i, 2));
+
     // Output column 1.
-    EXPECT_EQ(ValueFactory::GetIntegerValue(10 * i + 1),
-              result_base_tile->GetValue(i, 1));
+    EXPECT_EQ(
+        ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 1)),
+        result_base_tile->GetValue(i, 1));
     // Output column 0.
-    Value string_value(
-        ValueFactory::GetStringValue(std::to_string(10 * i + 3)));
+    Value string_value(ValueFactory::GetStringValue(
+          std::to_string(ExecutorTestsUtil::PopulatedValue(i, 3))));
     EXPECT_EQ(string_value,
               result_base_tile->GetValue(i, 0));
     string_value.FreeUninlinedData();
