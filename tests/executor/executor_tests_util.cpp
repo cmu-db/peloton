@@ -9,13 +9,22 @@
 #include <memory>
 #include <vector>
 
+#include "gtest/gtest.h"
+
 #include "catalog/schema.h"
 #include "common/types.h"
 #include "common/value_factory.h"
+#include "executor/abstract_executor.h"
+#include "executor/logical_tile.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
 
+#include "executor/mock_executor.h"
 #include "harness.h"
+
+using ::testing::IsNull;
+using ::testing::NotNull;
+using ::testing::Return;
 
 namespace nstore {
 namespace test {
@@ -122,6 +131,39 @@ void ExecutorTestsUtil::PopulateTiles(
     tile_group->InsertTuple(txn_id, &tuple);
   }
 }
+
+/**
+ * @brief Convenience function to pass a single logical tile through an
+ *        executor which has only one child.
+ * @param executor Executor to pass logical tile through.
+ * @param source_logical_tile Logical tile to pass through executor.
+ *
+ * @return Pointer to processed logical tile.
+ */
+executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
+    executor::AbstractExecutor *executor,
+    executor::LogicalTile *source_logical_tile) {
+  MockExecutor child_executor;
+  executor->AddChild(&child_executor);
+
+  // Uneventful init...
+  EXPECT_CALL(child_executor, SubInit())
+    .WillOnce(Return(true));
+  EXPECT_TRUE(executor->Init());
+
+  // Where the main work takes place...
+  EXPECT_CALL(child_executor, SubGetNextTile())
+    .WillOnce(Return(source_logical_tile))
+    .WillOnce(Return(nullptr));
+
+  std::unique_ptr<executor::LogicalTile> result_logical_tile(
+    executor->GetNextTile());
+  EXPECT_THAT(result_logical_tile, NotNull());
+  EXPECT_THAT(executor->GetNextTile(), IsNull());
+
+  return result_logical_tile.release();
+}
+
 
 } // namespace test
 } // namespace nstore
