@@ -17,6 +17,12 @@ struct ExecuteStatement : SQLStatement {
 	
 	virtual ~ExecuteStatement() {
 	  free(name);
+
+	  if(parameters){
+	    for(auto expr : *parameters)
+	      delete expr;
+	  }
+
 		delete parameters;
 	}
 

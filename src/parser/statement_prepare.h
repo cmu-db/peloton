@@ -2,6 +2,7 @@
 
 #include "sql_statement.h"
 #include "statement_select.h"
+#include "expression/parser_expression.h"
 
 #include <algorithm>
 
@@ -21,6 +22,11 @@ struct PrepareStatement : SQLStatement {
 	virtual ~PrepareStatement() {
 		delete query;
 		free(name);
+
+		for(void* e : placeholders){
+		  delete (nstore::expression::ParserExpression*)e;
+		}
+
 	}
 
 	/**

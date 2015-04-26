@@ -11,26 +11,39 @@ namespace parser {
  */
 struct InsertStatement : SQLStatement {
 
-	InsertStatement(InsertType type) :
-		SQLStatement(STATEMENT_TYPE_INSERT),
-		type(type),
-		table_name(NULL),
-		columns(NULL),
-		values(NULL),
-		select(NULL) {}
-	
-	virtual ~InsertStatement() {
-		free(table_name);
-		delete columns;
-		delete values;
-		delete select;
-	}
+  InsertStatement(InsertType type) :
+    SQLStatement(STATEMENT_TYPE_INSERT),
+    type(type),
+    table_name(NULL),
+    columns(NULL),
+    values(NULL),
+    select(NULL) {}
 
-	InsertType type;
-	char* table_name;
-	std::vector<char*>* columns;
-	std::vector<expression::AbstractExpression*>* values;
-	SelectStatement* select;
+  virtual ~InsertStatement() {
+    free(table_name);
+
+    if(columns) {
+      for(auto col : *columns)
+        free(col);
+      delete columns;
+    }
+
+    if(values){
+      for(auto expr : *values){
+        if(expr->GetExpressionType() != EXPRESSION_TYPE_PLACEHOLDER)
+          delete expr;
+      }
+      delete values;
+    }
+
+    delete select;
+  }
+
+  InsertType type;
+  char* table_name;
+  std::vector<char*>* columns;
+  std::vector<expression::AbstractExpression*>* values;
+  SelectStatement* select;
 };
 
 } // End parser namespace

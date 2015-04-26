@@ -381,7 +381,7 @@ column_def:
 		;
 
 opt_column_width:
-	'(' int_literal ')' { $$ = $2->ival; }
+	'(' int_literal ')' { $$ = $2->ival; delete $2; }
 	| /* empty */ { $$ = 0; }
 	;    
 
@@ -721,7 +721,7 @@ literal:
 	;
 
 string_literal:
-		STRING { $$ = new nstore::expression::ConstantValueExpression(nstore::ValueFactory::GetStringValue($1)); }
+		STRING { $$ = new nstore::expression::ConstantValueExpression(nstore::ValueFactory::GetStringValue($1)); free($1);}
 	;
 
 
