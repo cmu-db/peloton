@@ -1,5 +1,14 @@
 /**
- * @brief Header file for utility functions for executor tests.
+ * @brief Implementation of utility functions for executor tests.
+ *
+ * Repeated code in many of the executor tests are factored out and placed
+ * in this util class.
+ *
+ * Note that some of the test cases are aware of implementation details
+ * of the utility functions i.e. there are implicit contracts between
+ * many of the functions here and the test cases. For example, some of the
+ * test cases make assumptions about the layout of the tile group returned by
+ * CreateSimpleTileGroup().
  *
  * Copyright(c) 2015, CMU
  */
@@ -7,9 +16,24 @@
 #include "executor/executor_tests_util.h"
 
 #include <memory>
+#include <vector>
+
+#include "gtest/gtest.h"
 
 #include "catalog/schema.h"
+#include "common/value.h"
+#include "common/value_factory.h"
+#include "executor/abstract_executor.h"
+#include "executor/logical_tile.h"
 #include "storage/tile_group.h"
+#include "storage/tuple.h"
+
+#include "executor/mock_executor.h"
+#include "harness.h"
+
+using ::testing::IsNull;
+using ::testing::NotNull;
+using ::testing::Return;
 
 namespace nstore {
 namespace test {
@@ -73,14 +97,83 @@ storage::TileGroup *ExecutorTestsUtil::CreateSimpleTileGroup(
   catalog::Schema schema2(columns);
   schemas.push_back(schema2);
 
-  return storage::TileGroupFactory::GetTileGroup(
+  storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
       INVALID_OID,
       INVALID_OID,
       INVALID_OID,
       backend,
       schemas,
       tuple_count);
+
+  return tile_group;
 }
+
+/**
+ * @brief Populates the tiles in the given tile-group in a specific manner.
+ * @param tile_group Tile-group to populate with values.
+ * @param num_rows Number of tuples to insert.
+ */
+void ExecutorTestsUtil::PopulateTiles(
+    storage::TileGroup *tile_group,
+    int num_rows) {
+  // Create tuple schema from tile schemas.
+  std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();
+  std::unique_ptr<catalog::Schema> schema(
+    catalog::Schema::AppendSchemaList(tile_schemas));
+
+  // Ensure that the tile group is as expected.
+  assert(tile_schemas.size() == 2);
+  assert(schema->GetColumnCount() == 4);
+
+  // Insert tuples into tile_group.
+  const bool allocate = true;
+  const txn_id_t txn_id = GetTransactionId();
+  for (int i = 0; i < num_rows; i++) {
+    storage::Tuple tuple(schema.get(), allocate);
+    tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(i, 0)));
+    tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(i, 1)));
+    tuple.SetValue(2, ValueFactory::GetTinyIntValue(PopulatedValue(i, 2)));
+    tuple.SetValue(
+        3,
+        ValueFactory::GetStringValue(
+          std::to_string(PopulatedValue(i, 3)),
+          tile_group->GetTilePool(1)));
+    tile_group->InsertTuple(txn_id, &tuple);
+  }
+}
+
+/**
+ * @brief Convenience function to pass a single logical tile through an
+ *        executor which has only one child.
+ * @param executor Executor to pass logical tile through.
+ * @param source_logical_tile Logical tile to pass through executor.
+ *
+ * @return Pointer to processed logical tile.
+ */
+executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
+    executor::AbstractExecutor *executor,
+    executor::LogicalTile *source_logical_tile) {
+  MockExecutor child_executor;
+  executor->AddChild(&child_executor);
+
+  // Uneventful init...
+  EXPECT_CALL(child_executor, SubInit())
+    .WillOnce(Return(true));
+  EXPECT_TRUE(executor->Init());
+
+  // Where the main work takes place...
+  EXPECT_CALL(child_executor, SubGetNextTile())
+    .WillOnce(Return(source_logical_tile))
+    .WillOnce(Return(nullptr));
+
+  std::unique_ptr<executor::LogicalTile> result_logical_tile(
+    executor->GetNextTile());
+  EXPECT_THAT(result_logical_tile, NotNull());
+  EXPECT_THAT(executor->GetNextTile(), IsNull());
+
+  return result_logical_tile.release();
+}
+
 
 } // namespace test
 } // namespace nstore
