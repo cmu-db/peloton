@@ -5,11 +5,14 @@
  */
 
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
 #include "gtest/gtest.h"
 
+#include "common/value.h"
+#include "common/value_factory.h"
 #include "executor/concat_executor.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
@@ -73,7 +76,19 @@ TEST(ConcatTests, TwoColsAddedTest) {
   // correct values.
   EXPECT_EQ(4, result_logical_tile->NumCols());
   for (int i = 0; i < tuple_count; i++) {
-    //TODO Check values.
+    EXPECT_EQ(
+        ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 0)),
+        result_logical_tile->GetValue(0, i));
+    EXPECT_EQ(
+        ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 1)),
+        result_logical_tile->GetValue(1, i));
+    EXPECT_EQ(
+        ValueFactory::GetTinyIntValue(ExecutorTestsUtil::PopulatedValue(i, 2)),
+        result_logical_tile->GetValue(2, i));
+    Value string_value(ValueFactory::GetStringValue(
+          std::to_string(ExecutorTestsUtil::PopulatedValue(i, 3))));
+    EXPECT_EQ(string_value, result_logical_tile->GetValue(3, i));
+    string_value.FreeUninlinedData();
   }
 }
 
