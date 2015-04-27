@@ -12,7 +12,6 @@
 #include "executor/materialization_executor.h"
 
 #include <cassert>
-
 #include <memory>
 #include <utility>
 
@@ -29,14 +28,13 @@ namespace executor {
  * @param node Materialization node corresponding to this executor.
  */
 MaterializationExecutor::MaterializationExecutor(
-    const planner::AbstractPlanNode *node)
-  : AbstractExecutor(node) {
+    planner::AbstractPlanNode *node)
+: AbstractExecutor(node) {
 }
 
 /**
  * @brief Nothing to init at the moment.
- *
- * @return True on success, false otherwise.
+ * @return true on success, false otherwise.
  */
 bool MaterializationExecutor::SubInit() {
   assert(children_.size() == 1);
@@ -47,21 +45,22 @@ bool MaterializationExecutor::SubInit() {
  * @brief Creates materialized physical tile from logical tile and wraps it
  *        in a new logical tile.
  *
- * @return Pointer to logical tile containing newly materialized physical tile.
+ * @return true on success, false otherwise.
  */
-LogicalTile *MaterializationExecutor::SubGetNextTile() {
+bool MaterializationExecutor::SubExecute() {
   assert(children_.size() == 1);
 
   // Retrieve next tile.
-  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetNextTile());
+  children_[0]->Execute();
+  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
   if (source_tile.get() == nullptr) {
-    return nullptr;
+    return false;
   }
 
   const planner::MaterializationNode &node =
-    GetNode<planner::MaterializationNode>();
+      GetNode<planner::MaterializationNode>();
   const std::unordered_map<id_t, id_t> &old_to_new_cols =
-    node.old_to_new_cols();
+      node.old_to_new_cols();
 
   // Generate mappings.
   std::unordered_map<storage::Tile *, std::vector<id_t> > tile_to_cols;
@@ -74,8 +73,8 @@ LogicalTile *MaterializationExecutor::SubGetNextTile() {
   const int num_tuples = source_tile->NumTuples();
   std::unique_ptr<storage::Tile> dest_tile(
       storage::TileFactory::GetTempTile(
-        node.schema(),
-        num_tuples));
+          node.schema(),
+          num_tuples));
 
   // Proceed to materialize by tile.
   MaterializeByTiles(
@@ -86,9 +85,11 @@ LogicalTile *MaterializationExecutor::SubGetNextTile() {
 
   // Wrap physical tile in logical tile.
   bool own_base_tile = true;
-  return LogicalTileFactory::WrapBaseTiles(
-      { dest_tile.release() },
-      own_base_tile);
+
+  SetOutput(LogicalTileFactory::WrapBaseTiles({ dest_tile.release() },
+                                              own_base_tile));
+
+  return true;
 }
 
 /**

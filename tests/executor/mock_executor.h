@@ -27,9 +27,9 @@ class MockExecutor : public executor::AbstractExecutor {
 
   MOCK_METHOD0(SubInit, bool());
 
-  MOCK_METHOD0(SubGetNextTile, executor::LogicalTile *());
+  MOCK_METHOD0(SubExecute, bool());
 
-  MOCK_METHOD0(SubCleanUp, void());
+
 };
 
 } // namespace test

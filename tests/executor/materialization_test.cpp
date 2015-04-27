@@ -71,9 +71,8 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   // Pass through materialization executor.
   executor::MaterializationExecutor executor(&node);
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
-      ExecutorTestsUtil::ExecuteTile(
-        &executor,
-        source_logical_tile.release()));
+      ExecutorTestsUtil::ExecuteTile(&executor, source_logical_tile.release()));
+
 
   // Verify that logical tile is only made up of a single base tile.
   int num_cols = result_logical_tile->NumCols();
@@ -144,9 +143,7 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   // Pass through materialization executor.
   executor::MaterializationExecutor executor(&node);
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
-      ExecutorTestsUtil::ExecuteTile(
-        &executor,
-        source_logical_tile.release()));
+      ExecutorTestsUtil::ExecuteTile(&executor, source_logical_tile.release()));
 
   // Verify that logical tile is only made up of a single base tile.
   int num_cols = result_logical_tile->NumCols();

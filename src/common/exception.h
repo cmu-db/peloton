@@ -49,7 +49,8 @@ enum ExceptionType {
   EXCEPTION_TYPE_CATALOG = 13,            // catalog related
   EXCEPTION_TYPE_PARSER = 14,             // parser related
   EXCEPTION_TYPE_PLANNER = 15,            // planner related
-  EXCEPTION_TYPE_SCHEDULER = 16           // scheduler related
+  EXCEPTION_TYPE_SCHEDULER = 16,          // scheduler related
+  EXCEPTION_TYPE_EXECUTOR = 17            // executor related
 };
 
 class Exception {
@@ -367,6 +368,15 @@ class SchedulerException : Exception {
 public:
   SchedulerException(std::string msg) :
     Exception(EXCEPTION_TYPE_SCHEDULER, msg){
+  }
+};
+
+class ExecutorException : Exception {
+  ExecutorException() = delete;
+
+public:
+  ExecutorException(std::string msg) :
+    Exception(EXCEPTION_TYPE_EXECUTOR, msg){
   }
 };
 
