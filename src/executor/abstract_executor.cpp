@@ -5,6 +5,7 @@
  */
 
 #include "executor/abstract_executor.h"
+#include "common/logger.h"
 
 namespace nstore {
 namespace executor {
@@ -13,8 +14,18 @@ namespace executor {
  * @brief Constructor for AbstractExecutor.
  * @param node Abstract plan node corresponding to this executor.
  */
-AbstractExecutor::AbstractExecutor(const planner::AbstractPlanNode *node)
-  : node_(node) {
+AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node)
+: node_(node) {
+}
+
+
+void AbstractExecutor::SetOutput(LogicalTile* table) {
+  output.reset(table);
+}
+
+// Transfers ownership
+LogicalTile* AbstractExecutor::GetOutput() {
+  return output.release();
 }
 
 /**
@@ -32,14 +43,26 @@ void AbstractExecutor::AddChild(AbstractExecutor *child) {
  * It recursively initializes all children of this executor in the execution
  * tree. It calls SubInit() which is implemented by the subclass.
  *
- * @return True on success, false otherwise.
+ * @return true on success, false otherwise.
  */
 bool AbstractExecutor::Init() {
-  for (unsigned int i = 0; i < children_.size(); i++) {
-    //TODO Check return value for success. Rollback on failure?
-    children_[i]->Init();
+  bool status = false;
+
+  for (auto child : children_) {
+    status = child->Init();
+    if(status == false) {
+      LOG_ERROR("Initialization failed in child executor with plan id : %d\n", child->node_->GetPlanNodeId());
+      return false;
+    }
   }
-  return SubInit();
+
+  status = SubInit();
+  if(status == false) {
+    LOG_ERROR("Initialization failed in executor with plan id : %d\n", node_->GetPlanNodeId());
+    return false;
+  }
+
+  return true;
 }
 
 /**
@@ -50,11 +73,13 @@ bool AbstractExecutor::Init() {
  *
  * @return Pointer to the logical tile processed by this executor.
  */
-LogicalTile *AbstractExecutor::GetNextTile() {
+bool AbstractExecutor::Execute() {
   //TODO In the future, we might want to pass some kind of executor state to
   // GetNextTile. e.g. params for prepared plans.
 
-  return SubGetNextTile();
+  bool status = SubExecute();
+
+  return status;
 }
 
 } // namespace executor

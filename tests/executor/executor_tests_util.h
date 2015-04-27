@@ -34,9 +34,8 @@ class ExecutorTestsUtil {
 
   static void PopulateTiles(storage::TileGroup *tile_group, int num_rows);
 
-  static executor::LogicalTile *ExecuteTile(
-      executor::AbstractExecutor *executor,
-      executor::LogicalTile *source_tile);
+  static executor::LogicalTile *ExecuteTile(executor::AbstractExecutor *executor,
+                          executor::LogicalTile *source_logical_tile);
 
   /**
    * @brief Returns the value populated at the specified field.

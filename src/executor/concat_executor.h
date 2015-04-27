@@ -13,17 +13,16 @@ namespace executor {
 class LogicalTile;
 
 class ConcatExecutor : public AbstractExecutor {
- public:
-  explicit ConcatExecutor(const planner::AbstractPlanNode *node);
   ConcatExecutor(const ConcatExecutor &) = delete;
   ConcatExecutor& operator=(const ConcatExecutor &) = delete;
-  ConcatExecutor(ConcatExecutor &&) = delete;
-  ConcatExecutor& operator=(ConcatExecutor &&) = delete;
+
+ public:
+  explicit ConcatExecutor(planner::AbstractPlanNode *node);
 
  protected:
   bool SubInit();
 
-  LogicalTile *SubGetNextTile();
+  bool SubExecute();
 };
 
 } // namespace executor

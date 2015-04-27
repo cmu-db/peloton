@@ -32,8 +32,8 @@ TEST(ConcatTests, TwoColsAddedTest) {
   const int tuple_count = 9;
   std::unique_ptr<storage::TileGroup> tile_group(
       ExecutorTestsUtil::CreateSimpleTileGroup(
-        &backend,
-        tuple_count));
+          &backend,
+          tuple_count));
 
   ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
 
@@ -42,8 +42,8 @@ TEST(ConcatTests, TwoColsAddedTest) {
   const bool own_base_tiles = false;
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
       executor::LogicalTileFactory::WrapBaseTiles(
-        { source_base_tile },
-        own_base_tiles));
+          { source_base_tile },
+          own_base_tiles));
 
   assert(source_logical_tile->NumCols() == 2);
 
@@ -65,12 +65,11 @@ TEST(ConcatTests, TwoColsAddedTest) {
   planner::ConcatNode node(
       std::vector<planner::ConcatNode::ColumnPointer>({ cp1, cp2 }));
 
-  // Pass through executor.
+  // Pass through concat executor.
   executor::ConcatExecutor executor(&node);
+
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
-      ExecutorTestsUtil::ExecuteTile(
-        &executor,
-        source_logical_tile.release()));
+      ExecutorTestsUtil::ExecuteTile(&executor, source_logical_tile.release()));
 
   // Verify that logical tile has two new columns and that they have the
   // correct values.
@@ -86,7 +85,7 @@ TEST(ConcatTests, TwoColsAddedTest) {
         ValueFactory::GetTinyIntValue(ExecutorTestsUtil::PopulatedValue(i, 2)),
         result_logical_tile->GetValue(i, 2));
     Value string_value(ValueFactory::GetStringValue(
-          std::to_string(ExecutorTestsUtil::PopulatedValue(i, 3))));
+        std::to_string(ExecutorTestsUtil::PopulatedValue(i, 3))));
     EXPECT_EQ(string_value, result_logical_tile->GetValue(i, 3));
     string_value.FreeUninlinedData();
   }
