@@ -157,12 +157,12 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
   executor->AddChild(&child_executor);
 
   // Uneventful init...
-  EXPECT_CALL(child_executor, SubInit())
+  EXPECT_CALL(child_executor, DInit())
     .WillOnce(Return(true));
   EXPECT_TRUE(executor->Init());
 
   // Where the main work takes place...
-  EXPECT_CALL(child_executor, SubExecute())
+  EXPECT_CALL(child_executor, DExecute())
     .WillOnce(Return(true))
     .WillOnce(Return(false));
 

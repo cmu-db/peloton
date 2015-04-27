@@ -32,7 +32,7 @@ ConcatExecutor::ConcatExecutor(planner::AbstractPlanNode *node)
  * @brief Nothing to init at the moment.
  * @return true on success, false otherwise.
  */
-bool ConcatExecutor::SubInit() {
+bool ConcatExecutor::DInit() {
   assert(children_.size() == 1);
   return true;
 }
@@ -41,7 +41,7 @@ bool ConcatExecutor::SubInit() {
  * @brief Adds a column to the logical tile, using the position lists.
  * @return true on success, false otherwise.
  */
-bool ConcatExecutor::SubExecute() {
+bool ConcatExecutor::DExecute() {
   assert(children_.size() == 1);
 
   // Retrieve next tile.
@@ -52,7 +52,7 @@ bool ConcatExecutor::SubExecute() {
 
   // Grab data from plan node.
   std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
-  planner::ConcatNode &node = GetNode<planner::ConcatNode>();
+  const planner::ConcatNode &node = GetNode<planner::ConcatNode>();
   const std::vector<planner::ConcatNode::ColumnPointer> &new_columns =
       node.new_columns();
 

@@ -56,7 +56,7 @@ bool AbstractExecutor::Init() {
     }
   }
 
-  status = SubInit();
+  status = DInit();
   if(status == false) {
     LOG_ERROR("Initialization failed in executor with plan id : %d\n", node_->GetPlanNodeId());
     return false;
@@ -77,7 +77,7 @@ bool AbstractExecutor::Execute() {
   //TODO In the future, we might want to pass some kind of executor state to
   // GetNextTile. e.g. params for prepared plans.
 
-  bool status = SubExecute();
+  bool status = DExecute();
 
   return status;
 }
