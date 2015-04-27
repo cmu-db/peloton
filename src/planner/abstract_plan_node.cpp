@@ -19,17 +19,11 @@ namespace nstore {
 namespace planner {
 
 AbstractPlanNode::AbstractPlanNode(oid_t plan_node_id)
-: plan_node_id(plan_node_id),
-  executor(nullptr),
-  output(nullptr),
-  is_inlined(false) {
+: plan_node_id(plan_node_id) {
 }
 
 AbstractPlanNode::AbstractPlanNode()
-: plan_node_id(-1),
-  executor(nullptr),
-  output(nullptr),
-  is_inlined(false) {
+: plan_node_id(-1){
 }
 
 AbstractPlanNode::~AbstractPlanNode() {
@@ -128,26 +122,6 @@ void AbstractPlanNode::SetExecutor(executor::AbstractExecutor* executor_) {
   executor = executor_;
 }
 
-void AbstractPlanNode::SetInputs(const std::vector<LogicalTile*>& val){
-  inputs = val;
-}
-
-std::vector<LogicalTile*>& AbstractPlanNode::GetInputs() {
-  return inputs;
-}
-
-void AbstractPlanNode::SetOutput(LogicalTile* table) {
-  output = table;
-}
-
-LogicalTile* AbstractPlanNode::GetOutput() const {
-  return output;
-}
-
-std::vector<oid_t> AbstractPlanNode::GetOutputColumnGuids() const {
-  return output_column_guids;
-}
-
 //===--------------------------------------------------------------------===//
 // Utilities
 //===--------------------------------------------------------------------===//
@@ -180,7 +154,7 @@ std::string AbstractPlanNode::debug(const std::string& spacer) const {
   // Inline PlanNodes
   if (!inlined_nodes.empty()) {
 
-    buffer << info_spacer << "Inline Plannodes: "
+    buffer << info_spacer << "Inlined Plannodes: "
         << inlined_nodes.size() << "\n";
     std::string internal_spacer = info_spacer + "  ";
     for (auto node : inlined_nodes) {

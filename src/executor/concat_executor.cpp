@@ -24,14 +24,13 @@ namespace executor {
  * @brief Constructor for concat executor.
  * @param node Concat node corresponding to this executor.
  */
-ConcatExecutor::ConcatExecutor(const planner::AbstractPlanNode *node)
-  : AbstractExecutor(node) {
+ConcatExecutor::ConcatExecutor(planner::AbstractPlanNode *node)
+: AbstractExecutor(node) {
 }
 
 /**
  * @brief Nothing to init at the moment.
- *
- * @return True on success, false otherwise.
+ * @return true on success, false otherwise.
  */
 bool ConcatExecutor::SubInit() {
   assert(children_.size() == 1);
@@ -40,22 +39,22 @@ bool ConcatExecutor::SubInit() {
 
 /**
  * @brief Adds a column to the logical tile, using the position lists.
- *
- * @return Logical tile with added columns.
+ * @return true on success, false otherwise.
  */
-LogicalTile *ConcatExecutor::SubGetNextTile() {
+bool ConcatExecutor::SubExecute() {
   assert(children_.size() == 1);
 
   // Retrieve next tile.
-  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetNextTile());
-  if (source_tile.get() == nullptr) {
-    return nullptr;
+  const bool success = children_[0]->Execute();
+  if (!success) {
+    return false;
   }
 
   // Grab data from plan node.
-  const planner::ConcatNode &node = GetNode<planner::ConcatNode>();
+  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
+  planner::ConcatNode &node = GetNode<planner::ConcatNode>();
   const std::vector<planner::ConcatNode::ColumnPointer> &new_columns =
-    node.new_columns();
+      node.new_columns();
 
   // Add new columns.
   const bool own_base_tile = false;
@@ -71,7 +70,8 @@ LogicalTile *ConcatExecutor::SubGetNextTile() {
         col.position_list_idx);
   }
 
-  return source_tile.release();
+  SetOutput(source_tile.release());
+  return true;
 }
 
 } // namespace executor

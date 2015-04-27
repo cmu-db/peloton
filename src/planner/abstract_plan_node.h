@@ -11,16 +11,16 @@
 #include <map>
 #include <vector>
 
-#include "executor/abstract_executor.h"
 #include "common/types.h"
-#include <json_spirit.h>
 
 namespace nstore {
-namespace planner {
 
-class PlanColumn;
+namespace executor {
+class AbstractExecutor;
 class LogicalTile;
-class LogicalTile;
+}
+
+namespace planner {
 
 //===--------------------------------------------------------------------===//
 // Abstract Plan Node
@@ -80,25 +80,15 @@ class AbstractPlanNode {
 
   void SetPlanNodeId(oid_t plan_node_id);
 
-  void SetExecutor(executor::AbstractExecutor* executor);
+  void SetExecutor(nstore::executor::AbstractExecutor* executor);
 
-  inline executor::AbstractExecutor* GetExecutor() const {
+  inline nstore::executor::AbstractExecutor* GetExecutor() const {
     return executor;
   }
-
-  void SetInputs(const std::vector<LogicalTile*> &val);
-
-  std::vector<LogicalTile*>& GetInputs();
-
-  void SetOutput(LogicalTile* val);
-
-  LogicalTile *GetOutput() const;
 
   // Each sub-class will have to implement this function to return their type
   // This is better than having to store redundant types in all the objects
   virtual PlanNodeType GetPlanNodeType() const = 0;
-
-  std::vector<oid_t> GetOutputColumnGuids() const;
 
   //===--------------------------------------------------------------------===//
   // Utilities
@@ -126,23 +116,13 @@ class AbstractPlanNode {
 
   // We also keep a pointer to this node's executor so that we can
   // reference it quickly at runtime without having to look-up a map
-  executor::AbstractExecutor* executor; // volatile
+  nstore::executor::AbstractExecutor* executor = nullptr; // volatile
 
-  // Output tile group
-  // This is where we will write the results of the plan node's execution
-  LogicalTile* output;
-
-  // Input tile groups
-  // These tile groups are derived from the output of this node's children
-  std::vector<LogicalTile*> inputs;
-
-  // Some Executors can take advantage of multiple internal PlanNodes
-  // to perform tasks inline. This can be a big speed increase
+  // Some Executors can take advantage of multiple internal plan nodes
+  // to perform tasks inline.
   std::map<PlanNodeType, AbstractPlanNode*> inlined_nodes;
 
-  bool is_inlined;
-
-  std::vector<oid_t> output_column_guids;
+  bool is_inlined = false;
 
 };
 

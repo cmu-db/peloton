@@ -7,42 +7,58 @@
 #pragma once
 
 #include <cassert>
-
+#include <memory>
 #include <vector>
 
+#include "executor/logical_tile.h"
+#include "planner/abstract_plan_node.h"
+
 namespace nstore {
-
-namespace planner {
-class AbstractPlanNode;
-}
-
 namespace executor {
-class LogicalTile;
 
 class AbstractExecutor {
+
  public:
   AbstractExecutor(const AbstractExecutor &) = delete;
   AbstractExecutor& operator=(const AbstractExecutor &) = delete;
-  AbstractExecutor(AbstractExecutor &&) = delete;
-  AbstractExecutor& operator=(AbstractExecutor &&) = delete;
+
+  virtual ~AbstractExecutor(){}
 
   bool Init();
 
-  LogicalTile *GetNextTile();
+  bool Execute();
+
+  //===--------------------------------------------------------------------===//
+  // Children + Parent Helpers
+  //===--------------------------------------------------------------------===//
 
   void AddChild(AbstractExecutor *child);
 
+  void SetOutput(LogicalTile* val);
+
+  LogicalTile *GetOutput();
+
+  // Each sub-class will have to implement this function to return their type
+  // This is better than having to store redundant types in all the objects
+  virtual PlanNodeType GetPlanNodeType(){
+    return PLAN_NODE_TYPE_INVALID;
+  }
+
  protected:
-  explicit AbstractExecutor(const planner::AbstractPlanNode *node);
+  explicit AbstractExecutor(planner::AbstractPlanNode *node);
 
   /** @brief Init function to be overriden by subclass. */
-  virtual bool SubInit() = 0;
+  virtual bool SubInit(){
+    return true;
+  }
 
   /** @brief Workhorse function to be overriden by subclass. */
-  virtual LogicalTile *SubGetNextTile() = 0;
+  virtual bool SubExecute(){
+    return true;
+  }
 
   /** @brief Children nodes of this executor in the executor tree. */
-  std::vector<AbstractExecutor *> children_;
+  std::vector<AbstractExecutor*> children_;
 
   /**
    * @brief Convenience method to return plan node corresponding to this
@@ -50,15 +66,20 @@ class AbstractExecutor {
    *
    * @return Reference to plan node.
    */
-  template <class T> const T& GetNode() {
-    const T *node = dynamic_cast<const T *>(node_);
+  template <class T> inline T& GetNode() {
+    T *node = dynamic_cast<T *>(node_);
     assert(node);
     return *node;
   }
 
  private:
+
+  // Output logical tile
+  // This is where we will write the results of the plan node's execution
+  std::unique_ptr<LogicalTile> output;
+
   /** @brief Plan node corresponding to this executor. */
-  const planner::AbstractPlanNode *node_;
+  planner::AbstractPlanNode *node_ = nullptr;
 };
 
 } // namespace executor

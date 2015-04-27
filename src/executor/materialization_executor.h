@@ -26,19 +26,19 @@ namespace executor {
 class LogicalTile;
 
 class MaterializationExecutor : public AbstractExecutor {
- public:
-  explicit MaterializationExecutor(const planner::AbstractPlanNode *node);
   MaterializationExecutor(const MaterializationExecutor &) = delete;
   MaterializationExecutor& operator=(const MaterializationExecutor &) = delete;
-  MaterializationExecutor(MaterializationExecutor &&) = delete;
-  MaterializationExecutor& operator=(MaterializationExecutor &&) = delete;
+
+ public:
+  explicit MaterializationExecutor(planner::AbstractPlanNode *node);
 
  protected:
   bool SubInit();
 
-  LogicalTile *SubGetNextTile();
+  bool SubExecute();
 
  private:
+
   void GenerateTileToColMap(
     const std::unordered_map<id_t, id_t> &old_to_new_cols,
     LogicalTile *source_tile,
