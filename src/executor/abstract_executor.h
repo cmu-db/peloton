@@ -34,28 +34,22 @@ class AbstractExecutor {
 
   void AddChild(AbstractExecutor *child);
 
+  //===--------------------------------------------------------------------===//
+  // Accessors
+  //===--------------------------------------------------------------------===//
+
   void SetOutput(LogicalTile* val);
 
   LogicalTile *GetOutput();
 
-  // Each sub-class will have to implement this function to return their type
-  // This is better than having to store redundant types in all the objects
-  virtual PlanNodeType GetPlanNodeType(){
-    return PLAN_NODE_TYPE_INVALID;
-  }
-
  protected:
   explicit AbstractExecutor(planner::AbstractPlanNode *node);
 
-  /** @brief Init function to be overriden by subclass. */
-  virtual bool SubInit(){
-    return true;
-  }
+  /** @brief Init function to be overriden by derived class. */
+  virtual bool DInit() = 0;
 
-  /** @brief Workhorse function to be overriden by subclass. */
-  virtual bool SubExecute(){
-    return true;
-  }
+  /** @brief Workhorse function to be overriden by derived class. */
+  virtual bool DExecute() = 0;
 
   /** @brief Children nodes of this executor in the executor tree. */
   std::vector<AbstractExecutor*> children_;
@@ -66,8 +60,8 @@ class AbstractExecutor {
    *
    * @return Reference to plan node.
    */
-  template <class T> inline T& GetNode() {
-    T *node = dynamic_cast<T *>(node_);
+  template <class T> inline const T& GetNode() {
+    const T *node = dynamic_cast<const T *>(node_);
     assert(node);
     return *node;
   }
@@ -79,7 +73,7 @@ class AbstractExecutor {
   std::unique_ptr<LogicalTile> output;
 
   /** @brief Plan node corresponding to this executor. */
-  planner::AbstractPlanNode *node_ = nullptr;
+  const planner::AbstractPlanNode *node_ = nullptr;
 };
 
 } // namespace executor

@@ -25,11 +25,9 @@ class MockExecutor : public executor::AbstractExecutor {
   MockExecutor() : executor::AbstractExecutor(nullptr) {
   }
 
-  MOCK_METHOD0(SubInit, bool());
+  MOCK_METHOD0(DInit, bool());
 
-  MOCK_METHOD0(SubExecute, bool());
-
-
+  MOCK_METHOD0(DExecute, bool());
 };
 
 } // namespace test

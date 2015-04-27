@@ -19,18 +19,14 @@ namespace nstore {
 namespace planner {
 
 AbstractPlanNode::AbstractPlanNode(oid_t plan_node_id)
-: plan_node_id(plan_node_id) {
+: plan_node_id_(plan_node_id) {
 }
 
 AbstractPlanNode::AbstractPlanNode()
-: plan_node_id(-1){
+: plan_node_id_(-1){
 }
 
 AbstractPlanNode::~AbstractPlanNode() {
-  // clean up inlined nodes
-  for (auto node : inlined_nodes){
-    delete node.second;
-  }
 }
 
 //===--------------------------------------------------------------------===//
@@ -38,88 +34,27 @@ AbstractPlanNode::~AbstractPlanNode() {
 //===--------------------------------------------------------------------===//
 
 void AbstractPlanNode::AddChild(AbstractPlanNode* child) {
-  children.push_back(child);
+  children_.push_back(child);
 }
 
 std::vector<AbstractPlanNode*>& AbstractPlanNode::GetChildren() {
-  return children;
+  return children_;
 }
 
-std::vector<oid_t>& AbstractPlanNode::GetChildrenIds(){
-  return children_ids;
-}
-
-const std::vector<AbstractPlanNode*>& AbstractPlanNode::GetChildren() const {
-  return children;
-}
-
-void AbstractPlanNode::AddParent(AbstractPlanNode* parent){
-  parents.push_back(parent);
-}
-
-std::vector<AbstractPlanNode*>& AbstractPlanNode::GetParents(){
-  return parents;
-}
-
-std::vector<oid_t>& AbstractPlanNode::GetParentIds() {
-  return parent_ids;
-}
-
-const std::vector<AbstractPlanNode*>& AbstractPlanNode::GetParents() const {
-  return parents;
-}
-
-//===--------------------------------------------------------------------===//
-// Inlined plannodes
-//===--------------------------------------------------------------------===//
-
-void AbstractPlanNode::AddInlinePlanNode(AbstractPlanNode* inline_node) {
-  inlined_nodes[inline_node->GetPlanNodeType()] = inline_node;
-  inline_node->is_inlined = true;
-}
-
-AbstractPlanNode* AbstractPlanNode::GetInlinePlanNodes(PlanNodeType type) const {
-
-  auto lookup = inlined_nodes.find(type);
-  AbstractPlanNode* ret = nullptr;
-
-  if (lookup != inlined_nodes.end()) {
-    ret = lookup->second;
-  }
-  else {
-    LOG_TRACE("No internal PlanNode with type : " << PlanNodeToString(type)
-                  << " is available for " << debug() );
-  }
-
-  return ret;
-}
-
-std::map<PlanNodeType, AbstractPlanNode*>& AbstractPlanNode::GetInlinePlanNodes() {
-  return inlined_nodes;
-}
-
-const std::map<PlanNodeType, AbstractPlanNode*>& AbstractPlanNode::GetInlinePlanNodes() const{
-  return inlined_nodes;
-}
-
-bool AbstractPlanNode::IsInlined() const {
-  return is_inlined;
+AbstractPlanNode* AbstractPlanNode::GetParent(){
+  return parent_;
 }
 
 //===--------------------------------------------------------------------===//
 // Accessors
 //===--------------------------------------------------------------------===//
 
-void AbstractPlanNode::SetPlanNodeId(oid_t plan_node_id_) {
-  plan_node_id = plan_node_id_;
+void AbstractPlanNode::SetPlanNodeId(oid_t plan_node_id) {
+  plan_node_id_ = plan_node_id;
 }
 
 oid_t AbstractPlanNode::GetPlanNodeId() const {
-  return plan_node_id;
-}
-
-void AbstractPlanNode::SetExecutor(executor::AbstractExecutor* executor_) {
-  executor = executor_;
+  return plan_node_id_;
 }
 
 //===--------------------------------------------------------------------===//
@@ -151,25 +86,11 @@ std::string AbstractPlanNode::debug(const std::string& spacer) const {
   std::string info_spacer = spacer + "  |";
   buffer << this->debugInfo(info_spacer);
 
-  // Inline PlanNodes
-  if (!inlined_nodes.empty()) {
-
-    buffer << info_spacer << "Inlined Plannodes: "
-        << inlined_nodes.size() << "\n";
-    std::string internal_spacer = info_spacer + "  ";
-    for (auto node : inlined_nodes) {
-      buffer << info_spacer << "Inline "
-          << PlanNodeToString(node.second->GetPlanNodeType())
-          << ":\n";
-      buffer << node.second->debugInfo(internal_spacer);
-    }
-  }
-
   // Traverse the tree
   std::string child_spacer = spacer + "  ";
-  for (int ctr = 0, cnt = static_cast<int>(children.size()); ctr < cnt; ctr++) {
-    buffer << child_spacer << children[ctr]->GetPlanNodeType() << "\n";
-    buffer << children[ctr]->debug(child_spacer);
+  for (int ctr = 0, cnt = static_cast<int>(children_.size()); ctr < cnt; ctr++) {
+    buffer << child_spacer << children_[ctr]->GetPlanNodeType() << "\n";
+    buffer << children_[ctr]->debug(child_spacer);
   }
   return (buffer.str());
 }
