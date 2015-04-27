@@ -20,9 +20,9 @@ class ConcatExecutor : public AbstractExecutor {
   explicit ConcatExecutor(planner::AbstractPlanNode *node);
 
  protected:
-  bool SubInit();
+  bool DInit();
 
-  bool SubExecute();
+  bool DExecute();
 };
 
 } // namespace executor

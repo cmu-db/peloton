@@ -36,7 +36,7 @@ MaterializationExecutor::MaterializationExecutor(
  * @brief Nothing to init at the moment.
  * @return true on success, false otherwise.
  */
-bool MaterializationExecutor::SubInit() {
+bool MaterializationExecutor::DInit() {
   assert(children_.size() == 1);
   return true;
 }
@@ -47,7 +47,7 @@ bool MaterializationExecutor::SubInit() {
  *
  * @return true on success, false otherwise.
  */
-bool MaterializationExecutor::SubExecute() {
+bool MaterializationExecutor::DExecute() {
   assert(children_.size() == 1);
 
   // Retrieve next tile.

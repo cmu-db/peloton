@@ -33,9 +33,9 @@ class MaterializationExecutor : public AbstractExecutor {
   explicit MaterializationExecutor(planner::AbstractPlanNode *node);
 
  protected:
-  bool SubInit();
+  bool DInit();
 
-  bool SubExecute();
+  bool DExecute();
 
  private:
 
