@@ -47,12 +47,6 @@ class ConcatNode : public AbstractPlanNode {
     return PLAN_NODE_TYPE_INVALID;
   }
 
-  std::string debugInfo(const std::string& spacer) const {
-    //TODO Implement.
-    (void) spacer;
-    return "";
-  }
-
  private:
   /** @brief Vector of new columns to add to logical tile. */
   std::vector<ColumnPointer> new_columns_;
