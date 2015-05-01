@@ -66,11 +66,10 @@ class AbstractPlanNode {
 
   // Debugging convenience methods
   friend std::ostream& operator<<(std::ostream& os, const AbstractPlanNode& node);
+  std::string GetInfo(std::string spacer) const;
 
-  std::string debug() const;
-  std::string debug(bool traverse) const;
-  std::string debug(const std::string& spacer) const;
-  virtual std::string debugInfo(const std::string& spacer) const = 0;
+  // Override in derived plan nodes
+  virtual std::string GetInfo() const = 0;
 
  private:
 

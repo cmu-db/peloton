@@ -46,12 +46,6 @@ class MaterializationNode : public AbstractPlanNode {
     return PLAN_NODE_TYPE_INVALID;
   }
 
-  inline std::string debugInfo(const std::string& spacer) const {
-    //TODO Implement.
-    (void) spacer;
-    return "";
-  }
-
  private:
   /**
    * @brief Mapping of old column ids to new column ids after materialization.
