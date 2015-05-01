@@ -10,7 +10,6 @@
 
 namespace nstore {
 namespace executor {
-class LogicalTile;
 
 class ConcatExecutor : public AbstractExecutor {
   ConcatExecutor(const ConcatExecutor &) = delete;
