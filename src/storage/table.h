@@ -45,11 +45,13 @@ class Table {
 
   // Table constructor
   Table(catalog::Schema *schema,
-        Backend *backend)
+        Backend *backend,
+        std::string table_name)
  : database_id(INVALID_ID),
    table_id(INVALID_ID),
    backend(backend),
-   schema(schema){
+   schema(schema),
+   table_name(table_name){
   }
 
   ~Table() {
@@ -71,6 +73,10 @@ class Table {
 
   Backend *GetBackend() const {
     return backend;
+  }
+
+  std::string GetName() const {
+    return table_name;
   }
 
   //===--------------------------------------------------------------------===//
@@ -96,6 +102,9 @@ class Table {
   // table schema
   catalog::Schema *schema;
 
+  // table name
+  std::string table_name;
+
   // set of tile groups
   std::vector<TileGroup*> tile_groups;
 
@@ -104,6 +113,7 @@ class Table {
   size_t tuples_per_tilegroup = 1000;
 
   std::mutex table_mutex;
+
 };
 
 //===--------------------------------------------------------------------===//
@@ -116,12 +126,13 @@ class TableFactory {
   virtual ~TableFactory();
 
   static Table *GetTable(oid_t database_id,
-                         catalog::Schema *schema) {
+                         catalog::Schema *schema,
+                         std::string table_name = "temp") {
 
     // create a new backend
     Backend* backend = new VMBackend();
 
-    Table *table =  new Table(schema, backend);
+    Table *table =  new Table(schema, backend, table_name);
 
     table->database_id = database_id;
 

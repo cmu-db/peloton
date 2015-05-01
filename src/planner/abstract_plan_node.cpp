@@ -63,34 +63,24 @@ oid_t AbstractPlanNode::GetPlanNodeId() const {
 
 // Get a string representation of this plan node
 std::ostream& operator<<(std::ostream& os, const AbstractPlanNode& node) {
-  os << node.debug();
+
+  os << PlanNodeToString(node.GetPlanNodeType());
+  os << "[" << node.GetPlanNodeId() << "]";
+
   return os;
 }
 
-std::string AbstractPlanNode::debug() const {
+std::string AbstractPlanNode::GetInfo(std::string spacer) const {
   std::ostringstream buffer;
-
-  buffer << PlanNodeToString(this->GetPlanNodeType())
-      << "[" << this->GetPlanNodeId() << "]";
-
-  return buffer.str();
-}
-
-std::string AbstractPlanNode::debug(bool traverse) const {
-  return (traverse ? this->debug(std::string("")) : this->debug());
-}
-
-std::string AbstractPlanNode::debug(const std::string& spacer) const {
-  std::ostringstream buffer;
-  buffer << spacer << "* " << this->debug() << "\n";
+  buffer << spacer << "* " << this->GetInfo() << "\n";
   std::string info_spacer = spacer + "  |";
-  buffer << this->debugInfo(info_spacer);
+  buffer << this->GetInfo(info_spacer);
 
   // Traverse the tree
   std::string child_spacer = spacer + "  ";
   for (int ctr = 0, cnt = static_cast<int>(children_.size()); ctr < cnt; ctr++) {
     buffer << child_spacer << children_[ctr]->GetPlanNodeType() << "\n";
-    buffer << children_[ctr]->debug(child_spacer);
+    buffer << children_[ctr]->GetInfo(child_spacer);
   }
   return (buffer.str());
 }
