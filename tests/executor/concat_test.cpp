@@ -45,6 +45,8 @@ TEST(ConcatTests, TwoColsAddedTest) {
           { source_base_tile },
           own_base_tiles));
 
+  std::cout << (*(source_logical_tile.get()));
+
   assert(source_logical_tile->NumCols() == 2);
 
   // Set up catalog to map the base tile oid to the pointer.
@@ -70,6 +72,8 @@ TEST(ConcatTests, TwoColsAddedTest) {
 
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
       ExecutorTestsUtil::ExecuteTile(&executor, source_logical_tile.release()));
+
+  std::cout << (*(result_logical_tile.get()));
 
   // Verify that logical tile has two new columns and that they have the
   // correct values.
