@@ -55,7 +55,7 @@ class SeqScanNode : public AbstractPlanNode {
   /** @brief Selection predicate. */
   const std::unique_ptr<expression::AbstractExpression> predicate_;
 
-  /** @brief Columns to retrieve from tile group. */
+  /** @brief Columns from tile group to be added to logical tile output. */
   const std::vector<id_t> column_ids_;
 };
 
