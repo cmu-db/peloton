@@ -37,11 +37,13 @@ class BtreeMultimapIndex : public Index {
 
   ~BtreeMultimapIndex();
 
-  bool InsertEntry(storage::Tuple *key, ItemPointer location);
+  bool InsertEntry(const storage::Tuple *key, ItemPointer location);
 
-  bool DeleteEntry(storage::Tuple *key);
+  bool UpdateEntry(const storage::Tuple *key, ItemPointer location, ItemPointer old_location);
 
-  bool Exists(storage::Tuple *key) const;
+  bool DeleteEntry(const storage::Tuple *key);
+
+  bool Exists(const storage::Tuple *key) const;
 
   std::vector<ItemPointer> Scan() const;
 

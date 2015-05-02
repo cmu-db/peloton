@@ -106,18 +106,21 @@ class Index
   // Mutators
   //===--------------------------------------------------------------------===//
 
-  // insert an index entry linking to given tuple
-  virtual bool InsertEntry(storage::Tuple *key, ItemPointer location) = 0;
+  // insert an index entry linked to given tuple
+  virtual bool InsertEntry(const storage::Tuple *key, ItemPointer location) = 0;
+
+  // update an index entry linked to given tuple to point to new location
+  virtual bool UpdateEntry(const storage::Tuple *key, ItemPointer location, ItemPointer old_location) = 0;
 
   // delete the index entry linked to given tuple
-  virtual bool DeleteEntry(storage::Tuple *key) = 0;
-
-  // return whether the entry is already stored in the index
-  virtual bool Exists(storage::Tuple *key) const = 0;
+  virtual bool DeleteEntry(const storage::Tuple *key) = 0;
 
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//
+
+  // return whether the entry is already stored in the index
+  virtual bool Exists(const storage::Tuple *key) const = 0;
 
   // scan all keys in the index
   virtual std::vector<ItemPointer> Scan() const = 0;
