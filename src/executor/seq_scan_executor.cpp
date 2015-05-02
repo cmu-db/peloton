@@ -89,7 +89,8 @@ bool SeqScanExecutor::DExecute() {
   storage::TileIterator tile_it(base_tile);
   storage::Tuple tuple(&base_tile->GetSchema());
   while (tile_it.Next(tuple)) {
-    if (predicate->Evaluate(&tuple, nullptr).IsTrue()) {
+    if (predicate == nullptr
+        || predicate->Evaluate(&tuple, nullptr).IsTrue()) {
       // GetLocation() returns the id of the next tuple.
       assert(tile_it.GetLocation() > 0);
       position_list.push_back(tile_it.GetLocation() - 1);
