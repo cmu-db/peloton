@@ -16,6 +16,8 @@
 #include "storage/tile_group.h"
 #include "storage/backend_vm.h"
 
+#include "index/index.h"
+
 #include <string>
 
 namespace nstore {
@@ -80,11 +82,38 @@ class Table {
   }
 
   //===--------------------------------------------------------------------===//
-  // Operations
+  // OPERATIONS
   //===--------------------------------------------------------------------===//
 
   // add a new tile group to table
   oid_t AddTileGroup();
+
+  // insert tuple in table
+  oid_t InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
+
+  //===--------------------------------------------------------------------===//
+  // INDEXES
+  //===--------------------------------------------------------------------===//
+
+  size_t GetIndexCount() const {
+    return indexes.size();
+  }
+
+  index::Index *GetPrimaryKeyIndex() {
+    return primary_key_index;
+  }
+
+  const index::Index *GetPrimaryKeyIndex() const {
+    return primary_key_index;
+  }
+
+  void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+  bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+
+  void DeleteInIndexes(const storage::Tuple *tuple);
+  void UpdateInIndexes(const storage::Tuple *tuple, ItemPointer location, ItemPointer old_location);
+
+  bool CheckNulls(const storage::Tuple *tuple) const;
 
  protected:
 
@@ -107,6 +136,10 @@ class Table {
 
   // set of tile groups
   std::vector<TileGroup*> tile_groups;
+
+  // INDEXES
+  std::vector<index::Index*> indexes;
+  index::Index *primary_key_index = nullptr;
 
   // TODO need some policy ?
   // number of tuples allocated per tilegroup for this table

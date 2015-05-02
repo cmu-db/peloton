@@ -42,7 +42,7 @@ BtreeMultimapIndex::~BtreeMultimapIndex(){
 
 }
 
-bool BtreeMultimapIndex::InsertEntry(storage::Tuple *key, ItemPointer location) {
+bool BtreeMultimapIndex::InsertEntry(const storage::Tuple *key, ItemPointer location) {
 
   BTERR status = bt_insertkey (btree_db, key->GetData(), key->GetLength(), 0, &location, sizeof(ItemPointer), unique_keys);
 
@@ -52,7 +52,19 @@ bool BtreeMultimapIndex::InsertEntry(storage::Tuple *key, ItemPointer location) 
   return false;
 }
 
-bool BtreeMultimapIndex::DeleteEntry(storage::Tuple *key){
+bool  BtreeMultimapIndex::UpdateEntry(const storage::Tuple *key, ItemPointer location,
+                                      __attribute__((unused)) ItemPointer old_location) {
+
+  // uses same function as insert entry because of the underlying concurrent B+tree implementation
+  BTERR status = bt_insertkey (btree_db, key->GetData(), key->GetLength(), 0, &location, sizeof(ItemPointer), unique_keys);
+
+  if(status == BTERR_ok)
+    return true;
+
+  return false;
+}
+
+bool BtreeMultimapIndex::DeleteEntry(const storage::Tuple *key){
 
   BTERR status = bt_deletekey (btree_db, key->GetData(), 0, unique_keys);
 
@@ -63,7 +75,7 @@ bool BtreeMultimapIndex::DeleteEntry(storage::Tuple *key){
   return false;
 }
 
-bool BtreeMultimapIndex::Exists(storage::Tuple *key) const{
+bool BtreeMultimapIndex::Exists(const storage::Tuple *key) const{
 
   int found = bt_findkey (btree_db, key->GetData(), key->GetLength(), nullptr, 0);
 

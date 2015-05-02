@@ -356,14 +356,13 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
       catalog::Schema *tuple_schema = table->GetTable()->GetSchema();
       catalog::Schema *key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
 
-      index::IndexMetadata index_metadata(stmt->name,
-                                          INDEX_TYPE_BTREE_MULTIMAP,
-                                          tuple_schema,
-                                          key_schema,
-                                          stmt->unique);
+      index::IndexMetadata *index_metadata = new index::IndexMetadata(stmt->name,
+                                                                      INDEX_TYPE_BTREE_MULTIMAP,
+                                                                      tuple_schema,
+                                                                      key_schema,
+                                                                      stmt->unique);
 
-      index::Index *physical_index = nullptr;
-      //index::Index *physical_index = new index::IndexFactory::GetInstance(index_metadata);
+      index::Index *physical_index = index::IndexFactory::GetInstance(index_metadata);
 
       catalog::Index *index = new catalog::Index(stmt->name,
                                                  INDEX_TYPE_BTREE_MULTIMAP,
@@ -379,6 +378,7 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
           LOG_ERROR("Could not create index : %s \n", stmt->name);
           delete physical_index;
           delete index;
+          delete index_metadata;
           table->Unlock();
           return false;
         }
