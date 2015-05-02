@@ -283,16 +283,16 @@ std::ostream& operator<<(std::ostream& os, const LogicalTile& lt) {
   os << "\tLOGICAL TILE\n";
 
   os << "\t-----------------------------------------------------------\n";
-  os << "\tSCHEMA\n";
+  os << "\t SCHEMA : \n";
   for (unsigned int i = 0; i < lt.schema_.size(); i++) {
     const LogicalTile::ColumnPointer &cp = lt.schema_[i]; 
-    os << "Position list idx: " << cp.position_list_idx << ", "
+    os << "\t Position list idx: " << cp.position_list_idx << ", "
        << "base tile: " << cp.base_tile << ", "
        << "origin column id: " << cp.origin_column_id << std::endl;
   }
 
   os << "\t-----------------------------------------------------------\n";
-  os << "\tVALID ROWS\n";
+  os << "\t VALID ROWS : ";
 
   for (unsigned int i = 0; i < lt.valid_rows_.size(); i++) {
     os << lt.valid_rows_[i] << ", ";
@@ -301,10 +301,11 @@ std::ostream& operator<<(std::ostream& os, const LogicalTile& lt) {
   os << std::endl;
 
   os << "\t-----------------------------------------------------------\n";
-  os << "\tPOSITION LISTS\n";
+  os << "\t POSITION LISTS : \n";
 
+  int pos_list_id = 0;
   for(auto position_list : lt.position_lists_){
-    os << "\t" ;
+    os << "\t " << pos_list_id++ << " : ";
     for(auto pos : position_list) {
       os << pos << ", ";
     }

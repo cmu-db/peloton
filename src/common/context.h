@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * executor_context.h
+ * context.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/common/executor_context.h
+ * /n-store/src/common/context.h
  *
  *-------------------------------------------------------------------------
  */
@@ -17,17 +17,26 @@
 namespace nstore {
 
 //===--------------------------------------------------------------------===//
-// Executor Context
+// Context
 //===--------------------------------------------------------------------===//
 
 /**
- * EE global data required by executors at runtime.
+ * Context required by executors at runtime.
  */
-class ExecutorContext {
+class Context {
  public:
 
-  ExecutorContext() {
+  Context(txn_id_t transaction_id)
+ : txn_id(transaction_id) {
   }
+
+  txn_id_t GetTransactionId() const{
+    return txn_id;
+  }
+
+ private:
+
+  txn_id_t txn_id;
 
 };
 
