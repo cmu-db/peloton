@@ -43,9 +43,8 @@ class SeqScanNode : public AbstractPlanNode {
     return PLAN_NODE_TYPE_INVALID;
   }
 
-  std::string debugInfo(const std::string& spacer) const {
+  inline std::string GetInfo() const {
     //TODO Implement.
-    (void) spacer;
     return "";
   }
 

@@ -46,9 +46,8 @@ class MaterializationNode : public AbstractPlanNode {
     return PLAN_NODE_TYPE_INVALID;
   }
 
-  inline std::string debugInfo(const std::string& spacer) const {
+  inline std::string GetInfo() const {
     //TODO Implement.
-    (void) spacer;
     return "";
   }
 

@@ -188,6 +188,8 @@ public:
 	// Get a string representation of this tuple
 	friend std::ostream& operator<< (std::ostream& os, const Tuple& tuple);
 
+	std::string GetInfo() const;
+
 private:
 
 	char* GetDataPtr(const id_t column_id);

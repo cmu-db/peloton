@@ -50,7 +50,8 @@ enum ExceptionType {
   EXCEPTION_TYPE_PARSER = 14,             // parser related
   EXCEPTION_TYPE_PLANNER = 15,            // planner related
   EXCEPTION_TYPE_SCHEDULER = 16,          // scheduler related
-  EXCEPTION_TYPE_EXECUTOR = 17            // executor related
+  EXCEPTION_TYPE_EXECUTOR = 17,           // executor related
+  EXCEPTION_TYPE_CONSTRAINT = 18          // constraint related
 };
 
 class Exception {
@@ -380,6 +381,14 @@ public:
   }
 };
 
+class ConstraintException : Exception {
+  ConstraintException() = delete;
+
+ public:
+  ConstraintException(std::string msg) :
+    Exception(EXCEPTION_TYPE_CONSTRAINT, msg){
+  }
+};
 
 } // End nstore namespace
 
