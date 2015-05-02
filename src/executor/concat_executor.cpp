@@ -61,7 +61,11 @@ bool ConcatExecutor::DExecute() {
   for (unsigned int i = 0; i < new_columns.size(); i++) {
     const planner::ConcatNode::ColumnPointer &col = new_columns[i];
     auto &locator = catalog::Manager::GetInstance().locator;
+    // TODO Do this in DInit() to amortize lookup over all tiles.
+    // Do we have to do some kind of synchronization to ensure that the tile
+    // doesn't disappear midway through our request?
     auto it = locator.find(col.base_tile_oid);
+    // TODO Should this be an assert or an if statement?
     assert(it != locator.end());
     source_tile->AddColumn(
         static_cast<storage::Tile *>(it->second),
