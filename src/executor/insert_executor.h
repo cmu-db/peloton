@@ -16,12 +16,18 @@ class InsertExecutor : public AbstractExecutor {
   InsertExecutor& operator=(const InsertExecutor &) = delete;
 
  public:
-  explicit InsertExecutor(planner::AbstractPlanNode *node);
+  explicit InsertExecutor(planner::AbstractPlanNode *node,
+                          storage::Tuple *tuple = nullptr);
 
  protected:
   bool DInit();
 
   bool DExecute();
+
+ private:
+
+  // tuple to be inserted
+  storage::Tuple *tuple = nullptr;
 };
 
 } // namespace executor
