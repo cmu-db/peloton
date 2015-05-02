@@ -17,19 +17,16 @@
 #include "planner/insert_node.h"
 
 namespace nstore {
-
-namespace storage {
-class Tile;
-}
-
 namespace executor {
 
 /**
- * @brief Constructor for concat executor.
+ * @brief Constructor for insert executor.
  * @param node Insert node corresponding to this executor.
  */
-InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node)
-: AbstractExecutor(node) {
+InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
+                               storage::Tuple *tuple)
+: AbstractExecutor(node),
+  tuple(tuple) {
 }
 
 /**
@@ -47,13 +44,18 @@ bool InsertExecutor::DInit() {
  */
 bool InsertExecutor::DExecute() {
   assert(children_.size() <= 1);
+  assert(context);
 
   const planner::InsertNode &node = GetNode<planner::InsertNode>();
 
   // Insert given tuple into table
   if(children_.size() == 0){
+
     storage::Table *target_table = node.GetTable();
 
+    // Index validation
+
+    target_table->InsertTuple(context->GetTransactionId(), tuple);
   }
   // Insert given logical tile into table
   else{

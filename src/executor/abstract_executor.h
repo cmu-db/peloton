@@ -10,6 +10,7 @@
 #include <memory>
 #include <vector>
 
+#include "common/context.h"
 #include "executor/logical_tile.h"
 #include "planner/abstract_plan_node.h"
 
@@ -65,6 +66,9 @@ class AbstractExecutor {
     assert(node);
     return *node;
   }
+
+  // Executor context
+  Context *context = nullptr;
 
  private:
 
