@@ -36,6 +36,11 @@ using ::testing::NotNull;
 using ::testing::Return;
 
 namespace nstore {
+
+namespace storage {
+class Backend;
+}
+
 namespace test {
 
 /**

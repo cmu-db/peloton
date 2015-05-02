@@ -4,7 +4,8 @@
 # EXECUTOR
 ######################################################################
 
-check_PROGRAMS += logical_tile_test materialization_test concat_test
+check_PROGRAMS += logical_tile_test materialization_test concat_test \
+                  seq_scan_test
 
 logical_tile_test_SOURCES = \
                             executor/executor_tests_util.cpp \
@@ -20,3 +21,7 @@ concat_test_SOURCES = \
                       executor/concat_test.cpp \
                       executor/executor_tests_util.cpp \
                       harness.cpp
+
+seq_scan_test_SOURCES = \
+                        executor/seq_scan_test.cpp \
+                        harness.cpp

@@ -19,7 +19,7 @@
 namespace nstore {
 namespace storage {
 
-oid_t Table::AddTileGroup() {
+oid_t Table::AddDefaultTileGroup() {
 
   std::vector<catalog::Schema> schemas;
   std::vector<std::vector<std::string> > column_names;
@@ -34,6 +34,10 @@ oid_t Table::AddTileGroup() {
   tile_groups.push_back(tile_group);
 
   return tile_group_id;
+}
+
+void Table::AddTileGroup(TileGroup *tile_group) {
+  tile_groups.push_back(tile_group);
 }
 
 oid_t Table::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple){
@@ -65,7 +69,7 @@ oid_t Table::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple){
       tuple_id = tile_group->InsertTuple(transaction_id, tuple);
 
       if(tuple_id == INVALID_OID) {
-        AddTileGroup();
+        AddDefaultTileGroup();
 
         // this must work
         tile_group = tile_groups.back();
