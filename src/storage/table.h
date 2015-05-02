@@ -80,6 +80,15 @@ class Table {
   // add a new tile group to table
   oid_t AddTileGroup();
 
+  inline TileGroup *GetTileGroup(id_t tile_group_id) const {
+    assert(tile_group_id < tile_groups.size());
+    return tile_groups[tile_group_id];
+  }
+
+  inline unsigned int NumTileGroups() const {
+    return tile_groups.size();
+  }
+
  protected:
 
   //===--------------------------------------------------------------------===//
