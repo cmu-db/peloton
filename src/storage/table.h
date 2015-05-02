@@ -86,7 +86,9 @@ class Table {
   //===--------------------------------------------------------------------===//
 
   // add a new tile group to table
-  oid_t AddTileGroup();
+  oid_t AddDefaultTileGroup();
+
+  void AddTileGroup(TileGroup *tile_group);
 
   inline TileGroup *GetTileGroup(id_t tile_group_id) const {
     assert(tile_group_id < tile_groups.size());
