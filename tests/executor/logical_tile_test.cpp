@@ -30,9 +30,7 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   storage::VMBackend backend;
   const int tuple_count = 4;
   std::unique_ptr<storage::TileGroup> tile_group(
-      ExecutorTestsUtil::CreateSimpleTileGroup(
-        &backend,
-        tuple_count));
+      ExecutorTestsUtil::CreateTileGroup(&backend, tuple_count));
 
   // Create tuple schema from tile schemas.
   std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();

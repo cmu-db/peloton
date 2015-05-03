@@ -40,9 +40,7 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   storage::VMBackend backend;
   const int tuple_count = 9;
   std::unique_ptr<storage::TileGroup> tile_group(
-      ExecutorTestsUtil::CreateSimpleTileGroup(
-        &backend,
-        tuple_count));
+      ExecutorTestsUtil::CreateTileGroup(&backend, tuple_count));
 
   ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
 
@@ -106,9 +104,7 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   storage::VMBackend backend;
   const int tuple_count = 9;
   std::unique_ptr<storage::TileGroup> tile_group(
-      ExecutorTestsUtil::CreateSimpleTileGroup(
-        &backend,
-        tuple_count));
+      ExecutorTestsUtil::CreateTileGroup(&backend, tuple_count));
 
   ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
 
