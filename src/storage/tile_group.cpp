@@ -11,6 +11,7 @@
  */
 
 #include "common/synch.h"
+#include "common/logger.h"
 #include "storage/tile_group.h"
 
 namespace nstore {
@@ -62,11 +63,11 @@ id_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
 
   id_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
 
-  //std::cout << "Empty tuple slot :: " << tuple_slot_id << "\n";
+  LOG_TRACE("Empty tuple slot :: %d \n", tuple_slot_id);
 
   // No more slots
   if(tuple_slot_id == INVALID_ID)
-    return tuple_slot_id;
+    return INVALID_ID;
 
   id_t tile_column_count;
   id_t column_itr = 0;
@@ -187,7 +188,6 @@ bool TileGroup::DeleteTuple(txn_id_t transaction_id, id_t tuple_slot_id) {
 
 // Get a string representation of this tile group
 std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group) {
-
 
   os << "====================================================================================================\n";
 

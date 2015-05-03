@@ -23,10 +23,13 @@
 #include "catalog/schema.h"
 #include "common/value.h"
 #include "common/value_factory.h"
+#include "common/exception.h"
 #include "executor/abstract_executor.h"
 #include "executor/logical_tile.h"
 #include "storage/tile_group.h"
 #include "storage/tuple.h"
+#include "storage/table.h"
+#include "index/index_factory.h"
 
 #include "executor/mock_executor.h"
 #include "harness.h"
@@ -43,6 +46,55 @@ class Backend;
 
 namespace test {
 
+/** @brief Helper function for defining schema */
+catalog::ColumnInfo GetColumnInfo(int index) {
+  const bool allow_null = false;
+  const bool is_inlined = true;
+
+  switch(index){
+    case 0:
+      return catalog::ColumnInfo(
+          VALUE_TYPE_INTEGER,
+          GetTypeSize(VALUE_TYPE_INTEGER),
+          "COL_A",
+          allow_null,
+          is_inlined);
+      break;
+
+    case 1:
+      return catalog::ColumnInfo(
+          VALUE_TYPE_INTEGER,
+          GetTypeSize(VALUE_TYPE_INTEGER),
+          "COL_B",
+          allow_null,
+          is_inlined);
+      break;
+
+    case 2:
+      return catalog::ColumnInfo(
+          VALUE_TYPE_DOUBLE,
+          GetTypeSize(VALUE_TYPE_DOUBLE),
+          "COL_C",
+          allow_null,
+          is_inlined);
+      break;
+
+    case 3:
+      return catalog::ColumnInfo(
+          VALUE_TYPE_VARCHAR,
+          25, // Column length.
+          "COL_D",
+          allow_null,
+          false); // Not inlined.
+      break;
+
+    default:
+      throw ExecutorException("Invalid column index : " + std::to_string(index));
+      break;
+  }
+}
+
+
 /**
  * @brief Creates simple tile group for testing purposes.
  * @param tuple_count Tuple capacity of this tile group.
@@ -57,51 +109,23 @@ namespace test {
  *
  * @return Pointer to tile group.
  */
-storage::TileGroup *ExecutorTestsUtil::CreateSimpleTileGroup(
-    storage::Backend *backend,
-    int tuple_count) {
+storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(int tuple_count) {
   std::vector<catalog::ColumnInfo> columns;
   std::vector<catalog::Schema> schemas;
 
-  const bool allow_null = false;
-  const bool is_inlined = true;
-  catalog::ColumnInfo column1(
-      VALUE_TYPE_INTEGER,
-      GetTypeSize(VALUE_TYPE_INTEGER),
-      "A",
-      allow_null,
-      is_inlined);
-  catalog::ColumnInfo column2(
-      VALUE_TYPE_INTEGER,
-      GetTypeSize(VALUE_TYPE_INTEGER),
-      "B",
-      allow_null,
-      is_inlined);
-  catalog::ColumnInfo column3(
-      VALUE_TYPE_TINYINT,
-      GetTypeSize(VALUE_TYPE_TINYINT),
-      "C",
-      allow_null,
-      is_inlined);
-  catalog::ColumnInfo column4(
-      VALUE_TYPE_VARCHAR,
-      25, // Column length.
-      "D",
-      allow_null,
-      false); // Not inlined.
-
-  columns.push_back(column1);
-  columns.push_back(column2);
+  columns.push_back(GetColumnInfo(0));
+  columns.push_back(GetColumnInfo(1));
   catalog::Schema schema1(columns);
   schemas.push_back(schema1);
 
   columns.clear();
-  columns.push_back(column3);
-  columns.push_back(column4);
+  columns.push_back( GetColumnInfo(2));
+  columns.push_back( GetColumnInfo(3));
 
   catalog::Schema schema2(columns);
   schemas.push_back(schema2);
 
+  storage::Backend *backend = new storage::VMBackend();
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
       INVALID_OID,
       INVALID_OID,
@@ -124,7 +148,7 @@ void ExecutorTestsUtil::PopulateTiles(
   // Create tuple schema from tile schemas.
   std::vector<catalog::Schema> &tile_schemas = tile_group->GetTileSchemas();
   std::unique_ptr<catalog::Schema> schema(
-    catalog::Schema::AppendSchemaList(tile_schemas));
+      catalog::Schema::AppendSchemaList(tile_schemas));
 
   // Ensure that the tile group is as expected.
   assert(tile_schemas.size() == 2);
@@ -137,12 +161,10 @@ void ExecutorTestsUtil::PopulateTiles(
     storage::Tuple tuple(schema.get(), allocate);
     tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(i, 0)));
     tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(i, 1)));
-    tuple.SetValue(2, ValueFactory::GetTinyIntValue(PopulatedValue(i, 2)));
-    tuple.SetValue(
-        3,
-        ValueFactory::GetStringValue(
-          std::to_string(PopulatedValue(i, 3)),
-          tile_group->GetTilePool(1)));
+    tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(i, 2)));
+    tuple.SetValue(3, ValueFactory::GetStringValue(
+        std::to_string(PopulatedValue(i, 3)),
+        tile_group->GetTilePool(1)));
     tile_group->InsertTuple(txn_id, &tuple);
   }
 }
@@ -152,6 +174,7 @@ void ExecutorTestsUtil::PopulateTiles(
  *        executor which has only one child.
  * @param executor Executor to pass logical tile through.
  * @param source_logical_tile Logical tile to pass through executor.
+ * @param check the value of logical tiles
  *
  * @return Pointer to processed logical tile.
  */
@@ -163,13 +186,13 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
 
   // Uneventful init...
   EXPECT_CALL(child_executor, DInit())
-    .WillOnce(Return(true));
+  .WillOnce(Return(true));
   EXPECT_TRUE(executor->Init());
 
   // Where the main work takes place...
   EXPECT_CALL(child_executor, DExecute())
-    .WillOnce(Return(true))
-    .WillOnce(Return(false));
+  .WillOnce(Return(true))
+  .WillOnce(Return(false));
 
   child_executor.SetOutput(source_logical_tile);
 
@@ -182,6 +205,98 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
   return result_logical_tile.release();
 }
 
+storage::Table *ExecutorTestsUtil::CreateTable(int tuple_count) {
+  // Schema for first tile group. Vertical partition is 2, 2.
+  std::vector<catalog::Schema> schemas1({
+    catalog::Schema({ GetColumnInfo(0), GetColumnInfo(1) }),
+        catalog::Schema({ GetColumnInfo(2), GetColumnInfo(3) })
+  });
+
+  // Schema for second tile group. Vertical partition is 1, 3.
+  std::vector<catalog::Schema> schemas2({
+    catalog::Schema({ GetColumnInfo(0) }),
+        catalog::Schema({ GetColumnInfo(1), GetColumnInfo(2), GetColumnInfo(3) })
+  });
+
+  // Create table.
+  storage::Table *table = storage::TableFactory::GetTable(
+      INVALID_OID,
+      new catalog::Schema({
+    GetColumnInfo(0), GetColumnInfo(1),
+        GetColumnInfo(2), GetColumnInfo(3) }));
+
+  // Create tile groups.
+  table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
+      INVALID_OID,
+      INVALID_OID,
+      INVALID_OID,
+      table->GetBackend(),
+      schemas1,
+      tuple_count));
+  table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
+      INVALID_OID,
+      INVALID_OID,
+      INVALID_OID,
+      table->GetBackend(),
+      schemas2,
+      tuple_count));
+
+  // PRIMARY INDEX
+  std::vector<id_t> key_attrs;
+  catalog::Schema *tuple_schema = table->GetSchema();
+  catalog::Schema *key_schema;
+  index::IndexMetadata *index_metadata;
+  bool unique;
+
+  key_attrs = { 0 };
+  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  unique = true;
+  index_metadata = new index::IndexMetadata("PRIMARY_INDEX",
+                                            INDEX_TYPE_BTREE_MULTIMAP,
+                                            tuple_schema,
+                                            key_schema,
+                                            unique);
+  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+
+  table->AddIndex(pkey_index);
+
+  // SECONDARY INDEX
+  key_attrs = { 0, 1 };
+  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  unique = false;
+  index_metadata = new index::IndexMetadata("SECONDARY_INDEX",
+                                            INDEX_TYPE_BTREE_MULTIMAP,
+                                            tuple_schema,
+                                            key_schema,
+                                            unique);
+  index::Index *sec_index = index::IndexFactory::GetInstance(index_metadata);
+
+  table->AddIndex(sec_index);
+
+  return table;
+}
+
+storage::Tuple *ExecutorTestsUtil::GetTuple(storage::Table *table, int tuple_id) {
+
+  storage::Tuple* tuple = new storage::Tuple(table->GetSchema(), true);
+  tuple->SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0)));
+  tuple->SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1)));
+  tuple->SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2)));
+  tuple->SetValue(3, ValueFactory::GetStringValue(std::to_string(PopulatedValue(tuple_id, 3))));
+
+  return tuple;
+}
+
+storage::Tuple *ExecutorTestsUtil::GetNullTuple(storage::Table *table) {
+
+  storage::Tuple* tuple = new storage::Tuple(table->GetSchema(), true);
+  tuple->SetValue(0, ValueFactory::GetNullValue());
+  tuple->SetValue(1, ValueFactory::GetNullValue());
+  tuple->SetValue(2, ValueFactory::GetNullValue());
+  tuple->SetValue(3, ValueFactory::GetNullStringValue());
+
+  return tuple;
+}
 
 } // namespace test
 } // namespace nstore

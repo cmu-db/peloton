@@ -15,7 +15,7 @@ namespace planner {
 
 class InsertNode : public AbstractPlanNode {
  public:
-
+  InsertNode() = delete;
   InsertNode(const InsertNode &) = delete;
   InsertNode& operator=(const InsertNode &) = delete;
   InsertNode(InsertNode &&) = delete;
