@@ -46,6 +46,11 @@ class MaterializationNode : public AbstractPlanNode {
     return PLAN_NODE_TYPE_INVALID;
   }
 
+  inline std::string GetInfo() const {
+    //TODO Implement.
+    return "";
+  }
+
  private:
   /**
    * @brief Mapping of old column ids to new column ids after materialization.
