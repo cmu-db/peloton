@@ -109,9 +109,6 @@ class Index
   // insert an index entry linked to given tuple
   virtual bool InsertEntry(const storage::Tuple *key, ItemPointer location) = 0;
 
-  // update an index entry linked to given tuple to point to new location
-  virtual bool UpdateEntry(const storage::Tuple *key, ItemPointer location, ItemPointer old_location) = 0;
-
   // delete the index entry linked to given tuple
   virtual bool DeleteEntry(const storage::Tuple *key) = 0;
 

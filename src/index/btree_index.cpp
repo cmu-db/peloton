@@ -46,20 +46,9 @@ bool BtreeMultimapIndex::InsertEntry(const storage::Tuple *key, ItemPointer loca
 
   BTERR status = bt_insertkey (btree_db, key->GetData(), key->GetLength(), 0, &location, sizeof(ItemPointer), unique_keys);
 
-  if(status == BTERR_ok)
+  if(status == BTERR_ok){
     return true;
-
-  return false;
-}
-
-bool  BtreeMultimapIndex::UpdateEntry(const storage::Tuple *key, ItemPointer location,
-                                      __attribute__((unused)) ItemPointer old_location) {
-
-  // uses same function as insert entry because of the underlying concurrent B+tree implementation
-  BTERR status = bt_insertkey (btree_db, key->GetData(), key->GetLength(), 0, &location, sizeof(ItemPointer), unique_keys);
-
-  if(status == BTERR_ok)
-    return true;
+  }
 
   return false;
 }
@@ -106,7 +95,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::Scan() const{
     if( (set->latch = bt_pinlatch (bt, page_no, 1) ) )
       set->page = bt_mappage (bt, set->latch);
     else
-      fprintf(stderr, "unable to obtain latch"), exit(1);
+      ::fprintf(::stderr, "unable to obtain latch"), exit(1);
     bt_lockpage (bt, BtLockRead, set->latch);
     next = bt_getid (set->page->right);
 
@@ -262,8 +251,8 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyBetween(storage::
         item = (ItemPointer *) val->value;
         result.push_back(*item);
 
-        std::cout << "Tuple :: " << tuple << " block : " << item->block
-            << " offset : " << item->offset << "\n";
+        //std::cout << "Tuple :: " << tuple << " block : " << item->block
+        //    << " offset : " << item->offset << "\n";
       }
       else {
         break;
@@ -301,7 +290,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLT(storage::Tuple
     if( (set->latch = bt_pinlatch (bt, page_no, 1) ) )
       set->page = bt_mappage (bt, set->latch);
     else
-      fprintf(stderr, "unable to obtain latch"), exit(1);
+      ::fprintf(::stderr, "unable to obtain latch"), exit(1);
 
     bt_lockpage (bt, BtLockRead, set->latch);
     next = bt_getid (set->page->right);
@@ -361,7 +350,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLTE(storage::Tupl
     if( (set->latch = bt_pinlatch (bt, page_no, 1) ) )
       set->page = bt_mappage (bt, set->latch);
     else
-      fprintf(stderr, "unable to obtain latch"), exit(1);
+      ::fprintf(::stderr, "unable to obtain latch"), exit(1);
 
     bt_lockpage (bt, BtLockRead, set->latch);
     next = bt_getid (set->page->right);

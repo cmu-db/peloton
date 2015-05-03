@@ -58,6 +58,11 @@ class Table {
 
   ~Table() {
 
+    // clean up indices
+    for (auto index : indexes) {
+      delete index;
+    }
+
     // clean up tile groups
     for(auto tile_group : tile_groups)
       delete tile_group;
@@ -85,22 +90,26 @@ class Table {
   // OPERATIONS
   //===--------------------------------------------------------------------===//
 
-  // add a new tile group to table
+  // add a default unpartitioned tile group to table
   oid_t AddDefaultTileGroup();
 
+  // add a customized tile group to table
   void AddTileGroup(TileGroup *tile_group);
 
-  inline TileGroup *GetTileGroup(id_t tile_group_id) const {
+  // add an index to the table
+  void AddIndex(index::Index *index);
+
+  TileGroup *GetTileGroup(id_t tile_group_id) const {
     assert(tile_group_id < tile_groups.size());
     return tile_groups[tile_group_id];
   }
 
-  inline unsigned int NumTileGroups() const {
+  unsigned int GetTileGroupCount() const {
     return tile_groups.size();
   }
 
   // insert tuple in table
-  oid_t InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
+  id_t InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
 
   //===--------------------------------------------------------------------===//
   // INDEXES
@@ -110,21 +119,24 @@ class Table {
     return indexes.size();
   }
 
-  index::Index *GetPrimaryKeyIndex() {
-    return primary_key_index;
-  }
-
-  const index::Index *GetPrimaryKeyIndex() const {
-    return primary_key_index;
+  index::Index *GetIndex(id_t index_id) const {
+    assert(index_id < indexes.size());
+    return indexes[index_id];
   }
 
   void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
   bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
   void DeleteInIndexes(const storage::Tuple *tuple);
-  void UpdateInIndexes(const storage::Tuple *tuple, ItemPointer location, ItemPointer old_location);
 
   bool CheckNulls(const storage::Tuple *tuple) const;
+
+  //===--------------------------------------------------------------------===//
+  // Utilities
+  //===--------------------------------------------------------------------===//
+
+  // Get a string representation of this table
+  friend std::ostream& operator<<(std::ostream& os, const Table& table);
 
  protected:
 
@@ -150,7 +162,6 @@ class Table {
 
   // INDEXES
   std::vector<index::Index*> indexes;
-  index::Index *primary_key_index = nullptr;
 
   // TODO need some policy ?
   // number of tuples allocated per tilegroup for this table

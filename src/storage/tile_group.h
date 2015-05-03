@@ -86,6 +86,10 @@ class TileGroup {
     return tile_group_header->GetActiveTupleCount();
   }
 
+  id_t GetAllocatedTupleCount() const {
+    return num_tuple_slots;
+  }
+
   TileGroupHeader *GetHeader() const{
     return tile_group_header;
   }
