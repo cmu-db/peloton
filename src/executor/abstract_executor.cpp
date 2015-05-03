@@ -18,6 +18,9 @@ AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node)
 : node_(node) {
 }
 
+AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node,Context *context)
+: context_(context), node_(node) {
+}
 
 void AbstractExecutor::SetOutput(LogicalTile* table) {
   output.reset(table);

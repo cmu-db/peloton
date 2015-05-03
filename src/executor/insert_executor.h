@@ -17,6 +17,7 @@ class InsertExecutor : public AbstractExecutor {
 
  public:
   explicit InsertExecutor(planner::AbstractPlanNode *node,
+                          Context *context,
                           storage::Tuple *tuple = nullptr);
 
  protected:
