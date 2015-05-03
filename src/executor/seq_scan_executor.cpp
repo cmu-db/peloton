@@ -68,14 +68,14 @@ bool SeqScanExecutor::DExecute() {
   // TODO Are we supposed to go through database or catalog::Table first?
   storage::Table *table = static_cast<storage::Table *>(it->second);
   //TODO Create iterators for table and tile groups?
-  if (current_tile_group_id_ == table->NumTileGroups()) {
+  if (current_tile_group_id_ == table->GetTileGroupCount()) {
     return false;
   }
   storage::TileGroup *tile_group = table->GetTileGroup(current_tile_group_id_);
   if (current_tile_id_ == tile_group->NumTiles()) {
     current_tile_group_id_++;
     current_tile_id_ = 0;
-    if (current_tile_group_id_ == table->NumTileGroups()) {
+    if (current_tile_group_id_ == table->GetTileGroupCount()) {
       return false;
     }
     tile_group = table->GetTileGroup(current_tile_group_id_);

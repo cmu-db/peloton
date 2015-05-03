@@ -20,19 +20,28 @@ namespace nstore {
 namespace storage {
 
 oid_t Table::AddDefaultTileGroup() {
+  oid_t tile_group_id = INVALID_OID;
 
   std::vector<catalog::Schema> schemas;
   std::vector<std::vector<std::string> > column_names;
 
-  oid_t tile_group_id = catalog::Manager::GetInstance().GetNextOid();
+  tile_group_id = catalog::Manager::GetInstance().GetNextOid();
   schemas.push_back(*schema);
 
   TileGroup* tile_group = TileGroupFactory::GetTileGroup(database_id, table_id, tile_group_id,
                                                          backend,
                                                          schemas, tuples_per_tilegroup);
-
   {
     std::lock_guard<std::mutex> lock(table_mutex);
+
+    // Check if we actually need to allocate a tile group
+    auto last_tile_group = tile_groups.back();
+    if(last_tile_group->GetActiveTupleCount()
+        < last_tile_group->GetAllocatedTupleCount()) {
+      delete tile_group;
+      return INVALID_OID;
+    }
+
     tile_groups.push_back(tile_group);
   }
 
@@ -60,20 +69,20 @@ void Table::AddIndex(index::Index *index) {
 id_t Table::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple){
   assert(tuple);
 
-  ///////////////////////////////////////////////////
   // Not NULL checks
-  ///////////////////////////////////////////////////
-
   if(CheckNulls(tuple) == false){
     throw ConstraintException("Not NULL constraint violated : " + tuple->GetInfo());
     return INVALID_ID;
   }
 
-  ///////////////////////////////////////////////////
-  // Actual insertion
-  ///////////////////////////////////////////////////
+  // Index checks
+  ItemPointer location;
+  if(TryInsertInIndexes(tuple, location) == false){
+    throw ConstraintException("Index constraint violated : " + tuple->GetInfo());
+    return INVALID_ID;
+  }
 
-  // find last tile group
+  // Actual insertion into last tile group
   auto tile_group = tile_groups.back();
 
   // and try to insert into it
@@ -81,31 +90,17 @@ id_t Table::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple){
 
   // if that didn't work, need to add a new tile group
   if(tuple_id == INVALID_ID){
+    AddDefaultTileGroup();
 
-    // try to insert again to check if someone else added a tile group already
     tile_group = tile_groups.back();
     tuple_id = tile_group->InsertTuple(transaction_id, tuple);
-
-    if(tuple_id == INVALID_ID) {
-      AddDefaultTileGroup();
-      LOG_INFO("Added tile group");
-
-      // this must work
-      tile_group = tile_groups.back();
-      tuple_id = tile_group->InsertTuple(transaction_id, tuple);
-      assert(tuple_id != INVALID_ID);
-    }
+    if(tuple_id == INVALID_ID)
+      return INVALID_ID;
   }
 
-  ///////////////////////////////////////////////////
-  // Index checks
-  ///////////////////////////////////////////////////
-
-  ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
-  if(TryInsertInIndexes(tuple, location) == false){
-    throw ConstraintException("Index constraint violated : " + tuple->GetInfo());
-    return INVALID_ID;
-  }
+  // TODO: Index : update location
+  location = ItemPointer(tile_group->GetTileGroupId(), tuple_id);
+  InsertInIndexes(tuple, location);
 
   return tuple_id;
 }
@@ -161,19 +156,6 @@ void Table::DeleteInIndexes(const storage::Tuple *tuple) {
   }
 }
 
-void Table::UpdateInIndexes(const storage::Tuple *tuple, ItemPointer location, ItemPointer old_location) {
-  for(auto index : indexes){
-    LOG_TRACE("Updating tuple address in index %s.%s [%s]",
-              GetName().c_str(), index->GetName().c_str(), index->GetTypeName().c_str());
-
-    if (index->UpdateEntry(tuple, location, old_location) == false) {
-      LOG_ERROR("ERROR: Failed to update tuple to to new location ");
-      throw ExecutorException("Failed to update tuple to new address in index "
-          + GetName() + "." + index->GetName() + " " +index->GetTypeName());
-    }
-  }
-}
-
 bool Table::CheckNulls(const storage::Tuple *tuple) const {
   assert (schema->GetColumnCount() == tuple->GetColumnCount());
 
@@ -191,13 +173,22 @@ bool Table::CheckNulls(const storage::Tuple *tuple) const {
 
 std::ostream& operator<<(std::ostream& os, const Table& table){
 
-  os << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+  os << "================================================================================================\n";
   os << "TABLE :\n";
 
-  for(auto tile_group : table.tile_groups)
-    std::cout << (*tile_group);
+  id_t tile_group_count = table.GetTileGroupCount();
+  std::cout << "Tile Group Count : " << tile_group_count << "\n";
 
-  os << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+  id_t tuple_count = 0;
+  for(id_t tile_group_itr = 0 ; tile_group_itr < tile_group_count ; tile_group_itr++) {
+    auto tile_tuple_count = table.GetTileGroup(tile_group_itr)->GetActiveTupleCount();
+    std::cout << "Tile Group Id  : " << tile_group_itr << " Tuple Count : " << tile_tuple_count << "\n";
+    tuple_count += tile_tuple_count;
+  }
+
+  std::cout << "Table Tuple Count :: " << tuple_count << "\n";
+
+  os << "================================================================================================\n";
 
   return os;
 }
