@@ -11,6 +11,7 @@
 namespace nstore {
 
 namespace catalog {
+class ColumnInfo;
 class Manager;
 }
 
@@ -22,20 +23,34 @@ class LogicalTile;
 namespace storage {
 class Backend;
 class TileGroup;
+class Table;
+class Tuple;
 }
 
 namespace test {
 
 class ExecutorTestsUtil {
  public:
-  static storage::TileGroup *CreateSimpleTileGroup(
+
+  /**
+   * @brief Creates a basic tile group with allocated but not populated
+   *        tuples.
+   */
+  static storage::TileGroup *CreateTileGroup(
       storage::Backend *backend,
-      int tuple_count);
+      int allocate_tuple_count = DEFAULT_TUPLE_COUNT);
+
+  /** @brief Creates a basic table with allocated but not populated tuples */
+  static storage::Table *CreateTable(
+      int allocate_tuple_count = DEFAULT_TUPLE_COUNT);
 
   static void PopulateTiles(storage::TileGroup *tile_group, int num_rows);
 
-  static executor::LogicalTile *ExecuteTile(executor::AbstractExecutor *executor,
-                          executor::LogicalTile *source_logical_tile);
+  static catalog::ColumnInfo GetColumnInfo(int index);
+
+  static executor::LogicalTile *ExecuteTile(
+      executor::AbstractExecutor *executor,
+      executor::LogicalTile *source_logical_tile);
 
   /**
    * @brief Returns the value populated at the specified field.
@@ -49,6 +64,9 @@ class ExecutorTestsUtil {
   inline static int PopulatedValue(const id_t tuple_id, const id_t column_id) {
     return 10 * tuple_id + column_id;
   }
+
+  static storage::Tuple *GetTuple(storage::Table *table, id_t tuple_id);
+  static storage::Tuple *GetNullTuple(storage::Table *table);
 };
 
 } // namespace test

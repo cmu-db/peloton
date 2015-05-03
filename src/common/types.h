@@ -54,6 +54,8 @@ namespace nstore {
 #define DEFAULT_DB_ID  12345
 #define DEFAULT_DB_NAME "default"
 
+#define DEFAULT_TUPLE_COUNT 1000
+
 //===--------------------------------------------------------------------===//
 // Other Constants
 //===--------------------------------------------------------------------===//

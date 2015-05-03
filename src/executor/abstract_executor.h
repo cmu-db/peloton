@@ -45,6 +45,7 @@ class AbstractExecutor {
 
  protected:
   explicit AbstractExecutor(planner::AbstractPlanNode *node);
+  explicit AbstractExecutor(planner::AbstractPlanNode *node, Context *context);
 
   /** @brief Init function to be overriden by derived class. */
   virtual bool DInit() = 0;
@@ -68,7 +69,7 @@ class AbstractExecutor {
   }
 
   // Executor context
-  Context *context = nullptr;
+  Context *context_ = nullptr;
 
  private:
 
