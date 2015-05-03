@@ -11,6 +11,7 @@
 namespace nstore {
 
 namespace catalog {
+class ColumnInfo;
 class Manager;
 }
 
@@ -38,6 +39,8 @@ class ExecutorTestsUtil {
   static storage::Table *CreateTable(int allocate_tuple_count = DEFAULT_TUPLE_COUNT);
 
   static void PopulateTiles(storage::TileGroup *tile_group, int num_rows);
+
+  static catalog::ColumnInfo GetColumnInfo(int index);
 
   static executor::LogicalTile *ExecuteTile(executor::AbstractExecutor *executor,
                           executor::LogicalTile *source_logical_tile);

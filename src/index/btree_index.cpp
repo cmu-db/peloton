@@ -47,7 +47,6 @@ bool BtreeMultimapIndex::InsertEntry(const storage::Tuple *key, ItemPointer loca
   BTERR status = bt_insertkey (btree_db, key->GetData(), key->GetLength(), 0, &location, sizeof(ItemPointer), unique_keys);
 
   if(status == BTERR_ok){
-    num_keys++;
     return true;
   }
 
@@ -59,7 +58,6 @@ bool BtreeMultimapIndex::DeleteEntry(const storage::Tuple *key){
   BTERR status = bt_deletekey (btree_db, key->GetData(), 0, unique_keys);
 
   if(status == BTERR_ok) {
-    num_keys--;
     return true;
   }
 
@@ -75,10 +73,6 @@ bool BtreeMultimapIndex::Exists(const storage::Tuple *key) const{
   }
 
   return true;
-}
-
-size_t BtreeMultimapIndex::Size() const{
-  return num_keys;
 }
 
 std::vector<ItemPointer> BtreeMultimapIndex::Scan() const{
@@ -257,8 +251,8 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyBetween(storage::
         item = (ItemPointer *) val->value;
         result.push_back(*item);
 
-        std::cout << "Tuple :: " << tuple << " block : " << item->block
-            << " offset : " << item->offset << "\n";
+        //std::cout << "Tuple :: " << tuple << " block : " << item->block
+        //    << " offset : " << item->offset << "\n";
       }
       else {
         break;

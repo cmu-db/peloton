@@ -47,7 +47,7 @@ class Backend;
 namespace test {
 
 /** @brief Helper function for defining schema */
-catalog::ColumnInfo GetColumnInfo(int index) {
+catalog::ColumnInfo ExecutorTestsUtil::GetColumnInfo(int index) {
   const bool allow_null = false;
   const bool is_inlined = true;
 

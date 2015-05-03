@@ -12,6 +12,7 @@
 #include "gtest/gtest.h"
 #include "harness.h"
 
+#include "catalog/schema.h"
 #include "common/exception.h"
 #include "common/value.h"
 #include "common/value_factory.h"
@@ -43,8 +44,6 @@ void InsertTuple(storage::Table *table){
     executor::InsertExecutor executor(&node, &context, tuple);
     executor.Execute();
   }
-
-  std::cout << "Done. \n";
 }
 
 // Insert a tuple into a table
@@ -82,11 +81,47 @@ TEST(InsertTests, BasicTests) {
 
   LaunchParallelTest(8, InsertTuple, table);
 
+  // PRIMARY KEY
   auto pkey_index = table->GetIndex(0);
+  std::vector<catalog::ColumnInfo> columns;
+
+  columns.push_back(ExecutorTestsUtil::GetColumnInfo(0));
+  catalog::Schema *key_schema = new catalog::Schema(columns);
+  storage::Tuple *key1 = new storage::Tuple(key_schema, true);
+  storage::Tuple *key2 = new storage::Tuple(key_schema, true);
+
+  key1->SetValue(0, ValueFactory::GetIntegerValue(10));
+  key2->SetValue(0, ValueFactory::GetIntegerValue(100));
+
+  auto pkey_list = pkey_index->GetLocationsForKeyBetween(key1, key2);
+  std::cout << "PKEY INDEX :: Entries : " << pkey_list.size() << "\n";
+  for(auto item : pkey_list){
+    std::cout << item.block << " " << item.offset << "\n";
+  }
+  std::cout << "\n";
+
+  // SEC KEY
   auto sec_index = table->GetIndex(1);
 
-  std::cout << "PKEY INDEX :: " << pkey_index->Size() << "\n";
-  std::cout << "SEC INDEX :: " << sec_index->Size() << "\n";
+  columns.clear();
+  columns.push_back(ExecutorTestsUtil::GetColumnInfo(0));
+  columns.push_back(ExecutorTestsUtil::GetColumnInfo(1));
+  key_schema = new catalog::Schema(columns);
+
+  storage::Tuple *key3 = new storage::Tuple(key_schema, true);
+  storage::Tuple *key4 = new storage::Tuple(key_schema, true);
+
+  key3->SetValue(0, ValueFactory::GetIntegerValue(10));
+  key3->SetValue(1, ValueFactory::GetIntegerValue(11));
+  key4->SetValue(0, ValueFactory::GetIntegerValue(100));
+  key4->SetValue(1, ValueFactory::GetIntegerValue(101));
+
+  auto sec_list = sec_index->GetLocationsForKeyBetween(key1, key2);
+  std::cout << "SEC INDEX :: Entries : " << sec_list.size() << "\n";
+  for(auto item : sec_list){
+    std::cout << item.block << " " << item.offset << "\n";
+  }
+  std::cout << "\n";
 
   std::cout << (*table);
 }
