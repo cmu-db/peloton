@@ -24,7 +24,14 @@ class SeqScanNode : public AbstractPlanNode {
   SeqScanNode(SeqScanNode &&) = delete;
   SeqScanNode& operator=(SeqScanNode &&) = delete;
 
-  //TODO Implement constructor.
+  SeqScanNode(
+      oid_t table_id,
+      expression::AbstractExpression *predicate,
+      std::vector<id_t> &&column_ids)
+    : table_id_(table_id),
+      predicate_(predicate),
+      column_ids_(std::move(column_ids)) {
+  }
 
   oid_t table_id() const {
     return table_id_;
