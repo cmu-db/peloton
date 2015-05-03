@@ -69,7 +69,7 @@ class AbstractPlanNode {
   std::string GetInfo(std::string spacer) const;
 
   // Override in derived plan nodes
-  virtual std::string GetInfo() const = 0;
+  virtual std::string GetInfo() const;
 
  private:
 

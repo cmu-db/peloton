@@ -85,5 +85,9 @@ std::string AbstractPlanNode::GetInfo(std::string spacer) const {
   return (buffer.str());
 }
 
+std::string AbstractPlanNode::GetInfo() const{
+  return "";
+}
+
 } // namespace planner
 } // namespace nstore
