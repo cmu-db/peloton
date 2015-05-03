@@ -109,9 +109,6 @@ class Index
   // insert an index entry linked to given tuple
   virtual bool InsertEntry(const storage::Tuple *key, ItemPointer location) = 0;
 
-  // update an index entry linked to given tuple to point to new location
-  virtual bool UpdateEntry(const storage::Tuple *key, ItemPointer location, ItemPointer old_location) = 0;
-
   // delete the index entry linked to given tuple
   virtual bool DeleteEntry(const storage::Tuple *key) = 0;
 
@@ -121,6 +118,9 @@ class Index
 
   // return whether the entry is already stored in the index
   virtual bool Exists(const storage::Tuple *key) const = 0;
+
+  // get number of entries in index
+  virtual size_t Size() const = 0;
 
   // scan all keys in the index
   virtual std::vector<ItemPointer> Scan() const = 0;

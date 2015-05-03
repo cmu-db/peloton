@@ -32,10 +32,10 @@ class ExecutorTestsUtil {
  public:
 
   /** @brief Creates a basic tile group with allocated but not populated tuples */
-  static storage::TileGroup *CreateTileGroup(int allocate_tuple_count = 5);
+  static storage::TileGroup *CreateTileGroup(int allocate_tuple_count = DEFAULT_TUPLE_COUNT);
 
   /** @brief Creates a basic table with allocated but not populated tuples */
-  static storage::Table *CreateTable(int allocate_tuple_count = 5);
+  static storage::Table *CreateTable(int allocate_tuple_count = DEFAULT_TUPLE_COUNT);
 
   static void PopulateTiles(storage::TileGroup *tile_group, int num_rows);
 
@@ -55,7 +55,7 @@ class ExecutorTestsUtil {
     return 10 * tuple_id + column_id;
   }
 
-  static storage::Tuple *GetTuple(storage::Table *table, int tuple_id);
+  static storage::Tuple *GetTuple(storage::Table *table, id_t tuple_id);
   static storage::Tuple *GetNullTuple(storage::Table *table);
 };
 
