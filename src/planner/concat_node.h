@@ -47,6 +47,11 @@ class ConcatNode : public AbstractPlanNode {
     return PLAN_NODE_TYPE_INVALID;
   }
 
+  inline std::string GetInfo() const {
+    //TODO Implement.
+    return "";
+  }
+
  private:
   /** @brief Vector of new columns to add to logical tile. */
   std::vector<ColumnPointer> new_columns_;

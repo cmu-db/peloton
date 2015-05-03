@@ -8,7 +8,8 @@ check_PROGRAMS += \
 				  logical_tile_test \
 				  materialization_test \
 				  concat_test \
-				  insert_test
+				  insert_test \
+				  seq_scan_test
 
 executor_tests_common= 	executor/executor_tests_util.cpp \
 						harness.cpp
@@ -18,7 +19,7 @@ logical_tile_test_SOURCES = \
 							executor/logical_tile_test.cpp 
 
 materialization_test_SOURCES = \
-                               $(executor_tests_common) \
+							   $(executor_tests_common) \
 							   executor/materialization_test.cpp 
 
 concat_test_SOURCES = \
@@ -28,3 +29,7 @@ concat_test_SOURCES = \
 insert_test_SOURCES = \
 					  $(executor_tests_common) \
 					  executor/insert_test.cpp 
+
+seq_scan_test_SOURCES = \
+						$(executor_tests_common) \
+						executor/seq_scan_test.cpp 
