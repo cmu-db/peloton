@@ -85,10 +85,14 @@ class Table {
   // OPERATIONS
   //===--------------------------------------------------------------------===//
 
-  // add a new tile group to table
+  // add a default unpartitioned tile group to table
   oid_t AddDefaultTileGroup();
 
+  // add a customized tile group to table
   void AddTileGroup(TileGroup *tile_group);
+
+  // add an index to the table
+  void AddIndex(index::Index *index);
 
   inline TileGroup *GetTileGroup(id_t tile_group_id) const {
     assert(tile_group_id < tile_groups.size());
@@ -100,7 +104,7 @@ class Table {
   }
 
   // insert tuple in table
-  oid_t InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
+  id_t InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
 
   //===--------------------------------------------------------------------===//
   // INDEXES
@@ -125,6 +129,13 @@ class Table {
   void UpdateInIndexes(const storage::Tuple *tuple, ItemPointer location, ItemPointer old_location);
 
   bool CheckNulls(const storage::Tuple *tuple) const;
+
+  //===--------------------------------------------------------------------===//
+  // Utilities
+  //===--------------------------------------------------------------------===//
+
+  // Get a string representation of this table
+  friend std::ostream& operator<<(std::ostream& os, const Table& table);
 
  protected:
 

@@ -31,61 +31,80 @@ oid_t Table::AddDefaultTileGroup() {
                                                          backend,
                                                          schemas, tuples_per_tilegroup);
 
-  tile_groups.push_back(tile_group);
+  {
+    std::lock_guard<std::mutex> lock(table_mutex);
+    tile_groups.push_back(tile_group);
+  }
 
   return tile_group_id;
 }
 
 void Table::AddTileGroup(TileGroup *tile_group) {
-  tile_groups.push_back(tile_group);
+
+  {
+    std::lock_guard<std::mutex> lock(table_mutex);
+    tile_groups.push_back(tile_group);
+  }
+
 }
 
-oid_t Table::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple){
+void Table::AddIndex(index::Index *index) {
+
+  {
+    std::lock_guard<std::mutex> lock(table_mutex);
+    indexes.push_back(index);
+  }
+
+}
+
+id_t Table::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple){
   assert(tuple);
 
+  ///////////////////////////////////////////////////
   // Not NULL checks
+  ///////////////////////////////////////////////////
 
   if(CheckNulls(tuple) == false){
     throw ConstraintException("Not NULL constraint violated : " + tuple->GetInfo());
-    return INVALID_OID;
+    return INVALID_ID;
   }
 
+  ///////////////////////////////////////////////////
   // Actual insertion
+  ///////////////////////////////////////////////////
 
   // find last tile group
   auto tile_group = tile_groups.back();
 
   // and try to insert into it
-  oid_t tuple_id = tile_group->InsertTuple(transaction_id, tuple);
+  id_t tuple_id = tile_group->InsertTuple(transaction_id, tuple);
 
   // if that didn't work, need to add a new tile group
-  if(tuple_id == INVALID_OID){
+  if(tuple_id == INVALID_ID){
 
-    {
-      std::lock_guard<std::mutex> lock(table_mutex);
+    // try to insert again to check if someone else added a tile group already
+    tile_group = tile_groups.back();
+    tuple_id = tile_group->InsertTuple(transaction_id, tuple);
 
-      // try to insert again to check if someone else added a tile group already
+    if(tuple_id == INVALID_ID) {
+      AddDefaultTileGroup();
+      LOG_INFO("Added tile group");
+
+      // this must work
       tile_group = tile_groups.back();
       tuple_id = tile_group->InsertTuple(transaction_id, tuple);
-
-      if(tuple_id == INVALID_OID) {
-        AddDefaultTileGroup();
-
-        // this must work
-        tile_group = tile_groups.back();
-        tuple_id = tile_group->InsertTuple(transaction_id, tuple);
-        assert(tuple_id != INVALID_OID);
-      }
+      assert(tuple_id != INVALID_ID);
     }
-
   }
 
+  ///////////////////////////////////////////////////
   // Index checks
+  ///////////////////////////////////////////////////
 
   ItemPointer location(tile_group->GetTileGroupId(), tuple_id);
   if(TryInsertInIndexes(tuple, location) == false){
     throw ConstraintException("Index constraint violated : " + tuple->GetInfo());
-    return INVALID_OID;
+    return INVALID_ID;
   }
 
   return tuple_id;
@@ -104,19 +123,30 @@ bool Table::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location
   int index_count = GetIndexCount();
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
 
-    if(indexes[index_itr]->HasUniqueKeys() == false ||
-        indexes[index_itr]->Exists(tuple) == true ||
-        indexes[index_itr]->InsertEntry(tuple, location) == false) {
+    // No need to check if it does not have unique keys
+    if(indexes[index_itr]->HasUniqueKeys() == false) {
+      bool status = indexes[index_itr]->InsertEntry(tuple, location);
+      if(status == true)
+        continue;
+    }
+
+    // Check if key already exists
+    if(indexes[index_itr]->Exists(tuple) == true) {
       LOG_ERROR("Failed to insert into index %s.%s [%s]",
                 GetName().c_str(), indexes[index_itr]->GetName().c_str(),
                 indexes[index_itr]->GetTypeName().c_str());
-
-      // undo insert in other indexes
-      for (int prev_index_itr = index_itr + 1; prev_index_itr < index_count; ++prev_index_itr) {
-        indexes[prev_index_itr]->DeleteEntry(tuple);
-      }
-      return false;
     }
+    else {
+      bool status = indexes[index_itr]->InsertEntry(tuple, location);
+      if(status == true)
+        continue;
+    }
+
+    // Undo insert in other indexes as well
+    for (int prev_index_itr = index_itr + 1; prev_index_itr < index_count; ++prev_index_itr) {
+      indexes[prev_index_itr]->DeleteEntry(tuple);
+    }
+    return false;
   }
 
   return true;
@@ -157,6 +187,19 @@ bool Table::CheckNulls(const storage::Tuple *tuple) const {
   }
 
   return true;
+}
+
+std::ostream& operator<<(std::ostream& os, const Table& table){
+
+  os << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+  os << "TABLE :\n";
+
+  for(auto tile_group : table.tile_groups)
+    std::cout << (*tile_group);
+
+  os << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+
+  return os;
 }
 
 } // End storage namespace
