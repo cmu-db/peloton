@@ -119,9 +119,6 @@ class Index
   // return whether the entry is already stored in the index
   virtual bool Exists(const storage::Tuple *key) const = 0;
 
-  // get number of entries in index
-  virtual size_t Size() const = 0;
-
   // scan all keys in the index
   virtual std::vector<ItemPointer> Scan() const = 0;
 
