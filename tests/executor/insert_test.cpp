@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "gtest/gtest.h"
+#include "harness.h"
 
 #include "common/exception.h"
 #include "common/value.h"
@@ -24,22 +25,38 @@
 
 #include "executor/executor_tests_util.h"
 
+#include <atomic>
+
 namespace nstore {
 namespace test {
 
+std::atomic<int> tuple_id;
+
+void InsertTuple(storage::Table *table){
+
+  planner::InsertNode node(table);
+  const txn_id_t txn_id = 1000;
+  Context context(txn_id);
+
+  for(int tuple_itr = 0 ; tuple_itr < 500 ; tuple_itr++) {
+    storage::Tuple *tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
+    executor::InsertExecutor executor(&node, &context, tuple);
+    executor.Execute();
+  }
+
+  std::cout << "Done. \n";
+}
+
 // Insert a tuple into a table
 TEST(InsertTests, BasicTests) {
+
   // Create insert node for this test.
   storage::Table *table = ExecutorTestsUtil::CreateTable();
   planner::InsertNode node(table);
 
-  std::cout << (*table);
-
-  // Pass through concat executor.
+  // Pass through insert executor.
   const txn_id_t txn_id = 1000;
   Context context(txn_id);
-
-  const oid_t tuple_id = 1;
   storage::Tuple *tuple;
 
   tuple = ExecutorTestsUtil::GetNullTuple(table);
@@ -52,9 +69,8 @@ TEST(InsertTests, BasicTests) {
     std::cout << ce.what();
   }
 
-  tuple = ExecutorTestsUtil::GetTuple(table, tuple_id);
+  tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
   executor::InsertExecutor executor2(&node, &context, tuple);
-
   executor2.Execute();
 
   try{
@@ -64,8 +80,15 @@ TEST(InsertTests, BasicTests) {
     std::cout << ce.what();
   }
 
-  std::cout << (*table);
+  LaunchParallelTest(8, InsertTuple, table);
 
+  auto pkey_index = table->GetIndex(0);
+  auto sec_index = table->GetIndex(1);
+
+  std::cout << "PKEY INDEX :: " << pkey_index->Size() << "\n";
+  std::cout << "SEC INDEX :: " << sec_index->Size() << "\n";
+
+  std::cout << (*table);
 }
 
 } // namespace test

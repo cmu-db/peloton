@@ -94,12 +94,12 @@ class Table {
   // add an index to the table
   void AddIndex(index::Index *index);
 
-  inline TileGroup *GetTileGroup(id_t tile_group_id) const {
+  TileGroup *GetTileGroup(id_t tile_group_id) const {
     assert(tile_group_id < tile_groups.size());
     return tile_groups[tile_group_id];
   }
 
-  inline unsigned int NumTileGroups() const {
+  unsigned int GetTileGroupCount() const {
     return tile_groups.size();
   }
 
@@ -114,19 +114,15 @@ class Table {
     return indexes.size();
   }
 
-  index::Index *GetPrimaryKeyIndex() {
-    return primary_key_index;
-  }
-
-  const index::Index *GetPrimaryKeyIndex() const {
-    return primary_key_index;
+  index::Index *GetIndex(id_t index_id) const {
+    assert(index_id < indexes.size());
+    return indexes[index_id];
   }
 
   void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
   bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
   void DeleteInIndexes(const storage::Tuple *tuple);
-  void UpdateInIndexes(const storage::Tuple *tuple, ItemPointer location, ItemPointer old_location);
 
   bool CheckNulls(const storage::Tuple *tuple) const;
 
@@ -161,7 +157,6 @@ class Table {
 
   // INDEXES
   std::vector<index::Index*> indexes;
-  index::Index *primary_key_index = nullptr;
 
   // TODO need some policy ?
   // number of tuples allocated per tilegroup for this table

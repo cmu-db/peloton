@@ -276,7 +276,7 @@ storage::Table *ExecutorTestsUtil::CreateTable(int tuple_count) {
   return table;
 }
 
-storage::Tuple *ExecutorTestsUtil::GetTuple(storage::Table *table, int tuple_id) {
+storage::Tuple *ExecutorTestsUtil::GetTuple(storage::Table *table, id_t tuple_id) {
 
   storage::Tuple* tuple = new storage::Tuple(table->GetSchema(), true);
   tuple->SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0)));

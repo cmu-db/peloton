@@ -20,6 +20,8 @@
 #include <string>
 #include "catalog/manager.h"
 
+#include <atomic>
+
 namespace nstore {
 namespace index {
 
@@ -39,11 +41,11 @@ class BtreeMultimapIndex : public Index {
 
   bool InsertEntry(const storage::Tuple *key, ItemPointer location);
 
-  bool UpdateEntry(const storage::Tuple *key, ItemPointer location, ItemPointer old_location);
-
   bool DeleteEntry(const storage::Tuple *key);
 
   bool Exists(const storage::Tuple *key) const;
+
+  size_t Size() const;
 
   std::vector<ItemPointer> Scan() const;
 
@@ -72,6 +74,8 @@ class BtreeMultimapIndex : public Index {
 
   // unique keys
   int unique_keys;
+
+  std::atomic<size_t> num_keys;
 };
 
 } // End index namespace
