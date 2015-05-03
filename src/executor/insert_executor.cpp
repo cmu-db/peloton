@@ -52,10 +52,11 @@ bool InsertExecutor::DExecute() {
   if(children_.size() == 0){
 
     storage::Table *target_table = node.GetTable();
+    oid_t tuple_id = target_table->InsertTuple(context->GetTransactionId(), tuple);
 
-    // Index validation
+    if(tuple_id == INVALID_OID)
+      return false;
 
-    target_table->InsertTuple(context->GetTransactionId(), tuple);
   }
   // Insert given logical tile into table
   else{
