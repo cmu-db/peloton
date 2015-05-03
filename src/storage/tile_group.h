@@ -90,6 +90,10 @@ class TileGroup {
     return tile_group_header;
   }
 
+  unsigned int NumTiles() const {
+    return tiles.size();
+  }
+
   Tile *GetTile(const id_t tile_id) const {
     return tiles[tile_id];
   }
