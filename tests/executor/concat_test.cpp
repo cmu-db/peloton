@@ -51,17 +51,18 @@ TEST(ConcatTests, TwoColsAddedTest) {
 
   // Set up catalog to map the base tile oid to the pointer.
   auto &locator = catalog::Manager::GetInstance().locator;
-  locator[1] = tile_group->GetTile(1);
+  const id_t base_tile_oid = 1;
+  locator[base_tile_oid] = tile_group->GetTile(1);
 
   // Create concat node for this test.
   planner::ConcatNode::ColumnPointer cp1;
   cp1.position_list_idx = 0;
-  cp1.base_tile_oid = 1;
+  cp1.base_tile_oid = base_tile_oid;
   cp1.origin_column_id = 0;
 
   planner::ConcatNode::ColumnPointer cp2;
   cp2.position_list_idx = 0;
-  cp2.base_tile_oid = 1;
+  cp2.base_tile_oid = base_tile_oid;
   cp2.origin_column_id = 1;
 
   planner::ConcatNode node(
@@ -71,7 +72,9 @@ TEST(ConcatTests, TwoColsAddedTest) {
   executor::ConcatExecutor executor(&node);
 
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
-      ExecutorTestsUtil::ExecuteTile(&executor, source_logical_tile.release()));
+      ExecutorTestsUtil::ExecuteTile(
+        &executor,
+        source_logical_tile.release()));
 
   std::cout << (*(result_logical_tile.get()));
 
