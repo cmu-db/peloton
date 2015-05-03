@@ -45,8 +45,6 @@ class BtreeMultimapIndex : public Index {
 
   bool Exists(const storage::Tuple *key) const;
 
-  size_t Size() const;
-
   std::vector<ItemPointer> Scan() const;
 
   std::vector<ItemPointer> GetLocationsForKey(storage::Tuple *key) const;
