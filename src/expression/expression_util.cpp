@@ -258,6 +258,10 @@ AbstractExpression * ParameterValueFactory(int idx) {
   return new ParameterValueExpression(idx);
 }
 
+AbstractExpression *TupleValueFactory(int value_idx) {
+  return new TupleValueExpression(value_idx, "DUMMY", "DUMMY");
+}
+
 // convert the enumerated value type into a concrete c type for
 // tuple value expression templated ctors
 AbstractExpression* TupleValueFactory(json_spirit::Object &obj,

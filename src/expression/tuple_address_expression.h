@@ -7,7 +7,6 @@
 #include "common/serializer.h"
 #include "common/value_vector.h"
 #include "expression/abstract_expression.h"
-#include "storage/tuple.h"
 
 namespace nstore {
 namespace expression {
@@ -23,7 +22,7 @@ class TupleAddressExpression : public AbstractExpression {
  : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS) {
   }
 
-  inline Value Evaluate(const storage::Tuple *tuple1, __attribute__((unused)) const storage::Tuple *tuple2)  const {
+  inline Value Evaluate(const Tuple *tuple1, __attribute__((unused)) const Tuple *tuple2)  const {
     return ValueFactory::GetAddressValue(tuple1->GetData());
   }
 

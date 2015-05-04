@@ -27,10 +27,10 @@ class SeqScanNode : public AbstractPlanNode {
   SeqScanNode(
       oid_t table_id,
       expression::AbstractExpression *predicate,
-      std::vector<id_t> &&column_ids)
+      const std::vector<id_t> &column_ids)
     : table_id_(table_id),
       predicate_(predicate),
-      column_ids_(std::move(column_ids)) {
+      column_ids_(column_ids) {
   }
 
   oid_t table_id() const {

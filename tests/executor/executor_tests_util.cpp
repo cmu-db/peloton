@@ -159,9 +159,10 @@ void ExecutorTestsUtil::PopulateTiles(
     tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(i, 0)));
     tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(i, 1)));
     tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(i, 2)));
-    tuple.SetValue(3, ValueFactory::GetStringValue(
+    Value string_value = ValueFactory::GetStringValue(
         std::to_string(PopulatedValue(i, 3)),
-        tile_group->GetTilePool(1)));
+        tile_group->GetTilePool(1)); // TODO Kinda hacky.
+    tuple.SetValue(3, string_value);
     tile_group->InsertTuple(txn_id, &tuple);
   }
 }
@@ -193,7 +194,7 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
 
   child_executor.SetOutput(source_logical_tile);
 
-  executor->Execute();
+  EXPECT_TRUE(executor->Execute());
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
       executor->GetOutput());
   EXPECT_THAT(result_logical_tile, NotNull());
@@ -205,21 +206,21 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
 storage::Table *ExecutorTestsUtil::CreateTable(int tuple_count) {
   // Schema for first tile group. Vertical partition is 2, 2.
   std::vector<catalog::Schema> schemas1({
-    catalog::Schema({ GetColumnInfo(0), GetColumnInfo(1) }),
-        catalog::Schema({ GetColumnInfo(2), GetColumnInfo(3) })
+      catalog::Schema({ GetColumnInfo(0), GetColumnInfo(1) }),
+      catalog::Schema({ GetColumnInfo(2), GetColumnInfo(3) })
   });
 
   // Schema for second tile group. Vertical partition is 1, 3.
   std::vector<catalog::Schema> schemas2({
-    catalog::Schema({ GetColumnInfo(0) }),
-        catalog::Schema({ GetColumnInfo(1), GetColumnInfo(2), GetColumnInfo(3) })
+      catalog::Schema({ GetColumnInfo(0) }),
+      catalog::Schema({ GetColumnInfo(1), GetColumnInfo(2), GetColumnInfo(3) })
   });
 
   // Create table.
   storage::Table *table = storage::TableFactory::GetTable(
       INVALID_OID,
       new catalog::Schema({
-    GetColumnInfo(0), GetColumnInfo(1),
+        GetColumnInfo(0), GetColumnInfo(1),
         GetColumnInfo(2), GetColumnInfo(3) }));
 
   // Create tile groups.

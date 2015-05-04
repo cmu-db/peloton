@@ -30,7 +30,7 @@ class ConstantValueExpression : public AbstractExpression {
     value.FreeUninlinedData();
   }
 
-  Value Evaluate(__attribute__((unused)) const storage::Tuple *tuple1, __attribute__((unused)) const storage::Tuple *tuple2) const {
+  Value Evaluate(__attribute__((unused)) const Tuple *tuple1, __attribute__((unused)) const Tuple *tuple2) const {
     return this->value;
   }
 

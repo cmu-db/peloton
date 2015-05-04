@@ -15,12 +15,10 @@
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "expression/abstract_expression.h"
+#include "expression/tile_group_tuple.h"
 #include "planner/seq_scan_node.h"
 #include "storage/table.h"
-#include "storage/tile.h"
 #include "storage/tile_group.h"
-#include "storage/tile_iterator.h"
-#include "storage/tuple.h"
 
 namespace nstore {
 namespace executor {
@@ -64,36 +62,24 @@ bool SeqScanExecutor::DExecute() {
     return false;
   }
 
-  // Retrieve next available physical (base) tile.
-  // TODO Are we supposed to go through database or catalog::Table first?
+  // Retrieve next tile group.
   storage::Table *table = static_cast<storage::Table *>(it->second);
-  //TODO Create iterators for table and tile groups?
   if (current_tile_group_id_ == table->GetTileGroupCount()) {
     return false;
   }
-  storage::TileGroup *tile_group = table->GetTileGroup(current_tile_group_id_);
-  if (current_tile_id_ == tile_group->NumTiles()) {
-    current_tile_group_id_++;
-    current_tile_id_ = 0;
-    if (current_tile_group_id_ == table->GetTileGroupCount()) {
-      return false;
-    }
-    tile_group = table->GetTileGroup(current_tile_group_id_);
-    assert(tile_group->NumTiles() > 0);
-  }
-  storage::Tile *base_tile = tile_group->GetTile(current_tile_id_++);
+  storage::TileGroup *tile_group =
+      table->GetTileGroup(current_tile_group_id_++);
 
   // Construct position list by looping through tile group and
   // applying the predicate.
   std::vector<id_t> position_list;
-  storage::TileIterator tile_it(base_tile);
-  storage::Tuple tuple(&base_tile->GetSchema());
-  while (tile_it.Next(tuple)) {
+  for (id_t tuple_id = 0;
+      tuple_id < tile_group->GetActiveTupleCount();
+      tuple_id++) {
+    expression::TileGroupTuple tuple(tile_group, tuple_id);
     if (predicate == nullptr
         || predicate->Evaluate(&tuple, nullptr).IsTrue()) {
-      // GetLocation() returns the id of the next tuple.
-      assert(tile_it.GetLocation() > 0);
-      position_list.push_back(tile_it.GetLocation() - 1);
+      position_list.push_back(tuple_id);
     }
   }
 
@@ -103,10 +89,11 @@ bool SeqScanExecutor::DExecute() {
   const int position_list_idx = 0;
   logical_tile->AddPositionList(std::move(position_list));
   for (id_t origin_column_id : column_ids) {
+    id_t base_tile_id = tile_group->GetTileIdFromColumnId(origin_column_id);
     logical_tile->AddColumn(
-        base_tile,
+        tile_group->GetTile(base_tile_id),
         own_base_tile,
-        origin_column_id,
+        tile_group->GetOffsetColumnId(origin_column_id),
         position_list_idx);
   }
 

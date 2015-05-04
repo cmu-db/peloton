@@ -1,7 +1,6 @@
 #pragma once
 
 #include "expression/abstract_expression.h"
-#include "storage/tuple.h"
 
 #include <string>
 #include <sstream>
@@ -34,7 +33,7 @@ class TupleValueExpression : public AbstractExpression, public TupleValueExpress
     this->column_name = col_name;
   };
 
-  inline Value Evaluate(const storage::Tuple *tuple1, const storage::Tuple *tuple2)  const {
+  inline Value Evaluate(const Tuple *tuple1, const Tuple *tuple2)  const {
     if (tuple_idx == 0)
       return tuple1->GetValue(this->value_idx);
     else
