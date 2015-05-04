@@ -18,6 +18,7 @@
 #include "common/types.h"
 #include "common/value.h"
 #include "common/value_vector.h"
+#include "expression/tuple.h"
 #include <json_spirit.h>
 
 namespace nstore {
@@ -41,7 +42,7 @@ class AbstractExpression {
     // destroy this node and all children
     virtual ~AbstractExpression();
 
-    virtual Value Evaluate(const storage::Tuple *tuple1, const storage::Tuple *tuple2) const = 0;
+    virtual Value Evaluate(const Tuple *tuple1, const Tuple *tuple2) const = 0;
 
     // set parameter values for this node and its descendants
     virtual void Substitute(const ValueArray &params);

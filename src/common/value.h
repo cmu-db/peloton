@@ -274,6 +274,10 @@ public:
 	static const uint16_t max_decimal_scale = 12;
 	static const int64_t max_decimal_scale_factor = 1000000000000;
 
+        int GetIntegerForTestsOnly() {
+          return GetInteger();
+        }
+
 private:
 
 	//===--------------------------------------------------------------------===//

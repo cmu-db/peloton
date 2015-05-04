@@ -10,9 +10,13 @@
  *-------------------------------------------------------------------------
  */
 
-#include "common/synch.h"
-#include "common/logger.h"
 #include "storage/tile_group.h"
+
+#include <numeric>
+
+#include "common/logger.h"
+#include "common/synch.h"
+#include "common/types.h"
 
 namespace nstore {
 namespace storage {
@@ -181,6 +185,41 @@ bool TileGroup::DeleteTuple(txn_id_t transaction_id, id_t tuple_slot_id) {
   return false;
 }
 
+// Get tile id and column id w.r.t that tile corresponding to the specified
+// tile group column id.
+void TileGroup::LocateTileAndColumn(
+    id_t column_id,
+    id_t &offset_column_id,
+    id_t &tile_id) {
+  offset_column_id = column_id;
+  tile_id = 0;
+  assert(tile_schemas.size() > 0);
+  while (offset_column_id >= tile_schemas[tile_id].GetColumnCount()) {
+    offset_column_id -= tile_schemas[tile_id].GetColumnCount();
+    tile_id++;
+    assert(tile_id < tile_schemas.size());
+  }
+  assert(tile_id < tiles.size());
+}
+
+id_t TileGroup::GetTileIdFromColumnId(id_t column_id) {
+  id_t offset_column_id, tile_id;
+  LocateTileAndColumn(column_id, offset_column_id, tile_id);
+  return tile_id;
+}
+
+id_t TileGroup::GetOffsetColumnId(id_t column_id) {
+  id_t offset_column_id, tile_id;
+  LocateTileAndColumn(column_id, offset_column_id, tile_id);
+  return offset_column_id;
+}
+
+Value TileGroup::GetValue(id_t tuple_id, id_t column_id) {
+  assert(tuple_id < GetActiveTupleCount());
+  id_t offset_column_id, tile_id;
+  LocateTileAndColumn(column_id, offset_column_id, tile_id);
+  return tiles[tile_id]->GetValue(tuple_id, offset_column_id);
+}
 
 //===--------------------------------------------------------------------===//
 // Utilities
