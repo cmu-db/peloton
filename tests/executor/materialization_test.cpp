@@ -7,7 +7,6 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 #include "gtest/gtest.h"
@@ -63,7 +62,7 @@ TEST(MaterializationTests, SingleBaseTileTest) {
     old_to_new_cols[col] = col;
   }
   planner::MaterializationNode node(
-      std::move(old_to_new_cols),
+      old_to_new_cols,
       output_schema.release());
 
   // Pass through materialization executor.
@@ -133,13 +132,15 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   old_to_new_cols[1] = 1;
   old_to_new_cols[0] = 2;
   planner::MaterializationNode node(
-      std::move(old_to_new_cols),
+      old_to_new_cols,
       output_schema.release());
 
   // Pass through materialization executor.
   executor::MaterializationExecutor executor(&node);
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
-      ExecutorTestsUtil::ExecuteTile(&executor, source_logical_tile.release()));
+      ExecutorTestsUtil::ExecuteTile(
+        &executor,
+        source_logical_tile.release()));
 
   // Verify that logical tile is only made up of a single base tile.
   int num_cols = result_logical_tile->NumCols();
@@ -155,7 +156,6 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
     EXPECT_EQ(
         ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 0)),
         result_base_tile->GetValue(i, 2));
-
     // Output column 1.
     EXPECT_EQ(
         ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 1)),

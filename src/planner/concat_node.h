@@ -34,8 +34,8 @@ class ConcatNode : public AbstractPlanNode {
   ConcatNode(ConcatNode &&) = delete;
   ConcatNode& operator=(ConcatNode &&) = delete;
 
-  explicit ConcatNode(std::vector<ColumnPointer> &&new_columns)
-    : new_columns_(std::move(new_columns)) {
+  explicit ConcatNode(const std::vector<ColumnPointer> &new_columns)
+    : new_columns_(new_columns) {
   }
 
   inline const std::vector<ColumnPointer>& new_columns() const {

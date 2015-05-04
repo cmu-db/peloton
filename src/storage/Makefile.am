@@ -5,11 +5,11 @@
 ######################################################################
 
 storage_FILES = \
-				storage/tuple.cpp \
+				storage/table.cpp \
 				storage/tile.cpp \
 				storage/tile_group.cpp \
 				storage/tile_group_header.cpp \
-				storage/table.cpp 
+				storage/tuple.cpp
 
 storage_INCLUDES = \
-				   -I$(srcdir)/storage    
+				   -I$(srcdir)/storage

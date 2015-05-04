@@ -115,12 +115,12 @@ Tuple *Tile::GetTuple(const id_t tuple_slot_id) {
 
 /**
  * Returns value present at slot
- * NOTE : No checks, must be at valid slot and must exist.
  * TODO We might want to write an iterator class to amortize the schema
  * lookups when reading values of entire columns.
  */
 Value Tile::GetValue(const id_t tuple_slot_id, const id_t column_id) {
-
+  assert(tuple_slot_id < GetAllocatedTupleCount());
+  assert(column_id < schema.GetColumnCount());
   // NOTE: same logic used here as that used in
   // "Tuple::GetValue(const id_t column_id)"
 

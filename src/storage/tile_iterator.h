@@ -53,11 +53,30 @@ public:
 	 * Updates the given tuple so that it points to the next tuple in the table.
 	 * @return true if succeeded. false if no more tuples are there.
 	 */
-	bool Next(Tuple &out);
+	bool Next(Tuple &out) {
+    if(HasNext()) {
 
-	bool HasNext();
+      out.Move(data + (tile_itr * tuple_length));
+      tile_itr++;
 
-	id_t GetLocation() const;
+      return true;
+    }
+
+    return false;
+  }
+
+	bool HasNext() {
+    //std::cout << "Tile Itr :: " << tile_itr << " Active   :: "
+    //		<< tile_group_header->GetActiveTupleCount() << "\n";
+
+    return (tile_itr < tile->GetActiveTupleCount());
+  }
+
+
+  id_t GetLocation() const {
+    return tile_itr;
+  }
+
 
 private:
 	// Base tile data
@@ -73,32 +92,5 @@ private:
 	id_t tuple_length;
 };
 
-bool TileIterator::HasNext() {
-	//std::cout << "Tile Itr :: " << tile_itr << " Active   :: "
-	//		<< tile_group_header->GetActiveTupleCount() << "\n";
-
-	return (tile_itr < tile->GetActiveTupleCount());
-}
-
-bool TileIterator::Next(Tuple &out) {
-	if(HasNext()) {
-
-		out.Move(data + (tile_itr * tuple_length));
-		tile_itr++;
-
-		return true;
-	}
-
-	return false;
-}
-
-id_t TileIterator::GetLocation() const {
-	return tile_itr;
-}
-
-
 } // End storage namespace
 } // End nstore namespace
-
-
-

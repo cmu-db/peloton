@@ -19,6 +19,7 @@
 #include "common/value_factory.h"
 #include "common/value_peeker.h"
 #include "common/types.h"
+#include "expression/tuple.h"
 
 namespace nstore {
 namespace storage {
@@ -27,7 +28,7 @@ namespace storage {
 // Tuple class
 //===--------------------------------------------------------------------===//
 
-class Tuple {
+class Tuple : public expression::Tuple {
 	friend class catalog::Schema;
 	friend class ValuePeeker;
 	friend class Tile;

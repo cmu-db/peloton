@@ -6,7 +6,6 @@
 
 planner_FILES = \
 				planner/abstract_plan_node.cpp \
-				planner/materialization_node.cpp \
 				planner/plan_column.cpp \
 				planner/plan_node_util.cpp
 

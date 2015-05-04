@@ -118,6 +118,12 @@ class TileGroup {
     return tile_schemas;
   }
 
+  id_t GetTileIdFromColumnId(id_t column_id);
+
+  id_t GetOffsetColumnId(id_t column_id);
+
+  Value GetValue(id_t tuple_id, id_t column_id);
+
  protected:
 
   //===--------------------------------------------------------------------===//
@@ -145,6 +151,12 @@ class TileGroup {
 
   // number of tiles
   id_t tile_count;
+
+ private:
+  void LocateTileAndColumn(
+      id_t column_id,
+      id_t &offset_column_id,
+      id_t &tile_id);
 };
 
 
