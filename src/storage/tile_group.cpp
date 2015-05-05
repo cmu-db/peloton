@@ -189,13 +189,13 @@ bool TileGroup::DeleteTuple(txn_id_t transaction_id, id_t tuple_slot_id) {
 // tile group column id.
 void TileGroup::LocateTileAndColumn(
     id_t column_id,
-    id_t &offset_column_id,
+    id_t &tile_column_id,
     id_t &tile_id) {
-  offset_column_id = column_id;
+  tile_column_id = column_id;
   tile_id = 0;
   assert(tile_schemas.size() > 0);
-  while (offset_column_id >= tile_schemas[tile_id].GetColumnCount()) {
-    offset_column_id -= tile_schemas[tile_id].GetColumnCount();
+  while (tile_column_id >= tile_schemas[tile_id].GetColumnCount()) {
+    tile_column_id -= tile_schemas[tile_id].GetColumnCount();
     tile_id++;
     assert(tile_id < tile_schemas.size());
   }
@@ -203,22 +203,22 @@ void TileGroup::LocateTileAndColumn(
 }
 
 id_t TileGroup::GetTileIdFromColumnId(id_t column_id) {
-  id_t offset_column_id, tile_id;
-  LocateTileAndColumn(column_id, offset_column_id, tile_id);
+  id_t tile_column_id, tile_id;
+  LocateTileAndColumn(column_id, tile_column_id, tile_id);
   return tile_id;
 }
 
-id_t TileGroup::GetOffsetColumnId(id_t column_id) {
-  id_t offset_column_id, tile_id;
-  LocateTileAndColumn(column_id, offset_column_id, tile_id);
-  return offset_column_id;
+id_t TileGroup::GetTileColumnId(id_t column_id) {
+  id_t tile_column_id, tile_id;
+  LocateTileAndColumn(column_id, tile_column_id, tile_id);
+  return tile_column_id;
 }
 
 Value TileGroup::GetValue(id_t tuple_id, id_t column_id) {
   assert(tuple_id < GetActiveTupleCount());
-  id_t offset_column_id, tile_id;
-  LocateTileAndColumn(column_id, offset_column_id, tile_id);
-  return tiles[tile_id]->GetValue(tuple_id, offset_column_id);
+  id_t tile_column_id, tile_id;
+  LocateTileAndColumn(column_id, tile_column_id, tile_id);
+  return tiles[tile_id]->GetValue(tuple_id, tile_column_id);
 }
 
 //===--------------------------------------------------------------------===//
