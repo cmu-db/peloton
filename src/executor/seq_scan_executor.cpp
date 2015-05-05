@@ -83,11 +83,15 @@ bool SeqScanExecutor::DExecute() {
   const int position_list_idx = 0;
   logical_tile->AddPositionList(std::move(position_list));
   for (id_t origin_column_id : column_ids) {
-    id_t base_tile_id = tile_group->GetTileIdFromColumnId(origin_column_id);
+    id_t base_tile_id, tile_column_id;
+    tile_group->LocateTileAndColumn(
+        origin_column_id,
+        tile_column_id,
+        base_tile_id);
     logical_tile->AddColumn(
         tile_group->GetTile(base_tile_id),
         own_base_tile,
-        tile_group->GetOffsetColumnId(origin_column_id),
+        tile_column_id,
         position_list_idx);
   }
 
