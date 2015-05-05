@@ -150,12 +150,12 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
       EXPECT_EQ(
           ExecutorTestsUtil::PopulatedValue(old_tuple_id, 1),
           result_tiles[i]->GetValue(new_tuple_id, 1).GetIntegerForTestsOnly());
-      Value string_old_tuple_idue(ValueFactory::GetStringValue(std::to_string(
+      Value string_value(ValueFactory::GetStringValue(std::to_string(
               ExecutorTestsUtil::PopulatedValue(old_tuple_id, 3))));
       EXPECT_EQ(
-          string_old_tuple_idue,
+          string_value,
           result_tiles[i]->GetValue(new_tuple_id, 2));
-      string_old_tuple_idue.FreeUninlinedData();
+      string_value.FreeUninlinedData();
     }
     EXPECT_EQ(0, expected_tuples_left.size());
   }

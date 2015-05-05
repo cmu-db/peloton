@@ -27,9 +27,6 @@ class SeqScanExecutor : public AbstractExecutor {
  private:
   /** @brief Keeps track of current tile group id being scanned. */
   id_t current_tile_group_id_ = 0;
-
-  /** @brief Keeps track of current tile id being scanned. */
-  id_t current_tile_id_ = 0;
 };
 
 } // namespace executor
