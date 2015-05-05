@@ -12,7 +12,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "catalog/manager.h"
 #include "common/types.h"
 #include "common/value.h"
 #include "common/value_factory.h"
@@ -112,11 +111,6 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
   // Create table.
   std::unique_ptr<storage::Table> table(CreateTable());
 
-  // Set up catalog for this test.
-  auto &locator = catalog::Manager::GetInstance().locator;
-  const id_t table_oid = 1;
-  locator[table_oid] = table.get();
-
   // Column ids to be added to logical tile after scan.
   std::vector<id_t> column_ids({ 0, 1, 3 });
 
@@ -125,7 +119,7 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
 
   // Create plan node.
   planner::SeqScanNode node(
-    table_oid,
+    table.get(),
     CreatePredicate(tuple_ids),
     column_ids);
 
