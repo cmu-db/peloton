@@ -15,6 +15,11 @@
 #include "planner/abstract_plan_node.h"
 
 namespace nstore {
+
+namespace storage {
+class Table;
+}
+
 namespace planner {
 
 class SeqScanNode : public AbstractPlanNode {
@@ -25,16 +30,16 @@ class SeqScanNode : public AbstractPlanNode {
   SeqScanNode& operator=(SeqScanNode &&) = delete;
 
   SeqScanNode(
-      oid_t table_id,
+      storage::Table *table,
       expression::AbstractExpression *predicate,
       const std::vector<id_t> &column_ids)
-    : table_id_(table_id),
+    : table_(table),
       predicate_(predicate),
       column_ids_(column_ids) {
   }
 
-  oid_t table_id() const {
-    return table_id_;
+  const storage::Table *table() const {
+    return table_;
   }
 
   const expression::AbstractExpression *predicate() const {
@@ -56,8 +61,8 @@ class SeqScanNode : public AbstractPlanNode {
   }
 
  private:
-  /** @brief Oid of table to scan from. */
-  const oid_t table_id_;
+  /** @brief Pointer to table to scan from. */
+  const storage::Table *table_;
 
   /** @brief Selection predicate. */
   const std::unique_ptr<expression::AbstractExpression> predicate_;

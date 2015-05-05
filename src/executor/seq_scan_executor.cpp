@@ -1,6 +1,11 @@
 /**
  * @brief Executor for sequential scan node.
  *
+ * Possible optimization: Right now we loop through the tile group in the
+ * scan and apply the predicate tuple at a time. Instead, we might want to
+ * refactor the expression system so we can apply predicates to fields in
+ * different tiles separately, and then combine the results.
+ *
  * Copyright(c) 2015, CMU
  */
 
@@ -10,7 +15,6 @@
 #include <utility>
 #include <vector>
 
-#include "catalog/manager.h"
 #include "common/types.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
@@ -49,21 +53,11 @@ bool SeqScanExecutor::DExecute() {
 
   // Grab data from plan node.
   const planner::SeqScanNode &node = GetNode<planner::SeqScanNode>();
-  const oid_t table_id = node.table_id();
+  const storage::Table *table = node.table();
   const expression::AbstractExpression *predicate = node.predicate();
   const std::vector<id_t> &column_ids = node.column_ids();
 
-  auto &locator = catalog::Manager::GetInstance().locator;
-  // TODO Do this in DInit() to amortize lookup over all tiles.
-  // Do we have to do some kind of synchronization to ensure that the table
-  // doesn't disappear midway through our request?
-  auto it = locator.find(table_id);
-  if (it == locator.end()) {
-    return false;
-  }
-
   // Retrieve next tile group.
-  storage::Table *table = static_cast<storage::Table *>(it->second);
   if (current_tile_group_id_ == table->GetTileGroupCount()) {
     return false;
   }
