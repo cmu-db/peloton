@@ -39,9 +39,9 @@ class AbstractExecutor {
   // Accessors
   //===--------------------------------------------------------------------===//
 
-  void SetOutput(LogicalTile* val);
-
-  LogicalTile *GetOutput();
+  // Virtual because we want to be able to intercept via the mock executor
+  // in test cases.
+  virtual LogicalTile *GetOutput();
 
  protected:
   explicit AbstractExecutor(planner::AbstractPlanNode *node);
@@ -53,8 +53,7 @@ class AbstractExecutor {
   /** @brief Workhorse function to be overriden by derived class. */
   virtual bool DExecute() = 0;
 
-  /** @brief Children nodes of this executor in the executor tree. */
-  std::vector<AbstractExecutor*> children_;
+  void SetOutput(LogicalTile* val);
 
   /**
    * @brief Convenience method to return plan node corresponding to this
@@ -67,6 +66,9 @@ class AbstractExecutor {
     assert(node);
     return *node;
   }
+
+  /** @brief Children nodes of this executor in the executor tree. */
+  std::vector<AbstractExecutor*> children_;
 
   // Executor context
   Context *context_ = nullptr;

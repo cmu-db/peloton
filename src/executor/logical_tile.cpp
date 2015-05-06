@@ -97,6 +97,7 @@ void LogicalTile::InvalidateTuple(id_t tuple_id) {
   assert(tuple_id < valid_rows_.size());
   assert(valid_rows_[tuple_id]);
   valid_rows_[tuple_id] = false;
+  num_tuples_--;
 }
 
 /**

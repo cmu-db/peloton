@@ -28,6 +28,8 @@ class MockExecutor : public executor::AbstractExecutor {
   MOCK_METHOD0(DInit, bool());
 
   MOCK_METHOD0(DExecute, bool());
+
+  MOCK_METHOD0(GetOutput, executor::LogicalTile*());
 };
 
 } // namespace test

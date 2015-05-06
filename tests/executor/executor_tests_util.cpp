@@ -184,15 +184,16 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
 
   // Uneventful init...
   EXPECT_CALL(child_executor, DInit())
-  .WillOnce(Return(true));
+    .WillOnce(Return(true));
   EXPECT_TRUE(executor->Init());
 
   // Where the main work takes place...
   EXPECT_CALL(child_executor, DExecute())
-  .WillOnce(Return(true))
-  .WillOnce(Return(false));
+    .WillOnce(Return(true))
+    .WillOnce(Return(false));
 
-  child_executor.SetOutput(source_logical_tile);
+  EXPECT_CALL(child_executor, GetOutput())
+    .WillOnce(Return(source_logical_tile));
 
   EXPECT_TRUE(executor->Execute());
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
