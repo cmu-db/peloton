@@ -51,11 +51,10 @@ bool MaterializationExecutor::DExecute() {
   assert(children_.size() == 1);
 
   // Retrieve next tile.
-  children_[0]->Execute();
-  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
-  if (source_tile.get() == nullptr) {
+  if (!children_[0]->Execute()) {
     return false;
   }
+  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
 
   const planner::MaterializationNode &node =
       GetNode<planner::MaterializationNode>();

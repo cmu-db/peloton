@@ -13,7 +13,6 @@
 #include <cassert>
 #include <iostream>
 
-#include "common/value_factory.h"
 #include "storage/tile.h"
 
 namespace nstore {
@@ -91,6 +90,16 @@ int LogicalTile::AddPositionList(std::vector<id_t> &&position_list) {
 }
 
 /**
+ * @brief Invalidates the specified tuple in the logical tile.
+ * @param tuple_id Id of the specified tuple.
+ */
+void LogicalTile::InvalidateTuple(id_t tuple_id) {
+  assert(tuple_id < valid_rows_.size());
+  assert(valid_rows_[tuple_id]);
+  valid_rows_[tuple_id] = false;
+}
+
+/**
  * @brief Returns base tile that the specified column was from.
  * @param column_id Id of the specified column.
  *
@@ -137,10 +146,7 @@ storage::Tuple *LogicalTile::GetTuple(id_t column_id, id_t tuple_id) {
 Value LogicalTile::GetValue(id_t tuple_id, id_t column_id) {
   assert(column_id < schema_.size());
   assert(tuple_id < valid_rows_.size());
-
-  if (!valid_rows_[tuple_id]) {
-    return ValueFactory::GetInvalidValue();
-  }
+  assert(valid_rows_[tuple_id]);
 
   ColumnPointer &cp = schema_[column_id];
   id_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
