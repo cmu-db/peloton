@@ -19,7 +19,7 @@
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "expression/abstract_expression.h"
-#include "expression/tile_group_tuple.h"
+#include "expression/container_tuple.h"
 #include "planner/seq_scan_node.h"
 #include "storage/table.h"
 #include "storage/tile_group.h"
@@ -40,7 +40,7 @@ SeqScanExecutor::SeqScanExecutor(planner::AbstractPlanNode *node)
  * @return true on success, false otherwise.
  */
 bool SeqScanExecutor::DInit() {
-  assert(children_.size() == 0);
+  assert(children_.size() == 0 || children_.size() == 1);
   return true;
 }
 
@@ -49,7 +49,7 @@ bool SeqScanExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool SeqScanExecutor::DExecute() {
-  assert(children_.size() == 0);
+  assert(children_.size() == 0 || children_.size() == 1);
 
   // Grab data from plan node.
   const planner::SeqScanNode &node = GetNode<planner::SeqScanNode>();
@@ -57,12 +57,39 @@ bool SeqScanExecutor::DExecute() {
   const expression::AbstractExpression *predicate = node.predicate();
   const std::vector<id_t> &column_ids = node.column_ids();
 
+  // We are scanning over a logical tile.
+  if (children_.size() == 1) {
+    if (!children_[0]->Execute()) {
+      return false;
+    }
+
+    std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
+    if (predicate != nullptr) {
+      // Invalidate tuples that don't satisfy the predicate.
+      for (id_t tuple_id : *tile) {
+        expression::ContainerTuple<LogicalTile> tuple(tile.get(), tuple_id);
+        if (predicate->Evaluate(&tuple, nullptr).IsFalse()) {
+          tile->InvalidateTuple(tuple_id);
+        }
+      }
+    }
+
+    SetOutput(tile.release());
+    return true;
+  }
+
+  // We are scanning a table (this is a leaf node in the plan tree).
+  assert(children_.size() == 0);
+  assert(table != nullptr);
+  assert(column_ids.size() > 0);
+
   // Retrieve next tile group.
   if (current_tile_group_id_ == table->GetTileGroupCount()) {
     return false;
   }
+
   storage::TileGroup *tile_group =
-      table->GetTileGroup(current_tile_group_id_++);
+    table->GetTileGroup(current_tile_group_id_++);
 
   // Construct position list by looping through tile group and
   // applying the predicate.
@@ -70,7 +97,7 @@ bool SeqScanExecutor::DExecute() {
   for (id_t tuple_id = 0;
       tuple_id < tile_group->GetActiveTupleCount();
       tuple_id++) {
-    expression::TileGroupTuple tuple(tile_group, tuple_id);
+    expression::ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_id);
     if (predicate == nullptr
         || predicate->Evaluate(&tuple, nullptr).IsTrue()) {
       position_list.push_back(tuple_id);
