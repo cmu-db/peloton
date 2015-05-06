@@ -12,6 +12,7 @@ namespace nstore {
 
 namespace storage {
 class Tile;
+class TileGroup;
 }
 
 namespace executor {
@@ -24,6 +25,8 @@ class LogicalTileFactory {
   static LogicalTile *WrapBaseTiles(
       const std::vector<storage::Tile *> &base_tile,
       bool own_base_tiles);
+
+  static LogicalTile *WrapTileGroup(storage::TileGroup *tile_group);
 };
 
 } // namespace executor
