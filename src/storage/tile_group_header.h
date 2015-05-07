@@ -18,6 +18,7 @@
 #include <mutex>
 #include <iostream>
 #include <cassert>
+#include <queue>
 
 namespace nstore {
 namespace storage {
@@ -70,13 +71,29 @@ public:
 		{
 			std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
 
-			if(next_tuple_slot < num_tuple_slots) {
+			//  first, check free slots
+			if(free_slots.empty() == false) {
+			  tuple_slot_id = free_slots.front();
+			  free_slots.pop();
+			}
+      // check tile group capacity
+			else if(next_tuple_slot < num_tuple_slots) {
 				tuple_slot_id = next_tuple_slot;
 				next_tuple_slot++;
 			}
 		}
 
 		return tuple_slot_id;
+	}
+
+	void ReclaimTupleSlot(id_t tuple_slot_id) {
+
+    {
+      std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
+
+      free_slots.push(tuple_slot_id);
+    }
+
 	}
 
 	id_t GetActiveTupleCount() const {
@@ -183,6 +200,9 @@ private:
 
 	// next free tuple slot
 	id_t next_tuple_slot;
+
+  // free slots
+  std::queue<id_t> free_slots;
 
 	// synch helpers
 	std::mutex tile_header_mutex;
