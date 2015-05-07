@@ -442,7 +442,8 @@ BtMgr *bt_mgr (char *name, uint bits, uint nodemax)
 
   mgr = (BtMgr *) calloc (1, sizeof(BtMgr));
 
-  mgr->idx = open ((char*)name, O_RDWR | O_CREAT, 0666);
+  // TODO: overwrites existing index files
+  mgr->idx = open ((char*)name, O_RDWR | O_CREAT | O_TRUNC, 0666);
 
   if( mgr->idx == -1 ) {
     fprintf (stderr, "Unable to open btree file\n");
@@ -1656,6 +1657,7 @@ BTERR bt_insertkey (BtDb *bt, char *key, uint keylen, uint lvl, void *value, uin
     //  and insert the new key before slot.
 
     int compare = memcmp (ptr->key, ins->key, ins->len);
+
     if( (unique && (len != ins->len || compare)) || (!unique) ) {
       if( !(slot = bt_cleanpage (bt, set, ins->len, slot, vallen)) ) {
         if( !(entry = bt_splitpage (bt, set)) )

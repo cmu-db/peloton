@@ -39,10 +39,13 @@ void InsertTuple(storage::Table *table){
   const txn_id_t txn_id = 1000;
   Context context(txn_id);
 
-  for(int tuple_itr = 0 ; tuple_itr < 500 ; tuple_itr++) {
+  for(int tuple_itr = 0 ; tuple_itr < 5 ; tuple_itr++) {
     storage::Tuple *tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
     executor::InsertExecutor executor(&node, &context, tuple);
     executor.Execute();
+
+    tuple->FreeUninlinedData();
+    delete tuple;
   }
 }
 
@@ -68,6 +71,9 @@ TEST(InsertTests, BasicTests) {
     std::cout << ce.what();
   }
 
+  tuple->FreeUninlinedData();
+  delete tuple;
+
   tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
   executor::InsertExecutor executor2(&node, &context, tuple);
   executor2.Execute();
@@ -79,7 +85,10 @@ TEST(InsertTests, BasicTests) {
     std::cout << ce.what();
   }
 
-  LaunchParallelTest(8, InsertTuple, table);
+  tuple->FreeUninlinedData();
+  delete tuple;
+
+  LaunchParallelTest(1, InsertTuple, table);
 
   // PRIMARY KEY
   auto pkey_index = table->GetIndex(0);
@@ -100,6 +109,10 @@ TEST(InsertTests, BasicTests) {
   }
   std::cout << "\n";
 
+  delete key1;
+  delete key2;
+  delete key_schema;
+
   // SEC KEY
   auto sec_index = table->GetIndex(1);
 
@@ -116,7 +129,7 @@ TEST(InsertTests, BasicTests) {
   key4->SetValue(0, ValueFactory::GetIntegerValue(100));
   key4->SetValue(1, ValueFactory::GetIntegerValue(101));
 
-  auto sec_list = sec_index->GetLocationsForKeyBetween(key1, key2);
+  auto sec_list = sec_index->GetLocationsForKeyBetween(key3, key4);
   std::cout << "SEC INDEX :: Entries : " << sec_list.size() << "\n";
   for(auto item : sec_list){
     std::cout << item.block << " " << item.offset << "\n";
@@ -124,6 +137,12 @@ TEST(InsertTests, BasicTests) {
   std::cout << "\n";
 
   std::cout << (*table);
+
+  delete key3;
+  delete key4;
+  delete key_schema;
+
+  delete table;
 }
 
 } // namespace test
