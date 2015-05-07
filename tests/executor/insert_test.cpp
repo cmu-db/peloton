@@ -38,15 +38,22 @@ void InsertTuple(storage::Table *table){
   planner::InsertNode node(table);
   const txn_id_t txn_id = 1000;
   Context context(txn_id);
+  std::vector<storage::Tuple *> tuples;
 
-  for(int tuple_itr = 0 ; tuple_itr < 5 ; tuple_itr++) {
-    storage::Tuple *tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
-    executor::InsertExecutor executor(&node, &context, tuple);
-    executor.Execute();
+  for(int tuple_itr = 0 ; tuple_itr < 500 ; tuple_itr++) {
+    auto tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
+    tuples.push_back(tuple);
+  }
 
+  // Bulk insert
+  executor::InsertExecutor executor(&node, &context, tuples);
+  executor.Execute();
+
+  for(auto tuple : tuples) {
     tuple->FreeUninlinedData();
     delete tuple;
   }
+
 }
 
 // Insert a tuple into a table
@@ -60,9 +67,11 @@ TEST(InsertTests, BasicTests) {
   const txn_id_t txn_id = 1000;
   Context context(txn_id);
   storage::Tuple *tuple;
+  std::vector<storage::Tuple *> tuples;
 
   tuple = ExecutorTestsUtil::GetNullTuple(table);
-  executor::InsertExecutor executor(&node, &context, tuple);
+  tuples.push_back(tuple);
+  executor::InsertExecutor executor(&node, &context, tuples);
 
   try{
     executor.Execute();
@@ -73,9 +82,11 @@ TEST(InsertTests, BasicTests) {
 
   tuple->FreeUninlinedData();
   delete tuple;
+  tuples.clear();
 
   tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
-  executor::InsertExecutor executor2(&node, &context, tuple);
+  tuples.push_back(tuple);
+  executor::InsertExecutor executor2(&node, &context, tuples);
   executor2.Execute();
 
   try{
@@ -87,8 +98,9 @@ TEST(InsertTests, BasicTests) {
 
   tuple->FreeUninlinedData();
   delete tuple;
+  tuples.clear();
 
-  LaunchParallelTest(1, InsertTuple, table);
+  LaunchParallelTest(4, InsertTuple, table);
 
   // PRIMARY KEY
   auto pkey_index = table->GetIndex(0);
@@ -104,10 +116,6 @@ TEST(InsertTests, BasicTests) {
 
   auto pkey_list = pkey_index->GetLocationsForKeyBetween(key1, key2);
   std::cout << "PKEY INDEX :: Entries : " << pkey_list.size() << "\n";
-  for(auto item : pkey_list){
-    std::cout << item.block << " " << item.offset << "\n";
-  }
-  std::cout << "\n";
 
   delete key1;
   delete key2;
@@ -131,10 +139,6 @@ TEST(InsertTests, BasicTests) {
 
   auto sec_list = sec_index->GetLocationsForKeyBetween(key3, key4);
   std::cout << "SEC INDEX :: Entries : " << sec_list.size() << "\n";
-  for(auto item : sec_list){
-    std::cout << item.block << " " << item.offset << "\n";
-  }
-  std::cout << "\n";
 
   std::cout << (*table);
 
