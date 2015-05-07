@@ -53,18 +53,18 @@ TEST(ConcatTests, TwoColsAddedTest) {
   locator[base_tile_oid] = tile_group->GetTile(1);
 
   // Create concat node for this test.
-  planner::ConcatNode::ColumnPointer cp1;
+  executor::ColumnInfo cp1;
   cp1.position_list_idx = 0;
   cp1.base_tile_oid = base_tile_oid;
   cp1.origin_column_id = 0;
 
-  planner::ConcatNode::ColumnPointer cp2;
+  executor::ColumnInfo cp2;
   cp2.position_list_idx = 0;
   cp2.base_tile_oid = base_tile_oid;
   cp2.origin_column_id = 1;
 
   planner::ConcatNode node(
-      std::vector<planner::ConcatNode::ColumnPointer>({ cp1, cp2 }));
+      std::vector<executor::ColumnInfo>({ cp1, cp2 }));
 
   // Pass through concat executor.
   executor::ConcatExecutor executor(&node);
@@ -83,12 +83,15 @@ TEST(ConcatTests, TwoColsAddedTest) {
     EXPECT_EQ(
         ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 0)),
         result_logical_tile->GetValue(i, 0));
+
     EXPECT_EQ(
         ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(i, 1)),
         result_logical_tile->GetValue(i, 1));
+
     EXPECT_EQ(
         ValueFactory::GetTinyIntValue(ExecutorTestsUtil::PopulatedValue(i, 2)),
         result_logical_tile->GetValue(i, 2));
+
     Value string_value(ValueFactory::GetStringValue(
         std::to_string(ExecutorTestsUtil::PopulatedValue(i, 3))));
     EXPECT_EQ(string_value, result_logical_tile->GetValue(i, 3));

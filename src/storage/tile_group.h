@@ -118,6 +118,10 @@ class TileGroup {
     return tile_group_id;
   }
 
+  Backend* GetBackend() const{
+    return backend;
+  }
+
   std::vector<catalog::Schema> &GetTileSchemas() {
     return tile_schemas;
   }
