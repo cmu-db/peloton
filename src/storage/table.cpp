@@ -75,34 +75,32 @@ id_t Table::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple){
     return INVALID_ID;
   }
 
-  // Index checks
-  ItemPointer location;
-  if(TryInsertInIndexes(tuple, location) == false){
-    throw ConstraintException("Index constraint violated : " + tuple->GetInfo());
-    return INVALID_ID;
-  }
-
   // Actual insertion into last tile group
   auto tile_group = tile_groups.back();
 
   // and try to insert into it
-  id_t tuple_id = tile_group->InsertTuple(transaction_id, tuple);
+  id_t tuple_slot = tile_group->InsertTuple(transaction_id, tuple);
 
   // if that didn't work, need to add a new tile group
-  if(tuple_id == INVALID_ID){
+  if(tuple_slot == INVALID_ID){
     AddDefaultTileGroup();
 
     tile_group = tile_groups.back();
-    tuple_id = tile_group->InsertTuple(transaction_id, tuple);
-    if(tuple_id == INVALID_ID)
+    tuple_slot = tile_group->InsertTuple(transaction_id, tuple);
+    if(tuple_slot == INVALID_ID)
       return INVALID_ID;
   }
 
-  // TODO: Index : update location
-  location = ItemPointer(tile_group->GetTileGroupId(), tuple_id);
-  InsertInIndexes(tuple, location);
+  // Index checks
+  ItemPointer location = ItemPointer(tile_group->GetTileGroupId(), tuple_slot);
+  if(TryInsertInIndexes(tuple, location) == false){
+    tile_group->ReclaimTuple(tuple_slot);
 
-  return tuple_id;
+    throw ConstraintException("Index constraint violated : " + tuple->GetInfo());
+    return INVALID_ID;
+  }
+
+  return tuple_slot;
 }
 
 void Table::InsertInIndexes(const storage::Tuple *tuple, ItemPointer location) {

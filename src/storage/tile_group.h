@@ -15,6 +15,7 @@
 #include "catalog/manager.h"
 #include "storage/tile.h"
 #include "storage/tile_group_header.h"
+
 #include <cassert>
 
 namespace nstore {
@@ -66,6 +67,9 @@ class TileGroup {
   // insert tuple at next available slot in tile if a slot exists
   id_t InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
 
+  // reclaim tuple at given slot
+  void ReclaimTuple(id_t tuple_slot_id);
+
   // returns tuple at given slot if it exists and is visible to transaction at this time stamp
   Tuple* SelectTuple(txn_id_t transaction_id, id_t tile_id, id_t tuple_slot_id, cid_t at_cid);
 
@@ -112,6 +116,10 @@ class TileGroup {
 
   id_t GetTileGroupId() const {
     return tile_group_id;
+  }
+
+  Backend* GetBackend() const{
+    return backend;
   }
 
   std::vector<catalog::Schema> &GetTileSchemas() {
