@@ -22,6 +22,8 @@ class AbstractExecutor {
  public:
   AbstractExecutor(const AbstractExecutor &) = delete;
   AbstractExecutor& operator=(const AbstractExecutor &) = delete;
+  AbstractExecutor(AbstractExecutor &&) = delete;
+  AbstractExecutor& operator=(AbstractExecutor &&) = delete;
 
   virtual ~AbstractExecutor(){}
 

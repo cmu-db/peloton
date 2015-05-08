@@ -26,6 +26,11 @@ class DropExecutor {
 
  public:
 
+  DropExecutor(const DropExecutor &) = delete;
+  DropExecutor& operator=(const DropExecutor &) = delete;
+  DropExecutor(DropExecutor &&) = delete;
+  DropExecutor& operator=(DropExecutor &&) = delete;
+
   static bool Execute(parser::SQLStatement *query);
 
 };
