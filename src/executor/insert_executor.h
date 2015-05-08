@@ -12,10 +12,13 @@ namespace nstore {
 namespace executor {
 
 class InsertExecutor : public AbstractExecutor {
-  InsertExecutor(const InsertExecutor &) = delete;
-  InsertExecutor& operator=(const InsertExecutor &) = delete;
 
  public:
+  InsertExecutor(const InsertExecutor &) = delete;
+  InsertExecutor& operator=(const InsertExecutor &) = delete;
+  InsertExecutor(InsertExecutor &&) = delete;
+  InsertExecutor& operator=(InsertExecutor &&) = delete;
+
   explicit InsertExecutor(planner::AbstractPlanNode *node,
                           Context *context,
                           storage::Tuple *tuple = nullptr);
