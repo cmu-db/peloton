@@ -23,8 +23,12 @@ namespace executor {
 //===--------------------------------------------------------------------===//
 
 class CreateExecutor {
-
  public:
+
+  CreateExecutor(const CreateExecutor &) = delete;
+  CreateExecutor& operator=(const CreateExecutor &) = delete;
+  CreateExecutor(CreateExecutor &&) = delete;
+  CreateExecutor& operator=(CreateExecutor &&) = delete;
 
   static bool Execute(parser::SQLStatement *query);
 

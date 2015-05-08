@@ -12,10 +12,12 @@ namespace nstore {
 namespace executor {
 
 class ConcatExecutor : public AbstractExecutor {
+ public:
   ConcatExecutor(const ConcatExecutor &) = delete;
   ConcatExecutor& operator=(const ConcatExecutor &) = delete;
+  ConcatExecutor(ConcatExecutor &&) = delete;
+  ConcatExecutor& operator=(ConcatExecutor &&) = delete;
 
- public:
   explicit ConcatExecutor(planner::AbstractPlanNode *node);
 
  protected:
