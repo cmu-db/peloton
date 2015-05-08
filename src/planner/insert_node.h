@@ -1,5 +1,5 @@
 /**
- * @brief Header for concat plan node.
+ * @brief Header for insert plan node.
  *
  * Copyright(c) 2015, CMU
  */

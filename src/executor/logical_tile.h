@@ -22,6 +22,24 @@ class Tuple;
 
 namespace executor {
 
+/** @brief Column metadata for logical tile */
+struct ColumnInfo {
+  /** @brief Position list in logical tile that will correspond to this column. */
+  id_t position_list_idx;
+
+  /** @brief Id of base tile corresponding to this column. */
+  oid_t base_tile_oid;
+
+  /**
+   * @brief Pointer to base tile that column is from.
+   * IMPORTANT: We use a pointer instead of the oid of the tile to minimize indirection.
+   */
+  storage::Tile *base_tile;
+
+  /** @brief Original column id of this logical tile column in its associated base tile. */
+  id_t origin_column_id;
+};
+
 class LogicalTile {
   friend class LogicalTileFactory;
 
@@ -37,7 +55,7 @@ class LogicalTile {
       storage::Tile *base_tile,
       bool own_base_tile,
       id_t origin_column_id,
-      unsigned int position_list_idx);
+      id_t position_list_idx);
 
   int AddPositionList(std::vector<id_t> &&position_list);
 
@@ -87,53 +105,31 @@ class LogicalTile {
 
   iterator end();
 
-  friend std::ostream& operator<<(
-      std::ostream& os, const LogicalTile& logical_tile);
+  friend std::ostream& operator<<(std::ostream& os, const LogicalTile& logical_tile);
 
- private:
-  LogicalTile();
-
-  /**
-   * @brief An entry in a schema that links a position list to a corresponding
-   *        column.
-   */
-  struct ColumnPointer {
-    /** @brief Index of position list corresponding to this column. */
-    unsigned int position_list_idx;
-
-    /**
-     * @brief Pointer to base tile that column is from.
-     *
-     * We use a pointer instead of the oid of the tile to minimize indirection.
-     */
-    storage::Tile *base_tile;
-
-    /** @brief Original column id of this column in the base tile. */
-    id_t origin_column_id;
-  };
+  private:
+  LogicalTile(){};
 
   /**
    * @brief Mapping of column ids in this logical tile to the underlying
    *        position lists and columns in base tiles.
    */
-  std::vector<ColumnPointer> schema_;
+  std::vector<ColumnInfo> schema_;
 
   /**
    * @brief Lists of position lists.
-   *
    * Each list contains positions corresponding to particular tiles/columns.
    */
   std::vector<std::vector<id_t> > position_lists_;
 
   /**
    * @brief Bit-vector storing validity of each row in the position lists.
-   *
    * Used to cheaply invalidate rows of positions.
    */
   std::vector<bool> valid_rows_;
 
   /** @brief Keeps track of the number of tuples that are still valid. */
-  int num_tuples_;
+  id_t num_tuples_ = 0;
 
   /** @brief Set of base tiles owned (memory-wise) by this logical tile. */
   std::unordered_set<storage::Tile *> owned_base_tiles_;

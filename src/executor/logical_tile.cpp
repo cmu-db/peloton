@@ -18,21 +18,9 @@
 namespace nstore {
 namespace executor {
 
-/**
- * @brief Do nothing constructor.
- *
- * We have to implemented it to make it private. Only the LogicalTileFactory
- * is allowed to create logical tiles.
- */
-LogicalTile::LogicalTile() {
-}
-
-/**
- * @brief Destructor for this logical tile.
- *
- * Frees owned base tiles.
- */
 LogicalTile::~LogicalTile() {
+
+  // Frees owned base tiles.
   for (storage::Tile *base_tile : owned_base_tiles_) {
     delete base_tile;
   }
@@ -54,10 +42,10 @@ void LogicalTile::AddColumn(
     storage::Tile *base_tile,
     bool own_base_tile,
     id_t origin_column_id,
-    unsigned int position_list_idx) {
+    id_t position_list_idx) {
   assert(position_list_idx < position_lists_.size());
 
-  ColumnPointer cp;
+  ColumnInfo cp;
   cp.base_tile = base_tile;
   cp.origin_column_id = origin_column_id;
   cp.position_list_idx = position_list_idx;
@@ -78,13 +66,14 @@ void LogicalTile::AddColumn(
  * @return Position list index of newly added list.
  */
 int LogicalTile::AddPositionList(std::vector<id_t> &&position_list) {
-  assert(position_lists_.size() == 0
-      || position_lists_[0].size() == position_list.size());
+
+  assert(position_lists_.size() == 0 || position_lists_[0].size() == position_list.size());
 
   if (position_lists_.size() == 0) {
     num_tuples_ = position_list.size();
     valid_rows_.resize(position_list.size(), true);
   }
+
   position_lists_.push_back(std::move(position_list));
   return position_lists_.size() - 1;
 }
@@ -96,6 +85,7 @@ int LogicalTile::AddPositionList(std::vector<id_t> &&position_list) {
 void LogicalTile::InvalidateTuple(id_t tuple_id) {
   assert(tuple_id < valid_rows_.size());
   assert(valid_rows_[tuple_id]);
+
   valid_rows_[tuple_id] = false;
   num_tuples_--;
 }
@@ -122,10 +112,10 @@ storage::Tuple *LogicalTile::GetTuple(id_t column_id, id_t tuple_id) {
   assert(tuple_id < valid_rows_.size());
 
   if (!valid_rows_[tuple_id]) {
-    return NULL;
+    return nullptr;
   }
 
-  ColumnPointer &cp = schema_[column_id];
+  ColumnInfo &cp = schema_[column_id];
   id_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
   storage::Tile *base_tile = cp.base_tile;
 
@@ -149,7 +139,7 @@ Value LogicalTile::GetValue(id_t tuple_id, id_t column_id) {
   assert(tuple_id < valid_rows_.size());
   assert(valid_rows_[tuple_id]);
 
-  ColumnPointer &cp = schema_[column_id];
+  ColumnInfo &cp = schema_[column_id];
   id_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
   storage::Tile *base_tile = cp.base_tile;
 
@@ -237,6 +227,7 @@ LogicalTile::iterator& LogicalTile::iterator::operator++() {
   if (pos_ == tile_->valid_rows_.size()) {
     pos_ = INVALID_ID;
   }
+
   return *this;
 }
 
@@ -292,7 +283,7 @@ std::ostream& operator<<(std::ostream& os, const LogicalTile& lt) {
   os << "\t-----------------------------------------------------------\n";
   os << "\t SCHEMA : \n";
   for (unsigned int i = 0; i < lt.schema_.size(); i++) {
-    const LogicalTile::ColumnPointer &cp = lt.schema_[i]; 
+    const ColumnInfo &cp = lt.schema_[i];
     os << "\t Position list idx: " << cp.position_list_idx << ", "
        << "base tile: " << cp.base_tile << ", "
        << "origin column id: " << cp.origin_column_id << std::endl;
@@ -302,7 +293,7 @@ std::ostream& operator<<(std::ostream& os, const LogicalTile& lt) {
   os << "\t VALID ROWS : ";
 
   for (unsigned int i = 0; i < lt.valid_rows_.size(); i++) {
-    os << lt.valid_rows_[i] << ", ";
+    os << lt.valid_rows_[i] << " ";
   }
 
   os << std::endl;
@@ -314,7 +305,7 @@ std::ostream& operator<<(std::ostream& os, const LogicalTile& lt) {
   for(auto position_list : lt.position_lists_){
     os << "\t " << pos_list_id++ << " : ";
     for(auto pos : position_list) {
-      os << pos << ", ";
+      os << pos << " ";
     }
     os << "\n" ;
   }
