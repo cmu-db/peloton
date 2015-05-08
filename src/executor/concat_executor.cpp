@@ -38,7 +38,7 @@ bool ConcatExecutor::DInit() {
 }
 
 /**
- * @brief Adds a column to the logical tile, using the position lists.
+ * @brief Adds columns to the logical tile, using the position lists.
  * @return true on success, false otherwise.
  */
 bool ConcatExecutor::DExecute() {
@@ -49,24 +49,24 @@ bool ConcatExecutor::DExecute() {
   if (!success) {
     return false;
   }
-
-  // Grab data from plan node.
   std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
+
+  // Get new column information from plan node.
   const planner::ConcatNode &node = GetNode<planner::ConcatNode>();
-  const std::vector<planner::ConcatNode::ColumnPointer> &new_columns =
+  const std::vector<ColumnInfo> &new_columns =
       node.new_columns();
 
   // Add new columns.
   const bool own_base_tile = false;
-  for (unsigned int i = 0; i < new_columns.size(); i++) {
-    const planner::ConcatNode::ColumnPointer &col = new_columns[i];
+
+  for (id_t column_itr = 0; column_itr < new_columns.size(); column_itr++) {
+    auto &col = new_columns[column_itr];
     auto &locator = catalog::Manager::GetInstance().locator;
-    // TODO Do this in DInit() to amortize lookup over all tiles.
-    // Do we have to do some kind of synchronization to ensure that the tile
-    // doesn't disappear midway through our request?
+
     auto it = locator.find(col.base_tile_oid);
-    // TODO Should this be an assert or an if statement?
     assert(it != locator.end());
+
+    // Simply adds the column information to logical tile
     source_tile->AddColumn(
         static_cast<storage::Tile *>(it->second),
         own_base_tile,

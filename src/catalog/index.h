@@ -14,8 +14,8 @@
 
 #include "common/types.h"
 #include "index/index.h"
-#include <mutex>
 
+#include <mutex>
 #include <vector>
 #include <iostream>
 

@@ -25,9 +25,9 @@ namespace executor {
  */
 InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
                                Context *context,
-                               storage::Tuple *tuple)
+                               const std::vector<storage::Tuple *>& tuples)
 : AbstractExecutor(node, context),
-  tuple(tuple) {
+  tuples(tuples) {
 }
 
 /**
@@ -44,15 +44,14 @@ bool InsertExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool InsertExecutor::DExecute() {
-  assert(children_.size() <= 1);
+  assert(children_.size() == 0);
   assert(context_);
 
   const planner::InsertNode &node = GetNode<planner::InsertNode>();
 
-  // Insert given tuple into table
-  if(children_.size() == 0){
-    assert(tuple);
+  // Insert given tuples into table
 
+  for(auto tuple : tuples) {
     storage::Table *target_table = node.GetTable();
     id_t tuple_id = target_table->InsertTuple(context_->GetTransactionId(), tuple);
 
@@ -60,12 +59,8 @@ bool InsertExecutor::DExecute() {
       std::cout << "Insert failed \n";
       return false;
     }
-
   }
-  // Insert given logical tile into table
-  else{
 
-  }
 
   return true;
 }

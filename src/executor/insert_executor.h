@@ -8,6 +8,8 @@
 
 #include "executor/abstract_executor.h"
 
+#include <vector>
+
 namespace nstore {
 namespace executor {
 
@@ -21,7 +23,7 @@ class InsertExecutor : public AbstractExecutor {
 
   explicit InsertExecutor(planner::AbstractPlanNode *node,
                           Context *context,
-                          storage::Tuple *tuple = nullptr);
+                          const std::vector<storage::Tuple *>& tuples);
 
  protected:
   bool DInit();
@@ -30,8 +32,8 @@ class InsertExecutor : public AbstractExecutor {
 
  private:
 
-  // tuple to be inserted
-  storage::Tuple *tuple = nullptr;
+  // tuples to be inserted
+  std::vector<storage::Tuple *> tuples;
 };
 
 } // namespace executor

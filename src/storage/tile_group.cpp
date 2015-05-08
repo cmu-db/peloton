@@ -100,6 +100,13 @@ id_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
   return tuple_slot_id;
 }
 
+void TileGroup::ReclaimTuple(id_t tuple_slot_id) {
+
+  // add it to free slots
+  tile_group_header->ReclaimTupleSlot(tuple_slot_id);
+
+}
+
 /**
  * Return tuple at given tile slot if it exists and is visible.
  *
