@@ -26,10 +26,12 @@ namespace executor {
 class LogicalTile;
 
 class MaterializationExecutor : public AbstractExecutor {
+ public:
   MaterializationExecutor(const MaterializationExecutor &) = delete;
   MaterializationExecutor& operator=(const MaterializationExecutor &) = delete;
+  MaterializationExecutor(MaterializationExecutor &&) = delete;
+  MaterializationExecutor& operator=(MaterializationExecutor &&) = delete;
 
- public:
   explicit MaterializationExecutor(planner::AbstractPlanNode *node);
 
  protected:

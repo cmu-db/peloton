@@ -13,10 +13,12 @@ namespace nstore {
 namespace executor {
 
 class SeqScanExecutor : public AbstractExecutor {
+ public:
   SeqScanExecutor(const SeqScanExecutor &) = delete;
   SeqScanExecutor& operator=(const SeqScanExecutor &) = delete;
+  SeqScanExecutor(SeqScanExecutor &&) = delete;
+  SeqScanExecutor& operator=(SeqScanExecutor &&) = delete;
 
- public:
   explicit SeqScanExecutor(planner::AbstractPlanNode *node);
 
  protected:
