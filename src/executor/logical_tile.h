@@ -22,23 +22,10 @@ class Tuple;
 
 namespace executor {
 
-/** @brief Column metadata for logical tile */
-struct ColumnInfo {
-  /** @brief Position list in logical tile that will correspond to this column. */
-  id_t position_list_idx;
-
-  /** @brief Id of base tile corresponding to this column. */
-  oid_t base_tile_oid;
-
-  /**
-   * @brief Pointer to base tile that column is from.
-   * IMPORTANT: We use a pointer instead of the oid of the tile to minimize indirection.
-   */
-  storage::Tile *base_tile;
-
-  /** @brief Original column id of this logical tile column in its associated base tile. */
-  id_t origin_column_id;
-};
+/*
+ * Position list can be shared by multiple columns in a logical tile.
+ * This reduces deduplication.
+ */
 
 class LogicalTile {
   friend class LogicalTileFactory;
@@ -62,8 +49,6 @@ class LogicalTile {
   void InvalidateTuple(id_t tuple_id);
 
   storage::Tile *GetBaseTile(id_t column_id);
-
-  storage::Tuple *GetTuple(id_t column_id, id_t tuple_id);
 
   Value GetValue(id_t tuple_id, id_t column_id);
 
@@ -108,6 +93,22 @@ class LogicalTile {
   friend std::ostream& operator<<(std::ostream& os, const LogicalTile& logical_tile);
 
   private:
+
+  /** @brief Column metadata for logical tile */
+  struct ColumnInfo {
+    /** @brief Position list in logical tile that will correspond to this column. */
+    id_t position_list_idx;
+
+    /**
+     * @brief Pointer to base tile that column is from.
+     * IMPORTANT: We use a pointer instead of the oid of the tile to minimize indirection.
+     */
+    storage::Tile *base_tile;
+
+    /** @brief Original column id of this logical tile column in its associated base tile. */
+    id_t origin_column_id;
+  };
+
   LogicalTile(){};
 
   /**
