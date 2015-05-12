@@ -100,30 +100,6 @@ storage::Tile *LogicalTile::GetBaseTile(id_t column_id) {
   return schema_[column_id].base_tile;
 }
 
-/**
- * @brief Get the tuple from the base tile that contains the specified field.
- * @param column_id Column id of the specified field.
- * @param tuple_id Tuple id of the specified field (row/position).
- *
- * @return Pointer to copy of tuple from base tile.
- */
-storage::Tuple *LogicalTile::GetTuple(id_t column_id, id_t tuple_id) {
-  assert(column_id < schema_.size());
-  assert(tuple_id < valid_rows_.size());
-
-  if (!valid_rows_[tuple_id]) {
-    return nullptr;
-  }
-
-  ColumnInfo &cp = schema_[column_id];
-  id_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
-  storage::Tile *base_tile = cp.base_tile;
-
-  // Get a copy of the tuple from the underlying physical tile.
-  storage::Tuple *tuple = base_tile->GetTuple(base_tuple_id);
-
-  return tuple;
-}
 
 /**
  * @brief Get the value at the specified field.
@@ -283,7 +259,7 @@ std::ostream& operator<<(std::ostream& os, const LogicalTile& lt) {
   os << "\t-----------------------------------------------------------\n";
   os << "\t SCHEMA : \n";
   for (unsigned int i = 0; i < lt.schema_.size(); i++) {
-    const ColumnInfo &cp = lt.schema_[i];
+    const LogicalTile::ColumnInfo &cp = lt.schema_[i];
     os << "\t Position list idx: " << cp.position_list_idx << ", "
        << "base tile: " << cp.base_tile << ", "
        << "origin column id: " << cp.origin_column_id << std::endl;

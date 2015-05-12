@@ -7,7 +7,6 @@
 check_PROGRAMS += \
 				  logical_tile_test \
 				  materialization_test \
-				  concat_test \
 				  insert_test \
 				  seq_scan_test
 
@@ -21,10 +20,6 @@ logical_tile_test_SOURCES = \
 materialization_test_SOURCES = \
 							   $(executor_tests_common) \
 							   executor/materialization_test.cpp 
-
-concat_test_SOURCES = \
-					  $(executor_tests_common) \
-					  executor/concat_test.cpp
 
 insert_test_SOURCES = \
 					  $(executor_tests_common) \

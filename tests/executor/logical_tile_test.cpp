@@ -89,12 +89,6 @@ TEST(LogicalTileTests, TileMaterializationTest) {
 
   std::cout << (*logical_tile) << "\n";
 
-  std::unique_ptr<storage::Tuple> found_tuple1(logical_tile->GetTuple(0, 0));
-  std::unique_ptr<storage::Tuple> found_tuple2(logical_tile->GetTuple(0, 1));
-
-  std::cout << (*found_tuple1);
-  std::cout << (*found_tuple2);
-
   ////////////////////////////////////////////////////////////////
   // LOGICAL TILE (2 BASE TILE)
   ////////////////////////////////////////////////////////////////
@@ -130,20 +124,19 @@ TEST(LogicalTileTests, TileMaterializationTest) {
 
   std::cout << (*logical_tile) << "\n";
 
-  std::unique_ptr<storage::Tuple> found_tuple12(logical_tile->GetTuple(2, 0));
-  std::unique_ptr<storage::Tuple> found_tuple22(logical_tile->GetTuple(2, 1));
-
-  EXPECT_EQ((*found_tuple12), (*found_tuple1));
-  EXPECT_EQ((*found_tuple22), (*found_tuple2));
-
   ////////////////////////////////////////////////////////////////
   // LOGICAL TILE DISPLAY
   ////////////////////////////////////////////////////////////////
 
   std::cout << "Value : " << logical_tile->GetValue(0, 0) << "\n";
   std::cout << "Value : " << logical_tile->GetValue(0, 1) << "\n";
+  std::cout << "Value : " << logical_tile->GetValue(0, 2) << "\n";
+  std::cout << "Value : " << logical_tile->GetValue(0, 3) << "\n";
   std::cout << "Value : " << logical_tile->GetValue(1, 0) << "\n";
   std::cout << "Value : " << logical_tile->GetValue(1, 1) << "\n";
+  std::cout << "Value : " << logical_tile->GetValue(1, 2) << "\n";
+  std::cout << "Value : " << logical_tile->GetValue(1, 3) << "\n";
+
 }
 
 } // End test namespace
