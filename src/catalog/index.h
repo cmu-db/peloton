@@ -13,13 +13,17 @@
 #pragma once
 
 #include "common/types.h"
-#include "index/index.h"
 
 #include <mutex>
 #include <vector>
 #include <iostream>
 
 namespace nstore {
+
+namespace index{
+class Index;
+}
+
 namespace catalog {
 
 class Column;
@@ -44,9 +48,6 @@ class Index {
   ~Index() {
     // don't clean up columns here
     // they will cleaned in their respective tables
-
-    // clean up underlying index
-    delete physical_index;
   }
 
   std::string GetName() {

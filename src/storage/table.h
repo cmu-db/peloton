@@ -48,31 +48,9 @@ class Table {
   // Table constructor
   Table(catalog::Schema *schema,
         Backend *backend,
-        std::string table_name)
- : database_id(INVALID_ID),
-   table_id(INVALID_ID),
-   backend(backend),
-   schema(schema),
-   table_name(table_name){
-  }
+        std::string table_name);
 
-  ~Table() {
-
-    // clean up indices
-    for (auto index : indexes) {
-      delete index;
-    }
-
-    // clean up tile groups
-    for(auto tile_group : tile_groups)
-      delete tile_group;
-
-    // table owns its backend
-    delete backend;
-
-    // clean up schema
-    delete schema;
-  }
+  ~Table();
 
   catalog::Schema *GetSchema() const{
     return schema;

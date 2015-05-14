@@ -52,9 +52,9 @@ class LogicalTile {
 
   Value GetValue(id_t tuple_id, id_t column_id);
 
-  int NumTuples();
+  size_t NumTuples();
 
-  int NumCols();
+  size_t NumCols();
 
   /**
    * @brief Iterates through tuple ids in this logical tile.

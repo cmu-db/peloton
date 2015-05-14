@@ -43,6 +43,8 @@ class Manager {
 
   void SetLocation(const oid_t oid, void *location);
 
+  void *GetLocation(const oid_t oid) const;
+
   Manager() {}
 
   Manager(Manager const&) = delete;
