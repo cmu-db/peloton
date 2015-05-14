@@ -129,7 +129,7 @@ Value LogicalTile::GetValue(id_t tuple_id, id_t column_id) {
  *
  * @return Number of tuples.
  */
-int LogicalTile::NumTuples() {
+size_t LogicalTile::NumTuples() {
   return num_tuples_;
 }
 
@@ -138,7 +138,7 @@ int LogicalTile::NumTuples() {
  *
  * @return Number of columns.
  */
-int LogicalTile::NumCols() {
+size_t LogicalTile::NumCols() {
   return schema_.size();
 }
 

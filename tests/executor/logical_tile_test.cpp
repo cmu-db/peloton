@@ -26,6 +26,10 @@
 namespace nstore {
 namespace test {
 
+//===--------------------------------------------------------------------===//
+// Logical Tile Tests
+//===--------------------------------------------------------------------===//
+
 TEST(LogicalTileTests, TileMaterializationTest) {
   storage::VMBackend backend;
   const int tuple_count = 4;

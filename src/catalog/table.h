@@ -14,12 +14,16 @@
 
 #include "catalog/column.h"
 #include "catalog/index.h"
-#include "storage/table.h"
 
 #include <iostream>
 #include <mutex>
 
 namespace nstore {
+
+namespace storage {
+class Table;
+}
+
 namespace catalog {
 
 //===--------------------------------------------------------------------===//
@@ -47,9 +51,6 @@ class Table {
     // clean up columns
     for(auto col : columns)
       delete col;
-
-    // clean up underlying physical table
-    delete physical_table;
   }
 
   std::string GetName() {

@@ -12,7 +12,8 @@ executor_FILES = \
 		executor/logical_tile_factory.cpp \
 		executor/materialization_executor.cpp \
 		executor/seq_scan_executor.cpp \
-		executor/insert_executor.cpp
+		executor/insert_executor.cpp \
+		executor/delete_executor.cpp
 		
 executor_INCLUDES = \
                     -I$(srcdir)/executor

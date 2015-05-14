@@ -25,6 +25,16 @@ void Manager::SetLocation(const oid_t oid, void *location) {
   locator.insert(std::pair<oid_t, void*>(oid, location));
 }
 
+void *Manager::GetLocation(const oid_t oid) const{
+  void *location = nullptr;
+  try{
+    location = catalog::Manager::GetInstance().locator.at(oid);
+  }
+  catch(std::exception& e){
+  }
+  return location;
+}
+
 } // End catalog namespace
 } // End nstore namespace
 

@@ -80,7 +80,7 @@ catalog::ColumnInfo ExecutorTestsUtil::GetColumnInfo(int index) {
           25, // Column length.
           "COL_D",
           allow_null,
-          false); // Not inlined.
+          !is_inlined); // Not inlined.
       break;
 
     default:
@@ -148,7 +148,6 @@ void ExecutorTestsUtil::PopulateTiles(
       catalog::Schema::AppendSchemaList(tile_schemas));
 
   // Ensure that the tile group is as expected.
-  assert(tile_schemas.size() == 2);
   assert(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
@@ -161,10 +160,11 @@ void ExecutorTestsUtil::PopulateTiles(
     tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(i, 2)));
     Value string_value = ValueFactory::GetStringValue(
         std::to_string(PopulatedValue(i, 3)),
-        tile_group->GetTilePool(1)); // TODO Kinda hacky.
+        tile_group->GetTilePool(0));
     tuple.SetValue(3, string_value);
     tile_group->InsertTuple(txn_id, &tuple);
   }
+
 }
 
 /**
@@ -204,18 +204,7 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
   return result_logical_tile.release();
 }
 
-storage::Table *ExecutorTestsUtil::CreateTable(int tuple_count) {
-  // Schema for first tile group. Vertical partition is 2, 2.
-  std::vector<catalog::Schema> schemas1({
-      catalog::Schema({ GetColumnInfo(0), GetColumnInfo(1) }),
-      catalog::Schema({ GetColumnInfo(2), GetColumnInfo(3) })
-  });
-
-  // Schema for second tile group. Vertical partition is 1, 3.
-  std::vector<catalog::Schema> schemas2({
-      catalog::Schema({ GetColumnInfo(0) }),
-      catalog::Schema({ GetColumnInfo(1), GetColumnInfo(2), GetColumnInfo(3) })
-  });
+storage::Table *ExecutorTestsUtil::CreateTable() {
 
   // Create table.
   storage::Table *table = storage::TableFactory::GetTable(
@@ -223,22 +212,6 @@ storage::Table *ExecutorTestsUtil::CreateTable(int tuple_count) {
       new catalog::Schema({
         GetColumnInfo(0), GetColumnInfo(1),
         GetColumnInfo(2), GetColumnInfo(3) }));
-
-  // Create tile groups.
-  table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID,
-      INVALID_OID,
-      INVALID_OID,
-      table->GetBackend(),
-      schemas1,
-      tuple_count));
-  table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID,
-      INVALID_OID,
-      INVALID_OID,
-      table->GetBackend(),
-      schemas2,
-      tuple_count));
 
   // PRIMARY INDEX
   std::vector<id_t> key_attrs;
@@ -281,7 +254,7 @@ storage::Tuple *ExecutorTestsUtil::GetTuple(storage::Table *table, id_t tuple_id
   tuple->SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0)));
   tuple->SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 1)));
   tuple->SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(tuple_id, 2)));
-  tuple->SetValue(3, ValueFactory::GetStringValue(std::to_string(PopulatedValue(tuple_id, 3))));
+  tuple->SetValue(3, ValueFactory::GetStringValue("12345"));
 
   return tuple;
 }

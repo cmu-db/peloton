@@ -48,19 +48,17 @@ bool InsertExecutor::DExecute() {
   assert(context_);
 
   const planner::InsertNode &node = GetNode<planner::InsertNode>();
+  storage::Table *target_table = node.GetTable();
 
   // Insert given tuples into table
 
   for(auto tuple : tuples) {
-    storage::Table *target_table = node.GetTable();
     id_t tuple_id = target_table->InsertTuple(context_->GetTransactionId(), tuple);
-
     if(tuple_id == INVALID_ID) {
-      std::cout << "Insert failed \n";
+      context_->Undo();
       return false;
     }
   }
-
 
   return true;
 }

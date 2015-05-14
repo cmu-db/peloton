@@ -52,9 +52,13 @@ class TileGroup {
             int tuple_count);
 
   ~TileGroup() {
+
     // clean up tiles
-    for(auto tile : tiles)
+    auto& manager = catalog::Manager::GetInstance();
+    for(auto tile_id : tiles){
+      Tile *tile = static_cast<Tile *>(manager.GetLocation(tile_id));
       delete tile;
+    }
 
     // clean up tile group header
     delete tile_group_header;
@@ -102,16 +106,20 @@ class TileGroup {
     return tiles.size();
   }
 
-  Tile *GetTile(const id_t tile_id) const {
+  // Get the tile at given offset in the tile group
+  Tile *GetTile(const id_t tile_itr) const;
+
+  id_t GetTileId(const id_t tile_id) const {
     return tiles[tile_id];
   }
 
-  id_t GetTileId(const id_t tile_id) const {
-    return tiles[tile_id]->GetTileId();
-  }
-
   Pool *GetTilePool(const id_t tile_id) const {
-    return tiles[tile_id]->GetPool();
+    Tile *tile = GetTile(tile_id);
+
+    if(tile != nullptr)
+      return tile->GetPool();
+
+    return nullptr;
   }
 
   id_t GetTileGroupId() const {
@@ -155,7 +163,7 @@ class TileGroup {
   std::vector<catalog::Schema> tile_schemas;
 
   // set of tiles
-  std::vector<Tile*> tiles;
+  std::vector<id_t> tiles;
 
   TileGroupHeader* tile_group_header;
 
@@ -164,6 +172,8 @@ class TileGroup {
 
   // number of tiles
   id_t tile_count;
+
+  std::mutex tile_group_mutex;
 };
 
 

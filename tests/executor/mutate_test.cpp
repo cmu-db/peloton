@@ -10,37 +10,58 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "harness.h"
+#include "gmock/gmock.h"
 
 #include "catalog/schema.h"
 #include "common/exception.h"
 #include "common/value.h"
 #include "common/value_factory.h"
+
+#include "executor/delete_executor.h"
 #include "executor/insert_executor.h"
+#include "executor/seq_scan_executor.h"
+
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
+
+#include "planner/delete_node.h"
 #include "planner/insert_node.h"
+#include "planner/seq_scan_node.h"
+
 #include "storage/backend_vm.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
 
 #include "executor/executor_tests_util.h"
+#include "expression/expression_util.h"
+
+#include "executor/executor_tests_util.h"
+#include "executor/mock_executor.h"
+#include "harness.h"
 
 #include <atomic>
+
+using ::testing::NotNull;
+using ::testing::Return;
 
 namespace nstore {
 namespace test {
 
+//===--------------------------------------------------------------------===//
+// Mutator Tests
+//===--------------------------------------------------------------------===//
+
 std::atomic<int> tuple_id;
+std::atomic<int> delete_tuple_id;
 
 void InsertTuple(storage::Table *table){
 
   planner::InsertNode node(table);
+  std::vector<storage::Tuple *> tuples;
   const txn_id_t txn_id = 1000;
   Context context(txn_id);
-  std::vector<storage::Tuple *> tuples;
 
-  for(int tuple_itr = 0 ; tuple_itr < 500 ; tuple_itr++) {
+  for(int tuple_itr = 0 ; tuple_itr < 10 ; tuple_itr++) {
     auto tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
     tuples.push_back(tuple);
   }
@@ -53,6 +74,32 @@ void InsertTuple(storage::Table *table){
     tuple->FreeUninlinedData();
     delete tuple;
   }
+
+}
+
+void DeleteTuple(storage::Table *table){
+
+  const txn_id_t txn_id = 2000;
+  Context context(txn_id);
+  std::vector<storage::Tuple *> tuples;
+
+  // Delete
+  planner::DeleteNode delete_node(table, false);
+  executor::DeleteExecutor delete_executor(&delete_node, &context);
+
+  // Seq scan
+  std::vector<id_t> column_ids = { 0 };
+  planner::SeqScanNode seq_scan_node(
+      table,
+      expression::ConstantValueFactory(ValueFactory::GetTrue()),
+      column_ids);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node);
+
+  // Parent-Child relationship
+  delete_node.AddChild(&seq_scan_node);
+  delete_executor.AddChild(&seq_scan_executor);
+
+  delete_executor.Execute();
 
 }
 
@@ -101,6 +148,10 @@ TEST(InsertTests, BasicTests) {
   tuples.clear();
 
   LaunchParallelTest(4, InsertTuple, table);
+  //std::cout << (*table);
+
+  //LaunchParallelTest(1, DeleteTuple, table);
+  //std::cout << (*table);
 
   // PRIMARY KEY
   auto pkey_index = table->GetIndex(0);
@@ -139,8 +190,6 @@ TEST(InsertTests, BasicTests) {
 
   auto sec_list = sec_index->GetLocationsForKeyBetween(key3, key4);
   std::cout << "SEC INDEX :: Entries : " << sec_list.size() << "\n";
-
-  std::cout << (*table);
 
   delete key3;
   delete key4;
