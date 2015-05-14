@@ -30,6 +30,7 @@ namespace storage {
 Tile::Tile(TileGroupHeader* tile_header,
            Backend* backend,
            const catalog::Schema& tuple_schema,
+           TileGroup* tile_group,
            int tuple_count)
 :  database_id(INVALID_ID),
    table_id(INVALID_ID),
@@ -38,6 +39,7 @@ Tile::Tile(TileGroupHeader* tile_header,
    backend(backend),
    schema(tuple_schema),
    data(NULL),
+   tile_group(tile_group),
    pool(NULL),
    num_tuple_slots(tuple_count),
    column_count(tuple_schema.GetColumnCount()),
@@ -181,7 +183,7 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
   // Is it a dynamic tile or static tile ?
   if(tile.tile_group_header != nullptr) {
     os << "\tActive Tuples:  " << tile.tile_group_header->GetActiveTupleCount()
-					            << " out of " << tile.num_tuple_slots  <<" slots\n";
+					                << " out of " << tile.num_tuple_slots  <<" slots\n";
   }
   else {
     os << "\tActive Tuples:  " << tile.num_tuple_slots  <<" slots\n";
@@ -385,7 +387,7 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
     std::stringstream message(std::stringstream::in | std::stringstream::out);
 
     message << "Column count mismatch. Expecting "	<< schema.GetColumnCount()
-																		            << ", but " << column_count << " given" << std::endl;
+																		                << ", but " << column_count << " given" << std::endl;
     message << "Expecting the following columns:" << std::endl;
     message << schema.GetColumnCount() << std::endl;
     message << "The following columns are given:" << std::endl;

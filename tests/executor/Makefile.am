@@ -7,7 +7,7 @@
 check_PROGRAMS += \
 				  logical_tile_test \
 				  materialization_test \
-				  insert_test \
+				  mutate_test \
 				  seq_scan_test
 
 executor_tests_common= 	executor/executor_tests_util.cpp \
@@ -21,9 +21,9 @@ materialization_test_SOURCES = \
 							   $(executor_tests_common) \
 							   executor/materialization_test.cpp 
 
-insert_test_SOURCES = \
+mutate_test_SOURCES = \
 					  $(executor_tests_common) \
-					  executor/insert_test.cpp 
+					  executor/mutate_test.cpp 
 
 seq_scan_test_SOURCES = \
 						$(executor_tests_common) \

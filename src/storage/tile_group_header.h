@@ -90,7 +90,6 @@ public:
 
     {
       std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
-
       free_slots.push(tuple_slot_id);
     }
 

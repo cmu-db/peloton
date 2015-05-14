@@ -45,13 +45,13 @@ TEST(TileTests, BasicTest) {
   column_names.push_back("COL 3");
   column_names.push_back("COL 4");
 
-  int tuple_count = 6;
+  const int tuple_count = 6;
 
   storage::Backend *backend = new storage::VMBackend();
   storage::TileGroupHeader *header = new storage::TileGroupHeader(backend, tuple_count);
 
   storage::Tile *tile = storage::TileFactory::GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
-                                                      header, backend, *schema, 6);
+                                                      header, backend, *schema, nullptr, tuple_count);
 
   storage::Tuple *tuple1 = new storage::Tuple(schema, true);
   storage::Tuple *tuple2 = new storage::Tuple(schema, true);

@@ -10,6 +10,10 @@
 
 namespace nstore {
 
+//===--------------------------------------------------------------------===//
+// Utils
+//===--------------------------------------------------------------------===//
+
 namespace catalog {
 class ColumnInfo;
 class Manager;
@@ -41,8 +45,7 @@ class ExecutorTestsUtil {
       int allocate_tuple_count = DEFAULT_TUPLE_COUNT);
 
   /** @brief Creates a basic table with allocated but not populated tuples */
-  static storage::Table *CreateTable(
-      int allocate_tuple_count = DEFAULT_TUPLE_COUNT);
+  static storage::Table *CreateTable();
 
   static void PopulateTiles(storage::TileGroup *tile_group, int num_rows);
 

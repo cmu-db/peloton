@@ -36,29 +36,29 @@ class Tuple : public expression::Tuple {
 public:
 
 	// Default constructor (don't use this)
-	inline Tuple() : tuple_schema(nullptr), tuple_data(nullptr) {
+	inline Tuple() : tuple_schema(nullptr), tuple_data(nullptr), allocated(false) {
 	}
 
 	// Setup the tuple given a table
-	inline Tuple(const Tuple &rhs) : tuple_schema(rhs.tuple_schema), tuple_data(rhs.tuple_data) {
+	inline Tuple(const Tuple &rhs) : tuple_schema(rhs.tuple_schema), tuple_data(rhs.tuple_data), allocated(false) {
 	}
 
 	// Setup the tuple given a schema
-	inline Tuple(const catalog::Schema *schema) : tuple_schema(schema), tuple_data(nullptr) {
+	inline Tuple(const catalog::Schema *schema) : tuple_schema(schema), tuple_data(nullptr), allocated(false) {
 		assert(tuple_schema);
 	}
 
 	// Setup the tuple given a schema and location
-	inline Tuple(const catalog::Schema *schema, char* data) : tuple_schema(schema), tuple_data(data) {
+	inline Tuple(const catalog::Schema *schema, char* data) : tuple_schema(schema), tuple_data(data), allocated(false) {
 		assert(tuple_schema);
 		assert(tuple_data);
 	}
 
 	// Setup the tuple given a schema and allocate space
-	inline Tuple(const catalog::Schema *schema, bool allocate) : tuple_schema(schema), tuple_data(nullptr) {
+	inline Tuple(const catalog::Schema *schema, bool allocate) : tuple_schema(schema), tuple_data(nullptr), allocated(allocate) {
 		assert(tuple_schema);
 
-		if(allocate) {
+		if(allocated) {
 		  // initialize heap allocation
 			tuple_data = new char[tuple_schema->GetLength()]();
 		}
@@ -69,9 +69,9 @@ public:
 	// Does not delete either SCHEMA or UNINLINED data
 	// Tile or larger entities must take care of this
 	~Tuple() {
-
-	  // delete the tuple data
-		delete[] tuple_data;
+    // delete the tuple data
+	  if(allocated)
+	    delete[] tuple_data;
 	}
 
 	// Setup the tuple given the specified data location and schema
@@ -207,6 +207,8 @@ private:
 	// The tuple data, padded at the front by the TUPLE_HEADER
 	char *tuple_data;
 
+	// Allocated or not ?
+	bool allocated;
 };
 
 //===--------------------------------------------------------------------===//

@@ -65,7 +65,10 @@ bool DropExecutor::Execute(parser::SQLStatement *query) {
         db->Unlock();
       }
 
-      // this will also clean the underlying physical table
+      // clean up physical table
+      delete table->GetPhysicalTable();
+
+      // clean up catalog table
       delete table;
       LOG_WARN("Dropped table : %s \n", stmt->name);
       std::cout << (*db);
@@ -140,7 +143,10 @@ bool DropExecutor::Execute(parser::SQLStatement *query) {
         table->Unlock();
       }
 
-      // clean up index
+      // clean up physical index
+      delete index->GetPhysicalIndex();
+
+      // clean up catalog index
       delete index;
       LOG_WARN("Dropped index : %s \n", stmt->name);
       std::cout << (*db);

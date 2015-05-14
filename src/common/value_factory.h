@@ -86,6 +86,14 @@ public:
 		return Value::GetAddressValue(address);
 	}
 
+	static inline Value GetTrue(){
+	  return Value::GetTrue();
+	}
+
+  static inline Value GetFalse(){
+    return Value::GetFalse();
+  }
+
 	//===--------------------------------------------------------------------===//
 	// Testing helpers
 	//===--------------------------------------------------------------------===//

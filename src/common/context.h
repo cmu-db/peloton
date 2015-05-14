@@ -34,9 +34,25 @@ class Context {
     return txn_id;
   }
 
+  void TrackInsert(const ItemPointer location){
+    inserted_slots.push_back(location);
+  }
+
+  void TrackDelete(const ItemPointer location){
+    deleted_slots.push_back(location);
+  }
+
+  void Undo(){
+    // TODO: Need an undo mechanism here
+  }
+
  private:
 
   txn_id_t txn_id;
+
+  // slots mutated by the transaction
+  std::vector<ItemPointer> inserted_slots;
+  std::vector<ItemPointer> deleted_slots;
 
 };
 

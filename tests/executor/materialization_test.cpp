@@ -33,6 +33,10 @@ using ::testing::NotNull;
 namespace nstore {
 namespace test {
 
+//===--------------------------------------------------------------------===//
+// Materialization Tests
+//===--------------------------------------------------------------------===//
+
 // "Pass-through" test case. There is nothing to materialize as
 // there is only one base tile in the logical tile.
 TEST(MaterializationTests, SingleBaseTileTest) {

@@ -28,6 +28,7 @@ namespace storage {
 // Tile
 //===--------------------------------------------------------------------===//
 
+class TileGroup;
 class TileIterator;
 //class TileStats;
 
@@ -53,6 +54,7 @@ class Tile {
   Tile(TileGroupHeader* tile_header,
        Backend* backend,
        const catalog::Schema& tuple_schema,
+       TileGroup* tile_group,
        int tuple_count);
 
   virtual ~Tile();
@@ -132,12 +134,16 @@ class Tile {
     return column_count;
   };
 
+  Backend *GetBackend() const {
+    return backend;
+  }
+
   TileGroupHeader *GetHeader() const{
     return tile_group_header;
   }
 
-  Backend *GetBackend() const {
-    return backend;
+  TileGroup *GetTileGroup() const{
+    return tile_group;
   }
 
   id_t GetTileId() const {
@@ -190,6 +196,9 @@ class Tile {
 
   // set of fixed-length tuple slots
   char *data;
+
+  // relevant tile group
+  TileGroup *tile_group;
 
   // storage pool for uninlined data
   Pool *pool;
@@ -271,29 +280,31 @@ class TileFactory {
   TileFactory();
   virtual ~TileFactory();
 
-  // Creates tile that is not attached to a tile group. For use in the
-  // executor.
+  // Creates tile that is not attached to a tile group.
+  // For use in the executor.
   static Tile *GetTempTile(const catalog::Schema &schema, int tuple_count) {
+
+    // These temporary tiles don't belong to any tile group.
+    TileGroupHeader *header = nullptr;
+    TileGroup *tile_group = nullptr;
     Backend *backend = new VMBackend();
-    TileGroupHeader *header = nullptr; // No MVCC for these temporary tiles
 
     Tile *tile = GetTile(
         INVALID_ID, INVALID_ID, INVALID_ID, INVALID_ID,
-        header, backend,
-        schema,
-        tuple_count);
+        header, backend, schema, tile_group, tuple_count);
     tile->own_tile = true;
 
     return tile;
   }
 
   static Tile *GetTile(id_t database_id, id_t table_id, id_t tile_group_id, id_t tile_id,
-                       TileGroupHeader* tile_header,
-                       Backend* backend,
+                       TileGroupHeader *tile_header,
+                       Backend *backend,
                        const catalog::Schema& schema,
+                       TileGroup *tile_group,
                        int tuple_count) {
 
-    Tile *tile = new Tile(tile_header, backend, schema, tuple_count);
+    Tile *tile = new Tile(tile_header, backend, schema, tile_group, tuple_count);
 
     TileFactory::InitCommon(tile, database_id, table_id, tile_group_id, tile_id,
                             backend, schema);

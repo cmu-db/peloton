@@ -39,17 +39,18 @@ TileGroup::TileGroup(TileGroupHeader* tile_group_header,
 
     oid_t tile_id = catalog::Manager::GetInstance().GetNextOid();
 
-    Tile * tile = storage::TileFactory::GetTile(
+    Tile *tile = storage::TileFactory::GetTile(
         database_id, table_id, tile_group_id, tile_id,
         tile_group_header,
         backend,
         tile_schemas[tile_itr],
+        this,
         tuple_count);
 
-    // add metadata in locator
+    // add tile metadata in locator
     catalog::Manager::GetInstance().SetLocation(tile_id, tile);
 
-    tiles.push_back(tile);
+    tiles.push_back(tile_id);
   }
 
 }
@@ -67,7 +68,7 @@ id_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
 
   id_t tuple_slot_id = tile_group_header->GetNextEmptyTupleSlot();
 
-  LOG_TRACE("Empty tuple slot :: %d \n", tuple_slot_id);
+  LOG_TRACE("Tile Group Id :: %lu status :: %lu out of %lu slots \n", tile_group_id, tuple_slot_id, num_tuple_slots);
 
   // No more slots
   if(tuple_slot_id == INVALID_ID)
@@ -80,21 +81,23 @@ id_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
     const catalog::Schema& schema = tile_schemas[tile_itr];
     tile_column_count = schema.GetColumnCount();
 
-    storage::Tuple *tile_tuple = new storage::Tuple(&schema, true);
+    storage::Tile *tile = GetTile(tile_itr);
+    assert(tile);
+    char* tile_tuple_location = tile->GetTupleLocation(tuple_slot_id);
+    assert(tile_tuple_location);
+
+    // NOTE:: Only a tuple wrapper
+    storage::Tuple tile_tuple(&schema, tile_tuple_location);
 
     for(id_t tile_column_itr = 0 ; tile_column_itr < tile_column_count ; tile_column_itr++){
-      tile_tuple->SetValue(tile_column_itr, tuple->GetValue(column_itr));
+      tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr));
       column_itr++;
     }
-
-    tiles[tile_itr]->InsertTuple(tuple_slot_id, tile_tuple);
 
     // Set MVCC info
     tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
     tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
     tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
-
-    delete tile_tuple;
   }
 
   return tuple_slot_id;
@@ -112,17 +115,23 @@ void TileGroup::ReclaimTuple(id_t tuple_slot_id) {
  *
  * USED FOR POINT LOOKUPS
  */
-Tuple *TileGroup::SelectTuple(txn_id_t transaction_id, id_t tile_id, id_t tuple_slot_id, cid_t at_cid) {
-  assert(tile_id < tile_count);
+Tuple *TileGroup::SelectTuple(txn_id_t transaction_id, id_t tile_offset, id_t tuple_slot_id, cid_t at_cid) {
+  assert(tile_offset < tile_count);
   assert(tuple_slot_id < num_tuple_slots);
 
   // is it within bounds ?
   if(tuple_slot_id >= GetActiveTupleCount())
     return nullptr;
 
+  Tile *tile = GetTile(tile_offset);
+  if(tile == nullptr)
+    return nullptr;
+
+  Tuple *tuple = nullptr;
   // is it visible to transaction ?
   if(tile_group_header->IsVisible(tuple_slot_id, transaction_id, at_cid)){
-    return tiles[tile_id]->GetTuple(tuple_slot_id);
+    tuple = tile->GetTuple(tuple_slot_id);
+    return tuple;
   }
 
   return nullptr;
@@ -133,8 +142,8 @@ Tuple *TileGroup::SelectTuple(txn_id_t transaction_id, id_t tile_id, id_t tuple_
  *
  * USED FOR SEQUENTIAL SCANS
  */
-Tile *TileGroup::ScanTuples(txn_id_t transaction_id, id_t tile_id, cid_t at_cid) {
-  assert(tile_id < tile_count);
+Tile *TileGroup::ScanTuples(txn_id_t transaction_id, id_t tile_offset, cid_t at_cid) {
+  assert(tile_offset < tile_count);
 
   id_t active_tuple_count = GetActiveTupleCount();
 
@@ -143,6 +152,11 @@ Tile *TileGroup::ScanTuples(txn_id_t transaction_id, id_t tile_id, cid_t at_cid)
     return nullptr;
 
   Tuple *tuple = nullptr;
+
+  Tile *tile = GetTile(tile_offset);
+  if(tile == nullptr)
+    return nullptr;
+
   std::vector<Tuple *> tuples;
 
   // else go over all tuples
@@ -150,8 +164,7 @@ Tile *TileGroup::ScanTuples(txn_id_t transaction_id, id_t tile_id, cid_t at_cid)
 
     // is tuple at this slot visible to transaction ?
     if(tile_group_header->IsVisible(tile_itr, transaction_id, at_cid)){
-      tuple = tiles[tile_id]->GetTuple(tile_itr);
-
+      tuple = tile->GetTuple(tile_itr);
       tuples.push_back(tuple);
     }
   }
@@ -164,7 +177,7 @@ Tile *TileGroup::ScanTuples(txn_id_t transaction_id, id_t tile_id, cid_t at_cid)
 
     storage::Tile *tile = storage::TileFactory::GetTile(
         INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
-        header, backend, tile_schemas[tile_id], tuple_count);
+        header, backend, tile_schemas[tile_offset], this, tuple_count);
 
     id_t tuple_slot_id = 0;
 
@@ -223,10 +236,18 @@ id_t TileGroup::GetTileColumnId(id_t column_id) {
 
 Value TileGroup::GetValue(id_t tuple_id, id_t column_id) {
   assert(tuple_id < GetActiveTupleCount());
-  id_t tile_column_id, tile_id;
-  LocateTileAndColumn(column_id, tile_column_id, tile_id);
-  return tiles[tile_id]->GetValue(tuple_id, tile_column_id);
+  id_t tile_column_id, tile_offset;
+  LocateTileAndColumn(column_id, tile_column_id, tile_offset);
+  return GetTile(tile_offset)->GetValue(tuple_id, tile_column_id);
 }
+
+Tile *TileGroup::GetTile(const id_t tile_offset) const {
+  assert(tile_offset < tile_count);
+  auto& manager = catalog::Manager::GetInstance();
+  Tile *tile = static_cast<Tile *>(manager.GetLocation(tiles[tile_offset]));
+  return tile;
+}
+
 
 //===--------------------------------------------------------------------===//
 // Utilities
@@ -235,7 +256,7 @@ Value TileGroup::GetValue(id_t tuple_id, id_t column_id) {
 // Get a string representation of this tile group
 std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group) {
 
-  os << "====================================================================================================\n";
+  os << "=============================================================\n";
 
   os << "TILE GROUP :\n";
   os << "\tCatalog ::"
@@ -247,10 +268,12 @@ std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group) {
 													                                                << " out of " << tile_group.num_tuple_slots  <<" slots\n";
 
   for(id_t tile_itr = 0 ; tile_itr < tile_group.tile_count ; tile_itr++){
-    os << (*tile_group.tiles[tile_itr]);
+    Tile *tile = tile_group.GetTile(tile_itr);
+    if(tile != nullptr)
+      os << (*tile);
   }
 
-  os << "====================================================================================================\n";
+  os << "=============================================================\n";
 
   return os;
 }

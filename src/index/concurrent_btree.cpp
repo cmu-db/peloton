@@ -76,7 +76,7 @@ void WriteORelease (WOLock *lock)
     return;
   }
 
-  *lock->tid = 0;
+    *lock->tid = 0;
 }
 
 //  Phase-Fair reader/writer lock implementation
