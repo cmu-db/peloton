@@ -49,6 +49,7 @@ REDISTRIBUTION OF THIS SOFTWARE.
 #include <stddef.h>
 
 #include "catalog/schema.h"
+#include "common/synch.h"
 
 namespace nstore {
 namespace index {
@@ -93,13 +94,14 @@ typedef enum{
 } BtLock;
 
 //	definition for phase-fair reader/writer lock implementation
-
+/*
 typedef struct {
   ushort rin[1];
   ushort rout[1];
   ushort ticket[1];
   ushort serving[1];
 } RWLock;
+*/
 
 #define PHID 0x1
 #define PRES 0x2
@@ -125,11 +127,13 @@ volatile typedef struct BtSpinLatchType {
 
 //	write only reentrant lock
 
+/*
 typedef struct {
   BtSpinLatch xcl[1];
   volatile ushort tid[1];
   volatile ushort dup[1];
 } WOLock;
+*/
 
 //  hash table entries
 
@@ -144,8 +148,8 @@ typedef struct {
   uid page_no;			// latch set page number
   RWLock readwr[1];		// read/write page lock
   RWLock access[1];		// Access Intent/Page delete
-  WOLock parent[1];		// Posting of fence key in parent
-  WOLock atomic[1];		// Atomic update in progress
+  RecursiveLock parent[1];		// Posting of fence key in parent
+  RecursiveLock atomic[1];		// Atomic update in progress
   uint split;				// right split page atomic insert
   uint entry;				// entry slot in latch table
   uint next;				// next entry in hash table chain
@@ -375,21 +379,6 @@ uid bt_newdup (BtDb *bt);
 void bt_spinreleasewrite(BtSpinLatch *latch);
 void bt_spinwritelock(BtSpinLatch *latch);
 
-//  Write-Only Reentrant Lock
-
-void WriteOLock (WOLock *lock, ushort tid);
-
-void WriteORelease (WOLock *lock);
-
-//  Phase-Fair reader/writer lock implementation
-
-void WriteLock (RWLock *lock);
-
-void WriteRelease (RWLock *lock);
-
-void ReadLock (RWLock *lock);
-
-void ReadRelease (RWLock *lock);
 
 //  Spin Latch Manager
 //  wait until write lock mode is clear
