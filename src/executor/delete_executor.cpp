@@ -53,8 +53,7 @@ bool DeleteExecutor::DExecute() {
 
   // Delete tuples in logical tile
   if(children_.size() == 1) {
-
-    LOG_WARN("Delete executor :: 1 child \n");
+    LOG_TRACE("Delete executor :: 1 child \n");
 
     // Retrieve next tile.
     const bool success = children_[0]->Execute();
@@ -67,12 +66,11 @@ bool DeleteExecutor::DExecute() {
     storage::TileGroup *base_tile_group = base_tile->GetTileGroup();
     auto txn_id = context_->GetTransactionId();
 
-    LOG_WARN("Source tile : %p Tuples : %lu \n", source_tile.get(), source_tile->NumTuples());
+    LOG_TRACE("Source tile : %p Tuples : %lu \n", source_tile.get(), source_tile->NumTuples());
 
     // Delete each tuple
     for (id_t tuple_id : *source_tile) {
-
-      LOG_WARN("Tuple id : %lu \n", tuple_id);
+      LOG_TRACE("Tuple id : %lu \n", tuple_id);
 
       // try to delete the tuple
       // this might fail due to a concurrent operation that has latched the tuple

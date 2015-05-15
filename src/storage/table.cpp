@@ -64,6 +64,8 @@ oid_t Table::AddDefaultTileGroup() {
                                                          backend,
                                                          schemas, tuples_per_tilegroup);
 
+  LOG_TRACE("Trying to add a tile group \n");
+
   {
     std::lock_guard<std::mutex> lock(table_mutex);
 
@@ -71,17 +73,22 @@ oid_t Table::AddDefaultTileGroup() {
 
     // A) no tile groups in table
     if(tile_groups.empty()) {
+      LOG_TRACE("Added first tile group \n");
       tile_groups.push_back(tile_group);
       return tile_group_id;
     }
 
     // A) no slots in last tile group in table
     auto last_tile_group = tile_groups.back();
-    if(last_tile_group->GetActiveTupleCount()
-        < last_tile_group->GetAllocatedTupleCount()) {
+    id_t active_tuple_count = last_tile_group->GetActiveTupleCount();
+    id_t allocated_tuple_count = last_tile_group->GetAllocatedTupleCount();
+    if( active_tuple_count < allocated_tuple_count) {
+      LOG_TRACE("Slot exists in last tile group :: %lu %lu \n", active_tuple_count, allocated_tuple_count);
       delete tile_group;
       return INVALID_OID;
     }
+
+    LOG_TRACE("Added a tile group \n");
 
     tile_groups.push_back(tile_group);
   }
@@ -118,22 +125,17 @@ id_t Table::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple){
 
   // Actual insertion into last tile group
   TileGroup *tile_group = nullptr;
-  {
-    std::lock_guard<std::mutex> lock(table_mutex);
-    tile_group = tile_groups.back();
-  }
-  assert(tile_group != nullptr);
+  id_t tuple_slot = INVALID_ID;
 
-  // and try to insert into it
-  id_t tuple_slot = tile_group->InsertTuple(transaction_id, tuple);
-
-  // if that didn't work, need to add a new tile group
-  if(tuple_slot == INVALID_ID){
-    AddDefaultTileGroup();
+  while(tuple_slot == INVALID_ID){
+    {
+      std::lock_guard<std::mutex> lock(table_mutex);
+      tile_group = tile_groups.back();
+    }
 
     tuple_slot = tile_group->InsertTuple(transaction_id, tuple);
     if(tuple_slot == INVALID_ID)
-      return INVALID_ID;
+      AddDefaultTileGroup();
   }
 
   // Index checks

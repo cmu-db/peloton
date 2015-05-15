@@ -68,6 +68,39 @@ struct RWLock {
 
 };
 
+struct RecursiveLock {
+ public:
+
+  RecursiveLock(RecursiveLock const&) = delete;
+  RecursiveLock& operator=(RecursiveLock const&) = delete;
+
+  RecursiveLock() {
+
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&recursive_mutex, &attr);
+
+  }
+
+  ~RecursiveLock() {
+    pthread_mutex_destroy(&recursive_mutex);
+  }
+
+  void Lock() const {
+    pthread_mutex_lock(&recursive_mutex);
+  }
+
+  void Unlock() const {
+    pthread_mutex_unlock(&recursive_mutex);
+  }
+
+ private:
+
+  // can only be moved, not copied
+  pthread_mutexattr_t attr;
+  mutable pthread_mutex_t recursive_mutex;
+};
+
 struct SharedLock {
   const RWLock& shared_lock;
 

@@ -34,7 +34,7 @@ namespace executor {
  * @param node Seqscan node corresponding to this executor.
  */
 SeqScanExecutor::SeqScanExecutor(planner::AbstractPlanNode *node)
-  : AbstractExecutor(node) {
+: AbstractExecutor(node) {
 }
 
 /**
@@ -62,7 +62,7 @@ bool SeqScanExecutor::DExecute() {
   // We are scanning over a logical tile.
   if (children_.size() == 1) {
 
-    LOG_WARN("Seq Scan executor :: 1 child \n");
+    LOG_TRACE("Seq Scan executor :: 1 child \n");
 
     if (!children_[0]->Execute()) {
       return false;
@@ -82,65 +82,61 @@ bool SeqScanExecutor::DExecute() {
     SetOutput(tile.release());
     return true;
   }
+  // Scanning a table
+  else {
 
-  LOG_WARN("Seq Scan executor :: 0 child \n");
+    LOG_TRACE("Seq Scan executor :: 0 child \n");
 
-  LOG_WARN("Current tile group id :: %lu \n", current_tile_group_id_);
+    // We are scanning a table (this is a leaf node in the plan tree).
+    assert(children_.size() == 0);
+    assert(table != nullptr);
+    assert(column_ids.size() > 0);
 
-  // We are scanning a table (this is a leaf node in the plan tree).
-  assert(children_.size() == 0);
-  assert(table != nullptr);
-  assert(column_ids.size() > 0);
-
-  // Retrieve next tile group.
-  if (current_tile_group_id_ == table->GetTileGroupCount()) {
-    return false;
-  }
-
-  storage::TileGroup *tile_group =
-    table->GetTileGroup(current_tile_group_id_++);
-
-  LOG_WARN("Getting tile group \n");
-
-  // Construct position list by looping through tile group
-  // and applying the predicate.
-  std::vector<id_t> position_list;
-  for (id_t tuple_id = 0;
-      tuple_id < tile_group->GetActiveTupleCount();
-      tuple_id++) {
-    expression::ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_id);
-
-    if (predicate == nullptr || predicate->Evaluate(&tuple, nullptr).IsTrue()) {
-      position_list.push_back(tuple_id);
+    // Retrieve next tile group.
+    if (current_tile_group_id_ == table->GetTileGroupCount()) {
+      return false;
     }
+
+    storage::TileGroup *tile_group =
+        table->GetTileGroup(current_tile_group_id_++);
+    id_t active_tuple_count = tile_group->GetActiveTupleCount();
+
+    // Construct position list by looping through tile group
+    // and applying the predicate.
+    std::vector<id_t> position_list;
+    for (id_t tuple_id = 0; tuple_id < active_tuple_count ; tuple_id++) {
+      expression::ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_id);
+
+      if (predicate == nullptr || predicate->Evaluate(&tuple, nullptr).IsTrue()) {
+        position_list.push_back(tuple_id);
+      }
+    }
+
+    // Construct logical tile.
+    std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
+    const bool own_base_tile = false;
+    const int position_list_idx = 0;
+    logical_tile->AddPositionList(std::move(position_list));
+
+    for (id_t origin_column_id : column_ids) {
+      id_t base_tile_offset, tile_column_id;
+
+      tile_group->LocateTileAndColumn(
+          origin_column_id,
+          base_tile_offset,
+          tile_column_id);
+
+      logical_tile->AddColumn(
+          tile_group->GetTile(base_tile_offset),
+          own_base_tile,
+          tile_column_id,
+          position_list_idx);
+    }
+
+    SetOutput(logical_tile.release());
+    return true;
   }
 
-  LOG_WARN("Constructing the logical tile \n");
-
-  // Construct logical tile.
-  std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
-  const bool own_base_tile = false;
-  const int position_list_idx = 0;
-  logical_tile->AddPositionList(std::move(position_list));
-
-  for (id_t origin_column_id : column_ids) {
-    id_t base_tile_offset, tile_column_id;
-    tile_group->LocateTileAndColumn(
-        origin_column_id,
-        tile_column_id,
-        base_tile_offset);
-
-    logical_tile->AddColumn(
-        tile_group->GetTile(base_tile_offset),
-        own_base_tile,
-        tile_column_id,
-        position_list_idx);
-  }
-
-  LOG_WARN("SetOutput :: tuple count : %lu \n", tile_group->GetActiveTupleCount());
-
-  SetOutput(logical_tile.release());
-  return true;
 }
 
 } // namespace executor

@@ -80,7 +80,7 @@ catalog::ColumnInfo ExecutorTestsUtil::GetColumnInfo(int index) {
           25, // Column length.
           "COL_D",
           allow_null,
-          !is_inlined); // Not inlined.
+          !is_inlined); // inlined.
       break;
 
     default:
