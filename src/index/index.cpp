@@ -10,57 +10,79 @@
  *-------------------------------------------------------------------------
  */
 
-#include "index/index.h"
-
 #include <iostream>
+
+#include "index/index.h"
 
 namespace nstore {
 namespace index {
 
-Index::Index(IndexMetadata *metadata)
-: metadata(metadata),
-  identifier(metadata->identifier),
-  key_schema(metadata->key_schema),
-  tuple_schema(metadata->tuple_schema),
-  unique_keys(metadata->unique_keys) {
-
-  // # of columns in key
-  column_count = metadata->key_schema->GetColumnCount();
-
-  // initialize counters
-  lookup_counter = insert_counter = delete_counter = update_counter = 0;
-
+TableIndex::TableIndex(const TableIndexScheme &scheme) : m_scheme(scheme)
+{
+    name_ = scheme.name;
+    column_indices_vector_ = scheme.columnIndices;
+    column_types_vector_ = scheme.columnTypes;
+    colCount_ = (int)column_indices_vector_.size();
+    is_unique_index_ = scheme.unique;
+    m_tupleSchema = scheme.tupleSchema;
+    assert(column_types_vector_.size() == column_indices_vector_.size());
+    column_indices_ = new int[colCount_];
+    column_types_ = new ValueType[colCount_];
+    for (int i = 0; i < colCount_; ++i)
+    {
+        column_indices_[i] = column_indices_vector_[i];
+        column_types_[i] = column_types_vector_[i];
+    }
+    m_keySchema = scheme.keySchema;
+    // initialize all the counters to zero
+    m_lookups = m_inserts = m_deletes = m_updates = 0;
 }
 
-std::ostream& operator<<(std::ostream& os, const Index& index) {
+TableIndex::~TableIndex(){
+    delete[] column_indices_;
+    delete[] column_types_;
 
-  os << "\t-----------------------------------------------------------\n";
-
-  os << "\tINDEX\n";
-
-  os << index.GetTypeName() << "\t(" << index.GetName() << ")";
-  os << (index.HasUniqueKeys() ? " UNIQUE " : " NON-UNIQUE") << "\n";
-
-  os << "\tValue schema : " << index.tuple_schema ;
-
-  os << "\t-----------------------------------------------------------\n";
-
-  return os;
+    delete m_keySchema;
 }
 
-void Index::GetInfo() const {
+std::string TableIndex::debug() const
+{
+    std::ostringstream buffer;
+    buffer << this->getTypeName() << "(" << this->getName() << ")";
+    buffer << (isUniqueIndex() ? " UNIQUE " : " NON-UNIQUE ");
+    //
+    // Columns
+    //
+    buffer << " -> Columns[";
+    std::string add = "";
+    for (int ctr = 0; ctr < this->colCount_; ctr++) {
+        buffer << add << ctr << "th entry=" << this->column_indices_[ctr]
+               << "th (" << ValueToString(column_types_[ctr])
+               << ") column in parent table";
+        add = ", ";
+    }
+    buffer << "] --- size: " << this->getSize();
 
-  std::cout << identifier << ",";
-  std::cout << GetTypeName() << ",";
-  std::cout << lookup_counter << ",";
-  std::cout << insert_counter << ",";
-  std::cout << delete_counter << ",";
-  std::cout << update_counter << std::endl;
+    std::string ret(buffer.str());
+    return (ret);
+}
 
+void TableIndex::printReport()
+{
+    std::cout << name_ << ",";
+    std::cout << getTypeName() << ",";
+    std::cout << m_lookups << ",";
+    std::cout << m_inserts << ",";
+    std::cout << m_deletes << ",";
+    std::cout << m_updates << std::endl;
+}
+
+bool TableIndex::equals(const TableIndex *other) const{
+    //TODO Do something useful here!
+    return true;
 }
 
 } // End index namespace
 } // End nstore namespace
-
 
 
