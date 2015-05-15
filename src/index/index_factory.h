@@ -12,22 +12,25 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-
 #include "index/index.h"
 
 namespace nstore {
 namespace index {
 
 //===--------------------------------------------------------------------===//
-// Index Factory
+// IndexFactory
 //===--------------------------------------------------------------------===//
 
-class TableIndexFactory {
-public:
-    static TableIndex *getInstance(const TableIndexScheme &scheme);
+
+class IndexFactory {
+
+ public:
+
+  // Get an index with required attributes
+  static Index *GetInstance(IndexMetadata *metadata);
+
 };
+
 
 } // End index namespace
 } // End nstore namespace
