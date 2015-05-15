@@ -178,10 +178,7 @@ enum IndexType {
   INDEX_TYPE_INVALID = 0,     // invalid index type
 
   INDEX_TYPE_BTREE_MULTIMAP = 1,       // array
-  INDEX_TYPE_ORDERED_MAP = 2,  // ordered map
-  BALANCED_TREE_INDEX = 3,
-  HASH_TABLE_INDEX = 4,
-  ARRAY_INDEX = 5
+  INDEX_TYPE_ORDERED_MAP = 2  // ordered map
 };
 
 //===--------------------------------------------------------------------===//

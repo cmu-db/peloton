@@ -91,8 +91,6 @@ id_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
 
     for(id_t tile_column_itr = 0 ; tile_column_itr < tile_column_count ; tile_column_itr++){
       tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr));
-
-      std::cout << "VALUE :: " << tile_tuple.GetValue(tile_column_itr) << "\n";
       column_itr++;
     }
 
