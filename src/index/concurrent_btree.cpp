@@ -47,77 +47,6 @@ uid bt_newdup (BtDb *bt)
 void bt_spinreleasewrite(BtSpinLatch *latch);
 void bt_spinwritelock(BtSpinLatch *latch);
 
-//  Write-Only Reentrant Lock
-
-void WriteOLock (WOLock *lock, ushort tid)
-{
-  while( 1 ) {
-    bt_spinwritelock(lock->xcl);
-
-    if( *lock->tid == tid ) {
-      *lock->dup += 1;
-      bt_spinreleasewrite(lock->xcl);
-      return;
-    }
-    if( !*lock->tid ) {
-      *lock->tid = tid;
-      bt_spinreleasewrite(lock->xcl);
-      return;
-    }
-    bt_spinreleasewrite(lock->xcl);
-    sched_yield();
-  }
-}
-
-void WriteORelease (WOLock *lock)
-{
-  if( *lock->dup ) {
-    *lock->dup -= 1;
-    return;
-  }
-
-    *lock->tid = 0;
-}
-
-//  Phase-Fair reader/writer lock implementation
-
-void WriteLock (RWLock *lock)
-{
-  ushort w, r, tix;
-
-  tix = __sync_fetch_and_add ((int *) (ushort *) lock->ticket, 1);
-  // wait for our ticket to come up
-
-  while( tix != lock->serving[0] )
-    sched_yield();
-
-  w = PRES | (tix & PHID);
-  r = __sync_fetch_and_add ((int *) (ushort *) lock->rin, w);
-
-  while( r != *lock->rout )
-    sched_yield();
-}
-
-void WriteRelease (RWLock *lock)
-{
-  __sync_fetch_and_and ((int *) (ushort *)lock->rin, ~MASK);
-  lock->serving[0]++;
-}
-
-void ReadLock (RWLock *lock)
-{
-  ushort w;
-  w = __sync_fetch_and_add ((int *) (ushort *) lock->rin, RINC) & MASK;
-  if( w )
-    while( w == (*lock->rin & MASK) )
-      sched_yield ();
-}
-
-void ReadRelease (RWLock *lock)
-{
-  __sync_fetch_and_add ((int *) (ushort *) lock->rout, RINC);
-}
-
 //  Spin Latch Manager
 
 //  wait until write lock mode is clear
@@ -273,7 +202,8 @@ BtLatchSet *bt_pinlatch (BtDb *bt, uid page_no, uint loadit)
   BtPage page;
 
   //  try to find our entry
-
+  assert(bt);
+  assert(bt->mgr);
   bt_spinwritelock(bt->mgr->hashtable[hashidx].latch);
 
   if( (slot = bt->mgr->hashtable[hashidx].slot ) ) {
@@ -595,26 +525,26 @@ void bt_lockpage(BtDb *bt, BtLock mode, BtLatchSet *latch)
 {
   switch( mode ) {
     case BtLockRead:
-      ReadLock (latch->readwr);
+      latch->readwr->ReadLock();
       break;
     case BtLockWrite:
-      WriteLock (latch->readwr);
+      latch->readwr->WriteLock();
       break;
     case BtLockAccess:
-      ReadLock (latch->access);
+      latch->access->ReadLock();
       break;
     case BtLockDelete:
-      WriteLock (latch->access);
+      latch->access->WriteLock();
       break;
     case BtLockParent:
-      WriteOLock (latch->parent, bt->thread_no);
+      latch->parent->Lock();
       break;
     case BtLockAtomic:
-      WriteOLock (latch->atomic, bt->thread_no);
+      latch->atomic->Lock();
       break;
     case BtLockAtomic | BtLockRead:
-    WriteOLock (latch->atomic, bt->thread_no);
-    ReadLock (latch->readwr);
+    latch->atomic->Lock();
+    latch->readwr->ReadLock();
     break;
   }
 }
@@ -625,26 +555,26 @@ void bt_unlockpage(__attribute__((unused)) BtDb *bt, BtLock mode, BtLatchSet *la
 {
   switch( mode ) {
     case BtLockRead:
-      ReadRelease (latch->readwr);
+      latch->readwr->Unlock();
       break;
     case BtLockWrite:
-      WriteRelease (latch->readwr);
+      latch->readwr->Unlock();
       break;
     case BtLockAccess:
-      ReadRelease (latch->access);
+      latch->access->Unlock();
       break;
     case BtLockDelete:
-      WriteRelease (latch->access);
+      latch->access->Unlock();
       break;
     case BtLockParent:
-      WriteORelease (latch->parent);
+      latch->parent->Unlock();
       break;
     case BtLockAtomic:
-      WriteORelease (latch->atomic);
+      latch->atomic->Unlock();
       break;
     case BtLockAtomic | BtLockRead:
-    WriteORelease (latch->atomic);
-    ReadRelease (latch->readwr);
+    latch->atomic->Unlock();
+    latch->readwr->Unlock();
     break;
   }
 }
@@ -657,7 +587,8 @@ int bt_newpage(BtDb *bt, BtPageSet *set, BtPage contents)
   uid page_no;
 
   //  lock allocation page
-
+  assert(bt);
+  assert(bt->mgr);
   bt_spinwritelock(bt->mgr->lock);
 
   // use empty chain first
@@ -830,7 +761,8 @@ int bt_loadpage (BtDb *bt, BtPageSet *set, char *key, uint lvl, BtLock lock)
 void bt_freepage (BtDb *bt, BtPageSet *set)
 {
   //  lock allocation page
-
+  assert(bt);
+  assert(bt->mgr);
   bt_spinwritelock (bt->mgr->lock);
 
   //  store chain
@@ -1899,6 +1831,8 @@ BTERR bt_atomicfree (BtDb *bt, BtPageSet *prev, uint unique)
     bt_unlockpage (bt, BtLockWrite, temp->latch);
     bt_unpinlatch (temp->latch);
   } else {  // master is now the far right page
+    assert(bt);
+    assert(bt->mgr);
     bt_spinwritelock (bt->mgr->lock);
     bt_putid (bt->mgr->pagezero->alloc->left, prev->latch->page_no);
     bt_spinreleasewrite(bt->mgr->lock);
@@ -2155,6 +2089,8 @@ int bt_atomictxn (BtDb *bt, BtPage source, uint unique)
         bt_unlockpage (bt, BtLockWrite, set->latch);
         bt_unpinlatch (set->latch);
       } else {  // prev is rightmost page
+        assert(bt);
+        assert(bt->mgr);
         bt_spinwritelock (bt->mgr->lock);
         bt_putid (bt->mgr->pagezero->alloc->left, prev->latch->page_no);
         bt_spinreleasewrite(bt->mgr->lock);
@@ -2410,433 +2346,6 @@ BtKey *bt_key(BtDb *bt, uint slot)
 BtVal *bt_val(BtDb *bt, uint slot)
 {
   return valptr(bt->cursor,slot);
-}
-
-/*
- * USAGE :
- *
- * gcc -D STANDALONE -O3 threadskv8.c -lpthread
- * ./a.out btree_file w buffer_pool_size 1024 3 src_file1
- * ./a.out btree_file s buffer_pool_size 1024 3 src_file1
- *
- */
-
-
-#include <time.h>
-#include <sys/resource.h>
-
-double getCpuTime(int type) {
-  struct rusage used[1];
-  struct timeval tv[1];
-
-  switch( type ) {
-    case 0:
-      gettimeofday(tv, NULL);
-      return (double)tv->tv_sec + (double)tv->tv_usec / 1000000;
-
-    case 1:
-      getrusage(RUSAGE_SELF, used);
-      return (double)used->ru_utime.tv_sec + (double)used->ru_utime.tv_usec / 1000000;
-
-    case 2:
-      getrusage(RUSAGE_SELF, used);
-      return (double)used->ru_stime.tv_sec + (double)used->ru_stime.tv_usec / 1000000;
-  }
-
-  return 0;
-}
-
-void bt_poolaudit (BtMgr *mgr) {
-  BtLatchSet *latch;
-  uint slot = 0;
-
-  while( slot++ < mgr->latchdeployed ) {
-    latch = mgr->latchsets + slot;
-
-    if( *latch->readwr->rin & MASK )
-      fprintf(stderr, "latchset %d rwlocked for page %.8llu\n", slot, latch->page_no);
-    memset ((ushort *)latch->readwr, 0, sizeof(RWLock));
-
-    if( *latch->access->rin & MASK )
-      fprintf(stderr, "latchset %d accesslocked for page %.8llu\n", slot, latch->page_no);
-    memset ((ushort *)latch->access, 0, sizeof(RWLock));
-
-    if( *latch->parent->tid )
-      fprintf(stderr, "latchset %d parentlocked for page %.8llu\n", slot, latch->page_no);
-    memset ((ushort *)latch->parent, 0, sizeof(RWLock));
-
-    if( latch->pin & ~CLOCK_bit ) {
-      fprintf(stderr, "latchset %d pinned for page %.8llu\n", slot, latch->page_no);
-      latch->pin = 0;
-    }
-  }
-}
-
-uint bt_latchaudit (BtDb *bt) {
-  ushort idx, hashidx;
-  uid page_no;
-  BtLatchSet *latch;
-  uint cnt = 0;
-
-  if( *(ushort *)(bt->mgr->lock) )
-    fprintf(stderr, "Alloc page locked\n");
-  *(ushort *)(bt->mgr->lock) = 0;
-
-  for( idx = 1; idx <= bt->mgr->latchdeployed; idx++ ) {
-    latch = bt->mgr->latchsets + idx;
-    if( *latch->readwr->rin & MASK )
-      fprintf(stderr, "latchset %d rwlocked for page %.8llu\n", idx, latch->page_no);
-    memset ((ushort *)latch->readwr, 0, sizeof(RWLock));
-
-    if( *latch->access->rin & MASK )
-      fprintf(stderr, "latchset %d accesslocked for page %.8llu\n", idx, latch->page_no);
-    memset ((ushort *)latch->access, 0, sizeof(RWLock));
-
-    if( *latch->parent->tid )
-      fprintf(stderr, "latchset %d parentlocked for page %.8llu\n", idx, latch->page_no);
-    memset ((ushort *)latch->parent, 0, sizeof(WOLock));
-
-    if( latch->pin ) {
-      fprintf(stderr, "latchset %d pinned for page %.8llu\n", idx, latch->page_no);
-      latch->pin = 0;
-    }
-  }
-
-  for( hashidx = 0; hashidx < bt->mgr->latchhash; hashidx++ ) {
-    if( *(ushort *)(bt->mgr->hashtable[hashidx].latch) )
-      fprintf(stderr, "hash entry %d locked\n", hashidx);
-
-    *(ushort *)(bt->mgr->hashtable[hashidx].latch) = 0;
-
-    if( (idx = bt->mgr->hashtable[hashidx].slot ) ) do {
-      latch = bt->mgr->latchsets + idx;
-      if( latch->pin )
-        fprintf(stderr, "latchset %d pinned for page %.8llu\n", idx, latch->page_no);
-    } while( ( idx = latch->next ) );
-  }
-
-  page_no = LEAF_page;
-
-  while( page_no < bt_getid(bt->mgr->pagezero->alloc->right) ) {
-    uid off = page_no << bt->mgr->page_bits;
-
-    ssize_t ret = pread (bt->mgr->idx, bt->frame, bt->mgr->page_size, off);
-    if(ret == -1) {
-      fprintf(stderr, "pread error \n");
-      return 0;
-    }
-
-    if( !bt->frame->free && !bt->frame->lvl )
-      cnt += bt->frame->act;
-    page_no++;
-  }
-
-  cnt--;  // remove stopper key
-  fprintf(stderr, " Total keys read %d\n", cnt);
-
-  bt_close (bt);
-  return 0;
-}
-
-typedef struct {
-  char idx;
-  char *type;
-  char *infile;
-  BtMgr *mgr;
-  int num;
-} ThreadArg;
-
-//  standalone program to index file of keys
-//  then list them onto std-out
-
-void *index_file (void *arg){
-  int line = 0, found = 0, cnt = 0;
-  uid next, page_no = LEAF_page;  // start on first page of leaves
-  int ch, len = 0, type = 0;
-  unsigned int slot;
-  char key[BT_maxkey];
-  unsigned char txn[65536];
-  ThreadArg *args = (ThreadArg*) arg;
-  BtPageSet set[1];
-  uint nxt = 65536;
-  BtPage page;
-  BtKey *ptr;
-  BtVal *val;
-  BtDb *bt;
-  FILE *in;
-
-  uint unique = 0;
-  bt = bt_open (args->mgr);
-  page = (BtPage)txn;
-
-  if( (size_t ) args->idx < strlen (args->type) )
-    ch = args->type[(size_t) args->idx];
-  else
-    ch = args->type[strlen(args->type) - 1];
-
-  switch(ch | 0x20)
-  {
-    case 'a':
-      fprintf(stderr, "started latch mgr audit\n");
-      cnt = bt_latchaudit (bt);
-      fprintf(stderr, "finished latch mgr audit, found %d keys\n", cnt);
-      break;
-
-    case 'd':
-      type = Delete;
-
-    case 'p':
-      if( !type )
-        type = Unique;
-
-      if( args->num )
-        if( type == Delete )
-          fprintf(stderr, "started TXN pennysort delete for %s\n", args->infile);
-        else
-          fprintf(stderr, "started TXN pennysort insert for %s\n", args->infile);
-      else
-        if( type == Delete )
-          fprintf(stderr, "started pennysort delete for %s\n", args->infile);
-        else
-          fprintf(stderr, "started pennysort insert for %s\n", args->infile);
-
-      if( (in = fopen (args->infile, "rb")) )
-        while( ch = getc(in), ch != EOF )
-          if( ch == '\n' )
-          {
-            line++;
-
-            if( !args->num ) {
-              if( bt_insertkey (bt, key, 10, 0, key + 10, len - 10, unique) )
-                fprintf(stderr, "Error %d Line: %d\n", bt->err, line), exit(0);
-              len = 0;
-              continue;
-            }
-
-            nxt -= len - 10;
-            memcpy (txn + nxt, key + 10, len - 10);
-            nxt -= 1;
-            txn[nxt] = len - 10;
-            nxt -= 10;
-            memcpy (txn + nxt, key, 10);
-            nxt -= 1;
-            txn[nxt] = 10;
-            slotptr(page,++cnt)->off  = nxt;
-            slotptr(page,cnt)->type = type;
-            len = 0;
-
-            if( cnt < args->num )
-              continue;
-
-            page->cnt = cnt;
-            page->act = cnt;
-            page->min = nxt;
-
-            if( bt_atomictxn (bt, page, unique) )
-              fprintf(stderr, "Error %d Line: %d\n", bt->err, line), exit(0);
-            nxt = sizeof(txn);
-            cnt = 0;
-
-          }
-          else if( len < BT_maxkey )
-            key[len++] = ch;
-      fprintf(stderr, "finished %s for %d keys: %d reads %d writes %d found\n", args->infile, line, bt->reads, bt->writes, bt->found);
-      break;
-
-    case 'w':
-      fprintf(stderr, "started indexing for %s\n", args->infile);
-      if( (in = fopen (args->infile, "r") ) )
-        while( ch = getc(in), ch != EOF )
-          if( ch == '\n' )
-          {
-            line++;
-
-            if( bt_insertkey (bt, key, len, 0, NULL, 0, unique) )
-              fprintf(stderr, "Error %d Line: %d\n", bt->err, line), exit(0);
-            len = 0;
-          }
-          else if( len < BT_maxkey )
-            key[len++] = ch;
-      fprintf(stderr, "finished %s for %d keys: %d reads %d writes\n", args->infile, line, bt->reads, bt->writes);
-      break;
-
-    case 'f':
-      fprintf(stderr, "started finding keys for %s\n", args->infile);
-      if( (in = fopen (args->infile, "rb")) )
-        while( ch = getc(in), ch != EOF )
-          if( ch == '\n' )
-          {
-            line++;
-            if( bt_findkey (bt, key, len, NULL, 0) == 0 )
-              found++;
-            else if( bt->err )
-              fprintf(stderr, "Error %d Syserr %d Line: %d\n", bt->err, errno, line), exit(0);
-            len = 0;
-          }
-          else if( len < BT_maxkey )
-            key[len++] = ch;
-      fprintf(stderr, "finished %s for %d keys, found %d: %d reads %d writes\n", args->infile, line, found, bt->reads, bt->writes);
-      break;
-
-    case 's':
-      fprintf(stderr, "started scanning\n");
-      do {
-        if( (set->latch = bt_pinlatch (bt, page_no, 1) ) )
-          set->page = bt_mappage (bt, set->latch);
-        else
-          fprintf(stderr, "unable to obtain latch"), exit(1);
-        bt_lockpage (bt, BtLockRead, set->latch);
-        next = bt_getid (set->page->right);
-
-        for( slot = 0; slot++ < set->page->cnt; )
-          if( next || slot < set->page->cnt )
-            if( !slotptr(set->page, slot)->dead ) {
-              ptr = keyptr(set->page, slot);
-              len = ptr->len;
-
-              if( slotptr(set->page, slot)->type == Duplicate )
-                len -= BtId;
-
-              fwrite (ptr->key, len, 1, stdout);
-              val = valptr(set->page, slot);
-              fwrite (val->value, val->len, 1, stdout);
-              fputc ('\n', stdout);
-              cnt++;
-            }
-
-        bt_unlockpage (bt, BtLockRead, set->latch);
-        bt_unpinlatch (set->latch);
-      } while( (page_no = next ) );
-
-      fprintf(stderr, " Total keys read %d: %d reads, %d writes\n", cnt, bt->reads, bt->writes);
-      break;
-
-    case 'r':
-      fprintf(stderr, "started reverse scan\n");
-      if( (slot = bt_lastkey (bt)) )
-        while( (slot = bt_prevkey (bt, slot) ) ) {
-          if( slotptr(bt->cursor, slot)->dead )
-            continue;
-
-          ptr = keyptr(bt->cursor, slot);
-          len = ptr->len;
-
-          if( slotptr(bt->cursor, slot)->type == Duplicate )
-            len -= BtId;
-
-          fwrite (ptr->key, len, 1, stdout);
-          val = valptr(bt->cursor, slot);
-          fwrite (val->value, val->len, 1, stdout);
-          fputc ('\n', stdout);
-          cnt++;
-        }
-
-      fprintf(stderr, " Total keys read %d: %d reads, %d writes\n", cnt, bt->reads, bt->writes);
-      break;
-
-    case 'c':
-#ifdef unix
-      posix_fadvise( bt->mgr->idx, 0, 0, POSIX_FADV_SEQUENTIAL);
-#endif
-      fprintf(stderr, "started counting\n");
-      page_no = LEAF_page;
-
-      while( page_no < bt_getid(bt->mgr->pagezero->alloc->right) ) {
-        if( bt_readpage (bt->mgr, bt->frame, page_no) )
-          break;
-
-        if( !bt->frame->free && !bt->frame->lvl )
-          cnt += bt->frame->act;
-
-        bt->reads++;
-        page_no++;
-      }
-
-      cnt--;  // remove stopper key
-      fprintf(stderr, " Total keys counted %d: %d reads, %d writes\n", cnt, bt->reads, bt->writes);
-      break;
-  }
-
-  bt_close (bt);
-  return NULL;
-}
-
-typedef struct timeval timer;
-
-int main_test (int argc, char **argv) {
-  int idx, cnt, err;
-  int bits = 16;
-  double start;
-  pthread_t *threads;
-  ThreadArg *args;
-  uint poolsize = 0;
-  float elapsed;
-  int num = 0;
-  BtMgr *mgr;
-
-  if( argc < 3 ) {
-    fprintf (stderr, "Usage: %s idx_file cmds [page_bits buffer_pool_size txn_size src_file1 src_file2 ... ]\n", argv[0]);
-    fprintf (stderr, "  where idx_file is the name of the btree file\n");
-    fprintf (stderr, "  cmds is a string of (c)ount/(r)ev scan/(w)rite/(s)can/(d)elete/(f)ind/(p)ennysort, with one character command for each input src_file. Commands with no input file need a placeholder.\n");
-    fprintf (stderr, "  page_bits is the page size in bits\n");
-    fprintf (stderr, "  buffer_pool_size is the number of pages in buffer pool\n");
-    fprintf (stderr, "  txn_size = n to block transactions into n units, or zero for no transactions\n");
-    fprintf (stderr, "  src_file1 thru src_filen are files of keys separated by newline\n");
-    exit(0);
-  }
-
-  start = getCpuTime(0);
-
-  if( argc > 3 )
-    bits = atoi(argv[3]);
-
-  if( argc > 4 )
-    poolsize = atoi(argv[4]);
-
-  if( !poolsize )
-    fprintf (stderr, "Warning: no mapped_pool\n");
-
-  if( argc > 5 )
-    num = atoi(argv[5]);
-
-  cnt = argc - 6;
-  threads = (pthread_t *) malloc (cnt * sizeof(pthread_t));
-  args = (ThreadArg *) malloc (cnt * sizeof(ThreadArg));
-
-  mgr = bt_mgr ((argv[1]), bits, poolsize);
-
-  if( !mgr ) {
-    fprintf(stderr, "Index Open Error %s\n", argv[1]);
-    exit (1);
-  }
-
-  //  fire off threads
-
-  for( idx = 0; idx < cnt; idx++ ) {
-    args[idx].infile = argv[idx + 6];
-    args[idx].type = argv[2];
-    args[idx].mgr = mgr;
-    args[idx].num = num;
-    args[idx].idx = idx;
-    if( ( err = pthread_create (threads + idx, NULL, index_file, args + idx) ) )
-      fprintf(stderr, "Error creating thread %d\n", err);
-  }
-
-  //  wait for termination
-
-  for( idx = 0; idx < cnt; idx++ )
-    pthread_join (threads[idx], NULL);
-  bt_poolaudit(mgr);
-  bt_mgrclose (mgr);
-
-  elapsed = getCpuTime(0) - start;
-  fprintf(stderr, " real %dm%.3fs\n", (int)(elapsed/60), elapsed - (int)(elapsed/60)*60);
-  elapsed = getCpuTime(1);
-  fprintf(stderr, " user %dm%.3fs\n", (int)(elapsed/60), elapsed - (int)(elapsed/60)*60);
-  elapsed = getCpuTime(2);
-  fprintf(stderr, " sys  %dm%.3fs\n", (int)(elapsed/60), elapsed - (int)(elapsed/60)*60);
-
-  return 0;
 }
 
 } // End index namespace

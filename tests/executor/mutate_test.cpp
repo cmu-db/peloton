@@ -100,7 +100,6 @@ void DeleteTuple(storage::Table *table){
   delete_executor.AddChild(&seq_scan_executor);
 
   delete_executor.Execute();
-
 }
 
 // Insert a tuple into a table
@@ -147,8 +146,8 @@ TEST(InsertTests, BasicTests) {
   delete tuple;
   tuples.clear();
 
-  LaunchParallelTest(4, InsertTuple, table);
-  //std::cout << (*table);
+  LaunchParallelTest(1, InsertTuple, table);
+  std::cout << (*table);
 
   //LaunchParallelTest(1, DeleteTuple, table);
   //std::cout << (*table);

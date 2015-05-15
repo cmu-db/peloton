@@ -134,10 +134,7 @@ class TileGroup {
     return tile_schemas;
   }
 
-  void LocateTileAndColumn(
-      id_t column_id,
-      id_t &tile_column_id,
-      id_t &tile_id);
+  void LocateTileAndColumn(id_t column_id, id_t &tile_offset, id_t &tile_column_id);
 
   id_t GetTileIdFromColumnId(id_t column_id);
 
