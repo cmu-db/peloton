@@ -134,6 +134,11 @@ public:
 		return tuple_data;
 	}
 
+  // Set the address of this tuple in the table's backing store
+  inline void SetData(char *location) {
+    tuple_data = location;
+  }
+
 	// Return the number of columns in this tuple
 	inline id_t GetColumnCount() const {
 		return tuple_schema->GetColumnCount();

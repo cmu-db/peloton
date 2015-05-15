@@ -343,6 +343,20 @@ const char* Tuple::GetDataPtr(const id_t column_id) const {
   return &tuple_data[tuple_schema->GetOffset(column_id)];
 }
 
+size_t Tuple::HashCode(size_t seed) const {
+    const int columnCount = tuple_schema->GetColumnCount();
+    for (int i = 0; i < columnCount; i++) {
+        const Value value = GetValue(i);
+        value.HashCombine(seed);
+    }
+    return seed;
+}
+
+size_t Tuple::HashCode() const {
+    size_t seed = 0;
+    return HashCode(seed);
+}
+
 // Hasher
 struct TupleHasher: std::unary_function<Tuple, std::size_t> {
   // Generate a 64-bit number for the key value
