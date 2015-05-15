@@ -147,8 +147,8 @@ TEST(InsertTests, BasicTests) {
   delete tuple;
   tuples.clear();
 
-  LaunchParallelTest(4, InsertTuple, table);
-  //std::cout << (*table);
+  LaunchParallelTest(1, InsertTuple, table);
+  std::cout << (*table);
 
   //LaunchParallelTest(1, DeleteTuple, table);
   //std::cout << (*table);
