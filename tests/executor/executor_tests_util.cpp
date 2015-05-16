@@ -153,6 +153,8 @@ void ExecutorTestsUtil::PopulateTiles(
   // Insert tuples into tile_group.
   const bool allocate = true;
   const txn_id_t txn_id = GetTransactionId();
+  const cid_t commit_id = GetCommitId();
+
   for (int i = 0; i < num_rows; i++) {
     storage::Tuple tuple(schema.get(), allocate);
     tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(i, 0)));
@@ -162,7 +164,8 @@ void ExecutorTestsUtil::PopulateTiles(
         std::to_string(PopulatedValue(i, 3)),
         tile_group->GetTilePool(0));
     tuple.SetValue(3, string_value);
-    tile_group->InsertTuple(txn_id, &tuple);
+    id_t tuple_slot_id = tile_group->InsertTuple(txn_id, &tuple);
+    tile_group->CommitInsertedTuple(tuple_slot_id, commit_id);
   }
 
 }

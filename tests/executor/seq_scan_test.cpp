@@ -230,7 +230,8 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
       CreatePredicate(g_tuple_ids),
       column_ids);
 
-  executor::SeqScanExecutor executor(&node);
+  Context context = GetContext();
+  executor::SeqScanExecutor executor(&node, &context);
   RunTest(executor, table->GetTileGroupCount(), column_ids.size());
 }
 
@@ -249,7 +250,8 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
       column_ids);
 
   // Set up executor and its child.
-  executor::SeqScanExecutor executor(&node);
+  Context context = GetContext();
+  executor::SeqScanExecutor executor(&node, &context);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 

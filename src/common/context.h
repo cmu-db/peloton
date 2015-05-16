@@ -26,29 +26,40 @@ namespace nstore {
 class Context {
  public:
 
-  Context(txn_id_t transaction_id)
- : txn_id(transaction_id) {
+  Context(txn_id_t transaction_id, cid_t commit_id)
+ : txn_id(transaction_id), commit_id(commit_id) {
   }
 
   txn_id_t GetTransactionId() const{
     return txn_id;
   }
 
-  void TrackInsert(const ItemPointer location){
+  cid_t GetCommitId() const{
+    return commit_id;
+  }
+
+  void RecordInsert(const ItemPointer location){
     inserted_slots.push_back(location);
   }
 
-  void TrackDelete(const ItemPointer location){
+  void RecordDelete(const ItemPointer location){
     deleted_slots.push_back(location);
   }
 
-  void Undo(){
-    // TODO: Need an undo mechanism here
+  bool Commit(){
+    // TODO: Need a commit mechanism
+    return true;
+  }
+
+  bool Abort(){
+    // TODO: Need an abort mechanism
+    return true;
   }
 
  private:
 
   txn_id_t txn_id;
+  cid_t commit_id;
 
   // slots mutated by the transaction
   std::vector<ItemPointer> inserted_slots;
