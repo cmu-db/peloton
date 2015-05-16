@@ -8,6 +8,9 @@ AC_CONFIG_MACRO_DIR([m4])
 
 AM_INIT_AUTOMAKE([1.0 foreign subdir-objects])
 
+# Silent make by default
+AM_SILENT_RULES([yes])
+
 AC_PROG_CC([gcc])
 AC_PROG_LIBTOOL
  
@@ -64,12 +67,9 @@ AC_SUBST([TBB_LIBS])
 #[test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h.in])
 
 AC_CONFIG_FILES([Makefile
-                 third_party/Makefile
                  src/Makefile
                  tests/Makefile
                  ])
-
-AC_CONFIG_SUBDIRS([third_party/gmock])
 
 AC_OUTPUT
 # @end 2
