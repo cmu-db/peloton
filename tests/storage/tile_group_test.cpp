@@ -68,7 +68,7 @@ TEST(TileGroupTests, BasicTest) {
   storage::Backend *backend = new storage::VMBackend();
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
-                                                                           backend, schemas, 4);
+                                                                           nullptr, backend, schemas, 4);
 
 	// TUPLES
 
@@ -181,7 +181,7 @@ TEST(TileGroupTests, StressTest) {
   storage::Backend *backend = new storage::VMBackend();
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
-                                                                           backend, schemas, 10000);
+                                                                           nullptr, backend, schemas, 10000);
 
 	LaunchParallelTest(6, TileGroupInsert, tile_group, schema);
 
@@ -236,7 +236,7 @@ TEST(TileGroupTests, MVCCInsert) {
   storage::Backend *backend = new storage::VMBackend();
 
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
-                                                                           backend, schemas, 3);
+                                                                           nullptr, backend, schemas, 3);
 
 	storage::Tuple *tuple = new storage::Tuple(schema, true);
 
@@ -249,7 +249,6 @@ TEST(TileGroupTests, MVCCInsert) {
 
 	txn_id_t txn_id1 = GetTransactionId();
 	cid_t cid1 = GetCommitId();
-	txn_id_t txn_id2 = GetTransactionId();
 	cid_t cid2 = GetCommitId();
 
 	tuple->SetValue(2, ValueFactory::GetIntegerValue(0));
@@ -272,44 +271,23 @@ TEST(TileGroupTests, MVCCInsert) {
 	// SELECT
 
 	storage::Tuple *result = nullptr;
-	result = tile_group->SelectTuple(txn_id2, 1, 1, cid2);
-	EXPECT_EQ(result, nullptr);
+	result = tile_group->SelectTuple(1, 1);
+	EXPECT_NE(result, nullptr);
 
 	header->SetBeginCommitId(0, cid1);
 	header->SetBeginCommitId(2, cid1);
 
-	result = tile_group->SelectTuple(txn_id2, 1, 1, cid2);
-	EXPECT_EQ(result, nullptr);
+	result = tile_group->SelectTuple(1, 1);
+	EXPECT_NE(result, nullptr);
 
-	result = tile_group->SelectTuple(txn_id2, 1, 0, cid2);
+	result = tile_group->SelectTuple(1, 0);
 	EXPECT_NE(result, nullptr);
 
 	delete result;
 
-	// SCAN
-
-	storage::Tile *scan = nullptr;
-	scan = tile_group->ScanTuples(txn_id2, 1, cid2);
-
-	EXPECT_EQ(scan->GetActiveTupleCount(), 0);
-
-	delete scan->GetHeader();
-	delete scan;
-
 	// DELETE
 
-  scan = nullptr;
 	tile_group->DeleteTuple(cid2, 2);
-
-	txn_id_t txn_id3 = GetTransactionId();
-	cid_t cid3 = GetCommitId();
-
-	scan = tile_group->ScanTuples(txn_id3, 1, cid3);
-
-	EXPECT_EQ(scan->GetActiveTupleCount(), 0);
-
-  delete scan->GetHeader();
-	delete scan;
 
 	delete tuple;
 	delete schema;

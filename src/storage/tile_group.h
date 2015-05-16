@@ -25,6 +25,7 @@ namespace storage {
 // Tile Group
 //===--------------------------------------------------------------------===//
 
+class Table;
 class TileGroupIterator;
 
 /**
@@ -47,6 +48,7 @@ class TileGroup {
 
   // Tile group constructor
   TileGroup(TileGroupHeader *tile_group_header,
+            Table *table,
             Backend *backend,
             const std::vector<catalog::Schema>& schemas,
             int tuple_count);
@@ -74,11 +76,11 @@ class TileGroup {
   // reclaim tuple at given slot
   void ReclaimTuple(id_t tuple_slot_id);
 
-  // returns tuple at given slot if it exists and is visible to transaction at this time stamp
-  Tuple* SelectTuple(txn_id_t transaction_id, id_t tile_id, id_t tuple_slot_id, cid_t at_cid);
+  // returns tuple at given slot in tile if it exists
+  Tuple* SelectTuple(id_t tile_offset, id_t tuple_slot_id);
 
-  // returns tuples present in tile and are visible to transaction at this time stamp
-  Tile* ScanTuples(txn_id_t transaction_id, id_t tile_id, cid_t at_cid);
+  // returns tuple at given slot if it exists
+  Tuple *SelectTuple(id_t tuple_slot_id);
 
   // delete tuple at given slot if it is not already locked
   bool DeleteTuple(txn_id_t transaction_id, id_t tuple_slot_id);
@@ -154,6 +156,10 @@ class TileGroup {
     return tile_schemas;
   }
 
+  size_t GetTileCount() const{
+    return tile_count;
+  }
+
   void LocateTileAndColumn(id_t column_id, id_t &tile_offset, id_t &tile_column_id);
 
   id_t GetTileIdFromColumnId(id_t column_id);
@@ -182,7 +188,11 @@ class TileGroup {
   // set of tiles
   std::vector<id_t> tiles;
 
+  // associated tile group
   TileGroupHeader* tile_group_header;
+
+  // associated table
+  Table* table;
 
   // number of tuple slots allocated
   id_t num_tuple_slots;
@@ -204,13 +214,14 @@ class TileGroupFactory {
   virtual ~TileGroupFactory();
 
   static TileGroup *GetTileGroup(oid_t database_id, oid_t table_id, oid_t tile_group_id,
+                                 Table* table,
                                  Backend* backend,
                                  const std::vector<catalog::Schema>& schemas,
                                  int tuple_count) {
 
     TileGroupHeader *tile_header = new TileGroupHeader(backend, tuple_count);
 
-    TileGroup *tile_group = new TileGroup(tile_header, backend, schemas, tuple_count);
+    TileGroup *tile_group = new TileGroup(tile_header, table, backend, schemas, tuple_count);
 
     TileGroupFactory::InitCommon(tile_group, database_id, table_id, tile_group_id);
 

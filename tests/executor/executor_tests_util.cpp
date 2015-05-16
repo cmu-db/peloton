@@ -127,6 +127,7 @@ storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(
       INVALID_OID,
       INVALID_OID,
       INVALID_OID,
+      nullptr,
       backend,
       schemas,
       tuple_count);

@@ -59,7 +59,8 @@ mutate_test_LDADD = \
 					$(obj_DIR)/expression/expression_util.o \
 					$(obj_DIR)/executor/seq_scan_executor.o \
 					$(obj_DIR)/executor/delete_executor.o \
-					$(obj_DIR)/executor/insert_executor.o
+					$(obj_DIR)/executor/insert_executor.o \
+					$(obj_DIR)/executor/update_executor.o
 
 seq_scan_test_SOURCES = \
 						$(executor_tests_common) \

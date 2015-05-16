@@ -18,6 +18,7 @@
 #include "executor/delete_executor.h"
 #include "executor/insert_executor.h"
 #include "executor/seq_scan_executor.h"
+#include "executor/update_executor.h"
 
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
@@ -30,6 +31,7 @@
 #include "planner/delete_node.h"
 #include "planner/insert_node.h"
 #include "planner/seq_scan_node.h"
+#include "planner/update_node.h"
 
 #include "storage/tile_group.h"
 
@@ -69,6 +71,48 @@ void InsertTuple(storage::Table *table){
     tuple->FreeUninlinedData();
     delete tuple;
   }
+
+  context.Commit();
+}
+
+void UpdateTuple(storage::Table *table){
+
+  Context context = GetContext();
+  std::vector<storage::Tuple *> tuples;
+
+  // Update
+
+  std::vector<id_t> update_column_ids = { 1 };
+  std::vector<Value> values;
+  Value update_val = ValueFactory::GetDoubleValue(23.45);
+  values.push_back(update_val);
+
+  planner::UpdateNode update_node(table, update_column_ids, values);
+  executor::UpdateExecutor update_executor(&update_node, &context);
+
+  // Predicate
+
+  // WHERE ATTR_0 > 40
+  expression::TupleValueExpression *tup_val_exp =
+      new expression::TupleValueExpression(0, std::string("tablename"), std::string("colname"));
+  expression::ConstantValueExpression *const_val_exp =
+      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(40));
+  auto predicate =
+      new expression::ComparisonExpression<expression::CmpGt>(EXPRESSION_TYPE_COMPARE_EQ, tup_val_exp, const_val_exp);
+
+  // Seq scan
+  std::vector<id_t> column_ids = { 0 };
+  planner::SeqScanNode seq_scan_node(
+      table,
+      predicate,
+      column_ids);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, &context);
+
+  // Parent-Child relationship
+  update_node.AddChild(&seq_scan_node);
+  update_executor.AddChild(&seq_scan_executor);
+
+  update_executor.Execute();
 
   context.Commit();
 }
@@ -158,8 +202,11 @@ TEST(InsertTests, BasicTests) {
   LaunchParallelTest(1, InsertTuple, table);
   std::cout << (*table);
 
-  LaunchParallelTest(1, DeleteTuple, table);
-  std::cout << (*table);
+  //LaunchParallelTest(1, UpdateTuple, table);
+  //std::cout << (*table);
+
+  //LaunchParallelTest(1, DeleteTuple, table);
+  //std::cout << (*table);
 
   // PRIMARY KEY
   auto pkey_index = table->GetIndex(0);

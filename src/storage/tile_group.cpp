@@ -17,11 +17,13 @@
 #include "common/logger.h"
 #include "common/synch.h"
 #include "common/types.h"
+#include "storage/table.h"
 
 namespace nstore {
 namespace storage {
 
 TileGroup::TileGroup(TileGroupHeader* tile_group_header,
+                     Table *table,
                      Backend* backend,
                      const std::vector<catalog::Schema>& schemas,
                      int tuple_count)
@@ -31,6 +33,7 @@ TileGroup::TileGroup(TileGroupHeader* tile_group_header,
   backend(backend),
   tile_schemas(schemas),
   tile_group_header(tile_group_header),
+  table(table),
   num_tuple_slots(tuple_count) {
 
   tile_count = tile_schemas.size();
@@ -110,12 +113,7 @@ void TileGroup::ReclaimTuple(id_t tuple_slot_id) {
 
 }
 
-/**
- * Return tuple at given tile slot if it exists and is visible.
- *
- * USED FOR POINT LOOKUPS
- */
-Tuple *TileGroup::SelectTuple(txn_id_t transaction_id, id_t tile_offset, id_t tuple_slot_id, cid_t at_cid) {
+Tuple *TileGroup::SelectTuple(id_t tile_offset, id_t tuple_slot_id) {
   assert(tile_offset < tile_count);
   assert(tuple_slot_id < num_tuple_slots);
 
@@ -124,73 +122,34 @@ Tuple *TileGroup::SelectTuple(txn_id_t transaction_id, id_t tile_offset, id_t tu
     return nullptr;
 
   Tile *tile = GetTile(tile_offset);
-  if(tile == nullptr)
-    return nullptr;
-
-  Tuple *tuple = nullptr;
-  // is it visible to transaction ?
-  if(tile_group_header->IsVisible(tuple_slot_id, transaction_id, at_cid)){
-    tuple = tile->GetTuple(tuple_slot_id);
-    return tuple;
-  }
-
-  return nullptr;
+  assert(tile);
+  Tuple *tuple = tile->GetTuple(tuple_slot_id);
+  return tuple;
 }
 
-/**
- * Return tuples in tile that exist and are visible.
- *
- * USED FOR SEQUENTIAL SCANS
- */
-Tile *TileGroup::ScanTuples(txn_id_t transaction_id, id_t tile_offset, cid_t at_cid) {
-  assert(tile_offset < tile_count);
+Tuple *TileGroup::SelectTuple(id_t tuple_slot_id){
 
-  id_t active_tuple_count = GetNextTupleSlot();
-
-  // does it have tuples ?
-  if(active_tuple_count == 0)
+  // is it within bounds ?
+  if(tuple_slot_id >= GetNextTupleSlot())
     return nullptr;
 
-  Tuple *tuple = nullptr;
+  // allocate a new copy of the original tuple
+  Tuple *tuple = new Tuple(table->GetSchema());
+  id_t tuple_attr_itr = 0;
 
-  Tile *tile = GetTile(tile_offset);
-  if(tile == nullptr)
-    return nullptr;
+  for(id_t tile_itr = 0 ; tile_itr < tile_count ; tile_itr++){
+    Tile *tile = GetTile(tile_itr);
+    assert(tile);
 
-  std::vector<Tuple *> tuples;
+    // tile tuple wrapper
+    Tuple tile_tuple(tile->GetSchema(), tile->GetTupleLocation(tuple_slot_id));
+    id_t tile_tuple_count = tile->GetColumnCount();
 
-  // else go over all tuples
-  for(id_t tile_itr = 0 ; tile_itr < active_tuple_count ; tile_itr++){
-
-    // is tuple at this slot visible to transaction ?
-    if(tile_group_header->IsVisible(tile_itr, transaction_id, at_cid)){
-      tuple = tile->GetTuple(tile_itr);
-      tuples.push_back(tuple);
-    }
+    for(id_t tile_tuple_attr_itr = 0 ; tile_tuple_attr_itr < tile_tuple_count ; tile_tuple_attr_itr++)
+      tuple->SetValue(tuple_attr_itr++, tile_tuple.GetValue(tile_tuple_attr_itr));
   }
 
-  // create a new tile and insert these tuples
-  id_t tuple_count = tuples.size();
-
-  if(tuple_count > 0) {
-    TileGroupHeader* header = new TileGroupHeader(backend, tuple_count);
-
-    storage::Tile *tile = storage::TileFactory::GetTile(
-        INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
-        header, backend, tile_schemas[tile_offset], this, tuple_count);
-
-    id_t tuple_slot_id = 0;
-
-    for(auto tuple : tuples) {
-      tile->InsertTuple(tuple_slot_id, tuple);
-      tuple_slot_id++;
-      delete tuple;
-    }
-
-    return tile;
-  }
-
-  return nullptr;
+  return tuple;
 }
 
 // delete tuple at given slot if it is not already locked
