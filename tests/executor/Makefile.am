@@ -19,6 +19,7 @@ executor_tests_common_ld = \
 						   $(obj_DIR)/common/types.o \
 						   $(obj_DIR)/common/value.o \
 						   $(obj_DIR)/common/varlen.o \
+						   $(obj_DIR)/common/context.o \
 						   $(obj_DIR)/storage/table.o \
 						   $(obj_DIR)/storage/tile_group.o \
 						   $(obj_DIR)/storage/tile_group_header.o \
@@ -32,7 +33,6 @@ executor_tests_common_ld = \
 						   $(obj_DIR)/executor/logical_tile.o \
 						   $(obj_DIR)/executor/logical_tile_factory.o \
 						   $(obj_DIR)/planner/abstract_plan_node.o
-
 
 logical_tile_test_SOURCES = \
 							$(executor_tests_common) \
@@ -55,6 +55,8 @@ mutate_test_SOURCES = \
 
 mutate_test_LDADD = \
 					$(executor_tests_common_ld) \
+					$(obj_DIR)/expression/abstract_expression.o \
+					$(obj_DIR)/expression/expression_util.o \
 					$(obj_DIR)/executor/seq_scan_executor.o \
 					$(obj_DIR)/executor/delete_executor.o \
 					$(obj_DIR)/executor/insert_executor.o

@@ -13,10 +13,10 @@
 #include "executor/delete_executor.h"
 
 #include "catalog/manager.h"
+#include "common/context.h"
+#include "common/logger.h"
 #include "executor/logical_tile.h"
 #include "planner/delete_node.h"
-
-#include "common/logger.h"
 
 namespace nstore {
 namespace executor {

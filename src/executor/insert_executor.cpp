@@ -24,10 +24,8 @@ namespace executor {
  * @param node Insert node corresponding to this executor.
  */
 InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
-                               Context *context,
-                               const std::vector<storage::Tuple *>& tuples)
-: AbstractExecutor(node, context),
-  tuples(tuples) {
+                               Context *context)
+: AbstractExecutor(node, context) {
 }
 
 /**
@@ -49,15 +47,17 @@ bool InsertExecutor::DExecute() {
 
   const planner::InsertNode &node = GetNode<planner::InsertNode>();
   storage::Table *target_table = node.GetTable();
+  auto tuples = node.GetTuples();
 
   // Insert given tuples into table
 
   for(auto tuple : tuples) {
-    id_t tuple_id = target_table->InsertTuple(context_->GetTransactionId(), tuple);
-    if(tuple_id == INVALID_ID) {
+    ItemPointer location = target_table->InsertTuple(context_->GetTransactionId(), tuple);
+    if(location.block == INVALID_OID) {
       context_->Abort();
       return false;
     }
+    context_->RecordInsert(location);
   }
 
   return true;

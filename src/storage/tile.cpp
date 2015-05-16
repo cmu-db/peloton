@@ -180,15 +180,6 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
       << " Tile:  " << tile.tile_id
       << "\n";
 
-  // Is it a dynamic tile or static tile ?
-  if(tile.tile_group_header != nullptr) {
-    os << "\tActive Tuples:  " << tile.tile_group_header->GetNextTupleSlot()
-					                << " out of " << tile.num_tuple_slots  <<" slots\n";
-  }
-  else {
-    os << "\tActive Tuples:  " << tile.num_tuple_slots  <<" slots\n";
-  }
-
   // Columns
   // os << "\t-----------------------------------------------------------\n";
   // os << "\tSCHEMA\n";
