@@ -67,6 +67,7 @@ storage::Table *CreateTable() {
       INVALID_OID,
       INVALID_OID,
       INVALID_OID,
+      table.get(),
       table->GetBackend(),
       schemas1,
       tuple_count));
@@ -75,6 +76,7 @@ storage::Table *CreateTable() {
       INVALID_OID,
       INVALID_OID,
       INVALID_OID,
+      table.get(),
       table->GetBackend(),
       schemas2,
       tuple_count));

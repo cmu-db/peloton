@@ -27,6 +27,7 @@ class UpdateNode : public AbstractPlanNode {
     : target_table_(table),
       column_ids(column_ids),
       values(values){
+    assert(column_ids.size() == values.size());
   }
 
   inline PlanNodeType GetPlanNodeType() const {
@@ -41,11 +42,11 @@ class UpdateNode : public AbstractPlanNode {
     return target_table_->GetName();
   }
 
-  const std::vector<id_t>& GetUpdatedColumns(){
+  const std::vector<id_t>& GetUpdatedColumns() const {
     return column_ids;
   }
 
-  const std::vector<Value>& GetUpdatedColumnValues(){
+  const std::vector<Value>& GetUpdatedColumnValues() const{
     return values;
   }
 
