@@ -207,7 +207,7 @@ bool TileGroup::DeleteTuple(txn_id_t transaction_id, id_t tuple_slot_id) {
 
 bool TileGroup::CommitInsertedTuple(id_t tuple_slot_id, cid_t commit_id){
 
-  // compare and exchange the begin commit id to persist insert
+  // set the begin commit id to persist insert
   tile_group_header->SetBeginCommitId(tuple_slot_id, commit_id);
 
   tile_group_header->IncrementActiveTupleCount();
@@ -224,6 +224,20 @@ bool TileGroup::CommitDeletedTuple(id_t tuple_slot_id, txn_id_t transaction_id, 
   }
 
   return false;
+}
+
+bool TileGroup::AbortInsertedTuple(id_t tuple_slot_id){
+
+  // undo insert (we don't reset MVCC info currently)
+  ReclaimTuple(tuple_slot_id);
+  return true;
+}
+
+bool TileGroup::AbortDeletedTuple(id_t tuple_slot_id){
+
+  // undo deletion
+  tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
+  return true;
 }
 
 // Sets the tile id and column id w.r.t that tile corresponding to
@@ -283,8 +297,8 @@ std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group) {
       << " Tile Group:  " << tile_group.tile_group_id
       << "\n";
 
-  os << "\tActive Tuples:  " << tile_group.tile_group_header->GetNextTupleSlot()
-													                                                << " out of " << tile_group.num_tuple_slots  <<" slots\n";
+  os << "\tActive Tuples:  " << tile_group.tile_group_header->GetActiveTupleCount()
+      << " out of " << tile_group.num_tuple_slots  <<" slots\n";
 
   for(id_t tile_itr = 0 ; tile_itr < tile_group.tile_count ; tile_itr++){
     Tile *tile = tile_group.GetTile(tile_itr);

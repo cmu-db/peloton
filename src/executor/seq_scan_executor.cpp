@@ -103,6 +103,8 @@ bool SeqScanExecutor::DExecute() {
     cid_t commit_id = context_->GetCommitId();
     id_t active_tuple_count = tile_group->GetNextTupleSlot();
 
+    //tile_group_header->PrintVisibility(txn_id, commit_id);
+
     // Construct position list by looping through tile group
     // and applying the predicate.
     std::vector<id_t> position_list;

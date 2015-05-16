@@ -87,7 +87,7 @@ class Table {
   }
 
   // insert tuple in table
-  id_t InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
+  ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
 
   //===--------------------------------------------------------------------===//
   // INDEXES

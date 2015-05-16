@@ -89,6 +89,12 @@ class TileGroup {
   // commit the deleted tuple
   bool CommitDeletedTuple(id_t tuple_slot_id, txn_id_t transaction_id, cid_t commit_id);
 
+  // abort the inserted tuple
+  bool AbortInsertedTuple(id_t tuple_slot_id);
+
+  // abort the deleted tuple
+  bool AbortDeletedTuple(id_t tuple_slot_id);
+
   //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//
@@ -134,6 +140,10 @@ class TileGroup {
 
   id_t GetTileGroupId() const {
     return tile_group_id;
+  }
+
+  void SetTileGroupId(id_t tile_group_id_) {
+    tile_group_id = tile_group_id_;
   }
 
   Backend* GetBackend() const{
