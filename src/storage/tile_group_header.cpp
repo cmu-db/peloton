@@ -28,7 +28,7 @@ std::ostream& operator<<(std::ostream& os, const TileGroupHeader& tile_group_hea
 	os << "\tTILE GROUP HEADER \n";
 	os << "\t Txn Id      Begin Commit Id      End Commit Id      Prev ItemPointer \n";
 
-	id_t active_tuple_slots = tile_group_header.GetActiveTupleCount();
+	id_t active_tuple_slots = tile_group_header.GetNextTupleSlot();
   ItemPointer item;
 
 	for(id_t header_itr = 0 ; header_itr < active_tuple_slots ; header_itr++){
@@ -49,7 +49,7 @@ std::ostream& operator<<(std::ostream& os, const TileGroupHeader& tile_group_hea
 
 void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 
-	id_t active_tuple_slots = GetActiveTupleCount();
+	id_t active_tuple_slots = GetNextTupleSlot();
 
 	std::cout << "\t-----------------------------------------------------------\n";
 
@@ -61,14 +61,12 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 		bool activated = (at_cid >= GetBeginCommitId(header_itr));
 		bool invalidated = (at_cid >= GetEndCommitId(header_itr));
 
-		/*
 		std::cout << "\tSlot :: " << header_itr
 				<< " txn_id : " << GetTransactionId(header_itr)
-				<< " begin cid : " << GetBeginCommitId(header_itr)
-				<< " end cid : " << GetEndCommitId(header_itr) << "\n";
-		*/
+				<< " beg cid : " << GetBeginCommitId(header_itr)
+				<< " end cid : " << GetEndCommitId(header_itr) << "   ";
 
-		std::cout << "\tMVCC :: own : " << own << " activated : " << activated
+		std::cout << "\t MVCC :: own : " << own << " activated : " << activated
 				<< " invalidated : " << invalidated << " ";
 
 		// Visible iff past Insert || Own Insert

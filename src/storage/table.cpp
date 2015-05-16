@@ -80,7 +80,7 @@ oid_t Table::AddDefaultTileGroup() {
 
     // A) no slots in last tile group in table
     auto last_tile_group = tile_groups.back();
-    id_t active_tuple_count = last_tile_group->GetActiveTupleCount();
+    id_t active_tuple_count = last_tile_group->GetNextTupleSlot();
     id_t allocated_tuple_count = last_tile_group->GetAllocatedTupleCount();
     if( active_tuple_count < allocated_tuple_count) {
       LOG_TRACE("Slot exists in last tile group :: %lu %lu \n", active_tuple_count, allocated_tuple_count);
@@ -226,7 +226,7 @@ std::ostream& operator<<(std::ostream& os, const Table& table){
   id_t tuple_count = 0;
   for(id_t tile_group_itr = 0 ; tile_group_itr < tile_group_count ; tile_group_itr++) {
     auto tile_group = table.GetTileGroup(tile_group_itr);
-    auto tile_tuple_count = tile_group->GetActiveTupleCount();
+    auto tile_tuple_count = tile_group->GetNextTupleSlot();
 
     std::cout << "Tile Group Id  : " << tile_group_itr << " Tuple Count : " << tile_tuple_count << "\n";
     std::cout << (*tile_group);

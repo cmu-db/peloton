@@ -91,9 +91,14 @@ TEST(TileGroupTests, BasicTest) {
 
 	EXPECT_EQ(0, tile_group->GetActiveTupleCount());
 
-	tile_group->InsertTuple(txn_id, tuple1);
-	tile_group->InsertTuple(txn_id, tuple2);
-	tile_group->InsertTuple(txn_id, tuple1);
+	auto tuple_slot = tile_group->InsertTuple(txn_id, tuple1);
+  tile_group->CommitInsertedTuple(txn_id, tuple_slot);
+
+  tuple_slot =tile_group->InsertTuple(txn_id, tuple2);
+  tile_group->CommitInsertedTuple(txn_id, tuple_slot);
+
+  tuple_slot = tile_group->InsertTuple(txn_id, tuple1);
+  tile_group->CommitInsertedTuple(txn_id, tuple_slot);
 
 	EXPECT_EQ(3, tile_group->GetActiveTupleCount());
 
@@ -126,7 +131,8 @@ void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema){
 	tuple->SetValue(3, ValueFactory::GetStringValue("thread " + std::to_string(thread_id), tile_group->GetTilePool(1)));
 
 	for(int insert_itr = 0 ; insert_itr < 1000 ; insert_itr++) {
-		tile_group->InsertTuple(txn_id, tuple);
+	  auto tuple_slot = tile_group->InsertTuple(txn_id, tuple);
+	  tile_group->CommitInsertedTuple(txn_id, tuple_slot);
 	}
 
 	delete tuple;

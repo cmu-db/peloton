@@ -364,14 +364,16 @@ std::string Tuple::GetInfo() const {
 
   id_t column_count = GetColumnCount();
   for (id_t column_itr = 0; column_itr < column_count; column_itr++) {
-    os << "(";
-    if (IsNull(column_itr)) {
-      os << "<NULL>";
+    if(tuple_schema->IsInlined(column_itr) == true){
+      os << "(";
+      if (IsNull(column_itr)) {
+        os << "<NULL>";
+      }
+      else {
+        os << GetValue(column_itr);
+      }
+      os << ")";
     }
-    else {
-      os << GetValue(column_itr);
-    }
-    os << ")";
   }
 
   os << std::endl;

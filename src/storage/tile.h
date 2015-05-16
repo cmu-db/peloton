@@ -76,7 +76,7 @@ class Tile {
 
   // active tuple slots
   inline virtual id_t GetActiveTupleCount() const {
-    return tile_group_header->GetActiveTupleCount();
+    return tile_group_header->GetNextTupleSlot();
   }
 
   int GetTupleOffset(const char *tuple_address) const;

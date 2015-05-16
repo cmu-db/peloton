@@ -59,7 +59,8 @@ void InsertTuple(storage::Table *table){
   planner::InsertNode node(table);
   std::vector<storage::Tuple *> tuples;
   const txn_id_t txn_id = 1000;
-  Context context(txn_id);
+  const cid_t commit_id = 0;
+  Context context(txn_id, commit_id);
 
   for(int tuple_itr = 0 ; tuple_itr < 10 ; tuple_itr++) {
     auto tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
@@ -79,8 +80,7 @@ void InsertTuple(storage::Table *table){
 
 void DeleteTuple(storage::Table *table){
 
-  const txn_id_t txn_id = 2000;
-  Context context(txn_id);
+  Context context = GetContext();
   std::vector<storage::Tuple *> tuples;
 
   // Delete
@@ -91,9 +91,9 @@ void DeleteTuple(storage::Table *table){
   std::vector<id_t> column_ids = { 0 };
   planner::SeqScanNode seq_scan_node(
       table,
-      expression::ConstantValueFactory(ValueFactory::GetTrue()),
+      nullptr,
       column_ids);
-  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, &context);
 
   // Parent-Child relationship
   delete_node.AddChild(&seq_scan_node);
@@ -110,8 +110,7 @@ TEST(InsertTests, BasicTests) {
   planner::InsertNode node(table);
 
   // Pass through insert executor.
-  const txn_id_t txn_id = 1000;
-  Context context(txn_id);
+  Context context = GetContext();
   storage::Tuple *tuple;
   std::vector<storage::Tuple *> tuples;
 
@@ -149,8 +148,8 @@ TEST(InsertTests, BasicTests) {
   LaunchParallelTest(1, InsertTuple, table);
   std::cout << (*table);
 
-  //LaunchParallelTest(1, DeleteTuple, table);
-  //std::cout << (*table);
+  LaunchParallelTest(1, DeleteTuple, table);
+  std::cout << (*table);
 
   // PRIMARY KEY
   auto pkey_index = table->GetIndex(0);

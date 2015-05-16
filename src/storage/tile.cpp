@@ -182,7 +182,7 @@ std::ostream& operator<<(std::ostream& os, const Tile& tile) {
 
   // Is it a dynamic tile or static tile ?
   if(tile.tile_group_header != nullptr) {
-    os << "\tActive Tuples:  " << tile.tile_group_header->GetActiveTupleCount()
+    os << "\tActive Tuples:  " << tile.tile_group_header->GetNextTupleSlot()
 					                << " out of " << tile.num_tuple_slots  <<" slots\n";
   }
   else {
