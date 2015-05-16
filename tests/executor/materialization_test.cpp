@@ -57,7 +57,7 @@ TEST(MaterializationTests, SingleBaseTileTest) {
 
   // Create materialization node for this test.
   std::unique_ptr<catalog::Schema> output_schema(catalog::Schema::CopySchema(
-      &source_base_tile->GetSchema()));
+      source_base_tile->GetSchema()));
   std::unordered_map<id_t, id_t> old_to_new_cols;
 
   unsigned int column_count = output_schema->GetColumnCount();
@@ -124,9 +124,9 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   // Construct output schema. We drop column 3 and reorder the others to 3,1,0.
   std::vector<catalog::ColumnInfo> output_columns;
   // Note that Column 3 in the tile group is column 1 in the second tile.
-  output_columns.push_back(source_base_tiles[1]->GetSchema().GetColumnInfo(1));
-  output_columns.push_back(source_base_tiles[0]->GetSchema().GetColumnInfo(1));
-  output_columns.push_back(source_base_tiles[0]->GetSchema().GetColumnInfo(0));
+  output_columns.push_back(source_base_tiles[1]->GetSchema()->GetColumnInfo(1));
+  output_columns.push_back(source_base_tiles[0]->GetSchema()->GetColumnInfo(1));
+  output_columns.push_back(source_base_tiles[0]->GetSchema()->GetColumnInfo(0));
   std::unique_ptr<catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
 

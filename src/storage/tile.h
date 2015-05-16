@@ -122,8 +122,8 @@ class Tile {
   // Columns
   //===--------------------------------------------------------------------===//
 
-  const catalog::Schema& GetSchema() const {
-    return schema;
+  const catalog::Schema *GetSchema() const {
+    return &schema;
   };
 
   const std::string GetColumnName(const id_t column_index) const {

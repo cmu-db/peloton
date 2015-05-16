@@ -62,7 +62,7 @@ oid_t Table::AddDefaultTileGroup() {
   schemas.push_back(*schema);
 
   TileGroup* tile_group = TileGroupFactory::GetTileGroup(database_id, table_id, tile_group_id,
-                                                         backend,
+                                                         this, backend,
                                                          schemas, tuples_per_tilegroup);
 
   LOG_TRACE("Trying to add a tile group \n");
@@ -126,7 +126,7 @@ void Table::AddIndex(index::Index *index) {
 
 }
 
-ItemPointer Table::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple){
+ItemPointer Table::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple, bool update){
   assert(tuple);
 
   // Not NULL checks
@@ -152,9 +152,16 @@ ItemPointer Table::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tu
 
   // Index checks
   ItemPointer location = ItemPointer(tile_group->GetTileGroupId(), tuple_slot);
-  if(TryInsertInIndexes(tuple, location) == false){
-    tile_group->ReclaimTuple(tuple_slot);
-    throw ConstraintException("Index constraint violated : " + tuple->GetInfo());
+  if(update == false){
+    if(TryInsertInIndexes(tuple, location) == false){
+      tile_group->ReclaimTuple(tuple_slot);
+      throw ConstraintException("Index constraint violated : " + tuple->GetInfo());
+      return location;
+    }
+  }
+  else{
+    // just do a blind insert
+    InsertInIndexes(tuple, location);
     return location;
   }
 
