@@ -236,9 +236,6 @@ inline const Value Tuple::GetValue(const id_t column_id) const {
 	assert(tuple_schema);
 	assert(tuple_data);
 
-  // NOTE: same logic used here as that used in
-	// "Tile::GetValue(const id_t tuple_slot_id, const id_t column_id)"
-
 	const ValueType column_type = tuple_schema->GetType(column_id);
 
 	const char* data_ptr = GetDataPtr(column_id);

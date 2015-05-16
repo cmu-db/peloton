@@ -50,7 +50,8 @@ public:
 		backend(_backend),
 		data(nullptr),
 		num_tuple_slots(tuple_count),
-		next_tuple_slot(0) {
+		next_tuple_slot(0),
+		active_tuple_slots(0) {
 
 		header_size = num_tuple_slots * header_entry_size;
 
@@ -95,9 +96,21 @@ public:
 
 	}
 
-	id_t GetActiveTupleCount() const {
+	id_t GetNextTupleSlot() const {
 		return next_tuple_slot;
 	}
+
+  inline id_t GetActiveTupleCount() const {
+    return active_tuple_slots;
+  }
+
+  inline void IncrementActiveTupleCount() {
+    ++active_tuple_slots;
+  }
+
+  inline void DecrementActiveTupleCount() {
+    --active_tuple_slots;
+  }
 
 	//===--------------------------------------------------------------------===//
 	// MVCC utilities
@@ -199,6 +212,9 @@ private:
 
 	// next free tuple slot
 	id_t next_tuple_slot;
+
+	// active tuples
+  std::atomic<id_t> active_tuple_slots;
 
   // free slots
   std::queue<id_t> free_slots;

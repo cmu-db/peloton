@@ -20,6 +20,7 @@
 #include "common/types.h"
 #include "common/pretty_printer.h"
 #include "common/logger.h"
+#include "common/context.h"
 
 namespace nstore {
 namespace test {
@@ -51,11 +52,18 @@ void LaunchParallelTest(uint64_t num_threads, Args&&... args) {
 }
 
 inline txn_id_t GetTransactionId() {
-	return ++txn_id_counter;
+  return ++txn_id_counter;
 }
 
 inline cid_t GetCommitId() {
-	return ++cid_counter;
+  return ++cid_counter;
+}
+
+inline Context GetContext(){
+  const txn_id_t txn_id = GetTransactionId();
+  const cid_t commit_id = GetCommitId();
+  Context context(txn_id, commit_id);
+  return context;
 }
 
 

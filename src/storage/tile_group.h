@@ -83,12 +83,22 @@ class TileGroup {
   // delete tuple at given slot if it is not already locked
   bool DeleteTuple(txn_id_t transaction_id, id_t tuple_slot_id);
 
+  // commit the inserted tuple
+  bool CommitInsertedTuple(id_t tuple_slot_id, cid_t commit_id);
+
+  // commit the deleted tuple
+  bool CommitDeletedTuple(id_t tuple_slot_id, txn_id_t transaction_id, cid_t commit_id);
+
   //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//
 
   // Get a string representation of this tile group
   friend std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group);
+
+  id_t GetNextTupleSlot() const {
+    return tile_group_header->GetNextTupleSlot();
+  }
 
   id_t GetActiveTupleCount() const {
     return tile_group_header->GetActiveTupleCount();

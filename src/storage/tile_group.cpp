@@ -93,12 +93,12 @@ id_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
       tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr));
       column_itr++;
     }
-
-    // Set MVCC info
-    tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
-    tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
-    tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
   }
+
+  // Set MVCC info
+  tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
+  tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
+  tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
 
   return tuple_slot_id;
 }
@@ -120,7 +120,7 @@ Tuple *TileGroup::SelectTuple(txn_id_t transaction_id, id_t tile_offset, id_t tu
   assert(tuple_slot_id < num_tuple_slots);
 
   // is it within bounds ?
-  if(tuple_slot_id >= GetActiveTupleCount())
+  if(tuple_slot_id >= GetNextTupleSlot())
     return nullptr;
 
   Tile *tile = GetTile(tile_offset);
@@ -145,7 +145,7 @@ Tuple *TileGroup::SelectTuple(txn_id_t transaction_id, id_t tile_offset, id_t tu
 Tile *TileGroup::ScanTuples(txn_id_t transaction_id, id_t tile_offset, cid_t at_cid) {
   assert(tile_offset < tile_count);
 
-  id_t active_tuple_count = GetActiveTupleCount();
+  id_t active_tuple_count = GetNextTupleSlot();
 
   // does it have tuples ?
   if(active_tuple_count == 0)
@@ -196,9 +196,30 @@ Tile *TileGroup::ScanTuples(txn_id_t transaction_id, id_t tile_offset, cid_t at_
 // delete tuple at given slot if it is not already locked
 bool TileGroup::DeleteTuple(txn_id_t transaction_id, id_t tuple_slot_id) {
 
-  // compare and exchange the end commit id
+  // compare and exchange the end commit id to start delete
   if (atomic_cas<txn_id_t>(tile_group_header->GetEndCommitIdLocation(tuple_slot_id),
                            MAX_CID, transaction_id)) {
+    return true;
+  }
+
+  return false;
+}
+
+bool TileGroup::CommitInsertedTuple(id_t tuple_slot_id, cid_t commit_id){
+
+  // compare and exchange the begin commit id to persist insert
+  tile_group_header->SetBeginCommitId(tuple_slot_id, commit_id);
+
+  tile_group_header->IncrementActiveTupleCount();
+  return true;
+}
+
+bool TileGroup::CommitDeletedTuple(id_t tuple_slot_id, txn_id_t transaction_id, cid_t commit_id){
+
+  // compare and exchange the end commit id to persist delete
+  if (atomic_cas<txn_id_t>(tile_group_header->GetEndCommitIdLocation(tuple_slot_id),
+                           transaction_id, commit_id)) {
+    tile_group_header->DecrementActiveTupleCount();
     return true;
   }
 
@@ -233,7 +254,7 @@ id_t TileGroup::GetTileColumnId(id_t column_id) {
 }
 
 Value TileGroup::GetValue(id_t tuple_id, id_t column_id) {
-  assert(tuple_id < GetActiveTupleCount());
+  assert(tuple_id < GetNextTupleSlot());
   id_t tile_column_id, tile_offset;
   LocateTileAndColumn(column_id, tile_offset, tile_column_id);
   return GetTile(tile_offset)->GetValue(tuple_id, tile_column_id);
@@ -262,7 +283,7 @@ std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group) {
       << " Tile Group:  " << tile_group.tile_group_id
       << "\n";
 
-  os << "\tActive Tuples:  " << tile_group.tile_group_header->GetActiveTupleCount()
+  os << "\tActive Tuples:  " << tile_group.tile_group_header->GetNextTupleSlot()
 													                                                << " out of " << tile_group.num_tuple_slots  <<" slots\n";
 
   for(id_t tile_itr = 0 ; tile_itr < tile_group.tile_count ; tile_itr++){

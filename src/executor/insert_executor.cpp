@@ -55,7 +55,7 @@ bool InsertExecutor::DExecute() {
   for(auto tuple : tuples) {
     id_t tuple_id = target_table->InsertTuple(context_->GetTransactionId(), tuple);
     if(tuple_id == INVALID_ID) {
-      context_->Undo();
+      context_->Abort();
       return false;
     }
   }

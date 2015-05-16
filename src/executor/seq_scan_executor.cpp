@@ -33,8 +33,8 @@ namespace executor {
  * @brief Constructor for seqscan executor.
  * @param node Seqscan node corresponding to this executor.
  */
-SeqScanExecutor::SeqScanExecutor(planner::AbstractPlanNode *node)
-: AbstractExecutor(node) {
+SeqScanExecutor::SeqScanExecutor(planner::AbstractPlanNode *node, Context *context)
+: AbstractExecutor(node, context) {
 }
 
 /**
@@ -97,16 +97,21 @@ bool SeqScanExecutor::DExecute() {
       return false;
     }
 
-    storage::TileGroup *tile_group =
-        table->GetTileGroup(current_tile_group_id_++);
-    id_t active_tuple_count = tile_group->GetActiveTupleCount();
+    storage::TileGroup *tile_group = table->GetTileGroup(current_tile_group_id_++);
+    storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
+    txn_id_t txn_id = context_->GetTransactionId();
+    cid_t commit_id = context_->GetCommitId();
+    id_t active_tuple_count = tile_group->GetNextTupleSlot();
 
     // Construct position list by looping through tile group
     // and applying the predicate.
     std::vector<id_t> position_list;
     for (id_t tuple_id = 0; tuple_id < active_tuple_count ; tuple_id++) {
-      expression::ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_id);
+      if(tile_group_header->IsVisible(tuple_id, txn_id, commit_id) == false){
+        continue;
+      }
 
+      expression::ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_id);
       if (predicate == nullptr || predicate->Evaluate(&tuple, nullptr).IsTrue()) {
         position_list.push_back(tuple_id);
       }
