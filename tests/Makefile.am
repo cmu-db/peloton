@@ -11,6 +11,8 @@ GMOCK_BUILDDIR = $(top_builddir)/$(GMOCK_DIR)
 # TESTS -- Programs run automatically by "make check"
 # check_PROGRAMS -- Programs built by "make check" but not necessarily run
 # this is populated by the makefiles in the subdirs
+
+obj_DIR = $(top_builddir)/src
 check_PROGRAMS =
 
 AM_CPPFLAGS += \
@@ -24,7 +26,6 @@ AM_CXXFLAGS += $(GTEST_CXXFLAGS) -Wno-unused-but-set-variable
 AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -pthread -static \
 			  $(GMOCK_BUILDDIR)/libgmock.la \
 			  $(GMOCK_BUILDDIR)/libgmock_main.la \
-			  $(top_builddir)/src/libnstore.la \
 			  $(TBB_LIBS)
 
 ######################################################################
