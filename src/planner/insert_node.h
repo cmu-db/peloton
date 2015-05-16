@@ -21,8 +21,10 @@ class InsertNode : public AbstractPlanNode {
   InsertNode(InsertNode &&) = delete;
   InsertNode& operator=(InsertNode &&) = delete;
 
-  explicit InsertNode(storage::Table* table)
-    : target_table_(table) {
+  explicit InsertNode(storage::Table* table,
+                      const std::vector<storage::Tuple *>& tuples)
+    : target_table_(table),
+      tuples(tuples) {
   }
 
   inline PlanNodeType GetPlanNodeType() const {
@@ -37,9 +39,16 @@ class InsertNode : public AbstractPlanNode {
     return target_table_->GetName();
   }
 
+  const std::vector<storage::Tuple *>& GetTuples() const {
+    return tuples;
+  }
+
  private:
   /** @brief Target table. */
   storage::Table *target_table_;
+
+  // tuples to be inserted
+  std::vector<storage::Tuple *> tuples;
 };
 
 } // namespace planner

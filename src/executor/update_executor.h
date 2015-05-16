@@ -13,15 +13,12 @@
 namespace nstore {
 namespace executor {
 
-class InsertExecutor : public AbstractExecutor {
+class UpdateExecutor : public AbstractExecutor {
+  UpdateExecutor(const UpdateExecutor &) = delete;
+  UpdateExecutor& operator=(const UpdateExecutor &) = delete;
 
  public:
-  InsertExecutor(const InsertExecutor &) = delete;
-  InsertExecutor& operator=(const InsertExecutor &) = delete;
-  InsertExecutor(InsertExecutor &&) = delete;
-  InsertExecutor& operator=(InsertExecutor &&) = delete;
-
-  explicit InsertExecutor(planner::AbstractPlanNode *node,
+  explicit UpdateExecutor(planner::AbstractPlanNode *node,
                           Context *context);
 
  protected:

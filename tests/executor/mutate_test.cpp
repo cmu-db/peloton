@@ -13,30 +13,26 @@
 #include "gmock/gmock.h"
 
 #include "catalog/schema.h"
-#include "common/exception.h"
-#include "common/value.h"
 #include "common/value_factory.h"
 
 #include "executor/delete_executor.h"
 #include "executor/insert_executor.h"
 #include "executor/seq_scan_executor.h"
 
-#include "executor/logical_tile.h"
+#include "executor/executor_tests_util.h"
+#include "executor/mock_executor.h"
 #include "executor/logical_tile_factory.h"
+
+#include "expression/expression_util.h"
+#include "expression/abstract_expression.h"
+#include "expression/expression.h"
 
 #include "planner/delete_node.h"
 #include "planner/insert_node.h"
 #include "planner/seq_scan_node.h"
 
-#include "storage/backend_vm.h"
-#include "storage/tile.h"
 #include "storage/tile_group.h"
 
-#include "executor/executor_tests_util.h"
-#include "expression/expression_util.h"
-
-#include "executor/executor_tests_util.h"
-#include "executor/mock_executor.h"
 #include "harness.h"
 
 #include <atomic>
@@ -56,11 +52,8 @@ std::atomic<int> delete_tuple_id;
 
 void InsertTuple(storage::Table *table){
 
-  planner::InsertNode node(table);
   std::vector<storage::Tuple *> tuples;
-  const txn_id_t txn_id = 1000;
-  const cid_t commit_id = 0;
-  Context context(txn_id, commit_id);
+  Context context = GetContext();
 
   for(int tuple_itr = 0 ; tuple_itr < 10 ; tuple_itr++) {
     auto tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
@@ -68,7 +61,8 @@ void InsertTuple(storage::Table *table){
   }
 
   // Bulk insert
-  executor::InsertExecutor executor(&node, &context, tuples);
+  planner::InsertNode node(table, tuples);
+  executor::InsertExecutor executor(&node, &context);
   executor.Execute();
 
   for(auto tuple : tuples) {
@@ -76,6 +70,7 @@ void InsertTuple(storage::Table *table){
     delete tuple;
   }
 
+  context.Commit();
 }
 
 void DeleteTuple(storage::Table *table){
@@ -87,11 +82,21 @@ void DeleteTuple(storage::Table *table){
   planner::DeleteNode delete_node(table, false);
   executor::DeleteExecutor delete_executor(&delete_node, &context);
 
+  // Predicate
+
+  // WHERE ATTR_0 > 40
+  expression::TupleValueExpression *tup_val_exp =
+      new expression::TupleValueExpression(0, std::string("tablename"), std::string("colname"));
+  expression::ConstantValueExpression *const_val_exp =
+      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(40));
+  auto predicate =
+      new expression::ComparisonExpression<expression::CmpGt>(EXPRESSION_TYPE_COMPARE_EQ, tup_val_exp, const_val_exp);
+
   // Seq scan
   std::vector<id_t> column_ids = { 0 };
   planner::SeqScanNode seq_scan_node(
       table,
-      nullptr,
+      predicate,
       column_ids);
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, &context);
 
@@ -100,6 +105,8 @@ void DeleteTuple(storage::Table *table){
   delete_executor.AddChild(&seq_scan_executor);
 
   delete_executor.Execute();
+
+  context.Commit();
 }
 
 // Insert a tuple into a table
@@ -107,7 +114,6 @@ TEST(InsertTests, BasicTests) {
 
   // Create insert node for this test.
   storage::Table *table = ExecutorTestsUtil::CreateTable();
-  planner::InsertNode node(table);
 
   // Pass through insert executor.
   Context context = GetContext();
@@ -116,7 +122,8 @@ TEST(InsertTests, BasicTests) {
 
   tuple = ExecutorTestsUtil::GetNullTuple(table);
   tuples.push_back(tuple);
-  executor::InsertExecutor executor(&node, &context, tuples);
+  planner::InsertNode node(table, tuples);
+  executor::InsertExecutor executor(&node, &context);
 
   try{
     executor.Execute();
@@ -129,9 +136,12 @@ TEST(InsertTests, BasicTests) {
   delete tuple;
   tuples.clear();
 
+  context.Commit();
+
   tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
   tuples.push_back(tuple);
-  executor::InsertExecutor executor2(&node, &context, tuples);
+  planner::InsertNode node2(table, tuples);
+  executor::InsertExecutor executor2(&node2, &context);
   executor2.Execute();
 
   try{

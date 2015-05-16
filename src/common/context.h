@@ -14,6 +14,8 @@
 
 #include "common/types.h"
 
+#include <vector>
+
 namespace nstore {
 
 //===--------------------------------------------------------------------===//
@@ -25,17 +27,16 @@ namespace nstore {
  */
 class Context {
  public:
-
   Context(txn_id_t transaction_id, cid_t commit_id)
- : txn_id(transaction_id), commit_id(commit_id) {
+ : txn_id(transaction_id), local_commit_id(commit_id) {
   }
 
-  txn_id_t GetTransactionId() const{
+  inline txn_id_t GetTransactionId() const{
     return txn_id;
   }
 
-  cid_t GetCommitId() const{
-    return commit_id;
+  inline cid_t GetCommitId() const{
+    return local_commit_id;
   }
 
   void RecordInsert(const ItemPointer location){
@@ -46,22 +47,20 @@ class Context {
     deleted_slots.push_back(location);
   }
 
-  bool Commit(){
-    // TODO: Need a commit mechanism
-    return true;
-  }
+  bool Commit();
 
-  bool Abort(){
-    // TODO: Need an abort mechanism
-    return true;
-  }
+  bool Abort();
 
  private:
 
+  // transaction id
   txn_id_t txn_id;
-  cid_t commit_id;
+
+  // local commit id
+  cid_t local_commit_id;
 
   // slots mutated by the transaction
+  // TODO: (Make it thread safe ?
   std::vector<ItemPointer> inserted_slots;
   std::vector<ItemPointer> deleted_slots;
 

@@ -15,6 +15,7 @@
 #include "common/exception.h"
 #include "index/index.h"
 #include "common/logger.h"
+#include "catalog/manager.h"
 
 namespace nstore {
 namespace storage {
@@ -75,6 +76,9 @@ oid_t Table::AddDefaultTileGroup() {
     if(tile_groups.empty()) {
       LOG_TRACE("Added first tile group \n");
       tile_groups.push_back(tile_group);
+      // add tile group metadata in locator
+      catalog::Manager::GetInstance().SetLocation(tile_group_id, tile_group);
+      LOG_TRACE("Recording tile group : %d \n", tile_group_id);
       return tile_group_id;
     }
 
@@ -89,8 +93,10 @@ oid_t Table::AddDefaultTileGroup() {
     }
 
     LOG_TRACE("Added a tile group \n");
-
     tile_groups.push_back(tile_group);
+    // add tile group metadata in locator
+    catalog::Manager::GetInstance().SetLocation(tile_group_id, tile_group);
+    LOG_TRACE("Recording tile group : %d \n", tile_group_id);
   }
 
   return tile_group_id;
@@ -100,7 +106,13 @@ void Table::AddTileGroup(TileGroup *tile_group) {
 
   {
     std::lock_guard<std::mutex> lock(table_mutex);
+
     tile_groups.push_back(tile_group);
+    oid_t tile_group_id = tile_group->GetTileGroupId();
+
+    // add tile group metadata in locator
+    catalog::Manager::GetInstance().SetLocation(tile_group_id, tile_group);
+    LOG_TRACE("Recording tile group : %d \n", tile_group_id);
   }
 
 }
@@ -114,13 +126,13 @@ void Table::AddIndex(index::Index *index) {
 
 }
 
-id_t Table::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple){
+ItemPointer Table::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple){
   assert(tuple);
 
   // Not NULL checks
   if(CheckNulls(tuple) == false){
     throw ConstraintException("Not NULL constraint violated : " + tuple->GetInfo());
-    return INVALID_ID;
+    return ItemPointer();
   }
 
   // Actual insertion into last tile group
@@ -143,10 +155,10 @@ id_t Table::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple){
   if(TryInsertInIndexes(tuple, location) == false){
     tile_group->ReclaimTuple(tuple_slot);
     throw ConstraintException("Index constraint violated : " + tuple->GetInfo());
-    return INVALID_ID;
+    return location;
   }
 
-  return tuple_slot;
+  return location;
 }
 
 void Table::InsertInIndexes(const storage::Tuple *tuple, ItemPointer location) {
