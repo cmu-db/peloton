@@ -96,7 +96,7 @@ void UpdateTuple(storage::Table *table){
   expression::TupleValueExpression *tup_val_exp =
       new expression::TupleValueExpression(0, std::string("tablename"), std::string("colname"));
   expression::ConstantValueExpression *const_val_exp =
-      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(80));
+      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(10));
   auto predicate =
       new expression::ComparisonExpression<expression::CmpGt>(EXPRESSION_TYPE_COMPARE_EQ, tup_val_exp, const_val_exp);
 
@@ -180,8 +180,6 @@ TEST(InsertTests, BasicTests) {
   delete tuple;
   tuples.clear();
 
-  context.Commit();
-
   tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
   tuples.push_back(tuple);
   planner::InsertNode node2(table, tuples);
@@ -199,14 +197,16 @@ TEST(InsertTests, BasicTests) {
   delete tuple;
   tuples.clear();
 
+  context.Commit();
+
   LaunchParallelTest(1, InsertTuple, table);
   std::cout << (*table);
 
   LaunchParallelTest(1, UpdateTuple, table);
   std::cout << (*table);
 
-  //LaunchParallelTest(1, DeleteTuple, table);
-  //std::cout << (*table);
+  LaunchParallelTest(1, DeleteTuple, table);
+  std::cout << (*table);
 
   // PRIMARY KEY
   auto pkey_index = table->GetIndex(0);
