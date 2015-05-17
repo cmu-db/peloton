@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <climits>
 #include <limits>
+#include <sstream>
 
 namespace nstore {
 
@@ -369,6 +370,8 @@ struct ItemPointer {
   : block(block), offset(offset){
   }
 
+  //// Get a string representation of this item pointer
+  friend std::ostream& operator<<(std::ostream& os, const ItemPointer& location);
 };
 
 //===--------------------------------------------------------------------===//

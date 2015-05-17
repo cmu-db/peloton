@@ -55,11 +55,12 @@ bool UpdateExecutor::DExecute() {
 
   std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
 
-  storage::Tile *base_tile = source_tile->GetBaseTile(0);
-  storage::TileGroup *base_tile_group = base_tile->GetTileGroup();
+  storage::Tile *tile = source_tile->GetBaseTile(0);
+  storage::TileGroup *tile_group = tile->GetTileGroup();
 
-  auto tile_group_id = base_tile_group->GetTileGroupId();
+  auto tile_group_id = tile_group->GetTileGroupId();
   auto txn_id = context_->GetTransactionId();
+  auto& manager = catalog::Manager::GetInstance();
 
   const planner::UpdateNode &node = GetNode<planner::UpdateNode>();
   storage::Table *target_table = node.GetTable();
@@ -69,17 +70,17 @@ bool UpdateExecutor::DExecute() {
   // Update tuples in given table
   for (id_t tuple_id : *source_tile) {
 
-    // try to delete the tuple first
+    // (A) try to delete the tuple first
     // this might fail due to a concurrent operation that has latched the tuple
-    bool status = base_tile_group->DeleteTuple(txn_id, tuple_id);
+    bool status = tile_group->DeleteTuple(txn_id, tuple_id);
     if(status == false) {
       context_->Abort();
       return false;
     }
     context_->RecordDelete(ItemPointer(tile_group_id, tuple_id));
 
-    // now, make a copy of the original tuple
-    storage::Tuple *tuple = base_tile_group->SelectTuple(tuple_id);
+    // (B) now, make a copy of the original tuple
+    storage::Tuple *tuple = tile_group->SelectTuple(tuple_id);
 
     // and update the relevant values
     id_t col_itr = 0;
@@ -96,6 +97,11 @@ bool UpdateExecutor::DExecute() {
       return false;
     }
     context_->RecordInsert(location);
+
+    // (C) set back pointer in tile group header of updated tuple
+    storage::TileGroup *updated_tile_group = static_cast<storage::TileGroup*>(manager.GetLocation(location.block));
+    auto updated_tile_group_header = updated_tile_group->GetHeader();
+    updated_tile_group_header->SetPrevItemPointer(location.offset, ItemPointer(tile_group_id, tuple_id));
   }
 
   SetOutput(source_tile.release());
