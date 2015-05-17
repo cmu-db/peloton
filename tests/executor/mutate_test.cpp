@@ -84,7 +84,7 @@ void UpdateTuple(storage::Table *table){
 
   std::vector<id_t> update_column_ids = { 1 };
   std::vector<Value> values;
-  Value update_val = ValueFactory::GetDoubleValue(23.45);
+  Value update_val = ValueFactory::GetDoubleValue(23.5);
   values.push_back(update_val);
 
   planner::UpdateNode update_node(table, update_column_ids, values);
@@ -96,7 +96,7 @@ void UpdateTuple(storage::Table *table){
   expression::TupleValueExpression *tup_val_exp =
       new expression::TupleValueExpression(0, std::string("tablename"), std::string("colname"));
   expression::ConstantValueExpression *const_val_exp =
-      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(40));
+      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(80));
   auto predicate =
       new expression::ComparisonExpression<expression::CmpGt>(EXPRESSION_TYPE_COMPARE_EQ, tup_val_exp, const_val_exp);
 
