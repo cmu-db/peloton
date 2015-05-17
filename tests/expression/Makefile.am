@@ -13,6 +13,7 @@ expression_test_LDADD = \
 						$(obj_DIR)/common/types.o \
 						$(obj_DIR)/common/value.o \
 						$(obj_DIR)/common/varlen.o \
+          				$(obj_DIR)/common/pool.o \
 						$(obj_DIR)/storage/tuple.o \
 						$(obj_DIR)/expression/abstract_expression.o \
 						$(obj_DIR)/expression/expression_util.o

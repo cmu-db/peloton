@@ -12,6 +12,7 @@ parser_test_LDADD = \
 					$(obj_DIR)/common/types.o \
 					$(obj_DIR)/common/value.o \
 					$(obj_DIR)/common/varlen.o \
+  				    $(obj_DIR)/common/pool.o \
 					$(obj_DIR)/parser/parser.o \
 					$(obj_DIR)/parser_bison.o \
 					$(obj_DIR)/parser_flex.o \
