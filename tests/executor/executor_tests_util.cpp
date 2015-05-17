@@ -153,8 +153,8 @@ void ExecutorTestsUtil::PopulateTiles(
 
   // Insert tuples into tile_group.
   const bool allocate = true;
-  const txn_id_t txn_id = GetTransactionId();
-  const cid_t commit_id = GetCommitId();
+  const txn_id_t txn_id = GetNextTransactionId();
+  const cid_t commit_id = GetNextCommitId();
 
   for (int i = 0; i < num_rows; i++) {
     storage::Tuple tuple(schema.get(), allocate);

@@ -55,7 +55,7 @@ std::atomic<int> delete_tuple_id;
 void InsertTuple(storage::Table *table){
 
   std::vector<storage::Tuple *> tuples;
-  Context context = GetContext();
+  Context context = GetNextContext();
 
   for(int tuple_itr = 0 ; tuple_itr < 10 ; tuple_itr++) {
     auto tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
@@ -77,7 +77,7 @@ void InsertTuple(storage::Table *table){
 
 void UpdateTuple(storage::Table *table){
 
-  Context context = GetContext();
+  Context context = GetNextContext();
   std::vector<storage::Tuple *> tuples;
 
   // Update
@@ -119,7 +119,7 @@ void UpdateTuple(storage::Table *table){
 
 void DeleteTuple(storage::Table *table){
 
-  Context context = GetContext();
+  Context context = GetNextContext();
   std::vector<storage::Tuple *> tuples;
 
   // Delete
@@ -160,7 +160,7 @@ TEST(InsertTests, BasicTests) {
   storage::Table *table = ExecutorTestsUtil::CreateTable();
 
   // Pass through insert executor.
-  Context context = GetContext();
+  Context context = GetNextContext();
   storage::Tuple *tuple;
   std::vector<storage::Tuple *> tuples;
 

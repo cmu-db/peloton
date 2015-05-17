@@ -57,8 +57,7 @@ class TileGroup {
 
     // clean up tiles
     auto& manager = catalog::Manager::GetInstance();
-    for(auto tile_id : tiles){
-      Tile *tile = static_cast<Tile *>(manager.GetLocation(tile_id));
+    for(auto tile : tiles){
       delete tile;
     }
 
@@ -128,7 +127,8 @@ class TileGroup {
   Tile *GetTile(const id_t tile_itr) const;
 
   id_t GetTileId(const id_t tile_id) const {
-    return tiles[tile_id];
+    assert(tiles[tile_id]);
+    return tiles[tile_id]->GetTileId();
   }
 
   Pool *GetTilePool(const id_t tile_id) const {
@@ -186,7 +186,7 @@ class TileGroup {
   std::vector<catalog::Schema> tile_schemas;
 
   // set of tiles
-  std::vector<id_t> tiles;
+  std::vector<Tile*> tiles;
 
   // associated tile group
   TileGroupHeader* tile_group_header;

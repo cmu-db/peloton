@@ -358,16 +358,35 @@ static const cid_t MAX_CID = std::numeric_limits<cid_t>::max();
 // ItemPointer
 //===--------------------------------------------------------------------===//
 
+// logical physical location
 struct ItemPointer {
+
+  // block
   oid_t block;
+
+  // 0-based offset within block
   oid_t offset;
 
+  // OPTIMIZATION
+  // raw physical location
+  void *location;
+
   ItemPointer()
-  : block(INVALID_OID), offset(INVALID_OID) {
+  : block(INVALID_OID),
+    offset(INVALID_OID),
+    location(nullptr){
   }
 
   ItemPointer(oid_t block, oid_t offset)
-  : block(block), offset(offset){
+  : block(block),
+    offset(offset),
+    location(nullptr){
+  }
+
+  ItemPointer(oid_t block, oid_t offset, void *location)
+  : block(block),
+    offset(offset),
+    location(location){
   }
 
   //// Get a string representation of this item pointer

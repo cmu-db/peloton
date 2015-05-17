@@ -58,7 +58,7 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   tuple2.SetValue(
       3, ValueFactory::GetStringValue("tuple 2", tile_group->GetTilePool(1)));
 
-  txn_id_t txn_id = GetTransactionId();
+  txn_id_t txn_id = GetNextTransactionId();
 
   tile_group->InsertTuple(txn_id, &tuple1);
   tile_group->InsertTuple(txn_id, &tuple2);

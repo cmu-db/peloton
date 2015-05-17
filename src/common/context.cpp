@@ -21,7 +21,7 @@ bool Context::Commit(){
 
   // inserted slots
   for(auto slot : inserted_slots){
-    storage::TileGroup *tile_group = static_cast<storage::TileGroup *>(manager.GetLocation(slot.block));
+    storage::TileGroup *tile_group = static_cast<storage::TileGroup *>(slot.location);
     assert(tile_group);
 
     bool status = tile_group->CommitInsertedTuple(slot.offset, local_commit_id);
@@ -31,7 +31,7 @@ bool Context::Commit(){
 
   // deleted slots
   for(auto slot : deleted_slots){
-    storage::TileGroup *tile_group = static_cast<storage::TileGroup *>(manager.GetLocation(slot.block));
+    storage::TileGroup *tile_group = static_cast<storage::TileGroup *>(slot.location);
     assert(tile_group);
 
     bool status = tile_group->CommitDeletedTuple(slot.offset, txn_id, local_commit_id);
@@ -48,7 +48,7 @@ bool Context::Abort(){
 
   // inserted slots
   for(auto slot : inserted_slots){
-    storage::TileGroup *tile_group = static_cast<storage::TileGroup *>(manager.GetLocation(slot.block));
+    storage::TileGroup *tile_group = static_cast<storage::TileGroup *>(slot.location);
     assert(tile_group);
 
     bool status = tile_group->AbortInsertedTuple(slot.offset);
@@ -58,7 +58,7 @@ bool Context::Abort(){
 
   // deleted slots
   for(auto slot : deleted_slots){
-    storage::TileGroup *tile_group = static_cast<storage::TileGroup *>(manager.GetLocation(slot.block));
+    storage::TileGroup *tile_group = static_cast<storage::TileGroup *>(slot.location);
     assert(tile_group);
 
     bool status = tile_group->AbortDeletedTuple(slot.offset);

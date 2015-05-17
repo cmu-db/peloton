@@ -40,7 +40,8 @@ TileGroup::TileGroup(TileGroupHeader* tile_group_header,
 
   for(id_t tile_itr = 0 ; tile_itr < tile_count ; tile_itr++){
 
-    oid_t tile_id = catalog::Manager::GetInstance().GetNextOid();
+    auto& manager = catalog::Manager::GetInstance();
+    oid_t tile_id = manager.GetNextOid();
 
     Tile *tile = storage::TileFactory::GetTile(
         database_id, table_id, tile_group_id, tile_id,
@@ -50,10 +51,7 @@ TileGroup::TileGroup(TileGroupHeader* tile_group_header,
         this,
         tuple_count);
 
-    // add tile metadata in locator
-    catalog::Manager::GetInstance().SetLocation(tile_id, tile);
-
-    tiles.push_back(tile_id);
+    tiles.push_back(tile);
   }
 
 }
@@ -238,8 +236,7 @@ Value TileGroup::GetValue(id_t tuple_id, id_t column_id) {
 
 Tile *TileGroup::GetTile(const id_t tile_offset) const {
   assert(tile_offset < tile_count);
-  auto& manager = catalog::Manager::GetInstance();
-  Tile *tile = static_cast<Tile *>(manager.GetLocation(tiles[tile_offset]));
+  Tile *tile = tiles[tile_offset];
   return tile;
 }
 
