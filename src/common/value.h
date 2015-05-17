@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <string>
 #include <algorithm>
+#include <iostream>
 
 #include "ttmath/ttmathint.h"
 #include "boost/scoped_ptr.hpp"
@@ -384,13 +385,15 @@ private:
 	 * calling correctness.
 	 */
 	int32_t GetObjectLength() const {
-		if (IsNull()) {
+
+	  if (IsNull()) {
 			// Conceptually, I think a NULL object should just have
 			// length 0. In practice, this code path is often a defect
 			// in code not correctly handling null. May favor a more
 			// defensive "return 0" in the future? (rtb)
 			throw Exception("Must not ask  for object length on sql null object.");
 		}
+
 		if ((GetValueType() != VALUE_TYPE_VARCHAR) && (GetValueType() != VALUE_TYPE_VARBINARY)) {
 			// probably want GetTupleStorageSize() for non-object types.
 			// at the moment, only varchars are using GetObjectLength().
@@ -2148,8 +2151,8 @@ inline void Value::SerializeWithAllocation(void *storage, const bool is_inlined,
 				*reinterpret_cast<void**>(storage) = NULL;
 			}
 			else {
-				length = GetObjectLength();
-				const int8_t lengthLength = GetObjectLengthLength();
+			  length = GetObjectLength();
+			  const int8_t lengthLength = GetObjectLengthLength();
 				const int32_t minlength = lengthLength + length;
 				if (length > max_length) {
 					char msg[1024];
@@ -2157,6 +2160,7 @@ inline void Value::SerializeWithAllocation(void *storage, const bool is_inlined,
 							" and max is %d", length, max_length);
 					throw ObjectSizeException(msg);
 				}
+
 				Varlen* sref = Varlen::Create(minlength, data_pool);
 				char *copy = sref->Get();
 				SetObjectLengthToLocation(length, copy);
