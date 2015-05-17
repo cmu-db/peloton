@@ -44,7 +44,6 @@ void Tuple::SetValue(const id_t column_id, Value value) {
 
   const ValueType type = tuple_schema->GetType(column_id);
   value = value.CastAs(type);
-  std::cout << "CASTED VALUE :: " << value << "\n";
 
   const bool is_inlined = tuple_schema->IsInlined(column_id);
   char *dataPtr = GetDataPtr(column_id);
@@ -64,7 +63,6 @@ void Tuple::SetValueAllocate(const id_t column_id,
 
   const ValueType type = tuple_schema->GetType(column_id);
   value = value.CastAs(type);
-  std::cout << "CASTED VALUE :: " << value << "\n";
 
   const bool is_inlined = tuple_schema->IsInlined(column_id);
   char *dataPtr = GetDataPtr(column_id);

@@ -19,6 +19,8 @@
 #include <climits>
 #include <string.h>
 
+#include <mutex>
+
 #include "storage/backend.h"
 
 namespace nstore {
@@ -105,96 +107,14 @@ public:
 	}
 
 	/// Allocate a continous block of memory of the specified size.
-	inline void* Allocate(std::size_t size) {
-
-		/// See if there is space in the current chunk
-		Chunk *current_chunk = &chunks[current_chunk_index];
-		if (size > current_chunk->size - current_chunk->offset) {
-
-			/// Not enough space. Check if it is greater than our allocation size.
-			if (size > allocation_size) {
-
-				/// Allocate an oversize chunk that will not be reused.
-				char *storage = (char *) backend->Allocate(size);
-				oversize_chunks.push_back(Chunk(nexthigher(size), storage));
-				Chunk &newChunk = oversize_chunks.back();
-				newChunk.offset = size;
-				return newChunk.chunk_data;
-			}
-
-			/// Check if there is an already allocated chunk we can use.
-			current_chunk_index++;
-
-			if (current_chunk_index < chunks.size()) {
-				current_chunk = &chunks[current_chunk_index];
-				current_chunk->offset = size;
-				return current_chunk->chunk_data;
-			}
-			else {
-				/// Need to allocate a new chunk
-				char *storage = (char *) backend->Allocate(allocation_size);
-				chunks.push_back(Chunk(allocation_size, storage));
-				Chunk &new_chunk = chunks.back();
-				new_chunk.offset = size;
-				return new_chunk.chunk_data;
-			}
-		}
-
-		/// Get the offset into the current chunk. Then increment the
-		/// offset counter by the amount being allocated.
-		void *retval = current_chunk->chunk_data + current_chunk->offset;
-		current_chunk->offset += size;
-
-		///	Ensure 8 byte alignment of future allocations
-		current_chunk->offset += (8 - (current_chunk->offset % 8));
-		if (current_chunk->offset > current_chunk->size) {
-			current_chunk->offset = current_chunk->size;
-		}
-
-		return retval;
-	}
+	void* Allocate(std::size_t size);
 
 	/// Allocate a continous block of memory of the specified size conveniently initialized to 0s
-	inline void* AllocateZeroes(std::size_t size) {
-		return ::memset(Allocate(size), 0, size);
-	}
+	void* AllocateZeroes(std::size_t size);
 
-	inline void Purge() {
-		/// Erase any oversize chunks that were allocated
-		const std::size_t numOversizeChunks = oversize_chunks.size();
-		for (std::size_t ii = 0; ii < numOversizeChunks; ii++) {
-			backend->Free(oversize_chunks[ii].chunk_data);
-		}
-		oversize_chunks.clear();
+	void Purge();
 
-		/// Set the current chunk to the first in the list
-		current_chunk_index = 0;
-		std::size_t num_chunks = chunks.size();
-
-		/// If more then maxChunkCount chunks are allocated erase all extra chunks
-		if (num_chunks > max_chunk_count) {
-			for (std::size_t ii = max_chunk_count; ii < num_chunks; ii++) {
-				backend->Free(chunks[ii].chunk_data);
-			}
-			chunks.resize(max_chunk_count);
-		}
-
-		num_chunks = chunks.size();
-		for (std::size_t ii = 0; ii < num_chunks; ii++) {
-			chunks[ii].offset = 0;
-		}
-	}
-
-	int64_t GetAllocatedMemory()
-	{
-		int64_t total = 0;
-		total += chunks.size() * allocation_size;
-		for (uint32_t i = 0; i < oversize_chunks.size(); i++)
-		{
-			total += oversize_chunks[i].getSize();
-		}
-		return total;
-	}
+	int64_t GetAllocatedMemory();
 
 private:
 
@@ -208,6 +128,8 @@ private:
 
 	/// Oversize chunks that will be freed and not reused.
 	std::vector<Chunk> oversize_chunks;
+
+	std::mutex pool_mutex;
 };
 
 } // End nstore namespace
