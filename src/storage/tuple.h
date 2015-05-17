@@ -101,10 +101,20 @@ public:
 
 	// Get the value of a specified column (const)
 	// (expensive) checks the schema to see how to return the Value.
-	inline const Value GetValue(const id_t column_id) const;
+	const Value GetValue(const id_t column_id) const;
 
 	// Set appropriate column in tuple
 	void SetValue(const id_t column_id, Value value);
+
+  /**
+   * Allocate space to copy strings that can't be inlined rather
+   * than copying the pointer.
+   *
+   * Used when setting a NValue that will go into permanent storage in a persistent table.
+   * It is also possible to provide NULL for stringPool in which case
+   * the strings will be allocated on the heap.
+   */
+  void SetValueAllocate(const id_t column_id, Value value, Pool *dataPool);
 
 	inline int GetLength() const {
 		return tuple_schema->GetLength();
@@ -160,16 +170,6 @@ public:
 
 	// Return the amount of memory allocated for non-inlined objects
 	size_t GetUninlinedMemorySize() const;
-
-	/**
-	 * Allocate space to copy strings that can't be inlined rather
-	 * than copying the pointer.
-	 *
-	 * Used when setting a NValue that will go into permanent storage in a persistent table.
-	 * It is also possible to provide NULL for stringPool in which case
-	 * the strings will be allocated on the heap.
-	 */
-	void SetValueAllocate(const id_t column_id, Value value, Pool *dataPool);
 
 	//===--------------------------------------------------------------------===//
 	// Serialization utilities
@@ -228,38 +228,6 @@ inline Tuple& Tuple::operator=(const Tuple &rhs) {
 	tuple_schema = rhs.tuple_schema;
 	tuple_data = rhs.tuple_data;
 	return *this;
-}
-
-// Get the value of a specified column (const)
-// (expensive) checks the schema to see how to return the Value.
-inline const Value Tuple::GetValue(const id_t column_id) const {
-	assert(tuple_schema);
-	assert(tuple_data);
-
-	const ValueType column_type = tuple_schema->GetType(column_id);
-
-	const char* data_ptr = GetDataPtr(column_id);
-	const bool is_inlined = tuple_schema->IsInlined(column_id);
-
-	return Value::Deserialize(data_ptr, column_type, is_inlined);
-}
-
-// Set scalars by value and uninlined columns by reference into this tuple.
-inline void Tuple::SetValue(const id_t column_id, Value value) {
-	assert(tuple_schema);
-	assert(tuple_data);
-
-	const ValueType type = tuple_schema->GetType(column_id);
-	value = value.CastAs(type);
-
-	const bool is_inlined = tuple_schema->IsInlined(column_id);
-	char *dataPtr = GetDataPtr(column_id);
-	int32_t column_length = tuple_schema->GetLength(column_id);
-
-	if(is_inlined == false)
-		column_length = tuple_schema->GetVariableLength(column_id);
-
-	value.Serialize(dataPtr, is_inlined, column_length);
 }
 
 } // End storage namespace

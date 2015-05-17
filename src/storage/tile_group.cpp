@@ -93,7 +93,7 @@ id_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
     storage::Tuple tile_tuple(&schema, tile_tuple_location);
 
     for(id_t tile_column_itr = 0 ; tile_column_itr < tile_column_count ; tile_column_itr++){
-      tile_tuple.SetValue(tile_column_itr, tuple->GetValue(column_itr));
+      tile_tuple.SetValueAllocate(tile_column_itr, tuple->GetValue(column_itr), tile->GetPool());
       column_itr++;
     }
   }
@@ -134,7 +134,7 @@ Tuple *TileGroup::SelectTuple(id_t tuple_slot_id){
     return nullptr;
 
   // allocate a new copy of the original tuple
-  Tuple *tuple = new Tuple(table->GetSchema());
+  Tuple *tuple = new Tuple(table->GetSchema(), true);
   id_t tuple_attr_itr = 0;
 
   for(id_t tile_itr = 0 ; tile_itr < tile_count ; tile_itr++){
@@ -145,8 +145,10 @@ Tuple *TileGroup::SelectTuple(id_t tuple_slot_id){
     Tuple tile_tuple(tile->GetSchema(), tile->GetTupleLocation(tuple_slot_id));
     id_t tile_tuple_count = tile->GetColumnCount();
 
-    for(id_t tile_tuple_attr_itr = 0 ; tile_tuple_attr_itr < tile_tuple_count ; tile_tuple_attr_itr++)
-      tuple->SetValue(tuple_attr_itr++, tile_tuple.GetValue(tile_tuple_attr_itr));
+    for(id_t tile_tuple_attr_itr = 0 ; tile_tuple_attr_itr < tile_tuple_count ; tile_tuple_attr_itr++) {
+      Value val = tile_tuple.GetValue(tile_tuple_attr_itr);
+      tuple->SetValueAllocate(tuple_attr_itr++, val, nullptr);
+    }
   }
 
   return tuple;

@@ -18,9 +18,43 @@
 
 #include "storage/tuple.h"
 #include "common/exception.h"
+#include "common/logger.h"
 
 namespace nstore {
 namespace storage {
+
+// Get the value of a specified column (const)
+// (expensive) checks the schema to see how to return the Value.
+const Value Tuple::GetValue(const id_t column_id) const {
+  assert(tuple_schema);
+  assert(tuple_data);
+
+  const ValueType column_type = tuple_schema->GetType(column_id);
+
+  const char* data_ptr = GetDataPtr(column_id);
+  const bool is_inlined = tuple_schema->IsInlined(column_id);
+
+  return Value::Deserialize(data_ptr, column_type, is_inlined);
+}
+
+// Set scalars by value and uninlined columns by reference into this tuple.
+void Tuple::SetValue(const id_t column_id, Value value) {
+  assert(tuple_schema);
+  assert(tuple_data);
+
+  const ValueType type = tuple_schema->GetType(column_id);
+  value = value.CastAs(type);
+  std::cout << "CASTED VALUE :: " << value << "\n";
+
+  const bool is_inlined = tuple_schema->IsInlined(column_id);
+  char *dataPtr = GetDataPtr(column_id);
+  int32_t column_length = tuple_schema->GetLength(column_id);
+
+  if(is_inlined == false)
+    column_length = tuple_schema->GetVariableLength(column_id);
+
+  value.Serialize(dataPtr, is_inlined, column_length);
+}
 
 // Set all columns by value into this tuple.
 void Tuple::SetValueAllocate(const id_t column_id,
@@ -30,6 +64,7 @@ void Tuple::SetValueAllocate(const id_t column_id,
 
   const ValueType type = tuple_schema->GetType(column_id);
   value = value.CastAs(type);
+  std::cout << "CASTED VALUE :: " << value << "\n";
 
   const bool is_inlined = tuple_schema->IsInlined(column_id);
   char *dataPtr = GetDataPtr(column_id);
