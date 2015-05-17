@@ -61,9 +61,9 @@ bool DeleteExecutor::DExecute() {
   }
   std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
 
-  storage::Tile *base_tile = source_tile->GetBaseTile(0);
-  storage::TileGroup *base_tile_group = base_tile->GetTileGroup();
-  auto tile_group_id = base_tile_group->GetTileGroupId();
+  storage::Tile *tile = source_tile->GetBaseTile(0);
+  storage::TileGroup *tile_group = tile->GetTileGroup();
+  auto tile_group_id = tile_group->GetTileGroupId();
   auto txn_id = context_->GetTransactionId();
 
   LOG_TRACE("Source tile : %p Tuples : %lu \n", source_tile.get(), source_tile->NumTuples());
@@ -74,12 +74,12 @@ bool DeleteExecutor::DExecute() {
 
     // try to delete the tuple
     // this might fail due to a concurrent operation that has latched the tuple
-    bool status = base_tile_group->DeleteTuple(txn_id, tuple_id);
+    bool status = tile_group->DeleteTuple(txn_id, tuple_id);
     if(status == false) {
       context_->Abort();
       return false;
     }
-    context_->RecordDelete(ItemPointer(tile_group_id, tuple_id));
+    context_->RecordDelete(ItemPointer(tile_group_id, tuple_id, tile_group));
   }
 
   return true;

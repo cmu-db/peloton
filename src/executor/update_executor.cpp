@@ -77,7 +77,7 @@ bool UpdateExecutor::DExecute() {
       context_->Abort();
       return false;
     }
-    context_->RecordDelete(ItemPointer(tile_group_id, tuple_id));
+    context_->RecordDelete(ItemPointer(tile_group_id, tuple_id, tile_group));
 
     // (B) now, make a copy of the original tuple
     storage::Tuple *tuple = tile_group->SelectTuple(tuple_id);
@@ -99,7 +99,7 @@ bool UpdateExecutor::DExecute() {
     context_->RecordInsert(location);
 
     // (C) set back pointer in tile group header of updated tuple
-    storage::TileGroup *updated_tile_group = static_cast<storage::TileGroup*>(manager.GetLocation(location.block));
+    auto updated_tile_group = static_cast<storage::TileGroup*>(location.location);
     auto updated_tile_group_header = updated_tile_group->GetHeader();
     updated_tile_group_header->SetPrevItemPointer(location.offset, ItemPointer(tile_group_id, tuple_id));
   }

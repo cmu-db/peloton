@@ -17,6 +17,8 @@
 #include "common/logger.h"
 #include "catalog/manager.h"
 
+#include <mutex>
+
 namespace nstore {
 namespace storage {
 
@@ -42,8 +44,11 @@ Table::~Table() {
   }
 
   // clean up tile groups
-  for(auto tile_group : tile_groups)
+  id_t tile_group_count = GetTileGroupCount();
+  for(id_t tile_group_itr = 0 ; tile_group_itr < tile_group_count; tile_group_itr++){
+    auto tile_group = GetTileGroup(tile_group_itr);
     delete tile_group;
+  }
 
   // table owns its backend
   delete backend;
@@ -72,18 +77,20 @@ oid_t Table::AddDefaultTileGroup() {
 
     // Check if we actually need to allocate a tile group
 
-    // A) no tile groups in table
+    // (A) no tile groups in table
     if(tile_groups.empty()) {
       LOG_TRACE("Added first tile group \n");
-      tile_groups.push_back(tile_group);
+      tile_groups.push_back(tile_group->GetTileGroupId());
       // add tile group metadata in locator
       catalog::Manager::GetInstance().SetLocation(tile_group_id, tile_group);
       LOG_TRACE("Recording tile group : %d \n", tile_group_id);
       return tile_group_id;
     }
 
-    // A) no slots in last tile group in table
-    auto last_tile_group = tile_groups.back();
+    // (B) no slots in last tile group in table
+    auto last_tile_group_offset = GetTileGroupCount();
+    auto last_tile_group = GetTileGroup(last_tile_group_offset);
+
     id_t active_tuple_count = last_tile_group->GetNextTupleSlot();
     id_t allocated_tuple_count = last_tile_group->GetAllocatedTupleCount();
     if( active_tuple_count < allocated_tuple_count) {
@@ -93,7 +100,7 @@ oid_t Table::AddDefaultTileGroup() {
     }
 
     LOG_TRACE("Added a tile group \n");
-    tile_groups.push_back(tile_group);
+    tile_groups.push_back(tile_group->GetTileGroupId());
     // add tile group metadata in locator
     catalog::Manager::GetInstance().SetLocation(tile_group_id, tile_group);
     LOG_TRACE("Recording tile group : %d \n", tile_group_id);
@@ -107,7 +114,7 @@ void Table::AddTileGroup(TileGroup *tile_group) {
   {
     std::lock_guard<std::mutex> lock(table_mutex);
 
-    tile_groups.push_back(tile_group);
+    tile_groups.push_back(tile_group->GetTileGroupId());
     oid_t tile_group_id = tile_group->GetTileGroupId();
 
     // add tile group metadata in locator
@@ -126,32 +133,53 @@ void Table::AddIndex(index::Index *index) {
 
 }
 
+size_t Table::GetTileGroupCount() const{
+  {
+    size_t size = tile_groups.size();
+    return size;
+  }
+}
+
+TileGroup *Table::GetTileGroup(id_t tile_group_id) const{
+  assert(tile_group_id < GetTileGroupCount());
+
+  auto& manager = catalog::Manager::GetInstance();
+  storage::TileGroup *tile_group = static_cast<storage::TileGroup *>(manager.GetLocation(tile_groups[tile_group_id]));
+  assert(tile_group);
+
+  return tile_group;
+}
+
 ItemPointer Table::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple, bool update){
   assert(tuple);
 
-  // Not NULL checks
+  // (A) Not NULL checks
   if(CheckNulls(tuple) == false){
     throw ConstraintException("Not NULL constraint violated : " + tuple->GetInfo());
     return ItemPointer();
   }
 
-  // Actual insertion into last tile group
   TileGroup *tile_group = nullptr;
   id_t tuple_slot = INVALID_ID;
+  oid_t tile_group_offset = INVALID_OID;
 
   while(tuple_slot == INVALID_ID){
+
+    // (B) Figure out last tile group
     {
       std::lock_guard<std::mutex> lock(table_mutex);
-      tile_group = tile_groups.back();
+      tile_group_offset = GetTileGroupCount()-1;
     }
 
+    // (C) Try to insert
+    tile_group = GetTileGroup(tile_group_offset);
     tuple_slot = tile_group->InsertTuple(transaction_id, tuple);
     if(tuple_slot == INVALID_ID)
       AddDefaultTileGroup();
   }
 
-  // Index checks
-  ItemPointer location = ItemPointer(tile_group->GetTileGroupId(), tuple_slot);
+  // (D) Index checks and updates
+  ItemPointer location = ItemPointer(tile_group->GetTileGroupId(), tuple_slot, tile_group);
   if(update == false){
     if(TryInsertInIndexes(tuple, location) == false){
       tile_group->ReclaimTuple(tuple_slot);

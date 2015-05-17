@@ -33,6 +33,7 @@ namespace test {
 
 extern std::atomic<txn_id_t> txn_id_counter;
 extern std::atomic<cid_t> cid_counter;
+extern std::atomic<oid_t> tile_group_id_counter;
 
 uint64_t GetThreadId();
 
@@ -51,17 +52,21 @@ void LaunchParallelTest(uint64_t num_threads, Args&&... args) {
   }
 }
 
-inline txn_id_t GetTransactionId() {
+inline txn_id_t GetNextTransactionId() {
   return ++txn_id_counter;
 }
 
-inline cid_t GetCommitId() {
+inline cid_t GetNextCommitId() {
   return ++cid_counter;
 }
 
-inline Context GetContext(){
-  const txn_id_t txn_id = GetTransactionId();
-  const cid_t commit_id = GetCommitId();
+inline oid_t GetNextTileGroupId(){
+  return ++tile_group_id_counter;
+}
+
+inline Context GetNextContext(){
+  const txn_id_t txn_id = GetNextTransactionId();
+  const cid_t commit_id = GetNextCommitId();
   Context context(txn_id, commit_id);
   return context;
 }

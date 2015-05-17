@@ -62,11 +62,13 @@ storage::Table *CreateTable() {
     catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(2), ExecutorTestsUtil::GetColumnInfo(3) })
   });
 
+  GetNextTileGroupId();
+
   // Create tile groups.
   table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
       INVALID_OID,
       INVALID_OID,
-      INVALID_OID,
+      GetNextTileGroupId(),
       table.get(),
       table->GetBackend(),
       schemas1,
@@ -75,7 +77,7 @@ storage::Table *CreateTable() {
   table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
       INVALID_OID,
       INVALID_OID,
-      INVALID_OID,
+      GetNextTileGroupId(),
       table.get(),
       table->GetBackend(),
       schemas2,
@@ -232,7 +234,7 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
       CreatePredicate(g_tuple_ids),
       column_ids);
 
-  Context context = GetContext();
+  Context context = GetNextContext();
   executor::SeqScanExecutor executor(&node, &context);
   RunTest(executor, table->GetTileGroupCount(), column_ids.size());
 }
@@ -252,7 +254,7 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
       column_ids);
 
   // Set up executor and its child.
-  Context context = GetContext();
+  Context context = GetNextContext();
   executor::SeqScanExecutor executor(&node, &context);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);

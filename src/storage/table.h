@@ -77,14 +77,11 @@ class Table {
   // add an index to the table
   void AddIndex(index::Index *index);
 
-  TileGroup *GetTileGroup(id_t tile_group_id) const {
-    assert(tile_group_id < tile_groups.size());
-    return tile_groups[tile_group_id];
-  }
+  // NOTE: This must go through the manager's locator
+  // This allows us to "TRANSFORM" tile groups atomically
+  TileGroup *GetTileGroup(id_t tile_group_id) const;
 
-  unsigned int GetTileGroupCount() const {
-    return tile_groups.size();
-  }
+  size_t GetTileGroupCount() const;
 
   // insert tuple in table
   ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple, bool update = false);
@@ -136,7 +133,7 @@ class Table {
   std::string table_name;
 
   // set of tile groups
-  std::vector<TileGroup*> tile_groups;
+  std::vector<oid_t> tile_groups;
 
   // INDEXES
   std::vector<index::Index*> indexes;
