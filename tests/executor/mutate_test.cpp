@@ -202,8 +202,8 @@ TEST(InsertTests, BasicTests) {
   LaunchParallelTest(1, InsertTuple, table);
   std::cout << (*table);
 
-  //LaunchParallelTest(1, UpdateTuple, table);
-  //std::cout << (*table);
+  LaunchParallelTest(1, UpdateTuple, table);
+  std::cout << (*table);
 
   //LaunchParallelTest(1, DeleteTuple, table);
   //std::cout << (*table);
