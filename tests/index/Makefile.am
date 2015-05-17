@@ -13,6 +13,7 @@ index_test_LDADD = \
 				   $(obj_DIR)/common/types.o \
 				   $(obj_DIR)/common/value.o \
 				   $(obj_DIR)/common/varlen.o \
+				   $(obj_DIR)/common/pool.o \
 				   $(obj_DIR)/storage/tuple.o \
 				   $(obj_DIR)/index/index.o \
 				   $(obj_DIR)/index/index_factory.o \

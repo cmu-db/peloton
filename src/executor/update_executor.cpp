@@ -79,12 +79,14 @@ bool UpdateExecutor::DExecute() {
     context_->RecordDelete(ItemPointer(tile_group_id, tuple_id));
 
     // now, make a copy of the original tuple
-    storage::Tuple * tuple = base_tile_group->SelectTuple(tuple_id);
+    storage::Tuple *tuple = base_tile_group->SelectTuple(tuple_id);
 
     // and update the relevant values
     id_t col_itr = 0;
-    for(auto col : updated_cols)
-      tuple->SetValue(col, updated_col_vals[++col_itr]);
+    for(auto col : updated_cols){
+      Value val = updated_col_vals[col_itr++];
+      tuple->SetValue(col, val);
+    }
 
     // and finally insert into the table in update mode
     bool update_mode = true;
