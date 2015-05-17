@@ -87,7 +87,7 @@ TEST(TileGroupTests, BasicTest) {
 
 	// TRANSACTION
 
-	txn_id_t txn_id = GetTransactionId();
+	txn_id_t txn_id = GetNextTransactionId();
 
 	EXPECT_EQ(0, tile_group->GetActiveTupleCount());
 
@@ -123,7 +123,7 @@ void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema){
 	uint64_t thread_id = GetThreadId();
 
 	storage::Tuple *tuple = new storage::Tuple(schema, true);
-	txn_id_t txn_id = GetTransactionId();
+	txn_id_t txn_id = GetNextTransactionId();
 
 	tuple->SetValue(0, ValueFactory::GetIntegerValue(1));
 	tuple->SetValue(1, ValueFactory::GetIntegerValue(1));
@@ -247,9 +247,9 @@ TEST(TileGroupTests, MVCCInsert) {
 
 	id_t tuple_slot_id = INVALID_ID;
 
-	txn_id_t txn_id1 = GetTransactionId();
-	cid_t cid1 = GetCommitId();
-	cid_t cid2 = GetCommitId();
+	txn_id_t txn_id1 = GetNextTransactionId();
+	cid_t cid1 = GetNextCommitId();
+	cid_t cid2 = GetNextCommitId();
 
 	tuple->SetValue(2, ValueFactory::GetIntegerValue(0));
 	tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple);
