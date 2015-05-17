@@ -102,6 +102,7 @@ id_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
   tile_group_header->SetTransactionId(tuple_slot_id, transaction_id);
   tile_group_header->SetBeginCommitId(tuple_slot_id, MAX_CID);
   tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
+  tile_group_header->SetPrevItemPointer(tuple_slot_id, ItemPointer());
 
   return tuple_slot_id;
 }
@@ -266,6 +267,10 @@ std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group) {
     if(tile != nullptr)
       os << (*tile);
   }
+
+  auto header = tile_group.GetHeader();
+  if(header != nullptr)
+    os << (*header);
 
   os << "=============================================================\n";
 

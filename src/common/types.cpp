@@ -472,4 +472,9 @@ PlanNodeType StringToPlanNode(std::string str) {
     return PLAN_NODE_TYPE_INVALID;
 }
 
+std::ostream& operator<<(std::ostream& os, const ItemPointer& location){
+  os << " [ " << location.block << "  " << location.offset << " ] ";
+  return os;
+}
+
 } // End nstore namespace
