@@ -58,10 +58,10 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   // Create materialization node for this test.
   std::unique_ptr<catalog::Schema> output_schema(catalog::Schema::CopySchema(
       source_base_tile->GetSchema()));
-  std::unordered_map<id_t, id_t> old_to_new_cols;
+  std::unordered_map<oid_t, oid_t> old_to_new_cols;
 
   unsigned int column_count = output_schema->GetColumnCount();
-  for (id_t col = 0; col < column_count; col++) {
+  for (oid_t col = 0; col < column_count; col++) {
     // Create identity mapping.
     old_to_new_cols[col] = col;
   }
@@ -131,7 +131,7 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
       new catalog::Schema(output_columns));
 
   // Construct mapping using the ordering mentioned above.
-  std::unordered_map<id_t, id_t> old_to_new_cols;
+  std::unordered_map<oid_t, oid_t> old_to_new_cols;
   old_to_new_cols[3] = 0;
   old_to_new_cols[1] = 1;
   old_to_new_cols[0] = 2;

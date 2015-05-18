@@ -27,12 +27,12 @@ class ContainerTuple : public Tuple {
   ContainerTuple(ContainerTuple &&) = default;
   ContainerTuple& operator=(ContainerTuple &&) = default;
 
-  ContainerTuple(T *container, id_t tuple_id)
+  ContainerTuple(T *container, oid_t tuple_id)
     : container_(container),
       tuple_id_(tuple_id) {
   }
 
-  const Value GetValue(id_t column_id) const override {
+  const Value GetValue(oid_t column_id) const override {
     assert(container_ != nullptr);
     return container_->GetValue(tuple_id_, column_id);
   }
@@ -51,7 +51,7 @@ class ContainerTuple : public Tuple {
    * @brief Tuple id of tuple in tile group that this wrapper is pretending
    *        to be.
    */
-  const id_t tuple_id_;
+  const oid_t tuple_id_;
 
 };
 

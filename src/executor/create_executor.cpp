@@ -333,7 +333,7 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
         return false;
       }
 
-      std::vector<id_t> key_attrs;
+      std::vector<oid_t> key_attrs;
       std::vector<catalog::Column*> table_columns = table->GetColumns();
       std::vector<catalog::Column*> key_columns;
 

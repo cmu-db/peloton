@@ -74,8 +74,8 @@ TEST(LogicalTileTests, TileMaterializationTest) {
 
   storage::Tile *base_tile = tile_group->GetTile(1);
 
-  std::vector<id_t> position_list1 = { 0, 1 };
-  std::vector<id_t> position_list2 = { 0, 1 };
+  std::vector<oid_t> position_list1 = { 0, 1 };
+  std::vector<oid_t> position_list2 = { 0, 1 };
 
   std::unique_ptr<executor::LogicalTile> logical_tile(
     executor::LogicalTileFactory::GetTile());
@@ -86,8 +86,8 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   assert(tile_schemas.size() == 2);
   catalog::Schema *schema1 = &tile_schemas[0];
   catalog::Schema *schema2 = &tile_schemas[1];
-  id_t column_count = schema2->GetColumnCount();
-  for(id_t column_itr = 0 ; column_itr < column_count ; column_itr++) {
+  oid_t column_count = schema2->GetColumnCount();
+  for(oid_t column_itr = 0 ; column_itr < column_count ; column_itr++) {
     logical_tile->AddColumn(base_tile, own_base_tile, column_itr, column_itr);
   }
 
@@ -104,21 +104,21 @@ TEST(LogicalTileTests, TileMaterializationTest) {
 
   position_list1 = {0, 1};
   position_list2 = {0, 1};
-  std::vector<id_t> position_list3 = {0, 1};
-  std::vector<id_t> position_list4 = {0, 1};
+  std::vector<oid_t> position_list3 = {0, 1};
+  std::vector<oid_t> position_list4 = {0, 1};
 
   logical_tile->AddPositionList(std::move(position_list1));
   logical_tile->AddPositionList(std::move(position_list2));
   logical_tile->AddPositionList(std::move(position_list3));
   logical_tile->AddPositionList(std::move(position_list4));
 
-  id_t column_count1 = schema1->GetColumnCount();
-  for(id_t column_itr = 0 ; column_itr < column_count1; column_itr++) {
+  oid_t column_count1 = schema1->GetColumnCount();
+  for(oid_t column_itr = 0 ; column_itr < column_count1; column_itr++) {
     logical_tile->AddColumn(base_tile1, own_base_tile, column_itr, column_itr);
   }
 
-  id_t column_count2 = schema2->GetColumnCount();
-  for(id_t column_itr = 0 ; column_itr < column_count2; column_itr++) {
+  oid_t column_count2 = schema2->GetColumnCount();
+  for(oid_t column_itr = 0 ; column_itr < column_count2; column_itr++) {
     logical_tile->AddColumn(
         base_tile2,
         own_base_tile,

@@ -25,7 +25,7 @@ namespace catalog {
 // Transaction
 //===--------------------------------------------------------------------===//
 
-void Transaction::RecordInsert(const storage::TileGroup* tile, id_t offset) {
+void Transaction::RecordInsert(const storage::TileGroup* tile, oid_t offset) {
   {
     std::lock_guard<std::mutex> insert_lock(txn_mutex);
 
@@ -33,7 +33,7 @@ void Transaction::RecordInsert(const storage::TileGroup* tile, id_t offset) {
   }
 }
 
-void Transaction::RecordDelete(const storage::TileGroup* tile, id_t offset) {
+void Transaction::RecordDelete(const storage::TileGroup* tile, oid_t offset) {
   {
     std::lock_guard<std::mutex> delete_lock(txn_mutex);
 
@@ -59,11 +59,11 @@ bool Transaction::HasDeletedTuples(const storage::TileGroup* tile) const {
   return false;
 }
 
-const std::map<const storage::TileGroup*, std::vector<id_t> >& Transaction::GetInsertedTuples() {
+const std::map<const storage::TileGroup*, std::vector<oid_t> >& Transaction::GetInsertedTuples() {
   return inserted_tuples;
 }
 
-const std::map<const storage::TileGroup*, std::vector<id_t> >& Transaction::GetDeletedTuples() {
+const std::map<const storage::TileGroup*, std::vector<oid_t> >& Transaction::GetDeletedTuples() {
   return deleted_tuples;
 }
 

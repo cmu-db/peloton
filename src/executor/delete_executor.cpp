@@ -69,7 +69,7 @@ bool DeleteExecutor::DExecute() {
   LOG_TRACE("Source tile : %p Tuples : %lu \n", source_tile.get(), source_tile->NumTuples());
 
   // Delete each tuple
-  for (id_t tuple_id : *source_tile) {
+  for (oid_t tuple_id : *source_tile) {
     LOG_TRACE("Tuple id : %lu \n", tuple_id);
 
     // try to delete the tuple
@@ -79,7 +79,7 @@ bool DeleteExecutor::DExecute() {
       context_->Abort();
       return false;
     }
-    context_->RecordDelete(ItemPointer(tile_group_id, tuple_id, tile_group));
+    context_->RecordDelete(ItemPointer(tile_group_id, tuple_id));
   }
 
   return true;

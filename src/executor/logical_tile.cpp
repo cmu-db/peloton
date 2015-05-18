@@ -41,8 +41,8 @@ LogicalTile::~LogicalTile() {
 void LogicalTile::AddColumn(
     storage::Tile *base_tile,
     bool own_base_tile,
-    id_t origin_column_id,
-    id_t position_list_idx) {
+    oid_t origin_column_id,
+    oid_t position_list_idx) {
   assert(position_list_idx < position_lists_.size());
 
   ColumnInfo cp;
@@ -65,7 +65,7 @@ void LogicalTile::AddColumn(
  *
  * @return Position list index of newly added list.
  */
-int LogicalTile::AddPositionList(std::vector<id_t> &&position_list) {
+int LogicalTile::AddPositionList(std::vector<oid_t> &&position_list) {
 
   assert(position_lists_.size() == 0 || position_lists_[0].size() == position_list.size());
 
@@ -82,7 +82,7 @@ int LogicalTile::AddPositionList(std::vector<id_t> &&position_list) {
  * @brief Invalidates the specified tuple in the logical tile.
  * @param tuple_id Id of the specified tuple.
  */
-void LogicalTile::InvalidateTuple(id_t tuple_id) {
+void LogicalTile::InvalidateTuple(oid_t tuple_id) {
   assert(tuple_id < valid_rows_.size());
   assert(valid_rows_[tuple_id]);
 
@@ -96,7 +96,7 @@ void LogicalTile::InvalidateTuple(id_t tuple_id) {
  *
  * @return Pointer to base tile of specified column.
  */
-storage::Tile *LogicalTile::GetBaseTile(id_t column_id) {
+storage::Tile *LogicalTile::GetBaseTile(oid_t column_id) {
   return schema_[column_id].base_tile;
 }
 
@@ -110,13 +110,13 @@ storage::Tile *LogicalTile::GetBaseTile(id_t column_id) {
  *         or VALUE_TYPE_INVALID if it doesn't exist.
  */
 // TODO Amortize schema lookups by using iterator instead?
-Value LogicalTile::GetValue(id_t tuple_id, id_t column_id) {
+Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
   assert(column_id < schema_.size());
   assert(tuple_id < valid_rows_.size());
   assert(valid_rows_[tuple_id]);
 
   ColumnInfo &cp = schema_[column_id];
-  id_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
+  oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
   storage::Tile *base_tile = cp.base_tile;
 
   Value value = base_tile->GetValue(base_tuple_id, cp.origin_column_id);
@@ -171,7 +171,7 @@ LogicalTile::iterator LogicalTile::end() {
 LogicalTile::iterator::iterator(LogicalTile *tile, bool begin)
   : tile_(tile) {
   if (!begin) {
-    pos_ = INVALID_ID;
+    pos_ = INVALID_OID;
     return;
   }
 
@@ -183,7 +183,7 @@ LogicalTile::iterator::iterator(LogicalTile *tile, bool begin)
 
   // If no valid tuples...
   if (pos_ == tile_->valid_rows_.size()) {
-    pos_ = INVALID_ID;
+    pos_ = INVALID_OID;
   }
 }
 
@@ -201,7 +201,7 @@ LogicalTile::iterator& LogicalTile::iterator::operator++() {
   } while(pos_ < tile_->valid_rows_.size() && !tile_->valid_rows_[pos_]);
 
   if (pos_ == tile_->valid_rows_.size()) {
-    pos_ = INVALID_ID;
+    pos_ = INVALID_OID;
   }
 
   return *this;
@@ -245,7 +245,7 @@ bool LogicalTile::iterator::operator!=(const iterator &rhs) {
  *
  * @return Id of tuple that iterator is pointing at.
  */
-id_t LogicalTile::iterator::operator*() {
+oid_t LogicalTile::iterator::operator*() {
   return pos_;
 }
 

@@ -74,7 +74,7 @@ class IndexMetadata {
   // table columns in key schema
   // if column "i" of table schema is present in key schema
   // then the value "i" will be present in this vector
-  std::vector<id_t> table_columns_in_key;
+  std::vector<oid_t> table_columns_in_key;
 
   // unique keys ?
   bool unique_keys;

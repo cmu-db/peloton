@@ -68,7 +68,7 @@ bool UpdateExecutor::DExecute() {
   auto updated_col_vals = node.GetUpdatedColumnValues();
 
   // Update tuples in given table
-  for (id_t tuple_id : *source_tile) {
+  for (oid_t tuple_id : *source_tile) {
 
     // (A) try to delete the tuple first
     // this might fail due to a concurrent operation that has latched the tuple
@@ -77,13 +77,13 @@ bool UpdateExecutor::DExecute() {
       context_->Abort();
       return false;
     }
-    context_->RecordDelete(ItemPointer(tile_group_id, tuple_id, tile_group));
+    context_->RecordDelete(ItemPointer(tile_group_id, tuple_id));
 
     // (B) now, make a copy of the original tuple
     storage::Tuple *tuple = tile_group->SelectTuple(tuple_id);
 
     // and update the relevant values
-    id_t col_itr = 0;
+    oid_t col_itr = 0;
     for(auto col : updated_cols){
       Value val = updated_col_vals[col_itr++];
       tuple->SetValue(col, val);
@@ -103,7 +103,7 @@ bool UpdateExecutor::DExecute() {
     delete tuple;
 
     // (C) set back pointer in tile group header of updated tuple
-    auto updated_tile_group = static_cast<storage::TileGroup*>(location.location);
+    auto updated_tile_group = static_cast<storage::TileGroup*>(manager.locator[location.block]);
     auto updated_tile_group_header = updated_tile_group->GetHeader();
     updated_tile_group_header->SetPrevItemPointer(location.offset, ItemPointer(tile_group_id, tuple_id));
   }

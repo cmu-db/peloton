@@ -320,19 +320,13 @@ enum ResultType {
 // Type definitions.
 //===--------------------------------------------------------------------===//
 
-// For offsets and other similar larger domain types
-
-typedef uint64_t id_t;
-
-static const id_t INVALID_ID = std::numeric_limits<id_t>::max();
-
-static const id_t MAX_ID = std::numeric_limits<id_t>::max() - 1;
-
-// For catalog and other similar smaller domain types
-
 typedef uint16_t oid_t;
 
-static const oid_t INVALID_OID = 0;
+static const oid_t START_OID = 0;
+
+static const oid_t INVALID_OID = std::numeric_limits<oid_t>::max();
+
+static const oid_t MAX_OID = std::numeric_limits<oid_t>::max() - 1;
 
 // For transaction id
 
@@ -367,30 +361,16 @@ struct ItemPointer {
   // 0-based offset within block
   oid_t offset;
 
-  // OPTIMIZATION
-  // raw physical location
-  void *location;
-
   ItemPointer()
   : block(INVALID_OID),
-    offset(INVALID_OID),
-    location(nullptr){
+    offset(INVALID_OID){
   }
 
   ItemPointer(oid_t block, oid_t offset)
   : block(block),
-    offset(offset),
-    location(nullptr){
+    offset(offset){
   }
 
-  ItemPointer(oid_t block, oid_t offset, void *location)
-  : block(block),
-    offset(offset),
-    location(location){
-  }
-
-  //// Get a string representation of this item pointer
-  friend std::ostream& operator<<(std::ostream& os, const ItemPointer& location);
 };
 
 //===--------------------------------------------------------------------===//

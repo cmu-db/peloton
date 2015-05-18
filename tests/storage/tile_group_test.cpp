@@ -245,7 +245,7 @@ TEST(TileGroupTests, MVCCInsert) {
 	tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
 	tuple->SetValue(3, ValueFactory::GetStringValue("abc", tile_group->GetTilePool(1)));
 
-	id_t tuple_slot_id = INVALID_ID;
+	oid_t tuple_slot_id = INVALID_OID;
 
 	txn_id_t txn_id1 = GetNextTransactionId();
 	cid_t cid1 = GetNextCommitId();
@@ -264,7 +264,7 @@ TEST(TileGroupTests, MVCCInsert) {
 	EXPECT_EQ(2, tuple_slot_id);
 
 	tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple);
-	EXPECT_EQ(INVALID_ID, tuple_slot_id);
+	EXPECT_EQ(INVALID_OID, tuple_slot_id);
 
 	storage::TileGroupHeader *header = tile_group->GetHeader();
 

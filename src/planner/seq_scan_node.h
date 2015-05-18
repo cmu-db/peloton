@@ -32,7 +32,7 @@ class SeqScanNode : public AbstractPlanNode {
   SeqScanNode(
       storage::Table *table,
       expression::AbstractExpression *predicate,
-      const std::vector<id_t> &column_ids)
+      const std::vector<oid_t> &column_ids)
     : table_(table),
       predicate_(predicate),
       column_ids_(column_ids) {
@@ -46,7 +46,7 @@ class SeqScanNode : public AbstractPlanNode {
     return predicate_.get();
   }
 
-  const std::vector<id_t>& column_ids() const {
+  const std::vector<oid_t>& column_ids() const {
     return column_ids_;
   }
 
@@ -68,7 +68,7 @@ class SeqScanNode : public AbstractPlanNode {
   const std::unique_ptr<expression::AbstractExpression> predicate_;
 
   /** @brief Columns from tile group to be added to logical tile output. */
-  const std::vector<id_t> column_ids_;
+  const std::vector<oid_t> column_ids_;
 };
 
 } // namespace planner

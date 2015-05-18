@@ -46,7 +46,7 @@ class Payload {
 
   std::string data;
 
-  oid_t transaction_id = INVALID_OID;
+  oid_t transaction_id = START_OID;
 
   // type of message
   PayloadType msg_type;

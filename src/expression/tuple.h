@@ -17,7 +17,7 @@ class Tuple {
   virtual ~Tuple() {
   };
 
-  virtual const Value GetValue(id_t column_id) const = 0;
+  virtual const Value GetValue(oid_t column_id) const = 0;
 
   virtual char *GetData() const = 0;
 };

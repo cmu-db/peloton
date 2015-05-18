@@ -73,7 +73,7 @@ public:
   }
 
 
-  id_t GetLocation() const {
+  oid_t GetLocation() const {
     return tile_itr;
   }
 
@@ -87,9 +87,9 @@ private:
 	const TileGroupHeader *tile_group_header;
 
 	// Iterator over tile data
-	id_t tile_itr;
+	oid_t tile_itr;
 
-	id_t tuple_length;
+	oid_t tuple_length;
 };
 
 } // End storage namespace

@@ -57,7 +57,7 @@ bool SeqScanExecutor::DExecute() {
   const planner::SeqScanNode &node = GetNode<planner::SeqScanNode>();
   const storage::Table *table = node.table();
   const expression::AbstractExpression *predicate = node.predicate();
-  const std::vector<id_t> &column_ids = node.column_ids();
+  const std::vector<oid_t> &column_ids = node.column_ids();
 
   // We are scanning over a logical tile.
   if (children_.size() == 1) {
@@ -71,7 +71,7 @@ bool SeqScanExecutor::DExecute() {
     std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
     if (predicate != nullptr) {
       // Invalidate tuples that don't satisfy the predicate.
-      for (id_t tuple_id : *tile) {
+      for (oid_t tuple_id : *tile) {
         expression::ContainerTuple<LogicalTile> tuple(tile.get(), tuple_id);
         if (predicate->Evaluate(&tuple, nullptr).IsFalse()) {
           tile->InvalidateTuple(tuple_id);
@@ -101,14 +101,14 @@ bool SeqScanExecutor::DExecute() {
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
     txn_id_t txn_id = context_->GetTransactionId();
     cid_t commit_id = context_->GetCommitId();
-    id_t active_tuple_count = tile_group->GetNextTupleSlot();
+    oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
     //tile_group_header->PrintVisibility(txn_id, commit_id);
 
     // Construct position list by looping through tile group
     // and applying the predicate.
-    std::vector<id_t> position_list;
-    for (id_t tuple_id = 0; tuple_id < active_tuple_count ; tuple_id++) {
+    std::vector<oid_t> position_list;
+    for (oid_t tuple_id = 0; tuple_id < active_tuple_count ; tuple_id++) {
       if(tile_group_header->IsVisible(tuple_id, txn_id, commit_id) == false){
         continue;
       }
@@ -125,8 +125,8 @@ bool SeqScanExecutor::DExecute() {
     const int position_list_idx = 0;
     logical_tile->AddPositionList(std::move(position_list));
 
-    for (id_t origin_column_id : column_ids) {
-      id_t base_tile_offset, tile_column_id;
+    for (oid_t origin_column_id : column_ids) {
+      oid_t base_tile_offset, tile_column_id;
 
       tile_group->LocateTileAndColumn(
           origin_column_id,

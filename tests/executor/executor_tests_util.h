@@ -64,11 +64,11 @@ class ExecutorTestsUtil {
    *
    * @return Populated value.
    */
-  inline static int PopulatedValue(const id_t tuple_id, const id_t column_id) {
+  inline static int PopulatedValue(const oid_t tuple_id, const oid_t column_id) {
     return 10 * tuple_id + column_id;
   }
 
-  static storage::Tuple *GetTuple(storage::Table *table, id_t tuple_id);
+  static storage::Tuple *GetTuple(storage::Table *table, oid_t tuple_id);
   static storage::Tuple *GetNullTuple(storage::Table *table);
 };
 

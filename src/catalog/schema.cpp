@@ -22,16 +22,16 @@ namespace catalog {
 
 /// Helper function for creating TupleSchema
 void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
-                               const std::vector<id_t> column_lengths,
+                               const std::vector<oid_t> column_lengths,
                                const std::vector<std::string> column_names,
                                const std::vector<bool> allow_null,
                                const std::vector<bool> is_inlined) {
 
   bool tup_is_inlined = true;
-  id_t num_columns = column_types.size();
-  id_t column_offset = 0;
+  oid_t num_columns = column_types.size();
+  oid_t column_offset = 0;
 
-  for(id_t column_itr = 0 ; column_itr < num_columns ; column_itr++)	{
+  for(oid_t column_itr = 0 ; column_itr < num_columns ; column_itr++)	{
 
     ColumnInfo column_info(column_types[column_itr],
                            column_offset,
@@ -61,15 +61,15 @@ void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
 Schema::Schema(const std::vector<ColumnInfo> columns)
 : length(0),
   tuple_is_inlined(false) {
-  id_t column_count = columns.size();
+  oid_t column_count = columns.size();
 
   std::vector<ValueType> column_types;
-  std::vector<id_t> column_lengths;
+  std::vector<oid_t> column_lengths;
   std::vector<std::string> column_names;
   std::vector<bool> allow_null;
   std::vector<bool> is_inlined;
 
-  for (id_t column_itr = 0; column_itr < column_count; column_itr++) {
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     column_types.push_back(columns[column_itr].type);
 
     if(columns[column_itr].is_inlined)
@@ -87,10 +87,10 @@ Schema::Schema(const std::vector<ColumnInfo> columns)
 
 /// Copy schema
 Schema* Schema::CopySchema(const Schema	*schema) {
-  id_t column_count = schema->GetColumnCount();
-  std::vector<id_t> set;
+  oid_t column_count = schema->GetColumnCount();
+  std::vector<oid_t> set;
 
-  for (id_t column_itr = 0; column_itr < column_count; column_itr++)
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++)
     set.push_back(column_itr);
 
   return CopySchema(schema, set);
@@ -98,11 +98,11 @@ Schema* Schema::CopySchema(const Schema	*schema) {
 
 /// Copy subset of columns in the given schema
 Schema* Schema::CopySchema(const Schema *schema,
-                           const std::vector<id_t>& set){
-  id_t column_count = schema->GetColumnCount();
+                           const std::vector<oid_t>& set){
+  oid_t column_count = schema->GetColumnCount();
   std::vector<ColumnInfo> columns;
 
-  for (id_t column_itr = 0; column_itr < column_count; column_itr++) {
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     // If column exists in set
     if(std::find(set.begin(), set.end(), column_itr) != set.end()) {
       columns.push_back(schema->columns[column_itr]);
@@ -122,11 +122,11 @@ Schema* Schema::AppendSchema(Schema *first, Schema *second){
 /// Append subset of columns in the two given schemas
 Schema* Schema::AppendSchema(
     Schema *first,
-    std::vector<id_t>& first_set,
+    std::vector<oid_t>& first_set,
     Schema *second,
-    std::vector<id_t>& second_set) {
+    std::vector<oid_t>& second_set) {
   const std::vector<Schema *> schema_list({first, second});
-  const std::vector<std::vector<id_t> > subsets({first_set, second_set});
+  const std::vector<std::vector<oid_t> > subsets({first_set, second_set});
   return AppendSchemaPtrList(schema_list, subsets);
 }
 
@@ -143,12 +143,12 @@ Schema *Schema::AppendSchemaList(std::vector<Schema> &schema_list) {
 
 /// Append given schemas.
 Schema *Schema::AppendSchemaPtrList(const std::vector<Schema *> &schema_list) {
-  std::vector<std::vector<id_t> > subsets;
+  std::vector<std::vector<oid_t> > subsets;
 
   for (unsigned int i = 0; i < schema_list.size(); i++) {
     unsigned int column_count = schema_list[i]->GetColumnCount();
-    std::vector<id_t> subset;
-    for (id_t column_itr = 0; column_itr < column_count; column_itr++) {
+    std::vector<oid_t> subset;
+    for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
       subset.push_back(column_itr);
     }
     subsets.push_back(subset);
@@ -160,16 +160,16 @@ Schema *Schema::AppendSchemaPtrList(const std::vector<Schema *> &schema_list) {
 /// Append subsets of columns in the given schemas.
 Schema *Schema::AppendSchemaPtrList(
     const std::vector<Schema *> &schema_list,
-    const std::vector<std::vector<id_t> > &subsets) {
+    const std::vector<std::vector<oid_t> > &subsets) {
   assert(schema_list.size() == subsets.size());
 
   std::vector<ColumnInfo> columns;
   for (unsigned int i = 0; i < schema_list.size(); i++) {
     Schema *schema = schema_list[i];
-    const std::vector<id_t> &subset = subsets[i];
+    const std::vector<oid_t> &subset = subsets[i];
     unsigned int column_count = schema->GetColumnCount();
 
-    for (id_t column_itr = 0; column_itr < column_count; column_itr++) {
+    for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
       // If column exists in set.
       if(std::find(subset.begin(), subset.end(), column_itr) != subset.end()) {
         columns.push_back(schema->columns[column_itr]);
@@ -202,7 +202,7 @@ std::ostream& operator<< (std::ostream& os, const Schema& schema){
       " length = " << schema.length << "," <<
       " uninlined_column_count = " << schema.uninlined_column_count << std::endl;
 
-  for (id_t column_itr = 0; column_itr < schema.column_count; column_itr++) {
+  for (oid_t column_itr = 0; column_itr < schema.column_count; column_itr++) {
     os << "\t Column " << column_itr << " :: " << schema.columns[column_itr];
   }
 
@@ -218,7 +218,7 @@ bool Schema::operator== (const Schema &other) const {
     return false;
   }
 
-  for (id_t column_itr = 0; column_itr < other.GetColumnCount(); column_itr++) {
+  for (oid_t column_itr = 0; column_itr < other.GetColumnCount(); column_itr++) {
     const ColumnInfo& column_info = other.GetColumnInfo(column_itr);
     const ColumnInfo& other_column_info = GetColumnInfo(column_itr);
 
