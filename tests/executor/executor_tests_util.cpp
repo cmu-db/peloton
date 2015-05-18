@@ -162,11 +162,13 @@ void ExecutorTestsUtil::PopulateTiles(
     tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(i, 1)));
     tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(i, 2)));
     Value string_value = ValueFactory::GetStringValue(
-        std::to_string(PopulatedValue(i, 3)),
-        tile_group->GetTilePool(0));
+        std::to_string(PopulatedValue(i, 3)));
     tuple.SetValue(3, string_value);
+
     id_t tuple_slot_id = tile_group->InsertTuple(txn_id, &tuple);
     tile_group->CommitInsertedTuple(tuple_slot_id, commit_id);
+
+    string_value.FreeUninlinedData();
   }
 
 }
