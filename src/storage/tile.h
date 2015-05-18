@@ -67,15 +67,15 @@ class Tile {
    * Insert tuple at slot
    * NOTE : No checks, must be at valid slot.
    */
-  void InsertTuple(const id_t tuple_slot_id, Tuple *tuple);
+  void InsertTuple(const oid_t tuple_slot_id, Tuple *tuple);
 
   // allocated tuple slots
-  id_t GetAllocatedTupleCount() const {
+  oid_t GetAllocatedTupleCount() const {
     return num_tuple_slots;
   }
 
   // active tuple slots
-  inline virtual id_t GetActiveTupleCount() const {
+  inline virtual oid_t GetActiveTupleCount() const {
     return tile_group_header->GetNextTupleSlot();
   }
 
@@ -87,15 +87,15 @@ class Tile {
    * Returns tuple present at slot
    * NOTE : No checks, must be at valid slot and must exist.
    */
-  Tuple *GetTuple(const id_t tuple_slot_id);
+  Tuple *GetTuple(const oid_t tuple_slot_id);
 
   /**
    * Returns value present at slot
    * NOTE : No checks, must be at valid slot and must exist.
    */
-  Value GetValue(const id_t tuple_slot_id, const id_t column_id);
+  Value GetValue(const oid_t tuple_slot_id, const oid_t column_id);
 
-  void SetValue(Value value, const id_t tuple_slot_id, const id_t column_id);
+  void SetValue(Value value, const oid_t tuple_slot_id, const oid_t column_id);
 
   // Get tuple at location
   static Tuple *GetTuple(catalog::Manager* catalog, const ItemPointer* tuple_location);
@@ -126,7 +126,7 @@ class Tile {
     return &schema;
   };
 
-  const std::string GetColumnName(const id_t column_index) const {
+  const std::string GetColumnName(const oid_t column_index) const {
     return schema.GetColumnInfo(column_index).name;
   }
 
@@ -146,7 +146,7 @@ class Tile {
     return tile_group;
   }
 
-  id_t GetTileId() const {
+  oid_t GetTileId() const {
     return tile_id;
   }
 
@@ -163,7 +163,7 @@ class Tile {
   // Serialization/Deserialization
   //===--------------------------------------------------------------------===//
 
-  bool SerializeTo(SerializeOutput &output, id_t num_tuples);
+  bool SerializeTo(SerializeOutput &output, oid_t num_tuples);
   bool SerializeHeaderTo(SerializeOutput &output);
   bool SerializeTuplesTo(SerializeOutput &output, Tuple *tuples, int num_tuples);
 
@@ -174,7 +174,7 @@ class Tile {
     return (pool);
   }
 
-  char *GetTupleLocation(const id_t tuple_slot_id) const;
+  char *GetTupleLocation(const oid_t tuple_slot_id) const;
 
  protected:
 
@@ -183,10 +183,10 @@ class Tile {
   //===--------------------------------------------------------------------===//
 
   // Catalog information
-  id_t database_id;
-  id_t table_id;
-  id_t tile_group_id;
-  id_t tile_id;
+  oid_t database_id;
+  oid_t table_id;
+  oid_t tile_group_id;
+  oid_t tile_id;
 
   // storage backend
   Backend *backend;
@@ -204,10 +204,10 @@ class Tile {
   Pool *pool;
 
   // number of tuple slots allocated
-  id_t num_tuple_slots;
+  oid_t num_tuple_slots;
 
   // number of columns
-  id_t column_count;
+  oid_t column_count;
 
   // length of tile tuple
   size_t tuple_length;
@@ -221,7 +221,7 @@ class Tile {
   // Used for serialization/deserialization
   char *column_header;
 
-  id_t column_header_size;
+  oid_t column_header_size;
 
   /**
    * NOTE : Tiles don't keep track of number of occupied slots.
@@ -234,7 +234,7 @@ class Tile {
 };
 
 // Returns a pointer to the tuple requested. No checks are done that the index is valid.
-inline char *Tile::GetTupleLocation(const id_t tuple_slot_id) const {
+inline char *Tile::GetTupleLocation(const oid_t tuple_slot_id) const {
   char *tuple_location = data + (tuple_slot_id * tuple_length);
 
   return tuple_location;
@@ -290,14 +290,14 @@ class TileFactory {
     Backend *backend = new VMBackend();
 
     Tile *tile = GetTile(
-        INVALID_ID, INVALID_ID, INVALID_ID, INVALID_ID,
+        INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
         header, backend, schema, tile_group, tuple_count);
     tile->own_tile = true;
 
     return tile;
   }
 
-  static Tile *GetTile(id_t database_id, id_t table_id, id_t tile_group_id, id_t tile_id,
+  static Tile *GetTile(oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t tile_id,
                        TileGroupHeader *tile_header,
                        Backend *backend,
                        const catalog::Schema& schema,
@@ -315,7 +315,7 @@ class TileFactory {
  private:
 
   static void InitCommon(Tile *tile,
-                         id_t database_id, id_t table_id, id_t tile_group_id, id_t tile_id,
+                         oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t tile_id,
                          Backend* backend,
                          const catalog::Schema& schema) {
 

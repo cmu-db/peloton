@@ -79,7 +79,7 @@ class Table {
 
   // NOTE: This must go through the manager's locator
   // This allows us to "TRANSFORM" tile groups atomically
-  TileGroup *GetTileGroup(id_t tile_group_id) const;
+  TileGroup *GetTileGroup(oid_t tile_group_id) const;
 
   size_t GetTileGroupCount() const;
 
@@ -94,7 +94,7 @@ class Table {
     return indexes.size();
   }
 
-  index::Index *GetIndex(id_t index_id) const {
+  index::Index *GetIndex(oid_t index_id) const {
     assert(index_id < indexes.size());
     return indexes[index_id];
   }
@@ -120,8 +120,8 @@ class Table {
   //===--------------------------------------------------------------------===//
 
   // Catalog information
-  id_t database_id;
-  id_t table_id;
+  oid_t database_id;
+  oid_t table_id;
 
   // backend
   Backend *backend;

@@ -53,7 +53,7 @@ class Manager {
   // Data members
   //===--------------------------------------------------------------------===//
 
-  std::atomic<oid_t> oid = ATOMIC_VAR_INIT(INVALID_OID);
+  std::atomic<oid_t> oid = ATOMIC_VAR_INIT(START_OID);
 
   lookup_dir locator;
 };

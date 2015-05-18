@@ -27,9 +27,9 @@ namespace {
    *
    * @return Position list.
    */
-  std::vector<id_t> CreateIdentityPositionList(unsigned int size) {
-    std::vector<id_t> position_list(size);
-    for (id_t id = 0; id < size; id++) {
+  std::vector<oid_t> CreateIdentityPositionList(unsigned int size) {
+    std::vector<oid_t> position_list(size);
+    for (oid_t id = 0; id < size; id++) {
       position_list[id] = id;
     }
     return position_list;
@@ -63,7 +63,7 @@ LogicalTile *LogicalTileFactory::WrapBaseTiles(
   // First, we build a position list to be shared by all the tiles.
   //TODO Modify logical tile to be able to represent lazily position lists that
   // span the entire tile.
-  const id_t position_list_idx = 0;
+  const oid_t position_list_idx = 0;
   //TODO This should be active tuple count. But how to set it? High watermark?
   new_tile->AddPositionList(
       CreateIdentityPositionList(base_tiles[0]->GetAllocatedTupleCount()));
@@ -103,7 +103,7 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(
   assert(schemas.size() == tile_group->NumTiles());
   for (unsigned int i = 0; i < schemas.size(); i++) {
     storage::Tile *base_tile = tile_group->GetTile(i);
-    for (id_t col_id = 0; col_id < schemas[i].GetColumnCount(); col_id++) {
+    for (oid_t col_id = 0; col_id < schemas[i].GetColumnCount(); col_id++) {
       new_tile->AddColumn(
           base_tile,
           own_base_tile,

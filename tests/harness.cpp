@@ -11,7 +11,7 @@ namespace test {
 
 std::atomic<txn_id_t> txn_id_counter(INVALID_TXN_ID);
 std::atomic<cid_t> cid_counter(INVALID_CID);
-std::atomic<oid_t> tile_group_id_counter(INVALID_OID);
+std::atomic<oid_t> tile_group_id_counter(START_OID);
 
 uint64_t GetThreadId() {
   std::hash<std::thread::id> hash_fn;

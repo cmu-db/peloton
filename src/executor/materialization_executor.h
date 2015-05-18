@@ -42,15 +42,15 @@ class MaterializationExecutor : public AbstractExecutor {
  private:
 
   void GenerateTileToColMap(
-    const std::unordered_map<id_t, id_t> &old_to_new_cols,
+    const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
     LogicalTile *source_tile,
-    std::unordered_map<storage::Tile *, std::vector<id_t> > &tile_to_cols);
+    std::unordered_map<storage::Tile *, std::vector<oid_t> > &tile_to_cols);
 
   void MaterializeByTiles(
       LogicalTile *source_tile,
-      const std::unordered_map<id_t, id_t> &old_to_new_cols,
+      const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
       const
-      std::unordered_map<storage::Tile *, std::vector<id_t> > &tile_to_cols,
+      std::unordered_map<storage::Tile *, std::vector<oid_t> > &tile_to_cols,
       storage::Tile *dest_tile);
 };
 

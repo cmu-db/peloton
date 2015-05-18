@@ -66,8 +66,8 @@ public:
 		data = nullptr;
 	}
 
-	id_t GetNextEmptyTupleSlot() {
-		id_t tuple_slot_id = INVALID_ID;
+	oid_t GetNextEmptyTupleSlot() {
+		oid_t tuple_slot_id = INVALID_OID;
 
 		{
 			std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
@@ -87,7 +87,7 @@ public:
 		return tuple_slot_id;
 	}
 
-	void ReclaimTupleSlot(id_t tuple_slot_id) {
+	void ReclaimTupleSlot(oid_t tuple_slot_id) {
 
     {
       std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
@@ -96,11 +96,11 @@ public:
 
 	}
 
-	id_t GetNextTupleSlot() const {
+	oid_t GetNextTupleSlot() const {
 		return next_tuple_slot;
 	}
 
-  inline id_t GetActiveTupleCount() const {
+  inline oid_t GetActiveTupleCount() const {
     return active_tuple_slots;
   }
 
@@ -118,57 +118,57 @@ public:
 
 	// Getters
 
-	inline txn_id_t GetTransactionId(const id_t tuple_slot_id) const {
+	inline txn_id_t GetTransactionId(const oid_t tuple_slot_id) const {
 		return *((txn_id_t*)( data + (tuple_slot_id * header_entry_size)));
 	}
 
-	inline cid_t GetBeginCommitId(const id_t tuple_slot_id) const {
-		return *((cid_t*)( data + (tuple_slot_id * header_entry_size) + sizeof(id_t)));
+	inline cid_t GetBeginCommitId(const oid_t tuple_slot_id) const {
+		return *((cid_t*)( data + (tuple_slot_id * header_entry_size) +  sizeof(txn_id_t) ));
 	}
 
-	inline cid_t GetEndCommitId(const id_t tuple_slot_id) const {
-		return *((cid_t*)( data + (tuple_slot_id * header_entry_size) + 2 * sizeof(id_t)));
+	inline cid_t GetEndCommitId(const oid_t tuple_slot_id) const {
+		return *((cid_t*)( data + (tuple_slot_id * header_entry_size) +  sizeof(txn_id_t) + sizeof(cid_t)));
 	}
 
-  inline ItemPointer GetPrevItemPointer(const id_t tuple_slot_id) const {
-    return *((ItemPointer*)( data + (tuple_slot_id * header_entry_size) + 3 * sizeof(id_t)));
+  inline ItemPointer GetPrevItemPointer(const oid_t tuple_slot_id) const {
+    return *((ItemPointer*)( data + (tuple_slot_id * header_entry_size) +  sizeof(txn_id_t) + 2 * sizeof(cid_t)));
   }
 
 	// Getters for addresses
 
-	inline txn_id_t *GetTransactionIdLocation(const id_t tuple_slot_id) const {
+	inline txn_id_t *GetTransactionIdLocation(const oid_t tuple_slot_id) const {
 		return ((txn_id_t*)( data + (tuple_slot_id * header_entry_size)));
 	}
 
-	inline cid_t *GetBeginCommitIdLocation(const id_t tuple_slot_id) const {
-		return ((cid_t*)( data + (tuple_slot_id * header_entry_size) + sizeof(id_t) ));
+	inline cid_t *GetBeginCommitIdLocation(const oid_t tuple_slot_id) const {
+		return ((cid_t*)( data + (tuple_slot_id * header_entry_size) +  sizeof(txn_id_t) ));
 	}
 
-	inline cid_t *GetEndCommitIdLocation(const id_t tuple_slot_id) const {
-		return ((cid_t*)( data + (tuple_slot_id * header_entry_size) + 2 * sizeof(id_t) ));
+	inline cid_t *GetEndCommitIdLocation(const oid_t tuple_slot_id) const {
+		return ((cid_t*)( data + (tuple_slot_id * header_entry_size) +  sizeof(txn_id_t) + sizeof(cid_t) ));
 	}
 
 	// Setters
 
-	inline void SetTransactionId(const id_t tuple_slot_id, txn_id_t transaction_id) {
+	inline void SetTransactionId(const oid_t tuple_slot_id, txn_id_t transaction_id) {
 		*((txn_id_t*)( data + (tuple_slot_id * header_entry_size))) = transaction_id;
 	}
 
-	inline void SetBeginCommitId(const id_t tuple_slot_id, cid_t begin_cid) {
-		*((cid_t*)( data + (tuple_slot_id * header_entry_size) + sizeof(id_t))) = begin_cid;
+	inline void SetBeginCommitId(const oid_t tuple_slot_id, cid_t begin_cid) {
+		*((cid_t*)( data + (tuple_slot_id * header_entry_size) +  sizeof(txn_id_t) )) = begin_cid;
 	}
 
-	inline void SetEndCommitId(const id_t tuple_slot_id, cid_t end_cid) const {
-		*((cid_t*)( data + (tuple_slot_id * header_entry_size) + 2 * sizeof(cid_t))) = end_cid;
+	inline void SetEndCommitId(const oid_t tuple_slot_id, cid_t end_cid) const {
+		*((cid_t*)( data + (tuple_slot_id * header_entry_size) +  sizeof(txn_id_t) + sizeof(cid_t))) = end_cid;
 	}
 
-  inline void SetPrevItemPointer(const id_t tuple_slot_id, ItemPointer item) const {
-    *((ItemPointer*)( data + (tuple_slot_id * header_entry_size) + 3 * sizeof(cid_t))) = item;
+  inline void SetPrevItemPointer(const oid_t tuple_slot_id, ItemPointer item) const {
+    *((ItemPointer*)( data + (tuple_slot_id * header_entry_size) +  sizeof(txn_id_t) + 2 * sizeof(cid_t))) = item;
   }
 
 	// Visibility check
 
-	bool IsVisible(const id_t tuple_slot_id, txn_id_t txn_id, cid_t at_cid) {
+	bool IsVisible(const oid_t tuple_slot_id, txn_id_t txn_id, cid_t at_cid) {
 
 		bool own = (txn_id == GetTransactionId(tuple_slot_id));
 		bool activated = (at_cid >= GetBeginCommitId(tuple_slot_id));
@@ -193,7 +193,7 @@ public:
 private:
 
 	// header entry size is the size of the layout described above
-	static const size_t header_entry_size = 3 * sizeof(id_t) + sizeof(ItemPointer);
+	static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t) + sizeof(ItemPointer);
 
 	//===--------------------------------------------------------------------===//
 	// Data members
@@ -206,18 +206,18 @@ private:
 	char *data;
 
 	// number of tuple slots allocated
-	id_t num_tuple_slots;
+	oid_t num_tuple_slots;
 
 	size_t header_size;
 
 	// next free tuple slot
-	id_t next_tuple_slot;
+	oid_t next_tuple_slot;
 
 	// active tuples
-  std::atomic<id_t> active_tuple_slots;
+  std::atomic<oid_t> active_tuple_slots;
 
   // free slots
-  std::queue<id_t> free_slots;
+  std::queue<oid_t> free_slots;
 
 	// synch helpers
 	std::mutex tile_header_mutex;
