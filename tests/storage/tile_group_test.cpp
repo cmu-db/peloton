@@ -273,16 +273,17 @@ TEST(TileGroupTests, MVCCInsert) {
 	storage::Tuple *result = nullptr;
 	result = tile_group->SelectTuple(1, 1);
 	EXPECT_NE(result, nullptr);
+  delete result;
 
 	header->SetBeginCommitId(0, cid1);
 	header->SetBeginCommitId(2, cid1);
 
 	result = tile_group->SelectTuple(1, 1);
 	EXPECT_NE(result, nullptr);
+  delete result;
 
 	result = tile_group->SelectTuple(1, 0);
 	EXPECT_NE(result, nullptr);
-
 	delete result;
 
 	// DELETE
