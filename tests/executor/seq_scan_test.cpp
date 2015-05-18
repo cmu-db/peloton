@@ -39,7 +39,7 @@ namespace {
 /**
  * @brief Set of tuple_ids that will satisfy the predicate in our test cases.
  */
-const std::set<id_t> g_tuple_ids({ 0, 3, 5, 7 });
+const std::set<oid_t> g_tuple_ids({ 0, 3, 5, 7 });
 
 /**
  * @brief Convenience method to create table for test.
@@ -47,7 +47,7 @@ const std::set<id_t> g_tuple_ids({ 0, 3, 5, 7 });
  * @return Table generated for test.
  */
 storage::Table *CreateTable() {
-  const int tuple_count = 20;
+  const int tuple_count = 50;
   std::unique_ptr<storage::Table> table(ExecutorTestsUtil::CreateTable());
 
   // Schema for first tile group. Vertical partition is 2, 2.
@@ -105,12 +105,12 @@ storage::Table *CreateTable() {
  * parity of the loop iteration) the first field or last field of the tuple.
  */
 expression::AbstractExpression *CreatePredicate(
-    const std::set<id_t> &tuple_ids) {
+    const std::set<oid_t> &tuple_ids) {
   assert(tuple_ids.size() >= 1);
   expression::AbstractExpression *predicate =
       expression::ConstantValueFactory(Value::GetFalse());
   bool even = false;
-  for (id_t tuple_id : tuple_ids) {
+  for (oid_t tuple_id : tuple_ids) {
     even = !even;
     // Create equality expression comparison tuple value and constant value.
     // First, create tuple value expression.
@@ -184,8 +184,8 @@ void RunTest(
     EXPECT_EQ(g_tuple_ids.size(), result_tiles[i]->NumTuples());
 
     // Verify values.
-    std::set<id_t> expected_tuples_left(g_tuple_ids);
-    for (id_t new_tuple_id : *(result_tiles[i])) {
+    std::set<oid_t> expected_tuples_left(g_tuple_ids);
+    for (oid_t new_tuple_id : *(result_tiles[i])) {
 
       // We divide by 10 because we know how PopulatedValue() computes.
       // Bad style. Being a bit lazy here...
@@ -226,7 +226,7 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
   std::unique_ptr<storage::Table> table(CreateTable());
 
   // Column ids to be added to logical tile after scan.
-  std::vector<id_t> column_ids({ 0, 1, 3 });
+  std::vector<oid_t> column_ids({ 0, 1, 3 });
 
   // Create plan node.
   planner::SeqScanNode node(
@@ -245,7 +245,7 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
   storage::Table *table = nullptr;
 
   // No column ids as input to executor is another logical tile.
-  std::vector<id_t> column_ids;
+  std::vector<oid_t> column_ids;
 
   // Create plan node.
   planner::SeqScanNode node(

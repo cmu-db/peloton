@@ -30,7 +30,7 @@ class ColumnInfo {
 
   // Configures all members except offset
   ColumnInfo(ValueType column_type,
-             id_t column_length, std::string column_name,
+             oid_t column_length, std::string column_name,
              bool allow_null, bool is_inlined)
  : type(column_type), offset(0),
    name(column_name),
@@ -60,8 +60,8 @@ class ColumnInfo {
   }
 
   // Configure offset as well
-  ColumnInfo(ValueType column_type, id_t column_offset,
-             id_t column_length, std::string column_name,
+  ColumnInfo(ValueType column_type, oid_t column_offset,
+             oid_t column_length, std::string column_name,
              bool allow_null, bool is_inlined)
   : type(column_type), offset(column_offset),
     name(column_name),
@@ -121,7 +121,7 @@ class Schema	{
 
   /// Construct schema
   void CreateTupleSchema(const std::vector<ValueType> column_types,
-                         const std::vector<id_t> column_lengths,
+                         const std::vector<oid_t> column_lengths,
                          const std::vector<std::string> column_names,
                          const std::vector<bool> allow_null,
                          const std::vector<bool> is_inlined);
@@ -135,7 +135,7 @@ class Schema	{
   /// Copy subset of columns in the given schema
   static Schema *CopySchema(
       const Schema *schema,
-      const std::vector<id_t>& set);
+      const std::vector<oid_t>& set);
 
   /// Append two schema objects
   static Schema *AppendSchema(Schema *first, Schema *second);
@@ -143,9 +143,9 @@ class Schema	{
   /// Append subset of columns in the two given schemas
   static Schema *AppendSchema(
       Schema *first,
-      std::vector<id_t>& first_set,
+      std::vector<oid_t>& first_set,
       Schema *second,
-      std::vector<id_t>& second_set);
+      std::vector<oid_t>& second_set);
 
   /// Append given schemas.
   static Schema *AppendSchemaList(std::vector<Schema> &schema_list);
@@ -156,7 +156,7 @@ class Schema	{
   /// Append subsets of columns in the given schemas.
   static Schema *AppendSchemaPtrList(
       const std::vector<Schema *> &schema_list,
-      const std::vector<std::vector<id_t> > &subsets);
+      const std::vector<std::vector<oid_t> > &subsets);
 
   /// Compare two schemas
   bool operator== (const Schema &other) const;
@@ -166,38 +166,38 @@ class Schema	{
   // Schema accessors
   //===--------------------------------------------------------------------===//
 
-  inline size_t GetOffset(const id_t column_id) const {
+  inline size_t GetOffset(const oid_t column_id) const {
     return columns[column_id].offset;
   }
 
-  inline ValueType GetType(const id_t column_id) const {
+  inline ValueType GetType(const oid_t column_id) const {
     return columns[column_id].type;
   }
 
   /// Returns fixed length
-  inline size_t GetLength(const id_t column_id) const {
+  inline size_t GetLength(const oid_t column_id) const {
     return columns[column_id].fixed_length;
   }
 
-  inline size_t GetVariableLength(const id_t column_id) const {
+  inline size_t GetVariableLength(const oid_t column_id) const {
     return columns[column_id].variable_length;
   }
 
   //// Get the nullability of the column at a given index.
-  inline bool AllowNull(const id_t column_id) const {
+  inline bool AllowNull(const oid_t column_id) const {
     return columns[column_id].allow_null;
   }
 
 
-  inline bool IsInlined(const id_t column_id) const {
+  inline bool IsInlined(const oid_t column_id) const {
     return columns[column_id].is_inlined;
   }
 
-  const ColumnInfo GetColumnInfo(const id_t column_id) const {
+  const ColumnInfo GetColumnInfo(const oid_t column_id) const {
     return columns[column_id];
   }
 
-  id_t GetUninlinedColumnIndex(const id_t column_id) const {
+  oid_t GetUninlinedColumnIndex(const oid_t column_id) const {
     return uninlined_columns[column_id];
   }
 
@@ -206,16 +206,16 @@ class Schema	{
   }
 
   /// Return the number of columns in the schema for the tuple.
-  inline id_t GetColumnCount() const {
+  inline oid_t GetColumnCount() const {
     return column_count;
   }
 
-  id_t GetUninlinedColumnCount() const {
+  oid_t GetUninlinedColumnCount() const {
     return uninlined_column_count;
   }
 
   /// Return the number of bytes used by one tuple.
-  inline id_t GetLength() const {
+  inline oid_t GetLength() const {
     return length;
   }
 
@@ -235,12 +235,12 @@ class Schema	{
   std::vector<ColumnInfo> columns;
 
   // keeps track of unlined columns
-  std::vector<id_t> uninlined_columns;
+  std::vector<oid_t> uninlined_columns;
 
   // keep these in sync with the vectors above
-  id_t column_count;
+  oid_t column_count;
 
-  id_t uninlined_column_count;
+  oid_t uninlined_column_count;
 
   /// are all columns inlined
   bool tuple_is_inlined;

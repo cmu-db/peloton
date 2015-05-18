@@ -27,10 +27,10 @@ std::ostream& operator<<(std::ostream& os, const TileGroupHeader& tile_group_hea
 	os << "\t-----------------------------------------------------------\n";
 	os << "\tTILE GROUP HEADER \n";
 
-	id_t active_tuple_slots = tile_group_header.GetNextTupleSlot();
+	oid_t active_tuple_slots = tile_group_header.GetNextTupleSlot();
   ItemPointer item;
 
-	for(id_t header_itr = 0 ; header_itr < active_tuple_slots ; header_itr++){
+	for(oid_t header_itr = 0 ; header_itr < active_tuple_slots ; header_itr++){
 
     txn_id_t txn_id = tile_group_header.GetTransactionId(header_itr);
     cid_t beg_commit_id = tile_group_header.GetBeginCommitId(header_itr);
@@ -55,7 +55,8 @@ std::ostream& operator<<(std::ostream& os, const TileGroupHeader& tile_group_hea
     else
       os << std::setw(width) << end_commit_id;
 
-    os << " prev : " << tile_group_header.GetPrevItemPointer(header_itr) << "\n";
+    ItemPointer location = tile_group_header.GetPrevItemPointer(header_itr);
+    os << " prev : " << "[ " << location.block << " , " << location.offset << " ]\n";
 
 	}
 
@@ -66,11 +67,11 @@ std::ostream& operator<<(std::ostream& os, const TileGroupHeader& tile_group_hea
 
 void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 
-	id_t active_tuple_slots = GetNextTupleSlot();
+	oid_t active_tuple_slots = GetNextTupleSlot();
 
 	std::cout << "\t-----------------------------------------------------------\n";
 
-	for(id_t header_itr = 0 ; header_itr < active_tuple_slots ; header_itr++){
+	for(oid_t header_itr = 0 ; header_itr < active_tuple_slots ; header_itr++){
 
 		bool own = (txn_id == GetTransactionId(header_itr));
 		bool activated = (at_cid >= GetBeginCommitId(header_itr));
@@ -102,8 +103,10 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
     else
       std::cout << std::setw(width) << end_commit_id;
 
-    std::cout << " prev : " << GetPrevItemPointer(header_itr) << " :: ";
-		std::cout << " own : " << own;
+    ItemPointer location = GetPrevItemPointer(header_itr);
+    std::cout << " prev : " << "[ " << location.block << " , " << location.offset << " ]" <<
+
+    std::cout << " own : " << own;
 		std::cout << " activated : " << activated;
 		std::cout << " invalidated : " << invalidated << " ";
 

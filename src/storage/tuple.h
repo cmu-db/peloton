@@ -101,10 +101,10 @@ public:
 
 	// Get the value of a specified column (const)
 	// (expensive) checks the schema to see how to return the Value.
-	const Value GetValue(const id_t column_id) const;
+	const Value GetValue(const oid_t column_id) const;
 
 	// Set appropriate column in tuple
-	void SetValue(const id_t column_id, Value value);
+	void SetValue(const oid_t column_id, Value value);
 
   /**
    * Allocate space to copy strings that can't be inlined rather
@@ -114,7 +114,7 @@ public:
    * It is also possible to provide NULL for stringPool in which case
    * the strings will be allocated on the heap.
    */
-  void SetValueAllocate(const id_t column_id, Value value, Pool *dataPool);
+  void SetValueAllocate(const oid_t column_id, Value value, Pool *dataPool);
 
 	inline int GetLength() const {
 		return tuple_schema->GetLength();
@@ -145,7 +145,7 @@ public:
 	}
 
 	// Return the number of columns in this tuple
-	inline id_t GetColumnCount() const {
+	inline oid_t GetColumnCount() const {
 		return tuple_schema->GetColumnCount();
 	}
 
@@ -193,9 +193,9 @@ public:
 
 private:
 
-	char* GetDataPtr(const id_t column_id);
+	char* GetDataPtr(const oid_t column_id);
 
-	const char* GetDataPtr(const id_t column_id) const;
+	const char* GetDataPtr(const oid_t column_id) const;
 
 	//===--------------------------------------------------------------------===//
 	// Data members

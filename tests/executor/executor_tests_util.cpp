@@ -126,7 +126,7 @@ storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
       INVALID_OID,
       INVALID_OID,
-      INVALID_OID,
+      GetNextTileGroupId(),
       nullptr,
       backend,
       schemas,
@@ -165,7 +165,7 @@ void ExecutorTestsUtil::PopulateTiles(
         std::to_string(PopulatedValue(i, 3)));
     tuple.SetValue(3, string_value);
 
-    id_t tuple_slot_id = tile_group->InsertTuple(txn_id, &tuple);
+    oid_t tuple_slot_id = tile_group->InsertTuple(txn_id, &tuple);
     tile_group->CommitInsertedTuple(tuple_slot_id, commit_id);
 
     string_value.FreeUninlinedData();
@@ -220,7 +220,7 @@ storage::Table *ExecutorTestsUtil::CreateTable() {
         GetColumnInfo(2), GetColumnInfo(3) }));
 
   // PRIMARY INDEX
-  std::vector<id_t> key_attrs;
+  std::vector<oid_t> key_attrs;
   catalog::Schema *tuple_schema = table->GetSchema();
   catalog::Schema *key_schema;
   index::IndexMetadata *index_metadata;
@@ -254,7 +254,7 @@ storage::Table *ExecutorTestsUtil::CreateTable() {
   return table;
 }
 
-storage::Tuple *ExecutorTestsUtil::GetTuple(storage::Table *table, id_t tuple_id) {
+storage::Tuple *ExecutorTestsUtil::GetTuple(storage::Table *table, oid_t tuple_id) {
 
   storage::Tuple* tuple = new storage::Tuple(table->GetSchema(), true);
   tuple->SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0)));

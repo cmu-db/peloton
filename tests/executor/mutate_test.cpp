@@ -82,7 +82,7 @@ void UpdateTuple(storage::Table *table){
 
   // Update
 
-  std::vector<id_t> update_column_ids = { 1 };
+  std::vector<oid_t> update_column_ids = { 1 };
   std::vector<Value> values;
   Value update_val = ValueFactory::GetDoubleValue(23.5);
   values.push_back(update_val);
@@ -101,7 +101,7 @@ void UpdateTuple(storage::Table *table){
       new expression::ComparisonExpression<expression::CmpGt>(EXPRESSION_TYPE_COMPARE_EQ, tup_val_exp, const_val_exp);
 
   // Seq scan
-  std::vector<id_t> column_ids = { 0 };
+  std::vector<oid_t> column_ids = { 0 };
   planner::SeqScanNode seq_scan_node(
       table,
       predicate,
@@ -137,7 +137,7 @@ void DeleteTuple(storage::Table *table){
       new expression::ComparisonExpression<expression::CmpGt>(EXPRESSION_TYPE_COMPARE_EQ, tup_val_exp, const_val_exp);
 
   // Seq scan
-  std::vector<id_t> column_ids = { 0 };
+  std::vector<oid_t> column_ids = { 0 };
   planner::SeqScanNode seq_scan_node(
       table,
       predicate,

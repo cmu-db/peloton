@@ -25,7 +25,7 @@ namespace storage {
 
 // Get the value of a specified column (const)
 // (expensive) checks the schema to see how to return the Value.
-const Value Tuple::GetValue(const id_t column_id) const {
+const Value Tuple::GetValue(const oid_t column_id) const {
   assert(tuple_schema);
   assert(tuple_data);
 
@@ -38,7 +38,7 @@ const Value Tuple::GetValue(const id_t column_id) const {
 }
 
 // Set scalars by value and uninlined columns by reference into this tuple.
-void Tuple::SetValue(const id_t column_id, Value value) {
+void Tuple::SetValue(const oid_t column_id, Value value) {
   assert(tuple_schema);
   assert(tuple_data);
 
@@ -56,7 +56,7 @@ void Tuple::SetValue(const id_t column_id, Value value) {
 }
 
 // Set all columns by value into this tuple.
-void Tuple::SetValueAllocate(const id_t column_id,
+void Tuple::SetValueAllocate(const oid_t column_id,
                              Value value, Pool *dataPool) {
   assert(tuple_schema);
   assert(tuple_data);
@@ -81,7 +81,7 @@ void Tuple::Copy(const void *source, Pool *pool) {
   assert(tuple_data);
 
   const bool is_inlined = tuple_schema->IsInlined();
-  const id_t uninlineable_column_count = tuple_schema->GetUninlinedColumnCount();
+  const oid_t uninlineable_column_count = tuple_schema->GetUninlinedColumnCount();
 
   if (is_inlined) {
     // copy the data
@@ -91,8 +91,8 @@ void Tuple::Copy(const void *source, Pool *pool) {
     ::memcpy(tuple_data, source, tuple_schema->GetLength());
 
     // Copy each uninlined column doing an allocation for copies.
-    for (id_t column_itr = 0; column_itr < uninlineable_column_count; column_itr++) {
-      const id_t unlineable_column_id =
+    for (oid_t column_itr = 0; column_itr < uninlineable_column_count; column_itr++) {
+      const oid_t unlineable_column_id =
           tuple_schema->GetUninlinedColumnIndex(column_itr);
 
       // Get original value from uninlined pool
@@ -364,13 +364,13 @@ size_t Tuple::HashCode() const {
   return HashCode(seed);
 }
 
-char* Tuple::GetDataPtr(const id_t column_id) {
+char* Tuple::GetDataPtr(const oid_t column_id) {
   assert(tuple_schema);
   assert(tuple_data);
   return &tuple_data[tuple_schema->GetOffset(column_id)];
 }
 
-const char* Tuple::GetDataPtr(const id_t column_id) const {
+const char* Tuple::GetDataPtr(const oid_t column_id) const {
   assert(tuple_schema);
   assert(tuple_data);
   return &tuple_data[tuple_schema->GetOffset(column_id)];
@@ -395,8 +395,8 @@ class TupleEqualityChecker {
 std::string Tuple::GetInfo() const {
   std::stringstream os;
 
-  id_t column_count = GetColumnCount();
-  for (id_t column_itr = 0; column_itr < column_count; column_itr++) {
+  oid_t column_count = GetColumnCount();
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     os << "(";
     if (IsNull(column_itr)) {
       os << "<NULL>";

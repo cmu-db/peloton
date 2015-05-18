@@ -22,7 +22,7 @@ class UpdateNode : public AbstractPlanNode {
   UpdateNode& operator=(UpdateNode &&) = delete;
 
   explicit UpdateNode(storage::Table* table,
-                      const std::vector<id_t>& column_ids,
+                      const std::vector<oid_t>& column_ids,
                       const std::vector<Value>& values)
     : target_table_(table),
       column_ids(column_ids),
@@ -42,7 +42,7 @@ class UpdateNode : public AbstractPlanNode {
     return target_table_->GetName();
   }
 
-  const std::vector<id_t>& GetUpdatedColumns() const {
+  const std::vector<oid_t>& GetUpdatedColumns() const {
     return column_ids;
   }
 
@@ -56,7 +56,7 @@ class UpdateNode : public AbstractPlanNode {
   storage::Table *target_table_;
 
   /** @brief Columns altered by update */
-  const std::vector<id_t>& column_ids;
+  const std::vector<oid_t>& column_ids;
 
   /** @brief Values of columns altered by update */
   const std::vector<Value>& values;

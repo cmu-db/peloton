@@ -62,18 +62,18 @@ class Transaction {
   }
 
   // record inserted tuple
-  void RecordInsert(const storage::TileGroup* tile, id_t offset);
+  void RecordInsert(const storage::TileGroup* tile, oid_t offset);
 
   // record deleted tuple
-  void RecordDelete(const storage::TileGroup* tile, id_t offset);
+  void RecordDelete(const storage::TileGroup* tile, oid_t offset);
 
   bool HasInsertedTuples(const storage::TileGroup* tile) const;
 
   bool HasDeletedTuples(const storage::TileGroup* tile) const;
 
-  const std::map<const storage::TileGroup*, std::vector<id_t> >& GetInsertedTuples();
+  const std::map<const storage::TileGroup*, std::vector<oid_t> >& GetInsertedTuples();
 
-  const std::map<const storage::TileGroup*, std::vector<id_t> >& GetDeletedTuples();
+  const std::map<const storage::TileGroup*, std::vector<oid_t> >& GetDeletedTuples();
 
   // maintain reference counts for transactions
   void IncrementRefCount();
@@ -108,10 +108,10 @@ class Transaction {
   Transaction* next __attribute__((aligned(16)));
 
   // inserted tuples in each tile
-  std::map<const storage::TileGroup*, std::vector<id_t> > inserted_tuples;
+  std::map<const storage::TileGroup*, std::vector<oid_t> > inserted_tuples;
 
   // deleted tuples in each tile
-  std::map<const storage::TileGroup*, std::vector<id_t> > deleted_tuples;
+  std::map<const storage::TileGroup*, std::vector<oid_t> > deleted_tuples;
 
   // synch helpers
   std::mutex txn_mutex;

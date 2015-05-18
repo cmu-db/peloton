@@ -44,7 +44,7 @@ void AddTileGroup(){
 
   storage::Backend *backend = new storage::VMBackend();
 
-  for(id_t txn_itr = 0 ; txn_itr < 100 ; txn_itr++) {
+  for(oid_t txn_itr = 0 ; txn_itr < 100 ; txn_itr++) {
     storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
                                                                              nullptr, backend, schemas, 3);
 

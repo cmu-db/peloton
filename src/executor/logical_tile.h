@@ -41,16 +41,16 @@ class LogicalTile {
   void AddColumn(
       storage::Tile *base_tile,
       bool own_base_tile,
-      id_t origin_column_id,
-      id_t position_list_idx);
+      oid_t origin_column_id,
+      oid_t position_list_idx);
 
-  int AddPositionList(std::vector<id_t> &&position_list);
+  int AddPositionList(std::vector<oid_t> &&position_list);
 
-  void InvalidateTuple(id_t tuple_id);
+  void InvalidateTuple(oid_t tuple_id);
 
-  storage::Tile *GetBaseTile(id_t column_id);
+  storage::Tile *GetBaseTile(oid_t column_id);
 
-  Value GetValue(id_t tuple_id, id_t column_id);
+  Value GetValue(oid_t tuple_id, oid_t column_id);
 
   size_t NumTuples();
 
@@ -61,7 +61,7 @@ class LogicalTile {
    *
    * This provides easy access to tuples that have not been invalidated.
    */
-  class iterator : public std::iterator<std::input_iterator_tag, id_t> {
+  class iterator : public std::iterator<std::input_iterator_tag, oid_t> {
     // It's a friend so it can call this iterator's private constructor.
     friend class LogicalTile;
 
@@ -74,13 +74,13 @@ class LogicalTile {
 
     bool operator!=(const iterator &rhs);
 
-    id_t operator*();
+    oid_t operator*();
 
    private:
     iterator(LogicalTile *tile, bool begin);
 
     /** @brief Keeps track of position of iterator. */
-    id_t pos_;
+    oid_t pos_;
 
     /** @brief Tile that this iterator is iterating over. */
     LogicalTile *tile_;
@@ -97,7 +97,7 @@ class LogicalTile {
   /** @brief Column metadata for logical tile */
   struct ColumnInfo {
     /** @brief Position list in logical tile that will correspond to this column. */
-    id_t position_list_idx;
+    oid_t position_list_idx;
 
     /**
      * @brief Pointer to base tile that column is from.
@@ -106,7 +106,7 @@ class LogicalTile {
     storage::Tile *base_tile;
 
     /** @brief Original column id of this logical tile column in its associated base tile. */
-    id_t origin_column_id;
+    oid_t origin_column_id;
   };
 
   LogicalTile(){};
@@ -121,7 +121,7 @@ class LogicalTile {
    * @brief Lists of position lists.
    * Each list contains positions corresponding to particular tiles/columns.
    */
-  std::vector<std::vector<id_t> > position_lists_;
+  std::vector<std::vector<oid_t> > position_lists_;
 
   /**
    * @brief Bit-vector storing validity of each row in the position lists.
@@ -130,7 +130,7 @@ class LogicalTile {
   std::vector<bool> valid_rows_;
 
   /** @brief Keeps track of the number of tuples that are still valid. */
-  id_t num_tuples_ = 0;
+  oid_t num_tuples_ = 0;
 
   /** @brief Set of base tiles owned (memory-wise) by this logical tile. */
   std::unordered_set<storage::Tile *> owned_base_tiles_;

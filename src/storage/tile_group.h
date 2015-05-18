@@ -70,31 +70,31 @@ class TileGroup {
   //===--------------------------------------------------------------------===//
 
   // insert tuple at next available slot in tile if a slot exists
-  id_t InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
+  oid_t InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
 
   // reclaim tuple at given slot
-  void ReclaimTuple(id_t tuple_slot_id);
+  void ReclaimTuple(oid_t tuple_slot_id);
 
   // returns tuple at given slot in tile if it exists
-  Tuple* SelectTuple(id_t tile_offset, id_t tuple_slot_id);
+  Tuple* SelectTuple(oid_t tile_offset, oid_t tuple_slot_id);
 
   // returns tuple at given slot if it exists
-  Tuple *SelectTuple(id_t tuple_slot_id);
+  Tuple *SelectTuple(oid_t tuple_slot_id);
 
   // delete tuple at given slot if it is not already locked
-  bool DeleteTuple(txn_id_t transaction_id, id_t tuple_slot_id);
+  bool DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id);
 
   // commit the inserted tuple
-  bool CommitInsertedTuple(id_t tuple_slot_id, cid_t commit_id);
+  bool CommitInsertedTuple(oid_t tuple_slot_id, cid_t commit_id);
 
   // commit the deleted tuple
-  bool CommitDeletedTuple(id_t tuple_slot_id, txn_id_t transaction_id, cid_t commit_id);
+  bool CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id, cid_t commit_id);
 
   // abort the inserted tuple
-  bool AbortInsertedTuple(id_t tuple_slot_id);
+  bool AbortInsertedTuple(oid_t tuple_slot_id);
 
   // abort the deleted tuple
-  bool AbortDeletedTuple(id_t tuple_slot_id);
+  bool AbortDeletedTuple(oid_t tuple_slot_id);
 
   //===--------------------------------------------------------------------===//
   // Utilities
@@ -103,15 +103,15 @@ class TileGroup {
   // Get a string representation of this tile group
   friend std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group);
 
-  id_t GetNextTupleSlot() const {
+  oid_t GetNextTupleSlot() const {
     return tile_group_header->GetNextTupleSlot();
   }
 
-  id_t GetActiveTupleCount() const {
+  oid_t GetActiveTupleCount() const {
     return tile_group_header->GetActiveTupleCount();
   }
 
-  id_t GetAllocatedTupleCount() const {
+  oid_t GetAllocatedTupleCount() const {
     return num_tuple_slots;
   }
 
@@ -124,14 +124,14 @@ class TileGroup {
   }
 
   // Get the tile at given offset in the tile group
-  Tile *GetTile(const id_t tile_itr) const;
+  Tile *GetTile(const oid_t tile_itr) const;
 
-  id_t GetTileId(const id_t tile_id) const {
+  oid_t GetTileId(const oid_t tile_id) const {
     assert(tiles[tile_id]);
     return tiles[tile_id]->GetTileId();
   }
 
-  Pool *GetTilePool(const id_t tile_id) const {
+  Pool *GetTilePool(const oid_t tile_id) const {
     Tile *tile = GetTile(tile_id);
 
     if(tile != nullptr)
@@ -140,11 +140,11 @@ class TileGroup {
     return nullptr;
   }
 
-  id_t GetTileGroupId() const {
+  oid_t GetTileGroupId() const {
     return tile_group_id;
   }
 
-  void SetTileGroupId(id_t tile_group_id_) {
+  void SetTileGroupId(oid_t tile_group_id_) {
     tile_group_id = tile_group_id_;
   }
 
@@ -160,13 +160,13 @@ class TileGroup {
     return tile_count;
   }
 
-  void LocateTileAndColumn(id_t column_id, id_t &tile_offset, id_t &tile_column_id);
+  void LocateTileAndColumn(oid_t column_id, oid_t &tile_offset, oid_t &tile_column_id);
 
-  id_t GetTileIdFromColumnId(id_t column_id);
+  oid_t GetTileIdFromColumnId(oid_t column_id);
 
-  id_t GetTileColumnId(id_t column_id);
+  oid_t GetTileColumnId(oid_t column_id);
 
-  Value GetValue(id_t tuple_id, id_t column_id);
+  Value GetValue(oid_t tuple_id, oid_t column_id);
 
  protected:
 
@@ -175,9 +175,9 @@ class TileGroup {
   //===--------------------------------------------------------------------===//
 
   // Catalog information
-  id_t database_id;
-  id_t table_id;
-  id_t tile_group_id;
+  oid_t database_id;
+  oid_t table_id;
+  oid_t tile_group_id;
 
   // backend
   Backend* backend;
@@ -195,10 +195,10 @@ class TileGroup {
   Table* table;
 
   // number of tuple slots allocated
-  id_t num_tuple_slots;
+  oid_t num_tuple_slots;
 
   // number of tiles
-  id_t tile_count;
+  oid_t tile_count;
 
   std::mutex tile_group_mutex;
 };
