@@ -94,9 +94,13 @@ bool UpdateExecutor::DExecute() {
     ItemPointer location = target_table->InsertTuple(txn_id, tuple, update_mode);
     if(location.block == INVALID_OID) {
       context_->Abort();
+      tuple->FreeUninlinedData();
+      delete tuple;
       return false;
     }
     context_->RecordInsert(location);
+    tuple->FreeUninlinedData();
+    delete tuple;
 
     // (C) set back pointer in tile group header of updated tuple
     auto updated_tile_group = static_cast<storage::TileGroup*>(location.location);

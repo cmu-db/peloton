@@ -78,16 +78,19 @@ TEST(SchedulerTests, KernelTest) {
                                               " PRIMARY KEY (s_id, ait_type),"
                                               " FOREIGN KEY (sx_id) REFERENCES SUBSCRIBER (s_id)"
                                               " );"
-                                              "CREATE INDEX T_INDEX ON T (T_ID, DESCRIPTION);"
-                                              "CREATE INDEX T_INDEX_2 ON T (DETION);"
-                                              "CREATE INDEX XYZ_INDEX ON T ( DESCRIPTION );"
-                                              "DROP INDEX T_INDEX ON T;"
                                               "DROP TABLE ACCESS_INFO;"
                                               "CREATE DATABASE X;"
                                               "DROP DATABASE X;"
                                               "DROP TABLE T;"
                                               "DROP TABLE T;"
                                               );
+
+  /*
+  "CREATE INDEX T_INDEX ON T (T_ID, DESCRIPTION);"
+  "CREATE INDEX T_INDEX_2 ON T (DETION);"
+  "CREATE INDEX XYZ_INDEX ON T ( DESCRIPTION );"
+  "DROP INDEX T_INDEX ON T;"
+  */
 
   // final wait
   scheduler::Scheduler::GetInstance().Wait();
