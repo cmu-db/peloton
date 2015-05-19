@@ -13,7 +13,6 @@
 #include "executor/delete_executor.h"
 
 #include "catalog/manager.h"
-#include "common/context.h"
 #include "common/logger.h"
 #include "executor/logical_tile.h"
 #include "planner/delete_node.h"
@@ -26,7 +25,7 @@ namespace executor {
  * @param node Delete node corresponding to this executor.
  */
 DeleteExecutor::DeleteExecutor(planner::AbstractPlanNode *node,
-                               Context *context)
+                               Transaction *context)
 : AbstractExecutor(node, context){
 }
 
@@ -76,7 +75,9 @@ bool DeleteExecutor::DExecute() {
     // this might fail due to a concurrent operation that has latched the tuple
     bool status = tile_group->DeleteTuple(txn_id, tuple_id);
     if(status == false) {
-      context_->Abort();
+      auto& txn_manager = TransactionManager::GetInstance();
+      txn_manager.AbortTransaction(context_);
+
       return false;
     }
     context_->RecordDelete(ItemPointer(tile_group_id, tuple_id));

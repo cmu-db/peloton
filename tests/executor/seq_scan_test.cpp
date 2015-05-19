@@ -15,6 +15,7 @@
 #include "common/types.h"
 #include "common/value.h"
 #include "common/value_factory.h"
+#include "common/transaction.h"
 #include "executor/abstract_executor.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
@@ -234,8 +235,10 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
       CreatePredicate(g_tuple_ids),
       column_ids);
 
-  Context context = GetNextContext();
-  executor::SeqScanExecutor executor(&node, &context);
+  auto& txn_manager = TransactionManager::GetInstance();
+  auto context = txn_manager.BeginTransaction();
+
+  executor::SeqScanExecutor executor(&node, context);
   RunTest(executor, table->GetTileGroupCount(), column_ids.size());
 }
 
@@ -254,8 +257,9 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
       column_ids);
 
   // Set up executor and its child.
-  Context context = GetNextContext();
-  executor::SeqScanExecutor executor(&node, &context);
+  auto& txn_manager = TransactionManager::GetInstance();
+  auto context = txn_manager.BeginTransaction();
+  executor::SeqScanExecutor executor(&node, context);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 

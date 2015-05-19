@@ -6,20 +6,19 @@
 
 check_PROGRAMS += catalog_test \
 				  manager_test \
-				  tuple_schema_test \
-				  transaction_test
+				  tuple_schema_test
 
 catalog_tests_common_ld = \
-					 $(obj_DIR)/catalog/manager.o \
-					 $(obj_DIR)/catalog/schema.o \
-					 $(obj_DIR)/common/types.o \
-					 $(obj_DIR)/common/value.o \
-					 $(obj_DIR)/common/varlen.o \
-					 $(obj_DIR)/common/pool.o \
-					 $(obj_DIR)/storage/tile_group.o \
-					 $(obj_DIR)/storage/tile_group_header.o \
-					 $(obj_DIR)/storage/tile.o \
-					 $(obj_DIR)/storage/tuple.o
+						  $(obj_DIR)/catalog/manager.o \
+						  $(obj_DIR)/catalog/schema.o \
+						  $(obj_DIR)/common/types.o \
+						  $(obj_DIR)/common/value.o \
+						  $(obj_DIR)/common/varlen.o \
+						  $(obj_DIR)/common/pool.o \
+						  $(obj_DIR)/storage/tile_group.o \
+						  $(obj_DIR)/storage/tile_group_header.o \
+						  $(obj_DIR)/storage/tile.o \
+						  $(obj_DIR)/storage/tuple.o
 
 catalog_test_SOURCES = \
 					   catalog/catalog_test.cpp
@@ -36,12 +35,3 @@ tuple_schema_test_SOURCES = catalog/tuple_schema_test.cpp
 tuple_schema_test_LDADD = \
 						  $(obj_DIR)/catalog/schema.o \
 						  $(obj_DIR)/common/types.o
-
-transaction_test_SOURCES = \
-						   catalog/transaction_test.cpp \
-						   harness.cpp
-
-transaction_test_LDADD = \
-					 	 $(catalog_tests_common_ld) \
-					 	 $(obj_DIR)/catalog/transaction.o
-

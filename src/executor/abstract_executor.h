@@ -10,7 +10,7 @@
 #include <memory>
 #include <vector>
 
-#include "common/context.h"
+#include "common/transaction.h"
 #include "executor/logical_tile.h"
 #include "planner/abstract_plan_node.h"
 
@@ -47,7 +47,7 @@ class AbstractExecutor {
 
  protected:
   explicit AbstractExecutor(planner::AbstractPlanNode *node);
-  explicit AbstractExecutor(planner::AbstractPlanNode *node, Context *context);
+  explicit AbstractExecutor(planner::AbstractPlanNode *node, Transaction *context);
 
   /** @brief Init function to be overriden by derived class. */
   virtual bool DInit() = 0;
@@ -72,8 +72,8 @@ class AbstractExecutor {
   /** @brief Children nodes of this executor in the executor tree. */
   std::vector<AbstractExecutor*> children_;
 
-  // Executor context
-  Context *context_ = nullptr;
+  // Transaction context
+  Transaction *context_ = nullptr;
 
  private:
 
