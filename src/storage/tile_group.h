@@ -84,17 +84,21 @@ class TileGroup {
   // delete tuple at given slot if it is not already locked
   bool DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id);
 
+  //===--------------------------------------------------------------------===//
+  // Transaction Processing
+  //===--------------------------------------------------------------------===//
+
   // commit the inserted tuple
-  bool CommitInsertedTuple(oid_t tuple_slot_id, cid_t commit_id);
+  void CommitInsertedTuple(oid_t tuple_slot_id, cid_t commit_id);
 
   // commit the deleted tuple
-  bool CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id, cid_t commit_id);
+  void CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id, cid_t commit_id);
 
   // abort the inserted tuple
-  bool AbortInsertedTuple(oid_t tuple_slot_id);
+  void AbortInsertedTuple(oid_t tuple_slot_id);
 
   // abort the deleted tuple
-  bool AbortDeletedTuple(oid_t tuple_slot_id);
+  void AbortDeletedTuple(oid_t tuple_slot_id);
 
   //===--------------------------------------------------------------------===//
   // Utilities
