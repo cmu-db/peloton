@@ -82,7 +82,7 @@ void UpdateTuple(storage::Table *table){
 
   // Update
 
-  std::vector<oid_t> update_column_ids = { 1 };
+  std::vector<oid_t> update_column_ids = { 2 };
   std::vector<Value> values;
   Value update_val = ValueFactory::GetDoubleValue(23.5);
   values.push_back(update_val);
@@ -92,13 +92,13 @@ void UpdateTuple(storage::Table *table){
 
   // Predicate
 
-  // WHERE ATTR_0 > 40
+  // WHERE ATTR_0 < 60
   expression::TupleValueExpression *tup_val_exp =
       new expression::TupleValueExpression(0, std::string("tablename"), std::string("colname"));
   expression::ConstantValueExpression *const_val_exp =
-      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(10));
+      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(60));
   auto predicate =
-      new expression::ComparisonExpression<expression::CmpGt>(EXPRESSION_TYPE_COMPARE_EQ, tup_val_exp, const_val_exp);
+      new expression::ComparisonExpression<expression::CmpLt>(EXPRESSION_TYPE_COMPARE_LT, tup_val_exp, const_val_exp);
 
   // Seq scan
   std::vector<oid_t> column_ids = { 0 };
@@ -128,13 +128,13 @@ void DeleteTuple(storage::Table *table){
 
   // Predicate
 
-  // WHERE ATTR_0 > 40
+  // WHERE ATTR_0 < 90
   expression::TupleValueExpression *tup_val_exp =
       new expression::TupleValueExpression(0, std::string("tablename"), std::string("colname"));
   expression::ConstantValueExpression *const_val_exp =
-      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(40));
+      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(90));
   auto predicate =
-      new expression::ComparisonExpression<expression::CmpGt>(EXPRESSION_TYPE_COMPARE_EQ, tup_val_exp, const_val_exp);
+      new expression::ComparisonExpression<expression::CmpLt>(EXPRESSION_TYPE_COMPARE_LT, tup_val_exp, const_val_exp);
 
   // Seq scan
   std::vector<oid_t> column_ids = { 0 };

@@ -24,9 +24,7 @@ bool Context::Commit(){
     storage::TileGroup *tile_group = static_cast<storage::TileGroup *>(manager.locator[slot.block]);
     assert(tile_group);
 
-    bool status = tile_group->CommitInsertedTuple(slot.offset, local_commit_id);
-    if(status == false)
-      return false;
+    tile_group->CommitInsertedTuple(slot.offset, local_commit_id);
   }
 
   // deleted slots
@@ -34,9 +32,7 @@ bool Context::Commit(){
     storage::TileGroup *tile_group = static_cast<storage::TileGroup *>(manager.locator[slot.block]);
     assert(tile_group);
 
-    bool status = tile_group->CommitDeletedTuple(slot.offset, txn_id, local_commit_id);
-    if(status == false)
-      return false;
+    tile_group->CommitDeletedTuple(slot.offset, txn_id, local_commit_id);
   }
 
   return true;
@@ -51,9 +47,7 @@ bool Context::Abort(){
     storage::TileGroup *tile_group = static_cast<storage::TileGroup *>(manager.locator[slot.block]);
     assert(tile_group);
 
-    bool status = tile_group->AbortInsertedTuple(slot.offset);
-    if(status == false)
-      return false;
+    tile_group->AbortInsertedTuple(slot.offset);
   }
 
   // deleted slots
@@ -61,9 +55,7 @@ bool Context::Abort(){
     storage::TileGroup *tile_group = static_cast<storage::TileGroup *>(manager.locator[slot.block]);
     assert(tile_group);
 
-    bool status = tile_group->AbortDeletedTuple(slot.offset);
-    if(status == false)
-      return false;
+    tile_group->AbortDeletedTuple(slot.offset);
   }
 
   return true;
