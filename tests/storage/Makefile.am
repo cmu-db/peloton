@@ -36,6 +36,7 @@ tile_group_test_SOURCES = \
 tile_group_test_LDADD = \
 						$(storage_tests_common_ld) \
 						$(obj_DIR)/catalog/manager.o \
+						$(obj_DIR)/common/transaction.o \
 						$(obj_DIR)/storage/tile.o \
 						$(obj_DIR)/storage/tile_group.o \
 						$(obj_DIR)/storage/tile_group_header.o 

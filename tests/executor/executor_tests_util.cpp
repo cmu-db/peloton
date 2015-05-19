@@ -152,9 +152,11 @@ void ExecutorTestsUtil::PopulateTiles(
   assert(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
+  auto& txn_manager = TransactionManager::GetInstance();
   const bool allocate = true;
-  const txn_id_t txn_id = GetNextTransactionId();
-  const cid_t commit_id = GetNextCommitId();
+  auto txn = txn_manager.BeginTransaction();
+  const txn_id_t txn_id = txn->GetTransactionId();
+  const cid_t commit_id = txn->GetCommitId();
 
   for (int i = 0; i < num_rows; i++) {
     storage::Tuple tuple(schema.get(), allocate);

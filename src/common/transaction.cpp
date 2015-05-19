@@ -10,7 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "catalog/transaction.h"
+#include "common/transaction.h"
 #include "common/synch.h"
 #include "common/logger.h"
 
@@ -19,24 +19,21 @@
 #include <iomanip>
 
 namespace nstore {
-namespace catalog {
 
 //===--------------------------------------------------------------------===//
 // Transaction
 //===--------------------------------------------------------------------===//
 
-void Transaction::RecordInsert(storage::TileGroup* tile_group, oid_t offset) {
-  {
-    std::lock_guard<std::mutex> insert_lock(txn_mutex);
-    inserted_tuples[tile_group].push_back(offset);
-  }
+void Transaction::RecordInsert(ItemPointer location) {
+  auto& manager = catalog::Manager::GetInstance();
+  storage::TileGroup *tile_group = static_cast<storage::TileGroup *>(manager.locator[location.block]);
+  inserted_tuples[tile_group].push_back(location.offset);
 }
 
-void Transaction::RecordDelete(storage::TileGroup* tile_group, oid_t offset) {
-  {
-    std::lock_guard<std::mutex> delete_lock(txn_mutex);
-    deleted_tuples[tile_group].push_back(offset);
-  }
+void Transaction::RecordDelete(ItemPointer location) {
+  auto& manager = catalog::Manager::GetInstance();
+  storage::TileGroup *tile_group = static_cast<storage::TileGroup *>(manager.locator[location.block]);
+  deleted_tuples[tile_group].push_back(location.offset);
 }
 
 bool Transaction::HasInsertedTuples(storage::TileGroup* tile_group) const {
@@ -227,6 +224,7 @@ void TransactionManager::CommitPendingTransactions(std::vector<Transaction *>& p
 
 std::vector<Transaction*> TransactionManager::EndCommitPhase(Transaction * txn, bool sync){
   std::vector<Transaction *> txn_list;
+  auto& txn_mgr = GetInstance();
 
   // try to increment last commit id
   if (atomic_cas(&last_cid, txn->cid - 1, txn->cid)) {
@@ -235,7 +233,7 @@ std::vector<Transaction*> TransactionManager::EndCommitPhase(Transaction * txn, 
 
     // everything went fine and the txn was committed
     // if that worked, commit all pending transactions
-    CommitPendingTransactions(txn_list, txn);
+    txn_mgr.CommitPendingTransactions(txn_list, txn);
 
   }
   // it did not work, so add to waiting list
@@ -254,12 +252,12 @@ std::vector<Transaction*> TransactionManager::EndCommitPhase(Transaction * txn, 
       // it worked on the second try
       txn->waiting_to_commit = false;
 
-      CommitPendingTransactions(txn_list, txn);
+      txn_mgr.CommitPendingTransactions(txn_list, txn);
     }
   }
 
   // clear txn entry in txn table
-  EndTransaction(txn, sync);
+  txn_mgr.EndTransaction(txn, sync);
 
   return std::move(txn_list);
 }
@@ -349,6 +347,4 @@ void TransactionManager::AbortTransaction(Transaction *txn){
   // XXX LOG :: record abort entry
 }
 
-
-} // End catalog namespace
 } // End nstore namespace
