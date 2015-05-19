@@ -16,6 +16,7 @@
 #include "executor/logical_tile.h"
 #include "planner/update_node.h"
 #include "common/logger.h"
+#include "common/transaction.h"
 
 namespace nstore {
 namespace executor {
@@ -25,7 +26,7 @@ namespace executor {
  * @param node Update node corresponding to this executor.
  */
 UpdateExecutor::UpdateExecutor(planner::AbstractPlanNode *node,
-                               Context *context)
+                               Transaction *context)
 : AbstractExecutor(node, context) {
 }
 
@@ -74,7 +75,8 @@ bool UpdateExecutor::DExecute() {
     // this might fail due to a concurrent operation that has latched the tuple
     bool status = tile_group->DeleteTuple(txn_id, tuple_id);
     if(status == false) {
-      context_->Abort();
+      auto& txn_manager = TransactionManager::GetInstance();
+      txn_manager.AbortTransaction(context_);
       return false;
     }
     context_->RecordDelete(ItemPointer(tile_group_id, tuple_id));
@@ -93,7 +95,9 @@ bool UpdateExecutor::DExecute() {
     bool update_mode = true;
     ItemPointer location = target_table->InsertTuple(txn_id, tuple, update_mode);
     if(location.block == INVALID_OID) {
-      context_->Abort();
+      auto& txn_manager = TransactionManager::GetInstance();
+      txn_manager.AbortTransaction(context_);
+
       tuple->FreeUninlinedData();
       delete tuple;
       return false;

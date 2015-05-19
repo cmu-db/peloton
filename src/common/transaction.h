@@ -22,7 +22,6 @@
 #include "common/exception.h"
 
 namespace nstore {
-namespace catalog {
 
 #define BASE_REF_COUNT 1
 
@@ -67,11 +66,23 @@ class Transaction {
   // Mutators and Accessors
   //===--------------------------------------------------------------------===//
 
+  inline txn_id_t GetTransactionId() const{
+    return txn_id;
+  }
+
+  inline cid_t GetCommitId() const{
+    return cid;
+  }
+
+  inline cid_t GetLastCommitId() const{
+    return last_cid;
+  }
+
   // record inserted tuple
-  void RecordInsert(storage::TileGroup* tile_group, oid_t offset);
+  void RecordInsert(ItemPointer location);
 
   // record deleted tuple
-  void RecordDelete(storage::TileGroup* tile_group, oid_t offset);
+  void RecordDelete(ItemPointer location);
 
   // check if it has inserted any tuples in given tile group
   bool HasInsertedTuples(storage::TileGroup* tile_group) const;
@@ -227,6 +238,4 @@ class TransactionManager {
   std::mutex txn_manager_mutex;
 };
 
-
-} // End catalog namespace
 } // End nstore namespace

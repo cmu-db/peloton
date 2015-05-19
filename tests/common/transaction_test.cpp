@@ -13,7 +13,7 @@
 #include "gtest/gtest.h"
 
 #include "harness.h"
-#include "catalog/transaction.h"
+#include "common/transaction.h"
 
 namespace nstore {
 namespace test {
@@ -22,9 +22,9 @@ namespace test {
 // Transaction Tests
 //===--------------------------------------------------------------------===//
 
-void TransactionTest(catalog::TransactionManager *txn_manager){
+void TransactionTest(TransactionManager *txn_manager){
 
-  catalog::Transaction *txn1, *txn2, *txn3;
+  Transaction *txn1, *txn2, *txn3;
 
   uint64_t thread_id = GetThreadId();
 
@@ -52,7 +52,7 @@ void TransactionTest(catalog::TransactionManager *txn_manager){
 
 TEST(TransactionTests, TransactionTest) {
 
-  auto& txn_manager = catalog::TransactionManager::GetInstance();
+  auto& txn_manager = TransactionManager::GetInstance();
 
   LaunchParallelTest(4, TransactionTest, &txn_manager);
 

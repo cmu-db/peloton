@@ -24,7 +24,7 @@ namespace executor {
  * @param node Insert node corresponding to this executor.
  */
 InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
-                               Context *context)
+                               Transaction *context)
 : AbstractExecutor(node, context) {
 }
 
@@ -54,7 +54,8 @@ bool InsertExecutor::DExecute() {
   for(auto tuple : tuples) {
     ItemPointer location = target_table->InsertTuple(context_->GetTransactionId(), tuple);
     if(location.block == INVALID_OID) {
-      context_->Abort();
+      auto& txn_manager = TransactionManager::GetInstance();
+      txn_manager.AbortTransaction(context_);
       return false;
     }
     context_->RecordInsert(location);

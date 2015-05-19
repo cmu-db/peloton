@@ -7,7 +7,6 @@
 catalog_FILES = \
 				catalog/catalog.cpp \
 				catalog/schema.cpp \
-				catalog/transaction.cpp \
 				catalog/manager.cpp \
 				catalog/constraint.cpp \
 				catalog/index.cpp \

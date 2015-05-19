@@ -12,6 +12,7 @@
 
 #include "gtest/gtest.h"
 
+#include "common/transaction.h"
 #include "storage/tile_group.h"
 #include "harness.h"
 
@@ -87,7 +88,9 @@ TEST(TileGroupTests, BasicTest) {
 
 	// TRANSACTION
 
-	txn_id_t txn_id = GetNextTransactionId();
+  auto& txn_manager = TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+	txn_id_t txn_id = txn->GetTransactionId();
 
 	EXPECT_EQ(0, tile_group->GetActiveTupleCount());
 
@@ -123,7 +126,9 @@ void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema){
 	uint64_t thread_id = GetThreadId();
 
 	storage::Tuple *tuple = new storage::Tuple(schema, true);
-	txn_id_t txn_id = GetNextTransactionId();
+  auto& txn_manager = TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+  txn_id_t txn_id = txn->GetTransactionId();
 
 	tuple->SetValue(0, ValueFactory::GetIntegerValue(1));
 	tuple->SetValue(1, ValueFactory::GetIntegerValue(1));
@@ -247,9 +252,10 @@ TEST(TileGroupTests, MVCCInsert) {
 
 	oid_t tuple_slot_id = INVALID_OID;
 
-	txn_id_t txn_id1 = GetNextTransactionId();
-	cid_t cid1 = GetNextCommitId();
-	cid_t cid2 = GetNextCommitId();
+	auto& txn_manager = TransactionManager::GetInstance();
+	auto txn = txn_manager.BeginTransaction();
+  txn_id_t txn_id1 = txn->GetTransactionId();
+	cid_t cid1 = txn->GetLastCommitId();
 
 	tuple->SetValue(2, ValueFactory::GetIntegerValue(0));
 	tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple);
@@ -286,9 +292,15 @@ TEST(TileGroupTests, MVCCInsert) {
 	EXPECT_NE(result, nullptr);
 	delete result;
 
+	txn_manager.CommitTransaction(txn);
+
 	// DELETE
+  auto txn2 = txn_manager.BeginTransaction();
+  cid_t cid2 = txn2->GetLastCommitId();
 
 	tile_group->DeleteTuple(cid2, 2);
+
+  txn_manager.CommitTransaction(txn2);
 
 	delete tuple;
 	delete schema;

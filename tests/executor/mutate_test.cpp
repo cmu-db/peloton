@@ -54,8 +54,10 @@ std::atomic<int> delete_tuple_id;
 
 void InsertTuple(storage::Table *table){
 
+  auto& txn_manager = TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
   std::vector<storage::Tuple *> tuples;
-  Context context = GetNextContext();
 
   for(int tuple_itr = 0 ; tuple_itr < 10 ; tuple_itr++) {
     auto tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
@@ -64,7 +66,7 @@ void InsertTuple(storage::Table *table){
 
   // Bulk insert
   planner::InsertNode node(table, tuples);
-  executor::InsertExecutor executor(&node, &context);
+  executor::InsertExecutor executor(&node, txn);
   executor.Execute();
 
   for(auto tuple : tuples) {
@@ -72,12 +74,14 @@ void InsertTuple(storage::Table *table){
     delete tuple;
   }
 
-  context.Commit();
+  txn_manager.CommitTransaction(txn);
 }
 
 void UpdateTuple(storage::Table *table){
 
-  Context context = GetNextContext();
+  auto& txn_manager = TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
   std::vector<storage::Tuple *> tuples;
 
   // Update
@@ -88,7 +92,7 @@ void UpdateTuple(storage::Table *table){
   values.push_back(update_val);
 
   planner::UpdateNode update_node(table, update_column_ids, values);
-  executor::UpdateExecutor update_executor(&update_node, &context);
+  executor::UpdateExecutor update_executor(&update_node, txn);
 
   // Predicate
 
@@ -106,7 +110,7 @@ void UpdateTuple(storage::Table *table){
       table,
       predicate,
       column_ids);
-  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, &context);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, txn);
 
   // Parent-Child relationship
   update_node.AddChild(&seq_scan_node);
@@ -114,17 +118,19 @@ void UpdateTuple(storage::Table *table){
 
   update_executor.Execute();
 
-  context.Commit();
+  txn_manager.CommitTransaction(txn);
 }
 
 void DeleteTuple(storage::Table *table){
 
-  Context context = GetNextContext();
+  auto& txn_manager = TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
   std::vector<storage::Tuple *> tuples;
 
   // Delete
   planner::DeleteNode delete_node(table, false);
-  executor::DeleteExecutor delete_executor(&delete_node, &context);
+  executor::DeleteExecutor delete_executor(&delete_node, txn);
 
   // Predicate
 
@@ -142,7 +148,7 @@ void DeleteTuple(storage::Table *table){
       table,
       predicate,
       column_ids);
-  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, &context);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, txn);
 
   // Parent-Child relationship
   delete_node.AddChild(&seq_scan_node);
@@ -150,24 +156,26 @@ void DeleteTuple(storage::Table *table){
 
   delete_executor.Execute();
 
-  context.Commit();
+  txn_manager.CommitTransaction(txn);
 }
 
 // Insert a tuple into a table
 TEST(InsertTests, BasicTests) {
 
+  auto& txn_manager = TransactionManager::GetInstance();
+  auto context = txn_manager.BeginTransaction();
+
   // Create insert node for this test.
   storage::Table *table = ExecutorTestsUtil::CreateTable();
 
   // Pass through insert executor.
-  Context context = GetNextContext();
   storage::Tuple *tuple;
   std::vector<storage::Tuple *> tuples;
 
   tuple = ExecutorTestsUtil::GetNullTuple(table);
   tuples.push_back(tuple);
   planner::InsertNode node(table, tuples);
-  executor::InsertExecutor executor(&node, &context);
+  executor::InsertExecutor executor(&node, context);
 
   try{
     executor.Execute();
@@ -183,7 +191,7 @@ TEST(InsertTests, BasicTests) {
   tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
   tuples.push_back(tuple);
   planner::InsertNode node2(table, tuples);
-  executor::InsertExecutor executor2(&node2, &context);
+  executor::InsertExecutor executor2(&node2, context);
   executor2.Execute();
 
   try{
@@ -197,7 +205,7 @@ TEST(InsertTests, BasicTests) {
   delete tuple;
   tuples.clear();
 
-  context.Commit();
+  txn_manager.CommitTransaction(context);
 
   LaunchParallelTest(1, InsertTuple, table);
   std::cout << (*table);
