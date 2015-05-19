@@ -165,39 +165,33 @@ bool TileGroup::DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id) {
   return false;
 }
 
-bool TileGroup::CommitInsertedTuple(oid_t tuple_slot_id, cid_t commit_id){
+void TileGroup::CommitInsertedTuple(oid_t tuple_slot_id, cid_t commit_id){
 
   // set the begin commit id to persist insert
   tile_group_header->SetBeginCommitId(tuple_slot_id, commit_id);
-
   tile_group_header->IncrementActiveTupleCount();
-  return true;
 }
 
-bool TileGroup::CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id, cid_t commit_id){
+void TileGroup::CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id, cid_t commit_id){
 
-  // compare and exchange the end commit id to persist delete
-  if (atomic_cas<txn_id_t>(tile_group_header->GetEndCommitIdLocation(tuple_slot_id),
-                           transaction_id, commit_id)) {
-    tile_group_header->DecrementActiveTupleCount();
-    return true;
-  }
+  // set the end commit id to persist delete
+  tile_group_header->SetEndCommitId(tuple_slot_id, commit_id);
+  tile_group_header->DecrementActiveTupleCount();
 
-  return false;
 }
 
-bool TileGroup::AbortInsertedTuple(oid_t tuple_slot_id){
+void TileGroup::AbortInsertedTuple(oid_t tuple_slot_id){
 
   // undo insert (we don't reset MVCC info currently)
   ReclaimTuple(tuple_slot_id);
-  return true;
+
 }
 
-bool TileGroup::AbortDeletedTuple(oid_t tuple_slot_id){
+void TileGroup::AbortDeletedTuple(oid_t tuple_slot_id){
 
   // undo deletion
   tile_group_header->SetEndCommitId(tuple_slot_id, MAX_CID);
-  return true;
+
 }
 
 // Sets the tile id and column id w.r.t that tile corresponding to

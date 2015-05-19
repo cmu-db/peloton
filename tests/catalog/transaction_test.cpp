@@ -28,7 +28,7 @@ void TransactionTest(catalog::TransactionManager *txn_manager){
 
   uint64_t thread_id = GetThreadId();
 
-  for(oid_t txn_itr = 1 ; txn_itr < 100 ; txn_itr++) {
+  for(oid_t txn_itr = 1 ; txn_itr <= 100 ; txn_itr++) {
     txn1 = txn_manager->BeginTransaction();
     txn2 = txn_manager->BeginTransaction();
     txn3 = txn_manager->BeginTransaction();
@@ -52,15 +52,13 @@ void TransactionTest(catalog::TransactionManager *txn_manager){
 
 TEST(TransactionTests, TransactionTest) {
 
-  catalog::TransactionManager *txn_manager = new catalog::TransactionManager();
+  auto& txn_manager = catalog::TransactionManager::GetInstance();
 
-  LaunchParallelTest(8, TransactionTest, txn_manager);
+  LaunchParallelTest(4, TransactionTest, &txn_manager);
 
-  std::cout << "Last Commit Id :: " << txn_manager->GetLastCommitId() << "\n";
+  std::cout << "Last Commit Id :: " << txn_manager.GetLastCommitId() << "\n";
 
-  std::cout << "Current transactions count :: " << txn_manager->GetCurrentTransactions().size() << "\n";
-
-  delete txn_manager;
+  std::cout << "Current transactions count :: " << txn_manager.GetCurrentTransactions().size() << "\n";
 }
 
 } // End test namespace
