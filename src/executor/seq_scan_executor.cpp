@@ -55,9 +55,9 @@ bool SeqScanExecutor::DExecute() {
 
   // Grab data from plan node.
   const planner::SeqScanNode &node = GetNode<planner::SeqScanNode>();
-  const storage::Table *table = node.table();
-  const expression::AbstractExpression *predicate = node.predicate();
-  const std::vector<oid_t> &column_ids = node.column_ids();
+  const storage::Table *table = node.GetTable();
+  const expression::AbstractExpression *predicate = node.GetPredicate();
+  const std::vector<oid_t> &column_ids = node.GetColumnIds();
 
   // We are scanning over a logical tile.
   if (children_.size() == 1) {
