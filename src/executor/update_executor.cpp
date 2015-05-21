@@ -45,7 +45,7 @@ bool UpdateExecutor::DInit() {
  */
 bool UpdateExecutor::DExecute() {
   assert(children_.size() == 1);
-  assert(context_);
+  assert(transaction_);
 
   // We are scanning over a logical tile.
   LOG_TRACE("Update executor :: 1 child \n");
@@ -60,7 +60,7 @@ bool UpdateExecutor::DExecute() {
   storage::TileGroup *tile_group = tile->GetTileGroup();
 
   auto tile_group_id = tile_group->GetTileGroupId();
-  auto txn_id = context_->GetTransactionId();
+  auto txn_id = transaction_->GetTransactionId();
   auto& manager = catalog::Manager::GetInstance();
 
   const planner::UpdateNode &node = GetNode<planner::UpdateNode>();
@@ -76,10 +76,10 @@ bool UpdateExecutor::DExecute() {
     bool status = tile_group->DeleteTuple(txn_id, tuple_id);
     if(status == false) {
       auto& txn_manager = TransactionManager::GetInstance();
-      txn_manager.AbortTransaction(context_);
+      txn_manager.AbortTransaction(transaction_);
       return false;
     }
-    context_->RecordDelete(ItemPointer(tile_group_id, tuple_id));
+    transaction_->RecordDelete(ItemPointer(tile_group_id, tuple_id));
 
     // (B) now, make a copy of the original tuple
     storage::Tuple *tuple = tile_group->SelectTuple(tuple_id);
@@ -96,13 +96,13 @@ bool UpdateExecutor::DExecute() {
     ItemPointer location = target_table->InsertTuple(txn_id, tuple, update_mode);
     if(location.block == INVALID_OID) {
       auto& txn_manager = TransactionManager::GetInstance();
-      txn_manager.AbortTransaction(context_);
+      txn_manager.AbortTransaction(transaction_);
 
       tuple->FreeUninlinedData();
       delete tuple;
       return false;
     }
-    context_->RecordInsert(location);
+    transaction_->RecordInsert(location);
     tuple->FreeUninlinedData();
     delete tuple;
 

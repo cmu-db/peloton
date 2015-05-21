@@ -236,10 +236,13 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
       column_ids);
 
   auto& txn_manager = TransactionManager::GetInstance();
-  auto context = txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
 
-  executor::SeqScanExecutor executor(&node, context);
+  executor::SeqScanExecutor executor(&node, txn);
   RunTest(executor, table->GetTileGroupCount(), column_ids.size());
+
+  txn_manager.CommitTransaction(txn);
+  txn_manager.EndTransaction(txn);
 }
 
 // Sequential scan of logical tile with predicate.
@@ -258,8 +261,8 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
 
   // Set up executor and its child.
   auto& txn_manager = TransactionManager::GetInstance();
-  auto context = txn_manager.BeginTransaction();
-  executor::SeqScanExecutor executor(&node, context);
+  auto txn = txn_manager.BeginTransaction();
+  executor::SeqScanExecutor executor(&node, txn);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -290,6 +293,9 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
   int expected_column_count = data_table->GetSchema()->GetColumnCount();
 
   RunTest(executor, 2, expected_column_count);
+
+  txn_manager.CommitTransaction(txn);
+  txn_manager.EndTransaction(txn);
 }
 
 } // namespace test

@@ -173,6 +173,8 @@ void ExecutorTestsUtil::PopulateTiles(
     string_value.FreeUninlinedData();
   }
 
+  txn_manager.CommitTransaction(txn);
+  txn_manager.EndTransaction(txn);
 }
 
 /**
