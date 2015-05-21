@@ -38,26 +38,24 @@ class SeqScanNode : public AbstractPlanNode {
       column_ids_(column_ids) {
   }
 
-  const storage::Table *table() const {
+  const storage::Table *GetTable() const {
     return table_;
   }
 
-  const expression::AbstractExpression *predicate() const {
+  const expression::AbstractExpression *GetPredicate() const {
     return predicate_.get();
   }
 
-  const std::vector<oid_t>& column_ids() const {
+  const std::vector<oid_t>& GetColumnIds() const {
     return column_ids_;
   }
 
   inline PlanNodeType GetPlanNodeType() const {
-    //TODO Implement.
-    return PLAN_NODE_TYPE_INVALID;
+    return PLAN_NODE_TYPE_SEQSCAN;
   }
 
   inline std::string GetInfo() const {
-    //TODO Implement.
-    return "";
+    return "SeqScan";
   }
 
  private:
