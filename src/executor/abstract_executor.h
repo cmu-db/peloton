@@ -73,7 +73,7 @@ class AbstractExecutor {
   std::vector<AbstractExecutor*> children_;
 
   // Transaction context
-  Transaction *context_ = nullptr;
+  Transaction *transaction_ = nullptr;
 
  private:
 

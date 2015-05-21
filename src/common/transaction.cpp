@@ -284,6 +284,10 @@ void TransactionManager::CommitTransaction(Transaction *txn, bool sync){
 
   // XXX LOG : group commit entry
 
+  // process all committed txns
+  for (auto committed_txn : committed_txns)
+    committed_txn->DecrementRefCount();
+
 }
 
 //===--------------------------------------------------------------------===//

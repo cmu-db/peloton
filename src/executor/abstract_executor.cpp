@@ -18,8 +18,8 @@ AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node)
 : node_(node) {
 }
 
-AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node, Transaction *context)
-: context_(context), node_(node) {
+AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node, Transaction *transaction)
+: transaction_(transaction), node_(node) {
 }
 
 void AbstractExecutor::SetOutput(LogicalTile* table) {
