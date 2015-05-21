@@ -33,8 +33,8 @@ namespace executor {
  * @brief Constructor for seqscan executor.
  * @param node Seqscan node corresponding to this executor.
  */
-SeqScanExecutor::SeqScanExecutor(planner::AbstractPlanNode *node, Transaction *context)
-: AbstractExecutor(node, context) {
+SeqScanExecutor::SeqScanExecutor(planner::AbstractPlanNode *node, Transaction *transaction)
+: AbstractExecutor(node, transaction) {
 }
 
 /**
@@ -99,8 +99,8 @@ bool SeqScanExecutor::DExecute() {
 
     storage::TileGroup *tile_group = table->GetTileGroup(current_tile_group_id_++);
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
-    txn_id_t txn_id = context_->GetTransactionId();
-    cid_t commit_id = context_->GetLastCommitId();
+    txn_id_t txn_id = transaction_->GetTransactionId();
+    cid_t commit_id = transaction_->GetLastCommitId();
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
     //tile_group_header->PrintVisibility(txn_id, commit_id);

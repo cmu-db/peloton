@@ -67,6 +67,8 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   tile_group->InsertTuple(txn_id, &tuple2);
   tile_group->InsertTuple(txn_id, &tuple1);
 
+  txn_manager.CommitTransaction(txn);
+  txn_manager.EndTransaction(txn);
 
   ////////////////////////////////////////////////////////////////
   // LOGICAL TILE (1 BASE TILE)

@@ -24,8 +24,8 @@ namespace executor {
  * @param node Insert node corresponding to this executor.
  */
 InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
-                               Transaction *context)
-: AbstractExecutor(node, context) {
+                               Transaction *transaction)
+: AbstractExecutor(node, transaction) {
 }
 
 /**
@@ -43,7 +43,7 @@ bool InsertExecutor::DInit() {
  */
 bool InsertExecutor::DExecute() {
   assert(children_.size() == 0);
-  assert(context_);
+  assert(transaction_);
 
   const planner::InsertNode &node = GetNode<planner::InsertNode>();
   storage::Table *target_table = node.GetTable();
@@ -52,13 +52,13 @@ bool InsertExecutor::DExecute() {
   // Insert given tuples into table
 
   for(auto tuple : tuples) {
-    ItemPointer location = target_table->InsertTuple(context_->GetTransactionId(), tuple);
+    ItemPointer location = target_table->InsertTuple(transaction_->GetTransactionId(), tuple);
     if(location.block == INVALID_OID) {
       auto& txn_manager = TransactionManager::GetInstance();
-      txn_manager.AbortTransaction(context_);
+      txn_manager.AbortTransaction(transaction_);
       return false;
     }
-    context_->RecordInsert(location);
+    transaction_->RecordInsert(location);
   }
 
   return true;

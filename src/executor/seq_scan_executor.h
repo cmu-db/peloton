@@ -20,7 +20,7 @@ class SeqScanExecutor : public AbstractExecutor {
   SeqScanExecutor& operator=(SeqScanExecutor &&) = delete;
 
   explicit SeqScanExecutor(planner::AbstractPlanNode *node,
-                           Transaction *context);
+                           Transaction *transaction);
 
  protected:
   bool DInit();

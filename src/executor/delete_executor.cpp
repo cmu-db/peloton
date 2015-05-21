@@ -25,8 +25,8 @@ namespace executor {
  * @param node Delete node corresponding to this executor.
  */
 DeleteExecutor::DeleteExecutor(planner::AbstractPlanNode *node,
-                               Transaction *context)
-: AbstractExecutor(node, context){
+                               Transaction *transaction)
+: AbstractExecutor(node, transaction){
 }
 
 /**
@@ -46,7 +46,7 @@ bool DeleteExecutor::DInit() {
  */
 bool DeleteExecutor::DExecute() {
   assert(children_.size() == 1);
-  assert(context_);
+  assert(transaction_);
 
   const planner::DeleteNode &node = GetNode<planner::DeleteNode>();
 
@@ -63,7 +63,7 @@ bool DeleteExecutor::DExecute() {
   storage::Tile *tile = source_tile->GetBaseTile(0);
   storage::TileGroup *tile_group = tile->GetTileGroup();
   auto tile_group_id = tile_group->GetTileGroupId();
-  auto txn_id = context_->GetTransactionId();
+  auto txn_id = transaction_->GetTransactionId();
 
   LOG_TRACE("Source tile : %p Tuples : %lu \n", source_tile.get(), source_tile->NumTuples());
 
@@ -76,11 +76,11 @@ bool DeleteExecutor::DExecute() {
     bool status = tile_group->DeleteTuple(txn_id, tuple_id);
     if(status == false) {
       auto& txn_manager = TransactionManager::GetInstance();
-      txn_manager.AbortTransaction(context_);
+      txn_manager.AbortTransaction(transaction_);
 
       return false;
     }
-    context_->RecordDelete(ItemPointer(tile_group_id, tuple_id));
+    transaction_->RecordDelete(ItemPointer(tile_group_id, tuple_id));
   }
 
   return true;
