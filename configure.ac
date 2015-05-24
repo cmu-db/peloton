@@ -12,7 +12,10 @@ AM_INIT_AUTOMAKE([1.0 foreign subdir-objects])
 AM_SILENT_RULES([yes])
 
 AC_PROG_CC([gcc])
-AC_PROG_LIBTOOL
+# Enable static library
+#AC_PROG_LIBTOOL
+# Disable static library
+LT_INIT([disable-static])
  
 # Check for pthreads (uses m4/acx_pthread.m4).
 ACX_PTHREAD([], [AC_MSG_ERROR([Could not find pthreads in your system.])])
