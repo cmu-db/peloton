@@ -20,6 +20,15 @@
 #include "tbb/flow_graph.h"
 #include "executor/executors.h"
 
+#include <stdio.h>
+
+extern "C" int NStoreExecute(char* plan);
+
+int NStoreExecute(char* plan){
+  fprintf(stderr, "nstore :: %s \n", plan);
+  return 23;
+}
+
 namespace nstore {
 namespace backend {
 
