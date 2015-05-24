@@ -19,7 +19,7 @@ include $(srcdir)/scheduler/Makefile.am
 include $(srcdir)/storage/Makefile.am
 
 bin_PROGRAMS = nstore
-noinst_LTLIBRARIES= libnstore.la
+lib_LTLIBRARIES= libnstore.la
 
 ######################################################################
 # N-STORE SOURCES
