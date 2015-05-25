@@ -22,19 +22,6 @@
 
 #include <stdio.h>
 
-#include "postgres.h"
-#include "executor/execdebug.h"
-
-extern "C" TupleTableSlot *NStoreExecute(PlanState *planstate);
-
-TupleTableSlot *NStoreExecute(PlanState *planstate){
-
-  assert(planstate->plan);
-  printf("nstore node tag : %d \n", nodeTag(planstate));
-
-  return nullptr;
-}
-
 namespace nstore {
 namespace backend {
 
