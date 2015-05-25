@@ -22,11 +22,17 @@
 
 #include <stdio.h>
 
-extern "C" int NStoreExecute(char* plan);
+#include "postgres.h"
+#include "executor/execdebug.h"
 
-int NStoreExecute(char* plan){
-  fprintf(stderr, "nstore :: %s", plan);
-  return 23;
+extern "C" TupleTableSlot *NStoreExecute(PlanState *planstate);
+
+TupleTableSlot *NStoreExecute(PlanState *planstate){
+
+  assert(planstate->plan);
+  printf("nstore node tag : %d \n", nodeTag(planstate));
+
+  return nullptr;
 }
 
 namespace nstore {
