@@ -24,9 +24,11 @@
 TupleTableSlot *NStoreExecute(PlanState *node){
   TupleTableSlot *result = NULL;
 
-  fprintf(stderr, "NStoreExecute: \n");
+  fprintf(stderr, "\nPlan :: \n");
 
-  //nstore::backend::Bridge::ProcessPlan(node->plan);
+  nstore::backend::Bridge::ProcessPlan(node->plan);
+
+  fprintf(stderr, "\n++++++++++++++++++++++++++++++++++++++++++\n\n");
 
   return result;
 }
@@ -39,7 +41,7 @@ void Bridge::ProcessPlan(Plan *plan){
   if(plan == nullptr)
     return;
 
-  fprintf(stderr, "Plan node type: %d \n", (int) nodeTag(plan->type));
+  fprintf(stderr, "Plan node type: %d \n", (int) nodeTag(plan));
 
   ProcessPlan(plan->lefttree);
   ProcessPlan(plan->righttree);
