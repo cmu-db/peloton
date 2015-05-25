@@ -29,6 +29,8 @@ class Bridge {
 
  public:
 
+  static void ProcessPlan(Plan *plan);
+
 };
 
 
