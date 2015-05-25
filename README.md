@@ -15,25 +15,13 @@ DBMS designed for next-generation storage technologies like non-volatile memory 
 
 ## Installation 
 
-### Build N-Store
+### Get the repository
 
-    ./bootstrap
-
-    mkdir build
-    cd build
-
-    ../configure  
-    
-    make -j4
-    
-    (Optional) make -j4 check 
-
-### Next, build PostgreSQL and link it to N-Store
-
-    cd ..
-    cd postgres
-
-### Setup postgres build dir and build
+    git clone https://github.com/cmu-db/n-store.git
+ 
+    cd n-store
+ 
+### First, setup postgres build dir and build
 
     cd postgres
     mkdir build
@@ -44,17 +32,28 @@ DBMS designed for next-generation storage technologies like non-volatile memory 
     make -j8
     sudo make -j8 install
  
+    cd ..
+
+### Now, build N-Store
+
+    ./bootstrap
+
+    mkdir build
+    cd build
+
+    ../configure  
+    
+    make -j4
+
 ### Setup links to nstore library in postgres build and install dirs
 
-    cd contrib/nstore
-    ln -s ~/git/n-store/build/src/.libs/libnstore.so libnstore.so 
+    ln -s src/.libs/libnstore.so ../postgres/build/contrib/nstore/libnstore.so 
 
-    cd /usr/local/pgsql/lib
-    ln -s ~/git/n-store/build/src/.libs/libnstore.so libnstore.so 
+    sudo ln -s src/.libs/libnstore.so /usr/local/pgsql/lib/libnstore.so 
 
 ### Build hooks
 
-    cd contrib
+    cd ../postgres/contrib/nstore
 
     make -j8
     sudo make -j8 install
