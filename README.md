@@ -28,35 +28,35 @@ DBMS designed for next-generation storage technologies like non-volatile memory 
 
     cd build
     ../configure
-
-    make -j8
-    sudo make -j8 install
+    make -j4
+    sudo make -j4 install
  
-    cd ..
+    cd ../..
 
-### Now, build N-Store
+### Now, build N-Store in the repo's root directory
 
     ./bootstrap
 
     mkdir build
     cd build
-
-    ../configure  
-    
+    ../configure CXXFLAGS="-O0 -g" 
     make -j4
 
 ### Setup links to nstore library in postgres build and install dirs
 
-    ln -s src/.libs/libnstore.so ../postgres/build/contrib/nstore/libnstore.so 
+These commands depend on the location of the n-store repo dir.
+Assuming that the repo's dir is ~/git/n-store/ :
 
-    sudo ln -s src/.libs/libnstore.so /usr/local/pgsql/lib/libnstore.so 
+    ln -s  ~/git/n-store/build/src/.libs/libnstore.so ../postgres/build/contrib/nstore/libnstore.so 
+
+    sudo ln -s ~/git/n-store/build/src/.libs/libnstore.so /usr/local/pgsql/lib/libnstore.so 
 
 ### Build hooks
 
     cd ../postgres/contrib/nstore
 
-    make -j8
-    sudo make -j8 install
+    make 
+    sudo make install
 
     cd ..
 
@@ -73,15 +73,21 @@ DBMS designed for next-generation storage technologies like non-volatile memory 
     createuser -s -r postgres
     psql postgres 
 
-    help 
+    help
+    
+   
+### Now, try running this query 
+
+    SELECT * FROM pg_tables
     \q
 
     pg_ctl -D ./data stop
+    
+    vi data/pg_log/postgresql.log 
 
+If everything worked fine, you should see the query plan in the log. 
 
 ### (Optional) Tweak postgres config file and restart
-
-    cd postgres/build
 
     vi ./data/postgresql.conf    
     
@@ -122,24 +128,24 @@ We use `Eclipse` for our development. The following instructions assume that you
 
     cd ../postgres/build
 
+We need to restart the PostgreSQL server to load the updated n-store library.
+
     pg_ctl -D ./data restart
  
     psql postgres 
 
-## Test
+## Testing
 
-### Important note
+    cd build
+    make -j4 check
 
-When running tests using make check, ensure at least one file in the tests/ directory has been modified (to trigger a rebuild).
-
+    cd tests
+    make check-valgrind          
+    
 ### Code Coverage ::
 
     cd build
     ../configure --enable-code-coverage
     cd test
     make check-code-coverage
-
-### Valgrind ::
-
-    cd tests
-    make check-valgrind
+ 
