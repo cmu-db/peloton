@@ -59,9 +59,9 @@ Assuming that the repo's dir is `~/git/n-store/` :
 
     sudo ln -s ~/git/n-store/build/src/.libs/libnstore.so /usr/local/pgsql/lib/libnstore.so 
 
-### Build hooks
+### Build hooks in contrib dir
 
-    cd ../postgres/contrib/nstore
+    cd ../postgres/build/contrib
 
     make 
     sudo make install
