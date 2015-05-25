@@ -10,6 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
+#include "backend/outfuncs.h"
 #include "backend/bridge.h"
 #include "common/logger.h"
 
@@ -24,11 +25,8 @@
 TupleTableSlot *NStoreExecute(PlanState *node){
   TupleTableSlot *result = NULL;
 
-  fprintf(stderr, "\nPlan :: \n");
-
-  nstore::backend::Bridge::ProcessPlan(node->plan);
-
-  fprintf(stderr, "\n++++++++++++++++++++++++++++++++++++++++++\n\n");
+  nstore::LOG_INFO("\nPlan :: %s \n\n",
+                   nstore::backend::NodeToString(node->plan).c_str());
 
   return result;
 }
@@ -41,11 +39,8 @@ void Bridge::ProcessPlan(Plan *plan){
   if(plan == nullptr)
     return;
 
-  fprintf(stderr, "Plan node type: %d \n", (int) nodeTag(plan));
-
   ProcessPlan(plan->lefttree);
   ProcessPlan(plan->righttree);
-
 }
 
 
