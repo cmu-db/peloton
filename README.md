@@ -46,7 +46,7 @@ DBMS designed for next-generation storage technologies like non-volatile memory 
 ### Setup links to nstore library in postgres build and install dirs
 
 These commands depend on the location of the n-store repo dir.
-Assuming that the repo's dir is '~/git/n-store/' :
+Assuming that the repo's dir is `~/git/n-store/` :
 
     ln -s  ~/git/n-store/build/src/.libs/libnstore.so ../postgres/build/contrib/nstore/libnstore.so 
 
