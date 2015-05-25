@@ -3061,6 +3061,8 @@ _outConstraint(std::stringstream& str, const Constraint *node)
 static void
 _outNode(std::stringstream& str, const void *obj)
 {
+  str << "\nNODE :: \n";
+
   if (obj == NULL)
     appendStringInfoString(str, "<>");
   else if (IsA(obj, List) ||IsA(obj, IntList) || IsA(obj, OidList))
