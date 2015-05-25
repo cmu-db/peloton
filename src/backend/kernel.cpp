@@ -25,7 +25,7 @@
 extern "C" int NStoreExecute(char* plan);
 
 int NStoreExecute(char* plan){
-  fprintf(stderr, "nstore :: %s \n", plan);
+  fprintf(stderr, "nstore :: %s", plan);
   return 23;
 }
 

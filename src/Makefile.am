@@ -47,6 +47,10 @@ nstore_LDADD = libnstore.la
 # N-STORE INCLUDES
 ######################################################################
 
+postgres_INCLUDES = \
+				  -I$(top_srcdir)/postgres/src/include \
+				  -I$(top_srcdir)/postgres/build/src/include 
+
 nstore_INCLUDES = $(backend_INCLUDES) \
 				  $(catalog_INCLUDES) \
 				  $(common_INCLUDES) \
@@ -57,7 +61,8 @@ nstore_INCLUDES = $(backend_INCLUDES) \
 				  $(planner_INCLUDES) \
 				  $(storage_INCLUDES) \
 				  $(scheduler_INCLUDES) \
-				  $(third_party_INCLUDES)
+				  $(third_party_INCLUDES) \
+				  $(postgres_INCLUDES) 
 
 ######################################################################
 # THIRD-PARTY INCLUDES
