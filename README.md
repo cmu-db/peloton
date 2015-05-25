@@ -26,19 +26,25 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
 ### Get the repository
 
     git clone https://github.com/cmu-db/n-store.git
- 
     cd n-store
  
 ### First, setup postgres build dir and build
 
     cd postgres
     mkdir build
-
     cd build
+
     ../configure
     make -j4
     sudo make -j4 install
+
+ Add postgres install dir to the search path in `~/.bashrc` or `~/.zshrc` :
+
+    export PATH=$PATH:/usr/local/pgsql/bin
+
+ And load in the file to update the session's `PATH` :
  
+    source ~/.bashrc
     cd ../..
 
 ### Now, build N-Store in the repo's root directory
@@ -47,6 +53,7 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
 
     mkdir build
     cd build
+
     ../configure CXXFLAGS="-O0 -g" 
     make -j4
 
@@ -56,7 +63,6 @@ These commands depend on the location of the n-store repo dir.
 Assuming that the repo's dir is `~/git/n-store/` :
 
     ln -s  ~/git/n-store/build/src/.libs/libnstore.so ../postgres/build/contrib/nstore/libnstore.so 
-
     sudo ln -s ~/git/n-store/build/src/.libs/libnstore.so /usr/local/pgsql/lib/libnstore.so 
 
 ### Build hooks in contrib dir
