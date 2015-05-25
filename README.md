@@ -13,14 +13,81 @@ DBMS designed for next-generation storage technologies like non-volatile memory 
     sudo apt-get install g++ autotools-dev autoconf libtool 
     libtbb-dev libjson-spirit-dev
 
-## Deployment
+## Installation 
+
+### Build N-Store
 
     ./bootstrap
-    cd build
-    ../configure  
-    make -j4
-    make check [optional]
 
+    mkdir build
+    cd build
+
+    ../configure  
+    
+    make -j4
+    
+    (Optional) make -j4 check 
+
+### Next, build PostgreSQL and link it to N-Store
+
+    cd ..
+    cd postgres
+
+### Setup postgres build dir and build
+
+    cd postgres
+    mkdir build
+
+    cd build
+    ../configure
+
+    make -j8
+    sudo make -j8 install
+ 
+### Setup links to nstore library in postgres build and install dirs
+
+    cd contrib/nstore
+    ln -s ~/git/n-store/build/src/.libs/libnstore.so libnstore.so 
+
+    cd /usr/local/pgsql/lib
+    ln -s ~/git/n-store/build/src/.libs/libnstore.so libnstore.so 
+
+### Build hooks
+
+    cd contrib
+
+    make -j8
+    sudo make -j8 install
+
+    cd ..
+
+### Create a data dir within postgres build dir
+
+    initdb ./data
+
+    cp ../postgresql.conf ./data   
+
+    pg_ctl -D ./data start
+
+### Try out postgres terminal
+
+    createuser -s -r postgres
+    psql postgres 
+
+    help 
+    \q
+
+    pg_ctl -D ./data stop
+
+
+### (Optional) Tweak postgres config file and restart
+
+    cd postgres/build
+
+    vi ./data/postgresql.conf    
+    
+    pg_ctl -D ./data restart
+ 
 ## Development        
 
 ###  Environment Setup 
