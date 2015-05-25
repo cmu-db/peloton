@@ -37,6 +37,7 @@ common_SOURCES =  $(backend_FILES) \
 				  $(storage_FILES)
 
 libnstore_la_SOURCES = $(common_SOURCES)
+libnstore_la_LDFLAGS = $(TBB_LIBS) -pthread
 
 nstore_SOURCES = backend/nstore.cpp
 nstore_LDFLAGS = $(TBB_LIBS)              
