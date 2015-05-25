@@ -25,7 +25,7 @@
 TupleTableSlot *NStoreExecute(PlanState *node){
   TupleTableSlot *result = NULL;
 
-  nstore::LOG_INFO("\nPlan :: %s \n\n",
+  nstore::LOG_INFO("\nPLAN :: %s \n",
                    nstore::backend::NodeToString(node->plan).c_str());
 
   return result;
