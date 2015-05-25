@@ -1,20 +1,27 @@
 # N-Store 
-DBMS designed for next-generation storage technologies like non-volatile memory (NVM), and hybrid transaction/analytical processing (HTAP) workloads.
+
+DBMS designed for next-generation storage technologies, like non-volatile memory (NVM), and hybrid transaction/analytical processing (HTAP) workloads.
 
 ## Dependencies
 
 > - **g++ 4.7+** 
 > - **autotools** 
 > - **autoconf** 
-> - **tbb** [Thread Building Blocks - Parallelism library]
-> - **json-spirit** [C++ JSON Parser/Generator]
+> - **tbb** [Thread Building Blocks parallelism library]
+> - **json-spirit** [C++ JSON parser/generator]
+> - **libreadline-dev** [ Readline library ]
+> - **zlib1g-dev** [ Zlib compression library ]
+> - **flex** [ Lexical analyzer generator ]
+> - **bison** [ Parser generator ]
 
 ## Installation 
  
 ###	Ubuntu Quick Setup
 
     sudo apt-get install g++ autotools-dev autoconf libtool 
-    libtbb-dev libjson-spirit-dev
+    libtbb-dev libjson-spirit-dev libreadline-dev zlib1g-dev
+    flex bison
+
  
 ### Get the repository
 
