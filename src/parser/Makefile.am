@@ -16,4 +16,3 @@ AM_YFLAGS = -d
 
 parser_INCLUDES = \
 				  -I$(srcdir)/parser
-
