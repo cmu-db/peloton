@@ -18,7 +18,7 @@ include $(srcdir)/planner/Makefile.am
 include $(srcdir)/scheduler/Makefile.am
 include $(srcdir)/storage/Makefile.am
 
-#bin_PROGRAMS = nstore
+bin_PROGRAMS = nstore
 lib_LTLIBRARIES= libnstore.la
 
 ######################################################################
@@ -39,17 +39,13 @@ common_SOURCES =  $(backend_FILES) \
 libnstore_la_SOURCES = $(common_SOURCES)
 libnstore_la_LDFLAGS = $(TBB_LIBS) -pthread
 
-#nstore_SOURCES = backend/nstore.cpp
-#nstore_LDFLAGS = $(TBB_LIBS)              
-#nstore_LDADD = libnstore.la
+nstore_SOURCES = backend/nstore.cpp
+nstore_LDFLAGS = $(TBB_LIBS)
+nstore_LDADD = libnstore.la
 
 ######################################################################
 # N-STORE INCLUDES
 ######################################################################
-
-postgres_INCLUDES = \
-				  -I$(top_srcdir)/postgres/src/include \
-				  -I$(top_srcdir)/postgres/build/src/include 
 
 nstore_INCLUDES = $(backend_INCLUDES) \
 				  $(catalog_INCLUDES) \
@@ -61,8 +57,7 @@ nstore_INCLUDES = $(backend_INCLUDES) \
 				  $(planner_INCLUDES) \
 				  $(storage_INCLUDES) \
 				  $(scheduler_INCLUDES) \
-				  $(third_party_INCLUDES) \
-				  $(postgres_INCLUDES) 
+				  $(third_party_INCLUDES)
 
 ######################################################################
 # THIRD-PARTY INCLUDES
