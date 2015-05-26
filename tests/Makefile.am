@@ -19,6 +19,7 @@ AM_CPPFLAGS += \
 			   -isystem $(GMOCK_SRCDIR) \
 			   -I$(top_srcdir)/src \
 			   -I$(top_srcdir)/third_party \
+			   -I$(top_builddir)/src \
 			   $(GTEST_CPPFLAGS)
 
 AM_CXXFLAGS += $(GTEST_CXXFLAGS) -Wno-unused-but-set-variable
