@@ -6,7 +6,8 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
 
 > - **g++ 4.7+** 
 > - **autotools** 
-> - **autoconf** 
+> - **autoconf**
+> - **pkg-config** 
 > - **tbb** [Thread Building Blocks parallelism library]
 > - **json-spirit** [C++ JSON parser/generator]
 > - **flex** [ Lexical analyzer generator ]
@@ -16,7 +17,7 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
  
 ###	Ubuntu Quick Setup
 
-    sudo apt-get install g++ autotools-dev autoconf libtool libtbb-dev libjson-spirit-dev flex bison
+    sudo apt-get install g++ autotools-dev autoconf libtool pkg-config libtbb-dev libjson-spirit-dev flex bison
  
 ### Get the repository
 
