@@ -2,3 +2,7 @@
 # bootstrap -- Use this script to create generated files from the CVS dist
 
 autoreconf -fvi
+
+if [ ! -d "build" ] ; then
+    mkdir build
+fi
