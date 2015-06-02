@@ -44,4 +44,5 @@ include $(srcdir)/scheduler/Makefile.am
 include $(srcdir)/storage/Makefile.am
 
 TESTS = $(check_PROGRAMS) 
+LOG_COMPILER = $(srcdir)/test-driver.sh 
 
