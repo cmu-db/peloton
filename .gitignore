@@ -9,6 +9,10 @@ autom4te.cache
 *Makefile
 libtool
 aclocal.m4
+config.log
+config.status
+stamp-h1
+config.h
 
 ## -------------------------------
 ## Build artifacts
@@ -39,6 +43,15 @@ tmp/
 ## Doxygen artifacts
 ## -------------------------------
 doc/
+
+## -------------------------------
+## KDevelop files
+## -------------------------------
+.kdev4
+*.kdev4
+.dirstamp
+.deps
+.libs
 
 ## -------------------------------
 ## Eclipse files
