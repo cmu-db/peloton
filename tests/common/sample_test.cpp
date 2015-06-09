@@ -11,7 +11,7 @@ namespace test {
 
 TEST(SampleTest, Test1) {
 
-	EXPECT_EQ(3, SampleFunc(1,2));
+	EXPECT_EQ(4, SampleFunc(1,2));
 
 }
 
