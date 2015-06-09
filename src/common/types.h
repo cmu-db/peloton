@@ -65,6 +65,16 @@ namespace nstore {
 #define VARCHAR_LENGTH_MID  	256
 #define VARCHAR_LENGTH_LONG  	4096
 
+
+//===--------------------------------------------------------------------===//
+// Port to OSX
+//===---------------------------
+#ifdef __APPLE__
+#define off64_t off_t 
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+
+
 //===--------------------------------------------------------------------===//
 // Value types
 // This file defines all the types that we will support

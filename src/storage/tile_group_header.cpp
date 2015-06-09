@@ -104,7 +104,7 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
       std::cout << std::setw(width) << end_commit_id;
 
     ItemPointer location = GetPrevItemPointer(header_itr);
-    std::cout << " prev : " << "[ " << location.block << " , " << location.offset << " ]" <<
+    std::cout << " prev : " << "[ " << location.block << " , " << location.offset << " ]"; //<<
 
     std::cout << " own : " << own;
 		std::cout << " activated : " << activated;

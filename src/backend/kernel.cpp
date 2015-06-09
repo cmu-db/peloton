@@ -25,7 +25,11 @@
 namespace nstore {
 namespace backend {
 
+#ifdef __APPLE__
+using namespace tbb::flow::interface7;
+#else
 using namespace tbb::flow::interface6;
+#endif
 
 int size = 10000000;
 int chunk_size = 100000;
