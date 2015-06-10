@@ -48,8 +48,6 @@ bool DeleteExecutor::DExecute() {
   assert(children_.size() == 1);
   assert(transaction_);
 
-  const planner::DeleteNode &node = GetNode<planner::DeleteNode>();
-
   // Delete tuples in logical tile
   LOG_TRACE("Delete executor :: 1 child \n");
 
