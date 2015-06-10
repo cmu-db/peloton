@@ -12,7 +12,5 @@ parser_FILES = \
 			   parser/sql_statement.cpp \
 			   parser/table_ref.cpp
 			   			   
-AM_YFLAGS = -d
-
 parser_INCLUDES = \
 				  -I$(srcdir)/parser

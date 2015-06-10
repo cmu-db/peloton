@@ -124,7 +124,7 @@ bool TransactionManager::IsValid(txn_id_t txn_id){
   return (txn_id < GetInstance().next_txn_id);
 }
 
-void TransactionManager::EndTransaction(Transaction *txn, bool sync){
+void TransactionManager::EndTransaction(Transaction *txn, bool sync __attribute__((unused))){
 
   // XXX LOG :: record commit entry
 
@@ -169,7 +169,7 @@ void TransactionManager::BeginCommitPhase(Transaction *txn){
 
 }
 
-void TransactionManager::CommitModifications(Transaction *txn, bool sync){
+void TransactionManager::CommitModifications(Transaction *txn, bool sync __attribute__((unused))){
 
   // (A) commit inserts
   auto inserted_tuples = txn->GetInsertedTuples();

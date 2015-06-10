@@ -521,7 +521,7 @@ int keycmp (BtKey* key1, char *key2, catalog::Schema *key_schema)
 
 // place write, read, or parent lock on requested page_no.
 
-void bt_lockpage(BtDb *bt, BtLock mode, BtLatchSet *latch)
+void bt_lockpage(BtDb *bt __attribute__((unused)), BtLock mode, BtLatchSet *latch)
 {
   switch( mode ) {
     case BtLockRead:
