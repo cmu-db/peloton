@@ -1,32 +1,15 @@
 /*-------------------------------------------------------------------------
  *
- * main.cc
- * file description
+ * peloton.cpp
+ *  Stub main() routine for the peloton executable.
+ *
+ * This does some essential startup tasks.
  *
  * Copyright(c) 2015, CMU
- *
- * /n-store/src/main.cc
- *
- *-------------------------------------------------------------------------
- */
-
-/*-------------------------------------------------------------------------
- *
- * main.c
- *    Stub main() routine for the postgres executable.
- *
- * This does some essential startup tasks for any incarnation of postgres
- * (postmaster, standalone backend, standalone bootstrap process, or a
- * separately exec'd child of a postmaster) and then dispatches to the
- * proper FooMain() routine for the incarnation.
- *
- *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *
- * IDENTIFICATION
- *    src/backend/main/main.c
+ * src/backend/peloton.cpp
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +52,8 @@ main(int argc, char *argv[])
 {
   bool    do_check_root = true;
 
-  progname = get_progname(argv[0]);
+  progname = "peloton";
+  //progname = get_progname(argv[0]);
 
   /*
    * Platform-specific startup hacks
