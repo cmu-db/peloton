@@ -18,46 +18,61 @@ include $(srcdir)/planner/Makefile.am
 include $(srcdir)/scheduler/Makefile.am
 include $(srcdir)/storage/Makefile.am
 
-bin_PROGRAMS = nstore
-lib_LTLIBRARIES= libnstore.la
+include $(srcdir)/postgres/backend/Makefile.am
+include $(srcdir)/postgres/common/Makefile.am
+include $(srcdir)/postgres/port/Makefile.am
+include $(srcdir)/postgres/timezone/Makefile.am
+
+bin_PROGRAMS = peloton
+lib_LTLIBRARIES= libpeloton.la libpostgres.la
+
+DEFAULT_INCLUDES =
 
 ######################################################################
-# N-STORE SOURCES
+# PELOTON LIBRARY
 ######################################################################
 
-common_SOURCES =  $(backend_FILES) \
-				  $(catalog_FILES) \
-				  $(common_FILES) \
-				  $(executor_FILES) \
-				  $(expression_FILES) \
-				  $(index_FILES) \
-				  $(parser_FILES) \
-				  $(planner_FILES) \
-				  $(scheduler_FILES) \
-				  $(storage_FILES)
+libpeloton_la_SOURCES = \
+                      $(backend_FILES) \
+					  $(catalog_FILES) \
+					  $(common_FILES) \
+					  $(executor_FILES) \
+					  $(expression_FILES) \
+					  $(index_FILES) \
+					  $(parser_FILES) \
+					  $(planner_FILES) \
+					  $(scheduler_FILES) \
+					  $(storage_FILES)
 
-libnstore_la_SOURCES = $(common_SOURCES)
-libnstore_la_LDFLAGS = $(TBB_LIBS) -pthread
-
-nstore_SOURCES = backend/nstore.cpp
-nstore_LDFLAGS = $(TBB_LIBS)
-nstore_LDADD = libnstore.la
+libpeloton_la_LDFLAGS = $(TBB_LIBS) -pthread
+libpeloton_la_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(third_party_INCLUDES)
 
 ######################################################################
-# N-STORE INCLUDES
+# POSTGRES LIBRARY
 ######################################################################
 
-nstore_INCLUDES = $(backend_INCLUDES) \
-				  $(catalog_INCLUDES) \
-				  $(common_INCLUDES) \
-				  $(executor_INCLUDES) \
-				  $(expression_INCLUDES) \
-				  $(index_INCLUDES) \
-				  $(parser_INCLUDES) \
-				  $(planner_INCLUDES) \
-				  $(storage_INCLUDES) \
-				  $(scheduler_INCLUDES) \
-				  $(third_party_INCLUDES)
+libpostgres_la_SOURCES = \
+					  $(postgres_backend_FILES) \
+					  $(postgres_common_FILES) \
+					  $(postgres_port_FILES) \
+					  $(postgres_timezone_FILES)
+
+libpostgres_la_LDFLAGS = -lrt -lcrypt -ldl -lm
+libpostgres_la_CFLAGS =  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
+						 -Wendif-labels -Wmissing-format-attribute -Wformat-security \
+						 -fno-strict-aliasing -fwrapv -fexcess-precision=standard \
+						 -fPIC -fpic -msse4.2
+
+libpostgres_la_CPPFLAGS = $(postgres_common_INCLUDES)
+
+######################################################################
+# PELOTON
+######################################################################
+
+peloton_SOURCES = backend/peloton.cpp
+peloton_LDFLAGS = $(TBB_LIBS)
+peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) 
+peloton_LDADD = libpeloton.la libpostgres.la
 
 ######################################################################
 # THIRD-PARTY INCLUDES
