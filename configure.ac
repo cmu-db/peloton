@@ -74,5 +74,7 @@ AC_CONFIG_FILES([Makefile
                  tests/Makefile
                  ])
 
+AC_CONFIG_LINKS([tests/valgrind.supp:third_party/valgrind/valgrind.supp])
+
 AC_OUTPUT
 # @end 2
