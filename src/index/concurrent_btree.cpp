@@ -1538,7 +1538,7 @@ BTERR bt_insertslot (BtDb *bt, BtPageSet *set, uint slot, char *key,uint keylen,
 
 BTERR bt_insertkey (BtDb *bt, char *key, uint keylen, uint lvl, void *value, uint vallen, uint unique)
 {
-  char newkey[BT_keyarray];
+  char newkey[BT_keyarray] = { 0 };
   uint slot, len, entry;
   BtPageSet set[1];
   BtKey *ptr, *ins;
