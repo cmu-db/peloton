@@ -1,4 +1,3 @@
-#include "backend/nstore.h"
 #include "gtest/gtest.h"
 
 
@@ -11,13 +10,13 @@ namespace test {
 
 TEST(SampleTest, Test1) {
 
-	EXPECT_EQ(3, SampleFunc(1,2));
+	EXPECT_EQ(3, 1 + 2);
 
 }
 
 TEST(SampleTest, Test2) {
 
-	EXPECT_NE(1, SampleFunc(1,2));
+	EXPECT_NE(1, 1 + 2);
 
 }
 
