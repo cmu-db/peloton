@@ -56,7 +56,6 @@ class TileGroup {
   ~TileGroup() {
 
     // clean up tiles
-    auto& manager = catalog::Manager::GetInstance();
     for(auto tile : tiles){
       delete tile;
     }
