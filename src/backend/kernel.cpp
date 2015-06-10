@@ -33,7 +33,7 @@ using namespace tbb::flow::interface6;
 
 int size = 10000000;
 int chunk_size = 100000;
-int *data = new int[size];
+int *data;
 
 class table_iterator_task {
  public:
@@ -147,6 +147,7 @@ ResultType Kernel::Handler(const char* query) {
 
   /*
   int num_chunks = size/chunk_size;
+  data = new int[size]
   for(auto ii = 0; ii < size; ii++)
     data[ii] = rand()%10;
 
