@@ -25,7 +25,7 @@ namespace storage {
 // Tile Group
 //===--------------------------------------------------------------------===//
 
-class Table;
+class DataTable;
 class TileGroupIterator;
 
 /**
@@ -48,7 +48,7 @@ class TileGroup {
 
   // Tile group constructor
   TileGroup(TileGroupHeader *tile_group_header,
-            Table *table,
+            DataTable *table,
             Backend *backend,
             const std::vector<catalog::Schema>& schemas,
             int tuple_count);
@@ -195,7 +195,7 @@ class TileGroup {
   TileGroupHeader* tile_group_header;
 
   // associated table
-  Table* table;
+  DataTable* table;
 
   // number of tuple slots allocated
   oid_t num_tuple_slots;
@@ -217,7 +217,7 @@ class TileGroupFactory {
   virtual ~TileGroupFactory();
 
   static TileGroup *GetTileGroup(oid_t database_id, oid_t table_id, oid_t tile_group_id,
-                                 Table* table,
+                                 DataTable* table,
                                  Backend* backend,
                                  const std::vector<catalog::Schema>& schemas,
                                  int tuple_count) {

@@ -214,10 +214,10 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
   return result_logical_tile.release();
 }
 
-storage::Table *ExecutorTestsUtil::CreateTable() {
+storage::DataTable *ExecutorTestsUtil::CreateTable() {
 
   // Create table.
-  storage::Table *table = storage::TableFactory::GetTable(
+  storage::DataTable *table = storage::TableFactory::GetTable(
       INVALID_OID,
       new catalog::Schema({
         GetColumnInfo(0), GetColumnInfo(1),
@@ -258,7 +258,7 @@ storage::Table *ExecutorTestsUtil::CreateTable() {
   return table;
 }
 
-storage::Tuple *ExecutorTestsUtil::GetTuple(storage::Table *table, oid_t tuple_id) {
+storage::Tuple *ExecutorTestsUtil::GetTuple(storage::DataTable *table, oid_t tuple_id) {
 
   storage::Tuple* tuple = new storage::Tuple(table->GetSchema(), true);
   tuple->SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(tuple_id, 0)));
@@ -269,7 +269,7 @@ storage::Tuple *ExecutorTestsUtil::GetTuple(storage::Table *table, oid_t tuple_i
   return tuple;
 }
 
-storage::Tuple *ExecutorTestsUtil::GetNullTuple(storage::Table *table) {
+storage::Tuple *ExecutorTestsUtil::GetNullTuple(storage::DataTable *table) {
 
   storage::Tuple* tuple = new storage::Tuple(table->GetSchema(), true);
   tuple->SetValue(0, ValueFactory::GetNullValue());

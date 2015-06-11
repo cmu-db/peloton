@@ -23,7 +23,7 @@ namespace nstore {
 namespace storage {
 
 TileGroup::TileGroup(TileGroupHeader* tile_group_header,
-                     Table *table,
+                     DataTable *table,
                      Backend* backend,
                      const std::vector<catalog::Schema>& schemas,
                      int tuple_count)

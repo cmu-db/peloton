@@ -17,7 +17,7 @@
 namespace nstore {
 
 namespace storage {
-class Table;
+class DataTable;
 }
 
 namespace planner {
@@ -30,7 +30,7 @@ class SeqScanNode : public AbstractPlanNode {
   SeqScanNode& operator=(SeqScanNode &&) = delete;
 
   SeqScanNode(
-      storage::Table *table,
+      storage::DataTable *table,
       expression::AbstractExpression *predicate,
       const std::vector<oid_t> &column_ids)
     : table_(table),
@@ -38,7 +38,7 @@ class SeqScanNode : public AbstractPlanNode {
       column_ids_(column_ids) {
   }
 
-  const storage::Table *GetTable() const {
+  const storage::DataTable *GetTable() const {
     return table_;
   }
 
@@ -60,7 +60,7 @@ class SeqScanNode : public AbstractPlanNode {
 
  private:
   /** @brief Pointer to table to scan from. */
-  const storage::Table *table_;
+  const storage::DataTable *table_;
 
   /** @brief Selection predicate. */
   const std::unique_ptr<expression::AbstractExpression> predicate_;
