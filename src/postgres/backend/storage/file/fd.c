@@ -374,7 +374,11 @@ pg_flush_data(int fd, off_t offset, off_t amount)
 {
 	if (enableFsync)
 	{
+#if defined(HAVE_SYNC_FILE_RANGE)
+		return sync_file_range(fd, offset, amount, SYNC_FILE_RANGE_WRITE);
+#elif defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
 		return posix_fadvise(fd, offset, amount, POSIX_FADV_DONTNEED);
+#endif
 	}
 	return 0;
 }
