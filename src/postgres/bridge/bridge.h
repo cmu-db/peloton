@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "postgres.h"
+
 class Bridge {
 
  public:
