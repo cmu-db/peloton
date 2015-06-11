@@ -21,13 +21,13 @@ class Bridge {
 
   /**
    * @brief Getting the relation name.
-   * @param relId relation id
+   * @param relation id relation id
    */
-  static char* GetRelationName(Oid relId) {
+  static char* GetRelationName(Oid relation_id) {
       Relation relation;
       char *relation_name;
 
-      relation = relation_open(relId, NoLock);
+      relation = relation_open(relation_id, NoLock);
 
       // Get name for given relation
       relation_name = quote_qualified_identifier(get_namespace_name(RelationGetNamespace(relation)), RelationGetRelationName(relation));
