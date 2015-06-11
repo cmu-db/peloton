@@ -47,9 +47,9 @@ const std::set<oid_t> g_tuple_ids({ 0, 3, 5, 7 });
  *
  * @return Table generated for test.
  */
-storage::Table *CreateTable() {
+storage::DataTable *CreateTable() {
   const int tuple_count = 50;
-  std::unique_ptr<storage::Table> table(ExecutorTestsUtil::CreateTable());
+  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable());
 
   // Schema for first tile group. Vertical partition is 2, 2.
   std::vector<catalog::Schema> schemas1({
@@ -224,7 +224,7 @@ void RunTest(
 // paritioning changes midway.
 TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
   // Create table.
-  std::unique_ptr<storage::Table> table(CreateTable());
+  std::unique_ptr<storage::DataTable> table(CreateTable());
 
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids({ 0, 1, 3 });
@@ -248,7 +248,7 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
 // Sequential scan of logical tile with predicate.
 TEST(SeqScanTests, NonLeafNodePredicateTest) {
   // No table for this case as seq scan is not a leaf node.
-  storage::Table *table = nullptr;
+  storage::DataTable *table = nullptr;
 
   // No column ids as input to executor is another logical tile.
   std::vector<oid_t> column_ids;
@@ -278,7 +278,7 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
 
   // This table is generated so we can reuse the test data of the test case
   // where seq scan is a leaf node. We only need the data in the tiles.
-  std::unique_ptr<storage::Table> data_table(CreateTable());
+  std::unique_ptr<storage::DataTable> data_table(CreateTable());
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));

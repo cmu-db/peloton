@@ -55,7 +55,7 @@ bool SeqScanExecutor::DExecute() {
 
   // Grab data from plan node.
   const planner::SeqScanNode &node = GetNode<planner::SeqScanNode>();
-  const storage::Table *table = node.GetTable();
+  const storage::DataTable *table = node.GetTable();
   const expression::AbstractExpression *predicate = node.GetPredicate();
   const std::vector<oid_t> &column_ids = node.GetColumnIds();
 

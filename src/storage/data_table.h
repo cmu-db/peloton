@@ -1,11 +1,9 @@
 /*-------------------------------------------------------------------------
  *
- * table.h
+ * data_table.h
  * file description
  *
  * Copyright(c) 2015, CMU
- *
- * /n-store/src/storage/table.h
  *
  *-------------------------------------------------------------------------
  */
@@ -13,6 +11,7 @@
 #pragma once
 
 #include "catalog/manager.h"
+#include "storage/abstract_table.h"
 #include "storage/tile_group.h"
 #include "storage/backend_vm.h"
 
@@ -24,7 +23,7 @@ namespace nstore {
 namespace storage {
 
 //===--------------------------------------------------------------------===//
-// Table
+// DataTable
 //===--------------------------------------------------------------------===//
 
 /**
@@ -36,113 +35,64 @@ namespace storage {
  * <Tile Group n>
  *
  */
-class Table {
-  friend class TileGroup;
-  friend class TableFactory;
+class DataTable {
+    friend class TileGroup;
+    friend class TableFactory;
 
-  Table() = delete;
-  Table(Table const&) = delete;
+    DataTable() = delete;
+    DataTable(DataTable const&) = delete;
 
- public:
+public:
 
-  // Table constructor
-  Table(catalog::Schema *schema,
-        Backend *backend,
-        std::string table_name);
+    // Table constructor
+    DataTable(catalog::Schema *schema,
+              Backend *backend,
+              std::string table_name);
 
-  ~Table();
+    ~DataTable();
 
-  catalog::Schema *GetSchema() const{
-    return schema;
-  }
+    std::string GetName() const {
+        return table_name;
+    }
 
-  Backend *GetBackend() const {
-    return backend;
-  }
+    //===--------------------------------------------------------------------===//
+    // INDEXES
+    //===--------------------------------------------------------------------===//
 
-  std::string GetName() const {
-    return table_name;
-  }
+    // add an index to the table
+    void AddIndex(index::Index *index);
+    
+    inline size_t GetIndexCount() const {
+        return indexes.size();
+    }
 
-  //===--------------------------------------------------------------------===//
-  // OPERATIONS
-  //===--------------------------------------------------------------------===//
+    inline index::Index *GetIndex(oid_t index_id) const {
+        assert(index_id < indexes.size());
+        return indexes[index_id];
+    }
 
-  // add a default unpartitioned tile group to table
-  oid_t AddDefaultTileGroup();
+    void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+    bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
-  // add a customized tile group to table
-  void AddTileGroup(TileGroup *tile_group);
+    void DeleteInIndexes(const storage::Tuple *tuple);
 
-  // add an index to the table
-  void AddIndex(index::Index *index);
+    bool CheckNulls(const storage::Tuple *tuple) const;
 
-  // NOTE: This must go through the manager's locator
-  // This allows us to "TRANSFORM" tile groups atomically
-  TileGroup *GetTileGroup(oid_t tile_group_id) const;
+    //===--------------------------------------------------------------------===//
+    // UTILITIES
+    //===--------------------------------------------------------------------===//
 
-  size_t GetTileGroupCount() const;
+    // Get a string representation of this table
+    friend std::ostream& operator<<(std::ostream& os, const DataTable& table);
 
-  // insert tuple in table
-  ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple, bool update = false);
+protected:
 
-  //===--------------------------------------------------------------------===//
-  // INDEXES
-  //===--------------------------------------------------------------------===//
+    //===--------------------------------------------------------------------===//
+    // MEMBERS
+    //===--------------------------------------------------------------------===//
 
-  size_t GetIndexCount() const {
-    return indexes.size();
-  }
-
-  index::Index *GetIndex(oid_t index_id) const {
-    assert(index_id < indexes.size());
-    return indexes[index_id];
-  }
-
-  void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
-  bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
-
-  void DeleteInIndexes(const storage::Tuple *tuple);
-
-  bool CheckNulls(const storage::Tuple *tuple) const;
-
-  //===--------------------------------------------------------------------===//
-  // Utilities
-  //===--------------------------------------------------------------------===//
-
-  // Get a string representation of this table
-  friend std::ostream& operator<<(std::ostream& os, const Table& table);
-
- protected:
-
-  //===--------------------------------------------------------------------===//
-  // Data members
-  //===--------------------------------------------------------------------===//
-
-  // Catalog information
-  oid_t database_id;
-  oid_t table_id;
-
-  // backend
-  Backend *backend;
-
-  // table schema
-  catalog::Schema *schema;
-
-  // table name
-  std::string table_name;
-
-  // set of tile groups
-  std::vector<oid_t> tile_groups;
-
-  // INDEXES
-  std::vector<index::Index*> indexes;
-
-  // TODO need some policy ?
-  // number of tuples allocated per tilegroup for this table
-  size_t tuples_per_tilegroup = 1000;
-
-  std::mutex table_mutex;
+    // INDEXES
+    std::vector<index::Index*> indexes;
 
 };
 
@@ -150,24 +100,24 @@ class Table {
 // Table factory
 //===--------------------------------------------------------------------===//
 
-class TableFactory {
- public:
-  TableFactory();
-  virtual ~TableFactory();
+class DataTableFactory {
+public:
+    DataTableFactory();
+    virtual ~TableFactory();
 
-  static Table *GetTable(oid_t database_id,
-                         catalog::Schema *schema,
-                         std::string table_name = "temp") {
+    static DataTable *GetTable(oid_t database_id,
+                            catalog::Schema *schema,
+                            std::string table_name = "temp") {
 
-    // create a new backend
-    Backend* backend = new VMBackend();
+        // create a new backend
+        Backend* backend = new VMBackend();
 
-    Table *table =  new Table(schema, backend, table_name);
+        DataTable *table =  new DataTable(schema, backend, table_name);
 
-    table->database_id = database_id;
+        table->database_id = database_id;
 
-    return table;
-  }
+        return table;
+    }
 
 };
 
