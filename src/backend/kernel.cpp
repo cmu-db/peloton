@@ -28,7 +28,7 @@ namespace backend {
 #ifdef __APPLE__
 using namespace tbb::flow::interface7;
 #else
-using namespace tbb::flow::interface6;
+using namespace tbb::flow;
 #endif
 
 int size = 10000000;
