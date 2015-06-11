@@ -29,6 +29,8 @@ namespace storage {
  * Base class for tables
  */
 class AbstractTable {
+    friend class TileGroup;
+    friend class TableFactory;
 
 public:
     
@@ -45,12 +47,20 @@ public:
     // ACCESSORS
     //===--------------------------------------------------------------------===//
     
-    catalog::Schema *GetSchema() const{
+    inline catalog::Schema *GetSchema() const{
         return schema;
     }
     
-    Backend *GetBackend() const {
+    inline Backend *GetBackend() const {
         return backend;
+    }
+    
+    inline oid_t GetDatabaseId() const {
+        return database_id;
+    }
+    
+    inline oid_t GetTableId() const {
+        return table_id;
     }
 
     //===--------------------------------------------------------------------===//
@@ -70,93 +80,42 @@ public:
     // This allows us to "TRANSFORM" tile groups atomically
     TileGroup *GetTileGroup(oid_t tile_group_id) const;
 
-  size_t GetTileGroupCount() const;
+    size_t GetTileGroupCount() const;
 
-  // insert tuple in table
-  ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple, bool update = false);
+    // insert tuple in table
+    ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple, bool update = false);
 
-  //===--------------------------------------------------------------------===//
-  // INDEXES
-  //===--------------------------------------------------------------------===//
+    //===--------------------------------------------------------------------===//
+    // UTILITIES
+    //===--------------------------------------------------------------------===//
+    
+    bool AbstractTable::CheckNulls(const storage::Tuple *tuple) const;
 
-  size_t GetIndexCount() const {
-    return indexes.size();
-  }
+    // Get a string representation of this table
+    friend std::ostream& operator<<(std::ostream& os, const AbstractTable& table);
 
-  index::Index *GetIndex(oid_t index_id) const {
-    assert(index_id < indexes.size());
-    return indexes[index_id];
-  }
+protected:
 
-  void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
-  bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+    //===--------------------------------------------------------------------===//
+    // MEMBERS
+    //===--------------------------------------------------------------------===//
 
-  void DeleteInIndexes(const storage::Tuple *tuple);
+    // Catalog information
+    oid_t database_id;
+    oid_t table_id;
 
-  bool CheckNulls(const storage::Tuple *tuple) const;
+    // backend
+    Backend *backend;
 
-  //===--------------------------------------------------------------------===//
-  // Utilities
-  //===--------------------------------------------------------------------===//
+    // table schema
+    catalog::Schema *schema;
 
-  // Get a string representation of this table
-  friend std::ostream& operator<<(std::ostream& os, const Table& table);
+    // set of tile groups
+    std::vector<oid_t> tile_groups;
 
- protected:
-
-  //===--------------------------------------------------------------------===//
-  // Data members
-  //===--------------------------------------------------------------------===//
-
-  // Catalog information
-  oid_t database_id;
-  oid_t table_id;
-
-  // backend
-  Backend *backend;
-
-  // table schema
-  catalog::Schema *schema;
-
-  // table name
-  std::string table_name;
-
-  // set of tile groups
-  std::vector<oid_t> tile_groups;
-
-  // INDEXES
-  std::vector<index::Index*> indexes;
-
-  // TODO need some policy ?
-  // number of tuples allocated per tilegroup for this table
-  size_t tuples_per_tilegroup = 1000;
-
-  std::mutex table_mutex;
-
-};
-
-//===--------------------------------------------------------------------===//
-// Table factory
-//===--------------------------------------------------------------------===//
-
-class TableFactory {
- public:
-  TableFactory();
-  virtual ~TableFactory();
-
-  static Table *GetTable(oid_t database_id,
-                         catalog::Schema *schema,
-                         std::string table_name = "temp") {
-
-    // create a new backend
-    Backend* backend = new VMBackend();
-
-    Table *table =  new Table(schema, backend, table_name);
-
-    table->database_id = database_id;
-
-    return table;
-  }
+    // TODO need some policy ?
+    // number of tuples allocated per tilegroup for this table
+    size_t tuples_per_tilegroup = 1000;
 
 };
 

@@ -27,7 +27,7 @@ class LogicalTile;
 namespace storage {
 class Backend;
 class TileGroup;
-class Table;
+class DataTable;
 class Tuple;
 }
 
@@ -45,7 +45,7 @@ class ExecutorTestsUtil {
       int allocate_tuple_count = DEFAULT_TUPLE_COUNT);
 
   /** @brief Creates a basic table with allocated but not populated tuples */
-  static storage::Table *CreateTable();
+  static storage::DataTable *CreateTable();
 
   static void PopulateTiles(storage::TileGroup *tile_group, int num_rows);
 
@@ -68,8 +68,8 @@ class ExecutorTestsUtil {
     return 10 * tuple_id + column_id;
   }
 
-  static storage::Tuple *GetTuple(storage::Table *table, oid_t tuple_id);
-  static storage::Tuple *GetNullTuple(storage::Table *table);
+  static storage::Tuple *GetTuple(storage::DataTable *table, oid_t tuple_id);
+  static storage::Tuple *GetNullTuple(storage::DataTable *table);
 };
 
 } // namespace test
