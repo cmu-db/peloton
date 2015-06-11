@@ -56,8 +56,11 @@ libpostgres_la_SOURCES = \
 					  $(postgres_common_FILES) \
 					  $(postgres_port_FILES) \
 					  $(postgres_timezone_FILES)
-
-libpostgres_la_LDFLAGS = -lrt -lcrypt -ldl -lm
+if BUILD_OS_IS_DARWIN
+	libpostgres_la_LDFLAGS = -lcrypt -ldl -lm
+else
+	libpostgres_la_LDFLAGS = -lrt -lcrypt -ldl -lm
+endif
 libpostgres_la_CFLAGS =  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
 						 -Wendif-labels -Wmissing-format-attribute -Wformat-security \
 						 -fno-strict-aliasing -fwrapv -fexcess-precision=standard \
