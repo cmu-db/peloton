@@ -12,6 +12,6 @@
 class Bridge {
 
  public:
-  static char* GetRelationName(Oid relId);
+  static char* GetRelationName(Oid relation_id);
 
 };
