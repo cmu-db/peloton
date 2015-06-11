@@ -1,7 +1,7 @@
 # configure.in -- Process this file with autoconf to produce configure
 AC_PREREQ([2.64])
 
-AC_INIT([n-store], [0.1], [jarulraj@cs.cmu.edu])
+AC_INIT([peloton], [0.0.1], [jarulraj@cs.cmu.edu])
 AC_CONFIG_HEADERS([config.h:config-h.in])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
