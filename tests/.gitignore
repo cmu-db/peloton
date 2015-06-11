@@ -2,3 +2,4 @@
 *.xml
 *.trs
 *_test
+valgrind.supp
