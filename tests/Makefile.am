@@ -19,6 +19,8 @@ AM_CPPFLAGS += \
 			   -isystem $(GMOCK_SRCDIR) \
 			   -I$(top_srcdir)/src \
 			   -I$(top_srcdir)/third_party \
+			   -I$(top_srcdir)/src/postgres/include \
+			   -I$(top_srcdir)/src/postgres/backend	\			
 			   -I$(top_builddir)/src \
 			   $(GTEST_CPPFLAGS)
 
@@ -42,6 +44,8 @@ include $(srcdir)/parser/Makefile.am
 include $(srcdir)/planner/Makefile.am
 include $(srcdir)/scheduler/Makefile.am
 include $(srcdir)/storage/Makefile.am
+
+include $(srcdir)/postgres/bridge/Makefile.am
 
 TESTS = $(check_PROGRAMS) 
 LOG_COMPILER = $(srcdir)/test-driver.sh 
