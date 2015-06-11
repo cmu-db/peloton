@@ -19,6 +19,7 @@ include $(srcdir)/scheduler/Makefile.am
 include $(srcdir)/storage/Makefile.am
 
 include $(srcdir)/postgres/backend/Makefile.am
+include $(srcdir)/postgres/bridge/Makefile.am
 include $(srcdir)/postgres/common/Makefile.am
 include $(srcdir)/postgres/port/Makefile.am
 include $(srcdir)/postgres/timezone/Makefile.am
@@ -53,6 +54,7 @@ libpeloton_la_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(third_party_INCLUDES)
 
 libpostgres_la_SOURCES = \
 					  $(postgres_backend_FILES) \
+					  $(postgres_bridge_FILES) \
 					  $(postgres_common_FILES) \
 					  $(postgres_port_FILES) \
 					  $(postgres_timezone_FILES)
