@@ -1,0 +1,4 @@
+*.log
+*.xml
+*.trs
+*_test
