@@ -529,7 +529,8 @@
 #define HAVE_SYMLINK 1
 
 /* Define to 1 if you have the `sync_file_range' function. */
-#define HAVE_SYNC_FILE_RANGE 1
+/* Peloton porting issue, don't use sync_file_range in portable system */
+#define HAVE_SYNC_FILE_RANGE 0
 
 /* Define to 1 if you have the syslog interface. */
 #define HAVE_SYSLOG 1
