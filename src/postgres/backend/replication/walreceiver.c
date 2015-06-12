@@ -278,7 +278,7 @@ WalReceiverMain(void)
 	sigdelset(&BlockSig, SIGQUIT);
 
 	/* Load the libpq-specific functions */
-	// Peloton porting issue: the 3rd arg is true
+	// Peloton porting issue: the 2nd arg is false
 	load_file("libpqwalreceiver", 0);
 	if (walrcv_connect == NULL || walrcv_startstreaming == NULL ||
 		walrcv_endstreaming == NULL ||
