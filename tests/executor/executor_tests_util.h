@@ -34,42 +34,42 @@ class Tuple;
 namespace test {
 
 class ExecutorTestsUtil {
- public:
+public:
 
-  /**
-   * @brief Creates a basic tile group with allocated but not populated
-   *        tuples.
-   */
-  static storage::TileGroup *CreateTileGroup(
-      storage::Backend *backend,
-      int allocate_tuple_count = DEFAULT_TUPLE_COUNT);
+    /**
+     * @brief Creates a basic tile group with allocated but not populated
+     *        tuples.
+     */
+    static storage::TileGroup *CreateTileGroup(
+        storage::Backend *backend,
+        int allocate_tuple_count = DEFAULT_TUPLE_COUNT);
 
-  /** @brief Creates a basic table with allocated but not populated tuples */
-  static storage::DataTable *CreateTable();
+    /** @brief Creates a basic table with allocated but not populated tuples */
+    static storage::DataTable *CreateTable();
 
-  static void PopulateTiles(storage::TileGroup *tile_group, int num_rows);
+    static void PopulateTiles(storage::TileGroup *tile_group, int num_rows);
 
-  static catalog::ColumnInfo GetColumnInfo(int index);
+    static catalog::ColumnInfo GetColumnInfo(int index);
 
-  static executor::LogicalTile *ExecuteTile(
-      executor::AbstractExecutor *executor,
-      executor::LogicalTile *source_logical_tile);
+    static executor::LogicalTile *ExecuteTile(
+        executor::AbstractExecutor *executor,
+        executor::LogicalTile *source_logical_tile);
 
-  /**
-   * @brief Returns the value populated at the specified field.
-   * @param tuple_id Row of the specified field.
-   * @param column_id Column of the specified field.
-   *
-   * This method defines the values that are populated by PopulateTiles().
-   *
-   * @return Populated value.
-   */
-  inline static int PopulatedValue(const oid_t tuple_id, const oid_t column_id) {
-    return 10 * tuple_id + column_id;
-  }
+    /**
+     * @brief Returns the value populated at the specified field.
+     * @param tuple_id Row of the specified field.
+     * @param column_id Column of the specified field.
+     *
+     * This method defines the values that are populated by PopulateTiles().
+     *
+     * @return Populated value.
+     */
+    inline static int PopulatedValue(const oid_t tuple_id, const oid_t column_id) {
+        return 10 * tuple_id + column_id;
+    }
 
-  static storage::Tuple *GetTuple(storage::DataTable *table, oid_t tuple_id);
-  static storage::Tuple *GetNullTuple(storage::DataTable *table);
+    static storage::Tuple *GetTuple(storage::DataTable *table, oid_t tuple_id);
+    static storage::Tuple *GetNullTuple(storage::DataTable *table);
 };
 
 } // namespace test
