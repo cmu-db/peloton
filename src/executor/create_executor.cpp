@@ -19,6 +19,7 @@
 #include "index/index_factory.h"
 #include "parser/statement_create.h"
 #include "storage/data_table.h"
+#include "storage/table_factory.h"
 
 #include <cassert>
 #include <algorithm>
@@ -38,13 +39,13 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
     bool ret = false;
     switch(stmt->type) {
         case parser::CreateStatement::kDatabase:
-            ret = this->CreateDatabase(db, stmt);
+            ret = CreateDatabase(db, stmt);
             break;
         case parser::CreateStatement::kTable:
-            ret = this->CreateTable(db, stmt);
+            ret = CreateTable(db, stmt);
             break;
         case parser::CreateStatement::kIndex:
-            ret = this->CreateIndex(db, stmt);
+            ret = CreateIndex(db, stmt);
             break;
 // FIXME
 //         case parser::CreateStatement::kConstraint:
@@ -58,7 +59,7 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
     return (ret);
 }
 
-bool CreateExecutor::CreateDatabase(catalog::Database* db, parser::CreateStatement* stmt) {
+bool CreateExecutor::CreateDatabase(parser::CreateStatement* stmt) {
     catalog::Database *database = catalog::Catalog::GetInstance().GetDatabase(stmt->name);
     if (database != nullptr) {
         LOG_ERROR("Database already exists  : %s \n", stmt->name);
@@ -372,7 +373,14 @@ bool CreateExecutor::CreateIndex(catalog::Database* db, parser::CreateStatement*
 }
 
 bool CreateExecutor::CreateConstraint(catalog::Database* db, parser::CreateStatement* stmt) {
+    catalog::Table *table = db->GetTable(stmt->table_name);
+    if (table == nullptr) {
+        LOG_ERROR("Table does not exist  : %s \n", stmt->table_name);
+        return false;
+    }
+    
     // TODO
+    
     return (true);
 }
 
