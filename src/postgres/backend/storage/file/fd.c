@@ -125,9 +125,9 @@ int			max_files_per_process = 1000;
 int			max_safe_fds = 32;	/* default if not changed */
 
 // Peloton porting issue
-#ifndef SYNC_FILE_RANGE_WRITE
-#define SYNC_FILE_RANGE_WRITE 2
-#endif
+//#ifndef SYNC_FILE_RANGE_WRITE
+//#define SYNC_FILE_RANGE_WRITE 2
+//#endif
 
 /* Debugging.... */
 
@@ -378,9 +378,10 @@ pg_flush_data(int fd, off_t offset, off_t amount)
 {
 	if (enableFsync)
 	{
-#if defined(HAVE_SYNC_FILE_RANGE)
-		return sync_file_range(fd, offset, amount, SYNC_FILE_RANGE_WRITE);
-#elif defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
+/* Peloton porting issue: don't use sync_file_range in portable system */
+//#if defined(HAVE_SYNC_FILE_RANGE)
+//		return sync_file_range(fd, offset, amount, SYNC_FILE_RANGE_WRITE);
+#if defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
 		return posix_fadvise(fd, offset, amount, POSIX_FADV_DONTNEED);
 #endif
 	}
