@@ -10,7 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "storage/abstract_table.h"
+#include "storage/data_table.h"
 
 #include "common/exception.h"
 #include "index/index.h"
@@ -45,14 +45,27 @@ void DataTable::AddIndex(index::Index *index) {
 }
 
 ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple, bool update){
+    
+    // TODO: Check basic integrity constraints!
+    //       We don't want to do uniqueness or fkey checks here because
+    //       that would be additional index look-ups per tuple
+    //       But this is where we can do basic things like evaluate non-negative checks
+    
+    
     // Insert the tuples in the base table
     ItemPointer location = AbstractTable::InsertTuple(transaction_id, tuple, update);
 
     // Index checks and updates
     if (update == false) {
-        if (TryInsertInIndexes(tuple, location) == false){
-            tile_group->ReclaimTuple(tuple_slot);
+        if (TryInsertInIndexes(tuple, location) == false) {
+            // FIXME
+            // Need to think about how we want to actually do this, because right
+            // now there is no way to get back the target TileGroup and slot from
+            // AbstractTable::InsertTuple
+            // FIXME tile_group->ReclaimTuple(tuple_slot);
             throw ConstraintException("Index constraint violated : " + tuple->GetInfo());
+            // TODO: Why do we want to return the location here? We should probably 
+            // return null
             return location;
         }
     }
@@ -117,8 +130,7 @@ void DataTable::DeleteInIndexes(const storage::Tuple *tuple) {
 }
 
 
-std::ostream& operator<<(std::ostream& os, const Table& table) {
-
+std::ostream& operator<<(std::ostream& os, const DataTable& table) {
     os << "=====================================================\n";
     os << "TABLE :\n";
 
