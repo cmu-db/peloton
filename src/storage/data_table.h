@@ -96,30 +96,6 @@ protected:
 
 };
 
-//===--------------------------------------------------------------------===//
-// Table factory
-//===--------------------------------------------------------------------===//
-
-class DataTableFactory {
-public:
-    DataTableFactory();
-    virtual ~TableFactory();
-
-    static DataTable *GetTable(oid_t database_id,
-                            catalog::Schema *schema,
-                            std::string table_name = "temp") {
-
-        // create a new backend
-        Backend* backend = new VMBackend();
-
-        DataTable *table =  new DataTable(schema, backend, table_name);
-
-        table->database_id = database_id;
-
-        return table;
-    }
-
-};
 
 } // End storage namespace
 } // End nstore namespace
