@@ -23,15 +23,22 @@ namespace executor {
 //===--------------------------------------------------------------------===//
 
 class CreateExecutor {
- public:
+public:
 
-  CreateExecutor(const CreateExecutor &) = delete;
-  CreateExecutor& operator=(const CreateExecutor &) = delete;
-  CreateExecutor(CreateExecutor &&) = delete;
-  CreateExecutor& operator=(CreateExecutor &&) = delete;
+    CreateExecutor(const CreateExecutor &) = delete;
+    CreateExecutor& operator=(const CreateExecutor &) = delete;
+    CreateExecutor(CreateExecutor &&) = delete;
+    CreateExecutor& operator=(CreateExecutor &&) = delete;
 
-  static bool Execute(parser::SQLStatement *query);
+    static bool Execute(parser::SQLStatement *query);
 
+protected:
+    
+    bool CreateDatabase(catalog::Database* db, parser::CreateStatement* stmt);
+    bool CreateTable(catalog::Database* db, parser::CreateStatement* stmt);
+    bool CreateIndex(catalog::Database* db, parser::CreateStatement* stmt);
+    bool CreateConstraint(catalog::Database* db, parser::CreateStatement* stmt);
+    
 };
 
 } // namespace executor
