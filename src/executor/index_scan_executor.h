@@ -28,11 +28,14 @@ class IndexScanExecutor : public AbstractExecutor {
 
  private:
 
-  /** @brief Keeps track of current tile group id being scanned. */
-  oid_t current_tile_group_id_ = 0;
-
   /** @brief Result of index scan. */
   std::vector<LogicalTile *> result;
+
+  /** @brief Result itr */
+  size_t result_itr;
+
+  /** @brief Computed the result */
+  bool done;
 };
 
 } // namespace executor
