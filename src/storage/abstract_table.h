@@ -47,7 +47,7 @@ public:
     // ACCESSORS
     //===--------------------------------------------------------------------===//
     
-    inline catalog::Schema *GetSchema() const{
+    inline catalog::Schema *GetSchema() const {
         return schema;
     }
     
@@ -89,7 +89,7 @@ public:
     // UTILITIES
     //===--------------------------------------------------------------------===//
     
-    bool AbstractTable::CheckNulls(const storage::Tuple *tuple) const;
+    bool CheckNulls(const storage::Tuple *tuple) const;
 
     // Get a string representation of this table
     friend std::ostream& operator<<(std::ostream& os, const AbstractTable& table);

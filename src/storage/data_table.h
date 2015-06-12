@@ -35,7 +35,7 @@ namespace storage {
  * <Tile Group n>
  *
  */
-class DataTable {
+class DataTable : public AbstractTable {
     friend class TileGroup;
     friend class TableFactory;
 
@@ -91,6 +91,8 @@ protected:
     // MEMBERS
     //===--------------------------------------------------------------------===//
 
+    std::string table_name;
+    
     // INDEXES
     std::vector<index::Index*> indexes;
 

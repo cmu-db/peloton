@@ -11,6 +11,7 @@ storage_FILES = \
 				storage/tile.cpp \
 				storage/tile_group.cpp \
 				storage/tile_group_header.cpp \
+				storage/tile_group_factory.cpp \
 				storage/tuple.cpp
 
 storage_INCLUDES = \
