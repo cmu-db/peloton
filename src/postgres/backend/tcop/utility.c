@@ -631,6 +631,7 @@ standard_ProcessUtility(Node *parsetree,
 
 				closeAllVfds(); /* probably not necessary... */
 				/* Allowed names are restricted if you're not superuser */
+				// Peloton porting issue: the 3rd arg is true
 				load_file(stmt->filename, !superuser());
 			}
 			break;

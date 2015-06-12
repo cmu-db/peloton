@@ -23,8 +23,10 @@
 
 namespace nstore {
 
+#ifndef __APPLE__ // Ming: OS X has definition of these functions
 #define htonll(x) (((int64_t)(ntohl((int32_t)((x << 32) >> 32))) << 32) | (uint32_t)ntohl(((int32_t)(x >> 32))))
 #define ntohll(x) (((int64_t)(ntohl((int32_t)((x << 32) >> 32))) << 32) | (uint32_t)ntohl(((int32_t)(x >> 32))))
+#endif
 
 //===--------------------------------------------------------------------===//
 // Abstract class for reading from memory buffers.

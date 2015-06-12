@@ -59,7 +59,7 @@ bool SeqScanExecutor::DExecute() {
   const expression::AbstractExpression *predicate = node.GetPredicate();
   const std::vector<oid_t> &column_ids = node.GetColumnIds();
 
-  // We are scanning over a logical tile.
+  // Scanning over a logical tile.
   if (children_.size() == 1) {
 
     LOG_TRACE("Seq Scan executor :: 1 child \n");
