@@ -537,8 +537,9 @@ LoadOutputPlugin(OutputPluginCallbacks *callbacks, char *plugin)
 {
 	LogicalOutputPluginInit plugin_init;
 
+	// Peloton porting issue: the 3rd arg is false
 	plugin_init = (LogicalOutputPluginInit)
-		load_external_function(plugin, "_PG_output_plugin_init", false, NULL);
+		load_external_function(plugin, "_PG_output_plugin_init", 0, NULL);
 
 	if (plugin_init == NULL)
 		elog(ERROR, "output plugins have to declare the _PG_output_plugin_init symbol");

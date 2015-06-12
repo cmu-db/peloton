@@ -975,8 +975,9 @@ ParallelExtensionTrampoline(dsm_segment *seg, shm_toc *toc)
 	library_name = extensionstate;
 	function_name = extensionstate + strlen(library_name) + 1;
 
+	// Peloton porting issue: the 3rd arg is true
 	entrypt = (parallel_worker_main_type)
-		load_external_function(library_name, function_name, true, NULL);
+		load_external_function(library_name, function_name, 1, NULL);
 	entrypt(seg, toc);
 }
 

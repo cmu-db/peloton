@@ -820,7 +820,8 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 		elog(ERROR, "null probin for C function %u", funcoid);
 	probin = TextDatumGetCString(tmp);
 
-	(void) load_external_function(probin, prosrc, true, &libraryhandle);
+	// Peloton porting issue: the 3rd arg is true
+	(void) load_external_function(probin, prosrc, 1, &libraryhandle);
 	(void) fetch_finfo_record(libraryhandle, prosrc);
 
 	ReleaseSysCache(tuple);

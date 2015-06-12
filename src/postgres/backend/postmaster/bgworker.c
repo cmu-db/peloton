@@ -706,10 +706,11 @@ StartBackgroundWorker(void)
 	if (worker->bgw_main != NULL)
 		entrypt = worker->bgw_main;
 	else
+	// Peloton porting issue: the 3rd arg is true
 		entrypt = (bgworker_main_type)
 			load_external_function(worker->bgw_library_name,
 								   worker->bgw_function_name,
-								   true, NULL);
+								   1, NULL);
 
 	/*
 	 * Note that in normal processes, we would call InitPostgres here.  For a
