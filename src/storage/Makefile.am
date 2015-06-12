@@ -5,7 +5,7 @@
 ######################################################################
 
 storage_FILES = \
-				storage/abstract_table.cpp \				
+				storage/abstract_table.cpp \
 				storage/data_table.cpp \
 				storage/table_factory.cpp \
 				storage/tile.cpp \

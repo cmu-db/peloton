@@ -23,10 +23,10 @@ namespace nstore {
 namespace storage {
 
 DataTable::DataTable(catalog::Schema *schema,
-             Backend *backend,
-             std::string table_name)
-: AbstractTable(schema, backend),
-  table_name(table_name) {
+                     Backend *backend,
+                     std::string table_name)
+    : AbstractTable(schema, backend),
+      table_name(table_name) {
 
     // Sweat these rocks bitch!
 }
@@ -44,14 +44,14 @@ void DataTable::AddIndex(index::Index *index) {
     indexes.push_back(index);
 }
 
-ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple, bool update){
-    
+ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple, bool update) {
+
     // TODO: Check basic integrity constraints!
     //       We don't want to do uniqueness or fkey checks here because
     //       that would be additional index look-ups per tuple
     //       But this is where we can do basic things like evaluate non-negative checks
-    
-    
+
+
     // Insert the tuples in the base table
     ItemPointer location = AbstractTable::InsertTuple(transaction_id, tuple, update);
 
@@ -64,7 +64,7 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple
             // AbstractTable::InsertTuple
             // FIXME tile_group->ReclaimTuple(tuple_slot);
             throw ConstraintException("Index constraint violated : " + tuple->GetInfo());
-            // TODO: Why do we want to return the location here? We should probably 
+            // TODO: Why do we want to return the location here? We should probably
             // return null
             return location;
         }
@@ -93,9 +93,9 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer loca
 
         // No need to check if it does not have unique keys
         if(indexes[index_itr]->HasUniqueKeys() == false) {
-        bool status = indexes[index_itr]->InsertEntry(tuple, location);
-        if (status == true)
-            continue;
+            bool status = indexes[index_itr]->InsertEntry(tuple, location);
+            if (status == true)
+                continue;
         }
 
         // Check if key already exists
@@ -121,12 +121,12 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer loca
 }
 
 void DataTable::DeleteInIndexes(const storage::Tuple *tuple) {
-  for(auto index : indexes){
-    if (index->DeleteEntry(tuple) == false) {
-      throw ExecutorException("Failed to delete tuple from index " +
-                              GetName() + "." + index->GetName() + " " +index->GetTypeName());
+    for (auto index : indexes) {
+        if (index->DeleteEntry(tuple) == false) {
+            throw ExecutorException("Failed to delete tuple from index " +
+                                    GetName() + "." + index->GetName() + " " +index->GetTypeName());
+        }
     }
-  }
 }
 
 

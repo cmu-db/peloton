@@ -5,8 +5,8 @@
 ######################################################################
 
 check_PROGRAMS += catalog_test \
-				  manager_test \
-				  tuple_schema_test
+			manager_test \
+			tuple_schema_test
 
 catalog_tests_common_ld = \
 						  $(obj_DIR)/catalog/manager.o \
@@ -17,6 +17,7 @@ catalog_tests_common_ld = \
 						  $(obj_DIR)/common/pool.o \
 						  $(obj_DIR)/storage/tile_group.o \
 						  $(obj_DIR)/storage/tile_group_header.o \
+						  $(obj_DIR)/storage/tile_group_factory.o \
 						  $(obj_DIR)/storage/tile.o \
 						  $(obj_DIR)/storage/tuple.o
 
