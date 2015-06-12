@@ -13,6 +13,7 @@
 #include "executor/logical_tile.h"
 #include "storage/tile.h"
 #include "storage/tile_group.h"
+#include "storage/table.h"
 
 namespace nstore {
 namespace executor {
@@ -113,6 +114,56 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(
   }
 
   return new_tile.release();
+}
+
+/**
+ * @brief Convenience method to construct a set of logical tiles wrapping a
+ * given set of tuple locations potentially in multiple tile groups.
+ * @param tuple_locations Tuple locations which are item pointers.
+ *
+ * @return Logical tile(s) wrapping the give tuple locations.
+ */
+std::vector<LogicalTile *> LogicalTileFactory::WrapTupleLocations(const storage::Table *table,
+                                              const std::vector<ItemPointer> tuple_locations,
+                                              const std::vector<oid_t> column_ids) {
+  std::vector<LogicalTile *> result;
+
+  // Get the list of blocks
+  std::map<oid_t, std::vector<oid_t> > blocks;
+
+  for(auto tuple_location : tuple_locations){
+    blocks[tuple_location.block].push_back(tuple_location.offset);
+  }
+
+  // Construct a logical tile for each block
+  for(auto block : blocks){
+
+    LogicalTile *logical_tile = LogicalTileFactory::GetTile();
+    const bool own_base_tile = false;
+    const int position_list_idx = 0;
+
+    logical_tile->AddPositionList(std::move(block.second));
+    storage::TileGroup *tile_group = table->GetTileGroup(block.first);
+
+    for (oid_t origin_column_id : column_ids) {
+      oid_t base_tile_offset, tile_column_id;
+
+      tile_group->LocateTileAndColumn(
+          origin_column_id,
+          base_tile_offset,
+          tile_column_id);
+
+      logical_tile->AddColumn(
+          tile_group->GetTile(base_tile_offset),
+          own_base_tile,
+          tile_column_id,
+          position_list_idx);
+    }
+
+    result.push_back(logical_tile);
+  }
+
+  return result;
 }
 
 } // namespace executor

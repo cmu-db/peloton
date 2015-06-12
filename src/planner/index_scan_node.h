@@ -34,16 +34,24 @@ class IndexScanNode : public AbstractPlanNode {
   IndexScanNode& operator=(IndexScanNode &&) = delete;
 
   IndexScanNode(
+      storage::Table *table,
       index::Index *index,
       storage::Tuple *start_key,
       storage::Tuple *end_key,
-      bool inclusive,
+      bool start_inclusive,
+      bool end_inclusive,
       const std::vector<oid_t> &column_ids)
-    : index_(index),
+    : table_(table),
+      index_(index),
       start_key_(start_key),
       end_key_(end_key),
-      inclusive_(inclusive),
+      start_inclusive_(start_inclusive),
+      end_inclusive_(end_inclusive),
       column_ids_(column_ids) {
+  }
+
+  const storage::Table *GetTable() const {
+    return table_;
   }
 
   const index::Index* GetIndex() const{
@@ -58,8 +66,12 @@ class IndexScanNode : public AbstractPlanNode {
     return end_key_;
   }
 
-  bool IsInclusive() const {
-    return inclusive_;
+  bool IsStartInclusive() const {
+    return start_inclusive_;
+  }
+
+  bool IsEndInclusive() const {
+    return end_inclusive_;
   }
 
   const std::vector<oid_t>& GetColumnIds() const {
@@ -76,6 +88,9 @@ class IndexScanNode : public AbstractPlanNode {
 
  private:
 
+  /** @brief Pointer to table to scan from. */
+  const storage::Table *table_;
+
   /** @brief index associated with index scan. */
   index::Index *index_;
 
@@ -88,7 +103,10 @@ class IndexScanNode : public AbstractPlanNode {
   /** @brief whether we also need to include the terminal values ?
    *  Like ID > 50 (not inclusive) or ID >= 50 (inclusive)
    * */
-  bool inclusive_;
+  bool start_inclusive_;
+
+  bool end_inclusive_;
+
 
   /** @brief Columns from tile group to be added to logical tile output. */
   const std::vector<oid_t> column_ids_;

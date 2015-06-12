@@ -5,8 +5,8 @@
 ######################################################################
 
 parser_FILES = \
-			   parser_bison.ypp \
-			   parser_flex.lpp \
+			   parser/parser_bison.cpp \
+			   parser/parser_flex.cpp \
 			   parser/parser.cpp \
 			   parser/parser_utils.cpp \
 			   parser/sql_statement.cpp \
