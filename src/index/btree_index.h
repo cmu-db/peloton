@@ -47,17 +47,17 @@ class BtreeMultimapIndex : public Index {
 
   std::vector<ItemPointer> Scan() const;
 
-  std::vector<ItemPointer> GetLocationsForKey(storage::Tuple *key) const;
+  std::vector<ItemPointer> GetLocationsForKey(const storage::Tuple *key) const;
 
-  std::vector<ItemPointer> GetLocationsForKeyBetween(storage::Tuple *start, storage::Tuple *end) const;
+  std::vector<ItemPointer> GetLocationsForKeyBetween(const storage::Tuple *start, const storage::Tuple *end) const;
 
-  std::vector<ItemPointer> GetLocationsForKeyLT(storage::Tuple *key) const;
+  std::vector<ItemPointer> GetLocationsForKeyLT(const storage::Tuple *key) const;
 
-  std::vector<ItemPointer> GetLocationsForKeyLTE(storage::Tuple *key) const;
+  std::vector<ItemPointer> GetLocationsForKeyLTE(const storage::Tuple *key) const;
 
-  std::vector<ItemPointer> GetLocationsForKeyGT(storage::Tuple *key) const;
+  std::vector<ItemPointer> GetLocationsForKeyGT(const storage::Tuple *key) const;
 
-  std::vector<ItemPointer> GetLocationsForKeyGTE(storage::Tuple *key)  const;
+  std::vector<ItemPointer> GetLocationsForKeyGTE(const storage::Tuple *key)  const;
 
   std::string GetTypeName() const {
     return "BtreeMultimap";

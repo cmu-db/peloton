@@ -29,7 +29,7 @@ namespace executor {
  * @param node Indexscan node corresponding to this executor.
  */
 IndexScanExecutor::IndexScanExecutor(planner::AbstractPlanNode *node, Transaction *transaction)
-: AbstractExecutor(node, transaction) {
+: AbstractExecutor(node, transaction), result_itr(0), done(false) {
 }
 
 /**
@@ -48,70 +48,72 @@ bool IndexScanExecutor::DInit() {
 bool IndexScanExecutor::DExecute() {
   assert(children_.size() == 0);
 
-  // Grab data from plan node.
+  // Already performed the index lookup
+  if(done){
+    if(result_itr == result.size()) {
+      return false;
+    }
+    else {
+
+      // Return appropriate tile and go to next tile
+      SetOutput(result[result_itr]);
+      result_itr++;
+
+      return true;
+    }
+  }
+
+  // Else, need to do the index lookup
+
+  // Grab info from plan node.
   const planner::IndexScanNode &node = GetNode<planner::IndexScanNode>();
+  const storage::Table *table = node.GetTable();
   const index::Index *index = node.GetIndex();
   const std::vector<oid_t> &column_ids = node.GetColumnIds();
 
   LOG_TRACE("Index Scan executor :: 0 child \n");
 
-  // We are scanning a table (this is a leaf node in the plan tree).
   assert(index != nullptr);
   assert(column_ids.size() > 0);
 
-  /*
-  // Retrieve next tile group.
-  if (current_tile_group_id_ == table->GetTileGroupCount()) {
+  const storage::Tuple* start_key = node.GetStartKey();
+  const storage::Tuple* end_key = node.GetEndKey();
+  bool start_inclusive = node.IsStartInclusive();
+  bool end_inclusive = node.IsEndInclusive();
+  std::vector<ItemPointer> tuple_locations;
+
+  if(start_key == nullptr && end_key == nullptr) {
     return false;
   }
-
-  storage::TileGroup *tile_group = table->GetTileGroup(current_tile_group_id_++);
-  storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
-  txn_id_t txn_id = transaction_->GetTransactionId();
-  cid_t commit_id = transaction_->GetLastCommitId();
-  oid_t active_tuple_count = tile_group->GetNextTupleSlot();
-
-  //tile_group_header->PrintVisibility(txn_id, commit_id);
-
-  // Construct position list by looping through tile group
-  // and applying the predicate.
-  std::vector<oid_t> position_list;
-  for (oid_t tuple_id = 0; tuple_id < active_tuple_count ; tuple_id++) {
-    if(tile_group_header->IsVisible(tuple_id, txn_id, commit_id) == false){
-      continue;
+  else if(start_key == nullptr){
+    // < END_KEY
+    if(end_inclusive == false){
+      tuple_locations = index->GetLocationsForKeyLT(end_key);
     }
-
-    expression::ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_id);
-    if (predicate == nullptr || predicate->Evaluate(&tuple, nullptr).IsTrue()) {
-      position_list.push_back(tuple_id);
+    // <= END_KEY
+    else{
+      tuple_locations = index->GetLocationsForKeyLTE(end_key);
     }
   }
-  */
-
-  // Construct logical tile.
-  std::unique_ptr<LogicalTile> logical_tile(LogicalTileFactory::GetTile());
-  /*
-  const bool own_base_tile = false;
-  const int position_list_idx = 0;
-  logical_tile->AddPositionList(std::move(position_list));
-
-  for (oid_t origin_column_id : column_ids) {
-    oid_t base_tile_offset, tile_column_id;
-
-    tile_group->LocateTileAndColumn(
-        origin_column_id,
-        base_tile_offset,
-        tile_column_id);
-
-    logical_tile->AddColumn(
-        tile_group->GetTile(base_tile_offset),
-        own_base_tile,
-        tile_column_id,
-        position_list_idx);
+  else if(end_key == nullptr){
+    // > START_KEY
+    if(start_inclusive == false){
+      tuple_locations = index->GetLocationsForKeyGT(start_key);
+    }
+    // >= START_KEY
+    else{
+      tuple_locations = index->GetLocationsForKeyGTE(start_key);
+    }
   }
-  */
+  else{
+    // START_KEY < .. < END_KEY
+    tuple_locations = index->GetLocationsForKeyBetween(start_key, end_key);
+  }
 
-  SetOutput(logical_tile.release());
+  // Get the logical tiles corresponding to the given tuple locations
+  result = LogicalTileFactory::WrapTupleLocations(table, tuple_locations, column_ids);
+  done = true;
+
   return true;
 }
 

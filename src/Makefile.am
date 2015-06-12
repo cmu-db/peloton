@@ -44,7 +44,7 @@ libpeloton_la_SOURCES = \
 					  $(scheduler_FILES) \
 					  $(storage_FILES)
 
-libpeloton_la_LDFLAGS = $(TBB_LIBS) -pthread
+libpeloton_la_LDFLAGS = $(TBB_LIBS) 
 libpeloton_la_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(third_party_INCLUDES)
 
 ######################################################################
@@ -57,11 +57,20 @@ libpostgres_la_SOURCES = \
 					  $(postgres_port_FILES) \
 					  $(postgres_timezone_FILES)
 
+if BUILD_OS_IS_DARWIN
+libpostgres_la_LDFLAGS =  -ldl -lm
+libpostgres_la_CFLAGS =  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
+						 -Wendif-labels -Wmissing-format-attribute -Wformat-security \
+						 -fno-strict-aliasing -fwrapv \
+						 -fPIC -fpic -msse4.2
+## if build os is not darwin
+else
 libpostgres_la_LDFLAGS = -lrt -lcrypt -ldl -lm
 libpostgres_la_CFLAGS =  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
 						 -Wendif-labels -Wmissing-format-attribute -Wformat-security \
 						 -fno-strict-aliasing -fwrapv -fexcess-precision=standard \
 						 -fPIC -fpic -msse4.2
+endif
 
 libpostgres_la_CPPFLAGS = $(postgres_common_INCLUDES)
 

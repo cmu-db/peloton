@@ -16,13 +16,19 @@ AC_PROG_CC([gcc])
 #AC_PROG_LIBTOOL
 # Disable static library
 LT_INIT([disable-static])
- 
+
 # Check for pthreads (uses m4/acx_pthread.m4).
 ACX_PTHREAD([], [AC_MSG_ERROR([Could not find pthreads in your system.])])
 
 AC_LANG([C++])
 AC_PROG_CXX([g++])
 AC_SUBST([AM_CXXFLAGS], '-std=c++11 -stdlib=libc++')
+
+
+######################################################################
+# OS X portability support
+######################################################################
+AM_CONDITIONAL(BUILD_OS_IS_DARWIN, [[[[ "$build_os" == darwin* ]]]])
 
 ######################################################################
 # DOXYGEN SUPPORT
@@ -77,4 +83,21 @@ AC_CONFIG_FILES([Makefile
 AC_CONFIG_LINKS([tests/valgrind.supp:third_party/valgrind/valgrind.supp])
 
 AC_OUTPUT
+
+echo \
+"-------------------------------------------------
+
+${PACKAGE_NAME} Version ${PACKAGE_VERSION}
+
+Prefix: '${prefix}'.
+Compiler: '${CC} ${CFLAGS} ${CPPFLAGS}'
+Libraries: '${LIBS}'
+Building OS: '${build_os}'
+is OS X(# means Yes): '${BUILD_OS_IS_DARWIN_FALSE}'
+
+Package features:
+Async Execution: ${async_exec}
+
+--------------------------------------------------"
+
 # @end 2
