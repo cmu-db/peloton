@@ -22,9 +22,9 @@ AM_CPPFLAGS += \
 			   -I$(top_builddir)/src \
 			   $(GTEST_CPPFLAGS)
 
-AM_CXXFLAGS += $(GTEST_CXXFLAGS) -Wno-unused-but-set-variable
+AM_CXXFLAGS += $(GTEST_CXXFLAGS) 
 
-AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -pthread -static \
+AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -static \
 			  $(GMOCK_BUILDDIR)/libgmock.la \
 			  $(GMOCK_BUILDDIR)/libgmock_main.la \
 			  $(TBB_LIBS)
