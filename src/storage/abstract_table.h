@@ -73,9 +73,6 @@ public:
     // add a customized tile group to table
     void AddTileGroup(TileGroup *tile_group);
 
-    // add an index to the table
-    void AddIndex(index::Index *index);
-
     // NOTE: This must go through the manager's locator
     // This allows us to "TRANSFORM" tile groups atomically
     TileGroup *GetTileGroup(oid_t tile_group_id) const;
@@ -116,6 +113,8 @@ protected:
     // TODO need some policy ?
     // number of tuples allocated per tilegroup for this table
     size_t tuples_per_tilegroup = 1000;
+    
+    std::mutex table_mutex;
 
 };
 

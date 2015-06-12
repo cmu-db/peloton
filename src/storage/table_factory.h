@@ -29,7 +29,7 @@ public:
     /**
      * For a given Schema, instantiate a DataTable object and return it
      */
-    static DataTable* GetDataTable(oid_t database_id, catalog::Schema *schema);
+    static DataTable* GetDataTable(oid_t database_id, catalog::Schema *schema, std::string table_name);
 
 };
 

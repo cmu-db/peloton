@@ -91,6 +91,7 @@ bool CreateExecutor::CreateDatabase(parser::CreateStatement* stmt) {
 bool CreateExecutor::CreateTable(catalog::Database* db, parser::CreateStatement* stmt) {
     catalog::Table *table = nullptr;
     assert(stmt->columns);
+    std::string table_name = stmt->name;
 
     // Validation
     std::vector<std::string> columns;
@@ -150,13 +151,13 @@ bool CreateExecutor::CreateTable(catalog::Database* db, parser::CreateStatement*
     } // FOR
     
     // Initialization
-    table = db->GetTable(stmt->name);
+    table = db->GetTable(table_name);
     if (table != nullptr && stmt->if_not_exists) {
         LOG_ERROR("Table already exists  : %s \n", stmt->name);
         return false;
     }
 
-    table = new catalog::Table(stmt->name);
+    table = new catalog::Table(table_name);
     std::vector<catalog::ColumnInfo> physical_columns;
 
     oid_t offset = 0;
@@ -278,7 +279,7 @@ bool CreateExecutor::CreateTable(catalog::Database* db, parser::CreateStatement*
 
     // In-Memory Data Table
     catalog::Schema *schema = new catalog::Schema(physical_columns);
-    storage::DataTable *physical_table = storage::TableFactory::GetDataTable(DEFAULT_DB_ID, schema);
+    storage::DataTable *physical_table = storage::TableFactory::GetDataTable(DEFAULT_DB_ID, schema, table_name);
     table->SetPhysicalTable(physical_table);
 
     // lock database
