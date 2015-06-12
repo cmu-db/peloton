@@ -21,9 +21,12 @@ executor_tests_common_ld = \
 						   $(obj_DIR)/common/varlen.o \
 						   $(obj_DIR)/common/pool.o \
 						   $(obj_DIR)/common/transaction.o \
-						   $(obj_DIR)/storage/table.o \
+						   $(obj_DIR)/storage/abstract_table.o \
+						   $(obj_DIR)/storage/data_table.o \
+						   $(obj_DIR)/storage/table_factory.o \
 						   $(obj_DIR)/storage/tile_group.o \
 						   $(obj_DIR)/storage/tile_group_header.o \
+						   $(obj_DIR)/storage/tile_group_factory.o \
 						   $(obj_DIR)/storage/tile.o \
 						   $(obj_DIR)/storage/tuple.o \
 						   $(obj_DIR)/index/index.o \
