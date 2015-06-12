@@ -1654,7 +1654,7 @@ TEST(ValueTest, DecimalProducts)
     } catch (...) {
         caughtException = true;
     }
-    //ASSERT_TRUE(caughtException);
+    ASSERT_FALSE(caughtException);
 
     //Underflow
     rhs = ValueFactory::GetDecimalValueFromString("9999999999"  //10 digits
@@ -1669,7 +1669,7 @@ TEST(ValueTest, DecimalProducts)
     } catch (...) {
         caughtException = true;
     }
-    //ASSERT_TRUE(caughtException);
+    ASSERT_FALSE(caughtException);
 }
 
 TEST(ValueTest, DecimalQuotients) {

@@ -95,7 +95,7 @@ void MaterializationExecutor::MaterializeByTiles(
       assert(it != old_to_new_cols.end());
       oid_t new_col_id = it->second;
 
-      // Copy all tuples in the column to the physical tile
+      // Copy all values in the column to the physical tile
       for (oid_t old_tuple_id : *source_tile) {
         Value value = source_tile->GetValue(old_tuple_id, old_col_id);
         dest_tile->SetValue(value, new_tuple_id++, new_col_id);
