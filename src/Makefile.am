@@ -56,6 +56,9 @@ libpostgres_la_SOURCES = \
 					  $(postgres_common_FILES) \
 					  $(postgres_port_FILES) \
 					  $(postgres_timezone_FILES)
+
+UNAME_S := $(shell uname -s)
+
 if BUILD_OS_IS_DARWIN
 libpostgres_la_LDFLAGS =  -ldl -lm
 libpostgres_la_CFLAGS =  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
