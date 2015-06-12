@@ -16,7 +16,7 @@
 #include "expression/abstract_expression.h"
 #include "expression/container_tuple.h"
 #include "planner/index_scan_node.h"
-#include "storage/table.h"
+#include "storage/data_table.h"
 #include "storage/tile_group.h"
 
 #include "common/logger.h"

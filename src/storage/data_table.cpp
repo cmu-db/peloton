@@ -10,7 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "storage/table.h"
+#include "storage/abstract_table.h"
 
 #include "common/exception.h"
 #include "index/index.h"
@@ -22,7 +22,7 @@
 namespace nstore {
 namespace storage {
 
-DataTable::Table(catalog::Schema *schema,
+DataTable::DataTable(catalog::Schema *schema,
              Backend *backend,
              std::string table_name)
 : AbstractTable(schema, backend),

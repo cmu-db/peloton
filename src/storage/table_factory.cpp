@@ -11,9 +11,10 @@
 #include "storage/table_factory.h"
 
 #include "common/exception.h"
-#include "index/index.h"
 #include "common/logger.h"
+#include "index/index.h"
 #include "catalog/manager.h"
+#include "storage/data_table.h"
 
 #include <mutex>
 

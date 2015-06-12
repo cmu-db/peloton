@@ -25,7 +25,7 @@ namespace storage {
 // Tile Group
 //===--------------------------------------------------------------------===//
 
-class DataTable;
+class AbstractTable;
 class TileGroupIterator;
 
 /**
@@ -38,212 +38,172 @@ class TileGroupIterator;
  * TileGroups are only instantiated via TileGroupFactory.
  */
 class TileGroup {
-  friend class Tile;
-  friend class TileGroupFactory;
+    friend class Tile;
+    friend class TileGroupFactory;
 
-  TileGroup() = delete;
-  TileGroup(TileGroup const&) = delete;
+    TileGroup() = delete;
+    TileGroup(TileGroup const&) = delete;
 
- public:
+public:
 
-  // Tile group constructor
-  TileGroup(TileGroupHeader *tile_group_header,
-            DataTable *table,
-            Backend *backend,
-            const std::vector<catalog::Schema>& schemas,
-            int tuple_count);
+    // Tile group constructor
+    TileGroup(TileGroupHeader *tile_group_header,
+              DataTable *table,
+              Backend *backend,
+              const std::vector<catalog::Schema>& schemas,
+              int tuple_count);
 
-  ~TileGroup() {
+    ~TileGroup() {
 
-    // clean up tiles
-    for(auto tile : tiles){
-      delete tile;
+        // clean up tiles
+        for(auto tile : tiles) {
+            delete tile;
+        }
+
+        // clean up tile group header
+        delete tile_group_header;
     }
 
-    // clean up tile group header
-    delete tile_group_header;
-  }
+    //===--------------------------------------------------------------------===//
+    // Operations
+    //===--------------------------------------------------------------------===//
 
-  //===--------------------------------------------------------------------===//
-  // Operations
-  //===--------------------------------------------------------------------===//
+    // insert tuple at next available slot in tile if a slot exists
+    oid_t InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
 
-  // insert tuple at next available slot in tile if a slot exists
-  oid_t InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
+    // reclaim tuple at given slot
+    void ReclaimTuple(oid_t tuple_slot_id);
 
-  // reclaim tuple at given slot
-  void ReclaimTuple(oid_t tuple_slot_id);
+    // returns tuple at given slot in tile if it exists
+    Tuple* SelectTuple(oid_t tile_offset, oid_t tuple_slot_id);
 
-  // returns tuple at given slot in tile if it exists
-  Tuple* SelectTuple(oid_t tile_offset, oid_t tuple_slot_id);
+    // returns tuple at given slot if it exists
+    Tuple *SelectTuple(oid_t tuple_slot_id);
 
-  // returns tuple at given slot if it exists
-  Tuple *SelectTuple(oid_t tuple_slot_id);
+    // delete tuple at given slot if it is not already locked
+    bool DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id);
 
-  // delete tuple at given slot if it is not already locked
-  bool DeleteTuple(txn_id_t transaction_id, oid_t tuple_slot_id);
+    //===--------------------------------------------------------------------===//
+    // Transaction Processing
+    //===--------------------------------------------------------------------===//
 
-  //===--------------------------------------------------------------------===//
-  // Transaction Processing
-  //===--------------------------------------------------------------------===//
+    // commit the inserted tuple
+    void CommitInsertedTuple(oid_t tuple_slot_id, cid_t commit_id);
 
-  // commit the inserted tuple
-  void CommitInsertedTuple(oid_t tuple_slot_id, cid_t commit_id);
+    // commit the deleted tuple
+    void CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id, cid_t commit_id);
 
-  // commit the deleted tuple
-  void CommitDeletedTuple(oid_t tuple_slot_id, txn_id_t transaction_id, cid_t commit_id);
+    // abort the inserted tuple
+    void AbortInsertedTuple(oid_t tuple_slot_id);
 
-  // abort the inserted tuple
-  void AbortInsertedTuple(oid_t tuple_slot_id);
+    // abort the deleted tuple
+    void AbortDeletedTuple(oid_t tuple_slot_id);
 
-  // abort the deleted tuple
-  void AbortDeletedTuple(oid_t tuple_slot_id);
+    //===--------------------------------------------------------------------===//
+    // Utilities
+    //===--------------------------------------------------------------------===//
 
-  //===--------------------------------------------------------------------===//
-  // Utilities
-  //===--------------------------------------------------------------------===//
+    // Get a string representation of this tile group
+    friend std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group);
 
-  // Get a string representation of this tile group
-  friend std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group);
+    oid_t GetNextTupleSlot() const {
+        return tile_group_header->GetNextTupleSlot();
+    }
 
-  oid_t GetNextTupleSlot() const {
-    return tile_group_header->GetNextTupleSlot();
-  }
+    oid_t GetActiveTupleCount() const {
+        return tile_group_header->GetActiveTupleCount();
+    }
 
-  oid_t GetActiveTupleCount() const {
-    return tile_group_header->GetActiveTupleCount();
-  }
+    oid_t GetAllocatedTupleCount() const {
+        return num_tuple_slots;
+    }
 
-  oid_t GetAllocatedTupleCount() const {
-    return num_tuple_slots;
-  }
+    TileGroupHeader *GetHeader() const {
+        return tile_group_header;
+    }
 
-  TileGroupHeader *GetHeader() const{
-    return tile_group_header;
-  }
+    unsigned int NumTiles() const {
+        return tiles.size();
+    }
 
-  unsigned int NumTiles() const {
-    return tiles.size();
-  }
+    // Get the tile at given offset in the tile group
+    Tile *GetTile(const oid_t tile_itr) const;
 
-  // Get the tile at given offset in the tile group
-  Tile *GetTile(const oid_t tile_itr) const;
+    oid_t GetTileId(const oid_t tile_id) const {
+        assert(tiles[tile_id]);
+        return tiles[tile_id]->GetTileId();
+    }
 
-  oid_t GetTileId(const oid_t tile_id) const {
-    assert(tiles[tile_id]);
-    return tiles[tile_id]->GetTileId();
-  }
+    Pool *GetTilePool(const oid_t tile_id) const {
+        Tile *tile = GetTile(tile_id);
 
-  Pool *GetTilePool(const oid_t tile_id) const {
-    Tile *tile = GetTile(tile_id);
+        if(tile != nullptr)
+            return tile->GetPool();
 
-    if(tile != nullptr)
-      return tile->GetPool();
+        return nullptr;
+    }
 
-    return nullptr;
-  }
+    oid_t GetTileGroupId() const {
+        return tile_group_id;
+    }
 
-  oid_t GetTileGroupId() const {
-    return tile_group_id;
-  }
+    void SetTileGroupId(oid_t tile_group_id_) {
+        tile_group_id = tile_group_id_;
+    }
 
-  void SetTileGroupId(oid_t tile_group_id_) {
-    tile_group_id = tile_group_id_;
-  }
+    Backend* GetBackend() const {
+        return backend;
+    }
 
-  Backend* GetBackend() const{
-    return backend;
-  }
+    std::vector<catalog::Schema> &GetTileSchemas() {
+        return tile_schemas;
+    }
 
-  std::vector<catalog::Schema> &GetTileSchemas() {
-    return tile_schemas;
-  }
+    size_t GetTileCount() const {
+        return tile_count;
+    }
 
-  size_t GetTileCount() const{
-    return tile_count;
-  }
+    void LocateTileAndColumn(oid_t column_id, oid_t &tile_offset, oid_t &tile_column_id);
 
-  void LocateTileAndColumn(oid_t column_id, oid_t &tile_offset, oid_t &tile_column_id);
+    oid_t GetTileIdFromColumnId(oid_t column_id);
 
-  oid_t GetTileIdFromColumnId(oid_t column_id);
+    oid_t GetTileColumnId(oid_t column_id);
 
-  oid_t GetTileColumnId(oid_t column_id);
+    Value GetValue(oid_t tuple_id, oid_t column_id);
 
-  Value GetValue(oid_t tuple_id, oid_t column_id);
+protected:
 
- protected:
+    //===--------------------------------------------------------------------===//
+    // Data members
+    //===--------------------------------------------------------------------===//
 
-  //===--------------------------------------------------------------------===//
-  // Data members
-  //===--------------------------------------------------------------------===//
+    // Catalog information
+    oid_t database_id;
+    oid_t table_id;
+    oid_t tile_group_id;
 
-  // Catalog information
-  oid_t database_id;
-  oid_t table_id;
-  oid_t tile_group_id;
+    // backend
+    Backend* backend;
 
-  // backend
-  Backend* backend;
+    // mapping to tile schemas
+    std::vector<catalog::Schema> tile_schemas;
 
-  // mapping to tile schemas
-  std::vector<catalog::Schema> tile_schemas;
+    // set of tiles
+    std::vector<Tile*> tiles;
 
-  // set of tiles
-  std::vector<Tile*> tiles;
+    // associated tile group
+    TileGroupHeader* tile_group_header;
 
-  // associated tile group
-  TileGroupHeader* tile_group_header;
+    // associated table
+    DataTable* table;
 
-  // associated table
-  DataTable* table;
+    // number of tuple slots allocated
+    oid_t num_tuple_slots;
 
-  // number of tuple slots allocated
-  oid_t num_tuple_slots;
+    // number of tiles
+    oid_t tile_count;
 
-  // number of tiles
-  oid_t tile_count;
-
-  std::mutex tile_group_mutex;
-};
-
-
-//===--------------------------------------------------------------------===//
-// Tile Group factory
-//===--------------------------------------------------------------------===//
-
-class TileGroupFactory {
- public:
-  TileGroupFactory();
-  virtual ~TileGroupFactory();
-
-  static TileGroup *GetTileGroup(oid_t database_id, oid_t table_id, oid_t tile_group_id,
-                                 DataTable* table,
-                                 Backend* backend,
-                                 const std::vector<catalog::Schema>& schemas,
-                                 int tuple_count) {
-
-    TileGroupHeader *tile_header = new TileGroupHeader(backend, tuple_count);
-
-    TileGroup *tile_group = new TileGroup(tile_header, table, backend, schemas, tuple_count);
-
-    TileGroupFactory::InitCommon(tile_group, database_id, table_id, tile_group_id);
-
-    return tile_group;
-  }
-
- private:
-
-  static void InitCommon(TileGroup *tile_group,
-                         oid_t database_id,
-                         oid_t table_id,
-                         oid_t tile_group_id) {
-
-    tile_group->database_id = database_id;
-    tile_group->tile_group_id = tile_group_id;
-    tile_group->table_id = table_id;
-
-  }
-
+    std::mutex tile_group_mutex;
 };
 
 
