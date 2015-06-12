@@ -56,16 +56,19 @@ libpostgres_la_SOURCES = \
 					  $(postgres_common_FILES) \
 					  $(postgres_port_FILES) \
 					  $(postgres_timezone_FILES)
-
+if BUILD_OS_IS_DARWIN
 libpostgres_la_LDFLAGS =  -ldl -lm
 libpostgres_la_CFLAGS =  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
 						 -Wendif-labels -Wmissing-format-attribute -Wformat-security \
 						 -fno-strict-aliasing -fwrapv \
 						 -fPIC -fpic -msse4.2
 ## if build os is not darwin
-if !BUILD_OS_IS_DARWIN
-	libpostgres_la_LDFLAGS += -lrt -lcrypt
-	libpostgres_la_CFLAGS += -fexcess-precision=standard
+else
+libpostgres_la_LDFLAGS = -lrt -lcrypt -ldl -lm
+libpostgres_la_CFLAGS =  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
+						 -Wendif-labels -Wmissing-format-attribute -Wformat-security \
+						 -fno-strict-aliasing -fwrapv -fexcess-precision=standard \
+						 -fPIC -fpic -msse4.2
 endif
 
 libpostgres_la_CPPFLAGS = $(postgres_common_INCLUDES)

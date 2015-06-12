@@ -194,10 +194,8 @@ load_file(const char *filename, bool restricted)
  * Return (PGFunction) NULL if not found.
  */
 PGFunction
-lookup_external_function()
+lookup_external_function(void *filehandle, char *funcname)
 {
-  void *filehandle = NULL;
-  char *funcname = NULL;
 	return (PGFunction) pg_dlsym(filehandle, funcname);
 }
 
