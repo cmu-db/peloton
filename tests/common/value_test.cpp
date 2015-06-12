@@ -227,6 +227,7 @@ TEST(ValueTest, TestCastToBigInt) {
     try
     {
         Value decimalCastToBigInt = ValueFactory::CastAsBigInt(decimalValue);
+        std::cout << decimalCastToBigInt << "\n";
     }
     catch (...)
     {
@@ -238,6 +239,7 @@ TEST(ValueTest, TestCastToBigInt) {
     try
     {
         Value stringCastToBigInt = ValueFactory::CastAsBigInt(stringValue);
+        std::cout << stringCastToBigInt << std::endl;
     }
     catch (...)
     {
@@ -254,6 +256,7 @@ TEST(ValueTest, TestCastToBigInt) {
     try
     {
         Value doubleCastToBigInt = ValueFactory::CastAsBigInt(doubleOutOfRangeH);
+        std::cout << doubleCastToBigInt << std::endl;
     } catch (...)
     {
         caught = true;
@@ -264,6 +267,7 @@ TEST(ValueTest, TestCastToBigInt) {
     try
     {
         Value doubleCastToBigInt = ValueFactory::CastAsBigInt(doubleOutOfRangeL);
+        std::cout << doubleCastToBigInt << std::endl;
     } catch (...)
     {
         caught = true;
@@ -302,6 +306,7 @@ TEST(ValueTest, TestCastToInteger) {
     try
     {
         Value decimalCast = ValueFactory::CastAsInteger(decimalValue);
+        std::cout << decimalCast <<  std::endl;
     }
     catch (...)
     {
@@ -313,6 +318,7 @@ TEST(ValueTest, TestCastToInteger) {
     try
     {
         Value stringCast = ValueFactory::CastAsInteger(stringValue);
+        std::cout << stringCast << std::endl;
     }
     catch (...)
     {
@@ -329,6 +335,7 @@ TEST(ValueTest, TestCastToInteger) {
     try
     {
         Value doubleCastToInteger = ValueFactory::CastAsInteger(doubleOutOfRangeH);
+        std::cout << doubleCastToInteger << std::endl;
     } catch (...)
     {
         caught = true;
@@ -339,6 +346,7 @@ TEST(ValueTest, TestCastToInteger) {
     try
     {
         Value doubleCastToInteger = ValueFactory::CastAsInteger(doubleOutOfRangeL);
+        std::cout << doubleCastToInteger << std::endl;
     } catch (...)
     {
         caught = true;
@@ -352,6 +360,7 @@ TEST(ValueTest, TestCastToInteger) {
     try
     {
         Value bigIntCastToInteger = ValueFactory::CastAsInteger(bigIntOutOfRangeH);
+        std::cout << bigIntCastToInteger << std::endl;
     } catch (...)
     {
         caught = true;
@@ -362,6 +371,7 @@ TEST(ValueTest, TestCastToInteger) {
     try
     {
         Value bigIntCastToInteger = ValueFactory::CastAsInteger(bigIntOutOfRangeL);
+        std::cout << bigIntCastToInteger << std::endl;
     } catch (...)
     {
         caught = true;
@@ -400,6 +410,7 @@ TEST(ValueTest, TestCastToSmallInt) {
     try
     {
         Value decimalCast = ValueFactory::CastAsSmallInt(decimalValue);
+        std::cout << decimalCast << std::endl;
     }
     catch (...)
     {
@@ -411,6 +422,7 @@ TEST(ValueTest, TestCastToSmallInt) {
     try
     {
         Value stringCast = ValueFactory::CastAsSmallInt(stringValue);
+        std::cout << stringCast << std::endl;
     }
     catch (...)
     {
@@ -428,6 +440,7 @@ TEST(ValueTest, TestCastToSmallInt) {
     try
     {
         Value doubleCastToSmallInt = ValueFactory::CastAsSmallInt(doubleOutOfRangeH);
+        std::cout << doubleCastToSmallInt << std::endl;
     } catch (...)
     {
         caught = true;
@@ -438,6 +451,7 @@ TEST(ValueTest, TestCastToSmallInt) {
     try
     {
         Value doubleCastToSmallInt = ValueFactory::CastAsSmallInt(doubleOutOfRangeL);
+        std::cout << doubleCastToSmallInt << std::endl;
     } catch (...)
     {
         caught = true;
@@ -451,6 +465,7 @@ TEST(ValueTest, TestCastToSmallInt) {
     try
     {
         Value bigIntCastToSmallInt = ValueFactory::CastAsSmallInt(bigIntOutOfRangeH);
+        std::cout << bigIntCastToSmallInt << std::endl;
     } catch (...)
     {
         caught = true;
@@ -461,6 +476,7 @@ TEST(ValueTest, TestCastToSmallInt) {
     try
     {
         Value bigIntCastToSmallInt = ValueFactory::CastAsSmallInt(bigIntOutOfRangeL);
+        std::cout << bigIntCastToSmallInt << std::endl;
     } catch (...)
     {
         caught = true;
@@ -474,6 +490,7 @@ TEST(ValueTest, TestCastToSmallInt) {
     try
     {
         Value integerCastToSmallInt = ValueFactory::CastAsSmallInt(integerOutOfRangeH);
+        std::cout << integerCastToSmallInt << std::endl;
     } catch (...)
     {
         caught = true;
@@ -484,6 +501,7 @@ TEST(ValueTest, TestCastToSmallInt) {
     try
     {
         Value integerCastToSmallInt = ValueFactory::CastAsSmallInt(integerOutOfRangeL);
+        std::cout << integerCastToSmallInt << std::endl;
     } catch (...)
     {
         caught = true;
@@ -522,6 +540,7 @@ TEST(ValueTest, TestCastToTinyInt) {
     try
     {
         Value decimalCast = ValueFactory::CastAsTinyInt(decimalValue);
+        std::cout << decimalCast << std::endl;
     }
     catch (...)
     {
@@ -533,6 +552,7 @@ TEST(ValueTest, TestCastToTinyInt) {
     try
     {
         Value stringCast = ValueFactory::CastAsTinyInt(stringValue);
+        std::cout << stringCast << std::endl;
     }
     catch (...)
     {
@@ -550,6 +570,7 @@ TEST(ValueTest, TestCastToTinyInt) {
     try
     {
         Value doubleCastToTinyInt = ValueFactory::CastAsTinyInt(doubleOutOfRangeH);
+        std::cout << doubleCastToTinyInt << std::endl;
     } catch (...)
     {
         caught = true;
@@ -560,6 +581,7 @@ TEST(ValueTest, TestCastToTinyInt) {
     try
     {
         Value doubleCastToTinyInt = ValueFactory::CastAsTinyInt(doubleOutOfRangeL);
+        std::cout << doubleCastToTinyInt << std::endl;
     } catch (...)
     {
         caught = true;
@@ -573,6 +595,7 @@ TEST(ValueTest, TestCastToTinyInt) {
     try
     {
         Value bigIntCastToTinyInt = ValueFactory::CastAsTinyInt(bigIntOutOfRangeH);
+        std::cout << bigIntCastToTinyInt << std::endl;
     } catch (...)
     {
         caught = true;
@@ -583,6 +606,7 @@ TEST(ValueTest, TestCastToTinyInt) {
     try
     {
         Value bigIntCastToTinyInt = ValueFactory::CastAsTinyInt(bigIntOutOfRangeL);
+        std::cout << bigIntCastToTinyInt << std::endl;
     } catch (...)
     {
         caught = true;
@@ -596,6 +620,7 @@ TEST(ValueTest, TestCastToTinyInt) {
     try
     {
         Value integerCastToTinyInt = ValueFactory::CastAsTinyInt(integerOutOfRangeH);
+        std::cout << integerCastToTinyInt << std::endl;
     } catch (...)
     {
         caught = true;
@@ -606,6 +631,7 @@ TEST(ValueTest, TestCastToTinyInt) {
     try
     {
         Value integerCastToTinyInt = ValueFactory::CastAsTinyInt(integerOutOfRangeL);
+        std::cout << integerCastToTinyInt << std::endl;
     } catch (...)
     {
         caught = true;
@@ -619,6 +645,7 @@ TEST(ValueTest, TestCastToTinyInt) {
     try
     {
         Value smallIntCastToTinyInt = ValueFactory::CastAsTinyInt(smallIntOutOfRangeH);
+        std::cout << smallIntCastToTinyInt << std::endl;
     } catch (...)
     {
         caught = true;
@@ -629,6 +656,7 @@ TEST(ValueTest, TestCastToTinyInt) {
     try
     {
         Value smallIntCastToTinyInt = ValueFactory::CastAsTinyInt(smallIntOutOfRangeL);
+        std::cout << smallIntCastToTinyInt << std::endl;
     } catch (...)
     {
         caught = true;
@@ -672,6 +700,7 @@ TEST(ValueTest, TestCastToDouble) {
     try
     {
         Value decimalCast = ValueFactory::CastAsDouble(decimalValue);
+        std::cout << decimalCast << std::endl;
     }
     catch (...)
     {
@@ -683,6 +712,7 @@ TEST(ValueTest, TestCastToDouble) {
     try
     {
         Value stringCast = ValueFactory::CastAsDouble(stringValue);
+        std::cout << stringCast << std::endl;
     }
     catch (...)
     {
@@ -707,6 +737,7 @@ TEST(ValueTest, TestCastToString) {
     try
     {
         Value cast = ValueFactory::CastAsString(tinyInt);
+        std::cout << cast << std::endl;
     }
     catch (...)
     {
@@ -718,6 +749,7 @@ TEST(ValueTest, TestCastToString) {
     try
     {
         Value cast = ValueFactory::CastAsString(smallInt);
+        std::cout << cast << std::endl;
     }
     catch (...)
     {
@@ -729,6 +761,7 @@ TEST(ValueTest, TestCastToString) {
     try
     {
         Value cast = ValueFactory::CastAsString(integer);
+        std::cout << cast << std::endl;
     }
     catch (...)
     {
@@ -740,6 +773,7 @@ TEST(ValueTest, TestCastToString) {
     try
     {
         Value cast = ValueFactory::CastAsString(bigInt);
+        std::cout << cast << std::endl;
     }
     catch (...)
     {
@@ -751,6 +785,7 @@ TEST(ValueTest, TestCastToString) {
     try
     {
         Value cast = ValueFactory::CastAsString(doubleValue);
+        std::cout << cast << std::endl;
     }
     catch (...)
     {
@@ -762,6 +797,7 @@ TEST(ValueTest, TestCastToString) {
     try
     {
         Value cast = ValueFactory::CastAsString(decimalValue);
+        std::cout << cast << std::endl;
     }
     catch (...)
     {
@@ -795,6 +831,7 @@ TEST(ValueTest, TestCastToDecimal) {
     try
     {
         Value cast = ValueFactory::CastAsDecimal(doubleValue);
+        std::cout << cast << std::endl;
     }
     catch (...)
     {
@@ -806,6 +843,7 @@ TEST(ValueTest, TestCastToDecimal) {
     try
     {
         Value cast = ValueFactory::CastAsDecimal(stringValue);
+        std::cout << cast << std::endl;
     }
     catch (...)
     {
@@ -825,6 +863,7 @@ TEST(ValueTest, TestCastToDecimal) {
     try
     {
         Value doubleCastToDecimal = ValueFactory::CastAsDecimal(doubleOutOfRangeH);
+        std::cout << doubleCastToDecimal << std::endl;
     } catch (...)
     {
         caught = true;
@@ -835,6 +874,7 @@ TEST(ValueTest, TestCastToDecimal) {
     try
     {
         Value doubleCastToDecimal = ValueFactory::CastAsDecimal(doubleOutOfRangeL);
+        std::cout << doubleCastToDecimal << std::endl;
     } catch (...)
     {
         caught = true;
@@ -849,6 +889,7 @@ TEST(ValueTest, TestBigIntOpAddOverflow) {
     bool caught = false;
     try {
         Value result = lhs.OpAdd(rhs);
+        std::cout << result << std::endl;
     } catch (...) {
         caught = true;
     }
@@ -859,6 +900,7 @@ TEST(ValueTest, TestBigIntOpAddOverflow) {
     caught = false;
     try {
         Value result = lhs.OpAdd(rhs);
+        std::cout << result << std::endl;
     } catch (...) {
         caught = true;
     }
@@ -868,6 +910,7 @@ TEST(ValueTest, TestBigIntOpAddOverflow) {
     lhs = ValueFactory::GetBigIntValue(1);
     rhs = ValueFactory::GetBigIntValue(4);
     Value result = lhs.OpAdd(rhs);
+    std::cout << result << std::endl;
 }
 
 // Subtraction can only overflow BigInt since they are all cast to BigInt before addition takes place.
@@ -877,6 +920,7 @@ TEST(ValueTest, TestBigIntOpSubtractOverflow) {
     bool caught = false;
     try {
         Value result = lhs.OpSubtract(rhs);
+        std::cout << result << std::endl;
     } catch (...) {
         caught = true;
     }
@@ -887,6 +931,7 @@ TEST(ValueTest, TestBigIntOpSubtractOverflow) {
     caught = false;
     try {
         Value result = lhs.OpSubtract(rhs);
+        std::cout << result << std::endl;
     } catch (...) {
         caught = true;
     }
@@ -896,6 +941,7 @@ TEST(ValueTest, TestBigIntOpSubtractOverflow) {
     lhs = ValueFactory::GetBigIntValue(1);
     rhs = ValueFactory::GetBigIntValue(4);
     Value result = lhs.OpSubtract(rhs);
+    std::cout << result << std::endl;
 }
 
 // Multiplication can only overflow BigInt since they are all cast to BigInt before addition takes place.
@@ -905,6 +951,7 @@ TEST(ValueTest, TestBigIntOpMultiplyOverflow) {
     bool caught = false;
     try {
         Value result = lhs.OpMultiply(rhs);
+        std::cout << result << std::endl;
     } catch (...) {
         caught = true;
     }
@@ -915,6 +962,7 @@ TEST(ValueTest, TestBigIntOpMultiplyOverflow) {
     caught = false;
     try {
         Value result = lhs.OpMultiply(rhs);
+        std::cout << result << std::endl;
     } catch (...) {
         caught = true;
     }
@@ -925,6 +973,7 @@ TEST(ValueTest, TestBigIntOpMultiplyOverflow) {
     caught = false;
     try {
         Value result = lhs.OpMultiply(rhs);
+        std::cout << result << std::endl;
     } catch (...) {
         caught = true;
     }
@@ -935,6 +984,7 @@ TEST(ValueTest, TestBigIntOpMultiplyOverflow) {
     caught = false;
     try {
         Value result = lhs.OpMultiply(rhs);
+        std::cout << result << std::endl;
     } catch (...) {
         caught = true;
     }
@@ -944,6 +994,7 @@ TEST(ValueTest, TestBigIntOpMultiplyOverflow) {
     lhs = ValueFactory::GetBigIntValue(1);
     rhs = ValueFactory::GetBigIntValue(4);
     Value result = lhs.OpMultiply(rhs);
+    std::cout << result << std::endl;
 }
 
 TEST(ValueTest, TestDoubleOpAddOverflow) {
@@ -953,6 +1004,7 @@ TEST(ValueTest, TestDoubleOpAddOverflow) {
     bool caught = false;
     try {
         Value result = lhs.OpAdd(rhs);
+        std::cout << result << std::endl;
     } catch (...) {
         caught = true;
     }
@@ -964,6 +1016,7 @@ TEST(ValueTest, TestDoubleOpAddOverflow) {
     caught = false;
     try {
         Value result = lhs.OpAdd(rhs);
+        std::cout << result << std::endl;
     } catch (...) {
         caught = true;
     }
@@ -973,6 +1026,7 @@ TEST(ValueTest, TestDoubleOpAddOverflow) {
     lhs = ValueFactory::GetDoubleValue(1);
     rhs = ValueFactory::GetDoubleValue(4);
     Value result = lhs.OpAdd(rhs);
+    std::cout << result << std::endl;
 }
 
 TEST(ValueTest, TestDoubleOpSubtractOverflow) {
@@ -982,6 +1036,7 @@ TEST(ValueTest, TestDoubleOpSubtractOverflow) {
     bool caught = false;
     try {
         Value result = lhs.OpSubtract(rhs);
+        std::cout << result << std::endl;
     } catch (...) {
         caught = true;
     }
@@ -993,6 +1048,7 @@ TEST(ValueTest, TestDoubleOpSubtractOverflow) {
     caught = false;
     try {
         Value result = lhs.OpSubtract(rhs);
+        std::cout << result << std::endl;
     } catch (...) {
         caught = true;
     }
@@ -1002,6 +1058,7 @@ TEST(ValueTest, TestDoubleOpSubtractOverflow) {
     lhs = ValueFactory::GetDoubleValue(1.23);
     rhs = ValueFactory::GetDoubleValue(4.2345346);
     Value result = lhs.OpSubtract(rhs);
+    std::cout << result << std::endl;
 }
 
 TEST(ValueTest, TestDoubleOpMultiplyOverflow) {
@@ -1011,6 +1068,7 @@ TEST(ValueTest, TestDoubleOpMultiplyOverflow) {
     bool caught = false;
     try {
         Value result = lhs.OpMultiply(rhs);
+        std::cout << result << std::endl;
     } catch (...) {
         caught = true;
     }
@@ -1022,6 +1080,7 @@ TEST(ValueTest, TestDoubleOpMultiplyOverflow) {
     caught = false;
     try {
         Value result = lhs.OpMultiply(rhs);
+        std::cout << result << std::endl;
     } catch (...) {
         caught = true;
     }
@@ -1031,6 +1090,7 @@ TEST(ValueTest, TestDoubleOpMultiplyOverflow) {
     lhs = ValueFactory::GetDoubleValue(1.23);
     rhs = ValueFactory::GetDoubleValue(4.2345346);
     Value result = lhs.OpMultiply(rhs);
+    std::cout << result << std::endl;
 }
 
 TEST(ValueTest, TestDoubleOpDivideOverflow) {
@@ -1040,6 +1100,7 @@ TEST(ValueTest, TestDoubleOpDivideOverflow) {
     bool caught = false;
     try {
         Value result = lhs.OpDivide(rhs);
+        std::cout << result << std::endl;
     } catch (...) {
         caught = true;
     }
@@ -1051,6 +1112,7 @@ TEST(ValueTest, TestDoubleOpDivideOverflow) {
     caught = false;
     try {
         Value result = lhs.OpDivide(rhs);
+        std::cout << result << std::endl;
     } catch (...) {
         caught = true;
     }
@@ -1060,6 +1122,7 @@ TEST(ValueTest, TestDoubleOpDivideOverflow) {
     lhs = ValueFactory::GetDoubleValue(1.23);
     rhs = ValueFactory::GetDoubleValue(4.2345346);
     Value result = lhs.OpDivide(rhs);
+    std::cout << result << std::endl;
 }
 
 TEST(ValueTest, TestOpIncrementOverflow) {

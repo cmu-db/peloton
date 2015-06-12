@@ -99,7 +99,7 @@ static const Pg_magic_struct magic_data = PG_MODULE_MAGIC_DATA;
 PGFunction
 load_external_function(char *filename, char *funcname,
 #ifdef __APPLE__
-		int signalNotFound, void **filehandle)
+		char signalNotFound, void **filehandle)
 #else
 		bool signalNotFound, void **filehandle)
 #endif
@@ -141,7 +141,7 @@ load_external_function(char *filename, char *funcname,
  */
 void
 #ifdef __APPLE__ // TODO: Peloton porting issue
-load_file(const char *filename, int restricted)
+load_file(const char *filename, char restricted)
 #else
 load_file(const char *filename, bool restricted)
 #endif

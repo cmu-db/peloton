@@ -44,7 +44,7 @@ libpeloton_la_SOURCES = \
 					  $(scheduler_FILES) \
 					  $(storage_FILES)
 
-libpeloton_la_LDFLAGS = $(TBB_LIBS) -pthread
+libpeloton_la_LDFLAGS = $(TBB_LIBS) 
 libpeloton_la_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(third_party_INCLUDES)
 
 ######################################################################
@@ -56,8 +56,6 @@ libpostgres_la_SOURCES = \
 					  $(postgres_common_FILES) \
 					  $(postgres_port_FILES) \
 					  $(postgres_timezone_FILES)
-
-UNAME_S := $(shell uname -s)
 
 if BUILD_OS_IS_DARWIN
 libpostgres_la_LDFLAGS =  -ldl -lm
