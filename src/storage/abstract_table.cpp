@@ -129,7 +129,7 @@ TileGroup *AbstractTable::GetTileGroup(oid_t tile_group_id) const {
 
 ItemPointer AbstractTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple, bool update) {
     assert(tuple);
-
+    
     // (A) Not NULL checks
     if (CheckNulls(tuple) == false) {
         throw ConstraintException("Not NULL constraint violated : " + tuple->GetInfo());
@@ -153,6 +153,12 @@ ItemPointer AbstractTable::InsertTuple(txn_id_t transaction_id, const storage::T
             AddDefaultTileGroup();
         }
     }
+    
+    // TODO: Need to document what this flag actually means
+    if (update) {
+        LOG_TRACE("Inserted tuple with update flag enabled?");
+    }
+        
 
     // Return Location
     ItemPointer location = ItemPointer(tile_group->GetTileGroupId(), tuple_slot);
