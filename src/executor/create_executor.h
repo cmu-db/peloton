@@ -34,10 +34,10 @@ public:
 
 protected:
     
-    bool CreateDatabase(catalog::Database* db, parser::CreateStatement* stmt);
-    bool CreateTable(catalog::Database* db, parser::CreateStatement* stmt);
-    bool CreateIndex(catalog::Database* db, parser::CreateStatement* stmt);
-    bool CreateConstraint(catalog::Database* db, parser::CreateStatement* stmt);
+    static bool CreateDatabase(parser::CreateStatement* stmt);
+    static bool CreateTable(catalog::Database* db, parser::CreateStatement* stmt);
+    static bool CreateIndex(catalog::Database* db, parser::CreateStatement* stmt);
+    static bool CreateConstraint(catalog::Database* db, parser::CreateStatement* stmt);
     
 };
 
