@@ -39,7 +39,7 @@ bool CreateExecutor::Execute(parser::SQLStatement *query) {
     bool ret = false;
     switch(stmt->type) {
         case parser::CreateStatement::kDatabase:
-            ret = CreateDatabase(db, stmt);
+            ret = CreateDatabase(stmt);
             break;
         case parser::CreateStatement::kTable:
             ret = CreateTable(db, stmt);

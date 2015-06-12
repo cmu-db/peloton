@@ -12,6 +12,7 @@
 
 #include "catalog/manager.h"
 #include "storage/backend_vm.h"
+#include "storage/data_table.h"
 
 #include <string>
 
@@ -22,8 +23,6 @@ namespace storage {
  * Magic Table Factory!!
  */
 class TableFactory {
-    class AbstractTable;
-    class DataTable;
     
 public:
 

@@ -18,7 +18,7 @@
 #include "common/types.h"
 
 #include "index/index.h"
-#include "storage/table.h"
+#include "storage/data_table.h"
 #include "parser/statement_drop.h"
 
 #include <cassert>
