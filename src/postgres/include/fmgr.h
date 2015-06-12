@@ -638,9 +638,15 @@ extern bool CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid);
 extern char *Dynamic_library_path;
 
 //#ifndef __APPLE__ // TODO: Peloton porting issue
+#ifdef __APPLE__
+extern PGFunction load_external_function(char *filename, char *funcname,
+					   int signalNotFound, void **filehandle);
+extern void load_file(const char *filename, int restricted);
+#else
 extern PGFunction load_external_function(char *filename, char *funcname,
 					   bool signalNotFound, void **filehandle);
 extern void load_file(const char *filename, bool restricted);
+#endif
 //#else
 //extern PGFunction load_external_function();
 //extern void load_file(void);
