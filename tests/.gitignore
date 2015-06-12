@@ -3,3 +3,10 @@
 *.trs
 *_test
 valgrind.supp
+
+## -------------------------------
+## Test Artifacts
+## -------------------------------
+PRIMARY_INDEX
+SECONDARY_INDEX
+btree_index
