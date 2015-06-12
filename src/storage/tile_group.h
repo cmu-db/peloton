@@ -48,7 +48,7 @@ public:
 
     // Tile group constructor
     TileGroup(TileGroupHeader *tile_group_header,
-              DataTable *table,
+              AbstractTable *table,
               Backend *backend,
               const std::vector<catalog::Schema>& schemas,
               int tuple_count);
@@ -178,12 +178,12 @@ protected:
     //===--------------------------------------------------------------------===//
 
     // Catalog information
-    oid_t database_id;
-    oid_t table_id;
+    oid_t database_id;  // TODO REMOVE
+    oid_t table_id;     // TODO REMOVE
     oid_t tile_group_id;
 
     // backend
-    Backend* backend;
+    Backend* backend;   // TODO REMOVE(?)
 
     // mapping to tile schemas
     std::vector<catalog::Schema> tile_schemas;
@@ -195,7 +195,7 @@ protected:
     TileGroupHeader* tile_group_header;
 
     // associated table
-    DataTable* table;
+    AbstractTable* table; // TODO: Remove this! It is a waste of space!!
 
     // number of tuple slots allocated
     oid_t num_tuple_slots;

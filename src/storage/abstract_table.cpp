@@ -11,9 +11,10 @@
 #include "storage/abstract_table.h"
 
 #include "common/exception.h"
-#include "index/index.h"
 #include "common/logger.h"
+#include "index/index.h"
 #include "catalog/manager.h"
+#include "storage/tile_group_factory.h"
 
 #include <mutex>
 
@@ -111,11 +112,6 @@ void AbstractTable::AddTileGroup(TileGroup *tile_group) {
     LOG_TRACE("Recording tile group : %d \n", tile_group_id);
 }
 
-void AbstractTable::AddIndex(index::Index *index) {
-    std::lock_guard<std::mutex> lock(table_mutex);
-    indexes.push_back(index);
-}
-
 size_t AbstractTable::GetTileGroupCount() const {
     size_t size = tile_groups.size();
     return size;
@@ -144,7 +140,7 @@ ItemPointer AbstractTable::InsertTuple(txn_id_t transaction_id, const storage::T
     oid_t tuple_slot = INVALID_OID;
     oid_t tile_group_offset = INVALID_OID;
 
-    while (tuple_slot == INVALID_OID){
+    while (tuple_slot == INVALID_OID) {
 
         // (B) Figure out last tile group
         std::lock_guard<std::mutex> lock(table_mutex);

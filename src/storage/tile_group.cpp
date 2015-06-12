@@ -17,13 +17,13 @@
 #include "common/logger.h"
 #include "common/synch.h"
 #include "common/types.h"
-#include "storage/table.h"
+#include "storage/abstract_table.h"
 
 namespace nstore {
 namespace storage {
 
 TileGroup::TileGroup(TileGroupHeader* tile_group_header,
-                     DataTable *table,
+                     AbstractTable *table,
                      Backend* backend,
                      const std::vector<catalog::Schema>& schemas,
                      int tuple_count)
