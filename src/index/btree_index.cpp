@@ -132,7 +132,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::Scan() const{
   return result;
 }
 
-std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKey(storage::Tuple *key) const{
+std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKey(const storage::Tuple *key) const{
   std::vector<ItemPointer> result;
 
   BtPageSet set[1];
@@ -199,7 +199,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKey(storage::Tuple *
   return result;
 }
 
-std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyBetween(storage::Tuple *start, storage::Tuple *end) const{
+std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyBetween(const storage::Tuple *start,const storage::Tuple *end) const{
   std::vector<ItemPointer> result;
 
   BtPageSet set[1];
@@ -270,7 +270,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyBetween(storage::
   return result;
 }
 
-std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLT(storage::Tuple *key) const{
+std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLT(const storage::Tuple *key) const{
   std::vector<ItemPointer> result;
 
   BtPageSet set[1];
@@ -330,7 +330,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLT(storage::Tuple
   return result;
 }
 
-std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLTE(storage::Tuple *key) const{
+std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLTE(const storage::Tuple *key) const{
   std::vector<ItemPointer> result;
 
   BtPageSet set[1];
@@ -389,7 +389,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLTE(storage::Tupl
   return result;
 }
 
-std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyGT(storage::Tuple *key) const{
+std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyGT(const storage::Tuple *key) const{
   std::vector<ItemPointer> result;
 
   BtPageSet set[1];
@@ -454,7 +454,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyGT(storage::Tuple
   return result;
 }
 
-std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyGTE(storage::Tuple *key) const{
+std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyGTE(const storage::Tuple *key) const{
   std::vector<ItemPointer> result;
 
   BtPageSet set[1];

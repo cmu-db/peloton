@@ -33,6 +33,12 @@ class IndexScanExecutor : public AbstractExecutor {
 
   /** @brief Result of index scan. */
   std::vector<LogicalTile *> result;
+
+  /** @brief Result itr */
+  size_t result_itr;
+
+  /** @brief Computed the result */
+  bool done;
 };
 
 } // namespace executor

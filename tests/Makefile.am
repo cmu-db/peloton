@@ -24,7 +24,7 @@ AM_CPPFLAGS += \
 
 AM_CXXFLAGS += $(GTEST_CXXFLAGS) 
 
-AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -static \
+AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -static -pthread \
 			  $(GMOCK_BUILDDIR)/libgmock.la \
 			  $(GMOCK_BUILDDIR)/libgmock_main.la \
 			  $(TBB_LIBS)
