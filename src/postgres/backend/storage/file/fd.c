@@ -124,6 +124,10 @@ int			max_files_per_process = 1000;
  */
 int			max_safe_fds = 32;	/* default if not changed */
 
+// Peloton porting issue
+#ifndef SYNC_FILE_RANGE_WRITE
+#define SYNC_FILE_RANGE_WRITE 2
+#endif
 
 /* Debugging.... */
 
