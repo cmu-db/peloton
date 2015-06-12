@@ -637,10 +637,16 @@ extern bool CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid);
  */
 extern char *Dynamic_library_path;
 
-//extern PGFunction load_external_function(char *filename, char *funcname,
-//					   bool signalNotFound, void **filehandle);
+//#ifndef __APPLE__ // TODO: Peloton porting issue
+extern PGFunction load_external_function(char *filename, char *funcname,
+					   bool signalNotFound, void **filehandle);
+extern void load_file(const char *filename, bool restricted);
+//#else
+//extern PGFunction load_external_function();
+//extern void load_file(void);
+//#endif
+
 extern PGFunction lookup_external_function(void *filehandle, char *funcname);
-//extern void load_file(const char *filename, bool restricted);
 extern void **find_rendezvous_variable(const char *varName);
 extern Size EstimateLibraryStateSpace(void);
 extern void SerializeLibraryState(Size maxsize, char *start_address);

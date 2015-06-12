@@ -26,7 +26,7 @@ AC_SUBST([AM_CXXFLAGS], '-std=c++11 -stdlib=libc++')
 
 
 ######################################################################
-# OS X portability 
+# OS X portability support
 ######################################################################
 AM_CONDITIONAL(BUILD_OS_IS_DARWIN, [test x"$build_os" = darwin])
 

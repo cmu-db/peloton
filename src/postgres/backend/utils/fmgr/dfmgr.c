@@ -96,36 +96,46 @@ static const Pg_magic_struct magic_data = PG_MODULE_MAGIC_DATA;
  * lookup_external_function to lookup additional functions in the same file
  * at less cost than repeating load_external_function.
  */
+//#ifndef __APPLE__ // TODO: Peloton porting issue
 PGFunction
 load_external_function(char *filename, char *funcname,
-					   bool signalNotFound, void **filehandle)
+             bool signalNotFound, void **filehandle)
 {
-	char	   *fullname;
-	void	   *lib_handle;
-	PGFunction	retval;
+  char	   *fullname;
+  void	   *lib_handle;
+  PGFunction	retval;
 
-	/* Expand the possibly-abbreviated filename to an exact path name */
-	fullname = expand_dynamic_library_name(filename);
+  /* Expand the possibly-abbreviated filename to an exact path name */
+  fullname = expand_dynamic_library_name(filename);
 
-	/* Load the shared library, unless we already did */
-	lib_handle = internal_load_library(fullname);
+  /* Load the shared library, unless we already did */
+  lib_handle = internal_load_library(fullname);
 
-	/* Return handle if caller wants it */
-	if (filehandle)
-		*filehandle = lib_handle;
+  /* Return handle if caller wants it */
+  if (filehandle)
+    *filehandle = lib_handle;
 
-	/* Look up the function within the library */
-	retval = (PGFunction) pg_dlsym(lib_handle, funcname);
+  /* Look up the function within the library */
+  retval = (PGFunction) pg_dlsym(lib_handle, funcname);
 
-	if (retval == NULL && signalNotFound)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("could not find function \"%s\" in file \"%s\"",
-						funcname, fullname)));
+  if (retval == NULL && signalNotFound)
+    ereport(ERROR,
+        (errcode(ERRCODE_UNDEFINED_FUNCTION),
+         errmsg("could not find function \"%s\" in file \"%s\"",
+            funcname, fullname)));
 
-	pfree(fullname);
-	return retval;
+  pfree(fullname);
+  return retval;
 }
+//#else
+//PGFunction
+//load_external_function(void)
+//{
+//	PGFunction	retval;/
+//
+//	return retval;
+//}
+//#endif
 
 /*
  * This function loads a shlib file without looking up any particular
@@ -135,6 +145,7 @@ load_external_function(char *filename, char *funcname,
  * When 'restricted' is true, only libraries in the presumed-secure
  * directory $libdir/plugins may be referenced.
  */
+#ifndef __APPLE__ // TODO: Peloton porting issue
 void
 load_file(const char *filename, bool restricted)
 {
@@ -155,17 +166,40 @@ load_file(const char *filename, bool restricted)
 
 	pfree(fullname);
 }
+#else
+void
+load_file(const char *filename, bool restricted)
+{
+	char	   *fullname;
+
+	/* Apply security restriction if requested */
+	if (restricted)
+		check_restricted_library_name(filename);
+
+	/* Expand the possibly-abbreviated filename to an exact path name */
+	fullname = expand_dynamic_library_name(filename);
+
+	/* Unload the library if currently loaded */
+	internal_unload_library(fullname);
+
+	/* Load the shared library */
+	(void) internal_load_library(fullname);
+
+	pfree(fullname);
+}
+#endif
 
 /*
  * Lookup a function whose library file is already loaded.
  * Return (PGFunction) NULL if not found.
  */
 PGFunction
-lookup_external_function(void *filehandle, char *funcname)
+lookup_external_function()
 {
+  void *filehandle = NULL;
+  char *funcname = NULL;
 	return (PGFunction) pg_dlsym(filehandle, funcname);
 }
-
 
 /*
  * Load the specified dynamic-link library file, unless it already is
