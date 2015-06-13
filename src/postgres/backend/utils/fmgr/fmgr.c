@@ -348,7 +348,8 @@ fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 		probinstring = TextDatumGetCString(probinattr);
 
 		/* Look up the function itself */
-		user_fn = load_external_function(probinstring, prosrcstring, true,
+		// Peloton porting issue: the 3rd arg is true
+		user_fn = load_external_function(probinstring, prosrcstring, 1,
 										 &libraryhandle);
 
 		/* Get the function information record (real or default) */

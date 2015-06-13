@@ -1,8 +1,6 @@
-/* src/include/pg_config_ext.h.  Generated from pg_config_ext.h.in by configure.  */
-/*
- * src/include/pg_config_ext.h.in.  This is generated manually, not by
- * autoheader, since we want to limit which symbols get defined here.
- */
+#ifdef __APPLE__
+#include "port_config/darwin/pg_config_ext.h"
+#else
+#include "port_config/linux/pg_config_ext.h"
+#endif
 
-/* Define to the name of a signed 64-bit integer type. */
-#define PG_INT64_TYPE long int

@@ -21,7 +21,7 @@
 #include "expression/abstract_expression.h"
 #include "expression/container_tuple.h"
 #include "planner/seq_scan_node.h"
-#include "storage/table.h"
+#include "storage/data_table.h"
 #include "storage/tile_group.h"
 
 #include "common/logger.h"
@@ -55,11 +55,11 @@ bool SeqScanExecutor::DExecute() {
 
   // Grab data from plan node.
   const planner::SeqScanNode &node = GetNode<planner::SeqScanNode>();
-  const storage::Table *table = node.GetTable();
+  const storage::DataTable *table = node.GetTable();
   const expression::AbstractExpression *predicate = node.GetPredicate();
   const std::vector<oid_t> &column_ids = node.GetColumnIds();
 
-  // We are scanning over a logical tile.
+  // Scanning over a logical tile.
   if (children_.size() == 1) {
 
     LOG_TRACE("Seq Scan executor :: 1 child \n");

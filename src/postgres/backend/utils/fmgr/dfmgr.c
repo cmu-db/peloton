@@ -98,33 +98,37 @@ static const Pg_magic_struct magic_data = PG_MODULE_MAGIC_DATA;
  */
 PGFunction
 load_external_function(char *filename, char *funcname,
-					   bool signalNotFound, void **filehandle)
+#ifdef __APPLE__
+		char signalNotFound, void **filehandle)
+#else
+		bool signalNotFound, void **filehandle)
+#endif
 {
-	char	   *fullname;
-	void	   *lib_handle;
-	PGFunction	retval;
+  char	   *fullname;
+  void	   *lib_handle;
+  PGFunction	retval;
 
-	/* Expand the possibly-abbreviated filename to an exact path name */
-	fullname = expand_dynamic_library_name(filename);
+  /* Expand the possibly-abbreviated filename to an exact path name */
+  fullname = expand_dynamic_library_name(filename);
 
-	/* Load the shared library, unless we already did */
-	lib_handle = internal_load_library(fullname);
+  /* Load the shared library, unless we already did */
+  lib_handle = internal_load_library(fullname);
 
-	/* Return handle if caller wants it */
-	if (filehandle)
-		*filehandle = lib_handle;
+  /* Return handle if caller wants it */
+  if (filehandle)
+    *filehandle = lib_handle;
 
-	/* Look up the function within the library */
-	retval = (PGFunction) pg_dlsym(lib_handle, funcname);
+  /* Look up the function within the library */
+  retval = (PGFunction) pg_dlsym(lib_handle, funcname);
 
-	if (retval == NULL && signalNotFound)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("could not find function \"%s\" in file \"%s\"",
-						funcname, fullname)));
+  if (retval == NULL && signalNotFound)
+    ereport(ERROR,
+        (errcode(ERRCODE_UNDEFINED_FUNCTION),
+         errmsg("could not find function \"%s\" in file \"%s\"",
+            funcname, fullname)));
 
-	pfree(fullname);
-	return retval;
+  pfree(fullname);
+  return retval;
 }
 
 /*
@@ -136,7 +140,11 @@ load_external_function(char *filename, char *funcname,
  * directory $libdir/plugins may be referenced.
  */
 void
+#ifdef __APPLE__ // TODO: Peloton porting issue
+load_file(const char *filename, char restricted)
+#else
 load_file(const char *filename, bool restricted)
+#endif
 {
 	char	   *fullname;
 
@@ -165,7 +173,6 @@ lookup_external_function(void *filehandle, char *funcname)
 {
 	return (PGFunction) pg_dlsym(filehandle, funcname);
 }
-
 
 /*
  * Load the specified dynamic-link library file, unless it already is
