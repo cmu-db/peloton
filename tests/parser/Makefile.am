@@ -14,8 +14,8 @@ parser_test_LDADD = \
 										$(obj_DIR)/common/varlen.o \
 										$(obj_DIR)/common/pool.o \
 										$(obj_DIR)/parser/parser.o \
-										$(obj_DIR)/parser/parser_bison.o \
-										$(obj_DIR)/parser/parser_flex.o \
+										$(obj_DIR)/parser_bison.o \
+										$(obj_DIR)/parser_flex.o \
 										$(obj_DIR)/parser/parser_utils.o \
 										$(obj_DIR)/parser/sql_statement.o \
 										$(obj_DIR)/parser/table_ref.o \
