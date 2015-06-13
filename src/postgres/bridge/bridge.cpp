@@ -2,7 +2,7 @@
  * bridge.cpp
  *
  *  Created on: Jun 11, 2015
- *      Author: parallels
+ *      Author: Jinwoong Kim
  */
 
 extern "C"{
