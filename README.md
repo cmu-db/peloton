@@ -19,14 +19,15 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
 
     sudo apt-get install g++ autotools-dev autoconf libtool pkg-config libtbb-dev libjson-spirit-dev flex bison
  
-### Get the repository
+### Building
 
     git clone https://github.com/cmu-db/peloton.git
     cd peloton/build
     
-    ../configure CXXFLAGS="-O0 -g" 
+    ../configure 
     
     make -j4
+    sudo make -j4 install
 
 ## Development        
 
@@ -53,19 +54,3 @@ We use `Eclipse` for our development. The following instructions assume that you
 > 2. Open the `peloton` project in Eclipse and navigate to Project ->  Properties ->  C/C++ General.
 > 3. Click the Formatter option in the left-hand menu, and then select the Enable project specific settings checkbox at the top of the panel.
 > Click the Import button and then select the `eclipse-cpp-google-style.xml` file in `third_party/eclipse` directory.
- 
-## Testing
-
-    cd build
-    make -j4 check
-
-    cd tests
-    make check-valgrind          
-    
-### Code Coverage ::
-
-    cd build
-    ../configure --enable-code-coverage
-    cd test
-    make check-code-coverage
- 
