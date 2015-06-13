@@ -9,9 +9,6 @@
 
 #include "postgres.h"
 
-class Bridge {
+char* GetRelationName(Oid relation_id);
 
- public:
-  static char* GetRelationName(Oid relation_id);
-
-};
+int GetNumberOfAttributes(Oid relation_id);
