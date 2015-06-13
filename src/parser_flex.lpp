@@ -27,6 +27,7 @@ char* substr(const char* source, int from, int to) {
 #define TOKEN(name) { return SQL_##name; }
 #define yylex           parser_lex
 #define YY_EXIT_FAILURE ( (void)yyscanner, 2 ) // unused function warning
+#define YY_NO_INPUT // yyinput is not needed for warning issues
 
 %}
 /***************************
