@@ -25,7 +25,7 @@ namespace executor {
  */
 InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
                                Transaction *transaction)
-: AbstractExecutor(node, transaction) {
+    : AbstractExecutor(node, transaction) {
 }
 
 /**
@@ -33,8 +33,8 @@ InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
  * @return true on success, false otherwise.
  */
 bool InsertExecutor::DInit() {
-  assert(children_.size() <= 1);
-  return true;
+    assert(children_.size() <= 1);
+    return true;
 }
 
 /**
@@ -42,26 +42,26 @@ bool InsertExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool InsertExecutor::DExecute() {
-  assert(children_.size() == 0);
-  assert(transaction_);
+    assert(children_.size() == 0);
+    assert(transaction_);
 
-  const planner::InsertNode &node = GetNode<planner::InsertNode>();
-  storage::Table *target_table = node.GetTable();
-  auto tuples = node.GetTuples();
+    const planner::InsertNode &node = GetNode<planner::InsertNode>();
+    storage::DataTable *target_table = node.GetTable();
+    auto tuples = node.GetTuples();
 
-  // Insert given tuples into table
+    // Insert given tuples into table
 
-  for(auto tuple : tuples) {
-    ItemPointer location = target_table->InsertTuple(transaction_->GetTransactionId(), tuple);
-    if(location.block == INVALID_OID) {
-      auto& txn_manager = TransactionManager::GetInstance();
-      txn_manager.AbortTransaction(transaction_);
-      return false;
+    for (auto tuple : tuples) {
+        ItemPointer location = target_table->InsertTuple(transaction_->GetTransactionId(), tuple);
+        if (location.block == INVALID_OID) {
+            auto& txn_manager = TransactionManager::GetInstance();
+            txn_manager.AbortTransaction(transaction_);
+            return false;
+        }
+        transaction_->RecordInsert(location);
     }
-    transaction_->RecordInsert(location);
-  }
 
-  return true;
+    return true;
 }
 
 } // namespace executor

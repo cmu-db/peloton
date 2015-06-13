@@ -8,7 +8,8 @@ check_PROGRAMS += \
 				  logical_tile_test \
 				  materialization_test \
 				  mutate_test \
-				  seq_scan_test
+				  seq_scan_test \
+				  index_scan_test
 
 executor_tests_common= 	executor/executor_tests_util.cpp \
 						harness.cpp
@@ -21,9 +22,12 @@ executor_tests_common_ld = \
 						   $(obj_DIR)/common/varlen.o \
 						   $(obj_DIR)/common/pool.o \
 						   $(obj_DIR)/common/transaction.o \
-						   $(obj_DIR)/storage/table.o \
+						   $(obj_DIR)/storage/abstract_table.o \
+						   $(obj_DIR)/storage/data_table.o \
+						   $(obj_DIR)/storage/table_factory.o \
 						   $(obj_DIR)/storage/tile_group.o \
 						   $(obj_DIR)/storage/tile_group_header.o \
+						   $(obj_DIR)/storage/tile_group_factory.o \
 						   $(obj_DIR)/storage/tile.o \
 						   $(obj_DIR)/storage/tuple.o \
 						   $(obj_DIR)/index/index.o \
@@ -73,4 +77,10 @@ seq_scan_test_LDADD = \
 					  $(obj_DIR)/expression/expression_util.o \
 					  $(obj_DIR)/executor/seq_scan_executor.o
 
+index_scan_test_SOURCES = \
+						$(executor_tests_common) \
+						executor/index_scan_test.cpp 
+
+index_scan_test_LDADD = \
+					  $(executor_tests_common_ld)
 

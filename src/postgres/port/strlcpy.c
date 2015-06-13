@@ -41,6 +41,7 @@
  * Returns strlen(src); if retval >= siz, truncation occurred.
  * Function creation history:  http://www.gratisoft.us/todd/papers/strlcpy.html
  */
+#ifndef __APPLE__
 size_t
 strlcpy(char *dst, const char *src, size_t siz)
 {
@@ -69,3 +70,4 @@ strlcpy(char *dst, const char *src, size_t siz)
 
 	return (s - src - 1);		/* count does not include NUL */
 }
+#endif
