@@ -78,6 +78,7 @@ AC_SUBST([TBB_LIBS])
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  tests/Makefile
+                 tools/Makefile
                  ])
 
 AC_CONFIG_LINKS([tests/valgrind.supp:third_party/valgrind/valgrind.supp])
@@ -85,19 +86,16 @@ AC_CONFIG_LINKS([tests/valgrind.supp:third_party/valgrind/valgrind.supp])
 AC_OUTPUT
 
 echo \
-"-------------------------------------------------
+"---------------------------------------------------------------------
 
-${PACKAGE_NAME} Version ${PACKAGE_VERSION}
+${PACKAGE_NAME} 
 
-Prefix: '${prefix}'.
-Compiler: '${CC} ${CFLAGS} ${CPPFLAGS}'
-Libraries: '${LIBS}'
-Building OS: '${build_os}'
-is OS X(# means Yes): '${BUILD_OS_IS_DARWIN_FALSE}'
+Version        : ${PACKAGE_VERSION}
+OS             : '${build_os}'
+Prefix         : '${prefix}'.
+Compiler       : '${CC} ${CFLAGS} ${CPPFLAGS}'
+Libraries      : '${LIBS}'
 
-Package features:
-Async Execution: ${async_exec}
-
---------------------------------------------------"
+---------------------------------------------------------------------"
 
 # @end 2
