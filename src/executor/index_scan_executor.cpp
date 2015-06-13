@@ -16,7 +16,7 @@
 #include "expression/abstract_expression.h"
 #include "expression/container_tuple.h"
 #include "planner/index_scan_node.h"
-#include "storage/table.h"
+#include "storage/data_table.h"
 #include "storage/tile_group.h"
 
 #include "common/logger.h"
@@ -29,7 +29,7 @@ namespace executor {
  * @param node Indexscan node corresponding to this executor.
  */
 IndexScanExecutor::IndexScanExecutor(planner::AbstractPlanNode *node, Transaction *transaction)
-: AbstractExecutor(node, transaction), result_itr(0), done(false) {
+    : AbstractExecutor(node, transaction), result_itr(0), done(false) {
 }
 
 /**
@@ -37,8 +37,8 @@ IndexScanExecutor::IndexScanExecutor(planner::AbstractPlanNode *node, Transactio
  * @return true on success, false otherwise.
  */
 bool IndexScanExecutor::DInit() {
-  assert(children_.size() == 0);
-  return true;
+    assert(children_.size() == 0);
+    return true;
 }
 
 /**
@@ -46,75 +46,75 @@ bool IndexScanExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool IndexScanExecutor::DExecute() {
-  assert(children_.size() == 0);
+    assert(children_.size() == 0);
 
-  // Already performed the index lookup
-  if(done){
-    if(result_itr == result.size()) {
-      return false;
+    // Already performed the index lookup
+    if(done) {
+        if(result_itr == result.size()) {
+            return false;
+        }
+        else {
+
+            // Return appropriate tile and go to next tile
+            SetOutput(result[result_itr]);
+            result_itr++;
+
+            return true;
+        }
+    }
+
+    // Else, need to do the index lookup
+
+    // Grab info from plan node.
+    const planner::IndexScanNode &node = GetNode<planner::IndexScanNode>();
+    const storage::AbstractTable *table = node.GetTable();
+    const index::Index *index = node.GetIndex();
+    const std::vector<oid_t> &column_ids = node.GetColumnIds();
+
+    LOG_TRACE("Index Scan executor :: 0 child \n");
+
+    assert(index != nullptr);
+    assert(column_ids.size() > 0);
+
+    const storage::Tuple* start_key = node.GetStartKey();
+    const storage::Tuple* end_key = node.GetEndKey();
+    bool start_inclusive = node.IsStartInclusive();
+    bool end_inclusive = node.IsEndInclusive();
+    std::vector<ItemPointer> tuple_locations;
+
+    if(start_key == nullptr && end_key == nullptr) {
+        return false;
+    }
+    else if(start_key == nullptr) {
+        // < END_KEY
+        if(end_inclusive == false) {
+            tuple_locations = index->GetLocationsForKeyLT(end_key);
+        }
+        // <= END_KEY
+        else {
+            tuple_locations = index->GetLocationsForKeyLTE(end_key);
+        }
+    }
+    else if(end_key == nullptr) {
+        // > START_KEY
+        if(start_inclusive == false) {
+            tuple_locations = index->GetLocationsForKeyGT(start_key);
+        }
+        // >= START_KEY
+        else {
+            tuple_locations = index->GetLocationsForKeyGTE(start_key);
+        }
     }
     else {
-
-      // Return appropriate tile and go to next tile
-      SetOutput(result[result_itr]);
-      result_itr++;
-
-      return true;
+        // START_KEY < .. < END_KEY
+        tuple_locations = index->GetLocationsForKeyBetween(start_key, end_key);
     }
-  }
 
-  // Else, need to do the index lookup
+    // Get the logical tiles corresponding to the given tuple locations
+    result = LogicalTileFactory::WrapTupleLocations(table, tuple_locations, column_ids);
+    done = true;
 
-  // Grab info from plan node.
-  const planner::IndexScanNode &node = GetNode<planner::IndexScanNode>();
-  const storage::Table *table = node.GetTable();
-  const index::Index *index = node.GetIndex();
-  const std::vector<oid_t> &column_ids = node.GetColumnIds();
-
-  LOG_TRACE("Index Scan executor :: 0 child \n");
-
-  assert(index != nullptr);
-  assert(column_ids.size() > 0);
-
-  const storage::Tuple* start_key = node.GetStartKey();
-  const storage::Tuple* end_key = node.GetEndKey();
-  bool start_inclusive = node.IsStartInclusive();
-  bool end_inclusive = node.IsEndInclusive();
-  std::vector<ItemPointer> tuple_locations;
-
-  if(start_key == nullptr && end_key == nullptr) {
-    return false;
-  }
-  else if(start_key == nullptr){
-    // < END_KEY
-    if(end_inclusive == false){
-      tuple_locations = index->GetLocationsForKeyLT(end_key);
-    }
-    // <= END_KEY
-    else{
-      tuple_locations = index->GetLocationsForKeyLTE(end_key);
-    }
-  }
-  else if(end_key == nullptr){
-    // > START_KEY
-    if(start_inclusive == false){
-      tuple_locations = index->GetLocationsForKeyGT(start_key);
-    }
-    // >= START_KEY
-    else{
-      tuple_locations = index->GetLocationsForKeyGTE(start_key);
-    }
-  }
-  else{
-    // START_KEY < .. < END_KEY
-    tuple_locations = index->GetLocationsForKeyBetween(start_key, end_key);
-  }
-
-  // Get the logical tiles corresponding to the given tuple locations
-  result = LogicalTileFactory::WrapTupleLocations(table, tuple_locations, column_ids);
-  done = true;
-
-  return true;
+    return true;
 }
 
 } // namespace executor

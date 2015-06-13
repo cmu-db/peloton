@@ -52,7 +52,7 @@ namespace test {
 std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
 
-void InsertTuple(storage::Table *table){
+void InsertTuple(storage::DataTable *table){
 
   auto& txn_manager = TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -77,7 +77,7 @@ void InsertTuple(storage::Table *table){
   txn_manager.CommitTransaction(txn);
 }
 
-void UpdateTuple(storage::Table *table){
+void UpdateTuple(storage::DataTable *table){
 
   auto& txn_manager = TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -121,7 +121,7 @@ void UpdateTuple(storage::Table *table){
   txn_manager.CommitTransaction(txn);
 }
 
-void DeleteTuple(storage::Table *table){
+void DeleteTuple(storage::DataTable *table){
 
   auto& txn_manager = TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -166,7 +166,7 @@ TEST(InsertTests, BasicTests) {
   auto context = txn_manager.BeginTransaction();
 
   // Create insert node for this test.
-  storage::Table *table = ExecutorTestsUtil::CreateTable();
+  storage::DataTable *table = ExecutorTestsUtil::CreateTable();
 
   // Pass through insert executor.
   storage::Tuple *tuple;
