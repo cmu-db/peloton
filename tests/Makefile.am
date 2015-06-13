@@ -20,7 +20,7 @@ AM_CPPFLAGS += \
 			   -I$(top_srcdir)/src \
 			   -I$(top_srcdir)/third_party \
 			   -I$(top_srcdir)/src/postgres/include \
-			   -I$(top_srcdir)/src/postgres/backend	\			
+			   -I$(top_srcdir)/src/postgres/backend	\
 			   -I$(top_builddir)/src \
 			   $(GTEST_CPPFLAGS)
 
