@@ -21,7 +21,7 @@ class Bridge {
 
   /**
    * @brief Getting the relation name.
-   * @param relation id relation id
+   * @param relation_id relation id
    */
   static char* GetRelationName(Oid relation_id) {
       Relation relation;
@@ -30,13 +30,33 @@ class Bridge {
       relation = relation_open(relation_id, NoLock);
 
       // Get name for given relation
-      relation_name = quote_qualified_identifier(get_namespace_name(RelationGetNamespace(relation)), RelationGetRelationName(relation));
+     relation_name = quote_qualified_identifier(get_namespace_name(RelationGetNamespace(relation)), RelationGetRelationName(relation));
+
+      // Simply version of above function
+     // relation_name = RelationGetRelationName(relation);
+
 
       relation_close(relation, NoLock);
 
       return relation_name;
    }
 
-};
+  /**
+   * @brief Getting the number of attributes.
+   * @param relation_id relation id
+   */
+  int GetNumberOfAttributes(Oid relation_id) {
+      Relation relation;
+      AttrNumber numOfAttris;
+      
+      relation = relation_open(relation_id, NoLock);
+      
+      //Get the number of attributes
+      numOfAttris = RelationGetNumberOfAttributes(relation);
 
+      relation_close(relation, NoLock);
+      
+      return numOfAttris;
+  }
+};
 
