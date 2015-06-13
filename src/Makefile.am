@@ -21,11 +21,15 @@ include $(srcdir)/storage/Makefile.am
 include $(srcdir)/postgres/backend/Makefile.am
 include $(srcdir)/postgres/bridge/Makefile.am
 include $(srcdir)/postgres/common/Makefile.am
+include $(srcdir)/postgres/interfaces/Makefile.am
 include $(srcdir)/postgres/port/Makefile.am
 include $(srcdir)/postgres/timezone/Makefile.am
 
-bin_PROGRAMS = peloton
-lib_LTLIBRARIES= libpeloton.la libpostgres.la
+bin_peloton_PROGRAMS = peloton
+
+bin_pelotondir = /usr/local/peloton/bin
+
+lib_LTLIBRARIES += libpeloton.la libpostgres.la
 
 DEFAULT_INCLUDES =
 
@@ -45,7 +49,7 @@ libpeloton_la_SOURCES = \
 					  $(scheduler_FILES) \
 					  $(storage_FILES)
 
-libpeloton_la_LDFLAGS = $(TBB_LIBS) -pthread
+libpeloton_la_LDFLAGS = $(TBB_LIBS) 
 libpeloton_la_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(third_party_INCLUDES)
 
 ######################################################################
@@ -59,11 +63,20 @@ libpostgres_la_SOURCES = \
 					  $(postgres_port_FILES) \
 					  $(postgres_timezone_FILES)
 
+if BUILD_OS_IS_DARWIN
+libpostgres_la_LDFLAGS =  -ldl -lm
+libpostgres_la_CFLAGS =  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
+						 -Wendif-labels -Wmissing-format-attribute -Wformat-security \
+						 -fno-strict-aliasing -fwrapv \
+						 -fPIC -fpic -msse4.2
+## if build os is not darwin
+else
 libpostgres_la_LDFLAGS = -lrt -lcrypt -ldl -lm
 libpostgres_la_CFLAGS =  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
 						 -Wendif-labels -Wmissing-format-attribute -Wformat-security \
 						 -fno-strict-aliasing -fwrapv -fexcess-precision=standard \
 						 -fPIC -fpic -msse4.2
+endif
 
 libpostgres_la_CPPFLAGS = $(postgres_common_INCLUDES)
 

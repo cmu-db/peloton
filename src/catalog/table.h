@@ -21,7 +21,7 @@
 namespace nstore {
 
 namespace storage {
-class Table;
+class DataTable;
 }
 
 namespace catalog {
@@ -69,15 +69,15 @@ class Table {
     return constraints;
   }
 
-  storage::Table *GetTable() const {
+  storage::DataTable *GetTable() const {
     return physical_table;
   }
 
-  void SetPhysicalTable(storage::Table* table_) {
+  void SetPhysicalTable(storage::DataTable* table_) {
     physical_table = table_;
   }
 
-  storage::Table *GetPhysicalTable() {
+  storage::DataTable *GetPhysicalTable() {
     return physical_table;
   }
 
@@ -117,7 +117,7 @@ class Table {
   std::vector<Constraint*> constraints;
 
   // underlying physical table
-  storage::Table* physical_table = nullptr;
+  storage::DataTable* physical_table = nullptr;
 
   std::mutex table_mtx;
 };

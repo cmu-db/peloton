@@ -8,7 +8,8 @@ include $(top_srcdir)/third_party/gmock/Makefile.am
 # subdirectories of the project 
 SUBDIRS = \
 		  src \
-		  tests
+		  tests \
+		  tools
 
 # add files in the distribution
 EXTRA_DIST = bootstrap $(top_srcdir)/doc/doxygen.cfg
