@@ -75,3 +75,10 @@ GTAGS
 GRTAGS
 GPATH
 tags
+
+## -------------------------------
+## Code Coverage files
+## -------------------------------
+*.gcno
+*.gcda
+

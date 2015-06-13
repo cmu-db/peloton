@@ -39,6 +39,7 @@ tile_group_test_LDADD = \
 						$(obj_DIR)/common/transaction.o \
 						$(obj_DIR)/storage/tile.o \
 						$(obj_DIR)/storage/tile_group.o \
-						$(obj_DIR)/storage/tile_group_header.o 
+						$(obj_DIR)/storage/tile_group_header.o \
+						$(obj_DIR)/storage/tile_group_factory.o
 
 
