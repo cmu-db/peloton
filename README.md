@@ -19,15 +19,31 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
 
     sudo apt-get install g++ autotools-dev autoconf libtool pkg-config libtbb-dev libjson-spirit-dev flex bison
  
-### Building
+### Build Peloton
 
     git clone https://github.com/cmu-db/peloton.git
-    cd peloton/build
+
+    ./bootstrap
     
+    cd build
     ../configure 
-    
     make -j4
     sudo make -j4 install
+    
+    export PATH=$PATH:/usr/local/peloton/bin
+
+### Test terminal
+
+    initdb ./data
+    cp ../postgresql.conf ./data   
+    
+    pg_ctl -D ./data start
+    createuser -s -r postgres
+    
+    psql postgres 
+    help  
+    
+    pg_ctl -D ./data stop
 
 ## Development        
 
