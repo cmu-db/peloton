@@ -20,11 +20,15 @@ include $(srcdir)/storage/Makefile.am
 
 include $(srcdir)/postgres/backend/Makefile.am
 include $(srcdir)/postgres/common/Makefile.am
+include $(srcdir)/postgres/interfaces/Makefile.am
 include $(srcdir)/postgres/port/Makefile.am
 include $(srcdir)/postgres/timezone/Makefile.am
 
-bin_PROGRAMS = peloton
-lib_LTLIBRARIES= libpeloton.la libpostgres.la
+bin_peloton_PROGRAMS = peloton
+
+bin_pelotondir = /usr/local/peloton/bin
+
+lib_LTLIBRARIES += libpeloton.la libpostgres.la
 
 DEFAULT_INCLUDES =
 
