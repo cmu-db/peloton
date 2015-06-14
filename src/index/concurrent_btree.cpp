@@ -372,8 +372,7 @@ BtMgr *bt_mgr (char *name, uint bits, uint nodemax)
 
   mgr = (BtMgr *) calloc (1, sizeof(BtMgr));
 
-  // TODO: overwrites existing index files
-  mgr->idx = open ((char*)name, O_RDWR | O_CREAT | O_TRUNC, 0666);
+  mgr->idx = open (name, O_RDWR | O_CREAT | O_TRUNC, 0666);
 
   if( mgr->idx == -1 ) {
     fprintf (stderr, "Unable to open btree file\n");
@@ -461,14 +460,14 @@ BtMgr *bt_mgr (char *name, uint bits, uint nodemax)
   // mlock the pagezero page
 
   flag = PROT_READ | PROT_WRITE;
-  mgr->pagezero = (BtPageZero*) mmap (0, mgr->page_size, flag, MAP_SHARED, mgr->idx, ALLOC_page << mgr->page_bits);
+  mgr->pagezero = (BtPageZero*) mmap (0, mgr->page_size, flag, MAP_ANONYMOUS | MAP_PRIVATE, mgr->idx, ALLOC_page << mgr->page_bits);
   if( mgr->pagezero == MAP_FAILED ) {
     fprintf (stderr, "Unable to mmap btree page zero, error = %s\n", strerror(errno));
     return bt_mgrclose (mgr), (BtMgr *)NULL;
   }
   mlock (mgr->pagezero, mgr->page_size);
 
-  mgr->hashtable = (BtHashEntry *) mmap (0, (uid)mgr->nlatchpage << mgr->page_bits, flag, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+  mgr->hashtable = (BtHashEntry *) mmap (0, (uid)mgr->nlatchpage << mgr->page_bits, flag, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
   if( mgr->hashtable == MAP_FAILED ) {
     fprintf (stderr, "Unable to mmap anonymous buffer pool pages, error = %s\n", strerror(errno));
     return bt_mgrclose (mgr), (BtMgr *)NULL;
