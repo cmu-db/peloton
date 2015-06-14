@@ -29,11 +29,11 @@ namespace {
  * @return Position list.
  */
 std::vector<oid_t> CreateIdentityPositionList(unsigned int size) {
-    std::vector<oid_t> position_list(size);
-    for (oid_t id = 0; id < size; id++) {
-        position_list[id] = id;
-    }
-    return position_list;
+  std::vector<oid_t> position_list(size);
+  for (oid_t id = 0; id < size; id++) {
+    position_list[id] = id;
+  }
+  return position_list;
 }
 
 } // namespace
@@ -44,7 +44,7 @@ std::vector<oid_t> CreateIdentityPositionList(unsigned int size) {
  * @return Pointer to empty logical tile.
  */
 LogicalTile *LogicalTileFactory::GetTile() {
-    return new LogicalTile();
+  return new LogicalTile();
 }
 
 /**
@@ -57,31 +57,31 @@ LogicalTile *LogicalTileFactory::GetTile() {
 LogicalTile *LogicalTileFactory::WrapBaseTiles(
     const std::vector<storage::Tile *> &base_tiles,
     bool own_base_tiles) {
-    assert(base_tiles.size() > 0);
-    //TODO ASSERT all base tiles have the same height.
-    std::unique_ptr<LogicalTile> new_tile(new LogicalTile());
+  assert(base_tiles.size() > 0);
+  //TODO ASSERT all base tiles have the same height.
+  std::unique_ptr<LogicalTile> new_tile(new LogicalTile());
 
-    // First, we build a position list to be shared by all the tiles.
-    //TODO Modify logical tile to be able to represent lazily position lists that
-    // span the entire tile.
-    const oid_t position_list_idx = 0;
-    //TODO This should be active tuple count. But how to set it? High watermark?
-    new_tile->AddPositionList(
-        CreateIdentityPositionList(base_tiles[0]->GetAllocatedTupleCount()));
+  // First, we build a position list to be shared by all the tiles.
+  //TODO Modify logical tile to be able to represent lazily position lists that
+  // span the entire tile.
+  const oid_t position_list_idx = 0;
+  //TODO This should be active tuple count. But how to set it? High watermark?
+  new_tile->AddPositionList(
+      CreateIdentityPositionList(base_tiles[0]->GetAllocatedTupleCount()));
 
-    for (unsigned int i = 0; i < base_tiles.size(); i++) {
-        // Next, we construct the schema.
-        int column_count = base_tiles[i]->GetColumnCount();
-        for (int col_id = 0; col_id < column_count; col_id++) {
-            new_tile->AddColumn(
-                base_tiles[i],
-                own_base_tiles,
-                col_id,
-                position_list_idx);
-        }
+  for (unsigned int i = 0; i < base_tiles.size(); i++) {
+    // Next, we construct the schema.
+    int column_count = base_tiles[i]->GetColumnCount();
+    for (int col_id = 0; col_id < column_count; col_id++) {
+      new_tile->AddColumn(
+          base_tiles[i],
+          own_base_tiles,
+          col_id,
+          position_list_idx);
     }
+  }
 
-    return new_tile.release();
+  return new_tile.release();
 }
 
 /**
@@ -92,28 +92,28 @@ LogicalTile *LogicalTileFactory::WrapBaseTiles(
  */
 LogicalTile *LogicalTileFactory::WrapTileGroup(
     storage::TileGroup *tile_group) {
-    std::unique_ptr<LogicalTile> new_tile(new LogicalTile());
-    //TODO Don't use allocated tuple count. Use active tuple count.
-    new_tile->AddPositionList(
-        CreateIdentityPositionList(tile_group->GetAllocatedTupleCount()));
+  std::unique_ptr<LogicalTile> new_tile(new LogicalTile());
+  //TODO Don't use allocated tuple count. Use active tuple count.
+  new_tile->AddPositionList(
+      CreateIdentityPositionList(tile_group->GetAllocatedTupleCount()));
 
-    // Construct schema.
-    std::vector<catalog::Schema> &schemas = tile_group->GetTileSchemas();
-    const bool own_base_tile = false;
-    const int position_list_idx = 0;
-    assert(schemas.size() == tile_group->NumTiles());
-    for (unsigned int i = 0; i < schemas.size(); i++) {
-        storage::Tile *base_tile = tile_group->GetTile(i);
-        for (oid_t col_id = 0; col_id < schemas[i].GetColumnCount(); col_id++) {
-            new_tile->AddColumn(
-                base_tile,
-                own_base_tile,
-                col_id,
-                position_list_idx);
-        }
+  // Construct schema.
+  std::vector<catalog::Schema> &schemas = tile_group->GetTileSchemas();
+  const bool own_base_tile = false;
+  const int position_list_idx = 0;
+  assert(schemas.size() == tile_group->NumTiles());
+  for (unsigned int i = 0; i < schemas.size(); i++) {
+    storage::Tile *base_tile = tile_group->GetTile(i);
+    for (oid_t col_id = 0; col_id < schemas[i].GetColumnCount(); col_id++) {
+      new_tile->AddColumn(
+          base_tile,
+          own_base_tile,
+          col_id,
+          position_list_idx);
     }
+  }
 
-    return new_tile.release();
+  return new_tile.release();
 }
 
 /**
@@ -124,46 +124,64 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(
  * @return Logical tile(s) wrapping the give tuple locations.
  */
 std::vector<LogicalTile *> LogicalTileFactory::WrapTupleLocations(const storage::AbstractTable *table,
-        const std::vector<ItemPointer> tuple_locations,
-        const std::vector<oid_t> column_ids) {
-    std::vector<LogicalTile *> result;
+                                                                  const std::vector<ItemPointer> tuple_locations,
+                                                                  const std::vector<oid_t> column_ids,
+                                                                  txn_id_t txn_id,
+                                                                  cid_t commit_id) {
+  std::vector<LogicalTile *> result;
 
-    // Get the list of blocks
-    std::map<oid_t, std::vector<oid_t> > blocks;
+  // Get the list of blocks
+  std::map<oid_t, std::vector<oid_t> > blocks;
 
-    for(auto tuple_location : tuple_locations) {
-        blocks[tuple_location.block].push_back(tuple_location.offset);
+  for(auto tuple_location : tuple_locations) {
+    blocks[tuple_location.block].push_back(tuple_location.offset);
+  }
+
+  // Construct a logical tile for each block
+  for(auto block : blocks) {
+
+    LogicalTile *logical_tile = LogicalTileFactory::GetTile();
+    const bool own_base_tile = false;
+    const int position_list_idx = 0;
+
+    logical_tile->AddPositionList(std::move(block.second));
+    storage::TileGroup *tile_group = table->GetTileGroup(block.first);
+    storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
+
+    // Add relevant columns to logical tile
+    for (oid_t origin_column_id : column_ids) {
+      oid_t base_tile_offset, tile_column_id;
+
+      tile_group->LocateTileAndColumn(
+          origin_column_id,
+          base_tile_offset,
+          tile_column_id);
+
+      logical_tile->AddColumn(
+          tile_group->GetTile(base_tile_offset),
+          own_base_tile,
+          tile_column_id,
+          position_list_idx);
     }
 
-    // Construct a logical tile for each block
-    for(auto block : blocks) {
 
-        LogicalTile *logical_tile = LogicalTileFactory::GetTile();
-        const bool own_base_tile = false;
-        const int position_list_idx = 0;
+    std::vector<oid_t> position_list;
 
-        logical_tile->AddPositionList(std::move(block.second));
-        storage::TileGroup *tile_group = table->GetTileGroup(block.first);
-
-        for (oid_t origin_column_id : column_ids) {
-            oid_t base_tile_offset, tile_column_id;
-
-            tile_group->LocateTileAndColumn(
-                origin_column_id,
-                base_tile_offset,
-                tile_column_id);
-
-            logical_tile->AddColumn(
-                tile_group->GetTile(base_tile_offset),
-                own_base_tile,
-                tile_column_id,
-                position_list_idx);
-        }
-
-        result.push_back(logical_tile);
+    // Add visible tuples to logical tile
+    for(auto tuple_id :  block.second) {
+      if(tile_group_header->IsVisible(tuple_id, txn_id, commit_id) == false){
+        continue;
+      }
+      else {
+        position_list.push_back(tuple_id);
+      }
     }
 
-    return result;
+    logical_tile->AddPositionList(std::move(position_list));
+    result.push_back(logical_tile);
+  }
+
+  return result;
 }
 
 } // namespace executor
