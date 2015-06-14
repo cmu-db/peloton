@@ -110,8 +110,12 @@ bool IndexScanExecutor::DExecute() {
         tuple_locations = index->GetLocationsForKeyBetween(start_key, end_key);
     }
 
+    txn_id_t txn_id = transaction_->GetTransactionId();
+    cid_t commit_id = transaction_->GetLastCommitId();
+
     // Get the logical tiles corresponding to the given tuple locations
-    result = LogicalTileFactory::WrapTupleLocations(table, tuple_locations, column_ids);
+    result = LogicalTileFactory::WrapTupleLocations(table, tuple_locations, column_ids,
+                                                    txn_id, commit_id);
     done = true;
 
     return true;
