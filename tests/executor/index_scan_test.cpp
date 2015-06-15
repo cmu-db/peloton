@@ -34,6 +34,10 @@ TEST(IndexScanTests, IndexPredicateTest) {
   // Column ids to be added to logical tile after scan.
   std::vector<oid_t> column_ids( { 0, 1, 3 });
 
+  //===--------------------------------------------------------------------===//
+  // Start <= Tuple
+  //===--------------------------------------------------------------------===//
+
   // Set start key
   auto index = data_table->GetIndex(0);
   const catalog::Schema *index_key_schema = index->GetKeySchema();
@@ -41,7 +45,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
 
   start_key->SetValue(0, ValueFactory::GetIntegerValue(100));
 
-  storage::Tuple *end_key = nullptr;
+  std::unique_ptr<storage::Tuple> end_key(nullptr);
   bool start_inclusive = true;
   bool end_inclusive = true;
 
@@ -49,7 +53,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
   planner::IndexScanNode node(
       data_table.get(),
       data_table->GetIndex(0),
-      start_key.get(), end_key, start_inclusive, end_inclusive,
+      start_key.get(), end_key.get(), start_inclusive, end_inclusive,
       column_ids);
 
   auto& txn_manager = TransactionManager::GetInstance();
@@ -62,19 +66,63 @@ TEST(IndexScanTests, IndexPredicateTest) {
   EXPECT_TRUE(executor.Init());
 
   std::vector<std::unique_ptr<executor::LogicalTile> > result_tiles;
+
   for (int i = 0; i < expected_num_tiles; i++) {
     EXPECT_TRUE(executor.Execute());
-
     std::unique_ptr<executor::LogicalTile> result_tile(executor.GetOutput());
     EXPECT_THAT(result_tile, NotNull());
-
     result_tiles.emplace_back(result_tile.release());
   }
 
   EXPECT_FALSE(executor.Execute());
+  EXPECT_EQ(result_tiles.size(), expected_num_tiles);
+  EXPECT_EQ(result_tiles[0].get()->NumTuples(), 40);
+
+  std::cout << *(result_tiles[0].get());
 
   txn_manager.CommitTransaction(txn);
   txn_manager.EndTransaction(txn);
+
+  //===--------------------------------------------------------------------===//
+  // Start <= Tuple <= End
+  //===--------------------------------------------------------------------===//
+
+  // Set end key
+  end_key.reset(new storage::Tuple(index_key_schema, true));
+  end_key->SetValue(0, ValueFactory::GetIntegerValue(140));
+
+  // Create another plan node.
+  planner::IndexScanNode node2(
+      data_table.get(),
+      data_table->GetIndex(0),
+      start_key.get(), end_key.get(), start_inclusive, end_inclusive,
+      column_ids);
+
+  auto txn2 = txn_manager.BeginTransaction();
+
+  // Run the executor
+  executor::IndexScanExecutor executor2(&node2, txn2);
+  expected_num_tiles = 1;
+
+  result_tiles.clear();
+  EXPECT_TRUE(executor2.Init());
+
+  for (int i = 0; i < expected_num_tiles; i++) {
+    EXPECT_TRUE(executor2.Execute());
+    std::unique_ptr<executor::LogicalTile> result_tile(executor2.GetOutput());
+    EXPECT_THAT(result_tile, NotNull());
+    result_tiles.emplace_back(result_tile.release());
+  }
+
+  EXPECT_FALSE(executor2.Execute());
+  EXPECT_EQ(result_tiles.size(), expected_num_tiles);
+  EXPECT_EQ(result_tiles[0].get()->NumTuples(), 5);
+
+  std::cout << *(result_tiles[0].get());
+
+  txn_manager.CommitTransaction(txn2);
+  txn_manager.EndTransaction(txn2);
+
 }
 
 } // namespace test

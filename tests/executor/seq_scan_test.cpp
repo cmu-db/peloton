@@ -44,6 +44,55 @@ namespace {
 const std::set<oid_t> g_tuple_ids( { 0, 3, 5, 7 });
 
 /**
+ * @brief Convenience method to create table for test.
+ *
+ * @return Table generated for test.
+ */
+storage::DataTable *CreateTable() {
+  const int tuple_count = 50;
+  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable());
+
+  // Schema for first tile group. Vertical partition is 2, 2.
+  std::vector<catalog::Schema> schemas1({
+    catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(0), ExecutorTestsUtil::GetColumnInfo(1) }),
+    catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(2), ExecutorTestsUtil::GetColumnInfo(3) })
+  });
+
+  // Schema for second tile group. Vertical partition is 1, 3.
+  std::vector<catalog::Schema> schemas2({
+    catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(0) }),
+    catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(2), ExecutorTestsUtil::GetColumnInfo(3) })
+  });
+
+  GetNextTileGroupId();
+
+  // Create tile groups.
+  table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
+      INVALID_OID,
+      INVALID_OID,
+      GetNextTileGroupId(),
+      table.get(),
+      table->GetBackend(),
+      schemas1,
+      tuple_count));
+
+  table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
+      INVALID_OID,
+      INVALID_OID,
+      GetNextTileGroupId(),
+      table.get(),
+      table->GetBackend(),
+      schemas2,
+      tuple_count));
+
+  ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(0), tuple_count);
+  ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(1), tuple_count);
+  ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(2), tuple_count);
+
+  return table.release();
+}
+
+/**
  * @brief Convenience method to create predicate for test.
  * @param tuple_ids Set of tuple ids that we want the predicate to match with.
  *
@@ -176,7 +225,7 @@ void RunTest(
 // paritioning changes midway.
 TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
     // Create table.
-    std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable());
+    std::unique_ptr<storage::DataTable> table(CreateTable());
 
     // Column ids to be added to logical tile after scan.
     std::vector<oid_t> column_ids( { 0, 1, 3 });
@@ -230,7 +279,7 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
 
     // This table is generated so we can reuse the test data of the test case
     // where seq scan is a leaf node. We only need the data in the tiles.
-    std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateAndPopulateTable());
+    std::unique_ptr<storage::DataTable> data_table(CreateTable());
 
     std::unique_ptr<executor::LogicalTile> source_logical_tile1(
         executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
