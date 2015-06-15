@@ -13,6 +13,7 @@
 #include "executor/insert_executor.h"
 
 #include "catalog/manager.h"
+#include "common/logger.h"
 #include "executor/logical_tile.h"
 #include "planner/insert_node.h"
 
@@ -25,7 +26,7 @@ namespace executor {
  */
 InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
                                Transaction *transaction)
-    : AbstractExecutor(node, transaction) {
+: AbstractExecutor(node, transaction) {
 }
 
 /**
@@ -33,8 +34,8 @@ InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
  * @return true on success, false otherwise.
  */
 bool InsertExecutor::DInit() {
-    assert(children_.size() <= 1);
-    return true;
+  assert(children_.size() <= 1);
+  return true;
 }
 
 /**
@@ -42,26 +43,59 @@ bool InsertExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool InsertExecutor::DExecute() {
-    assert(children_.size() == 0);
-    assert(transaction_);
+  assert(children_.size() == 0 || children_.size() == 1);
+  assert(transaction_);
 
-    const planner::InsertNode &node = GetNode<planner::InsertNode>();
-    storage::DataTable *target_table = node.GetTable();
-    auto tuples = node.GetTuples();
+  const planner::InsertNode &node = GetNode<planner::InsertNode>();
+  storage::DataTable *target_table = node.GetTable();
+
+  // Inserting a logical tile.
+  if (children_.size() == 1) {
+    LOG_TRACE("Insert executor :: 1 child \n");
+
+    if (!children_[0]->Execute()) {
+      return false;
+    }
+
+    std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
+    assert(tile.get() != nullptr);
+
+    // Check logical tile schema against table schema
+    catalog::Schema *schema = target_table->GetSchema();
+    std::unique_ptr<catalog::Schema> tile_schema(tile.get()->GetSchema());
+
+    if(*schema != *(tile_schema.get())) {
+      LOG_ERROR("Insert executor :: table schema and logical tile schema don't match \n");
+      return false;
+    }
 
     // Insert given tuples into table
+    // TODO: Need to do actual insertion.
+
+    return true;
+  }
+  // Inserting a collection of tuples from plan node
+  else if (children_.size() == 0) {
+
+    LOG_TRACE("Insert executor :: 0 child \n");
+
+    // Insert given tuples into table
+    auto tuples = node.GetTuples();
 
     for (auto tuple : tuples) {
-        ItemPointer location = target_table->InsertTuple(transaction_->GetTransactionId(), tuple);
-        if (location.block == INVALID_OID) {
-            auto& txn_manager = TransactionManager::GetInstance();
-            txn_manager.AbortTransaction(transaction_);
-            return false;
-        }
-        transaction_->RecordInsert(location);
+      ItemPointer location = target_table->InsertTuple(transaction_->GetTransactionId(), tuple);
+      if (location.block == INVALID_OID) {
+        auto& txn_manager = TransactionManager::GetInstance();
+        txn_manager.AbortTransaction(transaction_);
+        return false;
+      }
+      transaction_->RecordInsert(location);
     }
 
     return true;
+  }
+
+  return true;
 }
 
 } // namespace executor
