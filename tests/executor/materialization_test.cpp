@@ -76,7 +76,7 @@ TEST(MaterializationTests, SingleBaseTileTest) {
 
 
   // Verify that logical tile is only made up of a single base tile.
-  int num_cols = result_logical_tile->NumCols();
+  int num_cols = result_logical_tile->GetColumnCount();
   EXPECT_EQ(2, num_cols);
   storage::Tile *result_base_tile = result_logical_tile->GetBaseTile(0);
   EXPECT_THAT(result_base_tile, NotNull());
@@ -147,7 +147,7 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
         source_logical_tile.release()));
 
   // Verify that logical tile is only made up of a single base tile.
-  int num_cols = result_logical_tile->NumCols();
+  int num_cols = result_logical_tile->GetColumnCount();
   EXPECT_EQ(3, num_cols);
   storage::Tile *result_base_tile = result_logical_tile->GetBaseTile(0);
   EXPECT_THAT(result_base_tile, NotNull());

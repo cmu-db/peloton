@@ -76,7 +76,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
 
   EXPECT_FALSE(executor.Execute());
   EXPECT_EQ(result_tiles.size(), expected_num_tiles);
-  EXPECT_EQ(result_tiles[0].get()->NumTuples(), 40);
+  EXPECT_EQ(result_tiles[0].get()->GetTupleCount(), 40);
 
   std::cout << *(result_tiles[0].get());
 
@@ -116,7 +116,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
 
   EXPECT_FALSE(executor2.Execute());
   EXPECT_EQ(result_tiles.size(), expected_num_tiles);
-  EXPECT_EQ(result_tiles[0].get()->NumTuples(), 5);
+  EXPECT_EQ(result_tiles[0].get()->GetTupleCount(), 5);
 
   std::cout << *(result_tiles[0].get());
 

@@ -26,8 +26,7 @@ public:
     static LogicalTile *GetTile();
 
     static LogicalTile *WrapBaseTiles(
-        const std::vector<storage::Tile *> &base_tile,
-        bool own_base_tiles);
+        const std::vector<storage::Tile *> &base_tile, bool own_base_tiles);
 
     static LogicalTile *WrapTileGroup(storage::TileGroup *tile_group);
 

@@ -53,11 +53,17 @@ class LogicalTile {
 
   Value GetValue(oid_t tuple_id, oid_t column_id);
 
-  size_t NumTuples();
+  size_t GetTupleCount();
 
-  size_t NumCols();
+  size_t GetColumnCount();
 
   catalog::Schema *GetSchema();
+
+  bool IsWrapper();
+
+  size_t GetWrappedTileCount();
+
+  storage::Tile *GetWrappedTile(oid_t physical_tile_offset);
 
   /**
    * @brief Iterates through tuple ids in this logical tile.
@@ -137,6 +143,12 @@ class LogicalTile {
 
   /** @brief Set of base tiles owned (memory-wise) by this logical tile. */
   std::unordered_set<storage::Tile *> owned_base_tiles_;
+
+  /** @brief Is this logical tile just a wrapper around physical tiles ? */
+  bool wrapper = false;
+
+  /** @brief Set of base tiles wrapped by this logical tile. */
+  std::vector<storage::Tile *> base_tiles_;
 };
 
 

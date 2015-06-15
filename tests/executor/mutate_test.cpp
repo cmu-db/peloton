@@ -204,13 +204,13 @@ TEST(MutateTests, StressTests) {
   txn_manager.CommitTransaction(context);
 
   LaunchParallelTest(1, InsertTuple, table);
-  std::cout << (*table);
+  //std::cout << (*table);
 
   LaunchParallelTest(1, UpdateTuple, table);
-  std::cout << (*table);
+  //std::cout << (*table);
 
   LaunchParallelTest(1, DeleteTuple, table);
-  std::cout << (*table);
+  //std::cout << (*table);
 
   // PRIMARY KEY
   auto pkey_index = table->GetIndex(0);
@@ -257,36 +257,17 @@ TEST(MutateTests, StressTests) {
   delete table;
 }
 
+// Insert a logical tile into a table
 TEST(MutateTests, InsertTest) {
-
-  storage::VMBackend backend;
-  const int tuple_count = 9;
-  std::unique_ptr<storage::TileGroup> tile_group(
-      ExecutorTestsUtil::CreateTileGroup(&backend, tuple_count));
-
-  ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
-
-  // Create logical tile from single base tile.
-  storage::Tile *source_base_tile = tile_group->GetTile(0);
-  const bool own_base_tiles = false;
-  std::unique_ptr<executor::LogicalTile> source_logical_tile(
-      executor::LogicalTileFactory::WrapBaseTiles(
-          { source_base_tile },
-          own_base_tiles));
-
-  std::cout << *(source_logical_tile.get());
 
   auto& txn_manager = TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
-  catalog::Schema *schema = source_logical_tile.get()->GetSchema();
-  std::unique_ptr<storage::DataTable> table( storage::TableFactory::GetDataTable(INVALID_OID,
-                                                                                 schema,
-                                                                                 "temp_table"));
-
+  // We are going to insert a tile group into a table in this test
+  std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateAndPopulateTable());
   const std::vector<storage::Tuple *> tuples;
 
-  planner::InsertNode node(table.get(), tuples);
+  planner::InsertNode node(data_table.get(), tuples);
   executor::InsertExecutor executor(&node, txn);
 
   MockExecutor child_executor;
@@ -301,10 +282,6 @@ TEST(MutateTests, InsertTest) {
   .WillOnce(Return(true))
   .WillOnce(Return(false));
 
-  // This table is generated so we can reuse the test data of the test case
-  // where seq scan is a leaf node. We only need the data in the tiles.
-  std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateAndPopulateTable());
-
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
 
@@ -313,11 +290,12 @@ TEST(MutateTests, InsertTest) {
 
   EXPECT_TRUE(executor.Init());
 
-  EXPECT_FALSE(executor.Execute());
+  EXPECT_TRUE(executor.Execute());
   EXPECT_FALSE(executor.Execute());
 
   txn_manager.CommitTransaction(txn);
   txn_manager.EndTransaction(txn);
+
 }
 
 } // namespace test
