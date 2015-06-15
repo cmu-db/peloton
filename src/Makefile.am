@@ -62,7 +62,7 @@ libpostgres_la_SOURCES = \
 					  $(postgres_timezone_FILES)
 
 if BUILD_OS_IS_DARWIN
-libpostgres_la_LDFLAGS =  -ldl -lm
+libpostgres_la_LDFLAGS = -ldl -lm
 libpostgres_la_CFLAGS =  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
 						 -Wendif-labels -Wmissing-format-attribute -Wformat-security \
 						 -fno-strict-aliasing -fwrapv \
