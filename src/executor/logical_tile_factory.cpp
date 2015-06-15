@@ -123,8 +123,7 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(
  *
  * @return Logical tile(s) wrapping the give tuple locations.
  */
-std::vector<LogicalTile *> LogicalTileFactory::WrapTupleLocations(const storage::AbstractTable *table,
-                                                                  const std::vector<ItemPointer> tuple_locations,
+std::vector<LogicalTile *> LogicalTileFactory::WrapTupleLocations(const std::vector<ItemPointer> tuple_locations,
                                                                   const std::vector<oid_t> column_ids,
                                                                   txn_id_t txn_id,
                                                                   cid_t commit_id) {
@@ -144,9 +143,21 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTupleLocations(const storage:
     const bool own_base_tile = false;
     const int position_list_idx = 0;
 
-    logical_tile->AddPositionList(std::move(block.second));
-    storage::TileGroup *tile_group = table->GetTileGroup(block.first);
+    storage::TileGroup *tile_group = (storage::TileGroup *) catalog::Manager::GetInstance().GetLocation(block.first);
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
+
+    // Add visible tuples to logical tile
+    std::vector<oid_t> position_list;
+    for(auto tuple_id :  block.second) {
+      if(tile_group_header->IsVisible(tuple_id, txn_id, commit_id) == false){
+        continue;
+      }
+      else {
+        position_list.push_back(tuple_id);
+      }
+    }
+
+    logical_tile->AddPositionList(std::move(position_list));
 
     // Add relevant columns to logical tile
     for (oid_t origin_column_id : column_ids) {
@@ -164,20 +175,6 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTupleLocations(const storage:
           position_list_idx);
     }
 
-
-    std::vector<oid_t> position_list;
-
-    // Add visible tuples to logical tile
-    for(auto tuple_id :  block.second) {
-      if(tile_group_header->IsVisible(tuple_id, txn_id, commit_id) == false){
-        continue;
-      }
-      else {
-        position_list.push_back(tuple_id);
-      }
-    }
-
-    logical_tile->AddPositionList(std::move(position_list));
     result.push_back(logical_tile);
   }
 
