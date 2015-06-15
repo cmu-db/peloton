@@ -81,7 +81,7 @@ public:
     size_t GetTileGroupCount() const;
 
     // insert tuple in table
-    ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple, bool update = false);
+    ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
 
     //===--------------------------------------------------------------------===//
     // UTILITIES

@@ -48,7 +48,7 @@ bool IndexScanExecutor::DInit() {
 bool IndexScanExecutor::DExecute() {
   assert(children_.size() == 0);
 
-  LOG_INFO("Index Scan executor :: 0 child \n");
+  LOG_TRACE("Index Scan executor :: 0 child \n");
 
   // Already performed the index lookup
   if(done) {
@@ -56,11 +56,9 @@ bool IndexScanExecutor::DExecute() {
       return false;
     }
     else {
-
       // Return appropriate tile and go to next tile
       SetOutput(result[result_itr]);
       result_itr++;
-
       return true;
     }
   }
@@ -69,7 +67,6 @@ bool IndexScanExecutor::DExecute() {
 
   // Grab info from plan node.
   const planner::IndexScanNode &node = GetNode<planner::IndexScanNode>();
-  const storage::AbstractTable *table = node.GetTable();
   const index::Index *index = node.GetIndex();
   const std::vector<oid_t> &column_ids = node.GetColumnIds();
 
@@ -110,7 +107,7 @@ bool IndexScanExecutor::DExecute() {
     tuple_locations = index->GetLocationsForKeyBetween(start_key, end_key);
   }
 
-  std::cout << "Tuple locations : " << tuple_locations.size() << "\n";
+  LOG_TRACE("Tuple locations : %lu \n", tuple_locations.size());
 
   if(tuple_locations.size() == 0)
     return false;
@@ -119,9 +116,14 @@ bool IndexScanExecutor::DExecute() {
   cid_t commit_id = transaction_->GetLastCommitId();
 
   // Get the logical tiles corresponding to the given tuple locations
-  result = LogicalTileFactory::WrapTupleLocations(table, tuple_locations, column_ids,
+  result = LogicalTileFactory::WrapTupleLocations(tuple_locations, column_ids,
                                                   txn_id, commit_id);
   done = true;
+
+  LOG_TRACE("Result tiles : %lu \n", result.size());
+
+  SetOutput(result[result_itr]);
+  result_itr++;
 
   return true;
 }

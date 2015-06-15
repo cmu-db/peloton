@@ -146,7 +146,8 @@ void ExecutorTestsUtil::PopulateTable(
     storage::DataTable *table,
     int num_rows) {
 
-  std::unique_ptr<catalog::Schema> schema(table->GetSchema());
+  const catalog::Schema *schema = table->GetSchema();
+
   // Ensure that the tile group is as expected.
   assert(schema->GetColumnCount() == 4);
 
@@ -157,7 +158,7 @@ void ExecutorTestsUtil::PopulateTable(
   const txn_id_t txn_id = txn->GetTransactionId();
 
   for (int i = 0; i < num_rows; i++) {
-    storage::Tuple tuple(schema.get(), allocate);
+    storage::Tuple tuple(schema, allocate);
     tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(i, 0)));
     tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(i, 1)));
     tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(i, 2)));
@@ -165,9 +166,10 @@ void ExecutorTestsUtil::PopulateTable(
         std::to_string(PopulatedValue(i, 3)));
     tuple.SetValue(3, string_value);
 
-    ItemPointer tuple_slot_id = table->InsertTuple(txn_id, &tuple, false);
-    EXPECT_FALSE(tuple_slot_id.block != INVALID_OID);
-    EXPECT_FALSE(tuple_slot_id.offset != INVALID_OID);
+    ItemPointer location = table->InsertTuple(txn_id, &tuple, false);
+    EXPECT_TRUE(location.block != INVALID_OID);
+    EXPECT_TRUE(location.offset != INVALID_OID);
+    txn->RecordInsert(location);
 
     string_value.FreeUninlinedData();
   }
@@ -309,48 +311,11 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_coun
  */
 storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
 
-  // First, create the table
   const int tuple_count = 50;
-  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable(tuple_count));
+  storage::DataTable *table = ExecutorTestsUtil::CreateTable(tuple_count);
+  ExecutorTestsUtil::PopulateTable(table, tuple_count * 3);
 
-  // Schema for first tile group. Vertical partition is 2, 2.
-  std::vector<catalog::Schema> schemas1( {
-    catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(0), ExecutorTestsUtil::GetColumnInfo(1) }),
-        catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(2), ExecutorTestsUtil::GetColumnInfo(3) })
-  });
-
-  // Schema for second tile group. Vertical partition is 1, 3.
-  std::vector<catalog::Schema> schemas2( {
-    catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(0) }),
-        catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(2), ExecutorTestsUtil::GetColumnInfo(3) })
-  });
-
-  GetNextTileGroupId();
-
-  // Create tile groups.
-  table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID,
-      INVALID_OID,
-      GetNextTileGroupId(),
-      table.get(),
-      table->GetBackend(),
-      schemas1,
-      tuple_count));
-
-  table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID,
-      INVALID_OID,
-      GetNextTileGroupId(),
-      table.get(),
-      table->GetBackend(),
-      schemas2,
-      tuple_count));
-
-  ExecutorTestsUtil::PopulateTable(table.get(), tuple_count);
-  ExecutorTestsUtil::PopulateTable(table.get(), tuple_count);
-  ExecutorTestsUtil::PopulateTable(table.get(), tuple_count);
-
-  return table.release();
+  return table;
 }
 
 storage::Tuple *ExecutorTestsUtil::GetTuple(storage::DataTable *table, oid_t tuple_id) {

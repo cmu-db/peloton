@@ -31,11 +31,10 @@ public:
 
     static LogicalTile *WrapTileGroup(storage::TileGroup *tile_group);
 
-    static std::vector<LogicalTile *> WrapTupleLocations(const storage::AbstractTable *table,
-            const std::vector<ItemPointer> tuple_locations,
-            const std::vector<oid_t> column_ids,
-            txn_id_t txn_id,
-            cid_t commit_id);
+    static std::vector<LogicalTile *> WrapTupleLocations(const std::vector<ItemPointer> tuple_locations,
+                                                         const std::vector<oid_t> column_ids,
+                                                         txn_id_t txn_id,
+                                                         cid_t commit_id);
 
 };
 
