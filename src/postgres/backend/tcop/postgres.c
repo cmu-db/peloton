@@ -39,6 +39,7 @@
 #include "access/parallel.h"
 #include "access/printtup.h"
 #include "access/xact.h"
+#include "bridge/bridge.h"
 #include "catalog/pg_type.h"
 #include "commands/async.h"
 #include "commands/prepare.h"
@@ -3910,8 +3911,8 @@ PostgresMain(int argc, char *argv[],
 	 * Non-error queries loop here.
 	 */
 
-        print_database_list(); //JWKIM
-        print_table_list();
+  GetDatabaseList();
+  GetTableList();
 
 	for (;;)
 	{

@@ -12,3 +12,8 @@
 char* GetRelationName(Oid relation_id);
 
 int GetNumberOfAttributes(Oid relation_id);
+
+void GetDatabaseList(void);
+
+void GetTableList(void);
+
