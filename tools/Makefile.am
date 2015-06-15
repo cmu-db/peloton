@@ -9,10 +9,13 @@ include $(top_srcdir)/common.am
 
 bin_peloton_PROGRAMS = initdb pg_ctl psql \
 			   createdb createuser dropdb dropuser             
-
 bin_pelotondir = /usr/local/peloton/bin
-
+if BUILD_OS_IS_DARWIN
+pg_common_ldflags = -L$(top_builddir)/src -lpostgres -lpq -lm -lreadline
+else
 pg_common_ldflags = -L$(top_builddir)/src -lpostgres -lpq -lrt -lm -lreadline
+endif
+
 
 ######################################################################
 # INITDB
