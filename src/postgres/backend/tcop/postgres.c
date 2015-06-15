@@ -3910,6 +3910,9 @@ PostgresMain(int argc, char *argv[],
 	 * Non-error queries loop here.
 	 */
 
+        print_database_list(); //JWKIM
+        print_table_list();
+
 	for (;;)
 	{
 		/*
