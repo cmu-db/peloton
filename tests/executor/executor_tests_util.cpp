@@ -166,10 +166,10 @@ void ExecutorTestsUtil::PopulateTable(
         std::to_string(PopulatedValue(i, 3)));
     tuple.SetValue(3, string_value);
 
-    ItemPointer location = table->InsertTuple(txn_id, &tuple, false);
-    EXPECT_TRUE(location.block != INVALID_OID);
-    EXPECT_TRUE(location.offset != INVALID_OID);
-    txn->RecordInsert(location);
+    ItemPointer tuple_slot_id = table->InsertTuple(txn_id, &tuple, false);
+    EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
+    EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
+    txn->RecordInsert(tuple_slot_id);
 
     string_value.FreeUninlinedData();
   }

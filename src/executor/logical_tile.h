@@ -10,6 +10,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "catalog/schema.h"
 #include "common/types.h"
 #include "common/value.h"
 
@@ -55,6 +56,8 @@ class LogicalTile {
   size_t NumTuples();
 
   size_t NumCols();
+
+  catalog::Schema *GetSchema();
 
   /**
    * @brief Iterates through tuple ids in this logical tile.

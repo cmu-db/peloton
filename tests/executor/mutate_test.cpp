@@ -19,22 +19,19 @@
 #include "executor/insert_executor.h"
 #include "executor/seq_scan_executor.h"
 #include "executor/update_executor.h"
-
-#include "executor/executor_tests_util.h"
-#include "executor/mock_executor.h"
 #include "executor/logical_tile_factory.h"
-
 #include "expression/expression_util.h"
 #include "expression/abstract_expression.h"
 #include "expression/expression.h"
-
 #include "planner/delete_node.h"
 #include "planner/insert_node.h"
 #include "planner/seq_scan_node.h"
 #include "planner/update_node.h"
-
 #include "storage/tile_group.h"
+#include "storage/table_factory.h"
 
+#include "executor/executor_tests_util.h"
+#include "executor/mock_executor.h"
 #include "harness.h"
 
 #include <atomic>
@@ -159,8 +156,7 @@ void DeleteTuple(storage::DataTable *table){
   txn_manager.CommitTransaction(txn);
 }
 
-// Insert a tuple into a table
-TEST(InsertTests, BasicTests) {
+TEST(MutateTests, StressTests) {
 
   auto& txn_manager = TransactionManager::GetInstance();
   auto context = txn_manager.BeginTransaction();
@@ -259,6 +255,69 @@ TEST(InsertTests, BasicTests) {
   delete key_schema;
 
   delete table;
+}
+
+TEST(MutateTests, InsertTest) {
+
+  storage::VMBackend backend;
+  const int tuple_count = 9;
+  std::unique_ptr<storage::TileGroup> tile_group(
+      ExecutorTestsUtil::CreateTileGroup(&backend, tuple_count));
+
+  ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
+
+  // Create logical tile from single base tile.
+  storage::Tile *source_base_tile = tile_group->GetTile(0);
+  const bool own_base_tiles = false;
+  std::unique_ptr<executor::LogicalTile> source_logical_tile(
+      executor::LogicalTileFactory::WrapBaseTiles(
+          { source_base_tile },
+          own_base_tiles));
+
+  std::cout << *(source_logical_tile.get());
+
+  auto& txn_manager = TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  catalog::Schema *schema = source_logical_tile.get()->GetSchema();
+  std::unique_ptr<storage::DataTable> table( storage::TableFactory::GetDataTable(INVALID_OID,
+                                                                                 schema,
+                                                                                 "temp_table"));
+
+  const std::vector<storage::Tuple *> tuples;
+
+  planner::InsertNode node(table.get(), tuples);
+  executor::InsertExecutor executor(&node, txn);
+
+  MockExecutor child_executor;
+  executor.AddChild(&child_executor);
+
+  // Uneventful init...
+  EXPECT_CALL(child_executor, DInit())
+  .WillOnce(Return(true));
+
+  // Will return one tile.
+  EXPECT_CALL(child_executor, DExecute())
+  .WillOnce(Return(true))
+  .WillOnce(Return(false));
+
+  // This table is generated so we can reuse the test data of the test case
+  // where seq scan is a leaf node. We only need the data in the tiles.
+  std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateAndPopulateTable());
+
+  std::unique_ptr<executor::LogicalTile> source_logical_tile1(
+      executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(1)));
+
+  EXPECT_CALL(child_executor, GetOutput())
+  .WillOnce(Return(source_logical_tile1.release()));
+
+  EXPECT_TRUE(executor.Init());
+
+  EXPECT_FALSE(executor.Execute());
+  EXPECT_FALSE(executor.Execute());
+
+  txn_manager.CommitTransaction(txn);
+  txn_manager.EndTransaction(txn);
 }
 
 } // namespace test
