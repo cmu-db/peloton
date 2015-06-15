@@ -132,7 +132,7 @@ bool MaterializationExecutor::DExecute() {
       tile_to_cols);
 
   // Create new physical tile.
-  const int num_tuples = source_tile->NumTuples();
+  const int num_tuples = source_tile->GetTupleCount();
   std::unique_ptr<storage::Tile> dest_tile(
       storage::TileFactory::GetTempTile(
           node.schema(),

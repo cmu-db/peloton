@@ -57,17 +57,20 @@ LogicalTile *LogicalTileFactory::GetTile() {
 LogicalTile *LogicalTileFactory::WrapBaseTiles(
     const std::vector<storage::Tile *> &base_tiles,
     bool own_base_tiles) {
+
   assert(base_tiles.size() > 0);
+
   //TODO ASSERT all base tiles have the same height.
   std::unique_ptr<LogicalTile> new_tile(new LogicalTile());
 
   // First, we build a position list to be shared by all the tiles.
+
   //TODO Modify logical tile to be able to represent lazily position lists that
   // span the entire tile.
   const oid_t position_list_idx = 0;
+
   //TODO This should be active tuple count. But how to set it? High watermark?
-  new_tile->AddPositionList(
-      CreateIdentityPositionList(base_tiles[0]->GetAllocatedTupleCount()));
+  new_tile->AddPositionList(CreateIdentityPositionList(base_tiles[0]->GetAllocatedTupleCount()));
 
   for (unsigned int i = 0; i < base_tiles.size(); i++) {
     // Next, we construct the schema.
@@ -80,6 +83,10 @@ LogicalTile *LogicalTileFactory::WrapBaseTiles(
           position_list_idx);
     }
   }
+
+  // Mark this logical tile as a wrapper around the physical base tiles
+  new_tile.get()->wrapper = true;
+  new_tile.get()->base_tiles_ = base_tiles;
 
   return new_tile.release();
 }
