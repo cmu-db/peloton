@@ -68,12 +68,15 @@ AC_PROG_YACC
 # PACKAGES
 ######################################################################
 
+# Check for OpenSSL
 AC_CHECK_SSL
 
-PKG_CHECK_MODULES([TBB], [tbb >= 1.0.0])
+# Check for Intel TBB library
+AX_TBB([], AC_MSG_ERROR([cannot find the Intel TBB library]))
 
-AC_SUBST([TBB_CFLAGS])
-AC_SUBST([TBB_LIBS])
+
+# Checks for Boost libraries
+AX_BOOST_BASE([1.42])
 
 #[test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h.in])
 
