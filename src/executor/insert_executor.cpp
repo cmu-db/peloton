@@ -16,6 +16,7 @@
 #include "common/logger.h"
 #include "executor/logical_tile.h"
 #include "planner/insert_node.h"
+#include "storage/tile_iterator.h"
 
 namespace nstore {
 namespace executor {
@@ -57,20 +58,31 @@ bool InsertExecutor::DExecute() {
       return false;
     }
 
-    std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
-    assert(tile.get() != nullptr);
+    std::unique_ptr<LogicalTile> logical_tile(children_[0]->GetOutput());
+    assert(logical_tile.get() != nullptr);
 
     // Check logical tile schema against table schema
     catalog::Schema *schema = target_table->GetSchema();
-    std::unique_ptr<catalog::Schema> tile_schema(tile.get()->GetSchema());
+    std::unique_ptr<catalog::Schema> tile_schema(logical_tile.get()->GetSchema());
 
     if(*schema != *(tile_schema.get())) {
       LOG_ERROR("Insert executor :: table schema and logical tile schema don't match \n");
       return false;
     }
 
+    // Get the underlying physical tile
+    assert(logical_tile.get()->IsWrapper() == true);
+    assert(logical_tile.get()->GetWrappedTileCount() == 1);
+
+    storage::Tile *physical_tile = logical_tile.get()->GetWrappedTile(0);
+    storage::TileIterator tile_iterator = physical_tile->GetIterator();
+
+    storage::Tuple tuple(physical_tile->GetSchema());
+
     // Insert given tuples into table
-    // TODO: Need to do actual insertion.
+    while (tile_iterator.Next(tuple)) {
+      // TODO: Insert tuple
+    }
 
     return true;
   }

@@ -180,10 +180,10 @@ void RunTest(
 
     // Check correctness of result tiles.
     for (int i = 0 ; i < expected_num_tiles; i++) {
-        EXPECT_EQ(expected_num_cols, result_tiles[i]->NumCols());
+        EXPECT_EQ(expected_num_cols, result_tiles[i]->GetColumnCount());
 
         // Only two tuples per tile satisfy our predicate.
-        EXPECT_EQ(g_tuple_ids.size(), result_tiles[i]->NumTuples());
+        EXPECT_EQ(g_tuple_ids.size(), result_tiles[i]->GetTupleCount());
 
         // Verify values.
         std::set<oid_t> expected_tuples_left(g_tuple_ids);
