@@ -24,8 +24,9 @@ namespace storage {
 
 DataTable::DataTable(catalog::Schema *schema,
                      Backend *backend,
-                     std::string table_name)
-    : AbstractTable(schema, backend),
+                     std::string table_name,
+                     size_t tuples_per_tilegroup)
+    : AbstractTable(schema, backend, tuples_per_tilegroup),
       table_name(table_name) {
 
     // Sweat these rocks bitch!

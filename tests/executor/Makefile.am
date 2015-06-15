@@ -82,5 +82,6 @@ index_scan_test_SOURCES = \
 						executor/index_scan_test.cpp 
 
 index_scan_test_LDADD = \
-					  $(executor_tests_common_ld)
+					  $(executor_tests_common_ld) \
+					  $(obj_DIR)/executor/index_scan_executor.o
 
