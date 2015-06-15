@@ -68,6 +68,8 @@ AC_PROG_YACC
 # PACKAGES
 ######################################################################
 
+AC_CHECK_SSL
+
 PKG_CHECK_MODULES([TBB], [tbb >= 1.0.0])
 
 AC_SUBST([TBB_CFLAGS])
