@@ -51,7 +51,7 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   storage::Tile *source_base_tile = tile_group->GetTile(0);
   const bool own_base_tiles = false;
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
-      executor::LogicalTileFactory::WrapBaseTiles(
+      executor::LogicalTileFactory::WrapTiles(
         { source_base_tile },
         own_base_tiles));
 
@@ -116,7 +116,7 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
     { tile_group->GetTile(0), tile_group->GetTile(1) };
   const bool own_base_tiles = false;
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
-      executor::LogicalTileFactory::WrapBaseTiles(
+      executor::LogicalTileFactory::WrapTiles(
           source_base_tiles,
           own_base_tiles));
 
