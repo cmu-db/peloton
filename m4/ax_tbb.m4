@@ -41,7 +41,7 @@ AC_DEFUN([AX_TBB], [
             if test -f "$tbbdir/include/tbb/tbb.h"; then
                 TBB_CPPFLAGS="-I$tbbdir/include"
                 TBB_LDFLAGS="-L$tbbdir/lib"
-                TBB_LIBS="-ltbb"
+                TBB_LIBS="-ltbb -ltbbmalloc"
                 found=true
                 AC_MSG_RESULT([yes])
                 break
