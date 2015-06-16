@@ -323,7 +323,7 @@ void bt_mgrclose (BtMgr *mgr)
     //    madvise (page, mgr->page_size, MADV_DONTNEED);
   }
 
-  fprintf(stderr, "%d buffer pool pages flushed\n", num);
+  //fprintf(stderr, "%d buffer pool pages flushed\n", num);
 
   munmap (mgr->hashtable, (uid)mgr->nlatchpage << mgr->page_bits);
   munmap (mgr->pagezero, mgr->page_size);

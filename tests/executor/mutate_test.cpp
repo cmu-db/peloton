@@ -19,22 +19,19 @@
 #include "executor/insert_executor.h"
 #include "executor/seq_scan_executor.h"
 #include "executor/update_executor.h"
-
-#include "executor/executor_tests_util.h"
-#include "executor/mock_executor.h"
 #include "executor/logical_tile_factory.h"
-
 #include "expression/expression_util.h"
 #include "expression/abstract_expression.h"
 #include "expression/expression.h"
-
 #include "planner/delete_node.h"
 #include "planner/insert_node.h"
 #include "planner/seq_scan_node.h"
 #include "planner/update_node.h"
-
 #include "storage/tile_group.h"
+#include "storage/table_factory.h"
 
+#include "executor/executor_tests_util.h"
+#include "executor/mock_executor.h"
 #include "harness.h"
 
 #include <atomic>
@@ -159,8 +156,7 @@ void DeleteTuple(storage::DataTable *table){
   txn_manager.CommitTransaction(txn);
 }
 
-// Insert a tuple into a table
-TEST(InsertTests, BasicTests) {
+TEST(MutateTests, StressTests) {
 
   auto& txn_manager = TransactionManager::GetInstance();
   auto context = txn_manager.BeginTransaction();
@@ -208,13 +204,13 @@ TEST(InsertTests, BasicTests) {
   txn_manager.CommitTransaction(context);
 
   LaunchParallelTest(1, InsertTuple, table);
-  std::cout << (*table);
+  //std::cout << (*table);
 
   LaunchParallelTest(1, UpdateTuple, table);
-  std::cout << (*table);
+  //std::cout << (*table);
 
   LaunchParallelTest(1, DeleteTuple, table);
-  std::cout << (*table);
+  //std::cout << (*table);
 
   // PRIMARY KEY
   auto pkey_index = table->GetIndex(0);
@@ -259,6 +255,56 @@ TEST(InsertTests, BasicTests) {
   delete key_schema;
 
   delete table;
+}
+
+// Insert a logical tile into a table
+TEST(MutateTests, InsertTest) {
+
+  auto& txn_manager = TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  // We are going to insert a tile group into a table in this test
+  std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateAndPopulateTable());
+  const std::vector<storage::Tuple *> tuples;
+
+  EXPECT_EQ(data_table->GetTileGroupCount(), 3);
+
+  planner::InsertNode node(data_table.get(), tuples);
+  executor::InsertExecutor executor(&node, txn);
+
+  MockExecutor child_executor;
+  executor.AddChild(&child_executor);
+
+  // Uneventful init...
+  EXPECT_CALL(child_executor, DInit())
+  .WillOnce(Return(true));
+
+  // Will return one tile.
+  EXPECT_CALL(child_executor, DExecute())
+  .WillOnce(Return(true))
+  .WillOnce(Return(false));
+
+  auto physical_tile = data_table->GetTileGroup(0)->GetTile(0);
+  std::vector<storage::Tile *> physical_tiles;
+  physical_tiles.push_back(physical_tile);
+
+  std::unique_ptr<executor::LogicalTile> source_logical_tile1(
+      executor::LogicalTileFactory::WrapTiles(physical_tiles, false));
+  EXPECT_TRUE(source_logical_tile1.get()->IsWrapper());
+
+  EXPECT_CALL(child_executor, GetOutput())
+  .WillOnce(Return(source_logical_tile1.release()));
+
+  EXPECT_TRUE(executor.Init());
+
+  EXPECT_TRUE(executor.Execute());
+  EXPECT_FALSE(executor.Execute());
+
+  txn_manager.CommitTransaction(txn);
+  txn_manager.EndTransaction(txn);
+
+  // We have inserted all the tuples in this logical tile
+  EXPECT_EQ(data_table->GetTileGroupCount(), 4);
 }
 
 } // namespace test
