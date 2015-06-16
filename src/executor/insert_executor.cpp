@@ -35,7 +35,9 @@ InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
  * @return true on success, false otherwise.
  */
 bool InsertExecutor::DInit() {
-  assert(children_.size() <= 1);
+  assert(children_.size() == 0 || children_.size() == 1);
+  assert(transaction_);
+
   return true;
 }
 
@@ -44,8 +46,6 @@ bool InsertExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool InsertExecutor::DExecute() {
-  assert(children_.size() == 0 || children_.size() == 1);
-  assert(transaction_);
 
   const planner::InsertNode &node = GetNode<planner::InsertNode>();
   storage::DataTable *target_table = node.GetTable();

@@ -20,7 +20,6 @@
 #include "executor/logical_tile_factory.h"
 #include "expression/abstract_expression.h"
 #include "expression/container_tuple.h"
-#include "planner/seq_scan_node.h"
 #include "storage/data_table.h"
 #include "storage/tile_group.h"
 
@@ -43,6 +42,16 @@ SeqScanExecutor::SeqScanExecutor(planner::AbstractPlanNode *node, Transaction *t
  */
 bool SeqScanExecutor::DInit() {
   assert(children_.size() == 0 || children_.size() == 1);
+
+  // Grab data from plan node.
+  const planner::SeqScanNode &node = GetNode<planner::SeqScanNode>();
+
+  printf("Init :: %p \n", node.GetTable());
+
+  table_ = node.GetTable();
+  predicate_ = node.GetPredicate();
+  column_ids_ = node.GetColumnIds();
+
   return true;
 }
 
@@ -51,53 +60,46 @@ bool SeqScanExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool SeqScanExecutor::DExecute() {
-  assert(children_.size() == 0 || children_.size() == 1);
-
-  // Grab data from plan node.
-  const planner::SeqScanNode &node = GetNode<planner::SeqScanNode>();
-  const storage::DataTable *table = node.GetTable();
-  const expression::AbstractExpression *predicate = node.GetPredicate();
-  const std::vector<oid_t> &column_ids = node.GetColumnIds();
 
   // Scanning over a logical tile.
   if (children_.size() == 1) {
 
     LOG_TRACE("Seq Scan executor :: 1 child \n");
 
+    assert(table_ == nullptr);
+    assert(column_ids_.size() == 0);
+
     if (!children_[0]->Execute()) {
       return false;
     }
 
     std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
-    if (predicate != nullptr) {
+    if (predicate_ != nullptr) {
       // Invalidate tuples that don't satisfy the predicate.
       for (oid_t tuple_id : *tile) {
         expression::ContainerTuple<LogicalTile> tuple(tile.get(), tuple_id);
-        if (predicate->Evaluate(&tuple, nullptr).IsFalse()) {
+        if (predicate_->Evaluate(&tuple, nullptr).IsFalse()) {
           tile->InvalidateTuple(tuple_id);
         }
       }
     }
 
     SetOutput(tile.release());
-    return true;
   }
   // Scanning a table
-  else {
+  else if (children_.size() == 0) {
 
     LOG_TRACE("Seq Scan executor :: 0 child \n");
 
-    // We are scanning a table (this is a leaf node in the plan tree).
-    assert(children_.size() == 0);
-    assert(table != nullptr);
-    assert(column_ids.size() > 0);
+    assert(table_ != nullptr);
+    assert(column_ids_.size() > 0);
 
     // Retrieve next tile group.
-    if (current_tile_group_id_ == table->GetTileGroupCount()) {
+    if (current_tile_group_id_ == table_->GetTileGroupCount()) {
       return false;
     }
 
-    storage::TileGroup *tile_group = table->GetTileGroup(current_tile_group_id_++);
+    storage::TileGroup *tile_group = table_->GetTileGroup(current_tile_group_id_++);
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
     txn_id_t txn_id = transaction_->GetTransactionId();
     cid_t commit_id = transaction_->GetLastCommitId();
@@ -114,7 +116,7 @@ bool SeqScanExecutor::DExecute() {
       }
 
       expression::ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_id);
-      if (predicate == nullptr || predicate->Evaluate(&tuple, nullptr).IsTrue()) {
+      if (predicate_ == nullptr || predicate_->Evaluate(&tuple, nullptr).IsTrue()) {
         position_list.push_back(tuple_id);
       }
     }
@@ -125,7 +127,7 @@ bool SeqScanExecutor::DExecute() {
     const int position_list_idx = 0;
     logical_tile->AddPositionList(std::move(position_list));
 
-    for (oid_t origin_column_id : column_ids) {
+    for (oid_t origin_column_id : column_ids_) {
       oid_t base_tile_offset, tile_column_id;
 
       tile_group->LocateTileAndColumn(
@@ -141,9 +143,9 @@ bool SeqScanExecutor::DExecute() {
     }
 
     SetOutput(logical_tile.release());
-    return true;
   }
 
+  return true;
 }
 
 } // namespace executor
