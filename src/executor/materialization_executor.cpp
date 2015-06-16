@@ -132,7 +132,7 @@ bool MaterializationExecutor::DExecute() {
       tile_to_cols);
 
   // Create new physical tile.
-  const int num_tuples = source_tile->NumTuples();
+  const int num_tuples = source_tile->GetTupleCount();
   std::unique_ptr<storage::Tile> dest_tile(
       storage::TileFactory::GetTempTile(
           node.schema(),
@@ -148,7 +148,7 @@ bool MaterializationExecutor::DExecute() {
   // Wrap physical tile in logical tile.
   bool own_base_tile = true;
 
-  SetOutput(LogicalTileFactory::WrapBaseTiles({ dest_tile.release() },
+  SetOutput(LogicalTileFactory::WrapTiles({ dest_tile.release() },
                                               own_base_tile));
 
   return true;

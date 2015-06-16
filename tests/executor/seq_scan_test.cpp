@@ -49,47 +49,47 @@ const std::set<oid_t> g_tuple_ids( { 0, 3, 5, 7 });
  * @return Table generated for test.
  */
 storage::DataTable *CreateTable() {
-    const int tuple_count = 50;
-    std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable());
+  const int tuple_count = 50;
+  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable());
 
-    // Schema for first tile group. Vertical partition is 2, 2.
-    std::vector<catalog::Schema> schemas1( {
-        catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(0), ExecutorTestsUtil::GetColumnInfo(1) }),
-        catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(2), ExecutorTestsUtil::GetColumnInfo(3) })
-    });
+  // Schema for first tile group. Vertical partition is 2, 2.
+  std::vector<catalog::Schema> schemas1({
+    catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(0), ExecutorTestsUtil::GetColumnInfo(1) }),
+    catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(2), ExecutorTestsUtil::GetColumnInfo(3) })
+  });
 
-    // Schema for second tile group. Vertical partition is 1, 3.
-    std::vector<catalog::Schema> schemas2( {
-        catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(0) }),
-        catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(2), ExecutorTestsUtil::GetColumnInfo(3) })
-    });
+  // Schema for second tile group. Vertical partition is 1, 3.
+  std::vector<catalog::Schema> schemas2({
+    catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(0) }),
+    catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(2), ExecutorTestsUtil::GetColumnInfo(3) })
+  });
 
-    GetNextTileGroupId();
+  GetNextTileGroupId();
 
-    // Create tile groups.
-    table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
-                            INVALID_OID,
-                            INVALID_OID,
-                            GetNextTileGroupId(),
-                            table.get(),
-                            table->GetBackend(),
-                            schemas1,
-                            tuple_count));
+  // Create tile groups.
+  table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
+      INVALID_OID,
+      INVALID_OID,
+      GetNextTileGroupId(),
+      table.get(),
+      table->GetBackend(),
+      schemas1,
+      tuple_count));
 
-    table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
-                            INVALID_OID,
-                            INVALID_OID,
-                            GetNextTileGroupId(),
-                            table.get(),
-                            table->GetBackend(),
-                            schemas2,
-                            tuple_count));
+  table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
+      INVALID_OID,
+      INVALID_OID,
+      GetNextTileGroupId(),
+      table.get(),
+      table->GetBackend(),
+      schemas2,
+      tuple_count));
 
-    ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(0), tuple_count);
-    ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(1), tuple_count);
-    ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(2), tuple_count);
+  ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(0), tuple_count);
+  ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(1), tuple_count);
+  ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(2), tuple_count);
 
-    return table.release();
+  return table.release();
 }
 
 /**
@@ -180,10 +180,10 @@ void RunTest(
 
     // Check correctness of result tiles.
     for (int i = 0 ; i < expected_num_tiles; i++) {
-        EXPECT_EQ(expected_num_cols, result_tiles[i]->NumCols());
+        EXPECT_EQ(expected_num_cols, result_tiles[i]->GetColumnCount());
 
         // Only two tuples per tile satisfy our predicate.
-        EXPECT_EQ(g_tuple_ids.size(), result_tiles[i]->NumTuples());
+        EXPECT_EQ(g_tuple_ids.size(), result_tiles[i]->GetTupleCount());
 
         // Verify values.
         std::set<oid_t> expected_tuples_left(g_tuple_ids);
