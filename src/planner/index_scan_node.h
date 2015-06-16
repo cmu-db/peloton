@@ -74,7 +74,7 @@ public:
         return end_inclusive_;
     }
 
-    const std::vector<oid_t>& GetColumnIds() const {
+    const std::vector<oid_t> GetColumnIds() const {
         return column_ids_;
     }
 
@@ -106,7 +106,6 @@ private:
     bool start_inclusive_;
 
     bool end_inclusive_;
-
 
     /** @brief Columns from tile group to be added to logical tile output. */
     const std::vector<oid_t> column_ids_;
