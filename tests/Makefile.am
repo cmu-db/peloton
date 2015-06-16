@@ -52,7 +52,7 @@ include $(srcdir)/planner/Makefile.am
 include $(srcdir)/scheduler/Makefile.am
 include $(srcdir)/storage/Makefile.am
 
-include $(srcdir)/postgres/bridge/Makefile.am
+#include $(srcdir)/postgres/bridge/Makefile.am
 
 TESTS = $(check_PROGRAMS) 
 LOG_COMPILER = $(srcdir)/test-driver.sh 

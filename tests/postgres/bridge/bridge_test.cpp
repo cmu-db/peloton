@@ -17,7 +17,7 @@
 
 extern "C" {
 
-#include "postgres/include/bridge/bridge.h"
+#include "../../src/bridge/bridge.h"
 #include "postgres/include/postmaster/postmaster.h"
 #include "postgres/include/utils/memutils.h"
 
