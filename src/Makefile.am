@@ -1,5 +1,9 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
+######################################################################
+# COMMON
+######################################################################
+
 ## Common flags
 include $(top_srcdir)/common.am
 
@@ -29,7 +33,7 @@ bin_peloton_PROGRAMS = peloton
 
 bin_pelotondir = /usr/local/peloton/bin
 
-lib_LTLIBRARIES += libpeloton.la libpostgres.la
+lib_LTLIBRARIES += libpeloton.la
 
 DEFAULT_INCLUDES =
 
@@ -47,38 +51,32 @@ libpeloton_la_SOURCES = \
 					  $(parser_FILES) \
 					  $(planner_FILES) \
 					  $(scheduler_FILES) \
-					  $(storage_FILES)
-
-libpeloton_la_LDFLAGS = $(TBB_LIBS) 
-libpeloton_la_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(third_party_INCLUDES)
-
-######################################################################
-# POSTGRES LIBRARY
-######################################################################
-
-libpostgres_la_SOURCES = \
+					  $(storage_FILES) \
 					  $(postgres_backend_FILES) \
 					  $(postgres_bridge_FILES) \
 					  $(postgres_common_FILES) \
 					  $(postgres_port_FILES) \
 					  $(postgres_timezone_FILES)
 
+## HACK: To make use of different include flags for peloton and postgres.
+
+libpeloton_la_CFLAGS = $(postgres_common_INCLUDES)
+libpeloton_la_CXXFLAGS = -std=c++11 -I. -I$(top_srcdir)/src -I.. $(third_party_INCLUDES)
+
 if BUILD_OS_IS_DARWIN
-libpostgres_la_LDFLAGS = -ldl -lm
-libpostgres_la_CFLAGS =  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
+libpeloton_la_LDFLAGS = -ldl -lm
+libpeloton_la_CFLAGS  +=  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
 						 -Wendif-labels -Wmissing-format-attribute -Wformat-security \
 						 -fno-strict-aliasing -fwrapv \
 						 -fPIC -fpic -msse4.2
 ## if build os is not darwin
 else
-libpostgres_la_LDFLAGS = -lrt -lcrypt -ldl -lm
-libpostgres_la_CFLAGS =  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
+libpeloton_la_LDFLAGS = -lrt -lcrypt -ldl -lm
+libpeloton_la_CFLAGS +=  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
 						 -Wendif-labels -Wmissing-format-attribute -Wformat-security \
 						 -fno-strict-aliasing -fwrapv -fexcess-precision=standard \
 						 -fPIC -fpic -msse4.2
 endif
-
-libpostgres_la_CPPFLAGS = $(postgres_common_INCLUDES)
 
 ######################################################################
 # PELOTON
@@ -86,8 +84,8 @@ libpostgres_la_CPPFLAGS = $(postgres_common_INCLUDES)
 
 peloton_SOURCES = backend/peloton.cpp
 peloton_LDFLAGS = $(TBB_LIBS)
-peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) 
-peloton_LDADD = libpeloton.la libpostgres.la
+peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES)
+peloton_LDADD = libpeloton.la $(TBB_LIBS)
 
 ######################################################################
 # THIRD-PARTY INCLUDES
