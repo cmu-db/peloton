@@ -102,6 +102,25 @@ storage::Tile *LogicalTile::GetBaseTile(oid_t column_id) {
 
 
 /**
+ * @brief Is this tile a wrapper around the underlying tiles ?
+ *
+ * @return bool
+ */
+bool LogicalTile::IsWrapper(){
+  return wrapper;
+}
+
+/**
+ * @brief Get the wrapped physical tile at given offset
+ *
+ * @return Pointer to the wrapped physical tile
+ */
+storage::Tile *LogicalTile::GetWrappedTile(){
+  assert(physical_tile_ != nullptr);
+  return physical_tile_;
+}
+
+/**
  * @brief Get the value at the specified field.
  * @param tuple_id Tuple id of the specified field (row/position).
  * @param column_id Column id of the specified field.
@@ -129,7 +148,7 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
  *
  * @return Number of tuples.
  */
-size_t LogicalTile::NumTuples() {
+size_t LogicalTile::GetTupleCount() {
   return num_tuples_;
 }
 
@@ -138,7 +157,7 @@ size_t LogicalTile::NumTuples() {
  *
  * @return Number of columns.
  */
-size_t LogicalTile::NumCols() {
+size_t LogicalTile::GetColumnCount() {
   return schema_.size();
 }
 
@@ -248,6 +267,27 @@ bool LogicalTile::iterator::operator!=(const iterator &rhs) {
 oid_t LogicalTile::iterator::operator*() {
   return pos_;
 }
+
+/**
+ * @brief Construct the schema of all the columns in the logical tile.
+ *
+ * @return Schema object.
+ */
+catalog::Schema *LogicalTile::GetSchema() {
+
+  std::vector<catalog::ColumnInfo> physical_columns;
+
+  for(ColumnInfo column : schema_) {
+    auto schema = column.base_tile->GetSchema();
+    auto physical_column = schema->GetColumnInfo(column.origin_column_id);
+    physical_columns.push_back(physical_column);
+  }
+
+  catalog::Schema *schema = new catalog::Schema(physical_columns);
+
+  return schema;
+}
+
 
 /** @brief Returns a string representation of this tile. */
 std::ostream& operator<<(std::ostream& os, const LogicalTile& lt) {
