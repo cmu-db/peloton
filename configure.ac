@@ -99,7 +99,11 @@ Version        : ${PACKAGE_VERSION}
 OS             : '${build_os}'
 Prefix         : '${prefix}'.
 Compiler       : '${CC} ${CFLAGS} ${CPPFLAGS}'
-Libraries      : '${LIBS}'
+Libraries      : '${LIBS}' '$TBB_LIBS'
+TBB_CPPFLAGS   : '${TBB_CPPFLAGS}'
+TBB_LDFLAGS    : '${TBB_LDFLAGS}'
+                    
+
 
 ---------------------------------------------------------------------"
 
