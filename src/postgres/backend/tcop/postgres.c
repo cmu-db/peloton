@@ -200,6 +200,18 @@ static void drop_unnamed_stmt(void);
 static void SigHupHandler(SIGNAL_ARGS);
 static void log_disconnections(int code, Datum arg);
 
+/* ----------------------------------------------------------------
+ * Wrapper functions declarations
+ * TODO: Peloton Modifications
+ * ----------------------------------------------------------------
+ */
+
+struct Kernel;
+
+extern void *Kernel_Create();
+extern void Kernel_Destroy(void *obj);
+extern int Kernel_GetTableList(struct Kernel* kernel, int arg);
+
 
 /* ----------------------------------------------------------------
  *		routines to obtain user input
@@ -3559,6 +3571,9 @@ PostgresMain(int argc, char *argv[],
 	sigjmp_buf	local_sigjmp_buf;
 	volatile bool send_ready_for_query = true;
 
+	struct Kernel *kernel = NULL;
+	int retval = -1;
+
 	/* Initialize startup process environment if necessary. */
 	if (!IsUnderPostmaster)
 		InitStandaloneProcess(argv[0]);
@@ -3907,13 +3922,25 @@ PostgresMain(int argc, char *argv[],
 	if (!ignore_till_sync)
 		send_ready_for_query = true;	/* initially, or after error */
 
-	/*
-	 * Non-error queries loop here.
-	 */
+
+	// TODO: Peloton modifications
+	/* Experimental code */
+
+	kernel = Kernel_Create();
+
+  retval = Kernel_GetTableList(kernel, 23);
+  fprintf(stderr, "Kernel :: retval : %d \n", retval);
+
+  Kernel_Destroy(kernel);
 
   GetDatabaseList();
   GetTableList();
 
+  /* End of Experimental code */
+
+	/*
+	 * Non-error queries loop here.
+	 */
 	for (;;)
 	{
 		/*
