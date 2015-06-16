@@ -20,7 +20,7 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
     sudo apt-get install g++ autotools-dev autoconf libtool pkg-config libtbb-dev libjson-spirit-dev flex bison
 
 ### OS X Setup
-Install the required dependencies using either or port and make sure you have the right version.
+Install the required dependencies using either `brew` or `port` and make sure you have the right version.
 
     brew install automake tbb boost json_spirit bison
  
