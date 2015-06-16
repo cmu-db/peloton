@@ -133,6 +133,9 @@ static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
 void
 ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
+	PlannedStmt *plan = queryDesc->plannedstmt;
+	elog_node_display(LOG, "plan", plan, Debug_pretty_print);
+
 	if (ExecutorStart_hook)
 		(*ExecutorStart_hook) (queryDesc, eflags);
 	else
