@@ -7,6 +7,7 @@
 #pragma once
 
 #include "executor/abstract_executor.h"
+#include "planner/index_scan_node.h"
 
 #include <vector>
 
@@ -28,6 +29,10 @@ class IndexScanExecutor : public AbstractExecutor {
 
  private:
 
+  //===--------------------------------------------------------------------===//
+  // Executor State
+  //===--------------------------------------------------------------------===//
+
   /** @brief Result of index scan. */
   std::vector<LogicalTile *> result;
 
@@ -36,6 +41,29 @@ class IndexScanExecutor : public AbstractExecutor {
 
   /** @brief Computed the result */
   bool done;
+
+  //===--------------------------------------------------------------------===//
+  // Plan Info
+  //===--------------------------------------------------------------------===//
+
+  /** @brief index associated with index scan. */
+  const index::Index *index_ = nullptr;
+
+  /** @brief starting key for index scan. */
+  const storage::Tuple *start_key_ = nullptr;
+
+  /** @brief ending key for index scan. */
+  const storage::Tuple *end_key_ = nullptr;
+
+  /** @brief whether we also need to include the terminal values ?
+   *  Like ID > 50 (not inclusive) or ID >= 50 (inclusive)
+   * */
+  bool start_inclusive_ = false;
+
+  bool end_inclusive_ = false;
+
+  /** @brief Columns from tile group to be added to logical tile output. */
+  std::vector<oid_t> column_ids_;
 };
 
 } // namespace executor

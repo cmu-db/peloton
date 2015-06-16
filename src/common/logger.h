@@ -14,8 +14,8 @@
 
 #include <string>
 #include <ctime>
-#include <cstdio>
 #include <sys/time.h>
+#include <stdio.h>
 
 namespace nstore {
 
@@ -27,11 +27,6 @@ namespace nstore {
  * Debug logging functions.
  * Turned on/off by LOG_LEVEL compile option.
  */
-
-#include <string>
-#include <ctime>
-#include <cstdio>
-#include <sys/time.h>
 
 // Log levels
 
