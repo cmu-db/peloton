@@ -21,14 +21,18 @@
 namespace nstore {
 namespace storage {
 
-DataTable* TableFactory::GetDataTable(oid_t database_id, catalog::Schema* schema, std::string table_name) {
+DataTable* TableFactory::GetDataTable(oid_t database_id,
+                                      catalog::Schema* schema,
+                                      std::string table_name,
+                                      size_t tuples_per_tilegroup_count) {
     // create a new backend
     // FIXME: We need a better way of managing these. Why not just embed it in
     //        directly inside of the table object?
     Backend* backend = new VMBackend();
 
-    DataTable *table =  new DataTable(schema, backend, table_name);
-    table->database_id = database_id; // FIXME
+    DataTable *table =  new DataTable(schema, backend, table_name,
+                                      tuples_per_tilegroup_count);
+    table->database_id = database_id;
 
     return table;
 
