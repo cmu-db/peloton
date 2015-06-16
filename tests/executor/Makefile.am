@@ -9,7 +9,8 @@ check_PROGRAMS += \
 				  materialization_test \
 				  mutate_test \
 				  seq_scan_test \
-				  index_scan_test
+				  index_scan_test \
+				  limit_test
 
 executor_tests_common= 	executor/executor_tests_util.cpp \
 						harness.cpp
@@ -84,4 +85,13 @@ index_scan_test_SOURCES = \
 index_scan_test_LDADD = \
 					  $(executor_tests_common_ld) \
 					  $(obj_DIR)/executor/index_scan_executor.o
+					  
+limit_test_SOURCES = \
+					$(executor_tests_common) \
+					executor/limit_test.cpp
+					
+limit_test_LDADD = \
+				$(executor_tests_common_ld) \
+				$(obj_DIR)/executor/limit_executor.o
+				
 
