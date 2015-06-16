@@ -33,14 +33,13 @@ class Kernel {
 };
 
 // Wrapper functions declarations
-
-extern "C" {
-
-void *Kernel_Create();
-void Kernel_Destroy(void *obj);
-int Kernel_GetTableList(Kernel* kernel, int arg);
-
-}
+//extern "C" {
+//
+//void *Kernel_Create();
+//void Kernel_Destroy(void *obj);
+//int Kernel_GetTableList(Kernel* kernel, int arg);
+//
+//}
 
 
 } // namespace backend

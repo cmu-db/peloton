@@ -39,7 +39,7 @@
 #include "access/parallel.h"
 #include "access/printtup.h"
 #include "access/xact.h"
-#include "bridge/bridge.h"
+#include "../../bridge/bridge.h"
 #include "catalog/pg_type.h"
 #include "commands/async.h"
 #include "commands/prepare.h"
@@ -206,11 +206,10 @@ static void log_disconnections(int code, Datum arg);
  * ----------------------------------------------------------------
  */
 
-struct Kernel;
-
-extern void *Kernel_Create();
-extern void Kernel_Destroy(void *obj);
-extern int Kernel_GetTableList(struct Kernel* kernel, int arg);
+//struct Kernel;
+//extern void *Kernel_Create();
+//extern void Kernel_Destroy(void *obj);
+//extern int Kernel_GetTableList(struct Kernel* kernel, int arg);
 
 
 /* ----------------------------------------------------------------
@@ -3571,8 +3570,8 @@ PostgresMain(int argc, char *argv[],
 	sigjmp_buf	local_sigjmp_buf;
 	volatile bool send_ready_for_query = true;
 
-	struct Kernel *kernel = NULL;
-	int retval = -1;
+//	struct Kernel *kernel = NULL;
+//	int retval = -1;
 
 	/* Initialize startup process environment if necessary. */
 	if (!IsUnderPostmaster)
@@ -3926,17 +3925,15 @@ PostgresMain(int argc, char *argv[],
 	// TODO: Peloton modifications
 	/* Experimental code */
 
-	kernel = Kernel_Create();
+//	kernel = Kernel_Create();
+//
+//	retval = Kernel_GetTableList(kernel, 23);
+//	fprintf(stderr, "Kernel :: retval : %d \n", retval);
+//
+//	Kernel_Destroy(kernel);
+	GetDatabaseList();
 
-  retval = Kernel_GetTableList(kernel, 23);
-  fprintf(stderr, "Kernel :: retval : %d \n", retval);
-
-  Kernel_Destroy(kernel);
-
-  GetDatabaseList();
-  GetTableList();
-
-  /* End of Experimental code */
+	/* End of Experimental code */
 
 	/*
 	 * Non-error queries loop here.

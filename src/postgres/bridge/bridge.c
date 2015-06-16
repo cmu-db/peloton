@@ -9,7 +9,7 @@
 
 #include "access/heapam.h"
 #include "access/xact.h"
-#include "bridge/bridge.h"
+#include "../../bridge/bridge.h"
 #include "utils/rel.h"
 #include "utils/ruleutils.h"
 #include "utils/builtins.h"
@@ -75,7 +75,7 @@ void GetDatabaseList(void) {
   HeapTuple	tup;
 
   StartTransactionCommand();
-  (void) GetTransactionSnapshot();
+  //(void) GetTransactionSnapshot();
 
   rel = heap_open(DatabaseRelationId, AccessShareLock);
   scan = heap_beginscan_catalog(rel, 0, NULL);
@@ -130,7 +130,7 @@ void GetTableList(void) {
   HeapTuple	tup;
 
   StartTransactionCommand();
-  (void) GetTransactionSnapshot();
+  //(void) GetTransactionSnapshot();
 
   rel = heap_open(RelationRelationId, AccessShareLock);
   scan = heap_beginscan_catalog(rel, 0, NULL);
