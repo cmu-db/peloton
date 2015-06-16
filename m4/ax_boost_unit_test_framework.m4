@@ -29,7 +29,7 @@
 #   and this notice are preserved. This file is offered as-is, without any
 #   warranty.
 
-#serial 17
+#serial 19
 
 AC_DEFUN([AX_BOOST_UNIT_TEST_FRAMEWORK],
 [
@@ -76,9 +76,9 @@ AC_DEFUN([AX_BOOST_UNIT_TEST_FRAMEWORK],
 
             if test "x$ax_boost_user_unit_test_framework_lib" = "x"; then
 			saved_ldflags="${LDFLAGS}"
-                for monitor_library in `ls $BOOSTLIBDIR/libboost_unit_test_framework*.so* $BOOSTLIBDIR/libboost_unit_test_framework*.a* 2>/dev/null` ; do
+                for monitor_library in `ls $BOOSTLIBDIR/libboost_unit_test_framework*.so* $BOOSTLIBDIR/libboost_unit_test_framework*.dylib* $BOOSTLIBDIR/libboost_unit_test_framework*.a* 2>/dev/null` ; do
                     if test -r $monitor_library ; then
-                       libextension=`echo $monitor_library | sed 's,.*/,,' | sed -e 's;^lib\(boost_unit_test_framework.*\)\.so.*$;\1;' -e 's;^lib\(boost_unit_test_framework.*\)\.a*$;\1;'`
+                       libextension=`echo $monitor_library | sed 's,.*/,,' | sed -e 's;^lib\(boost_unit_test_framework.*\)\.so.*$;\1;' -e 's;^lib\(boost_unit_test_framework.*\)\.dylib.*$;\1;' -e 's;^lib\(boost_unit_test_framework.*\)\.a.*$;\1;'`
                        ax_lib=${libextension}
                        link_unit_test_framework="yes"
                     else
@@ -92,7 +92,7 @@ AC_DEFUN([AX_BOOST_UNIT_TEST_FRAMEWORK],
 				    fi
                 done
                 if test "x$link_unit_test_framework" != "xyes"; then
-                for libextension in `ls $BOOSTLIBDIR/boost_unit_test_framework*.{dll,a}* 2>/dev/null  | sed 's,.*/,,' | sed -e 's;^\(boost_unit_test_framework.*\)\.dll.*$;\1;' -e 's;^\(boost_unit_test_framework.*\)\.a*$;\1;'` ; do
+                for libextension in `ls $BOOSTLIBDIR/boost_unit_test_framework*.dll* $BOOSTLIBDIR/boost_unit_test_framework*.a* 2>/dev/null  | sed 's,.*/,,' | sed -e 's;^\(boost_unit_test_framework.*\)\.dll.*$;\1;' -e 's;^\(boost_unit_test_framework.*\)\.a.*$;\1;'` ; do
                      ax_lib=${libextension}
 				    AC_CHECK_LIB($ax_lib, exit,
                                  [BOOST_UNIT_TEST_FRAMEWORK_LIB="-l$ax_lib"; AC_SUBST(BOOST_UNIT_TEST_FRAMEWORK_LIB) link_unit_test_framework="yes"; break],

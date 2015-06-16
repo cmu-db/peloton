@@ -74,7 +74,6 @@ AC_CHECK_SSL
 # Check for Intel TBB library
 AX_TBB([], AC_MSG_ERROR([cannot find the Intel TBB library]))
 
-
 # Checks for Boost libraries
 AX_BOOST_BASE([1.42])
 AX_BOOST_ASIO
@@ -111,5 +110,3 @@ TBB_LDFLAGS    : '${TBB_LDFLAGS}'
 
 
 ---------------------------------------------------------------------"
-
-# @end 2
