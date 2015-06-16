@@ -61,27 +61,31 @@ bool InsertExecutor::DExecute() {
     std::unique_ptr<LogicalTile> logical_tile(children_[0]->GetOutput());
     assert(logical_tile.get() != nullptr);
 
-    // Check logical tile schema against table schema
-    catalog::Schema *schema = target_table->GetSchema();
-    std::unique_ptr<catalog::Schema> tile_schema(logical_tile.get()->GetSchema());
+    // Get the underlying physical tile from the logical wrapper tile
+    assert(logical_tile.get()->IsWrapper() == true);
+    storage::Tile *physical_tile = logical_tile.get()->GetWrappedTile();
 
-    if(*schema != *(tile_schema.get())) {
+    // Next, check logical tile schema against table schema
+    catalog::Schema *schema = target_table->GetSchema();
+    const catalog::Schema *tile_schema = physical_tile->GetSchema();
+
+    if(*schema != *tile_schema) {
       LOG_ERROR("Insert executor :: table schema and logical tile schema don't match \n");
       return false;
     }
 
-    // Get the underlying physical tile
-    assert(logical_tile.get()->IsWrapper() == true);
-    assert(logical_tile.get()->GetWrappedTileCount() == 1);
-
-    storage::Tile *physical_tile = logical_tile.get()->GetWrappedTile(0);
     storage::TileIterator tile_iterator = physical_tile->GetIterator();
-
     storage::Tuple tuple(physical_tile->GetSchema());
 
-    // Insert given tuples into table
+    // Finally, Insert given tuples into table
     while (tile_iterator.Next(tuple)) {
-      // TODO: Insert tuple
+      ItemPointer location = target_table->InsertTuple(transaction_->GetTransactionId(), &tuple);
+      if (location.block == INVALID_OID) {
+        auto& txn_manager = TransactionManager::GetInstance();
+        txn_manager.AbortTransaction(transaction_);
+        return false;
+      }
+      transaction_->RecordInsert(location);
     }
 
     return true;

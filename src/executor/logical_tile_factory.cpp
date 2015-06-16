@@ -54,9 +54,8 @@ LogicalTile *LogicalTileFactory::GetTile() {
  *
  * @return Pointer to newly created logical tile.
  */
-LogicalTile *LogicalTileFactory::WrapBaseTiles(
-    const std::vector<storage::Tile *> &base_tiles,
-    bool own_base_tiles) {
+LogicalTile *LogicalTileFactory::WrapTiles(const std::vector<storage::Tile *> &base_tiles,
+                                           bool own_base_tiles) {
 
   assert(base_tiles.size() > 0);
 
@@ -84,9 +83,11 @@ LogicalTile *LogicalTileFactory::WrapBaseTiles(
     }
   }
 
-  // Mark this logical tile as a wrapper around the physical base tiles
-  new_tile.get()->wrapper = true;
-  new_tile.get()->base_tiles_ = base_tiles;
+  // Mark this logical tile as a wrapper if that's the case
+  if(base_tiles.size() == 1) {
+    new_tile.get()->wrapper = true;
+    new_tile.get()->physical_tile_ = base_tiles[0];
+  }
 
   return new_tile.release();
 }
@@ -97,19 +98,20 @@ LogicalTile *LogicalTileFactory::WrapBaseTiles(
  *
  * @return Logical tile wrapping tile group.
  */
-LogicalTile *LogicalTileFactory::WrapTileGroup(
-    storage::TileGroup *tile_group) {
+LogicalTile *LogicalTileFactory::WrapTileGroup(storage::TileGroup *tile_group) {
+
   std::unique_ptr<LogicalTile> new_tile(new LogicalTile());
+
+  const int position_list_idx = 0;
   //TODO Don't use allocated tuple count. Use active tuple count.
-  new_tile->AddPositionList(
-      CreateIdentityPositionList(tile_group->GetAllocatedTupleCount()));
+  new_tile->AddPositionList(CreateIdentityPositionList(tile_group->GetAllocatedTupleCount()));
 
   // Construct schema.
   std::vector<catalog::Schema> &schemas = tile_group->GetTileSchemas();
   const bool own_base_tile = false;
-  const int position_list_idx = 0;
   assert(schemas.size() == tile_group->NumTiles());
   for (unsigned int i = 0; i < schemas.size(); i++) {
+
     storage::Tile *base_tile = tile_group->GetTile(i);
     for (oid_t col_id = 0; col_id < schemas[i].GetColumnCount(); col_id++) {
       new_tile->AddColumn(
@@ -118,6 +120,12 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(
           col_id,
           position_list_idx);
     }
+  }
+
+  // Mark this logical tile as a wrapper if that's the case
+  if(schemas.size() == 1) {
+    new_tile.get()->wrapper = true;
+    new_tile.get()->physical_tile_ = tile_group->GetTile(0);
   }
 
   return new_tile.release();
@@ -130,10 +138,9 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(
  *
  * @return Logical tile(s) wrapping the give tuple locations.
  */
-std::vector<LogicalTile *> LogicalTileFactory::WrapTupleLocations(const std::vector<ItemPointer> tuple_locations,
+std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(const std::vector<ItemPointer> tuple_locations,
                                                                   const std::vector<oid_t> column_ids,
-                                                                  txn_id_t txn_id,
-                                                                  cid_t commit_id) {
+                                                                  txn_id_t txn_id, cid_t commit_id) {
   std::vector<LogicalTile *> result;
 
   // Get the list of blocks
@@ -180,6 +187,12 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTupleLocations(const std::vec
           own_base_tile,
           tile_column_id,
           position_list_idx);
+    }
+
+    // Mark this logical tile as a wrapper if that's the case
+    if(tile_group->GetTileCount() == 1) {
+      logical_tile->wrapper = true;
+      logical_tile->physical_tile_ = tile_group->GetTile(0);
     }
 
     result.push_back(logical_tile);
