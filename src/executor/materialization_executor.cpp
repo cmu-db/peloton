@@ -148,7 +148,7 @@ bool MaterializationExecutor::DExecute() {
   // Wrap physical tile in logical tile.
   bool own_base_tile = true;
 
-  SetOutput(LogicalTileFactory::WrapBaseTiles({ dest_tile.release() },
+  SetOutput(LogicalTileFactory::WrapTiles({ dest_tile.release() },
                                               own_base_tile));
 
   return true;

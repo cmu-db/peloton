@@ -111,21 +111,13 @@ bool LogicalTile::IsWrapper(){
 }
 
 /**
- * @brief Get the count of wrapped physical tiles
- *
- * @return count of wrapped tiles
- */
-size_t LogicalTile::GetWrappedTileCount(){
-  return base_tiles_.size();
-}
-
-/**
  * @brief Get the wrapped physical tile at given offset
  *
  * @return Pointer to the wrapped physical tile
  */
-storage::Tile *LogicalTile::GetWrappedTile(oid_t physical_tile_offset){
-  return base_tiles_[physical_tile_offset];
+storage::Tile *LogicalTile::GetWrappedTile(){
+  assert(physical_tile_ != nullptr);
+  return physical_tile_;
 }
 
 /**
