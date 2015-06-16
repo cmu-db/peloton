@@ -68,6 +68,7 @@ doc/
 .project
 .cproject
 .settings
+.autotools
 
 /Debug/
 /misc/
