@@ -42,10 +42,15 @@ public:
      */
     static storage::TileGroup *CreateTileGroup(
         storage::Backend *backend,
-        int allocate_tuple_count = DEFAULT_TUPLE_COUNT);
+        int allocate_tuple_count = DEFAULT_TUPLES_PER_TILEGROUP);
 
     /** @brief Creates a basic table with allocated but not populated tuples */
-    static storage::DataTable *CreateTable();
+    static storage::DataTable *CreateTable(int tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP);
+
+    /** @brief Creates a basic table with allocated and populated tuples */
+    static storage::DataTable *CreateAndPopulateTable();
+
+    static void PopulateTable(storage::DataTable *table, int num_rows);
 
     static void PopulateTiles(storage::TileGroup *tile_group, int num_rows);
 
