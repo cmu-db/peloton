@@ -20,9 +20,9 @@
 
 #include <stdio.h>
 
-extern "C" {
-void GetTableList(void);
-}
+//extern "C" {
+//void GetTableList(void);
+//}
 
 namespace nstore {
 namespace backend {
@@ -173,27 +173,26 @@ ResultType Kernel::Handler(const char* query) {
   return status;
 }
 
-int Kernel::GetTableList(int arg){
-
-  // Call the external "C" function in global namespace
-  ::GetTableList();
-
-  return arg;
-}
+//int Kernel::GetTableList(int arg){
+//
+//  // Call the external "C" function in global namespace
+//  ::GetTableList();
+//
+//  return arg;
+//}
 
 // Wrapper functions definitions
-
-extern "C" void *Kernel_Create(){
-  return new Kernel();
-}
-
-extern "C" void Kernel_Destroy(void *obj){
-  delete static_cast<Kernel*>(obj);
-}
-
-extern "C" int Kernel_GetTableList(Kernel* kernel, int arg){
-    return kernel->GetTableList(arg);
-}
+//extern "C" void *Kernel_Create(){
+//  return new Kernel();
+//}
+//
+//extern "C" void Kernel_Destroy(void *obj){
+//  delete static_cast<Kernel*>(obj);
+//}
+//
+//extern "C" int Kernel_GetTableList(Kernel* kernel, int arg){
+//    return kernel->GetTableList(arg);
+//}
 
 
 

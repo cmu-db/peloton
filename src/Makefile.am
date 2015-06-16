@@ -12,6 +12,7 @@ include $(top_srcdir)/common.am
 ######################################################################
 
 include $(srcdir)/backend/Makefile.am
+include $(srcdir)/bridge/Makefile.am
 include $(srcdir)/catalog/Makefile.am
 include $(srcdir)/common/Makefile.am
 include $(srcdir)/executor/Makefile.am
