@@ -77,6 +77,11 @@ AX_TBB([], AC_MSG_ERROR([cannot find the Intel TBB library]))
 
 # Checks for Boost libraries
 AX_BOOST_BASE([1.42])
+AX_BOOST_ASIO
+AX_BOOST_FILESYSTEM
+AX_BOOST_SERIALIZATION
+AX_BOOST_SYSTEM
+AX_BOOST_THREAD
 
 #[test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h.in])
 
