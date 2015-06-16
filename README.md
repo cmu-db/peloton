@@ -17,7 +17,7 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
  
 ###	Ubuntu Quick Setup
 
-    sudo apt-get install g++ libtool libboost1.54-dev libtbb-dev libjson-spirit-dev flex bison
+    sudo apt-get install g++ pkg-config libtool libboost1.54-dev libtbb-dev libjson-spirit-dev flex bison
 
 ### OS X Setup
 
