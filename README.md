@@ -10,6 +10,7 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
 > - **pkg-config** 
 > - **tbb** [Thread Building Blocks parallelism library]
 > - **json-spirit** [C++ JSON parser/generator]
+> - **readline** [Commandline editing library]
 > - **flex** [ Lexical analyzer generator ]
 > - **bison 3.0.4** [ Parser generator ]
 
@@ -17,7 +18,7 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
  
 ###	Ubuntu Quick Setup
 
-    sudo apt-get install g++ pkg-config libtool libboost1.54-dev libtbb-dev libjson-spirit-dev flex bison
+    sudo apt-get install g++ pkg-config libtool libboost1.54-dev libtbb-dev libjson-spirit-dev libreadline-dev flex bison
 
 ### OS X Setup
 
