@@ -18,7 +18,7 @@ AC_PROG_CC([gcc])
 LT_INIT([disable-static])
 
 # Check for pthreads (uses m4/acx_pthread.m4).
-ACX_PTHREAD([], [AC_MSG_ERROR([Could not find pthreads in your system.])])
+ACX_PTHREAD([], [AC_MSG_ERROR([Please install pthread library : libpthread-stubs0-dev])])
 
 AC_LANG([C++])
 AC_PROG_CXX([g++])
@@ -57,30 +57,37 @@ AX_CHECK_COMPILE_FLAG([-fdiagnostics-color=auto], [CXXFLAGS="$CXXFLAGS -fdiagnos
 AX_VALGRIND_CHECK
 AX_CODE_COVERAGE
 
-######################################################################
-# PARSER
-######################################################################
-
-AC_PROG_LEX
-AC_PROG_YACC
 
 ######################################################################
 # PACKAGES
 ######################################################################
 
+# Check for flex and bison
+AX_PROG_FLEX([], AC_MSG_ERROR([Please install flex : flex]))
+AX_PROG_BISON([], AC_MSG_ERROR([Please install bison : bison]))
+
+# Check for readline support
+AX_LIB_READLINE
+
+# Check for zlib
+AX_CHECK_ZLIB([], AC_MSG_ERROR([Please install zlib library : libzlib1g-dev]))
+
 # Check for OpenSSL
 AC_CHECK_SSL
 
 # Check for Intel TBB library
-AX_TBB([], AC_MSG_ERROR([cannot find the Intel TBB library]))
+AX_TBB([], AC_MSG_ERROR([Please install the Intel TBB library : libtbb-dev]))
 
-# Checks for Boost libraries
+# Check for Boost libraries
 AX_BOOST_BASE([1.42])
 AX_BOOST_ASIO
 AX_BOOST_FILESYSTEM
 AX_BOOST_SERIALIZATION
 AX_BOOST_SYSTEM
 AX_BOOST_THREAD
+
+# Check for valgrind
+AX_VALGRIND_CHECK
 
 #[test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h.in])
 
@@ -100,11 +107,12 @@ echo \
 ${PACKAGE_NAME} 
 
 Version        : ${PACKAGE_VERSION}
-OS             : '${build_os}'
-Prefix         : '${prefix}'.
-Compiler       : '${CC} ${CFLAGS} ${CPPFLAGS}'
-Libraries      : '${LIBS} $TBB_LIBS'
-                    
-
+OS             : ${build_os}
+Prefix         : ${prefix}
+Compiler       : ${CC}
+CPP Flags      : ${CPPFLAGS}
+C Flags        : ${CFLAGS}
+C++ Flags      : ${CXXFLAGS}
+Libraries      : ${LIBS} $TBB_LIBS
 
 ---------------------------------------------------------------------"

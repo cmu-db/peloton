@@ -21,7 +21,7 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
 
 ### OS X Setup
 
-    brew install automake tbb boost json_spirit bison
+    brew install automake tbb boost json_spirit flex bison
  
 ### Build Peloton
 
