@@ -55,13 +55,43 @@ bool NestedLoopJoinExecutor::DExecute() {
 
   LOG_TRACE("Nested Loop Join executor :: 2 children \n");
 
-  if (!children_[0]->Execute()) {
+  // Already performed the join ?
+  if(done) {
+    if(result_itr == result.size()) {
+      return false;
+    }
+    else {
+      // Return appropriate tile and go to next tile
+      SetOutput(result[result_itr]);
+      result_itr++;
+      return true;
+    }
+  }
+
+  // Try to get next tile from LEFT child
+  if (children_[0]->Execute() == false) {
     return false;
   }
 
-  std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
+  // Try to get next tile from RIGHT child
+  if (children_[1]->Execute() == false) {
+    // Check if resetting helps
+    //children_[1]->Reset();
+    if (children_[1]->Execute() == false) {
+      return false;
+    }
+  }
+
+  std::unique_ptr<LogicalTile> tile0(children_[0]->GetOutput());
+  std::unique_ptr<LogicalTile> tile1(children_[1]->GetOutput());
+
+  // Check the logical tiles.
+  assert(tile0.get() != nullptr);
+  assert(tile1.get() != nullptr);
 
   if (predicate_ != nullptr) {
+
+    /*
     // Invalidate tuples that don't satisfy the predicate.
     for (oid_t tuple_id : *tile) {
       expression::ContainerTuple<LogicalTile> tuple(tile.get(), tuple_id);
@@ -69,9 +99,17 @@ bool NestedLoopJoinExecutor::DExecute() {
         tile->InvalidateTuple(tuple_id);
       }
     }
+    */
+
   }
 
-  SetOutput(tile.release());
+
+  done = true;
+
+  LOG_TRACE("Result tiles : %lu \n", result.size());
+
+  SetOutput(result[result_itr]);
+  result_itr++;
 
   return true;
 }
