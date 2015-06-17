@@ -67,6 +67,27 @@ GetNumberOfAttributes(Oid relation_id) {
 }
 
 /**
+ * @brief Getting the number of tuples.
+ * @param relation_id relation id
+ */
+float 
+GetNumberOfTuples(Oid relation_id) {
+  Relation HeapRelation;
+  float  numOfTuples;
+
+  StartTransactionCommand();
+  HeapRelation = heap_open(relation_id,RowExclusiveLock/*must be know about lock..*/);
+
+  //Get the number of tuples from pg_class
+  numOfTuples = HeapRelation->rd_rel->reltuples;
+
+  heap_close(HeapRelation, RowExclusiveLock);
+
+  CommitTransactionCommand();
+  return numOfTuples;;
+}
+
+/**
  * @brief Printing all databases from catalog table, i.e., pg_database
  */
 void GetDatabaseList(void) {

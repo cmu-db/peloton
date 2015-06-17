@@ -3932,6 +3932,7 @@ PostgresMain(int argc, char *argv[],
 //
 //	Kernel_Destroy(kernel);
 	GetDatabaseList();
+        printf("# of tuples of pg_database is %f\n", GetNumberOfTuples(1259));
 
 	/* End of Experimental code */
 
