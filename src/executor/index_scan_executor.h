@@ -37,10 +37,10 @@ class IndexScanExecutor : public AbstractExecutor {
   std::vector<LogicalTile *> result;
 
   /** @brief Result itr */
-  size_t result_itr;
+  oid_t result_itr = INVALID_OID;
 
   /** @brief Computed the result */
-  bool done;
+  bool done = false;
 
   //===--------------------------------------------------------------------===//
   // Plan Info

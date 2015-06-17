@@ -35,7 +35,10 @@ class SeqScanExecutor : public AbstractExecutor {
   //===--------------------------------------------------------------------===//
 
   /** @brief Keeps track of current tile group id being scanned. */
-  oid_t current_tile_group_id_ = 0;
+  oid_t current_tile_group_id_ = INVALID_OID;
+
+  /** @brief Keeps track of the number of tile groups to scan. */
+  oid_t table_tile_group_count_ = INVALID_OID;
 
   //===--------------------------------------------------------------------===//
   // Plan Info
