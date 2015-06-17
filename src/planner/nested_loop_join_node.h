@@ -38,11 +38,11 @@ class NestedLoopJoinNode : public AbstractPlanNode {
   }
 
   inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_INDEXSCAN;
+    return PLAN_NODE_TYPE_NESTLOOP;
   }
 
   inline std::string GetInfo() const {
-    return "IndexScan";
+    return "NestedLoopJoin";
   }
 
  private:
