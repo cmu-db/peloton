@@ -16,7 +16,8 @@ executor_FILES = \
 				 executor/index_scan_executor.cpp \
 				 executor/insert_executor.cpp \
 				 executor/delete_executor.cpp \
-				 executor/update_executor.cpp
-
+				 executor/update_executor.cpp \
+				 executor/nested_loop_join_executor.cpp
+				 
 executor_INCLUDES = \
 					-I$(srcdir)/executor
