@@ -7,8 +7,6 @@
 
 #pragma once
 
-//#include "postgres.h"
-
 char* GetRelationName(unsigned int relation_id);
 
 int GetNumberOfAttributes(unsigned int relation_id);
@@ -19,4 +17,5 @@ void GetDatabaseList(void);
 
 void GetTableList(void);
 
+void Test1(unsigned int);
 
