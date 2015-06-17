@@ -279,7 +279,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_coun
   key_attrs = { 0 };
   key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
   unique = true;
-  index_metadata = new index::IndexMetadata("PRIMARY_INDEX",
+  index_metadata = new index::IndexMetadata("primary_btree_index",
                                             INDEX_TYPE_BTREE_MULTIMAP,
                                             tuple_schema,
                                             key_schema,
@@ -292,7 +292,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_coun
   key_attrs = { 0, 1 };
   key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
   unique = false;
-  index_metadata = new index::IndexMetadata("SECONDARY_INDEX",
+  index_metadata = new index::IndexMetadata("secondary_btree_index",
                                             INDEX_TYPE_BTREE_MULTIMAP,
                                             tuple_schema,
                                             key_schema,
@@ -311,9 +311,9 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_coun
  */
 storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
 
-  const int tuple_count = 50;
+  const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
   storage::DataTable *table = ExecutorTestsUtil::CreateTable(tuple_count);
-  ExecutorTestsUtil::PopulateTable(table, tuple_count * 3);
+  ExecutorTestsUtil::PopulateTable(table, tuple_count * DEFAULT_TILEGROUP_COUNT);
 
   return table;
 }

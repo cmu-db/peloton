@@ -41,7 +41,7 @@ namespace {
 /**
  * @brief Set of tuple_ids that will satisfy the predicate in our test cases.
  */
-const std::set<oid_t> g_tuple_ids( { 0, 3, 5, 7 });
+const std::set<oid_t> g_tuple_ids( { 0, 3 });
 
 /**
  * @brief Convenience method to create table for test.
@@ -49,7 +49,7 @@ const std::set<oid_t> g_tuple_ids( { 0, 3, 5, 7 });
  * @return Table generated for test.
  */
 storage::DataTable *CreateTable() {
-  const int tuple_count = 50;
+  const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
   std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable());
 
   // Schema for first tile group. Vertical partition is 2, 2.

@@ -31,6 +31,9 @@ class DataTable;
 class Tuple;
 }
 
+#define TESTS_TUPLES_PER_TILEGROUP   5
+#define DEFAULT_TILEGROUP_COUNT      3
+
 namespace test {
 
 class ExecutorTestsUtil {
@@ -41,11 +44,10 @@ public:
      *        tuples.
      */
     static storage::TileGroup *CreateTileGroup(
-        storage::Backend *backend,
-        int allocate_tuple_count = DEFAULT_TUPLES_PER_TILEGROUP);
+        storage::Backend *backend, int allocate_tuple_count = TESTS_TUPLES_PER_TILEGROUP);
 
     /** @brief Creates a basic table with allocated but not populated tuples */
-    static storage::DataTable *CreateTable(int tuples_per_tilegroup_count = DEFAULT_TUPLES_PER_TILEGROUP);
+    static storage::DataTable *CreateTable(int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP);
 
     /** @brief Creates a basic table with allocated and populated tuples */
     static storage::DataTable *CreateAndPopulateTable();
