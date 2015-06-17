@@ -28,9 +28,7 @@ namespace executor {
  * @param node Indexscan node corresponding to this executor.
  */
 IndexScanExecutor::IndexScanExecutor(planner::AbstractPlanNode *node, Transaction *transaction)
-: AbstractExecutor(node, transaction),
-  result_itr(0),
-  done(false){
+: AbstractExecutor(node, transaction) {
 }
 
 /**
@@ -56,6 +54,8 @@ bool IndexScanExecutor::DInit() {
   end_key_ = node.GetEndKey();
   start_inclusive_ = node.IsStartInclusive();
   end_inclusive_ = node.IsEndInclusive();
+
+  result_itr = START_OID;
 
   return true;
 }

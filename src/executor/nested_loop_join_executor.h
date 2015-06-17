@@ -43,13 +43,13 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
   std::vector<LogicalTile *> result;
 
   /** @brief Result itr */
-  size_t shorter_table_itr = 0;
+  oid_t shorter_table_itr = INVALID_OID;
 
   /** @brief Computed the result */
   bool done = false;
 
   /** @brief Result itr */
-  size_t result_itr = 0;
+  oid_t result_itr = INVALID_OID;
 
   /** @brief Join table schema. */
   const catalog::Schema *schema_ = nullptr;
