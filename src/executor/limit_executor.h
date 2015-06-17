@@ -28,8 +28,16 @@ protected:
   bool DExecute();
 
 private:
-  size_t num_skipped_ = 0;
-  size_t num_returned_ = 0;
+
+  //===--------------------------------------------------------------------===//
+  // Executor State
+  //===--------------------------------------------------------------------===//
+
+  /** @brief Number of tuples skipped. */
+  oid_t num_skipped_ = INVALID_OID;
+
+  /** @brief Number of tuples returned. */
+  oid_t num_returned_ = INVALID_OID;
 
 };
 
