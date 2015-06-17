@@ -14,13 +14,11 @@
 #include "harness.h"
 
 #include <iostream>
+#include <string>
+#include <cstdlib>
 
 extern "C" {
-
-#include "../../src/bridge/bridge.h"
-#include "postgres/include/postmaster/postmaster.h"
-#include "postgres/include/utils/memutils.h"
-
+//#include "../../postgres/src/include/postmaster/postmaster.h"
 }
 
 namespace nstore {
@@ -30,55 +28,42 @@ namespace test {
 // Bridge Tests
 //===--------------------------------------------------------------------===//
 
-int InitPeloton(){
-
-  int pid = fork();
-  // Child process
-  if ( pid == 0 ) {
-    TopMemoryContext = AllocSetContextCreate((MemoryContext) NULL, "TopMemoryContext",
-                                             0, 8 * 1024, 8 * 1024);
-
-    MemoryContextSwitchTo(TopMemoryContext);
-
-    ErrorContext = AllocSetContextCreate(TopMemoryContext, "ErrorContext",
-                                         8 * 1024, 8 * 1024, 8 * 1024);
-    MessageContext = AllocSetContextCreate(TopMemoryContext, "MessageContext",
-                                           8 * 1024, 8 * 1024, 8 * 1024);
-
-    // Start Postmaster
-    int argc = 3;
-    char const *argv[] =  { "/usr/local/peloton/bin/peloton", "-D", "data"};
-    PostmasterMain(argc, (char **)argv);
-
-    return 0;
-  }
-  // Parent process
-  else {
-    std::cout << "Started Peloton... \n";
-    return pid;
-  }
-}
-
-int StopPeloton(int pid) {
-  int retval = kill(pid, SIGKILL);
-  return retval;
-}
-
 TEST(BridgeTests, BasicTest) {
+  
+  int res;
+  std::string db_name ("bridge_test_db");
+  std::string db_filesystem_path = "./" + db_name;
+  std::string cmd;
 
-  // Start Peloton
-  int pid = InitPeloton();
+  cmd = "rm -rf " + db_filesystem_path;
+  res = system(cmd.c_str());
+  assert(res == 0);
 
-  try {
+  cmd = "initdb " + db_filesystem_path;
+  res = system(cmd.c_str());
+  assert(res == 0);
 
-    char *relation_name = ::GetRelationName(1260);
-    std::cout << "Relation name :: " << relation_name << "\n";
-  }
-  catch (std::exception& e) {
-    StopPeloton(pid);
-  }
+  cmd = "pg_ctl -D " + db_filesystem_path + " start -o -testmode=1"; // 1 : bridge test mode 
+  res = system(cmd.c_str());
+  assert(res == 0);
 
-  StopPeloton(pid);
+  // TODO: Make it time insensitive 
+  // Wait for the server before running the tests.
+  sleep(3);
+
+  std::cout << "\n\n\n";
+  std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+
+  res = system("psql postgres <<EOF");
+  assert(res == 0);
+
+  std::cout << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+  std::cout << "\n\n\n";
+  
+  cmd = "pg_ctl -D " + db_filesystem_path + " stop ";
+  res = system(cmd.c_str());
+  assert(res == 0);
+
 }
 
 } // End test namespace
