@@ -4,14 +4,14 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
 
 ## Dependencies
 
-> - **g++ 4.7+** 
-> - **autotools** 
-> - **autoconf**
+> - **g++ 4.7+** [ Compiler, need support for C++11 ] 
+> - **libtool** 
 > - **pkg-config** 
 > - **tbb** [Thread Building Blocks parallelism library]
 > - **json-spirit** [C++ JSON parser/generator]
 > - **flex** [ Lexical analyzer generator ]
 > - **bison 3.0.4** [ Parser generator ]
+> - **valgrind** [ Dynamic analysis framework ]
 
 ## Installation 
  
@@ -33,8 +33,11 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
     ../configure 
     make -j4
     sudo make -j4 install
-    
+
+### Update paths 
+
     export PATH=$PATH:/usr/local/peloton/bin
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
 ### Test terminal
 

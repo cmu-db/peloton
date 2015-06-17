@@ -17,17 +17,17 @@ AC_PROG_CC([gcc])
 # Disable static library
 LT_INIT([disable-static])
 
-# Check for pthreads (uses m4/acx_pthread.m4).
+# Check for pthreads 
 ACX_PTHREAD([], [AC_MSG_ERROR([Please install pthread library : libpthread-stubs0-dev])])
 
 AC_LANG([C++])
 AC_PROG_CXX([g++])
 AC_SUBST([AM_CXXFLAGS], '-std=c++11 -stdlib=libc++')
 
+######################################################################
+# OS X Support
+######################################################################
 
-######################################################################
-# OS X portability support
-######################################################################
 AM_CONDITIONAL(BUILD_OS_IS_DARWIN, [[[[ "$build_os" == darwin* ]]]])
 
 ######################################################################
@@ -57,6 +57,20 @@ AX_CHECK_COMPILE_FLAG([-fdiagnostics-color=auto], [CXXFLAGS="$CXXFLAGS -fdiagnos
 AX_VALGRIND_CHECK
 AX_CODE_COVERAGE
 
+######################################################################
+# PARALLEL MAKE 
+######################################################################
+
+NPROCS=1
+if [[ "$build_os" == "linux-gnu" ]]
+then
+    NPROCS=$(grep -c ^processor /proc/cpuinfo)
+elif [[ "$build_os" == "darwin" ]]
+then
+    NPROCS=$(sysctl -n hw.physicalcpu)
+fi
+
+MAKEFLAGS="-j$NPROCS"
 
 ######################################################################
 # PACKAGES
@@ -86,9 +100,6 @@ AX_BOOST_SERIALIZATION
 AX_BOOST_SYSTEM
 AX_BOOST_THREAD
 
-# Check for valgrind
-AX_VALGRIND_CHECK
-
 #[test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h.in])
 
 AC_CONFIG_FILES([Makefile
@@ -113,6 +124,7 @@ Compiler       : ${CC}
 CPP Flags      : ${CPPFLAGS}
 C Flags        : ${CFLAGS}
 C++ Flags      : ${CXXFLAGS}
+Make Flags     : ${MAKEFLAGS}
 Libraries      : ${LIBS} $TBB_LIBS
 
 ---------------------------------------------------------------------"
