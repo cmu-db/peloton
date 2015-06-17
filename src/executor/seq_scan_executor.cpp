@@ -52,6 +52,12 @@ bool SeqScanExecutor::DInit() {
   predicate_ = node.GetPredicate();
   column_ids_ = node.GetColumnIds();
 
+  current_tile_group_id_ = START_OID;
+
+  if(table_ != nullptr) {
+    table_tile_group_count_ = table_->GetTileGroupCount();
+  }
+
   return true;
 }
 
@@ -95,7 +101,7 @@ bool SeqScanExecutor::DExecute() {
     assert(column_ids_.size() > 0);
 
     // Retrieve next tile group.
-    if (current_tile_group_id_ == table_->GetTileGroupCount()) {
+    if (current_tile_group_id_ == table_tile_group_count_) {
       return false;
     }
 

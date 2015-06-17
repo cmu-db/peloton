@@ -44,6 +44,9 @@ bool NestedLoopJoinExecutor::DInit() {
   // NOTE: predicate can be null for cartesian product
   predicate_ = node.GetPredicate();
 
+  shorter_table_itr = START_OID;
+  result_itr = START_OID;
+
   return true;
 }
 
@@ -75,8 +78,10 @@ bool NestedLoopJoinExecutor::DExecute() {
 
   // Try to get next tile from RIGHT child
   if (children_[1]->Execute() == false) {
-    // Check if resetting helps
-    //children_[1]->Reset();
+
+    // Check if reinit helps
+    children_[1]->Init();
+
     if (children_[1]->Execute() == false) {
       return false;
     }
