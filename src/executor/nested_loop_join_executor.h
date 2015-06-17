@@ -42,18 +42,6 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
   /** @brief Result of nested loop join. */
   std::vector<LogicalTile *> result;
 
-  /** @brief Result itr */
-  oid_t shorter_table_itr = INVALID_OID;
-
-  /** @brief Computed the result */
-  bool done = false;
-
-  /** @brief Result itr */
-  oid_t result_itr = INVALID_OID;
-
-  /** @brief Join table schema. */
-  const catalog::Schema *schema_ = nullptr;
-
   //===--------------------------------------------------------------------===//
   // Plan Info
   //===--------------------------------------------------------------------===//

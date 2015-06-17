@@ -28,6 +28,47 @@ LogicalTile::~LogicalTile() {
 
 /**
  * @brief Adds column metadata to the logical tile.
+ * @param cp ColumnInfo that needs to be added.
+ * @param own_base_tile True if the logical tile should assume ownership of
+ *                      the base tile passed in.
+ */
+void LogicalTile::AddColumn(const ColumnInfo& cp,
+                            bool own_base_tile){
+
+  schema_.push_back(cp);
+
+  if (own_base_tile) {
+    owned_base_tiles_.insert(cp.base_tile);
+  }
+
+}
+
+/**
+ * @brief Get the schema of the tile.
+ * @return ColumnInfo-based schema of the tile.
+ */
+const std::vector<LogicalTile::ColumnInfo>& LogicalTile::GetSchema() const{
+  return schema_;
+}
+
+/**
+ * @brief Get the position lists of the tile.
+ * @return Position lists of the tile.
+ */
+const std::vector<std::vector<oid_t> >& LogicalTile::GetPositionLists() const{
+  return position_lists_;
+}
+
+/**
+ * @brief Set the schema of the tile.
+ * @param ColumnInfo-based schema of the tile.
+ */
+void LogicalTile::SetSchema(const std::vector<LogicalTile::ColumnInfo>& schema){
+  schema_ = schema;
+}
+
+/**
+ * @brief Adds column metadata to the logical tile.
  * @param base_tile Base tile that this column is from.
  * @param own_base_tile True if the logical tile should assume ownership of
  *                      the base tile passed in.
@@ -266,26 +307,6 @@ bool LogicalTile::iterator::operator!=(const iterator &rhs) {
  */
 oid_t LogicalTile::iterator::operator*() {
   return pos_;
-}
-
-/**
- * @brief Construct the schema of all the columns in the logical tile.
- *
- * @return Schema object.
- */
-catalog::Schema *LogicalTile::GetSchema() {
-
-  std::vector<catalog::ColumnInfo> physical_columns;
-
-  for(ColumnInfo column : schema_) {
-    auto schema = column.base_tile->GetSchema();
-    auto physical_column = schema->GetColumnInfo(column.origin_column_id);
-    physical_columns.push_back(physical_column);
-  }
-
-  catalog::Schema *schema = new catalog::Schema(physical_columns);
-
-  return schema;
 }
 
 

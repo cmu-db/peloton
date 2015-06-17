@@ -46,8 +46,6 @@ bool SeqScanExecutor::DInit() {
   // Grab data from plan node.
   const planner::SeqScanNode &node = GetNode<planner::SeqScanNode>();
 
-  printf("Init :: %p \n", node.GetTable());
-
   table_ = node.GetTable();
   predicate_ = node.GetPredicate();
   column_ids_ = node.GetColumnIds();
