@@ -13,4 +13,4 @@ scheduler_test_LDADD = \
 					   $(obj_DIR)/backend/kernel.o \
 					   $(obj_DIR)/scheduler/scheduler.o \
 					   $(obj_DIR)/scheduler/traffic_cop.o \
-					   $(top_builddir)/src/libpeloton.la			   				   
+					   $(top_builddir)/src/libpeloton.la

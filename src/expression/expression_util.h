@@ -41,11 +41,11 @@ AbstractExpression *ComparisonFactory(ExpressionType et, AbstractExpression*, Ab
 
 AbstractExpression *OperatorFactory(ExpressionType et,  AbstractExpression*, AbstractExpression*);
 
-AbstractExpression *ConstantValueFactory(const Value &val);
+AbstractExpression *ConstantValueFactory(const nstore::Value &val);
 
 AbstractExpression *ParameterValueFactory(int idx);
 
-AbstractExpression *TupleValueFactory(int idx);
+AbstractExpression *TupleValueFactory(int tuple_idx, int value_idx);
 
 AbstractExpression *ConjunctionFactory(ExpressionType, AbstractExpression*, AbstractExpression*);
 
