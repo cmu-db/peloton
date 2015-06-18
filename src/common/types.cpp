@@ -56,25 +56,6 @@ std::string GetTypeName(ValueType type) {
     return (ret);
 }
 
-std::string GetBackendTypeName(BackendType type) {
-    std::string ret;
-
-    switch (type) {
-    case (BACKEND_TYPE_VM):
-        return "volatile";
-    case (BACKEND_TYPE_NVM):
-        return "non-volatile";
-    case (BACKEND_TYPE_INVALID):
-        return "INVALID";
-    default: {
-        char buffer[32];
-        ::snprintf(buffer, 32, "UNKNOWN[%d] ", type);
-        ret = buffer;
-    }
-    }
-    return (ret);
-}
-
 /// Works only for fixed-length types
 std::size_t GetTypeSize(ValueType type) {
     switch (type) {
@@ -104,6 +85,39 @@ std::size_t GetTypeSize(ValueType type) {
         return 0;
     }
     }
+}
+
+//===--------------------------------------------------------------------===//
+// BackendType <--> String Utilities
+//===--------------------------------------------------------------------===//
+std::string BackendTypeToString(BackendType type) {
+    std::string ret;
+
+    switch (type) {
+    case (BACKEND_TYPE_VM):
+        return "VOLATILE";
+    case (BACKEND_TYPE_NVM):
+        return "NON-VOLATILE";
+    case (BACKEND_TYPE_INVALID):
+        return "INVALID";
+    default: {
+        char buffer[32];
+        ::snprintf(buffer, 32, "UNKNOWN[%d] ", type);
+        ret = buffer;
+    }
+    }
+    return (ret);
+}
+
+BackendType StringToBackendType(std::string str) {
+    if (str == "INVALID") {
+        return BACKEND_TYPE_INVALID;
+    } else if (str == "VOLATILE") {
+        return BACKEND_TYPE_VM;
+    } else if (str == "NON-VOLATILE") {
+        return BACKEND_TYPE_NVM;
+    }
+    return BACKEND_TYPE_INVALID;
 }
 
 //===--------------------------------------------------------------------===//
