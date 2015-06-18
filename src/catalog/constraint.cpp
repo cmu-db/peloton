@@ -18,7 +18,7 @@ std::ostream& operator<<(std::ostream& os, const Constraint& constraint) {
 
     os << "\tCONSTRAINT ";
 
-    os << constraint.GetName() << " " << ConstraintToString(constraint.type) << "\n";
+    os << constraint.GetName() << " " << ConstraintTypeToString(constraint.type) << "\n";
 
     if(constraint.type == CONSTRAINT_TYPE_PRIMARY) {
         os << "\t\tPrimary Key Columns : ";

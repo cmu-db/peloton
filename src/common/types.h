@@ -418,13 +418,13 @@ ValueType StringToValue(std::string str );
 std::string ExpressionToString(ExpressionType type);
 ExpressionType StringToExpression(std::string str);
 
-std::string IndexToString(IndexType type);
-IndexType StringToIndex(std::string str);
+std::string IndexTypeToString(IndexType type);
+IndexType StringToIndexType(std::string str);
 
 std::string PlanNodeToString(PlanNodeType type);
 PlanNodeType StringToPlanNode(std::string str);
 
-std::string ConstraintToString(ConstraintType type);
-ConstraintType StringToConstraint(std::string str);
+std::string ConstraintTypeToString(ConstraintType type);
+ConstraintType StringToConstraintType(std::string str);
 
 } // End nstore namespace
