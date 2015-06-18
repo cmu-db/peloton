@@ -28,7 +28,7 @@ namespace nstore {
 namespace storage {
 
 Tile::Tile(TileGroupHeader* tile_header,
-           Backend* backend,
+           AbstractBackend* backend,
            const catalog::Schema& tuple_schema,
            TileGroup* tile_group,
            int tuple_count)

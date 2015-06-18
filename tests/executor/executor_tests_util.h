@@ -25,7 +25,7 @@ class LogicalTile;
 }
 
 namespace storage {
-class Backend;
+class AbstractBackend;
 class TileGroup;
 class DataTable;
 class Tuple;
@@ -41,7 +41,7 @@ public:
      *        tuples.
      */
     static storage::TileGroup *CreateTileGroup(
-        storage::Backend *backend,
+        storage::AbstractBackend *backend,
         int allocate_tuple_count = DEFAULT_TUPLE_COUNT);
 
     /** @brief Creates a basic table with allocated but not populated tuples */
