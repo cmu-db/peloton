@@ -10,7 +10,7 @@
 #include <memory>
 #include <vector>
 
-#include "common/transaction.h"
+#include "concurrency/transaction.h"
 #include "executor/logical_tile.h"
 #include "planner/abstract_plan_node.h"
 

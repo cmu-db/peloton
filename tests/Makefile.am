@@ -42,6 +42,7 @@ endif
 
 include $(srcdir)/catalog/Makefile.am
 include $(srcdir)/common/Makefile.am
+include $(srcdir)/concurrency/Makefile.am
 include $(srcdir)/executor/Makefile.am
 include $(srcdir)/expression/Makefile.am
 include $(srcdir)/index/Makefile.am

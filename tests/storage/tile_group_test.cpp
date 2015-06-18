@@ -12,7 +12,7 @@
 
 #include "gtest/gtest.h"
 
-#include "common/transaction.h"
+#include "concurrency/transaction.h"
 #include "storage/tile_group.h"
 #include "storage/tile_group_factory.h"
 #include "harness.h"
