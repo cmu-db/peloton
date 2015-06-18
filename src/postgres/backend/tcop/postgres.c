@@ -3569,10 +3569,6 @@ PostgresMain(int argc, char *argv[],
   StringInfoData input_message;
   sigjmp_buf	local_sigjmp_buf;
   volatile bool send_ready_for_query = true;
-  float temp;
-
-  //	struct Kernel *kernel = NULL;
-  //	int retval = -1;
 
   /* Initialize startup process environment if necessary. */
   if (!IsUnderPostmaster)
@@ -3923,13 +3919,6 @@ PostgresMain(int argc, char *argv[],
     send_ready_for_query = true;	/* initially, or after error */
 
   // TODO: Peloton modifications
-  /* Experimental code */
-
-  //	kernel = Kernel_Create();
-  //	retval = Kernel_GetTableList(kernel, 23);
-  //	fprintf(stderr, "Kernel :: retval : %d \n", retval);
-  //	Kernel_Destroy(kernel);
-
   switch(CurrentTestModeStatus)
   {
     case TEST_MODE_TYPE_BRIDGE:
@@ -3944,19 +3933,10 @@ PostgresMain(int argc, char *argv[],
       printf("No_TEST_MODE\n");
       // do nothing..
       break;
+
+    default:
+      break;
   }
-  //temp = GetNumberOfTuples(16385);
-/*
-  temp = GetNumberOfTuples(16388);
-printf("# of tuples : %f\n", temp);
-  SetNumberOfTuples(16388, 202.0);
-
-  temp = GetNumberOfTuples(16388);;
-printf("# of tuples : %f\n", temp);
-*/
-
-
-  /* End of Experimental code */
 
   /*
    * Non-error queries loop here.

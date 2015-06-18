@@ -1,11 +1,14 @@
-/*
- * bridge.h
+/**
+ * @brief Header for postgres bridge.
  *
- *  Created on: Jun 11, 2015
- *      Author: Jinwoong Kim
+ * Copyright(c) 2015, CMU
  */
 
 #pragma once
+
+//===--------------------------------------------------------------------===//
+//  Bridge for managing Postgres
+//===--------------------------------------------------------------------===//
 
 char* GetRelationName(Oid relation_id);
 
@@ -19,4 +22,4 @@ void GetDatabaseList(void);
 
 void GetTableList(void);
 
-void Test1(unsigned int);
+void SetUserTableStats(Oid relation_id);
