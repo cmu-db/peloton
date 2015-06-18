@@ -784,6 +784,7 @@ PostmasterMain(int argc, char *argv[])
     }
   }
 
+  // TODO: Peloton Modifications
   /*
    * Parse command-line option for setting test mode
    */
