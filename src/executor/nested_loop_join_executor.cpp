@@ -174,8 +174,9 @@ bool NestedLoopJoinExecutor::DExecute() {
 
   output_tile.get()->SetPositionLists(std::move(position_lists));
 
-  SetOutput(output_tile.release());
+  std::cout << *(output_tile.get());
 
+  SetOutput(output_tile.release());
 
   return true;
 }

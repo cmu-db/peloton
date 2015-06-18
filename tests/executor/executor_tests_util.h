@@ -43,8 +43,8 @@ public:
      * @brief Creates a basic tile group with allocated but not populated
      *        tuples.
      */
-    static storage::TileGroup *CreateTileGroup(
-        storage::Backend *backend, int allocate_tuple_count = TESTS_TUPLES_PER_TILEGROUP);
+    static storage::TileGroup *CreateTileGroup(storage::Backend *backend,
+        int allocate_tuple_count = TESTS_TUPLES_PER_TILEGROUP);
 
     /** @brief Creates a basic table with allocated but not populated tuples */
     static storage::DataTable *CreateTable(int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP);
