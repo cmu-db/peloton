@@ -132,4 +132,5 @@ dropuser_LDFLAGS = $(pg_common_ldflags)
 
 install-data-hook:
 	cp -rf $(top_srcdir)/tools/peloton /usr/local
+	mkdir -p /usr/local/peloton/lib
 	ln -sf $(top_builddir)/../src/peloton $(top_builddir)/tools/.libs/

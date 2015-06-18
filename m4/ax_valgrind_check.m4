@@ -60,8 +60,7 @@
 AC_DEFUN([AX_VALGRIND_CHECK],[
 	dnl Check for --enable-valgrind
 	AC_MSG_CHECKING([whether to enable Valgrind on the unit tests])
-	AC_MSG_RESULT(yes)
-    AC_ARG_ENABLE([valgrind],
+	AC_ARG_ENABLE([valgrind],
 	              [AS_HELP_STRING([--enable-valgrind], [Whether to enable Valgrind on the unit tests])],
 	              [enable_valgrind=$enableval],[enable_valgrind=])
 
@@ -78,8 +77,7 @@ AC_DEFUN([AX_VALGRIND_CHECK],[
 	AC_MSG_RESULT([$enable_valgrind])
 
 	# Check for Valgrind tools we care about.
-	#m4_define([valgrind_tool_list],[[memcheck], [helgrind], [drd], [exp-sgcheck]])
-	m4_define([valgrind_tool_list],[[memcheck]])
+	m4_define([valgrind_tool_list],[[memcheck], [helgrind], [drd], [exp-sgcheck]])
 
 	AS_IF([test "$VALGRIND" != ""],[
 		m4_foreach([vgtool],[valgrind_tool_list],[
@@ -110,14 +108,13 @@ VALGRIND_CHECK_RULES='
 # Optional variables
 VALGRIND_SUPPRESSIONS ?= $(addprefix --suppressions=,$(VALGRIND_SUPPRESSIONS_FILES))
 VALGRIND_FLAGS ?= --num-callers=30
-VALGRIND_memcheck_FLAGS ?= --leak-check=full --show-reachable=no --suppressions=../../third_party/valgrind/valgrind.supp
+VALGRIND_memcheck_FLAGS ?= --leak-check=full --show-reachable=no
 VALGRIND_helgrind_FLAGS ?= --history-level=approx
 VALGRIND_drd_FLAGS ?=
 VALGRIND_sgcheck_FLAGS ?=
 
 # Internal use
-#valgrind_tools = memcheck helgrind drd sgcheck
-valgrind_tools = memcheck
+valgrind_tools = memcheck helgrind drd sgcheck
 valgrind_log_files = $(addprefix test-suite-,$(addsuffix .log,$(valgrind_tools)))
 
 valgrind_memcheck_flags = --tool=memcheck $(VALGRIND_memcheck_FLAGS)
