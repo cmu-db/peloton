@@ -43,6 +43,7 @@ bool NestedLoopJoinExecutor::DInit() {
 
   // NOTE: predicate can be null for cartesian product
   predicate_ = node.GetPredicate();
+  left_scan_start = true;
 
   return true;
 }
@@ -53,22 +54,37 @@ bool NestedLoopJoinExecutor::DInit() {
  */
 bool NestedLoopJoinExecutor::DExecute() {
 
-  LOG_TRACE("Nested Loop Join executor :: 2 children \n");
+  LOG_TRACE("********** Nested Loop Join executor :: 2 children \n");
 
-  // Try to get next tile from LEFT child
-  if (children_[0]->Execute() == false) {
-    return false;
-  }
-
+  bool right_scan_end = false;
   // Try to get next tile from RIGHT child
   if (children_[1]->Execute() == false) {
+    LOG_TRACE("Did not get right tile \n");
+    right_scan_end = true;
+  }
 
-    // Check if reinit helps
+  if(right_scan_end == true){
+    LOG_TRACE("Resetting scan for right tile \n");
     children_[1]->Init();
-
     if (children_[1]->Execute() == false) {
+      LOG_ERROR("Did not get right tile on second try\n");
       return false;
     }
+  }
+
+  LOG_TRACE("Got right tile \n");
+
+  if(left_scan_start == true || right_scan_end == true) {
+    left_scan_start = false;
+    // Try to get next tile from LEFT child
+    if (children_[0]->Execute() == false) {
+      LOG_TRACE("Did not get left tile \n");
+      return false;
+    }
+    LOG_TRACE("Got left tile \n");
+  }
+  else {
+    LOG_TRACE("Already have left tile \n");
   }
 
   std::unique_ptr<LogicalTile> left_tile(children_[0]->GetOutput());
@@ -106,6 +122,8 @@ bool NestedLoopJoinExecutor::DExecute() {
     // Compute output tile column count
     size_t left_tile_column_count = left_tile_position_lists.size();
     size_t right_tile_column_count = right_tile_position_lists.size();
+    size_t output_tile_column_count = left_tile_column_count + right_tile_column_count;
+
     assert(left_tile_column_count > 0);
     assert(right_tile_column_count > 0);
 
@@ -116,8 +134,8 @@ bool NestedLoopJoinExecutor::DExecute() {
 
     // Construct position lists for output tile
     std::vector< std::vector<oid_t> > position_lists;
-    for(size_t column_itr = 0; column_itr < right_tile_column_count; column_itr++)
-      position_lists.push_back(std::vector<oid_t>(INVALID_OID, output_tile_row_count));
+    for(size_t column_itr = 0; column_itr < output_tile_column_count; column_itr++)
+      position_lists.push_back(std::vector<oid_t>(output_tile_row_count, INVALID_OID));
 
     // Go over every pair of tuples in left and right logical tiles
     size_t output_tile_row_itr = 0;
@@ -139,7 +157,7 @@ bool NestedLoopJoinExecutor::DExecute() {
             output_tile_column_itr < right_tile_column_count;
             output_tile_column_itr++){
           position_lists[left_tile_column_count + output_tile_column_itr][output_tile_row_itr] =
-              right_tile_position_lists[output_tile_column_itr][left_tile_row_itr];
+              right_tile_position_lists[output_tile_column_itr][right_tile_row_itr];
         }
 
         output_tile_row_itr++;
