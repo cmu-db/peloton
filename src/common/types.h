@@ -399,8 +399,6 @@ struct ItemPointer {
 
 std::string GetTypeName(ValueType type);
 
-std::string GetBackendTypeName(BackendType type);
-
 /// Works only for fixed-length types
 std::size_t GetTypeSize(ValueType type);
 
@@ -411,6 +409,9 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 //===--------------------------------------------------------------------===//
 // Transformers
 //===--------------------------------------------------------------------===//
+
+std::string BackendTypeToString(BackendType type);
+BackendType StringToBackendType(std::string str );
 
 std::string ValueToString(ValueType type);
 ValueType StringToValue(std::string str );

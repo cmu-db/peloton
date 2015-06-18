@@ -40,7 +40,7 @@ public:
 	}
 
 	std::string GetBackendType() const{
-		return GetBackendTypeName(BACKEND_TYPE_VM);
+		return BackendTypeToString(BACKEND_TYPE_VM);
 	}
 
 };
