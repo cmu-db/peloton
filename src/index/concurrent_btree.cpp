@@ -323,7 +323,7 @@ void bt_mgrclose (BtMgr *mgr)
     //    madvise (page, mgr->page_size, MADV_DONTNEED);
   }
 
-  fprintf(stderr, "%d buffer pool pages flushed\n", num);
+  //fprintf(stderr, "%d buffer pool pages flushed\n", num);
 
   munmap (mgr->hashtable, (uid)mgr->nlatchpage << mgr->page_bits);
   munmap (mgr->pagezero, mgr->page_size);
@@ -372,7 +372,8 @@ BtMgr *bt_mgr (char *name, uint bits, uint nodemax)
 
   mgr = (BtMgr *) calloc (1, sizeof(BtMgr));
 
-  mgr->idx = open (name, O_RDWR | O_CREAT | O_TRUNC, 0666);
+  std::string name_string = "/tmp/" + std::string(name) + ".peloton";
+  mgr->idx = open (name_string.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0666);
 
   if( mgr->idx == -1 ) {
     fprintf (stderr, "Unable to open btree file\n");

@@ -38,6 +38,7 @@ MaterializationExecutor::MaterializationExecutor(
  */
 bool MaterializationExecutor::DInit() {
   assert(children_.size() == 1);
+
   return true;
 }
 
@@ -112,7 +113,6 @@ void MaterializationExecutor::MaterializeByTiles(
  * @return true on success, false otherwise.
  */
 bool MaterializationExecutor::DExecute() {
-  assert(children_.size() == 1);
 
   // Retrieve child tile.
   const bool success = children_[0]->Execute();
@@ -126,30 +126,18 @@ bool MaterializationExecutor::DExecute() {
 
   // Generate mappings.
   std::unordered_map<storage::Tile *, std::vector<oid_t> > tile_to_cols;
-  GenerateTileToColMap(
-      old_to_new_cols,
-      source_tile.get(),
-      tile_to_cols);
+  GenerateTileToColMap(old_to_new_cols, source_tile.get(), tile_to_cols);
 
   // Create new physical tile.
-  const int num_tuples = source_tile->NumTuples();
-  std::unique_ptr<storage::Tile> dest_tile(
-      storage::TileFactory::GetTempTile(
-          node.schema(),
-          num_tuples));
+  const int num_tuples = source_tile->GetTupleCount();
+  std::unique_ptr<storage::Tile> dest_tile(storage::TileFactory::GetTempTile(node.schema(), num_tuples));
 
   // Proceed to materialize logical tile by physical tile at a time.
-  MaterializeByTiles(
-      source_tile.get(),
-      old_to_new_cols,
-      tile_to_cols,
-      dest_tile.get());
+  MaterializeByTiles( source_tile.get(), old_to_new_cols, tile_to_cols, dest_tile.get());
 
   // Wrap physical tile in logical tile.
   bool own_base_tile = true;
-
-  SetOutput(LogicalTileFactory::WrapBaseTiles({ dest_tile.release() },
-                                              own_base_tile));
+  SetOutput(LogicalTileFactory::WrapTiles({ dest_tile.release() }, own_base_tile));
 
   return true;
 }
