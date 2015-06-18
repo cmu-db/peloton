@@ -1,4 +1,4 @@
-/*
+/* @brief Helper routines for printing PlanState node in Postgres
  * pprint.c
  *	Copyright(c) 2015 CMU
  *  Created on: Jun 18, 2015
@@ -15,6 +15,7 @@ static void print_list(const List* list, int ind);
 static void indent(int ind);
 
 #define DEST stdout
+
 
 void print_queryDesc(const QueryDesc *queryDesc) {
   print_planstate(queryDesc->planstate, 0);
