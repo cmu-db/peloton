@@ -35,7 +35,7 @@ public:
 protected:
         
     // Table constructor
-    AbstractTable(catalog::Schema *schema, Backend *backend);
+    AbstractTable(catalog::Schema *schema, AbstractBackend *backend);
 
 public:    
     
@@ -47,7 +47,7 @@ public:
         return schema;
     }
     
-    inline Backend *GetBackend() const {
+    inline AbstractBackend *GetBackend() const {
         return backend;
     }
     
@@ -98,7 +98,7 @@ protected:
     oid_t table_id;
 
     // backend
-    Backend *backend;
+    AbstractBackend *backend;
 
     // table schema
     catalog::Schema *schema;

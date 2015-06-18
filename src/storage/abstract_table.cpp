@@ -22,7 +22,7 @@ namespace nstore {
 namespace storage {
 
 AbstractTable::AbstractTable(catalog::Schema *schema,
-             Backend *backend)
+             AbstractBackend *backend)
 : database_id(INVALID_OID), // FIXME
   table_id(INVALID_OID),    // FIXME
   backend(backend),

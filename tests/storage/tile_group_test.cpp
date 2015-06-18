@@ -67,7 +67,7 @@ TEST(TileGroupTests, BasicTest) {
     column_names.push_back(tile_column_names);
 
     // TILE GROUP
-    storage::Backend *backend = new storage::VMBackend();
+    storage::AbstractBackend *backend = new storage::VMBackend();
 
     storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
                                      nullptr, backend, schemas, 4);
@@ -190,7 +190,7 @@ TEST(TileGroupTests, StressTest) {
 
     // TILE GROUP
 
-    storage::Backend *backend = new storage::VMBackend();
+    storage::AbstractBackend *backend = new storage::VMBackend();
 
     storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
                                      nullptr, backend, schemas, 10000);
@@ -245,7 +245,7 @@ TEST(TileGroupTests, MVCCInsert) {
     column_names.push_back(tile_column_names);
 
     // TILE GROUP
-    storage::Backend *backend = new storage::VMBackend();
+    storage::AbstractBackend *backend = new storage::VMBackend();
 
     storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
                                      nullptr, backend, schemas, 3);
