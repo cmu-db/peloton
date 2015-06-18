@@ -95,7 +95,7 @@ void UpdateTuple(storage::DataTable *table){
 
   // WHERE ATTR_0 < 60
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, std::string("tablename"), std::string("colname"));
+      new expression::TupleValueExpression(0, 0, std::string("tablename"), std::string("colname"));
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(60));
   auto predicate =
@@ -134,7 +134,7 @@ void DeleteTuple(storage::DataTable *table){
 
   // WHERE ATTR_0 < 90
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, std::string("tablename"), std::string("colname"));
+      new expression::TupleValueExpression(0, 0, std::string("tablename"), std::string("colname"));
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(90));
   auto predicate =

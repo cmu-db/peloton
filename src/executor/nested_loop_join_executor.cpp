@@ -172,11 +172,20 @@ bool NestedLoopJoinExecutor::DExecute() {
     }
   }
 
-  output_tile.get()->SetPositionLists(std::move(position_lists));
-
-  std::cout << *(output_tile.get());
-
-  SetOutput(output_tile.release());
+  // Check if we have any matching tuples.
+  if(position_lists[0].size() > 0){
+    output_tile.get()->SetPositionLists(std::move(position_lists));
+    std::cout << *(output_tile.get());
+    SetOutput(output_tile.release());
+    return true;
+  }
+  // Try again
+  else{
+    // If we are out of any more pairs of child tiles to examine,
+    // then we will return false earlier in this function.
+    // So, we don't have to return false here.
+    DExecute();
+  }
 
   return true;
 }
