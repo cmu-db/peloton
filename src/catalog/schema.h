@@ -23,6 +23,7 @@ namespace catalog {
 // Column Information
 //===--------------------------------------------------------------------===//
 
+// TODO: Why is this different than catalog::ColumnInfo?
 class ColumnInfo {
   ColumnInfo() = delete;
 

@@ -18,12 +18,9 @@
 namespace nstore {
 namespace catalog {
 
-//===--------------------------------------------------------------------===//
-// Abstract Catalog Object
-//===--------------------------------------------------------------------===//
-
 /**
- * Base class for all catalog objecets
+ * Base class for all catalog objects
+ * @author pavlo
  */
 class AbstractCatalogObject {
     
@@ -74,6 +71,14 @@ private:
     //===--------------------------------------------------------------------===//
     
     // The unique identifier for this catalog object
+    // TODO: We need to decide whether this id is unique for given type of catalog object
+    //       within a database (across all columns) or whether it's globally unique.
+    //       If it's going to be globally unique then we will want this to be a 64-bit int.
+    //       It may also cause problems if we want to really wide tables, since now we
+    //       need to store an entire column catalog object for it.
+    //       We should discusss this design goal to determine how feasible it is. For example, we 
+    //       could have special column groups that have an auto-generated name that 
+    //       we don't have to store a unique names for each time and can use a single type
     oid_t id_;
     
     // The name of this catalog object
@@ -82,9 +87,8 @@ private:
     
     // Lock for this single
     // TODO: Determine whether we really need this per catalog object. We probably don't
-    // and we're wasting memory by allocating it.
+    //       and we're wasting memory by allocating it.
     std::mutex mutex_;
-
 
 };
 
