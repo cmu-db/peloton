@@ -120,7 +120,7 @@ expression::AbstractExpression *CreatePredicate(const std::set<oid_t> &tuple_ids
     // First, create tuple value expression.
     expression::AbstractExpression *tuple_value_expr = nullptr;
 
-    tuple_value_expr = even ? expression::TupleValueFactory(0) : expression::TupleValueFactory(3);
+    tuple_value_expr = even ? expression::TupleValueFactory(0, 0) : expression::TupleValueFactory(0, 3);
 
     Value int_val = ValueFactory::GetIntegerValue( ExecutorTestsUtil::PopulatedValue(tuple_id, 0));
     Value string_val = ValueFactory::GetStringValue(std::to_string(ExecutorTestsUtil::PopulatedValue(tuple_id, 3)));
