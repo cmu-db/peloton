@@ -23,7 +23,7 @@ namespace nstore {
 namespace storage {
 
 DataTable::DataTable(catalog::Schema *schema,
-                     Backend *backend,
+                     AbstractBackend *backend,
                      std::string table_name)
     : AbstractTable(schema, backend),
       table_name(table_name) {

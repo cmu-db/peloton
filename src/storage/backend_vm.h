@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "storage/backend.h"
+#include "storage/abstract_backend.h"
 
 namespace nstore {
 namespace storage {
@@ -22,7 +22,7 @@ namespace storage {
 //===--------------------------------------------------------------------===//
 
 
-class VMBackend : public Backend {
+class VMBackend : public AbstractBackend {
 
 public:
 	virtual ~VMBackend(){};

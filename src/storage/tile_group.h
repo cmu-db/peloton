@@ -49,7 +49,7 @@ public:
     // Tile group constructor
     TileGroup(TileGroupHeader *tile_group_header,
               AbstractTable *table,
-              Backend *backend,
+              AbstractBackend *backend,
               const std::vector<catalog::Schema>& schemas,
               int tuple_count);
 
@@ -151,7 +151,7 @@ public:
         tile_group_id = tile_group_id_;
     }
 
-    Backend* GetBackend() const {
+    AbstractBackend* GetBackend() const {
         return backend;
     }
 
@@ -183,7 +183,7 @@ protected:
     oid_t tile_group_id;
 
     // backend
-    Backend* backend;   // TODO REMOVE(?)
+    AbstractBackend* backend;   // TODO REMOVE(?)
 
     // mapping to tile schemas
     std::vector<catalog::Schema> tile_schemas;

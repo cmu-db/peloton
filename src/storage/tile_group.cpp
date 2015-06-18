@@ -24,7 +24,7 @@ namespace storage {
 
 TileGroup::TileGroup(TileGroupHeader* tile_group_header,
                      AbstractTable *table,
-                     Backend* backend,
+                     AbstractBackend* backend,
                      const std::vector<catalog::Schema>& schemas,
                      int tuple_count)
 : database_id(INVALID_OID),

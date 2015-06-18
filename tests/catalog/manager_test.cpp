@@ -43,7 +43,7 @@ void AddTileGroup() {
     catalog::Schema *schema1 = new catalog::Schema(columns);
     schemas.push_back(*schema1);
 
-    storage::Backend *backend = new storage::VMBackend();
+    storage::AbstractBackend *backend = new storage::VMBackend();
 
     for (oid_t txn_itr = 0 ; txn_itr < 100 ; txn_itr++) {
         storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(

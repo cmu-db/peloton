@@ -108,7 +108,7 @@ catalog::ColumnInfo ExecutorTestsUtil::GetColumnInfo(int index) {
  * @return Pointer to tile group.
  */
 storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(
-    storage::Backend *backend,
+    storage::AbstractBackend *backend,
     int tuple_count) {
     std::vector<catalog::ColumnInfo> columns;
     std::vector<catalog::Schema> schemas;
