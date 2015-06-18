@@ -187,7 +187,7 @@ bool CreateExecutor::CreateTable(catalog::Database* db, parser::CreateStatement*
                     columns);
 
             catalog::Constraint *constraint = new catalog::Constraint(constraint_name,
-                    catalog::Constraint::CONSTRAINT_TYPE_PRIMARY,
+                    CONSTRAINT_TYPE_PRIMARY,
                     index,
                     nullptr,
                     columns,
@@ -229,7 +229,7 @@ bool CreateExecutor::CreateTable(catalog::Database* db, parser::CreateStatement*
                 sink_columns.push_back(foreign_table->GetColumn(key));
 
             catalog::Constraint *constraint = new catalog::Constraint(constraint_name,
-                    catalog::Constraint::CONSTRAINT_TYPE_FOREIGN,
+                    CONSTRAINT_TYPE_FOREIGN,
                     nullptr,
                     foreign_table,
                     source_columns,
