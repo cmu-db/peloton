@@ -35,7 +35,7 @@ public:
 
     // create default db
     Catalog() {
-        Database* db = new Database("default");
+        Database* db = new Database("default"); // FIXME
         databases.push_back(db);
     }
 
