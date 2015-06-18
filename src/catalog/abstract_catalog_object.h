@@ -30,6 +30,9 @@ class AbstractCatalogObject {
 protected:
 
     // Constructor
+    // TODO: Need to decide whether we want to include a pointer to
+    //       the parent catalog object for this one. We used that a lot in the
+    //       analysis code for H-Store but we probably don't need it for this.
     AbstractCatalogObject(oid_t id, std::string name) :
         id_(id),
         name_(name) {
