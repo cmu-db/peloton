@@ -271,7 +271,7 @@ TEST(ExpressionTest, SimpleFilter) {
   // EXPRESSION
 
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, std::string("tablename"), std::string("colname"));
+      new expression::TupleValueExpression(0, 0, std::string("tablename"), std::string("colname"));
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(20));
   expression::ComparisonExpression<expression::CmpEq> *equal =
@@ -309,14 +309,14 @@ TEST(ExpressionTest, OrFilter) {
   // WHERE id = 20 OR id=30
 
   expression::TupleValueExpression *tup_val_a =
-      new expression::TupleValueExpression(1, std::string("tablename"), std::string("colname"));
+      new expression::TupleValueExpression(0, 1, std::string("tablename"), std::string("colname"));
   expression::ConstantValueExpression *const_val_a =
       new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(20));
   expression::ComparisonExpression<expression::CmpEq> *comp_a =
       new expression::ComparisonExpression<expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQ, tup_val_a, const_val_a);
 
   expression::TupleValueExpression *tup_val_b =
-      new expression::TupleValueExpression(1, std::string("tablename"), std::string("colname"));
+      new expression::TupleValueExpression(0, 1, std::string("tablename"), std::string("colname"));
   expression::ConstantValueExpression *const_val_b =
       new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(30));
   expression::ComparisonExpression<expression::CmpEq> *comp_b =

@@ -4,29 +4,54 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
 
 ## Dependencies
 
-> - **g++ 4.7+** 
-> - **autotools** 
-> - **autoconf**
+> - **g++ 4.7+** [ Compiler, need support for C++11 ] 
+> - **libtool** 
 > - **pkg-config** 
 > - **tbb** [Thread Building Blocks parallelism library]
 > - **json-spirit** [C++ JSON parser/generator]
+> - **readline** [Commandline editing library]
 > - **flex** [ Lexical analyzer generator ]
-> - **bison** [ Parser generator ]
+> - **bison 3.0.4** [ Parser generator ]
+> - **valgrind** [ Dynamic analysis framework ]
 
 ## Installation 
  
 ###	Ubuntu Quick Setup
 
-    sudo apt-get install g++ autotools-dev autoconf libtool pkg-config libtbb-dev libjson-spirit-dev flex bison
+    sudo apt-get install g++ pkg-config libtool libboost1.54-dev libtbb-dev libjson-spirit-dev libreadline-dev flex bison
+
+### OS X Setup
+
+    brew install automake tbb boost json_spirit flex bison
  
-### Get the repository
+### Build Peloton
 
     git clone https://github.com/cmu-db/peloton.git
-    cd peloton/build
+
+    ./bootstrap
     
-    ../configure CXXFLAGS="-O0 -g" 
-    
+    cd build
+    ../configure 
     make -j4
+    sudo make -j4 install
+
+### Update paths 
+
+    export PATH=$PATH:/usr/local/peloton/bin
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+
+### Test terminal
+
+    initdb ./data
+    cp ../postgresql.conf ./data   
+    
+    pg_ctl -D ./data start
+    createuser -s -r postgres
+    
+    psql postgres 
+    help  
+    
+    pg_ctl -D ./data stop
 
 ## Development        
 
@@ -53,19 +78,3 @@ We use `Eclipse` for our development. The following instructions assume that you
 > 2. Open the `peloton` project in Eclipse and navigate to Project ->  Properties ->  C/C++ General.
 > 3. Click the Formatter option in the left-hand menu, and then select the Enable project specific settings checkbox at the top of the panel.
 > Click the Import button and then select the `eclipse-cpp-google-style.xml` file in `third_party/eclipse` directory.
- 
-## Testing
-
-    cd build
-    make -j4 check
-
-    cd tests
-    make check-valgrind          
-    
-### Code Coverage ::
-
-    cd build
-    ../configure --enable-code-coverage
-    cd test
-    make check-code-coverage
- 

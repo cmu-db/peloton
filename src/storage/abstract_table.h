@@ -11,6 +11,7 @@
 #pragma once
 
 #include "catalog/manager.h"
+#include "common/types.h"
 #include "storage/tile_group.h"
 #include "storage/backend_vm.h"
 
@@ -35,7 +36,7 @@ public:
 protected:
         
     // Table constructor
-    AbstractTable(catalog::Schema *schema, AbstractBackend *backend);
+    AbstractTable(catalog::Schema *schema, AbstractBackend *backend, size_t tuples_per_tilegroup);
 
 public:    
     
@@ -76,7 +77,7 @@ public:
     size_t GetTileGroupCount() const;
 
     // insert tuple in table
-    ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple, bool update = false);
+    ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
 
     //===--------------------------------------------------------------------===//
     // UTILITIES
@@ -108,7 +109,7 @@ protected:
 
     // TODO need some policy ?
     // number of tuples allocated per tilegroup for this table
-    size_t tuples_per_tilegroup = 1000;
+    size_t tuples_per_tilegroup;
     
     std::mutex table_mutex;
 
