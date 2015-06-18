@@ -101,5 +101,7 @@ nested_loop_join_test_SOURCES = \
 
 nested_loop_join_test_LDADD = \
 					  $(executor_tests_common_ld) \
+					  $(obj_DIR)/expression/abstract_expression.o \
+					  $(obj_DIR)/expression/expression_util.o \					  
 					  $(obj_DIR)/executor/nested_loop_join_executor.o
 
