@@ -104,7 +104,7 @@ bool NestedLoopJoinExecutor::DExecute() {
                             right_tile_schema.begin(), right_tile_schema.end());
 
   // Set the output logical tile schema
-  output_tile.get()->SetSchema(output_tile_schema);
+  output_tile.get()->SetSchema(std::move(output_tile_schema));
 
   // Now, let's compute the position lists for the output tile
 
@@ -165,6 +165,10 @@ bool NestedLoopJoinExecutor::DExecute() {
     }
 
     assert(output_tile_row_itr == output_tile_row_count);
+
+    output_tile.get()->SetPositionLists(std::move(position_lists));
+
+    std::cout << "Cartesian Product :: " << *(output_tile.get()) << "\n";
 
     SetOutput(output_tile.release());
   }
