@@ -258,8 +258,8 @@ AbstractExpression * ParameterValueFactory(int idx) {
   return new ParameterValueExpression(idx);
 }
 
-AbstractExpression *TupleValueFactory(int value_idx) {
-  return new TupleValueExpression(value_idx, "DUMMY", "DUMMY");
+AbstractExpression *TupleValueFactory(int tuple_idx, int value_idx) {
+  return new TupleValueExpression(tuple_idx, value_idx, "DUMMY", "DUMMY");
 }
 
 // convert the enumerated value type into a concrete c type for
@@ -296,7 +296,10 @@ AbstractExpression* TupleValueFactory(json_spirit::Object &obj,
         " TVE");
   }
 
-  return new TupleValueExpression(valueIdxValue.get_int(),
+  // FIXME: Shouldn't this vary between 0 and 1 depending on left or right tuple ?
+  int tuple_idx = 0;
+
+  return new TupleValueExpression(tuple_idx, valueIdxValue.get_int(),
                                   tableName.get_str(), columnName.get_str());
 }
 

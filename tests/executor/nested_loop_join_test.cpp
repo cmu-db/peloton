@@ -130,21 +130,21 @@ expression::AbstractExpression * CreateJoinPredicate(){
   // LEFT.1 == RIGHT.1
 
   expression::TupleValueExpression *left_table_attr_1 =
-      new expression::TupleValueExpression(1, "left_table", "attr1");
+      new expression::TupleValueExpression(0, 1, "left_table", "attr1");
   expression::TupleValueExpression *right_table_attr_1 =
-      new expression::TupleValueExpression(1, "right_table", "attr1");
+      new expression::TupleValueExpression(1, 1, "right_table", "attr1");
 
   expression::ComparisonExpression<expression::CmpEq> *comp_a =
       new expression::ComparisonExpression<expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQ,
                                                                left_table_attr_1,
                                                                right_table_attr_1);
 
-  // LEFT.3 > 0.0
+  // LEFT.3 > 50.0
 
   expression::TupleValueExpression *left_table_attr_3 =
-      new expression::TupleValueExpression(1, "left_table", "attr3");
+      new expression::TupleValueExpression(0, 1, "left_table", "attr3");
   expression::ConstantValueExpression *const_val_1 =
-      new expression::ConstantValueExpression(ValueFactory::GetDoubleValue(0.0));
+      new expression::ConstantValueExpression(ValueFactory::GetDoubleValue(50.0));
   expression::ComparisonExpression<expression::CmpGt> *comp_b =
       new expression::ComparisonExpression<expression::CmpGt>(EXPRESSION_TYPE_COMPARE_GT,
                                                               left_table_attr_3,
@@ -153,8 +153,6 @@ expression::AbstractExpression * CreateJoinPredicate(){
   predicate = new expression::ConjunctionExpression<expression::ConjunctionAnd> (EXPRESSION_TYPE_CONJUNCTION_AND,
                                                                                  comp_a,
                                                                                  comp_b);
-
-  std::cout << (*predicate);
 
   return predicate;
 }
@@ -254,10 +252,11 @@ TEST(NestedLoopJoinTests, JoinPredicateTest) {
   // Run the executor
   EXPECT_TRUE(executor.Init());
 
-  for(size_t tile_itr = 0; tile_itr < 6 ; tile_itr++)
+  for(size_t tile_itr = 0; tile_itr < 2 ; tile_itr++) {
     EXPECT_TRUE(executor.Execute());
+  }
 
-  EXPECT_FALSE(executor.Execute());
+  EXPECT_TRUE(executor.Execute());
 }
 
 } // namespace test
