@@ -325,6 +325,16 @@ enum ResultType {
   RESULT_TYPE_UNKNOWN      = 5
 };
 
+//===--------------------------------------------------------------------===//
+// Constraint Types
+//===--------------------------------------------------------------------===//
+
+enum ConstraintType {
+    CONSTRAINT_TYPE_INVALID = 0, // invalid
+    CONSTRAINT_TYPE_PRIMARY = 1, // primary key
+    CONSTRAINT_TYPE_FOREIGN = 2  // foreign key
+};
+
 
 //===--------------------------------------------------------------------===//
 // Type definitions.
@@ -403,15 +413,18 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 //===--------------------------------------------------------------------===//
 
 std::string ValueToString(ValueType type);
-
 ValueType StringToValue(std::string str );
 
 std::string ExpressionToString(ExpressionType type);
-
 ExpressionType StringToExpression(std::string str);
 
-std::string PlanNodeToString(PlanNodeType type);
+std::string IndexToString(IndexType type);
+IndexType StringToIndex(std::string str);
 
+std::string PlanNodeToString(PlanNodeType type);
 PlanNodeType StringToPlanNode(std::string str);
+
+std::string ConstraintToString(ConstraintType type);
+ConstraintType StringToConstraint(std::string str);
 
 } // End nstore namespace
