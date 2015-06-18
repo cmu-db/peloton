@@ -122,22 +122,22 @@ expression::AbstractExpression *CreatePredicate(const std::set<oid_t> &tuple_ids
 
     tuple_value_expr = even ? expression::TupleValueFactory(0, 0) : expression::TupleValueFactory(0, 3);
 
-    Value int_val = ValueFactory::GetIntegerValue( ExecutorTestsUtil::PopulatedValue(tuple_id, 0));
-    Value string_val = ValueFactory::GetStringValue(std::to_string(ExecutorTestsUtil::PopulatedValue(tuple_id, 3)));
-
     // Second, create constant value expression.
-    Value constant_value = even ? int_val : string_val;
+    Value constant_value = even
+        ? ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(tuple_id, 0)) :
+            ValueFactory::GetStringValue(std::to_string(ExecutorTestsUtil::PopulatedValue(tuple_id, 3)));
 
-    expression::AbstractExpression *constant_value_expr = nullptr;
-    expression::AbstractExpression *equality_expr = nullptr;
-
-    constant_value_expr = expression::ConstantValueFactory(constant_value);
+    expression::AbstractExpression *constant_value_expr = expression::ConstantValueFactory(constant_value);
 
     // Finally, link them together using an equality expression.
-    equality_expr = expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQ, tuple_value_expr, constant_value_expr);
+    expression::AbstractExpression *equality_expr = expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQ,
+                                                                                  tuple_value_expr,
+                                                                                  constant_value_expr);
 
     // Join equality expression to other equality expression using ORs.
-    predicate = expression::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_OR, predicate, equality_expr);
+    predicate = expression::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_OR,
+                                               predicate,
+                                               equality_expr);
   }
 
   return predicate;
@@ -193,7 +193,7 @@ void RunTest(
       // Bad style. Being a bit lazy here...
 
       int old_tuple_id = result_tiles[i]->GetValue(new_tuple_id, 0)
-                                   .GetIntegerForTestsOnly() / 10;
+                                       .GetIntegerForTestsOnly() / 10;
 
       EXPECT_EQ(1, expected_tuples_left.erase(old_tuple_id));
 
