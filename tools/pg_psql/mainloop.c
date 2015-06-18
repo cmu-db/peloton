@@ -74,6 +74,7 @@ MainLoop(FILE *source)
 		exit(EXIT_FAILURE);
 	}
 
+
 	/* main loop to get queries and execute them */
 	while (successResult == EXIT_SUCCESS)
 	{
