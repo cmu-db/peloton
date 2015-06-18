@@ -42,7 +42,7 @@ class TupleValueExpression : public AbstractExpression, public TupleValueExpress
 
   std::string DebugInfo(const std::string &spacer) const {
     std::ostringstream buffer;
-    buffer << spacer << "Optimized Column Reference[" << this->value_idx << "]\n";
+    buffer << spacer << "TupleValueReference[" << this->value_idx << "]\n";
     return (buffer.str());
   }
 

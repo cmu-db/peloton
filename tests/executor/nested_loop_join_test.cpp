@@ -13,6 +13,8 @@
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "executor/nested_loop_join_executor.h"
+#include "expression/abstract_expression.h"
+#include "expression/expression.h"
 #include "planner/nested_loop_join_node.h"
 #include "storage/data_table.h"
 
@@ -120,12 +122,51 @@ TEST(NestedLoopJoinTests, CartesianProductTest) {
   EXPECT_FALSE(executor.Execute());
 }
 
+// Create join predicate
+expression::AbstractExpression * CreateJoinPredicate(){
+
+  expression::AbstractExpression *predicate = nullptr;
+
+  // LEFT.1 == RIGHT.1
+
+  expression::TupleValueExpression *left_table_attr_1 =
+      new expression::TupleValueExpression(1, "left_table", "attr1");
+  expression::TupleValueExpression *right_table_attr_1 =
+      new expression::TupleValueExpression(1, "right_table", "attr1");
+
+  expression::ComparisonExpression<expression::CmpEq> *comp_a =
+      new expression::ComparisonExpression<expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQ,
+                                                               left_table_attr_1,
+                                                               right_table_attr_1);
+
+  // LEFT.3 > 0.0
+
+  expression::TupleValueExpression *left_table_attr_3 =
+      new expression::TupleValueExpression(1, "left_table", "attr3");
+  expression::ConstantValueExpression *const_val_1 =
+      new expression::ConstantValueExpression(ValueFactory::GetDoubleValue(0.0));
+  expression::ComparisonExpression<expression::CmpGt> *comp_b =
+      new expression::ComparisonExpression<expression::CmpGt>(EXPRESSION_TYPE_COMPARE_GT,
+                                                              left_table_attr_3,
+                                                              const_val_1);
+
+  predicate = new expression::ConjunctionExpression<expression::ConjunctionAnd> (EXPRESSION_TYPE_CONJUNCTION_AND,
+                                                                                 comp_a,
+                                                                                 comp_b);
+
+  std::cout << (*predicate);
+
+  return predicate;
+}
 
 // Join Predicate Test
 TEST(NestedLoopJoinTests, JoinPredicateTest) {
 
+  // Create predicate
+  auto predicate = CreateJoinPredicate();
+
   // Create plan node.
-  planner::NestedLoopJoinNode node(nullptr);
+  planner::NestedLoopJoinNode node(predicate);
 
   // Run the executor
   executor::NestedLoopJoinExecutor executor(&node);
@@ -164,6 +205,9 @@ TEST(NestedLoopJoinTests, JoinPredicateTest) {
   bool mutate_table = true;
   std::unique_ptr<storage::DataTable> right_table(ExecutorTestsUtil::CreateTable(tile_group_size));
   ExecutorTestsUtil::PopulateTable(right_table.get(), tile_group_size * 2, mutate_table);
+
+  std::cout << *(left_table.get());
+  std::cout << *(right_table.get());
 
   std::unique_ptr<executor::LogicalTile> left_logical_tile11(
       executor::LogicalTileFactory::WrapTileGroup(left_table->GetTileGroup(0)));
