@@ -20,7 +20,6 @@
 #include "planner/limit_node.h"
 #include "storage/data_table.h"
 
-
 #include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
 #include "harness.h"
