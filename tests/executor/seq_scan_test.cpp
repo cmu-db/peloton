@@ -106,40 +106,40 @@ storage::DataTable *CreateTable() {
  * In each equality node, we either use (arbitrarily taking reference from the
  * parity of the loop iteration) the first field or last field of the tuple.
  */
-expression::AbstractExpression *CreatePredicate(
-    const std::set<oid_t> &tuple_ids) {
-    assert(tuple_ids.size() >= 1);
+expression::AbstractExpression *CreatePredicate(const std::set<oid_t> &tuple_ids) {
+
+  assert(tuple_ids.size() >= 1);
     expression::AbstractExpression *predicate =
         expression::ConstantValueFactory(Value::GetFalse());
+
     bool even = false;
     for (oid_t tuple_id : tuple_ids) {
         even = !even;
+
         // Create equality expression comparison tuple value and constant value.
         // First, create tuple value expression.
-        expression::AbstractExpression *tuple_value_expr = even
-                ? expression::TupleValueFactory(0)
-                : expression::TupleValueFactory(3);
+        expression::AbstractExpression *tuple_value_expr = nullptr;
+
+        tuple_value_expr = even ? expression::TupleValueFactory(0) : expression::TupleValueFactory(3);
+
+        Value int_val = ValueFactory::GetIntegerValue( ExecutorTestsUtil::PopulatedValue(tuple_id, 0));
+        Value string_val = ValueFactory::GetStringValue(std::to_string(ExecutorTestsUtil::PopulatedValue(tuple_id, 3)));
+
         // Second, create constant value expression.
-        Value constant_value = even
-                               ? ValueFactory::GetIntegerValue(
-                                   ExecutorTestsUtil::PopulatedValue(tuple_id, 0))
-                               : ValueFactory::GetStringValue(
-                                   std::to_string(ExecutorTestsUtil::PopulatedValue(tuple_id, 3)));
-        expression::AbstractExpression *constant_value_expr =
-            expression::ConstantValueFactory(constant_value);
+        Value constant_value = even ? int_val : string_val;
+
+        expression::AbstractExpression *constant_value_expr = nullptr;
+        expression::AbstractExpression *equality_expr = nullptr;
+
+        constant_value_expr = expression::ConstantValueFactory(constant_value);
+
         // Finally, link them together using an equality expression.
-        expression::AbstractExpression *equality_expr =
-            expression::ComparisonFactory(
-                EXPRESSION_TYPE_COMPARE_EQ,
-                tuple_value_expr,
-                constant_value_expr);
+        equality_expr = expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQ, tuple_value_expr, constant_value_expr);
 
         // Join equality expression to other equality expression using ORs.
-        predicate = expression::ConjunctionFactory(
-                        EXPRESSION_TYPE_CONJUNCTION_OR,
-                        predicate,
-                        equality_expr);
+        predicate = expression::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_OR, predicate, equality_expr);
     }
+
     return predicate;
 }
 
@@ -197,21 +197,17 @@ void RunTest(
 
             EXPECT_EQ(1, expected_tuples_left.erase(old_tuple_id));
 
-            EXPECT_EQ(
-                ExecutorTestsUtil::PopulatedValue(old_tuple_id, 1),
-                result_tiles[i]->GetValue(new_tuple_id, 1).GetIntegerForTestsOnly());
-
-            Value string_value(ValueFactory::GetStringValue(std::to_string(
-                                   ExecutorTestsUtil::PopulatedValue(old_tuple_id, 3))));
+            int val1 = ExecutorTestsUtil::PopulatedValue(old_tuple_id, 1);
+            EXPECT_EQ(val1, result_tiles[i]->GetValue(new_tuple_id, 1).GetIntegerForTestsOnly());
+            int val2 = ExecutorTestsUtil::PopulatedValue(old_tuple_id, 3);
 
             // expected_num_cols - 1 is a hacky way to ensure that
             // we are always getting the last column in the original table.
             // For the tile group test case, it'll be 2 (one column is removed
             // during the scan as part of the test case).
             // For the logical tile test case, it'll be 3.
-            EXPECT_EQ(
-                string_value,
-                result_tiles[i]->GetValue(new_tuple_id, expected_num_cols - 1));
+            Value string_value(ValueFactory::GetStringValue(std::to_string(val2)));
+            EXPECT_EQ(string_value, result_tiles[i]->GetValue(new_tuple_id, expected_num_cols - 1));
             string_value.FreeUninlinedData();
         }
         EXPECT_EQ(0, expected_tuples_left.size());

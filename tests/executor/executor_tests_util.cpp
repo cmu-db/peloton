@@ -142,9 +142,7 @@ storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(
  * @param table Table to populate with values.
  * @param num_rows Number of tuples to insert.
  */
-void ExecutorTestsUtil::PopulateTable(
-    storage::DataTable *table,
-    int num_rows) {
+void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows, bool mutate) {
 
   const catalog::Schema *schema = table->GetSchema();
 
@@ -157,13 +155,17 @@ void ExecutorTestsUtil::PopulateTable(
   auto txn = txn_manager.BeginTransaction();
   const txn_id_t txn_id = txn->GetTransactionId();
 
-  for (int i = 0; i < num_rows; i++) {
+  for (int col_itr = 0; col_itr < num_rows; col_itr++) {
+    int populate_value = col_itr;
+    if(mutate)
+      populate_value *= 3;
+
     storage::Tuple tuple(schema, allocate);
-    tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(i, 0)));
-    tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(i, 1)));
-    tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(i, 2)));
+    tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0)));
+    tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 1)));
+    tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(populate_value, 2)));
     Value string_value = ValueFactory::GetStringValue(
-        std::to_string(PopulatedValue(i, 3)));
+        std::to_string(PopulatedValue(populate_value, 3)));
     tuple.SetValue(3, string_value);
 
     ItemPointer tuple_slot_id = table->InsertTuple(txn_id, &tuple, false);
@@ -202,13 +204,13 @@ void ExecutorTestsUtil::PopulateTiles(
   const txn_id_t txn_id = txn->GetTransactionId();
   const cid_t commit_id = txn->GetCommitId();
 
-  for (int i = 0; i < num_rows; i++) {
+  for (int col_itr = 0; col_itr < num_rows; col_itr++) {
     storage::Tuple tuple(schema.get(), allocate);
-    tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(i, 0)));
-    tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(i, 1)));
-    tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(i, 2)));
+    tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 0)));
+    tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(col_itr, 1)));
+    tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(col_itr, 2)));
     Value string_value = ValueFactory::GetStringValue(
-        std::to_string(PopulatedValue(i, 3)));
+        std::to_string(PopulatedValue(col_itr, 3)));
     tuple.SetValue(3, string_value);
 
     oid_t tuple_slot_id = tile_group->InsertTuple(txn_id, &tuple);
