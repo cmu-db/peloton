@@ -63,8 +63,16 @@ const std::vector<std::vector<oid_t> >& LogicalTile::GetPositionLists() const{
  * @brief Set the schema of the tile.
  * @param ColumnInfo-based schema of the tile.
  */
-void LogicalTile::SetSchema(const std::vector<LogicalTile::ColumnInfo>& schema){
+void LogicalTile::SetSchema(std::vector<LogicalTile::ColumnInfo>&& schema){
   schema_ = schema;
+}
+
+/**
+ * @brief Set the position lists of the tile.
+ * @param Position lists.
+ */
+void LogicalTile::SetPositionLists(std::vector<std::vector<oid_t> >&& position_lists){
+  position_lists_ = position_lists;
 }
 
 /**

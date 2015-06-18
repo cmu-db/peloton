@@ -67,9 +67,11 @@ class LogicalTile {
 
   const std::vector<ColumnInfo>& GetSchema() const;
 
-  void SetSchema(const std::vector<LogicalTile::ColumnInfo>& schema);
+  void SetSchema(std::vector<LogicalTile::ColumnInfo>&& schema);
 
   const std::vector<std::vector<oid_t> >& GetPositionLists() const;
+
+  void SetPositionLists(std::vector<std::vector<oid_t> >&& position_lists);
 
   //===--------------------------------------------------------------------===//
   // Special Case : Single underlying Physical Tile
