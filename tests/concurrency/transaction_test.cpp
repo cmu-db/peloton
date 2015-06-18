@@ -13,7 +13,7 @@
 #include "gtest/gtest.h"
 
 #include "harness.h"
-#include "common/transaction.h"
+#include "concurrency/transaction.h"
 
 namespace nstore {
 namespace test {
