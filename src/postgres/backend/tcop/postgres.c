@@ -206,11 +206,6 @@ static void log_disconnections(int code, Datum arg);
  * ----------------------------------------------------------------
  */
 
-//struct Kernel;
-//extern void *Kernel_Create();
-//extern void Kernel_Destroy(void *obj);
-//extern int Kernel_GetTableList(struct Kernel* kernel, int arg);
-
 
 /* ----------------------------------------------------------------
  *		routines to obtain user input
