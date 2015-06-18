@@ -48,6 +48,7 @@ public:
     DataTable(catalog::Schema *schema,
               AbstractBackend *backend,
               std::string table_name);
+              size_t tuples_per_tilegroup);
 
     ~DataTable();
 

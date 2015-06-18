@@ -71,4 +71,18 @@ extern void ShmemBackendArrayAllocation(void);
  */
 #define MAX_BACKENDS	0x7fffff
 
+//===--------------------------------------------------------------------===//
+// Test mode types
+// This defines all the postgres bridge test modes that we will support
+//===--------------------------------------------------------------------===//
+
+typedef enum {
+  TEST_MODE_TYPE_INVALID = 0,   // invalid test mode type
+
+  TEST_MODE_TYPE_BRIDGE  = 1,    // bridge tests
+  TEST_MODE_TYPE_STATISTICS = 2  // statistics tests
+}TestMode;
+
+extern TestMode CurrentTestModeStatus;
+
 #endif   /* _POSTMASTER_H */
