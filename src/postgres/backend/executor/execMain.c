@@ -60,6 +60,8 @@
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
 
+#include "nodes/pprint.h"
+
 
 /* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */
 ExecutorStart_hook_type ExecutorStart_hook = NULL;
@@ -282,6 +284,12 @@ void
 ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, long count)
 {
+	//PlannedStmt *plan = queryDesc->plannedstmt;
+	//elog_node_display(LOG, "plan", plan, Debug_pretty_print);
+
+  print_queryDesc(queryDesc);
+
+
 	if (ExecutorRun_hook)
 		(*ExecutorRun_hook) (queryDesc, direction, count);
 	else
