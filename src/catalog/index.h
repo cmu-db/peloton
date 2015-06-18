@@ -29,10 +29,10 @@ namespace catalog {
 
 class Column;
 
-//===--------------------------------------------------------------------===//
-// Index
-//===--------------------------------------------------------------------===//
 
+/**
+ * Index Catalog Object
+ */
 class Index : public AbstractCatalogObject {
 
 public:

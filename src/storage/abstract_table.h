@@ -21,12 +21,8 @@
 namespace nstore {
 namespace storage {
 
-//===--------------------------------------------------------------------===//
-// Abstract Table
-//===--------------------------------------------------------------------===//
-
 /**
- * Base class for tables
+ * Base class for all tables
  */
 class AbstractTable {
     friend class TileGroup;
