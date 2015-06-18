@@ -5,8 +5,6 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/common/transaction.h
- *
  *-------------------------------------------------------------------------
  */
 
@@ -18,8 +16,8 @@
 #include <map>
 
 #include "common/types.h"
-#include "storage/tile_group.h"
 #include "common/exception.h"
+#include "storage/tile_group.h"
 
 namespace nstore {
 

@@ -5,8 +5,6 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/executor/update_executor.cpp
- *
  *-------------------------------------------------------------------------
  */
 
@@ -16,7 +14,7 @@
 #include "executor/logical_tile.h"
 #include "planner/update_node.h"
 #include "common/logger.h"
-#include "common/transaction.h"
+#include "concurrency/transaction.h"
 
 namespace nstore {
 namespace executor {

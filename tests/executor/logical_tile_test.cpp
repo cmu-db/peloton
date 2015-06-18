@@ -14,7 +14,7 @@
 #include "catalog/schema.h"
 #include "common/types.h"
 #include "common/value_factory.h"
-#include "common/transaction.h"
+#include "concurrency/transaction.h"
 #include "executor/logical_tile.h"
 #include "executor/logical_tile_factory.h"
 #include "storage/backend_vm.h"

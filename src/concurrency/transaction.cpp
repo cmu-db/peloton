@@ -10,7 +10,8 @@
  *-------------------------------------------------------------------------
  */
 
-#include "common/transaction.h"
+#include "concurrency/transaction.h"
+
 #include "common/synch.h"
 #include "common/logger.h"
 

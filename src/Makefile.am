@@ -10,6 +10,7 @@ include $(top_srcdir)/common.am
 include $(srcdir)/backend/Makefile.am
 include $(srcdir)/catalog/Makefile.am
 include $(srcdir)/common/Makefile.am
+include $(srcdir)/concurrency/Makefile.am
 include $(srcdir)/executor/Makefile.am
 include $(srcdir)/expression/Makefile.am
 include $(srcdir)/index/Makefile.am
@@ -33,16 +34,17 @@ DEFAULT_INCLUDES =
 ######################################################################
 
 libpeloton_la_SOURCES = \
-                      $(backend_FILES) \
-					  $(catalog_FILES) \
-					  $(common_FILES) \
-					  $(executor_FILES) \
-					  $(expression_FILES) \
-					  $(index_FILES) \
-					  $(parser_FILES) \
-					  $(planner_FILES) \
-					  $(scheduler_FILES) \
-					  $(storage_FILES)
+			$(backend_FILES) \
+			$(catalog_FILES) \
+			$(common_FILES) \
+			$(concurrency_FILES) \
+			$(executor_FILES) \
+			$(expression_FILES) \
+			$(index_FILES) \
+			$(parser_FILES) \
+			$(planner_FILES) \
+			$(scheduler_FILES) \
+			$(storage_FILES)
 
 libpeloton_la_LDFLAGS = $(TBB_LIBS) 
 libpeloton_la_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(third_party_INCLUDES)
