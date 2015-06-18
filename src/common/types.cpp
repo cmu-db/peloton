@@ -391,7 +391,7 @@ ExpressionType StringToExpression(std::string str ) {
 // Index Type - String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string IndexToString(IndexType type) {
+std::string IndexTypeToString(IndexType type) {
     switch (type) {
     case INDEX_TYPE_INVALID: {
         return "INVALID";
@@ -406,7 +406,7 @@ std::string IndexToString(IndexType type) {
     return "INVALID";
 }
 
-IndexType StringToIndex(std::string str) {
+IndexType StringToIndexType(std::string str) {
     if (str == "INVALID") {
         return INDEX_TYPE_INVALID;
     } else if (str == "BTREE_MULTIMAP") {
@@ -530,7 +530,7 @@ PlanNodeType StringToPlanNode(std::string str) {
 // Constraint Type - String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string ConstraintToString(ConstraintType type) {
+std::string ConstraintTypeToString(ConstraintType type) {
     switch (type) {
     case CONSTRAINT_TYPE_INVALID: {
         return "INVALID";
@@ -545,7 +545,7 @@ std::string ConstraintToString(ConstraintType type) {
     return "INVALID";
 }
 
-ConstraintType StringToConstraint(std::string str) {
+ConstraintType StringToConstraintType(std::string str) {
     if (str == "INVALID") {
         return CONSTRAINT_TYPE_INVALID;
     } else if (str == "PRIMARY_KEY") {

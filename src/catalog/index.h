@@ -65,10 +65,12 @@ public:
         return columns;
     }
 
+    // FIXME: REMOVE THIS!
     void SetPhysicalIndex(index::Index* index) {
         physical_index = index;
     }
 
+    // FIXME: REMOVE THIS!
     index::Index *GetPhysicalIndex() {
         return physical_index;
     }
@@ -92,7 +94,7 @@ private:
     std::vector<Column*> columns;
 
     // underlying physical index
-    index::Index* physical_index = nullptr;
+    index::Index* physical_index = nullptr; // FIXME: REMOVE THIS!
 
 };
 
