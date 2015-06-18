@@ -12,7 +12,7 @@
 
 #include "executor/execdesc.h"
 
-extern void print_queryDesc(QueryDesc *queryDesc);
+extern void print_queryDesc(const QueryDesc *queryDesc);
 
 
 
