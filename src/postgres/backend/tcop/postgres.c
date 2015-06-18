@@ -3569,6 +3569,7 @@ PostgresMain(int argc, char *argv[],
   StringInfoData input_message;
   sigjmp_buf	local_sigjmp_buf;
   volatile bool send_ready_for_query = true;
+  float temp;
 
   //	struct Kernel *kernel = NULL;
   //	int retval = -1;
@@ -3944,6 +3945,16 @@ PostgresMain(int argc, char *argv[],
       // do nothing..
       break;
   }
+  //temp = GetNumberOfTuples(16385);
+/*
+  temp = GetNumberOfTuples(16388);
+printf("# of tuples : %f\n", temp);
+  SetNumberOfTuples(16388, 202.0);
+
+  temp = GetNumberOfTuples(16388);;
+printf("# of tuples : %f\n", temp);
+*/
+
 
   /* End of Experimental code */
 
