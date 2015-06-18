@@ -17,7 +17,6 @@
 #include <unistd.h>
 
 extern "C" {
-
 #include "postgres.h"
 
 #include "bootstrap/bootstrap.h"
@@ -31,18 +30,14 @@ extern "C" {
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
 #include "utils/ps_status.h"
-
 }
 
-
 const char *progname;
-
 
 static void startup_hacks(const char *progname);
 static void init_locale(int category, const char *locale);
 static void help(const char *progname);
 static void check_root(const char *progname);
-
 
 /*
  * Any Postgres server process begins execution here.

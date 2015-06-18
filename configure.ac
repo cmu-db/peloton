@@ -17,17 +17,17 @@ AC_PROG_CC([gcc])
 # Disable static library
 LT_INIT([disable-static])
 
-# Check for pthreads (uses m4/acx_pthread.m4).
-ACX_PTHREAD([], [AC_MSG_ERROR([Could not find pthreads in your system.])])
+# Check for pthreads 
+ACX_PTHREAD([], [AC_MSG_ERROR([Please install pthread library : libpthread-stubs0-dev])])
 
 AC_LANG([C++])
 AC_PROG_CXX([g++])
 AC_SUBST([AM_CXXFLAGS], '-std=c++11 -stdlib=libc++')
 
+######################################################################
+# OS X Support
+######################################################################
 
-######################################################################
-# OS X portability support
-######################################################################
 AM_CONDITIONAL(BUILD_OS_IS_DARWIN, [[[[ "$build_os" == darwin* ]]]])
 
 ######################################################################
@@ -58,26 +58,55 @@ AX_VALGRIND_CHECK
 AX_CODE_COVERAGE
 
 ######################################################################
-# PARSER
+# PARALLEL MAKE 
 ######################################################################
 
-AC_PROG_LEX
-AC_PROG_YACC
+NPROCS=1
+if [[ "$build_os" == "linux-gnu" ]]
+then
+    NPROCS=$(grep -c ^processor /proc/cpuinfo)
+elif [[ "$build_os" == "darwin" ]]
+then
+    NPROCS=$(sysctl -n hw.physicalcpu)
+fi
+
+NPROCS=`expr $NPROCS / 2`
+MAKEFLAGS="-j$NPROCS"
 
 ######################################################################
 # PACKAGES
 ######################################################################
 
-PKG_CHECK_MODULES([TBB], [tbb >= 1.0.0])
+# Check for flex and bison
+AX_PROG_FLEX([], AC_MSG_ERROR([Please install flex : flex]))
+AX_PROG_BISON([], AC_MSG_ERROR([Please install bison : bison]))
 
-AC_SUBST([TBB_CFLAGS])
-AC_SUBST([TBB_LIBS])
+# Check for readline support
+AX_LIB_READLINE
+
+# Check for zlib
+AX_CHECK_ZLIB([], AC_MSG_ERROR([Please install zlib library : libzlib1g-dev]))
+
+# Check for OpenSSL
+AC_CHECK_SSL
+
+# Check for Intel TBB library
+AX_TBB([], AC_MSG_ERROR([Please install the Intel TBB library : libtbb-dev]))
+
+# Check for Boost libraries
+AX_BOOST_BASE([1.42])
+AX_BOOST_ASIO
+AX_BOOST_FILESYSTEM
+AX_BOOST_SERIALIZATION
+AX_BOOST_SYSTEM
+AX_BOOST_THREAD
 
 #[test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h.in])
 
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  tests/Makefile
+                 tools/Makefile
                  ])
 
 AC_CONFIG_LINKS([tests/valgrind.supp:third_party/valgrind/valgrind.supp])
@@ -85,19 +114,18 @@ AC_CONFIG_LINKS([tests/valgrind.supp:third_party/valgrind/valgrind.supp])
 AC_OUTPUT
 
 echo \
-"-------------------------------------------------
+"---------------------------------------------------------------------
 
-${PACKAGE_NAME} Version ${PACKAGE_VERSION}
+${PACKAGE_NAME} 
 
-Prefix: '${prefix}'.
-Compiler: '${CC} ${CFLAGS} ${CPPFLAGS}'
-Libraries: '${LIBS}'
-Building OS: '${build_os}'
-is OS X(# means Yes): '${BUILD_OS_IS_DARWIN_FALSE}'
+Version        : ${PACKAGE_VERSION}
+OS             : ${build_os}
+Prefix         : ${prefix}
+Compiler       : ${CC}
+CPP Flags      : ${CPPFLAGS}
+C Flags        : ${CFLAGS}
+C++ Flags      : ${CXXFLAGS}
+Make Flags     : ${MAKEFLAGS}
+Libraries      : ${LIBS} $TBB_LIBS
 
-Package features:
-Async Execution: ${async_exec}
-
---------------------------------------------------"
-
-# @end 2
+---------------------------------------------------------------------"

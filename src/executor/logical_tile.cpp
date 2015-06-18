@@ -28,6 +28,55 @@ LogicalTile::~LogicalTile() {
 
 /**
  * @brief Adds column metadata to the logical tile.
+ * @param cp ColumnInfo that needs to be added.
+ * @param own_base_tile True if the logical tile should assume ownership of
+ *                      the base tile passed in.
+ */
+void LogicalTile::AddColumn(const ColumnInfo& cp,
+                            bool own_base_tile){
+
+  schema_.push_back(cp);
+
+  if (own_base_tile) {
+    owned_base_tiles_.insert(cp.base_tile);
+  }
+
+}
+
+/**
+ * @brief Get the schema of the tile.
+ * @return ColumnInfo-based schema of the tile.
+ */
+const std::vector<LogicalTile::ColumnInfo>& LogicalTile::GetSchema() const{
+  return schema_;
+}
+
+/**
+ * @brief Get the position lists of the tile.
+ * @return Position lists of the tile.
+ */
+const std::vector<std::vector<oid_t> >& LogicalTile::GetPositionLists() const{
+  return position_lists_;
+}
+
+/**
+ * @brief Set the schema of the tile.
+ * @param ColumnInfo-based schema of the tile.
+ */
+void LogicalTile::SetSchema(std::vector<LogicalTile::ColumnInfo>&& schema){
+  schema_ = schema;
+}
+
+/**
+ * @brief Set the position lists of the tile.
+ * @param Position lists.
+ */
+void LogicalTile::SetPositionLists(std::vector<std::vector<oid_t> >&& position_lists){
+  position_lists_ = position_lists;
+}
+
+/**
+ * @brief Adds column metadata to the logical tile.
  * @param base_tile Base tile that this column is from.
  * @param own_base_tile True if the logical tile should assume ownership of
  *                      the base tile passed in.
@@ -102,6 +151,25 @@ storage::Tile *LogicalTile::GetBaseTile(oid_t column_id) {
 
 
 /**
+ * @brief Is this tile a wrapper around the underlying tiles ?
+ *
+ * @return bool
+ */
+bool LogicalTile::IsWrapper(){
+  return wrapper;
+}
+
+/**
+ * @brief Get the wrapped physical tile at given offset
+ *
+ * @return Pointer to the wrapped physical tile
+ */
+storage::Tile *LogicalTile::GetWrappedTile(){
+  assert(physical_tile_ != nullptr);
+  return physical_tile_;
+}
+
+/**
  * @brief Get the value at the specified field.
  * @param tuple_id Tuple id of the specified field (row/position).
  * @param column_id Column id of the specified field.
@@ -129,7 +197,7 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
  *
  * @return Number of tuples.
  */
-size_t LogicalTile::NumTuples() {
+size_t LogicalTile::GetTupleCount() {
   return num_tuples_;
 }
 
@@ -138,7 +206,7 @@ size_t LogicalTile::NumTuples() {
  *
  * @return Number of columns.
  */
-size_t LogicalTile::NumCols() {
+size_t LogicalTile::GetColumnCount() {
   return schema_.size();
 }
 
@@ -248,6 +316,7 @@ bool LogicalTile::iterator::operator!=(const iterator &rhs) {
 oid_t LogicalTile::iterator::operator*() {
   return pos_;
 }
+
 
 /** @brief Returns a string representation of this tile. */
 std::ostream& operator<<(std::ostream& os, const LogicalTile& lt) {

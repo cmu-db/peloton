@@ -9,7 +9,9 @@ check_PROGRAMS += \
 				  materialization_test \
 				  mutate_test \
 				  seq_scan_test \
-				  index_scan_test
+				  index_scan_test \
+				  limit_test \
+				  nested_loop_join_test
 
 executor_tests_common= 	executor/executor_tests_util.cpp \
 						harness.cpp
@@ -78,9 +80,28 @@ seq_scan_test_LDADD = \
 					  $(obj_DIR)/executor/seq_scan_executor.o
 
 index_scan_test_SOURCES = \
-						$(executor_tests_common) \
-						executor/index_scan_test.cpp 
+						  $(executor_tests_common) \
+						  executor/index_scan_test.cpp 
 
 index_scan_test_LDADD = \
-					  $(executor_tests_common_ld)
+						$(executor_tests_common_ld) \
+						$(obj_DIR)/executor/index_scan_executor.o
+
+limit_test_SOURCES = \
+					 $(executor_tests_common) \
+					 executor/limit_test.cpp
+
+limit_test_LDADD = \
+				   $(executor_tests_common_ld) \
+				   $(obj_DIR)/executor/limit_executor.o
+
+nested_loop_join_test_SOURCES = \
+								$(executor_tests_common) \
+								executor/nested_loop_join_test.cpp 
+
+nested_loop_join_test_LDADD = \
+							  $(executor_tests_common_ld) \
+							  $(obj_DIR)/expression/abstract_expression.o \
+							  $(obj_DIR)/expression/expression_util.o \
+							  $(obj_DIR)/executor/nested_loop_join_executor.o
 

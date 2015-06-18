@@ -10,6 +10,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "catalog/schema.h"
 #include "common/types.h"
 #include "common/value.h"
 
@@ -22,13 +23,22 @@ class Tuple;
 
 namespace executor {
 
-/*
- * Position list can be shared by multiple columns in a logical tile.
- * This reduces deduplication.
- */
+//===--------------------------------------------------------------------===//
+// Logical Tile
+//===--------------------------------------------------------------------===//
 
+/**
+ * Represents a Logical Tile that can represent columns in many Physical Tiles.
+ *
+ * LT :: <C1, C2>
+ * C1 :: col 5 in PT 5
+ * C2 :: col 3 in PT 9 ...
+ *
+ * LogicalTiles are only instantiated via LogicalTileFactory.
+ */
 class LogicalTile {
   friend class LogicalTileFactory;
+  struct ColumnInfo;
 
  public:
   LogicalTile(const LogicalTile &) = delete;
@@ -38,11 +48,10 @@ class LogicalTile {
 
   ~LogicalTile();
 
-  void AddColumn(
-      storage::Tile *base_tile,
-      bool own_base_tile,
-      oid_t origin_column_id,
-      oid_t position_list_idx);
+  void AddColumn(const ColumnInfo& cp, bool own_base_tile);
+
+  void AddColumn(storage::Tile *base_tile, bool own_base_tile,
+      oid_t origin_column_id, oid_t position_list_idx);
 
   int AddPositionList(std::vector<oid_t> &&position_list);
 
@@ -52,9 +61,29 @@ class LogicalTile {
 
   Value GetValue(oid_t tuple_id, oid_t column_id);
 
-  size_t NumTuples();
+  size_t GetTupleCount();
 
-  size_t NumCols();
+  size_t GetColumnCount();
+
+  const std::vector<ColumnInfo>& GetSchema() const;
+
+  void SetSchema(std::vector<LogicalTile::ColumnInfo>&& schema);
+
+  const std::vector<std::vector<oid_t> >& GetPositionLists() const;
+
+  void SetPositionLists(std::vector<std::vector<oid_t> >&& position_lists);
+
+  //===--------------------------------------------------------------------===//
+  // Special Case : Single underlying Physical Tile
+  //===--------------------------------------------------------------------===//
+
+  bool IsWrapper();
+
+  storage::Tile *GetWrappedTile();
+
+  //===--------------------------------------------------------------------===//
+  // Logical Tile Iterator
+  //===--------------------------------------------------------------------===//
 
   /**
    * @brief Iterates through tuple ids in this logical tile.
@@ -109,6 +138,7 @@ class LogicalTile {
     oid_t origin_column_id;
   };
 
+  // Dummy default constructor
   LogicalTile(){};
 
   /**
@@ -134,6 +164,17 @@ class LogicalTile {
 
   /** @brief Set of base tiles owned (memory-wise) by this logical tile. */
   std::unordered_set<storage::Tile *> owned_base_tiles_;
+
+  /** @brief Is this logical tile just a wrapper around a single physical tile ? */
+  bool wrapper = false;
+
+  /** @brief Underlying physical tile
+   *
+   * For handling the case where the logical tile is built on top of a
+   * single underlying physical tile. In this case, we can directly access
+   * the underlying physical tile rather than going through the logical tile.
+   * */
+  storage::Tile * physical_tile_ = nullptr;
 };
 
 

@@ -36,7 +36,7 @@ class ConstantValueExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     std::stringstream os;
-    os << spacer << "OptimizedConstantValueExpression:" << value;
+    os << spacer << "ConstantValueExpression: " << value;
     return os.str();
   }
 

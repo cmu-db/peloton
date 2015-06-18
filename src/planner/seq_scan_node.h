@@ -33,9 +33,9 @@ class SeqScanNode : public AbstractPlanNode {
       storage::DataTable *table,
       expression::AbstractExpression *predicate,
       const std::vector<oid_t> &column_ids)
-    : table_(table),
-      predicate_(predicate),
-      column_ids_(column_ids) {
+  : table_(table),
+    predicate_(predicate),
+    column_ids_(column_ids) {
   }
 
   const storage::DataTable *GetTable() const {
