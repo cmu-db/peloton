@@ -1,11 +1,12 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
 ######################################################################
-# BACKEND
+# EXPRESSION
 ######################################################################
 
-backend_FILES = \
-				backend/kernel.cpp
+expression_FILES = \
+				   expression/abstract_expression.cpp \
+				   expression/expression_util.cpp
 
-backend_INCLUDES = \
-				   -I$(srcdir)/backend
+expression_INCLUDES = \
+					  -I$(srcdir)/expression    
