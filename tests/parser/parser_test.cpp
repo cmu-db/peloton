@@ -13,8 +13,8 @@
 #include "gtest/gtest.h"
 
 #include "harness.h"
-#include "parser/parser.h"
-#include "parser/parser_utils.h"
+#include "backend/parser/parser.h"
+#include "backend/parser/parser_utils.h"
 
 #include <vector>
 

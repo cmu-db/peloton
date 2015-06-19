@@ -1,0 +1,183 @@
+/**
+ * @brief Header for logical tile.
+ *
+ * Copyright(c) 2015, CMU
+ */
+
+#pragma once
+
+#include <iterator>
+#include <unordered_set>
+#include <vector>
+
+#include "backend/catalog/schema.h"
+#include "backend/common/types.h"
+#include "backend/common/value.h"
+
+namespace nstore {
+
+namespace storage {
+class Tile;
+class Tuple;
+}
+
+namespace executor {
+
+//===--------------------------------------------------------------------===//
+// Logical Tile
+//===--------------------------------------------------------------------===//
+
+/**
+ * Represents a Logical Tile that can represent columns in many Physical Tiles.
+ *
+ * LT :: <C1, C2>
+ * C1 :: col 5 in PT 5
+ * C2 :: col 3 in PT 9 ...
+ *
+ * LogicalTiles are only instantiated via LogicalTileFactory.
+ */
+class LogicalTile {
+  friend class LogicalTileFactory;
+  struct ColumnInfo;
+
+ public:
+  LogicalTile(const LogicalTile &) = delete;
+  LogicalTile& operator=(const LogicalTile &) = delete;
+  LogicalTile(LogicalTile &&) = delete;
+  LogicalTile& operator=(LogicalTile &&) = delete;
+
+  ~LogicalTile();
+
+  void AddColumn(const ColumnInfo& cp, bool own_base_tile);
+
+  void AddColumn(storage::Tile *base_tile, bool own_base_tile,
+      oid_t origin_column_id, oid_t position_list_idx);
+
+  int AddPositionList(std::vector<oid_t> &&position_list);
+
+  void InvalidateTuple(oid_t tuple_id);
+
+  storage::Tile *GetBaseTile(oid_t column_id);
+
+  Value GetValue(oid_t tuple_id, oid_t column_id);
+
+  size_t GetTupleCount();
+
+  size_t GetColumnCount();
+
+  const std::vector<ColumnInfo>& GetSchema() const;
+
+  void SetSchema(std::vector<LogicalTile::ColumnInfo>&& schema);
+
+  const std::vector<std::vector<oid_t> >& GetPositionLists() const;
+
+  void SetPositionLists(std::vector<std::vector<oid_t> >&& position_lists);
+
+  //===--------------------------------------------------------------------===//
+  // Special Case : Single underlying Physical Tile
+  //===--------------------------------------------------------------------===//
+
+  bool IsWrapper();
+
+  storage::Tile *GetWrappedTile();
+
+  //===--------------------------------------------------------------------===//
+  // Logical Tile Iterator
+  //===--------------------------------------------------------------------===//
+
+  /**
+   * @brief Iterates through tuple ids in this logical tile.
+   *
+   * This provides easy access to tuples that have not been invalidated.
+   */
+  class iterator : public std::iterator<std::input_iterator_tag, oid_t> {
+    // It's a friend so it can call this iterator's private constructor.
+    friend class LogicalTile;
+
+   public:
+    iterator& operator++();
+
+    iterator operator++(int);
+
+    bool operator==(const iterator &rhs);
+
+    bool operator!=(const iterator &rhs);
+
+    oid_t operator*();
+
+   private:
+    iterator(LogicalTile *tile, bool begin);
+
+    /** @brief Keeps track of position of iterator. */
+    oid_t pos_;
+
+    /** @brief Tile that this iterator is iterating over. */
+    LogicalTile *tile_;
+  };
+
+  iterator begin();
+
+  iterator end();
+
+  friend std::ostream& operator<<(std::ostream& os, const LogicalTile& logical_tile);
+
+  private:
+
+  /** @brief Column metadata for logical tile */
+  struct ColumnInfo {
+    /** @brief Position list in logical tile that will correspond to this column. */
+    oid_t position_list_idx;
+
+    /**
+     * @brief Pointer to base tile that column is from.
+     * IMPORTANT: We use a pointer instead of the oid of the tile to minimize indirection.
+     */
+    storage::Tile *base_tile;
+
+    /** @brief Original column id of this logical tile column in its associated base tile. */
+    oid_t origin_column_id;
+  };
+
+  // Dummy default constructor
+  LogicalTile(){};
+
+  /**
+   * @brief Mapping of column ids in this logical tile to the underlying
+   *        position lists and columns in base tiles.
+   */
+  std::vector<ColumnInfo> schema_;
+
+  /**
+   * @brief Lists of position lists.
+   * Each list contains positions corresponding to particular tiles/columns.
+   */
+  std::vector<std::vector<oid_t> > position_lists_;
+
+  /**
+   * @brief Bit-vector storing validity of each row in the position lists.
+   * Used to cheaply invalidate rows of positions.
+   */
+  std::vector<bool> valid_rows_;
+
+  /** @brief Keeps track of the number of tuples that are still valid. */
+  oid_t num_tuples_ = 0;
+
+  /** @brief Set of base tiles owned (memory-wise) by this logical tile. */
+  std::unordered_set<storage::Tile *> owned_base_tiles_;
+
+  /** @brief Is this logical tile just a wrapper around a single physical tile ? */
+  bool wrapper = false;
+
+  /** @brief Underlying physical tile
+   *
+   * For handling the case where the logical tile is built on top of a
+   * single underlying physical tile. In this case, we can directly access
+   * the underlying physical tile rather than going through the logical tile.
+   * */
+  storage::Tile * physical_tile_ = nullptr;
+};
+
+
+} // namespace executor
+} // namespace nstore
+
