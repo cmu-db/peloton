@@ -792,7 +792,15 @@ PostmasterMain(int argc, char *argv[])
   {
     if( strstr(argv[arg_itr], "-testmode="))
     {
-      CurrentTestModeStatus = (int)(argv[arg_itr][10]-'0');
+      char* user_input = &argv[arg_itr][10];
+
+      if( !strcmp(user_input, "TEST_MODE_TYPE_BRIDGE"))
+          CurrentTestModeStatus = TEST_MODE_TYPE_BRIDGE;
+      else if( !strcmp(user_input, "TEST_MODE_TYPE_STATISTICS"))
+          CurrentTestModeStatus = TEST_MODE_TYPE_STATISTICS;
+      else //user can also type the test most as a number
+	CurrentTestModeStatus = (int)(user_input[0]-'0');
+      
       if( CurrentTestModeStatus == TEST_MODE_TYPE_INVALID)
       {
         printf("Error : %d is invalid TestMode\n", CurrentTestModeStatus);
