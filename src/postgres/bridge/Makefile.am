@@ -5,7 +5,7 @@
 ######################################################################
 
 postgres_bridge_FILES = \
-						postgres/bridge/bridge.cpp
+						postgres/bridge/bridge.c
 
 postgres_bridge_INCLUDES = \
 						   -I$(srcdir)/postgres/include \
