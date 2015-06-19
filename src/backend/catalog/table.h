@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "catalog/column.h"
-#include "catalog/index.h"
+#include "backend/catalog/column.h"
+#include "backend/catalog/index.h"
 
 #include <iostream>
 #include <mutex>

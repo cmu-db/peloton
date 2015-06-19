@@ -5,8 +5,8 @@
 ######################################################################
 
 expression_FILES = \
-				   expression/abstract_expression.cpp \
-				   expression/expression_util.cpp
+				   backend/expression/abstract_expression.cpp \
+				   backend/expression/expression_util.cpp
 
 expression_INCLUDES = \
-					  -I$(srcdir)/expression    
+					  -I$(srcdir)/backend/expression    

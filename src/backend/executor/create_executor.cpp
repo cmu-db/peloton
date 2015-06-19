@@ -10,16 +10,16 @@
  *-------------------------------------------------------------------------
  */
 
-#include "executor/create_executor.h"
+#include "backend/executor/create_executor.h"
 
-#include "catalog/catalog.h"
-#include "catalog/database.h"
-#include "common/logger.h"
-#include "common/types.h"
-#include "index/index_factory.h"
-#include "parser/statement_create.h"
-#include "storage/data_table.h"
-#include "storage/table_factory.h"
+#include "backend/catalog/catalog.h"
+#include "backend/catalog/database.h"
+#include "backend/common/logger.h"
+#include "backend/common/types.h"
+#include "backend/index/index_factory.h"
+#include "backend/parser/statement_create.h"
+#include "backend/storage/data_table.h"
+#include "backend/storage/table_factory.h"
 
 #include <cassert>
 #include <algorithm>

@@ -5,14 +5,14 @@
 ######################################################################
 
 catalog_FILES = \
-				catalog/catalog.cpp \
-				catalog/schema.cpp \
-				catalog/manager.cpp \
-				catalog/constraint.cpp \
-				catalog/index.cpp \
-				catalog/column.cpp \
-				catalog/table.cpp \
-				catalog/database.cpp 
+				backend/catalog/catalog.cpp \
+				backend/catalog/schema.cpp \
+				backend/catalog/manager.cpp \
+				backend/catalog/constraint.cpp \
+				backend/catalog/index.cpp \
+				backend/catalog/column.cpp \
+				backend/catalog/table.cpp \
+				backend/catalog/database.cpp 
 
 catalog_INCLUDES = \
-				   -I$(srcdir)/catalog    
+				   -I$(srcdir)/backend/catalog    

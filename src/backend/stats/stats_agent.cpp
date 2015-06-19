@@ -14,19 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with VoltDB.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "stats_agent.h"
+#include "backend/stats_agent.h"
 
-#include "common/ids.h"
-#include "common/tabletuple.h"
-#include "common/TupleSchema.h"
-#include "storage/PersistentTableStats.h"
-#include "storage/tablefactory.h"
-#include "storage/tableiterator.h"
+#include "backend/common/ids.h"
+#include "backend/common/tabletuple.h"
+#include "backend/common/TupleSchema.h"
+#include "backend/storage/PersistentTableStats.h"
+#include "backend/storage/tablefactory.h"
+#include "backend/storage/tableiterator.h"
 #include <cassert>
 #include <string>
 #include <vector>
 
-#include "stats_source.h"
+#include "backend/stats_source.h"
 
 namespace voltdb {
 

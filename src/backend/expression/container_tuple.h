@@ -11,11 +11,11 @@
 
 #include <cassert>
 
-#include "common/types.h"
-#include "common/value.h"
-#include "common/exception.h"
-#include "expression/tuple.h"
-#include "storage/tile_group.h"
+#include "backend/common/types.h"
+#include "backend/common/value.h"
+#include "backend/common/exception.h"
+#include "backend/expression/tuple.h"
+#include "backend/storage/tile_group.h"
 
 namespace nstore {
 namespace expression {

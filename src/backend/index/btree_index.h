@@ -10,15 +10,15 @@
 
 #pragma once
 
-#include "common/types.h"
-#include "storage/tuple.h"
+#include "backend/common/types.h"
+#include "backend/storage/tuple.h"
 
-#include "index/index.h"
-#include "index/concurrent_btree.h"
+#include "backend/index/index.h"
+#include "backend/index/concurrent_btree.h"
 
 #include <vector>
 #include <string>
-#include "catalog/manager.h"
+#include "backend/catalog/manager.h"
 
 #include <atomic>
 

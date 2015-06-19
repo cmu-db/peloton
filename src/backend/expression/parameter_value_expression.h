@@ -5,9 +5,9 @@
 #include <string>
 #include <sstream>
 
-#include "common/value_vector.h"
-#include "expression/tuple_value_expression.h"
-#include "expression/constant_value_expression.h"
+#include "backend/common/value_vector.h"
+#include "backend/expression/tuple_value_expression.h"
+#include "backend/expression/constant_value_expression.h"
 
 namespace nstore {
 namespace expression {

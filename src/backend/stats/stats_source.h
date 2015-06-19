@@ -13,10 +13,10 @@
 
 #pragma once
 
-#include "common/value.h"
-#include "common/types.h"
-#include "storage/tuple.h"
-#include "storage/table.h"
+#include "backend/common/value.h"
+#include "backend/common/types.h"
+#include "backend/storage/tuple.h"
+#include "backend/storage/table.h"
 
 #include <string>
 #include <vector>

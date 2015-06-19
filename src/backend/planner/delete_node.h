@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include "planner/abstract_plan_node.h"
-#include "common/types.h"
-#include "storage/data_table.h"
+#include "backend/planner/abstract_plan_node.h"
+#include "backend/common/types.h"
+#include "backend/storage/data_table.h"
 
 namespace nstore {
 namespace planner {

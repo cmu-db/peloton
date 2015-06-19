@@ -8,8 +8,8 @@
 #include <vector>
 #include <iostream>
 
-#include "common/types.h"
-#include "expression/expression.h"
+#include "backend/common/types.h"
+#include "backend/expression/expression.h"
 
 namespace nstore {
 namespace parser {

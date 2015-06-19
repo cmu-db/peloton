@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include "common/types.h"
-#include "executor/abstract_executor.h"
-#include "planner/seq_scan_node.h"
+#include "backend/common/types.h"
+#include "backend/executor/abstract_executor.h"
+#include "backend/planner/seq_scan_node.h"
 
 namespace nstore {
 namespace executor {

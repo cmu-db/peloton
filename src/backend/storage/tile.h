@@ -12,14 +12,14 @@
 
 #pragma once
 
-#include "catalog/manager.h"
-#include "catalog/schema.h"
-#include "storage/backend.h"
-#include "storage/tuple.h"
-#include "storage/tile_group_header.h"
-#include "storage/backend.h"
+#include "backend/catalog/manager.h"
+#include "backend/catalog/schema.h"
+#include "backend/storage/backend.h"
+#include "backend/storage/tuple.h"
+#include "backend/storage/tile_group_header.h"
+#include "backend/storage/backend.h"
 #include <mutex>
-#include "backend_vm.h"
+#include "backend/storage/backend_vm.h"
 
 namespace nstore {
 namespace storage {

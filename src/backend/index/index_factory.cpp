@@ -13,9 +13,9 @@
 #include <cassert>
 #include <iostream>
 
-#include "index/index_factory.h"
+#include "backend/index/index_factory.h"
 
-#include "btree_index.h"
+#include "backend/index/btree_index.h"
 
 namespace nstore {
 namespace index {

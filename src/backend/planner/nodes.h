@@ -14,22 +14,22 @@ namespace planner {
 // This is just for convenience
 
 /*TODO Uncomment.
-#include "planner/aggregate_node.h"
-#include "planner/delete_node.h"
-#include "planner/distinct_node.h"
-#include "planner/indexscan_node.h"
-#include "planner/insert_node.h"
-#include "planner/limit_node.h"
-#include "planner/materialize_node.h"
-#include "planner/nestloop_node.h"
-#include "planner/nestloopindex_node.h"
-#include "planner/projection_node.h"
-#include "planner/orderby_node.h"
-#include "planner/receive_node.h"
-#include "planner/send_node.h"
-#include "planner/seqscan_node.h"
-#include "planner/union_node.h"
-#include "planner/update_node.h"
+#include "backend/planner/aggregate_node.h"
+#include "backend/planner/delete_node.h"
+#include "backend/planner/distinct_node.h"
+#include "backend/planner/indexscan_node.h"
+#include "backend/planner/insert_node.h"
+#include "backend/planner/limit_node.h"
+#include "backend/planner/materialize_node.h"
+#include "backend/planner/nestloop_node.h"
+#include "backend/planner/nestloopindex_node.h"
+#include "backend/planner/projection_node.h"
+#include "backend/planner/orderby_node.h"
+#include "backend/planner/receive_node.h"
+#include "backend/planner/send_node.h"
+#include "backend/planner/seqscan_node.h"
+#include "backend/planner/union_node.h"
+#include "backend/planner/update_node.h"
 */
 
 } // namespace planner

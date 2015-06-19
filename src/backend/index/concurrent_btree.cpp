@@ -10,12 +10,12 @@
  *-------------------------------------------------------------------------
  */
 
-#include "index/concurrent_btree.h"
+#include "backend/index/concurrent_btree.h"
 
 #include <sstream>
 #include <iostream>
 
-#include "storage/tuple.h"
+#include "backend/storage/tuple.h"
 
 namespace nstore {
 namespace index {

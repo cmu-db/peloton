@@ -17,9 +17,9 @@
 #include <vector>
 #include <map>
 
-#include "common/types.h"
-#include "storage/tile_group.h"
-#include "common/exception.h"
+#include "backend/common/types.h"
+#include "backend/storage/tile_group.h"
+#include "backend/common/exception.h"
 
 namespace nstore {
 

@@ -18,8 +18,8 @@
 #include <exception>
 #include <arpa/inet.h>
 
-#include "common/byte_array.h"
-#include "common/exception.h"
+#include "backend/common/byte_array.h"
+#include "backend/common/exception.h"
 
 namespace nstore {
 

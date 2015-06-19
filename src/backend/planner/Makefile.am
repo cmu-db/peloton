@@ -5,9 +5,9 @@
 ######################################################################
 
 planner_FILES = \
-				planner/abstract_plan_node.cpp \
-				planner/plan_column.cpp \
-				planner/plan_node_util.cpp
+				backend/planner/abstract_plan_node.cpp \
+				backend/planner/plan_column.cpp \
+				backend/planner/plan_node_util.cpp
 
 planner_INCLUDES = \
-				   -I$(srcdir)/planner
+				   -I$(srcdir)/backend/planner

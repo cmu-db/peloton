@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "catalog/table.h"
+#include "backend/catalog/table.h"
 
 #include <iostream>
 #include <mutex>

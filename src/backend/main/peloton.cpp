@@ -17,19 +17,19 @@
 #include <unistd.h>
 
 extern "C" {
-#include "postgres.h"
+#include "postgres/include/postgres.h"
 
-#include "bootstrap/bootstrap.h"
-#include "common/username.h"
-#include "postmaster/postmaster.h"
-#include "storage/barrier.h"
-#include "storage/s_lock.h"
-#include "storage/spin.h"
-#include "tcop/tcopprot.h"
-#include "utils/help_config.h"
-#include "utils/memutils.h"
-#include "utils/pg_locale.h"
-#include "utils/ps_status.h"
+#include "postgres/include/bootstrap/bootstrap.h"
+#include "postgres/include/common/username.h"
+#include "postgres/include/postmaster/postmaster.h"
+#include "postgres/include/storage/barrier.h"
+#include "postgres/include/storage/s_lock.h"
+#include "postgres/include/storage/spin.h"
+#include "postgres/include/tcop/tcopprot.h"
+#include "postgres/include/utils/help_config.h"
+#include "postgres/include/utils/memutils.h"
+#include "postgres/include/utils/pg_locale.h"
+#include "postgres/include/utils/ps_status.h"
 }
 
 const char *progname;

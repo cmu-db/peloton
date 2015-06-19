@@ -10,19 +10,19 @@
  *-------------------------------------------------------------------------
  */
 
-#include "tile_stats.h"
-#include "storage/TableStats.h"
-#include "common/TupleSchema.h"
-#include "common/ids.h"
-#include "common/ValueFactory.hpp"
-#include "common/tabletuple.h"
-#include "storage/table.h"
-#include "storage/tablefactory.h"
+#include "backend/tile_stats.h"
+#include "backend/storage/TableStats.h"
+#include "backend/common/TupleSchema.h"
+#include "backend/common/ids.h"
+#include "backend/common/ValueFactory.hpp"
+#include "backend/common/tabletuple.h"
+#include "backend/storage/table.h"
+#include "backend/storage/tablefactory.h"
 
 #include <vector>
 #include <string>
 
-#include "../stats/stats.h"
+#include "backend/../stats/stats.h"
 
 namespace nstore {
 namespace storage {

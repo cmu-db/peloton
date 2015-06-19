@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "catalog/schema.h"
-#include "executor/abstract_executor.h"
-#include "planner/nested_loop_join_node.h"
+#include "backend/catalog/schema.h"
+#include "backend/executor/abstract_executor.h"
+#include "backend/planner/nested_loop_join_node.h"
 
 #include <vector>
 

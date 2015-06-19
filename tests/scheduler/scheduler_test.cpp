@@ -13,10 +13,10 @@
 #include "gtest/gtest.h"
 
 #include "harness.h"
-#include "scheduler/traffic_cop.h"
-#include "scheduler/scheduler.h"
-#include "backend/kernel.h"
-#include "catalog/catalog.h"
+#include "backend/scheduler/traffic_cop.h"
+#include "backend/scheduler/scheduler.h"
+#include "backend/main/kernel.h"
+#include "backend/catalog/catalog.h"
 
 #include <sstream>
 

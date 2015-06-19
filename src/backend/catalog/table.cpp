@@ -10,7 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "catalog/table.h"
+#include "backend/catalog/table.h"
 
 namespace nstore {
 namespace catalog {

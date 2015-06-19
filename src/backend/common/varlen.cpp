@@ -10,8 +10,8 @@
  *-------------------------------------------------------------------------
  */
 
-#include "common/varlen.h"
-#include "common/pool.h"
+#include "backend/common/varlen.h"
+#include "backend/common/pool.h"
 
 namespace nstore {
 

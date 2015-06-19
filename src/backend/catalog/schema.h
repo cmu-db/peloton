@@ -14,7 +14,7 @@
 
 #include <vector>
 
-#include "common/types.h"
+#include "backend/common/types.h"
 
 namespace nstore {
 namespace catalog {

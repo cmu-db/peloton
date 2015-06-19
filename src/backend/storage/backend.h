@@ -14,7 +14,7 @@
 
 #include <string>
 
-#include "common/types.h"
+#include "backend/common/types.h"
 
 namespace nstore {
 namespace storage {

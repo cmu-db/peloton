@@ -10,11 +10,11 @@
  *-------------------------------------------------------------------------
  */
 
-#include "stats/stats_source.h"
+#include "backend/stats/stats_source.h"
 
-#include "common/value_factory.h"
-#include "storage/table.h"
-#include "storage/table_factory.h"
+#include "backend/common/value_factory.h"
+#include "backend/storage/table.h"
+#include "backend/storage/table_factory.h"
 
 #include <vector>
 #include <string>

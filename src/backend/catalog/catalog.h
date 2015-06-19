@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "catalog/database.h"
+#include "backend/catalog/database.h"
 
 #include <iostream>
 #include <mutex>
