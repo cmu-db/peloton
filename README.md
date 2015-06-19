@@ -53,6 +53,11 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
     
     pg_ctl -D ./data stop
 
+### Testing
+
+    make check -j4        // Build and execute tests
+    cd tests; make check-build -j4  // Only build the tests.
+
 ## Development        
 
 ###  Environment Setup 
