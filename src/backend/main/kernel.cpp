@@ -5,18 +5,19 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/backend/kernel.cpp
+ * /n-store/src/kernel.cpp
  *
  *-------------------------------------------------------------------------
  */
 
 
-#include "backend/kernel.h"
+#include "main/kernel.h"
 #include "common/logger.h"
 #include "executor/executors.h"
+#include "parser/parser.h"
+
 #include "tbb/tbb.h"
 #include "tbb/flow_graph.h"
-#include "parser/parser.h"
 
 #include <stdio.h>
 

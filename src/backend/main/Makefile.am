@@ -5,7 +5,7 @@
 ######################################################################
 
 backend_FILES = \
-				backend/kernel.cpp
+				backend/main/kernel.cpp
 
 backend_INCLUDES = \
 				   -I$(srcdir)/backend

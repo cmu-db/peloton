@@ -11,17 +11,17 @@ include $(top_srcdir)/common.am
 # SUBDIRS
 ######################################################################
 
-include $(srcdir)/backend/Makefile.am
-include $(srcdir)/bridge/Makefile.am
-include $(srcdir)/catalog/Makefile.am
-include $(srcdir)/common/Makefile.am
-include $(srcdir)/executor/Makefile.am
-include $(srcdir)/expression/Makefile.am
-include $(srcdir)/index/Makefile.am
-include $(srcdir)/parser/Makefile.am
-include $(srcdir)/planner/Makefile.am
-include $(srcdir)/scheduler/Makefile.am
-include $(srcdir)/storage/Makefile.am
+include $(srcdir)/backend/bridge/Makefile.am
+include $(srcdir)/backend/catalog/Makefile.am
+include $(srcdir)/backend/common/Makefile.am
+include $(srcdir)/backend/executor/Makefile.am
+include $(srcdir)/backend/expression/Makefile.am
+include $(srcdir)/backend/index/Makefile.am
+include $(srcdir)/backend/main/Makefile.am
+include $(srcdir)/backend/parser/Makefile.am
+include $(srcdir)/backend/planner/Makefile.am
+include $(srcdir)/backend/scheduler/Makefile.am
+include $(srcdir)/backend/storage/Makefile.am
 
 include $(srcdir)/postgres/backend/Makefile.am
 include $(srcdir)/postgres/bridge/Makefile.am
@@ -61,29 +61,28 @@ libpeloton_la_SOURCES = \
 
 ## HACK: To make use of different include flags for peloton and postgres.
 
-libpeloton_la_CFLAGS = $(postgres_common_INCLUDES)
-libpeloton_la_CXXFLAGS = -std=c++11 -I. -I$(top_srcdir)/src -I.. $(third_party_INCLUDES)
+libpeloton_la_CPPFLAGS = -I$(srcdir)/postgres/include \
+						 -I$(srcdir)/postgres/backend \
+						 -I$(srcdir)/ \
+						 $(third_party_INCLUDES)
+
+libpeloton_la_CXXFLAGS = -std=c++11 -Wall -Wpointer-arith -Wendif-labels \
+                         -Wmissing-format-attribute -Wformat-security \
+						 -fno-strict-aliasing -fwrapv \
+						 -fPIC -fpic -msse4.2
 
 if BUILD_OS_IS_DARWIN
 libpeloton_la_LDFLAGS = -ldl -lm
-libpeloton_la_CFLAGS  +=  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
-						 -Wendif-labels -Wmissing-format-attribute -Wformat-security \
-						 -fno-strict-aliasing -fwrapv \
-						 -fPIC -fpic -msse4.2
 ## if build os is not darwin
 else
 libpeloton_la_LDFLAGS = -lrt -lcrypt -ldl -lm
-libpeloton_la_CFLAGS +=  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
-						 -Wendif-labels -Wmissing-format-attribute -Wformat-security \
-						 -fno-strict-aliasing -fwrapv -fexcess-precision=standard \
-						 -fPIC -fpic -msse4.2
 endif
 
 ######################################################################
 # PELOTON
 ######################################################################
 
-peloton_SOURCES = backend/peloton.cpp
+peloton_SOURCES = backend/main/peloton.cpp
 peloton_LDFLAGS = $(TBB_LIBS)
 peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES)
 peloton_LDADD = libpeloton.la $(TBB_LIBS)
