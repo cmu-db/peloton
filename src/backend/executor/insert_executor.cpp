@@ -10,13 +10,13 @@
  *-------------------------------------------------------------------------
  */
 
-#include "executor/insert_executor.h"
+#include "backend/executor/insert_executor.h"
 
-#include "catalog/manager.h"
-#include "common/logger.h"
-#include "executor/logical_tile.h"
-#include "planner/insert_node.h"
-#include "storage/tile_iterator.h"
+#include "backend/catalog/manager.h"
+#include "backend/common/logger.h"
+#include "backend/executor/logical_tile.h"
+#include "backend/planner/insert_node.h"
+#include "backend/storage/tile_iterator.h"
 
 namespace nstore {
 namespace executor {

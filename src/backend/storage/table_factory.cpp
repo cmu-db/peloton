@@ -8,13 +8,13 @@
  *-------------------------------------------------------------------------
  */
 
-#include "storage/table_factory.h"
+#include "backend/storage/table_factory.h"
 
-#include "common/exception.h"
-#include "common/logger.h"
-#include "index/index.h"
-#include "catalog/manager.h"
-#include "storage/data_table.h"
+#include "backend/common/exception.h"
+#include "backend/common/logger.h"
+#include "backend/index/index.h"
+#include "backend/catalog/manager.h"
+#include "backend/storage/data_table.h"
 
 #include <mutex>
 

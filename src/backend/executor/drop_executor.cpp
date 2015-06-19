@@ -10,16 +10,16 @@
  *-------------------------------------------------------------------------
  */
 
-#include "executor/drop_executor.h"
+#include "backend/executor/drop_executor.h"
 
-#include "catalog/catalog.h"
-#include "catalog/database.h"
-#include "common/logger.h"
-#include "common/types.h"
+#include "backend/catalog/catalog.h"
+#include "backend/catalog/database.h"
+#include "backend/common/logger.h"
+#include "backend/common/types.h"
 
-#include "index/index.h"
-#include "storage/data_table.h"
-#include "parser/statement_drop.h"
+#include "backend/index/index.h"
+#include "backend/storage/data_table.h"
+#include "backend/parser/statement_drop.h"
 
 #include <cassert>
 #include <algorithm>

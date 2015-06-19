@@ -5,10 +5,10 @@
 ######################################################################
 
 index_FILES = \
-			  index/index.cpp \
-			  index/index_factory.cpp \
-			  index/concurrent_btree.cpp \
-			  index/btree_index.cpp
+			  backend/index/index.cpp \
+			  backend/index/index_factory.cpp \
+			  backend/index/concurrent_btree.cpp \
+			  backend/index/btree_index.cpp
 
 index_INCLUDES = \
-				 -I$(srcdir)/common    
+				 -I$(srcdir)/backend/common    

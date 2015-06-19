@@ -5,7 +5,7 @@
  *
  */
 
-#include "plan_column.h"
+#include "backend/planner/plan_column.h"
 
 #include <sstream>
 

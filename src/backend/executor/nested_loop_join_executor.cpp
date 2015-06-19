@@ -10,15 +10,15 @@
  *-------------------------------------------------------------------------
  */
 
-#include "executor/nested_loop_join_executor.h"
+#include "backend/executor/nested_loop_join_executor.h"
 
 #include <vector>
 
-#include "common/types.h"
-#include "common/logger.h"
-#include "executor/logical_tile_factory.h"
-#include "expression/abstract_expression.h"
-#include "expression/container_tuple.h"
+#include "backend/common/types.h"
+#include "backend/common/logger.h"
+#include "backend/executor/logical_tile_factory.h"
+#include "backend/expression/abstract_expression.h"
+#include "backend/expression/container_tuple.h"
 
 namespace nstore {
 namespace executor {

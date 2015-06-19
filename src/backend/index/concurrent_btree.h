@@ -48,8 +48,8 @@ REDISTRIBUTION OF THIS SOFTWARE.
 #include <string.h>
 #include <stddef.h>
 
-#include "catalog/schema.h"
-#include "common/synch.h"
+#include "backend/catalog/schema.h"
+#include "backend/common/synch.h"
 
 namespace nstore {
 namespace index {

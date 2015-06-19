@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "catalog/catalog.h"
-#include "parser/parser.h"
+#include "backend/catalog/catalog.h"
+#include "backend/parser/parser.h"
 
 namespace nstore {
 namespace executor {

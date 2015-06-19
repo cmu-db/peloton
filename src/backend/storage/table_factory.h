@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "catalog/manager.h"
-#include "common/types.h"
-#include "storage/backend_vm.h"
-#include "storage/data_table.h"
+#include "backend/catalog/manager.h"
+#include "backend/common/types.h"
+#include "backend/storage/backend_vm.h"
+#include "backend/storage/data_table.h"
 
 #include <string>
 

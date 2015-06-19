@@ -4,12 +4,12 @@
  * Copyright(c) 2015, CMU
  */
 
-#include "executor/limit_executor.h"
+#include "backend/executor/limit_executor.h"
 
-#include "common/logger.h"
-#include "common/types.h"
-#include "executor/logical_tile.h"
-#include "planner/limit_node.h"
+#include "backend/common/logger.h"
+#include "backend/common/types.h"
+#include "backend/executor/logical_tile.h"
+#include "backend/planner/limit_node.h"
 
 namespace nstore {
 namespace executor {

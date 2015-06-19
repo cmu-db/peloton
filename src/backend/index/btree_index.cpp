@@ -10,7 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "btree_index.h"
+#include "backend/index/btree_index.h"
 
 namespace nstore {
 namespace index {

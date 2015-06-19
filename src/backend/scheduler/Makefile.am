@@ -5,8 +5,8 @@
 ######################################################################
 
 scheduler_FILES = \
-				scheduler/traffic_cop.cpp \
-				scheduler/scheduler.cpp
+				backend/scheduler/traffic_cop.cpp \
+				backend/scheduler/scheduler.cpp
 
 scheduler_INCLUDES = \
-				   -I$(srcdir)/scheduler
+				   -I$(srcdir)/backend/scheduler

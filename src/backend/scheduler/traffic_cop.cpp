@@ -13,7 +13,7 @@
 #include <tbb/tbb.h>
 #include <tbb/concurrent_queue.h>
 
-#include "scheduler/traffic_cop.h"
+#include "backend/scheduler/traffic_cop.h"
 #include <iostream>
 
 namespace nstore {

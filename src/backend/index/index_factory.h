@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "index/index.h"
+#include "backend/index/index.h"
 
 namespace nstore {
 namespace index {

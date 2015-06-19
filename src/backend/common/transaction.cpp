@@ -10,9 +10,9 @@
  *-------------------------------------------------------------------------
  */
 
-#include "common/transaction.h"
-#include "common/synch.h"
-#include "common/logger.h"
+#include "backend/common/transaction.h"
+#include "backend/common/synch.h"
+#include "backend/common/logger.h"
 
 #include <chrono>
 #include <thread>

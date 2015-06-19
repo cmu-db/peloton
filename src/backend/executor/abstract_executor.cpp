@@ -4,8 +4,8 @@
  * Copyright(c) 2015, CMU
  */
 
-#include "executor/abstract_executor.h"
-#include "common/logger.h"
+#include "backend/executor/abstract_executor.h"
+#include "backend/common/logger.h"
 
 namespace nstore {
 namespace executor {

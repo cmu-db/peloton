@@ -10,9 +10,9 @@
 #include <unordered_set>
 #include <vector>
 
-#include "catalog/schema.h"
-#include "common/types.h"
-#include "common/value.h"
+#include "backend/catalog/schema.h"
+#include "backend/common/types.h"
+#include "backend/common/value.h"
 
 namespace nstore {
 

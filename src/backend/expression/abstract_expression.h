@@ -15,10 +15,10 @@
 #include <string>
 #include <vector>
 
-#include "common/types.h"
-#include "common/value.h"
-#include "common/value_vector.h"
-#include "expression/tuple.h"
+#include "backend/common/types.h"
+#include "backend/common/value.h"
+#include "backend/common/value_vector.h"
+#include "backend/expression/tuple.h"
 #include <json_spirit.h>
 
 namespace nstore {

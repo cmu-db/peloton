@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "catalog/manager.h"
+#include "backend/catalog/manager.h"
 #include "tbb/tbb.h"
-#include "common/types.h"
+#include "backend/common/types.h"
 
 #include <iostream>
 

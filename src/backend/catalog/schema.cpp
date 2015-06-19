@@ -10,7 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "catalog/schema.h"
+#include "backend/catalog/schema.h"
 
 #include <cassert>
 

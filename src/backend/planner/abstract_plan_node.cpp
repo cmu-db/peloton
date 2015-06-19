@@ -9,11 +9,11 @@
 #include <string>
 #include <utility>
 
-#include "common/types.h"
-#include "common/logger.h"
-#include "planner/abstract_plan_node.h"
-#include "planner/plan_column.h"
-#include "planner/plan_node_util.h"
+#include "backend/common/types.h"
+#include "backend/common/logger.h"
+#include "backend/planner/abstract_plan_node.h"
+#include "backend/planner/plan_column.h"
+#include "backend/planner/plan_node_util.h"
 
 namespace nstore {
 namespace planner {

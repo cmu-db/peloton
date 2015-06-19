@@ -7,11 +7,11 @@
 
 #include <sstream>
 
-#include "planner/plan_node_util.h"
-#include "common/types.h"
-#include "common/exception.h"
-#include "common/logger.h"
-#include "planner/nodes.h"
+#include "backend/planner/plan_node_util.h"
+#include "backend/common/types.h"
+#include "backend/common/exception.h"
+#include "backend/common/logger.h"
+#include "backend/planner/nodes.h"
 
 namespace nstore {
 namespace planner {

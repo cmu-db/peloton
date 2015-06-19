@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "catalog/manager.h"
-#include "storage/abstract_table.h"
-#include "storage/tile_group.h"
+#include "backend/catalog/manager.h"
+#include "backend/storage/abstract_table.h"
+#include "backend/storage/tile_group.h"
 
 #include <string>
 

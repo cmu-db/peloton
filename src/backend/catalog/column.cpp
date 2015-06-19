@@ -10,8 +10,8 @@
  *-------------------------------------------------------------------------
  */
 
-#include "catalog/column.h"
-#include "common/types.h"
+#include "backend/catalog/column.h"
+#include "backend/common/types.h"
 
 namespace nstore {
 namespace catalog {

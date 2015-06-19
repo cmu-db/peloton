@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "common/iterator.h"
-#include "storage/tile.h"
-#include "storage/tile_group_header.h"
+#include "backend/common/iterator.h"
+#include "backend/storage/tile.h"
+#include "backend/storage/tile_group_header.h"
 
 namespace nstore {
 namespace storage {

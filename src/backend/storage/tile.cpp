@@ -10,19 +10,19 @@
  *-------------------------------------------------------------------------
  */
 
-#include "storage/tile.h"
+#include "backend/storage/tile.h"
 
 #include <cassert>
 #include <cstdio>
 
 #include <sstream>
 
-#include "catalog/schema.h"
-#include "common/exception.h"
-#include "common/pool.h"
-#include "common/serializer.h"
-#include "storage/tile_iterator.h"
-#include "storage/tuple.h"
+#include "backend/catalog/schema.h"
+#include "backend/common/exception.h"
+#include "backend/common/pool.h"
+#include "backend/common/serializer.h"
+#include "backend/storage/tile_iterator.h"
+#include "backend/storage/tuple.h"
 
 namespace nstore {
 namespace storage {

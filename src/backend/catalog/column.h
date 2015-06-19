@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "common/types.h"
-#include "catalog/constraint.h"
+#include "backend/common/types.h"
+#include "backend/catalog/constraint.h"
 
 namespace nstore {
 namespace catalog {

@@ -10,8 +10,8 @@
  *-------------------------------------------------------------------------
  */
 
-#include "catalog/constraint.h"
-#include "catalog/column.h"
+#include "backend/catalog/constraint.h"
+#include "backend/catalog/column.h"
 
 namespace nstore {
 namespace catalog {

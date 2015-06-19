@@ -19,9 +19,9 @@
 #include <iostream>
 #include <sstream>
 
-#include "common/types.h"
-#include "common/value.h"
-#include "storage/tuple.h"
+#include "backend/common/types.h"
+#include "backend/common/value.h"
+#include "backend/storage/tuple.h"
 
 namespace nstore {
 

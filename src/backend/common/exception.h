@@ -14,7 +14,7 @@
 
 #include <iostream>
 
-#include "common/types.h"
+#include "backend/common/types.h"
 
 #include <cstdio>
 #include <cstdlib>

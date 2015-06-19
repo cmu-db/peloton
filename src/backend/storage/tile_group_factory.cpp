@@ -8,7 +8,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "storage/tile_group_factory.h"
+#include "backend/storage/tile_group_factory.h"
 
 namespace nstore {
 namespace storage {

@@ -10,9 +10,9 @@
 #include <memory>
 #include <vector>
 
-#include "common/transaction.h"
-#include "executor/logical_tile.h"
-#include "planner/abstract_plan_node.h"
+#include "backend/common/transaction.h"
+#include "backend/executor/logical_tile.h"
+#include "backend/planner/abstract_plan_node.h"
 
 namespace nstore {
 namespace executor {

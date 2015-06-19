@@ -10,15 +10,15 @@
  *-------------------------------------------------------------------------
  */
 
-#include "storage/tuple.h"
+#include "backend/storage/tuple.h"
 
 #include <cstdlib>
 #include <sstream>
 #include <cassert>
 
-#include "storage/tuple.h"
-#include "common/exception.h"
-#include "common/logger.h"
+#include "backend/storage/tuple.h"
+#include "backend/common/exception.h"
+#include "backend/common/logger.h"
 
 namespace nstore {
 namespace storage {

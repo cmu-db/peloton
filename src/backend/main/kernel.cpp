@@ -11,10 +11,10 @@
  */
 
 
-#include "main/kernel.h"
-#include "common/logger.h"
-#include "executor/executors.h"
-#include "parser/parser.h"
+#include "backend/main/kernel.h"
+#include "backend/common/logger.h"
+#include "backend/executor/executors.h"
+#include "backend/parser/parser.h"
 
 #include "tbb/tbb.h"
 #include "tbb/flow_graph.h"
