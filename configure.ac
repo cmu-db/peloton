@@ -70,7 +70,7 @@ then
     NPROCS=$(sysctl -n hw.physicalcpu)
 fi
 
-NPROCS=`expr $NPROCS / 2`
+#NPROCS=`expr $NPROCS / 2`
 MAKEFLAGS="-j$NPROCS"
 
 ######################################################################

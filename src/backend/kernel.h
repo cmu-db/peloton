@@ -28,7 +28,18 @@ class Kernel {
 
   static ResultType Handler(const char* query);
 
+  static int GetTableList(int arg);
+
 };
+
+// Wrapper functions declarations
+//extern "C" {
+//
+//void *Kernel_Create();
+//void Kernel_Destroy(void *obj);
+//int Kernel_GetTableList(Kernel* kernel, int arg);
+//
+//}
 
 
 } // namespace backend
