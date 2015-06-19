@@ -122,8 +122,8 @@ Version        : ${PACKAGE_VERSION}
 OS             : ${build_os}
 Prefix         : ${prefix}
 Compiler       : ${CC}
-CPP Flags      : ${CPPFLAGS}
 C Flags        : ${CFLAGS}
+CPP Flags      : ${CPPFLAGS}
 C++ Flags      : ${CXXFLAGS}
 Make Flags     : ${MAKEFLAGS}
 Libraries      : ${LIBS} $TBB_LIBS

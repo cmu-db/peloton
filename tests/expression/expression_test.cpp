@@ -5,11 +5,11 @@
 #include "gtest/gtest.h"
 #include "harness.h"
 
-#include "expression/abstract_expression.h"
-#include "expression/expression.h"
-#include "common/types.h"
-#include "common/value_peeker.h"
-#include "storage/tuple.h"
+#include "backend/expression/abstract_expression.h"
+#include "backend/expression/expression.h"
+#include "backend/common/types.h"
+#include "backend/common/value_peeker.h"
+#include "backend/storage/tuple.h"
 
 namespace nstore {
 namespace test {
