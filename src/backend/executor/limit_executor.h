@@ -12,6 +12,11 @@
 namespace nstore {
 namespace executor {
 
+/**
+ * TODO Currently, both limit and offset must be good numbers.
+ * Postgres also allows stand-alone LIMIT and stand-alone OFFSET.
+ * Need further change to accommodate it.
+ */
 class LimitExecutor: public AbstractExecutor {
 public:
   LimitExecutor(const LimitExecutor &) = delete;
@@ -34,10 +39,10 @@ private:
   //===--------------------------------------------------------------------===//
 
   /** @brief Number of tuples skipped. */
-  oid_t num_skipped_ = INVALID_OID;
+  size_t num_skipped_ = 0;
 
   /** @brief Number of tuples returned. */
-  oid_t num_returned_ = INVALID_OID;
+  size_t num_returned_ = 0;
 
 };
 

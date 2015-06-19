@@ -18,7 +18,7 @@ namespace planner {
 
 /**
  * @brief	Limit (with Offset) plan node.
- * IMPORTANT: now only works on logical_tile and returns the same column set as the input.
+ * IMPORTANT: now only works on logical_tile and returns with the same schema as the input.
  */
 class LimitNode: public AbstractPlanNode {
 public:
