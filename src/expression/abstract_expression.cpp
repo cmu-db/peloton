@@ -107,6 +107,7 @@ std::string AbstractExpression::Debug() const {
   std::ostringstream os;
   os << "\tExpression [" << ExpressionToString(GetExpressionType())
           << ", " << GetExpressionType() << " ]\n";
+  os << DebugInfo(" ");
   return (os.str());
 }
 

@@ -108,69 +108,83 @@ bool NestedLoopJoinExecutor::DExecute() {
 
   // Now, let's compute the position lists for the output tile
 
-  // Join predicate exists
-  if (predicate_ != nullptr) {
-
-  }
   // Cartesian product
-  else {
 
-    // Add everything from two logical tiles
-    auto left_tile_position_lists = left_tile.get()->GetPositionLists();
-    auto right_tile_position_lists = right_tile.get()->GetPositionLists();
+  // Add everything from two logical tiles
+  auto left_tile_position_lists = left_tile.get()->GetPositionLists();
+  auto right_tile_position_lists = right_tile.get()->GetPositionLists();
 
-    // Compute output tile column count
-    size_t left_tile_column_count = left_tile_position_lists.size();
-    size_t right_tile_column_count = right_tile_position_lists.size();
-    size_t output_tile_column_count = left_tile_column_count + right_tile_column_count;
+  // Compute output tile column count
+  size_t left_tile_column_count = left_tile_position_lists.size();
+  size_t right_tile_column_count = right_tile_position_lists.size();
+  size_t output_tile_column_count = left_tile_column_count + right_tile_column_count;
 
-    assert(left_tile_column_count > 0);
-    assert(right_tile_column_count > 0);
+  assert(left_tile_column_count > 0);
+  assert(right_tile_column_count > 0);
 
-    // Compute output tile row count
-    size_t left_tile_row_count = left_tile_position_lists[0].size();
-    size_t right_tile_row_count = right_tile_position_lists[0].size();
-    size_t output_tile_row_count = left_tile_row_count * right_tile_row_count;
+  // Compute output tile row count
+  size_t left_tile_row_count = left_tile_position_lists[0].size();
+  size_t right_tile_row_count = right_tile_position_lists[0].size();
 
-    // Construct position lists for output tile
-    std::vector< std::vector<oid_t> > position_lists;
-    for(size_t column_itr = 0; column_itr < output_tile_column_count; column_itr++)
-      position_lists.push_back(std::vector<oid_t>(output_tile_row_count, INVALID_OID));
+  // Construct position lists for output tile
+  std::vector< std::vector<oid_t> > position_lists;
+  for(size_t column_itr = 0; column_itr < output_tile_column_count; column_itr++)
+    position_lists.push_back(std::vector<oid_t>());
 
-    // Go over every pair of tuples in left and right logical tiles
-    size_t output_tile_row_itr = 0;
-    for(size_t left_tile_row_itr = 0 ; left_tile_row_itr < left_tile_row_count; left_tile_row_itr++){
-      for(size_t right_tile_row_itr = 0 ; right_tile_row_itr < right_tile_row_count; right_tile_row_itr++){
+  // Go over every pair of tuples in left and right logical tiles
+  for(size_t left_tile_row_itr = 0 ; left_tile_row_itr < left_tile_row_count; left_tile_row_itr++){
+    for(size_t right_tile_row_itr = 0 ; right_tile_row_itr < right_tile_row_count; right_tile_row_itr++){
 
-        // And, for each pair, insert a tuple into the output logical tile
+      // TODO: OPTIMIZATION : Can split the control flow into two paths -
+      // one for cartesian product and one for join
+      // Then, we can skip this branch atleast for the cartesian product path.
 
-        // First, copy the elements in left logical tile's tuple
-        for(size_t output_tile_column_itr = 0 ;
-            output_tile_column_itr < left_tile_column_count;
-            output_tile_column_itr++){
-          position_lists[output_tile_column_itr][output_tile_row_itr] =
-              left_tile_position_lists[output_tile_column_itr][left_tile_row_itr];
+      // Join predicate exists
+      if (predicate_ != nullptr) {
+
+        expression::ContainerTuple<executor::LogicalTile> left_tuple(left_tile.get(), left_tile_row_itr);
+        expression::ContainerTuple<executor::LogicalTile> right_tuple(right_tile.get(), right_tile_row_itr);
+
+        // Join predicate is false. Skip pair and continue.
+        if(predicate_->Evaluate(&left_tuple, &right_tuple).IsFalse()){
+          continue;
         }
-
-        // Then, copy the elements in left logical tile's tuple
-        for(size_t output_tile_column_itr = 0 ;
-            output_tile_column_itr < right_tile_column_count;
-            output_tile_column_itr++){
-          position_lists[left_tile_column_count + output_tile_column_itr][output_tile_row_itr] =
-              right_tile_position_lists[output_tile_column_itr][right_tile_row_itr];
-        }
-
-        output_tile_row_itr++;
       }
+
+      // Insert a tuple into the output logical tile
+
+      // First, copy the elements in left logical tile's tuple
+      for(size_t output_tile_column_itr = 0 ;
+          output_tile_column_itr < left_tile_column_count;
+          output_tile_column_itr++){
+        position_lists[output_tile_column_itr].push_back(
+            left_tile_position_lists[output_tile_column_itr][left_tile_row_itr]);
+      }
+
+      // Then, copy the elements in left logical tile's tuple
+      for(size_t output_tile_column_itr = 0 ;
+          output_tile_column_itr < right_tile_column_count;
+          output_tile_column_itr++){
+        position_lists[left_tile_column_count + output_tile_column_itr].push_back(
+            right_tile_position_lists[output_tile_column_itr][right_tile_row_itr]);
+      }
+
     }
+  }
 
-    assert(output_tile_row_itr == output_tile_row_count);
-
+  // Check if we have any matching tuples.
+  if(position_lists[0].size() > 0){
     output_tile.get()->SetPositionLists(std::move(position_lists));
-
-    std::cout << "Cartesian Product :: " << *(output_tile.get()) << "\n";
-
+    std::cout << *(output_tile.get());
     SetOutput(output_tile.release());
+    return true;
+  }
+  // Try again
+  else{
+    // If we are out of any more pairs of child tiles to examine,
+    // then we will return false earlier in this function.
+    // So, we don't have to return false here.
+    DExecute();
   }
 
   return true;

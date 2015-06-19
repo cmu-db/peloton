@@ -25,9 +25,9 @@ class TupleValueExpression : public AbstractExpression, public TupleValueExpress
 
  public:
 
-  TupleValueExpression(int value_idx, std::string table_name, std::string col_name)
+  TupleValueExpression(int tuple_idx, int value_idx, std::string table_name, std::string col_name)
  : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE) {
-    this->tuple_idx = 0;
+    this->tuple_idx = tuple_idx;
     this->value_idx = value_idx;
     this->table_name = table_name;
     this->column_name = col_name;
@@ -42,7 +42,7 @@ class TupleValueExpression : public AbstractExpression, public TupleValueExpress
 
   std::string DebugInfo(const std::string &spacer) const {
     std::ostringstream buffer;
-    buffer << spacer << "Optimized Column Reference[" << this->value_idx << "]\n";
+    buffer << spacer << "TupleValueReference[" << this->value_idx << "]\n";
     return (buffer.str());
   }
 

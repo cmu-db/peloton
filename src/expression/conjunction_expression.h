@@ -32,7 +32,13 @@ class ConjunctionExpression : public AbstractExpression
   Value Evaluate(const Tuple *tuple1, const Tuple *tuple2) const;
 
   std::string DebugInfo(const std::string &spacer) const {
-    return (spacer + "ConjunctionExpression\n");
+    std::string retval;
+    if(m_left != nullptr)
+      retval = m_left->DebugInfo(spacer);
+    retval += spacer + "ConjunctionExpression\n" + spacer;
+    if(m_right != nullptr)
+      retval = m_right->DebugInfo(spacer);
+    return retval;
   }
 
   AbstractExpression *m_left;
