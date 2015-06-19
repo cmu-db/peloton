@@ -5,7 +5,6 @@
 
 The following files should be automatically generated:
 
-
     /src/postgres/backend/bootstrap/bootparse.c
     /src/postgres/backend/bootstrap/bootscanner.c
     /src/postgres/backend/parser/scan.c
