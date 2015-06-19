@@ -52,6 +52,26 @@ const std::vector<LogicalTile::ColumnInfo>& LogicalTile::GetSchema() const{
 }
 
 /**
+ * @brief Construct the underlying physical schema of all the columns in the logical tile.
+ *
+ * @return New schema object.
+ */
+catalog::Schema* LogicalTile::GetPhysicalSchema() const {
+
+  std::vector<catalog::ColumnInfo> physical_columns;
+
+  for(ColumnInfo column : schema_) {
+    auto schema = column.base_tile->GetSchema();
+    auto physical_column = schema->GetColumnInfo(column.origin_column_id);
+    physical_columns.push_back(physical_column);
+  }
+
+  catalog::Schema *schema = new catalog::Schema(physical_columns);
+
+  return schema;
+}
+
+/**
  * @brief Get the position lists of the tile.
  * @return Position lists of the tile.
  */
