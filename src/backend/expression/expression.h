@@ -16,11 +16,11 @@
 // Convenience Wrapper
 //===--------------------------------------------------------------------===//
 
-#include "comparison_expression.h"
-#include "conjunction_expression.h"
-#include "constant_value_expression.h"
-#include "operator_expression.h"
-#include "parameter_value_expression.h"
-#include "parser_expression.h"
-#include "tuple_address_expression.h"
-#include "tuple_value_expression.h"
+#include "backend/expression/comparison_expression.h"
+#include "backend/expression/conjunction_expression.h"
+#include "backend/expression/constant_value_expression.h"
+#include "backend/expression/operator_expression.h"
+#include "backend/expression/parameter_value_expression.h"
+#include "backend/expression/parser_expression.h"
+#include "backend/expression/tuple_address_expression.h"
+#include "backend/expression/tuple_value_expression.h"

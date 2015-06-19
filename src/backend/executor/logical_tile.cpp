@@ -8,12 +8,12 @@
  * Copyright(c) 2015, CMU
  */
 
-#include "executor/logical_tile.h"
+#include "backend/executor/logical_tile.h"
 
 #include <cassert>
 #include <iostream>
 
-#include "storage/tile.h"
+#include "backend/storage/tile.h"
 
 namespace nstore {
 namespace executor {

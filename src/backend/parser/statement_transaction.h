@@ -1,6 +1,6 @@
 #pragma once
 
-#include "sql_statement.h"
+#include "backend/parser/sql_statement.h"
 
 namespace nstore {
 namespace parser {

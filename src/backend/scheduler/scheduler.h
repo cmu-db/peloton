@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "task.h"
+#include "backend/scheduler/task.h"
 #include "tbb/task_scheduler_init.h"
 
 namespace nstore {

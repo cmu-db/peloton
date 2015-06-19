@@ -14,12 +14,12 @@
 
 #include <memory>
 
-#include "catalog/schema.h"
-#include "common/value.h"
-#include "common/value_factory.h"
-#include "common/value_peeker.h"
-#include "common/types.h"
-#include "expression/tuple.h"
+#include "backend/catalog/schema.h"
+#include "backend/common/value.h"
+#include "backend/common/value_factory.h"
+#include "backend/common/value_peeker.h"
+#include "backend/common/types.h"
+#include "backend/expression/tuple.h"
 
 namespace nstore {
 namespace storage {

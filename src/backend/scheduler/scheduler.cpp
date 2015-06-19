@@ -12,9 +12,9 @@
 
 #include <cassert>
 
-#include "scheduler/scheduler.h"
+#include "backend/scheduler/scheduler.h"
 #include "tbb/task_scheduler_init.h"
-#include "common/exception.h"
+#include "backend/common/exception.h"
 #include <string>
 
 namespace nstore {

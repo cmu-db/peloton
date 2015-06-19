@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "executor/abstract_executor.h"
-#include "planner/index_scan_node.h"
+#include "backend/executor/abstract_executor.h"
+#include "backend/planner/index_scan_node.h"
 
 #include <vector>
 

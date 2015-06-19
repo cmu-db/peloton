@@ -10,7 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "index/index.h"
+#include "backend/index/index.h"
 
 #include <iostream>
 

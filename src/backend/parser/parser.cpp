@@ -13,10 +13,10 @@
 #include <iostream>
 #include <string>
 
-#include "parser/parser.h"
+#include "backend/parser/parser.h"
 #include "parser_bison.h"
 #include "parser_flex.h"
-#include "common/exception.h"
+#include "backend/common/exception.h"
 
 namespace nstore {
 namespace parser {

@@ -7,10 +7,10 @@
 parser_FILES = \
 			   parser_bison.ypp \
 			   parser_flex.lpp \
-			   parser/parser.cpp \
-			   parser/parser_utils.cpp \
-			   parser/sql_statement.cpp \
-			   parser/table_ref.cpp
+			   backend/parser/parser.cpp \
+			   backend/parser/parser_utils.cpp \
+			   backend/parser/sql_statement.cpp \
+			   backend/parser/table_ref.cpp
 			   			   
 parser_INCLUDES = \
-				  -I$(srcdir)/parser
+				  -I$(srcdir)/backend/parser

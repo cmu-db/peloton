@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "common/types.h"
-#include "expression/abstract_expression.h"
+#include "backend/common/types.h"
+#include "backend/expression/abstract_expression.h"
 #include <json_spirit.h>
 
 #include <string>

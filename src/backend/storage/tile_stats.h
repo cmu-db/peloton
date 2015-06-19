@@ -15,9 +15,9 @@
 #include <vector>
 #include <string>
 
-#include "../catalog/schema.h"
-#include "stats/stats_source.h"
-#include "storage/tile.h"
+#include "backend/../catalog/schema.h"
+#include "backend/stats/stats_source.h"
+#include "backend/storage/tile.h"
 
 namespace nstore {
 namespace storage {

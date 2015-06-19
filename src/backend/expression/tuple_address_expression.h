@@ -3,10 +3,10 @@
 #include <string>
 #include <sstream>
 
-#include "common/value_factory.h"
-#include "common/serializer.h"
-#include "common/value_vector.h"
-#include "expression/abstract_expression.h"
+#include "backend/common/value_factory.h"
+#include "backend/common/serializer.h"
+#include "backend/common/value_vector.h"
+#include "backend/expression/abstract_expression.h"
 
 namespace nstore {
 namespace expression {

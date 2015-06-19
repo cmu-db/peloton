@@ -12,9 +12,9 @@
 
 #pragma once
 
-#include "catalog/manager.h"
-#include "storage/tile.h"
-#include "storage/tile_group_header.h"
+#include "backend/catalog/manager.h"
+#include "backend/storage/tile.h"
+#include "backend/storage/tile_group_header.h"
 
 #include <cassert>
 

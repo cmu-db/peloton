@@ -27,11 +27,11 @@
 #include "ttmath/ttmathint.h"
 #include "boost/scoped_ptr.hpp"
 
-#include "common/exception.h"
-#include "common/pool.h"
-#include "common/serializer.h"
-#include "common/types.h"
-#include "common/varlen.h"
+#include "backend/common/exception.h"
+#include "backend/common/pool.h"
+#include "backend/common/serializer.h"
+#include "backend/common/types.h"
+#include "backend/common/varlen.h"
 
 namespace nstore {
 

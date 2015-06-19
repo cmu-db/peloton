@@ -5,11 +5,11 @@
 ######################################################################
 
 common_FILES = \
-			   common/value.cpp \
-			   common/types.cpp \
-			   common/varlen.cpp \
-			   common/transaction.cpp \
-			   common/pool.cpp
+			   backend/common/value.cpp \
+			   backend/common/types.cpp \
+			   backend/common/varlen.cpp \
+			   backend/common/transaction.cpp \
+			   backend/common/pool.cpp
 
 common_INCLUDES = \
-				  -I$(srcdir)/common    
+				  -I$(srcdir)/backend/common    

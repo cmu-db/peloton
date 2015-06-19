@@ -1,7 +1,7 @@
 #pragma once
 
-#include "sql_statement.h"
-#include "table_ref.h"
+#include "backend/parser/sql_statement.h"
+#include "backend/parser/table_ref.h"
 
 namespace nstore {
 namespace parser {

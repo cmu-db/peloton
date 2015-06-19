@@ -10,7 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "storage/tile_group_header.h"
+#include "backend/storage/tile_group_header.h"
 
 #include <iostream>
 #include <iomanip>

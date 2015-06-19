@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "common/types.h"
+#include "backend/common/types.h"
 #include "tbb/concurrent_queue.h"
 
 #include <iostream>

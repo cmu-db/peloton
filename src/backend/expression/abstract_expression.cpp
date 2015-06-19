@@ -11,12 +11,12 @@
  */
 
 
-#include "expression/abstract_expression.h"
+#include "backend/expression/abstract_expression.h"
 
-#include "common/types.h"
-#include "common/serializer.h"
-#include "expression/expression_util.h"
-#include "common/logger.h"
+#include "backend/common/types.h"
+#include "backend/common/serializer.h"
+#include "backend/expression/expression_util.h"
+#include "backend/common/logger.h"
 
 #include <sstream>
 #include <cassert>

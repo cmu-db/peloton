@@ -10,12 +10,12 @@
  *-------------------------------------------------------------------------
  */
 
-#include "storage/data_table.h"
+#include "backend/storage/data_table.h"
 
-#include "common/exception.h"
-#include "index/index.h"
-#include "common/logger.h"
-#include "catalog/manager.h"
+#include "backend/common/exception.h"
+#include "backend/index/index.h"
+#include "backend/common/logger.h"
+#include "backend/catalog/manager.h"
 
 #include <mutex>
 

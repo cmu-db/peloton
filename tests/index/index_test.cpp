@@ -13,7 +13,7 @@
 #include "gtest/gtest.h"
 #include "harness.h"
 
-#include "index/index_factory.h"
+#include "backend/index/index_factory.h"
 
 namespace nstore {
 namespace test {

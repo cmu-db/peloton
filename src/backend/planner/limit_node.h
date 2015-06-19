@@ -10,8 +10,8 @@
 #include <string>
 #include <vector>
 
-#include "common/types.h"
-#include "planner/abstract_plan_node.h"
+#include "backend/common/types.h"
+#include "backend/planner/abstract_plan_node.h"
 
 namespace nstore {
 namespace planner {

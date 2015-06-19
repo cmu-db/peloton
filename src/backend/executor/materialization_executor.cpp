@@ -9,16 +9,16 @@
  * Copyright(c) 2015, CMU
  */
 
-#include "executor/materialization_executor.h"
+#include "backend/executor/materialization_executor.h"
 
 #include <cassert>
 #include <memory>
 #include <utility>
 
-#include "executor/logical_tile.h"
-#include "executor/logical_tile_factory.h"
-#include "planner/materialization_node.h"
-#include "storage/tile.h"
+#include "backend/executor/logical_tile.h"
+#include "backend/executor/logical_tile_factory.h"
+#include "backend/planner/materialization_node.h"
+#include "backend/storage/tile.h"
 
 namespace nstore {
 namespace executor {

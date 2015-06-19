@@ -10,9 +10,9 @@
  *-------------------------------------------------------------------------
  */
 
-#include "sql_statement.h"
+#include "backend/parser/sql_statement.h"
 
-#include "parser_utils.h"
+#include "backend/parser/parser_utils.h"
 
 namespace nstore {
 namespace parser {

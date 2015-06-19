@@ -10,14 +10,14 @@
  *-------------------------------------------------------------------------
  */
 
-#include "storage/tile_group.h"
+#include "backend/storage/tile_group.h"
 
 #include <numeric>
 
-#include "common/logger.h"
-#include "common/synch.h"
-#include "common/types.h"
-#include "storage/abstract_table.h"
+#include "backend/common/logger.h"
+#include "backend/common/synch.h"
+#include "backend/common/types.h"
+#include "backend/storage/abstract_table.h"
 
 namespace nstore {
 namespace storage {

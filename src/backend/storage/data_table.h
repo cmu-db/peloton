@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "catalog/manager.h"
-#include "storage/abstract_table.h"
-#include "storage/tile_group.h"
-#include "storage/backend_vm.h"
+#include "backend/catalog/manager.h"
+#include "backend/storage/abstract_table.h"
+#include "backend/storage/tile_group.h"
+#include "backend/storage/backend_vm.h"
 
-#include "index/index.h"
+#include "backend/index/index.h"
 
 #include <string>
 

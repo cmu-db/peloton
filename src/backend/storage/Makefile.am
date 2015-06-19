@@ -5,14 +5,14 @@
 ######################################################################
 
 storage_FILES = \
-				storage/abstract_table.cpp \
-				storage/data_table.cpp \
-				storage/table_factory.cpp \
-				storage/tile.cpp \
-				storage/tile_group.cpp \
-				storage/tile_group_header.cpp \
-				storage/tile_group_factory.cpp \
-				storage/tuple.cpp
+				backend/storage/abstract_table.cpp \
+				backend/storage/data_table.cpp \
+				backend/storage/table_factory.cpp \
+				backend/storage/tile.cpp \
+				backend/storage/tile_group.cpp \
+				backend/storage/tile_group_header.cpp \
+				backend/storage/tile_group_factory.cpp \
+				backend/storage/tuple.cpp
 
 storage_INCLUDES = \
-				   -I$(srcdir)/storage
+				   -I$(srcdir)/backend/storage

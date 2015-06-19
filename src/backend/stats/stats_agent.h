@@ -18,8 +18,8 @@
 #ifndef STATSAGENT_H_
 #define STATSAGENT_H_
 
-#include "common/ids.h"
-#include "common/types.h"
+#include "backend/common/ids.h"
+#include "backend/common/types.h"
 #include <vector>
 #include <map>
 

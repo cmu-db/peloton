@@ -10,7 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "common/pool.h"
+#include "backend/common/pool.h"
 
 namespace nstore {
 

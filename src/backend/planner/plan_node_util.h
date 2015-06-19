@@ -7,7 +7,7 @@
 
 #include <string>
 
-#include "planner/abstract_plan_node.h"
+#include "backend/planner/abstract_plan_node.h"
 
 namespace nstore {
 namespace planner {

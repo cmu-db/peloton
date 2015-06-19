@@ -21,7 +21,7 @@
 
 #include <mutex>
 
-#include "storage/backend.h"
+#include "backend/storage/backend.h"
 
 namespace nstore {
 

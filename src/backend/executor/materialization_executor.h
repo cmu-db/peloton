@@ -9,8 +9,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "common/types.h"
-#include "executor/abstract_executor.h"
+#include "backend/common/types.h"
+#include "backend/executor/abstract_executor.h"
 
 namespace nstore {
 

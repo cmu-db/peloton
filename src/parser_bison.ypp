@@ -16,9 +16,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include "parser/statements.h"
+#include "backend/parser/statements.h"
 #include "parser_bison.h"
-#include "common/value_factory.h"
+#include "backend/common/value_factory.h"
 
 using namespace std;
 using namespace nstore::parser;

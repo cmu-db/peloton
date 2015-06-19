@@ -10,18 +10,18 @@
  *-------------------------------------------------------------------------
  */
 
-#include "expression/expression_util.h"
+#include "backend/expression/expression_util.h"
 
-#include "common/value_factory.h"
-#include "common/exception.h"
-#include "common/logger.h"
-#include "expression/abstract_expression.h"
+#include "backend/common/value_factory.h"
+#include "backend/common/exception.h"
+#include "backend/common/logger.h"
+#include "backend/expression/abstract_expression.h"
 #include <cassert>
 #include <sstream>
 #include <cstdlib>
 #include <stdexcept>
 
-#include "expression.h"
+#include "backend/expression/expression.h"
 #include <json_spirit.h>
 
 namespace nstore {

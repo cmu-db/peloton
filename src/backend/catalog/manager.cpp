@@ -10,7 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "catalog/manager.h"
+#include "backend/catalog/manager.h"
 
 namespace nstore {
 namespace catalog {

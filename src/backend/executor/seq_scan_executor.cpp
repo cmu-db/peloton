@@ -9,22 +9,22 @@
  * Copyright(c) 2015, CMU
  */
 
-#include "executor/seq_scan_executor.h"
+#include "backend/executor/seq_scan_executor.h"
 
 #include <memory>
 #include <utility>
 #include <vector>
 
-#include "common/types.h"
-#include "executor/logical_tile.h"
-#include "executor/logical_tile_factory.h"
-#include "expression/abstract_expression.h"
-#include "expression/expression.h"
-#include "expression/container_tuple.h"
-#include "storage/data_table.h"
-#include "storage/tile_group.h"
+#include "backend/common/types.h"
+#include "backend/executor/logical_tile.h"
+#include "backend/executor/logical_tile_factory.h"
+#include "backend/expression/abstract_expression.h"
+#include "backend/expression/expression.h"
+#include "backend/expression/container_tuple.h"
+#include "backend/storage/data_table.h"
+#include "backend/storage/tile_group.h"
 
-#include "common/logger.h"
+#include "backend/common/logger.h"
 
 namespace nstore {
 namespace executor {

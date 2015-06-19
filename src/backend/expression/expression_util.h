@@ -15,7 +15,7 @@
 #include <string>
 #include <vector>
 
-#include "expression/abstract_expression.h"
+#include "backend/expression/abstract_expression.h"
 
 namespace nstore {
 namespace expression {

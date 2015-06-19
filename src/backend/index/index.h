@@ -15,11 +15,11 @@
 #include <vector>
 #include <string>
 
-#include "catalog/manager.h"
-#include "catalog/schema.h"
-#include "common/exception.h"
-#include "common/types.h"
-#include "storage/tuple.h"
+#include "backend/catalog/manager.h"
+#include "backend/catalog/schema.h"
+#include "backend/common/exception.h"
+#include "backend/common/types.h"
+#include "backend/storage/tuple.h"
 
 namespace nstore {
 namespace index {
