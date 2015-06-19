@@ -6,16 +6,8 @@
  *      Author: Ming Fang
  */
 
-#ifndef SRC_POSTGRES_INCLUDE_NODES_PPRINT_H_
-#define SRC_POSTGRES_INCLUDE_NODES_PPRINT_H_
+#pragma once
 
+extern "C" void printPostgresQueryDesc(const QueryDesc *queryDesc);
+extern "C" void printPostgresPlanStateTree(const PlanState *planstate);
 
-#include "executor/execdesc.h"
-
-extern void print_queryDesc(const QueryDesc *queryDesc);
-
-
-
-
-
-#endif /* SRC_POSTGRES_INCLUDE_NODES_PPRINT_H_ */
