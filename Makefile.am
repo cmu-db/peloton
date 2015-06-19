@@ -13,3 +13,6 @@ SUBDIRS = \
 
 # add files in the distribution
 EXTRA_DIST = bootstrap $(top_srcdir)/doc/doxygen.cfg
+
+clean-local:
+	find . -type f -name "*.gcno" -delete; find . -type f -name "*.gcda" -delete

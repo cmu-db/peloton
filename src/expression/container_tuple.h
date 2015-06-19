@@ -13,11 +13,16 @@
 
 #include "common/types.h"
 #include "common/value.h"
+#include "common/exception.h"
 #include "expression/tuple.h"
 #include "storage/tile_group.h"
 
 namespace nstore {
 namespace expression {
+
+//===--------------------------------------------------------------------===//
+// Container Tuple wrapping a tile group or logical tile.
+//===--------------------------------------------------------------------===//
 
 template <class T>
 class ContainerTuple : public Tuple {
@@ -32,14 +37,18 @@ class ContainerTuple : public Tuple {
       tuple_id_(tuple_id) {
   }
 
+  /** @brief Get the value at the given column id. */
   const Value GetValue(oid_t column_id) const override {
     assert(container_ != nullptr);
+
     return container_->GetValue(tuple_id_, column_id);
   }
 
-  inline char *GetData() const override {
-    //TODO This is used by tuple address expression. Wtf is that?
-    assert(false);
+  /** @brief Get the raw location of the tuple's contents. */
+  inline char *GetData() const override{
+    // NOTE: We can't get a table tuple from a tilegroup or logical tile
+    // without materializing it. So, this must not be used.
+    throw NotImplementedException("GetData() not supported for container tuples.");
     return nullptr;
   }
 
