@@ -67,6 +67,8 @@ class LogicalTile {
 
   const std::vector<ColumnInfo>& GetSchema() const;
 
+  catalog::Schema* GetPhysicalSchema() const;
+
   void SetSchema(std::vector<LogicalTile::ColumnInfo>&& schema);
 
   const std::vector<std::vector<oid_t> >& GetPositionLists() const;
