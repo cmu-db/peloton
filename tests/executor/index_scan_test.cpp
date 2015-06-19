@@ -9,12 +9,12 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "common/types.h"
-#include "executor/logical_tile.h"
-#include "executor/logical_tile_factory.h"
-#include "executor/index_scan_executor.h"
-#include "planner/index_scan_node.h"
-#include "storage/data_table.h"
+#include "backend/common/types.h"
+#include "backend/executor/logical_tile.h"
+#include "backend/executor/logical_tile_factory.h"
+#include "backend/executor/index_scan_executor.h"
+#include "backend/planner/index_scan_node.h"
+#include "backend/storage/data_table.h"
 
 #include "executor/executor_tests_util.h"
 #include "harness.h"
