@@ -11,6 +11,7 @@ AM_INIT_AUTOMAKE([1.0 foreign subdir-objects])
 # Silent make by default
 AM_SILENT_RULES([yes])
 
+AC_PROG_CC([gcc])
 # Enable static library
 #AC_PROG_LIBTOOL
 # Disable static library
@@ -121,6 +122,7 @@ Version        : ${PACKAGE_VERSION}
 OS             : ${build_os}
 Prefix         : ${prefix}
 Compiler       : ${CC}
+C Flags        : ${CFLAGS}
 CPP Flags      : ${CPPFLAGS}
 C++ Flags      : ${CXXFLAGS}
 Make Flags     : ${MAKEFLAGS}
