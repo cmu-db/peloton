@@ -18,7 +18,8 @@ executor_FILES = \
 				 executor/delete_executor.cpp \
 				 executor/update_executor.cpp \
 				 executor/nested_loop_join_executor.cpp \
-				 executor/order_by_executor.cpp
+				 executor/order_by_executor.cpp \
+				 executor/aggregate_executor.cpp
 				 
 executor_INCLUDES = \
 					-I$(srcdir)/executor
