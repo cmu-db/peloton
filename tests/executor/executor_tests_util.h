@@ -52,7 +52,7 @@ public:
     /** @brief Creates a basic table with allocated and populated tuples */
     static storage::DataTable *CreateAndPopulateTable();
 
-    static void PopulateTable(storage::DataTable *table, int num_rows, bool mutate = false);
+    static void PopulateTable(storage::DataTable *table, int num_rows, bool mutate = false, bool random = false);
 
     static void PopulateTiles(storage::TileGroup *tile_group, int num_rows);
 

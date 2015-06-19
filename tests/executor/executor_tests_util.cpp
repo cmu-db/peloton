@@ -15,6 +15,8 @@
 
 #include "executor/executor_tests_util.h"
 
+#include <cstdlib>
+#include <ctime>
 #include <memory>
 #include <vector>
 
@@ -142,7 +144,9 @@ storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(
  * @param table Table to populate with values.
  * @param num_rows Number of tuples to insert.
  */
-void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows, bool mutate) {
+void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows, bool mutate, bool random) {
+  if(random)
+    std::srand(std::time(nullptr));
 
   const catalog::Schema *schema = table->GetSchema();
 
@@ -161,11 +165,18 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows, b
       populate_value *= 3;
 
     storage::Tuple tuple(schema, allocate);
+
+    // Make sure first column is unique in all cases
     tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0)));
-    tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 1)));
-    tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(populate_value, 2)));
+
+    // In case of random, make sure this column has duplicated values
+    tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(random ? std::rand()%(num_rows/2):populate_value, 1)));
+
+    tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(random ? std::rand():populate_value, 2)));
+
+    // In case of random, make sure this column has duplicated values
     Value string_value = ValueFactory::GetStringValue(
-        std::to_string(PopulatedValue(populate_value, 3)));
+        std::to_string(PopulatedValue(random ? std::rand()%(num_rows/2):populate_value, 3)));
     tuple.SetValue(3, string_value);
 
     ItemPointer tuple_slot_id = table->InsertTuple(txn_id, &tuple, false);

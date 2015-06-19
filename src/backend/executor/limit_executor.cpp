@@ -30,8 +30,8 @@ LimitExecutor::LimitExecutor(planner::AbstractPlanNode *node,
 bool LimitExecutor::DInit(){
   assert(children_.size() == 1);
 
-  num_skipped_ = START_OID;
-  num_returned_ = START_OID;
+  num_skipped_ = 0;
+  num_returned_ = 0;
 
   return true;
 }
