@@ -77,7 +77,8 @@ extern void ShmemBackendArrayAllocation(void);
 //===--------------------------------------------------------------------===//
 
 typedef enum {
-  TEST_MODE_TYPE_INVALID = 0,   // invalid test mode type
+  TEST_MODE_TYPE_INVALID = -1,   // invalid test mode type
+  TEST_MODE_TYPE_OFF = 0,   // test mode off
 
   TEST_MODE_TYPE_BRIDGE  = 1,    // bridge tests
   TEST_MODE_TYPE_STATISTICS = 2  // statistics tests

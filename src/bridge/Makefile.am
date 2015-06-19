@@ -4,8 +4,8 @@
 # BRIDGE
 ######################################################################
 
-#bridge_FILES = \
-#				backend/kernel.cpp
+bridge_FILES = \
+				bridge/ddl.cpp
 
 bridge_INCLUDES = \
-				   -I$(srcdir)/bridge
+				   -I$(srcdir)/bridge\

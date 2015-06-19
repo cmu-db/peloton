@@ -3916,6 +3916,14 @@ PostgresMain(int argc, char *argv[],
   // TODO: Peloton modifications
   switch(CurrentTestModeStatus)
   {
+    case TEST_MODE_TYPE_INVALID:
+      printf("TEST_MODE_TYPE_INVALID\n");
+      // never be printed..
+      break;
+    case TEST_MODE_TYPE_OFF:
+      printf("TEST_MODE_TYPE_OFF\n");
+      // do nothing..
+      break;
     case TEST_MODE_TYPE_BRIDGE:
       printf("BRIDGE_TEST_MODE\n");
       GetDatabaseList();
@@ -3924,11 +3932,6 @@ PostgresMain(int argc, char *argv[],
       printf("STATISTIC_TEST_MODE\n");
       // do somethinig..
       break;
-    case TEST_MODE_TYPE_INVALID:
-      printf("No_TEST_MODE\n");
-      // do nothing..
-      break;
-
     default:
       break;
   }
