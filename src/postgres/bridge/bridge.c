@@ -14,6 +14,7 @@
 #include "access/xact.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_namespace.h"
 #include "common/fe_memutils.h"
 #include "utils/rel.h"
 #include "utils/ruleutils.h"
@@ -25,25 +26,36 @@
 #include "../../bridge/bridge.h"
 
 /**
- * @brief Getting the relation name.
+ * @brief Getting the relation name
  * @param relation_id relation id
  */
 char* 
-GetRelationName(Oid relation_id) {
-  Relation relation;
-  char *relation_name;
+GetRelationName(Oid relation_id){
+  Relation pg_class_rel;
+  HeapTuple tuple;
+  Form_pg_class pgclass;
 
-  relation = relation_open(relation_id, NoLock);
+  StartTransactionCommand();
+  
+  //open pg_class table
+  pg_class_rel = heap_open(RelationRelationId,AccessShareLock);
+  
+  //search the table with given relation id from pg_class table
+  tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relation_id));
+  if (!HeapTupleIsValid(tuple))
+  {
+    //Check whether relation id is valid or not
+    elog(ERROR, "cache lookup failed for relation %u", relation_id);
+  }
+  
+  pgclass = (Form_pg_class) GETSTRUCT(tuple);
 
-  if(relation == NULL)
-    return "";
+  heap_freetuple(tuple);
+  heap_close(pg_class_rel, AccessShareLock);
+  
+  CommitTransactionCommand();
 
-  // Get name for given relation
-   relation_name = RelationGetRelationName(relation);
-
-  relation_close(relation, NoLock);
-
-  return relation_name;
+  return NameStr(pgclass->relname);
 }
 
 /**
@@ -52,17 +64,25 @@ GetRelationName(Oid relation_id) {
  */
 int 
 GetNumberOfAttributes(Oid relation_id) {
-  Relation relation;
-  AttrNumber numOfAttris;
+  Relation pg_class_rel;
+  HeapTuple tuple;
+  Form_pg_class pgclass;
 
-  relation = relation_open(relation_id, NoLock);
+  StartTransactionCommand();
 
-  //Get the number of attributes
-  numOfAttris = RelationGetNumberOfAttributes(relation);
+  pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
 
-  relation_close(relation, NoLock);
+  tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relation_id));
+  if (!HeapTupleIsValid(tuple))
+    elog(ERROR, "cache lookup failed for relation %u", relation_id);
 
-  return numOfAttris;
+  pgclass = (Form_pg_class) GETSTRUCT(tuple);
+
+  heap_close(pg_class_rel, AccessShareLock);
+
+  CommitTransactionCommand();
+
+  return pgclass->relnatts;
 }
 
 /**
@@ -70,20 +90,26 @@ GetNumberOfAttributes(Oid relation_id) {
  * @param relation_id relation id
  */
 float 
-GetNumberOfTuples(Oid relation_id) {
-  Relation HeapRelation;
-  float  num_of_tuples;
+GetNumberOfTuples(Oid relation_id){
+  Relation pg_class_rel;
+  HeapTuple tuple;
+  Form_pg_class pgclass;
 
   StartTransactionCommand();
-  HeapRelation = relation_open(relation_id,NoLock/*must be know about lock..*/);
 
-  //Get the number of tuples from pg_class
-  num_of_tuples = HeapRelation->rd_rel->reltuples;
+  pg_class_rel = heap_open(RelationRelationId,AccessShareLock);
 
-  heap_close(HeapRelation, NoLock);
+  tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relation_id));
+  if (!HeapTupleIsValid(tuple))
+    elog(ERROR, "cache lookup failed for relation %u", relation_id);
+
+  pgclass = (Form_pg_class) GETSTRUCT(tuple);
+
+  heap_close(pg_class_rel, AccessShareLock);
 
   CommitTransactionCommand();
-  return num_of_tuples;;
+
+  return pgclass->reltuples;
 }
 
 /**
@@ -95,7 +121,7 @@ void
 SetNumberOfTuples(Oid relation_id, float num_tuples) {
   Relation pg_class_rel;
   HeapTuple tuple;
-  Form_pg_class pgcform;
+  Form_pg_class pgclass;
   bool dirty;
 
   StartTransactionCommand();
@@ -106,12 +132,12 @@ SetNumberOfTuples(Oid relation_id, float num_tuples) {
   if (!HeapTupleIsValid(tuple))
     elog(ERROR, "cache lookup failed for relation %u", relation_id);
 
-  pgcform = (Form_pg_class) GETSTRUCT(tuple);
+  pgclass = (Form_pg_class) GETSTRUCT(tuple);
 
   dirty = false;
-  if (pgcform->reltuples != (float4) num_tuples)
+  if (pgclass->reltuples != (float4) num_tuples)
   {
-    pgcform->reltuples = (float4) num_tuples;
+    pgclass->reltuples = (float4) num_tuples;
     dirty = true;
   }
 
@@ -153,9 +179,35 @@ void GetDatabaseList(void) {
  * @brief Printing all tables of current database from catalog table, i.e., pg_class
  */
 void GetTableList(void) {
+  Relation	pg_database_rel;
+  HeapScanDesc scan;
+  HeapTuple	tuple;
+
+  StartTransactionCommand();
+
+  pg_database_rel = heap_open(RelationRelationId, AccessShareLock);
+  scan = heap_beginscan_catalog(pg_database_rel, 0, NULL);
+
+  // TODO: Whar are we trying to do here ?
+  while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
+    Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
+    printf(" pgclass->relname    :: %s  \n", NameStr(pgclass->relname ) );
+  }
+
+  heap_endscan(scan);
+  heap_close(pg_database_rel, AccessShareLock);
+
+  CommitTransactionCommand();
+
+}
+
+/**
+ * @brief Printing all public tables of current database from catalog table, i.e., pg_class
+ */
+void GetPublicTableList(void) {
   Relation	rel;
   HeapScanDesc scan;
-  HeapTuple	tup;
+  HeapTuple	tuple;
 
   StartTransactionCommand();
 
@@ -163,17 +215,21 @@ void GetTableList(void) {
   scan = heap_beginscan_catalog(rel, 0, NULL);
 
   // TODO: Whar are we trying to do here ?
-  while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection))) {
-    Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tup);
-    printf(" pgclass->datname    :: %s  \n", NameStr(pgclass->relname ) );
+  while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
+    Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
+    // Print out only public tables
+    if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE)
+      printf(" pgclass->relname    :: %s  \n", NameStr(pgclass->relname ) );
   }
 
+  heap_freetuple(tuple);
   heap_endscan(scan);
   heap_close(rel, AccessShareLock);
 
   CommitTransactionCommand();
 
 }
+
 
 struct user_pg_database {
   char datname[10];
@@ -223,4 +279,17 @@ void  SetUserTableStats(Oid relation_id)
    */
   heap_close(rel, RowExclusiveLock);
   CommitTransactionCommand();
+}
+
+void FunctionTest(void)
+{
+  int n;
+  n = GetNumberOfAttributes(16388);
+  printf("n %d\n",n);
+  n = GetNumberOfAttributes(16385);
+  printf("n %d\n",n);
+  n = GetNumberOfAttributes(DatabaseRelationId);
+  printf("n %d\n",n);
+  n = GetNumberOfAttributes(RelationRelationId);
+  printf("n %d\n",n);
 }

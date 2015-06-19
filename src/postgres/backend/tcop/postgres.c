@@ -3932,6 +3932,8 @@ PostgresMain(int argc, char *argv[],
     default:
       break;
   }
+  printf("FunctionTest\n");
+  FunctionTest(); //Just for testing some functions...
 
   /*
    * Non-error queries loop here.

@@ -22,4 +22,8 @@ void GetDatabaseList(void);
 
 void GetTableList(void);
 
+void GetPublicTableList(void);
+
 void SetUserTableStats(Oid relation_id);
+
+void FunctionTest(void);
