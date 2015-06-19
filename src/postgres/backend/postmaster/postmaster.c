@@ -358,7 +358,7 @@ static DNSServiceRef bonjour_sdref = NULL;
 #endif
 
 // Test Mode Status
-TestMode CurrentTestModeStatus = TEST_MODE_TYPE_INVALID;
+TestMode CurrentTestModeStatus = TEST_MODE_TYPE_OFF;
 
 /*
  * postmaster.c - function prototypes
@@ -799,7 +799,7 @@ PostmasterMain(int argc, char *argv[])
       else if( !strcmp(user_input, "TEST_MODE_TYPE_STATISTICS"))
           CurrentTestModeStatus = TEST_MODE_TYPE_STATISTICS;
       else //user can also type the test most as a number
-	CurrentTestModeStatus = (int)(user_input[0]-'0');
+	  CurrentTestModeStatus = (int)(user_input[0]-'0');
       
       if( CurrentTestModeStatus == TEST_MODE_TYPE_INVALID)
       {
