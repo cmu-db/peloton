@@ -14,7 +14,6 @@
 #include "backend/main/kernel.h"
 #include "backend/common/logger.h"
 #include "backend/executor/executors.h"
-#include "backend/parser/parser.h"
 
 #include "tbb/tbb.h"
 #include "tbb/flow_graph.h"
@@ -109,44 +108,7 @@ class aggregator_task {
 ResultType Kernel::Handler(const char* query) {
   ResultType status = RESULT_TYPE_INVALID;
 
-  std::cout << "Kernel \n";
-
-  // Parse query
-  parser::SQLStatementList *result = parser::Parser::ParseSQLString(query);
-
-  if(result == nullptr || result->is_valid == false) {
-    LOG_ERROR("Parsing failed for query :: %s\n"
-        "Parsing error : %s", query, result->parser_msg);
-    status = RESULT_TYPE_FAILURE;
-    delete result;
-    return status;
-  }
-
-  std::cout << (*result);
-
-  auto statements = result->GetStatements();
-  for(auto statement : statements){
-
-    // Take of DML
-    switch(statement->GetType()){
-
-      case STATEMENT_TYPE_CREATE:
-        executor::CreateExecutor::Execute(statement);
-        break;
-
-      case STATEMENT_TYPE_DROP:
-        executor::DropExecutor::Execute(statement);
-        break;
-
-      default:
-        break;
-    }
-
-    // Validate and construct query plan
-
-    // Construct execution DFG
-
-  }
+  std::cout << query << "\n";
 
   /*
   int num_chunks = size/chunk_size;
@@ -170,7 +132,6 @@ ResultType Kernel::Handler(const char* query) {
   */
 
   status = RESULT_TYPE_SUCCESS;
-  delete result;
   return status;
 }
 

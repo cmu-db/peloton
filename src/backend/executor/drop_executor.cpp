@@ -19,7 +19,6 @@
 
 #include "backend/index/index.h"
 #include "backend/storage/data_table.h"
-#include "backend/parser/statement_drop.h"
 
 #include <cassert>
 #include <algorithm>
@@ -27,7 +26,10 @@
 namespace nstore {
 namespace executor {
 
-bool DropExecutor::Execute(parser::SQLStatement *query) {
+// TODO: Fix function
+static bool Execute();
+/*
+bool DropExecutor::Execute() {
 
   parser::DropStatement* stmt = (parser::DropStatement*) query;
 
@@ -161,6 +163,7 @@ bool DropExecutor::Execute(parser::SQLStatement *query) {
 
   return false;
 }
+*/
 
 } // namespace executor
 } // namespace nstore
