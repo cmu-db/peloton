@@ -21,7 +21,7 @@ namespace bridge {
 int DDL::CreateTable(int arg){
     // FIXME: Get default db 
     catalog::Database* db = catalog::Catalog::GetInstance().GetDatabase(DEFAULT_DB_NAME);
-    assert(db);
+    //assert(db);
 
     //parser::CreateStatement* stmt;
     //stmt->name = "tbname"; // warning
