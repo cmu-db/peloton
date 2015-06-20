@@ -16,13 +16,13 @@ obj_DIR = $(top_builddir)/src/backend
 check_PROGRAMS =
 
 AM_CPPFLAGS += \
-			   -isystem $(GMOCK_SRCDIR) \
-			   -I$(top_srcdir)/src/postgres/include \
-			   -I$(top_srcdir)/src/postgres/backend	\
-			   -I$(top_srcdir)/src \
-			   -I$(top_srcdir)/third_party \
-			   -I$(top_builddir)/src \
-			   $(GTEST_CPPFLAGS)
+	       -isystem $(GMOCK_SRCDIR) \
+	       -I$(top_srcdir)/src/postgres/include \
+	       -I$(top_srcdir)/src/postgres/backend	\
+	       -I$(top_srcdir)/src \
+	       -I$(top_srcdir)/third_party \
+	       -I$(top_builddir)/src \
+	       $(GTEST_CPPFLAGS)
 
 AM_CXXFLAGS += $(GTEST_CXXFLAGS) 
 
@@ -52,7 +52,7 @@ include $(srcdir)/planner/Makefile.am
 include $(srcdir)/scheduler/Makefile.am
 include $(srcdir)/storage/Makefile.am
 
-include $(srcdir)/postgres/bridge/Makefile.am
+#include $(srcdir)/postgres/bridge/Makefile.am
 
 TESTS = $(check_PROGRAMS) 
 LOG_COMPILER = $(srcdir)/test-driver.sh 
