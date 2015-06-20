@@ -43,7 +43,8 @@ DEFAULT_INCLUDES =
 ######################################################################
 
 libpeloton_la_SOURCES = \
-                      $(backend_FILES) \
+            $(backend_FILES) \
+            $(bridge_FILES) \
 					  $(catalog_FILES) \
 					  $(common_FILES) \
 					  $(executor_FILES) \

@@ -66,6 +66,7 @@
 #include "utils/guc.h"
 #include "utils/syscache.h"
 
+extern int DDL_CreateTable(int arg);
 
 /* Hook for plugins to get control in ProcessUtility() */
 ProcessUtility_hook_type ProcessUtility_hook = NULL;
@@ -944,12 +945,16 @@ ProcessUtilitySlow(Node *parsetree,
 			case T_CreateStmt:
 			case T_CreateForeignTableStmt:
 				{
+          int ret;  
 					List	   *stmts;
 					ListCell   *l;
 
 					/* Run parse analysis ... */
 					stmts = transformCreateStmt((CreateStmt *) parsetree,
 												queryString);
+
+          ret = DDL_CreateTable(23);
+          fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
 
 					/* ... and do it */
 					foreach(l, stmts)
