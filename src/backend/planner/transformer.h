@@ -20,12 +20,8 @@ class PlanTransformer {
 
   static PlanTransformer& GetInstance();
 
-  void printPostgresPlanStates(const PlanState *planstate);
+  void printPostgresPlanStateTree(const PlanState *planstate);
 
- private:
-  void printPostgresPlanStates(const PlanState *planstate, int indentLeven);
-  void printSubPlanStateList(const List* list, int indentLevel);
-  void indent(int indentLevel);
 };
 }
 }
