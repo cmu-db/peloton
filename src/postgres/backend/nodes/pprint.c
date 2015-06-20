@@ -9,7 +9,6 @@
 
 #include <ctype.h>
 #include "nodes/pprint.h"
-#include "nodes/execnodes.h"
 
 static void print_planstate(const PlanState *planstate, int ind);
 static void print_list(const List* list, int ind);
@@ -17,11 +16,11 @@ static void indent(int ind);
 
 #define DEST stdout
 
-void printPostgresQueryDesc(const QueryDesc *queryDesc) {
+void printQueryDesc(const QueryDesc *queryDesc) {
   print_planstate(queryDesc->planstate, 0);
 }
 
-void printPostgresPlanStateTree(const PlanState *planstate) {
+void printPlanStateTree(const PlanState *planstate) {
   print_planstate(planstate, 0);
 }
 

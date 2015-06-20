@@ -8,6 +8,9 @@
 
 #pragma once
 
-extern "C" void printPostgresQueryDesc(const QueryDesc *queryDesc);
-extern "C" void printPostgresPlanStateTree(const PlanState *planstate);
+#include "nodes/execnodes.h"
+#include "executor/execdesc.h"
+
+extern void printQueryDesc(const QueryDesc *queryDesc);
+extern void printPlanStateTree(const PlanState *planstate);
 
