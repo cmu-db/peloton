@@ -15,7 +15,7 @@
 #include "gtest/gtest.h"
 #include "harness.h"
 
-//#include "catalog/catalog.h"
+//#include "backend/catalog/catalog.h"
 
 namespace nstore {
 namespace test {

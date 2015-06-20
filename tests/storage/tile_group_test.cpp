@@ -12,9 +12,9 @@
 
 #include "gtest/gtest.h"
 
-#include "common/transaction.h"
-#include "storage/tile_group.h"
-#include "storage/tile_group_factory.h"
+#include "backend/common/transaction.h"
+#include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_factory.h"
 #include "harness.h"
 
 namespace nstore {
