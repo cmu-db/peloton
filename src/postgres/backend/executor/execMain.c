@@ -287,7 +287,7 @@ ExecutorRun(QueryDesc *queryDesc,
 	//PlannedStmt *plan = queryDesc->plannedstmt;
 	//elog_node_display(LOG, "plan", plan, Debug_pretty_print);
 
-  printQueryDesc(queryDesc);
+  //printPlanStateTree(queryDesc->planstate);
 
 
 	if (ExecutorRun_hook)

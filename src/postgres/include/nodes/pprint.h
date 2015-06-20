@@ -6,11 +6,13 @@
  *      Author: Ming Fang
  */
 
-#pragma once
+#ifndef SRC_POSTGRES_INCLUDE_NODES_PPRINT_H_
+#define SRC_POSTGRES_INCLUDE_NODES_PPRINT_H_
 
-#include "nodes/execnodes.h"
 #include "executor/execdesc.h"
+#include "nodes/execnodes.h"
 
 extern void printQueryDesc(const QueryDesc *queryDesc);
 extern void printPlanStateTree(const PlanState *planstate);
 
+#endif /* SRC_POSTGRES_INCLUDE_NODES_PPRINT_H_ */
