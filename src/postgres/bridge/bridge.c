@@ -22,7 +22,7 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
-#include "../../bridge/bridge.h"
+#include "../../backend/bridge/bridge.h"
 
 /**
  * @brief Getting the relation name.

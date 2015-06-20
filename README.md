@@ -18,11 +18,11 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
  
 ###	Ubuntu Quick Setup
 
-    sudo apt-get install g++ pkg-config libtool libboost1.54-dev libtbb-dev libjson-spirit-dev libreadline-dev flex bison
+    sudo apt-get install g++ pkg-config libtool libtbb-dev libjson-spirit-dev libreadline-dev flex bison
 
 ### OS X Setup
 
-    brew install automake tbb boost json_spirit flex bison
+    brew install automake tbb json_spirit flex bison
  
 ### Build Peloton
 
@@ -52,6 +52,11 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
     help  
     
     pg_ctl -D ./data stop
+
+### Testing
+
+    make check -j4        // Build and execute tests
+    cd tests; make check-build -j4  // Only build the tests.
 
 ## Development        
 

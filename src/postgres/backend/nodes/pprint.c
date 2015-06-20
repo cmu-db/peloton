@@ -8,6 +8,8 @@
 #include "postgres.h"
 
 #include <ctype.h>
+
+#include "executor/execdesc.h"
 #include "nodes/pprint.h"
 #include "nodes/execnodes.h"
 
