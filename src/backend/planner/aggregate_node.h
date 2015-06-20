@@ -32,15 +32,34 @@ class AggregateNode : public AbstractPlanNode {
 
  private:
 
-  /** @brief Columns in the output table */
+  /** @brief Columns in the output logical tile
+   *  These are not present in input logical tile
+   **/
   std::vector<catalog::ColumnInfo> output_columns;
+
+  /**
+   *  Sample queries :
+   *
+   *  Consider this schema:
+   *  Products :: < ProductID | CategoryID | Units >
+   *
+   *  SELECT CategoryID, SUM(Units)
+   *  FROM Products
+   *  GROUP BY CategoryID;
+   *
+   *  SELECT DISTINCT ProductID, CategoryID
+   *  From Products
+   */
 
   /** @brief Aggregate columns */
   std::vector<ExpressionType> aggregate_types;
-  std::vector<catalog::ColumnInfo> aggregate_columns;
+  std::vector<oid_t> aggregate_columns;
 
   /** @brief Group by columns */
-  std::vector<catalog::ColumnInfo> group_by_columns;
+  std::vector<oid_t> group_by_columns;
+
+  /** @brief Pass through columns */
+  std::vector<oid_t> pass_through_columns;
 
 };
 
