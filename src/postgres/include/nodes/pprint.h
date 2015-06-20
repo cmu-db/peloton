@@ -8,6 +8,6 @@
 
 #pragma once
 
-extern "C" void printPostgresQueryDesc(const QueryDesc *queryDesc);
-extern "C" void printPostgresPlanStateTree(const PlanState *planstate);
+void printPostgresQueryDesc(const QueryDesc *queryDesc);
+void printPostgresPlanStateTree(const PlanState *planstate);
 

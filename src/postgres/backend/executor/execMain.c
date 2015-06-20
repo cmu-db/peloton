@@ -287,8 +287,8 @@ ExecutorRun(QueryDesc *queryDesc,
 	//PlannedStmt *plan = queryDesc->plannedstmt;
 	//elog_node_display(LOG, "plan", plan, Debug_pretty_print);
 
-  print_queryDesc(queryDesc);
-
+    // TODO: not yet defined
+    //print_queryDesc(queryDesc);
 
 	if (ExecutorRun_hook)
 		(*ExecutorRun_hook) (queryDesc, direction, count);
