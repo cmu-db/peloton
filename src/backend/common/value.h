@@ -25,7 +25,6 @@
 #include <iostream>
 
 #include "ttmath/ttmathint.h"
-#include "boost/scoped_ptr.hpp"
 
 #include "backend/common/exception.h"
 #include "backend/common/pool.h"
