@@ -8,12 +8,12 @@ include $(top_srcdir)/common.am
 ######################################################################
 
 bin_peloton_PROGRAMS = initdb pg_ctl psql \
-			   createdb createuser dropdb dropuser             
+					   createdb createuser dropdb dropuser             
 bin_pelotondir = /usr/local/peloton/bin
 if BUILD_OS_IS_DARWIN
-pg_common_ldflags = -L$(top_builddir)/src -lpostgres -lpq -lm -lreadline
+pg_common_ldflags = -L$(top_builddir)/src/.libs -lpeloton -lpq $(TBB_LIBS) -lm -lreadline
 else
-pg_common_ldflags = -L$(top_builddir)/src -lpostgres -lpq -lrt -lm -lreadline
+pg_common_ldflags = -L$(top_builddir)/src/.libs -lpeloton -lpq $(TBB_LIBS) -lrt -lm -lreadline
 endif
 
 
@@ -72,18 +72,18 @@ psql_LDFLAGS = $(pg_common_ldflags)
 ######################################################################
 
 pg_scripts_CPPFLAGS = \
-					-DFRONTEND \
-				    -I$(top_srcdir)/tools/common \
-					-I$(top_srcdir)/src/postgres/include \
-					-I$(top_srcdir)/src/postgres/interfaces/libpq
+					  -DFRONTEND \
+					  -I$(top_srcdir)/tools/common \
+					  -I$(top_srcdir)/src/postgres/include \
+					  -I$(top_srcdir)/src/postgres/interfaces/libpq
 
 pg_scripts_SOURCES = \
-                    common/dumputils.c \
-			        common/fe_memutils.c \
-			        common/keywords.c
+					 common/dumputils.c \
+					 common/fe_memutils.c \
+					 common/keywords.c
 
 pg_ctl_SOURCES = \
-                 $(pg_scripts_SOURCES) \
+				 $(pg_scripts_SOURCES) \
 				 scripts/pg_ctl.c
 
 pg_ctl_CPPFLAGS = $(pg_scripts_CPPFLAGS)

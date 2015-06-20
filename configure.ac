@@ -70,7 +70,7 @@ then
     NPROCS=$(sysctl -n hw.physicalcpu)
 fi
 
-NPROCS=`expr $NPROCS / 2`
+#NPROCS=`expr $NPROCS / 2`
 MAKEFLAGS="-j$NPROCS"
 
 ######################################################################
@@ -94,12 +94,12 @@ AC_CHECK_SSL
 AX_TBB([], AC_MSG_ERROR([Please install the Intel TBB library : libtbb-dev]))
 
 # Check for Boost libraries
-AX_BOOST_BASE([1.42])
-AX_BOOST_ASIO
-AX_BOOST_FILESYSTEM
-AX_BOOST_SERIALIZATION
-AX_BOOST_SYSTEM
-AX_BOOST_THREAD
+#AX_BOOST_BASE([1.42])
+#AX_BOOST_ASIO
+#AX_BOOST_FILESYSTEM
+#AX_BOOST_SERIALIZATION
+#AX_BOOST_SYSTEM
+#AX_BOOST_THREAD
 
 #[test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h.in])
 
@@ -122,8 +122,8 @@ Version        : ${PACKAGE_VERSION}
 OS             : ${build_os}
 Prefix         : ${prefix}
 Compiler       : ${CC}
-CPP Flags      : ${CPPFLAGS}
 C Flags        : ${CFLAGS}
+CPP Flags      : ${CPPFLAGS}
 C++ Flags      : ${CXXFLAGS}
 Make Flags     : ${MAKEFLAGS}
 Libraries      : ${LIBS} $TBB_LIBS
