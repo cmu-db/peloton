@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/catalog/catalog.h"
+#include "backend/bridge/ddl.h"
 
 namespace nstore {
 namespace executor {
