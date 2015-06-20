@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "bridge/ddl.h"
 #include "catalog/catalog.h"
 #include "parser/parser.h"
 
@@ -23,6 +24,7 @@ namespace executor {
 //===--------------------------------------------------------------------===//
 
 class CreateExecutor {
+    friend class bridge::DDL; 
 public:
 
     CreateExecutor(const CreateExecutor &) = delete;
