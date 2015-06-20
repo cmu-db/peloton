@@ -7,7 +7,7 @@
 #pragma once
 
 namespace nstore {
-namespace ddl {
+namespace bridge {
 
 //===--------------------------------------------------------------------===//
 // DDL Class 
