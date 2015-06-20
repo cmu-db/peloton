@@ -66,6 +66,7 @@
 #include "utils/guc.h"
 #include "utils/syscache.h"
 
+// TODO: Peloton Modifications
 extern int DDL_CreateTable(int arg);
 
 /* Hook for plugins to get control in ProcessUtility() */
@@ -953,8 +954,12 @@ ProcessUtilitySlow(Node *parsetree,
 					stmts = transformCreateStmt((CreateStmt *) parsetree,
 												queryString);
 
-          ret = DDL_CreateTable(23);
-          fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
+					// TODO: Peloton Modifications
+					/*
+					 * Intercept the create table request from Postgres and create a table in Peloton
+					 */
+					ret = DDL_CreateTable(23);
+					fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
 
 					/* ... and do it */
 					foreach(l, stmts)
