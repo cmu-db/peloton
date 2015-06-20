@@ -6,7 +6,22 @@
 
 #pragma once
 
+namespace nstore {
+namespace ddl {
+
 //===--------------------------------------------------------------------===//
-//  DDL for managing Postgres
+// DDL Class 
 //===--------------------------------------------------------------------===//
 
+class DDL {
+public:
+  static int CreateTable(int arg);
+
+};
+
+extern "C" {
+  int DDL_CreateTable(int arg);
+}
+
+} // namespace bridge
+} // namespace nstore
