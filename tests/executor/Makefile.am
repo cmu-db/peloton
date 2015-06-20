@@ -11,7 +11,8 @@ check_PROGRAMS += \
 				  seq_scan_test \
 				  index_scan_test \
 				  limit_test \
-				  nested_loop_join_test
+				  nested_loop_join_test \
+				  order_by_test
 
 executor_tests_common= 	executor/executor_tests_util.cpp \
 						harness.cpp
@@ -105,3 +106,10 @@ nested_loop_join_test_LDADD = \
 							  $(obj_DIR)/expression/expression_util.o \
 							  $(obj_DIR)/executor/nested_loop_join_executor.o
 
+order_by_test_SOURCES = \
+						$(executor_tests_common) \
+						executor/order_by_test.cpp 
+
+order_by_test_LDADD = \
+					$(executor_tests_common_ld) \
+					$(obj_DIR)/executor/order_by_executor.o
