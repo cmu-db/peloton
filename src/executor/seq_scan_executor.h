@@ -8,6 +8,7 @@
 
 #include "common/types.h"
 #include "executor/abstract_executor.h"
+#include "planner/seq_scan_node.h"
 
 namespace nstore {
 namespace executor {
@@ -28,8 +29,30 @@ class SeqScanExecutor : public AbstractExecutor {
   bool DExecute();
 
  private:
+
+  //===--------------------------------------------------------------------===//
+  // Executor State
+  //===--------------------------------------------------------------------===//
+
   /** @brief Keeps track of current tile group id being scanned. */
-  oid_t current_tile_group_id_ = 0;
+  oid_t current_tile_group_id_ = INVALID_OID;
+
+  /** @brief Keeps track of the number of tile groups to scan. */
+  oid_t table_tile_group_count_ = INVALID_OID;
+
+  //===--------------------------------------------------------------------===//
+  // Plan Info
+  //===--------------------------------------------------------------------===//
+
+  /** @brief Pointer to table to scan from. */
+  const storage::DataTable *table_ = nullptr;
+
+  /** @brief Selection predicate. */
+  const expression::AbstractExpression *predicate_ = nullptr;
+
+  /** @brief Columns from tile group to be added to logical tile output. */
+  std::vector<oid_t> column_ids_;
+
 };
 
 } // namespace executor

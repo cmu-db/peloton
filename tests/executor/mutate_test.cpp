@@ -95,7 +95,7 @@ void UpdateTuple(storage::DataTable *table){
 
   // WHERE ATTR_0 < 60
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, std::string("tablename"), std::string("colname"));
+      new expression::TupleValueExpression(0, 0, std::string("tablename"), std::string("colname"));
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(60));
   auto predicate =
@@ -113,7 +113,8 @@ void UpdateTuple(storage::DataTable *table){
   update_node.AddChild(&seq_scan_node);
   update_executor.AddChild(&seq_scan_executor);
 
-  update_executor.Execute();
+  EXPECT_TRUE(update_executor.Init());
+  EXPECT_TRUE(update_executor.Execute());
 
   txn_manager.CommitTransaction(txn);
 }
@@ -133,7 +134,7 @@ void DeleteTuple(storage::DataTable *table){
 
   // WHERE ATTR_0 < 90
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, std::string("tablename"), std::string("colname"));
+      new expression::TupleValueExpression(0, 0, std::string("tablename"), std::string("colname"));
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(90));
   auto predicate =
@@ -151,7 +152,8 @@ void DeleteTuple(storage::DataTable *table){
   delete_node.AddChild(&seq_scan_node);
   delete_executor.AddChild(&seq_scan_executor);
 
-  delete_executor.Execute();
+  EXPECT_TRUE(delete_executor.Init());
+  EXPECT_FALSE(delete_executor.Execute());
 
   txn_manager.CommitTransaction(txn);
 }
