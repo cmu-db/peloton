@@ -5,7 +5,7 @@
 ######################################################################
 
 bridge_FILES = \
-               bridge/ddl.cpp
+               backend/bridge/ddl.cpp
 
 bridge_INCLUDES = \
-                  -I$(srcdir)/bridge
+                  -I$(srcdir)/backend/bridge

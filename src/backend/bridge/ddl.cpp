@@ -10,10 +10,10 @@
  *-------------------------------------------------------------------------
  */
 
-#include "bridge/ddl.h"
-#include "executor/create_executor.h"
-#include "parser/parser.h"
-#include "parser/statement_create.h"
+#include "backend/bridge/ddl.h"
+#include "backend/executor/create_executor.h"
+
+#include <cassert>
 
 namespace nstore {
 namespace bridge {
@@ -23,9 +23,9 @@ int DDL::CreateTable(int arg){
     catalog::Database* db = catalog::Catalog::GetInstance().GetDatabase(DEFAULT_DB_NAME);
     assert(db);
 
-    parser::CreateStatement* stmt;
-    stmt->name = "tbname"; // warning
-    executor::CreateExecutor::CreateTable(db, stmt); 
+    //parser::CreateStatement* stmt;
+    //stmt->name = "tbname"; // warning
+    //executor::CreateExecutor::CreateTable(db, stmt); 
     return arg * 2;
 }
 

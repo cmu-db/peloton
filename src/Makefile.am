@@ -42,7 +42,6 @@ DEFAULT_INCLUDES =
 ######################################################################
 
 libpeloton_la_SOURCES = \
-<<<<<<< HEAD
             $(backend_FILES) \
             $(bridge_FILES) \
 					  $(catalog_FILES) \
@@ -59,22 +58,6 @@ libpeloton_la_SOURCES = \
 					  $(postgres_common_FILES) \
 					  $(postgres_port_FILES) \
 					  $(postgres_timezone_FILES)
-=======
-			$(backend_FILES) \
-			$(catalog_FILES) \
-			$(common_FILES) \
-			$(executor_FILES) \
-			$(expression_FILES) \
-			$(index_FILES) \
-			$(planner_FILES) \
-			$(scheduler_FILES) \
-			$(storage_FILES) \
-			$(postgres_backend_FILES) \
-			$(postgres_bridge_FILES) \
-			$(postgres_common_FILES) \
-			$(postgres_port_FILES) \
-			$(postgres_timezone_FILES)
->>>>>>> origin
 
 ## HACK: To make use of different include flags for peloton and postgres.
 
