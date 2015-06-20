@@ -35,6 +35,11 @@ DeleteExecutor::DeleteExecutor(planner::AbstractPlanNode *node,
  */
 bool DeleteExecutor::DInit() {
   assert(children_.size() <= 1);
+  assert(transaction_);
+
+  // Delete tuples in logical tile
+  LOG_TRACE("Delete executor :: 1 child \n");
+
   return true;
 }
 
@@ -45,17 +50,13 @@ bool DeleteExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool DeleteExecutor::DExecute() {
-  assert(children_.size() == 1);
-  assert(transaction_);
-
-  // Delete tuples in logical tile
-  LOG_TRACE("Delete executor :: 1 child \n");
 
   // Retrieve next tile.
   const bool success = children_[0]->Execute();
   if (!success) {
     return false;
   }
+
   std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
 
   storage::Tile *tile = source_tile->GetBaseTile(0);

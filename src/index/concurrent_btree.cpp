@@ -372,7 +372,8 @@ BtMgr *bt_mgr (char *name, uint bits, uint nodemax)
 
   mgr = (BtMgr *) calloc (1, sizeof(BtMgr));
 
-  mgr->idx = open (name, O_RDWR | O_CREAT | O_TRUNC, 0666);
+  std::string name_string = "/tmp/" + std::string(name) + ".peloton";
+  mgr->idx = open (name_string.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0666);
 
   if( mgr->idx == -1 ) {
     fprintf (stderr, "Unable to open btree file\n");

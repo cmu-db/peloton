@@ -43,7 +43,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
   const catalog::Schema *index_key_schema = index->GetKeySchema();
   std::unique_ptr<storage::Tuple> start_key(new storage::Tuple(index_key_schema, true));
 
-  start_key->SetValue(0, ValueFactory::GetIntegerValue(100));
+  start_key->SetValue(0, ValueFactory::GetIntegerValue(0));
 
   std::unique_ptr<storage::Tuple> end_key(nullptr);
   bool start_inclusive = true;
@@ -76,7 +76,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
 
   EXPECT_FALSE(executor.Execute());
   EXPECT_EQ(result_tiles.size(), expected_num_tiles);
-  EXPECT_EQ(result_tiles[0].get()->GetTupleCount(), 40);
+  EXPECT_EQ(result_tiles[0].get()->GetTupleCount(), 5);
 
   std::cout << *(result_tiles[0].get());
 
@@ -89,7 +89,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
 
   // Set end key
   end_key.reset(new storage::Tuple(index_key_schema, true));
-  end_key->SetValue(0, ValueFactory::GetIntegerValue(140));
+  end_key->SetValue(0, ValueFactory::GetIntegerValue(20));
 
   // Create another plan node.
   planner::IndexScanNode node2(
@@ -116,7 +116,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
 
   EXPECT_FALSE(executor2.Execute());
   EXPECT_EQ(result_tiles.size(), expected_num_tiles);
-  EXPECT_EQ(result_tiles[0].get()->GetTupleCount(), 5);
+  EXPECT_EQ(result_tiles[0].get()->GetTupleCount(), 3);
 
   std::cout << *(result_tiles[0].get());
 

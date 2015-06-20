@@ -38,6 +38,7 @@ namespace executor {
  */
 class LogicalTile {
   friend class LogicalTileFactory;
+  struct ColumnInfo;
 
  public:
   LogicalTile(const LogicalTile &) = delete;
@@ -47,11 +48,10 @@ class LogicalTile {
 
   ~LogicalTile();
 
-  void AddColumn(
-      storage::Tile *base_tile,
-      bool own_base_tile,
-      oid_t origin_column_id,
-      oid_t position_list_idx);
+  void AddColumn(const ColumnInfo& cp, bool own_base_tile);
+
+  void AddColumn(storage::Tile *base_tile, bool own_base_tile,
+      oid_t origin_column_id, oid_t position_list_idx);
 
   int AddPositionList(std::vector<oid_t> &&position_list);
 
@@ -65,7 +65,13 @@ class LogicalTile {
 
   size_t GetColumnCount();
 
-  catalog::Schema *GetSchema();
+  const std::vector<ColumnInfo>& GetSchema() const;
+
+  void SetSchema(std::vector<LogicalTile::ColumnInfo>&& schema);
+
+  const std::vector<std::vector<oid_t> >& GetPositionLists() const;
+
+  void SetPositionLists(std::vector<std::vector<oid_t> >&& position_lists);
 
   //===--------------------------------------------------------------------===//
   // Special Case : Single underlying Physical Tile
@@ -132,6 +138,7 @@ class LogicalTile {
     oid_t origin_column_id;
   };
 
+  // Dummy default constructor
   LogicalTile(){};
 
   /**
@@ -167,7 +174,7 @@ class LogicalTile {
    * single underlying physical tile. In this case, we can directly access
    * the underlying physical tile rather than going through the logical tile.
    * */
-  storage::Tile * physical_tile_;
+  storage::Tile * physical_tile_ = nullptr;
 };
 
 
