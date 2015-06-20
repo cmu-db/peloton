@@ -14,9 +14,9 @@
 
 #include <memory>
 
-#include "storage/tuple.h"
+#include "backend/storage/tuple.h"
 
-#include "../../src/storage/backend_vm.h"
+#include "backend/storage/backend_vm.h"
 
 namespace nstore {
 namespace test {
