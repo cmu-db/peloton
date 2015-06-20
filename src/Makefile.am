@@ -43,28 +43,28 @@ DEFAULT_INCLUDES =
 ######################################################################
 
 libpeloton_la_SOURCES = \
-                      $(backend_FILES) \
-					  $(catalog_FILES) \
-					  $(common_FILES) \
-					  $(executor_FILES) \
-					  $(expression_FILES) \
-					  $(index_FILES) \
-					  $(parser_FILES) \
-					  $(planner_FILES) \
-					  $(scheduler_FILES) \
-					  $(storage_FILES) \
-					  $(postgres_backend_FILES) \
-					  $(postgres_bridge_FILES) \
-					  $(postgres_common_FILES) \
-					  $(postgres_port_FILES) \
-					  $(postgres_timezone_FILES)
+			$(backend_FILES) \
+			$(catalog_FILES) \
+			$(common_FILES) \
+			$(executor_FILES) \
+			$(expression_FILES) \
+			$(index_FILES) \
+			$(parser_FILES) \
+			$(planner_FILES) \
+			$(scheduler_FILES) \
+			$(storage_FILES) \
+			$(postgres_backend_FILES) \
+			$(postgres_bridge_FILES) \
+			$(postgres_common_FILES) \
+			$(postgres_port_FILES) \
+			$(postgres_timezone_FILES)
 
 ## HACK: To make use of different include flags for peloton and postgres.
 
 libpeloton_la_CPPFLAGS = -I$(srcdir)/postgres/include \
-						 -I$(srcdir)/postgres/backend \
-						 -I$(srcdir)/ \
-						 $(third_party_INCLUDES)
+			 -I$(srcdir)/postgres/backend \
+			 -I$(srcdir)/ \
+			 $(third_party_INCLUDES)
 
 libpeloton_la_CFLAGS = $(postgres_common_INCLUDES)
 libpeloton_la_CXXFLAGS = -std=c++11 -I. -I$(top_srcdir)/src -I.. $(third_party_INCLUDES)
@@ -72,16 +72,16 @@ libpeloton_la_CXXFLAGS = -std=c++11 -I. -I$(top_srcdir)/src -I.. $(third_party_I
 if BUILD_OS_IS_DARWIN
 libpeloton_la_LDFLAGS = -ldl -lm
 libpeloton_la_CFLAGS  +=  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
-						 -Wendif-labels -Wmissing-format-attribute -Wformat-security \
-						 -fno-strict-aliasing -fwrapv \
-						 -fPIC -fpic -msse4.2
+			  -Wendif-labels -Wmissing-format-attribute -Wformat-security \
+			  -fno-strict-aliasing -fwrapv \
+			  -fPIC -fpic -msse4.2
 ## if build os is not darwin
 else
 libpeloton_la_LDFLAGS = -lrt -lcrypt -ldl -lm
 libpeloton_la_CFLAGS +=  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
-						 -Wendif-labels -Wmissing-format-attribute -Wformat-security \
-						 -fno-strict-aliasing -fwrapv -fexcess-precision=standard \
-						 -fPIC -fpic -msse4.2
+			 -Wendif-labels -Wmissing-format-attribute -Wformat-security \
+			 -fno-strict-aliasing -fwrapv -fexcess-precision=standard \
+			 -fPIC -fpic -msse4.2
 endif
 
 ######################################################################
