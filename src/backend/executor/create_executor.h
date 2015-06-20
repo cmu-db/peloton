@@ -13,7 +13,6 @@
 #pragma once
 
 #include "backend/catalog/catalog.h"
-#include "backend/parser/parser.h"
 
 namespace nstore {
 namespace executor {
@@ -23,22 +22,33 @@ namespace executor {
 //===--------------------------------------------------------------------===//
 
 class CreateExecutor {
-public:
+ public:
 
-    CreateExecutor(const CreateExecutor &) = delete;
-    CreateExecutor& operator=(const CreateExecutor &) = delete;
-    CreateExecutor(CreateExecutor &&) = delete;
-    CreateExecutor& operator=(CreateExecutor &&) = delete;
+  CreateExecutor(const CreateExecutor &) = delete;
+  CreateExecutor& operator=(const CreateExecutor &) = delete;
+  CreateExecutor(CreateExecutor &&) = delete;
+  CreateExecutor& operator=(CreateExecutor &&) = delete;
 
-    static bool Execute(parser::SQLStatement *query);
+  // TODO: Fix function
+  static bool Execute();
 
-protected:
-    
-    static bool CreateDatabase(parser::CreateStatement* stmt);
-    static bool CreateTable(catalog::Database* db, parser::CreateStatement* stmt);
-    static bool CreateIndex(catalog::Database* db, parser::CreateStatement* stmt);
-    static bool CreateConstraint(catalog::Database* db, parser::CreateStatement* stmt);
-    
+ protected:
+
+  static bool CreateDatabase(std::string db_name);
+
+  // TODO: Fix function
+  static bool CreateTable(catalog::Database* db);
+
+  static bool CreateIndex(catalog::Database* db,
+                          std::string index_name,
+                          std::string table_name,
+                          std::vector<std::string> index_attrs,
+                          bool unique);
+
+
+  static bool CreateConstraint(catalog::Database* db,
+                               std::string table_name);
+
 };
 
 } // namespace executor

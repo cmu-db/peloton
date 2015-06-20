@@ -13,7 +13,6 @@
 #pragma once
 
 #include "backend/catalog/catalog.h"
-#include "backend/parser/parser.h"
 
 namespace nstore {
 namespace executor {
@@ -31,7 +30,8 @@ class DropExecutor {
   DropExecutor(DropExecutor &&) = delete;
   DropExecutor& operator=(DropExecutor &&) = delete;
 
-  static bool Execute(parser::SQLStatement *query);
+  // TODO: Fix function
+  static bool Execute();
 
 };
 
