@@ -57,3 +57,5 @@ include $(srcdir)/postgres/bridge/Makefile.am
 TESTS = $(check_PROGRAMS) 
 LOG_COMPILER = $(srcdir)/test-driver.sh 
 
+CLEANFILES = /tmp/*.peloton
+
