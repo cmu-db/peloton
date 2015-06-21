@@ -15,12 +15,12 @@ namespace bridge {
 
 class DDL {
 public:
-  static int CreateTable(int arg);
+  static int CreateTable(char* table_name, int arg);
 
 };
 
 extern "C" {
-  int DDL_CreateTable(int arg);
+  int DDL_CreateTable(char* table_name, int arg);
 }
 
 } // namespace bridge

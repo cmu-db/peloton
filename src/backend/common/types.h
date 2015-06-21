@@ -229,6 +229,20 @@ enum PlanNodeType {
 };
 
 //===--------------------------------------------------------------------===//
+// Create Types
+//===--------------------------------------------------------------------===//
+
+enum CreateType {
+  CREATE_TYPE_INVALID                = 0, // invalid create type
+
+  CREATE_TYPE_DB                     = 1, // db create type
+  CREATE_TYPE_TABLE                  = 2, // table create type
+  CREATE_TYPE_INDEX                  = 3, // index create type
+  CREATE_TYPE_CONSTRAINT             = 4  // constraint create type
+
+};
+
+//===--------------------------------------------------------------------===//
 // Statement Types
 //===--------------------------------------------------------------------===//
 
