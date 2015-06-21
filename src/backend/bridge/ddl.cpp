@@ -18,19 +18,17 @@
 namespace nstore {
 namespace bridge {
 
-int DDL::CreateTable(int arg){
+int DDL::CreateTable(char* table_name, int arg){
     // FIXME: Get default db 
     catalog::Database* db = catalog::Catalog::GetInstance().GetDatabase(DEFAULT_DB_NAME);
-    //assert(db);
+    assert(db);
 
-    //parser::CreateStatement* stmt;
-    //stmt->name = "tbname"; // warning
-    //executor::CreateExecutor::CreateTable(db, stmt); 
+    executor::CreateExecutor::CreateTable(db, table_name, NULL ); 
     return arg * 2;
 }
 
-extern "C" int DDL_CreateTable(int arg) {
-    return DDL::CreateTable(arg);
+extern "C" int DDL_CreateTable(char* table_name, int arg) {
+    return DDL::CreateTable(table_name, arg);
 }
 
 } // namespace bridge
