@@ -5,9 +5,10 @@
  *  Created on: Jun 18, 2015
  *      Author: Ming Fang
  */
-#include <iostream>
-#include "planner/transformer.h"
-#include "postgres/include/nodes/pprint.h"
+extern "C" {
+#include "nodes/pprint.h"
+}
+#include "backend/planner/transformer.h"
 
 extern "C" void printPlanStateTree(const PlanState * planstate);
 

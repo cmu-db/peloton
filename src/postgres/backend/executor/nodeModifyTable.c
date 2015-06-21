@@ -281,6 +281,7 @@ ExecInsert(ModifyTableState *mtstate,
   Oid			newId;
   List	   *recheckIndexes = NIL;
 
+  /*
   TupleTableSlot *slot_copy;
   HeapTuple  tuple_copy;
   Datum      *dvalues;
@@ -289,13 +290,14 @@ ExecInsert(ModifyTableState *mtstate,
   int     natts;
   int     i;
   bool    isnull;
-
+  */
   /*
    * get the heap tuple out of the tuple table slot, making sure we have a
    * writable copy
    */
   tuple = ExecMaterializeSlot(slot);
 
+  /*
   // TODO: Peloton changes
   PrintTupleTableSlot(slot);
 
@@ -322,6 +324,7 @@ ExecInsert(ModifyTableState *mtstate,
   pfree(dvalues);
   pfree(nulls);
   pfree(tuple_copy);
+  */
 
   /*
    * get information on the (current) result relation
