@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/catalog/catalog.h"
+#include "backend/catalog/schema.h"
 #include "backend/bridge/ddl.h"
 
 namespace nstore {
@@ -33,14 +34,14 @@ class CreateExecutor {
   CreateExecutor& operator=(CreateExecutor &&) = delete;
 
   // TODO: Fix function
-  static bool Execute();
+  static bool Execute(std::string name, CreateType createType);
 
  protected:
 
   static bool CreateDatabase(std::string db_name);
 
   // TODO: Fix function
-  static bool CreateTable(catalog::Database* db);
+  static bool CreateTable(catalog::Database* db, std::string table_name, catalog::Schema* schema );
 
   static bool CreateIndex(catalog::Database* db,
                           std::string index_name,

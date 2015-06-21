@@ -67,7 +67,7 @@
 #include "utils/syscache.h"
 
 // TODO: Peloton Modifications
-extern int DDL_CreateTable(int arg);
+extern int DDL_CreateTable(char* table_name, int arg);
 
 /* Hook for plugins to get control in ProcessUtility() */
 ProcessUtility_hook_type ProcessUtility_hook = NULL;
@@ -946,30 +946,46 @@ ProcessUtilitySlow(Node *parsetree,
 			case T_CreateStmt:
 			case T_CreateForeignTableStmt:
 				{
-          int ret;  
+                    
 					List	   *stmts;
 					ListCell   *l;
+
+					// TODO: Peloton Modifications
+         int ret;  
 
 					/* Run parse analysis ... */
 					stmts = transformCreateStmt((CreateStmt *) parsetree,
 												queryString);
 
-					// TODO: Peloton Modifications
-					/*
-					 * Intercept the create table request from Postgres and create a table in Peloton
-					 */
-					ret = DDL_CreateTable(23);
-					fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
-
-					/* ... and do it */
+				  /* ... and do it */
 					foreach(l, stmts)
 					{
 						Node	   *stmt = (Node *) lfirst(l);
 
 						if (IsA(stmt, CreateStmt))
 						{
+                                                        CreateStmt* Cstmt = stmt;
 							Datum		toast_options;
 							static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
+
+							// TODO: Peloton Modifications
+							/*
+							 * Intercept the create table request from Postgres and create a table in Peloton
+							 */
+							printf(":::::table:::::: %s %d\n", __func__, __LINE__);
+							printf("CreateStmt Info\n");
+							printf("Cstmt->NodeTag %d \n", Cstmt->type);
+							printf("Cstmt->relation->catalogname %d \n", Cstmt->relation->catalogname);
+							printf("Cstmt->relation->schemaname %d \n", Cstmt->relation->schemaname);
+							printf("Cstmt->relation->relname %d \n", Cstmt->relation->relname);
+							printf("Cstmt->relation->relname %d \n", Cstmt->relation->relname);
+
+							//printf("Cstmt->tableElts %d \n", type);
+							//printf("Cstmt->ofTypename %d \n", type);
+							ret = DDL_CreateTable( Cstmt->relation->relname ,23);
+							//ret = DDL_CreateTable( ((CreateStmt*)(stmt))->relation->relname ,23);
+							fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
+
 
 							/* Create the table itself */
 							address = DefineRelation((CreateStmt *) stmt,
@@ -1004,6 +1020,7 @@ ProcessUtilitySlow(Node *parsetree,
 						}
 						else if (IsA(stmt, CreateForeignTableStmt))
 						{
+printf(":::::foreign:::::: %s %d\n", __func__, __LINE__);
 							/* Create the table itself */
 							address = DefineRelation((CreateStmt *) stmt,
 													 RELKIND_FOREIGN_TABLE,
@@ -1021,6 +1038,7 @@ ProcessUtilitySlow(Node *parsetree,
 							 * call will stash the objects so created into our
 							 * event trigger context.
 							 */
+printf(":::::recurse:::::: %s %d\n", __func__, __LINE__);
 							ProcessUtility(stmt,
 										   queryString,
 										   PROCESS_UTILITY_SUBCOMMAND,
