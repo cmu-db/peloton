@@ -10,12 +10,12 @@
  *-------------------------------------------------------------------------
  */
 
-#include "catalog/manager.h"
+#include "backend/catalog/manager.h"
 #include "gtest/gtest.h"
 
 #include "harness.h"
-#include "storage/tile_group.h"
-#include "storage/tile_group_factory.h"
+#include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_factory.h"
 
 namespace nstore {
 namespace test {

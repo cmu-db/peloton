@@ -17,9 +17,9 @@
 #include <functional>
 #include <iostream>
 
-#include "common/types.h"
-#include "common/pretty_printer.h"
-#include "common/logger.h"
+#include "backend/common/types.h"
+#include "backend/common/pretty_printer.h"
+#include "backend/common/logger.h"
 
 namespace nstore {
 namespace test {

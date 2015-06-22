@@ -12,17 +12,17 @@ GMOCK_BUILDDIR = $(top_builddir)/$(GMOCK_DIR)
 # check_PROGRAMS -- Programs built by "make check" but not necessarily run
 # this is populated by the makefiles in the subdirs
 
-obj_DIR = $(top_builddir)/src
+obj_DIR = $(top_builddir)/src/backend
 check_PROGRAMS =
 
 AM_CPPFLAGS += \
-			   -isystem $(GMOCK_SRCDIR) \
-			   -I$(top_srcdir)/src \
-			   -I$(top_srcdir)/third_party \
-			   -I$(top_srcdir)/src/postgres/include \
-			   -I$(top_srcdir)/src/postgres/backend	\
-			   -I$(top_builddir)/src \
-			   $(GTEST_CPPFLAGS)
+	       -isystem $(GMOCK_SRCDIR) \
+	       -I$(top_srcdir)/src/postgres/include \
+	       -I$(top_srcdir)/src/postgres/backend	\
+	       -I$(top_srcdir)/src \
+	       -I$(top_srcdir)/third_party \
+	       -I$(top_builddir)/src \
+	       $(GTEST_CPPFLAGS)
 
 AM_CXXFLAGS += $(GTEST_CXXFLAGS) 
 
@@ -48,15 +48,17 @@ include $(srcdir)/concurrency/Makefile.am
 include $(srcdir)/executor/Makefile.am
 include $(srcdir)/expression/Makefile.am
 include $(srcdir)/index/Makefile.am
-include $(srcdir)/parser/Makefile.am
 include $(srcdir)/planner/Makefile.am
 include $(srcdir)/scheduler/Makefile.am
 include $(srcdir)/storage/Makefile.am
 
-include $(srcdir)/postgres/bridge/Makefile.am
+#include $(srcdir)/postgres/bridge/Makefile.am
 
 TESTS = $(check_PROGRAMS) 
 LOG_COMPILER = $(srcdir)/test-driver.sh 
 
 CLEANFILES = /tmp/*.peloton
+
+check-build:
+	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
 
