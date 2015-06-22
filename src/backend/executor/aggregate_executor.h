@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/executor/abstract_executor.h"
+#include "backend/storage/data_table.h"
 
 #include <vector>
 
