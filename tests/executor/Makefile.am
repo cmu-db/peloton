@@ -24,6 +24,7 @@ executor_tests_common_ld = \
 						   $(obj_DIR)/common/value.o \
 						   $(obj_DIR)/common/varlen.o \
 						   $(obj_DIR)/common/pool.o \
+						   $(obj_DIR)/concurrency/transaction_manager.o \
 						   $(obj_DIR)/concurrency/transaction.o \
 						   $(obj_DIR)/storage/abstract_table.o \
 						   $(obj_DIR)/storage/data_table.o \

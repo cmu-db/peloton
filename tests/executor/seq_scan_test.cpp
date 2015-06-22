@@ -232,7 +232,7 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
       CreatePredicate(g_tuple_ids),
       column_ids);
 
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   executor::SeqScanExecutor executor(&node, txn);
@@ -257,7 +257,7 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
       column_ids);
 
   // Set up executor and its child.
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   executor::SeqScanExecutor executor(&node, txn);
   MockExecutor child_executor;

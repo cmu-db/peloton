@@ -21,7 +21,7 @@ class DeleteExecutor : public AbstractExecutor {
   DeleteExecutor& operator=(DeleteExecutor &&) = delete;
 
   DeleteExecutor(planner::AbstractPlanNode *node,
-                 Transaction *transaction);
+                 concurrency::Transaction *transaction);
 
   ~DeleteExecutor(){}
 

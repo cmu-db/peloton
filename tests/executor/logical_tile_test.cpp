@@ -59,7 +59,7 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   tuple2.SetValue(
       3, ValueFactory::GetStringValue("tuple 2", tile_group->GetTilePool(1)));
 
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   txn_id_t txn_id = txn->GetTransactionId();
 
