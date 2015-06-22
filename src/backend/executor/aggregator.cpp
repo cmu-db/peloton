@@ -49,7 +49,7 @@ Agg* GetAggInstance(ExpressionType agg_type) {
       break;
     default: {
       std::string message =  "Unknown aggregate type " + std::to_string(agg_type);
-      throw UnknownTypeException(message);
+      throw UnknownTypeException(agg_type, message);
     }
   }
 
@@ -99,7 +99,8 @@ bool Helper(planner::AggregateNode* node,
     tuple.get()->SetValue(column.first, prev_tuple->GetValue(column.second));
   }
 
-  if (output_table->InsertTuple(transaction_id, tuple.get(), false) != INVALID_ITEMPOINTER) {
+  auto location = output_table->InsertTuple(transaction_id, tuple.get(), false);
+  if (location.block == INVALID_OID) {
     LOG_ERROR("Failed to insert tuple \n");
     return false;
   }
@@ -148,7 +149,7 @@ class Aggregator<PLAN_NODE_TYPE_AGGREGATE> {
 
   }
 
-  bool NextTuple(storage::Tuple *next_tuple, storage::Tuple *prev_tuple) {
+  bool NextTuple(storage::Tuple *cur_tuple, storage::Tuple *prev_tuple) {
 
     bool start_new_agg = false;
 
@@ -159,7 +160,7 @@ class Aggregator<PLAN_NODE_TYPE_AGGREGATE> {
     else {
       // Compare group by columns
       for (oid_t column_itr = 0; column_itr < group_by_columns.size() ; column_itr++) {
-        bool not_equal = next_tuple->GetValue(group_by_columns[column_itr]).
+        bool not_equal = cur_tuple->GetValue(group_by_columns[column_itr]).
             OpNotEquals(prev_tuple->GetValue(group_by_columns[column_itr])).IsTrue();
 
         if (not_equal){
@@ -191,7 +192,7 @@ class Aggregator<PLAN_NODE_TYPE_AGGREGATE> {
 
     for (oid_t column_itr = 0; column_itr < aggregate_columns.size(); column_itr++) {
       const oid_t column_index = aggregate_columns[column_itr];
-      Value value = next_tuple->GetValue(column_index);
+      Value value = cur_tuple->GetValue(column_index);
       aggregates[column_itr]->Advance(value);
     }
 
@@ -233,13 +234,13 @@ class Aggregator<PLAN_NODE_TYPE_AGGREGATE> {
   // From plan node
 
   /** @brief Group by columns */
-  const std::vector<oid_t> group_by_columns;
+  std::vector<oid_t> group_by_columns;
 
   /** @brief Aggregate columns */
-  const std::vector<oid_t> aggregate_columns;
+  std::vector<oid_t> aggregate_columns;
 
   /** @brief Aggregate types */
-  const std::vector<ExpressionType> aggregate_types;
+  std::vector<ExpressionType> aggregate_types;
 
 };
 
