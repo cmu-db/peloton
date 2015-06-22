@@ -159,7 +159,7 @@ class CountStarAgg : public Agg {
     count(0) {
   }
 
-  void Advance(const Value val) {
+  void Advance(const Value val __attribute__((unused))) {
     ++count;
   }
 
