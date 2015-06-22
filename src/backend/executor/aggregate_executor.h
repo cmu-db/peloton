@@ -12,13 +12,26 @@
 
 #pragma once
 
-#include "executor/abstract_executor.h"
+#include "backend/executor/abstract_executor.h"
 
 #include <vector>
 
 namespace nstore {
 namespace executor {
 
+/**
+ * The actual executor class templated on the type of aggregation that
+ * should be performed.
+ *
+ * If it is instantiated using PLAN_NODE_TYPE_AGGREGATE,
+ * then it will do a constant space aggregation that expects the input table
+ * to be sorted on the group by key.
+ *
+ * If it is instantiated using PLAN_NODE_TYPE_HASHAGGREGATE,
+ * then the input does not need to be sorted and it will hash the group by key
+ * to aggregate the tuples.
+ */
+template<PlanNodeType aggregate_type>
 class AggregateExecutor : public AbstractExecutor {
  public:
   AggregateExecutor(const AggregateExecutor &) = delete;
@@ -34,6 +47,13 @@ class AggregateExecutor : public AbstractExecutor {
   bool DInit();
 
   bool DExecute();
+
+  //===--------------------------------------------------------------------===//
+  // Executor State
+  //===--------------------------------------------------------------------===//
+
+  /** @brief Output table. */
+  storage::DataTable *output_table = nullptr;
 
 };
 

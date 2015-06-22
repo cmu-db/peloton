@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * aggregate.h
+ * aggregator.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/executor/aggregate.h
+ * /peloton/src/backend/executor/aggregator.h
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,9 @@
 
 #include "backend/common/value_factory.h"
 #include "backend/executor/abstract_executor.h"
+#include "backend/storage/backend.h"
+#include "backend/storage/data_table.h"
+#include "backend/planner/aggregate_node.h"
 
 //===--------------------------------------------------------------------===//
 // Aggregate
@@ -53,8 +56,7 @@ class SumAgg : public Agg {
     }
   }
 
-  Value Finalize()
-  {
+  Value Finalize() {
     if (!have_advanced)
     {
       return ValueFactory::GetNullValue();
@@ -93,7 +95,7 @@ class AvgAgg : public Agg {
       } else {
         aggregate = aggregate.OpAdd(weighted_val);
       }
-      count += delta.GetInteger();
+      count +=  ValuePeeker::PeekAsInteger(delta);
     }
     else {
       if (count == 0) {
@@ -236,45 +238,28 @@ class MinAgg : public Agg {
   bool have_advanced;
 };
 
+/** brief Create an instance of an aggregator for the specified aggregate */
+Agg* GetAggInstance(ExpressionType agg_type);
+
 /*
- * Create an instance of an aggregator for the specified aggregate
- * type, column type, and result type. The object is constructed in
- * memory from the provided memrory pool.
+ * Interface for an aggregator (not an an individual aggregate)
+ *
+ * This will aggregate some number of tuples and produce the results in the
+ * provided output .
  */
-inline Agg* GetAggInstance(Backend* backend, ExpressionType agg_type) {
-  Agg* aggregator;
+template<PlanNodeType aggregate_type>
+class Aggregator {
+public:
 
-  switch (agg_type) {
-    case EXPRESSION_TYPE_AGGREGATE_COUNT:
-      aggregator = new (backend->Allocate(sizeof(CountAgg))) CountAgg();
-      break;
-    case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR:
-      aggregator = new (backend->Allocate(sizeof(CountStarAgg))) CountStarAgg();
-      break;
-    case EXPRESSION_TYPE_AGGREGATE_SUM:
-      aggregator = new (backend->Allocate(sizeof(SumAgg))) SumAgg();
-      break;
-    case EXPRESSION_TYPE_AGGREGATE_AVG:
-      aggregator = new (backend->Allocate(sizeof(AvgAgg))) AvgAgg(false);
-      break;
-    case EXPRESSION_TYPE_AGGREGATE_WEIGHTED_AVG:
-      aggregator = new (backend->Allocate(sizeof(AvgAgg))) AvgAgg(true);
-      break;
-    case EXPRESSION_TYPE_AGGREGATE_MIN:
-      aggregator = new (backend->Allocate(sizeof(MinAgg))) MinAgg();
-      break;
-    case EXPRESSION_TYPE_AGGREGATE_MAX  :
-      aggregator = new (backend->Allocate(sizeof(MaxAgg))) MaxAgg();
-      break;
-    default: {
-      std::string message =  "Unknown aggregate type " + std::to_string(agg_type);
-      throw UnknownTypeException(message);
-    }
-  }
+    Aggregator(catalog::Schema *group_by_key_schema,
+               planner::AggregateNode *node,
+               storage::DataTable *output_table);
 
-  return aggregator;
-}
+    bool NextTuple(storage::Tuple *next_tuple, storage::Tuple *prev_tuple);
 
+    bool Finalize(storage::Tuple *prev_tuple);
+
+};
 
 } // namespace executor
 } // namespace nstore
