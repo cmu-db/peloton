@@ -67,7 +67,8 @@
 #include "utils/syscache.h"
 
 // TODO: Peloton Modifications
-extern int DDL_CreateTable(char* table_name, int arg);
+#include "backend/bridge/ddl.h"
+#include "parser/parse_type.h" // JWKIM< for typenameTypeIdAndMod, It will be removed in the near future..
 
 /* Hook for plugins to get control in ProcessUtility() */
 ProcessUtility_hook_type ProcessUtility_hook = NULL;
@@ -946,43 +947,58 @@ ProcessUtilitySlow(Node *parsetree,
 			case T_CreateStmt:
 			case T_CreateForeignTableStmt:
 				{
-                    
 					List	   *stmts;
 					ListCell   *l;
 
-					// TODO: Peloton Modifications
-         int ret;  
 
 					/* Run parse analysis ... */
 					stmts = transformCreateStmt((CreateStmt *) parsetree,
 												queryString);
 
-				  /* ... and do it */
+					/* ... and do it */
 					foreach(l, stmts)
 					{
 						Node	   *stmt = (Node *) lfirst(l);
 
 						if (IsA(stmt, CreateStmt))
 						{
-                                                        CreateStmt* Cstmt = stmt;
 							Datum		toast_options;
 							static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
 							// TODO: Peloton Modifications
+							int ret;  
+							ListCell   *entry;
+                                                        int attnum=0;
+
+							Oid	atttypid;
+							int32	atttypmod;
+							CreateStmt* Cstmt = (CreateStmt*)stmt;
+							List* schema = (List*)(Cstmt->tableElts);
+							printf(":::::table:::::: %s %d\n", __func__, __LINE__);
+
+							foreach(entry, schema) // Need to find out better way..
+							{
+								ColumnDef  *coldef = lfirst(entry);
+								attnum++;
+							}
+							DDL_Column ddl_column[attnum];
+							attnum = 0;
+							foreach(entry, schema)
+							{
+								ColumnDef  *coldef = lfirst(entry);
+								strcpy(ddl_column[attnum].name, coldef->colname);
+								ddl_column[attnum].is_not_null = coldef->is_not_null;
+								ddl_column[attnum].size = 10; // I have no idea yet.
+								typenameTypeIdAndMod(NULL, coldef->typeName, &atttypid, &atttypmod);
+								ddl_column[attnum].type = atttypid;
+								// need to find out size...
+								attnum++;
+							}
+
 							/*
 							 * Intercept the create table request from Postgres and create a table in Peloton
 							 */
-							printf(":::::table:::::: %s %d\n", __func__, __LINE__);
-							printf("CreateStmt Info\n");
-							printf("Cstmt->NodeTag %d \n", Cstmt->type);
-							printf("Cstmt->relation->catalogname %d \n", Cstmt->relation->catalogname);
-							printf("Cstmt->relation->schemaname %d \n", Cstmt->relation->schemaname);
-							printf("Cstmt->relation->relname %d \n", Cstmt->relation->relname);
-							printf("Cstmt->relation->relname %d \n", Cstmt->relation->relname);
-
-							//printf("Cstmt->tableElts %d \n", type);
-							//printf("Cstmt->ofTypename %d \n", type);
-							ret = DDL_CreateTable( Cstmt->relation->relname ,23);
+							ret = DDL_CreateTable( Cstmt->relation->relname, ddl_column, attnum);
 							//ret = DDL_CreateTable( ((CreateStmt*)(stmt))->relation->relname ,23);
 							fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
 

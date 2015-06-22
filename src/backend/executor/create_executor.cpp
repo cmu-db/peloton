@@ -87,6 +87,8 @@ bool CreateExecutor::CreateDatabase(std::string db_name) {
 
 bool CreateExecutor::CreateTable(catalog::Database* db,
                                  std::string table_name,
+                                 DDL_Column* columns,
+                                 int number_of_columns,
                                  catalog::Schema* schema = NULL) {
   catalog::Table *table = nullptr;
 
@@ -106,21 +108,15 @@ bool CreateExecutor::CreateTable(catalog::Database* db,
   // AddColumn
   // AddIndex
   // AddConstraint
-/*
-  for( Column* col : colmnus)
-  {
-    Column* col = new catalog::Column(col_name, col_type, col_offset, col_size, col_not_null);
-    int ret = table.AddColumn(col);
-    assert(ret);
-  }
-*/
 
-  catalog::Column* col = new catalog::Column("id", VALUE_TYPE_BIGINT, 0, sizeof(int), false);
-    int ret = table->AddColumn(col);
-    assert(ret);
-  col = new catalog::Column("name", VALUE_TYPE_VARCHAR, 1, sizeof(char)*10, false);
-    ret = table->AddColumn(col);
-    assert(ret);
+  for( int column_number = 0; column_number < number_of_columns; column_number++)
+  {
+      //TODO :: FIX
+      catalog::Column* column = new catalog::Column(columns[column_number].name, VALUE_TYPE_BIGINT, column_number, columns[column_number].size, columns[column_number].is_not_null);
+      int ret = table->AddColumn(column);
+      assert(ret);
+      printf("column name : %s\n", columns[column_number].name);
+  }
 
   // lock database
   {
