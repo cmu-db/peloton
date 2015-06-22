@@ -56,7 +56,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
       start_key.get(), end_key.get(), start_inclusive, end_inclusive,
       column_ids);
 
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   // Run the executor

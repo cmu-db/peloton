@@ -1,4 +1,4 @@
-/**
+ /**
  * @brief Implementation of utility functions for executor tests.
  *
  * Repeated code in many of the executor tests are factored out and placed
@@ -154,7 +154,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows, b
   assert(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
   const txn_id_t txn_id = txn->GetTransactionId();
@@ -209,7 +209,7 @@ void ExecutorTestsUtil::PopulateTiles(
   assert(schema->GetColumnCount() == 4);
 
   // Insert tuples into tile_group.
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
   const txn_id_t txn_id = txn->GetTransactionId();

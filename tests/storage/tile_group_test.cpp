@@ -90,7 +90,7 @@ TEST(TileGroupTests, BasicTest) {
 
     // TRANSACTION
 
-    auto& txn_manager = TransactionManager::GetInstance();
+    auto& txn_manager = concurrency::TransactionManager::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     txn_id_t txn_id = txn->GetTransactionId();
 
@@ -131,7 +131,7 @@ void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema) {
     uint64_t thread_id = GetThreadId();
 
     storage::Tuple *tuple = new storage::Tuple(schema, true);
-    auto& txn_manager = TransactionManager::GetInstance();
+    auto& txn_manager = concurrency::TransactionManager::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     txn_id_t txn_id = txn->GetTransactionId();
 
@@ -260,7 +260,7 @@ TEST(TileGroupTests, MVCCInsert) {
 
     oid_t tuple_slot_id = INVALID_OID;
 
-    auto& txn_manager = TransactionManager::GetInstance();
+    auto& txn_manager = concurrency::TransactionManager::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     txn_id_t txn_id1 = txn->GetTransactionId();
     cid_t cid1 = txn->GetLastCommitId();

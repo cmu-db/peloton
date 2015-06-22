@@ -21,6 +21,22 @@
 namespace nstore {
 namespace concurrency {
 
+TransactionManager::TransactionManager() {
+    next_txn_id = ATOMIC_VAR_INIT(START_TXN_ID);
+    next_cid = ATOMIC_VAR_INIT(START_CID);
+
+    // BASE transaction
+    // All transactions are based on this transaction
+    last_txn = new Transaction(START_TXN_ID, START_CID);
+    last_txn->cid = START_CID;
+    last_cid = START_CID;
+}
+
+TransactionManager::~TransactionManager() {
+    // delete BASE txn
+    delete last_txn;
+}
+
 // Get entry in table
 Transaction *TransactionManager::GetTransaction(txn_id_t txn_id) {
     if(txn_table.count(txn_id) != 0) {

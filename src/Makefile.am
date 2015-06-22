@@ -14,7 +14,7 @@ include $(top_srcdir)/common.am
 include $(srcdir)/backend/bridge/Makefile.am
 include $(srcdir)/backend/catalog/Makefile.am
 include $(srcdir)/backend/common/Makefile.am
-# include $(srcdir)/backend/concurrency/Makefile.am
+include $(srcdir)/backend/concurrency/Makefile.am
 include $(srcdir)/backend/executor/Makefile.am
 include $(srcdir)/backend/expression/Makefile.am
 include $(srcdir)/backend/index/Makefile.am
@@ -46,6 +46,7 @@ libpeloton_la_SOURCES = \
 			$(backend_FILES) \
 			$(catalog_FILES) \
 			$(common_FILES) \
+			$(concurrency_FILES) \
 			$(executor_FILES) \
 			$(expression_FILES) \
 			$(index_FILES) \
