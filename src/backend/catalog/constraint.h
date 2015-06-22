@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include "common/types.h"
-#include "catalog/abstract_catalog_object.h"
+#include "backend/common/types.h"
+#include "backend/catalog/abstract_catalog_object.h"
 
 
 #include <string>

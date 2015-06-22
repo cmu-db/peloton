@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "common/types.h"
-#include "common/exception.h"
-#include "storage/tile_group.h"
-#include "concurrency/transaction_manager.h"
+#include "backend/common/types.h"
+#include "backend/common/exception.h"
+#include "backend/storage/tile_group.h"
+#include "backend/concurrency/transaction_manager.h"
 
 #include <atomic>
 #include <cassert>
