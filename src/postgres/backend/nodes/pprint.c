@@ -10,6 +10,7 @@
 #include <ctype.h>
 
 #include "executor/execdesc.h"
+#include "foreign/fdwapi.h"
 #include "nodes/pprint.h"
 
 /* static helpers */
@@ -20,6 +21,9 @@ static void print_subplan(FILE *DEST, List *plans, const char *plan_name,
                           int ind);
 static void print_member(FILE *DEST, List *plans, PlanState **planstates,
                          int ind);
+static void print_modifytable_info(FILE *DEST, ModifyTableState *mtstate,
+                                   int ind);
+
 /* deprecated */
 static void print_planstate(FILE *DEST, const PlanState *planstate, int ind);
 static void print_list(FILE *DEST, const List* list, int ind);
@@ -37,6 +41,7 @@ void printQueryDesc(const QueryDesc *queryDesc) {
 void printPlanStateTree(const PlanState *planstate) {
   FILE *minglog = fopen(logpath, "a+");
   print_plan(minglog, planstate, NULL, NULL, 0);
+  fprintf(minglog, "\n");
   fclose(minglog);
 }
 
@@ -221,26 +226,26 @@ static void print_plan(FILE *DEST, const PlanState *planstate,
   }
 
   indent(DEST, ind);
-  fprintf(DEST, "Node Type: %s/%s\n", sname, pname);  // node type
+  fprintf(DEST, "Node Type: %s/%s|", sname, pname);  // node type
   if (plan_name) {
     indent(DEST, ind + 1);
-    fprintf(DEST, "Subplan Name: %s\n", plan_name);
+    fprintf(DEST, "Subplan Name: %s|", plan_name);
   }
   if (relationship) {
     indent(DEST, ind + 1);
-    fprintf(DEST, "Relationship: %s\n", relationship);
+    fprintf(DEST, "Relationship: %s|", relationship);
   }
   if (strategy) {
     indent(DEST, ind + 1);
-    fprintf(DEST, "Strategy: %s\n", strategy);
+    fprintf(DEST, "Strategy: %s|", strategy);
   }
   if (operation) {
     indent(DEST, ind + 1);
-    fprintf(DEST, "Operation: %s\n", operation);
+    fprintf(DEST, "Operation: %s|", operation);
   }
   if (custom_name) {
     indent(DEST, ind + 1);
-    fprintf(DEST, "Custom Plan Provider: %s\n", custom_name);
+    fprintf(DEST, "Custom Plan Provider: %s|", custom_name);
   }
 
   /* 2.
@@ -286,6 +291,7 @@ static void print_plan(FILE *DEST, const PlanState *planstate,
        * ModifyTableTarget, for relation that was named in the original query
        * ModifyTable_info(multiple target table or non-nominal relation, FDW and foreign , on conflict clause)
        * */
+      print_modifytable_info(DEST, (ModifyTableState *) planstate, ind + 1);
 
       break;
     case T_NestLoop:
@@ -318,7 +324,7 @@ static void print_plan(FILE *DEST, const PlanState *planstate,
       }
 
       indent(DEST, ind + 1);
-      fprintf(DEST, "Type: %s\n", jointype);
+      fprintf(DEST, "Type: %s|", jointype);
     }
       break;
     case T_SetOp: {
@@ -409,7 +415,8 @@ static void print_plan(FILE *DEST, const PlanState *planstate,
       break;
     case T_SubqueryScan:
       print_plan(DEST, ((SubqueryScanState *) planstate)->subplan, "Subquery",
-                 NULL, ind + 1);
+      NULL,
+                 ind + 1);
       break;
     default:
       break;
@@ -442,138 +449,173 @@ static void print_member(FILE *DEST, List *plans, PlanState **planstates,
   }
 }
 
+static void print_modifytable_info(FILE *DEST, ModifyTableState *mtstate,
+                                   int ind) {
+  ModifyTable *node = (ModifyTable *) mtstate->ps.plan;
+  bool labeltargets;
+  int j;
+
+  labeltargets =
+      (mtstate->mt_nplans > 1
+          || (mtstate->mt_nplans == 1
+              && mtstate->resultRelInfo->ri_RangeTableIndex
+                  != node->nominalRelation));
+  if (labeltargets) {
+    indent(DEST, ind);
+    fprintf(
+        DEST,
+        "More than one target relations or the target relation is not nominal|");
+  }
+
+  for (j = 0; j < mtstate->mt_nplans; ++j) {
+    ResultRelInfo *resultRelInfo = mtstate->resultRelInfo + j;
+    FdwRoutine *fdwroutine = resultRelInfo->ri_FdwRoutine;
+
+    if (fdwroutine && fdwroutine->ExplainForeignModify != NULL) {
+      indent(DEST, ind);
+      fprintf(DEST, "Foreign modify|");
+    }
+  }
+
+  if (node->onConflictAction != ONCONFLICT_NONE) {
+    indent(DEST, ind);
+    fprintf(DEST, "ON CONFLICT ACTION|");
+  }
+
+}
+
 static void print_planstate(FILE *DEST, const PlanState *planstate, int ind) {
   indent(DEST, ind);
   if (planstate == NULL) {
-    fprintf(DEST, "Plan: NULL\n");
+    fprintf(DEST, "Plan: NULL|");
   } else {
     fprintf(DEST, "Plan: %p", (void *) planstate);
 
     switch (nodeTag(planstate)) {
       case T_PlanState:
-        fprintf(DEST, "Plan State\n");
+        fprintf(DEST, "Plan State|");
         break;
       case T_ResultState:
-        fprintf(DEST, "Result State\n");
+        fprintf(DEST, "Result State|");
         break;
       case T_ModifyTableState:
-        fprintf(DEST, "Modify Table State\n");
+        fprintf(DEST, "Modify Table State|");
         break;
       case T_AppendState:
-        fprintf(DEST, "Append State\n");
+        fprintf(DEST, "Append State|");
         break;
       case T_MergeAppendState:
-        fprintf(DEST, "Merge Append State\n");
+        fprintf(DEST, "Merge Append State|");
         break;
       case T_RecursiveUnionState:
-        fprintf(DEST, "Recursive Union State\n");
+        fprintf(DEST, "Recursive Union State|");
         break;
       case T_BitmapAndState:
-        fprintf(DEST, "Bitmap And State\n");
+        fprintf(DEST, "Bitmap And State|");
         break;
       case T_BitmapOrState:
-        fprintf(DEST, "Bitmap Or State\n");
+        fprintf(DEST, "Bitmap Or State|");
         break;
       case T_ScanState:
-        fprintf(DEST, "Scan State\n");
+        fprintf(DEST, "Scan State|");
         break;
       case T_SeqScanState:
-        fprintf(DEST, "Seq Scan State\n");
+        fprintf(DEST, "Seq Scan State|");
         break;
       case T_SampleScanState:
-        fprintf(DEST, "Sample Scan State\n");
+        fprintf(DEST, "Sample Scan State|");
         break;
       case T_IndexScanState:
-        fprintf(DEST, "Index Scan State\n");
+        fprintf(DEST, "Index Scan State|");
         break;
       case T_IndexOnlyScanState:
-        fprintf(DEST, "Index Only Scan State\n");
+        fprintf(DEST, "Index Only Scan State|");
         break;
       case T_BitmapIndexScanState:
-        fprintf(DEST, "Bitmap Index Scan State\n");
+        fprintf(DEST, "Bitmap Index Scan State|");
         break;
       case T_BitmapHeapScanState:
-        fprintf(DEST, "Bitmap Heap Scan State\n");
+        fprintf(DEST, "Bitmap Heap Scan State|");
         break;
       case T_TidScanState:
-        fprintf(DEST, "Tid Scan State\n");
+        fprintf(DEST, "Tid Scan State|");
         break;
       case T_SubqueryScanState:
-        fprintf(DEST, "Subquery Scan State\n");
+        fprintf(DEST, "Subquery Scan State|");
         break;
       case T_FunctionScanState:
-        fprintf(DEST, "Function Scan State\n");
+        fprintf(DEST, "Function Scan State|");
         break;
       case T_ValuesScanState:
-        fprintf(DEST, "Values Scan State\n");
+        fprintf(DEST, "Values Scan State|");
         break;
       case T_CteScanState:
-        fprintf(DEST, "Cte Scan State\n");
+        fprintf(DEST, "Cte Scan State|");
         break;
       case T_WorkTableScanState:
-        fprintf(DEST, "WorkTableScanState\n");
+        fprintf(DEST, "WorkTableScanState|");
         break;
       case T_ForeignScanState:
-        fprintf(DEST, "Foreign Scan State\n");
+        fprintf(DEST, "Foreign Scan State|");
         break;
       case T_CustomScanState:
-        fprintf(DEST, "Custom Scan State\n");
+        fprintf(DEST, "Custom Scan State|");
         break;
       case T_JoinState:
-        fprintf(DEST, "Join State\n");
+        fprintf(DEST, "Join State|");
         break;
       case T_NestLoopState:
-        fprintf(DEST, "Nest Loop State\n");
+        fprintf(DEST, "Nest Loop State|");
         break;
       case T_MergeJoinState:
-        fprintf(DEST, "Merge Join State\n");
+        fprintf(DEST, "Merge Join State|");
         break;
       case T_HashJoinState:
-        fprintf(DEST, "Hash Join State\n");
+        fprintf(DEST, "Hash Join State|");
         break;
       case T_MaterialState:
-        fprintf(DEST, "Material State\n");
+        fprintf(DEST, "Material State|");
         break;
       case T_SortState:
-        fprintf(DEST, "Sort State\n");
+        fprintf(DEST, "Sort State|");
         break;
       case T_GroupState:
-        fprintf(DEST, "Group State\n");
+        fprintf(DEST, "Group State|");
         break;
       case T_AggState:
-        fprintf(DEST, "Agg State\n");
+        fprintf(DEST, "Agg State|");
         break;
       case T_WindowAggState:
-        fprintf(DEST, "Window Agg State\n");
+        fprintf(DEST, "Window Agg State|");
         break;
       case T_UniqueState:
-        fprintf(DEST, "Unique State\n");
+        fprintf(DEST, "Unique State|");
         break;
       case T_HashState:
-        fprintf(DEST, "Hash State\n");
+        fprintf(DEST, "Hash State|");
         break;
       case T_SetOpState:
-        fprintf(DEST, "Set Op State\n");
+        fprintf(DEST, "Set Op State|");
         break;
       case T_LockRowsState:
-        fprintf(DEST, "Lock Rows State\n");
+        fprintf(DEST, "Lock Rows State|");
         break;
       case T_LimitState:
-        fprintf(DEST, "Limit State\n");
+        fprintf(DEST, "Limit State|");
         break;
       default:
-        fprintf(DEST, "No such Plan State\n");
+        fprintf(DEST, "No such Plan State|");
         break;
     }
 
     print_list(DEST, planstate->subPlan, ind + 1);
 
     indent(DEST, ind + 1);
-    fprintf(DEST, "Left Child:\n");
+    fprintf(DEST, "Left Child:|");
     print_planstate(DEST, planstate->lefttree, ind + 2);
 
     indent(DEST, ind + 1);
-    fprintf(DEST, "Right Child:\n");
+    fprintf(DEST, "Right Child:|");
     print_planstate(DEST, planstate->righttree, ind + 2);
   }
 }
@@ -581,10 +623,10 @@ static void print_planstate(FILE *DEST, const PlanState *planstate, int ind) {
 static void print_list(FILE *DEST, const List* list, int ind) {
   ListCell *l;
   indent(DEST, ind);
-  fprintf(DEST, "Subplan State List: \n");
+  fprintf(DEST, "Subplan State List: |");
   if (list == NIL) {
     indent(DEST, ind + 1);
-    fprintf(DEST, "Empty List\n");
+    fprintf(DEST, "Empty List|");
   } else {
     foreach(l, list)
     {
@@ -597,7 +639,7 @@ static void print_list(FILE *DEST, const List* list, int ind) {
 static void indent(FILE *DEST, int ind) {
   int i;
   for (i = 0; i < ind; i++) {
-    fprintf(DEST, "-");
+    //fprintf(DEST, "-");
   }
 }
 
