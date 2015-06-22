@@ -452,9 +452,12 @@ extern int	pg_get_encoding_from_locale(const char *ctype, bool write_message);
 extern int	pg_codepage_to_encoding(UINT cp);
 #endif
 
+// TODO: Peloton
 /* port/inet_net_ntop.c */
+/*
 extern char *inet_net_ntop(int af, const void *src, int bits,
 			  char *dst, size_t size);
+*/
 
 /* port/pgcheckdir.c */
 extern int	pg_check_dir(const char *dir);
