@@ -27,7 +27,7 @@ namespace executor {
  * @brief Constructor for indexscan executor.
  * @param node Indexscan node corresponding to this executor.
  */
-IndexScanExecutor::IndexScanExecutor(planner::AbstractPlanNode *node, Transaction *transaction)
+IndexScanExecutor::IndexScanExecutor(planner::AbstractPlanNode *node, concurrency::Transaction *transaction)
 : AbstractExecutor(node, transaction) {
 }
 

@@ -25,7 +25,7 @@ public:
   LimitExecutor& operator=(const LimitExecutor &&) = delete;
 
   explicit LimitExecutor(planner::AbstractPlanNode *node,
-                         Transaction *transaction);
+                         concurrency::Transaction *transaction);
 
 protected:
   bool DInit();
