@@ -5,8 +5,8 @@
 ######################################################################
 
 concurrency_FILES = \
-		concurrency/transaction_manager.cpp \
-		concurrency/transaction.cpp
+		backend/concurrency/transaction_manager.cpp \
+		backend/concurrency/transaction.cpp
 
 concurrency_INCLUDES = \
 				   -I$(srcdir)/concurrency
