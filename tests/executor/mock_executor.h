@@ -10,7 +10,7 @@
 
 #include "gmock/gmock.h"
 
-#include "executor/abstract_executor.h"
+#include "backend/executor/abstract_executor.h"
 
 namespace nstore {
 

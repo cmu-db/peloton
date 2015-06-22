@@ -23,10 +23,10 @@ namespace test {
 
 #include "harness.h"
 
-#include "common/value.h"
-#include "common/value_factory.h"
-#include "common/value_peeker.h"
-#include "common/serializer.h"
+#include "backend/common/value.h"
+#include "backend/common/value_factory.h"
+#include "backend/common/value_peeker.h"
+#include "backend/common/serializer.h"
 
 #include <cfloat>
 #include <limits>

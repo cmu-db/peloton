@@ -12,8 +12,8 @@
 
 #include "gtest/gtest.h"
 
-#include "storage/tile.h"
-#include "storage/tile_group.h"
+#include "backend/storage/tile.h"
+#include "backend/storage/tile_group.h"
 
 namespace nstore {
 namespace test {

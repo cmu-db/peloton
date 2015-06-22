@@ -12,7 +12,7 @@
 
 #include "gtest/gtest.h"
 
-#include "catalog/schema.h"
+#include "backend/catalog/schema.h"
 
 namespace nstore {
 namespace test {
