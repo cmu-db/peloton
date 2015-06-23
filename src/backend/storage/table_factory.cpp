@@ -22,7 +22,7 @@ namespace nstore {
 namespace storage {
 
 DataTable* TableFactory::GetDataTable(oid_t database_id,
-                                      catalog::Schema* schema,
+                                      const catalog::Schema* schema,
                                       std::string table_name,
                                       size_t tuples_per_tilegroup_count) {
     // create a new backend

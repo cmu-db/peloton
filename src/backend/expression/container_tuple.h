@@ -33,8 +33,8 @@ class ContainerTuple : public Tuple {
   ContainerTuple& operator=(ContainerTuple &&) = default;
 
   ContainerTuple(T *container, oid_t tuple_id)
-    : container_(container),
-      tuple_id_(tuple_id) {
+  : container_(container),
+    tuple_id_(tuple_id) {
   }
 
   /** @brief Get the value at the given column id. */

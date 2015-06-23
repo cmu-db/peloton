@@ -21,7 +21,7 @@
 namespace nstore {
 namespace storage {
 
-AbstractTable::AbstractTable(catalog::Schema *schema,
+AbstractTable::AbstractTable(const catalog::Schema *schema,
                              Backend *backend,
                              size_t tuples_per_tilegroup)
 : database_id(INVALID_OID),

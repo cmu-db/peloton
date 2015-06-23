@@ -345,7 +345,7 @@ bool CreateExecutor::CreateIndex(catalog::Database* db,
   // Physical index
   //===--------------------------------------------------------------------===//
 
-  catalog::Schema *tuple_schema = table->GetTable()->GetSchema();
+  auto tuple_schema = table->GetTable()->GetSchema();
   catalog::Schema *key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(index_name,

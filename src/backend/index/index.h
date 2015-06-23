@@ -38,8 +38,8 @@ class IndexMetadata {
 
   IndexMetadata(std::string identifier,
                 IndexType type,
-                catalog::Schema *tuple_schema,
-                catalog::Schema *key_schema,
+                const catalog::Schema *tuple_schema,
+                const catalog::Schema *key_schema,
                 bool unique_keys)
 
  : identifier(identifier),
@@ -66,10 +66,10 @@ class IndexMetadata {
   IndexType type;
 
   // schema of tuple values
-  catalog::Schema *tuple_schema;
+  const catalog::Schema *tuple_schema;
 
   // schema of keys
-  catalog::Schema *key_schema;
+  const catalog::Schema *key_schema;
 
   // table columns in key schema
   // if column "i" of table schema is present in key schema
@@ -189,9 +189,9 @@ class Index
 
   std::string identifier;
 
-  catalog::Schema *key_schema;
+  const catalog::Schema *key_schema;
 
-  catalog::Schema *tuple_schema;
+  const catalog::Schema *tuple_schema;
 
   int column_count;
 

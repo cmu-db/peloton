@@ -66,7 +66,7 @@ bool InsertExecutor::DExecute() {
     storage::Tile *physical_tile = logical_tile.get()->GetWrappedTile();
 
     // Next, check logical tile schema against table schema
-    catalog::Schema *schema = target_table->GetSchema();
+    auto schema = target_table->GetSchema();
     const catalog::Schema *tile_schema = physical_tile->GetSchema();
 
     if(*schema != *tile_schema) {
