@@ -254,13 +254,41 @@ public:
 
     Aggregator(const catalog::Schema *group_by_key_schema,
                const planner::AggregateNode *node,
-               storage::DataTable *output_table);
+               storage::DataTable *output_table,
+               txn_id_t transaction_id);
 
-    bool NextTuple(expression::ContainerTuple<LogicalTile> *next_tuple,
-                   expression::ContainerTuple<LogicalTile> *prev_tuple);
+    bool Advance(expression::ContainerTuple<LogicalTile> *next_tuple,
+                 expression::ContainerTuple<LogicalTile> *prev_tuple);
 
     bool Finalize(expression::ContainerTuple<LogicalTile> *prev_tuple);
 
+private:
+
+  /** @brief Group by key */
+  const catalog::Schema *group_by_key_schema;
+
+  /** @brief Plan node */
+  const planner::AggregateNode *node;
+
+  /** @brief Output table */
+  storage::DataTable *output_table;
+
+  /** @brief Transaction id for mutating table */
+  const txn_id_t transaction_id;
+
+  /** @brief Aggregates */
+  Agg **aggregates;
+
+  // From plan node
+
+  /** @brief Group by columns */
+  std::vector<oid_t> group_by_columns;
+
+  /** @brief Aggregate columns */
+  std::vector<oid_t> aggregate_columns;
+
+  /** @brief Aggregate types */
+  std::vector<ExpressionType> aggregate_types;
 };
 
 } // namespace executor
