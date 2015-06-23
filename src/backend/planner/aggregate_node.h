@@ -28,8 +28,16 @@ class AggregateNode : public AbstractPlanNode {
   AggregateNode(AggregateNode &&) = delete;
   AggregateNode& operator=(AggregateNode &&) = delete;
 
-  AggregateNode(const std::vector<oid_t>& aggregate_columns)
-  : aggregate_columns_(aggregate_columns) {
+  AggregateNode(const std::vector<oid_t>& aggregate_columns,
+                const std::vector<oid_t>& group_by_columns,
+                const std::map<oid_t, oid_t>& pass_through_columns,
+                const std::vector<ExpressionType>& aggregate_types,
+                const catalog::Schema *output_table_schema)
+  : aggregate_columns_(aggregate_columns),
+    group_by_columns_(group_by_columns),
+    pass_through_columns_(pass_through_columns),
+    aggregate_types_(aggregate_types),
+    output_table_schema_(output_table_schema){
   }
 
   inline PlanNodeType GetPlanNodeType() const {
@@ -56,10 +64,6 @@ class AggregateNode : public AbstractPlanNode {
     return output_table_schema_;
   }
 
-  const catalog::Schema *GetGroupBySchema() const {
-    return group_by_key_schema_;
-  }
-
  private:
 
   /** @brief Aggregate columns */
@@ -67,9 +71,6 @@ class AggregateNode : public AbstractPlanNode {
 
   /** @brief Group by columns */
   const std::vector<oid_t> group_by_columns_;
-
-  /** @brief Aggregate column schema */
-  const catalog::Schema *group_by_key_schema_;
 
   /** @brief Pass through columns */
   const std::map<oid_t, oid_t> pass_through_columns_;
