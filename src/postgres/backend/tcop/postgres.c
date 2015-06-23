@@ -3712,7 +3712,7 @@ PostgresMain(int argc, char *argv[],
    */
   InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
 
-  InitPeloton();
+  InitPeloton(dbname);
 
   // set it up and create a table one by one
 

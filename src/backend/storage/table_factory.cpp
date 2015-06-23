@@ -8,6 +8,7 @@
  *-------------------------------------------------------------------------
  */
 
+#include "backend/bridge/bridge.h"
 #include "backend/storage/table_factory.h"
 
 #include "backend/common/exception.h"
@@ -34,7 +35,9 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
                                       tuples_per_tilegroup_count);
     table->database_id = database_id;
    
-    tableMap[table_name] = table; 
+    unsigned int table_oid = GetRelationOidFromRelationName(table_name.c_str());
+    
+    tableMap[table_oid] = table; 
 
     return table;
 
@@ -43,16 +46,15 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
 bool TableFactory::DropDataTable(oid_t database_id,
                                  std::string table_name){
 
-    //TODO :: Check database id as well...
-    DataTable* table =  tableMap[table_name];
+    unsigned int table_oid = GetRelationOidFromRelationName(table_name.c_str());
 
+    DataTable* table =  tableMap[table_oid];
 
     if( table == 0 ) return false;
 
     delete table;
 
     return true;
-
 }
 
 
