@@ -52,11 +52,15 @@ PlanTransformer::AbstractPlanNodePtr PlanTransformer::transform(
 
 PlanTransformer::AbstractPlanNodePtr PlanTransformer::transformModifyTable(
     const ModifyTableState* planstate) {
+
   /*TODO: Actually implement this function */
   storage::DataTable *rtable = nullptr;
+  // catalog::Manager::GetInstance().GetLocation(table_oid);
   std::vector<storage::Tuple *> tuples;
+
   return PlanTransformer::AbstractPlanNodePtr(
       new planner::InsertNode(rtable, tuples));
+
 }
 
 }

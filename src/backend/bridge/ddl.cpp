@@ -41,108 +41,91 @@ bool DDL::CreateTable(std::string table_name,
 
       ValueType currentValueType;
 
-      switch( ddl_columnInfo[column_itr].type ){
+      switch(ddl_columnInfo[column_itr].type ){
         // Could not find yet corresponding types in Postgres...
         // Also - check below types again to make sure..
         // TODO :: change the numbers to enum type
-  
-        //case ??:
-        //currentValueType = VALUE_TYPE_NULL;
-        //break;
-  
-        //case ??:
-        //currentValueType = VALUE_TYPE_TINYINT;
-        //ddl_columnInfo[column_itr].is_inlined = true;
-  
-        //break;
-        //case ??:
-        //currentValueType = VALUE_TYPE_ADDRESS;
-        //break;
-  
-        //case ??:
-        //currentValueType = VALUE_TYPE_VARBINARY;
-        //break;
-  
+
         /* BOOLEAN */
         case 16: // boolean, 'true'/'false'
-        currentValueType = VALUE_TYPE_BOOLEAN;
-        break;
-  
-        /* INTEGER */
-        case 21: // -32 thousand to 32 thousand, 2-byte storage
-        currentValueType = VALUE_TYPE_SMALLINT;
-        ddl_columnInfo[column_itr].is_inlined = true;
-        break;
-        case 23: // -2 billion to 2 billion integer, 4-byte storage
-        currentValueType = VALUE_TYPE_INTEGER;
-        ddl_columnInfo[column_itr].is_inlined = true;
-        break;
-        case 20: // ~18 digit integer, 8-byte storage
-        currentValueType = VALUE_TYPE_BIGINT;
-        ddl_columnInfo[column_itr].is_inlined = true;
-        break;
+          currentValueType = VALUE_TYPE_BOOLEAN;
+          break;
 
-        /* DOUBLE */
+          /* INTEGER */
+        case 21: // -32 thousand to 32 thousand, 2-byte storage
+          currentValueType = VALUE_TYPE_SMALLINT;
+          ddl_columnInfo[column_itr].is_inlined = true;
+          break;
+        case 23: // -2 billion to 2 billion integer, 4-byte storage
+          currentValueType = VALUE_TYPE_INTEGER;
+          ddl_columnInfo[column_itr].is_inlined = true;
+          break;
+        case 20: // ~18 digit integer, 8-byte storage
+          currentValueType = VALUE_TYPE_BIGINT;
+          ddl_columnInfo[column_itr].is_inlined = true;
+          break;
+
+          /* DOUBLE */
         case 701: // double-precision floating point number, 8-byte storage
-        currentValueType = VALUE_TYPE_DOUBLE;
-        ddl_columnInfo[column_itr].is_inlined = true;
-        break;
-   
-        /* CHAR */
+          currentValueType = VALUE_TYPE_DOUBLE;
+          ddl_columnInfo[column_itr].is_inlined = true;
+          break;
+
+          /* CHAR */
         case 1042: // char(length), blank-padded string, fixed storage length
-        currentValueType = VALUE_TYPE_VARCHAR;
-        ddl_columnInfo[column_itr].is_inlined = true;
-        break;
-        // !!! NEED TO BE UPDATED ...
+          currentValueType = VALUE_TYPE_VARCHAR;
+          ddl_columnInfo[column_itr].is_inlined = true;
+          break;
+          // !!! NEED TO BE UPDATED ...
         case 1043: // varchar(length), non-blank-padded string, variable storage length;
-        currentValueType = VALUE_TYPE_VARCHAR;
-        ddl_columnInfo[column_itr].is_inlined = true;
-        break;
-   
-        /* TIMESTAMPS */
+          currentValueType = VALUE_TYPE_VARCHAR;
+          ddl_columnInfo[column_itr].is_inlined = true;
+          break;
+
+          /* TIMESTAMPS */
         case 1114: // date and time
         case 1184: // date and time with time zone
-        currentValueType = VALUE_TYPE_TIMESTAMP;
-        ddl_columnInfo[column_itr].is_inlined = true;
-        break;
-   
-        /* DECIMAL */
+          currentValueType = VALUE_TYPE_TIMESTAMP;
+          ddl_columnInfo[column_itr].is_inlined = true;
+          break;
+
+          /* DECIMAL */
         case 1700: // numeric(precision, decimal), arbitrary precision number
-        currentValueType = VALUE_TYPE_DECIMAL;
-        break;
-   
-        /* INVALID VALUE TYPE */
+          currentValueType = VALUE_TYPE_DECIMAL;
+          break;
+
+          /* INVALID VALUE TYPE */
         default:
-        currentValueType = VALUE_TYPE_INVALID;
-        printf("INVALID VALUE TYPE : %d \n", ddl_columnInfo[column_itr].type);
-        break;
+          currentValueType = VALUE_TYPE_INVALID;
+          printf("INVALID VALUE TYPE : %d \n", ddl_columnInfo[column_itr].type);
+          break;
       }
 
-        catalog::ColumnInfo *columnInfo = new catalog::ColumnInfo( currentValueType,
-                                                                   ddl_columnInfo[column_itr].column_offset,
-                                                                   ddl_columnInfo[column_itr].column_length,
-                                                                   ddl_columnInfo[column_itr].name,
-                                                                   ddl_columnInfo[column_itr].allow_null,
-                                                                   ddl_columnInfo[column_itr].is_inlined );
-        // Add current columnInfo into the columnInfoVect
-        columnInfoVect.push_back(*columnInfo);
-      }
-
-      // Construct schema from vector of ColumnInfo
-      schema = new catalog::Schema(columnInfoVect);
+      catalog::ColumnInfo *columnInfo = new catalog::ColumnInfo( currentValueType,
+                                                                 ddl_columnInfo[column_itr].column_offset,
+                                                                 ddl_columnInfo[column_itr].column_length,
+                                                                 ddl_columnInfo[column_itr].name,
+                                                                 ddl_columnInfo[column_itr].allow_null,
+                                                                 ddl_columnInfo[column_itr].is_inlined );
+      // Add current columnInfo into the columnInfoVect
+      columnInfoVect.push_back(*columnInfo);
     }
 
-    // Construct backend
-    storage::VMBackend *vmbackend = new storage::VMBackend;
+    // Construct schema from vector of ColumnInfo
+    schema = new catalog::Schema(columnInfoVect);
+  }
 
-    // Create a table from schema
-    storage::DataTable *table;
+  // Construct backend
+  storage::VMBackend *vmbackend = new storage::VMBackend;
 
-    table =  storage::TableFactory::GetDataTable(db_oid, schema, table_name);
+  // Create a table from schema
+  storage::DataTable *table;
 
-    //LOG_WARN("Created table : %s \n", table_name);
-    printf("Created table : %s \n", table_name.c_str());
-    return true;
+  table =  storage::TableFactory::GetDataTable(db_oid, schema, table_name);
+
+  //LOG_WARN("Created table : %s \n", table_name);
+  printf("Created table : %s \n", table_name.c_str());
+  return true;
 }
 
 bool DDL::DropTable(std::string table_name){
@@ -164,12 +147,12 @@ bool DDL::DropTable(std::string table_name){
 }
 
 extern "C" {
-  bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns) {
-    return DDL::CreateTable(table_name, ddl_columnInfo, num_columns);
-  }
-  bool DDL_DropTable(char* table_name) {
-    return DDL::DropTable(table_name);
-  }
+bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns) {
+  return DDL::CreateTable(table_name, ddl_columnInfo, num_columns);
+}
+bool DDL_DropTable(char* table_name) {
+  return DDL::DropTable(table_name);
+}
 }
 
 } // namespace bridge
