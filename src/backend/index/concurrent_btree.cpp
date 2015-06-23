@@ -502,7 +502,7 @@ BtDb *bt_open (BtMgr *mgr)
 //  +1: key2 < key1
 //  as the comparison value
 
-int keycmp (BtKey* key1, char *key2, catalog::Schema *key_schema)
+int keycmp (BtKey* key1, char *key2, const catalog::Schema *key_schema)
 {
   storage::Tuple lhs_tuple(key_schema, key1->key);
   storage::Tuple rhs_tuple(key_schema, key2);
@@ -628,8 +628,7 @@ int bt_newpage(BtDb *bt, BtPageSet *set, BtPage contents)
 }
 
 //  find slot in page for given key at a given level
-
-int bt_findslot (BtPage page, char *key, catalog::Schema *key_schema)
+int bt_findslot (BtPage page, char *key, const catalog::Schema *key_schema)
 {
   uint diff, higher = page->cnt, low = 1, slot;
   uint good = 0;

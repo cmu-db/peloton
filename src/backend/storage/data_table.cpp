@@ -22,7 +22,7 @@
 namespace nstore {
 namespace storage {
 
-DataTable::DataTable(catalog::Schema *schema,
+DataTable::DataTable(const catalog::Schema *schema,
                      Backend *backend,
                      std::string table_name,
                      size_t tuples_per_tilegroup)

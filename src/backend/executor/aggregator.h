@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * aggregate.h
+ * aggregator.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/executor/aggregate.h
+ * /peloton/src/backend/executor/aggregator.h
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,10 @@
 
 #include "backend/common/value_factory.h"
 #include "backend/executor/abstract_executor.h"
+#include "backend/expression/container_tuple.h"
+#include "backend/storage/backend.h"
+#include "backend/storage/data_table.h"
+#include "backend/planner/aggregate_node.h"
 
 //===--------------------------------------------------------------------===//
 // Aggregate
@@ -53,8 +57,7 @@ class SumAgg : public Agg {
     }
   }
 
-  Value Finalize()
-  {
+  Value Finalize() {
     if (!have_advanced)
     {
       return ValueFactory::GetNullValue();
@@ -93,7 +96,7 @@ class AvgAgg : public Agg {
       } else {
         aggregate = aggregate.OpAdd(weighted_val);
       }
-      count += delta.GetInteger();
+      count +=  ValuePeeker::PeekAsInteger(delta);
     }
     else {
       if (count == 0) {
@@ -157,7 +160,7 @@ class CountStarAgg : public Agg {
     count(0) {
   }
 
-  void Advance(const Value val) {
+  void Advance(const Value val __attribute__((unused))) {
     ++count;
   }
 
@@ -236,45 +239,57 @@ class MinAgg : public Agg {
   bool have_advanced;
 };
 
+/** brief Create an instance of an aggregator for the specified aggregate */
+Agg* GetAggInstance(ExpressionType agg_type);
+
 /*
- * Create an instance of an aggregator for the specified aggregate
- * type, column type, and result type. The object is constructed in
- * memory from the provided memrory pool.
+ * Interface for an aggregator (not an an individual aggregate)
+ *
+ * This will aggregate some number of tuples and produce the results in the
+ * provided output .
  */
-inline Agg* GetAggInstance(Backend* backend, ExpressionType agg_type) {
-  Agg* aggregator;
+template<PlanNodeType aggregate_type>
+class Aggregator {
+public:
 
-  switch (agg_type) {
-    case EXPRESSION_TYPE_AGGREGATE_COUNT:
-      aggregator = new (backend->Allocate(sizeof(CountAgg))) CountAgg();
-      break;
-    case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR:
-      aggregator = new (backend->Allocate(sizeof(CountStarAgg))) CountStarAgg();
-      break;
-    case EXPRESSION_TYPE_AGGREGATE_SUM:
-      aggregator = new (backend->Allocate(sizeof(SumAgg))) SumAgg();
-      break;
-    case EXPRESSION_TYPE_AGGREGATE_AVG:
-      aggregator = new (backend->Allocate(sizeof(AvgAgg))) AvgAgg(false);
-      break;
-    case EXPRESSION_TYPE_AGGREGATE_WEIGHTED_AVG:
-      aggregator = new (backend->Allocate(sizeof(AvgAgg))) AvgAgg(true);
-      break;
-    case EXPRESSION_TYPE_AGGREGATE_MIN:
-      aggregator = new (backend->Allocate(sizeof(MinAgg))) MinAgg();
-      break;
-    case EXPRESSION_TYPE_AGGREGATE_MAX  :
-      aggregator = new (backend->Allocate(sizeof(MaxAgg))) MaxAgg();
-      break;
-    default: {
-      std::string message =  "Unknown aggregate type " + std::to_string(agg_type);
-      throw UnknownTypeException(message);
-    }
-  }
+    Aggregator(const catalog::Schema *group_by_key_schema,
+               const planner::AggregateNode *node,
+               storage::DataTable *output_table,
+               txn_id_t transaction_id);
 
-  return aggregator;
-}
+    bool Advance(expression::ContainerTuple<LogicalTile> *next_tuple,
+                 expression::ContainerTuple<LogicalTile> *prev_tuple);
 
+    bool Finalize(expression::ContainerTuple<LogicalTile> *prev_tuple);
+
+private:
+
+  /** @brief Group by key */
+  const catalog::Schema *group_by_key_schema;
+
+  /** @brief Plan node */
+  const planner::AggregateNode *node;
+
+  /** @brief Output table */
+  storage::DataTable *output_table;
+
+  /** @brief Transaction id for mutating table */
+  const txn_id_t transaction_id;
+
+  /** @brief Aggregates */
+  Agg **aggregates;
+
+  // From plan node
+
+  /** @brief Group by columns */
+  std::vector<oid_t> group_by_columns;
+
+  /** @brief Aggregate columns */
+  std::vector<oid_t> aggregate_columns;
+
+  /** @brief Aggregate types */
+  std::vector<ExpressionType> aggregate_types;
+};
 
 } // namespace executor
 } // namespace nstore

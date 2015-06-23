@@ -45,7 +45,7 @@ class DataTable : public AbstractTable {
 public:
 
     // Table constructor
-    DataTable(catalog::Schema *schema,
+    DataTable(const catalog::Schema *schema,
               Backend *backend,
               std::string table_name,
               size_t tuples_per_tilegroup);
