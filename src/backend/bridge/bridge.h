@@ -10,13 +10,19 @@
 //  Bridge for managing Postgres
 //===--------------------------------------------------------------------===//
 
-char* GetRelationName(Oid relation_id);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-int GetNumberOfAttributes(Oid  relation_id);
+char* GetRelationName(unsigned int relation_id);
 
-float GetNumberOfTuples(Oid relation_id);
+int GetNumberOfAttributes(unsigned int  relation_id);
 
-void SetNumberOfTuples(Oid relation_id, float num_of_tuples);
+float GetNumberOfTuples(unsigned int relation_id);
+
+int GetCurrentDatabaseOid(void);
+
+void SetNumberOfTuples(unsigned int relation_id, float num_of_tuples);
 
 void GetDatabaseList(void);
 
@@ -24,6 +30,12 @@ void GetTableList(void);
 
 void GetPublicTableList(void);
 
-void SetUserTableStats(Oid relation_id);
+bool IsThisTableExist(const char* table_name);
+
+void SetUserTableStats(unsigned int relation_id);
 
 void FunctionTest(void);
+
+#ifdef __cplusplus
+}
+#endif
