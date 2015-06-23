@@ -284,7 +284,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_coun
 
   // PRIMARY INDEX
   std::vector<oid_t> key_attrs;
-  catalog::Schema *tuple_schema = table->GetSchema();
+  auto tuple_schema = table->GetSchema();
   catalog::Schema *key_schema;
   index::IndexMetadata *index_metadata;
   bool unique;

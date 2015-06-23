@@ -121,5 +121,6 @@ aggregate_test_SOURCES = \
 
 aggregate_test_LDADD = \
 					$(executor_tests_common_ld) \
+					$(obj_DIR)/executor/aggregator.o \
 					$(obj_DIR)/executor/aggregate_executor.o
 					

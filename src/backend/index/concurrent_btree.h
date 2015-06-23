@@ -442,6 +442,8 @@ BtDb *bt_open (BtMgr *mgr);
 //  as the comparison value
 int keycmp (BtKey* key1, char *key2, const catalog::Schema *key_schema);
 
+int keycmp (BtKey* key1, char *key2, catalog::Schema *key_schema);
+
 // place write, read, or parent lock on requested page_no.
 void bt_lockpage(BtDb *bt, BtLock mode, BtLatchSet *latch);
 
