@@ -48,8 +48,11 @@ TEST(AggregateTests, DistinctTest){
   // Setup plan node
 
   std::vector<oid_t> aggregate_columns;
-  std::vector<oid_t> group_by_columns;
+  std::vector<oid_t> group_by_columns = { 0, 1 };
   std::map<oid_t, oid_t> pass_through_columns;
+
+  pass_through_columns[2] = 2;
+  pass_through_columns[3] = 3;
 
   std::vector<ExpressionType> aggregate_types;
 
