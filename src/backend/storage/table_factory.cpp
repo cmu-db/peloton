@@ -34,10 +34,12 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
     DataTable *table =  new DataTable(schema, backend, table_name,
                                       tuples_per_tilegroup_count);
     table->database_id = database_id;
-   
-    unsigned int table_oid = GetRelationOidFromRelationName(table_name.c_str());
-    
-    tableMap[table_oid] = table; 
+
+    // Check if we need this table in the catalog
+    if(database_id != INVALID_OID){
+        unsigned int table_oid = GetRelationOidFromRelationName(table_name.c_str());
+        tableMap[table_oid] = table; 
+    }
 
     return table;
 
@@ -46,13 +48,12 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
 bool TableFactory::DropDataTable(std::string table_name){
 
     unsigned int table_oid = GetRelationOidFromRelationName(table_name.c_str());
-
     DataTable* table =  tableMap[table_oid];
 
-    if( table == 0 ) return false;
-
+    if( table == 0 ) 
+        return false;
     delete table;
-
+    
     return true;
 }
 
