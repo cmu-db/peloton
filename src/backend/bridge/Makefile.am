@@ -5,7 +5,7 @@
 ######################################################################
 
 bridge_FILES = \
-				backend/bridge/transformer.cpp
+				backend/bridge/plan_transformer.cpp
 
 bridge_INCLUDES = \
 				   -I$(srcdir)/bridge

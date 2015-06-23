@@ -7,8 +7,7 @@
 planner_FILES = \
 				backend/planner/abstract_plan_node.cpp \
 				backend/planner/plan_column.cpp \
-				backend/planner/plan_node_util.cpp \
-				backend/planner/transformer.cpp
+				backend/planner/plan_node_util.cpp
 
 planner_INCLUDES = \
 				   -I$(srcdir)/backend/planner
