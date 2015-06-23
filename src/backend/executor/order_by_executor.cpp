@@ -33,6 +33,8 @@ bool OrderByExecutor::DInit(){
 }
 
 bool OrderByExecutor::DExecute(){
+  LOG_TRACE("Order By executor \n");
+
   if(!sort_done_)
     DoSort();
 

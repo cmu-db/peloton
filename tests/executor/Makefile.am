@@ -13,6 +13,7 @@ check_PROGRAMS += \
 				  limit_test \
 				  nested_loop_join_test \
 				  order_by_test \
+				  hash_set_op_test \
 				  aggregate_test
 
 executor_tests_common= 	executor/executor_tests_util.cpp \
@@ -115,6 +116,17 @@ order_by_test_LDADD = \
 					$(executor_tests_common_ld) \
 					$(obj_DIR)/executor/order_by_executor.o
 
+					
+hash_set_op_test_SOURCES = \
+						$(executor_tests_common) \
+						executor/hash_set_op_test.cpp
+						
+hash_set_op_test_LDADD = \
+						$(executor_tests_common_ld) \
+						$(obj_DIR)/executor/hash_set_op_executor.o
+						
+
+
 aggregate_test_SOURCES = \
 						$(executor_tests_common) \
 						executor/aggregate_test.cpp 
@@ -124,3 +136,4 @@ aggregate_test_LDADD = \
 					$(obj_DIR)/executor/aggregator.o \
 					$(obj_DIR)/executor/aggregate_executor.o
 					
+

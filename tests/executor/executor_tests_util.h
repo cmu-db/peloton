@@ -6,7 +6,11 @@
 
 #pragma once
 
+#include <vector>
+#include <memory>
+
 #include "backend/common/types.h"
+
 
 namespace nstore {
 
@@ -77,6 +81,9 @@ public:
 
     static storage::Tuple *GetTuple(storage::DataTable *table, oid_t tuple_id);
     static storage::Tuple *GetNullTuple(storage::DataTable *table);
+
+    /** Print the tuples from a vector of logical tiles */
+    static void PrintTileVector(std::vector<std::unique_ptr<executor::LogicalTile>>& tile_vec);
 };
 
 } // namespace test
