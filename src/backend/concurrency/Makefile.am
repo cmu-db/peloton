@@ -1,14 +1,12 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
 ######################################################################
-# COMMON
+# CONCURRENCY
 ######################################################################
 
-common_FILES = \
-			   backend/common/value.cpp \
-			   backend/common/types.cpp \
-			   backend/common/varlen.cpp \
-			   backend/common/pool.cpp
+concurrency_FILES = \
+		backend/concurrency/transaction_manager.cpp \
+		backend/concurrency/transaction.cpp
 
-common_INCLUDES = \
-				  -I$(srcdir)/backend/common    
+concurrency_INCLUDES = \
+				   -I$(srcdir)/concurrency

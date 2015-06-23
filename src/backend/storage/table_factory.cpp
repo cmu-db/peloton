@@ -29,13 +29,15 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
     // create a new backend
     // FIXME: We need a better way of managing these. Why not just embed it in
     //        directly inside of the table object?
-    Backend* backend = new VMBackend();
+    AbstractBackend* backend = new VMBackend();
 
     DataTable *table =  new DataTable(schema, backend, table_name,
                                       tuples_per_tilegroup_count);
     table->database_id = database_id;
    
-    unsigned int table_oid = GetRelationOidFromRelationName(table_name.c_str());
+    unsigned int table_oid = 0;
+    // TODO: Fix this
+    //GetRelationOidFromRelationName(table_name.c_str());
     
     tableMap[table_oid] = table; 
 
@@ -43,10 +45,11 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
 
 }
 
-bool TableFactory::DropDataTable(oid_t database_id,
-                                 std::string table_name){
+bool TableFactory::DropDataTable(std::string table_name){
 
-    unsigned int table_oid = GetRelationOidFromRelationName(table_name.c_str());
+    unsigned int table_oid = 0;
+    // TODO: Fix this 
+    //GetRelationOidFromRelationName(table_name.c_str());
 
     DataTable* table =  tableMap[table_oid];
 

@@ -15,7 +15,7 @@
 #include "backend/common/types.h"
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
-#include "backend/common/transaction.h"
+#include "backend/concurrency/transaction.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
@@ -232,7 +232,7 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
       CreatePredicate(g_tuple_ids),
       column_ids);
 
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   executor::SeqScanExecutor executor(&node, txn);
@@ -257,7 +257,7 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
       column_ids);
 
   // Set up executor and its child.
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   executor::SeqScanExecutor executor(&node, txn);
   MockExecutor child_executor;

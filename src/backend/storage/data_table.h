@@ -46,7 +46,7 @@ public:
 
     // Table constructor
     DataTable(catalog::Schema *schema,
-              Backend *backend,
+              AbstractBackend *backend,
               std::string table_name,
               size_t tuples_per_tilegroup);
 

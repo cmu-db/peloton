@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/common/types.h"
+#include "backend/catalog/abstract_catalog_object.h"
 
 #include <mutex>
 #include <vector>
@@ -20,7 +21,7 @@
 
 namespace nstore {
 
-namespace index{
+namespace index {
 class Index;
 }
 
@@ -28,79 +29,73 @@ namespace catalog {
 
 class Column;
 
-//===--------------------------------------------------------------------===//
-// Index
-//===--------------------------------------------------------------------===//
 
-class Index {
+/**
+ * Index Catalog Object
+ */
+class Index : public AbstractCatalogObject {
 
- public:
-  Index(std::string name,
-        IndexType type,
-        bool unique,
-        std::vector<Column*> columns)
- : name(name),
-   type(type),
-   unique(unique),
-   columns(columns){
-  }
+public:
 
-  ~Index() {
-    // don't clean up columns here
-    // they will cleaned in their respective tables
-  }
+    Index(std::string name, IndexType type, bool unique, std::vector<Column*> columns)
+        : AbstractCatalogObject(static_cast<oid_t>(1), name), // FIXME
+          type(type),
+          unique(unique),
+          columns(columns) {
+    }
 
-  std::string GetName() {
-    return name;
-  }
+    ~Index() {
+        // don't clean up columns here
+        // they will cleaned in their respective tables
+    }
+    
+    //===--------------------------------------------------------------------===//
+    // ACCESSORS
+    //===--------------------------------------------------------------------===//
 
-  IndexType GetType() const {
-    return type;
-  }
+    IndexType GetType() const {
+        return type;
+    }
 
-  bool IsUnique() const {
-    return unique;
-  }
+    bool IsUnique() const {
+        return unique;
+    }
 
-  std::vector<Column*> GetColumns() const {
-    return columns;
-  }
+    std::vector<Column*> GetColumns() const {
+        return columns;
+    }
 
-  void SetPhysicalIndex(index::Index* index) {
-    physical_index = index;
-  }
+    // FIXME: REMOVE THIS!
+    void SetPhysicalIndex(index::Index* index) {
+        physical_index = index;
+    }
 
-  index::Index *GetPhysicalIndex() {
-    return physical_index;
-  }
+    // FIXME: REMOVE THIS!
+    index::Index *GetPhysicalIndex() {
+        return physical_index;
+    }
 
-  // Get a string representation of this index
-  friend std::ostream& operator<<(std::ostream& os, const Index& index);
+    // Get a string representation of this index
+    friend std::ostream& operator<<(std::ostream& os, const Index& index);
 
-  void Lock(){
-    index_mtx.lock();
-  }
+private:
 
-  void Unlock(){
-    index_mtx.unlock();
-  }
+    //===--------------------------------------------------------------------===//
+    // MEMBERS
+    //===--------------------------------------------------------------------===//
+    
+    // What data structure is the index using ?
+    IndexType type = INDEX_TYPE_INVALID;
 
- private:
-  std::string name;
+    // Can the index contain duplicate keys?
+    bool unique = false;
 
-  // What data structure is the index using ?
-  IndexType type = INDEX_TYPE_INVALID;
+    // Columns referenced by the index
+    std::vector<Column*> columns;
 
-  // Can the index contain duplicate keys?
-  bool unique = false;
+    // underlying physical index
+    index::Index* physical_index = nullptr; // FIXME: REMOVE THIS!
 
-  // Columns referenced by the index
-  std::vector<Column*> columns;
-
-  // underlying physical index
-  index::Index* physical_index = nullptr;
-
-  std::mutex index_mtx;
 };
 
 } // End catalog namespace

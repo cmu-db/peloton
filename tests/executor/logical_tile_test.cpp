@@ -14,7 +14,7 @@
 #include "backend/catalog/schema.h"
 #include "backend/common/types.h"
 #include "backend/common/value_factory.h"
-#include "backend/common/transaction.h"
+#include "backend/concurrency/transaction.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
 #include "backend/storage/backend_vm.h"
@@ -59,7 +59,7 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   tuple2.SetValue(
       3, ValueFactory::GetStringValue("tuple 2", tile_group->GetTilePool(1)));
 
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   txn_id_t txn_id = txn->GetTransactionId();
 

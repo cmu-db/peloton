@@ -10,7 +10,8 @@
 #include <memory>
 #include <vector>
 
-#include "backend/common/transaction.h"
+#include "backend/concurrency/transaction_manager.h"
+#include "backend/concurrency/transaction.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/planner/abstract_plan_node.h"
 
@@ -47,7 +48,7 @@ class AbstractExecutor {
 
  protected:
   explicit AbstractExecutor(planner::AbstractPlanNode *node);
-  explicit AbstractExecutor(planner::AbstractPlanNode *node, Transaction *context);
+  explicit AbstractExecutor(planner::AbstractPlanNode *node, concurrency::Transaction *context);
 
   /** @brief Init function to be overriden by derived class. */
   virtual bool DInit() = 0;
@@ -73,7 +74,7 @@ class AbstractExecutor {
   std::vector<AbstractExecutor*> children_;
 
   // Transaction context
-  Transaction *transaction_ = nullptr;
+  concurrency::Transaction *transaction_ = nullptr;
 
  private:
 

@@ -26,44 +26,46 @@ namespace catalog {
 
 class Catalog {
 
- public:
+public:
 
-  // Singleton
-  static Catalog& GetInstance();
+    /**
+     * @deprecated We need to get rid of this!
+     */
+    static Catalog& GetInstance();
 
-  // create default db
-  Catalog(){
-    Database* db = new Database("default");
-    databases.push_back(db);
-  }
+    // create default db
+    Catalog() {
+        Database* db = new Database("default"); // FIXME
+        databases.push_back(db);
+    }
 
-  ~Catalog() {
-    // clean up databases
-    for(auto db : databases)
-      delete db;
-  }
+    ~Catalog() {
+        // clean up databases
+        for(auto db : databases)
+            delete db;
+    }
 
-  bool AddDatabase(Database* db);
-  Database* GetDatabase(const std::string &db_name) const;
-  bool RemoveDatabase(const std::string &db_name);
+    bool AddDatabase(Database* db);
+    Database* GetDatabase(const std::string &db_name) const;
+    bool RemoveDatabase(const std::string &db_name);
 
-  // Get a string representation of this catalog
-  friend std::ostream& operator<<(std::ostream& os, const Catalog& catalog);
+    // Get a string representation of this catalog
+    friend std::ostream& operator<<(std::ostream& os, const Catalog& catalog);
 
-  void Lock(){
-    catalog_mtx.lock();
-  }
+    void Lock() {
+        catalog_mtx.lock();
+    }
 
-  void Unlock(){
-    catalog_mtx.unlock();
-  }
+    void Unlock() {
+        catalog_mtx.unlock();
+    }
 
- private:
+private:
 
-  // list of databases in catalog
-  std::vector<Database*> databases;
+    // list of databases in catalog
+    std::vector<Database*> databases;
 
-  std::mutex catalog_mtx;
+    std::mutex catalog_mtx;
 
 };
 
