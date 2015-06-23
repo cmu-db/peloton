@@ -17,6 +17,8 @@ extern "C" void printPlanStateTree(const PlanState * planstate);
 namespace nstore {
 namespace planner {
 
+
+
 PlanTransformer&
 PlanTransformer::GetInstance() {
   static PlanTransformer planTransformer;
