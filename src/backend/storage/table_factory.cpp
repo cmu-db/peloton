@@ -35,9 +35,7 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
                                       tuples_per_tilegroup_count);
     table->database_id = database_id;
    
-    unsigned int table_oid = 0;
-    // TODO: Fix this
-    //GetRelationOidFromRelationName(table_name.c_str());
+    unsigned int table_oid = GetRelationOidFromRelationName(table_name.c_str());
     
     tableMap[table_oid] = table; 
 
@@ -47,9 +45,7 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
 
 bool TableFactory::DropDataTable(std::string table_name){
 
-    unsigned int table_oid = 0;
-    // TODO: Fix this 
-    //GetRelationOidFromRelationName(table_name.c_str());
+    unsigned int table_oid = GetRelationOidFromRelationName(table_name.c_str());
 
     DataTable* table =  tableMap[table_oid];
 
