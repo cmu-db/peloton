@@ -79,7 +79,18 @@ bool HashSetOpExecutor::ExecuteHelper(){
     return false;
 
   // Define hash table key type
-  typedef std::pair<LogicalTile*, oid_t> ht_key_t;
+  typedef struct ht_key_t {
+    LogicalTile* tile;
+    oid_t tuple_id;
+
+    ht_key_t(LogicalTile* t, oid_t tid)
+    : tile(t), tuple_id(tid) {
+    }
+
+    bool operator==(const ht_key_t& rhs) const {
+      return (rhs.tile == tile && rhs.tuple_id == tuple_id);
+    };
+  } ht_key_t;
 
   // Define mapped type
   typedef struct {
@@ -97,7 +108,7 @@ bool HashSetOpExecutor::ExecuteHelper(){
     size_t operator()(const ht_key_t& key) const{
       size_t hval = seed_;
       for(oid_t col_id = 0; col_id < num_cols_; col_id++){
-        Value value = key.first->GetValue(key.second, col_id);
+        Value value = key.tile->GetValue(key.tuple_id, col_id);
         value.HashCombine(hval);
       }
       return hval;
@@ -115,8 +126,8 @@ bool HashSetOpExecutor::ExecuteHelper(){
 
     bool operator()(const ht_key_t& ta, const ht_key_t& tb) const{
       for(oid_t col_id = 0; col_id < num_cols_; col_id++){
-        Value lval = ta.first->GetValue(ta.second, col_id);
-        Value rval = tb.first->GetValue(tb.second, col_id);
+        Value lval = ta.tile->GetValue(ta.tuple_id, col_id);
+        Value rval = tb.tile->GetValue(tb.tuple_id, col_id);
         if(lval != rval)
           return false;
       }
@@ -202,7 +213,7 @@ bool HashSetOpExecutor::ExecuteHelper(){
   for(auto& item : htable) {
     assert(item.second.left == 1 || item.second.left == 0);
     if(item.second.left == 0) {
-      item.first.first->InvalidateTuple(item.first.second);
+      item.first.tile->InvalidateTuple(item.first.tuple_id);
     }
   }
 
