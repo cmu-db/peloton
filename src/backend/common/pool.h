@@ -21,7 +21,7 @@
 
 #include <mutex>
 
-#include "backend/storage/backend.h"
+#include "backend/storage/abstract_backend.h"
 
 namespace nstore {
 
@@ -76,7 +76,7 @@ class Pool {
 
 public:
 
-	Pool(storage::Backend *_backend) :
+	Pool(storage::AbstractBackend *_backend) :
 		backend(_backend),
 		allocation_size(TEMP_POOL_CHUNK_SIZE),
 		max_chunk_count(1),
@@ -84,7 +84,7 @@ public:
 		Init();
 	}
 
-	Pool(storage::Backend *_backend, uint64_t allocation_size, uint64_t max_chunk_count) :
+	Pool(storage::AbstractBackend *_backend, uint64_t allocation_size, uint64_t max_chunk_count) :
 		backend(_backend),
 		allocation_size(allocation_size),
 		max_chunk_count(static_cast<std::size_t>(max_chunk_count)),
@@ -119,7 +119,7 @@ public:
 private:
 
 	/// Location of pool on storage
-	storage::Backend *backend;
+	storage::AbstractBackend *backend;
 
 	const uint64_t allocation_size;
 	std::size_t max_chunk_count;

@@ -81,7 +81,7 @@ TEST(TupleTests, VarcharTest) {
 	tuple->SetValue(1, ValueFactory::GetIntegerValue(45));
 	tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
 
-	storage::Backend *backend = new storage::VMBackend();
+	storage::AbstractBackend *backend = new storage::VMBackend();
 	Pool *pool = new Pool(backend);
 
 	Value val = ValueFactory::GetStringValue("hello hello world", pool);

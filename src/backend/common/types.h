@@ -339,6 +339,16 @@ enum ResultType {
   RESULT_TYPE_UNKNOWN      = 5
 };
 
+//===--------------------------------------------------------------------===//
+// Constraint Types
+//===--------------------------------------------------------------------===//
+
+enum ConstraintType {
+    CONSTRAINT_TYPE_INVALID = 0, // invalid
+    CONSTRAINT_TYPE_PRIMARY = 1, // primary key
+    CONSTRAINT_TYPE_FOREIGN = 2  // foreign key
+};
+
 
 //===--------------------------------------------------------------------===//
 // Type definitions.
@@ -405,8 +415,6 @@ extern ItemPointer INVALID_ITEMPOINTER;
 
 std::string GetTypeName(ValueType type);
 
-std::string GetBackendTypeName(BackendType type);
-
 /// Works only for fixed-length types
 std::size_t GetTypeSize(ValueType type);
 
@@ -418,16 +426,22 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 // Transformers
 //===--------------------------------------------------------------------===//
 
-std::string ValueToString(ValueType type);
+std::string BackendTypeToString(BackendType type);
+BackendType StringToBackendType(std::string str );
 
+std::string ValueToString(ValueType type);
 ValueType StringToValue(std::string str );
 
 std::string ExpressionToString(ExpressionType type);
-
 ExpressionType StringToExpression(std::string str);
 
-std::string PlanNodeToString(PlanNodeType type);
+std::string IndexTypeToString(IndexType type);
+IndexType StringToIndexType(std::string str);
 
+std::string PlanNodeToString(PlanNodeType type);
 PlanNodeType StringToPlanNode(std::string str);
+
+std::string ConstraintTypeToString(ConstraintType type);
+ConstraintType StringToConstraintType(std::string str);
 
 } // End nstore namespace

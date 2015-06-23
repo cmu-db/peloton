@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/storage/backend.h"
+#include "backend/storage/abstract_backend.h"
 
 #include <atomic>
 #include <mutex>
@@ -46,7 +46,7 @@ class TileGroupHeader {
 
 public:
 
-	TileGroupHeader(Backend* _backend, int tuple_count) :
+	TileGroupHeader(AbstractBackend* _backend, int tuple_count) :
 		backend(_backend),
 		data(nullptr),
 		num_tuple_slots(tuple_count),
@@ -200,7 +200,7 @@ private:
 	//===--------------------------------------------------------------------===//
 
 	// storage backend
-	Backend *backend;
+	AbstractBackend *backend;
 
 	// set of fixed-length tuple slots
 	char *data;

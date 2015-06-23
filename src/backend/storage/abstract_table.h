@@ -22,12 +22,8 @@
 namespace nstore {
 namespace storage {
 
-//===--------------------------------------------------------------------===//
-// Abstract Table
-//===--------------------------------------------------------------------===//
-
 /**
- * Base class for tables
+ * Base class for all tables
  */
 class AbstractTable {
     friend class TileGroup;
@@ -40,7 +36,7 @@ public:
 protected:
         
     // Table constructor
-    AbstractTable(catalog::Schema *schema, Backend *backend, size_t tuples_per_tilegroup);
+    AbstractTable(catalog::Schema *schema, AbstractBackend *backend, size_t tuples_per_tilegroup);
 
 public:    
     
@@ -52,7 +48,7 @@ public:
         return schema;
     }
     
-    inline Backend *GetBackend() const {
+    inline AbstractBackend *GetBackend() const {
         return backend;
     }
     
@@ -103,7 +99,7 @@ protected:
     oid_t table_id;
 
     // backend
-    Backend *backend;
+    AbstractBackend *backend;
 
     // table schema
     catalog::Schema *schema;
