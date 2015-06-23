@@ -4,15 +4,21 @@
  * Copyright(c) 2015, CMU
  */
 
+#ifdef __cplusplus
+#include "backend/catalog/schema.h"
+#endif
+
 #pragma once
 
 typedef struct 
 {
-   char name[100];
    int type;
-   int size;
-   bool is_not_null;
-} DDL_Column;
+   int column_offset;
+   int column_length;
+   char name[256]; // TODO :: Default size should be checked by joy 
+   bool allow_null;
+   bool is_inlined;
+} DDL_ColumnInfo;
 
 #ifdef __cplusplus
 
@@ -25,12 +31,12 @@ namespace bridge {
 
 class DDL {
 public:
-  static int CreateTable(char* table_name, DDL_Column* columns, int number_of_columns);
+  static bool CreateTable(std::string table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns, catalog::Schema* schema);
 
 };
 
 extern "C" {
-  int DDL_CreateTable(char* table_name, DDL_Column* columns, int number_of_columns);
+  bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns);
 }
 
 } // namespace bridge
@@ -38,5 +44,5 @@ extern "C" {
 
 #endif
 
-extern int DDL_CreateTable(char* table_name, DDL_Column* columns, int number_of_columns);
+extern bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns);
 

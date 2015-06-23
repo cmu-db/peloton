@@ -950,7 +950,6 @@ ProcessUtilitySlow(Node *parsetree,
 					List	   *stmts;
 					ListCell   *l;
 
-
 					/* Run parse analysis ... */
 					stmts = transformCreateStmt((CreateStmt *) parsetree,
 												queryString);
@@ -966,42 +965,40 @@ ProcessUtilitySlow(Node *parsetree,
 							static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
 							// TODO: Peloton Modifications
-							int ret;  
-							ListCell   *entry;
-                                                        int attnum=0;
-
-							Oid	atttypid;
-							int32	atttypmod;
 							CreateStmt* Cstmt = (CreateStmt*)stmt;
 							List* schema = (List*)(Cstmt->tableElts);
-							printf(":::::table:::::: %s %d\n", __func__, __LINE__);
+							ListCell   *entry;
+							DDL_ColumnInfo ddl_columnInfo[ schema->length ];
+							bool ret;  
 
-							foreach(entry, schema) // Need to find out better way..
-							{
-								ColumnDef  *coldef = lfirst(entry);
-								attnum++;
-							}
-							DDL_Column ddl_column[attnum];
-							attnum = 0;
+              // Parse the CreateStmt and construct ddl_columnInfo
 							foreach(entry, schema)
 							{
 								ColumnDef  *coldef = lfirst(entry);
-								strcpy(ddl_column[attnum].name, coldef->colname);
-								ddl_column[attnum].is_not_null = coldef->is_not_null;
-								ddl_column[attnum].size = 10; // I have no idea yet.
-								typenameTypeIdAndMod(NULL, coldef->typeName, &atttypid, &atttypmod);
-								ddl_column[attnum].type = atttypid;
-								// need to find out size...
-								attnum++;
+                Type		tup;
+                Form_pg_type typ;
+                Oid			typoid;
+                int column_itr=0;
+
+                tup = typenameType(NULL, coldef->typeName, NULL);
+                typ = (Form_pg_type) GETSTRUCT(tup);
+                typoid = HeapTupleGetOid(tup);
+                ReleaseSysCache(tup);
+
+								ddl_columnInfo[column_itr].type = typoid;
+								ddl_columnInfo[column_itr].column_offset = column_itr;
+								ddl_columnInfo[column_itr].column_length = typ->typlen;
+								strcpy(ddl_columnInfo[column_itr].name, coldef->colname);
+								ddl_columnInfo[column_itr].allow_null = !coldef->is_not_null;
+								ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
+								column_itr++;
 							}
 
 							/*
-							 * Intercept the create table request from Postgres and create a table in Peloton
+							 * Now, intercept the create table request from Postgres and create a table in Peloton
 							 */
-							ret = DDL_CreateTable( Cstmt->relation->relname, ddl_column, attnum);
-							//ret = DDL_CreateTable( ((CreateStmt*)(stmt))->relation->relname ,23);
+							ret = DDL_CreateTable( Cstmt->relation->relname, ddl_columnInfo, schema->length);
 							fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
-
 
 							/* Create the table itself */
 							address = DefineRelation((CreateStmt *) stmt,
@@ -1036,7 +1033,7 @@ ProcessUtilitySlow(Node *parsetree,
 						}
 						else if (IsA(stmt, CreateForeignTableStmt))
 						{
-printf(":::::foreign:::::: %s %d\n", __func__, __LINE__);
+              printf(":::::foreign:::::: %s %d\n", __func__, __LINE__);
 							/* Create the table itself */
 							address = DefineRelation((CreateStmt *) stmt,
 													 RELKIND_FOREIGN_TABLE,
@@ -1054,7 +1051,7 @@ printf(":::::foreign:::::: %s %d\n", __func__, __LINE__);
 							 * call will stash the objects so created into our
 							 * event trigger context.
 							 */
-printf(":::::recurse:::::: %s %d\n", __func__, __LINE__);
+              printf(":::::recurse:::::: %s %d\n", __func__, __LINE__);
 							ProcessUtility(stmt,
 										   queryString,
 										   PROCESS_UTILITY_SUBCOMMAND,
