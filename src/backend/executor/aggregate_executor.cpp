@@ -73,10 +73,12 @@ bool AggregateExecutor::DExecute() {
 
   // Get input tile and aggregate it
   std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
+  txn_id_t txn_id = transaction_->GetTransactionId();
 
   Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE> aggregator(group_by_key_schema,
                         &node,
-                        output_table);
+                        output_table,
+                        txn_id);
 
   LOG_INFO("Looping..");
 
@@ -85,7 +87,7 @@ bool AggregateExecutor::DExecute() {
   for (oid_t tuple_id : *tile) {
     auto cur_tuple = new expression::ContainerTuple<LogicalTile>(tile.get(), tuple_id);
 
-    if (aggregator.NextTuple(cur_tuple, prev_tuple) == false) {
+    if (aggregator.Advance(cur_tuple, prev_tuple) == false) {
       return false;
     }
 

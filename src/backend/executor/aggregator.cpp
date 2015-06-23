@@ -127,123 +127,96 @@ struct AggregateList {
  * sorted on the group by key.
  */
 template<>
-class Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE> {
+Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::
+Aggregator(const catalog::Schema *group_by_key_schema,
+           const planner::AggregateNode *node,
+           storage::DataTable *output_table,
+           txn_id_t transaction_id)
+           : group_by_key_schema(group_by_key_schema),
+             node(node),
+             output_table(output_table),
+             transaction_id(transaction_id) {
 
- public:
+  aggregate_types = node->GetAggregateTypes();
+  aggregate_columns = node->GetAggregateColumns();
+  group_by_columns = node->GetGroupByColumns();
 
-  Aggregator(const catalog::Schema *group_by_key_schema,
-             const planner::AggregateNode *node,
-             storage::DataTable *output_table,
-             txn_id_t transaction_id)
- : group_by_key_schema(group_by_key_schema),
-   node(node),
-   output_table(output_table),
-   transaction_id(transaction_id) {
+  // Create aggregators
+  aggregates = new Agg*[aggregate_columns.size()];
 
-    aggregate_types = node->GetAggregateTypes();
-    aggregate_columns = node->GetAggregateColumns();
-    group_by_columns = node->GetGroupByColumns();
+}
 
-    // Create aggregators
-    aggregates = new Agg*[aggregate_columns.size()];
+template<>
+bool
+Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::
+Advance(expression::ContainerTuple<LogicalTile> *cur_tuple,
+        expression::ContainerTuple<LogicalTile> *prev_tuple) {
 
+  bool start_new_agg = false;
+
+  // Check if we are starting a new aggregate tuple
+  if (prev_tuple == nullptr) {
+    start_new_agg = true;
+  }
+  else {
+    // Compare group by columns
+    for (oid_t column_itr = 0; column_itr < group_by_columns.size() ; column_itr++) {
+      bool not_equal = cur_tuple->GetValue(group_by_columns[column_itr]).
+          OpNotEquals(prev_tuple->GetValue(group_by_columns[column_itr])).IsTrue();
+
+      if (not_equal){
+        start_new_agg = true;
+        break;
+      }
+    }
   }
 
-  bool NextTuple(expression::ContainerTuple<LogicalTile> *cur_tuple,
-                 expression::ContainerTuple<LogicalTile> *prev_tuple) {
-
-    bool start_new_agg = false;
-
-    // Check if we are starting a new aggregate tuple
-    if (prev_tuple == nullptr) {
-      start_new_agg = true;
-    }
-    else {
-      // Compare group by columns
-      for (oid_t column_itr = 0; column_itr < group_by_columns.size() ; column_itr++) {
-        bool not_equal = cur_tuple->GetValue(group_by_columns[column_itr]).
-            OpNotEquals(prev_tuple->GetValue(group_by_columns[column_itr])).IsTrue();
-
-        if (not_equal){
-          start_new_agg = true;
-          break;
-        }
-      }
-    }
-
-    // If we have started a new aggregate tuple
-    if (start_new_agg) {
-      LOG_TRACE("Started a new group!");
-
-      if (Helper(node, aggregates, output_table,
-                 prev_tuple, transaction_id) == false){
-        return false;
-      }
-
-      // Create aggregate
-      for (oid_t column_itr = 0; column_itr < aggregate_columns.size(); column_itr++) {
-        // Clean up previous aggregate
-        if (aggregates[column_itr] != nullptr) {
-          aggregates[column_itr]->~Agg();
-        }
-        aggregates[column_itr] =
-            GetAggInstance(aggregate_types[column_itr]);
-      }
-    }
-
-    for (oid_t column_itr = 0; column_itr < aggregate_columns.size(); column_itr++) {
-      const oid_t column_index = aggregate_columns[column_itr];
-      Value value = cur_tuple->GetValue(column_index);
-      aggregates[column_itr]->Advance(value);
-    }
-
-    return true;
-  }
-
-  bool Finalize(expression::ContainerTuple<LogicalTile> *prev_tuple) {
+  // If we have started a new aggregate tuple
+  if (start_new_agg) {
+    LOG_TRACE("Started a new group!");
 
     if (Helper(node, aggregates, output_table,
-               prev_tuple, transaction_id) == false) {
+               prev_tuple, transaction_id) == false){
       return false;
     }
 
-    // TODO: if no record exists in input_table, we have to output a null record
-    // only when it doesn't have GROUP BY. See difference of these cases:
-    //   SELECT SUM(A) FROM BBB ,   when BBB has no tuple
-    //   SELECT SUM(A) FROM BBB GROUP BY C,   when BBB has no tuple
-
-    return true;
+    // Create aggregate
+    for (oid_t column_itr = 0; column_itr < aggregate_columns.size(); column_itr++) {
+      // Clean up previous aggregate
+      if (aggregates[column_itr] != nullptr) {
+        aggregates[column_itr]->~Agg();
+      }
+      aggregates[column_itr] =
+          GetAggInstance(aggregate_types[column_itr]);
+    }
   }
 
- private:
+  for (oid_t column_itr = 0; column_itr < aggregate_columns.size(); column_itr++) {
+    const oid_t column_index = aggregate_columns[column_itr];
+    Value value = cur_tuple->GetValue(column_index);
+    aggregates[column_itr]->Advance(value);
+  }
 
-  /** @brief Group by key */
-  const catalog::Schema *group_by_key_schema;
+  return true;
+}
 
-  /** @brief Plan node */
-  const planner::AggregateNode *node;
+template<>
+bool
+Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::
+Finalize(expression::ContainerTuple<LogicalTile> *prev_tuple) {
 
-  /** @brief Output table */
-  storage::DataTable *output_table;
+  if (Helper(node, aggregates, output_table,
+             prev_tuple, transaction_id) == false) {
+    return false;
+  }
 
-  /** @brief Transaction id for mutating table */
-  const txn_id_t transaction_id;
+  // TODO: if no record exists in input_table, we have to output a null record
+  // only when it doesn't have GROUP BY. See difference of these cases:
+  //   SELECT SUM(A) FROM BBB ,   when BBB has no tuple
+  //   SELECT SUM(A) FROM BBB GROUP BY C,   when BBB has no tuple
 
-  /** @brief Aggregates */
-  Agg **aggregates;
-
-  // From plan node
-
-  /** @brief Group by columns */
-  std::vector<oid_t> group_by_columns;
-
-  /** @brief Aggregate columns */
-  std::vector<oid_t> aggregate_columns;
-
-  /** @brief Aggregate types */
-  std::vector<ExpressionType> aggregate_types;
-
-};
+  return true;
+}
 
 } // namespace executor
 } // namespace nstore
