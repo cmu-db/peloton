@@ -13,6 +13,9 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/xact.h"
+#include "backend/bridge/bridge.h"
+#include "backend/bridge/ddl.h"
+#include "catalog/pg_attribute.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_namespace.h"
@@ -24,7 +27,6 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
-#include "../../backend/bridge/bridge.h"
 
 /**
  * @brief Getting the relation name
@@ -51,7 +53,6 @@ GetRelationName(Oid relation_id){
   
   pgclass = (Form_pg_class) GETSTRUCT(tuple);
 
-  heap_freetuple(tuple);
   heap_close(pg_class_rel, AccessShareLock);
   
   CommitTransactionCommand();
@@ -188,14 +189,14 @@ void GetDatabaseList(void) {
  * @brief Printing all tables of current database from catalog table, i.e., pg_class
  */
 void GetTableList(void) {
-  Relation	pg_database_rel;
+  Relation	pg_class_rel;
   HeapScanDesc scan;
   HeapTuple	tuple;
 
   StartTransactionCommand();
 
-  pg_database_rel = heap_open(RelationRelationId, AccessShareLock);
-  scan = heap_beginscan_catalog(pg_database_rel, 0, NULL);
+  pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
+  scan = heap_beginscan_catalog(pg_class_rel, 0, NULL);
 
   // TODO: Whar are we trying to do here ?
   while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
@@ -204,7 +205,7 @@ void GetTableList(void) {
   }
 
   heap_endscan(scan);
-  heap_close(pg_database_rel, AccessShareLock);
+  heap_close(pg_class_rel, AccessShareLock);
 
   CommitTransactionCommand();
 
@@ -231,7 +232,6 @@ void GetPublicTableList(void) {
       printf(" pgclass->relname    :: %s  \n", NameStr(pgclass->relname ) );
   }
 
-  heap_freetuple(tuple);
   heap_endscan(scan);
   heap_close(rel, AccessShareLock);
 
@@ -263,13 +263,85 @@ bool IsThisTableExist(const char* table_name) {
         return true;
   }
 
-  heap_freetuple(tuple);
   heap_endscan(scan);
   heap_close(rel, AccessShareLock);
 
   CommitTransactionCommand();
 
   return false;
+}
+
+bool InitPeloton(void)
+{
+  Relation	pg_class_rel;
+  Relation	pg_attribute_rel;
+
+  HeapScanDesc scan;
+  HeapScanDesc scan2;
+
+  HeapTuple	tuple;
+  HeapTuple	tuple2;
+
+  int column_itr;
+
+  StartTransactionCommand();
+
+  pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
+  pg_attribute_rel = heap_open(AttributeRelationId, AccessShareLock);
+
+  scan = heap_beginscan_catalog(pg_class_rel, 0, NULL);
+
+  while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
+    Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
+    if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE)
+    {
+      // create columninfo as much as attnum
+      DDL_ColumnInfo ddl_columnInfo[ pgclass->relnatts ] ;
+      Oid table_oid = HeapTupleHeaderGetOid(tuple->t_data);
+
+      //printf(" pgclass->relname    :: %s  \n", NameStr(pgclass->relname ) );
+
+      scan2 = heap_beginscan_catalog(pg_attribute_rel, 0, NULL);
+      column_itr = 0;  
+      while (HeapTupleIsValid(tuple2 = heap_getnext(scan2, ForwardScanDirection))) {
+        Form_pg_attribute pgattribute = (Form_pg_attribute) GETSTRUCT(tuple2);
+        if( pgattribute->attrelid == table_oid )
+        {
+          // Skip system columns..
+          if( strcmp( NameStr(pgattribute->attname),"cmax" ) &&
+              strcmp( NameStr(pgattribute->attname),"cmin" ) &&
+              strcmp( NameStr(pgattribute->attname),"ctid" ) &&
+              strcmp( NameStr(pgattribute->attname),"xmax" ) &&
+              strcmp( NameStr(pgattribute->attname),"xmin" ) &&
+              strcmp( NameStr(pgattribute->attname),"tableoid" ) )
+          {
+            //printf("attname %s \n", NameStr(pgattribute->attname));
+            //printf("atttypid %d \n", pgattribute->atttypid);
+            //printf("attlen %d \n", pgattribute->attlen);
+            //printf("attnotnull %d \n", pgattribute->attnotnull);
+
+            ddl_columnInfo[column_itr].type = pgattribute->atttypid;
+            ddl_columnInfo[column_itr].column_offset = column_itr;
+            ddl_columnInfo[column_itr].column_length = pgattribute->attlen;
+            strcpy(ddl_columnInfo[column_itr].name, NameStr(pgattribute->attname));
+            ddl_columnInfo[column_itr].allow_null = ! pgattribute->attnotnull;
+            ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
+            column_itr++;
+          } // end if
+        } // end if
+      } // end while
+
+      heap_endscan(scan2);
+    } // end if
+  } // end while
+
+  heap_endscan(scan);
+  heap_close(pg_attribute_rel, AccessShareLock);
+  heap_close(pg_class_rel, AccessShareLock);
+
+  CommitTransactionCommand();
+
+  return true;
 }
 
 
@@ -313,7 +385,7 @@ void  SetUserTableStats(Oid relation_id)
   simple_heap_update(rel, &newtup->t_self, newtup);
 
   printf("%s %d\n", __func__, __LINE__);
-  heap_freetuple(newtup);
+  heap_freetuple(newtup); // It may incur segmentation fault
 
   /*
    * Close relation, but keep lock till commit.

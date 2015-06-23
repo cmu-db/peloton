@@ -32,6 +32,8 @@ void GetPublicTableList(void);
 
 bool IsThisTableExist(const char* table_name);
 
+bool InitPeloton(void);
+
 void SetUserTableStats(unsigned int relation_id);
 
 void FunctionTest(void);
