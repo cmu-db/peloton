@@ -5,7 +5,8 @@
 ######################################################################
 
 bridge_FILES = \
-				backend/bridge/plan_transformer.cpp
+				backend/bridge/plan_transformer.cpp \
+				backend/bridge/tuple_transformer.cpp
 
 bridge_INCLUDES = \
 				   -I$(srcdir)/bridge
