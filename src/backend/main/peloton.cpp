@@ -96,31 +96,9 @@ main(int argc, char *argv[])
 
   set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("postgres"));
 
-#ifdef WIN32
 
-  /*
-   * Windows uses codepages rather than the environment, so we work around
-   * that by querying the environment explicitly first for LC_COLLATE and
-   * LC_CTYPE. We have to do this because initdb passes those values in the
-   * environment. If there is nothing there we fall back on the codepage.
-   */
-  {
-    char     *env_locale;
-
-    if ((env_locale = getenv("LC_COLLATE")) != NULL)
-      init_locale(LC_COLLATE, env_locale);
-    else
-      init_locale(LC_COLLATE, "");
-
-    if ((env_locale = getenv("LC_CTYPE")) != NULL)
-      init_locale(LC_CTYPE, env_locale);
-    else
-      init_locale(LC_CTYPE, "");
-  }
-#else
   init_locale(LC_COLLATE, "");
   init_locale(LC_CTYPE, "");
-#endif
 
 #ifdef LC_MESSAGES
   init_locale(LC_MESSAGES, "");
@@ -190,17 +168,6 @@ main(int argc, char *argv[])
     SubPostmasterMain(argc, argv);  /* does not return */
 #endif
 
-#ifdef WIN32
-
-  /*
-   * Start our win32 signal implementation
-   *
-   * SubPostmasterMain() will do this for itself, but the remaining modes
-   * need it here
-   */
-  pgwin32_signal_initialize();
-#endif
-
   if (argc > 1 && strcmp(argv[1], "--boot") == 0)
     AuxiliaryProcessMain(argc, argv);   /* does not return */
   else if (argc > 1 && strcmp(argv[1], "--describe-config") == 0)
@@ -230,31 +197,6 @@ main(int argc, char *argv[])
 static void
 startup_hacks(const char *progname __attribute__((unused)))
 {
-  /*
-   * Windows-specific execution environment hacking.
-   */
-#ifdef WIN32
-  {
-    WSADATA   wsaData;
-    int     err;
-
-    /* Make output streams unbuffered by default */
-    setvbuf(stdout, NULL, _IONBF, 0);
-    setvbuf(stderr, NULL, _IONBF, 0);
-
-    /* Prepare Winsock */
-    err = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (err != 0)
-    {
-      write_stderr("%s: WSAStartup failed: %d\n",
-             progname, err);
-      exit(1);
-    }
-
-    /* In case of general protection fault, don't show GUI popup box */
-    SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
-  }
-#endif   /* WIN32 */
 
   /*
    * Initialize dummy_spinlock, in case we are on a platform where we have
@@ -352,9 +294,7 @@ help(const char *progname)
 static void
 check_root(const char *progname)
 {
-#ifndef WIN32
-  if (geteuid() == 0)
-  {
+  if (geteuid() == 0) {
     write_stderr("\"root\" execution of the PostgreSQL server is not permitted.\n"
            "The server must be started under an unprivileged user ID to prevent\n"
       "possible system security compromise.  See the documentation for\n"
@@ -376,17 +316,7 @@ check_root(const char *progname)
            progname);
     exit(1);
   }
-#else             /* WIN32 */
-  if (pgwin32_is_admin())
-  {
-    write_stderr("Execution of PostgreSQL by a user with administrative permissions is not\n"
-           "permitted.\n"
-           "The server must be started under an unprivileged user ID to prevent\n"
-     "possible system security compromises.  See the documentation for\n"
-          "more information on how to properly start the server.\n");
-    exit(1);
-  }
-#endif   /* WIN32 */
+
 }
 
 

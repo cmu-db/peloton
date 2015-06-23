@@ -12,9 +12,10 @@
 
 #include "gtest/gtest.h"
 
-#include "backend/common/transaction.h"
+#include "backend/concurrency/transaction.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_factory.h"
+
 #include "harness.h"
 
 namespace nstore {
@@ -67,7 +68,7 @@ TEST(TileGroupTests, BasicTest) {
     column_names.push_back(tile_column_names);
 
     // TILE GROUP
-    storage::Backend *backend = new storage::VMBackend();
+    storage::AbstractBackend *backend = new storage::VMBackend();
 
     storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
                                      nullptr, backend, schemas, 4);
@@ -89,7 +90,7 @@ TEST(TileGroupTests, BasicTest) {
 
     // TRANSACTION
 
-    auto& txn_manager = TransactionManager::GetInstance();
+    auto& txn_manager = concurrency::TransactionManager::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     txn_id_t txn_id = txn->GetTransactionId();
 
@@ -130,7 +131,7 @@ void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema) {
     uint64_t thread_id = GetThreadId();
 
     storage::Tuple *tuple = new storage::Tuple(schema, true);
-    auto& txn_manager = TransactionManager::GetInstance();
+    auto& txn_manager = concurrency::TransactionManager::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     txn_id_t txn_id = txn->GetTransactionId();
 
@@ -190,7 +191,7 @@ TEST(TileGroupTests, StressTest) {
 
     // TILE GROUP
 
-    storage::Backend *backend = new storage::VMBackend();
+    storage::AbstractBackend *backend = new storage::VMBackend();
 
     storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
                                      nullptr, backend, schemas, 10000);
@@ -245,7 +246,7 @@ TEST(TileGroupTests, MVCCInsert) {
     column_names.push_back(tile_column_names);
 
     // TILE GROUP
-    storage::Backend *backend = new storage::VMBackend();
+    storage::AbstractBackend *backend = new storage::VMBackend();
 
     storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
                                      nullptr, backend, schemas, 3);
@@ -259,7 +260,7 @@ TEST(TileGroupTests, MVCCInsert) {
 
     oid_t tuple_slot_id = INVALID_OID;
 
-    auto& txn_manager = TransactionManager::GetInstance();
+    auto& txn_manager = concurrency::TransactionManager::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     txn_id_t txn_id1 = txn->GetTransactionId();
     cid_t cid1 = txn->GetLastCommitId();

@@ -66,7 +66,7 @@ TEST(LimitTests, NonLeafLimitOffsetTest){
   planner::LimitNode node(limit, offset);
 
   // Create and set up executor
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   executor::LimitExecutor executor(&node, txn);
   MockExecutor child_executor;
@@ -107,7 +107,7 @@ TEST(LimitTests, NonLeafSkipAllTest){
   planner::LimitNode node(limit, offset);
 
   // Create and set up executor
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   executor::LimitExecutor executor(&node, txn);
   MockExecutor child_executor;
@@ -149,7 +149,7 @@ TEST(LimitTests, NonLeafReturnAllTest){
   planner::LimitNode node(limit, offset);
 
   // Create and set up executor
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   executor::LimitExecutor executor(&node, txn);
   MockExecutor child_executor;
@@ -191,7 +191,7 @@ TEST(LimitTests, NonLeafHugeLimitTest){
   planner::LimitNode node(limit, offset);
 
   // Create and set up executor
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   executor::LimitExecutor executor(&node, txn);
   MockExecutor child_executor;

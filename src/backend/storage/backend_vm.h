@@ -5,14 +5,12 @@
 *
 * Copyright(c) 2015, CMU
 *
-* /n-store/src/storage/volatile_backend.h
-*
 *-------------------------------------------------------------------------
 */
 
 #pragma once
 
-#include "backend/storage/backend.h"
+#include "backend/storage/abstract_backend.h"
 
 namespace nstore {
 namespace storage {
@@ -22,7 +20,7 @@ namespace storage {
 //===--------------------------------------------------------------------===//
 
 
-class VMBackend : public Backend {
+class VMBackend : public AbstractBackend {
 
 public:
 	virtual ~VMBackend(){};
@@ -40,7 +38,7 @@ public:
 	}
 
 	std::string GetBackendType() const{
-		return GetBackendTypeName(BACKEND_TYPE_VM);
+		return BackendTypeToString(BACKEND_TYPE_VM);
 	}
 
 };

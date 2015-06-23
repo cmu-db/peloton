@@ -51,7 +51,7 @@ std::atomic<int> delete_tuple_id;
 
 void InsertTuple(storage::DataTable *table){
 
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   std::vector<storage::Tuple *> tuples;
@@ -76,7 +76,7 @@ void InsertTuple(storage::DataTable *table){
 
 void UpdateTuple(storage::DataTable *table){
 
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   std::vector<storage::Tuple *> tuples;
@@ -121,7 +121,7 @@ void UpdateTuple(storage::DataTable *table){
 
 void DeleteTuple(storage::DataTable *table){
 
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   std::vector<storage::Tuple *> tuples;
@@ -160,7 +160,7 @@ void DeleteTuple(storage::DataTable *table){
 
 TEST(MutateTests, StressTests) {
 
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto context = txn_manager.BeginTransaction();
 
   // Create insert node for this test.
@@ -262,7 +262,7 @@ TEST(MutateTests, StressTests) {
 // Insert a logical tile into a table
 TEST(MutateTests, InsertTest) {
 
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   // We are going to insert a tile group into a table in this test

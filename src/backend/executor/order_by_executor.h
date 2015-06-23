@@ -27,7 +27,7 @@ class OrderByExecutor : public AbstractExecutor {
   OrderByExecutor& operator=(const OrderByExecutor &&) = delete;
 
   explicit OrderByExecutor(planner::AbstractPlanNode *node,
-                           Transaction *transaction);
+                           concurrency::Transaction *transaction);
 
  protected:
   bool DInit();
@@ -68,7 +68,7 @@ class OrderByExecutor : public AbstractExecutor {
   };
 
   /** A backend is required to allocate physical tiles */
-  storage::Backend *backend_ = nullptr;
+  storage::AbstractBackend *backend_ = nullptr;
 
   /** All tiles returned by child. */
   std::vector<std::unique_ptr<LogicalTile>> input_tiles_;

@@ -13,7 +13,7 @@
 namespace nstore {
 namespace storage {
 
-TileGroup* TileGroupFactory::GetTileGroup(oid_t database_id, oid_t table_id, oid_t tile_group_id, AbstractTable* table, Backend* backend, const std::vector< catalog::Schema >& schemas, int tuple_count) {
+TileGroup* TileGroupFactory::GetTileGroup(oid_t database_id, oid_t table_id, oid_t tile_group_id, AbstractTable* table, AbstractBackend* backend, const std::vector< catalog::Schema >& schemas, int tuple_count) {
     TileGroupHeader *tile_header = new TileGroupHeader(backend, tuple_count);
 
     TileGroup *tile_group = new TileGroup(tile_header, table, backend, schemas, tuple_count);

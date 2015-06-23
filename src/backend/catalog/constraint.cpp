@@ -5,8 +5,6 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/catalog/constraint.cpp
- *
  *-------------------------------------------------------------------------
  */
 
@@ -18,34 +16,34 @@ namespace catalog {
 
 std::ostream& operator<<(std::ostream& os, const Constraint& constraint) {
 
-  os << "\tCONSTRAINT ";
+    os << "\tCONSTRAINT ";
 
-  os << constraint.name << " " << constraint.type << "\n";
+    os << constraint.GetName() << " " << ConstraintTypeToString(constraint.type) << "\n";
 
-  if(constraint.type == Constraint::CONSTRAINT_TYPE_PRIMARY) {
-    os << "\t\tPrimary Key Columns : ";
-    for(auto col : constraint.columns) {
-      os << col->GetName() << " ";
+    if(constraint.type == CONSTRAINT_TYPE_PRIMARY) {
+        os << "\t\tPrimary Key Columns : ";
+        for(auto col : constraint.columns) {
+            os << col->GetName() << " ";
+        }
+        os << "\n";
     }
-    os << "\n";
-  }
-  else if(constraint.type == Constraint::CONSTRAINT_TYPE_FOREIGN) {
-    os << "\t\tLocal Columns : ";
-    for(auto col : constraint.columns) {
-      os << col->GetName() << " ";
+    else if(constraint.type == CONSTRAINT_TYPE_FOREIGN) {
+        os << "\t\tLocal Columns : ";
+        for(auto col : constraint.columns) {
+            os << col->GetName() << " ";
+        }
+        os << "\n";
+
+        os << "\t\tForeign Columns : ";
+        for(auto col : constraint.foreign_columns) {
+            os << col->GetName() << " ";
+        }
+        os << "\n";
     }
+
     os << "\n";
 
-    os << "\t\tForeign Columns : ";
-    for(auto col : constraint.foreign_columns) {
-      os << col->GetName() << " ";
-    }
-    os << "\n";
-  }
-
-  os << "\n";
-
-  return os;
+    return os;
 }
 
 

@@ -75,11 +75,11 @@ TEST(OrderByTests, IntAscTest){
   std::vector<oid_t> sort_keys({1});
   std::vector<bool> descend_flags({false});
   std::vector<oid_t> output_columns({0,1,2,3});
-  storage::Backend* backend = new storage::VMBackend();
+  storage::AbstractBackend* backend = new storage::VMBackend();
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   executor::OrderByExecutor executor(&node, txn);
   MockExecutor child_executor;
@@ -120,11 +120,11 @@ TEST(OrderByTests, IntDescTest){
   std::vector<oid_t> sort_keys({1});
   std::vector<bool> descend_flags({true});
   std::vector<oid_t> output_columns({0,1,2,3});
-  storage::Backend* backend = new storage::VMBackend();
+  storage::AbstractBackend* backend = new storage::VMBackend();
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   executor::OrderByExecutor executor(&node, txn);
   MockExecutor child_executor;
@@ -165,11 +165,11 @@ TEST(OrderByTests, StringDescTest){
   std::vector<oid_t> sort_keys({3});
   std::vector<bool> descend_flags({true});
   std::vector<oid_t> output_columns({0,1,2,3});
-  storage::Backend* backend = new storage::VMBackend();
+  storage::AbstractBackend* backend = new storage::VMBackend();
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   executor::OrderByExecutor executor(&node, txn);
   MockExecutor child_executor;
@@ -210,11 +210,11 @@ TEST(OrderByTests, IntAscStringDescTest){
   std::vector<oid_t> sort_keys({1,3});
   std::vector<bool> descend_flags({false, true});
   std::vector<oid_t> output_columns({0,1,2,3});
-  storage::Backend* backend = new storage::VMBackend();
+  storage::AbstractBackend* backend = new storage::VMBackend();
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   executor::OrderByExecutor executor(&node, txn);
   MockExecutor child_executor;
@@ -258,11 +258,11 @@ TEST(OrderByTests, StringDescIntAscTest){
   std::vector<oid_t> sort_keys({3,1});
   std::vector<bool> descend_flags({true, false});
   std::vector<oid_t> output_columns({0,1,2,3});
-  storage::Backend* backend = new storage::VMBackend();
+  storage::AbstractBackend* backend = new storage::VMBackend();
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   executor::OrderByExecutor executor(&node, txn);
   MockExecutor child_executor;
