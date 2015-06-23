@@ -41,7 +41,8 @@ executor_tests_common_ld = \
 						   $(obj_DIR)/executor/abstract_executor.o \
 						   $(obj_DIR)/executor/logical_tile.o \
 						   $(obj_DIR)/executor/logical_tile_factory.o \
-						   $(obj_DIR)/planner/abstract_plan_node.o
+						   $(obj_DIR)/planner/abstract_plan_node.o \
+						   $(top_builddir)/src/libpeloton.la
 
 logical_tile_test_SOURCES = \
 							$(executor_tests_common) \
