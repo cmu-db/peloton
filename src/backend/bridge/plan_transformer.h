@@ -12,7 +12,7 @@
 #include "backend/planner/abstract_plan_node.h"
 
 namespace nstore {
-namespace planner {
+namespace bridge {
 class PlanTransformer {
  public:
   PlanTransformer() {
@@ -20,7 +20,7 @@ class PlanTransformer {
   ~PlanTransformer() {
   }
 
-  typedef std::tr1::shared_ptr<AbstractPlanNode> AbstractPlanNodePtr;
+  typedef std::tr1::shared_ptr<planner::AbstractPlanNode> AbstractPlanNodePtr;
 
   static PlanTransformer& GetInstance();
 
