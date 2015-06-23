@@ -9,6 +9,7 @@
 #include "postgres.h"
 #include "c.h"
 
+#include "miscadmin.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/xact.h"
@@ -110,6 +111,14 @@ GetNumberOfTuples(Oid relation_id){
   CommitTransactionCommand();
 
   return pgclass->reltuples;
+}
+
+/**
+ * @brief Getting the current database Oid
+ */
+int 
+GetCurrentDatabaseOid(void){
+  return MyDatabaseId;
 }
 
 /**
@@ -230,7 +239,44 @@ void GetPublicTableList(void) {
 
 }
 
+/**
+ * @ Determin whether 'table_name' table exists in the current database or not
+ * @ params table_name table name
+ */
+bool IsThisTableExist(const char* table_name) {
+  Relation	rel;
+  HeapScanDesc scan;
+  HeapTuple	tuple;
 
+  StartTransactionCommand();
+
+  rel = heap_open(RelationRelationId, AccessShareLock);
+  scan = heap_beginscan_catalog(rel, 0, NULL);
+
+  while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
+    Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
+    const char* current_table_name = NameStr(pgclass->relname);
+
+    //Compare current table name and given table name
+    if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE &&
+        strcmp( current_table_name, table_name ) == 0)
+        return true;
+  }
+
+  heap_freetuple(tuple);
+  heap_endscan(scan);
+  heap_close(rel, AccessShareLock);
+
+  CommitTransactionCommand();
+
+  return false;
+}
+
+
+/**
+ * @brief Setting the user table stats
+ * @param relation_id relation id
+ */
 struct user_pg_database {
   char datname[10];
   int datdba;
@@ -238,11 +284,6 @@ struct user_pg_database {
 };
 
 typedef struct user_pg_database *Form_user_pg_database;
-
-/**
- * @brief Setting the user table stats
- * @param relation_id relation id
- */
 void  SetUserTableStats(Oid relation_id)
 {
   Relation rel;
