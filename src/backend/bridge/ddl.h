@@ -32,11 +32,13 @@ namespace bridge {
 class DDL {
 public:
   static bool CreateTable(std::string table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns, catalog::Schema* schema);
+  static bool DropTable(std::string table_name);
 
 };
 
 extern "C" {
   bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns);
+  bool DDL_DropTable(char* table_name );
 }
 
 } // namespace bridge
@@ -46,3 +48,4 @@ extern "C" {
 
 extern bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns);
 
+extern bool DDL_DropTable(char* table_name );
