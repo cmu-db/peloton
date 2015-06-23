@@ -17,22 +17,23 @@ namespace catalog {
 
 
 Manager& Manager::GetInstance() {
-  static Manager manager;
-  return manager;
+    static Manager manager;
+    return manager;
 }
 
 void Manager::SetLocation(const oid_t oid, void *location) {
-  locator.insert(std::pair<oid_t, void*>(oid, location));
+    locator.insert(std::pair<oid_t, void*>(oid, location));
 }
 
-void *Manager::GetLocation(const oid_t oid) const{
-  void *location = nullptr;
-  try{
-    location = catalog::Manager::GetInstance().locator.at(oid);
-  }
-  catch(std::exception& e){
-  }
-  return location;
+void *Manager::GetLocation(const oid_t oid) const {
+    void *location = nullptr;
+    try {
+        location = catalog::Manager::GetInstance().locator.at(oid);
+    }
+    catch(std::exception& e) {
+        // FIXME
+    }
+    return location;
 }
 
 } // End catalog namespace

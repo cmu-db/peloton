@@ -18,7 +18,7 @@ AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node)
 : node_(node) {
 }
 
-AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node, Transaction *transaction)
+AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node, concurrency::Transaction *transaction)
 : transaction_(transaction), node_(node) {
 }
 

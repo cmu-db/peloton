@@ -155,7 +155,7 @@ bool DDL::DropTable(std::string table_name){
     return false;
 
 
-  bool ret = storage::TableFactory::DropDataTable(db_oid, table_name);
+  bool ret = storage::TableFactory::DropDataTable(table_name);
   if( !ret )
     return false;
 

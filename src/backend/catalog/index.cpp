@@ -18,18 +18,16 @@ namespace catalog {
 
 std::ostream& operator<<(std::ostream& os, const Index& index) {
 
-  os << "\tINDEX :: ";
+    os << "\tINDEX :: " << index.GetName();
+    os << " Type : " << IndexTypeToString(index.type);
+    os << " Unique : " << index.unique << "\n";
+    os << " Columns : ";
+    for(auto col : index.columns) {
+        os << col->GetName() << " ";
+    }
+    os << "\n";
 
-  os << index.name << " Type : " << index.type << " Unique : " << index.unique << "\n";
-
-  os << "\t\tColumns : ";
-  for(auto col : index.columns) {
-    os << col->GetName() << " ";
-  }
-
-  os << "\n";
-
-  return os;
+    return os;
 }
 
 

@@ -19,7 +19,7 @@ namespace executor {
  * @param node  LimitNode plan node corresponding to this executor
  */
 LimitExecutor::LimitExecutor(planner::AbstractPlanNode *node,
-                             Transaction *transaction)
+                             concurrency::Transaction *transaction)
   : AbstractExecutor(node, transaction){
 }
 

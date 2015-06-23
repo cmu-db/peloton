@@ -14,6 +14,7 @@ include $(top_srcdir)/common.am
 include $(srcdir)/backend/bridge/Makefile.am
 include $(srcdir)/backend/catalog/Makefile.am
 include $(srcdir)/backend/common/Makefile.am
+include $(srcdir)/backend/concurrency/Makefile.am
 include $(srcdir)/backend/executor/Makefile.am
 include $(srcdir)/backend/expression/Makefile.am
 include $(srcdir)/backend/index/Makefile.am
@@ -42,22 +43,22 @@ DEFAULT_INCLUDES =
 ######################################################################
 
 libpeloton_la_SOURCES = \
-            $(backend_FILES) \
-            $(bridge_FILES) \
-					  $(catalog_FILES) \
-					  $(common_FILES) \
-					  $(executor_FILES) \
-					  $(expression_FILES) \
-					  $(index_FILES) \
-					  $(parser_FILES) \
-					  $(planner_FILES) \
-					  $(scheduler_FILES) \
-					  $(storage_FILES) \
-					  $(postgres_backend_FILES) \
-					  $(postgres_bridge_FILES) \
-					  $(postgres_common_FILES) \
-					  $(postgres_port_FILES) \
-					  $(postgres_timezone_FILES)
+			$(backend_FILES) \
+			$(bridge_FILES) \
+			$(catalog_FILES) \
+			$(common_FILES) \
+			$(concurrency_FILES) \
+			$(executor_FILES) \
+			$(expression_FILES) \
+			$(index_FILES) \
+			$(planner_FILES) \
+			$(scheduler_FILES) \
+			$(storage_FILES) \
+			$(postgres_backend_FILES) \
+			$(postgres_bridge_FILES) \
+			$(postgres_common_FILES) \
+			$(postgres_port_FILES) \
+			$(postgres_timezone_FILES)
 
 ## HACK: To make use of different include flags for peloton and postgres.
 

@@ -29,7 +29,7 @@ public:
 
     static TileGroup *GetTileGroup(oid_t database_id, oid_t table_id, oid_t tile_group_id,
                                    AbstractTable* table,
-                                   Backend* backend,
+                                   AbstractBackend* backend,
                                    const std::vector<catalog::Schema>& schemas,
                                    int tuple_count);
 
