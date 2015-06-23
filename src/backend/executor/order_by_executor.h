@@ -14,6 +14,8 @@ namespace nstore {
 namespace executor {
 
 /**
+ * @warning This is a pipeline breaker and a materialization point.
+ *
  * TODO Currently, we store all input tiles and sort result in memory
  * until this executor is destroyed, which is sometimes necessary.
  * But can we let it release the RAM earlier as long as the executor
