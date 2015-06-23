@@ -273,6 +273,7 @@ postgres_backend_FILES = \
 						 postgres/backend/nodes/readfuncs.c \
 						 postgres/backend/nodes/tidbitmap.c \
 						 postgres/backend/nodes/value.c \
+						 postgres/backend/nodes/pprint.c \
 						 postgres/backend/optimizer/geqo/geqo_copy.c \
 						 postgres/backend/optimizer/geqo/geqo_cx.c \
 						 postgres/backend/optimizer/geqo/geqo_erx.c \
