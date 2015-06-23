@@ -28,53 +28,57 @@ class AggregateNode : public AbstractPlanNode {
   AggregateNode(AggregateNode &&) = delete;
   AggregateNode& operator=(AggregateNode &&) = delete;
 
+  AggregateNode(const std::vector<oid_t>& aggregate_columns)
+  : aggregate_columns_(aggregate_columns) {
+  }
+
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_AGGREGATE;
   }
 
-  const std::vector<oid_t>& GetAggregateColumnsOffsets() const {
-    return aggregate_columns_offsets;
+  const std::vector<oid_t>& GetAggregateColumns() const {
+    return aggregate_columns_;
   }
 
-  const std::vector<oid_t>& GetGroupByColumnsOffsets() const {
-    return group_by_columns_offsets;
+  const std::vector<oid_t>& GetGroupByColumns() const {
+    return group_by_columns_;
   }
 
-  const std::map<oid_t, oid_t>& GetPassThroughColumnsMapping() const {
-    return pass_through_columns_mapping;
+  const std::map<oid_t, oid_t>& GetPassThroughColumns() const {
+    return pass_through_columns_;
   }
 
   const std::vector<ExpressionType>& GetAggregateTypes() const {
-    return aggregate_types;
+    return aggregate_types_;
   }
 
   const catalog::Schema *GetOutputTableSchema() const {
-    return output_table_schema;
+    return output_table_schema_;
   }
 
   const catalog::Schema *GetGroupBySchema() const {
-    return group_by_key_schema;
+    return group_by_key_schema_;
   }
 
  private:
 
   /** @brief Aggregate columns */
-  std::vector<oid_t> aggregate_columns_offsets;
+  const std::vector<oid_t> aggregate_columns_;
 
   /** @brief Group by columns */
-  std::vector<oid_t> group_by_columns_offsets;
+  const std::vector<oid_t> group_by_columns_;
 
   /** @brief Aggregate column schema */
-  catalog::Schema *group_by_key_schema;
+  const catalog::Schema *group_by_key_schema_;
 
   /** @brief Pass through columns */
-  std::map<oid_t, oid_t> pass_through_columns_mapping;
+  const std::map<oid_t, oid_t> pass_through_columns_;
 
   /** @brief Aggregate types */
-  std::vector<ExpressionType> aggregate_types;
+  const std::vector<ExpressionType> aggregate_types_;
 
   /** @brief Output columns */
-  catalog::Schema *output_table_schema;
+  const catalog::Schema *output_table_schema_;
 
 };
 

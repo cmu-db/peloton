@@ -27,8 +27,7 @@ namespace executor {
  * @brief Constructor for aggregate executor.
  * @param node Aggregate node corresponding to this executor.
  */
-template<PlanNodeType aggregate_type>
-AggregateExecutor<aggregate_type>::AggregateExecutor(planner::AbstractPlanNode *node)
+AggregateExecutor::AggregateExecutor(planner::AbstractPlanNode *node)
 : AbstractExecutor(node) {
 }
 
@@ -36,8 +35,7 @@ AggregateExecutor<aggregate_type>::AggregateExecutor(planner::AbstractPlanNode *
  * @brief Basic initialization.
  * @return true on success, false otherwise.
  */
-template<PlanNodeType aggregate_type>
-bool AggregateExecutor<aggregate_type>::DInit() {
+bool AggregateExecutor::DInit() {
   assert(children_.size() == 1);
 
   LOG_INFO("Aggregate Scan executor :: 1 child \n");
@@ -50,7 +48,7 @@ bool AggregateExecutor<aggregate_type>::DInit() {
   // (2) the pass through columns
 
   // Construct the output table
-  catalog::Schema *output_table_schema = node.GetOutputTableSchema();
+  auto output_table_schema = node.GetOutputTableSchema();
   size_t column_count = output_table_schema->GetColumnCount();
   assert(column_count >= 1);
 
@@ -65,8 +63,7 @@ bool AggregateExecutor<aggregate_type>::DInit() {
  * @brief Creates logical tile(s) wrapping the results of aggregation.
  * @return true on success, false otherwise.
  */
-template<PlanNodeType aggregate_type>
-bool AggregateExecutor<aggregate_type>::DExecute() {
+bool AggregateExecutor::DExecute() {
 
   // Grab info from plan node
   const planner::AggregateNode &node = GetNode<planner::AggregateNode>();
@@ -77,20 +74,22 @@ bool AggregateExecutor<aggregate_type>::DExecute() {
   // Get input tile and aggregate it
   std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
 
-  Aggregator<aggregate_type> aggregator(group_by_key_schema,
-                                        node,
-                                        output_table);
+  Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE> aggregator(group_by_key_schema,
+                        &node,
+                        output_table);
 
   LOG_INFO("Looping..");
 
-  expression::ContainerTuple<LogicalTile> prev_tuple;
+  expression::ContainerTuple<LogicalTile> *prev_tuple = nullptr;
 
   for (oid_t tuple_id : *tile) {
-    expression::ContainerTuple<LogicalTile> cur_tuple(tile.get(), tuple_id);
+    auto cur_tuple = new expression::ContainerTuple<LogicalTile>(tile.get(), tuple_id);
 
     if (aggregator.NextTuple(cur_tuple, prev_tuple) == false) {
       return false;
     }
+
+    delete prev_tuple;
     prev_tuple = cur_tuple;
   }
 
