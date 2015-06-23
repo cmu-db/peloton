@@ -14,6 +14,7 @@
 
 #include "backend/common/value_factory.h"
 #include "backend/executor/abstract_executor.h"
+#include "backend/expression/container_tuple.h"
 #include "backend/storage/backend.h"
 #include "backend/storage/data_table.h"
 #include "backend/planner/aggregate_node.h"
@@ -251,13 +252,14 @@ template<PlanNodeType aggregate_type>
 class Aggregator {
 public:
 
-    Aggregator(catalog::Schema *group_by_key_schema,
-               planner::AggregateNode *node,
+    Aggregator(const catalog::Schema *group_by_key_schema,
+               const planner::AggregateNode *node,
                storage::DataTable *output_table);
 
-    bool NextTuple(storage::Tuple *next_tuple, storage::Tuple *prev_tuple);
+    bool NextTuple(expression::ContainerTuple<LogicalTile> *next_tuple,
+                   expression::ContainerTuple<LogicalTile> *prev_tuple);
 
-    bool Finalize(storage::Tuple *prev_tuple);
+    bool Finalize(expression::ContainerTuple<LogicalTile> *prev_tuple);
 
 };
 
