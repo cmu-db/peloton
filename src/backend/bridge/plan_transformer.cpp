@@ -15,9 +15,7 @@ extern "C" {
 extern "C" void printPlanStateTree(const PlanState * planstate);
 
 namespace nstore {
-namespace planner {
-
-
+namespace bridge {
 
 PlanTransformer&
 PlanTransformer::GetInstance() {
@@ -42,7 +40,8 @@ PlanTransformer::AbstractPlanNodePtr PlanTransformer::transform(
   /* 1. Plan Type */
   switch (nodeTag(plan)) {
     case T_ModifyTable:
-      planNode = transformModifyTable((ModifyTableState *) planstate);
+      planNode = PlanTransformer::transformModifyTable(
+          (ModifyTableState *) planstate);
       break;
     default:
       break;
@@ -51,12 +50,13 @@ PlanTransformer::AbstractPlanNodePtr PlanTransformer::transform(
   return planNode;
 }
 
-PlanTransformer::AbstractPlanNodePtr transformModifyTable(
-    ModifyTableState* planstate) {
+PlanTransformer::AbstractPlanNodePtr PlanTransformer::transformModifyTable(
+    const ModifyTableState* planstate) {
   /*TODO: Actually implement this function */
   storage::DataTable *rtable = nullptr;
   std::vector<storage::Tuple *> tuples;
-  return PlanTransformer::AbstractPlanNodePtr(new planner::InsertNode(rtable, tuples));
+  return PlanTransformer::AbstractPlanNodePtr(
+      new planner::InsertNode(rtable, tuples));
 }
 
 }
