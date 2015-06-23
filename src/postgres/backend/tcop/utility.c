@@ -959,54 +959,19 @@ ProcessUtilitySlow(Node *parsetree,
 					{
 						Node	   *stmt = (Node *) lfirst(l);
 
+
 						if (IsA(stmt, CreateStmt))
 						{
 							Datum		toast_options;
 							static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
-							// TODO: Peloton Modifications
-							CreateStmt* Cstmt = (CreateStmt*)stmt;
-							List* schema = (List*)(Cstmt->tableElts);
-							ListCell   *entry;
-							DDL_ColumnInfo ddl_columnInfo[ schema->length ];
-							bool ret;  
-
-              // Parse the CreateStmt and construct ddl_columnInfo
-							foreach(entry, schema)
-							{
-								ColumnDef  *coldef = lfirst(entry);
-                Type		tup;
-                Form_pg_type typ;
-                Oid			typoid;
-                int column_itr=0;
-
-                tup = typenameType(NULL, coldef->typeName, NULL);
-                typ = (Form_pg_type) GETSTRUCT(tup);
-                typoid = HeapTupleGetOid(tup);
-                ReleaseSysCache(tup);
-
-								ddl_columnInfo[column_itr].type = typoid;
-								ddl_columnInfo[column_itr].column_offset = column_itr;
-								ddl_columnInfo[column_itr].column_length = typ->typlen;
-								strcpy(ddl_columnInfo[column_itr].name, coldef->colname);
-								ddl_columnInfo[column_itr].allow_null = !coldef->is_not_null;
-								ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
-								column_itr++;
-							}
-
-							/*
-							 * Now, intercept the create table request from Postgres and create a table in Peloton
-							 */
-							ret = DDL_CreateTable( Cstmt->relation->relname, ddl_columnInfo, schema->length);
-							fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
-
-							/* Create the table itself */
-							address = DefineRelation((CreateStmt *) stmt,
-													 RELKIND_RELATION,
-													 InvalidOid, NULL);
-							EventTriggerCollectSimpleCommand(address,
-															 secondaryObject,
-															 stmt);
+              /* Create the table itself */
+              address = DefineRelation((CreateStmt *) stmt,
+                  RELKIND_RELATION,
+                  InvalidOid, NULL);
+              EventTriggerCollectSimpleCommand(address,
+                  secondaryObject,
+                  stmt);
 
 							/*
 							 * Let NewRelationCreateToastTable decide if this
@@ -1030,6 +995,47 @@ ProcessUtilitySlow(Node *parsetree,
 
 							NewRelationCreateToastTable(address.objectId,
 														toast_options);
+
+              // TODO: Peloton Modifications
+              {
+                CreateStmt* Cstmt = (CreateStmt*)stmt;
+                List* schema = (List*)(Cstmt->tableElts);
+                ListCell   *entry;
+                bool ret;
+                DDL_ColumnInfo ddl_columnInfo[ schema->length ];
+
+
+
+                // Parse the CreateStmt and construct ddl_columnInfo
+                foreach(entry, schema)
+                {
+                  ColumnDef  *coldef = lfirst(entry);
+                  Type		tup;
+                  Form_pg_type typ;
+                  Oid			typoid;
+                  int column_itr=0;
+
+                  tup = typenameType(NULL, coldef->typeName, NULL);
+                  typ = (Form_pg_type) GETSTRUCT(tup);
+                  typoid = HeapTupleGetOid(tup);
+                  ReleaseSysCache(tup);
+
+                  ddl_columnInfo[column_itr].type = typoid;
+                  ddl_columnInfo[column_itr].column_offset = column_itr;
+                  ddl_columnInfo[column_itr].column_length = typ->typlen;
+                  strcpy(ddl_columnInfo[column_itr].name, coldef->colname);
+                  ddl_columnInfo[column_itr].allow_null = !coldef->is_not_null;
+                  ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
+                  column_itr++;
+                }
+
+                /*
+                 * Now, intercept the create table request from Postgres and create a table in Peloton
+                 */
+                ret = DDL_CreateTable( Cstmt->relation->relname, ddl_columnInfo, schema->length);
+                fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
+              }
+
 						}
 						else if (IsA(stmt, CreateForeignTableStmt))
 						{
@@ -1502,6 +1508,26 @@ ProcessUtilitySlow(Node *parsetree,
 
 			case T_DropStmt:
 				ExecDropStmt((DropStmt *) parsetree, isTopLevel);
+
+        //TODO :: Peloton Modification
+        {
+          DropStmt* drop;
+          ListCell   *cell;
+          bool ret;
+
+          drop = (DropStmt*) parsetree;
+          foreach(cell, drop->objects)
+          {
+            if (drop->removeType == OBJECT_TABLE )
+            {
+              List* names = ((List *) lfirst(cell));
+              char* table_name = strVal(linitial(names));
+              ret  = DDL_DropTable(table_name);
+              fprintf(stderr, "DDL_DropTable :: %d \n", ret);
+            }
+          }
+        }
+
 				/* no commands stashed for DROP */
 				commandCollected = true;
 				break;

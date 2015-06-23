@@ -21,7 +21,10 @@
 namespace nstore {
 namespace bridge {
 
-bool DDL::CreateTable(std::string table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns, catalog::Schema* schema = NULL){
+bool DDL::CreateTable(std::string table_name,
+                      DDL_ColumnInfo* ddl_columnInfo,
+                      int num_columns, 
+                      catalog::Schema* schema = NULL){
   // Either columns or schema is required to create a table
   if( ddl_columnInfo == NULL && schema == NULL ) 
     return false;
@@ -143,8 +146,31 @@ bool DDL::CreateTable(std::string table_name, DDL_ColumnInfo* ddl_columnInfo, in
     return true;
 }
 
-extern "C" bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns) {
+bool DDL::DropTable(std::string table_name){
+
+  int db_oid = GetCurrentDatabaseOid();
+  if( db_oid == 0 )
+    return false;
+
+  if( table_name == "" )
+    return false;
+
+
+  bool ret = storage::TableFactory::DropDataTable(db_oid, table_name);
+  if( !ret )
+    return false;
+
+  printf("Drop table : %s \n", table_name.c_str());
+  return true;
+}
+
+extern "C" {
+  bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns) {
     return DDL::CreateTable(table_name, ddl_columnInfo, num_columns);
+  }
+  bool DDL_DropTable(char* table_name) {
+    return DDL::DropTable(table_name);
+  }
 }
 
 } // namespace bridge
