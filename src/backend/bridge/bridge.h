@@ -32,7 +32,9 @@ void GetPublicTableList(void);
 
 bool IsThisTableExist(const char* table_name);
 
-bool InitPeloton(void);
+bool InitPeloton(const char* dbname);
+
+unsigned int GetRelationOidFromRelationName(const char *table_name);
 
 void SetUserTableStats(unsigned int relation_id);
 

@@ -68,7 +68,7 @@
 
 // TODO: Peloton Modifications
 #include "backend/bridge/ddl.h"
-#include "parser/parse_type.h" // JWKIM< for typenameTypeIdAndMod, It will be removed in the near future..
+#include "parser/parse_type.h" 
 
 /* Hook for plugins to get control in ProcessUtility() */
 ProcessUtility_hook_type ProcessUtility_hook = NULL;
@@ -1004,8 +1004,6 @@ ProcessUtilitySlow(Node *parsetree,
                 bool ret;
                 DDL_ColumnInfo ddl_columnInfo[ schema->length ];
 
-
-
                 // Parse the CreateStmt and construct ddl_columnInfo
                 foreach(entry, schema)
                 {
@@ -1028,7 +1026,6 @@ ProcessUtilitySlow(Node *parsetree,
                   ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
                   column_itr++;
                 }
-
                 /*
                  * Now, intercept the create table request from Postgres and create a table in Peloton
                  */
@@ -1507,8 +1504,6 @@ ProcessUtilitySlow(Node *parsetree,
 				break;
 
 			case T_DropStmt:
-				ExecDropStmt((DropStmt *) parsetree, isTopLevel);
-
         //TODO :: Peloton Modification
         {
           DropStmt* drop;
@@ -1527,6 +1522,8 @@ ProcessUtilitySlow(Node *parsetree,
             }
           }
         }
+
+				ExecDropStmt((DropStmt *) parsetree, isTopLevel);
 
 				/* no commands stashed for DROP */
 				commandCollected = true;

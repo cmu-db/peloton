@@ -45,7 +45,8 @@ public:
 
 };
 
-static std::map<std::string, DataTable*> tableMap;
+//TODO ::We need table maps as much as number of database
+static std::map<unsigned int, DataTable*> tableMap;
 
 } // End storage namespace
 } // End nstore namespace

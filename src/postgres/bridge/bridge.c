@@ -165,9 +165,9 @@ SetNumberOfTuples(Oid relation_id, float num_tuples) {
  * @brief Printing all databases from catalog table, i.e., pg_database
  */
 void GetDatabaseList(void) {
-  Relation	rel;
+  Relation rel;
   HeapScanDesc scan;
-  HeapTuple	tup;
+  HeapTuple tup;
 
   StartTransactionCommand();
 
@@ -189,9 +189,9 @@ void GetDatabaseList(void) {
  * @brief Printing all tables of current database from catalog table, i.e., pg_class
  */
 void GetTableList(void) {
-  Relation	pg_class_rel;
+  Relation pg_class_rel;
   HeapScanDesc scan;
-  HeapTuple	tuple;
+  HeapTuple tuple;
 
   StartTransactionCommand();
 
@@ -215,9 +215,9 @@ void GetTableList(void) {
  * @brief Printing all public tables of current database from catalog table, i.e., pg_class
  */
 void GetPublicTableList(void) {
-  Relation	rel;
+  Relation rel;
   HeapScanDesc scan;
-  HeapTuple	tuple;
+  HeapTuple tuple;
 
   StartTransactionCommand();
 
@@ -240,13 +240,13 @@ void GetPublicTableList(void) {
 }
 
 /**
- * @ Determin whether 'table_name' table exists in the current database or not
- * @ params table_name table name
+ * @Determin whether 'table_name' table exists in the current database or not
+ * @param table_name table name
  */
 bool IsThisTableExist(const char* table_name) {
-  Relation	rel;
+  Relation rel;
   HeapScanDesc scan;
-  HeapTuple	tuple;
+  HeapTuple tuple;
 
   StartTransactionCommand();
 
@@ -271,18 +271,25 @@ bool IsThisTableExist(const char* table_name) {
   return false;
 }
 
-bool InitPeloton(void)
+/**
+ * Initialize Peloton
+ * This function constructs tables in current database
+ * @param dbname current database
+ */
+bool InitPeloton(const char* dbname)
 {
-  Relation	pg_class_rel;
-  Relation	pg_attribute_rel;
+  Relation pg_class_rel;
+  Relation pg_attribute_rel;
 
   HeapScanDesc scan;
   HeapScanDesc scan2;
 
-  HeapTuple	tuple;
-  HeapTuple	tuple2;
+  HeapTuple tuple;
+  HeapTuple tuple2;
 
   int column_itr;
+
+  printf("Initialize Peloton Database %s \n", dbname);
 
   StartTransactionCommand();
 
@@ -344,6 +351,37 @@ bool InitPeloton(void)
   return true;
 }
 
+/*
+ * given a table name, look up the OID
+ * @param table_name table name
+ */
+unsigned int
+GetRelationOidFromRelationName(const char *table_name){
+  unsigned int relation_oid = 0;
+  Relation pg_class_rel;
+
+  HeapScanDesc scan;
+
+  HeapTuple tuple;
+
+  pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
+
+  scan = heap_beginscan_catalog(pg_class_rel, 0, NULL);
+
+  while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
+    Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
+    if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE){
+      if( strcmp( NameStr(pgclass->relname), table_name) == 0 )
+        relation_oid = HeapTupleHeaderGetOid(tuple->t_data);
+    }
+  } // end while
+
+  heap_endscan(scan);
+  heap_close(pg_class_rel, AccessShareLock);
+
+  return relation_oid;
+}
+
 
 /**
  * @brief Setting the user table stats
@@ -359,8 +397,8 @@ typedef struct user_pg_database *Form_user_pg_database;
 void  SetUserTableStats(Oid relation_id)
 {
   Relation rel;
-  HeapTuple	newtup;
-  //HeapTuple	tup, newtup;
+  HeapTuple newtup;
+  //HeapTuple tup, newtup;
   Oid relid;
   Form_user_pg_database userpgdatabase;
 
