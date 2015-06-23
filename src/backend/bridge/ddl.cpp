@@ -34,8 +34,7 @@ bool DDL::CreateTable(std::string table_name,
     return false;
 
   // Construct schema with ddl_columnInfo
-  if( schema == NULL )
-  {
+  if( schema == NULL ){
     std::vector<catalog::ColumnInfo> columnInfoVect;
 
     for( int column_itr = 0; column_itr < num_columns; column_itr++ ){
