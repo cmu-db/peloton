@@ -70,38 +70,35 @@ bool AggregateExecutor::DExecute() {
 
   // Grab info from plan node
   const planner::AggregateNode &node = GetNode<planner::AggregateNode>();
-
-  auto agg_types = node.GetAggregateTypes();
-
-  // Get input tile and aggregate it
-  std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
   txn_id_t txn_id = transaction_->GetTransactionId();
-
   Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE> aggregator(&node,
                                                                 output_table,
                                                                 txn_id);
 
-  LOG_INFO("Looping..");
+  // Get input tiles and aggregate them
+  while(children_[0]->Execute() == true) {
+    std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
 
-  expression::ContainerTuple<LogicalTile> *prev_tuple = nullptr;
+    LOG_INFO("Looping over tile..");
+    expression::ContainerTuple<LogicalTile> *prev_tuple = nullptr;
 
-  for (oid_t tuple_id : *tile) {
-    auto cur_tuple = new expression::ContainerTuple<LogicalTile>(tile.get(), tuple_id);
+    for (oid_t tuple_id : *tile) {
+      auto cur_tuple = new expression::ContainerTuple<LogicalTile>(tile.get(), tuple_id);
 
-    if (aggregator.Advance(cur_tuple, prev_tuple) == false) {
-      return false;
+      if (aggregator.Advance(cur_tuple, prev_tuple) == false) {
+        return false;
+      }
+
+      delete prev_tuple;
+      prev_tuple = cur_tuple;
     }
 
-    delete prev_tuple;
-    prev_tuple = cur_tuple;
+    LOG_INFO("Finalizing..");
+    if (!aggregator.Finalize(prev_tuple))
+      return false;
+
+    LOG_INFO("Finished processing logical tile");
   }
-
-  LOG_INFO("Finalizing..");
-
-  if (!aggregator.Finalize(prev_tuple))
-    return false;
-
-  LOG_INFO("Finished");
 
   return true;
 }
