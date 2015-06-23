@@ -12,7 +12,8 @@ check_PROGRAMS += \
 				  index_scan_test \
 				  limit_test \
 				  nested_loop_join_test \
-				  order_by_test
+				  order_by_test \
+				  hash_set_op_test
 
 executor_tests_common= 	executor/executor_tests_util.cpp \
 						harness.cpp
@@ -113,3 +114,12 @@ order_by_test_SOURCES = \
 order_by_test_LDADD = \
 					$(executor_tests_common_ld) \
 					$(obj_DIR)/executor/order_by_executor.o
+					
+hash_set_op_test_SOURCES = \
+						$(executor_tests_common) \
+						executor/hash_set_op_test.cpp
+						
+hash_set_op_test_LDADD = \
+						$(executor_tests_common_ld) \
+						$(obj_DIR)/executor/hash_set_op_executor.o
+						

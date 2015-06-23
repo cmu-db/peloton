@@ -353,5 +353,18 @@ storage::Tuple *ExecutorTestsUtil::GetNullTuple(storage::DataTable *table) {
   return tuple;
 }
 
+void ExecutorTestsUtil::PrintTileVector(std::vector<std::unique_ptr<executor::LogicalTile>>& tile_vec) {
+  for(auto &tile : tile_vec) {
+    for(oid_t tuple_id : *tile) {
+      std::cout << "<";
+      for(oid_t col_id = 0; col_id < tile->GetColumnCount(); col_id++){
+        std::cout << tile->GetValue(tuple_id, col_id) << ",";
+      }
+      std::cout << ">";
+    }
+  }
+  std::cout << std::endl;
+}
+
 } // namespace test
 } // namespace nstore
