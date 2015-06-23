@@ -15,6 +15,8 @@
 #include "backend/storage/backend_vm.h"
 #include "backend/storage/data_table.h"
 
+#include <iostream>
+#include <map>
 #include <string>
 
 namespace nstore {
@@ -35,7 +37,15 @@ public:
                                    std::string table_name,
                                    size_t tuples_per_tile_group_count = DEFAULT_TUPLES_PER_TILEGROUP);
 
+    /**
+     * For a given table name, drop the table from database
+     */
+    static bool DropDataTable(oid_t database_id,
+                       std::string table_name);
+
 };
+
+static std::map<std::string, DataTable*> tableMap;
 
 } // End storage namespace
 } // End nstore namespace

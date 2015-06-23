@@ -33,8 +33,25 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
     DataTable *table =  new DataTable(schema, backend, table_name,
                                       tuples_per_tilegroup_count);
     table->database_id = database_id;
+   
+    tableMap[table_name] = table; 
 
     return table;
+
+}
+
+bool TableFactory::DropDataTable(oid_t database_id,
+                                 std::string table_name){
+
+    //TODO :: Check database id as well...
+    DataTable* table =  tableMap[table_name];
+
+
+    if( table == 0 ) return false;
+
+    delete table;
+
+    return true;
 
 }
 
