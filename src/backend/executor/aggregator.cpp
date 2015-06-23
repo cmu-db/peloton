@@ -67,7 +67,8 @@ bool Helper(const planner::AggregateNode* node,
             expression::ContainerTuple<LogicalTile> *prev_tuple,
             txn_id_t transaction_id) {
 
-  LOG_INFO("Helper \n");
+  if(prev_tuple == nullptr)
+    return true;
 
   auto schema = output_table->GetSchema();
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
@@ -75,7 +76,7 @@ bool Helper(const planner::AggregateNode* node,
   /*
    * This first pass is to add all columns that were aggregated on.
    */
-  LOG_INFO("Setting aggregated columns \n");
+  //LOG_INFO("Setting aggregated columns \n");
 
   auto aggregate_columns = node->GetAggregateColumns();
   for (oid_t column_itr = 0; column_itr < aggregate_columns.size(); column_itr++){
@@ -93,13 +94,15 @@ bool Helper(const planner::AggregateNode* node,
    * that are not being aggregated on but are still in the SELECT
    * list.
    */
-  LOG_INFO("Setting pass through columns \n");
+  //LOG_INFO("Setting pass through columns \n");
 
   auto pass_through_columns = node->GetPassThroughColumns();
   for (auto column : pass_through_columns){
     // <first, second> == <output tuple column index, source tuple column index >
     tuple.get()->SetValue(column.first, prev_tuple->GetValue(column.second));
   }
+
+  std::cout << "TUPLE :: " << *(tuple.get());
 
   auto location = output_table->InsertTuple(transaction_id, tuple.get(), false);
   if (location.block == INVALID_OID) {
@@ -173,7 +176,7 @@ Advance(expression::ContainerTuple<LogicalTile> *cur_tuple,
 
   // If we have started a new aggregate tuple
   if (start_new_agg) {
-    LOG_TRACE("Started a new group!");
+    LOG_INFO("Started a new group!");
 
     if (Helper(node, aggregates, output_table,
                prev_tuple, transaction_id) == false){
