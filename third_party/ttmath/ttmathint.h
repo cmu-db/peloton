@@ -148,7 +148,7 @@ public:
 
      it can return carry (1) (look on ChangeSign() for details)
      */
-    uint Abs() {
+    uint Abs_() {
         if (!IsSign())
             return 0;
 
@@ -324,8 +324,8 @@ public:
          because next we're using the method Mul from the base class UInt
          which is without a sign)
          */
-        Abs();
-        ss2.Abs();
+        Abs_();
+        ss2.Abs_();
 
         if (UInt<value_size>::Mul(ss2))
             return 1;
@@ -394,8 +394,8 @@ public:
         /*
          we don't have to test the carry from Abs as well as in Mul
          */
-        Abs();
-        ss2.Abs();
+        Abs_();
+        ss2.Abs_();
 
         uint c = UInt<value_size>::Div(ss2, remainder);
 
@@ -434,7 +434,7 @@ public:
         /*
          we don't have to test the carry from Abs as well as in Mul
          */
-        Abs();
+        Abs_();
 
         if (ss2 < 0) {
             ss2 = -ss2;
@@ -475,7 +475,7 @@ private:
         uint c = 0;
 
         if (was_sign)
-            c += Abs();
+            c += Abs_();
 
         uint c_temp = UInt<value_size>::Pow(pow);
         if (c_temp > 0)
@@ -824,7 +824,7 @@ private:
     void ToStringBase(string_type & result, uint b = 10) const {
         if (IsSign()) {
             Int<value_size> temp(*this);
-            temp.Abs();
+            temp.Abs_();
 
             temp.UInt<value_size>::ToString(result, b);
             result.insert(result.begin(), '-');
