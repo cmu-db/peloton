@@ -61,13 +61,13 @@ Agg* GetAggInstance(ExpressionType agg_type) {
  * into a new tuple in the output tile group as well as passing through any
  * additional columns from the input tile group.
  */
-bool Helper(planner::AggregateNode* node,
+bool Helper(const planner::AggregateNode* node,
             Agg** aggregates,
             storage::DataTable *output_table,
-            storage::Tuple *prev_tuple,
+            expression::ContainerTuple<LogicalTile> *prev_tuple,
             txn_id_t transaction_id) {
 
-  catalog::Schema *schema = output_table->GetSchema();
+  auto schema = output_table->GetSchema();
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
 
   /*
@@ -75,7 +75,7 @@ bool Helper(planner::AggregateNode* node,
    */
   LOG_DEBUG("Setting aggregated columns \n");
 
-  auto aggregate_columns = node->GetAggregateColumnsOffsets();
+  auto aggregate_columns = node->GetAggregateColumns();
   for (oid_t column_itr = 0; column_itr < aggregate_columns.size(); column_itr++){
     if (aggregates[column_itr] != nullptr) {
       const oid_t column_index = aggregate_columns[column_itr];
@@ -93,7 +93,7 @@ bool Helper(planner::AggregateNode* node,
    */
   LOG_DEBUG("Setting pass through columns \n");
 
-  auto pass_through_columns = node->GetPassThroughColumnsMapping();
+  auto pass_through_columns = node->GetPassThroughColumns();
   for (auto column : pass_through_columns){
     // <first, second> == <output tuple column index, source tuple column index >
     tuple.get()->SetValue(column.first, prev_tuple->GetValue(column.second));
@@ -127,12 +127,12 @@ struct AggregateList {
  * sorted on the group by key.
  */
 template<>
-class Aggregator<PLAN_NODE_TYPE_AGGREGATE> {
+class Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE> {
 
  public:
 
-  Aggregator(catalog::Schema *group_by_key_schema,
-             planner::AggregateNode *node,
+  Aggregator(const catalog::Schema *group_by_key_schema,
+             const planner::AggregateNode *node,
              storage::DataTable *output_table,
              txn_id_t transaction_id)
  : group_by_key_schema(group_by_key_schema),
@@ -141,15 +141,16 @@ class Aggregator<PLAN_NODE_TYPE_AGGREGATE> {
    transaction_id(transaction_id) {
 
     aggregate_types = node->GetAggregateTypes();
-    aggregate_columns = node->GetAggregateColumnsOffsets();
-    group_by_columns = node->GetGroupByColumnsOffsets();
+    aggregate_columns = node->GetAggregateColumns();
+    group_by_columns = node->GetGroupByColumns();
 
     // Create aggregators
     aggregates = new Agg*[aggregate_columns.size()];
 
   }
 
-  bool NextTuple(storage::Tuple *cur_tuple, storage::Tuple *prev_tuple) {
+  bool NextTuple(expression::ContainerTuple<LogicalTile> *cur_tuple,
+                 expression::ContainerTuple<LogicalTile> *prev_tuple) {
 
     bool start_new_agg = false;
 
@@ -199,7 +200,7 @@ class Aggregator<PLAN_NODE_TYPE_AGGREGATE> {
     return true;
   }
 
-  bool Finalize(storage::Tuple *prev_tuple) {
+  bool Finalize(expression::ContainerTuple<LogicalTile> *prev_tuple) {
 
     if (Helper(node, aggregates, output_table,
                prev_tuple, transaction_id) == false) {
@@ -217,10 +218,10 @@ class Aggregator<PLAN_NODE_TYPE_AGGREGATE> {
  private:
 
   /** @brief Group by key */
-  catalog::Schema *group_by_key_schema;
+  const catalog::Schema *group_by_key_schema;
 
   /** @brief Plan node */
-  planner::AggregateNode *node;
+  const planner::AggregateNode *node;
 
   /** @brief Output table */
   storage::DataTable *output_table;

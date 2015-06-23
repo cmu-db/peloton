@@ -32,7 +32,6 @@ namespace executor {
  * then the input does not need to be sorted and it will hash the group by key
  * to aggregate the tuples.
  */
-template<PlanNodeType aggregate_type>
 class AggregateExecutor : public AbstractExecutor {
  public:
   AggregateExecutor(const AggregateExecutor &) = delete;
