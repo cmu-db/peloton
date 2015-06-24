@@ -302,6 +302,7 @@ bool InitPeloton(const char* dbname)
     Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
     if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE)
     {
+      printf("Create Table %s in Peloton\n", NameStr(pgclass->relname));
       // create columninfo as much as attnum
       DDL_ColumnInfo ddl_columnInfo[ pgclass->relnatts ] ;
       Oid table_oid = HeapTupleHeaderGetOid(tuple->t_data);
