@@ -198,7 +198,6 @@ void GetTableList(void) {
   pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
   scan = heap_beginscan_catalog(pg_class_rel, 0, NULL);
 
-  // TODO: Whar are we trying to do here ?
   while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
     Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
     printf(" pgclass->relname    :: %s  \n", NameStr(pgclass->relname ) );
@@ -298,6 +297,7 @@ bool InitPeloton(const char* dbname)
 
   scan = heap_beginscan_catalog(pg_class_rel, 0, NULL);
 
+  //TODO :: Make this one single loop
   while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
     Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
     if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE)
@@ -306,7 +306,6 @@ bool InitPeloton(const char* dbname)
       DDL_ColumnInfo ddl_columnInfo[ pgclass->relnatts ] ;
       Oid table_oid = HeapTupleHeaderGetOid(tuple->t_data);
 
-      //printf(" pgclass->relname    :: %s  \n", NameStr(pgclass->relname ) );
 
       scan2 = heap_beginscan_catalog(pg_attribute_rel, 0, NULL);
       column_itr = 0;  
