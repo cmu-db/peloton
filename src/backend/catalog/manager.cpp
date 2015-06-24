@@ -29,13 +29,24 @@ void Manager::SetLocation(const oid_t db_oid, const oid_t table_oid, void *locat
     std::pair<oid_t, oid_t> db_and_table_oid_pair; // TODO:: RENAME
     db_and_table_oid_pair = std::make_pair(db_oid, table_oid);
 
-    locator2.insert(std::pair<std::pair<oid_t, oid_t>, void*>(std::make_pair(db_oid,table_oid), location));
+    locator2.insert(std::pair<std::pair<oid_t, oid_t>, void*>(db_and_table_oid_pair, location));
 }
 
 void *Manager::GetLocation(const oid_t oid) const {
     void *location = nullptr;
     try {
         location = catalog::Manager::GetInstance().locator.at(oid);
+    }
+    catch(std::exception& e) {
+        // FIXME
+    }
+    return location;
+}
+
+void *Manager::GetLocation(const oid_t database_oid, const oid_t table_oid) const {
+    void *location = nullptr;
+    try {
+        location = catalog::Manager::GetInstance().locator2.at(std::make_pair(database_oid, table_oid));
     }
     catch(std::exception& e) {
         // FIXME

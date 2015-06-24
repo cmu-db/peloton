@@ -16,11 +16,11 @@ extern "C" {
 
 char* GetRelationName(unsigned int relation_id);
 
-int GetNumberOfAttributes(unsigned int  relation_id);
+int GetNumberOfAttributes(unsigned int relation_id);
 
 float GetNumberOfTuples(unsigned int relation_id);
 
-int GetCurrentDatabaseOid(void);
+unsigned int GetCurrentDatabaseOid(void);
 
 void SetNumberOfTuples(unsigned int relation_id, float num_of_tuples);
 
