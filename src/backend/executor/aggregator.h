@@ -252,8 +252,7 @@ template<PlanNodeType aggregate_type>
 class Aggregator {
 public:
 
-    Aggregator(const catalog::Schema *group_by_key_schema,
-               const planner::AggregateNode *node,
+    Aggregator(const planner::AggregateNode *node,
                storage::DataTable *output_table,
                txn_id_t transaction_id);
 
@@ -263,9 +262,6 @@ public:
     bool Finalize(expression::ContainerTuple<LogicalTile> *prev_tuple);
 
 private:
-
-  /** @brief Group by key */
-  const catalog::Schema *group_by_key_schema;
 
   /** @brief Plan node */
   const planner::AggregateNode *node;
