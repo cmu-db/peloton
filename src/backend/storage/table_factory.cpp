@@ -48,7 +48,7 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
 bool TableFactory::DropDataTable(std::string table_name){
 
     oid_t table_oid = GetRelationOidFromRelationName(table_name.c_str());
-    DataTable* table =  catalog::Manager::GetInstance().GetLocation(table_oid);
+    DataTable* table =  (DataTable*) catalog::Manager::GetInstance().GetLocation(table_oid);
 
     if(table == nullptr)
       return false;
