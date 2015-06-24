@@ -23,11 +23,15 @@ void TestTupleTransformer(Datum datum, Oid atttypid) {
   printf("Call to ValueGetDatum in Peloton\n");
   printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
   p_datum = ValueGetDatum(p_value);
+  printf("\n");
+  printf("--------------------------------\n");
+  printf("\n");
 }
 
 
 
-nstore::Value DatumGetValue(Datum datum, Oid atttypid) {
+nstore::Value
+DatumGetValue(Datum datum, Oid atttypid) {
   nstore::Value value;
   nstore::Pool *data_pool = nullptr;
   int16_t smallint;
@@ -82,7 +86,8 @@ nstore::Value DatumGetValue(Datum datum, Oid atttypid) {
   return value;
 }
 
-Datum ValueGetDatum(nstore::Value value) {
+Datum
+ValueGetDatum(nstore::Value value) {
   nstore::ValueType value_type;
   nstore::ValuePeeker value_peeker;
   Datum datum;
