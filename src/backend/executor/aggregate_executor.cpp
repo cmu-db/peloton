@@ -27,8 +27,9 @@ namespace executor {
  * @brief Constructor for aggregate executor.
  * @param node Aggregate node corresponding to this executor.
  */
-AggregateExecutor::AggregateExecutor(planner::AbstractPlanNode *node)
-: AbstractExecutor(node) {
+AggregateExecutor::AggregateExecutor(planner::AbstractPlanNode *node,
+                                     Transaction *transaction)
+: AbstractExecutor(node, transaction) {
 }
 
 /**
@@ -65,42 +66,39 @@ bool AggregateExecutor::DInit() {
  */
 bool AggregateExecutor::DExecute() {
 
+  LOG_INFO("Executing.. ");
+
   // Grab info from plan node
   const planner::AggregateNode &node = GetNode<planner::AggregateNode>();
-
-  auto agg_types = node.GetAggregateTypes();
-  auto group_by_key_schema = node.GetGroupBySchema();
-
-  // Get input tile and aggregate it
-  std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
   txn_id_t txn_id = transaction_->GetTransactionId();
+  Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE> aggregator(&node,
+                                                                output_table,
+                                                                txn_id);
 
-  Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE> aggregator(group_by_key_schema,
-                        &node,
-                        output_table,
-                        txn_id);
+  // Get input tiles and aggregate them
+  while(children_[0]->Execute() == true) {
+    std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
 
-  LOG_INFO("Looping..");
+    LOG_INFO("Looping over tile..");
+    expression::ContainerTuple<LogicalTile> *prev_tuple = nullptr;
 
-  expression::ContainerTuple<LogicalTile> *prev_tuple = nullptr;
+    for (oid_t tuple_id : *tile) {
+      auto cur_tuple = new expression::ContainerTuple<LogicalTile>(tile.get(), tuple_id);
 
-  for (oid_t tuple_id : *tile) {
-    auto cur_tuple = new expression::ContainerTuple<LogicalTile>(tile.get(), tuple_id);
+      if (aggregator.Advance(cur_tuple, prev_tuple) == false) {
+        return false;
+      }
 
-    if (aggregator.Advance(cur_tuple, prev_tuple) == false) {
-      return false;
+      delete prev_tuple;
+      prev_tuple = cur_tuple;
     }
 
-    delete prev_tuple;
-    prev_tuple = cur_tuple;
+    LOG_INFO("Finalizing..");
+    if (!aggregator.Finalize(prev_tuple))
+      return false;
+
+    LOG_INFO("Finished processing logical tile");
   }
-
-  LOG_INFO("Finalizing..");
-
-  if (!aggregator.Finalize(prev_tuple))
-    return false;
-
-  LOG_INFO("Finished");
 
   return true;
 }
