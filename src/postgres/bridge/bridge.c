@@ -288,7 +288,9 @@ bool InitPeloton(const char* dbname)
 
   int column_itr;
 
-  printf("Initialize Peloton Database \"%s\" \n", dbname);
+  printf("################################################\n");
+  printf("#### Initialize Peloton Database \"%s\" #### \n", dbname);
+  printf("################################################\n");
 
   StartTransactionCommand();
 
