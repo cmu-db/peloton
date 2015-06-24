@@ -14,7 +14,8 @@ check_PROGRAMS += \
 				  nested_loop_join_test \
 				  order_by_test \
 				  hash_set_op_test \
-				  aggregate_test
+				  aggregate_test \
+				  append_test
 
 executor_tests_common= 	executor/executor_tests_util.cpp \
 						harness.cpp
@@ -136,4 +137,11 @@ aggregate_test_LDADD = \
 					$(obj_DIR)/executor/aggregator.o \
 					$(obj_DIR)/executor/aggregate_executor.o
 					
-
+append_test_SOURCES = \
+					$(executor_tests_common) \
+					executor/append_test.cpp
+					
+append_test_LDADD = \
+					$(executor_tests_common_ld) \
+					$(obj_DIR)/executor/append_executor.o
+					
