@@ -44,9 +44,14 @@ public:
     }
 
     void SetLocation(const oid_t oid, void *location);
+
+    // Store table location with two keys
     void SetLocation(const oid_t oid1, const oid_t oid2, void *location);
 
     void *GetLocation(const oid_t oid) const;
+
+    // Look up the address with two keys
+    void *GetLocation(const oid_t database_oid, const oid_t table_oid) const;
 
     Manager() {}
 

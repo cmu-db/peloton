@@ -117,7 +117,7 @@ GetNumberOfTuples(Oid relation_id){
 /**
  * @brief Getting the current database Oid
  */
-int 
+Oid 
 GetCurrentDatabaseOid(void){
   return MyDatabaseId;
 }
@@ -288,7 +288,7 @@ bool InitPeloton(const char* dbname)
 
   int column_itr;
 
-  printf("Initialize Peloton Database %s \n", dbname);
+  printf("Initialize Peloton Database \"%s\" \n", dbname);
 
   StartTransactionCommand();
 
@@ -302,7 +302,6 @@ bool InitPeloton(const char* dbname)
     Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
     if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE)
     {
-      printf("Create Table %s in Peloton\n", NameStr(pgclass->relname));
       // create columninfo as much as attnum
       DDL_ColumnInfo ddl_columnInfo[ pgclass->relnatts ] ;
       Oid table_oid = HeapTupleHeaderGetOid(tuple->t_data);
@@ -339,6 +338,7 @@ bool InitPeloton(const char* dbname)
       } // end while
 
       heap_endscan(scan2);
+      printf("Create Table \"%s\" in Peloton\n", NameStr(pgclass->relname));
     } // end if
   } // end while
 
