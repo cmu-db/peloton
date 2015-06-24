@@ -1318,6 +1318,14 @@ ProcessUtilitySlow(Node *parsetree,
 					commandCollected = true;
 					EventTriggerAlterTableEnd();
 				}
+        //TODO :: Peloton Modification
+        {
+          // Parse the index statement 
+          // Call DDL_CreateIndex
+          //ret = DDL_CreateIndex(index_name, type, unique, DDL_ColumnInfo);
+          //fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
+         
+        }
 				break;
 
 			case T_CreateExtensionStmt:
