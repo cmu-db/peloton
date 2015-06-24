@@ -48,12 +48,9 @@ DataTable* TableFactory::GetDataTable(oid_t database_oid,
 bool TableFactory::DropDataTable(oid_t database_oid, std::string table_name){
 
     oid_t table_oid = GetRelationOidFromRelationName(table_name.c_str());
-<<<<<<< HEAD
-    DataTable* table =  (nstore::storage::DataTable *)catalog::Manager::GetInstance().GetLocation(table_oid);
-=======
 
     DataTable* table =  (DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
->>>>>>> 8b8be2c272b32b778bbc257a4ae6c461c6861428
+
 
     if(table == nullptr)
       return false;
