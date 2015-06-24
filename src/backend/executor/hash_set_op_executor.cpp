@@ -1,5 +1,5 @@
 /**
- * @brief Header file for hash-based set operation executor.
+ * @brief hash-based set operation executor.
  *
  * Copyright(c) 2015, CMU
  */
