@@ -32,7 +32,7 @@ public:
     /**
      * For a given Schema, instantiate a DataTable object and return it
      */
-    static DataTable* GetDataTable(oid_t database_id,
+    static DataTable* GetDataTable(oid_t database_oid,
                                    catalog::Schema *schema,
                                    std::string table_name,
                                    size_t tuples_per_tile_group_count = DEFAULT_TUPLES_PER_TILEGROUP);
@@ -40,7 +40,7 @@ public:
     /**
      * For a given table name, drop the table from database
      */
-    static bool DropDataTable(std::string table_name);
+    static bool DropDataTable(oid_t database_oid, std::string table_name);
 
 };
 
