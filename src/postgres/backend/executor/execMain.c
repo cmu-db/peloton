@@ -287,7 +287,7 @@ ExecutorRun(QueryDesc *queryDesc,
 	//PlannedStmt *plan = queryDesc->plannedstmt;
 	//elog_node_display(LOG, "plan", plan, Debug_pretty_print);
 
-  printPlanStateTree(queryDesc->planstate);
+  //	printPlanStateTree(queryDesc->planstate);
 
 
 	if (ExecutorRun_hook)
@@ -1558,6 +1558,7 @@ ExecutePlan(EState *estate,
 		/*
 		 * Execute the plan and obtain a tuple
 		 */
+
 		slot = ExecProcNode(planstate);
 
 		/*
