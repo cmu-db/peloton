@@ -10,13 +10,8 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/bridge/bridge.h"
 #include "backend/bridge/ddl.h"
-#include "backend/catalog/catalog.h"
-#include "backend/storage/backend_vm.h"
-#include "backend/storage/table_factory.h"
 
-#include <cassert>
 
 namespace nstore {
 namespace bridge {
@@ -146,12 +141,25 @@ bool DDL::DropTable(std::string table_name){
   return true;
 }
 
+bool DDL::CreateIndex(std::string index_name,
+                      int type,
+                      bool unique, 
+                      DDL_ColumnInfo* ddl_columnInfo)
+{
+  //  nned to convert type into IndexType
+  ///call IndexFactory
+}
+ 
+
 extern "C" {
 bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns) {
   return DDL::CreateTable(table_name, ddl_columnInfo, num_columns);
 }
 bool DDL_DropTable(char* table_name) {
   return DDL::DropTable(table_name);
+}
+bool DDL_CreateIndex(char* index_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfo) {
+  return DDL::CreateIndex(index_name, type, unique, ddl_columnInfo);
 }
 }
 
