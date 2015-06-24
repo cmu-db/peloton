@@ -59,6 +59,8 @@
 /** @brief Helper function to print a tuple table slot */
 void PrintTupleTableSlot(TupleTableSlot *slot);
 
+extern void TestTupleTransformer(Datum datum,Oid oid);
+
 static bool ExecOnConflictUpdate(ModifyTableState *mtstate,
                                  ResultRelInfo *resultRelInfo,
                                  ItemPointer conflictTid,
@@ -216,6 +218,8 @@ ExecCheckTIDVisible(EState *estate,
  *      PrintTuple - print one tuple for an interactive backend
  * ----------------
  */
+
+
 void
 PrintTupleTableSlot(TupleTableSlot *slot){
   TupleDesc typeinfo = slot->tts_tupleDescriptor;
@@ -229,33 +233,68 @@ PrintTupleTableSlot(TupleTableSlot *slot){
   unsigned attributeId;
   Form_pg_attribute attributeP;
 
+  Datum p_datum;
+  Oid p_oid;
+
   for (i = 0; i < natts; ++i) {
-    attr = slot_getattr(slot, i + 1, &isnull);
-    if (isnull)
-      continue;
-    getTypeOutputInfo(typeinfo->attrs[i]->atttypid,
-                      &typoutput, &typisvarlena);
+		attr = slot_getattr(slot, i + 1, &isnull);
+		if (isnull)
+		  continue;
+		Assert(typeinfo != NULL);
+		Assert(typeinfo->attrs[i] != NULL);
+		getTypeOutputInfo(typeinfo->attrs[i]->atttypid,
+						  &typoutput, &typisvarlena);
 
-    value = OidOutputFunctionCall(typoutput, attr);
+		value = OidOutputFunctionCall(typoutput, attr);
 
-    // Print the attribute.
-    attributeId = (unsigned) i + 1;
-    attributeP = typeinfo->attrs[i];
+		// Print the attribute.
+		attributeId = (unsigned) i + 1;
+		attributeP = typeinfo->attrs[i];
 
-    printf("\t%2d: %s%s%s%s\t(typeid = %u, len = %d, typmod = %d, byval = %c)\n",
-           attributeId,
-           NameStr(attributeP->attname),
-           value != NULL ? " = \"" : "",
-               value != NULL ? value : "",
-                   value != NULL ? "\"" : "",
-                       (unsigned int) (attributeP->atttypid),
-                       attributeP->attlen,
-                       attributeP->atttypmod,
-                       attributeP->attbyval ? 't' : 'f');
-  }
-  printf("\t----\n");
+		printf("\t%2d: %s%s%s%s\t(typeid = %u, len = %d, typmod = %d, byval = %c)\n",
+			   attributeId,
+			   NameStr(attributeP->attname),
+			   value != NULL ? " = \"" : "",
+				   value != NULL ? value : "",
+					   value != NULL ? "\"" : "",
+						   (unsigned int) (attributeP->atttypid),
+						   attributeP->attlen,
+						   attributeP->atttypmod,
+						   attributeP->attbyval ? 't' : 'f');
 
+		p_oid = attributeP->atttypid;
+
+		switch(p_oid) {
+			// short int
+			case 21:	p_datum = Int16GetDatum((short)(atoi(value)));
+						break;
+			// integer
+			case 23:	p_datum = Int32GetDatum(atoi(value));
+						break;
+			// big int
+			case 20:	p_datum = Int64GetDatum(strtol(value,NULL,10));
+						break;
+			// real
+			case 700:	p_datum = Float4GetDatum(strtof(value,NULL));
+						break;
+			// double
+			case 701:	p_datum = Float8GetDatum(strtod(value,NULL));
+						break;
+			// char
+			case 1042:	p_datum = CStringGetDatum(value);
+						break;
+			// varchar
+			case 1043:	p_datum = CStringGetDatum(value);
+						break;
+			default:	p_datum = CStringGetDatum(value);
+						break;
+		}
+
+		TestTupleTransformer(p_datum,p_oid);
+    }
+		printf("\t----\n");
 }
+
 
 /* ----------------------------------------------------------------
  *		ExecInsert
@@ -281,7 +320,7 @@ ExecInsert(ModifyTableState *mtstate,
   Oid			newId;
   List	   *recheckIndexes = NIL;
 
-  /*
+
   TupleTableSlot *slot_copy;
   HeapTuple  tuple_copy;
   Datum      *dvalues;
@@ -290,23 +329,28 @@ ExecInsert(ModifyTableState *mtstate,
   int     natts;
   int     i;
   bool    isnull;
-  */
+
+
   /*
    * get the heap tuple out of the tuple table slot, making sure we have a
    * writable copy
    */
   tuple = ExecMaterializeSlot(slot);
 
-  /*
+
   // TODO: Peloton changes
   PrintTupleTableSlot(slot);
 
   // Create another copy of this tuple.
+  Assert(slot != NULL);
   typeinfo = slot->tts_tupleDescriptor;
+  Assert(typeinfo != NULL);
   natts = typeinfo->natts;
   dvalues = (Datum *) palloc0(natts * sizeof(Datum));
   nulls = (bool *) palloc(natts * sizeof(bool));
 
+  Assert(dvalues != NULL);
+  Assert(nulls != NULL);
   for (i = 0; i < natts; ++i) {
     dvalues[i] = slot_getattr(slot, i + 1, &isnull);
     nulls[i] = isnull;
@@ -314,6 +358,8 @@ ExecInsert(ModifyTableState *mtstate,
   tuple_copy = heap_form_tuple(typeinfo, dvalues, nulls);
 
   slot_copy = MakeTupleTableSlot();
+
+  Assert(slot_copy != NULL);
   ExecSetSlotDescriptor(slot_copy, typeinfo);
   slot_copy->tts_tuple = tuple_copy;
 
@@ -324,7 +370,7 @@ ExecInsert(ModifyTableState *mtstate,
   pfree(dvalues);
   pfree(nulls);
   pfree(tuple_copy);
-  */
+
 
   /*
    * get information on the (current) result relation
