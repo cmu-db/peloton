@@ -24,7 +24,7 @@ bool DDL::CreateTable(std::string table_name,
   if( ddl_columnInfo == NULL && schema == NULL ) 
     return false;
 
-  int db_oid = GetCurrentDatabaseOid();
+  unsigned int db_oid = GetCurrentDatabaseOid();
   if( db_oid == 0 )
     return false;
 
@@ -106,6 +106,7 @@ bool DDL::CreateTable(std::string table_name,
       columnInfoVect.push_back(*columnInfo);
     }
 
+    // TODO :: ColumnInfo may have nothing
     // Construct schema from vector of ColumnInfo
     schema = new catalog::Schema(columnInfoVect);
   }
@@ -119,25 +120,19 @@ bool DDL::CreateTable(std::string table_name,
   table =  storage::TableFactory::GetDataTable(db_oid, schema, table_name);
 
   //LOG_WARN("Created table : %s \n", table_name);
-  printf("Created table : %s \n", table_name.c_str());
   return true;
 }
 
 bool DDL::DropTable(std::string table_name){
 
-  int db_oid = GetCurrentDatabaseOid();
-  if( db_oid == 0 )
+  unsigned int db_oid = GetCurrentDatabaseOid();
+  if( db_oid == 0 ||  table_name.empty() )
     return false;
 
-  if( table_name == "" )
-    return false;
-
-
-  bool ret = storage::TableFactory::DropDataTable(table_name);
+  bool ret = storage::TableFactory::DropDataTable(db_oid, table_name);
   if( !ret )
     return false;
 
-  printf("Drop table : %s \n", table_name.c_str());
   return true;
 }
 
@@ -159,8 +154,7 @@ bool DDL_DropTable(char* table_name) {
   return DDL::DropTable(table_name);
 }
 bool DDL_CreateIndex(char* index_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfo) {
-  return DDL::CreateIndex(index_name, type, unique, ddl_columnInfo);
-}
+  return DDL::CreateIndex(index_name, type, unique, ddl_columnInfo); }
 }
 
 } // namespace bridge
