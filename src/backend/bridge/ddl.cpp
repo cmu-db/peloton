@@ -20,8 +20,7 @@ bool DDL::CreateTable(std::string table_name,
                       DDL_ColumnInfo* ddl_columnInfo,
                       int num_columns, 
                       catalog::Schema* schema = NULL){
-  // Either columns or schema is required to create a table
-  if( ddl_columnInfo == NULL && schema == NULL ) 
+  if( ( num_columns > 0 && ddl_columnInfo == NULL) && schema == NULL ) 
     return false;
 
   oid_t db_oid = GetCurrentDatabaseOid();
@@ -239,8 +238,8 @@ bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_c
 bool DDL_DropTable(char* table_name) {
   return DDL::DropTable(table_name);
 }
-bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema, DDL_ColumnInfo* ddl_columnInfoForKeySchema) {
-  return DDL::CreateIndex(index_name, table_name, type, unique, ddl_columnInfoForTupleSchema, ddl_columnInfoForKeySchema); }
+bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema, DDL_ColumnInfo* ddl_columnInfoForKeySchema, int num_columns) {
+  return DDL::CreateIndex(index_name, table_name, type, unique, ddl_columnInfoForTupleSchema, ddl_columnInfoForKeySchema, num_columns); }
 }
 
 } // namespace bridge

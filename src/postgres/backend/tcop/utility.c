@@ -998,40 +998,50 @@ ProcessUtilitySlow(Node *parsetree,
                             toast_options);
 
               // TODO: Peloton Modifications
+              // Run our create table function when postgres successes to create table
+              if( address.objectId != 0 )
               {
+                 bool ret;
                 CreateStmt* Cstmt = (CreateStmt*)stmt;
                 List* schema = (List*)(Cstmt->tableElts);
-                ListCell   *entry;
-                bool ret;
-                DDL_ColumnInfo ddl_columnInfo[ schema->length ];
-
-                // Parse the CreateStmt and construct ddl_columnInfo
-                foreach(entry, schema)
+           
+                if( schema != NULL )
                 {
-                  ColumnDef  *coldef = lfirst(entry);
-                  Type    tup;
-                  Form_pg_type typ;
-                  Oid      typoid;
-                  int column_itr=0;
-
-                  tup = typenameType(NULL, coldef->typeName, NULL);
-                  typ = (Form_pg_type) GETSTRUCT(tup);
-                  typoid = HeapTupleGetOid(tup);
-                  ReleaseSysCache(tup);
-
-                  ddl_columnInfo[column_itr].type = typoid;
-                  ddl_columnInfo[column_itr].column_offset = column_itr;
-                  ddl_columnInfo[column_itr].column_length = typ->typlen;
-                  strcpy(ddl_columnInfo[column_itr].name, coldef->colname);
-                  ddl_columnInfo[column_itr].allow_null = !coldef->is_not_null;
-                  ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
-                  column_itr++;
+                 ListCell   *entry;
+                  DDL_ColumnInfo ddl_columnInfo[ schema->length ];
+  
+                  // Parse the CreateStmt and construct ddl_columnInfo
+                  foreach(entry, schema)
+                  {
+                    ColumnDef  *coldef = lfirst(entry);
+                    Type    tup;
+                    Form_pg_type typ;
+                    Oid      typoid;
+                    int column_itr=0;
+  
+                    tup = typenameType(NULL, coldef->typeName, NULL);
+                    typ = (Form_pg_type) GETSTRUCT(tup);
+                    typoid = HeapTupleGetOid(tup);
+                    ReleaseSysCache(tup);
+  
+                    ddl_columnInfo[column_itr].type = typoid;
+                    ddl_columnInfo[column_itr].column_offset = column_itr;
+                    ddl_columnInfo[column_itr].column_length = typ->typlen;
+                    strcpy(ddl_columnInfo[column_itr].name, coldef->colname);
+                    ddl_columnInfo[column_itr].allow_null = !coldef->is_not_null;
+                    ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
+                    column_itr++;
+                  } 
+                  /*
+                   * Now, intercept the create table request from Postgres and create a table in Peloton
+                   */
+                  ret = DDL_CreateTable( Cstmt->relation->relname, ddl_columnInfo, schema->length);
+                }else
+                {
+                  // Create Table without column info
+                  ret = DDL_CreateTable( Cstmt->relation->relname, NULL, 0 );
                 }
-                /*
-                 * Now, intercept the create table request from Postgres and create a table in Peloton
-                 */
-                ret = DDL_CreateTable( Cstmt->relation->relname, ddl_columnInfo, schema->length);
-                fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
+               fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
               }
 
             }
@@ -1341,7 +1351,7 @@ ProcessUtilitySlow(Node *parsetree,
                                                                            0,  /* int column_length */ 
                                                                            indexElem->name, /* char name */  
                                                                            true, /* bool allow_null */ 
-                                                                           false/* bool is_inlined */ // true for int, double, char, timestamp..
+                                                                           false /* bool is_inlined */ // true for int, double, char, timestamp..      
                                                                         };
 
             ddl_columnInfoForKeySchema[column_itr] = (DDL_ColumnInfo) {  0,  /* int type */   
@@ -1362,8 +1372,10 @@ ProcessUtilitySlow(Node *parsetree,
                                 stmt->relation->relname,
                                 0,
                                 stmt->unique,
-                                ddl_columnInfoForTupleSchema, ddl_columnInfoForKeySchema);
-          fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
+                                ddl_columnInfoForTupleSchema, ddl_columnInfoForKeySchema,
+                                stmt->indexParams->length
+                               );
+          fprintf(stderr, "DDL_CreateIndex :: %d \n", ret);
         }
       }
         break;
@@ -1468,6 +1480,7 @@ ProcessUtilitySlow(Node *parsetree,
         address = AlterSequence((AlterSeqStmt *) parsetree);
         break;
 
+      // TODO ?
       case T_CreateTableAsStmt:
         address = ExecCreateTableAs((CreateTableAsStmt *) parsetree,
                   queryString, params, completionTag);
@@ -1555,7 +1568,7 @@ ProcessUtilitySlow(Node *parsetree,
         //TODO :: Peloton Modification
         {
           DropStmt* drop;
-          ListCell   *cell;
+          ListCell  *cell;
           bool ret;
 
           drop = (DropStmt*) parsetree;
