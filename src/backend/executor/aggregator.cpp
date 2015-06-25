@@ -67,6 +67,7 @@ bool Helper(const planner::AggregateNode* node,
             expression::ContainerTuple<LogicalTile> *prev_tuple,
             txn_id_t transaction_id) {
 
+  // Ignore null tuples
   if(prev_tuple == nullptr)
     return true;
 
