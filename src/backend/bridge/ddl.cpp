@@ -24,7 +24,7 @@ bool DDL::CreateTable(std::string table_name,
   if( ddl_columnInfo == NULL && schema == NULL ) 
     return false;
 
-  unsigned int db_oid = GetCurrentDatabaseOid();
+  oid_t db_oid = GetCurrentDatabaseOid();
   if( db_oid == 0 )
     return false;
 
@@ -132,13 +132,16 @@ bool DDL::CreateTable(std::string table_name,
 
   table =  storage::TableFactory::GetDataTable(db_oid, schema, table_name);
 
+  // Store the schema for "CreateIndex"
+  table->SetSchema(schema);
+
   //LOG_WARN("Created table : %s \n", table_name);
   return true;
 }
 
 bool DDL::DropTable(std::string table_name){
 
-  unsigned int db_oid = GetCurrentDatabaseOid();
+  oid_t db_oid = GetCurrentDatabaseOid();
   if( db_oid == 0 ||  table_name.empty() )
     return false;
 
@@ -155,12 +158,14 @@ bool DDL::CreateIndex(std::string index_name,
                       int type,
                       bool unique, 
                       DDL_ColumnInfo* ddl_columnInfoForTupleSchema,
-                      DDL_ColumnInfo* ddl_columnInfoForKeySchema)
+                      DDL_ColumnInfo* ddl_columnInfoForKeySchema,
+                      int num_columns)
 {
  
-  IndexType currentIndexType = INDEX_TYPE_INVALID;
+  IndexType currentIndexType = INDEX_TYPE_BTREE_MULTIMAP;
 
 /*
+  // TODO :: I coudn't find any IndexType Information in IndexStmt
   switch(type){
     case:
     currentIndexType = INDEX_TYPE_BTREE_MULTIMAP; // array
@@ -176,19 +181,52 @@ bool DDL::CreateIndex(std::string index_name,
   }
 */
 
-  // get the columns info from relation ...
-  // Actually, schema...
+  // Get the database oid and table oid
+  oid_t database_oid = GetCurrentDatabaseOid();
+  oid_t table_oid = GetRelationOidFromRelationName(table_name.c_str());
 
+  // Get the table pointer from manager
+  storage::DataTable* table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+
+  // Bring the schema of table
+  catalog::Schema* table_schema = table->GetSchema();
+
+  std::cout << *table_schema << std::endl;
+
+  // Make schema based on table_schema
+  std::vector<oid_t> oid_t_vec;
+  
 /*
-  catalog::Schema * tuple_schema;
-  catalog::Schema * key_schema;
+  for(oid_t column_itr = 0;  column_itr < num_columns; column_itr++)
+  {
+    // GetColumns and iterate it and compare with .. this.. one ..
+    catalog::ColumnInfo columnInfo = table_schema->GetColumnInfo(column_itr);
+    for( oid_t column_itr2 = 0; column_itr2 < table_schema->GetColumnCount(); column_itr2++)
+    {
+      // Look up the given column names in table_schema
+      if( sddl_columnInfoForTupleSchema->name 
+    }
+    DDL_ColumnInfo* ddl_columnInfoForKeySchema)
+}
+  oid_t_vec.push_back(0);
+  catalog::Schema * tuple_schema = catalog::Schema::CopySchema(table_schema, oid_t_vec);
+  std::cout << *tuple_schema << std::endl;
+*/
 
+  /*
+  catalog::Schema * key
+  */
+
+ 
+  // Create metadata and index 
+  /*
   index::IndexMetadata* metadata(index_name, currentIndexType, tuple_schema, key_schema, unique);
 
   index::Index* index = index::IndexFactory::GetInstance(metadata);
-*/
+  */
 
-  //void DataTable::AddIndex(index::Index *index) {
+  // Add an index into the table
+  // table->AddIndex(index);
 
   return true;
 }
