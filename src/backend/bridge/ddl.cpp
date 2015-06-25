@@ -32,16 +32,12 @@ bool DDL::CreateTable(std::string table_name,
     std::vector<catalog::ColumnInfo> columnInfoVect;
     ValueType currentValueType;
 
+    // TODO :: Do we need this kind of table??
+    // create a table without columnInfo
     if( num_columns == 0 )
     {
           currentValueType = VALUE_TYPE_NULL;
-          catalog::ColumnInfo *columnInfo = new catalog::ColumnInfo( currentValueType,
-                          0, 
-                          0,
-                          "",
-                          true,
-                          true);
-          // Add current columnInfo into the columnInfoVect
+          catalog::ColumnInfo *columnInfo = new catalog::ColumnInfo( currentValueType, 0, 0, "", true, true);
           columnInfoVect.push_back(*columnInfo);
     }else
     {
@@ -195,7 +191,6 @@ bool DDL::CreateIndex(std::string index_name,
   // Make schema based on table_schema
   std::vector<oid_t> oid_t_vec;
   
-/*
   for(oid_t column_itr = 0;  column_itr < num_columns; column_itr++)
   {
     // GetColumns and iterate it and compare with .. this.. one ..
@@ -203,14 +198,13 @@ bool DDL::CreateIndex(std::string index_name,
     for( oid_t column_itr2 = 0; column_itr2 < table_schema->GetColumnCount(); column_itr2++)
     {
       // Look up the given column names in table_schema
-      if( sddl_columnInfoForTupleSchema->name 
+      catalog::ColumnInfo col = table_schema->GetColumnInfo(column_itr2);
+      if( strcmp( ddl_columnInfoForTupleSchema[column_itr].name , (col.name).c_str() )== 0 )
+        oid_t_vec.push_back(column_itr2);
     }
-    DDL_ColumnInfo* ddl_columnInfoForKeySchema)
-}
-  oid_t_vec.push_back(0);
+  }
   catalog::Schema * tuple_schema = catalog::Schema::CopySchema(table_schema, oid_t_vec);
   std::cout << *tuple_schema << std::endl;
-*/
 
   /*
   catalog::Schema * key
