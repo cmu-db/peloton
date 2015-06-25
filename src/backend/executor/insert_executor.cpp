@@ -61,9 +61,8 @@ bool InsertExecutor::DExecute() {
     std::unique_ptr<LogicalTile> logical_tile(children_[0]->GetOutput());
     assert(logical_tile.get() != nullptr);
 
-    // Get the underlying physical tile from the logical wrapper tile
-    assert(logical_tile.get()->IsWrapper() == true);
-    storage::Tile *physical_tile = logical_tile.get()->GetWrappedTile();
+    // Get the underlying physical tile
+    storage::Tile *physical_tile = logical_tile.get()->GetBaseTile(0);
 
     // Next, check logical tile schema against table schema
     auto schema = target_table->GetSchema();

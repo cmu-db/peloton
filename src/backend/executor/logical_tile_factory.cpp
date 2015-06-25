@@ -83,12 +83,6 @@ LogicalTile *LogicalTileFactory::WrapTiles(const std::vector<storage::Tile *> &b
     }
   }
 
-  // Mark this logical tile as a wrapper if that's the case
-  if(base_tiles.size() == 1) {
-    new_tile.get()->wrapper = true;
-    new_tile.get()->physical_tile_ = base_tiles[0];
-  }
-
   return new_tile.release();
 }
 
@@ -120,12 +114,6 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(storage::TileGroup *tile_group) {
           col_id,
           position_list_idx);
     }
-  }
-
-  // Mark this logical tile as a wrapper if that's the case
-  if(schemas.size() == 1) {
-    new_tile.get()->wrapper = true;
-    new_tile.get()->physical_tile_ = tile_group->GetTile(0);
   }
 
   return new_tile.release();
@@ -187,12 +175,6 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(const std::vector<
           own_base_tile,
           tile_column_id,
           position_list_idx);
-    }
-
-    // Mark this logical tile as a wrapper if that's the case
-    if(tile_group->GetTileCount() == 1) {
-      logical_tile->wrapper = true;
-      logical_tile->physical_tile_ = tile_group->GetTile(0);
     }
 
     result.push_back(logical_tile);
