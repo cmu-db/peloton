@@ -23,11 +23,15 @@ void TestTupleTransformer(Datum datum, Oid atttypid) {
   printf("Call to ValueGetDatum in Peloton\n");
   printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
   p_datum = ValueGetDatum(p_value);
+  printf("\n");
+  printf("--------------------------------\n");
+  printf("\n");
 }
 
 
 
-nstore::Value DatumGetValue(Datum datum, Oid atttypid) {
+nstore::Value
+DatumGetValue(Datum datum, Oid atttypid) {
   nstore::Value value;
   nstore::Pool *data_pool = nullptr;
   int16_t smallint;
@@ -82,7 +86,8 @@ nstore::Value DatumGetValue(Datum datum, Oid atttypid) {
   return value;
 }
 
-Datum ValueGetDatum(nstore::Value value) {
+Datum
+ValueGetDatum(nstore::Value value) {
   nstore::ValueType value_type;
   nstore::ValuePeeker value_peeker;
   Datum datum;
@@ -90,39 +95,41 @@ Datum ValueGetDatum(nstore::Value value) {
   int32_t integer;
   int64_t bigint;
   char *character;
-  char *variable_character;
+  std::string variable_character_string;
+  const char *variable_character;
   double timestamp;
 
   value_type = value.GetValueType();
 
   switch (value_type) {
     case 4:
-      smallint = value_peeker.PeekSmallInt(value);
-      printf("%d\n", smallint);
-      datum = Int16GetDatum(smallint);
-      break;
+		smallint = value_peeker.PeekSmallInt(value);
+		printf("%d\n", smallint);
+		datum = Int16GetDatum(smallint);
+		break;
 
     case 5:
-      integer = value_peeker.PeekInteger(value);
-      printf("%d\n", integer);
-      datum = Int32GetDatum(integer);
-      break;
+		integer = value_peeker.PeekInteger(value);
+		printf("%d\n", integer);
+		datum = Int32GetDatum(integer);
+		break;
 
     case 6:
-      bigint = value_peeker.PeekBigInt(value);
-      printf("%ld\n", bigint);
-      datum = Int64GetDatum(bigint);
-      break;
+		bigint = value_peeker.PeekBigInt(value);
+		printf("%ld\n", bigint);
+		datum = Int64GetDatum(bigint);
+		break;
 
-      //case 9:		variable_character = CastAsString(value);
-      //		datum = CStringGetDatum(variable_character);
-      //	break;
+	// TODO: Peloton changes
+	// varchar -- no function found yet -- vivek
+    case 9:
+    	break;
 
     case 11:
-      timestamp = value_peeker.PeekTimestamp(value);
-      printf("%f\n", (float) timestamp);
-      datum = Float8GetDatum((float) timestamp);
-      break;
+		timestamp = value_peeker.PeekTimestamp(value);
+		printf("%f\n", (float) timestamp);
+		datum = Float8GetDatum((float) timestamp);
+		break;
 
     default:
       break;
