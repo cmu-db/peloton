@@ -1317,15 +1317,32 @@ ProcessUtilitySlow(Node *parsetree,
 													 parsetree);
 					commandCollected = true;
 					EventTriggerAlterTableEnd();
-				}
+
         //TODO :: Peloton Modification
         {
+          ListCell   *entry;
+          
+          DDL_ColumnInfo ddl_columnInfo[ stmt->indexParams->length ];
           // Parse the index statement 
-          // Call DDL_CreateIndex
-          //ret = DDL_CreateIndex(index_name, type, unique, DDL_ColumnInfo);
+
+          // Parse the IndexStmt and construct ... sth
+          foreach(entry, stmt->indexParams)
+          {
+            IndexElem *indexElem = lfirst(entry);
+            indexElem->name; /* name of attribute to index, or NULL */
+            indexElem->indexcolname; /* name for index column; NULL = default */
+          }
+
+          /*  TODO :: ColumnNames and KeyName?
+          ret = DDL_CreateIndex(stmt->idxname,
+                                NameStr(stmt->relation->relname),
+                                type, <-- ?? 
+                                stmt->unique,
+                                DDL_ColumnInfo);
           //fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
-         
+          */
         }
+			}
 				break;
 
 			case T_CreateExtensionStmt:
