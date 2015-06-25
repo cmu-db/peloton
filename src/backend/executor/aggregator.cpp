@@ -83,8 +83,8 @@ bool Helper(const planner::AggregateNode* node,
     if (aggregates[column_itr] != nullptr) {
       const oid_t column_index = aggregate_columns[column_itr];
       const ValueType column_type = schema->GetType(column_index);
-      tuple.get()->SetValue(column_index,
-                            aggregates[column_itr]->Finalize().CastAs(column_type));
+      Value final_val = aggregates[column_itr]->Finalize();
+      tuple.get()->SetValue(column_index, final_val.CastAs(column_type));
     }
   }
 
@@ -144,8 +144,11 @@ Aggregator(const planner::AggregateNode *node,
   aggregate_columns = node->GetAggregateColumns();
   group_by_columns = node->GetGroupByColumns();
 
-  // Create aggregators
+  LOG_INFO("Aggregates :: %lu \n", aggregate_columns.size());
+
+  // Create aggregators and initialize
   aggregates = new Agg*[aggregate_columns.size()];
+  ::memset(aggregates, 0, sizeof(void*) * aggregate_columns.size());
 
 }
 
