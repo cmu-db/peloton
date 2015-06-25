@@ -43,13 +43,13 @@ namespace bridge {
 class DDL {
 public:
   static bool CreateTable(std::string table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns, catalog::Schema* schema);
-  static bool DropTable(std::string table_name);
+  static bool DropTable(unsigned int table_oid);
   static bool CreateIndex(std::string index_name, std::string table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema,  DDL_ColumnInfo* ddl_columnInfoForKeySchema, int num_columns);
 };
 
 extern "C" {
   bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns);
-  bool DDL_DropTable(char* table_name );
+  bool DDL_DropTable(unsigned int table_oid);
   bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema, DDL_ColumnInfo* ddl_columnInfoForKeySchema , int num_columns);
 }
 
@@ -60,6 +60,6 @@ extern "C" {
 
 extern bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns);
 
-extern bool DDL_DropTable(char* table_name );
+extern bool DDL_DropTable(unsigned int table_oid);
 
 extern bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema, DDL_ColumnInfo* ddl_columnInfoForKeySchema , int num_columns);
