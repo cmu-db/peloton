@@ -51,6 +51,7 @@ bool TableFactory::DropDataTable(oid_t database_oid, std::string table_name){
 
     DataTable* table =  (DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
 
+
     if(table == nullptr)
       return false;
 

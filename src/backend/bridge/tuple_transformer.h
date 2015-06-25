@@ -10,13 +10,14 @@
 extern "C" {
 #include "postgres.h"
 }
+
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
 
 
 //typedef nstore::Value nstore_value;
 
-//extern "C" {
+extern "C" {
 
 	nstore::Value DatumGetValue(Datum datum, Oid atttypid);
 
@@ -24,4 +25,4 @@ extern "C" {
 
 	void TestTupleTransformer(Datum datum, Oid atttypid);
 
-//};
+};
