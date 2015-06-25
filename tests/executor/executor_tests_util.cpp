@@ -144,7 +144,11 @@ storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(
  * @param table Table to populate with values.
  * @param num_rows Number of tuples to insert.
  */
-void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows, bool mutate, bool random) {
+void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
+                                      bool mutate,
+                                      bool random,
+                                      bool group_by) {
+  // Random values
   if(random)
     std::srand(std::time(nullptr));
 
@@ -166,11 +170,20 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows, b
 
     storage::Tuple tuple(schema, allocate);
 
-    // Make sure first column is unique in all cases
-    tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0)));
+    if(group_by) {
+      // Make sure first column is unique in all cases
+      tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(0, 0)));
 
-    // In case of random, make sure this column has duplicated values
-    tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(random ? std::rand()%(num_rows/2):populate_value, 1)));
+      // In case of random, make sure this column has duplicated values
+      tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(1, 1)));
+    }
+    else {
+      // Make sure first column is unique in all cases
+      tuple.SetValue(0, ValueFactory::GetIntegerValue(PopulatedValue(populate_value, 0)));
+
+      // In case of random, make sure this column has duplicated values
+      tuple.SetValue(1, ValueFactory::GetIntegerValue(PopulatedValue(random ? std::rand()%(num_rows/2):populate_value, 1)));
+    }
 
     tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(random ? std::rand():populate_value, 2)));
 
@@ -178,6 +191,8 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows, b
     Value string_value = ValueFactory::GetStringValue(
         std::to_string(PopulatedValue(random ? std::rand()%(num_rows/2):populate_value, 3)));
     tuple.SetValue(3, string_value);
+
+    std::cout << "INSERT TUPLE :: " << tuple << "\n";
 
     ItemPointer tuple_slot_id = table->InsertTuple(txn_id, &tuple, false);
     EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
@@ -326,7 +341,8 @@ storage::DataTable *ExecutorTestsUtil::CreateAndPopulateTable() {
 
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
   storage::DataTable *table = ExecutorTestsUtil::CreateTable(tuple_count);
-  ExecutorTestsUtil::PopulateTable(table, tuple_count * DEFAULT_TILEGROUP_COUNT);
+  ExecutorTestsUtil::PopulateTable(table, tuple_count * DEFAULT_TILEGROUP_COUNT,
+                                   false, false, false);
 
   return table;
 }

@@ -67,9 +67,9 @@ TEST(NestedLoopJoinTests, CartesianProductTest) {
   // Create a table and wrap it in logical tile
   size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
   std::unique_ptr<storage::DataTable> left_table(ExecutorTestsUtil::CreateTable(tile_group_size));
-  ExecutorTestsUtil::PopulateTable(left_table.get(), tile_group_size * 3);
+  ExecutorTestsUtil::PopulateTable(left_table.get(), tile_group_size * 3, false, false, false);
   std::unique_ptr<storage::DataTable> right_table(ExecutorTestsUtil::CreateTable(tile_group_size));
-  ExecutorTestsUtil::PopulateTable(right_table.get(), tile_group_size * 2);
+  ExecutorTestsUtil::PopulateTable(right_table.get(), tile_group_size * 2, false, false, false);
 
   std::unique_ptr<executor::LogicalTile> left_logical_tile11(
       executor::LogicalTileFactory::WrapTileGroup(left_table->GetTileGroup(0)));
@@ -199,10 +199,10 @@ TEST(NestedLoopJoinTests, JoinPredicateTest) {
   // Create a table and wrap it in logical tile
   size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
   std::unique_ptr<storage::DataTable> left_table(ExecutorTestsUtil::CreateTable(tile_group_size));
-  ExecutorTestsUtil::PopulateTable(left_table.get(), tile_group_size * 3);
+  ExecutorTestsUtil::PopulateTable(left_table.get(), tile_group_size * 3, false, false, false);
   bool mutate_table = true;
   std::unique_ptr<storage::DataTable> right_table(ExecutorTestsUtil::CreateTable(tile_group_size));
-  ExecutorTestsUtil::PopulateTable(right_table.get(), tile_group_size * 2, mutate_table);
+  ExecutorTestsUtil::PopulateTable(right_table.get(), tile_group_size * 2, mutate_table, false, false);
 
   std::cout << *(left_table.get());
   std::cout << *(right_table.get());
