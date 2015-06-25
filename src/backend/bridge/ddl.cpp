@@ -138,13 +138,13 @@ bool DDL::CreateTable(std::string table_name,
   return true;
 }
 
-bool DDL::DropTable(std::string table_name){
-
+bool DDL::DropTable(unsigned int table_oid)
+{
   oid_t db_oid = GetCurrentDatabaseOid();
-  if( db_oid == 0 ||  table_name.empty() )
+  if( db_oid == 0 || table_oid == 0 )
     return false;
 
-  bool ret = storage::TableFactory::DropDataTable(db_oid, table_name);
+  bool ret = storage::TableFactory::DropDataTable(db_oid, table_oid);
   if( !ret )
     return false;
 
@@ -235,8 +235,8 @@ extern "C" {
 bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns) {
   return DDL::CreateTable(table_name, ddl_columnInfo, num_columns);
 }
-bool DDL_DropTable(char* table_name) {
-  return DDL::DropTable(table_name);
+bool DDL_DropTable(unsigned int table_oid) {
+  return DDL::DropTable(table_oid);
 }
 bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema, DDL_ColumnInfo* ddl_columnInfoForKeySchema, int num_columns) {
   return DDL::CreateIndex(index_name, table_name, type, unique, ddl_columnInfoForTupleSchema, ddl_columnInfoForKeySchema, num_columns); }
