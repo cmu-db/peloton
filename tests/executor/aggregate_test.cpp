@@ -225,7 +225,11 @@ TEST(AggregateTests, AggregateTest){
 
   EXPECT_TRUE(executor.Execute());
 
-  EXPECT_TRUE(executor.GetOutput());
+  auto logical_tile = executor.GetOutput();
+  EXPECT_TRUE(logical_tile != nullptr);
+
+  EXPECT_TRUE(logical_tile->GetValue(0, 2) == ValueFactory::GetDoubleValue(110));
+  EXPECT_TRUE(logical_tile->GetValue(1, 2) == ValueFactory::GetDoubleValue(360));
 
   txn_manager.CommitTransaction(txn);
   txn_manager.EndTransaction(txn);

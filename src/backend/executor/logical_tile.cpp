@@ -171,25 +171,6 @@ storage::Tile *LogicalTile::GetBaseTile(oid_t column_id) {
 
 
 /**
- * @brief Is this tile a wrapper around the underlying tiles ?
- *
- * @return bool
- */
-bool LogicalTile::IsWrapper(){
-  return wrapper;
-}
-
-/**
- * @brief Get the wrapped physical tile at given offset
- *
- * @return Pointer to the wrapped physical tile
- */
-storage::Tile *LogicalTile::GetWrappedTile(){
-  assert(physical_tile_ != nullptr);
-  return physical_tile_;
-}
-
-/**
  * @brief Get the value at the specified field.
  * @param tuple_id Tuple id of the specified field (row/position).
  * @param column_id Column id of the specified field.
