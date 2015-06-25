@@ -1001,14 +1001,15 @@ ProcessUtilitySlow(Node *parsetree,
               // Run our create table function when postgres successes to create table
               if( address.objectId != 0 )
               {
-                 bool ret;
+                int column_itr=0;
+                bool ret;
                 CreateStmt* Cstmt = (CreateStmt*)stmt;
                 List* schema = (List*)(Cstmt->tableElts);
            
                 if( schema != NULL )
                 {
                  ListCell   *entry;
-                  DDL_ColumnInfo ddl_columnInfo[ schema->length ];
+                 DDL_ColumnInfo* ddl_columnInfo = (DDL_ColumnInfo*) malloc( sizeof(DDL_ColumnInfo)*schema->length);
   
                   // Parse the CreateStmt and construct ddl_columnInfo
                   foreach(entry, schema)
@@ -1017,7 +1018,6 @@ ProcessUtilitySlow(Node *parsetree,
                     Type    tup;
                     Form_pg_type typ;
                     Oid      typoid;
-                    int column_itr=0;
   
                     tup = typenameType(NULL, coldef->typeName, NULL);
                     typ = (Form_pg_type) GETSTRUCT(tup);
@@ -1025,6 +1025,7 @@ ProcessUtilitySlow(Node *parsetree,
                     ReleaseSysCache(tup);
   
                     ddl_columnInfo[column_itr].type = typoid;
+printf("type %u\n", typoid);
                     ddl_columnInfo[column_itr].column_offset = column_itr;
                     ddl_columnInfo[column_itr].column_length = typ->typlen;
                     strcpy(ddl_columnInfo[column_itr].name, coldef->colname);
@@ -1334,8 +1335,8 @@ ProcessUtilitySlow(Node *parsetree,
           ListCell   *entry;
           bool ret;
           
-          DDL_ColumnInfo ddl_columnInfoForTupleSchema[ stmt->indexParams->length ];
-          DDL_ColumnInfo ddl_columnInfoForKeySchema[ stmt->indexParams->length ];
+          DDL_ColumnInfo *ddl_columnInfoForTupleSchema = (DDL_ColumnInfo *)malloc(sizeof(DDL_ColumnInfo)*stmt->indexParams->length);
+          DDL_ColumnInfo *ddl_columnInfoForKeySchema = (DDL_ColumnInfo *)malloc(sizeof(DDL_ColumnInfo)*stmt->indexParams->length);
 
           // Parse the IndexStmt and construct ddl_columnInfo for TupleSchema and KeySchema
           foreach(entry, stmt->indexParams)
@@ -1343,8 +1344,8 @@ ProcessUtilitySlow(Node *parsetree,
             IndexElem *indexElem = lfirst(entry);
             int column_itr = 0;
 
-            //indexElem->name; /* name of attribute to index, or NULL */
-            //indexElem->indexcolname; /* name for index column; NULL = default */
+            //printf("index name %s \n", indexElem->name); /* name of attribute to index, or NULL */
+            //printf("Index column %s \n", indexElem->indexcolname) ; /* name for index column; NULL = default */
 
             ddl_columnInfoForTupleSchema[column_itr] = (DDL_ColumnInfo) {  0,  /* int type */   
                                                                            column_itr, /* int column_offset*/
