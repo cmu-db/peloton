@@ -81,7 +81,7 @@ TEST(LimitTests, NonLeafLimitOffsetTest){
 
   // Create a table and wrap it in logical tile
   std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*3);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*3, false, false, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -123,7 +123,7 @@ TEST(LimitTests, NonLeafSkipAllTest){
 
   // Create a table and wrap it in logical tile
   std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*3);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*3, false, false, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -165,7 +165,7 @@ TEST(LimitTests, NonLeafReturnAllTest){
 
   // Create a table and wrap it in logical tile
   std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*3);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*3, false, false, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -207,7 +207,7 @@ TEST(LimitTests, NonLeafHugeLimitTest){
 
   // Create a table and wrap it in logical tile
   std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*3);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*3, false, false, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));

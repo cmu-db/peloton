@@ -66,8 +66,6 @@ bool AggregateExecutor::DInit() {
  */
 bool AggregateExecutor::DExecute() {
 
-  LOG_INFO("Executing.. ");
-
   // Grab info from plan node
   const planner::AggregateNode &node = GetNode<planner::AggregateNode>();
   txn_id_t txn_id = transaction_->GetTransactionId();

@@ -80,7 +80,7 @@ TEST(AppendTests, AppendTwoTest) {
 
   size_t tile_size = 10;
   std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*5, false, false);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*5, false, false, false);
 
   std::unique_ptr<executor::LogicalTile> ltile0(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
