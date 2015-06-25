@@ -120,7 +120,6 @@ bool DDL::CreateTable(std::string table_name,
       }
     }
 
-    // TODO :: ColumnInfo may have nothing
     // Construct schema from vector of ColumnInfo
     schema = new catalog::Schema(columnInfoVect);
   }
@@ -150,13 +149,48 @@ bool DDL::DropTable(std::string table_name){
   return true;
 }
 
+//TODO :: 
 bool DDL::CreateIndex(std::string index_name,
+                      std::string table_name,
                       int type,
                       bool unique, 
-                      DDL_ColumnInfo* ddl_columnInfo)
+                      DDL_ColumnInfo* ddl_columnInfoForTupleSchema,
+                      DDL_ColumnInfo* ddl_columnInfoForKeySchema)
 {
-  //  nned to convert type into IndexType
-  ///call IndexFactory
+ 
+  IndexType currentIndexType = INDEX_TYPE_INVALID;
+
+/*
+  switch(type){
+    case:
+    currentIndexType = INDEX_TYPE_BTREE_MULTIMAP; // array
+    break;
+
+    case:
+    currentIndexType = INDEX_TYPE_ORDERED_MAP;   // ordered map
+    break;
+
+    default:
+    printf("Something's wrong\n");
+    break;
+  }
+*/
+
+  // get the columns info from relation ...
+  // Actually, schema...
+
+/*
+  catalog::Schema * tuple_schema;
+  catalog::Schema * key_schema;
+
+  index::IndexMetadata* metadata(index_name, currentIndexType, tuple_schema, key_schema, unique);
+
+  index::Index* index = index::IndexFactory::GetInstance(metadata);
+*/
+
+  //void DataTable::AddIndex(index::Index *index) {
+
+  return true;
 }
  
 
@@ -167,8 +201,8 @@ bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_c
 bool DDL_DropTable(char* table_name) {
   return DDL::DropTable(table_name);
 }
-bool DDL_CreateIndex(char* index_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfo) {
-  return DDL::CreateIndex(index_name, type, unique, ddl_columnInfo); }
+bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema, DDL_ColumnInfo* ddl_columnInfoForKeySchema) {
+  return DDL::CreateIndex(index_name, table_name, type, unique, ddl_columnInfoForTupleSchema, ddl_columnInfoForKeySchema); }
 }
 
 } // namespace bridge
