@@ -77,7 +77,7 @@ bool Helper(const planner::AggregateNode* node,
   /*
    * This first pass is to add all columns that were aggregated on.
    */
-  //LOG_INFO("Setting aggregated columns \n");
+  //LOG_TRACE("Setting aggregated columns \n");
 
   auto aggregate_columns = node->GetAggregateColumns();
   for (oid_t column_itr = 0; column_itr < aggregate_columns.size(); column_itr++){
@@ -95,7 +95,7 @@ bool Helper(const planner::AggregateNode* node,
    * that are not being aggregated on but are still in the SELECT
    * list.
    */
-  //LOG_INFO("Setting pass through columns \n");
+  //LOG_TRACE("Setting pass through columns \n");
 
   auto pass_through_columns = node->GetPassThroughColumns();
   for (auto column : pass_through_columns){
@@ -145,7 +145,7 @@ Aggregator(const planner::AggregateNode *node,
   aggregate_columns = node->GetAggregateColumns();
   group_by_columns = node->GetGroupByColumns();
 
-  LOG_INFO("Aggregates :: %lu \n", aggregate_columns.size());
+  LOG_TRACE("Aggregates :: %lu \n", aggregate_columns.size());
 
   // Create aggregators and initialize
   aggregates = new Agg*[aggregate_columns.size()];
@@ -163,7 +163,7 @@ Advance(expression::ContainerTuple<LogicalTile> *cur_tuple,
 
   // Check if we are starting a new aggregate tuple
   if (prev_tuple == nullptr) {
-    LOG_INFO("Prev tuple is nullprt!");
+    LOG_TRACE("Prev tuple is nullprt!");
     start_new_agg = true;
   }
   else {
@@ -182,7 +182,7 @@ Advance(expression::ContainerTuple<LogicalTile> *cur_tuple,
 
   // If we have started a new aggregate tuple
   if (start_new_agg) {
-    LOG_INFO("Started a new group!");
+    LOG_TRACE("Started a new group!");
 
     if (Helper(node, aggregates, output_table,
                prev_tuple, transaction_id) == false){

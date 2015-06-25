@@ -53,6 +53,15 @@ class AggregateExecutor : public AbstractExecutor {
   // Executor State
   //===--------------------------------------------------------------------===//
 
+  /** @brief Result of aggregate */
+  std::vector<LogicalTile *> result;
+
+  /** @brief Result itr */
+  oid_t result_itr = INVALID_OID;
+
+  /** @brief Computed the result */
+  bool done = false;
+
   /** @brief Output table. */
   storage::DataTable *output_table = nullptr;
 

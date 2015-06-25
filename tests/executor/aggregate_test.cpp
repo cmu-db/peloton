@@ -225,6 +225,8 @@ TEST(AggregateTests, AggregateTest){
 
   EXPECT_TRUE(executor.Execute());
 
+  EXPECT_TRUE(executor.GetOutput());
+
   txn_manager.CommitTransaction(txn);
   txn_manager.EndTransaction(txn);
 }
