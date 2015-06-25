@@ -12,6 +12,8 @@
 #include "backend/catalog/catalog.h"
 #include "backend/catalog/schema.h"
 #include "backend/common/types.h"
+#include "backend/index/index.h"
+#include "backend/index/index_factory.h"
 #include "backend/storage/backend_vm.h"
 #include "backend/storage/table_factory.h"
 
@@ -42,13 +44,13 @@ class DDL {
 public:
   static bool CreateTable(std::string table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns, catalog::Schema* schema);
   static bool DropTable(std::string table_name);
-  static bool CreateIndex(std::string index_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfo);
+  static bool CreateIndex(std::string index_name, std::string table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema,  DDL_ColumnInfo* ddl_columnInfoForKeySchema);
 };
 
 extern "C" {
   bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns);
   bool DDL_DropTable(char* table_name );
-  bool DDL_CreateIndex(char* index_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfo );
+  bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema, DDL_ColumnInfo* ddl_columnInfoForKeySchema );
 }
 
 } // namespace bridge
@@ -60,4 +62,4 @@ extern bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, in
 
 extern bool DDL_DropTable(char* table_name );
 
-extern bool DDL_CreateIndex(char* index_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfo );
+extern bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema, DDL_ColumnInfo* ddl_columnInfoForKeySchema );
