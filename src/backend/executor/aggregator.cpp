@@ -102,7 +102,7 @@ bool Helper(const planner::AggregateNode* node,
     tuple.get()->SetValue(column.first, prev_tuple->GetValue(column.second));
   }
 
-  std::cout << "TUPLE :: " << *(tuple.get());
+  std::cout << "GROUP TUPLE :: " << *(tuple.get());
 
   auto location = output_table->InsertTuple(transaction_id, tuple.get(), false);
   if (location.block == INVALID_OID) {
@@ -159,13 +159,15 @@ Advance(expression::ContainerTuple<LogicalTile> *cur_tuple,
 
   // Check if we are starting a new aggregate tuple
   if (prev_tuple == nullptr) {
+    LOG_INFO("Prev tuple is nullprt!");
     start_new_agg = true;
   }
   else {
     // Compare group by columns
     for (oid_t column_itr = 0; column_itr < group_by_columns.size() ; column_itr++) {
-      bool not_equal = cur_tuple->GetValue(group_by_columns[column_itr]).
-          OpNotEquals(prev_tuple->GetValue(group_by_columns[column_itr])).IsTrue();
+      Value lval = cur_tuple->GetValue(group_by_columns[column_itr]);
+      Value rval = prev_tuple->GetValue(group_by_columns[column_itr]);
+      bool not_equal = lval.OpNotEquals(rval).IsTrue();
 
       if (not_equal){
         start_new_agg = true;

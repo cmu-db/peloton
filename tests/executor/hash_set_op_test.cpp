@@ -84,9 +84,9 @@ TEST(HashSetOptTests, ExceptTest){
   // The tables should be populated with the same data.
   size_t tile_size = 10;
   std::unique_ptr<storage::DataTable> data_table1(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table1.get(), tile_size*5, false, false);
+  ExecutorTestsUtil::PopulateTable(data_table1.get(), tile_size*5, false, false, false);
   std::unique_ptr<storage::DataTable> data_table2(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table2.get(), tile_size*5, false, false);
+  ExecutorTestsUtil::PopulateTable(data_table2.get(), tile_size*5, false, false, false);
 
   // Create two mock tiles. They wrap two physical tiles that should contain the same data.
   // But we invalidate the 2/5 tuples of the first mock tile
@@ -152,16 +152,16 @@ TEST(HashSetOptTests, ExceptAllTest){
   size_t tile_size = 10;
 
   std::unique_ptr<storage::DataTable> data_table1(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table1.get(), tile_size*5, false, false);
+  ExecutorTestsUtil::PopulateTable(data_table1.get(), tile_size*5, false, false, false);
 
   std::unique_ptr<storage::DataTable> data_table2(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table2.get(), tile_size*5, false, false);
+  ExecutorTestsUtil::PopulateTable(data_table2.get(), tile_size*5, false, false, false);
 
   std::unique_ptr<storage::DataTable> data_table3(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table3.get(), tile_size*5, false, false);
+  ExecutorTestsUtil::PopulateTable(data_table3.get(), tile_size*5, false, false, false);
 
   std::unique_ptr<storage::DataTable> data_table4(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table4.get(), tile_size*5, false, false);
+  ExecutorTestsUtil::PopulateTable(data_table4.get(), tile_size*5, false, false, false);
 
   // Create four mock tiles.
 
@@ -232,9 +232,9 @@ TEST(HashSetOptTests, IntersectTest){
   // The tables should be populated with the same data.
   size_t tile_size = 10;
   std::unique_ptr<storage::DataTable> data_table1(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table1.get(), tile_size*5, false, false);
+  ExecutorTestsUtil::PopulateTable(data_table1.get(), tile_size*5, false, false, false);
   std::unique_ptr<storage::DataTable> data_table2(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table2.get(), tile_size*5, false, false);
+  ExecutorTestsUtil::PopulateTable(data_table2.get(), tile_size*5, false, false, false);
 
   // Create two mock tiles. They wrap two physical tiles that should contain the same data.
   // But we invalidate the 2/5 tuples of the first mock tile
@@ -299,16 +299,16 @@ TEST(HashSetOptTests, IntersectAllTest){
   size_t tile_size = 10;
 
   std::unique_ptr<storage::DataTable> data_table1(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table1.get(), tile_size*5, false, false);
+  ExecutorTestsUtil::PopulateTable(data_table1.get(), tile_size*5, false, false, false);
 
   std::unique_ptr<storage::DataTable> data_table2(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table2.get(), tile_size*5, false, false);
+  ExecutorTestsUtil::PopulateTable(data_table2.get(), tile_size*5, false, false, false);
 
   std::unique_ptr<storage::DataTable> data_table3(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table3.get(), tile_size*5, false, false);
+  ExecutorTestsUtil::PopulateTable(data_table3.get(), tile_size*5, false, false, false);
 
   std::unique_ptr<storage::DataTable> data_table4(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table4.get(), tile_size*5, false, false);
+  ExecutorTestsUtil::PopulateTable(data_table4.get(), tile_size*5, false, false, false);
 
   // Create four mock tiles.
 
