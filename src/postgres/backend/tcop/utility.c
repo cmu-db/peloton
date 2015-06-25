@@ -1343,8 +1343,8 @@ ProcessUtilitySlow(Node *parsetree,
             IndexElem *indexElem = lfirst(entry);
             int column_itr = 0;
 
-            indexElem->name; /* name of attribute to index, or NULL */
-            indexElem->indexcolname; /* name for index column; NULL = default */
+            //indexElem->name; /* name of attribute to index, or NULL */
+            //indexElem->indexcolname; /* name for index column; NULL = default */
 
             ddl_columnInfoForTupleSchema[column_itr] = (DDL_ColumnInfo) {  0,  /* int type */   
                                                                            column_itr, /* int column_offset*/
@@ -1569,25 +1569,30 @@ ProcessUtilitySlow(Node *parsetree,
         {
           DropStmt* drop;
           ListCell  *cell;
+          int table_oid_itr = 0;
           bool ret;
-
           drop = (DropStmt*) parsetree;
+          Oid table_oid_list[drop->objects->length];
+
           foreach(cell, drop->objects)
           {
             if (drop->removeType == OBJECT_TABLE )
             {
               List* names = ((List *) lfirst(cell));
               char* table_name = strVal(linitial(names));
-              ret  = DDL_DropTable(table_name);
-              fprintf(stderr, "DDL_DropTable :: %d \n", ret);
+              table_oid_list[table_oid_itr++] = GetRelationOidFromRelationName(table_name);
             }
           }
+          ExecDropStmt((DropStmt *) parsetree, isTopLevel);
+
+          while(table_oid_itr > 0)
+          {
+            ret  = DDL_DropTable(table_oid_list[--table_oid_itr]);
+            fprintf(stderr, "DDL_DropTable :: %d \n", ret);
+          }
+          /* no commands stashed for DROP */
+          commandCollected = true;
         }
-
-        ExecDropStmt((DropStmt *) parsetree, isTopLevel);
-
-        /* no commands stashed for DROP */
-        commandCollected = true;
         break;
 
       case T_RenameStmt:
