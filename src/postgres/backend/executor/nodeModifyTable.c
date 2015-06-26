@@ -235,7 +235,6 @@ PrintTupleTableSlot(TupleTableSlot *slot){
 
   Datum p_datum;
   Oid p_oid;
-  double value_timestamp;
 
   for (i = 0; i < natts; ++i) {
 		attr = slot_getattr(slot, i + 1, &isnull);

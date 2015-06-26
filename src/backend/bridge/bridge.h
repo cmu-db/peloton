@@ -10,9 +10,11 @@
 //  Bridge for managing Postgres
 //===--------------------------------------------------------------------===//
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "nodes/pprint.h"
 
 char* GetRelationName(unsigned int relation_id);
 
