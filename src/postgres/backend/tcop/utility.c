@@ -1355,7 +1355,7 @@ ProcessUtilitySlow(Node *parsetree,
               ddl_columnInfoForKeySchema[column_itr_for_KeySchema].type = 0;  // Unnecessary in CreateIndex
               ddl_columnInfoForKeySchema[column_itr_for_KeySchema].column_offset = 0; // Unnecessary in CreateIndex
               ddl_columnInfoForKeySchema[column_itr_for_KeySchema].column_length = 0; // Unnecessary in CreateIndex
-              strcpy(ddl_columnInfoForKeySchema[column_itr_for_KeySchema].name, indexElem->indexcolname );
+              strcpy(ddl_columnInfoForKeySchema[column_itr_for_KeySchema].name, indexElem->name );
               ddl_columnInfoForKeySchema[column_itr_for_KeySchema].allow_null = true;  // Unnecessary in CreateIndex
               ddl_columnInfoForKeySchema[column_itr_for_KeySchema].is_inlined = false; // true for int, double, char, timestamp..
               column_itr_for_KeySchema++;
