@@ -97,7 +97,6 @@ PlanTransformer::AbstractPlanNodePtr PlanTransformer::transformInsert(
 
   PlanState *subplanstate = mtstate->mt_plans[0]; /* Should be only one which is a Result Plan */
   TupleTableSlot *planSlot;
-  TupleTableSlot *slot;
   std::vector<storage::Tuple *> tuples;
 
   planSlot = ExecProcNode(subplanstate);
