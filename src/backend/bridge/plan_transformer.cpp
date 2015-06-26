@@ -102,7 +102,7 @@ PlanTransformer::AbstractPlanNodePtr PlanTransformer::transformInsert(
 
   planSlot = ExecProcNode(subplanstate);
   assert(!TupIsNull(planSlot)); /* The tuple should not be null */
-  storage::Tuple *tuple = TupleTransformer(planSlot);
+  storage::Tuple *tuple = TupleTransformer(planSlot, schema);
   tuples.push_back(tuple);
 
   return PlanTransformer::AbstractPlanNodePtr(
