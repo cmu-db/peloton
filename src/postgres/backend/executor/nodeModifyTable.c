@@ -265,12 +265,6 @@ PrintTupleTableSlot(TupleTableSlot *slot){
 
 		p_oid = attributeP->atttypid;
 
-		if(p_oid == 1114)
-		{
-			value_timestamp = strtod(value,NULL);
-			printf("Timestamp printed as double: %f\n",value_timestamp);
-		}
-
 		switch(p_oid) {
 			// short int
 			case 21:	p_datum = Int16GetDatum((short)(atoi(value)));
