@@ -62,7 +62,16 @@ public:
     
     // insert tuple in table
     ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple, bool update = false);
-    
+
+    void SetSchema(catalog::Schema* given_schema)
+    {
+       schema = given_schema;
+    }
+
+    catalog::Schema* GetSchema()
+    {
+       return schema;
+    }
     
     //===--------------------------------------------------------------------===//
     // INDEXES
@@ -87,6 +96,7 @@ public:
 
     bool CheckNulls(const storage::Tuple *tuple) const;
 
+
     //===--------------------------------------------------------------------===//
     // UTILITIES
     //===--------------------------------------------------------------------===//
@@ -104,6 +114,9 @@ protected:
     
     // INDEXES
     std::vector<index::Index*> indexes;
+
+    // SCHEMA
+    catalog::Schema *schema;
 
 };
 
