@@ -30,6 +30,7 @@ class PlanTransformer {
 
  private:
   static AbstractPlanNodePtr transformModifyTable(const ModifyTableState *plan);
+  static AbstractPlanNodePtr transformInsert(const ModifyTableState *plan);
 
 };
 }
