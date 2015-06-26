@@ -67,11 +67,6 @@ public:
     {
        schema = given_schema;
     }
-
-    catalog::Schema* GetSchema()
-    {
-       return schema;
-    }
     
     //===--------------------------------------------------------------------===//
     // INDEXES
@@ -114,9 +109,6 @@ protected:
     
     // INDEXES
     std::vector<index::Index*> indexes;
-
-    // SCHEMA
-    catalog::Schema *schema;
 
 };
 
