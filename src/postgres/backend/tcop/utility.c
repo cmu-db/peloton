@@ -69,6 +69,7 @@
 // TODO: Peloton Modifications
 #include "backend/bridge/bridge.h"
 #include "backend/bridge/ddl.h"
+#include "catalog/pg_am.h"
 #include "parser/parse_type.h" 
 
 /* Hook for plugins to get control in ProcessUtility() */
@@ -1334,11 +1335,10 @@ ProcessUtilitySlow(Node *parsetree,
         if( address.objectId != 0 )
         {
           ListCell   *entry;
-          bool ret;
-          int column_itr_for_TupleSchema = 0;
           int column_itr_for_KeySchema= 0;
+          int type = 0;
+          bool ret;
 
-          DDL_ColumnInfo *ddl_columnInfoForTupleSchema = (DDL_ColumnInfo *)malloc(sizeof(DDL_ColumnInfo)*stmt->indexParams->length); 
           DDL_ColumnInfo *ddl_columnInfoForKeySchema = (DDL_ColumnInfo *)malloc(sizeof(DDL_ColumnInfo)*stmt->indexParams->length);
 
           // Parse the IndexStmt and construct ddl_columnInfo for TupleSchema and KeySchema
@@ -1351,37 +1351,42 @@ ProcessUtilitySlow(Node *parsetree,
 
             if( indexElem->name != NULL )
             {
-              ddl_columnInfoForTupleSchema[column_itr_for_TupleSchema].type = 0;
-              ddl_columnInfoForTupleSchema[column_itr_for_TupleSchema].column_offset = column_itr_for_TupleSchema;
-              ddl_columnInfoForTupleSchema[column_itr_for_TupleSchema].column_length = 0;
-              strcpy(ddl_columnInfoForTupleSchema[column_itr_for_TupleSchema].name, indexElem->name );
-              ddl_columnInfoForTupleSchema[column_itr_for_TupleSchema].allow_null = true;
-              ddl_columnInfoForTupleSchema[column_itr_for_TupleSchema].is_inlined = false; // true for int, double, char, timestamp..
-              column_itr_for_TupleSchema++;
-            }
-
-            if( indexElem->indexcolname != NULL )
-            {
-              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].type = 0;
-              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].column_offset = column_itr_for_KeySchema;
-              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].column_length = 0;
+              // TODO :: For now, we don't need any information except column name
+              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].type = 0;  // Unnecessary in CreateIndex
+              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].column_offset = 0; // Unnecessary in CreateIndex
+              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].column_length = 0; // Unnecessary in CreateIndex
               strcpy(ddl_columnInfoForKeySchema[column_itr_for_KeySchema].name, indexElem->indexcolname );
-              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].allow_null = true;
+              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].allow_null = true;  // Unnecessary in CreateIndex
               ddl_columnInfoForKeySchema[column_itr_for_KeySchema].is_inlined = false; // true for int, double, char, timestamp..
               column_itr_for_KeySchema++;
             }
           }
+
+          /*
+           * look up the access method, transform the method name into IndexType
+           */
+          if (strcmp(stmt->accessMethod, "btree") == 0){
+            type = BTREE_AM_OID;
+          }else if (strcmp(stmt->accessMethod, "hash") == 0){
+            type = HASH_AM_OID;
+          }else if (strcmp(stmt->accessMethod, "rtree") == 0 || strcmp(stmt->accessMethod, "gist") == 0){
+            type = GIST_AM_OID;
+          }else if (strcmp(stmt->accessMethod, "gin") == 0){
+            type = GIN_AM_OID;
+          }else if (strcmp(stmt->accessMethod, "spgist") == 0){
+            type = SPGIST_AM_OID;
+          }else if (strcmp(stmt->accessMethod, "brin") == 0){
+            type = BRIN_AM_OID;
+          }else{
+            type = 0;
+          }
  
-          /* 
-          * TODO :: ColumnNames and KeyName?
-          * TODO :: Maybe, we only need to pass the column names and keycolumn names ??
-          */
           ret = DDL_CreateIndex(stmt->idxname,
                                 stmt->relation->relname,
-                                stmt->accessMethod,
+                                type,
                                 stmt->unique,
-                                ddl_columnInfoForTupleSchema, ddl_columnInfoForKeySchema,
-                                column_itr_for_TupleSchema, column_itr_for_KeySchema
+                                ddl_columnInfoForKeySchema,
+                                column_itr_for_KeySchema
                                );
           fprintf(stderr, "DDL_CreateIndex :: %d \n", ret);
         }
