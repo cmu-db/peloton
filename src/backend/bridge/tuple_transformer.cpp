@@ -144,6 +144,11 @@ Datum ValueGetDatum(nstore::Value value) {
 
 namespace nstore {
 namespace bridge {
+/* @brief convert a Postgres tuple into Peloton tuple
+ * @param slot Postgres tuple
+ * @param schema Peloton scheme of the table to which the tuple belongs
+ * @return a Peloton tuple
+ */
 storage::Tuple *TupleTransformer(TupleTableSlot * slot,
                                   catalog::Schema *schema) {
   TupleDesc typeinfo = slot->tts_tupleDescriptor;
@@ -161,7 +166,6 @@ storage::Tuple *TupleTransformer(TupleTableSlot * slot,
   Datum p_datum;
   Oid p_oid;
   std::vector<Value> vals;
-  std::vector<catalog::ColumnInfo> colums;
   std::vector<oid_t> oid_t_vec;
   oid_t num_columns = schema->GetColumnCount();
 
