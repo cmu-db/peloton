@@ -26,35 +26,40 @@
 #include "utils/lsyscache.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
-
+#include "tcop/dest.h"
+#include "tcop/tcopprot.h"
+#include "tcop/fastpath.h"
+#include "tcop/pquery.h"
+#include "tcop/tcopprot.h"
+#include "tcop/utility.h"
+#
 
 /**
  * @brief Getting the relation name
  * @param relation_id relation id
  */
-char* 
-GetRelationName(Oid relation_id){
+char*
+GetRelationName(Oid relation_id) {
   Relation pg_class_rel;
   HeapTuple tuple;
   Form_pg_class pgclass;
 
   StartTransactionCommand();
-  
+
   //open pg_class table
-  pg_class_rel = heap_open(RelationRelationId,AccessShareLock);
-  
+  pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
+
   //search the table with given relation id from pg_class table
   tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relation_id));
-  if (!HeapTupleIsValid(tuple))
-  {
+  if (!HeapTupleIsValid(tuple)) {
     //Check whether relation id is valid or not
     elog(ERROR, "cache lookup failed for relation %u", relation_id);
   }
-  
+
   pgclass = (Form_pg_class) GETSTRUCT(tuple);
 
   heap_close(pg_class_rel, AccessShareLock);
-  
+
   CommitTransactionCommand();
 
   return NameStr(pgclass->relname);
@@ -64,8 +69,7 @@ GetRelationName(Oid relation_id){
  * @brief Getting the number of attributes.
  * @param relation_id relation id
  */
-int 
-GetNumberOfAttributes(Oid relation_id) {
+int GetNumberOfAttributes(Oid relation_id) {
   Relation pg_class_rel;
   HeapTuple tuple;
   Form_pg_class pgclass;
@@ -91,15 +95,14 @@ GetNumberOfAttributes(Oid relation_id) {
  * @brief Getting the number of tuples.
  * @param relation_id relation id
  */
-float 
-GetNumberOfTuples(Oid relation_id){
+float GetNumberOfTuples(Oid relation_id) {
   Relation pg_class_rel;
   HeapTuple tuple;
   Form_pg_class pgclass;
 
   StartTransactionCommand();
 
-  pg_class_rel = heap_open(RelationRelationId,AccessShareLock);
+  pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
 
   tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relation_id));
   if (!HeapTupleIsValid(tuple))
@@ -117,8 +120,7 @@ GetNumberOfTuples(Oid relation_id){
 /**
  * @brief Getting the current database Oid
  */
-Oid 
-GetCurrentDatabaseOid(void){
+Oid GetCurrentDatabaseOid(void) {
   return MyDatabaseId;
 }
 
@@ -127,8 +129,7 @@ GetCurrentDatabaseOid(void){
  * @param relation_id relation id
  * @param num_of_tuples number of tuples
  */
-void 
-SetNumberOfTuples(Oid relation_id, float num_tuples) {
+void SetNumberOfTuples(Oid relation_id, float num_tuples) {
   Relation pg_class_rel;
   HeapTuple tuple;
   Form_pg_class pgclass;
@@ -136,7 +137,7 @@ SetNumberOfTuples(Oid relation_id, float num_tuples) {
 
   StartTransactionCommand();
 
-  pg_class_rel = heap_open(RelationRelationId,RowExclusiveLock);
+  pg_class_rel = heap_open(RelationRelationId, RowExclusiveLock);
 
   tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relation_id));
   if (!HeapTupleIsValid(tuple))
@@ -145,8 +146,7 @@ SetNumberOfTuples(Oid relation_id, float num_tuples) {
   pgclass = (Form_pg_class) GETSTRUCT(tuple);
 
   dirty = false;
-  if (pgclass->reltuples != (float4) num_tuples)
-  {
+  if (pgclass->reltuples != (float4) num_tuples) {
     pgclass->reltuples = (float4) num_tuples;
     dirty = true;
   }
@@ -174,9 +174,9 @@ void GetDatabaseList(void) {
   rel = heap_open(DatabaseRelationId, AccessShareLock);
   scan = heap_beginscan_catalog(rel, 0, NULL);
 
-  while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection)))  {
+  while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection))) {
     Form_pg_database pgdatabase = (Form_pg_database) GETSTRUCT(tup);
-    printf(" pgdatabase->datname  :: %s\n", NameStr(pgdatabase->datname) );
+    printf(" pgdatabase->datname  :: %s\n", NameStr(pgdatabase->datname));
   }
 
   heap_endscan(scan);
@@ -200,7 +200,7 @@ void GetTableList(void) {
 
   while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
     Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
-    printf(" pgclass->relname    :: %s  \n", NameStr(pgclass->relname ) );
+    printf(" pgclass->relname    :: %s  \n", NameStr(pgclass->relname));
   }
 
   heap_endscan(scan);
@@ -227,8 +227,8 @@ void GetPublicTableList(void) {
   while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
     Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
     // Print out only public tables
-    if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE)
-      printf(" pgclass->relname    :: %s  \n", NameStr(pgclass->relname ) );
+    if (pgclass->relnamespace == PG_PUBLIC_NAMESPACE)
+      printf(" pgclass->relname    :: %s  \n", NameStr(pgclass->relname));
   }
 
   heap_endscan(scan);
@@ -257,9 +257,9 @@ bool IsThisTableExist(const char* table_name) {
     const char* current_table_name = NameStr(pgclass->relname);
 
     //Compare current table name and given table name
-    if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE &&
-        strcmp( current_table_name, table_name ) == 0)
-        return true;
+    if (pgclass->relnamespace == PG_PUBLIC_NAMESPACE
+        && strcmp(current_table_name, table_name) == 0)
+      return true;
   }
 
   heap_endscan(scan);
@@ -275,8 +275,7 @@ bool IsThisTableExist(const char* table_name) {
  * This function constructs tables in current database
  * @param dbname current database
  */
-bool InitPeloton(const char* dbname)
-{
+bool InitPeloton(const char* dbname) {
   Relation pg_class_rel;
   Relation pg_attribute_rel;
 
@@ -302,27 +301,24 @@ bool InitPeloton(const char* dbname)
   //TODO :: Make this one single loop
   while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
     Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
-    if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE)
-    {
+    if (pgclass->relnamespace == PG_PUBLIC_NAMESPACE) {
       // create columninfo as much as attnum
-      DDL_ColumnInfo ddl_columnInfo[ pgclass->relnatts ] ;
+      DDL_ColumnInfo ddl_columnInfo[pgclass->relnatts];
       Oid table_oid = HeapTupleHeaderGetOid(tuple->t_data);
 
-
       scan2 = heap_beginscan_catalog(pg_attribute_rel, 0, NULL);
-      column_itr = 0;  
-      while (HeapTupleIsValid(tuple2 = heap_getnext(scan2, ForwardScanDirection))) {
+      column_itr = 0;
+      while (HeapTupleIsValid(
+          tuple2 = heap_getnext(scan2, ForwardScanDirection))) {
         Form_pg_attribute pgattribute = (Form_pg_attribute) GETSTRUCT(tuple2);
-        if( pgattribute->attrelid == table_oid )
-        {
+        if (pgattribute->attrelid == table_oid) {
           // Skip system columns..
-          if( strcmp( NameStr(pgattribute->attname),"cmax" ) &&
-              strcmp( NameStr(pgattribute->attname),"cmin" ) &&
-              strcmp( NameStr(pgattribute->attname),"ctid" ) &&
-              strcmp( NameStr(pgattribute->attname),"xmax" ) &&
-              strcmp( NameStr(pgattribute->attname),"xmin" ) &&
-              strcmp( NameStr(pgattribute->attname),"tableoid" ) )
-          {
+          if (strcmp(NameStr(pgattribute->attname), "cmax")
+              && strcmp(NameStr(pgattribute->attname), "cmin")
+              && strcmp(NameStr(pgattribute->attname), "ctid")
+              && strcmp(NameStr(pgattribute->attname), "xmax")
+              && strcmp(NameStr(pgattribute->attname), "xmin")
+              && strcmp(NameStr(pgattribute->attname), "tableoid")) {
             //printf("attname %s \n", NameStr(pgattribute->attname));
             //printf("atttypid %d \n", pgattribute->atttypid);
             //printf("attlen %d \n", pgattribute->attlen);
@@ -331,18 +327,19 @@ bool InitPeloton(const char* dbname)
             ddl_columnInfo[column_itr].type = pgattribute->atttypid;
             ddl_columnInfo[column_itr].column_offset = column_itr;
             ddl_columnInfo[column_itr].column_length = pgattribute->attlen;
-            strcpy(ddl_columnInfo[column_itr].name, NameStr(pgattribute->attname));
-            ddl_columnInfo[column_itr].allow_null = ! pgattribute->attnotnull;
-            ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
+            strcpy(ddl_columnInfo[column_itr].name,
+                   NameStr(pgattribute->attname));
+            ddl_columnInfo[column_itr].allow_null = !pgattribute->attnotnull;
+            ddl_columnInfo[column_itr].is_inlined = false;  // true for int, double, char, timestamp..
             column_itr++;
-          } // end if
-        } // end if
-      } // end while
+          }  // end if
+        }  // end if
+      }  // end while
 
       heap_endscan(scan2);
       printf("Create Table \"%s\" in Peloton\n", NameStr(pgclass->relname));
-    } // end if
-  } // end while
+    }  // end if
+  }  // end while
 
   heap_endscan(scan);
   heap_close(pg_attribute_rel, AccessShareLock);
@@ -357,8 +354,7 @@ bool InitPeloton(const char* dbname)
  * given a table name, look up the OID
  * @param table_name table name
  */
-unsigned int
-GetRelationOidFromRelationName(const char *table_name){
+unsigned int GetRelationOidFromRelationName(const char *table_name) {
   unsigned int relation_oid = 0;
   Relation pg_class_rel;
 
@@ -372,18 +368,17 @@ GetRelationOidFromRelationName(const char *table_name){
 
   while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
     Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
-    if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE){
-      if( strcmp( NameStr(pgclass->relname), table_name) == 0 )
+    if (pgclass->relnamespace == PG_PUBLIC_NAMESPACE) {
+      if (strcmp(NameStr(pgclass->relname), table_name) == 0)
         relation_oid = HeapTupleHeaderGetOid(tuple->t_data);
     }
-  } // end while
+  }  // end while
 
   heap_endscan(scan);
   heap_close(pg_class_rel, AccessShareLock);
 
   return relation_oid;
 }
-
 
 /**
  * @brief Setting the user table stats
@@ -396,8 +391,7 @@ struct user_pg_database {
 };
 
 typedef struct user_pg_database *Form_user_pg_database;
-void  SetUserTableStats(Oid relation_id)
-{
+void SetUserTableStats(Oid relation_id) {
   Relation rel;
   HeapTuple newtup;
   //HeapTuple tup, newtup;
@@ -415,17 +409,17 @@ void  SetUserTableStats(Oid relation_id)
   if (!HeapTupleIsValid(newtup))
     elog(ERROR, "cache lookup failed for the new tuple");
 
-  printf("test11 %d \n", userpgdatabase->encoding );
-  if( userpgdatabase->encoding == 101)
+  printf("test11 %d \n", userpgdatabase->encoding);
+  if (userpgdatabase->encoding == 101)
     userpgdatabase->encoding = 1001;
-  printf("test12 %d \n", userpgdatabase->encoding );
+  printf("test12 %d \n", userpgdatabase->encoding);
   printf("%s %d\n", __func__, __LINE__);
 
   /* update tuple */
   simple_heap_update(rel, &newtup->t_self, newtup);
 
   printf("%s %d\n", __func__, __LINE__);
-  heap_freetuple(newtup); // It may incur segmentation fault
+  heap_freetuple(newtup);  // It may incur segmentation fault
 
   /*
    * Close relation, but keep lock till commit.
@@ -434,15 +428,80 @@ void  SetUserTableStats(Oid relation_id)
   CommitTransactionCommand();
 }
 
-void FunctionTest(void)
-{
+void FunctionTest(void) {
   int n;
   n = GetNumberOfAttributes(16388);
-  printf("n %d\n",n);
+  printf("n %d\n", n);
   n = GetNumberOfAttributes(16385);
-  printf("n %d\n",n);
+  printf("n %d\n", n);
   n = GetNumberOfAttributes(DatabaseRelationId);
-  printf("n %d\n",n);
+  printf("n %d\n", n);
   n = GetNumberOfAttributes(RelationRelationId);
-  printf("n %d\n",n);
+  printf("n %d\n", n);
 }
+
+PlanState *PlanSimpleQuery(const char* query_string) {
+  PlanState *planstate = NULL;
+  List *parsetree_list;
+  ListCell *parsetree_item;
+
+  /*
+   * Do basic parsing of the query or queries (this should be safe even if
+   * we are in aborted transaction state!)
+   */
+  parsetree_list = pg_parse_query(query_string);
+
+  /*
+   * Run through the raw parsetree(s) and process each one.
+   */
+  foreach(parsetree_item, parsetree_list)
+  {
+    Node *parsetree = (Node *) lfirst(parsetree_item);
+    const char *commandTag;
+    List *querytree_list, *plantree_list;
+    Portal portal;
+
+    commandTag = CreateCommandTag(parsetree);
+    querytree_list = pg_analyze_and_rewrite(parsetree, query_string,
+    NULL,
+                                            0);
+
+    plantree_list = pg_plan_queries(querytree_list, 0, NULL);
+
+    /*
+     * Create unnamed portal to run the query or queries in. If there
+     * already is one, silently drop it.
+     */
+    portal = CreatePortal("", true, true);
+    /* Don't display the portal in pg_cursors */
+    portal->visible = false;
+
+    /*
+     * We don't have to copy anything into the portal, because everything
+     * we are passing here is in MessageContext, which will outlive the
+     * portal anyway.
+     */
+    PortalDefineQuery(portal, NULL, query_string, commandTag, plantree_list, NULL);
+
+    /*
+     * Start the portal.  No parameters here.
+     */
+    PortalStart(portal, NULL, 0, InvalidSnapshot);
+
+    /*
+     * Switch back to transaction context for execution.
+     */
+
+    planstate = portal->queryDesc->planstate;
+
+    /*
+     * Run the portal to completion, and then drop it (and the receiver).
+     */
+    PortalDrop(portal, false);
+
+    break;
+  } /* end loop over parsetrees */
+
+  return planstate;
+}
+
