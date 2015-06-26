@@ -7,7 +7,9 @@
 
 #pragma once
 
-#include "postgres/include/executor/execdesc.h"
+extern "C" {
+#include "executor/execdesc.h"
+}
 #include <tr1/memory>
 #include "backend/planner/abstract_plan_node.h"
 

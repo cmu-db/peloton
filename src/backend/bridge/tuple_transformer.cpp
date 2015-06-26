@@ -144,7 +144,7 @@ Datum ValueGetDatum(nstore::Value value) {
 
 namespace nstore {
 namespace bridge {
-storage::Tuple * TupleTransformer(TupleTableSlot * slot,
+storage::Tuple *TupleTransformer(TupleTableSlot * slot,
                                   catalog::Schema *schema) {
   TupleDesc typeinfo = slot->tts_tupleDescriptor;
   int natts = typeinfo->natts;
