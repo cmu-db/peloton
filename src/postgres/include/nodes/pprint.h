@@ -10,7 +10,6 @@
 #define SRC_POSTGRES_INCLUDE_NODES_PPRINT_H_
 #include "postgres.h"
 #include "executor/execdesc.h"
-//#include "nodes/execnodes.h"
 
 
 extern void printQueryDesc(const QueryDesc *queryDesc);
