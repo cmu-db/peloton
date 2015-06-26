@@ -67,6 +67,7 @@ TEST(AggregateTests, DistinctTest){
   planner::AggregateNode node(aggregate_columns,
                               aggregate_columns_map,
                               group_by_columns,
+                              nullptr,
                               pass_through_columns_map,
                               aggregate_types,
                               output_table_schema);
@@ -134,6 +135,7 @@ TEST(AggregateTests, GroupByTest){
   planner::AggregateNode node(aggregate_columns,
                               aggregate_columns_map,
                               group_by_columns,
+                              nullptr,
                               pass_through_columns_map,
                               aggregate_types,
                               output_table_schema);
@@ -215,6 +217,7 @@ TEST(AggregateTests, AggregateTest){
   planner::AggregateNode node(aggregate_columns,
                               aggregate_columns_map,
                               group_by_columns,
+                              nullptr,
                               pass_through_columns_map,
                               aggregate_types,
                               output_table_schema.get());

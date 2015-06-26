@@ -376,22 +376,6 @@ const char* Tuple::GetDataPtr(const oid_t column_id) const {
   return &tuple_data[tuple_schema->GetOffset(column_id)];
 }
 
-// Hasher
-struct TupleHasher: std::unary_function<Tuple, std::size_t> {
-  // Generate a 64-bit number for the key value
-  size_t operator()(Tuple tuple) const {
-    return tuple.HashCode();
-  }
-};
-
-// Equality operator
-class TupleEqualityChecker {
- public:
-  bool operator()(const Tuple lhs, const Tuple rhs) const {
-    return lhs.EqualsNoSchemaCheck(rhs);
-  }
-};
-
 std::string Tuple::GetInfo() const {
   std::stringstream os;
 
