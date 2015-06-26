@@ -67,6 +67,7 @@
 #include "utils/syscache.h"
 
 // TODO: Peloton Modifications
+#include "backend/bridge/bridge.h"
 #include "backend/bridge/ddl.h"
 #include "parser/parse_type.h" 
 
@@ -1025,7 +1026,6 @@ ProcessUtilitySlow(Node *parsetree,
                     ReleaseSysCache(tup);
   
                     ddl_columnInfo[column_itr].type = typoid;
-printf("type %u\n", typoid);
                     ddl_columnInfo[column_itr].column_offset = column_itr;
                     ddl_columnInfo[column_itr].column_length = typ->typlen;
                     strcpy(ddl_columnInfo[column_itr].name, coldef->colname);
@@ -1336,6 +1336,7 @@ printf("type %u\n", typoid);
           bool ret;
           
           DDL_ColumnInfo *ddl_columnInfoForTupleSchema = (DDL_ColumnInfo *)malloc(sizeof(DDL_ColumnInfo)*stmt->indexParams->length);
+
           DDL_ColumnInfo *ddl_columnInfoForKeySchema = (DDL_ColumnInfo *)malloc(sizeof(DDL_ColumnInfo)*stmt->indexParams->length);
 
           // Parse the IndexStmt and construct ddl_columnInfo for TupleSchema and KeySchema
@@ -1347,21 +1348,26 @@ printf("type %u\n", typoid);
             //printf("index name %s \n", indexElem->name); /* name of attribute to index, or NULL */
             //printf("Index column %s \n", indexElem->indexcolname) ; /* name for index column; NULL = default */
 
-            ddl_columnInfoForTupleSchema[column_itr] = (DDL_ColumnInfo) {  0,  /* int type */   
-                                                                           column_itr, /* int column_offset*/
-                                                                           0,  /* int column_length */ 
-                                                                           indexElem->name, /* char name */  
-                                                                           true, /* bool allow_null */ 
-                                                                           false /* bool is_inlined */ // true for int, double, char, timestamp..      
-                                                                        };
+            if( indexElem->name != NULL )
+            {
+              ddl_columnInfoForTupleSchema[column_itr].type = 0;
+              ddl_columnInfoForTupleSchema[column_itr].column_offset = column_itr;
+              ddl_columnInfoForTupleSchema[column_itr].column_length = 0;
+              strcpy(ddl_columnInfoForTupleSchema[column_itr].name, indexElem->name );
+              ddl_columnInfoForTupleSchema[column_itr].allow_null = true;
+              ddl_columnInfoForTupleSchema[column_itr].is_inlined = false; // true for int, double, char, timestamp..
+            }
 
-            ddl_columnInfoForKeySchema[column_itr] = (DDL_ColumnInfo) {  0,  /* int type */   
-                                                                         column_itr, /* int column_offset*/
-                                                                         0,  /* int column_length */ 
-                                                                         indexElem->indexcolname, /* char name */  
-                                                                         true, /* bool allow_null */ 
-                                                                         false/* bool is_inlined */ // true for int, double, char, timestamp..
-                                                                        };
+            if( indexElem->indexcolname != NULL )
+            {
+              ddl_columnInfoForKeySchema[column_itr].type = 0;
+              ddl_columnInfoForKeySchema[column_itr].column_offset = column_itr;
+              ddl_columnInfoForKeySchema[column_itr].column_length = 0;
+              strcpy(ddl_columnInfoForKeySchema[column_itr].name, indexElem->indexcolname );
+              ddl_columnInfoForKeySchema[column_itr].allow_null = true;
+              ddl_columnInfoForKeySchema[column_itr].is_inlined = false; // true for int, double, char, timestamp..
+            }
+
             column_itr++;
           }
 
@@ -1572,8 +1578,9 @@ printf("type %u\n", typoid);
           ListCell  *cell;
           int table_oid_itr = 0;
           bool ret;
+          Oid* table_oid_list;
           drop = (DropStmt*) parsetree;
-          Oid table_oid_list[drop->objects->length];
+          table_oid_list = (Oid*) malloc ( sizeof(Oid)*(drop->objects->length));
 
           foreach(cell, drop->objects)
           {
