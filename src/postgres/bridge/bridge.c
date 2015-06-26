@@ -287,6 +287,7 @@ bool InitPeloton(const char* dbname)
   HeapTuple tuple2;
 
   int column_itr;
+  bool ret;
 
   printf("################################################\n");
   printf("#### Initialize Peloton Database \"%s\" #### \n", dbname);
@@ -305,42 +306,55 @@ bool InitPeloton(const char* dbname)
     if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE)
     {
       // create columninfo as much as attnum
-      DDL_ColumnInfo ddl_columnInfo[ pgclass->relnatts ] ;
-      Oid table_oid = HeapTupleHeaderGetOid(tuple->t_data);
-
-
-      scan2 = heap_beginscan_catalog(pg_attribute_rel, 0, NULL);
-      column_itr = 0;  
-      while (HeapTupleIsValid(tuple2 = heap_getnext(scan2, ForwardScanDirection))) {
-        Form_pg_attribute pgattribute = (Form_pg_attribute) GETSTRUCT(tuple2);
-        if( pgattribute->attrelid == table_oid )
-        {
-          // Skip system columns..
-          if( strcmp( NameStr(pgattribute->attname),"cmax" ) &&
-              strcmp( NameStr(pgattribute->attname),"cmin" ) &&
-              strcmp( NameStr(pgattribute->attname),"ctid" ) &&
-              strcmp( NameStr(pgattribute->attname),"xmax" ) &&
-              strcmp( NameStr(pgattribute->attname),"xmin" ) &&
-              strcmp( NameStr(pgattribute->attname),"tableoid" ) )
+      int attnum =  pgclass->relnatts ;
+      if( attnum > 0 )
+      {
+        DDL_ColumnInfo ddl_columnInfo[ pgclass->relnatts ] ;
+        Oid table_oid = HeapTupleHeaderGetOid(tuple->t_data);
+  
+  
+        scan2 = heap_beginscan_catalog(pg_attribute_rel, 0, NULL);
+        column_itr = 0;  
+        while (HeapTupleIsValid(tuple2 = heap_getnext(scan2, ForwardScanDirection))) {
+          Form_pg_attribute pgattribute = (Form_pg_attribute) GETSTRUCT(tuple2);
+          if( pgattribute->attrelid == table_oid )
           {
-            //printf("attname %s \n", NameStr(pgattribute->attname));
-            //printf("atttypid %d \n", pgattribute->atttypid);
-            //printf("attlen %d \n", pgattribute->attlen);
-            //printf("attnotnull %d \n", pgattribute->attnotnull);
-
-            ddl_columnInfo[column_itr].type = pgattribute->atttypid;
-            ddl_columnInfo[column_itr].column_offset = column_itr;
-            ddl_columnInfo[column_itr].column_length = pgattribute->attlen;
-            strcpy(ddl_columnInfo[column_itr].name, NameStr(pgattribute->attname));
-            ddl_columnInfo[column_itr].allow_null = ! pgattribute->attnotnull;
-            ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
-            column_itr++;
+            // Skip system columns..
+            if( strcmp( NameStr(pgattribute->attname),"cmax" ) &&
+                strcmp( NameStr(pgattribute->attname),"cmin" ) &&
+                strcmp( NameStr(pgattribute->attname),"ctid" ) &&
+                strcmp( NameStr(pgattribute->attname),"xmax" ) &&
+                strcmp( NameStr(pgattribute->attname),"xmin" ) &&
+                strcmp( NameStr(pgattribute->attname),"tableoid" ) )
+            {
+              //printf("attname %s \n", NameStr(pgattribute->attname));
+              //printf("atttypid %d \n", pgattribute->atttypid);
+              //printf("attlen %d \n", pgattribute->attlen);
+              //printf("attnotnull %d \n", pgattribute->attnotnull);
+  
+              ddl_columnInfo[column_itr].type = pgattribute->atttypid;
+              ddl_columnInfo[column_itr].column_offset = column_itr;
+              ddl_columnInfo[column_itr].column_length = pgattribute->attlen;
+              strcpy(ddl_columnInfo[column_itr].name, NameStr(pgattribute->attname));
+              ddl_columnInfo[column_itr].allow_null = ! pgattribute->attnotnull;
+              ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
+              column_itr++;
+            } // end if
           } // end if
-        } // end if
-      } // end while
+        } // end while
+  
+        heap_endscan(scan2);
 
-      heap_endscan(scan2);
-      printf("Create Table \"%s\" in Peloton\n", NameStr(pgclass->relname));
+        ret = DDL_CreateTable( NameStr(pgclass->relname) , ddl_columnInfo, column_itr);
+        if( ret )  printf("Create Table \"%s\" in Peloton\n", NameStr(pgclass->relname));
+        else	   fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
+      }else
+      {
+        // Create Table without column info
+        ret = DDL_CreateTable( NameStr(pgclass->relname) , NULL, 0);
+        if( ret )  printf("Create Table \"%s\" in Peloton\n", NameStr(pgclass->relname));
+        else	   fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
+      }
     } // end if
   } // end while
 
