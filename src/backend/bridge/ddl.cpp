@@ -154,7 +154,8 @@ bool DDL::CreateIndex(std::string index_name,
                       bool unique, 
                       DDL_ColumnInfo* ddl_columnInfoForTupleSchema,
                       DDL_ColumnInfo* ddl_columnInfoForKeySchema,
-                      int num_columns)
+                      int num_columns,
+                      int num_columns2)
 {
  
   IndexType currentIndexType = INDEX_TYPE_BTREE_MULTIMAP;
@@ -186,15 +187,15 @@ bool DDL::CreateIndex(std::string index_name,
   // Bring the schema of table
   catalog::Schema* table_schema = table->GetSchema();
 
+  // print out table_schema just for debugging
   std::cout << *table_schema << std::endl;
 
   // Make schema based on table_schema
   std::vector<oid_t> oid_t_vec;
+  std::vector<oid_t> oid_t_vec2;
   
   for(oid_t column_itr = 0;  column_itr < num_columns; column_itr++)
   {
-    // GetColumns and iterate it and compare with .. this.. one ..
-    catalog::ColumnInfo columnInfo = table_schema->GetColumnInfo(column_itr);
     for( oid_t column_itr2 = 0; column_itr2 < table_schema->GetColumnCount(); column_itr2++)
     {
       // Look up the given column names in table_schema
@@ -203,23 +204,32 @@ bool DDL::CreateIndex(std::string index_name,
         oid_t_vec.push_back(column_itr2);
     }
   }
+
   catalog::Schema * tuple_schema = catalog::Schema::CopySchema(table_schema, oid_t_vec);
   std::cout << *tuple_schema << std::endl;
 
-  /*
-  catalog::Schema * key
-  */
+
+  for(oid_t column_itr = 0;  column_itr < num_columns2 ; column_itr++)
+  {
+    for( oid_t column_itr2 = 0; column_itr2 < table_schema->GetColumnCount(); column_itr2++)
+    {
+      // Look up the given column names in table_schema
+      catalog::ColumnInfo col = table_schema->GetColumnInfo(column_itr2);
+      if( strcmp( ddl_columnInfoForKeySchema[column_itr].name , (col.name).c_str() )== 0 )
+        oid_t_vec2.push_back(column_itr2);
+    }
+  }
+  catalog::Schema * key_schema = catalog::Schema::CopySchema(table_schema, oid_t_vec2);
+  std::cout << *key_schema << std::endl;
 
  
   // Create metadata and index 
-  /*
-  index::IndexMetadata* metadata(index_name, currentIndexType, tuple_schema, key_schema, unique);
+  index::IndexMetadata* metadata = new index::IndexMetadata(index_name, currentIndexType, tuple_schema, key_schema, unique);
 
   index::Index* index = index::IndexFactory::GetInstance(metadata);
-  */
 
   // Add an index into the table
-  // table->AddIndex(index);
+   table->AddIndex(index);
 
   return true;
 }
@@ -232,8 +242,8 @@ bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_c
 bool DDL_DropTable(unsigned int table_oid) {
   return DDL::DropTable(table_oid);
 }
-bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema, DDL_ColumnInfo* ddl_columnInfoForKeySchema, int num_columns) {
-  return DDL::CreateIndex(index_name, table_name, type, unique, ddl_columnInfoForTupleSchema, ddl_columnInfoForKeySchema, num_columns); }
+bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema, DDL_ColumnInfo* ddl_columnInfoForKeySchema, int num_columns, int num_columns2) {
+  return DDL::CreateIndex(index_name, table_name, type, unique, ddl_columnInfoForTupleSchema, ddl_columnInfoForKeySchema, num_columns, num_columns2); }
 }
 
 } // namespace bridge
