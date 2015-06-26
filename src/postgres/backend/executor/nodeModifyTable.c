@@ -286,6 +286,10 @@ PrintTupleTableSlot(TupleTableSlot *slot){
 			// varchar
 			case 1043:	p_datum = CStringGetDatum(value);
 						break;
+
+			case 1114:	p_datum = CStringGetDatum(value);
+						break;
+
 			default:	p_datum = CStringGetDatum(value);
 						break;
 		}

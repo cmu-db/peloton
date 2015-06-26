@@ -150,7 +150,7 @@ bool DDL::DropTable(unsigned int table_oid)
 //TODO :: 
 bool DDL::CreateIndex(std::string index_name,
                       std::string table_name,
-                      int type,
+                      std::string accessMethod,
                       bool unique, 
                       DDL_ColumnInfo* ddl_columnInfoForTupleSchema,
                       DDL_ColumnInfo* ddl_columnInfoForKeySchema,
@@ -159,22 +159,14 @@ bool DDL::CreateIndex(std::string index_name,
 {
   IndexType currentIndexType = INDEX_TYPE_BTREE_MULTIMAP;
 
-/*
-  // TODO :: I coudn't find any IndexType Information in IndexStmt
-  switch(type){
-    case:
+  // TODO :: Check
+  if( strcmp( accessMethod.c_str(), "btree") == 0 )
     currentIndexType = INDEX_TYPE_BTREE_MULTIMAP; // array
-    break;
-
-    case:
+  else if( strcmp( accessMethod.c_str(), "map") == 0 )
     currentIndexType = INDEX_TYPE_ORDERED_MAP;   // ordered map
-    break;
-
-    default:
-    printf("Something's wrong\n");
-    break;
-  }
-*/
+  else
+    currentIndexType = INDEX_TYPE_INVALID; 
+  
 
   // Get the database oid and table oid
   oid_t database_oid = GetCurrentDatabaseOid();
@@ -249,8 +241,8 @@ bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_c
 bool DDL_DropTable(unsigned int table_oid) {
   return DDL::DropTable(table_oid);
 }
-bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema, DDL_ColumnInfo* ddl_columnInfoForKeySchema, int num_columns, int num_columns2) {
-  return DDL::CreateIndex(index_name, table_name, type, unique, ddl_columnInfoForTupleSchema, ddl_columnInfoForKeySchema, num_columns, num_columns2); }
+bool DDL_CreateIndex(char* index_name, char* table_name, char* accessMethod, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema, DDL_ColumnInfo* ddl_columnInfoForKeySchema, int num_columns, int num_columns2) {
+  return DDL::CreateIndex(index_name, table_name, accessMethod, unique, ddl_columnInfoForTupleSchema, ddl_columnInfoForKeySchema, num_columns, num_columns2); }
 }
 
 } // namespace bridge

@@ -44,7 +44,8 @@ nstore::Value DatumGetValue(Datum datum, Oid atttypid) {
   int64_t bigint;
   char *character;
   char *variable_character;
-  double timestamp;
+  long int timestamp;
+  char *timestamp_charpointer;
 
   switch (atttypid) {
     case 21:
@@ -79,9 +80,10 @@ nstore::Value DatumGetValue(Datum datum, Oid atttypid) {
       break;
 
     case 1114:
-      timestamp = DatumGetFloat8(datum);
-      printf("%f\n", timestamp);
-      value = nstore::ValueFactory::GetDoubleValue(timestamp);
+      timestamp = DatumGetInt64(datum);
+      timestamp_charpointer = DatumGetCString(datum);
+      printf("%s\n", timestamp_charpointer);
+      value = nstore::ValueFactory::GetTimestampValue(timestamp);
       break;
 
     default:
@@ -91,54 +93,68 @@ nstore::Value DatumGetValue(Datum datum, Oid atttypid) {
   return value;
 }
 
-Datum ValueGetDatum(nstore::Value value) {
-  nstore::ValueType value_type;
-  nstore::ValuePeeker value_peeker;
-  Datum datum;
-  int16_t smallint;
-  int32_t integer;
-  int64_t bigint;
-  char *character;
-  std::string variable_character_string;
-  const char *variable_character;
-  double timestamp;
+Datum
+ValueGetDatum(nstore::Value value) {
+	nstore::ValueType value_type;
+	nstore::ValuePeeker value_peeker;
+	Datum datum;
+	int16_t smallint;
+	int32_t integer;
+	int64_t bigint;
+	double double_precision;
+	char *character;
+	std::string variable_character_string;
+	char *variable_character;
+	long int timestamp;
+	//char *timestamp_charpointer;
 
-  value_type = value.GetValueType();
+	value_type = value.GetValueType();
 
-  switch (value_type) {
-    case 4:
-      smallint = value_peeker.PeekSmallInt(value);
-      printf("%d\n", smallint);
-      datum = Int16GetDatum(smallint);
-      break;
+	switch (value_type) {
+		//small int
+		case 4:
+			smallint = value_peeker.PeekSmallInt(value);
+			printf("%d\n", smallint);
+			datum = Int16GetDatum(smallint);
+			break;
+		// integer
+		case 5:
+			integer = value_peeker.PeekInteger(value);
+			printf("%d\n", integer);
+			datum = Int32GetDatum(integer);
+			break;
+		// big int
+		case 6:
+			bigint = value_peeker.PeekBigInt(value);
+			printf("%ld\n", bigint);
+			datum = Int64GetDatum(bigint);
+			break;
 
-    case 5:
-      integer = value_peeker.PeekInteger(value);
-      printf("%d\n", integer);
-      datum = Int32GetDatum(integer);
-      break;
+		//double
+		case 8:
+			double_precision = value_peeker.PeekDouble(value);
+			printf("%f\n", double_precision);
+			datum = Float8GetDatum(double_precision);
+			break;
 
-    case 6:
-      bigint = value_peeker.PeekBigInt(value);
-      printf("%ld\n", bigint);
-      datum = Int64GetDatum(bigint);
-      break;
+		// varchar
+		case 9:
+			variable_character = (char *)value_peeker.PeekObjectValue(value);
+			printf("%s\n", variable_character);
+			datum = CStringGetDatum(variable_character);
+			break;
 
-      // TODO: Peloton changes
-      // varchar -- no function found yet -- vivek
-    case 9:
-      break;
+		// timestamp
+		case 11:
+			timestamp = value_peeker.PeekTimestamp(value);
+			datum = Int64GetDatum(timestamp);
+			printf("%s\n",DatumGetCString(timestamp));
+			break;
 
-    case 11:
-      timestamp = value_peeker.PeekTimestamp(value);
-      printf("%f\n", (float) timestamp);
-      datum = Float8GetDatum((float) timestamp);
-      break;
+		default:
+		  break;
 
-    default:
-      break;
-
-      return datum;
+		return datum;
   }
 }
 
