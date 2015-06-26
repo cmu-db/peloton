@@ -154,10 +154,9 @@ bool DDL::CreateIndex(std::string index_name,
                       bool unique, 
                       DDL_ColumnInfo* ddl_columnInfoForTupleSchema,
                       DDL_ColumnInfo* ddl_columnInfoForKeySchema,
-                      int num_columns,
-                      int num_columns2)
+                      int num_columns_of_TupleSchema,
+                      int num_columns_of_KeySchema)
 {
- 
   IndexType currentIndexType = INDEX_TYPE_BTREE_MULTIMAP;
 
 /*
@@ -181,51 +180,59 @@ bool DDL::CreateIndex(std::string index_name,
   oid_t database_oid = GetCurrentDatabaseOid();
   oid_t table_oid = GetRelationOidFromRelationName(table_name.c_str());
 
-  // Get the table pointer from manager
+  // Get the table location from manager
   storage::DataTable* table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
 
   // Bring the schema of table
   catalog::Schema* table_schema = table->GetSchema();
 
-  // print out table_schema just for debugging
+  // Print out table_schema just for debugging
   std::cout << *table_schema << std::endl;
 
-  // Make schema based on table_schema
-  std::vector<oid_t> oid_t_vec;
-  std::vector<oid_t> oid_t_vec2;
-  
-  for(oid_t column_itr = 0;  column_itr < num_columns; column_itr++)
+  // To store selected column's oid into the vector
+  std::vector<oid_t> selected_oids_for_TupleSchema;
+  std::vector<oid_t> selected_oids_for_KeySchema;
+
+  // Based on ColumnInfo for TupleSchema, find out the given column names in the table schema and store it's column oid 
+  for(oid_t column_itr_for_TupleSchema = 0;  column_itr_for_TupleSchema < num_columns_of_TupleSchema; column_itr_for_TupleSchema++)
   {
-    for( oid_t column_itr2 = 0; column_itr2 < table_schema->GetColumnCount(); column_itr2++)
+    for( oid_t column_itr_for_TableSchema = 0; column_itr_for_TableSchema < table_schema->GetColumnCount(); column_itr_for_TableSchema++)
     {
-      // Look up the given column names in table_schema
-      catalog::ColumnInfo col = table_schema->GetColumnInfo(column_itr2);
-      if( strcmp( ddl_columnInfoForTupleSchema[column_itr].name , (col.name).c_str() )== 0 )
-        oid_t_vec.push_back(column_itr2);
+      // Get the current column info from table schema
+      catalog::ColumnInfo colInfo = table_schema->GetColumnInfo(column_itr_for_TableSchema);
+
+      // compare it with the given column name based on columnInfo for Tuple Schema
+      if( strcmp( ddl_columnInfoForTupleSchema[ column_itr_for_TupleSchema].name , (colInfo.name).c_str() )== 0 )
+        selected_oids_for_TupleSchema.push_back(column_itr_for_TableSchema);
     }
   }
 
-  catalog::Schema * tuple_schema = catalog::Schema::CopySchema(table_schema, oid_t_vec);
+  // Print out tuple schema just for debugging
+  catalog::Schema * tuple_schema = catalog::Schema::CopySchema(table_schema, selected_oids_for_TupleSchema);
   std::cout << *tuple_schema << std::endl;
 
 
-  for(oid_t column_itr = 0;  column_itr < num_columns2 ; column_itr++)
+  // Do the same thing with KeySchema 
+  // Based on ColumnInfo for KeySchema, find out the given column names in the table schema and store it's column oid 
+  for(oid_t column_itr_for_KeySchema = 0;  column_itr_for_KeySchema < num_columns_of_KeySchema; column_itr_for_KeySchema++)
   {
-    for( oid_t column_itr2 = 0; column_itr2 < table_schema->GetColumnCount(); column_itr2++)
+    for( oid_t column_itr_for_TableSchema = 0; column_itr_for_TableSchema < table_schema->GetColumnCount(); column_itr_for_TableSchema++)
     {
-      // Look up the given column names in table_schema
-      catalog::ColumnInfo col = table_schema->GetColumnInfo(column_itr2);
-      if( strcmp( ddl_columnInfoForKeySchema[column_itr].name , (col.name).c_str() )== 0 )
-        oid_t_vec2.push_back(column_itr2);
+      // Get the current column info from table schema
+      catalog::ColumnInfo colInfo = table_schema->GetColumnInfo(column_itr_for_TableSchema);
+
+      // compare it with the given column name based on columnInfo for Tuple Schema
+      if( strcmp( ddl_columnInfoForKeySchema[ column_itr_for_KeySchema].name , (colInfo.name).c_str() )== 0 )
+        selected_oids_for_KeySchema.push_back(column_itr_for_TableSchema);
     }
   }
-  catalog::Schema * key_schema = catalog::Schema::CopySchema(table_schema, oid_t_vec2);
+
+  // Print out key schema just for debugging
+  catalog::Schema * key_schema = catalog::Schema::CopySchema(table_schema, selected_oids_for_KeySchema);
   std::cout << *key_schema << std::endl;
 
- 
   // Create metadata and index 
   index::IndexMetadata* metadata = new index::IndexMetadata(index_name, currentIndexType, tuple_schema, key_schema, unique);
-
   index::Index* index = index::IndexFactory::GetInstance(metadata);
 
   // Add an index into the table
