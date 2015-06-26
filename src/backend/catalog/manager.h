@@ -26,7 +26,7 @@ namespace catalog {
 //===--------------------------------------------------------------------===//
 
 typedef tbb::concurrent_unordered_map<oid_t, void*> lookup_dir;
-typedef tbb::concurrent_unordered_map<std::pair<oid_t, oid_t>, void*> lookup_dir2; // TODO :: RENAME
+typedef tbb::concurrent_unordered_map<std::pair<oid_t, oid_t>, void*> global_lookup_dir; 
 
 class Manager {
 
@@ -64,7 +64,7 @@ public:
     std::atomic<oid_t> oid = ATOMIC_VAR_INIT(START_OID);
 
     lookup_dir locator;
-    lookup_dir2 locator2; // TODO :: RENAME
+    global_lookup_dir global_locator;
 };
 
 } // End catalog namespace
