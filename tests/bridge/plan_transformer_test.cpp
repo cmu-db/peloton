@@ -26,8 +26,9 @@ namespace test {
 
 TEST(PlanTransformerTests, PrintPlanTest) {
   std::string query = "SELECT * FROM pg_class;";
-  PlanState *planstate = PlanSimpleQuery(query.c_str());
-  bridge::PlanTransformer::GetInstance().printPostgresPlanStateTree(planstate);
+
+  //PlanState *planstate = bridge::TestUtil::PlanQuery(query.c_str());
+  //bridge::PlanTransformer::GetInstance().printPostgresPlanStateTree(planstate);
 }
 
 } // End test namespace

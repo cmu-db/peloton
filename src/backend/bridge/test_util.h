@@ -22,7 +22,8 @@ class TestUtil {
   TestUtil() {}
   ~TestUtil() {}
 
-  static PlanState *PlanSimpleQuery(std::string query);
+  // Not working
+  static PlanState *PlanQuery(std::string query);
 
 
 };
