@@ -75,11 +75,13 @@ bool DDL::CreateTable(std::string table_name,
             break;
   
             /* CHAR */
+          case 1014:
           case 1042: // char(length), blank-padded string, fixed storage length
             currentValueType = VALUE_TYPE_VARCHAR;
             ddl_columnInfo[column_itr].is_inlined = true;
             break;
             // !!! NEED TO BE UPDATED ...
+          case 1015:
           case 1043: // varchar(length), non-blank-padded string, variable storage length;
             currentValueType = VALUE_TYPE_VARCHAR;
             ddl_columnInfo[column_itr].is_inlined = true;
@@ -190,7 +192,7 @@ bool DDL::CreateIndex(std::string index_name,
   catalog::Schema* tuple_schema = table->GetSchema();
 
   // Print out tuple_schema just for debugging
-  std::cout << *tuple_schema << std::endl;
+  //std::cout << *tuple_schema << std::endl;
 
   // Make a vector to store selected column's oids
   std::vector<oid_t> selected_oids_for_KeySchema;
@@ -209,9 +211,9 @@ bool DDL::CreateIndex(std::string index_name,
     }
   }
 
-  // TODO :: REMOVE :: Print out key schema just for debugging
   catalog::Schema * key_schema = catalog::Schema::CopySchema(tuple_schema, selected_oids_for_KeySchema);
-  std::cout << *key_schema << std::endl;
+  // TODO :: REMOVE :: Print out key schema just for debugging
+  //std::cout << *key_schema << std::endl;
 
   // Create metadata and index 
   index::IndexMetadata* metadata = new index::IndexMetadata(index_name, currentIndexType, tuple_schema, key_schema, unique);
