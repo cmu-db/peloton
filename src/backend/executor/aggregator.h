@@ -19,6 +19,8 @@
 #include "backend/storage/data_table.h"
 #include "backend/planner/aggregate_node.h"
 
+#include <unordered_map>
+
 //===--------------------------------------------------------------------===//
 // Aggregate
 //===--------------------------------------------------------------------===//
@@ -242,6 +244,26 @@ class MinAgg : public Agg {
 /** brief Create an instance of an aggregator for the specified aggregate */
 Agg* GetAggInstance(ExpressionType agg_type);
 
+/**
+ * List of aggregates for a specific group.
+ */
+struct AggregateList {
+
+  // A tuple from the group of tuples being aggregated.
+  // Source of pass through columns.
+  AbstractTuple *group_tuple;
+
+  // The aggregates for each column for this group
+  Agg **aggregates;
+
+};
+
+/*
+ * Type of the hash table used to store aggregates for each group.
+ */
+typedef std::unordered_map<storage::Tuple, AggregateList*,
+    storage::TupleHasher, storage::TupleComparator> HashAggregateMapType;
+
 /*
  * Interface for an aggregator (not an an individual aggregate)
  *
@@ -256,10 +278,10 @@ public:
                storage::DataTable *output_table,
                txn_id_t transaction_id);
 
-    bool Advance(expression::ContainerTuple<LogicalTile> *next_tuple,
-                 expression::ContainerTuple<LogicalTile> *prev_tuple);
+    bool Advance(AbstractTuple *next_tuple,
+                 AbstractTuple *prev_tuple);
 
-    bool Finalize(expression::ContainerTuple<LogicalTile> *prev_tuple);
+    bool Finalize(AbstractTuple *prev_tuple);
 
 private:
 
@@ -273,9 +295,7 @@ private:
   const txn_id_t transaction_id;
 
   /** @brief Aggregates */
-  Agg **aggregates;
-
-  // From plan node
+  Agg **aggregates = nullptr;
 
   /** @brief Group by columns */
   std::vector<oid_t> group_by_columns;
@@ -285,6 +305,19 @@ private:
 
   /** @brief Aggregate types */
   std::vector<ExpressionType> aggregate_types;
+
+  //===--------------------------------------------------------------------===//
+  // Used only for hash aggregation
+  //===--------------------------------------------------------------------===//
+
+  /** @brief Group by key tuple used */
+  storage::Tuple *group_by_key_tuple = nullptr;
+
+  /** @brief Hash table */
+  HashAggregateMapType aggregates_map;
+
+  /** @brief Group by key tuple used */
+  const catalog::Schema *group_by_key_schema = nullptr;
 };
 
 } // namespace executor

@@ -64,7 +64,7 @@ Agg* GetAggInstance(ExpressionType agg_type) {
 bool Helper(const planner::AggregateNode* node,
             Agg** aggregates,
             storage::DataTable *output_table,
-            expression::ContainerTuple<LogicalTile> *prev_tuple,
+            AbstractTuple *prev_tuple,
             txn_id_t transaction_id) {
 
   // Ignore null tuples
@@ -80,7 +80,7 @@ bool Helper(const planner::AggregateNode* node,
   //LOG_TRACE("Setting aggregated columns \n");
 
   auto aggregate_columns = node->GetAggregateColumns();
-  auto aggregate_columns_map = node->GetAggregateColumnsMapping();
+  auto aggregate_columns_map = node->GetAggregateColumnsMap();
   for (oid_t column_itr = 0; column_itr < aggregate_columns.size(); column_itr++){
     if (aggregates[column_itr] != nullptr) {
       const oid_t column_index = aggregate_columns_map[column_itr];
@@ -98,7 +98,7 @@ bool Helper(const planner::AggregateNode* node,
    */
   //LOG_TRACE("Setting pass through columns \n");
 
-  auto pass_through_columns_map = node->GetPassThroughColumnsMapping();
+  auto pass_through_columns_map = node->GetPassThroughColumnsMap();
   for (auto column : pass_through_columns_map){
     // <first, second> == <input tuple column index, output tuple column index >
     tuple.get()->SetValue(column.second, prev_tuple->GetValue(column.first));
@@ -115,24 +115,106 @@ bool Helper(const planner::AggregateNode* node,
   return true;
 }
 
-/**
- * List of aggregates for a specific group.
- */
-struct AggregateList {
 
-  // A tuple from the group of tuples being aggregated.
-  // Source of pass through columns.
-  storage::Tuple *group_tuple;
+//===--------------------------------------------------------------------===//
+// Specialization of an Aggregator that uses a hash map to aggregate
+// tuples from the input table, i.e. it does not expect the input
+// table to be sorted on the group by key.
+//===--------------------------------------------------------------------===//
 
-  // The aggregates for each column for this group
-  Agg* aggregates[0];
+template<>
+Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::
+Aggregator(const planner::AggregateNode *node,
+           storage::DataTable *output_table,
+           txn_id_t transaction_id)
+           : node(node),
+             output_table(output_table),
+             transaction_id(transaction_id) {
 
-};
+  group_by_columns = node->GetGroupByColumns();
+  group_by_key_schema = node->GetGroupByKeySchema();
+  assert(group_by_key_schema != nullptr);
 
-/*
- * Specialization of an aggregator that expects the input table to be
- * sorted on the group by key.
- */
+  // Allocate a group by key tuple
+  group_by_key_tuple = new storage::Tuple(group_by_key_schema, true);
+
+  aggregate_types = node->GetAggregateTypes();
+  aggregate_columns = node->GetAggregateColumns();
+}
+
+template<>
+bool
+Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::
+Advance(AbstractTuple *cur_tuple,
+        AbstractTuple *prev_tuple __attribute__((unused))) {
+  AggregateList *aggregate_list;
+
+  // Configure a tuple and search for the required group.
+  for (oid_t column_itr = 0; column_itr < group_by_columns.size(); column_itr++) {
+    Value cur_tuple_val = cur_tuple->GetValue(group_by_columns[column_itr]);
+    group_by_key_tuple->SetValue(column_itr, cur_tuple_val);
+  }
+
+  auto map_itr = aggregates_map.find(*group_by_key_tuple);
+
+  // Group not found. Make a new entry in the hash for this new group.
+  if (map_itr == aggregates_map.end()) {
+
+    // Allocate new aggregate list
+    aggregate_list = new AggregateList();
+    aggregate_list->aggregates = new Agg*[aggregate_columns.size()];
+    aggregate_list->group_tuple = cur_tuple;
+
+    for (oid_t column_itr = 0; column_itr < aggregate_columns.size(); column_itr++) {
+      aggregate_list->aggregates[column_itr] =
+          GetAggInstance(aggregate_types[column_itr]);
+    }
+
+    aggregates_map.
+    insert(HashAggregateMapType::value_type(*group_by_key_tuple,
+                                            aggregate_list));
+  }
+  // Otherwise, the list is the second item of the pair.
+  else {
+    aggregate_list = map_itr->second;
+  }
+
+  // Update the aggregation calculation
+  for (oid_t column_itr = 0; column_itr < aggregate_columns.size(); column_itr++) {
+    const oid_t column_index = aggregate_columns[column_itr];
+    Value value = cur_tuple->GetValue(column_index);
+    aggregate_list->aggregates[column_itr]->Advance(value);
+  }
+
+  return true;
+}
+
+template<>
+bool
+Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::
+Finalize(AbstractTuple *prev_tuple __attribute__((unused))) {
+
+  for (auto entry : aggregates_map){
+    if (Helper(node, entry.second->aggregates, output_table,
+               entry.second->group_tuple, transaction_id) == false) {
+      return false;
+    }
+  }
+
+  // TODO: if no record exists in input_table, we have to output a null record
+  // only when it doesn't have GROUP BY. See difference of these cases:
+  //   SELECT SUM(A) FROM BBB ,   when BBB has no tuple
+  //   SELECT SUM(A) FROM BBB GROUP BY C,   when BBB has no tuple
+
+  return true;
+}
+
+
+//===--------------------------------------------------------------------===//
+// Specialization of an aggregator that expects the input table to be
+// sorted on the group by key.
+//===--------------------------------------------------------------------===//
+
 template<>
 Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::
 Aggregator(const planner::AggregateNode *node,
@@ -142,13 +224,11 @@ Aggregator(const planner::AggregateNode *node,
              output_table(output_table),
              transaction_id(transaction_id) {
 
-  aggregate_types = node->GetAggregateTypes();
-  aggregate_columns = node->GetAggregateColumns();
   group_by_columns = node->GetGroupByColumns();
 
-  LOG_TRACE("Aggregates :: %lu \n", aggregate_columns.size());
-
   // Create aggregators and initialize
+  aggregate_types = node->GetAggregateTypes();
+  aggregate_columns = node->GetAggregateColumns();
   aggregates = new Agg*[aggregate_columns.size()];
   ::memset(aggregates, 0, sizeof(void*) * aggregate_columns.size());
 
@@ -157,8 +237,8 @@ Aggregator(const planner::AggregateNode *node,
 template<>
 bool
 Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::
-Advance(expression::ContainerTuple<LogicalTile> *cur_tuple,
-        expression::ContainerTuple<LogicalTile> *prev_tuple) {
+Advance(AbstractTuple *cur_tuple,
+        AbstractTuple *prev_tuple) {
 
   bool start_new_agg = false;
 
@@ -201,6 +281,7 @@ Advance(expression::ContainerTuple<LogicalTile> *cur_tuple,
     }
   }
 
+  // Update the aggregation calculation
   for (oid_t column_itr = 0; column_itr < aggregate_columns.size(); column_itr++) {
     const oid_t column_index = aggregate_columns[column_itr];
     Value value = cur_tuple->GetValue(column_index);
@@ -213,7 +294,7 @@ Advance(expression::ContainerTuple<LogicalTile> *cur_tuple,
 template<>
 bool
 Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::
-Finalize(expression::ContainerTuple<LogicalTile> *prev_tuple) {
+Finalize(AbstractTuple *prev_tuple) {
 
   if (Helper(node, aggregates, output_table,
              prev_tuple, transaction_id) == false) {

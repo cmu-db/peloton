@@ -26,7 +26,7 @@ class OperatorUnaryNotExpression : public AbstractExpression {
     left_expr = left;
   };
 
-  Value Evaluate(const Tuple *tuple1, const Tuple *tuple2) const {
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const {
     assert (m_left);
     return m_left->Evaluate(tuple1, tuple2).OpNegate();
   }
@@ -49,7 +49,7 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
     left_expr = left;
   };
 
-  Value Evaluate(const Tuple *tuple1, const Tuple *tuple2) const {
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const {
     assert (m_left);
     return m_left->Evaluate(tuple1, tuple2).OpMultiply(ValueFactory::GetTinyIntValue(-1));
   }
@@ -94,7 +94,7 @@ class OperatorExpression : public AbstractExpression {
  : AbstractExpression(type, left, right) {
   }
 
-  Value Evaluate(const Tuple *tuple1, const Tuple *tuple2) const {
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const {
     assert(left_expr);
     assert(right_expr);
     return oper.op(left_expr->Evaluate(tuple1, tuple2), right_expr->Evaluate(tuple1, tuple2));
