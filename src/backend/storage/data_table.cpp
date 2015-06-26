@@ -28,13 +28,11 @@ DataTable::DataTable(catalog::Schema *schema,
                      size_t tuples_per_tilegroup)
 : AbstractTable(schema, backend, tuples_per_tilegroup),
   table_name(table_name) {
-  printf("DataTable %s has been created !!\n", table_name.c_str());
 
   // Sweat these rocks bitch!
 }
 
 DataTable::~DataTable() {
-  printf("DataTable %s has been destroyed !!\n", table_name.c_str());
   // clean up indices
   for (auto index : indexes) {
     delete index;
