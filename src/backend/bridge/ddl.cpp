@@ -186,32 +186,30 @@ bool DDL::CreateIndex(std::string index_name,
   // Get the table location from manager
   storage::DataTable* table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
 
-  // Bring the schema of table
+  // Bring the tuple schema from the table
   catalog::Schema* tuple_schema = table->GetSchema();
 
-  // Print out table_schema just for debugging
+  // Print out tuple_schema just for debugging
   std::cout << *tuple_schema << std::endl;
 
-  // To store selected column's oid into the vector
+  // Make a vector to store selected column's oids
   std::vector<oid_t> selected_oids_for_KeySchema;
 
-
-  // Do the same thing with KeySchema 
-  // Based on ColumnInfo for KeySchema, find out the given column names in the table schema and store it's column oid 
+  // Based on the ColumnInfo of KeySchema, find out the given 'key' columns in the tuple schema and store it's oid 
   for(oid_t column_itr_for_KeySchema = 0;  column_itr_for_KeySchema < num_columns_of_KeySchema; column_itr_for_KeySchema++)
   {
     for( oid_t column_itr_for_TupleSchema = 0; column_itr_for_TupleSchema < tuple_schema->GetColumnCount(); column_itr_for_TupleSchema++)
     {
-      // Get the current column info from table schema
+      // Get the current column info from tuple schema
       catalog::ColumnInfo colInfo = tuple_schema->GetColumnInfo(column_itr_for_TupleSchema);
 
-      // compare it with the given column name based on columnInfo for Tuple Schema
+      // Compare Key Schema's current column name and Tuple Schema's current column name
       if( strcmp( ddl_columnInfoForKeySchema[ column_itr_for_KeySchema].name , (colInfo.name).c_str() )== 0 )
         selected_oids_for_KeySchema.push_back(column_itr_for_TupleSchema);
     }
   }
 
-  // Print out key schema just for debugging
+  // TODO :: REMOVE :: Print out key schema just for debugging
   catalog::Schema * key_schema = catalog::Schema::CopySchema(tuple_schema, selected_oids_for_KeySchema);
   std::cout << *key_schema << std::endl;
 
@@ -220,7 +218,7 @@ bool DDL::CreateIndex(std::string index_name,
   index::Index* index = index::IndexFactory::GetInstance(metadata);
 
   // Add an index into the table
-   table->AddIndex(index);
+ table->AddIndex(index);
 
   return true;
 }
