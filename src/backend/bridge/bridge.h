@@ -42,8 +42,6 @@ void SetUserTableStats(unsigned int relation_id);
 
 void FunctionTest(void);
 
-PlanState *PlanSimpleQuery(const char *query_string);
-
 #ifdef __cplusplus
 }
 #endif
