@@ -150,23 +150,34 @@ bool DDL::DropTable(unsigned int table_oid)
 //TODO :: 
 bool DDL::CreateIndex(std::string index_name,
                       std::string table_name,
-                      std::string accessMethod,
+                      int type,
                       bool unique, 
-                      DDL_ColumnInfo* ddl_columnInfoForTupleSchema,
                       DDL_ColumnInfo* ddl_columnInfoForKeySchema,
-                      int num_columns_of_TupleSchema,
                       int num_columns_of_KeySchema)
 {
-  IndexType currentIndexType = INDEX_TYPE_BTREE_MULTIMAP;
 
-  // TODO :: Check
-  if( strcmp( accessMethod.c_str(), "btree") == 0 )
-    currentIndexType = INDEX_TYPE_BTREE_MULTIMAP; // array
-  else if( strcmp( accessMethod.c_str(), "map") == 0 )
-    currentIndexType = INDEX_TYPE_ORDERED_MAP;   // ordered map
-  else
-    currentIndexType = INDEX_TYPE_INVALID; 
-  
+  /* Currently, we use only btree as an index method */
+  IndexType currentIndexType = INDEX_TYPE_BTREE_MULTIMAP;
+//  switch(type)
+//  {
+//    case 403: /* BTREE_AM_OID*/
+//    currentIndexType = INDEX_TYPE_BTREE_MULTIMAP; // array
+//      break;
+//    case 405: /* HASH_AM_OID*/
+//      break;
+//    case 783: /* GIST_AM_OID*/
+//      break;
+//    case 2742: /* GINH_AM_OID*/
+//      break;
+//    case 4000: /* SPGIST_AM_OID*/
+//      break;
+//    case 3580: /* BRIN_AM_OID*/
+//      break;
+//    default:
+//    currentIndexType = INDEX_TYPE_ORDERED_MAP;   // ordered map
+//    currentIndexType = INDEX_TYPE_INVALID; 
+//      break;
+//  }
 
   // Get the database oid and table oid
   oid_t database_oid = GetCurrentDatabaseOid();
@@ -176,51 +187,32 @@ bool DDL::CreateIndex(std::string index_name,
   storage::DataTable* table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
 
   // Bring the schema of table
-  catalog::Schema* table_schema = table->GetSchema();
+  catalog::Schema* tuple_schema = table->GetSchema();
 
   // Print out table_schema just for debugging
-  std::cout << *table_schema << std::endl;
+  std::cout << *tuple_schema << std::endl;
 
   // To store selected column's oid into the vector
-  std::vector<oid_t> selected_oids_for_TupleSchema;
   std::vector<oid_t> selected_oids_for_KeySchema;
-
-  // Based on ColumnInfo for TupleSchema, find out the given column names in the table schema and store it's column oid 
-  for(oid_t column_itr_for_TupleSchema = 0;  column_itr_for_TupleSchema < num_columns_of_TupleSchema; column_itr_for_TupleSchema++)
-  {
-    for( oid_t column_itr_for_TableSchema = 0; column_itr_for_TableSchema < table_schema->GetColumnCount(); column_itr_for_TableSchema++)
-    {
-      // Get the current column info from table schema
-      catalog::ColumnInfo colInfo = table_schema->GetColumnInfo(column_itr_for_TableSchema);
-
-      // compare it with the given column name based on columnInfo for Tuple Schema
-      if( strcmp( ddl_columnInfoForTupleSchema[ column_itr_for_TupleSchema].name , (colInfo.name).c_str() )== 0 )
-        selected_oids_for_TupleSchema.push_back(column_itr_for_TableSchema);
-    }
-  }
-
-  // Print out tuple schema just for debugging
-  catalog::Schema * tuple_schema = catalog::Schema::CopySchema(table_schema, selected_oids_for_TupleSchema);
-  std::cout << *tuple_schema << std::endl;
 
 
   // Do the same thing with KeySchema 
   // Based on ColumnInfo for KeySchema, find out the given column names in the table schema and store it's column oid 
   for(oid_t column_itr_for_KeySchema = 0;  column_itr_for_KeySchema < num_columns_of_KeySchema; column_itr_for_KeySchema++)
   {
-    for( oid_t column_itr_for_TableSchema = 0; column_itr_for_TableSchema < table_schema->GetColumnCount(); column_itr_for_TableSchema++)
+    for( oid_t column_itr_for_TupleSchema = 0; column_itr_for_TupleSchema < tuple_schema->GetColumnCount(); column_itr_for_TupleSchema++)
     {
       // Get the current column info from table schema
-      catalog::ColumnInfo colInfo = table_schema->GetColumnInfo(column_itr_for_TableSchema);
+      catalog::ColumnInfo colInfo = tuple_schema->GetColumnInfo(column_itr_for_TupleSchema);
 
       // compare it with the given column name based on columnInfo for Tuple Schema
       if( strcmp( ddl_columnInfoForKeySchema[ column_itr_for_KeySchema].name , (colInfo.name).c_str() )== 0 )
-        selected_oids_for_KeySchema.push_back(column_itr_for_TableSchema);
+        selected_oids_for_KeySchema.push_back(column_itr_for_TupleSchema);
     }
   }
 
   // Print out key schema just for debugging
-  catalog::Schema * key_schema = catalog::Schema::CopySchema(table_schema, selected_oids_for_KeySchema);
+  catalog::Schema * key_schema = catalog::Schema::CopySchema(tuple_schema, selected_oids_for_KeySchema);
   std::cout << *key_schema << std::endl;
 
   // Create metadata and index 
@@ -241,8 +233,8 @@ bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_c
 bool DDL_DropTable(unsigned int table_oid) {
   return DDL::DropTable(table_oid);
 }
-bool DDL_CreateIndex(char* index_name, char* table_name, char* accessMethod, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema, DDL_ColumnInfo* ddl_columnInfoForKeySchema, int num_columns, int num_columns2) {
-  return DDL::CreateIndex(index_name, table_name, accessMethod, unique, ddl_columnInfoForTupleSchema, ddl_columnInfoForKeySchema, num_columns, num_columns2); }
+bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForKeySchema, int num_columns_of_KeySchema) {
+  return DDL::CreateIndex(index_name, table_name, type, unique, ddl_columnInfoForKeySchema, num_columns_of_KeySchema ) ; }
 }
 
 } // namespace bridge
