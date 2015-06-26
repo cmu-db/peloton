@@ -11,7 +11,9 @@
 namespace nstore {
 namespace bridge {
 
-PlanState *TestUtil::PlanSimpleQuery(std::string query) {
+
+// Not working
+PlanState *TestUtil::PlanQuery(std::string query) {
   PlanState* planstate = nullptr;
   return planstate;
 }
