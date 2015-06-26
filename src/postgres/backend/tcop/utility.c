@@ -1334,7 +1334,9 @@ ProcessUtilitySlow(Node *parsetree,
         {
           ListCell   *entry;
           bool ret;
-          
+          int column_itr = 0;
+          int column_itr2 = 0;
+
           DDL_ColumnInfo *ddl_columnInfoForTupleSchema = (DDL_ColumnInfo *)malloc(sizeof(DDL_ColumnInfo)*stmt->indexParams->length);
 
           DDL_ColumnInfo *ddl_columnInfoForKeySchema = (DDL_ColumnInfo *)malloc(sizeof(DDL_ColumnInfo)*stmt->indexParams->length);
@@ -1343,7 +1345,6 @@ ProcessUtilitySlow(Node *parsetree,
           foreach(entry, stmt->indexParams)
           {
             IndexElem *indexElem = lfirst(entry);
-            int column_itr = 0;
 
             //printf("index name %s \n", indexElem->name); /* name of attribute to index, or NULL */
             //printf("Index column %s \n", indexElem->indexcolname) ; /* name for index column; NULL = default */
@@ -1356,19 +1357,19 @@ ProcessUtilitySlow(Node *parsetree,
               strcpy(ddl_columnInfoForTupleSchema[column_itr].name, indexElem->name );
               ddl_columnInfoForTupleSchema[column_itr].allow_null = true;
               ddl_columnInfoForTupleSchema[column_itr].is_inlined = false; // true for int, double, char, timestamp..
+              column_itr++;
             }
 
             if( indexElem->indexcolname != NULL )
             {
-              ddl_columnInfoForKeySchema[column_itr].type = 0;
-              ddl_columnInfoForKeySchema[column_itr].column_offset = column_itr;
-              ddl_columnInfoForKeySchema[column_itr].column_length = 0;
-              strcpy(ddl_columnInfoForKeySchema[column_itr].name, indexElem->indexcolname );
-              ddl_columnInfoForKeySchema[column_itr].allow_null = true;
-              ddl_columnInfoForKeySchema[column_itr].is_inlined = false; // true for int, double, char, timestamp..
+              ddl_columnInfoForKeySchema[column_itr2].type = 0;
+              ddl_columnInfoForKeySchema[column_itr2].column_offset = column_itr2;
+              ddl_columnInfoForKeySchema[column_itr2].column_length = 0;
+              strcpy(ddl_columnInfoForKeySchema[column_itr2].name, indexElem->indexcolname );
+              ddl_columnInfoForKeySchema[column_itr2].allow_null = true;
+              ddl_columnInfoForKeySchema[column_itr2].is_inlined = false; // true for int, double, char, timestamp..
+              column_itr2++;
             }
-
-            column_itr++;
           }
 
           /* 
@@ -1380,7 +1381,7 @@ ProcessUtilitySlow(Node *parsetree,
                                 0,
                                 stmt->unique,
                                 ddl_columnInfoForTupleSchema, ddl_columnInfoForKeySchema,
-                                stmt->indexParams->length
+                                column_itr, column_itr2
                                );
           fprintf(stderr, "DDL_CreateIndex :: %d \n", ret);
         }
