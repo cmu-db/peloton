@@ -235,6 +235,7 @@ PrintTupleTableSlot(TupleTableSlot *slot){
 
   Datum p_datum;
   Oid p_oid;
+  double value_timestamp;
 
   for (i = 0; i < natts; ++i) {
 		attr = slot_getattr(slot, i + 1, &isnull);
@@ -264,6 +265,12 @@ PrintTupleTableSlot(TupleTableSlot *slot){
 
 		p_oid = attributeP->atttypid;
 
+		if(p_oid == 1114)
+		{
+			value_timestamp = strtod(value,NULL);
+			printf("Timestamp printed as double: %f\n",value_timestamp);
+		}
+
 		switch(p_oid) {
 			// short int
 			case 21:	p_datum = Int16GetDatum((short)(atoi(value)));
@@ -286,6 +293,10 @@ PrintTupleTableSlot(TupleTableSlot *slot){
 			// varchar
 			case 1043:	p_datum = CStringGetDatum(value);
 						break;
+
+			case 1114:	p_datum = CStringGetDatum(value);
+						break;
+
 			default:	p_datum = CStringGetDatum(value);
 						break;
 		}
