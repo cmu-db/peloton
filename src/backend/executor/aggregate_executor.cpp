@@ -45,10 +45,6 @@ bool AggregateExecutor::DInit() {
   // Grab info from plan node and check it
   const planner::AggregateNode &node = GetNode<planner::AggregateNode>();
 
-  // Plan has info about :
-  // (1) the aggregate columns, and
-  // (2) the pass through columns
-
   // Construct the output table
   auto output_table_schema = node.GetOutputTableSchema();
   size_t column_count = output_table_schema->GetColumnCount();
@@ -85,9 +81,9 @@ bool AggregateExecutor::DExecute() {
   // Grab info from plan node
   const planner::AggregateNode &node = GetNode<planner::AggregateNode>();
   txn_id_t txn_id = transaction_->GetTransactionId();
-  Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE> aggregator(&node,
-                                                                output_table,
-                                                                txn_id);
+
+  // Get an aggregator
+  Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE> aggregator(&node, output_table, txn_id);
 
   // Get input tiles and aggregate them
   while(children_[0]->Execute() == true) {

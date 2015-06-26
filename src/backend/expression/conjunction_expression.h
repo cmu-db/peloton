@@ -29,7 +29,7 @@ class ConjunctionExpression : public AbstractExpression
     this->m_right = right;
   }
 
-  Value Evaluate(const Tuple *tuple1, const Tuple *tuple2) const;
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const;
 
   std::string DebugInfo(const std::string &spacer) const {
     std::string retval;
@@ -46,14 +46,14 @@ class ConjunctionExpression : public AbstractExpression
 };
 
 template<> inline Value
-ConjunctionExpression<ConjunctionAnd>::Evaluate(const Tuple *tuple1,
-                                                const Tuple *tuple2) const {
+ConjunctionExpression<ConjunctionAnd>::Evaluate(const AbstractTuple *tuple1,
+                                                const AbstractTuple *tuple2) const {
   return m_left->Evaluate(tuple1, tuple2).OpAnd(m_right->Evaluate(tuple1, tuple2));
 }
 
 template<> inline Value
-ConjunctionExpression<ConjunctionOr>::Evaluate(const Tuple *tuple1,
-                                               const Tuple *tuple2) const {
+ConjunctionExpression<ConjunctionOr>::Evaluate(const AbstractTuple *tuple1,
+                                               const AbstractTuple *tuple2) const {
   return m_left->Evaluate(tuple1, tuple2).OpOr(m_right->Evaluate(tuple1, tuple2));
 }
 

@@ -29,28 +29,30 @@ class AggregateNode : public AbstractPlanNode {
   AggregateNode& operator=(AggregateNode &&) = delete;
 
   AggregateNode(const std::vector<oid_t>& aggregate_columns,
-                const std::map<oid_t, oid_t>& aggregate_columns_mapping,
+                const std::map<oid_t, oid_t>& aggregate_columns_map,
                 const std::vector<oid_t>& group_by_columns,
-                const std::map<oid_t, oid_t>& pass_through_columns,
+                const catalog::Schema *group_by_key_schema,
+                const std::map<oid_t, oid_t>& pass_through_columns_map,
                 const std::vector<ExpressionType>& aggregate_types,
                 const catalog::Schema *output_table_schema)
   : aggregate_columns_(aggregate_columns),
-    aggregate_columns_map_(aggregate_columns_mapping),
+    aggregate_columns_map_(aggregate_columns_map),
     group_by_columns_(group_by_columns),
-    pass_through_columns_map_(pass_through_columns),
+    group_by_key_schema_(group_by_key_schema),
+    pass_through_columns_map_(pass_through_columns_map),
     aggregate_types_(aggregate_types),
     output_table_schema_(output_table_schema){
   }
 
   inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_AGGREGATE;
+    return PlanNodeType::PLAN_NODE_TYPE_AGGREGATE;
   }
 
   const std::vector<oid_t>& GetAggregateColumns() const {
     return aggregate_columns_;
   }
 
-  const std::map<oid_t, oid_t>& GetAggregateColumnsMapping() const {
+  const std::map<oid_t, oid_t>& GetAggregateColumnsMap() const {
     return aggregate_columns_map_;
   }
 
@@ -58,7 +60,11 @@ class AggregateNode : public AbstractPlanNode {
     return group_by_columns_;
   }
 
-  const std::map<oid_t, oid_t>& GetPassThroughColumnsMapping() const {
+  const catalog::Schema *GetGroupByKeySchema() const {
+    return group_by_key_schema_;
+  }
+
+  const std::map<oid_t, oid_t>& GetPassThroughColumnsMap() const {
     return pass_through_columns_map_;
   }
 
@@ -80,6 +86,9 @@ class AggregateNode : public AbstractPlanNode {
 
   /** @brief Group by columns */
   const std::vector<oid_t> group_by_columns_;
+
+  /** @brief Group by key tuple used (Needed only for hash aggregation) */
+  const catalog::Schema *group_by_key_schema_;
 
   /** @brief Pass through columns mapping (input -> output) */
   const std::map<oid_t, oid_t> pass_through_columns_map_;
