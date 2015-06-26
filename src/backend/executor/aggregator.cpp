@@ -80,9 +80,10 @@ bool Helper(const planner::AggregateNode* node,
   //LOG_TRACE("Setting aggregated columns \n");
 
   auto aggregate_columns = node->GetAggregateColumns();
+  auto aggregate_columns_map = node->GetAggregateColumnsMapping();
   for (oid_t column_itr = 0; column_itr < aggregate_columns.size(); column_itr++){
     if (aggregates[column_itr] != nullptr) {
-      const oid_t column_index = aggregate_columns[column_itr];
+      const oid_t column_index = aggregate_columns_map[column_itr];
       const ValueType column_type = schema->GetType(column_index);
       Value final_val = aggregates[column_itr]->Finalize();
       tuple.get()->SetValue(column_index, final_val.CastAs(column_type));
@@ -97,10 +98,10 @@ bool Helper(const planner::AggregateNode* node,
    */
   //LOG_TRACE("Setting pass through columns \n");
 
-  auto pass_through_columns = node->GetPassThroughColumns();
-  for (auto column : pass_through_columns){
-    // <first, second> == <output tuple column index, source tuple column index >
-    tuple.get()->SetValue(column.first, prev_tuple->GetValue(column.second));
+  auto pass_through_columns_map = node->GetPassThroughColumnsMapping();
+  for (auto column : pass_through_columns_map){
+    // <first, second> == <input tuple column index, output tuple column index >
+    tuple.get()->SetValue(column.second, prev_tuple->GetValue(column.first));
   }
 
   std::cout << "GROUP TUPLE :: " << *(tuple.get());
