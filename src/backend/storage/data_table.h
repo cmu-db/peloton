@@ -43,7 +43,6 @@ class DataTable : public AbstractTable {
     DataTable(DataTable const&) = delete;
 
 public:
-
     // Table constructor
     DataTable(catalog::Schema *schema,
               AbstractBackend *backend,
@@ -68,6 +67,10 @@ public:
        schema = given_schema;
     }
     
+    catalog::Schema *GetSchema()
+    {
+       return AbstractTable::GetSchema();
+    }
     //===--------------------------------------------------------------------===//
     // INDEXES
     //===--------------------------------------------------------------------===//
