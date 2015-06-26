@@ -277,15 +277,12 @@ bool IsThisTableExist(const char* table_name) {
  */
 bool InitPeloton(const char* dbname)
 {
-  Relation pg_class_rel;
+  // Relations for catalog tables
+  Relation pg_class_rel;   
   Relation pg_attribute_rel;
-  //Relation pg_index_rel;
 
-  HeapScanDesc scan;
-  HeapScanDesc scan2;
-
-  HeapTuple tuple;
-  HeapTuple tuple2;
+  HeapScanDesc scan_pg_class;
+  HeapTuple tuple_for_pg_class;
 
   int column_itr;
   bool ret;
@@ -299,26 +296,28 @@ bool InitPeloton(const char* dbname)
   pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
   pg_attribute_rel = heap_open(AttributeRelationId, AccessShareLock);
 
-  scan = heap_beginscan_catalog(pg_class_rel, 0, NULL);
+  scan_pg_class = heap_beginscan_catalog(pg_class_rel, 0, NULL);
 
   //TODO :: Make this one single loop
-  while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
-    Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
+  while (HeapTupleIsValid(tuple_for_pg_class = heap_getnext(scan_pg_class, ForwardScanDirection))) {
+    Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple_for_pg_class);
 
     // Create only user tables
-    if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE && pgclass->relkind == 'r')
+    if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE && ( pgclass->relkind == 'r' ||  pgclass->relkind == 'i'))
     {
       // create columninfo as much as attnum
       int attnum =  pgclass->relnatts ;
       if( attnum > 0 )
       {
+        HeapScanDesc scan_pg_attribute;
+        HeapTuple tuple_for_pg_attribute;
         DDL_ColumnInfo ddl_columnInfo[ pgclass->relnatts ] ;
-        Oid table_oid = HeapTupleHeaderGetOid(tuple->t_data);
+        Oid table_oid = HeapTupleHeaderGetOid(tuple_for_pg_class->t_data);
   
-        scan2 = heap_beginscan_catalog(pg_attribute_rel, 0, NULL);
+        scan_pg_attribute = heap_beginscan_catalog(pg_attribute_rel, 0, NULL);
         column_itr = 0;  
-        while (HeapTupleIsValid(tuple2 = heap_getnext(scan2, ForwardScanDirection))) {
-          Form_pg_attribute pgattribute = (Form_pg_attribute) GETSTRUCT(tuple2);
+        while (HeapTupleIsValid(tuple_for_pg_attribute = heap_getnext(scan_pg_attribute, ForwardScanDirection))) {
+          Form_pg_attribute pgattribute = (Form_pg_attribute) GETSTRUCT(tuple_for_pg_attribute);
           if( pgattribute->attrelid == table_oid )
           {
             // Skip system columns..
@@ -340,59 +339,51 @@ bool InitPeloton(const char* dbname)
           } // end if
         } // end while
   
+        heap_endscan(scan_pg_attribute);
 
-        ret = DDL_CreateTable( NameStr(pgclass->relname) , ddl_columnInfo, column_itr);
-        if( ret )  printf("Create Table \"%s\" in Peloton\n", NameStr(pgclass->relname));
-        else	   fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
+        // Create the table
+        if( pgclass->relkind == 'r' )
+        {
+          ret = DDL_CreateTable( NameStr(pgclass->relname) , ddl_columnInfo, column_itr);
+          if( ret )  printf("Create Table \"%s\" in Peloton\n", NameStr(pgclass->relname));
+          else       fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
+        } 
+        // Create the index
+        else if( pgclass->relkind == 'i')
+        {
+          Relation pg_index_rel;
+          HeapScanDesc scan_pg_index;
+          HeapTuple tuple_for_pg_index;
+          pg_index_rel = heap_open(IndexRelationId, AccessShareLock);
+          scan_pg_index = heap_beginscan_catalog(pg_index_rel, 0, NULL);
+
+          while (HeapTupleIsValid(tuple_for_pg_index = heap_getnext(scan_pg_index, ForwardScanDirection))) {
+            Form_pg_index pgindex = (Form_pg_index) GETSTRUCT(tuple_for_pg_index);
+
+            if( pgindex->indexrelid == table_oid )
+            {
+              DDL_CreateIndex(NameStr(pgclass->relname), get_rel_name(pgindex->indrelid), 0, pgindex->indisunique, ddl_columnInfo, column_itr);
+              if( ret )  printf("Create Index \"%s\" in Peloton\n", NameStr(pgclass->relname));
+              else       fprintf(stderr, "DDL_CreateIndex :: %d \n", ret);
+              break;
+            }
+          }
+
+          heap_endscan(scan_pg_index);
+          heap_close(pg_index_rel, AccessShareLock);
+        }
       }else
       {
         // Create Table without column info
         ret = DDL_CreateTable( NameStr(pgclass->relname) , NULL, 0);
         if( ret )  printf("Create Table \"%s\" in Peloton\n", NameStr(pgclass->relname));
-        else	   fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
+        else       fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
       }
     } // end if
     
-    /* TODO :: Need to find the better way..
-    // Create an index if the table has an index 
-    if( pgclass->relhasindex )
-    {
-      Oid table_oid = HeapTupleHeaderGetOid(tuple->t_data);
-      pg_index_rel = heap_open(IndexRelationId, AccessShareLock);
-
-      scan2 = heap_beginscan_catalog(pg_index_rel, 0, NULL);
-      column_itr = 0;  
-      while (HeapTupleIsValid(tuple2 = heap_getnext(scan2, ForwardScanDirection))) {
-        Form_pg_index pgindex = (Form_pg_index) GETSTRUCT(tuple2);
-        DDL_ColumnInfo ddl_columnInfo[ pgindex->indnatts ] ;
-        if( pgindex->attrelid == table_oid )
-        {
-          // Skip system columns..
-          if( strcmp( NameStr(pgattribute->attname),"cmax" ) &&
-              strcmp( NameStr(pgattribute->attname),"cmin" ) &&
-              strcmp( NameStr(pgattribute->attname),"ctid" ) &&
-              strcmp( NameStr(pgattribute->attname),"xmax" ) &&
-              strcmp( NameStr(pgattribute->attname),"xmin" ) &&
-              strcmp( NameStr(pgattribute->attname),"tableoid" ) )
-          {
-            ddl_columnInfo[column_itr].type = 
-            ddl_columnInfo[column_itr].column_offset = column_itr;
-            ddl_columnInfo[column_itr].column_length = 0;
-            strcpy(ddl_columnInfo[column_itr].name, NameStr(pgattribute->attname));
-            ddl_columnInfo[column_itr].allow_null = false;
-            ddl_columnInfo[column_itr].is_inlined = true;
-            column_itr++;
-          } // end if
-        } // end if
-      } // end while
-  
-      CreateIndex(index_name, NameStr(pgclass->relname), type, pgindex->indisunique, ddl_columnInfoForKeySchema, num_columns_of_KeySchema);
-    } // end if
-    */
   } // end while
 
-  heap_endscan(scan2);
-  heap_endscan(scan);
+  heap_endscan(scan_pg_class);
   heap_close(pg_attribute_rel, AccessShareLock);
   heap_close(pg_class_rel, AccessShareLock);
 
