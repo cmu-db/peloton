@@ -47,23 +47,27 @@ TEST(AggregateTests, DistinctTest){
 
   // Setup plan node
 
+  std::vector<oid_t> group_by_columns = { 0, 1, 2, 3 };
+  std::map<oid_t, oid_t> pass_through_columns_map;
+
+  // Input tuple column index -> Output tuple column index
+  pass_through_columns_map[0] = 0;
+  pass_through_columns_map[1] = 1;
+  pass_through_columns_map[2] = 2;
+  pass_through_columns_map[3] = 3;
+
+  // No aggregates for this test
   std::vector<oid_t> aggregate_columns;
-  std::vector<oid_t> group_by_columns = { 0 , 1, 2, 4};
-  std::map<oid_t, oid_t> pass_through_columns;
-
-  pass_through_columns[0] = 0;
-  pass_through_columns[1] = 1;
-  pass_through_columns[2] = 2;
-  pass_through_columns[3] = 3;
-
+  std::map<oid_t, oid_t> aggregate_columns_map;
   std::vector<ExpressionType> aggregate_types;
 
   auto output_table_schema = data_table.get()->GetSchema();
 
   // Create the plan node
   planner::AggregateNode node(aggregate_columns,
+                              aggregate_columns_map,
                               group_by_columns,
-                              pass_through_columns,
+                              pass_through_columns_map,
                               aggregate_types,
                               output_table_schema);
 
@@ -111,23 +115,26 @@ TEST(AggregateTests, GroupByTest){
 
   // Setup plan node
 
-  std::vector<oid_t> aggregate_columns;
   std::vector<oid_t> group_by_columns = { 0 , 1};
-  std::map<oid_t, oid_t> pass_through_columns;
+  std::map<oid_t, oid_t> pass_through_columns_map;
 
-  pass_through_columns[0] = 0;
-  pass_through_columns[1] = 1;
-  pass_through_columns[2] = 2;
-  pass_through_columns[3] = 3;
+  pass_through_columns_map[0] = 0;
+  pass_through_columns_map[1] = 1;
+  pass_through_columns_map[2] = 2;
+  pass_through_columns_map[3] = 3;
 
+  // No aggregates for this test
+  std::vector<oid_t> aggregate_columns;
+  std::map<oid_t, oid_t> aggregate_columns_map;
   std::vector<ExpressionType> aggregate_types;
 
   auto output_table_schema = data_table.get()->GetSchema();
 
   // Create the plan node
   planner::AggregateNode node(aggregate_columns,
+                              aggregate_columns_map,
                               group_by_columns,
-                              pass_through_columns,
+                              pass_through_columns_map,
                               aggregate_types,
                               output_table_schema);
 
@@ -175,18 +182,28 @@ TEST(AggregateTests, AggregateTest){
 
   // Setup plan node
 
-  std::vector<oid_t> aggregate_columns = { 2 };
   std::vector<oid_t> group_by_columns = { 0 , 1};
-  std::map<oid_t, oid_t> pass_through_columns;
+  std::map<oid_t, oid_t> pass_through_columns_map;
 
-  pass_through_columns[0] = 0;
-  pass_through_columns[1] = 1;
+  // Input tuple column index -> Output tuple column index
+  pass_through_columns_map[0] = 0;
+  pass_through_columns_map[1] = 1;
+
+  // Aggregates
+  std::vector<oid_t> aggregate_columns = { 2, 2 };
+  std::map<oid_t, oid_t> aggregate_columns_map;
+
+  // Input tuple column index -> Output tuple column index
+  aggregate_columns_map[0] = 2;
+  aggregate_columns_map[1] = 3;
 
   std::vector<ExpressionType> aggregate_types;
   aggregate_types.push_back(EXPRESSION_TYPE_AGGREGATE_SUM);
+  aggregate_types.push_back(EXPRESSION_TYPE_AGGREGATE_AVG);
 
+  // More complex schema construction
   auto data_table_schema = data_table.get()->GetSchema();
-  std::vector<oid_t> set = { 0, 1, 2};
+  std::vector<oid_t> set = { 0, 1, 2, 2};
   std::vector<catalog::ColumnInfo> columns;
   for(auto column_index : set){
     columns.push_back(data_table_schema->GetColumnInfo(column_index));
@@ -196,8 +213,9 @@ TEST(AggregateTests, AggregateTest){
 
   // Create the plan node
   planner::AggregateNode node(aggregate_columns,
+                              aggregate_columns_map,
                               group_by_columns,
-                              pass_through_columns,
+                              pass_through_columns_map,
                               aggregate_types,
                               output_table_schema.get());
 
@@ -230,6 +248,8 @@ TEST(AggregateTests, AggregateTest){
 
   EXPECT_TRUE(logical_tile->GetValue(0, 2) == ValueFactory::GetDoubleValue(110));
   EXPECT_TRUE(logical_tile->GetValue(1, 2) == ValueFactory::GetDoubleValue(360));
+  EXPECT_TRUE(logical_tile->GetValue(0, 3) == ValueFactory::GetDoubleValue(22));
+  EXPECT_TRUE(logical_tile->GetValue(1, 3) == ValueFactory::GetDoubleValue(72));
 
   txn_manager.CommitTransaction(txn);
   txn_manager.EndTransaction(txn);
