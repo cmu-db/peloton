@@ -44,13 +44,13 @@ class DDL {
 public:
   static bool CreateTable(std::string table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns, catalog::Schema* schema);
   static bool DropTable(unsigned int table_oid);
-  static bool CreateIndex(std::string index_name, std::string table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema,  DDL_ColumnInfo* ddl_columnInfoForKeySchema, int num_columns, int num_columns2);
+  static bool CreateIndex(std::string index_name, std::string table_name, std::string accessMethod, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema,  DDL_ColumnInfo* ddl_columnInfoForKeySchema, int num_columns, int num_columns2);
 };
 
 extern "C" {
   bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns);
   bool DDL_DropTable(unsigned int table_oid);
-  bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema, DDL_ColumnInfo* ddl_columnInfoForKeySchema , int num_columns, int num_columns2);
+  bool DDL_CreateIndex(char* index_name, char* table_name, char* accessMethod, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema, DDL_ColumnInfo* ddl_columnInfoForKeySchema , int num_columns, int num_columns2);
 }
 
 } // namespace bridge
@@ -62,4 +62,4 @@ extern bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, in
 
 extern bool DDL_DropTable(unsigned int table_oid);
 
-extern bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema, DDL_ColumnInfo* ddl_columnInfoForKeySchema , int num_columns, int num_columns2);
+extern bool DDL_CreateIndex(char* index_name, char* table_name, char* accessMethod, bool unique, DDL_ColumnInfo* ddl_columnInfoForTupleSchema, DDL_ColumnInfo* ddl_columnInfoForKeySchema , int num_columns, int num_columns2);
