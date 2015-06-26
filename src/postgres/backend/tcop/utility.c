@@ -1331,14 +1331,14 @@ ProcessUtilitySlow(Node *parsetree,
           EventTriggerAlterTableEnd();
 
         //TODO :: Peloton Modification
+        if( address.objectId != 0 )
         {
           ListCell   *entry;
           bool ret;
           int column_itr = 0;
           int column_itr2 = 0;
 
-          DDL_ColumnInfo *ddl_columnInfoForTupleSchema = (DDL_ColumnInfo *)malloc(sizeof(DDL_ColumnInfo)*stmt->indexParams->length);
-
+          DDL_ColumnInfo *ddl_columnInfoForTupleSchema = (DDL_ColumnInfo *)malloc(sizeof(DDL_ColumnInfo)*stmt->indexParams->length); 
           DDL_ColumnInfo *ddl_columnInfoForKeySchema = (DDL_ColumnInfo *)malloc(sizeof(DDL_ColumnInfo)*stmt->indexParams->length);
 
           // Parse the IndexStmt and construct ddl_columnInfo for TupleSchema and KeySchema
