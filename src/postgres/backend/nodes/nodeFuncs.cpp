@@ -2064,7 +2064,7 @@ query_tree_walker(Query *query,
  */
 bool
 range_table_walker(List *rtable,
-				   bool (*walker) (),
+				   bool (*walker) (Node *, void *),
 				   void *context,
 				   int flags)
 {
@@ -2813,7 +2813,7 @@ expression_tree_mutator(Node *node,
  */
 Query *
 query_tree_mutator(Query *query,
-				   Node *(*mutator) (),
+				   Node *(*mutator) (Node *, void *),
 				   void *context,
 				   int flags)
 {
@@ -2852,7 +2852,7 @@ query_tree_mutator(Query *query,
  */
 List *
 range_table_mutator(List *rtable,
-					Node *(*mutator) (),
+					Node *(*mutator) (Node *, void *),
 					void *context,
 					int flags)
 {
