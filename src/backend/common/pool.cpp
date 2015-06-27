@@ -12,7 +12,7 @@
 
 #include "backend/common/pool.h"
 
-namespace nstore {
+namespace peloton {
 
 
 /// Allocate a continous block of memory of the specified size.
@@ -124,7 +124,7 @@ int64_t Pool::GetAllocatedMemory() {
 }
 
 
-} // End nstore namespace
+} // End peloton namespace
 
 
 

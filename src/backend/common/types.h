@@ -18,7 +18,7 @@
 #include <limits>
 #include <sstream>
 
-namespace nstore {
+namespace peloton {
 
 //===--------------------------------------------------------------------===//
 // NULL-related Constants
@@ -31,10 +31,10 @@ namespace nstore {
 #define INT64_NULL        INT64_MIN
 
 /// Minimum value user can represent that is not NULL
-#define NSTORE_INT8_MIN 		INT8_NULL  + 1
-#define NSTORE_INT16_MIN 		INT16_NULL + 1
-#define NSTORE_INT32_MIN 		INT32_NULL + 1
-#define NSTORE_INT64_MIN 		INT64_NULL + 1
+#define PELOTON_INT8_MIN 		INT8_NULL  + 1
+#define PELOTON_INT16_MIN 		INT16_NULL + 1
+#define PELOTON_INT32_MIN 		INT32_NULL + 1
+#define PELOTON_INT64_MIN 		INT64_NULL + 1
 #define DECIMAL_MIN 	-9999999
 #define DECIMAL_MAX 	9999999
 
@@ -458,4 +458,4 @@ PlanNodeType StringToPlanNode(std::string str);
 std::string ConstraintTypeToString(ConstraintType type);
 ConstraintType StringToConstraintType(std::string str);
 
-} // End nstore namespace
+} // End peloton namespace

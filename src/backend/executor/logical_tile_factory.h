@@ -10,7 +10,7 @@
 
 #include "backend/common/types.h"
 
-namespace nstore {
+namespace peloton {
 
 namespace storage {
 class Tile;
@@ -42,4 +42,4 @@ class LogicalTileFactory {
 };
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

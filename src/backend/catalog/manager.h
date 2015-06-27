@@ -18,7 +18,7 @@
 #include "tbb/concurrent_unordered_map.h"
 #include "backend/common/types.h"
 
-namespace nstore {
+namespace peloton {
 namespace catalog {
 
 //===--------------------------------------------------------------------===//
@@ -68,4 +68,4 @@ public:
 };
 
 } // End catalog namespace
-} // End nstore namespace
+} // End peloton namespace

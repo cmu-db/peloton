@@ -11,7 +11,7 @@
 #include "backend/common/value_peeker.h"
 #include "backend/storage/tuple.h"
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -355,5 +355,5 @@ TEST(ExpressionTest, OrFilter) {
 }
 
 } // End test namespace
-} // End nstore namespace
+} // End peloton namespace
 

@@ -16,7 +16,7 @@
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
 
-namespace nstore {
+namespace peloton {
 
 //===--------------------------------------------------------------------===//
 // Pretty printer
@@ -56,4 +56,4 @@ public:
 
 };
 
-}  // End nstore namespace
+}  // End peloton namespace

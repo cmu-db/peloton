@@ -17,7 +17,7 @@
 
 #include <map>
 
-namespace nstore {
+namespace peloton {
 namespace planner {
 
 // IMPORTANT:: Need own copy of output table schema.
@@ -104,5 +104,5 @@ class AggregateNode : public AbstractPlanNode {
 };
 
 } // namespace planner
-} // namespace nstore
+} // namespace peloton
 

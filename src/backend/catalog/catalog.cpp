@@ -13,7 +13,7 @@
 #include "backend/common/types.h"
 #include "backend/catalog/catalog.h"
 
-namespace nstore {
+namespace peloton {
 namespace catalog {
 
 Catalog& Catalog::GetInstance() {
@@ -56,4 +56,4 @@ std::ostream& operator<<(std::ostream& os, const Catalog& catalog) {
 
 
 } // End catalog namespace
-} // End nstore namespace
+} // End peloton namespace

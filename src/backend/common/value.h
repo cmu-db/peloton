@@ -32,7 +32,7 @@
 #include "backend/common/types.h"
 #include "backend/common/varlen.h"
 
-namespace nstore {
+namespace peloton {
 
 //===--------------------------------------------------------------------===//
 // Type system
@@ -1581,6 +1581,6 @@ inline const Value Value::DeserializeWithAllocation(SerializeInput &input, Pool 
 }
 
 
-} // End nstore namespace
+} // End peloton namespace
 
 

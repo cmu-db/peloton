@@ -10,7 +10,7 @@
 CODE_COVERAGE_IGNORE_PATTERN="/usr/*" "*/third_party/*" "*/test/*"
 
 ## Global CFLAGS
-AM_CPPFLAGS = $(nstore_INCLUDES) @TBB_CPPFLAGS@ @TBB_LIBS@ 
+AM_CPPFLAGS = $(peloton_INCLUDES) @TBB_CPPFLAGS@ @TBB_LIBS@ 
 
 AM_CXXFLAGS = -std=c++11 -Wall -Werror -Wextra -fno-strict-aliasing -Wno-deprecated-register \
               $(CODE_COVERAGE_CFLAGS)

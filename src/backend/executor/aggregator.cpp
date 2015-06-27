@@ -14,7 +14,7 @@
 #include "backend/executor/aggregator.h"
 #include "backend/common/logger.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /*
@@ -331,4 +331,4 @@ Finalize(AbstractTuple *prev_tuple) {
 }
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

@@ -22,7 +22,7 @@
 #include <vector>
 #include <map>
 
-namespace nstore {
+namespace peloton {
 namespace stats {
 
 class Table;
@@ -151,5 +151,5 @@ private:
 };
 
 } // End stats namespace
-} // End nstore namespace
+} // End peloton namespace
 

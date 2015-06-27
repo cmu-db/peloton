@@ -18,7 +18,7 @@
 #include <iostream>
 #include <string>
 
-namespace nstore {
+namespace peloton {
 namespace scheduler {
 
 //===--------------------------------------------------------------------===//
@@ -72,9 +72,9 @@ class TrafficCop {
   TrafficCop(TrafficCop const&) = delete;
   TrafficCop& operator=(TrafficCop const&) = delete;
 
-  const std::string prompt = "nstore => ";
+  const std::string prompt = "peloton => ";
   oid_t stmts_executed;
 };
 
 } // namespace scheduler
-} // namespace nstore
+} // namespace peloton

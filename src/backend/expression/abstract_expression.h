@@ -21,7 +21,7 @@
 #include "backend/common/abstract_tuple.h"
 #include <json_spirit.h>
 
-namespace nstore {
+namespace peloton {
 namespace expression {
 
 class SerializeInput;
@@ -134,4 +134,4 @@ class AbstractExpression {
 };
 
 } // End expression namespace
-} // End nstore namespace
+} // End peloton namespace

@@ -12,7 +12,7 @@
 
 #include "backend/executor/abstract_executor.h"
 
-namespace nstore {
+namespace peloton {
 
 namespace executor {
 class LogicalTile;
@@ -33,4 +33,4 @@ class MockExecutor : public executor::AbstractExecutor {
 };
 
 } // namespace test
-} // namespace nstore
+} // namespace peloton

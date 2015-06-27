@@ -42,7 +42,7 @@ using ::testing::IsNull;
 using ::testing::NotNull;
 using ::testing::Return;
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 /** @brief Helper function for defining schema */
@@ -384,4 +384,4 @@ void ExecutorTestsUtil::PrintTileVector(std::vector<std::unique_ptr<executor::Lo
 }
 
 } // namespace test
-} // namespace nstore
+} // namespace peloton

@@ -9,7 +9,7 @@
 
 #include <sstream>
 
-namespace nstore {
+namespace peloton {
 namespace planner {
 
 PlanColumn::PlanColumn(json_spirit::Object& col_object) :
@@ -101,7 +101,7 @@ std::ostream& operator<<(std::ostream& os, const PlanColumn& column) {
 }
 
 } // namespace planner
-} // namespace nstore
+} // namespace peloton
 
 
 

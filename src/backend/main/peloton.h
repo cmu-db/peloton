@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * nstore.h
+ * peloton.h
  * Configuration for n-store
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/nstore.h
+ * /n-store/src/peloton.h
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #include <string>
 #include <cstdlib>
 
-namespace nstore {
+namespace peloton {
 
 class configuration {
 

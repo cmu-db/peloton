@@ -9,7 +9,7 @@
 #include "backend/expression/tuple_value_expression.h"
 #include "backend/expression/constant_value_expression.h"
 
-namespace nstore {
+namespace peloton {
 namespace expression {
 
 //===--------------------------------------------------------------------===//
@@ -60,5 +60,5 @@ class ParameterValueExpression : public AbstractExpression, public ParameterValu
 };
 
 } // End expression namespace
-} // End nstore namespace
+} // End peloton namespace
 

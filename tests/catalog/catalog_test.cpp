@@ -17,7 +17,7 @@
 
 //#include "backend/catalog/catalog.h"
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -31,4 +31,4 @@ TEST(CatalogTests, BasicTest) {
 }
 
 } // End test namespace
-} // End nstore namespace
+} // End peloton namespace

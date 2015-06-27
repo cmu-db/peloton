@@ -9,7 +9,7 @@
 #include "backend/common/types.h"
 #include "backend/executor/abstract_executor.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /**
@@ -47,4 +47,4 @@ private:
 };
 
 } /* namespace executor */
-} /* namespace nstore */
+} /* namespace peloton */

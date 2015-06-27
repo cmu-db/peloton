@@ -17,7 +17,7 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/planner/delete_node.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /**
@@ -86,4 +86,4 @@ bool DeleteExecutor::DExecute() {
 }
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

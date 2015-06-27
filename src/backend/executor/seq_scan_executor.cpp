@@ -26,7 +26,7 @@
 
 #include "backend/common/logger.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /**
@@ -154,4 +154,4 @@ bool SeqScanExecutor::DExecute() {
 }
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

@@ -7,7 +7,7 @@
 
 #include <string>
 
-namespace nstore {
+namespace peloton {
 namespace expression {
 
 class ConjunctionAnd;
@@ -58,4 +58,4 @@ ConjunctionExpression<ConjunctionOr>::Evaluate(const AbstractTuple *tuple1,
 }
 
 } // End expression namespace
-} // End nstore namespace
+} // End peloton namespace

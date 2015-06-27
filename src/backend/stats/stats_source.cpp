@@ -20,7 +20,7 @@
 #include <string>
 #include <cassert>
 
-namespace nstore {
+namespace peloton {
 namespace stats {
 
 std::vector<std::string> StatsSource::GetBaseStatsTableColumnNames() {
@@ -154,4 +154,4 @@ std::vector<catalog::ColumnInfo> StatsSource::CreateStatsTableSchema() {
 
 
 } // End stats namespace
-} // End nstore namespace
+} // End peloton namespace

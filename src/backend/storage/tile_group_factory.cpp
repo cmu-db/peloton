@@ -10,7 +10,7 @@
 
 #include "backend/storage/tile_group_factory.h"
 
-namespace nstore {
+namespace peloton {
 namespace storage {
 
 TileGroup* TileGroupFactory::GetTileGroup(oid_t database_id, oid_t table_id, oid_t tile_group_id,
@@ -33,5 +33,5 @@ TileGroup* TileGroupFactory::GetTileGroup(oid_t database_id, oid_t table_id, oid
 
 
 } // End storage namespace
-} // End nstore namespace
+} // End peloton namespace
 

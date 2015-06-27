@@ -15,7 +15,7 @@
 
 #include "backend/index/index_factory.h"
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -139,7 +139,7 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
 
 
 } // End test namespace
-} // End nstore namespace
+} // End peloton namespace
 
 
 

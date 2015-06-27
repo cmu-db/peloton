@@ -7,7 +7,7 @@
 #include "backend/executor/abstract_executor.h"
 #include "backend/common/logger.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /**
@@ -87,4 +87,4 @@ bool AbstractExecutor::Execute() {
 }
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

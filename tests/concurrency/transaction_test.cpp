@@ -16,7 +16,7 @@
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/concurrency/transaction.h"
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -63,5 +63,5 @@ TEST(TransactionTests, TransactionTest) {
 }
 
 } // End test namespace
-} // End nstore namespace
+} // End peloton namespace
 

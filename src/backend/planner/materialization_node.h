@@ -14,7 +14,7 @@
 #include "backend/common/types.h"
 #include "backend/planner/abstract_plan_node.h"
 
-namespace nstore {
+namespace peloton {
 
 namespace catalog {
 class Schema;
@@ -66,4 +66,4 @@ class MaterializationNode : public AbstractPlanNode {
 };
 
 } // namespace planner
-} // namespace nstore
+} // namespace peloton

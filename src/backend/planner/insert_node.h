@@ -10,7 +10,7 @@
 #include "backend/common/types.h"
 #include "backend/storage/data_table.h"
 
-namespace nstore {
+namespace peloton {
 namespace planner {
 
 class InsertNode : public AbstractPlanNode {
@@ -52,4 +52,4 @@ private:
 };
 
 } // namespace planner
-} // namespace nstore
+} // namespace peloton

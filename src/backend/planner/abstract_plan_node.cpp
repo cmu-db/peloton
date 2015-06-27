@@ -15,7 +15,7 @@
 #include "backend/planner/plan_column.h"
 #include "backend/planner/plan_node_util.h"
 
-namespace nstore {
+namespace peloton {
 namespace planner {
 
 AbstractPlanNode::AbstractPlanNode(oid_t plan_node_id)
@@ -90,4 +90,4 @@ std::string AbstractPlanNode::GetInfo() const{
 }
 
 } // namespace planner
-} // namespace nstore
+} // namespace peloton

@@ -21,7 +21,7 @@
 #include "backend/common/pretty_printer.h"
 #include "backend/common/logger.h"
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -56,7 +56,7 @@ inline oid_t GetNextTileGroupId(){
 }
 
 } // End test namespace
-} // End nstore namespace
+} // End peloton namespace
 
 
 

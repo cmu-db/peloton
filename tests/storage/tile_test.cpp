@@ -15,7 +15,7 @@
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -86,6 +86,6 @@ TEST(TileTests, BasicTest) {
 }
 
 } // End test namespace
-} // End nstore namespace
+} // End peloton namespace
 
 
