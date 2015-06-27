@@ -15,7 +15,7 @@
 
 #include "backend/storage/tile.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 LogicalTile::~LogicalTile() {
@@ -363,4 +363,4 @@ std::ostream& operator<<(std::ostream& os, const LogicalTile& lt) {
 }
 
 } // End executor namespace
-} // End nstore namespace
+} // End peloton namespace

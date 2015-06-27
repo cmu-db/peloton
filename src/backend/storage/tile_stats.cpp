@@ -24,7 +24,7 @@
 
 #include "backend/../stats/stats.h"
 
-namespace nstore {
+namespace peloton {
 namespace storage {
 
 vector<string> TableStats::generateTableStatsColumnNames() {
@@ -324,5 +324,5 @@ TableStats::~TableStats() {
 }
 
 } // End storage namespace
-} // End nstore namespace
+} // End peloton namespace
 

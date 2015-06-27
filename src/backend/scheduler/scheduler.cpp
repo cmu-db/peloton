@@ -17,7 +17,7 @@
 #include "backend/common/exception.h"
 #include <string>
 
-namespace nstore {
+namespace peloton {
 namespace scheduler {
 
 
@@ -82,5 +82,5 @@ void Scheduler::Wait() {
 }
 
 } // namespace scheduler
-} // namespace nstore
+} // namespace peloton
 

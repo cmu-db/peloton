@@ -19,7 +19,7 @@
 #include "backend/common/types.h"
 #include "backend/storage/abstract_table.h"
 
-namespace nstore {
+namespace peloton {
 namespace storage {
 
 TileGroup::TileGroup(TileGroupHeader* tile_group_header,
@@ -269,4 +269,4 @@ std::ostream& operator<<(std::ostream& os, const TileGroup& tile_group) {
 }
 
 } // End storage namespace
-} // End nstore namespace
+} // End peloton namespace

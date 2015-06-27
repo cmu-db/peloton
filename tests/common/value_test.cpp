@@ -14,7 +14,7 @@
 
 #include "harness.h"
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -1165,10 +1165,10 @@ TEST(ValueTest, TestOpIncrementOverflow) {
 }
 
 TEST(ValueTest, TestOpDecrementOverflow) {
-    Value bigIntValue = ValueFactory::GetBigIntValue(NSTORE_INT64_MIN);
-    Value integerValue = ValueFactory::GetIntegerValue(NSTORE_INT32_MIN);
-    Value smallIntValue = ValueFactory::GetSmallIntValue(NSTORE_INT16_MIN);
-    Value tinyIntValue = ValueFactory::GetTinyIntValue(NSTORE_INT8_MIN);
+    Value bigIntValue = ValueFactory::GetBigIntValue(PELOTON_INT64_MIN);
+    Value integerValue = ValueFactory::GetIntegerValue(PELOTON_INT32_MIN);
+    Value smallIntValue = ValueFactory::GetSmallIntValue(PELOTON_INT16_MIN);
+    Value tinyIntValue = ValueFactory::GetTinyIntValue(PELOTON_INT8_MIN);
 
     bool caught = false;
     try {
@@ -1974,5 +1974,5 @@ TEST(ValueTest, SerializeToExport)
 }
 
 } // End test namespace
-} // End nstore namespace
+} // End peloton namespace
 

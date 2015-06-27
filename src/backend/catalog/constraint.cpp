@@ -11,7 +11,7 @@
 #include "backend/catalog/constraint.h"
 #include "backend/catalog/column.h"
 
-namespace nstore {
+namespace peloton {
 namespace catalog {
 
 std::ostream& operator<<(std::ostream& os, const Constraint& constraint) {
@@ -48,6 +48,6 @@ std::ostream& operator<<(std::ostream& os, const Constraint& constraint) {
 
 
 } // End catalog namespace
-} // End nstore namespace
+} // End peloton namespace
 
 

@@ -17,7 +17,7 @@
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /**
@@ -116,4 +116,4 @@ bool UpdateExecutor::DExecute() {
 }
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

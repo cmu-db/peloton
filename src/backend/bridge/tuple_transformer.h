@@ -16,20 +16,20 @@ extern "C" {
 #include "backend/common/value_factory.h"
 #include "backend/storage/data_table.h"
 
-//typedef nstore::Value nstore_value;
+//typedef peloton::Value peloton_value;
 
 extern "C" {
 
-nstore::Value DatumGetValue(Datum datum, Oid atttypid);
+peloton::Value DatumGetValue(Datum datum, Oid atttypid);
 
-Datum ValueGetDatum(nstore::Value value);
+Datum ValueGetDatum(peloton::Value value);
 
 void TestTupleTransformer(Datum datum, Oid atttypid);
 
 }
 
-namespace nstore {
+namespace peloton {
 namespace bridge {
-storage::Tuple *TupleTransformer(TupleTableSlot *slot, catalog::Schema *schema);
+storage::Tuple *TupleTransformer(TupleTableSlot *slot, const catalog::Schema *schema);
 }
 }

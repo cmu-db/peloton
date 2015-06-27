@@ -5,7 +5,7 @@
 #include <string>
 #include <sstream>
 
-namespace nstore {
+namespace peloton {
 namespace expression {
 
 class SerializeInput;
@@ -72,5 +72,5 @@ class TupleValueExpression : public AbstractExpression, public TupleValueExpress
 };
 
 } // End expression namespace
-} // End nstore namespace
+} // End peloton namespace
 

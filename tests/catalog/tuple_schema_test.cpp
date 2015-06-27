@@ -14,7 +14,7 @@
 
 #include "backend/catalog/schema.h"
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -66,5 +66,5 @@ TEST(TupleSchemaTests, TupleSchemaTest) {
 }
 
 } // End test namespace
-} // End nstore namespace
+} // End peloton namespace
 

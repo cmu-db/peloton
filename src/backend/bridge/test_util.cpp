@@ -8,7 +8,7 @@
 
 #include "backend/bridge/test_util.h"
 
-namespace nstore {
+namespace peloton {
 namespace bridge {
 
 

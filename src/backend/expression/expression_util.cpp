@@ -24,7 +24,7 @@
 #include "backend/expression/expression.h"
 #include <json_spirit.h>
 
-namespace nstore {
+namespace peloton {
 namespace expression {
 
 // Function static helper templated functions to vivify an optimal
@@ -526,6 +526,6 @@ std::string GetTypeName(ExpressionType type) {
 }
 
 } // End expression namespace
-} // End nstore namespace
+} // End peloton namespace
 
 

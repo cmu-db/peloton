@@ -18,7 +18,7 @@
 
 #include <iostream>
 
-namespace nstore {
+namespace peloton {
 namespace scheduler {
 
 //===--------------------------------------------------------------------===//
@@ -65,4 +65,4 @@ class Task : public tbb::task {
 
 
 } // namespace scheduler
-} // namespace nstore
+} // namespace peloton

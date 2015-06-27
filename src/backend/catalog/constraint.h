@@ -21,7 +21,7 @@
 #include <algorithm>
 #include <iostream>
 
-namespace nstore {
+namespace peloton {
 namespace catalog {
 
 class Index;
@@ -98,4 +98,4 @@ private:
 };
 
 } // End catalog namespace
-} // End nstore namespace
+} // End peloton namespace

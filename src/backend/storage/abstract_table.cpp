@@ -18,7 +18,7 @@
 
 #include <mutex>
 
-namespace nstore {
+namespace peloton {
 namespace storage {
 
 AbstractTable::AbstractTable(const catalog::Schema *schema,
@@ -214,5 +214,5 @@ std::ostream& operator<<(std::ostream& os, const AbstractTable& table) {
 }
 
 } // End storage namespace
-} // End nstore namespace
+} // End peloton namespace
 

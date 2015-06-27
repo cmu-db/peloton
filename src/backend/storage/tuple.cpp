@@ -20,7 +20,7 @@
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
 
-namespace nstore {
+namespace peloton {
 namespace storage {
 
 // Get the value of a specified column (const)
@@ -401,7 +401,7 @@ std::ostream& operator<< (std::ostream& os, const Tuple& tuple){
 }
 
 } // End storage namespace
-} // End nstore namespace
+} // End peloton namespace
 
 
 

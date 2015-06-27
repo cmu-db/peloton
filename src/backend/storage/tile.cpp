@@ -24,7 +24,7 @@
 #include "backend/storage/tile_iterator.h"
 #include "backend/storage/tuple.h"
 
-namespace nstore {
+namespace peloton {
 namespace storage {
 
 Tile::Tile(TileGroupHeader* tile_header,
@@ -466,7 +466,7 @@ TileIterator Tile::GetIterator() {
 
 
 } // End storage namespace
-} // End nstore namespace
+} // End peloton namespace
 
 
 

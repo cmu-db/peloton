@@ -10,7 +10,7 @@
 #include "backend/executor/abstract_executor.h"
 #include "backend/planner/seq_scan_node.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 class SeqScanExecutor : public AbstractExecutor {
@@ -56,4 +56,4 @@ class SeqScanExecutor : public AbstractExecutor {
 };
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

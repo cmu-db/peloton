@@ -24,7 +24,7 @@
 #include "executor/executor_tests_util.h"
 #include "harness.h"
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -149,4 +149,4 @@ TEST(LogicalTileTests, TileMaterializationTest) {
 }
 
 } // End test namespace
-} // End nstore namespace
+} // End peloton namespace

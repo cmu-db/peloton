@@ -21,7 +21,7 @@
 #include "backend/common/byte_array.h"
 #include "backend/common/exception.h"
 
-namespace nstore {
+namespace peloton {
 
 #ifndef __APPLE__ // Ming: OS X has definition of these functions
 #define htonll(x) (((int64_t)(ntohl((int32_t)((x << 32) >> 32))) << 32) | (uint32_t)ntohl(((int32_t)(x >> 32))))
@@ -782,7 +782,7 @@ class ExportSerializeOutput {
 };
 
 
-}  // End nstore namespace
+}  // End peloton namespace
 
 
 

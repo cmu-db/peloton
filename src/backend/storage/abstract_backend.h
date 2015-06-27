@@ -16,7 +16,7 @@
 
 #include "backend/common/types.h"
 
-namespace nstore {
+namespace peloton {
 namespace storage {
 
 //===--------------------------------------------------------------------===//
@@ -43,4 +43,4 @@ public:
 };
 
 } // End storage namespace
-} // End nstore namespace
+} // End peloton namespace

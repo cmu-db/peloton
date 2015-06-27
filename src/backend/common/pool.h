@@ -23,7 +23,7 @@
 
 #include "backend/storage/abstract_backend.h"
 
-namespace nstore {
+namespace peloton {
 
 static const size_t TEMP_POOL_CHUNK_SIZE = 1024 * 1024; // 1 MB
 
@@ -132,7 +132,7 @@ private:
 	std::mutex pool_mutex;
 };
 
-} // End nstore namespace
+} // End peloton namespace
 
 
 

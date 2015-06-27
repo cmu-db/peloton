@@ -14,7 +14,7 @@
 #include "backend/common/types.h"
 #include "backend/common/value.h"
 
-namespace nstore {
+namespace peloton {
 
 namespace storage {
 class Tile;
@@ -163,5 +163,5 @@ class LogicalTile {
 
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton
 

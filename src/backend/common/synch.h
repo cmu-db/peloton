@@ -22,7 +22,7 @@
 // Synchronization utilities
 //===--------------------------------------------------------------------===//
 
-namespace nstore {
+namespace peloton {
 
 template <typename T>
 inline bool atomic_cas(T* object, T old_value, T new_value) {
@@ -164,4 +164,4 @@ class Spinlock {
 
 };
 
-} // End nstore namespace
+} // End peloton namespace

@@ -15,7 +15,7 @@
 #include "backend/executor/logical_tile.h"
 #include "backend/planner/abstract_plan_node.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 class AbstractExecutor {
@@ -87,4 +87,4 @@ class AbstractExecutor {
 };
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

@@ -11,7 +11,7 @@
 
 #include <string>
 
-namespace nstore {
+namespace peloton {
 namespace expression {
 
 //===--------------------------------------------------------------------===//
@@ -115,4 +115,4 @@ class InlinedComparisonExpression : public AbstractExpression {
 };
 
 } // End expression namespace
-} // End nstore namespace
+} // End peloton namespace

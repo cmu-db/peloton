@@ -16,7 +16,7 @@
 
 #include "backend/common/types.h"
 
-namespace nstore {
+namespace peloton {
 namespace catalog {
 
 //===--------------------------------------------------------------------===//
@@ -249,4 +249,4 @@ class Schema	{
 };
 
 } // End catalog namespace
-} // End nstore namespace
+} // End peloton namespace

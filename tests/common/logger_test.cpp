@@ -14,7 +14,7 @@
 
 #include "harness.h"
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -30,4 +30,4 @@ TEST(LoggerTests, BasicTest) {
 }
 
 } // End test namespace
-} // End nstore namespace
+} // End peloton namespace

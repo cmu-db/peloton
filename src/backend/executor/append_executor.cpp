@@ -10,7 +10,7 @@
 #include "backend/executor/append_executor.h"
 #include "backend/planner/append_node.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /**
@@ -52,4 +52,4 @@ bool AppendExecutor::DExecute(){
 
 
 } /* namespace executor */
-} /* namespace nstore */
+} /* namespace peloton */

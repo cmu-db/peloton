@@ -17,7 +17,7 @@
 
 #include "backend/expression/abstract_expression.h"
 
-namespace nstore {
+namespace peloton {
 namespace expression {
 
 //===--------------------------------------------------------------------===//
@@ -41,7 +41,7 @@ AbstractExpression *ComparisonFactory(ExpressionType et, AbstractExpression*, Ab
 
 AbstractExpression *OperatorFactory(ExpressionType et,  AbstractExpression*, AbstractExpression*);
 
-AbstractExpression *ConstantValueFactory(const nstore::Value &val);
+AbstractExpression *ConstantValueFactory(const peloton::Value &val);
 
 AbstractExpression *ParameterValueFactory(int idx);
 
@@ -62,5 +62,5 @@ boost::shared_array<int>
 ConvertIfAllParameterValues(const std::vector<AbstractExpression*> &expressions);
 
 } // End expression namespace
-} // End nstore namespace
+} // End peloton namespace
 

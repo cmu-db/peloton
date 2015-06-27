@@ -9,7 +9,7 @@
 #include "backend/common/types.h"
 #include "backend/common/value.h"
 
-namespace nstore {
+namespace peloton {
 
 //===--------------------------------------------------------------------===//
 // Tuple Interface
@@ -28,4 +28,4 @@ class AbstractTuple {
 
 };
 
-} // namespace nstore
+} // namespace peloton

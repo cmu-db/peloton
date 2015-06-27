@@ -15,7 +15,7 @@
 
 #include <cstring>
 
-namespace nstore {
+namespace peloton {
 
 ItemPointer INVALID_ITEMPOINTER;
 
@@ -579,4 +579,4 @@ ConstraintType StringToConstraintType(std::string str) {
 }
 
 
-} // End nstore namespace
+} // End peloton namespace

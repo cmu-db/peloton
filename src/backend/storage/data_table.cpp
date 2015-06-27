@@ -19,7 +19,7 @@
 
 #include <mutex>
 
-namespace nstore {
+namespace peloton {
 namespace storage {
 
 DataTable::DataTable(const catalog::Schema *schema,
@@ -153,5 +153,5 @@ std::ostream& operator<<(std::ostream& os, const DataTable& table) {
 }
 
 } // End storage namespace
-} // End nstore namespace
+} // End peloton namespace
 

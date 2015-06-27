@@ -12,7 +12,7 @@
 #include "backend/common/types.h"
 
 
-namespace nstore {
+namespace peloton {
 
 //===--------------------------------------------------------------------===//
 // Utils
@@ -91,4 +91,4 @@ public:
 };
 
 } // namespace test
-} // namespace nstore
+} // namespace peloton

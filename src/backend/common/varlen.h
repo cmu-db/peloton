@@ -14,7 +14,7 @@
 
 #include <cstddef>
 
-namespace nstore {
+namespace peloton {
 
 class Pool;
 
@@ -68,5 +68,5 @@ private:
 	char* varlen_string_ptr;
 };
 
-} // End nstore namespace
+} // End peloton namespace
 

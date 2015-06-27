@@ -21,7 +21,7 @@
 #include "backend/common/types.h"
 #include "backend/storage/tuple.h"
 
-namespace nstore {
+namespace peloton {
 namespace index {
 
 //===--------------------------------------------------------------------===//
@@ -206,5 +206,5 @@ class Index
 };
 
 } // End index namespace
-} // End nstore namespace
+} // End peloton namespace
 

@@ -16,7 +16,7 @@
 #include <cstring>
 #include <boost/shared_array.hpp>
 
-namespace nstore {
+namespace peloton {
 
 //===--------------------------------------------------------------------===//
 // A safe and handy char* container
@@ -153,5 +153,5 @@ private:
 
 typedef GenericArray<char> ByteArray;
 
-}  /// End nstore namespace
+}  /// End peloton namespace
 

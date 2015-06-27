@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /**
@@ -144,5 +144,5 @@ bool AggregateExecutor::DExecute() {
 
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton
 

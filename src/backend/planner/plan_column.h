@@ -13,7 +13,7 @@
 
 #include <string>
 
-namespace nstore {
+namespace peloton {
 namespace planner {
 
 /**
@@ -60,6 +60,6 @@ class PlanColumn {
 };
 
 } // namespace planner
-} // namespace nstore
+} // namespace peloton
 
 

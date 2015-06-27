@@ -18,7 +18,7 @@
 
 #include "backend/storage/backend_vm.h"
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -106,5 +106,5 @@ TEST(TupleTests, VarcharTest) {
 }
 
 } // End test namespace
-} // End nstore namespace
+} // End peloton namespace
 

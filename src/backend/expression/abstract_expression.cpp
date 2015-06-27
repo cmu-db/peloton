@@ -22,7 +22,7 @@
 #include <cassert>
 #include <stdexcept>
 
-namespace nstore {
+namespace peloton {
 namespace expression {
 
 AbstractExpression::AbstractExpression()
@@ -233,4 +233,4 @@ AbstractExpression* AbstractExpression::CreateExpressionTreeRecurse(json_spirit:
 }
 
 } // End expression namespace
-} // End nstore namespace
+} // End peloton namespace

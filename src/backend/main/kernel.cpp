@@ -20,7 +20,7 @@
 
 #include <stdio.h>
 
-namespace nstore {
+namespace peloton {
 namespace backend {
 
 #ifdef __APPLE__
@@ -132,4 +132,4 @@ ResultType Kernel::Handler(const char* query) {
 }
 
 } // namespace backend
-} // namespace nstore
+} // namespace peloton

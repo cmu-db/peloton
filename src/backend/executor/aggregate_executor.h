@@ -17,7 +17,7 @@
 
 #include <vector>
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /**
@@ -67,4 +67,4 @@ class AggregateExecutor : public AbstractExecutor {
 };
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

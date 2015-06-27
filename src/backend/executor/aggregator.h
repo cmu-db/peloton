@@ -25,7 +25,7 @@
 // Aggregate
 //===--------------------------------------------------------------------===//
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /*
@@ -323,4 +323,4 @@ private:
 };
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

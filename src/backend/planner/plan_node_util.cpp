@@ -13,7 +13,7 @@
 #include "backend/common/logger.h"
 #include "backend/planner/nodes.h"
 
-namespace nstore {
+namespace peloton {
 namespace planner {
 
 AbstractPlanNode* GetEmptyPlanNode(PlanNodeType type) {
@@ -86,5 +86,5 @@ AbstractPlanNode* GetEmptyPlanNode(PlanNodeType type) {
 }
 
 } // namespace planner
-} // namespace nstore
+} // namespace peloton
 

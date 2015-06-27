@@ -17,7 +17,7 @@
 #include "backend/common/abstract_tuple.h"
 #include "backend/storage/tile_group.h"
 
-namespace nstore {
+namespace peloton {
 namespace expression {
 
 //===--------------------------------------------------------------------===//
@@ -65,4 +65,4 @@ class ContainerTuple : public AbstractTuple {
 };
 
 } // namespace expression
-} // namespace nstore
+} // namespace peloton

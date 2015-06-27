@@ -10,7 +10,7 @@
 
 #include <vector>
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 class InsertExecutor : public AbstractExecutor {
@@ -34,4 +34,4 @@ class InsertExecutor : public AbstractExecutor {
 };
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

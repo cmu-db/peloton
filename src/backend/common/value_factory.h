@@ -15,7 +15,7 @@
 
 #include "backend/common/value.h"
 
-namespace nstore {
+namespace peloton {
 
 //===--------------------------------------------------------------------===//
 // Value generator
@@ -128,6 +128,6 @@ public:
 
 };
 
-} // End nstore namespace
+} // End peloton namespace
 
 

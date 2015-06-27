@@ -17,7 +17,7 @@
 #include "backend/bridge/bridge.h"
 #include "backend/bridge/plan_transformer.h"
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -32,5 +32,5 @@ TEST(PlanTransformerTests, PrintPlanTest) {
 }
 
 } // End test namespace
-} // End nstore namespace
+} // End peloton namespace
 

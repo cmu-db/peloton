@@ -16,7 +16,7 @@
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group_header.h"
 
-namespace nstore {
+namespace peloton {
 namespace storage {
 
 //===--------------------------------------------------------------------===//
@@ -93,4 +93,4 @@ private:
 };
 
 } // End storage namespace
-} // End nstore namespace
+} // End peloton namespace
