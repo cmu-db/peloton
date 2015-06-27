@@ -20,7 +20,7 @@
 #include <cassert>
 #include <queue>
 
-namespace nstore {
+namespace peloton {
 namespace storage {
 
 //===--------------------------------------------------------------------===//
@@ -226,7 +226,7 @@ private:
 
 
 } // End storage namespace
-} // End nstore namespace
+} // End peloton namespace
 
 
 

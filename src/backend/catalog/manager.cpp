@@ -12,7 +12,7 @@
 
 #include "backend/catalog/manager.h"
 
-namespace nstore {
+namespace peloton {
 namespace catalog {
 
 
@@ -55,7 +55,7 @@ void *Manager::GetLocation(const oid_t database_oid, const oid_t table_oid) cons
 }
 
 } // End catalog namespace
-} // End nstore namespace
+} // End peloton namespace
 
 
 

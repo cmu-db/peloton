@@ -27,7 +27,7 @@
 using ::testing::NotNull;
 using ::testing::Return;
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 namespace {
@@ -229,4 +229,4 @@ TEST(LimitTests, NonLeafHugeLimitTest){
 }
 
 } // namespace test
-} // namespace nstore
+} // namespace peloton

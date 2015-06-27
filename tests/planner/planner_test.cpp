@@ -15,7 +15,7 @@
 #include "harness.h"
 #include "backend/planner/abstract_plan_node.h"
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -28,5 +28,5 @@ TEST(PlannerTests, BasicTest) {
 }
 
 } // End test namespace
-} // End nstore namespace
+} // End peloton namespace
 

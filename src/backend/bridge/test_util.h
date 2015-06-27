@@ -14,7 +14,7 @@ extern "C" {
 #include "nodes/pprint.h"
 }
 
-namespace nstore {
+namespace peloton {
 namespace bridge {
 
 class TestUtil {

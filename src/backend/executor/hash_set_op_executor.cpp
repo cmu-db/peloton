@@ -14,7 +14,7 @@
 #include "backend/executor/hash_set_op_executor.h"
 #include "backend/planner/set_op_node.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /**
@@ -253,4 +253,4 @@ bool HashSetOpExecutor::UpdateHashTable(HT &htable){
 
 
 } /* namespace executor */
-} /* namespace nstore */
+} /* namespace peloton */

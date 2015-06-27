@@ -20,7 +20,7 @@
 
 #include "backend/common/logger.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /**
@@ -132,4 +132,4 @@ bool IndexScanExecutor::DExecute() {
 }
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

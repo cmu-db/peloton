@@ -20,7 +20,7 @@ extern "C" {
 }
 void TestTupleTransformer(Datum datum, Oid atttypid) {
 
-  nstore::Value p_value;
+  peloton::Value p_value;
   Datum p_datum;
   printf("Call to DatumGetValue in Peloton\n");
   printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
@@ -36,9 +36,9 @@ void TestTupleTransformer(Datum datum, Oid atttypid) {
   printf("\n");
 }
 
-nstore::Value DatumGetValue(Datum datum, Oid atttypid) {
-  nstore::Value value;
-  nstore::Pool *data_pool = nullptr;
+peloton::Value DatumGetValue(Datum datum, Oid atttypid) {
+  peloton::Value value;
+  peloton::Pool *data_pool = nullptr;
   int16_t smallint;
   int32_t integer;
   int64_t bigint;
@@ -51,31 +51,31 @@ nstore::Value DatumGetValue(Datum datum, Oid atttypid) {
     case 21:
       smallint = DatumGetInt16(datum);
       printf("%d\n", smallint);
-      value = nstore::ValueFactory::GetSmallIntValue(smallint);
+      value = peloton::ValueFactory::GetSmallIntValue(smallint);
       break;
 
     case 23:
       integer = DatumGetInt32(datum);
       printf("%d\n", integer);
-      value = nstore::ValueFactory::GetIntegerValue(integer);
+      value = peloton::ValueFactory::GetIntegerValue(integer);
       break;
 
     case 20:
       bigint = DatumGetInt64(datum);
       printf("%ld\n", bigint);
-      value = nstore::ValueFactory::GetBigIntValue(bigint);
+      value = peloton::ValueFactory::GetBigIntValue(bigint);
       break;
 
     case 1042:
       character = DatumGetCString(datum);
       printf("%s\n", character);
-      value = nstore::ValueFactory::GetStringValue(character, data_pool);
+      value = peloton::ValueFactory::GetStringValue(character, data_pool);
       break;
 
     case 1043:
       variable_character = DatumGetCString(datum);
       printf("%s\n", variable_character);
-      value = nstore::ValueFactory::GetStringValue(variable_character,
+      value = peloton::ValueFactory::GetStringValue(variable_character,
                                                    data_pool);
       break;
 
@@ -83,7 +83,7 @@ nstore::Value DatumGetValue(Datum datum, Oid atttypid) {
       timestamp = DatumGetInt64(datum);
       timestamp_charpointer = DatumGetCString(datum);
       printf("%s\n", timestamp_charpointer);
-      value = nstore::ValueFactory::GetTimestampValue(timestamp);
+      value = peloton::ValueFactory::GetTimestampValue(timestamp);
       break;
 
     default:
@@ -94,9 +94,9 @@ nstore::Value DatumGetValue(Datum datum, Oid atttypid) {
 }
 
 Datum
-ValueGetDatum(nstore::Value value) {
-	nstore::ValueType value_type;
-	nstore::ValuePeeker value_peeker;
+ValueGetDatum(peloton::Value value) {
+	peloton::ValueType value_type;
+	peloton::ValuePeeker value_peeker;
 	Datum datum;
 	int16_t smallint;
 	int32_t integer;
@@ -158,7 +158,7 @@ ValueGetDatum(nstore::Value value) {
   }
 }
 
-namespace nstore {
+namespace peloton {
 namespace bridge {
 /* @brief convert a Postgres tuple into Peloton tuple
  * @param slot Postgres tuple
@@ -166,7 +166,7 @@ namespace bridge {
  * @return a Peloton tuple
  */
 storage::Tuple *TupleTransformer(TupleTableSlot * slot,
-                                  catalog::Schema *schema) {
+                                 const catalog::Schema *schema) {
   TupleDesc typeinfo = slot->tts_tupleDescriptor;
   int natts = typeinfo->natts;
   int i;

@@ -24,7 +24,7 @@
 #include <cassert>
 #include <algorithm>
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 // TODO: Fix function
@@ -462,5 +462,5 @@ bool CreateExecutor::CreateConstraint(catalog::Database* db,
 }
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton
 

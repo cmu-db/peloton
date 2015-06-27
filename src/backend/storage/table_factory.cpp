@@ -19,7 +19,7 @@
 
 #include <mutex>
 
-namespace nstore {
+namespace peloton {
 namespace storage {
 
 DataTable* TableFactory::GetDataTable(oid_t database_id,
@@ -59,5 +59,5 @@ bool TableFactory::DropDataTable(oid_t database_oid, oid_t table_oid)
 
 
 } // End storage namespace
-} // End nstore namespace
+} // End peloton namespace
 

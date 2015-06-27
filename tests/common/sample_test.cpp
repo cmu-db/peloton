@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -17,4 +17,4 @@ TEST(SampleTest, Test2) {
 }
 
 } // End test namespace
-} // End nstore namespace
+} // End peloton namespace

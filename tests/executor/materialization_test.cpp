@@ -30,7 +30,7 @@
 
 using ::testing::NotNull;
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -181,4 +181,4 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
 }
 
 } // namespace test
-} // namespace nstore
+} // namespace peloton

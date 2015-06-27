@@ -27,7 +27,7 @@
 using ::testing::NotNull;
 using ::testing::Return;
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 namespace {
@@ -306,4 +306,4 @@ TEST(OrderByTests, StringDescIntAscTest){
 }
 
 } // namespace test
-} // namespace nstore
+} // namespace peloton

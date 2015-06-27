@@ -10,7 +10,7 @@
 #include "backend/executor/logical_tile.h"
 
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /**

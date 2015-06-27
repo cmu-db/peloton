@@ -10,7 +10,7 @@
 
 #include <vector>
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 class DeleteExecutor : public AbstractExecutor {
@@ -33,4 +33,4 @@ class DeleteExecutor : public AbstractExecutor {
 };
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

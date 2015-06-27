@@ -39,7 +39,7 @@
 using ::testing::NotNull;
 using ::testing::Return;
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -309,4 +309,4 @@ TEST(MutateTests, InsertTest) {
 }
 
 } // namespace test
-} // namespace nstore
+} // namespace peloton

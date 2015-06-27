@@ -12,7 +12,7 @@
 
 #include "backend/index/btree_index.h"
 
-namespace nstore {
+namespace peloton {
 namespace index {
 
 
@@ -518,7 +518,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyGTE(const storage
 }
 
 } // End index namespace
-} // End nstore namespace
+} // End peloton namespace
 
 
 

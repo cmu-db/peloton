@@ -10,7 +10,7 @@
 #include "backend/executor/abstract_executor.h"
 #include "backend/storage/tuple.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /**
@@ -93,4 +93,4 @@ class OrderByExecutor : public AbstractExecutor {
 };
 
 } /* namespace executor */
-} /* namespace nstore */
+} /* namespace peloton */

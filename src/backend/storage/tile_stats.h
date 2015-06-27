@@ -19,7 +19,7 @@
 #include "backend/stats/stats_source.h"
 #include "backend/storage/tile.h"
 
-namespace nstore {
+namespace peloton {
 namespace storage {
 
 /// Stats for tiles
@@ -109,5 +109,5 @@ private:
 };
 
 } // End storage namespace
-} // End nstore namespace
+} // End peloton namespace
 

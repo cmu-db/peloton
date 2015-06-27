@@ -17,7 +17,7 @@
 #include <string>
 #include <cstdlib>
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -63,5 +63,5 @@ TEST(BridgeTests, BasicTest) {
 }
 
 } // End test namespace
-} // End nstore namespace
+} // End peloton namespace
 

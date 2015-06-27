@@ -17,7 +17,7 @@
 
 #include <cassert>
 
-namespace nstore {
+namespace peloton {
 
 /**
  * A class for Peeking into an Value and converting its data to a
@@ -106,6 +106,6 @@ public:
 	}
 };
 
-} // End nstore namespace
+} // End peloton namespace
 
 

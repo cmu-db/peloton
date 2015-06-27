@@ -23,7 +23,7 @@
 #include "backend/common/value.h"
 #include "backend/storage/tuple.h"
 
-namespace nstore {
+namespace peloton {
 
 //===--------------------------------------------------------------------===//
 // Value Vector
@@ -299,4 +299,4 @@ class ValueArrayEqualityTester {
   ValueType* column_types_;
 };
 
-} // End nstore namespace
+} // End peloton namespace

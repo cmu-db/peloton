@@ -14,7 +14,7 @@
 
 #include "backend/catalog/catalog.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 //===--------------------------------------------------------------------===//
@@ -36,4 +36,4 @@ class DropExecutor {
 };
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

@@ -15,7 +15,7 @@
 #include "backend/storage/tile_group.h"
 #include "backend/storage/data_table.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 namespace {
@@ -179,4 +179,4 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(const std::vector<
 }
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

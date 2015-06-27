@@ -8,7 +8,7 @@
 
 #pragma once
 
-namespace nstore {
+namespace peloton {
 namespace planner {
 
 // This is just for convenience
@@ -33,5 +33,5 @@ namespace planner {
 */
 
 } // namespace planner
-} // namespace nstore
+} // namespace peloton
 

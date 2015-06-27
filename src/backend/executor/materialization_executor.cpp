@@ -20,7 +20,7 @@
 #include "backend/planner/materialization_node.h"
 #include "backend/storage/tile.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /**
@@ -144,4 +144,4 @@ bool MaterializationExecutor::DExecute() {
 
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

@@ -18,7 +18,7 @@
 #include "backend/planner/insert_node.h"
 #include "backend/storage/tile_iterator.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /**
@@ -114,4 +114,4 @@ bool InsertExecutor::DExecute() {
 }
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

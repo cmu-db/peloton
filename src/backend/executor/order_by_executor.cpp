@@ -11,7 +11,7 @@
 #include "backend/planner/order_by_node.h"
 #include "backend/storage/tile.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /**
@@ -182,4 +182,4 @@ bool OrderByExecutor::DoSort(){
 
 
 } /* namespace executor */
-} /* namespace nstore */
+} /* namespace peloton */

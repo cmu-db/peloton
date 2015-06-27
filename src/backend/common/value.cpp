@@ -17,7 +17,7 @@
 #include <sstream>
 #include <iostream>
 
-namespace nstore {
+namespace peloton {
 
 /// For x <op> y where x is an integer,
 /// promote x and y to s_intPromotionTable[y]
@@ -917,23 +917,23 @@ Value Value::OpDecrement() const {
   Value retval(type);
   switch(type) {
   case VALUE_TYPE_TINYINT:
-    if (GetTinyInt() == NSTORE_INT8_MIN) {
+    if (GetTinyInt() == PELOTON_INT8_MIN) {
       throw NumericValueOutOfRangeException("Decrementing this TinyInt results in a value out of range");
     }
     retval.GetTinyInt() = static_cast<int8_t>(GetTinyInt() - 1); break;
   case VALUE_TYPE_SMALLINT:
-    if (GetSmallInt() == NSTORE_INT16_MIN) {
+    if (GetSmallInt() == PELOTON_INT16_MIN) {
       throw NumericValueOutOfRangeException("Decrementing this SmallInt results in a value out of range");
     }
     retval.GetSmallInt() = static_cast<int16_t>(GetSmallInt() - 1); break;
   case VALUE_TYPE_INTEGER:
-    if (GetInteger() == NSTORE_INT32_MIN) {
+    if (GetInteger() == PELOTON_INT32_MIN) {
       throw NumericValueOutOfRangeException("Decrementing this Integer results in a value out of range");
     }
     retval.GetInteger() = GetInteger() - 1; break;
   case VALUE_TYPE_BIGINT:
   case VALUE_TYPE_TIMESTAMP:
-    if (GetBigInt() == NSTORE_INT64_MIN) {
+    if (GetBigInt() == PELOTON_INT64_MIN) {
       throw NumericValueOutOfRangeException("Decrementing this BigInt/Timestamp results in a value out of range");
     }
     retval.GetBigInt() = GetBigInt() - 1; break;
@@ -1578,7 +1578,7 @@ std::string Value::GetTypeName(ValueType type) {
 }
 
 
-} // End nstore namespace
+} // End peloton namespace
 
 
 

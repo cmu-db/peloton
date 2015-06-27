@@ -20,7 +20,7 @@
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/container_tuple.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 /**
@@ -191,6 +191,6 @@ bool NestedLoopJoinExecutor::DExecute() {
 }
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton
 
 

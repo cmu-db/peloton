@@ -18,7 +18,7 @@
 
 #include "harness.h"
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -322,7 +322,7 @@ TEST(TileGroupTests, MVCCInsert) {
 }
 
 } // End test namespace
-} // End nstore namespace
+} // End peloton namespace
 
 
 
