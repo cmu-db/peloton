@@ -95,10 +95,12 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
  *
  *	  Planning converts a Query tree into a Plan tree headed by a PlannedStmt
  *	  node --- the Query structure is not used by the executor.
+ *
+ *	  Peloton porting: use c++ inheritance
  */
-typedef struct Query
+struct Query : Node
 {
-	NodeTag		type;
+	//NodeTag		type;
 
 	CmdType		commandType;	/* select|insert|update|delete|utility */
 
@@ -158,7 +160,7 @@ typedef struct Query
 
 	List	   *constraintDeps; /* a list of pg_constraint OIDs that the query
 								 * depends on to be semantically valid */
-} Query;
+};
 
 
 /****************************************************************************
