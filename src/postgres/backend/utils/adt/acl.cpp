@@ -1652,7 +1652,7 @@ convert_any_priv_string(text *priv_type_text,
 	char	   *chunk;
 	char	   *next_chunk;
 
-	/* We rely on priv_type being a private, modifiable string */
+	/* We rely on priv_type being a cprivate, modifiable string */
 	for (chunk = priv_type; chunk; chunk = next_chunk)
 	{
 		int			chunk_len;

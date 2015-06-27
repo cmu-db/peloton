@@ -993,7 +993,7 @@ AtStart_Memory(void)
 	TransactionState s = CurrentTransactionState;
 
 	/*
-	 * If this is the first time through, create a private context for
+	 * If this is the first time through, create a cprivate context for
 	 * AbortTransaction to work in.  By reserving some space now, we can
 	 * insulate AbortTransaction from out-of-memory scenarios.  Like
 	 * ErrorContext, we set it up with slow growth rate and a nonzero minimum

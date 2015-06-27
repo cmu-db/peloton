@@ -79,7 +79,7 @@ typedef struct IndexScanDescData
 	bool		xactStartedInRecovery;	/* prevents killing/seeing killed
 										 * tuples */
 
-	/* index access method's private state */
+	/* index access method's cprivate state */
 	void	   *opaque;			/* access-method-specific info */
 
 	/* in an index-only scan, this is valid after a successful amgettuple */

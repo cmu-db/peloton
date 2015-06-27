@@ -100,7 +100,7 @@ int			PostAuthDelay = 0;
 
 
 /* ----------------
- *		private variables
+ *		cprivate variables
  * ----------------
  */
 

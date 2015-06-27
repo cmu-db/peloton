@@ -18,7 +18,7 @@
 #include "storage/relfilenode.h"
 #include "utils/relcache.h"
 
-/* struct definition is private to rewriteheap.c */
+/* struct definition is cprivate to rewriteheap.c */
 typedef struct RewriteStateData *RewriteState;
 
 extern RewriteState begin_heap_rewrite(Relation OldHeap, Relation NewHeap,

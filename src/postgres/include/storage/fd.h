@@ -55,7 +55,7 @@ typedef int File;
 extern int	max_files_per_process;
 
 /*
- * This is private to fd.c, but exported for save/restore_backend_variables()
+ * This is cprivate to fd.c, but exported for save/restore_backend_variables()
  */
 extern int	max_safe_fds;
 

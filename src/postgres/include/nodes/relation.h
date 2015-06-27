@@ -258,7 +258,7 @@ typedef struct PlannerInfo
 	Relids		curOuterRels;	/* outer rels above current node */
 	List	   *curOuterParams; /* not-yet-assigned NestLoopParams */
 
-	/* optional private data for join_search_hook, e.g., GEQO */
+	/* optional cprivate data for join_search_hook, e.g., GEQO */
 	void	   *join_search_private;
 
 	/* for GroupingFunc fixup in setrefs */
@@ -381,7 +381,7 @@ typedef struct PlannerInfo
  *
  *		serverid - OID of foreign server, if foreign table (else InvalidOid)
  *		fdwroutine - function hooks for FDW, if foreign table (else NULL)
- *		fdw_private - private state for FDW, if foreign table (else NULL)
+ *		fdw_private - cprivate state for FDW, if foreign table (else NULL)
  *
  * The presence of the remaining fields depends on the restrictions
  * and joins that the relation participates in:
@@ -883,7 +883,7 @@ typedef struct TidPath
 /*
  * ForeignPath represents a potential scan of a foreign table
  *
- * fdw_private stores FDW private data about the scan.  While fdw_private is
+ * fdw_private stores FDW cprivate data about the scan.  While fdw_private is
  * not actually touched by the core code during normal operations, it's
  * generally a good idea to use a representation that can be dumped by
  * nodeToString(), so that you can examine the structure during debugging
@@ -928,7 +928,7 @@ typedef struct CustomPathMethods
 												struct CustomPath *best_path,
 												List *tlist,
 												List *clauses);
-	/* Optional: print additional fields besides "private" */
+	/* Optional: print additional fields besides "cprivate" */
 	void		(*TextOutCustomPath) (StringInfo str,
 											  const struct CustomPath *node);
 } CustomPathMethods;
@@ -1716,22 +1716,22 @@ typedef struct JoinCostWorkspace
 	Cost		startup_cost;	/* cost expended before fetching any tuples */
 	Cost		total_cost;		/* total cost (assuming all tuples fetched) */
 
-	/* Fields below here should be treated as private to costsize.c */
+	/* Fields below here should be treated as cprivate to costsize.c */
 	Cost		run_cost;		/* non-startup cost components */
 
-	/* private for cost_nestloop code */
+	/* cprivate for cost_nestloop code */
 	Cost		inner_rescan_run_cost;
 	double		outer_matched_rows;
 	Selectivity inner_scan_frac;
 
-	/* private for cost_mergejoin code */
+	/* cprivate for cost_mergejoin code */
 	Cost		inner_run_cost;
 	double		outer_rows;
 	double		inner_rows;
 	double		outer_skip_rows;
 	double		inner_skip_rows;
 
-	/* private for cost_hashjoin code */
+	/* cprivate for cost_hashjoin code */
 	int			numbuckets;
 	int			numbatches;
 } JoinCostWorkspace;

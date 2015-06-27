@@ -1003,7 +1003,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 	 */
 	PageSetLSN(leftpage, PageGetLSN(origpage));
 
-	/* init btree private data */
+	/* init btree cprivate data */
 	oopaque = (BTPageOpaque) PageGetSpecialPointer(origpage);
 	lopaque = (BTPageOpaque) PageGetSpecialPointer(leftpage);
 	ropaque = (BTPageOpaque) PageGetSpecialPointer(rightpage);

@@ -22,7 +22,7 @@
  *
  * Each active hashjoin has a HashJoinTable control block, which is
  * palloc'd in the executor's per-query context.  All other storage needed
- * for the hashjoin is kept in private memory contexts, two for each hashjoin.
+ * for the hashjoin is kept in cprivate memory contexts, two for each hashjoin.
  * This makes it easy and fast to release the storage when we don't need it
  * anymore.  (Exception: data associated with the temp files lives in the
  * per-query context too, since we always call buffile.c in that context.)

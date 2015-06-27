@@ -272,7 +272,7 @@ CreateIntoRelDestReceiver(IntoClause *intoClause)
 	self->pub.rDestroy = intorel_destroy;
 	self->pub.mydest = DestIntoRel;
 	self->into = intoClause;
-	/* other private fields will be set during intorel_startup */
+	/* other cprivate fields will be set during intorel_startup */
 
 	return (DestReceiver *) self;
 }
@@ -459,7 +459,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 		SetMatViewPopulatedState(intoRelationDesc, true);
 
 	/*
-	 * Fill private fields of myState for use by later routines
+	 * Fill cprivate fields of myState for use by later routines
 	 */
 	myState->rel = intoRelationDesc;
 	myState->output_cid = GetCurrentCommandId(true);

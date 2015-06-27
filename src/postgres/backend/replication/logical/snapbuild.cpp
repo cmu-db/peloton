@@ -143,7 +143,7 @@ struct SnapBuild
 	/* how far are we along building our first full snapshot */
 	SnapBuildState state;
 
-	/* private memory context used to allocate memory for this module. */
+	/* cprivate memory context used to allocate memory for this module. */
 	MemoryContext context;
 
 	/* all transactions < than this have committed/aborted */
