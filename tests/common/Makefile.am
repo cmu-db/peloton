@@ -16,8 +16,8 @@ logger_test_SOURCES = common/logger_test.cpp
 value_test_SOURCES = common/value_test.cpp
 
 value_test_LDADD = \
-				   $(obj_DIR)/common/value.o \
-				   $(obj_DIR)/common/varlen.o \
-				   $(obj_DIR)/common/types.o \
-				   $(obj_DIR)/common/pool.o
+				   $(obj_DIR)/common/libpeloton_la-value.lo \
+				   $(obj_DIR)/common/libpeloton_la-varlen.lo \
+				   $(obj_DIR)/common/libpeloton_la-types.lo \
+				   $(obj_DIR)/common/libpeloton_la-pool.lo
 
