@@ -18,7 +18,7 @@ extern "C" {
 
 extern "C" void printPlanStateTree(const PlanState * planstate);
 
-namespace nstore {
+namespace peloton {
 namespace bridge {
 
 PlanTransformer&
@@ -93,7 +93,7 @@ PlanTransformer::AbstractPlanNodePtr PlanTransformer::transformInsert(
           .GetLocation(database_oid, table_oid));
 
   /* Resolve tuple */
-  catalog::Schema *schema = result_table->GetSchema();
+  auto schema = result_table->GetSchema();
 
   PlanState *subplanstate = mtstate->mt_plans[0]; /* Should be only one which is a Result Plan */
   TupleTableSlot *planSlot;

@@ -13,7 +13,7 @@ extern "C" {
 #include <tr1/memory>
 #include "backend/planner/abstract_plan_node.h"
 
-namespace nstore {
+namespace peloton {
 namespace bridge {
 class PlanTransformer {
  public:

@@ -17,7 +17,7 @@
 
 #include "backend/storage/tuple.h"
 
-namespace nstore {
+namespace peloton {
 namespace index {
 
 void bt_putid(unsigned char *dest, uid id)
@@ -2364,6 +2364,6 @@ BtVal *bt_val(BtDb *bt, uint slot)
 }
 
 } // End index namespace
-} // End nstore namespace
+} // End peloton namespace
 
 

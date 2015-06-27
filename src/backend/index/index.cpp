@@ -14,7 +14,7 @@
 
 #include <iostream>
 
-namespace nstore {
+namespace peloton {
 namespace index {
 
 Index::Index(IndexMetadata *metadata)
@@ -60,7 +60,7 @@ void Index::GetInfo() const {
 }
 
 } // End index namespace
-} // End nstore namespace
+} // End peloton namespace
 
 
 

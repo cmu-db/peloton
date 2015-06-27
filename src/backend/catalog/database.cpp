@@ -10,7 +10,7 @@
 
 #include "backend/catalog/database.h"
 
-namespace nstore {
+namespace peloton {
 namespace catalog {
 
 bool Database::AddTable(Table* table) {
@@ -50,5 +50,5 @@ std::ostream& operator<<(std::ostream& os, const Database& database) {
 
 
 } // End catalog namespace
-} // End nstore namespace
+} // End peloton namespace
 

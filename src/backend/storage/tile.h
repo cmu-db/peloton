@@ -21,7 +21,7 @@
 
 #include <mutex>
 
-namespace nstore {
+namespace peloton {
 namespace storage {
 
 //===--------------------------------------------------------------------===//
@@ -331,4 +331,4 @@ class TileFactory {
 
 
 } // End storage namespace
-} // End nstore namespace
+} // End peloton namespace

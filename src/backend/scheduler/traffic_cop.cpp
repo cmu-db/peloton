@@ -16,7 +16,7 @@
 #include "backend/scheduler/traffic_cop.h"
 #include <iostream>
 
-namespace nstore {
+namespace peloton {
 namespace scheduler {
 
 std::istream& operator >> (std::istream& in, Payload& msg) {
@@ -84,6 +84,6 @@ void TrafficCop::Execute() {
 }
 
 } // namespace scheduler
-} // namespace nstore
+} // namespace peloton
 
 

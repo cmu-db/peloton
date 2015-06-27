@@ -13,7 +13,7 @@
 #include "backend/bridge/ddl.h"
 
 
-namespace nstore {
+namespace peloton {
 namespace bridge {
 
 bool DDL::CreateTable(std::string table_name,
@@ -238,4 +238,4 @@ bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, 
 }
 
 } // namespace bridge
-} // namespace nstore
+} // namespace peloton

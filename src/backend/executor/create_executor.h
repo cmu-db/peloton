@@ -16,7 +16,7 @@
 #include "backend/catalog/schema.h"
 #include "backend/bridge/ddl.h"
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 //===--------------------------------------------------------------------===//
@@ -56,5 +56,5 @@ class CreateExecutor {
 };
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton
 

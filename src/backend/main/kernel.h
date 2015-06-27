@@ -14,7 +14,7 @@
 
 #include "backend/common/types.h"
 
-namespace nstore {
+namespace peloton {
 namespace backend {
 
 //===--------------------------------------------------------------------===//
@@ -31,4 +31,4 @@ class Kernel {
 };
 
 } // namespace backend
-} // namespace nstore
+} // namespace peloton

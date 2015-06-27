@@ -14,7 +14,7 @@
 
 #include "backend/index/index.h"
 
-namespace nstore {
+namespace peloton {
 namespace index {
 
 //===--------------------------------------------------------------------===//
@@ -33,4 +33,4 @@ class IndexFactory {
 
 
 } // End index namespace
-} // End nstore namespace
+} // End peloton namespace

@@ -13,7 +13,7 @@
 
 #include "backend/common/types.h"
 
-namespace nstore {
+namespace peloton {
 
 namespace executor {
 class AbstractExecutor;
@@ -84,4 +84,4 @@ class AbstractPlanNode {
 };
 
 } // namespace planner
-} // namespace nstore
+} // namespace peloton

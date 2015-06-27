@@ -15,7 +15,7 @@
 #include <string>
 #include <mutex>
 
-namespace nstore {
+namespace peloton {
 namespace catalog {
 
 /**
@@ -93,6 +93,6 @@ private:
 };
 
 } // End catalog namespace
-} // End nstore namespace
+} // End peloton namespace
 
 

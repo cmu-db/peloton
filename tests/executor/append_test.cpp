@@ -25,7 +25,7 @@
 using ::testing::NotNull;
 using ::testing::Return;
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 namespace {

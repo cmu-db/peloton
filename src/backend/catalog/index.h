@@ -19,7 +19,7 @@
 #include <vector>
 #include <iostream>
 
-namespace nstore {
+namespace peloton {
 
 namespace index {
 class Index;
@@ -99,4 +99,4 @@ private:
 };
 
 } // End catalog namespace
-} // End nstore namespace
+} // End peloton namespace

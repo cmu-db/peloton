@@ -12,7 +12,7 @@
 
 #include "backend/catalog/table.h"
 
-namespace nstore {
+namespace peloton {
 namespace catalog {
 
 bool Table::AddColumn(Column* column) {
@@ -109,6 +109,6 @@ std::ostream& operator<<(std::ostream& os, const Table& table) {
 
 
 } // End catalog namespace
-} // End nstore namespace
+} // End peloton namespace
 
 

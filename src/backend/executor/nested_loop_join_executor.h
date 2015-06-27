@@ -18,7 +18,7 @@
 
 #include <vector>
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 class NestedLoopJoinExecutor : public AbstractExecutor {
@@ -55,4 +55,4 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
 };
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

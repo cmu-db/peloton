@@ -19,7 +19,7 @@
 #include <iostream>
 
 
-namespace nstore {
+namespace peloton {
 
 namespace storage {
 class DataTable;
@@ -122,5 +122,5 @@ private:
 };
 
 } // End catalog namespace
-} // End nstore namespace
+} // End peloton namespace
 

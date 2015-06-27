@@ -19,7 +19,7 @@
 #include <vector>
 #include <map>
 
-namespace nstore {
+namespace peloton {
 namespace concurrency {
 
 #define BASE_REF_COUNT 1
@@ -116,4 +116,4 @@ private:
 };
 
 } // End concurrency namespace
-} // End nstore namespace
+} // End peloton namespace

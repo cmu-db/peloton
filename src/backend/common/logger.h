@@ -17,7 +17,7 @@
 #include <sys/time.h>
 #include <stdio.h>
 
-namespace nstore {
+namespace peloton {
 
 //===--------------------------------------------------------------------===//
 // Simple Logger
@@ -163,4 +163,4 @@ inline void OutputLogHeader(const char *file, int line, const char *func, int le
   fprintf(LOG_OUTPUT_STREAM, "%s [%s:%d:%s] %s - ", time_str, file, line, func, type);
 }
 
-} // End nstore namespace
+} // End peloton namespace

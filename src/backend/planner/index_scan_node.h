@@ -14,7 +14,7 @@
 #include "backend/expression/abstract_expression.h"
 #include "backend/planner/abstract_plan_node.h"
 
-namespace nstore {
+namespace peloton {
 
 namespace index {
 class Index;
@@ -112,4 +112,4 @@ private:
 };
 
 } // namespace planner
-} // namespace nstore
+} // namespace peloton

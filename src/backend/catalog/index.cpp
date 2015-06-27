@@ -13,7 +13,7 @@
 #include "backend/catalog/index.h"
 #include "backend/catalog/column.h"
 
-namespace nstore {
+namespace peloton {
 namespace catalog {
 
 std::ostream& operator<<(std::ostream& os, const Index& index) {
@@ -32,6 +32,6 @@ std::ostream& operator<<(std::ostream& os, const Index& index) {
 
 
 } // End catalog namespace
-} // End nstore namespace
+} // End peloton namespace
 
 

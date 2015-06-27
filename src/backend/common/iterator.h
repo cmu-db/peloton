@@ -13,7 +13,7 @@
 
 #pragma once
 
-namespace nstore {
+namespace peloton {
 
 //===--------------------------------------------------------------------===//
 // Iterator Interface
@@ -29,6 +29,6 @@ public:
 	virtual ~Iterator() {}
 };
 
-} // End nstore namespace
+} // End peloton namespace
 
 

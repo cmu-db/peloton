@@ -14,7 +14,7 @@
 #include "backend/catalog/abstract_catalog_object.h"
 #include "backend/catalog/constraint.h"
 
-namespace nstore {
+namespace peloton {
 namespace catalog {
 
 /**
@@ -71,4 +71,4 @@ private:
 };
 
 } // End catalog namespace
-} // End nstore namespace
+} // End peloton namespace

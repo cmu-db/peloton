@@ -17,7 +17,7 @@
 
 #include "backend/index/btree_index.h"
 
-namespace nstore {
+namespace peloton {
 namespace index {
 
 Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
@@ -31,5 +31,5 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
 }
 
 } // End index namespace
-} // End nstore namespace
+} // End peloton namespace
 

@@ -23,7 +23,7 @@
 #include <cassert>
 #include <algorithm>
 
-namespace nstore {
+namespace peloton {
 namespace executor {
 
 // TODO: Fix function
@@ -166,6 +166,6 @@ bool DropExecutor::Execute() {
 */
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton
 
 

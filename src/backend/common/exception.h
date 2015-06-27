@@ -25,7 +25,7 @@
 #include <cxxabi.h>
 #include <signal.h>
 
-namespace nstore {
+namespace peloton {
 
 //===--------------------------------------------------------------------===//
 // Exception Types
@@ -402,5 +402,5 @@ class ConstraintException: public Exception {
   }
 };
 
-} // End nstore namespace
+} // End peloton namespace
 

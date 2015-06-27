@@ -15,7 +15,7 @@
 #include <iostream>
 #include <iomanip>
 
-namespace nstore {
+namespace peloton {
 namespace storage {
 
 //===--------------------------------------------------------------------===//
@@ -122,4 +122,4 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 }
 
 } // End storage namespace
-} // End nstore namespace
+} // End peloton namespace

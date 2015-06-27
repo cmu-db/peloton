@@ -12,7 +12,7 @@
 #include "backend/common/types.h"
 #include "backend/executor/abstract_executor.h"
 
-namespace nstore {
+namespace peloton {
 
 namespace planner {
 class AbstractPlanNode;
@@ -54,4 +54,4 @@ class MaterializationExecutor : public AbstractExecutor {
 };
 
 } // namespace executor
-} // namespace nstore
+} // namespace peloton

@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <sstream>
 
-namespace nstore {
+namespace peloton {
 namespace catalog {
 
 /// Helper function for creating TupleSchema
@@ -235,4 +235,4 @@ bool Schema::operator!= (const Schema &other) const {
 }
 
 } // End catalog namespace
-} // End nstore namespace
+} // End peloton namespace

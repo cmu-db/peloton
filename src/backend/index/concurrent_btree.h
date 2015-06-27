@@ -51,7 +51,7 @@ REDISTRIBUTION OF THIS SOFTWARE.
 #include "backend/catalog/schema.h"
 #include "backend/common/synch.h"
 
-namespace nstore {
+namespace peloton {
 namespace index {
 
 typedef unsigned long long	uid;
@@ -578,5 +578,5 @@ BtKey *bt_key(BtDb *bt, uint slot);
 BtVal *bt_val(BtDb *bt, uint slot);
 
 } // End index namespace
-} // End nstore namespace
+} // End peloton namespace
 

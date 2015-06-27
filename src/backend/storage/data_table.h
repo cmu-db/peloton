@@ -19,7 +19,7 @@
 
 #include <string>
 
-namespace nstore {
+namespace peloton {
 namespace storage {
 
 //===--------------------------------------------------------------------===//
@@ -108,6 +108,6 @@ protected:
 
 
 } // End storage namespace
-} // End nstore namespace
+} // End peloton namespace
 
 

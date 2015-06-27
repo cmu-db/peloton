@@ -18,7 +18,7 @@
 #include <thread>
 #include <iomanip>
 
-namespace nstore {
+namespace peloton {
 namespace concurrency {
 
 TransactionManager::TransactionManager() {
@@ -295,4 +295,4 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
 }
 
 } // End concurrency namespace
-} // End nstore namespace
+} // End peloton namespace

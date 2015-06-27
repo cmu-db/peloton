@@ -17,7 +17,7 @@
 #include <thread>
 #include <iomanip>
 
-namespace nstore {
+namespace peloton {
 namespace concurrency {
 
 void Transaction::RecordInsert(ItemPointer location) {
@@ -88,4 +88,4 @@ std::ostream& operator<<(std::ostream& os, const Transaction& txn) {
 
 
 } // End concurrency namespace
-} // End nstore namespace
+} // End peloton namespace

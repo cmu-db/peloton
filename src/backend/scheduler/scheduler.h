@@ -15,7 +15,7 @@
 #include "backend/scheduler/task.h"
 #include "tbb/task_scheduler_init.h"
 
-namespace nstore {
+namespace peloton {
 namespace scheduler {
 
 class SchedulerState {
@@ -70,4 +70,4 @@ class Scheduler {
 };
 
 } // namespace scheduler
-} // namespace nstore
+} // namespace peloton

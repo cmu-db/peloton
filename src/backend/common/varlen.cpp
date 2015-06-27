@@ -13,7 +13,7 @@
 #include "backend/common/varlen.h"
 #include "backend/common/pool.h"
 
-namespace nstore {
+namespace peloton {
 
 Varlen* Varlen::Create(size_t size, Pool* dataPool){
 	Varlen* retval;
@@ -69,5 +69,5 @@ void Varlen::SetBackPtr()
 	*backptr = this;
 }
 
-} // End nstore namespace
+} // End peloton namespace
 

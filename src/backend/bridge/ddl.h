@@ -33,7 +33,7 @@ typedef struct
 
 #ifdef __cplusplus
 
-namespace nstore {
+namespace peloton {
 namespace bridge {
 
 //===--------------------------------------------------------------------===//
@@ -54,7 +54,7 @@ extern "C" {
 }
 
 } // namespace bridge
-} // namespace nstore
+} // namespace peloton
 
 #endif
 

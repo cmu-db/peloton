@@ -6,7 +6,7 @@
 
 #include "harness.h"
 
-namespace nstore {
+namespace peloton {
 namespace test {
 
 std::atomic<txn_id_t> txn_id_counter(INVALID_TXN_ID);
@@ -23,4 +23,4 @@ uint64_t GetThreadId() {
 }
 
 } // End test namespace
-} // End nstore namespace
+} // End peloton namespace

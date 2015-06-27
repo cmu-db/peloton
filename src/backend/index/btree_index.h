@@ -22,7 +22,7 @@
 
 #include <atomic>
 
-namespace nstore {
+namespace peloton {
 namespace index {
 
 /**
@@ -77,5 +77,5 @@ class BtreeMultimapIndex : public Index {
 };
 
 } // End index namespace
-} // End nstore namespace
+} // End peloton namespace
 
