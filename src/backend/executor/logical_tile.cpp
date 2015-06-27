@@ -22,6 +22,7 @@ LogicalTile::~LogicalTile() {
 
   // Frees owned base tiles.
   for (storage::Tile *base_tile : owned_base_tiles_) {
+    std::cout << "Free logical tile \n";
     delete base_tile;
   }
 }
@@ -169,25 +170,6 @@ storage::Tile *LogicalTile::GetBaseTile(oid_t column_id) {
   return schema_[column_id].base_tile;
 }
 
-
-/**
- * @brief Is this tile a wrapper around the underlying tiles ?
- *
- * @return bool
- */
-bool LogicalTile::IsWrapper(){
-  return wrapper;
-}
-
-/**
- * @brief Get the wrapped physical tile at given offset
- *
- * @return Pointer to the wrapped physical tile
- */
-storage::Tile *LogicalTile::GetWrappedTile(){
-  assert(physical_tile_ != nullptr);
-  return physical_tile_;
-}
 
 /**
  * @brief Get the value at the specified field.

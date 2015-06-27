@@ -14,7 +14,7 @@
 #include "backend/common/types.h"
 #include "backend/common/value.h"
 #include "backend/common/exception.h"
-#include "backend/expression/tuple.h"
+#include "backend/common/abstract_tuple.h"
 #include "backend/storage/tile_group.h"
 
 namespace nstore {
@@ -25,7 +25,7 @@ namespace expression {
 //===--------------------------------------------------------------------===//
 
 template <class T>
-class ContainerTuple : public Tuple {
+class ContainerTuple : public AbstractTuple {
  public:
   ContainerTuple(const ContainerTuple &) = default;
   ContainerTuple& operator=(const ContainerTuple &) = default;
@@ -33,8 +33,8 @@ class ContainerTuple : public Tuple {
   ContainerTuple& operator=(ContainerTuple &&) = default;
 
   ContainerTuple(T *container, oid_t tuple_id)
-    : container_(container),
-      tuple_id_(tuple_id) {
+  : container_(container),
+    tuple_id_(tuple_id) {
   }
 
   /** @brief Get the value at the given column id. */

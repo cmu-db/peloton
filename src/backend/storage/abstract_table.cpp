@@ -21,12 +21,11 @@
 namespace nstore {
 namespace storage {
 
-AbstractTable::AbstractTable(catalog::Schema *schema,
-             AbstractBackend *backend,
-            size_t tuples_per_tilegroup)
-
-: database_id(INVALID_OID), // FIXME
-  table_id(INVALID_OID),    // FIXME
+AbstractTable::AbstractTable(const catalog::Schema *schema,
+        AbstractBackend *backend,
+        size_t tuples_per_tilegroup)
+: database_id(INVALID_OID),
+  table_id(INVALID_OID),
   backend(backend),
   schema(schema),
   tuples_per_tilegroup(tuples_per_tilegroup){

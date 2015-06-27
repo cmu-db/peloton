@@ -30,7 +30,7 @@ class ParameterValueExpression : public AbstractExpression, public ParameterValu
     this->m_valueIdx = value_idx;
  };
 
-  Value Evaluate(__attribute__((unused)) const Tuple *tuple1, __attribute__((unused)) const Tuple *tuple2) const {
+  Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1, __attribute__((unused)) const AbstractTuple *tuple2) const {
     return this->m_paramValue;
   }
 
