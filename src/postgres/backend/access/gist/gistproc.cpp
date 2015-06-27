@@ -437,17 +437,18 @@ g_box_consider_split(ConsiderSplitContext *context, int dimNum,
 
 /*
  * Return increase of original BOX area by new BOX area insertion.
+ * Peloton porting: change new to cnew
  */
 static double
-box_penalty(BOX *original, BOX *new)
+box_penalty(BOX *original, BOX *cnew)
 {
 	double		union_width,
 				union_height;
 
-	union_width = Max(original->high.x, new->high.x) -
-		Min(original->low.x, new->low.x);
-	union_height = Max(original->high.y, new->high.y) -
-		Min(original->low.y, new->low.y);
+	union_width = Max(original->high.x, cnew->high.x) -
+		Min(original->low.x, cnew->low.x);
+	union_height = Max(original->high.y, cnew->high.y) -
+		Min(original->low.y, cnew->low.y);
 	return union_width * union_height - (original->high.x - original->low.x) *
 		(original->high.y - original->low.y);
 }

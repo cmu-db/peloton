@@ -684,7 +684,7 @@
 #define HAVE__GET_CPUID 1
 
 /* Define to 1 if your compiler understands _Static_assert. */
-#define HAVE__STATIC_ASSERT 1
+#define HAVE__STATIC_ASSERT 0
 
 /* Define to 1 if your compiler understands __VA_ARGS__ in macros. */
 #define HAVE__VA_ARGS 1
