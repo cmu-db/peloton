@@ -1268,6 +1268,8 @@ typedef struct UpdateStmt
  * LIMIT, etc, clause values into a SELECT statement without worrying
  * whether it is a simple or compound SELECT.
  * ----------------------
+ *
+ * Peloton porting: use c++ inheritance
  */
 typedef enum SetOperation
 {
@@ -1277,9 +1279,9 @@ typedef enum SetOperation
 	SETOP_EXCEPT
 } SetOperation;
 
-typedef struct SelectStmt
+typedef struct SelectStmt : Node
 {
-	NodeTag		type;
+	//NodeTag		type;
 
 	/*
 	 * These fields are used only in "leaf" SelectStmts.
