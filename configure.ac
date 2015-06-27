@@ -38,7 +38,7 @@ DX_HTML_FEATURE(ON)
 DX_DOT_FEATURE(OFF)
 DX_PDF_FEATURE(OFF)
 DX_PS_FEATURE(OFF)
-DX_INIT_DOXYGEN([$PACKAGE_NAME],[doxygen.cfg],[doc])
+DX_INIT_DOXYGEN([$PACKAGE_NAME],[doc/doxygen.cfg],[doc])
 
 ######################################################################
 # GCC COLOR
