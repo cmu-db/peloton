@@ -496,6 +496,12 @@ std::string PlanNodeToString(PlanNodeType type) {
     case PLAN_NODE_TYPE_DISTINCT: {
         return "DISTINCT";
     }
+    case PLAN_NODE_TYPE_SETOP: {
+        return "SETOP";
+    }
+    case PLAN_NODE_TYPE_APPEND: {
+        return "APPEND";
+    }
     }
     return "INVALID";
 }

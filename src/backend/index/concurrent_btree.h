@@ -284,7 +284,7 @@ typedef struct {
   ushort thread_no;		// thread number
 
   // key schema for comparison
-  catalog::Schema *key_schema;
+  const catalog::Schema *key_schema;
 } BtDb;
 
 typedef enum {
@@ -440,6 +440,8 @@ BtDb *bt_open (BtMgr *mgr);
 //  -1: key2 > key1
 //  +1: key2 < key1
 //  as the comparison value
+int keycmp (BtKey* key1, char *key2, const catalog::Schema *key_schema);
+
 int keycmp (BtKey* key1, char *key2, catalog::Schema *key_schema);
 
 // place write, read, or parent lock on requested page_no.

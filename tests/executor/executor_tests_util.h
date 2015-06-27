@@ -6,7 +6,11 @@
 
 #pragma once
 
+#include <vector>
+#include <memory>
+
 #include "backend/common/types.h"
+
 
 namespace nstore {
 
@@ -53,7 +57,10 @@ public:
     /** @brief Creates a basic table with allocated and populated tuples */
     static storage::DataTable *CreateAndPopulateTable();
 
-    static void PopulateTable(storage::DataTable *table, int num_rows, bool mutate = false, bool random = false);
+    static void PopulateTable(storage::DataTable *table, int num_rows,
+                              bool mutate,
+                              bool random,
+                              bool group_by);
 
     static void PopulateTiles(storage::TileGroup *tile_group, int num_rows);
 
@@ -78,6 +85,9 @@ public:
 
     static storage::Tuple *GetTuple(storage::DataTable *table, oid_t tuple_id);
     static storage::Tuple *GetNullTuple(storage::DataTable *table);
+
+    /** Print the tuples from a vector of logical tiles */
+    static void PrintTileVector(std::vector<std::unique_ptr<executor::LogicalTile>>& tile_vec);
 };
 
 } // namespace test

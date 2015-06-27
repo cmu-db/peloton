@@ -19,7 +19,7 @@
 #include "backend/common/value_factory.h"
 #include "backend/common/value_peeker.h"
 #include "backend/common/types.h"
-#include "backend/expression/tuple.h"
+#include "backend/common/abstract_tuple.h"
 
 namespace nstore {
 namespace storage {
@@ -28,7 +28,7 @@ namespace storage {
 // Tuple class
 //===--------------------------------------------------------------------===//
 
-class Tuple : public expression::Tuple {
+class Tuple : public AbstractTuple {
 	friend class catalog::Schema;
 	friend class ValuePeeker;
 	friend class Tile;
@@ -229,6 +229,28 @@ inline Tuple& Tuple::operator=(const Tuple &rhs) {
 	tuple_data = rhs.tuple_data;
 	return *this;
 }
+
+//===--------------------------------------------------------------------===//
+// Tuple Hasher
+//===--------------------------------------------------------------------===//
+
+struct TupleHasher: std::unary_function<Tuple, std::size_t> {
+  // Generate a 64-bit number for the key value
+  size_t operator()(Tuple tuple) const {
+    return tuple.HashCode();
+  }
+};
+
+//===--------------------------------------------------------------------===//
+// Tuple Comparator
+//===--------------------------------------------------------------------===//
+
+class TupleComparator {
+ public:
+  bool operator()(const Tuple lhs, const Tuple rhs) const {
+    return lhs.EqualsNoSchemaCheck(rhs);
+  }
+};
 
 } // End storage namespace
 } // End nstore namespace

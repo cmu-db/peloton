@@ -275,7 +275,7 @@ bool CreateExecutor::CreateIndex(catalog::Database* db,
   // Physical index
   //===--------------------------------------------------------------------===//
 
-  catalog::Schema *tuple_schema = table->GetTable()->GetSchema();
+  auto tuple_schema = table->GetTable()->GetSchema();
   catalog::Schema *key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(index_name,
@@ -435,11 +435,31 @@ bool CreateExecutor::CreateConstraint(catalog::Database* db,
 
     }
   } // FOR
+
+  // In-Memory Data Table
+  catalog::Schema *schema = new catalog::Schema(physical_columns);
+  storage::DataTable *physical_table = storage::TableFactory::GetDataTable(DEFAULT_DB_ID, schema, table_name);
+  table->SetPhysicalTable(physical_table);
+
+  // lock database
+  {
+    db->Lock();
+
+    bool status = db->AddTable(table);
+    if (status == false) {
+      LOG_ERROR("Could not create table : %s \n", table_name);
+      delete table;
+      db->Unlock();
+      return false;
+    }
+
+    db->Unlock();
+  }
   */
 
-  return (true);
+  LOG_WARN("Created table : %s \n", table_name.c_str());
+  return true;
 }
-
 
 } // namespace executor
 } // namespace nstore

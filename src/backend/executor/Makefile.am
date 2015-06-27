@@ -19,7 +19,11 @@ executor_FILES = \
 		 backend/executor/update_executor.cpp \
 		 backend/executor/nested_loop_join_executor.cpp \
 		 backend/executor/order_by_executor.cpp \
-		 backend/executor/aggregate_executor.cpp				 
+		 backend/executor/hash_set_op_executor.cpp \
+		 backend/executor/aggregator.cpp \
+		 backend/executor/aggregate_executor.cpp \
+		 backend/executor/append_executor.cpp		 
+
 
 executor_INCLUDES = \
 		    -I$(srcdir)/backend/executor
