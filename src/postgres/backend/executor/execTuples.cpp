@@ -721,7 +721,7 @@ ExecFetchSlotTupleDatum(TupleTableSlot *slot)
  *
  *		A typical use for this operation is to prepare a computed tuple
  *		for being stored on disk.  The original data may or may not be
- *		virtual, but in any case we need a private copy for heap_insert
+ *		virtual, but in any case we need a cprivate copy for heap_insert
  *		to scribble on.
  * --------------------------------
  */
@@ -789,7 +789,7 @@ ExecMaterializeSlot(TupleTableSlot *slot)
  *		ExecCopySlot
  *			Copy the source slot's contents into the destination slot.
  *
- *		The destination acquires a private copy that will not go away
+ *		The destination acquires a cprivate copy that will not go away
  *		if the source is cleared.
  *
  *		The caller must ensure the slots have compatible tupdescs.

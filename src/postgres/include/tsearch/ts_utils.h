@@ -37,7 +37,7 @@ extern void close_tsvector_parser(TSVectorParseState state);
 
 /* parse_tsquery */
 
-struct TSQueryParserStateData;	/* private in backend/utils/adt/tsquery.c */
+struct TSQueryParserStateData;	/* cprivate in backend/utils/adt/tsquery.c */
 typedef struct TSQueryParserStateData *TSQueryParserState;
 
 typedef void (*PushFunction) (Datum opaque, TSQueryParserState state,

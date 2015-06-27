@@ -91,7 +91,7 @@ anybit_typmodout(int32 typmod)
  *	The data structure contains the following elements:
  *	  header  -- length of the whole data structure (incl header)
  *				 in bytes. (as with all varying length datatypes)
- *	  data section -- private data section for the bits data structures
+ *	  data section -- cprivate data section for the bits data structures
  *		bitlength -- length of the bit string in bits
  *		bitdata   -- bit string, most significant byte first
  *

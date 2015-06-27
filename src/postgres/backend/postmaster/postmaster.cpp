@@ -5234,7 +5234,7 @@ processCancelRequest(Port *port, void *pkt)
    *		Start an autovac worker process.
    *
    * This function is here because it enters the resulting PID into the
-   * postmaster's private backends list.
+   * postmaster's cprivate backends list.
    *
    * NB -- this code very roughly matches BackendStartup.
    */

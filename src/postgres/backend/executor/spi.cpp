@@ -1712,7 +1712,7 @@ SPI_plan_get_cached_plan(SPIPlanPtr plan)
 }
 
 
-/* =================== private functions =================== */
+/* =================== cprivate functions =================== */
 
 /*
  * spi_dest_startup
@@ -2038,7 +2038,7 @@ _SPI_execute_plan(SPIPlanPtr plan, ParamListInfo paramLI,
 		}
 		else
 		{
-			/* Make sure we have a private copy of the snapshot to modify */
+			/* Make sure we have a cprivate copy of the snapshot to modify */
 			PushCopiedSnapshot(snapshot);
 			pushed_active_snap = true;
 		}

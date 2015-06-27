@@ -1088,7 +1088,7 @@ PageSetChecksumCopy(Page page, BlockNumber blkno)
 }
 
 /*
- * Set checksum for a page in private memory.
+ * Set checksum for a page in cprivate memory.
  *
  * This must only be used when we know that no other process can be modifying
  * the page buffer.

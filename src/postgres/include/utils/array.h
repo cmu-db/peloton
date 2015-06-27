@@ -82,7 +82,7 @@ typedef struct
 } ArrayType;
 
 /*
- * An expanded array is contained within a private memory context (as
+ * An expanded array is contained within a cprivate memory context (as
  * all expanded objects must be) and has a control structure as below.
  *
  * The expanded array might contain a regular "flat" array if that was the
@@ -118,7 +118,7 @@ typedef struct ExpandedArrayHeader
 	/*
 	 * If we have a Datum-array representation of the array, it's kept here;
 	 * else dvalues/dnulls are NULL.  The dvalues and dnulls arrays are always
-	 * palloc'd within the object private context, but may change size from
+	 * palloc'd within the object cprivate context, but may change size from
 	 * time to time.  For pass-by-ref element types, dvalues entries might
 	 * point either into the fstartptr..fendptr area, or to separately
 	 * palloc'd chunks.  Elements should always be fully detoasted, as they
@@ -176,7 +176,7 @@ typedef struct ArrayBuildState
 	int16		typlen;			/* needed info about datatype */
 	bool		typbyval;
 	char		typalign;
-	bool		private_cxt;	/* use private memory context */
+	bool		private_cxt;	/* use cprivate memory context */
 } ArrayBuildState;
 
 /*
@@ -197,7 +197,7 @@ typedef struct ArrayBuildStateArr
 	int			lbs[MAXDIM];
 	Oid			array_type;		/* data type of the arrays */
 	Oid			element_type;	/* data type of the array elements */
-	bool		private_cxt;	/* use private memory context */
+	bool		private_cxt;	/* use cprivate memory context */
 } ArrayBuildStateArr;
 
 /*
@@ -227,7 +227,7 @@ typedef struct ArrayMetaState
 } ArrayMetaState;
 
 /*
- * private state needed by array_map (here because caller must provide it)
+ * cprivate state needed by array_map (here because caller must provide it)
  */
 typedef struct ArrayMapState
 {
@@ -235,7 +235,7 @@ typedef struct ArrayMapState
 	ArrayMetaState ret_extra;
 } ArrayMapState;
 
-/* ArrayIteratorData is private in arrayfuncs.c */
+/* ArrayIteratorData is cprivate in arrayfuncs.c */
 typedef struct ArrayIteratorData *ArrayIterator;
 
 /* fmgr macros for regular varlena array objects */

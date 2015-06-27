@@ -17,7 +17,7 @@
 #include <fcntl.h>
 
 #include "datatype/timestamp.h"
-#include "private.h"
+#include "cprivate.h"
 #include "pgtz.h"
 #include "tzfile.h"
 

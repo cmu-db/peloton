@@ -3281,7 +3281,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"ssl_key_file", PGC_POSTMASTER, CONN_AUTH_SECURITY,
-			gettext_noop("Location of the SSL server private key file."),
+			gettext_noop("Location of the SSL server cprivate key file."),
 			NULL
 		},
 		&ssl_key_file,

@@ -281,7 +281,7 @@ static Gene
 gimme_gene(PlannerInfo *root, Edge edge, Edge *edge_table)
 {
 	int			i;
-	Gene		friend;
+	Gene		cfriend;
 	int			minimum_edges;
 	int			minimum_count = -1;
 	int			rand_decision;
@@ -297,7 +297,7 @@ gimme_gene(PlannerInfo *root, Edge edge, Edge *edge_table)
 
 	for (i = 0; i < edge.unused_edges; i++)
 	{
-		friend = (Gene) edge.edge_list[i];
+		cfriend = (Gene) edge.edge_list[i];
 
 		/*
 		 * give priority to shared edges that are negative; so return 'em
@@ -307,8 +307,8 @@ gimme_gene(PlannerInfo *root, Edge edge, Edge *edge_table)
 		 * negative values are caught here so we need not worry about
 		 * converting to absolute values
 		 */
-		if (friend < 0)
-			return (Gene) Abs(friend);
+		if (cfriend < 0)
+			return (Gene) Abs(cfriend);
 
 
 		/*
@@ -327,14 +327,14 @@ gimme_gene(PlannerInfo *root, Edge edge, Edge *edge_table)
 		 */
 
 
-		if (edge_table[(int) friend].unused_edges < minimum_edges)
+		if (edge_table[(int) cfriend].unused_edges < minimum_edges)
 		{
-			minimum_edges = edge_table[(int) friend].unused_edges;
+			minimum_edges = edge_table[(int) cfriend].unused_edges;
 			minimum_count = 1;
 		}
 		else if (minimum_count == -1)
 			elog(ERROR, "minimum_count not set");
-		else if (edge_table[(int) friend].unused_edges == minimum_edges)
+		else if (edge_table[(int) cfriend].unused_edges == minimum_edges)
 			minimum_count++;
 
 	}							/* for (i=0; i<edge.unused_edges; i++) */
@@ -346,15 +346,15 @@ gimme_gene(PlannerInfo *root, Edge edge, Edge *edge_table)
 
 	for (i = 0; i < edge.unused_edges; i++)
 	{
-		friend = (Gene) edge.edge_list[i];
+		cfriend = (Gene) edge.edge_list[i];
 
 		/* return the chosen candidate point */
-		if (edge_table[(int) friend].unused_edges == minimum_edges)
+		if (edge_table[(int) cfriend].unused_edges == minimum_edges)
 		{
 			minimum_count--;
 
 			if (minimum_count == rand_decision)
-				return friend;
+				return cfriend;
 		}
 	}
 

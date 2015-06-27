@@ -14,7 +14,7 @@
  *	  This should be moved to a more appropriate place.  It is here
  *	  for lack of a better place.
  *
- *	  These functions store LargeObjectDesc structs in a private MemoryContext,
+ *	  These functions store LargeObjectDesc structs in a cprivate MemoryContext,
  *	  which means that large object descriptors hang around until we destroy
  *	  the context at transaction end.  It'd be possible to prolong the lifetime
  *	  of the context so that LO FDs are good across transactions (for example,
@@ -65,7 +65,7 @@ bool		lo_compat_privileges;
  * LO "FD"s are indexes into the cookies array.
  *
  * A non-null entry is a pointer to a LargeObjectDesc allocated in the
- * LO private memory context "fscxt".  The cookies array itself is also
+ * LO cprivate memory context "fscxt".  The cookies array itself is also
  * dynamically allocated in that context.  Its current allocated size is
  * cookies_len entries, of which any unused entries will be NULL.
  */

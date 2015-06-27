@@ -733,7 +733,7 @@ typedef struct PgBackendStatus
 	 * To avoid locking overhead, we use the following protocol: a backend
 	 * increments st_changecount before modifying its entry, and again after
 	 * finishing a modification.  A would-be reader should note the value of
-	 * st_changecount, copy the entry into private memory, then check
+	 * st_changecount, copy the entry into cprivate memory, then check
 	 * st_changecount again.  If the value hasn't changed, and if it's even,
 	 * the copy is valid; otherwise start over.  This makes updates cheap
 	 * while reads are potentially expensive, but that's the tradeoff we want.
@@ -788,7 +788,7 @@ typedef struct PgBackendStatus
  *
  * Also pgstat_save_changecount_before() and pgstat_save_changecount_after()
  * need to be called before and after PgBackendStatus entries are copied into
- * private memory, respectively.
+ * cprivate memory, respectively.
  */
 #define pgstat_increment_changecount_before(beentry)	\
 	do {	\

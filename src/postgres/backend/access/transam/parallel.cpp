@@ -248,11 +248,11 @@ InitializeParallelDSM(ParallelContext *pcxt)
 	/*
 	 * Create DSM and initialize with cnew table of contents.  But if the user
 	 * didn't request any workers, then don't bother creating a dynamic shared
-	 * memory segment; instead, just use backend-private memory.
+	 * memory segment; instead, just use backend-cprivate memory.
 	 *
 	 * Also, if we can't create a dynamic shared memory segment because the
 	 * maximum number of segments have already been created, then fall back
-	 * to backend-private memory, and plan not to use any workers.  We hope
+	 * to backend-cprivate memory, and plan not to use any workers.  We hope
 	 * this won't happen very often, but it's better to abandon the use of
 	 * parallelism than to fail outright.
 	 */
@@ -536,7 +536,7 @@ DestroyParallelContext(ParallelContext *pcxt)
 	}
 
 	/*
-	 * If this parallel context is actually in backend-private memory rather
+	 * If this parallel context is actually in backend-cprivate memory rather
 	 * than shared memory, free that memory instead.
 	 */
 	if (pcxt->private_memory != NULL)

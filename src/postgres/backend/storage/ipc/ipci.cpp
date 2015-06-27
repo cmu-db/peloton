@@ -86,7 +86,7 @@ RequestAddinShmemSpace(Size size)
  * check IsUnderPostmaster, rather than EXEC_BACKEND, to detect this case.
  * This is a bit code-wasteful and could be cleaned up.)
  *
- * If "makePrivate" is true then we only need private memory, not shared
+ * If "makePrivate" is true then we only need cprivate memory, not shared
  * memory.  This is true for a standalone backend, false for a postmaster.
  */
 void
