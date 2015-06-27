@@ -28,34 +28,34 @@ typedef tbb::concurrent_unordered_map<oid_t, void*> lookup_dir;
 
 class Manager {
 
- public:
+public:
 
-  // Singleton
-  static Manager& GetInstance();
+    // Singleton
+    static Manager& GetInstance();
 
-  oid_t GetNextOid(){
-    return ++oid;
-  }
+    oid_t GetNextOid() {
+        return ++oid;
+    }
 
-  oid_t GetOid() {
-    return oid;
-  }
+    oid_t GetOid() {
+        return oid;
+    }
 
-  void SetLocation(const oid_t oid, void *location);
+    void SetLocation(const oid_t oid, void *location);
 
-  void *GetLocation(const oid_t oid) const;
+    void *GetLocation(const oid_t oid) const;
 
-  Manager() {}
+    Manager() {}
 
-  Manager(Manager const&) = delete;
+    Manager(Manager const&) = delete;
 
-  //===--------------------------------------------------------------------===//
-  // Data members
-  //===--------------------------------------------------------------------===//
+    //===--------------------------------------------------------------------===//
+    // Data members
+    //===--------------------------------------------------------------------===//
 
-  std::atomic<oid_t> oid = ATOMIC_VAR_INIT(START_OID);
+    std::atomic<oid_t> oid = ATOMIC_VAR_INIT(START_OID);
 
-  lookup_dir locator;
+    lookup_dir locator;
 };
 
 } // End catalog namespace

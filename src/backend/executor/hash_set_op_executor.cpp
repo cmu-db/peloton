@@ -21,7 +21,7 @@ namespace executor {
  * @brief Constructor
  */
 HashSetOpExecutor::HashSetOpExecutor(planner::AbstractPlanNode *node,
-                                     Transaction *transaction)
+                                     concurrency::Transaction *transaction)
 : AbstractExecutor(node, transaction) {
 
 }

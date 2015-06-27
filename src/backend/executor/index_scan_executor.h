@@ -20,7 +20,7 @@ class IndexScanExecutor : public AbstractExecutor {
 
  public:
   explicit IndexScanExecutor(planner::AbstractPlanNode *node,
-                          Transaction *transaction);
+                          concurrency::Transaction *transaction);
 
  protected:
   bool DInit();

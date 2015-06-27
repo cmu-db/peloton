@@ -52,8 +52,7 @@ TEST(AppendTests, AppendTwoTest) {
   planner::AppendNode node;
 
   // Create and set up executor
-  // Create and set up executor
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   executor::AppendExecutor executor(&node, txn);
 

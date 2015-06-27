@@ -73,7 +73,7 @@ TEST(AggregateTests, DistinctTest){
                               output_table_schema);
 
   // Create and set up executor
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   executor::AggregateExecutor executor(&node, txn);
@@ -141,7 +141,7 @@ TEST(AggregateTests, GroupByTest){
                               output_table_schema);
 
   // Create and set up executor
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   executor::AggregateExecutor executor(&node, txn);
@@ -223,7 +223,7 @@ TEST(AggregateTests, AggregateTest){
                               output_table_schema.get());
 
   // Create and set up executor
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   executor::AggregateExecutor executor(&node, txn);

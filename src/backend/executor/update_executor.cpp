@@ -5,18 +5,17 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/executor/update_executor.cpp
- *
  *-------------------------------------------------------------------------
  */
 
 #include "backend/executor/update_executor.h"
 
+#include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/planner/update_node.h"
-#include "backend/common/logger.h"
-#include "backend/common/transaction.h"
+#include "backend/concurrency/transaction.h"
+#include "backend/concurrency/transaction_manager.h"
 
 namespace nstore {
 namespace executor {
@@ -26,7 +25,7 @@ namespace executor {
  * @param node Update node corresponding to this executor.
  */
 UpdateExecutor::UpdateExecutor(planner::AbstractPlanNode *node,
-                               Transaction *context)
+                               concurrency::Transaction *context)
     : AbstractExecutor(node, context) {
 }
 
@@ -75,7 +74,7 @@ bool UpdateExecutor::DExecute() {
         // this might fail due to a concurrent operation that has latched the tuple
         bool status = tile_group->DeleteTuple(txn_id, tuple_id);
         if(status == false) {
-            auto& txn_manager = TransactionManager::GetInstance();
+            auto& txn_manager = concurrency::TransactionManager::GetInstance();
             txn_manager.AbortTransaction(transaction_);
             return false;
         }
@@ -95,7 +94,7 @@ bool UpdateExecutor::DExecute() {
         bool update_mode = true;
         ItemPointer location = target_table->InsertTuple(txn_id, tuple, update_mode);
         if(location.block == INVALID_OID) {
-            auto& txn_manager = TransactionManager::GetInstance();
+            auto& txn_manager = concurrency::TransactionManager::GetInstance();
             txn_manager.AbortTransaction(transaction_);
 
             tuple->FreeUninlinedData();

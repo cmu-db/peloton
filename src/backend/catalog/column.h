@@ -5,75 +5,68 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/catalog/column.h
- *
  *-------------------------------------------------------------------------
  */
 
 #pragma once
 
 #include "backend/common/types.h"
+#include "backend/catalog/abstract_catalog_object.h"
 #include "backend/catalog/constraint.h"
 
 namespace nstore {
 namespace catalog {
 
-//===--------------------------------------------------------------------===//
-// Column
-//===--------------------------------------------------------------------===//
+/**
+ * Column Catalog Object 
+ */
+class Column : public AbstractCatalogObject {
 
-class Column {
+public:
+    Column(std::string name, ValueType type, oid_t offset, size_t size, bool not_null)
+        : AbstractCatalogObject(static_cast<oid_t>(1), name), // FIXME
+          type(type),
+          offset(offset),
+          size(size),
+          not_null(not_null) {
+    }
+    
+    //===--------------------------------------------------------------------===//
+    // ACCESSORS
+    //===--------------------------------------------------------------------===//
 
- public:
-  Column(std::string name,
-         ValueType type,
-         oid_t offset,
-         size_t size,
-         bool not_null)
- : name(name),
-   type(type),
-   offset(offset),
-   size(size),
-   not_null(not_null){
-  }
+    ValueType GetType() const {
+        return type;
+    }
 
-  std::string GetName() {
-    return name;
-  }
+    oid_t GetOffset() const {
+        return offset;
+    }
 
-  ValueType GetType() const {
-    return type;
-  }
+    size_t GetSize() const {
+        return size;
+    }
 
-  oid_t GetOffset() const {
-    return offset;
-  }
+    bool IsNotNullable() const {
+        return not_null;
+    }
 
-  size_t GetSize() const {
-    return size;
-  }
+    // Get a string representation of this column
+    friend std::ostream& operator<<(std::ostream& os, const Column& column);
 
-  bool IsNotNullable() const {
-    return not_null;
-  }
+private:
 
-  // Get a string representation of this column
-  friend std::ostream& operator<<(std::ostream& os, const Column& column);
+    // The data type of the column
+    ValueType type = VALUE_TYPE_INVALID;
 
- private:
-  std::string name;
+    // The column's order in the table
+    oid_t offset = 0;
 
-  // The data type of the column
-  ValueType type = VALUE_TYPE_INVALID;
+    // Size of the column
+    size_t size = 0;
 
-  // The column's order in the table
-  oid_t offset = 0;
-
-  // Size of the column
-  size_t size = 0;
-
-  // Is it not nullable ?
-  bool not_null = false;
+    // Is it not nullable ?
+    bool not_null = false;
 
 };
 

@@ -56,7 +56,7 @@ TEST(HashSetOptTests, ExceptTest){
   planner::SetOpNode node(SETOP_TYPE_EXCEPT);
 
   // Create and set up executor
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   executor::HashSetOpExecutor executor(&node, txn);
 
@@ -121,7 +121,7 @@ TEST(HashSetOptTests, ExceptAllTest){
   planner::SetOpNode node(SETOP_TYPE_EXCEPT_ALL);
 
   // Create and set up executor
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   executor::HashSetOpExecutor executor(&node, txn);
 
@@ -204,7 +204,7 @@ TEST(HashSetOptTests, IntersectTest){
   planner::SetOpNode node(SETOP_TYPE_INTERSECT);
 
   // Create and set up executor
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   executor::HashSetOpExecutor executor(&node, txn);
 
@@ -268,7 +268,7 @@ TEST(HashSetOptTests, IntersectAllTest){
   planner::SetOpNode node(SETOP_TYPE_INTERSECT_ALL);
 
   // Create and set up executor
-  auto& txn_manager = TransactionManager::GetInstance();
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   executor::HashSetOpExecutor executor(&node, txn);
 

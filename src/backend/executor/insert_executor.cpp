@@ -26,7 +26,7 @@ namespace executor {
  * @param node Insert node corresponding to this executor.
  */
 InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
-                               Transaction *transaction)
+                               concurrency::Transaction *transaction)
 : AbstractExecutor(node, transaction) {
 }
 
@@ -80,7 +80,7 @@ bool InsertExecutor::DExecute() {
     while (tile_iterator.Next(tuple)) {
       ItemPointer location = target_table->InsertTuple(transaction_->GetTransactionId(), &tuple);
       if (location.block == INVALID_OID) {
-        auto& txn_manager = TransactionManager::GetInstance();
+        auto& txn_manager = concurrency::TransactionManager::GetInstance();
         txn_manager.AbortTransaction(transaction_);
         return false;
       }
@@ -100,7 +100,7 @@ bool InsertExecutor::DExecute() {
     for (auto tuple : tuples) {
       ItemPointer location = target_table->InsertTuple(transaction_->GetTransactionId(), tuple);
       if (location.block == INVALID_OID) {
-        auto& txn_manager = TransactionManager::GetInstance();
+        auto& txn_manager = concurrency::TransactionManager::GetInstance();
         txn_manager.AbortTransaction(transaction_);
         return false;
       }
