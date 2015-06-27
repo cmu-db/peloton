@@ -48,7 +48,7 @@ class HashSetOpExecutor : public AbstractExecutor {
   bool ExecuteHelper();
 
   template <SetOpType SETOP, class HT>
-  bool UpdateHashTable(HT &htable);
+  bool CalculateCopies(HT &htable);
 
   /** @brief The specified set-op type */
   SetOpType set_op_ = SETOP_TYPE_INVALID;

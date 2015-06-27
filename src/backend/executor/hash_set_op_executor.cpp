@@ -159,6 +159,7 @@ bool HashSetOpExecutor::ExecuteHelper(){
     for(oid_t tuple_id : *tile){
       auto it = htable.find(ht_key_t(tile.get(), tuple_id));
       // Do nothing if this key never appears in the left child
+      // because it shouldn't show up in the result anyway
       if(it != htable.end()){
         it->second.right++;
       }
@@ -168,16 +169,16 @@ bool HashSetOpExecutor::ExecuteHelper(){
   // Calculate the output number for each key
   switch(set_op_){
     case SETOP_TYPE_INTERSECT:
-      UpdateHashTable<SETOP_TYPE_INTERSECT>(htable);
+      CalculateCopies<SETOP_TYPE_INTERSECT>(htable);
       break;
     case SETOP_TYPE_INTERSECT_ALL:
-      UpdateHashTable<SETOP_TYPE_INTERSECT_ALL>(htable);
+      CalculateCopies<SETOP_TYPE_INTERSECT_ALL>(htable);
       break;
     case SETOP_TYPE_EXCEPT:
-      UpdateHashTable<SETOP_TYPE_EXCEPT>(htable);
+      CalculateCopies<SETOP_TYPE_EXCEPT>(htable);
       break;
     case SETOP_TYPE_EXCEPT_ALL:
-      UpdateHashTable<SETOP_TYPE_EXCEPT_ALL>(htable);
+      CalculateCopies<SETOP_TYPE_EXCEPT_ALL>(htable);
       break;
     case SETOP_TYPE_INVALID:
       return false;
@@ -228,7 +229,7 @@ bool HashSetOpExecutor::ExecuteHelper(){
  * and store it in the left counter.
  */
 template <SetOpType SETOP, class HT>
-bool HashSetOpExecutor::UpdateHashTable(HT &htable){
+bool HashSetOpExecutor::CalculateCopies(HT &htable){
   for(auto& item : htable){
     switch(SETOP){
       case SETOP_TYPE_INTERSECT:
