@@ -20,6 +20,8 @@
 namespace nstore {
 namespace planner {
 
+// IMPORTANT:: Need own copy of output table schema.
+// TODO: Can we relax this constraint ?
 class AggregateNode : public AbstractPlanNode {
  public:
   AggregateNode() = delete;
