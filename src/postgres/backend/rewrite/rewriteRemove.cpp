@@ -84,7 +84,7 @@ RemoveRewriteRuleById(Oid ruleOid)
 
 	/*
 	 * Issue shared-inval notice to force all backends (including me!) to
-	 * update relcache entries with the new rule set.
+	 * update relcache entries with the cnew rule set.
 	 */
 	CacheInvalidateRelcache(event_relation);
 

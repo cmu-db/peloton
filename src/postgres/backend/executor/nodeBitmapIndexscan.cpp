@@ -65,7 +65,7 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 		doscan = true;
 
 	/*
-	 * Prepare the result bitmap.  Normally we just create a new one to pass
+	 * Prepare the result bitmap.  Normally we just create a cnew one to pass
 	 * back; however, our parent node is allowed to store a pre-made one into
 	 * node->biss_result, in which case we just OR our tuple IDs into the
 	 * existing bitmap.  (This saves needing explicit UNION steps.)
@@ -127,7 +127,7 @@ ExecReScanBitmapIndexScan(BitmapIndexScanState *node)
 
 	/*
 	 * If we are doing runtime key calculations (ie, any of the index key
-	 * values weren't simple Consts), compute the new key values.
+	 * values weren't simple Consts), compute the cnew key values.
 	 *
 	 * Array keys are also treated as runtime keys; note that if we return
 	 * with biss_RuntimeKeysReady still false, then there is an empty array

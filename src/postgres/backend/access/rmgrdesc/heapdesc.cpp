@@ -59,7 +59,7 @@ heap_desc(StringInfo buf, XLogReaderState *record)
 						 xlrec->old_offnum,
 						 xlrec->old_xmax);
 		out_infobits(buf, xlrec->old_infobits_set);
-		appendStringInfo(buf, "; new off %u xmax %u",
+		appendStringInfo(buf, "; cnew off %u xmax %u",
 						 xlrec->new_offnum,
 						 xlrec->new_xmax);
 	}
@@ -71,7 +71,7 @@ heap_desc(StringInfo buf, XLogReaderState *record)
 						 xlrec->old_offnum,
 						 xlrec->old_xmax);
 		out_infobits(buf, xlrec->old_infobits_set);
-		appendStringInfo(buf, "; new off %u xmax %u",
+		appendStringInfo(buf, "; cnew off %u xmax %u",
 						 xlrec->new_offnum,
 						 xlrec->new_xmax);
 	}

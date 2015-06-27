@@ -323,7 +323,7 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 					offnum = OffsetNumberNext(offnum);	/* move forward */
 				else
 				{
-					/* new page, locate starting position by binary search */
+					/* cnew page, locate starting position by binary search */
 					offnum = _hash_binsearch(page, so->hashso_sk_hash);
 				}
 
@@ -364,7 +364,7 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 					offnum = OffsetNumberPrev(offnum);	/* move back */
 				else
 				{
-					/* new page, locate starting position by binary search */
+					/* cnew page, locate starting position by binary search */
 					offnum = _hash_binsearch_last(page, so->hashso_sk_hash);
 				}
 

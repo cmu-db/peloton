@@ -875,7 +875,7 @@ recurse:
 			(*it)->curIndex++;
 
 			/*
-			 * Value may be a container, in which case we recurse with new,
+			 * Value may be a container, in which case we recurse with cnew,
 			 * child iterator (unless the caller asked not to, by passing
 			 * skipNested).
 			 */
@@ -1240,7 +1240,7 @@ JsonbHashScalarValue(const JsonbValue *scalarVal, uint32 *hash)
 
 	/*
 	 * Combine hash values of successive keys, values and elements by rotating
-	 * the previous value left 1 bit, then XOR'ing in the new
+	 * the previous value left 1 bit, then XOR'ing in the cnew
 	 * key/value/element's hash value.
 	 */
 	*hash = (*hash << 1) | (*hash >> 31);

@@ -448,7 +448,7 @@ FetchStatementTargetList(Node *stmt)
  * should simply pass zero.
  *
  * The caller can optionally pass a snapshot to be used; pass InvalidSnapshot
- * for the normal behavior of setting a new snapshot.  This parameter is
+ * for the normal behavior of setting a cnew snapshot.  This parameter is
  * presently ignored for non-PORTAL_ONE_SELECT portals (it's only intended
  * to be used for cursors).
  *
@@ -750,7 +750,7 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 	 * destroyed and replaced in the course of the internal commit and
 	 * restart.  So we need to be prepared to restore it as pointing to the
 	 * exit-time TopTransactionResourceOwner.  (Ain't that ugly?  This idea of
-	 * internally starting whole new transactions is not good.)
+	 * internally starting whole cnew transactions is not good.)
 	 * CurrentMemoryContext has a similar problem, but the other pointers we
 	 * save here will be NULL or pointing to longer-lived objects.
 	 */
@@ -1261,7 +1261,7 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 
 			/*
 			 * Must always have a snapshot for plannable queries.  First time
-			 * through, take a new snapshot; for subsequent queries in the
+			 * through, take a cnew snapshot; for subsequent queries in the
 			 * same portal, just update the snapshot's copy of the command
 			 * counter.
 			 */

@@ -281,7 +281,7 @@ _hash_form_tuple(Relation index, Datum *values, bool *isnull)
  * Returns the offset of the first index entry having hashkey >= hash_value,
  * or the page's max offset plus one if hash_value is greater than all
  * existing hash keys in the page.  This is the appropriate place to start
- * a search, or to insert a new item.
+ * a search, or to insert a cnew item.
  */
 OffsetNumber
 _hash_binsearch(Page page, uint32 hash_value)
@@ -319,7 +319,7 @@ _hash_binsearch(Page page, uint32 hash_value)
  * Same as above, except that if there are multiple matching items in the
  * page, we return the offset of the last one instead of the first one,
  * and the possible range of outputs is 0..maxoffset not 1..maxoffset+1.
- * This is handy for starting a new page in a backwards scan.
+ * This is handy for starting a cnew page in a backwards scan.
  */
 OffsetNumber
 _hash_binsearch_last(Page page, uint32 hash_value)

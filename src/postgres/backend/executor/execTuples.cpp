@@ -249,7 +249,7 @@ ExecDropSingleTupleTableSlot(TupleTableSlot *slot)
  */
 void
 ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
-					  TupleDesc tupdesc)		/* new tuple descriptor */
+					  TupleDesc tupdesc)		/* cnew tuple descriptor */
 {
 	/* For safety, make sure slot is empty before changing it */
 	ExecClearTuple(slot);
@@ -267,7 +267,7 @@ ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
 		pfree(slot->tts_isnull);
 
 	/*
-	 * Install the new descriptor; if it's refcounted, bump its refcount.
+	 * Install the cnew descriptor; if it's refcounted, bump its refcount.
 	 */
 	slot->tts_tupleDescriptor = tupdesc;
 	PinTupleDesc(tupdesc);
@@ -344,7 +344,7 @@ ExecStoreTuple(HeapTuple tuple,
 		heap_free_minimal_tuple(slot->tts_mintuple);
 
 	/*
-	 * Store the new tuple into the specified slot.
+	 * Store the cnew tuple into the specified slot.
 	 */
 	slot->tts_isempty = false;
 	slot->tts_shouldFree = shouldFree;
@@ -413,7 +413,7 @@ ExecStoreMinimalTuple(MinimalTuple mtup,
 	slot->tts_buffer = InvalidBuffer;
 
 	/*
-	 * Store the new tuple into the specified slot.
+	 * Store the cnew tuple into the specified slot.
 	 */
 	slot->tts_isempty = false;
 	slot->tts_shouldFree = false;
@@ -1061,7 +1061,7 @@ ExecTypeSetColNames(TupleDesc typeInfo, List *namesList)
 		}
 	}
 
-	/* If we modified the tupdesc, it's now a new record type */
+	/* If we modified the tupdesc, it's now a cnew record type */
 	if (modified)
 	{
 		typeInfo->tdtypeid = RECORDOID;
@@ -1227,11 +1227,11 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
  * to enforce that; more specifically, the rule applies only to actual Datums
  * and not to HeapTuple structures.  Therefore, HeapTupleHeaderGetDatum is
  * now a function that detects whether there are externally-toasted fields
- * and constructs a new tuple with inlined fields if so.  We still need
+ * and constructs a cnew tuple with inlined fields if so.  We still need
  * heap_form_tuple to insert the Datum header fields, because otherwise this
  * code would have no way to obtain a tupledesc for the tuple.
  *
- * Note that if we do build a new tuple, it's palloc'd in the current
+ * Note that if we do build a cnew tuple, it's palloc'd in the current
  * memory context.  Beware of code that changes context between the initial
  * heap_form_tuple/etc call and calling HeapTuple(Header)GetDatum.
  *

@@ -313,7 +313,7 @@ typedef struct PlannerInfo
  * alias Vars are expanded to non-aliased form during preprocess_expression.
  *
  * Parts of this data structure are specific to various scan and join
- * mechanisms.  It didn't seem worth creating new node types for them.
+ * mechanisms.  It didn't seem worth creating cnew node types for them.
  *
  *		relids - Set of base-relation identifiers; it is a base relation
  *				if there is just one, a join relation if more than one
@@ -1338,16 +1338,17 @@ typedef struct MergeScanSelCache
  * Although the planner treats this as an expression node type, it is not
  * recognized by the parser or executor, so we declare it here rather than
  * in primnodes.h.
+ *
+ * Peloton porting: use C++ inheritance
  */
-
-typedef struct PlaceHolderVar
+struct PlaceHolderVar : Expr
 {
-	Expr		xpr;
+	//Expr		xpr;
 	Expr	   *phexpr;			/* the represented expression */
 	Relids		phrels;			/* base relids syntactically within expr src */
 	Index		phid;			/* ID for PHV (unique within planner run) */
 	Index		phlevelsup;		/* > 0 if PHV belongs to outer query */
-} PlaceHolderVar;
+};
 
 /*
  * "Special join" info.

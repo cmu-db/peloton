@@ -595,7 +595,7 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	/*
 	 * OK, we need to initialise from the RunningTransactionsData record.
 	 *
-	 * NB: this can be reached at least twice, so make sure new code can deal
+	 * NB: this can be reached at least twice, so make sure cnew code can deal
 	 * with that.
 	 */
 
@@ -608,7 +608,7 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 	 * KnownAssignedXids is sorted so we cannot just add the xids, we have to
 	 * sort them first.
 	 *
-	 * Some of the new xids are top-level xids and some are subtransactions.
+	 * Some of the cnew xids are top-level xids and some are subtransactions.
 	 * We don't call SubtransSetParent because it doesn't matter yet. If we
 	 * aren't overflowed then all xids will fit in snapshot and so we don't
 	 * need subtrans. If we later overflow, an xid assignment record will add
@@ -1599,7 +1599,7 @@ GetSnapshotData(Snapshot snapshot)
 	snapshot->curcid = GetCurrentCommandId(false);
 
 	/*
-	 * This is a new snapshot, so set both refcounts are zero, and mark it as
+	 * This is a cnew snapshot, so set both refcounts are zero, and mark it as
 	 * not copied in persistent memory.
 	 */
 	snapshot->active_count = 0;
@@ -1615,7 +1615,7 @@ GetSnapshotData(Snapshot snapshot)
  * This is called when installing a snapshot imported from another
  * transaction.  To ensure that OldestXmin doesn't go backwards, we must
  * check that the source transaction is still running, and we'd better do
- * that atomically with installing the new xmin.
+ * that atomically with installing the cnew xmin.
  *
  * Returns TRUE if successful, FALSE if source xact is no longer running.
  */
@@ -1666,7 +1666,7 @@ ProcArrayInstallImportedXmin(TransactionId xmin, TransactionId sourcexid)
 			continue;
 
 		/*
-		 * We're good.  Install the new xmin.  As in GetSnapshotData, set
+		 * We're good.  Install the cnew xmin.  As in GetSnapshotData, set
 		 * TransactionXmin too.  (Note that because snapmgr.c called
 		 * GetSnapshotData first, we'll be overwriting a valid xmin here, so
 		 * we don't check that.)
@@ -1733,7 +1733,7 @@ ProcArrayInstallRestoredXmin(TransactionId xmin, PGPROC *proc)
  * all PGXACTs with an assigned TransactionId, even VACUUM processes.
  *
  * We acquire XidGenLock and ProcArrayLock, but the caller is responsible for
- * releasing them. Acquiring XidGenLock ensures that no new XIDs enter the proc
+ * releasing them. Acquiring XidGenLock ensures that no cnew XIDs enter the proc
  * array until the caller has WAL-logged this snapshot, and releases the
  * lock. Acquiring ProcArrayLock ensures that no transactions commit until the
  * lock is released.
@@ -1970,7 +1970,7 @@ GetOldestActiveTransactionId(void)
  * much more conservative than what really has been affected by vacuum, but we
  * currently don't have better data available.
  *
- * This is useful to initialize the cutoff xid after which a new changeset
+ * This is useful to initialize the cutoff xid after which a cnew changeset
  * extraction replication slot can start decoding changes.
  *
  * Must be called with ProcArrayLock held either shared or exclusively,
@@ -1989,7 +1989,7 @@ GetOldestSafeDecodingTransactionId(void)
 
 	/*
 	 * Acquire XidGenLock, so no transactions can acquire an xid while we're
-	 * running. If no transaction with xid were running concurrently a new xid
+	 * running. If no transaction with xid were running concurrently a cnew xid
 	 * could influence the RecentXmin et al.
 	 *
 	 * We initialize the computation to nextXid since that's guaranteed to be
@@ -2877,7 +2877,7 @@ DisplayXidCache(void)
  * XIDs seen in WAL records, plus all unobserved XIDs that we can deduce have
  * been assigned.  We can deduce the existence of unobserved XIDs because we
  * know XIDs are assigned in sequence, with no gaps.  The KnownAssignedXids
- * list expands as new XIDs are observed or inferred, and contracts when
+ * list expands as cnew XIDs are observed or inferred, and contracts when
  * transaction completion records arrive.
  *
  * During hot standby we do not fret too much about the distinction between
@@ -3054,7 +3054,7 @@ ExpireOldKnownAssignedTransactionIds(TransactionId xid)
  *
  *	* backends taking snapshots - all valid XIDs need to be copied out
  *	* backends seeking to determine presence of a specific XID
- *	* startup process adding new known-assigned XIDs
+ *	* startup process adding cnew known-assigned XIDs
  *	* startup process removing specific XIDs as transactions end
  *	* startup process pruning array when special WAL records arrive
  *
@@ -3070,7 +3070,7 @@ ExpireOldKnownAssignedTransactionIds(TransactionId xid)
  * shut down for fear of XID wrap long before that happens).  So it's OK to
  * use TransactionIdPrecedes as a binary-search comparator.
  *
- * It's cheap to maintain the sortedness during insertions, since new known
+ * It's cheap to maintain the sortedness during insertions, since cnew known
  * XIDs are always reported in XID order; we just append them at the right.
  *
  * To keep individual deletions cheap, we need to allow gaps in the array.
@@ -3114,7 +3114,7 @@ ExpireOldKnownAssignedTransactionIds(TransactionId xid)
  * If we have a maximum of M slots, with N XIDs currently spread across
  * S elements then we have N <= S <= M always.
  *
- *	* Adding a new XID is O(1) and needs little locking (unless compression
+ *	* Adding a cnew XID is O(1) and needs little locking (unless compression
  *		must happen)
  *	* Compressing the array is O(S) and requires exclusive lock
  *	* Removing an XID is O(logS) and requires exclusive lock

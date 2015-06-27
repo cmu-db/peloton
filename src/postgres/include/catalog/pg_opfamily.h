@@ -32,7 +32,7 @@ CATALOG(pg_opfamily,2753)
 {
 	Oid			opfmethod;		/* index access method opfamily is for */
 	NameData	opfname;		/* name of this opfamily */
-	Oid			opfnamespace;	/* namespace of this opfamily */
+	Oid			opfnamespace;	/* cnamespace of this opfamily */
 	Oid			opfowner;		/* opfamily owner */
 } FormData_pg_opfamily;
 

@@ -136,7 +136,7 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf)
 		buf = _hash_getbuf(rel, nextblkno, HASH_WRITE, LH_OVERFLOW_PAGE);
 	}
 
-	/* now that we have correct backlink, initialize new overflow page */
+	/* now that we have correct backlink, initialize cnew overflow page */
 	ovflpage = BufferGetPage(ovflbuf);
 	ovflopaque = (HashPageOpaque) PageGetSpecialPointer(ovflpage);
 	ovflopaque->hasho_prevblkno = BufferGetBlockNumber(buf);
@@ -245,13 +245,13 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 
 	/*
 	 * No free pages --- have to extend the relation to add an overflow page.
-	 * First, check to see if we have to add a new bitmap page too.
+	 * First, check to see if we have to add a cnew bitmap page too.
 	 */
 	if (last_bit == (uint32) (BMPGSZ_BIT(metap) - 1))
 	{
 		/*
-		 * We create the new bitmap page with all pages marked "in use".
-		 * Actually two pages in the new bitmap's range will exist
+		 * We create the cnew bitmap page with all pages marked "in use".
+		 * Actually two pages in the cnew bitmap's range will exist
 		 * immediately: the bitmap page itself, and the following page which
 		 * is the one we return to the caller.  Both of these are correctly
 		 * marked "in use".  Subsequent pages do not exist yet, but it is
@@ -269,7 +269,7 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 		 */
 	}
 
-	/* Calculate address of the new overflow page */
+	/* Calculate address of the cnew overflow page */
 	bit = metap->hashm_spares[splitnum];
 	blkno = bitno_to_blkno(metap, bit);
 
@@ -494,12 +494,12 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf,
 /*
  *	_hash_initbitmap()
  *
- *	 Initialize a new bitmap page.  The metapage has a write-lock upon
+ *	 Initialize a cnew bitmap page.  The metapage has a write-lock upon
  *	 entering the function, and must be written by caller after return.
  *
- * 'blkno' is the block number of the new bitmap page.
+ * 'blkno' is the block number of the cnew bitmap page.
  *
- * All bits in the new bitmap page are set to "1", indicating "in use".
+ * All bits in the cnew bitmap page are set to "1", indicating "in use".
  */
 void
 _hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno,
@@ -511,12 +511,12 @@ _hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno,
 	uint32	   *freep;
 
 	/*
-	 * It is okay to write-lock the new bitmap page while holding metapage
-	 * write lock, because no one else could be contending for the new page.
+	 * It is okay to write-lock the cnew bitmap page while holding metapage
+	 * write lock, because no one else could be contending for the cnew page.
 	 * Also, the metapage lock makes it safe to extend the index using
 	 * _hash_getnewbuf.
 	 *
-	 * There is some loss of concurrency in possibly doing I/O for the new
+	 * There is some loss of concurrency in possibly doing I/O for the cnew
 	 * page while holding the metapage lock, but this path is taken so seldom
 	 * that it's not worth worrying about.
 	 */
@@ -535,10 +535,10 @@ _hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno,
 	freep = HashPageGetBitmap(pg);
 	MemSet(freep, 0xFF, BMPGSZ_BYTE(metap));
 
-	/* write out the new bitmap page (releasing write lock and pin) */
+	/* write out the cnew bitmap page (releasing write lock and pin) */
 	_hash_wrtbuf(rel, buf);
 
-	/* add the new bitmap page to the metapage's list of bitmaps */
+	/* add the cnew bitmap page to the metapage's list of bitmaps */
 	/* metapage already has a write lock */
 	if (metap->hashm_nmaps >= HASH_MAX_BITMAPS)
 		ereport(ERROR,

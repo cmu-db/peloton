@@ -36,7 +36,7 @@
 CATALOG(pg_operator,2617)
 {
 	NameData	oprname;		/* name of operator */
-	Oid			oprnamespace;	/* OID of namespace containing this oper */
+	Oid			oprnamespace;	/* OID of cnamespace containing this oper */
 	Oid			oprowner;		/* operator owner */
 	char		oprkind;		/* 'l', 'r', or 'b' */
 	bool		oprcanmerge;	/* can be used in merge join? */
@@ -1511,7 +1511,7 @@ DESCR("add");
 DATA(insert OID = 2555 (  "+"	   PGNSP PGUID b f f	23	 1082 1082 1100 0 integer_pl_date - - ));
 DESCR("add");
 
-/* new operators for Y-direction rtree opfamilies */
+/* cnew operators for Y-direction rtree opfamilies */
 DATA(insert OID = 2570 (  "<<|"    PGNSP PGUID b f f 603 603	16	 0	 0 box_below positionsel positionjoinsel ));
 DESCR("is below");
 DATA(insert OID = 2571 (  "&<|"    PGNSP PGUID b f f 603 603	16	 0	 0 box_overbelow positionsel positionjoinsel ));

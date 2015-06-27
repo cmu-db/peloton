@@ -510,7 +510,7 @@ pqParseInput2(PGconn *conn)
 						return;
 					conn->asyncStatus = PGASYNC_READY;
 					break;
-				case 'Z':		/* backend is ready for new query */
+				case 'Z':		/* backend is ready for cnew query */
 					conn->asyncStatus = PGASYNC_IDLE;
 					break;
 				case 'I':		/* empty query */
@@ -555,7 +555,7 @@ pqParseInput2(PGconn *conn)
 					else
 					{
 						/*
-						 * A new 'T' message is treated as the start of
+						 * A cnew 'T' message is treated as the start of
 						 * another PGresult.  (It is not clear that this is
 						 * really possible with the current backend.) We stop
 						 * parsing until the application accepts the current
@@ -715,7 +715,7 @@ getRowDescriptions(PGconn *conn)
 	conn->inStart = conn->inCursor;
 
 	/*
-	 * We could perform additional setup for the new result set here, but for
+	 * We could perform additional setup for the cnew result set here, but for
 	 * now there's nothing else to do.
 	 */
 
@@ -1535,7 +1535,7 @@ pqFunctionCall2(PGconn *conn, Oid fnid,
 				if (pqGetErrorNotice2(conn, false))
 					continue;
 				break;
-			case 'Z':			/* backend is ready for new query */
+			case 'Z':			/* backend is ready for cnew query */
 				/* consume the message and exit */
 				conn->inStart = conn->inCursor;
 				/* if we saved a result object (probably an error), use it */

@@ -362,7 +362,7 @@ error_duplicate_filter_variable(const char *defname)
 }
 
 /*
- * Insert the new pg_event_trigger row and record dependencies.
+ * Insert the cnew pg_event_trigger row and record dependencies.
  */
 static Oid
 insert_event_trigger_tuple(char *trigname, char *eventname, Oid evtOwner,
@@ -381,7 +381,7 @@ insert_event_trigger_tuple(char *trigname, char *eventname, Oid evtOwner,
 	/* Open pg_event_trigger. */
 	tgrel = heap_open(EventTriggerRelationId, RowExclusiveLock);
 
-	/* Build the new pg_trigger tuple. */
+	/* Build the cnew pg_trigger tuple. */
 	memset(nulls, false, sizeof(nulls));
 	namestrcpy(&evtnamedata, trigname);
 	values[Anum_pg_event_trigger_evtname - 1] = NameGetDatum(&evtnamedata);
@@ -418,7 +418,7 @@ insert_event_trigger_tuple(char *trigname, char *eventname, Oid evtOwner,
 	/* Depend on extension, if any. */
 	recordDependencyOnCurrentExtension(&myself, false);
 
-	/* Post creation hook for new event trigger */
+	/* Post creation hook for cnew event trigger */
 	InvokeObjectPostCreateHook(EventTriggerRelationId, trigoid, 0);
 
 	/* Close pg_event_trigger. */
@@ -1208,7 +1208,7 @@ EventTriggerSupportsGrantObjectType(GrantObjectType objtype)
 }
 
 /*
- * Prepare event trigger state for a new complete query to run, if necessary;
+ * Prepare event trigger state for a cnew complete query to run, if necessary;
  * returns whether this was done.  If it was, EventTriggerEndCompleteQuery must
  * be called when the query is done, regardless of whether it succeeds or fails
  * -- so use of a PG_TRY block is mandatory.
@@ -1293,7 +1293,7 @@ trackDroppedObjectsNeeded(void)
  * Support for dropped objects information on event trigger functions.
  *
  * We keep the list of objects dropped by the current command in current
- * state's SQLDropList (comprising SQLDropObject items).  Each time a new
+ * state's SQLDropList (comprising SQLDropObject items).  Each time a cnew
  * command is to start, a clean EventTriggerQueryState is created; commands
  * that drop objects do the dependency.c dance to drop objects, which
  * populates the current state's SQLDropList; when the event triggers are
@@ -2102,7 +2102,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 											 RelationGetDescr(catalog), &isnull);
 							if (isnull)
 								elog(ERROR,
-									 "invalid null namespace in object %u/%u/%d",
+									 "invalid null cnamespace in object %u/%u/%d",
 									 addr.classId, addr.objectId, addr.objectSubId);
 							/* XXX not quite get_namespace_name_or_temp */
 							if (isAnyTempNamespace(schema_oid))

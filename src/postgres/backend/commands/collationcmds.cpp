@@ -151,12 +151,12 @@ DefineCollation(List *names, List *parameters)
  * Subroutine for ALTER COLLATION SET SCHEMA and RENAME
  *
  * Is there a collation with the same name of the given collation already in
- * the given namespace?  If so, raise an appropriate error message.
+ * the given cnamespace?  If so, raise an appropriate error message.
  */
 void
 IsThereCollationInNamespace(const char *collname, Oid nspOid)
 {
-	/* make sure the name doesn't already exist in new schema */
+	/* make sure the name doesn't already exist in cnew schema */
 	if (SearchSysCacheExists3(COLLNAMEENCNSP,
 							  CStringGetDatum(collname),
 							  Int32GetDatum(GetDatabaseEncoding()),

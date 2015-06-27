@@ -289,7 +289,7 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
 /*
  * tuplestore_begin_heap
  *
- * Create a new tuplestore; other types of tuple stores (other than
+ * Create a cnew tuplestore; other types of tuple stores (other than
  * "heap" tuple stores, for heap tuples) are possible, but not presently
  * implemented.
  *
@@ -365,7 +365,7 @@ tuplestore_set_eflags(Tuplestorestate *state, int eflags)
  *
  * Returns the pointer's index.
  *
- * The new pointer initially copies the position of read pointer 0.
+ * The cnew pointer initially copies the position of read pointer 0.
  * It can have its own eflags, but if any data has been inserted into
  * the tuplestore, these eflags must not represent an increase in
  * requirements.
@@ -377,7 +377,7 @@ tuplestore_alloc_read_pointer(Tuplestorestate *state, int eflags)
 	if (state->status != TSS_INMEM || state->memtupcount != 0)
 	{
 		if ((state->eflags | eflags) != state->eflags)
-			elog(ERROR, "too late to require new tuplestore eflags");
+			elog(ERROR, "too late to require cnew tuplestore eflags");
 	}
 
 	/* Make room for another read pointer if needed */
@@ -493,7 +493,7 @@ tuplestore_select_read_pointer(Tuplestorestate *state, int ptr)
 
 			/*
 			 * We have to make the temp file's seek position equal to the
-			 * logical position of the new read pointer.  In eof_reached
+			 * logical position of the cnew read pointer.  In eof_reached
 			 * state, that's the EOF, which we have available from the saved
 			 * write position.
 			 */
@@ -563,7 +563,7 @@ grow_memtuples(Tuplestorestate *state)
 	if (!state->growmemtuples)
 		return false;
 
-	/* Select new value of memtupsize */
+	/* Select cnew value of memtupsize */
 	if (memNowUsed <= state->availMem)
 	{
 		/*
@@ -587,10 +587,10 @@ grow_memtuples(Tuplestorestate *state)
 		 * To stay within allowedMem, we can't increase memtupsize by more
 		 * than availMem / sizeof(void *) elements. In practice, we want to
 		 * increase it by considerably less, because we need to leave some
-		 * space for the tuples to which the new array slots will refer.  We
-		 * assume the new tuples will be about the same size as the tuples
+		 * space for the tuples to which the cnew array slots will refer.  We
+		 * assume the cnew tuples will be about the same size as the tuples
 		 * we've already seen, and thus we can extrapolate from the space
-		 * consumption so far to estimate an appropriate new size for the
+		 * consumption so far to estimate an appropriate cnew size for the
 		 * memtuples array.  The optimal value might be higher or lower than
 		 * this estimate, but it's hard to know that in advance.  We again
 		 * clamp at INT_MAX tuples.
@@ -598,7 +598,7 @@ grow_memtuples(Tuplestorestate *state)
 		 * This calculation is safe against enlarging the array so much that
 		 * LACKMEM becomes true, because the memory currently used includes
 		 * the present array; thus, there would be enough allowedMem for the
-		 * new array elements even if no other memory were currently used.
+		 * cnew array elements even if no other memory were currently used.
 		 *
 		 * We do the arithmetic in float8, because otherwise the product of
 		 * memtupsize and allowedMem could overflow.  Any inaccuracy in the
@@ -643,7 +643,7 @@ grow_memtuples(Tuplestorestate *state)
 	 * LACKMEM if the memory chunk overhead associated with the memtuples
 	 * array were to increase.  That shouldn't happen with any sane value of
 	 * allowedMem, because at any array size large enough to risk LACKMEM,
-	 * palloc would be treating both old and new arrays as separate chunks.
+	 * palloc would be treating both old and cnew arrays as separate chunks.
 	 * But we'll check LACKMEM explicitly below just in case.)
 	 */
 	if (state->availMem < (int64) ((newmemtupsize - memtupsize) * sizeof(void *)))

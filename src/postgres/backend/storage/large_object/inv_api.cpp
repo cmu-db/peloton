@@ -209,13 +209,13 @@ getdatafield(Form_pg_largeobject tuple,
 
 
 /*
- *	inv_create -- create a new large object
+ *	inv_create -- create a cnew large object
  *
  *	Arguments:
- *	  lobjId - OID to use for new large object, or InvalidOid to pick one
+ *	  lobjId - OID to use for cnew large object, or InvalidOid to pick one
  *
  *	Returns:
- *	  OID of new object
+ *	  OID of cnew object
  *
  * If lobjId is not InvalidOid, then an error occurs if the OID is already
  * in use.
@@ -226,7 +226,7 @@ inv_create(Oid lobjId)
 	Oid			lobjId_new;
 
 	/*
-	 * Create a new largeobject with empty data pages
+	 * Create a cnew largeobject with empty data pages
 	 */
 	lobjId_new = LargeObjectCreate(lobjId);
 
@@ -242,11 +242,11 @@ inv_create(Oid lobjId)
 	recordDependencyOnOwner(LargeObjectRelationId,
 							lobjId_new, GetUserId());
 
-	/* Post creation hook for new large object */
+	/* Post creation hook for cnew large object */
 	InvokeObjectPostCreateHook(LargeObjectRelationId, lobjId_new, 0);
 
 	/*
-	 * Advance command counter to make new tuple visible to later operations.
+	 * Advance command counter to make cnew tuple visible to later operations.
 	 */
 	CommandCounterIncrement();
 
@@ -656,7 +656,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 				MemSet(workb + len, 0, off - len);
 
 			/*
-			 * Insert appropriate portion of new data
+			 * Insert appropriate portion of cnew data
 			 */
 			n = LOBLKSIZE - off;
 			n = (n <= (nbytes - nwritten)) ? n : (nbytes - nwritten);
@@ -664,7 +664,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 			nwritten += n;
 			obj_desc->offset += n;
 			off += n;
-			/* compute valid length of new page */
+			/* compute valid length of cnew page */
 			len = (len >= off) ? len : off;
 			SET_VARSIZE(&workbuf.hdr, len + VARHDRSZ);
 
@@ -692,7 +692,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 		else
 		{
 			/*
-			 * Write a brand new page.
+			 * Write a brand cnew page.
 			 *
 			 * First, fill any hole
 			 */
@@ -701,14 +701,14 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 				MemSet(workb, 0, off);
 
 			/*
-			 * Insert appropriate portion of new data
+			 * Insert appropriate portion of cnew data
 			 */
 			n = LOBLKSIZE - off;
 			n = (n <= (nbytes - nwritten)) ? n : (nbytes - nwritten);
 			memcpy(workb + off, buf + nwritten, n);
 			nwritten += n;
 			obj_desc->offset += n;
-			/* compute valid length of new page */
+			/* compute valid length of cnew page */
 			len = off + n;
 			SET_VARSIZE(&workbuf.hdr, len + VARHDRSZ);
 
@@ -837,7 +837,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int64 len)
 		if (off > pagelen)
 			MemSet(workb + pagelen, 0, off - pagelen);
 
-		/* compute length of new page */
+		/* compute length of cnew page */
 		SET_VARSIZE(&workbuf.hdr, off + VARHDRSZ);
 
 		/*
@@ -868,7 +868,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int64 len)
 		}
 
 		/*
-		 * Write a brand new page.
+		 * Write a brand cnew page.
 		 *
 		 * Fill the hole up to the truncation point
 		 */
@@ -876,11 +876,11 @@ inv_truncate(LargeObjectDesc *obj_desc, int64 len)
 		if (off > 0)
 			MemSet(workb, 0, off);
 
-		/* compute length of new page */
+		/* compute length of cnew page */
 		SET_VARSIZE(&workbuf.hdr, off + VARHDRSZ);
 
 		/*
-		 * Form and insert new tuple
+		 * Form and insert cnew tuple
 		 */
 		memset(values, 0, sizeof(values));
 		memset(nulls, false, sizeof(nulls));

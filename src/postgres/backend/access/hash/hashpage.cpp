@@ -47,7 +47,7 @@ static void _hash_splitbucket(Relation rel, Buffer metabuf,
 /*
  * We use high-concurrency locking on hash indexes (see README for an overview
  * of the locking rules).  However, we can skip taking lmgr locks when the
- * index is local to the current backend (ie, either temp or new in the
+ * index is local to the current backend (ie, either temp or cnew in the
  * current transaction).  No one else can see it, so there's no reason to
  * take locks.  We still take buffer-level locks, but not lmgr locks.
  */
@@ -167,7 +167,7 @@ _hash_getinitbuf(Relation rel, BlockNumber blkno)
 }
 
 /*
- *	_hash_getnewbuf() -- Get a new page at the end of the index.
+ *	_hash_getnewbuf() -- Get a cnew page at the end of the index.
  *
  *		This has the same API as _hash_getinitbuf, except that we are adding
  *		a page to the index, and hence expect the page to be past the
@@ -477,7 +477,7 @@ _hash_metapinit(Relation rel, double num_tuples, ForkNumber forkNum)
 }
 
 /*
- *	_hash_pageinit() -- Initialize a new hash index page.
+ *	_hash_pageinit() -- Initialize a cnew hash index page.
  */
 void
 _hash_pageinit(Page page, Size size)
@@ -487,7 +487,7 @@ _hash_pageinit(Page page, Size size)
 }
 
 /*
- * Attempt to expand the hash table by creating one new bucket.
+ * Attempt to expand the hash table by creating one cnew bucket.
  *
  * This will silently do nothing if it cannot get the needed locks.
  *
@@ -567,24 +567,24 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 		goto fail;
 
 	/*
-	 * Likewise lock the new bucket (should never fail).
+	 * Likewise lock the cnew bucket (should never fail).
 	 *
-	 * Note: it is safe to compute the new bucket's blkno here, even though we
+	 * Note: it is safe to compute the cnew bucket's blkno here, even though we
 	 * may still need to update the BUCKET_TO_BLKNO mapping.  This is because
 	 * the current value of hashm_spares[hashm_ovflpoint] correctly shows
-	 * where we are going to put a new splitpoint's worth of buckets.
+	 * where we are going to put a cnew splitpoint's worth of buckets.
 	 */
 	start_nblkno = BUCKET_TO_BLKNO(metap, new_bucket);
 
 	if (_hash_has_active_scan(rel, new_bucket))
-		elog(ERROR, "scan in progress on supposedly new bucket");
+		elog(ERROR, "scan in progress on supposedly cnew bucket");
 
 	if (!_hash_try_getlock(rel, start_nblkno, HASH_EXCLUSIVE))
-		elog(ERROR, "could not get lock on supposedly new bucket");
+		elog(ERROR, "could not get lock on supposedly cnew bucket");
 
 	/*
 	 * If the split point is increasing (hashm_maxbucket's log base 2
-	 * increases), we need to allocate a new batch of bucket pages.
+	 * increases), we need to allocate a cnew batch of bucket pages.
 	 */
 	spare_ndx = _hash_log2(new_bucket + 1);
 	if (spare_ndx > metap->hashm_ovflpoint)
@@ -592,7 +592,7 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 		Assert(spare_ndx == metap->hashm_ovflpoint + 1);
 
 		/*
-		 * The number of buckets in the new splitpoint is equal to the total
+		 * The number of buckets in the cnew splitpoint is equal to the total
 		 * number already in existence, i.e. new_bucket.  Currently this maps
 		 * one-to-one to blocks required, but someday we may need a more
 		 * complicated calculation here.
@@ -607,7 +607,7 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	}
 
 	/*
-	 * Physically allocate the new bucket's primary page.  We want to do this
+	 * Physically allocate the cnew bucket's primary page.  We want to do this
 	 * before changing the metapage's mapping info, in case we can't get the
 	 * disk space.
 	 */
@@ -628,7 +628,7 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 
 	if (new_bucket > metap->hashm_highmask)
 	{
-		/* Starting a new doubling */
+		/* Starting a cnew doubling */
 		metap->hashm_lowmask = metap->hashm_highmask;
 		metap->hashm_highmask = new_bucket | metap->hashm_lowmask;
 	}
@@ -637,7 +637,7 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	 * If the split point is increasing (hashm_maxbucket's log base 2
 	 * increases), we need to adjust the hashm_spares[] array and
 	 * hashm_ovflpoint so that future overflow pages will be created beyond
-	 * this new batch of bucket pages.
+	 * this cnew batch of bucket pages.
 	 */
 	if (spare_ndx > metap->hashm_ovflpoint)
 	{
@@ -662,7 +662,7 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	/* Write out the metapage and drop lock, but keep pin */
 	_hash_chgbufaccess(rel, metabuf, HASH_WRITE, HASH_NOLOCK);
 
-	/* Relocate records to the new bucket */
+	/* Relocate records to the cnew bucket */
 	_hash_splitbucket(rel, metabuf,
 					  old_bucket, new_bucket,
 					  start_oblkno, buf_nblkno,
@@ -683,9 +683,9 @@ fail:
 
 
 /*
- * _hash_alloc_buckets -- allocate a new splitpoint's worth of bucket pages
+ * _hash_alloc_buckets -- allocate a cnew splitpoint's worth of bucket pages
  *
- * This does not need to initialize the new bucket pages; we'll do that as
+ * This does not need to initialize the cnew bucket pages; we'll do that as
  * each one is used by _hash_expandtable().  But we have to extend the logical
  * EOF to the end of the splitpoint; this keeps smgr's idea of the EOF in
  * sync with ours, so that we don't get complaints from smgr.
@@ -698,7 +698,7 @@ fail:
  * hash indexes sequentially anyway, that probably doesn't matter.
  *
  * XXX It's annoying that this code is executed with the metapage lock held.
- * We need to interlock against _hash_getovflpage() adding a new overflow page
+ * We need to interlock against _hash_getovflpage() adding a cnew overflow page
  * concurrently, but it'd likely be better to use LockRelationForExtension
  * for the purpose.  OTOH, adding a splitpoint is a very infrequent operation,
  * so it may not be worth worrying about.
@@ -735,7 +735,7 @@ _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
  *
  * We are splitting a bucket that consists of a base bucket page and zero
  * or more overflow (bucket chain) pages.  We must relocate tuples that
- * belong in the new bucket, and compress out any free space in the old
+ * belong in the cnew bucket, and compress out any free space in the old
  * bucket.
  *
  * The caller must hold exclusive locks on both buckets to ensure that
@@ -745,11 +745,11 @@ _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
  * The buffer is returned in the same state.  (The metapage is only
  * touched if it becomes necessary to add or remove overflow pages.)
  *
- * In addition, the caller must have created the new bucket's base page,
+ * In addition, the caller must have created the cnew bucket's base page,
  * which is passed in buffer nbuf, pinned and write-locked.  That lock and
  * pin are released here.  (The API is set up this way because we must do
  * _hash_getnewbuf() before releasing the metapage write lock.  So instead of
- * passing the new bucket's start block number, we pass an actual buffer.)
+ * passing the cnew bucket's start block number, we pass an actual buffer.)
  */
 static void
 _hash_splitbucket(Relation rel,
@@ -779,7 +779,7 @@ _hash_splitbucket(Relation rel,
 
 	npage = BufferGetPage(nbuf);
 
-	/* initialize the new bucket's primary page */
+	/* initialize the cnew bucket's primary page */
 	nopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
 	nopaque->hasho_prevblkno = InvalidBlockNumber;
 	nopaque->hasho_nextblkno = InvalidBlockNumber;
@@ -789,8 +789,8 @@ _hash_splitbucket(Relation rel,
 
 	/*
 	 * Partition the tuples in the old bucket between the old bucket and the
-	 * new bucket, advancing along the old bucket's overflow bucket chain and
-	 * adding overflow pages to the new bucket as needed.  Outer loop iterates
+	 * cnew bucket, advancing along the old bucket's overflow bucket chain and
+	 * adding overflow pages to the cnew bucket as needed.  Outer loop iterates
 	 * once per page in old bucket.
 	 */
 	for (;;)
@@ -823,12 +823,12 @@ _hash_splitbucket(Relation rel,
 			if (bucket == nbucket)
 			{
 				/*
-				 * insert the tuple into the new bucket.  if it doesn't fit on
-				 * the current page in the new bucket, we must allocate a new
+				 * insert the tuple into the cnew bucket.  if it doesn't fit on
+				 * the current page in the cnew bucket, we must allocate a cnew
 				 * overflow page and place the tuple on that page instead.
 				 *
 				 * XXX we have a problem here if we fail to get space for a
-				 * new overflow page: we'll error out leaving the bucket split
+				 * cnew overflow page: we'll error out leaving the bucket split
 				 * only partially complete, meaning the index is corrupt,
 				 * since searches may fail to find entries they should find.
 				 */
@@ -839,18 +839,18 @@ _hash_splitbucket(Relation rel,
 				{
 					/* write out nbuf and drop lock, but keep pin */
 					_hash_chgbufaccess(rel, nbuf, HASH_WRITE, HASH_NOLOCK);
-					/* chain to a new overflow page */
+					/* chain to a cnew overflow page */
 					nbuf = _hash_addovflpage(rel, metabuf, nbuf);
 					npage = BufferGetPage(nbuf);
 					/* we don't need nopaque within the loop */
 				}
 
 				/*
-				 * Insert tuple on new page, using _hash_pgaddtup to ensure
+				 * Insert tuple on cnew page, using _hash_pgaddtup to ensure
 				 * correct ordering by hashkey.  This is a tad inefficient
 				 * since we may have to shuffle itempointers repeatedly.
 				 * Possible future improvement: accumulate all the items for
-				 * the new page and qsort them before insertion.
+				 * the cnew page and qsort them before insertion.
 				 */
 				(void) _hash_pgaddtup(rel, nbuf, itemsz, itup);
 
@@ -896,7 +896,7 @@ _hash_splitbucket(Relation rel,
 	 * We're at the end of the old bucket chain, so we're done partitioning
 	 * the tuples.  Before quitting, call _hash_squeezebucket to ensure the
 	 * tuples remaining in the old bucket (including the overflow pages) are
-	 * packed as tightly as possible.  The new bucket is already tight.
+	 * packed as tightly as possible.  The cnew bucket is already tight.
 	 */
 	_hash_wrtbuf(rel, nbuf);
 

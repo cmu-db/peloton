@@ -177,7 +177,7 @@ recordDependencyOnOwner(Oid classId, Oid objectId, Oid owner)
  * updating SHARED_DEPENDENCY_OWNER entries, which should have that property.
  *
  * If there is no previous entry, we assume it was referencing a PINned
- * object, so we create a new entry.  If the new referenced object is
+ * object, so we create a cnew entry.  If the cnew referenced object is
  * PINned, we don't create an entry (and drop the old one, if any).
  *
  * sdepRel must be the pg_shdepend relation, already opened and suitably
@@ -196,7 +196,7 @@ shdepChangeDep(Relation sdepRel,
 	SysScanDesc scan;
 
 	/*
-	 * Make sure the new referenced object doesn't go away while we record the
+	 * Make sure the cnew referenced object doesn't go away while we record the
 	 * dependency.
 	 */
 	shdepLockAndCheckObject(refclassid, refobjid);
@@ -241,7 +241,7 @@ shdepChangeDep(Relation sdepRel,
 
 	if (isSharedObjectPinned(refclassid, refobjid, sdepRel))
 	{
-		/* No new entry needed, so just delete existing entry if any */
+		/* No cnew entry needed, so just delete existing entry if any */
 		if (oldtup)
 			simple_heap_delete(sdepRel, &oldtup->t_self);
 	}
@@ -261,7 +261,7 @@ shdepChangeDep(Relation sdepRel,
 	}
 	else
 	{
-		/* Need to insert new entry */
+		/* Need to insert cnew entry */
 		Datum		values[Natts_pg_shdepend];
 		bool		nulls[Natts_pg_shdepend];
 
@@ -277,8 +277,8 @@ shdepChangeDep(Relation sdepRel,
 		values[Anum_pg_shdepend_deptype - 1] = CharGetDatum(deptype);
 
 		/*
-		 * we are reusing oldtup just to avoid declaring a new variable, but
-		 * it's certainly a new tuple
+		 * we are reusing oldtup just to avoid declaring a cnew variable, but
+		 * it's certainly a cnew tuple
 		 */
 		oldtup = heap_form_tuple(RelationGetDescr(sdepRel), values, nulls);
 		simple_heap_insert(sdepRel, oldtup);
@@ -294,7 +294,7 @@ shdepChangeDep(Relation sdepRel,
 /*
  * changeDependencyOnOwner
  *
- * Update the shared dependencies to account for the new owner.
+ * Update the shared dependencies to account for the cnew owner.
  *
  * Note: we don't need an objsubid argument because only whole objects
  * have owners.
@@ -314,7 +314,7 @@ changeDependencyOnOwner(Oid classId, Oid objectId, Oid newOwnerId)
 
 	/*----------
 	 * There should never be a SHARED_DEPENDENCY_ACL entry for the owner,
-	 * so get rid of it if there is one.  This can happen if the new owner
+	 * so get rid of it if there is one.  This can happen if the cnew owner
 	 * was previously granted some rights to the object.
 	 *
 	 * This step is analogous to aclnewowner's removal of duplicate entries
@@ -398,9 +398,9 @@ getOidListDiff(Oid *list1, int *nlist1, Oid *list2, int *nlist2)
  * classId, objectId, objsubId: identify the object whose ACL this is
  * ownerId: role owning the object
  * noldmembers, oldmembers: array of roleids appearing in old ACL
- * nnewmembers, newmembers: array of roleids appearing in new ACL
+ * nnewmembers, newmembers: array of roleids appearing in cnew ACL
  *
- * We calculate the differences between the new and old lists of roles,
+ * We calculate the differences between the cnew and old lists of roles,
  * and then insert or delete from pg_shdepend as appropriate.
  *
  * Note that we can't just insert all referenced roles blindly during GRANT,
@@ -437,7 +437,7 @@ updateAclDependencies(Oid classId, Oid objectId, int32 objsubId,
 	{
 		sdepRel = heap_open(SharedDependRelationId, RowExclusiveLock);
 
-		/* Add new dependencies that weren't already present */
+		/* Add cnew dependencies that weren't already present */
 		for (i = 0; i < nnewmembers; i++)
 		{
 			Oid			roleid = newmembers[i];
@@ -703,7 +703,7 @@ checkSharedDependencies(Oid classId, Oid objectId,
 /*
  * copyTemplateDependencies
  *
- * Routine to create the initial shared dependencies of a new database.
+ * Routine to create the initial shared dependencies of a cnew database.
  * We simply copy the dependencies from the template database.
  */
 void
@@ -743,7 +743,7 @@ copyTemplateDependencies(Oid templateDbId, Oid newDbId)
 
 	/*
 	 * Copy the entries of the original database, changing the database Id to
-	 * that of the new database.  Note that because we are not copying rows
+	 * that of the cnew database.  Note that because we are not copying rows
 	 * with dbId == 0 (ie, rows describing dependent shared objects) we won't
 	 * copy the ownership dependency of the template database itself; this is
 	 * what we want.
@@ -863,7 +863,7 @@ shdepAddDependency(Relation sdepRel,
 	memset(nulls, false, sizeof(nulls));
 
 	/*
-	 * Form the new tuple and record the dependency.
+	 * Form the cnew tuple and record the dependency.
 	 */
 	values[Anum_pg_shdepend_dbid - 1] = ObjectIdGetDatum(classIdGetDbId(classId));
 	values[Anum_pg_shdepend_classid - 1] = ObjectIdGetDatum(classId);

@@ -1601,7 +1601,7 @@ get_func_rows(Oid funcid)
 
 /*
  * get_relname_relid
- *		Given name and namespace of a relation, look up the OID.
+ *		Given name and cnamespace of a relation, look up the OID.
  *
  * Returns InvalidOid if there is no such relation.
  */
@@ -2934,9 +2934,9 @@ free_attstatsslot(Oid atttype,
 
 /*
  * get_namespace_name
- *		Returns the name of a given namespace
+ *		Returns the name of a given cnamespace
  *
- * Returns a palloc'd copy of the string, or NULL if no such namespace.
+ * Returns a palloc'd copy of the string, or NULL if no such cnamespace.
  */
 char *
 get_namespace_name(Oid nspid)
@@ -2959,7 +2959,7 @@ get_namespace_name(Oid nspid)
 
 /*
  * get_namespace_name_or_temp
- *		As above, but if it is this backend's temporary namespace, return
+ *		As above, but if it is this backend's temporary cnamespace, return
  *		"pg_temp" instead.
  */
 char *

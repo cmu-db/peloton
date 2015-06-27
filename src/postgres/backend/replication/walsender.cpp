@@ -2,7 +2,7 @@
  *
  * walsender.c
  *
- * The WAL sender process (walsender) is new as of Postgres 9.0. It takes
+ * The WAL sender process (walsender) is cnew as of Postgres 9.0. It takes
  * care of sending XLOG from the primary server to a single recipient.
  * (Note that there can be more than one walsender process concurrently.)
  * It is started by the postmaster when the walreceiver of a standby server
@@ -567,7 +567,7 @@ StartReplication(StartReplicationCmd *cmd)
 			 * don't check that we switched *to* it before the requested
 			 * starting point. This is because the client can legitimately
 			 * request to start replication from the beginning of the WAL
-			 * segment that contains switchpoint, but on the new timeline, so
+			 * segment that contains switchpoint, but on the cnew timeline, so
 			 * that it doesn't end up with a partial segment. If you ask for a
 			 * too old starting point, you'll get an error later when we fail
 			 * to find the requested WAL segment in pg_xlog.
@@ -758,7 +758,7 @@ logical_read_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr, int req
 }
 
 /*
- * Create a new replication slot.
+ * Create a cnew replication slot.
  */
 static void
 CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
@@ -1216,14 +1216,14 @@ WalSndWaitForWal(XLogRecPtr loc)
 		if (loc <= RecentFlushPtr)
 			break;
 
-		/* Waiting for new WAL. Since we need to wait, we're now caught up. */
+		/* Waiting for cnew WAL. Since we need to wait, we're now caught up. */
 		WalSndCaughtUp = true;
 
 		/*
 		 * Try to flush pending output to the client. Also wait for the socket
 		 * becoming writable, if there's still pending output after an attempt
 		 * to flush. Otherwise we might just sit on output data while waiting
-		 * for new WAL being generated.
+		 * for cnew WAL being generated.
 		 */
 		if (pq_flush_if_writable() != 0)
 			WalSndShutdown();
@@ -1570,7 +1570,7 @@ ProcessStandbyReplyMessage(void)
 	}
 }
 
-/* compute new replication slot xmin horizon if needed */
+/* compute cnew replication slot xmin horizon if needed */
 static void
 PhysicalReplicationSlotNewXmin(TransactionId feedbackXmin)
 {
@@ -2025,7 +2025,7 @@ retry:
 			/*-------
 			 * When reading from a historic timeline, and there is a timeline
 			 * switch within this segment, read from the WAL segment belonging
-			 * to the new timeline.
+			 * to the cnew timeline.
 			 *
 			 * For example, imagine that this server is currently on timeline
 			 * 5, and we're streaming timeline 4. The switch from timeline 4
@@ -2045,7 +2045,7 @@ retry:
 			 * archive on this server, the file belonging to the old timeline,
 			 * 000000040000000000000013, might not exist. Their contents are
 			 * equal up to the switchpoint, because at a timeline switch, the
-			 * used portion of the old segment is copied to the new file.
+			 * used portion of the old segment is copied to the cnew file.
 			 *-------
 			 */
 			curFileTimeLine = sendTimeLine;
@@ -2123,7 +2123,7 @@ retry:
 	 * this after reading, because even though the segment was present when we
 	 * opened it, it might get recycled or removed while we read it. The
 	 * read() succeeds in that case, but the data we tried to read might
-	 * already have been overwritten with new WAL records.
+	 * already have been overwritten with cnew WAL records.
 	 */
 	XLByteToSeg(startptr, segno);
 	CheckXLogRemoved(segno, ThisTimeLineID);
@@ -2216,7 +2216,7 @@ XLogSendPhysical(void)
 		{
 			/*
 			 * We have been promoted. RecoveryInProgress() updated
-			 * ThisTimeLineID to the new current timeline.
+			 * ThisTimeLineID to the cnew current timeline.
 			 */
 			am_cascading_walsender = false;
 			becameHistoric = true;
@@ -2236,7 +2236,7 @@ XLogSendPhysical(void)
 		{
 			/*
 			 * The timeline we were sending has become historic. Read the
-			 * timeline history file of the new timeline to see where exactly
+			 * timeline history file of the cnew timeline to see where exactly
 			 * we forked off from the timeline we were sending.
 			 */
 			List	   *history;

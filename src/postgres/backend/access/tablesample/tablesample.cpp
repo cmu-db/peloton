@@ -251,7 +251,7 @@ tablesample_getnext(TableSampleDesc *desc)
 										  PointerGetDatum(desc)));
 
 		/*
-		 * Report our new scan position for synchronization purposes. We
+		 * Report our cnew scan position for synchronization purposes. We
 		 * don't do that when moving backwards, however. That would just
 		 * mess up any other forward-moving scanners.
 		 *

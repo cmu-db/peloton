@@ -163,7 +163,7 @@ struct XLogReaderState
 	char	   *errormsg_buf;
 };
 
-/* Get a new XLogReader */
+/* Get a cnew XLogReader */
 extern XLogReaderState *XLogReaderAllocate(XLogPageReadCB pagereadfunc,
 				   void *private_data);
 

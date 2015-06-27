@@ -456,7 +456,7 @@ lo_lseek64(PGconn *conn, int fd, pg_int64 offset, int whence)
 
 /*
  * lo_creat
- *	  create a new large object
+ *	  create a cnew large object
  * the mode is ignored (once upon a time it had a use)
  *
  * returns the oid of the large object created or
@@ -495,7 +495,7 @@ lo_creat(PGconn *conn, int mode)
 
 /*
  * lo_create
- *	  create a new large object
+ *	  create a cnew large object
  * if lobjId isn't InvalidOid, it specifies the OID to (attempt to) create
  *
  * returns the oid of the large object created or

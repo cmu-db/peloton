@@ -32,7 +32,7 @@
 CATALOG(pg_class,1259) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83) BKI_SCHEMA_MACRO
 {
 	NameData	relname;		/* class name */
-	Oid			relnamespace;	/* OID of namespace containing this class */
+	Oid			relnamespace;	/* OID of cnamespace containing this class */
 	Oid			reltype;		/* OID of entry in pg_type for table's
 								 * implicit row type */
 	Oid			reloftype;		/* OID of entry in pg_type for underlying

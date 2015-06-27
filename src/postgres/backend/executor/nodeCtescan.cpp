@@ -111,7 +111,7 @@ CteScanNext(CteScanState *node)
 		 * Append a copy of the returned tuple to tuplestore.  NOTE: because
 		 * our read pointer is certainly in EOF state, its read position will
 		 * move forward over the added tuple.  This is what we want.  Also,
-		 * any other readers will *not* move past the new tuple, which is what
+		 * any other readers will *not* move past the cnew tuple, which is what
 		 * they want.
 		 */
 		tuplestore_puttupleslot(tuplestorestate, cteslot);
@@ -186,7 +186,7 @@ ExecInitCteScan(CteScan *node, EState *estate, int eflags)
 	Assert(innerPlan(node) == NULL);
 
 	/*
-	 * create new CteScanState for node
+	 * create cnew CteScanState for node
 	 */
 	scanstate = makeNode(CteScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
@@ -316,7 +316,7 @@ ExecReScanCteScan(CteScanState *node)
 	ExecScanReScan(&node->ss);
 
 	/*
-	 * Clear the tuplestore if a new scan of the underlying CTE is required.
+	 * Clear the tuplestore if a cnew scan of the underlying CTE is required.
 	 * This implicitly resets all the tuplestore's read pointers.  Note that
 	 * multiple CTE nodes might redundantly clear the tuplestore; that's OK,
 	 * and not unduly expensive.  We'll stop taking this path as soon as

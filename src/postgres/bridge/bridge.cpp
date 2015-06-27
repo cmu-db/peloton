@@ -452,7 +452,7 @@ void  SetUserTableStats(Oid relation_id)
   userpgdatabase = (Form_user_pg_database) GETSTRUCT(newtup);
 
   if (!HeapTupleIsValid(newtup))
-    elog(ERROR, "cache lookup failed for the new tuple");
+    elog(ERROR, "cache lookup failed for the cnew tuple");
 
   printf("test11 %d \n", userpgdatabase->encoding );
   if( userpgdatabase->encoding == 101)

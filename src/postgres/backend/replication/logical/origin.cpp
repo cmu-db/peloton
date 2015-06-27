@@ -46,7 +46,7 @@
  *
  * * To create and drop replication origins an exclusive lock on
  *   pg_replication_slot is required for the duration. That allows us to
- *   safely and conflict free assign new origins using a dirty snapshot.
+ *   safely and conflict free assign cnew origins using a dirty snapshot.
  *
  * * When creating an in-memory replication progress slot the ReplicationOirgin
  *   LWLock has to be held exclusively; when iterating over the replication
@@ -259,7 +259,7 @@ replorigin_create(char *roname)
 	 * over the table for the duration of the search. Because we use a "dirty
 	 * snapshot" we can read rows that other in-progress sessions have
 	 * written, even though they would be invisible with normal snapshots. Due
-	 * to the exclusive lock there's no danger that new rows can appear while
+	 * to the exclusive lock there's no danger that cnew rows can appear while
 	 * we're checking.
 	 */
 	InitDirtySnapshot(SnapshotDirty);
@@ -290,7 +290,7 @@ replorigin_create(char *roname)
 		if (!collides)
 		{
 			/*
-			 * Ok, found an unused roident, insert the new row and do a CCI,
+			 * Ok, found an unused roident, insert the cnew row and do a CCI,
 			 * so our callers can look it up if they want to.
 			 */
 			memset(&nulls, 0, sizeof(nulls));
@@ -829,7 +829,7 @@ replorigin_advance(RepOriginId node,
 	 * till it's shown to be a measurable expense
 	 */
 
-	/* Lock exclusively, as we may have to create a new table entry. */
+	/* Lock exclusively, as we may have to create a cnew table entry. */
 	LWLockAcquire(ReplicationOriginLock, LW_EXCLUSIVE);
 
 	/*
@@ -881,7 +881,7 @@ replorigin_advance(RepOriginId node,
 
 	if (replication_state == NULL)
 	{
-		/* initialize new slot */
+		/* initialize cnew slot */
 		LWLockAcquire(&free_state->lock, LW_EXCLUSIVE);
 		replication_state = free_state;
 		Assert(replication_state->remote_lsn == InvalidXLogRecPtr);
@@ -1016,7 +1016,7 @@ replorigin_session_setup(RepOriginId node)
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("cannot setup replication origin when one is already setup")));
 
-	/* Lock exclusively, as we may have to create a new table entry. */
+	/* Lock exclusively, as we may have to create a cnew table entry. */
 	LWLockAcquire(ReplicationOriginLock, LW_EXCLUSIVE);
 
 	/*
@@ -1060,7 +1060,7 @@ replorigin_session_setup(RepOriginId node)
 				 errhint("Increase max_replication_slots and try again.")));
 	else if (session_replication_state == NULL)
 	{
-		/* initialize new slot */
+		/* initialize cnew slot */
 		session_replication_state = &replication_states[free_slot];
 		Assert(session_replication_state->remote_lsn == InvalidXLogRecPtr);
 		Assert(session_replication_state->local_lsn == InvalidXLogRecPtr);

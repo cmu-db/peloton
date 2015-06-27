@@ -285,10 +285,10 @@ pg_signal_thread(LPVOID param)
 			 * We have a connected pipe. Pass this off to a separate thread
 			 * that will do the actual processing of the pipe.
 			 *
-			 * We must also create a new instance of the pipe *before* we
-			 * start running the new thread. If we don't, there is a race
+			 * We must also create a cnew instance of the pipe *before* we
+			 * start running the cnew thread. If we don't, there is a race
 			 * condition whereby the dispatch thread might run CloseHandle()
-			 * before we have created a new instance, thereby causing a small
+			 * before we have created a cnew instance, thereby causing a small
 			 * window of time where we will miss incoming requests.
 			 */
 			newpipe = CreateNamedPipe(pipename, PIPE_ACCESS_DUPLEX,

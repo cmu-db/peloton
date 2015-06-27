@@ -274,7 +274,7 @@ set_cheapest(RelOptInfo *parent_rel)
 							best_param_path = path;
 						break;
 					case BMS_SUBSET1:
-						/* new path is less-parameterized */
+						/* cnew path is less-parameterized */
 						best_param_path = path;
 						break;
 					case BMS_SUBSET2:
@@ -395,7 +395,7 @@ void
 add_path(RelOptInfo *parent_rel, Path *new_path)
 {
 	bool		accept_new = true;		/* unless we find a superior old path */
-	ListCell   *insert_after = NULL;	/* where to insert new item */
+	ListCell   *insert_after = NULL;	/* where to insert cnew item */
 	List	   *new_path_pathkeys;
 	ListCell   *p1;
 	ListCell   *p1_prev;
@@ -411,7 +411,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 	new_path_pathkeys = new_path->param_info ? NIL : new_path->pathkeys;
 
 	/*
-	 * Loop to check proposed new path against old paths.  Note it is possible
+	 * Loop to check proposed cnew path against old paths.  Note it is possible
 	 * for more than one old path to be tossed out because new_path dominates
 	 * it.
 	 *
@@ -422,7 +422,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 	for (p1 = list_head(parent_rel->pathlist); p1 != NULL; p1 = p1_next)
 	{
 		Path	   *old_path = (Path *) lfirst(p1);
-		bool		remove_old = false; /* unless new proves superior */
+		bool		remove_old = false; /* unless cnew proves superior */
 		PathCostComparison costcmp;
 		PathKeysComparison keyscmp;
 		BMS_Comparison outercmp;
@@ -467,14 +467,14 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 							if ((outercmp == BMS_EQUAL ||
 								 outercmp == BMS_SUBSET1) &&
 								new_path->rows <= old_path->rows)
-								remove_old = true;		/* new dominates old */
+								remove_old = true;		/* cnew dominates old */
 						}
 						else if (keyscmp == PATHKEYS_BETTER2)
 						{
 							if ((outercmp == BMS_EQUAL ||
 								 outercmp == BMS_SUBSET2) &&
 								new_path->rows >= old_path->rows)
-								accept_new = false;		/* old dominates new */
+								accept_new = false;		/* old dominates cnew */
 						}
 						else	/* keyscmp == PATHKEYS_EQUAL */
 						{
@@ -496,24 +496,24 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 								 * costs compare differently.
 								 */
 								if (new_path->rows < old_path->rows)
-									remove_old = true;	/* new dominates old */
+									remove_old = true;	/* cnew dominates old */
 								else if (new_path->rows > old_path->rows)
-									accept_new = false; /* old dominates new */
+									accept_new = false; /* old dominates cnew */
 								else if (compare_path_costs_fuzzily(new_path,
 																	old_path,
 																1.0000000001,
 																	parent_rel->consider_startup) == COSTS_BETTER1)
-									remove_old = true;	/* new dominates old */
+									remove_old = true;	/* cnew dominates old */
 								else
 									accept_new = false; /* old equals or
-														 * dominates new */
+														 * dominates cnew */
 							}
 							else if (outercmp == BMS_SUBSET1 &&
 									 new_path->rows <= old_path->rows)
-								remove_old = true;		/* new dominates old */
+								remove_old = true;		/* cnew dominates old */
 							else if (outercmp == BMS_SUBSET2 &&
 									 new_path->rows >= old_path->rows)
-								accept_new = false;		/* old dominates new */
+								accept_new = false;		/* old dominates cnew */
 							/* else different parameterizations, keep both */
 						}
 						break;
@@ -525,7 +525,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 							if ((outercmp == BMS_EQUAL ||
 								 outercmp == BMS_SUBSET1) &&
 								new_path->rows <= old_path->rows)
-								remove_old = true;		/* new dominates old */
+								remove_old = true;		/* cnew dominates old */
 						}
 						break;
 					case COSTS_BETTER2:
@@ -536,7 +536,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 							if ((outercmp == BMS_EQUAL ||
 								 outercmp == BMS_SUBSET2) &&
 								new_path->rows >= old_path->rows)
-								accept_new = false;		/* old dominates new */
+								accept_new = false;		/* old dominates cnew */
 						}
 						break;
 					case COSTS_DIFFERENT:
@@ -551,7 +551,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		}
 
 		/*
-		 * Remove current element from pathlist if dominated by new.
+		 * Remove current element from pathlist if dominated by cnew.
 		 */
 		if (remove_old)
 		{
@@ -567,7 +567,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		}
 		else
 		{
-			/* new belongs after this old path if it has cost >= old's */
+			/* cnew belongs after this old path if it has cost >= old's */
 			if (new_path->total_cost >= old_path->total_cost)
 				insert_after = p1;
 			/* p1_prev advances */
@@ -585,7 +585,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 
 	if (accept_new)
 	{
-		/* Accept the new path: insert it at proper place in pathlist */
+		/* Accept the cnew path: insert it at proper place in pathlist */
 		if (insert_after)
 			lappend_cell(parent_rel->pathlist, insert_after, new_path);
 		else
@@ -593,7 +593,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 	}
 	else
 	{
-		/* Reject and recycle the new path */
+		/* Reject and recycle the cnew path */
 		if (!IsA(new_path, IndexPath))
 			pfree(new_path);
 	}
@@ -601,7 +601,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 
 /*
  * add_path_precheck
- *	  Check whether a proposed new path could possibly get accepted.
+ *	  Check whether a proposed cnew path could possibly get accepted.
  *	  We assume we know the path's pathkeys and parameterization accurately,
  *	  and have lower bounds for its costs.
  *
@@ -634,12 +634,12 @@ add_path_precheck(RelOptInfo *parent_rel,
 
 		/*
 		 * We are looking for an old_path with the same parameterization (and
-		 * by assumption the same rowcount) that dominates the new path on
+		 * by assumption the same rowcount) that dominates the cnew path on
 		 * pathkeys as well as both cost metrics.  If we find one, we can
-		 * reject the new path.
+		 * reject the cnew path.
 		 *
 		 * For speed, we make exact rather than fuzzy cost comparisons. If an
-		 * old path dominates the new path exactly on both costs, it will
+		 * old path dominates the cnew path exactly on both costs, it will
 		 * surely do so fuzzily.
 		 */
 		if (total_cost >= old_path->total_cost)
@@ -647,7 +647,7 @@ add_path_precheck(RelOptInfo *parent_rel,
 			/* can win on startup cost only if unparameterized */
 			if (startup_cost >= old_path->startup_cost || required_outer)
 			{
-				/* new path does not win on cost, so check pathkeys... */
+				/* cnew path does not win on cost, so check pathkeys... */
 				List	   *old_path_pathkeys;
 
 				old_path_pathkeys = old_path->param_info ? NIL : old_path->pathkeys;
@@ -656,10 +656,10 @@ add_path_precheck(RelOptInfo *parent_rel,
 				if (keyscmp == PATHKEYS_EQUAL ||
 					keyscmp == PATHKEYS_BETTER2)
 				{
-					/* new path does not win on pathkeys... */
+					/* cnew path does not win on pathkeys... */
 					if (bms_equal(required_outer, PATH_REQ_OUTER(old_path)))
 					{
-						/* Found an old path that dominates the new one */
+						/* Found an old path that dominates the cnew one */
 						return false;
 					}
 				}
@@ -669,7 +669,7 @@ add_path_precheck(RelOptInfo *parent_rel,
 		{
 			/*
 			 * Since the pathlist is sorted by total_cost, we can stop looking
-			 * once we reach a path with a total_cost larger than the new
+			 * once we reach a path with a total_cost larger than the cnew
 			 * path's.
 			 */
 			break;
@@ -747,7 +747,7 @@ create_samplescan_path(PlannerInfo *root, RelOptInfo *rel, Relids required_outer
  * 'loop_count' is the number of repetitions of the indexscan to factor into
  *		estimates of caching behavior.
  *
- * Returns the new path node.
+ * Returns the cnew path node.
  */
 IndexPath *
 create_index_path(PlannerInfo *root,
@@ -1541,7 +1541,7 @@ calc_non_nestloop_required_outer(Path *outer_path, Path *inner_path)
  * 'outer_path' is the outer path
  * 'inner_path' is the inner path
  * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
- * 'pathkeys' are the path keys of the new join path
+ * 'pathkeys' are the path keys of the cnew join path
  * 'required_outer' is the set of required outer rels
  *
  * Returns the resulting path node.
@@ -1621,7 +1621,7 @@ create_nestloop_path(PlannerInfo *root,
  * 'outer_path' is the outer path
  * 'inner_path' is the inner path
  * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
- * 'pathkeys' are the path keys of the new join path
+ * 'pathkeys' are the path keys of the cnew join path
  * 'required_outer' is the set of required outer rels
  * 'mergeclauses' are the RestrictInfo nodes to use as merge clauses
  *		(this should be a subset of the restrict_clauses list)

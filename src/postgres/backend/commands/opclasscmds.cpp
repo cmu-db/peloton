@@ -232,7 +232,7 @@ get_opclass_oid(Oid amID, List *opclassname, bool missing_ok)
 
 /*
  * CreateOpFamily
- *		Internal routine to make the catalog entry for a new operator family.
+ *		Internal routine to make the catalog entry for a cnew operator family.
  *
  * Caller must have done permissions checks etc. already.
  */
@@ -292,7 +292,7 @@ CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
 	myself.objectId = opfamilyoid;
 	myself.objectSubId = 0;
 
-	/* dependency on namespace */
+	/* dependency on cnamespace */
 	referenced.classId = NamespaceRelationId;
 	referenced.objectId = namespaceoid;
 	referenced.objectSubId = 0;
@@ -304,7 +304,7 @@ CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
 	/* dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, false);
 
-	/* Post creation hook for new operator family */
+	/* Post creation hook for cnew operator family */
 	InvokeObjectPostCreateHook(OperatorFamilyRelationId, opfamilyoid, 0);
 
 	heap_close(rel, RowExclusiveLock);
@@ -314,7 +314,7 @@ CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
 
 /*
  * DefineOpClass
- *		Define a new index operator class.
+ *		Define a cnew index operator class.
  */
 ObjectAddress
 DefineOpClass(CreateOpClassStmt *stmt)
@@ -323,7 +323,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	Oid			amoid,			/* our AM's oid */
 				typeoid,		/* indexable datatype oid */
 				storageoid,		/* storage datatype oid, if any */
-				namespaceoid,	/* namespace to create opclass in */
+				namespaceoid,	/* cnamespace to create opclass in */
 				opfamilyoid,	/* oid of containing opfamily */
 				opclassoid;		/* oid of opclass we create */
 	int			maxOpNumber,	/* amstrategies value */
@@ -342,11 +342,11 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	ObjectAddress myself,
 				referenced;
 
-	/* Convert list of names to a name and namespace */
+	/* Convert list of names to a name and cnamespace */
 	namespaceoid = QualifiedNameGetCreationNamespace(stmt->opclassname,
 													 &opcname);
 
-	/* Check we have creation rights in target namespace */
+	/* Check we have creation rights in target cnamespace */
 	aclresult = pg_namespace_aclcheck(namespaceoid, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
@@ -418,7 +418,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	}
 	else
 	{
-		/* Lookup existing family of same name and namespace */
+		/* Lookup existing family of same name and cnamespace */
 		tup = SearchSysCache3(OPFAMILYAMNAMENSP,
 							  ObjectIdGetDatum(amoid),
 							  PointerGetDatum(opcname),
@@ -677,7 +677,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	myself.objectId = opclassoid;
 	myself.objectSubId = 0;
 
-	/* dependency on namespace */
+	/* dependency on cnamespace */
 	referenced.classId = NamespaceRelationId;
 	referenced.objectId = namespaceoid;
 	referenced.objectSubId = 0;
@@ -710,7 +710,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	/* dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, false);
 
-	/* Post creation hook for new operator class */
+	/* Post creation hook for cnew operator class */
 	InvokeObjectPostCreateHook(OperatorClassRelationId, opclassoid, 0);
 
 	heap_close(rel, RowExclusiveLock);
@@ -721,21 +721,21 @@ DefineOpClass(CreateOpClassStmt *stmt)
 
 /*
  * DefineOpFamily
- *		Define a new index operator family.
+ *		Define a cnew index operator family.
  */
 ObjectAddress
 DefineOpFamily(CreateOpFamilyStmt *stmt)
 {
 	char	   *opfname;		/* name of opfamily we're creating */
 	Oid			amoid,			/* our AM's oid */
-				namespaceoid;	/* namespace to create opfamily in */
+				namespaceoid;	/* cnamespace to create opfamily in */
 	AclResult	aclresult;
 
-	/* Convert list of names to a name and namespace */
+	/* Convert list of names to a name and cnamespace */
 	namespaceoid = QualifiedNameGetCreationNamespace(stmt->opfamilyname,
 													 &opfname);
 
-	/* Check we have creation rights in target namespace */
+	/* Check we have creation rights in target cnamespace */
 	aclresult = pg_namespace_aclcheck(namespaceoid, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
@@ -1236,7 +1236,7 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 }
 
 /*
- * Add a new family member to the appropriate list, after checking for
+ * Add a cnew family member to the appropriate list, after checking for
  * duplicated strategy or proc number.
  */
 static void
@@ -1689,13 +1689,13 @@ get_am_name(Oid amOid)
  * Subroutine for ALTER OPERATOR CLASS SET SCHEMA/RENAME
  *
  * Is there an operator class with the given name and signature already
- * in the given namespace?	If so, raise an appropriate error message.
+ * in the given cnamespace?	If so, raise an appropriate error message.
  */
 void
 IsThereOpClassInNamespace(const char *opcname, Oid opcmethod,
 						  Oid opcnamespace)
 {
-	/* make sure the new name doesn't exist */
+	/* make sure the cnew name doesn't exist */
 	if (SearchSysCacheExists3(CLAAMNAMENSP,
 							  ObjectIdGetDatum(opcmethod),
 							  CStringGetDatum(opcname),
@@ -1712,13 +1712,13 @@ IsThereOpClassInNamespace(const char *opcname, Oid opcmethod,
  * Subroutine for ALTER OPERATOR FAMILY SET SCHEMA/RENAME
  *
  * Is there an operator family with the given name and signature already
- * in the given namespace?	If so, raise an appropriate error message.
+ * in the given cnamespace?	If so, raise an appropriate error message.
  */
 void
 IsThereOpFamilyInNamespace(const char *opfname, Oid opfmethod,
 						   Oid opfnamespace)
 {
-	/* make sure the new name doesn't exist */
+	/* make sure the cnew name doesn't exist */
 	if (SearchSysCacheExists3(OPFAMILYAMNAMENSP,
 							  ObjectIdGetDatum(opfmethod),
 							  CStringGetDatum(opfname),

@@ -154,7 +154,7 @@ typedef unsigned int flex_uint32_t;
 /* Action number for EOF rule of a given start state. */
 #define YY_STATE_EOF(state) (YY_END_OF_BUFFER + state + 1)
 
-/* Special action meaning "start processing a new file". */
+/* Special action meaning "start processing a cnew file". */
 #define YY_NEW_FILE replication_yyrestart(replication_yyin  )
 
 #define YY_END_OF_BUFFER_CHAR 0
@@ -268,9 +268,9 @@ struct yy_buffer_state
 	 * still have a bunch of tokens to match, though, because of
 	 * possible backing-up.
 	 *
-	 * When we actually see the EOF, we change the status to "new"
+	 * When we actually see the EOF, we change the status to "cnew"
 	 * (via replication_yyrestart()), so that the user can continue scanning by
-	 * just pointing replication_yyin at a new input file.
+	 * just pointing replication_yyin at a cnew input file.
 	 */
 #define YY_BUFFER_EOF_PENDING 2
 
@@ -1211,14 +1211,14 @@ YY_FATAL_ERROR( "flex scanner jammed" );
 
 		if ( YY_CURRENT_BUFFER_LVALUE->yy_buffer_status == YY_BUFFER_NEW )
 			{
-			/* We're scanning a new file or input source.  It's
+			/* We're scanning a cnew file or input source.  It's
 			 * possible that this happened because the user
-			 * just pointed replication_yyin at a new source and called
+			 * just pointed replication_yyin at a cnew source and called
 			 * replication_yylex().  If so, then we have to assure
 			 * consistency between YY_CURRENT_BUFFER and our
 			 * globals.  Here is the right place to do so, because
 			 * this is the first action (other than possibly a
-			 * back-up) that will match for the new input source.
+			 * back-up) that will match for the cnew input source.
 			 */
 			(yy_n_chars) = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
 			YY_CURRENT_BUFFER_LVALUE->yy_input_file = replication_yyin;
@@ -1330,7 +1330,7 @@ YY_FATAL_ERROR( "flex scanner jammed" );
 		} /* end of scanning one token */
 } /* end of replication_yylex */
 
-/* yy_get_next_buffer - try to read in a new buffer
+/* yy_get_next_buffer - try to read in a cnew buffer
  *
  * Returns a code representing an action:
  *	EOB_ACT_LAST_MATCH -
@@ -1619,7 +1619,7 @@ static int yy_get_next_buffer (void)
 }
 
 /** Switch to a different input buffer.
- * @param new_buffer The new input buffer.
+ * @param new_buffer The cnew input buffer.
  * 
  */
     void replication_yy_switch_to_buffer  (YY_BUFFER_STATE  new_buffer )
@@ -1765,10 +1765,10 @@ static void replication_yy_load_buffer_state  (void)
 		replication_yy_load_buffer_state( );
 }
 
-/** Pushes the new state onto the stack. The new state becomes
+/** Pushes the cnew state onto the stack. The cnew state becomes
  *  the current state. This function will allocate the stack
  *  if necessary.
- *  @param new_buffer The new state.
+ *  @param new_buffer The cnew state.
  *  
  */
 void replication_yypush_buffer_state (YY_BUFFER_STATE new_buffer )
@@ -1798,7 +1798,7 @@ void replication_yypush_buffer_state (YY_BUFFER_STATE new_buffer )
 }
 
 /** Removes and deletes the top of the stack, if present.
- *  The next element becomes the new top.
+ *  The next element becomes the cnew top.
  *  
  */
 void replication_yypop_buffer_state (void)
@@ -1857,7 +1857,7 @@ static void replication_yyensure_buffer_stack (void)
 		if ( ! (yy_buffer_stack) )
 			YY_FATAL_ERROR( "out of dynamic memory in replication_yyensure_buffer_stack()" );
 
-		/* zero only the new slots.*/
+		/* zero only the cnew slots.*/
 		memset((yy_buffer_stack) + (yy_buffer_stack_max), 0, grow_size * sizeof(struct yy_buffer_state*));
 		(yy_buffer_stack_max) = num_to_alloc;
 	}

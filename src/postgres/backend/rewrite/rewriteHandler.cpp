@@ -534,7 +534,7 @@ rewriteRuleAction(Query *parsetree,
 	AddQual(sub_action, parsetree->jointree->quals);
 
 	/*
-	 * Rewrite new.attribute with right hand side of target-list entry for
+	 * Rewrite cnew.attribute with right hand side of target-list entry for
 	 * appropriate field name in insert/update.
 	 *
 	 * KLUGE ALERT: since ReplaceVarsFromTargetList returns a mutated copy, we
@@ -856,7 +856,7 @@ rewriteTargetListIU(List *targetList,
 
 
 /*
- * Convert a matched TLE from the original tlist into a correct new TLE.
+ * Convert a matched TLE from the original tlist into a correct cnew TLE.
  *
  * This routine detects and handles multiple assignments to the same target
  * attribute.  (The attribute name is needed only for error messages.)
@@ -1419,7 +1419,7 @@ ApplyRetrieveRule(Query *parsetree,
 			 * For the most part, Vars referencing the view should remain as
 			 * they are, meaning that they implicitly represent OLD values.
 			 * But in the RETURNING list if any, we want such Vars to
-			 * represent NEW values, so change them to reference the new RTE.
+			 * represent NEW values, so change them to reference the cnew RTE.
 			 *
 			 * Since ChangeVarNodes scribbles on the tree in-place, copy the
 			 * RETURNING list first for safety.
@@ -1658,7 +1658,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 
 		/*
 		 * If the table is not referenced in the query, then we ignore it.
-		 * This prevents infinite expansion loop due to new rtable entries
+		 * This prevents infinite expansion loop due to cnew rtable entries
 		 * inserted by expansion of a rule. A table is referenced if it is
 		 * part of the join set (a source table), or is referenced by any Var
 		 * nodes, or is the result table.
@@ -1668,7 +1668,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 			continue;
 
 		/*
-		 * Also, if this is a new result relation introduced by
+		 * Also, if this is a cnew result relation introduced by
 		 * ApplyRetrieveRule, we don't want to do anything more with it.
 		 */
 		if (rt_index == parsetree->resultRelation &&
@@ -1749,7 +1749,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 
 	/*
 	 * Apply any row level security policies.  We do this last because it
-	 * requires special recursion detection if the new quals have sublink
+	 * requires special recursion detection if the cnew quals have sublink
 	 * subqueries, and if we did it in the loop above query_tree_walker
 	 * would then recurse into those quals a second time.
 	 */
@@ -1773,7 +1773,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 		rel = heap_open(rte->relid, NoLock);
 
 		/*
-		 * Fetch any new security quals that must be applied to this RTE.
+		 * Fetch any cnew security quals that must be applied to this RTE.
 		 */
 		get_row_security_policies(parsetree, parsetree->commandType, rte,
 								  rt_index, &securityQuals, &withCheckOptions,
@@ -1784,7 +1784,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 			if (hasSubLinks)
 			{
 				/*
-				 * Recursively process the new quals, checking for infinite
+				 * Recursively process the cnew quals, checking for infinite
 				 * recursion.
 				 */
 				if (list_member_oid(activeRIRs, RelationGetRelid(rel)))
@@ -1805,7 +1805,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 			}
 
 			/*
-			 * Add the new security quals to the start of the RTE's list so
+			 * Add the cnew security quals to the start of the RTE's list so
 			 * that they get applied before any existing security quals (which
 			 * might have come from a user-written security barrier view, and
 			 * might contain malicious code).
@@ -1819,7 +1819,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 
 		/*
 		 * Make sure the query is marked correctly if row level security
-		 * applies, or if the new quals had sublinks.
+		 * applies, or if the cnew quals had sublinks.
 		 */
 		if (hasRowSecurity)
 			parsetree->hasRowSecurity = true;
@@ -2735,7 +2735,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 	heap_close(base_rel, NoLock);
 
 	/*
-	 * Create a new target RTE describing the base relation, and add it to the
+	 * Create a cnew target RTE describing the base relation, and add it to the
 	 * outer query's rangetable.  (What's happening in the next few steps is
 	 * very much like what the planner would do to "pull up" the view into the
 	 * outer query.  Perhaps someday we should refactor things enough so that
@@ -2754,7 +2754,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 
 	/*
 	 * Make a copy of the view's targetlist, adjusting its Vars to reference
-	 * the new target RTE, ie make their varnos be new_rt_index instead of
+	 * the cnew target RTE, ie make their varnos be new_rt_index instead of
 	 * base_rt_index.  There can be no Vars for other rels in the tlist, so
 	 * this is sufficient to pull up the tlist expressions for use in the
 	 * outer query.  The tlist will provide the replacement expressions used
@@ -2768,7 +2768,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 				   0);
 
 	/*
-	 * Mark the new target RTE for the permissions checks that we want to
+	 * Mark the cnew target RTE for the permissions checks that we want to
 	 * enforce against the view owner, as distinct from the query caller.  At
 	 * the relation level, require the same INSERT/UPDATE/DELETE permissions
 	 * that the query caller needs against the view.  We drop the ACL_SELECT
@@ -2815,8 +2815,8 @@ rewriteTargetView(Query *parsetree, Relation view)
 												  view_targetlist);
 
 	/*
-	 * Move any security barrier quals from the view RTE onto the new target
-	 * RTE.  Any such quals should now apply to the new target RTE and will
+	 * Move any security barrier quals from the view RTE onto the cnew target
+	 * RTE.  Any such quals should now apply to the cnew target RTE and will
 	 * not reference the original view RTE in the rewritten query.
 	 */
 	new_rte->securityQuals = view_rte->securityQuals;
@@ -2826,8 +2826,8 @@ rewriteTargetView(Query *parsetree, Relation view)
 	 * For UPDATE/DELETE, rewriteTargetListUD will have added a wholerow junk
 	 * TLE for the view to the end of the targetlist, which we no longer need.
 	 * Remove it to avoid unnecessary work when we process the targetlist.
-	 * Note that when we recurse through rewriteQuery a new junk TLE will be
-	 * added to allow the executor to find the proper row in the new target
+	 * Note that when we recurse through rewriteQuery a cnew junk TLE will be
+	 * added to allow the executor to find the proper row in the cnew target
 	 * relation.  (So, if we failed to do this, we might have multiple junk
 	 * TLEs with the same name, which would be disastrous.)
 	 */
@@ -2858,7 +2858,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 
 	/*
 	 * Update all other RTI references in the query that point to the view
-	 * (for example, parsetree->resultRelation itself) to point to the new
+	 * (for example, parsetree->resultRelation itself) to point to the cnew
 	 * base relation instead.  Vars will not be affected since none of them
 	 * reference parsetree->resultRelation any longer.
 	 */
@@ -2899,12 +2899,12 @@ rewriteTargetView(Query *parsetree, Relation view)
 	/*
 	 * For UPDATE/DELETE, pull up any WHERE quals from the view.  We know that
 	 * any Vars in the quals must reference the one base relation, so we need
-	 * only adjust their varnos to reference the new target (just the same as
+	 * only adjust their varnos to reference the cnew target (just the same as
 	 * we did with the view targetlist).
 	 *
 	 * Note that there is special-case handling for the quals of a security
 	 * barrier view, since they need to be kept separate from any
-	 * user-supplied quals, so these quals are kept on the new target RTE.
+	 * user-supplied quals, so these quals are kept on the cnew target RTE.
 	 *
 	 * For INSERT, the view's quals can be ignored in the main query.
 	 */
@@ -2966,11 +2966,11 @@ rewriteTargetView(Query *parsetree, Relation view)
 		}
 
 		/*
-		 * Add the new WithCheckOption to the start of the list, so that
+		 * Add the cnew WithCheckOption to the start of the list, so that
 		 * checks on inner views are run before checks on outer views, as
 		 * required by the SQL standard.
 		 *
-		 * If the new check is CASCADED, we need to add it even if this view
+		 * If the cnew check is CASCADED, we need to add it even if this view
 		 * has no quals, since there may be quals on child views.  A LOCAL
 		 * check can be omitted if this view has no quals.
 		 */

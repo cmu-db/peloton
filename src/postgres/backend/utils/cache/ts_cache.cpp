@@ -494,7 +494,7 @@ lookup_ts_config_cache(Oid cfgId)
 				elog(ERROR, "maptokentype entries are out of order");
 			if (toktype > maxtokentype)
 			{
-				/* starting a new token type, but first save the prior data */
+				/* starting a cnew token type, but first save the prior data */
 				if (ndicts > 0)
 				{
 					maplists[maxtokentype].len = ndicts;

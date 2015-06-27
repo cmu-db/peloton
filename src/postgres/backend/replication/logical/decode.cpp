@@ -88,11 +88,11 @@ LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogReaderState *recor
 	buf.endptr = ctx->reader->EndRecPtr;
 	buf.record = record;
 
-	/* cast so we get a warning when new rmgrs are added */
+	/* cast so we get a warning when cnew rmgrs are added */
 	switch ((RmgrIds) XLogRecGetRmid(record))
 	{
 			/*
-			 * Rmgrs we care about for logical decoding. Add new rmgrs in
+			 * Rmgrs we care about for logical decoding. Add cnew rmgrs in
 			 * rmgrlist.h's order.
 			 */
 		case RM_XLOG_ID:
@@ -117,7 +117,7 @@ LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogReaderState *recor
 
 			/*
 			 * Rmgrs irrelevant for logical decoding; they describe stuff not
-			 * represented in logical decoding. Add new rmgrs in rmgrlist.h's
+			 * represented in logical decoding. Add cnew rmgrs in rmgrlist.h's
 			 * order.
 			 */
 		case RM_SMGR_ID:
@@ -549,7 +549,7 @@ DecodeAbort(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 /*
  * Parse XLOG_HEAP_INSERT (not MULTI_INSERT!) records into tuplebufs.
  *
- * Deletes can contain the new tuple.
+ * Deletes can contain the cnew tuple.
  */
 static void
 DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
@@ -598,7 +598,7 @@ DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
  * Parse XLOG_HEAP_UPDATE and XLOG_HEAP_HOT_UPDATE, which have the same layout
  * in the record, from wal into proper tuplebufs.
  *
- * Updates can possibly contain a new tuple and the old primary key.
+ * Updates can possibly contain a cnew tuple and the old primary key.
  */
 static void
 DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)

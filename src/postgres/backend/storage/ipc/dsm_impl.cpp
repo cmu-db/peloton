@@ -16,12 +16,12 @@
  * several implementations of this facility.  Many systems implement
  * POSIX shared memory (shm_open etc.), which is well-suited to our needs
  * in this area, with the exception that shared memory identifiers live
- * in a flat system-wide namespace, raising the uncomfortable prospect of
+ * in a flat system-wide cnamespace, raising the uncomfortable prospect of
  * name collisions with other processes (including other copies of
  * PostgreSQL) running on the same system.  Some systems only support
  * the older System V shared memory interface (shmget etc.) which is
  * also usable; however, the default allocation limits are often quite
- * small, and the namespace is even more restricted.
+ * small, and the cnamespace is even more restricted.
  *
  * We also provide an mmap-based shared memory implementation.  This may
  * be useful on systems that provide shared memory via a special-purpose
@@ -126,12 +126,12 @@ int			dynamic_shared_memory_type;
  *
  * DSM_OP_ATTACH.  Map the segment, whose size must be the request_size.
  * The segment may already be mapped; any existing mapping should be removed
- * before creating a new one.
+ * before creating a cnew one.
  *
  * DSM_OP_DETACH.  Unmap the segment.
  *
  * DSM_OP_RESIZE.  Resize the segment to the given request_size and
- * remap the segment at that new size.
+ * remap the segment at that cnew size.
  *
  * DSM_OP_DESTROY.  Unmap the segment, if it is mapped.  Destroy the
  * segment.
@@ -139,17 +139,17 @@ int			dynamic_shared_memory_type;
  * Arguments:
  *	 op: The operation to be performed.
  *	 handle: The handle of an existing object, or for DSM_OP_CREATE, the
- *	   a new handle the caller wants created.
+ *	   a cnew handle the caller wants created.
  *	 request_size: For DSM_OP_CREATE, the requested size.  For DSM_OP_RESIZE,
- *	   the new size.  Otherwise, 0.
+ *	   the cnew size.  Otherwise, 0.
  *	 impl_private: Private, implementation-specific data.  Will be a pointer
  *	   to NULL for the first operation on a shared memory segment within this
  *	   backend; thereafter, it will point to the value to which it was set
  *	   on the previous call.
  *	 mapped_address: Pointer to start of current mapping; pointer to NULL
- *	   if none.  Updated with new mapping address.
+ *	   if none.  Updated with cnew mapping address.
  *	 mapped_size: Pointer to size of current mapping; pointer to 0 if none.
- *	   Updated with new mapped size.
+ *	   Updated with cnew mapped size.
  *	 elevel: Level at which to log errors.
  *
  * Return value: true on success, false on failure.  When false is returned,
@@ -232,7 +232,7 @@ dsm_impl_can_resize(void)
  * segment, are performed as if the shared memory segments were files.
  *
  * Indeed, on some platforms, they may be implemented that way.  While
- * POSIX shared memory segments seem intended to exist in a flat namespace,
+ * POSIX shared memory segments seem intended to exist in a flat cnamespace,
  * some operating systems may implement them as files, even going so far
  * to treat a request for /xyz as a request to create a file by that name
  * in the root directory.  Users of such broken platforms should select
@@ -276,7 +276,7 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 	}
 
 	/*
-	 * Create new segment or open an existing one for attach or resize.
+	 * Create cnew segment or open an existing one for attach or resize.
 	 *
 	 * Even though we're not going through fd.c, we should be safe against
 	 * running out of file descriptors, because of NUM_RESERVED_FDS.  We're
@@ -434,7 +434,7 @@ dsm_impl_sysv(dsm_op op, dsm_handle handle, Size request_size,
 	snprintf(name, 64, "%u", handle);
 
 	/*
-	 * The System V shared memory namespace is very restricted; names are of
+	 * The System V shared memory cnamespace is very restricted; names are of
 	 * type key_t, which is expected to be some sort of integer data type, but
 	 * not necessarily the same one as dsm_handle.  Since we use dsm_handle to
 	 * identify shared memory segments across processes, this might seem like
@@ -624,7 +624,7 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, Size request_size,
 		return true;
 
 	/*
-	 * Storing the shared memory segment in the Global\ namespace, can allow
+	 * Storing the shared memory segment in the Global\ cnamespace, can allow
 	 * any process running in any session to access that file mapping object
 	 * provided that the caller has the required access rights. But to avoid
 	 * issues faced in main shared memory, we are using the naming convention
@@ -666,7 +666,7 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, Size request_size,
 		return true;
 	}
 
-	/* Create new segment or open an existing one for attach. */
+	/* Create cnew segment or open an existing one for attach. */
 	if (op == DSM_OP_CREATE)
 	{
 		DWORD		size_high;
@@ -747,7 +747,7 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, Size request_size,
 	/*
 	 * VirtualQuery gives size in page_size units, which is 4K for Windows. We
 	 * need size only when we are attaching, but it's better to get the size
-	 * when creating new segment to keep size consistent both for
+	 * when creating cnew segment to keep size consistent both for
 	 * DSM_OP_CREATE and DSM_OP_ATTACH.
 	 */
 	if (VirtualQuery(address, &info, sizeof(info)) == 0)
@@ -825,7 +825,7 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 		return true;
 	}
 
-	/* Create new segment or open an existing one for attach or resize. */
+	/* Create cnew segment or open an existing one for attach or resize. */
 	flags = O_RDWR | (op == DSM_OP_CREATE ? O_CREAT | O_EXCL : 0);
 	if ((fd = OpenTransientFile(name, flags, 0600)) == -1)
 	{

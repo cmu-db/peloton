@@ -40,7 +40,7 @@
 
 #define XLOG_HEAP_OPMASK		0x70
 /*
- * When we insert 1st item on new page in INSERT, UPDATE, HOT_UPDATE,
+ * When we insert 1st item on cnew page in INSERT, UPDATE, HOT_UPDATE,
  * or MULTI_INSERT, we can (and we do) restore entire page in redo
  */
 #define XLOG_HEAP_INIT_PAGE		0x80
@@ -171,12 +171,12 @@ typedef struct xl_multi_insert_tuple
 /*
  * This is what we need to know about update|hot_update
  *
- * Backup blk 0: new page
+ * Backup blk 0: cnew page
  *
  * If XLOG_HEAP_PREFIX_FROM_OLD or XLOG_HEAP_SUFFIX_FROM_OLD flags are set,
  * the prefix and/or suffix come first, as one or two uint16s.
  *
- * After that, xl_heap_header and new tuple data follow.  The new tuple
+ * After that, xl_heap_header and cnew tuple data follow.  The cnew tuple
  * data doesn't include the prefix and suffix, which are copied from the
  * old tuple on replay.
  *
@@ -191,8 +191,8 @@ typedef struct xl_heap_update
 	OffsetNumber old_offnum;	/* old tuple's offset */
 	uint8		old_infobits_set;		/* infomask bits to set on old tuple */
 	uint8		flags;
-	TransactionId new_xmax;		/* xmax of the new tuple */
-	OffsetNumber new_offnum;	/* new tuple's offset */
+	TransactionId new_xmax;		/* xmax of the cnew tuple */
+	OffsetNumber new_offnum;	/* cnew tuple's offset */
 
 	/*
 	 * If XLOG_HEAP_CONTAINS_OLD_TUPLE or XLOG_HEAP_CONTAINS_OLD_KEY flags are

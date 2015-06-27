@@ -129,10 +129,10 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 				 errmsg("view must have at least one column")));
 
 	/*
-	 * Look up, check permissions on, and lock the creation namespace; also
+	 * Look up, check permissions on, and lock the creation cnamespace; also
 	 * check for a preexisting view with the same name.  This will also set
 	 * relation->relpersistence to RELPERSISTENCE_TEMP if the selected
-	 * namespace is temporary.
+	 * cnamespace is temporary.
 	 */
 	lockmode = replace ? AccessExclusiveLock : NoLock;
 	(void) RangeVarGetAndCheckCreationNamespace(relation, lockmode, &viewOid);
@@ -159,7 +159,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		CheckTableNotInUse(rel, "CREATE OR REPLACE VIEW");
 
 		/*
-		 * Due to the namespace visibility rules for temporary objects, we
+		 * Due to the cnamespace visibility rules for temporary objects, we
 		 * should only end up replacing a temporary view with another
 		 * temporary view, and similarly for permanent views.
 		 */
@@ -167,14 +167,14 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 
 		/*
 		 * Create a tuple descriptor to compare against the existing view, and
-		 * verify that the old column list is an initial prefix of the new
+		 * verify that the old column list is an initial prefix of the cnew
 		 * column list.
 		 */
 		descriptor = BuildDescForRelation(attrList);
 		checkViewTupleDesc(descriptor, rel->rd_att);
 
 		/*
-		 * The new options list replaces the existing options list, even if
+		 * The cnew options list replaces the existing options list, even if
 		 * it's empty.
 		 */
 		atcmd = makeNode(AlterTableCmd);
@@ -183,7 +183,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		atcmds = lappend(atcmds, atcmd);
 
 		/*
-		 * If new attributes have been added, we must add pg_attribute entries
+		 * If cnew attributes have been added, we must add pg_attribute entries
 		 * for them.  It is convenient (although overkill) to use the ALTER
 		 * TABLE ADD COLUMN infrastructure for this.
 		 */
@@ -247,10 +247,10 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 }
 
 /*
- * Verify that tupledesc associated with proposed new view definition
+ * Verify that tupledesc associated with proposed cnew view definition
  * matches tupledesc of old view.  This is basically a cut-down version
  * of equalTupleDescs(), with code added to generate specific complaints.
- * Also, we allow the new tupledesc to have more columns than the old.
+ * Also, we allow the cnew tupledesc to have more columns than the old.
  */
 static void
 checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
@@ -295,7 +295,7 @@ checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
 	}
 
 	/*
-	 * We ignore the constraint fields.  The new view desc can't have any
+	 * We ignore the constraint fields.  The cnew view desc can't have any
 	 * constraints, and the only ones that could be on the old view are
 	 * defaults, which we are happy to leave in place.
 	 */
@@ -325,7 +325,7 @@ DefineViewRules(Oid viewOid, Query *viewParse, bool replace)
  * UpdateRangeTableOfViewParse
  *
  * Update the range table of the given parsetree.
- * This update consists of adding two new entries IN THE BEGINNING
+ * This update consists of adding two cnew entries IN THE BEGINNING
  * of the range table (otherwise the rule system will die a slow,
  * horrible and painful death, and we do not want that now, do we?)
  * one for the OLD relation and one for the NEW one (both of
@@ -364,14 +364,14 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 	viewRel = relation_open(viewOid, AccessShareLock);
 
 	/*
-	 * Create the 2 new range table entries and form the new range table...
+	 * Create the 2 cnew range table entries and form the cnew range table...
 	 * OLD first, then NEW....
 	 */
 	rt_entry1 = addRangeTableEntryForRelation(pstate, viewRel,
 											  makeAlias("old", NIL),
 											  false, false);
 	rt_entry2 = addRangeTableEntryForRelation(pstate, viewRel,
-											  makeAlias("new", NIL),
+											  makeAlias("cnew", NIL),
 											  false, false);
 	/* Must override addRangeTableEntry's default access-check flags */
 	rt_entry1->requiredPerms = 0;

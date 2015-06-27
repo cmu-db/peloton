@@ -194,7 +194,7 @@ StartupDecodingContext(List *output_plugin_options,
 }
 
 /*
- * Create a new decoding context, for a new logical slot.
+ * Create a cnew decoding context, for a cnew logical slot.
  *
  * plugin contains the name of the output plugin
  * output_plugin_options contains options passed to the output plugin
@@ -291,7 +291,7 @@ CreateInitDecodingContext(char *plugin,
 		 * If all required WAL is still there, great, otherwise retry. The
 		 * slot should prevent further removal of WAL, unless there's a
 		 * concurrent ReplicationSlotsComputeRequiredLSN() after we've written
-		 * the new restart_lsn above, so normally we should never need to loop
+		 * the cnew restart_lsn above, so normally we should never need to loop
 		 * more than twice.
 		 */
 		XLByteToSeg(slot->data.restart_lsn, segno);
@@ -308,9 +308,9 @@ CreateInitDecodingContext(char *plugin,
 	 * without further interlock its return value might immediately be out of
 	 * date.
 	 *
-	 * So we have to acquire the ProcArrayLock to prevent computation of new
+	 * So we have to acquire the ProcArrayLock to prevent computation of cnew
 	 * xmin horizons by other backends, get the safe decoding xid, and inform
-	 * the slot machinery about the new limit. Once that's done the
+	 * the slot machinery about the cnew limit. Once that's done the
 	 * ProcArrayLock can be released as the slot machinery now is
 	 * protecting against vacuum.
 	 * ----
@@ -346,7 +346,7 @@ CreateInitDecodingContext(char *plugin,
 }
 
 /*
- * Create a new decoding context, for a logical slot that has previously been
+ * Create a cnew decoding context, for a logical slot that has previously been
  * used already.
  *
  * start_lsn contains the LSN of the last received data or InvalidXLogRecPtr
@@ -465,7 +465,7 @@ DecodingContextFindStartpoint(LogicalDecodingContext *ctx)
 		XLogRecord *record;
 		char	   *err = NULL;
 
-		/* the read_page callback waits for new WAL */
+		/* the read_page callback waits for cnew WAL */
 		record = XLogReadRecord(ctx->reader, startptr, &err);
 		if (err)
 			elog(ERROR, "%s", err);
@@ -857,7 +857,7 @@ LogicalIncreaseRestartDecodingForSlot(XLogRecPtr current_lsn, XLogRecPtr restart
 		slot->candidate_restart_valid = current_lsn;
 		slot->candidate_restart_lsn = restart_lsn;
 
-		elog(DEBUG1, "got new restart lsn %X/%X at %X/%X",
+		elog(DEBUG1, "got cnew restart lsn %X/%X at %X/%X",
 			 (uint32) (restart_lsn >> 32), (uint32) restart_lsn,
 			 (uint32) (current_lsn >> 32), (uint32) current_lsn);
 	}
@@ -913,7 +913,7 @@ LogicalConfirmReceivedLocation(XLogRecPtr lsn)
 			 * that some catalog tuples might have been removed already.
 			 *
 			 * Ensure that by first writing to ->xmin and only update
-			 * ->effective_xmin once the new state is synced to disk. After a
+			 * ->effective_xmin once the cnew state is synced to disk. After a
 			 * crash ->effective_xmin is set to ->xmin.
 			 */
 			if (TransactionIdIsValid(slot->candidate_catalog_xmin) &&
@@ -939,7 +939,7 @@ LogicalConfirmReceivedLocation(XLogRecPtr lsn)
 
 		SpinLockRelease(&slot->mutex);
 
-		/* first write new xmin to disk, so we know whats up after a crash */
+		/* first write cnew xmin to disk, so we know whats up after a crash */
 		if (updated_xmin || updated_restart)
 		{
 			ReplicationSlotMarkDirty();
@@ -948,7 +948,7 @@ LogicalConfirmReceivedLocation(XLogRecPtr lsn)
 		}
 
 		/*
-		 * Now the new xmin is safely on disk, we can let the global value
+		 * Now the cnew xmin is safely on disk, we can let the global value
 		 * advance. We do not take ProcArrayLock or similar since we only
 		 * advance xmin here and there's not much harm done by a concurrent
 		 * computation missing that.

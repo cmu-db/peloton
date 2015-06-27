@@ -333,7 +333,7 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 						 attr + i, isnull + i);
 
 		if (neednew)
-			/* we already need new key, so we can skip check */
+			/* we already need cnew key, so we can skip check */
 			continue;
 
 		if (isnull[i])
@@ -360,7 +360,7 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 
 /*
  * Search an upper index page for the entry with lowest penalty for insertion
- * of the new index key contained in "it".
+ * of the cnew index key contained in "it".
  *
  * Returns the index of the page entry to insert into.
  */
@@ -409,7 +409,7 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 	 * lead to better space usage, but that hurts cache-locality during
 	 * insertion.  To get the best of both worlds, when we find a tuple that's
 	 * exactly as good as the previous best, choose randomly whether to stick
-	 * to the old best, or use the new one.  Once we decide to stick to the
+	 * to the old best, or use the cnew one.  Once we decide to stick to the
 	 * old best, we keep sticking to it for any subsequent equally good tuples
 	 * we might find.  This favors tuples with low offsets, but still allows
 	 * some inserts to go to other equally-good subtrees.
@@ -469,7 +469,7 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 				if (j < r->rd_att->natts - 1)
 					best_penalty[j + 1] = -1;
 
-				/* we have new best, so reset keep-it decision */
+				/* we have cnew best, so reset keep-it decision */
 				keep_current_best = -1;
 			}
 			else if (best_penalty[j] == usize)
@@ -505,7 +505,7 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 			}
 			if (keep_current_best == 0)
 			{
-				/* we choose to use the new tuple */
+				/* we choose to use the cnew tuple */
 				result = i;
 				/* choose again if there are even more exactly-as-good ones */
 				keep_current_best = -1;
@@ -621,7 +621,7 @@ gistFetchAtt(GISTSTATE *giststate, int nkey, Datum k, Relation r)
 
 /*
  * Fetch all keys in tuple.
- * returns new IndexTuple that contains GISTENTRY with fetched data
+ * returns cnew IndexTuple that contains GISTENTRY with fetched data
  */
 IndexTuple
 gistFetchTuple(GISTSTATE *giststate, Relation r, IndexTuple tuple)
@@ -691,7 +691,7 @@ gistpenalty(GISTSTATE *giststate, int attno,
 }
 
 /*
- * Initialize a new index page
+ * Initialize a cnew index page
  */
 void
 GISTInitBuffer(Buffer b, uint32 f)
@@ -748,7 +748,7 @@ gistcheckpage(Relation rel, Buffer buf)
 
 
 /*
- * Allocate a new page (either by recycling, or by extending the index file)
+ * Allocate a cnew page (either by recycling, or by extending the index file)
  *
  * The returned buffer is already pinned and exclusive-locked
  *

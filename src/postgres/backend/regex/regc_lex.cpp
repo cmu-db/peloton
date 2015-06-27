@@ -69,7 +69,7 @@
 static void
 lexstart(struct vars * v)
 {
-	prefixes(v);				/* may turn on new type bits etc. */
+	prefixes(v);				/* may turn on cnew type bits etc. */
 	NOERR();
 
 	if (v->cflags & REG_QUOTE)

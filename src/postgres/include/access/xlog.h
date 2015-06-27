@@ -189,7 +189,7 @@ typedef struct CheckpointStatsData
 
 	int			ckpt_bufs_written;		/* # of buffers written */
 
-	int			ckpt_segs_added;	/* # of new xlog segments created */
+	int			ckpt_segs_added;	/* # of cnew xlog segments created */
 	int			ckpt_segs_removed;		/* # of xlog segments deleted */
 	int			ckpt_segs_recycled;		/* # of xlog segments recycled */
 

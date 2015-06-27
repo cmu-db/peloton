@@ -396,7 +396,7 @@ typedef struct spgxlogAddLeaf
 	OffsetNumber offnumParent;	/* where the parent downlink is, if any */
 	uint16		nodeI;
 
-	/* new leaf tuple follows (unaligned!) */
+	/* cnew leaf tuple follows (unaligned!) */
 } spgxlogAddLeaf;
 
 /*
@@ -435,9 +435,9 @@ typedef struct spgxlogMoveLeafs
 
 /*
  * Backup Blk 0: original page
- * Backup Blk 1: where new tuple goes, if not same place
+ * Backup Blk 1: where cnew tuple goes, if not same place
  * Backup Blk 2: where parent downlink is, if updated and different from
- *				 the old and new
+ *				 the old and cnew
  */
 typedef struct spgxlogAddNode
 {
@@ -448,11 +448,11 @@ typedef struct spgxlogAddNode
 	OffsetNumber offnum;
 
 	/*
-	 * Offset of the new tuple, on the new page (on backup block 1). Invalid,
+	 * Offset of the cnew tuple, on the cnew page (on backup block 1). Invalid,
 	 * if we overwrote the old tuple in the original page).
 	 */
 	OffsetNumber offnumNew;
-	bool		newPage;		/* init new page? */
+	bool		newPage;		/* init cnew page? */
 
 	/*----
 	 * Where is the parent downlink? parentBlk indicates which page it's on,
@@ -460,7 +460,7 @@ typedef struct spgxlogAddNode
 	 * parentBlk are:
 	 *
 	 * 0: parent == original page
-	 * 1: parent == new page
+	 * 1: parent == cnew page
 	 * 2: parent == different page (blk ref 2)
 	 * -1: parent not updated
 	 *----
@@ -493,7 +493,7 @@ typedef struct spgxlogSplitTuple
 								 * prefix? */
 
 	/*
-	 * new prefix inner tuple follows, then new postfix inner tuple (both are
+	 * cnew prefix inner tuple follows, then cnew postfix inner tuple (both are
 	 * unaligned!)
 	 */
 } spgxlogSplitTuple;
@@ -514,7 +514,7 @@ typedef struct spgxlogPickSplit
 	bool		initSrc;		/* re-init the Src page? */
 	bool		initDest;		/* re-init the Dest page? */
 
-	/* where to put new inner tuple */
+	/* where to put cnew inner tuple */
 	OffsetNumber offnumInner;
 	bool		initInner;		/* re-init the Inner page? */
 
@@ -532,7 +532,7 @@ typedef struct spgxlogPickSplit
 	 *		array of deleted tuple numbers, length nDelete
 	 *		array of inserted tuple numbers, length nInsert
 	 *		array of page selector bytes for inserted tuples, length nInsert
-	 *		new inner tuple (unaligned!)
+	 *		cnew inner tuple (unaligned!)
 	 *		list of leaf tuples, length nInsert (unaligned!)
 	 *----------
 	 */

@@ -252,7 +252,7 @@ static int	nextTempTableSpace = 0;
  * LruInsert	   - put a file at the front of the Lru ring and open it
  * ReleaseLruFile  - Release an fd by closing the last entry in the Lru ring
  * ReleaseLruFiles - Release fd(s) until we're under the max_safe_fds limit
- * AllocateVfd	   - grab a free (or new) file record (from VfdArray)
+ * AllocateVfd	   - grab a free (or cnew) file record (from VfdArray)
  * FreeVfd		   - free a file record
  *
  * The Least Recently Used ring is a doubly linked list that begins and
@@ -862,7 +862,7 @@ AllocateVfd(void)
 		VfdCache = newVfdCache;
 
 		/*
-		 * Initialize the new entries and link them into the free list.
+		 * Initialize the cnew entries and link them into the free list.
 		 */
 		for (i = SizeVfdCache; i < newCacheSize; i++)
 		{
@@ -874,7 +874,7 @@ AllocateVfd(void)
 		VfdCache[0].nextFree = SizeVfdCache;
 
 		/*
-		 * Record the new size
+		 * Record the cnew size
 		 */
 		SizeVfdCache = newCacheSize;
 	}

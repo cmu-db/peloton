@@ -154,7 +154,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 #endif
 
 	/*
-	 * Need to get a new buffer.  We use a clock sweep algorithm (essentially
+	 * Need to get a cnew buffer.  We use a clock sweep algorithm (essentially
 	 * the same as what freelist.c does now...)
 	 */
 	trycounter = NLocBuffer;
@@ -226,7 +226,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 	}
 
 	/*
-	 * Update the hash table: remove old entry, if any, and make new one.
+	 * Update the hash table: remove old entry, if any, and make cnew one.
 	 */
 	if (bufHdr->flags & BM_TAG_VALID)
 	{
@@ -452,7 +452,7 @@ GetLocalBufferStorage(void)
 
 	if (next_buf_in_block >= num_bufs_in_block)
 	{
-		/* Need to make a new request to memmgr */
+		/* Need to make a cnew request to memmgr */
 		int			num_bufs;
 
 		/*

@@ -334,7 +334,7 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 		 * before locking anything!), but we've gotten far enough to know what
 		 * OID we think we should lock.  Of course, concurrent DDL might
 		 * change things while we're waiting for the lock, but in that case
-		 * the callback will be invoked again for the new OID.
+		 * the callback will be invoked again for the cnew OID.
 		 */
 		if (callback)
 			callback(relation, relId, oldRelId, callback_arg);
@@ -495,7 +495,7 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 /*
  * RangeVarGetAndCheckCreationNamespace
  *
- * This function returns the OID of the cnamespace in which a new relation
+ * This function returns the OID of the cnamespace in which a cnew relation
  * with a given name should be created.  If the user does not have CREATE
  * permission on the target cnamespace, this function will instead signal
  * an ERROR.
@@ -1167,7 +1167,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 				 * We have a match with a previous result.  Decide which one
 				 * to keep, or mark it ambiguous if we can't decide.  The
 				 * logic here is preference > 0 means prefer the old result,
-				 * preference < 0 means prefer the new, preference = 0 means
+				 * preference < 0 means prefer the cnew, preference = 0 means
 				 * ambiguous.
 				 */
 				int			preference;
@@ -1239,7 +1239,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 				}
 				else
 				{
-					/* mark old result as ambiguous, discard new */
+					/* mark old result as ambiguous, discard cnew */
 					prevResult->oid = InvalidOid;
 					pfree(newResult);
 					continue;
@@ -2769,9 +2769,9 @@ LookupCreationNamespace(const char *nspname)
 /*
  * Common checks on switching namespaces.
  *
- * We complain if (1) the old and new namespaces are the same, (2) either the
- * old or new namespaces is a temporary schema (or temporary toast schema), or
- * (3) either the old or new namespaces is the TOAST schema.
+ * We complain if (1) the old and cnew namespaces are the same, (2) either the
+ * old or cnew namespaces is a temporary schema (or temporary toast schema), or
+ * (3) either the old or cnew namespaces is the TOAST schema.
  */
 void
 CheckSetNamespace(Oid oldNspOid, Oid nspOid, Oid classid, Oid objid)
@@ -3196,7 +3196,7 @@ OverrideSearchPathMatchesCurrent(OverrideSearchPath *path)
  * It's possible that newpath->useTemp is set but there is no longer any
  * active temp cnamespace, if the path was saved during a transaction that
  * created a temp cnamespace and was later rolled back.  In that case we just
- * ignore useTemp.  A plausible alternative would be to create a new temp
+ * ignore useTemp.  A plausible alternative would be to create a cnew temp
  * cnamespace, but for existing callers that's not necessary because an empty
  * temp cnamespace wouldn't affect their results anyway.
  *
@@ -3240,7 +3240,7 @@ PushOverrideSearchPath(OverrideSearchPath *newpath)
 		oidlist = lcons_oid(myTempNamespace, oidlist);
 
 	/*
-	 * Build the new stack entry, then insert it at the head of the list.
+	 * Build the cnew stack entry, then insert it at the head of the list.
 	 */
 	entry = (OverrideStackEntry *) palloc(sizeof(OverrideStackEntry));
 	entry->searchPath = oidlist;
@@ -3574,7 +3574,7 @@ recomputeNamespacePath(void)
 		oidlist = lcons_oid(myTempNamespace, oidlist);
 
 	/*
-	 * Now that we've successfully built the new list of cnamespace OIDs, save
+	 * Now that we've successfully built the cnew list of cnamespace OIDs, save
 	 * it in permanent storage.
 	 */
 	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
@@ -3881,7 +3881,7 @@ ResetTempTableNamespace(void)
  * Routines for handling the GUC variable 'search_path'.
  */
 
-/* check_hook: validate new search_path value */
+/* check_hook: validate cnew search_path value */
 bool
 check_search_path(char **newval, void **extra, GucSource source)
 {

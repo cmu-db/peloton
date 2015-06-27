@@ -464,7 +464,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	myState->rel = intoRelationDesc;
 	myState->output_cid = GetCurrentCommandId(true);
 
-	/* and remember the new relation's address for ExecCreateTableAs */
+	/* and remember the cnew relation's address for ExecCreateTableAs */
 	CreateAsReladdr = intoRelationAddr;
 
 	/*
@@ -495,7 +495,7 @@ intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 	tuple = ExecMaterializeSlot(slot);
 
 	/*
-	 * force assignment of new OID (see comments in ExecInsert)
+	 * force assignment of cnew OID (see comments in ExecInsert)
 	 */
 	if (myState->rel->rd_rel->relhasoids)
 		HeapTupleSetOid(tuple, InvalidOid);

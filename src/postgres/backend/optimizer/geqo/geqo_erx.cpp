@@ -104,7 +104,7 @@ gimme_edge_table(PlannerInfo *root, Gene *tour1, Gene *tour2,
 		edge_table[i].unused_edges = 0;
 	}
 
-	/* fill edge table with new data */
+	/* fill edge table with cnew data */
 
 	edge_total = 0;
 
@@ -183,7 +183,7 @@ gimme_edge(PlannerInfo *root, Gene gene1, Gene gene2, Edge *edge_table)
 
 /* gimme_tour
  *
- *	  creates a new tour using edges from the edge table.
+ *	  creates a cnew tour using edges from the edge table.
  *	  priority is given to "shared" edges (i.e. edges which
  *	  all parent genes possess and are marked as negative
  *	  in the edge table.)

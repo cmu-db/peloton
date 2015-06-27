@@ -187,7 +187,7 @@ array_typanalyze(PG_FUNCTION_ARGS)
  * batches of size w. (The batch size is also known as "bucket size" and is
  * equal to 1/epsilon.) Let the current batch number be b_current, starting
  * with 1. For each element e we either increment its f count, if it's
- * already in D, or insert a new triple into D with values (e, 1, b_current
+ * already in D, or insert a cnew triple into D with values (e, 1, b_current
  * - 1). After processing each batch we prune D, by removing from it all
  * elements with f + delta <= b_current.  After the algorithm finishes we
  * suppress all elements from D that do not satisfy f >= (s - epsilon) * N,
@@ -361,7 +361,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 				continue;
 			}
 
-			/* Lookup current element in hashtable, adding it if new */
+			/* Lookup current element in hashtable, adding it if cnew */
 			elem_value = elem_values[j];
 			item = (TrackItem *) hash_search(elements_tab,
 											 (const void *) &elem_value,
@@ -383,7 +383,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			}
 			else
 			{
-				/* Initialize new tracking list element */
+				/* Initialize cnew tracking list element */
 
 				/*
 				 * If element type is pass-by-reference, we must copy it into

@@ -381,7 +381,7 @@ create_proc_lang(const char *languageName, bool replace,
 	}
 	else
 	{
-		/* Creating a new language */
+		/* Creating a cnew language */
 		tup = heap_form_tuple(tupDesc, values, nulls);
 		simple_heap_insert(rel, tup);
 		is_update = false;
@@ -391,7 +391,7 @@ create_proc_lang(const char *languageName, bool replace,
 	CatalogUpdateIndexes(rel, tup);
 
 	/*
-	 * Create dependencies for the new language.  If we are updating an
+	 * Create dependencies for the cnew language.  If we are updating an
 	 * existing language, first delete any existing pg_depend entries.
 	 * (However, since we are not changing ownership or permissions, the
 	 * shared dependencies do *not* need to change, and we leave them alone.)
@@ -435,7 +435,7 @@ create_proc_lang(const char *languageName, bool replace,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
-	/* Post creation hook for new procedural language */
+	/* Post creation hook for cnew procedural language */
 	InvokeObjectPostCreateHook(LanguageRelationId, myself.objectId, 0);
 
 	heap_close(rel, RowExclusiveLock);

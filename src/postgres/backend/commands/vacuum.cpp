@@ -389,9 +389,9 @@ get_rel_oids(Oid relid, const RangeVar *vacrel)
 		 * Since we don't take a lock here, the relation might be gone, or the
 		 * RangeVar might no longer refer to the OID we look up here.  In the
 		 * former case, VACUUM will do nothing; in the latter case, it will
-		 * process the OID we looked up here, rather than the new one. Neither
+		 * process the OID we looked up here, rather than the cnew one. Neither
 		 * is ideal, but there's little practical alternative, since we're
-		 * going to commit this transaction and begin a new one between now
+		 * going to commit this transaction and begin a cnew one between now
 		 * and then.
 		 */
 		relid = RangeVarGetRelid(vacrel, NoLock, false);
@@ -629,7 +629,7 @@ vacuum_set_xid_limits(Relation rel,
 }
 
 /*
- * vac_estimate_reltuples() -- estimate the new value for pg_class.reltuples
+ * vac_estimate_reltuples() -- estimate the cnew value for pg_class.reltuples
  *
  *		If we scanned the whole relation then we should just use the count of
  *		live tuples seen; but if we did not, we should not trust the count
@@ -660,7 +660,7 @@ vac_estimate_reltuples(Relation relation, bool is_analyze,
 	/*
 	 * If scanned_pages is zero but total_pages isn't, keep the existing value
 	 * of reltuples.  (Note: callers should avoid updating the pg_class
-	 * statistics in this situation, since no new information has been
+	 * statistics in this situation, since no cnew information has been
 	 * provided.)
 	 */
 	if (scanned_pages == 0)
@@ -682,9 +682,9 @@ vac_estimate_reltuples(Relation relation, bool is_analyze,
 	 * For ANALYZE, the moving average multiplier is just the fraction of the
 	 * table's pages we scanned.  This is equivalent to assuming that the
 	 * tuple density in the unscanned pages didn't change.  Of course, it
-	 * probably did, if the new density measurement is different. But over
+	 * probably did, if the cnew density measurement is different. But over
 	 * repeated cycles, the value of reltuples will converge towards the
-	 * correct value, if repeated measurements show the same new density.
+	 * correct value, if repeated measurements show the same cnew density.
 	 *
 	 * For VACUUM, the situation is a bit different: we have looked at a
 	 * nonrandom sample of pages, but we know for certain that the pages we
@@ -712,8 +712,8 @@ vac_estimate_reltuples(Relation relation, bool is_analyze,
  *		for both index and heap relation entries in pg_class.
  *
  *		We violate transaction semantics here by overwriting the rel's
- *		existing pg_class tuple with the new values.  This is reasonably
- *		safe as long as we're sure that the new values are correct whether or
+ *		existing pg_class tuple with the cnew values.  This is reasonably
+ *		safe as long as we're sure that the cnew values are correct whether or
  *		not this transaction commits.  The reason for doing this is that if
  *		we updated these tuples in the usual way, vacuuming pg_class itself
  *		wouldn't work very well --- by the time we got done with a vacuum
@@ -820,10 +820,10 @@ vac_update_relstats(Relation relation,
 
 	/*
 	 * Update relfrozenxid, unless caller passed InvalidTransactionId
-	 * indicating it has no new data.
+	 * indicating it has no cnew data.
 	 *
 	 * Ordinarily, we don't let relfrozenxid go backwards: if things are
-	 * working correctly, the only way the new frozenxid could be older would
+	 * working correctly, the only way the cnew frozenxid could be older would
 	 * be if a previous VACUUM was done with a tighter freeze_min_age, in
 	 * which case we don't want to forget the work it already did.  However,
 	 * if the stored relfrozenxid is "in the future", then it must be corrupt
@@ -872,8 +872,8 @@ vac_update_relstats(Relation relation,
  *		truncate pg_clog and pg_multixact.
  *
  *		We violate transaction semantics here by overwriting the database's
- *		existing pg_database tuple with the new values.  This is reasonably
- *		safe since the new values are correct whether or not this transaction
+ *		existing pg_database tuple with the cnew values.  This is reasonably
+ *		safe since the cnew values are correct whether or not this transaction
  *		commits.  As with vac_update_relstats, this avoids leaving dead tuples
  *		behind after a VACUUM.
  */
@@ -895,14 +895,14 @@ vac_update_datfrozenxid(void)
 	/*
 	 * Initialize the "min" calculation with GetOldestXmin, which is a
 	 * reasonable approximation to the minimum relfrozenxid for not-yet-
-	 * committed pg_class entries for new tables; see AddNewRelationTuple().
+	 * committed pg_class entries for cnew tables; see AddNewRelationTuple().
 	 * So we cannot produce a wrong minimum by starting with this.
 	 */
 	newFrozenXid = GetOldestXmin(NULL, true);
 
 	/*
 	 * Similarly, initialize the MultiXact "min" with the value that would be
-	 * used on pg_class for new tables.  See AddNewRelationTuple().
+	 * used on pg_class for cnew tables.  See AddNewRelationTuple().
 	 */
 	newMinMulti = GetOldestMultiXactId();
 
@@ -1063,11 +1063,11 @@ vac_truncate_clog(TransactionId frozenXID,
 	/*
 	 * Scan pg_database to compute the minimum datfrozenxid/datminmxid
 	 *
-	 * Note: we need not worry about a race condition with new entries being
+	 * Note: we need not worry about a race condition with cnew entries being
 	 * inserted by CREATE DATABASE.  Any such entry will have a copy of some
 	 * existing DB's datfrozenxid, and that source DB cannot be ours because
 	 * of the interlock against copying a DB containing an active backend.
-	 * Hence the new entry will not reduce the minimum.  Also, if two VACUUMs
+	 * Hence the cnew entry will not reduce the minimum.  Also, if two VACUUMs
 	 * concurrently modify the datfrozenxid's of different databases, the
 	 * worst possible outcome is that pg_clog is not truncated as aggressively
 	 * as it could be.
@@ -1142,7 +1142,7 @@ vac_truncate_clog(TransactionId frozenXID,
 	TruncateCommitTs(frozenXID, true);
 
 	/*
-	 * Update the wrap limit for GetNewTransactionId and creation of new
+	 * Update the wrap limit for GetNewTransactionId and creation of cnew
 	 * MultiXactIds.  Note: these functions will also signal the postmaster
 	 * for an(other) autovac cycle if needed.   XXX should we avoid possibly
 	 * signalling twice?

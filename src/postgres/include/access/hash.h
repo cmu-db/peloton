@@ -234,8 +234,8 @@ typedef HashMetaPageData *HashMetaPage;
 #define HTMaxStrategyNumber				1
 
 /*
- *	When a new operator class is declared, we require that the user supply
- *	us with an amproc procudure for hashing a key of the new type.
+ *	When a cnew operator class is declared, we require that the user supply
+ *	us with an amproc procudure for hashing a key of the cnew type.
  *	Since we only have one such proc in amproc, it's number 1.
  */
 #define HASHPROC		1

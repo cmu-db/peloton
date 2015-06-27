@@ -39,7 +39,7 @@ struct GinVacuumState
  * in number of items (nitems).
  *
  * If none of the items need to be removed, returns NULL. Otherwise returns
- * a new palloc'd array with the remaining items. The number of remaining
+ * a cnew palloc'd array with the remaining items. The number of remaining
  * items is returned in *nremaining.
  */
 ItemPointer
@@ -487,7 +487,7 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 					 */
 					tmppage = PageGetTempPageCopy(origpage);
 
-					/* set itup pointer to new page */
+					/* set itup pointer to cnew page */
 					itup = (IndexTuple) PageGetItem(tmppage, PageGetItemId(tmppage, i));
 				}
 

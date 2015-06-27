@@ -299,11 +299,11 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
  * From "http://www.ft.uni-erlangen.de/~mskuhn/iso-time.html" by Markus Kuhn:
  * "Week 01 of a year is per definition the first week which has the
  * Thursday in this year, which is equivalent to the week which contains
- * the fourth day of January. In other words, the first week of a new year
- * is the week which has the majority of its days in the new year. Week 01
+ * the fourth day of January. In other words, the first week of a cnew year
+ * is the week which has the majority of its days in the cnew year. Week 01
  * might also contain days from the previous year and the week before week
  * 01 of a year is the last week (52 or 53) of the previous year even if
- * it contains days from the new year. A week starts with Monday (day 1)
+ * it contains days from the cnew year. A week starts with Monday (day 1)
  * and ends with Sunday (day 7). For example, the first week of the year
  * 1997 lasts from 1996-12-30 to 1997-01-05..."
  * (ado, 1996-01-02)

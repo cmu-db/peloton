@@ -42,7 +42,7 @@ static bool right_merge_direction(PlannerInfo *root, PathKey *pathkey);
 /*
  * make_canonical_pathkey
  *	  Given the parameters for a PathKey, find any pre-existing matching
- *	  pathkey in the query's list of "canonical" pathkeys.  Make a new
+ *	  pathkey in the query's list of "canonical" pathkeys.  Make a cnew
  *	  entry if there's not one already.
  *
  * Note that this function must not be used until after we have completed
@@ -98,7 +98,7 @@ make_canonical_pathkey(PlannerInfo *root,
  *
  * We detect two cases:
  *
- * 1. If the new pathkey's equivalence class contains a constant, and isn't
+ * 1. If the cnew pathkey's equivalence class contains a constant, and isn't
  * below an outer join, then we can disregard it as a sort key.  An example:
  *			SELECT ... WHERE x = 42 ORDER BY x, y;
  * We may as well just sort by y.  Note that because of opfamily matching,
@@ -108,7 +108,7 @@ make_canonical_pathkey(PlannerInfo *root,
  * us simplify (or even skip) explicit sorts, but also allows matching index
  * sort orders to a query when there are don't-care index columns.
  *
- * 2. If the new pathkey's equivalence class is the same as that of any
+ * 2. If the cnew pathkey's equivalence class is the same as that of any
  * existing member of the pathkey list, then it is redundant.  Some examples:
  *			SELECT ... ORDER BY x, x;
  *			SELECT ... ORDER BY x, x DESC;
@@ -778,7 +778,7 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
  * 'jointype' is the join type (inner, left, full, etc)
  * 'outer_pathkeys' is the list of the current outer path's path keys
  *
- * Returns the list of new path keys.
+ * Returns the list of cnew path keys.
  */
 List *
 build_join_pathkeys(PlannerInfo *root,
@@ -868,7 +868,7 @@ make_pathkeys_for_sortclauses(PlannerInfo *root,
  * same EquivalenceClass, otherwise not.)  If the mergeclause is either
  * used to generate an EquivalenceClass, or derived from an EquivalenceClass,
  * then it's easy to set up the left_ec and right_ec members --- otherwise,
- * this function should be called to set them up.  We will generate new
+ * this function should be called to set them up.  We will generate cnew
  * EquivalenceClauses if necessary to represent the mergeclause's left and
  * right sides.
  *

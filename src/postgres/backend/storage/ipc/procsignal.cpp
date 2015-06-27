@@ -196,7 +196,7 @@ SendProcSignal(pid_t pid, ProcSignalReason reason, BackendId backendId)
 		 * Note: Since there's no locking, it's possible that the target
 		 * process detaches from shared memory and exits right after this
 		 * test, before we set the flag and send signal. And the signal slot
-		 * might even be recycled by a new process, so it's remotely possible
+		 * might even be recycled by a cnew process, so it's remotely possible
 		 * that we set a flag for a wrong process. That's OK, all the signals
 		 * are such that no harm is done if they're mistakenly fired.
 		 */

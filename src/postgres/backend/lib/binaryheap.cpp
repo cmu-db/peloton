@@ -103,7 +103,7 @@ parent_offset(int i)
  *
  * Adds the given datum to the end of the heap's list of nodes in O(1) without
  * preserving the heap property. This is a convenience to add elements quickly
- * to a new heap. To obtain a valid heap, one must call binaryheap_build()
+ * to a cnew heap. To obtain a valid heap, one must call binaryheap_build()
  * afterwards.
  */
 void
@@ -183,7 +183,7 @@ binaryheap_remove_first(binaryheap *heap)
 
 	/*
 	 * Swap the root and last nodes, decrease the size of the heap (i.e.
-	 * remove the former root node) and sift the new root node down to its
+	 * remove the former root node) and sift the cnew root node down to its
 	 * correct position.
 	 */
 	swap_nodes(heap, 0, heap->bh_size - 1);
@@ -198,7 +198,7 @@ binaryheap_remove_first(binaryheap *heap)
  *
  * Replace the topmost element of a non-empty heap, preserving the heap
  * property.  O(1) in the best case, or O(log n) if it must fall back to
- * sifting the new node down.
+ * sifting the cnew node down.
  */
 void
 binaryheap_replace_first(binaryheap *heap, Datum d)
@@ -249,7 +249,7 @@ sift_up(binaryheap *heap, int node_off)
 
 		/*
 		 * Otherwise, swap the node and its parent and go on to check the
-		 * node's new parent.
+		 * node's cnew parent.
 		 */
 		swap_nodes(heap, node_off, parent_off);
 		node_off = parent_off;

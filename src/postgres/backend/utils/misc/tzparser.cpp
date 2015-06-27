@@ -179,10 +179,10 @@ splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
  * *base: base address of array (changeable if must enlarge array)
  * *arraysize: allocated length of array (changeable if must enlarge array)
  * n: current number of valid elements in array
- * entry: new data to insert
+ * entry: cnew data to insert
  * override: TRUE if OK to override
  *
- * Returns the new array length (new value for n), or -1 if error
+ * Returns the cnew array length (cnew value for n), or -1 if error
  */
 static int
 addToArray(tzEntry **base, int *arraysize, int n,
@@ -270,7 +270,7 @@ addToArray(tzEntry **base, int *arraysize, int n,
  * *arraysize: allocated length of array (changeable if must enlarge array)
  * n: current number of valid elements in array
  *
- * Returns the new array length (new value for n), or -1 if error
+ * Returns the cnew array length (cnew value for n), or -1 if error
  */
 static int
 ParseTzFile(const char *filename, int depth,

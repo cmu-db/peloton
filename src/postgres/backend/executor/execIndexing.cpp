@@ -405,7 +405,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 		if (indexInfo->ii_ExclusionOps != NULL)
 		{
 			bool		violationOK;
-			bool		waitMode;
+			CEOUC_WAIT_MODE	waitMode;
 
 			if (noDupErr)
 			{
@@ -594,14 +594,14 @@ ExecCheckIndexConstraints(TupleTableSlot *slot,
 /*
  * Check for violation of an exclusion or unique constraint
  *
- * heap: the table containing the new tuple
+ * heap: the table containing the cnew tuple
  * index: the index supporting the constraint
  * indexInfo: info about the index, including the exclusion properties
- * tupleid: heap TID of the new tuple we have just inserted (invalid if we
- *		haven't inserted a new tuple yet)
- * values, isnull: the *index* column values computed for the new tuple
+ * tupleid: heap TID of the cnew tuple we have just inserted (invalid if we
+ *		haven't inserted a cnew tuple yet)
+ * values, isnull: the *index* column values computed for the cnew tuple
  * estate: an EState we can do evaluation in
- * newIndex: if true, we are trying to build a new index (this affects
+ * newIndex: if true, we are trying to build a cnew index (this affects
  *		only the wording of error messages)
  * waitMode: whether to wait for concurrent inserters/deleters
  * violationOK: if true, don't throw error for violation

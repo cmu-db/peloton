@@ -146,7 +146,7 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 }
 
 /*
- * CatalogUpdateIndexes - do all the indexing work for a new catalog tuple
+ * CatalogUpdateIndexes - do all the indexing work for a cnew catalog tuple
  *
  * This is a convenience routine for the common case where we only need
  * to insert or update a single tuple in a system catalog.  Avoid using it for
