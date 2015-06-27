@@ -163,7 +163,7 @@ do_end(void)
 static int num_columns_read = 0;
 
 
-#line 167 "bootparse.c" /* yacc.c:339  */
+#line 167 "bootparse.cpp" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -240,7 +240,7 @@ union YYSTYPE
 	int			ival;
 	Oid			oidval;
 
-#line 244 "bootparse.c" /* yacc.c:355  */
+#line 244 "bootparse.cpp" /* yacc.c:355  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -255,7 +255,7 @@ int boot_yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 259 "bootparse.c" /* yacc.c:358  */
+#line 259 "bootparse.cpppp" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -1403,7 +1403,7 @@ yyreduce:
 					boot_openrel((yyvsp[0].str));
 					do_end();
 				}
-#line 1407 "bootparse.c" /* yacc.c:1646  */
+#line 1407 "bootparse.cpppp" /* yacc.c:1646  */
     break;
 
   case 15:
@@ -1413,7 +1413,7 @@ yyreduce:
 					closerel((yyvsp[0].str));
 					do_end();
 				}
-#line 1417 "bootparse.c" /* yacc.c:1646  */
+#line 1417 "bootparse.cpppp" /* yacc.c:1646  */
     break;
 
   case 16:
@@ -1423,7 +1423,7 @@ yyreduce:
 					closerel(NULL);
 					do_end();
 				}
-#line 1427 "bootparse.c" /* yacc.c:1646  */
+#line 1427 "bootparse.cpppp" /* yacc.c:1646  */
     break;
 
   case 17:
@@ -1437,7 +1437,7 @@ yyreduce:
 						 (yyvsp[-6].str),
 						 (yyvsp[-5].oidval));
 				}
-#line 1441 "bootparse.c" /* yacc.c:1646  */
+#line 1441 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 18:
@@ -1445,7 +1445,7 @@ yyreduce:
     {
 					do_end();
 				}
-#line 1449 "bootparse.c" /* yacc.c:1646  */
+#line 1449 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 19:
@@ -1522,7 +1522,7 @@ yyreduce:
 					}
 					do_end();
 				}
-#line 1526 "bootparse.c" /* yacc.c:1646  */
+#line 1526 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 20:
@@ -1535,7 +1535,7 @@ yyreduce:
 						elog(DEBUG4, "inserting row");
 					num_columns_read = 0;
 				}
-#line 1539 "bootparse.c" /* yacc.c:1646  */
+#line 1539 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 21:
@@ -1549,7 +1549,7 @@ yyreduce:
 					InsertOneTuple((yyvsp[-4].oidval));
 					do_end();
 				}
-#line 1553 "bootparse.c" /* yacc.c:1646  */
+#line 1553 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 22:
@@ -1593,7 +1593,7 @@ yyreduce:
 								false);
 					do_end();
 				}
-#line 1597 "bootparse.c" /* yacc.c:1646  */
+#line 1597 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 23:
@@ -1637,7 +1637,7 @@ yyreduce:
 								false);
 					do_end();
 				}
-#line 1641 "bootparse.c" /* yacc.c:1646  */
+#line 1641 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 24:
@@ -1648,7 +1648,7 @@ yyreduce:
 					BootstrapToastTable((yyvsp[0].str), (yyvsp[-3].oidval), (yyvsp[-2].oidval));
 					do_end();
 				}
-#line 1652 "bootparse.c" /* yacc.c:1646  */
+#line 1652 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 25:
@@ -1658,19 +1658,19 @@ yyreduce:
 					build_indices();
 					do_end();
 				}
-#line 1662 "bootparse.c" /* yacc.c:1646  */
+#line 1662 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 26:
 #line 390 "bootparse.y" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].ielem)); }
-#line 1668 "bootparse.c" /* yacc.c:1646  */
+#line 1668 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 27:
 #line 391 "bootparse.y" /* yacc.c:1646  */
     { (yyval.list) = list_make1((yyvsp[0].ielem)); }
-#line 1674 "bootparse.c" /* yacc.c:1646  */
+#line 1674 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 28:
@@ -1686,55 +1686,55 @@ yyreduce:
 					n->nulls_ordering = SORTBY_NULLS_DEFAULT;
 					(yyval.ielem) = n;
 				}
-#line 1690 "bootparse.c" /* yacc.c:1646  */
+#line 1690 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 29:
 #line 410 "bootparse.y" /* yacc.c:1646  */
     { (yyval.ival) = 1; }
-#line 1696 "bootparse.c" /* yacc.c:1646  */
+#line 1696 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 30:
 #line 411 "bootparse.y" /* yacc.c:1646  */
     { (yyval.ival) = 0; }
-#line 1702 "bootparse.c" /* yacc.c:1646  */
+#line 1702 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 31:
 #line 415 "bootparse.y" /* yacc.c:1646  */
     { (yyval.ival) = 1; }
-#line 1708 "bootparse.c" /* yacc.c:1646  */
+#line 1708 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 32:
 #line 416 "bootparse.y" /* yacc.c:1646  */
     { (yyval.ival) = 0; }
-#line 1714 "bootparse.c" /* yacc.c:1646  */
+#line 1714 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 33:
 #line 420 "bootparse.y" /* yacc.c:1646  */
     { (yyval.ival) = 1; }
-#line 1720 "bootparse.c" /* yacc.c:1646  */
+#line 1720 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 34:
 #line 421 "bootparse.y" /* yacc.c:1646  */
     { (yyval.ival) = 0; }
-#line 1726 "bootparse.c" /* yacc.c:1646  */
+#line 1726 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 35:
 #line 425 "bootparse.y" /* yacc.c:1646  */
     { (yyval.oidval) = (yyvsp[0].oidval); }
-#line 1732 "bootparse.c" /* yacc.c:1646  */
+#line 1732 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 36:
 #line 426 "bootparse.y" /* yacc.c:1646  */
     { (yyval.oidval) = InvalidOid; }
-#line 1738 "bootparse.c" /* yacc.c:1646  */
+#line 1738 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 39:
@@ -1744,77 +1744,77 @@ yyreduce:
 						elog(FATAL, "too many columns");
 				   DefineAttr((yyvsp[-3].str), (yyvsp[-1].str), numattr-1, (yyvsp[0].ival));
 				}
-#line 1748 "bootparse.c" /* yacc.c:1646  */
+#line 1748 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 40:
 #line 444 "bootparse.y" /* yacc.c:1646  */
     { (yyval.ival) = BOOTCOL_NULL_FORCE_NOT_NULL; }
-#line 1754 "bootparse.c" /* yacc.c:1646  */
+#line 1754 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 41:
 #line 445 "bootparse.y" /* yacc.c:1646  */
     {  (yyval.ival) = BOOTCOL_NULL_FORCE_NULL; }
-#line 1760 "bootparse.c" /* yacc.c:1646  */
+#line 1760 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 42:
 #line 446 "bootparse.y" /* yacc.c:1646  */
     { (yyval.ival) = BOOTCOL_NULL_AUTO; }
-#line 1766 "bootparse.c" /* yacc.c:1646  */
+#line 1766 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 43:
 #line 450 "bootparse.y" /* yacc.c:1646  */
     { (yyval.oidval) = atooid((yyvsp[0].str)); }
-#line 1772 "bootparse.c" /* yacc.c:1646  */
+#line 1772 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 44:
 #line 454 "bootparse.y" /* yacc.c:1646  */
     { (yyval.oidval) = (yyvsp[0].oidval); }
-#line 1778 "bootparse.c" /* yacc.c:1646  */
+#line 1778 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 45:
 #line 455 "bootparse.y" /* yacc.c:1646  */
     { (yyval.oidval) = InvalidOid; }
-#line 1784 "bootparse.c" /* yacc.c:1646  */
+#line 1784 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 49:
 #line 466 "bootparse.y" /* yacc.c:1646  */
     { InsertOneValue((yyvsp[0].str), num_columns_read++); }
-#line 1790 "bootparse.c" /* yacc.c:1646  */
+#line 1790 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 50:
 #line 468 "bootparse.y" /* yacc.c:1646  */
     { InsertOneValue((yyvsp[0].str), num_columns_read++); }
-#line 1796 "bootparse.c" /* yacc.c:1646  */
+#line 1796 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 51:
 #line 470 "bootparse.y" /* yacc.c:1646  */
     { InsertOneNull(num_columns_read++); }
-#line 1802 "bootparse.c" /* yacc.c:1646  */
+#line 1802 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 52:
 #line 474 "bootparse.y" /* yacc.c:1646  */
     { (yyval.str) = yylval.str; }
-#line 1808 "bootparse.c" /* yacc.c:1646  */
+#line 1808 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 53:
 #line 478 "bootparse.y" /* yacc.c:1646  */
     { (yyval.str) = yylval.str; }
-#line 1814 "bootparse.c" /* yacc.c:1646  */
+#line 1814 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
 
-#line 1818 "bootparse.c" /* yacc.c:1646  */
+#line 1818 "bootparse.cpp" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2045,4 +2045,4 @@ yyreturn:
 #line 480 "bootparse.y" /* yacc.c:1906  */
 
 
-#include "bootscanner.c"
+#include "bootscanner.cpp"

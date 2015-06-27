@@ -1,6 +1,6 @@
-#line 2 "bootscanner.c"
+#line 2 "bootscanner.cpppp"
 
-#line 4 "bootscanner.c"
+#line 4 "bootscanner.cpppp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -792,7 +792,7 @@ fprintf_to_ereport(const char *fmt, const char *msg)
 static int	yyline = 1;			/* line number for error reporting */
 
 #define YY_NO_INPUT 1
-#line 796 "bootscanner.c"
+#line 796 "bootscanner.cpp"
 
 #define INITIAL 0
 
@@ -983,7 +983,7 @@ YY_DECL
 #line 74 "bootscanner.l"
 
 
-#line 987 "bootscanner.c"
+#line 987 "bootscanner.cpp"
 
 	if ( !(yy_init) )
 		{
@@ -1260,7 +1260,7 @@ YY_RULE_SETUP
 #line 143 "bootscanner.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1264 "bootscanner.c"
+#line 1264 "bootscanner.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2136,7 +2136,7 @@ static int yy_init_globals (void)
     (yy_init) = 0;
     (yy_start) = 0;
 
-/* Defined in main.c */
+/* Defined in main.cpp */
 #ifdef YY_STDINIT
     boot_yyin = stdin;
     boot_yyout = stdout;
