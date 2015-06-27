@@ -29,8 +29,15 @@ namespace executor {
  * @param node Aggregate node corresponding to this executor.
  */
 AggregateExecutor::AggregateExecutor(planner::AbstractPlanNode *node,
-                                     Transaction *transaction)
+                                     concurrency::Transaction *transaction)
 : AbstractExecutor(node, transaction) {
+}
+
+AggregateExecutor::~AggregateExecutor() {
+
+  // clean up temporary aggregation table
+  delete output_table;
+
 }
 
 /**
@@ -107,6 +114,7 @@ bool AggregateExecutor::DExecute() {
     if (!aggregator.Finalize(prev_tuple))
       return false;
 
+    delete prev_tuple;
     LOG_TRACE("Finished processing logical tile");
   }
 

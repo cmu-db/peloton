@@ -40,9 +40,9 @@ class AggregateExecutor : public AbstractExecutor {
   AggregateExecutor& operator=(AggregateExecutor &&) = delete;
 
   AggregateExecutor(planner::AbstractPlanNode *node,
-                    Transaction *transaction);
+                    concurrency::Transaction *transaction);
 
-  ~AggregateExecutor(){}
+  ~AggregateExecutor();
 
  protected:
   bool DInit();

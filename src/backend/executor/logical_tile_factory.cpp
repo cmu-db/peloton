@@ -55,7 +55,7 @@ LogicalTile *LogicalTileFactory::GetTile() {
  * @return Pointer to newly created logical tile.
  */
 LogicalTile *LogicalTileFactory::WrapTiles(const std::vector<storage::Tile *> &base_tiles,
-                                           bool own_base_tiles) {
+                                           bool own_base_tile) {
 
   assert(base_tiles.size() > 0);
 
@@ -72,7 +72,7 @@ LogicalTile *LogicalTileFactory::WrapTiles(const std::vector<storage::Tile *> &b
     for (int col_id = 0; col_id < column_count; col_id++) {
       new_tile->AddColumn(
           base_tiles[i],
-          own_base_tiles,
+          own_base_tile,
           col_id,
           position_list_idx);
     }
@@ -97,8 +97,8 @@ LogicalTile *LogicalTileFactory::WrapTileGroup(storage::TileGroup *tile_group) {
 
   // Construct schema.
   std::vector<catalog::Schema> &schemas = tile_group->GetTileSchemas();
-  const bool own_base_tile = false;
   assert(schemas.size() == tile_group->NumTiles());
+  bool own_base_tile = false;
   for (unsigned int i = 0; i < schemas.size(); i++) {
 
     storage::Tile *base_tile = tile_group->GetTile(i);

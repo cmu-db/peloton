@@ -23,13 +23,11 @@ namespace nstore {
 namespace storage {
 
 DataTable::DataTable(const catalog::Schema *schema,
-                     Backend *backend,
+                     AbstractBackend *backend,
                      std::string table_name,
                      size_t tuples_per_tilegroup)
 : AbstractTable(schema, backend, tuples_per_tilegroup),
   table_name(table_name) {
-
-  // Sweat these rocks bitch!
 }
 
 DataTable::~DataTable() {

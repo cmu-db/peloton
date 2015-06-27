@@ -44,10 +44,10 @@
    which clients will try to connect. This can be overridden at run-time, but
    it's convenient if your clients have the right default compiled in.
    (--with-pgport=PORTNUM) */
-#define DEF_PGPORT 5432
+#define DEF_PGPORT 57721
 
 /* Define to the default TCP port number as a string constant. */
-#define DEF_PGPORT_STR "5432"
+#define DEF_PGPORT_STR "57721"
 
 /* Define to build with GSSAPI support. (--with-gssapi) */
 /* #undef ENABLE_GSS */

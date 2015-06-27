@@ -22,8 +22,8 @@ namespace nstore {
 namespace storage {
 
 AbstractTable::AbstractTable(const catalog::Schema *schema,
-                             Backend *backend,
-                             size_t tuples_per_tilegroup)
+        AbstractBackend *backend,
+        size_t tuples_per_tilegroup)
 : database_id(INVALID_OID),
   table_id(INVALID_OID),
   backend(backend),

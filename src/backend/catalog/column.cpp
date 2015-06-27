@@ -16,16 +16,16 @@
 namespace nstore {
 namespace catalog {
 
-std::ostream& operator<<(std::ostream& os, const Column& column){
+std::ostream& operator<<(std::ostream& os, const Column& column) {
 
-  os << "\tCOLUMN ";
+    os << "\tCOLUMN ";
 
-  os << column.offset << " : " << column.name << " "
-      << GetTypeName(column.type) << " " << column.size << " " << column.not_null;
+    os << column.offset << " : " << column.GetName() << " "
+       << GetTypeName(column.type) << " " << column.size << " " << column.not_null;
 
-  os << "\n";
+    os << "\n";
 
-  return os;
+    return os;
 }
 
 } // End catalog namespace

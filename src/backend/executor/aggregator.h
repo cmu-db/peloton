@@ -283,6 +283,8 @@ public:
 
     bool Finalize(AbstractTuple *prev_tuple);
 
+    ~Aggregator();
+
 private:
 
   /** @brief Plan node */
