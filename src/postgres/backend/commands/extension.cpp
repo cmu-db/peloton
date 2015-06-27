@@ -604,7 +604,7 @@ read_extension_control_file(const char *extname)
 /*
  * Read the auxiliary control file for the specified extension and version.
  *
- * Returns a new modified ExtensionControlFile struct; the original struct
+ * Returns a cnew modified ExtensionControlFile struct; the original struct
  * (reflecting just the primary control file) is not modified.
  */
 static ExtensionControlFile *
@@ -823,7 +823,7 @@ execute_extension_script(Oid extensionOid, ExtensionControlFile *control,
 	/*
 	 * Set up the search path to contain the target schema, then the schemas
 	 * of any prerequisite extensions, and nothing else.  In particular this
-	 * makes the target schema be the default creation target namespace.
+	 * makes the target schema be the default creation target cnamespace.
 	 *
 	 * Note: it might look tempting to use PushOverrideSearchPath for this,
 	 * but we cannot do that.  We have to actually set the search_path GUC in
@@ -1377,7 +1377,7 @@ CreateExtension(CreateExtensionStmt *stmt)
 			CreateSchemaCommand(csstmt, NULL);
 
 			/*
-			 * CreateSchemaCommand includes CommandCounterIncrement, so new
+			 * CreateSchemaCommand includes CommandCounterIncrement, so cnew
 			 * schema is now visible
 			 */
 			schemaOid = get_namespace_oid(schemaName, false);
@@ -1386,7 +1386,7 @@ CreateExtension(CreateExtensionStmt *stmt)
 	else
 	{
 		/*
-		 * Else, use the current default creation namespace, which is the
+		 * Else, use the current default creation cnamespace, which is the
 		 * first explicit entry in the search_path.
 		 */
 		List	   *search_path = fetch_search_path(false);
@@ -1397,7 +1397,7 @@ CreateExtension(CreateExtensionStmt *stmt)
 					 errmsg("no schema has been selected to create in")));
 		schemaOid = linitial_oid(search_path);
 		schemaName = get_namespace_name(schemaOid);
-		if (schemaName == NULL) /* recently-deleted namespace? */
+		if (schemaName == NULL) /* recently-deleted cnamespace? */
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_SCHEMA),
 					 errmsg("no schema has been selected to create in")));
@@ -1406,7 +1406,7 @@ CreateExtension(CreateExtensionStmt *stmt)
 	}
 
 	/*
-	 * We don't check creation rights on the target namespace here.  If the
+	 * We don't check creation rights on the target cnamespace here.  If the
 	 * extension script actually creates any objects there, it will fail if
 	 * the user doesn't have such permissions.  But there are cases such as
 	 * procedural languages where it's convenient to set schema = pg_catalog
@@ -1442,7 +1442,7 @@ CreateExtension(CreateExtensionStmt *stmt)
 	}
 
 	/*
-	 * Insert new tuple into pg_extension, and create dependency entries.
+	 * Insert cnew tuple into pg_extension, and create dependency entries.
 	 */
 	address = InsertExtensionTuple(control->name, extowner,
 								   schemaOid, control->relocatable,
@@ -1479,8 +1479,8 @@ CreateExtension(CreateExtensionStmt *stmt)
 /*
  * InsertExtensionTuple
  *
- * Insert the new pg_extension row, and create extension's dependency entries.
- * Return the OID assigned to the new row.
+ * Insert the cnew pg_extension row, and create extension's dependency entries.
+ * Return the OID assigned to the cnew row.
  *
  * This is exported for the benefit of pg_upgrade, which has to create a
  * pg_extension entry (and the extension-level dependencies) without
@@ -1563,7 +1563,7 @@ InsertExtensionTuple(const char *extName, Oid extOwner,
 
 		recordDependencyOn(&myself, &otherext, DEPENDENCY_NORMAL);
 	}
-	/* Post creation hook for new extension */
+	/* Post creation hook for cnew extension */
 	InvokeObjectPostCreateHook(ExtensionRelationId, extensionOid, 0);
 
 	return myself;
@@ -2438,7 +2438,7 @@ AlterExtensionNamespace(List *names, const char *newschema, Oid *oldschema)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_EXTENSION,
 					   extensionName);
 
-	/* Permission check: must have creation rights in target namespace */
+	/* Permission check: must have creation rights in target cnamespace */
 	aclresult = pg_namespace_aclcheck(nspOid, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE, newschema);
@@ -2541,13 +2541,13 @@ AlterExtensionNamespace(List *names, const char *newschema, Oid *oldschema)
 												 objsMoved);
 
 		/*
-		 * Remember previous namespace of first object that has one
+		 * Remember previous cnamespace of first object that has one
 		 */
 		if (oldNspOid == InvalidOid && dep_oldNspOid != InvalidOid)
 			oldNspOid = dep_oldNspOid;
 
 		/*
-		 * If not all the objects had the same old namespace (ignoring any
+		 * If not all the objects had the same old cnamespace (ignoring any
 		 * that are not in namespaces), complain.
 		 */
 		if (dep_oldNspOid != InvalidOid && dep_oldNspOid != oldNspOid)
@@ -2576,7 +2576,7 @@ AlterExtensionNamespace(List *names, const char *newschema, Oid *oldschema)
 
 	heap_close(extRel, RowExclusiveLock);
 
-	/* update dependencies to point to the new schema */
+	/* update dependencies to point to the cnew schema */
 	changeDependencyFor(ExtensionRelationId, extensionOid,
 						NamespaceRelationId, oldNspOid, nspOid);
 

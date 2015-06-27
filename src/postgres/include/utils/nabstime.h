@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * nabstime.h
- *	  Definitions for the "new" abstime code.
+ *	  Definitions for the "cnew" abstime code.
  *
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group

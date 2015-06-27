@@ -81,21 +81,21 @@ typedef struct spgChooseOut
 		{
 			int			nodeN;	/* descend to this node (index from 0) */
 			int			levelAdd;		/* increment level by this much */
-			Datum		restDatum;		/* new leaf datum */
+			Datum		restDatum;		/* cnew leaf datum */
 		}			matchNode;
 		struct					/* results for spgAddNode */
 		{
-			Datum		nodeLabel;		/* new node's label */
+			Datum		nodeLabel;		/* cnew node's label */
 			int			nodeN;	/* where to insert it (index from 0) */
 		}			addNode;
 		struct					/* results for spgSplitTuple */
 		{
-			/* Info to form new inner tuple with one node */
+			/* Info to form cnew inner tuple with one node */
 			bool		prefixHasPrefix;		/* tuple should have a prefix? */
 			Datum		prefixPrefixDatum;		/* if so, its value */
 			Datum		nodeLabel;		/* node's label */
 
-			/* Info to form new lower-level inner tuple with all old nodes */
+			/* Info to form cnew lower-level inner tuple with all old nodes */
 			bool		postfixHasPrefix;		/* tuple should have a prefix? */
 			Datum		postfixPrefixDatum;		/* if so, its value */
 		}			splitTuple;
@@ -114,14 +114,14 @@ typedef struct spgPickSplitIn
 
 typedef struct spgPickSplitOut
 {
-	bool		hasPrefix;		/* new inner tuple should have a prefix? */
+	bool		hasPrefix;		/* cnew inner tuple should have a prefix? */
 	Datum		prefixDatum;	/* if so, its value */
 
-	int			nNodes;			/* number of nodes for new inner tuple */
+	int			nNodes;			/* number of nodes for cnew inner tuple */
 	Datum	   *nodeLabels;		/* their labels (or NULL for no labels) */
 
 	int		   *mapTuplesToNodes;		/* node index for each leaf tuple */
-	Datum	   *leafTupleDatums;	/* datum to store in each new leaf tuple */
+	Datum	   *leafTupleDatums;	/* datum to store in each cnew leaf tuple */
 } spgPickSplitOut;
 
 /*

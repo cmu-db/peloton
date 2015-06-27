@@ -108,7 +108,7 @@ static void ParallelExtensionTrampoline(dsm_segment *seg, shm_toc *toc);
 static void ParallelWorkerMain(Datum main_arg);
 
 /*
- * Establish a new parallel context.  This should be done after entering
+ * Establish a cnew parallel context.  This should be done after entering
  * parallel mode, and (unless there is an error) the context should be
  * destroyed before exiting the current subtransaction.
  */
@@ -134,7 +134,7 @@ CreateParallelContext(parallel_worker_main_type entrypoint, int nworkers)
 	/* We might be running in a short-lived memory context. */
 	oldcontext = MemoryContextSwitchTo(TopTransactionContext);
 
-	/* Initialize a new ParallelContext. */
+	/* Initialize a cnew ParallelContext. */
 	pcxt = palloc0(sizeof(ParallelContext));
 	pcxt->subid = GetCurrentSubTransactionId();
 	pcxt->nworkers = nworkers;
@@ -150,7 +150,7 @@ CreateParallelContext(parallel_worker_main_type entrypoint, int nworkers)
 }
 
 /*
- * Establish a new parallel context that calls a function provided by an
+ * Establish a cnew parallel context that calls a function provided by an
  * extension.  This works around the fact that the library might get mapped
  * at a different address in each backend.
  */
@@ -246,7 +246,7 @@ InitializeParallelDSM(ParallelContext *pcxt)
 	}
 
 	/*
-	 * Create DSM and initialize with new table of contents.  But if the user
+	 * Create DSM and initialize with cnew table of contents.  But if the user
 	 * didn't request any workers, then don't bother creating a dynamic shared
 	 * memory segment; instead, just use backend-private memory.
 	 *

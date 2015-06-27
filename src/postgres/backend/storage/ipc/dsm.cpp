@@ -117,7 +117,7 @@ static bool dsm_init_done = false;
  * startup time, but there's no obvious need for such a facility, which
  * would also be complex to handle in the EXEC_BACKEND case.  Once the
  * postmaster has begun spawning children, there's an additional problem:
- * each new mapping would require an update to the control segment,
+ * each cnew mapping would require an update to the control segment,
  * which requires locking, in which the postmaster must not be involved.
  */
 static dlist_head dsm_segment_list = DLIST_STATIC_INIT(dsm_segment_list);
@@ -162,7 +162,7 @@ dsm_postmaster_startup(PGShmemHeader *shim)
 	if (dynamic_shared_memory_type == DSM_IMPL_MMAP)
 		dsm_cleanup_for_mmap();
 
-	/* Determine size for new control segment. */
+	/* Determine size for cnew control segment. */
 	maxitems = PG_DYNSHMEM_FIXED_SLOTS
 		+ PG_DYNSHMEM_SLOTS_PER_BACKEND * MaxBackends;
 	elog(DEBUG2, "dynamic shared memory system will support %u segments",
@@ -170,7 +170,7 @@ dsm_postmaster_startup(PGShmemHeader *shim)
 	segsize = dsm_control_bytes_needed(maxitems);
 
 	/*
-	 * Loop until we find an unused identifier for the new control segment. We
+	 * Loop until we find an unused identifier for the cnew control segment. We
 	 * sometimes use 0 as a sentinel value indicating that no control segment
 	 * is known to exist, so avoid using that value for a real control
 	 * segment.
@@ -451,7 +451,7 @@ dsm_set_control_handle(dsm_handle h)
 #endif
 
 /*
- * Create a new dynamic shared memory segment.
+ * Create a cnew dynamic shared memory segment.
  */
 dsm_segment *
 dsm_create(Size size, int flags)
@@ -466,7 +466,7 @@ dsm_create(Size size, int flags)
 	if (!dsm_init_done)
 		dsm_backend_startup();
 
-	/* Create a new segment descriptor. */
+	/* Create a cnew segment descriptor. */
 	seg = dsm_create_descriptor();
 
 	/* Loop until we find an unused segment identifier. */
@@ -479,7 +479,7 @@ dsm_create(Size size, int flags)
 			break;
 	}
 
-	/* Lock the control segment so we can register the new segment. */
+	/* Lock the control segment so we can register the cnew segment. */
 	LWLockAcquire(DynamicSharedMemoryControlLock, LW_EXCLUSIVE);
 
 	/* Search the control segment for an unused slot. */
@@ -516,7 +516,7 @@ dsm_create(Size size, int flags)
 				 errmsg("too many dynamic shared memory segments")));
 	}
 
-	/* Enter the handle into a new array slot. */
+	/* Enter the handle into a cnew array slot. */
 	dsm_control->item[nitems].handle = seg->handle;
 	/* refcnt of 1 triggers destruction, so start at 2 */
 	dsm_control->item[nitems].refcnt = 2;
@@ -560,7 +560,7 @@ dsm_attach(dsm_handle h)
 	 *
 	 * If you're hitting this error, you probably want to attempt to find an
 	 * existing mapping via dsm_find_mapping() before calling dsm_attach() to
-	 * create a new one.
+	 * create a cnew one.
 	 */
 	dlist_foreach(iter, &dsm_segment_list)
 	{
@@ -569,7 +569,7 @@ dsm_attach(dsm_handle h)
 			elog(ERROR, "can't attach the same segment more than once");
 	}
 
-	/* Create a new segment descriptor. */
+	/* Create a cnew segment descriptor. */
 	seg = dsm_create_descriptor();
 	seg->handle = h;
 
@@ -683,7 +683,7 @@ dsm_resize(dsm_segment *seg, Size size)
  * This is intended to be used when some other process has extended the
  * mapping using dsm_resize(), but we've still only got the initial
  * portion mapped.  Since this might change the address at which the
- * segment is mapped, we return the new mapped address.
+ * segment is mapped, we return the cnew mapped address.
  */
 void *
 dsm_remap(dsm_segment *seg)
@@ -757,14 +757,14 @@ dsm_detach(dsm_segment *seg)
 		seg->control_slot = INVALID_CONTROL_SLOT;
 		LWLockRelease(DynamicSharedMemoryControlLock);
 
-		/* If new reference count is 1, try to destroy the segment. */
+		/* If cnew reference count is 1, try to destroy the segment. */
 		if (refcnt == 1)
 		{
 			/*
 			 * If we fail to destroy the segment here, or are killed before we
 			 * finish doing so, the reference count will remain at 1, which
 			 * will mean that nobody else can attach to the segment.  At
-			 * postmaster shutdown time, or when a new postmaster is started
+			 * postmaster shutdown time, or when a cnew postmaster is started
 			 * after a hard kill, another attempt will be made to remove the
 			 * segment.
 			 *
@@ -899,7 +899,7 @@ dsm_segment_map_length(dsm_segment *seg)
  * Get a handle for a mapping.
  *
  * To establish communication via dynamic shared memory between two backends,
- * one of them should first call dsm_create() to establish a new shared
+ * one of them should first call dsm_create() to establish a cnew shared
  * memory mapping.  That process should then call dsm_segment_handle() to
  * obtain a handle for the mapping, and pass that handle to the
  * coordinating backend via some means (e.g. bgw_main_arg, or via the

@@ -85,8 +85,8 @@ static RBNode sentinel = {InitialState, RBBLACK, RBNIL, RBNIL, NULL};
  *	node_size: actual size of tree nodes (> sizeof(RBNode))
  *	The manipulation functions:
  *	comparator: compare two RBNodes for less/equal/greater
- *	combiner: merge an existing tree entry with a new one
- *	allocfunc: allocate a new RBNode
+ *	combiner: merge an existing tree entry with a cnew one
+ *	allocfunc: allocate a cnew RBNode
  *	freefunc: free an old RBNode
  *	arg: passthrough pointer that will be passed to the manipulation functions
  *
@@ -385,13 +385,13 @@ rb_insert_fixup(RBTree *rb, RBNode *x)
 }
 
 /*
- * rb_insert: insert a new value into the tree.
+ * rb_insert: insert a cnew value into the tree.
  *
  * data represents the value to insert.  Its RBNode fields need not
  * be valid, it's the extra data in the larger struct that is of interest.
  *
  * If the value represented by "data" is not present in the tree, then
- * we copy "data" into a new tree entry and return that node, setting *isNew
+ * we copy "data" into a cnew tree entry and return that node, setting *isNew
  * to true.
  *
  * If the value represented by "data" is already present, then we call the
@@ -431,7 +431,7 @@ rb_insert(RBTree *rb, const RBNode *data, bool *isNew)
 	}
 
 	/*
-	 * Value is not present, so create a new node containing data.
+	 * Value is not present, so create a cnew node containing data.
 	 */
 	*isNew = true;
 

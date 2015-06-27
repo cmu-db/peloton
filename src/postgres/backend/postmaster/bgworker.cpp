@@ -569,7 +569,7 @@ bgworker_sigusr1_handler(SIGNAL_ARGS)
 }
 
 /*
- * Start a new background worker
+ * Start a cnew background worker
  *
  * This is the main entry point for background worker, to be called from
  * postmaster.
@@ -729,7 +729,7 @@ StartBackgroundWorker(void)
 }
 
 /*
- * Register a new background worker while processing shared_preload_libraries.
+ * Register a cnew background worker while processing shared_preload_libraries.
  *
  * This can only be called in the _PG_init function of a module library
  * that's loaded by shared_preload_libraries; otherwise it has no effect.
@@ -808,7 +808,7 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 }
 
 /*
- * Register a new background worker from a regular backend.
+ * Register a cnew background worker from a regular backend.
  *
  * Returns true on success and false on failure.  Failure typically indicates
  * that no background worker slots are currently available.
@@ -858,7 +858,7 @@ RegisterDynamicBackgroundWorker(BackgroundWorker *worker,
 
 			/*
 			 * Make sure postmaster doesn't see the slot as in use before it
-			 * sees the new contents.
+			 * sees the cnew contents.
 			 */
 			pg_write_barrier();
 

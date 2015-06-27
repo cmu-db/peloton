@@ -29,7 +29,7 @@
 
 
 /*
- * ShmemQueueInit -- make the head of a new queue point
+ * ShmemQueueInit -- make the head of a cnew queue point
  *		to itself
  */
 void

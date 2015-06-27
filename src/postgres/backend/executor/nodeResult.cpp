@@ -13,7 +13,7 @@
  *				insert into emp values ('mike', 15000)
  *
  *		(Remember that in an INSERT or UPDATE, we need a plan tree that
- *		generates the new rows.)
+ *		generates the cnew rows.)
  *
  *		Result nodes are also used to optimise queries with constant
  *		qualifications (ie, quals that do not depend on the scanned data),

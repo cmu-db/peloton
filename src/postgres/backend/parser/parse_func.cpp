@@ -971,7 +971,7 @@ func_match_argtypes(int nargs,
  *
  * OLD COMMENTS:
  *
- * This routine is new code, replacing binary_oper_select_candidate()
+ * This routine is cnew code, replacing binary_oper_select_candidate()
  * which dates from v4.2/v1.0.x days. It tries very hard to match up
  * operators with types, including allowing type coercions if necessary.
  * The important thing is that the code do as much as possible,
@@ -1424,7 +1424,7 @@ func_get_detail(List *funcname,
 	if (argdefaults)
 		*argdefaults = NIL;
 
-	/* Get list of possible candidates from namespace search */
+	/* Get list of possible candidates from cnamespace search */
 	raw_candidates = FuncnameGetCandidates(funcname, nargs, fargnames,
 										   expand_variadic, expand_defaults,
 										   false);
@@ -1494,7 +1494,7 @@ func_get_detail(List *funcname,
 
 				if (sourceType == UNKNOWNOID && IsA(arg1, Const))
 				{
-					/* always treat typename('literal') as coercion */
+					/* always treat ctypename('literal') as coercion */
 					iscoercion = true;
 				}
 				else
@@ -2032,7 +2032,7 @@ func_signature_string(List *funcname, int nargs,
  *		look up the function.
  *
  * If the function name is not schema-qualified, it is sought in the current
- * namespace search path.
+ * cnamespace search path.
  *
  * If the function is not found, we return InvalidOid if noError is true,
  * else raise an error.

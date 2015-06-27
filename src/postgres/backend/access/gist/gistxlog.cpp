@@ -407,7 +407,7 @@ gistXLogUpdate(RelFileNode node, Buffer buffer,
 	XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
 	XLogRegisterBufData(0, (char *) todelete, sizeof(OffsetNumber) * ntodelete);
 
-	/* new tuples */
+	/* cnew tuples */
 	for (i = 0; i < ituplen; i++)
 		XLogRegisterBufData(0, (char *) (itup[i]), IndexTupleSize(itup[i]));
 

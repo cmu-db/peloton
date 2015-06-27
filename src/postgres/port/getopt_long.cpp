@@ -48,8 +48,8 @@
  *	Parse argc/argv argument vector, with long options.
  *
  * This implementation does not use optreset.  Instead, we guarantee that
- * it can be restarted on a new argv array after a previous call returned -1,
- * if the caller resets optind to 1 before the first call of the new series.
+ * it can be restarted on a cnew argv array after a previous call returned -1,
+ * if the caller resets optind to 1 before the first call of the cnew series.
  * (Internally, this means we must be sure to reset "place" to EMSG before
  * returning -1.)
  */

@@ -251,7 +251,7 @@ PrintTupleTableSlot(TupleTableSlot *slot){
 		attributeId = (unsigned) i + 1;
 		attributeP = typeinfo->attrs[i];
 
-		printf("\t%2d: %s%s%s%s\t(typeid = %u, len = %d, typmod = %d, byval = %c)\n",
+		printf("\t%2d: %s%s%s%s\t(ctypeid = %u, len = %d, typmod = %d, byval = %c)\n",
 			   attributeId,
 			   NameStr(attributeP->attname),
 			   value != NULL ? " = \"" : "",
@@ -390,7 +390,7 @@ ExecInsert(ModifyTableState *mtstate,
    * return a tuple extracted literally from some table with the same
    * rowtype.
    *
-   * XXX if we ever wanted to allow users to assign their own OIDs to new
+   * XXX if we ever wanted to allow users to assign their own OIDs to cnew
    * rows, this'd be the place to do it.  For the moment, we make a point of
    * doing this before calling triggers, so that a user-supplied trigger
    * could hack the OID if desired.
@@ -588,7 +588,7 @@ ExecInsert(ModifyTableState *mtstate,
       /*
        * insert the tuple normally.
        *
-       * Note: heap_insert returns the tid (location) of the new tuple
+       * Note: heap_insert returns the tid (location) of the cnew tuple
        * in the t_self field.
        */
       newId = heap_insert(resultRelationDesc, tuple,
@@ -995,7 +995,7 @@ ExecUpdate(ItemPointer tupleid,
     /*
      * Check any RLS UPDATE WITH CHECK policies
      *
-     * If we generate a new candidate tuple after EvalPlanQual testing, we
+     * If we generate a cnew candidate tuple after EvalPlanQual testing, we
      * must loop back here and recheck any RLS policies and constraints.
      * (We don't need to redo triggers, however.  If there are any BEFORE
      * triggers then trigger.c will have done heap_lock_tuple to lock the
@@ -1102,19 +1102,19 @@ ExecUpdate(ItemPointer tupleid,
 
     /*
      * Note: instead of having to update the old index tuples associated
-     * with the heap tuple, all we do is form and insert new index tuples.
+     * with the heap tuple, all we do is form and insert cnew index tuples.
      * This is because UPDATEs are actually DELETEs and INSERTs, and index
      * tuple deletion is done later by VACUUM (see notes in ExecDelete).
-     * All we do here is insert new index tuples.  -cim 9/27/89
+     * All we do here is insert cnew index tuples.  -cim 9/27/89
      */
 
     /*
      * insert index entries for tuple
      *
-     * Note: heap_update returns the tid (location) of the new tuple in
+     * Note: heap_update returns the tid (location) of the cnew tuple in
      * the t_self field.
      *
-     * If it's a HOT update, we mustn't insert new index entries.
+     * If it's a HOT update, we mustn't insert cnew index entries.
      */
     if (resultRelInfo->ri_NumIndices > 0 && !HeapTupleIsHeapOnly(tuple))
       recheckIndexes = ExecInsertIndexTuples(slot, &(tuple->t_self),
@@ -1245,7 +1245,7 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
        * Tell caller to try again from the very start.
        *
        * It does not make sense to use the usual EvalPlanQual() style
-       * loop here, as the new version of the row might not conflict
+       * loop here, as the cnew version of the row might not conflict
        * anymore, or the conflicting tuple has actually been deleted.
        */
       ReleaseBuffer(buffer);
@@ -1270,7 +1270,7 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
    * It's not sufficient to rely on the check within ExecUpdate() as e.g.
    * CONFLICT ... WHERE clause may prevent us from reaching that.
    *
-   * This means we only ever continue when a new command in the current
+   * This means we only ever continue when a cnew command in the current
    * transaction could see the row, even though in READ COMMITTED mode the
    * tuple will not be visible according to the current statement's
    * snapshot.  This is in line with the way UPDATE deals with newer tuple
@@ -1321,7 +1321,7 @@ ExecOnConflictUpdate(ModifyTableState *mtstate,
                          mtstate->ps.state);
   }
 
-  /* Project the new tuple version */
+  /* Project the cnew tuple version */
   ExecProject(resultRelInfo->ri_onConflictSetProj, NULL);
 
   /* Execute UPDATE with projection */
@@ -1658,7 +1658,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
    * call ExecInitNode on each of the plans to be executed and save the
    * results into the array "mt_plans".  This is also a convenient place to
    * verify that the proposed target relations are valid and open their
-   * indexes for insertion of new index entries.  Note we *must* set
+   * indexes for insertion of cnew index entries.  Note we *must* set
    * estate->es_result_relation_info correctly while we initialize each
    * sub-plan; ExecContextForcesOids depends on that!
    */
@@ -1677,7 +1677,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
     /*
      * If there are indices on the result relation, open them and save
-     * descriptors in the result relation info, so that we can add new
+     * descriptors in the result relation info, so that we can add cnew
      * index entries for the tuples we add/update.  We need not do this
      * for a DELETE, however, since deletion doesn't affect indexes. Also,
      * inside an EvalPlanQual operation, the indexes might be open

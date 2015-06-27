@@ -30,7 +30,7 @@
 /* Working data for heap_page_prune and subroutines */
 typedef struct
 {
-	TransactionId new_prune_xid;	/* new prune hint value for page */
+	TransactionId new_prune_xid;	/* cnew prune hint value for page */
 	TransactionId latestRemovedXid;		/* latest xid to be removed by this
 										 * prune */
 	int			nredirected;	/* numbers of entries in arrays below */
@@ -112,7 +112,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 
 	/*
 	 * We prune when a previous UPDATE failed to find enough space on the page
-	 * for a new tuple version, or when free space falls below the relation's
+	 * for a cnew tuple version, or when free space falls below the relation's
 	 * fill-factor target (but not less than 10%).
 	 *
 	 * Checking free space here is questionable since we aren't holding any
@@ -163,7 +163,7 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
  *
  * If report_stats is true then we send the number of reclaimed heap-only
  * tuples to pgstats.  (This must be FALSE during vacuum, since vacuum will
- * send its own new total to pgstats, and we don't want this delta applied
+ * send its own cnew total to pgstats, and we don't want this delta applied
  * on top of that.)
  *
  * Returns the number of tuples deleted from the page and sets
@@ -185,7 +185,7 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 	 * logic as possible out of the critical section, and also ensures that
 	 * WAL replay will work the same as the normal case.
 	 *
-	 * First, initialize the new pd_prune_xid value to zero (indicating no
+	 * First, initialize the cnew pd_prune_xid value to zero (indicating no
 	 * prunable tuples).  If we find any tuples which may soon become
 	 * prunable, we will save the lowest relevant XID in new_prune_xid. Also
 	 * initialize the rest of our working state.
@@ -267,7 +267,7 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 	else
 	{
 		/*
-		 * If we didn't prune anything, but have found a new value for the
+		 * If we didn't prune anything, but have found a cnew value for the
 		 * pd_prune_xid field, update it and mark the buffer dirty. This is
 		 * treated as a non-WAL-logged hint.
 		 *

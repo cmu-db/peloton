@@ -82,7 +82,7 @@ BlockSampler_Next(BlockSampler bs)
 	 * block number.  But we can reduce this to one sampler_random_fract()
 	 * call per selected block, by noting that each time the while-test
 	 * succeeds, we can reinterpret V as a uniform random number in the range
-	 * 0 to p. Therefore, instead of choosing a new V, we just adjust p to be
+	 * 0 to p. Therefore, instead of choosing a cnew V, we just adjust p to be
 	 * the appropriate fraction of its former value, and our next loop
 	 * makes the appropriate probabilistic test.
 	 *
@@ -102,7 +102,7 @@ BlockSampler_Next(BlockSampler bs)
 		bs->t++;
 		K--;					/* keep K == N - t */
 
-		/* adjust p to be new cutoff point in reduced range */
+		/* adjust p to be cnew cutoff point in reduced range */
 		p *= 1.0 - (double) k / (double) K;
 	}
 

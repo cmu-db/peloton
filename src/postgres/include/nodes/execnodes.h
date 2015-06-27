@@ -29,7 +29,7 @@
 /* ----------------
  *	  IndexInfo information
  *
- *		this struct holds the information needed to construct new index
+ *		this struct holds the information needed to construct cnew index
  *		entries for a particular index.  Used for both index_build and
  *		retail creation of index entries.
  *
@@ -202,7 +202,7 @@ typedef struct ReturnSetInfo
  *		ProjectionInfo node information
  *
  *		This is all the information needed to perform projections ---
- *		that is, form new tuples by evaluation of targetlist expressions.
+ *		that is, form cnew tuples by evaluation of targetlist expressions.
  *		Nodes which need to do projections create one of these.
  *
  *		ExecProject() evaluates the tlist, forms a tuple, and stores it
@@ -264,7 +264,7 @@ typedef struct ProjectionInfo
  *	  the planner adds a "junk" entry to the targetlist so that the tuples
  *	  returned to ExecutePlan() contain an extra attribute: the ctid of
  *	  the tuple to be updated.  This is needed to do the update, but we
- *	  don't want the ctid to be part of the stored new tuple!  So, we
+ *	  don't want the ctid to be part of the stored cnew tuple!  So, we
  *	  apply a "junk filter" to remove the junk attributes and form the
  *	  real output tuple.  The junkfilter code also provides routines to
  *	  extract the values of the junk attribute(s) from the input tuple.
@@ -818,7 +818,7 @@ typedef struct FieldStoreState
 {
 	ExprState	xprstate;
 	ExprState  *arg;			/* input tuple value */
-	List	   *newvals;		/* new value(s) for field(s) */
+	List	   *newvals;		/* cnew value(s) for field(s) */
 	TupleDesc	argdesc;		/* tupdesc for most recent input */
 } FieldStoreState;
 
@@ -1637,7 +1637,7 @@ typedef struct JoinState
 /* ----------------
  *	 NestLoopState information
  *
- *		NeedNewOuter	   true if need new outer tuple on next call
+ *		NeedNewOuter	   true if need cnew outer tuple on next call
  *		MatchedOuter	   true if found a join match for current outer tuple
  *		NullInnerTupleSlot prepared null tuple for left outer joins
  * ----------------

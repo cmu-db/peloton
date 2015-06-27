@@ -49,7 +49,7 @@ extern int	unlink(const char *filename);
  * Private function declarations.
  */
 extern char *icalloc(int nelem, int elsize);
-extern char *icatalloc(char *old, const char *new);
+extern char *icatalloc(char *old, const char *cnew);
 extern char *icpyalloc(const char *string);
 extern char *imalloc(int n);
 extern void *irealloc(void *pointer, int size);

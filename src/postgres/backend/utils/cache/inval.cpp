@@ -11,7 +11,7 @@
  *	(See utils/time/tqual.c, and note that system catalogs are generally
  *	scanned under the most current snapshot available, rather than the
  *	transaction snapshot.)	At the command boundary, the old tuple stops
- *	being valid and the new version, if any, becomes valid.  Therefore,
+ *	being valid and the cnew version, if any, becomes valid.  Therefore,
  *	we cannot simply flush a tuple from the system caches during heap_update()
  *	or heap_delete().  The tuple is still good at that point; what's more,
  *	even if we did flush it, it might be reloaded into the caches by a later
@@ -19,10 +19,10 @@
  *	of outdated (updated/deleted) tuples and then do the required cache
  *	flushes at the next command boundary.  We must also keep track of
  *	inserted tuples so that we can flush "negative" cache entries that match
- *	the new tuples; again, that mustn't happen until end of command.
+ *	the cnew tuples; again, that mustn't happen until end of command.
  *
  *	Once we have finished the command, we still need to remember inserted
- *	tuples (including new versions of updated tuples), so that we can flush
+ *	tuples (including cnew versions of updated tuples), so that we can flush
  *	them from the caches if we abort the transaction.  Similarly, we'd better
  *	be able to flush "negative" cache entries that may have been loaded in
  *	place of deleted tuples, so we still need the deleted ones too.
@@ -822,7 +822,7 @@ xactGetCommittedInvalidationMessages(SharedInvalidationMessage **msgs,
 	 * so we can copy directly into WAL message. Maintain the order that they
 	 * would be processed in by AtEOXact_Inval(), to ensure emulated behaviour
 	 * in redo is as similar as possible to original. We want the same bugs,
-	 * if any, not new ones.
+	 * if any, not cnew ones.
 	 */
 	oldcontext = MemoryContextSwitchTo(CurTransactionContext);
 
@@ -1066,7 +1066,7 @@ CommandEndInvalidationMessages(void)
  *
  * For an insert or delete, tuple is the target tuple and newtuple is NULL.
  * For an update, we are called just once, with tuple being the old tuple
- * version and newtuple the new version.  This allows avoidance of duplicate
+ * version and newtuple the cnew version.  This allows avoidance of duplicate
  * effort during an update.
  */
 void
@@ -1314,7 +1314,7 @@ CacheInvalidateSmgr(RelFileNodeBackend rnode)
  * Sending this type of invalidation msg forces other backends to re-read
  * the indicated relation mapping file.  It is also necessary to send a
  * relcache inval for the specific relations whose mapping has been altered,
- * else the relcache won't get updated with the new filenode data.
+ * else the relcache won't get updated with the cnew filenode data.
  *
  * Note: because these messages are nontransactional, they won't be captured
  * in commit/abort WAL entries.  Instead, calls to CacheInvalidateRelmap()

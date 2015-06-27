@@ -583,7 +583,7 @@ relabel_to_typmod(Node *expr, int32 typmod)
 	while (expr && IsA(expr, RelabelType))
 		expr = (Node *) ((RelabelType *) expr)->arg;
 
-	/* Apply new typmod, preserving the previous exposed type and collation */
+	/* Apply cnew typmod, preserving the previous exposed type and collation */
 	return (Node *) makeRelabelType((Expr *) expr, type, typmod, coll,
 									COERCE_EXPLICIT_CAST);
 }
@@ -1496,7 +1496,7 @@ exprLocation(const Node *expr)
 			loc = ((const Constraint *) expr)->location;
 			break;
 		case T_FunctionParameter:
-			/* just use typename's location */
+			/* just use ctypename's location */
 			loc = exprLocation((Node *) ((const FunctionParameter *) expr)->argType);
 			break;
 		case T_XmlSerialize:
@@ -1645,7 +1645,7 @@ leftmostLoc(int loc1, int loc2)
 
 bool
 expression_tree_walker(Node *node,
-					   bool (*walker) (),
+					   bool (*walker) (Node *, void *),
 					   void *context)
 {
 	ListCell   *temp;
@@ -1733,9 +1733,9 @@ expression_tree_walker(Node *node,
 										   walker, context))
 					return true;
 				/* walker must see the refexpr and refassgnexpr, however */
-				if (walker(aref->refexpr, context))
+				if (walker(reinterpret_cast<Node*>(aref->refexpr), context))
 					return true;
-				if (walker(aref->refassgnexpr, context))
+				if (walker((Node *)aref->refassgnexpr, context))
 					return true;
 			}
 			break;
@@ -1749,7 +1749,7 @@ expression_tree_walker(Node *node,
 			}
 			break;
 		case T_NamedArgExpr:
-			return walker(((NamedArgExpr *) node)->arg, context);
+			return walker(reinterpret_cast<Node *>(((NamedArgExpr *) node)->arg), context);
 		case T_OpExpr:
 		case T_DistinctExpr:	/* struct-equivalent to OpExpr */
 		case T_NullIfExpr:		/* struct-equivalent to OpExpr */
@@ -1807,25 +1807,25 @@ expression_tree_walker(Node *node,
 			}
 			break;
 		case T_AlternativeSubPlan:
-			return walker(((AlternativeSubPlan *) node)->subplans, context);
+			return walker((Node *)((AlternativeSubPlan *) node)->subplans, context);
 		case T_FieldSelect:
-			return walker(((FieldSelect *) node)->arg, context);
+			return walker((Node *)((FieldSelect *) node)->arg, context);
 		case T_FieldStore:
 			{
 				FieldStore *fstore = (FieldStore *) node;
 
-				if (walker(fstore->arg, context))
+				if (walker((Node *)fstore->arg, context))
 					return true;
 				if (walker(fstore->newvals, context))
 					return true;
 			}
 			break;
 		case T_RelabelType:
-			return walker(((RelabelType *) node)->arg, context);
+			return walker((Node *)((RelabelType *) node)->arg, context);
 		case T_CoerceViaIO:
-			return walker(((CoerceViaIO *) node)->arg, context);
+			return walker((Node *)((CoerceViaIO *) node)->arg, context);
 		case T_ArrayCoerceExpr:
-			return walker(((ArrayCoerceExpr *) node)->arg, context);
+			return walker((Node *)((ArrayCoerceExpr *) node)->arg, context);
 		case T_ConvertRowtypeExpr:
 			return walker(((ConvertRowtypeExpr *) node)->arg, context);
 		case T_CollateExpr:
@@ -2020,7 +2020,7 @@ expression_tree_walker(Node *node,
  */
 bool
 query_tree_walker(Query *query,
-				  bool (*walker) (),
+				  bool (*walker) (Node *, void *),
 				  void *context,
 				  int flags)
 {
@@ -2123,7 +2123,7 @@ range_table_walker(List *rtable,
 /*
  * expression_tree_mutator() is designed to support routines that make a
  * modified copy of an expression tree, with some nodes being added,
- * removed, or replaced by new subtrees.  The original tree is (normally)
+ * removed, or replaced by cnew subtrees.  The original tree is (normally)
  * not changed.  Each recursion level is responsible for returning a copy of
  * (or appropriately modified substitute for) the subtree it is handed.
  * A mutator routine should look like this:
@@ -2170,7 +2170,7 @@ range_table_walker(List *rtable,
  * expression_tree_mutator itself is called on a Query node, it does nothing
  * and returns the unmodified Query node.  The net effect is that unless the
  * mutator does something special at a Query node, sub-selects will not be
- * visited or modified; the original sub-select will be linked to by the new
+ * visited or modified; the original sub-select will be linked to by the cnew
  * SubLink node.  Mutators that want to descend into sub-selects will usually
  * do so by recognizing Query nodes and calling query_tree_mutator (below).
  *
@@ -2184,7 +2184,7 @@ range_table_walker(List *rtable,
 
 Node *
 expression_tree_mutator(Node *node,
-						Node *(*mutator) (),
+						Node *(*mutator) (Node *, void*),
 						void *context)
 {
 	/*
@@ -2923,7 +2923,7 @@ range_table_mutator(List *rtable,
  */
 bool
 query_or_expression_tree_walker(Node *node,
-								bool (*walker) (),
+								bool (*walker) (Node *, void *),
 								void *context,
 								int flags)
 {
@@ -2975,7 +2975,7 @@ query_or_expression_tree_mutator(Node *node,
  */
 bool
 raw_expression_tree_walker(Node *node,
-						   bool (*walker) (),
+						   bool (*walker) (Node *, void *),
 						   void *context)
 {
 	ListCell   *temp;

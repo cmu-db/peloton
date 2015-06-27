@@ -106,7 +106,7 @@ tsm_bernoulli_nextblock(PG_FUNCTION_ARGS)
  * Get next tuple from current block.
  *
  * This method implements the main logic in bernoulli sampling.
- * The algorithm simply generates new random number (in 0.0-1.0 range) and if
+ * The algorithm simply generates cnew random number (in 0.0-1.0 range) and if
  * it falls within user specified probability (in the same range) return the
  * tuple offset.
  *

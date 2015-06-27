@@ -264,7 +264,7 @@ string_compare(const char *key1, const char *key2, Size keysize)
 /************************** CREATE ROUTINES **********************/
 
 /*
- * hash_create -- create a new dynamic hash table
+ * hash_create -- create a cnew dynamic hash table
  *
  *	tabname: a name for the table (for debugging purposes)
  *	nelem: maximum number of elements expected
@@ -822,7 +822,7 @@ calc_bucket(HASHHDR *hctl, uint32 hash_val)
  * the result is a dangling pointer that shouldn't be dereferenced!)
  *
  * HASH_ENTER will normally ereport a generic "out of memory" error if
- * it is unable to create a new entry.  The HASH_ENTER_NULL operation is
+ * it is unable to create a cnew entry.  The HASH_ENTER_NULL operation is
  * the same except it will return NULL if out of memory.  Note that
  * HASH_ENTER_NULL cannot be used with the default palloc-based allocator,
  * since palloc internally ereports on out-of-memory.
@@ -1028,21 +1028,21 @@ hash_search_with_hash_value(HTAB *hashp,
 /*
  * hash_update_hash_key -- change the hash key of an existing table entry
  *
- * This is equivalent to removing the entry, making a new entry, and copying
+ * This is equivalent to removing the entry, making a cnew entry, and copying
  * over its data, except that the entry never goes to the table's freelist.
  * Therefore this cannot suffer an out-of-memory failure, even if there are
  * other processes operating in other partitions of the hashtable.
  *
- * Returns TRUE if successful, FALSE if the requested new hash key is already
+ * Returns TRUE if successful, FALSE if the requested cnew hash key is already
  * present.  Throws error if the specified entry pointer isn't actually a
  * table member.
  *
- * NB: currently, there is no special case for old and new hash keys being
+ * NB: currently, there is no special case for old and cnew hash keys being
  * identical, which means we'll report FALSE for that situation.  This is
  * preferable for existing uses.
  *
  * NB: for a partitioned hashtable, caller must hold lock on both relevant
- * partitions, if the new hash key would belong to a different partition.
+ * partitions, if the cnew hash key would belong to a different partition.
  */
 bool
 hash_update_hash_key(HTAB *hashp,
@@ -1149,7 +1149,7 @@ hash_update_hash_key(HTAB *hashp,
 	currBucket = existingElement;
 
 	/*
-	 * If old and new hash values belong to the same bucket, we need not
+	 * If old and cnew hash values belong to the same bucket, we need not
 	 * change any chain links, and indeed should not since this simplistic
 	 * update will corrupt the list if currBucket is the last element.  (We
 	 * cannot fall out earlier, however, since we need to scan the bucket to
@@ -1160,12 +1160,12 @@ hash_update_hash_key(HTAB *hashp,
 		/* OK to remove record from old hash bucket's chain. */
 		*oldPrevPtr = currBucket->link;
 
-		/* link into new hashbucket chain */
+		/* link into cnew hashbucket chain */
 		*prevBucketPtr = currBucket;
 		currBucket->link = NULL;
 	}
 
-	/* copy new key into record */
+	/* copy cnew key into record */
 	currBucket->hashvalue = newhashvalue;
 	hashp->keycopy(ELEMENTKEY(currBucket), newKeyPtr, keysize);
 
@@ -1175,7 +1175,7 @@ hash_update_hash_key(HTAB *hashp,
 }
 
 /*
- * create a new entry if possible
+ * create a cnew entry if possible
  */
 static HASHBUCKET
 get_hash_entry(HTAB *hashp)
@@ -1407,7 +1407,7 @@ expand_table(HTAB *hashp)
 
 	if (new_segnum >= hctl->nsegs)
 	{
-		/* Allocate new segment if necessary -- could fail if dir full */
+		/* Allocate cnew segment if necessary -- could fail if dir full */
 		if (new_segnum >= hctl->dsize)
 			if (!dir_realloc(hashp))
 				return false;
@@ -1416,12 +1416,12 @@ expand_table(HTAB *hashp)
 		hctl->nsegs++;
 	}
 
-	/* OK, we created a new bucket */
+	/* OK, we created a cnew bucket */
 	hctl->max_bucket++;
 
 	/*
 	 * *Before* changing masks, find old bucket corresponding to same hash
-	 * values; values in that bucket may need to be relocated to new bucket.
+	 * values; values in that bucket may need to be relocated to cnew bucket.
 	 * Note that new_bucket is certainly larger than low_mask at this point,
 	 * so we can skip the first step of the regular hash mask calc.
 	 */
@@ -1437,7 +1437,7 @@ expand_table(HTAB *hashp)
 	}
 
 	/*
-	 * Relocate records to the new bucket.  NOTE: because of the way the hash
+	 * Relocate records to the cnew bucket.  NOTE: because of the way the hash
 	 * masking is done in calc_bucket, only one old bucket can need to be
 	 * split at this point.  With a different way of reducing the hash value,
 	 * that might not be true!
@@ -1531,7 +1531,7 @@ seg_alloc(HTAB *hashp)
 }
 
 /*
- * allocate some new elements and link them into the free list
+ * allocate some cnew elements and link them into the free list
  */
 static bool
 element_alloc(HTAB *hashp, int nelem)
@@ -1556,7 +1556,7 @@ element_alloc(HTAB *hashp, int nelem)
 	if (!firstElement)
 		return false;
 
-	/* prepare to link all the new entries into the freelist */
+	/* prepare to link all the cnew entries into the freelist */
 	prevElement = NULL;
 	tmpElement = firstElement;
 	for (i = 0; i < nelem; i++)

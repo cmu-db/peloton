@@ -15,14 +15,14 @@
  * its local mapped catalogs, and there is a separate map file for shared
  * catalogs.  Mapped catalogs have zero in their pg_class.relfilenode entries.
  *
- * Relocation of a normal table is committed (ie, the new physical file becomes
+ * Relocation of a normal table is committed (ie, the cnew physical file becomes
  * authoritative) when the pg_class row update commits.  For mapped catalogs,
  * the act of updating the map file is effectively commit of the relocation.
  * We postpone the file update till just before commit of the transaction
  * doing the rewrite, but there is necessarily a window between.  Therefore
  * mapped catalogs can only be relocated by operations such as VACUUM FULL
  * and CLUSTER, which make no transactionally-significant changes: it must be
- * safe for the new file to replace the old, even if the transaction itself
+ * safe for the cnew file to replace the old, even if the transaction itself
  * aborts.  An important factor here is that the indexes and toast table of
  * a mapped catalog must also be mapped, so that the rewrites/relocations of
  * all these files commit in a single map file update rather than being tied
@@ -238,7 +238,7 @@ RelationMapFilenodeToOid(Oid filenode, bool shared)
 /*
  * RelationMapUpdateMap
  *
- * Install a new relfilenode mapping for the specified relation.
+ * Install a cnew relfilenode mapping for the specified relation.
  *
  * If immediate is true (or we're bootstrapping), the mapping is activated
  * immediately.  Otherwise it is made pending until CommandCounterIncrement.
@@ -292,7 +292,7 @@ RelationMapUpdateMap(Oid relationId, Oid fileNode, bool shared,
 /*
  * apply_map_update
  *
- * Insert a new mapping into the given map variable, replacing any existing
+ * Insert a cnew mapping into the given map variable, replacing any existing
  * mapping for the same relation.
  *
  * In some cases the caller knows there must be an existing mapping; pass
@@ -313,7 +313,7 @@ apply_map_update(RelMapFile *map, Oid relationId, Oid fileNode, bool add_okay)
 		}
 	}
 
-	/* Nope, need to add a new mapping */
+	/* Nope, need to add a cnew mapping */
 	if (!add_okay)
 		elog(ERROR, "attempt to apply a mapping to unmapped relation %u",
 			 relationId);
@@ -686,7 +686,7 @@ load_relmap_file(bool shared)
 }
 
 /*
- * Write out a new shared or local map file with the given contents.
+ * Write out a cnew shared or local map file with the given contents.
  *
  * The magic number and CRC are automatically updated in *newmap.  On
  * success, we copy the data to the appropriate permanent static variable.
@@ -882,7 +882,7 @@ perform_relmap_update(bool shared, const RelMapFile *updates)
 		memcpy(&newmap, &local_map, sizeof(RelMapFile));
 
 	/*
-	 * Apply the updates to newmap.  No new mappings should appear, unless
+	 * Apply the updates to newmap.  No cnew mappings should appear, unless
 	 * somebody is adding indexes to system catalogs.
 	 */
 	merge_map_updates(&newmap, updates, allowSystemTableMods);
@@ -923,8 +923,8 @@ relmap_redo(XLogReaderState *record)
 		dbpath = GetDatabasePath(xlrec->dbid, xlrec->tsid);
 
 		/*
-		 * Write out the new map and send sinval, but of course don't write a
-		 * new WAL entry.  There's no surrounding transaction to tell to
+		 * Write out the cnew map and send sinval, but of course don't write a
+		 * cnew WAL entry.  There's no surrounding transaction to tell to
 		 * preserve files, either.
 		 *
 		 * There shouldn't be anyone else updating relmaps during WAL replay,

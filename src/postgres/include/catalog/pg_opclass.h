@@ -52,7 +52,7 @@ CATALOG(pg_opclass,2616)
 {
 	Oid			opcmethod;		/* index access method opclass is for */
 	NameData	opcname;		/* name of this opclass */
-	Oid			opcnamespace;	/* namespace of this opclass */
+	Oid			opcnamespace;	/* cnamespace of this opclass */
 	Oid			opcowner;		/* opclass owner */
 	Oid			opcfamily;		/* containing operator family */
 	Oid			opcintype;		/* type of data indexed by opclass */

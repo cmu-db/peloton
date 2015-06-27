@@ -167,7 +167,7 @@ build_base_rel_tlists(PlannerInfo *root, List *final_tlist)
  *	  The list may also contain PlaceHolderVars.  These don't necessarily
  *	  have a single owning relation; we keep their attr_needed info in
  *	  root->placeholder_list instead.  If create_new_ph is true, it's OK
- *	  to create new PlaceHolderInfos; otherwise, the PlaceHolderInfos must
+ *	  to create cnew PlaceHolderInfos; otherwise, the PlaceHolderInfos must
  *	  already exist, and we should only update their ph_needed.  (This should
  *	  be true before deconstruct_jointree begins, and false after that.)
  */
@@ -586,7 +586,7 @@ add_lateral_info(PlannerInfo *root, Relids lhs, Relids rhs)
 	/*
 	 * The input is redundant if it has the same RHS and an LHS that is a
 	 * subset of an existing entry's.  If an existing entry has the same RHS
-	 * and an LHS that is a subset of the new one, it's redundant, but we
+	 * and an LHS that is a subset of the cnew one, it's redundant, but we
 	 * don't trouble to get rid of it.  The only case that is really worth
 	 * worrying about is identical entries, and we handle that well enough
 	 * with this simple logic.
@@ -599,7 +599,7 @@ add_lateral_info(PlannerInfo *root, Relids lhs, Relids rhs)
 			return;
 	}
 
-	/* Not there, so make a new entry */
+	/* Not there, so make a cnew entry */
 	ljinfo = makeNode(LateralJoinInfo);
 	ljinfo->lateral_lhs = bms_copy(lhs);
 	ljinfo->lateral_rhs = bms_copy(rhs);
@@ -1243,7 +1243,7 @@ make_outerjoininfo(PlannerInfo *root,
 
 /*
  * compute_semijoin_info
- *	  Fill semijoin-related fields of a new SpecialJoinInfo
+ *	  Fill semijoin-related fields of a cnew SpecialJoinInfo
  *
  * Note: this relies on only the jointype and syn_righthand fields of the
  * SpecialJoinInfo; the rest may not be set yet.
@@ -1460,7 +1460,7 @@ compute_semijoin_info(SpecialJoinInfo *sjinfo, List *clause)
  * In normal use (when is_deduced is FALSE), at the time this is called,
  * root->join_info_list must contain entries for all and only those special
  * joins that are syntactically below this qual.  But when is_deduced is TRUE,
- * we are adding new deduced clauses after completion of deconstruct_jointree,
+ * we are adding cnew deduced clauses after completion of deconstruct_jointree,
  * so it cannot be assumed that root->join_info_list has anything to do with
  * qual placement.
  */
@@ -1864,7 +1864,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
  * To enforce (2), scan the join_info_list and merge the required-relid sets of
  * any such OJs into the clause's own reference list.  At the time we are
  * called, the join_info_list contains only outer joins below this qual.  We
- * have to repeat the scan until no new relids get added; this ensures that
+ * have to repeat the scan until no cnew relids get added; this ensures that
  * the qual is suitably delayed regardless of the order in which OJs get
  * executed.  As an example, if we have one OJ with LHS=A, RHS=B, and one with
  * LHS=B, RHS=C, it is implied that these can be done in either order; if the
@@ -2138,7 +2138,7 @@ process_implied_equality(PlannerInfo *root,
 	Expr	   *clause;
 
 	/*
-	 * Build the new clause.  Copy to ensure it shares no substructure with
+	 * Build the cnew clause.  Copy to ensure it shares no substructure with
 	 * original (this is necessary in case there are subselects in there...)
 	 */
 	clause = make_opclause(opno,
@@ -2166,7 +2166,7 @@ process_implied_equality(PlannerInfo *root,
 	}
 
 	/*
-	 * Push the new clause into all the appropriate restrictinfo lists.
+	 * Push the cnew clause into all the appropriate restrictinfo lists.
 	 */
 	distribute_qual_to_rels(root, (Node *) clause,
 							true, below_outer_join, JOIN_INNER,
@@ -2199,7 +2199,7 @@ build_implied_join_equality(Oid opno,
 	Expr	   *clause;
 
 	/*
-	 * Build the new clause.  Copy to ensure it shares no substructure with
+	 * Build the cnew clause.  Copy to ensure it shares no substructure with
 	 * original (this is necessary in case there are subselects in there...)
 	 */
 	clause = make_opclause(opno,

@@ -186,14 +186,14 @@ gistrescan(PG_FUNCTION_ARGS)
 												ALLOCSET_DEFAULT_MAXSIZE);
 	}
 
-	/* create new, empty RBTree for search queue */
+	/* create cnew, empty RBTree for search queue */
 	oldCxt = MemoryContextSwitchTo(so->queueCxt);
 	so->queue = pairingheap_allocate(pairingheap_GISTSearchItem_cmp, scan);
 	MemoryContextSwitchTo(oldCxt);
 
 	so->firstCall = true;
 
-	/* Update scan key, if a new one is given */
+	/* Update scan key, if a cnew one is given */
 	if (key && scan->numberOfKeys > 0)
 	{
 		void	  **fn_extras = NULL;
@@ -249,7 +249,7 @@ gistrescan(PG_FUNCTION_ARGS)
 			pfree(fn_extras);
 	}
 
-	/* Update order-by key, if a new one is given */
+	/* Update order-by key, if a cnew one is given */
 	if (orderbys && scan->numberOfOrderBys > 0)
 	{
 		void	  **fn_extras = NULL;

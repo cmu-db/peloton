@@ -188,7 +188,7 @@ GetVisibilityMapPins(Relation relation, Buffer buffer1, Buffer buffer2,
  *	for ordering.
  *
  *	NOTE: it is unlikely, but not quite impossible, for otherBuffer to be the
- *	same buffer we select for insertion of the new tuple (this could only
+ *	same buffer we select for insertion of the cnew tuple (this could only
  *	happen if space is freed in that page after heap_update finds there's not
  *	enough there).  In that case, the page will be pinned and locked only once.
  *
@@ -197,9 +197,9 @@ GetVisibilityMapPins(Relation relation, Buffer buffer1, Buffer buffer2,
  *	no further lwlocks while they are locked.
  *
  *	We normally use FSM to help us find free space.  However,
- *	if HEAP_INSERT_SKIP_FSM is specified, we just append a new empty page to
+ *	if HEAP_INSERT_SKIP_FSM is specified, we just append a cnew empty page to
  *	the end of the relation if the tuple won't fit on the current target page.
- *	This can save some cycles when we know the relation is new and doesn't
+ *	This can save some cycles when we know the relation is cnew and doesn't
  *	contain useful amounts of free space.
  *
  *	HEAP_INSERT_SKIP_FSM is also useful for non-WAL-logged additions to a
@@ -434,8 +434,8 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	 * Have to extend the relation.
 	 *
 	 * We have to use a lock to ensure no one else is extending the rel at the
-	 * same time, else we will both try to initialize the same new page.  We
-	 * can skip locking for new or temp relations, however, since no one else
+	 * same time, else we will both try to initialize the same cnew page.  We
+	 * can skip locking for cnew or temp relations, however, since no one else
 	 * could be accessing them.
 	 */
 	needLock = !RELATION_IS_LOCAL(relation);
@@ -459,21 +459,21 @@ RelationGetBufferForTuple(Relation relation, Size len,
 		LockBuffer(otherBuffer, BUFFER_LOCK_EXCLUSIVE);
 
 	/*
-	 * Now acquire lock on the new page.
+	 * Now acquire lock on the cnew page.
 	 */
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
 	/*
 	 * Release the file-extension lock; it's now OK for someone else to extend
 	 * the relation some more.  Note that we cannot release this lock before
-	 * we have buffer lock on the new page, or we risk a race condition
+	 * we have buffer lock on the cnew page, or we risk a race condition
 	 * against vacuumlazy.c --- see comments therein.
 	 */
 	if (needLock)
 		UnlockRelationForExtension(relation, ExclusiveLock);
 
 	/*
-	 * We need to initialize the empty new page.  Double-check that it really
+	 * We need to initialize the empty cnew page.  Double-check that it really
 	 * is empty (this should never happen, but if it does we don't want to
 	 * risk wiping out valid data).
 	 */
@@ -493,9 +493,9 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	}
 
 	/*
-	 * Remember the new page as our target for future insertions.
+	 * Remember the cnew page as our target for future insertions.
 	 *
-	 * XXX should we enter the new page into the free space map immediately,
+	 * XXX should we enter the cnew page into the free space map immediately,
 	 * or just keep it for this backend's exclusive use in the short run
 	 * (until VACUUM sees it)?	Seems to depend on whether you expect the
 	 * current backend to make more insertions or not, which is probably a

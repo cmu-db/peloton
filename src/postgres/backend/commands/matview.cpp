@@ -45,7 +45,7 @@
 typedef struct
 {
 	DestReceiver pub;			/* publicly-known function pointers */
-	Oid			transientoid;	/* OID of new heap into which to store */
+	Oid			transientoid;	/* OID of cnew heap into which to store */
 	/* These fields are filled by transientrel_startup: */
 	Relation	transientrel;	/* relation to write to */
 	CommandId	output_cid;		/* cmin to insert in output tuples */
@@ -117,8 +117,8 @@ SetMatViewPopulatedState(Relation relation, bool newstate)
 /*
  * ExecRefreshMatView -- execute a REFRESH MATERIALIZED VIEW command
  *
- * This refreshes the materialized view by creating a new table and swapping
- * the relfilenodes of the new table and the old materialized view, so the OID
+ * This refreshes the materialized view by creating a cnew table and swapping
+ * the relfilenodes of the cnew table and the old materialized view, so the OID
  * of the original materialized view is preserved. Thus we do not lose GRANT
  * nor references to this materialized view.
  *
@@ -128,7 +128,7 @@ SetMatViewPopulatedState(Relation relation, bool newstate)
  * skipData field shows whether the clause was used.
  *
  * Indexes are rebuilt too, via REINDEX. Since we are effectively bulk-loading
- * the new heap, it's better to create the indexes afterwards than to fill them
+ * the cnew heap, it's better to create the indexes afterwards than to fill them
  * incrementally while we load.
  *
  * The matview's "populated" state is changed based on whether the contents
@@ -251,7 +251,7 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 						   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 	save_nestlevel = NewGUCNestLevel();
 
-	/* Concurrent refresh builds new data in temp tablespace, and does diff. */
+	/* Concurrent refresh builds cnew data in temp tablespace, and does diff. */
 	if (concurrent)
 	{
 		tableSpace = GetDefaultTablespace(RELPERSISTENCE_TEMP);
@@ -474,7 +474,7 @@ transientrel_destroy(DestReceiver *self)
 
 /*
  * Given a qualified temporary table name, append an underscore followed by
- * the given integer, to make a new table name based on the old one.
+ * the given integer, to make a cnew table name based on the old one.
  *
  * This leaks memory through palloc(), which won't be cleaned up until the
  * current memory context is freed.
@@ -515,10 +515,10 @@ mv_GenerateOper(StringInfo buf, Oid opoid)
  * Refresh a materialized view with transactional semantics, while allowing
  * concurrent reads.
  *
- * This is called after a new version of the data has been created in a
+ * This is called after a cnew version of the data has been created in a
  * temporary table.  It performs a full outer join against the old version of
  * the data, producing "diff" results.  This join cannot work if there are any
- * duplicated rows in either the old or new versions, in the sense that every
+ * duplicated rows in either the old or cnew versions, in the sense that every
  * column would compare as equal between the two rows.  It does work correctly
  * in the face of rows which have at least one NULL value, with all non-NULL
  * columns equal.  The behavior of NULLs on equality tests and on UNIQUE
@@ -527,14 +527,14 @@ mv_GenerateOper(StringInfo buf, Oid opoid)
  * index on the materialized view, we have exactly the guarantee we need.
  *
  * The temporary table used to hold the diff results contains just the TID of
- * the old record (if matched) and the ROW from the new table as a single
+ * the old record (if matched) and the ROW from the cnew table as a single
  * column of complex record type (if matched).
  *
  * Once we have the diff table, we perform set-based DELETE and INSERT
  * operations against the materialized view, and discard both temporary
  * tables.
  *
- * Everything from the generation of the new data to applying the differences
+ * Everything from the generation of the cnew data to applying the differences
  * takes place under cover of an ExclusiveLock, since it seems as though we
  * would want to prohibit not only concurrent REFRESH operations, but also
  * incremental maintenance.  It also doesn't seem reasonable or safe to allow
@@ -574,14 +574,14 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
 
-	/* Analyze the temp table with the new contents. */
+	/* Analyze the temp table with the cnew contents. */
 	appendStringInfo(&querybuf, "ANALYZE %s", tempname);
 	if (SPI_exec(querybuf.data, 0) != SPI_OK_UTILITY)
 		elog(ERROR, "SPI_exec failed: %s", querybuf.data);
 
 	/*
 	 * We need to ensure that there are not duplicate rows without NULLs in
-	 * the new data set before we can count on the "diff" results.  Check for
+	 * the cnew data set before we can count on the "diff" results.  Check for
 	 * that in a way that allows showing the first duplicated row found.  Even
 	 * after we pass this test, a unique index on the materialized view may
 	 * find a duplicate key problem.
@@ -608,7 +608,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_CARDINALITY_VIOLATION),
-				 errmsg("new data for \"%s\" contains duplicate rows without any null columns",
+				 errmsg("cnew data for \"%s\" contains duplicate rows without any null columns",
 						RelationGetRelationName(matviewRel)),
 				 errdetail("Row: %s",
 			SPI_getvalue(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1))));

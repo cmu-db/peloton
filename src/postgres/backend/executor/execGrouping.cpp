@@ -319,12 +319,12 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
  * Find or create a hashtable entry for the tuple group containing the
  * given tuple.  The tuple must be the same type as the hashtable entries.
  *
- * If isnew is NULL, we do not create new entries; we return NULL if no
+ * If isnew is NULL, we do not create cnew entries; we return NULL if no
  * match is found.
  *
- * If isnew isn't NULL, then a new entry is created if no existing entry
+ * If isnew isn't NULL, then a cnew entry is created if no existing entry
  * matches.  On return, *isnew is true if the entry is newly created,
- * false if it existed already.  Any extra space in a new entry has been
+ * false if it existed already.  Any extra space in a cnew entry has been
  * zeroed.
  */
 TupleHashEntry
@@ -386,10 +386,10 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 		else
 		{
 			/*
-			 * created new entry
+			 * created cnew entry
 			 *
 			 * Zero any caller-requested space in the entry.  (This zaps the
-			 * "key data" dynahash.c copied into the new entry, but we don't
+			 * "key data" dynahash.c copied into the cnew entry, but we don't
 			 * care since we're about to overwrite it anyway.)
 			 */
 			MemSet(entry, 0, hashtable->entrysize);

@@ -3121,7 +3121,7 @@ add_unique_group_var(PlannerInfo *root, List *varinfos,
 		{
 			if (varinfo->ndistinct <= ndistinct)
 			{
-				/* Keep older item, forget new one */
+				/* Keep older item, forget cnew one */
 				return varinfos;
 			}
 			else
@@ -3341,7 +3341,7 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 
 		/*
 		 * Get the product of numdistinct estimates of the Vars for this rel.
-		 * Also, construct new varinfos list of remaining Vars.
+		 * Also, construct cnew varinfos list of remaining Vars.
 		 */
 		for_each_cell(l, lnext(list_head(varinfos)))
 		{
@@ -5018,7 +5018,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 				 * In principle, we should scan the index with our current
 				 * active snapshot, which is the best approximation we've got
 				 * to what the query will see when executed.  But that won't
-				 * be exact if a new snap is taken before running the query,
+				 * be exact if a cnew snap is taken before running the query,
 				 * and it can be very expensive if a lot of uncommitted rows
 				 * exist at the end of the index (because we'll laboriously
 				 * fetch each one and reject it).  What seems like a good
@@ -5200,7 +5200,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 	char	   *match;
 	char	   *patt;
 	int			pattlen;
-	Oid			typeid = patt_const->consttype;
+	Oid			ctypeid = patt_const->consttype;
 	int			pos,
 				match_pos;
 	bool		is_multibyte = (pg_database_encoding_max_length() > 1);
@@ -5208,11 +5208,11 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 	bool		locale_is_c = false;
 
 	/* the right-hand const is type text or bytea */
-	Assert(typeid == BYTEAOID || typeid == TEXTOID);
+	Assert(ctypeid == BYTEAOID || ctypeid == TEXTOID);
 
 	if (case_insensitive)
 	{
-		if (typeid == BYTEAOID)
+		if (ctypeid == BYTEAOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			errmsg("case insensitive matching not supported on type bytea")));
@@ -5237,7 +5237,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 		}
 	}
 
-	if (typeid != BYTEAOID)
+	if (ctypeid != BYTEAOID)
 	{
 		patt = TextDatumGetCString(patt_const->constvalue);
 		pattlen = strlen(patt);
@@ -5280,8 +5280,8 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 
 	match[match_pos] = '\0';
 
-	if (typeid != BYTEAOID)
-		*prefix_const = string_to_const(match, typeid);
+	if (ctypeid != BYTEAOID)
+		*prefix_const = string_to_const(match, ctypeid);
 	else
 		*prefix_const = string_to_bytea_const(match, match_pos);
 
@@ -5306,7 +5306,7 @@ static Pattern_Prefix_Status
 regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 				   Const **prefix_const, Selectivity *rest_selec)
 {
-	Oid			typeid = patt_const->consttype;
+	Oid			ctypeid = patt_const->consttype;
 	char	   *prefix;
 	bool		exact;
 
@@ -5315,7 +5315,7 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 	 * such, it should be noted that the rest of this function has *not* been
 	 * made safe for binary (possibly NULL containing) strings.
 	 */
-	if (typeid == BYTEAOID)
+	if (ctypeid == BYTEAOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		 errmsg("regular-expression matching not supported on type bytea")));
@@ -5342,7 +5342,7 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 		return Pattern_Prefix_None;
 	}
 
-	*prefix_const = string_to_const(prefix, typeid);
+	*prefix_const = string_to_const(prefix, ctypeid);
 
 	if (rest_selec != NULL)
 	{
@@ -5829,7 +5829,7 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc, Oid collation)
 		 * (for BYTEA, we treat each byte as a character).
 		 *
 		 * Note: the incrementer function is expected to return true if it's
-		 * generated a valid-per-the-encoding new character, otherwise false.
+		 * generated a valid-per-the-encoding cnew character, otherwise false.
 		 * The contents of the character on false return are unspecified.
 		 */
 		while (charinc(lastchar, charlen))
@@ -6457,7 +6457,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 
 		if (indexcol != qinfo->indexcol)
 		{
-			/* Beginning of a new column's quals */
+			/* Beginning of a cnew column's quals */
 			if (!eqQualHere)
 				break;			/* done if no '=' qual for indexcol */
 			eqQualHere = false;

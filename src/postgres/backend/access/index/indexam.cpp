@@ -317,7 +317,7 @@ index_beginscan_internal(Relation indexRelation,
 /* ----------------
  *		index_rescan  - (re)start a scan of an index
  *
- * During a restart, the caller may specify a new set of scankeys and/or
+ * During a restart, the caller may specify a cnew set of scankeys and/or
  * orderbykeys; but the number of keys cannot differ from what index_beginscan
  * was told.  (Later we might relax that to "must not exceed", but currently
  * the index AMs tend to assume that scan->numberOfKeys is what to believe.)

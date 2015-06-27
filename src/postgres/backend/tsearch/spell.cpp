@@ -762,7 +762,7 @@ nextline:
  * Note caller must already have applied get_tsearch_config_filename
  *
  * This function is responsible for parsing ispell ("old format") affix files.
- * If we realize that the file contains new-format commands, we pass off the
+ * If we realize that the file contains cnew-format commands, we pass off the
  * work to NIImportOOAffixes(), which will re-read the whole file.
  */
 void
@@ -858,7 +858,7 @@ NIImportAffixes(IspellDict *Conf, const char *filename)
 			/*
 			 * An old-format flag is a single ASCII character; we expect it to
 			 * be followed by EOL, whitespace, or ':'.  Otherwise this is a
-			 * new-format flag command.
+			 * cnew-format flag command.
 			 */
 			if (*s && pg_mblen(s) == 1)
 			{
@@ -898,7 +898,7 @@ isnewformat:
 	if (oldformat)
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-		errmsg("affix file contains both old-style and new-style commands")));
+		errmsg("affix file contains both old-style and cnew-style commands")));
 	tsearch_readline_end(&trst);
 
 	NIImportOOAffixes(Conf, filename);
@@ -1645,7 +1645,7 @@ SplitToVariants(IspellDict *Conf, SPNode *snode, SplitVar *orig, char *word, int
 			if (subres)
 			{
 				/* Yes, it was a word from dictionary */
-				SplitVar   *new = CopyVar(var, 0);
+				SplitVar   *cnew = CopyVar(var, 0);
 				SplitVar   *ptr = var;
 				char	  **sptr = subres;
 
@@ -1653,17 +1653,17 @@ SplitToVariants(IspellDict *Conf, SPNode *snode, SplitVar *orig, char *word, int
 
 				while (*sptr)
 				{
-					AddStem(new, *sptr);
+					AddStem(cnew, *sptr);
 					sptr++;
 				}
 				pfree(subres);
 
 				while (ptr->next)
 					ptr = ptr->next;
-				ptr->next = SplitToVariants(Conf, NULL, new, word, wordlen, startpos + lenaff, startpos + lenaff);
+				ptr->next = SplitToVariants(Conf, NULL, cnew, word, wordlen, startpos + lenaff, startpos + lenaff);
 
-				pfree(new->stem);
-				pfree(new);
+				pfree(cnew->stem);
+				pfree(cnew);
 			}
 		}
 

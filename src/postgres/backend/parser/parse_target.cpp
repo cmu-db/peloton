@@ -461,9 +461,9 @@ transformAssignedExpr(ParseState *pstate,
 
 	/*
 	 * If there is indirection on the target column, prepare an array or
-	 * subfield assignment expression.  This will generate a new column value
+	 * subfield assignment expression.  This will generate a cnew column value
 	 * that the source value has been inserted into, which can then be placed
-	 * in the new tuple constructed by INSERT or UPDATE.
+	 * in the cnew tuple constructed by INSERT or UPDATE.
 	 */
 	if (indirection)
 	{

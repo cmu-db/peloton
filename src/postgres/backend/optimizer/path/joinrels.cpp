@@ -56,7 +56,7 @@ join_search_one_level(PlannerInfo *root, int level)
 
 	Assert(joinrels[level] == NIL);
 
-	/* Set join_cur_level so that new joinrels are added to proper list */
+	/* Set join_cur_level so that cnew joinrels are added to proper list */
 	root->join_cur_level = level;
 
 	/*
@@ -247,7 +247,7 @@ join_search_one_level(PlannerInfo *root, int level)
  * multiple ways --- for example (a join b) join c is the same RelOptInfo as
  * (b join c) join a, though the second case will add a different set of Paths
  * to it.  This is the reason for using the join_rel_level mechanism, which
- * automatically ensures that each new joinrel is only added to the list once.
+ * automatically ensures that each cnew joinrel is only added to the list once.
  *
  * 'old_rel' is the relation entry for the relation to be joined
  * 'other_rels': the first cell in a linked list containing the other

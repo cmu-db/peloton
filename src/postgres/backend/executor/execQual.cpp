@@ -17,7 +17,7 @@
  *		ExecEvalExpr	- (now a macro) evaluate an expression, return a datum
  *		ExecEvalExprSwitchContext - same, but switch into eval memory context
  *		ExecQual		- return true/false if qualification is satisfied
- *		ExecProject		- form a new tuple by projecting the given tuple
+ *		ExecProject		- form a cnew tuple by projecting the given tuple
  *
  *	 NOTES
  *		The more heavily used ExecEvalExpr routines, such as ExecEvalScalarVar,
@@ -435,8 +435,8 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 		/*
 		 * For assignment to varlena arrays, we handle a NULL original array
 		 * by substituting an empty (zero-dimensional) array; insertion of the
-		 * new element will result in a singleton array value.  It does not
-		 * matter whether the new element is NULL.
+		 * cnew element will result in a singleton array value.  It does not
+		 * matter whether the cnew element is NULL.
 		 */
 		if (*isNull)
 		{
@@ -855,7 +855,7 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 
 		/*
 		 * Use the variable's declared rowtype as the descriptor for the
-		 * output values, modulo possibly assigning new column names below. In
+		 * output values, modulo possibly assigning cnew column names below. In
 		 * particular, we *must* absorb any attisdropped markings.
 		 */
 		oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
@@ -868,7 +868,7 @@ ExecEvalWholeRowVar(WholeRowVarExprState *wrvstate, ExprContext *econtext,
 	{
 		/*
 		 * In the RECORD case, we use the input slot's rowtype as the
-		 * descriptor for the output values, modulo possibly assigning new
+		 * descriptor for the output values, modulo possibly assigning cnew
 		 * column names below.
 		 */
 		oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
@@ -1911,7 +1911,7 @@ restart:
 			}
 
 			/*
-			 * If we reach here, loop around to run the function on the new
+			 * If we reach here, loop around to run the function on the cnew
 			 * argument.
 			 */
 		}
@@ -2893,7 +2893,7 @@ ExecEvalConvertRowtype(ConvertRowtypeExprState *cstate,
 		/* allocate map in long-lived memory context */
 		old_cxt = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 
-		/* prepare map from old to new attribute numbers */
+		/* prepare map from old to cnew attribute numbers */
 		cstate->map = convert_tuples_by_name(cstate->indesc,
 											 cstate->outdesc,
 								 gettext_noop("could not convert row type"));

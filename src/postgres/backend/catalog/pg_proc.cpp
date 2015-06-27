@@ -515,7 +515,7 @@ ProcedureCreate(const char *procedureName,
 			Assert(IsA(oldDefaults, List));
 			Assert(list_length(oldDefaults) == oldproc->pronargdefaults);
 
-			/* new list can have more defaults than old, advance over 'em */
+			/* cnew list can have more defaults than old, advance over 'em */
 			newlc = list_head(parameterDefaults);
 			for (i = list_length(parameterDefaults) - oldproc->pronargdefaults;
 				 i > 0;
@@ -581,7 +581,7 @@ ProcedureCreate(const char *procedureName,
 	}
 	else
 	{
-		/* Creating a new procedure */
+		/* Creating a cnew procedure */
 
 		/* First, get default permissions and set up proacl */
 		proacl = get_user_default_acl(ACL_OBJECT_FUNCTION, proowner,
@@ -602,7 +602,7 @@ ProcedureCreate(const char *procedureName,
 	retval = HeapTupleGetOid(tup);
 
 	/*
-	 * Create dependencies for the new function.  If we are updating an
+	 * Create dependencies for the cnew function.  If we are updating an
 	 * existing function, first delete any existing pg_depend entries.
 	 * (However, since we are not changing ownership or permissions, the
 	 * shared dependencies do *not* need to change, and we leave them alone.)
@@ -614,7 +614,7 @@ ProcedureCreate(const char *procedureName,
 	myself.objectId = retval;
 	myself.objectSubId = 0;
 
-	/* dependency on namespace */
+	/* dependency on cnamespace */
 	referenced.classId = NamespaceRelationId;
 	referenced.objectId = procNamespace;
 	referenced.objectSubId = 0;
@@ -686,7 +686,7 @@ ProcedureCreate(const char *procedureName,
 
 	heap_freetuple(tup);
 
-	/* Post creation hook for new function */
+	/* Post creation hook for cnew function */
 	InvokeObjectPostCreateHook(ProcedureRelationId, retval, 0);
 
 	heap_close(rel, RowExclusiveLock);
@@ -697,7 +697,7 @@ ProcedureCreate(const char *procedureName,
 		ArrayType  *set_items = NULL;
 		int			save_nestlevel = 0;
 
-		/* Advance command counter so new tuple can be seen by validator */
+		/* Advance command counter so cnew tuple can be seen by validator */
 		CommandCounterIncrement();
 
 		/*
@@ -713,7 +713,7 @@ ProcedureCreate(const char *procedureName,
 		if (check_function_bodies)
 		{
 			set_items = (ArrayType *) DatumGetPointer(proconfig);
-			if (set_items)		/* Need a new GUC nesting level */
+			if (set_items)		/* Need a cnew GUC nesting level */
 			{
 				save_nestlevel = NewGUCNestLevel();
 				ProcessGUCArray(set_items,

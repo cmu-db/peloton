@@ -180,7 +180,7 @@ makeSublist(Relation index, IndexTuple *tuples, int32 ntuples,
 
 		if (size + tupsize > GinListPageSize)
 		{
-			/* won't fit, force a new page and reprocess */
+			/* won't fit, force a cnew page and reprocess */
 			i--;
 			curBuffer = InvalidBuffer;
 		}
@@ -881,7 +881,7 @@ ginInsertCleanup(GinState *ginstate,
 			}
 
 			/*
-			 * Remember next page - it will become the new list head
+			 * Remember next page - it will become the cnew list head
 			 */
 			blkno = GinPageGetOpaque(page)->rightlink;
 			UnlockReleaseBuffer(buffer);		/* shiftList will do exclusive

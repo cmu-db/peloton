@@ -19,7 +19,7 @@
  * license, or royalty fee is required for any of the authorized uses.
  * Modifications to this software may be copyrighted by their authors
  * and need not follow the licensing terms described here, provided that
- * the new terms are clearly indicated on the first page of each file where
+ * the cnew terms are clearly indicated on the first page of each file where
  * they apply.
  *
  * IN NO EVENT SHALL THE AUTHORS OR DISTRIBUTORS BE LIABLE TO ANY PARTY

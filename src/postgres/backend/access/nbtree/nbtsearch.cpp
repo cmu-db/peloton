@@ -113,7 +113,7 @@ _bt_search(Relation rel, int keysz, ScanKey scankey, bool nextkey,
 		/*
 		 * Race -- the page we just grabbed may have split since we read its
 		 * pointer in the parent (or metapage).  If it has, we may need to
-		 * move right to its new sibling.  Do that.
+		 * move right to its cnew sibling.  Do that.
 		 *
 		 * In write-mode, allow _bt_moveright to finish any incomplete splits
 		 * along the way.  Strictly speaking, we'd only need to finish an
@@ -1568,7 +1568,7 @@ _bt_walk_left(Relation rel, Buffer buf)
 			if (opaque->btpo_prev == lblkno)
 				elog(ERROR, "could not find left sibling of block %u in index \"%s\"",
 					 obknum, RelationGetRelationName(rel));
-			/* Okay to try again with new lblkno value */
+			/* Okay to try again with cnew lblkno value */
 		}
 	}
 

@@ -221,7 +221,7 @@ ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 								 queryString, estate);
 	}
 
-	/* Create a new portal to run the query in */
+	/* Create a cnew portal to run the query in */
 	portal = CreateNewPortal();
 	/* Don't display the portal in pg_cursors, it is for internal use only */
 	portal->visible = false;

@@ -132,7 +132,7 @@ CommentObject(CommentStmt *stmt)
 /*
  * CreateComments --
  *
- * Create a comment for the specified object descriptor.  Inserts a new
+ * Create a comment for the specified object descriptor.  Inserts a cnew
  * pg_description tuple, or replaces an existing one with the same key.
  *
  * If the comment given is null or an empty string, instead delete any
@@ -207,7 +207,7 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 
 	systable_endscan(sd);
 
-	/* If we didn't find an old tuple, insert a new one */
+	/* If we didn't find an old tuple, insert a cnew one */
 
 	if (newtuple == NULL && comment != NULL)
 	{
@@ -232,7 +232,7 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
  * CreateSharedComments --
  *
  * Create a comment for the specified shared object descriptor.  Inserts a
- * new pg_shdescription tuple, or replaces an existing one with the same key.
+ * cnew pg_shdescription tuple, or replaces an existing one with the same key.
  *
  * If the comment given is null or an empty string, instead delete any
  * existing comment for the specified key.
@@ -301,7 +301,7 @@ CreateSharedComments(Oid oid, Oid classoid, char *comment)
 
 	systable_endscan(sd);
 
-	/* If we didn't find an old tuple, insert a new one */
+	/* If we didn't find an old tuple, insert a cnew one */
 
 	if (newtuple == NULL && comment != NULL)
 	{
