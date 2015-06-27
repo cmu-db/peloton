@@ -44,7 +44,7 @@ class DataTable : public AbstractTable {
 
 public:
     // Table constructor
-    DataTable(catalog::Schema *schema,
+    DataTable(const catalog::Schema *schema,
               AbstractBackend *backend,
               std::string table_name,
               size_t tuples_per_tilegroup);
@@ -61,16 +61,7 @@ public:
     
     // insert tuple in table
     ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple, bool update = false);
-
-    void SetSchema(catalog::Schema* given_schema)
-    {
-       schema = given_schema;
-    }
     
-    catalog::Schema *GetSchema()
-    {
-       return AbstractTable::GetSchema();
-    }
     //===--------------------------------------------------------------------===//
     // INDEXES
     //===--------------------------------------------------------------------===//

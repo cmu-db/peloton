@@ -55,7 +55,7 @@ class ParserExpression : public AbstractExpression {
   virtual ~ParserExpression() {
   }
 
-  Value Evaluate(__attribute__((unused)) const Tuple *tuple1, __attribute__((unused)) const Tuple *tuple2) const {
+  Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1, __attribute__((unused)) const AbstractTuple *tuple2) const {
     return Value::GetTrue();
   }
 

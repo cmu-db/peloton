@@ -33,7 +33,7 @@ class TupleValueExpression : public AbstractExpression, public TupleValueExpress
     this->column_name = col_name;
   };
 
-  inline Value Evaluate(const Tuple *tuple1, const Tuple *tuple2)  const {
+  inline Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2)  const {
     if (tuple_idx == 0)
       return tuple1->GetValue(this->value_idx);
     else

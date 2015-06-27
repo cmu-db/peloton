@@ -22,8 +22,8 @@
 namespace nstore {
 namespace storage {
 
-DataTable* TableFactory::GetDataTable(oid_t database_oid,
-                                      catalog::Schema* schema,
+DataTable* TableFactory::GetDataTable(oid_t database_id,
+                                      const catalog::Schema* schema,
                                       std::string table_name,
                                       size_t tuples_per_tilegroup_count) {
     // create a new backend
@@ -33,12 +33,12 @@ DataTable* TableFactory::GetDataTable(oid_t database_oid,
 
     DataTable *table =  new DataTable(schema, backend, table_name,
                                       tuples_per_tilegroup_count);
-    table->database_id = database_oid;
+    table->database_id = database_id;
 
     // Check if we need this table in the catalog
-    if(database_oid != INVALID_OID){
+    if(database_id != INVALID_OID){
         oid_t table_oid = GetRelationOidFromRelationName(table_name.c_str());
-        catalog::Manager::GetInstance().SetLocation( database_oid, table_oid, table);
+        catalog::Manager::GetInstance().SetLocation(database_id, table_oid, table);
     }
 
     return table;

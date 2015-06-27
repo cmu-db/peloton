@@ -76,14 +76,6 @@ class LogicalTile {
   void SetPositionLists(std::vector<std::vector<oid_t> >&& position_lists);
 
   //===--------------------------------------------------------------------===//
-  // Special Case : Single underlying Physical Tile
-  //===--------------------------------------------------------------------===//
-
-  bool IsWrapper();
-
-  storage::Tile *GetWrappedTile();
-
-  //===--------------------------------------------------------------------===//
   // Logical Tile Iterator
   //===--------------------------------------------------------------------===//
 
@@ -167,16 +159,6 @@ class LogicalTile {
   /** @brief Set of base tiles owned (memory-wise) by this logical tile. */
   std::unordered_set<storage::Tile *> owned_base_tiles_;
 
-  /** @brief Is this logical tile just a wrapper around a single physical tile ? */
-  bool wrapper = false;
-
-  /** @brief Underlying physical tile
-   *
-   * For handling the case where the logical tile is built on top of a
-   * single underlying physical tile. In this case, we can directly access
-   * the underlying physical tile rather than going through the logical tile.
-   * */
-  storage::Tile * physical_tile_ = nullptr;
 };
 
 

@@ -1,7 +1,7 @@
 # configure.in -- Process this file with autoconf to produce configure
 AC_PREREQ([2.64])
 
-AC_INIT([peloton], [0.0.1], [jarulraj@cs.cmu.edu])
+AC_INIT([Peloton], [0.0.1], [peloton-dev@cs.cmu.edu])
 AC_CONFIG_HEADERS([config.h:config-h.in])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
@@ -35,14 +35,10 @@ AM_CONDITIONAL(BUILD_OS_IS_DARWIN, [[[[ "$build_os" == darwin* ]]]])
 ######################################################################
 
 DX_HTML_FEATURE(ON)
-DX_CHM_FEATURE(OFF)
-DX_CHI_FEATURE(OFF)
-DX_MAN_FEATURE(OFF)
-DX_RTF_FEATURE(OFF)
-DX_XML_FEATURE(OFF)
+DX_DOT_FEATURE(OFF)
 DX_PDF_FEATURE(OFF)
 DX_PS_FEATURE(OFF)
-DX_INIT_DOXYGEN([$PACKAGE_NAME], [doc/doxygen.cfg], [doc])
+DX_INIT_DOXYGEN([$PACKAGE_NAME],[doxygen.cfg],[doc])
 
 ######################################################################
 # GCC COLOR
