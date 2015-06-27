@@ -63,9 +63,10 @@ typedef enum OnCommitAction {
  * field is not used, and inhOpt shows whether to apply the operation
  * recursively to child tables.  In some contexts it is also useful to carry
  * a TEMP table indication here.
+ * Peloton porting: use c++ inheritance
  */
-typedef struct RangeVar {
-  NodeTag type;
+typedef struct RangeVar : Node {
+  //NodeTag type;
   char *catalogname; /* the catalog (database) name, or NULL */
   char *schemaname; /* the schema name, or NULL */
   char *relname; /* the relation/sequence name */
@@ -83,9 +84,11 @@ typedef struct RangeVar {
  * For CREATE MATERIALIZED VIEW, viewQuery is the parsed-but-not-rewritten
  * SELECT Query for the view; otherwise it's NULL.  (Although it's actually
  * Query*, we declare it as Node* to avoid a forward reference.)
+ *
+ * Peloton porting: use c++ inheritance
  */
-typedef struct IntoClause {
-  NodeTag type;
+typedef struct IntoClause : Node {
+  //NodeTag type;
 
   RangeVar *rel; /* target relation name */
   List *colNames; /* column names to assign, or NIL */
