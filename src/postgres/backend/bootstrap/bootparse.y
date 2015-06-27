@@ -479,4 +479,4 @@ boot_ident :
 		;
 %%
 
-#include "bootscanner.c"
+#include "bootscanner.cpp"

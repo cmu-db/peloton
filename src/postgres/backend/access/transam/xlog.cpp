@@ -3908,12 +3908,12 @@ ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr, int emode,
 		   bool fetching_ckpt)
 {
 	XLogRecord *record;
-	XLogPageReadPrivate *private = (XLogPageReadPrivate *) xlogreader->private_data;
+	XLogPageReadPrivate *cprivate = (XLogPageReadPrivate *) xlogreader->private_data;
 
 	/* Pass through parameters to XLogPageRead */
-	private->fetching_ckpt = fetching_ckpt;
-	private->emode = emode;
-	private->randAccess = (RecPtr != InvalidXLogRecPtr);
+	cprivate->fetching_ckpt = fetching_ckpt;
+	cprivate->emode = emode;
+	cprivate->randAccess = (RecPtr != InvalidXLogRecPtr);
 
 	/* This is the first attempt to read this page. */
 	lastSourceFailed = false;
@@ -5900,7 +5900,7 @@ StartupXLOG(void)
 	bool		backupFromStandby = false;
 	DBState		dbstate_at_startup;
 	XLogReaderState *xlogreader;
-	XLogPageReadPrivate private;
+	XLogPageReadPrivate cprivate;
 	bool		fast_promoted = false;
 
 	/*
@@ -6031,8 +6031,8 @@ StartupXLOG(void)
 		OwnLatch(&XLogCtl->recoveryWakeupLatch);
 
 	/* Set up XLOG reader facility */
-	MemSet(&private, 0, sizeof(XLogPageReadPrivate));
-	xlogreader = XLogReaderAllocate(&XLogPageRead, &private);
+	MemSet(&cprivate, 0, sizeof(XLogPageReadPrivate));
+	xlogreader = XLogReaderAllocate(&XLogPageRead, &cprivate);
 	if (!xlogreader)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -10952,14 +10952,16 @@ CancelBackup(void)
  * and call XLogPageRead() again with the same arguments. This lets
  * XLogPageRead() to try fetching the record from another source, or to
  * sleep and retry.
+ *
+ * Peloton porting: changed private to cprivate
  */
 static int
 XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr, int reqLen,
 			 XLogRecPtr targetRecPtr, char *readBuf, TimeLineID *readTLI)
 {
-	XLogPageReadPrivate *private =
+	XLogPageReadPrivate *cprivate =
 	(XLogPageReadPrivate *) xlogreader->private_data;
-	int			emode = private->emode;
+	int			emode = cprivate->emode;
 	uint32		targetPageOff;
 	XLogSegNo targetSegNo PG_USED_FOR_ASSERTS_ONLY;
 
@@ -11000,8 +11002,8 @@ retry:
 		 receivedUpto < targetPagePtr + reqLen))
 	{
 		if (!WaitForWALToBecomeAvailable(targetPagePtr + reqLen,
-										 private->randAccess,
-										 private->fetching_ckpt,
+										 cprivate->randAccess,
+										 cprivate->fetching_ckpt,
 										 targetRecPtr))
 		{
 			if (readFile >= 0)

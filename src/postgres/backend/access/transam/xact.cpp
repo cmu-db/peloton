@@ -5409,7 +5409,7 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 		for (i = 0; i < parsed->nrels; i++)
 		{
 			SMgrRelation srel = smgropen(parsed->xnodes[i], InvalidBackendId);
-			ForkNumber	fork;
+			unsigned int fork; // Peloton Porting. Changed type from ForkNumber to unsigned int
 
 			for (fork = 0; fork <= MAX_FORKNUM; fork++)
 				XLogDropRelation(parsed->xnodes[i], fork);
@@ -5512,7 +5512,7 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid)
 	for (i = 0; i < parsed->nrels; i++)
 	{
 		SMgrRelation srel = smgropen(parsed->xnodes[i], InvalidBackendId);
-		ForkNumber	fork;
+		unsigned int fork; // Peloton Porting. Changed type from ForkNumber to unsigned int
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
 			XLogDropRelation(parsed->xnodes[i], fork);
