@@ -1130,10 +1130,12 @@ typedef struct RowMarkClause
  *
  * Note: WithClause does not propagate into the Query representation;
  * but CommonTableExpr does.
+ *
+ * Peloton porting: use c++ inheritance
  */
-typedef struct WithClause
+typedef struct WithClause : Node
 {
-	NodeTag		type;
+	//NodeTag		type;
 	List	   *ctes;			/* list of CommonTableExprs */
 	bool		recursive;		/* true = WITH RECURSIVE */
 	int			location;		/* token location, or -1 if unknown */
