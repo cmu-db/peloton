@@ -17,6 +17,9 @@
 #include <string>
 #include <cstdlib>
 
+/*!
+ \brief Peloton DBMS namespace.
+ */
 namespace peloton {
 
 class configuration {
