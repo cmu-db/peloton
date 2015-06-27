@@ -793,9 +793,12 @@ typedef enum RTEKind
 	RTE_CTE						/* common table expr (WITH list element) */
 } RTEKind;
 
-typedef struct RangeTblEntry
+/* Peloton porting: use c++ inheritance
+ *
+ * */
+struct RangeTblEntry : Node
 {
-	NodeTag		type;
+	//NodeTag		type;
 
 	RTEKind		rtekind;		/* see above */
 
@@ -879,7 +882,7 @@ typedef struct RangeTblEntry
 	Bitmapset  *insertedCols;	/* columns needing INSERT permission */
 	Bitmapset  *updatedCols;	/* columns needing UPDATE permission */
 	List	   *securityQuals;	/* any security barrier quals to apply */
-} RangeTblEntry;
+};
 
 /*
  * RangeTblFunction -
