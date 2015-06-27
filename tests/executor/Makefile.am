@@ -21,30 +21,30 @@ executor_tests_common= 	executor/executor_tests_util.cpp \
 						harness.cpp
 
 executor_tests_common_ld = \
-						   $(obj_DIR)/catalog/manager.o \
-						   $(obj_DIR)/catalog/schema.o \
-						   $(obj_DIR)/common/types.o \
-						   $(obj_DIR)/common/value.o \
-						   $(obj_DIR)/common/varlen.o \
-						   $(obj_DIR)/common/pool.o \
-						   $(obj_DIR)/concurrency/transaction_manager.o \
-						   $(obj_DIR)/concurrency/transaction.o \
-						   $(obj_DIR)/storage/abstract_table.o \
-						   $(obj_DIR)/storage/data_table.o \
-						   $(obj_DIR)/storage/table_factory.o \
-						   $(obj_DIR)/storage/tile_group.o \
-						   $(obj_DIR)/storage/tile_group_header.o \
-						   $(obj_DIR)/storage/tile_group_factory.o \
-						   $(obj_DIR)/storage/tile.o \
-						   $(obj_DIR)/storage/tuple.o \
-						   $(obj_DIR)/index/index.o \
-						   $(obj_DIR)/index/index_factory.o \
-						   $(obj_DIR)/index/concurrent_btree.o \
-						   $(obj_DIR)/index/btree_index.o \
-						   $(obj_DIR)/executor/abstract_executor.o \
-						   $(obj_DIR)/executor/logical_tile.o \
-						   $(obj_DIR)/executor/logical_tile_factory.o \
-						   $(obj_DIR)/planner/abstract_plan_node.o \
+						   $(obj_DIR)/catalog/libpeloton_la-manager.lo \
+						   $(obj_DIR)/catalog/libpeloton_la-schema.lo \
+						   $(obj_DIR)/common/libpeloton_la-types.lo \
+						   $(obj_DIR)/common/libpeloton_la-value.lo \
+						   $(obj_DIR)/common/libpeloton_la-varlen.lo \
+						   $(obj_DIR)/common/libpeloton_la-pool.lo \
+						   $(obj_DIR)/concurrency/libpeloton_la-transaction_manager.lo \
+						   $(obj_DIR)/concurrency/libpeloton_la-transaction.lo \
+						   $(obj_DIR)/storage/libpeloton_la-abstract_table.lo \
+						   $(obj_DIR)/storage/libpeloton_la-data_table.lo \
+						   $(obj_DIR)/storage/libpeloton_la-table_factory.lo \
+						   $(obj_DIR)/storage/libpeloton_la-tile_group.lo \
+						   $(obj_DIR)/storage/libpeloton_la-tile_group_header.lo \
+						   $(obj_DIR)/storage/libpeloton_la-tile_group_factory.lo \
+						   $(obj_DIR)/storage/libpeloton_la-tile.lo \
+						   $(obj_DIR)/storage/libpeloton_la-tuple.lo \
+						   $(obj_DIR)/index/libpeloton_la-index.lo \
+						   $(obj_DIR)/index/libpeloton_la-index_factory.lo \
+						   $(obj_DIR)/index/libpeloton_la-concurrent_btree.lo \
+						   $(obj_DIR)/index/libpeloton_la-btree_index.lo \
+						   $(obj_DIR)/executor/libpeloton_la-abstract_executor.lo \
+						   $(obj_DIR)/executor/libpeloton_la-logical_tile.lo \
+						   $(obj_DIR)/executor/libpeloton_la-logical_tile_factory.lo \
+						   $(obj_DIR)/planner/libpeloton_la-abstract_plan_node.lo \
 						   $(top_builddir)/src/libpeloton.la
 
 logical_tile_test_SOURCES = \
@@ -60,7 +60,7 @@ materialization_test_SOURCES = \
 
 materialization_test_LDADD = \
 							 $(executor_tests_common_ld) \
-							 $(obj_DIR)/executor/materialization_executor.o
+							 $(obj_DIR)/executor/libpeloton_la-materialization_executor.lo
 
 mutate_test_SOURCES = \
 					  $(executor_tests_common) \
@@ -68,12 +68,12 @@ mutate_test_SOURCES = \
 
 mutate_test_LDADD = \
 					$(executor_tests_common_ld) \
-					$(obj_DIR)/expression/abstract_expression.o \
-					$(obj_DIR)/expression/expression_util.o \
-					$(obj_DIR)/executor/seq_scan_executor.o \
-					$(obj_DIR)/executor/delete_executor.o \
-					$(obj_DIR)/executor/insert_executor.o \
-					$(obj_DIR)/executor/update_executor.o
+					$(obj_DIR)/expression/libpeloton_la-abstract_expression.lo \
+					$(obj_DIR)/expression/libpeloton_la-expression_util.lo \
+					$(obj_DIR)/executor/libpeloton_la-seq_scan_executor.lo \
+					$(obj_DIR)/executor/libpeloton_la-delete_executor.lo \
+					$(obj_DIR)/executor/libpeloton_la-insert_executor.lo \
+					$(obj_DIR)/executor/libpeloton_la-update_executor.lo
 
 seq_scan_test_SOURCES = \
 						$(executor_tests_common) \
@@ -81,9 +81,9 @@ seq_scan_test_SOURCES = \
 
 seq_scan_test_LDADD = \
 					  $(executor_tests_common_ld) \
-					  $(obj_DIR)/expression/abstract_expression.o \
-					  $(obj_DIR)/expression/expression_util.o \
-					  $(obj_DIR)/executor/seq_scan_executor.o
+					  $(obj_DIR)/expression/libpeloton_la-abstract_expression.lo \
+					  $(obj_DIR)/expression/libpeloton_la-expression_util.lo \
+					  $(obj_DIR)/executor/libpeloton_la-seq_scan_executor.lo
 
 index_scan_test_SOURCES = \
 						  $(executor_tests_common) \
@@ -91,7 +91,7 @@ index_scan_test_SOURCES = \
 
 index_scan_test_LDADD = \
 						$(executor_tests_common_ld) \
-						$(obj_DIR)/executor/index_scan_executor.o
+						$(obj_DIR)/executor/libpeloton_la-index_scan_executor.lo
 
 limit_test_SOURCES = \
 					 $(executor_tests_common) \
@@ -99,7 +99,7 @@ limit_test_SOURCES = \
 
 limit_test_LDADD = \
 				   $(executor_tests_common_ld) \
-				   $(obj_DIR)/executor/limit_executor.o
+				   $(obj_DIR)/executor/libpeloton_la-limit_executor.lo
 
 nested_loop_join_test_SOURCES = \
 								$(executor_tests_common) \
@@ -107,9 +107,9 @@ nested_loop_join_test_SOURCES = \
 
 nested_loop_join_test_LDADD = \
 							  $(executor_tests_common_ld) \
-							  $(obj_DIR)/expression/abstract_expression.o \
-							  $(obj_DIR)/expression/expression_util.o \
-							  $(obj_DIR)/executor/nested_loop_join_executor.o
+							  $(obj_DIR)/expression/libpeloton_la-abstract_expression.lo \
+							  $(obj_DIR)/expression/libpeloton_la-expression_util.lo \
+							  $(obj_DIR)/executor/libpeloton_la-nested_loop_join_executor.lo
 
 order_by_test_SOURCES = \
 						$(executor_tests_common) \
@@ -117,8 +117,7 @@ order_by_test_SOURCES = \
 
 order_by_test_LDADD = \
 					$(executor_tests_common_ld) \
-					$(obj_DIR)/executor/order_by_executor.o
-
+					$(obj_DIR)/executor/libpeloton_la-order_by_executor.lo
 					
 hash_set_op_test_SOURCES = \
 						$(executor_tests_common) \
@@ -126,9 +125,7 @@ hash_set_op_test_SOURCES = \
 						
 hash_set_op_test_LDADD = \
 						$(executor_tests_common_ld) \
-						$(obj_DIR)/executor/hash_set_op_executor.o
-						
-
+						$(obj_DIR)/executor/libpeloton_la-hash_set_op_executor.lo						
 
 aggregate_test_SOURCES = \
 						$(executor_tests_common) \
@@ -136,8 +133,8 @@ aggregate_test_SOURCES = \
 
 aggregate_test_LDADD = \
 					$(executor_tests_common_ld) \
-					$(obj_DIR)/executor/aggregator.o \
-					$(obj_DIR)/executor/aggregate_executor.o
+					$(obj_DIR)/executor/libpeloton_la-aggregator.lo \
+					$(obj_DIR)/executor/libpeloton_la-aggregate_executor.lo
 					
 append_test_SOURCES = \
 					$(executor_tests_common) \
@@ -145,5 +142,5 @@ append_test_SOURCES = \
 					
 append_test_LDADD = \
 					$(executor_tests_common_ld) \
-					$(obj_DIR)/executor/append_executor.o
+					$(obj_DIR)/executor/libpeloton_la-append_executor.lo
 					

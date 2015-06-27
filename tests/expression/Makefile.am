@@ -9,11 +9,11 @@ check_PROGRAMS += expression_test
 expression_test_SOURCES = expression/expression_test.cpp
 
 expression_test_LDADD = \
-						$(obj_DIR)/catalog/schema.o \
-						$(obj_DIR)/common/types.o \
-						$(obj_DIR)/common/value.o \
-						$(obj_DIR)/common/varlen.o \
-          				$(obj_DIR)/common/pool.o \
-						$(obj_DIR)/storage/tuple.o \
-						$(obj_DIR)/expression/abstract_expression.o \
-						$(obj_DIR)/expression/expression_util.o
+						$(obj_DIR)/catalog/libpeloton_la-schema.lo \
+						$(obj_DIR)/common/libpeloton_la-types.lo \
+						$(obj_DIR)/common/libpeloton_la-value.lo \
+						$(obj_DIR)/common/libpeloton_la-varlen.lo \
+          				$(obj_DIR)/common/libpeloton_la-pool.lo \
+						$(obj_DIR)/storage/libpeloton_la-tuple.lo \
+						$(obj_DIR)/expression/libpeloton_la-abstract_expression.lo \
+						$(obj_DIR)/expression/libpeloton_la-expression_util.lo
