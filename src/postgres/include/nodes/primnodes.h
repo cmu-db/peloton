@@ -33,12 +33,14 @@
  * Note: colnames is a list of Value nodes (always strings).  In Alias structs
  * associated with RTEs, there may be entries corresponding to dropped
  * columns; these are normally empty strings ("").  See parsenodes.h for info.
+ *
+ * Peloton porting: Use c++ inheritance
  */
-typedef struct Alias {
-  NodeTag type;
+struct Alias : Node {
+  //NodeTag type;
   char *aliasname; /* aliased rel name (never qualified) */
   List *colnames; /* optional list of column aliases */
-} Alias;
+};
 
 typedef enum InhOption {
   INH_NO, /* Do NOT scan child tables */
