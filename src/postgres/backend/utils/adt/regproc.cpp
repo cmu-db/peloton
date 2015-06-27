@@ -202,7 +202,7 @@ regprocout(PG_FUNCTION_ARGS)
 		char	   *proname = NameStr(procform->proname);
 
 		/*
-		 * In bootstrap mode, skip the fancy namespace stuff and just return
+		 * In bootstrap mode, skip the fancy cnamespace stuff and just return
 		 * the proc name.  (This path is only needed for debugging output
 		 * anyway.)
 		 */
@@ -295,7 +295,7 @@ regprocedurein(PG_FUNCTION_ARGS)
 
 	/*
 	 * Else it's a name and arguments.  Parse the name and arguments, look up
-	 * potential matches in the current namespace search list, and scan to see
+	 * potential matches in the current cnamespace search list, and scan to see
 	 * which one exactly matches the given argument types.  (There will not be
 	 * more than one match.)
 	 *
@@ -339,7 +339,7 @@ to_regprocedure(PG_FUNCTION_ARGS)
 
 	/*
 	 * Parse the name and arguments, look up potential matches in the current
-	 * namespace search list, and scan to see which one exactly matches the
+	 * cnamespace search list, and scan to see which one exactly matches the
 	 * given argument types.    (There will not be more than one match.)
 	 */
 	parseNameAndArgTypes(pro_name, false, &names, &nargs, argtypes);
@@ -661,7 +661,7 @@ regoperout(PG_FUNCTION_ARGS)
 		char	   *oprname = NameStr(operform->oprname);
 
 		/*
-		 * In bootstrap mode, skip the fancy namespace stuff and just return
+		 * In bootstrap mode, skip the fancy cnamespace stuff and just return
 		 * the oper name.  (This path is only needed for debugging output
 		 * anyway.)
 		 */
@@ -759,7 +759,7 @@ regoperatorin(PG_FUNCTION_ARGS)
 
 	/*
 	 * Else it's a name and arguments.  Parse the name and arguments, look up
-	 * potential matches in the current namespace search list, and scan to see
+	 * potential matches in the current cnamespace search list, and scan to see
 	 * which one exactly matches the given argument types.  (There will not be
 	 * more than one match.)
 	 *
@@ -805,7 +805,7 @@ to_regoperator(PG_FUNCTION_ARGS)
 
 	/*
 	 * Parse the name and arguments, look up potential matches in the current
-	 * namespace search list, and scan to see which one exactly matches the
+	 * cnamespace search list, and scan to see which one exactly matches the
 	 * given argument types.    (There will not be more than one match.)
 	 */
 	parseNameAndArgTypes(opr_name_or_oid, true, &names, &nargs, argtypes);
@@ -1105,7 +1105,7 @@ regclassout(PG_FUNCTION_ARGS)
 		char	   *classname = NameStr(classform->relname);
 
 		/*
-		 * In bootstrap mode, skip the fancy namespace stuff and just return
+		 * In bootstrap mode, skip the fancy cnamespace stuff and just return
 		 * the class name.  (This path is only needed for debugging output
 		 * anyway.)
 		 */
@@ -1160,7 +1160,7 @@ regclasssend(PG_FUNCTION_ARGS)
 
 
 /*
- * regtypein		- converts "typename" to type OID
+ * regtypein		- converts "ctypename" to type OID
  *
  * We also accept a numeric OID, for symmetry with the output routine.
  *
@@ -1243,7 +1243,7 @@ regtypein(PG_FUNCTION_ARGS)
 }
 
 /*
- * to_regtype		- converts "typename" to type OID
+ * to_regtype		- converts "ctypename" to type OID
  *
  * If the name is not found, we return NULL.
  */
@@ -1288,7 +1288,7 @@ regtypeout(PG_FUNCTION_ARGS)
 		Form_pg_type typeform = (Form_pg_type) GETSTRUCT(typetup);
 
 		/*
-		 * In bootstrap mode, skip the fancy namespace stuff and just return
+		 * In bootstrap mode, skip the fancy cnamespace stuff and just return
 		 * the type name.  (This path is only needed for debugging output
 		 * anyway.)
 		 */
@@ -1657,7 +1657,7 @@ regrolesend(PG_FUNCTION_ARGS)
 }
 
 /*
- * regnamespacein		- converts "nspname" to namespace OID
+ * regnamespacein		- converts "nspname" to cnamespace OID
  *
  * We also accept a numeric OID, for symmetry with the output routine.
  *
@@ -1691,7 +1691,7 @@ regnamespacein(PG_FUNCTION_ARGS)
 }
 
 /*
- * to_regnamespace		- converts "nspname" to namespace OID
+ * to_regnamespace		- converts "nspname" to cnamespace OID
  *
  * If the name is not found, we return NULL.
  */
@@ -1710,7 +1710,7 @@ to_regnamespace(PG_FUNCTION_ARGS)
 }
 
 /*
- * regnamespaceout		- converts namespace OID to "nsp_name"
+ * regnamespaceout		- converts cnamespace OID to "nsp_name"
  */
 Datum
 regnamespaceout(PG_FUNCTION_ARGS)
@@ -1727,7 +1727,7 @@ regnamespaceout(PG_FUNCTION_ARGS)
 	result = get_namespace_name(nspid);
 	if (!result)
 	{
-		/* If OID doesn't match any namespace, return it numerically */
+		/* If OID doesn't match any cnamespace, return it numerically */
 		result = (char *) palloc(NAMEDATALEN);
 		snprintf(result, NAMEDATALEN, "%u", nspid);
 	}
@@ -1835,11 +1835,11 @@ parseNameAndArgTypes(const char *string, bool allowNone, List **names,
 	char	   *rawname;
 	char	   *ptr;
 	char	   *ptr2;
-	char	   *typename;
+	char	   *ctypename;
 	bool		in_quote;
 	bool		had_comma;
 	int			paren_count;
-	Oid			typeid;
+	Oid			ctypeid;
 	int32		typmod;
 
 	/* We need a modifiable copy of the input string. */
@@ -1895,7 +1895,7 @@ parseNameAndArgTypes(const char *string, bool allowNone, List **names,
 						 errmsg("expected a type name")));
 			break;
 		}
-		typename = ptr;
+		ctypename = ptr;
 		/* Find end of type name --- end of string or comma */
 		/* ... but not a quoted or parenthesized comma */
 		in_quote = false;
@@ -1938,30 +1938,30 @@ parseNameAndArgTypes(const char *string, bool allowNone, List **names,
 			Assert(*ptr == '\0');
 		}
 		/* Lop off trailing whitespace */
-		while (--ptr2 >= typename)
+		while (--ptr2 >= ctypename)
 		{
 			if (!isspace((unsigned char) *ptr2))
 				break;
 			*ptr2 = '\0';
 		}
 
-		if (allowNone && pg_strcasecmp(typename, "none") == 0)
+		if (allowNone && pg_strcasecmp(ctypename, "none") == 0)
 		{
 			/* Special case for NONE */
-			typeid = InvalidOid;
+			ctypeid = InvalidOid;
 			typmod = -1;
 		}
 		else
 		{
 			/* Use full parser to resolve the type name */
-			parseTypeString(typename, &typeid, &typmod, false);
+			parseTypeString(ctypename, &ctypeid, &typmod, false);
 		}
 		if (*nargs >= FUNC_MAX_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 					 errmsg("too many arguments")));
 
-		argtypes[*nargs] = typeid;
+		argtypes[*nargs] = ctypeid;
 		(*nargs)++;
 	}
 

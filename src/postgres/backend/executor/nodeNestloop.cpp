@@ -119,7 +119,7 @@ ExecNestLoop(NestLoopState *node)
 		 */
 		if (node->nl_NeedNewOuter)
 		{
-			ENL1_printf("getting new outer tuple");
+			ENL1_printf("getting cnew outer tuple");
 			outerTupleSlot = ExecProcNode(outerPlan);
 
 			/*
@@ -131,7 +131,7 @@ ExecNestLoop(NestLoopState *node)
 				return NULL;
 			}
 
-			ENL1_printf("saving new outer tuple information");
+			ENL1_printf("saving cnew outer tuple information");
 			econtext->ecxt_outertuple = outerTupleSlot;
 			node->nl_NeedNewOuter = false;
 			node->nl_MatchedOuter = false;
@@ -169,14 +169,14 @@ ExecNestLoop(NestLoopState *node)
 		/*
 		 * we have an outerTuple, try to get the next inner tuple.
 		 */
-		ENL1_printf("getting new inner tuple");
+		ENL1_printf("getting cnew inner tuple");
 
 		innerTupleSlot = ExecProcNode(innerPlan);
 		econtext->ecxt_innertuple = innerTupleSlot;
 
 		if (TupIsNull(innerTupleSlot))
 		{
-			ENL1_printf("no inner tuple, need new outer tuple");
+			ENL1_printf("no inner tuple, need cnew outer tuple");
 
 			node->nl_NeedNewOuter = true;
 
@@ -220,13 +220,13 @@ ExecNestLoop(NestLoopState *node)
 			}
 
 			/*
-			 * Otherwise just return to top of loop for a new outer tuple.
+			 * Otherwise just return to top of loop for a cnew outer tuple.
 			 */
 			continue;
 		}
 
 		/*
-		 * at this point we have a new pair of inner and outer tuples so we
+		 * at this point we have a cnew pair of inner and outer tuples so we
 		 * test the inner and outer tuples to see if they satisfy the node's
 		 * qualification.
 		 *
@@ -436,7 +436,7 @@ ExecReScanNestLoop(NestLoopState *node)
 		ExecReScan(outerPlan);
 
 	/*
-	 * innerPlan is re-scanned for each new outer tuple and MUST NOT be
+	 * innerPlan is re-scanned for each cnew outer tuple and MUST NOT be
 	 * re-scanned from here or you'll get troubles from inner index scans when
 	 * outer Vars are used as run-time keys...
 	 */

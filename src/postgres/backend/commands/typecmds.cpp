@@ -83,7 +83,7 @@ typedef struct
 /* Potentially set by pg_upgrade_support functions */
 Oid			binary_upgrade_next_array_pg_type_oid = InvalidOid;
 
-static void makeRangeConstructors(const char *name, Oid namespace,
+static void makeRangeConstructors(const char *name, Oid cnamespace,
 					  Oid rangeOid, Oid subtype);
 static Oid	findTypeInputFunction(List *procname, Oid typeOid);
 static Oid	findTypeOutputFunction(List *procname, Oid typeOid);
@@ -106,7 +106,7 @@ static char *domainAddConstraint(Oid domainOid, Oid domainNamespace,
 
 /*
  * DefineType
- *		Registers a new base type.
+ *		Registers a cnew base type.
  */
 ObjectAddress
 DefineType(List *names, List *parameters)
@@ -178,12 +178,12 @@ DefineType(List *names, List *parameters)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to create a base type")));
 
-	/* Convert list of names to a name and namespace */
+	/* Convert list of names to a name and cnamespace */
 	typeNamespace = QualifiedNameGetCreationNamespace(names, &typeName);
 
 #ifdef NOT_USED
 	/* XXX this is unnecessary given the superuser check above */
-	/* Check we have creation rights in target namespace */
+	/* Check we have creation rights in target cnamespace */
 	aclresult = pg_namespace_aclcheck(typeNamespace, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
@@ -216,7 +216,7 @@ DefineType(List *names, List *parameters)
 	{
 		address = TypeShellMake(typeName, typeNamespace, GetUserId());
 		typoid = address.objectId;
-		/* Make new shell type visible for modification below */
+		/* Make cnew shell type visible for modification below */
 		CommandCounterIncrement();
 
 		/*
@@ -547,7 +547,7 @@ DefineType(List *names, List *parameters)
 	 * There is a general assumption that I/O functions are stable or
 	 * immutable; this allows us for example to mark record_in/record_out
 	 * stable rather than volatile.  Ideally we would throw errors not just
-	 * warnings here; but since this check is new as of 9.5, and since the
+	 * warnings here; but since this check is cnew as of 9.5, and since the
 	 * volatility marking might be just an error-of-omission and not a true
 	 * indication of how the function behaves, we'll let it pass as a warning
 	 * for now.
@@ -600,7 +600,7 @@ DefineType(List *names, List *parameters)
 	address =
 		TypeCreate(InvalidOid,	/* no predetermined type OID */
 				   typeName,	/* type name */
-				   typeNamespace,		/* namespace */
+				   typeNamespace,		/* cnamespace */
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
 				   GetUserId(), /* owner's ID */
@@ -641,7 +641,7 @@ DefineType(List *names, List *parameters)
 
 	TypeCreate(array_oid,		/* force assignment of this type OID */
 			   array_type,		/* type name */
-			   typeNamespace,	/* namespace */
+			   typeNamespace,	/* cnamespace */
 			   InvalidOid,		/* relation oid (n/a here) */
 			   0,		/* relation kind (ditto) */
 			   GetUserId(),	/* owner's ID */
@@ -717,7 +717,7 @@ RemoveTypeById(Oid typeOid)
 
 /*
  * DefineDomain
- *		Registers a new domain.
+ *		Registers a cnew domain.
  */
 ObjectAddress
 DefineDomain(CreateDomainStmt *stmt)
@@ -756,11 +756,11 @@ DefineDomain(CreateDomainStmt *stmt)
 	Oid			baseColl;
 	ObjectAddress address;
 
-	/* Convert list of names to a name and namespace */
+	/* Convert list of names to a name and cnamespace */
 	domainNamespace = QualifiedNameGetCreationNamespace(stmt->domainname,
 														&domainName);
 
-	/* Check we have creation rights in target namespace */
+	/* Check we have creation rights in target cnamespace */
 	aclresult = pg_namespace_aclcheck(domainNamespace, GetUserId(),
 									  ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
@@ -1027,7 +1027,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	address =
 		TypeCreate(InvalidOid,	/* no predetermined type OID */
 				   domainName,	/* type name */
-				   domainNamespace,		/* namespace */
+				   domainNamespace,		/* cnamespace */
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
 				   GetUserId(), /* owner's ID */
@@ -1095,7 +1095,7 @@ DefineDomain(CreateDomainStmt *stmt)
 
 /*
  * DefineEnum
- *		Registers a new enum.
+ *		Registers a cnew enum.
  */
 ObjectAddress
 DefineEnum(CreateEnumStmt *stmt)
@@ -1108,11 +1108,11 @@ DefineEnum(CreateEnumStmt *stmt)
 	Oid			enumArrayOid;
 	ObjectAddress enumTypeAddr;
 
-	/* Convert list of names to a name and namespace */
+	/* Convert list of names to a name and cnamespace */
 	enumNamespace = QualifiedNameGetCreationNamespace(stmt->typeName,
 													  &enumName);
 
-	/* Check we have creation rights in target namespace */
+	/* Check we have creation rights in target cnamespace */
 	aclresult = pg_namespace_aclcheck(enumNamespace, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
@@ -1139,7 +1139,7 @@ DefineEnum(CreateEnumStmt *stmt)
 	enumTypeAddr =
 		TypeCreate(InvalidOid,	/* no predetermined type OID */
 				   enumName,	/* type name */
-				   enumNamespace,		/* namespace */
+				   enumNamespace,		/* cnamespace */
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
 				   GetUserId(), /* owner's ID */
@@ -1179,7 +1179,7 @@ DefineEnum(CreateEnumStmt *stmt)
 
 	TypeCreate(enumArrayOid,	/* force assignment of this type OID */
 			   enumArrayName,	/* type name */
-			   enumNamespace,	/* namespace */
+			   enumNamespace,	/* cnamespace */
 			   InvalidOid,		/* relation oid (n/a here) */
 			   0,				/* relation kind (ditto) */
 			   GetUserId(),		/* owner's ID */
@@ -1216,19 +1216,19 @@ DefineEnum(CreateEnumStmt *stmt)
 
 /*
  * AlterEnum
- *		Adds a new label to an existing enum.
+ *		Adds a cnew label to an existing enum.
  */
 ObjectAddress
 AlterEnum(AlterEnumStmt *stmt, bool isTopLevel)
 {
 	Oid			enum_type_oid;
-	TypeName   *typename;
+	TypeName   *ctypename;
 	HeapTuple	tup;
 	ObjectAddress address;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeTypeNameFromNameList(stmt->typeName);
-	enum_type_oid = typenameTypeId(NULL, typename);
+	ctypename = makeTypeNameFromNameList(stmt->typeName);
+	enum_type_oid = typenameTypeId(NULL, ctypename);
 
 	tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(enum_type_oid));
 	if (!HeapTupleIsValid(tup))
@@ -1256,7 +1256,7 @@ AlterEnum(AlterEnumStmt *stmt, bool isTopLevel)
 	/* Check it's an enum and check user has permission to ALTER the enum */
 	checkEnumOwner(tup);
 
-	/* Add the new label */
+	/* Add the cnew label */
 	AddEnumLabel(enum_type_oid, stmt->newVal,
 				 stmt->newValNeighbor, stmt->newValIsAfter,
 				 stmt->skipIfExists);
@@ -1297,7 +1297,7 @@ checkEnumOwner(HeapTuple tup)
 
 /*
  * DefineRange
- *		Registers a new range type.
+ *		Registers a cnew range type.
  */
 ObjectAddress
 DefineRange(CreateRangeStmt *stmt)
@@ -1324,11 +1324,11 @@ DefineRange(CreateRangeStmt *stmt)
 	ListCell   *lc;
 	ObjectAddress address;
 
-	/* Convert list of names to a name and namespace */
+	/* Convert list of names to a name and cnamespace */
 	typeNamespace = QualifiedNameGetCreationNamespace(stmt->typeName,
 													  &typeName);
 
-	/* Check we have creation rights in target namespace */
+	/* Check we have creation rights in target cnamespace */
 	aclresult = pg_namespace_aclcheck(typeNamespace, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
@@ -1363,7 +1363,7 @@ DefineRange(CreateRangeStmt *stmt)
 	{
 		address = TypeShellMake(typeName, typeNamespace, GetUserId());
 		typoid = address.objectId;
-		/* Make new shell type visible for modification below */
+		/* Make cnew shell type visible for modification below */
 		CommandCounterIncrement();
 	}
 
@@ -1478,7 +1478,7 @@ DefineRange(CreateRangeStmt *stmt)
 	address =
 		TypeCreate(InvalidOid,	/* no predetermined type OID */
 				   typeName,	/* type name */
-				   typeNamespace,		/* namespace */
+				   typeNamespace,		/* cnamespace */
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
 				   GetUserId(), /* owner's ID */
@@ -1520,7 +1520,7 @@ DefineRange(CreateRangeStmt *stmt)
 
 	TypeCreate(rangeArrayOid,	/* force assignment of this type OID */
 			   rangeArrayName,	/* type name */
-			   typeNamespace,	/* namespace */
+			   typeNamespace,	/* cnamespace */
 			   InvalidOid,		/* relation oid (n/a here) */
 			   0,				/* relation kind (ditto) */
 			   GetUserId(),		/* owner's ID */
@@ -1561,14 +1561,14 @@ DefineRange(CreateRangeStmt *stmt)
 /*
  * Because there may exist several range types over the same subtype, the
  * range type can't be uniquely determined from the subtype.  So it's
- * impossible to define a polymorphic constructor; we have to generate new
+ * impossible to define a polymorphic constructor; we have to generate cnew
  * constructor functions explicitly for each range type.
  *
  * We actually define 4 functions, with 0 through 3 arguments.  This is just
  * to offer more convenience for the user.
  */
 static void
-makeRangeConstructors(const char *name, Oid namespace,
+makeRangeConstructors(const char *name, Oid cnamespace,
 					  Oid rangeOid, Oid subtype)
 {
 	static const char *const prosrc[2] = {"range_constructor2",
@@ -1596,7 +1596,7 @@ makeRangeConstructors(const char *name, Oid namespace,
 												   pronargs[i]);
 
 		myself = ProcedureCreate(name,	/* name: same as range type */
-								 namespace,		/* namespace */
+								 cnamespace,		/* cnamespace */
 								 false, /* replace */
 								 false, /* returns set */
 								 rangeOid,		/* return type */
@@ -2064,7 +2064,7 @@ AssignTypeArrayOid(void)
  * If the relation already exists, then 'DefineRelation' will abort
  * the xact...
  *
- * Return type is the new type's object address.
+ * Return type is the cnew type's object address.
  *-------------------------------------------------------------------
  */
 ObjectAddress
@@ -2127,7 +2127,7 @@ DefineCompositeType(RangeVar *typevar, List *coldeflist)
 ObjectAddress
 AlterDomainDefault(List *names, Node *defaultRaw)
 {
-	TypeName   *typename;
+	TypeName   *ctypename;
 	Oid			domainoid;
 	HeapTuple	tup;
 	ParseState *pstate;
@@ -2142,8 +2142,8 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	ObjectAddress address;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeTypeNameFromNameList(names);
-	domainoid = typenameTypeId(NULL, typename);
+	ctypename = makeTypeNameFromNameList(names);
+	domainoid = typenameTypeId(NULL, ctypename);
 
 	/* Look up the domain in the type table */
 	rel = heap_open(TypeRelationId, RowExclusiveLock);
@@ -2156,12 +2156,12 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	/* Check it's a domain and check user has permission for ALTER DOMAIN */
 	checkDomainOwner(tup);
 
-	/* Setup new tuple */
+	/* Setup cnew tuple */
 	MemSet(new_record, (Datum) 0, sizeof(new_record));
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 	MemSet(new_record_repl, false, sizeof(new_record_repl));
 
-	/* Store the new default into the tuple */
+	/* Store the cnew default into the tuple */
 	if (defaultRaw)
 	{
 		/* Create a dummy ParseState for transformExpr */
@@ -2201,7 +2201,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 											  NIL, false, false);
 
 			/*
-			 * Form an updated tuple with the new default and write it back.
+			 * Form an updated tuple with the cnew default and write it back.
 			 */
 			new_record[Anum_pg_type_typdefaultbin - 1] = CStringGetTextDatum(nodeToString(defaultExpr));
 
@@ -2268,7 +2268,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 ObjectAddress
 AlterDomainNotNull(List *names, bool notNull)
 {
-	TypeName   *typename;
+	TypeName   *ctypename;
 	Oid			domainoid;
 	Relation	typrel;
 	HeapTuple	tup;
@@ -2276,8 +2276,8 @@ AlterDomainNotNull(List *names, bool notNull)
 	ObjectAddress address = InvalidObjectAddress;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeTypeNameFromNameList(names);
-	domainoid = typenameTypeId(NULL, typename);
+	ctypename = makeTypeNameFromNameList(names);
+	domainoid = typenameTypeId(NULL, ctypename);
 
 	/* Look up the domain in the type table */
 	typrel = heap_open(TypeRelationId, RowExclusiveLock);
@@ -2386,7 +2386,7 @@ ObjectAddress
 AlterDomainDropConstraint(List *names, const char *constrName,
 						  DropBehavior behavior, bool missing_ok)
 {
-	TypeName   *typename;
+	TypeName   *ctypename;
 	Oid			domainoid;
 	HeapTuple	tup;
 	Relation	rel;
@@ -2398,8 +2398,8 @@ AlterDomainDropConstraint(List *names, const char *constrName,
 	ObjectAddress address = InvalidObjectAddress;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeTypeNameFromNameList(names);
-	domainoid = typenameTypeId(NULL, typename);
+	ctypename = makeTypeNameFromNameList(names);
+	domainoid = typenameTypeId(NULL, ctypename);
 
 	/* Look up the domain in the type table */
 	rel = heap_open(TypeRelationId, RowExclusiveLock);
@@ -2457,11 +2457,11 @@ AlterDomainDropConstraint(List *names, const char *constrName,
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 				  errmsg("constraint \"%s\" of domain \"%s\" does not exist",
-						 constrName, TypeNameToString(typename))));
+						 constrName, TypeNameToString(ctypename))));
 		else
 			ereport(NOTICE,
 					(errmsg("constraint \"%s\" of domain \"%s\" does not exist, skipping",
-							constrName, TypeNameToString(typename))));
+							constrName, TypeNameToString(ctypename))));
 	}
 
 	return address;
@@ -2476,7 +2476,7 @@ ObjectAddress
 AlterDomainAddConstraint(List *names, Node *newConstraint,
 						 ObjectAddress *constrAddr)
 {
-	TypeName   *typename;
+	TypeName   *ctypename;
 	Oid			domainoid;
 	Relation	typrel;
 	HeapTuple	tup;
@@ -2486,8 +2486,8 @@ AlterDomainAddConstraint(List *names, Node *newConstraint,
 	ObjectAddress address;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeTypeNameFromNameList(names);
-	domainoid = typenameTypeId(NULL, typename);
+	ctypename = makeTypeNameFromNameList(names);
+	domainoid = typenameTypeId(NULL, ctypename);
 
 	/* Look up the domain in the type table */
 	typrel = heap_open(TypeRelationId, RowExclusiveLock);
@@ -2584,7 +2584,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint,
 ObjectAddress
 AlterDomainValidateConstraint(List *names, char *constrName)
 {
-	TypeName   *typename;
+	TypeName   *ctypename;
 	Oid			domainoid;
 	Relation	typrel;
 	Relation	conrel;
@@ -2602,8 +2602,8 @@ AlterDomainValidateConstraint(List *names, char *constrName)
 	ObjectAddress address;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeTypeNameFromNameList(names);
-	domainoid = typenameTypeId(NULL, typename);
+	ctypename = makeTypeNameFromNameList(names);
+	domainoid = typenameTypeId(NULL, ctypename);
 
 	/* Look up the domain in the type table */
 	typrel = heap_open(TypeRelationId, AccessShareLock);
@@ -2640,13 +2640,13 @@ AlterDomainValidateConstraint(List *names, char *constrName)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("constraint \"%s\" of domain \"%s\" does not exist",
-						constrName, TypeNameToString(typename))));
+						constrName, TypeNameToString(ctypename))));
 
 	if (con->contype != CONSTRAINT_CHECK)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 		errmsg("constraint \"%s\" of domain \"%s\" is not a check constraint",
-			   constrName, TypeNameToString(typename))));
+			   constrName, TypeNameToString(ctypename))));
 
 	val = SysCacheGetAttr(CONSTROID, tuple,
 						  Anum_pg_constraint_conbin,
@@ -2751,7 +2751,7 @@ validateDomainConstraint(Oid domainoid, char *ccbin)
 					 */
 					ereport(ERROR,
 							(errcode(ERRCODE_CHECK_VIOLATION),
-							 errmsg("column \"%s\" of table \"%s\" contains values that violate the new constraint",
+							 errmsg("column \"%s\" of table \"%s\" contains values that violate the cnew constraint",
 								NameStr(tupdesc->attrs[attnum - 1]->attname),
 									RelationGetRelationName(testrel)),
 							 errtablecol(testrel, attnum)));
@@ -2800,7 +2800,7 @@ validateDomainConstraint(Oid domainoid, char *ccbin)
  * the same approach, but it'd be nicer to fix it properly.
  *
  * Generally used for retrieving a list of tests when adding
- * new constraints to a domain.
+ * cnew constraints to a domain.
  */
 static List *
 get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
@@ -3066,7 +3066,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	 */
 	ccoid =
 		CreateConstraintEntry(constr->conname,	/* Constraint Name */
-							  domainNamespace,	/* namespace */
+							  domainNamespace,	/* cnamespace */
 							  CONSTRAINT_CHECK, /* Constraint Type */
 							  false,	/* Is Deferrable */
 							  false,	/* Is Deferred */
@@ -3112,7 +3112,7 @@ RenameType(RenameStmt *stmt)
 {
 	List	   *names = stmt->object;
 	const char *newTypeName = stmt->newname;
-	TypeName   *typename;
+	TypeName   *ctypename;
 	Oid			typeOid;
 	Relation	rel;
 	HeapTuple	tup;
@@ -3120,8 +3120,8 @@ RenameType(RenameStmt *stmt)
 	ObjectAddress address;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeTypeNameFromNameList(names);
-	typeOid = typenameTypeId(NULL, typename);
+	ctypename = makeTypeNameFromNameList(names);
+	typeOid = typenameTypeId(NULL, ctypename);
 
 	/* Look up the type in the type table */
 	rel = heap_open(TypeRelationId, RowExclusiveLock);
@@ -3188,7 +3188,7 @@ RenameType(RenameStmt *stmt)
 ObjectAddress
 AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype)
 {
-	TypeName   *typename;
+	TypeName   *ctypename;
 	Oid			typeOid;
 	Relation	rel;
 	HeapTuple	tup;
@@ -3200,15 +3200,15 @@ AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype)
 	rel = heap_open(TypeRelationId, RowExclusiveLock);
 
 	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeTypeNameFromNameList(names);
+	ctypename = makeTypeNameFromNameList(names);
 
 	/* Use LookupTypeName here so that shell types can be processed */
-	tup = LookupTypeName(NULL, typename, NULL, false);
+	tup = LookupTypeName(NULL, ctypename, NULL, false);
 	if (tup == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("type \"%s\" does not exist",
-						TypeNameToString(typename))));
+						TypeNameToString(ctypename))));
 	typeOid = typeTypeId(tup);
 
 	/* Copy the syscache entry so we can scribble on it below */
@@ -3248,7 +3248,7 @@ AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype)
 						 format_type_be(typTup->typelem))));
 
 	/*
-	 * If the new owner is the same as the existing owner, consider the
+	 * If the cnew owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
 	if (typTup->typowner != newOwnerId)
@@ -3260,10 +3260,10 @@ AlterTypeOwner(List *names, Oid newOwnerId, ObjectType objecttype)
 			if (!pg_type_ownercheck(HeapTupleGetOid(tup), GetUserId()))
 				aclcheck_error_type(ACLCHECK_NOT_OWNER, HeapTupleGetOid(tup));
 
-			/* Must be able to become new owner */
+			/* Must be able to become cnew owner */
 			check_is_member_of_role(GetUserId(), newOwnerId);
 
-			/* New owner must have CREATE privilege on namespace */
+			/* New owner must have CREATE privilege on cnamespace */
 			aclresult = pg_namespace_aclcheck(typTup->typnamespace,
 											  newOwnerId,
 											  ACL_CREATE);
@@ -3414,7 +3414,7 @@ ObjectAddress
 AlterTypeNamespace(List *names, const char *newschema, ObjectType objecttype,
 				   Oid *oldschema)
 {
-	TypeName   *typename;
+	TypeName   *ctypename;
 	Oid			typeOid;
 	Oid			nspOid;
 	Oid			oldNspOid;
@@ -3422,8 +3422,8 @@ AlterTypeNamespace(List *names, const char *newschema, ObjectType objecttype,
 	ObjectAddress myself;
 
 	/* Make a TypeName so we can use standard type lookup machinery */
-	typename = makeTypeNameFromNameList(names);
-	typeOid = typenameTypeId(NULL, typename);
+	ctypename = makeTypeNameFromNameList(names);
+	typeOid = typenameTypeId(NULL, ctypename);
 
 	/* Don't allow ALTER DOMAIN on a type */
 	if (objecttype == OBJECT_DOMAIN && get_typtype(typeOid) != TYPTYPE_DOMAIN)
@@ -3471,7 +3471,7 @@ AlterTypeNamespace_oid(Oid typeOid, Oid nspOid, ObjectAddresses *objsMoved)
 }
 
 /*
- * Move specified type to new namespace.
+ * Move specified type to cnew cnamespace.
  *
  * Caller must have already checked privileges.
  *
@@ -3480,10 +3480,10 @@ AlterTypeNamespace_oid(Oid typeOid, Oid nspOid, ObjectAddresses *objsMoved)
  * recursion (outside callers must never try to move an array type directly).
  *
  * If errorOnTableType is TRUE, the function errors out if the type is
- * a table type.  ALTER TABLE has to be used to move a table to a new
- * namespace.
+ * a table type.  ALTER TABLE has to be used to move a table to a cnew
+ * cnamespace.
  *
- * Returns the type's old namespace OID.
+ * Returns the type's old cnamespace OID.
  */
 Oid
 AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,

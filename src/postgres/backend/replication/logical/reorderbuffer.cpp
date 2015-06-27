@@ -37,7 +37,7 @@
  *	  chunks.
  *
  *	  This module also has to deal with reassembling toast records from the
- *	  individual chunks stored in WAL. When a new (or initial) version of a
+ *	  individual chunks stored in WAL. When a cnew (or initial) version of a
  *	  tuple is stored in WAL it will always be preceded by the toast chunks
  *	  emitted for the columns stored out of line. Within a single toplevel
  *	  transaction there will be no other data carrying records between a row's
@@ -220,7 +220,7 @@ static void ReorderBufferToastAppendChunk(ReorderBuffer *rb, ReorderBufferTXN *t
 
 
 /*
- * Allocate a new ReorderBuffer
+ * Allocate a cnew ReorderBuffer
  */
 ReorderBuffer *
 ReorderBufferAllocate(void)
@@ -550,7 +550,7 @@ ReorderBufferTXNByXid(ReorderBuffer *rb, TransactionId xid, bool create,
 		txn = ent->txn;
 	else if (create)
 	{
-		/* initialize the new entry, if creation was requested */
+		/* initialize the cnew entry, if creation was requested */
 		Assert(ent != NULL);
 
 		ent->txn = ReorderBufferGetTXN(rb);
@@ -1491,7 +1491,7 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 					}
 
 
-					/* and continue with the new one */
+					/* and continue with the cnew one */
 					SetupHistoricSnapshot(snapshot_now, txn->tuplecid_hash);
 					break;
 
@@ -1516,7 +1516,7 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 
 						/*
 						 * Every time the CommandId is incremented, we could
-						 * see new catalog contents, so execute all
+						 * see cnew catalog contents, so execute all
 						 * invalidations.
 						 */
 						ReorderBufferExecuteInvalidations(rb, txn);
@@ -1751,7 +1751,7 @@ ReorderBufferIsXidKnown(ReorderBuffer *rb, TransactionId xid)
 }
 
 /*
- * Add a new snapshot to this transaction that may only used after lsn 'lsn'
+ * Add a cnew snapshot to this transaction that may only used after lsn 'lsn'
  * because the previous snapshot doesn't describe the catalog correctly for
  * following rows.
  */
@@ -1809,7 +1809,7 @@ ReorderBufferAddNewCommandId(ReorderBuffer *rb, TransactionId xid,
 
 
 /*
- * Add new (relfilenode, tid) -> (cmin, cmax) mappings.
+ * Add cnew (relfilenode, tid) -> (cmin, cmax) mappings.
  */
 void
 ReorderBufferAddNewTupleCids(ReorderBuffer *rb, TransactionId xid,
@@ -3096,7 +3096,7 @@ restart:
 
 	/*
 	 * failed to find a mapping, check whether the table was rewritten and
-	 * apply mapping if so, but only do that once - there can be no new
+	 * apply mapping if so, but only do that once - there can be no cnew
 	 * mappings while we are in here since we have to hold a lock on the
 	 * relation.
 	 */

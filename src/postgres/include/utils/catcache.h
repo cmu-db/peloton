@@ -56,7 +56,7 @@ typedef struct catcache
 	long		cc_searches;	/* total # searches against this cache */
 	long		cc_hits;		/* # of matches against existing entry */
 	long		cc_neg_hits;	/* # of matches against negative entry */
-	long		cc_newloads;	/* # of successful loads of new entry */
+	long		cc_newloads;	/* # of successful loads of cnew entry */
 
 	/*
 	 * cc_searches - (cc_hits + cc_neg_hits + cc_newloads) is number of failed
@@ -136,7 +136,7 @@ typedef struct catclist
 	 *
 	 * If "ordered" is true then the member tuples appear in the order of the
 	 * cache's underlying index.  This will be true in normal operation, but
-	 * might not be true during bootstrap or recovery operations. (namespace.c
+	 * might not be true during bootstrap or recovery operations. (cnamespace.c
 	 * is able to save some cycles when it is true.)
 	 */
 	dlist_node	cache_elem;		/* list member of per-catcache list */

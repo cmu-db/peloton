@@ -132,7 +132,7 @@ getQuadrant(TypeCacheEntry *typcache, RangeType *centroid, RangeType *tst)
 }
 
 /*
- * Choose SP-GiST function: choose path for addition of new range.
+ * Choose SP-GiST function: choose path for addition of cnew range.
  */
 Datum
 spg_range_quad_choose(PG_FUNCTION_ARGS)

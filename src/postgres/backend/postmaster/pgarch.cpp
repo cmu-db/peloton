@@ -352,7 +352,7 @@ pgarch_MainLoop(void)
 		 * SIGUSR2 arrives.  However, that means a random SIGTERM would
 		 * disable archiving indefinitely, which doesn't seem like a good
 		 * idea.  If more than 60 seconds pass since SIGTERM, exit anyway, so
-		 * that the postmaster can start a new archiver if needed.
+		 * that the postmaster can start a cnew archiver if needed.
 		 */
 		if (got_SIGTERM)
 		{
@@ -439,7 +439,7 @@ pgarch_ArchiverCopyLoop(void)
 				return;
 
 			/*
-			 * Check for config update.  This is so that we'll adopt a new
+			 * Check for config update.  This is so that we'll adopt a cnew
 			 * setting for archive_command as soon as possible, even if there
 			 * is a backlog of files to be archived.
 			 */

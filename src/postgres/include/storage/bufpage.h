@@ -170,11 +170,11 @@ typedef PageHeaderData *PageHeader;
  * changes to it are not WAL-logged.
  *
  * PD_PAGE_FULL is set if an UPDATE doesn't find enough free space in the
- * page for its new tuple version; this suggests that a prune is needed.
+ * page for its cnew tuple version; this suggests that a prune is needed.
  * Again, this is just a hint.
  */
 #define PD_HAS_FREE_LINES	0x0001		/* are there any unused line pointers? */
-#define PD_PAGE_FULL		0x0002		/* not enough free space for new
+#define PD_PAGE_FULL		0x0002		/* not enough free space for cnew
 										 * tuple? */
 #define PD_ALL_VISIBLE		0x0004		/* all tuples on page are visible to
 										 * everyone */
@@ -183,7 +183,7 @@ typedef PageHeaderData *PageHeader;
 
 /*
  * Page layout version number 0 is for pre-7.3 Postgres releases.
- * Releases 7.3 and 7.4 use 1, denoting a new HeapTupleHeader layout.
+ * Releases 7.3 and 7.4 use 1, denoting a cnew HeapTupleHeader layout.
  * Release 8.0 uses 2; it changed the HeapTupleHeader layout again.
  * Release 8.1 uses 3; it redefined HeapTupleHeader infomask bits.
  * Release 8.3 uses 4; it changed the HeapTupleHeader layout again, and

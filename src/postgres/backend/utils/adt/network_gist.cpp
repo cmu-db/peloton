@@ -618,9 +618,9 @@ inet_gist_fetch(PG_FUNCTION_ARGS)
  * The GiST page split penalty function
  *
  * Charge a large penalty if address family doesn't match, or a somewhat
- * smaller one if the new value would degrade the union's minbits
+ * smaller one if the cnew value would degrade the union's minbits
  * (minimum netmask width).  Otherwise, penalty is inverse of the
- * new number of common address bits.
+ * cnew number of common address bits.
  */
 Datum
 inet_gist_penalty(PG_FUNCTION_ARGS)
@@ -629,16 +629,16 @@ inet_gist_penalty(PG_FUNCTION_ARGS)
 	GISTENTRY  *newent = (GISTENTRY *) PG_GETARG_POINTER(1);
 	float	   *penalty = (float *) PG_GETARG_POINTER(2);
 	GistInetKey *orig = DatumGetInetKeyP(origent->key),
-			   *new = DatumGetInetKeyP(newent->key);
+			   *cnew = DatumGetInetKeyP(newent->key);
 	int			commonbits;
 
-	if (gk_ip_family(orig) == gk_ip_family(new))
+	if (gk_ip_family(orig) == gk_ip_family(cnew))
 	{
-		if (gk_ip_minbits(orig) <= gk_ip_minbits(new))
+		if (gk_ip_minbits(orig) <= gk_ip_minbits(cnew))
 		{
-			commonbits = bitncommon(gk_ip_addr(orig), gk_ip_addr(new),
+			commonbits = bitncommon(gk_ip_addr(orig), gk_ip_addr(cnew),
 									Min(gk_ip_commonbits(orig),
-										gk_ip_commonbits(new)));
+										gk_ip_commonbits(cnew)));
 			if (commonbits > 0)
 				*penalty = 1.0f / commonbits;
 			else

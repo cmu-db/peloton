@@ -176,7 +176,7 @@ typedef struct SerializedSnapshotData
 
 /*
  * GetTransactionSnapshot
- *		Get the appropriate snapshot for a new query in a transaction.
+ *		Get the appropriate snapshot for a cnew query in a transaction.
  *
  * Note that the return value may point at static storage that will be modified
  * by future calls and by CommandCounterIncrement().  Callers should call
@@ -324,11 +324,11 @@ GetNonHistoricCatalogSnapshot(Oid relid)
 
 	if (CatalogSnapshotStale)
 	{
-		/* Get new snapshot. */
+		/* Get cnew snapshot. */
 		CatalogSnapshot = GetSnapshotData(&CatalogSnapshotData);
 
 		/*
-		 * Mark new snapshost as valid.  We must do this last, in case an
+		 * Mark cnew snapshost as valid.  We must do this last, in case an
 		 * ERROR occurs inside GetSnapshotData().
 		 */
 		CatalogSnapshotStale = false;
@@ -535,7 +535,7 @@ FreeSnapshot(Snapshot snapshot)
  *		Set the given snapshot as the current active snapshot
  *
  * If the passed snapshot is a statically-allocated one, or it is possibly
- * subject to a future command counter update, create a new long-lived copy
+ * subject to a future command counter update, create a cnew long-lived copy
  * with active refcount=1.  Otherwise, only increment the refcount.
  */
 void
@@ -570,7 +570,7 @@ PushActiveSnapshot(Snapshot snap)
  *
  * This should be used when the ActiveSnapshot has to be modifiable, for
  * example if the caller intends to call UpdateActiveSnapshotCommandId.
- * The new snapshot will be released when popped from the stack.
+ * The cnew snapshot will be released when popped from the stack.
  */
 void
 PushCopiedSnapshot(Snapshot snapshot)
@@ -1205,7 +1205,7 @@ ImportSnapshot(const char *idstr)
 
 	/*
 	 * If we are in read committed mode then the next query would execute with
-	 * a new snapshot thus making this function call quite useless.
+	 * a cnew snapshot thus making this function call quite useless.
 	 */
 	if (!IsolationUsesXactSnapshot())
 		ereport(ERROR,

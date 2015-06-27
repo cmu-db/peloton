@@ -518,7 +518,7 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 /*
  * Remove any occurrences of the target relid from a joinlist structure.
  *
- * It's easiest to build a whole new list structure, so we handle it that
+ * It's easiest to build a whole cnew list structure, so we handle it that
  * way.  Efficiency is not a big deal here.
  *
  * *nremoved is incremented by the number of occurrences removed (there

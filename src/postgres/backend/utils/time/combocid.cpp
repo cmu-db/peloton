@@ -250,7 +250,7 @@ GetComboCommandId(CommandId cmin, CommandId cmax)
 	}
 
 	/*
-	 * We have to create a new combo cid. Check that there's room for it in
+	 * We have to create a cnew combo cid. Check that there's room for it in
 	 * the array, and grow it if there isn't.
 	 */
 	if (usedComboCids >= sizeComboCids)

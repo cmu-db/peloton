@@ -2,7 +2,7 @@
  *
  * syncrep.c
  *
- * Synchronous replication is new as of PostgreSQL 9.1.
+ * Synchronous replication is cnew as of PostgreSQL 9.1.
  *
  * If requested, transaction commits wait until their commit LSN is
  * acknowledged by the synchronous standby.

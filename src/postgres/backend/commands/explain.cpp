@@ -263,7 +263,7 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 }
 
 /*
- * Create a new ExplainState struct initialized with default options.
+ * Create a cnew ExplainState struct initialized with default options.
  */
 ExplainState *
 NewExplainState(void)
@@ -2344,7 +2344,7 @@ static void
 ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 {
 	char	   *objectname = NULL;
-	char	   *namespace = NULL;
+	char	   *cnamespace = NULL;
 	const char *objecttag = NULL;
 	RangeTblEntry *rte;
 	char	   *refname;
@@ -2369,7 +2369,7 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 			Assert(rte->rtekind == RTE_RELATION);
 			objectname = get_rel_name(rte->relid);
 			if (es->verbose)
-				namespace = get_namespace_name(get_rel_namespace(rte->relid));
+				cnamespace = get_namespace_name(get_rel_namespace(rte->relid));
 			objecttag = "Relation Name";
 			break;
 		case T_FunctionScan:
@@ -2396,7 +2396,7 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 
 						objectname = get_func_name(funcid);
 						if (es->verbose)
-							namespace =
+							cnamespace =
 								get_namespace_name(get_func_namespace(funcid));
 					}
 				}
@@ -2427,8 +2427,8 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 	if (es->format == EXPLAIN_FORMAT_TEXT)
 	{
 		appendStringInfoString(es->str, " on");
-		if (namespace != NULL)
-			appendStringInfo(es->str, " %s.%s", quote_identifier(namespace),
+		if (cnamespace != NULL)
+			appendStringInfo(es->str, " %s.%s", quote_identifier(cnamespace),
 							 quote_identifier(objectname));
 		else if (objectname != NULL)
 			appendStringInfo(es->str, " %s", quote_identifier(objectname));
@@ -2439,8 +2439,8 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 	{
 		if (objecttag != NULL && objectname != NULL)
 			ExplainPropertyText(objecttag, objectname, es);
-		if (namespace != NULL)
-			ExplainPropertyText("Schema", namespace, es);
+		if (cnamespace != NULL)
+			ExplainPropertyText("Schema", cnamespace, es);
 		ExplainPropertyText("Alias", refname, es);
 	}
 }

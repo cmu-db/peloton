@@ -239,7 +239,7 @@ get_row_security_policies(Query* root, CmdType commandType, RangeTblEntry* rte,
 
 	/*
 	 * For INSERT or UPDATE, we need to add the WITH CHECK quals to
-	 * Query's withCheckOptions to verify that any new records pass the
+	 * Query's withCheckOptions to verify that any cnew records pass the
 	 * WITH CHECK policy (this will be a copy of the USING policy, if no
 	 * explicit WITH CHECK policy exists).
 	 */

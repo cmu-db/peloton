@@ -702,7 +702,7 @@ ccondissect(struct vars * v,
 				return er;
 		}
 
-		/* that midpoint didn't work, find a new one */
+		/* that midpoint didn't work, find a cnew one */
 		if (mid == begin)
 		{
 			/* all possibilities exhausted */
@@ -712,11 +712,11 @@ ccondissect(struct vars * v,
 		mid = longest(v, d, begin, mid - 1, (int *) NULL);
 		if (mid == NULL)
 		{
-			/* failed to find a new one */
+			/* failed to find a cnew one */
 			MDEBUG(("%d failed midpoint\n", t->id));
 			return REG_NOMATCH;
 		}
-		MDEBUG(("%d: new midpoint %ld\n", t->id, LOFF(mid)));
+		MDEBUG(("%d: cnew midpoint %ld\n", t->id, LOFF(mid)));
 		zaptreesubs(v, t->left);
 		zaptreesubs(v, t->right);
 	}
@@ -777,7 +777,7 @@ crevcondissect(struct vars * v,
 				return er;
 		}
 
-		/* that midpoint didn't work, find a new one */
+		/* that midpoint didn't work, find a cnew one */
 		if (mid == end)
 		{
 			/* all possibilities exhausted */
@@ -787,11 +787,11 @@ crevcondissect(struct vars * v,
 		mid = shortest(v, d, begin, mid + 1, end, (chr **) NULL, (int *) NULL);
 		if (mid == NULL)
 		{
-			/* failed to find a new one */
+			/* failed to find a cnew one */
 			MDEBUG(("%d failed midpoint\n", t->id));
 			return REG_NOMATCH;
 		}
-		MDEBUG(("%d: new midpoint %ld\n", t->id, LOFF(mid)));
+		MDEBUG(("%d: cnew midpoint %ld\n", t->id, LOFF(mid)));
 		zaptreesubs(v, t->left);
 		zaptreesubs(v, t->right);
 	}

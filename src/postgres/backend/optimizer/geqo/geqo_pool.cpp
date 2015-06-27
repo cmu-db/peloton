@@ -180,7 +180,7 @@ free_chromo(PlannerInfo *root, Chromosome *chromo)
 }
 
 /* spread_chromo
- *	 inserts a new chromosome into the pool, displacing worst gene in pool
+ *	 inserts a cnew chromosome into the pool, displacing worst gene in pool
  *	 assumes best->worst = smallest->largest
  */
 void
@@ -194,11 +194,11 @@ spread_chromo(PlannerInfo *root, Chromosome *chromo, Pool *pool)
 	Chromosome	swap_chromo,
 				tmp_chromo;
 
-	/* new chromo is so bad we can't use it */
+	/* cnew chromo is so bad we can't use it */
 	if (chromo->worth > pool->data[pool->size - 1].worth)
 		return;
 
-	/* do a binary search to find the index of the new chromo */
+	/* do a binary search to find the index of the cnew chromo */
 
 	top = 0;
 	mid = pool->size / 2;
@@ -207,7 +207,7 @@ spread_chromo(PlannerInfo *root, Chromosome *chromo, Pool *pool)
 
 	while (index == -1)
 	{
-		/* these 4 cases find a new location */
+		/* these 4 cases find a cnew location */
 
 		if (chromo->worth <= pool->data[top].worth)
 			index = top;
@@ -220,7 +220,7 @@ spread_chromo(PlannerInfo *root, Chromosome *chromo, Pool *pool)
 
 
 		/*
-		 * these 2 cases move the search indices since a new location has not
+		 * these 2 cases move the search indices since a cnew location has not
 		 * yet been found.
 		 */
 
@@ -243,7 +243,7 @@ spread_chromo(PlannerInfo *root, Chromosome *chromo, Pool *pool)
 	 */
 
 	/*
-	 * copy new gene into pool storage; always replace worst gene in pool
+	 * copy cnew gene into pool storage; always replace worst gene in pool
 	 */
 
 	geqo_copy(root, &pool->data[pool->size - 1], chromo, pool->string_length);

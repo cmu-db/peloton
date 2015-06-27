@@ -142,7 +142,7 @@ compareint(const void *va, const void *vb)
 
 /*
  * Removes duplicates from an array of int32. 'l' is
- * size of the input array. Returns the new size of the array.
+ * size of the input array. Returns the cnew size of the array.
  */
 static int
 uniqueint(int32 *a, int32 l)

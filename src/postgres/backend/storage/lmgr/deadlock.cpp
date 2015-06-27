@@ -46,7 +46,7 @@ typedef struct
 typedef struct
 {
 	LOCK	   *lock;			/* the lock whose wait queue is described */
-	PGPROC	  **procs;			/* array of PGPROC *'s in new wait order */
+	PGPROC	  **procs;			/* array of PGPROC *'s in cnew wait order */
 	int			nProcs;
 } WAIT_ORDER;
 
@@ -685,7 +685,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 
 /*
  * ExpandConstraints -- expand a list of constraints into a set of
- *		specific new orderings for affected wait queues
+ *		specific cnew orderings for affected wait queues
  *
  * Input is a list of soft edges to be reversed.  The output is a list
  * of nWaitOrders WAIT_ORDER structs in waitOrders[], with PGPROC array
@@ -722,7 +722,7 @@ ExpandConstraints(EDGE *constraints,
 		}
 		if (j >= 0)
 			continue;
-		/* No, so allocate a new list */
+		/* No, so allocate a cnew list */
 		waitOrders[nWaitOrders].lock = lock;
 		waitOrders[nWaitOrders].procs = waitOrderProcs + nWaitOrderProcs;
 		waitOrders[nWaitOrders].nProcs = lock->waitProcs.size;

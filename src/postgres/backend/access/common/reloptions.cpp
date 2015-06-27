@@ -406,7 +406,7 @@ initialize_reloptions(void)
 
 /*
  * add_reloption_kind
- *		Create a new relopt_kind value, to be used in custom reloptions by
+ *		Create a cnew relopt_kind value, to be used in custom reloptions by
  *		user-defined AMs.
  */
 relopt_kind
@@ -457,7 +457,7 @@ add_reloption(relopt_gen *newoption)
 
 /*
  * allocate_reloption
- *		Allocate a new reloption and initialize the type-agnostic fields
+ *		Allocate a cnew reloption and initialize the type-agnostic fields
  *		(for types other than string)
  */
 static relopt_gen *
@@ -506,7 +506,7 @@ allocate_reloption(bits32 kinds, int type, char *name, char *desc)
 
 /*
  * add_bool_reloption
- *		Add a new boolean reloption
+ *		Add a cnew boolean reloption
  */
 void
 add_bool_reloption(bits32 kinds, char *name, char *desc, bool default_val)
@@ -522,7 +522,7 @@ add_bool_reloption(bits32 kinds, char *name, char *desc, bool default_val)
 
 /*
  * add_int_reloption
- *		Add a new integer reloption
+ *		Add a cnew integer reloption
  */
 void
 add_int_reloption(bits32 kinds, char *name, char *desc, int default_val,
@@ -541,7 +541,7 @@ add_int_reloption(bits32 kinds, char *name, char *desc, int default_val,
 
 /*
  * add_real_reloption
- *		Add a new float reloption
+ *		Add a cnew float reloption
  */
 void
 add_real_reloption(bits32 kinds, char *name, char *desc, double default_val,
@@ -560,7 +560,7 @@ add_real_reloption(bits32 kinds, char *name, char *desc, double default_val,
 
 /*
  * add_string_reloption
- *		Add a new string reloption
+ *		Add a cnew string reloption
  *
  * "validator" is an optional function pointer that can be used to test the
  * validity of the values.  It must elog(ERROR) when the argument string is
@@ -600,8 +600,8 @@ add_string_reloption(bits32 kinds, char *name, char *desc, char *default_val,
 /*
  * Transform a relation options list (list of DefElem) into the text array
  * format that is kept in pg_class.reloptions, including only those options
- * that are in the passed namespace.  The output values do not include the
- * namespace.
+ * that are in the passed cnamespace.  The output values do not include the
+ * cnamespace.
  *
  * This is used for three cases: CREATE TABLE/INDEX, ALTER TABLE SET, and
  * ALTER TABLE RESET.  In the ALTER cases, oldOptions is the existing
@@ -613,9 +613,9 @@ add_string_reloption(bits32 kinds, char *name, char *desc, char *default_val,
  *
  * Note that this is not responsible for determining whether the options
  * are valid, but it does check that namespaces for all the options given are
- * listed in validnsps.  The NULL namespace is always valid and need not be
+ * listed in validnsps.  The NULL cnamespace is always valid and need not be
  * explicitly listed.  Passing a NULL pointer means that only the NULL
- * namespace is valid.
+ * cnamespace is valid.
  *
  * Both oldOptions and the result are text arrays (or NULL for "default"),
  * but we declare them as Datums to avoid including array.h in reloptions.h.
@@ -632,7 +632,7 @@ transformRelOptions(Datum oldOptions, List *defList, char *namspace,
 	if (defList == NIL)
 		return oldOptions;
 
-	/* We build new array using accumArrayResult */
+	/* We build cnew array using accumArrayResult */
 	astate = NULL;
 
 	/* Copy any oldOptions that aren't to be replaced */
@@ -658,7 +658,7 @@ transformRelOptions(Datum oldOptions, List *defList, char *namspace,
 				DefElem    *def = (DefElem *) lfirst(cell);
 				int			kw_len;
 
-				/* ignore if not in the same namespace */
+				/* ignore if not in the same cnamespace */
 				if (namspace == NULL)
 				{
 					if (def->defnamespace != NULL)
@@ -685,7 +685,7 @@ transformRelOptions(Datum oldOptions, List *defList, char *namspace,
 	}
 
 	/*
-	 * If CREATE/SET, add new options to array; if RESET, just check that the
+	 * If CREATE/SET, add cnew options to array; if RESET, just check that the
 	 * user didn't say RESET (option=val).  (Must do this because the grammar
 	 * doesn't enforce it.)
 	 */
@@ -707,7 +707,7 @@ transformRelOptions(Datum oldOptions, List *defList, char *namspace,
 			Size		len;
 
 			/*
-			 * Error out if the namespace is not valid.  A NULL namespace is
+			 * Error out if the cnamespace is not valid.  A NULL cnamespace is
 			 * always valid.
 			 */
 			if (def->defnamespace != NULL)
@@ -731,14 +731,14 @@ transformRelOptions(Datum oldOptions, List *defList, char *namspace,
 				if (!valid)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("unrecognized parameter namespace \"%s\"",
+							 errmsg("unrecognized parameter cnamespace \"%s\"",
 									def->defnamespace)));
 			}
 
 			if (ignoreOids && pg_strcasecmp(def->defname, "oids") == 0)
 				continue;
 
-			/* ignore if not in the same namespace */
+			/* ignore if not in the same cnamespace */
 			if (namspace == NULL)
 			{
 				if (def->defnamespace != NULL)
@@ -752,7 +752,7 @@ transformRelOptions(Datum oldOptions, List *defList, char *namspace,
 			/*
 			 * Flatten the DefElem into a text string like "name=arg". If we
 			 * have just "name", assume "name=true" is meant.  Note: the
-			 * namespace is not output.
+			 * cnamespace is not output.
 			 */
 			if (def->arg != NULL)
 				value = defGetString(def);

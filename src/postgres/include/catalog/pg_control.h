@@ -33,7 +33,7 @@ typedef struct CheckPoint
 	XLogRecPtr	redo;			/* next RecPtr available when we began to
 								 * create CheckPoint (i.e. REDO start point) */
 	TimeLineID	ThisTimeLineID; /* current TLI */
-	TimeLineID	PrevTimeLineID; /* previous TLI, if this record begins a new
+	TimeLineID	PrevTimeLineID; /* previous TLI, if this record begins a cnew
 								 * timeline (equals ThisTimeLineID otherwise) */
 	bool		fullPageWrites; /* current full_page_writes */
 	uint32		nextXidEpoch;	/* higher-order bits of nextXid */

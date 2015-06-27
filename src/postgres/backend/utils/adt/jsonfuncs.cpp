@@ -2789,7 +2789,7 @@ populate_recordset_object_start(void *state)
 	if (lex_level > 1)
 		return;
 
-	/* Object at level 1: set up a new hash table for this object */
+	/* Object at level 1: set up a cnew hash table for this object */
 	memset(&ctl, 0, sizeof(ctl));
 	ctl.keysize = NAMEDATALEN;
 	ctl.entrysize = sizeof(JsonHashEntry);

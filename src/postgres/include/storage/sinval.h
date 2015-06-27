@@ -34,7 +34,7 @@
  * Catcache inval events are initially driven by detecting tuple inserts,
  * updates and deletions in system catalogs (see CacheInvalidateHeapTuple).
  * An update can generate two inval events, one for the old tuple and one for
- * the new, but this is reduced to one event if the tuple's hash key doesn't
+ * the cnew, but this is reduced to one event if the tuple's hash key doesn't
  * change.  Note that the inval events themselves don't actually say whether
  * the tuple is being inserted or deleted.  Also, since we transmit only a
  * hash key, there is a small risk of unnecessary invalidations due to chance
@@ -48,7 +48,7 @@
  * Catcache, relcache, and snapshot invalidations are transactional, and so
  * are sent to other backends upon commit.  Internally to the generating
  * backend, they are also processed at CommandCounterIncrement so that later
- * commands in the same transaction see the new state.  The generating backend
+ * commands in the same transaction see the cnew state.  The generating backend
  * also has to process them at abort, to flush out any cache state it's loaded
  * from no-longer-valid entries.
  *

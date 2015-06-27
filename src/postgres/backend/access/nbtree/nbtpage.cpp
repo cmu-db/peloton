@@ -81,7 +81,7 @@ _bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level)
  *		them all in the Hopi Indian rain dance of lock requests below.
  *
  *		The access type parameter (BT_READ or BT_WRITE) controls whether
- *		a new root page will be created or not.  If access = BT_READ,
+ *		a cnew root page will be created or not.  If access = BT_READ,
  *		and no root page exists, we just return InvalidBuffer.  For
  *		BT_WRITE, we try to create the root page if it doesn't exist.
  *		NOTE that the returned root page will have only a read lock set
@@ -208,7 +208,7 @@ _bt_getroot(Relation rel, int access)
 
 		/*
 		 * Get, initialize, write, and leave a lock of the appropriate type on
-		 * the new root page.  Since this is the first page in the tree, it's
+		 * the cnew root page.  Since this is the first page in the tree, it's
 		 * a leaf as well as the root.
 		 */
 		rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
@@ -264,7 +264,7 @@ _bt_getroot(Relation rel, int access)
 
 		/*
 		 * swap root write lock for read lock.  There is no danger of anyone
-		 * else accessing the new root page while it's unlocked, since no one
+		 * else accessing the cnew root page while it's unlocked, since no one
 		 * else knows where it is yet.
 		 */
 		LockBuffer(rootbuf, BUFFER_LOCK_UNLOCK);
@@ -650,8 +650,8 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 		 * Extend the relation by one page.
 		 *
 		 * We have to use a lock to ensure no one else is extending the rel at
-		 * the same time, else we will both try to initialize the same new
-		 * page.  We can skip locking for new or temp relations, however,
+		 * the same time, else we will both try to initialize the same cnew
+		 * page.  We can skip locking for cnew or temp relations, however,
 		 * since no one else could be accessing them.
 		 */
 		needLock = !RELATION_IS_LOCAL(rel);
@@ -661,19 +661,19 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 
 		buf = ReadBuffer(rel, P_NEW);
 
-		/* Acquire buffer lock on new page */
+		/* Acquire buffer lock on cnew page */
 		LockBuffer(buf, BT_WRITE);
 
 		/*
 		 * Release the file-extension lock; it's now OK for someone else to
 		 * extend the relation some more.  Note that we cannot release this
-		 * lock before we have buffer lock on the new page, or we risk a race
+		 * lock before we have buffer lock on the cnew page, or we risk a race
 		 * condition against btvacuumscan --- see comments therein.
 		 */
 		if (needLock)
 			UnlockRelationForExtension(rel, ExclusiveLock);
 
-		/* Initialize the new page before returning it */
+		/* Initialize the cnew page before returning it */
 		page = BufferGetPage(buf);
 		Assert(PageIsNew(page));
 		_bt_pageinit(page, BufferGetPageSize(buf));
@@ -722,7 +722,7 @@ _bt_relbuf(Relation rel, Buffer buf)
 }
 
 /*
- *	_bt_pageinit() -- Initialize a new page.
+ *	_bt_pageinit() -- Initialize a cnew page.
  *
  * On return, the page header is initialized; data space is empty;
  * special space is zeroed out.
@@ -1498,7 +1498,7 @@ _bt_mark_page_halfdead(Relation rel, Buffer leafbuf, BTStack stack)
  * leaf page is deleted.
  *
  * Returns 'false' if the page could not be unlinked (shouldn't happen).
- * If the (new) right sibling of the page is empty, *rightsib_empty is set
+ * If the (cnew) right sibling of the page is empty, *rightsib_empty is set
  * to true.
  */
 static bool
@@ -1671,7 +1671,7 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, bool *rightsib_empty)
 
 	/*
 	 * If we are deleting the next-to-last page on the target's level, then
-	 * the rightsib is a candidate to become the new fast root. (In theory, it
+	 * the rightsib is a candidate to become the cnew fast root. (In theory, it
 	 * might be possible to push the fast root even further down, but the odds
 	 * of doing so are slim, and the locking considerations daunting.)
 	 *

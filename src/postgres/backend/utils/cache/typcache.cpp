@@ -366,7 +366,7 @@ lookup_type_cache(Oid type_id, int flags)
 		typentry->eq_opr = eq_opr;
 
 		/*
-		 * Reset info about hash function whenever we pick up new info about
+		 * Reset info about hash function whenever we pick up cnew info about
 		 * equality operator.  This is so we can ensure that the hash function
 		 * matches the operator.
 		 */
@@ -641,7 +641,7 @@ load_rangetype_info(TypeCacheEntry *typentry)
  *
  * Note: we assume we're called in a relatively short-lived context, so it's
  * okay to leak data into the current context while scanning pg_constraint.
- * We build the new DomainConstraintCache data in a context underneath
+ * We build the cnew DomainConstraintCache data in a context underneath
  * CurrentMemoryContext, and reparent it under CacheMemoryContext when
  * complete.
  */
@@ -945,7 +945,7 @@ InitDomainConstraintRef(Oid type_id, DomainConstraintRef *ref,
  * UpdateDomainConstraintRef --- recheck validity of domain constraint info
  *
  * If the domain's constraint set changed, ref->constraints is updated to
- * point at a new list of cached constraints.
+ * point at a cnew list of cached constraints.
  *
  * In the normal case where nothing happened to the domain, this is cheap
  * enough that it's reasonable (and expected) to check before *each* use
@@ -961,7 +961,7 @@ UpdateDomainConstraintRef(DomainConstraintRef *ref)
 		typentry->typtype == TYPTYPE_DOMAIN)
 		load_domaintype_info(typentry);
 
-	/* Transfer to ref object if there's new info, adjusting refcounts */
+	/* Transfer to ref object if there's cnew info, adjusting refcounts */
 	if (ref->dcc != typentry->domainData)
 	{
 		/* Paranoia --- be sure link is nulled before trying to release */
@@ -1177,7 +1177,7 @@ lookup_rowtype_tupdesc_internal(Oid type_id, int32 typmod, bool noError)
 /*
  * lookup_rowtype_tupdesc
  *
- * Given a typeid/typmod that should describe a known composite type,
+ * Given a ctypeid/typmod that should describe a known composite type,
  * return the tuple descriptor for the type.  Will ereport on failure.
  *
  * Note: on success, we increment the refcount of the returned TupleDesc,

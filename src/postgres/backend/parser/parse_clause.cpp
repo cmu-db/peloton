@@ -55,7 +55,7 @@ static Node *transformJoinUsingClause(ParseState *pstate,
 						 RangeTblEntry *leftRTE, RangeTblEntry *rightRTE,
 						 List *leftVars, List *rightVars);
 static Node *transformJoinOnClause(ParseState *pstate, JoinExpr *j,
-					  List *namespace);
+					  List *cnamespace);
 static RangeTblEntry *transformTableEntry(ParseState *pstate, RangeVar *r);
 static RangeTblEntry *transformCTEReference(ParseState *pstate, RangeVar *r,
 					  CommonTableExpr *cte, Index levelsup);
@@ -65,14 +65,14 @@ static RangeTblEntry *transformRangeFunction(ParseState *pstate,
 					   RangeFunction *r);
 static Node *transformFromClauseItem(ParseState *pstate, Node *n,
 						RangeTblEntry **top_rte, int *top_rti,
-						List **namespace);
+						List **cnamespace);
 static Node *buildMergedJoinVar(ParseState *pstate, JoinType jointype,
 				   Var *l_colvar, Var *r_colvar);
 static ParseNamespaceItem *makeNamespaceItem(RangeTblEntry *rte,
 				  bool rel_visible, bool cols_visible,
 				  bool lateral_only, bool lateral_ok);
-static void setNamespaceColumnVisibility(List *namespace, bool cols_visible);
-static void setNamespaceLateralState(List *namespace,
+static void setNamespaceColumnVisibility(List *cnamespace, bool cols_visible);
+static void setNamespaceLateralState(List *cnamespace,
 						 bool lateral_only, bool lateral_ok);
 static void checkExprIsVarFree(ParseState *pstate, Node *n,
 				   const char *constructName);
@@ -95,7 +95,7 @@ static Node *transformFrameOffset(ParseState *pstate, int frameOptions,
 /*
  * transformFromClause -
  *	  Process the FROM clause and add items to the query's range table,
- *	  joinlist, and namespace.
+ *	  joinlist, and cnamespace.
  *
  * Note: we assume that the pstate's p_rtable, p_joinlist, and p_namespace
  * lists were initialized to NIL when the pstate was created.
@@ -111,7 +111,7 @@ transformFromClause(ParseState *pstate, List *frmList)
 	 * The grammar will have produced a list of RangeVars, RangeSubselects,
 	 * RangeFunctions, and/or JoinExprs. Transform each one (possibly adding
 	 * entries to the rtable), check for duplicate refnames, and then add it
-	 * to the joinlist and namespace.
+	 * to the joinlist and cnamespace.
 	 *
 	 * Note we must process the items left-to-right for proper handling of
 	 * LATERAL references.
@@ -121,26 +121,26 @@ transformFromClause(ParseState *pstate, List *frmList)
 		Node	   *n = lfirst(fl);
 		RangeTblEntry *rte;
 		int			rtindex;
-		List	   *namespace;
+		List	   *cnamespace;
 
 		n = transformFromClauseItem(pstate, n,
 									&rte,
 									&rtindex,
-									&namespace);
+									&cnamespace);
 
-		checkNameSpaceConflicts(pstate, pstate->p_namespace, namespace);
+		checkNameSpaceConflicts(pstate, pstate->p_namespace, cnamespace);
 
-		/* Mark the new namespace items as visible only to LATERAL */
-		setNamespaceLateralState(namespace, true, true);
+		/* Mark the cnew cnamespace items as visible only to LATERAL */
+		setNamespaceLateralState(cnamespace, true, true);
 
 		pstate->p_joinlist = lappend(pstate->p_joinlist, n);
-		pstate->p_namespace = list_concat(pstate->p_namespace, namespace);
+		pstate->p_namespace = list_concat(pstate->p_namespace, cnamespace);
 	}
 
 	/*
-	 * We're done parsing the FROM list, so make all namespace items
+	 * We're done parsing the FROM list, so make all cnamespace items
 	 * unconditionally visible.  Note that this will also reset lateral_only
-	 * for any namespace items that were already present when we were called;
+	 * for any cnamespace items that were already present when we were called;
 	 * but those should have been that way already.
 	 */
 	setNamespaceLateralState(pstate->p_namespace, false, true);
@@ -157,10 +157,10 @@ transformFromClause(ParseState *pstate, List *frmList)
  *	  the write lock before any read lock.
  *
  *	  If alsoSource is true, add the target to the query's joinlist and
- *	  namespace.  For INSERT, we don't want the target to be joined to;
+ *	  cnamespace.  For INSERT, we don't want the target to be joined to;
  *	  it's a destination of tuples, not a source.   For UPDATE/DELETE,
  *	  we do need to scan or join the target.  (NOTE: we do not bother
- *	  to check for namespace conflict; we assume that the namespace was
+ *	  to check for cnamespace conflict; we assume that the cnamespace was
  *	  initially empty in these cases.)
  *
  *	  Finally, we mark the relation as requiring the permissions specified
@@ -196,7 +196,7 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 										relation->alias, inh, false);
 	pstate->p_target_rangetblentry = rte;
 
-	/* assume new rte is at end */
+	/* assume cnew rte is at end */
 	rtindex = list_length(pstate->p_rtable);
 	Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
 
@@ -212,9 +212,9 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	rte->requiredPerms = requiredPerms;
 
 	/*
-	 * If UPDATE/DELETE, add table to joinlist and namespace.
+	 * If UPDATE/DELETE, add table to joinlist and cnamespace.
 	 *
-	 * Note: some callers know that they can find the new ParseNamespaceItem
+	 * Note: some callers know that they can find the cnew ParseNamespaceItem
 	 * at the end of the pstate->p_namespace list.  This is a bit ugly but not
 	 * worth complicating this function's signature for.
 	 */
@@ -397,23 +397,23 @@ transformJoinUsingClause(ParseState *pstate,
  *	  Result is a transformed qualification expression.
  */
 static Node *
-transformJoinOnClause(ParseState *pstate, JoinExpr *j, List *namespace)
+transformJoinOnClause(ParseState *pstate, JoinExpr *j, List *cnamespace)
 {
 	Node	   *result;
 	List	   *save_namespace;
 
 	/*
-	 * The namespace that the join expression should see is just the two
+	 * The cnamespace that the join expression should see is just the two
 	 * subtrees of the JOIN plus any outer references from upper pstate
-	 * levels.  Temporarily set this pstate's namespace accordingly.  (We need
+	 * levels.  Temporarily set this pstate's cnamespace accordingly.  (We need
 	 * not check for refname conflicts, because transformFromClauseItem()
-	 * already did.)  All namespace items are marked visible regardless of
+	 * already did.)  All cnamespace items are marked visible regardless of
 	 * LATERAL state.
 	 */
-	setNamespaceLateralState(namespace, false, true);
+	setNamespaceLateralState(cnamespace, false, true);
 
 	save_namespace = pstate->p_namespace;
-	pstate->p_namespace = namespace;
+	pstate->p_namespace = cnamespace;
 
 	result = transformWhereClause(pstate, j->quals,
 								  EXPR_KIND_JOIN_ON, "JOIN/ON");
@@ -765,14 +765,14 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
  *
  * *top_rti: receives the rangetable index of top_rte.  (Ditto.)
  *
- * *namespace: receives a List of ParseNamespaceItems for the RTEs exposed
+ * *cnamespace: receives a List of ParseNamespaceItems for the RTEs exposed
  * as table/column names by this item.  (The lateral_only flags in these items
  * are indeterminate and should be explicitly set by the caller before use.)
  */
 static Node *
 transformFromClauseItem(ParseState *pstate, Node *n,
 						RangeTblEntry **top_rte, int *top_rti,
-						List **namespace)
+						List **cnamespace)
 {
 	if (IsA(n, RangeVar))
 	{
@@ -797,12 +797,12 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		if (!rte)
 			rte = transformTableEntry(pstate, rv);
 
-		/* assume new rte is at end */
+		/* assume cnew rte is at end */
 		rtindex = list_length(pstate->p_rtable);
 		Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
 		*top_rte = rte;
 		*top_rti = rtindex;
-		*namespace = list_make1(makeDefaultNSItem(rte));
+		*cnamespace = list_make1(makeDefaultNSItem(rte));
 		rtr = makeNode(RangeTblRef);
 		rtr->rtindex = rtindex;
 		return (Node *) rtr;
@@ -815,12 +815,12 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		int			rtindex;
 
 		rte = transformRangeSubselect(pstate, (RangeSubselect *) n);
-		/* assume new rte is at end */
+		/* assume cnew rte is at end */
 		rtindex = list_length(pstate->p_rtable);
 		Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
 		*top_rte = rte;
 		*top_rti = rtindex;
-		*namespace = list_make1(makeDefaultNSItem(rte));
+		*cnamespace = list_make1(makeDefaultNSItem(rte));
 		rtr = makeNode(RangeTblRef);
 		rtr->rtindex = rtindex;
 		return (Node *) rtr;
@@ -833,12 +833,12 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		int			rtindex;
 
 		rte = transformRangeFunction(pstate, (RangeFunction *) n);
-		/* assume new rte is at end */
+		/* assume cnew rte is at end */
 		rtindex = list_length(pstate->p_rtable);
 		Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
 		*top_rte = rte;
 		*top_rti = rtindex;
-		*namespace = list_make1(makeDefaultNSItem(rte));
+		*cnamespace = list_make1(makeDefaultNSItem(rte));
 		rtr = makeNode(RangeTblRef);
 		rtr->rtindex = rtindex;
 		return (Node *) rtr;
@@ -876,14 +876,14 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 
 		/*
 		 * Make the left-side RTEs available for LATERAL access within the
-		 * right side, by temporarily adding them to the pstate's namespace
+		 * right side, by temporarily adding them to the pstate's cnamespace
 		 * list.  Per SQL:2008, if the join type is not INNER or LEFT then the
 		 * left-side names must still be exposed, but it's an error to
 		 * reference them.  (Stupid design, but that's what it says.)  Hence,
-		 * we always push them into the namespace, but mark them as not
+		 * we always push them into the cnamespace, but mark them as not
 		 * lateral_ok if the jointype is wrong.
 		 *
-		 * Notice that we don't require the merged namespace list to be
+		 * Notice that we don't require the merged cnamespace list to be
 		 * conflict-free.  See the comments for scanNameSpaceForRefname().
 		 *
 		 * NB: this coding relies on the fact that list_concat is not
@@ -901,26 +901,26 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 										  &r_rtindex,
 										  &r_namespace);
 
-		/* Remove the left-side RTEs from the namespace list again */
+		/* Remove the left-side RTEs from the cnamespace list again */
 		pstate->p_namespace = list_truncate(pstate->p_namespace,
 											sv_namespace_length);
 
 		/*
 		 * Check for conflicting refnames in left and right subtrees. Must do
 		 * this because higher levels will assume I hand back a self-
-		 * consistent namespace list.
+		 * consistent cnamespace list.
 		 */
 		checkNameSpaceConflicts(pstate, l_namespace, r_namespace);
 
 		/*
-		 * Generate combined namespace info for possible use below.
+		 * Generate combined cnamespace info for possible use below.
 		 */
 		my_namespace = list_concat(l_namespace, r_namespace);
 
 		/*
 		 * Extract column name and var lists from both subtrees
 		 *
-		 * Note: expandRTE returns new lists, safe for me to modify
+		 * Note: expandRTE returns cnew lists, safe for me to modify
 		 */
 		expandRTE(l_rte, l_rtindex, 0, -1, false,
 				  &l_colnames, &l_colvars);
@@ -1122,7 +1122,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 										j->alias,
 										true);
 
-		/* assume new rte is at end */
+		/* assume cnew rte is at end */
 		j->rtindex = list_length(pstate->p_rtable);
 		Assert(rte == rt_fetch(j->rtindex, pstate->p_rtable));
 
@@ -1136,7 +1136,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		Assert(list_length(pstate->p_joinexprs) == j->rtindex);
 
 		/*
-		 * Prepare returned namespace list.  If the JOIN has an alias then it
+		 * Prepare returned cnamespace list.  If the JOIN has an alias then it
 		 * hides the contained RTEs completely; otherwise, the contained RTEs
 		 * are still visible as table names, but are not visible for
 		 * unqualified column-name access.
@@ -1155,7 +1155,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		 * The join RTE itself is always made visible for unqualified column
 		 * names.  It's visible as a relation name only if it has an alias.
 		 */
-		*namespace = lappend(my_namespace,
+		*cnamespace = lappend(my_namespace,
 							 makeNamespaceItem(rte,
 											   (j->alias != NULL),
 											   true,
@@ -1174,12 +1174,12 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 
 		rte = transformTableSampleEntry(pstate, rv);
 
-		/* assume new rte is at end */
+		/* assume cnew rte is at end */
 		rtindex = list_length(pstate->p_rtable);
 		Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
 		*top_rte = rte;
 		*top_rti = rtindex;
-		*namespace = list_make1(makeDefaultNSItem(rte));
+		*cnamespace = list_make1(makeDefaultNSItem(rte));
 		rtr = makeNode(RangeTblRef);
 		rtr->rtindex = rtindex;
 		return (Node *) rtr;
@@ -1329,14 +1329,14 @@ makeNamespaceItem(RangeTblEntry *rte, bool rel_visible, bool cols_visible,
 
 /*
  * setNamespaceColumnVisibility -
- *	  Convenience subroutine to update cols_visible flags in a namespace list.
+ *	  Convenience subroutine to update cols_visible flags in a cnamespace list.
  */
 static void
-setNamespaceColumnVisibility(List *namespace, bool cols_visible)
+setNamespaceColumnVisibility(List *cnamespace, bool cols_visible)
 {
 	ListCell   *lc;
 
-	foreach(lc, namespace)
+	foreach(lc, cnamespace)
 	{
 		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(lc);
 
@@ -1346,14 +1346,14 @@ setNamespaceColumnVisibility(List *namespace, bool cols_visible)
 
 /*
  * setNamespaceLateralState -
- *	  Convenience subroutine to update LATERAL flags in a namespace list.
+ *	  Convenience subroutine to update LATERAL flags in a cnamespace list.
  */
 static void
-setNamespaceLateralState(List *namespace, bool lateral_only, bool lateral_ok)
+setNamespaceLateralState(List *cnamespace, bool lateral_only, bool lateral_ok)
 {
 	ListCell   *lc;
 
-	foreach(lc, namespace)
+	foreach(lc, cnamespace)
 	{
 		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) lfirst(lc);
 
@@ -1714,7 +1714,7 @@ findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist,
 	}
 
 	/*
-	 * If no matches, construct a new target entry which is appended to the
+	 * If no matches, construct a cnew target entry which is appended to the
 	 * end of the target list.  This target is given resjunk = TRUE so that it
 	 * will not be projected into the final tuple.
 	 */
@@ -1756,7 +1756,7 @@ findTargetlistEntrySQL99(ParseState *pstate, Node *node, List **tlist,
  *      - expression lists
  *      - empty grouping sets
  *      - CUBE or ROLLUP nodes with lists nested 2 deep
- * The return is a new list, but doesn't deep-copy the old nodes except for
+ * The return is a cnew list, but doesn't deep-copy the old nodes except for
  * GroupingSet nodes.
  *
  * As a side effect, flag whether the list has any GroupingSet nodes.
@@ -2325,7 +2325,7 @@ transformWindowDefinitions(ParseState *pstate,
 											   true /* force SQL99 rules */ );
 
 		/*
-		 * And prepare the new WindowClause.
+		 * And prepare the cnew WindowClause.
 		 */
 		wc = makeNode(WindowClause);
 		wc->name = windef->name;

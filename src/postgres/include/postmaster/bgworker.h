@@ -24,7 +24,7 @@
  * dynamically registered background worker; the worker will be sent a SIGTERM
  * and will not be restarted after it exits.  Whenever the postmaster knows
  * that a worker will not be restarted, it unregisters the worker, freeing up
- * that worker's slot for use by a new worker.
+ * that worker's slot for use by a cnew worker.
  *
  * Note that there might be more than one worker in a database concurrently,
  * and the same module may request more than one worker running the same (or
@@ -99,10 +99,10 @@ typedef enum BgwHandleStatus
 struct BackgroundWorkerHandle;
 typedef struct BackgroundWorkerHandle BackgroundWorkerHandle;
 
-/* Register a new bgworker during shared_preload_libraries */
+/* Register a cnew bgworker during shared_preload_libraries */
 extern void RegisterBackgroundWorker(BackgroundWorker *worker);
 
-/* Register a new bgworker from a regular backend */
+/* Register a cnew bgworker from a regular backend */
 extern bool RegisterDynamicBackgroundWorker(BackgroundWorker *worker,
 								BackgroundWorkerHandle **handle);
 

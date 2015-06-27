@@ -171,7 +171,7 @@ transformAggregateCall(ParseState *pstate, Aggref *agg,
 		 * from regular aggregate arguments later.
 		 *
 		 * We need to mess with p_next_resno since it will be used to number
-		 * any new targetlist entries.
+		 * any cnew targetlist entries.
 		 */
 		save_next_resno = pstate->p_next_resno;
 		pstate->p_next_resno = attno;
@@ -473,7 +473,7 @@ check_agglevels_and_constraints(ParseState *pstate, Node *expr)
 
 			/*
 			 * There is intentionally no default: case here, so that the
-			 * compiler will warn if we add a new ParseExprKind without
+			 * compiler will warn if we add a cnew ParseExprKind without
 			 * extending this switch.  If we do see an unrecognized value at
 			 * runtime, the behavior will be the same as for EXPR_KIND_OTHER,
 			 * which is sane anyway.
@@ -827,7 +827,7 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 
 			/*
 			 * There is intentionally no default: case here, so that the
-			 * compiler will warn if we add a new ParseExprKind without
+			 * compiler will warn if we add a cnew ParseExprKind without
 			 * extending this switch.  If we do see an unrecognized value at
 			 * runtime, the behavior will be the same as for EXPR_KIND_OTHER,
 			 * which is sane anyway.
@@ -849,7 +849,7 @@ transformWindowFuncCall(ParseState *pstate, WindowFunc *wfunc,
 	/*
 	 * If the OVER clause just specifies a window name, find that WINDOW
 	 * clause (which had better be present).  Otherwise, try to match all the
-	 * properties of the OVER clause, and make a new entry in the p_windowdefs
+	 * properties of the OVER clause, and make a cnew entry in the p_windowdefs
 	 * list if no luck.
 	 */
 	if (windef->name)

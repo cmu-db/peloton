@@ -221,7 +221,7 @@ btree_xlog_split(bool onleft, bool isroot, XLogReaderState *record)
 	if (!isleaf)
 		_bt_clear_incomplete_split(record, 3);
 
-	/* Reconstruct right (new) sibling page from scratch */
+	/* Reconstruct right (cnew) sibling page from scratch */
 	rbuf = XLogInitBufferForRedo(record, 1);
 	datapos = XLogRecGetBlockData(record, 1, &datalen);
 	rpage = (Page) BufferGetPage(rbuf);
@@ -309,12 +309,12 @@ btree_xlog_split(bool onleft, bool isroot, XLogReaderState *record)
 			Size		itemsz;
 			Item		item;
 
-			/* add the new item if it was inserted on left page */
+			/* add the cnew item if it was inserted on left page */
 			if (onleft && off == xlrec->newitemoff)
 			{
 				if (PageAddItem(newlpage, newitem, newitemsz, leftoff,
 								false, false) == InvalidOffsetNumber)
-					elog(ERROR, "failed to add new item to left page after split");
+					elog(ERROR, "failed to add cnew item to left page after split");
 				leftoff = OffsetNumberNext(leftoff);
 			}
 
@@ -332,7 +332,7 @@ btree_xlog_split(bool onleft, bool isroot, XLogReaderState *record)
 		{
 			if (PageAddItem(newlpage, newitem, newitemsz, leftoff,
 							false, false) == InvalidOffsetNumber)
-				elog(ERROR, "failed to add new item to left page after split");
+				elog(ERROR, "failed to add cnew item to left page after split");
 			leftoff = OffsetNumberNext(leftoff);
 		}
 
@@ -355,7 +355,7 @@ btree_xlog_split(bool onleft, bool isroot, XLogReaderState *record)
 	UnlockReleaseBuffer(rbuf);
 
 	/*
-	 * Fix left-link of the page to the right of the new right sibling.
+	 * Fix left-link of the page to the right of the cnew right sibling.
 	 *
 	 * Note: in normal operation, we do this while still holding lock on the
 	 * two split pages.  However, that's not necessary for correctness in WAL
@@ -396,7 +396,7 @@ btree_xlog_vacuum(XLogReaderState *record)
 	 * are any.  This prevents replay of the VACUUM from reaching the stage of
 	 * removing heap tuples while there could still be indexscans "in flight"
 	 * to those particular tuples for those scans which could be confused by
-	 * finding new tuples at the old TID locations (see nbtree/README).
+	 * finding cnew tuples at the old TID locations (see nbtree/README).
 	 *
 	 * It might be worth checking if there are actually any backends running;
 	 * if not, we could just skip this.
@@ -523,7 +523,7 @@ btree_xlog_delete_get_latestRemovedXid(XLogReaderState *record)
 	 * transactions; but since we just worked out that that's zero people,
 	 * it's OK.
 	 *
-	 * XXX There is a race condition here, which is that a new backend might
+	 * XXX There is a race condition here, which is that a cnew backend might
 	 * start just after we look.  If so, it cannot need to conflict, but this
 	 * coding will result in throwing a conflict anyway.
 	 */

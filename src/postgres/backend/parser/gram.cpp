@@ -206,9 +206,9 @@ static void base_yyerror(YYLTYPE *yylloc, core_yyscan_t yyscanner,
 						 const char *msg);
 static Node *makeColumnRef(char *colname, List *indirection,
 						   int location, core_yyscan_t yyscanner);
-static Node *makeTypeCast(Node *arg, TypeName *typename, int location);
+static Node *makeTypeCast(Node *arg, TypeName *ctypename, int location);
 static Node *makeStringConst(char *str, int location);
-static Node *makeStringConstCast(char *str, int location, TypeName *typename);
+static Node *makeStringConstCast(char *str, int location, TypeName *ctypename);
 static Node *makeIntConst(int val, int location);
 static Node *makeFloatConst(char *str, int location);
 static Node *makeBitStringConst(char *str, int location);
@@ -999,9 +999,9 @@ union yyalloc
 
 # define YYCOPY_NEEDED 1
 
-/* Relocate STACK from its old location to the new one.  The
-   local variables YYSIZE and YYSTACKSIZE give the old and new number of
-   elements in the stack, and YYPTR gives the new location of the
+/* Relocate STACK from its old location to the cnew one.  The
+   local variables YYSIZE and YYSTACKSIZE give the old and cnew number of
+   elements in the stack, and YYPTR gives the cnew location of the
    stack.  Advance YYPTR to a properly aligned location for the next
    stack.  */
 # define YYSTACK_RELOCATE(Stack_alloc, Stack)                           \
@@ -22721,7 +22721,7 @@ YYLTYPE yylloc = yyloc_default;
   goto yysetstate;
 
 /*------------------------------------------------------------.
-| yynewstate -- Push a new state, which is found in yystate.  |
+| yynewstate -- Push a cnew state, which is found in yystate.  |
 `------------------------------------------------------------*/
  yynewstate:
   /* In all cases, when you get here, the value and location stacks
@@ -40750,7 +40750,7 @@ yyreduce:
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
-     that yytoken be updated with the new translation.  We take the
+     that yytoken be updated with the cnew translation.  We take the
      approach of translating immediately before every use of yytoken.
      One alternative is translating here after every semantic action,
      but that translation would be missed if the semantic action invokes
@@ -41048,11 +41048,11 @@ makeColumnRef(char *colname, List *indirection,
 }
 
 static Node *
-makeTypeCast(Node *arg, TypeName *typename, int location)
+makeTypeCast(Node *arg, TypeName *ctypename, int location)
 {
 	TypeCast *n = makeNode(TypeCast);
 	n->arg = arg;
-	n->typeName = typename;
+	n->typeName = ctypename;
 	n->location = location;
 	return (Node *) n;
 }
@@ -41070,11 +41070,11 @@ makeStringConst(char *str, int location)
 }
 
 static Node *
-makeStringConstCast(char *str, int location, TypeName *typename)
+makeStringConstCast(char *str, int location, TypeName *ctypename)
 {
 	Node *s = makeStringConst(str, location);
 
-	return makeTypeCast(s, typename, -1);
+	return makeTypeCast(s, ctypename, -1);
 }
 
 static Node *
@@ -41758,7 +41758,7 @@ makeRecursiveViewSelect(char *relname, List *aliases, Node *query)
 	w->ctes = list_make1(cte);
 	w->location = -1;
 
-	/* create target list for the new SELECT from the alias list of the
+	/* create target list for the cnew SELECT from the alias list of the
 	 * recursive view specification */
 	foreach (lc, aliases)
 	{
@@ -41772,7 +41772,7 @@ makeRecursiveViewSelect(char *relname, List *aliases, Node *query)
 		tl = lappend(tl, rt);
 	}
 
-	/* create new SELECT combining WITH clause, target list, and fake FROM
+	/* create cnew SELECT combining WITH clause, target list, and fake FROM
 	 * clause */
 	s->withClause = w;
 	s->targetList = tl;

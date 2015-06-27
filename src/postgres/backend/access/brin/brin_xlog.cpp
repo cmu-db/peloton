@@ -38,7 +38,7 @@ brin_xlog_createidx(XLogReaderState *record)
 }
 
 /*
- * Common part of an insert or update. Inserts the new tuple and updates the
+ * Common part of an insert or update. Inserts the cnew tuple and updates the
  * revmap.
  */
 static void
@@ -154,7 +154,7 @@ brin_xlog_update(XLogReaderState *record)
 		MarkBufferDirty(buffer);
 	}
 
-	/* Then insert the new tuple and update revmap, like in an insertion. */
+	/* Then insert the cnew tuple and update revmap, like in an insertion. */
 	brin_xlog_insert_update(record, &xlrec->insert);
 
 	if (BufferIsValid(buffer))

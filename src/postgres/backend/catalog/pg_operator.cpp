@@ -124,7 +124,7 @@ validOperatorName(const char *name)
 /*
  * OperatorGet
  *
- *		finds an operator given an exact specification (name, namespace,
+ *		finds an operator given an exact specification (name, cnamespace,
  *		left and right type IDs).
  *
  *		*defined is set TRUE if defined (not a shell)
@@ -258,7 +258,7 @@ OperatorShellMake(const char *operatorName,
 	tupDesc = pg_operator_desc->rd_att;
 
 	/*
-	 * create a new operator tuple
+	 * create a cnew operator tuple
 	 */
 	tup = heap_form_tuple(tupDesc, values, nulls);
 
@@ -274,7 +274,7 @@ OperatorShellMake(const char *operatorName,
 
 	heap_freetuple(tup);
 
-	/* Post creation hook for new shell operator */
+	/* Post creation hook for cnew shell operator */
 	InvokeObjectPostCreateHook(OperatorRelationId, operatorObjectId, 0);
 
 	/*
@@ -294,8 +294,8 @@ OperatorShellMake(const char *operatorName,
  * OperatorCreate
  *
  * "X" indicates an optional argument (i.e. one that can be NULL or 0)
- *		operatorName			name for new operator
- *		operatorNamespace		namespace for new operator
+ *		operatorName			name for cnew operator
+ *		operatorNamespace		cnamespace for cnew operator
  *		leftTypeId				X left type ID
  *		rightTypeId				X right type ID
  *		procedureId				procedure ID for operator
@@ -543,7 +543,7 @@ OperatorCreate(const char *operatorName,
 	/* Add dependencies for the entry */
 	address = makeOperatorDependencies(tup);
 
-	/* Post creation hook for new operator */
+	/* Post creation hook for cnew operator */
 	InvokeObjectPostCreateHook(OperatorRelationId, operatorObjectId, 0);
 
 	heap_close(pg_operator_desc, RowExclusiveLock);
@@ -556,7 +556,7 @@ OperatorCreate(const char *operatorName,
 	 * then defines the other operator of the pair with the proper commutator
 	 * or negator attribute.  That style doesn't require creation of a shell,
 	 * and it's the only style that worked right before Postgres version 6.5.
-	 * This code also takes care of the situation where the new operator is
+	 * This code also takes care of the situation where the cnew operator is
 	 * its own commutator.
 	 */
 	if (selfCommutator)
@@ -637,8 +637,8 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
  *
  *	For a given operator, look up its negator and commutator operators.
  *	If they are defined, but their negator and commutator fields
- *	(respectively) are empty, then use the new operator for neg or comm.
- *	This solves a problem for users who need to insert two new operators
+ *	(respectively) are empty, then use the cnew operator for neg or comm.
+ *	This solves a problem for users who need to insert two cnew operators
  *	which are the negator or commutator of each other.
  */
 static void
@@ -759,8 +759,8 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 }
 
 /*
- * Create dependencies for a new operator (either a freshly inserted
- * complete operator, a new shell operator, or a just-updated shell).
+ * Create dependencies for a cnew operator (either a freshly inserted
+ * complete operator, a cnew shell operator, or a just-updated shell).
  *
  * NB: the OidIsValid tests in this routine are necessary, in case
  * the given operator is a shell.
@@ -783,7 +783,7 @@ makeOperatorDependencies(HeapTuple tuple)
 	deleteDependencyRecordsFor(myself.classId, myself.objectId, true);
 	deleteSharedDependencyRecordsFor(myself.classId, myself.objectId, 0);
 
-	/* Dependency on namespace */
+	/* Dependency on cnamespace */
 	if (OidIsValid(oper->oprnamespace))
 	{
 		referenced.classId = NamespaceRelationId;

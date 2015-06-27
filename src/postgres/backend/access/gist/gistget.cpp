@@ -243,7 +243,7 @@ gistindex_keytest(IndexScanDesc scan,
  * TIDs.
  *
  * If we detect that the index page has split since we saw its downlink
- * in the parent, we push its new right sibling onto the queue so the
+ * in the parent, we push its cnew right sibling onto the queue so the
  * sibling will be processed next.
  */
 static void
@@ -287,7 +287,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 
 		oldcxt = MemoryContextSwitchTo(so->queueCxt);
 
-		/* Create new GISTSearchItem for the right sibling index page */
+		/* Create cnew GISTSearchItem for the right sibling index page */
 		item = palloc(SizeOfGISTSearchItem(scan->numberOfOrderBys));
 		item->blkno = opaque->rightlink;
 		item->data.parentlsn = pageItem->data.parentlsn;
@@ -372,7 +372,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 
 			oldcxt = MemoryContextSwitchTo(so->queueCxt);
 
-			/* Create new GISTSearchItem for this item */
+			/* Create cnew GISTSearchItem for this item */
 			item = palloc(SizeOfGISTSearchItem(scan->numberOfOrderBys));
 
 			if (GistPageIsLeaf(page))
@@ -402,7 +402,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 				item->data.parentlsn = BufferGetLSNAtomic(buffer);
 			}
 
-			/* Insert it into the queue using new distance data */
+			/* Insert it into the queue using cnew distance data */
 			memcpy(item->distances, so->distances,
 				   sizeof(double) * scan->numberOfOrderBys);
 

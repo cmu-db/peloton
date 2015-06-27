@@ -6,7 +6,7 @@
  * This module is a pg_clog-like system that stores the commit timestamp
  * for each transaction.
  *
- * XLOG interactions: this module generates an XLOG record whenever a new
+ * XLOG interactions: this module generates an XLOG record whenever a cnew
  * CommitTs page is initialized to zeroes.  Also, one XLOG record is
  * generated for setting of values when the caller requests it; this allows
  * us to support values coming from places other than transaction commit.
@@ -183,7 +183,7 @@ TransactionTreeSetCommitTsData(TransactionId xid, int nsubxids,
 			break;
 
 		/*
-		 * Set the new head and skip over it, as well as over the subxids
+		 * Set the cnew head and skip over it, as well as over the subxids
 		 * we just wrote.
 		 */
 		headxid = subxids[j];
@@ -505,7 +505,7 @@ BootStrapCommitTs(void)
  * If writeXlog is TRUE, also emit an XLOG record saying we did this.
  *
  * The page is not actually written, just set up in shared memory.
- * The slot number of the new page is returned.
+ * The slot number of the cnew page is returned.
  *
  * Control lock must be held at entry, and will be held at exit.
  */
@@ -597,7 +597,7 @@ ActivateCommitTs(void)
 	 * enabled, then started with commitTs disabled, then restarted with it
 	 * enabled again?  It doesn't look like it does, because there should be a
 	 * checkpoint that sets the value to InvalidTransactionId at end of
-	 * recovery; and so any chance of injecting new transactions without
+	 * recovery; and so any chance of injecting cnew transactions without
 	 * CommitTs values would occur after the oldestCommitTs has been set to
 	 * Invalid temporarily.
 	 */

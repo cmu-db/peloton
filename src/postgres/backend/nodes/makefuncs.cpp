@@ -261,7 +261,7 @@ makeTargetEntry(Expr *expr,
  *	  duplicate a TargetEntry, but don't copy substructure
  *
  * This is commonly used when we just want to modify the resno or substitute
- * a new expression.
+ * a cnew expression.
  */
 TargetEntry *
 flatCopyTargetEntry(TargetEntry *src_tle)

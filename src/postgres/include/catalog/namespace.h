@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * namespace.h
- *	  prototypes for functions in backend/catalog/namespace.c
+ * cnamespace.h
+ *	  prototypes for functions in backend/catalog/cnamespace.c
  *
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/include/catalog/namespace.h
+ * src/include/catalog/cnamespace.h
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 
 /*
  *	This structure holds a list of possible functions or operators
- *	found by namespace lookup.  Each function/operator is identified
+ *	found by cnamespace lookup.  Each function/operator is identified
  *	by OID and by argument types; the list must be pruned by type
  *	resolution rules that are embodied in the parser, not here.
  *	See FuncnameGetCandidates's comments for more info.
@@ -28,7 +28,7 @@
 typedef struct _FuncCandidateList
 {
 	struct _FuncCandidateList *next;
-	int			pathpos;		/* for internal use of namespace lookup */
+	int			pathpos;		/* for internal use of cnamespace lookup */
 	Oid			oid;			/* the function or operator's OID */
 	int			nargs;			/* number of arg types returned */
 	int			nvargs;			/* number of args to become variadic array */

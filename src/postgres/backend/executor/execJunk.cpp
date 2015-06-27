@@ -41,7 +41,7 @@
  * Finally, when at the top level we get back a tuple, we can call
  * ExecFindJunkAttribute/ExecGetJunkAttribute to retrieve the values of the
  * junk attributes we are interested in, and ExecFilterJunk to remove all the
- * junk attributes from a tuple.  This new "clean" tuple is then printed,
+ * junk attributes from a tuple.  This cnew "clean" tuple is then printed,
  * inserted, or updated.
  *
  *-------------------------------------------------------------------------
@@ -73,7 +73,7 @@ ExecInitJunkFilter(List *targetList, bool hasoid, TupleTableSlot *slot)
 	cleanTupType = ExecCleanTypeFromTL(targetList, hasoid);
 
 	/*
-	 * Use the given slot, or make a new slot if we weren't given one.
+	 * Use the given slot, or make a cnew slot if we weren't given one.
 	 */
 	if (slot)
 		ExecSetSlotDescriptor(slot, cleanTupType);
@@ -144,7 +144,7 @@ ExecInitJunkFilterConversion(List *targetList,
 	int			i;
 
 	/*
-	 * Use the given slot, or make a new slot if we weren't given one.
+	 * Use the given slot, or make a cnew slot if we weren't given one.
 	 */
 	if (slot)
 		ExecSetSlotDescriptor(slot, cleanTupType);
@@ -294,7 +294,7 @@ ExecFilterJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 	isnull = resultSlot->tts_isnull;
 
 	/*
-	 * Transpose data into proper fields of the new tuple.
+	 * Transpose data into proper fields of the cnew tuple.
 	 */
 	for (i = 0; i < cleanLength; i++)
 	{

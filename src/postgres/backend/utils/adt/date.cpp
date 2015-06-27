@@ -420,7 +420,7 @@ date_mi(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32((int32) (dateVal1 - dateVal2));
 }
 
-/* Add a number of days to a date, giving a new date.
+/* Add a number of days to a date, giving a cnew date.
  * Must handle both positive and negative numbers of days.
  */
 Datum
@@ -435,7 +435,7 @@ date_pli(PG_FUNCTION_ARGS)
 	PG_RETURN_DATEADT(dateVal + days);
 }
 
-/* Subtract a number of days from a date, giving a new date.
+/* Subtract a number of days from a date, giving a cnew date.
  */
 Datum
 date_mii(PG_FUNCTION_ARGS)
@@ -893,7 +893,7 @@ timestamptz_cmp_date(PG_FUNCTION_ARGS)
 }
 
 
-/* Add an interval to a date, giving a new date.
+/* Add an interval to a date, giving a cnew date.
  * Must handle both positive and negative intervals.
  *
  * We implement this by promoting the date to timestamp (without time zone)
@@ -913,7 +913,7 @@ date_pl_interval(PG_FUNCTION_ARGS)
 							   PointerGetDatum(span));
 }
 
-/* Subtract an interval from a date, giving a new date.
+/* Subtract an interval from a date, giving a cnew date.
  * Must handle both positive and negative intervals.
  *
  * We implement this by promoting the date to timestamp (without time zone)

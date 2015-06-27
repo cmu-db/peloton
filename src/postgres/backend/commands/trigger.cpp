@@ -332,7 +332,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 											false, false);
 		addRTEtoQuery(pstate, rte, false, true, true);
 		rte = addRangeTableEntryForRelation(pstate, rel,
-											makeAlias("new", NIL),
+											makeAlias("cnew", NIL),
 											false, false);
 		addRTEtoQuery(pstate, rte, false, true, true);
 
@@ -558,7 +558,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 	}
 
 	/*
-	 * Build the new pg_trigger tuple.
+	 * Build the cnew pg_trigger tuple.
 	 */
 	memset(nulls, false, sizeof(nulls));
 
@@ -793,7 +793,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 		recordDependencyOnExpr(&myself, whenClause, whenRtable,
 							   DEPENDENCY_NORMAL);
 
-	/* Post creation hook for new trigger */
+	/* Post creation hook for cnew trigger */
 	InvokeObjectPostCreateHookArg(TriggerRelationId, trigoid, 0,
 								  isInternal);
 
@@ -810,7 +810,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
  *
  * The conversion is complex because a pre-7.3 foreign key involved three
  * separate triggers, which were reported separately in dumps.  While the
- * single trigger on the referencing table adds no new information, we need
+ * single trigger on the referencing table adds no cnew information, we need
  * to know the trigger functions of both of the triggers on the referenced
  * table to build the constraint declaration.  Also, due to lack of proper
  * dependency checking pre-7.3, it is possible that the source database had
@@ -943,7 +943,7 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 
 	if (l == NULL)
 	{
-		/* First trigger of set, so create a new list entry */
+		/* First trigger of set, so create a cnew list entry */
 		MemoryContext oldContext;
 
 		ereport(NOTICE,
@@ -1138,7 +1138,7 @@ RemoveTriggerById(Oid trigOid)
 	 * We do not bother to try to determine whether any other triggers remain,
 	 * which would be needed in order to decide whether it's safe to clear the
 	 * relation's relhastriggers.  (In any case, there might be a concurrent
-	 * process adding new triggers.)  Instead, just force a relcache inval to
+	 * process adding cnew triggers.)  Instead, just force a relcache inval to
 	 * make other backends (and this one too!) rebuild their relcache entries.
 	 * There's no great harm in leaving relhastriggers true even if there are
 	 * no triggers left.
@@ -1323,7 +1323,7 @@ renametrig(RenameStmt *stmt)
 		tgoid = HeapTupleGetOid(tuple);
 
 		/*
-		 * Update pg_trigger tuple with new tgname.
+		 * Update pg_trigger tuple with cnew tgname.
 		 */
 		tuple = heap_copytuple(tuple);	/* need a modifiable copy */
 
@@ -1376,7 +1376,7 @@ renametrig(RenameStmt *stmt)
  *
  * rel: relation to process (caller must hold suitable lock on it)
  * tgname: trigger to process, or NULL to scan all triggers
- * fires_when: new value for tgenabled field. In addition to generic
+ * fires_when: cnew value for tgenabled field. In addition to generic
  *			   enablement/disablement, this also defines when the trigger
  *			   should be fired in session replication roles.
  * skip_system: if true, skip "system" triggers (constraint triggers)
@@ -1891,7 +1891,7 @@ ExecCallTriggerFunc(TriggerData *trigdata,
 	/*
 	 * Do the function evaluation in the per-tuple memory context, so that
 	 * leaked memory will be reclaimed once per tuple. Note in particular that
-	 * any new tuple created by the trigger function will live till the end of
+	 * any cnew tuple created by the trigger function will live till the end of
 	 * the tuple cycle.
 	 */
 	oldContext = MemoryContextSwitchTo(per_tuple_context);
@@ -2943,7 +2943,7 @@ TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 		}
 
 		/*
-		 * Finally evaluate the expression, making the old and/or new tuples
+		 * Finally evaluate the expression, making the old and/or cnew tuples
 		 * available as INNER_VAR/OUTER_VAR respectively.
 		 */
 		econtext->ecxt_innertuple = oldslot;
@@ -3036,7 +3036,7 @@ typedef SetConstraintStateData *SetConstraintState;
  * because all instances of the same type of event in a given event list will
  * be fired at the same time, if they were queued between the same firing
  * cycles.  So we need only ensure that ats_firing_id is zero when attaching
- * a new event to an existing AfterTriggerSharedData record.
+ * a cnew event to an existing AfterTriggerSharedData record.
  */
 typedef uint32 TriggerFlags;
 
@@ -3067,7 +3067,7 @@ typedef struct AfterTriggerEventData
 {
 	TriggerFlags ate_flags;		/* status bits and offset to shared data */
 	ItemPointerData ate_ctid1;	/* inserted, deleted, or old updated tuple */
-	ItemPointerData ate_ctid2;	/* new updated tuple */
+	ItemPointerData ate_ctid2;	/* cnew updated tuple */
 } AfterTriggerEventData;
 
 /* AfterTriggerEventData, minus ate_ctid2 */
@@ -3311,7 +3311,7 @@ afterTriggerCheckState(AfterTriggerShared evtshared)
 /* ----------
  * afterTriggerAddEvent()
  *
- *	Add a new trigger event to the specified queue.
+ *	Add a cnew trigger event to the specified queue.
  *	The passed-in event data is copied.
  * ----------
  */
@@ -3326,8 +3326,8 @@ afterTriggerAddEvent(AfterTriggerEventList *events,
 	AfterTriggerEvent newevent;
 
 	/*
-	 * If empty list or not enough room in the tail chunk, make a new chunk.
-	 * We assume here that a new shared record will always be needed.
+	 * If empty list or not enough room in the tail chunk, make a cnew chunk.
+	 * We assume here that a cnew shared record will always be needed.
 	 */
 	chunk = events->tail;
 	if (chunk == NULL ||
@@ -3396,7 +3396,7 @@ afterTriggerAddEvent(AfterTriggerEventList *events,
 
 	/*
 	 * Try to locate a matching shared-data record already in the chunk. If
-	 * none, make a new one.
+	 * none, make a cnew one.
 	 */
 	for (newshared = ((AfterTriggerShared) chunk->endptr) - 1;
 		 (char *) newshared >= chunk->endfree;
@@ -3418,7 +3418,7 @@ afterTriggerAddEvent(AfterTriggerEventList *events,
 	/* Insert the data */
 	newevent = (AfterTriggerEvent) chunk->freeptr;
 	memcpy(newevent, event, eventsize);
-	/* ... and link the new event to its shared record */
+	/* ... and link the cnew event to its shared record */
 	newevent->ate_flags &= ~AFTER_TRIGGER_OFFSET;
 	newevent->ate_flags |= (char *) newshared - (char *) newevent;
 
@@ -3746,7 +3746,7 @@ afterTriggerMarkEvents(AfterTriggerEventList *events,
  *	When delete_ok is TRUE, it's safe to delete fully-processed events.
  *	(We are not very tense about that: we simply reset a chunk to be empty
  *	if all its events got fired.  The objective here is just to avoid useless
- *	rescanning of events when a trigger queues new events during transaction
+ *	rescanning of events when a trigger queues cnew events during transaction
  *	end, so it's not necessary to worry much about the case where only
  *	some events are fired.)
  *
@@ -4364,7 +4364,7 @@ AfterTriggerEnlargeQueryState(void)
 		afterTriggers.maxquerydepth = new_alloc;
 	}
 
-	/* Initialize new query lists to empty */
+	/* Initialize cnew query lists to empty */
 	while (init_depth < afterTriggers.maxquerydepth)
 	{
 		AfterTriggerEventList *events;

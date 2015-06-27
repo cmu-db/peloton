@@ -51,7 +51,7 @@ struct fp_info
 {
 	Oid			funcid;
 	FmgrInfo	flinfo;			/* function lookup info for funcid */
-	Oid			namespace;		/* other stuff from pg_proc */
+	Oid			cnamespace;		/* other stuff from pg_proc */
 	Oid			rettype;
 	Oid			argtypes[FUNC_MAX_ARGS];
 	char		fname[NAMEDATALEN];		/* function name for logging */
@@ -228,7 +228,7 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
 		elog(ERROR, "function %s has more than %d arguments",
 			 NameStr(pp->proname), FUNC_MAX_ARGS);
 
-	fip->namespace = pp->pronamespace;
+	fip->cnamespace = pp->pronamespace;
 	fip->rettype = pp->prorettype;
 	memcpy(fip->argtypes, pp->proargtypes.values, pp->pronargs * sizeof(Oid));
 	strlcpy(fip->fname, NameStr(pp->proname), NAMEDATALEN);
@@ -325,11 +325,11 @@ HandleFunctionRequest(StringInfo msgBuf)
 	 * Check permission to access and call function.  Since we didn't go
 	 * through a normal name lookup, we need to check schema usage too.
 	 */
-	aclresult = pg_namespace_aclcheck(fip->namespace, GetUserId(), ACL_USAGE);
+	aclresult = pg_namespace_aclcheck(fip->cnamespace, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
-					   get_namespace_name(fip->namespace));
-	InvokeNamespaceSearchHook(fip->namespace, true);
+					   get_namespace_name(fip->cnamespace));
+	InvokeNamespaceSearchHook(fip->cnamespace, true);
 
 	aclresult = pg_proc_aclcheck(fid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)

@@ -120,10 +120,10 @@ ExecSecLabelStmt(SecLabelStmt *stmt)
 			break;
 	}
 
-	/* Provider gets control here, may throw ERROR to veto new label. */
+	/* Provider gets control here, may throw ERROR to veto cnew label. */
 	(*provider->hook) (&address, stmt->label);
 
-	/* Apply new label. */
+	/* Apply cnew label. */
 	SetSecurityLabel(&address, provider->provider_name, stmt->label);
 
 	/*
@@ -303,7 +303,7 @@ SetSharedSecurityLabel(const ObjectAddress *object,
 	}
 	systable_endscan(scan);
 
-	/* If we didn't find an old tuple, insert a new one */
+	/* If we didn't find an old tuple, insert a cnew one */
 	if (newtup == NULL && label != NULL)
 	{
 		newtup = heap_form_tuple(RelationGetDescr(pg_shseclabel),
@@ -394,7 +394,7 @@ SetSecurityLabel(const ObjectAddress *object,
 	}
 	systable_endscan(scan);
 
-	/* If we didn't find an old tuple, insert a new one */
+	/* If we didn't find an old tuple, insert a cnew one */
 	if (newtup == NULL && label != NULL)
 	{
 		newtup = heap_form_tuple(RelationGetDescr(pg_seclabel),

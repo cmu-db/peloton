@@ -819,7 +819,7 @@ typedef struct PgBackendStatus
  * LocalPgBackendStatus
  *
  * When we build the backend status array, we use LocalPgBackendStatus to be
- * able to add new values to the struct when needed without adding new fields
+ * able to add cnew values to the struct when needed without adding cnew fields
  * to the shared memory. It contains the backend status as a first member.
  * ----------
  */

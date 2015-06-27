@@ -652,7 +652,7 @@ parse(struct vars * v,
 		branch->left = parsebranch(v, stopper, type, left, right, 0);
 		NOERRN();
 		branch->flags |= UP(branch->flags | branch->left->flags);
-		if ((branch->flags & ~branches->flags) != 0)	/* new flags */
+		if ((branch->flags & ~branches->flags) != 0)	/* cnew flags */
 			for (t = branches; t != branch; t = t->right)
 				t->flags |= branch->flags;
 	} while (EAT('|'));
@@ -749,7 +749,7 @@ parseqatom(struct vars * v,
 		   struct state * rp,	/* right state to hang it on */
 		   struct subre * top)	/* subtree top */
 {
-	struct state *s;			/* temporaries for new states */
+	struct state *s;			/* temporaries for cnew states */
 	struct state *s2;
 
 #define  ARCV(t, val)	 newarc(v->nfa, t, val, lp, rp)
@@ -767,7 +767,7 @@ parseqatom(struct vars * v,
 
 	/* initial bookkeeping */
 	atom = NULL;
-	assert(lp->nouts == 0);		/* must string new code */
+	assert(lp->nouts == 0);		/* must string cnew code */
 	assert(rp->nins == 0);		/* between lp and rp */
 	subno = 0;					/* just to shut lint up */
 
@@ -913,7 +913,7 @@ parseqatom(struct vars * v,
 			else
 				atomtype = PLAIN;		/* something that's not '(' */
 			NEXT();
-			/* need new endpoints because tree will contain pointers */
+			/* need cnew endpoints because tree will contain pointers */
 			s = newstate(v->nfa);
 			s2 = newstate(v->nfa);
 			NOERR();
@@ -1061,7 +1061,7 @@ parseqatom(struct vars * v,
 	 * We make the s state here for both cases; s2 is made below if needed
 	 *----------
 	 */
-	s = newstate(v->nfa);		/* first, new endpoints for the atom */
+	s = newstate(v->nfa);		/* first, cnew endpoints for the atom */
 	s2 = newstate(v->nfa);
 	NOERR();
 	moveouts(v->nfa, lp, s);

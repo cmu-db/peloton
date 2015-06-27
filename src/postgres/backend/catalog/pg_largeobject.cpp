@@ -32,7 +32,7 @@
 /*
  * Create a large object having the given LO identifier.
  *
- * We create a new large object by inserting an entry into
+ * We create a cnew large object by inserting an entry into
  * pg_largeobject_metadata without any data pages, so that the object
  * will appear to exist with size 0.
  */

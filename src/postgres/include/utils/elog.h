@@ -269,10 +269,10 @@ extern PGDLLIMPORT ErrorContextCallback *error_context_stack;
  * pg_indent will indent the construct nicely.)  The error recovery code
  * can optionally do PG_RE_THROW() to propagate the same error outwards.
  *
- * Note: while the system will correctly propagate any new ereport(ERROR)
+ * Note: while the system will correctly propagate any cnew ereport(ERROR)
  * occurring in the recovery section, there is a small limit on the number
  * of levels this will work for.  It's best to keep the error recovery
- * section simple enough that it can't generate any new errors, at least
+ * section simple enough that it can't generate any cnew errors, at least
  * not before popping the error stack.
  *
  * Note: an ereport(FATAL) will not be caught by this construct; control will

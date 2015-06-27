@@ -79,7 +79,7 @@ static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
  * CheckIndexCompatible
  *		Determine whether an existing index definition is compatible with a
  *		prospective index definition, such that the existing index storage
- *		could become the storage of the new index, avoiding a rebuild.
+ *		could become the storage of the cnew index, avoiding a rebuild.
  *
  * 'heapRelation': the relation the index would apply to.
  * 'accessMethodName': name of the AM to use.
@@ -91,7 +91,7 @@ static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
  * This is tailored to the needs of ALTER TABLE ALTER TYPE, which recreates
  * any indexes that depended on a changing column from their pg_get_indexdef
  * or pg_get_constraintdef definitions.  We omit some of the sanity checks of
- * DefineIndex.  We assume that the old and new indexes have the same number
+ * DefineIndex.  We assume that the old and cnew indexes have the same number
  * of columns and that if one has an expression column or predicate, both do.
  * Errors arising from the attribute list still apply.
  *
@@ -165,7 +165,7 @@ CheckIndexCompatible(Oid oldId,
 
 	/*
 	 * Compute the operator classes, collations, and exclusion operators for
-	 * the new index, so we can test whether it's compatible with the existing
+	 * the cnew index, so we can test whether it's compatible with the existing
 	 * one.  Note that ComputeIndexAttrs might fail here, but that's OK:
 	 * DefineIndex would have called this function with the same arguments
 	 * later on, and it would have failed then anyway.
@@ -277,15 +277,15 @@ CheckIndexCompatible(Oid oldId,
 
 /*
  * DefineIndex
- *		Creates a new index.
+ *		Creates a cnew index.
  *
  * 'relationId': the OID of the heap relation on which the index is to be
  *		created
- * 'stmt': IndexStmt describing the properties of the new index.
+ * 'stmt': IndexStmt describing the properties of the cnew index.
  * 'indexRelationId': normally InvalidOid, but during bootstrap can be
  *		nonzero to specify a preselected OID for the index.
  * 'is_alter_table': this is due to an ALTER rather than a CREATE operation.
- * 'check_rights': check for CREATE rights in the namespace.  (This should
+ * 'check_rights': check for CREATE rights in the cnamespace.  (This should
  *		be true except when ALTER is deleting/recreating an index.)
  * 'skip_build': make the catalog entries but leave the index file empty;
  *		it will be filled later.
@@ -391,7 +391,7 @@ DefineIndex(Oid relationId,
 				 errmsg("cannot create indexes on temporary tables of other sessions")));
 
 	/*
-	 * Verify we (still) have CREATE rights in the rel's namespace.
+	 * Verify we (still) have CREATE rights in the rel's cnamespace.
 	 * (Presumably we did when the rel was created, but maybe not anymore.)
 	 * Skip check if caller doesn't want it.  Also skip check if
 	 * bootstrapping, since permissions machinery may not be working yet.
@@ -642,7 +642,7 @@ DefineIndex(Oid relationId,
 	/*
 	 * For a concurrent build, it's important to make the catalog entries
 	 * visible to other transactions before we start to build the index. That
-	 * will prevent them from making incompatible HOT updates.  The new index
+	 * will prevent them from making incompatible HOT updates.  The cnew index
 	 * will be marked not indisready and not indisvalid, so that no one else
 	 * tries to either insert into it or use it for queries.
 	 *
@@ -674,7 +674,7 @@ DefineIndex(Oid relationId,
 	 * with the old list of indexes.  Use ShareLock to consider running
 	 * transactions that hold locks that permit writing to the table.  Note we
 	 * do not need to worry about xacts that open the table for writing after
-	 * this point; they will see the new index when they open it.
+	 * this point; they will see the cnew index when they open it.
 	 *
 	 * Note: the reason we use actual lock acquisition here, rather than just
 	 * checking the ProcArray and sleeping, is that deadlock is possible if
@@ -686,15 +686,15 @@ DefineIndex(Oid relationId,
 
 	/*
 	 * At this moment we are sure that there are no transactions with the
-	 * table open for write that don't have this new index in their list of
-	 * indexes.  We have waited out all the existing transactions and any new
-	 * transaction will have the new index in its list, but the index is still
+	 * table open for write that don't have this cnew index in their list of
+	 * indexes.  We have waited out all the existing transactions and any cnew
+	 * transaction will have the cnew index in its list, but the index is still
 	 * marked as "not-ready-for-inserts".  The index is consulted while
-	 * deciding HOT-safety though.  This arrangement ensures that no new HOT
-	 * chains can be created where the new tuple and the old tuple in the
+	 * deciding HOT-safety though.  This arrangement ensures that no cnew HOT
+	 * chains can be created where the cnew tuple and the old tuple in the
 	 * chain have different index keys.
 	 *
-	 * We now take a new snapshot, and build the index using all tuples that
+	 * We now take a cnew snapshot, and build the index using all tuples that
 	 * are visible in this snapshot.  We can be sure that any HOT updates to
 	 * these tuples will be compatible with the index, since any updates made
 	 * by transactions that didn't know about the index are now committed or
@@ -726,8 +726,8 @@ DefineIndex(Oid relationId,
 
 	/*
 	 * Update the pg_index row to mark the index as ready for inserts. Once we
-	 * commit this transaction, any new transactions that open the table must
-	 * insert new entries into the index for insertions and non-HOT updates.
+	 * commit this transaction, any cnew transactions that open the table must
+	 * insert cnew entries into the index for insertions and non-HOT updates.
 	 */
 	index_set_state_flags(indexRelationId, INDEX_CREATE_SET_READY);
 
@@ -865,7 +865,7 @@ DefineIndex(Oid relationId,
 	 * The pg_index update will cause backends (including this one) to update
 	 * relcache entries for the index itself, but we should also send a
 	 * relcache inval on the parent table to force replanning of cached plans.
-	 * Otherwise existing sessions might fail to use the new index where it
+	 * Otherwise existing sessions might fail to use the cnew index where it
 	 * would be useful.  (Note that our earlier commits did not create reasons
 	 * to replan; so relcache flush on the index itself was sufficient.)
 	 */
@@ -1492,19 +1492,19 @@ makeObjectName(const char *name1, const char *name2, const char *label)
 }
 
 /*
- * Select a nonconflicting name for a new relation.  This is ordinarily
+ * Select a nonconflicting name for a cnew relation.  This is ordinarily
  * used to choose index names (which is why it's here) but it can also
  * be used for sequences, or any autogenerated relation kind.
  *
  * name1, name2, and label are used the same way as for makeObjectName(),
  * except that the label can't be NULL; digits will be appended to the label
- * if needed to create a name that is unique within the specified namespace.
+ * if needed to create a name that is unique within the specified cnamespace.
  *
  * Note: it is theoretically possible to get a collision anyway, if someone
  * else chooses the same name concurrently.  This is fairly unlikely to be
  * a problem in practice, especially if one is holding an exclusive lock on
  * the relation identified by name1.  However, if choosing multiple names
- * within a single command, you'd better create the new object and do
+ * within a single command, you'd better create the cnew object and do
  * CommandCounterIncrement before choosing the next one!
  *
  * Returns a palloc'd string.
@@ -1527,7 +1527,7 @@ ChooseRelationName(const char *name1, const char *name2,
 		if (!OidIsValid(get_relname_relid(relname, namespaceid)))
 			break;
 
-		/* found a conflict, so try a new name component */
+		/* found a conflict, so try a cnew name component */
 		pfree(relname);
 		snprintf(modlabel, sizeof(modlabel), "%s%d", label, ++pass);
 	}
@@ -1581,7 +1581,7 @@ ChooseIndexName(const char *tabname, Oid namespaceId,
 }
 
 /*
- * Generate "name2" for a new index given the list of column names for it
+ * Generate "name2" for a cnew index given the list of column names for it
  * (as produced by ChooseIndexColumnNames).  This will be passed to
  * ChooseRelationName along with the parent table name and a suitable label.
  *

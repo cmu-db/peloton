@@ -264,7 +264,7 @@ defGetTypeName(DefElem *def)
 		case T_TypeName:
 			return (TypeName *) def->arg;
 		case T_String:
-			/* Allow quoted typename for backwards compatibility */
+			/* Allow quoted ctypename for backwards compatibility */
 			return makeTypeNameFromNameList(list_make1(def->arg));
 		default:
 			ereport(ERROR,
@@ -302,7 +302,7 @@ defGetTypeLength(DefElem *def)
 				return -1;		/* variable length */
 			break;
 		case T_TypeName:
-			/* cope if grammar chooses to believe "variable" is a typename */
+			/* cope if grammar chooses to believe "variable" is a ctypename */
 			if (pg_strcasecmp(TypeNameToString((TypeName *) def->arg),
 							  "variable") == 0)
 				return -1;		/* variable length */

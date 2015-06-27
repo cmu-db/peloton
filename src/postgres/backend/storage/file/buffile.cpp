@@ -151,7 +151,7 @@ extendBufFile(BufFile *file)
 }
 
 /*
- * Create a BufFile for a new temporary file (which will expand to become
+ * Create a BufFile for a cnew temporary file (which will expand to become
  * multiple temporary files if more than MAX_PHYSICAL_FILESIZE bytes are
  * written to it).
  *
@@ -532,7 +532,7 @@ BufFileSeek(BufFile *file, int fileno, off_t offset, int whence)
 
 	/*
 	 * At this point and no sooner, check for seek past last segment. The
-	 * above flush could have created a new segment, so checking sooner would
+	 * above flush could have created a cnew segment, so checking sooner would
 	 * not work (at least not with this code).
 	 */
 	if (file->isTemp)

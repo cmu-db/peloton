@@ -61,11 +61,11 @@ typedef struct DomainIOData
 
 
 /*
- * domain_state_setup - initialize the cache for a new domain type.
+ * domain_state_setup - initialize the cache for a cnew domain type.
  *
- * Note: we can't re-use the same cache struct for a new domain type,
+ * Note: we can't re-use the same cache struct for a cnew domain type,
  * since there's no provision for releasing the DomainConstraintRef.
- * If a call site needs to deal with a new domain type, we just leak
+ * If a call site needs to deal with a cnew domain type, we just leak
  * the old struct for the duration of the query.
  */
 static DomainIOData *

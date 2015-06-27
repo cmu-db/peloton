@@ -98,7 +98,7 @@ CreateTemplateTupleDesc(int natts, bool hasoid)
 
 /*
  * CreateTupleDesc
- *		This function allocates a new TupleDesc pointing to a given
+ *		This function allocates a cnew TupleDesc pointing to a given
  *		Form_pg_attribute array.
  *
  * Note: if the TupleDesc is ever freed, the Form_pg_attribute array
@@ -131,7 +131,7 @@ CreateTupleDesc(int natts, bool hasoid, Form_pg_attribute *attrs)
 
 /*
  * CreateTupleDescCopy
- *		This function creates a new TupleDesc by copying from an existing
+ *		This function creates a cnew TupleDesc by copying from an existing
  *		TupleDesc.
  *
  * !!! Constraints and defaults are not copied !!!
@@ -159,7 +159,7 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 
 /*
  * CreateTupleDescCopyConstr
- *		This function creates a new TupleDesc by copying from an existing
+ *		This function creates a cnew TupleDesc by copying from an existing
  *		TupleDesc (including its constraints and defaults).
  */
 TupleDesc
@@ -599,7 +599,7 @@ BuildDescForRelation(List *schema)
 	int			attdim;
 
 	/*
-	 * allocate a new tuple descriptor
+	 * allocate a cnew tuple descriptor
 	 */
 	natts = list_length(schema);
 	desc = CreateTemplateTupleDesc(natts, false);
@@ -697,7 +697,7 @@ BuildDescFromLists(List *names, List *types, List *typmods, List *collations)
 	Assert(natts == list_length(collations));
 
 	/*
-	 * allocate a new tuple descriptor
+	 * allocate a cnew tuple descriptor
 	 */
 	desc = CreateTemplateTupleDesc(natts, false);
 

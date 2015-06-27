@@ -2437,7 +2437,7 @@ addtype(long gmtoff, const char *abbr, int isdst,
 	}
 
 	/*
-	 * There isn't one; add a new one, unless there are already too many.
+	 * There isn't one; add a cnew one, unless there are already too many.
 	 */
 	if (typecnt >= TZ_MAX_TYPES)
 	{

@@ -94,7 +94,7 @@
 
 #ifdef EXEC_BACKEND
 #define CONFIG_EXEC_PARAMS "global/config_exec_params"
-#define CONFIG_EXEC_PARAMS_NEW "global/config_exec_params.new"
+#define CONFIG_EXEC_PARAMS_NEW "global/config_exec_params.cnew"
 #endif
 
 /*
@@ -761,7 +761,7 @@ static const unit_conversion time_unit_conversion_table[] =
  *
  * 6. Don't forget to document the option (at least in config.sgml).
  *
- * 7. If it's a new GUC_LIST option you must edit pg_dumpall.c to ensure
+ * 7. If it's a cnew GUC_LIST option you must edit pg_dumpall.c to ensure
  *	  it is not single quoted at dump time.
  */
 
@@ -1198,7 +1198,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"update_process_title", PGC_SUSET, STATS_COLLECTOR,
 			gettext_noop("Updates the process title to show the active SQL command."),
-			gettext_noop("Enables updating of the process title every time a new SQL command is received by the server.")
+			gettext_noop("Enables updating of the process title every time a cnew SQL command is received by the server.")
 		},
 		&update_process_title,
 		true,
@@ -1335,7 +1335,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"default_transaction_read_only", PGC_USERSET, CLIENT_CONN_STATEMENT,
-			gettext_noop("Sets the default read-only status of new transactions."),
+			gettext_noop("Sets the default read-only status of cnew transactions."),
 			NULL
 		},
 		&DefaultXactReadOnly,
@@ -1354,7 +1354,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"default_transaction_deferrable", PGC_USERSET, CLIENT_CONN_STATEMENT,
-			gettext_noop("Sets the default deferrable status of new transactions."),
+			gettext_noop("Sets the default deferrable status of cnew transactions."),
 			NULL
 		},
 		&DefaultXactDeferrable,
@@ -1393,7 +1393,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"default_with_oids", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
-			gettext_noop("Create new tables with OIDs by default."),
+			gettext_noop("Create cnew tables with OIDs by default."),
 			NULL
 		},
 		&default_with_oids,
@@ -1627,7 +1627,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"archive_timeout", PGC_SIGHUP, WAL_ARCHIVING,
 			gettext_noop("Forces a switch to the next xlog file if a "
-						 "new file has not been started within N seconds."),
+						 "cnew file has not been started within N seconds."),
 			NULL,
 			GUC_UNIT_S
 		},
@@ -3446,7 +3446,7 @@ static struct config_enum ConfigureNamesEnum[] =
 
 	{
 		{"default_transaction_isolation", PGC_USERSET, CLIENT_CONN_STATEMENT,
-			gettext_noop("Sets the transaction isolation level of each new transaction."),
+			gettext_noop("Sets the transaction isolation level of each cnew transaction."),
 			NULL
 		},
 		&DefaultXactIsoLevel,
@@ -3661,7 +3661,7 @@ static struct config_enum ConfigureNamesEnum[] =
 /*
  * To allow continued support of obsolete names for GUC variables, we apply
  * the following mappings to any unrecognized name.  Note that an old name
- * should be mapped to a new one only if the new variable has very similar
+ * should be mapped to a cnew one only if the cnew variable has very similar
  * semantics to the old.
  */
 static const char *const map_old_guc_names[] = {
@@ -3880,7 +3880,7 @@ set_extra_field(struct config_generic * gconf, void **field, void *newval)
  * Support for copying a variable's active value into a stack entry.
  * The "extra" field associated with the active value is copied, too.
  *
- * NB: be sure stringval and extra fields of a new stack entry are
+ * NB: be sure stringval and extra fields of a cnew stack entry are
  * initialized to NULL before this is used, else we'll try to free() them.
  */
 static void
@@ -4037,7 +4037,7 @@ build_guc_variables(void)
 }
 
 /*
- * Add a new GUC variable to the list of known variables. The
+ * Add a cnew GUC variable to the list of known variables. The
  * list is expanded if needed.
  */
 static bool
@@ -4753,7 +4753,7 @@ push_old_value(struct config_generic * gconf, GucAction action)
 	}
 
 	/*
-	 * Push a new stack entry
+	 * Push a cnew stack entry
 	 *
 	 * We keep all the stack entries in TopTransactionContext for simplicity.
 	 */
@@ -4803,7 +4803,7 @@ AtStart_GUC(void)
 }
 
 /*
- * Enter a new nesting level for GUC values.  This is called at subtransaction
+ * Enter a cnew nesting level for GUC values.  This is called at subtransaction
  * start, and when entering a function that has proconfig settings, and in
  * some other places where we want to set GUC variables transiently.
  * NOTE we must not risk error here, else subtransaction start will be unhappy.
@@ -5082,7 +5082,7 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 			gconf->stack = prev;
 			pfree(stack);
 
-			/* Report new value if we changed it */
+			/* Report cnew value if we changed it */
 			if (changed && (gconf->flags & GUC_REPORT))
 				ReportGUCOption(gconf);
 		}						/* end of stack-popping loop */
@@ -5777,7 +5777,7 @@ set_config_option(const char *name, const char *value,
 			{
 				/*
 				 * If a PGC_BACKEND or PGC_SU_BACKEND parameter is changed in
-				 * the config file, we want to accept the new value in the
+				 * the config file, we want to accept the cnew value in the
 				 * postmaster (whence it will propagate to
 				 * subsequently-started backends), but ignore it in existing
 				 * backends.  This is a tad klugy, but necessary because we
@@ -5835,7 +5835,7 @@ set_config_option(const char *name, const char *value,
 	 * Note: this flag is currently used for "session_authorization" and
 	 * "role".  We need to prohibit changing these inside a local userid
 	 * context because when we exit it, GUC won't be notified, leaving things
-	 * out of sync.  (This could be fixed by forcing a new GUC nesting level,
+	 * out of sync.  (This could be fixed by forcing a cnew GUC nesting level,
 	 * but that would change behavior in possibly-undesirable ways.)  Also, we
 	 * prohibit changing these in a security-restricted operation because
 	 * otherwise RESET could be used to regain the session user's privileges.
@@ -6778,11 +6778,11 @@ replace_auto_config_value(ConfigVariable **head_p, ConfigVariable **tail_p,
 	if (value == NULL)
 		return;
 
-	/* OK, append a new entry */
+	/* OK, append a cnew entry */
 	item = palloc(sizeof *item);
 	item->name = pstrdup(name);
 	item->value = pstrdup(value);
-	item->filename = pstrdup("");		/* new item has no location */
+	item->filename = pstrdup("");		/* cnew item has no location */
 	item->sourceline = 0;
 	item->next = NULL;
 
@@ -6797,7 +6797,7 @@ replace_auto_config_value(ConfigVariable **head_p, ConfigVariable **tail_p,
 /*
  * Execute ALTER SYSTEM statement.
  *
- * Read the old PG_AUTOCONF_FILENAME file, merge in the new variable value,
+ * Read the old PG_AUTOCONF_FILENAME file, merge in the cnew variable value,
  * and write out an updated file.  If the command is ALTER SYSTEM RESET ALL,
  * we can skip reading the old file and just write an empty file.
  *
@@ -6938,14 +6938,14 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 		}
 
 		/*
-		 * Now, replace any existing entry with the new value, or add it if
+		 * Now, replace any existing entry with the cnew value, or add it if
 		 * not present.
 		 */
 		replace_auto_config_value(&head, &tail, name, value);
 	}
 
 	/*
-	 * To ensure crash safety, first write the new file data to a temp file,
+	 * To ensure crash safety, first write the cnew file data to a temp file,
 	 * then atomically rename it into place.
 	 *
 	 * If there is a temp file left over due to a previous crash, it's okay to
@@ -6966,7 +6966,7 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 	 */
 	PG_TRY();
 	{
-		/* Write and sync the new contents to the temporary file */
+		/* Write and sync the cnew contents to the temporary file */
 		write_auto_conf_file(Tmpfd, AutoConfTmpFileName, head);
 
 		/* Close before renaming; may be required on some platforms */
@@ -7206,7 +7206,7 @@ set_config_by_name(PG_FUNCTION_ARGS)
 							 is_local ? GUC_ACTION_LOCAL : GUC_ACTION_SET,
 							 true, 0, false);
 
-	/* get the new current value */
+	/* get the cnew current value */
 	new_value = GetConfigOptionByName(name, NULL);
 
 	/* Convert return string to text */
@@ -7216,7 +7216,7 @@ set_config_by_name(PG_FUNCTION_ARGS)
 
 /*
  * Common code for DefineCustomXXXVariable subroutines: allocate the
- * new variable's config struct and fill in generic fields.
+ * cnew variable's config struct and fill in generic fields.
  */
 static struct config_generic *
 init_custom_variable(const char *name,
@@ -7255,7 +7255,7 @@ init_custom_variable(const char *name,
 }
 
 /*
- * Common code for DefineCustomXXXVariable subroutines: insert the new
+ * Common code for DefineCustomXXXVariable subroutines: insert the cnew
  * variable into the GUC variable array, replacing any placeholder.
  */
 static void
@@ -7298,8 +7298,8 @@ define_custom_variable(struct config_generic * variable)
 
 	/*
 	 * First, set the variable to its default value.  We must do this even
-	 * though we intend to immediately apply a new value, since it's possible
-	 * that the new value is invalid.
+	 * though we intend to immediately apply a cnew value, since it's possible
+	 * that the cnew value is invalid.
 	 */
 	InitializeOneGUCOption(variable);
 
@@ -8500,7 +8500,7 @@ write_nondefault_variables(GucContext context)
 	}
 
 	/*
-	 * Put new file in place.  This could delay on Win32, but we don't hold
+	 * Put cnew file in place.  This could delay on Win32, but we don't hold
 	 * any exclusive locks.
 	 */
 	rename(CONFIG_EXEC_PARAMS_NEW, CONFIG_EXEC_PARAMS);
@@ -8618,7 +8618,7 @@ read_nondefault_variables(void)
  * negation of this test determines whether to restore the compiled-in default
  * value before processing serialized values.
  *
- * A PGC_S_DEFAULT setting on the serialize side will typically match new
+ * A PGC_S_DEFAULT setting on the serialize side will typically match cnew
  * postmaster children, but that can be false when got_SIGHUP == true and the
  * pending configuration change modifies this setting.  Nonetheless, we omit
  * PGC_S_DEFAULT settings from serialization and make up for that by restoring
@@ -8932,7 +8932,7 @@ read_gucstate(char **srcptr, char *srcend)
 	if (ptr > srcend)
 		elog(ERROR, "could not find null terminator in GUC state");
 
-	/* Set the new position to the byte following the terminating NUL */
+	/* Set the cnew position to the byte following the terminating NUL */
 	*srcptr = ptr + 1;
 
 	return retptr;
@@ -9129,7 +9129,7 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 	if (record)
 		name = record->name;
 
-	/* build new item for array */
+	/* build cnew item for array */
 	newval = psprintf("%s=%s", name, value);
 	datum = CStringGetTextDatum(newval);
 

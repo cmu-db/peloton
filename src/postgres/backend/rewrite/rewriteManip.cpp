@@ -666,7 +666,7 @@ adjust_relid_set(Relids relids, int oldrelid, int newrelid)
 	{
 		/* Ensure we have a modifiable copy */
 		relids = bms_copy(relids);
-		/* Remove old, add new */
+		/* Remove old, add cnew */
 		relids = bms_del_member(relids, oldrelid);
 		relids = bms_add_member(relids, newrelid);
 	}
@@ -945,7 +945,7 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 		strcmp(rt_fetch(PRS2_OLD_VARNO, parsetree->rtable)->eref->aliasname,
 			   "old") == 0 &&
 		strcmp(rt_fetch(PRS2_NEW_VARNO, parsetree->rtable)->eref->aliasname,
-			   "new") == 0)
+			   "cnew") == 0)
 		return parsetree;
 	Assert(parsetree->jointree && IsA(parsetree->jointree, FromExpr));
 	if (list_length(parsetree->jointree->fromlist) != 1)
@@ -961,7 +961,7 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 		strcmp(rt_fetch(PRS2_OLD_VARNO, selectquery->rtable)->eref->aliasname,
 			   "old") == 0 &&
 		strcmp(rt_fetch(PRS2_NEW_VARNO, selectquery->rtable)->eref->aliasname,
-			   "new") == 0)
+			   "cnew") == 0)
 	{
 		if (subquery_ptr)
 			*subquery_ptr = &(selectrte->subquery);
@@ -1099,7 +1099,7 @@ replace_rte_variables(Node *node, int target_varno, int sublevels_up,
 
 	/*
 	 * We try to initialize inserted_sublink to true if there is no need to
-	 * detect new sublinks because the query already has some.
+	 * detect cnew sublinks because the query already has some.
 	 */
 	if (node && IsA(node, Query))
 		context.inserted_sublink = ((Query *) node)->hasSubLinks;

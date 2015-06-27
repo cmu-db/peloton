@@ -35,7 +35,7 @@
 /*
  * ConversionCreate
  *
- * Add a new tuple to pg_conversion.
+ * Add a cnew tuple to pg_conversion.
  */
 ObjectAddress
 ConversionCreate(const char *conname, Oid connamespace,
@@ -104,7 +104,7 @@ ConversionCreate(const char *conname, Oid connamespace,
 
 	tup = heap_form_tuple(tupDesc, values, nulls);
 
-	/* insert a new tuple */
+	/* insert a cnew tuple */
 	simple_heap_insert(rel, tup);
 
 	/* update the index if any */
@@ -120,7 +120,7 @@ ConversionCreate(const char *conname, Oid connamespace,
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
-	/* create dependency on namespace */
+	/* create dependency on cnamespace */
 	referenced.classId = NamespaceRelationId;
 	referenced.objectId = connamespace;
 	referenced.objectSubId = 0;
@@ -133,7 +133,7 @@ ConversionCreate(const char *conname, Oid connamespace,
 	/* dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, false);
 
-	/* Post creation hook for new conversion */
+	/* Post creation hook for cnew conversion */
 	InvokeObjectPostCreateHook(ConversionRelationId, HeapTupleGetOid(tup), 0);
 
 	heap_freetuple(tup);
@@ -179,7 +179,7 @@ RemoveConversionById(Oid conversionOid)
  * FindDefaultConversion
  *
  * Find "default" conversion proc by for_encoding and to_encoding in the
- * given namespace.
+ * given cnamespace.
  *
  * If found, returns the procedure's oid, otherwise InvalidOid.  Note that
  * you get the procedure's OID not the conversion's OID!
