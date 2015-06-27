@@ -32,7 +32,7 @@ class OrderByNode : public AbstractPlanNode {
       const std::vector<oid_t>  &sort_keys,
       const std::vector<bool>   &descend_flags,
       const std::vector<oid_t>  &output_column_ids,
-      storage::Backend*  backend)
+      storage::AbstractBackend*  backend)
   : sort_keys_(sort_keys),
     descend_flags_(descend_flags),
     output_column_ids_(output_column_ids),
@@ -49,7 +49,7 @@ class OrderByNode : public AbstractPlanNode {
 //    backend_ = new storage::VMBackend();
 //  }
 
-  storage::Backend* GetBackend() const {
+    storage::AbstractBackend* GetBackend() const {
     return backend_;
   }
 
@@ -90,7 +90,7 @@ private:
   const std::vector<oid_t> output_column_ids_;
 
   /** @brief Backend used to allocate intermediate physical tiles. */
-  storage::Backend* backend_;
+  storage::AbstractBackend* backend_;
 
 };
 

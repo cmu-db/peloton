@@ -37,7 +37,7 @@ class HashSetOpExecutor : public AbstractExecutor {
   HashSetOpExecutor& operator=(const HashSetOpExecutor &&) = delete;
 
   explicit HashSetOpExecutor(planner::AbstractPlanNode *node,
-                             Transaction *transaction);
+                             concurrency::Transaction *transaction);
 
  protected:
   bool DInit();

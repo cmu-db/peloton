@@ -19,7 +19,7 @@ class UpdateExecutor : public AbstractExecutor {
 
  public:
   explicit UpdateExecutor(planner::AbstractPlanNode *node,
-                          Transaction *context);
+                          concurrency::Transaction *context);
 
  protected:
   bool DInit();

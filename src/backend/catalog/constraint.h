@@ -12,6 +12,10 @@
 
 #pragma once
 
+#include "backend/common/types.h"
+#include "backend/catalog/abstract_catalog_object.h"
+
+
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -24,79 +28,72 @@ class Index;
 class Table;
 class Column;
 
-//===--------------------------------------------------------------------===//
-// Constraint
-//===--------------------------------------------------------------------===//
+/**
+ * Constraint Catalog Object
+ */
+class Constraint : public AbstractCatalogObject {
 
-class Constraint {
+public:
 
- public:
+    // FIXME: Not all constraints will have foreign key information
+    //        We should make this information optional
+    Constraint(std::string name, ConstraintType type, Index* index, Table* foreign_key_table,
+               std::vector<Column*> columns, std::vector<Column*> foreign_columns)
+        : AbstractCatalogObject(static_cast<oid_t>(1), name), // FIXME
+          type(type),
+          index(index),
+          foreign_key_table(foreign_key_table),
+          columns(columns),
+          foreign_columns(foreign_columns) {
+    }
+    
+    //===--------------------------------------------------------------------===//
+    // ACCESSORS
+    //===--------------------------------------------------------------------===//
 
-  enum ConstraintType{
-    CONSTRAINT_TYPE_INVALID = 0, // invalid
+    ConstraintType GetType() const {
+        return type;
+    }
 
-    CONSTRAINT_TYPE_PRIMARY = 1, // primary key
-    CONSTRAINT_TYPE_FOREIGN = 2  // foreign key
-  };
+    Index *GetIndex() const {
+        return index;
+    }
 
-  Constraint(std::string name,
-             ConstraintType type,
-             Index* index,
-             Table* foreign_key_table,
-             std::vector<Column*> columns,
-             std::vector<Column*> foreign_columns)
- : name(name),
-   type(type),
-   index(index),
-   foreign_key_table(foreign_key_table),
-   columns(columns),
-   foreign_columns(foreign_columns){
-  }
+    Table *GetForeignKeyTable() const {
+        return foreign_key_table;
+    }
 
-  std::string GetName() const {
-    return name;
-  }
+    std::vector<Column*> GetColumns() const {
+        return columns;
+    }
 
-  ConstraintType GetType() const {
-    return type;
-  }
+    std::vector<Column*> GetForeignColumns() const {
+        return foreign_columns;
+    }
 
-  Index *GetIndex() const {
-    return index;
-  }
+    // Get a string representation of this constraint
+    friend std::ostream& operator<<(std::ostream& os, const Constraint& constraint);
 
-  Table *GetForeignKeyTable() const {
-    return foreign_key_table;
-  }
+private:
+    
+    //===--------------------------------------------------------------------===//
+    // MEMBERS
+    //===--------------------------------------------------------------------===//
 
-  std::vector<Column*> GetColumns() const {
-    return columns;
-  }
+    // The type of constraint
+    ConstraintType type = CONSTRAINT_TYPE_INVALID;
 
-  std::vector<Column*> GetForeignColumns() const {
-    return foreign_columns;
-  }
+    // The index used by this constraint (if needed)
+    Index* index = nullptr;
 
-  // Get a string representation of this constraint
-  friend std::ostream& operator<<(std::ostream& os, const Constraint& constraint);
+    // The table referenced by the foreign key (if needed)
+    Table* foreign_key_table = nullptr;
 
- private:
-  std::string name;
+    // The columns in the table referenced by the constraint (if needed)
+    std::vector<Column*> columns;
 
-  // The type of constraint
-  ConstraintType type = CONSTRAINT_TYPE_INVALID;
-
-  // The index used by this constraint (if needed)
-  Index* index = nullptr;
-
-  // The table referenced by the foreign key (if needed)
-  Table* foreign_key_table = nullptr;
-
-  // The columns in the table referenced by the constraint (if needed)
-  std::vector<Column*> columns;
-
-  // The columns in the foreign table referenced by the constraint (if needed)
-  std::vector<Column*> foreign_columns;
+    // The columns in the foreign table referenced by the constraint (if needed)
+    std::vector<Column*> foreign_columns;
 
 };
 

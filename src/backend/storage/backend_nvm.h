@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "backend/storage/backend.h"
+#include "backend/storage/abstract_backend.h"
 
 namespace nstore {
 namespace storage {
@@ -22,7 +22,7 @@ namespace storage {
 //===--------------------------------------------------------------------===//
 
 
-class NVMBackend : public Backend {
+class NVMBackend : public AbstractBackend {
 
 public:
 	virtual ~NVMBackend(){};
@@ -40,7 +40,7 @@ public:
 	}
 
 	std::string GetBackendType() const{
-		return GetBackendTypeName(BACKEND_TYPE_NVM);
+		return BackendTypeToString(BACKEND_TYPE_NVM);
 	}
 
 };

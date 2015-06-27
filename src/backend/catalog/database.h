@@ -5,13 +5,12 @@
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/catalog/database.h
- *
  *-------------------------------------------------------------------------
  */
 
 #pragma once
 
+#include "backend/catalog/abstract_catalog_object.h"
 #include "backend/catalog/table.h"
 
 #include <iostream>
@@ -24,48 +23,41 @@ namespace catalog {
 // Database
 //===--------------------------------------------------------------------===//
 
-class Database {
+class Database : public AbstractCatalogObject {
 
- public:
+public:
 
-  Database(std::string name)
- : name(name) {
-  }
+    Database(std::string name)
+        : AbstractCatalogObject(static_cast<oid_t>(1), name) { // FIXME
+    }
 
-  ~Database() {
+    ~Database() {
 
-    // clean up tables
-    for(auto table : tables)
-      delete table;
+        // clean up tables
+        for(auto table : tables) {
+            delete table;
+        }
+    }
+    
+    //===--------------------------------------------------------------------===//
+    // ACCESSORS
+    //===--------------------------------------------------------------------===//
 
-  }
+    bool AddTable(Table* table);
+    Table* GetTable(const std::string &table_name) const;
+    bool RemoveTable(const std::string &table_name);
 
-  std::string GetName() {
-    return name;
-  }
+    // Get a string representation of this database
+    friend std::ostream& operator<<(std::ostream& os, const Database& database);
 
-  bool AddTable(Table* table);
-  Table* GetTable(const std::string &table_name) const;
-  bool RemoveTable(const std::string &table_name);
+private:
+    
+    //===--------------------------------------------------------------------===//
+    // MEMBERS
+    //===--------------------------------------------------------------------===//
 
-  // Get a string representation of this database
-  friend std::ostream& operator<<(std::ostream& os, const Database& database);
-
-  void Lock(){
-    database_mtx.lock();
-  }
-
-  void Unlock(){
-    database_mtx.unlock();
-  }
-
- private:
-  std::string name;
-
-  // tables in db
-  std::vector<Table*> tables;
-
-  std::mutex database_mtx;
+    // tables in db
+    std::vector<Table*> tables;
 };
 
 } // End catalog namespace

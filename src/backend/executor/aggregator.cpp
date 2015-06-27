@@ -143,6 +143,16 @@ Aggregator(const planner::AggregateNode *node,
 }
 
 template<>
+Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::
+~Aggregator(){
+
+  // Clean up group by key tuple
+  group_by_key_tuple->FreeUninlinedData();
+  delete group_by_key_tuple;
+
+}
+
+template<>
 bool
 Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::
 Advance(AbstractTuple *cur_tuple,
@@ -199,6 +209,10 @@ Finalize(AbstractTuple *prev_tuple __attribute__((unused))) {
                entry.second->group_tuple, transaction_id) == false) {
       return false;
     }
+
+    // Clean up allocated storage
+    delete entry.second->aggregates;
+    delete entry.second->group_tuple;
   }
 
   // TODO: if no record exists in input_table, we have to output a null record
@@ -232,6 +246,13 @@ Aggregator(const planner::AggregateNode *node,
   aggregates = new Agg*[aggregate_columns.size()];
   ::memset(aggregates, 0, sizeof(void*) * aggregate_columns.size());
 
+}
+
+template<>
+Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::
+~Aggregator(){
+  // Clean up aggregators
+  delete[] aggregates;
 }
 
 template<>

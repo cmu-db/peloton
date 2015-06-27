@@ -8,7 +8,6 @@ common_FILES = \
 			   backend/common/value.cpp \
 			   backend/common/types.cpp \
 			   backend/common/varlen.cpp \
-			   backend/common/transaction.cpp \
 			   backend/common/pool.cpp
 
 common_INCLUDES = \

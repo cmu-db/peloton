@@ -12,11 +12,12 @@
 
 #pragma once
 
+#include "backend/catalog/abstract_catalog_object.h"
 #include "backend/catalog/column.h"
 #include "backend/catalog/index.h"
 
 #include <iostream>
-#include <mutex>
+
 
 namespace nstore {
 
@@ -26,100 +27,98 @@ class DataTable;
 
 namespace catalog {
 
-//===--------------------------------------------------------------------===//
-// Table
-//===--------------------------------------------------------------------===//
+/**
+ * Table Catalog Object 
+ */
+class Table : public AbstractCatalogObject {
 
-class Table {
+public:
 
- public:
+    Table(std::string name)
+        : AbstractCatalogObject(static_cast<oid_t>(1), name) { // FIXME
+        // Light em up!
+    }
 
-  Table(std::string name)
- : name(name) {
-  }
+    ~Table() {
 
-  ~Table(){
+        // clean up indices
+        for(auto index : indexes)
+            delete index;
 
-    // clean up indices
-    for(auto index : indexes)
-     delete index;
+        // clean up constraints
+        for(auto constraint : constraints)
+            delete constraint;
 
-    // clean up constraints
-    for(auto constraint : constraints)
-      delete constraint;
+        // clean up columns
+        for(auto col : columns)
+            delete col;
+    }
+    
+    //===--------------------------------------------------------------------===//
+    // ACCESSORS
+    //===--------------------------------------------------------------------===//
 
-    // clean up columns
-    for(auto col : columns)
-      delete col;
-  }
+    std::vector<Column*> GetColumns() const {
+        return columns;
+    }
 
-  std::string GetName() {
-    return name;
-  }
+    std::vector<Index*> GetIndices() const {
+        return indexes;
+    }
 
-  std::vector<Column*> GetColumns() const {
-    return columns;
-  }
+    std::vector<Constraint*> GetConstraints() const {
+        return constraints;
+    }
 
-  std::vector<Index*> GetIndices() const {
-    return indexes;
-  }
+    // TODO: REMOVE THIS!
+    storage::DataTable *GetTable() const {
+        return physical_table;
+    }
 
-  std::vector<Constraint*> GetConstraints() const {
-    return constraints;
-  }
+    // TODO: REMOVE THIS!
+    void SetPhysicalTable(storage::DataTable* table_) {
+        physical_table = table_;
+    }
 
-  storage::DataTable *GetTable() const {
-    return physical_table;
-  }
+    // TODO: REMOVE THIS!
+    storage::DataTable *GetPhysicalTable() {
+        return physical_table;
+    }
 
-  void SetPhysicalTable(storage::DataTable* table_) {
-    physical_table = table_;
-  }
+    bool AddColumn(Column* column);
+    Column* GetColumn(const std::string &column_name) const;
+    bool RemoveColumn(const std::string &column_name);
 
-  storage::DataTable *GetPhysicalTable() {
-    return physical_table;
-  }
+    bool AddIndex(Index* index);
+    Index* GetIndex(const std::string &index_name) const;
+    bool RemoveIndex(const std::string &index_name);
 
-  bool AddColumn(Column* column);
-  Column* GetColumn(const std::string &column_name) const;
-  bool RemoveColumn(const std::string &column_name);
+    bool AddConstraint(Constraint* constraint);
+    Constraint* GetConstraint(const std::string &constraint_name) const;
+    bool RemoveConstraint(const std::string &constraint_name);
 
-  bool AddIndex(Index* index);
-  Index* GetIndex(const std::string &index_name) const;
-  bool RemoveIndex(const std::string &index_name);
+    // Get a string representation of this table
+    friend std::ostream& operator<<(std::ostream& os, const Table& table);
+    
 
-  bool AddConstraint(Constraint* constraint);
-  Constraint* GetConstraint(const std::string &constraint_name) const;
-  bool RemoveConstraint(const std::string &constraint_name);
+private:
+    
+    //===--------------------------------------------------------------------===//
+    // MEMBERS
+    //===--------------------------------------------------------------------===//
 
-  // Get a string representation of this table
-  friend std::ostream& operator<<(std::ostream& os, const Table& table);
+    // columns in table
+    std::vector<Column*> columns;
 
-  void Lock(){
-    table_mtx.lock();
-  }
+    // indexes for table
+    std::vector<Index*> indexes;
 
-  void Unlock(){
-    table_mtx.unlock();
-  }
+    // constraints for column
+    std::vector<Constraint*> constraints;
 
- private:
-  std::string name;
+    // underlying physical table
+    storage::DataTable* physical_table = nullptr; // TODO: REMOVE THIS!
 
-  // columns in table
-  std::vector<Column*> columns;
-
-  // indexes for table
-  std::vector<Index*> indexes;
-
-  // constraints for column
-  std::vector<Constraint*> constraints;
-
-  // underlying physical table
-  storage::DataTable* physical_table = nullptr;
-
-  std::mutex table_mtx;
 };
 
 } // End catalog namespace

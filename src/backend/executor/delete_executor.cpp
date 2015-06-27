@@ -25,7 +25,7 @@ namespace executor {
  * @param node Delete node corresponding to this executor.
  */
 DeleteExecutor::DeleteExecutor(planner::AbstractPlanNode *node,
-                               Transaction *transaction)
+                               concurrency::Transaction *transaction)
 : AbstractExecutor(node, transaction){
 }
 
@@ -74,7 +74,7 @@ bool DeleteExecutor::DExecute() {
     // this might fail due to a concurrent operation that has latched the tuple
     bool status = tile_group->DeleteTuple(txn_id, tuple_id);
     if(status == false) {
-      auto& txn_manager = TransactionManager::GetInstance();
+      auto& txn_manager = concurrency::TransactionManager::GetInstance();
       txn_manager.AbortTransaction(transaction_);
 
       return false;

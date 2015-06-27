@@ -17,7 +17,7 @@ namespace executor {
  * @brief Constructor
  */
 AppendExecutor::AppendExecutor(planner::AbstractPlanNode *node,
-                               Transaction *transaction)
+                               concurrency::Transaction *transaction)
 : AbstractExecutor(node, transaction) {
 
 }

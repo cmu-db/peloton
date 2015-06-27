@@ -14,12 +14,12 @@
 
 #include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
-#include "backend/storage/backend.h"
+#include "backend/storage/abstract_backend.h"
+#include "backend/storage/backend_vm.h"
 #include "backend/storage/tuple.h"
 #include "backend/storage/tile_group_header.h"
-#include "backend/storage/backend.h"
+
 #include <mutex>
-#include "backend/storage/backend_vm.h"
 
 namespace nstore {
 namespace storage {
@@ -52,7 +52,7 @@ class Tile {
 
   // Tile creator
   Tile(TileGroupHeader* tile_header,
-       Backend* backend,
+       AbstractBackend* backend,
        const catalog::Schema& tuple_schema,
        TileGroup* tile_group,
        int tuple_count);
@@ -134,7 +134,7 @@ class Tile {
     return column_count;
   };
 
-  Backend *GetBackend() const {
+  AbstractBackend *GetBackend() const {
     return backend;
   }
 
@@ -189,7 +189,7 @@ class Tile {
   oid_t tile_id;
 
   // storage backend
-  Backend *backend;
+  AbstractBackend *backend;
 
   // tile schema
   catalog::Schema schema;
@@ -287,7 +287,7 @@ class TileFactory {
     // These temporary tiles don't belong to any tile group.
     TileGroupHeader *header = nullptr;
     TileGroup *tile_group = nullptr;
-    Backend *backend = new VMBackend();
+    AbstractBackend *backend = new VMBackend();
 
     Tile *tile = GetTile(
         INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
@@ -299,7 +299,7 @@ class TileFactory {
 
   static Tile *GetTile(oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t tile_id,
                        TileGroupHeader *tile_header,
-                       Backend *backend,
+                       AbstractBackend *backend,
                        const catalog::Schema& schema,
                        TileGroup *tile_group,
                        int tuple_count) {
@@ -316,7 +316,7 @@ class TileFactory {
 
   static void InitCommon(Tile *tile,
                          oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t tile_id,
-                         Backend* backend,
+                         AbstractBackend* backend,
                          const catalog::Schema& schema) {
 
     tile->database_id = database_id;
