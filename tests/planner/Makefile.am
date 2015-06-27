@@ -8,4 +8,4 @@ check_PROGRAMS += planner_test
 
 planner_test_SOURCES = planner/planner_test.cpp
 
-planner_test_LDADD = $(LIBGDAMM_LIBS)
+planner_test_LDADD =
