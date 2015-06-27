@@ -1150,10 +1150,12 @@ typedef struct WithClause : Node
  *		ON CONFLICT unique index inference clause
  *
  * Note: InferClause does not propagate into the Query representation.
+ *
+ * Peloton porting: use c++ inheritance
  */
-typedef struct InferClause
+typedef struct InferClause : Node
 {
-	NodeTag		type;
+	//NodeTag		type;
 	List	   *indexElems;		/* IndexElems to infer unique index */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
 	char	   *conname;		/* Constraint name, or NULL if unnamed */
