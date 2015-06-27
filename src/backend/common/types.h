@@ -226,6 +226,8 @@ enum PlanNodeType {
     PLAN_NODE_TYPE_MATERIALIZE      = 55,
     PLAN_NODE_TYPE_LIMIT            = 56,
     PLAN_NODE_TYPE_DISTINCT         = 57,
+    PLAN_NODE_TYPE_SETOP            = 58,   // set operation
+    PLAN_NODE_TYPE_APPEND           = 59    // append
 };
 
 //===--------------------------------------------------------------------===//
@@ -349,6 +351,18 @@ enum ConstraintType {
     CONSTRAINT_TYPE_FOREIGN = 2  // foreign key
 };
 
+
+//===--------------------------------------------------------------------===//
+// Set Operation Types
+//===--------------------------------------------------------------------===//
+enum SetOpType {
+  SETOP_TYPE_INVALID             = 0,
+
+  SETOP_TYPE_INTERSECT           = 1,
+  SETOP_TYPE_INTERSECT_ALL       = 2,
+  SETOP_TYPE_EXCEPT              = 3,
+  SETOP_TYPE_EXCEPT_ALL          = 4
+};
 
 //===--------------------------------------------------------------------===//
 // Type definitions.

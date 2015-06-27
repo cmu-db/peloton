@@ -189,7 +189,7 @@ bool DDL::CreateIndex(std::string index_name,
   storage::DataTable* table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
 
   // Bring the tuple schema from the table
-  catalog::Schema* tuple_schema = table->GetSchema();
+  auto tuple_schema = table->GetSchema();
 
   // Print out tuple_schema just for debugging
   //std::cout << *tuple_schema << std::endl;

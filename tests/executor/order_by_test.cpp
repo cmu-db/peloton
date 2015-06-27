@@ -96,7 +96,8 @@ TEST(OrderByTests, IntAscTest){
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
   std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*2, false, true);
+  bool random = true;
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*2, false, random, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -141,7 +142,8 @@ TEST(OrderByTests, IntDescTest){
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
   std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*2, false, true);
+  bool random = true;
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*2, false, random, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -186,7 +188,8 @@ TEST(OrderByTests, StringDescTest){
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
   std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*2, false, true);
+  bool random = true;
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*2, false, random, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -231,7 +234,8 @@ TEST(OrderByTests, IntAscStringDescTest){
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
   std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*2, false, true);
+  bool random = true;
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*2, false, random, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -279,7 +283,8 @@ TEST(OrderByTests, StringDescIntAscTest){
   // Create a table and wrap it in logical tile
   size_t tile_size = 20;
   std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*2, false, true);
+  bool random = true;
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size*2, false, random, false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));

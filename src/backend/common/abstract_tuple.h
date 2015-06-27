@@ -10,15 +10,14 @@
 #include "backend/common/value.h"
 
 namespace nstore {
-namespace expression {
 
 //===--------------------------------------------------------------------===//
-// Tuple Interface for Expression System
+// Tuple Interface
 //===--------------------------------------------------------------------===//
 
-class Tuple {
+class AbstractTuple {
  public:
-  virtual ~Tuple() {
+  virtual ~AbstractTuple() {
   };
 
   /** @brief Get the value at the given column id. */
@@ -29,5 +28,4 @@ class Tuple {
 
 };
 
-} // namespace expression
 } // namespace nstore

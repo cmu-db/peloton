@@ -18,7 +18,7 @@ namespace nstore {
 namespace planner {
 
 /**
- * IMPORTANT All tiles got from child must have the same logical schema.
+ * IMPORTANT All tiles got from child must have the same physical schema.
  */
 
 class OrderByNode : public AbstractPlanNode {
