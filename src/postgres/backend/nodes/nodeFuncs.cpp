@@ -2946,7 +2946,7 @@ query_or_expression_tree_walker(Node *node,
  */
 Node *
 query_or_expression_tree_mutator(Node *node,
-								 Node *(*mutator) (),
+								 Node *(*mutator) (Node *, void *),
 								 void *context,
 								 int flags)
 {
