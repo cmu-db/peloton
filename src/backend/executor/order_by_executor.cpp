@@ -135,6 +135,7 @@ bool OrderByExecutor::DoSort(){
   assert(count == sort_buffer_.size());
 
   // Prepare the compare function
+  // Note: This is a less-than comparer, NOT an equality comparer.
   struct TupleComparer {
     TupleComparer(std::vector<bool> &_descend_flags)
       : descend_flags(_descend_flags){
