@@ -182,7 +182,7 @@ static bool extract_query_dependencies_walker(Node *node,
  * wouldn't match up with the Vars in the outer plan tree.  The SubqueryScan
  * serves a necessary function as a buffer between outer query and subquery
  * variable numbering ... but after we've flattened the rangetable this is
- * no longer a problem, since then there's only one rtindex namespace.
+ * no longer a problem, since then there's only one rtindex cnamespace.
  *
  * set_plan_references recursively traverses the whole plan tree.
  *
@@ -1909,7 +1909,7 @@ search_indexed_tlist_for_sortgroupref(Node *node,
 
 /*
  * fix_join_expr
- *	   Create a new set of targetlist entries or join qual clauses by
+ *	   Create a cnew set of targetlist entries or join qual clauses by
  *	   changing the varno/varattno values of variables in the clauses
  *	   to reference target list values from the outer and inner join
  *	   relation target lists.  Also perform opcode lookup and add
@@ -1935,7 +1935,7 @@ search_indexed_tlist_for_sortgroupref(Node *node,
  *		whose Vars may appear in the clause without provoking an error
  * 'rtoffset': how much to increment varnoold by
  *
- * Returns the new expression tree.  The original clause structure is
+ * Returns the cnew expression tree.  The original clause structure is
  * not modified.
  */
 static List *

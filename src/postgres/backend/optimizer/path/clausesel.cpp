@@ -279,7 +279,7 @@ clauselist_selectivity(PlannerInfo *root,
 }
 
 /*
- * addRangeClause --- add a new range clause for clauselist_selectivity
+ * addRangeClause --- add a cnew range clause for clauselist_selectivity
  *
  * Here is where we try to match up pairs of range-query clauses
  */
@@ -354,7 +354,7 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
 		return;
 	}
 
-	/* No matching var found, so make a new clause-pair data structure */
+	/* No matching var found, so make a cnew clause-pair data structure */
 	rqelem = (RangeQueryClause *) palloc(sizeof(RangeQueryClause));
 	rqelem->var = var;
 	if (is_lobound)

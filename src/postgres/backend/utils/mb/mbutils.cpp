@@ -167,7 +167,7 @@ PrepareClientEncoding(int encoding)
 		fmgr_info_cxt(to_client_proc, &convinfo->to_client_info,
 					  TopMemoryContext);
 
-		/* Attach new info to head of list */
+		/* Attach cnew info to head of list */
 		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 		ConvProcList = lcons(convinfo, ConvProcList);
 		MemoryContextSwitchTo(oldcontext);
@@ -960,7 +960,7 @@ raw_pg_bind_textdomain_codeset(const char *domainname, int encoding)
 /*
  * Bind a gettext message domain to the codeset corresponding to the database
  * encoding.  For SQL_ASCII, instead bind to the codeset implied by LC_CTYPE.
- * Return the MessageEncoding implied by the new settings.
+ * Return the MessageEncoding implied by the cnew settings.
  *
  * On most platforms, gettext defaults to the codeset implied by LC_CTYPE.
  * When that matches the database encoding, we don't need to do anything.  In

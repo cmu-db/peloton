@@ -127,7 +127,7 @@ pg_signal_backend(int pid, int sig)
 
 	/*
 	 * Can the process we just validated above end, followed by the pid being
-	 * recycled for a new process, before reaching here?  Then we'd be trying
+	 * recycled for a cnew process, before reaching here?  Then we'd be trying
 	 * to kill the wrong thing.  Seems near impossible when sequential pid
 	 * assignment and wraparound is used.  Perhaps it could happen on a system
 	 * where pid re-use is randomized.  That race condition possibility seems
@@ -532,17 +532,17 @@ pg_typeof(PG_FUNCTION_ARGS)
 Datum
 pg_collation_for(PG_FUNCTION_ARGS)
 {
-	Oid			typeid;
+	Oid			ctypeid;
 	Oid			collid;
 
-	typeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
-	if (!typeid)
+	ctypeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+	if (!ctypeid)
 		PG_RETURN_NULL();
-	if (!type_is_collatable(typeid) && typeid != UNKNOWNOID)
+	if (!type_is_collatable(ctypeid) && ctypeid != UNKNOWNOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("collations are not supported by type %s",
-						format_type_be(typeid))));
+						format_type_be(ctypeid))));
 
 	collid = PG_GET_COLLATION();
 	if (!collid)

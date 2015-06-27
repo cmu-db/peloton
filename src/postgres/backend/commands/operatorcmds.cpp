@@ -84,10 +84,10 @@ DefineOperator(List *names, List *parameters)
 	int			nargs;
 	ListCell   *pl;
 
-	/* Convert list of names to a name and namespace */
+	/* Convert list of names to a name and cnamespace */
 	oprNamespace = QualifiedNameGetCreationNamespace(names, &oprName);
 
-	/* Check we have creation rights in target namespace */
+	/* Check we have creation rights in target cnamespace */
 	aclresult = pg_namespace_aclcheck(oprNamespace, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
@@ -287,7 +287,7 @@ DefineOperator(List *names, List *parameters)
 	 */
 	return
 		OperatorCreate(oprName, /* operator name */
-					   oprNamespace,	/* namespace */
+					   oprNamespace,	/* cnamespace */
 					   typeId1, /* left type id */
 					   typeId2, /* right type id */
 					   functionOid,		/* function for operator */

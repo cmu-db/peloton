@@ -25,8 +25,8 @@
  * this was problematic because one can't tell whether a string ending at
  * the current level can be pushed down into such a child node.  For
  * backwards compatibility, we still support such node labels for reading;
- * but no new entries will ever be pushed down into a zero-labeled child.
- * No new entries ever get pushed into a -2-labeled child, either.
+ * but no cnew entries will ever be pushed down into a zero-labeled child.
+ * No cnew entries ever get pushed into a -2-labeled child, either.
  *
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group

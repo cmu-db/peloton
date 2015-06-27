@@ -238,7 +238,7 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
  * Initialize (or reinitialize) a page to zeroes.
  *
  * The page is not actually written, just set up in shared memory.
- * The slot number of the new page is returned.
+ * The slot number of the cnew page is returned.
  *
  * Control lock must be held at entry, and will be held at exit.
  */
@@ -264,7 +264,7 @@ SimpleLruZeroPage(SlruCtl ctl, int pageno)
 	/* Set the buffer to zeroes */
 	MemSet(shared->page_buffer[slotno], 0, BLCKSZ);
 
-	/* Set the LSNs for this new page to zero */
+	/* Set the LSNs for this cnew page to zero */
 	SimpleLruZeroLSNs(ctl, slotno);
 
 	/* Assume this page is now the latest active page */
@@ -276,7 +276,7 @@ SimpleLruZeroPage(SlruCtl ctl, int pageno)
 /*
  * Zero all the LSNs we store for this slru page.
  *
- * This should be called each time we create a new page, and each time we read
+ * This should be called each time we create a cnew page, and each time we read
  * in a page from disk into an existing buffer.  (Such an old page cannot
  * have any interesting LSNs, since we'd have flushed them before writing
  * the page in the first place.)
@@ -295,7 +295,7 @@ SimpleLruZeroLSNs(SlruCtl ctl, int slotno)
 
 /*
  * Wait for any active I/O on a page slot to finish.  (This does not
- * guarantee that new I/O hasn't been started before we return, though.
+ * guarantee that cnew I/O hasn't been started before we return, though.
  * In fact the slot might not even contain the same page anymore.)
  *
  * Control lock must be held at entry, and will be held at exit.
@@ -313,7 +313,7 @@ SimpleLruWaitIO(SlruCtl ctl, int slotno)
 
 	/*
 	 * If the slot is still in an io-in-progress state, then either someone
-	 * already started a new I/O on the slot, or a previous I/O failed and
+	 * already started a cnew I/O on the slot, or a previous I/O failed and
 	 * neglected to reset the page state.  That shouldn't happen, really, but
 	 * it seems worth a few extra cycles to check and recover from it. We can
 	 * cheaply test for failure by seeing if the buffer lock is still held (we

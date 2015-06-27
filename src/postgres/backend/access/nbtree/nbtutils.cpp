@@ -186,7 +186,7 @@ _bt_freestack(BTStack stack)
  *
  * Note: the reason we need so->arrayKeyData, rather than just scribbling
  * on scan->keyData, is that callers are permitted to call btrescan without
- * supplying a new set of scankey data.
+ * supplying a cnew set of scankey data.
  */
 void
 _bt_preprocess_array_keys(IndexScanDesc scan)
@@ -423,7 +423,7 @@ _bt_find_extreme_element(IndexScanDesc scan, ScanKey skey,
 /*
  * _bt_sort_array_elements() -- sort and de-dup array elements
  *
- * The array elements are sorted in-place, and the new number of elements
+ * The array elements are sorted in-place, and the cnew number of elements
  * after duplicate removal is returned.
  *
  * scan and skey identify the index column, whose opfamily determines the
@@ -737,7 +737,7 @@ _bt_restore_array_keys(IndexScanDesc scan)
  * Note: the reason we have to copy the preprocessed scan keys into private
  * storage is that we are modifying the array based on comparisons of the
  * key argument values, which could change on a rescan or after moving to
- * new elements of array keys.  Therefore we can't overwrite the source data.
+ * cnew elements of array keys.  Therefore we can't overwrite the source data.
  */
 void
 _bt_preprocess_keys(IndexScanDesc scan)
@@ -940,7 +940,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
 			if (i == numberOfKeys)
 				break;
 
-			/* Re-initialize for new attno */
+			/* Re-initialize for cnew attno */
 			attno = cur->sk_attno;
 			memset(xform, 0, sizeof(xform));
 		}

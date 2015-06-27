@@ -8,8 +8,8 @@
  *
  * INTERFACE
  *
- * The caller is responsible for creating the new heap, all catalog
- * changes, supplying the tuples to be written to the new heap, and
+ * The caller is responsible for creating the cnew heap, all catalog
+ * changes, supplying the tuples to be written to the cnew heap, and
  * rebuilding indexes.  The caller must hold AccessExclusiveLock on the
  * target table, because we assume no one else is writing into it.
  *
@@ -28,7 +28,7 @@
  * }
  * end_heap_rewrite
  *
- * The contents of the new relation shouldn't be relied on until after
+ * The contents of the cnew relation shouldn't be relied on until after
  * end_heap_rewrite is called.
  *
  *
@@ -37,7 +37,7 @@
  * This would be a fairly trivial affair, except that we need to maintain
  * the ctid chains that link versions of an updated tuple together.
  * Since the newly stored tuples will have tids different from the original
- * ones, if we just copied t_ctid fields to the new table the links would
+ * ones, if we just copied t_ctid fields to the cnew table the links would
  * be wrong.  When we are required to copy a (presumably recently-dead or
  * delete-in-progress) tuple whose ctid doesn't point to itself, we have
  * to substitute the correct ctid instead.
@@ -48,13 +48,13 @@
  *
  * If we encounter A first, we'll store the tuple in the unresolved_tups
  * hash table. When we later encounter B, we remove A from the hash table,
- * fix the ctid to point to the new location of B, and insert both A and B
- * to the new heap.
+ * fix the ctid to point to the cnew location of B, and insert both A and B
+ * to the cnew heap.
  *
- * If we encounter B first, we can insert B to the new heap right away.
+ * If we encounter B first, we can insert B to the cnew heap right away.
  * We then add an entry to the old_new_tid_map hash table showing B's
- * original tid (in the old heap) and new tid (in the new heap).
- * When we later encounter A, we get the new location of B from the table,
+ * original tid (in the old heap) and cnew tid (in the cnew heap).
+ * When we later encounter A, we get the cnew location of B from the table,
  * and can write A immediately with the correct ctid.
  *
  * Entries in the hash tables can be removed as soon as the later tuple
@@ -81,14 +81,14 @@
  * in the whole table.  Note that if we do fail halfway through a CLUSTER,
  * the old table is still valid, so failure is not catastrophic.
  *
- * We can't use the normal heap_insert function to insert into the new
+ * We can't use the normal heap_insert function to insert into the cnew
  * heap, because heap_insert overwrites the visibility information.
  * We use a special-purpose raw_heap_insert function instead, which
  * is optimized for bulk inserting a lot of tuples, knowing that we have
- * exclusive access to the heap.  raw_heap_insert builds new pages in
+ * exclusive access to the heap.  raw_heap_insert builds cnew pages in
  * local storage.  When a page is full, or at the end of the process,
  * we insert it to WAL as a single record and then write it to disk
- * directly through smgr.  Note, however, that any data sent to the new
+ * directly through smgr.  Note, however, that any data sent to the cnew
  * heap's TOAST table will go through the normal bufmgr.
  *
  *
@@ -189,7 +189,7 @@ typedef UnresolvedTupData *UnresolvedTup;
 typedef struct
 {
 	TidHashKey	key;			/* actual xmin/old location of B tuple */
-	ItemPointerData new_tid;	/* where we put it in the new heap */
+	ItemPointerData new_tid;	/* where we put it in the cnew heap */
 } OldToNewMappingData;
 
 typedef OldToNewMappingData *OldToNewMapping;
@@ -214,7 +214,7 @@ typedef struct RewriteMappingFile
  */
 typedef struct RewriteMappingDataEntry
 {
-	LogicalRewriteMappingData map;		/* map between old and new location of
+	LogicalRewriteMappingData map;		/* map between old and cnew location of
 										 * the tuple */
 	dlist_node	node;
 } RewriteMappingDataEntry;
@@ -233,11 +233,11 @@ static void logical_end_heap_rewrite(RewriteState state);
  * Begin a rewrite of a table
  *
  * old_heap		old, locked heap relation tuples will be read from
- * new_heap		new, locked heap relation to insert tuples to
+ * new_heap		cnew, locked heap relation to insert tuples to
  * oldest_xmin	xid used by the caller to determine which tuples are dead
  * freeze_xid	xid before which tuples will be frozen
  * min_multi	multixact before which multis will be removed
- * use_wal		should the inserts to the new heap be WAL-logged?
+ * use_wal		should the inserts to the cnew heap be WAL-logged?
  *
  * Returns an opaque RewriteState, allocated in current memory context,
  * to be used in subsequent calls to the other functions.
@@ -293,7 +293,7 @@ begin_heap_rewrite(Relation old_heap, Relation new_heap, TransactionId oldest_xm
 	hash_ctl.entrysize = sizeof(OldToNewMappingData);
 
 	state->rs_old_new_tid_map =
-		hash_create("Rewrite / Old to new tid map",
+		hash_create("Rewrite / Old to cnew tid map",
 					128,		/* arbitrary initial size */
 					&hash_ctl,
 					HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
@@ -366,7 +366,7 @@ end_heap_rewrite(RewriteState state)
 }
 
 /*
- * Add a tuple to the new heap.
+ * Add a tuple to the cnew heap.
  *
  * Visibility information is copied from the original tuple, except that
  * we "freeze" very-old tuples.  Note that since we scribble on new_tuple,
@@ -374,7 +374,7 @@ end_heap_rewrite(RewriteState state)
  *
  * state		opaque state as returned by begin_heap_rewrite
  * old_tuple	original tuple in the old heap
- * new_tuple	new, rewritten tuple to be inserted to new heap
+ * new_tuple	cnew, rewritten tuple to be inserted to cnew heap
  */
 void
 rewrite_heap_tuple(RewriteState state,
@@ -417,7 +417,7 @@ rewrite_heap_tuple(RewriteState state,
 	ItemPointerSetInvalid(&new_tuple->t_data->t_ctid);
 
 	/*
-	 * If the tuple has been updated, check the old-to-new mapping hash table.
+	 * If the tuple has been updated, check the old-to-cnew mapping hash table.
 	 */
 	if (!((old_tuple->t_data->t_infomask & HEAP_XMAX_INVALID) ||
 		  HeapTupleHeaderIsOnlyLocked(old_tuple->t_data)) &&
@@ -438,7 +438,7 @@ rewrite_heap_tuple(RewriteState state,
 		{
 			/*
 			 * We've already copied the tuple that t_ctid points to, so we can
-			 * set the ctid of this tuple to point to the new location, and
+			 * set the ctid of this tuple to point to the cnew location, and
 			 * insert it right away.
 			 */
 			new_tuple->t_data->t_ctid = mapping->new_tid;
@@ -474,7 +474,7 @@ rewrite_heap_tuple(RewriteState state,
 
 	/*
 	 * Now we will write the tuple, and then check to see if it is the B tuple
-	 * in any new or known pair.  When we resolve a known pair, we will be
+	 * in any cnew or known pair.  When we resolve a known pair, we will be
 	 * able to write that pair's A tuple, and then we have to check if it
 	 * resolves some other pair.  Hence, we need a loop here.
 	 */
@@ -520,7 +520,7 @@ rewrite_heap_tuple(RewriteState state,
 				/*
 				 * We have seen and memorized the previous tuple already. Now
 				 * that we know where we inserted the tuple its t_ctid points
-				 * to, fix its t_ctid and insert it to the new heap.
+				 * to, fix its t_ctid and insert it to the cnew heap.
 				 */
 				if (free_new)
 					heap_freetuple(new_tuple);
@@ -543,7 +543,7 @@ rewrite_heap_tuple(RewriteState state,
 			else
 			{
 				/*
-				 * Remember the new tid of this tuple. We'll use it to set the
+				 * Remember the cnew tid of this tuple. We'll use it to set the
 				 * ctid when we find the previous tuple in the chain.
 				 */
 				OldToNewMapping mapping;
@@ -567,7 +567,7 @@ rewrite_heap_tuple(RewriteState state,
 
 /*
  * Register a dead tuple with an ongoing rewrite. Dead tuples are not
- * copied to the new table, but we still make note of them so that we
+ * copied to the cnew table, but we still make note of them so that we
  * can release some resources earlier.
  *
  * Returns true if a tuple was removed from the unresolved_tups table.
@@ -617,11 +617,11 @@ rewrite_heap_dead_tuple(RewriteState state, HeapTuple old_tuple)
 }
 
 /*
- * Insert a tuple to the new relation.  This has to track heap_insert
+ * Insert a tuple to the cnew relation.  This has to track heap_insert
  * and its subsidiary functions!
  *
- * t_self of the tuple is set to the new TID of the tuple. If t_ctid of the
- * tuple is invalid on entry, it's replaced with the new TID as well (in
+ * t_self of the tuple is set to the cnew TID of the tuple. If t_ctid of the
+ * tuple is invalid on entry, it's replaced with the cnew TID as well (in
  * the inserted data only, not in the caller's copy).
  */
 static void
@@ -635,7 +635,7 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 	HeapTuple	heaptup;
 
 	/*
-	 * If the new tuple is too big for storage or contains already toasted
+	 * If the cnew tuple is too big for storage or contains already toasted
 	 * out-of-line attributes from some other relation, invoke the toaster.
 	 *
 	 * Note: below this point, heaptup is the data we actually intend to store
@@ -707,7 +707,7 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 
 	if (!state->rs_buffer_valid)
 	{
-		/* Initialize a new empty page */
+		/* Initialize a cnew empty page */
 		PageInit(page, BLCKSZ, 0);
 		state->rs_buffer_valid = true;
 	}
@@ -751,7 +751,7 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
  *
  * For that, every time we find a tuple that's been modified in a catalog
  * relation within the xmin horizon of any decoding slot, we log a mapping
- * from the old to the new location.
+ * from the old to the cnew location.
  *
  * To deal with rewrites that abort the filename of a mapping file contains
  * the xid of the transaction performing the rewrite, which then can be
@@ -870,7 +870,7 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 		uint32		len;
 		int			written;
 
-		/* this file hasn't got any new mappings */
+		/* this file hasn't got any cnew mappings */
 		if (src->num_mappings == 0)
 			continue;
 
@@ -969,7 +969,7 @@ logical_end_heap_rewrite(RewriteState state)
 }
 
 /*
- * Log a single (old->new) mapping for 'xid'.
+ * Log a single (old->cnew) mapping for 'xid'.
  */
 static void
 logical_rewrite_log_mapping(RewriteState state, TransactionId xid,
@@ -1199,7 +1199,7 @@ CheckPointLogicalRewriteHeap(void)
 	char		path[MAXPGPATH];
 
 	/*
-	 * We start of with a minimum of the last redo pointer. No new decoding
+	 * We start of with a minimum of the last redo pointer. No cnew decoding
 	 * slot will start before that, so that's a safe upper bound for removal.
 	 */
 	redo = GetRedoRecPtr();

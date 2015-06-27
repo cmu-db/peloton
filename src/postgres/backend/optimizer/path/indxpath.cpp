@@ -528,7 +528,7 @@ consider_index_join_outer_rels(PlannerInfo *root, RelOptInfo *rel,
 		 * limit the number of relid sets accepted to 10 * considered_clauses.
 		 *
 		 * Note: get_join_index_paths adds entries to *considered_relids, but
-		 * it prepends them to the list, so that we won't visit new entries
+		 * it prepends them to the list, so that we won't visit cnew entries
 		 * during the inner foreach loop.  No real harm would be done if we
 		 * did, since the subset check would reject them; but it would waste
 		 * some cycles.
@@ -538,7 +538,7 @@ consider_index_join_outer_rels(PlannerInfo *root, RelOptInfo *rel,
 			Relids		oldrelids = (Relids) lfirst(lc2);
 
 			/*
-			 * If either is a subset of the other, no new set is possible.
+			 * If either is a subset of the other, no cnew set is possible.
 			 * This isn't a complete test for redundancy, but it's easy and
 			 * cheap.  get_join_index_paths will check more carefully if we
 			 * already generated the same relids set.
@@ -1463,12 +1463,12 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 				if (redundant)
 					continue;
 			}
-			/* tentatively add new path to paths, so we can estimate cost */
+			/* tentatively add cnew path to paths, so we can estimate cost */
 			paths = lappend(paths, pathinfo->path);
 			newcost = bitmap_and_cost_est(root, rel, paths);
 			if (newcost < costsofar)
 			{
-				/* keep new path in paths, update subsidiary variables */
+				/* keep cnew path in paths, update subsidiary variables */
 				costsofar = newcost;
 				qualsofar = list_concat(qualsofar,
 										list_copy(pathinfo->quals));
@@ -1480,7 +1480,7 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 			}
 			else
 			{
-				/* reject new path, remove it from paths list */
+				/* reject cnew path, remove it from paths list */
 				paths = list_delete_cell(paths, lnext(lastcell), lastcell);
 			}
 			Assert(lnext(lastcell) == NULL);
@@ -3606,7 +3606,7 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 	if (newclause == (Expr *) clause)
 		return rinfo;
 
-	/* Else we need a new RestrictInfo */
+	/* Else we need a cnew RestrictInfo */
 	return make_simple_restrictinfo(newclause);
 }
 

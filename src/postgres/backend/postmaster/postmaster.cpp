@@ -200,7 +200,7 @@ char	   *ListenAddresses;
  * number of backend slots available to non-superusers is
  * (MaxBackends - ReservedBackends).  Note what this really means is
  * "if there are <= ReservedBackends connections available, only superusers
- * can make new connections" --- pre-existing superuser connections don't
+ * can make cnew connections" --- pre-existing superuser connections don't
  * count against the limit.
  */
 int			ReservedBackends;
@@ -289,7 +289,7 @@ static bool RecoveryError = false;		/* T if WAL recovery failed */
  * quit.  (We track these in the BackendList so that we can know when they
  * are all gone; this is important because they're still connected to shared
  * memory, and would interfere with an attempt to destroy the shmem segment,
- * possibly leading to SHMALL failure when we try to make a new one.)
+ * possibly leading to SHMALL failure when we try to make a cnew one.)
  * In PM_WAIT_DEAD_END state we are waiting for all the dead_end children
  * to drain out of the system, and therefore stop accepting connection
  * requests at all until the last existing child has quit (which hopefully
@@ -330,7 +330,7 @@ static time_t AbortStartTime;
 
 static bool ReachedNormalRunning = false;		/* T if we've reached PM_RUN */
 
-bool		ClientAuthInProgress = false;		/* T during new-client
+bool		ClientAuthInProgress = false;		/* T during cnew-client
  * authentication */
 
 bool		redirection_done = false;	/* stderr redirected for syslogger? */
@@ -1561,7 +1561,7 @@ ServerLoop(void)
      * do nontrivial work.
      *
      * If we are in PM_WAIT_DEAD_END state, then we don't want to accept
-     * any new connections, so we don't call select(), and just sleep.
+     * any cnew connections, so we don't call select(), and just sleep.
      */
     memcpy((char *) &rmask, (char *) &readmask, sizeof(fd_set));
 
@@ -1633,7 +1633,7 @@ ServerLoop(void)
       }
     }
 
-    /* If we have lost the log collector, try to start a new one */
+    /* If we have lost the log collector, try to start a cnew one */
     if (SysLoggerPID == 0 && Logging_collector)
       SysLoggerPID = SysLogger_Start();
 
@@ -1652,15 +1652,15 @@ ServerLoop(void)
     }
 
     /*
-     * Likewise, if we have lost the walwriter process, try to start a new
+     * Likewise, if we have lost the walwriter process, try to start a cnew
      * one.  But this is needed only in normal operation (else we cannot
-     * be writing any new WAL).
+     * be writing any cnew WAL).
      */
     if (WalWriterPID == 0 && pmState == PM_RUN)
       WalWriterPID = StartWalWriter();
 
     /*
-     * If we have lost the autovacuum launcher, try to start a new one. We
+     * If we have lost the autovacuum launcher, try to start a cnew one. We
      * don't want autovacuum to run in binary upgrade mode because
      * autovacuum might update relfrozenxid for empty tables before the
      * physical files are put in place.
@@ -1674,14 +1674,14 @@ ServerLoop(void)
         start_autovac_launcher = false; /* signal processed */
     }
 
-    /* If we have lost the stats collector, try to start a new one */
+    /* If we have lost the stats collector, try to start a cnew one */
     if (PgStatPID == 0 && pmState == PM_RUN)
       PgStatPID = pgstat_start();
 
     /*
-     * If we have lost the archiver, try to start a new one.
+     * If we have lost the archiver, try to start a cnew one.
      *
-     * If WAL archiving is enabled always, we try to start a new archiver
+     * If WAL archiving is enabled always, we try to start a cnew archiver
      * even during recovery.
      */
     if (PgArchPID == 0 && wal_level >= WAL_LEVEL_ARCHIVE)
@@ -2113,7 +2113,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 /*
  * The client has sent a cancel request packet, not a normal
- * start-a-new-connection packet.  Perform the necessary processing.
+ * start-a-cnew-connection packet.  Perform the necessary processing.
  * Nothing is sent back to the client.
  */
 static void
@@ -2213,7 +2213,7 @@ processCancelRequest(Port *port, void *pkt)
      * We allow more connections than we can have backends here because some
      * might still be authenticating; they might fail auth, or some existing
      * backend might exit before the auth cycle is completed. The exact
-     * MaxBackends limit is enforced when a new backend tries to join the
+     * MaxBackends limit is enforced when a cnew backend tries to join the
      * shared-inval backend array.
      *
      * The limit here must match the sizes of the per-child-process arrays;
@@ -2714,7 +2714,7 @@ processCancelRequest(Port *port, void *pkt)
       }
 
       /*
-       * Was it the bgwriter?  Normal exit can be ignored; we'll start a new
+       * Was it the bgwriter?  Normal exit can be ignored; we'll start a cnew
        * one at the next iteration of the postmaster's main loop, if
        * necessary.  Any other exit condition is treated as a crash.
        */
@@ -2785,7 +2785,7 @@ processCancelRequest(Port *port, void *pkt)
 
       /*
        * Was it the wal writer?  Normal exit can be ignored; we'll start a
-       * new one at the next iteration of the postmaster's main loop, if
+       * cnew one at the next iteration of the postmaster's main loop, if
        * necessary.  Any other exit condition is treated as a crash.
        */
       if (pid == WalWriterPID)
@@ -2813,7 +2813,7 @@ processCancelRequest(Port *port, void *pkt)
 
       /*
        * Was it the autovacuum launcher?	Normal exit can be ignored; we'll
-       * start a new one at the next iteration of the postmaster's main
+       * start a cnew one at the next iteration of the postmaster's main
        * loop, if necessary.  Any other exit condition is treated as a
        * crash.
        */
@@ -2827,7 +2827,7 @@ processCancelRequest(Port *port, void *pkt)
       }
 
       /*
-       * Was it the archiver?  If so, just try to start a new one; no need
+       * Was it the archiver?  If so, just try to start a cnew one; no need
        * to force reset of the rest of the system.  (If fail, we'll try
        * again in future cycles of the main loop.).  Unless we were waiting
        * for it to shut down; don't restart it in that case, and
@@ -2845,7 +2845,7 @@ processCancelRequest(Port *port, void *pkt)
       }
 
       /*
-       * Was it the statistics collector?  If so, just try to start a new
+       * Was it the statistics collector?  If so, just try to start a cnew
        * one; no need to force reset of the rest of the system.  (If fail,
        * we'll try again in future cycles of the main loop.)
        */
@@ -2860,11 +2860,11 @@ processCancelRequest(Port *port, void *pkt)
         continue;
       }
 
-      /* Was it the system logger?  If so, try to start a new one */
+      /* Was it the system logger?  If so, try to start a cnew one */
       if (pid == SysLoggerPID)
       {
         SysLoggerPID = 0;
-        /* for safety's sake, launch new logger *first* */
+        /* for safety's sake, launch cnew logger *first* */
         SysLoggerPID = SysLogger_Start();
         if (!EXIT_STATUS_0(exitstatus))
           LogChildExit(LOG, _("system logger process"),
@@ -3485,7 +3485,7 @@ processCancelRequest(Port *port, void *pkt)
         {
           /*
            * Start waiting for dead_end children to die.  This state
-           * change causes ServerLoop to stop creating new ones.
+           * change causes ServerLoop to stop creating cnew ones.
            */
           pmState = PM_WAIT_DEAD_END;
 
@@ -3559,7 +3559,7 @@ processCancelRequest(Port *port, void *pkt)
        * (ie, no dead_end children remain), and the archiver and stats
        * collector are gone too.
        *
-       * The reason we wait for those two is to protect them against a new
+       * The reason we wait for those two is to protect them against a cnew
        * postmaster starting conflicting subprocesses; this isn't an
        * ironclad protection, but it at least helps in the
        * shutdown-and-immediately-restart scenario.  Note that they have
@@ -3878,14 +3878,14 @@ processCancelRequest(Port *port, void *pkt)
       free(bn);
       errno = save_errno;
       ereport(LOG,
-              (errmsg("could not fork new process for connection: %m")));
+              (errmsg("could not fork cnew process for connection: %m")));
       report_fork_failure_to_client(port, save_errno);
       return STATUS_ERROR;
     }
 
     /* in parent, successful fork */
     ereport(DEBUG2,
-            (errmsg_internal("forked new backend, pid=%d socket=%d",
+            (errmsg_internal("forked cnew backend, pid=%d socket=%d",
                              (int) pid, (int) port->sock)));
 
     /*
@@ -3920,7 +3920,7 @@ processCancelRequest(Port *port, void *pkt)
 
     /* Format the error message packet (always V2 protocol) */
     snprintf(buffer, sizeof(buffer), "E%s%s\n",
-             _("could not fork new process for connection: "),
+             _("could not fork cnew process for connection: "),
              strerror(errnum));
 
     /* Set port to non-blocking.  Don't do send() if this fails */
@@ -4098,7 +4098,7 @@ processCancelRequest(Port *port, void *pkt)
      * postgres: wal sender process <user> <host> <activity>
      *
      * To achieve that, we pass "wal sender process" as username and username
-     * as dbname to init_ps_display(). XXX: should add a new variant of
+     * as dbname to init_ps_display(). XXX: should add a cnew variant of
      * init_ps_display() to avoid abusing the parameters like this.
      */
     if (am_walsender)
@@ -4136,7 +4136,7 @@ processCancelRequest(Port *port, void *pkt)
     /*
      * Don't want backend to be able to see the postmaster random number
      * generator state.  We have to clobber the static random_seed *and* start
-     * a new random sequence in the random() library function.
+     * a cnew random sequence in the random() library function.
      */
     random_seed = 0;
     random_start_time.tv_usec = 0;
@@ -4221,7 +4221,7 @@ processCancelRequest(Port *port, void *pkt)
    *
    * Some operating systems (WIN32) don't have fork() so we have to simulate
    * it by storing parameters that need to be passed to the child and
-   * then create a new child process.
+   * then create a cnew child process.
    *
    * returns the pid of the fork/exec'd process, or -1 on failure
    */
@@ -4337,8 +4337,8 @@ processCancelRequest(Port *port, void *pkt)
    * - starts backend using CreateProcess(), in suspended state
    * - writes out backend variables to the parameter file
    *	- during this, duplicates handles and sockets required for
-   *	  inheritance into the new process
-   * - resumes execution of the new process once the backend parameter
+   *	  inheritance into the cnew process
+   * - resumes execution of the cnew process once the backend parameter
    *	 file is complete.
    */
   static pid_t
@@ -5443,7 +5443,7 @@ processCancelRequest(Port *port, void *pkt)
 #endif
 
   /*
-   * Start a new bgworker.
+   * Start a cnew bgworker.
    * Starting time conditions must have been checked already.
    *
    * This code is heavily based on autovacuum.c, q.v.

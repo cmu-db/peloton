@@ -895,7 +895,7 @@ numeric		(PG_FUNCTION_ARGS)
 {
 	Numeric		num = PG_GETARG_NUMERIC(0);
 	int32		typmod = PG_GETARG_INT32(1);
-	Numeric		new;
+	Numeric		cnew;
 	int32		tmp_typmod;
 	int			precision;
 	int			scale;
@@ -915,9 +915,9 @@ numeric		(PG_FUNCTION_ARGS)
 	 */
 	if (typmod < (int32) (VARHDRSZ))
 	{
-		new = (Numeric) palloc(VARSIZE(num));
-		memcpy(new, num, VARSIZE(num));
-		PG_RETURN_NUMERIC(new);
+		cnew = (Numeric) palloc(VARSIZE(num));
+		memcpy(cnew, num, VARSIZE(num));
+		PG_RETURN_NUMERIC(cnew);
 	}
 
 	/*
@@ -940,16 +940,16 @@ numeric		(PG_FUNCTION_ARGS)
 		&& (NUMERIC_CAN_BE_SHORT(scale, NUMERIC_WEIGHT(num))
 			|| !NUMERIC_IS_SHORT(num)))
 	{
-		new = (Numeric) palloc(VARSIZE(num));
-		memcpy(new, num, VARSIZE(num));
+		cnew = (Numeric) palloc(VARSIZE(num));
+		memcpy(cnew, num, VARSIZE(num));
 		if (NUMERIC_IS_SHORT(num))
-			new->choice.n_short.n_header =
+			cnew->choice.n_short.n_header =
 				(num->choice.n_short.n_header & ~NUMERIC_SHORT_DSCALE_MASK)
 				| (scale << NUMERIC_SHORT_DSCALE_SHIFT);
 		else
-			new->choice.n_long.n_sign_dscale = NUMERIC_SIGN(new) |
+			cnew->choice.n_long.n_sign_dscale = NUMERIC_SIGN(cnew) |
 				((uint16) scale & NUMERIC_DSCALE_MASK);
-		PG_RETURN_NUMERIC(new);
+		PG_RETURN_NUMERIC(cnew);
 	}
 
 	/*
@@ -960,11 +960,11 @@ numeric		(PG_FUNCTION_ARGS)
 
 	set_var_from_num(num, &var);
 	apply_typmod(&var, typmod);
-	new = make_result(&var);
+	cnew = make_result(&var);
 
 	free_var(&var);
 
-	PG_RETURN_NUMERIC(new);
+	PG_RETURN_NUMERIC(cnew);
 }
 
 Datum
@@ -3173,7 +3173,7 @@ makeNumericAggState(FunctionCallInfo fcinfo, bool calcSumX2)
 }
 
 /*
- * Accumulate a new input value for numeric aggregate functions.
+ * Accumulate a cnew input value for numeric aggregate functions.
  */
 static void
 do_numeric_accum(NumericAggState *state, Numeric newval)
@@ -3242,7 +3242,7 @@ do_numeric_accum(NumericAggState *state, Numeric newval)
  *
  * If we aggregate the values 1.01 and 2 then the result will be 3.01.
  * If we are then asked to un-aggregate the 1.01 then we must fail as we
- * won't be able to tell what the new aggregated value's dscale should be.
+ * won't be able to tell what the cnew aggregated value's dscale should be.
  * We don't want to return 2.00 (dscale = 2), since the sum's dscale would
  * have been zero if we'd really aggregated only 2.
  *
@@ -3291,7 +3291,7 @@ do_numeric_discard(NumericAggState *state, Numeric newval)
 		}
 		else
 		{
-			/* Correct new maxScale is uncertain, must fail */
+			/* Correct cnew maxScale is uncertain, must fail */
 			return false;
 		}
 	}
@@ -3439,7 +3439,7 @@ makeInt128AggState(FunctionCallInfo fcinfo, bool calcSumX2)
 }
 
 /*
- * Accumulate a new input value for 128-bit aggregate functions.
+ * Accumulate a cnew input value for 128-bit aggregate functions.
  */
 static void
 do_int128_accum(Int128AggState *state, int128 newval)
@@ -4115,7 +4115,7 @@ int2_sum(PG_FUNCTION_ARGS)
 	/*
 	 * If we're invoked as an aggregate, we can cheat and modify our first
 	 * parameter in-place to avoid palloc overhead. If not, we need to return
-	 * the new value of the transition variable. (If int8 is pass-by-value,
+	 * the cnew value of the transition variable. (If int8 is pass-by-value,
 	 * then of course this is useless as well as incorrect, so just ifdef it
 	 * out.)
 	 */
@@ -4124,7 +4124,7 @@ int2_sum(PG_FUNCTION_ARGS)
 	{
 		int64	   *oldsum = (int64 *) PG_GETARG_POINTER(0);
 
-		/* Leave the running sum unchanged in the new input is null */
+		/* Leave the running sum unchanged in the cnew input is null */
 		if (!PG_ARGISNULL(1))
 			*oldsum = *oldsum + (int64) PG_GETARG_INT16(1);
 
@@ -4135,7 +4135,7 @@ int2_sum(PG_FUNCTION_ARGS)
 	{
 		int64		oldsum = PG_GETARG_INT64(0);
 
-		/* Leave sum unchanged if new input is null. */
+		/* Leave sum unchanged if cnew input is null. */
 		if (PG_ARGISNULL(1))
 			PG_RETURN_INT64(oldsum);
 
@@ -4164,7 +4164,7 @@ int4_sum(PG_FUNCTION_ARGS)
 	/*
 	 * If we're invoked as an aggregate, we can cheat and modify our first
 	 * parameter in-place to avoid palloc overhead. If not, we need to return
-	 * the new value of the transition variable. (If int8 is pass-by-value,
+	 * the cnew value of the transition variable. (If int8 is pass-by-value,
 	 * then of course this is useless as well as incorrect, so just ifdef it
 	 * out.)
 	 */
@@ -4173,7 +4173,7 @@ int4_sum(PG_FUNCTION_ARGS)
 	{
 		int64	   *oldsum = (int64 *) PG_GETARG_POINTER(0);
 
-		/* Leave the running sum unchanged in the new input is null */
+		/* Leave the running sum unchanged in the cnew input is null */
 		if (!PG_ARGISNULL(1))
 			*oldsum = *oldsum + (int64) PG_GETARG_INT32(1);
 
@@ -4184,7 +4184,7 @@ int4_sum(PG_FUNCTION_ARGS)
 	{
 		int64		oldsum = PG_GETARG_INT64(0);
 
-		/* Leave sum unchanged if new input is null. */
+		/* Leave sum unchanged if cnew input is null. */
 		if (PG_ARGISNULL(1))
 			PG_RETURN_INT64(oldsum);
 
@@ -4222,7 +4222,7 @@ int8_sum(PG_FUNCTION_ARGS)
 
 	oldsum = PG_GETARG_NUMERIC(0);
 
-	/* Leave sum unchanged if new input is null. */
+	/* Leave sum unchanged if cnew input is null. */
 	if (PG_ARGISNULL(1))
 		PG_RETURN_NUMERIC(oldsum);
 
@@ -5819,7 +5819,7 @@ mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
 				dig[i] = newdig;
 			}
 			Assert(carry == 0);
-			/* Reset maxdig to indicate new worst-case */
+			/* Reset maxdig to indicate cnew worst-case */
 			maxdig = 1 + var1digit;
 		}
 
@@ -6309,7 +6309,7 @@ div_var_fast(NumericVar *var1, NumericVar *var2, NumericVar *result,
 				maxdiv = Max(maxdiv, 1);
 
 				/*
-				 * Recompute the quotient digit since new info may have
+				 * Recompute the quotient digit since cnew info may have
 				 * propagated into the top four dividend digits
 				 */
 				fdividend = (double) div[qi];

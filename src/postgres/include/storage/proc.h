@@ -60,7 +60,7 @@ struct XidCache
 
 /*
  * Each backend has a PGPROC struct in shared memory.  There is also a list of
- * currently-unused PGPROC structs that will be reallocated to new backends.
+ * currently-unused PGPROC structs that will be reallocated to cnew backends.
  *
  * links: list link for any list the PGPROC is in.  When waiting for a lock,
  * the PGPROC is linked into that lock's waitProcs queue.  A recycled PGPROC

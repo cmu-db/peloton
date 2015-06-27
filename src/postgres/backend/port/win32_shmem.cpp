@@ -28,7 +28,7 @@ static void pgwin32_SharedMemoryDelete(int status, Datum shmId);
  * an identifier unique for this data directory. Then replace all backslashes
  * with forward slashes, since backslashes aren't permitted in global object names.
  *
- * Store the shared memory segment in the Global\ namespace (requires NT2 TSE or
+ * Store the shared memory segment in the Global\ cnamespace (requires NT2 TSE or
  * 2000, but that's all we support for other reasons as well), to make sure you can't
  * open two postmasters in different sessions against the same data directory.
  *
@@ -61,9 +61,9 @@ GetSharedMemName(void)
 
 	/*
 	 * XXX: Intentionally overwriting the Global\ part here. This was not the
-	 * original approach, but putting it in the actual Global\ namespace
+	 * original approach, but putting it in the actual Global\ cnamespace
 	 * causes permission errors in a lot of cases, so we leave it in the
-	 * default namespace for now.
+	 * default cnamespace for now.
 	 */
 	for (cp = retptr; *cp; cp++)
 		if (*cp == '\\')
@@ -111,8 +111,8 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
  * Create a shared memory segment of the given size and initialize its
  * standard header.
  *
- * makePrivate means to always create a new segment, rather than attach to
- * or recycle any existing segment. On win32, we always create a new segment,
+ * makePrivate means to always create a cnew segment, rather than attach to
+ * or recycle any existing segment. On win32, we always create a cnew segment,
  * since there is no need for recycling (segments go away automatically
  * when the last backend exits)
  *
@@ -151,7 +151,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 
 	/*
 	 * When recycling a shared memory segment, it may take a short while
-	 * before it gets dropped from the global namespace. So re-try after
+	 * before it gets dropped from the global cnamespace. So re-try after
 	 * sleeping for a second, and continue retrying 10 times. (both the 1
 	 * second time and the 10 retries are completely arbitrary)
 	 */
@@ -218,11 +218,11 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 		elog(LOG, "could not close handle to shared memory: error code %lu", GetLastError());
 
 
-	/* Register on-exit routine to delete the new segment */
+	/* Register on-exit routine to delete the cnew segment */
 	on_shmem_exit(pgwin32_SharedMemoryDelete, PointerGetDatum(hmap2));
 
 	/*
-	 * Get a pointer to the new shared memory segment. Map the whole segment
+	 * Get a pointer to the cnew shared memory segment. Map the whole segment
 	 * at once, and let the system decide on the initial address.
 	 */
 	memAddress = MapViewOfFileEx(hmap2, FILE_MAP_WRITE | FILE_MAP_READ, 0, 0, 0, NULL);
@@ -234,7 +234,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 
 
 	/*
-	 * OK, we created a new segment.  Mark it as created by this process. The
+	 * OK, we created a cnew segment.  Mark it as created by this process. The
 	 * order of assignments here is critical so that another Postgres process
 	 * can't see the header as valid but belonging to an invalid PID!
 	 */

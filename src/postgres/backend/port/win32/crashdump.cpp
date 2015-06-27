@@ -17,7 +17,7 @@
  * This *won't* work in hard OOM situations or stack overflows.
  *
  * For those, it'd be necessary to take a much more complicated approach where
- * the handler switches to a new stack (if it can) and forks a helper process
+ * the handler switches to a cnew stack (if it can) and forks a helper process
  * to debug it self.
  *
  * POSSIBLE FUTURE WORK

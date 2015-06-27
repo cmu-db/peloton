@@ -36,13 +36,13 @@ irealloc(void *pointer, int size)
 }
 
 char *
-icatalloc(char *old, const char *new)
+icatalloc(char *old, const char *cnew)
 {
 	char	   *result;
 	int			oldsize,
 				newsize;
 
-	newsize = (new == NULL) ? 0 : strlen(new);
+	newsize = (cnew == NULL) ? 0 : strlen(cnew);
 	if (old == NULL)
 		oldsize = 0;
 	else if (newsize == 0)
@@ -50,8 +50,8 @@ icatalloc(char *old, const char *new)
 	else
 		oldsize = strlen(old);
 	if ((result = irealloc(old, oldsize + newsize + 1)) != NULL)
-		if (new != NULL)
-			(void) strcpy(result + oldsize, new);
+		if (cnew != NULL)
+			(void) strcpy(result + oldsize, cnew);
 	return result;
 }
 

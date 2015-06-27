@@ -487,7 +487,7 @@ static char *
 expand_dynamic_library_name(const char *name)
 {
 	bool		have_slash;
-	char	   *new;
+	char	   *cnew;
 	char	   *full;
 
 	AssertArg(name);
@@ -508,19 +508,19 @@ expand_dynamic_library_name(const char *name)
 		pfree(full);
 	}
 
-	new = psprintf("%s%s", name, DLSUFFIX);
+	cnew = psprintf("%s%s", name, DLSUFFIX);
 
 	if (!have_slash)
 	{
-		full = find_in_dynamic_libpath(new);
-		pfree(new);
+		full = find_in_dynamic_libpath(cnew);
+		pfree(cnew);
 		if (full)
 			return full;
 	}
 	else
 	{
-		full = substitute_libpath_macro(new);
-		pfree(new);
+		full = substitute_libpath_macro(cnew);
+		pfree(cnew);
 		if (file_exists(full))
 			return full;
 		pfree(full);

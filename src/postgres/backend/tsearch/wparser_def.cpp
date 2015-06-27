@@ -348,7 +348,7 @@ TParserInit(char *str, int len)
  * This is useful because at some places TParsers are created
  * recursively and the repeated copying around of the strings can
  * cause major inefficiency if the source string is long.
- * The new parser starts parsing at the original's current position.
+ * The cnew parser starts parsing at the original's current position.
  *
  * Obviously one must not close the original TParser before the copy.
  */
@@ -1933,7 +1933,7 @@ TParserGet(TParser *prs)
 			pfree(ptr);
 		}
 
-		/* set new state if pointed */
+		/* set cnew state if pointed */
 		if (item->tostate != TPS_Null)
 			prs->state->state = item->tostate;
 

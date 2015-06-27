@@ -161,7 +161,7 @@ typedef struct RI_QueryHashEntry
 typedef struct RI_CompareKey
 {
 	Oid			eq_opr;			/* the equality operator to apply */
-	Oid			typeid;			/* the data type to apply it to */
+	Oid			ctypeid;			/* the data type to apply it to */
 } RI_CompareKey;
 
 
@@ -212,14 +212,14 @@ static void ri_BuildQueryKey(RI_QueryKey *key,
 				 int32 constr_queryno);
 static bool ri_KeysEqual(Relation rel, HeapTuple oldtup, HeapTuple newtup,
 			 const RI_ConstraintInfo *riinfo, bool rel_is_pk);
-static bool ri_AttributesEqual(Oid eq_opr, Oid typeid,
+static bool ri_AttributesEqual(Oid eq_opr, Oid ctypeid,
 				   Datum oldvalue, Datum newvalue);
 
 static void ri_InitHashTables(void);
 static void InvalidateConstraintCacheCallBack(Datum arg, int cacheid, uint32 hashvalue);
 static SPIPlanPtr ri_FetchPreparedPlan(RI_QueryKey *key);
 static void ri_HashPreparedPlan(RI_QueryKey *key, SPIPlanPtr plan);
-static RI_CompareHashEntry *ri_HashCompareOp(Oid eq_opr, Oid typeid);
+static RI_CompareHashEntry *ri_HashCompareOp(Oid eq_opr, Oid ctypeid);
 
 static void ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname,
 				int tgkind);
@@ -769,7 +769,7 @@ ri_restrict_del(TriggerData *trigdata, bool is_no_action)
 			ri_PerformCheck(riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
-							true,		/* must detect new rows */
+							true,		/* must detect cnew rows */
 							SPI_OK_SELECT);
 
 			if (SPI_finish() != SPI_OK_FINISH)
@@ -871,7 +871,7 @@ ri_restrict_upd(TriggerData *trigdata, bool is_no_action)
 									trigdata->tg_relation, true);
 
 	/*
-	 * Get the relation descriptors of the FK and PK tables and the new and
+	 * Get the relation descriptors of the FK and PK tables and the cnew and
 	 * old tuple.
 	 *
 	 * fk_rel is opened in RowShareLock mode since that's what our eventual
@@ -914,7 +914,7 @@ ri_restrict_upd(TriggerData *trigdata, bool is_no_action)
 			}
 
 			/*
-			 * No need to check anything if old and new keys are equal
+			 * No need to check anything if old and cnew keys are equal
 			 */
 			if (ri_KeysEqual(pk_rel, old_row, new_row, riinfo, true))
 			{
@@ -992,7 +992,7 @@ ri_restrict_upd(TriggerData *trigdata, bool is_no_action)
 			ri_PerformCheck(riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
-							true,		/* must detect new rows */
+							true,		/* must detect cnew rows */
 							SPI_OK_SELECT);
 
 			if (SPI_finish() != SPI_OK_FINISH)
@@ -1148,7 +1148,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 			ri_PerformCheck(riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
-							true,		/* must detect new rows */
+							true,		/* must detect cnew rows */
 							SPI_OK_DELETE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
@@ -1210,7 +1210,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 									trigdata->tg_relation, true);
 
 	/*
-	 * Get the relation descriptors of the FK and PK tables and the new and
+	 * Get the relation descriptors of the FK and PK tables and the cnew and
 	 * old tuple.
 	 *
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
@@ -1253,7 +1253,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * No need to do anything if old and new keys are equal
+			 * No need to do anything if old and cnew keys are equal
 			 */
 			if (ri_KeysEqual(pk_rel, old_row, new_row, riinfo, true))
 			{
@@ -1329,7 +1329,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 			ri_PerformCheck(riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, new_row,
-							true,		/* must detect new rows */
+							true,		/* must detect cnew rows */
 							SPI_OK_UPDATE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
@@ -1494,7 +1494,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 			ri_PerformCheck(riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
-							true,		/* must detect new rows */
+							true,		/* must detect cnew rows */
 							SPI_OK_UPDATE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
@@ -1597,7 +1597,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * No need to do anything if old and new keys are equal
+			 * No need to do anything if old and cnew keys are equal
 			 */
 			if (ri_KeysEqual(pk_rel, old_row, new_row, riinfo, true))
 			{
@@ -1670,7 +1670,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 			ri_PerformCheck(riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
-							true,		/* must detect new rows */
+							true,		/* must detect cnew rows */
 							SPI_OK_UPDATE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
@@ -1836,7 +1836,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			ri_PerformCheck(riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
-							true,		/* must detect new rows */
+							true,		/* must detect cnew rows */
 							SPI_OK_UPDATE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
@@ -1952,7 +1952,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * No need to do anything if old and new keys are equal
+			 * No need to do anything if old and cnew keys are equal
 			 */
 			if (ri_KeysEqual(pk_rel, old_row, new_row, riinfo, true))
 			{
@@ -2027,7 +2027,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			ri_PerformCheck(riinfo, &qkey, qplan,
 							fk_rel, pk_rel,
 							old_row, NULL,
-							true,		/* must detect new rows */
+							true,		/* must detect cnew rows */
 							SPI_OK_UPDATE);
 
 			if (SPI_finish() != SPI_OK_FINISH)
@@ -2104,7 +2104,7 @@ RI_FKey_pk_upd_check_required(Trigger *trigger, Relation pk_rel,
 			if (ri_NullCheck(old_row, riinfo, true) != RI_KEYS_NONE_NULL)
 				return false;
 
-			/* If all old and new key values are equal, no check is needed */
+			/* If all old and cnew key values are equal, no check is needed */
 			if (ri_KeysEqual(pk_rel, old_row, new_row, riinfo, true))
 				return false;
 
@@ -2154,7 +2154,7 @@ RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
 		case FKCONSTR_MATCH_SIMPLE:
 
 			/*
-			 * If any new key value is NULL, the row must satisfy the
+			 * If any cnew key value is NULL, the row must satisfy the
 			 * constraint, so no check is needed.
 			 */
 			if (ri_NullCheck(new_row, riinfo, false) != RI_KEYS_NONE_NULL)
@@ -2171,7 +2171,7 @@ RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
 			if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(old_row->t_data)))
 				return true;
 
-			/* If all old and new key values are equal, no check is needed */
+			/* If all old and cnew key values are equal, no check is needed */
 			if (ri_KeysEqual(fk_rel, old_row, new_row, riinfo, false))
 				return false;
 
@@ -2181,7 +2181,7 @@ RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
 		case FKCONSTR_MATCH_FULL:
 
 			/*
-			 * If all new key values are NULL, the row must satisfy the
+			 * If all cnew key values are NULL, the row must satisfy the
 			 * constraint, so no check is needed.  On the other hand, if only
 			 * some of them are NULL, the row must fail the constraint.  We
 			 * must not throw error here, because the row might get
@@ -2209,7 +2209,7 @@ RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
 			if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(old_row->t_data)))
 				return true;
 
-			/* If all old and new key values are equal, no check is needed */
+			/* If all old and cnew key values are equal, no check is needed */
 			if (ri_KeysEqual(fk_rel, old_row, new_row, riinfo, false))
 				return false;
 
@@ -3444,7 +3444,7 @@ ri_FetchPreparedPlan(RI_QueryKey *key)
 
 	/*
 	 * Otherwise we might as well flush the cached plan now, to free a little
-	 * memory space before we make a new one.
+	 * memory space before we make a cnew one.
 	 */
 	entry->plan = NULL;
 	if (plan)
@@ -3473,7 +3473,7 @@ ri_HashPreparedPlan(RI_QueryKey *key, SPIPlanPtr plan)
 		ri_InitHashTables();
 
 	/*
-	 * Add the new plan.  We might be overwriting an entry previously found
+	 * Add the cnew plan.  We might be overwriting an entry previously found
 	 * invalid by ri_FetchPreparedPlan.
 	 */
 	entry = (RI_QueryHashEntry *) hash_search(ri_query_cache,
@@ -3556,10 +3556,10 @@ ri_KeysEqual(Relation rel, HeapTuple oldtup, HeapTuple newtup,
  * ----------
  */
 static bool
-ri_AttributesEqual(Oid eq_opr, Oid typeid,
+ri_AttributesEqual(Oid eq_opr, Oid ctypeid,
 				   Datum oldvalue, Datum newvalue)
 {
-	RI_CompareHashEntry *entry = ri_HashCompareOp(eq_opr, typeid);
+	RI_CompareHashEntry *entry = ri_HashCompareOp(eq_opr, ctypeid);
 
 	/* Do we need to cast the values? */
 	if (OidIsValid(entry->cast_func_finfo.fn_oid))
@@ -3585,12 +3585,12 @@ ri_AttributesEqual(Oid eq_opr, Oid typeid,
 /* ----------
  * ri_HashCompareOp -
  *
- *	See if we know how to compare two values, and create a new hash entry
+ *	See if we know how to compare two values, and create a cnew hash entry
  *	if not.
  * ----------
  */
 static RI_CompareHashEntry *
-ri_HashCompareOp(Oid eq_opr, Oid typeid)
+ri_HashCompareOp(Oid eq_opr, Oid ctypeid)
 {
 	RI_CompareKey key;
 	RI_CompareHashEntry *entry;
@@ -3607,7 +3607,7 @@ ri_HashCompareOp(Oid eq_opr, Oid typeid)
 	 * contains no struct padding.
 	 */
 	key.eq_opr = eq_opr;
-	key.typeid = typeid;
+	key.ctypeid = ctypeid;
 	entry = (RI_CompareHashEntry *) hash_search(ri_compare_cache,
 												(void *) &key,
 												HASH_ENTER, &found);
@@ -3644,11 +3644,11 @@ ri_HashCompareOp(Oid eq_opr, Oid typeid)
 		 */
 		op_input_types(eq_opr, &lefttype, &righttype);
 		Assert(lefttype == righttype);
-		if (typeid == lefttype)
+		if (ctypeid == lefttype)
 			castfunc = InvalidOid;		/* simplest case */
 		else
 		{
-			pathtype = find_coercion_pathway(lefttype, typeid,
+			pathtype = find_coercion_pathway(lefttype, ctypeid,
 											 COERCION_IMPLICIT,
 											 &castfunc);
 			if (pathtype != COERCION_PATH_FUNC &&
@@ -3660,9 +3660,9 @@ ri_HashCompareOp(Oid eq_opr, Oid typeid)
 				 * special cases such as RECORD; find_coercion_pathway
 				 * currently doesn't subsume these special cases.
 				 */
-				if (!IsBinaryCoercible(typeid, lefttype))
+				if (!IsBinaryCoercible(ctypeid, lefttype))
 					elog(ERROR, "no conversion function from %s to %s",
-						 format_type_be(typeid),
+						 format_type_be(ctypeid),
 						 format_type_be(lefttype));
 			}
 		}

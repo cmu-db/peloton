@@ -279,7 +279,7 @@ record_in(PG_FUNCTION_ARGS)
 	/*
 	 * We cannot return tuple->t_data because heap_form_tuple allocates it as
 	 * part of a larger chunk, and our caller may expect to be able to pfree
-	 * our result.  So must copy the info into a new palloc chunk.
+	 * our result.  So must copy the info into a cnew palloc chunk.
 	 */
 	result = (HeapTupleHeader) palloc(tuple->t_len);
 	memcpy(result, tuple->t_data, tuple->t_len);
@@ -623,7 +623,7 @@ record_recv(PG_FUNCTION_ARGS)
 	/*
 	 * We cannot return tuple->t_data because heap_form_tuple allocates it as
 	 * part of a larger chunk, and our caller may expect to be able to pfree
-	 * our result.  So must copy the info into a new palloc chunk.
+	 * our result.  So must copy the info into a cnew palloc chunk.
 	 */
 	result = (HeapTupleHeader) palloc(tuple->t_len);
 	memcpy(result, tuple->t_data, tuple->t_len);

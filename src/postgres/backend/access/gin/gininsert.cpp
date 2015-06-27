@@ -40,7 +40,7 @@ typedef struct
  * Adds array of item pointers to tuple's posting list, or
  * creates posting tree and tuple pointing to tree in case
  * of not enough space.  Max size of tuple is defined in
- * GinFormTuple().  Returns a new, modified index tuple.
+ * GinFormTuple().  Returns a cnew, modified index tuple.
  * items[] must be in sorted order with no duplicates.
  */
 static IndexTuple
@@ -64,7 +64,7 @@ addItemPointersToLeafTuple(GinState *ginstate,
 	attnum = gintuple_get_attrnum(ginstate, old);
 	key = gintuple_get_key(ginstate, old, &category);
 
-	/* merge the old and new posting lists */
+	/* merge the old and cnew posting lists */
 	oldItems = ginReadTuple(ginstate, attnum, old, &oldNPosting);
 
 	newItems = ginMergeItemPointers(items, nitem,
@@ -105,7 +105,7 @@ addItemPointersToLeafTuple(GinState *ginstate,
 							  items, nitem,
 							  buildStats);
 
-		/* And build a new posting-tree-only result tuple */
+		/* And build a cnew posting-tree-only result tuple */
 		res = GinFormTuple(ginstate, attnum, key, category, NULL, 0, 0, true);
 		GinSetPostingTree(res, postingRoot);
 	}
@@ -153,7 +153,7 @@ buildFreshLeafTuple(GinState *ginstate,
 		res = GinFormTuple(ginstate, attnum, key, category, NULL, 0, 0, true);
 
 		/*
-		 * Initialize a new posting tree with the TIDs.
+		 * Initialize a cnew posting tree with the TIDs.
 		 */
 		postingRoot = createPostingTree(ginstate->index, items, nitem,
 										buildStats);
@@ -224,12 +224,12 @@ ginEntryInsert(GinState *ginstate,
 	}
 	else
 	{
-		/* no match, so construct a new leaf entry */
+		/* no match, so construct a cnew leaf entry */
 		itup = buildFreshLeafTuple(ginstate, attnum, key, category,
 								   items, nitem, buildStats);
 	}
 
-	/* Insert the new or modified leaf tuple */
+	/* Insert the cnew or modified leaf tuple */
 	insertdata.entry = itup;
 	ginInsertValue(&btree, stack, &insertdata, buildStats);
 	pfree(itup);

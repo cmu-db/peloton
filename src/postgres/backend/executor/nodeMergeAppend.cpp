@@ -79,7 +79,7 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 	mergeplanstates = (PlanState **) palloc0(nplans * sizeof(PlanState *));
 
 	/*
-	 * create new MergeAppendState for our node
+	 * create cnew MergeAppendState for our node
 	 */
 	mergestate->ps.plan = (Plan *) node;
 	mergestate->ps.state = estate;

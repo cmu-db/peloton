@@ -948,7 +948,7 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
  * The returned list of tuples is in order by physical position in the table.
  * (We will rely on this later to derive correlation estimates.)
  *
- * As of May 2004 we use a new two-stage method:  Stage one selects up
+ * As of May 2004 we use a cnew two-stage method:  Stage one selects up
  * to targrows random blocks (or all blocks, if there aren't so many).
  * Stage two scans these blocks and uses the Vitter algorithm to create
  * a random sample of targrows rows (or less, if there are less in the
@@ -1137,7 +1137,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 				{
 					/*
 					 * t in Vitter's paper is the number of records already
-					 * processed.  If we need to compute a new S value, we
+					 * processed.  If we need to compute a cnew S value, we
 					 * must use the not-yet-incremented value of samplerows as
 					 * t.
 					 */
@@ -1499,7 +1499,7 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 			continue;
 
 		/*
-		 * Construct a new pg_statistic tuple
+		 * Construct a cnew pg_statistic tuple
 		 */
 		for (i = 0; i < Natts_pg_statistic; ++i)
 		{
@@ -1588,7 +1588,7 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 		}
 		else
 		{
-			/* No, insert new tuple */
+			/* No, insert cnew tuple */
 			stup = heap_form_tuple(RelationGetDescr(sd), values, nulls);
 			simple_heap_insert(sd, stup);
 		}
@@ -2270,7 +2270,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 						dups_cnt > track[track_cnt - 1].count)
 					{
 						/*
-						 * Found a new item for the mcv list; find its
+						 * Found a cnew item for the mcv list; find its
 						 * position, bubbling down old items if needed. Loop
 						 * invariant is that j points at an empty/ replaceable
 						 * slot.

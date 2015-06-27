@@ -1517,7 +1517,7 @@ create_bitmap_scan_plan(PlannerInfo *root,
  * (We do not attempt to detect such redundancies for quals that are within
  * OR subtrees.  This could be done in a less hacky way if we returned the
  * indexquals in RestrictInfo form, but that would be slower and still pretty
- * messy, since we'd have to build new RestrictInfos in many cases.)
+ * messy, since we'd have to build cnew RestrictInfos in many cases.)
  */
 static Plan *
 create_bitmap_subplan(PlannerInfo *root, Path *bitmapqual,

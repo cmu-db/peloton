@@ -162,10 +162,10 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	pstate->p_sourcetext = queryString;
 
 	/*
-	 * Look up the creation namespace.  This also checks permissions on the
-	 * target namespace, locks it against concurrent drops, checks for a
-	 * preexisting relation in that namespace with the same name, and updates
-	 * stmt->relation->relpersistence if the selected namespace is temporary.
+	 * Look up the creation cnamespace.  This also checks permissions on the
+	 * target cnamespace, locks it against concurrent drops, checks for a
+	 * preexisting relation in that cnamespace with the same name, and updates
+	 * stmt->relation->relpersistence if the selected cnamespace is temporary.
 	 */
 	setup_parser_errposition_callback(&pcbstate, pstate,
 									  stmt->relation->location);
@@ -349,7 +349,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 
 		/*
 		 * We have to reject "serial[]" explicitly, because once we've set
-		 * typeid, LookupTypeName won't notice arrayBounds.  We don't need any
+		 * ctypeid, LookupTypeName won't notice arrayBounds.  We don't need any
 		 * special coding for serial(typmod) though.
 		 */
 		if (is_serial && column->typeName->arrayBounds != NIL)
@@ -379,7 +379,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 		List	   *attnamelist;
 
 		/*
-		 * Determine namespace and name to use for the sequence.
+		 * Determine cnamespace and name to use for the sequence.
 		 *
 		 * Although we use ChooseRelationName, it's not guaranteed that the
 		 * selected sequence name won't conflict; given sufficiently long
@@ -754,13 +754,13 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 
 	/*
 	 * Initialize column number map for map_variable_attnos().  We need this
-	 * since dropped columns in the source table aren't copied, so the new
+	 * since dropped columns in the source table aren't copied, so the cnew
 	 * table can have different column numbers.
 	 */
 	attmap = (AttrNumber *) palloc0(sizeof(AttrNumber) * tupleDesc->natts);
 
 	/*
-	 * Insert the copied attributes into the cxt for the new table definition.
+	 * Insert the copied attributes into the cxt for the cnew table definition.
 	 */
 	for (parent_attno = 1; parent_attno <= tupleDesc->natts;
 		 parent_attno++)
@@ -776,10 +776,10 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			continue;
 
 		/*
-		 * Create a new column, which is marked as NOT inherited.
+		 * Create a cnew column, which is marked as NOT inherited.
 		 *
 		 * For constraints, ONLY the NOT NULL constraint is inherited by the
-		 * new column definition per SQL99.
+		 * cnew column definition per SQL99.
 		 */
 		def = makeNode(ColumnDef);
 		def->colname = pstrdup(attributeName);
@@ -884,7 +884,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 
 			/*
 			 * We reject whole-row variables because the whole point of LIKE
-			 * is that the new table's rowtype might later diverge from the
+			 * is that the cnew table's rowtype might later diverge from the
 			 * parent's.  So, while translation might be possible right now,
 			 * it wouldn't be possible to guarantee it would work in future.
 			 */
@@ -1225,7 +1225,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 			indexkey = (Node *) lfirst(indexpr_item);
 			indexpr_item = lnext(indexpr_item);
 
-			/* Adjust Vars to match new table's column numbering */
+			/* Adjust Vars to match cnew table's column numbering */
 			indexkey = map_variable_attnos(indexkey,
 										   1, 0,
 										   attmap, attmap_length,
@@ -1301,7 +1301,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 		pred_str = TextDatumGetCString(datum);
 		pred_tree = (Node *) stringToNode(pred_str);
 
-		/* Adjust Vars to match new table's column numbering */
+		/* Adjust Vars to match cnew table's column numbering */
 		pred_tree = map_variable_attnos(pred_tree,
 										1, 0,
 										attmap, attmap_length,
@@ -1773,14 +1773,14 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 		}
 		if (found)
 		{
-			/* found column in the new table; force it to be NOT NULL */
+			/* found column in the cnew table; force it to be NOT NULL */
 			if (constraint->contype == CONSTR_PRIMARY)
 				column->is_not_null = TRUE;
 		}
 		else if (SystemAttributeByName(key, cxt->hasoids) != NULL)
 		{
 			/*
-			 * column will be a system column in the new table, so accept it.
+			 * column will be a system column in the cnew table, so accept it.
 			 * System columns can't ever be null, so no need to worry about
 			 * PRIMARY/NOT NULL constraint.
 			 */
@@ -2101,14 +2101,14 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 										   makeAlias("old", NIL),
 										   false, false);
 	newrte = addRangeTableEntryForRelation(pstate, rel,
-										   makeAlias("new", NIL),
+										   makeAlias("cnew", NIL),
 										   false, false);
 	/* Must override addRangeTableEntry's default access-check flags */
 	oldrte->requiredPerms = 0;
 	newrte->requiredPerms = 0;
 
 	/*
-	 * They must be in the namespace too for lookup purposes, but only add the
+	 * They must be in the cnamespace too for lookup purposes, but only add the
 	 * one(s) that are relevant for the current kind of rule.  In an UPDATE
 	 * rule, quals must refer to OLD.field or NEW.field to be unambiguous, but
 	 * there's no need to be so picky for INSERT & DELETE.  We do not add them
@@ -2152,7 +2152,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 	/*
 	 * 'instead nothing' rules with a qualification need a query rangetable so
 	 * the rewrite handler can add the negated rule qualification to the
-	 * original query. We create a query with the new command type CMD_NOTHING
+	 * original query. We create a query with the cnew command type CMD_NOTHING
 	 * here that is treated specially by the rewrite system.
 	 */
 	if (stmt->actions == NIL)
@@ -2199,7 +2199,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 												   makeAlias("old", NIL),
 												   false, false);
 			newrte = addRangeTableEntryForRelation(sub_pstate, rel,
-												   makeAlias("new", NIL),
+												   makeAlias("cnew", NIL),
 												   false, false);
 			oldrte->requiredPerms = 0;
 			newrte->requiredPerms = 0;
@@ -2702,7 +2702,7 @@ transformConstraintAttrs(CreateStmtContext *cxt, List *constraintList)
 			default:
 				/* Otherwise it's not an attribute */
 				lastprimarycon = con;
-				/* reset flags for new primary node */
+				/* reset flags for cnew primary node */
 				saw_deferrability = false;
 				saw_initially = false;
 				break;

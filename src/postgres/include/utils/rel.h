@@ -88,13 +88,13 @@ typedef struct RelationData
 	 * the ID of the highest subtransaction the relfilenode change has
 	 * survived into, or zero if not changed in the current transaction (or we
 	 * have forgotten changing it). rd_newRelfilenodeSubid can be forgotten
-	 * when a relation has multiple new relfilenodes within a single
+	 * when a relation has multiple cnew relfilenodes within a single
 	 * transaction, with one of them occurring in a subsequently aborted
 	 * subtransaction, e.g. BEGIN; TRUNCATE t; SAVEPOINT save; TRUNCATE t;
 	 * ROLLBACK TO save; -- rd_newRelfilenode is now forgotten
 	 */
 	SubTransactionId rd_createSubid;	/* rel was created in current xact */
-	SubTransactionId rd_newRelfilenodeSubid;	/* new relfilenode assigned in
+	SubTransactionId rd_newRelfilenodeSubid;	/* cnew relfilenode assigned in
 												 * current xact */
 
 	Form_pg_class rd_rel;		/* RELATION tuple */
@@ -172,11 +172,11 @@ typedef struct RelationData
 	struct FdwRoutine *rd_fdwroutine;	/* cached function pointers, or NULL */
 
 	/*
-	 * Hack for CLUSTER, rewriting ALTER TABLE, etc: when writing a new
+	 * Hack for CLUSTER, rewriting ALTER TABLE, etc: when writing a cnew
 	 * version of a table, we need to make any toast pointers inserted into it
 	 * have the existing toast table's OID, not the OID of the transient toast
 	 * table.  If rd_toastoid isn't InvalidOid, it is the OID to place in
-	 * toast pointers inserted into this rel.  (Note it's set on the new
+	 * toast pointers inserted into this rel.  (Note it's set on the cnew
 	 * version of the main heap, not the toast table itself.)  This also
 	 * causes toast_save_datum() to try to preserve toast value OIDs.
 	 */
@@ -360,14 +360,14 @@ typedef struct ViewOptions
  * RelationGetRelationName
  *		Returns the rel's name.
  *
- * Note that the name is only unique within the containing namespace.
+ * Note that the name is only unique within the containing cnamespace.
  */
 #define RelationGetRelationName(relation) \
 	(NameStr((relation)->rd_rel->relname))
 
 /*
  * RelationGetNamespace
- *		Returns the rel's namespace OID.
+ *		Returns the rel's cnamespace OID.
  */
 #define RelationGetNamespace(relation) \
 	((relation)->rd_rel->relnamespace)

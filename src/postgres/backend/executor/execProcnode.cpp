@@ -25,7 +25,7 @@
  *	 NOTES
  *		This used to be three files.  It is now all combined into
  *		one file so that it is easier to keep ExecInitNode, ExecProcNode,
- *		and ExecEndNode in sync when new nodes are added.
+ *		and ExecEndNode in sync when cnew nodes are added.
  *
  *	 EXAMPLE
  *		Suppose we want the age of the manager of the shoe department and

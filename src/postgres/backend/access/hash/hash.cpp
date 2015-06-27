@@ -44,7 +44,7 @@ static void hashbuildCallback(Relation index,
 
 
 /*
- *	hashbuild() -- build a new hash index.
+ *	hashbuild() -- build a cnew hash index.
  */
 Datum
 hashbuild(PG_FUNCTION_ARGS)
@@ -165,7 +165,7 @@ hashbuildCallback(Relation index,
  *	hashinsert() -- insert an index tuple into a hash table.
  *
  *	Hash on the heap tuple's key, form an index tuple with hash code.
- *	Find the appropriate location for the new tuple, and put it there.
+ *	Find the appropriate location for the cnew tuple, and put it there.
  */
 Datum
 hashinsert(PG_FUNCTION_ARGS)
@@ -426,7 +426,7 @@ hashrescan(PG_FUNCTION_ARGS)
 	ItemPointerSetInvalid(&(so->hashso_curpos));
 	ItemPointerSetInvalid(&(so->hashso_heappos));
 
-	/* Update scan key, if a new one is given */
+	/* Update scan key, if a cnew one is given */
 	if (scankey && scan->numberOfKeys > 0)
 	{
 		memmove(scan->keyData,

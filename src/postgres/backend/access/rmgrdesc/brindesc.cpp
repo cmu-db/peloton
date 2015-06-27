@@ -43,7 +43,7 @@ brin_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_brin_update *xlrec = (xl_brin_update *) rec;
 
-		appendStringInfo(buf, "heapBlk %u pagesPerRange %u old offnum %u, new offnum %u",
+		appendStringInfo(buf, "heapBlk %u pagesPerRange %u old offnum %u, cnew offnum %u",
 						 xlrec->insert.heapBlk,
 						 xlrec->insert.pagesPerRange,
 						 xlrec->oldOffnum,

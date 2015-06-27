@@ -38,11 +38,11 @@ CATALOG(pg_constraint,2606)
 	 * relations.  This is partly for backwards compatibility with past
 	 * Postgres practice, and partly because we don't want to have to obtain a
 	 * global lock to generate a globally unique name for a nameless
-	 * constraint.  We associate a namespace with constraint names only for
+	 * constraint.  We associate a cnamespace with constraint names only for
 	 * SQL-spec compatibility.
 	 */
 	NameData	conname;		/* name of this constraint */
-	Oid			connamespace;	/* OID of namespace containing constraint */
+	Oid			connamespace;	/* OID of cnamespace containing constraint */
 	char		contype;		/* constraint type; see codes below */
 	bool		condeferrable;	/* deferrable constraint? */
 	bool		condeferred;	/* deferred by default? */

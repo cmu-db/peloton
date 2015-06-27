@@ -14,7 +14,7 @@
  * Cache invalidation is driven off sinval events.  Any CachedPlanSource
  * that matches the event is marked invalid, as is its generic CachedPlan
  * if it has one.  When (and if) the next demand for a cached plan occurs,
- * parse analysis and rewrite is repeated to build a new valid query tree,
+ * parse analysis and rewrite is repeated to build a cnew valid query tree,
  * and then planning is performed as normal.  We also force re-analysis and
  * re-planning if the active search_path is different from the previous time.
  *
@@ -172,7 +172,7 @@ CreateCachedPlan(Node *raw_parse_tree,
 										   ALLOCSET_DEFAULT_MAXSIZE);
 
 	/*
-	 * Create and fill the CachedPlanSource struct within the new context.
+	 * Create and fill the CachedPlanSource struct within the cnew context.
 	 * Most fields are just left empty for the moment.
 	 */
 	oldcxt = MemoryContextSwitchTo(source_context);
@@ -578,7 +578,7 @@ RevalidateCachedQuery(CachedPlanSource *plansource)
 	}
 
 	/*
-	 * If this is a new cached plan, then set the user id it was planned by
+	 * If this is a cnew cached plan, then set the user id it was planned by
 	 * and under what row security settings; these are needed to determine
 	 * plan invalidation when RLS is involved.
 	 */
@@ -746,7 +746,7 @@ RevalidateCachedQuery(CachedPlanSource *plansource)
 	}
 
 	/*
-	 * Allocate new query_context and copy the completed querytree into it.
+	 * Allocate cnew query_context and copy the completed querytree into it.
 	 * It's transient until we complete the copying and dependency extraction.
 	 */
 	querytree_context = AllocSetContextCreate(CurrentMemoryContext,
@@ -869,7 +869,7 @@ CheckCachedPlan(CachedPlanSource *plansource)
 }
 
 /*
- * BuildCachedPlan: construct a new CachedPlan from a CachedPlanSource.
+ * BuildCachedPlan: construct a cnew CachedPlan from a CachedPlanSource.
  *
  * qlist should be the result value from a previous RevalidateCachedQuery,
  * or it can be set to NIL if we need to re-copy the plansource's query_list.
@@ -973,7 +973,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 											 ALLOCSET_DEFAULT_MAXSIZE);
 
 		/*
-		 * Copy plan into the new context.
+		 * Copy plan into the cnew context.
 		 */
 		MemoryContextSwitchTo(plan_context);
 
@@ -983,7 +983,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 		plan_context = CurrentMemoryContext;
 
 	/*
-	 * Create and fill the CachedPlan struct within the new context.
+	 * Create and fill the CachedPlan struct within the cnew context.
 	 */
 	plan = (CachedPlan *) palloc(sizeof(CachedPlan));
 	plan->magic = CACHEDPLAN_MAGIC;
@@ -1001,7 +1001,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	plan->is_saved = false;
 	plan->is_valid = true;
 
-	/* assign generation number to new plan */
+	/* assign generation number to cnew plan */
 	plan->generation = ++(plansource->generation);
 
 	MemoryContextSwitchTo(oldcxt);
@@ -1161,11 +1161,11 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 		}
 		else
 		{
-			/* Build a new generic plan */
+			/* Build a cnew generic plan */
 			plan = BuildCachedPlan(plansource, qlist, NULL);
 			/* Just make real sure plansource->gplan is clear */
 			ReleaseGenericPlan(plansource);
-			/* Link the new generic plan into the plansource */
+			/* Link the cnew generic plan into the plansource */
 			plansource->gplan = plan;
 			plan->refcount++;
 			/* Immediately reparent into appropriate context */
@@ -1181,7 +1181,7 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 				MemoryContextSetParent(plan->context,
 								MemoryContextGetParent(plansource->context));
 			}
-			/* Update generic_cost whenever we make a new generic plan */
+			/* Update generic_cost whenever we make a cnew generic plan */
 			plansource->generic_cost = cached_plan_cost(plan, false);
 
 			/*
@@ -1272,7 +1272,7 @@ ReleaseCachedPlan(CachedPlan *plan, bool useResOwner)
 }
 
 /*
- * CachedPlanSetParentContext: move a CachedPlanSource to a new memory context
+ * CachedPlanSetParentContext: move a CachedPlanSource to a cnew memory context
  *
  * This can only be applied to unsaved plans; once saved, a plan always
  * lives underneath CacheMemoryContext.

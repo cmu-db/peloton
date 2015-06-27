@@ -4105,24 +4105,24 @@ _copyAlterPolicyStmt(const AlterPolicyStmt *from)
  * list MUST be of type T_List; T_IntList and T_OidList nodes don't
  * need deep copies, so they should be copied via list_copy()
  */
-#define COPY_NODE_CELL(new, old)					\
-	(new) = (ListCell *) palloc(sizeof(ListCell));	\
-	lfirst(new) = copyObject(lfirst(old));
+#define COPY_NODE_CELL(cnew, old)					\
+	(cnew) = (ListCell *) palloc(sizeof(ListCell));	\
+	lfirst(cnew) = copyObject(lfirst(old));
 
 static List *
 _copyList(const List *from)
 {
-	List	   *new;
+	List	   *cnew;
 	ListCell   *curr_old;
 	ListCell   *prev_new;
 
 	Assert(list_length(from) >= 1);
 
-	new = makeNode(List);
-	new->length = from->length;
+	cnew = makeNode(List);
+	cnew->length = from->length;
 
-	COPY_NODE_CELL(new->head, from->head);
-	prev_new = new->head;
+	COPY_NODE_CELL(cnew->head, from->head);
+	prev_new = cnew->head;
 	curr_old = lnext(from->head);
 
 	while (curr_old)
@@ -4132,9 +4132,9 @@ _copyList(const List *from)
 		curr_old = curr_old->next;
 	}
 	prev_new->next = NULL;
-	new->tail = prev_new;
+	cnew->tail = prev_new;
 
-	return new;
+	return cnew;
 }
 
 /* ****************************************************************

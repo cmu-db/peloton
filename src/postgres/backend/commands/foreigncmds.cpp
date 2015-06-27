@@ -200,7 +200,7 @@ transformGenericOptions(Oid catalogId,
 /*
  * Internal workhorse for changing a data wrapper's owner.
  *
- * Allow this only for superusers; also the new owner must be a
+ * Allow this only for superusers; also the cnew owner must be a
  * superuser.
  */
 static void
@@ -362,7 +362,7 @@ AlterForeignServerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 				aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_FOREIGN_SERVER,
 							   NameStr(form->srvname));
 
-			/* Must be able to become new owner */
+			/* Must be able to become cnew owner */
 			check_is_member_of_role(GetUserId(), newOwnerId);
 
 			/* New owner must have USAGE privilege on foreign-data wrapper */
@@ -659,7 +659,7 @@ CreateForeignDataWrapper(CreateFdwStmt *stmt)
 	/* dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, false);
 
-	/* Post creation hook for new foreign data wrapper */
+	/* Post creation hook for cnew foreign data wrapper */
 	InvokeObjectPostCreateHook(ForeignDataWrapperRelationId, fdwId, 0);
 
 	heap_close(rel, RowExclusiveLock);
@@ -725,7 +725,7 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 
 		/*
 		 * It could be that the behavior of accessing foreign table changes
-		 * with the new handler.  Warn about this.
+		 * with the cnew handler.  Warn about this.
 		 */
 		ereport(WARNING,
 				(errmsg("changing the foreign-data wrapper handler can change behavior of existing foreign tables")));
@@ -739,7 +739,7 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 		/*
 		 * It could be that existing options for the FDW or dependent SERVER,
 		 * USER MAPPING or FOREIGN TABLE objects are no longer valid according
-		 * to the new validator.  Warn about this.
+		 * to the cnew validator.  Warn about this.
 		 */
 		if (OidIsValid(fdwvalidator))
 			ereport(WARNING,
@@ -806,7 +806,7 @@ AlterForeignDataWrapper(AlterFdwStmt *stmt)
 										ProcedureRelationId,
 										DEPENDENCY_NORMAL);
 
-		/* And build new ones. */
+		/* And build cnew ones. */
 
 		if (OidIsValid(fdwhandler))
 		{
@@ -961,7 +961,7 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 	/* dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, false);
 
-	/* Post creation hook for new foreign server */
+	/* Post creation hook for cnew foreign server */
 	InvokeObjectPostCreateHook(ForeignServerRelationId, srvId, 0);
 
 	heap_close(rel, RowExclusiveLock);
@@ -1214,7 +1214,7 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	/* dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, false);
 
-	/* Post creation hook for new user mapping */
+	/* Post creation hook for cnew user mapping */
 	InvokeObjectPostCreateHook(UserMappingRelationId, umId, 0);
 
 	heap_close(rel, RowExclusiveLock);

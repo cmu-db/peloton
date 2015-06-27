@@ -37,7 +37,7 @@
 CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 {
 	NameData	typname;		/* type name */
-	Oid			typnamespace;	/* OID of namespace containing this type */
+	Oid			typnamespace;	/* OID of cnamespace containing this type */
 	Oid			typowner;		/* type owner */
 
 	/*
@@ -573,7 +573,7 @@ DESCR("registered role");
 #define REGROLEOID		4096
 
 DATA(insert OID = 4089 ( regnamespace  PGNSP PGUID	4 t b N f t \054 0	 0 4090 regnamespacein regnamespaceout regnamespacerecv regnamespacesend - - - i p f 0 -1 0 0 _null_ _null_ _null_ ));
-DESCR("registered namespace");
+DESCR("registered cnamespace");
 #define REGNAMESPACEOID		4089
 
 DATA(insert OID = 2207 ( _regprocedure PGNSP PGUID -1 f b A f t \054 0 2202 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));

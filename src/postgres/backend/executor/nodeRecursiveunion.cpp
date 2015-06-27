@@ -123,7 +123,7 @@ ExecRecursiveUnion(RecursiveUnionState *node)
 			/* intermediate table becomes working table */
 			node->working_table = node->intermediate_table;
 
-			/* create new empty intermediate table */
+			/* create cnew empty intermediate table */
 			node->intermediate_table = tuplestore_begin_heap(false, false,
 															 work_mem);
 			node->intermediate_empty = true;

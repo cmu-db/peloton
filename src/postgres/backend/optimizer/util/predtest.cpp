@@ -1727,7 +1727,7 @@ lookup_proof_cache(Oid pred_op, Oid clause_op, bool refute_it)
 													 HASH_ENTER, &cfound);
 	if (!cfound)
 	{
-		/* new cache entry, set it invalid */
+		/* cnew cache entry, set it invalid */
 		cache_entry->have_implic = false;
 		cache_entry->have_refute = false;
 	}

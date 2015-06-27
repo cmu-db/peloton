@@ -43,7 +43,7 @@ comparePos(const void *a, const void *b)
  * Removes duplicate pos entries. If there's two entries with same pos
  * but different weight, the higher weight is retained.
  *
- * Returns new length.
+ * Returns cnew length.
  */
 static int
 uniquePos(WordEntryPos *a, int l)

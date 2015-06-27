@@ -111,7 +111,7 @@ typedef struct
 } deparse_context;
 
 /*
- * Each level of query context around a subtree needs a level of Var namespace.
+ * Each level of query context around a subtree needs a level of Var cnamespace.
  * A Var having varlevelsup=N refers to the N'th item (counting from 0) in
  * the current context's namespaces list.
  *
@@ -227,7 +227,7 @@ typedef struct
 	 * entries are unique unless this is for an unnamed JOIN RTE.  (In such an
 	 * RTE, we never actually print this array, but we must compute it anyway
 	 * for possible use in computing column names of upper joins.) The
-	 * parallel array is_new_col marks which of these columns are new since
+	 * parallel array is_new_col marks which of these columns are cnew since
 	 * original parsing.  Entries with is_new_col false must match the
 	 * non-NULL colnames entries one-for-one.
 	 */
@@ -862,7 +862,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 		newrte->rtekind = RTE_RELATION;
 		newrte->relid = trigrec->tgrelid;
 		newrte->relkind = relkind;
-		newrte->alias = makeAlias("new", NIL);
+		newrte->alias = makeAlias("cnew", NIL);
 		newrte->eref = newrte->alias;
 		newrte->lateral = false;
 		newrte->inh = false;
@@ -875,7 +875,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 		set_rtable_names(&dpns, NIL, NULL);
 		set_simple_column_names(&dpns);
 
-		/* Set up context with one-deep namespace stack */
+		/* Set up context with one-deep cnamespace stack */
 		context.buf = &buf;
 		context.namespaces = list_make1(&dpns);
 		context.windowClause = NIL;
@@ -1890,10 +1890,10 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 			elog(ERROR, "cache lookup failed for relation %u", sequenceId);
 		classtuple = (Form_pg_class) GETSTRUCT(classtup);
 
-		/* Get the namespace */
+		/* Get the cnamespace */
 		nspname = get_namespace_name(classtuple->relnamespace);
 		if (!nspname)
-			elog(ERROR, "cache lookup failed for namespace %u",
+			elog(ERROR, "cache lookup failed for cnamespace %u",
 				 classtuple->relnamespace);
 
 		/* And construct the result string */
@@ -2549,7 +2549,7 @@ deparse_context_for(const char *aliasname, Oid relid)
 	set_rtable_names(dpns, NIL, NULL);
 	set_simple_column_names(dpns);
 
-	/* Return a one-deep namespace stack */
+	/* Return a one-deep cnamespace stack */
 	return list_make1(dpns);
 }
 
@@ -2585,7 +2585,7 @@ deparse_context_for_plan_rtable(List *rtable, List *rtable_names)
 	 */
 	set_simple_column_names(dpns);
 
-	/* Return a one-deep namespace stack */
+	/* Return a one-deep cnamespace stack */
 	return list_make1(dpns);
 }
 
@@ -2613,7 +2613,7 @@ deparse_context_for_plan_rtable(List *rtable, List *rtable_names)
  * Once this function has been called, deparse_expression() can be called on
  * subsidiary expression(s) of the specified PlanState node.  To deparse
  * expressions of a different Plan node in the same Plan tree, re-call this
- * function to identify the new parent Plan node.
+ * function to identify the cnew parent Plan node.
  *
  * The result is the same List passed in; this is a notational convenience.
  */
@@ -2623,7 +2623,7 @@ set_deparse_context_planstate(List *dpcontext,
 {
 	deparse_namespace *dpns;
 
-	/* Should always have one-entry namespace list for Plan deparsing */
+	/* Should always have one-entry cnamespace list for Plan deparsing */
 	Assert(list_length(dpcontext) == 1);
 	dpns = (deparse_namespace *) linitial(dpcontext);
 
@@ -2660,7 +2660,7 @@ select_rtable_names_for_explain(List *rtable, Bitmapset *rels_used)
  *
  * We fill in dpns->rtable_names with a list of names that is one-for-one with
  * the already-filled dpns->rtable list.  Each RTE name is unique among those
- * in the new namespace plus any ancestor namespaces listed in
+ * in the cnew cnamespace plus any ancestor namespaces listed in
  * parent_namespaces.
  *
  * If rels_used isn't NULL, only RTE indexes listed in it are given aliases.
@@ -2973,7 +2973,7 @@ set_using_names(deparse_namespace *dpns, Node *jtnode, List *parentUsing)
 		rightcolinfo = deparse_columns_fetch(colinfo->rightrti, dpns);
 
 		/*
-		 * If this join is unnamed, then we cannot substitute new aliases at
+		 * If this join is unnamed, then we cannot substitute cnew aliases at
 		 * this level, so any name requirements pushed down to here must be
 		 * pushed down again to the children.
 		 */
@@ -3168,7 +3168,7 @@ set_relation_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 	 * enough already, if we pushed down a name for the last column.)  Note:
 	 * it's possible that there are now more columns than there were when the
 	 * query was parsed, ie colnames could be longer than rte->eref->colnames.
-	 * We must assign unique aliases to the new columns too, else there could
+	 * We must assign unique aliases to the cnew columns too, else there could
 	 * be unresolved conflicts when the view/rule is reloaded.
 	 */
 	expand_colnames_array_to(colinfo, ncolumns);
@@ -3188,7 +3188,7 @@ set_relation_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 	 * Scan the columns, select a unique alias for each one, and store it in
 	 * colinfo->colnames and colinfo->new_colnames.  The former array has NULL
 	 * entries for dropped columns, the latter omits them.  Also mark
-	 * new_colnames entries as to whether they are new since parse time; this
+	 * new_colnames entries as to whether they are cnew since parse time; this
 	 * is the case for entries beyond the length of rte->eref->colnames.
 	 */
 	noldcolumns = list_length(rte->eref->colnames);
@@ -3223,7 +3223,7 @@ set_relation_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 
 		/* Put names of non-dropped columns in new_colnames[] too */
 		colinfo->new_colnames[j] = colname;
-		/* And mark them as new or not */
+		/* And mark them as cnew or not */
 		colinfo->is_new_col[j] = (i >= noldcolumns);
 		j++;
 
@@ -3235,7 +3235,7 @@ set_relation_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 	/*
 	 * Set correct length for new_colnames[] array.  (Note: if columns have
 	 * been added, colinfo->num_cols includes them, which is not really quite
-	 * right but is harmless, since any new columns must be at the end where
+	 * right but is harmless, since any cnew columns must be at the end where
 	 * they won't affect varattnos of pre-existing columns.)
 	 */
 	colinfo->num_new_cols = j;
@@ -3371,7 +3371,7 @@ set_join_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 	colinfo->is_new_col = (bool *) palloc0(nnewcolumns * sizeof(bool));
 
 	/*
-	 * Generating the new_colnames array is a bit tricky since any new columns
+	 * Generating the new_colnames array is a bit tricky since any cnew columns
 	 * added since parse time must be inserted in the right places.  This code
 	 * must match the parser, which will order a join's columns as merged
 	 * columns first (in USING-clause order), then non-merged columns from the
@@ -3386,7 +3386,7 @@ set_join_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 	 * meanings for the current child RTE.
 	 */
 
-	/* Handle merged columns; they are first and can't be new */
+	/* Handle merged columns; they are first and can't be cnew */
 	i = j = 0;
 	while (i < noldcolumns &&
 		   colinfo->leftattnos[i] != 0 &&
@@ -3435,7 +3435,7 @@ set_join_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 		else
 		{
 			/*
-			 * Unique-ify the new child column name and assign, unless we're
+			 * Unique-ify the cnew child column name and assign, unless we're
 			 * in an unnamed join, in which case just copy
 			 */
 			if (rte->alias != NULL)
@@ -3484,7 +3484,7 @@ set_join_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 		else
 		{
 			/*
-			 * Unique-ify the new child column name and assign, unless we're
+			 * Unique-ify the cnew child column name and assign, unless we're
 			 * in an unnamed join, in which case just copy
 			 */
 			if (rte->alias != NULL)
@@ -3809,7 +3809,7 @@ flatten_join_using_qual(Node *qual, List **leftvars, List **rightvars)
 /*
  * get_rtable_name: convenience function to get a previously assigned RTE alias
  *
- * The RTE must belong to the topmost namespace level in "context".
+ * The RTE must belong to the topmost cnamespace level in "context".
  */
 static char *
 get_rtable_name(int rtindex, deparse_context *context)
@@ -3962,7 +3962,7 @@ push_ancestor_plan(deparse_namespace *dpns, ListCell *ancestor_cell,
 	/* Save state for restoration later */
 	*save_dpns = *dpns;
 
-	/* Build a new ancestor list with just this node's ancestors */
+	/* Build a cnew ancestor list with just this node's ancestors */
 	ancestors = NIL;
 	while ((ancestor_cell = lnext(ancestor_cell)) != NULL)
 		ancestors = lappend(ancestors, lfirst(ancestor_cell));
@@ -4619,7 +4619,7 @@ get_simple_values_rte(Query *query)
 	 * parser/analyze.c will never generate a "bare" VALUES RTE --- they only
 	 * appear inside auto-generated sub-queries with very restricted
 	 * structure.  However, DefineView might have modified the tlist by
-	 * injecting new column aliases; so compare tlist resnames against the
+	 * injecting cnew column aliases; so compare tlist resnames against the
 	 * RTE's names to detect that.
 	 */
 	if (result)
@@ -4800,8 +4800,8 @@ get_target_list(List *targetList, deparse_context *context,
 		colno++;
 
 		/*
-		 * Put the new field text into targetbuf so we can decide after we've
-		 * got it whether or not it needs to go on a new line.
+		 * Put the cnew field text into targetbuf so we can decide after we've
+		 * got it whether or not it needs to go on a cnew line.
 		 */
 		resetStringInfo(&targetbuf);
 		context->buf = &targetbuf;
@@ -4852,7 +4852,7 @@ get_target_list(List *targetList, deparse_context *context,
 		{
 			int			leading_nl_pos;
 
-			/* Does the new field start with a new line? */
+			/* Does the cnew field start with a cnew line? */
 			if (targetbuf.len > 0 && targetbuf.data[0] == '\n')
 				leading_nl_pos = 0;
 			else
@@ -4876,8 +4876,8 @@ get_target_list(List *targetList, deparse_context *context,
 					trailing_nl++;
 
 				/*
-				 * Add a newline, plus some indentation, if the new field is
-				 * not the first and either the new field would cause an
+				 * Add a newline, plus some indentation, if the cnew field is
+				 * not the first and either the cnew field would cause an
 				 * overflow or the last field used more than one line.
 				 */
 				if (colno > 1 &&
@@ -4892,7 +4892,7 @@ get_target_list(List *targetList, deparse_context *context,
 				(strchr(targetbuf.data + leading_nl_pos + 1, '\n') != NULL);
 		}
 
-		/* Add the new field */
+		/* Add the cnew field */
 		appendStringInfoString(buf, targetbuf.data);
 	}
 
@@ -5825,7 +5825,7 @@ get_utility_query_def(Query *query, deparse_context *context)
  *
  * If istoplevel is TRUE, the Var is at the top level of a SELECT's
  * targetlist, which means we need special treatment of whole-row Vars.
- * Instead of the normal "tab.*", we'll print "tab.*::typename", which is a
+ * Instead of the normal "tab.*", we'll print "tab.*::ctypename", which is a
  * dirty hack to prevent "tab.*" from being expanded into multiple columns.
  * (The parser will strip the useless coercion, so no inefficiency is added in
  * dump and reload.)  We used to print just "tab" in such cases, but that is
@@ -6259,7 +6259,7 @@ get_name_for_var_field(Var *var, int fieldno,
 						/*
 						 * Recurse into the sub-select to see what its Var
 						 * refers to. We have to build an additional level of
-						 * namespace to keep in step with varlevelsup in the
+						 * cnamespace to keep in step with varlevelsup in the
 						 * subselect.
 						 */
 						deparse_namespace mydpns;
@@ -6341,7 +6341,7 @@ get_name_for_var_field(Var *var, int fieldno,
 				ListCell   *lc;
 
 				/*
-				 * Try to find the referenced CTE using the namespace stack.
+				 * Try to find the referenced CTE using the cnamespace stack.
 				 */
 				ctelevelsup = rte->ctelevelsup + netlevelsup;
 				if (ctelevelsup >= list_length(context->namespaces))
@@ -6373,10 +6373,10 @@ get_name_for_var_field(Var *var, int fieldno,
 					{
 						/*
 						 * Recurse into the CTE to see what its Var refers to.
-						 * We have to build an additional level of namespace
+						 * We have to build an additional level of cnamespace
 						 * to keep in step with varlevelsup in the CTE.
 						 * Furthermore it could be an outer CTE, so we may
-						 * have to delete some levels of namespace.
+						 * have to delete some levels of cnamespace.
 						 */
 						List	   *save_nslist = context->namespaces;
 						List	   *new_nslist;
@@ -8314,7 +8314,7 @@ get_coercion_expr(Node *arg, deparse_context *context,
 		((Const *) arg)->consttype == resulttype &&
 		((Const *) arg)->consttypmod == -1)
 	{
-		/* Show the constant without normal ::typename decoration */
+		/* Show the constant without normal ::ctypename decoration */
 		get_const_expr((Const *) arg, context, -1);
 	}
 	else
@@ -8334,13 +8334,13 @@ get_coercion_expr(Node *arg, deparse_context *context,
  *
  *	Make a string representation of a Const
  *
- * showtype can be -1 to never show "::typename" decoration, or +1 to always
+ * showtype can be -1 to never show "::ctypename" decoration, or +1 to always
  * show it, or 0 to show it only if the constant wouldn't be assumed to be
  * the right type by default.
  *
  * If the Const's collation isn't default for its type, show that too.
  * We mustn't do this when showtype is -1 (since that means the caller will
- * print "::typename", and we can't put a COLLATE clause in between).  It's
+ * print "::ctypename", and we can't put a COLLATE clause in between).  It's
  * caller's responsibility that collation isn't missed in such cases.
  * ----------
  */
@@ -8439,7 +8439,7 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 		return;
 
 	/*
-	 * For showtype == 0, append ::typename unless the constant will be
+	 * For showtype == 0, append ::ctypename unless the constant will be
 	 * implicitly typed as the right type when it is read in.
 	 *
 	 * XXX this code has to be kept in sync with the behavior of the parser,
@@ -8698,8 +8698,8 @@ get_from_clause(Query *query, const char *prefix, deparse_context *context)
 			appendStringInfoString(buf, ", ");
 
 			/*
-			 * Put the new FROM item's text into itembuf so we can decide
-			 * after we've got it whether or not it needs to go on a new line.
+			 * Put the cnew FROM item's text into itembuf so we can decide
+			 * after we've got it whether or not it needs to go on a cnew line.
 			 */
 			initStringInfo(&itembuf);
 			context->buf = &itembuf;
@@ -8712,7 +8712,7 @@ get_from_clause(Query *query, const char *prefix, deparse_context *context)
 			/* Consider line-wrapping if enabled */
 			if (PRETTY_INDENT(context) && context->wrapColumn >= 0)
 			{
-				/* Does the new item start with a new line? */
+				/* Does the cnew item start with a cnew line? */
 				if (itembuf.len > 0 && itembuf.data[0] == '\n')
 				{
 					/* If so, we shouldn't add anything */
@@ -8731,7 +8731,7 @@ get_from_clause(Query *query, const char *prefix, deparse_context *context)
 						trailing_nl++;
 
 					/*
-					 * Add a newline, plus some indentation, if the new item
+					 * Add a newline, plus some indentation, if the cnew item
 					 * would cause an overflow.
 					 */
 					if (strlen(trailing_nl) + itembuf.len > context->wrapColumn)
@@ -8741,7 +8741,7 @@ get_from_clause(Query *query, const char *prefix, deparse_context *context)
 				}
 			}
 
-			/* Add the new item */
+			/* Add the cnew item */
 			appendStringInfoString(buf, itembuf.data);
 
 			/* clean up */
@@ -9419,7 +9419,7 @@ get_relation_name(Oid relid)
  *
  * If namespaces isn't NIL, it must be a list of deparse_namespace nodes.
  * We will forcibly qualify the relation name if it equals any CTE name
- * visible in the namespace list.
+ * visible in the cnamespace list.
  */
 static char *
 generate_relation_name(Oid relid, List *namespaces)

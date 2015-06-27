@@ -75,7 +75,7 @@ static void ReleaseSemaphores(int status, Datum arg);
 /*
  * InternalIpcSemaphoreCreate
  *
- * Attempt to create a new semaphore set with the specified key.
+ * Attempt to create a cnew semaphore set with the specified key.
  * Will fail (return -1) if such a set already exists.
  *
  * If we fail with a failure code other than collision-with-existing-set,
@@ -209,7 +209,7 @@ IpcSemaphoreCreate(int numSems)
 	{
 		pid_t		creatorPID;
 
-		/* Try to create new semaphore set */
+		/* Try to create cnew semaphore set */
 		semId = InternalIpcSemaphoreCreate(nextSemaKey, numSems + 1);
 		if (semId >= 0)
 			break;				/* successful create */
@@ -259,7 +259,7 @@ IpcSemaphoreCreate(int numSems)
 	}
 
 	/*
-	 * OK, we created a new sema set.  Mark it as created by this process. We
+	 * OK, we created a cnew sema set.  Mark it as created by this process. We
 	 * do this by setting the spare semaphore to PGSemaMagic-1 and then
 	 * incrementing it with semop().  That leaves it with value PGSemaMagic
 	 * and sempid referencing this process.

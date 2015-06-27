@@ -95,19 +95,19 @@ static void init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel);
 static Form_pg_sequence read_seq_tuple(SeqTable elm, Relation rel,
 			   Buffer *buf, HeapTuple seqtuple);
 static void init_params(List *options, bool isInit,
-			Form_pg_sequence new, List **owned_by);
+			Form_pg_sequence cnew, List **owned_by);
 static void do_setval(Oid relid, int64 next, bool iscalled);
 static void process_owned_by(Relation seqrel, List *owned_by);
 
 
 /*
  * DefineSequence
- *				Creates a new sequence relation
+ *				Creates a cnew sequence relation
  */
 ObjectAddress
 DefineSequence(CreateSeqStmt *seq)
 {
-	FormData_pg_sequence new;
+	FormData_pg_sequence cnew;
 	List	   *owned_by;
 	CreateStmt *stmt = makeNode(CreateStmt);
 	Oid			seqoid;
@@ -145,7 +145,7 @@ DefineSequence(CreateSeqStmt *seq)
 	}
 
 	/* Check and set all option values */
-	init_params(seq->options, true, &new, &owned_by);
+	init_params(seq->options, true, &cnew, &owned_by);
 
 	/*
 	 * Create relation (and fill value[] and null[] for the tuple)
@@ -180,32 +180,32 @@ DefineSequence(CreateSeqStmt *seq)
 			case SEQ_COL_LASTVAL:
 				coldef->typeName = makeTypeNameFromOid(INT8OID, -1);
 				coldef->colname = "last_value";
-				value[i - 1] = Int64GetDatumFast(new.last_value);
+				value[i - 1] = Int64GetDatumFast(cnew.last_value);
 				break;
 			case SEQ_COL_STARTVAL:
 				coldef->typeName = makeTypeNameFromOid(INT8OID, -1);
 				coldef->colname = "start_value";
-				value[i - 1] = Int64GetDatumFast(new.start_value);
+				value[i - 1] = Int64GetDatumFast(cnew.start_value);
 				break;
 			case SEQ_COL_INCBY:
 				coldef->typeName = makeTypeNameFromOid(INT8OID, -1);
 				coldef->colname = "increment_by";
-				value[i - 1] = Int64GetDatumFast(new.increment_by);
+				value[i - 1] = Int64GetDatumFast(cnew.increment_by);
 				break;
 			case SEQ_COL_MAXVALUE:
 				coldef->typeName = makeTypeNameFromOid(INT8OID, -1);
 				coldef->colname = "max_value";
-				value[i - 1] = Int64GetDatumFast(new.max_value);
+				value[i - 1] = Int64GetDatumFast(cnew.max_value);
 				break;
 			case SEQ_COL_MINVALUE:
 				coldef->typeName = makeTypeNameFromOid(INT8OID, -1);
 				coldef->colname = "min_value";
-				value[i - 1] = Int64GetDatumFast(new.min_value);
+				value[i - 1] = Int64GetDatumFast(cnew.min_value);
 				break;
 			case SEQ_COL_CACHE:
 				coldef->typeName = makeTypeNameFromOid(INT8OID, -1);
 				coldef->colname = "cache_value";
-				value[i - 1] = Int64GetDatumFast(new.cache_value);
+				value[i - 1] = Int64GetDatumFast(cnew.cache_value);
 				break;
 			case SEQ_COL_LOG:
 				coldef->typeName = makeTypeNameFromOid(INT8OID, -1);
@@ -215,7 +215,7 @@ DefineSequence(CreateSeqStmt *seq)
 			case SEQ_COL_CYCLE:
 				coldef->typeName = makeTypeNameFromOid(BOOLOID, -1);
 				coldef->colname = "is_cycled";
-				value[i - 1] = BoolGetDatum(new.is_cycled);
+				value[i - 1] = BoolGetDatum(cnew.is_cycled);
 				break;
 			case SEQ_COL_CALLED:
 				coldef->typeName = makeTypeNameFromOid(BOOLOID, -1);
@@ -259,7 +259,7 @@ DefineSequence(CreateSeqStmt *seq)
  *
  * The change is made transactionally, so that on failure of the current
  * transaction, the sequence will be restored to its previous state.
- * We do that by creating a whole new relfilenode for the sequence; so this
+ * We do that by creating a whole cnew relfilenode for the sequence; so this
  * works much like the rewriting forms of ALTER TABLE.
  *
  * Caller is assumed to have acquired AccessExclusiveLock on the sequence,
@@ -302,7 +302,7 @@ ResetSequence(Oid seq_relid)
 	seq->log_cnt = 0;
 
 	/*
-	 * Create a new storage file for the sequence.  We want to keep the
+	 * Create a cnew storage file for the sequence.  We want to keep the
 	 * sequence's relfrozenxid at 0, since it won't contain any unfrozen XIDs.
 	 * Same with relminmxid, since a sequence will never contain multixacts.
 	 */
@@ -310,7 +310,7 @@ ResetSequence(Oid seq_relid)
 							  InvalidTransactionId, InvalidMultiXactId);
 
 	/*
-	 * Insert the modified tuple into the new storage file.
+	 * Insert the modified tuple into the cnew storage file.
 	 */
 	fill_seq_with_data(seq_rel, tuple);
 
@@ -412,7 +412,7 @@ AlterSequence(AlterSeqStmt *stmt)
 	Buffer		buf;
 	HeapTupleData seqtuple;
 	Form_pg_sequence seq;
-	FormData_pg_sequence new;
+	FormData_pg_sequence cnew;
 	List	   *owned_by;
 	ObjectAddress address;
 
@@ -433,14 +433,14 @@ AlterSequence(AlterSeqStmt *stmt)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   stmt->sequence->relname);
 
-	/* lock page' buffer and read tuple into new sequence structure */
+	/* lock page' buffer and read tuple into cnew sequence structure */
 	seq = read_seq_tuple(elm, seqrel, &buf, &seqtuple);
 
 	/* Copy old values of options into workspace */
-	memcpy(&new, seq, sizeof(FormData_pg_sequence));
+	memcpy(&cnew, seq, sizeof(FormData_pg_sequence));
 
-	/* Check and set new values */
-	init_params(stmt->options, false, &new, &owned_by);
+	/* Check and set cnew values */
+	init_params(stmt->options, false, &cnew, &owned_by);
 
 	/* Clear local cache so that we don't think we have cached numbers */
 	/* Note that we do not change the currval() state */
@@ -453,7 +453,7 @@ AlterSequence(AlterSeqStmt *stmt)
 	/* Now okay to update the on-disk tuple */
 	START_CRIT_SECTION();
 
-	memcpy(seq, &new, sizeof(FormData_pg_sequence));
+	memcpy(seq, &cnew, sizeof(FormData_pg_sequence));
 
 	MarkBufferDirty(buf);
 
@@ -604,7 +604,7 @@ nextval_internal(Oid relid)
 	 * fetch count to grab SEQ_LOG_VALS more values than we actually need to
 	 * cache.  (These will then be usable without logging.)
 	 *
-	 * If this is the first nextval after a checkpoint, we must force a new
+	 * If this is the first nextval after a checkpoint, we must force a cnew
 	 * WAL record to be written anyway, else replay starting from the
 	 * checkpoint would fail to advance the sequence past the logged values.
 	 * In this case we may as well fetch extra values.
@@ -1051,7 +1051,7 @@ init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 	elm = (SeqTable) hash_search(seqhashtab, &relid, HASH_ENTER, &found);
 
 	/*
-	 * Initialize the new hash table entry if it did not exist already.
+	 * Initialize the cnew hash table entry if it did not exist already.
 	 *
 	 * NOTE: seqtable entries are stored for the life of a backend (unless
 	 * explicitly discarded with DISCARD). If the sequence itself is deleted
@@ -1156,7 +1156,7 @@ read_seq_tuple(SeqTable elm, Relation rel, Buffer *buf, HeapTuple seqtuple)
 
 /*
  * init_params: process the options list of CREATE or ALTER SEQUENCE,
- * and store the values into appropriate fields of *new.  Also set
+ * and store the values into appropriate fields of *cnew.  Also set
  * *owned_by to any OWNED BY option, or to NIL if there is none.
  *
  * If isInit is true, fill any unspecified options with default values;
@@ -1164,7 +1164,7 @@ read_seq_tuple(SeqTable elm, Relation rel, Buffer *buf, HeapTuple seqtuple)
  */
 static void
 init_params(List *options, bool isInit,
-			Form_pg_sequence new, List **owned_by)
+			Form_pg_sequence cnew, List **owned_by)
 {
 	DefElem    *start_value = NULL;
 	DefElem    *restart_value = NULL;
@@ -1255,69 +1255,69 @@ init_params(List *options, bool isInit,
 	 * would affect future nextval allocations.
 	 */
 	if (isInit)
-		new->log_cnt = 0;
+		cnew->log_cnt = 0;
 
 	/* INCREMENT BY */
 	if (increment_by != NULL)
 	{
-		new->increment_by = defGetInt64(increment_by);
-		if (new->increment_by == 0)
+		cnew->increment_by = defGetInt64(increment_by);
+		if (cnew->increment_by == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("INCREMENT must not be zero")));
-		new->log_cnt = 0;
+		cnew->log_cnt = 0;
 	}
 	else if (isInit)
-		new->increment_by = 1;
+		cnew->increment_by = 1;
 
 	/* CYCLE */
 	if (is_cycled != NULL)
 	{
-		new->is_cycled = intVal(is_cycled->arg);
-		Assert(BoolIsValid(new->is_cycled));
-		new->log_cnt = 0;
+		cnew->is_cycled = intVal(is_cycled->arg);
+		Assert(BoolIsValid(cnew->is_cycled));
+		cnew->log_cnt = 0;
 	}
 	else if (isInit)
-		new->is_cycled = false;
+		cnew->is_cycled = false;
 
 	/* MAXVALUE (null arg means NO MAXVALUE) */
 	if (max_value != NULL && max_value->arg)
 	{
-		new->max_value = defGetInt64(max_value);
-		new->log_cnt = 0;
+		cnew->max_value = defGetInt64(max_value);
+		cnew->log_cnt = 0;
 	}
 	else if (isInit || max_value != NULL)
 	{
-		if (new->increment_by > 0)
-			new->max_value = SEQ_MAXVALUE;		/* ascending seq */
+		if (cnew->increment_by > 0)
+			cnew->max_value = SEQ_MAXVALUE;		/* ascending seq */
 		else
-			new->max_value = -1;	/* descending seq */
-		new->log_cnt = 0;
+			cnew->max_value = -1;	/* descending seq */
+		cnew->log_cnt = 0;
 	}
 
 	/* MINVALUE (null arg means NO MINVALUE) */
 	if (min_value != NULL && min_value->arg)
 	{
-		new->min_value = defGetInt64(min_value);
-		new->log_cnt = 0;
+		cnew->min_value = defGetInt64(min_value);
+		cnew->log_cnt = 0;
 	}
 	else if (isInit || min_value != NULL)
 	{
-		if (new->increment_by > 0)
-			new->min_value = 1; /* ascending seq */
+		if (cnew->increment_by > 0)
+			cnew->min_value = 1; /* ascending seq */
 		else
-			new->min_value = SEQ_MINVALUE;		/* descending seq */
-		new->log_cnt = 0;
+			cnew->min_value = SEQ_MINVALUE;		/* descending seq */
+		cnew->log_cnt = 0;
 	}
 
 	/* crosscheck min/max */
-	if (new->min_value >= new->max_value)
+	if (cnew->min_value >= cnew->max_value)
 	{
 		char		bufm[100],
 					bufx[100];
 
-		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->min_value);
-		snprintf(bufx, sizeof(bufx), INT64_FORMAT, new->max_value);
+		snprintf(bufm, sizeof(bufm), INT64_FORMAT, cnew->min_value);
+		snprintf(bufx, sizeof(bufx), INT64_FORMAT, cnew->max_value);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("MINVALUE (%s) must be less than MAXVALUE (%s)",
@@ -1326,35 +1326,35 @@ init_params(List *options, bool isInit,
 
 	/* START WITH */
 	if (start_value != NULL)
-		new->start_value = defGetInt64(start_value);
+		cnew->start_value = defGetInt64(start_value);
 	else if (isInit)
 	{
-		if (new->increment_by > 0)
-			new->start_value = new->min_value;	/* ascending seq */
+		if (cnew->increment_by > 0)
+			cnew->start_value = cnew->min_value;	/* ascending seq */
 		else
-			new->start_value = new->max_value;	/* descending seq */
+			cnew->start_value = cnew->max_value;	/* descending seq */
 	}
 
 	/* crosscheck START */
-	if (new->start_value < new->min_value)
+	if (cnew->start_value < cnew->min_value)
 	{
 		char		bufs[100],
 					bufm[100];
 
-		snprintf(bufs, sizeof(bufs), INT64_FORMAT, new->start_value);
-		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->min_value);
+		snprintf(bufs, sizeof(bufs), INT64_FORMAT, cnew->start_value);
+		snprintf(bufm, sizeof(bufm), INT64_FORMAT, cnew->min_value);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("START value (%s) cannot be less than MINVALUE (%s)",
 						bufs, bufm)));
 	}
-	if (new->start_value > new->max_value)
+	if (cnew->start_value > cnew->max_value)
 	{
 		char		bufs[100],
 					bufm[100];
 
-		snprintf(bufs, sizeof(bufs), INT64_FORMAT, new->start_value);
-		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->max_value);
+		snprintf(bufs, sizeof(bufs), INT64_FORMAT, cnew->start_value);
+		snprintf(bufm, sizeof(bufm), INT64_FORMAT, cnew->max_value);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			  errmsg("START value (%s) cannot be greater than MAXVALUE (%s)",
@@ -1365,38 +1365,38 @@ init_params(List *options, bool isInit,
 	if (restart_value != NULL)
 	{
 		if (restart_value->arg != NULL)
-			new->last_value = defGetInt64(restart_value);
+			cnew->last_value = defGetInt64(restart_value);
 		else
-			new->last_value = new->start_value;
-		new->is_called = false;
-		new->log_cnt = 0;
+			cnew->last_value = cnew->start_value;
+		cnew->is_called = false;
+		cnew->log_cnt = 0;
 	}
 	else if (isInit)
 	{
-		new->last_value = new->start_value;
-		new->is_called = false;
+		cnew->last_value = cnew->start_value;
+		cnew->is_called = false;
 	}
 
 	/* crosscheck RESTART (or current value, if changing MIN/MAX) */
-	if (new->last_value < new->min_value)
+	if (cnew->last_value < cnew->min_value)
 	{
 		char		bufs[100],
 					bufm[100];
 
-		snprintf(bufs, sizeof(bufs), INT64_FORMAT, new->last_value);
-		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->min_value);
+		snprintf(bufs, sizeof(bufs), INT64_FORMAT, cnew->last_value);
+		snprintf(bufm, sizeof(bufm), INT64_FORMAT, cnew->min_value);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			   errmsg("RESTART value (%s) cannot be less than MINVALUE (%s)",
 					  bufs, bufm)));
 	}
-	if (new->last_value > new->max_value)
+	if (cnew->last_value > cnew->max_value)
 	{
 		char		bufs[100],
 					bufm[100];
 
-		snprintf(bufs, sizeof(bufs), INT64_FORMAT, new->last_value);
-		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->max_value);
+		snprintf(bufs, sizeof(bufs), INT64_FORMAT, cnew->last_value);
+		snprintf(bufm, sizeof(bufm), INT64_FORMAT, cnew->max_value);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			errmsg("RESTART value (%s) cannot be greater than MAXVALUE (%s)",
@@ -1406,29 +1406,29 @@ init_params(List *options, bool isInit,
 	/* CACHE */
 	if (cache_value != NULL)
 	{
-		new->cache_value = defGetInt64(cache_value);
-		if (new->cache_value <= 0)
+		cnew->cache_value = defGetInt64(cache_value);
+		if (cnew->cache_value <= 0)
 		{
 			char		buf[100];
 
-			snprintf(buf, sizeof(buf), INT64_FORMAT, new->cache_value);
+			snprintf(buf, sizeof(buf), INT64_FORMAT, cnew->cache_value);
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("CACHE (%s) must be greater than zero",
 							buf)));
 		}
-		new->log_cnt = 0;
+		cnew->log_cnt = 0;
 	}
 	else if (isInit)
-		new->cache_value = 1;
+		cnew->cache_value = 1;
 }
 
 /*
  * Process an OWNED BY option for CREATE/ALTER SEQUENCE
  *
  * Ownership permissions on the sequence are already checked,
- * but if we are establishing a new owned-by dependency, we must
- * enforce that the referenced table has the same owner and namespace
+ * but if we are establishing a cnew owned-by dependency, we must
+ * enforce that the referenced table has the same owner and cnamespace
  * as the sequence.
  */
 static void
@@ -1494,7 +1494,7 @@ process_owned_by(Relation seqrel, List *owned_by)
 
 	/*
 	 * OK, we are ready to update pg_depend.  First remove any existing AUTO
-	 * dependencies for the sequence, then optionally add a new one.
+	 * dependencies for the sequence, then optionally add a cnew one.
 	 */
 	markSequenceUnowned(RelationGetRelid(seqrel));
 
@@ -1597,7 +1597,7 @@ seq_redo(XLogReaderState *record)
 	 * We always reinit the page.  However, since this WAL record type is also
 	 * used for updating sequences, it's possible that a hot-standby backend
 	 * is examining the page concurrently; so we mustn't transiently trash the
-	 * buffer.  The solution is to build the correct new page contents in
+	 * buffer.  The solution is to build the correct cnew page contents in
 	 * local workspace and then memcpy into the buffer.  Then only bytes that
 	 * are supposed to change will change, even transiently. We must palloc
 	 * the local page for alignment reasons.

@@ -6,7 +6,7 @@
  *
  *	  Note that the definitions here are not intended to be exposed to clients
  *	  of the frontend interface libraries --- so we don't worry much about
- *	  polluting the namespace with lots of stuff...
+ *	  polluting the cnamespace with lots of stuff...
  *
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
@@ -21,7 +21,7 @@
  *	 TABLE OF CONTENTS
  *
  *		When adding stuff to this file, please try to put stuff
- *		into the relevant section, or add new sections as appropriate.
+ *		into the relevant section, or add cnew sections as appropriate.
  *
  *	  section	description
  *	  -------	------------------------------------------------

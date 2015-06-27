@@ -443,7 +443,7 @@ KeepFileRestoredFromArchive(char *path, char *xlogfname)
 		 * On Windows, if another process (e.g a walsender process) holds the
 		 * file open in FILE_SHARE_DELETE mode, unlink will succeed, but the
 		 * file will still show up in directory listing until the last handle
-		 * is closed, and we cannot rename the new file in its place until
+		 * is closed, and we cannot rename the cnew file in its place until
 		 * that. To avoid that problem, rename the old file to a temporary
 		 * name first. Use a counter to create a unique filename, because the
 		 * same file might be restored from the archive multiple times, and a
@@ -496,7 +496,7 @@ KeepFileRestoredFromArchive(char *path, char *xlogfname)
 		WalSndRqstFileReload();
 
 	/*
-	 * Signal walsender that new WAL has arrived. Again, this isn't necessary
+	 * Signal walsender that cnew WAL has arrived. Again, this isn't necessary
 	 * if we restored something other than a WAL segment, but it does no harm
 	 * either.
 	 */

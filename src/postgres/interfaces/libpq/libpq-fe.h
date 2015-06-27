@@ -239,7 +239,7 @@ typedef struct pgresAttDesc
 
 /* ===	in fe-connect.c === */
 
-/* make a new client connection to the backend */
+/* make a cnew client connection to the backend */
 /* Asynchronous (non-blocking) */
 extern PGconn *PQconnectStart(const char *conninfo);
 extern PGconn *PQconnectStartParams(const char *const * keywords,
@@ -274,7 +274,7 @@ extern PQconninfoOption *PQconninfo(PGconn *conn);
 extern void PQconninfoFree(PQconninfoOption *connOptions);
 
 /*
- * close the current connection and restablish a new one with the same
+ * close the current connection and restablish a cnew one with the same
  * parameters
  */
 /* Asynchronous (non-blocking) */
@@ -466,7 +466,7 @@ extern int	PQfsize(const PGresult *res, int field_num);
 extern int	PQfmod(const PGresult *res, int field_num);
 extern char *PQcmdStatus(PGresult *res);
 extern char *PQoidStatus(const PGresult *res);	/* old and ugly */
-extern Oid	PQoidValue(const PGresult *res);	/* new and improved */
+extern Oid	PQoidValue(const PGresult *res);	/* cnew and improved */
 extern char *PQcmdTuples(PGresult *res);
 extern char *PQgetvalue(const PGresult *res, int tup_num, int field_num);
 extern int	PQgetlength(const PGresult *res, int tup_num, int field_num);

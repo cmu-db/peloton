@@ -353,7 +353,7 @@ cidr_set_masklen(PG_FUNCTION_ARGS)
 
 	ip_bits(dst) = bits;
 
-	/* zero out any bits to the right of the new netmask */
+	/* zero out any bits to the right of the cnew netmask */
 	byte = bits / 8;
 
 	nbits = bits % 8;

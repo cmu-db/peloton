@@ -90,17 +90,17 @@ typedef struct
 	Oid			class_oid;		/* oid of catalog */
 	Oid			oid_index_oid;	/* oid of index on system oid column */
 	int			oid_catcache_id;	/* id of catcache on system oid column	*/
-	int			name_catcache_id;		/* id of catcache on (name,namespace),
+	int			name_catcache_id;		/* id of catcache on (name,cnamespace),
 										 * or (name) if the object does not
-										 * live in a namespace */
+										 * live in a cnamespace */
 	AttrNumber	attnum_name;	/* attnum of name field */
-	AttrNumber	attnum_namespace;		/* attnum of namespace field */
+	AttrNumber	attnum_namespace;		/* attnum of cnamespace field */
 	AttrNumber	attnum_owner;	/* attnum of owner field */
 	AttrNumber	attnum_acl;		/* attnum of acl field */
 	AclObjectKind acl_kind;		/* ACL_KIND_* of this object type */
 	bool		is_nsp_name_unique;		/* can the nsp/name combination (or
 										 * name alone, if there's no
-										 * namespace) be considered a unique
+										 * cnamespace) be considered a unique
 										 * identifier for an object of this
 										 * class? */
 } ObjectPropertyType;
@@ -769,9 +769,9 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 				break;
 			case OBJECT_TRANSFORM:
 				{
-					TypeName   *typename = (TypeName *) linitial(objname);
+					TypeName   *ctypename = (TypeName *) linitial(objname);
 					char	   *langname = strVal(linitial(objargs));
-					Oid			type_id = LookupTypeNameOid(NULL, typename, missing_ok);
+					Oid			type_id = LookupTypeNameOid(NULL, ctypename, missing_ok);
 					Oid			lang_id = get_language_oid(langname, missing_ok);
 
 					address.classId = TransformRelationId;
@@ -1339,23 +1339,23 @@ static ObjectAddress
 get_object_address_type(ObjectType objtype, ListCell *typecell, bool missing_ok)
 {
 	ObjectAddress address;
-	TypeName   *typename;
+	TypeName   *ctypename;
 	Type		tup;
 
-	typename = (TypeName *) lfirst(typecell);
+	ctypename = (TypeName *) lfirst(typecell);
 
 	address.classId = TypeRelationId;
 	address.objectId = InvalidOid;
 	address.objectSubId = 0;
 
-	tup = LookupTypeName(NULL, typename, NULL, missing_ok);
+	tup = LookupTypeName(NULL, ctypename, NULL, missing_ok);
 	if (!HeapTupleIsValid(tup))
 	{
 		if (!missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("type \"%s\" does not exist",
-							TypeNameToString(typename))));
+							TypeNameToString(ctypename))));
 		return address;
 	}
 	address.objectId = typeTypeId(tup);
@@ -1366,7 +1366,7 @@ get_object_address_type(ObjectType objtype, ListCell *typecell, bool missing_ok)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("\"%s\" is not a domain",
-							TypeNameToString(typename))));
+							TypeNameToString(ctypename))));
 	}
 
 	ReleaseSysCache(tup);
@@ -2028,11 +2028,11 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 			break;
 		case OBJECT_TRANSFORM:
 			{
-				TypeName   *typename = (TypeName *) linitial(objname);
-				Oid			typeid = typenameTypeId(NULL, typename);
+				TypeName   *ctypename = (TypeName *) linitial(objname);
+				Oid			ctypeid = typenameTypeId(NULL, ctypename);
 
-				if (!pg_type_ownercheck(typeid, roleid))
-					aclcheck_error_type(ACLCHECK_NOT_OWNER, typeid);
+				if (!pg_type_ownercheck(ctypeid, roleid))
+					aclcheck_error_type(ACLCHECK_NOT_OWNER, ctypeid);
 			}
 			break;
 		case OBJECT_TABLESPACE:
@@ -2100,7 +2100,7 @@ get_object_namespace(const ObjectAddress *address)
 	Oid			oid;
 	const ObjectPropertyType *property;
 
-	/* If not owned by a namespace, just return InvalidOid. */
+	/* If not owned by a cnamespace, just return InvalidOid. */
 	property = get_object_property_data(address->classId);
 	if (property->attnum_namespace == InvalidAttrNumber)
 		return InvalidOid;
@@ -2109,7 +2109,7 @@ get_object_namespace(const ObjectAddress *address)
 	cache = property->oid_catcache_id;
 	Assert(cache != -1);
 
-	/* Fetch tuple from syscache and extract namespace attribute. */
+	/* Fetch tuple from syscache and extract cnamespace attribute. */
 	tuple = SearchSysCache1(cache, ObjectIdGetDatum(address->objectId));
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for cache %d oid %u",
@@ -2749,7 +2749,7 @@ getObjectDescription(const ObjectAddress *object)
 
 				nspname = get_namespace_name(object->objectId);
 				if (!nspname)
-					elog(ERROR, "cache lookup failed for namespace %u",
+					elog(ERROR, "cache lookup failed for cnamespace %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("schema %s"), nspname);
 				break;
@@ -2923,22 +2923,22 @@ getObjectDescription(const ObjectAddress *object)
 				{
 					case DEFACLOBJ_RELATION:
 						appendStringInfo(&buffer,
-										 _("default privileges on new relations belonging to role %s"),
+										 _("default privileges on cnew relations belonging to role %s"),
 									  GetUserNameFromId(defacl->defaclrole, false));
 						break;
 					case DEFACLOBJ_SEQUENCE:
 						appendStringInfo(&buffer,
-										 _("default privileges on new sequences belonging to role %s"),
+										 _("default privileges on cnew sequences belonging to role %s"),
 									  GetUserNameFromId(defacl->defaclrole, false));
 						break;
 					case DEFACLOBJ_FUNCTION:
 						appendStringInfo(&buffer,
-										 _("default privileges on new functions belonging to role %s"),
+										 _("default privileges on cnew functions belonging to role %s"),
 									  GetUserNameFromId(defacl->defaclrole, false));
 						break;
 					case DEFACLOBJ_TYPE:
 						appendStringInfo(&buffer,
-										 _("default privileges on new types belonging to role %s"),
+										 _("default privileges on cnew types belonging to role %s"),
 									  GetUserNameFromId(defacl->defaclrole, false));
 						break;
 					default:
@@ -3235,7 +3235,7 @@ pg_identify_object(PG_FUNCTION_ARGS)
 				schema_oid = heap_getattr(objtup, nspAttnum,
 										  RelationGetDescr(catalog), &isnull);
 				if (isnull)
-					elog(ERROR, "invalid null namespace in object %u/%u/%d",
+					elog(ERROR, "invalid null cnamespace in object %u/%u/%d",
 					 address.classId, address.objectId, address.objectSubId);
 			}
 
@@ -4109,7 +4109,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 				nspname = get_namespace_name_or_temp(object->objectId);
 				if (!nspname)
-					elog(ERROR, "cache lookup failed for namespace %u",
+					elog(ERROR, "cache lookup failed for cnamespace %u",
 						 object->objectId);
 				appendStringInfoString(&buffer,
 									   quote_identifier(nspname));

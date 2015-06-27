@@ -60,7 +60,7 @@ extern void cache_locale_time(void);
 /*
  * We define our own wrapper around locale_t so we can keep the same
  * function signatures for all builds, while not having to create a
- * fake version of the standard type locale_t in the global namespace.
+ * fake version of the standard type locale_t in the global cnamespace.
  * The fake version of pg_locale_t can be checked for truth; that's
  * about all it will be needed for.
  */

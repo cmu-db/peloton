@@ -71,10 +71,10 @@
  *	 Examine the RETURNS clause of the CREATE FUNCTION statement
  *	 and return information about it as *prorettype_p and *returnsSet.
  *
- * This is more complex than the average typename lookup because we want to
+ * This is more complex than the average ctypename lookup because we want to
  * allow a shell type to be used, or even created if the specified return type
  * doesn't exist yet.  (Without this, there's no way to define the I/O procs
- * for a new type.)  But SQL function creation won't cope, so error out if
+ * for a cnew type.)  But SQL function creation won't cope, so error out if
  * the target language is SQL.  (We do this here, not in the SQL-function
  * validator, so as not to produce a NOTICE and then an ERROR for the same
  * condition.)
@@ -859,11 +859,11 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 	Form_pg_language languageStruct;
 	List	   *as_clause;
 
-	/* Convert list of names to a name and namespace */
+	/* Convert list of names to a name and cnamespace */
 	namespaceId = QualifiedNameGetCreationNamespace(stmt->funcname,
 													&funcname);
 
-	/* Check we have creation rights in target namespace */
+	/* Check we have creation rights in target cnamespace */
 	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
@@ -938,12 +938,12 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 
 		foreach (lc, (List *) transformDefElem)
 		{
-			Oid typeid = typenameTypeId(NULL, lfirst(lc));
-			Oid elt = get_base_element_type(typeid);
-			typeid = elt ? elt : typeid;
+			Oid ctypeid = typenameTypeId(NULL, lfirst(lc));
+			Oid elt = get_base_element_type(ctypeid);
+			ctypeid = elt ? elt : ctypeid;
 
-			get_transform_oid(typeid, languageOid, false);
-			trftypes_list = lappend_oid(trftypes_list, typeid);
+			get_transform_oid(ctypeid, languageOid, false);
+			trftypes_list = lappend_oid(trftypes_list, ctypeid);
 		}
 	}
 
@@ -1646,7 +1646,7 @@ CreateCast(CreateCastStmt *stmt)
 	/* dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, false);
 
-	/* Post creation hook for new cast */
+	/* Post creation hook for cnew cast */
 	InvokeObjectPostCreateHook(CastRelationId, castid, 0);
 
 	heap_freetuple(tuple);
@@ -1742,7 +1742,7 @@ check_transform_function(Form_pg_proc procstruct)
 Oid
 CreateTransform(CreateTransformStmt *stmt)
 {
-	Oid			typeid;
+	Oid			ctypeid;
 	char		typtype;
 	Oid			langid;
 	Oid			fromsqlfuncid;
@@ -1763,8 +1763,8 @@ CreateTransform(CreateTransformStmt *stmt)
 	/*
 	 * Get the type
 	 */
-	typeid = typenameTypeId(NULL, stmt->type_name);
-	typtype = get_typtype(typeid);
+	ctypeid = typenameTypeId(NULL, stmt->type_name);
+	typtype = get_typtype(ctypeid);
 
 	if (typtype == TYPTYPE_PSEUDO)
 		ereport(ERROR,
@@ -1778,12 +1778,12 @@ CreateTransform(CreateTransformStmt *stmt)
 				 errmsg("data type %s is a domain",
 						TypeNameToString(stmt->type_name))));
 
-	if (!pg_type_ownercheck(typeid, GetUserId()))
-		aclcheck_error_type(ACLCHECK_NOT_OWNER, typeid);
+	if (!pg_type_ownercheck(ctypeid, GetUserId()))
+		aclcheck_error_type(ACLCHECK_NOT_OWNER, ctypeid);
 
-	aclresult = pg_type_aclcheck(typeid, GetUserId(), ACL_USAGE);
+	aclresult = pg_type_aclcheck(ctypeid, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
-		aclcheck_error_type(aclresult, typeid);
+		aclcheck_error_type(aclresult, ctypeid);
 
 	/*
 	 * Get the language
@@ -1837,7 +1837,7 @@ CreateTransform(CreateTransformStmt *stmt)
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for function %u", tosqlfuncid);
 		procstruct = (Form_pg_proc) GETSTRUCT(tuple);
-		if (procstruct->prorettype != typeid)
+		if (procstruct->prorettype != ctypeid)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("return data type of TO SQL function must be the transform data type")));
@@ -1850,7 +1850,7 @@ CreateTransform(CreateTransformStmt *stmt)
 	/*
 	 * Ready to go
 	 */
-	values[Anum_pg_transform_trftype - 1] = ObjectIdGetDatum(typeid);
+	values[Anum_pg_transform_trftype - 1] = ObjectIdGetDatum(ctypeid);
 	values[Anum_pg_transform_trflang - 1] = ObjectIdGetDatum(langid);
 	values[Anum_pg_transform_trffromsql - 1] = ObjectIdGetDatum(fromsqlfuncid);
 	values[Anum_pg_transform_trftosql - 1] = ObjectIdGetDatum(tosqlfuncid);
@@ -1860,7 +1860,7 @@ CreateTransform(CreateTransformStmt *stmt)
 	relation = heap_open(TransformRelationId, RowExclusiveLock);
 
 	tuple = SearchSysCache2(TRFTYPELANG,
-							ObjectIdGetDatum(typeid),
+							ObjectIdGetDatum(ctypeid),
 							ObjectIdGetDatum(langid));
 	if (HeapTupleIsValid(tuple))
 	{
@@ -1868,7 +1868,7 @@ CreateTransform(CreateTransformStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
 					 errmsg("transform for type %s language \"%s\" already exists",
-							format_type_be(typeid),
+							format_type_be(ctypeid),
 							stmt->lang)));
 
 		MemSet(replaces, false, sizeof(replaces));
@@ -1907,7 +1907,7 @@ CreateTransform(CreateTransformStmt *stmt)
 
 	/* dependency on type */
 	referenced.classId = TypeRelationId;
-	referenced.objectId = typeid;
+	referenced.objectId = ctypeid;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
@@ -1930,7 +1930,7 @@ CreateTransform(CreateTransformStmt *stmt)
 	/* dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, is_replace);
 
-	/* Post creation hook for new transform */
+	/* Post creation hook for cnew transform */
 	InvokeObjectPostCreateHook(TransformRelationId, transformid, 0);
 
 	heap_freetuple(newtuple);
@@ -1996,7 +1996,7 @@ DropTransformById(Oid transformOid)
  * Subroutine for ALTER FUNCTION/AGGREGATE SET SCHEMA/RENAME
  *
  * Is there a function with the given name and signature already in the given
- * namespace?  If so, raise an appropriate error message.
+ * cnamespace?  If so, raise an appropriate error message.
  */
 void
 IsThereFunctionInNamespace(const char *proname, int pronargs,

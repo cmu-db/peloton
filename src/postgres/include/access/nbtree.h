@@ -138,7 +138,7 @@ typedef struct BTMetaPageData
  *	Old comments:
  *	In addition, we must guarantee that all tuples in the index are unique,
  *	in order to satisfy some assumptions in Lehman and Yao.  The way that we
- *	do this is by generating a new OID for every insertion that we do in the
+ *	do this is by generating a cnew OID for every insertion that we do in the
  *	tree.  This adds eight bytes to the size of btree index tuples.  Note
  *	that we do not use the OID as part of a composite key; the OID only
  *	serves as a unique identifier for a given index tuple (logical position
@@ -214,13 +214,13 @@ typedef struct BTMetaPageData
 #define XLOG_BTREE_INSERT_UPPER 0x10	/* same, on a non-leaf page */
 #define XLOG_BTREE_INSERT_META	0x20	/* same, plus update metapage */
 #define XLOG_BTREE_SPLIT_L		0x30	/* add index tuple with split */
-#define XLOG_BTREE_SPLIT_R		0x40	/* as above, new item on right */
+#define XLOG_BTREE_SPLIT_R		0x40	/* as above, cnew item on right */
 #define XLOG_BTREE_SPLIT_L_ROOT 0x50	/* add tuple with split of root */
-#define XLOG_BTREE_SPLIT_R_ROOT 0x60	/* as above, new item on right */
+#define XLOG_BTREE_SPLIT_R_ROOT 0x60	/* as above, cnew item on right */
 #define XLOG_BTREE_DELETE		0x70	/* delete leaf index tuples for a page */
 #define XLOG_BTREE_UNLINK_PAGE	0x80	/* delete a half-dead page */
 #define XLOG_BTREE_UNLINK_PAGE_META 0x90		/* same, and update metapage */
-#define XLOG_BTREE_NEWROOT		0xA0	/* new root page */
+#define XLOG_BTREE_NEWROOT		0xA0	/* cnew root page */
 #define XLOG_BTREE_MARK_PAGE_HALFDEAD 0xB0		/* mark a leaf as half-dead */
 #define XLOG_BTREE_VACUUM		0xC0	/* delete entries on a page during
 										 * vacuum */
@@ -259,27 +259,27 @@ typedef struct xl_btree_insert
  * On insert with split, we save all the items going into the right sibling
  * so that we can restore it completely from the log record.  This way takes
  * less xlog space than the normal approach, because if we did it standardly,
- * XLogInsert would almost always think the right page is new and store its
+ * XLogInsert would almost always think the right page is cnew and store its
  * whole page image.  The left page, however, is handled in the normal
  * incremental-update fashion.
  *
  * Note: the four XLOG_BTREE_SPLIT xl_info codes all use this data record.
  * The _L and _R variants indicate whether the inserted tuple went into the
- * left or right split page (and thus, whether newitemoff and the new item
+ * left or right split page (and thus, whether newitemoff and the cnew item
  * are stored or not).  The _ROOT variants indicate that we are splitting
  * the root page, and thus that a newroot record rather than an insert or
  * split record should follow.  Note that a split record never carries a
  * metapage update --- we'll do that in the parent-level update.
  *
- * Backup Blk 0: original page / new left page
+ * Backup Blk 0: original page / cnew left page
  *
- * The left page's data portion contains the new item, if it's the _L variant.
- * (In the _R variants, the new item is one of the right page's tuples.)
+ * The left page's data portion contains the cnew item, if it's the _L variant.
+ * (In the _R variants, the cnew item is one of the right page's tuples.)
  * If level > 0, an IndexTuple representing the HIKEY of the left page
  * follows.  We don't need this on leaf pages, because it's the same as the
- * leftmost key in the new right page.
+ * leftmost key in the cnew right page.
  *
- * Backup Blk 1: new right page
+ * Backup Blk 1: cnew right page
  *
  * The right page's data portion contains the right page's tuples in the
  * form used by _bt_restore_page.
@@ -291,7 +291,7 @@ typedef struct xl_btree_split
 {
 	uint32		level;			/* tree level of page being split */
 	OffsetNumber firstright;	/* first item moved to right page */
-	OffsetNumber newitemoff;	/* new item's offset (if placed on left page) */
+	OffsetNumber newitemoff;	/* cnew item's offset (if placed on left page) */
 } xl_btree_split;
 
 #define SizeOfBtreeSplit	(offsetof(xl_btree_split, newitemoff) + sizeof(OffsetNumber))
@@ -388,7 +388,7 @@ typedef struct xl_btree_mark_page_halfdead
  * Backup Blk 1: target block's left sibling, if any
  * Backup Blk 2: target block's right sibling
  * Backup Blk 3: leaf block (if different from target)
- * Backup Blk 4: metapage (if rightsib becomes new fast root)
+ * Backup Blk 4: metapage (if rightsib becomes cnew fast root)
  */
 typedef struct xl_btree_unlink_page
 {
@@ -416,13 +416,13 @@ typedef struct xl_btree_unlink_page
  * Note that although this implies rewriting the metadata page, we don't need
  * an xl_btree_metadata record --- the rootblk and level are sufficient.
  *
- * Backup Blk 0: new root page (2 tuples as payload, if splitting old root)
+ * Backup Blk 0: cnew root page (2 tuples as payload, if splitting old root)
  * Backup Blk 1: left child (if splitting an old root)
  * Backup Blk 2: metapage
  */
 typedef struct xl_btree_newroot
 {
-	BlockNumber rootblk;		/* location of new root (redundant with blk 0) */
+	BlockNumber rootblk;		/* location of cnew root (redundant with blk 0) */
 	uint32		level;			/* its tree level */
 } xl_btree_newroot;
 
@@ -439,7 +439,7 @@ typedef struct xl_btree_newroot
 #define BTCommuteStrategyNumber(strat)	(BTMaxStrategyNumber + 1 - (strat))
 
 /*
- *	When a new operator class is declared, we require that the user
+ *	When a cnew operator class is declared, we require that the user
  *	supply us with an amproc procedure (BTORDER_PROC) for determining
  *	whether, for two keys a and b, a < b, a = b, or a > b.  This routine
  *	must return < 0, 0, > 0, respectively, in these three cases.  (It must

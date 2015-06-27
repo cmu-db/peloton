@@ -671,7 +671,7 @@ stringTypeDatum(Type tp, char *string, int32 atttypmod)
 	return result;
 }
 
-/* given a typeid, return the type's typrelid (associated relation, if any) */
+/* given a ctypeid, return the type's typrelid (associated relation, if any) */
 Oid
 typeidTypeRelid(Oid type_id)
 {
