@@ -15,7 +15,7 @@
 #include "backend/common/value_factory.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/expression/container_tuple.h"
-#include "backend/storage/backend.h"
+#include "backend/storage/abstract_backend.h"
 #include "backend/storage/data_table.h"
 #include "backend/planner/aggregate_node.h"
 
