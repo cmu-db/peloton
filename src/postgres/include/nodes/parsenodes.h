@@ -183,10 +183,12 @@ struct Query : Node
  * If pct_type is TRUE, then names is actually a field name and we look up
  * the type of that field.  Otherwise (the normal case), names is a type
  * name possibly qualified with schema and database name.
+ *
+ * Peloton porting: use c++ inheritance
  */
-typedef struct TypeName
+typedef struct TypeName : Node
 {
-	NodeTag		type;
+	//NodeTag		type;
 	List	   *names;			/* qualified name (list of Value strings) */
 	Oid			typeOid;		/* type identified by OID */
 	bool		setof;			/* is a set? */
@@ -476,10 +478,12 @@ typedef struct SortBy
  * For OVER clauses, we use "name" for the "OVER window" syntax, or "refname"
  * for the "OVER (window)" syntax, which is subtly different --- the latter
  * implies overriding the window frame clause.
+ *
+ * Peloton porting: use c++ inheritance
  */
-typedef struct WindowDef
+typedef struct WindowDef : Node
 {
-	NodeTag		type;
+	//NodeTag		type;
 	char	   *name;			/* window's own name */
 	char	   *refname;		/* referenced window name, if any */
 	List	   *partitionClause;	/* PARTITION BY expression list */
