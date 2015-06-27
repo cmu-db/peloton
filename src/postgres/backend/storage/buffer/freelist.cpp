@@ -504,7 +504,7 @@ StrategyInitialize(bool init)
 
 
 /* ----------------------------------------------------------------
- *				Backend-private buffer ring management
+ *				Backend-cprivate buffer ring management
  * ----------------------------------------------------------------
  */
 

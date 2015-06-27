@@ -8,7 +8,7 @@
  * EIDRM means EINVAL in PGSharedMemoryIsInUse().  This is reasonably safe
  * since in fact Linux has no excuse for ever returning EIDRM; it doesn't
  * track removed segments in a way that would allow distinguishing them from
- * private ones.  But someday that code might get upgraded, and we'd have
+ * cprivate ones.  But someday that code might get upgraded, and we'd have
  * to have a kernel version test here.
  */
 #define HAVE_LINUX_EIDRM_BUG

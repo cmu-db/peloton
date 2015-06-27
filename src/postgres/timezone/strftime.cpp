@@ -23,7 +23,7 @@
 #include <fcntl.h>
 #include <locale.h>
 
-#include "private.h"
+#include "cprivate.h"
 #include "tzfile.h"
 
 

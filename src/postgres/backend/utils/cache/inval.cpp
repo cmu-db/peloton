@@ -456,7 +456,7 @@ ProcessInvalidationMessagesMulti(InvalidationListHeader *hdr,
 }
 
 /* ----------------------------------------------------------------
- *					  private support functions
+ *					  cprivate support functions
  * ----------------------------------------------------------------
  */
 

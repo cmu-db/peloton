@@ -98,7 +98,7 @@ static volatile BufferDesc *PinCountWaitBuf = NULL;
 /*
  * Backend-Private refcount management:
  *
- * Each buffer also has a private refcount that keeps track of the number of
+ * Each buffer also has a cprivate refcount that keeps track of the number of
  * times the buffer is pinned in the current process.  This is so that the
  * shared refcount needs to be modified only once if a buffer is pinned more
  * than once by an individual backend.  It's also used to check that no buffers
@@ -1477,7 +1477,7 @@ PinBuffer(volatile BufferDesc *buf, BufferAccessStrategy strategy)
  *
  * Also all callers only ever use this function when it's known that the
  * buffer can't have a preexisting pin by this backend. That allows us to skip
- * searching the private refcount array & hash, which is a boon, because the
+ * searching the cprivate refcount array & hash, which is a boon, because the
  * spinlock is still held.
  *
  * Note: use of this routine is frequently mandatory, not just an optimization
@@ -2393,7 +2393,7 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 	/*
 	 * Update page checksum if desired.  Since we have only shared lock on the
 	 * buffer, other processes might be updating hint bits in it, so we must
-	 * copy the page to private storage if we do checksumming.
+	 * copy the page to cprivate storage if we do checksumming.
 	 */
 	bufToWrite = PageSetChecksumCopy((Page) bufBlock, buf->tag.blockNum);
 

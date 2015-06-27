@@ -229,7 +229,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 	 *
 	 * When using fmgr_security_definer, function stats tracking is always
 	 * disabled at the outer level, and instead we set the flag properly in
-	 * fmgr_security_definer's private flinfo and implement the tracking
+	 * fmgr_security_definer's cprivate flinfo and implement the tracking
 	 * inside fmgr_security_definer.  This loses the ability to charge the
 	 * overhead of fmgr_security_definer to the function, but gains the
 	 * ability to set the track_functions GUC as a local GUC parameter of an

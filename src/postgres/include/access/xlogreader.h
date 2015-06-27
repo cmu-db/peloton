@@ -135,7 +135,7 @@ struct XLogReaderState
 	int			max_block_id;	/* highest block_id in use (-1 if none) */
 
 	/* ----------------------------------------
-	 * private/internal state
+	 * cprivate/internal state
 	 * ----------------------------------------
 	 */
 

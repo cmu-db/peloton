@@ -582,7 +582,7 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 			 * to some large data structure.  The aggregate definition can
 			 * provide an estimate of the size.  If it doesn't, then we assume
 			 * ALLOCSET_DEFAULT_INITSIZE, which is a good guess if the data is
-			 * being kept in a private memory context, as is done by
+			 * being kept in a cprivate memory context, as is done by
 			 * array_agg() for instance.
 			 */
 			if (aggtransspace > 0)

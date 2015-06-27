@@ -402,7 +402,7 @@ btbeginscan(PG_FUNCTION_ARGS)
 	/* get the scan */
 	scan = RelationGetIndexScan(rel, nkeys, norderbys);
 
-	/* allocate private workspace */
+	/* allocate cprivate workspace */
 	so = (BTScanOpaque) palloc(sizeof(BTScanOpaqueData));
 	BTScanPosInvalidate(so->currPos);
 	BTScanPosInvalidate(so->markPos);

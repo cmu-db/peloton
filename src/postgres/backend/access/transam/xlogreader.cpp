@@ -927,7 +927,7 @@ out:
  * ----------------------------------------
  */
 
-/* private function to reset the state between records */
+/* cprivate function to reset the state between records */
 static void
 ResetDecoder(XLogReaderState *state)
 {

@@ -2259,7 +2259,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	pgstat_count_heap_insert(relation, 1);
 
 	/*
-	 * If heaptup is a private copy, release it.  Don't forget to copy t_self
+	 * If heaptup is a cprivate copy, release it.  Don't forget to copy t_self
 	 * back to the caller's image, too.
 	 */
 	if (heaptup != tup)
@@ -3878,7 +3878,7 @@ l2:
 	pgstat_count_heap_update(relation, use_hot_update);
 
 	/*
-	 * If heaptup is a private copy, release it.  Don't forget to copy t_self
+	 * If heaptup is a cprivate copy, release it.  Don't forget to copy t_self
 	 * back to the caller's image, too.
 	 */
 	if (heaptup != newtup)
@@ -6236,7 +6236,7 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
  * Caller is responsible for ensuring that no other backend can access the
  * storage underlying this tuple, either by holding an exclusive lock on the
  * buffer containing it (which is what lazy VACUUM does), or by having it by
- * in private storage (which is what CLUSTER and friends do).
+ * in cprivate storage (which is what CLUSTER and friends do).
  *
  * Note: it might seem we could make the changes without exclusive lock, since
  * TransactionId read/write is assumed atomic anyway.  However there is a race

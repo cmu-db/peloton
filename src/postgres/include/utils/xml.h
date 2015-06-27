@@ -43,7 +43,7 @@ typedef enum
 	PG_XML_STRICTNESS_ALL		/* report all notices/warnings/errors */
 } PgXmlStrictness;
 
-/* struct PgXmlErrorContext is private to xml.c */
+/* struct PgXmlErrorContext is cprivate to xml.c */
 typedef struct PgXmlErrorContext PgXmlErrorContext;
 
 #define DatumGetXmlP(X)		((xmltype *) PG_DETOAST_DATUM(X))

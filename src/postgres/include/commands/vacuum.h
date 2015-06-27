@@ -119,7 +119,7 @@ typedef struct VacAttrStats
 	char		statypalign[STATISTIC_NUM_SLOTS];
 
 	/*
-	 * These fields are private to the main ANALYZE code and should not be
+	 * These fields are cprivate to the main ANALYZE code and should not be
 	 * looked at by type-specific functions.
 	 */
 	int			tupattnum;		/* attribute number within tuples */

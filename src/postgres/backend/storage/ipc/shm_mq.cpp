@@ -79,7 +79,7 @@ struct shm_mq
 };
 
 /*
- * This structure is a backend-private handle for access to a queue.
+ * This structure is a backend-cprivate handle for access to a queue.
  *
  * mqh_queue is a pointer to the queue we've attached, and mqh_segment is
  * a pointer to the dynamic shared memory segment that contains it.

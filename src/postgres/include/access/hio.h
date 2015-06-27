@@ -21,7 +21,7 @@
 
 
 /*
- * state for bulk inserts --- private to heapam.c and hio.c
+ * state for bulk inserts --- cprivate to heapam.c and hio.c
  *
  * If current_buf isn't InvalidBuffer, then we are holding an extra pin
  * on that buffer.

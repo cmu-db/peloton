@@ -736,7 +736,7 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 		onpage_tup->t_ctid = tup->t_self;
 	}
 
-	/* If heaptup is a private copy, release it. */
+	/* If heaptup is a cprivate copy, release it. */
 	if (heaptup != tup)
 		heap_freetuple(heaptup);
 }

@@ -73,7 +73,7 @@ typedef struct
 	GistBufferingMode bufferingMode;
 } GISTBuildState;
 
-/* prototypes for private functions */
+/* prototypes for cprivate functions */
 static void gistInitBuffering(GISTBuildState *buildstate);
 static int	calculatePagesPerBuffer(GISTBuildState *buildstate, int levelStep);
 static void gistBuildCallback(Relation index,

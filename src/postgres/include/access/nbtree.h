@@ -463,11 +463,11 @@ typedef struct xl_btree_newroot
 
 /*
  *	BTStackData -- As we descend a tree, we push the (location, downlink)
- *	pairs from internal pages onto a private stack.  If we split a
+ *	pairs from internal pages onto a cprivate stack.  If we split a
  *	leaf, we use this stack to walk back up the tree and insert data
  *	into parent pages (and possibly to split them, too).  Lehman and
  *	Yao's update algorithm guarantees that under no circumstances can
- *	our private stack give us an irredeemably bad picture up the tree.
+ *	our cprivate stack give us an irredeemably bad picture up the tree.
  *	Again, see the paper for details.
  */
 
@@ -482,7 +482,7 @@ typedef struct BTStackData
 typedef BTStackData *BTStack;
 
 /*
- * BTScanOpaqueData is the btree-private state needed for an indexscan.
+ * BTScanOpaqueData is the btree-cprivate state needed for an indexscan.
  * This consists of preprocessed scan keys (see _bt_preprocess_keys() for
  * details of the preprocessing), information about the current location
  * of the scan, and information about the marked location, if any.  (We use
@@ -638,7 +638,7 @@ typedef struct BTScanOpaqueData
 typedef BTScanOpaqueData *BTScanOpaque;
 
 /*
- * We use some private sk_flags bits in preprocessed scan keys.  We're allowed
+ * We use some cprivate sk_flags bits in preprocessed scan keys.  We're allowed
  * to use bits 16-31 (see skey.h).  The uppermost bits are copied from the
  * index's indoption[] array entry for the index attribute.
  */

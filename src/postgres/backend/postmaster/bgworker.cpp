@@ -34,7 +34,7 @@
 #include "utils/timeout.h"
 
 /*
- * The postmaster's list of registered background workers, in private memory.
+ * The postmaster's list of registered background workers, in cprivate memory.
  */
 slist_head	BackgroundWorkerList = SLIST_STATIC_INIT(BackgroundWorkerList);
 
@@ -130,7 +130,7 @@ BackgroundWorkerShmemInit(void)
 		/*
 		 * Copy contents of worker list into shared memory.  Record the shared
 		 * memory slot assigned to each worker.  This ensures a 1-to-1
-		 * correspondence between the postmaster's private list and the array
+		 * correspondence between the postmaster's cprivate list and the array
 		 * in shared memory.
 		 */
 		slist_foreach(siter, &BackgroundWorkerList)
@@ -166,7 +166,7 @@ BackgroundWorkerShmemInit(void)
 }
 
 /*
- * Search the postmaster's backend-private list of RegisteredBgWorker objects
+ * Search the postmaster's backend-cprivate list of RegisteredBgWorker objects
  * for the one that maps to the given slot number.
  */
 static RegisteredBgWorker *

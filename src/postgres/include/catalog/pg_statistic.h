@@ -184,7 +184,7 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  *				(values to be documented in ESRI ST_Geometry documentation)
  *	300-9999:	reserved for future public assignments
  *
- * For private use you may choose a "kind" code at random in the range
+ * For cprivate use you may choose a "kind" code at random in the range
  * 10000-30000.  However, for code that is to be widely disseminated it is
  * better to obtain a publicly defined "kind" code by request from the
  * PostgreSQL Global Development Group.

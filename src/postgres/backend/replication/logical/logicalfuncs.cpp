@@ -43,7 +43,7 @@
 
 #include "storage/fd.h"
 
-/* private date for writing out data */
+/* cprivate date for writing out data */
 typedef struct DecodingOutputState
 {
 	Tuplestorestate *tupstore;
