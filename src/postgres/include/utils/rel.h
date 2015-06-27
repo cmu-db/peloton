@@ -102,7 +102,7 @@ typedef struct RelationData
 	Oid			rd_id;			/* relation's object id */
 	LockInfoData rd_lockInfo;	/* lock mgr's info for locking relation */
 	RuleLock   *rd_rules;		/* rewrite rules */
-	MemoryContext rd_rulescxt;	/* private memory cxt for rd_rules, if any */
+	MemoryContext rd_rulescxt;	/* cprivate memory cxt for rd_rules, if any */
 	TriggerDesc *trigdesc;		/* Trigger info, or NULL if rel has none */
 	/* use "struct" here to avoid needing to include rowsecurity.h: */
 	struct RowSecurityDesc *rd_rsdesc;	/* row security policies, or NULL */
@@ -138,14 +138,14 @@ typedef struct RelationData
 	 * arrays are indexed by support function number, which is a sufficient
 	 * identifier given that restriction.
 	 *
-	 * Note: rd_amcache is available for index AMs to cache private data about
+	 * Note: rd_amcache is available for index AMs to cache cprivate data about
 	 * an index.  This must be just a cache since it may get reset at any time
 	 * (in particular, it will get reset by a relcache inval message for the
 	 * index).  If used, it must point to a single memory chunk palloc'd in
 	 * rd_indexcxt.  A relcache reset will include freeing that chunk and
 	 * setting rd_amcache = NULL.
 	 */
-	MemoryContext rd_indexcxt;	/* private memory cxt for this stuff */
+	MemoryContext rd_indexcxt;	/* cprivate memory cxt for this stuff */
 	RelationAmInfo *rd_aminfo;	/* lookup info for funcs found in pg_am */
 	Oid		   *rd_opfamily;	/* OIDs of op families for each index col */
 	Oid		   *rd_opcintype;	/* OIDs of opclass declared input data types */
@@ -192,7 +192,7 @@ typedef struct RelationData
  *
  * RelationGetFillFactor() and RelationGetTargetPageFreeSpace() can only
  * be applied to relations that use this format or a superset for
- * private options data.
+ * cprivate options data.
  */
  /* autovacuum-related reloptions. */
 typedef struct AutoVacOpts

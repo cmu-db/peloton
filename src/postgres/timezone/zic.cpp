@@ -14,7 +14,7 @@
 
 #include "pg_getopt.h"
 
-#include "private.h"
+#include "cprivate.h"
 #include "pgtz.h"
 #include "tzfile.h"
 

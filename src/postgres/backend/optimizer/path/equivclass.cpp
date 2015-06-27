@@ -2015,7 +2015,7 @@ add_child_rel_equivalences(PlannerInfo *root,
  */
 void
 mutate_eclass_expressions(PlannerInfo *root,
-						  Node *(*mutator) (),
+						  Node *(*mutator) (Node *, void *),
 						  void *context,
 						  bool include_child_exprs)
 {

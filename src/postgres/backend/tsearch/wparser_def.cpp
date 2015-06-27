@@ -343,7 +343,7 @@ TParserInit(char *str, int len)
 
 /*
  * As an alternative to a full TParserInit one can create a
- * TParserCopy which basically is a regular TParser without a private
+ * TParserCopy which basically is a regular TParser without a cprivate
  * copy of the string - instead it uses the one from another TParser.
  * This is useful because at some places TParsers are created
  * recursively and the repeated copying around of the strings can

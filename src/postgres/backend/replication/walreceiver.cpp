@@ -128,7 +128,7 @@ static StringInfoData incoming_message;
  */
 static volatile bool WalRcvImmediateInterruptOK = false;
 
-/* Prototypes for private functions */
+/* Prototypes for cprivate functions */
 static void ProcessWalRcvInterrupts(void);
 static void EnableWalRcvImmediateExit(void);
 static void DisableWalRcvImmediateExit(void);

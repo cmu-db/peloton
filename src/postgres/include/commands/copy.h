@@ -18,7 +18,7 @@
 #include "nodes/parsenodes.h"
 #include "tcop/dest.h"
 
-/* CopyStateData is private in commands/copy.c */
+/* CopyStateData is cprivate in commands/copy.c */
 typedef struct CopyStateData *CopyState;
 
 extern Oid DoCopy(const CopyStmt *stmt, const char *queryString,

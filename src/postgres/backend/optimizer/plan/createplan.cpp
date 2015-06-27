@@ -200,7 +200,7 @@ create_plan(PlannerInfo *root, Path *best_path)
 	/* plan_params should not be in use in current query level */
 	Assert(root->plan_params == NIL);
 
-	/* Initialize this module's private workspace in PlannerInfo */
+	/* Initialize this module's cprivate workspace in PlannerInfo */
 	root->curOuterRels = NULL;
 	root->curOuterParams = NIL;
 
@@ -5030,7 +5030,7 @@ make_modifytable(PlannerInfo *root,
 
 	/*
 	 * For each result relation that is a foreign table, allow the FDW to
-	 * construct private plan data, and accumulate it all into a list.
+	 * construct cprivate plan data, and accumulate it all into a list.
 	 */
 	fdw_private_list = NIL;
 	i = 0;

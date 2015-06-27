@@ -931,7 +931,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	estate->es_epqScanDone = NULL;
 
 	/*
-	 * Initialize private state information for each SubPlan.  We must do this
+	 * Initialize cprivate state information for each SubPlan.  We must do this
 	 * before running ExecInitNode on the main query tree, since
 	 * ExecInitSubPlan expects to be able to find these entries.
 	 */
@@ -962,7 +962,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	}
 
 	/*
-	 * Initialize the private state information for all the nodes in the query
+	 * Initialize the cprivate state information for all the nodes in the query
 	 * tree.  This opens files, allocates storage and leaves us ready to start
 	 * processing tuples.
 	 */
@@ -2811,7 +2811,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	estate->es_tupleTable = NIL;
 
 	/*
-	 * Initialize private state information for each SubPlan.  We must do this
+	 * Initialize cprivate state information for each SubPlan.  We must do this
 	 * before running ExecInitNode on the main query tree, since
 	 * ExecInitSubPlan expects to be able to find these entries. Some of the
 	 * SubPlans might not be used in the part of the plan tree we intend to
@@ -2830,7 +2830,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	}
 
 	/*
-	 * Initialize the private state information for all the nodes in the part
+	 * Initialize the cprivate state information for all the nodes in the part
 	 * of the plan tree we need to run.  This opens files, allocates storage
 	 * and leaves us ready to start processing tuples.
 	 */

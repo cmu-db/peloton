@@ -465,7 +465,7 @@ findoprnd(QueryItem *ptr, int size)
  * having an operator with no operand.
  *
  * opaque is passed on to pushval as is, pushval can use it to store its
- * private state.
+ * cprivate state.
  *
  * The returned query might contain QI_STOPVAL nodes. The caller is responsible
  * for cleaning them up (with clean_fakeval)

@@ -300,7 +300,7 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	}
 	else
 	{
-		/* Create the hash table's private memory context */
+		/* Create the hash table's cprivate memory context */
 		if (flags & HASH_CONTEXT)
 			CurrentDynaHashCxt = info->hcxt;
 		else

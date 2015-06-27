@@ -131,7 +131,7 @@ struct addrinfo
 
 #ifndef HAVE_GETADDRINFO
 
-/* Rename private copies per comments above */
+/* Rename cprivate copies per comments above */
 #ifdef getaddrinfo
 #undef getaddrinfo
 #endif

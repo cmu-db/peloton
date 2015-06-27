@@ -4,7 +4,7 @@
  *	Generic trigger procedures for referential integrity constraint
  *	checks.
  *
- *	Note about memory management: the private hashtables kept here live
+ *	Note about memory management: the cprivate hashtables kept here live
  *	across query and transaction boundaries, in fact they live as long as
  *	the backend does.  This works because the hashtable structures
  *	themselves are allocated by dynahash.c in its permanent DynaHashCxt,
@@ -3403,7 +3403,7 @@ ri_InitHashTables(void)
 /* ----------
  * ri_FetchPreparedPlan -
  *
- *	Lookup for a query key in our private hash table of prepared
+ *	Lookup for a query key in our cprivate hash table of prepared
  *	and saved SPI execution plans. Return the plan if found or NULL.
  * ----------
  */
@@ -3457,7 +3457,7 @@ ri_FetchPreparedPlan(RI_QueryKey *key)
 /* ----------
  * ri_HashPreparedPlan -
  *
- *	Add another plan to our private SPI query plan hashtable.
+ *	Add another plan to our cprivate SPI query plan hashtable.
  * ----------
  */
 static void

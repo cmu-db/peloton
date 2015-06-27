@@ -8,7 +8,7 @@
 
 #include "postgres_fe.h"
 
-#include "private.h"
+#include "cprivate.h"
 
 
 #define nonzero(n)	(((n) == 0) ? 1 : (n))

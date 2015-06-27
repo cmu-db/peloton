@@ -131,7 +131,7 @@ typedef struct DomainConstraintRef
 {
 	List	   *constraints;	/* list of DomainConstraintState nodes */
 
-	/* Management data --- treat these fields as private to typcache.c */
+	/* Management data --- treat these fields as cprivate to typcache.c */
 	TypeCacheEntry *tcache;		/* owning typcache entry */
 	DomainConstraintCache *dcc; /* current constraints, or NULL if none */
 	MemoryContextCallback callback;		/* used to release refcount when done */

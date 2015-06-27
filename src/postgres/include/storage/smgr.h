@@ -59,7 +59,7 @@ typedef struct SMgrRelationData
 	/* additional public fields may someday exist here */
 
 	/*
-	 * Fields below here are intended to be private to smgr.c and its
+	 * Fields below here are intended to be cprivate to smgr.c and its
 	 * submodules.  Do not touch them from elsewhere.
 	 */
 	int			smgr_which;		/* storage manager selector */

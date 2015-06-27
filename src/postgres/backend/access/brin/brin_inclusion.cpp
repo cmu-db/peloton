@@ -51,7 +51,7 @@
 
 /*
  * Subtract this from procnum to obtain index in InclusionOpaque arrays
- * (Must be equal to minimum of private procnums).
+ * (Must be equal to minimum of cprivate procnums).
  */
 #define		PROCNUM_BASE			11
 

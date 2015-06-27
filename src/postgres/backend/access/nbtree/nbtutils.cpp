@@ -734,7 +734,7 @@ _bt_restore_array_keys(IndexScanDesc scan)
  * comparison on the row's first index column, for the purposes of the logic
  * about required keys.
  *
- * Note: the reason we have to copy the preprocessed scan keys into private
+ * Note: the reason we have to copy the preprocessed scan keys into cprivate
  * storage is that we are modifying the array based on comparisons of the
  * key argument values, which could change on a rescan or after moving to
  * cnew elements of array keys.  Therefore we can't overwrite the source data.
@@ -1294,7 +1294,7 @@ _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption)
  *
  * Note: when we set required-key flag bits in a subsidiary scankey, we are
  * scribbling on a data structure belonging to the index AM's caller, not on
- * our private copy.  This should be OK because the marking will not change
+ * our cprivate copy.  This should be OK because the marking will not change
  * from scan to scan within a query, and so we'd just re-mark the same way
  * anyway on a rescan.  Something to keep an eye on though.
  */

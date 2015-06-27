@@ -369,7 +369,7 @@ static XLogRecPtr RedoStartLSN = InvalidXLogRecPtr;
  * WALWriteLock.  To update it, you need to hold both locks.  The point of
  * this arrangement is that the value can be examined by code that already
  * holds WALWriteLock without needing to grab info_lck as well.  In addition
- * to the shared variable, each backend has a private copy of LogwrtResult,
+ * to the shared variable, each backend has a cprivate copy of LogwrtResult,
  * which is updated when convenient.
  *
  * The request bookkeeping is simpler: there is a shared XLogCtl->LogwrtRqst
@@ -650,7 +650,7 @@ typedef struct XLogCtlData
 
 static XLogCtlData *XLogCtl = NULL;
 
-/* a private copy of XLogCtl->Insert.WALInsertLocks, for convenience */
+/* a cprivate copy of XLogCtl->Insert.WALInsertLocks, for convenience */
 static WALInsertLockPadded *WALInsertLocks = NULL;
 
 /*
@@ -7813,7 +7813,7 @@ GetRedoRecPtr(void)
  * Return information needed to decide whether a modified block needs a
  * full-page image to be included in the WAL record.
  *
- * The returned values are cached copies from backend-private memory, and
+ * The returned values are cached copies from backend-cprivate memory, and
  * possibly out-of-date.  XLogInsertRecord will re-check them against
  * up-to-date values, while holding the WAL insert lock.
  */
@@ -10953,7 +10953,7 @@ CancelBackup(void)
  * XLogPageRead() to try fetching the record from another source, or to
  * sleep and retry.
  *
- * Peloton porting: changed private to cprivate
+ * Peloton porting: changed cprivate to cprivate
  */
 static int
 XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr, int reqLen,

@@ -484,7 +484,7 @@ lookup_type_cache(Oid type_id, int flags)
 	 * Set up fmgr lookup info as requested
 	 *
 	 * Note: we tell fmgr the finfo structures live in CacheMemoryContext,
-	 * which is not quite right (they're really in the hash table's private
+	 * which is not quite right (they're really in the hash table's cprivate
 	 * memory context) but this will do for our purposes.
 	 *
 	 * Note: the code above avoids invalidating the finfo structs unless the

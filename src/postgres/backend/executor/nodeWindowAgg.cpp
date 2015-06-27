@@ -144,7 +144,7 @@ typedef struct WindowStatePerAggData
 	int			wfuncno;		/* index of associated PerFuncData */
 
 	/* Context holding transition value and possibly other subsidiary data */
-	MemoryContext aggcontext;	/* may be private, or winstate->aggcontext */
+	MemoryContext aggcontext;	/* may be cprivate, or winstate->aggcontext */
 
 	/* Current transition value */
 	Datum		transValue;		/* current transition value */
@@ -207,7 +207,7 @@ initialize_windowaggregate(WindowAggState *winstate,
 	MemoryContext oldContext;
 
 	/*
-	 * If we're using a private aggcontext, we may reset it here.  But if the
+	 * If we're using a cprivate aggcontext, we may reset it here.  But if the
 	 * context is shared, we don't know which other aggregates may still need
 	 * it, so we must leave it to the caller to reset at an appropriate time.
 	 */
@@ -1809,7 +1809,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	/*
 	 * Create mid-lived context for aggregate trans values etc.
 	 *
-	 * Note that moving aggregates each use their own private context, not
+	 * Note that moving aggregates each use their own cprivate context, not
 	 * this one.
 	 */
 	winstate->aggcontext =

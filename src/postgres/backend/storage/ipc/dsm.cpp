@@ -71,7 +71,7 @@ struct dsm_segment
 	ResourceOwner resowner;		/* Resource owner. */
 	dsm_handle	handle;			/* Segment name. */
 	uint32		control_slot;	/* Slot in control segment. */
-	void	   *impl_private;	/* Implementation-specific private data. */
+	void	   *impl_private;	/* Implementation-specific cprivate data. */
 	void	   *mapped_address; /* Mapping address, or NULL if unmapped. */
 	Size		mapped_size;	/* Size of our mapping. */
 	slist_head	on_detach;		/* On-detach callbacks. */
@@ -787,7 +787,7 @@ dsm_detach(dsm_segment *seg)
 		}
 	}
 
-	/* Clean up our remaining backend-private data structures. */
+	/* Clean up our remaining backend-cprivate data structures. */
 	if (seg->resowner != NULL)
 		ResourceOwnerForgetDSM(seg->resowner, seg);
 	dlist_delete(&seg->node);

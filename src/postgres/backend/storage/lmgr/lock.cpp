@@ -253,7 +253,7 @@ static HTAB *LockMethodProcLockHash;
 static HTAB *LockMethodLocalHash;
 
 
-/* private state for error cleanup */
+/* cprivate state for error cleanup */
 static LOCALLOCK *StrongLockInProgress;
 static LOCALLOCK *awaitedLock;
 static ResourceOwner awaitedOwner;
@@ -2436,7 +2436,7 @@ FastPathGrantRelationLock(Oid relid, LOCKMODE lockmode)
 
 /*
  * FastPathUnGrantRelationLock
- *		Release fast-path lock, if present.  Update backend-private local
+ *		Release fast-path lock, if present.  Update backend-cprivate local
  *		use count, while we're at it.
  */
 static bool

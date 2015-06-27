@@ -57,7 +57,7 @@ typedef struct IndexVacuumInfo
  * ambulkdelete calls were made (because no tuples needed deletion).
  * Note that an index AM could choose to return a larger struct
  * of which this is just the first field; this provides a way for ambulkdelete
- * to communicate additional private data to amvacuumcleanup.
+ * to communicate additional cprivate data to amvacuumcleanup.
  *
  * Note: pages_removed is the amount by which the index physically shrank,
  * if any (ie the change in its total size on disk).  pages_deleted and

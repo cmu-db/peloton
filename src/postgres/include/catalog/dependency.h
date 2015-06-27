@@ -107,7 +107,7 @@ typedef enum SharedDependencyType
 	SHARED_DEPENDENCY_INVALID = 0
 } SharedDependencyType;
 
-/* expansible list of ObjectAddresses (private in dependency.c) */
+/* expansible list of ObjectAddresses (cprivate in dependency.c) */
 typedef struct ObjectAddresses ObjectAddresses;
 
 /*

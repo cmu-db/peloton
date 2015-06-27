@@ -2202,7 +2202,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 	/*
 	 * Set up aggregate-result storage in the output expr context, and also
-	 * allocate my private per-agg working storage
+	 * allocate my cprivate per-agg working storage
 	 */
 	econtext = aggstate->ss.ps.ps_ExprContext;
 	econtext->ecxt_aggvalues = (Datum *) palloc0(sizeof(Datum) * numaggs);
