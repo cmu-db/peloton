@@ -252,6 +252,9 @@ template<>
 Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::
 ~Aggregator(){
   // Clean up aggregators
+  for (oid_t column_itr = 0; column_itr < aggregate_columns.size(); column_itr++) {
+    delete aggregates[column_itr];
+  }
   delete[] aggregates;
 }
 
@@ -294,11 +297,8 @@ Advance(AbstractTuple *cur_tuple,
     // Create aggregate
     for (oid_t column_itr = 0; column_itr < aggregate_columns.size(); column_itr++) {
       // Clean up previous aggregate
-      if (aggregates[column_itr] != nullptr) {
-        aggregates[column_itr]->~Agg();
-      }
-      aggregates[column_itr] =
-          GetAggInstance(aggregate_types[column_itr]);
+      delete aggregates[column_itr];
+      aggregates[column_itr] =  GetAggInstance(aggregate_types[column_itr]);
     }
   }
 

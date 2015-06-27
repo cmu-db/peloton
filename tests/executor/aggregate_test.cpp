@@ -61,7 +61,15 @@ TEST(AggregateTests, DistinctTest){
   std::map<oid_t, oid_t> aggregate_columns_map;
   std::vector<ExpressionType> aggregate_types;
 
-  auto output_table_schema = data_table.get()->GetSchema();
+  // Create output table schema
+  auto data_table_schema = data_table.get()->GetSchema();
+  std::vector<oid_t> set = { 0, 1, 2, 3};
+  std::vector<catalog::ColumnInfo> columns;
+  for(auto column_index : set){
+    columns.push_back(data_table_schema->GetColumnInfo(column_index));
+  }
+
+  auto output_table_schema = new catalog::Schema(columns);
 
   // Create the plan node
   planner::AggregateNode node(aggregate_columns,
@@ -129,7 +137,15 @@ TEST(AggregateTests, GroupByTest){
   std::map<oid_t, oid_t> aggregate_columns_map;
   std::vector<ExpressionType> aggregate_types;
 
-  auto output_table_schema = data_table.get()->GetSchema();
+  // Create output table schema
+  auto data_table_schema = data_table.get()->GetSchema();
+  std::vector<oid_t> set = { 0, 1, 2, 3};
+  std::vector<catalog::ColumnInfo> columns;
+  for(auto column_index : set){
+    columns.push_back(data_table_schema->GetColumnInfo(column_index));
+  }
+
+  auto output_table_schema = new catalog::Schema(columns);
 
   // Create the plan node
   planner::AggregateNode node(aggregate_columns,
@@ -211,7 +227,7 @@ TEST(AggregateTests, AggregateTest){
     columns.push_back(data_table_schema->GetColumnInfo(column_index));
   }
 
-  std::unique_ptr<catalog::Schema> output_table_schema(new catalog::Schema(columns));
+  auto output_table_schema = new catalog::Schema(columns);
 
   // Create the plan node
   planner::AggregateNode node(aggregate_columns,
@@ -220,7 +236,7 @@ TEST(AggregateTests, AggregateTest){
                               nullptr,
                               pass_through_columns_map,
                               aggregate_types,
-                              output_table_schema.get());
+                              output_table_schema);
 
   // Create and set up executor
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
@@ -246,17 +262,18 @@ TEST(AggregateTests, AggregateTest){
 
   EXPECT_TRUE(executor.Execute());
 
-  auto logical_tile = executor.GetOutput();
-  EXPECT_TRUE(logical_tile != nullptr);
+  std::unique_ptr<executor::LogicalTile> logical_tile(executor.GetOutput());
+  EXPECT_TRUE(logical_tile.get() != nullptr);
 
-  EXPECT_TRUE(logical_tile->GetValue(0, 2) == ValueFactory::GetDoubleValue(110));
-  EXPECT_TRUE(logical_tile->GetValue(1, 2) == ValueFactory::GetDoubleValue(360));
-  EXPECT_TRUE(logical_tile->GetValue(0, 3) == ValueFactory::GetDoubleValue(22));
-  EXPECT_TRUE(logical_tile->GetValue(1, 3) == ValueFactory::GetDoubleValue(72));
+  EXPECT_TRUE(logical_tile.get()->GetValue(0, 2) == ValueFactory::GetDoubleValue(110));
+  EXPECT_TRUE(logical_tile.get()->GetValue(1, 2) == ValueFactory::GetDoubleValue(360));
+  EXPECT_TRUE(logical_tile.get()->GetValue(0, 3) == ValueFactory::GetDoubleValue(22));
+  EXPECT_TRUE(logical_tile.get()->GetValue(1, 3) == ValueFactory::GetDoubleValue(72));
 
   txn_manager.CommitTransaction(txn);
   txn_manager.EndTransaction(txn);
 }
+
 
 } // namespace test
 } // namespace nstore
