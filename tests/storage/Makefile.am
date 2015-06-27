@@ -9,12 +9,12 @@ check_PROGRAMS += tuple_test \
 				  tile_group_test
 
 storage_tests_common_ld = \
-						  $(obj_DIR)/catalog/schema.o \
-						  $(obj_DIR)/common/types.o \
-						  $(obj_DIR)/common/value.o \
-						  $(obj_DIR)/common/varlen.o \
-						  $(obj_DIR)/common/pool.o \
-						  $(obj_DIR)/storage/tuple.o
+						  $(obj_DIR)/catalog/libpeloton_la-schema.lo \
+						  $(obj_DIR)/common/libpeloton_la-types.lo \
+						  $(obj_DIR)/common/libpeloton_la-value.lo \
+						  $(obj_DIR)/common/libpeloton_la-varlen.lo \
+						  $(obj_DIR)/common/libpeloton_la-pool.lo \
+						  $(obj_DIR)/storage/libpeloton_la-tuple.lo
 
 
 tuple_test_SOURCES = storage/tuple_test.cpp
@@ -27,7 +27,7 @@ tile_test_SOURCES = storage/tile_test.cpp
 
 tile_test_LDADD = \
 				  $(storage_tests_common_ld) \
-				  $(obj_DIR)/storage/tile.o				  
+				  $(obj_DIR)/storage/libpeloton_la-tile.lo				  
 
 tile_group_test_SOURCES = \
 						  harness.cpp \
@@ -35,12 +35,12 @@ tile_group_test_SOURCES = \
 
 tile_group_test_LDADD = \
 						$(storage_tests_common_ld) \
-						$(obj_DIR)/catalog/manager.o \
-						$(obj_DIR)/concurrency/transaction_manager.o \
-						$(obj_DIR)/concurrency/transaction.o \
-						$(obj_DIR)/storage/tile.o \
-						$(obj_DIR)/storage/tile_group.o \
-						$(obj_DIR)/storage/tile_group_header.o \
-						$(obj_DIR)/storage/tile_group_factory.o
+						$(obj_DIR)/catalog/libpeloton_la-manager.lo \
+						$(obj_DIR)/concurrency/libpeloton_la-transaction_manager.lo \
+						$(obj_DIR)/concurrency/libpeloton_la-transaction.lo \
+						$(obj_DIR)/storage/libpeloton_la-tile.lo \
+						$(obj_DIR)/storage/libpeloton_la-tile_group.lo \
+						$(obj_DIR)/storage/libpeloton_la-tile_group_header.lo \
+						$(obj_DIR)/storage/libpeloton_la-tile_group_factory.lo
 
 

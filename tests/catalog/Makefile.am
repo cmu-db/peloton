@@ -9,17 +9,17 @@ check_PROGRAMS += catalog_test \
 			tuple_schema_test
 
 catalog_tests_common_ld = \
-						  $(obj_DIR)/catalog/manager.o \
-						  $(obj_DIR)/catalog/schema.o \
-						  $(obj_DIR)/common/types.o \
-						  $(obj_DIR)/common/value.o \
-						  $(obj_DIR)/common/varlen.o \
-						  $(obj_DIR)/common/pool.o \
-						  $(obj_DIR)/storage/tile_group.o \
-						  $(obj_DIR)/storage/tile_group_header.o \
-						  $(obj_DIR)/storage/tile_group_factory.o \
-						  $(obj_DIR)/storage/tile.o \
-						  $(obj_DIR)/storage/tuple.o
+						  $(obj_DIR)/catalog/libpeloton_la-manager.lo \
+						  $(obj_DIR)/catalog/libpeloton_la-schema.lo \
+						  $(obj_DIR)/common/libpeloton_la-types.lo \
+						  $(obj_DIR)/common/libpeloton_la-value.lo \
+						  $(obj_DIR)/common/libpeloton_la-varlen.lo \
+						  $(obj_DIR)/common/libpeloton_la-pool.lo \
+						  $(obj_DIR)/storage/libpeloton_la-tile_group.lo \
+						  $(obj_DIR)/storage/libpeloton_la-tile_group_header.lo \
+						  $(obj_DIR)/storage/libpeloton_la-tile_group_factory.lo \
+						  $(obj_DIR)/storage/libpeloton_la-tile.lo \
+						  $(obj_DIR)/storage/libpeloton_la-tuple.lo
 
 catalog_test_SOURCES = \
 					   catalog/catalog_test.cpp
@@ -34,5 +34,5 @@ manager_test_LDADD = \
 tuple_schema_test_SOURCES = catalog/tuple_schema_test.cpp
 
 tuple_schema_test_LDADD = \
-						  $(obj_DIR)/catalog/schema.o \
-						  $(obj_DIR)/common/types.o
+						  $(obj_DIR)/catalog/libpeloton_la-schema.lo \
+						  $(obj_DIR)/common/libpeloton_la-types.lo
