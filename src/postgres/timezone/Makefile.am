@@ -5,11 +5,11 @@
 ######################################################################
 
 postgres_timezone_FILES = \
-						  postgres/timezone/ialloc.c \
-						  postgres/timezone/localtime.c \
-						  postgres/timezone/pgtz.c \
-						  postgres/timezone/scheck.c \
-						  postgres/timezone/strftime.c
+						  postgres/timezone/ialloc.cpp \
+						  postgres/timezone/localtime.cpp \
+						  postgres/timezone/pgtz.cpp \
+						  postgres/timezone/scheck.cpp \
+						  postgres/timezone/strftime.cpp
 
 postgres_timezone_INCLUDES = \
 							 -I$(srcdir)/postgres/include \
