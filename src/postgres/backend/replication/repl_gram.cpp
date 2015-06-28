@@ -47,7 +47,7 @@
 #define YYBISON_VERSION "3.0.2"
 
 /* Skeleton name.  */
-#define YYSKELETON_NAME "yacc.c"
+#define YYSKELETON_NAME "yacc.cpp"
 
 /* Pure parsers.  */
 #define YYPURE 0
@@ -111,7 +111,7 @@ Node *replication_parse_result;
 #define YYFREE   pfree
 
 
-#line 115 "repl_gram.c" /* yacc.c:339  */
+#line 115 "repl_gram.cpp" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -183,7 +183,7 @@ union YYSTYPE
 		List					*list;
 		DefElem					*defelt;
 
-#line 187 "repl_gram.c" /* yacc.c:355  */
+#line 187 "repl_gram.cpp" /* yacc.c:355  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -198,7 +198,7 @@ int replication_yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 202 "repl_gram.c" /* yacc.c:358  */
+#line 202 "repl_gram.cpp" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -1314,7 +1314,7 @@ yyreduce:
     {
 					replication_parse_result = (yyvsp[-1].node);
 				}
-#line 1318 "repl_gram.c" /* yacc.c:1646  */
+#line 1318 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 12:
@@ -1322,7 +1322,7 @@ yyreduce:
     {
 					(yyval.node) = (Node *) makeNode(IdentifySystemCmd);
 				}
-#line 1326 "repl_gram.c" /* yacc.c:1646  */
+#line 1326 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 13:
@@ -1333,19 +1333,19 @@ yyreduce:
 					cmd->options = (yyvsp[0].list);
 					(yyval.node) = (Node *) cmd;
 				}
-#line 1337 "repl_gram.c" /* yacc.c:1646  */
+#line 1337 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 14:
 #line 140 "repl_gram.y" /* yacc.c:1646  */
     { (yyval.list) = lappend((yyvsp[-1].list), (yyvsp[0].defelt)); }
-#line 1343 "repl_gram.c" /* yacc.c:1646  */
+#line 1343 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 15:
 #line 142 "repl_gram.y" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 1349 "repl_gram.c" /* yacc.c:1646  */
+#line 1349 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 16:
@@ -1354,7 +1354,7 @@ yyreduce:
 				  (yyval.defelt) = makeDefElem("label",
 								   (Node *)makeString((yyvsp[0].str)));
 				}
-#line 1358 "repl_gram.c" /* yacc.c:1646  */
+#line 1358 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 17:
@@ -1363,7 +1363,7 @@ yyreduce:
 				  (yyval.defelt) = makeDefElem("progress",
 								   (Node *)makeInteger(TRUE));
 				}
-#line 1367 "repl_gram.c" /* yacc.c:1646  */
+#line 1367 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 18:
@@ -1372,7 +1372,7 @@ yyreduce:
 				  (yyval.defelt) = makeDefElem("fast",
 								   (Node *)makeInteger(TRUE));
 				}
-#line 1376 "repl_gram.c" /* yacc.c:1646  */
+#line 1376 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 19:
@@ -1381,7 +1381,7 @@ yyreduce:
 				  (yyval.defelt) = makeDefElem("wal",
 								   (Node *)makeInteger(TRUE));
 				}
-#line 1385 "repl_gram.c" /* yacc.c:1646  */
+#line 1385 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 20:
@@ -1390,7 +1390,7 @@ yyreduce:
 				  (yyval.defelt) = makeDefElem("nowait",
 								   (Node *)makeInteger(TRUE));
 				}
-#line 1394 "repl_gram.c" /* yacc.c:1646  */
+#line 1394 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 21:
@@ -1399,7 +1399,7 @@ yyreduce:
 				  (yyval.defelt) = makeDefElem("max_rate",
 								   (Node *)makeInteger((yyvsp[0].uintval)));
 				}
-#line 1403 "repl_gram.c" /* yacc.c:1646  */
+#line 1403 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 22:
@@ -1408,7 +1408,7 @@ yyreduce:
 				  (yyval.defelt) = makeDefElem("tablespace_map",
 								   (Node *)makeInteger(TRUE));
 				}
-#line 1412 "repl_gram.c" /* yacc.c:1646  */
+#line 1412 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 23:
@@ -1420,7 +1420,7 @@ yyreduce:
 					cmd->slotname = (yyvsp[-1].str);
 					(yyval.node) = (Node *) cmd;
 				}
-#line 1424 "repl_gram.c" /* yacc.c:1646  */
+#line 1424 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 24:
@@ -1433,7 +1433,7 @@ yyreduce:
 					cmd->plugin = (yyvsp[0].str);
 					(yyval.node) = (Node *) cmd;
 				}
-#line 1437 "repl_gram.c" /* yacc.c:1646  */
+#line 1437 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 25:
@@ -1444,7 +1444,7 @@ yyreduce:
 					cmd->slotname = (yyvsp[0].str);
 					(yyval.node) = (Node *) cmd;
 				}
-#line 1448 "repl_gram.c" /* yacc.c:1646  */
+#line 1448 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 26:
@@ -1459,7 +1459,7 @@ yyreduce:
 					cmd->timeline = (yyvsp[0].uintval);
 					(yyval.node) = (Node *) cmd;
 				}
-#line 1463 "repl_gram.c" /* yacc.c:1646  */
+#line 1463 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 27:
@@ -1473,7 +1473,7 @@ yyreduce:
 					cmd->options = (yyvsp[0].list);
 					(yyval.node) = (Node *) cmd;
 				}
-#line 1477 "repl_gram.c" /* yacc.c:1646  */
+#line 1477 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 28:
@@ -1491,19 +1491,19 @@ yyreduce:
 
 					(yyval.node) = (Node *) cmd;
 				}
-#line 1495 "repl_gram.c" /* yacc.c:1646  */
+#line 1495 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 31:
 #line 273 "repl_gram.y" /* yacc.c:1646  */
     { (yyval.str) = (yyvsp[0].str); }
-#line 1501 "repl_gram.c" /* yacc.c:1646  */
+#line 1501 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 32:
 #line 275 "repl_gram.y" /* yacc.c:1646  */
     { (yyval.str) = NULL; }
-#line 1507 "repl_gram.c" /* yacc.c:1646  */
+#line 1507 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 33:
@@ -1515,25 +1515,25 @@ yyreduce:
 								 (errmsg("invalid timeline %u", (yyvsp[0].uintval)))));
 					(yyval.uintval) = (yyvsp[0].uintval);
 				}
-#line 1519 "repl_gram.c" /* yacc.c:1646  */
+#line 1519 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 34:
 #line 287 "repl_gram.y" /* yacc.c:1646  */
     { (yyval.uintval) = 0; }
-#line 1525 "repl_gram.c" /* yacc.c:1646  */
+#line 1525 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 35:
 #line 292 "repl_gram.y" /* yacc.c:1646  */
     { (yyval.list) = (yyvsp[-1].list); }
-#line 1531 "repl_gram.c" /* yacc.c:1646  */
+#line 1531 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 36:
 #line 293 "repl_gram.y" /* yacc.c:1646  */
     { (yyval.list) = NIL; }
-#line 1537 "repl_gram.c" /* yacc.c:1646  */
+#line 1537 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 37:
@@ -1541,7 +1541,7 @@ yyreduce:
     {
 					(yyval.list) = list_make1((yyvsp[0].defelt));
 				}
-#line 1545 "repl_gram.c" /* yacc.c:1646  */
+#line 1545 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 38:
@@ -1549,7 +1549,7 @@ yyreduce:
     {
 					(yyval.list) = lappend((yyvsp[-2].list), (yyvsp[0].defelt));
 				}
-#line 1553 "repl_gram.c" /* yacc.c:1646  */
+#line 1553 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 39:
@@ -1557,23 +1557,23 @@ yyreduce:
     {
 					(yyval.defelt) = makeDefElem((yyvsp[-1].str), (yyvsp[0].node));
 				}
-#line 1561 "repl_gram.c" /* yacc.c:1646  */
+#line 1561 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 40:
 #line 315 "repl_gram.y" /* yacc.c:1646  */
     { (yyval.node) = (Node *) makeString((yyvsp[0].str)); }
-#line 1567 "repl_gram.c" /* yacc.c:1646  */
+#line 1567 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 41:
 #line 316 "repl_gram.y" /* yacc.c:1646  */
     { (yyval.node) = NULL; }
-#line 1573 "repl_gram.c" /* yacc.c:1646  */
+#line 1573 "repl_gram.cpp" /* yacc.c:1646  */
     break;
 
 
-#line 1577 "repl_gram.c" /* yacc.c:1646  */
+#line 1577 "repl_gram.cpp" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
