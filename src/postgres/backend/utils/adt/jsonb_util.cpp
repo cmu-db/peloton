@@ -216,10 +216,10 @@ compareJsonbContainers(JsonbContainer *a, JsonbContainer *b)
 			{
 				switch (va.type)
 				{
-					case jbvString:
-					case jbvNull:
-					case jbvNumeric:
-					case jbvBool:
+					case JsonbValue::jbvString:
+					case JsonbValue::jbvNull:
+					case JsonbValue::jbvNumeric:
+					case JsonbValue::jbvBool:
 						res = compareJsonbScalarValue(&va, &vb);
 						break;
 					case jbvArray:
@@ -1217,19 +1217,19 @@ JsonbHashScalarValue(const JsonbValue *scalarVal, uint32 *hash)
 	/* Compute hash value for scalarVal */
 	switch (scalarVal->type)
 	{
-		case jbvNull:
+		case JsonbValue::jbvNull:
 			tmp = 0x01;
 			break;
-		case jbvString:
+		case JsonbValue::jbvString:
 			tmp = DatumGetUInt32(hash_any((const unsigned char *) scalarVal->val.string.val,
 										  scalarVal->val.string.len));
 			break;
-		case jbvNumeric:
+		case JsonbValue::jbvNumeric:
 			/* Must hash equal numerics to equal hash codes */
 			tmp = DatumGetUInt32(DirectFunctionCall1(hash_numeric,
 								   NumericGetDatum(scalarVal->val.numeric)));
 			break;
-		case jbvBool:
+		case JsonbValue::jbvBool:
 			tmp = scalarVal->val.boolean ? 0x02 : 0x04;
 			break;
 		default:
@@ -1257,15 +1257,15 @@ equalsJsonbScalarValue(JsonbValue *aScalar, JsonbValue *bScalar)
 	{
 		switch (aScalar->type)
 		{
-			case jbvNull:
+			case JsonbValue::jbvNull:
 				return true;
-			case jbvString:
+			case JsonbValue::jbvString:
 				return lengthCompareJsonbStringValue(aScalar, bScalar) == 0;
-			case jbvNumeric:
+			case JsonbValue::jbvNumeric:
 				return DatumGetBool(DirectFunctionCall2(numeric_eq,
 									   PointerGetDatum(aScalar->val.numeric),
 									 PointerGetDatum(bScalar->val.numeric)));
-			case jbvBool:
+			case JsonbValue::jbvBool:
 				return aScalar->val.boolean == bScalar->val.boolean;
 
 			default:
@@ -1289,19 +1289,19 @@ compareJsonbScalarValue(JsonbValue *aScalar, JsonbValue *bScalar)
 	{
 		switch (aScalar->type)
 		{
-			case jbvNull:
+			case JsonbValue::jbvNull:
 				return 0;
-			case jbvString:
+			case JsonbValue::jbvString:
 				return varstr_cmp(aScalar->val.string.val,
 								  aScalar->val.string.len,
 								  bScalar->val.string.val,
 								  bScalar->val.string.len,
 								  DEFAULT_COLLATION_OID);
-			case jbvNumeric:
+			case JsonbValue::jbvNumeric:
 				return DatumGetInt32(DirectFunctionCall2(numeric_cmp,
 									   PointerGetDatum(aScalar->val.numeric),
 									 PointerGetDatum(bScalar->val.numeric)));
-			case jbvBool:
+			case JsonbValue::jbvBool:
 				if (aScalar->val.boolean == bScalar->val.boolean)
 					return 0;
 				else if (aScalar->val.boolean > bScalar->val.boolean)
@@ -1672,17 +1672,17 @@ convertJsonbScalar(StringInfo buffer, JEntry *jentry, JsonbValue *scalarVal)
 
 	switch (scalarVal->type)
 	{
-		case jbvNull:
+		case JsonbValue::jbvNull:
 			*jentry = JENTRY_ISNULL;
 			break;
 
-		case jbvString:
+		case JsonbValue::jbvString:
 			appendToBuffer(buffer, scalarVal->val.string.val, scalarVal->val.string.len);
 
 			*jentry = scalarVal->val.string.len;
 			break;
 
-		case jbvNumeric:
+		case JsonbValue::jbvNumeric:
 			numlen = VARSIZE_ANY(scalarVal->val.numeric);
 			padlen = padBufferToInt(buffer);
 
@@ -1691,7 +1691,7 @@ convertJsonbScalar(StringInfo buffer, JEntry *jentry, JsonbValue *scalarVal)
 			*jentry = JENTRY_ISNUMERIC | (padlen + numlen);
 			break;
 
-		case jbvBool:
+		case JsonbValue::jbvBool:
 			*jentry = (scalarVal->val.boolean) ?
 				JENTRY_ISBOOL_TRUE : JENTRY_ISBOOL_FALSE;
 			break;
