@@ -1019,7 +1019,7 @@ pqRowProcessor(PGconn *conn, const char **errmsgp)
 	/*
 	 * In single-row mode, make a cnew PGresult that will hold just this one
 	 * row; the original conn->result is left unchanged so that it can be used
-	 * again as the template for future rows.
+	 * again as the ctemplate for future rows.
 	 */
 	if (conn->singleRowMode)
 	{

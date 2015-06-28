@@ -121,7 +121,7 @@ report_namespace_conflict(Oid classId, const char *name, Oid nspOid)
 			break;
 		case TSTemplateRelationId:
 			Assert(OidIsValid(nspOid));
-			msgfmt = gettext_noop("text search template \"%s\" already exists in schema \"%s\"");
+			msgfmt = gettext_noop("text search ctemplate \"%s\" already exists in schema \"%s\"");
 			break;
 		case TSConfigRelationId:
 			Assert(OidIsValid(nspOid));

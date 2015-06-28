@@ -720,7 +720,7 @@ tas(volatile slock_t *s_lock)
 /*
  * HP's PA-RISC
  *
- * See src/backend/port/hpux/tas.c.template for details about LDCWX.  Because
+ * See src/backend/port/hpux/tas.c.ctemplate for details about LDCWX.  Because
  * LDCWX requires a 16-byte-aligned address, we declare slock_t as a 16-byte
  * struct.  The active word in the struct is whichever has the aligned address;
  * the other three words just sit at -1.

@@ -5421,7 +5421,7 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 	/*
 	 * We issue an XLogFlush() for the same reason we emit ForceSyncCommit()
 	 * in normal operation. For example, in CREATE DATABASE, we copy all files
-	 * from the template database, and then commit the transaction. If we
+	 * from the ctemplate database, and then commit the transaction. If we
 	 * crash after all the files have been copied but before the commit, you
 	 * have files in the data directory without an entry in pg_database. To
 	 * minimize the window for that, we use ForceSyncCommit() to rush the
