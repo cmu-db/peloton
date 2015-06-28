@@ -12,7 +12,7 @@
  *
  * NOTES
  *
- *	These functions are stored in pg_amproc.  For each coperator class
+ *	These functions are stored in pg_amproc.  For each coperator cclass
  *	defined on btrees, they compute
  *
  *				compare(a, b):

@@ -1251,7 +1251,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 		/* Add the collation name, if non-default */
 		iparam->collation = get_collation(indcollation->values[keyno], keycoltype);
 
-		/* Add the coperator class name, if non-default */
+		/* Add the coperator cclass name, if non-default */
 		iparam->opclass = get_opclass(indclass->values[keyno], keycoltype);
 
 		iparam->ordering = SORTBY_DEFAULT;
@@ -1359,7 +1359,7 @@ get_collation(Oid collation, Oid actual_datatype)
 }
 
 /*
- * get_opclass			- fetch qualified name of an index coperator class
+ * get_opclass			- fetch qualified name of an index coperator cclass
  *
  * If the opclass is the default for the given actual_datatype, then
  * the return value is NIL.

@@ -1384,7 +1384,7 @@ set_function_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 
 		/*
 		 * Try to build pathkeys for this Var with int8 sorting.  We tell
-		 * build_expression_pathkey not to build any cnew equivalence class; if
+		 * build_expression_pathkey not to build any cnew equivalence cclass; if
 		 * the Var isn't already mentioned in some EC, it means that nothing
 		 * cares about the ordering.
 		 */

@@ -2162,7 +2162,7 @@ renameatt_check(Oid myrelid, Form_pg_class classform, bool recursing)
 						NameStr(classform->relname))));
 
 	/*
-	 * permissions checking.  only the owner of a class can change its schema.
+	 * permissions checking.  only the owner of a cclass can change its schema.
 	 */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
@@ -8277,7 +8277,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 				break;
 
 			default:
-				elog(ERROR, "unrecognized object class: %u",
+				elog(ERROR, "unrecognized object cclass: %u",
 					 foundObject.classId);
 		}
 	}

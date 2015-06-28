@@ -4123,7 +4123,7 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 			 * XXX if we have a choice, is there any way of figuring out which
 			 * might be cheapest to execute?  (For example, int4lt is likely
 			 * much cheaper to execute than numericlt, but both might appear
-			 * in the same equivalence class...)  Not clear that we ever will
+			 * in the same equivalence cclass...)  Not clear that we ever will
 			 * have an interesting choice in practice, so it may not matter.
 			 */
 			foreach(j, tlist)
@@ -4158,7 +4158,7 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 				ListCell   *k;
 
 				/*
-				 * We shouldn't be trying to sort by an equivalence class that
+				 * We shouldn't be trying to sort by an equivalence cclass that
 				 * contains a constant, so no need to consider such cases any
 				 * further.
 				 */
@@ -4274,7 +4274,7 @@ find_ec_member_for_tle(EquivalenceClass *ec,
 		Expr	   *emexpr;
 
 		/*
-		 * We shouldn't be trying to sort by an equivalence class that
+		 * We shouldn't be trying to sort by an equivalence cclass that
 		 * contains a constant, so no need to consider such cases any further.
 		 */
 		if (em->em_is_const)

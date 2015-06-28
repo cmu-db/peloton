@@ -1271,7 +1271,7 @@ doDeletion(const ObjectAddress *object, int flags)
 			break;
 
 		default:
-			elog(ERROR, "unrecognized object class: %u",
+			elog(ERROR, "unrecognized object cclass: %u",
 				 object->classId);
 	}
 }
@@ -2028,7 +2028,7 @@ new_object_addresses(void)
 /*
  * Add an entry to an ObjectAddresses array.
  *
- * It is convenient to specify the class by ObjectClass rather than directly
+ * It is convenient to specify the cclass by ObjectClass rather than directly
  * by catalog OID.
  */
 static void
@@ -2284,7 +2284,7 @@ free_object_addresses(ObjectAddresses *addrs)
 }
 
 /*
- * Determine the class of a given object identified by objectAddress.
+ * Determine the cclass of a given object identified by objectAddress.
  *
  * This function is essentially the reverse mapping for the object_classes[]
  * table.  We implement it as a function because the OIDs aren't consecutive.
@@ -2295,7 +2295,7 @@ getObjectClass(const ObjectAddress *object)
 	/* only pg_class entries can have nonzero objectSubId */
 	if (object->classId != RelationRelationId &&
 		object->objectSubId != 0)
-		elog(ERROR, "invalid non-zero objectSubId for object class %u",
+		elog(ERROR, "invalid non-zero objectSubId for object cclass %u",
 			 object->classId);
 
 	switch (object->classId)
@@ -2402,6 +2402,6 @@ getObjectClass(const ObjectAddress *object)
 	}
 
 	/* shouldn't get here */
-	elog(ERROR, "unrecognized object class: %u", object->classId);
+	elog(ERROR, "unrecognized object cclass: %u", object->classId);
 	return OCLASS_CLASS;		/* keep compiler quiet */
 }

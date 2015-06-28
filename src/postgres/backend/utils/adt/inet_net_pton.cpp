@@ -197,7 +197,7 @@ inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size)
 	/* If nothing was written to the destination, we found no address. */
 	if (dst == odst)
 		goto enoent;
-	/* If no CIDR spec was given, infer width from net class. */
+	/* If no CIDR spec was given, infer width from net cclass. */
 	if (bits == -1)
 	{
 		if (*odst >= 240)		/* Class E */
@@ -216,7 +216,7 @@ inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size)
 			bits = (dst - odst) * 8;
 
 		/*
-		 * If there are no additional bits specified for a class D address
+		 * If there are no additional bits specified for a cclass D address
 		 * adjust bits to 4.
 		 */
 		if (bits == 8 && *odst == 224)

@@ -547,7 +547,7 @@ consider_index_join_outer_rels(PlannerInfo *root, RelOptInfo *rel,
 				continue;
 
 			/*
-			 * If this clause was derived from an equivalence class, the
+			 * If this clause was derived from an equivalence cclass, the
 			 * clause list may contain other clauses derived from the same
 			 * eclass.  We should not consider that combining this clause with
 			 * one of those clauses generates a usefully different
@@ -674,7 +674,7 @@ get_join_index_paths(PlannerInfo *root, RelOptInfo *rel,
 /*
  * eclass_already_used
  *		True if any join clause usable with oldrelids was generated from
- *		the specified equivalence class.
+ *		the specified equivalence cclass.
  */
 static bool
 eclass_already_used(EquivalenceClass *parent_ec, Relids oldrelids,

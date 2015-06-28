@@ -2042,7 +2042,7 @@ check_redundant_nullability_qual(PlannerInfo *root, Node *clause)
  *	  clause list(s).
  *
  * This is the last step of distribute_qual_to_rels() for ordinary qual
- * clauses.  Clauses that are interesting for equivalence-class processing
+ * clauses.  Clauses that are interesting for equivalence-cclass processing
  * are diverted to the EC machinery, but may ultimately get fed back here.
  */
 void

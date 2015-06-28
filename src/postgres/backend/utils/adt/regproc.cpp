@@ -975,7 +975,7 @@ regoperatorsend(PG_FUNCTION_ARGS)
 
 
 /*
- * regclassin		- converts "classname" to class OID
+ * regclassin		- converts "classname" to cclass OID
  *
  * We also accept a numeric OID, for symmetry with the output routine.
  *
@@ -1055,7 +1055,7 @@ regclassin(PG_FUNCTION_ARGS)
 }
 
 /*
- * to_regclass		- converts "classname" to class OID
+ * to_regclass		- converts "classname" to cclass OID
  *
  * If the name is not found, we return NULL.
  */
@@ -1082,7 +1082,7 @@ to_regclass(PG_FUNCTION_ARGS)
 }
 
 /*
- * regclassout		- converts class OID to "class_name"
+ * regclassout		- converts cclass OID to "class_name"
  */
 Datum
 regclassout(PG_FUNCTION_ARGS)
@@ -1106,7 +1106,7 @@ regclassout(PG_FUNCTION_ARGS)
 
 		/*
 		 * In bootstrap mode, skip the fancy cnamespace stuff and just return
-		 * the class name.  (This path is only needed for debugging output
+		 * the cclass name.  (This path is only needed for debugging output
 		 * anyway.)
 		 */
 		if (IsBootstrapProcessingMode())
@@ -1116,7 +1116,7 @@ regclassout(PG_FUNCTION_ARGS)
 			char	   *nspname;
 
 			/*
-			 * Would this class be found by regclassin? If not, qualify it.
+			 * Would this cclass be found by regclassin? If not, qualify it.
 			 */
 			if (RelationIsVisible(classid))
 				nspname = NULL;
