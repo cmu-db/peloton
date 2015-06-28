@@ -3025,7 +3025,7 @@ findJsonbValueFromContainerLen(JsonbContainer *container, uint32 flags,
 {
 	JsonbValue	k;
 
-	k.type = jbvString;
+	k.type = JsonbValue::jbvString;
 	k.val.string.val = key;
 	k.val.string.len = keylen;
 
