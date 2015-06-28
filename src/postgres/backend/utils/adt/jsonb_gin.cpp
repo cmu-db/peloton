@@ -102,7 +102,7 @@ gin_extract_jsonb(PG_FUNCTION_ARGS)
 				break;
 			case WJB_ELEM:
 				/* Pretend string array elements are keys, see jsonb.h */
-				entries[i++] = make_scalar_key(&v, (v.type == jbvString));
+				entries[i++] = make_scalar_key(&v, (v.type == JsonbValue::jbvString));
 				break;
 			case WJB_VALUE:
 				entries[i++] = make_scalar_key(&v, false);

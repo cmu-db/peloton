@@ -86,7 +86,7 @@ JsonbValueToJsonb(JsonbValue *val)
 		JsonbValue *res;
 		JsonbValue	scalarArray;
 
-		scalarArray.type = jbvArray;
+		scalarArray.type = JsonbValue::jbvArray;
 		scalarArray.val.array.rawScalar = true;
 		scalarArray.val.array.nElems = 1;
 
@@ -96,13 +96,13 @@ JsonbValueToJsonb(JsonbValue *val)
 
 		out = convertToJsonb(res);
 	}
-	else if (val->type == jbvObject || val->type == jbvArray)
+	else if (val->type == JsonbValue::jbvObject || val->type == JsonbValue::jbvArray)
 	{
 		out = convertToJsonb(val);
 	}
 	else
 	{
-		Assert(val->type == jbvBinary);
+		Assert(val->type == JsonbValue::jbvBinary);
 		out = palloc(VARHDRSZ + val->val.binary.len);
 		SET_VARSIZE(out, VARHDRSZ + val->val.binary.len);
 		memcpy(VARDATA(out), val->val.binary.data, val->val.binary.len);
@@ -222,7 +222,7 @@ compareJsonbContainers(JsonbContainer *a, JsonbContainer *b)
 					case JsonbValue::jbvBool:
 						res = compareJsonbScalarValue(&va, &vb);
 						break;
-					case jbvArray:
+					case JsonbValue::jbvArray:
 
 						/*
 						 * This could be a "raw scalar" pseudo array.  That's
@@ -235,11 +235,11 @@ compareJsonbContainers(JsonbContainer *a, JsonbContainer *b)
 						if (va.val.array.nElems != vb.val.array.nElems)
 							res = (va.val.array.nElems > vb.val.array.nElems) ? 1 : -1;
 						break;
-					case jbvObject:
+					case JsonbValue::jbvObject:
 						if (va.val.object.nPairs != vb.val.object.nPairs)
 							res = (va.val.object.nPairs > vb.val.object.nPairs) ? 1 : -1;
 						break;
-					case jbvBinary:
+					case JsonbValue::jbvBinary:
 						elog(ERROR, "unexpected jbvBinary value");
 				}
 			}
@@ -270,8 +270,8 @@ compareJsonbContainers(JsonbContainer *a, JsonbContainer *b)
 			Assert(rb != WJB_END_ARRAY && rb != WJB_END_OBJECT);
 
 			Assert(va.type != vb.type);
-			Assert(va.type != jbvBinary);
-			Assert(vb.type != jbvBinary);
+			Assert(va.type != JsonbValue::jbvBinary);
+			Assert(vb.type != JsonbValue::jbvBinary);
 			/* Type-defined order */
 			res = (va.type > vb.type) ? 1 : -1;
 		}
@@ -365,7 +365,7 @@ findJsonbValueFromContainer(JsonbContainer *container, uint32 flags,
 					stopHigh = count;
 
 		/* Object key passed by caller must be a string */
-		Assert(key->type == jbvString);
+		Assert(key->type == JsonbValue::jbvString);
 
 		/* Binary search on object/pair keys *only* */
 		while (stopLow < stopHigh)
@@ -460,7 +460,7 @@ fillJsonbValue(JsonbContainer *container, int index,
 
 	if (JBE_ISNULL(entry))
 	{
-		result->type = jbvNull;
+		result->type = JsonbValue::jbvNull;
 	}
 	else if (JBE_ISSTRING(entry))
 	{
@@ -471,23 +471,23 @@ fillJsonbValue(JsonbContainer *container, int index,
 	}
 	else if (JBE_ISNUMERIC(entry))
 	{
-		result->type = jbvNumeric;
+		result->type = JsonbValue::jbvNumeric;
 		result->val.numeric = (Numeric) (base_addr + INTALIGN(offset));
 	}
 	else if (JBE_ISBOOL_TRUE(entry))
 	{
-		result->type = jbvBool;
+		result->type = JsonbValue::jbvBool;
 		result->val.boolean = true;
 	}
 	else if (JBE_ISBOOL_FALSE(entry))
 	{
-		result->type = jbvBool;
+		result->type = JsonbValue::jbvBool;
 		result->val.boolean = false;
 	}
 	else
 	{
 		Assert(JBE_ISCONTAINER(entry));
-		result->type = jbvBinary;
+		result->type = JsonbValue::jbvBinary;
 		/* Remove alignment padding from data pointer and length */
 		result->val.binary.data = (JsonbContainer *) (base_addr + INTALIGN(offset));
 		result->val.binary.len = getJsonbLength(container, index) -
@@ -522,7 +522,7 @@ pushJsonbValue(JsonbParseState **pstate, JsonbIteratorToken seq,
 	JsonbIteratorToken tok;
 
 	if (!jbval || (seq != WJB_ELEM && seq != WJB_VALUE) ||
-		jbval->type != jbvBinary)
+		jbval->type != JsonbValue::jbvBinary)
 	{
 		/* drop through */
 		return pushJsonbValueScalar(pstate, seq, jbval);
@@ -553,14 +553,14 @@ pushJsonbValueScalar(JsonbParseState **pstate, JsonbIteratorToken seq,
 			Assert(!scalarVal || scalarVal->val.array.rawScalar);
 			*pstate = pushState(pstate);
 			result = &(*pstate)->contVal;
-			(*pstate)->contVal.type = jbvArray;
+			(*pstate)->contVal.type = JsonbValue::jbvArray;
 			(*pstate)->contVal.val.array.nElems = 0;
 			(*pstate)->contVal.val.array.rawScalar = (scalarVal &&
 											 scalarVal->val.array.rawScalar);
 			if (scalarVal && scalarVal->val.array.nElems > 0)
 			{
 				/* Assume that this array is still really a scalar */
-				Assert(scalarVal->type == jbvArray);
+				Assert(scalarVal->type == JsonbValue::jbvArray);
 				(*pstate)->size = scalarVal->val.array.nElems;
 			}
 			else
@@ -574,14 +574,14 @@ pushJsonbValueScalar(JsonbParseState **pstate, JsonbIteratorToken seq,
 			Assert(!scalarVal);
 			*pstate = pushState(pstate);
 			result = &(*pstate)->contVal;
-			(*pstate)->contVal.type = jbvObject;
+			(*pstate)->contVal.type = JsonbValue::jbvObject;
 			(*pstate)->contVal.val.object.nPairs = 0;
 			(*pstate)->size = 4;
 			(*pstate)->contVal.val.object.pairs = palloc(sizeof(JsonbPair) *
 														 (*pstate)->size);
 			break;
 		case WJB_KEY:
-			Assert(scalarVal->type == jbvString);
+			Assert(scalarVal->type == JsonbValue::jbvString);
 			appendKey(*pstate, scalarVal);
 			break;
 		case WJB_VALUE:
@@ -609,10 +609,10 @@ pushJsonbValueScalar(JsonbParseState **pstate, JsonbIteratorToken seq,
 			{
 				switch ((*pstate)->contVal.type)
 				{
-					case jbvArray:
+					case JsonbValue::jbvArray:
 						appendElement(*pstate, result);
 						break;
-					case jbvObject:
+					case JsonbValue::jbvObject:
 						appendValue(*pstate, result);
 						break;
 					default:
@@ -647,8 +647,8 @@ appendKey(JsonbParseState *pstate, JsonbValue *string)
 {
 	JsonbValue *object = &pstate->contVal;
 
-	Assert(object->type == jbvObject);
-	Assert(string->type == jbvString);
+	Assert(object->type == JsonbValue::jbvObject);
+	Assert(string->type == JsonbValue::jbvString);
 
 	if (object->val.object.nPairs >= JSONB_MAX_PAIRS)
 		ereport(ERROR,
@@ -676,7 +676,7 @@ appendValue(JsonbParseState *pstate, JsonbValue *scalarVal)
 {
 	JsonbValue *object = &pstate->contVal;
 
-	Assert(object->type == jbvObject);
+	Assert(object->type == JsonbValue::jbvObject);
 
 	object->val.object.pairs[object->val.object.nPairs++].value = *scalarVal;
 }
@@ -689,7 +689,7 @@ appendElement(JsonbParseState *pstate, JsonbValue *scalarVal)
 {
 	JsonbValue *array = &pstate->contVal;
 
-	Assert(array->type == jbvArray);
+	Assert(array->type == JsonbValue::jbvArray);
 
 	if (array->val.array.nElems >= JSONB_MAX_ELEMS)
 		ereport(ERROR,
@@ -766,7 +766,7 @@ recurse:
 	{
 		case JBI_ARRAY_START:
 			/* Set v to array on first array call */
-			val->type = jbvArray;
+			val->type = JsonbValue::jbvArray;
 			val->val.array.nElems = (*it)->nElems;
 
 			/*
@@ -819,7 +819,7 @@ recurse:
 
 		case JBI_OBJECT_START:
 			/* Set v to object on first object call */
-			val->type = jbvObject;
+			val->type = JsonbValue::jbvObject;
 			val->val.object.nPairs = (*it)->nElems;
 
 			/*
@@ -852,7 +852,7 @@ recurse:
 				fillJsonbValue((*it)->container, (*it)->curIndex,
 							   (*it)->dataProper, (*it)->curDataOffset,
 							   val);
-				if (val->type != jbvString)
+				if (val->type != JsonbValue::jbvString)
 					elog(ERROR, "unexpected jsonb type as object key");
 
 				/* Set state for next call */
@@ -991,8 +991,8 @@ JsonbDeepContains(JsonbIterator **val, JsonbIterator **mContained)
 	}
 	else if (rcont == WJB_BEGIN_OBJECT)
 	{
-		Assert(vval.type == jbvObject);
-		Assert(vcontained.type == jbvObject);
+		Assert(vval.type == JsonbValue::jbvObject);
+		Assert(vcontained.type == JsonbValue::jbvObject);
 
 		/*
 		 * If the lhs has fewer pairs than the rhs, it can't possibly contain
@@ -1056,8 +1056,8 @@ JsonbDeepContains(JsonbIterator **val, JsonbIterator **mContained)
 				JsonbIterator *nestval,
 						   *nestContained;
 
-				Assert(lhsVal->type == jbvBinary);
-				Assert(vcontained.type == jbvBinary);
+				Assert(lhsVal->type == JsonbValue::jbvBinary);
+				Assert(vcontained.type == JsonbValue::jbvBinary);
 
 				nestval = JsonbIteratorInit(lhsVal->val.binary.data);
 				nestContained = JsonbIteratorInit(vcontained.val.binary.data);
@@ -1092,8 +1092,8 @@ JsonbDeepContains(JsonbIterator **val, JsonbIterator **mContained)
 		JsonbValue *lhsConts = NULL;
 		uint32		nLhsElems = vval.val.array.nElems;
 
-		Assert(vval.type == jbvArray);
-		Assert(vcontained.type == jbvArray);
+		Assert(vval.type == JsonbValue::jbvArray);
+		Assert(vcontained.type == JsonbValue::jbvArray);
 
 		/*
 		 * Handle distinction between "raw scalar" pseudo arrays, and real
@@ -1151,7 +1151,7 @@ JsonbDeepContains(JsonbIterator **val, JsonbIterator **mContained)
 						rcont = JsonbIteratorNext(val, &vval, true);
 						Assert(rcont == WJB_ELEM);
 
-						if (vval.type == jbvBinary)
+						if (vval.type == JsonbValue::jbvBinary)
 							lhsConts[j++] = vval;
 					}
 
@@ -1405,7 +1405,7 @@ convertToJsonb(JsonbValue *val)
 	Jsonb	   *res;
 
 	/* Should not already have binary representation */
-	Assert(val->type != jbvBinary);
+	Assert(val->type != JsonbValue::jbvBinary);
 
 	/* Allocate an output buffer. It will be enlarged as needed */
 	initStringInfo(&buffer);
@@ -1456,9 +1456,9 @@ convertJsonbValue(StringInfo buffer, JEntry *header, JsonbValue *val, int level)
 
 	if (IsAJsonbScalar(val))
 		convertJsonbScalar(buffer, header, val);
-	else if (val->type == jbvArray)
+	else if (val->type == JsonbValue::jbvArray)
 		convertJsonbArray(buffer, header, val, level);
-	else if (val->type == jbvObject)
+	else if (val->type == JsonbValue::jbvObject)
 		convertJsonbObject(buffer, header, val, level);
 	else
 		elog(ERROR, "unknown type of jsonb container to convert");
@@ -1720,8 +1720,8 @@ lengthCompareJsonbStringValue(const void *a, const void *b)
 	const JsonbValue *vb = (const JsonbValue *) b;
 	int			res;
 
-	Assert(va->type == jbvString);
-	Assert(vb->type == jbvString);
+	Assert(va->type == JsonbValue::jbvString);
+	Assert(vb->type == JsonbValue::jbvString);
 
 	if (va->val.string.len == vb->val.string.len)
 	{
@@ -1775,7 +1775,7 @@ uniqueifyJsonbObject(JsonbValue *object)
 {
 	bool		hasNonUniq = false;
 
-	Assert(object->type == jbvObject);
+	Assert(object->type == JsonbValue::jbvObject);
 
 	if (object->val.object.nPairs > 1)
 		qsort_arg(object->val.object.pairs, object->val.object.nPairs, sizeof(JsonbPair),
