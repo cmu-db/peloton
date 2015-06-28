@@ -376,7 +376,7 @@ findJsonbValueFromContainer(JsonbContainer *container, uint32 flags,
 
 			stopMiddle = stopLow + (stopHigh - stopLow) / 2;
 
-			candidate.type = jbvString;
+			candidate.type = JsonbValue::jbvString;
 			candidate.val.string.val =
 				base_addr + getJsonbOffset(container, stopMiddle);
 			candidate.val.string.len = getJsonbLength(container, stopMiddle);
@@ -464,7 +464,7 @@ fillJsonbValue(JsonbContainer *container, int index,
 	}
 	else if (JBE_ISSTRING(entry))
 	{
-		result->type = jbvString;
+		result->type = JsonbValue::jbvString;
 		result->val.string.val = base_addr + offset;
 		result->val.string.len = getJsonbLength(container, index);
 		Assert(result->val.string.len >= 0);

@@ -299,7 +299,7 @@ jsonb_in_object_field_start(void *pstate, char *fname, bool isnull)
 	JsonbValue	v;
 
 	Assert(fname != NULL);
-	v.type =JsonbValue::jbvString;
+	v.type = JsonbValue::jbvString;
 	v.val.string.len = checkStringLen(strlen(fname));
 	v.val.string.val = fname;
 
@@ -347,7 +347,7 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 
 		case JSON_TOKEN_STRING:
 			Assert(token != NULL);
-			v.type =JsonbValue::jbvString;
+			v.type = JsonbValue::jbvString;
 			v.val.string.len = checkStringLen(strlen(token));
 			v.val.string.val = token;
 			break;
@@ -731,7 +731,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 				if (key_scalar)
 				{
 					outputstr = DatumGetBool(val) ? "true" : "false";
-					jb.type =JsonbValue::jbvString;
+					jb.type = JsonbValue::jbvString;
 					jb.val.string.len = strlen(outputstr);
 					jb.val.string.val = outputstr;
 				}
@@ -746,7 +746,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 				if (key_scalar)
 				{
 					/* always quote keys */
-					jb.type =JsonbValue::jbvString;
+					jb.type = JsonbValue::jbvString;
 					jb.val.string.len = strlen(outputstr);
 					jb.val.string.val = outputstr;
 				}
@@ -768,7 +768,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 					}
 					else
 					{
-						jb.type =JsonbValue::jbvString;
+						jb.type = JsonbValue::jbvString;
 						jb.val.string.len = strlen(outputstr);
 						jb.val.string.val = outputstr;
 					}
@@ -781,7 +781,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 				char		buf[MAXDATELEN + 1];
 
 				date = DatumGetDateADT(val);
-				jb.type =JsonbValue::jbvString;
+				jb.type = JsonbValue::jbvString;
 
 				if (DATE_NOT_FINITE(date))
 				{
@@ -806,7 +806,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 					char		buf[MAXDATELEN + 1];
 
 					timestamp = DatumGetTimestamp(val);
-					jb.type =JsonbValue::jbvString;
+					jb.type = JsonbValue::jbvString;
 
 					if (TIMESTAMP_NOT_FINITE(timestamp))
 					{
@@ -836,7 +836,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 					char		buf[MAXDATELEN + 1];
 
 					timestamp = DatumGetTimestamp(val);
-					jb.type =JsonbValue::jbvString;
+					jb.type = JsonbValue::jbvString;
 
 					if (TIMESTAMP_NOT_FINITE(timestamp))
 					{
@@ -913,7 +913,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 				break;
 			default:
 				outputstr = OidOutputFunctionCall(outfuncoid, val);
-				jb.type =JsonbValue::jbvString;
+				jb.type = JsonbValue::jbvString;
 				jb.val.string.len = checkStringLen(strlen(outputstr));
 				jb.val.string.val = outputstr;
 				break;
@@ -1082,7 +1082,7 @@ composite_to_jsonb(Datum composite, JsonbInState *result)
 
 		attname = NameStr(tupdesc->attrs[i]->attname);
 
-		v.type =JsonbValue::jbvString;
+		v.type = JsonbValue::jbvString;
 		/* don't need checkStringLen here - can't exceed maximum name length */
 		v.val.string.len = strlen(attname);
 		v.val.string.val = attname;
@@ -1397,7 +1397,7 @@ jsonb_object(PG_FUNCTION_ARGS)
 		str = TextDatumGetCString(in_datums[i * 2]);
 		len = strlen(str);
 
-		v.type =JsonbValue::jbvString;
+		v.type = JsonbValue::jbvString;
 
 		v.val.string.len = len;
 		v.val.string.val = str;
@@ -1413,7 +1413,7 @@ jsonb_object(PG_FUNCTION_ARGS)
 			str = TextDatumGetCString(in_datums[i * 2 + 1]);
 			len = strlen(str);
 
-			v.type =JsonbValue::jbvString;
+			v.type = JsonbValue::jbvString;
 
 			v.val.string.len = len;
 			v.val.string.val = str;
@@ -1492,7 +1492,7 @@ jsonb_object_two_arg(PG_FUNCTION_ARGS)
 		str = TextDatumGetCString(key_datums[i]);
 		len = strlen(str);
 
-		v.type =JsonbValue::jbvString;
+		v.type = JsonbValue::jbvString;
 
 		v.val.string.len = len;
 		v.val.string.val = str;
@@ -1508,7 +1508,7 @@ jsonb_object_two_arg(PG_FUNCTION_ARGS)
 			str = TextDatumGetCString(val_datums[i]);
 			len = strlen(str);
 
-			v.type =JsonbValue::jbvString;
+			v.type = JsonbValue::jbvString;
 
 			v.val.string.len = len;
 			v.val.string.val = str;
