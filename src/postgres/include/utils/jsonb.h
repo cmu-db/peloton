@@ -272,8 +272,8 @@ struct JsonbValue
 	}			val;
 };
 
-#define IsAJsonbScalar(jsonbval)	((jsonbval)->type >= jbvNull && \
-									 (jsonbval)->type <= jbvBool)
+#define IsAJsonbScalar(jsonbval)	((jsonbval)->type >= JsonbValue::jbvNull && \
+									 (jsonbval)->type <= JsonbValue::jbvBool)
 
 /*
  * Key/value pair within an Object.

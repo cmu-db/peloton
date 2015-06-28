@@ -31,7 +31,7 @@ jsonb_exists(PG_FUNCTION_ARGS)
 	 * scalar elements.  Existence of a key/element is only considered at the
 	 * top level.  No recursion occurs.
 	 */
-	kval.type = jbvString;
+	kval.type = JsonbValue::jbvString;
 	kval.val.string.val = VARDATA_ANY(key);
 	kval.val.string.len = VARSIZE_ANY_EXHDR(key);
 
@@ -62,7 +62,7 @@ jsonb_exists_any(PG_FUNCTION_ARGS)
 		if (key_nulls[i])
 			continue;
 
-		strVal.type = jbvString;
+		strVal.type = JsonbValue::jbvString;
 		strVal.val.string.val = VARDATA(key_datums[i]);
 		strVal.val.string.len = VARSIZE(key_datums[i]) - VARHDRSZ;
 
@@ -95,7 +95,7 @@ jsonb_exists_all(PG_FUNCTION_ARGS)
 		if (key_nulls[i])
 			continue;
 
-		strVal.type = jbvString;
+		strVal.type = JsonbValue::jbvString;
 		strVal.val.string.val = VARDATA(key_datums[i]);
 		strVal.val.string.len = VARSIZE(key_datums[i]) - VARHDRSZ;
 
