@@ -13,9 +13,10 @@
 #include "postgres.h"
 #include "c.h"
 
-#include "miscadmin.h"
 #include "libpq/ip.h"
 #include "libpq/pqsignal.h"
+#include "miscadmin.h"
+#include "nodes/print.h"
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 #include "utils/timeout.h"
@@ -66,7 +67,7 @@ static void peloton_MainLoop(void);
 static void peloton_setheader(Peloton_MsgHdr *hdr, PelotonMsgType mtype);
 static void peloton_send(void *msg, int len);
 
-static void peloton_recv_inquiry(Peloton_MsgInquiry *msg, int len);
+static void peloton_recv_plan(Peloton_MsgPlan *msg, int len);
 
 /**
  * @brief Initialize peloton
@@ -74,12 +75,12 @@ static void peloton_recv_inquiry(Peloton_MsgInquiry *msg, int len);
 int peloton_start(void){
   pid_t   pelotonPid;
 
-  fprintf(stdout, "starting peloton process \n");
-
   switch ((pelotonPid = fork_process()))
   {
     case -1:
-      fprintf(stderr, "could not fork peloton process \n");
+      ereport(LOG,
+          (errmsg("could not fork peloton process: %m")));
+      return -1;
       break;
 
     case 0:
@@ -95,12 +96,11 @@ int peloton_start(void){
 
       /* Do some stuff */
       PelotonMain(0, NULL);
-
+      return 0;
       break;
 
     default:
       /* Do nothing */
-      fprintf(stdout, "Peloton process : %d\n", pelotonPid);
       return (int) pelotonPid;
       break;
   }
@@ -122,7 +122,7 @@ PelotonMain(int argc, char *argv[])
   init_ps_display("peloton process", "", "", "");
 
   ereport(LOG,
-      (errmsg("peloton started")));
+      (errmsg("peloton started : pid :: %d", getpid())));
 
   /*
    * Set up signal handlers.  We operate on databases much like a regular
@@ -197,8 +197,6 @@ peloton_MainLoop(void)
   Peloton_Msg  msg;
   int     wr;
 
-  fprintf(stdout, "starting peloton main loop \n");
-
   /*
    * Loop to process messages until we get SIGQUIT or detect ungraceful
    * death of our parent postmaster.
@@ -215,8 +213,6 @@ peloton_MainLoop(void)
    */
   for (;;)
   {
-    fprintf(stdout, "looping.. \n");
-
     /* Clear any already-pending wakeups */
     ResetLatch(MyLatch);
 
@@ -279,8 +275,10 @@ peloton_MainLoop(void)
           fprintf(stdout, "Received dummy message \n");
           break;
 
-        case PELOTON_MTYPE_DEADLOCK:
-          peloton_recv_inquiry((Peloton_MsgInquiry *) &msg, len);
+        case PELOTON_MTYPE_PLAN:
+          fprintf(stdout, "Received plan message \n");
+
+          peloton_recv_plan((Peloton_MsgPlan *) &msg, len);
           break;
 
         default:
@@ -333,8 +331,6 @@ peloton_init(void)
   int     tries = 0;
 
 #define TESTBYTEVAL ((char) 199)
-
-  fprintf(stdout, "starting peloton init \n");
 
   /*
    * This static assertion verifies that we didn't mess up the calculations
@@ -548,8 +544,6 @@ retry2:
 
   pg_freeaddrinfo_all(hints.ai_family, addrs);
 
-  fprintf(stdout, "finished peloton init \n");
-
   return;
 
 startup_failed:
@@ -639,16 +633,55 @@ peloton_ping(void)
 }
 
 /* ----------
- * peloton_recv_inquiry() -
+ * peloton_proc_node() -
  *
- *  Process stat inquiry requests.
+ *  Execute the given node to return a(nother) tuple.
+ * ----------
+ */
+void
+peloton_proc_node(PlanState *node)
+{
+  Peloton_MsgPlan msg;
+
+  if (pelotonSock == PGINVALID_SOCKET)
+    return;
+
+  peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_PLAN);
+  msg.m_node = (*node);
+
+  peloton_send(&msg, sizeof(msg));
+}
+
+/* ----------
+ * peloton_recv_plan() -
+ *
+ *  Process plan execution requests.
  * ----------
  */
 static void
-peloton_recv_inquiry(Peloton_MsgInquiry *msg, int len)
+peloton_recv_plan(Peloton_MsgPlan *msg, int len)
 {
-  elog(DEBUG2, "received inquiry for database %u", msg->databaseid);
+  PlanState node;
+  Plan *plan;
 
+  /* Don't try to print the plan */
+  return;
+
+  if(msg == NULL)
+    return;
+
+  node = msg->m_node;
+
+  plan = node.plan;
+  if(plan == NULL)
+  {
+    fprintf(stdout, "plan is null \n");
+    return;
+  }
+
+  fprintf(stdout, "going to print plan : %p \n", plan);
+
+  elog_node_display(LOG, "plan", plan, Debug_pretty_print);
 }
 
 
