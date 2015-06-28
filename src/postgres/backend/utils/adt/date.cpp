@@ -1471,7 +1471,7 @@ time_smaller(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMEADT((time1 < time2) ? time1 : time2);
 }
 
-/* overlaps_time() --- implements the SQL OVERLAPS operator.
+/* overlaps_time() --- implements the SQL OVERLAPS coperator.
  *
  * Algorithm is per SQL spec.  This is much harder than you'd think
  * because the spec requires us to deliver a non-null answer in some cases
@@ -2341,7 +2341,7 @@ timetz_mi_interval(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMETZADT_P(result);
 }
 
-/* overlaps_timetz() --- implements the SQL OVERLAPS operator.
+/* overlaps_timetz() --- implements the SQL OVERLAPS coperator.
  *
  * Algorithm is per SQL spec.  This is much harder than you'd think
  * because the spec requires us to deliver a non-null answer in some cases

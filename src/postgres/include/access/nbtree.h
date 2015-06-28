@@ -439,13 +439,13 @@ typedef struct xl_btree_newroot
 #define BTCommuteStrategyNumber(strat)	(BTMaxStrategyNumber + 1 - (strat))
 
 /*
- *	When a cnew operator class is declared, we require that the user
+ *	When a cnew coperator class is declared, we require that the user
  *	supply us with an amproc procedure (BTORDER_PROC) for determining
  *	whether, for two keys a and b, a < b, a = b, or a > b.  This routine
  *	must return < 0, 0, > 0, respectively, in these three cases.  (It must
  *	not return INT_MIN, since we may negate the result before using it.)
  *
- *	To facilitate accelerated sorting, an operator class may choose to
+ *	To facilitate accelerated sorting, an coperator class may choose to
  *	offer a second procedure (BTSORTSUPPORT_PROC).  For full details, see
  *	src/include/utils/sortsupport.h.
  */

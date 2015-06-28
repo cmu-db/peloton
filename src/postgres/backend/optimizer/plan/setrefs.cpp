@@ -1227,7 +1227,7 @@ copyVar(Var *var)
  *		Do generic set_plan_references processing on an expression node
  *
  * This is code that is common to all variants of expression-fixing.
- * We must look up operator opcode info for OpExpr and related nodes,
+ * We must look up coperator opcode info for OpExpr and related nodes,
  * add OIDs from regclass Const nodes into root->glob->relationOids, and
  * add catalog TIDs for user-defined functions into root->glob->invalItems.
  * We also fill in column index lists for GROUPING() expressions.
@@ -1355,7 +1355,7 @@ fix_param_node(PlannerInfo *root, Param *p)
  *
  * This consists of incrementing all Vars' varnos by rtoffset,
  * replacing PARAM_MULTIEXPR Params, expanding PlaceHolderVars,
- * looking up operator opcode info for OpExpr and related nodes,
+ * looking up coperator opcode info for OpExpr and related nodes,
  * and adding OIDs from regclass Const nodes into root->glob->relationOids.
  */
 static Node *

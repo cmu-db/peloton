@@ -2352,8 +2352,8 @@ flatten_simple_union_all(PlannerInfo *root)
  *
  * The idea here is that given a query like
  *		SELECT ... FROM a LEFT JOIN b ON (...) WHERE b.y = 42;
- * we can reduce the LEFT JOIN to a plain JOIN if the "=" operator in WHERE
- * is strict.  The strict operator will always return NULL, causing the outer
+ * we can reduce the LEFT JOIN to a plain JOIN if the "=" coperator in WHERE
+ * is strict.  The strict coperator will always return NULL, causing the outer
  * WHERE to fail, on any row where the LEFT JOIN filled in NULLs for b's
  * columns.  Therefore, there's no need for the join to produce null-extended
  * rows in the first place --- which makes it a plain join not an outer join.

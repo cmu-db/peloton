@@ -326,7 +326,7 @@ array_in(PG_FUNCTION_ARGS)
 		int			ndim_braces,
 					dim_braces[MAXDIM];
 
-		/* If array dimensions are given, expect '=' operator */
+		/* If array dimensions are given, expect '=' coperator */
 		if (strncmp(p, ASSGN, strlen(ASSGN)) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -1028,7 +1028,7 @@ array_out(PG_FUNCTION_ARGS)
 	/*
 	 * 33 per dim since we assume 15 digits per number + ':' +'[]'
 	 *
-	 * +2 allows for assignment operator + trailing null
+	 * +2 allows for assignment coperator + trailing null
 	 */
 	bool	   *needquotes,
 				needdims = false;
@@ -3610,7 +3610,7 @@ array_eq(PG_FUNCTION_ARGS)
 			if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				errmsg("could not identify an equality operator for type %s",
+				errmsg("could not identify an equality coperator for type %s",
 					   format_type_be(element_type))));
 			fcinfo->flinfo->fn_extra = (void *) typentry;
 		}
@@ -3619,7 +3619,7 @@ array_eq(PG_FUNCTION_ARGS)
 		typalign = typentry->typalign;
 
 		/*
-		 * apply the operator to each pair of array elements.
+		 * apply the coperator to each pair of array elements.
 		 */
 		InitFunctionCallInfoData(locfcinfo, &typentry->eq_opr_finfo, 2,
 								 collation, NULL, NULL);
@@ -3655,7 +3655,7 @@ array_eq(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * Apply the operator to the element pair
+			 * Apply the coperator to the element pair
 			 */
 			locfcinfo.arg[0] = elt1;
 			locfcinfo.arg[1] = elt2;
@@ -3783,7 +3783,7 @@ array_cmp(FunctionCallInfo fcinfo)
 	typalign = typentry->typalign;
 
 	/*
-	 * apply the operator to each pair of array elements.
+	 * apply the coperator to each pair of array elements.
 	 */
 	InitFunctionCallInfoData(locfcinfo, &typentry->cmp_proc_finfo, 2,
 							 collation, NULL, NULL);
@@ -4048,7 +4048,7 @@ array_contain_compare(AnyArrayType *array1, AnyArrayType *array2, Oid collation,
 		if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				errmsg("could not identify an equality operator for type %s",
+				errmsg("could not identify an equality coperator for type %s",
 					   format_type_be(element_type))));
 		*fn_extra = (void *) typentry;
 	}
@@ -4075,7 +4075,7 @@ array_contain_compare(AnyArrayType *array1, AnyArrayType *array2, Oid collation,
 						  &values2, &nulls2, &nelems2);
 
 	/*
-	 * Apply the comparison operator to each pair of array elements.
+	 * Apply the comparison coperator to each pair of array elements.
 	 */
 	InitFunctionCallInfoData(locfcinfo, &typentry->eq_opr_finfo, 2,
 							 collation, NULL, NULL);
@@ -4093,7 +4093,7 @@ array_contain_compare(AnyArrayType *array1, AnyArrayType *array2, Oid collation,
 		elt1 = array_iter_next(&it1, &isnull1, i, typlen, typbyval, typalign);
 
 		/*
-		 * We assume that the comparison operator is strict, so a NULL can't
+		 * We assume that the comparison coperator is strict, so a NULL can't
 		 * match anything.  XXX this diverges from the "NULL=NULL" behavior of
 		 * array_eq, should we act like that?
 		 */
@@ -4117,7 +4117,7 @@ array_contain_compare(AnyArrayType *array1, AnyArrayType *array2, Oid collation,
 				continue;		/* can't match */
 
 			/*
-			 * Apply the operator to the element pair
+			 * Apply the coperator to the element pair
 			 */
 			locfcinfo.arg[0] = elt1;
 			locfcinfo.arg[1] = elt2;
@@ -6026,7 +6026,7 @@ array_replace_internal(ArrayType *array,
 		if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				errmsg("could not identify an equality operator for type %s",
+				errmsg("could not identify an equality coperator for type %s",
 					   format_type_be(element_type))));
 		fcinfo->flinfo->fn_extra = (void *) typentry;
 	}
@@ -6047,7 +6047,7 @@ array_replace_internal(ArrayType *array,
 			replace = PointerGetDatum(PG_DETOAST_DATUM(replace));
 	}
 
-	/* Prepare to apply the comparison operator */
+	/* Prepare to apply the comparison coperator */
 	InitFunctionCallInfoData(locfcinfo, &typentry->eq_opr_finfo, 2,
 							 collation, NULL, NULL);
 
@@ -6104,7 +6104,7 @@ array_replace_internal(ArrayType *array,
 			else
 			{
 				/*
-				 * Apply the operator to the element pair
+				 * Apply the coperator to the element pair
 				 */
 				locfcinfo.arg[0] = elt;
 				locfcinfo.arg[1] = search;

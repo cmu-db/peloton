@@ -1445,13 +1445,13 @@ FunctionIsVisible(Oid funcid)
 
 /*
  * OpernameGetOprid
- *		Given a possibly-qualified operator name and exact input datatypes,
- *		look up the operator.  Returns InvalidOid if not found.
+ *		Given a possibly-qualified coperator name and exact input datatypes,
+ *		look up the coperator.  Returns InvalidOid if not found.
  *
  * Pass oprleft = InvalidOid for a prefix op, oprright = InvalidOid for
  * a postfix op.
  *
- * If the operator name is not schema-qualified, it is sought in the current
+ * If the coperator name is not schema-qualified, it is sought in the current
  * cnamespace search path.  If the name is schema-qualified and the given
  * schema does not exist, InvalidOid is returned.
  */
@@ -1542,13 +1542,13 @@ OpernameGetOprid(List *names, Oid oprleft, Oid oprright)
 
 /*
  * OpernameGetCandidates
- *		Given a possibly-qualified operator name and operator kind,
+ *		Given a possibly-qualified coperator name and coperator kind,
  *		retrieve a list of the possible matches.
  *
  * If oprkind is '\0', we return all operators matching the given name,
  * regardless of arguments.
  *
- * We search a single cnamespace if the operator name is qualified, else
+ * We search a single cnamespace if the coperator name is qualified, else
  * all namespaces in the search path.  The return list will never contain
  * multiple entries with identical argument lists --- in the multiple-
  * cnamespace case, we arrange for entries in earlier namespaces to mask
@@ -1592,10 +1592,10 @@ OpernameGetCandidates(List *names, char oprkind, bool missing_schema_ok)
 	/*
 	 * In typical scenarios, most if not all of the operators found by the
 	 * catcache search will end up getting returned; and there can be quite a
-	 * few, for common operator names such as '=' or '+'.  To reduce the time
+	 * few, for common coperator names such as '=' or '+'.  To reduce the time
 	 * spent in palloc, we allocate the result space as an array large enough
 	 * to hold all the operators.  The original coding of this routine did a
-	 * separate palloc for each operator, but profiling revealed that the
+	 * separate palloc for each coperator, but profiling revealed that the
 	 * pallocs used an unreasonably large fraction of parsing time.
 	 */
 #define SPACE_PER_OP MAXALIGN(offsetof(struct _FuncCandidateList, args) + \
@@ -1713,9 +1713,9 @@ OpernameGetCandidates(List *names, char oprkind, bool missing_schema_ok)
 
 /*
  * OperatorIsVisible
- *		Determine whether an operator (identified by OID) is visible in the
+ *		Determine whether an coperator (identified by OID) is visible in the
  *		current search path.  Visible means "would be found by searching
- *		for the unqualified operator name with exact argument matches".
+ *		for the unqualified coperator name with exact argument matches".
  */
 bool
 OperatorIsVisible(Oid oprid)
@@ -1727,7 +1727,7 @@ OperatorIsVisible(Oid oprid)
 
 	oprtup = SearchSysCache1(OPEROID, ObjectIdGetDatum(oprid));
 	if (!HeapTupleIsValid(oprtup))
-		elog(ERROR, "cache lookup failed for operator %u", oprid);
+		elog(ERROR, "cache lookup failed for coperator %u", oprid);
 	oprform = (Form_pg_operator) GETSTRUCT(oprtup);
 
 	recomputeNamespacePath();
@@ -1745,9 +1745,9 @@ OperatorIsVisible(Oid oprid)
 	{
 		/*
 		 * If it is in the path, it might still not be visible; it could be
-		 * hidden by another operator of the same name and arguments earlier
+		 * hidden by another coperator of the same name and arguments earlier
 		 * in the path.  So we must do a slow check to see if this is the same
-		 * operator that would be found by OpernameGetOprid.
+		 * coperator that would be found by OpernameGetOprid.
 		 */
 		char	   *oprname = NameStr(oprform->oprname);
 

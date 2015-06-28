@@ -562,7 +562,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	/*
 	 * Deconstruct the hash clauses into outer and inner argument values, so
 	 * that we can evaluate those subexpressions separately.  Also make a list
-	 * of the hash operator OIDs, in preparation for looking up the hash
+	 * of the hash coperator OIDs, in preparation for looking up the hash
 	 * functions to use.
 	 */
 	lclauses = NIL;

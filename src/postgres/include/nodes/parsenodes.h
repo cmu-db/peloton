@@ -234,7 +234,7 @@ typedef struct ParamRef : Node
  */
 typedef enum A_Expr_Kind
 {
-	AEXPR_OP,					/* normal operator */
+	AEXPR_OP,					/* normal coperator */
 	AEXPR_OP_ANY,				/* scalar op ANY (array) */
 	AEXPR_OP_ALL,				/* scalar op ALL (array) */
 	AEXPR_DISTINCT,				/* IS DISTINCT FROM - name must be "=" */
@@ -255,7 +255,7 @@ typedef struct A_Expr : Node
 {
 	//NodeTag		type;
 	A_Expr_Kind kind;			/* see above */
-	List	   *name;			/* possibly-qualified name of operator */
+	List	   *name;			/* possibly-qualified name of coperator */
 	Node	   *lexpr;			/* left argument, or NULL if none */
 	Node	   *rexpr;			/* right argument, or NULL if none */
 	int			location;		/* token location, or -1 if unknown */
@@ -468,7 +468,7 @@ typedef struct SortBy : Node
 	SortByDir	sortby_dir;		/* ASC/DESC/USING/default */
 	SortByNulls sortby_nulls;	/* NULLS FIRST/LAST */
 	List	   *useOp;			/* name of op to use, if SORTBY_USING */
-	int			location;		/* operator location, or -1 if none/unknown */
+	int			location;		/* coperator location, or -1 if none/unknown */
 } SortBy;
 
 /*
@@ -960,8 +960,8 @@ typedef struct WithCheckOption : Node
  *
  * tleSortGroupRef must match ressortgroupref of exactly one entry of the
  *		query's targetlist; that is the expression to be sorted or grouped by.
- * eqop is the OID of the equality operator.
- * sortop is the OID of the ordering operator (a "<" or ">" operator),
+ * eqop is the OID of the equality coperator.
+ * sortop is the OID of the ordering coperator (a "<" or ">" coperator),
  *		or InvalidOid if not available.
  * nulls_first means about what you'd expect.  If sortop is InvalidOid
  *		then nulls_first is meaningless and should be set to false.
@@ -978,13 +978,13 @@ typedef struct WithCheckOption : Node
  * of the referenced targetlist expression to find out what it is.
  *
  * In a grouping item, eqop must be valid.  If the eqop is a btree equality
- * operator, then sortop should be set to a compatible ordering operator.
+ * coperator, then sortop should be set to a compatible ordering coperator.
  * We prefer to set eqop/sortop/nulls_first to match any ORDER BY item that
  * the query presents for the same tlist item.  If there is none, we just
  * use the default ordering op for the datatype.
  *
  * If the tlist item's type has a hash opclass but no btree opclass, then
- * we will set eqop to the hash equality operator, sortop to InvalidOid,
+ * we will set eqop to the hash equality coperator, sortop to InvalidOid,
  * and nulls_first to false.  A grouping item of this kind can only be
  * implemented by hashing, and of course it'll never match an ORDER BY item.
  *
@@ -1006,8 +1006,8 @@ typedef struct SortGroupClause : Node
 {
 	//NodeTag		type;
 	Index		tleSortGroupRef;	/* reference into targetlist */
-	Oid			eqop;			/* the equality operator ('=' op) */
-	Oid			sortop;			/* the ordering operator ('<' op), or 0 */
+	Oid			eqop;			/* the equality coperator ('=' op) */
+	Oid			sortop;			/* the ordering coperator ('<' op), or 0 */
 	bool		nulls_first;	/* do NULLs come before normal values? */
 	bool		hashable;		/* can eqop be implemented by hashing? */
 } SortGroupClause;
@@ -1843,7 +1843,7 @@ typedef struct Constraint : Node
 	List	   *keys;			/* String nodes naming referenced column(s) */
 
 	/* Fields used for EXCLUSION constraints: */
-	List	   *exclusions;		/* list of (IndexElem, operator name) pairs */
+	List	   *exclusions;		/* list of (IndexElem, coperator name) pairs */
 
 	/* Fields used for index constraints (UNIQUE, PRIMARY KEY, EXCLUSION): */
 	List	   *options;		/* options from WITH clause */
@@ -2218,7 +2218,7 @@ typedef struct AlterSeqStmt : Node
 typedef struct DefineStmt : Node
 {
 	//NodeTag		type;
-	ObjectType	kind;			/* aggregate, operator, type */
+	ObjectType	kind;			/* aggregate, coperator, type */
 	bool		oldstyle;		/* hack to signal old CREATE AGG syntax */
 	List	   *defnames;		/* qualified name (list of Value strings) */
 	List	   *args;			/* a list of TypeName (if needed) */
@@ -2261,8 +2261,8 @@ typedef struct CreateOpClassItem : Node
 {
 	//NodeTag		type;
 	int			itemtype;		/* see codes above */
-	/* fields used for an operator or function item: */
-	List	   *name;			/* operator or function name */
+	/* fields used for an coperator or function item: */
+	List	   *name;			/* coperator or function name */
 	List	   *args;			/* argument types */
 	int			number;			/* strategy num or support proc num */
 	List	   *order_family;	/* only used for ordering operators */
@@ -2433,7 +2433,7 @@ typedef struct IndexStmt : Node
 	List	   *indexParams;	/* columns to index: a list of IndexElem */
 	List	   *options;		/* WITH clause options: a list of DefElem */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
-	List	   *excludeOpNames; /* exclusion operator names, or NIL if none */
+	List	   *excludeOpNames; /* exclusion coperator names, or NIL if none */
 	char	   *idxcomment;		/* comment to apply to index, or NULL */
 	Oid			indexOid;		/* OID of an existing index, if any */
 	Oid			oldNode;		/* relfilenode of existing storage, if any */

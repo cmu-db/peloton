@@ -1288,4 +1288,4 @@ backtrack:
 
 
 
-#include "rege_dfa.c"
+#include "rege_dfa.cpp"

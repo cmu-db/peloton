@@ -104,7 +104,7 @@ make_canonical_pathkey(PlannerInfo *root,
  * We may as well just sort by y.  Note that because of opfamily matching,
  * this is semantically correct: we know that the equality constraint is one
  * that actually binds the variable to a single value in the terms of any
- * ordering operator that might go with the eclass.  This rule not only lets
+ * ordering coperator that might go with the eclass.  This rule not only lets
  * us simplify (or even skip) explicit sorts, but also allows matching index
  * sort orders to a query when there are don't-care index columns.
  *
@@ -193,18 +193,18 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 	 * EquivalenceClasses need to contain opfamily lists based on the family
 	 * membership of mergejoinable equality operators, which could belong to
 	 * more than one opfamily.  So we have to look up the opfamily's equality
-	 * operator and get its membership.
+	 * coperator and get its membership.
 	 */
 	equality_op = get_opfamily_member(opfamily,
 									  opcintype,
 									  opcintype,
 									  BTEqualStrategyNumber);
 	if (!OidIsValid(equality_op))		/* shouldn't happen */
-		elog(ERROR, "could not find equality operator for opfamily %u",
+		elog(ERROR, "could not find equality coperator for opfamily %u",
 			 opfamily);
 	opfamilies = get_mergejoin_opfamilies(equality_op);
 	if (!opfamilies)			/* certainly should find some */
-		elog(ERROR, "could not find opfamilies for equality operator %u",
+		elog(ERROR, "could not find opfamilies for equality coperator %u",
 			 equality_op);
 
 	/* Now find or (optionally) create a matching EquivalenceClass */
@@ -223,7 +223,7 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 
 /*
  * make_pathkey_from_sortop
- *	  Like make_pathkey_from_sortinfo, but work from a sort operator.
+ *	  Like make_pathkey_from_sortinfo, but work from a sort coperator.
  *
  * This should eventually go away, but we need to restructure SortGroupClause
  * first.
@@ -242,10 +242,10 @@ make_pathkey_from_sortop(PlannerInfo *root,
 				collation;
 	int16		strategy;
 
-	/* Find the operator in pg_amop --- failure shouldn't happen */
+	/* Find the coperator in pg_amop --- failure shouldn't happen */
 	if (!get_ordering_op_properties(ordering_op,
 									&opfamily, &opcintype, &strategy))
-		elog(ERROR, "operator %u is not a valid ordering operator",
+		elog(ERROR, "coperator %u is not a valid ordering coperator",
 			 ordering_op);
 
 	/* Because SortGroupClause doesn't carry collation, consult the expr */
@@ -504,10 +504,10 @@ build_index_pathkeys(PlannerInfo *root,
 /*
  * build_expression_pathkey
  *	  Build a pathkeys list that describes an ordering by a single expression
- *	  using the given sort operator.
+ *	  using the given sort coperator.
  *
  * expr, nullable_relids, and rel are as for make_pathkey_from_sortinfo.
- * We induce the other arguments assuming default sort order for the operator.
+ * We induce the other arguments assuming default sort order for the coperator.
  *
  * Similarly to make_pathkey_from_sortinfo, the result is NIL if create_it
  * is false and the expression isn't already in some EquivalenceClass.
@@ -526,10 +526,10 @@ build_expression_pathkey(PlannerInfo *root,
 	int16		strategy;
 	PathKey    *cpathkey;
 
-	/* Find the operator in pg_amop --- failure shouldn't happen */
+	/* Find the coperator in pg_amop --- failure shouldn't happen */
 	if (!get_ordering_op_properties(opno,
 									&opfamily, &opcintype, &strategy))
-		elog(ERROR, "operator %u is not a valid ordering operator",
+		elog(ERROR, "coperator %u is not a valid ordering coperator",
 			 opno);
 
 	cpathkey = make_pathkey_from_sortinfo(root,
@@ -890,7 +890,7 @@ initialize_mergeclause_eclasses(PlannerInfo *root, RestrictInfo *restrictinfo)
 	Assert(restrictinfo->left_ec == NULL);
 	Assert(restrictinfo->right_ec == NULL);
 
-	/* Need the declared input types of the operator */
+	/* Need the declared input types of the coperator */
 	op_input_types(((OpExpr *) clause)->opno, &lefttype, &righttype);
 
 	/* Find or create a matching EquivalenceClass for each side */

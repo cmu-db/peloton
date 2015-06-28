@@ -553,11 +553,11 @@ DESCR("registered procedure (with args)");
 #define REGPROCEDUREOID 2202
 
 DATA(insert OID = 2203 ( regoper	   PGNSP PGUID	4 t b N f t \054 0	 0 2208 regoperin regoperout regoperrecv regopersend - - - i p f 0 -1 0 0 _null_ _null_ _null_ ));
-DESCR("registered operator");
+DESCR("registered coperator");
 #define REGOPEROID		2203
 
 DATA(insert OID = 2204 ( regoperator   PGNSP PGUID	4 t b N f t \054 0	 0 2209 regoperatorin regoperatorout regoperatorrecv regoperatorsend - - - i p f 0 -1 0 0 _null_ _null_ _null_ ));
-DESCR("registered operator (with args)");
+DESCR("registered coperator (with args)");
 #define REGOPERATOROID	2204
 
 DATA(insert OID = 2205 ( regclass	   PGNSP PGUID	4 t b N f t \054 0	 0 2210 regclassin regclassout regclassrecv regclasssend - - - i p f 0 -1 0 0 _null_ _null_ _null_ ));

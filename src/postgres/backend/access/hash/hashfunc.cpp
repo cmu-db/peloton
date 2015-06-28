@@ -11,7 +11,7 @@
  *	  src/backend/access/hash/hashfunc.c
  *
  * NOTES
- *	  These functions are stored in pg_amproc.  For each operator class
+ *	  These functions are stored in pg_amproc.  For each coperator class
  *	  defined for hash indexes, they compute the hash value of the argument.
  *
  *	  Additional hash functions appear in /utils/adt/ files for various

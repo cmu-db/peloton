@@ -165,8 +165,8 @@ typedef enum
  * In addition to the expressions themselves, the planner passes the btree
  * opfamily OID, collation OID, btree strategy number (BTLessStrategyNumber or
  * BTGreaterStrategyNumber), and nulls-first flag that identify the intended
- * sort ordering for each merge key.  The mergejoinable operator is an
- * equality operator in the opfamily, and the two inputs are guaranteed to be
+ * sort ordering for each merge key.  The mergejoinable coperator is an
+ * equality coperator in the opfamily, and the two inputs are guaranteed to be
  * ordered in either increasing or decreasing (respectively) order according
  * to the opfamily and collation, with nulls at the indicated end of the range.
  * This allows us to obtain the needed comparison function from the opfamily.
@@ -220,13 +220,13 @@ MJExamineQuals(List *mergeclauses,
 			elog(ERROR, "unsupported mergejoin strategy %d", opstrategy);
 		clause->ssup.ssup_nulls_first = nulls_first;
 
-		/* Extract the operator's declared left/right datatypes */
+		/* Extract the coperator's declared left/right datatypes */
 		get_op_opfamily_properties(qual->opno, opfamily, false,
 								   &op_strategy,
 								   &op_lefttype,
 								   &op_righttype);
 		if (op_strategy != BTEqualStrategyNumber)		/* should not happen */
-			elog(ERROR, "cannot merge using non-equality operator %u",
+			elog(ERROR, "cannot merge using non-equality coperator %u",
 				 qual->opno);
 
 		/*

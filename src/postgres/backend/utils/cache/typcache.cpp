@@ -25,7 +25,7 @@
  * We have some provisions for updating cache entries if the stored data
  * becomes obsolete.  Information dependent on opclasses is cleared if we
  * detect updates to pg_opclass.  We also support clearing the tuple
- * descriptor and operator/function parts of a rowtype's cache entry,
+ * descriptor and coperator/function parts of a rowtype's cache entry,
  * since those may need to change as a consequence of ALTER TABLE.
  * Domain constraint changes are also tracked properly.
  *
@@ -292,7 +292,7 @@ lookup_type_cache(Oid type_id, int flags)
 	}
 
 	/*
-	 * If we need to look up equality operator, and there's no btree opclass,
+	 * If we need to look up equality coperator, and there's no btree opclass,
 	 * force lookup of hash opclass.
 	 */
 	if ((flags & (TYPECACHE_EQ_OPR | TYPECACHE_EQ_OPR_FINFO)) &&
@@ -347,7 +347,7 @@ lookup_type_cache(Oid type_id, int flags)
 										 HTEqualStrategyNumber);
 
 		/*
-		 * If the proposed equality operator is array_eq or record_eq, check
+		 * If the proposed equality coperator is array_eq or record_eq, check
 		 * to see if the element type or column types support equality. If
 		 * not, array_eq or record_eq would fail at runtime, so we don't want
 		 * to report that the type has equality.
@@ -367,8 +367,8 @@ lookup_type_cache(Oid type_id, int flags)
 
 		/*
 		 * Reset info about hash function whenever we pick up cnew info about
-		 * equality operator.  This is so we can ensure that the hash function
-		 * matches the operator.
+		 * equality coperator.  This is so we can ensure that the hash function
+		 * matches the coperator.
 		 */
 		typentry->flags &= ~(TCFLAGS_CHECKED_HASH_PROC);
 		typentry->flags |= TCFLAGS_CHECKED_EQ_OPR;
@@ -488,7 +488,7 @@ lookup_type_cache(Oid type_id, int flags)
 	 * memory context) but this will do for our purposes.
 	 *
 	 * Note: the code above avoids invalidating the finfo structs unless the
-	 * referenced operator/function OID actually changes.  This is to prevent
+	 * referenced coperator/function OID actually changes.  This is to prevent
 	 * unnecessary leakage of any subsidiary data attached to an finfo, since
 	 * that would cause session-lifespan memory leaks.
 	 */

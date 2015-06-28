@@ -3,7 +3,7 @@
 * geqo_px.c
 *
 *	 position crossover [PX] routines;
-*	 PX operator according to Syswerda
+*	 PX coperator according to Syswerda
 *	 (The Genetic Algorithms Handbook, L Davis, ed)
 *
 * src/backend/optimizer/geqo/geqo_px.c

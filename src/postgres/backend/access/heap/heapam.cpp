@@ -3956,8 +3956,8 @@ heap_tuple_attr_equals(TupleDesc tupdesc, int attrnum,
 	 * We do simple binary comparison of the two datums.  This may be overly
 	 * strict because there can be multiple binary representations for the
 	 * same logical value.  But we should be OK as long as there are no false
-	 * positives.  Using a type-specific equality operator is messy because
-	 * there could be multiple notions of equality in different operator
+	 * positives.  Using a type-specific equality coperator is messy because
+	 * there could be multiple notions of equality in different coperator
 	 * classes; furthermore, we cannot safely invoke user-defined functions
 	 * while holding exclusive buffer lock.
 	 */

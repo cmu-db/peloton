@@ -54,7 +54,7 @@ CATALOG(pg_opclass,2616)
 	NameData	opcname;		/* name of this opclass */
 	Oid			opcnamespace;	/* cnamespace of this opclass */
 	Oid			opcowner;		/* opclass owner */
-	Oid			opcfamily;		/* containing operator family */
+	Oid			opcfamily;		/* containing coperator family */
 	Oid			opcintype;		/* type of data indexed by opclass */
 	bool		opcdefault;		/* T if opclass is default for opcintype */
 	Oid			opckeytype;		/* type of data in index, or InvalidOid */
@@ -236,7 +236,7 @@ DATA(insert (	405		jsonb_ops			PGNSP PGUID 4034  3802 t 0 ));
 DATA(insert (	2742	jsonb_ops			PGNSP PGUID 4036  3802 t 25 ));
 DATA(insert (	2742	jsonb_path_ops		PGNSP PGUID 4037  3802 f 23 ));
 
-/* BRIN operator classes */
+/* BRIN coperator classes */
 /* no brin opclass for bool */
 DATA(insert (	3580	bytea_minmax_ops		PGNSP PGUID 4064    17 t 17 ));
 DATA(insert (	3580	char_minmax_ops			PGNSP PGUID 4062    18 t 18 ));

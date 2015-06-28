@@ -826,7 +826,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			 * to an insertion scan key by replacing the sk_func with the
 			 * appropriate btree comparison function.
 			 *
-			 * If scankey operator is not a cross-type comparison, we can use
+			 * If scankey coperator is not a cross-type comparison, we can use
 			 * the cached comparison function; otherwise gotta look it up in
 			 * the catalogs.  (That can't lead to infinite recursion, since no
 			 * indexscan initiated by syscache lookup will use cross-data-type

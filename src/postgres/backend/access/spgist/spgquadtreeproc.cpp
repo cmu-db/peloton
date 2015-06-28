@@ -246,7 +246,7 @@ spg_quad_inner_consistent(PG_FUNCTION_ARGS)
 			case RTContainedByStrategyNumber:
 
 				/*
-				 * For this operator, the query is a box not a point.  We
+				 * For this coperator, the query is a box not a point.  We
 				 * cheat to the extent of assuming that DatumGetPointP won't
 				 * do anything that would be bad for a pointer-to-box.
 				 */
@@ -340,7 +340,7 @@ spg_quad_leaf_consistent(PG_FUNCTION_ARGS)
 			case RTContainedByStrategyNumber:
 
 				/*
-				 * For this operator, the query is a box not a point.  We
+				 * For this coperator, the query is a box not a point.  We
 				 * cheat to the extent of assuming that DatumGetPointP won't
 				 * do anything that would be bad for a pointer-to-box.
 				 */
