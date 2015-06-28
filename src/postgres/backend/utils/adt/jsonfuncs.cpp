@@ -539,15 +539,15 @@ jsonb_object_field_text(PG_FUNCTION_ARGS)
 
 		switch (v->type)
 		{
-			case jbvNull:
+			case JsonbValue::jbvNull:
 				break;
-			case jbvBool:
+			case JsonbValue::jbvBool:
 				result = cstring_to_text(v->val.boolean ? "true" : "false");
 				break;
-			case jbvString:
+			case JsonbValue::jbvString:
 				result = cstring_to_text_with_len(v->val.string.val, v->val.string.len);
 				break;
-			case jbvNumeric:
+			case JsonbValue::jbvNumeric:
 				result = cstring_to_text(DatumGetCString(DirectFunctionCall1(numeric_out,
 										  PointerGetDatum(v->val.numeric))));
 				break;
@@ -634,15 +634,15 @@ jsonb_array_element_text(PG_FUNCTION_ARGS)
 
 		switch (v->type)
 		{
-			case jbvNull:
+			case JsonbValue::jbvNull:
 				break;
-			case jbvBool:
+			case JsonbValue::jbvBool:
 				result = cstring_to_text(v->val.boolean ? "true" : "false");
 				break;
-			case jbvString:
+			case JsonbValue::jbvString:
 				result = cstring_to_text_with_len(v->val.string.val, v->val.string.len);
 				break;
-			case jbvNumeric:
+			case JsonbValue::jbvNumeric:
 				result = cstring_to_text(DatumGetCString(DirectFunctionCall1(numeric_out,
 										  PointerGetDatum(v->val.numeric))));
 				break;
