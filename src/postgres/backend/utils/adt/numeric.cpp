@@ -2300,7 +2300,7 @@ numeric_mul(PG_FUNCTION_ARGS)
 	/*
 	 * Unpack the values, let mul_var() compute the result and return it.
 	 * Unlike add_var() and sub_var(), mul_var() will round its result. In the
-	 * case of numeric_mul(), which is invoked for the * operator on numerics,
+	 * case of numeric_mul(), which is invoked for the * coperator on numerics,
 	 * we request exact representation for the product (rscale = sum(dscale of
 	 * arg1, dscale of arg2)).
 	 */

@@ -116,12 +116,12 @@ typedef enum
 /*
  * get token from query string
  *
- * *operator is filled in with OP_* when return values is PT_OPR
+ * *coperator is filled in with OP_* when return values is PT_OPR
  * *strval, *lenval and *weight are filled in when return value is PT_VAL
  */
 static ts_tokentype
 gettoken_query(TSQueryParserState state,
-			   int8 *operator,
+			   int8 *coperator,
 			   int *lenval, char **strval, int16 *weight, bool *prefix)
 {
 	*weight = 0;
@@ -137,7 +137,7 @@ gettoken_query(TSQueryParserState state,
 				{
 					(state->buf)++;		/* can safely ++, t_iseq guarantee
 										 * that pg_mblen()==1 */
-					*operator = OP_NOT;
+					*coperator = OP_NOT;
 					state->state = WAITOPERAND;
 					return PT_OPR;
 				}
@@ -181,14 +181,14 @@ gettoken_query(TSQueryParserState state,
 				if (t_iseq(state->buf, '&'))
 				{
 					state->state = WAITOPERAND;
-					*operator = OP_AND;
+					*coperator = OP_AND;
 					(state->buf)++;
 					return PT_OPR;
 				}
 				if (t_iseq(state->buf, '|'))
 				{
 					state->state = WAITOPERAND;
-					*operator = OP_OR;
+					*coperator = OP_OR;
 					(state->buf)++;
 					return PT_OPR;
 				}
@@ -220,7 +220,7 @@ gettoken_query(TSQueryParserState state,
 }
 
 /*
- * Push an operator to state->polstr
+ * Push an coperator to state->polstr
  */
 void
 pushOperator(TSQueryParserState state, int8 oper)
@@ -330,7 +330,7 @@ makepol(TSQueryParserState state,
 		PushFunction pushval,
 		Datum opaque)
 {
-	int8		operator = 0;
+	int8		coperator = 0;
 	ts_tokentype type;
 	int			lenval = 0;
 	char	   *strval = NULL;
@@ -342,7 +342,7 @@ makepol(TSQueryParserState state,
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
 
-	while ((type = gettoken_query(state, &operator, &lenval, &strval, &weight, &prefix)) != PT_END)
+	while ((type = gettoken_query(state, &coperator, &lenval, &strval, &weight, &prefix)) != PT_END)
 	{
 		switch (type)
 		{
@@ -356,13 +356,13 @@ makepol(TSQueryParserState state,
 				}
 				break;
 			case PT_OPR:
-				if (lenstack && operator == OP_OR)
+				if (lenstack && coperator == OP_OR)
 					pushOperator(state, OP_OR);
 				else
 				{
 					if (lenstack == STACKDEPTH) /* internal error */
 						elog(ERROR, "tsquery stack too small");
-					opstack[lenstack] = operator;
+					opstack[lenstack] = coperator;
 					lenstack++;
 				}
 				break;
@@ -462,7 +462,7 @@ findoprnd(QueryItem *ptr, int size)
  * pushValue and pushOperator. It must push a single value with pushValue,
  * a complete expression with all operands, or a stopword placeholder
  * with pushStop, otherwise the prefix notation representation will be broken,
- * having an operator with no operand.
+ * having an coperator with no operand.
  *
  * opaque is passed on to pushval as is, pushval can use it to store its
  * cprivate state.
@@ -554,7 +554,7 @@ parse_tsquery(char *buf,
 	memcpy((void *) GETOPERAND(query), (void *) state.op, state.sumlen);
 	pfree(state.op);
 
-	/* Set left operand pointers for every operator. */
+	/* Set left operand pointers for every coperator. */
 	findoprnd(ptr, query->size);
 
 	return query;
@@ -723,7 +723,7 @@ infix(INFIX *in, bool first)
 		in->curpol = nrm.curpol;
 		infix(in, false);
 
-		/* print operator & right operand */
+		/* print coperator & right operand */
 		RESIZEBUF(in, 3 + (nrm.cur - nrm.buf));
 		switch (op)
 		{
@@ -735,7 +735,7 @@ infix(INFIX *in, bool first)
 				break;
 			default:
 				/* OP_NOT is handled in above if-branch */
-				elog(ERROR, "unrecognized operator type: %d", op);
+				elog(ERROR, "unrecognized coperator type: %d", op);
 		}
 		in->cur = strchr(in->cur, '\0');
 		pfree(nrm.buf);
@@ -787,9 +787,9 @@ tsqueryout(PG_FUNCTION_ARGS)
  *			operand text in client encoding, null-terminated
  * uint8	prefix
  *
- * For each operator:
+ * For each coperator:
  * uint8	type, QI_OPR
- * uint8	operator, one of OP_AND, OP_OR, OP_NOT.
+ * uint8	coperator, one of OP_AND, OP_OR, OP_NOT.
  */
 Datum
 tsquerysend(PG_FUNCTION_ARGS)
@@ -908,7 +908,7 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 
 			oper = (int8) pq_getmsgint(buf, sizeof(int8));
 			if (oper != OP_NOT && oper != OP_OR && oper != OP_AND)
-				elog(ERROR, "invalid tsquery: unrecognized operator type %d",
+				elog(ERROR, "invalid tsquery: unrecognized coperator type %d",
 					 (int) oper);
 			if (i == size - 1)
 				elog(ERROR, "invalid pointer to right operand");

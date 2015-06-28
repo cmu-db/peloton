@@ -3,7 +3,7 @@
  *		Implementation of inclusion opclasses for BRIN
  *
  * This module provides framework BRIN support functions for the "inclusion"
- * operator classes.  A few SQL-level support functions are also required for
+ * coperator classes.  A few SQL-level support functions are also required for
  * each opclass.
  *
  * The "inclusion" BRIN strategy is useful for types that support R-Tree
@@ -298,7 +298,7 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 		 * Placement strategies
 		 *
 		 * These are implemented by logically negating the result of the
-		 * converse placement operator; for this to work, the converse operator
+		 * converse placement coperator; for this to work, the converse coperator
 		 * must be part of the opclass.  An error will be thrown by
 		 * inclusion_get_strategy_procinfo() if the required strategy is not
 		 * part of the opclass.
@@ -359,7 +359,7 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 			 * Overlap and contains strategies
 			 *
 			 * These strategies are simple enough that we can simply call the
-			 * operator and return its result.  Empty elements don't change
+			 * coperator and return its result.  Empty elements don't change
 			 * the result.
 			 */
 
@@ -377,9 +377,9 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 			/*
 			 * Contained by strategies
 			 *
-			 * We cannot just call the original operator for the contained by
+			 * We cannot just call the original coperator for the contained by
 			 * strategies because some elements can be contained even though
-			 * the union is not; instead we use the overlap operator.
+			 * the union is not; instead we use the overlap coperator.
 			 *
 			 * We check for empty elements separately as they are not merged to
 			 * the union but contained by everything.
@@ -401,7 +401,7 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 			 * Adjacent strategy
 			 *
 			 * We test for overlap first but to be safe we need to call
-			 * the actual adjacent operator also.
+			 * the actual adjacent coperator also.
 			 *
 			 * An empty element cannot be adjacent to any other, so there is
 			 * no need to check for it.
@@ -423,7 +423,7 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 			 * Basic comparison strategies
 			 *
 			 * It is straightforward to support the equality strategies with
-			 * the contains operator.  Generally, inequality strategies do not
+			 * the contains coperator.  Generally, inequality strategies do not
 			 * make much sense for the types which will be used with the
 			 * inclusion BRIN family of opclasses, but is is possible to
 			 * implement them with logical negation of the left-of and right-of
@@ -623,7 +623,7 @@ inclusion_get_procinfo(BrinDesc *bdesc, uint16 attno, uint16 procnum)
  *
  * Return the procedure corresponding to the given sub-type and strategy
  * number.  The data type of the index will be used as the left hand side of
- * the operator and the given sub-type will be used as the right hand side.
+ * the coperator and the given sub-type will be used as the right hand side.
  * Throws an error if the pg_amop row does not exist, but that should not
  * happen with a properly configured opclass.
  *
@@ -679,7 +679,7 @@ inclusion_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 								Int16GetDatum(strategynum));
 
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
+			elog(ERROR, "missing coperator %d(%u,%u) in opfamily %u",
 				 strategynum, attr->atttypid, subtype, opfamily);
 
 		oprid = DatumGetObjectId(SysCacheGetAttr(AMOPSTRATEGY, tuple,

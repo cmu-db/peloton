@@ -2722,7 +2722,7 @@ static struct config_real ConfigureNamesReal[] =
 	{
 		{"cpu_operator_cost", PGC_USERSET, QUERY_TUNING_COST,
 			gettext_noop("Sets the planner's estimate of the cost of "
-						 "processing each operator or function call."),
+						 "processing each coperator or function call."),
 			NULL
 		},
 		&cpu_operator_cost,

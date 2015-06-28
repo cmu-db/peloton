@@ -43,7 +43,7 @@ bool		operator_precedence_warning = false;
 bool		Transform_null_equals = false;
 
 /*
- * Node-type groups for operator precedence warnings
+ * Node-type groups for coperator precedence warnings
  * We use zero for everything not otherwise classified
  */
 #define PREC_GROUP_POSTFIX_IS	1		/* postfix IS tests (NullTest, etc) */
@@ -340,7 +340,7 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 			 * they are only injected into parse trees in fully-formed state.
 			 *
 			 * Ordinarily we should not see a Var here, but it is convenient
-			 * for transformJoinUsingClause() to create untransformed operator
+			 * for transformJoinUsingClause() to create untransformed coperator
 			 * trees containing already-transformed Vars.  The best
 			 * alternative would be to deconstruct and reconstruct column
 			 * references, which seems expensively pointless.  So allow it.
@@ -531,7 +531,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 	 * the grammar at the top level of a SELECT list, and transformTargetList
 	 * will take care of it before it ever gets here.  Also, "A.*" etc will
 	 * be expanded by transformTargetList if they appear at SELECT top level,
-	 * so here we are only going to see them as function or operator inputs.
+	 * so here we are only going to see them as function or coperator inputs.
 	 *
 	 * Currently, if a catalog name is given then it must equal the current
 	 * database name; we check it here and then discard it.
@@ -918,7 +918,7 @@ transformAExprOp(ParseState *pstate, A_Expr *a)
 	}
 	else
 	{
-		/* Ordinary scalar operator */
+		/* Ordinary scalar coperator */
 		lexpr = transformExprRecurse(pstate, lexpr);
 		rexpr = transformExprRecurse(pstate, rexpr);
 
@@ -1003,7 +1003,7 @@ transformAExprDistinct(ParseState *pstate, A_Expr *a)
 	}
 	else
 	{
-		/* Ordinary scalar operator */
+		/* Ordinary scalar coperator */
 		return (Node *) make_distinct_op(pstate,
 										 a->name,
 										 lexpr,
@@ -1026,12 +1026,12 @@ transformAExprNullIf(ParseState *pstate, A_Expr *a)
 								a->location);
 
 	/*
-	 * The comparison operator itself should yield boolean ...
+	 * The comparison coperator itself should yield boolean ...
 	 */
 	if (result->opresulttype != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("NULLIF requires = operator to yield boolean"),
+				 errmsg("NULLIF requires = coperator to yield boolean"),
 				 parser_errposition(pstate, a->location)));
 
 	/*
@@ -1104,7 +1104,7 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 	ListCell   *l;
 
 	/*
-	 * If the operator is <>, combine with AND not OR.
+	 * If the coperator is <>, combine with AND not OR.
 	 */
 	if (strcmp(strVal(linitial(a->name)), "<>") == 0)
 		useOr = false;
@@ -1231,7 +1231,7 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 		}
 		else
 		{
-			/* Ordinary scalar operator */
+			/* Ordinary scalar coperator */
 			cmp = (Node *) make_op(pstate,
 								   a->name,
 								   copyObject(lexpr),
@@ -1750,7 +1750,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 	if (sublink->subLinkType == EXISTS_SUBLINK)
 	{
 		/*
-		 * EXISTS needs no test expression or combining operator. These fields
+		 * EXISTS needs no test expression or combining coperator. These fields
 		 * should be null already, but make sure.
 		 */
 		sublink->testexpr = NULL;
@@ -1770,7 +1770,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 					 parser_errposition(pstate, sublink->location)));
 
 		/*
-		 * EXPR and ARRAY need no test expression or combining operator. These
+		 * EXPR and ARRAY need no test expression or combining coperator. These
 		 * fields should be null already, but make sure.
 		 */
 		sublink->testexpr = NULL;
@@ -1859,7 +1859,7 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 					 parser_errposition(pstate, sublink->location)));
 
 		/*
-		 * Identify the combining operator(s) and generate a suitable
+		 * Identify the combining coperator(s) and generate a suitable
 		 * row-comparison expression.
 		 */
 		sublink->testexpr = make_row_comparison_op(pstate,
@@ -2602,7 +2602,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 
 	/*
 	 * We can't compare zero-length rows because there is no principled basis
-	 * for figuring out what the operator is.
+	 * for figuring out what the coperator is.
 	 */
 	if (nopers == 0)
 		ereport(ERROR,
@@ -2626,27 +2626,27 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 
 		/*
 		 * We don't use coerce_to_boolean here because we insist on the
-		 * operator yielding boolean directly, not via coercion.  If it
+		 * coperator yielding boolean directly, not via coercion.  If it
 		 * doesn't yield bool it won't be in any index opfamilies...
 		 */
 		if (cmp->opresulttype != BOOLOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-				   errmsg("row comparison operator must yield type boolean, "
+				   errmsg("row comparison coperator must yield type boolean, "
 						  "not type %s",
 						  format_type_be(cmp->opresulttype)),
 					 parser_errposition(pstate, location)));
 		if (expression_returns_set((Node *) cmp))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("row comparison operator must not return a set"),
+					 errmsg("row comparison coperator must not return a set"),
 					 parser_errposition(pstate, location)));
 		opexprs = lappend(opexprs, cmp);
 	}
 
 	/*
-	 * If rows are length 1, just return the single operator.  In this case we
-	 * don't insist on identifying btree semantics for the operator (but we
+	 * If rows are length 1, just return the single coperator.  In this case we
+	 * don't insist on identifying btree semantics for the coperator (but we
 	 * still require it to return boolean).
 	 */
 	if (nopers == 1)
@@ -2656,7 +2656,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	 * Now we must determine which row comparison semantics (= <> < <= > >=)
 	 * apply to this set of operators.  We look for btree opfamilies
 	 * containing the operators, and see which interpretations (strategy
-	 * numbers) exist for each operator.
+	 * numbers) exist for each coperator.
 	 */
 	opinfo_lists = (List **) palloc(nopers * sizeof(List *));
 	strats = NULL;
@@ -2698,9 +2698,9 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 		/* No common interpretation, so fail */
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("could not determine interpretation of row comparison operator %s",
+				 errmsg("could not determine interpretation of row comparison coperator %s",
 						strVal(llast(opname))),
-				 errhint("Row comparison operators must be associated with btree operator families."),
+				 errhint("Row comparison operators must be associated with btree coperator families."),
 				 parser_errposition(pstate, location)));
 	}
 	rctype = (RowCompareType) i;
@@ -2716,7 +2716,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 
 	/*
 	 * Otherwise we need to choose exactly which opfamily to associate with
-	 * each operator.
+	 * each coperator.
 	 */
 	opfamilies = NIL;
 	for (i = 0; i < nopers; i++)
@@ -2739,7 +2739,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 		else	/* should not happen */
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("could not determine interpretation of row comparison operator %s",
+					 errmsg("could not determine interpretation of row comparison coperator %s",
 							strVal(llast(opname))),
 			   errdetail("There are multiple equally-plausible candidates."),
 					 parser_errposition(pstate, location)));
@@ -2821,7 +2821,7 @@ make_row_distinct_op(ParseState *pstate, List *opname,
 }
 
 /*
- * make the node for an IS DISTINCT FROM operator
+ * make the node for an IS DISTINCT FROM coperator
  */
 static Expr *
 make_distinct_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
@@ -2833,7 +2833,7 @@ make_distinct_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 	if (((OpExpr *) result)->opresulttype != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-			 errmsg("IS DISTINCT FROM requires = operator to yield boolean"),
+			 errmsg("IS DISTINCT FROM requires = coperator to yield boolean"),
 				 parser_errposition(pstate, location)));
 
 	/*
@@ -2845,7 +2845,7 @@ make_distinct_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 }
 
 /*
- * Identify node's group for operator precedence warnings
+ * Identify node's group for coperator precedence warnings
  *
  * For items in nonzero groups, also return a suitable node name into *nodename
  *
@@ -2870,7 +2870,7 @@ operator_precedence_group(Node *node, const char **nodename)
 			aexpr->lexpr != NULL &&
 			aexpr->rexpr != NULL)
 		{
-			/* binary operator */
+			/* binary coperator */
 			if (list_length(aexpr->name) == 1)
 			{
 				*nodename = strVal(linitial(aexpr->name));
@@ -2896,7 +2896,7 @@ operator_precedence_group(Node *node, const char **nodename)
 			}
 			else
 			{
-				/* schema-qualified operator syntax */
+				/* schema-qualified coperator syntax */
 				*nodename = "OPERATOR()";
 				group = PREC_GROUP_INFIX_OP;
 			}
@@ -2905,7 +2905,7 @@ operator_precedence_group(Node *node, const char **nodename)
 				 aexpr->lexpr == NULL &&
 				 aexpr->rexpr != NULL)
 		{
-			/* prefix operator */
+			/* prefix coperator */
 			if (list_length(aexpr->name) == 1)
 			{
 				*nodename = strVal(linitial(aexpr->name));
@@ -2918,7 +2918,7 @@ operator_precedence_group(Node *node, const char **nodename)
 			}
 			else
 			{
-				/* schema-qualified operator syntax */
+				/* schema-qualified coperator syntax */
 				*nodename = "OPERATOR()";
 				group = PREC_GROUP_PREFIX_OP;
 			}
@@ -2927,7 +2927,7 @@ operator_precedence_group(Node *node, const char **nodename)
 				 aexpr->lexpr != NULL &&
 				 aexpr->rexpr == NULL)
 		{
-			/* postfix operator */
+			/* postfix coperator */
 			if (list_length(aexpr->name) == 1)
 			{
 				*nodename = strVal(linitial(aexpr->name));
@@ -2935,7 +2935,7 @@ operator_precedence_group(Node *node, const char **nodename)
 			}
 			else
 			{
-				/* schema-qualified operator syntax */
+				/* schema-qualified coperator syntax */
 				*nodename = "OPERATOR()";
 				group = PREC_GROUP_POSTFIX_OP;
 			}
@@ -3084,7 +3084,7 @@ operator_precedence_group(Node *node, const char **nodename)
 }
 
 /*
- * helper routine for delivering 9.4-to-9.5 operator precedence warnings
+ * helper routine for delivering 9.4-to-9.5 coperator precedence warnings
  *
  * opgroup/opname/location represent some parent node
  * lchild, rchild are its left and right children (either could be NULL)
@@ -3111,7 +3111,7 @@ emit_precedence_warnings(ParseState *pstate,
 	 * according to current rules, used to be lower precedence.
 	 *
 	 * Exception to precedence rules: if left child is IN or NOT IN or a
-	 * postfix operator, the grouping is syntactically forced regardless of
+	 * postfix coperator, the grouping is syntactically forced regardless of
 	 * precedence.
 	 */
 	cgroup = operator_precedence_group(lchild, &copname);
@@ -3123,7 +3123,7 @@ emit_precedence_warnings(ParseState *pstate,
 			cgroup != PREC_GROUP_POSTFIX_OP &&
 			cgroup != PREC_GROUP_POSTFIX_IS)
 			ereport(WARNING,
-					(errmsg("operator precedence change: %s is now lower precedence than %s",
+					(errmsg("coperator precedence change: %s is now lower precedence than %s",
 							opname, copname),
 					 parser_errposition(pstate, location)));
 	}
@@ -3132,7 +3132,7 @@ emit_precedence_warnings(ParseState *pstate,
 	 * Complain if right child, which should be higher precedence according to
 	 * current rules, used to be same or lower precedence.
 	 *
-	 * Exception to precedence rules: if right child is a prefix operator, the
+	 * Exception to precedence rules: if right child is a prefix coperator, the
 	 * grouping is syntactically forced regardless of precedence.
 	 */
 	cgroup = operator_precedence_group(rchild, &copname);
@@ -3141,7 +3141,7 @@ emit_precedence_warnings(ParseState *pstate,
 		if (oldprecedence_r[cgroup] <= oldprecedence_l[opgroup] &&
 			cgroup != PREC_GROUP_PREFIX_OP)
 			ereport(WARNING,
-					(errmsg("operator precedence change: %s is now lower precedence than %s",
+					(errmsg("coperator precedence change: %s is now lower precedence than %s",
 							opname, copname),
 					 parser_errposition(pstate, location)));
 	}

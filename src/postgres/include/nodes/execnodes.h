@@ -1732,7 +1732,7 @@ typedef struct HashJoinState
 	List	   *hashclauses;	/* list of ExprState nodes */
 	List	   *hj_OuterHashKeys;		/* list of ExprState nodes */
 	List	   *hj_InnerHashKeys;		/* list of ExprState nodes */
-	List	   *hj_HashOperators;		/* list of operator OIDs */
+	List	   *hj_HashOperators;		/* list of coperator OIDs */
 	HashJoinTable hj_HashTable;
 	uint32		hj_CurHashValue;
 	int			hj_CurBucketNo;

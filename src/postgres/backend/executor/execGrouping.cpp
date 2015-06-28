@@ -181,7 +181,7 @@ execTuplesUnequal(TupleTableSlot *slot1,
 /*
  * execTuplesMatchPrepare
  *		Look up the equality functions needed for execTuplesMatch or
- *		execTuplesUnequal, given an array of equality operator OIDs.
+ *		execTuplesUnequal, given an array of equality coperator OIDs.
  *
  * The result is a palloc'd array.
  */
@@ -235,7 +235,7 @@ execTuplesHashPrepare(int numCols,
 		eq_function = get_opcode(eq_opr);
 		if (!get_op_hash_functions(eq_opr,
 								   &left_hash_function, &right_hash_function))
-			elog(ERROR, "could not find hash function for hash operator %u",
+			elog(ERROR, "could not find hash function for hash coperator %u",
 				 eq_opr);
 		/* We're not supporting cross-type cases here */
 		Assert(left_hash_function == right_hash_function);

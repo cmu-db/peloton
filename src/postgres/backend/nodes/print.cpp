@@ -376,13 +376,13 @@ print_expr(const Node *expr, const List *rtable)
 		if (list_length(e->args) > 1)
 		{
 			print_expr(get_leftop((const Expr *) e), rtable);
-			printf(" %s ", ((opname != NULL) ? opname : "(invalid operator)"));
+			printf(" %s ", ((opname != NULL) ? opname : "(invalid coperator)"));
 			print_expr(get_rightop((const Expr *) e), rtable);
 		}
 		else
 		{
 			/* we print prefix and postfix ops the same... */
-			printf("%s ", ((opname != NULL) ? opname : "(invalid operator)"));
+			printf("%s ", ((opname != NULL) ? opname : "(invalid coperator)"));
 			print_expr(get_leftop((const Expr *) e), rtable);
 		}
 	}

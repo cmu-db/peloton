@@ -6366,7 +6366,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		/*
 		 * Check it's a btree; currently this can never fail since no other
 		 * index AMs support unique indexes.  If we ever did have other types
-		 * of unique indexes, we'd need a way to determine which operator
+		 * of unique indexes, we'd need a way to determine which coperator
 		 * strategy number is equality.  (Is it reasonable to insist that
 		 * every such index AM use btree's number for equality?)
 		 */
@@ -6375,14 +6375,14 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		eqstrategy = BTEqualStrategyNumber;
 
 		/*
-		 * There had better be a primary equality operator for the index.
+		 * There had better be a primary equality coperator for the index.
 		 * We'll use it for PK = PK comparisons.
 		 */
 		ppeqop = get_opfamily_member(opfamily, opcintype, opcintype,
 									 eqstrategy);
 
 		if (!OidIsValid(ppeqop))
-			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
+			elog(ERROR, "missing coperator %d(%u,%u) in opfamily %u",
 				 eqstrategy, opcintype, opcintype, opfamily);
 
 		/*
@@ -6410,7 +6410,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		{
 			/*
 			 * Otherwise, look for an implicit cast from the FK type to the
-			 * opcintype, and if found, use the primary equality operator.
+			 * opcintype, and if found, use the primary equality coperator.
 			 * This is a bit tricky because opcintype might be a polymorphic
 			 * type such as ANYARRAY or ANYENUM; so what we have to test is
 			 * whether the two actual column types can be concurrently cast to
@@ -6489,7 +6489,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 			 * arbitrarily in response to get_fn_expr_argtype().  Therefore,
 			 * when the cast destination is polymorphic, we only avoid
 			 * revalidation if the input type has not changed at all.  Given
-			 * just the core data types and operator classes, this requirement
+			 * just the core data types and coperator classes, this requirement
 			 * prevents no would-be optimizations.
 			 *
 			 * If the cast converts from a base type to a domain thereon, then
@@ -8720,7 +8720,7 @@ TryReuseIndex(Oid oldId, IndexStmt *stmt)
 /*
  * Subroutine for ATPostAlterTypeParse().
  *
- * Stash the old P-F equality operator into the Constraint node, for possible
+ * Stash the old P-F equality coperator into the Constraint node, for possible
  * use by ATAddForeignKeyConstraint() in determining whether revalidation of
  * this constraint can be skipped.
  */
@@ -8755,7 +8755,7 @@ TryReuseForeignKey(Oid oldId, Constraint *con)
 		elog(ERROR, "conpfeqop is not a 1-D Oid array");
 	rawarr = (Oid *) ARR_DATA_PTR(arr);
 
-	/* stash a List of the operator Oids in our Constraint node */
+	/* stash a List of the coperator Oids in our Constraint node */
 	for (i = 0; i < numkeys; i++)
 		con->old_conpfeqop = lcons_oid(rawarr[i], con->old_conpfeqop);
 

@@ -1442,7 +1442,7 @@ LookupOpclassInfo(Oid operatorClassOid,
 
 	/*
 	 * When testing for cache-flush hazards, we intentionally disable the
-	 * operator class cache and force reloading of the info on each call. This
+	 * coperator class cache and force reloading of the info on each call. This
 	 * is helpful because we want to test the case where a cache flush occurs
 	 * while we are loading the info, and it's very hard to provoke that if
 	 * this happens only once per opclass per backend.
@@ -4337,7 +4337,7 @@ RelationGetIndexAttrBitmap(Relation relation, IndexAttrBitmapKind attrKind)
  *
  * This should be called only for an index that is known to have an
  * associated exclusion constraint.  It returns arrays (palloc'd in caller's
- * context) of the exclusion operator OIDs, their underlying functions'
+ * context) of the exclusion coperator OIDs, their underlying functions'
  * OIDs, and their strategy numbers in the index's opclasses.  We cache
  * all this information since it requires a fair amount of work to get.
  */
@@ -4407,7 +4407,7 @@ RelationGetExclusionInfo(Relation indexRelation,
 				 RelationGetRelationName(indexRelation));
 		found = true;
 
-		/* Extract the operator OIDS from conexclop */
+		/* Extract the coperator OIDS from conexclop */
 		val = fastgetattr(htup,
 						  Anum_pg_constraint_conexclop,
 						  conrel->rd_att, &isnull);
@@ -4441,7 +4441,7 @@ RelationGetExclusionInfo(Relation indexRelation,
 											 indexRelation->rd_opfamily[i]);
 		/* shouldn't fail, since it was checked at index creation */
 		if (strats[i] == InvalidStrategy)
-			elog(ERROR, "could not find strategy for operator %u in family %u",
+			elog(ERROR, "could not find strategy for coperator %u in family %u",
 				 ops[i], indexRelation->rd_opfamily[i]);
 	}
 

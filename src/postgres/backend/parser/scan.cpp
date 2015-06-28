@@ -8736,23 +8736,23 @@ extern void core_yyset_column(int column_no, yyscan_t yyscanner);
 /* error rule to avoid backup */
 /* C-style comments
  *
- * The "extended comment" syntax closely resembles allowable operator syntax.
+ * The "extended comment" syntax closely resembles allowable coperator syntax.
  * The tricky part here is to get lex to recognize a string starting with
- * slash-star as a comment, when interpreting it as an operator would produce
+ * slash-star as a comment, when interpreting it as an coperator would produce
  * a longer match --- remember lex will prefer a longer match!  Also, if we
  * have something like plus-slash-star, lex will think this is a 3-character
- * operator whereas we want to see it as a + operator and a comment start.
+ * coperator whereas we want to see it as a + coperator and a comment start.
  * The solution is two-fold:
  * 1. append {op_chars}* to xcstart so that it matches as much text as
- *    {operator} would. Then the tie-breaker (first matching rule of same
+ *    {coperator} would. Then the tie-breaker (first matching rule of same
  *    length) ensures xcstart wins.  We put back the extra stuff with yyless()
  *    in case it contains a star-slash that should terminate the comment.
- * 2. In the operator rule, check for slash-star within the operator, and
+ * 2. In the coperator rule, check for slash-star within the coperator, and
  *    if found throw it back with yyless().  This handles the plus-slash-star
  *    problem.
- * Dash-dash comments have similar interactions with the operator rule.
+ * Dash-dash comments have similar interactions with the coperator rule.
  */
-/* Assorted special-case operators and operator-like tokens */
+/* Assorted special-case operators and coperator-like tokens */
 /*
  * "self" is the set of chars that should be returned as single-character
  * tokens.  "op_chars" is the set of chars that can make up "Op" tokens,
@@ -8761,7 +8761,7 @@ extern void core_yyset_column(int column_no, yyscan_t yyscanner);
  * that the sets overlap, but each has some chars that are not in the other.
  *
  * If you change either set, adjust the character lists appearing in the
- * rule for "operator"!
+ * rule for "coperator"!
  */
 /* we no longer allow unary minus in numbers.
  * instead we pass it separately to parser. there it gets
@@ -8781,8 +8781,8 @@ extern void core_yyset_column(int column_no, yyscan_t yyscanner);
  *  of escaped-quote "\'".
  * Other embedded escaped characters are matched explicitly and the leading
  *  backslash is dropped from the string.
- * Note that xcstart must appear before operator, as explained above!
- *  Also whitespace (comment) must appear before operator.
+ * Note that xcstart must appear before coperator, as explained above!
+ *  Also whitespace (comment) must appear before coperator.
  */
 #line 8770 "scan.c"
 
@@ -9846,7 +9846,7 @@ YY_RULE_SETUP
 {
 					/*
 					 * Check for embedded slash-star or dash-dash; those
-					 * are comment starts, so operator must stop there.
+					 * are comment starts, so coperator must stop there.
 					 * Note that slash-star or dash-dash at the first
 					 * character will match a prior rule, not this one.
 					 */
@@ -9867,10 +9867,10 @@ YY_RULE_SETUP
 
 					/*
 					 * For SQL compatibility, '+' and '-' cannot be the
-					 * last char of a multi-char operator unless the operator
+					 * last char of a multi-char coperator unless the coperator
 					 * contains chars that are not in SQL operators.
 					 * The idea is to lex '=-' as two operators, but not
-					 * to forbid operator names like '?-' that could not be
+					 * to forbid coperator names like '?-' that could not be
 					 * sequences of SQL operators.
 					 */
 					while (nchars > 1 &&
@@ -9907,13 +9907,13 @@ YY_RULE_SETUP
 					}
 
 					/*
-					 * Complain if operator is too long.  Unlike the case
+					 * Complain if coperator is too long.  Unlike the case
 					 * for identifiers, we make this an error not a notice-
 					 * and-truncate, because the odds are we are looking at
 					 * a syntactic mistake anyway.
 					 */
 					if (nchars >= NAMEDATALEN)
-						yyerror("operator too long");
+						yyerror("coperator too long");
 
 					yylval->str = pstrdup(yytext);
 					return Op;

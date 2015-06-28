@@ -24,7 +24,7 @@
  *				input/output, recv/send procedures
  *		"create type":
  *				type
- *		"create operator":
+ *		"create coperator":
  *				operators
  *
  *
@@ -249,7 +249,7 @@ defGetQualifiedName(DefElem *def)
  * Extract a TypeName from a DefElem.
  *
  * Note: we do not accept a List arg here, because the parser will only
- * return a bare List when the name looks like an operator name.
+ * return a bare List when the name looks like an coperator name.
  */
 TypeName *
 defGetTypeName(DefElem *def)
@@ -308,7 +308,7 @@ defGetTypeLength(DefElem *def)
 				return -1;		/* variable length */
 			break;
 		case T_List:
-			/* must be an operator name */
+			/* must be an coperator name */
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(def->arg));

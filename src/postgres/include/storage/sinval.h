@@ -17,6 +17,8 @@
 #include <signal.h>
 
 #include "storage/relfilenode.h"
+/* Peloton porting: get std::memcpy to work around coperator= in union*/
+#include <cstring>
 
 /*
  * We support several types of shared-invalidation messages:
@@ -109,7 +111,7 @@ typedef struct
 	Oid			relId;			/* relation ID */
 } SharedInvalSnapshotMsg;
 
-typedef union
+union SharedInvalidationMessage
 {
 	int8		id;				/* type field --- must be first */
 	SharedInvalCatcacheMsg cc;
@@ -118,7 +120,24 @@ typedef union
 	SharedInvalSmgrMsg sm;
 	SharedInvalRelmapMsg rm;
 	SharedInvalSnapshotMsg sn;
-} SharedInvalidationMessage;
+
+	/* Peloton porting: since sm has non-trivial ctor
+	 * This union's default ctor is implictly deleted
+	 * The work aroud is to define ctor and dtor manually */
+	SharedInvalidationMessage() : sm() {}
+	~SharedInvalidationMessage() {};
+
+	SharedInvalidationMessage(const SharedInvalidationMessage &rhs) {
+	  if (this == &rhs) return;
+	  std::memcpy(this, &rhs, sizeof(SharedInvalidationMessage));
+	}
+
+	SharedInvalidationMessage &operator=(const SharedInvalidationMessage &rhs) {
+	  if (this == &rhs) return *this;
+	  std::memcpy(this, &rhs, sizeof(SharedInvalidationMessage));
+	  return *this;
+	}
+};
 
 
 /* Counter of messages processed; don't worry about overflow. */

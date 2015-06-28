@@ -190,20 +190,20 @@ jsonb_typeof(PG_FUNCTION_ARGS)
 		 * array and then its first (and only) member.
 		 */
 		(void) JsonbIteratorNext(&it, &v, true);
-		Assert(v.type == jbvArray);
+		Assert(v.type == JsonbValue::jbvArray);
 		(void) JsonbIteratorNext(&it, &v, true);
 		switch (v.type)
 		{
-			case jbvNull:
+			case JsonbValue::jbvNull:  // Peloton porting, add namespce to resolve enum
 				result = "null";
 				break;
-			case jbvString:
+			case JsonbValue::jbvString:
 				result = "string";
 				break;
-			case jbvNumeric:
+			case JsonbValue::jbvNumeric:
 				result = "number";
 				break;
-			case jbvBool:
+			case JsonbValue::jbvBool:
 				result = "boolean";
 				break;
 			default:
@@ -299,7 +299,7 @@ jsonb_in_object_field_start(void *pstate, char *fname, bool isnull)
 	JsonbValue	v;
 
 	Assert(fname != NULL);
-	v.type = jbvString;
+	v.type =JsonbValue::jbvString;
 	v.val.string.len = checkStringLen(strlen(fname));
 	v.val.string.val = fname;
 
@@ -311,18 +311,18 @@ jsonb_put_escaped_value(StringInfo out, JsonbValue *scalarVal)
 {
 	switch (scalarVal->type)
 	{
-		case jbvNull:
+		case JsonbValue::jbvNull:
 			appendBinaryStringInfo(out, "null", 4);
 			break;
-		case jbvString:
+		case JsonbValue::jbvString:
 			escape_json(out, pnstrdup(scalarVal->val.string.val, scalarVal->val.string.len));
 			break;
-		case jbvNumeric:
+		case JsonbValue::jbvNumeric:
 			appendStringInfoString(out,
 							 DatumGetCString(DirectFunctionCall1(numeric_out,
 								  PointerGetDatum(scalarVal->val.numeric))));
 			break;
-		case jbvBool:
+		case JsonbValue::jbvBool:
 			if (scalarVal->val.boolean)
 				appendBinaryStringInfo(out, "true", 4);
 			else
@@ -347,7 +347,7 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 
 		case JSON_TOKEN_STRING:
 			Assert(token != NULL);
-			v.type = jbvString;
+			v.type =JsonbValue::jbvString;
 			v.val.string.len = checkStringLen(strlen(token));
 			v.val.string.val = token;
 			break;
@@ -358,20 +358,20 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 			 * numeric size is well below the JsonbValue restriction
 			 */
 			Assert(token != NULL);
-			v.type = jbvNumeric;
+			v.type =JsonbValue::jbvNumeric;
 			v.val.numeric = DatumGetNumeric(DirectFunctionCall3(numeric_in, CStringGetDatum(token), 0, -1));
 
 			break;
 		case JSON_TOKEN_TRUE:
-			v.type = jbvBool;
+			v.type = JsonbValue::jbvBool;
 			v.val.boolean = true;
 			break;
 		case JSON_TOKEN_FALSE:
-			v.type = jbvBool;
+			v.type = JsonbValue::jbvBool;
 			v.val.boolean = false;
 			break;
 		case JSON_TOKEN_NULL:
-			v.type = jbvNull;
+			v.type =JsonbValue::jbvNull;
 			break;
 		default:
 			/* should not be possible */
@@ -384,7 +384,7 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 		/* single scalar */
 		JsonbValue	va;
 
-		va.type = jbvArray;
+		va.type = JsonbValue::jbvArray;
 		va.val.array.rawScalar = true;
 		va.val.array.nElems = 1;
 
@@ -398,10 +398,10 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 
 		switch (o->type)
 		{
-			case jbvArray:
+			case JsonbValue::jbvArray:
 				_state->res = pushJsonbValue(&_state->parseState, WJB_ELEM, &v);
 				break;
-			case jbvObject:
+			case JsonbValue::jbvObject:
 				_state->res = pushJsonbValue(&_state->parseState, WJB_VALUE, &v);
 				break;
 			default:
@@ -687,7 +687,7 @@ jsonb_categorize_type(Oid typoid,
  * except that if is_null is true then they can be invalid.
  *
  * If key_scalar is true, the value is stored as a key, so insist
- * it's of an acceptable type, and force it to be a jbvString.
+ * it's of an acceptable type, and force it to be aJsonbValue::jbvString.
  */
 static void
 datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
@@ -701,7 +701,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 
 	if (is_null)
 	{
-		jb.type = jbvNull;
+		jb.type =JsonbValue::jbvNull;
 	}
 	else if (key_scalar &&
 			 (tcategory == JSONBTYPE_ARRAY ||
@@ -731,13 +731,13 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 				if (key_scalar)
 				{
 					outputstr = DatumGetBool(val) ? "true" : "false";
-					jb.type = jbvString;
+					jb.type =JsonbValue::jbvString;
 					jb.val.string.len = strlen(outputstr);
 					jb.val.string.val = outputstr;
 				}
 				else
 				{
-					jb.type = jbvBool;
+					jb.type = JsonbValue::jbvBool;
 					jb.val.boolean = DatumGetBool(val);
 				}
 				break;
@@ -746,7 +746,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 				if (key_scalar)
 				{
 					/* always quote keys */
-					jb.type = jbvString;
+					jb.type =JsonbValue::jbvString;
 					jb.val.string.len = strlen(outputstr);
 					jb.val.string.val = outputstr;
 				}
@@ -761,14 +761,14 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 									 strchr(outputstr, 'n') != NULL);
 					if (!numeric_error)
 					{
-						jb.type = jbvNumeric;
+						jb.type =JsonbValue::jbvNumeric;
 						jb.val.numeric = DatumGetNumeric(DirectFunctionCall3(numeric_in, CStringGetDatum(outputstr), 0, -1));
 
 						pfree(outputstr);
 					}
 					else
 					{
-						jb.type = jbvString;
+						jb.type =JsonbValue::jbvString;
 						jb.val.string.len = strlen(outputstr);
 						jb.val.string.val = outputstr;
 					}
@@ -781,7 +781,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 				char		buf[MAXDATELEN + 1];
 
 				date = DatumGetDateADT(val);
-				jb.type = jbvString;
+				jb.type =JsonbValue::jbvString;
 
 				if (DATE_NOT_FINITE(date))
 				{
@@ -806,7 +806,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 					char		buf[MAXDATELEN + 1];
 
 					timestamp = DatumGetTimestamp(val);
-					jb.type = jbvString;
+					jb.type =JsonbValue::jbvString;
 
 					if (TIMESTAMP_NOT_FINITE(timestamp))
 					{
@@ -836,7 +836,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 					char		buf[MAXDATELEN + 1];
 
 					timestamp = DatumGetTimestamp(val);
-					jb.type = jbvString;
+					jb.type =JsonbValue::jbvString;
 
 					if (TIMESTAMP_NOT_FINITE(timestamp))
 					{
@@ -891,7 +891,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 					if (JB_ROOT_IS_SCALAR(jsonb))
 					{
 						(void) JsonbIteratorNext(&it, &jb, true);
-						Assert(jb.type == jbvArray);
+						Assert(jb.type == JsonbValue::jbvArray);
 						(void) JsonbIteratorNext(&it, &jb, true);
 						scalar_jsonb = true;
 					}
@@ -913,7 +913,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 				break;
 			default:
 				outputstr = OidOutputFunctionCall(outfuncoid, val);
-				jb.type = jbvString;
+				jb.type =JsonbValue::jbvString;
 				jb.val.string.len = checkStringLen(strlen(outputstr));
 				jb.val.string.val = outputstr;
 				break;
@@ -930,7 +930,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 		/* single root scalar */
 		JsonbValue	va;
 
-		va.type = jbvArray;
+		va.type = JsonbValue::jbvArray;
 		va.val.array.rawScalar = true;
 		va.val.array.nElems = 1;
 
@@ -944,10 +944,10 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 
 		switch (o->type)
 		{
-			case jbvArray:
+			case JsonbValue::jbvArray:
 				result->res = pushJsonbValue(&result->parseState, WJB_ELEM, &jb);
 				break;
-			case jbvObject:
+			case JsonbValue::jbvObject:
 				result->res = pushJsonbValue(&result->parseState,
 											 key_scalar ? WJB_KEY : WJB_VALUE,
 											 &jb);
@@ -1082,7 +1082,7 @@ composite_to_jsonb(Datum composite, JsonbInState *result)
 
 		attname = NameStr(tupdesc->attrs[i]->attname);
 
-		v.type = jbvString;
+		v.type =JsonbValue::jbvString;
 		/* don't need checkStringLen here - can't exceed maximum name length */
 		v.val.string.len = strlen(attname);
 		v.val.string.val = attname;
@@ -1397,7 +1397,7 @@ jsonb_object(PG_FUNCTION_ARGS)
 		str = TextDatumGetCString(in_datums[i * 2]);
 		len = strlen(str);
 
-		v.type = jbvString;
+		v.type =JsonbValue::jbvString;
 
 		v.val.string.len = len;
 		v.val.string.val = str;
@@ -1406,14 +1406,14 @@ jsonb_object(PG_FUNCTION_ARGS)
 
 		if (in_nulls[i * 2 + 1])
 		{
-			v.type = jbvNull;
+			v.type =JsonbValue::jbvNull;
 		}
 		else
 		{
 			str = TextDatumGetCString(in_datums[i * 2 + 1]);
 			len = strlen(str);
 
-			v.type = jbvString;
+			v.type =JsonbValue::jbvString;
 
 			v.val.string.len = len;
 			v.val.string.val = str;
@@ -1492,7 +1492,7 @@ jsonb_object_two_arg(PG_FUNCTION_ARGS)
 		str = TextDatumGetCString(key_datums[i]);
 		len = strlen(str);
 
-		v.type = jbvString;
+		v.type =JsonbValue::jbvString;
 
 		v.val.string.len = len;
 		v.val.string.val = str;
@@ -1501,14 +1501,14 @@ jsonb_object_two_arg(PG_FUNCTION_ARGS)
 
 		if (val_nulls[i])
 		{
-			v.type = jbvNull;
+			v.type =JsonbValue::jbvNull;
 		}
 		else
 		{
 			str = TextDatumGetCString(val_datums[i]);
 			len = strlen(str);
 
-			v.type = jbvString;
+			v.type =JsonbValue::jbvString;
 
 			v.val.string.len = len;
 			v.val.string.val = str;
@@ -1648,14 +1648,14 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 			case WJB_ELEM:
 			case WJB_KEY:
 			case WJB_VALUE:
-				if (v.type == jbvString)
+				if (v.type ==JsonbValue::jbvString)
 				{
 					/* copy string values in the aggregate context */
 					char	   *buf = palloc(v.val.string.len + 1);
 					snprintf(buf, v.val.string.len + 1, "%s", v.val.string.val);
 					v.val.string.val = buf;
 				}
-				else if (v.type == jbvNumeric)
+				else if (v.type ==JsonbValue::jbvNumeric)
 				{
 					/* same for numeric */
 				  v.val.numeric =
@@ -1809,7 +1809,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 					elog(ERROR, "unexpected structure for key");
 				break;
 			case WJB_ELEM:
-				if (v.type == jbvString)
+				if (v.type ==JsonbValue::jbvString)
 				{
 					/* copy string values in the aggregate context */
 					char	   *buf = palloc(v.val.string.len + 1);
@@ -1867,14 +1867,14 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 			case WJB_ELEM:
 			case WJB_KEY:
 			case WJB_VALUE:
-				if (v.type == jbvString)
+				if (v.type ==JsonbValue::jbvString)
 				{
 					/* copy string values in the aggregate context */
 					char	   *buf = palloc(v.val.string.len + 1);
 					snprintf(buf, v.val.string.len + 1, "%s", v.val.string.val);
 					v.val.string.val = buf;
 				}
-				else if (v.type == jbvNumeric)
+				else if (v.type ==JsonbValue::jbvNumeric)
 				{
 					/* same for numeric */
 					v.val.numeric =

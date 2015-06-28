@@ -1763,7 +1763,7 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
  *
  * Note: pushing quals into a DISTINCT subquery is theoretically dubious:
  * we're effectively assuming that the quals cannot distinguish values that
- * the DISTINCT's equality operator sees as equal, yet there are many
+ * the DISTINCT's equality coperator sees as equal, yet there are many
  * counterexamples to that assumption.  However use of such a qual with a
  * DISTINCT subquery would be unsafe anyway, since there's no guarantee which
  * "equal" value will be chosen as the output value by the DISTINCT operation.
@@ -1778,7 +1778,7 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
  * leaving others, causing changes in the window functions' results for the
  * surviving rows.  We insist that such a qual reference only partitioning
  * columns, but again that only protects us if the qual does not distinguish
- * values that the partitioning equality operator sees as equal.  The risks
+ * values that the partitioning equality coperator sees as equal.  The risks
  * here are perhaps larger than for DISTINCT, since no de-duplication of rows
  * occurs and thus there is no theoretical problem with such a qual.  But
  * we'll do this anyway because the potential performance benefits are very

@@ -347,7 +347,7 @@ transformJoinUsingClause(ParseState *pstate,
 			   *rvars;
 
 	/*
-	 * We cheat a little bit here by building an untransformed operator tree
+	 * We cheat a little bit here by building an untransformed coperator tree
 	 * whose leaves are the already-transformed Vars.  This requires collusion
 	 * from transformExpr(), which normally could be expected to complain
 	 * about already-transformed subnodes.  However, this does mean that we
@@ -1849,7 +1849,7 @@ flatten_grouping_sets(Node *expr, bool toplevel, bool *hasGroupingSets)
  *
  * The expression is added to the targetlist if not already present, and to the
  * flatresult list (which will become the groupClause) if not already present
- * there.  The sortClause is consulted for operator and sort order hints.
+ * there.  The sortClause is consulted for coperator and sort order hints.
  *
  * Returns the ressortgroupref of the expression.
  *
@@ -1903,7 +1903,7 @@ transformGroupClauseExpr(List **flatresult, Bitmapset *seen_local,
 			return tle->ressortgroupref;
 
 		/*
-		 * If the GROUP BY tlist entry also appears in ORDER BY, copy operator
+		 * If the GROUP BY tlist entry also appears in ORDER BY, copy coperator
 		 * info from the (first) matching ORDER BY item.  This means that if
 		 * you write something like "GROUP BY foo ORDER BY foo USING <<<", the
 		 * GROUP BY operation silently takes on the equality semantics implied
@@ -1911,7 +1911,7 @@ transformGroupClauseExpr(List **flatresult, Bitmapset *seen_local,
 		 * odds that we can implement both GROUP BY and ORDER BY with a single
 		 * sort step, and it allows the user to choose the equality semantics
 		 * used by GROUP BY, should she be working with a datatype that has
-		 * more than one equality operator.
+		 * more than one equality coperator.
 		 *
 		 * If we're in a grouping set, though, we force our requested ordering
 		 * to be NULLS LAST, because if we have any hope of using a sorted agg
@@ -2308,7 +2308,7 @@ transformWindowDefinitions(ParseState *pstate,
 		/*
 		 * Transform PARTITION and ORDER specs, if any.  These are treated
 		 * almost exactly like top-level GROUP BY and ORDER BY clauses,
-		 * including the special handling of nondefault operator semantics.
+		 * including the special handling of nondefault coperator semantics.
 		 */
 		orderClause = transformSortClause(pstate,
 										  windef->orderClause,
@@ -2428,7 +2428,7 @@ transformWindowDefinitions(ParseState *pstate,
  * possible into the distinctClause.  This avoids a possible need to re-sort,
  * and allows the user to choose the equality semantics used by DISTINCT,
  * should she be working with a datatype that has more than one equality
- * operator.
+ * coperator.
  *
  * is_agg is true if we are transforming an aggregate(DISTINCT ...)
  * function call.  This does not affect any behavior, only the phrasing
@@ -2517,7 +2517,7 @@ transformDistinctClause(ParseState *pstate,
  * possible into the distinctClause.  This avoids a possible need to re-sort,
  * and allows the user to choose the equality semantics used by DISTINCT,
  * should she be working with a datatype that has more than one equality
- * operator.
+ * coperator.
  */
 List *
 transformDistinctOnClause(ParseState *pstate, List *distinctlist,
@@ -2722,7 +2722,7 @@ resolve_unique_index_expr(ParseState *pstate, InferClause *infer,
 		 */
 		pInfer->expr = transformExpr(pstate, parse, EXPR_KIND_INDEX_EXPRESSION);
 
-		/* Perform lookup of collation and operator class as required */
+		/* Perform lookup of collation and coperator class as required */
 		if (!ielem->collation)
 			pInfer->infercollid = InvalidOid;
 		else
@@ -2840,7 +2840,7 @@ transformOnConflictArbiter(ParseState *pstate,
  *		info.
  *
  * If resolveUnknown is TRUE, convert TLEs of type UNKNOWN to TEXT.  If not,
- * do nothing (which implies the search for a sort operator will fail).
+ * do nothing (which implies the search for a sort coperator will fail).
  * pstate should be provided if resolveUnknown is TRUE, but can be NULL
  * otherwise.
  *
@@ -2873,7 +2873,7 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 	/*
 	 * Rather than clutter the API of get_sort_group_operators and the other
 	 * functions we're about to use, make use of error context callback to
-	 * mark any error reports with a parse position.  We point to the operator
+	 * mark any error reports with a parse position.  We point to the coperator
 	 * location if present, else to the expression being sorted.  (NB: use the
 	 * original untransformed expression here; the TLE entry might well point
 	 * at a duplicate expression in the regular SELECT list.)
@@ -2909,20 +2909,20 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 										  false);
 
 			/*
-			 * Verify it's a valid ordering operator, fetch the corresponding
-			 * equality operator, and determine whether to consider it like
+			 * Verify it's a valid ordering coperator, fetch the corresponding
+			 * equality coperator, and determine whether to consider it like
 			 * ASC or DESC.
 			 */
 			eqop = get_equality_op_for_ordering_op(sortop, &reverse);
 			if (!OidIsValid(eqop))
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					   errmsg("operator %s is not a valid ordering operator",
+					   errmsg("coperator %s is not a valid ordering coperator",
 							  strVal(llast(sortby->useOp))),
-						 errhint("Ordering operators must be \"<\" or \">\" members of btree operator families.")));
+						 errhint("Ordering operators must be \"<\" or \">\" members of btree coperator families.")));
 
 			/*
-			 * Also see if the equality operator is hashable.
+			 * Also see if the equality coperator is hashable.
 			 */
 			hashable = op_hashjoinable(eqop, restype);
 			break;
@@ -2979,7 +2979,7 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
  *		semantics.
  *
  * This is very similar to addTargetToSortList, except that we allow the
- * case where only a grouping (equality) operator can be found, and that
+ * case where only a grouping (equality) coperator can be found, and that
  * the TLE is considered "already in the list" if it appears there with any
  * sorting semantics.
  *
@@ -2989,7 +2989,7 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
  * to report such a location.
  *
  * If resolveUnknown is TRUE, convert TLEs of type UNKNOWN to TEXT.  If not,
- * do nothing (which implies the search for an equality operator will fail).
+ * do nothing (which implies the search for an equality coperator will fail).
  * pstate should be provided if resolveUnknown is TRUE, but can be NULL
  * otherwise.
  *

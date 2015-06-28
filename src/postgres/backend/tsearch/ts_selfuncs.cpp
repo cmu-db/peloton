@@ -69,7 +69,7 @@ tsmatchsel(PG_FUNCTION_ARGS)
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 
 #ifdef NOT_USED
-	Oid			operator = PG_GETARG_OID(1);
+	Oid			coperator = PG_GETARG_OID(1);
 #endif
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	int			varRelid = PG_GETARG_INT32(3);
@@ -96,7 +96,7 @@ tsmatchsel(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * The "@@" operator is strict, so we can cope with NULL right away
+	 * The "@@" coperator is strict, so we can cope with NULL right away
 	 */
 	if (((Const *) other)->constisnull)
 	{
@@ -389,7 +389,7 @@ tsquery_opr_selec(QueryItem *item, char *operand,
 	}
 	else
 	{
-		/* Current TSQuery node is an operator */
+		/* Current TSQuery node is an coperator */
 		Selectivity s1,
 					s2;
 
@@ -417,7 +417,7 @@ tsquery_opr_selec(QueryItem *item, char *operand,
 				break;
 
 			default:
-				elog(ERROR, "unrecognized operator: %d", item->qoperator.oper);
+				elog(ERROR, "unrecognized coperator: %d", item->qoperator.oper);
 				selec = 0;		/* keep compiler quiet */
 				break;
 		}

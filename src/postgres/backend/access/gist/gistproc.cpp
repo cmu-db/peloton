@@ -865,7 +865,7 @@ gist_box_same(PG_FUNCTION_ARGS)
 }
 
 /*
- * Leaf-level consistency for boxes: just apply the query operator
+ * Leaf-level consistency for boxes: just apply the query coperator
  */
 static bool
 gist_box_leaf_consistent(BOX *key, BOX *query, StrategyNumber strategy)
@@ -1365,7 +1365,7 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 		case BoxStrategyNumberGroup:
 			{
 				/*
-				 * The only operator in this group is point <@ box (on_pb), so
+				 * The only coperator in this group is point <@ box (on_pb), so
 				 * we needn't examine strategy again.
 				 *
 				 * For historical reasons, on_pb uses exact rather than fuzzy

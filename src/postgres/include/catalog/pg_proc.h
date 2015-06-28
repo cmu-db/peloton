@@ -123,9 +123,9 @@ typedef FormData_pg_proc *Form_pg_proc;
 /*
  * Note: every entry in pg_proc.h is expected to have a DESCR() comment,
  * except for functions that implement pg_operator.h operators and don't
- * have a good reason to be called directly rather than via the operator.
+ * have a good reason to be called directly rather than via the coperator.
  * (If you do expect such a function to be used directly, you should
- * duplicate the operator's comment.)  initdb will supply suitable default
+ * duplicate the coperator's comment.)  initdb will supply suitable default
  * comments for functions referenced by pg_operator.
  *
  * Try to follow the style of existing functions' comments.
@@ -3105,7 +3105,7 @@ DESCR("is type visible in search path?");
 DATA(insert OID = 2081 (  pg_function_is_visible	PGNSP PGUID 12 10 0 0 0 f f f f t f s 1 0 16 "26" _null_ _null_ _null_ _null_ _null_ pg_function_is_visible _null_ _null_ _null_ ));
 DESCR("is function visible in search path?");
 DATA(insert OID = 2082 (  pg_operator_is_visible	PGNSP PGUID 12 10 0 0 0 f f f f t f s 1 0 16 "26" _null_ _null_ _null_ _null_ _null_ pg_operator_is_visible _null_ _null_ _null_ ));
-DESCR("is operator visible in search path?");
+DESCR("is coperator visible in search path?");
 DATA(insert OID = 2083 (  pg_opclass_is_visible		PGNSP PGUID 12 10 0 0 0 f f f f t f s 1 0 16 "26" _null_ _null_ _null_ _null_ _null_ pg_opclass_is_visible _null_ _null_ _null_ ));
 DESCR("is opclass visible in search path?");
 DATA(insert OID = 3829 (  pg_opfamily_is_visible	PGNSP PGUID 12 10 0 0 0 f f f f t f s 1 0 16 "26" _null_ _null_ _null_ _null_ _null_ pg_opfamily_is_visible _null_ _null_ _null_ ));
@@ -3195,9 +3195,9 @@ DATA(insert OID = 2625 ( pg_ls_dir			PGNSP PGUID 12 1 1000 0 0 f f f f t t v 1 0
 DESCR("list all files in a directory");
 DATA(insert OID = 2626 ( pg_sleep			PGNSP PGUID 12 1 0 0 0 f f f f t f v 1 0 2278 "701" _null_ _null_ _null_ _null_ _null_ pg_sleep _null_ _null_ _null_ ));
 DESCR("sleep for the specified time in seconds");
-DATA(insert OID = 3935 ( pg_sleep_for			PGNSP PGUID 14 1 0 0 0 f f f f t f v 1 0 2278 "1186" _null_ _null_ _null_ _null_ _null_ "select pg_catalog.pg_sleep(extract(epoch from pg_catalog.clock_timestamp() operator(pg_catalog.+) $1) operator(pg_catalog.-) extract(epoch from pg_catalog.clock_timestamp()))" _null_ _null_ _null_ ));
+DATA(insert OID = 3935 ( pg_sleep_for			PGNSP PGUID 14 1 0 0 0 f f f f t f v 1 0 2278 "1186" _null_ _null_ _null_ _null_ _null_ "select pg_catalog.pg_sleep(extract(epoch from pg_catalog.clock_timestamp() coperator(pg_catalog.+) $1) coperator(pg_catalog.-) extract(epoch from pg_catalog.clock_timestamp()))" _null_ _null_ _null_ ));
 DESCR("sleep for the specified interval");
-DATA(insert OID = 3936 ( pg_sleep_until			PGNSP PGUID 14 1 0 0 0 f f f f t f v 1 0 2278 "1184" _null_ _null_ _null_ _null_ _null_ "select pg_catalog.pg_sleep(extract(epoch from $1) operator(pg_catalog.-) extract(epoch from pg_catalog.clock_timestamp()))" _null_ _null_ _null_ ));
+DATA(insert OID = 3936 ( pg_sleep_until			PGNSP PGUID 14 1 0 0 0 f f f f t f v 1 0 2278 "1184" _null_ _null_ _null_ _null_ _null_ "select pg_catalog.pg_sleep(extract(epoch from $1) coperator(pg_catalog.-) extract(epoch from pg_catalog.clock_timestamp()))" _null_ _null_ _null_ ));
 DESCR("sleep until the specified time");
 
 DATA(insert OID = 2971 (  text				PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 25 "16" _null_ _null_ _null_ _null_ _null_ booltext _null_ _null_ _null_ ));
@@ -3470,9 +3470,9 @@ DESCR("I/O");
 DATA(insert OID = 2215 (  regoperout		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2275 "2203" _null_ _null_ _null_ _null_ _null_ regoperout _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 3492 (  to_regoper		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2203 "2275" _null_ _null_ _null_ _null_ _null_ to_regoper _null_ _null_ _null_ ));
-DESCR("convert operator name to regoper");
+DESCR("convert coperator name to regoper");
 DATA(insert OID = 3476 (  to_regoperator	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2204 "2275" _null_ _null_ _null_ _null_ _null_ to_regoperator _null_ _null_ _null_ ));
-DESCR("convert operator name to regoperator");
+DESCR("convert coperator name to regoperator");
 DATA(insert OID = 2216 (  regoperatorin		PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2204 "2275" _null_ _null_ _null_ _null_ _null_ regoperatorin _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2217 (  regoperatorout	PGNSP PGUID 12 1 0 0 0 f f f f t f s 1 0 2275 "2204" _null_ _null_ _null_ _null_ _null_ regoperatorout _null_ _null_ _null_ ));
@@ -4828,15 +4828,15 @@ DESCR("less-equal-greater");
 DATA(insert OID = 4045 (  jsonb_hash	   PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 23 "3802" _null_ _null_ _null_ _null_ _null_ jsonb_hash _null_ _null_ _null_ ));
 DESCR("hash");
 DATA(insert OID = 4046 (  jsonb_contains   PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3802 3802" _null_ _null_ _null_ _null_ _null_ jsonb_contains _null_ _null_ _null_ ));
-DESCR("implementation of @> operator");
+DESCR("implementation of @> coperator");
 DATA(insert OID = 4047 (  jsonb_exists	 PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3802 25" _null_ _null_ _null_ _null_ _null_ jsonb_exists _null_ _null_ _null_ ));
-DESCR("implementation of ? operator");
+DESCR("implementation of ? coperator");
 DATA(insert OID = 4048 (  jsonb_exists_any	 PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3802 1009" _null_ _null_ _null_ _null_ _null_ jsonb_exists_any _null_ _null_ _null_ ));
-DESCR("implementation of ?| operator");
+DESCR("implementation of ?| coperator");
 DATA(insert OID = 4049 (  jsonb_exists_all	 PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3802 1009" _null_ _null_ _null_ _null_ _null_ jsonb_exists_all _null_ _null_ _null_ ));
-DESCR("implementation of ?& operator");
+DESCR("implementation of ?& coperator");
 DATA(insert OID = 4050 (  jsonb_contained	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3802 3802" _null_ _null_ _null_ _null_ _null_ jsonb_contained _null_ _null_ _null_ ));
-DESCR("implementation of <@ operator");
+DESCR("implementation of <@ coperator");
 DATA(insert OID = 3480 (  gin_compare_jsonb  PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 23 "25 25" _null_ _null_ _null_ _null_ _null_ gin_compare_jsonb _null_ _null_ _null_ ));
 DESCR("GIN support");
 DATA(insert OID = 3482 (  gin_extract_jsonb  PGNSP PGUID 12 1 0 0 0 f f f f t f i 3 0 2281 "2281 2281 2281" _null_ _null_ _null_ _null_ _null_ gin_extract_jsonb _null_ _null_ _null_ ));
@@ -4975,37 +4975,37 @@ DESCR("is the range's lower bound infinite?");
 DATA(insert OID = 3854 (  upper_inf PGNSP PGUID 12 1 0 0 0 f f f f t f i 1 0 16 "3831" _null_ _null_ _null_ _null_ _null_ range_upper_inf _null_ _null_ _null_ ));
 DESCR("is the range's upper bound infinite?");
 DATA(insert OID = 3855 (  range_eq	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_eq _null_ _null_ _null_ ));
-DESCR("implementation of = operator");
+DESCR("implementation of = coperator");
 DATA(insert OID = 3856 (  range_ne	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_ne _null_ _null_ _null_ ));
-DESCR("implementation of <> operator");
+DESCR("implementation of <> coperator");
 DATA(insert OID = 3857 (  range_overlaps		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_overlaps _null_ _null_ _null_ ));
-DESCR("implementation of && operator");
+DESCR("implementation of && coperator");
 DATA(insert OID = 3858 (  range_contains_elem	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3831 2283" _null_ _null_ _null_ _null_ _null_ range_contains_elem _null_ _null_ _null_ ));
-DESCR("implementation of @> operator");
+DESCR("implementation of @> coperator");
 DATA(insert OID = 3859 (  range_contains		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_contains _null_ _null_ _null_ ));
-DESCR("implementation of @> operator");
+DESCR("implementation of @> coperator");
 DATA(insert OID = 3860 (  elem_contained_by_range	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "2283 3831" _null_ _null_ _null_ _null_ _null_ elem_contained_by_range _null_ _null_ _null_ ));
-DESCR("implementation of <@ operator");
+DESCR("implementation of <@ coperator");
 DATA(insert OID = 3861 (  range_contained_by	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_contained_by _null_ _null_ _null_ ));
-DESCR("implementation of <@ operator");
+DESCR("implementation of <@ coperator");
 DATA(insert OID = 3862 (  range_adjacent		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_adjacent _null_ _null_ _null_ ));
-DESCR("implementation of -|- operator");
+DESCR("implementation of -|- coperator");
 DATA(insert OID = 3863 (  range_before		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_before _null_ _null_ _null_ ));
-DESCR("implementation of << operator");
+DESCR("implementation of << coperator");
 DATA(insert OID = 3864 (  range_after		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_after _null_ _null_ _null_ ));
-DESCR("implementation of >> operator");
+DESCR("implementation of >> coperator");
 DATA(insert OID = 3865 (  range_overleft	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_overleft _null_ _null_ _null_ ));
-DESCR("implementation of &< operator");
+DESCR("implementation of &< coperator");
 DATA(insert OID = 3866 (  range_overright	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_overright _null_ _null_ _null_ ));
-DESCR("implementation of &> operator");
+DESCR("implementation of &> coperator");
 DATA(insert OID = 3867 (  range_union		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 3831 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_union _null_ _null_ _null_ ));
-DESCR("implementation of + operator");
+DESCR("implementation of + coperator");
 DATA(insert OID = 4057 (  range_merge		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 3831 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_merge _null_ _null_ _null_ ));
 DESCR("the smallest range which includes both of the given ranges");
 DATA(insert OID = 3868 (  range_intersect	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 3831 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_intersect _null_ _null_ _null_ ));
-DESCR("implementation of * operator");
+DESCR("implementation of * coperator");
 DATA(insert OID = 3869 (  range_minus		PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 3831 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_minus _null_ _null_ _null_ ));
-DESCR("implementation of - operator");
+DESCR("implementation of - coperator");
 DATA(insert OID = 3870 (  range_cmp PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 23 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 DATA(insert OID = 3871 (  range_lt	PGNSP PGUID 12 1 0 0 0 f f f f t f i 2 0 16 "3831 3831" _null_ _null_ _null_ _null_ _null_ range_lt _null_ _null_ _null_ ));

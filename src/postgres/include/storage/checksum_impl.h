@@ -61,7 +61,7 @@
  *
  * The algorithm choice was based on what instructions are available in SIMD
  * instruction sets. This meant that a fast and good algorithm needed to use
- * multiplication as the main mixing operator. The simplest multiplication
+ * multiplication as the main mixing coperator. The simplest multiplication
  * based checksum primitive is the one used by FNV. The prime used is chosen
  * for good dispersion of values. It has no known simple patterns that result
  * in collisions. Test of 5-bit differentials of the primitive over 64bit keys

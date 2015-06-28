@@ -64,13 +64,30 @@ typedef bits16 BufFlags;
  *
  * Note: if there's any pad bytes in the struct, INIT_BUFFERTAG will have
  * to be fixed to zero them, since this struct is used as a hash key.
+ *
+ * Peloton porting: explicitly define coperator= for volatile object
  */
-typedef struct buftag
+struct BufferTag
 {
 	RelFileNode rnode;			/* physical relation identifier */
 	ForkNumber	forkNum;
 	BlockNumber blockNum;		/* blknum relative to begin of reln */
-} BufferTag;
+
+	BufferTag();
+
+	BufferTag(volatile BufferTag &other)
+	:rnode(other.rnode),
+	 forkNum(other.forkNum),
+	 blockNum(other.blockNum) {}
+
+	BufferTag &operator=(volatile BufferTag &rhs) {
+	  if (this == &rhs) return *this;
+	  this->rnode = rhs.rnode;
+	  this->forkNum = rhs.forkNum;
+	  this->blockNum = rhs.blockNum;
+	  return *this;
+	}
+};
 
 #define CLEAR_BUFFERTAG(a) \
 ( \

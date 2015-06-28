@@ -351,7 +351,7 @@ minmax_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 								Int16GetDatum(strategynum));
 
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
+			elog(ERROR, "missing coperator %d(%u,%u) in opfamily %u",
 				 strategynum, attr->atttypid, subtype, opfamily);
 
 		oprid = DatumGetObjectId(SysCacheGetAttr(AMOPSTRATEGY, tuple,

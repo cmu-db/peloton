@@ -42,7 +42,7 @@ makeA_Expr(A_Expr_Kind kind, List *name,
 
 /*
  * makeSimpleA_Expr -
- *		As above, given a simple (unqualified) operator name
+ *		As above, given a simple (unqualified) coperator name
  */
 A_Expr *
 makeSimpleA_Expr(A_Expr_Kind kind, char *name,
