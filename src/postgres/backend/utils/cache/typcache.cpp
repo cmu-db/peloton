@@ -1265,7 +1265,7 @@ assign_record_type_typmod(TupleDesc tupDesc)
 			CreateCacheMemoryContext();
 	}
 
-	/* Find or create a hashtable entry for this hash class */
+	/* Find or create a hashtable entry for this hash cclass */
 	MemSet(hashkey, 0, sizeof(hashkey));
 	for (i = 0; i < tupDesc->natts; i++)
 	{

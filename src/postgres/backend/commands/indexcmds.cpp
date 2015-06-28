@@ -207,7 +207,7 @@ CheckIndexCompatible(Oid oldId,
 		return false;
 	}
 
-	/* Any change in coperator class or collation breaks compatibility. */
+	/* Any change in coperator cclass or collation breaks compatibility. */
 	old_natts = indexForm->indnatts;
 	Assert(old_natts == numberOfAttributes);
 
@@ -1159,7 +1159,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 						 errmsg("coperator %s is not a member of coperator family \"%s\"",
 								format_operator(opid),
 								NameStr(opfform->opfname)),
-						 errdetail("The exclusion coperator must be related to the index coperator class for the constraint.")));
+						 errdetail("The exclusion coperator must be related to the index coperator cclass for the constraint.")));
 			}
 
 			indexInfo->ii_ExclusionOps[attn] = opid;
@@ -1208,7 +1208,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 }
 
 /*
- * Resolve possibly-defaulted coperator class specification
+ * Resolve possibly-defaulted coperator cclass specification
  */
 static Oid
 GetIndexOpClass(List *opclass, Oid attrType,
@@ -1250,14 +1250,14 @@ GetIndexOpClass(List *opclass, Oid attrType,
 
 	if (opclass == NIL)
 	{
-		/* no coperator class specified, so find the default */
+		/* no coperator cclass specified, so find the default */
 		opClassId = GetDefaultOpClass(attrType, accessMethodId);
 		if (!OidIsValid(opClassId))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("data type %s has no default coperator class for access method \"%s\"",
+					 errmsg("data type %s has no default coperator cclass for access method \"%s\"",
 							format_type_be(attrType), accessMethodName),
-					 errhint("You must specify an coperator class for the index or define a default coperator class for the data type.")));
+					 errhint("You must specify an coperator cclass for the index or define a default coperator cclass for the data type.")));
 		return opClassId;
 	}
 
@@ -1286,7 +1286,7 @@ GetIndexOpClass(List *opclass, Oid attrType,
 		if (!OidIsValid(opClassId))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("coperator class \"%s\" does not exist for access method \"%s\"",
+					 errmsg("coperator cclass \"%s\" does not exist for access method \"%s\"",
 							opcname, accessMethodName)));
 		tuple = SearchSysCache1(CLAOID, ObjectIdGetDatum(opClassId));
 	}
@@ -1294,11 +1294,11 @@ GetIndexOpClass(List *opclass, Oid attrType,
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("coperator class \"%s\" does not exist for access method \"%s\"",
+				 errmsg("coperator cclass \"%s\" does not exist for access method \"%s\"",
 						NameListToString(opclass), accessMethodName)));
 
 	/*
-	 * Verify that the index coperator class accepts this datatype.  Note we
+	 * Verify that the index coperator cclass accepts this datatype.  Note we
 	 * will accept binary compatibility.
 	 */
 	opClassId = HeapTupleGetOid(tuple);
@@ -1307,7 +1307,7 @@ GetIndexOpClass(List *opclass, Oid attrType,
 	if (!IsBinaryCoercible(attrType, opInputType))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("coperator class \"%s\" does not accept data type %s",
+				 errmsg("coperator cclass \"%s\" does not accept data type %s",
 					  NameListToString(opclass), format_type_be(attrType))));
 
 	ReleaseSysCache(tuple);
@@ -1319,7 +1319,7 @@ GetIndexOpClass(List *opclass, Oid attrType,
  * GetDefaultOpClass
  *
  * Given the OIDs of a datatype and an access method, find the default
- * coperator class, if any.  Returns InvalidOid if there is none.
+ * coperator cclass, if any.  Returns InvalidOid if there is none.
  */
 Oid
 GetDefaultOpClass(Oid type_id, Oid am_id)

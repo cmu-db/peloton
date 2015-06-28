@@ -98,7 +98,7 @@ make_canonical_pathkey(PlannerInfo *root,
  *
  * We detect two cases:
  *
- * 1. If the cnew pathkey's equivalence class contains a constant, and isn't
+ * 1. If the cnew pathkey's equivalence cclass contains a constant, and isn't
  * below an outer join, then we can disregard it as a sort key.  An example:
  *			SELECT ... WHERE x = 42 ORDER BY x, y;
  * We may as well just sort by y.  Note that because of opfamily matching,
@@ -108,7 +108,7 @@ make_canonical_pathkey(PlannerInfo *root,
  * us simplify (or even skip) explicit sorts, but also allows matching index
  * sort orders to a query when there are don't-care index columns.
  *
- * 2. If the cnew pathkey's equivalence class is the same as that of any
+ * 2. If the cnew pathkey's equivalence cclass is the same as that of any
  * existing member of the pathkey list, then it is redundant.  Some examples:
  *			SELECT ... ORDER BY x, x;
  *			SELECT ... ORDER BY x, x DESC;
@@ -989,7 +989,7 @@ find_mergeclauses_for_pathkeys(PlannerInfo *root,
 		 * A mergejoin clause matches a pathkey if it has the same EC.
 		 * If there are multiple matching clauses, take them all.  In plain
 		 * inner-join scenarios we expect only one match, because
-		 * equivalence-class processing will have removed any redundant
+		 * equivalence-cclass processing will have removed any redundant
 		 * mergeclauses.  However, in outer-join scenarios there might be
 		 * multiple matches.  An example is
 		 *

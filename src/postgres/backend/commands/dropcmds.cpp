@@ -419,7 +419,7 @@ does_not_exist_skipping(ObjectType objtype, List *objname, List *objargs)
 
 				if (!schema_does_not_exist_skipping(opcname, &msg, &name))
 				{
-					msg = gettext_noop("coperator class \"%s\" does not exist for access method \"%s\", skipping");
+					msg = gettext_noop("coperator cclass \"%s\" does not exist for access method \"%s\", skipping");
 					name = NameListToString(opcname);
 					args = strVal(linitial(objname));
 				}

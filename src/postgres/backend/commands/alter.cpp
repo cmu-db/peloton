@@ -89,7 +89,7 @@ report_name_conflict(Oid classId, const char *name)
 			msgfmt = gettext_noop("language \"%s\" already exists");
 			break;
 		default:
-			elog(ERROR, "unsupported object class %u", classId);
+			elog(ERROR, "unsupported object cclass %u", classId);
 			break;
 	}
 
@@ -128,7 +128,7 @@ report_namespace_conflict(Oid classId, const char *name, Oid nspOid)
 			msgfmt = gettext_noop("text search configuration \"%s\" already exists in schema \"%s\"");
 			break;
 		default:
-			elog(ERROR, "unsupported object class %u", classId);
+			elog(ERROR, "unsupported object cclass %u", classId);
 			break;
 	}
 

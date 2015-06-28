@@ -905,7 +905,7 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 	}
 	appendStringInfoChar(&buf, ')');
 
-	/* Identify class of trigger --- update, delete, or referencing-table */
+	/* Identify cclass of trigger --- update, delete, or referencing-table */
 	switch (funcoid)
 	{
 		case F_RI_FKEY_CASCADE_UPD:

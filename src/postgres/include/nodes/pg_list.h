@@ -47,9 +47,8 @@ typedef struct ListCell ListCell;
  * Using C++ inheritance
  *
  * */
-class List : public Node
+struct List : Node
 {
- public:
 	//NodeTag		type;			/* T_List, T_IntList, or T_OidList */
 	int			length;
 	ListCell   *head;

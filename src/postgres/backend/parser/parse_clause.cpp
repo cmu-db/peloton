@@ -2722,7 +2722,7 @@ resolve_unique_index_expr(ParseState *pstate, InferClause *infer,
 		 */
 		pInfer->expr = transformExpr(pstate, parse, EXPR_KIND_INDEX_EXPRESSION);
 
-		/* Perform lookup of collation and coperator class as required */
+		/* Perform lookup of collation and coperator cclass as required */
 		if (!ielem->collation)
 			pInfer->infercollid = InvalidOid;
 		else

@@ -109,7 +109,7 @@ typedef unsigned int flex_uint32_t;
 
 #ifdef __cplusplus
 
-/* The "const" storage-class-modifier is valid. */
+/* The "const" storage-cclass-modifier is valid. */
 #define YY_USE_CONST
 
 #else	/* ! __cplusplus */

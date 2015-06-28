@@ -166,7 +166,7 @@ getJsonbLength(const JsonbContainer *jc, int index)
 /*
  * BT comparator worker function.  Returns an integer less than, equal to, or
  * greater than zero, indicating whether a is less than, equal to, or greater
- * than b.  Consistent with the requirements for a B-Tree coperator class
+ * than b.  Consistent with the requirements for a B-Tree coperator cclass
  *
  * Strings are compared lexically, in contrast with other places where we use a
  * much simpler comparator logic for searching through Strings.  Since this is

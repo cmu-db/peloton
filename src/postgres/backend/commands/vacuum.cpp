@@ -1378,7 +1378,7 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	/* Restore userid and security context */
 	SetUserIdAndSecContext(save_userid, save_sec_context);
 
-	/* all done with this class, but hold lock until commit */
+	/* all done with this cclass, but hold lock until commit */
 	if (onerel)
 		relation_close(onerel, NoLock);
 

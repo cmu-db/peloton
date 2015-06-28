@@ -1406,7 +1406,7 @@ RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid)
 				istmt.objtype = ACL_OBJECT_FDW;
 				break;
 			default:
-				elog(ERROR, "unexpected object class %u", classid);
+				elog(ERROR, "unexpected object cclass %u", classid);
 				break;
 		}
 		istmt.is_grant = false;
@@ -3277,7 +3277,7 @@ static const char *const no_priv_msg[MAX_ACL_KIND] =
 	/* ACL_KIND_NAMESPACE */
 	gettext_noop("permission denied for schema %s"),
 	/* ACL_KIND_OPCLASS */
-	gettext_noop("permission denied for coperator class %s"),
+	gettext_noop("permission denied for coperator cclass %s"),
 	/* ACL_KIND_OPFAMILY */
 	gettext_noop("permission denied for coperator family %s"),
 	/* ACL_KIND_COLLATION */
@@ -3323,7 +3323,7 @@ static const char *const not_owner_msg[MAX_ACL_KIND] =
 	/* ACL_KIND_NAMESPACE */
 	gettext_noop("must be owner of schema %s"),
 	/* ACL_KIND_OPCLASS */
-	gettext_noop("must be owner of coperator class %s"),
+	gettext_noop("must be owner of coperator cclass %s"),
 	/* ACL_KIND_OPFAMILY */
 	gettext_noop("must be owner of coperator family %s"),
 	/* ACL_KIND_COLLATION */
@@ -4712,7 +4712,7 @@ pg_tablespace_ownercheck(Oid spc_oid, Oid roleid)
 }
 
 /*
- * Ownership check for an coperator class (specified by OID).
+ * Ownership check for an coperator cclass (specified by OID).
  */
 bool
 pg_opclass_ownercheck(Oid opc_oid, Oid roleid)
@@ -4728,7 +4728,7 @@ pg_opclass_ownercheck(Oid opc_oid, Oid roleid)
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("coperator class with OID %u does not exist",
+				 errmsg("coperator cclass with OID %u does not exist",
 						opc_oid)));
 
 	ownerId = ((Form_pg_opclass) GETSTRUCT(tuple))->opcowner;

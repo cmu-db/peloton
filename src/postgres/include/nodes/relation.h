@@ -591,8 +591,8 @@ typedef struct IndexOptInfo
  * the included values might be all NULL rather than all the same non-null
  * values.  See src/backend/optimizer/README for more on that point.
  *
- * NB: if ec_merged isn't NULL, this class has been merged into another, and
- * should be ignored in favor of using the pointed-to class.
+ * NB: if ec_merged isn't NULL, this cclass has been merged into another, and
+ * should be ignored in favor of using the pointed-to cclass.
  */
 typedef struct EquivalenceClass
 {

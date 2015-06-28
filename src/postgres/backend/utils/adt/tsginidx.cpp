@@ -284,7 +284,7 @@ gin_tsquery_consistent(PG_FUNCTION_ARGS)
 		 * query.
 		 */
 		gcv.first_item = item = GETQUERY(query);
-		gcv.check = check;
+		gcv.check = reinterpret_cast<char *>(check);
 		gcv.map_item_operand = (int *) (extra_data[0]);
 		gcv.need_recheck = recheck;
 
