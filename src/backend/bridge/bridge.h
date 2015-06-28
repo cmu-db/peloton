@@ -16,6 +16,8 @@ extern "C" {
 #endif
 #include "nodes/pprint.h"
 
+int peloton_start(void);
+
 char* GetRelationName(unsigned int relation_id);
 
 int GetNumberOfAttributes(unsigned int relation_id);
