@@ -38,6 +38,15 @@ class ContainerTuple : public AbstractTuple {
     tuple_id_(tuple_id) {
   }
 
+  /* Accessors */
+  T* GetContainer() const {
+    return container_;
+  }
+
+  oid_t GetTupleId() const {
+    return tuple_id_;
+  }
+
   /** @brief Get the value at the given column id. */
   const Value GetValue(oid_t column_id) const override {
     assert(container_ != nullptr);
@@ -92,18 +101,24 @@ class ContainerTuple : public AbstractTuple {
 
 };
 
+//===--------------------------------------------------------------------===//
+// ContainerTuple Hasher
+//===--------------------------------------------------------------------===//
 template <class T>
 struct ContainerTupleHasher: std::unary_function<ContainerTuple<T>, std::size_t> {
   // Generate a 64-bit number for the key value
-  size_t operator()(ContainerTuple<T> tuple) const {
+  size_t operator()(const ContainerTuple<T>& tuple) const {
     return tuple.HashCode();
   }
 };
 
+//===--------------------------------------------------------------------===//
+// ContainerTuple Comparator
+//===--------------------------------------------------------------------===//
 template <class T>
 class ContainerTupleComparator {
  public:
-  bool operator()(const ContainerTuple<T> lhs, const ContainerTuple<T> rhs) const {
+  bool operator()(const ContainerTuple<T>& lhs, const ContainerTuple<T>& rhs) const {
     return lhs.EqualsNoSchemaCheck(rhs);
   }
 };
