@@ -227,8 +227,8 @@ find_all_inheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents)
  * has_subclass - does this relation have any children?
  *
  * In the current implementation, has_subclass returns whether a
- * particular class *might* have a subclass. It will not return the
- * correct result if a class had a subclass which was later dropped.
+ * particular cclass *might* have a subclass. It will not return the
+ * correct result if a cclass had a subclass which was later dropped.
  * This is because relhassubclass in pg_class is not updated immediately
  * when a subclass is dropped, primarily because of concurrency concerns.
  *
@@ -257,7 +257,7 @@ has_subclass(Oid relationId)
 
 /*
  * Given two type OIDs, determine whether the first is a complex type
- * (class type) that inherits from the second.
+ * (cclass type) that inherits from the second.
  */
 bool
 typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)

@@ -77,7 +77,7 @@ _bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level)
  *		Since the root page can move around the btree file, we have to read
  *		its location from the metadata page, and then read the root page
  *		itself.  If no root page exists yet, we have to create one.  The
- *		standard class of race conditions exists here; I think I covered
+ *		standard cclass of race conditions exists here; I think I covered
  *		them all in the Hopi Indian rain dance of lock requests below.
  *
  *		The access type parameter (BT_READ or BT_WRITE) controls whether

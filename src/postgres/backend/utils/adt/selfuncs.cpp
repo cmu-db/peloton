@@ -5602,7 +5602,7 @@ regex_selectivity_sub(const char *patt, int pattlen, bool case_insensitive)
 				negclass = true;
 				pos++;
 			}
-			if (patt[pos] == ']')		/* ']' at start of class is not
+			if (patt[pos] == ']')		/* ']' at start of cclass is not
 										 * special */
 				pos++;
 			while (pos < pattlen && patt[pos] != ']')

@@ -102,7 +102,7 @@ typedef struct
 										 * name alone, if there's no
 										 * cnamespace) be considered a unique
 										 * identifier for an object of this
-										 * class? */
+										 * cclass? */
 } ObjectPropertyType;
 
 static const ObjectPropertyType ObjectProperty[] =
@@ -495,7 +495,7 @@ ObjectTypeMap[] =
 	/* OCLASS_OPERATOR */
 	{ "coperator", OBJECT_OPERATOR },
 	/* OCLASS_OPCLASS */
-	{ "coperator class", OBJECT_OPCLASS },
+	{ "coperator cclass", OBJECT_OPCLASS },
 	/* OCLASS_OPFAMILY */
 	{ "coperator family", OBJECT_OPFAMILY },
 	/* OCLASS_AMOP */
@@ -2228,7 +2228,7 @@ get_object_namensp_unique(Oid class_id)
 }
 
 /*
- * Return whether we have useful data for the given object class in the
+ * Return whether we have useful data for the given object cclass in the
  * ObjectProperty table.
  */
 bool
@@ -2256,7 +2256,7 @@ get_object_property_data(Oid class_id)
 
 	/*
 	 * A shortcut to speed up multiple consecutive lookups of a particular
-	 * object class.
+	 * object cclass.
 	 */
 	if (prop_last && prop_last->class_oid == class_id)
 		return prop_last;
@@ -2271,7 +2271,7 @@ get_object_property_data(Oid class_id)
 	}
 
 	ereport(ERROR,
-			(errmsg_internal("unrecognized class ID: %u", class_id)));
+			(errmsg_internal("unrecognized cclass ID: %u", class_id)));
 
 	return NULL;				/* keep MSC compiler happy */
 }
@@ -2538,7 +2538,7 @@ getObjectDescription(const ObjectAddress *object)
 				else
 					nspname = get_namespace_name(opcForm->opcnamespace);
 
-				appendStringInfo(&buffer, _("coperator class %s for access method %s"),
+				appendStringInfo(&buffer, _("coperator cclass %s for access method %s"),
 								 quote_qualified_identifier(nspname,
 												  NameStr(opcForm->opcname)),
 								 NameStr(amForm->amname));
@@ -3417,7 +3417,7 @@ getObjectTypeDescription(const ObjectAddress *object)
 			break;
 
 		case OCLASS_OPCLASS:
-			appendStringInfoString(&buffer, "coperator class");
+			appendStringInfoString(&buffer, "coperator cclass");
 			break;
 
 		case OCLASS_OPFAMILY:
@@ -4436,7 +4436,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 	 * leave it as NIL.
 	 */
 	if (objname && *objname == NIL)
-		elog(ERROR, "requested object address for unsupported object class %d: text result \"%s\"",
+		elog(ERROR, "requested object address for unsupported object cclass %d: text result \"%s\"",
 			 (int) getObjectClass(object), buffer.data);
 
 	return buffer.data;

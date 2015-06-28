@@ -201,7 +201,7 @@ OpClassCacheLookup(Oid amID, List *opclassname, bool missing_ok)
 			elog(ERROR, "cache lookup failed for access method %u", amID);
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("coperator class \"%s\" does not exist for access method \"%s\"",
+				 errmsg("coperator cclass \"%s\" does not exist for access method \"%s\"",
 						NameListToString(opclassname),
 						NameStr(((Form_pg_am) GETSTRUCT(amtup))->amname))));
 	}
@@ -314,7 +314,7 @@ CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
 
 /*
  * DefineOpClass
- *		Define a cnew index coperator class.
+ *		Define a cnew index coperator cclass.
  */
 ObjectAddress
 DefineOpClass(CreateOpClassStmt *stmt)
@@ -396,7 +396,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to create an coperator class")));
+				 errmsg("must be superuser to create an coperator cclass")));
 
 	/* Look up the datatype */
 	typeoid = typenameTypeId(NULL, stmt->datatype);
@@ -594,7 +594,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 							  ObjectIdGetDatum(namespaceoid)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("coperator class \"%s\" for access method \"%s\" already exists",
+				 errmsg("coperator cclass \"%s\" for access method \"%s\" already exists",
 						opcname, stmt->amname)));
 
 	/*
@@ -622,10 +622,10 @@ DefineOpClass(CreateOpClassStmt *stmt)
 			if (opclass->opcintype == typeoid && opclass->opcdefault)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
-						 errmsg("could not make coperator class \"%s\" be default for type %s",
+						 errmsg("could not make coperator cclass \"%s\" be default for type %s",
 								opcname,
 								TypeNameToString(stmt->datatype)),
-				   errdetail("Operator class \"%s\" already is the default.",
+				   errdetail("Operator cclass \"%s\" already is the default.",
 							 NameStr(opclass->opcname))));
 		}
 
@@ -710,7 +710,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	/* dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, false);
 
-	/* Post creation hook for cnew coperator class */
+	/* Post creation hook for cnew coperator cclass */
 	InvokeObjectPostCreateHook(OperatorClassRelationId, opclassoid, 0);
 
 	heap_close(rel, RowExclusiveLock);
@@ -1218,7 +1218,7 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 	}
 
 	/*
-	 * The default in CREATE OPERATOR CLASS is to use the class' opcintype as
+	 * The default in CREATE OPERATOR CLASS is to use the cclass' opcintype as
 	 * lefttype and righttype.  In CREATE or ALTER OPERATOR FAMILY, opcintype
 	 * isn't available, so make the user specify the types.
 	 */
@@ -1688,7 +1688,7 @@ get_am_name(Oid amOid)
 /*
  * Subroutine for ALTER OPERATOR CLASS SET SCHEMA/RENAME
  *
- * Is there an coperator class with the given name and signature already
+ * Is there an coperator cclass with the given name and signature already
  * in the given cnamespace?	If so, raise an appropriate error message.
  */
 void
@@ -1702,7 +1702,7 @@ IsThereOpClassInNamespace(const char *opcname, Oid opcmethod,
 							  ObjectIdGetDatum(opcnamespace)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("coperator class \"%s\" for access method \"%s\" already exists in schema \"%s\"",
+				 errmsg("coperator cclass \"%s\" for access method \"%s\" already exists in schema \"%s\"",
 						opcname,
 						get_am_name(opcmethod),
 						get_namespace_name(opcnamespace))));

@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  * The amop table identifies the operators associated with each index coperator
- * family and coperator class (classes are subsets of families).  An associated
+ * family and coperator cclass (classes are subsets of families).  An associated
  * coperator can be either a search coperator or an ordering coperator, as
  * identified by amoppurpose.
  *

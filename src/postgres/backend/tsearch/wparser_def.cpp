@@ -1832,7 +1832,7 @@ TParserGet(TParser *prs)
 			Assert(item != NULL);
 		}
 
-		/* find action by character class */
+		/* find action by character cclass */
 		while (item->isclass)
 		{
 			prs->c = item->c;

@@ -22,22 +22,22 @@
 
 
 /*
- * Range class properties used to segregate different classes of ranges in
- * GiST.  Each unique combination of properties is a class.  CLS_EMPTY cannot
+ * Range cclass properties used to segregate different classes of ranges in
+ * GiST.  Each unique combination of properties is a cclass.  CLS_EMPTY cannot
  * be combined with anything else.
  */
 #define CLS_NORMAL			0	/* Ordinary finite range (no bits set) */
 #define CLS_LOWER_INF		1	/* Lower bound is infinity */
 #define CLS_UPPER_INF		2	/* Upper bound is infinity */
 #define CLS_CONTAIN_EMPTY	4	/* Contains underlying empty ranges */
-#define CLS_EMPTY			8	/* Special class for empty ranges */
+#define CLS_EMPTY			8	/* Special cclass for empty ranges */
 
 #define CLS_COUNT			9	/* # of classes; includes all combinations of
 								 * properties. CLS_EMPTY doesn't combine with
 								 * anything else, so it's only 2^3 + 1. */
 
 /*
- * Minimum accepted ratio of split for items of the same class.  If the items
+ * Minimum accepted ratio of split for items of the same cclass.  If the items
  * are of different classes, we will separate along those lines regardless of
  * the ratio.
  */
@@ -247,7 +247,7 @@ range_gist_fetch(PG_FUNCTION_ARGS)
  * The penalty function has the following goals (in order from most to least
  * important):
  * - Keep normal ranges separate
- * - Avoid broadening the class of the original predicate
+ * - Avoid broadening the cclass of the original predicate
  * - Avoid broadening (as determined by subtype_diff) the original predicate
  * - Favor adding ranges to narrower original predicates
  */
@@ -280,7 +280,7 @@ range_gist_penalty(PG_FUNCTION_ARGS)
 
 	/*
 	 * Distinct branches for handling distinct classes of ranges.  Note that
-	 * penalty values only need to be commensurate within the same class of
+	 * penalty values only need to be commensurate within the same cclass of
 	 * cnew range.
 	 */
 	if (new_empty)
@@ -506,7 +506,7 @@ range_gist_penalty(PG_FUNCTION_ARGS)
  * The GiST PickSplit method for ranges
  *
  * Primarily, we try to segregate ranges of different classes.  If splitting
- * ranges of the same class, use the appropriate split method for that class.
+ * ranges of the same cclass, use the appropriate split method for that cclass.
  */
 Datum
 range_gist_picksplit(PG_FUNCTION_ARGS)
@@ -546,7 +546,7 @@ range_gist_picksplit(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Count non-empty classes and find biggest class.
+	 * Count non-empty classes and find biggest cclass.
 	 */
 	total_count = maxoff;
 	for (j = 0; j < CLS_COUNT; j++)
@@ -566,7 +566,7 @@ range_gist_picksplit(PG_FUNCTION_ARGS)
 
 	if (non_empty_classes_count == 1)
 	{
-		/* One non-empty class, so split inside class */
+		/* One non-empty cclass, so split inside cclass */
 		if ((biggest_class & ~CLS_CONTAIN_EMPTY) == CLS_NORMAL)
 		{
 			/* double sorting split for normal ranges */
@@ -593,7 +593,7 @@ range_gist_picksplit(PG_FUNCTION_ARGS)
 		/*
 		 * Class based split.
 		 *
-		 * To which side of the split should each class go?  Initialize them
+		 * To which side of the split should each cclass go?  Initialize them
 		 * all to go to the left side.
 		 */
 		SplitLR		classes_groups[CLS_COUNT];
@@ -614,7 +614,7 @@ range_gist_picksplit(PG_FUNCTION_ARGS)
 			 *
 			 * Select the way which balances the ranges between left and right
 			 * the best. If split in these ways is not possible, there are at
-			 * most 3 classes, so just separate biggest class.
+			 * most 3 classes, so just separate biggest cclass.
 			 *----------
 			 */
 			int			infCount,
@@ -930,9 +930,9 @@ range_gist_fallback_split(TypeCacheEntry *typcache,
 /*
  * Split based on classes of ranges.
  *
- * See get_gist_range_class for class definitions.
+ * See get_gist_range_class for cclass definitions.
  * classes_groups is an array of length CLS_COUNT indicating the side of the
- * split to which each class should go.
+ * split to which each cclass should go.
  */
 static void
 range_gist_class_split(TypeCacheEntry *typcache,
@@ -952,17 +952,17 @@ range_gist_class_split(TypeCacheEntry *typcache,
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 	{
 		RangeType  *range = DatumGetRangeType(entryvec->vector[i].key);
-		int			class;
+		int			cclass;
 
-		/* Get class of range */
-		class = get_gist_range_class(range);
+		/* Get cclass of range */
+		cclass = get_gist_range_class(range);
 
 		/* Place range to appropriate page */
-		if (classes_groups[class] == SPLIT_LEFT)
+		if (classes_groups[cclass] == SPLIT_LEFT)
 			PLACE_LEFT(range, i);
 		else
 		{
-			Assert(classes_groups[class] == SPLIT_RIGHT);
+			Assert(classes_groups[cclass] == SPLIT_RIGHT);
 			PLACE_RIGHT(range, i);
 		}
 	}
@@ -1445,9 +1445,9 @@ range_gist_consider_split(ConsiderSplitContext *context,
 }
 
 /*
- * Find class number for range.
+ * Find cclass number for range.
  *
- * The class number is a valid combination of the properties of the
+ * The cclass number is a valid combination of the properties of the
  * range.  Note: the highest possible number is 8, because CLS_EMPTY
  * can't be combined with anything else.
  */
