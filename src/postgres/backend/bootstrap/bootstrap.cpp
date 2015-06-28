@@ -2,7 +2,7 @@
  *
  * bootstrap.c
  *	  routines to support running postgres in 'bootstrap' mode
- *	bootstrap mode is used to create the initial template database
+ *	bootstrap mode is used to create the initial ctemplate database
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -459,7 +459,7 @@ CheckerModeMain(void)
 /*
  *	 The main entry point for running the backend in bootstrap mode
  *
- *	 The bootstrap mode is used to initialize the template database.
+ *	 The bootstrap mode is used to initialize the ctemplate database.
  *	 The bootstrap backend doesn't speak SQL, but instead expects
  *	 commands in a special bootstrap language.
  */

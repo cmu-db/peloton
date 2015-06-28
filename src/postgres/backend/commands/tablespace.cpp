@@ -29,7 +29,7 @@
  *			$PGDATA/base/dboid/relfilenode
  *
  * To allow CREATE DATABASE to give a cnew database a default tablespace
- * that's different from the template database's default, we make the
+ * that's different from the ctemplate database's default, we make the
  * provision that a zero in pg_class.reltablespace means the database's
  * default tablespace.  Without this, CREATE DATABASE would have to go in
  * and munge the system catalogs of the cnew database.

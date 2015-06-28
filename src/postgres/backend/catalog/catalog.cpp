@@ -112,7 +112,7 @@ IsCatalogClass(Oid relid, Form_pg_class reltuple)
 
 	/* ----
 	 * Check whether the oid was assigned during initdb, when creating the
-	 * initial template database. Minus the relations in information_schema
+	 * initial ctemplate database. Minus the relations in information_schema
 	 * excluded above, these are integral part of the system.
 	 * We could instead check whether the relation is pinned in pg_depend, but
 	 * this is noticeably cheaper and doesn't require catalog access.

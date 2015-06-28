@@ -66,7 +66,7 @@
 
 typedef struct
 {
-	Oid			src_dboid;		/* source (template) DB */
+	Oid			src_dboid;		/* source (ctemplate) DB */
 	Oid			dest_dboid;		/* DB we are trying to create */
 } createdb_failure_params;
 
@@ -163,7 +163,7 @@ createdb(const CreatedbStmt *stmt)
 						 errmsg("conflicting or redundant options")));
 			downer = defel;
 		}
-		else if (strcmp(defel->defname, "template") == 0)
+		else if (strcmp(defel->defname, "ctemplate") == 0)
 		{
 			if (dtemplate)
 				ereport(ERROR,
@@ -300,8 +300,8 @@ createdb(const CreatedbStmt *stmt)
 	check_is_member_of_role(GetUserId(), datdba);
 
 	/*
-	 * Lookup database (template) to be cloned, and obtain share lock on it.
-	 * ShareLock allows two CREATE DATABASEs to work from the same template
+	 * Lookup database (ctemplate) to be cloned, and obtain share lock on it.
+	 * ShareLock allows two CREATE DATABASEs to work from the same ctemplate
 	 * concurrently, while ensuring no one is busy dropping it in parallel
 	 * (which would be Very Bad since we'd likely get an incomplete copy
 	 * without knowing it).  This also prevents any cnew connections from being
@@ -309,7 +309,7 @@ createdb(const CreatedbStmt *stmt)
 	 * won't change underneath us.
 	 */
 	if (!dbtemplate)
-		dbtemplate = "template1";		/* Default template database name */
+		dbtemplate = "template1";		/* Default ctemplate database name */
 
 	if (!get_db_info(dbtemplate, ShareLock,
 					 &src_dboid, &src_owner, &src_encoding,
@@ -318,7 +318,7 @@ createdb(const CreatedbStmt *stmt)
 					 &src_collate, &src_ctype))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("template database \"%s\" does not exist",
+				 errmsg("ctemplate database \"%s\" does not exist",
 						dbtemplate)));
 
 	/*
@@ -370,31 +370,31 @@ createdb(const CreatedbStmt *stmt)
 	 *
 	 * However, we assume that template0 doesn't contain any non-ASCII data
 	 * nor any indexes that depend on collation or ctype, so template0 can be
-	 * used as template for creating a database with any encoding or locale.
+	 * used as ctemplate for creating a database with any encoding or locale.
 	 */
 	if (strcmp(dbtemplate, "template0") != 0)
 	{
 		if (encoding != src_encoding)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cnew encoding (%s) is incompatible with the encoding of the template database (%s)",
+					 errmsg("cnew encoding (%s) is incompatible with the encoding of the ctemplate database (%s)",
 							pg_encoding_to_char(encoding),
 							pg_encoding_to_char(src_encoding)),
-					 errhint("Use the same encoding as in the template database, or use template0 as template.")));
+					 errhint("Use the same encoding as in the ctemplate database, or use template0 as ctemplate.")));
 
 		if (strcmp(dbcollate, src_collate) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cnew collation (%s) is incompatible with the collation of the template database (%s)",
+					 errmsg("cnew collation (%s) is incompatible with the collation of the ctemplate database (%s)",
 							dbcollate, src_collate),
-					 errhint("Use the same collation as in the template database, or use template0 as template.")));
+					 errhint("Use the same collation as in the ctemplate database, or use template0 as ctemplate.")));
 
 		if (strcmp(dbctype, src_ctype) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cnew LC_CTYPE (%s) is incompatible with the LC_CTYPE of the template database (%s)",
+					 errmsg("cnew LC_CTYPE (%s) is incompatible with the LC_CTYPE of the ctemplate database (%s)",
 							dbctype, src_ctype),
-					 errhint("Use the same LC_CTYPE as in the template database, or use template0 as template.")));
+					 errhint("Use the same LC_CTYPE as in the ctemplate database, or use template0 as ctemplate.")));
 	}
 
 	/* Resolve default tablespace for cnew database */
@@ -419,13 +419,13 @@ createdb(const CreatedbStmt *stmt)
 				  errmsg("pg_global cannot be used as default tablespace")));
 
 		/*
-		 * If we are trying to change the default tablespace of the template,
-		 * we require that the template not have any files in the cnew default
+		 * If we are trying to change the default tablespace of the ctemplate,
+		 * we require that the ctemplate not have any files in the cnew default
 		 * tablespace.  This is necessary because otherwise the copied
 		 * database would contain pg_class rows that refer to its default
 		 * tablespace both explicitly (by OID) and implicitly (as zero), which
 		 * would cause problems.  For example another CREATE DATABASE using
-		 * the copied database as template, and trying to change its default
+		 * the copied database as ctemplate, and trying to change its default
 		 * tablespace again, would yield outright incorrect results (it would
 		 * improperly move tables to the cnew default tablespace that should
 		 * stay in the same tablespace).
@@ -451,7 +451,7 @@ createdb(const CreatedbStmt *stmt)
 	}
 	else
 	{
-		/* Use template database's default tablespace */
+		/* Use ctemplate database's default tablespace */
 		dst_deftablespace = src_deftablespace;
 		/* Note there is no additional permission check in this path */
 	}
@@ -522,8 +522,8 @@ createdb(const CreatedbStmt *stmt)
 
 	/*
 	 * We deliberately set datacl to default (NULL), rather than copying it
-	 * from the template database.  Copying it would be a bad idea when the
-	 * owner is not the same as the template's owner.
+	 * from the ctemplate database.  Copying it would be a bad idea when the
+	 * owner is not the same as the ctemplate's owner.
 	 */
 	new_record_nulls[Anum_pg_database_datacl - 1] = true;
 
@@ -576,7 +576,7 @@ createdb(const CreatedbStmt *stmt)
 							PointerGetDatum(&fparms));
 	{
 		/*
-		 * Iterate through all tablespaces of the template database, and copy
+		 * Iterate through all tablespaces of the ctemplate database, and copy
 		 * each one to the cnew database.
 		 */
 		rel = heap_open(TableSpaceRelationId, AccessShareLock);
@@ -657,7 +657,7 @@ createdb(const CreatedbStmt *stmt)
 		 * (Both of these were real bugs in releases 8.0 through 8.0.3.)
 		 *
 		 * In PITR replay, the first of these isn't an issue, and the second
-		 * is only a risk if the CREATE DATABASE and subsequent template
+		 * is only a risk if the CREATE DATABASE and subsequent ctemplate
 		 * database change both occur while a base backup is being taken.
 		 * There doesn't seem to be much we can do about that except document
 		 * it as a limitation.
@@ -782,7 +782,7 @@ dropdb(const char *dbname, bool missing_ok)
 	 * Look up the target database's OID, and get exclusive lock on it. We
 	 * need this to ensure that no cnew backend starts up in the target
 	 * database while we are deleting it (see postinit.c), and that no one is
-	 * using it as a CREATE DATABASE template or trying to delete it for
+	 * using it as a CREATE DATABASE ctemplate or trying to delete it for
 	 * themselves.
 	 */
 	pgdbrel = heap_open(DatabaseRelationId, RowExclusiveLock);
@@ -825,7 +825,7 @@ dropdb(const char *dbname, bool missing_ok)
 	if (db_istemplate)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("cannot drop a template database")));
+				 errmsg("cannot drop a ctemplate database")));
 
 	/* Obviously can't drop my own database */
 	if (db_id == MyDatabaseId)
@@ -1056,7 +1056,7 @@ movedb(const char *dbname, const char *tblspcname)
 	 * Look up the target database's OID, and get exclusive lock on it. We
 	 * need this to ensure that no cnew backend starts up in the database while
 	 * we are moving it, and that no one is using it as a CREATE DATABASE
-	 * template or trying to delete it.
+	 * ctemplate or trying to delete it.
 	 */
 	pgdbrel = heap_open(DatabaseRelationId, RowExclusiveLock);
 
@@ -1769,7 +1769,7 @@ get_db_info(const char *name, LOCKMODE lockmode,
 				/* character encoding */
 				if (encodingP)
 					*encodingP = dbform->encoding;
-				/* allowed as template? */
+				/* allowed as ctemplate? */
 				if (dbIsTemplateP)
 					*dbIsTemplateP = dbform->datistemplate;
 				/* allowing connections? */
