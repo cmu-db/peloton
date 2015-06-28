@@ -27,6 +27,12 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
+#include <sys/types.h>
+#include <unistd.h>
+
+//===--------------------------------------------------------------------===//
+// Postgres Utility Functions
+//===--------------------------------------------------------------------===//
 
 /**
  * @brief Getting the relation name
@@ -39,10 +45,10 @@ GetRelationName(Oid relation_id){
   Form_pg_class pgclass;
 
   StartTransactionCommand();
-  
+
   //open pg_class table
   pg_class_rel = heap_open(RelationRelationId,AccessShareLock);
-  
+
   //search the table with given relation id from pg_class table
   tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relation_id));
   if (!HeapTupleIsValid(tuple))
@@ -50,11 +56,11 @@ GetRelationName(Oid relation_id){
     //Check whether relation id is valid or not
     elog(ERROR, "cache lookup failed for relation %u", relation_id);
   }
-  
+
   pgclass = (Form_pg_class) GETSTRUCT(tuple);
 
   heap_close(pg_class_rel, AccessShareLock);
-  
+
   CommitTransactionCommand();
 
   return NameStr(pgclass->relname);
@@ -259,7 +265,7 @@ bool IsThisTableExist(const char* table_name) {
     //Compare current table name and given table name
     if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE &&
         strcmp( current_table_name, table_name ) == 0)
-        return true;
+      return true;
   }
 
   heap_endscan(scan);
@@ -287,6 +293,7 @@ bool InitPeloton(const char* dbname)
   int column_itr;
   bool ret;
 
+  printf("Process Id : %d \n", getpid());
   printf("################################################\n");
   printf("#### Initialize Peloton Database \"%s\" #### \n", dbname);
   printf("################################################\n");
@@ -313,7 +320,7 @@ bool InitPeloton(const char* dbname)
         HeapTuple tuple_for_pg_attribute;
         DDL_ColumnInfo ddl_columnInfo[ pgclass->relnatts ] ;
         Oid table_oid = HeapTupleHeaderGetOid(tuple_for_pg_class->t_data);
-  
+
         scan_pg_attribute = heap_beginscan_catalog(pg_attribute_rel, 0, NULL);
         column_itr = 0;  
         while (HeapTupleIsValid(tuple_for_pg_attribute = heap_getnext(scan_pg_attribute, ForwardScanDirection))) {
@@ -338,7 +345,7 @@ bool InitPeloton(const char* dbname)
             } // end if
           } // end if
         } // end while
-  
+
         heap_endscan(scan_pg_attribute);
 
         // Create the table
@@ -380,7 +387,7 @@ bool InitPeloton(const char* dbname)
         else       fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
       }
     } // end if
-    
+
   } // end while
 
   heap_endscan(scan_pg_class);
