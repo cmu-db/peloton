@@ -118,7 +118,7 @@ SB_lower_char(unsigned char c, pg_locale_t locale, bool locale_is_c)
 #define MatchText	MB_MatchText
 #define do_like_escape	MB_do_like_escape
 
-#include "like_match.c"
+#include "like_match.cpp"
 
 /* Set up to compile like_match.c for single-byte characters */
 #define CHAREQ(p1, p2) (*(p1) == *(p2))
@@ -128,14 +128,14 @@ SB_lower_char(unsigned char c, pg_locale_t locale, bool locale_is_c)
 #define MatchText	SB_MatchText
 #define do_like_escape	SB_do_like_escape
 
-#include "like_match.c"
+#include "like_match.cpp"
 
 /* setup to compile like_match.c for single byte case insensitive matches */
 #define MATCH_LOWER(t) SB_lower_char((unsigned char) (t), locale, locale_is_c)
 #define NextChar(p, plen) NextByte((p), (plen))
 #define MatchText SB_IMatchText
 
-#include "like_match.c"
+#include "like_match.cpp"
 
 /* setup to compile like_match.c for UTF8 encoding, using fast NextChar */
 
@@ -143,7 +143,7 @@ SB_lower_char(unsigned char c, pg_locale_t locale, bool locale_is_c)
 	do { (p)++; (plen)--; } while ((plen) > 0 && (*(p) & 0xC0) == 0x80 )
 #define MatchText	UTF8_MatchText
 
-#include "like_match.c"
+#include "like_match.cpp"
 
 /* Generic for all cases not requiring inline case-folding */
 static inline int

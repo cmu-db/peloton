@@ -421,7 +421,7 @@ void
 CreateLWLocks(void)
 {
 	StaticAssertExpr(LW_VAL_EXCLUSIVE > (uint32) MAX_BACKENDS,
-					 "MAX_BACKENDS too big for lwlock.c");
+					 "MAX_BACKENDS too big for lwlock.cpp");
 
 	if (!IsUnderPostmaster)
 	{
