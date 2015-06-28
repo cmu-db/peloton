@@ -136,10 +136,6 @@ static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
 void
 ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
-	//PlannedStmt *plan = queryDesc->plannedstmt;
-	//elog_node_display(LOG, "plan", plan, Debug_pretty_print);
-  peloton_ping();
-
 	if (ExecutorStart_hook)
 		(*ExecutorStart_hook) (queryDesc, eflags);
 	else
@@ -286,11 +282,10 @@ void
 ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, long count)
 {
-	//PlannedStmt *plan = queryDesc->plannedstmt;
+  // TODO: Peloton Changes
+  //PlannedStmt *plan = queryDesc->plannedstmt;
 	//elog_node_display(LOG, "plan", plan, Debug_pretty_print);
-
-  //	printPlanStateTree(queryDesc->planstate);
-
+  peloton_ping();
 
 	if (ExecutorRun_hook)
 		(*ExecutorRun_hook) (queryDesc, direction, count);
@@ -1562,6 +1557,9 @@ ExecutePlan(EState *estate,
 		 */
 
 		slot = ExecProcNode(planstate);
+
+		// TODO: Peloton Changes
+		peloton_proc_node(planstate);
 
 		/*
 		 * if the tuple is null, then we assume there is nothing more to
