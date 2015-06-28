@@ -63,6 +63,11 @@ static void peloton_sigusr2_handler(SIGNAL_ARGS);
 static void peloton_sigterm_handler(SIGNAL_ARGS);
 static void peloton_MainLoop(void);
 
+static void peloton_setheader(Peloton_MsgHdr *hdr, PelotonMsgType mtype);
+static void peloton_send(void *msg, int len);
+
+static void peloton_recv_inquiry(Peloton_MsgInquiry *msg, int len);
+
 /**
  * @brief Initialize peloton
  */
@@ -271,10 +276,11 @@ peloton_MainLoop(void)
       switch (msg.msg_hdr.m_type)
       {
         case PELOTON_MTYPE_DUMMY:
+          fprintf(stdout, "Received dummy message \n");
           break;
 
         case PELOTON_MTYPE_DEADLOCK:
-          //peloton_recv_inquiry((Peloton_MsgInquiry *) &msg, len);
+          peloton_recv_inquiry((Peloton_MsgInquiry *) &msg, len);
           break;
 
         default:
@@ -564,6 +570,85 @@ startup_failed:
    * on from postgresql.conf without a restart.
    */
   SetConfigOption("track_counts", "off", PGC_INTERNAL, PGC_S_OVERRIDE);
+}
+
+
+/* ------------------------------------------------------------
+ * Local support functions follow
+ * ------------------------------------------------------------
+ */
+
+/* ----------
+ * peloton_setheader() -
+ *
+ *    Set common header fields in a peloton message
+ * ----------
+ */
+static void
+peloton_setheader(Peloton_MsgHdr *hdr, PelotonMsgType mtype)
+{
+  hdr->m_type = mtype;
+}
+
+
+/* ----------
+ * peloton_send() -
+ *
+ *    Send out one peloton message to the collector
+ * ----------
+ */
+static void
+peloton_send(void *msg, int len)
+{
+  int     rc;
+
+  if (pelotonSock == PGINVALID_SOCKET)
+    return;
+
+  ((Peloton_MsgHdr *) msg)->m_size = len;
+
+  /* We'll retry after EINTR, but ignore all other failures */
+  do
+  {
+    rc = send(pelotonSock, msg, len, 0);
+  } while (rc < 0 && errno == EINTR);
+
+#ifdef USE_ASSERT_CHECKING
+  /* In debug builds, log send failures ... */
+  if (rc < 0)
+    elog(LOG, "could not send to peloton: %m");
+#endif
+}
+
+/* ----------
+ * peloton_ping() -
+ *
+ *  Send some junk data to the collector to increase traffic.
+ * ----------
+ */
+void
+peloton_ping(void)
+{
+  Peloton_MsgDummy msg;
+
+  if (pelotonSock == PGINVALID_SOCKET)
+    return;
+
+  peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_DUMMY);
+  peloton_send(&msg, sizeof(msg));
+}
+
+/* ----------
+ * peloton_recv_inquiry() -
+ *
+ *  Process stat inquiry requests.
+ * ----------
+ */
+static void
+peloton_recv_inquiry(Peloton_MsgInquiry *msg, int len)
+{
+  elog(DEBUG2, "received inquiry for database %u", msg->databaseid);
+
 }
 
 
