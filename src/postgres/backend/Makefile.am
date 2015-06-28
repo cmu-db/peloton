@@ -579,6 +579,8 @@ postgres_backend_FILES = \
 						 postgres/backend/utils/mmgr/aset.c \
 						 postgres/backend/utils/mmgr/mcxt.c \
 						 postgres/backend/utils/mmgr/portalmem.c \
+						 postgres/backend/utils/mmgr/shmctx.c \
+						 postgres/backend/utils/mmgr/shmset.c \
 						 postgres/backend/utils/resowner/resowner.c \
 						 postgres/backend/utils/sort/logtape.c \
 						 postgres/backend/utils/sort/sortsupport.c \
