@@ -13,6 +13,8 @@
 #ifndef PELOTON_H
 #define PELOTON_H
 
+#include "nodes/execnodes.h"
+
 /* ----------
  * The types of backend -> peloton messages
  * ----------
@@ -20,7 +22,7 @@
 typedef enum PelotonMsgType
 {
   PELOTON_MTYPE_DUMMY,
-  PELOTON_MTYPE_DEADLOCK
+  PELOTON_MTYPE_PLAN
 } PelotonMsgType;
 
 /* ------------------------------------------------------------
@@ -48,9 +50,8 @@ typedef struct Peloton_MsgHdr
 #define PELOTON_MAX_MSG_SIZE 1000
 #define PELOTON_MSG_PAYLOAD  (PELOTON_MAX_MSG_SIZE - sizeof(Peloton_MsgHdr))
 
-
 /* ----------
- * Peloton_MsgDummy        A dummy message, ignored by the collector
+ * Peloton_MsgDummy        A dummy message, ignored by peloton.
  * ----------
  */
 typedef struct Peloton_MsgDummy
@@ -59,15 +60,14 @@ typedef struct Peloton_MsgDummy
 } Peloton_MsgDummy;
 
 /* ----------
- * Peloton_MsgDeadlock     Sent by the backend to tell the collector
- *                about a deadlock that occurred.
+ * Peloton_MsgPlan     Sent by the backend to share the plan to peloton.
  * ----------
  */
-typedef struct Peloton_MsgDeadlock
+typedef struct Peloton_MsgPlan
 {
   Peloton_MsgHdr m_hdr;
-  Oid     m_databaseid;
-} Peloton_MsgDeadlock;
+  PlanState m_node;
+} Peloton_MsgPlan;
 
 
 /* ----------
@@ -78,20 +78,8 @@ typedef union Peloton_Msg
 {
   Peloton_MsgHdr msg_hdr;
   Peloton_MsgDummy msg_dummy;
-  Peloton_MsgDeadlock msg_deadlock;
+  Peloton_MsgPlan msg_plan;
 } Peloton_Msg;
-
-/* ----------
- * Peloton_MsgInquiry      Sent by a backend to ask the collector to write the stats file.
- * ----------
- */
-
-typedef struct Peloton_MsgInquiry
-{
-  Peloton_MsgHdr m_hdr;
-  Oid     databaseid;   /* requested DB (InvalidOid => all DBs) */
-} Peloton_MsgInquiry;
-
 
 /* ----------
  * Functions called from postmaster
@@ -102,6 +90,7 @@ extern void peloton_init(void);
 extern int  peloton_start(void);
 
 extern void peloton_ping(void);
+extern void peloton_proc_node(PlanState *node);
 
 #endif   /* PELOTON_H */
 
