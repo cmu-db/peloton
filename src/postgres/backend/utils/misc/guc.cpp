@@ -10101,4 +10101,4 @@ show_log_file_mode(void)
 	return buf;
 }
 
-#include "guc-file.c"
+#include "guc-file.cpp"

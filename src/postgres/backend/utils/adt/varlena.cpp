@@ -5089,6 +5089,6 @@ rest_of_char_same(const char *s1, const char *s2, int len)
 }
 
 /* Expand each Levenshtein distance variant */
-#include "levenshtein.c"
+#include "levenshtein.cpp"
 #define LEVENSHTEIN_LESS_EQUAL
-#include "levenshtein.c"
+#include "levenshtein.cpp"

@@ -1,6 +1,6 @@
-#line 2 "repl_scanner.c"
+#line 2 "repl_scanner.cpp"
 
-#line 4 "repl_scanner.c"
+#line 4 "repl_scanner.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -691,7 +691,7 @@ static void addlitchar(unsigned char ychar);
 /* Double quote
  * Allows embedded spaces and other special characters into identifiers.
  */
-#line 695 "repl_scanner.c"
+#line 695 "repl_scanner.cpp"
 
 #define INITIAL 0
 #define xq 1
@@ -881,7 +881,7 @@ YY_DECL
 #line 81 "repl_scanner.l"
 
 
-#line 885 "repl_scanner.c"
+#line 885 "repl_scanner.cpp"
 
 	if ( !(yy_init) )
 		{
@@ -1198,7 +1198,7 @@ YY_RULE_SETUP
 #line 182 "repl_scanner.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1202 "repl_scanner.c"
+#line 1202 "repl_scanner.cpp"
 
 	case YY_END_OF_BUFFER:
 		{

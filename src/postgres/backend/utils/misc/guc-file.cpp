@@ -1,6 +1,6 @@
-#line 2 "guc-file.c"
+#line 2 "guc-file.cpp"
 
-#line 4 "guc-file.c"
+#line 4 "guc-file.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -575,7 +575,7 @@ static int GUC_flex_fatal(const char *msg);
 static char *GUC_scanstr(const char *s);
 
 #define YY_NO_INPUT 1
-#line 579 "guc-file.c"
+#line 579 "guc-file.cpp"
 
 #define INITIAL 0
 
@@ -763,7 +763,7 @@ YY_DECL
 #line 85 "/home/parallels/git/postgres/orig/../src/backend/utils/misc/guc-file.l"
 
 
-#line 767 "guc-file.c"
+#line 767 "guc-file.cpp"
 
 	if ( !(yy_init) )
 		{
@@ -903,7 +903,7 @@ YY_RULE_SETUP
 #line 101 "/home/parallels/git/postgres/orig/../src/backend/utils/misc/guc-file.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 907 "guc-file.c"
+#line 907 "guc-file.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
