@@ -352,6 +352,7 @@ postgres_backend_FILES = \
 						 postgres/backend/postmaster/bgwriter.c \
 						 postgres/backend/postmaster/checkpointer.c \
 						 postgres/backend/postmaster/fork_process.c \
+						 postgres/backend/postmaster/peloton.c \
 						 postgres/backend/postmaster/pgarch.c \
 						 postgres/backend/postmaster/pgstat.c \
 						 postgres/backend/postmaster/postmaster.c \
