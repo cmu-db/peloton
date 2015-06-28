@@ -127,6 +127,7 @@
 #include "storage/spin.h"
 #endif
 
+#include "postmaster/peloton.h"
 
 /*
  * Possible types of a backend. Beyond being the possible bkend_type values in
@@ -247,7 +248,8 @@ static pid_t StartupPID = 0,
     AutoVacPID = 0,
     PgArchPID = 0,
     PgStatPID = 0,
-    SysLoggerPID = 0;
+    SysLoggerPID = 0,
+    PelotonPID = 0;
 
 /* Startup/shutdown state */
 #define			NoShutdown		0
@@ -1211,6 +1213,11 @@ PostmasterMain(int argc, char *argv[])
   autovac_init();
 
   /*
+   * Initialize peloton subsystem (again, no process start yet)
+   */
+  peloton_init();
+
+  /*
    * Load configuration files for client authentication.
    */
   if (!load_hba())
@@ -1677,6 +1684,11 @@ ServerLoop(void)
     /* If we have lost the stats collector, try to start a new one */
     if (PgStatPID == 0 && pmState == PM_RUN)
       PgStatPID = pgstat_start();
+
+    // TODO: Peloton Changes
+    /* Initialize Peoloton and start the process */
+    if(PelotonPID == 0 && pmState == PM_RUN)
+      PelotonPID = peloton_start();
 
     /*
      * If we have lost the archiver, try to start a new one.
@@ -2410,6 +2422,8 @@ processCancelRequest(Port *port, void *pkt)
         signal_child(SysLoggerPID, SIGHUP);
       if (PgStatPID != 0)
         signal_child(PgStatPID, SIGHUP);
+      if (PelotonPID != 0)
+        signal_child(PelotonPID, SIGHUP);
 
       /* Reload authentication config files too */
       if (!load_hba())
@@ -2478,6 +2492,9 @@ processCancelRequest(Port *port, void *pkt)
           /* and the walwriter too */
           if (WalWriterPID != 0)
             signal_child(WalWriterPID, SIGTERM);
+          /* and peloton too */
+          if (PelotonPID != 0)
+            signal_child(PelotonPID, SIGTERM);
 
           /*
            * If we're in recovery, we can't kill the startup process
@@ -2520,6 +2537,8 @@ processCancelRequest(Port *port, void *pkt)
           signal_child(BgWriterPID, SIGTERM);
         if (WalReceiverPID != 0)
           signal_child(WalReceiverPID, SIGTERM);
+        if (PelotonPID != 0)
+          signal_child(PelotonPID, SIGTERM);
         SignalUnconnectedWorkers(SIGTERM);
         if (pmState == PM_RECOVERY)
         {
@@ -2702,6 +2721,8 @@ processCancelRequest(Port *port, void *pkt)
           PgArchPID = pgarch_start();
         if (PgStatPID == 0)
           PgStatPID = pgstat_start();
+        if (PelotonPID == 0)
+          PelotonPID = peloton_start();
 
         /* workers may be scheduled to start now */
         maybe_start_bgworker();
@@ -2869,6 +2890,18 @@ processCancelRequest(Port *port, void *pkt)
         if (!EXIT_STATUS_0(exitstatus))
           LogChildExit(LOG, _("system logger process"),
                        pid, exitstatus);
+        continue;
+      }
+
+      /* Was it the peloton process?  If so, try to start a new one */
+      if (pid == PelotonPID)
+      {
+        PelotonPID = 0;
+        if (!EXIT_STATUS_0(exitstatus))
+          LogChildExit(LOG, _("peloton process"),
+                       pid, exitstatus);
+        if (pmState == PM_RUN)
+          PelotonPID = peloton_start();
         continue;
       }
 
@@ -3292,6 +3325,18 @@ processCancelRequest(Port *port, void *pkt)
       signal_child(AutoVacPID, (SendStop ? SIGSTOP : SIGQUIT));
     }
 
+    /* Take care of peloton too */
+    if (pid == PelotonPID)
+      PelotonPID = 0;
+    else if (PelotonPID != 0 && take_action)
+    {
+      ereport(DEBUG2,
+              (errmsg_internal("sending %s to process %d",
+                               (SendStop ? "SIGSTOP" : "SIGQUIT"),
+                               (int) PelotonPID)));
+      signal_child(PelotonPID, (SendStop ? SIGSTOP : SIGQUIT));
+    }
+
     /*
      * Force a power-cycle of the pgarch process too.  (This isn't absolutely
      * necessary, but it seems like a good idea for robustness, and it
@@ -3476,6 +3521,7 @@ processCancelRequest(Port *port, void *pkt)
           StartupPID == 0 &&
           WalReceiverPID == 0 &&
           BgWriterPID == 0 &&
+          PelotonPID == 0 &&
           (CheckpointerPID == 0 ||
               (!FatalError && Shutdown < ImmediateShutdown)) &&
               WalWriterPID == 0 &&
@@ -3577,6 +3623,7 @@ processCancelRequest(Port *port, void *pkt)
         Assert(CheckpointerPID == 0);
         Assert(WalWriterPID == 0);
         Assert(AutoVacPID == 0);
+        Assert(PelotonPID == 0);
         /* syslogger is not considered here */
         pmState = PM_NO_CHILDREN;
       }
@@ -3793,6 +3840,8 @@ processCancelRequest(Port *port, void *pkt)
       signal_child(PgArchPID, signal);
     if (PgStatPID != 0)
       signal_child(PgStatPID, signal);
+    if (PelotonPID != 0)
+      signal_child(PelotonPID, signal);
     SignalUnconnectedWorkers(signal);
   }
 
@@ -4878,6 +4927,9 @@ processCancelRequest(Port *port, void *pkt)
        */
       Assert(PgStatPID == 0);
       PgStatPID = pgstat_start();
+
+      Assert(PelotonPID == 0);
+      PelotonPID = peloton_start();
 
       ereport(LOG,
               (errmsg("database system is ready to accept read only connections")));
