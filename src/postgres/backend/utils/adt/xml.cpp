@@ -1046,7 +1046,7 @@ pg_xml_done(PgXmlErrorContext *errcxt, bool isError)
 #endif
 
 	if (cur_errcxt != (void *) errcxt)
-		elog(WARNING, "libxml error handling state is out of sync with xml.c");
+		elog(WARNING, "libxml error handling state is out of sync with xml.cpp");
 
 	/* Restore the saved handlers */
 	xmlSetStructuredErrorFunc(errcxt->saved_errcxt, errcxt->saved_errfunc);

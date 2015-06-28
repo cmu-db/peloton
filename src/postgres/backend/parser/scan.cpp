@@ -1,6 +1,6 @@
-#line 2 "scan.c"
+#line 2 "scan.cpp"
 
-#line 4 "scan.c"
+#line 4 "scan.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -8784,7 +8784,7 @@ extern void core_yyset_column(int column_no, yyscan_t yyscanner);
  * Note that xcstart must appear before coperator, as explained above!
  *  Also whitespace (comment) must appear before coperator.
  */
-#line 8770 "scan.c"
+#line 8770 "scan.cpp"
 
 #define INITIAL 0
 #define xb 1
@@ -9043,7 +9043,7 @@ YY_DECL
 #line 392 "scan.l"
 
 
-#line 9029 "scan.c"
+#line 9029 "scan.cpp"
 
     yylval = yylval_param;
 
@@ -10039,7 +10039,7 @@ YY_RULE_SETUP
 #line 1007 "scan.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 10025 "scan.c"
+#line 10025 "scan.cpp"
 
 	case YY_END_OF_BUFFER:
 		{

@@ -47,7 +47,7 @@
 #define YYBISON_VERSION "3.0.2"
 
 /* Skeleton name.  */
-#define YYSKELETON_NAME "yacc.c"
+#define YYSKELETON_NAME "yacc.cpp"
 
 /* Pure parsers.  */
 #define YYPURE 0

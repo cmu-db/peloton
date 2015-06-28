@@ -514,7 +514,7 @@ static void free_sort_tuple(Tuplesortstate *state, SortTuple *stup);
  * reduces to ApplySortComparator(), that is single-key MinimalTuple sorts
  * and Datum sorts.
  */
-#include "qsort_tuple.c"
+#include "qsort_tuple.cpp"
 
 
 /*
