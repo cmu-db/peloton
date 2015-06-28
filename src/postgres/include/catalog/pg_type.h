@@ -64,7 +64,7 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP BKI_ROWTYPE_OID(71) BKI_SCHEMA_MACRO
 	 * table's rowtype), 'd' for a domain, 'e' for an enum type, 'p' for a
 	 * pseudo-type, or 'r' for a range type. (Use the TYPTYPE macros below.)
 	 *
-	 * If typtype is 'c', typrelid is the OID of the class' entry in pg_class.
+	 * If typtype is 'c', typrelid is the OID of the cclass' entry in pg_class.
 	 */
 	char		typtype;
 
@@ -561,7 +561,7 @@ DESCR("registered coperator (with args)");
 #define REGOPERATOROID	2204
 
 DATA(insert OID = 2205 ( regclass	   PGNSP PGUID	4 t b N f t \054 0	 0 2210 regclassin regclassout regclassrecv regclasssend - - - i p f 0 -1 0 0 _null_ _null_ _null_ ));
-DESCR("registered class");
+DESCR("registered cclass");
 #define REGCLASSOID		2205
 
 DATA(insert OID = 2206 ( regtype	   PGNSP PGUID	4 t b N f t \054 0	 0 2211 regtypein regtypeout regtyperecv regtypesend - - - i p f 0 -1 0 0 _null_ _null_ _null_ ));

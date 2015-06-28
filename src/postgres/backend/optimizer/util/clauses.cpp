@@ -2099,7 +2099,7 @@ is_strict_saop(ScalarArrayOpExpr *expr, bool falseOK)
  *	  will be constant over any one scan of the current query, so it can be
  *	  used as, eg, an indexscan key.
  *
- * CAUTION: this function omits to test for one very important class of
+ * CAUTION: this function omits to test for one very important cclass of
  * not-constant expressions, namely aggregates (Aggrefs).  In current usage
  * this is only applied to WHERE clauses and so a check for Aggrefs would be
  * a waste of cycles; but be sure to also check contain_agg_clause() if you

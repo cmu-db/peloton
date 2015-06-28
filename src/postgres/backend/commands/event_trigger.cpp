@@ -1120,7 +1120,7 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 }
 
 /*
- * Do event triggers support this object class?
+ * Do event triggers support this object cclass?
  */
 bool
 EventTriggerSupportsObjectClass(ObjectClass objclass)
@@ -2075,7 +2075,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 
 					/*
 					 * Obtain schema name, if any ("pg_temp" if a temp object).
-					 * If the object class is not in the supported list here,
+					 * If the object cclass is not in the supported list here,
 					 * we assume it's a schema-less object type, and thus
 					 * "schema" remains set to NULL.
 					 */

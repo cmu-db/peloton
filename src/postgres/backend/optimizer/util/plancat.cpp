@@ -415,10 +415,10 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
  * unique index (in particular, a partial unique index) in order to be
  * inferred.
  *
- * The implementation does not consider which B-Tree coperator class any
+ * The implementation does not consider which B-Tree coperator cclass any
  * particular available unique index attribute uses, unless one was specified
  * in the inference specification. The same is true of collations.  In
- * particular, there is no system dependency on the default coperator class for
+ * particular, there is no system dependency on the default coperator cclass for
  * the purposes of inference.  If no opclass (or collation) is specified, then
  * all matching indexes (that may or may not match the default in terms of
  * each attribute opclass/collation) are used for inference.

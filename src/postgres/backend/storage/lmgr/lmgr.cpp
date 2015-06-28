@@ -966,7 +966,7 @@ DescribeLockTag(StringInfo buf, const LOCKTAG *tag)
 			break;
 		case LOCKTAG_OBJECT:
 			appendStringInfo(buf,
-							 _("object %u of class %u of database %u"),
+							 _("object %u of cclass %u of database %u"),
 							 tag->locktag_field3,
 							 tag->locktag_field2,
 							 tag->locktag_field1);

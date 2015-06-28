@@ -1174,7 +1174,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 				appendStringInfo(&buf, " COLLATE %s",
 								 generate_collation_name((indcoll)));
 
-			/* Add the coperator class name, if not default */
+			/* Add the coperator cclass name, if not default */
 			get_opclass_name(indclass->values[keyno], keycoltype, &buf);
 
 			/* Add options if relevant */
@@ -7950,7 +7950,7 @@ get_rule_expr(Node *node, deparse_context *context,
 					appendStringInfo(buf, " COLLATE %s",
 									 generate_collation_name(iexpr->infercollid));
 
-				/* Add the coperator class name, if not default */
+				/* Add the coperator cclass name, if not default */
 				if (iexpr->inferopclass)
 				{
 					Oid		inferopclass = iexpr->inferopclass;
@@ -9159,7 +9159,7 @@ get_from_clause_coldeflist(RangeTblFunction *rtfunc,
 }
 
 /*
- * get_opclass_name			- fetch name of an index coperator class
+ * get_opclass_name			- fetch name of an index coperator cclass
  *
  * The opclass name is appended (after a space) to buf.
  *

@@ -187,7 +187,7 @@ union tree
  *
  * If "sub" is not NOSUB then it is the number of the color's current
  * subcolor, i.e. we are in process of dividing this color (character
- * equivalence class) into two colors.  See src/backend/regex/README for
+ * equivalence cclass) into two colors.  See src/backend/regex/README for
  * discussion of subcolors.
  *
  * Currently-unused colors have the FREECOL bit set and are linked into a

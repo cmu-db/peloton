@@ -462,18 +462,18 @@ before(celt x, celt y)
 }
 
 /*
- * eclass - supply cvec for an equivalence class
+ * eclass - supply cvec for an equivalence cclass
  * Must include case counterparts on request.
  */
 static struct cvec *
 eclass(struct vars * v,			/* context */
 	   celt c,					/* Collating element representing the
-								 * equivalence class. */
+								 * equivalence cclass. */
 	   int cases)				/* all cases? */
 {
 	struct cvec *cv;
 
-	/* crude fake equivalence class for testing */
+	/* crude fake equivalence cclass for testing */
 	if ((v->cflags & REG_FAKE) && c == 'x')
 	{
 		cv = getcvec(v, 4, 0);
@@ -497,7 +497,7 @@ eclass(struct vars * v,			/* context */
 }
 
 /*
- * cclass - supply cvec for a character class
+ * cclass - supply cvec for a character cclass
  *
  * Must include case counterparts if "cases" is true.
  *
@@ -518,7 +518,7 @@ cclass(struct vars * v,			/* context */
 				index;
 
 	/*
-	 * The following arrays define the valid character class names.
+	 * The following arrays define the valid character cclass names.
 	 */
 
 	static const char *const classNames[] = {
@@ -562,7 +562,7 @@ cclass(struct vars * v,			/* context */
 		index = (int) CC_ALPHA;
 
 	/*
-	 * Now compute the character class contents.  For classes that are based
+	 * Now compute the character cclass contents.  For classes that are based
 	 * on the behavior of a <wctype.h> or <ctype.h> function, we use
 	 * pg_ctype_get_cache so that we can cache the results.  Other classes
 	 * have definitions that are hard-wired here, and for those we just

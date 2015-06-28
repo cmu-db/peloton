@@ -320,7 +320,7 @@ find_minmax_aggs_walker(Node *node, List **context)
 
 		/*
 		 * ORDER BY is usually irrelevant for MIN/MAX, but it can change the
-		 * outcome if the aggsortop's coperator class recognizes non-identical
+		 * outcome if the aggsortop's coperator cclass recognizes non-identical
 		 * values as equal.  For example, 4.0 and 4.00 are equal according to
 		 * numeric_ops, yet distinguishable.  If MIN() receives more than one
 		 * value equal to 4.0 and no value less than 4.0, it is unspecified

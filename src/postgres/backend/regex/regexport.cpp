@@ -11,7 +11,7 @@
  *
  * Notice that these functions return info into caller-provided arrays
  * rather than doing their own malloc's.  This simplifies the APIs by
- * eliminating a class of error conditions, and in the case of colors
+ * eliminating a cclass of error conditions, and in the case of colors
  * allows the caller to decide how big is too big to bother with.
  *
  *

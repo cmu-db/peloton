@@ -173,7 +173,7 @@ static FormData_pg_attribute a6 = {
 /*
  * We decided to call this attribute "tableoid" rather than say
  * "classoid" on the basis that in the future there may be more than one
- * table of a particular class/type. In any case table is still the word
+ * table of a particular cclass/type. In any case table is still the word
  * used in SQL.
  */
 static FormData_pg_attribute a7 = {

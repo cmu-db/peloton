@@ -1410,7 +1410,7 @@ LookupOpclassInfo(Oid operatorClassOid,
 		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(OpClassCacheEnt);
-		OpClassCache = hash_create("Operator class cache", 64,
+		OpClassCache = hash_create("Operator cclass cache", 64,
 								   &ctl, HASH_ELEM | HASH_BLOBS);
 
 		/* Also make sure CacheMemoryContext exists */
@@ -1442,7 +1442,7 @@ LookupOpclassInfo(Oid operatorClassOid,
 
 	/*
 	 * When testing for cache-flush hazards, we intentionally disable the
-	 * coperator class cache and force reloading of the info on each call. This
+	 * coperator cclass cache and force reloading of the info on each call. This
 	 * is helpful because we want to test the case where a cache flush occurs
 	 * while we are loading the info, and it's very hard to provoke that if
 	 * this happens only once per opclass per backend.

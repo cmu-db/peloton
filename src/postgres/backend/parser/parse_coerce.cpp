@@ -459,7 +459,7 @@ coerce_type(ParseState *pstate, Node *node,
 		|| typeIsOfTypedTable(inputTypeId, targetTypeId))
 	{
 		/*
-		 * Input class type is a subclass of target, so generate an
+		 * Input cclass type is a subclass of target, so generate an
 		 * appropriate runtime conversion (removing unneeded columns and
 		 * possibly rearranging the ones that are wanted).
 		 */
@@ -565,7 +565,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 			continue;
 
 		/*
-		 * If input is a class type that inherits from target, accept
+		 * If input is a cclass type that inherits from target, accept
 		 */
 		if (typeInheritsFrom(inputTypeId, targetTypeId)
 			|| typeIsOfTypedTable(inputTypeId, targetTypeId))

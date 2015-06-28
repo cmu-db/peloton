@@ -64,14 +64,14 @@ CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS BKI_ROWTYPE_OID(75) BK
 
 	/*
 	 * attnum is the "attribute number" for the attribute:	A value that
-	 * uniquely identifies this attribute within its class. For user
+	 * uniquely identifies this attribute within its cclass. For user
 	 * attributes, Attribute numbers are greater than 0 and not greater than
-	 * the number of attributes in the class. I.e. if the Class pg_class says
+	 * the number of attributes in the cclass. I.e. if the Class pg_class says
 	 * that Class XYZ has 10 attributes, then the user attribute numbers in
 	 * Class pg_attribute must be 1-10.
 	 *
 	 * System attributes have attribute numbers less than 0 that are unique
-	 * within the class, but not constrained to any particular range.
+	 * within the cclass, but not constrained to any particular range.
 	 *
 	 * Note that (attnum - 1) is often used as the index to an array.
 	 */

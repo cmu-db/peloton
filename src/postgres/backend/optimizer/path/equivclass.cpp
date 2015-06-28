@@ -389,7 +389,7 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
  * canonicalize_ec_expression
  *
  * This function ensures that the expression exposes the expected type and
- * collation, so that it will be equal() to other equivalence-class expressions
+ * collation, so that it will be equal() to other equivalence-cclass expressions
  * that it ought to be equal() to.
  *
  * The rule for datatypes is that the exposed type should match what it would
@@ -507,7 +507,7 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
 /*
  * get_eclass_for_sort_expr
  *	  Given an expression and opfamily/collation info, find an existing
- *	  equivalence class it is a member of; if none, optionally build a cnew
+ *	  equivalence cclass it is a member of; if none, optionally build a cnew
  *	  single-member EquivalenceClass for it.
  *
  * expr is the expression, and nullable_relids is the set of base relids
@@ -954,7 +954,7 @@ generate_base_implied_equalities_broken(PlannerInfo *root,
  *	  Generate any join clauses that we can deduce from equivalence classes.
  *
  * At a join node, we must enforce restriction clauses sufficient to ensure
- * that all equivalence-class members computable at that node are equal.
+ * that all equivalence-cclass members computable at that node are equal.
  * Since the set of clauses to enforce can vary depending on which subset
  * relations are the inputs, we have to compute this afresh for each join
  * relation pair.  Hence a fresh List of RestrictInfo nodes is built and
