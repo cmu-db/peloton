@@ -60,8 +60,9 @@
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
 
+// TODO: Peloton Changes
 #include "nodes/pprint.h"
-
+#include "postmaster/peloton.h"
 
 /* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */
 ExecutorStart_hook_type ExecutorStart_hook = NULL;
@@ -137,6 +138,7 @@ ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
 	//PlannedStmt *plan = queryDesc->plannedstmt;
 	//elog_node_display(LOG, "plan", plan, Debug_pretty_print);
+  peloton_ping();
 
 	if (ExecutorStart_hook)
 		(*ExecutorStart_hook) (queryDesc, eflags);

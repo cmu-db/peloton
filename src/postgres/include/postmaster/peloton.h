@@ -82,12 +82,26 @@ typedef union Peloton_Msg
 } Peloton_Msg;
 
 /* ----------
+ * Peloton_MsgInquiry      Sent by a backend to ask the collector to write the stats file.
+ * ----------
+ */
+
+typedef struct Peloton_MsgInquiry
+{
+  Peloton_MsgHdr m_hdr;
+  Oid     databaseid;   /* requested DB (InvalidOid => all DBs) */
+} Peloton_MsgInquiry;
+
+
+/* ----------
  * Functions called from postmaster
  * ----------
  */
 
 extern void peloton_init(void);
 extern int  peloton_start(void);
+
+extern void peloton_ping(void);
 
 #endif   /* PELOTON_H */
 
