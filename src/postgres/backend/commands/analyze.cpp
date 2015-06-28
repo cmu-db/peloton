@@ -1665,9 +1665,9 @@ ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull)
  */
 typedef struct
 {
-	Oid			eqopr;			/* '=' operator for datatype, if any */
+	Oid			eqopr;			/* '=' coperator for datatype, if any */
 	Oid			eqfunc;			/* and associated function */
-	Oid			ltopr;			/* '<' operator for datatype, if any */
+	Oid			ltopr;			/* '<' coperator for datatype, if any */
 } StdAnalyzeData;
 
 typedef struct
@@ -1723,11 +1723,11 @@ std_typanalyze(VacAttrStats *stats)
 							 &ltopr, &eqopr, NULL,
 							 NULL);
 
-	/* If column has no "=" operator, we can't do much of anything */
+	/* If column has no "=" coperator, we can't do much of anything */
 	if (!OidIsValid(eqopr))
 		return false;
 
-	/* Save the operator info for compute_stats routines */
+	/* Save the coperator info for compute_stats routines */
 	mystats = (StdAnalyzeData *) palloc(sizeof(StdAnalyzeData));
 	mystats->eqopr = eqopr;
 	mystats->eqfunc = get_opcode(eqopr);
@@ -1776,7 +1776,7 @@ std_typanalyze(VacAttrStats *stats)
 /*
  *	compute_minimal_stats() -- compute minimal column statistics
  *
- *	We use this when we can find only an "=" operator for the datatype.
+ *	We use this when we can find only an "=" coperator for the datatype.
  *
  *	We determine the fraction of non-null rows, the average width, the
  *	most common values, and the (estimated) number of distinct values.

@@ -708,7 +708,7 @@ TS_execute(QueryItem *curitem, void *checkval, bool calcnot,
 				return TS_execute(curitem + 1, checkval, calcnot, chkcond);
 
 		default:
-			elog(ERROR, "unrecognized operator: %d", curitem->qoperator.oper);
+			elog(ERROR, "unrecognized coperator: %d", curitem->qoperator.oper);
 	}
 
 	/* not reachable, but keep compiler quiet */
@@ -758,7 +758,7 @@ tsquery_requires_match(QueryItem *curitem)
 				return false;
 
 		default:
-			elog(ERROR, "unrecognized operator: %d", curitem->qoperator.oper);
+			elog(ERROR, "unrecognized coperator: %d", curitem->qoperator.oper);
 	}
 
 	/* not reachable, but keep compiler quiet */

@@ -27,7 +27,7 @@ tsquery_numnode(PG_FUNCTION_ARGS)
 }
 
 static QTNode *
-join_tsqueries(TSQuery a, TSQuery b, int8 operator)
+join_tsqueries(TSQuery a, TSQuery b, int8 coperator)
 {
 	QTNode	   *res = (QTNode *) palloc0(sizeof(QTNode));
 
@@ -35,7 +35,7 @@ join_tsqueries(TSQuery a, TSQuery b, int8 operator)
 
 	res->valnode = (QueryItem *) palloc0(sizeof(QueryItem));
 	res->valnode->type = QI_OPR;
-	res->valnode->qoperator.oper = operator;
+	res->valnode->qoperator.oper = coperator;
 
 	res->child = (QTNode **) palloc0(sizeof(QTNode *) * 2);
 	res->child[0] = QT2QTN(GETQUERY(b), GETOPERAND(b));

@@ -1804,4 +1804,4 @@ yyreturn:
 #line 318 "repl_gram.y" /* yacc.c:1906  */
 
 
-#include "repl_scanner.c"
+#include "repl_scanner.cpp"

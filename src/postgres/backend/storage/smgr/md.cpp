@@ -393,7 +393,7 @@ mdunlink(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 	/* Now do the per-fork work */
 	if (forkNum == InvalidForkNumber)
 	{
-		for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
+		for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum = forkNum + 1)
 			mdunlinkfork(rnode, forkNum, isRedo);
 	}
 	else
@@ -1093,7 +1093,7 @@ mdsync(void)
 		 * requests will be processed now if they reach the table before we
 		 * begin to scan their fork.
 		 */
-		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
+		for (forknum = 0; forknum <= MAX_FORKNUM; forknum = forknum + 1)
 		{
 			Bitmapset  *requests = entry->requests[forknum];
 			int			segno;
@@ -1239,7 +1239,7 @@ mdsync(void)
 		 * remove the entry.  Otherwise, update its cycle counter, as all the
 		 * requests now in it must have arrived during this cycle.
 		 */
-		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
+		for (forknum = 0; forknum <= MAX_FORKNUM; forknum = forknum + 1)
 		{
 			if (entry->requests[forknum] != NULL)
 				break;
@@ -1472,7 +1472,7 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 			if (forknum == InvalidForkNumber)
 			{
 				/* remove requests for all forks */
-				for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
+				for (forknum = 0; forknum <= MAX_FORKNUM; forknum = forknum + 1)
 				{
 					bms_free(entry->requests[forknum]);
 					entry->requests[forknum] = NULL;
@@ -1504,7 +1504,7 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 			if (entry->rnode.dbNode == rnode.dbNode)
 			{
 				/* remove requests for all forks */
-				for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
+				for (forknum = 0; forknum <= MAX_FORKNUM; forknum = forknum + 1)
 				{
 					bms_free(entry->requests[forknum]);
 					entry->requests[forknum] = NULL;

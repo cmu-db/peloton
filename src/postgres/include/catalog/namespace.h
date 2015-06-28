@@ -20,7 +20,7 @@
 
 /*
  *	This structure holds a list of possible functions or operators
- *	found by cnamespace lookup.  Each function/operator is identified
+ *	found by cnamespace lookup.  Each function/coperator is identified
  *	by OID and by argument types; the list must be pruned by type
  *	resolution rules that are embodied in the parser, not here.
  *	See FuncnameGetCandidates's comments for more info.
@@ -29,7 +29,7 @@ typedef struct _FuncCandidateList
 {
 	struct _FuncCandidateList *next;
 	int			pathpos;		/* for internal use of cnamespace lookup */
-	Oid			oid;			/* the function or operator's OID */
+	Oid			oid;			/* the function or coperator's OID */
 	int			nargs;			/* number of arg types returned */
 	int			nvargs;			/* number of args to become variadic array */
 	int			ndargs;			/* number of defaulted args */

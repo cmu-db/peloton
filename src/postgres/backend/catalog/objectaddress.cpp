@@ -493,13 +493,13 @@ ObjectTypeMap[] =
 	/* OCLASS_LARGEOBJECT */
 	{ "large object", OBJECT_LARGEOBJECT },
 	/* OCLASS_OPERATOR */
-	{ "operator", OBJECT_OPERATOR },
+	{ "coperator", OBJECT_OPERATOR },
 	/* OCLASS_OPCLASS */
-	{ "operator class", OBJECT_OPCLASS },
+	{ "coperator class", OBJECT_OPCLASS },
 	/* OCLASS_OPFAMILY */
-	{ "operator family", OBJECT_OPFAMILY },
+	{ "coperator family", OBJECT_OPFAMILY },
 	/* OCLASS_AMOP */
-	{ "operator of access method", OBJECT_AMOP },
+	{ "coperator of access method", OBJECT_AMOP },
 	/* OCLASS_AMPROC */
 	{ "function of access method", OBJECT_AMPROC },
 	/* OCLASS_REWRITE */
@@ -606,7 +606,7 @@ static void getRelationIdentity(StringInfo buffer, Oid relid, List **objname);
  *
  * Note: If the object is not found, we don't give any indication of the
  * reason.  (It might have been a missing schema if the name was qualified, or
- * an inexistant type name in case of a cast, function or operator; etc).
+ * an inexistant type name in case of a cast, function or coperator; etc).
  * Currently there is only one caller that might be interested in such info, so
  * we don't spend much effort here.  If more callers start to care, it might be
  * better to add some support for that in this function.
@@ -1471,7 +1471,7 @@ get_object_address_opf_member(ObjectType objtype,
 					if (!missing_ok)
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_OBJECT),
-								 errmsg("operator %d (%s, %s) of %s does not exist",
+								 errmsg("coperator %d (%s, %s) of %s does not exist",
 										membernum, typenames[0], typenames[1],
 										getObjectDescription(&famaddr))));
 				}
@@ -2506,7 +2506,7 @@ getObjectDescription(const ObjectAddress *object)
 			break;
 
 		case OCLASS_OPERATOR:
-			appendStringInfo(&buffer, _("operator %s"),
+			appendStringInfo(&buffer, _("coperator %s"),
 							 format_operator(object->objectId));
 			break;
 
@@ -2538,7 +2538,7 @@ getObjectDescription(const ObjectAddress *object)
 				else
 					nspname = get_namespace_name(opcForm->opcnamespace);
 
-				appendStringInfo(&buffer, _("operator class %s for access method %s"),
+				appendStringInfo(&buffer, _("coperator class %s for access method %s"),
 								 quote_qualified_identifier(nspname,
 												  NameStr(opcForm->opcname)),
 								 NameStr(amForm->amname));
@@ -2584,11 +2584,11 @@ getObjectDescription(const ObjectAddress *object)
 				getOpFamilyDescription(&opfam, amopForm->amopfamily);
 
 				/*------
-				   translator: %d is the operator strategy (a number), the
+				   translator: %d is the coperator strategy (a number), the
 				   first two %s's are data type names, the third %s is the
-				   description of the operator family, and the last %s is the
-				   textual form of the operator with arguments.  */
-				appendStringInfo(&buffer, _("operator %d (%s, %s) of %s: %s"),
+				   description of the coperator family, and the last %s is the
+				   textual form of the coperator with arguments.  */
+				appendStringInfo(&buffer, _("coperator %d (%s, %s) of %s: %s"),
 								 amopForm->amopstrategy,
 								 format_type_be(amopForm->amoplefttype),
 								 format_type_be(amopForm->amoprighttype),
@@ -2636,7 +2636,7 @@ getObjectDescription(const ObjectAddress *object)
 				/*------
 				   translator: %d is the function number, the first two %s's
 				   are data type names, the third %s is the description of the
-				   operator family, and the last %s is the textual form of the
+				   coperator family, and the last %s is the textual form of the
 				   function with arguments.  */
 				appendStringInfo(&buffer, _("function %d (%s, %s) of %s: %s"),
 								 amprocForm->amprocnum,
@@ -3119,7 +3119,7 @@ getRelationDescription(StringInfo buffer, Oid relid)
 }
 
 /*
- * subroutine for getObjectDescription: describe an operator family
+ * subroutine for getObjectDescription: describe an coperator family
  */
 static void
 getOpFamilyDescription(StringInfo buffer, Oid opfid)
@@ -3147,7 +3147,7 @@ getOpFamilyDescription(StringInfo buffer, Oid opfid)
 	else
 		nspname = get_namespace_name(opfForm->opfnamespace);
 
-	appendStringInfo(buffer, _("operator family %s for access method %s"),
+	appendStringInfo(buffer, _("coperator family %s for access method %s"),
 					 quote_qualified_identifier(nspname,
 												NameStr(opfForm->opfname)),
 					 NameStr(amForm->amname));
@@ -3413,19 +3413,19 @@ getObjectTypeDescription(const ObjectAddress *object)
 			break;
 
 		case OCLASS_OPERATOR:
-			appendStringInfoString(&buffer, "operator");
+			appendStringInfoString(&buffer, "coperator");
 			break;
 
 		case OCLASS_OPCLASS:
-			appendStringInfoString(&buffer, "operator class");
+			appendStringInfoString(&buffer, "coperator class");
 			break;
 
 		case OCLASS_OPFAMILY:
-			appendStringInfoString(&buffer, "operator family");
+			appendStringInfoString(&buffer, "coperator family");
 			break;
 
 		case OCLASS_AMOP:
-			appendStringInfoString(&buffer, "operator of access method");
+			appendStringInfoString(&buffer, "coperator of access method");
 			break;
 
 		case OCLASS_AMPROC:
@@ -3960,7 +3960,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 					*objargs = list_make2(ltype, rtype);
 				}
 
-				appendStringInfo(&buffer, "operator %d (%s, %s) of %s",
+				appendStringInfo(&buffer, "coperator %d (%s, %s) of %s",
 								 amopForm->amopstrategy,
 								 ltype, rtype, opfam.data);
 

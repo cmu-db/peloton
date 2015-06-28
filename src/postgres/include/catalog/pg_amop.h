@@ -4,14 +4,14 @@
  *	  definition of the system "amop" relation (pg_amop)
  *	  along with the relation's initial contents.
  *
- * The amop table identifies the operators associated with each index operator
- * family and operator class (classes are subsets of families).  An associated
- * operator can be either a search operator or an ordering operator, as
+ * The amop table identifies the operators associated with each index coperator
+ * family and coperator class (classes are subsets of families).  An associated
+ * coperator can be either a search coperator or an ordering coperator, as
  * identified by amoppurpose.
  *
  * The primary key for this table is <amopfamily, amoplefttype, amoprighttype,
  * amopstrategy>.  amoplefttype and amoprighttype are just copies of the
- * operator's oprleft/oprright, ie its declared input data types.  The
+ * coperator's oprleft/oprright, ie its declared input data types.  The
  * "default" operators for a particular opclass within the family are those
  * with amoplefttype = amoprighttype = opclass's opcintype.  An opfamily may
  * also contain other operators, typically cross-data-type operators.  All the
@@ -20,8 +20,8 @@
  *
  * We also keep a unique index on <amopopr, amoppurpose, amopfamily>, so that
  * we can use a syscache to quickly answer questions of the form "is this
- * operator in this opfamily, and if so what are its semantics with respect to
- * the family?"  This implies that the same operator cannot be listed for
+ * coperator in this opfamily, and if so what are its semantics with respect to
+ * the family?"  This implies that the same coperator cannot be listed for
  * multiple strategy numbers within a single opfamily, with the exception that
  * it's possible to list it for both search and ordering purposes (with
  * different strategy numbers for the two purposes).
@@ -56,18 +56,18 @@
 CATALOG(pg_amop,2602)
 {
 	Oid			amopfamily;		/* the index opfamily this entry is for */
-	Oid			amoplefttype;	/* operator's left input data type */
-	Oid			amoprighttype;	/* operator's right input data type */
-	int16		amopstrategy;	/* operator strategy number */
-	char		amoppurpose;	/* is operator for 's'earch or 'o'rdering? */
-	Oid			amopopr;		/* the operator's pg_operator OID */
+	Oid			amoplefttype;	/* coperator's left input data type */
+	Oid			amoprighttype;	/* coperator's right input data type */
+	int16		amopstrategy;	/* coperator strategy number */
+	char		amoppurpose;	/* is coperator for 's'earch or 'o'rdering? */
+	Oid			amopopr;		/* the coperator's pg_operator OID */
 	Oid			amopmethod;		/* the index access method this entry is for */
 	Oid			amopsortfamily; /* ordering opfamily OID, or 0 if search op */
 } FormData_pg_amop;
 
 /* allowed values of amoppurpose: */
-#define AMOP_SEARCH		's'		/* operator is for search */
-#define AMOP_ORDER		'o'		/* operator is for ordering */
+#define AMOP_SEARCH		's'		/* coperator is for search */
+#define AMOP_ORDER		'o'		/* coperator is for ordering */
 
 /* ----------------
  *		Form_pg_amop corresponds to a pointer to a tuple with

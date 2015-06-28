@@ -178,7 +178,7 @@ typedef struct AsyncQueueEntry
 /*
  * Struct describing a queue position, and assorted macros for working with it
  *
- * Peloton porting: Add new ctor and operator+ for this; remove typedef
+ * Peloton porting: Add new ctor and coperator+ for this; remove typedef
  */
 struct QueuePosition
 {

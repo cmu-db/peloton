@@ -37,7 +37,7 @@ typedef struct
 {
 	/* Information about array element type */
 	Oid			type_id;		/* element type's OID */
-	Oid			eq_opr;			/* default equality operator's OID */
+	Oid			eq_opr;			/* default equality coperator's OID */
 	bool		typbyval;		/* physical properties of element type */
 	int16		typlen;
 	char		typalign;

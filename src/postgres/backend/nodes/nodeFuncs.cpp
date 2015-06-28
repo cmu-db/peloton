@@ -1166,10 +1166,10 @@ exprSetInputCollation(Node *expr, Oid inputcollation)
  * For expressions larger than a single token, the intent here is to
  * return the location of the expression's leftmost token, not necessarily
  * the topmost Node's location field.  For example, an OpExpr's location
- * field will point at the operator name, but if it is not a prefix operator
+ * field will point at the coperator name, but if it is not a prefix coperator
  * then we should return the location of the left-hand operand instead.
  * The reason is that we want to reference the entire expression not just
- * that operator, and pointing to its start seems to be the most natural way.
+ * that coperator, and pointing to its start seems to be the most natural way.
  *
  * The location is not perfect --- for example, since the grammar doesn't
  * explicitly represent parentheses in the parsetree, given something that
@@ -1246,7 +1246,7 @@ exprLocation(const Node *expr)
 			{
 				const OpExpr *opexpr = (const OpExpr *) expr;
 
-				/* consider both operator name and leftmost arg */
+				/* consider both coperator name and leftmost arg */
 				loc = leftmostLoc(opexpr->location,
 								  exprLocation((Node *) opexpr->args));
 			}
@@ -1255,7 +1255,7 @@ exprLocation(const Node *expr)
 			{
 				const ScalarArrayOpExpr *saopexpr = (const ScalarArrayOpExpr *) expr;
 
-				/* consider both operator name and leftmost arg */
+				/* consider both coperator name and leftmost arg */
 				loc = leftmostLoc(saopexpr->location,
 								  exprLocation((Node *) saopexpr->args));
 			}
@@ -1277,7 +1277,7 @@ exprLocation(const Node *expr)
 			{
 				const SubLink *sublink = (const SubLink *) expr;
 
-				/* check the testexpr, if any, and the operator/keyword */
+				/* check the testexpr, if any, and the coperator/keyword */
 				loc = leftmostLoc(exprLocation(sublink->testexpr),
 								  sublink->location);
 			}
@@ -1426,8 +1426,8 @@ exprLocation(const Node *expr)
 			{
 				const A_Expr *aexpr = (const A_Expr *) expr;
 
-				/* use leftmost of operator or left operand (if any) */
-				/* we assume right operand can't be to left of operator */
+				/* use leftmost of coperator or left operand (if any) */
+				/* we assume right operand can't be to left of coperator */
 				loc = leftmostLoc(aexpr->location,
 								  exprLocation(aexpr->lexpr));
 			}
@@ -1480,7 +1480,7 @@ exprLocation(const Node *expr)
 			loc = exprLocation(((const CollateClause *) expr)->arg);
 			break;
 		case T_SortBy:
-			/* just use argument's location (ignore operator, if any) */
+			/* just use argument's location (ignore coperator, if any) */
 			loc = exprLocation(((const SortBy *) expr)->node);
 			break;
 		case T_WindowDef:
@@ -3197,7 +3197,7 @@ raw_expression_tree_walker(Node *node,
 					return true;
 				if (walker(expr->rexpr, context))
 					return true;
-				/* operator name is deemed uninteresting */
+				/* coperator name is deemed uninteresting */
 			}
 			break;
 		case T_BoolExpr:

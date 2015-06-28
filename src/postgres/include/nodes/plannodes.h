@@ -618,8 +618,8 @@ typedef struct NestLoopParam
  * opfamily OID, a collation OID, a direction (BTLessStrategyNumber or
  * BTGreaterStrategyNumber) and a nulls-first flag.  Note that the two sides
  * of each mergeclause may be of different datatypes, but they are ordered the
- * same way according to the common opfamily and collation.  The operator in
- * each mergeclause must be an equality operator of the indicated opfamily.
+ * same way according to the common opfamily and collation.  The coperator in
+ * each mergeclause must be an equality coperator of the indicated opfamily.
  * ----------------
  */
 typedef struct MergeJoin

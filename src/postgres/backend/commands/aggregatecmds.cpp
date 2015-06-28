@@ -388,7 +388,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 						   mfinalfuncName,		/* final function name */
 						   finalfuncExtraArgs,
 						   mfinalfuncExtraArgs,
-						   sortoperatorName,	/* sort operator name */
+						   sortoperatorName,	/* sort coperator name */
 						   transTypeId, /* transition data type */
 						   transSpace,	/* transition space */
 						   mtransTypeId,		/* transition data type */

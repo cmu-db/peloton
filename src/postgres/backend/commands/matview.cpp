@@ -498,7 +498,7 @@ mv_GenerateOper(StringInfo buf, Oid opoid)
 
 	opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(opoid));
 	if (!HeapTupleIsValid(opertup))
-		elog(ERROR, "cache lookup failed for operator %u", opoid);
+		elog(ERROR, "cache lookup failed for coperator %u", opoid);
 	operform = (Form_pg_operator) GETSTRUCT(opertup);
 	Assert(operform->oprkind == 'b');
 

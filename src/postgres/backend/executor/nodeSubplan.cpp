@@ -810,7 +810,7 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 		 */
 		if (IsA(sstate->testexpr->expr, OpExpr))
 		{
-			/* single combining operator */
+			/* single combining coperator */
 			oplist = list_make1(sstate->testexpr);
 		}
 		else if (and_clause((Node *) sstate->testexpr->expr))
@@ -886,14 +886,14 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 			/* Look up the equality function for the RHS type */
 			if (!get_compatible_hash_operators(opexpr->opno,
 											   NULL, &rhs_eq_oper))
-				elog(ERROR, "could not find compatible hash operator for operator %u",
+				elog(ERROR, "could not find compatible hash coperator for coperator %u",
 					 opexpr->opno);
 			fmgr_info(get_opcode(rhs_eq_oper), &sstate->tab_eq_funcs[i - 1]);
 
 			/* Lookup the associated hash functions */
 			if (!get_op_hash_functions(opexpr->opno,
 									   &left_hashfn, &right_hashfn))
-				elog(ERROR, "could not find hash function for hash operator %u",
+				elog(ERROR, "could not find hash function for hash coperator %u",
 					 opexpr->opno);
 			fmgr_info(left_hashfn, &sstate->lhs_hash_funcs[i - 1]);
 			fmgr_info(right_hashfn, &sstate->tab_hash_funcs[i - 1]);

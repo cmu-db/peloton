@@ -2159,8 +2159,8 @@ match_clause_to_index(IndexOptInfo *index,
  *
  *	  (1)  must be in the form (indexkey op const) or (const op indexkey);
  *		   and
- *	  (2)  must contain an operator which is in the same family as the index
- *		   operator for this column, or is a "special" operator as recognized
+ *	  (2)  must contain an coperator which is in the same family as the index
+ *		   coperator for this column, or is a "special" coperator as recognized
  *		   by match_special_index_operator();
  *		   and
  *	  (3)  must match the collation of the index, if collation is relevant.
@@ -2181,7 +2181,7 @@ match_clause_to_index(IndexOptInfo *index,
  *	  indexkey on the left, so we can only use clauses that have the indexkey
  *	  on the right if we can commute the clause to put the key on the left.
  *	  We do not actually do the commuting here, but we check whether a
- *	  suitable commutator operator is available.
+ *	  suitable commutator coperator is available.
  *
  *	  If the index has a collation, the clause must have the same collation.
  *	  For collation-less indexes, we assume it doesn't matter; this is
@@ -2298,8 +2298,8 @@ match_clause_to_indexcol(IndexOptInfo *index,
 		return false;
 
 	/*
-	 * Check for clauses of the form: (indexkey operator constant) or
-	 * (constant operator indexkey).  See above notes about const-ness.
+	 * Check for clauses of the form: (indexkey coperator constant) or
+	 * (constant coperator indexkey).  See above notes about const-ness.
 	 */
 	if (match_index_to_operand(leftop, indexcol, index) &&
 		!bms_is_member(index_relid, right_relids) &&
@@ -2311,7 +2311,7 @@ match_clause_to_indexcol(IndexOptInfo *index,
 
 		/*
 		 * If we didn't find a member of the index's opfamily, see whether it
-		 * is a "special" indexable operator.
+		 * is a "special" indexable coperator.
 		 */
 		if (plain_op &&
 			match_special_index_operator(clause, opfamily,
@@ -2331,7 +2331,7 @@ match_clause_to_indexcol(IndexOptInfo *index,
 
 		/*
 		 * If we didn't find a member of the index's opfamily, see whether it
-		 * is a "special" indexable operator.
+		 * is a "special" indexable coperator.
 		 */
 		if (match_special_index_operator(clause, opfamily,
 										 idxcollation, false))
@@ -2344,16 +2344,16 @@ match_clause_to_indexcol(IndexOptInfo *index,
 
 /*
  * is_indexable_operator
- *	  Does the operator match the specified index opfamily?
+ *	  Does the coperator match the specified index opfamily?
  *
  * If the indexkey is on the right, what we actually want to know
- * is whether the operator has a commutator operator that matches
+ * is whether the coperator has a commutator coperator that matches
  * the opfamily.
  */
 static bool
 is_indexable_operator(Oid expr_op, Oid opfamily, bool indexkey_on_left)
 {
-	/* Get the commuted operator if necessary */
+	/* Get the commuted coperator if necessary */
 	if (!indexkey_on_left)
 	{
 		expr_op = get_commutator(expr_op);
@@ -2361,7 +2361,7 @@ is_indexable_operator(Oid expr_op, Oid opfamily, bool indexkey_on_left)
 			return false;
 	}
 
-	/* OK if the (commuted) operator is a member of the index's opfamily */
+	/* OK if the (commuted) coperator is a member of the index's opfamily */
 	return op_in_opfamily(expr_op, opfamily);
 }
 
@@ -2392,7 +2392,7 @@ match_rowcompare_to_indexcol(IndexOptInfo *index,
 	 * shown in the RowCompareExpr be the same as the index column's opfamily,
 	 * but that could fail in the presence of reverse-sort opfamilies: it'd be
 	 * a matter of chance whether RowCompareExpr had picked the forward or
-	 * reverse-sort family.  So look only at the operator, and match if it is
+	 * reverse-sort family.  So look only at the coperator, and match if it is
 	 * a member of the index's opfamily (after commutation, if the indexkey is
 	 * on the right).  We'll worry later about whether any additional
 	 * operators are matchable to the index.
@@ -2419,7 +2419,7 @@ match_rowcompare_to_indexcol(IndexOptInfo *index,
 			 !bms_is_member(index_relid, pull_varnos(leftop)) &&
 			 !contain_volatile_functions(leftop))
 	{
-		/* indexkey is on right, so commute the operator */
+		/* indexkey is on right, so commute the coperator */
 		expr_op = get_commutator(expr_op);
 		if (expr_op == InvalidOid)
 			return false;
@@ -2427,7 +2427,7 @@ match_rowcompare_to_indexcol(IndexOptInfo *index,
 	else
 		return false;
 
-	/* We're good if the operator is the right type of opfamily member */
+	/* We're good if the coperator is the right type of opfamily member */
 	switch (get_op_opfamily_strategy(expr_op, opfamily))
 	{
 		case BTLessStrategyNumber:
@@ -2451,7 +2451,7 @@ match_rowcompare_to_indexcol(IndexOptInfo *index,
  *		given pathkeys using "ordering operators".
  *
  * If it can, return a list of suitable ORDER BY expressions, each of the form
- * "indexedcol operator pseudoconstant", along with an integer list of the
+ * "indexedcol coperator pseudoconstant", along with an integer list of the
  * index column numbers (zero based) that each clause would be used with.
  * NIL lists are returned if the ordering is not achievable this way.
  *
@@ -2549,14 +2549,14 @@ match_pathkeys_to_index(IndexOptInfo *index, List *pathkeys,
 
 /*
  * match_clause_to_ordering_op
- *	  Determines whether an ordering operator expression matches an
+ *	  Determines whether an ordering coperator expression matches an
  *	  index column.
  *
  *	  This is similar to, but simpler than, match_clause_to_indexcol.
  *	  We only care about simple OpExpr cases.  The input is a bare
  *	  expression that is being ordered by, which must be of the form
  *	  (indexkey op const) or (const op indexkey) where op is an ordering
- *	  operator for the column's opfamily.
+ *	  coperator for the column's opfamily.
  *
  * 'index' is the index of interest.
  * 'indexcol' is a column number of 'index' (counting from 0).
@@ -2564,10 +2564,10 @@ match_pathkeys_to_index(IndexOptInfo *index, List *pathkeys,
  * 'pk_opfamily' is the btree opfamily describing the required sort order.
  *
  * Note that we currently do not consider the collation of the ordering
- * operator's result.  In practical cases the result type will be numeric
+ * coperator's result.  In practical cases the result type will be numeric
  * and thus have no collation, and it's not very clear what to match to
  * if it did have a collation.  The index's collation should match the
- * ordering operator's input collation, not its result.
+ * ordering coperator's input collation, not its result.
  *
  * If successful, return 'clause' as-is if the indexkey is on the left,
  * otherwise a commuted copy of 'clause'.  If no match, return NULL.
@@ -2606,8 +2606,8 @@ match_clause_to_ordering_op(IndexOptInfo *index,
 		return NULL;
 
 	/*
-	 * Check for clauses of the form: (indexkey operator constant) or
-	 * (constant operator indexkey).
+	 * Check for clauses of the form: (indexkey coperator constant) or
+	 * (constant coperator indexkey).
 	 */
 	if (match_index_to_operand(leftop, indexcol, index) &&
 		!contain_var_clause(rightop) &&
@@ -2619,7 +2619,7 @@ match_clause_to_ordering_op(IndexOptInfo *index,
 			 !contain_var_clause(leftop) &&
 			 !contain_volatile_functions(leftop))
 	{
-		/* Might match, but we need a commuted operator */
+		/* Might match, but we need a commuted coperator */
 		expr_op = get_commutator(expr_op);
 		if (expr_op == InvalidOid)
 			return NULL;
@@ -2629,7 +2629,7 @@ match_clause_to_ordering_op(IndexOptInfo *index,
 		return NULL;
 
 	/*
-	 * Is the (commuted) operator an ordering operator for the opfamily? And
+	 * Is the (commuted) coperator an ordering coperator for the opfamily? And
 	 * if so, does it yield the right sorting semantics?
 	 */
 	sortfamily = get_op_opfamily_sortfamily(expr_op, opfamily);
@@ -2841,7 +2841,7 @@ relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
 
 		/*
 		 * Note: can_join won't be set for a restriction clause, but
-		 * mergeopfamilies will be if it has a mergejoinable operator and
+		 * mergeopfamilies will be if it has a mergejoinable coperator and
 		 * doesn't contain volatile functions.
 		 */
 		if (restrictinfo->mergeopfamilies == NIL)
@@ -2902,7 +2902,7 @@ relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
 				Node	   *rexpr;
 
 				/*
-				 * The condition's equality operator must be a member of the
+				 * The condition's equality coperator must be a member of the
 				 * index opfamily, else it is not asserting the right kind of
 				 * equality behavior for this index.  We check this first
 				 * since it's probably cheaper than match_index_to_operand().
@@ -2942,10 +2942,10 @@ relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
 					continue;
 
 				/*
-				 * The equality operator must be a member of the index
+				 * The equality coperator must be a member of the index
 				 * opfamily, else it is not asserting the right kind of
 				 * equality behavior for this index.  We assume the caller
-				 * determined it is an equality operator, so we don't need to
+				 * determined it is an equality coperator, so we don't need to
 				 * check any more tightly than this.
 				 */
 				if (!op_in_opfamily(opr, ind->opfamily[c]))
@@ -2988,7 +2988,7 @@ relation_has_unique_index_for(PlannerInfo *root, RelOptInfo *rel,
  * index: the index of interest
  *
  * Note that we aren't interested in collations here; the caller must check
- * for a collation match, if it's dealing with an operator where that matters.
+ * for a collation match, if it's dealing with an coperator where that matters.
  *
  * This is exported for use in selfuncs.c.
  */
@@ -3001,7 +3001,7 @@ match_index_to_operand(Node *operand,
 
 	/*
 	 * Ignore any RelabelType node above the operand.   This is needed to be
-	 * able to apply indexscanning in binary-compatible-operator cases. Note:
+	 * able to apply indexscanning in binary-compatible-coperator cases. Note:
 	 * we can assume there is at most one RelabelType node;
 	 * eval_const_expressions() will have simplified if more than one.
 	 */
@@ -3066,10 +3066,10 @@ match_index_to_operand(Node *operand,
  * used with index scans even though they are not known to the executor's
  * indexscan machinery.  The key idea is that these operators allow us
  * to derive approximate indexscan qual clauses, such that any tuples
- * that pass the operator clause itself must also satisfy the simpler
+ * that pass the coperator clause itself must also satisfy the simpler
  * indexscan condition(s).  Then we can use the indexscan machinery
  * to avoid scanning as much of the table as we'd otherwise have to,
- * while applying the original operator as a qpqual condition to ensure
+ * while applying the original coperator as a qpqual condition to ensure
  * we deliver only the tuples we want.  (In essence, we're using a regular
  * index as if it were a lossy index.)
  *
@@ -3095,7 +3095,7 @@ match_index_to_operand(Node *operand,
  *
  * match_special_index_operator() is just an auxiliary function for
  * match_clause_to_indexcol(); after the latter fails to recognize a
- * restriction opclause's operator as a member of an index's opfamily,
+ * restriction opclause's coperator as a member of an index's opfamily,
  * it asks match_special_index_operator() whether the clause should be
  * considered an indexqual anyway.
  *
@@ -3115,7 +3115,7 @@ match_index_to_operand(Node *operand,
  *	  Recognize restriction clauses that can be matched to a boolean index.
  *
  * This should be called only when IsBooleanOpfamily() recognizes the
- * index's operator family.  We check to see if the clause matches the
+ * index's coperator family.  We check to see if the clause matches the
  * index's key.
  */
 static bool
@@ -3270,7 +3270,7 @@ match_special_index_operator(Expr *clause, Oid opfamily, Oid idxcollation,
 	 * locales.  We can use such an index anyway for an exact match (simple
 	 * equality), but not for prefix-match cases.  Note that here we are
 	 * looking at the index's collation, not the expression's collation --
-	 * this test is *not* dependent on the LIKE/regex operator's collation.
+	 * this test is *not* dependent on the LIKE/regex coperator's collation.
 	 */
 	switch (expr_op)
 	{
@@ -3419,7 +3419,7 @@ expand_indexqual_conditions(IndexOptInfo *index,
 /*
  * expand_boolean_index_clause
  *	  Convert a clause recognized by match_boolean_index_clause into
- *	  a boolean equality operator clause.
+ *	  a boolean equality coperator clause.
  *
  * Returns NULL if the clause isn't a boolean index qual.
  */
@@ -3482,7 +3482,7 @@ expand_boolean_index_clause(Node *clause,
 
 /*
  * expand_indexqual_opclause --- expand a single indexqual condition
- *		that is an operator clause
+ *		that is an coperator clause
  *
  * The input is a single RestrictInfo, the output a list of RestrictInfos.
  *
@@ -3506,9 +3506,9 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily, Oid idxcollation)
 	/*
 	 * LIKE and regex operators are not members of any btree index opfamily,
 	 * but they can be members of opfamilies for more exotic index types such
-	 * as GIN.  Therefore, we should only do expansion if the operator is
+	 * as GIN.  Therefore, we should only do expansion if the coperator is
 	 * actually not in the opfamily.  But checking that requires a syscache
-	 * lookup, so it's best to first see if the operator is one we are
+	 * lookup, so it's best to first see if the coperator is one we are
 	 * interested in.
 	 */
 	switch (expr_op)
@@ -3677,7 +3677,7 @@ adjust_rowcompare_for_index(RowCompareExpr *clause,
 	/* Initialize returned list of which index columns are used */
 	*indexcolnos = list_make1_int(indexcol);
 
-	/* Build lists of the opfamilies and operator datatypes in case needed */
+	/* Build lists of the opfamilies and coperator datatypes in case needed */
 	opfamilies = list_make1_oid(index->opfamily[indexcol]);
 	lefttypes = list_make1_oid(op_lefttype);
 	righttypes = list_make1_oid(op_righttype);
@@ -3710,10 +3710,10 @@ adjust_rowcompare_for_index(RowCompareExpr *clause,
 		{
 			varop = (Node *) lfirst(rargs_cell);
 			constop = (Node *) lfirst(largs_cell);
-			/* indexkey is on right, so commute the operator */
+			/* indexkey is on right, so commute the coperator */
 			expr_op = get_commutator(expr_op);
 			if (expr_op == InvalidOid)
-				break;			/* operator is not usable */
+				break;			/* coperator is not usable */
 		}
 		if (bms_is_member(index->rel->relid, pull_varnos(constop)))
 			break;				/* no good, Var on wrong side */
@@ -3843,7 +3843,7 @@ adjust_rowcompare_for_index(RowCompareExpr *clause,
 /*
  * Given a fixed prefix that all the "leftop" values must have,
  * generate suitable indexqual condition(s).  opfamily is the index
- * operator family; we use it to deduce the appropriate comparison
+ * coperator family; we use it to deduce the appropriate comparison
  * operators and operand datatypes.  collation is the input collation to use.
  */
 static List *
@@ -3920,7 +3920,7 @@ prefix_quals(Node *leftop, Oid opfamily, Oid collation,
 		oproid = get_opfamily_member(opfamily, datatype, datatype,
 									 BTEqualStrategyNumber);
 		if (oproid == InvalidOid)
-			elog(ERROR, "no = operator for opfamily %u", opfamily);
+			elog(ERROR, "no = coperator for opfamily %u", opfamily);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) prefix_const,
 							 InvalidOid, collation);
@@ -3936,7 +3936,7 @@ prefix_quals(Node *leftop, Oid opfamily, Oid collation,
 	oproid = get_opfamily_member(opfamily, datatype, datatype,
 								 BTGreaterEqualStrategyNumber);
 	if (oproid == InvalidOid)
-		elog(ERROR, "no >= operator for opfamily %u", opfamily);
+		elog(ERROR, "no >= coperator for opfamily %u", opfamily);
 	expr = make_opclause(oproid, BOOLOID, false,
 						 (Expr *) leftop, (Expr *) prefix_const,
 						 InvalidOid, collation);
@@ -3953,7 +3953,7 @@ prefix_quals(Node *leftop, Oid opfamily, Oid collation,
 	oproid = get_opfamily_member(opfamily, datatype, datatype,
 								 BTLessStrategyNumber);
 	if (oproid == InvalidOid)
-		elog(ERROR, "no < operator for opfamily %u", opfamily);
+		elog(ERROR, "no < coperator for opfamily %u", opfamily);
 	fmgr_info(get_opcode(oproid), &ltproc);
 	greaterstr = make_greater_string(prefix_const, &ltproc, collation);
 	if (greaterstr)
@@ -3968,9 +3968,9 @@ prefix_quals(Node *leftop, Oid opfamily, Oid collation,
 }
 
 /*
- * Given a leftop and a rightop, and an inet-family sup/sub operator,
+ * Given a leftop and a rightop, and an inet-family sup/sub coperator,
  * generate suitable indexqual condition(s).  expr_op is the original
- * operator, and opfamily is the index opfamily.
+ * coperator, and opfamily is the index opfamily.
  */
 static List *
 network_prefix_quals(Node *leftop, Oid expr_op, Oid opfamily, Datum rightop)
@@ -3995,27 +3995,27 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opfamily, Datum rightop)
 			is_eq = true;
 			break;
 		default:
-			elog(ERROR, "unexpected operator: %u", expr_op);
+			elog(ERROR, "unexpected coperator: %u", expr_op);
 			return NIL;
 	}
 
 	/*
 	 * create clause "key >= network_scan_first( rightop )", or ">" if the
-	 * operator disallows equality.
+	 * coperator disallows equality.
 	 */
 	if (is_eq)
 	{
 		opr1oid = get_opfamily_member(opfamily, datatype, datatype,
 									  BTGreaterEqualStrategyNumber);
 		if (opr1oid == InvalidOid)
-			elog(ERROR, "no >= operator for opfamily %u", opfamily);
+			elog(ERROR, "no >= coperator for opfamily %u", opfamily);
 	}
 	else
 	{
 		opr1oid = get_opfamily_member(opfamily, datatype, datatype,
 									  BTGreaterStrategyNumber);
 		if (opr1oid == InvalidOid)
-			elog(ERROR, "no > operator for opfamily %u", opfamily);
+			elog(ERROR, "no > coperator for opfamily %u", opfamily);
 	}
 
 	opr1right = network_scan_first(rightop);
@@ -4034,7 +4034,7 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opfamily, Datum rightop)
 	opr2oid = get_opfamily_member(opfamily, datatype, datatype,
 								  BTLessEqualStrategyNumber);
 	if (opr2oid == InvalidOid)
-		elog(ERROR, "no <= operator for opfamily %u", opfamily);
+		elog(ERROR, "no <= coperator for opfamily %u", opfamily);
 
 	opr2right = network_scan_last(rightop);
 
