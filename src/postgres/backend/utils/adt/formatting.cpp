@@ -2121,7 +2121,7 @@ from_char_set_mode(TmFromChar *tmfc, const FromCharDateMode mode)
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
 					 errmsg("invalid combination of date conventions"),
 					 errhint("Do not mix Gregorian and ISO week date "
-							 "conventions in a formatting template.")));
+							 "conventions in a formatting ctemplate.")));
 	}
 }
 

@@ -2354,7 +2354,7 @@ TSDictionaryIsVisible(Oid dictId)
 }
 
 /*
- * get_ts_template_oid - find a TS template by possibly qualified name
+ * get_ts_template_oid - find a TS ctemplate by possibly qualified name
  *
  * If not found, returns InvalidOid if missing_ok, else throws error
  */
@@ -2404,7 +2404,7 @@ get_ts_template_oid(List *names, bool missing_ok)
 	if (!OidIsValid(tmploid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("text search template \"%s\" does not exist",
+				 errmsg("text search ctemplate \"%s\" does not exist",
 						NameListToString(names))));
 
 	return tmploid;
@@ -2412,9 +2412,9 @@ get_ts_template_oid(List *names, bool missing_ok)
 
 /*
  * TSTemplateIsVisible
- *		Determine whether a template (identified by OID) is visible in the
+ *		Determine whether a ctemplate (identified by OID) is visible in the
  *		current search path.  Visible means "would be found by searching
- *		for the unqualified template name".
+ *		for the unqualified ctemplate name".
  */
 bool
 TSTemplateIsVisible(Oid tmplId)
@@ -2426,7 +2426,7 @@ TSTemplateIsVisible(Oid tmplId)
 
 	tup = SearchSysCache1(TSTEMPLATEOID, ObjectIdGetDatum(tmplId));
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "cache lookup failed for text search template %u", tmplId);
+		elog(ERROR, "cache lookup failed for text search ctemplate %u", tmplId);
 	form = (Form_pg_ts_template) GETSTRUCT(tup);
 
 	recomputeNamespacePath();
@@ -2444,7 +2444,7 @@ TSTemplateIsVisible(Oid tmplId)
 	{
 		/*
 		 * If it is in the path, it might still not be visible; it could be
-		 * hidden by another template of the same name earlier in the path. So
+		 * hidden by another ctemplate of the same name earlier in the path. So
 		 * we must do a slow check for conflicting templates.
 		 */
 		char	   *name = NameStr(form->tmplname);

@@ -338,7 +338,7 @@ extern bool superuser_arg(Oid roleid);	/* given user is superuser */
  * The first two processing modes are used during special times. When the
  * system state indicates bootstrap processing, transactions are all given
  * transaction id "one" and are consequently guaranteed to commit. This mode
- * is used during the initial generation of template databases.
+ * is used during the initial generation of ctemplate databases.
  *
  * Initialization mode: used while starting a backend, until all normal
  * initialization is complete.  Some code behaves differently when executed
@@ -350,7 +350,7 @@ extern bool superuser_arg(Oid roleid);	/* given user is superuser */
 
 typedef enum ProcessingMode
 {
-	BootstrapProcessing,		/* bootstrap creation of template database */
+	BootstrapProcessing,		/* bootstrap creation of ctemplate database */
 	InitProcessing,				/* initializing system */
 	NormalProcessing			/* normal processing */
 } ProcessingMode;

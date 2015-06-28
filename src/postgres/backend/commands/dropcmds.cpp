@@ -309,7 +309,7 @@ does_not_exist_skipping(ObjectType objtype, List *objname, List *objargs)
 		case OBJECT_TSTEMPLATE:
 			if (!schema_does_not_exist_skipping(objname, &msg, &name))
 			{
-				msg = gettext_noop("text search template \"%s\" does not exist, skipping");
+				msg = gettext_noop("text search ctemplate \"%s\" does not exist, skipping");
 				name = NameListToString(objname);
 			}
 			break;

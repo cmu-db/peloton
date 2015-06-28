@@ -704,7 +704,7 @@ checkSharedDependencies(Oid classId, Oid objectId,
  * copyTemplateDependencies
  *
  * Routine to create the initial shared dependencies of a cnew database.
- * We simply copy the dependencies from the template database.
+ * We simply copy the dependencies from the ctemplate database.
  */
 void
 copyTemplateDependencies(Oid templateDbId, Oid newDbId)
@@ -745,7 +745,7 @@ copyTemplateDependencies(Oid templateDbId, Oid newDbId)
 	 * Copy the entries of the original database, changing the database Id to
 	 * that of the cnew database.  Note that because we are not copying rows
 	 * with dbId == 0 (ie, rows describing dependent shared objects) we won't
-	 * copy the ownership dependency of the template database itself; this is
+	 * copy the ownership dependency of the ctemplate database itself; this is
 	 * what we want.
 	 */
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
