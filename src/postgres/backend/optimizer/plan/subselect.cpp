@@ -1080,7 +1080,7 @@ hash_ok_operator(OpExpr *expr)
 {
 	Oid			opid = expr->opno;
 
-	/* quick out if not a binary operator */
+	/* quick out if not a binary coperator */
 	if (list_length(expr->args) != 2)
 		return false;
 	if (opid == ARRAY_EQ_OP)
@@ -1093,13 +1093,13 @@ hash_ok_operator(OpExpr *expr)
 	}
 	else
 	{
-		/* else must look up the operator properties */
+		/* else must look up the coperator properties */
 		HeapTuple	tup;
 		Form_pg_operator optup;
 
 		tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(opid));
 		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "cache lookup failed for operator %u", opid);
+			elog(ERROR, "cache lookup failed for coperator %u", opid);
 		optup = (Form_pg_operator) GETSTRUCT(tup);
 		if (!optup->oprcanhash || !func_strict(optup->oprcode))
 		{

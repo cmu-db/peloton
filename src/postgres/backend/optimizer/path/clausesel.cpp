@@ -173,7 +173,7 @@ clauselist_selectivity(PlannerInfo *root,
 			if (ok)
 			{
 				/*
-				 * If it's not a "<" or ">" operator, just merge the
+				 * If it's not a "<" or ">" coperator, just merge the
 				 * selectivity in generically.  But if it's the right oprrest,
 				 * add the clause to rqlist for later processing.
 				 */
@@ -399,7 +399,7 @@ bms_is_subset_singleton(const Bitmapset *s, int x)
 
 /*
  * treat_as_join_clause -
- *	  Decide whether an operator clause is to be handled by the
+ *	  Decide whether an coperator clause is to be handled by the
  *	  restriction or join estimator.  Subroutine for clause_selectivity().
  */
 static inline bool
@@ -673,7 +673,7 @@ clause_selectivity(PlannerInfo *root,
 
 		/*
 		 * DistinctExpr has the same representation as OpExpr, but the
-		 * contained operator is "=" not "<>", so we must negate the result.
+		 * contained coperator is "=" not "<>", so we must negate the result.
 		 * This estimation method doesn't give the right behavior for nulls,
 		 * but it's better than doing nothing.
 		 */
@@ -683,7 +683,7 @@ clause_selectivity(PlannerInfo *root,
 	else if (is_funcclause(clause))
 	{
 		/*
-		 * This is not an operator, so we guess at the selectivity. THIS IS A
+		 * This is not an coperator, so we guess at the selectivity. THIS IS A
 		 * HACK TO GET V4 OUT THE DOOR.  FUNCS SHOULD BE ABLE TO HAVE
 		 * SELECTIVITIES THEMSELVES.       -- JMH 7/9/92
 		 */

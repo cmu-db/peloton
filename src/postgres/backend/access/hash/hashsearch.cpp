@@ -157,7 +157,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 
 	/* We support only single-column hash indexes */
 	Assert(cur->sk_attno == 1);
-	/* And there's only one operator strategy, too */
+	/* And there's only one coperator strategy, too */
 	Assert(cur->sk_strategy == HTEqualStrategyNumber);
 
 	/*
@@ -171,7 +171,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	 * Okay to compute the hash key.  We want to do this before acquiring any
 	 * locks, in case a user-defined hash function happens to be slow.
 	 *
-	 * If scankey operator is not a cross-type comparison, we can use the
+	 * If scankey coperator is not a cross-type comparison, we can use the
 	 * cached hash function; otherwise gotta look it up in the catalogs.
 	 *
 	 * We support the convention that sk_subtype == InvalidOid means the

@@ -90,7 +90,7 @@ negate_clause(Node *node)
 		case T_OpExpr:
 			{
 				/*
-				 * Negate operator if possible: (NOT (< A B)) => (>= A B)
+				 * Negate coperator if possible: (NOT (< A B)) => (>= A B)
 				 */
 				OpExpr	   *opexpr = (OpExpr *) node;
 				Oid			negator = get_negator(opexpr->opno);
@@ -114,7 +114,7 @@ negate_clause(Node *node)
 		case T_ScalarArrayOpExpr:
 			{
 				/*
-				 * Negate a ScalarArrayOpExpr if its operator has a negator;
+				 * Negate a ScalarArrayOpExpr if its coperator has a negator;
 				 * for example x = ANY (list) becomes x <> ALL (list)
 				 */
 				ScalarArrayOpExpr *saopexpr = (ScalarArrayOpExpr *) node;

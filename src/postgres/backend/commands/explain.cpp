@@ -2072,7 +2072,7 @@ show_sortorder_options(StringInfo buf, Node *sortexpr,
 		appendStringInfo(buf, " COLLATE %s", quote_identifier(collname));
 	}
 
-	/* Print direction if not ASC, or USING if non-default sort operator */
+	/* Print direction if not ASC, or USING if non-default sort coperator */
 	if (sortOperator == typentry->gt_opr)
 	{
 		appendStringInfoString(buf, " DESC");
@@ -2083,9 +2083,9 @@ show_sortorder_options(StringInfo buf, Node *sortexpr,
 		char	   *opname = get_opname(sortOperator);
 
 		if (opname == NULL)
-			elog(ERROR, "cache lookup failed for operator %u", sortOperator);
+			elog(ERROR, "cache lookup failed for coperator %u", sortOperator);
 		appendStringInfo(buf, " USING %s", opname);
-		/* Determine whether operator would be considered ASC or DESC */
+		/* Determine whether coperator would be considered ASC or DESC */
 		(void) get_equality_op_for_ordering_op(sortOperator, &reverse);
 	}
 

@@ -478,7 +478,7 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 			int			r;
 
 			/*
-			 * If it's a collation-aware operator, but the collation is C, we
+			 * If it's a collation-aware coperator, but the collation is C, we
 			 * can treat it as non-collation-aware.  With non-C collation we
 			 * need to traverse whole tree :-( so there's no point in making
 			 * any check here.  (Note also that our reconstructed value may

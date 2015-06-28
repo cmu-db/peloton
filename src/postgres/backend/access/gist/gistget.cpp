@@ -130,7 +130,7 @@ gistindex_keytest(IndexScanDesc scan,
 			/*
 			 * Call the Consistent function to evaluate the test.  The
 			 * arguments are the index datum (as a GISTENTRY*), the comparison
-			 * datum, the comparison operator's strategy number and subtype
+			 * datum, the comparison coperator's strategy number and subtype
 			 * from pg_amop, and the recheck flag.
 			 *
 			 * (Presently there's no need to pass the subtype since it'll
@@ -191,7 +191,7 @@ gistindex_keytest(IndexScanDesc scan,
 			/*
 			 * Call the Distance function to evaluate the distance.  The
 			 * arguments are the index datum (as a GISTENTRY*), the comparison
-			 * datum, the ordering operator's strategy number and subtype from
+			 * datum, the ordering coperator's strategy number and subtype from
 			 * pg_amop, and the recheck flag.
 			 *
 			 * (Presently there's no need to pass the subtype since it'll
@@ -495,7 +495,7 @@ getNextNearest(IndexScanDesc scan)
 				else
 				{
 					/*
-					 * If the ordering operator's return value is anything
+					 * If the ordering coperator's return value is anything
 					 * else, we don't know how to convert the float8 bound
 					 * calculated by the distance function to that.  The
 					 * executor won't actually need the order by values we
@@ -503,7 +503,7 @@ getNextNearest(IndexScanDesc scan)
 					 * insist on converting if the *recheck flag is set.
 					 */
 					if (scan->xs_recheckorderby)
-						elog(ERROR, "GiST operator family's FOR ORDER BY operator must return float8 or float4 if the distance function is lossy");
+						elog(ERROR, "GiST coperator family's FOR ORDER BY coperator must return float8 or float4 if the distance function is lossy");
 					scan->xs_orderbynulls[i] = true;
 				}
 			}

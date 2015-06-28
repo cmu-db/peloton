@@ -204,7 +204,7 @@ transformAggregateCall(ParseState *pstate, Aggref *agg,
 
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_FUNCTION),
-							 errmsg("could not identify an ordering operator for type %s",
+							 errmsg("could not identify an ordering coperator for type %s",
 									format_type_be(exprType(expr))),
 							 errdetail("Aggregates with DISTINCT must be able to sort their inputs."),
 							 parser_errposition(pstate, exprLocation(expr))));

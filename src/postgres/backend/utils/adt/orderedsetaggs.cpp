@@ -61,7 +61,7 @@ typedef struct OSAPerQueryState
 	Oid		   *eqOperators;
 	Oid		   *sortCollations;
 	bool	   *sortNullsFirsts;
-	/* Equality operator call info, created only if needed: */
+	/* Equality coperator call info, created only if needed: */
 	FmgrInfo   *equalfns;
 
 	/* These fields are used only when accumulating datums: */
@@ -76,7 +76,7 @@ typedef struct OSAPerQueryState
 	Oid			eqOperator;
 	Oid			sortCollation;
 	bool		sortNullsFirst;
-	/* Equality operator call info, created only if needed: */
+	/* Equality coperator call info, created only if needed: */
 	FmgrInfo	equalfn;
 } OSAPerQueryState;
 

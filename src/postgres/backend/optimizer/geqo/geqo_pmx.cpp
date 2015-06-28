@@ -3,7 +3,7 @@
 * geqo_pmx.c
 *
 *	 partially matched crossover [PMX] routines;
-*	 PMX operator according to Goldberg & Lingle
+*	 PMX coperator according to Goldberg & Lingle
 *	 (Proc Int'l Conf on GA's)
 *
 * src/backend/optimizer/geqo/geqo_pmx.c

@@ -23,7 +23,7 @@
  *				input/output, recv/send functions
  *		"create type":
  *				type
- *		"create operator":
+ *		"create coperator":
  *				operators
  *
  *
@@ -1910,14 +1910,14 @@ findRangeSubOpclass(List *opcname, Oid subtype)
 		opcid = get_opclass_oid(BTREE_AM_OID, opcname, false);
 
 		/*
-		 * Verify that the operator class accepts this datatype. Note we will
+		 * Verify that the coperator class accepts this datatype. Note we will
 		 * accept binary compatibility.
 		 */
 		opInputType = get_opclass_input_type(opcid);
 		if (!IsBinaryCoercible(subtype, opInputType))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("operator class \"%s\" does not accept data type %s",
+				 errmsg("coperator class \"%s\" does not accept data type %s",
 						NameListToString(opcname),
 						format_type_be(subtype))));
 	}
@@ -1929,9 +1929,9 @@ findRangeSubOpclass(List *opcname, Oid subtype)
 			/* We spell the error message identically to GetIndexOpClass */
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("data type %s has no default operator class for access method \"%s\"",
+					 errmsg("data type %s has no default coperator class for access method \"%s\"",
 							format_type_be(subtype), "btree"),
-					 errhint("You must specify an operator class for the range type or define a default operator class for the subtype.")));
+					 errhint("You must specify an coperator class for the range type or define a default coperator class for the subtype.")));
 		}
 	}
 

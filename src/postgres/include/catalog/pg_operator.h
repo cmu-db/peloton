@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_operator.h
- *	  definition of the system "operator" relation (pg_operator)
+ *	  definition of the system "coperator" relation (pg_operator)
  *	  along with the relation's initial contents.
  *
  *
@@ -35,9 +35,9 @@
 
 CATALOG(pg_operator,2617)
 {
-	NameData	oprname;		/* name of operator */
+	NameData	oprname;		/* name of coperator */
 	Oid			oprnamespace;	/* OID of cnamespace containing this oper */
-	Oid			oprowner;		/* operator owner */
+	Oid			oprowner;		/* coperator owner */
 	char		oprkind;		/* 'l', 'r', or 'b' */
 	bool		oprcanmerge;	/* can be used in merge join? */
 	bool		oprcanhash;		/* can be used in hash join? */
@@ -86,7 +86,7 @@ typedef FormData_pg_operator *Form_pg_operator;
 
 /*
  * Note: every entry in pg_operator.h is expected to have a DESCR() comment.
- * If the operator is a deprecated equivalent of some other entry, be sure
+ * If the coperator is a deprecated equivalent of some other entry, be sure
  * to comment it as such so that initdb doesn't think it's a preferred name
  * for the underlying function.
  */

@@ -711,7 +711,7 @@ parsebranch(struct vars * v,
 	while (!SEE('|') && !SEE(stopper) && !SEE(EOS))
 	{
 		if (seencontent)
-		{						/* implicit concat operator */
+		{						/* implicit concat coperator */
 			lp = newstate(v->nfa);
 			NOERRN();
 			moveins(v->nfa, right, lp);
@@ -2060,9 +2060,9 @@ stid(struct subre * t,
 #endif   /* REG_DEBUG */
 
 
-#include "regc_lex.c"
-#include "regc_color.c"
-#include "regc_nfa.c"
-#include "regc_cvec.c"
-#include "regc_pg_locale.c"
-#include "regc_locale.c"
+#include "regc_lex.cpp"
+#include "regc_color.cpp"
+#include "regc_nfa.cpp"
+#include "regc_cvec.cpp"
+#include "regc_pg_locale.cpp"
+#include "regc_locale.cpp"

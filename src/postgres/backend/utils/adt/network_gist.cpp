@@ -203,7 +203,7 @@ inet_gist_consistent(PG_FUNCTION_ARGS)
 	 * Compare available common prefix bits to the query, but not beyond
 	 * either the query's netmask or the minimum netmask among the represented
 	 * values.  If these bits don't match the query, we have our answer (and
-	 * may or may not need to descend, depending on the operator).  If they do
+	 * may or may not need to descend, depending on the coperator).  If they do
 	 * match, and we are not at a leaf, we descend in all cases.
 	 *
 	 * Note this is the final check for operators that only consider the

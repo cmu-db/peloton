@@ -215,7 +215,7 @@ gistrescan(PG_FUNCTION_ARGS)
 
 		/*
 		 * Modify the scan key so that the Consistent method is called for all
-		 * comparisons. The original operator is passed to the Consistent
+		 * comparisons. The original coperator is passed to the Consistent
 		 * function in the form of its strategy number, which is available
 		 * from the sk_strategy field, and its subtype from the sk_subtype
 		 * field.
@@ -269,7 +269,7 @@ gistrescan(PG_FUNCTION_ARGS)
 
 		/*
 		 * Modify the order-by key so that the Distance method is called for
-		 * all comparisons. The original operator is passed to the Distance
+		 * all comparisons. The original coperator is passed to the Distance
 		 * function in the form of its strategy number, which is available
 		 * from the sk_strategy field, and its subtype from the sk_subtype
 		 * field.
@@ -288,12 +288,12 @@ gistrescan(PG_FUNCTION_ARGS)
 			fmgr_info_copy(&(skey->sk_func), finfo, so->giststate->scanCxt);
 
 			/*
-			 * Look up the datatype returned by the original ordering operator.
+			 * Look up the datatype returned by the original ordering coperator.
 			 * GiST always uses a float8 for the distance function, but the
-			 * ordering operator could be anything else.
+			 * ordering coperator could be anything else.
 			 *
 			 * XXX: The distance function is only allowed to be lossy if the
-			 * ordering operator's result type is float4 or float8.  Otherwise
+			 * ordering coperator's result type is float4 or float8.  Otherwise
 			 * we don't know how to return the distance to the executor.  But
 			 * we cannot check that here, as we won't know if the distance
 			 * function is lossy until it returns *recheck = true for the

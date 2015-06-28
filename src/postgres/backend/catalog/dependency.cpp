@@ -1462,7 +1462,7 @@ recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
  * Note: in many cases we do not need to create dependencies on the datatypes
  * involved in an expression, because we'll have an indirect dependency via
  * some other object.  For instance Var nodes depend on a column which depends
- * on the datatype, and OpExpr nodes depend on the operator which depends on
+ * on the datatype, and OpExpr nodes depend on the coperator which depends on
  * the datatype.  However we do need a type dependency if there is no such
  * indirect dependency, as for example in Const and CoerceToDomain nodes.
  *
@@ -1882,7 +1882,7 @@ find_expr_references_walker(Node *node,
 	{
 		SetOperationStmt *setop = (SetOperationStmt *) node;
 
-		/* we need to look at the groupClauses for operator references */
+		/* we need to look at the groupClauses for coperator references */
 		find_expr_references_walker((Node *) setop->groupClauses, context);
 		/* fall through to examine child nodes */
 	}

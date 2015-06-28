@@ -525,7 +525,7 @@ typedef struct IndexOptInfo
 	int			ncolumns;		/* number of columns in index */
 	int		   *indexkeys;		/* column numbers of index's keys, or 0 */
 	Oid		   *indexcollations;	/* OIDs of collations of index columns */
-	Oid		   *opfamily;		/* OIDs of operator families for columns */
+	Oid		   *opfamily;		/* OIDs of coperator families for columns */
 	Oid		   *opcintype;		/* OIDs of opclass declared input data types */
 	Oid		   *sortopfamily;	/* OIDs of btree opfamilies, if orderable */
 	bool	   *reverse_sort;	/* is sort order descending? */
@@ -545,7 +545,7 @@ typedef struct IndexOptInfo
 	bool		unique;			/* true if a unique index */
 	bool		immediate;		/* is uniqueness enforced immediately? */
 	bool		hypothetical;	/* true if index doesn't really exist */
-	bool		amcanorderbyop; /* does AM support order by operator result? */
+	bool		amcanorderbyop; /* does AM support order by coperator result? */
 	bool		amoptionalkey;	/* can query omit key for the first column? */
 	bool		amsearcharray;	/* can AM handle ScalarArrayOpExpr quals? */
 	bool		amsearchnulls;	/* can AM search for NULL/NOT NULL entries? */
@@ -564,7 +564,7 @@ typedef struct IndexOptInfo
  * require merging two existing EquivalenceClasses.  At the end of the qual
  * distribution process, we have sets of values that are known all transitively
  * equal to each other, where "equal" is according to the rules of the btree
- * operator family(s) shown in ec_opfamilies, as well as the collation shown
+ * coperator family(s) shown in ec_opfamilies, as well as the collation shown
  * by ec_collation.  (We restrict an EC to contain only equalities whose
  * operators belong to the same set of opfamilies.  This could probably be
  * relaxed, but for now it's not worth the trouble, since nearly all equality
@@ -598,7 +598,7 @@ typedef struct EquivalenceClass
 {
 	NodeTag		type;
 
-	List	   *ec_opfamilies;	/* btree operator family OIDs */
+	List	   *ec_opfamilies;	/* btree coperator family OIDs */
 	Oid			ec_collation;	/* collation, if datatypes are collatable */
 	List	   *ec_members;		/* list of EquivalenceMembers */
 	List	   *ec_sources;		/* list of generating RestrictInfos */
@@ -640,7 +640,7 @@ typedef struct EquivalenceClass
  * em_datatype is usually the same as exprType(em_expr), but can be
  * different when dealing with a binary-compatible opfamily; in particular
  * anyarray_ops would never work without this.  Use em_datatype when
- * looking up a specific btree operator to work with this expression.
+ * looking up a specific btree coperator to work with this expression.
  */
 typedef struct EquivalenceMember
 {
@@ -783,7 +783,7 @@ typedef struct Path
  * in the same order.  These are not RestrictInfos, just bare expressions,
  * since they generally won't yield booleans.  Also, unlike the case for
  * quals, it's guaranteed that each expression has the index key on the left
- * side of the operator.
+ * side of the coperator.
  *
  * 'indexorderbycols' is an integer list of index column numbers (zero-based)
  * of the same length as 'indexorderbys', showing which index column each
@@ -1220,7 +1220,7 @@ typedef struct HashPath
  * The can_join flag is set true if the clause looks potentially useful as
  * a merge or hash join clause, that is if it is a binary opclause with
  * nonoverlapping sets of relids referenced in the left and right sides.
- * (Whether the operator is actually merge or hash joinable isn't checked,
+ * (Whether the coperator is actually merge or hash joinable isn't checked,
  * however.)
  *
  * The pseudoconstant flag is set true if the clause contains no Vars of
@@ -1285,7 +1285,7 @@ typedef struct RestrictInfo
 								 * not yet set */
 
 	/* valid if clause is mergejoinable, else NIL */
-	List	   *mergeopfamilies;	/* opfamilies containing clause operator */
+	List	   *mergeopfamilies;	/* opfamilies containing clause coperator */
 
 	/* cache space for mergeclause processing; NULL if not yet set */
 	EquivalenceClass *left_ec;	/* EquivalenceClass containing lefthand */
@@ -1298,7 +1298,7 @@ typedef struct RestrictInfo
 	bool		outer_is_left;	/* T = outer var on left, F = on right */
 
 	/* valid if clause is hashjoinable, else InvalidOid: */
-	Oid			hashjoinoperator;		/* copy of clause operator */
+	Oid			hashjoinoperator;		/* copy of clause coperator */
 
 	/* cache space for hashclause processing; -1 if not yet set */
 	Selectivity left_bucketsize;	/* avg bucketsize of left side */
@@ -1591,7 +1591,7 @@ typedef struct MinMaxAggInfo
 	NodeTag		type;
 
 	Oid			aggfnoid;		/* pg_proc Oid of the aggregate */
-	Oid			aggsortop;		/* Oid of its sort operator */
+	Oid			aggsortop;		/* Oid of its sort coperator */
 	Expr	   *target;			/* expression we are aggregating on */
 	PlannerInfo *subroot;		/* modified "root" for planning the subquery */
 	Path	   *path;			/* access path for subquery */

@@ -4412,7 +4412,7 @@ get_column_info_for_window(PlannerInfo *root, WindowClause *wc, List *tlist,
  * calls are converted to positional notation and function default arguments
  * get inserted.  The fact that constant subexpressions get simplified is a
  * side-effect that is useful when the expression will get evaluated more than
- * once.  Also, we must fix operator function IDs.
+ * once.  Also, we must fix coperator function IDs.
  *
  * Note: this must not make any damaging changes to the passed-in expression
  * tree.  (It would actually be okay to apply fix_opfuncids to it, but since

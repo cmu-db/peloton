@@ -25,7 +25,7 @@
  *				input/output, recv/send procedures
  *		"create type":
  *				type
- *		"create operator":
+ *		"create coperator":
  *				operators
  *
  *-------------------------------------------------------------------------

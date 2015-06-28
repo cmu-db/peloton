@@ -3,7 +3,7 @@
 * geqo_ox1.c
 *
 *	 order crossover [OX] routines;
-*	 OX1 operator according to Davis
+*	 OX1 coperator according to Davis
 *	 (Proc Int'l Joint Conf on AI)
 *
 * src/backend/optimizer/geqo/geqo_ox1.c
