@@ -585,16 +585,16 @@ make_scalar_key(const JsonbValue *scalarVal, bool is_key)
 
 	switch (scalarVal->type)
 	{
-		case jbvNull:
+		case JsonbValue::jbvNull:
 			Assert(!is_key);
 			item = make_text_key(JGINFLAG_NULL, "", 0);
 			break;
-		case jbvBool:
+		case JsonbValue::jbvBool:
 			Assert(!is_key);
 			item = make_text_key(JGINFLAG_BOOL,
 								 scalarVal->val.boolean ? "t" : "f", 1);
 			break;
-		case jbvNumeric:
+		case JsonbValue::jbvNumeric:
 			Assert(!is_key);
 
 			/*
@@ -611,7 +611,7 @@ make_scalar_key(const JsonbValue *scalarVal, bool is_key)
 			item = make_text_key(JGINFLAG_NUM, cstr, strlen(cstr));
 			pfree(cstr);
 			break;
-		case jbvString:
+		case JsonbValue::jbvString:
 			item = make_text_key(is_key ? JGINFLAG_KEY : JGINFLAG_STR,
 								 scalarVal->val.string.val,
 								 scalarVal->val.string.len);
