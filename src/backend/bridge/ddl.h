@@ -8,7 +8,6 @@
 
 #include <cassert>
 
-#include "backend/bridge/bridge.h"
 #include "backend/catalog/catalog.h"
 #include "backend/catalog/schema.h"
 #include "backend/common/types.h"
@@ -16,6 +15,8 @@
 #include "backend/index/index_factory.h"
 #include "backend/storage/backend_vm.h"
 #include "backend/storage/table_factory.h"
+
+#include "bridge/bridge.h"
 
 #endif
 

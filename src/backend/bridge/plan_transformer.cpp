@@ -12,9 +12,10 @@ extern "C" {
 }
 #include "backend/bridge/plan_transformer.h"
 #include "backend/bridge/tuple_transformer.h"
-#include "backend/bridge/bridge.h"
 #include "backend/storage/data_table.h"
 #include "backend/planner/insert_node.h"
+
+#include "bridge/bridge.h"
 
 extern "C" void printPlanStateTree(const PlanState * planstate);
 
