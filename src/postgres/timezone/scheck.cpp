@@ -8,7 +8,7 @@
 
 #include "postgres_fe.h"
 
-#include "cprivate.h"
+#include "private.h"
 
 
 const char *
