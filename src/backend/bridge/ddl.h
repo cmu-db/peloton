@@ -53,6 +53,10 @@ namespace bridge {
 class DDL {
 
  public:
+  DDL(const DDL &) = delete;
+  DDL& operator=(const DDL &) = delete;
+  DDL(DDL &&) = delete;
+  DDL& operator=(DDL &&) = delete;
 
   static bool CreateTable(std::string table_name,
                           ColumnInfo *schema,
