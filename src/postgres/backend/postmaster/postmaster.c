@@ -257,6 +257,9 @@ static pid_t StartupPID = 0,
 #define			FastShutdown	2
 #define			ImmediateShutdown	3
 
+/* Peloton Port */
+Port *PelotonPort = NULL;
+
 static int	Shutdown = NoShutdown;
 
 static bool FatalError = false; /* T if recovering from backend crash */

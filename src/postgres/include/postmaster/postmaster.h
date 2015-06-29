@@ -13,6 +13,8 @@
 #ifndef _POSTMASTER_H
 #define _POSTMASTER_H
 
+#include "libpq/libpq.h"
+
 /* GUC options */
 extern bool EnableSSL;
 extern int	ReservedBackends;
@@ -85,5 +87,7 @@ typedef enum {
 }TestMode;
 
 extern TestMode CurrentTestModeStatus;
+
+extern Port *PelotonPort;
 
 #endif   /* _POSTMASTER_H */
