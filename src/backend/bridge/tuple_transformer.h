@@ -1,8 +1,7 @@
-/*
- * tupleTransformer.h
+/**
+ * @brief Header for postgres plan transformer.
  *
- *  Created on: Jun 22, 2015
- *      Author: vivek
+ * Copyright(c) 2015, CMU
  */
 
 #pragma once

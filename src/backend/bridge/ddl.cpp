@@ -268,7 +268,7 @@ bool DDLCreateIndex(char* index_name,
                           table_name,
                           type, unique,
                           key_column_info,
-                          num_columns_in_key ) ;
+                          num_columns_in_key) ;
 
 }
 

@@ -1,8 +1,13 @@
-/*
- * tupleTransformer.cpp
+/*-------------------------------------------------------------------------
  *
- *  Created on: Jun 22, 2015
- *      Author: vivek
+ * tuple_transformer.cpp
+ * file description
+ *
+ * Copyright(c) 2015, CMU
+ *
+ * /n-store/src/bridge/tuple_transformer.cpp
+ *
+ *-------------------------------------------------------------------------
  */
 
 #include <iostream>
