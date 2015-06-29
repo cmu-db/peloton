@@ -90,7 +90,7 @@ bool CreateExecutor::CreateDatabase(std::string db_name) {
 // TODO :: Remove
 bool CreateExecutor::CreateTable(catalog::Database* db,
                                  std::string table_name,
-                                 DDL_ColumnInfo* ddl_columnInfo,
+                                 ColumnInfo* ddl_columnInfo,
                                  int num_columns,
                                  catalog::Schema* schema = NULL) {
   //Either columns or schema is required to create a table
