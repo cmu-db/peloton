@@ -10,9 +10,7 @@
 #pragma once
 
 #include <string>
-extern "C" {
 #include "nodes/pprint.h"
-}
 
 namespace peloton {
 namespace bridge {
