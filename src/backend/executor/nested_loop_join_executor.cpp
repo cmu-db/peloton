@@ -39,7 +39,7 @@ bool NestedLoopJoinExecutor::DInit() {
     assert(children_.size() == 2);
 
     // Grab data from plan node.
-    const planner::NestedLoopJoinNode &node = GetNode<planner::NestedLoopJoinNode>();
+    const planner::NestedLoopJoinNode &node = GetPlanNode<planner::NestedLoopJoinNode>();
 
     // NOTE: predicate can be null for cartesian product
     predicate_ = node.GetPredicate();

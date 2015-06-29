@@ -45,7 +45,7 @@ bool SeqScanExecutor::DInit() {
   assert(children_.size() == 0 || children_.size() == 1);
 
   // Grab data from plan node.
-  const planner::SeqScanNode &node = GetNode<planner::SeqScanNode>();
+  const planner::SeqScanNode &node = GetPlanNode<planner::SeqScanNode>();
 
   table_ = node.GetTable();
   predicate_ = node.GetPredicate();

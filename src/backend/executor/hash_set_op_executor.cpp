@@ -64,7 +64,7 @@ bool HashSetOpExecutor::ExecuteHelper(){
   assert(!hash_done_);
 
   // Grab data from plan node
-  const planner::SetOpNode &node = GetNode<planner::SetOpNode>();
+  const planner::SetOpNode &node = GetPlanNode<planner::SetOpNode>();
   set_op_ = node.GetSetOp();
   assert(set_op_ != SETOP_TYPE_INVALID);
 
