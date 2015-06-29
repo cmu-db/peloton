@@ -379,7 +379,7 @@ RegisterTimeout(TimeoutId id, timeout_handler_proc handler)
 	if (id >= USER_TIMEOUT)
 	{
 		/* Allocate a user-defined timeout reason */
-		for (id = USER_TIMEOUT; id < MAX_TIMEOUTS; id++)
+		for (id = USER_TIMEOUT; id < MAX_TIMEOUTS; id = id + 1)
 			if (all_timeouts[id].timeout_handler == NULL)
 				break;
 		if (id >= MAX_TIMEOUTS)
