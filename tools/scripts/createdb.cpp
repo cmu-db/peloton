@@ -30,7 +30,7 @@ main(int argc, char *argv[])
 		{"echo", no_argument, NULL, 'e'},
 		{"owner", required_argument, NULL, 'O'},
 		{"tablespace", required_argument, NULL, 'D'},
-		{"template", required_argument, NULL, 'T'},
+		{"ctemplate", required_argument, NULL, 'T'},
 		{"encoding", required_argument, NULL, 'E'},
 		{"lc-collate", required_argument, NULL, 1},
 		{"lc-ctype", required_argument, NULL, 2},
@@ -53,7 +53,7 @@ main(int argc, char *argv[])
 	bool		echo = false;
 	char	   *owner = NULL;
 	char	   *tablespace = NULL;
-	char	   *template = NULL;
+	char	   *ctemplate = NULL;
 	char	   *encoding = NULL;
 	char	   *lc_collate = NULL;
 	char	   *lc_ctype = NULL;
@@ -98,7 +98,7 @@ main(int argc, char *argv[])
 				tablespace = pg_strdup(optarg);
 				break;
 			case 'T':
-				template = pg_strdup(optarg);
+				ctemplate = pg_strdup(optarg);
 				break;
 			case 'E':
 				encoding = pg_strdup(optarg);
@@ -188,8 +188,8 @@ main(int argc, char *argv[])
 		appendPQExpBuffer(&sql, " TABLESPACE %s", fmtId(tablespace));
 	if (encoding)
 		appendPQExpBuffer(&sql, " ENCODING '%s'", encoding);
-	if (template)
-		appendPQExpBuffer(&sql, " TEMPLATE %s", fmtId(template));
+	if (ctemplate)
+		appendPQExpBuffer(&sql, " TEMPLATE %s", fmtId(ctemplate));
 	if (lc_collate)
 		appendPQExpBuffer(&sql, " LC_COLLATE '%s'", lc_collate);
 	if (lc_ctype)
@@ -259,7 +259,7 @@ help(const char *progname)
 	printf(_("      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"));
 	printf(_("      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"));
 	printf(_("  -O, --owner=OWNER            database user to own the cnew database\n"));
-	printf(_("  -T, --template=TEMPLATE      template database to copy\n"));
+	printf(_("  -T, --ctemplate=TEMPLATE      ctemplate database to copy\n"));
 	printf(_("  -V, --version                output version information, then exit\n"));
 	printf(_("  -?, --help                   show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));

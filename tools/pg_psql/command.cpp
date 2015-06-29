@@ -588,7 +588,7 @@ exec_command(const char *cmd,
 
 	/*
 	 * \ef -- edit the named function, or present a blank CREATE FUNCTION
-	 * template if no argument is given
+	 * ctemplate if no argument is given
 	 */
 	else if (strcmp(cmd, "ef") == 0)
 	{
