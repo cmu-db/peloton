@@ -278,10 +278,9 @@ bool IsThisTableExist(const char* table_name) {
 
 /**
  * Initialize Peloton
- * This function constructs tables in current database
- * @param dbname current database
+ * This function constructs tables in all databases
  */
-bool InitPeloton(const char* dbname)
+bool InitPeloton()
 {
   // Relations for catalog tables
   Relation pg_class_rel;   
@@ -292,11 +291,6 @@ bool InitPeloton(const char* dbname)
 
   int column_itr;
   bool ret;
-
-  printf("Process Id : %d \n", getpid());
-  printf("################################################\n");
-  printf("#### Initialize Peloton Database \"%s\" #### \n", dbname);
-  printf("################################################\n");
 
   StartTransactionCommand();
 
