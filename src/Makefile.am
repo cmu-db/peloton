@@ -89,7 +89,7 @@ endif
 # PELOTON
 ######################################################################
 
-peloton_SOURCES = backend/main/peloton.cpp
+peloton_SOURCES = backend/main/main.cpp
 peloton_LDFLAGS =
 peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES)
 peloton_LDADD = libpeloton.la $(TBB_LIBS)

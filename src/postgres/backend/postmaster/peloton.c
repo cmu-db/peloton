@@ -20,6 +20,7 @@
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 #include "utils/timeout.h"
+#include "utils/memutils.h"
 #include "postmaster/fork_process.h"
 #include "postmaster/postmaster.h"
 #include "storage/latch.h"
@@ -647,7 +648,7 @@ peloton_proc_node(PlanState *node)
     return;
 
   peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_PLAN);
-  msg.m_node = (*node);
+  msg.m_node = node;
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -661,27 +662,35 @@ peloton_proc_node(PlanState *node)
 static void
 peloton_recv_plan(Peloton_MsgPlan *msg, int len)
 {
-  PlanState node;
+  PlanState *node;
   Plan *plan;
-
-  /* Don't try to print the plan */
-  return;
 
   if(msg == NULL)
     return;
 
-  node = msg->m_node;
+  SHMContextStats(TopSharedMemoryContext);
 
-  plan = node.plan;
+  fprintf(stdout, "going to print plan : %p \n", plan);
+
+  node = msg->m_node;
+  if(node == NULL)
+  {
+    fprintf(stdout, "node is null \n");
+    return;
+  }
+
+  plan = node->plan;
   if(plan == NULL)
   {
     fprintf(stdout, "plan is null \n");
     return;
   }
 
-  fprintf(stdout, "going to print plan : %p \n", plan);
+  //elog_node_display(LOG, "plan", plan, Debug_pretty_print);
 
-  elog_node_display(LOG, "plan", plan, Debug_pretty_print);
+  /* Clean up plan */
+  //pfree(plan);
+
 }
 
 
