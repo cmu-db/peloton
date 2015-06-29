@@ -54,12 +54,13 @@
  * there *must not* be any unused padding bytes in this struct.  That
  * should be safe as long as all the fields are of type Oid.
  */
-struct RelFileNode
+typedef struct RelFileNode
 {
 	Oid			spcNode;		/* tablespace */
 	Oid			dbNode;			/* database */
 	Oid			relNode;		/* relation */
 
+#ifdef __cplusplus
 	RelFileNode() {}
 
 	RelFileNode (volatile RelFileNode &other)
@@ -74,7 +75,8 @@ struct RelFileNode
 	  this->relNode = rhs.relNode;
 	  return *this;
 	}
-};
+#endif
+} RelFileNode;
 
 /*
  * Augmenting a relfilenode with the backend ID provides all the information
