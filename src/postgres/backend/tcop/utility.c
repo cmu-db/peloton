@@ -1011,7 +1011,7 @@ ProcessUtilitySlow(Node *parsetree,
                 if( schema != NULL )
                 {
                  ListCell   *entry;
-                 DDL_ColumnInfo* ddl_columnInfo = (DDL_ColumnInfo*) malloc( sizeof(DDL_ColumnInfo)*schema->length);
+                 ColumnInfo* ddl_columnInfo = (ColumnInfo*) malloc( sizeof(ColumnInfo)*schema->length);
   
                   // Parse the CreateStmt and construct ddl_columnInfo
                   foreach(entry, schema)
@@ -1037,13 +1037,13 @@ ProcessUtilitySlow(Node *parsetree,
                   /*
                    * Now, intercept the create table request from Postgres and create a table in Peloton
                    */
-                  ret = DDL_CreateTable( Cstmt->relation->relname, ddl_columnInfo, schema->length);
+                  ret = DDLCreateTable( Cstmt->relation->relname, ddl_columnInfo, schema->length);
                 }else
                 {
                   // Create Table without column info
-                  ret = DDL_CreateTable( Cstmt->relation->relname, NULL, 0 );
+                  ret = DDLCreateTable( Cstmt->relation->relname, NULL, 0 );
                 }
-               fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
+               fprintf(stderr, "DDLCreateTable :: %d \n", ret);
               }
 
             }
@@ -1339,7 +1339,7 @@ ProcessUtilitySlow(Node *parsetree,
           int type = 0;
           bool ret;
 
-          DDL_ColumnInfo *ddl_columnInfoForKeySchema = (DDL_ColumnInfo *)malloc(sizeof(DDL_ColumnInfo)*stmt->indexParams->length);
+          ColumnInfo *ddl_columnInfoForKeySchema = (ColumnInfo *)malloc(sizeof(ColumnInfo)*stmt->indexParams->length);
 
           // Parse the IndexStmt and construct ddl_columnInfo for TupleSchema and KeySchema
           foreach(entry, stmt->indexParams)
@@ -1381,14 +1381,14 @@ ProcessUtilitySlow(Node *parsetree,
             type = 0;
           }
  
-          ret = DDL_CreateIndex(stmt->idxname,
+          ret = DDLCreateIndex(stmt->idxname,
                                 stmt->relation->relname,
                                 type,
                                 stmt->unique,
                                 ddl_columnInfoForKeySchema,
                                 column_itr_for_KeySchema
                                );
-          fprintf(stderr, "DDL_CreateIndex :: %d \n", ret);
+          fprintf(stderr, "DDLCreateIndex :: %d \n", ret);
         }
       }
         break;
@@ -1601,8 +1601,8 @@ ProcessUtilitySlow(Node *parsetree,
 
           while(table_oid_itr > 0)
           {
-            ret  = DDL_DropTable(table_oid_list[--table_oid_itr]);
-            fprintf(stderr, "DDL_DropTable :: %d \n", ret);
+            ret  = DDLDropTable(table_oid_list[--table_oid_itr]);
+            fprintf(stderr, "DDLDropTable :: %d \n", ret);
           }
           /* no commands stashed for DROP */
           commandCollected = true;

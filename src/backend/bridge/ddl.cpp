@@ -10,17 +10,36 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/bridge/ddl.h"
+#include "bridge/bridge.h"
 
+#include "backend/bridge/ddl.h"
+#include "backend/catalog/catalog.h"
+#include "backend/catalog/schema.h"
+#include "backend/common/types.h"
+#include "backend/index/index.h"
+#include "backend/index/index_factory.h"
+#include "backend/storage/backend_vm.h"
+#include "backend/storage/table_factory.h"
+
+#include <cassert>
 
 namespace peloton {
 namespace bridge {
 
+/**
+ * @brief Create table.
+ * @param table_name Table name
+ * @param column_info Information about the columns
+ * @param num_columns Number of columns in the table
+ * @param schema Schema for the table
+ * @return true if we created a table, false otherwise
+ */
 bool DDL::CreateTable(std::string table_name,
-                      DDL_ColumnInfo* ddl_columnInfo,
+                      ColumnInfo *column_info,
                       int num_columns, 
-                      catalog::Schema* schema = NULL){
-  if( ( num_columns > 0 && ddl_columnInfo == NULL) && schema == NULL ) 
+                      catalog::Schema* schema) {
+
+  if( ( num_columns > 0 && column_info == NULL) && schema == NULL ) 
     return false;
 
   oid_t db_oid = GetCurrentDatabaseOid();
@@ -44,7 +63,7 @@ bool DDL::CreateTable(std::string table_name,
       for( int column_itr = 0; column_itr < num_columns; column_itr++ ){
   
   
-        switch(ddl_columnInfo[column_itr].type ){
+        switch(column_info[column_itr].type ){
           // Could not find yet corresponding types in Postgres...
           // Also - check below types again to make sure..
           // TODO :: change the numbers to enum type
@@ -57,41 +76,41 @@ bool DDL::CreateTable(std::string table_name,
             /* INTEGER */
           case 21: // -32 thousand to 32 thousand, 2-byte storage
             currentValueType = VALUE_TYPE_SMALLINT;
-            ddl_columnInfo[column_itr].is_inlined = true;
+            column_info[column_itr].is_inlined = true;
             break;
           case 23: // -2 billion to 2 billion integer, 4-byte storage
             currentValueType = VALUE_TYPE_INTEGER;
-            ddl_columnInfo[column_itr].is_inlined = true;
+            column_info[column_itr].is_inlined = true;
             break;
           case 20: // ~18 digit integer, 8-byte storage
             currentValueType = VALUE_TYPE_BIGINT;
-            ddl_columnInfo[column_itr].is_inlined = true;
+            column_info[column_itr].is_inlined = true;
             break;
   
             /* DOUBLE */
           case 701: // double-precision floating point number, 8-byte storage
             currentValueType = VALUE_TYPE_DOUBLE;
-            ddl_columnInfo[column_itr].is_inlined = true;
+            column_info[column_itr].is_inlined = true;
             break;
   
             /* CHAR */
           case 1014:
           case 1042: // char(length), blank-padded string, fixed storage length
             currentValueType = VALUE_TYPE_VARCHAR;
-            ddl_columnInfo[column_itr].is_inlined = true;
+            column_info[column_itr].is_inlined = true;
             break;
             // !!! NEED TO BE UPDATED ...
           case 1015:
           case 1043: // varchar(length), non-blank-padded string, variable storage length;
             currentValueType = VALUE_TYPE_VARCHAR;
-            ddl_columnInfo[column_itr].is_inlined = true;
+            column_info[column_itr].is_inlined = true;
             break;
   
             /* TIMESTAMPS */
           case 1114: // date and time
           case 1184: // date and time with time zone
             currentValueType = VALUE_TYPE_TIMESTAMP;
-            ddl_columnInfo[column_itr].is_inlined = true;
+            column_info[column_itr].is_inlined = true;
             break;
   
             /* DECIMAL */
@@ -102,16 +121,16 @@ bool DDL::CreateTable(std::string table_name,
             /* INVALID VALUE TYPE */
           default:
             currentValueType = VALUE_TYPE_INVALID;
-            printf("INVALID VALUE TYPE : %d \n", ddl_columnInfo[column_itr].type);
+            printf("INVALID VALUE TYPE : %d \n", column_info[column_itr].type);
             break;
         }
   
         catalog::ColumnInfo *columnInfo = new catalog::ColumnInfo( currentValueType,
-                                                                   ddl_columnInfo[column_itr].column_offset,
-                                                                   ddl_columnInfo[column_itr].column_length,
-                                                                   ddl_columnInfo[column_itr].name,
-                                                                   ddl_columnInfo[column_itr].allow_null,
-                                                                   ddl_columnInfo[column_itr].is_inlined );
+                                                                   column_info[column_itr].column_offset,
+                                                                   column_info[column_itr].column_length,
+                                                                   column_info[column_itr].name,
+                                                                   column_info[column_itr].allow_null,
+                                                                   column_info[column_itr].is_inlined );
         // Add current columnInfo into the columnInfoVect
         columnInfoVect.push_back(*columnInfo);
       }
@@ -136,8 +155,13 @@ bool DDL::CreateTable(std::string table_name,
   return true;
 }
 
-bool DDL::DropTable(unsigned int table_oid)
-{
+/**
+ * @brief Drop table.
+ * @param table_oid Table id.
+ * @return true if we dropped the table, false otherwise
+ */
+bool DDL::DropTable(unsigned int table_oid) {
+
   oid_t db_oid = GetCurrentDatabaseOid();
   if( db_oid == 0 || table_oid == 0 )
     return false;
@@ -149,14 +173,23 @@ bool DDL::DropTable(unsigned int table_oid)
   return true;
 }
 
-//TODO :: 
-bool DDL::CreateIndex(std::string index_name,
-                      std::string table_name,
-                      int type,
-                      bool unique, 
-                      DDL_ColumnInfo* ddl_columnInfoForKeySchema,
-                      int num_columns_of_KeySchema)
-{
+/**
+ * @brief Create index.
+ * @param index_name Index name
+ * @param table_name Table name
+ * @param type Type of the index
+ * @param unique Index is unique or not ?
+ * @param
+ * @param column_info Information about the columns
+ * @param num_columns Number of columns in the table
+ * @param schema Schema for the table
+ *
+ * @return true if we dropped the table, false otherwise
+ */
+bool DDL::CreateIndex(std::string index_name, std::string table_name,
+                      int type, bool unique,
+                      ColumnInfo* key_column_info,
+                      int num_columns_in_key) {
 
   /* Currently, we use only btree as an index method */
   IndexType currentIndexType = INDEX_TYPE_BTREE_MULTIMAP;
@@ -198,7 +231,7 @@ bool DDL::CreateIndex(std::string index_name,
   std::vector<oid_t> selected_oids_for_KeySchema;
 
   // Based on the ColumnInfo of KeySchema, find out the given 'key' columns in the tuple schema and store it's oid 
-  for(oid_t column_itr_for_KeySchema = 0;  column_itr_for_KeySchema < num_columns_of_KeySchema; column_itr_for_KeySchema++)
+  for(oid_t column_itr_for_KeySchema = 0;  column_itr_for_KeySchema < num_columns_in_key; column_itr_for_KeySchema++)
   {
     for( oid_t column_itr_for_TupleSchema = 0; column_itr_for_TupleSchema < tuple_schema->GetColumnCount(); column_itr_for_TupleSchema++)
     {
@@ -206,7 +239,7 @@ bool DDL::CreateIndex(std::string index_name,
       catalog::ColumnInfo colInfo = tuple_schema->GetColumnInfo(column_itr_for_TupleSchema);
 
       // Compare Key Schema's current column name and Tuple Schema's current column name
-      if( strcmp( ddl_columnInfoForKeySchema[ column_itr_for_KeySchema].name , (colInfo.name).c_str() )== 0 )
+      if( strcmp( key_column_info[ column_itr_for_KeySchema].name , (colInfo.name).c_str() )== 0 )
         selected_oids_for_KeySchema.push_back(column_itr_for_TupleSchema);
     }
   }
@@ -225,16 +258,35 @@ bool DDL::CreateIndex(std::string index_name,
   return true;
 }
  
+/* ------------------------------------------------------------
+ * C-style function declarations
+ * ------------------------------------------------------------
+ */
 
 extern "C" {
-bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns) {
-  return DDL::CreateTable(table_name, ddl_columnInfo, num_columns);
+
+bool DDLCreateTable(char* table_name,
+                     ColumnInfo* column_info,
+                     int num_columns) {
+  return DDL::CreateTable(table_name, column_info, num_columns);
 }
-bool DDL_DropTable(unsigned int table_oid) {
+
+bool DDLDropTable(unsigned int table_oid) {
   return DDL::DropTable(table_oid);
 }
-bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForKeySchema, int num_columns_of_KeySchema) {
-  return DDL::CreateIndex(index_name, table_name, type, unique, ddl_columnInfoForKeySchema, num_columns_of_KeySchema ) ; }
+
+bool DDLCreateIndex(char* index_name, char* table_name,
+                     int type, bool unique,
+                     ColumnInfo* key_column_info,
+                     int num_columns_in_key) {
+
+  return DDL::CreateIndex(index_name, table_name,
+                          type, unique,
+                          key_column_info,
+                          num_columns_in_key ) ;
+
+}
+
 }
 
 } // namespace bridge
