@@ -102,7 +102,7 @@ typedef struct SchemaQuery
 	 * Namespace --- name of field to join to pg_namespace.oid. For example,
 	 * "c.relnamespace".
 	 */
-	const char *namespace;
+	const char *cnamespace;
 
 	/*
 	 * Result --- the appropriately-quoted name to return, in the case of an
@@ -742,13 +742,17 @@ static const SchemaQuery Query_for_list_of_matviews = {
  * DROP; and there is also a query to get a list of them.
  */
 
-typedef struct
+struct pgsql_thing_t
 {
 	const char *name;
 	const char *query;			/* simple query, or NULL */
 	const SchemaQuery *squery;	/* schema query, or NULL */
 	const bits32 flags;			/* visibility flags, see below */
-} pgsql_thing_t;
+
+	/* Peloton porting: add default ctor to avoid uninitialized const member error */
+	pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
+	: name(name), query(query), squery(squery), flags(flags) {}
+};
 
 #define THING_NO_CREATE		(1 << 0)	/* should not show up after CREATE */
 #define THING_NO_DROP		(1 << 1)	/* should not show up after DROP */
@@ -4169,7 +4173,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 							  "WHERE %s = n.oid AND ",
 							  qualresult,
 							  completion_squery->catname,
-							  completion_squery->namespace);
+							  completion_squery->cnamespace);
 			if (completion_squery->selcondition)
 				appendPQExpBuffer(&query_buffer, "%s AND ",
 								  completion_squery->selcondition);
