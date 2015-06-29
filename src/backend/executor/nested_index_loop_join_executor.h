@@ -21,12 +21,12 @@
 namespace peloton {
 namespace executor {
 
-class NestedLoopJoinExecutor : public AbstractExecutor {
-    NestedLoopJoinExecutor(const NestedLoopJoinExecutor &) = delete;
-    NestedLoopJoinExecutor& operator=(const NestedLoopJoinExecutor &) = delete;
+class NestedIndexLoopJoinExecutor : public AbstractExecutor {
+    NestedIndexLoopJoinExecutor(const NestedIndexLoopJoinExecutor &) = delete;
+    NestedIndexLoopJoinExecutor& operator=(const NestedIndexLoopJoinExecutor &) = delete;
 
 public:
-    explicit NestedLoopJoinExecutor(planner::AbstractPlanNode *node);
+    explicit NestedIndexLoopJoinExecutor(planner::AbstractPlanNode *node);
 
 protected:
     bool DInit();
