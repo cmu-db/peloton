@@ -1,113 +1,137 @@
-/*
- * transformer.cpp
+/*-------------------------------------------------------------------------
  *
- *  Copyright(c) 2015, CMU
- *  Created on: Jun 18, 2015
- *      Author: Ming Fang
+ * plan_transformer.cpp
+ * file description
+ *
+ * Copyright(c) 2015, CMU
+ *
+ * /n-store/src/bridge/plan_transformer.cpp
+ *
+ *-------------------------------------------------------------------------
  */
+
 extern "C" {
 #include "nodes/pprint.h"
 #include "utils/rel.h"
-#include "executor/executor.h"
 }
+
+#include "bridge/bridge.h"
+
 #include "backend/bridge/plan_transformer.h"
 #include "backend/bridge/tuple_transformer.h"
 #include "backend/storage/data_table.h"
 #include "backend/planner/insert_node.h"
-
-#include "bridge/bridge.h"
 
 extern "C" void printPlanStateTree(const PlanState * planstate);
 
 namespace peloton {
 namespace bridge {
 
-PlanTransformer&
-PlanTransformer::GetInstance() {
+/**
+ * @brief Get an instance of the plan transformer.
+ * @return The instance.
+ */
+PlanTransformer& PlanTransformer::GetInstance() {
   static PlanTransformer planTransformer;
   return planTransformer;
 }
 
-void PlanTransformer::printPostgresPlanStateTree(
-    const PlanState * planstate) const {
-  printPlanStateTree(planstate);
+/**
+ * @brief Pretty print the plan state tree.
+ * @return none.
+ */
+void PlanTransformer::PrintPlanState(const PlanState *plan_state) const {
+  printPlanStateTree(plan_state);
 }
 
-/* @brief Convert Postgres PlanState into Peloton AbstractPlanNode.
- *
- *
- *
+/**
+ * @brief Convert Postgres PlanState into AbstractPlanNode.
+ * @return Pointer to the constructed AbstractPlanNode.
  */
-PlanTransformer::AbstractPlanNodePtr PlanTransformer::transform(
-    const PlanState * planstate) {
-  Plan *plan = planstate->plan;
-  AbstractPlanNodePtr planNode;
+planner::AbstractPlanNode *PlanTransformer::TransformPlan(const PlanState *plan_state) {
 
-  /* 1. Plan Type */
+  Plan *plan = plan_state->plan;
+  planner::AbstractPlanNode *plan_node;
+
   switch (nodeTag(plan)) {
     case T_ModifyTable:
-      planNode = PlanTransformer::transformModifyTable(
-          (ModifyTableState *) planstate);
+      plan_node = PlanTransformer::TransformModifyTable((ModifyTableState *) plan_state);
       break;
+
     default:
+      plan_node = nullptr;
       break;
   }
 
-  return planNode;
+  return plan_node;
 }
 
-PlanTransformer::AbstractPlanNodePtr PlanTransformer::transformModifyTable(
-    const ModifyTableState *mtstate) {
+/**
+ * @brief Convert ModifyTableState into AbstractPlanNode.
+ * @return Pointer to the constructed AbstractPlanNode.
+ */
+planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
+    const ModifyTableState *mt_plan_state) {
 
-  /* TODO: implement UPDATE, DELETE */
+  /* TODO: handle UPDATE, DELETE */
   /* TODO: Add logging */
-  ModifyTable *plan = (ModifyTable *) mtstate->ps.plan;
+  ModifyTable *plan = (ModifyTable *) mt_plan_state->ps.plan;
 
   switch (plan->operation) {
     case CMD_INSERT:
-      return PlanTransformer::transformInsert(mtstate);
+      return PlanTransformer::TransformInsert(mt_plan_state);
       break;
+
     default:
-      return PlanTransformer::AbstractPlanNodePtr();  // default ctor = nullptr
       break;
   }
+
+  return nullptr;
 }
 
-PlanTransformer::AbstractPlanNodePtr PlanTransformer::transformInsert(
-    const ModifyTableState *mtstate) {
-
-  /* TODO: Add logging */
+/**
+ * @brief Convert ModifyTableState Insert case into AbstractPlanNode.
+ * @return Pointer to the constructed AbstractPlanNode.
+ */
+planner::AbstractPlanNode *PlanTransformer::TransformInsert(
+    const ModifyTableState *mt_plan_state) {
 
   /* Resolve result table */
-  ResultRelInfo *resultRelInfo = mtstate->resultRelInfo;
-  Relation resultRelationDesc = resultRelInfo->ri_RelationDesc;
+  ResultRelInfo *result_rel_info = mt_plan_state->resultRelInfo;
+  Relation result_relation_desc = result_rel_info->ri_RelationDesc;
 
-  /* Current Peloton only support plain insert statement
-   * The number of subplan is exactly 1
+  /* Currently, we only support plain insert statement.
+   * So, the number of subplan must be exactly 1.
    * TODO: can it be 0? */
-  assert(mtstate->mt_nplans == 1);
+  assert(mt_plan_state->mt_nplans == 1);
 
   Oid database_oid = GetCurrentDatabaseOid();
-  Oid table_oid = resultRelationDesc->rd_id;
-  storage::DataTable *result_table =
-      static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
-          .GetLocation(database_oid, table_oid));
+  Oid table_oid = result_relation_desc->rd_id;
 
-  /* Resolve tuple */
-  auto schema = result_table->GetSchema();
+  /* Get the target table */
+  storage::DataTable *target_table = static_cast<storage::DataTable*>(catalog::Manager::GetInstance().
+      GetLocation(database_oid, table_oid));
 
-  PlanState *subplanstate = mtstate->mt_plans[0]; /* Should be only one which is a Result Plan */
-  TupleTableSlot *planSlot;
+  /* Get the tuple schema */
+  auto schema = target_table->GetSchema();
+
+  /* Should be only one which is a Result Plan */
+  PlanState *subplan_state = mt_plan_state->mt_plans[0];
+  TupleTableSlot *plan_slot;
   std::vector<storage::Tuple *> tuples;
 
-  planSlot = ExecProcNode(subplanstate);
-  assert(!TupIsNull(planSlot)); /* The tuple should not be null */
-  storage::Tuple *tuple = TupleTransformer(planSlot, schema);
+  /*
+  plan_slot = ExecProcNode(subplan_state);
+  assert(!TupIsNull(plan_slot)); // The tuple should not be null
+
+  auto tuple = TupleTransformer(plan_slot, schema);
   tuples.push_back(tuple);
+  */
 
-  return PlanTransformer::AbstractPlanNodePtr(
-      new planner::InsertNode(result_table, tuples));
+  auto plan_node = new planner::InsertNode(target_table, tuples);
+
+  return plan_node;
 }
 
-}
-}
+} // namespace bridge
+} // namespace peloton
