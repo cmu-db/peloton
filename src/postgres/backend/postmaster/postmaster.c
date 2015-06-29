@@ -1540,9 +1540,9 @@ DetermineSleepTime(struct timeval * timeout)
 static int
 ServerLoop(void)
 {
-  fd_set		readmask;
-  int			nSockets;
-  time_t		now,
+  fd_set    readmask;
+  int     nSockets;
+  time_t    now,
   last_touch_time;
 
   last_touch_time = time(NULL);
@@ -1551,8 +1551,8 @@ ServerLoop(void)
 
   for (;;)
   {
-    fd_set		rmask;
-    int			selres;
+    fd_set    rmask;
+    int     selres;
 
     /*
      * Wait for a connection request to arrive.
@@ -1608,7 +1608,7 @@ ServerLoop(void)
      */
     if (selres > 0)
     {
-      int			i;
+      int     i;
 
       for (i = 0; i < MAXLISTEN; i++)
       {
@@ -1616,7 +1616,7 @@ ServerLoop(void)
           break;
         if (FD_ISSET(ListenSocket[i], &rmask))
         {
-          Port	   *port;
+          Port     *port;
 
           port = ConnCreate(ListenSocket[i]);
           if (port)
@@ -1678,11 +1678,6 @@ ServerLoop(void)
     /* If we have lost the stats collector, try to start a new one */
     if (PgStatPID == 0 && pmState == PM_RUN)
       PgStatPID = pgstat_start();
-
-    // TODO: Peloton Changes
-    /* Initialize Peoloton and start the process */
-    if(PelotonPID == 0 && pmState == PM_RUN)
-      PelotonPID = peloton_start();
 
     /*
      * If we have lost the archiver, try to start a new one.
