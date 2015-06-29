@@ -937,7 +937,7 @@ exec_simple_query(const char *query_string)
   /*
    * Switch to appropriate context for constructing parsetrees.
    */
-  oldcontext = MemoryContextSwitchTo(MessageContext);
+  oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
 
   /*
    * Do basic parsing of the query or queries (this should be safe even if
@@ -1033,7 +1033,7 @@ exec_simple_query(const char *query_string)
      * Switch to appropriate context for constructing querytrees (again,
      * these must outlive the execution context).
      */
-    oldcontext = MemoryContextSwitchTo(MessageContext);
+    oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
 
     querytree_list = pg_analyze_and_rewrite(parsetree, query_string,
                                             NULL, 0);

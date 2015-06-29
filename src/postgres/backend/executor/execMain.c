@@ -1561,6 +1561,8 @@ ExecutePlan(EState *estate,
 		// TODO: Peloton Changes
 		peloton_proc_node(planstate);
 
+	  elog_node_display(LOG, "plan", planstate->plan, Debug_pretty_print);
+
 		/*
 		 * if the tuple is null, then we assume there is nothing more to
 		 * process so we just end the loop...
