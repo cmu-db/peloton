@@ -7,16 +7,12 @@
 #pragma once
 
 //===--------------------------------------------------------------------===//
-//  Bridge for managing Postgres
+//  Bridge for accessing Postgres Catalog
 //===--------------------------------------------------------------------===//
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "nodes/pprint.h"
-
-int peloton_start(void);
 
 char* GetRelationName(unsigned int relation_id);
 
