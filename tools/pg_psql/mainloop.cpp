@@ -460,4 +460,4 @@ MainLoop(FILE *source)
  * multiple infrastructures for stdio.h and so on.  flex is absolutely
  * uncooperative about that, so we can't compile psqlscan.c on its own.
  */
-#include "psqlscan.c"
+#include "psqlscan.cpp"

@@ -15,11 +15,6 @@
 #ifndef LIBPQ_FE_H
 #define LIBPQ_FE_H
 
-#ifdef __cplusplus
-extern		"C"
-{
-#endif
-
 #include <stdio.h>
 
 /*
@@ -586,8 +581,5 @@ extern int	pg_char_to_encoding(const char *name);
 extern const char *pg_encoding_to_char(int encoding);
 extern int	pg_valid_server_encoding_id(int encoding);
 
-#ifdef __cplusplus
-}
-#endif
 
 #endif   /* LIBPQ_FE_H */
