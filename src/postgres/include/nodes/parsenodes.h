@@ -98,10 +98,12 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
  *
  *	  Peloton porting: use c++ inheritance
  */
-struct Query : Node
-{
-	//NodeTag		type;
-
+#ifdef __cplusplus
+typedef struct Query : Node {
+#else
+typedef struct Query {
+	NodeTag		type;
+#endif
 	CmdType		commandType;	/* select|insert|update|delete|utility */
 
 	QuerySource querySource;	/* where did I come from? */
@@ -160,7 +162,7 @@ struct Query : Node
 
 	List	   *constraintDeps; /* a list of pg_constraint OIDs that the query
 								 * depends on to be semantically valid */
-};
+} Query;
 
 
 /****************************************************************************

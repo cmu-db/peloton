@@ -119,7 +119,7 @@ postgres_backend_FILES = \
 						 postgres/backend/access/transam/xloginsert.cpp \
 						 postgres/backend/access/transam/xlogreader.cpp \
 						 postgres/backend/access/transam/xlogutils.cpp \
-						 postgres/backend/bootstrap/bootparse.cpp \
+						 postgres/backend/bootstrap/bootparse.c \
 						 postgres/backend/bootstrap/bootstrap.cpp \
 						 postgres/backend/catalog/aclchk.cpp \
 						 postgres/backend/catalog/catalog.cpp \
