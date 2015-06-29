@@ -306,19 +306,6 @@ peloton_MainLoop(void)
   proc_exit(0);       /* done */
 }
 
-/* ----------
- * peloton_send_bootstrap() -
- *
- *  Called from postmaster at startup. Create the resources required
- *  by the peloton process.
- * ----------
- */
-void
-peloton_send_bootstrap(void)
-{
-
-}
-
 
 /* ----------
  * peloton_init() -
