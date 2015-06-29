@@ -285,7 +285,7 @@ ExecutorRun(QueryDesc *queryDesc,
   // TODO: Peloton Changes
   //PlannedStmt *plan = queryDesc->plannedstmt;
 	//elog_node_display(LOG, "plan", plan, Debug_pretty_print);
-  peloton_ping();
+  peloton_send_ping();
 
 	if (ExecutorRun_hook)
 		(*ExecutorRun_hook) (queryDesc, direction, count);
