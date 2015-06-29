@@ -161,10 +161,11 @@ extern MemoryContext SHMAllocSetContextCreate(MemoryContext parent,
 #define ALLOCSET_SMALL_INITSIZE  (1 * 1024)
 #define ALLOCSET_SMALL_MAXSIZE	 (8 * 1024)
 
-
 /* shared memory context management functions */
 
-#define SHM_DEFAULT_SEGMENT  mm_query_segment
+#define SHM_DEFAULT_SEGMENT      mm_query_segment
+#define SHM_DEFAULT_SIZE         (128 * 1024 * 1024)
+
 extern MM  *mm_query_segment;
 
 extern void SHMContextShutdown(void);

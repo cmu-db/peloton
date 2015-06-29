@@ -34,10 +34,6 @@ MM  *mm_query_segment = NULL;
 /*
  * These functions implement the MemoryContext API for Shared Memory contexts.
  */
-MemoryContext SHMContextCreate(NodeTag tag, Size size,
-                 MemoryContextMethods *methods,
-                 MemoryContext parent,
-                 const char *name, MM * shmctx);
 MM * SHMFindMMContext(MemoryContext ac);
 void SHMContextShutdown(void);
 void SHMContextInit(void);
@@ -48,6 +44,10 @@ void SHMContextDeleteChildren(MemoryContext context);
 void SHMContextResetAndDeleteChildren(MemoryContext context);
 bool SHMContextContains(MemoryContext context, void *pointer);
 void SHMContextStats(MemoryContext context);
+MemoryContext SHMContextCreate(NodeTag tag, Size size,
+                 MemoryContextMethods *methods,
+                 MemoryContext parent,
+                 const char *name, MM * shmctx);
 
 static void SHMContextStatsInternal(MemoryContext context, int level);
 
@@ -55,115 +55,6 @@ static void SHMContextStatsInternal(MemoryContext context, int level);
 void SHMContextCheck(MemoryContext context);
 #endif
 
-/*--------------------
- * MemoryContextCreate
- *    Context-type-independent part of context creation.
- *
- * This is only intended to be called by context-type-specific
- * context creation routines, not by the unwashed masses.
- *
- * The context creation procedure is a little bit tricky because
- * we want to be sure that we don't leave the context tree invalid
- * in case of failure (such as insufficient memory to allocate the
- * context node itself).  The procedure goes like this:
- *  1.  Context-type-specific routine first calls MemoryContextCreate(),
- *    passing the appropriate tag/size/methods values (the methods
- *    pointer will ordinarily point to statically allocated data).
- *    The parent and name parameters usually come from the caller.
- *  2.  MemoryContextCreate() attempts to allocate the context node,
- *    plus space for the name.  If this fails we can elog() with no
- *    damage done.
- *  3.  We fill in all of the type-independent MemoryContext fields.
- *  4.  We call the type-specific init routine (using the methods pointer).
- *    The init routine is required to make the node minimally valid
- *    with zero chance of failure --- it can't allocate more memory,
- *    for example.
- *  5.  Now we have a minimally valid node that can behave correctly
- *    when told to reset or delete itself.  We link the node to its
- *    parent (if any), making the node part of the context tree.
- *  6.  We return to the context-type-specific routine, which finishes
- *    up type-specific initialization.  This routine can now do things
- *    that might fail (like allocate more memory), so long as it's
- *    sure the node is left in a state that delete will handle.
- *
- * This protocol doesn't prevent us from leaking memory if step 6 fails
- * during creation of a top-level context, since there's no parent link
- * in that case.  However, if you run out of memory while you're building
- * a top-level context, you might as well go home anyway...
- *
- * Normally, the context node and the name are allocated from
- * TopMemoryContext (NOT from the parent context, since the node must
- * survive resets of its parent context!).  However, this routine is itself
- * used to create TopMemoryContext!  If we see that TopMemoryContext is NULL,
- * we assume we are creating TopMemoryContext and use malloc() to allocate
- * the node.
- *
- * Note that the name field of a MemoryContext does not point to
- * separately-allocated storage, so it should not be freed at context
- * deletion.
- *--------------------
- */
-MemoryContext
-SHMContextCreate(NodeTag tag, Size size,
-                 MemoryContextMethods *methods,
-                 MemoryContext parent,
-                 const char *name, MM * shmctx)
-{
-  MemoryContext node = NULL;
-  Size    needed = size + strlen(name) + 1;
-
-  /* Get space for node and name */
-  if (tag == T_SHMAllocSetContext)
-  {
-    /* OC: if this is a shared memory context, then malloc its */
-    /* memory context in shared memory */
-    if (!shmctx)
-    {
-      elog(ERROR, "MemoryContextCreate: mm shared memory pool not yet created");
-      return NULL;
-    }
-    if (TopSharedMemoryContext)
-    {
-      MemoryContext old = MemoryContextSwitchTo(TopSharedMemoryContext);
-
-      node = (MemoryContext) palloc(needed);
-      MemoryContextSwitchTo(old);
-    }
-    else
-    {
-      /* warning -- danger -- this context will CANNOT be freed */
-      /* MemoryContextDelete exprects a block alloced with palloc */
-      node = (MemoryContext) mm_malloc(shmctx, needed);
-
-    }
-  }
-  else
-    Assert(false);
-
-  /* Initialize the node as best we can */
-  MemSet(node, 0, size);
-  node->type = tag;
-  node->methods = methods;
-  node->parent = NULL;    /* for the moment */
-  node->firstchild = NULL;
-  node->nextchild = NULL;
-  node->name = ((char *) node) + size;
-  strcpy(node->name, name);
-
-  /* Type-specific routine finishes any other essential initialization */
-  (*node->methods->init) (node);
-
-  /* OK to link node to parent (if any) */
-  if (parent)
-  {
-    node->parent = parent;
-    node->nextchild = parent->firstchild;
-    parent->firstchild = node;
-  }
-
-  /* Return to type-specific creation routine to finish up */
-  return node;
-}
 
 MM *
 SHMFindMMContext(MemoryContext ac)
@@ -200,18 +91,15 @@ SHMContextShutdown(void)
 void
 SHMContextInit(void)
 {
-  char		mmquerysegname[100];
-  //int			pid = 0;
+  char		mm_query_seg_name[100];
 
   if (mm_query_segment)
     return;
 
-  //pid = getpid();
-  //sprintf(mmquerysegname, "/tmp/mm_query_segment_%d", pid);
-  sprintf(mmquerysegname, "/tmp/shm.peloton");
+  sprintf(mm_query_seg_name, "/tmp/peloton");
 
-  mm_query_segment = mm_create(100 * 1024 * 1024,
-                               mmquerysegname);
+  mm_query_segment = mm_create(SHM_DEFAULT_SIZE,
+                               mm_query_seg_name);
   if (!mm_query_segment)
   {
     elog(ERROR, "couldn't allocate mm_query_segment");
@@ -219,9 +107,9 @@ SHMContextInit(void)
 
   TopSharedMemoryContext = SHMAllocSetContextCreate((MemoryContext) NULL,
                                                     "TopSharedMemoryContext",
-                                                    8 * 1024,
-                                                    8 * 1024,
-                                                    8 * 1024,
+                                                    ALLOCSET_SMALL_MINSIZE,
+                                                    ALLOCSET_SMALL_INITSIZE,
+                                                    ALLOCSET_SMALL_MAXSIZE,
                                                     mm_query_segment);
 }
 
@@ -444,6 +332,115 @@ SHMContextContains(MemoryContext context, void *pointer)
   return false;
 }
 
+/*--------------------
+ * MemoryContextCreate
+ *    Context-type-independent part of context creation.
+ *
+ * This is only intended to be called by context-type-specific
+ * context creation routines, not by the unwashed masses.
+ *
+ * The context creation procedure is a little bit tricky because
+ * we want to be sure that we don't leave the context tree invalid
+ * in case of failure (such as insufficient memory to allocate the
+ * context node itself).  The procedure goes like this:
+ *  1.  Context-type-specific routine first calls MemoryContextCreate(),
+ *    passing the appropriate tag/size/methods values (the methods
+ *    pointer will ordinarily point to statically allocated data).
+ *    The parent and name parameters usually come from the caller.
+ *  2.  MemoryContextCreate() attempts to allocate the context node,
+ *    plus space for the name.  If this fails we can elog() with no
+ *    damage done.
+ *  3.  We fill in all of the type-independent MemoryContext fields.
+ *  4.  We call the type-specific init routine (using the methods pointer).
+ *    The init routine is required to make the node minimally valid
+ *    with zero chance of failure --- it can't allocate more memory,
+ *    for example.
+ *  5.  Now we have a minimally valid node that can behave correctly
+ *    when told to reset or delete itself.  We link the node to its
+ *    parent (if any), making the node part of the context tree.
+ *  6.  We return to the context-type-specific routine, which finishes
+ *    up type-specific initialization.  This routine can now do things
+ *    that might fail (like allocate more memory), so long as it's
+ *    sure the node is left in a state that delete will handle.
+ *
+ * This protocol doesn't prevent us from leaking memory if step 6 fails
+ * during creation of a top-level context, since there's no parent link
+ * in that case.  However, if you run out of memory while you're building
+ * a top-level context, you might as well go home anyway...
+ *
+ * Normally, the context node and the name are allocated from
+ * TopMemoryContext (NOT from the parent context, since the node must
+ * survive resets of its parent context!).  However, this routine is itself
+ * used to create TopMemoryContext!  If we see that TopMemoryContext is NULL,
+ * we assume we are creating TopMemoryContext and use malloc() to allocate
+ * the node.
+ *
+ * Note that the name field of a MemoryContext does not point to
+ * separately-allocated storage, so it should not be freed at context
+ * deletion.
+ *--------------------
+ */
+MemoryContext
+SHMContextCreate(NodeTag tag, Size size,
+                 MemoryContextMethods *methods,
+                 MemoryContext parent,
+                 const char *name, MM * shmctx)
+{
+  MemoryContext node = NULL;
+  Size    needed = size + strlen(name) + 1;
+
+  /* Get space for node and name */
+  if (tag == T_SHMAllocSetContext)
+  {
+    /* OC: if this is a shared memory context, then malloc its */
+    /* memory context in shared memory */
+    if (!shmctx)
+    {
+      elog(ERROR, "MemoryContextCreate: mm shared memory pool not yet created");
+      return NULL;
+    }
+    if (TopSharedMemoryContext)
+    {
+      MemoryContext old = MemoryContextSwitchTo(TopSharedMemoryContext);
+
+      node = (MemoryContext) palloc(needed);
+      MemoryContextSwitchTo(old);
+    }
+    else
+    {
+      /* warning -- danger -- this context will CANNOT be freed */
+      /* MemoryContextDelete exprects a block alloced with palloc */
+      node = (MemoryContext) mm_malloc(shmctx, needed);
+
+    }
+  }
+  else
+    Assert(false);
+
+  /* Initialize the node as best we can */
+  MemSet(node, 0, size);
+  node->type = tag;
+  node->methods = methods;
+  node->parent = NULL;    /* for the moment */
+  node->firstchild = NULL;
+  node->nextchild = NULL;
+  node->name = ((char *) node) + size;
+  strcpy(node->name, name);
+
+  /* Type-specific routine finishes any other essential initialization */
+  (*node->methods->init) (node);
+
+  /* OK to link node to parent (if any) */
+  if (parent)
+  {
+    node->parent = parent;
+    node->nextchild = parent->firstchild;
+    parent->firstchild = node;
+  }
+
+  /* Return to type-specific creation routine to finish up */
+  return node;
+}
 
 /*
  * MemoryContextCheck
@@ -467,4 +464,3 @@ SHMContextCheck(MemoryContext context)
   mm_unlock(mmcxt);
 }
 #endif
-
