@@ -14,10 +14,8 @@
 #include "backend/common/types.h"
 #include "backend/bridge/ddl.h"
 
-extern "C" {
 #include "fmgr.h"
 #include "utils/lsyscache.h"
-}
 void TestTupleTransformer(Datum datum, Oid atttypid) {
 
   peloton::Value p_value;

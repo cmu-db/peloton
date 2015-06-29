@@ -11,9 +11,6 @@
 //===--------------------------------------------------------------------===//
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include "nodes/pprint.h"
 
 char* GetRelationName(unsigned int relation_id);
@@ -41,7 +38,3 @@ unsigned int GetRelationOidFromRelationName(const char *table_name);
 void SetUserTableStats(unsigned int relation_id);
 
 void FunctionTest(void);
-
-#ifdef __cplusplus
-}
-#endif

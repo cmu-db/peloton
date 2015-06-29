@@ -950,7 +950,7 @@ exec_command(const char *cmd,
 		char	   *pw1;
 		char	   *pw2;
 
-		pw1 = simple_prompt("Enter new password: ", 100, false);
+		pw1 = simple_prompt("Enter cnew password: ", 100, false);
 		pw2 = simple_prompt("Enter it again: ", 100, false);
 
 		if (strcmp(pw1, pw2) != 0)
@@ -1719,7 +1719,7 @@ do_connect(char *dbname, char *user, char *host, char *port)
 
 		/*
 		 * Connection attempt failed; either retry the connection attempt with
-		 * a new password, or give up.
+		 * a cnew password, or give up.
 		 */
 		if (!password && PQconnectionNeedsPassword(n_conn) && pset.getPassword != TRI_NO)
 		{
@@ -1756,7 +1756,7 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	}
 
 	/*
-	 * Replace the old connection with the new one, and update
+	 * Replace the old connection with the cnew one, and update
 	 * connection-dependent variables.
 	 */
 	PQsetNoticeProcessor(n_conn, NoticeProcessor, NULL);
@@ -1764,7 +1764,7 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	SyncVariables();
 	connection_warnings(false); /* Must be after SyncVariables */
 
-	/* Tell the user about the new connection */
+	/* Tell the user about the cnew connection */
 	if (!pset.quiet)
 	{
 		if (param_is_newly_set(PQhost(o_conn), PQhost(pset.db)) ||
@@ -1899,7 +1899,7 @@ checkWin32Codepage(void)
  * SyncVariables
  *
  * Make psql's internal variables agree with connection state upon
- * establishing a new connection.
+ * establishing a cnew connection.
  */
 void
 SyncVariables(void)
@@ -2316,7 +2316,7 @@ set_unicode_line_style(printQueryOpt *popt, const char *value, size_t vallen,
 	else
 		return false;
 
-	/* input is ok, generate new unicode style */
+	/* input is ok, generate cnew unicode style */
 	refresh_utf8format(&(popt->topt));
 
 	return true;

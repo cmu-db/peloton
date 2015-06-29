@@ -3,8 +3,7 @@
  *
  * Copyright(c) 2015, CMU
  */
-
-#ifdef __cplusplus
+#pragma once
 
 #include <cassert>
 
@@ -17,9 +16,7 @@
 #include "backend/storage/backend_vm.h"
 #include "backend/storage/table_factory.h"
 
-#endif
 
-#pragma once
 
 typedef struct 
 {
@@ -31,8 +28,6 @@ typedef struct
    bool is_inlined;
 } DDL_ColumnInfo;
 
-#ifdef __cplusplus
-
 namespace peloton {
 namespace bridge {
 
@@ -42,24 +37,20 @@ namespace bridge {
 
 class DDL {
 public:
-  static bool CreateTable(std::string table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns, catalog::Schema* schema);
+  static bool CreateTable(std::string table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns, catalog::Schema* schema = nullptr);
   static bool DropTable(unsigned int table_oid);
   static bool CreateIndex(std::string index_name, std::string table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForKeySchema, int num_columns_of_KeySchema);
-};
 
-extern "C" {
-  bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns);
-  bool DDL_DropTable(unsigned int table_oid);
-  bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForKeySchema , int num_columns_of_KeySchema );
-}
+  //bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns);
+  //bool DDL_DropTable(unsigned int table_oid);
+  //bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForKeySchema , int num_columns_of_KeySchema );
+};
 
 } // namespace bridge
 } // namespace peloton
 
-#endif
+//extern bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns);
 
-extern bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns);
+//extern bool DDL_DropTable(unsigned int table_oid);
 
-extern bool DDL_DropTable(unsigned int table_oid);
-
-extern bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForKeySchema , int num_columns_of_KeySchema);
+//extern bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForKeySchema , int num_columns_of_KeySchema);
