@@ -255,7 +255,7 @@ int boot_yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 259 "bootparse.cpppp" /* yacc.c:358  */
+#line 259 "bootparse.cpp" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -1403,7 +1403,7 @@ yyreduce:
 					boot_openrel((yyvsp[0].str));
 					do_end();
 				}
-#line 1407 "bootparse.cpppp" /* yacc.c:1646  */
+#line 1407 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 15:
@@ -1413,7 +1413,7 @@ yyreduce:
 					closerel((yyvsp[0].str));
 					do_end();
 				}
-#line 1417 "bootparse.cpppp" /* yacc.c:1646  */
+#line 1417 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 16:
@@ -1423,7 +1423,7 @@ yyreduce:
 					closerel(NULL);
 					do_end();
 				}
-#line 1427 "bootparse.cpppp" /* yacc.c:1646  */
+#line 1427 "bootparse.cpp" /* yacc.c:1646  */
     break;
 
   case 17:
