@@ -34,7 +34,7 @@ void GetPublicTableList(void);
 
 bool IsThisTableExist(const char* table_name);
 
-bool InitPeloton();
+bool InitPeloton(const char* db_name);
 
 Oid GetRelationOidFromRelationName(const char *table_name);
 
