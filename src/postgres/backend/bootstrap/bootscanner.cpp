@@ -1,6 +1,6 @@
-#line 2 "bootscanner.cpppp"
+#line 2 "bootscanner.cpp"
 
-#line 4 "bootscanner.cpppp"
+#line 4 "bootscanner.cpp"
 
 #define  YY_INT_ALIGNED short int
 
