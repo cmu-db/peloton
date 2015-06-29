@@ -23,8 +23,8 @@
  */
 #define PG_KEYWORD(a,b,c) {a,0,c},
 
-const ScanKeyword FEScanKeywords[] = {
+extern const ScanKeyword FEScanKeywords[] = {
 #include "parser/kwlist.h"
 };
 
-const int	NumFEScanKeywords = lengthof(FEScanKeywords);
+extern const int	NumFEScanKeywords = lengthof(FEScanKeywords);
