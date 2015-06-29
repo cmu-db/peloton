@@ -1809,7 +1809,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 			if (!inJob)
 			{
 				/*
-				 * Job objects are working, and the new process isn't in one,
+				 * Job objects are working, and the cnew process isn't in one,
 				 * so we can create one safely. If any problems show up when
 				 * setting it, we're going to ignore them.
 				 */

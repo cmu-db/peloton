@@ -215,7 +215,7 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 		}
 	}
 
-	/* not present, make new entry */
+	/* not present, make cnew entry */
 	current = pg_malloc(sizeof *current);
 	current->name = pg_strdup(name);
 	current->value = pg_strdup(value);
@@ -253,7 +253,7 @@ SetVariableAssignHook(VariableSpace space, const char *name, VariableAssignHook 
 		}
 	}
 
-	/* not present, make new entry */
+	/* not present, make cnew entry */
 	current = pg_malloc(sizeof *current);
 	current->name = pg_strdup(name);
 	current->value = NULL;

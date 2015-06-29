@@ -344,7 +344,7 @@ bool InitPeloton(const char* dbname)
         // Create the table
         if( pgclass->relkind == 'r' )
         {
-          ret = DDL_CreateTable( NameStr(pgclass->relname) , ddl_columnInfo, column_itr);
+          ret = peloton::bridge::DDL::CreateTable( NameStr(pgclass->relname) , ddl_columnInfo, column_itr);
           if( ret )  printf("Create Table \"%s\" in Peloton\n", NameStr(pgclass->relname));
           else       fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
         } 
@@ -362,7 +362,7 @@ bool InitPeloton(const char* dbname)
 
             if( pgindex->indexrelid == table_oid )
             {
-              DDL_CreateIndex(NameStr(pgclass->relname), get_rel_name(pgindex->indrelid), 0, pgindex->indisunique, ddl_columnInfo, column_itr);
+              peloton::bridge::DDL::CreateIndex(NameStr(pgclass->relname), get_rel_name(pgindex->indrelid), 0, pgindex->indisunique, ddl_columnInfo, column_itr);
               if( ret )  printf("Create Index \"%s\" in Peloton\n", NameStr(pgclass->relname));
               else       fprintf(stderr, "DDL_CreateIndex :: %d \n", ret);
               break;
@@ -375,7 +375,7 @@ bool InitPeloton(const char* dbname)
       }else
       {
         // Create Table without column info
-        ret = DDL_CreateTable( NameStr(pgclass->relname) , NULL, 0);
+        ret = peloton::bridge::DDL::CreateTable( NameStr(pgclass->relname) , NULL, 0);
         if( ret )  printf("Create Table \"%s\" in Peloton\n", NameStr(pgclass->relname));
         else       fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
       }

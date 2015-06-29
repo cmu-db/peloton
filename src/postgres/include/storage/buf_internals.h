@@ -73,7 +73,7 @@ struct BufferTag
 	ForkNumber	forkNum;
 	BlockNumber blockNum;		/* blknum relative to begin of reln */
 
-	BufferTag();
+	BufferTag() {};
 
 	BufferTag(volatile BufferTag &other)
 	:rnode(other.rnode),

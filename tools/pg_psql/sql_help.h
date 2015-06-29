@@ -429,37 +429,37 @@ static const struct _helpStruct QL_HELP[] = {
       21 },
 
     { "CREATE AGGREGATE",
-      N_("define a new aggregate function"),
+      N_("define a cnew aggregate function"),
       sql_help_CREATE_AGGREGATE,
       46 },
 
     { "CREATE CAST",
-      N_("define a new cast"),
+      N_("define a cnew cast"),
       sql_help_CREATE_CAST,
       10 },
 
     { "CREATE COLLATION",
-      N_("define a new collation"),
+      N_("define a cnew collation"),
       sql_help_CREATE_COLLATION,
       5 },
 
     { "CREATE CONVERSION",
-      N_("define a new encoding conversion"),
+      N_("define a cnew encoding conversion"),
       sql_help_CREATE_CONVERSION,
       1 },
 
     { "CREATE DATABASE",
-      N_("create a new database"),
+      N_("create a cnew database"),
       sql_help_CREATE_DATABASE,
       9 },
 
     { "CREATE DOMAIN",
-      N_("define a new domain"),
+      N_("define a cnew domain"),
       sql_help_CREATE_DOMAIN,
       8 },
 
     { "CREATE EVENT TRIGGER",
-      N_("define a new event trigger"),
+      N_("define a cnew event trigger"),
       sql_help_CREATE_EVENT_TRIGGER,
       3 },
 
@@ -469,147 +469,147 @@ static const struct _helpStruct QL_HELP[] = {
       3 },
 
     { "CREATE FOREIGN DATA WRAPPER",
-      N_("define a new foreign-data wrapper"),
+      N_("define a cnew foreign-data wrapper"),
       sql_help_CREATE_FOREIGN_DATA_WRAPPER,
       3 },
 
     { "CREATE FOREIGN TABLE",
-      N_("define a new foreign table"),
+      N_("define a cnew foreign table"),
       sql_help_CREATE_FOREIGN_TABLE,
       20 },
 
     { "CREATE FUNCTION",
-      N_("define a new function"),
+      N_("define a cnew function"),
       sql_help_CREATE_FUNCTION,
       16 },
 
     { "CREATE GROUP",
-      N_("define a new database role"),
+      N_("define a cnew database role"),
       sql_help_CREATE_GROUP,
       17 },
 
     { "CREATE INDEX",
-      N_("define a new index"),
+      N_("define a cnew index"),
       sql_help_CREATE_INDEX,
       4 },
 
     { "CREATE LANGUAGE",
-      N_("define a new procedural language"),
+      N_("define a cnew procedural language"),
       sql_help_CREATE_LANGUAGE,
       2 },
 
     { "CREATE MATERIALIZED VIEW",
-      N_("define a new materialized view"),
+      N_("define a cnew materialized view"),
       sql_help_CREATE_MATERIALIZED_VIEW,
       5 },
 
     { "CREATE OPERATOR",
-      N_("define a new operator"),
+      N_("define a cnew operator"),
       sql_help_CREATE_OPERATOR,
       6 },
 
     { "CREATE OPERATOR CLASS",
-      N_("define a new operator class"),
+      N_("define a cnew operator class"),
       sql_help_CREATE_OPERATOR_CLASS,
       5 },
 
     { "CREATE OPERATOR FAMILY",
-      N_("define a new operator family"),
+      N_("define a cnew operator family"),
       sql_help_CREATE_OPERATOR_FAMILY,
       0 },
 
     { "CREATE POLICY",
-      N_("define a new policy for a table"),
+      N_("define a cnew policy for a table"),
       sql_help_CREATE_POLICY,
       4 },
 
     { "CREATE ROLE",
-      N_("define a new database role"),
+      N_("define a cnew database role"),
       sql_help_CREATE_ROLE,
       20 },
 
     { "CREATE RULE",
-      N_("define a new rewrite rule"),
+      N_("define a cnew rewrite rule"),
       sql_help_CREATE_RULE,
       6 },
 
     { "CREATE SCHEMA",
-      N_("define a new schema"),
+      N_("define a cnew schema"),
       sql_help_CREATE_SCHEMA,
       9 },
 
     { "CREATE SEQUENCE",
-      N_("define a new sequence generator"),
+      N_("define a cnew sequence generator"),
       sql_help_CREATE_SEQUENCE,
       3 },
 
     { "CREATE SERVER",
-      N_("define a new foreign server"),
+      N_("define a cnew foreign server"),
       sql_help_CREATE_SERVER,
       2 },
 
     { "CREATE TABLE",
-      N_("define a new table"),
+      N_("define a cnew table"),
       sql_help_CREATE_TABLE,
       56 },
 
     { "CREATE TABLE AS",
-      N_("define a new table from the results of a query"),
+      N_("define a cnew table from the results of a query"),
       sql_help_CREATE_TABLE_AS,
       6 },
 
     { "CREATE TABLESPACE",
-      N_("define a new tablespace"),
+      N_("define a cnew tablespace"),
       sql_help_CREATE_TABLESPACE,
       3 },
 
     { "CREATE TEXT SEARCH CONFIGURATION",
-      N_("define a new text search configuration"),
+      N_("define a cnew text search configuration"),
       sql_help_CREATE_TEXT_SEARCH_CONFIGURATION,
       3 },
 
     { "CREATE TEXT SEARCH DICTIONARY",
-      N_("define a new text search dictionary"),
+      N_("define a cnew text search dictionary"),
       sql_help_CREATE_TEXT_SEARCH_DICTIONARY,
       3 },
 
     { "CREATE TEXT SEARCH PARSER",
-      N_("define a new text search parser"),
+      N_("define a cnew text search parser"),
       sql_help_CREATE_TEXT_SEARCH_PARSER,
       6 },
 
     { "CREATE TEXT SEARCH TEMPLATE",
-      N_("define a new text search template"),
+      N_("define a cnew text search template"),
       sql_help_CREATE_TEXT_SEARCH_TEMPLATE,
       3 },
 
     { "CREATE TRANSFORM",
-      N_("define a new transform"),
+      N_("define a cnew transform"),
       sql_help_CREATE_TRANSFORM,
       3 },
 
     { "CREATE TRIGGER",
-      N_("define a new trigger"),
+      N_("define a cnew trigger"),
       sql_help_CREATE_TRIGGER,
       13 },
 
     { "CREATE TYPE",
-      N_("define a new data type"),
+      N_("define a cnew data type"),
       sql_help_CREATE_TYPE,
       35 },
 
     { "CREATE USER",
-      N_("define a new database role"),
+      N_("define a cnew database role"),
       sql_help_CREATE_USER,
       19 },
 
     { "CREATE USER MAPPING",
-      N_("define a new mapping of a user to a foreign server"),
+      N_("define a cnew mapping of a user to a foreign server"),
       sql_help_CREATE_USER_MAPPING,
       2 },
 
     { "CREATE VIEW",
-      N_("define a new view"),
+      N_("define a cnew view"),
       sql_help_CREATE_VIEW,
       3 },
 
@@ -854,7 +854,7 @@ static const struct _helpStruct QL_HELP[] = {
       4 },
 
     { "INSERT",
-      N_("create new rows in a table"),
+      N_("create cnew rows in a table"),
       sql_help_INSERT,
       18 },
 
@@ -939,7 +939,7 @@ static const struct _helpStruct QL_HELP[] = {
       0 },
 
     { "SAVEPOINT",
-      N_("define a new savepoint within the current transaction"),
+      N_("define a cnew savepoint within the current transaction"),
       sql_help_SAVEPOINT,
       0 },
 
@@ -954,7 +954,7 @@ static const struct _helpStruct QL_HELP[] = {
       41 },
 
     { "SELECT INTO",
-      N_("define a new table from the results of a query"),
+      N_("define a cnew table from the results of a query"),
       sql_help_SELECT_INTO,
       14 },
 
