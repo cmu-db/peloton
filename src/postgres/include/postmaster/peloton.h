@@ -66,7 +66,7 @@ typedef struct Peloton_MsgDummy
 typedef struct Peloton_MsgPlan
 {
   Peloton_MsgHdr m_hdr;
-  PlanState m_node;
+  PlanState *m_node;
 } Peloton_MsgPlan;
 
 

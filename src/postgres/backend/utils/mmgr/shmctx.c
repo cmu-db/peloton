@@ -210,7 +210,8 @@ SHMContextInit(void)
   //sprintf(mmquerysegname, "/tmp/mm_query_segment_%d", pid);
   sprintf(mmquerysegname, "/tmp/shm.peloton");
 
-  mm_query_segment = mm_create(20 * 1024 * 1024, mmquerysegname);
+  mm_query_segment = mm_create(100 * 1024 * 1024,
+                               mmquerysegname);
   if (!mm_query_segment)
   {
     elog(ERROR, "couldn't allocate mm_query_segment");
