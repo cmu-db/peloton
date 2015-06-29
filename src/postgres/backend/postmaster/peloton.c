@@ -273,12 +273,9 @@ peloton_MainLoop(void)
       switch (msg.msg_hdr.m_type)
       {
         case PELOTON_MTYPE_DUMMY:
-          fprintf(stdout, "Received dummy message \n");
           break;
 
         case PELOTON_MTYPE_PLAN:
-          fprintf(stdout, "Received plan message \n");
-
           peloton_recv_plan((Peloton_MsgPlan *) &msg, len);
           break;
 
@@ -640,15 +637,29 @@ peloton_ping(void)
  * ----------
  */
 void
-peloton_proc_node(PlanState *node)
+peloton_send_proc_node(PlanState *node)
 {
   Peloton_MsgPlan msg;
+  MemoryContext oldcontext;
 
   if (pelotonSock == PGINVALID_SOCKET)
     return;
 
   peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_PLAN);
-  msg.m_node = node;
+
+  /*
+   * Switch to TopSharedMemoryContext context for copying plan.
+   */
+  oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
+
+  // TODO: Can we avoid copying the plan ?
+  msg.m_node = (PlanState *) palloc(sizeof(PlanState));
+  memcpy(msg.m_node, node, sizeof(PlanState));
+
+  /*
+   * Switch back to old context.
+   */
+  MemoryContextSwitchTo(oldcontext);
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -665,32 +676,23 @@ peloton_recv_plan(Peloton_MsgPlan *msg, int len)
   PlanState *node;
   Plan *plan;
 
-  if(msg == NULL)
-    return;
-
-  SHMContextStats(TopSharedMemoryContext);
-
-  fprintf(stdout, "going to print plan : %p \n", plan);
-
-  node = msg->m_node;
-  if(node == NULL)
+  if(msg != NULL)
   {
-    fprintf(stdout, "node is null \n");
-    return;
+    /* Get the planstate */
+    node = msg->m_node;
+
+    if(node != NULL)
+    {
+      /* Get the plan */
+      plan = node->plan;
+
+      fprintf(stdout, "Planstate type : %d\n", plan->type);
+      //elog_node_display(LOG, "plan", plan, Debug_pretty_print);
+    }
   }
 
-  plan = node->plan;
-  if(plan == NULL)
-  {
-    fprintf(stdout, "plan is null \n");
-    return;
-  }
-
-  //elog_node_display(LOG, "plan", plan, Debug_pretty_print);
-
-  /* Clean up plan */
-  //pfree(plan);
-
+  /* Print stats */
+  //SHMContextStats(TopSharedMemoryContext);
 }
 
 
