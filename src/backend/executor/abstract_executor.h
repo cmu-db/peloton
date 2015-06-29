@@ -64,7 +64,7 @@ class AbstractExecutor {
    *
    * @return Reference to plan node.
    */
-  template <class T> inline const T& GetNode() {
+  template <class T> inline const T& GetPlanNode() {
     const T *node = dynamic_cast<const T *>(node_);
     assert(node);
     return *node;
