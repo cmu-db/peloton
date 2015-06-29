@@ -42,7 +42,7 @@ bool IndexScanExecutor::DInit() {
   LOG_TRACE("Index Scan executor :: 0 child \n");
 
   // Grab info from plan node and check it
-  const planner::IndexScanNode &node = GetNode<planner::IndexScanNode>();
+  const planner::IndexScanNode &node = GetPlanNode<planner::IndexScanNode>();
 
   index_ = node.GetIndex();
   assert(index_ != nullptr);
