@@ -188,9 +188,12 @@ typedef struct Query {
  *
  * Peloton porting: use c++ inheritance
  */
-typedef struct TypeName : Node
-{
-	//NodeTag		type;
+#ifdef __cplusplus
+typedef struct TypeName : Node {
+#else
+typedef struct TypeName {
+  NodeTag		type;
+#endif
 	List	   *names;			/* qualified name (list of Value strings) */
 	Oid			typeOid;		/* type identified by OID */
 	bool		setof;			/* is a set? */
@@ -214,9 +217,12 @@ typedef struct TypeName : Node
  * for simplicity in the normal case, initial field selection from a table
  * name is represented within ColumnRef and not by adding A_Indirection.
  */
-typedef struct ColumnRef : Node
-{
-	//NodeTag		type;
+#ifdef __cplusplus
+typedef struct ColumnRef : Node {
+#else
+typedef struct ColumnRef {
+	NodeTag		type;
+#endif
 	List	   *fields;			/* field names (Value strings) or A_Star */
 	int			location;		/* token location, or -1 if unknown */
 } ColumnRef;
@@ -224,9 +230,12 @@ typedef struct ColumnRef : Node
 /*
  * ParamRef - specifies a $n parameter reference
  */
-typedef struct ParamRef : Node
-{
-	//NodeTag		type;
+typedef struct ParamRef : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	int			number;			/* the number of the parameter */
 	int			location;		/* token location, or -1 if unknown */
 } ParamRef;
@@ -253,9 +262,12 @@ typedef enum A_Expr_Kind
 	AEXPR_PAREN					/* nameless dummy node for parentheses */
 } A_Expr_Kind;
 
-typedef struct A_Expr : Node
-{
-	//NodeTag		type;
+typedef struct A_Expr : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	A_Expr_Kind kind;			/* see above */
 	List	   *name;			/* possibly-qualified name of coperator */
 	Node	   *lexpr;			/* left argument, or NULL if none */
@@ -266,9 +278,12 @@ typedef struct A_Expr : Node
 /*
  * A_Const - a literal constant
  */
-typedef struct A_Const : Node
-{
-	//NodeTag		type;
+typedef struct A_Const : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	Value		val;			/* value (includes type info, see value.h) */
 	int			location;		/* token location, or -1 if unknown */
 } A_Const;
@@ -276,9 +291,12 @@ typedef struct A_Const : Node
 /*
  * TypeCast - a CAST expression
  */
-typedef struct TypeCast : Node
-{
-	//NodeTag		type;
+typedef struct TypeCast : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	Node	   *arg;			/* the expression being casted */
 	TypeName   *typeName;		/* the target type */
 	int			location;		/* token location, or -1 if unknown */
@@ -287,9 +305,12 @@ typedef struct TypeCast : Node
 /*
  * CollateClause - a COLLATE expression
  */
-typedef struct CollateClause : Node
-{
-	//NodeTag		type;
+typedef struct CollateClause : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	Node	   *arg;			/* input expression */
 	List	   *collname;		/* possibly-qualified collation name */
 	int			location;		/* token location, or -1 if unknown */
@@ -306,9 +327,12 @@ typedef enum RoleSpecType
 	ROLESPEC_PUBLIC			/* role name is "public" */
 } RoleSpecType;
 
-typedef struct RoleSpec : Node
-{
-	//NodeTag		type;
+typedef struct RoleSpec : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	RoleSpecType roletype;	/* Type of this rolespec */
 	char	   *rolename;	/* filled only for ROLESPEC_CSTRING */
 	int			location;	/* token location, or -1 if unknown */
@@ -328,9 +352,12 @@ typedef struct RoleSpec : Node
  * Normally, you'd initialize this via makeFuncCall() and then only change the
  * parts of the struct its defaults don't match afterwards, as needed.
  */
-typedef struct FuncCall : Node
-{
-	//NodeTag		type;
+typedef struct FuncCall : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *funcname;		/* qualified name of function */
 	List	   *args;			/* the arguments (list of exprs) */
 	List	   *agg_order;		/* ORDER BY (list of SortBy) */
@@ -346,9 +373,12 @@ typedef struct FuncCall : Node
 /*
  * TableSampleClause - a sampling method information
  */
-typedef struct TableSampleClause : Node
-{
-	//NodeTag		type;
+typedef struct TableSampleClause : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	Oid			tsmid;
 	bool		tsmseqscan;
 	bool		tsmpagemode;
@@ -369,17 +399,23 @@ typedef struct TableSampleClause : Node
  * This can appear within ColumnRef.fields, A_Indirection.indirection, and
  * ResTarget.indirection lists.
  */
-typedef struct A_Star : Node
-{
-	//NodeTag		type;
+typedef struct A_Star : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 } A_Star;
 
 /*
  * A_Indices - array subscript or slice bounds ([lidx:uidx] or [uidx])
  */
-typedef struct A_Indices : Node
-{
-	//NodeTag		type;
+typedef struct A_Indices : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	Node	   *lidx;			/* NULL if it's a single subscript */
 	Node	   *uidx;
 } A_Indices;
@@ -399,9 +435,12 @@ typedef struct A_Indices : Node
  * Currently, A_Star must appear only as the last list element --- the grammar
  * is responsible for enforcing this!
  */
-typedef struct A_Indirection : Node
-{
-	//NodeTag		type;
+typedef struct A_Indirection : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	Node	   *arg;			/* the thing being selected from */
 	List	   *indirection;	/* subscripts and/or field names and/or * */
 } A_Indirection;
@@ -409,9 +448,12 @@ typedef struct A_Indirection : Node
 /*
  * A_ArrayExpr - an ARRAY[] construct
  */
-typedef struct A_ArrayExpr : Node
-{
-	//NodeTag		type;
+typedef struct A_ArrayExpr : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *elements;		/* array element expressions */
 	int			location;		/* token location, or -1 if unknown */
 } A_ArrayExpr;
@@ -434,9 +476,12 @@ typedef struct A_ArrayExpr : Node
  *
  * See A_Indirection for more info about what can appear in 'indirection'.
  */
-typedef struct ResTarget : Node
-{
-	//NodeTag		type;
+typedef struct ResTarget : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *name;			/* column name or NULL */
 	List	   *indirection;	/* subscripts, field names, and '*', or NIL */
 	Node	   *val;			/* the value expression to compute or assign */
@@ -452,9 +497,12 @@ typedef struct ResTarget : Node
  * row-valued-expression (which parse analysis will process only once, when
  * handling the MultiAssignRef with colno=1).
  */
-typedef struct MultiAssignRef : Node
-{
-	//NodeTag		type;
+typedef struct MultiAssignRef : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	Node	   *source;			/* the row-valued expression */
 	int			colno;			/* column number for this target (1..n) */
 	int			ncolumns;		/* number of targets in the construct */
@@ -463,9 +511,12 @@ typedef struct MultiAssignRef : Node
 /*
  * SortBy - for ORDER BY clause
  */
-typedef struct SortBy : Node
-{
-	//NodeTag		type;
+typedef struct SortBy : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	Node	   *node;			/* expression to sort on */
 	SortByDir	sortby_dir;		/* ASC/DESC/USING/default */
 	SortByNulls sortby_nulls;	/* NULLS FIRST/LAST */
@@ -483,9 +534,12 @@ typedef struct SortBy : Node
  *
  * Peloton porting: use c++ inheritance
  */
-typedef struct WindowDef : Node
-{
-	//NodeTag		type;
+typedef struct WindowDef : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *name;			/* window's own name */
 	char	   *refname;		/* referenced window name, if any */
 	List	   *partitionClause;	/* PARTITION BY expression list */
@@ -531,9 +585,12 @@ typedef struct WindowDef : Node
 /*
  * RangeSubselect - subquery appearing in a FROM clause
  */
-typedef struct RangeSubselect : Node
-{
-	//NodeTag		type;
+typedef struct RangeSubselect : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	bool		lateral;		/* does it have LATERAL prefix? */
 	Node	   *subquery;		/* the untransformed sub-select clause */
 	Alias	   *alias;			/* table alias & optional column aliases */
@@ -553,9 +610,12 @@ typedef struct RangeSubselect : Node
  * at the top level.  (We disallow coldeflist appearing both here and
  * per-function, but that's checked in parse analysis, not by the grammar.)
  */
-typedef struct RangeFunction : Node
-{
-	//NodeTag		type;
+typedef struct RangeFunction : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	bool		lateral;		/* does it have LATERAL prefix? */
 	bool		ordinality;		/* does it have WITH ORDINALITY suffix? */
 	bool		is_rowsfrom;	/* is result of ROWS FROM() syntax? */
@@ -572,9 +632,12 @@ typedef struct RangeFunction : Node
  * custom tablesample methods which may need different input arguments so we
  * accept list of arguments.
  */
-typedef struct RangeTableSample : Node
-{
-	//NodeTag		type;
+typedef struct RangeTableSample : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	RangeVar   *relation;
 	char	   *method;		/* sampling method */
 	Node	   *repeatable;
@@ -599,9 +662,12 @@ typedef struct RangeTableSample : Node
  * the item and set raw_default instead.  CONSTR_DEFAULT items
  * should not appear in any subsequent processing.
  */
-typedef struct ColumnDef : Node
-{
-	//NodeTag		type;
+typedef struct ColumnDef : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *colname;		/* name of column */
 	TypeName   *typeName;		/* type of column */
 	int			inhcount;		/* number of times column is inherited */
@@ -621,9 +687,12 @@ typedef struct ColumnDef : Node
 /*
  * TableLikeClause - CREATE TABLE ( ... LIKE ... ) clause
  */
-typedef struct TableLikeClause : Node
-{
-	//NodeTag		type;
+typedef struct TableLikeClause : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	RangeVar   *relation;
 	bits32		options;		/* OR of TableLikeOption flags */
 } TableLikeClause;
@@ -645,9 +714,12 @@ typedef enum TableLikeOption
  * index, and 'expr' is NULL.  For an index expression, 'name' is NULL and
  * 'expr' is the expression tree.
  */
-typedef struct IndexElem : Node
-{
-	//NodeTag		type;
+typedef struct IndexElem : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *name;			/* name of attribute to index, or NULL */
 	Node	   *expr;			/* expression to index, or NULL */
 	char	   *indexcolname;	/* name for index column; NULL = default */
@@ -675,9 +747,12 @@ typedef enum DefElemAction
 	DEFELEM_DROP
 } DefElemAction;
 
-typedef struct DefElem : Node
-{
-	//NodeTag		type;
+typedef struct DefElem : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *defnamespace;	/* NULL if unqualified name */
 	char	   *defname;
 	Node	   *arg;			/* a (Value *) or a (TypeName *) */
@@ -693,9 +768,12 @@ typedef struct DefElem : Node
  * a location field --- currently, parse analysis insists on unqualified
  * names in LockingClause.)
  */
-typedef struct LockingClause : Node
-{
-	//NodeTag		type;
+typedef struct LockingClause : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *lockedRels;		/* FOR [KEY] UPDATE/SHARE relations */
 	LockClauseStrength strength;
 	LockWaitPolicy	waitPolicy;	/* NOWAIT and SKIP LOCKED */
@@ -704,9 +782,12 @@ typedef struct LockingClause : Node
 /*
  * XMLSERIALIZE (in raw parse tree only)
  */
-typedef struct XmlSerialize : Node
-{
-	//NodeTag		type;
+typedef struct XmlSerialize : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	XmlOptionType xmloption;	/* DOCUMENT or CONTENT */
 	Node	   *expr;
 	TypeName   *typeName;
@@ -804,9 +885,12 @@ typedef enum RTEKind
 /* Peloton porting: use c++ inheritance
  *
  * */
-struct RangeTblEntry : Node
-{
-	//NodeTag		type;
+struct RangeTblEntry : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 
 	RTEKind		rtekind;		/* see above */
 
@@ -908,9 +992,12 @@ struct RangeTblEntry : Node
  * (including dropped columns!), so that we can successfully ignore any
  * columns added after the query was parsed.
  */
-typedef struct RangeTblFunction : Node
-{
-	//NodeTag		type;
+typedef struct RangeTblFunction : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 
 	Node	   *funcexpr;		/* expression tree for func call */
 	int			funccolcount;	/* number of columns it contributes to RTE */
@@ -937,9 +1024,12 @@ typedef enum WCOKind
 	WCO_RLS_CONFLICT_CHECK		/* RLS ON CONFLICT DO UPDATE USING policy */
 } WCOKind;
 
-typedef struct WithCheckOption : Node
-{
-	//NodeTag		type;
+typedef struct WithCheckOption : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	WCOKind		kind;			/* kind of WCO */
 	char	   *relname;		/* name of relation that specified the WCO */
 	Node	   *qual;			/* constraint qual to check */
@@ -1004,9 +1094,12 @@ typedef struct WithCheckOption : Node
  * ORDER BY and set up for the Unique step.  This is semantically necessary
  * for DISTINCT ON, and presents no real drawback for DISTINCT.)
  */
-typedef struct SortGroupClause : Node
-{
-	//NodeTag		type;
+typedef struct SortGroupClause : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	Index		tleSortGroupRef;	/* reference into targetlist */
 	Oid			eqop;			/* the equality coperator ('=' op) */
 	Oid			sortop;			/* the ordering coperator ('<' op), or 0 */
@@ -1073,9 +1166,12 @@ typedef enum
 	GROUPING_SET_SETS
 } GroupingSetKind;
 
-typedef struct GroupingSet : Node
-{
-	//NodeTag		type;
+typedef struct GroupingSet : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	GroupingSetKind kind;
 	List	   *content;
 	int			location;
@@ -1095,9 +1191,12 @@ typedef struct GroupingSet : Node
  * the orderClause might or might not be copied (see copiedOrder); the framing
  * options are never copied, per spec.
  */
-typedef struct WindowClause : Node
-{
-	//NodeTag		type;
+typedef struct WindowClause : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *name;			/* window name (NULL in an OVER clause) */
 	char	   *refname;		/* referenced window name, if any */
 	List	   *partitionClause;	/* PARTITION BY list */
@@ -1121,9 +1220,12 @@ typedef struct WindowClause : Node
  * level.  Also, Query.hasForUpdate tells whether there were explicit FOR
  * UPDATE/SHARE/KEY SHARE clauses in the current query level.
  */
-typedef struct RowMarkClause : Node
-{
-	//NodeTag		type;
+typedef struct RowMarkClause : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	Index		rti;			/* range table index of target relation */
 	LockClauseStrength strength;
 	LockWaitPolicy waitPolicy;	/* NOWAIT and SKIP LOCKED */
@@ -1139,9 +1241,12 @@ typedef struct RowMarkClause : Node
  *
  * Peloton porting: use c++ inheritance
  */
-typedef struct WithClause : Node
-{
-	//NodeTag		type;
+typedef struct WithClause : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *ctes;			/* list of CommonTableExprs */
 	bool		recursive;		/* true = WITH RECURSIVE */
 	int			location;		/* token location, or -1 if unknown */
@@ -1155,9 +1260,12 @@ typedef struct WithClause : Node
  *
  * Peloton porting: use c++ inheritance
  */
-typedef struct InferClause : Node
-{
-	//NodeTag		type;
+typedef struct InferClause : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *indexElems;		/* IndexElems to infer unique index */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
 	char	   *conname;		/* Constraint name, or NULL if unnamed */
@@ -1186,9 +1294,12 @@ typedef struct OnConflictClause : Node
  *
  * We don't currently support the SEARCH or CYCLE clause.
  */
-typedef struct CommonTableExpr : Node
-{
-	//NodeTag		type;
+typedef struct CommonTableExpr : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *ctename;		/* query name (never qualified) */
 	List	   *aliascolnames;	/* optional list of column names */
 	/* SelectStmt/InsertStmt/etc before parse analysis, Query afterwards: */
@@ -1224,9 +1335,12 @@ typedef struct CommonTableExpr : Node
  * is INSERT ... DEFAULT VALUES.
  * ----------------------
  */
-typedef struct InsertStmt : Node
-{
-	//NodeTag		type;
+typedef struct InsertStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	RangeVar   *relation;		/* relation to insert into */
 	List	   *cols;			/* optional: names of the target columns */
 	Node	   *selectStmt;		/* the source SELECT/VALUES, or NULL */
@@ -1239,9 +1353,12 @@ typedef struct InsertStmt : Node
  *		Delete Statement
  * ----------------------
  */
-typedef struct DeleteStmt : Node
-{
-	//NodeTag		type;
+typedef struct DeleteStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	RangeVar   *relation;		/* relation to delete from */
 	List	   *usingClause;	/* optional using clause for more tables */
 	Node	   *whereClause;	/* qualifications */
@@ -1253,9 +1370,12 @@ typedef struct DeleteStmt : Node
  *		Update Statement
  * ----------------------
  */
-typedef struct UpdateStmt : Node
-{
-	//NodeTag		type;
+typedef struct UpdateStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	RangeVar   *relation;		/* relation to update */
 	List	   *targetList;		/* the target list (of ResTarget) */
 	Node	   *whereClause;	/* qualifications */
@@ -1287,9 +1407,12 @@ typedef enum SetOperation
 	SETOP_EXCEPT
 } SetOperation;
 
-typedef struct SelectStmt : Node
-{
-	//NodeTag		type;
+typedef struct SelectStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 
 	/*
 	 * These fields are used only in "leaf" SelectStmts.
@@ -1354,9 +1477,12 @@ typedef struct SelectStmt : Node
  * column has a collatable type.
  * ----------------------
  */
-typedef struct SetOperationStmt : Node
-{
-	//NodeTag		type;
+typedef struct SetOperationStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	SetOperation op;			/* type of set op */
 	bool		all;			/* ALL specified? */
 	Node	   *larg;			/* left child */
@@ -1444,9 +1570,12 @@ typedef enum ObjectType
  * executed after the schema itself is created.
  * ----------------------
  */
-typedef struct CreateSchemaStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateSchemaStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *schemaname;		/* the name of the schema to create */
 	Node	   *authrole;		/* the owner of the created schema */
 	List	   *schemaElts;		/* schema components (list of parsenodes) */
@@ -1463,9 +1592,12 @@ typedef enum DropBehavior
  *	Alter Table
  * ----------------------
  */
-typedef struct AlterTableStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterTableStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	RangeVar   *relation;		/* table to work on */
 	List	   *cmds;			/* list of subcommands */
 	ObjectType	relkind;		/* type of object */
@@ -1535,16 +1667,22 @@ typedef enum AlterTableType
 	AT_GenericOptions			/* OPTIONS (...) */
 } AlterTableType;
 
-typedef struct ReplicaIdentityStmt : Node
-{
-	//NodeTag		type;
+typedef struct ReplicaIdentityStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char		identity_type;
 	char	   *name;
 } ReplicaIdentityStmt;
 
-typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */ : Node
-{
-	//NodeTag		type;
+typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */ : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	AlterTableType subtype;		/* Type of table alteration to apply */
 	char	   *name;			/* column, constraint, or trigger to act on,
 								 * or tablespace */
@@ -1563,9 +1701,12 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */ : Node
  * this command.
  * ----------------------
  */
-typedef struct AlterDomainStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterDomainStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char		subtype;		/*------------
 								 *	T = alter column default
 								 *	N = alter column drop not null
@@ -1610,9 +1751,12 @@ typedef enum GrantObjectType
 	ACL_OBJECT_TYPE				/* type */
 } GrantObjectType;
 
-typedef struct GrantStmt : Node
-{
-	//NodeTag		type;
+typedef struct GrantStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	bool		is_grant;		/* true = GRANT, false = REVOKE */
 	GrantTargetType targtype;	/* type of the grant target */
 	GrantObjectType objtype;	/* kind of object being operated on */
@@ -1630,9 +1774,12 @@ typedef struct GrantStmt : Node
  * function.  So it is sufficient to identify an existing function, but it
  * is not enough info to define a function nor to call it.
  */
-typedef struct FuncWithArgs : Node
-{
-	//NodeTag		type;
+typedef struct FuncWithArgs : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *funcname;		/* qualified name of function */
 	List	   *funcargs;		/* list of Typename nodes */
 } FuncWithArgs;
@@ -1644,9 +1791,12 @@ typedef struct FuncWithArgs : Node
  * Note that simple "ALL PRIVILEGES" is represented as a NIL list, not
  * an AccessPriv with both fields null.
  */
-typedef struct AccessPriv : Node
-{
-	//NodeTag		type;
+typedef struct AccessPriv : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *priv_name;		/* string name of privilege */
 	List	   *cols;			/* list of Value strings */
 } AccessPriv;
@@ -1660,9 +1810,12 @@ typedef struct AccessPriv : Node
  * of role names, as Value strings.
  * ----------------------
  */
-typedef struct GrantRoleStmt : Node
-{
-	//NodeTag		type;
+typedef struct GrantRoleStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *granted_roles;	/* list of roles to be granted/revoked */
 	List	   *grantee_roles;	/* list of member roles to add/delete */
 	bool		is_grant;		/* true = GRANT, false = REVOKE */
@@ -1675,9 +1828,12 @@ typedef struct GrantRoleStmt : Node
  *	Alter Default Privileges Statement
  * ----------------------
  */
-typedef struct AlterDefaultPrivilegesStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterDefaultPrivilegesStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *options;		/* list of DefElem */
 	GrantStmt  *action;			/* GRANT/REVOKE action (with objects=NIL) */
 } AlterDefaultPrivilegesStmt;
@@ -1690,9 +1846,12 @@ typedef struct AlterDefaultPrivilegesStmt : Node
  * and "query" must be non-NULL.
  * ----------------------
  */
-typedef struct CopyStmt : Node
-{
-	//NodeTag		type;
+typedef struct CopyStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	RangeVar   *relation;		/* the relation to copy */
 	Node	   *query;			/* the SELECT query to copy */
 	List	   *attlist;		/* List of column names (as Strings), or NIL
@@ -1720,9 +1879,12 @@ typedef enum
 	VAR_RESET_ALL				/* RESET ALL */
 } VariableSetKind;
 
-typedef struct VariableSetStmt : Node
-{
-	//NodeTag		type;
+typedef struct VariableSetStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	VariableSetKind kind;
 	char	   *name;			/* variable to be set */
 	List	   *args;			/* List of A_Const nodes */
@@ -1733,9 +1895,12 @@ typedef struct VariableSetStmt : Node
  * Show Statement
  * ----------------------
  */
-typedef struct VariableShowStmt : Node
-{
-	//NodeTag		type;
+typedef struct VariableShowStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *name;
 } VariableShowStmt;
 
@@ -1750,9 +1915,12 @@ typedef struct VariableShowStmt : Node
  * ----------------------
  */
 
-typedef struct CreateStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	RangeVar   *relation;		/* relation to create */
 	List	   *tableElts;		/* column definitions (list of ColumnDef) */
 	List	   *inhRelations;	/* relations to inherit from (list of
@@ -1825,9 +1993,12 @@ typedef enum ConstrType			/* types of constraints */
 #define FKCONSTR_MATCH_PARTIAL		'p'
 #define FKCONSTR_MATCH_SIMPLE		's'
 
-typedef struct Constraint : Node
-{
-	//NodeTag		type;
+typedef struct Constraint : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	ConstrType	contype;		/* see above */
 
 	/* Fields used for most/all constraint types: */
@@ -1875,33 +2046,45 @@ typedef struct Constraint : Node
  * ----------------------
  */
 
-typedef struct CreateTableSpaceStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateTableSpaceStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *tablespacename;
 	Node	   *owner;
 	char	   *location;
 	List	   *options;
 } CreateTableSpaceStmt;
 
-typedef struct DropTableSpaceStmt : Node
-{
-	//NodeTag		type;
+typedef struct DropTableSpaceStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *tablespacename;
 	bool		missing_ok;		/* skip error if missing? */
 } DropTableSpaceStmt;
 
-typedef struct AlterTableSpaceOptionsStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterTableSpaceOptionsStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *tablespacename;
 	List	   *options;
 	bool		isReset;
 } AlterTableSpaceOptionsStmt;
 
-typedef struct AlterTableMoveAllStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterTableMoveAllStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *orig_tablespacename;
 	ObjectType	objtype;		/* Object type to move */
 	List	   *roles;			/* List of roles to move objects of */
@@ -1914,25 +2097,34 @@ typedef struct AlterTableMoveAllStmt : Node
  * ----------------------
  */
 
-typedef struct CreateExtensionStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateExtensionStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *extname;
 	bool		if_not_exists;	/* just do nothing if it already exists? */
 	List	   *options;		/* List of DefElem nodes */
 } CreateExtensionStmt;
 
 /* Only used for ALTER EXTENSION UPDATE; later might need an action field */
-typedef struct AlterExtensionStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterExtensionStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *extname;
 	List	   *options;		/* List of DefElem nodes */
 } AlterExtensionStmt;
 
-typedef struct AlterExtensionContentsStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterExtensionContentsStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *extname;		/* Extension's name */
 	int			action;			/* +1 = add object, -1 = drop object */
 	ObjectType	objtype;		/* Object's type */
@@ -1945,17 +2137,23 @@ typedef struct AlterExtensionContentsStmt : Node
  * ----------------------
  */
 
-typedef struct CreateFdwStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateFdwStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *fdwname;		/* foreign-data wrapper name */
 	List	   *func_options;	/* HANDLER/VALIDATOR options */
 	List	   *options;		/* generic options to FDW */
 } CreateFdwStmt;
 
-typedef struct AlterFdwStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterFdwStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *fdwname;		/* foreign-data wrapper name */
 	List	   *func_options;	/* HANDLER/VALIDATOR options */
 	List	   *options;		/* generic options to FDW */
@@ -1966,9 +2164,12 @@ typedef struct AlterFdwStmt : Node
  * ----------------------
  */
 
-typedef struct CreateForeignServerStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateForeignServerStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *servername;		/* server name */
 	char	   *servertype;		/* optional server type */
 	char	   *version;		/* optional server version */
@@ -1976,9 +2177,12 @@ typedef struct CreateForeignServerStmt : Node
 	List	   *options;		/* generic options to server */
 } CreateForeignServerStmt;
 
-typedef struct AlterForeignServerStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterForeignServerStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *servername;		/* server name */
 	char	   *version;		/* optional server version */
 	List	   *options;		/* generic options to server */
@@ -2002,25 +2206,34 @@ typedef struct CreateForeignTableStmt
  * ----------------------
  */
 
-typedef struct CreateUserMappingStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateUserMappingStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	Node	   *user;			/* user role */
 	char	   *servername;		/* server name */
 	List	   *options;		/* generic options to server */
 } CreateUserMappingStmt;
 
-typedef struct AlterUserMappingStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterUserMappingStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	Node	   *user;			/* user role */
 	char	   *servername;		/* server name */
 	List	   *options;		/* generic options to server */
 } AlterUserMappingStmt;
 
-typedef struct DropUserMappingStmt : Node
-{
-	//NodeTag		type;
+typedef struct DropUserMappingStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	Node	   *user;			/* user role */
 	char	   *servername;		/* server name */
 	bool		missing_ok;		/* ignore missing mappings */
@@ -2038,9 +2251,12 @@ typedef enum ImportForeignSchemaType
 	FDW_IMPORT_SCHEMA_EXCEPT	/* exclude listed tables from import */
 } ImportForeignSchemaType;
 
-typedef struct ImportForeignSchemaStmt : Node
-{
-	//NodeTag		type;
+typedef struct ImportForeignSchemaStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *server_name;	/* FDW server name */
 	char	   *remote_schema;	/* remote schema name to query */
 	char	   *local_schema;	/* local schema to create objects in */
@@ -2053,9 +2269,12 @@ typedef struct ImportForeignSchemaStmt : Node
  *		Create POLICY Statement
  *----------------------
  */
-typedef struct CreatePolicyStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreatePolicyStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *policy_name;	/* Policy's name */
 	RangeVar   *table;			/* the table name the policy applies to */
 	char	   *cmd;			/* the command name the policy applies to */
@@ -2068,9 +2287,12 @@ typedef struct CreatePolicyStmt : Node
  *		Alter POLICY Statement
  *----------------------
  */
-typedef struct AlterPolicyStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterPolicyStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *policy_name;	/* Policy's name */
 	RangeVar   *table;			/* the table name the policy applies to */
 	List	   *roles;			/* the roles associated with the policy */
@@ -2082,9 +2304,12 @@ typedef struct AlterPolicyStmt : Node
  *		Create TRIGGER Statement
  * ----------------------
  */
-typedef struct CreateTrigStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateTrigStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *trigname;		/* TRIGGER's name */
 	RangeVar   *relation;		/* relation trigger is on */
 	List	   *funcname;		/* qual. name of function to call */
@@ -2107,9 +2332,12 @@ typedef struct CreateTrigStmt : Node
  *		Create EVENT TRIGGER Statement
  * ----------------------
  */
-typedef struct CreateEventTrigStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateEventTrigStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *trigname;		/* TRIGGER's name */
 	char	   *eventname;		/* event's identifier */
 	List	   *whenclause;		/* list of DefElems indicating filtering */
@@ -2120,9 +2348,12 @@ typedef struct CreateEventTrigStmt : Node
  *		Alter EVENT TRIGGER Statement
  * ----------------------
  */
-typedef struct AlterEventTrigStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterEventTrigStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *trigname;		/* TRIGGER's name */
 	char		tgenabled;		/* trigger's firing configuration WRT
 								 * session_replication_role */
@@ -2133,9 +2364,12 @@ typedef struct AlterEventTrigStmt : Node
  *		Create PROCEDURAL LANGUAGE Statements
  * ----------------------
  */
-typedef struct CreatePLangStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreatePLangStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	bool		replace;		/* T => replace if already exists */
 	char	   *plname;			/* PL name */
 	List	   *plhandler;		/* PL call handler function (qual. name) */
@@ -2160,33 +2394,45 @@ typedef enum RoleStmtType
 	ROLESTMT_GROUP
 } RoleStmtType;
 
-typedef struct CreateRoleStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateRoleStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	RoleStmtType stmt_type;		/* ROLE/USER/GROUP */
 	char	   *role;			/* role name */
 	List	   *options;		/* List of DefElem nodes */
 } CreateRoleStmt;
 
-typedef struct AlterRoleStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterRoleStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	Node	   *role;			/* role */
 	List	   *options;		/* List of DefElem nodes */
 	int			action;			/* +1 = add members, -1 = drop members */
 } AlterRoleStmt;
 
-typedef struct AlterRoleSetStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterRoleSetStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	Node	   *role;			/* role */
 	char	   *database;		/* database name, or NULL */
 	VariableSetStmt *setstmt;	/* SET or RESET subcommand */
 } AlterRoleSetStmt;
 
-typedef struct DropRoleStmt : Node
-{
-	//NodeTag		type;
+typedef struct DropRoleStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *roles;			/* List of roles to remove */
 	bool		missing_ok;		/* skip error if a role is missing? */
 } DropRoleStmt;
@@ -2196,18 +2442,24 @@ typedef struct DropRoleStmt : Node
  * ----------------------
  */
 
-typedef struct CreateSeqStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateSeqStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	RangeVar   *sequence;		/* the sequence to create */
 	List	   *options;
 	Oid			ownerId;		/* ID of owner, or InvalidOid for default */
 	bool		if_not_exists;	/* just do nothing if it already exists? */
 } CreateSeqStmt;
 
-typedef struct AlterSeqStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterSeqStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	RangeVar   *sequence;		/* the sequence to alter */
 	List	   *options;
 	bool		missing_ok;		/* skip error if a role is missing? */
@@ -2217,9 +2469,12 @@ typedef struct AlterSeqStmt : Node
  *		Create {Aggregate|Operator|Type} Statement
  * ----------------------
  */
-typedef struct DefineStmt : Node
-{
-	//NodeTag		type;
+typedef struct DefineStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	ObjectType	kind;			/* aggregate, coperator, type */
 	bool		oldstyle;		/* hack to signal old CREATE AGG syntax */
 	List	   *defnames;		/* qualified name (list of Value strings) */
@@ -2231,9 +2486,12 @@ typedef struct DefineStmt : Node
  *		Create Domain Statement
  * ----------------------
  */
-typedef struct CreateDomainStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateDomainStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *domainname;		/* qualified name (list of Value strings) */
 	TypeName   *typeName;		/* the base type */
 	CollateClause *collClause;	/* untransformed COLLATE spec, if any */
@@ -2244,9 +2502,12 @@ typedef struct CreateDomainStmt : Node
  *		Create Operator Class Statement
  * ----------------------
  */
-typedef struct CreateOpClassStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateOpClassStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *opclassname;	/* qualified name (list of Value strings) */
 	List	   *opfamilyname;	/* qualified name (ditto); NIL if omitted */
 	char	   *amname;			/* name of index AM opclass is for */
@@ -2259,9 +2520,12 @@ typedef struct CreateOpClassStmt : Node
 #define OPCLASS_ITEM_FUNCTION		2
 #define OPCLASS_ITEM_STORAGETYPE	3
 
-typedef struct CreateOpClassItem : Node
-{
-	//NodeTag		type;
+typedef struct CreateOpClassItem : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	int			itemtype;		/* see codes above */
 	/* fields used for an coperator or function item: */
 	List	   *name;			/* coperator or function name */
@@ -2277,9 +2541,12 @@ typedef struct CreateOpClassItem : Node
  *		Create Operator Family Statement
  * ----------------------
  */
-typedef struct CreateOpFamilyStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateOpFamilyStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *opfamilyname;	/* qualified name (list of Value strings) */
 	char	   *amname;			/* name of index AM opfamily is for */
 } CreateOpFamilyStmt;
@@ -2288,9 +2555,12 @@ typedef struct CreateOpFamilyStmt : Node
  *		Alter Operator Family Statement
  * ----------------------
  */
-typedef struct AlterOpFamilyStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterOpFamilyStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *opfamilyname;	/* qualified name (list of Value strings) */
 	char	   *amname;			/* name of index AM opfamily is for */
 	bool		isDrop;			/* ADD or DROP the items? */
@@ -2302,9 +2572,12 @@ typedef struct AlterOpFamilyStmt : Node
  * ----------------------
  */
 
-typedef struct DropStmt : Node
-{
-	//NodeTag		type;
+typedef struct DropStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *objects;		/* list of sublists of names (as Values) */
 	List	   *arguments;		/* list of sublists of arguments (as Values) */
 	ObjectType	removeType;		/* object type */
@@ -2317,9 +2590,12 @@ typedef struct DropStmt : Node
  *				Truncate Table Statement
  * ----------------------
  */
-typedef struct TruncateStmt : Node
-{
-	//NodeTag		type;
+typedef struct TruncateStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *relations;		/* relations (RangeVars) to be truncated */
 	bool		restart_seqs;	/* restart owned sequences? */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
@@ -2329,9 +2605,12 @@ typedef struct TruncateStmt : Node
  *				Comment On Statement
  * ----------------------
  */
-typedef struct CommentStmt : Node
-{
-	//NodeTag		type;
+typedef struct CommentStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	ObjectType	objtype;		/* Object's type */
 	List	   *objname;		/* Qualified name of the object */
 	List	   *objargs;		/* Arguments if needed (eg, for functions) */
@@ -2342,9 +2621,12 @@ typedef struct CommentStmt : Node
  *				SECURITY LABEL Statement
  * ----------------------
  */
-typedef struct SecLabelStmt : Node
-{
-	//NodeTag		type;
+typedef struct SecLabelStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	ObjectType	objtype;		/* Object's type */
 	List	   *objname;		/* Qualified name of the object */
 	List	   *objargs;		/* Arguments if needed (eg, for functions) */
@@ -2370,9 +2652,12 @@ typedef struct SecLabelStmt : Node
 #define CURSOR_OPT_GENERIC_PLAN 0x0040	/* force use of generic plan */
 #define CURSOR_OPT_CUSTOM_PLAN	0x0080	/* force use of custom plan */
 
-typedef struct DeclareCursorStmt : Node
-{
-	//NodeTag		type;
+typedef struct DeclareCursorStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *portalname;		/* name of the portal (cursor) */
 	int			options;		/* bitmask of options (see above) */
 	Node	   *query;			/* the raw SELECT query */
@@ -2382,9 +2667,12 @@ typedef struct DeclareCursorStmt : Node
  *		Close Portal Statement
  * ----------------------
  */
-typedef struct ClosePortalStmt : Node
-{
-	//NodeTag		type;
+typedef struct ClosePortalStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *portalname;		/* name of the portal (cursor) */
 	/* NULL means CLOSE ALL */
 } ClosePortalStmt;
@@ -2405,9 +2693,12 @@ typedef enum FetchDirection
 
 #define FETCH_ALL	LONG_MAX
 
-typedef struct FetchStmt : Node
-{
-	//NodeTag		type;
+typedef struct FetchStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	FetchDirection direction;	/* see above */
 	long		howMany;		/* number of rows, or position argument */
 	char	   *portalname;		/* name of portal (cursor) */
@@ -2425,9 +2716,12 @@ typedef struct FetchStmt : Node
  * properties are empty.
  * ----------------------
  */
-typedef struct IndexStmt : Node
-{
-	//NodeTag		type;
+typedef struct IndexStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *idxname;		/* name of cnew index, or NULL for default */
 	RangeVar   *relation;		/* relation to build index on */
 	char	   *accessMethod;	/* name of access method (eg. btree) */
@@ -2453,9 +2747,12 @@ typedef struct IndexStmt : Node
  *		Create Function Statement
  * ----------------------
  */
-typedef struct CreateFunctionStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateFunctionStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	bool		replace;		/* T => replace if already exists */
 	List	   *funcname;		/* qualified name of function to create */
 	List	   *parameters;		/* a list of FunctionParameter */
@@ -2474,18 +2771,24 @@ typedef enum FunctionParameterMode
 	FUNC_PARAM_TABLE = 't'		/* table function output column */
 } FunctionParameterMode;
 
-typedef struct FunctionParameter : Node
-{
-	//NodeTag		type;
+typedef struct FunctionParameter : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *name;			/* parameter name, or NULL if not given */
 	TypeName   *argType;		/* TypeName for parameter type */
 	FunctionParameterMode mode; /* IN/OUT/etc */
 	Node	   *defexpr;		/* raw default expr, or NULL if not given */
 } FunctionParameter;
 
-typedef struct AlterFunctionStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterFunctionStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	FuncWithArgs *func;			/* name and args of function */
 	List	   *actions;		/* list of DefElem */
 } AlterFunctionStmt;
@@ -2496,15 +2799,21 @@ typedef struct AlterFunctionStmt : Node
  * DoStmt is the raw parser output, InlineCodeBlock is the execution-time API
  * ----------------------
  */
-typedef struct DoStmt : Node
-{
-	//NodeTag		type;
+typedef struct DoStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *args;			/* List of DefElem nodes */
 } DoStmt;
 
-typedef struct InlineCodeBlock : Node
-{
-	//NodeTag		type;
+typedef struct InlineCodeBlock : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *source_text;	/* source text of anonymous code block */
 	Oid			langOid;		/* OID of selected language */
 	bool		langIsTrusted;	/* trusted property of the language */
@@ -2514,9 +2823,12 @@ typedef struct InlineCodeBlock : Node
  *		Alter Object Rename Statement
  * ----------------------
  */
-typedef struct RenameStmt : Node
-{
-	//NodeTag		type;
+typedef struct RenameStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	ObjectType	renameType;		/* OBJECT_TABLE, OBJECT_COLUMN, etc */
 	ObjectType	relationType;	/* if column name, associated relation type */
 	RangeVar   *relation;		/* in case it's a table */
@@ -2533,9 +2845,12 @@ typedef struct RenameStmt : Node
  *		ALTER object SET SCHEMA Statement
  * ----------------------
  */
-typedef struct AlterObjectSchemaStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterObjectSchemaStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	ObjectType objectType;		/* OBJECT_TABLE, OBJECT_TYPE, etc */
 	RangeVar   *relation;		/* in case it's a table */
 	List	   *object;			/* in case it's some other object */
@@ -2548,9 +2863,12 @@ typedef struct AlterObjectSchemaStmt : Node
  *		Alter Object Owner Statement
  * ----------------------
  */
-typedef struct AlterOwnerStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterOwnerStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	ObjectType objectType;		/* OBJECT_TABLE, OBJECT_TYPE, etc */
 	RangeVar   *relation;		/* in case it's a table */
 	List	   *object;			/* in case it's some other object */
@@ -2563,9 +2881,12 @@ typedef struct AlterOwnerStmt : Node
  *		Create Rule Statement
  * ----------------------
  */
-typedef struct RuleStmt : Node
-{
-	//NodeTag		type;
+typedef struct RuleStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	RangeVar   *relation;		/* relation the rule is for */
 	char	   *rulename;		/* name of the rule */
 	Node	   *whereClause;	/* qualifications */
@@ -2579,9 +2900,12 @@ typedef struct RuleStmt : Node
  *		Notify Statement
  * ----------------------
  */
-typedef struct NotifyStmt : Node
-{
-	//NodeTag		type;
+typedef struct NotifyStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *conditionname;	/* condition name to notify */
 	char	   *payload;		/* the payload string, or NULL if none */
 } NotifyStmt;
@@ -2590,9 +2914,12 @@ typedef struct NotifyStmt : Node
  *		Listen Statement
  * ----------------------
  */
-typedef struct ListenStmt : Node
-{
-	//NodeTag		type;
+typedef struct ListenStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *conditionname;	/* condition name to listen on */
 } ListenStmt;
 
@@ -2600,9 +2927,12 @@ typedef struct ListenStmt : Node
  *		Unlisten Statement
  * ----------------------
  */
-typedef struct UnlistenStmt : Node
-{
-	//NodeTag		type;
+typedef struct UnlistenStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *conditionname;	/* name to unlisten on, or NULL for all */
 } UnlistenStmt;
 
@@ -2624,9 +2954,12 @@ typedef enum TransactionStmtKind
 	TRANS_STMT_ROLLBACK_PREPARED
 } TransactionStmtKind;
 
-typedef struct TransactionStmt : Node
-{
-	//NodeTag		type;
+typedef struct TransactionStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	TransactionStmtKind kind;	/* see above */
 	List	   *options;		/* for BEGIN/START and savepoint commands */
 	char	   *gid;			/* for two-phase-commit related commands */
@@ -2636,9 +2969,12 @@ typedef struct TransactionStmt : Node
  *		Create Type Statement, composite types
  * ----------------------
  */
-typedef struct CompositeTypeStmt : Node
-{
-	//NodeTag		type;
+typedef struct CompositeTypeStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	RangeVar   *typevar;		/* the composite type to be created */
 	List	   *coldeflist;		/* list of ColumnDef nodes */
 } CompositeTypeStmt;
@@ -2647,9 +2983,12 @@ typedef struct CompositeTypeStmt : Node
  *		Create Type Statement, enum types
  * ----------------------
  */
-typedef struct CreateEnumStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateEnumStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *typeName;		/* qualified name (list of Value strings) */
 	List	   *vals;			/* enum values (list of Value strings) */
 } CreateEnumStmt;
@@ -2658,9 +2997,12 @@ typedef struct CreateEnumStmt : Node
  *		Create Type Statement, range types
  * ----------------------
  */
-typedef struct CreateRangeStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateRangeStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *typeName;		/* qualified name (list of Value strings) */
 	List	   *params;			/* range parameters (list of DefElem) */
 } CreateRangeStmt;
@@ -2669,9 +3011,12 @@ typedef struct CreateRangeStmt : Node
  *		Alter Type Statement, enum types
  * ----------------------
  */
-typedef struct AlterEnumStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterEnumStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *typeName;		/* qualified name (list of Value strings) */
 	char	   *newVal;			/* cnew enum value's name */
 	char	   *newValNeighbor; /* neighboring enum value, if specified */
@@ -2690,9 +3035,12 @@ typedef enum ViewCheckOption
 	CASCADED_CHECK_OPTION
 } ViewCheckOption;
 
-typedef struct ViewStmt : Node
-{
-	//NodeTag		type;
+typedef struct ViewStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	RangeVar   *view;			/* the view to be created */
 	List	   *aliases;		/* target column names */
 	Node	   *query;			/* the SELECT query */
@@ -2705,9 +3053,12 @@ typedef struct ViewStmt : Node
  *		Load Statement
  * ----------------------
  */
-typedef struct LoadStmt : Node
-{
-	//NodeTag		type;
+typedef struct LoadStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *filename;		/* file to load */
 } LoadStmt;
 
@@ -2715,9 +3066,12 @@ typedef struct LoadStmt : Node
  *		Createdb Statement
  * ----------------------
  */
-typedef struct CreatedbStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreatedbStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *dbname;			/* name of database to create */
 	List	   *options;		/* List of DefElem nodes */
 } CreatedbStmt;
@@ -2726,16 +3080,22 @@ typedef struct CreatedbStmt : Node
  *	Alter Database
  * ----------------------
  */
-typedef struct AlterDatabaseStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterDatabaseStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *dbname;			/* name of database to alter */
 	List	   *options;		/* List of DefElem nodes */
 } AlterDatabaseStmt;
 
-typedef struct AlterDatabaseSetStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterDatabaseSetStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *dbname;			/* database name */
 	VariableSetStmt *setstmt;	/* SET or RESET subcommand */
 } AlterDatabaseSetStmt;
@@ -2744,9 +3104,12 @@ typedef struct AlterDatabaseSetStmt : Node
  *		Dropdb Statement
  * ----------------------
  */
-typedef struct DropdbStmt : Node
-{
-	//NodeTag		type;
+typedef struct DropdbStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *dbname;			/* database to drop */
 	bool		missing_ok;		/* skip error if db is missing? */
 } DropdbStmt;
@@ -2755,9 +3118,12 @@ typedef struct DropdbStmt : Node
  *		Alter System Statement
  * ----------------------
  */
-typedef struct AlterSystemStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterSystemStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	VariableSetStmt *setstmt;	/* SET subcommand */
 } AlterSystemStmt;
 
@@ -2765,9 +3131,12 @@ typedef struct AlterSystemStmt : Node
  *		Cluster Statement (support pbrown's cluster index implementation)
  * ----------------------
  */
-typedef struct ClusterStmt : Node
-{
-	//NodeTag		type;
+typedef struct ClusterStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	RangeVar   *relation;		/* relation being indexed, or NULL if all */
 	char	   *indexname;		/* original index defined */
 	bool		verbose;		/* print progress info */
@@ -2792,9 +3161,12 @@ typedef enum VacuumOption
 	VACOPT_SKIPTOAST = 1 << 6	/* don't process the TOAST table, if any */
 } VacuumOption;
 
-typedef struct VacuumStmt : Node
-{
-	//NodeTag		type;
+typedef struct VacuumStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	int			options;		/* OR of VacuumOption flags */
 	RangeVar   *relation;		/* single table to process, or NULL */
 	List	   *va_cols;		/* list of column names, or NIL for all */
@@ -2808,9 +3180,12 @@ typedef struct VacuumStmt : Node
  * planning of the query are always postponed until execution of EXPLAIN.
  * ----------------------
  */
-typedef struct ExplainStmt : Node
-{
-	//NodeTag		type;
+typedef struct ExplainStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	Node	   *query;			/* the query (see comments above) */
 	List	   *options;		/* list of DefElem nodes */
 } ExplainStmt;
@@ -2828,9 +3203,12 @@ typedef struct ExplainStmt : Node
  * can be a SELECT or an EXECUTE, but not other DML statements.
  * ----------------------
  */
-typedef struct CreateTableAsStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateTableAsStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	Node	   *query;			/* the query (see comments above) */
 	IntoClause *into;			/* destination table */
 	ObjectType	relkind;		/* OBJECT_TABLE or OBJECT_MATVIEW */
@@ -2842,9 +3220,12 @@ typedef struct CreateTableAsStmt : Node
  *		REFRESH MATERIALIZED VIEW Statement
  * ----------------------
  */
-typedef struct RefreshMatViewStmt : Node
-{
-	//NodeTag		type;
+typedef struct RefreshMatViewStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	bool		concurrent;		/* allow concurrent access? */
 	bool		skipData;		/* true for WITH NO DATA */
 	RangeVar   *relation;		/* relation to insert into */
@@ -2854,9 +3235,12 @@ typedef struct RefreshMatViewStmt : Node
  * Checkpoint Statement
  * ----------------------
  */
-typedef struct CheckPointStmt : Node
-{
-	//NodeTag		type;
+typedef struct CheckPointStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 } CheckPointStmt;
 
 /* ----------------------
@@ -2872,9 +3256,12 @@ typedef enum DiscardMode
 	DISCARD_TEMP
 } DiscardMode;
 
-typedef struct DiscardStmt : Node
-{
-	//NodeTag		type;
+typedef struct DiscardStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	DiscardMode target;
 } DiscardStmt;
 
@@ -2882,9 +3269,12 @@ typedef struct DiscardStmt : Node
  *		LOCK Statement
  * ----------------------
  */
-typedef struct LockStmt : Node
-{
-	//NodeTag		type;
+typedef struct LockStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *relations;		/* relations to lock */
 	int			mode;			/* lock mode */
 	bool		nowait;			/* no wait mode */
@@ -2894,9 +3284,12 @@ typedef struct LockStmt : Node
  *		SET CONSTRAINTS Statement
  * ----------------------
  */
-typedef struct ConstraintsSetStmt : Node
-{
-	//NodeTag		type;
+typedef struct ConstraintsSetStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *constraints;	/* List of names as RangeVars */
 	bool		deferred;
 } ConstraintsSetStmt;
@@ -2918,9 +3311,12 @@ typedef enum ReindexObjectType
 	REINDEX_OBJECT_DATABASE	/* database */
 } ReindexObjectType;
 
-typedef struct ReindexStmt : Node
-{
-	//NodeTag		type;
+typedef struct ReindexStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	ReindexObjectType	kind;	/* REINDEX_OBJECT_INDEX, REINDEX_OBJECT_TABLE, etc. */
 	RangeVar   *relation;		/* Table or index to reindex */
 	const char *name;			/* name of database to reindex */
@@ -2931,9 +3327,12 @@ typedef struct ReindexStmt : Node
  *		CREATE CONVERSION Statement
  * ----------------------
  */
-typedef struct CreateConversionStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateConversionStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *conversion_name;	/* Name of the conversion */
 	char	   *for_encoding_name;		/* source encoding name */
 	char	   *to_encoding_name;		/* destination encoding name */
@@ -2945,9 +3344,12 @@ typedef struct CreateConversionStmt : Node
  *	CREATE CAST Statement
  * ----------------------
  */
-typedef struct CreateCastStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateCastStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	TypeName   *sourcetype;
 	TypeName   *targettype;
 	FuncWithArgs *func;
@@ -2959,9 +3361,12 @@ typedef struct CreateCastStmt : Node
  *	CREATE TRANSFORM Statement
  * ----------------------
  */
-typedef struct CreateTransformStmt : Node
-{
-	//NodeTag		type;
+typedef struct CreateTransformStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	bool		replace;
 	TypeName   *type_name;
 	char	   *lang;
@@ -2973,9 +3378,12 @@ typedef struct CreateTransformStmt : Node
  *		PREPARE Statement
  * ----------------------
  */
-typedef struct PrepareStmt : Node
-{
-	//NodeTag		type;
+typedef struct PrepareStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *name;			/* Name of plan, arbitrary */
 	List	   *argtypes;		/* Types of parameters (List of TypeName) */
 	Node	   *query;			/* The query itself (as a raw parsetree) */
@@ -2987,9 +3395,12 @@ typedef struct PrepareStmt : Node
  * ----------------------
  */
 
-typedef struct ExecuteStmt : Node
-{
-	//NodeTag		type;
+typedef struct ExecuteStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *name;			/* The name of the plan to execute */
 	List	   *params;			/* Values to assign to parameters */
 } ExecuteStmt;
@@ -2999,9 +3410,12 @@ typedef struct ExecuteStmt : Node
  *		DEALLOCATE Statement
  * ----------------------
  */
-typedef struct DeallocateStmt : Node
-{
-	//NodeTag		type;
+typedef struct DeallocateStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	char	   *name;			/* The name of the plan to remove */
 	/* NULL means DEALLOCATE ALL */
 } DeallocateStmt;
@@ -3009,9 +3423,12 @@ typedef struct DeallocateStmt : Node
 /*
  *		DROP OWNED statement
  */
-typedef struct DropOwnedStmt : Node
-{
-	//NodeTag		type;
+typedef struct DropOwnedStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *roles;
 	DropBehavior behavior;
 } DropOwnedStmt;
@@ -3019,9 +3436,12 @@ typedef struct DropOwnedStmt : Node
 /*
  *		REASSIGN OWNED statement
  */
-typedef struct ReassignOwnedStmt : Node
-{
-	//NodeTag		type;
+typedef struct ReassignOwnedStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *roles;
 	Node	   *newrole;
 } ReassignOwnedStmt;
@@ -3029,9 +3449,12 @@ typedef struct ReassignOwnedStmt : Node
 /*
  * TS Dictionary stmts: DefineStmt, RenameStmt and DropStmt are default
  */
-typedef struct AlterTSDictionaryStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterTSDictionaryStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	List	   *dictname;		/* qualified name (list of Value strings) */
 	List	   *options;		/* List of DefElem nodes */
 } AlterTSDictionaryStmt;
@@ -3048,9 +3471,12 @@ typedef enum AlterTSConfigType
 	ALTER_TSCONFIG_DROP_MAPPING
 } AlterTSConfigType;
 
-typedef struct AlterTSConfigurationStmt : Node
-{
-	//NodeTag		type;
+typedef struct AlterTSConfigurationStmt : Node {
+#else
+typedef struct XXX {
+	NodeTag		type;
+#endif
+
 	AlterTSConfigType	kind;	/* ALTER_TSCONFIG_ADD_MAPPING, etc */
 	List	   *cfgname;		/* qualified name (list of Value strings) */
 
