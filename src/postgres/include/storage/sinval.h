@@ -18,7 +18,9 @@
 
 #include "storage/relfilenode.h"
 /* Peloton porting: get std::memcpy to work around coperator= in union*/
+#ifdef __cplusplus
 #include <cstring>
+#endif
 
 /*
  * We support several types of shared-invalidation messages:
@@ -111,6 +113,7 @@ typedef struct
 	Oid			relId;			/* relation ID */
 } SharedInvalSnapshotMsg;
 
+#ifdef __cplusplus
 union SharedInvalidationMessage
 {
 	int8		id;				/* type field --- must be first */
@@ -138,7 +141,18 @@ union SharedInvalidationMessage
 	  return *this;
 	}
 };
-
+#else
+typedef union
+{
+  int8    id;       /* type field --- must be first */
+  SharedInvalCatcacheMsg cc;
+  SharedInvalCatalogMsg cat;
+  SharedInvalRelcacheMsg rc;
+  SharedInvalSmgrMsg sm;
+  SharedInvalRelmapMsg rm;
+  SharedInvalSnapshotMsg sn;
+} SharedInvalidationMessage;
+#endif
 
 /* Counter of messages processed; don't worry about overflow. */
 extern uint64 SharedInvalidMessageCounter;

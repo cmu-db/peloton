@@ -47,6 +47,7 @@ typedef struct ListCell ListCell;
  * Using C++ inheritance
  *
  * */
+#ifdef __cplusplus
 struct List : Node
 {
 	//NodeTag		type;			/* T_List, T_IntList, or T_OidList */
@@ -54,6 +55,15 @@ struct List : Node
 	ListCell   *head;
 	ListCell   *tail;
 };
+#else
+typedef struct List
+{
+	NodeTag		type;			/* T_List, T_IntList, or T_OidList */
+	int			length;
+	ListCell   *head;
+	ListCell   *tail;
+} List;
+#endif
 
 struct ListCell
 {
