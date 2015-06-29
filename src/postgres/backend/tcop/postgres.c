@@ -3704,8 +3704,6 @@ PostgresMain(int argc, char *argv[],
    */
   InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
 
-  InitPeloton(dbname);
-
   /*
    * If the PostmasterContext is still around, recycle the space; we don't
    * need it anymore after InitPostgres completes.  Note this does not trash

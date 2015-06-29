@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "c.h"
+
 //===--------------------------------------------------------------------===//
 //  Bridge for accessing Postgres Catalog
 //===--------------------------------------------------------------------===//
@@ -14,15 +16,15 @@
 extern "C" {
 #endif
 
-char* GetRelationName(unsigned int relation_id);
+char* GetRelationName(Oid relation_id);
 
-int GetNumberOfAttributes(unsigned int relation_id);
+int GetNumberOfAttributes(Oid relation_id);
 
-float GetNumberOfTuples(unsigned int relation_id);
+float GetNumberOfTuples(Oid relation_id);
 
-unsigned int GetCurrentDatabaseOid(void);
+Oid GetCurrentDatabaseOid(void);
 
-void SetNumberOfTuples(unsigned int relation_id, float num_of_tuples);
+void SetNumberOfTuples(Oid relation_id, float num_of_tuples);
 
 void GetDatabaseList(void);
 
@@ -32,11 +34,11 @@ void GetPublicTableList(void);
 
 bool IsThisTableExist(const char* table_name);
 
-bool InitPeloton(const char* dbname);
+bool InitPeloton();
 
-unsigned int GetRelationOidFromRelationName(const char *table_name);
+Oid GetRelationOidFromRelationName(const char *table_name);
 
-void SetUserTableStats(unsigned int relation_id);
+void SetUserTableStats(Oid relation_id);
 
 void FunctionTest(void);
 
