@@ -786,7 +786,6 @@ PostmasterMain(int argc, char *argv[])
     }
   }
 
-  // TODO: Peloton Modifications
   /*
    * Parse command-line option for setting test mode
    */
@@ -796,18 +795,10 @@ PostmasterMain(int argc, char *argv[])
     {
       char* user_input = &argv[arg_itr][10];
 
-      if( !strcmp(user_input, "TEST_MODE_TYPE_BRIDGE"))
-          CurrentTestModeStatus = TEST_MODE_TYPE_BRIDGE;
-      else if( !strcmp(user_input, "TEST_MODE_TYPE_STATISTICS"))
-          CurrentTestModeStatus = TEST_MODE_TYPE_STATISTICS;
-      else //user can also type the test most as a number
-	  CurrentTestModeStatus = (int)(user_input[0]-'0');
-      
-      if( CurrentTestModeStatus == TEST_MODE_TYPE_INVALID)
-      {
-        printf("Error : %d is invalid TestMode\n", CurrentTestModeStatus);
-        ExitPostmaster(1);
-      }
+      if(strcmp(user_input, "TEST_MODE_TYPE_BRIDGE") == 0)
+        CurrentTestModeStatus = TEST_MODE_TYPE_BRIDGE;
+      else if(strcmp(user_input, "TEST_MODE_TYPE_STATISTICS") == 0)
+        CurrentTestModeStatus = TEST_MODE_TYPE_STATISTICS;
     }
   }
 
