@@ -26,6 +26,7 @@
 #include "postmaster/postmaster.h"
 #include "storage/latch.h"
 #include "storage/ipc.h"
+#include "storage/proc.h"
 #include "tcop/tcopprot.h"
 
 #include "postmaster/peloton.h"
@@ -60,7 +61,7 @@ static volatile sig_atomic_t got_SIGHUP = false;
  * Local function forward declarations
  * ----------
  */
-NON_EXEC_STATIC void PelotonMain(int argc, char *argv[]) pg_attribute_noreturn();
+NON_EXEC_STATIC void PelotonMain(int argc, char *argv[], Port *port) pg_attribute_noreturn();
 static void peloton_sighup_handler(SIGNAL_ARGS);
 static void peloton_sigusr2_handler(SIGNAL_ARGS);
 static void peloton_sigterm_handler(SIGNAL_ARGS);
@@ -90,14 +91,10 @@ int peloton_start(void){
       InitPostmasterChild();
 
       /* Close the postmaster's sockets */
-      //ClosePostmasterPorts(false);
-
-      /* Drop our connection to postmaster's shared memory, as well */
-      //dsm_detach_all();
-      //PGSharedMemoryDetach();
+      ClosePostmasterPorts(false);
 
       /* Do some stuff */
-      PelotonMain(0, NULL);
+      PelotonMain(0, NULL, PelotonPort);
       return 0;
       break;
 
@@ -118,8 +115,11 @@ int peloton_start(void){
  *  since we don't use 'em, it hardly matters...
  */
 NON_EXEC_STATIC void
-PelotonMain(int argc, char *argv[])
+PelotonMain(int argc, char *argv[], Port *port)
 {
+  /* Set port */
+  MyProcPort = port;
+
   /* Identify myself via ps */
   init_ps_display("peloton process", "", "", "");
 
@@ -145,6 +145,29 @@ PelotonMain(int argc, char *argv[])
   pqsignal(SIGCHLD, SIG_DFL);
 
   PG_SETMASK(&UnBlockSig);
+
+  /* Early initialization */
+  BaseInit();
+
+  /*
+   * Create a per-backend PGPROC struct in shared memory, except in the
+   * EXEC_BACKEND case where this was done in SubPostmasterMain. We must do
+   * this before we can use LWLocks (and in the EXEC_BACKEND case we already
+   * had to do some stuff with LWLocks).
+   */
+  InitProcess();
+
+  /*
+   * General initialization.
+   *
+   * NOTE: if you are tempted to add code in this vicinity, consider putting
+   * it inside InitPostgres() instead.  In particular, anything that
+   * involves database access should be there, not here.
+   */
+  InitPostgres("postgres", InvalidOid, "parallels", InvalidOid, NULL);
+
+  /* Initialize Peloton here */
+  InitPeloton(NULL);
 
   peloton_MainLoop();
 
