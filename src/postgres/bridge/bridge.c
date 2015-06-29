@@ -392,6 +392,8 @@ bool InitPeloton(const char* db_name)
 
   CommitTransactionCommand();
 
+  elog(LOG, "Finished initializing Peloton");
+
   return true;
 }
 
