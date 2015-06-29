@@ -22,7 +22,6 @@
 typedef enum PelotonMsgType
 {
   PELOTON_MTYPE_DUMMY,
-  PELOTON_MTYPE_BOOTSTRAP,
   PELOTON_MTYPE_PLAN
 } PelotonMsgType;
 
@@ -71,15 +70,6 @@ typedef struct Peloton_MsgPlan
 } Peloton_MsgPlan;
 
 /* ----------
- * Peloton_Bootstrap    Sent by the postmaster to bootstrap peloton.
- * ----------
- */
-typedef struct Peloton_MsgBootstrap
-{
-  Peloton_MsgHdr m_hdr;
-} Peloton_MsgBootstrap;
-
-/* ----------
  * Peloton_Msg         Union over all possible messages.
  * ----------
  */
@@ -99,7 +89,6 @@ extern void peloton_init(void);
 extern int  peloton_start(void);
 
 extern void peloton_send_ping(void);
-extern void peloton_send_bootstrap(void);
 extern void peloton_send_proc_node(PlanState *node);
 
 #endif   /* PELOTON_H */
