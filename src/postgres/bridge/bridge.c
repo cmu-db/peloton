@@ -13,7 +13,7 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/xact.h"
-#include "backend/bridge/bridge.h"
+#include "bridge/bridge.h"
 #include "backend/bridge/ddl.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_database.h"

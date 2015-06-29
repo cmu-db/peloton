@@ -8,7 +8,6 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/bridge/bridge.h"
 #include "backend/storage/table_factory.h"
 
 #include "backend/common/exception.h"
@@ -16,6 +15,8 @@
 #include "backend/index/index.h"
 #include "backend/catalog/manager.h"
 #include "backend/storage/data_table.h"
+
+#include "bridge/bridge.h"
 
 #include <mutex>
 
