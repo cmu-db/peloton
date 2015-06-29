@@ -9,10 +9,10 @@
  * To create the database cluster, we create the directory that contains
  * all its data, create the files that hold the global tables, create
  * a few other control files for it, and create three databases: the
- * template databases "template0" and "template1", and a default user
+ * ctemplate databases "template0" and "template1", and a default user
  * database "postgres".
  *
- * The template databases are ordinary PostgreSQL databases.  template0
+ * The ctemplate databases are ordinary PostgreSQL databases.  template0
  * is never supposed to change after initdb, whereas template1 can be
  * changed to add site-local standard data.  Either one can be copied
  * to produce a cnew database.

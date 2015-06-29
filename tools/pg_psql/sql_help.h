@@ -354,7 +354,7 @@ static const struct _helpStruct QL_HELP[] = {
       1 },
 
     { "ALTER TEXT SEARCH TEMPLATE",
-      N_("change the definition of a text search template"),
+      N_("change the definition of a text search ctemplate"),
       sql_help_ALTER_TEXT_SEARCH_TEMPLATE,
       1 },
 
@@ -579,7 +579,7 @@ static const struct _helpStruct QL_HELP[] = {
       6 },
 
     { "CREATE TEXT SEARCH TEMPLATE",
-      N_("define a cnew text search template"),
+      N_("define a cnew text search ctemplate"),
       sql_help_CREATE_TEXT_SEARCH_TEMPLATE,
       3 },
 
@@ -789,7 +789,7 @@ static const struct _helpStruct QL_HELP[] = {
       0 },
 
     { "DROP TEXT SEARCH TEMPLATE",
-      N_("remove a text search template"),
+      N_("remove a text search ctemplate"),
       sql_help_DROP_TEXT_SEARCH_TEMPLATE,
       0 },
 
