@@ -318,7 +318,7 @@ bool InitPeloton(const char* dbname)
       {
         HeapScanDesc scan_pg_attribute;
         HeapTuple tuple_for_pg_attribute;
-        DDL_ColumnInfo ddl_columnInfo[ pgclass->relnatts ] ;
+        ColumnInfo ddl_columnInfo[ pgclass->relnatts ] ;
         Oid table_oid = HeapTupleHeaderGetOid(tuple_for_pg_class->t_data);
 
         scan_pg_attribute = heap_beginscan_catalog(pg_attribute_rel, 0, NULL);
@@ -351,9 +351,9 @@ bool InitPeloton(const char* dbname)
         // Create the table
         if( pgclass->relkind == 'r' )
         {
-          ret = DDL_CreateTable( NameStr(pgclass->relname) , ddl_columnInfo, column_itr);
+          ret = DDLCreateTable( NameStr(pgclass->relname) , ddl_columnInfo, column_itr);
           if( ret )  printf("Create Table \"%s\" in Peloton\n", NameStr(pgclass->relname));
-          else       fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
+          else       fprintf(stderr, "DDLCreateTable :: %d \n", ret);
         } 
         // Create the index
         else if( pgclass->relkind == 'i')
@@ -369,9 +369,9 @@ bool InitPeloton(const char* dbname)
 
             if( pgindex->indexrelid == table_oid )
             {
-              DDL_CreateIndex(NameStr(pgclass->relname), get_rel_name(pgindex->indrelid), 0, pgindex->indisunique, ddl_columnInfo, column_itr);
+              DDLCreateIndex(NameStr(pgclass->relname), get_rel_name(pgindex->indrelid), 0, pgindex->indisunique, ddl_columnInfo, column_itr);
               if( ret )  printf("Create Index \"%s\" in Peloton\n", NameStr(pgclass->relname));
-              else       fprintf(stderr, "DDL_CreateIndex :: %d \n", ret);
+              else       fprintf(stderr, "DDLCreateIndex :: %d \n", ret);
               break;
             }
           }
@@ -382,9 +382,9 @@ bool InitPeloton(const char* dbname)
       }else
       {
         // Create Table without column info
-        ret = DDL_CreateTable( NameStr(pgclass->relname) , NULL, 0);
+        ret = DDLCreateTable( NameStr(pgclass->relname) , NULL, 0);
         if( ret )  printf("Create Table \"%s\" in Peloton\n", NameStr(pgclass->relname));
-        else       fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
+        else       fprintf(stderr, "DDLCreateTable :: %d \n", ret);
       }
     } // end if
 

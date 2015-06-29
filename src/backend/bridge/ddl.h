@@ -4,33 +4,39 @@
  * Copyright(c) 2015, CMU
  */
 
-#ifdef __cplusplus
-
-#include <cassert>
-
-#include "backend/catalog/catalog.h"
-#include "backend/catalog/schema.h"
-#include "backend/common/types.h"
-#include "backend/index/index.h"
-#include "backend/index/index_factory.h"
-#include "backend/storage/backend_vm.h"
-#include "backend/storage/table_factory.h"
-
-#include "bridge/bridge.h"
-
-#endif
-
 #pragma once
+
+#include "pg_config_manual.h"
+
+#ifdef __cplusplus
+#include "backend/catalog/schema.h"
+#endif
 
 typedef struct 
 {
    int type;
    int column_offset;
    int column_length;
-   char name[256]; // TODO :: Default size should be checked by joy 
+   char name[NAMEDATALEN];
    bool allow_null;
    bool is_inlined;
-} DDL_ColumnInfo;
+} ColumnInfo;
+
+/* ------------------------------------------------------------
+ * C-style function declarations
+ * ------------------------------------------------------------
+ */
+
+extern bool DDLCreateTable(char *table_name,
+                    ColumnInfo *column_info,
+                    int num_columns);
+
+extern bool DDLDropTable(unsigned int table_oid);
+
+extern bool DDLCreateIndex(char *index_name, char *table_name,
+                    int type, bool unique,
+                    ColumnInfo *key_column_info,
+                    int num_columns_in_key);
 
 #ifdef __cplusplus
 
@@ -42,25 +48,24 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class DDL {
-public:
-  static bool CreateTable(std::string table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns, catalog::Schema* schema);
-  static bool DropTable(unsigned int table_oid);
-  static bool CreateIndex(std::string index_name, std::string table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForKeySchema, int num_columns_of_KeySchema);
-};
 
-extern "C" {
-  bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns);
-  bool DDL_DropTable(unsigned int table_oid);
-  bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForKeySchema , int num_columns_of_KeySchema );
-}
+public:
+
+  static bool CreateTable(std::string table_name,
+                          ColumnInfo *column_info,
+                          int num_columns,
+                          catalog::Schema *schema = nullptr);
+
+  static bool DropTable(unsigned int table_oid);
+
+  static bool CreateIndex(std::string index_name, std::string table_name,
+                          int type, bool unique,
+                          ColumnInfo *key_column_info,
+                          int num_columns_in_key);
+
+};
 
 } // namespace bridge
 } // namespace peloton
 
 #endif
-
-extern bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns);
-
-extern bool DDL_DropTable(unsigned int table_oid);
-
-extern bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForKeySchema , int num_columns_of_KeySchema);
