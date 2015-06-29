@@ -1037,11 +1037,11 @@ ProcessUtilitySlow(Node *parsetree,
                   /*
                    * Now, intercept the create table request from Postgres and create a table in Peloton
                    */
-                  ret = DDL_CreateTable( Cstmt->relation->relname, ddl_columnInfo, schema->length);
+                  ret = peloton::bridge::DDL::CreateTable( Cstmt->relation->relname, ddl_columnInfo, schema->length);
                 }else
                 {
                   // Create Table without column info
-                  ret = DDL_CreateTable( Cstmt->relation->relname, NULL, 0 );
+                  ret = peloton::bridge::DDL::CreateTable( Cstmt->relation->relname, NULL, 0 );
                 }
                fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
               }
@@ -1381,7 +1381,7 @@ ProcessUtilitySlow(Node *parsetree,
             type = 0;
           }
  
-          ret = DDL_CreateIndex(stmt->idxname,
+          ret = peloton::bridge::DDL::CreateIndex(stmt->idxname,
                                 stmt->relation->relname,
                                 type,
                                 stmt->unique,
@@ -1601,7 +1601,7 @@ ProcessUtilitySlow(Node *parsetree,
 
           while(table_oid_itr > 0)
           {
-            ret  = DDL_DropTable(table_oid_list[--table_oid_itr]);
+            ret  = peloton::bridge::DDL::DropTable(table_oid_list[--table_oid_itr]);
             fprintf(stderr, "DDL_DropTable :: %d \n", ret);
           }
           /* no commands stashed for DROP */

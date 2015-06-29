@@ -19,8 +19,8 @@ namespace bridge {
 bool DDL::CreateTable(std::string table_name,
                       DDL_ColumnInfo* ddl_columnInfo,
                       int num_columns, 
-                      catalog::Schema* schema = NULL){
-  if( ( num_columns > 0 && ddl_columnInfo == NULL) && schema == NULL ) 
+                      catalog::Schema* schema = nullptr){
+  if( ( num_columns > 0 && ddl_columnInfo == nullptr) && schema == nullptr )
     return false;
 
   oid_t db_oid = GetCurrentDatabaseOid();
@@ -28,7 +28,7 @@ bool DDL::CreateTable(std::string table_name,
     return false;
 
   // Construct schema with ddl_columnInfo
-  if( schema == NULL ){
+  if( schema == nullptr ){
     std::vector<catalog::ColumnInfo> columnInfoVect;
     ValueType currentValueType;
 
@@ -225,17 +225,6 @@ bool DDL::CreateIndex(std::string index_name,
   return true;
 }
  
-
-extern "C" {
-bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns) {
-  return DDL::CreateTable(table_name, ddl_columnInfo, num_columns);
-}
-bool DDL_DropTable(unsigned int table_oid) {
-  return DDL::DropTable(table_oid);
-}
-bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForKeySchema, int num_columns_of_KeySchema) {
-  return DDL::CreateIndex(index_name, table_name, type, unique, ddl_columnInfoForKeySchema, num_columns_of_KeySchema ) ; }
-}
 
 } // namespace bridge
 } // namespace peloton

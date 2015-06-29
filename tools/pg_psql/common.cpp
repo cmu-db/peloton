@@ -1483,7 +1483,7 @@ skip_white_space(const char *query)
 
 /*
  * Check whether a command is one of those for which we should NOT start
- * a new transaction block (ie, send a preceding BEGIN).
+ * a cnew transaction block (ie, send a preceding BEGIN).
  *
  * These include the transaction control statements themselves, plus
  * certain statements that the backend disallows inside transaction blocks.

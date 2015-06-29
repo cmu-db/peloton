@@ -29,7 +29,7 @@ MainLoop(FILE *source)
 {
 	PsqlScanState scan_state;	/* lexer working state */
 	volatile PQExpBuffer query_buf;		/* buffer for query being accumulated */
-	volatile PQExpBuffer previous_buf;	/* if there isn't anything in the new
+	volatile PQExpBuffer previous_buf;	/* if there isn't anything in the cnew
 										 * buffer yet, use this one for \e,
 										 * etc. */
 	PQExpBuffer history_buf;	/* earlier lines of a multi-line command, not
@@ -54,7 +54,7 @@ MainLoop(FILE *source)
 	prev_cmd_interactive = pset.cur_cmd_interactive;
 	prev_lineno = pset.lineno;
 
-	/* Establish new source */
+	/* Establish cnew source */
 	pset.cur_cmd_source = source;
 	pset.cur_cmd_interactive = ((source == stdin) && !pset.notty);
 	pset.lineno = 0;
@@ -145,7 +145,7 @@ MainLoop(FILE *source)
 
 		/*
 		 * query_buf holds query already accumulated.  line is the malloc'd
-		 * new line of input (note it must be freed before looping around!)
+		 * cnew line of input (note it must be freed before looping around!)
 		 */
 
 		/* No more input.  Time to quit, or \i done */
@@ -367,7 +367,7 @@ MainLoop(FILE *source)
 				}
 				else if (slashCmdStatus == PSQL_CMD_NEWEDIT)
 				{
-					/* rescan query_buf as new input */
+					/* rescan query_buf as cnew input */
 					psql_scan_finish(scan_state);
 					free(line);
 					line = pg_strdup(query_buf->data);
