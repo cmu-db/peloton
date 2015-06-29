@@ -1,6 +1,6 @@
-#line 2 "psqlscan.c"
+#line 2 "psqlscan.cpp"
 
-#line 4 "psqlscan.c"
+#line 4 "psqlscan.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -3729,7 +3729,7 @@ static void escape_variable(bool as_ident);
  * Note that xcstart must appear before operator, as explained above!
  *  Also whitespace (comment) must appear before operator.
  */
-#line 3733 "psqlscan.c"
+#line 3733 "psqlscan.cpp"
 
 #define INITIAL 0
 #define xb 1
@@ -3936,7 +3936,7 @@ YY_DECL
 #line 417 "/home/parallels/git/postgres/orig/../src/bin/psql/psqlscan.l"
 
 
-#line 3940 "psqlscan.c"
+#line 3940 "psqlscan.cpp"
 
 	if ( !(yy_init) )
 		{
@@ -5182,7 +5182,7 @@ YY_RULE_SETUP
 #line 1190 "/home/parallels/git/postgres/orig/../src/bin/psql/psqlscan.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 5186 "psqlscan.c"
+#line 5186 "psqlscan.cpp"
 
 	case YY_END_OF_BUFFER:
 		{

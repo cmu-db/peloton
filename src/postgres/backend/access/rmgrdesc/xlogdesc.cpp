@@ -23,7 +23,7 @@
 /*
  * GUC support
  */
-config_enum_entry wal_level_options[] = {
+extern const config_enum_entry wal_level_options[] = {
 	{"minimal", WAL_LEVEL_MINIMAL, false},
 	{"archive", WAL_LEVEL_ARCHIVE, false},
 	{"hot_standby", WAL_LEVEL_HOT_STANDBY, false},
