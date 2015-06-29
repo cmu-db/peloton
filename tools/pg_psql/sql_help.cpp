@@ -1660,7 +1660,7 @@ sql_help_CREATE_DATABASE(PQExpBuffer buf)
 					  "           [ CONNECTION LIMIT [=] %s ] ]",
 					  _("name"),
 					  _("user_name"),
-					  _("template"),
+					  _("ctemplate"),
 					  _("encoding"),
 					  _("lc_collate"),
 					  _("lc_ctype"),
@@ -2280,7 +2280,7 @@ sql_help_CREATE_TEXT_SEARCH_DICTIONARY(PQExpBuffer buf)
 					  "    [, %s = %s [, ... ]]\n"
 					  ")",
 					  _("name"),
-					  _("template"),
+					  _("ctemplate"),
 					  _("option"),
 					  _("value"));
 }
