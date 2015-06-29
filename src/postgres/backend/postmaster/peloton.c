@@ -164,10 +164,11 @@ PelotonMain(int argc, char *argv[], Port *port)
    * it inside InitPostgres() instead.  In particular, anything that
    * involves database access should be there, not here.
    */
-  InitPostgres("postgres", InvalidOid, "parallels", InvalidOid, NULL);
+  // TODO: Hardcoded db and user names
+  //InitPostgres("postgres", InvalidOid, "superuser", InvalidOid, NULL);
 
   /* Initialize Peloton here */
-  InitPeloton(NULL);
+  //InitPeloton(NULL);
 
   peloton_MainLoop();
 
