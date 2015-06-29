@@ -1753,7 +1753,7 @@ setup_depend(void)
 		" FROM pg_trigger;\n",
 
 		/*
-		 * restriction here to avoid pinning the public namespace
+		 * restriction here to avoid pinning the public cnamescpace
 		 */
 		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
 		" FROM pg_namespace "
