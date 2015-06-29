@@ -10,8 +10,6 @@
  *-------------------------------------------------------------------------
  */
 
-
-#include "backend/bridge/bridge.h"
 #include "backend/catalog/catalog.h"
 #include "backend/catalog/database.h"
 #include "backend/common/logger.h"
@@ -20,6 +18,8 @@
 #include "backend/index/index_factory.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/table_factory.h"
+
+#include "bridge/bridge.h"
 
 #include <cassert>
 #include <algorithm>

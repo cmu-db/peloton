@@ -67,7 +67,7 @@
 #include "utils/syscache.h"
 
 // TODO: Peloton Modifications
-#include "backend/bridge/bridge.h"
+#include "bridge/bridge.h"
 #include "backend/bridge/ddl.h"
 #include "catalog/pg_am.h"
 #include "parser/parse_type.h" 
