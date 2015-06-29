@@ -202,13 +202,6 @@ static void SigHupHandler(SIGNAL_ARGS);
 static void log_disconnections(int code, Datum arg);
 
 /* ----------------------------------------------------------------
- * Wrapper functions declarations
- * TODO: Peloton Modifications
- * ----------------------------------------------------------------
- */
-
-
-/* ----------------------------------------------------------------
  *		routines to obtain user input
  * ----------------------------------------------------------------
  */
@@ -3715,49 +3708,6 @@ PostgresMain(int argc, char *argv[],
 
   InitPeloton(dbname);
 
-  // set it up and create a table one by one
-
-  /*
-  // Get the public table list
-  // 
-  CreateStmt* Cstmt = (CreateStmt*)stmt;
-  List* schema = (List*)(Cstmt->tableElts);
-  ListCell   *entry;
-  DDL_ColumnInfo ddl_columnInfo[ schema->length ];
-  bool ret;  
-
-  // Parse the CreateStmt and construct ddl_columnInfo
-  foreach(entry, schema)
-  {
-	  ColumnDef  *coldef = lfirst(entry);
-	  Type		tup;
-	  Form_pg_type typ;
-	  Oid			typoid;
-	  int column_itr=0;
-
-	  tup = typenameType(NULL, coldef->typeName, NULL);
-	  typ = (Form_pg_type) GETSTRUCT(tup);
-	  typoid = HeapTupleGetOid(tup);
-	  ReleaseSysCache(tup);
-
-	  ddl_columnInfo[column_itr].type = typoid;
-	  ddl_columnInfo[column_itr].column_offset = column_itr;
-	  ddl_columnInfo[column_itr].column_length = typ->typlen;
-	  strcpy(ddl_columnInfo[column_itr].name, coldef->colname);
-	  ddl_columnInfo[column_itr].allow_null = !coldef->is_not_null;
-	  ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
-	  column_itr++;
-  }
-
-  */
-  /*
-   * Now, Create the tables in Peloton
-   */
-  //ret = DDL_CreateTable( Cstmt->relation->relname, ddl_columnInfo, schema->length);
-  //fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
-
-
-
   /*
    * If the PostmasterContext is still around, recycle the space; we don't
    * need it anymore after InitPostgres completes.  Note this does not trash
@@ -3959,24 +3909,18 @@ PostgresMain(int argc, char *argv[],
   if (!ignore_till_sync)
     send_ready_for_query = true;	/* initially, or after error */
 
-  // TODO: Peloton modifications
   switch(CurrentTestModeStatus)
   {
     case TEST_MODE_TYPE_INVALID:
-      printf("TEST_MODE_TYPE_INVALID\n");
-      // never be printed..
       break;
     case TEST_MODE_TYPE_OFF:
-      printf("TEST_MODE_TYPE_OFF\n");
-      // do nothing..
       break;
     case TEST_MODE_TYPE_BRIDGE:
-      printf("BRIDGE_TEST_MODE\n");
+      elog(LOG, "Testing bridge");
       GetDatabaseList();
       break;
     case TEST_MODE_TYPE_STATISTICS:
-      printf("STATISTIC_TEST_MODE\n");
-      // do somethinig..
+      /* Test something here */
       break;
     default:
       break;
