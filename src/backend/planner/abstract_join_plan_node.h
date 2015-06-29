@@ -1,5 +1,5 @@
 /**
- * @brief Header for abstract plan node.
+ * @brief Header for abstract join plan node.
  *
  * Copyright(c) 2015, CMU
  */
