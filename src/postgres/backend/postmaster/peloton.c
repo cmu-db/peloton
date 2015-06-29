@@ -13,6 +13,7 @@
 #include "postgres.h"
 #include "c.h"
 
+#include "bridge/bridge.h"
 #include "libpq/ip.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
@@ -144,6 +145,9 @@ PelotonMain(int argc, char *argv[])
   pqsignal(SIGCHLD, SIG_DFL);
 
   PG_SETMASK(&UnBlockSig);
+
+  /* Init Peloton DB */
+  InitPeloton();
 
   peloton_MainLoop();
 
