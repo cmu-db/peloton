@@ -1623,6 +1623,18 @@ ServerLoop(void)
           {
             BackendStartup(port);
 
+            /* Get Peloton Port */
+            if(PelotonPort == NULL) {
+              PelotonPort = port;
+
+              fprintf(stdout, "Port :: PelotonPort : %d \n", PelotonPort->sock);
+              fflush(stdout);
+            }
+
+            fprintf(stdout, "Port : db name %s user name %s sock %d \n",
+                    port->database_name, port->user_name, port->sock);
+            fflush(stdout);
+
             /*
              * We no longer need the open socket or port structure
              * in this process

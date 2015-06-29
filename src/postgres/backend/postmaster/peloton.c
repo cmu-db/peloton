@@ -61,7 +61,7 @@ static volatile sig_atomic_t got_SIGHUP = false;
  * Local function forward declarations
  * ----------
  */
-NON_EXEC_STATIC void PelotonMain(int argc, char *argv[], Port *port) pg_attribute_noreturn();
+NON_EXEC_STATIC void PelotonMain(int argc, char *argv[]) pg_attribute_noreturn();
 static void peloton_sighup_handler(SIGNAL_ARGS);
 static void peloton_sigusr2_handler(SIGNAL_ARGS);
 static void peloton_sigterm_handler(SIGNAL_ARGS);
@@ -94,7 +94,7 @@ int peloton_start(void){
       ClosePostmasterPorts(false);
 
       /* Do some stuff */
-      PelotonMain(0, NULL, PelotonPort);
+      PelotonMain(0, NULL);
       return 0;
       break;
 
@@ -115,10 +115,10 @@ int peloton_start(void){
  *  since we don't use 'em, it hardly matters...
  */
 NON_EXEC_STATIC void
-PelotonMain(int argc, char *argv[], Port *port)
+PelotonMain(int argc, char *argv[])
 {
   /* Set port */
-  MyProcPort = port;
+  MyProcPort = PelotonPort;
 
   /* Identify myself via ps */
   init_ps_display("peloton process", "", "", "");
