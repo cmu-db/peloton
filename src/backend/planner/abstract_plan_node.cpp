@@ -64,7 +64,7 @@ oid_t AbstractPlanNode::GetPlanNodeId() const {
 // Get a string representation of this plan node
 std::ostream& operator<<(std::ostream& os, const AbstractPlanNode& node) {
 
-    os << PlanNodeToString(node.GetPlanNodeType());
+    os << PlanNodeTypeToString(node.GetPlanNodeType());
     os << "[" << node.GetPlanNodeId() << "]";
 
     return os;
