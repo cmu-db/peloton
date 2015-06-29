@@ -280,7 +280,7 @@ bool IsThisTableExist(const char* table_name) {
  * Initialize Peloton
  * This function constructs tables in all databases
  */
-bool InitPeloton()
+bool InitPeloton(const char* db_name)
 {
   // Relations for catalog tables
   Relation pg_class_rel;   
@@ -291,6 +291,8 @@ bool InitPeloton()
 
   int column_itr;
   bool ret;
+
+  elog(LOG, "Initializing Peloton");
 
   StartTransactionCommand();
 
