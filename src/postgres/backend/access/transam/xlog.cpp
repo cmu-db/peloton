@@ -123,7 +123,7 @@ static double PrevCheckPointDistance = 0;
 /*
  * GUC support
  */
-config_enum_entry sync_method_options[] = {
+extern const config_enum_entry sync_method_options[] = {
 	{"fsync", SYNC_METHOD_FSYNC, false},
 #ifdef HAVE_FSYNC_WRITETHROUGH
 	{"fsync_writethrough", SYNC_METHOD_FSYNC_WRITETHROUGH, false},
@@ -145,7 +145,7 @@ config_enum_entry sync_method_options[] = {
  * Although only "on", "off", and "always" are documented,
  * we accept all the likely variants of "on" and "off".
  */
-config_enum_entry archive_mode_options[] = {
+extern const config_enum_entry archive_mode_options[] = {
 	{"always", ARCHIVE_MODE_ALWAYS, false},
 	{"on", ARCHIVE_MODE_ON, false},
 	{"off", ARCHIVE_MODE_OFF, false},

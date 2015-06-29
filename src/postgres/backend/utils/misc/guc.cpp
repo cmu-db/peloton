@@ -395,10 +395,10 @@ static const struct config_enum_entry row_security_options[] = {
 /*
  * Options for enum values stored in other modules
  */
-extern config_enum_entry wal_level_options[];
-extern config_enum_entry archive_mode_options[];
-extern config_enum_entry sync_method_options[];
-extern config_enum_entry dynamic_shared_memory_options[];
+extern const config_enum_entry wal_level_options[];
+extern const config_enum_entry archive_mode_options[];
+extern const config_enum_entry sync_method_options[];
+extern const config_enum_entry dynamic_shared_memory_options[];
 
 /*
  * GUC option variables that are exported from this module
