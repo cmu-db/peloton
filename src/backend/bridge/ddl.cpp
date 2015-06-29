@@ -10,11 +10,13 @@
  *-------------------------------------------------------------------------
  */
 
+#include "c.h"
 #include "bridge/bridge.h"
 
 #include "backend/bridge/ddl.h"
 #include "backend/catalog/catalog.h"
 #include "backend/catalog/schema.h"
+#include "backend/common/logger.h"
 #include "backend/common/types.h"
 #include "backend/index/index.h"
 #include "backend/index/index_factory.h"
@@ -35,124 +37,121 @@ namespace bridge {
  * @return true if we created a table, false otherwise
  */
 bool DDL::CreateTable(std::string table_name,
-                      ColumnInfo *column_info,
-                      int num_columns, 
-                      catalog::Schema* schema) {
+                      ColumnInfo *schema,
+                      int num_columns) {
+  assert(num_columns >= 0);
+  assert(schema);
 
-  if( ( num_columns > 0 && column_info == NULL) && schema == NULL ) 
+  // Check db oid
+  Oid database_oid = GetCurrentDatabaseOid();
+  if(database_oid == InvalidOid)
     return false;
 
-  oid_t db_oid = GetCurrentDatabaseOid();
-  if( db_oid == 0 )
-    return false;
+  // Construct schema with column information
+  std::vector<catalog::ColumnInfo> column_infos;
+  ValueType column_type;
 
-  // Construct schema with ddl_columnInfo
-  if( schema == NULL ){
-    std::vector<catalog::ColumnInfo> columnInfoVect;
-    ValueType currentValueType;
+  if(num_columns > 0) {
+    // Go over each column to get its information
+    for( int column_itr = 0; column_itr < num_columns; column_itr++ ){
 
-    // TODO :: Do we need this kind of table??
-    // create a table without columnInfo
-    if( num_columns == 0 )
-    {
-          currentValueType = VALUE_TYPE_NULL;
-          catalog::ColumnInfo *columnInfo = new catalog::ColumnInfo( currentValueType, 0, 0, "", true, true);
-          columnInfoVect.push_back(*columnInfo);
-    }else
-    {
-      for( int column_itr = 0; column_itr < num_columns; column_itr++ ){
-  
-  
-        switch(column_info[column_itr].type ){
-          // Could not find yet corresponding types in Postgres...
-          // Also - check below types again to make sure..
-          // TODO :: change the numbers to enum type
-  
-          /* BOOLEAN */
-          case 16: // boolean, 'true'/'false'
-            currentValueType = VALUE_TYPE_BOOLEAN;
-            break;
-  
-            /* INTEGER */
-          case 21: // -32 thousand to 32 thousand, 2-byte storage
-            currentValueType = VALUE_TYPE_SMALLINT;
-            column_info[column_itr].is_inlined = true;
-            break;
-          case 23: // -2 billion to 2 billion integer, 4-byte storage
-            currentValueType = VALUE_TYPE_INTEGER;
-            column_info[column_itr].is_inlined = true;
-            break;
-          case 20: // ~18 digit integer, 8-byte storage
-            currentValueType = VALUE_TYPE_BIGINT;
-            column_info[column_itr].is_inlined = true;
-            break;
-  
-            /* DOUBLE */
-          case 701: // double-precision floating point number, 8-byte storage
-            currentValueType = VALUE_TYPE_DOUBLE;
-            column_info[column_itr].is_inlined = true;
-            break;
-  
-            /* CHAR */
-          case 1014:
-          case 1042: // char(length), blank-padded string, fixed storage length
-            currentValueType = VALUE_TYPE_VARCHAR;
-            column_info[column_itr].is_inlined = true;
-            break;
-            // !!! NEED TO BE UPDATED ...
-          case 1015:
-          case 1043: // varchar(length), non-blank-padded string, variable storage length;
-            currentValueType = VALUE_TYPE_VARCHAR;
-            column_info[column_itr].is_inlined = true;
-            break;
-  
-            /* TIMESTAMPS */
-          case 1114: // date and time
-          case 1184: // date and time with time zone
-            currentValueType = VALUE_TYPE_TIMESTAMP;
-            column_info[column_itr].is_inlined = true;
-            break;
-  
-            /* DECIMAL */
-          case 1700: // numeric(precision, decimal), arbitrary precision number
-            currentValueType = VALUE_TYPE_DECIMAL;
-            break;
-  
-            /* INVALID VALUE TYPE */
-          default:
-            currentValueType = VALUE_TYPE_INVALID;
-            printf("INVALID VALUE TYPE : %d \n", column_info[column_itr].type);
-            break;
-        }
-  
-        catalog::ColumnInfo *columnInfo = new catalog::ColumnInfo( currentValueType,
-                                                                   column_info[column_itr].column_offset,
-                                                                   column_info[column_itr].column_length,
-                                                                   column_info[column_itr].name,
-                                                                   column_info[column_itr].allow_null,
-                                                                   column_info[column_itr].is_inlined );
-        // Add current columnInfo into the columnInfoVect
-        columnInfoVect.push_back(*columnInfo);
+      switch(schema[column_itr].type ){
+
+        // Could not find yet corresponding types in Postgres.
+        // FIXME: change the hardcoded constants to enum type
+
+        /* BOOLEAN */
+        case 16: // boolean, 'true'/'false'
+          column_type = VALUE_TYPE_BOOLEAN;
+          break;
+
+          /* INTEGER */
+        case 21: // -32 thousand to 32 thousand, 2-byte storage
+          column_type = VALUE_TYPE_SMALLINT;
+          schema[column_itr].is_inlined = true;
+          break;
+        case 23: // -2 billion to 2 billion integer, 4-byte storage
+          column_type = VALUE_TYPE_INTEGER;
+          schema[column_itr].is_inlined = true;
+          break;
+        case 20: // ~18 digit integer, 8-byte storage
+          column_type = VALUE_TYPE_BIGINT;
+          schema[column_itr].is_inlined = true;
+          break;
+
+          /* DOUBLE */
+        case 701: // double-precision floating point number, 8-byte storage
+          column_type = VALUE_TYPE_DOUBLE;
+          schema[column_itr].is_inlined = true;
+          break;
+
+          /* CHAR */
+        case 1014:
+        case 1042: // char(length), blank-padded string, fixed storage length
+          column_type = VALUE_TYPE_VARCHAR;
+          schema[column_itr].is_inlined = true;
+          break;
+
+          // !!! NEED TO BE UPDATED ...
+        case 1015:
+        case 1043: // varchar(length), non-blank-padded string, variable storage length;
+          column_type = VALUE_TYPE_VARCHAR;
+          schema[column_itr].is_inlined = true;
+          break;
+
+          /* TIMESTAMPS */
+        case 1114: // date and time
+        case 1184: // date and time with time zone
+          column_type = VALUE_TYPE_TIMESTAMP;
+          schema[column_itr].is_inlined = true;
+          break;
+
+          /* DECIMAL */
+        case 1700: // numeric(precision, decimal), arbitrary precision number
+          column_type = VALUE_TYPE_DECIMAL;
+          break;
+
+          /* INVALID VALUE TYPE */
+        default:
+          column_type = VALUE_TYPE_INVALID;
+          LOG_ERROR("Invalid column type : %d \n", schema[column_itr].type);
+          return false;
+          break;
       }
-    }
 
-    // Construct schema from vector of ColumnInfo
-    schema = new catalog::Schema(columnInfoVect);
+      catalog::ColumnInfo column_info(column_type,
+                                      schema[column_itr].column_offset,
+                                      schema[column_itr].column_length,
+                                      schema[column_itr].name,
+                                      schema[column_itr].allow_null,
+                                      schema[column_itr].is_inlined );
+
+      // Add current column to column info vector
+      column_infos.push_back(column_info);
+    }
+  }
+  // SPECIAL CASE:: No columns in table
+  else {
+    column_type = VALUE_TYPE_NULL;
+    catalog::ColumnInfo column_info(column_type, 0, 0, "", true, true);
+    column_infos.push_back(column_info);
   }
 
-  // Construct backend
-  storage::VMBackend *vmbackend = new storage::VMBackend;
+  // Construct our schema from vector of ColumnInfo
+  auto our_schema = new catalog::Schema(column_infos);
 
-  // Create a table from schema
-  storage::DataTable *table;
+  // FIXME: Construct table backend
+  storage::VMBackend *backend = new storage::VMBackend();
 
-  table =  storage::TableFactory::GetDataTable(db_oid, schema, table_name);
+  // Build a table from schema
+  storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, our_schema, table_name);
 
-  // Store the schema for "CreateIndex"
-  table->SetSchema(schema);
+  if(table != nullptr) {
+    LOG_INFO("Created table : %s\n", table_name.c_str());
+    return true;
+  }
 
-  //LOG_WARN("Created table : %s \n", table_name);
-  return true;
+  return false;
 }
 
 /**
@@ -160,17 +159,22 @@ bool DDL::CreateTable(std::string table_name,
  * @param table_oid Table id.
  * @return true if we dropped the table, false otherwise
  */
-bool DDL::DropTable(unsigned int table_oid) {
+bool DDL::DropTable(Oid table_oid) {
 
-  oid_t db_oid = GetCurrentDatabaseOid();
-  if( db_oid == 0 || table_oid == 0 )
+  oid_t database_oid = GetCurrentDatabaseOid();
+
+  if(database_oid == InvalidOid || table_oid == InvalidOid) {
+    LOG_WARN("Could not drop table :: db oid : %u table oid : %u", database_oid, table_oid);
     return false;
+  }
 
-  bool ret = storage::TableFactory::DropDataTable(db_oid, table_oid);
-  if( !ret )
-    return false;
+  bool status = storage::TableFactory::DropDataTable(database_oid, table_oid);
+  if(status == true) {
+    LOG_INFO("Dropped table with oid : %u\n", table_oid);
+    return true;
+  }
 
-  return true;
+  return false;
 }
 
 /**
@@ -186,78 +190,56 @@ bool DDL::DropTable(unsigned int table_oid) {
  *
  * @return true if we dropped the table, false otherwise
  */
-bool DDL::CreateIndex(std::string index_name, std::string table_name,
-                      int type, bool unique,
+bool DDL::CreateIndex(std::string index_name,
+                      std::string table_name,
+                      int index_type, bool unique_keys,
                       ColumnInfo* key_column_info,
                       int num_columns_in_key) {
 
-  /* Currently, we use only btree as an index method */
-  IndexType currentIndexType = INDEX_TYPE_BTREE_MULTIMAP;
-//  switch(type)
-//  {
-//    case 403: /* BTREE_AM_OID*/
-//    currentIndexType = INDEX_TYPE_BTREE_MULTIMAP; // array
-//      break;
-//    case 405: /* HASH_AM_OID*/
-//      break;
-//    case 783: /* GIST_AM_OID*/
-//      break;
-//    case 2742: /* GINH_AM_OID*/
-//      break;
-//    case 4000: /* SPGIST_AM_OID*/
-//      break;
-//    case 3580: /* BRIN_AM_OID*/
-//      break;
-//    default:
-//    currentIndexType = INDEX_TYPE_ORDERED_MAP;   // ordered map
-//    currentIndexType = INDEX_TYPE_INVALID; 
-//      break;
-//  }
+  // NOTE: We currently only support btree as our index implementation
+  // FIXME: Support other types based on "type" argument
+  IndexType our_index_type = INDEX_TYPE_BTREE_MULTIMAP;
 
   // Get the database oid and table oid
   oid_t database_oid = GetCurrentDatabaseOid();
   oid_t table_oid = GetRelationOidFromRelationName(table_name.c_str());
 
   // Get the table location from manager
-  storage::DataTable* table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+  auto table = catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+  storage::DataTable* data_table = (storage::DataTable*) table;
+  auto tuple_schema = data_table->GetSchema();
 
-  // Bring the tuple schema from the table
-  auto tuple_schema = table->GetSchema();
+  // Construct key schema
+  std::vector<oid_t> key_columns;
 
-  // Print out tuple_schema just for debugging
-  //std::cout << *tuple_schema << std::endl;
+  // Based on the key column info, get the oid of the given 'key' columns in the tuple schema
+  for(oid_t key_schema_column_itr = 0;  key_schema_column_itr < num_columns_in_key; key_schema_column_itr++) {
+    for( oid_t tuple_schema_column_itr = 0; tuple_schema_column_itr < tuple_schema->GetColumnCount();
+        tuple_schema_column_itr++){
 
-  // Make a vector to store selected column's oids
-  std::vector<oid_t> selected_oids_for_KeySchema;
-
-  // Based on the ColumnInfo of KeySchema, find out the given 'key' columns in the tuple schema and store it's oid 
-  for(oid_t column_itr_for_KeySchema = 0;  column_itr_for_KeySchema < num_columns_in_key; column_itr_for_KeySchema++)
-  {
-    for( oid_t column_itr_for_TupleSchema = 0; column_itr_for_TupleSchema < tuple_schema->GetColumnCount(); column_itr_for_TupleSchema++)
-    {
       // Get the current column info from tuple schema
-      catalog::ColumnInfo colInfo = tuple_schema->GetColumnInfo(column_itr_for_TupleSchema);
+      catalog::ColumnInfo column_info = tuple_schema->GetColumnInfo(tuple_schema_column_itr);
 
       // Compare Key Schema's current column name and Tuple Schema's current column name
-      if( strcmp( key_column_info[ column_itr_for_KeySchema].name , (colInfo.name).c_str() )== 0 )
-        selected_oids_for_KeySchema.push_back(column_itr_for_TupleSchema);
+      if(strcmp(key_column_info[ key_schema_column_itr].name , (column_info.name).c_str())== 0)
+        key_columns.push_back(tuple_schema_column_itr);
     }
   }
 
-  catalog::Schema * key_schema = catalog::Schema::CopySchema(tuple_schema, selected_oids_for_KeySchema);
-  // TODO :: REMOVE :: Print out key schema just for debugging
-  //std::cout << *key_schema << std::endl;
+  auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_columns);
 
-  // Create metadata and index 
-  index::IndexMetadata* metadata = new index::IndexMetadata(index_name, currentIndexType, tuple_schema, key_schema, unique);
+  // Create index metadata and physical index
+  index::IndexMetadata* metadata = new index::IndexMetadata(index_name, our_index_type,
+                                                            tuple_schema, key_schema,
+                                                            unique_keys);
   index::Index* index = index::IndexFactory::GetInstance(metadata);
 
-  // Add an index into the table
- table->AddIndex(index);
+  // Record the built index in the table
+  data_table->AddIndex(index);
 
   return true;
 }
- 
+
 /* ------------------------------------------------------------
  * C-style function declarations
  * ------------------------------------------------------------
@@ -266,21 +248,24 @@ bool DDL::CreateIndex(std::string index_name, std::string table_name,
 extern "C" {
 
 bool DDLCreateTable(char* table_name,
-                     ColumnInfo* column_info,
-                     int num_columns) {
-  return DDL::CreateTable(table_name, column_info, num_columns);
+                    ColumnInfo* schema,
+                    int num_columns) {
+  return DDL::CreateTable(table_name, schema, num_columns);
 }
 
-bool DDLDropTable(unsigned int table_oid) {
+bool DDLDropTable(Oid table_oid) {
   return DDL::DropTable(table_oid);
 }
 
-bool DDLCreateIndex(char* index_name, char* table_name,
-                     int type, bool unique,
-                     ColumnInfo* key_column_info,
-                     int num_columns_in_key) {
+bool DDLCreateIndex(char* index_name,
+                    char* table_name,
+                    int type,
+                    bool unique,
+                    ColumnInfo* key_column_info,
+                    int num_columns_in_key) {
 
-  return DDL::CreateIndex(index_name, table_name,
+  return DDL::CreateIndex(index_name,
+                          table_name,
                           type, unique,
                           key_column_info,
                           num_columns_in_key ) ;
