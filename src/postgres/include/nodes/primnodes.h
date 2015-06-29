@@ -36,11 +36,19 @@
  *
  * Peloton porting: Use c++ inheritance
  */
+#ifdef __cplusplus
 struct Alias : Node {
   //NodeTag type;
   char *aliasname; /* aliased rel name (never qualified) */
   List *colnames; /* optional list of column aliases */
 };
+#else
+typedef struct Alias {
+  NodeTag type;
+  char *aliasname; /* aliased rel name (never qualified) */
+  List *colnames; /* optional list of column aliases */
+} Alias;
+#endif
 
 typedef enum InhOption {
   INH_NO, /* Do NOT scan child tables */
@@ -65,8 +73,12 @@ typedef enum OnCommitAction {
  * a TEMP table indication here.
  * Peloton porting: use c++ inheritance
  */
+#ifdef __cplusplus
 typedef struct RangeVar : Node {
-  //NodeTag type;
+#else
+typedef struct RangeVar {
+  NodeTag type;
+#endif
   char *catalogname; /* the catalog (database) name, or NULL */
   char *schemaname; /* the schema name, or NULL */
   char *relname; /* the relation/sequence name */
@@ -87,9 +99,12 @@ typedef struct RangeVar : Node {
  *
  * Peloton porting: use c++ inheritance
  */
+#ifdef __cplusplus
 typedef struct IntoClause : Node {
-  //NodeTag type;
-
+#else
+typedef struct IntoClause {
+  NodeTag type;
+#endif
   RangeVar *rel; /* target relation name */
   List *colNames; /* column names to assign, or NIL */
   List *options; /* options from WITH clause */
@@ -115,8 +130,13 @@ typedef struct IntoClause : Node {
  * Peloton porting:
  * Using C++ inheritance
  */
-struct Expr : Node {
-};
+#ifdef __cplusplus
+typedef struct Expr : Node {
+#else
+typedef struct Expr {
+  NodeTag type;
+#endif
+} Expr;
 
 /*
  * Var - expression node representing a variable (ie, a table column)
