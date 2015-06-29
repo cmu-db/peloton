@@ -4000,6 +4000,14 @@ PostgresMain(int argc, char *argv[],
     MemoryContextSwitchTo(MessageContext);
     MemoryContextResetAndDeleteChildren(MessageContext);
 
+    // TODO: Peloton Changes
+    /*
+     * Release storage left over from prior query cycle, and create a new
+     * query input buffer in the cleared TopSharedMemoryContext.
+     */
+    MemoryContextSwitchTo(TopSharedMemoryContext);
+    MemoryContextResetAndDeleteChildren(TopSharedMemoryContext);
+
     initStringInfo(&input_message);
 
     /*

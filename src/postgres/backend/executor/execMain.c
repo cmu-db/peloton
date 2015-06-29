@@ -1559,9 +1559,7 @@ ExecutePlan(EState *estate,
 		slot = ExecProcNode(planstate);
 
 		// TODO: Peloton Changes
-		peloton_proc_node(planstate);
-
-	  elog_node_display(LOG, "plan", planstate->plan, Debug_pretty_print);
+		peloton_send_proc_node(planstate);
 
 		/*
 		 * if the tuple is null, then we assume there is nothing more to
