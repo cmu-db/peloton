@@ -3,7 +3,7 @@
 * geqo_ox2.c
 *
 *	 order crossover [OX] routines;
-*	 OX2 coperator according to Syswerda
+*	 OX2 operator___ according to Syswerda
 *	 (The Genetic Algorithms Handbook, ed L Davis)
 *
 * src/backend/optimizer/geqo/geqo_ox2.c

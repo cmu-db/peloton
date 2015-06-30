@@ -19,7 +19,7 @@
 },
 
 {
-	REG_ECTYPE, "REG_ECTYPE", "invalid character cclass"
+	REG_ECTYPE, "REG_ECTYPE", "invalid character class___"
 },
 
 {

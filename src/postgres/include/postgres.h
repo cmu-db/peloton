@@ -19,7 +19,7 @@
  *	 TABLE OF CONTENTS
  *
  *		When adding stuff to this file, please try to put stuff
- *		into the relevant section, or add cnew sections as appropriate.
+ *		into the relevant section, or add new___ sections as appropriate.
  *
  *	  section	description
  *	  -------	------------------------------------------------

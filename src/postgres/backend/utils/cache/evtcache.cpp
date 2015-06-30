@@ -119,7 +119,7 @@ BuildEventTriggerCache(void)
 	/* Prevent the memory context from being nuked while we're rebuilding. */
 	EventTriggerCacheState = ETCS_REBUILD_STARTED;
 
-	/* Create cnew hash table. */
+	/* Create new___ hash table. */
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(EventTriggerEvent);
 	ctl.entrysize = sizeof(EventTriggerCacheEntry);
@@ -173,7 +173,7 @@ BuildEventTriggerCache(void)
 		else
 			continue;
 
-		/* Allocate cnew cache item. */
+		/* Allocate new___ cache item. */
 		item = palloc0(sizeof(EventTriggerCacheItem));
 		item->fnoid = form->evtfoid;
 		item->enabled = form->evtenabled;
@@ -203,7 +203,7 @@ BuildEventTriggerCache(void)
 	/* Restore previous memory context. */
 	MemoryContextSwitchTo(oldcontext);
 
-	/* Install cnew cache. */
+	/* Install new___ cache. */
 	EventTriggerCache = cache;
 
 	/*

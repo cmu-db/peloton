@@ -38,7 +38,7 @@
  *	aggmfinalfn			final function for moving-aggregate mode (0 if none)
  *	aggfinalextra		true to pass extra dummy arguments to aggfinalfn
  *	aggmfinalextra		true to pass extra dummy arguments to aggmfinalfn
- *	aggsortop			associated sort coperator (0 if none)
+ *	aggsortop			associated sort operator___ (0 if none)
  *	aggtranstype		type of aggregate's transition (state) data
  *	aggtransspace		estimated size of state data (0 for default estimate)
  *	aggmtranstype		type of moving-aggregate state data (0 if none)

@@ -40,7 +40,7 @@
  *
  * setup/teardown:
  *		StreamServerPort	- Open postmaster's server port
- *		StreamConnection	- Create cnew connection with client
+ *		StreamConnection	- Create new___ connection with client
  *		StreamClose			- Close a client/backend connection
  *		TouchSocketFiles	- Protect socket files against /tmp cleaners
  *		pq_init			- initialize libpq at backend startup
@@ -458,7 +458,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 #ifndef WIN32
 
 		/*
-		 * Without the SO_REUSEADDR flag, a cnew postmaster can't be started
+		 * Without the SO_REUSEADDR flag, a new___ postmaster can't be started
 		 * right away after a stop or crash, giving "address already in use"
 		 * error on TCP ports.
 		 *
@@ -669,8 +669,8 @@ Setup_AF_UNIX(char *sock_path)
 
 
 /*
- * StreamConnection -- create a cnew connection with client using
- *		server port.  Set port->sock to the FD of the cnew connection.
+ * StreamConnection -- create a new___ connection with client using
+ *		server port.  Set port->sock to the FD of the new___ connection.
  *
  * ASSUME: that this doesn't need to be non-blocking because
  *		the Postmaster uses select() to tell when the server master
@@ -689,7 +689,7 @@ StreamConnection(pgsocket server_fd, Port *port)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not accept cnew connection: %m")));
+				 errmsg("could not accept new___ connection: %m")));
 
 		/*
 		 * If accept() fails then postmaster.c will still see the server

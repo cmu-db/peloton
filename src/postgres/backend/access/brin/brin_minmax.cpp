@@ -61,7 +61,7 @@ brin_minmax_opcinfo(PG_FUNCTION_ARGS)
 /*
  * Examine the given index tuple (which contains partial status of a certain
  * page range) by comparing it to the given value that comes from another heap
- * tuple.  If the cnew value is outside the min/max range specified by the
+ * tuple.  If the new___ value is outside the min/max range specified by the
  * existing tuple values, update the index tuple and return true.  Otherwise,
  * return false and do not modify in this case.
  */
@@ -80,7 +80,7 @@ brin_minmax_add_value(PG_FUNCTION_ARGS)
 	AttrNumber	attno;
 
 	/*
-	 * If the cnew value is null, we record that we saw it if it's the first
+	 * If the new___ value is null, we record that we saw it if it's the first
 	 * one; otherwise, there's nothing to do.
 	 */
 	if (isnull)
@@ -96,7 +96,7 @@ brin_minmax_add_value(PG_FUNCTION_ARGS)
 	attr = bdesc->bd_tupdesc->attrs[attno - 1];
 
 	/*
-	 * If the recorded value is null, store the cnew value (which we know to be
+	 * If the recorded value is null, store the new___ value (which we know to be
 	 * not null) as both minimum and maximum, and we're done.
 	 */
 	if (column->bv_allnulls)
@@ -108,7 +108,7 @@ brin_minmax_add_value(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Otherwise, need to compare the cnew value with the existing boundaries
+	 * Otherwise, need to compare the new___ value with the existing boundaries
 	 * and update them accordingly.  First check if it's less than the
 	 * existing minimum.
 	 */
@@ -351,7 +351,7 @@ minmax_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 								Int16GetDatum(strategynum));
 
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "missing coperator %d(%u,%u) in opfamily %u",
+			elog(ERROR, "missing operator___ %d(%u,%u) in opfamily %u",
 				 strategynum, attr->atttypid, subtype, opfamily);
 
 		oprid = DatumGetObjectId(SysCacheGetAttr(AMOPSTRATEGY, tuple,

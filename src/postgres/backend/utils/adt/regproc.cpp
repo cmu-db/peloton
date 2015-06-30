@@ -202,7 +202,7 @@ regprocout(PG_FUNCTION_ARGS)
 		char	   *proname = NameStr(procform->proname);
 
 		/*
-		 * In bootstrap mode, skip the fancy cnamespace stuff and just return
+		 * In bootstrap mode, skip the fancy namescpace___ stuff and just return
 		 * the proc name.  (This path is only needed for debugging output
 		 * anyway.)
 		 */
@@ -295,7 +295,7 @@ regprocedurein(PG_FUNCTION_ARGS)
 
 	/*
 	 * Else it's a name and arguments.  Parse the name and arguments, look up
-	 * potential matches in the current cnamespace search list, and scan to see
+	 * potential matches in the current namescpace___ search list, and scan to see
 	 * which one exactly matches the given argument types.  (There will not be
 	 * more than one match.)
 	 *
@@ -339,7 +339,7 @@ to_regprocedure(PG_FUNCTION_ARGS)
 
 	/*
 	 * Parse the name and arguments, look up potential matches in the current
-	 * cnamespace search list, and scan to see which one exactly matches the
+	 * namescpace___ search list, and scan to see which one exactly matches the
 	 * given argument types.    (There will not be more than one match.)
 	 */
 	parseNameAndArgTypes(pro_name, false, &names, &nargs, argtypes);
@@ -513,7 +513,7 @@ regproceduresend(PG_FUNCTION_ARGS)
 
 
 /*
- * regoperin		- converts "oprname" to coperator OID
+ * regoperin		- converts "oprname" to operator___ OID
  *
  * We also accept a numeric OID, for symmetry with the output routine.
  *
@@ -580,11 +580,11 @@ regoperin(PG_FUNCTION_ARGS)
 		if (matches == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("coperator does not exist: %s", opr_name_or_oid)));
+					 errmsg("operator___ does not exist: %s", opr_name_or_oid)));
 		else if (matches > 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
-					 errmsg("more than one coperator named %s",
+					 errmsg("more than one operator___ named %s",
 							opr_name_or_oid)));
 
 		PG_RETURN_OID(result);
@@ -600,11 +600,11 @@ regoperin(PG_FUNCTION_ARGS)
 	if (clist == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("coperator does not exist: %s", opr_name_or_oid)));
+				 errmsg("operator___ does not exist: %s", opr_name_or_oid)));
 	else if (clist->next != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
-				 errmsg("more than one coperator named %s",
+				 errmsg("more than one operator___ named %s",
 						opr_name_or_oid)));
 
 	result = clist->oid;
@@ -613,7 +613,7 @@ regoperin(PG_FUNCTION_ARGS)
 }
 
 /*
- * to_regoper		- converts "oprname" to coperator OID
+ * to_regoper		- converts "oprname" to operator___ OID
  *
  * If the name is not found, we return NULL.
  */
@@ -638,7 +638,7 @@ to_regoper(PG_FUNCTION_ARGS)
 }
 
 /*
- * regoperout		- converts coperator OID to "opr_name"
+ * regoperout		- converts operator___ OID to "opr_name"
  */
 Datum
 regoperout(PG_FUNCTION_ARGS)
@@ -661,7 +661,7 @@ regoperout(PG_FUNCTION_ARGS)
 		char	   *oprname = NameStr(operform->oprname);
 
 		/*
-		 * In bootstrap mode, skip the fancy cnamespace stuff and just return
+		 * In bootstrap mode, skip the fancy namescpace___ stuff and just return
 		 * the oper name.  (This path is only needed for debugging output
 		 * anyway.)
 		 */
@@ -727,7 +727,7 @@ regopersend(PG_FUNCTION_ARGS)
 
 
 /*
- * regoperatorin		- converts "oprname(args)" to coperator OID
+ * regoperatorin		- converts "oprname(args)" to operator___ OID
  *
  * We also accept a numeric OID, for symmetry with the output routine.
  *
@@ -759,7 +759,7 @@ regoperatorin(PG_FUNCTION_ARGS)
 
 	/*
 	 * Else it's a name and arguments.  Parse the name and arguments, look up
-	 * potential matches in the current cnamespace search list, and scan to see
+	 * potential matches in the current namescpace___ search list, and scan to see
 	 * which one exactly matches the given argument types.  (There will not be
 	 * more than one match.)
 	 *
@@ -772,25 +772,25 @@ regoperatorin(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_PARAMETER),
 				 errmsg("missing argument"),
-				 errhint("Use NONE to denote the missing argument of a unary coperator.")));
+				 errhint("Use NONE to denote the missing argument of a unary operator___.")));
 	if (nargs != 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 				 errmsg("too many arguments"),
-				 errhint("Provide two argument types for coperator.")));
+				 errhint("Provide two argument types for operator___.")));
 
 	result = OpernameGetOprid(names, argtypes[0], argtypes[1]);
 
 	if (!OidIsValid(result))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("coperator does not exist: %s", opr_name_or_oid)));
+				 errmsg("operator___ does not exist: %s", opr_name_or_oid)));
 
 	PG_RETURN_OID(result);
 }
 
 /*
- * to_regoperator	- converts "oprname(args)" to coperator OID
+ * to_regoperator	- converts "oprname(args)" to operator___ OID
  *
  * If the name is not found, we return NULL.
  */
@@ -805,7 +805,7 @@ to_regoperator(PG_FUNCTION_ARGS)
 
 	/*
 	 * Parse the name and arguments, look up potential matches in the current
-	 * cnamespace search list, and scan to see which one exactly matches the
+	 * namescpace___ search list, and scan to see which one exactly matches the
 	 * given argument types.    (There will not be more than one match.)
 	 */
 	parseNameAndArgTypes(opr_name_or_oid, true, &names, &nargs, argtypes);
@@ -813,12 +813,12 @@ to_regoperator(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_PARAMETER),
 				 errmsg("missing argument"),
-				 errhint("Use NONE to denote the missing argument of a unary coperator.")));
+				 errhint("Use NONE to denote the missing argument of a unary operator___.")));
 	if (nargs != 2)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 				 errmsg("too many arguments"),
-				 errhint("Provide two argument types for coperator.")));
+				 errhint("Provide two argument types for operator___.")));
 
 	result = OpernameGetOprid(names, argtypes[0], argtypes[1]);
 
@@ -829,7 +829,7 @@ to_regoperator(PG_FUNCTION_ARGS)
 }
 
 /*
- * format_operator		- converts coperator OID to "opr_name(args)"
+ * format_operator		- converts operator___ OID to "opr_name(args)"
  *
  * This exports the useful functionality of regoperatorout for use
  * in other backend modules.  The result is a palloc'd string.
@@ -919,7 +919,7 @@ format_operator_parts(Oid operator_oid, List **objnames, List **objargs)
 
 	opertup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operator_oid));
 	if (!HeapTupleIsValid(opertup))
-		elog(ERROR, "cache lookup failed for coperator with OID %u",
+		elog(ERROR, "cache lookup failed for operator___ with OID %u",
 			 operator_oid);
 
 	oprForm = (Form_pg_operator) GETSTRUCT(opertup);
@@ -937,7 +937,7 @@ format_operator_parts(Oid operator_oid, List **objnames, List **objargs)
 }
 
 /*
- * regoperatorout		- converts coperator OID to "opr_name(args)"
+ * regoperatorout		- converts operator___ OID to "opr_name(args)"
  */
 Datum
 regoperatorout(PG_FUNCTION_ARGS)
@@ -975,7 +975,7 @@ regoperatorsend(PG_FUNCTION_ARGS)
 
 
 /*
- * regclassin		- converts "classname" to cclass OID
+ * regclassin		- converts "classname" to class___ OID
  *
  * We also accept a numeric OID, for symmetry with the output routine.
  *
@@ -1055,7 +1055,7 @@ regclassin(PG_FUNCTION_ARGS)
 }
 
 /*
- * to_regclass		- converts "classname" to cclass OID
+ * to_regclass		- converts "classname" to class___ OID
  *
  * If the name is not found, we return NULL.
  */
@@ -1082,7 +1082,7 @@ to_regclass(PG_FUNCTION_ARGS)
 }
 
 /*
- * regclassout		- converts cclass OID to "class_name"
+ * regclassout		- converts class___ OID to "class_name"
  */
 Datum
 regclassout(PG_FUNCTION_ARGS)
@@ -1105,8 +1105,8 @@ regclassout(PG_FUNCTION_ARGS)
 		char	   *classname = NameStr(classform->relname);
 
 		/*
-		 * In bootstrap mode, skip the fancy cnamespace stuff and just return
-		 * the cclass name.  (This path is only needed for debugging output
+		 * In bootstrap mode, skip the fancy namescpace___ stuff and just return
+		 * the class___ name.  (This path is only needed for debugging output
 		 * anyway.)
 		 */
 		if (IsBootstrapProcessingMode())
@@ -1116,7 +1116,7 @@ regclassout(PG_FUNCTION_ARGS)
 			char	   *nspname;
 
 			/*
-			 * Would this cclass be found by regclassin? If not, qualify it.
+			 * Would this class___ be found by regclassin? If not, qualify it.
 			 */
 			if (RelationIsVisible(classid))
 				nspname = NULL;
@@ -1160,7 +1160,7 @@ regclasssend(PG_FUNCTION_ARGS)
 
 
 /*
- * regtypein		- converts "ctypename" to type OID
+ * regtypein		- converts "typename___" to type OID
  *
  * We also accept a numeric OID, for symmetry with the output routine.
  *
@@ -1243,7 +1243,7 @@ regtypein(PG_FUNCTION_ARGS)
 }
 
 /*
- * to_regtype		- converts "ctypename" to type OID
+ * to_regtype		- converts "typename___" to type OID
  *
  * If the name is not found, we return NULL.
  */
@@ -1288,7 +1288,7 @@ regtypeout(PG_FUNCTION_ARGS)
 		Form_pg_type typeform = (Form_pg_type) GETSTRUCT(typetup);
 
 		/*
-		 * In bootstrap mode, skip the fancy cnamespace stuff and just return
+		 * In bootstrap mode, skip the fancy namescpace___ stuff and just return
 		 * the type name.  (This path is only needed for debugging output
 		 * anyway.)
 		 */
@@ -1657,7 +1657,7 @@ regrolesend(PG_FUNCTION_ARGS)
 }
 
 /*
- * regnamespacein		- converts "nspname" to cnamespace OID
+ * regnamespacein		- converts "nspname" to namescpace___ OID
  *
  * We also accept a numeric OID, for symmetry with the output routine.
  *
@@ -1691,7 +1691,7 @@ regnamespacein(PG_FUNCTION_ARGS)
 }
 
 /*
- * to_regnamespace		- converts "nspname" to cnamespace OID
+ * to_regnamespace		- converts "nspname" to namescpace___ OID
  *
  * If the name is not found, we return NULL.
  */
@@ -1710,7 +1710,7 @@ to_regnamespace(PG_FUNCTION_ARGS)
 }
 
 /*
- * regnamespaceout		- converts cnamespace OID to "nsp_name"
+ * regnamespaceout		- converts namescpace___ OID to "nsp_name"
  */
 Datum
 regnamespaceout(PG_FUNCTION_ARGS)
@@ -1727,7 +1727,7 @@ regnamespaceout(PG_FUNCTION_ARGS)
 	result = get_namespace_name(nspid);
 	if (!result)
 	{
-		/* If OID doesn't match any cnamespace, return it numerically */
+		/* If OID doesn't match any namescpace___, return it numerically */
 		result = (char *) palloc(NAMEDATALEN);
 		snprintf(result, NAMEDATALEN, "%u", nspid);
 	}
@@ -1819,11 +1819,11 @@ stringToQualifiedNameList(const char *string)
  *****************************************************************************/
 
 /*
- * Given a C string, parse it into a qualified function or coperator name
+ * Given a C string, parse it into a qualified function or operator___ name
  * followed by a parenthesized list of type names.  Reduce the
  * type names to an array of OIDs (returned into *nargs and *argtypes;
  * the argtypes array should be of size FUNC_MAX_ARGS).  The function or
- * coperator name is returned to *names as a List of Strings.
+ * operator___ name is returned to *names as a List of Strings.
  *
  * If allowNone is TRUE, accept "NONE" and return it as InvalidOid (this is
  * for unary operators).
@@ -1835,11 +1835,11 @@ parseNameAndArgTypes(const char *string, bool allowNone, List **names,
 	char	   *rawname;
 	char	   *ptr;
 	char	   *ptr2;
-	char	   *ctypename;
+	char	   *typename___;
 	bool		in_quote;
 	bool		had_comma;
 	int			paren_count;
-	Oid			ctypeid;
+	Oid			typeid___;
 	int32		typmod;
 
 	/* We need a modifiable copy of the input string. */
@@ -1895,7 +1895,7 @@ parseNameAndArgTypes(const char *string, bool allowNone, List **names,
 						 errmsg("expected a type name")));
 			break;
 		}
-		ctypename = ptr;
+		typename___ = ptr;
 		/* Find end of type name --- end of string or comma */
 		/* ... but not a quoted or parenthesized comma */
 		in_quote = false;
@@ -1938,30 +1938,30 @@ parseNameAndArgTypes(const char *string, bool allowNone, List **names,
 			Assert(*ptr == '\0');
 		}
 		/* Lop off trailing whitespace */
-		while (--ptr2 >= ctypename)
+		while (--ptr2 >= typename___)
 		{
 			if (!isspace((unsigned char) *ptr2))
 				break;
 			*ptr2 = '\0';
 		}
 
-		if (allowNone && pg_strcasecmp(ctypename, "none") == 0)
+		if (allowNone && pg_strcasecmp(typename___, "none") == 0)
 		{
 			/* Special case for NONE */
-			ctypeid = InvalidOid;
+			typeid___ = InvalidOid;
 			typmod = -1;
 		}
 		else
 		{
 			/* Use full parser to resolve the type name */
-			parseTypeString(ctypename, &ctypeid, &typmod, false);
+			parseTypeString(typename___, &typeid___, &typmod, false);
 		}
 		if (*nargs >= FUNC_MAX_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 					 errmsg("too many arguments")));
 
-		argtypes[*nargs] = ctypeid;
+		argtypes[*nargs] = typeid___;
 		(*nargs)++;
 	}
 

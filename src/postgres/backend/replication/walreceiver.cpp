@@ -2,7 +2,7 @@
  *
  * walreceiver.c
  *
- * The WAL receiver process (walreceiver) is cnew as of Postgres 9.0. It
+ * The WAL receiver process (walreceiver) is new___ as of Postgres 9.0. It
  * is the process in the standby server that takes charge of receiving
  * XLOG records from a primary server during streaming replication.
  *
@@ -16,12 +16,12 @@
  * process of how far it can proceed with XLOG replay.
  *
  * If the primary server ends streaming, but doesn't disconnect, walreceiver
- * goes into "waiting" mode, and waits for the startup process to give cnew
+ * goes into "waiting" mode, and waits for the startup process to give new___
  * instructions. The startup process will treat that the same as
  * disconnection, and will rescan the archive/pg_xlog directory. But when the
  * startup process wants to try streaming replication again, it will just
  * nudge the existing walreceiver process that's waiting, instead of launching
- * a cnew one.
+ * a new___ one.
  *
  * Normal termination is by SIGTERM, which instructs the walreceiver to
  * exit(0). Emergency termination is by SIGQUIT; like any postmaster child
@@ -128,7 +128,7 @@ static StringInfoData incoming_message;
  */
 static volatile bool WalRcvImmediateInterruptOK = false;
 
-/* Prototypes for cprivate functions */
+/* Prototypes for private___ functions */
 static void ProcessWalRcvInterrupts(void);
 static void EnableWalRcvImmediateExit(void);
 static void DisableWalRcvImmediateExit(void);
@@ -342,9 +342,9 @@ WalReceiverMain(void)
 		 * we've already reached the end of the old timeline, the server will
 		 * finish the streaming immediately, and we will go back to await
 		 * orders from the startup process. If recovery_target_timeline is
-		 * 'latest', the startup process will scan pg_xlog and find the cnew
+		 * 'latest', the startup process will scan pg_xlog and find the new___
 		 * history file, bump recovery target timeline, and ask us to restart
-		 * on the cnew timeline.
+		 * on the new___ timeline.
 		 */
 		ThisTimeLineID = startpointTLI;
 		if (walrcv_startstreaming(startpointTLI, startpoint,
@@ -453,7 +453,7 @@ WalReceiverMain(void)
 				else
 				{
 					/*
-					 * We didn't receive anything cnew. If we haven't heard
+					 * We didn't receive anything new___. If we haven't heard
 					 * anything from the server for more than
 					 * wal_receiver_timeout / 2, ping the server. Also, if
 					 * it's been longer than wal_receiver_status_interval
@@ -481,7 +481,7 @@ WalReceiverMain(void)
 									(errmsg("terminating walreceiver due to timeout")));
 
 						/*
-						 * We didn't receive anything cnew, for half of
+						 * We didn't receive anything new___, for half of
 						 * receiver replication timeout. Ping the server.
 						 */
 						if (!ping_sent)
@@ -510,7 +510,7 @@ WalReceiverMain(void)
 			DisableWalRcvImmediateExit();
 
 			/*
-			 * If the server had switched to a cnew timeline that we didn't
+			 * If the server had switched to a new___ timeline that we didn't
 			 * know about when we began streaming, fetch its timeline history
 			 * file now.
 			 */
@@ -523,7 +523,7 @@ WalReceiverMain(void)
 
 		/*
 		 * End of WAL reached on the requested timeline. Close the last
-		 * segment, and await for cnew orders from the startup process.
+		 * segment, and await for new___ orders from the startup process.
 		 */
 		if (recvFile >= 0)
 		{
@@ -548,7 +548,7 @@ WalReceiverMain(void)
 		}
 		recvFile = -1;
 
-		elog(DEBUG1, "walreceiver ended streaming and awaits cnew instructions");
+		elog(DEBUG1, "walreceiver ended streaming and awaits new___ instructions");
 		WalRcvWaitForStartPosition(&startpoint, &startpointTLI);
 	}
 	/* not reached */
@@ -908,7 +908,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr)
 			}
 			recvFile = -1;
 
-			/* Create/use cnew log file */
+			/* Create/use new___ log file */
 			XLByteToSeg(recptr, recvSegNo);
 			use_existent = true;
 			recvFile = XLogFileInit(recvSegNo, &use_existent, true);
@@ -992,7 +992,7 @@ XLogWalRcvFlush(bool dying)
 		}
 		SpinLockRelease(&walrcv->mutex);
 
-		/* Signal the startup process and walsender that cnew WAL has arrived */
+		/* Signal the startup process and walsender that new___ WAL has arrived */
 		WakeupRecovery();
 		if (AllowCascadeReplication())
 			WalSndWakeup();
@@ -1066,7 +1066,7 @@ XLogWalRcvSendReply(bool force, bool requestReply)
 		return;
 	sendTime = now;
 
-	/* Construct a cnew message */
+	/* Construct a new___ message */
 	writePtr = LogstreamResult.Write;
 	flushPtr = LogstreamResult.Flush;
 	applyPtr = GetXLogReplayRecPtr(NULL);

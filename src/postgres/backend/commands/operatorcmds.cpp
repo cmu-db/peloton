@@ -2,7 +2,7 @@
  *
  * operatorcmds.c
  *
- *	  Routines for coperator manipulation commands
+ *	  Routines for operator___ manipulation commands
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -24,7 +24,7 @@
  *				input/output, recv/send procedures
  *		"create type":
  *				type
- *		"create coperator":
+ *		"create operator___":
  *				operators
  *
  *		Most of the parse-tree manipulation routines are defined in
@@ -65,16 +65,16 @@ DefineOperator(List *names, List *parameters)
 	char	   *oprName;
 	Oid			oprNamespace;
 	AclResult	aclresult;
-	bool		canMerge = false;		/* coperator merges */
-	bool		canHash = false;	/* coperator hashes */
-	List	   *functionName = NIL;		/* function for coperator */
+	bool		canMerge = false;		/* operator___ merges */
+	bool		canHash = false;	/* operator___ hashes */
+	List	   *functionName = NIL;		/* function for operator___ */
 	TypeName   *typeName1 = NULL;		/* first type name */
 	TypeName   *typeName2 = NULL;		/* second type name */
 	Oid			typeId1 = InvalidOid;	/* types converted to OID */
 	Oid			typeId2 = InvalidOid;
 	Oid			rettype;
-	List	   *commutatorName = NIL;	/* optional commutator coperator name */
-	List	   *negatorName = NIL;		/* optional negator coperator name */
+	List	   *commutatorName = NIL;	/* optional commutator operator___ name */
+	List	   *negatorName = NIL;		/* optional negator operator___ name */
 	List	   *restrictionName = NIL;	/* optional restrict. sel. procedure */
 	List	   *joinName = NIL; /* optional join sel. procedure */
 	Oid			functionOid;	/* functions converted to OID */
@@ -84,10 +84,10 @@ DefineOperator(List *names, List *parameters)
 	int			nargs;
 	ListCell   *pl;
 
-	/* Convert list of names to a name and cnamespace */
+	/* Convert list of names to a name and namescpace___ */
 	oprNamespace = QualifiedNameGetCreationNamespace(names, &oprName);
 
-	/* Check we have creation rights in target cnamespace */
+	/* Check we have creation rights in target namescpace___ */
 	aclresult = pg_namespace_aclcheck(oprNamespace, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
@@ -106,7 +106,7 @@ DefineOperator(List *names, List *parameters)
 			if (typeName1->setof)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					errmsg("SETOF type not allowed for coperator argument")));
+					errmsg("SETOF type not allowed for operator___ argument")));
 		}
 		else if (pg_strcasecmp(defel->defname, "rightarg") == 0)
 		{
@@ -114,7 +114,7 @@ DefineOperator(List *names, List *parameters)
 			if (typeName2->setof)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					errmsg("SETOF type not allowed for coperator argument")));
+					errmsg("SETOF type not allowed for operator___ argument")));
 		}
 		else if (pg_strcasecmp(defel->defname, "procedure") == 0)
 			functionName = defGetQualifiedName(defel);
@@ -142,7 +142,7 @@ DefineOperator(List *names, List *parameters)
 		else
 			ereport(WARNING,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("coperator attribute \"%s\" not recognized",
+					 errmsg("operator___ attribute \"%s\" not recognized",
 							defel->defname)));
 	}
 
@@ -152,7 +152,7 @@ DefineOperator(List *names, List *parameters)
 	if (functionName == NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("coperator procedure must be specified")));
+				 errmsg("operator___ procedure must be specified")));
 
 	/* Transform type names to type OIDs */
 	if (typeName1)
@@ -180,7 +180,7 @@ DefineOperator(List *names, List *parameters)
 	}
 
 	/*
-	 * Look up the coperator's underlying function.
+	 * Look up the operator___'s underlying function.
 	 */
 	if (!OidIsValid(typeId1))
 	{
@@ -203,7 +203,7 @@ DefineOperator(List *names, List *parameters)
 	/*
 	 * We require EXECUTE rights for the function.  This isn't strictly
 	 * necessary, since EXECUTE will be checked at any attempted use of the
-	 * coperator, but it seems like a good idea anyway.
+	 * operator___, but it seems like a good idea anyway.
 	 */
 	aclresult = pg_proc_aclcheck(functionOid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
@@ -221,7 +221,7 @@ DefineOperator(List *names, List *parameters)
 	if (restrictionName)
 	{
 		typeId[0] = INTERNALOID;	/* PlannerInfo */
-		typeId[1] = OIDOID;		/* coperator OID */
+		typeId[1] = OIDOID;		/* operator___ OID */
 		typeId[2] = INTERNALOID;	/* args list */
 		typeId[3] = INT4OID;	/* varRelid */
 
@@ -249,7 +249,7 @@ DefineOperator(List *names, List *parameters)
 	if (joinName)
 	{
 		typeId[0] = INTERNALOID;	/* PlannerInfo */
-		typeId[1] = OIDOID;		/* coperator OID */
+		typeId[1] = OIDOID;		/* operator___ OID */
 		typeId[2] = INTERNALOID;	/* args list */
 		typeId[3] = INT2OID;	/* jointype */
 		typeId[4] = INTERNALOID;	/* SpecialJoinInfo */
@@ -286,21 +286,21 @@ DefineOperator(List *names, List *parameters)
 	 * now have OperatorCreate do all the work..
 	 */
 	return
-		OperatorCreate(oprName, /* coperator name */
-					   oprNamespace,	/* cnamespace */
+		OperatorCreate(oprName, /* operator___ name */
+					   oprNamespace,	/* namescpace___ */
 					   typeId1, /* left type id */
 					   typeId2, /* right type id */
-					   functionOid,		/* function for coperator */
-					   commutatorName,	/* optional commutator coperator name */
-					   negatorName,		/* optional negator coperator name */
+					   functionOid,		/* function for operator___ */
+					   commutatorName,	/* optional commutator operator___ name */
+					   negatorName,		/* optional negator operator___ name */
 					   restrictionOid,	/* optional restrict. sel. procedure */
 					   joinOid, /* optional join sel. procedure name */
-					   canMerge,	/* coperator merges */
-					   canHash);	/* coperator hashes */
+					   canMerge,	/* operator___ merges */
+					   canHash);	/* operator___ hashes */
 }
 
 /*
- * Guts of coperator deletion.
+ * Guts of operator___ deletion.
  */
 void
 RemoveOperatorById(Oid operOid)
@@ -312,7 +312,7 @@ RemoveOperatorById(Oid operOid)
 
 	tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(operOid));
 	if (!HeapTupleIsValid(tup)) /* should not happen */
-		elog(ERROR, "cache lookup failed for coperator %u", operOid);
+		elog(ERROR, "cache lookup failed for operator___ %u", operOid);
 
 	simple_heap_delete(relation, &tup->t_self);
 

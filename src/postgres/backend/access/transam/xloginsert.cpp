@@ -5,7 +5,7 @@
  *
  * Constructing a WAL record begins with a call to XLogBeginInsert,
  * followed by a number of XLogRegister* calls. The registered data is
- * collected in cprivate working memory, and finally assembled into a chain
+ * collected in private___ working memory, and finally assembled into a chain
  * of XLogRecData structs by a call to XLogRecordAssemble(). See
  * access/transam/README for details.
  *
@@ -126,7 +126,7 @@ XLogBeginInsert(void)
 
 	/* cross-check on whether we should be here or not */
 	if (!XLogInsertAllowed())
-		elog(ERROR, "cannot make cnew WAL entries during recovery");
+		elog(ERROR, "cannot make new___ WAL entries during recovery");
 
 	begininsert_called = true;
 }
@@ -921,7 +921,7 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
  * Write a WAL record containing a full image of a page. Caller is responsible
  * for writing the page to disk after calling this routine.
  *
- * Note: If you're using this function, you should be building pages in cprivate
+ * Note: If you're using this function, you should be building pages in private___
  * memory and writing them directly to smgr.  If you're using buffers, call
  * log_newpage_buffer instead.
  *

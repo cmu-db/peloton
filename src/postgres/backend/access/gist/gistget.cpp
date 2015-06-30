@@ -130,7 +130,7 @@ gistindex_keytest(IndexScanDesc scan,
 			/*
 			 * Call the Consistent function to evaluate the test.  The
 			 * arguments are the index datum (as a GISTENTRY*), the comparison
-			 * datum, the comparison coperator's strategy number and subtype
+			 * datum, the comparison operator___'s strategy number and subtype
 			 * from pg_amop, and the recheck flag.
 			 *
 			 * (Presently there's no need to pass the subtype since it'll
@@ -191,7 +191,7 @@ gistindex_keytest(IndexScanDesc scan,
 			/*
 			 * Call the Distance function to evaluate the distance.  The
 			 * arguments are the index datum (as a GISTENTRY*), the comparison
-			 * datum, the ordering coperator's strategy number and subtype from
+			 * datum, the ordering operator___'s strategy number and subtype from
 			 * pg_amop, and the recheck flag.
 			 *
 			 * (Presently there's no need to pass the subtype since it'll
@@ -243,7 +243,7 @@ gistindex_keytest(IndexScanDesc scan,
  * TIDs.
  *
  * If we detect that the index page has split since we saw its downlink
- * in the parent, we push its cnew right sibling onto the queue so the
+ * in the parent, we push its new___ right sibling onto the queue so the
  * sibling will be processed next.
  */
 static void
@@ -287,7 +287,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 
 		oldcxt = MemoryContextSwitchTo(so->queueCxt);
 
-		/* Create cnew GISTSearchItem for the right sibling index page */
+		/* Create new___ GISTSearchItem for the right sibling index page */
 		item = palloc(SizeOfGISTSearchItem(scan->numberOfOrderBys));
 		item->blkno = opaque->rightlink;
 		item->data.parentlsn = pageItem->data.parentlsn;
@@ -372,7 +372,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 
 			oldcxt = MemoryContextSwitchTo(so->queueCxt);
 
-			/* Create cnew GISTSearchItem for this item */
+			/* Create new___ GISTSearchItem for this item */
 			item = palloc(SizeOfGISTSearchItem(scan->numberOfOrderBys));
 
 			if (GistPageIsLeaf(page))
@@ -402,7 +402,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 				item->data.parentlsn = BufferGetLSNAtomic(buffer);
 			}
 
-			/* Insert it into the queue using cnew distance data */
+			/* Insert it into the queue using new___ distance data */
 			memcpy(item->distances, so->distances,
 				   sizeof(double) * scan->numberOfOrderBys);
 
@@ -495,7 +495,7 @@ getNextNearest(IndexScanDesc scan)
 				else
 				{
 					/*
-					 * If the ordering coperator's return value is anything
+					 * If the ordering operator___'s return value is anything
 					 * else, we don't know how to convert the float8 bound
 					 * calculated by the distance function to that.  The
 					 * executor won't actually need the order by values we
@@ -503,7 +503,7 @@ getNextNearest(IndexScanDesc scan)
 					 * insist on converting if the *recheck flag is set.
 					 */
 					if (scan->xs_recheckorderby)
-						elog(ERROR, "GiST coperator family's FOR ORDER BY coperator must return float8 or float4 if the distance function is lossy");
+						elog(ERROR, "GiST operator___ family's FOR ORDER BY operator___ must return float8 or float4 if the distance function is lossy");
 					scan->xs_orderbynulls[i] = true;
 				}
 			}

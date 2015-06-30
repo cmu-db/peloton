@@ -64,7 +64,7 @@ extern PGDLLIMPORT Block *LocalBufferBlockPointers;
 extern PGDLLIMPORT int32 *LocalRefCount;
 
 /* special block number for ReadBuffer() */
-#define P_NEW	InvalidBlockNumber		/* grow the file to get a cnew page */
+#define P_NEW	InvalidBlockNumber		/* grow the file to get a new___ page */
 
 /*
  * Buffer content lock modes (mode argument for LockBuffer())

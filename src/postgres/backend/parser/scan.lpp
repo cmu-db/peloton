@@ -1188,12 +1188,12 @@ static char *
 litbufdup(core_yyscan_t yyscanner)
 {
 	int			llen = yyextra->literallen;
-	char	   *cnew;
+	char	   *new___;
 
-	cnew = palloc(llen + 1);
-	memcpy(cnew, yyextra->literalbuf, llen);
-	cnew[llen] = '\0';
-	return cnew;
+	new___ = palloc(llen + 1);
+	memcpy(new___, yyextra->literalbuf, llen);
+	new___[llen] = '\0';
+	return new___;
 }
 
 static int
@@ -1300,7 +1300,7 @@ check_uescapechar(unsigned char escape)
 static char *
 litbuf_udeescape(unsigned char escape, core_yyscan_t yyscanner)
 {
-	char *cnew;
+	char *new___;
 	char *litbuf, *in, *out;
 	pg_wchar pair_first = 0;
 
@@ -1312,10 +1312,10 @@ litbuf_udeescape(unsigned char escape, core_yyscan_t yyscanner)
 	 * This relies on the subtle assumption that a UTF-8 expansion
 	 * cannot be longer than its escaped representation.
 	 */
-	cnew = palloc(yyextra->literallen + 1);
+	new___ = palloc(yyextra->literallen + 1);
 
 	in = litbuf;
-	out = cnew;
+	out = new___;
 	while (*in)
 	{
 		if (in[0] == escape)
@@ -1432,8 +1432,8 @@ litbuf_udeescape(unsigned char escape, core_yyscan_t yyscanner)
 	 * codes; but it's probably not worth the trouble, since this isn't
 	 * likely to be a performance-critical path.
 	 */
-	pg_verifymbstr(cnew, out - cnew, false);
-	return cnew;
+	pg_verifymbstr(new___, out - new___, false);
+	return new___;
 }
 
 static unsigned char

@@ -125,7 +125,7 @@ FinishSortSupportFunction(Oid opfamily, Oid opcintype, SortSupport ssup)
 }
 
 /*
- * Fill in SortSupport given an ordering coperator (btree "<" or ">" coperator).
+ * Fill in SortSupport given an ordering operator___ (btree "<" or ">" operator___).
  *
  * Caller must previously have zeroed the SortSupportData structure and then
  * filled in ssup_cxt, ssup_collation, and ssup_nulls_first.  This will fill
@@ -140,10 +140,10 @@ PrepareSortSupportFromOrderingOp(Oid orderingOp, SortSupport ssup)
 
 	Assert(ssup->comparator == NULL);
 
-	/* Find the coperator in pg_amop */
+	/* Find the operator___ in pg_amop */
 	if (!get_ordering_op_properties(orderingOp, &opfamily, &opcintype,
 									&strategy))
-		elog(ERROR, "coperator %u is not a valid ordering coperator",
+		elog(ERROR, "operator___ %u is not a valid ordering operator___",
 			 orderingOp);
 	ssup->ssup_reverse = (strategy == BTGreaterStrategyNumber);
 

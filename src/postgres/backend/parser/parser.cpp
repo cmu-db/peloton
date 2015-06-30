@@ -24,6 +24,8 @@
 #include "parser/gramparse.h"
 #include "parser/parser.h"
 
+extern int base_yydebug;
+
 
 /*
  * raw_parser
@@ -38,8 +40,6 @@ raw_parser(const char *str)
 	base_yy_extra_type yyextra;
 	int			yyresult;
 
-	elog(LOG, "raw parser \n");
-
 	/* initialize the flex scanner */
 	yyscanner = scanner_init(str, &yyextra.core_yy_extra,
 							 ScanKeywords, NumScanKeywords);
@@ -50,12 +50,10 @@ raw_parser(const char *str)
 	/* initialize the bison parser */
 	parser_init(&yyextra);
 
-	elog(LOG, "raw parser yyparse \n");
+	base_yydebug = 1;
 
 	/* Parse! */
 	yyresult = base_yyparse(yyscanner);
-
-	elog(LOG, "yyparse done \n");
 
 	/* Clean up (release memory) */
 	scanner_finish(yyscanner);

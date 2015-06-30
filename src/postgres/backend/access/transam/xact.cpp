@@ -476,7 +476,7 @@ GetStableLatestTransactionId(void)
 /*
  * AssignTransactionId
  *
- * Assigns a cnew permanent XID to the given TransactionState.
+ * Assigns a new___ permanent XID to the given TransactionState.
  * We do not assign XIDs to transactions until/unless this is called.
  * Also, any parent TransactionStates that don't yet have XIDs are assigned
  * one; this maintains the invariant that a child transaction has an XID
@@ -495,7 +495,7 @@ AssignTransactionId(TransactionState s)
 
 	/*
 	 * Workers synchronize transaction state at the beginning of each
-	 * parallel operation, so we can't account for cnew XIDs at this point.
+	 * parallel operation, so we can't account for new___ XIDs at this point.
 	 */
 	if (IsInParallelMode())
 		elog(ERROR, "cannot assign XIDs during a parallel operation");
@@ -544,7 +544,7 @@ AssignTransactionId(TransactionState s)
 		log_unknown_top = true;
 
 	/*
-	 * Generate a cnew Xid and record it in PG_PROC and pg_subtrans.
+	 * Generate a new___ Xid and record it in PG_PROC and pg_subtrans.
 	 *
 	 * NB: we must make the subtrans entry BEFORE the Xid appears anywhere in
 	 * shared storage other than PG_PROC; because if there's no room for it in
@@ -928,7 +928,7 @@ CommandCounterIncrement(void)
 	{
 		/*
 		 * Workers synchronize transaction state at the beginning of each
-		 * parallel operation, so we can't account for cnew commands after that
+		 * parallel operation, so we can't account for new___ commands after that
 		 * point.
 		 */
 		if (IsInParallelMode())
@@ -944,7 +944,7 @@ CommandCounterIncrement(void)
 		}
 		currentCommandIdUsed = false;
 
-		/* Propagate cnew command ID into static snapshots */
+		/* Propagate new___ command ID into static snapshots */
 		SnapshotSetCommandId(currentCommandId);
 
 		/*
@@ -993,7 +993,7 @@ AtStart_Memory(void)
 	TransactionState s = CurrentTransactionState;
 
 	/*
-	 * If this is the first time through, create a cprivate context for
+	 * If this is the first time through, create a private___ context for
 	 * AbortTransaction to work in.  By reserving some space now, we can
 	 * insulate AbortTransaction from out-of-memory scenarios.  Like
 	 * ErrorContext, we set it up with slow growth rate and a nonzero minimum
@@ -1840,7 +1840,7 @@ StartTransaction(void)
 	AtStart_ResourceOwner();
 
 	/*
-	 * Assign a cnew LocalTransactionId, and combine it with the backendId to
+	 * Assign a new___ LocalTransactionId, and combine it with the backendId to
 	 * form a virtual transaction id.
 	 */
 	vxid.backendId = MyBackendId;
@@ -1885,7 +1885,7 @@ StartTransaction(void)
 	Assert(s->prevSecContext == 0);
 
 	/*
-	 * initialize other subsystems for cnew transaction
+	 * initialize other subsystems for new___ transaction
 	 */
 	AtStart_GUC();
 	AtStart_Cache();
@@ -2652,7 +2652,7 @@ StartTransactionCommand(void)
 
 			/*
 			 * We are somewhere in a transaction block or subtransaction and
-			 * about to start a cnew command.  For now we do nothing, but
+			 * about to start a new___ command.  For now we do nothing, but
 			 * someday we may do command-local resource initialization. (Note
 			 * that any needed CommandCounterIncrement was done by the
 			 * previous CommitTransactionCommand.)
@@ -2834,7 +2834,7 @@ CommitTransactionCommand(void)
 			 * any subtransactions into their parent, which leads to O(N^2)
 			 * operations with respect to resource owners - this isn't that
 			 * bad until we approach a thousands of savepoints but is
-			 * necessary for correctness should after triggers create cnew
+			 * necessary for correctness should after triggers create new___
 			 * resource owners.
 			 */
 		case TBLOCK_SUBCOMMIT:
@@ -2882,7 +2882,7 @@ CommitTransactionCommand(void)
 
 			/*
 			 * The current subtransaction is the target of a ROLLBACK TO
-			 * command.  Abort and pop it, then start a cnew subtransaction
+			 * command.  Abort and pop it, then start a new___ subtransaction
 			 * with the same name.
 			 */
 		case TBLOCK_SUBRESTART:
@@ -3712,7 +3712,7 @@ DefineSavepoint(char *name)
 
 	/*
 	 * Workers synchronize transaction state at the beginning of each parallel
-	 * operation, so we can't account for cnew subtransactions after that
+	 * operation, so we can't account for new___ subtransactions after that
 	 * point.  (Note that this check will certainly error out if s->blockState
 	 * is TBLOCK_PARALLEL_INPROGRESS, so we can treat that as an invalid case
 	 * below.)
@@ -4017,7 +4017,7 @@ BeginInternalSubTransaction(char *name)
 
 	/*
 	 * Workers synchronize transaction state at the beginning of each parallel
-	 * operation, so we can't account for cnew subtransactions after that point.
+	 * operation, so we can't account for new___ subtransactions after that point.
 	 * We might be able to make an exception for the type of subtransaction
 	 * established by this function, which is typically used in contexts where
 	 * we're going to release or roll back the subtransaction before proceeding
@@ -4367,7 +4367,7 @@ StartSubTransaction(void)
 	s->state = TRANS_START;
 
 	/*
-	 * Initialize subsystems for cnew subtransaction
+	 * Initialize subsystems for new___ subtransaction
 	 *
 	 * must initialize resource-management stuff first
 	 */

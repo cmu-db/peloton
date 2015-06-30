@@ -4,8 +4,8 @@
  *
  * The range map (revmap) is a translation structure for BRIN indexes: for each
  * page range there is one summary tuple, and its location is tracked by the
- * revmap.  Whenever a cnew tuple is inserted into a table that violates the
- * previously recorded summary values, a cnew tuple is inserted into the index
+ * revmap.  Whenever a new___ tuple is inserted into a table that violates the
+ * previously recorded summary values, a new___ tuple is inserted into the index
  * and the revmap is updated to point to it.
  *
  * The revmap is stored in the first pages of the index, immediately following

@@ -317,7 +317,7 @@ index_beginscan_internal(Relation indexRelation,
 /* ----------------
  *		index_rescan  - (re)start a scan of an index
  *
- * During a restart, the caller may specify a cnew set of scankeys and/or
+ * During a restart, the caller may specify a new___ set of scankeys and/or
  * orderbykeys; but the number of keys cannot differ from what index_beginscan
  * was told.  (Later we might relax that to "must not exceed", but currently
  * the index AMs tend to assume that scan->numberOfKeys is what to believe.)
@@ -750,7 +750,7 @@ index_can_return(Relation indexRelation, int attno)
  *		index_getprocid
  *
  *		Index access methods typically require support routines that are
- *		not directly the implementation of any WHERE-clause query coperator
+ *		not directly the implementation of any WHERE-clause query operator___
  *		and so cannot be kept in pg_amop.  Instead, such routines are kept
  *		in pg_amproc.  These registered procedure OIDs are assigned numbers
  *		according to a convention established by the access method.
@@ -758,9 +758,9 @@ index_can_return(Relation indexRelation, int attno)
  *		involved; it just builds an ordered list of them for
  *		each attribute on which an index is defined.
  *
- *		As of Postgres 8.3, support routines within an coperator family
+ *		As of Postgres 8.3, support routines within an operator___ family
  *		are further subdivided by the "left type" and "right type" of the
- *		query coperator(s) that they support.  The "default" functions for a
+ *		query operator___(s) that they support.  The "default" functions for a
  *		particular indexed attribute are those with both types equal to
  *		the index opclass' opcintype (note that this is subtly different
  *		from the indexed attribute's own type: it may be a binary-compatible

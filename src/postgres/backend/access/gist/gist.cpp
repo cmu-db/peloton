@@ -141,8 +141,8 @@ gistinsert(PG_FUNCTION_ARGS)
 
 /*
  * Place tuples from 'itup' to 'buffer'. If 'oldoffnum' is valid, the tuple
- * at that offset is atomically removed along with inserting the cnew tuples.
- * This is used to replace a tuple with a cnew one.
+ * at that offset is atomically removed along with inserting the new___ tuples.
+ * This is used to replace a tuple with a new___ one.
  *
  * If 'leftchildbuf' is valid, we're inserting the downlink for the page
  * to the right of 'leftchildbuf', or updating the downlink for 'leftchildbuf'.
@@ -159,11 +159,11 @@ gistinsert(PG_FUNCTION_ARGS)
  * 'buffer' is the root page and it needs to be split, gistplacetopage()
  * performs the split as one atomic operation, and *splitinfo is set to NIL.
  * In that case, we continue to hold the root page locked, and the child
- * pages are released; note that cnew tuple(s) are *not* on the root page
- * but in one of the cnew child pages.
+ * pages are released; note that new___ tuple(s) are *not* on the root page
+ * but in one of the new___ child pages.
  *
  * If 'newblkno' is not NULL, returns the block number of page the first
- * cnew/updated tuple was inserted to. Usually it's the given page, but could
+ * new___/updated tuple was inserted to. Usually it's the given page, but could
  * be its right sibling if the page was split.
  *
  * Returns 'true' if the page was split, 'false' otherwise.
@@ -255,13 +255,13 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 				 npage, GIST_MAX_SPLIT_PAGES);
 
 		/*
-		 * Set up pages to work with. Allocate cnew buffers for all but the
-		 * leftmost page. The original page becomes the cnew leftmost page, and
-		 * is just replaced with the cnew contents.
+		 * Set up pages to work with. Allocate new___ buffers for all but the
+		 * leftmost page. The original page becomes the new___ leftmost page, and
+		 * is just replaced with the new___ contents.
 		 *
-		 * For a root-split, allocate cnew buffers for all child pages, the
-		 * original page is overwritten with cnew root page containing
-		 * downlinks to the cnew child pages.
+		 * For a root-split, allocate new___ buffers for all child pages, the
+		 * original page is overwritten with new___ root page containing
+		 * downlinks to the new___ child pages.
 		 */
 		ptr = dist;
 		if (!is_rootsplit)
@@ -281,7 +281,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		}
 		for (; ptr; ptr = ptr->next)
 		{
-			/* Allocate cnew page */
+			/* Allocate new___ page */
 			ptr->buffer = gistNewBuffer(rel);
 			GISTInitBuffer(ptr->buffer, (is_leaf) ? F_LEAF : 0);
 			ptr->page = BufferGetPage(ptr->buffer);
@@ -289,7 +289,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		}
 
 		/*
-		 * Now that we know which blocks the cnew pages go to, set up downlink
+		 * Now that we know which blocks the new___ pages go to, set up downlink
 		 * tuples to point to them.
 		 */
 		for (ptr = dist; ptr; ptr = ptr->next)
@@ -299,9 +299,9 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		}
 
 		/*
-		 * If this is a root split, we construct the cnew root page with the
+		 * If this is a root split, we construct the new___ root page with the
 		 * downlinks here directly, instead of requiring the caller to insert
-		 * them. Add the cnew root page to the list along with the child pages.
+		 * them. Add the new___ root page to the list along with the child pages.
 		 */
 		if (is_rootsplit)
 		{
@@ -343,7 +343,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		}
 
 		/*
-		 * Fill all pages. All the pages are cnew, ie. freshly allocated empty
+		 * Fill all pages. All the pages are new___, ie. freshly allocated empty
 		 * pages, or a temporary copy of the old page.
 		 */
 		for (ptr = dist; ptr; ptr = ptr->next)
@@ -435,11 +435,11 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		}
 
 		/*
-		 * Return the cnew child buffers to the caller.
+		 * Return the new___ child buffers to the caller.
 		 *
 		 * If this was a root split, we've already inserted the downlink
-		 * pointers, in the form of a cnew root page. Therefore we can release
-		 * all the cnew buffers, and keep just the root page locked.
+		 * pointers, in the form of a new___ root page. Therefore we can release
+		 * all the new___ buffers, and keep just the root page locked.
 		 */
 		if (is_rootsplit)
 		{
@@ -666,7 +666,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 				 * might have to split the page to make the updated tuple fit.
 				 * In that case the updated tuple might migrate to the other
 				 * half of the split, so we have to go back to the parent and
-				 * descend back to the half that's a better fit for the cnew
+				 * descend back to the half that's a better fit for the new___
 				 * tuple.
 				 */
 				if (gistinserttuple(&state, stack, giststate, newtup,
@@ -700,7 +700,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 		else
 		{
 			/*
-			 * Leaf page. Insert the cnew key. We've already updated all the
+			 * Leaf page. Insert the new___ key. We've already updated all the
 			 * parents on the way down, but we might have to split the page if
 			 * it doesn't fit. gistinserthere() will take care of that.
 			 */
@@ -770,7 +770,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace, GISTSTATE *giststate)
 /*
  * Traverse the tree to find path from root page to specified "child" block.
  *
- * returns a cnew insertion stack, starting from the parent of "child", up
+ * returns a new___ insertion stack, starting from the parent of "child", up
  * to the root. *downlinkoffnum is set to the offset of the downlink in the
  * direct parent of child.
  *
@@ -949,7 +949,7 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child)
 			ptr = ptr->parent;
 		}
 
-		/* ok, find cnew path */
+		/* ok, find new___ path */
 		ptr = parent = gistFindPath(r, child->blkno, &child->downlinkoffnum);
 
 		/* read all buffers as expected by caller */
@@ -961,7 +961,7 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child)
 			ptr = ptr->parent;
 		}
 
-		/* install cnew chain of parents to stack */
+		/* install new___ chain of parents to stack */
 		child->parent = parent;
 
 		/* make recursive call to normal processing */
@@ -1062,7 +1062,7 @@ gistfixsplit(GISTInsertState *state, GISTSTATE *giststate)
 
 		page = BufferGetPage(buf);
 
-		/* Form the cnew downlink tuples to insert to parent */
+		/* Form the new___ downlink tuples to insert to parent */
 		downlink = gistformdownlink(state->r, buf, giststate, stack);
 
 		si->buf = buf;
@@ -1086,7 +1086,7 @@ gistfixsplit(GISTInsertState *state, GISTSTATE *giststate)
 
 /*
  * Insert or replace a tuple in stack->buffer. If 'oldoffnum' is valid, the
- * tuple at 'oldoffnum' is replaced, otherwise the tuple is inserted as cnew.
+ * tuple at 'oldoffnum' is replaced, otherwise the tuple is inserted as new___.
  * 'stack' represents the path from the root to the page being updated.
  *
  * The caller must hold an exclusive lock on stack->buffer.  The lock is still
@@ -1194,10 +1194,10 @@ gistfinishsplit(GISTInsertState *state, GISTInsertStack *stack,
 	Assert(list_length(splitinfo) >= 2);
 
 	/*
-	 * We need to insert downlinks for each cnew page, and update the downlink
+	 * We need to insert downlinks for each new___ page, and update the downlink
 	 * for the original (leftmost) page in the split. Begin at the rightmost
 	 * page, inserting one downlink at a time until there's only two pages
-	 * left. Finally insert the downlink for the last cnew page and update the
+	 * left. Finally insert the downlink for the last new___ page and update the
 	 * downlink for the original page as one operation.
 	 */
 
@@ -1241,7 +1241,7 @@ gistfinishsplit(GISTInsertState *state, GISTInsertStack *stack,
 	/*
 	 * Finally insert downlink for the remaining right page and update the
 	 * downlink for the original page to not contain the tuples that were
-	 * moved to the cnew pages.
+	 * moved to the new___ pages.
 	 */
 	tuples[0] = left->downlink;
 	tuples[1] = right->downlink;

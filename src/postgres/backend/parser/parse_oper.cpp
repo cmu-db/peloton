@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * parse_oper.c
- *		handle coperator things for parser
+ *		handle operator___ things for parser
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -32,13 +32,13 @@
 
 
 /*
- * The lookup key for the coperator lookaside hash table.  Unused bits must be
+ * The lookup key for the operator___ lookaside hash table.  Unused bits must be
  * zeroes to ensure hashing works consistently --- in particular, oprname
  * must be zero-padded and any unused entries in search_path must be zero.
  *
  * search_path contains the actual search_path with which the entry was
- * derived (minus temp cnamespace if any), or else the single specified
- * schema OID if we are looking up an explicitly-qualified coperator name.
+ * derived (minus temp namescpace___ if any), or else the single specified
+ * schema OID if we are looking up an explicitly-qualified operator___ name.
  *
  * search_path has to be fixed-length since the hashtable code insists on
  * fixed-size keys.  If your search path is longer than that, we just punt
@@ -61,7 +61,7 @@ typedef struct OprCacheEntry
 	/* the hash lookup key MUST BE FIRST */
 	OprCacheKey key;
 
-	Oid			opr_oid;		/* OID of the resolved coperator */
+	Oid			opr_oid;		/* OID of the resolved operator___ */
 } OprCacheEntry;
 
 
@@ -85,16 +85,16 @@ static void InvalidateOprCacheCallBack(Datum arg, int cacheid, uint32 hashvalue)
 
 /*
  * LookupOperName
- *		Given a possibly-qualified coperator name and exact input datatypes,
- *		look up the coperator.
+ *		Given a possibly-qualified operator___ name and exact input datatypes,
+ *		look up the operator___.
  *
  * Pass oprleft = InvalidOid for a prefix op, oprright = InvalidOid for
  * a postfix op.
  *
- * If the coperator name is not schema-qualified, it is sought in the current
- * cnamespace search path.
+ * If the operator___ name is not schema-qualified, it is sought in the current
+ * namescpace___ search path.
  *
- * If the coperator is not found, we return InvalidOid if noError is true,
+ * If the operator___ is not found, we return InvalidOid if noError is true,
  * else raise an error.  pstate and location are used only to report the
  * error position; pass NULL/-1 if not available.
  */
@@ -122,7 +122,7 @@ LookupOperName(ParseState *pstate, List *opername, Oid oprleft, Oid oprright,
 
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("coperator does not exist: %s",
+				 errmsg("operator___ does not exist: %s",
 						op_signature_string(opername, oprkind,
 											oprleft, oprright)),
 				 parser_errposition(pstate, location)));
@@ -165,15 +165,15 @@ LookupOperNameTypeNames(ParseState *pstate, List *opername,
  *
  * We fetch the "<", "=", and ">" operators all at once to reduce lookup
  * overhead (knowing that most callers will be interested in at least two).
- * However, a given datatype might have only an "=" coperator, if it is
+ * However, a given datatype might have only an "=" operator___, if it is
  * hashable but not sortable.  (Other combinations of present and missing
  * operators shouldn't happen, unless the system catalogs are messed up.)
  *
- * If an coperator is missing and the corresponding needXX flag is true,
+ * If an operator___ is missing and the corresponding needXX flag is true,
  * throw a standard error message, else return InvalidOid.
  *
- * In addition to the coperator OIDs themselves, this function can identify
- * whether the "=" coperator is hashable.
+ * In addition to the operator___ OIDs themselves, this function can identify
+ * whether the "=" operator___ is hashable.
  *
  * Callers can pass NULL pointers for any results they don't care to get.
  *
@@ -217,13 +217,13 @@ get_sort_group_operators(Oid argtype,
 		(needGT && !OidIsValid(gt_opr)))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("could not identify an ordering coperator for type %s",
+				 errmsg("could not identify an ordering operator___ for type %s",
 						format_type_be(argtype)),
-		 errhint("Use an explicit ordering coperator or modify the query.")));
+		 errhint("Use an explicit ordering operator___ or modify the query.")));
 	if (needEQ && !OidIsValid(eq_opr))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("could not identify an equality coperator for type %s",
+				 errmsg("could not identify an equality operator___ for type %s",
 						format_type_be(argtype))));
 
 	/* Return results as needed */
@@ -238,14 +238,14 @@ get_sort_group_operators(Oid argtype,
 }
 
 
-/* given coperator tuple, return the coperator OID */
+/* given operator___ tuple, return the operator___ OID */
 Oid
 oprid(Operator op)
 {
 	return HeapTupleGetOid(op);
 }
 
-/* given coperator tuple, return the underlying function's OID */
+/* given operator___ tuple, return the underlying function's OID */
 Oid
 oprfuncid(Operator op)
 {
@@ -304,7 +304,7 @@ binary_oper_exact(List *opname, Oid arg1, Oid arg2)
 
 /* oper_select_candidate()
  *		Given the input argtype array and one or more candidates
- *		for the coperator, attempt to resolve the conflict.
+ *		for the operator___, attempt to resolve the conflict.
  *
  * Returns FUNCDETAIL_NOTFOUND, FUNCDETAIL_MULTIPLE, or FUNCDETAIL_NORMAL.
  * In the success case the Oid of the best candidate is stored in *operOid.
@@ -357,14 +357,14 @@ oper_select_candidate(int nargs,
 }
 
 
-/* oper() -- search for a binary coperator
- * Given coperator name, types of arg1 and arg2, return oper struct.
+/* oper() -- search for a binary operator___
+ * Given operator___ name, types of arg1 and arg2, return oper struct.
  *
- * IMPORTANT: the returned coperator (if any) is only promised to be
+ * IMPORTANT: the returned operator___ (if any) is only promised to be
  * coercion-compatible with the input datatypes.  Do not use this if
  * you need an exact- or binary-compatible match; see compatible_oper.
  *
- * If no matching coperator found, return NULL if noError is true,
+ * If no matching operator___ found, return NULL if noError is true,
  * raise an error if it is false.  pstate and location are used only to report
  * the error position; pass NULL/-1 if not available.
  *
@@ -445,9 +445,9 @@ oper(ParseState *pstate, List *opname, Oid ltypeId, Oid rtypeId,
 }
 
 /* compatible_oper()
- *	given an opname and input datatypes, find a compatible binary coperator
+ *	given an opname and input datatypes, find a compatible binary operator___
  *
- *	This is tighter than oper() because it will not return an coperator that
+ *	This is tighter than oper() because it will not return an operator___ that
  *	requires coercion of the input datatypes (but binary-compatible operators
  *	are accepted).  Otherwise, the semantics are the same.
  */
@@ -475,16 +475,16 @@ compatible_oper(ParseState *pstate, List *op, Oid arg1, Oid arg2,
 	if (!noError)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("coperator requires run-time type coercion: %s",
+				 errmsg("operator___ requires run-time type coercion: %s",
 						op_signature_string(op, 'b', arg1, arg2)),
 				 parser_errposition(pstate, location)));
 
 	return (Operator) NULL;
 }
 
-/* compatible_oper_opid() -- get OID of a binary coperator
+/* compatible_oper_opid() -- get OID of a binary operator___
  *
- * This is a convenience routine that extracts only the coperator OID
+ * This is a convenience routine that extracts only the operator___ OID
  * from the result of compatible_oper().  InvalidOid is returned if the
  * lookup fails and noError is true.
  */
@@ -505,14 +505,14 @@ compatible_oper_opid(List *op, Oid arg1, Oid arg2, bool noError)
 }
 
 
-/* right_oper() -- search for a unary right coperator (postfix coperator)
- * Given coperator name and type of arg, return oper struct.
+/* right_oper() -- search for a unary right operator___ (postfix operator___)
+ * Given operator___ name and type of arg, return oper struct.
  *
- * IMPORTANT: the returned coperator (if any) is only promised to be
+ * IMPORTANT: the returned operator___ (if any) is only promised to be
  * coercion-compatible with the input datatype.  Do not use this if
  * you need an exact- or binary-compatible match.
  *
- * If no matching coperator found, return NULL if noError is true,
+ * If no matching operator___ found, return NULL if noError is true,
  * raise an error if it is false.  pstate and location are used only to report
  * the error position; pass NULL/-1 if not available.
  *
@@ -563,7 +563,7 @@ right_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 		{
 			/*
 			 * We must run oper_select_candidate even if only one candidate,
-			 * otherwise we may falsely return a non-type-compatible coperator.
+			 * otherwise we may falsely return a non-type-compatible operator___.
 			 */
 			fdresult = oper_select_candidate(1, &arg, clist, &operOid);
 		}
@@ -584,14 +584,14 @@ right_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 }
 
 
-/* left_oper() -- search for a unary left coperator (prefix coperator)
- * Given coperator name and type of arg, return oper struct.
+/* left_oper() -- search for a unary left operator___ (prefix operator___)
+ * Given operator___ name and type of arg, return oper struct.
  *
- * IMPORTANT: the returned coperator (if any) is only promised to be
+ * IMPORTANT: the returned operator___ (if any) is only promised to be
  * coercion-compatible with the input datatype.  Do not use this if
  * you need an exact- or binary-compatible match.
  *
- * If no matching coperator found, return NULL if noError is true,
+ * If no matching operator___ found, return NULL if noError is true,
  * raise an error if it is false.  pstate and location are used only to report
  * the error position; pass NULL/-1 if not available.
  *
@@ -654,7 +654,7 @@ left_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 
 			/*
 			 * We must run oper_select_candidate even if only one candidate,
-			 * otherwise we may falsely return a non-type-compatible coperator.
+			 * otherwise we may falsely return a non-type-compatible operator___.
 			 */
 			fdresult = oper_select_candidate(1, &arg, clist, &operOid);
 		}
@@ -676,10 +676,10 @@ left_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 
 /*
  * op_signature_string
- *		Build a string representing an coperator name, including arg type(s).
+ *		Build a string representing an operator___ name, including arg type(s).
  *		The result is something like "integer + integer".
  *
- * This is typically used in the construction of coperator-not-found error
+ * This is typically used in the construction of operator___-not-found error
  * messages.
  */
 static const char *
@@ -701,7 +701,7 @@ op_signature_string(List *op, char oprkind, Oid arg1, Oid arg2)
 }
 
 /*
- * op_error - utility routine to complain about an unresolvable coperator
+ * op_error - utility routine to complain about an unresolvable operator___
  */
 static void
 op_error(ParseState *pstate, List *op, char oprkind,
@@ -711,17 +711,17 @@ op_error(ParseState *pstate, List *op, char oprkind,
 	if (fdresult == FUNCDETAIL_MULTIPLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
-				 errmsg("coperator is not unique: %s",
+				 errmsg("operator___ is not unique: %s",
 						op_signature_string(op, oprkind, arg1, arg2)),
-				 errhint("Could not choose a best candidate coperator. "
+				 errhint("Could not choose a best candidate operator___. "
 						 "You might need to add explicit type casts."),
 				 parser_errposition(pstate, location)));
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("coperator does not exist: %s",
+				 errmsg("operator___ does not exist: %s",
 						op_signature_string(op, oprkind, arg1, arg2)),
-		  errhint("No coperator matches the given name and argument type(s). "
+		  errhint("No operator___ matches the given name and argument type(s). "
 				  "You might need to add explicit type casts."),
 				 parser_errposition(pstate, location)));
 }
@@ -730,7 +730,7 @@ op_error(ParseState *pstate, List *op, char oprkind,
  * make_op()
  *		Operator expression construction.
  *
- * Transform coperator expression ensuring type compatibility.
+ * Transform operator___ expression ensuring type compatibility.
  * This is where some type conversion happens.
  *
  * As with coerce_type, pstate may be NULL if no special unknown-Param
@@ -751,24 +751,24 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 	Oid			rettype;
 	OpExpr	   *result;
 
-	/* Select the coperator */
+	/* Select the operator___ */
 	if (rtree == NULL)
 	{
-		/* right coperator */
+		/* right operator___ */
 		ltypeId = exprType(ltree);
 		rtypeId = InvalidOid;
 		tup = right_oper(pstate, opname, ltypeId, false, location);
 	}
 	else if (ltree == NULL)
 	{
-		/* left coperator */
+		/* left operator___ */
 		rtypeId = exprType(rtree);
 		ltypeId = InvalidOid;
 		tup = left_oper(pstate, opname, rtypeId, false, location);
 	}
 	else
 	{
-		/* otherwise, binary coperator */
+		/* otherwise, binary operator___ */
 		ltypeId = exprType(ltree);
 		rtypeId = exprType(rtree);
 		tup = oper(pstate, opname, ltypeId, rtypeId, false, location);
@@ -780,7 +780,7 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 	if (!RegProcedureIsValid(opform->oprcode))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("coperator is only a shell: %s",
+				 errmsg("operator___ is only a shell: %s",
 						op_signature_string(opname,
 											opform->oprkind,
 											opform->oprleft,
@@ -790,7 +790,7 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 	/* Do typecasting and build the expression tree */
 	if (rtree == NULL)
 	{
-		/* right coperator */
+		/* right operator___ */
 		args = list_make1(ltree);
 		actual_arg_types[0] = ltypeId;
 		declared_arg_types[0] = opform->oprleft;
@@ -798,7 +798,7 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 	}
 	else if (ltree == NULL)
 	{
-		/* left coperator */
+		/* left operator___ */
 		args = list_make1(rtree);
 		actual_arg_types[0] = rtypeId;
 		declared_arg_types[0] = opform->oprright;
@@ -806,7 +806,7 @@ make_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree,
 	}
 	else
 	{
-		/* otherwise, binary coperator */
+		/* otherwise, binary operator___ */
 		args = list_make2(ltree, rtree);
 		actual_arg_types[0] = ltypeId;
 		actual_arg_types[1] = rtypeId;
@@ -870,9 +870,9 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	atypeId = exprType(rtree);
 
 	/*
-	 * The right-hand input of the coperator will be the element type of the
+	 * The right-hand input of the operator___ will be the element type of the
 	 * array.  However, if we currently have just an untyped literal on the
-	 * right, stay with that and hope we can resolve the coperator.
+	 * right, stay with that and hope we can resolve the operator___.
 	 */
 	if (atypeId == UNKNOWNOID)
 		rtypeId = UNKNOWNOID;
@@ -886,7 +886,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 					 parser_errposition(pstate, location)));
 	}
 
-	/* Now resolve the coperator */
+	/* Now resolve the operator___ */
 	tup = oper(pstate, opname, ltypeId, rtypeId, false, location);
 	opform = (Form_pg_operator) GETSTRUCT(tup);
 
@@ -894,7 +894,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	if (!RegProcedureIsValid(opform->oprcode))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("coperator is only a shell: %s",
+				 errmsg("operator___ is only a shell: %s",
 						op_signature_string(opname,
 											opform->oprkind,
 											opform->oprleft,
@@ -919,17 +919,17 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 											   false);
 
 	/*
-	 * Check that coperator result is boolean
+	 * Check that operator___ result is boolean
 	 */
 	if (rettype != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-			 errmsg("op ANY/ALL (array) requires coperator to yield boolean"),
+			 errmsg("op ANY/ALL (array) requires operator___ to yield boolean"),
 				 parser_errposition(pstate, location)));
 	if (get_func_retset(opform->oprcode))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-		  errmsg("op ANY/ALL (array) requires coperator not to return a set"),
+		  errmsg("op ANY/ALL (array) requires operator___ not to return a set"),
 				 parser_errposition(pstate, location)));
 
 	/*
@@ -975,14 +975,14 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 
 
 /*
- * Lookaside cache to speed coperator lookup.  Possibly this should be in
+ * Lookaside cache to speed operator___ lookup.  Possibly this should be in
  * a separate module under utils/cache/ ?
  *
- * The idea here is that the mapping from coperator name and given argument
+ * The idea here is that the mapping from operator___ name and given argument
  * types is constant for a given search path (or single specified schema OID)
  * so long as the contents of pg_operator and pg_cast don't change.  And that
  * mapping is pretty expensive to compute, especially for ambiguous operators;
- * this is mainly because there are a *lot* of instances of popular coperator
+ * this is mainly because there are a *lot* of instances of popular operator___
  * names such as "=", and we have to check each one to see which is the
  * best match.  So once we have identified the correct mapping, we save it
  * in a cache that need only be flushed on pg_operator or pg_cast change.
@@ -995,18 +995,18 @@ make_scalar_array_op(ParseState *pstate, List *opname,
  *
  * Note: at some point it might be worth doing a similar cache for function
  * lookups.  However, the potential gain is a lot less since (a) function
- * names are generally not overloaded as heavily as coperator names, and
+ * names are generally not overloaded as heavily as operator___ names, and
  * (b) we'd have to flush on pg_proc updates, which are probably a good
  * deal more common than pg_operator updates.
  */
 
-/* The coperator cache hashtable */
+/* The operator___ cache hashtable */
 static HTAB *OprCacheHash = NULL;
 
 
 /*
  * make_oper_cache_key
- *		Fill the lookup key struct given coperator name and arg types.
+ *		Fill the lookup key struct given operator___ name and arg types.
  *
  * Returns TRUE if successful, FALSE if the search_path overflowed
  * (hence no caching is possible).
@@ -1027,7 +1027,7 @@ make_oper_cache_key(ParseState *pstate, OprCacheKey *key, List *opname,
 	/* ensure zero-fill for stable hashing */
 	MemSet(key, 0, sizeof(OprCacheKey));
 
-	/* save coperator name and input types into key */
+	/* save operator___ name and input types into key */
 	strlcpy(key->oprname, opername, NAMEDATALEN);
 	key->left_arg = ltypeId;
 	key->right_arg = rtypeId;
@@ -1056,7 +1056,7 @@ make_oper_cache_key(ParseState *pstate, OprCacheKey *key, List *opname,
  * find_oper_cache_entry
  *
  * Look for a cache entry matching the given key.  If found, return the
- * contained coperator OID, else return InvalidOid.
+ * contained operator___ OID, else return InvalidOid.
  */
 static Oid
 find_oper_cache_entry(OprCacheKey *key)

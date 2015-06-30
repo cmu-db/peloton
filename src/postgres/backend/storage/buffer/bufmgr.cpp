@@ -98,7 +98,7 @@ static volatile BufferDesc *PinCountWaitBuf = NULL;
 /*
  * Backend-Private refcount management:
  *
- * Each buffer also has a cprivate refcount that keeps track of the number of
+ * Each buffer also has a private___ refcount that keeps track of the number of
  * times the buffer is pinned in the current process.  This is so that the
  * shared refcount needs to be modified only once if a buffer is pinned more
  * than once by an individual backend.  It's also used to check that no buffers
@@ -111,7 +111,7 @@ static volatile BufferDesc *PinCountWaitBuf = NULL;
  * keep track of backend local pins.
  *
  * Until no more than REFCOUNT_ARRAY_ENTRIES buffers are pinned at once, all
- * refcounts are kept track of in the array; after that, cnew array entries
+ * refcounts are kept track of in the array; after that, new___ array entries
  * displace old ones into the hash table. That way a frequently used entry
  * can't get "stuck" in the hashtable while infrequent ones clog the array.
  *
@@ -140,7 +140,7 @@ static void ForgetPrivateRefCountEntry(PrivateRefCountEntry *ref);
 /*
  * Ensure that the PrivateRefCountArray has sufficient space to store one more
  * entry. This has to be called before using NewPrivateRefCountEntry() to fill
- * a cnew entry - but it's perfectly fine to not use a reserved entry.
+ * a new___ entry - but it's perfectly fine to not use a reserved entry.
  */
 static void
 ReservePrivateRefCountEntry(void)
@@ -496,7 +496,7 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
  * ReadBufferExtended -- returns a buffer containing the requested
  *		block of the requested relation.  If the blknum
  *		requested is P_NEW, extend the relation file and
- *		allocate a cnew block.  (Caller is responsible for
+ *		allocate a new___ block.  (Caller is responsible for
  *		ensuring that only one backend tries to extend a
  *		relation at the same time!)
  *
@@ -750,7 +750,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 
 	if (isExtend)
 	{
-		/* cnew buffers are zero-filled */
+		/* new___ buffers are zero-filled */
 		MemSet((char *) bufBlock, 0, BLCKSZ);
 		/* don't set checksum for all-zero page */
 		smgrextend(smgr, forkNum, blockNum, (char *) bufBlock, false);
@@ -848,7 +848,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 /*
  * BufferAlloc -- subroutine for ReadBuffer.  Handles lookup of a shared
  *		buffer.  If no buffer exists already, selects a replacement
- *		victim and evicts the old page, but does NOT read in cnew page.
+ *		victim and evicts the old page, but does NOT read in new___ page.
  *
  * "strategy" can be a buffer replacement strategy object, or NULL for
  * the default strategy.  The selected buffer's usage_count is advanced when
@@ -930,7 +930,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	}
 
 	/*
-	 * Didn't find it in the buffer pool.  We'll have to initialize a cnew
+	 * Didn't find it in the buffer pool.  We'll have to initialize a new___
 	 * buffer.  Remember to unlock the mapping lock while doing the work.
 	 */
 	LWLockRelease(newPartitionLock);
@@ -1037,7 +1037,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 
 		/*
 		 * To change the association of a valid buffer, we'll need to have
-		 * exclusive lock on both the old and cnew mapping partitions.
+		 * exclusive lock on both the old and new___ mapping partitions.
 		 */
 		if (oldFlags & BM_TAG_VALID)
 		{
@@ -1072,7 +1072,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		}
 		else
 		{
-			/* if it wasn't valid, we need only the cnew partition */
+			/* if it wasn't valid, we need only the new___ partition */
 			LWLockAcquire(newPartitionLock, LW_EXCLUSIVE);
 			/* these just keep the compiler quiet about uninit variables */
 			oldHash = 0;
@@ -1080,7 +1080,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		}
 
 		/*
-		 * Try to make a hashtable entry for the buffer under its cnew tag.
+		 * Try to make a hashtable entry for the buffer under its new___ tag.
 		 * This could fail because while we were writing someone else
 		 * allocated another buffer for the same block we want to read in.
 		 * Note that we have not yet removed the hashtable entry for the old
@@ -1143,9 +1143,9 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 
 		/*
 		 * Somebody could have pinned or re-dirtied the buffer while we were
-		 * doing the I/O and making the cnew hashtable entry.  If so, we can't
+		 * doing the I/O and making the new___ hashtable entry.  If so, we can't
 		 * recycle this buffer; we must undo everything we've done and start
-		 * over with a cnew victim buffer.
+		 * over with a new___ victim buffer.
 		 */
 		oldFlags = buf->flags;
 		if (buf->refcount == 1 && !(oldFlags & BM_DIRTY))
@@ -1477,7 +1477,7 @@ PinBuffer(volatile BufferDesc *buf, BufferAccessStrategy strategy)
  *
  * Also all callers only ever use this function when it's known that the
  * buffer can't have a preexisting pin by this backend. That allows us to skip
- * searching the cprivate refcount array & hash, which is a boon, because the
+ * searching the private___ refcount array & hash, which is a boon, because the
  * spinlock is still held.
  *
  * Note: use of this routine is frequently mandatory, not just an optimization
@@ -1854,7 +1854,7 @@ BgBufferSync(void)
 	saved_info_valid = true;
 
 	/*
-	 * Compute how many buffers had to be scanned for each cnew allocation, ie,
+	 * Compute how many buffers had to be scanned for each new___ allocation, ie,
 	 * 1/density of reusable buffers, and track a moving average of that.
 	 *
 	 * If the strategy point didn't move, we don't update the density estimate
@@ -1971,7 +1971,7 @@ BgBufferSync(void)
 #endif
 
 	/*
-	 * Consider the above scan as being like a cnew allocation scan.
+	 * Consider the above scan as being like a new___ allocation scan.
 	 * Characterize its density and update the smoothed one based on it. This
 	 * effectively halves the moving average period in cases where both the
 	 * strategy and the background writer are doing some useful scanning,
@@ -1987,7 +1987,7 @@ BgBufferSync(void)
 			smoothing_samples;
 
 #ifdef BGW_DEBUG
-		elog(DEBUG2, "bgwriter: cleaner density alloc=%u scan=%ld density=%.2f cnew smoothed=%.2f",
+		elog(DEBUG2, "bgwriter: cleaner density alloc=%u scan=%ld density=%.2f new___ smoothed=%.2f",
 			 new_recent_alloc, new_strategy_delta,
 			 scans_per_alloc, smoothed_density);
 #endif
@@ -2108,7 +2108,7 @@ InitBufferPoolAccess(void)
 }
 
 /*
- * InitBufferPoolBackend --- second-stage initialization of a cnew backend
+ * InitBufferPoolBackend --- second-stage initialization of a new___ backend
  *
  * This is called after we have acquired a PGPROC and so can safely get
  * LWLocks.  We don't currently need to do anything at this stage ...
@@ -2393,7 +2393,7 @@ FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln)
 	/*
 	 * Update page checksum if desired.  Since we have only shared lock on the
 	 * buffer, other processes might be updating hint bits in it, so we must
-	 * copy the page to cprivate storage if we do checksumming.
+	 * copy the page to private___ storage if we do checksumming.
 	 */
 	bufToWrite = PageSetChecksumCopy((Page) bufBlock, buf->tag.blockNum);
 
@@ -2471,7 +2471,7 @@ BufferIsPermanent(Buffer buffer)
 	 * need not bother with the buffer header spinlock.  Even if someone else
 	 * changes the buffer header flags while we're doing this, we assume that
 	 * changing an aligned 2-byte BufFlags value is atomic, so we'll read the
-	 * old value or the cnew value, but not random garbage.
+	 * old value or the new___ value, but not random garbage.
 	 */
 	bufHdr = GetBufferDescriptor(buffer - 1);
 	return (bufHdr->flags & BM_PERMANENT) != 0;
@@ -2556,7 +2556,7 @@ DropRelFileNodeBuffers(RelFileNodeBackend rnode, ForkNumber forkNum,
 		 * we attempt to lock the buffer; this saves a lot of lock
 		 * acquisitions in typical cases.  It should be safe because the
 		 * caller must have AccessExclusiveLock on the relation, or some other
-		 * reason to be certain that no one is loading cnew pages of the rel
+		 * reason to be certain that no one is loading new___ pages of the rel
 		 * into the buffer pool.  (Otherwise we might well miss such pages
 		 * entirely.)  Therefore, while the tag might be changing while we
 		 * look at it, it can't be changing *to* a value we care about, only

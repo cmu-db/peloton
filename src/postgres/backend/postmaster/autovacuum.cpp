@@ -19,10 +19,10 @@
  * not as robust as the postmaster).  So it leaves that task to the postmaster.
  *
  * There is an autovacuum shared memory area, where the launcher stores
- * information about the database it wants vacuumed.  When it wants a cnew
+ * information about the database it wants vacuumed.  When it wants a new___
  * worker to start, it sets a flag in shared memory and sends a signal to the
  * postmaster.  Then postmaster knows nothing more than it must start a worker;
- * so it forks a cnew child, which turns into a worker.  This cnew process
+ * so it forks a new___ child, which turns into a worker.  This new___ process
  * connects to shared memory, and there it can inspect the information that the
  * launcher has set up.
  *
@@ -33,11 +33,11 @@
  * high load, memory pressure, too many processes, etc); more permanent
  * problems, like failure to connect to a database, are detected later in the
  * worker and dealt with just by having the worker exit normally.  The launcher
- * will launch a cnew worker again later, per schedule.
+ * will launch a new___ worker again later, per schedule.
  *
  * When the worker is done vacuuming it sends SIGUSR2 to the launcher.  The
  * launcher then wakes up and is able to launch another worker, if the schedule
- * is so tight that a cnew worker is needed immediately.  At this time the
+ * is so tight that a new___ worker is needed immediately.  At this time the
  * launcher can also balance the settings for the various remaining workers'
  * cost-based vacuum delay feature.
  *
@@ -650,8 +650,8 @@ AutoVacLauncherMain(int argc, char *argv[])
 			if (AutoVacuumShmem->av_signal[AutoVacForkFailed])
 			{
 				/*
-				 * If the postmaster failed to start a cnew worker, we sleep
-				 * for a little while and resend the signal.  The cnew worker's
+				 * If the postmaster failed to start a new___ worker, we sleep
+				 * for a little while and resend the signal.  The new___ worker's
 				 * state is still in memory, so this is sufficient.  After
 				 * that, we restart the main loop.
 				 *
@@ -733,7 +733,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 		if (!can_launch)
 			continue;
 
-		/* We're OK to start a cnew worker */
+		/* We're OK to start a new___ worker */
 
 		if (dlist_is_empty(&DatabaseList))
 		{
@@ -852,10 +852,10 @@ launcher_determine_sleep(bool canlaunch, bool recursing, struct timeval * nap)
  * distributed regularly across the next autovacuum_naptime interval.
  *
  * Receives the Oid of the database that made this list be generated (we call
- * this the "cnew" database, because when the database was already present on
+ * this the "new___" database, because when the database was already present on
  * the list, we expect that this function is not called at all).  The
  * preexisting list, if any, will be used to preserve the order of the
- * databases in the autovacuum_naptime period.  The cnew database is put at the
+ * databases in the autovacuum_naptime period.  The new___ database is put at the
  * end of the interval.  The actual values are not saved, which should not be
  * much of a problem.
  */
@@ -890,18 +890,18 @@ rebuild_database_list(Oid newdb)
 
 	/*
 	 * Implementing this is not as simple as it sounds, because we need to put
-	 * the cnew database at the end of the list; next the databases that were
+	 * the new___ database at the end of the list; next the databases that were
 	 * already on the list, and finally (at the tail of the list) all the
 	 * other databases that are not on the existing list.
 	 *
 	 * To do this, we build an empty hash table of scored databases.  We will
-	 * start with the lowest score (zero) for the cnew database, then
+	 * start with the lowest score (zero) for the new___ database, then
 	 * increasing scores for the databases in the existing list, in order, and
 	 * lastly increasing scores for all databases gotten via
 	 * get_database_list() that are not already on the hash.
 	 *
 	 * Then we will put all the hash elements into an array, sort the array by
-	 * score, and finally put the array elements into the cnew doubly linked
+	 * score, and finally put the array elements into the new___ doubly linked
 	 * list.
 	 */
 	hctl.keysize = sizeof(Oid);
@@ -910,7 +910,7 @@ rebuild_database_list(Oid newdb)
 	dbhash = hash_create("db hash", 20, &hctl,	/* magic number here FIXME */
 						 HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
-	/* start by inserting the cnew database */
+	/* start by inserting the new___ database */
 	score = 0;
 	if (OidIsValid(newdb))
 	{
@@ -981,7 +981,7 @@ rebuild_database_list(Oid newdb)
 	}
 	nelems = score;
 
-	/* from here on, the allocated memory belongs to the cnew list */
+	/* from here on, the allocated memory belongs to the new___ list */
 	MemoryContextSwitchTo(newcxt);
 	dlist_init(&DatabaseList);
 
@@ -1141,7 +1141,7 @@ do_start_worker(void)
 	 * XXX This could be improved if we had more info about whether it needs
 	 * vacuuming before connecting to it.  Perhaps look through the pgstats
 	 * data for the database's tables?  One idea is to keep track of the
-	 * number of cnew and dead tuples per database in pgstats.  However it
+	 * number of new___ and dead tuples per database in pgstats.  However it
 	 * isn't clear how to construct a metric that measures that and not cause
 	 * starvation for less busy databases.
 	 */
@@ -1306,7 +1306,7 @@ launch_worker(TimestampTz now)
 
 				/*
 				 * add autovacuum_naptime seconds to the current time, and use
-				 * that as the cnew "next_worker" field for this database.
+				 * that as the new___ "next_worker" field for this database.
 				 */
 				avdb->adl_next_worker =
 					TimestampTzPlusMilliseconds(now, autovacuum_naptime * 1000);
@@ -1583,7 +1583,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 
 		/*
 		 * remove from the "starting" pointer, so that the launcher can start
-		 * a cnew worker if required
+		 * a new___ worker if required
 		 */
 		AutoVacuumShmem->av_startingWorker = NULL;
 		LWLockRelease(AutovacuumLock);
@@ -1657,7 +1657,7 @@ FreeWorkerInfo(int code, Datum arg)
 		LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
 
 		/*
-		 * Wake the launcher up so that he can launch a cnew worker immediately
+		 * Wake the launcher up so that he can launch a new___ worker immediately
 		 * if required.  We only save the launcher's PID in local memory here;
 		 * the actual signal will be sent when the PGPROC is recycled.  Note
 		 * that we always do this, so that the launcher can rebalance the cost
@@ -2328,7 +2328,7 @@ do_autovacuum(void)
 		PG_CATCH();
 		{
 			/*
-			 * Abort the transaction, start a cnew one, and proceed with the
+			 * Abort the transaction, start a new___ one, and proceed with the
 			 * next table in our list.
 			 */
 			HOLD_INTERRUPTS();

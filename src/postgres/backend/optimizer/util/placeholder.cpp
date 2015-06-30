@@ -84,7 +84,7 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv,
 
 	/* Not found, so create it */
 	if (!create_new_ph)
-		elog(ERROR, "too late to create a cnew PlaceHolderInfo");
+		elog(ERROR, "too late to create a new___ PlaceHolderInfo");
 
 	phinfo = makeNode(PlaceHolderInfo);
 

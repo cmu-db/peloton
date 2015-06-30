@@ -87,7 +87,7 @@ static void reform_and_rewrite_tuple(HeapTuple tuple,
  * we need to:
  *	- provide a separate memory context so that we can pass information in
  *	  a way that survives across transactions
- *	- start a cnew transaction every time a cnew relation is clustered
+ *	- start a new___ transaction every time a new___ relation is clustered
  *	- check for validity of the information on to-be-clustered relations,
  *	  as someone might have deleted a relation behind our back, or
  *	  clustered one on a different index
@@ -160,7 +160,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		else
 		{
 			/*
-			 * The index is expected to be in the same cnamespace as the
+			 * The index is expected to be in the same namescpace___ as the
 			 * relation.
 			 */
 			indexOid = get_relname_relid(stmt->indexname,
@@ -221,7 +221,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		{
 			RelToCluster *rvtc = (RelToCluster *) lfirst(rv);
 
-			/* Start a cnew transaction for each relation. */
+			/* Start a new___ transaction for each relation. */
 			StartTransactionCommand();
 			/* functions in indexes may want a snapshot set */
 			PushActiveSnapshot(GetTransactionSnapshot());
@@ -231,7 +231,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 			CommitTransactionCommand();
 		}
 
-		/* Start a cnew transaction for the cleanup work. */
+		/* Start a new___ transaction for the cleanup work. */
 		StartTransactionCommand();
 
 		/* Clean up working storage */
@@ -242,18 +242,18 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 /*
  * cluster_rel
  *
- * This clusters the table by creating a cnew, clustered table and
- * swapping the relfilenodes of the cnew table and the old table, so
+ * This clusters the table by creating a new___, clustered table and
+ * swapping the relfilenodes of the new___ table and the old table, so
  * the OID of the original table is preserved.  Thus we do not lose
  * GRANT, inheritance nor references to this table (this was a bug
  * in releases thru 7.3).
  *
  * Indexes are rebuilt too, via REINDEX. Since we are effectively bulk-loading
- * the cnew table, it's better to create the indexes afterwards than to fill
+ * the new___ table, it's better to create the indexes afterwards than to fill
  * them incrementally while we load the table.
  *
  * If indexOid is InvalidOid, the table will be rewritten in physical order
- * instead of index order.  This is the cnew implementation of VACUUM FULL,
+ * instead of index order.  This is the new___ implementation of VACUUM FULL,
  * and error messages should refer to the operation as VACUUM not CLUSTER.
  */
 void
@@ -277,7 +277,7 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose)
 		return;
 
 	/*
-	 * Since we may open a cnew transaction for each relation, we have to check
+	 * Since we may open a new___ transaction for each relation, we have to check
 	 * that the relation still is what we think it is.
 	 *
 	 * If this is a single-transaction CLUSTER, we can skip these tests. We
@@ -456,7 +456,7 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck, LOCKMOD
 	 * it might well not contain entries for every heap row, or might not even
 	 * be internally consistent.  (But note that we don't check indcheckxmin;
 	 * the worst consequence of following broken HOT chains would be that we
-	 * might put recently-dead tuples out-of-order in the cnew table, and there
+	 * might put recently-dead tuples out-of-order in the new___ table, and there
 	 * is little harm in that.)
 	 */
 	if (!IndexIsValid(OldIndex->rd_index))
@@ -579,7 +579,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 							   OldHeap->rd_rel->relpersistence,
 							   AccessExclusiveLock);
 
-	/* Copy the heap data into the cnew table in the desired order */
+	/* Copy the heap data into the new___ table in the desired order */
 	copy_heap_data(OIDNewHeap, tableOid, indexOid, verbose,
 				   &swap_toast_by_content, &frozenXid, &cutoffMulti);
 
@@ -595,13 +595,13 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 
 
 /*
- * Create the transient table that will be filled with cnew data during
+ * Create the transient table that will be filled with new___ data during
  * CLUSTER, ALTER TABLE, and similar operations.  The transient table
  * duplicates the logical structure of the OldHeap, but is placed in
  * NewTableSpace which might be different from OldHeap's.  Also, it's built
  * with the specified persistence, which might differ from the original's.
  *
- * After this, the caller should load the cnew heap with transferred/modified
+ * After this, the caller should load the new___ heap with transferred/modified
  * data, then call finish_heap_swap to complete the operation.
  */
 Oid
@@ -629,7 +629,7 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 	 */
 
 	/*
-	 * But we do want to use reloptions of the old heap for cnew heap.
+	 * But we do want to use reloptions of the old heap for new___ heap.
 	 */
 	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(OIDOldHeap));
 	if (!HeapTupleIsValid(tuple))
@@ -645,14 +645,14 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 		namespaceid = RelationGetNamespace(OldHeap);
 
 	/*
-	 * Create the cnew heap, using a temporary name in the same cnamespace as
+	 * Create the new___ heap, using a temporary name in the same namescpace___ as
 	 * the existing table.  NOTE: there is some risk of collision with user
 	 * relnames.  Working around this seems more trouble than it's worth; in
-	 * particular, we can't create the cnew heap in a different cnamespace from
+	 * particular, we can't create the new___ heap in a different namescpace___ from
 	 * the old, or we will have problems with the TEMP status of temp tables.
 	 *
-	 * Note: the cnew heap is not a shared relation, even if we are rebuilding
-	 * a shared rel.  However, we do make the cnew heap mapped if the source is
+	 * Note: the new___ heap is not a shared relation, even if we are rebuilding
+	 * a shared rel.  However, we do make the new___ heap mapped if the source is
 	 * mapped.  This simplifies swap_relation_files, and is absolutely
 	 * necessary for rebuilding pg_class, for reasons explained there.
 	 */
@@ -690,12 +690,12 @@ make_new_heap(Oid OIDOldHeap, Oid NewTableSpace, char relpersistence,
 	CommandCounterIncrement();
 
 	/*
-	 * If necessary, create a TOAST table for the cnew relation.
+	 * If necessary, create a TOAST table for the new___ relation.
 	 *
 	 * If the relation doesn't have a TOAST table already, we can't need one
-	 * for the cnew relation.  The other way around is possible though: if some
+	 * for the new___ relation.  The other way around is possible though: if some
 	 * wide columns have been dropped, NewHeapCreateToastTable can decide that
-	 * no TOAST table is needed for the cnew table.
+	 * no TOAST table is needed for the new___ table.
 	 *
 	 * Note that NewHeapCreateToastTable ends with CommandCounterIncrement, so
 	 * that the TOAST table will be visible for insertion.
@@ -811,7 +811,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 
 	/*
 	 * If both tables have TOAST tables, perform toast swap by content.  It is
-	 * possible that the old table has a toast table but the cnew one doesn't,
+	 * possible that the old table has a toast table but the new___ one doesn't,
 	 * if toastable columns have been dropped.  In that case we have to do
 	 * swap by links.  This is okay because swap by content is only essential
 	 * for system catalogs, and we don't support schema changes for them.
@@ -853,7 +853,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 						  NULL);
 
 	/*
-	 * FreezeXid will become the table's cnew relfrozenxid, and that mustn't go
+	 * FreezeXid will become the table's new___ relfrozenxid, and that mustn't go
 	 * backwards, so take the max.
 	 */
 	if (TransactionIdPrecedes(FreezeXid, OldHeap->rd_rel->relfrozenxid))
@@ -934,7 +934,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	 * Scan through the OldHeap, either in OldIndex order or sequentially;
 	 * copy each tuple into the NewHeap, or transiently to the tuplesort
 	 * module.  Note that we don't bother sorting dead tuples (they won't get
-	 * to the cnew table anyway).
+	 * to the new___ table anyway).
 	 */
 	for (;;)
 	{
@@ -1048,7 +1048,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 
 	/*
 	 * In scan-and-sort mode, complete the sort, then read out all live tuples
-	 * from the tuplestore and write them to the cnew relation.
+	 * from the tuplestore and write them to the new___ relation.
 	 */
 	if (tuplesort != NULL)
 	{
@@ -1123,7 +1123,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
  * frozenXid.  It seems a bit ugly to have this here, but the caller would
  * have to do it anyway, so having it here saves a heap_update.  Note: in
  * the swap-toast-links case, we assume we don't need to change the toast
- * table's relfrozenxid: the cnew version of the toast table should already
+ * table's relfrozenxid: the new___ version of the toast table should already
  * have relfrozenxid set to RecentXmin, which is good enough.
  *
  * Lastly, if r2 and its toast table and toast index (if any) are mapped,
@@ -1261,7 +1261,7 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 		relform1->relminmxid = cutoffMulti;
 	}
 
-	/* swap size statistics too, since cnew rel has freshly-updated stats */
+	/* swap size statistics too, since new___ rel has freshly-updated stats */
 	{
 		int32		swap_pages;
 		float4		swap_tuples;
@@ -1388,7 +1388,7 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 						 count);
 			}
 
-			/* Register cnew dependencies */
+			/* Register new___ dependencies */
 			baseobject.classId = RelationRelationId;
 			baseobject.objectSubId = 0;
 			toastobject.classId = RelationRelationId;
@@ -1506,7 +1506,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 
 	/*
 	 * Rebuild each index on the relation (but not the toast table, which is
-	 * all-cnew at this point).  It is important to do this before the DROP
+	 * all-new___ at this point).  It is important to do this before the DROP
 	 * step because if we are processing a system catalog that will be used
 	 * during DROP, we want to have its indexes available.  There is no
 	 * advantage to the other order anyway because this is all transactional,
@@ -1515,8 +1515,8 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	 *
 	 * Note: because index_build is called via reindex_relation, it will never
 	 * set indcheckxmin true for the indexes.  This is OK even though in some
-	 * sense we are building cnew indexes rather than rebuilding existing ones,
-	 * because the cnew heap won't contain any HOT chains at all, let alone
+	 * sense we are building new___ indexes rather than rebuilding existing ones,
+	 * because the new___ heap won't contain any HOT chains at all, let alone
 	 * broken ones, so it can't be necessary to set indcheckxmin.
 	 */
 	reindex_flags = REINDEX_REL_SUPPRESS_INDEX_USE;
@@ -1540,7 +1540,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	 * swap_relation_files()), thus relfrozenxid was not updated. That's
 	 * annoying because a potential reason for doing a VACUUM FULL is a
 	 * imminent or actual anti-wraparound shutdown.  So, now that we can
-	 * access the cnew relation using it's indices, update relfrozenxid.
+	 * access the new___ relation using it's indices, update relfrozenxid.
 	 * pg_class doesn't have a toast relation, so we don't need to update the
 	 * corresponding toast relation. Not that there's little point moving all
 	 * relfrozenxid updates here since swap_relation_files() needs to write to
@@ -1568,13 +1568,13 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 		heap_close(relRelation, RowExclusiveLock);
 	}
 
-	/* Destroy cnew heap with old filenode */
+	/* Destroy new___ heap with old filenode */
 	object.classId = RelationRelationId;
 	object.objectId = OIDNewHeap;
 	object.objectSubId = 0;
 
 	/*
-	 * The cnew relation is local to our transaction and we know nothing
+	 * The new___ relation is local to our transaction and we know nothing
 	 * depends on it, so DROP_RESTRICT should be OK.
 	 */
 	performDeletion(&object, DROP_RESTRICT, PERFORM_DELETION_INTERNAL);
@@ -1584,7 +1584,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 	/*
 	 * Now we must remove any relation mapping entries that we set up for the
 	 * transient table, as well as its toast table and toast index if any. If
-	 * we fail to do this before commit, the relmapper will complain about cnew
+	 * we fail to do this before commit, the relmapper will complain about new___
 	 * permanent map entries being added post-bootstrap.
 	 */
 	for (i = 0; OidIsValid(mapped_tables[i]); i++)
@@ -1697,10 +1697,10 @@ get_tables_to_cluster(MemoryContext cluster_context)
  *
  * 1. We'd like to squeeze out the values of any dropped columns, both
  * to save space and to ensure we have no corner-case failures. (It's
- * possible for example that the cnew table hasn't got a TOAST table
+ * possible for example that the new___ table hasn't got a TOAST table
  * and so is unable to store any large values of dropped cols.)
  *
- * 2. The tuple might not even be legal for the cnew table; this is
+ * 2. The tuple might not even be legal for the new___ table; this is
  * currently only known to happen as an after-effect of ALTER TABLE
  * SET WITHOUT OIDS.
  *

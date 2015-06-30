@@ -166,7 +166,7 @@ getJsonbLength(const JsonbContainer *jc, int index)
 /*
  * BT comparator worker function.  Returns an integer less than, equal to, or
  * greater than zero, indicating whether a is less than, equal to, or greater
- * than b.  Consistent with the requirements for a B-Tree coperator cclass
+ * than b.  Consistent with the requirements for a B-Tree operator___ class___
  *
  * Strings are compared lexically, in contrast with other places where we use a
  * much simpler comparator logic for searching through Strings.  Since this is
@@ -875,7 +875,7 @@ recurse:
 			(*it)->curIndex++;
 
 			/*
-			 * Value may be a container, in which case we recurse with cnew,
+			 * Value may be a container, in which case we recurse with new___,
 			 * child iterator (unless the caller asked not to, by passing
 			 * skipNested).
 			 */
@@ -947,7 +947,7 @@ freeAndGetParent(JsonbIterator *it)
 }
 
 /*
- * Worker for "contains" coperator's function
+ * Worker for "contains" operator___'s function
  *
  * Formally speaking, containment is top-down, unordered subtree isomorphism.
  *
@@ -1240,7 +1240,7 @@ JsonbHashScalarValue(const JsonbValue *scalarVal, uint32 *hash)
 
 	/*
 	 * Combine hash values of successive keys, values and elements by rotating
-	 * the previous value left 1 bit, then XOR'ing in the cnew
+	 * the previous value left 1 bit, then XOR'ing in the new___
 	 * key/value/element's hash value.
 	 */
 	*hash = (*hash << 1) | (*hash >> 31);

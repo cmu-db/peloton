@@ -68,7 +68,7 @@ suppress_redundant_updates_trigger(PG_FUNCTION_ARGS)
 
 	/*
 	 * We are called before the OID, if any, has been transcribed from the old
-	 * tuple to the cnew (in heap_update).  To avoid a bogus compare failure,
+	 * tuple to the new___ (in heap_update).  To avoid a bogus compare failure,
 	 * copy the OID now.  But check that someone didn't already put another
 	 * OID value into newtuple.  (That's not actually possible at present, but
 	 * maybe someday.)

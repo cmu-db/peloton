@@ -11,11 +11,11 @@
  * IDENTIFICATION
  *	  src/backend/libpq/be-secure-openssl.c
  *
- *	  Since the server static cprivate key ($DataDir/server.key)
+ *	  Since the server static private___ key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
  *	  backend can restart automatically, it is important that
  *	  we select an algorithm that continues to provide confidentiality
- *	  even if the attacker has the server's cprivate key.  Ephemeral
+ *	  even if the attacker has the server's private___ key.  Ephemeral
  *	  DH (EDH) keys provide this, and in fact provide Perfect Forward
  *	  Secrecy (PFS) except for situations where the session can
  *	  be hijacked during a periodic handshake/renegotiation.
@@ -23,7 +23,7 @@
  *	  are used (since the imposter will be unable to successfully
  *	  complete renegotiation).
  *
- *	  N.B., the static cprivate key should still be protected to
+ *	  N.B., the static private___ key should still be protected to
  *	  the largest extent possible, to minimize the risk of
  *	  impersonations.
  *
@@ -104,7 +104,7 @@ static SSL_CTX *SSL_context = NULL;
 /*
  *	Hardcoded DH parameters, used in ephemeral DH keying.
  *	As discussed above, EDH protects the confidentiality of
- *	sessions even if the static cprivate key is compromised,
+ *	sessions even if the static private___ key is compromised,
  *	so we are *highly* motivated to ensure that we can use
  *	EDH even if the DBA... or an attacker... deletes the
  *	$DataDir/dh*.pem files.
@@ -204,7 +204,7 @@ be_tls_init(void)
 		SSL_CTX_set_mode(SSL_context, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
 
 		/*
-		 * Load and verify server's certificate and cprivate key
+		 * Load and verify server's certificate and private___ key
 		 */
 		if (SSL_CTX_use_certificate_chain_file(SSL_context,
 											   ssl_cert_file) != 1)
@@ -216,7 +216,7 @@ be_tls_init(void)
 		if (stat(ssl_key_file, &buf) != 0)
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 errmsg("could not access cprivate key file \"%s\": %m",
+					 errmsg("could not access private___ key file \"%s\": %m",
 							ssl_key_file)));
 
 		/*
@@ -231,7 +231,7 @@ be_tls_init(void)
 		if (!S_ISREG(buf.st_mode) || buf.st_mode & (S_IRWXG | S_IRWXO))
 			ereport(FATAL,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				  errmsg("cprivate key file \"%s\" has group or world access",
+				  errmsg("private___ key file \"%s\" has group or world access",
 						 ssl_key_file),
 				   errdetail("Permissions should be u=rw (0600) or less.")));
 #endif
@@ -240,12 +240,12 @@ be_tls_init(void)
 										ssl_key_file,
 										SSL_FILETYPE_PEM) != 1)
 			ereport(FATAL,
-					(errmsg("could not load cprivate key file \"%s\": %s",
+					(errmsg("could not load private___ key file \"%s\": %s",
 							ssl_key_file, SSLerrmessage())));
 
 		if (SSL_CTX_check_private_key(SSL_context) != 1)
 			ereport(FATAL,
-					(errmsg("check of cprivate key failed: %s",
+					(errmsg("check of private___ key failed: %s",
 							SSLerrmessage())));
 	}
 

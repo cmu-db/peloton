@@ -152,7 +152,7 @@ enable_timeout(TimeoutId id, TimestampTz now, TimestampTz fin_time)
 		remove_timeout_index(i);
 
 	/*
-	 * Find out the index where to insert the cnew timeout.  We sort by
+	 * Find out the index where to insert the new___ timeout.  We sort by
 	 * fin_time, and for equal fin_time by priority.
 	 */
 	for (i = 0; i < num_active_timeouts; i++)
@@ -219,7 +219,7 @@ schedule_alarm(TimestampTz now)
 		 *
 		 * 1. The signal handler finds nothing to do (because the nearest
 		 * timeout event is still in the future).  It will re-set the timer
-		 * and return.  Then we'll overwrite the timer value with a cnew one.
+		 * and return.  Then we'll overwrite the timer value with a new___ one.
 		 * This will mean that the timer fires a little later than we
 		 * intended, but only by the amount of time it takes for the signal
 		 * handler to do nothing useful, which shouldn't be much.
