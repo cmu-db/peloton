@@ -145,8 +145,8 @@ bool DDL::CreateTable(std::string table_name,
            case CONSTR_PRIMARY:
               printf(" ConstraintNode->contype is CONSTR_PRIMARY\n");
               currentConstraintType = CONSTRAINT_TYPE_PRIMARY;
-              ColumnNamesForKeySchema_vec.push_back(ddl
-              num_of_PrimaryKeys++;
+              //ColumnNamesForKeySchema_vec.push_back(ddl
+              //num_of_PrimaryKeys++;
               break;
 
             case CONSTR_FOREIGN:
