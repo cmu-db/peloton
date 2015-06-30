@@ -911,7 +911,7 @@ typedef enum RTEKind
  *
  * */
 #ifdef __cplusplus
-struct RangeTblEntry : Node {
+typedef struct RangeTblEntry : Node {
 #else
 typedef struct RangeTblEntry {
 	NodeTag		type;
@@ -1000,7 +1000,7 @@ typedef struct RangeTblEntry {
 	Bitmapset  *insertedCols;	/* columns needing INSERT permission */
 	Bitmapset  *updatedCols;	/* columns needing UPDATE permission */
 	List	   *securityQuals;	/* any security barrier quals to apply */
-};
+} RangeTblEntry;
 
 /*
  * RangeTblFunction -
