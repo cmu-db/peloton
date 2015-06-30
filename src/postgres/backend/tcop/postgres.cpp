@@ -621,8 +621,6 @@ pg_parse_query(const char *query_string)
 {
   List	   *raw_parsetree_list;
 
-  elog(LOG, "pg_parse_query \n");
-
   TRACE_POSTGRESQL_QUERY_PARSE_START(query_string);
 
   if (log_parser_stats)
@@ -904,8 +902,6 @@ exec_simple_query(const char *query_string)
   bool		was_logged = false;
   bool		isTopLevel;
   char		msec_str[32];
-
-  elog(LOG, "exec_simple_query \n");
 
   /*
    * Report query to various monitoring facilities.
