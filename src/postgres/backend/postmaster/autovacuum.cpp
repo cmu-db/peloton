@@ -852,7 +852,7 @@ launcher_determine_sleep(bool canlaunch, bool recursing, struct timeval * nap)
  * distributed regularly across the next autovacuum_naptime interval.
  *
  * Receives the Oid of the database that made this list be generated (we call
- * this the "new___" database, because when the database was already present on
+ * this the "new" database, because when the database was already present on
  * the list, we expect that this function is not called at all).  The
  * preexisting list, if any, will be used to preserve the order of the
  * databases in the autovacuum_naptime period.  The new___ database is put at the

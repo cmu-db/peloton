@@ -332,7 +332,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 											false, false);
 		addRTEtoQuery(pstate, rte, false, true, true);
 		rte = addRangeTableEntryForRelation(pstate, rel,
-											makeAlias("new___", NIL),
+											makeAlias("new", NIL),
 											false, false);
 		addRTEtoQuery(pstate, rte, false, true, true);
 
