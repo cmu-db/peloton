@@ -120,9 +120,9 @@ get_ts_parser_func(DefElem *defel, int attnum)
 }
 
 /*
- * make pg_depend entries for a cnew pg_ts_parser entry
+ * make pg_depend entries for a new___ pg_ts_parser entry
  *
- * Return value is the address of said cnew entry.
+ * Return value is the address of said new___ entry.
  */
 static ObjectAddress
 makeParserDependencies(HeapTuple tuple)
@@ -135,7 +135,7 @@ makeParserDependencies(HeapTuple tuple)
 	myself.objectId = HeapTupleGetOid(tuple);
 	myself.objectSubId = 0;
 
-	/* dependency on cnamespace */
+	/* dependency on namescpace___ */
 	referenced.classId = NamespaceRelationId;
 	referenced.objectId = prs->prsnamespace;
 	referenced.objectSubId = 0;
@@ -191,10 +191,10 @@ DefineTSParser(List *names, List *parameters)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to create text search parsers")));
 
-	/* Convert list of names to a name and cnamespace */
+	/* Convert list of names to a name and namescpace___ */
 	namespaceoid = QualifiedNameGetCreationNamespace(names, &prsname);
 
-	/* initialize tuple fields with name/cnamespace */
+	/* initialize tuple fields with name/namescpace___ */
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
@@ -277,7 +277,7 @@ DefineTSParser(List *names, List *parameters)
 
 	address = makeParserDependencies(tup);
 
-	/* Post creation hook for cnew text search parser */
+	/* Post creation hook for new___ text search parser */
 	InvokeObjectPostCreateHook(TSParserRelationId, prsOid, 0);
 
 	heap_freetuple(tup);
@@ -313,9 +313,9 @@ RemoveTSParserById(Oid prsId)
 /* ---------------------- TS Dictionary commands -----------------------*/
 
 /*
- * make pg_depend entries for a cnew pg_ts_dict entry
+ * make pg_depend entries for a new___ pg_ts_dict entry
  *
- * Return value is address of the cnew entry
+ * Return value is address of the new___ entry
  */
 static ObjectAddress
 makeDictionaryDependencies(HeapTuple tuple)
@@ -328,7 +328,7 @@ makeDictionaryDependencies(HeapTuple tuple)
 	myself.objectId = HeapTupleGetOid(tuple);
 	myself.objectSubId = 0;
 
-	/* dependency on cnamespace */
+	/* dependency on namescpace___ */
 	referenced.classId = NamespaceRelationId;
 	referenced.objectId = dict->dictnamespace;
 	referenced.objectSubId = 0;
@@ -424,10 +424,10 @@ DefineTSDictionary(List *names, List *parameters)
 	char	   *dictname;
 	ObjectAddress address;
 
-	/* Convert list of names to a name and cnamespace */
+	/* Convert list of names to a name and namescpace___ */
 	namespaceoid = QualifiedNameGetCreationNamespace(names, &dictname);
 
-	/* Check we have creation rights in target cnamespace */
+	/* Check we have creation rights in target namescpace___ */
 	aclresult = pg_namespace_aclcheck(namespaceoid, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
@@ -488,7 +488,7 @@ DefineTSDictionary(List *names, List *parameters)
 
 	address = makeDictionaryDependencies(tup);
 
-	/* Post creation hook for cnew text search dictionary */
+	/* Post creation hook for new___ text search dictionary */
 	InvokeObjectPostCreateHook(TSDictionaryRelationId, dictOid, 0);
 
 	heap_freetuple(tup);
@@ -591,7 +591,7 @@ AlterTSDictionary(AlterTSDictionaryStmt *stmt)
 		}
 
 		/*
-		 * and add cnew value if it's got one
+		 * and add new___ value if it's got one
 		 */
 		if (defel->arg)
 			dictoptions = lappend(dictoptions, defel);
@@ -690,7 +690,7 @@ get_ts_template_func(DefElem *defel, int attnum)
 }
 
 /*
- * make pg_depend entries for a cnew pg_ts_template entry
+ * make pg_depend entries for a new___ pg_ts_template entry
  */
 static ObjectAddress
 makeTSTemplateDependencies(HeapTuple tuple)
@@ -703,7 +703,7 @@ makeTSTemplateDependencies(HeapTuple tuple)
 	myself.objectId = HeapTupleGetOid(tuple);
 	myself.objectSubId = 0;
 
-	/* dependency on cnamespace */
+	/* dependency on namescpace___ */
 	referenced.classId = NamespaceRelationId;
 	referenced.objectId = tmpl->tmplnamespace;
 	referenced.objectSubId = 0;
@@ -751,7 +751,7 @@ DefineTSTemplate(List *names, List *parameters)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 			   errmsg("must be superuser to create text search templates")));
 
-	/* Convert list of names to a name and cnamespace */
+	/* Convert list of names to a name and namescpace___ */
 	namespaceoid = QualifiedNameGetCreationNamespace(names, &tmplname);
 
 	for (i = 0; i < Natts_pg_ts_template; i++)
@@ -812,7 +812,7 @@ DefineTSTemplate(List *names, List *parameters)
 
 	address = makeTSTemplateDependencies(tup);
 
-	/* Post creation hook for cnew text search ctemplate */
+	/* Post creation hook for new___ text search ctemplate */
 	InvokeObjectPostCreateHook(TSTemplateRelationId, tmplOid, 0);
 
 	heap_freetuple(tup);
@@ -872,7 +872,7 @@ GetTSConfigTuple(List *names)
 }
 
 /*
- * make pg_depend entries for a cnew or updated pg_ts_config entry
+ * make pg_depend entries for a new___ or updated pg_ts_config entry
  *
  * Pass opened pg_ts_config_map relation if there might be any config map
  * entries for the config.
@@ -904,7 +904,7 @@ makeConfigurationDependencies(HeapTuple tuple, bool removeOld,
 	 */
 	addrs = new_object_addresses();
 
-	/* dependency on cnamespace */
+	/* dependency on namescpace___ */
 	referenced.classId = NamespaceRelationId;
 	referenced.objectId = cfg->cfgnamespace;
 	referenced.objectSubId = 0;
@@ -982,10 +982,10 @@ DefineTSConfiguration(List *names, List *parameters, ObjectAddress *copied)
 	ListCell   *pl;
 	ObjectAddress address;
 
-	/* Convert list of names to a name and cnamespace */
+	/* Convert list of names to a name and namescpace___ */
 	namespaceoid = QualifiedNameGetCreationNamespace(names, &cfgname);
 
-	/* Check we have creation rights in target cnamespace */
+	/* Check we have creation rights in target namescpace___ */
 	aclresult = pg_namespace_aclcheck(namespaceoid, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
@@ -1118,7 +1118,7 @@ DefineTSConfiguration(List *names, List *parameters, ObjectAddress *copied)
 
 	address = makeConfigurationDependencies(tup, false, mapRel);
 
-	/* Post creation hook for cnew text search configuration */
+	/* Post creation hook for new___ text search configuration */
 	InvokeObjectPostCreateHook(TSConfigRelationId, cfgOid, 0);
 
 	heap_freetuple(tup);
@@ -1420,7 +1420,7 @@ MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
 	else
 	{
 		/*
-		 * Insertion of cnew entries
+		 * Insertion of new___ entries
 		 */
 		for (i = 0; i < ntoken; i++)
 		{

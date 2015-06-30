@@ -264,7 +264,7 @@ index_check_primary_key(Relation heapRel,
 /*
  *		ConstructTupleDescriptor
  *
- * Build an index tuple descriptor for a cnew index
+ * Build an index tuple descriptor for a new___ index
  */
 static TupleDesc
 ConstructTupleDescriptor(Relation heapRelation,
@@ -297,7 +297,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 	natts = RelationGetForm(heapRelation)->relnatts;
 
 	/*
-	 * allocate the cnew tuple descriptor
+	 * allocate the new___ tuple descriptor
 	 */
 	indexTupDesc = CreateTemplateTupleDesc(numatts, false);
 
@@ -502,7 +502,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 	indstate = CatalogOpenIndexes(pg_attribute);
 
 	/*
-	 * insert data from cnew index's tupdesc into pg_attribute
+	 * insert data from new___ index's tupdesc into pg_attribute
 	 */
 	indexTupDesc = RelationGetDescr(indexRelation);
 
@@ -526,7 +526,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 /* ----------------------------------------------------------------
  *		UpdateIndexRelation
  *
- * Construct and insert a cnew entry in the pg_index catalog
+ * Construct and insert a new___ entry in the pg_index catalog
  * ----------------------------------------------------------------
  */
 static void
@@ -654,7 +654,7 @@ UpdateIndexRelation(Oid indexoid,
  * indexRelationId: normally, pass InvalidOid to let this routine
  *		generate an OID for the index.  During bootstrap this may be
  *		nonzero to specify a preselected OID.
- * relFileNode: normally, pass InvalidOid to get cnew storage.  May be
+ * relFileNode: normally, pass InvalidOid to get new___ storage.  May be
  *		nonzero to attach an existing valid build.
  * indexInfo: same info executor uses to insert into the index
  * indexColNames: column names to use for index (List of char *)
@@ -674,7 +674,7 @@ UpdateIndexRelation(Oid indexoid,
  * concurrent: if true, do not lock the table against writers.  The index
  *		will be marked "invalid" and the caller must take additional steps
  *		to fix it up.
- * is_internal: if true, post creation hook for cnew index
+ * is_internal: if true, post creation hook for new___ index
  * if_not_exists: if true, do not throw an error if a relation with
  *		the same name already exists.
  *
@@ -719,7 +719,7 @@ index_create(Relation heapRelation,
 	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
 
 	/*
-	 * The index will be in the same cnamespace as its parent table, and is
+	 * The index will be in the same namescpace___ as its parent table, and is
 	 * shared across databases if and only if the parent is.  Likewise, it
 	 * will use the relfilenode map if and only if the parent does; and it
 	 * inherits the parent's relpersistence.
@@ -912,7 +912,7 @@ index_create(Relation heapRelation,
 	 * linked to the table.  If it's not a CONSTRAINT, we need to make a
 	 * dependency directly on the table.
 	 *
-	 * We don't need a dependency on the cnamespace, because there'll be an
+	 * We don't need a dependency on the namescpace___, because there'll be an
 	 * indirect dependency via our parent table.
 	 *
 	 * During bootstrap we can't register any dependencies, and we don't try
@@ -1010,7 +1010,7 @@ index_create(Relation heapRelation,
 			}
 		}
 
-		/* Store dependency on coperator classes */
+		/* Store dependency on operator___ classes */
 		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 		{
 			referenced.classId = OperatorClassRelationId;
@@ -1048,7 +1048,7 @@ index_create(Relation heapRelation,
 		Assert(!initdeferred);
 	}
 
-	/* Post creation hook for cnew index */
+	/* Post creation hook for new___ index */
 	InvokeObjectPostCreateHookArg(RelationRelationId,
 								  indexRelationId, 0, is_internal);
 
@@ -1112,7 +1112,7 @@ index_create(Relation heapRelation,
 /*
  * index_constraint_create
  *
- * Set up a constraint associated with an index.  Return the cnew constraint's
+ * Set up a constraint associated with an index.  Return the new___ constraint's
  * address.
  *
  * heapRelation: table owning the index (must be suitably locked by caller)
@@ -1380,7 +1380,7 @@ index_drop(Oid indexId, bool concurrent)
 	 * transactions that are still scanning the index can continue to see
 	 * valid index contents.  For instance, if they are using READ COMMITTED
 	 * mode, and another transaction makes changes and commits, they need to
-	 * see those cnew tuples in the index.
+	 * see those new___ tuples in the index.
 	 *
 	 * After all transactions that could possibly have used the index for
 	 * queries end, we can unset indisready and indislive, then wait till
@@ -1396,7 +1396,7 @@ index_drop(Oid indexId, bool concurrent)
 	 * non-concurrent case we can just do that now.  In the concurrent case
 	 * it's a bit trickier.  The predicate locks must be moved when there are
 	 * no index scans in progress on the index and no more can subsequently
-	 * start, so that no cnew predicate locks can be made on the index.  Also,
+	 * start, so that no new___ predicate locks can be made on the index.  Also,
 	 * they must be moved before heap inserts stop maintaining the index, else
 	 * the conflict with the predicate lock on the index gap could be missed
 	 * before the lock on the heap relation is in place to detect a conflict
@@ -1584,7 +1584,7 @@ index_drop(Oid indexId, bool concurrent)
 	DeleteRelationTuple(indexId);
 
 	/*
-	 * We are presently too lazy to attempt to compute the cnew correct value
+	 * We are presently too lazy to attempt to compute the new___ correct value
 	 * of relhasindex (the next VACUUM will fix it if necessary). So there is
 	 * no need to update the pg_class tuple for the owning relation. But we
 	 * must send out a shared-cache-inval notice on the owning relation to
@@ -1709,8 +1709,8 @@ BuildSpeculativeIndexInfo(Relation index, IndexInfo *ii)
 	ii->ii_UniqueStrats = (uint16 *) palloc(sizeof(uint16) * ncols);
 
 	/*
-	 * We have to look up the coperator's strategy number.  This
-	 * provides a cross-check that the coperator does match the index.
+	 * We have to look up the operator___'s strategy number.  This
+	 * provides a cross-check that the operator___ does match the index.
 	 */
 	/* We need the func OIDs and strategy numbers too */
 	for (i = 0; i < ncols; i++)
@@ -1727,7 +1727,7 @@ BuildSpeculativeIndexInfo(Relation index, IndexInfo *ii)
 
 /* ----------------
  *		FormIndexDatum
- *			Construct values[] and isnull[] arrays for a cnew index tuple.
+ *			Construct values[] and isnull[] arrays for a new___ index tuple.
  *
  *	indexInfo		Info about the index
  *	slot			Heap tuple for which we must prepare an index entry
@@ -1818,9 +1818,9 @@ FormIndexDatum(IndexInfo *indexInfo,
  *
  * NOTE: an important side-effect of this operation is that an SI invalidation
  * message is sent out to all backends --- including me --- causing relcache
- * entries to be flushed or updated with the cnew data.  This must happen even
+ * entries to be flushed or updated with the new___ data.  This must happen even
  * if we find that no change is needed in the pg_class row.  When updating
- * a heap entry, this ensures that other backends find out about the cnew
+ * a heap entry, this ensures that other backends find out about the new___
  * index.  When updating an index, it's important because some index AMs
  * expect a relcache flush to occur after REINDEX.
  */
@@ -1857,7 +1857,7 @@ index_update_stats(Relation rel,
 	 * It is safe to use a non-transactional update even though our
 	 * transaction could still fail before committing.  Setting relhasindex
 	 * true is safe even if there are no indexes (VACUUM will eventually fix
-	 * it), likewise for relhaspkey.  And of course the cnew relpages and
+	 * it), likewise for relhaspkey.  And of course the new___ relpages and
 	 * reltuples counts are correct regardless.  However, we don't want to
 	 * change relpages (or relallvisible) if the caller isn't providing an
 	 * updated reltuples count, because that would bollix the
@@ -2084,7 +2084,7 @@ index_build(Relation heapRelation,
 			elog(ERROR, "cache lookup failed for index %u", indexId);
 		indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
 
-		/* If it's a cnew index, indcheckxmin shouldn't be set ... */
+		/* If it's a new___ index, indcheckxmin shouldn't be set ... */
 		Assert(!indexForm->indcheckxmin);
 
 		indexForm->indcheckxmin = true;
@@ -2135,7 +2135,7 @@ index_build(Relation heapRelation,
  * after the AM has done whatever setup it needs.  The parent heap relation
  * is scanned to find tuples that should be entered into the index.  Each
  * such tuple is passed to the AM's callback routine, which does the right
- * things to add it to the cnew index.  After we return, the AM's index
+ * things to add it to the new___ index.  After we return, the AM's index
  * build procedure does whatever cleanup it needs.
  *
  * The total count of heap tuples is returned.  This is for updating pg_class
@@ -2270,7 +2270,7 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 		 * of the chain's root tuple.  This approach is necessary to preserve
 		 * the HOT-chain structure in the heap. So we need to be able to find
 		 * the root item offset for every tuple that's in a HOT-chain.  When
-		 * first reaching a cnew page of the relation, call
+		 * first reaching a new___ page of the relation, call
 		 * heap_get_root_tuples() to build a map of root item offsets on the
 		 * page.
 		 *
@@ -2570,7 +2570,7 @@ IndexBuildHeapRangeScan(Relation heapRelation,
 
 
 /*
- * IndexCheckExclusion - verify that a cnew exclusion constraint is satisfied
+ * IndexCheckExclusion - verify that a new___ exclusion constraint is satisfied
  *
  * When creating an exclusion constraint, we first build the index normally
  * and then rescan the heap to check for conflicts.  We assume that we only
@@ -2685,7 +2685,7 @@ IndexCheckExclusion(Relation heapRelation,
  *
  * We do a concurrent index build by first inserting the catalog entry for the
  * index via index_create(), marking it not indisready and not indisvalid.
- * Then we commit our transaction and start a cnew one, then we wait for all
+ * Then we commit our transaction and start a new___ one, then we wait for all
  * transactions that could have been modifying the table to terminate.  Now
  * we know that any subsequently-started transactions will see the index and
  * honor its constraints on HOT updates; so while existing HOT-chains might
@@ -2706,7 +2706,7 @@ IndexCheckExclusion(Relation heapRelation,
  * commit the second transaction and start a third.  Again we wait for all
  * transactions that could have been modifying the table to terminate.  Now
  * we know that any subsequently-started transactions will see the index and
- * insert their cnew tuples into it.  We then take a cnew reference snapshot
+ * insert their new___ tuples into it.  We then take a new___ reference snapshot
  * which is passed to validate_index().  Any tuples that are valid according
  * to this snap, but are not in the index, must be added to the index.
  * (Any tuples committed live after the snap will be inserted into the
@@ -2739,7 +2739,7 @@ IndexCheckExclusion(Relation heapRelation,
  * transactions will be able to use it for queries.
  *
  * Doing two full table scans is a brute-force strategy.  We could try to be
- * cleverer, eg storing cnew tuples in a special area of the table (perhaps
+ * cleverer, eg storing new___ tuples in a special area of the table (perhaps
  * making the table append-only by setting use_fsm).  However that would
  * add yet more locking issues.
  */
@@ -2921,7 +2921,7 @@ validate_index_heapscan(Relation heapRelation,
 		/*
 		 * As commented in IndexBuildHeapScan, we should index heap-only
 		 * tuples under the TIDs of their root tuples; so when we advance onto
-		 * a cnew heap page, build a map of root item offsets on the page.
+		 * a new___ heap page, build a map of root item offsets on the page.
 		 *
 		 * This complicates merging against the tuplesort output: we will
 		 * visit the live tuples in order by their offsets, but the root
@@ -2930,7 +2930,7 @@ validate_index_heapscan(Relation heapRelation,
 		 * tuplesort output, but only within the current page.  We handle that
 		 * by keeping a bool array in_index[] showing all the
 		 * already-passed-over tuplesort output TIDs of the current page. We
-		 * clear that array here, when advancing onto a cnew heap page.
+		 * clear that array here, when advancing onto a new___ heap page.
 		 */
 		if (scan->rs_cblock != root_blkno)
 		{
@@ -3250,7 +3250,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 			indexInfo->ii_ExclusionStrats = NULL;
 		}
 
-		/* We'll build a cnew physical relation for the index */
+		/* We'll build a new___ physical relation for the index */
 		RelationSetNewRelfilenode(iRel, persistence, InvalidTransactionId,
 								  InvalidMultiXactId);
 
@@ -3425,13 +3425,13 @@ reindex_relation(Oid relid, int flags, int options)
 	 * It is okay to not insert entries into the indexes we have not processed
 	 * yet because all of this is transaction-safe.  If we fail partway
 	 * through, the updated rows are dead and it doesn't matter whether they
-	 * have index entries.  Also, a cnew pg_class index will be created with a
+	 * have index entries.  Also, a new___ pg_class index will be created with a
 	 * correct entry for its own pg_class row because we do
 	 * RelationSetNewRelfilenode() before we do index_build().
 	 *
 	 * Note that we also clear pg_class's rd_oidindex until the loop is done,
 	 * so that that index can't be accessed either.  This means we cannot
-	 * safely generate cnew relation OIDs while in the loop; shouldn't be a
+	 * safely generate new___ relation OIDs while in the loop; shouldn't be a
 	 * problem.
 	 */
 	is_pg_class = (RelationGetRelid(rel) == RelationRelationId);
@@ -3452,7 +3452,7 @@ reindex_relation(Oid relid, int flags, int options)
 			SetReindexPending(indexIds);
 
 			/*
-			 * Make the cnew heap contents visible --- now things might be
+			 * Make the new___ heap contents visible --- now things might be
 			 * inconsistent!
 			 */
 			CommandCounterIncrement();

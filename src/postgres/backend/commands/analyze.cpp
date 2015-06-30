@@ -948,7 +948,7 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
  * The returned list of tuples is in order by physical position in the table.
  * (We will rely on this later to derive correlation estimates.)
  *
- * As of May 2004 we use a cnew two-stage method:  Stage one selects up
+ * As of May 2004 we use a new___ two-stage method:  Stage one selects up
  * to targrows random blocks (or all blocks, if there aren't so many).
  * Stage two scans these blocks and uses the Vitter algorithm to create
  * a random sample of targrows rows (or less, if there are less in the
@@ -1137,7 +1137,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 				{
 					/*
 					 * t in Vitter's paper is the number of records already
-					 * processed.  If we need to compute a cnew S value, we
+					 * processed.  If we need to compute a new___ S value, we
 					 * must use the not-yet-incremented value of samplerows as
 					 * t.
 					 */
@@ -1499,7 +1499,7 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 			continue;
 
 		/*
-		 * Construct a cnew pg_statistic tuple
+		 * Construct a new___ pg_statistic tuple
 		 */
 		for (i = 0; i < Natts_pg_statistic; ++i)
 		{
@@ -1588,7 +1588,7 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 		}
 		else
 		{
-			/* No, insert cnew tuple */
+			/* No, insert new___ tuple */
 			stup = heap_form_tuple(RelationGetDescr(sd), values, nulls);
 			simple_heap_insert(sd, stup);
 		}
@@ -1665,9 +1665,9 @@ ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull)
  */
 typedef struct
 {
-	Oid			eqopr;			/* '=' coperator for datatype, if any */
+	Oid			eqopr;			/* '=' operator___ for datatype, if any */
 	Oid			eqfunc;			/* and associated function */
-	Oid			ltopr;			/* '<' coperator for datatype, if any */
+	Oid			ltopr;			/* '<' operator___ for datatype, if any */
 } StdAnalyzeData;
 
 typedef struct
@@ -1723,11 +1723,11 @@ std_typanalyze(VacAttrStats *stats)
 							 &ltopr, &eqopr, NULL,
 							 NULL);
 
-	/* If column has no "=" coperator, we can't do much of anything */
+	/* If column has no "=" operator___, we can't do much of anything */
 	if (!OidIsValid(eqopr))
 		return false;
 
-	/* Save the coperator info for compute_stats routines */
+	/* Save the operator___ info for compute_stats routines */
 	mystats = (StdAnalyzeData *) palloc(sizeof(StdAnalyzeData));
 	mystats->eqopr = eqopr;
 	mystats->eqfunc = get_opcode(eqopr);
@@ -1776,7 +1776,7 @@ std_typanalyze(VacAttrStats *stats)
 /*
  *	compute_minimal_stats() -- compute minimal column statistics
  *
- *	We use this when we can find only an "=" coperator for the datatype.
+ *	We use this when we can find only an "=" operator___ for the datatype.
  *
  *	We determine the fraction of non-null rows, the average width, the
  *	most common values, and the (estimated) number of distinct values.
@@ -2270,7 +2270,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 						dups_cnt > track[track_cnt - 1].count)
 					{
 						/*
-						 * Found a cnew item for the mcv list; find its
+						 * Found a new___ item for the mcv list; find its
 						 * position, bubbling down old items if needed. Loop
 						 * invariant is that j points at an empty/ replaceable
 						 * slot.

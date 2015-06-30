@@ -135,7 +135,7 @@ typedef unsigned int flex_uint32_t;
 /* Action number for EOF rule of a given start state. */
 #define YY_STATE_EOF(state) (YY_END_OF_BUFFER + state + 1)
 
-/* Special action meaning "start processing a cnew file". */
+/* Special action meaning "start processing a new___ file". */
 #define YY_NEW_FILE yyrestart(yyin  )
 
 #define YY_END_OF_BUFFER_CHAR 0
@@ -249,9 +249,9 @@ struct yy_buffer_state
 	 * still have a bunch of tokens to match, though, because of
 	 * possible backing-up.
 	 *
-	 * When we actually see the EOF, we change the status to "cnew"
+	 * When we actually see the EOF, we change the status to "new___"
 	 * (via yyrestart()), so that the user can continue scanning by
-	 * just pointing yyin at a cnew input file.
+	 * just pointing yyin at a new___ input file.
 	 */
 #define YY_BUFFER_EOF_PENDING 2
 
@@ -5195,14 +5195,14 @@ YY_FATAL_ERROR( "flex scanner jammed" );
 
 		if ( YY_CURRENT_BUFFER_LVALUE->yy_buffer_status == YY_BUFFER_NEW )
 			{
-			/* We're scanning a cnew file or input source.  It's
+			/* We're scanning a new___ file or input source.  It's
 			 * possible that this happened because the user
-			 * just pointed yyin at a cnew source and called
+			 * just pointed yyin at a new___ source and called
 			 * yylex().  If so, then we have to assure
 			 * consistency between YY_CURRENT_BUFFER and our
 			 * globals.  Here is the right place to do so, because
 			 * this is the first action (other than possibly a
-			 * back-up) that will match for the cnew input source.
+			 * back-up) that will match for the new___ input source.
 			 */
 			(yy_n_chars) = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
 			YY_CURRENT_BUFFER_LVALUE->yy_input_file = yyin;
@@ -5313,7 +5313,7 @@ YY_FATAL_ERROR( "flex scanner jammed" );
 		} /* end of scanning one token */
 } /* end of yylex */
 
-/* yy_get_next_buffer - try to read in a cnew buffer
+/* yy_get_next_buffer - try to read in a new___ buffer
  *
  * Returns a code representing an action:
  *	EOB_ACT_LAST_MATCH -
@@ -5577,7 +5577,7 @@ static int yy_get_next_buffer (void)
 }
 
 /** Switch to a different input buffer.
- * @param new_buffer The cnew input buffer.
+ * @param new_buffer The new___ input buffer.
  * 
  */
     void yy_switch_to_buffer  (YY_BUFFER_STATE  new_buffer )
@@ -5723,10 +5723,10 @@ static void yy_load_buffer_state  (void)
 		yy_load_buffer_state( );
 }
 
-/** Pushes the cnew state onto the stack. The cnew state becomes
+/** Pushes the new___ state onto the stack. The new___ state becomes
  *  the current state. This function will allocate the stack
  *  if necessary.
- *  @param new_buffer The cnew state.
+ *  @param new_buffer The new___ state.
  *  
  */
 void yypush_buffer_state (YY_BUFFER_STATE new_buffer )
@@ -5756,7 +5756,7 @@ void yypush_buffer_state (YY_BUFFER_STATE new_buffer )
 }
 
 /** Removes and deletes the top of the stack, if present.
- *  The next element becomes the cnew top.
+ *  The next element becomes the new___ top.
  *  
  */
 void yypop_buffer_state (void)
@@ -5815,7 +5815,7 @@ static void yyensure_buffer_stack (void)
 		if ( ! (yy_buffer_stack) )
 			YY_FATAL_ERROR( "out of dynamic memory in yyensure_buffer_stack()" );
 
-		/* zero only the cnew slots.*/
+		/* zero only the new___ slots.*/
 		memset((yy_buffer_stack) + (yy_buffer_stack_max), 0, grow_size * sizeof(struct yy_buffer_state*));
 		(yy_buffer_stack_max) = num_to_alloc;
 	}
@@ -6677,7 +6677,7 @@ evaluate_backtick(void)
  *
  * cur_state must point to the active PsqlScanState.
  *
- * NOTE SIDE EFFECT: the cnew buffer is made the active flex input buffer.
+ * NOTE SIDE EFFECT: the new___ buffer is made the active flex input buffer.
  */
 static void
 push_new_buffer(const char *newstr, const char *varname)
@@ -6757,7 +6757,7 @@ var_is_current_source(PsqlScanState state, const char *varname)
  *
  * cur_state must point to the active PsqlScanState.
  *
- * NOTE SIDE EFFECT: the cnew buffer is made the active flex input buffer.
+ * NOTE SIDE EFFECT: the new___ buffer is made the active flex input buffer.
  */
 static YY_BUFFER_STATE
 prepare_buffer(const char *txt, int len, char **txtcopy)

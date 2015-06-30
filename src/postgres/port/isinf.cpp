@@ -64,7 +64,7 @@ double		x;
 int
 isinf(double x)
 {
-	int			fpclass = cclass(x);
+	int			fpclass = class___(x);
 
 	if (fpclass == FP_PLUS_INF)
 		return 1;

@@ -1298,7 +1298,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 
 	/*
 	 * If parent relation is selected FOR UPDATE/SHARE, we need to mark its
-	 * PlanRowMark as isParent = true, and generate a cnew PlanRowMark for each
+	 * PlanRowMark as isParent = true, and generate a new___ PlanRowMark for each
 	 * child.
 	 */
 	if (oldrc)
@@ -1888,7 +1888,7 @@ adjust_relid_set(Relids relids, Index oldrelid, Index newrelid)
 	{
 		/* Ensure we have a modifiable copy */
 		relids = bms_copy(relids);
-		/* Remove old, add cnew */
+		/* Remove old, add new___ */
 		relids = bms_del_member(relids, oldrelid);
 		relids = bms_add_member(relids, newrelid);
 	}

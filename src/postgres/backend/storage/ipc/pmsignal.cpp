@@ -140,7 +140,7 @@ CheckPostmasterSignal(PMSignalReason reason)
 
 
 /*
- * AssignPostmasterChildSlot - select an unused slot for a cnew postmaster
+ * AssignPostmasterChildSlot - select an unused slot for a new___ postmaster
  * child process, and set its state to ASSIGNED.  Returns a slot number
  * (one to N).
  *

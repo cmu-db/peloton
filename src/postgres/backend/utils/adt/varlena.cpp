@@ -133,7 +133,7 @@ static void text_format_append_string(StringInfo buf, const char *str,
  *
  * Create a text value from a null-terminated C string.
  *
- * The cnew text value is freshly palloc'd with a full-size VARHDR.
+ * The new___ text value is freshly palloc'd with a full-size VARHDR.
  */
 text *
 cstring_to_text(const char *s)
@@ -2698,7 +2698,7 @@ byteaGetBit(PG_FUNCTION_ARGS)
 /*-------------------------------------------------------------
  * byteaSetByte
  *
- * Given an instance of type 'bytea' creates a cnew one with
+ * Given an instance of type 'bytea' creates a new___ one with
  * the Nth byte set to the given value.
  *
  *-------------------------------------------------------------
@@ -2737,7 +2737,7 @@ byteaSetByte(PG_FUNCTION_ARGS)
 /*-------------------------------------------------------------
  * byteaSetBit
  *
- * Given an instance of type 'bytea' creates a cnew one with
+ * Given an instance of type 'bytea' creates a new___ one with
  * the Nth bit set to the given value.
  *
  *-------------------------------------------------------------
@@ -2772,7 +2772,7 @@ byteaSetBit(PG_FUNCTION_ARGS)
 	if (newBit != 0 && newBit != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cnew bit must be 0 or 1")));
+				 errmsg("new___ bit must be 0 or 1")));
 
 	/*
 	 * Make a copy of the original varlena.
@@ -2912,7 +2912,7 @@ SplitIdentifierString(char *rawstring, char separator,
 	if (*nextp == '\0')
 		return true;			/* allow empty string */
 
-	/* At the top of the loop, we are at start of a cnew identifier. */
+	/* At the top of the loop, we are at start of a new___ identifier. */
 	do
 	{
 		char	   *curname;
@@ -3037,7 +3037,7 @@ SplitDirectoriesString(char *rawstring, char separator,
 	if (*nextp == '\0')
 		return true;			/* allow empty string */
 
-	/* At the top of the loop, we are at start of a cnew directory. */
+	/* At the top of the loop, we are at start of a new___ directory. */
 	do
 	{
 		char	   *curname;
@@ -4993,7 +4993,7 @@ text_format_string_conversion(StringInfo buf, char conversion,
 	/* Escape. */
 	if (conversion == 'I')
 	{
-		/* quote_identifier may or may not allocate a cnew string. */
+		/* quote_identifier may or may not allocate a new___ string. */
 		text_format_append_string(buf, quote_identifier(str), flags, width);
 	}
 	else if (conversion == 'L')
@@ -5001,7 +5001,7 @@ text_format_string_conversion(StringInfo buf, char conversion,
 		char	   *qstr = quote_literal_cstr(str);
 
 		text_format_append_string(buf, qstr, flags, width);
-		/* quote_literal_cstr() always allocates a cnew string */
+		/* quote_literal_cstr() always allocates a new___ string */
 		pfree(qstr);
 	}
 	else

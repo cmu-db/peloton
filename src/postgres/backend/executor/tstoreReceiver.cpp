@@ -117,7 +117,7 @@ tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 	slot_getallattrs(slot);
 
 	/*
-	 * Fetch back any out-of-line datums.  We build the cnew datums array in
+	 * Fetch back any out-of-line datums.  We build the new___ datums array in
 	 * myState->outvalues[] (but we can re-use the slot's isnull array). Also,
 	 * remember the fetched values to free afterwards.
 	 */
@@ -194,7 +194,7 @@ CreateTuplestoreDestReceiver(void)
 	self->pub.rDestroy = tstoreDestroyReceiver;
 	self->pub.mydest = DestTuplestore;
 
-	/* cprivate fields will be set by SetTuplestoreDestReceiverParams */
+	/* private___ fields will be set by SetTuplestoreDestReceiverParams */
 
 	return (DestReceiver *) self;
 }

@@ -67,7 +67,7 @@ static Oid	AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid);
 
 /*
  * Raise an error to the effect that an object of the given name is already
- * present in the given cnamespace.
+ * present in the given namescpace___.
  */
 static void
 report_name_conflict(Oid classId, const char *name)
@@ -89,7 +89,7 @@ report_name_conflict(Oid classId, const char *name)
 			msgfmt = gettext_noop("language \"%s\" already exists");
 			break;
 		default:
-			elog(ERROR, "unsupported object cclass %u", classId);
+			elog(ERROR, "unsupported object class___ %u", classId);
 			break;
 	}
 
@@ -128,7 +128,7 @@ report_namespace_conflict(Oid classId, const char *name, Oid nspOid)
 			msgfmt = gettext_noop("text search configuration \"%s\" already exists in schema \"%s\"");
 			break;
 		default:
-			elog(ERROR, "unsupported object cclass %u", classId);
+			elog(ERROR, "unsupported object class___ %u", classId);
 			break;
 	}
 
@@ -146,7 +146,7 @@ report_namespace_conflict(Oid classId, const char *name, Oid nspOid)
  *
  * rel: catalog relation containing object (RowExclusiveLock'd by caller)
  * objectId: OID of object to be renamed
- * new_name: CString representation of cnew name
+ * new_name: CString representation of new___ name
  */
 static void
 AlterObjectRename_internal(Relation rel, Oid objectId, const char *new_name)
@@ -181,7 +181,7 @@ AlterObjectRename_internal(Relation rel, Oid objectId, const char *new_name)
 	Assert(!isnull);
 	old_name = NameStr(*(DatumGetName(datum)));
 
-	/* Get OID of cnamespace */
+	/* Get OID of namescpace___ */
 	if (Anum_namespace > 0)
 	{
 		datum = heap_getattr(oldtup, Anum_namespace,
@@ -211,7 +211,7 @@ AlterObjectRename_internal(Relation rel, Oid objectId, const char *new_name)
 		if (!has_privs_of_role(GetUserId(), DatumGetObjectId(ownerId)))
 			aclcheck_error(ACLCHECK_NOT_OWNER, acl_kind, old_name);
 
-		/* User must have CREATE privilege on the cnamespace */
+		/* User must have CREATE privilege on the namescpace___ */
 		if (OidIsValid(namespaceId))
 		{
 			aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
@@ -477,9 +477,9 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt,
 }
 
 /*
- * Change an object's cnamespace given its classOid and object Oid.
+ * Change an object's namescpace___ given its classOid and object Oid.
  *
- * Objects that don't have a cnamespace should be ignored.
+ * Objects that don't have a namescpace___ should be ignored.
  *
  * This function is currently used only by ALTER EXTENSION SET SCHEMA,
  * so it only needs to cover object types that can be members of an
@@ -487,7 +487,7 @@ ExecAlterObjectSchemaStmt(AlterObjectSchemaStmt *stmt,
  * such as not wanting to process array types --- those should never
  * be direct members of an extension anyway.
  *
- * Returns the OID of the object's previous cnamespace, or InvalidOid if
+ * Returns the OID of the object's previous namescpace___, or InvalidOid if
  * object doesn't have a schema.
  */
 Oid
@@ -550,15 +550,15 @@ AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
 }
 
 /*
- * Generic function to change the cnamespace of a given object, for simple
+ * Generic function to change the namescpace___ of a given object, for simple
  * cases (won't work for tables, nor other cases where we need to do more
- * than change the cnamespace column of a single catalog entry).
+ * than change the namescpace___ column of a single catalog entry).
  *
  * rel: catalog relation containing object (RowExclusiveLock'd by caller)
- * objid: OID of object to change the cnamespace of
- * nspOid: OID of cnew cnamespace
+ * objid: OID of object to change the namescpace___ of
+ * nspOid: OID of new___ namescpace___
  *
- * Returns the OID of the object's previous cnamespace.
+ * Returns the OID of the object's previous namescpace___.
  */
 static Oid
 AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
@@ -572,7 +572,7 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 	AclObjectKind acl_kind = get_object_aclkind(classId);
 	Oid			oldNspOid;
 	Datum		name,
-				cnamespace;
+				namescpace___;
 	bool		isnull;
 	HeapTuple	tup,
 				newtup;
@@ -587,12 +587,12 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 
 	name = heap_getattr(tup, Anum_name, RelationGetDescr(rel), &isnull);
 	Assert(!isnull);
-	cnamespace = heap_getattr(tup, Anum_namespace, RelationGetDescr(rel),
+	namescpace___ = heap_getattr(tup, Anum_namespace, RelationGetDescr(rel),
 							 &isnull);
 	Assert(!isnull);
-	oldNspOid = DatumGetObjectId(cnamespace);
+	oldNspOid = DatumGetObjectId(namescpace___);
 
-	/* Check basic cnamespace related issues */
+	/* Check basic namescpace___ related issues */
 	CheckSetNamespace(oldNspOid, nspOid, classId, objid);
 
 	/* Permission checks ... superusers can always do it */
@@ -618,7 +618,7 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 			aclcheck_error(ACLCHECK_NOT_OWNER, acl_kind,
 						   NameStr(*(DatumGetName(name))));
 
-		/* User must have CREATE privilege on cnew cnamespace */
+		/* User must have CREATE privilege on new___ namescpace___ */
 		aclresult = pg_namespace_aclcheck(nspOid, GetUserId(), ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
@@ -682,7 +682,7 @@ AlterObjectNamespace_internal(Relation rel, Oid objid, Oid nspOid)
 	pfree(nulls);
 	pfree(replaces);
 
-	/* update dependencies to point to the cnew schema */
+	/* update dependencies to point to the new___ schema */
 	changeDependencyFor(classId, objid,
 						NamespaceRelationId, oldNspOid, nspOid);
 
@@ -784,7 +784,7 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
  *
  * rel: catalog relation containing object (RowExclusiveLock'd by caller)
  * objectId: OID of object to change the ownership of
- * new_ownerId: OID of cnew object owner
+ * new_ownerId: OID of new___ object owner
  */
 void
 AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
@@ -852,10 +852,10 @@ AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
 				}
 				aclcheck_error(ACLCHECK_NOT_OWNER, aclkind, objname);
 			}
-			/* Must be able to become cnew owner */
+			/* Must be able to become new___ owner */
 			check_is_member_of_role(GetUserId(), new_ownerId);
 
-			/* New owner must have CREATE privilege on cnamespace */
+			/* New owner must have CREATE privilege on namescpace___ */
 			if (OidIsValid(namespaceId))
 			{
 				AclResult	aclresult;
@@ -877,7 +877,7 @@ AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
 		replaces[Anum_owner - 1] = true;
 
 		/*
-		 * Determine the modified ACL for the cnew owner.  This is only
+		 * Determine the modified ACL for the new___ owner.  This is only
 		 * necessary when the ACL is non-null.
 		 */
 		if (Anum_acl != InvalidAttrNumber)

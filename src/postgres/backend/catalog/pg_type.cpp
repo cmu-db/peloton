@@ -123,7 +123,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	nulls[Anum_pg_type_typacl - 1] = true;
 
 	/*
-	 * create a cnew type tuple
+	 * create a new___ type tuple
 	 */
 	tup = heap_form_tuple(tupDesc, values, nulls);
 
@@ -169,7 +169,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 								 NULL,
 								 false);
 
-	/* Post creation hook for cnew shell type */
+	/* Post creation hook for new___ shell type */
 	InvokeObjectPostCreateHook(TypeRelationId, typoid, 0);
 
 	ObjectAddressSet(address, TypeRelationId, typoid);
@@ -186,10 +186,10 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 /* ----------------------------------------------------------------
  *		TypeCreate
  *
- *		This does all the necessary work needed to define a cnew type.
+ *		This does all the necessary work needed to define a new___ type.
  *
- *		Returns the ObjectAddress assigned to the cnew type.
- *		If newTypeOid is zero (the normal case), a cnew OID is created;
+ *		Returns the ObjectAddress assigned to the new___ type.
+ *		If newTypeOid is zero (the normal case), a new___ OID is created;
  *		otherwise we use exactly that OID.
  * ----------------------------------------------------------------
  */
@@ -419,7 +419,7 @@ TypeCreate(Oid newTypeOid,
 
 		/* trouble if caller wanted to force the OID */
 		if (OidIsValid(newTypeOid))
-			elog(ERROR, "cannot assign cnew OID to existing shell type");
+			elog(ERROR, "cannot assign new___ OID to existing shell type");
 
 		/*
 		 * Okay to update existing shell type tuple
@@ -489,7 +489,7 @@ TypeCreate(Oid newTypeOid,
 								  NULL),
 								 rebuildDeps);
 
-	/* Post creation hook for cnew type */
+	/* Post creation hook for new___ type */
 	InvokeObjectPostCreateHook(TypeRelationId, typeObjectId, 0);
 
 	ObjectAddressSet(address, TypeRelationId, typeObjectId);
@@ -548,7 +548,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 	myself.objectSubId = 0;
 
 	/*
-	 * Make dependencies on cnamespace, owner, extension.
+	 * Make dependencies on namescpace___, owner, extension.
 	 *
 	 * For a relation rowtype (that's not a composite type), we should skip
 	 * these because we'll depend on them indirectly through the pg_class
@@ -806,7 +806,7 @@ makeArrayTypeName(const char *typeName, Oid typeNamespace)
  * will be rolled back if the type creation fails due to conflicting names.)
  *
  * Note that this must be called *before* calling makeArrayTypeName to
- * determine the cnew type's own array type name; else the latter will
+ * determine the new___ type's own array type name; else the latter will
  * certainly pick the same name.
  *
  * Returns TRUE if successfully moved the type, FALSE if not.

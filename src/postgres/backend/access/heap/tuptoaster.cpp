@@ -515,11 +515,11 @@ toast_delete(Relation rel, HeapTuple oldtup)
 /* ----------
  * toast_insert_or_update -
  *
- *	Delete no-longer-used toast-entries and create cnew ones to
- *	make the cnew tuple fit on INSERT or UPDATE
+ *	Delete no-longer-used toast-entries and create new___ ones to
+ *	make the new___ tuple fit on INSERT or UPDATE
  *
  * Inputs:
- *	newtup: the candidate cnew tuple to be inserted
+ *	newtup: the candidate new___ tuple to be inserted
  *	oldtup: the old row version for UPDATE, or NULL for INSERT
  *	options: options to be passed to heap_insert() for toast rows
  * Result:
@@ -610,7 +610,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		if (oldtup != NULL)
 		{
 			/*
-			 * For UPDATE get the old and cnew values of this attribute
+			 * For UPDATE get the old and new___ values of this attribute
 			 */
 			old_value = (struct varlena *) DatumGetPointer(toast_oldvalues[i]);
 			new_value = (struct varlena *) DatumGetPointer(toast_values[i]);
@@ -637,7 +637,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 				{
 					/*
 					 * This attribute isn't changed by this update so we reuse
-					 * the original reference to the old value in the cnew
+					 * the original reference to the old value in the new___
 					 * tuple.
 					 */
 					toast_action[i] = 'p';
@@ -648,7 +648,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		else
 		{
 			/*
-			 * For INSERT simply get the cnew value
+			 * For INSERT simply get the new___ value
 			 */
 			new_value = (struct varlena *) DatumGetPointer(toast_values[i]);
 		}
@@ -679,7 +679,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 			 * still in the tuple must be someone else's that we cannot reuse
 			 * (this includes the case of an out-of-line in-memory datum).
 			 * Fetch it back (without decompression, unless we are forcing
-			 * PLAIN storage).  If necessary, we'll push it out as a cnew
+			 * PLAIN storage).  If necessary, we'll push it out as a new___
 			 * external value below.
 			 */
 			if (VARATT_IS_EXTERNAL(new_value))
@@ -986,7 +986,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	}
 
 	/*
-	 * In the case we toasted any values, we need to build a cnew heap tuple
+	 * In the case we toasted any values, we need to build a new___ heap tuple
 	 * with the changed values.
 	 */
 	if (need_change)
@@ -998,7 +998,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		int32		new_tuple_len;
 
 		/*
-		 * Calculate the cnew size of the tuple.
+		 * Calculate the new___ size of the tuple.
 		 *
 		 * Note: we used to assume here that the old tuple's t_hoff must equal
 		 * the new_header_len value, but that was incorrect.  The old tuple
@@ -1162,7 +1162,7 @@ toast_flatten_tuple(HeapTuple tup, TupleDesc tupleDesc)
  *	ranges, etc) must not contain any external TOAST pointers.  Without
  *	this rule, we'd have to look inside each Datum when preparing a tuple
  *	for storage, which would be expensive and would fail to extend cleanly
- *	to cnew sorts of container types.
+ *	to new___ sorts of container types.
  *
  *	However, we don't want to say that tuples represented as HeapTuples
  *	can't contain toasted fields, so instead this routine should be called
@@ -1236,7 +1236,7 @@ toast_flatten_tuple_to_datum(HeapTupleHeader tup,
 	}
 
 	/*
-	 * Calculate the cnew size of the tuple.
+	 * Calculate the new___ size of the tuple.
 	 *
 	 * This should match the reconstruction code in toast_insert_or_update.
 	 */
@@ -1497,7 +1497,7 @@ toast_save_datum(Relation rel, Datum value,
 	 * toast table, re-use its value ID.  If we didn't have a prior external
 	 * value (which is a corner case, but possible if the table's attstorage
 	 * options have been changed), we have to pick a value ID that doesn't
-	 * conflict with either cnew or existing toast value OIDs.
+	 * conflict with either new___ or existing toast value OIDs.
 	 */
 	if (!OidIsValid(rel->rd_toastoid))
 	{
@@ -1529,7 +1529,7 @@ toast_save_datum(Relation rel, Datum value,
 				 * those versions could easily reference the same toast value.
 				 * When we copy the second or later version of such a row,
 				 * reusing the OID will mean we select an OID that's already
-				 * in the cnew toast table.  Check for that, and if so, just
+				 * in the new___ toast table.  Check for that, and if so, just
 				 * fall through without writing the data again.
 				 *
 				 * While annoying and ugly-looking, this is a good thing
@@ -1551,8 +1551,8 @@ toast_save_datum(Relation rel, Datum value,
 		if (toast_pointer.va_valueid == InvalidOid)
 		{
 			/*
-			 * cnew value; must choose an OID that doesn't conflict in either
-			 * old or cnew toast table
+			 * new___ value; must choose an OID that doesn't conflict in either
+			 * old or new___ toast table
 			 */
 			do
 			{

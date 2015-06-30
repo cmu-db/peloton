@@ -594,14 +594,14 @@ ExecCheckIndexConstraints(TupleTableSlot *slot,
 /*
  * Check for violation of an exclusion or unique constraint
  *
- * heap: the table containing the cnew tuple
+ * heap: the table containing the new___ tuple
  * index: the index supporting the constraint
  * indexInfo: info about the index, including the exclusion properties
- * tupleid: heap TID of the cnew tuple we have just inserted (invalid if we
- *		haven't inserted a cnew tuple yet)
- * values, isnull: the *index* column values computed for the cnew tuple
+ * tupleid: heap TID of the new___ tuple we have just inserted (invalid if we
+ *		haven't inserted a new___ tuple yet)
+ * values, isnull: the *index* column values computed for the new___ tuple
  * estate: an EState we can do evaluation in
- * newIndex: if true, we are trying to build a cnew index (this affects
+ * newIndex: if true, we are trying to build a new___ index (this affects
  *		only the wording of error messages)
  * waitMode: whether to wait for concurrent inserters/deleters
  * violationOK: if true, don't throw error for violation
@@ -838,7 +838,7 @@ retry:
 	 * Ordinarily, at this point the search should have found the originally
 	 * inserted tuple (if any), unless we exited the loop early because of
 	 * conflict.  However, it is possible to define exclusion constraints for
-	 * which that wouldn't be true --- for instance, if the coperator is <>.
+	 * which that wouldn't be true --- for instance, if the operator___ is <>.
 	 * So we no longer complain if found_self is still false.
 	 */
 

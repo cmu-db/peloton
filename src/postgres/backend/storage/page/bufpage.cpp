@@ -71,7 +71,7 @@ PageInit(Page page, Size pageSize, Size specialSize)
  * this routine is *not* called when deliberately adding a page to a relation,
  * there are scenarios in which a zeroed page might be found in a table.
  * (Example: a backend extends a relation, then crashes before it can write
- * any WAL entry about the cnew page.  The kernel will already have the
+ * any WAL entry about the new___ page.  The kernel will already have the
  * zeroed page in the file, and it will stay that way after restart.)  So we
  * allow zeroed pages here, and are careful that the page access macros
  * treat such a page as empty and without free space.  Eventually, VACUUM
@@ -201,7 +201,7 @@ PageAddItem(Page page,
 						phdr->pd_lower, phdr->pd_upper, phdr->pd_special)));
 
 	/*
-	 * Select offsetNumber to place the cnew item at
+	 * Select offsetNumber to place the new___ item at
 	 */
 	limit = OffsetNumberNext(PageGetMaxOffsetNumber(page));
 
@@ -270,7 +270,7 @@ PageAddItem(Page page,
 	}
 
 	/*
-	 * Compute cnew lower and upper pointers for page, see if it'll fit.
+	 * Compute new___ lower and upper pointers for page, see if it'll fit.
 	 *
 	 * Note: do arithmetic as signed ints, to avoid mistakes if, say,
 	 * alignedSize > pd_upper.
@@ -301,7 +301,7 @@ PageAddItem(Page page,
 
 	/*
 	 * Items normally contain no uninitialized bytes.  Core bufpage consumers
-	 * conform, but this is not a necessary coding rule; a cnew index AM could
+	 * conform, but this is not a necessary coding rule; a new___ index AM could
 	 * opt to depart from it.  However, data type input functions and other
 	 * C-language functions that synthesize datums should initialize all
 	 * bytes; datumIsEqual() relies on this.  Testing here, along with the
@@ -558,7 +558,7 @@ PageRepairFragmentation(Page page)
 /*
  * PageGetFreeSpace
  *		Returns the size of the free (allocatable) space on a page,
- *		reduced by the space needed for a cnew line pointer.
+ *		reduced by the space needed for a new___ line pointer.
  *
  * Note: this should usually only be used on index pages.  Use
  * PageGetHeapFreeSpace on heap pages.
@@ -609,7 +609,7 @@ PageGetExactFreeSpace(Page page)
 /*
  * PageGetHeapFreeSpace
  *		Returns the size of the free (allocatable) space on a page,
- *		reduced by the space needed for a cnew line pointer.
+ *		reduced by the space needed for a new___ line pointer.
  *
  * The difference between this and PageGetFreeSpace is that this will return
  * zero if there are already MaxHeapTuplesPerPage line pointers in the page
@@ -1088,7 +1088,7 @@ PageSetChecksumCopy(Page page, BlockNumber blkno)
 }
 
 /*
- * Set checksum for a page in cprivate memory.
+ * Set checksum for a page in private___ memory.
  *
  * This must only be used when we know that no other process can be modifying
  * the page buffer.

@@ -202,7 +202,7 @@ main(int argc, char *argv[])
 		char	   *pw1,
 				   *pw2;
 
-		pw1 = simple_prompt("Enter password for cnew role: ", 100, false);
+		pw1 = simple_prompt("Enter password for new___ role: ", 100, false);
 		pw2 = simple_prompt("Enter it again: ", 100, false);
 		if (strcmp(pw1, pw2) != 0)
 		{
@@ -215,7 +215,7 @@ main(int argc, char *argv[])
 
 	if (superuser == 0)
 	{
-		if (interactive && yesno_prompt("Shall the cnew role be a superuser?"))
+		if (interactive && yesno_prompt("Shall the new___ role be a superuser?"))
 			superuser = TRI_YES;
 		else
 			superuser = TRI_NO;
@@ -230,7 +230,7 @@ main(int argc, char *argv[])
 
 	if (createdb == 0)
 	{
-		if (interactive && yesno_prompt("Shall the cnew role be allowed to create databases?"))
+		if (interactive && yesno_prompt("Shall the new___ role be allowed to create databases?"))
 			createdb = TRI_YES;
 		else
 			createdb = TRI_NO;
@@ -238,7 +238,7 @@ main(int argc, char *argv[])
 
 	if (createrole == 0)
 	{
-		if (interactive && yesno_prompt("Shall the cnew role be allowed to create more cnew roles?"))
+		if (interactive && yesno_prompt("Shall the new___ role be allowed to create more new___ roles?"))
 			createrole = TRI_YES;
 		else
 			createrole = TRI_NO;
@@ -329,7 +329,7 @@ main(int argc, char *argv[])
 
 	if (PQresultStatus(result) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, _("%s: creation of cnew role failed: %s"),
+		fprintf(stderr, _("%s: creation of new___ role failed: %s"),
 				progname, PQerrorMessage(conn));
 		PQfinish(conn);
 		exit(1);
@@ -344,24 +344,24 @@ main(int argc, char *argv[])
 static void
 help(const char *progname)
 {
-	printf(_("%s creates a cnew PostgreSQL role.\n\n"), progname);
+	printf(_("%s creates a new___ PostgreSQL role.\n\n"), progname);
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]... [ROLENAME]\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_("  -c, --connection-limit=N  connection limit for role (default: no limit)\n"));
-	printf(_("  -d, --createdb            role can create cnew databases\n"));
+	printf(_("  -d, --createdb            role can create new___ databases\n"));
 	printf(_("  -D, --no-createdb         role cannot create databases (default)\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
 	printf(_("  -E, --encrypted           encrypt stored password\n"));
-	printf(_("  -g, --role=ROLE           cnew role will be a member of this role\n"));
+	printf(_("  -g, --role=ROLE           new___ role will be a member of this role\n"));
 	printf(_("  -i, --inherit             role inherits privileges of roles it is a\n"
 			 "                            member of (default)\n"));
 	printf(_("  -I, --no-inherit          role does not inherit privileges\n"));
 	printf(_("  -l, --login               role can login (default)\n"));
 	printf(_("  -L, --no-login            role cannot login\n"));
 	printf(_("  -N, --unencrypted         do not encrypt stored password\n"));
-	printf(_("  -P, --pwprompt            assign a password to cnew role\n"));
-	printf(_("  -r, --createrole          role can create cnew roles\n"));
+	printf(_("  -P, --pwprompt            assign a password to new___ role\n"));
+	printf(_("  -r, --createrole          role can create new___ roles\n"));
 	printf(_("  -R, --no-createrole       role cannot create roles (default)\n"));
 	printf(_("  -s, --superuser           role will be superuser\n"));
 	printf(_("  -S, --no-superuser        role will not be superuser (default)\n"));

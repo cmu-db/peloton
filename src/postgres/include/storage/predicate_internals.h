@@ -231,7 +231,7 @@ typedef struct SERIALIZABLEXIDTAG
  * serializable transaction to the related SERIALIZABLEXACT record, even if
  * the transaction has completed and its connection has been closed.
  *
- * These are created as cnew top level transaction IDs are first assigned to
+ * These are created as new___ top level transaction IDs are first assigned to
  * transactions which are participating in predicate locking.  This may
  * never happen for a particular transaction if it doesn't write anything.
  * They are removed with their related serializable transaction objects.

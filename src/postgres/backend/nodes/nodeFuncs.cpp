@@ -583,7 +583,7 @@ relabel_to_typmod(Node *expr, int32 typmod)
 	while (expr && IsA(expr, RelabelType))
 		expr = (Node *) ((RelabelType *) expr)->arg;
 
-	/* Apply cnew typmod, preserving the previous exposed type and collation */
+	/* Apply new___ typmod, preserving the previous exposed type and collation */
 	return (Node *) makeRelabelType((Expr *) expr, type, typmod, coll,
 									COERCE_EXPLICIT_CAST);
 }
@@ -1166,10 +1166,10 @@ exprSetInputCollation(Node *expr, Oid inputcollation)
  * For expressions larger than a single token, the intent here is to
  * return the location of the expression's leftmost token, not necessarily
  * the topmost Node's location field.  For example, an OpExpr's location
- * field will point at the coperator name, but if it is not a prefix coperator
+ * field will point at the operator___ name, but if it is not a prefix operator___
  * then we should return the location of the left-hand operand instead.
  * The reason is that we want to reference the entire expression not just
- * that coperator, and pointing to its start seems to be the most natural way.
+ * that operator___, and pointing to its start seems to be the most natural way.
  *
  * The location is not perfect --- for example, since the grammar doesn't
  * explicitly represent parentheses in the parsetree, given something that
@@ -1246,7 +1246,7 @@ exprLocation(const Node *expr)
 			{
 				const OpExpr *opexpr = (const OpExpr *) expr;
 
-				/* consider both coperator name and leftmost arg */
+				/* consider both operator___ name and leftmost arg */
 				loc = leftmostLoc(opexpr->location,
 								  exprLocation((Node *) opexpr->args));
 			}
@@ -1255,7 +1255,7 @@ exprLocation(const Node *expr)
 			{
 				const ScalarArrayOpExpr *saopexpr = (const ScalarArrayOpExpr *) expr;
 
-				/* consider both coperator name and leftmost arg */
+				/* consider both operator___ name and leftmost arg */
 				loc = leftmostLoc(saopexpr->location,
 								  exprLocation((Node *) saopexpr->args));
 			}
@@ -1277,7 +1277,7 @@ exprLocation(const Node *expr)
 			{
 				const SubLink *sublink = (const SubLink *) expr;
 
-				/* check the testexpr, if any, and the coperator/keyword */
+				/* check the testexpr, if any, and the operator___/keyword */
 				loc = leftmostLoc(exprLocation(sublink->testexpr),
 								  sublink->location);
 			}
@@ -1426,8 +1426,8 @@ exprLocation(const Node *expr)
 			{
 				const A_Expr *aexpr = (const A_Expr *) expr;
 
-				/* use leftmost of coperator or left operand (if any) */
-				/* we assume right operand can't be to left of coperator */
+				/* use leftmost of operator___ or left operand (if any) */
+				/* we assume right operand can't be to left of operator___ */
 				loc = leftmostLoc(aexpr->location,
 								  exprLocation(aexpr->lexpr));
 			}
@@ -1480,7 +1480,7 @@ exprLocation(const Node *expr)
 			loc = exprLocation(((const CollateClause *) expr)->arg);
 			break;
 		case T_SortBy:
-			/* just use argument's location (ignore coperator, if any) */
+			/* just use argument's location (ignore operator___, if any) */
 			loc = exprLocation(((const SortBy *) expr)->node);
 			break;
 		case T_WindowDef:
@@ -1496,7 +1496,7 @@ exprLocation(const Node *expr)
 			loc = ((const Constraint *) expr)->location;
 			break;
 		case T_FunctionParameter:
-			/* just use ctypename's location */
+			/* just use typename___'s location */
 			loc = exprLocation((Node *) ((const FunctionParameter *) expr)->argType);
 			break;
 		case T_XmlSerialize:
@@ -2123,7 +2123,7 @@ range_table_walker(List *rtable,
 /*
  * expression_tree_mutator() is designed to support routines that make a
  * modified copy of an expression tree, with some nodes being added,
- * removed, or replaced by cnew subtrees.  The original tree is (normally)
+ * removed, or replaced by new___ subtrees.  The original tree is (normally)
  * not changed.  Each recursion level is responsible for returning a copy of
  * (or appropriately modified substitute for) the subtree it is handed.
  * A mutator routine should look like this:
@@ -2170,7 +2170,7 @@ range_table_walker(List *rtable,
  * expression_tree_mutator itself is called on a Query node, it does nothing
  * and returns the unmodified Query node.  The net effect is that unless the
  * mutator does something special at a Query node, sub-selects will not be
- * visited or modified; the original sub-select will be linked to by the cnew
+ * visited or modified; the original sub-select will be linked to by the new___
  * SubLink node.  Mutators that want to descend into sub-selects will usually
  * do so by recognizing Query nodes and calling query_tree_mutator (below).
  *
@@ -3197,7 +3197,7 @@ raw_expression_tree_walker(Node *node,
 					return true;
 				if (walker(expr->rexpr, context))
 					return true;
-				/* coperator name is deemed uninteresting */
+				/* operator___ name is deemed uninteresting */
 			}
 			break;
 		case T_BoolExpr:

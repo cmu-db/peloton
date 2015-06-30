@@ -2,7 +2,7 @@
  *
  * walwriter.c
  *
- * The WAL writer background process is cnew as of Postgres 8.3.  It attempts
+ * The WAL writer background process is new___ as of Postgres 8.3.  It attempts
  * to keep regular backends from having to write out (and fsync) WAL pages.
  * Also, it guarantees that transaction commit records that weren't synced
  * to disk immediately upon commit (ie, were "asynchronously committed")

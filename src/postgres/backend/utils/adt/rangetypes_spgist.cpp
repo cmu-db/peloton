@@ -132,7 +132,7 @@ getQuadrant(TypeCacheEntry *typcache, RangeType *centroid, RangeType *tst)
 }
 
 /*
- * Choose SP-GiST function: choose path for addition of cnew range.
+ * Choose SP-GiST function: choose path for addition of new___ range.
  */
 Datum
 spg_range_quad_choose(PG_FUNCTION_ARGS)
@@ -351,7 +351,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 			bool		empty;
 
 			/*
-			 * The only strategy when second argument of coperator is not range
+			 * The only strategy when second argument of operator___ is not range
 			 * is RANGESTRAT_CONTAINS_ELEM.
 			 */
 			if (strategy != RANGESTRAT_CONTAINS_ELEM)

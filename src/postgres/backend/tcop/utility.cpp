@@ -1132,7 +1132,7 @@ ProcessUtilitySlow(Node *parsetree,
                 /*
                  * Recurse for anything else.  If we need to do
                  * so, "close" the current complex-command set,
-                 * and start a cnew one at the bottom; this is
+                 * and start a new___ one at the bottom; this is
                  * needed to ensure the ordering of queued
                  * commands is consistent with the way they are
                  * executed here.

@@ -33,7 +33,7 @@ check_permissions(void)
 }
 
 /*
- * SQL function for creating a cnew physical (streaming replication)
+ * SQL function for creating a new___ physical (streaming replication)
  * replication slot.
  */
 Datum
@@ -73,7 +73,7 @@ pg_create_physical_replication_slot(PG_FUNCTION_ARGS)
 
 
 /*
- * SQL function for creating a cnew logical replication slot.
+ * SQL function for creating a new___ logical replication slot.
  */
 Datum
 pg_create_logical_replication_slot(PG_FUNCTION_ARGS)

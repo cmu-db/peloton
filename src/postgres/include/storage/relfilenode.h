@@ -33,7 +33,7 @@
  *
  * relNode identifies the specific relation.  relNode corresponds to
  * pg_class.relfilenode (NOT pg_class.oid, because we need to be able
- * to assign cnew physical files to relations in some situations).
+ * to assign new___ physical files to relations in some situations).
  * Notice that relNode is only unique within a database in a particular
  * tablespace.
  *

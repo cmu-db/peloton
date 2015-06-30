@@ -418,7 +418,7 @@ systable_getnext(SysScanDesc sysscan)
 		/*
 		 * We currently don't need to support lossy index operators for any
 		 * system catalog scan.  It could be done here, using the scan keys to
-		 * drive the coperator calls, if we arranged to save the heap attnums
+		 * drive the operator___ calls, if we arranged to save the heap attnums
 		 * during systable_beginscan(); this is practical because we still
 		 * wouldn't need to support indexes on expressions.
 		 */

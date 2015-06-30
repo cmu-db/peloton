@@ -9,7 +9,7 @@
  * Then we scan the index tuples in order and build the btree pages
  * for each level.  We load source tuples into leaf-level pages.
  * Whenever we fill a page at one level, we add a link to it to its
- * parent level (starting a cnew parent level if necessary).  When
+ * parent level (starting a new___ parent level if necessary).  When
  * done, we write out each final page on each level, adding it to
  * its parent level.  When we have only one page on a level, it must be
  * the root -- it can be attached to the btree metapage and we are done.
@@ -238,7 +238,7 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 
 
 /*
- * allocate workspace for a cnew, clean btree page, not linked to any siblings.
+ * allocate workspace for a new___, clean btree page, not linked to any siblings.
  */
 static Page
 _bt_blnewpage(uint32 level)
@@ -322,7 +322,7 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 }
 
 /*
- * allocate and initialize a cnew BTPageState.  the returned structure
+ * allocate and initialize a new___ BTPageState.  the returned structure
  * is suitable for immediate use by _bt_buildadd.
  */
 static BTPageState *
@@ -511,14 +511,14 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 		ItemId		hii;
 		IndexTuple	oitup;
 
-		/* Create cnew page of same level */
+		/* Create new___ page of same level */
 		npage = _bt_blnewpage(state->btps_level);
 
 		/* and assign it a page position */
 		nblkno = wstate->btws_pages_alloced++;
 
 		/*
-		 * We copy the last item on the page into the cnew page, and then
+		 * We copy the last item on the page into the new___ page, and then
 		 * rearrange the old page so that the 'last item' becomes its high key
 		 * rather than a true data item.  There had better be at least two
 		 * items on the page already, else the page would be empty of useful
@@ -539,7 +539,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 
 		/*
 		 * Link the old page into its parent, using its minimum key. If we
-		 * don't have a parent, we have to create one; this adds a cnew btree
+		 * don't have a parent, we have to create one; this adds a new___ btree
 		 * level.
 		 */
 		if (state->btps_next == NULL)
@@ -551,8 +551,8 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 		pfree(state->btps_minkey);
 
 		/*
-		 * Save a copy of the minimum key for the cnew page.  We have to copy
-		 * it off the old page, not the cnew one, in case we are not at leaf
+		 * Save a copy of the minimum key for the new___ page.  We have to copy
+		 * it off the old page, not the new___ one, in case we are not at leaf
 		 * level.
 		 */
 		state->btps_minkey = CopyIndexTuple(oitup);
@@ -576,13 +576,13 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 		_bt_blwritepage(wstate, opage, oblkno);
 
 		/*
-		 * Reset last_off to point to cnew page
+		 * Reset last_off to point to new___ page
 		 */
 		last_off = P_FIRSTKEY;
 	}
 
 	/*
-	 * If the cnew item is the first for its page, stash a copy for later. Note
+	 * If the new___ item is the first for its page, stash a copy for later. Note
 	 * this will only happen for the first item on a level; on later pages,
 	 * the first item for a page is copied from the prior page in the code
 	 * above.
@@ -594,7 +594,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup)
 	}
 
 	/*
-	 * Add the cnew item into the current page.
+	 * Add the new___ item into the current page.
 	 */
 	last_off = OffsetNumberNext(last_off);
 	_bt_sortaddtup(npage, itupsz, itup, last_off);
@@ -660,7 +660,7 @@ _bt_uppershutdown(BTWriteState *wstate, BTPageState *state)
 
 	/*
 	 * As the last step in the process, construct the metapage and make it
-	 * point to the cnew root (unless we had no data at all, in which case it's
+	 * point to the new___ root (unless we had no data at all, in which case it's
 	 * set to point to "P_NONE").  This changes the index to the "valid" state
 	 * by filling in a valid magic number in the metapage.
 	 */

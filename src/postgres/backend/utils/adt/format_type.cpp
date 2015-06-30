@@ -190,7 +190,7 @@ format_type_internal(Oid type_oid, int32 typemod,
 			{
 				/*
 				 * bit with typmod -1 is not the same as BIT, which means
-				 * BIT(1) per SQL spec.  Report it as the quoted ctypename so
+				 * BIT(1) per SQL spec.  Report it as the quoted typename___ so
 				 * that parser will not assign a bogus typmod.
 				 */
 			}
@@ -423,9 +423,9 @@ oidvectortypes(PG_FUNCTION_ARGS)
 
 	for (num = 0; num < numargs; num++)
 	{
-		char	   *ctypename = format_type_internal(oidArray->values[num], -1,
+		char	   *typename___ = format_type_internal(oidArray->values[num], -1,
 													false, true, false);
-		size_t		slen = strlen(ctypename);
+		size_t		slen = strlen(typename___);
 
 		if (left < (slen + 2))
 		{
@@ -439,7 +439,7 @@ oidvectortypes(PG_FUNCTION_ARGS)
 			strcat(result, ", ");
 			left -= 2;
 		}
-		strcat(result, ctypename);
+		strcat(result, typename___);
 		left -= slen;
 	}
 

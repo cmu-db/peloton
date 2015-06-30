@@ -476,7 +476,7 @@ ResourceOwnerGetParent(ResourceOwner owner)
 }
 
 /*
- * Reassign a ResourceOwner to have a cnew parent
+ * Reassign a ResourceOwner to have a new___ parent
  */
 void
 ResourceOwnerNewParent(ResourceOwner owner,
