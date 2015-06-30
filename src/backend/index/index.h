@@ -15,9 +15,7 @@
 #include <vector>
 #include <string>
 
-#include "backend/catalog/manager.h"
 #include "backend/catalog/schema.h"
-#include "backend/common/exception.h"
 #include "backend/common/types.h"
 #include "backend/storage/tuple.h"
 
