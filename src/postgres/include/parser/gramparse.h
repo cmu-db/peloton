@@ -26,7 +26,7 @@
  * NB: include gram.h only AFTER including scanner.h, because scanner.h
  * is what #defines YYLTYPE.
  */
-#include "parser/gram.h"
+#include "postgres/backend/parser/gram.hpp"
 
 /*
  * The YY_EXTRA data that a flex scanner allows us to pass around.  Private
