@@ -458,7 +458,7 @@ StrategyInitialize(bool init)
 	 * Since we can't tolerate running out of lookup table entries, we must be
 	 * sure to specify an adequate table size here.  The maximum steady-state
 	 * usage is of course NBuffers entries, but BufferAlloc() tries to insert
-	 * a cnew entry before deleting the old.  In principle this could be
+	 * a new___ entry before deleting the old.  In principle this could be
 	 * happening in each partition concurrently, so we could need as many as
 	 * NBuffers + NUM_BUFFER_PARTITIONS entries.
 	 */
@@ -504,7 +504,7 @@ StrategyInitialize(bool init)
 
 
 /* ----------------------------------------------------------------
- *				Backend-cprivate buffer ring management
+ *				Backend-private___ buffer ring management
  * ----------------------------------------------------------------
  */
 
@@ -594,9 +594,9 @@ GetBufferFromRing(BufferAccessStrategy strategy)
 		strategy->current = 0;
 
 	/*
-	 * If the slot hasn't been filled yet, tell the caller to allocate a cnew
+	 * If the slot hasn't been filled yet, tell the caller to allocate a new___
 	 * buffer with the normal allocation strategy.  He will then fill this
-	 * slot by calling AddBufferToRing with the cnew buffer.
+	 * slot by calling AddBufferToRing with the new___ buffer.
 	 */
 	bufnum = strategy->buffers[strategy->current];
 	if (bufnum == InvalidBuffer)
@@ -624,7 +624,7 @@ GetBufferFromRing(BufferAccessStrategy strategy)
 	UnlockBufHdr(buf);
 
 	/*
-	 * Tell caller to allocate a cnew buffer with the normal allocation
+	 * Tell caller to allocate a new___ buffer with the normal allocation
 	 * strategy.  He'll then replace this ring element via AddBufferToRing.
 	 */
 	strategy->current_was_in_ring = false;
@@ -651,7 +651,7 @@ AddBufferToRing(BufferAccessStrategy strategy, volatile BufferDesc *buf)
  * be written out and doing so would require flushing WAL too.  This gives us
  * a chance to choose a different victim.
  *
- * Returns true if buffer manager should ask for a cnew victim, and false
+ * Returns true if buffer manager should ask for a new___ victim, and false
  * if this buffer should be written and re-used.
  */
 bool

@@ -88,10 +88,10 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	char		mtransTypeType = 0;
 	ListCell   *pl;
 
-	/* Convert list of names to a name and cnamespace */
+	/* Convert list of names to a name and namescpace___ */
 	aggNamespace = QualifiedNameGetCreationNamespace(name, &aggName);
 
-	/* Check we have creation rights in target cnamespace */
+	/* Check we have creation rights in target namescpace___ */
 	aclresult = pg_namespace_aclcheck(aggNamespace, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
@@ -297,7 +297,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	 * transtype can't be a pseudo-type, since we need to be able to store
 	 * values of the transtype.  However, we can allow polymorphic transtype
 	 * in some cases (AggregateCreate will check).  Also, we allow "internal"
-	 * for functions that want to pass pointers to cprivate data structures;
+	 * for functions that want to pass pointers to private___ data structures;
 	 * but allow that only to superusers, since you could crash the system (or
 	 * worse) by connecting up incompatible internal-using functions in an
 	 * aggregate.
@@ -371,7 +371,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	 * Most of the argument-checking is done inside of AggregateCreate
 	 */
 	return AggregateCreate(aggName,		/* aggregate name */
-						   aggNamespace,		/* cnamespace */
+						   aggNamespace,		/* namescpace___ */
 						   aggKind,
 						   numArgs,
 						   numDirectArgs,
@@ -388,7 +388,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 						   mfinalfuncName,		/* final function name */
 						   finalfuncExtraArgs,
 						   mfinalfuncExtraArgs,
-						   sortoperatorName,	/* sort coperator name */
+						   sortoperatorName,	/* sort operator___ name */
 						   transTypeId, /* transition data type */
 						   transSpace,	/* transition space */
 						   mtransTypeId,		/* transition data type */

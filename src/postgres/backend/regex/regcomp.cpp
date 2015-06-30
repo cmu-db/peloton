@@ -197,7 +197,7 @@ static celt element(struct vars *, const chr *, const chr *);
 static struct cvec *range(struct vars *, celt, celt, int);
 static int	before(celt, celt);
 static struct cvec *eclass(struct vars *, celt, int);
-static struct cvec *cclass(struct vars *, const chr *, const chr *, int);
+static struct cvec *class___(struct vars *, const chr *, const chr *, int);
 static struct cvec *allcases(struct vars *, chr);
 static int	cmp(const chr *, const chr *, size_t);
 static int	casecmp(const chr *, const chr *, size_t);
@@ -652,7 +652,7 @@ parse(struct vars * v,
 		branch->left = parsebranch(v, stopper, type, left, right, 0);
 		NOERRN();
 		branch->flags |= UP(branch->flags | branch->left->flags);
-		if ((branch->flags & ~branches->flags) != 0)	/* cnew flags */
+		if ((branch->flags & ~branches->flags) != 0)	/* new___ flags */
 			for (t = branches; t != branch; t = t->right)
 				t->flags |= branch->flags;
 	} while (EAT('|'));
@@ -711,7 +711,7 @@ parsebranch(struct vars * v,
 	while (!SEE('|') && !SEE(stopper) && !SEE(EOS))
 	{
 		if (seencontent)
-		{						/* implicit concat coperator */
+		{						/* implicit concat operator___ */
 			lp = newstate(v->nfa);
 			NOERRN();
 			moveins(v->nfa, right, lp);
@@ -749,7 +749,7 @@ parseqatom(struct vars * v,
 		   struct state * rp,	/* right state to hang it on */
 		   struct subre * top)	/* subtree top */
 {
-	struct state *s;			/* temporaries for cnew states */
+	struct state *s;			/* temporaries for new___ states */
 	struct state *s2;
 
 #define  ARCV(t, val)	 newarc(v->nfa, t, val, lp, rp)
@@ -767,7 +767,7 @@ parseqatom(struct vars * v,
 
 	/* initial bookkeeping */
 	atom = NULL;
-	assert(lp->nouts == 0);		/* must string cnew code */
+	assert(lp->nouts == 0);		/* must string new___ code */
 	assert(rp->nins == 0);		/* between lp and rp */
 	subno = 0;					/* just to shut lint up */
 
@@ -913,7 +913,7 @@ parseqatom(struct vars * v,
 			else
 				atomtype = PLAIN;		/* something that's not '(' */
 			NEXT();
-			/* need cnew endpoints because tree will contain pointers */
+			/* need new___ endpoints because tree will contain pointers */
 			s = newstate(v->nfa);
 			s2 = newstate(v->nfa);
 			NOERR();
@@ -1061,7 +1061,7 @@ parseqatom(struct vars * v,
 	 * We make the s state here for both cases; s2 is made below if needed
 	 *----------
 	 */
-	s = newstate(v->nfa);		/* first, cnew endpoints for the atom */
+	s = newstate(v->nfa);		/* first, new___ endpoints for the atom */
 	s2 = newstate(v->nfa);
 	NOERR();
 	moveouts(v->nfa, lp, s);
@@ -1441,7 +1441,7 @@ brackpart(struct vars * v,
 			endp = scanplain(v);
 			INSIST(startp < endp, REG_ECTYPE);
 			NOERR();
-			cv = cclass(v, startp, endp, (v->cflags & REG_ICASE));
+			cv = class___(v, startp, endp, (v->cflags & REG_ICASE));
 			NOERR();
 			dovec(v, cv, lp, rp);
 			return;

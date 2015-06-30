@@ -243,7 +243,7 @@ existsTimeLineHistory(TimeLineID probeTLI)
  *
  * Note: while this is somewhat heuristic, it does positively guarantee
  * that (result + 1) is not a known timeline, and therefore it should
- * be safe to assign that ID to a cnew timeline.
+ * be safe to assign that ID to a new___ timeline.
  */
 TimeLineID
 findNewestTimeLine(TimeLineID startTLI)
@@ -274,11 +274,11 @@ findNewestTimeLine(TimeLineID startTLI)
 }
 
 /*
- * Create a cnew timeline history file.
+ * Create a new___ timeline history file.
  *
- *	newTLI: ID of the cnew timeline
+ *	newTLI: ID of the new___ timeline
  *	parentTLI: ID of its immediate parent
- *	switchpoint: XLOG position where the system switched to the cnew timeline
+ *	switchpoint: XLOG position where the system switched to the new___ timeline
  *	reason: human-readable explanation of why the timeline was switched
  *
  * Currently this is only used at the end recovery, and so there are no locking

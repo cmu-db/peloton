@@ -168,7 +168,7 @@ euc_tw2mic(const unsigned char *euc, unsigned char *p, int len)
 					*p++ = LC_CNS11643_2;
 				else
 				{
-					/* other planes are MULE cprivate charsets */
+					/* other planes are MULE private___ charsets */
 					*p++ = LCPRV2_B;
 					*p++ = c1 - 0xa3 + LC_CNS11643_3;
 				}
@@ -287,7 +287,7 @@ big52mic(const unsigned char *big5, unsigned char *p, int len)
 		cnsBuf = BIG5toCNS(big5buf, &lc);
 		if (lc != 0)
 		{
-			/* Planes 3 and 4 are MULE cprivate charsets */
+			/* Planes 3 and 4 are MULE private___ charsets */
 			if (lc == LC_CNS11643_3 || lc == LC_CNS11643_4)
 				*p++ = LCPRV2_B;
 			*p++ = lc;			/* Plane No. */

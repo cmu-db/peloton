@@ -16,7 +16,7 @@
  * dataset (with the possible exception of the final output) is written
  * and read exactly once in a perfectly sequential manner.  Therefore,
  * a datum once read will not be required again, and we can recycle its
- * space for use by the cnew tape dataset(s) being generated.  In this way,
+ * space for use by the new___ tape dataset(s) being generated.  In this way,
  * the total space usage is essentially just the actual data volume, plus
  * insignificant bookkeeping and start/stop overhead.
  *
@@ -323,7 +323,7 @@ ltsRecordBlockNum(LogicalTapeSet *lts, IndirectBlock *indirect,
 	{
 		/*
 		 * This indirect block is full, so dump it out and recursively save
-		 * its address in the next indirection level.  Create a cnew
+		 * its address in the next indirection level.  Create a new___
 		 * indirection level if there wasn't one before.
 		 */
 		long		indirblock = ltsGetFreeBlock(lts);

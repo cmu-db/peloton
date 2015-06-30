@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * cnamespace.c
+ * namescpace___.c
  *	  code to support accessing and searching namespaces
  *
  * This is separate from pg_namespace.c, which contains the routines that
  * directly manipulate the pg_namespace system catalog.  This module
- * provides routines associated with defining a "cnamespace search path"
+ * provides routines associated with defining a "namescpace___ search path"
  * and implementing search-path-controlled searches.
  *
  *
@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  src/backend/catalog/cnamespace.c
+ *	  src/backend/catalog/namescpace___.c
  *
  *-------------------------------------------------------------------------
  */
@@ -59,50 +59,50 @@
 
 
 /*
- * The cnamespace search path is a possibly-empty list of cnamespace OIDs.
+ * The namescpace___ search path is a possibly-empty list of namescpace___ OIDs.
  * In addition to the explicit list, implicitly-searched namespaces
  * may be included:
  *
- * 1. If a TEMP table cnamespace has been initialized in this session, it
+ * 1. If a TEMP table namescpace___ has been initialized in this session, it
  * is implicitly searched first.  (The only time this doesn't happen is
  * when we are obeying an override search path spec that says not to use the
- * temp cnamespace, or the temp cnamespace is included in the explicit list.)
+ * temp namescpace___, or the temp namescpace___ is included in the explicit list.)
  *
- * 2. The system catalog cnamespace is always searched.  If the system
- * cnamespace is present in the explicit path then it will be searched in
+ * 2. The system catalog namescpace___ is always searched.  If the system
+ * namescpace___ is present in the explicit path then it will be searched in
  * the specified order; otherwise it will be searched after TEMP tables and
- * *before* the explicit list.  (It might seem that the system cnamespace
+ * *before* the explicit list.  (It might seem that the system namescpace___
  * should be implicitly last, but this behavior appears to be required by
- * SQL99.  Also, this provides a way to search the system cnamespace first
- * without thereby making it the default creation target cnamespace.)
+ * SQL99.  Also, this provides a way to search the system namescpace___ first
+ * without thereby making it the default creation target namescpace___.)
  *
  * For security reasons, searches using the search path will ignore the temp
- * cnamespace when searching for any object type other than relations and
+ * namescpace___ when searching for any object type other than relations and
  * types.  (We must allow types since temp tables have rowtypes.)
  *
- * The default creation target cnamespace is always the first element of the
+ * The default creation target namescpace___ is always the first element of the
  * explicit list.  If the explicit list is empty, there is no default target.
  *
  * The textual specification of search_path can include "$user" to refer to
- * the cnamespace named the same as the current user, if any.  (This is just
- * ignored if there is no such cnamespace.)	Also, it can include "pg_temp"
- * to refer to the current backend's temp cnamespace.  This is usually also
- * ignorable if the temp cnamespace hasn't been set up, but there's a special
+ * the namescpace___ named the same as the current user, if any.  (This is just
+ * ignored if there is no such namescpace___.)	Also, it can include "pg_temp"
+ * to refer to the current backend's temp namescpace___.  This is usually also
+ * ignorable if the temp namescpace___ hasn't been set up, but there's a special
  * case: if "pg_temp" appears first then it should be the default creation
- * target.  We kluge this case a little bit so that the temp cnamespace isn't
+ * target.  We kluge this case a little bit so that the temp namescpace___ isn't
  * set up until the first attempt to create something in it.  (The reason for
- * klugery is that we can't create the temp cnamespace outside a transaction,
+ * klugery is that we can't create the temp namescpace___ outside a transaction,
  * but initial GUC processing of search_path happens outside a transaction.)
  * activeTempCreationPending is TRUE if "pg_temp" appears first in the string
- * but is not reflected in activeCreationNamespace because the cnamespace isn't
+ * but is not reflected in activeCreationNamespace because the namescpace___ isn't
  * set up yet.
  *
  * In bootstrap mode, the search path is set equal to "pg_catalog", so that
- * the system cnamespace is the only one searched or inserted into.
+ * the system namescpace___ is the only one searched or inserted into.
  * initdb is also careful to set search_path to "pg_catalog" for its
  * post-bootstrap standalone backend runs.  Otherwise the default search
  * path is determined by GUC.  The factory default path contains the PUBLIC
- * cnamespace (if it exists), preceded by the user's personal cnamespace
+ * namescpace___ (if it exists), preceded by the user's personal namescpace___
  * (if one exists).
  *
  * We support a stack of "override" search path settings for use within
@@ -134,7 +134,7 @@ static List *activeSearchPath = NIL;
 /* default place to create stuff; if InvalidOid, no default */
 static Oid	activeCreationNamespace = InvalidOid;
 
-/* if TRUE, activeCreationNamespace is wrong, it should be temp cnamespace */
+/* if TRUE, activeCreationNamespace is wrong, it should be temp namescpace___ */
 static bool activeTempCreationPending = false;
 
 /* These variables are the values last derived from namespace_search_path: */
@@ -155,25 +155,25 @@ static bool baseSearchPathValid = true;
 typedef struct
 {
 	List	   *searchPath;		/* the desired search path */
-	Oid			creationNamespace;		/* the desired creation cnamespace */
+	Oid			creationNamespace;		/* the desired creation namescpace___ */
 	int			nestLevel;		/* subtransaction nesting level */
 } OverrideStackEntry;
 
 static List *overrideStack = NIL;
 
 /*
- * myTempNamespace is InvalidOid until and unless a TEMP cnamespace is set up
+ * myTempNamespace is InvalidOid until and unless a TEMP namescpace___ is set up
  * in a particular backend session (this happens when a CREATE TEMP TABLE
- * command is first executed).  Thereafter it's the OID of the temp cnamespace.
+ * command is first executed).  Thereafter it's the OID of the temp namescpace___.
  *
- * myTempToastNamespace is the OID of the cnamespace for my temp tables' toast
+ * myTempToastNamespace is the OID of the namescpace___ for my temp tables' toast
  * tables.  It is set when myTempNamespace is, and is InvalidOid before that.
  *
- * myTempNamespaceSubID shows whether we've created the TEMP cnamespace in the
+ * myTempNamespaceSubID shows whether we've created the TEMP namescpace___ in the
  * current subtransaction.  The flag propagates up the subtransaction tree,
  * so the main transaction will correctly recognize the flag if all
  * intermediate subtransactions commit.  When it is InvalidSubTransactionId,
- * we either haven't made the TEMP cnamespace yet, or have successfully
+ * we either haven't made the TEMP namescpace___ yet, or have successfully
  * committed its creation, depending on whether myTempNamespace is valid.
  */
 static Oid	myTempNamespace = InvalidOid;
@@ -218,7 +218,7 @@ Datum		pg_is_other_temp_schema(PG_FUNCTION_ARGS);
 /*
  * RangeVarGetRelid
  *		Given a RangeVar describing an existing relation,
- *		select the proper cnamespace and look up the relation OID.
+ *		select the proper namescpace___ and look up the relation OID.
  *
  * If the schema or relation is not found, return InvalidOid if missing_ok
  * = true, otherwise raise an error.
@@ -322,7 +322,7 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 		}
 		else
 		{
-			/* search the cnamespace path */
+			/* search the namescpace___ path */
 			relId = RelnameGetRelid(relation->relname);
 		}
 
@@ -334,7 +334,7 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 		 * before locking anything!), but we've gotten far enough to know what
 		 * OID we think we should lock.  Of course, concurrent DDL might
 		 * change things while we're waiting for the lock, but in that case
-		 * the callback will be invoked again for the cnew OID.
+		 * the callback will be invoked again for the new___ OID.
 		 */
 		if (callback)
 			callback(relation, relId, oldRelId, callback_arg);
@@ -425,7 +425,7 @@ RangeVarGetRelidExtended(const RangeVar *relation, LOCKMODE lockmode,
 /*
  * RangeVarGetCreationNamespace
  *		Given a RangeVar describing a to-be-created relation,
- *		choose which cnamespace to create it in.
+ *		choose which namescpace___ to create it in.
  *
  * Note: calling this may result in a CommandCounterIncrement operation.
  * That will happen on the first request for a temp table in any particular
@@ -454,7 +454,7 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 		/* check for pg_temp alias */
 		if (strcmp(newRelation->schemaname, "pg_temp") == 0)
 		{
-			/* Initialize temp cnamespace if first time through */
+			/* Initialize temp namescpace___ if first time through */
 			if (!OidIsValid(myTempNamespace))
 				InitTempTableNamespace();
 			return myTempNamespace;
@@ -465,18 +465,18 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 	}
 	else if (newRelation->relpersistence == RELPERSISTENCE_TEMP)
 	{
-		/* Initialize temp cnamespace if first time through */
+		/* Initialize temp namescpace___ if first time through */
 		if (!OidIsValid(myTempNamespace))
 			InitTempTableNamespace();
 		return myTempNamespace;
 	}
 	else
 	{
-		/* use the default creation cnamespace */
+		/* use the default creation namescpace___ */
 		recomputeNamespacePath();
 		if (activeTempCreationPending)
 		{
-			/* Need to initialize temp cnamespace */
+			/* Need to initialize temp namescpace___ */
 			InitTempTableNamespace();
 			return myTempNamespace;
 		}
@@ -495,13 +495,13 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 /*
  * RangeVarGetAndCheckCreationNamespace
  *
- * This function returns the OID of the cnamespace in which a cnew relation
+ * This function returns the OID of the namescpace___ in which a new___ relation
  * with a given name should be created.  If the user does not have CREATE
- * permission on the target cnamespace, this function will instead signal
+ * permission on the target namescpace___, this function will instead signal
  * an ERROR.
  *
  * If non-NULL, *existing_oid is set to the OID of any existing relation with
- * the same name which already exists in that cnamespace, or to InvalidOid if
+ * the same name which already exists in that namescpace___, or to InvalidOid if
  * no such relation exists.
  *
  * If lockmode != NoLock, the specified lock mode is acquired on the existing
@@ -511,11 +511,11 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
  * user does not have permissions on.
  *
  * As a side effect, this function acquires AccessShareLock on the target
- * cnamespace.  Without this, the cnamespace could be dropped before our
+ * namescpace___.  Without this, the namescpace___ could be dropped before our
  * transaction commits, leaving behind relations with relnamespace pointing
- * to a no-longer-exstant cnamespace.
+ * to a no-longer-exstant namescpace___.
  *
- * As a further side-effect, if the select cnamespace is a temporary cnamespace,
+ * As a further side-effect, if the select namescpace___ is a temporary namescpace___,
  * we mark the RangeVar as RELPERSISTENCE_TEMP.
  */
 Oid
@@ -555,7 +555,7 @@ RangeVarGetAndCheckCreationNamespace(RangeVar *relation,
 
 		inval_count = SharedInvalidMessageCounter;
 
-		/* Look up creation cnamespace and check for existing relation. */
+		/* Look up creation namescpace___ and check for existing relation. */
 		nspid = RangeVarGetCreationNamespace(relation);
 		Assert(OidIsValid(nspid));
 		if (existing_relation_id != NULL)
@@ -571,7 +571,7 @@ RangeVarGetAndCheckCreationNamespace(RangeVar *relation,
 		if (IsBootstrapProcessingMode())
 			break;
 
-		/* Check cnamespace permissions. */
+		/* Check namescpace___ permissions. */
 		aclresult = pg_namespace_aclcheck(nspid, GetUserId(), ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
@@ -582,7 +582,7 @@ RangeVarGetAndCheckCreationNamespace(RangeVar *relation,
 			/* If nothing changed, we're done. */
 			if (relid == oldrelid && nspid == oldnspid)
 				break;
-			/* If creation cnamespace has changed, give up old lock. */
+			/* If creation namescpace___ has changed, give up old lock. */
 			if (nspid != oldnspid)
 				UnlockDatabaseObject(NamespaceRelationId, oldnspid, 0,
 									 AccessShareLock);
@@ -591,7 +591,7 @@ RangeVarGetAndCheckCreationNamespace(RangeVar *relation,
 				UnlockRelationOid(oldrelid, lockmode);
 		}
 
-		/* Lock cnamespace. */
+		/* Lock namescpace___. */
 		if (nspid != oldnspid)
 			LockDatabaseObject(NamespaceRelationId, nspid, 0, AccessShareLock);
 
@@ -623,7 +623,7 @@ RangeVarGetAndCheckCreationNamespace(RangeVar *relation,
 
 /*
  * Adjust the relpersistence for an about-to-be-created relation based on the
- * creation cnamespace, and throw an error for invalid combinations.
+ * creation namescpace___, and throw an error for invalid combinations.
  */
 void
 RangeVarAdjustRelationPersistence(RangeVar *newRelation, Oid nspid)
@@ -709,7 +709,7 @@ RelationIsVisible(Oid relid)
 
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible. Items in
-	 * the system cnamespace are surely in the path and so we needn't even do
+	 * the system namescpace___ are surely in the path and so we needn't even do
 	 * list_member_oid() for them.
 	 */
 	relnamespace = relform->relnamespace;
@@ -804,7 +804,7 @@ TypeIsVisible(Oid typid)
 
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible. Items in
-	 * the system cnamespace are surely in the path and so we needn't even do
+	 * the system namescpace___ are surely in the path and so we needn't even do
 	 * list_member_oid() for them.
 	 */
 	typnamespace = typform->typnamespace;
@@ -888,8 +888,8 @@ TypeIsVisible(Oid typid)
  * array can be used to map this back to the catalog information.
  * argnumbers[k] is set to the proargtypes index of the k'th call argument.
  *
- * We search a single cnamespace if the function name is qualified, else
- * all namespaces in the search path.  In the multiple-cnamespace case,
+ * We search a single namescpace___ if the function name is qualified, else
+ * all namespaces in the search path.  In the multiple-namescpace___ case,
  * we arrange for entries in earlier namespaces to mask identical entries in
  * later namespaces.
  *
@@ -941,7 +941,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 	}
 	else
 	{
-		/* flag to indicate we need cnamespace search */
+		/* flag to indicate we need namescpace___ search */
 		namespaceId = InvalidOid;
 		recomputeNamespacePath();
 	}
@@ -964,7 +964,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 
 		if (OidIsValid(namespaceId))
 		{
-			/* Consider only procs in specified cnamespace */
+			/* Consider only procs in specified namescpace___ */
 			if (procform->pronamespace != namespaceId)
 				continue;
 		}
@@ -972,7 +972,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 		{
 			/*
 			 * Consider only procs that are in the search path and are not in
-			 * the temp cnamespace.
+			 * the temp namescpace___.
 			 */
 			ListCell   *nsp;
 
@@ -1113,7 +1113,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 		/*
 		 * Does it have the same arguments as something we already accepted?
 		 * If so, decide what to do to avoid returning duplicate argument
-		 * lists.  We can skip this check for the single-cnamespace case if no
+		 * lists.  We can skip this check for the single-namescpace___ case if no
 		 * special (named, variadic or defaults) match has been made, since
 		 * then the unique index on pg_proc guarantees all the matches have
 		 * different argument lists.
@@ -1167,7 +1167,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 				 * We have a match with a previous result.  Decide which one
 				 * to keep, or mark it ambiguous if we can't decide.  The
 				 * logic here is preference > 0 means prefer the old result,
-				 * preference < 0 means prefer the cnew, preference = 0 means
+				 * preference < 0 means prefer the new___, preference = 0 means
 				 * ambiguous.
 				 */
 				int			preference;
@@ -1184,7 +1184,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 					/*
 					 * With variadic functions we could have, for example,
 					 * both foo(numeric) and foo(variadic numeric[]) in the
-					 * same cnamespace; if so we prefer the non-variadic match
+					 * same namescpace___; if so we prefer the non-variadic match
 					 * on efficiency grounds.
 					 */
 					preference = 1;
@@ -1198,10 +1198,10 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 					/*----------
 					 * We can't decide.  This can happen with, for example,
 					 * both foo(numeric, variadic numeric[]) and
-					 * foo(variadic numeric[]) in the same cnamespace, or
+					 * foo(variadic numeric[]) in the same namescpace___, or
 					 * both foo(int) and foo (int, int default something)
-					 * in the same cnamespace, or both foo(a int, b text)
-					 * and foo(b text, a int) in the same cnamespace.
+					 * in the same namescpace___, or both foo(a int, b text)
+					 * and foo(b text, a int) in the same namescpace___.
 					 *----------
 					 */
 					preference = 0;
@@ -1239,7 +1239,7 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 				}
 				else
 				{
-					/* mark old result as ambiguous, discard cnew */
+					/* mark old result as ambiguous, discard new___ */
 					prevResult->oid = InvalidOid;
 					pfree(newResult);
 					continue;
@@ -1401,7 +1401,7 @@ FunctionIsVisible(Oid funcid)
 
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible. Items in
-	 * the system cnamespace are surely in the path and so we needn't even do
+	 * the system namescpace___ are surely in the path and so we needn't even do
 	 * list_member_oid() for them.
 	 */
 	pronamespace = procform->pronamespace;
@@ -1445,14 +1445,14 @@ FunctionIsVisible(Oid funcid)
 
 /*
  * OpernameGetOprid
- *		Given a possibly-qualified coperator name and exact input datatypes,
- *		look up the coperator.  Returns InvalidOid if not found.
+ *		Given a possibly-qualified operator___ name and exact input datatypes,
+ *		look up the operator___.  Returns InvalidOid if not found.
  *
  * Pass oprleft = InvalidOid for a prefix op, oprright = InvalidOid for
  * a postfix op.
  *
- * If the coperator name is not schema-qualified, it is sought in the current
- * cnamespace search path.  If the name is schema-qualified and the given
+ * If the operator___ name is not schema-qualified, it is sought in the current
+ * namescpace___ search path.  If the name is schema-qualified and the given
  * schema does not exist, InvalidOid is returned.
  */
 Oid
@@ -1519,7 +1519,7 @@ OpernameGetOprid(List *names, Oid oprleft, Oid oprright)
 		int			i;
 
 		if (namespaceId == myTempNamespace)
-			continue;			/* do not look in temp cnamespace */
+			continue;			/* do not look in temp namescpace___ */
 
 		for (i = 0; i < catlist->n_members; i++)
 		{
@@ -1542,16 +1542,16 @@ OpernameGetOprid(List *names, Oid oprleft, Oid oprright)
 
 /*
  * OpernameGetCandidates
- *		Given a possibly-qualified coperator name and coperator kind,
+ *		Given a possibly-qualified operator___ name and operator___ kind,
  *		retrieve a list of the possible matches.
  *
  * If oprkind is '\0', we return all operators matching the given name,
  * regardless of arguments.
  *
- * We search a single cnamespace if the coperator name is qualified, else
+ * We search a single namescpace___ if the operator___ name is qualified, else
  * all namespaces in the search path.  The return list will never contain
  * multiple entries with identical argument lists --- in the multiple-
- * cnamespace case, we arrange for entries in earlier namespaces to mask
+ * namescpace___ case, we arrange for entries in earlier namespaces to mask
  * identical entries in later namespaces.
  *
  * The returned items always have two args[] entries --- one or the other
@@ -1581,7 +1581,7 @@ OpernameGetCandidates(List *names, char oprkind, bool missing_schema_ok)
 	}
 	else
 	{
-		/* flag to indicate we need cnamespace search */
+		/* flag to indicate we need namescpace___ search */
 		namespaceId = InvalidOid;
 		recomputeNamespacePath();
 	}
@@ -1592,10 +1592,10 @@ OpernameGetCandidates(List *names, char oprkind, bool missing_schema_ok)
 	/*
 	 * In typical scenarios, most if not all of the operators found by the
 	 * catcache search will end up getting returned; and there can be quite a
-	 * few, for common coperator names such as '=' or '+'.  To reduce the time
+	 * few, for common operator___ names such as '=' or '+'.  To reduce the time
 	 * spent in palloc, we allocate the result space as an array large enough
 	 * to hold all the operators.  The original coding of this routine did a
-	 * separate palloc for each coperator, but profiling revealed that the
+	 * separate palloc for each operator___, but profiling revealed that the
 	 * pallocs used an unreasonably large fraction of parsing time.
 	 */
 #define SPACE_PER_OP MAXALIGN(offsetof(struct _FuncCandidateList, args) + \
@@ -1617,7 +1617,7 @@ OpernameGetCandidates(List *names, char oprkind, bool missing_schema_ok)
 
 		if (OidIsValid(namespaceId))
 		{
-			/* Consider only opers in specified cnamespace */
+			/* Consider only opers in specified namescpace___ */
 			if (operform->oprnamespace != namespaceId)
 				continue;
 			/* No need to check args, they must all be different */
@@ -1626,7 +1626,7 @@ OpernameGetCandidates(List *names, char oprkind, bool missing_schema_ok)
 		{
 			/*
 			 * Consider only opers that are in the search path and are not in
-			 * the temp cnamespace.
+			 * the temp namescpace___.
 			 */
 			ListCell   *nsp;
 
@@ -1713,9 +1713,9 @@ OpernameGetCandidates(List *names, char oprkind, bool missing_schema_ok)
 
 /*
  * OperatorIsVisible
- *		Determine whether an coperator (identified by OID) is visible in the
+ *		Determine whether an operator___ (identified by OID) is visible in the
  *		current search path.  Visible means "would be found by searching
- *		for the unqualified coperator name with exact argument matches".
+ *		for the unqualified operator___ name with exact argument matches".
  */
 bool
 OperatorIsVisible(Oid oprid)
@@ -1727,14 +1727,14 @@ OperatorIsVisible(Oid oprid)
 
 	oprtup = SearchSysCache1(OPEROID, ObjectIdGetDatum(oprid));
 	if (!HeapTupleIsValid(oprtup))
-		elog(ERROR, "cache lookup failed for coperator %u", oprid);
+		elog(ERROR, "cache lookup failed for operator___ %u", oprid);
 	oprform = (Form_pg_operator) GETSTRUCT(oprtup);
 
 	recomputeNamespacePath();
 
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible. Items in
-	 * the system cnamespace are surely in the path and so we needn't even do
+	 * the system namescpace___ are surely in the path and so we needn't even do
 	 * list_member_oid() for them.
 	 */
 	oprnamespace = oprform->oprnamespace;
@@ -1745,9 +1745,9 @@ OperatorIsVisible(Oid oprid)
 	{
 		/*
 		 * If it is in the path, it might still not be visible; it could be
-		 * hidden by another coperator of the same name and arguments earlier
+		 * hidden by another operator___ of the same name and arguments earlier
 		 * in the path.  So we must do a slow check to see if this is the same
-		 * coperator that would be found by OpernameGetOprid.
+		 * operator___ that would be found by OpernameGetOprid.
 		 */
 		char	   *oprname = NameStr(oprform->oprname);
 
@@ -1783,7 +1783,7 @@ OpclassnameGetOpcid(Oid amid, const char *opcname)
 		Oid			namespaceId = lfirst_oid(l);
 
 		if (namespaceId == myTempNamespace)
-			continue;			/* do not look in temp cnamespace */
+			continue;			/* do not look in temp namescpace___ */
 
 		opcid = GetSysCacheOid3(CLAAMNAMENSP,
 								ObjectIdGetDatum(amid),
@@ -1820,7 +1820,7 @@ OpclassIsVisible(Oid opcid)
 
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible. Items in
-	 * the system cnamespace are surely in the path and so we needn't even do
+	 * the system namescpace___ are surely in the path and so we needn't even do
 	 * list_member_oid() for them.
 	 */
 	opcnamespace = opcform->opcnamespace;
@@ -1866,7 +1866,7 @@ OpfamilynameGetOpfid(Oid amid, const char *opfname)
 		Oid			namespaceId = lfirst_oid(l);
 
 		if (namespaceId == myTempNamespace)
-			continue;			/* do not look in temp cnamespace */
+			continue;			/* do not look in temp namescpace___ */
 
 		opfid = GetSysCacheOid3(OPFAMILYAMNAMENSP,
 								ObjectIdGetDatum(amid),
@@ -1903,7 +1903,7 @@ OpfamilyIsVisible(Oid opfid)
 
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible. Items in
-	 * the system cnamespace are surely in the path and so we needn't even do
+	 * the system namescpace___ are surely in the path and so we needn't even do
 	 * list_member_oid() for them.
 	 */
 	opfnamespace = opfform->opfnamespace;
@@ -1947,7 +1947,7 @@ CollationGetCollid(const char *collname)
 		Oid			collid;
 
 		if (namespaceId == myTempNamespace)
-			continue;			/* do not look in temp cnamespace */
+			continue;			/* do not look in temp namescpace___ */
 
 		/* Check for database-encoding-specific entry */
 		collid = GetSysCacheOid3(COLLNAMEENCNSP,
@@ -1993,7 +1993,7 @@ CollationIsVisible(Oid collid)
 
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible. Items in
-	 * the system cnamespace are surely in the path and so we needn't even do
+	 * the system namescpace___ are surely in the path and so we needn't even do
 	 * list_member_oid() for them.
 	 */
 	collnamespace = collform->collnamespace;
@@ -2039,7 +2039,7 @@ ConversionGetConid(const char *conname)
 		Oid			namespaceId = lfirst_oid(l);
 
 		if (namespaceId == myTempNamespace)
-			continue;			/* do not look in temp cnamespace */
+			continue;			/* do not look in temp namescpace___ */
 
 		conid = GetSysCacheOid2(CONNAMENSP,
 								PointerGetDatum(conname),
@@ -2075,7 +2075,7 @@ ConversionIsVisible(Oid conid)
 
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible. Items in
-	 * the system cnamespace are surely in the path and so we needn't even do
+	 * the system namescpace___ are surely in the path and so we needn't even do
 	 * list_member_oid() for them.
 	 */
 	connamespace = conform->connamespace;
@@ -2138,7 +2138,7 @@ get_ts_parser_oid(List *names, bool missing_ok)
 			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;		/* do not look in temp cnamespace */
+				continue;		/* do not look in temp namescpace___ */
 
 			prsoid = GetSysCacheOid2(TSPARSERNAMENSP,
 									 PointerGetDatum(parser_name),
@@ -2168,7 +2168,7 @@ TSParserIsVisible(Oid prsId)
 {
 	HeapTuple	tup;
 	Form_pg_ts_parser form;
-	Oid			cnamespace;
+	Oid			namescpace___;
 	bool		visible;
 
 	tup = SearchSysCache1(TSPARSEROID, ObjectIdGetDatum(prsId));
@@ -2180,12 +2180,12 @@ TSParserIsVisible(Oid prsId)
 
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible. Items in
-	 * the system cnamespace are surely in the path and so we needn't even do
+	 * the system namescpace___ are surely in the path and so we needn't even do
 	 * list_member_oid() for them.
 	 */
-	cnamespace = form->prsnamespace;
-	if (cnamespace != PG_CATALOG_NAMESPACE &&
-		!list_member_oid(activeSearchPath, cnamespace))
+	namescpace___ = form->prsnamespace;
+	if (namescpace___ != PG_CATALOG_NAMESPACE &&
+		!list_member_oid(activeSearchPath, namescpace___))
 		visible = false;
 	else
 	{
@@ -2203,9 +2203,9 @@ TSParserIsVisible(Oid prsId)
 			Oid			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;		/* do not look in temp cnamespace */
+				continue;		/* do not look in temp namescpace___ */
 
-			if (namespaceId == cnamespace)
+			if (namespaceId == namescpace___)
 			{
 				/* Found it first in path */
 				visible = true;
@@ -2264,7 +2264,7 @@ get_ts_dict_oid(List *names, bool missing_ok)
 			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;		/* do not look in temp cnamespace */
+				continue;		/* do not look in temp namescpace___ */
 
 			dictoid = GetSysCacheOid2(TSDICTNAMENSP,
 									  PointerGetDatum(dict_name),
@@ -2294,7 +2294,7 @@ TSDictionaryIsVisible(Oid dictId)
 {
 	HeapTuple	tup;
 	Form_pg_ts_dict form;
-	Oid			cnamespace;
+	Oid			namescpace___;
 	bool		visible;
 
 	tup = SearchSysCache1(TSDICTOID, ObjectIdGetDatum(dictId));
@@ -2307,12 +2307,12 @@ TSDictionaryIsVisible(Oid dictId)
 
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible. Items in
-	 * the system cnamespace are surely in the path and so we needn't even do
+	 * the system namescpace___ are surely in the path and so we needn't even do
 	 * list_member_oid() for them.
 	 */
-	cnamespace = form->dictnamespace;
-	if (cnamespace != PG_CATALOG_NAMESPACE &&
-		!list_member_oid(activeSearchPath, cnamespace))
+	namescpace___ = form->dictnamespace;
+	if (namescpace___ != PG_CATALOG_NAMESPACE &&
+		!list_member_oid(activeSearchPath, namescpace___))
 		visible = false;
 	else
 	{
@@ -2330,9 +2330,9 @@ TSDictionaryIsVisible(Oid dictId)
 			Oid			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;		/* do not look in temp cnamespace */
+				continue;		/* do not look in temp namescpace___ */
 
-			if (namespaceId == cnamespace)
+			if (namespaceId == namescpace___)
 			{
 				/* Found it first in path */
 				visible = true;
@@ -2391,7 +2391,7 @@ get_ts_template_oid(List *names, bool missing_ok)
 			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;		/* do not look in temp cnamespace */
+				continue;		/* do not look in temp namescpace___ */
 
 			tmploid = GetSysCacheOid2(TSTEMPLATENAMENSP,
 									  PointerGetDatum(template_name),
@@ -2421,7 +2421,7 @@ TSTemplateIsVisible(Oid tmplId)
 {
 	HeapTuple	tup;
 	Form_pg_ts_template form;
-	Oid			cnamespace;
+	Oid			namescpace___;
 	bool		visible;
 
 	tup = SearchSysCache1(TSTEMPLATEOID, ObjectIdGetDatum(tmplId));
@@ -2433,12 +2433,12 @@ TSTemplateIsVisible(Oid tmplId)
 
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible. Items in
-	 * the system cnamespace are surely in the path and so we needn't even do
+	 * the system namescpace___ are surely in the path and so we needn't even do
 	 * list_member_oid() for them.
 	 */
-	cnamespace = form->tmplnamespace;
-	if (cnamespace != PG_CATALOG_NAMESPACE &&
-		!list_member_oid(activeSearchPath, cnamespace))
+	namescpace___ = form->tmplnamespace;
+	if (namescpace___ != PG_CATALOG_NAMESPACE &&
+		!list_member_oid(activeSearchPath, namescpace___))
 		visible = false;
 	else
 	{
@@ -2456,9 +2456,9 @@ TSTemplateIsVisible(Oid tmplId)
 			Oid			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;		/* do not look in temp cnamespace */
+				continue;		/* do not look in temp namescpace___ */
 
-			if (namespaceId == cnamespace)
+			if (namespaceId == namescpace___)
 			{
 				/* Found it first in path */
 				visible = true;
@@ -2517,7 +2517,7 @@ get_ts_config_oid(List *names, bool missing_ok)
 			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;		/* do not look in temp cnamespace */
+				continue;		/* do not look in temp namescpace___ */
 
 			cfgoid = GetSysCacheOid2(TSCONFIGNAMENSP,
 									 PointerGetDatum(config_name),
@@ -2547,7 +2547,7 @@ TSConfigIsVisible(Oid cfgid)
 {
 	HeapTuple	tup;
 	Form_pg_ts_config form;
-	Oid			cnamespace;
+	Oid			namescpace___;
 	bool		visible;
 
 	tup = SearchSysCache1(TSCONFIGOID, ObjectIdGetDatum(cfgid));
@@ -2560,12 +2560,12 @@ TSConfigIsVisible(Oid cfgid)
 
 	/*
 	 * Quick check: if it ain't in the path at all, it ain't visible. Items in
-	 * the system cnamespace are surely in the path and so we needn't even do
+	 * the system namescpace___ are surely in the path and so we needn't even do
 	 * list_member_oid() for them.
 	 */
-	cnamespace = form->cfgnamespace;
-	if (cnamespace != PG_CATALOG_NAMESPACE &&
-		!list_member_oid(activeSearchPath, cnamespace))
+	namescpace___ = form->cfgnamespace;
+	if (namescpace___ != PG_CATALOG_NAMESPACE &&
+		!list_member_oid(activeSearchPath, namescpace___))
 		visible = false;
 	else
 	{
@@ -2583,9 +2583,9 @@ TSConfigIsVisible(Oid cfgid)
 			Oid			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;		/* do not look in temp cnamespace */
+				continue;		/* do not look in temp namescpace___ */
 
-			if (namespaceId == cnamespace)
+			if (namespaceId == namescpace___)
 			{
 				/* Found it first in path */
 				visible = true;
@@ -2662,7 +2662,7 @@ DeconstructQualifiedName(List *names,
  * LookupNamespaceNoError
  *		Look up a schema name.
  *
- * Returns the cnamespace OID, or InvalidOid if not found.
+ * Returns the namescpace___ OID, or InvalidOid if not found.
  *
  * Note this does NOT perform any permissions check --- callers are
  * responsible for being sure that an appropriate check is made.
@@ -2682,7 +2682,7 @@ LookupNamespaceNoError(const char *nspname)
 
 		/*
 		 * Since this is used only for looking up existing objects, there is
-		 * no point in trying to initialize the temp cnamespace here; and doing
+		 * no point in trying to initialize the temp namescpace___ here; and doing
 		 * so might create problems for some callers. Just report "not found".
 		 */
 		return InvalidOid;
@@ -2696,7 +2696,7 @@ LookupNamespaceNoError(const char *nspname)
  *		Process an explicitly-specified schema name: look up the schema
  *		and verify we have USAGE (lookup) rights in it.
  *
- * Returns the cnamespace OID
+ * Returns the namescpace___ OID
  */
 Oid
 LookupExplicitNamespace(const char *nspname, bool missing_ok)
@@ -2712,7 +2712,7 @@ LookupExplicitNamespace(const char *nspname, bool missing_ok)
 
 		/*
 		 * Since this is used only for looking up existing objects, there is
-		 * no point in trying to initialize the temp cnamespace here; and doing
+		 * no point in trying to initialize the temp namescpace___ here; and doing
 		 * so might create problems for some callers --- just fall through.
 		 */
 	}
@@ -2739,7 +2739,7 @@ LookupExplicitNamespace(const char *nspname, bool missing_ok)
  * permission check, and that we are willing to create pg_temp if needed.
  *
  * Note: calling this may result in a CommandCounterIncrement operation,
- * if we have to create or clean out the temp cnamespace.
+ * if we have to create or clean out the temp namescpace___.
  */
 Oid
 LookupCreationNamespace(const char *nspname)
@@ -2750,7 +2750,7 @@ LookupCreationNamespace(const char *nspname)
 	/* check for pg_temp alias */
 	if (strcmp(nspname, "pg_temp") == 0)
 	{
-		/* Initialize temp cnamespace if first time through */
+		/* Initialize temp namescpace___ if first time through */
 		if (!OidIsValid(myTempNamespace))
 			InitTempTableNamespace();
 		return myTempNamespace;
@@ -2769,9 +2769,9 @@ LookupCreationNamespace(const char *nspname)
 /*
  * Common checks on switching namespaces.
  *
- * We complain if (1) the old and cnew namespaces are the same, (2) either the
- * old or cnew namespaces is a temporary schema (or temporary toast schema), or
- * (3) either the old or cnew namespaces is the TOAST schema.
+ * We complain if (1) the old and new___ namespaces are the same, (2) either the
+ * old or new___ namespaces is a temporary schema (or temporary toast schema), or
+ * (3) either the old or new___ namespaces is the TOAST schema.
  */
 void
 CheckSetNamespace(Oid oldNspOid, Oid nspOid, Oid classid, Oid objid)
@@ -2803,14 +2803,14 @@ CheckSetNamespace(Oid oldNspOid, Oid nspOid, Oid classid, Oid objid)
 /*
  * QualifiedNameGetCreationNamespace
  *		Given a possibly-qualified name for an object (in List-of-Values
- *		format), determine what cnamespace the object should be created in.
+ *		format), determine what namescpace___ the object should be created in.
  *		Also extract and return the object name (last component of list).
  *
  * Note: this does not apply any permissions check.  Callers must check
- * for CREATE rights on the selected cnamespace when appropriate.
+ * for CREATE rights on the selected namescpace___ when appropriate.
  *
  * Note: calling this may result in a CommandCounterIncrement operation,
- * if we have to create or clean out the temp cnamespace.
+ * if we have to create or clean out the temp namescpace___.
  */
 Oid
 QualifiedNameGetCreationNamespace(List *names, char **objname_p)
@@ -2826,7 +2826,7 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 		/* check for pg_temp alias */
 		if (strcmp(schemaname, "pg_temp") == 0)
 		{
-			/* Initialize temp cnamespace if first time through */
+			/* Initialize temp namescpace___ if first time through */
 			if (!OidIsValid(myTempNamespace))
 				InitTempTableNamespace();
 			return myTempNamespace;
@@ -2837,11 +2837,11 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 	}
 	else
 	{
-		/* use the default creation cnamespace */
+		/* use the default creation namescpace___ */
 		recomputeNamespacePath();
 		if (activeTempCreationPending)
 		{
-			/* Need to initialize temp cnamespace */
+			/* Need to initialize temp namescpace___ */
 			InitTempTableNamespace();
 			return myTempNamespace;
 		}
@@ -2856,9 +2856,9 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 }
 
 /*
- * get_namespace_oid - given a cnamespace name, look up the OID
+ * get_namespace_oid - given a namescpace___ name, look up the OID
  *
- * If missing_ok is false, throw an error if cnamespace name not found.  If
+ * If missing_ok is false, throw an error if namescpace___ name not found.  If
  * true, just return InvalidOid.
  */
 Oid
@@ -2972,7 +2972,7 @@ NameListToQuotedString(List *names)
 }
 
 /*
- * isTempNamespace - is the given cnamespace my temporary-table cnamespace?
+ * isTempNamespace - is the given namescpace___ my temporary-table namescpace___?
  */
 bool
 isTempNamespace(Oid namespaceId)
@@ -2983,8 +2983,8 @@ isTempNamespace(Oid namespaceId)
 }
 
 /*
- * isTempToastNamespace - is the given cnamespace my temporary-toast-table
- *		cnamespace?
+ * isTempToastNamespace - is the given namescpace___ my temporary-toast-table
+ *		namescpace___?
  */
 bool
 isTempToastNamespace(Oid namespaceId)
@@ -2995,8 +2995,8 @@ isTempToastNamespace(Oid namespaceId)
 }
 
 /*
- * isTempOrTempToastNamespace - is the given cnamespace my temporary-table
- *		cnamespace or my temporary-toast-table cnamespace?
+ * isTempOrTempToastNamespace - is the given namescpace___ my temporary-table
+ *		namescpace___ or my temporary-toast-table namescpace___?
  */
 bool
 isTempOrTempToastNamespace(Oid namespaceId)
@@ -3008,7 +3008,7 @@ isTempOrTempToastNamespace(Oid namespaceId)
 }
 
 /*
- * isAnyTempNamespace - is the given cnamespace a temporary-table cnamespace
+ * isAnyTempNamespace - is the given namescpace___ a temporary-table namescpace___
  * (either my own, or another backend's)?  Temporary-toast-table namespaces
  * are included, too.
  */
@@ -3018,10 +3018,10 @@ isAnyTempNamespace(Oid namespaceId)
 	bool		result;
 	char	   *nspname;
 
-	/* True if the cnamespace name starts with "pg_temp_" or "pg_toast_temp_" */
+	/* True if the namescpace___ name starts with "pg_temp_" or "pg_toast_temp_" */
 	nspname = get_namespace_name(namespaceId);
 	if (!nspname)
-		return false;			/* no such cnamespace? */
+		return false;			/* no such namescpace___? */
 	result = (strncmp(nspname, "pg_temp_", 8) == 0) ||
 		(strncmp(nspname, "pg_toast_temp_", 14) == 0);
 	pfree(nspname);
@@ -3029,8 +3029,8 @@ isAnyTempNamespace(Oid namespaceId)
 }
 
 /*
- * isOtherTempNamespace - is the given cnamespace some other backend's
- * temporary-table cnamespace (including temporary-toast-table namespaces)?
+ * isOtherTempNamespace - is the given namescpace___ some other backend's
+ * temporary-table namescpace___ (including temporary-toast-table namespaces)?
  *
  * Note: for most purposes in the C code, this function is obsolete.  Use
  * RELATION_IS_OTHER_TEMP() instead to detect non-local temp relations.
@@ -3038,18 +3038,18 @@ isAnyTempNamespace(Oid namespaceId)
 bool
 isOtherTempNamespace(Oid namespaceId)
 {
-	/* If it's my own temp cnamespace, say "false" */
+	/* If it's my own temp namescpace___, say "false" */
 	if (isTempOrTempToastNamespace(namespaceId))
 		return false;
-	/* Else, if it's any temp cnamespace, say "true" */
+	/* Else, if it's any temp namescpace___, say "true" */
 	return isAnyTempNamespace(namespaceId);
 }
 
 /*
- * GetTempNamespaceBackendId - if the given cnamespace is a temporary-table
- * cnamespace (either my own, or another backend's), return the BackendId
+ * GetTempNamespaceBackendId - if the given namescpace___ is a temporary-table
+ * namescpace___ (either my own, or another backend's), return the BackendId
  * that owns it.  Temporary-toast-table namespaces are included, too.
- * If it isn't a temp cnamespace, return InvalidBackendId.
+ * If it isn't a temp namescpace___, return InvalidBackendId.
  */
 int
 GetTempNamespaceBackendId(Oid namespaceId)
@@ -3057,10 +3057,10 @@ GetTempNamespaceBackendId(Oid namespaceId)
 	int			result;
 	char	   *nspname;
 
-	/* See if the cnamespace name starts with "pg_temp_" or "pg_toast_temp_" */
+	/* See if the namescpace___ name starts with "pg_temp_" or "pg_toast_temp_" */
 	nspname = get_namespace_name(namespaceId);
 	if (!nspname)
-		return InvalidBackendId;	/* no such cnamespace? */
+		return InvalidBackendId;	/* no such namescpace___? */
 	if (strncmp(nspname, "pg_temp_", 8) == 0)
 		result = atoi(nspname + 8);
 	else if (strncmp(nspname, "pg_toast_temp_", 14) == 0)
@@ -3072,7 +3072,7 @@ GetTempNamespaceBackendId(Oid namespaceId)
 }
 
 /*
- * GetTempToastNamespace - get the OID of my temporary-toast-table cnamespace,
+ * GetTempToastNamespace - get the OID of my temporary-toast-table namescpace___,
  * which must already be assigned.  (This is only used when creating a toast
  * table for a temp table, so we must have already done InitTempTableNamespace)
  */
@@ -3155,7 +3155,7 @@ OverrideSearchPathMatchesCurrent(OverrideSearchPath *path)
 	/* We scan down the activeSearchPath to see if it matches the input. */
 	lc = list_head(activeSearchPath);
 
-	/* If path->addTemp, first item should be my temp cnamespace. */
+	/* If path->addTemp, first item should be my temp namescpace___. */
 	if (path->addTemp)
 	{
 		if (lc && lfirst_oid(lc) == myTempNamespace)
@@ -3194,15 +3194,15 @@ OverrideSearchPathMatchesCurrent(OverrideSearchPath *path)
  * search_path variable is ignored while an override is active.
  *
  * It's possible that newpath->useTemp is set but there is no longer any
- * active temp cnamespace, if the path was saved during a transaction that
- * created a temp cnamespace and was later rolled back.  In that case we just
- * ignore useTemp.  A plausible alternative would be to create a cnew temp
- * cnamespace, but for existing callers that's not necessary because an empty
- * temp cnamespace wouldn't affect their results anyway.
+ * active temp namescpace___, if the path was saved during a transaction that
+ * created a temp namescpace___ and was later rolled back.  In that case we just
+ * ignore useTemp.  A plausible alternative would be to create a new___ temp
+ * namescpace___, but for existing callers that's not necessary because an empty
+ * temp namescpace___ wouldn't affect their results anyway.
  *
  * It's also worth noting that other schemas listed in newpath might not
  * exist anymore either.  We don't worry about this because OIDs that match
- * no existing cnamespace will simply not produce any hits during searches.
+ * no existing namescpace___ will simply not produce any hits during searches.
  */
 void
 PushOverrideSearchPath(OverrideSearchPath *newpath)
@@ -3240,7 +3240,7 @@ PushOverrideSearchPath(OverrideSearchPath *newpath)
 		oidlist = lcons_oid(myTempNamespace, oidlist);
 
 	/*
-	 * Build the cnew stack entry, then insert it at the head of the list.
+	 * Build the new___ stack entry, then insert it at the head of the list.
 	 */
 	entry = (OverrideStackEntry *) palloc(sizeof(OverrideStackEntry));
 	entry->searchPath = oidlist;
@@ -3345,7 +3345,7 @@ get_collation_oid(List *name, bool missing_ok)
 			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;		/* do not look in temp cnamespace */
+				continue;		/* do not look in temp namescpace___ */
 
 			colloid = GetSysCacheOid3(COLLNAMEENCNSP,
 									  PointerGetDatum(collation_name),
@@ -3407,7 +3407,7 @@ get_conversion_oid(List *name, bool missing_ok)
 			namespaceId = lfirst_oid(l);
 
 			if (namespaceId == myTempNamespace)
-				continue;		/* do not look in temp cnamespace */
+				continue;		/* do not look in temp namescpace___ */
 
 			conoid = GetSysCacheOid2(CONNAMENSP,
 									 PointerGetDatum(conversion_name),
@@ -3442,7 +3442,7 @@ FindDefaultConversionProc(int32 for_encoding, int32 to_encoding)
 		Oid			namespaceId = lfirst_oid(l);
 
 		if (namespaceId == myTempNamespace)
-			continue;			/* do not look in temp cnamespace */
+			continue;			/* do not look in temp namescpace___ */
 
 		proc = FindDefaultConversion(namespaceId, for_encoding, to_encoding);
 		if (OidIsValid(proc))
@@ -3503,7 +3503,7 @@ recomputeNamespacePath(void)
 
 		if (strcmp(curname, "$user") == 0)
 		{
-			/* $user --- substitute cnamespace matching user name, if any */
+			/* $user --- substitute namescpace___ matching user name, if any */
 			HeapTuple	tuple;
 
 			tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
@@ -3524,7 +3524,7 @@ recomputeNamespacePath(void)
 		}
 		else if (strcmp(curname, "pg_temp") == 0)
 		{
-			/* pg_temp --- substitute temp cnamespace, if any */
+			/* pg_temp --- substitute temp namescpace___, if any */
 			if (OidIsValid(myTempNamespace))
 			{
 				if (!list_member_oid(oidlist, myTempNamespace) &&
@@ -3533,14 +3533,14 @@ recomputeNamespacePath(void)
 			}
 			else
 			{
-				/* If it ought to be the creation cnamespace, set flag */
+				/* If it ought to be the creation namescpace___, set flag */
 				if (oidlist == NIL)
 					temp_missing = true;
 			}
 		}
 		else
 		{
-			/* normal cnamespace reference */
+			/* normal namescpace___ reference */
 			namespaceId = get_namespace_oid(curname, true);
 			if (OidIsValid(namespaceId) &&
 				!list_member_oid(oidlist, namespaceId) &&
@@ -3574,7 +3574,7 @@ recomputeNamespacePath(void)
 		oidlist = lcons_oid(myTempNamespace, oidlist);
 
 	/*
-	 * Now that we've successfully built the cnew list of cnamespace OIDs, save
+	 * Now that we've successfully built the new___ list of namescpace___ OIDs, save
 	 * it in permanent storage.
 	 */
 	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
@@ -3604,7 +3604,7 @@ recomputeNamespacePath(void)
 
 /*
  * InitTempTableNamespace
- *		Initialize temp table cnamespace on first use in a particular backend
+ *		Initialize temp table namescpace___ on first use in a particular backend
  */
 static void
 InitTempTableNamespace(void)
@@ -3622,7 +3622,7 @@ InitTempTableNamespace(void)
 	 *
 	 * Note that ACL_CREATE_TEMP rights are rechecked in pg_namespace_aclmask;
 	 * that's necessary since current user ID could change during the session.
-	 * But there's no need to make the cnamespace in the first place until a
+	 * But there's no need to make the namescpace___ in the first place until a
 	 * temp table creation request is made by someone with appropriate rights.
 	 */
 	if (pg_database_aclcheck(MyDatabaseId, GetUserId(),
@@ -3659,29 +3659,29 @@ InitTempTableNamespace(void)
 	if (!OidIsValid(namespaceId))
 	{
 		/*
-		 * First use of this temp cnamespace in this database; create it. The
+		 * First use of this temp namescpace___ in this database; create it. The
 		 * temp namespaces are always owned by the superuser.  We leave their
 		 * permissions at default --- i.e., no access except to superuser ---
 		 * to ensure that unprivileged users can't peek at other backends'
 		 * temp tables.  This works because the places that access the temp
-		 * cnamespace for my own backend skip permissions checks on it.
+		 * namescpace___ for my own backend skip permissions checks on it.
 		 */
 		namespaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID,
 									  true);
-		/* Advance command counter to make cnamespace visible */
+		/* Advance command counter to make namescpace___ visible */
 		CommandCounterIncrement();
 	}
 	else
 	{
 		/*
-		 * If the cnamespace already exists, clean it out (in case the former
+		 * If the namescpace___ already exists, clean it out (in case the former
 		 * owner crashed without doing so).
 		 */
 		RemoveTempRelations(namespaceId);
 	}
 
 	/*
-	 * If the corresponding toast-table cnamespace doesn't exist yet, create
+	 * If the corresponding toast-table namescpace___ doesn't exist yet, create
 	 * it. (We assume there is no need to clean it out if it does exist, since
 	 * dropping a parent table should make its toast table go away.)
 	 */
@@ -3693,12 +3693,12 @@ InitTempTableNamespace(void)
 	{
 		toastspaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID,
 									   true);
-		/* Advance command counter to make cnamespace visible */
+		/* Advance command counter to make namescpace___ visible */
 		CommandCounterIncrement();
 	}
 
 	/*
-	 * Okay, we've prepared the temp cnamespace ... but it's not committed yet,
+	 * Okay, we've prepared the temp namescpace___ ... but it's not committed yet,
 	 * so all our work could be undone by transaction rollback.  Set flag for
 	 * AtEOXact_Namespace to know what to do.
 	 */
@@ -3719,9 +3719,9 @@ void
 AtEOXact_Namespace(bool isCommit, bool parallel)
 {
 	/*
-	 * If we abort the transaction in which a temp cnamespace was selected,
+	 * If we abort the transaction in which a temp namescpace___ was selected,
 	 * we'll have to do any creation or cleanout work over again.  So, just
-	 * forget the cnamespace entirely until next time.  On the other hand, if
+	 * forget the namescpace___ entirely until next time.  On the other hand, if
 	 * we commit then register an exit callback to clean out the temp tables
 	 * at backend shutdown.  (We only want to register the callback once per
 	 * session, so this is a good place to do it.)
@@ -3765,7 +3765,7 @@ AtEOXact_Namespace(bool isCommit, bool parallel)
 /*
  * AtEOSubXact_Namespace
  *
- * At subtransaction commit, propagate the temp-cnamespace-creation
+ * At subtransaction commit, propagate the temp-namescpace___-creation
  * flag to the parent subtransaction.
  *
  * At subtransaction abort, forget the flag if we set it up.
@@ -3783,7 +3783,7 @@ AtEOSubXact_Namespace(bool isCommit, SubTransactionId mySubid,
 		else
 		{
 			myTempNamespaceSubID = InvalidSubTransactionId;
-			/* TEMP cnamespace creation failed, so reset state */
+			/* TEMP namescpace___ creation failed, so reset state */
 			myTempNamespace = InvalidOid;
 			myTempToastNamespace = InvalidOid;
 			baseSearchPathValid = false;		/* need to rebuild list */
@@ -3823,10 +3823,10 @@ AtEOSubXact_Namespace(bool isCommit, SubTransactionId mySubid,
 }
 
 /*
- * Remove all relations in the specified temp cnamespace.
+ * Remove all relations in the specified temp namescpace___.
  *
  * This is called at backend shutdown (if we made any temp relations).
- * It is also called when we begin using a pre-existing temp cnamespace,
+ * It is also called when we begin using a pre-existing temp namescpace___,
  * in order to clean out any relations that might have been created by
  * a crashed backend.
  */
@@ -3836,10 +3836,10 @@ RemoveTempRelations(Oid tempNamespaceId)
 	ObjectAddress object;
 
 	/*
-	 * We want to get rid of everything in the target cnamespace, but not the
-	 * cnamespace itself (deleting it only to recreate it later would be a
+	 * We want to get rid of everything in the target namescpace___, but not the
+	 * namescpace___ itself (deleting it only to recreate it later would be a
 	 * waste of cycles).  We do this by finding everything that has a
-	 * dependency on the cnamespace.
+	 * dependency on the namescpace___.
 	 */
 	object.classId = NamespaceRelationId;
 	object.objectId = tempNamespaceId;
@@ -3867,7 +3867,7 @@ RemoveTempRelationsCallback(int code, Datum arg)
 }
 
 /*
- * Remove all temp tables from the temporary cnamespace.
+ * Remove all temp tables from the temporary namescpace___.
  */
 void
 ResetTempTableNamespace(void)
@@ -3881,7 +3881,7 @@ ResetTempTableNamespace(void)
  * Routines for handling the GUC variable 'search_path'.
  */
 
-/* check_hook: validate cnew search_path value */
+/* check_hook: validate new___ search_path value */
 bool
 check_search_path(char **newval, void **extra, GucSource source)
 {
@@ -3939,7 +3939,7 @@ InitializeSearchPath(void)
 	{
 		/*
 		 * In bootstrap mode, the search path must be 'pg_catalog' so that
-		 * tables are created in the proper cnamespace; ignore the GUC setting.
+		 * tables are created in the proper namescpace___; ignore the GUC setting.
 		 */
 		MemoryContext oldcxt;
 
@@ -3988,7 +3988,7 @@ NamespaceCallback(Datum arg, int cacheid, uint32 hashvalue)
  * includeImplicit is true.
  *
  * Note: calling this may result in a CommandCounterIncrement operation,
- * if we have to create or clean out the temp cnamespace.
+ * if we have to create or clean out the temp namescpace___.
  */
 List *
 fetch_search_path(bool includeImplicit)
@@ -3998,9 +3998,9 @@ fetch_search_path(bool includeImplicit)
 	recomputeNamespacePath();
 
 	/*
-	 * If the temp cnamespace should be first, force it to exist.  This is so
+	 * If the temp namescpace___ should be first, force it to exist.  This is so
 	 * that callers can trust the result to reflect the actual default
-	 * creation cnamespace.  It's a bit bogus to do this here, since
+	 * creation namescpace___.  It's a bit bogus to do this here, since
 	 * current_schema() is supposedly a stable function without side-effects,
 	 * but the alternatives seem worse.
 	 */
@@ -4026,9 +4026,9 @@ fetch_search_path(bool includeImplicit)
  * then the data didn't fit and is not all stored.)
  *
  * The returned list always includes the implicitly-prepended namespaces,
- * but never includes the temp cnamespace.  (This is suitable for existing
- * users, which would want to ignore the temp cnamespace anyway.)  This
- * definition allows us to not worry about initializing the temp cnamespace.
+ * but never includes the temp namescpace___.  (This is suitable for existing
+ * users, which would want to ignore the temp namescpace___ anyway.)  This
+ * definition allows us to not worry about initializing the temp namescpace___.
  */
 int
 fetch_search_path_array(Oid *sarray, int sarray_len)
@@ -4043,7 +4043,7 @@ fetch_search_path_array(Oid *sarray, int sarray_len)
 		Oid			namespaceId = lfirst_oid(l);
 
 		if (namespaceId == myTempNamespace)
-			continue;			/* do not include temp cnamespace */
+			continue;			/* do not include temp namescpace___ */
 
 		if (count < sarray_len)
 			sarray[count] = namespaceId;

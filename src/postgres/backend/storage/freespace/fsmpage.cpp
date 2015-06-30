@@ -103,7 +103,7 @@ fsm_set_avail(Page page, int slot, uint8 value)
 	} while (nodeno > 0);
 
 	/*
-	 * sanity check: if the cnew value is (still) higher than the value at the
+	 * sanity check: if the new___ value is (still) higher than the value at the
 	 * top, the tree is corrupt.  If so, rebuild.
 	 */
 	if (value > fsmpage->fp_nodes[0])

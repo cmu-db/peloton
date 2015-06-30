@@ -10,7 +10,7 @@
  * looked up again.  Now we use specialized access code so that the commit
  * log can be broken into relatively small, independent segments.
  *
- * XLOG interactions: this module generates an XLOG record whenever a cnew
+ * XLOG interactions: this module generates an XLOG record whenever a new___
  * CLOG page is initialized to zeroes.  Other writes of CLOG come from
  * recording of transaction commit or abort in xact.c, which generates its
  * own XLOG records for these events and will re-perform the status update
@@ -488,7 +488,7 @@ BootStrapCLOG(void)
  * If writeXlog is TRUE, also emit an XLOG record saying we did this.
  *
  * The page is not actually written, just set up in shared memory.
- * The slot number of the cnew page is returned.
+ * The slot number of the new___ page is returned.
  *
  * Control lock must be held at entry, and will be held at exit.
  */

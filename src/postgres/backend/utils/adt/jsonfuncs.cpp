@@ -696,7 +696,7 @@ get_path_all(FunctionCallInfo fcinfo, bool as_text)
 	/*
 	 * If the array contains any null elements, return NULL, on the grounds
 	 * that you'd have gotten NULL if any RHS value were NULL in a nested
-	 * series of applications of the -> coperator.  (Note: because we also
+	 * series of applications of the -> operator___.  (Note: because we also
 	 * return NULL for error cases such as no-such-field, this is true
 	 * regardless of the contents of the rest of the array.)
 	 */
@@ -1140,7 +1140,7 @@ get_jsonb_path_all(FunctionCallInfo fcinfo, bool as_text)
 	/*
 	 * If the array contains any null elements, return NULL, on the grounds
 	 * that you'd have gotten NULL if any RHS value were NULL in a nested
-	 * series of applications of the -> coperator.  (Note: because we also
+	 * series of applications of the -> operator___.  (Note: because we also
 	 * return NULL for error cases such as no-such-field, this is true
 	 * regardless of the contents of the rest of the array.)
 	 */
@@ -2789,7 +2789,7 @@ populate_recordset_object_start(void *state)
 	if (lex_level > 1)
 		return;
 
-	/* Object at level 1: set up a cnew hash table for this object */
+	/* Object at level 1: set up a new___ hash table for this object */
 	memset(&ctl, 0, sizeof(ctl));
 	ctl.keysize = NAMEDATALEN;
 	ctl.entrysize = sizeof(JsonHashEntry);
@@ -3287,7 +3287,7 @@ jsonb_pretty(PG_FUNCTION_ARGS)
 /*
  * SQL function jsonb_concat (jsonb, jsonb)
  *
- * function for || coperator
+ * function for || operator___
  */
 Datum
 jsonb_concat(PG_FUNCTION_ARGS)

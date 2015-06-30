@@ -65,13 +65,13 @@ static ObjectAddress makeOperatorDependencies(HeapTuple tuple);
 
 
 /*
- * Check whether a proposed coperator name is legal
+ * Check whether a proposed operator___ name is legal
  *
  * This had better match the behavior of parser/scan.l!
  *
  * We need this because the parser is not smart enough to check that
  * the arguments of CREATE OPERATOR's COMMUTATOR, NEGATOR, etc clauses
- * are coperator names rather than some other lexical entity.
+ * are operator___ names rather than some other lexical entity.
  */
 static bool
 validOperatorName(const char *name)
@@ -93,9 +93,9 @@ validOperatorName(const char *name)
 
 	/*
 	 * For SQL standard compatibility, '+' and '-' cannot be the last char of
-	 * a multi-char coperator unless the coperator contains chars that are not
+	 * a multi-char operator___ unless the operator___ contains chars that are not
 	 * in SQL operators. The idea is to lex '=-' as two operators, but not to
-	 * forbid coperator names like '?-' that could not be sequences of standard
+	 * forbid operator___ names like '?-' that could not be sequences of standard
 	 * SQL operators.
 	 */
 	if (len > 1 &&
@@ -124,7 +124,7 @@ validOperatorName(const char *name)
 /*
  * OperatorGet
  *
- *		finds an coperator given an exact specification (name, cnamespace,
+ *		finds an operator___ given an exact specification (name, namescpace___,
  *		left and right type IDs).
  *
  *		*defined is set TRUE if defined (not a shell)
@@ -164,7 +164,7 @@ OperatorGet(const char *operatorName,
 /*
  * OperatorLookup
  *
- *		looks up an coperator given a possibly-qualified name and
+ *		looks up an operator___ given a possibly-qualified name and
  *		left and right type IDs.
  *
  *		*defined is set TRUE if defined (not a shell)
@@ -196,7 +196,7 @@ OperatorLookup(List *operatorName,
 
 /*
  * OperatorShellMake
- *		Make a "shell" entry for a not-yet-existing coperator.
+ *		Make a "shell" entry for a not-yet-existing operator___.
  */
 static Oid
 OperatorShellMake(const char *operatorName,
@@ -214,12 +214,12 @@ OperatorShellMake(const char *operatorName,
 	TupleDesc	tupDesc;
 
 	/*
-	 * validate coperator name
+	 * validate operator___ name
 	 */
 	if (!validOperatorName(operatorName))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
-				 errmsg("\"%s\" is not a valid coperator name",
+				 errmsg("\"%s\" is not a valid operator___ name",
 						operatorName)));
 
 	/*
@@ -232,7 +232,7 @@ OperatorShellMake(const char *operatorName,
 	}
 
 	/*
-	 * initialize values[] with the coperator name and input data types. Note
+	 * initialize values[] with the operator___ name and input data types. Note
 	 * that oprcode is set to InvalidOid, indicating it's a shell.
 	 */
 	namestrcpy(&oname, operatorName);
@@ -258,12 +258,12 @@ OperatorShellMake(const char *operatorName,
 	tupDesc = pg_operator_desc->rd_att;
 
 	/*
-	 * create a cnew coperator tuple
+	 * create a new___ operator___ tuple
 	 */
 	tup = heap_form_tuple(tupDesc, values, nulls);
 
 	/*
-	 * insert our "shell" coperator tuple
+	 * insert our "shell" operator___ tuple
 	 */
 	operatorObjectId = simple_heap_insert(pg_operator_desc, tup);
 
@@ -274,7 +274,7 @@ OperatorShellMake(const char *operatorName,
 
 	heap_freetuple(tup);
 
-	/* Post creation hook for cnew shell coperator */
+	/* Post creation hook for new___ shell operator___ */
 	InvokeObjectPostCreateHook(OperatorRelationId, operatorObjectId, 0);
 
 	/*
@@ -283,7 +283,7 @@ OperatorShellMake(const char *operatorName,
 	CommandCounterIncrement();
 
 	/*
-	 * close the coperator relation and return the oid.
+	 * close the operator___ relation and return the oid.
 	 */
 	heap_close(pg_operator_desc, RowExclusiveLock);
 
@@ -294,26 +294,26 @@ OperatorShellMake(const char *operatorName,
  * OperatorCreate
  *
  * "X" indicates an optional argument (i.e. one that can be NULL or 0)
- *		operatorName			name for cnew coperator
- *		operatorNamespace		cnamespace for cnew coperator
+ *		operatorName			name for new___ operator___
+ *		operatorNamespace		namescpace___ for new___ operator___
  *		leftTypeId				X left type ID
  *		rightTypeId				X right type ID
- *		procedureId				procedure ID for coperator
- *		commutatorName			X commutator coperator
- *		negatorName				X negator coperator
+ *		procedureId				procedure ID for operator___
+ *		commutatorName			X commutator operator___
+ *		negatorName				X negator operator___
  *		restrictionId			X restriction selectivity procedure ID
  *		joinId					X join selectivity procedure ID
- *		canMerge				merge join can be used with this coperator
- *		canHash					hash join can be used with this coperator
+ *		canMerge				merge join can be used with this operator___
+ *		canHash					hash join can be used with this operator___
  *
  * The caller should have validated properties and permissions for the
  * objects passed as OID references.  We must handle the commutator and
- * negator coperator references specially, however, since those need not
+ * negator operator___ references specially, however, since those need not
  * exist beforehand.
  *
  * This routine gets complicated because it allows the user to
- * specify operators that do not exist.  For example, if coperator
- * "op" is being defined, the negator coperator "negop" and the
+ * specify operators that do not exist.  For example, if operator___
+ * "op" is being defined, the negator operator___ "negop" and the
  * commutator "commop" can also be defined without specifying
  * any information other than their names.  Since in order to
  * add "op" to the PG_OPERATOR catalog, all the Oid's for these
@@ -321,7 +321,7 @@ OperatorShellMake(const char *operatorName,
  * declaration is done on the commutator and negator operators.
  * This is called creating a shell, and its main effect is to
  * create a tuple in the PG_OPERATOR catalog with minimal
- * information about the coperator (just its name and types).
+ * information about the operator___ (just its name and types).
  * Forward declaration is used only for this purpose, it is
  * not available to the user as it is for type definition.
  */
@@ -360,7 +360,7 @@ OperatorCreate(const char *operatorName,
 	if (!validOperatorName(operatorName))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
-				 errmsg("\"%s\" is not a valid coperator name",
+				 errmsg("\"%s\" is not a valid operator___ name",
 						operatorName)));
 
 	if (!(OidIsValid(leftTypeId) && OidIsValid(rightTypeId)))
@@ -420,7 +420,7 @@ OperatorCreate(const char *operatorName,
 	if (operatorAlreadyDefined)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_FUNCTION),
-				 errmsg("coperator %s already exists",
+				 errmsg("operator___ %s already exists",
 						operatorName)));
 
 	/*
@@ -447,14 +447,14 @@ OperatorCreate(const char *operatorName,
 										  leftTypeId, rightTypeId,
 										  true);
 
-		/* Permission check: must own other coperator */
+		/* Permission check: must own other operator___ */
 		if (OidIsValid(commutatorId) &&
 			!pg_oper_ownercheck(commutatorId, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
 						   NameListToString(commutatorName));
 
 		/*
-		 * self-linkage to this coperator; will fix below. Note that only
+		 * self-linkage to this operator___; will fix below. Note that only
 		 * self-linkage for commutation makes sense.
 		 */
 		if (!OidIsValid(commutatorId))
@@ -472,7 +472,7 @@ OperatorCreate(const char *operatorName,
 									   leftTypeId, rightTypeId,
 									   false);
 
-		/* Permission check: must own other coperator */
+		/* Permission check: must own other operator___ */
 		if (OidIsValid(negatorId) &&
 			!pg_oper_ownercheck(negatorId, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
@@ -482,7 +482,7 @@ OperatorCreate(const char *operatorName,
 		negatorId = InvalidOid;
 
 	/*
-	 * set up values in the coperator tuple
+	 * set up values in the operator___ tuple
 	 */
 
 	for (i = 0; i < Natts_pg_operator; ++i)
@@ -511,14 +511,14 @@ OperatorCreate(const char *operatorName,
 	pg_operator_desc = heap_open(OperatorRelationId, RowExclusiveLock);
 
 	/*
-	 * If we are replacing an coperator shell, update; else insert
+	 * If we are replacing an operator___ shell, update; else insert
 	 */
 	if (operatorObjectId)
 	{
 		tup = SearchSysCacheCopy1(OPEROID,
 								  ObjectIdGetDatum(operatorObjectId));
 		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "cache lookup failed for coperator %u",
+			elog(ERROR, "cache lookup failed for operator___ %u",
 				 operatorObjectId);
 
 		tup = heap_modify_tuple(tup,
@@ -543,20 +543,20 @@ OperatorCreate(const char *operatorName,
 	/* Add dependencies for the entry */
 	address = makeOperatorDependencies(tup);
 
-	/* Post creation hook for cnew coperator */
+	/* Post creation hook for new___ operator___ */
 	InvokeObjectPostCreateHook(OperatorRelationId, operatorObjectId, 0);
 
 	heap_close(pg_operator_desc, RowExclusiveLock);
 
 	/*
 	 * If a commutator and/or negator link is provided, update the other
-	 * coperator(s) to point at this one, if they don't already have a link.
-	 * This supports an alternative style of coperator definition wherein the
-	 * user first defines one coperator without giving negator or commutator,
-	 * then defines the other coperator of the pair with the proper commutator
+	 * operator___(s) to point at this one, if they don't already have a link.
+	 * This supports an alternative style of operator___ definition wherein the
+	 * user first defines one operator___ without giving negator or commutator,
+	 * then defines the other operator___ of the pair with the proper commutator
 	 * or negator attribute.  That style doesn't require creation of a shell,
 	 * and it's the only style that worked right before Postgres version 6.5.
-	 * This code also takes care of the situation where the cnew coperator is
+	 * This code also takes care of the situation where the new___ operator___ is
 	 * its own commutator.
 	 */
 	if (selfCommutator)
@@ -569,12 +569,12 @@ OperatorCreate(const char *operatorName,
 }
 
 /*
- * Try to lookup another coperator (commutator, etc)
+ * Try to lookup another operator___ (commutator, etc)
  *
- * If not found, check to see if it is exactly the coperator we are trying
+ * If not found, check to see if it is exactly the operator___ we are trying
  * to define; if so, return InvalidOid.  (Note that this case is only
  * sensible for a commutator, so we error out otherwise.)  If it is not
- * the same coperator, create a shell coperator.
+ * the same operator___, create a shell operator___.
  */
 static Oid
 get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
@@ -607,17 +607,17 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
 		otherRightTypeId == rightTypeId)
 	{
 		/*
-		 * self-linkage to this coperator; caller will fix later. Note that
+		 * self-linkage to this operator___; caller will fix later. Note that
 		 * only self-linkage for commutation makes sense.
 		 */
 		if (!isCommutator)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-			 errmsg("coperator cannot be its own negator or sort coperator")));
+			 errmsg("operator___ cannot be its own negator or sort operator___")));
 		return InvalidOid;
 	}
 
-	/* not in catalogs, different from coperator, so make shell */
+	/* not in catalogs, different from operator___, so make shell */
 
 	aclresult = pg_namespace_aclcheck(otherNamespace, GetUserId(),
 									  ACL_CREATE);
@@ -635,10 +635,10 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
 /*
  * OperatorUpd
  *
- *	For a given coperator, look up its negator and commutator operators.
+ *	For a given operator___, look up its negator and commutator operators.
  *	If they are defined, but their negator and commutator fields
- *	(respectively) are empty, then use the cnew coperator for neg or comm.
- *	This solves a problem for users who need to insert two cnew operators
+ *	(respectively) are empty, then use the new___ operator___ for neg or comm.
+ *	This solves a problem for users who need to insert two new___ operators
  *	which are the negator or commutator of each other.
  */
 static void
@@ -662,7 +662,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	 * check and update the commutator & negator, if necessary
 	 *
 	 * We need a CommandCounterIncrement here in case of a self-commutator
-	 * coperator: we'll need to update the tuple that we just inserted.
+	 * operator___: we'll need to update the tuple that we just inserted.
 	 */
 	CommandCounterIncrement();
 
@@ -671,7 +671,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	tup = SearchSysCacheCopy1(OPEROID, ObjectIdGetDatum(commId));
 
 	/*
-	 * if the commutator and negator are the same coperator, do one update. XXX
+	 * if the commutator and negator are the same operator___, do one update. XXX
 	 * this is probably useless code --- I doubt it ever makes sense for
 	 * commutator and negator to be the same thing...
 	 */
@@ -759,11 +759,11 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 }
 
 /*
- * Create dependencies for a cnew coperator (either a freshly inserted
- * complete coperator, a cnew shell coperator, or a just-updated shell).
+ * Create dependencies for a new___ operator___ (either a freshly inserted
+ * complete operator___, a new___ shell operator___, or a just-updated shell).
  *
  * NB: the OidIsValid tests in this routine are necessary, in case
- * the given coperator is a shell.
+ * the given operator___ is a shell.
  */
 static ObjectAddress
 makeOperatorDependencies(HeapTuple tuple)
@@ -783,7 +783,7 @@ makeOperatorDependencies(HeapTuple tuple)
 	deleteDependencyRecordsFor(myself.classId, myself.objectId, true);
 	deleteSharedDependencyRecordsFor(myself.classId, myself.objectId, 0);
 
-	/* Dependency on cnamespace */
+	/* Dependency on namescpace___ */
 	if (OidIsValid(oper->oprnamespace))
 	{
 		referenced.classId = NamespaceRelationId;
@@ -820,12 +820,12 @@ makeOperatorDependencies(HeapTuple tuple)
 	}
 
 	/*
-	 * NOTE: we do not consider the coperator to depend on the associated
+	 * NOTE: we do not consider the operator___ to depend on the associated
 	 * operators oprcom and oprnegate. We would not want to delete this
-	 * coperator if those go away, but only reset the link fields; which is not
+	 * operator___ if those go away, but only reset the link fields; which is not
 	 * a function that the dependency code can presently handle.  (Something
 	 * could perhaps be done with objectSubId though.)	For now, it's okay to
-	 * let those links dangle if a referenced coperator is removed.
+	 * let those links dangle if a referenced operator___ is removed.
 	 */
 
 	/* Dependency on implementation function */

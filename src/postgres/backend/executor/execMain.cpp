@@ -463,7 +463,7 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 
 	/*
 	 * Check that ExecutorFinish was called, unless in EXPLAIN-only mode. This
-	 * Assert is needed because ExecutorFinish is cnew as of 9.1, and callers
+	 * Assert is needed because ExecutorFinish is new___ as of 9.1, and callers
 	 * might forget to call it.
 	 */
 	Assert(estate->es_finished ||
@@ -931,7 +931,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	estate->es_epqScanDone = NULL;
 
 	/*
-	 * Initialize cprivate state information for each SubPlan.  We must do this
+	 * Initialize private___ state information for each SubPlan.  We must do this
 	 * before running ExecInitNode on the main query tree, since
 	 * ExecInitSubPlan expects to be able to find these entries.
 	 */
@@ -962,7 +962,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	}
 
 	/*
-	 * Initialize the cprivate state information for all the nodes in the query
+	 * Initialize the private___ state information for all the nodes in the query
 	 * tree.  This opens files, allocates storage and leaves us ready to start
 	 * processing tuples.
 	 */
@@ -1302,18 +1302,18 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 		if (RelationGetRelid(rInfo->ri_RelationDesc) == relid)
 			return rInfo;
 	}
-	/* Nope, so we need a cnew one */
+	/* Nope, so we need a new___ one */
 
 	/*
 	 * Open the target relation's relcache entry.  We assume that an
 	 * appropriate lock is still held by the backend from whenever the trigger
-	 * event got queued, so we need take no cnew lock here.  Also, we need not
+	 * event got queued, so we need take no new___ lock here.  Also, we need not
 	 * recheck the relkind, so no need for CheckValidResultRel.
 	 */
 	rel = heap_open(relid, NoLock);
 
 	/*
-	 * Make the cnew entry in the right context.
+	 * Make the new___ entry in the right context.
 	 */
 	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
 	rInfo = makeNode(ResultRelInfo);
@@ -1347,7 +1347,7 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
  *
  * One reason this is ugly is that all plan nodes in the plan tree will emit
  * tuples with space for an OID, though we really only need the topmost node
- * to do so.  However, node types like Sort don't project cnew tuples but just
+ * to do so.  However, node types like Sort don't project new___ tuples but just
  * return their inputs, and in those cases the requirement propagates down
  * to the input node.  Eventually we might make this code smart enough to
  * recognize how far down the requirement really goes, but for now we just
@@ -1569,10 +1569,10 @@ ExecutePlan(EState *estate,
 			break;
 
 		/*
-		 * If we have a junk filter, then project a cnew tuple with the junk
+		 * If we have a junk filter, then project a new___ tuple with the junk
 		 * removed.
 		 *
-		 * Store this cnew "clean" tuple in the junkfilter's resultSlot.
+		 * Store this new___ "clean" tuple in the junkfilter's resultSlot.
 		 * (Formerly, we stored it back over the "dirty" tuple, which is WRONG
 		 * because that tuple slot has the wrong descriptor.)
 		 */
@@ -1732,7 +1732,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 													 64);
 			ereport(ERROR,
 					(errcode(ERRCODE_CHECK_VIOLATION),
-					 errmsg("cnew row for relation \"%s\" violates check constraint \"%s\"",
+					 errmsg("new___ row for relation \"%s\" violates check constraint \"%s\"",
 							RelationGetRelationName(rel), failed),
 					 val_desc ? errdetail("Failing row contains %s.", val_desc) : 0,
 					 errtableconstraint(rel, failed)));
@@ -1783,10 +1783,10 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 			continue;
 
 		/*
-		 * WITH CHECK OPTION checks are intended to ensure that the cnew tuple
+		 * WITH CHECK OPTION checks are intended to ensure that the new___ tuple
 		 * is visible (in the case of a view) or that it passes the
 		 * 'with-check' policy (in the case of row security).
-		 * If the qual evaluates to NULL or FALSE, then the cnew tuple won't be
+		 * If the qual evaluates to NULL or FALSE, then the new___ tuple won't be
 		 * included in the view or doesn't pass the 'with-check' policy for the
 		 * table.  We need ExecQual to return FALSE for NULL to handle the view
 		 * case (the opposite of what we do above for CHECK constraints).
@@ -1820,7 +1820,7 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 
 					ereport(ERROR,
 							(errcode(ERRCODE_WITH_CHECK_OPTION_VIOLATION),
-						errmsg("cnew row violates WITH CHECK OPTION for \"%s\"",
+						errmsg("new___ row violates WITH CHECK OPTION for \"%s\"",
 							   wco->relname),
 							 val_desc ? errdetail("Failing row contains %s.",
 												  val_desc) : 0));
@@ -1829,13 +1829,13 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 				case WCO_RLS_UPDATE_CHECK:
 					ereport(ERROR,
 							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("cnew row violates row level security policy for \"%s\"",
+						 errmsg("new___ row violates row level security policy for \"%s\"",
 								wco->relname)));
 					break;
 				case WCO_RLS_CONFLICT_CHECK:
 					ereport(ERROR,
 							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("cnew row violates row level security policy (USING expression) for \"%s\"",
+						 errmsg("new___ row violates row level security policy (USING expression) for \"%s\"",
 								wco->relname)));
 					break;
 				default:
@@ -2116,7 +2116,7 @@ ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist)
  * *tid is also an output parameter: it's modified to hold the TID of the
  * latest version of the tuple (note this may be changed even on failure)
  *
- * Returns a slot containing the cnew candidate update/delete tuple, or
+ * Returns a slot containing the new___ candidate update/delete tuple, or
  * NULL if we determine we shouldn't process the row.
  *
  * Note: properly, lockmode should be declared as enum LockTupleMode,
@@ -2153,7 +2153,7 @@ EvalPlanQual(EState *estate, EPQState *epqstate,
 	EvalPlanQualBegin(epqstate, estate);
 
 	/*
-	 * Free old test tuple, if any, and store cnew tuple where relation's scan
+	 * Free old test tuple, if any, and store new___ tuple where relation's scan
 	 * node will see it
 	 */
 	EvalPlanQualSetTuple(epqstate, rti, copyTuple);
@@ -2481,7 +2481,7 @@ EvalPlanQualSetTuple(EPQState *epqstate, Index rti, HeapTuple tuple)
 	Assert(rti > 0);
 
 	/*
-	 * free old test tuple, if any, and store cnew tuple where relation's scan
+	 * free old test tuple, if any, and store new___ tuple where relation's scan
 	 * node will see it
 	 */
 	if (estate->es_epqTuple[rti - 1] != NULL)
@@ -2811,7 +2811,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	estate->es_tupleTable = NIL;
 
 	/*
-	 * Initialize cprivate state information for each SubPlan.  We must do this
+	 * Initialize private___ state information for each SubPlan.  We must do this
 	 * before running ExecInitNode on the main query tree, since
 	 * ExecInitSubPlan expects to be able to find these entries. Some of the
 	 * SubPlans might not be used in the part of the plan tree we intend to
@@ -2830,7 +2830,7 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	}
 
 	/*
-	 * Initialize the cprivate state information for all the nodes in the part
+	 * Initialize the private___ state information for all the nodes in the part
 	 * of the plan tree we need to run.  This opens files, allocates storage
 	 * and leaves us ready to start processing tuples.
 	 */

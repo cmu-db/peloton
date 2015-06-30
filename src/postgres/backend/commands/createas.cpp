@@ -272,7 +272,7 @@ CreateIntoRelDestReceiver(IntoClause *intoClause)
 	self->pub.rDestroy = intorel_destroy;
 	self->pub.mydest = DestIntoRel;
 	self->into = intoClause;
-	/* other cprivate fields will be set during intorel_startup */
+	/* other private___ fields will be set during intorel_startup */
 
 	return (DestReceiver *) self;
 }
@@ -459,12 +459,12 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 		SetMatViewPopulatedState(intoRelationDesc, true);
 
 	/*
-	 * Fill cprivate fields of myState for use by later routines
+	 * Fill private___ fields of myState for use by later routines
 	 */
 	myState->rel = intoRelationDesc;
 	myState->output_cid = GetCurrentCommandId(true);
 
-	/* and remember the cnew relation's address for ExecCreateTableAs */
+	/* and remember the new___ relation's address for ExecCreateTableAs */
 	CreateAsReladdr = intoRelationAddr;
 
 	/*
@@ -495,7 +495,7 @@ intorel_receive(TupleTableSlot *slot, DestReceiver *self)
 	tuple = ExecMaterializeSlot(slot);
 
 	/*
-	 * force assignment of cnew OID (see comments in ExecInsert)
+	 * force assignment of new___ OID (see comments in ExecInsert)
 	 */
 	if (myState->rel->rd_rel->relhasoids)
 		HeapTupleSetOid(tuple, InvalidOid);

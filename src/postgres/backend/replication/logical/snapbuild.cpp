@@ -80,7 +80,7 @@
  *		   +-------------------------+
  *
  * Initially the machinery is in the START stage. When an xl_running_xacts
- * record is read that is sufficiently cnew (above the safe xmin horizon),
+ * record is read that is sufficiently new___ (above the safe xmin horizon),
  * there's a state transition. If there were no running xacts when the
  * runnign_xacts record was generated, we'll directly go into CONSISTENT
  * state, otherwise we'll switch to the FULL_SNAPSHOT state. Having a full
@@ -143,7 +143,7 @@ struct SnapBuild
 	/* how far are we along building our first full snapshot */
 	SnapBuildState state;
 
-	/* cprivate memory context used to allocate memory for this module. */
+	/* private___ memory context used to allocate memory for this module. */
 	MemoryContext context;
 
 	/* all transactions < than this have committed/aborted */
@@ -273,7 +273,7 @@ static bool SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn);
 
 
 /*
- * Allocate a cnew snapshot builder.
+ * Allocate a new___ snapshot builder.
  *
  * xmin_horizon is the xid >=which we can be sure no catalog rows have been
  * removed, start_lsn is the LSN >= we want to replay commits.
@@ -421,7 +421,7 @@ SnapBuildSnapDecRefcount(Snapshot snap)
 }
 
 /*
- * Build a cnew snapshot, based on currently committed catalog-modifying
+ * Build a new___ snapshot, based on currently committed catalog-modifying
  * transactions.
  *
  * In-progress transactions with catalog access are *not* allowed to modify
@@ -662,7 +662,7 @@ SnapBuildProcessChange(SnapBuild *builder, TransactionId xid, XLogRecPtr lsn)
 
 	if (!is_old_tx || !ReorderBufferXidHasBaseSnapshot(builder->reorder, xid))
 	{
-		/* only build a cnew snapshot if we don't have a prebuilt one */
+		/* only build a new___ snapshot if we don't have a prebuilt one */
 		if (builder->snapshot == NULL)
 		{
 			builder->snapshot = SnapBuildBuildSnapshot(builder, xid);
@@ -704,7 +704,7 @@ SnapBuildProcessNewCid(SnapBuild *builder, TransactionId xid,
 								 xlrec->cmin, xlrec->cmax,
 								 xlrec->combocid);
 
-	/* figure out cnew command id */
+	/* figure out new___ command id */
 	if (xlrec->cmin != InvalidCommandId &&
 		xlrec->cmax != InvalidCommandId)
 		cid = Max(xlrec->cmin, xlrec->cmax);
@@ -754,10 +754,10 @@ SnapBuildTxnIsRunning(SnapBuild *builder, TransactionId xid)
 }
 
 /*
- * Add a cnew Snapshot to all transactions we're decoding that currently are
- * in-progress so they can see cnew catalog contents made by the transaction
+ * Add a new___ Snapshot to all transactions we're decoding that currently are
+ * in-progress so they can see new___ catalog contents made by the transaction
  * that just committed. This is necessary because those in-progress
- * transactions will use the cnew catalog's contents from here on (at the very
+ * transactions will use the new___ catalog's contents from here on (at the very
  * least everything they do needs to be compatible with newer catalog
  * contents).
  */
@@ -791,7 +791,7 @@ SnapBuildDistributeNewCatalogSnapshot(SnapBuild *builder, XLogRecPtr lsn)
 		if (!ReorderBufferXidHasBaseSnapshot(builder->reorder, txn->xid))
 			continue;
 
-		elog(DEBUG2, "adding a cnew snapshot to %u at %X/%X",
+		elog(DEBUG2, "adding a new___ snapshot to %u at %X/%X",
 			 txn->xid, (uint32) (lsn >> 32), (uint32) lsn);
 
 		/*
@@ -805,7 +805,7 @@ SnapBuildDistributeNewCatalogSnapshot(SnapBuild *builder, XLogRecPtr lsn)
 }
 
 /*
- * Keep track of a cnew catalog changing transaction that has committed.
+ * Keep track of a new___ catalog changing transaction that has committed.
  */
 static void
 SnapBuildAddCommittedTxn(SnapBuild *builder, TransactionId xid)
@@ -825,7 +825,7 @@ SnapBuildAddCommittedTxn(SnapBuild *builder, TransactionId xid)
 
 	/*
 	 * TODO: It might make sense to keep the array sorted here instead of
-	 * doing it every time we build a cnew snapshot. On the other hand this
+	 * doing it every time we build a new___ snapshot. On the other hand this
 	 * gets called repeatedly when a transaction with subtransactions commits.
 	 */
 	builder->committed.xip[builder->committed.xcnt++] = xid;
@@ -1075,10 +1075,10 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 										 builder->snapshot);
 		}
 
-		/* refcount of the snapshot builder for the cnew snapshot */
+		/* refcount of the snapshot builder for the new___ snapshot */
 		SnapBuildSnapIncRefcount(builder->snapshot);
 
-		/* add a cnew Snapshot to all currently running transactions */
+		/* add a new___ Snapshot to all currently running transactions */
 		SnapBuildDistributeNewCatalogSnapshot(builder, lsn);
 	}
 	else
@@ -1785,7 +1785,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 	builder->running.xcnt_space = ondisk.builder.running.xcnt_space;
 	builder->running.xip = ondisk.builder.running.xip;
 
-	/* our snapshot is not interesting anymore, build a cnew one */
+	/* our snapshot is not interesting anymore, build a new___ one */
 	if (builder->snapshot != NULL)
 	{
 		SnapBuildSnapDecRefcount(builder->snapshot);
@@ -1829,7 +1829,7 @@ CheckPointSnapBuild(void)
 	char		path[MAXPGPATH];
 
 	/*
-	 * We start of with a minimum of the last redo pointer. No cnew replication
+	 * We start of with a minimum of the last redo pointer. No new___ replication
 	 * slot will start before that, so that's a safe upper bound for removal.
 	 */
 	redo = GetRedoRecPtr();

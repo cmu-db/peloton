@@ -126,7 +126,7 @@ MakeExpandedObjectReadOnly(Datum d, bool isnull, int16 typlen)
 }
 
 /*
- * Transfer ownership of an expanded object to a cnew parent memory context.
+ * Transfer ownership of an expanded object to a new___ parent memory context.
  * The object must be referenced by a R/W pointer, and what we return is
  * always its "standard" R/W pointer, which is certain to have the same
  * lifespan as the object itself.  (The passed-in pointer might not, and

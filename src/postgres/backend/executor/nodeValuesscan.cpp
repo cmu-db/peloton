@@ -200,7 +200,7 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	Assert(innerPlan(node) == NULL);
 
 	/*
-	 * create cnew ScanState for node
+	 * create new___ ScanState for node
 	 */
 	scanstate = makeNode(ValuesScanState);
 	scanstate->ss.ps.plan = (Plan *) node;

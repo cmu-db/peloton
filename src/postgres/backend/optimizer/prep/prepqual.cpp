@@ -48,7 +48,7 @@ static Expr *process_duplicate_ors(List *orlist);
  *	  Negate a Boolean expression.
  *
  * Input is a clause to be negated (e.g., the argument of a NOT clause).
- * Returns a cnew clause equivalent to the negation of the given clause.
+ * Returns a new___ clause equivalent to the negation of the given clause.
  *
  * Although this can be invoked on its own, it's mainly intended as a helper
  * for eval_const_expressions(), and that context drives several design
@@ -90,7 +90,7 @@ negate_clause(Node *node)
 		case T_OpExpr:
 			{
 				/*
-				 * Negate coperator if possible: (NOT (< A B)) => (>= A B)
+				 * Negate operator___ if possible: (NOT (< A B)) => (>= A B)
 				 */
 				OpExpr	   *opexpr = (OpExpr *) node;
 				Oid			negator = get_negator(opexpr->opno);
@@ -114,7 +114,7 @@ negate_clause(Node *node)
 		case T_ScalarArrayOpExpr:
 			{
 				/*
-				 * Negate a ScalarArrayOpExpr if its coperator has a negator;
+				 * Negate a ScalarArrayOpExpr if its operator___ has a negator;
 				 * for example x = ANY (list) becomes x <> ALL (list)
 				 */
 				ScalarArrayOpExpr *saopexpr = (ScalarArrayOpExpr *) node;
@@ -152,7 +152,7 @@ negate_clause(Node *node)
 						 * the given AND clause is an AND or a NOT-above-OR, then
 						 * the recursive calls of negate_clause() can't return any
 						 * OR clauses.  So we needn't call pull_ors() before
-						 * building a cnew OR clause.  Similarly for the OR case.
+						 * building a new___ OR clause.  Similarly for the OR case.
 						 *--------------------
 						 */
 					case AND_EXPR:
@@ -322,7 +322,7 @@ pull_ands(List *andlist)
 		/*
 		 * Note: we can destructively concat the subexpression's arglist
 		 * because we know the recursive invocation of pull_ands will have
-		 * built a cnew arglist not shared with any other expr. Otherwise we'd
+		 * built a new___ arglist not shared with any other expr. Otherwise we'd
 		 * need a list_copy here.
 		 */
 		if (and_clause(subexpr))
@@ -354,7 +354,7 @@ pull_ors(List *orlist)
 		/*
 		 * Note: we can destructively concat the subexpression's arglist
 		 * because we know the recursive invocation of pull_ors will have
-		 * built a cnew arglist not shared with any other expr. Otherwise we'd
+		 * built a new___ arglist not shared with any other expr. Otherwise we'd
 		 * need a list_copy here.
 		 */
 		if (or_clause(subexpr))
@@ -544,7 +544,7 @@ process_duplicate_ors(List *orlist)
 
 	/*
 	 * Check each element of the reference list to see if it's in all the OR
-	 * clauses.  Build a cnew list of winning clauses.
+	 * clauses.  Build a new___ list of winning clauses.
 	 */
 	winners = NIL;
 	foreach(temp, reference)
@@ -586,7 +586,7 @@ process_duplicate_ors(List *orlist)
 		return make_orclause(orlist);
 
 	/*
-	 * Generate cnew OR list consisting of the remaining sub-clauses.
+	 * Generate new___ OR list consisting of the remaining sub-clauses.
 	 *
 	 * If any clause degenerates to empty, then we have a situation like (A
 	 * AND B) OR (A), which can be reduced to just A --- that is, the

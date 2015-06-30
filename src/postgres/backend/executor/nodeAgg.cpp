@@ -431,7 +431,7 @@ initialize_phase(AggState *aggstate, int newphase)
 	else
 	{
 		/*
-		 * The old output tuplesort becomes the cnew input one, and this is the
+		 * The old output tuplesort becomes the new___ input one, and this is the
 		 * right time to actually sort it.
 		 */
 		aggstate->sort_in = aggstate->sort_out;
@@ -570,7 +570,7 @@ initialize_aggregate(AggState *aggstate, AggStatePerAgg peraggstate,
 }
 
 /*
- * Initialize all aggregates for a cnew group of input values.
+ * Initialize all aggregates for a new___ group of input values.
  *
  * If there are multiple grouping sets, we initialize only the first numReset
  * of them (the grouping sets are ordered so that the most specific one, which
@@ -610,10 +610,10 @@ initialize_aggregates(AggState *aggstate,
 }
 
 /*
- * Given cnew input value(s), advance the transition function of one aggregate
+ * Given new___ input value(s), advance the transition function of one aggregate
  * within one grouping set only (already set in aggstate->current_set)
  *
- * The cnew values (and null flags) have been preloaded into argument positions
+ * The new___ values (and null flags) have been preloaded into argument positions
  * 1 and up in peraggstate->transfn_fcinfo, so that we needn't copy them again
  * to pass to the transition function.  We also expect that the static fields
  * of the fcinfo are already initialized; that was done by ExecInitAgg().
@@ -694,7 +694,7 @@ advance_transition_function(AggState *aggstate,
 	aggstate->curperagg = NULL;
 
 	/*
-	 * If pass-by-ref datatype, must copy the cnew value into aggcontext and
+	 * If pass-by-ref datatype, must copy the new___ value into aggcontext and
 	 * pfree the prior transValue.  But if transfn returned a pointer to its
 	 * first input, we don't need to do anything.
 	 */
@@ -901,7 +901,7 @@ process_ordered_aggregate_single(AggState *aggstate,
 			/* forget the old value, if any */
 			if (!oldIsNull && !peraggstate->inputtypeByVal)
 				pfree(DatumGetPointer(oldVal));
-			/* and remember the cnew one for subsequent equality checks */
+			/* and remember the new___ one for subsequent equality checks */
 			oldVal = *newVal;
 			oldIsNull = *isNull;
 			haveOldVal = true;
@@ -1429,7 +1429,7 @@ lookup_hash_entry(AggState *aggstate, TupleTableSlot *inputslot)
 
 	if (isnew)
 	{
-		/* initialize aggregates for cnew tuple group */
+		/* initialize aggregates for new___ tuple group */
 		initialize_aggregates(aggstate, aggstate->peragg, entry->pergroup, 0);
 	}
 
@@ -1614,7 +1614,7 @@ agg_retrieve_direct(AggState *aggstate)
 		/*-
 		 * If a subgroup for the current grouping set is present, project it.
 		 *
-		 * We have a cnew group if:
+		 * We have a new___ group if:
 		 *  - we're out of input but haven't projected all grouping sets
 		 *    (checked above)
 		 * OR
@@ -1654,7 +1654,7 @@ agg_retrieve_direct(AggState *aggstate)
 			aggstate->projected_set = 0;
 
 			/*
-			 * If we don't already have the first tuple of the cnew group,
+			 * If we don't already have the first tuple of the new___ group,
 			 * fetch it from the outer plan.
 			 */
 			if (aggstate->grp_firstTuple == NULL)
@@ -1714,7 +1714,7 @@ agg_retrieve_direct(AggState *aggstate)
 			}
 
 			/*
-			 * Initialize working state for a cnew input tuple group.
+			 * Initialize working state for a new___ input tuple group.
 			 */
 			initialize_aggregates(aggstate, peragg, pergroup, numReset);
 
@@ -2202,7 +2202,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 	/*
 	 * Set up aggregate-result storage in the output expr context, and also
-	 * allocate my cprivate per-agg working storage
+	 * allocate my private___ per-agg working storage
 	 */
 	econtext = aggstate->ss.ps.ps_ExprContext;
 	econtext->ecxt_aggvalues = (Datum *) palloc0(sizeof(Datum) * numaggs);
@@ -2279,7 +2279,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			continue;
 		}
 
-		/* Nope, so assign a cnew PerAgg record */
+		/* Nope, so assign a new___ PerAgg record */
 		peraggstate = &peragg[++aggno];
 
 		/* Mark Aggref state node with assigned index in the result array */

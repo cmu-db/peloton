@@ -326,7 +326,7 @@ array_in(PG_FUNCTION_ARGS)
 		int			ndim_braces,
 					dim_braces[MAXDIM];
 
-		/* If array dimensions are given, expect '=' coperator */
+		/* If array dimensions are given, expect '=' operator___ */
 		if (strncmp(p, ASSGN, strlen(ASSGN)) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -1028,7 +1028,7 @@ array_out(PG_FUNCTION_ARGS)
 	/*
 	 * 33 per dim since we assume 15 digits per number + ':' +'[]'
 	 *
-	 * +2 allows for assignment coperator + trailing null
+	 * +2 allows for assignment operator___ + trailing null
 	 */
 	bool	   *needquotes,
 				needdims = false;
@@ -1988,7 +1988,7 @@ array_get_element_expanded(Datum arraydatum,
 /*
  * array_get_slice :
  *		   This routine takes an array and a range of indices (upperIndex and
- *		   lowerIndx), creates a cnew array structure for the referred elements
+ *		   lowerIndx), creates a new___ array structure for the referred elements
  *		   and returns a pointer to it.
  *
  * This handles both ordinary varlena arrays and fixed-length arrays.
@@ -2004,7 +2004,7 @@ array_get_element_expanded(Datum arraydatum,
  *	elmalign: pg_type.typalign for the array's element type
  *
  * Outputs:
- *	The return value is the cnew array Datum (it's never NULL)
+ *	The return value is the new___ array Datum (it's never NULL)
  *
  * NOTE: we assume it is OK to scribble on the provided subscript arrays
  * lowerIndx[] and upperIndx[].  These are generally just temporaries.
@@ -2130,7 +2130,7 @@ array_get_slice(Datum arraydatum,
 	memcpy(ARR_DIMS(newarray), span, ndim * sizeof(int));
 
 	/*
-	 * Lower bounds of the cnew array are set to 1.  Formerly (before 7.3) we
+	 * Lower bounds of the new___ array are set to 1.  Formerly (before 7.3) we
 	 * copied the given lowerIndx values ... but that seems confusing.
 	 */
 	newlb = ARR_LBOUND(newarray);
@@ -2149,7 +2149,7 @@ array_get_slice(Datum arraydatum,
 /*
  * array_set_element :
  *		  This routine sets the value of one array element (specified by
- *		  a subscript array) to a cnew value specified by "dataValue".
+ *		  a subscript array) to a new___ value specified by "dataValue".
  *
  * This handles both ordinary varlena arrays and fixed-length arrays.
  *
@@ -2165,14 +2165,14 @@ array_get_slice(Datum arraydatum,
  *	elmalign: pg_type.typalign for the array's element type
  *
  * Result:
- *		  A cnew array is returned, just like the old except for the one
+ *		  A new___ array is returned, just like the old except for the one
  *		  modified entry.  The original array object is not changed,
  *		  unless what is passed is a read-write reference to an expanded
  *		  array object; in that case the expanded array is updated in-place.
  *
  * For one-dimensional arrays only, we allow the array to be extended
  * by assigning to a position outside the existing subscript range; any
- * positions between the existing elements and the cnew one are set to NULLs.
+ * positions between the existing elements and the new___ one are set to NULLs.
  * (XXX TODO: allow a corresponding behavior for multidimensional arrays)
  *
  * NOTE: For assignments, we throw an error for invalid subscripts etc,
@@ -2393,7 +2393,7 @@ array_set_element(Datum arraydatum,
 	newsize = overheadlen + lenbefore + newitemlen + lenafter;
 
 	/*
-	 * OK, create the cnew array and fill in header/dimensions
+	 * OK, create the new___ array and fill in header/dimensions
 	 */
 	newarray = (ArrayType *) palloc0(newsize);
 	SET_VARSIZE(newarray, newsize);
@@ -2509,7 +2509,7 @@ array_set_element_expanded(Datum arraydatum,
 	if (ndim == 0)
 	{
 		/*
-		 * Allocate adequate space for cnew dimension info.  This is harmless
+		 * Allocate adequate space for new___ dimension info.  This is harmless
 		 * if we fail later.
 		 */
 		Assert(nSubscripts > 0 && nSubscripts <= MAXDIM);
@@ -2541,7 +2541,7 @@ array_set_element_expanded(Datum arraydatum,
 	deconstruct_expanded_array(eah);
 
 	/*
-	 * Copy cnew element into array's context, if needed (we assume it's
+	 * Copy new___ element into array's context, if needed (we assume it's
 	 * already detoasted, so no junk should be created).  If we fail further
 	 * down, this memory is leaked, but that's reasonably harmless.
 	 */
@@ -2677,7 +2677,7 @@ array_set_element_expanded(Datum arraydatum,
 	else
 		oldValue = NULL;
 
-	/* And finally we can insert the cnew element. */
+	/* And finally we can insert the new___ element. */
 	dvalues[offset] = dataValue;
 	if (dnulls)
 		dnulls[offset] = isNull;
@@ -2701,7 +2701,7 @@ array_set_element_expanded(Datum arraydatum,
 /*
  * array_set_slice :
  *		  This routine sets the value of a range of array locations (specified
- *		  by upper and lower subscript values) to cnew values passed as
+ *		  by upper and lower subscript values) to new___ values passed as
  *		  another array.
  *
  * This handles both ordinary varlena arrays and fixed-length arrays.
@@ -2719,12 +2719,12 @@ array_set_element_expanded(Datum arraydatum,
  *	elmalign: pg_type.typalign for the array's element type
  *
  * Result:
- *		  A cnew array is returned, just like the old except for the
+ *		  A new___ array is returned, just like the old except for the
  *		  modified range.  The original array object is not changed.
  *
  * For one-dimensional arrays only, we allow the array to be extended
  * by assigning to positions outside the existing subscript range; any
- * positions between the existing elements and the cnew ones are set to NULLs.
+ * positions between the existing elements and the new___ ones are set to NULLs.
  * (XXX TODO: allow a corresponding behavior for multidimensional arrays)
  *
  * NOTE: we assume it is OK to scribble on the provided index arrays
@@ -2907,8 +2907,8 @@ array_set_slice(Datum arraydatum,
 				 errmsg("source array too small")));
 
 	/*
-	 * Compute space occupied by cnew entries, space occupied by replaced
-	 * entries, and required space for cnew array.
+	 * Compute space occupied by new___ entries, space occupied by replaced
+	 * entries, and required space for new___ array.
 	 */
 	if (newhasnulls)
 		overheadlen = ARR_OVERHEAD_WITHNULLS(ndim, nitems);
@@ -3065,7 +3065,7 @@ array_set(ArrayType *array, int nSubscripts, int *indx,
 /*
  * array_map()
  *
- * Map an array through an arbitrary function.  Return a cnew array with
+ * Map an array through an arbitrary function.  Return a new___ array with
  * same dimensions and each source element transformed by fn().  Each
  * source element is passed as the first argument to fn(); additional
  * arguments to be passed to fn() can be specified by the caller.
@@ -3166,7 +3166,7 @@ array_map(FunctionCallInfo fcinfo, Oid retType, ArrayMapState *amstate)
 	typbyval = ret_extra->typbyval;
 	typalign = ret_extra->typalign;
 
-	/* Allocate temporary arrays for cnew values */
+	/* Allocate temporary arrays for new___ values */
 	values = (Datum *) palloc(nitems * sizeof(Datum));
 	nulls = (bool *) palloc(nitems * sizeof(bool));
 
@@ -3610,7 +3610,7 @@ array_eq(PG_FUNCTION_ARGS)
 			if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				errmsg("could not identify an equality coperator for type %s",
+				errmsg("could not identify an equality operator___ for type %s",
 					   format_type_be(element_type))));
 			fcinfo->flinfo->fn_extra = (void *) typentry;
 		}
@@ -3619,7 +3619,7 @@ array_eq(PG_FUNCTION_ARGS)
 		typalign = typentry->typalign;
 
 		/*
-		 * apply the coperator to each pair of array elements.
+		 * apply the operator___ to each pair of array elements.
 		 */
 		InitFunctionCallInfoData(locfcinfo, &typentry->eq_opr_finfo, 2,
 								 collation, NULL, NULL);
@@ -3655,7 +3655,7 @@ array_eq(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * Apply the coperator to the element pair
+			 * Apply the operator___ to the element pair
 			 */
 			locfcinfo.arg[0] = elt1;
 			locfcinfo.arg[1] = elt2;
@@ -3783,7 +3783,7 @@ array_cmp(FunctionCallInfo fcinfo)
 	typalign = typentry->typalign;
 
 	/*
-	 * apply the coperator to each pair of array elements.
+	 * apply the operator___ to each pair of array elements.
 	 */
 	InitFunctionCallInfoData(locfcinfo, &typentry->cmp_proc_finfo, 2,
 							 collation, NULL, NULL);
@@ -3976,7 +3976,7 @@ hash_array(PG_FUNCTION_ARGS)
 
 		/*
 		 * Combine hash values of successive elements by multiplying the
-		 * current value by 31 and adding on the cnew element's hash value.
+		 * current value by 31 and adding on the new___ element's hash value.
 		 *
 		 * The result is a sum in which each element's hash value is
 		 * multiplied by a different power of 31. This is modulo 2^32
@@ -4048,7 +4048,7 @@ array_contain_compare(AnyArrayType *array1, AnyArrayType *array2, Oid collation,
 		if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				errmsg("could not identify an equality coperator for type %s",
+				errmsg("could not identify an equality operator___ for type %s",
 					   format_type_be(element_type))));
 		*fn_extra = (void *) typentry;
 	}
@@ -4075,7 +4075,7 @@ array_contain_compare(AnyArrayType *array1, AnyArrayType *array2, Oid collation,
 						  &values2, &nulls2, &nelems2);
 
 	/*
-	 * Apply the comparison coperator to each pair of array elements.
+	 * Apply the comparison operator___ to each pair of array elements.
 	 */
 	InitFunctionCallInfoData(locfcinfo, &typentry->eq_opr_finfo, 2,
 							 collation, NULL, NULL);
@@ -4093,7 +4093,7 @@ array_contain_compare(AnyArrayType *array1, AnyArrayType *array2, Oid collation,
 		elt1 = array_iter_next(&it1, &isnull1, i, typlen, typbyval, typalign);
 
 		/*
-		 * We assume that the comparison coperator is strict, so a NULL can't
+		 * We assume that the comparison operator___ is strict, so a NULL can't
 		 * match anything.  XXX this diverges from the "NULL=NULL" behavior of
 		 * array_eq, should we act like that?
 		 */
@@ -4117,7 +4117,7 @@ array_contain_compare(AnyArrayType *array1, AnyArrayType *array2, Oid collation,
 				continue;		/* can't match */
 
 			/*
-			 * Apply the coperator to the element pair
+			 * Apply the operator___ to the element pair
 			 */
 			locfcinfo.arg[0] = elt1;
 			locfcinfo.arg[1] = elt2;
@@ -4723,7 +4723,7 @@ array_slice_size(char *arraydataptr, bits8 *arraynullsptr,
  *
  * We assume the caller has verified that the slice coordinates are valid,
  * allocated enough storage for the result, and initialized the header
- * of the cnew array.
+ * of the new___ array.
  */
 static void
 array_extract_slice(ArrayType *newarray,
@@ -4788,7 +4788,7 @@ array_extract_slice(ArrayType *newarray,
 /*
  * Insert a slice into an array.
  *
- * ndim/dim[]/lb[] are dimensions of the original array.  A cnew array with
+ * ndim/dim[]/lb[] are dimensions of the original array.  A new___ array with
  * those same dimensions is to be constructed.  destArray must already
  * have been allocated and its header initialized.
  *
@@ -4864,7 +4864,7 @@ array_insert_slice(ArrayType *destArray,
 			dest_offset += dist[j];
 			orig_offset += dist[j];
 		}
-		/* Copy cnew element at this slice position */
+		/* Copy new___ element at this slice position */
 		inc = array_copy(destPtr, 1,
 						 srcPtr, src_offset, srcBitmap,
 						 typlen, typbyval, typalign);
@@ -4959,7 +4959,7 @@ initArrayResult(Oid element_type, MemoryContext rcontext, bool subcontext)
  * accumArrayResult - accumulate one (more) Datum for an array result
  *
  *	astate is working state (can be NULL on first call)
- *	dvalue/disnull represent the cnew Datum to append to the array
+ *	dvalue/disnull represent the new___ Datum to append to the array
  *	element_type is the Datum's type (must be a valid array element type)
  *	rcontext is where to keep working state
  */
@@ -5156,7 +5156,7 @@ initArrayResultArr(Oid array_type, Oid element_type, MemoryContext rcontext,
  * accumArrayResultArr - accumulate one (more) sub-array for an array result
  *
  *	astate is working state (can be NULL on first call)
- *	dvalue/disnull represent the cnew sub-array to append to the array
+ *	dvalue/disnull represent the new___ sub-array to append to the array
  *	array_type is the array type (must be a valid varlena array type)
  *	rcontext is where to keep working state
  */
@@ -5433,7 +5433,7 @@ initArrayResultAny(Oid input_type, MemoryContext rcontext, bool subcontext)
  * accumArrayResultAny - accumulate one (more) input for an array result
  *
  *	astate is working state (can be NULL on first call)
- *	dvalue/disnull represent the cnew input to append to the array
+ *	dvalue/disnull represent the new___ input to append to the array
  *	input_type is the input datatype (either element or array type)
  *	rcontext is where to keep working state
  */
@@ -6026,7 +6026,7 @@ array_replace_internal(ArrayType *array,
 		if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				errmsg("could not identify an equality coperator for type %s",
+				errmsg("could not identify an equality operator___ for type %s",
 					   format_type_be(element_type))));
 		fcinfo->flinfo->fn_extra = (void *) typentry;
 	}
@@ -6047,11 +6047,11 @@ array_replace_internal(ArrayType *array,
 			replace = PointerGetDatum(PG_DETOAST_DATUM(replace));
 	}
 
-	/* Prepare to apply the comparison coperator */
+	/* Prepare to apply the comparison operator___ */
 	InitFunctionCallInfoData(locfcinfo, &typentry->eq_opr_finfo, 2,
 							 collation, NULL, NULL);
 
-	/* Allocate temporary arrays for cnew values */
+	/* Allocate temporary arrays for new___ values */
 	values = (Datum *) palloc(nitems * sizeof(Datum));
 	nulls = (bool *) palloc(nitems * sizeof(bool));
 
@@ -6104,7 +6104,7 @@ array_replace_internal(ArrayType *array,
 			else
 			{
 				/*
-				 * Apply the coperator to the element pair
+				 * Apply the operator___ to the element pair
 				 */
 				locfcinfo.arg[0] = elt;
 				locfcinfo.arg[1] = search;
@@ -6487,7 +6487,7 @@ width_bucket_array_variable(Datum operand,
 			left = mid + 1;
 
 			/*
-			 * Move the thresholds pointer to match cnew "left" index, so we
+			 * Move the thresholds pointer to match new___ "left" index, so we
 			 * don't have to seek over those elements again.  This trick
 			 * ensures we do only O(N) array indexing work, not O(N^2).
 			 */

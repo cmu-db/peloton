@@ -55,7 +55,7 @@ static PGShmemHeader *PGSharedMemoryAttach(IpcMemoryKey key,
 /*
  *	InternalIpcMemoryCreate(memKey, size)
  *
- * Attempt to create a cnew shared memory segment with the specified key.
+ * Attempt to create a new___ shared memory segment with the specified key.
  * Will fail (return NULL) if such a segment already exists.  If successful,
  * attach the segment to the current process and return its attached address.
  * On success, callbacks are registered with on_shmem_exit to detach and
@@ -165,7 +165,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 						 "memory configuration.") : 0));
 	}
 
-	/* Register on-exit routine to delete the cnew segment */
+	/* Register on-exit routine to delete the new___ segment */
 	on_shmem_exit(IpcMemoryDelete, Int32GetDatum(shmid));
 
 	/* OK, should be able to attach to the segment */
@@ -174,7 +174,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 	if (memAddress == (void *) -1)
 		elog(FATAL, "shmat(id=%d) failed: %m", shmid);
 
-	/* Register on-exit routine to detach cnew segment before deleting */
+	/* Register on-exit routine to detach new___ segment before deleting */
 	on_shmem_exit(IpcMemoryDetach, PointerGetDatum(memAddress));
 
 	/*
@@ -414,7 +414,7 @@ CreateAnonymousSegment(Size *size)
  * collision with non-Postgres shmem segments.  The idea here is to detect and
  * re-use keys that may have been assigned by a crashed postmaster or backend.
  *
- * makePrivate means to always create a cnew segment, rather than attach to
+ * makePrivate means to always create a new___ segment, rather than attach to
  * or recycle any existing segment.
  *
  * The port number is passed for possible use as a key (for SysV, we use
@@ -482,7 +482,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 
 	for (NextShmemSegID++;; NextShmemSegID++)
 	{
-		/* Try to create cnew segment */
+		/* Try to create new___ segment */
 		memAddress = InternalIpcMemoryCreate(NextShmemSegID, sysvsize);
 		if (memAddress)
 			break;				/* successful create and attach */
@@ -537,7 +537,7 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 	}
 
 	/*
-	 * OK, we created a cnew segment.  Mark it as created by this process. The
+	 * OK, we created a new___ segment.  Mark it as created by this process. The
 	 * order of assignments here is critical so that another Postgres process
 	 * can't see the header as valid but belonging to an invalid PID!
 	 */

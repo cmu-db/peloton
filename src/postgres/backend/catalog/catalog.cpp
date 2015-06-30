@@ -120,7 +120,7 @@ IsCatalogClass(Oid relid, Form_pg_class reltuple)
 	 * This test is safe since even an oid wraparound will preserve this
 	 * property (c.f. GetNewObjectId()) and it has the advantage that it works
 	 * correctly even if a user decides to create a relation in the pg_catalog
-	 * cnamespace.
+	 * namescpace___.
 	 * ----
 	 */
 	return relid < FirstNormalObjectId;
@@ -152,7 +152,7 @@ IsToastClass(Form_pg_class reltuple)
 
 /*
  * IsSystemNamespace
- *		True iff cnamespace is pg_catalog.
+ *		True iff namescpace___ is pg_catalog.
  *
  * NOTE: the reason this isn't a macro is to avoid having to include
  * catalog/pg_namespace.h in a lot of places.
@@ -165,7 +165,7 @@ IsSystemNamespace(Oid namespaceId)
 
 /*
  * IsToastNamespace
- *		True iff cnamespace is pg_toast or my temporary-toast-table cnamespace.
+ *		True iff namescpace___ is pg_toast or my temporary-toast-table namescpace___.
  *
  * Note: this will return false for temporary-toast-table namespaces belonging
  * to other backends.  Those are treated the same as other backends' regular
@@ -260,7 +260,7 @@ IsSharedRelation(Oid relationId)
 
 /*
  * GetNewOid
- *		Generate a cnew OID that is unique within the given relation.
+ *		Generate a new___ OID that is unique within the given relation.
  *
  * Caller must have a suitable lock on the relation.
  *
@@ -337,7 +337,7 @@ GetNewOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
 
 	InitDirtySnapshot(SnapshotDirty);
 
-	/* Generate cnew OIDs until we find one not in the table */
+	/* Generate new___ OIDs until we find one not in the table */
 	do
 	{
 		CHECK_FOR_INTERRUPTS();
@@ -363,7 +363,7 @@ GetNewOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
 
 /*
  * GetNewRelFileNode
- *		Generate a cnew relfilenode number that is unique within the
+ *		Generate a new___ relfilenode number that is unique within the
  *		database of the given tablespace.
  *
  * If the relfilenode will also be used as the relation's OID, pass the
@@ -442,7 +442,7 @@ GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 			 * that we can't read the directory itself, we'd be in an infinite
 			 * loop.  In practice it seems best to go ahead regardless of the
 			 * errno.  If there is a colliding file we will get an smgr
-			 * failure when we attempt to create the cnew relation file.
+			 * failure when we attempt to create the new___ relation file.
 			 */
 			collides = false;
 		}

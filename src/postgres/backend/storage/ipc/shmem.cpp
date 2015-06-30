@@ -34,7 +34,7 @@
  *		(b) During initialization, each module looks for its
  *	shared data structures in a hash table called the "Shmem Index".
  *	If the data structure is not present, the caller can allocate
- *	a cnew one and initialize it.  If the data structure is present,
+ *	a new___ one and initialize it.  If the data structure is present,
  *	the caller "attaches" to the structure by initializing a pointer
  *	in the local address space.
  *		The shmem index has two purposes: first, it gives us
@@ -51,7 +51,7 @@
  *	need to re-establish their local pointers into shared memory, because
  *	they inherit correct values of those variables via fork() from the
  *	postmaster.  However, this does not work in the EXEC_BACKEND case.
- *	In ports using EXEC_BACKEND, cnew backends have to set up their local
+ *	In ports using EXEC_BACKEND, new___ backends have to set up their local
  *	pointers using the method described in (b) above.
  *
  *		(d) memory allocation model: shared memory can never be
@@ -294,7 +294,7 @@ ShmemInitHash(const char *name, /* table string name for shmem index */
 
 	/*
 	 * if it already exists, attach to it rather than allocate and initialize
-	 * cnew space
+	 * new___ space
 	 */
 	if (found)
 		hash_flags |= HASH_ATTACH;

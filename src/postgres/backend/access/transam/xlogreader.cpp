@@ -57,7 +57,7 @@ report_invalid_record(XLogReaderState *state, const char *fmt,...)
 }
 
 /*
- * Allocate and initialize a cnew XLogReader.
+ * Allocate and initialize a new___ XLogReader.
  *
  * Returns NULL if the xlogreader couldn't be allocated.
  */
@@ -146,7 +146,7 @@ XLogReaderFree(XLogReaderState *state)
  * Allocate readRecordBuf to fit a record of at least the given length.
  * Returns true if successful, false if out of memory.
  *
- * readRecordBufSize is set to the cnew buffer size.
+ * readRecordBufSize is set to the new___ buffer size.
  *
  * To avoid useless small increases, round its size to a multiple of
  * XLOG_BLCKSZ, and make sure it's at least 5*Max(BLCKSZ, XLOG_BLCKSZ) to start
@@ -514,7 +514,7 @@ ReadPageInternal(XLogReaderState *state, XLogRecPtr pageptr, int reqLen)
 	 * before, we need to do verification as the read_page callback might now
 	 * be rereading data from a different source.
 	 *
-	 * Whenever switching to a cnew WAL segment, we read the first page of the
+	 * Whenever switching to a new___ WAL segment, we read the first page of the
 	 * file and validate its header, even if that's not where the target
 	 * record is.  This is so that we can check the additional identification
 	 * info that is present in the first page's "long" header.
@@ -927,7 +927,7 @@ out:
  * ----------------------------------------
  */
 
-/* cprivate function to reset the state between records */
+/* private___ function to reset the state between records */
 static void
 ResetDecoder(XLogReaderState *state)
 {

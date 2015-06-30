@@ -185,7 +185,7 @@ PortalListGetPrimaryStmt(List *stmts)
 
 /*
  * CreatePortal
- *		Returns a cnew portal given a name.
+ *		Returns a new___ portal given a name.
  *
  * allowDup: if true, automatically drop any pre-existing portal of the
  * same name (if false, an error is raised).
@@ -214,7 +214,7 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 		PortalDrop(portal, false);
 	}
 
-	/* make cnew portal structure */
+	/* make new___ portal structure */
 	portal = (Portal) MemoryContextAllocZero(PortalMemory, sizeof *portal);
 
 	/* initialize portal heap context; typically it won't store much */
@@ -247,7 +247,7 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 
 /*
  * CreateNewPortal
- *		Create a cnew portal, assigning it a random nonconflicting name.
+ *		Create a new___ portal, assigning it a random nonconflicting name.
  */
 Portal
 CreateNewPortal(void)

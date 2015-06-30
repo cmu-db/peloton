@@ -400,7 +400,7 @@ InitCommunication(void)
 	{
 		/*
 		 * We're running a postgres bootstrap process or a standalone backend.
-		 * Create cprivate "shmem" and semaphores.
+		 * Create private___ "shmem" and semaphores.
 		 */
 		CreateSharedMemoryAndSemaphores(true, 0);
 	}
@@ -650,7 +650,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		return;
 
 	/*
-	 * Start a cnew transaction here before first access to db, and get a
+	 * Start a new___ transaction here before first access to db, and get a
 	 * snapshot.  We don't have a use for the snapshot itself, but we're
 	 * interested in the secondary effect that it sets RecentGlobalXmin. (This
 	 * is critical for anything that reads heap pages, because HOT may decide
@@ -720,7 +720,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 
 	/*
-	 * If we're trying to shut down, only superusers can connect, and cnew
+	 * If we're trying to shut down, only superusers can connect, and new___
 	 * replication connections are not allowed.
 	 */
 	if ((!am_superuser || am_walsender) &&
@@ -730,7 +730,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		if (am_walsender)
 			ereport(FATAL,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("cnew replication connections are not allowed during database shutdown")));
+					 errmsg("new___ replication connections are not allowed during database shutdown")));
 		else
 			ereport(FATAL,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -969,7 +969,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 * selected the active user and gotten the right GUC settings.
 	 */
 
-	/* set default cnamespace search path */
+	/* set default namescpace___ search path */
 	InitializeSearchPath();
 
 	/* initialize client encoding */

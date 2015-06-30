@@ -33,11 +33,11 @@ static Size br_page_get_freespace(Page page);
  * oldbuf, to newtup (size newsz) as summary tuple for the page range starting
  * at heapBlk.  oldbuf must not be locked on entry, and is not locked at exit.
  *
- * If samepage is true, attempt to put the cnew tuple in the same page, but if
+ * If samepage is true, attempt to put the new___ tuple in the same page, but if
  * there's no room, use some other one.
  *
  * If the update is successful, return true; the revmap is updated to point to
- * the cnew tuple.  If the update is not done for whatever reason, return false.
+ * the new___ tuple.  If the update is not done for whatever reason, return false.
  * Caller may retry the update if this happens.
  */
 bool
@@ -115,7 +115,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 	/*
 	 * Great, the old tuple is intact.  We can proceed with the update.
 	 *
-	 * If there's enough room in the old page for the cnew tuple, replace it.
+	 * If there's enough room in the old page for the new___ tuple, replace it.
 	 *
 	 * Note that there might now be enough space on the page even though the
 	 * caller told us there isn't, if a concurrent update moved another tuple
@@ -171,7 +171,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 	else
 	{
 		/*
-		 * Not enough free space on the oldpage. Put the cnew tuple on the cnew
+		 * Not enough free space on the oldpage. Put the new___ tuple on the new___
 		 * page, and update the revmap.
 		 */
 		Page		newpage = BufferGetPage(newbuf);
@@ -187,7 +187,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 		newoff = PageAddItem(newpage, (Item) newtup, newsz,
 							 InvalidOffsetNumber, false, false);
 		if (newoff == InvalidOffsetNumber)
-			elog(ERROR, "failed to add BRIN tuple to cnew page");
+			elog(ERROR, "failed to add BRIN tuple to new___ page");
 		MarkBufferDirty(oldbuf);
 		MarkBufferDirty(newbuf);
 
@@ -211,7 +211,7 @@ brin_doupdate(Relation idxrel, BlockNumber pagesPerRange,
 
 			XLogBeginInsert();
 
-			/* cnew page */
+			/* new___ page */
 			XLogRegisterData((char *) &xlrec, SizeOfBrinUpdate);
 
 			XLogRegisterBuffer(0, newbuf, REGBUF_STANDARD | (extended ? REGBUF_WILL_INIT : 0));
@@ -255,8 +255,8 @@ brin_can_do_samepage_update(Buffer buffer, Size origsz, Size newsz)
  * mark the range containing the given page as pointing to the inserted entry.
  * A WAL record is written.
  *
- * The buffer, if valid, is first checked for free space to insert the cnew
- * entry; if there isn't enough, a cnew buffer is obtained and pinned.  No
+ * The buffer, if valid, is first checked for free space to insert the new___
+ * entry; if there isn't enough, a new___ buffer is obtained and pinned.  No
  * buffer lock must be held on entry, no buffer lock is held on exit.
  *
  * Return value is the offset number where the tuple was inserted.
@@ -279,7 +279,7 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 	brinRevmapExtend(revmap, heapBlk);
 
 	/*
-	 * Obtain a locked buffer to insert the cnew tuple.  Note
+	 * Obtain a locked buffer to insert the new___ tuple.  Note
 	 * brin_getinsertbuffer ensures there's enough space in the returned
 	 * buffer.
 	 */
@@ -315,7 +315,7 @@ brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 	off = PageAddItem(page, (Item) tup, itemsz, InvalidOffsetNumber,
 					  false, false);
 	if (off == InvalidOffsetNumber)
-		elog(ERROR, "could not insert cnew index tuple to page");
+		elog(ERROR, "could not insert new___ index tuple to page");
 	MarkBufferDirty(*buffer);
 
 	BRIN_elog((DEBUG2, "inserted tuple (%u,%u) for range starting at %u",
@@ -377,7 +377,7 @@ brin_page_init(Page page, uint16 type)
 }
 
 /*
- * Initialize a cnew BRIN index' metapage.
+ * Initialize a new___ BRIN index' metapage.
  */
 void
 brin_metapage_init(Page page, BlockNumber pagesPerRange, uint16 version)
@@ -494,7 +494,7 @@ brin_evacuate_page(Relation idxRel, BlockNumber pagesPerRange,
  * index item of size itemsz.  If oldbuf is a valid buffer, it is also locked
  * (in an order determined to avoid deadlocks.)
  *
- * If there's no existing page with enough free space to accommodate the cnew
+ * If there's no existing page with enough free space to accommodate the new___
  * item, the relation is extended.  If this happens, *extended is set to true.
  *
  * If we find that the old page is no longer a regular index page (because
@@ -536,7 +536,7 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 		{
 			/*
 			 * There's not enough free space in any existing index page,
-			 * according to the FSM: extend the relation to obtain a shiny cnew
+			 * according to the FSM: extend the relation to obtain a shiny new___
 			 * page.
 			 */
 			if (!RELATION_IS_LOCAL(irel))
@@ -565,7 +565,7 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 		}
 
 		/*
-		 * We lock the old buffer first, if it's earlier than the cnew one; but
+		 * We lock the old buffer first, if it's earlier than the new___ one; but
 		 * before we do, we need to check that it hasn't been turned into a
 		 * revmap page concurrently; if we detect that it happened, give up
 		 * and tell caller to start over.
@@ -592,7 +592,7 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 			brin_page_init(page, BRIN_PAGETYPE_REGULAR);
 
 		/*
-		 * We have a cnew buffer to insert into.  Check that the cnew page has
+		 * We have a new___ buffer to insert into.  Check that the new___ page has
 		 * enough free space, and return it if it does; otherwise start over.
 		 * Note that we allow for the FSM to be out of date here, and in that
 		 * case we update it and move on.
@@ -617,7 +617,7 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 			/*
 			 * Lock the old buffer if not locked already.  Note that in this
 			 * case we know for sure it's a regular page: it's later than the
-			 * cnew page we just got, which is not a revmap page, and revmap
+			 * new___ page we just got, which is not a revmap page, and revmap
 			 * pages are always consecutive.
 			 */
 			if (BufferIsValid(oldbuf) && oldblk > newblk)
@@ -632,8 +632,8 @@ brin_getinsertbuffer(Relation irel, Buffer oldbuf, Size itemsz,
 		/* This page is no good. */
 
 		/*
-		 * If an entirely cnew page does not contain enough free space for the
-		 * cnew item, then surely that item is oversized.  Complain loudly; but
+		 * If an entirely new___ page does not contain enough free space for the
+		 * new___ item, then surely that item is oversized.  Complain loudly; but
 		 * first make sure we record the page as free, for next time.
 		 */
 		if (extended)

@@ -78,7 +78,7 @@ typedef enum
 
 /*
  * The following type records the source of the current setting.  A
- * cnew setting can only take effect if the previous setting had the
+ * new___ setting can only take effect if the previous setting had the
  * same or lower level.  (E.g, changing the config file doesn't
  * override the postmaster command line.)  Tracking the source allows us
  * to process sources in any convenient order without affecting results.
@@ -414,7 +414,7 @@ extern bool check_default_tablespace(char **newval, void **extra, GucSource sour
 extern bool check_temp_tablespaces(char **newval, void **extra, GucSource source);
 extern void assign_temp_tablespaces(const char *newval, void *extra);
 
-/* in catalog/cnamespace.c */
+/* in catalog/namescpace___.c */
 extern bool check_search_path(char **newval, void **extra, GucSource source);
 extern void assign_search_path(const char *newval, void *extra);
 

@@ -11,7 +11,7 @@
  * To make it work when the inserting transaction does delete the tuple,
  * we create a "combo" command ID and store that in the tuple header
  * instead of cmin and cmax. The combo command ID can be mapped to the
- * real cmin and cmax using a backend-cprivate array, which is managed by
+ * real cmin and cmax using a backend-private___ array, which is managed by
  * this module.
  *
  * To allow reusing existing combo cids, we also keep a hash table that
@@ -250,7 +250,7 @@ GetComboCommandId(CommandId cmin, CommandId cmax)
 	}
 
 	/*
-	 * We have to create a cnew combo cid. Check that there's room for it in
+	 * We have to create a new___ combo cid. Check that there's room for it in
 	 * the array, and grow it if there isn't.
 	 */
 	if (usedComboCids >= sizeComboCids)

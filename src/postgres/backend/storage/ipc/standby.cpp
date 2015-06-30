@@ -82,7 +82,7 @@ InitRecoveryTransactionEnvironment(void)
 	 * Note that we don't need to run XactLockTableInsert() because nobody
 	 * needs to wait on xids. That sounds a little strange, but table locks
 	 * are held by vxids and row level locks are held by xids. All queries
-	 * hold AccessShareLocks so never block while we write or lock cnew rows.
+	 * hold AccessShareLocks so never block while we write or lock new___ rows.
 	 */
 	vxid.backendId = MyBackendId;
 	vxid.localTransactionId = GetNextLocalTransactionId();
@@ -835,8 +835,8 @@ standby_redo(XLogReaderState *record)
  * up from a checkpoint and are immediately at our starting point, we
  * unconditionally move to STANDBY_INITIALIZED. After this point we
  * must do 4 things:
- *	* move shared nextXid forwards as we see cnew xids
- *	* extend the clog and subtrans with each cnew xid
+ *	* move shared nextXid forwards as we see new___ xids
+ *	* extend the clog and subtrans with each new___ xid
  *	* keep track of uncommitted known assigned xids
  *	* keep track of uncommitted AccessExclusiveLocks
  *

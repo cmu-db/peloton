@@ -129,7 +129,7 @@ gistGetNodeBuffer(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	if (!found)
 	{
 		/*
-		 * Node buffer wasn't found. Initialize the cnew buffer as empty.
+		 * Node buffer wasn't found. Initialize the new___ buffer as empty.
 		 */
 		MemoryContext oldcxt = MemoryContextSwitchTo(gfbb->context);
 
@@ -159,11 +159,11 @@ gistGetNodeBuffer(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 		}
 
 		/*
-		 * Prepend the cnew buffer to the list of buffers on this level. It's
-		 * not arbitrary that the cnew buffer is put to the beginning of the
+		 * Prepend the new___ buffer to the list of buffers on this level. It's
+		 * not arbitrary that the new___ buffer is put to the beginning of the
 		 * list: in the final emptying phase we loop through all buffers at
 		 * each level, and flush them. If a page is split during the emptying,
-		 * it's more efficient to flush the cnew splitted pages first, before
+		 * it's more efficient to flush the new___ splitted pages first, before
 		 * moving on to pre-existing pages on the level. The buffers just
 		 * created during the page split are likely still in cache, so
 		 * flushing them immediately is more efficient than putting them to
@@ -366,7 +366,7 @@ gistPushItupToNodeBuffer(GISTBuildBuffers *gfbb, GISTNodeBuffer *nodeBuffer,
 	if (PAGE_NO_SPACE(nodeBuffer->pageBuffer, itup))
 	{
 		/*
-		 * Nope. Swap previous block to disk and allocate a cnew one.
+		 * Nope. Swap previous block to disk and allocate a new___ one.
 		 */
 		BlockNumber blkno;
 
@@ -376,7 +376,7 @@ gistPushItupToNodeBuffer(GISTBuildBuffers *gfbb, GISTNodeBuffer *nodeBuffer,
 
 		/*
 		 * Reset the in-memory page as empty, and link the previous block to
-		 * the cnew page by storing its block number in the prev-link.
+		 * the new___ page by storing its block number in the prev-link.
 		 */
 		PAGE_FREE_SPACE(nodeBuffer->pageBuffer) =
 			BLCKSZ - MAXALIGN(offsetof(GISTNodeBufferPage, tupledata));
@@ -530,7 +530,7 @@ typedef struct
 
 /*
  * At page split, distribute tuples from the buffer of the split page to
- * cnew buffers for the created page halves. This also adjusts the downlinks
+ * new___ buffers for the created page halves. This also adjusts the downlinks
  * in 'splitinfo' to include the tuples in the buffers.
  */
 void
@@ -568,7 +568,7 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 
 	/*
 	 * Make a copy of the old buffer, as we're going reuse it as the buffer
-	 * for the cnew left page, which is on the same block as the old page.
+	 * for the new___ left page, which is on the same block as the old page.
 	 * That's not true for the root page, but that's fine because we never
 	 * have a buffer on the root page anyway. The original algorithm as
 	 * described by Arge et al did, but it's of no use, as you might as well
@@ -578,7 +578,7 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	memcpy(&oldBuf, nodeBuffer, sizeof(GISTNodeBuffer));
 	oldBuf.isTemp = true;
 
-	/* Reset the old buffer, used for the cnew left page from now on */
+	/* Reset the old buffer, used for the new___ left page from now on */
 	nodeBuffer->blocksCount = 0;
 	nodeBuffer->pageBuffer = NULL;
 	nodeBuffer->pageBlocknum = InvalidBlockNumber;
@@ -624,7 +624,7 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 
 	/*
 	 * Loop through all index tuples in the buffer of the page being split,
-	 * moving them to buffers for the cnew pages.  We try to move each tuple to
+	 * moving them to buffers for the new___ pages.  We try to move each tuple to
 	 * the page that will result in the lowest penalty for the leading column
 	 * or, in the case of a tie, the lowest penalty for the earliest column
 	 * that is not tied.

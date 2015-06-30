@@ -318,7 +318,7 @@ set_ps_display(const char *activity, bool force)
 			ps_buffer_size - ps_buffer_fixed_size);
 	ps_buffer_cur_len = strlen(ps_buffer);
 
-	/* Transmit cnew setting to kernel, if necessary */
+	/* Transmit new___ setting to kernel, if necessary */
 
 #ifdef PS_USE_SETPROCTITLE
 	setproctitle("%s", ps_buffer);

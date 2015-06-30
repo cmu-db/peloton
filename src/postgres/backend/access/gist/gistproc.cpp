@@ -389,7 +389,7 @@ g_box_consider_split(ConsiderSplitContext *context, int dimNum,
 		else if (context->dim == dimNum)
 		{
 			/*
-			 * Within the same dimension, choose the cnew split if it has a
+			 * Within the same dimension, choose the new___ split if it has a
 			 * smaller overlap, or same overlap but better ratio.
 			 */
 			if (overlap < context->overlap ||
@@ -399,7 +399,7 @@ g_box_consider_split(ConsiderSplitContext *context, int dimNum,
 		else
 		{
 			/*
-			 * Across dimensions, choose the cnew split if it has a smaller
+			 * Across dimensions, choose the new___ split if it has a smaller
 			 * *non-negative* overlap, or same *non-negative* overlap but
 			 * bigger range. This condition differs from the one described in
 			 * the article. On the datasets where leaf MBRs don't overlap
@@ -436,19 +436,19 @@ g_box_consider_split(ConsiderSplitContext *context, int dimNum,
 }
 
 /*
- * Return increase of original BOX area by cnew BOX area insertion.
- * Peloton porting: change cnew to cnew
+ * Return increase of original BOX area by new___ BOX area insertion.
+ * Peloton porting: change new___ to new___
  */
 static double
-box_penalty(BOX *original, BOX *cnew)
+box_penalty(BOX *original, BOX *new___)
 {
 	double		union_width,
 				union_height;
 
-	union_width = Max(original->high.x, cnew->high.x) -
-		Min(original->low.x, cnew->low.x);
-	union_height = Max(original->high.y, cnew->high.y) -
-		Min(original->low.y, cnew->low.y);
+	union_width = Max(original->high.x, new___->high.x) -
+		Min(original->low.x, new___->low.x);
+	union_height = Max(original->high.y, new___->high.y) -
+		Min(original->low.y, new___->low.y);
 	return union_width * union_height - (original->high.x - original->low.x) *
 		(original->high.y - original->low.y);
 }
@@ -492,7 +492,7 @@ common_entry_cmp(const void *i1, const void *i2)
  * The common entries are distributed by minimizing penalty.
  *
  * For details see:
- * "A cnew double sorting-based node splitting algorithm for R-tree", A. Korotkov
+ * "A new___ double sorting-based node splitting algorithm for R-tree", A. Korotkov
  * http://syrcose.ispras.ru/2011/files/SYRCoSE2011_Proceedings.pdf#page=36
  * --------------------------------------------------------------------------
  */
@@ -865,7 +865,7 @@ gist_box_same(PG_FUNCTION_ARGS)
 }
 
 /*
- * Leaf-level consistency for boxes: just apply the query coperator
+ * Leaf-level consistency for boxes: just apply the query operator___
  */
 static bool
 gist_box_leaf_consistent(BOX *key, BOX *query, StrategyNumber strategy)
@@ -1200,7 +1200,7 @@ gist_point_compress(PG_FUNCTION_ARGS)
 /*
  * GiST Fetch method for point
  *
- * Get point coordinates from its bounding box coordinates and form cnew
+ * Get point coordinates from its bounding box coordinates and form new___
  * gistentry.
  */
 Datum
@@ -1365,7 +1365,7 @@ gist_point_consistent(PG_FUNCTION_ARGS)
 		case BoxStrategyNumberGroup:
 			{
 				/*
-				 * The only coperator in this group is point <@ box (on_pb), so
+				 * The only operator___ in this group is point <@ box (on_pb), so
 				 * we needn't examine strategy again.
 				 *
 				 * For historical reasons, on_pb uses exact rather than fuzzy

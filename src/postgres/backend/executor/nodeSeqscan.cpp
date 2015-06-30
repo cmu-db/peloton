@@ -268,7 +268,7 @@ ExecReScanSeqScan(SeqScanState *node)
 	scan = node->ss_currentScanDesc;
 
 	heap_rescan(scan,			/* scan desc */
-				NULL);			/* cnew scan keys */
+				NULL);			/* new___ scan keys */
 
 	ExecScanReScan((ScanState *) node);
 }

@@ -13,13 +13,13 @@
  * for I/O, while the "followers" don't, there is a strong self-synchronizing
  * effect once we can get the backends examining approximately the same part
  * of the table at the same time.  Hence all that is really needed is to get
- * a cnew backend beginning a seqscan to begin it close to where other backends
+ * a new___ backend beginning a seqscan to begin it close to where other backends
  * are reading.  We can scan the table circularly, from block X up to the
  * end and then from block 0 to X-1, to ensure we visit all rows while still
  * participating in the common scan.
  *
  * To accomplish that, we keep track of the scan position of each table, and
- * start cnew scans close to where the previous scan(s) are.  We don't try to
+ * start new___ scans close to where the previous scan(s) are.  We don't try to
  * do any extra synchronization to keep the scans together afterwards; some
  * scans might progress much more slowly than others, for example if the
  * results need to be transferred to the client over a slow network, and we
@@ -64,7 +64,7 @@ bool		trace_syncscan = false;
  *
  * XXX: What's a good value? It should be large enough to hold the
  * maximum number of large tables scanned simultaneously.  But a larger value
- * means more traversing of the LRU list when starting a cnew scan.
+ * means more traversing of the LRU list when starting a new___ scan.
  */
 #define SYNC_SCAN_NELEM 20
 
@@ -74,7 +74,7 @@ bool		trace_syncscan = false;
  * Note: This should be smaller than the ring size (see buffer/freelist.c)
  * we use for bulk reads.  Otherwise a scan joining other scans might start
  * from a page that's no longer in the buffer cache.  This is a bit fuzzy;
- * there's no guarantee that the cnew scan will read the page before it leaves
+ * there's no guarantee that the new___ scan will read the page before it leaves
  * the buffer cache anyway, and on the other hand the page is most likely
  * still in the OS cache.
  */
@@ -298,7 +298,7 @@ ss_report_location(Relation rel, BlockNumber location)
 	/*
 	 * To reduce lock contention, only report scan progress every N pages. For
 	 * the same reason, don't block if the lock isn't immediately available.
-	 * Missing a few updates isn't critical, it just means that a cnew scan
+	 * Missing a few updates isn't critical, it just means that a new___ scan
 	 * that wants to join the pack will start a little bit behind the head of
 	 * the scan.  Hopefully the pages are still in OS cache and the scan
 	 * catches up quickly.

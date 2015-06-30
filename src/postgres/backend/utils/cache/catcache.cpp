@@ -771,7 +771,7 @@ InitCatCache(int id,
 	}
 
 	/*
-	 * allocate a cnew cache structure
+	 * allocate a new___ cache structure
 	 *
 	 * Note: we rely on zeroing to initialize all the dlist headers correctly
 	 */
@@ -780,7 +780,7 @@ InitCatCache(int id,
 
 	/*
 	 * initialize the cache's relation information for the relation
-	 * corresponding to this cache, and initialize some of the cnew cache's
+	 * corresponding to this cache, and initialize some of the new___ cache's
 	 * other internal fields.  But don't open the relation yet.
 	 */
 	cp->id = id;
@@ -796,7 +796,7 @@ InitCatCache(int id,
 		cp->cc_key[i] = key[i];
 
 	/*
-	 * cnew cache is initialized as far as we can go for now. print some
+	 * new___ cache is initialized as far as we can go for now. print some
 	 * debugging information, if appropriate.
 	 */
 	InitCatCache_DEBUG2;
@@ -827,11 +827,11 @@ RehashCatCache(CatCache *cp)
 	elog(DEBUG1, "rehashing catalog cache id %d for %s; %d tups, %d buckets",
 		 cp->id, cp->cc_relname, cp->cc_ntup, cp->cc_nbuckets);
 
-	/* Allocate a cnew, larger, hash table. */
+	/* Allocate a new___, larger, hash table. */
 	newnbuckets = cp->cc_nbuckets * 2;
 	newbucket = (dlist_head *) MemoryContextAllocZero(CacheMemoryContext, newnbuckets * sizeof(dlist_head));
 
-	/* Move all entries from old hash table to cnew. */
+	/* Move all entries from old hash table to new___. */
 	for (i = 0; i < cp->cc_nbuckets; i++)
 	{
 		dlist_mutable_iter iter;
@@ -846,7 +846,7 @@ RehashCatCache(CatCache *cp)
 		}
 	}
 
-	/* Switch to the cnew array. */
+	/* Switch to the new___ array. */
 	pfree(cp->cc_bucket);
 	cp->cc_nbuckets = newnbuckets;
 	cp->cc_bucket = newbucket;
@@ -1015,7 +1015,7 @@ InitCatCachePhase2(CatCache *cache, bool touch_index)
 		/*
 		 * While we've got the index open, let's check that it's unique (and
 		 * not just deferrable-unique, thank you very much).  This is just to
-		 * catch thinkos in definitions of cnew catcaches, so we don't worry
+		 * catch thinkos in definitions of new___ catcaches, so we don't worry
 		 * about the pg_am indexes not getting tested.
 		 */
 		Assert(idesc->rd_index->indisunique &&
@@ -1499,7 +1499,7 @@ SearchCatCacheList(CatCache *cache,
 	/*
 	 * List was not found in cache, so we have to build it by reading the
 	 * relation.  For each matching tuple found in the relation, use an
-	 * existing cache entry if possible, else build a cnew one.
+	 * existing cache entry if possible, else build a new___ one.
 	 *
 	 * We have to bump the member refcounts temporarily to ensure they won't
 	 * get dropped from the cache while loading other members. We use a PG_TRY
@@ -1568,7 +1568,7 @@ SearchCatCacheList(CatCache *cache,
 
 			if (!found)
 			{
-				/* We didn't find a usable entry, so make a cnew one */
+				/* We didn't find a usable entry, so make a new___ one */
 				ct = CatalogCacheCreateEntry(cache, ntp,
 											 hashValue, hashIndex,
 											 false);
@@ -1688,8 +1688,8 @@ ReleaseCatCacheList(CatCList *list)
 
 /*
  * CatalogCacheCreateEntry
- *		Create a cnew CatCTup entry, copying the given HeapTuple and other
- *		supplied data into it.  The cnew entry initially has refcount 0.
+ *		Create a new___ CatCTup entry, copying the given HeapTuple and other
+ *		supplied data into it.  The new___ entry initially has refcount 0.
  */
 static CatCTup *
 CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp,
@@ -1835,7 +1835,7 @@ build_dummy_tuple(CatCache *cache, int nkeys, ScanKey skeys)
  *
  *	For an insert or delete, tuple is the target tuple and newtuple is NULL.
  *	For an update, we are called just once, with tuple being the old tuple
- *	version and newtuple the cnew version.  We should make two list entries
+ *	version and newtuple the new___ version.  We should make two list entries
  *	if the tuple's hash value changed, but only one if it didn't.
  *
  *	Note that it is irrelevant whether the given tuple is actually loaded

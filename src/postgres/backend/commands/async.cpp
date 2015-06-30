@@ -93,7 +93,7 @@
  *	  backend: if our pointer is set to the same position as the global tail
  *	  pointer is set, then we move the global tail pointer ahead to where the
  *	  second-laziest backend is (in general, we take the MIN of the current
- *	  head position and all active backends' cnew tail pointers). Whenever we
+ *	  head position and all active backends' new___ tail pointers). Whenever we
  *	  move the global tail pointer we also truncate now-unused pages (i.e.,
  *	  delete files in pg_notify/ that are no longer used).
  *
@@ -178,7 +178,7 @@ typedef struct AsyncQueueEntry
 /*
  * Struct describing a queue position, and assorted macros for working with it
  *
- * Peloton porting: Add new ctor and coperator+ for this; remove typedef
+ * Peloton porting: Add new ctor and operator___+ for this; remove typedef
  */
 struct QueuePosition
 {
@@ -984,7 +984,7 @@ Exec_ListenCommit(const char *channel)
 		return;
 
 	/*
-	 * Add the cnew channel name to listenChannels.
+	 * Add the new___ channel name to listenChannels.
 	 *
 	 * XXX It is theoretically possible to get an out-of-memory failure here,
 	 * which would be bad because we already committed.  For the moment it
@@ -1112,7 +1112,7 @@ ProcessCompletedNotifies(void)
 		 * If we found no other listening backends, and we aren't listening
 		 * ourselves, then we must execute asyncQueueAdvanceTail to flush the
 		 * queue, because ain't nobody else gonna do it.  This prevents queue
-		 * overflow when we're sending useless notifies to nobody. (A cnew
+		 * overflow when we're sending useless notifies to nobody. (A new___
 		 * listener could have joined since we looked, but if so this is
 		 * harmless.)
 		 */
@@ -1191,7 +1191,7 @@ asyncQueueIsFull(void)
 	int			boundary;
 
 	/*
-	 * The queue is full if creating a cnew head page would create a page that
+	 * The queue is full if creating a new___ head page would create a page that
 	 * logically precedes the current global tail pointer, ie, the head
 	 * pointer would wrap around compared to the tail.  We cannot create such
 	 * a head page for fear of confusing slru.c.  For safety we round the tail
@@ -1212,7 +1212,7 @@ asyncQueueIsFull(void)
 
 /*
  * Advance the QueuePosition to the next entry, assuming that the current
- * entry is of length entryLength.  If we jump to a cnew page the function
+ * entry is of length entryLength.  If we jump to a new___ page the function
  * returns true, else false.
  */
 static bool
@@ -1274,7 +1274,7 @@ asyncQueueNotificationToEntry(Notification *n, AsyncQueueEntry *qe)
 /*
  * Add pending notifications to the queue.
  *
- * We go page by page here, i.e. we stop once we have to go to a cnew page but
+ * We go page by page here, i.e. we stop once we have to go to a new___ page but
  * we will be called again and then fill that next page. If an entry does not
  * fit into the current page, we write a dummy entry with an InvalidOid as the
  * database OID in order to fill the page. So every page is always used up to
@@ -1302,7 +1302,7 @@ asyncQueueAddEntries(ListCell *nextNotify)
 	/*
 	 * We work with a local copy of QUEUE_HEAD, which we write back to shared
 	 * memory upon exiting.  The reason for this is that if we have to advance
-	 * to a cnew page, SimpleLruZeroPage might fail (out of disk space, for
+	 * to a new___ page, SimpleLruZeroPage might fail (out of disk space, for
 	 * instance), and we must not advance QUEUE_HEAD if it does.  (Otherwise,
 	 * subsequent insertions would try to put entries into a page that slru.c
 	 * thinks doesn't exist yet.)  So, use a local position variable.  Note
@@ -1544,7 +1544,7 @@ AtAbort_Notify(void)
 /*
  * AtSubStart_Notify() --- Take care of subtransaction start.
  *
- * Push empty state for the cnew subtransaction.
+ * Push empty state for the new___ subtransaction.
  */
 void
 AtSubStart_Notify(void)
@@ -2057,7 +2057,7 @@ AsyncExistsPendingNotify(const char *channel, const char *payload)
 		payload = "";
 
 	/*----------
-	 * We need to append cnew elements to the end of the list in order to keep
+	 * We need to append new___ elements to the end of the list in order to keep
 	 * the order. However, on the other hand we'd like to check the list
 	 * backwards in order to make duplicate-elimination a tad faster when the
 	 * same condition is signaled many times in a row. So as a compromise we

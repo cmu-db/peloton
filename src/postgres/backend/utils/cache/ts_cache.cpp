@@ -292,7 +292,7 @@ lookup_ts_dictionary_cache(Oid dictId)
 							HASH_ENTER, &found);
 			Assert(!found);		/* it wasn't there a moment ago */
 
-			/* Create cprivate memory context the first time through */
+			/* Create private___ memory context the first time through */
 			saveCtx = AllocSetContextCreate(CacheMemoryContext,
 											NameStr(dict->dictname),
 											ALLOCSET_SMALL_MINSIZE,
@@ -301,7 +301,7 @@ lookup_ts_dictionary_cache(Oid dictId)
 		}
 		else
 		{
-			/* Clear the existing entry's cprivate context */
+			/* Clear the existing entry's private___ context */
 			saveCtx = entry->dictCtx;
 			MemoryContextResetAndDeleteChildren(saveCtx);
 		}
@@ -320,7 +320,7 @@ lookup_ts_dictionary_cache(Oid dictId)
 			MemoryContext oldcontext;
 
 			/*
-			 * Init method runs in dictionary's cprivate memory context, and we
+			 * Init method runs in dictionary's private___ memory context, and we
 			 * make sure the options are stored there too
 			 */
 			oldcontext = MemoryContextSwitchTo(entry->dictCtx);
@@ -494,7 +494,7 @@ lookup_ts_config_cache(Oid cfgId)
 				elog(ERROR, "maptokentype entries are out of order");
 			if (toktype > maxtokentype)
 			{
-				/* starting a cnew token type, but first save the prior data */
+				/* starting a new___ token type, but first save the prior data */
 				if (ndicts > 0)
 				{
 					maplists[maxtokentype].len = ndicts;
