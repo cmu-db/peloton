@@ -13,12 +13,13 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
 > - **flex** [ Lexical analyzer generator ]
 > - **bison 3.0.4** [ Parser generator ]
 > - **valgrind** [ Dynamic analysis framework ]
+> - **mm** [ Shared memory library ]
 
 ## Installation 
  
 ###	Ubuntu Quick Setup
 
-    sudo apt-get install g++ pkg-config libtool libtbb-dev libjson-spirit-dev libreadline-dev flex bison
+    sudo apt-get install g++ pkg-config libtool libtbb-dev libjson-spirit-dev libreadline-dev libmm flex bison
 
 ### OS X Setup
 

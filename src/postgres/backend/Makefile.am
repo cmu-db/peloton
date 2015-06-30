@@ -352,6 +352,7 @@ postgres_backend_FILES = \
 						 postgres/backend/postmaster/bgwriter.c \
 						 postgres/backend/postmaster/checkpointer.c \
 						 postgres/backend/postmaster/fork_process.c \
+						 postgres/backend/postmaster/peloton.c \
 						 postgres/backend/postmaster/pgarch.c \
 						 postgres/backend/postmaster/pgstat.c \
 						 postgres/backend/postmaster/postmaster.c \
@@ -578,6 +579,8 @@ postgres_backend_FILES = \
 						 postgres/backend/utils/mmgr/aset.c \
 						 postgres/backend/utils/mmgr/mcxt.c \
 						 postgres/backend/utils/mmgr/portalmem.c \
+						 postgres/backend/utils/mmgr/shmctx.c \
+						 postgres/backend/utils/mmgr/shmset.c \
 						 postgres/backend/utils/resowner/resowner.c \
 						 postgres/backend/utils/sort/logtape.c \
 						 postgres/backend/utils/sort/sortsupport.c \

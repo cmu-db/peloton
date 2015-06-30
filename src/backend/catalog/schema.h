@@ -63,7 +63,8 @@ class ColumnInfo {
   // Configure offset as well
   ColumnInfo(ValueType column_type, oid_t column_offset,
              oid_t column_length, std::string column_name,
-             bool allow_null, bool is_inlined, std::vector<Constraint> column_constraint_vector)
+             bool allow_null, bool is_inlined,
+             std::vector<Constraint> column_constraint_vector)
   : type(column_type), offset(column_offset),
     name(column_name),
     allow_null(allow_null), is_inlined(is_inlined), constraint_vector(column_constraint_vector){
