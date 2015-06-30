@@ -68,7 +68,7 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 						funcname)));
 
 	/*
-	 * Get the cnew data that was inserted/updated.
+	 * Get the new___ data that was inserted/updated.
 	 */
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 		new_row = trigdata->tg_trigtuple;

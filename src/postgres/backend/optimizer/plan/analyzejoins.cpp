@@ -255,7 +255,7 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 
 	/*
 	 * Search for mergejoinable clauses that constrain the inner rel against
-	 * either the outer rel or a pseudoconstant.  If an coperator is
+	 * either the outer rel or a pseudoconstant.  If an operator___ is
 	 * mergejoinable then it behaves like equality for some btree opclass, so
 	 * it's what we want.  The mergejoinability test also eliminates clauses
 	 * containing volatile functions, which we couldn't depend on.
@@ -330,9 +330,9 @@ join_is_removable(PlannerInfo *root, SpecialJoinInfo *sjinfo)
 			Var		   *var;
 
 			/*
-			 * Get the equality coperator we need uniqueness according to.
-			 * (This might be a cross-type coperator and thus not exactly the
-			 * same coperator the subquery would consider; that's all right
+			 * Get the equality operator___ we need uniqueness according to.
+			 * (This might be a cross-type operator___ and thus not exactly the
+			 * same operator___ the subquery would consider; that's all right
 			 * since query_is_distinct_for can resolve such cases.)  The
 			 * mergejoinability test above should have selected only OpExprs.
 			 */
@@ -518,7 +518,7 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 /*
  * Remove any occurrences of the target relid from a joinlist structure.
  *
- * It's easiest to build a whole cnew list structure, so we handle it that
+ * It's easiest to build a whole new___ list structure, so we handle it that
  * way.  Efficiency is not a big deal here.
  *
  * *nremoved is incremented by the number of occurrences removed (there
@@ -629,7 +629,7 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 
 	/*
 	 * DISTINCT (including DISTINCT ON) guarantees uniqueness if all the
-	 * columns in the DISTINCT clause appear in colnos and coperator semantics
+	 * columns in the DISTINCT clause appear in colnos and operator___ semantics
 	 * match.
 	 */
 	if (query->distinctClause)
@@ -651,7 +651,7 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 
 	/*
 	 * Similarly, GROUP BY without GROUPING SETS guarantees uniqueness if all
-	 * the grouped columns appear in colnos and coperator semantics match.
+	 * the grouped columns appear in colnos and operator___ semantics match.
 	 */
 	if (query->groupClause && !query->groupingSets)
 	{

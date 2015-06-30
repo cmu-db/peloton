@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * hashsort.c
- *		Sort tuples for insertion into a cnew hash index.
+ *		Sort tuples for insertion into a new___ hash index.
  *
  * When building a very large hash index, we pre-sort the tuples by bucket
  * number to improve locality of access to the index, and thereby avoid

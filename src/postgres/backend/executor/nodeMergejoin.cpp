@@ -165,8 +165,8 @@ typedef enum
  * In addition to the expressions themselves, the planner passes the btree
  * opfamily OID, collation OID, btree strategy number (BTLessStrategyNumber or
  * BTGreaterStrategyNumber), and nulls-first flag that identify the intended
- * sort ordering for each merge key.  The mergejoinable coperator is an
- * equality coperator in the opfamily, and the two inputs are guaranteed to be
+ * sort ordering for each merge key.  The mergejoinable operator___ is an
+ * equality operator___ in the opfamily, and the two inputs are guaranteed to be
  * ordered in either increasing or decreasing (respectively) order according
  * to the opfamily and collation, with nulls at the indicated end of the range.
  * This allows us to obtain the needed comparison function from the opfamily.
@@ -220,13 +220,13 @@ MJExamineQuals(List *mergeclauses,
 			elog(ERROR, "unsupported mergejoin strategy %d", opstrategy);
 		clause->ssup.ssup_nulls_first = nulls_first;
 
-		/* Extract the coperator's declared left/right datatypes */
+		/* Extract the operator___'s declared left/right datatypes */
 		get_op_opfamily_properties(qual->opno, opfamily, false,
 								   &op_strategy,
 								   &op_lefttype,
 								   &op_righttype);
 		if (op_strategy != BTEqualStrategyNumber)		/* should not happen */
-			elog(ERROR, "cannot merge using non-equality coperator %u",
+			elog(ERROR, "cannot merge using non-equality operator___ %u",
 				 qual->opno);
 
 		/*
@@ -288,7 +288,7 @@ MJExamineQuals(List *mergeclauses,
  * a first-column NULL.
  *
  * We evaluate the values in OuterEContext, which can be reset each
- * time we move to a cnew tuple.
+ * time we move to a new___ tuple.
  */
 static MJEvalResult
 MJEvalOuterValues(MergeJoinState *mergestate)
@@ -923,7 +923,7 @@ ExecMergeJoin(MergeJoinState *node)
 					case MJEVAL_MATCHABLE:
 
 						/*
-						 * Test the cnew inner tuple to see if it matches
+						 * Test the new___ inner tuple to see if it matches
 						 * outer.
 						 *
 						 * If they do match, then we join them and move on to
@@ -948,7 +948,7 @@ ExecMergeJoin(MergeJoinState *node)
 						/*
 						 * It contains a NULL and hence can't match any outer
 						 * tuple, so we can skip the comparison and assume the
-						 * cnew tuple is greater than current outer.
+						 * new___ tuple is greater than current outer.
 						 */
 						node->mj_JoinState = EXEC_MJ_NEXTOUTER;
 						break;
@@ -980,7 +980,7 @@ ExecMergeJoin(MergeJoinState *node)
 				 * we know we just bumped into the
 				 * first inner tuple > current outer tuple (or possibly
 				 * the end of the inner stream)
-				 * so get a cnew outer tuple and then
+				 * so get a new___ outer tuple and then
 				 * proceed to test it against the marked tuple
 				 * (EXEC_MJ_TESTOUTER)
 				 *
@@ -1018,7 +1018,7 @@ ExecMergeJoin(MergeJoinState *node)
 				switch (MJEvalOuterValues(node))
 				{
 					case MJEVAL_MATCHABLE:
-						/* Go test the cnew tuple against the marked tuple */
+						/* Go test the new___ tuple against the marked tuple */
 						node->mj_JoinState = EXEC_MJ_TESTOUTER;
 						break;
 					case MJEVAL_NONMATCHABLE:
@@ -1044,21 +1044,21 @@ ExecMergeJoin(MergeJoinState *node)
 				break;
 
 				/*--------------------------------------------------------
-				 * EXEC_MJ_TESTOUTER If the cnew outer tuple and the marked
+				 * EXEC_MJ_TESTOUTER If the new___ outer tuple and the marked
 				 * tuple satisfy the merge clause then we know we have
 				 * duplicates in the outer scan so we have to restore the
 				 * inner scan to the marked tuple and proceed to join the
-				 * cnew outer tuple with the inner tuples.
+				 * new___ outer tuple with the inner tuples.
 				 *
 				 * This is the case when
 				 *						  outer inner
 				 *							4	  5  - marked tuple
 				 *			 outer tuple -	5	  5
-				 *		 cnew outer tuple -	5	  5
+				 *		 new___ outer tuple -	5	  5
 				 *							6	  8  - inner tuple
 				 *							7	 12
 				 *
-				 *				cnew outer tuple == marked tuple
+				 *				new___ outer tuple == marked tuple
 				 *
 				 * If the outer tuple fails the test, then we are done
 				 * with the marked tuples, and we have to look for a
@@ -1071,10 +1071,10 @@ ExecMergeJoin(MergeJoinState *node)
 				 *						  outer inner
 				 *							5	  5  - marked tuple
 				 *			 outer tuple -	5	  5
-				 *		 cnew outer tuple -	6	  8  - inner tuple
+				 *		 new___ outer tuple -	6	  8  - inner tuple
 				 *							7	 12
 				 *
-				 *				cnew outer tuple > marked tuple
+				 *				new___ outer tuple > marked tuple
 				 *
 				 *---------------------------------------------------------
 				 */
@@ -1097,11 +1097,11 @@ ExecMergeJoin(MergeJoinState *node)
 					/*
 					 * the merge clause matched so now we restore the inner
 					 * scan position to the first mark, and go join that tuple
-					 * (and any following ones) to the cnew outer.
+					 * (and any following ones) to the new___ outer.
 					 *
 					 * NOTE: we do not need to worry about the MatchedInner
 					 * state for the rescanned inner tuples.  We know all of
-					 * them will match this cnew outer tuple and therefore
+					 * them will match this new___ outer tuple and therefore
 					 * won't be emitted as fill tuples.  This works *only*
 					 * because we require the extra joinquals to be constant
 					 * when doing a right or full join --- otherwise some of
@@ -1114,7 +1114,7 @@ ExecMergeJoin(MergeJoinState *node)
 					ExecRestrPos(innerPlan);
 
 					/*
-					 * ExecRestrPos probably should give us back a cnew Slot,
+					 * ExecRestrPos probably should give us back a new___ Slot,
 					 * but since it doesn't, use the marked slot.  (The
 					 * previously returned mj_InnerTupleSlot cannot be assumed
 					 * to hold the required tuple.)
@@ -1127,12 +1127,12 @@ ExecMergeJoin(MergeJoinState *node)
 				else
 				{
 					/* ----------------
-					 *	if the cnew outer tuple didn't match the marked inner
+					 *	if the new___ outer tuple didn't match the marked inner
 					 *	tuple then we have a case like:
 					 *
 					 *			 outer inner
 					 *			   4	 4	- marked tuple
-					 * cnew outer - 5	 4
+					 * new___ outer - 5	 4
 					 *			   6	 5	- inner tuple
 					 *			   7
 					 *
@@ -1271,7 +1271,7 @@ ExecMergeJoin(MergeJoinState *node)
 				switch (MJEvalOuterValues(node))
 				{
 					case MJEVAL_MATCHABLE:
-						/* Go test the cnew tuple against the current inner */
+						/* Go test the new___ tuple against the current inner */
 						node->mj_JoinState = EXEC_MJ_SKIP_TEST;
 						break;
 					case MJEVAL_NONMATCHABLE:

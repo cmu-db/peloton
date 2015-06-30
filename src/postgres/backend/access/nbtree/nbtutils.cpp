@@ -186,7 +186,7 @@ _bt_freestack(BTStack stack)
  *
  * Note: the reason we need so->arrayKeyData, rather than just scribbling
  * on scan->keyData, is that callers are permitted to call btrescan without
- * supplying a cnew set of scankey data.
+ * supplying a new___ set of scankey data.
  */
 void
 _bt_preprocess_array_keys(IndexScanDesc scan)
@@ -303,7 +303,7 @@ _bt_preprocess_array_keys(IndexScanDesc scan)
 		}
 
 		/*
-		 * If the comparison coperator is not equality, then the array qual
+		 * If the comparison operator___ is not equality, then the array qual
 		 * degenerates to a simple comparison against the smallest or largest
 		 * non-null array element, as appropriate.
 		 */
@@ -385,7 +385,7 @@ _bt_find_extreme_element(IndexScanDesc scan, ScanKey skey,
 		elemtype = rel->rd_opcintype[skey->sk_attno - 1];
 
 	/*
-	 * Look up the appropriate comparison coperator in the opfamily.
+	 * Look up the appropriate comparison operator___ in the opfamily.
 	 *
 	 * Note: it's possible that this would fail, if the opfamily is
 	 * incomplete, but it seems quite unlikely that an opfamily would omit
@@ -397,12 +397,12 @@ _bt_find_extreme_element(IndexScanDesc scan, ScanKey skey,
 								 elemtype,
 								 strat);
 	if (!OidIsValid(cmp_op))
-		elog(ERROR, "missing coperator %d(%u,%u) in opfamily %u",
+		elog(ERROR, "missing operator___ %d(%u,%u) in opfamily %u",
 			 strat, elemtype, elemtype,
 			 rel->rd_opfamily[skey->sk_attno - 1]);
 	cmp_proc = get_opcode(cmp_op);
 	if (!RegProcedureIsValid(cmp_proc))
-		elog(ERROR, "missing oprcode for coperator %u", cmp_op);
+		elog(ERROR, "missing oprcode for operator___ %u", cmp_op);
 
 	fmgr_info(cmp_proc, &flinfo);
 
@@ -423,7 +423,7 @@ _bt_find_extreme_element(IndexScanDesc scan, ScanKey skey,
 /*
  * _bt_sort_array_elements() -- sort and de-dup array elements
  *
- * The array elements are sorted in-place, and the cnew number of elements
+ * The array elements are sorted in-place, and the new___ number of elements
  * after duplicate removal is returned.
  *
  * scan and skey identify the index column, whose opfamily determines the
@@ -701,9 +701,9 @@ _bt_restore_array_keys(IndexScanDesc scan)
  * >/>= bound and the tightest </<= bound, and if there's an = key then
  * that's the only one returned.  (So, we return either a single = key,
  * or one or two boundary-condition keys for each attr.)  However, if we
- * cannot compare two keys for lack of a suitable cross-type coperator,
+ * cannot compare two keys for lack of a suitable cross-type operator___,
  * we cannot eliminate either.  If there are two such keys of the same
- * coperator strategy, the second one is just pushed into the output array
+ * operator___ strategy, the second one is just pushed into the output array
  * without further processing here.  We may also emit both >/>= or both
  * </<= keys if we can't compare them.  The logic about required keys still
  * works if we don't eliminate redundant keys.
@@ -711,7 +711,7 @@ _bt_restore_array_keys(IndexScanDesc scan)
  * Note that one reason we need direction-sensitive required-key flags is
  * precisely that we may not be able to eliminate redundant keys.  Suppose
  * we have "x > 4::int AND x > 10::bigint", and we are unable to determine
- * which key is more restrictive for lack of a suitable cross-type coperator.
+ * which key is more restrictive for lack of a suitable cross-type operator___.
  * _bt_first will arbitrarily pick one of the keys to do the initial
  * positioning with.  If it picks x > 4, then the x > 10 condition will fail
  * until we reach index entries > 10; but we can't stop the scan just because
@@ -734,10 +734,10 @@ _bt_restore_array_keys(IndexScanDesc scan)
  * comparison on the row's first index column, for the purposes of the logic
  * about required keys.
  *
- * Note: the reason we have to copy the preprocessed scan keys into cprivate
+ * Note: the reason we have to copy the preprocessed scan keys into private___
  * storage is that we are modifying the array based on comparisons of the
  * key argument values, which could change on a rescan or after moving to
- * cnew elements of array keys.  Therefore we can't overwrite the source data.
+ * new___ elements of array keys.  Therefore we can't overwrite the source data.
  */
 void
 _bt_preprocess_keys(IndexScanDesc scan)
@@ -940,12 +940,12 @@ _bt_preprocess_keys(IndexScanDesc scan)
 			if (i == numberOfKeys)
 				break;
 
-			/* Re-initialize for cnew attno */
+			/* Re-initialize for new___ attno */
 			attno = cur->sk_attno;
 			memset(xform, 0, sizeof(xform));
 		}
 
-		/* check strategy this key's coperator corresponds to */
+		/* check strategy this key's operator___ corresponds to */
 		j = cur->sk_strategy - 1;
 
 		/* if row comparison, push it directly to the output array */
@@ -1007,18 +1007,18 @@ _bt_preprocess_keys(IndexScanDesc scan)
 }
 
 /*
- * Compare two scankey values using a specified coperator.
+ * Compare two scankey values using a specified operator___.
  *
  * The test we want to perform is logically "leftarg op rightarg", where
  * leftarg and rightarg are the sk_argument values in those ScanKeys, and
- * the comparison coperator is the one in the op ScanKey.  However, in
- * cross-data-type situations we may need to look up the correct coperator in
+ * the comparison operator___ is the one in the op ScanKey.  However, in
+ * cross-data-type situations we may need to look up the correct operator___ in
  * the index's opfamily: it is the one having amopstrategy = op->sk_strategy
  * and amoplefttype/amoprighttype equal to the two argument datatypes.
  *
  * If the opfamily doesn't supply a complete set of cross-type operators we
  * may not be able to make the comparison.  If we can make the comparison
- * we store the coperator result in *result and return TRUE.  We return FALSE
+ * we store the operator___ result in *result and return TRUE.  We return FALSE
  * if the comparison could not be made.
  *
  * Note: op always points at the same ScanKey as either leftarg or rightarg.
@@ -1137,7 +1137,7 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 
 	/*
 	 * Otherwise, we need to go to the syscache to find the appropriate
-	 * coperator.  (This cannot result in infinite recursion, since no
+	 * operator___.  (This cannot result in infinite recursion, since no
 	 * indexscan initiated by syscache lookup will use cross-data-type
 	 * operators.)
 	 *
@@ -1176,7 +1176,7 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
  *
  * We copy the appropriate indoption value into the scankey sk_flags
  * (shifting to avoid clobbering system-defined flag bits).  Also, if
- * the DESC option is set, commute (flip) the coperator strategy number.
+ * the DESC option is set, commute (flip) the operator___ strategy number.
  *
  * A secondary purpose is to check for IS NULL/NOT NULL scankeys and set up
  * the strategy field correctly for them.
@@ -1202,14 +1202,14 @@ _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption)
 
 	/*
 	 * We treat all btree operators as strict (even if they're not so marked
-	 * in pg_proc). This means that it is impossible for an coperator condition
+	 * in pg_proc). This means that it is impossible for an operator___ condition
 	 * with a NULL comparison constant to succeed, and we can reject it right
 	 * away.
 	 *
 	 * However, we now also support "x IS NULL" clauses as search conditions,
 	 * so in that case keep going. The planner has not filled in any
 	 * particular strategy in this case, so set it to BTEqualStrategyNumber
-	 * --- we can treat IS NULL as an equality coperator for purposes of search
+	 * --- we can treat IS NULL as an equality operator___ for purposes of search
 	 * strategy.
 	 *
 	 * Likewise, "x IS NOT NULL" is supported.  We treat that as either "less
@@ -1218,7 +1218,7 @@ _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption)
 	 *
 	 * Note: someday we might have to fill in sk_collation from the index
 	 * column's collation.  At the moment this is a non-issue because we'll
-	 * never actually call the comparison coperator on a NULL.
+	 * never actually call the comparison operator___ on a NULL.
 	 */
 	if (skey->sk_flags & SK_ISNULL)
 	{
@@ -1283,7 +1283,7 @@ _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption)
 /*
  * Mark a scankey as "required to continue the scan".
  *
- * Depending on the coperator type, the key may be required for both scan
+ * Depending on the operator___ type, the key may be required for both scan
  * directions or just one.  Also, if the key is a row comparison header,
  * we have to mark the appropriate subsidiary ScanKeys as required.  In
  * such cases, the first subsidiary key is required, but subsequent ones
@@ -1294,7 +1294,7 @@ _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption)
  *
  * Note: when we set required-key flag bits in a subsidiary scankey, we are
  * scribbling on a data structure belonging to the index AM's caller, not on
- * our cprivate copy.  This should be OK because the marking will not change
+ * our private___ copy.  This should be OK because the marking will not change
  * from scan to scan within a query, and so we'd just re-mark the same way
  * anyway on a rescan.  Something to keep an eye on though.
  */
@@ -1653,7 +1653,7 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
 			return false;
 		}
 
-		/* Perform the test --- three-way comparison not bool coperator */
+		/* Perform the test --- three-way comparison not bool operator___ */
 		cmpresult = DatumGetInt32(FunctionCall2Coll(&subkey->sk_func,
 													subkey->sk_collation,
 													datum,

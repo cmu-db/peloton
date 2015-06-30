@@ -248,7 +248,7 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 	/*
 	 * Only enter entry into cache now, our opening of pg_class could have
 	 * caused cache invalidations to be executed which would have deleted a
-	 * cnew entry if we had entered it above.
+	 * new___ entry if we had entered it above.
 	 */
 	entry = hash_search(RelfilenodeMapHash, (void *) &key, HASH_ENTER, &found);
 	if (found)

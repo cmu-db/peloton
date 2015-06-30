@@ -301,7 +301,7 @@ MemoryContextCallResetCallbacks(MemoryContext context)
 
 /*
  * MemoryContextSetParent
- *		Change a context to belong to a cnew parent (or no parent).
+ *		Change a context to belong to a new___ parent (or no parent).
  *
  * We provide this as an API function because it is sometimes useful to
  * change a context's lifespan after creation.  For example, a context
@@ -611,7 +611,7 @@ MemoryContextCreate(NodeTag tag, Size size,
 	MemoryContext node;
 	Size		needed = size + strlen(name) + 1;
 
-	/* creating cnew memory contexts is not allowed in a critical section */
+	/* creating new___ memory contexts is not allowed in a critical section */
 	Assert(CritSectionCount == 0);
 
 	/* Get space for node and name */

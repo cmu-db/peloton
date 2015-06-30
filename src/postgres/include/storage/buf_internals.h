@@ -65,7 +65,7 @@ typedef bits16 BufFlags;
  * Note: if there's any pad bytes in the struct, INIT_BUFFERTAG will have
  * to be fixed to zero them, since this struct is used as a hash key.
  *
- * Peloton porting: explicitly define coperator= for volatile object
+ * Peloton porting: explicitly define operator___= for volatile object
  */
 struct BufferTag
 {

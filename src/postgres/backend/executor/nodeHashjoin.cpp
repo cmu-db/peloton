@@ -134,7 +134,7 @@ ExecHashJoin(HashJoinState *node)
 				 * If we are rescanning the join, we make use of information
 				 * gained on the previous scan: don't bother to try the
 				 * prefetch if the previous scan found the outer relation
-				 * nonempty. This is not 100% reliable since with cnew
+				 * nonempty. This is not 100% reliable since with new___
 				 * parameters the outer relation might yield different
 				 * results, but it's a good heuristic.
 				 *
@@ -562,7 +562,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate, int eflags)
 	/*
 	 * Deconstruct the hash clauses into outer and inner argument values, so
 	 * that we can evaluate those subexpressions separately.  Also make a list
-	 * of the hash coperator OIDs, in preparation for looking up the hash
+	 * of the hash operator___ OIDs, in preparation for looking up the hash
 	 * functions to use.
 	 */
 	lclauses = NIL;
@@ -716,7 +716,7 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 
 /*
  * ExecHashJoinNewBatch
- *		switch to a cnew hashjoin batch
+ *		switch to a new___ hashjoin batch
  *
  * Returns true if successful, false if there are no more batches.
  */
@@ -809,7 +809,7 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 	hashtable->curbatch = curbatch;
 
 	/*
-	 * Reload the hash table with the cnew inner batch (which could be empty)
+	 * Reload the hash table with the new___ inner batch (which could be empty)
 	 */
 	ExecHashTableReset(hashtable);
 
@@ -966,7 +966,7 @@ ExecReScanHashJoin(HashJoinState *node)
 
 			/*
 			 * Also, we need to reset our state about the emptiness of the
-			 * outer relation, so that the cnew scan of the outer will update
+			 * outer relation, so that the new___ scan of the outer will update
 			 * it correctly if it turns out to be empty this time. (There's no
 			 * harm in clearing it now because ExecHashJoin won't need the
 			 * info.  In the other cases, where the hash table doesn't exist

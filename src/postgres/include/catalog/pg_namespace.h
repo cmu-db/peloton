@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_namespace.h
- *	  definition of the system "cnamespace" relation (pg_namespace)
+ *	  definition of the system "namescpace___" relation (pg_namespace)
  *	  along with the relation's initial contents.
  *
  *
@@ -26,8 +26,8 @@
  *
  *		cpp turns this into typedef struct FormData_pg_namespace
  *
- *	nspname				name of the cnamespace
- *	nspowner			owner (creator) of the cnamespace
+ *	nspname				name of the namescpace___
+ *	nspowner			owner (creator) of the namescpace___
  *	nspacl				access privilege list
  * ----------------------------------------------------------------
  */

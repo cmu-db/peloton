@@ -55,8 +55,8 @@
 #define L_BBND	5				/* BRE bound */
 #define L_BRACK 6				/* brackets */
 #define L_CEL	7				/* collating element */
-#define L_ECL	8				/* equivalence cclass */
-#define L_CCL	9				/* character cclass */
+#define L_ECL	8				/* equivalence class___ */
+#define L_CCL	9				/* character class___ */
 #define INTOCON(c)	(v->lexcon = (c))
 #define INCON(con)	(v->lexcon == (con))
 
@@ -69,7 +69,7 @@
 static void
 lexstart(struct vars * v)
 {
-	prefixes(v);				/* may turn on cnew type bits etc. */
+	prefixes(v);				/* may turn on new___ type bits etc. */
 	NOERR();
 
 	if (v->cflags & REG_QUOTE)
@@ -262,7 +262,7 @@ static const chr brbackw[] = {	/* \w within brackets */
 
 /*
  * lexword - interpolate a bracket expression for word characters
- * Possibly ought to inquire whether there is a "word" character cclass.
+ * Possibly ought to inquire whether there is a "word" character class___.
  */
 static void
 lexword(struct vars * v)

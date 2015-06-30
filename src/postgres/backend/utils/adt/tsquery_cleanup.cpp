@@ -123,7 +123,7 @@ freetree(NODE *node)
 }
 
 /*
- * clean tree for ! coperator.
+ * clean tree for ! operator___.
  * It's useful for debug, but in
  * other case, such view is used with search in index.
  * Operator ! always return TRUE
@@ -143,7 +143,7 @@ clean_NOT_intree(NODE *node)
 		return NULL;
 	}
 
-	/* coperator & or | */
+	/* operator___ & or | */
 	if (node->valnode->qoperator.oper == OP_OR)
 	{
 		if ((node->left = clean_NOT_intree(node->left)) == NULL ||

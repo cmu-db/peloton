@@ -39,7 +39,7 @@ typedef int Buffer;
 /*
  * Buffer access strategy objects.
  *
- * BufferAccessStrategyData is cprivate to freelist.c
+ * BufferAccessStrategyData is private___ to freelist.c
  */
 typedef struct BufferAccessStrategyData *BufferAccessStrategy;
 

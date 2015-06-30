@@ -73,7 +73,7 @@ static void union_tuples(BrinDesc *bdesc, BrinMemTuple *a,
 /*
  * A tuple in the heap is being inserted.  To keep a brin index up to date,
  * we need to obtain the relevant index tuple and compare its stored values
- * with those of the cnew tuple.  If the tuple values are not consistent with
+ * with those of the new___ tuple.  If the tuple values are not consistent with
  * the summary tuple, we need to update the index tuple.
  *
  * If the range is not currently summarized (i.e. the revmap returns NULL for
@@ -133,8 +133,8 @@ brininsert(PG_FUNCTION_ARGS)
 		dtup = brin_deform_tuple(bdesc, brtup);
 
 		/*
-		 * Compare the key values of the cnew tuple to the stored index values;
-		 * our deformed tuple will get updated if the cnew tuple doesn't fit
+		 * Compare the key values of the new___ tuple to the stored index values;
+		 * our deformed tuple will get updated if the new___ tuple doesn't fit
 		 * the original range (note this means we can't break out of the loop
 		 * early). Make a note of whether this happens, so that we know to
 		 * insert the modified tuple later.
@@ -161,7 +161,7 @@ brininsert(PG_FUNCTION_ARGS)
 		if (!need_insert)
 		{
 			/*
-			 * The tuple is consistent with the cnew values, so there's nothing
+			 * The tuple is consistent with the new___ values, so there's nothing
 			 * to do.
 			 */
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
@@ -197,7 +197,7 @@ brininsert(PG_FUNCTION_ARGS)
 			 * Try to update the tuple.  If this doesn't work for whatever
 			 * reason, we need to restart from the top; the revmap might be
 			 * pointing at a different tuple for this block now, so we need to
-			 * recompute to ensure both our cnew heap tuple and the other
+			 * recompute to ensure both our new___ heap tuple and the other
 			 * inserter's are covered by the combined tuple.  It might be that
 			 * we don't need to update at all.
 			 */
@@ -568,7 +568,7 @@ brinbuildCallback(Relation index,
 }
 
 /*
- * brinbuild() -- build a cnew BRIN index.
+ * brinbuild() -- build a new___ BRIN index.
  */
 Datum
 brinbuild(PG_FUNCTION_ARGS)
@@ -943,7 +943,7 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
 	/*
 	 * Execute the partial heap scan covering the heap blocks in the specified
 	 * page range, summarizing the heap tuples in it.  This scan stops just
-	 * short of brinbuildCallback creating the cnew index entry.
+	 * short of brinbuildCallback creating the new___ index entry.
 	 */
 	state->bs_currRangeStart = heapBlk;
 	IndexBuildHeapRangeScan(heapRel, state->bs_irel, indexInfo, false,
@@ -984,7 +984,7 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
 
 		/*
 		 * If the update didn't work, it might be because somebody updated the
-		 * placeholder tuple concurrently.  Extract the cnew version, union it
+		 * placeholder tuple concurrently.  Extract the new___ version, union it
 		 * with the values we have from the scan, and start over.  (There are
 		 * other reasons for the update to fail, but it's simple to treat them
 		 * the same.)
@@ -1009,7 +1009,7 @@ summarize_range(IndexInfo *indexInfo, BrinBuildState *state, Relation heapRel,
  * summarized.  The index and heap must have been locked by caller in at
  * least ShareUpdateExclusiveLock mode.
  *
- * For each cnew index tuple inserted, *numSummarized (if not NULL) is
+ * For each new___ index tuple inserted, *numSummarized (if not NULL) is
  * incremented; for each existing tuple, *numExisting (if not NULL) is
  * incremented.
  */

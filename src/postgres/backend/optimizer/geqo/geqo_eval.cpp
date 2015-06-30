@@ -64,7 +64,7 @@ geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
 	struct HTAB *savehash;
 
 	/*
-	 * Create a cprivate memory context that will hold all temp storage
+	 * Create a private___ memory context that will hold all temp storage
 	 * allocated inside gimme_tree().
 	 *
 	 * Since geqo_eval() will be called many times, we can't afford to let all
@@ -90,7 +90,7 @@ geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
 	 * We also must take care not to mess up the outer join_rel_hash, if there
 	 * is one.  We can do this by just temporarily setting the link to NULL.
 	 * (If we are dealing with enough join rels, which we very likely are, a
-	 * cnew hash table will get built and used locally.)
+	 * new___ hash table will get built and used locally.)
 	 *
 	 * join_rel_level[] shouldn't be in use, so just Assert it isn't.
 	 */
@@ -141,7 +141,7 @@ geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
  *
  *	 'tour' is the proposed join order, of length 'num_gene'
  *
- * Returns a cnew join relation whose cheapest path is the best plan for
+ * Returns a new___ join relation whose cheapest path is the best plan for
  * this join order.  NB: will return NULL if join order is invalid and
  * we can't modify it into a valid order.
  *
@@ -164,7 +164,7 @@ geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
 RelOptInfo *
 gimme_tree(PlannerInfo *root, Gene *tour, int num_gene)
 {
-	GeqoPrivateData *cprivate = (GeqoPrivateData *) root->join_search_private;
+	GeqoPrivateData *private___ = (GeqoPrivateData *) root->join_search_private;
 	List	   *clumps;
 	int			rel_count;
 
@@ -172,8 +172,8 @@ gimme_tree(PlannerInfo *root, Gene *tour, int num_gene)
 	 * Sometimes, a relation can't yet be joined to others due to heuristics
 	 * or actual semantic restrictions.  We maintain a list of "clumps" of
 	 * successfully joined relations, with larger clumps at the front. Each
-	 * cnew relation from the tour is added to the first clump it can be joined
-	 * to; if there is none then it becomes a cnew clump of its own. When we
+	 * new___ relation from the tour is added to the first clump it can be joined
+	 * to; if there is none then it becomes a new___ clump of its own. When we
 	 * enlarge an existing clump we check to see if it can now be merged with
 	 * any other clumps.  After the tour is all scanned, we forget about the
 	 * heuristics and try to forcibly join any remaining clumps.  If we are
@@ -189,7 +189,7 @@ gimme_tree(PlannerInfo *root, Gene *tour, int num_gene)
 
 		/* Get the next input relation */
 		cur_rel_index = (int) tour[rel_count];
-		cur_rel = (RelOptInfo *) list_nth(cprivate->initial_rels,
+		cur_rel = (RelOptInfo *) list_nth(private___->initial_rels,
 										  cur_rel_index - 1);
 
 		/* Make it into a single-rel clump */
@@ -269,7 +269,7 @@ merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, bool force)
 				/* Find and save the cheapest paths for this joinrel */
 				set_cheapest(joinrel);
 
-				/* Absorb cnew clump into old */
+				/* Absorb new___ clump into old */
 				old_clump->joinrel = joinrel;
 				old_clump->size += new_clump->size;
 				pfree(new_clump);

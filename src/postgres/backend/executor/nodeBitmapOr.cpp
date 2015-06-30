@@ -60,7 +60,7 @@ ExecInitBitmapOr(BitmapOr *node, EState *estate, int eflags)
 	bitmapplanstates = (PlanState **) palloc0(nplans * sizeof(PlanState *));
 
 	/*
-	 * create cnew BitmapOrState for our BitmapOr node
+	 * create new___ BitmapOrState for our BitmapOr node
 	 */
 	bitmaporstate->ps.plan = (Plan *) node;
 	bitmaporstate->ps.state = estate;

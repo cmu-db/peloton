@@ -136,7 +136,7 @@ ExecInitAppend(Append *node, EState *estate, int eflags)
 	appendplanstates = (PlanState **) palloc0(nplans * sizeof(PlanState *));
 
 	/*
-	 * create cnew AppendState for our append node
+	 * create new___ AppendState for our append node
 	 */
 	appendstate->ps.plan = (Plan *) node;
 	appendstate->ps.state = estate;
@@ -230,7 +230,7 @@ ExecAppend(AppendState *node)
 		if (!exec_append_initialize_next(node))
 			return ExecClearTuple(node->ps.ps_ResultTupleSlot);
 
-		/* Else loop back and try to get a tuple from the cnew subplan */
+		/* Else loop back and try to get a tuple from the new___ subplan */
 	}
 }
 

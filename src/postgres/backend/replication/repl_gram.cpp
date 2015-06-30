@@ -399,9 +399,9 @@ union yyalloc
 
 # define YYCOPY_NEEDED 1
 
-/* Relocate STACK from its old location to the cnew one.  The
-   local variables YYSIZE and YYSTACKSIZE give the old and cnew number of
-   elements in the stack, and YYPTR gives the cnew location of the
+/* Relocate STACK from its old location to the new___ one.  The
+   local variables YYSIZE and YYSTACKSIZE give the old and new___ number of
+   elements in the stack, and YYPTR gives the new___ location of the
    stack.  Advance YYPTR to a properly aligned location for the next
    stack.  */
 # define YYSTACK_RELOCATE(Stack_alloc, Stack)                           \
@@ -1134,7 +1134,7 @@ yyparse (void)
   goto yysetstate;
 
 /*------------------------------------------------------------.
-| yynewstate -- Push a cnew state, which is found in yystate.  |
+| yynewstate -- Push a new___ state, which is found in yystate.  |
 `------------------------------------------------------------*/
  yynewstate:
   /* In all cases, when you get here, the value and location stacks
@@ -1577,7 +1577,7 @@ yyreduce:
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
-     that yytoken be updated with the cnew translation.  We take the
+     that yytoken be updated with the new___ translation.  We take the
      approach of translating immediately before every use of yytoken.
      One alternative is translating here after every semantic action,
      but that translation would be missed if the semantic action invokes

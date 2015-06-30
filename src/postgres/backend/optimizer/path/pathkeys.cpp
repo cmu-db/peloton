@@ -42,7 +42,7 @@ static bool right_merge_direction(PlannerInfo *root, PathKey *pathkey);
 /*
  * make_canonical_pathkey
  *	  Given the parameters for a PathKey, find any pre-existing matching
- *	  pathkey in the query's list of "canonical" pathkeys.  Make a cnew
+ *	  pathkey in the query's list of "canonical" pathkeys.  Make a new___
  *	  entry if there's not one already.
  *
  * Note that this function must not be used until after we have completed
@@ -98,17 +98,17 @@ make_canonical_pathkey(PlannerInfo *root,
  *
  * We detect two cases:
  *
- * 1. If the cnew pathkey's equivalence cclass contains a constant, and isn't
+ * 1. If the new___ pathkey's equivalence class___ contains a constant, and isn't
  * below an outer join, then we can disregard it as a sort key.  An example:
  *			SELECT ... WHERE x = 42 ORDER BY x, y;
  * We may as well just sort by y.  Note that because of opfamily matching,
  * this is semantically correct: we know that the equality constraint is one
  * that actually binds the variable to a single value in the terms of any
- * ordering coperator that might go with the eclass.  This rule not only lets
+ * ordering operator___ that might go with the eclass.  This rule not only lets
  * us simplify (or even skip) explicit sorts, but also allows matching index
  * sort orders to a query when there are don't-care index columns.
  *
- * 2. If the cnew pathkey's equivalence cclass is the same as that of any
+ * 2. If the new___ pathkey's equivalence class___ is the same as that of any
  * existing member of the pathkey list, then it is redundant.  Some examples:
  *			SELECT ... ORDER BY x, x;
  *			SELECT ... ORDER BY x, x DESC;
@@ -193,18 +193,18 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 	 * EquivalenceClasses need to contain opfamily lists based on the family
 	 * membership of mergejoinable equality operators, which could belong to
 	 * more than one opfamily.  So we have to look up the opfamily's equality
-	 * coperator and get its membership.
+	 * operator___ and get its membership.
 	 */
 	equality_op = get_opfamily_member(opfamily,
 									  opcintype,
 									  opcintype,
 									  BTEqualStrategyNumber);
 	if (!OidIsValid(equality_op))		/* shouldn't happen */
-		elog(ERROR, "could not find equality coperator for opfamily %u",
+		elog(ERROR, "could not find equality operator___ for opfamily %u",
 			 opfamily);
 	opfamilies = get_mergejoin_opfamilies(equality_op);
 	if (!opfamilies)			/* certainly should find some */
-		elog(ERROR, "could not find opfamilies for equality coperator %u",
+		elog(ERROR, "could not find opfamilies for equality operator___ %u",
 			 equality_op);
 
 	/* Now find or (optionally) create a matching EquivalenceClass */
@@ -223,7 +223,7 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 
 /*
  * make_pathkey_from_sortop
- *	  Like make_pathkey_from_sortinfo, but work from a sort coperator.
+ *	  Like make_pathkey_from_sortinfo, but work from a sort operator___.
  *
  * This should eventually go away, but we need to restructure SortGroupClause
  * first.
@@ -242,10 +242,10 @@ make_pathkey_from_sortop(PlannerInfo *root,
 				collation;
 	int16		strategy;
 
-	/* Find the coperator in pg_amop --- failure shouldn't happen */
+	/* Find the operator___ in pg_amop --- failure shouldn't happen */
 	if (!get_ordering_op_properties(ordering_op,
 									&opfamily, &opcintype, &strategy))
-		elog(ERROR, "coperator %u is not a valid ordering coperator",
+		elog(ERROR, "operator___ %u is not a valid ordering operator___",
 			 ordering_op);
 
 	/* Because SortGroupClause doesn't carry collation, consult the expr */
@@ -504,10 +504,10 @@ build_index_pathkeys(PlannerInfo *root,
 /*
  * build_expression_pathkey
  *	  Build a pathkeys list that describes an ordering by a single expression
- *	  using the given sort coperator.
+ *	  using the given sort operator___.
  *
  * expr, nullable_relids, and rel are as for make_pathkey_from_sortinfo.
- * We induce the other arguments assuming default sort order for the coperator.
+ * We induce the other arguments assuming default sort order for the operator___.
  *
  * Similarly to make_pathkey_from_sortinfo, the result is NIL if create_it
  * is false and the expression isn't already in some EquivalenceClass.
@@ -526,10 +526,10 @@ build_expression_pathkey(PlannerInfo *root,
 	int16		strategy;
 	PathKey    *cpathkey;
 
-	/* Find the coperator in pg_amop --- failure shouldn't happen */
+	/* Find the operator___ in pg_amop --- failure shouldn't happen */
 	if (!get_ordering_op_properties(opno,
 									&opfamily, &opcintype, &strategy))
-		elog(ERROR, "coperator %u is not a valid ordering coperator",
+		elog(ERROR, "operator___ %u is not a valid ordering operator___",
 			 opno);
 
 	cpathkey = make_pathkey_from_sortinfo(root,
@@ -778,7 +778,7 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
  * 'jointype' is the join type (inner, left, full, etc)
  * 'outer_pathkeys' is the list of the current outer path's path keys
  *
- * Returns the list of cnew path keys.
+ * Returns the list of new___ path keys.
  */
 List *
 build_join_pathkeys(PlannerInfo *root,
@@ -868,7 +868,7 @@ make_pathkeys_for_sortclauses(PlannerInfo *root,
  * same EquivalenceClass, otherwise not.)  If the mergeclause is either
  * used to generate an EquivalenceClass, or derived from an EquivalenceClass,
  * then it's easy to set up the left_ec and right_ec members --- otherwise,
- * this function should be called to set them up.  We will generate cnew
+ * this function should be called to set them up.  We will generate new___
  * EquivalenceClauses if necessary to represent the mergeclause's left and
  * right sides.
  *
@@ -890,7 +890,7 @@ initialize_mergeclause_eclasses(PlannerInfo *root, RestrictInfo *restrictinfo)
 	Assert(restrictinfo->left_ec == NULL);
 	Assert(restrictinfo->right_ec == NULL);
 
-	/* Need the declared input types of the coperator */
+	/* Need the declared input types of the operator___ */
 	op_input_types(((OpExpr *) clause)->opno, &lefttype, &righttype);
 
 	/* Find or create a matching EquivalenceClass for each side */
@@ -989,7 +989,7 @@ find_mergeclauses_for_pathkeys(PlannerInfo *root,
 		 * A mergejoin clause matches a pathkey if it has the same EC.
 		 * If there are multiple matching clauses, take them all.  In plain
 		 * inner-join scenarios we expect only one match, because
-		 * equivalence-cclass processing will have removed any redundant
+		 * equivalence-class___ processing will have removed any redundant
 		 * mergeclauses.  However, in outer-join scenarios there might be
 		 * multiple matches.  An example is
 		 *

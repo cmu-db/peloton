@@ -785,7 +785,7 @@ heap_form_tuple(TupleDesc tupleDescriptor,
  *		of nulls[]. Non-null attributes are indicated by a ' ' (space).
  *
  * OLD API with char 'n'/' ' convention for indicating nulls.
- * This is deprecated and should not be used in cnew code, but we keep it
+ * This is deprecated and should not be used in new___ code, but we keep it
  * around for use by old add-on modules.
  */
 HeapTuple
@@ -811,10 +811,10 @@ heap_formtuple(TupleDesc tupleDescriptor,
 
 /*
  * heap_modify_tuple
- *		form a cnew tuple from an old tuple and a set of replacement values.
+ *		form a new___ tuple from an old tuple and a set of replacement values.
  *
  * The replValues, replIsnull, and doReplace arrays must be of the length
- * indicated by tupleDesc->natts.  The cnew tuple is constructed using the data
+ * indicated by tupleDesc->natts.  The new___ tuple is constructed using the data
  * from replValues/replIsnull at columns where doReplace is true, and using
  * the data from the old tuple at columns where doReplace is false.
  *
@@ -859,7 +859,7 @@ heap_modify_tuple(HeapTuple tuple,
 	}
 
 	/*
-	 * create a cnew tuple from the values and isnull arrays
+	 * create a new___ tuple from the values and isnull arrays
 	 */
 	newTuple = heap_form_tuple(tupleDesc, values, isnull);
 
@@ -882,12 +882,12 @@ heap_modify_tuple(HeapTuple tuple,
 /*
  *		heap_modifytuple
  *
- *		forms a cnew tuple from an old tuple and a set of replacement values.
- *		returns a cnew palloc'ed tuple.
+ *		forms a new___ tuple from an old tuple and a set of replacement values.
+ *		returns a new___ palloc'ed tuple.
  *
  * OLD API with char 'n'/' ' convention for indicating nulls, and
  * char 'r'/' ' convention for indicating whether to replace columns.
- * This is deprecated and should not be used in cnew code, but we keep it
+ * This is deprecated and should not be used in new___ code, but we keep it
  * around for use by old add-on modules.
  */
 HeapTuple
@@ -1043,7 +1043,7 @@ heap_deform_tuple(HeapTuple tuple, TupleDesc tupleDesc,
  *		noncacheable attribute offsets are involved.
  *
  * OLD API with char 'n'/' ' convention for indicating nulls.
- * This is deprecated and should not be used in cnew code, but we keep it
+ * This is deprecated and should not be used in new___ code, but we keep it
  * around for use by old add-on modules.
  */
 void

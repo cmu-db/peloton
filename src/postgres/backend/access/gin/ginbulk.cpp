@@ -90,7 +90,7 @@ ginAllocEntryAccumulator(void *arg)
 		accum->eas_used = 0;
 	}
 
-	/* Allocate cnew RBNode from current chunk */
+	/* Allocate new___ RBNode from current chunk */
 	ea = accum->entryallocator + accum->eas_used;
 	accum->eas_used++;
 
@@ -160,7 +160,7 @@ ginInsertBAEntry(BuildAccumulator *accum,
 	if (isNew)
 	{
 		/*
-		 * Finish initializing cnew tree entry, including making permanent
+		 * Finish initializing new___ tree entry, including making permanent
 		 * copies of the datum (if it's not null) and itempointer.
 		 */
 		if (category == GIN_CAT_NORM_KEY)
