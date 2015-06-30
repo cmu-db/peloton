@@ -206,13 +206,13 @@ PelotonMain(int argc, char *argv[])
    * stale stats info), we'll fail and exit here.
    */
   InitPostgres("postgres", InvalidOid, NULL, InvalidOid, NULL);
+
   SetProcessingMode(NormalProcessing);
-  set_ps_display("postgres", false);
 
   ereport(LOG, (errmsg("peloton: processing database \"%s\"", "postgres")));
 
   /* Init Peloton */
-  InitPeloton("postgres");
+  InitPeloton();
 
   /* Start main loop */
   peloton_MainLoop();
