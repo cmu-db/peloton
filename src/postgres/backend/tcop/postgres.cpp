@@ -628,12 +628,12 @@ pg_parse_query(const char *query_string)
 
   raw_parsetree_list = raw_parser(query_string);
 
-  elog(LOG, "pg_parse_query done \n");
+  //elog(LOG, "pg_parse_query done \n");
 
   if (log_parser_stats)
     ShowUsage("PARSER STATISTICS");
 
-  elog(LOG, "pg_parse_query \n");
+  //elog(LOG, "pg_parse_query \n");
 
 #ifdef COPY_PARSE_PLAN_TREES
   /* Optional debugging check: pass raw parsetrees through copyObject() */
