@@ -621,6 +621,8 @@ pg_parse_query(const char *query_string)
 {
   List	   *raw_parsetree_list;
 
+  elog(LOG, "pg_parse_query \n");
+
   TRACE_POSTGRESQL_QUERY_PARSE_START(query_string);
 
   if (log_parser_stats)
@@ -628,8 +630,12 @@ pg_parse_query(const char *query_string)
 
   raw_parsetree_list = raw_parser(query_string);
 
+  elog(LOG, "pg_parse_query done \n");
+
   if (log_parser_stats)
     ShowUsage("PARSER STATISTICS");
+
+  elog(LOG, "pg_parse_query \n");
 
 #ifdef COPY_PARSE_PLAN_TREES
   /* Optional debugging check: pass raw parsetrees through copyObject() */
@@ -899,6 +905,7 @@ exec_simple_query(const char *query_string)
   bool		isTopLevel;
   char		msec_str[32];
 
+  elog(LOG, "exec_simple_query \n");
 
   /*
    * Report query to various monitoring facilities.
