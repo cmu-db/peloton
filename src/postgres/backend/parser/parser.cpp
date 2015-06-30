@@ -50,7 +50,7 @@ raw_parser(const char *str)
 	/* initialize the bison parser */
 	parser_init(&yyextra);
 
-	//base_yydebug = 1;
+	base_yydebug = 1;
 
 	/* Parse! */
 	yyresult = base_yyparse(yyscanner);
