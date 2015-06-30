@@ -16,31 +16,53 @@
 extern "C" {
 #endif
 
+//===--------------------------------------------------------------------===//
+// Getters
+//===--------------------------------------------------------------------===//
+
+HeapTuple GetPGClassTuple(Oid relation_id);
+
+HeapTuple GetPGClassTuple(const char *relation_name);
+
+//===--------------------------------------------------------------------===//
+// Oid <--> Name
+//===--------------------------------------------------------------------===//
+
 char* GetRelationName(Oid relation_id);
+
+Oid GetRelationOid(const char *relation_name);
+
+//===--------------------------------------------------------------------===//
+// Catalog information
+//===--------------------------------------------------------------------===//
 
 int GetNumberOfAttributes(Oid relation_id);
 
 float GetNumberOfTuples(Oid relation_id);
 
+bool RelationExists(const char* relation_name);
+
 Oid GetCurrentDatabaseOid(void);
 
-void SetNumberOfTuples(Oid relation_id, float num_of_tuples);
+//===--------------------------------------------------------------------===//
+// Table Lists
+//===--------------------------------------------------------------------===//
 
 void GetDatabaseList(void);
 
-void GetTableList(void);
+void GetTableList(bool catalog_only = false);
 
-void GetPublicTableList(void);
+//===--------------------------------------------------------------------===//
+// Setters
+//===--------------------------------------------------------------------===//
 
-bool IsThisTableExist(const char* table_name);
-
-bool InitPeloton(void);
-
-Oid GetRelationOidFromRelationName(const char *table_name);
+void SetNumberOfTuples(Oid relation_id, float num_of_tuples);
 
 void SetUserTableStats(Oid relation_id);
 
-void FunctionTest(void);
+// Initialize
+
+bool InitPeloton(void);
 
 #ifdef __cplusplus
 }
