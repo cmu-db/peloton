@@ -3913,7 +3913,6 @@ PostgresMain(int argc, char *argv[],
       break;
     case TEST_MODE_TYPE_BRIDGE:
       elog(LOG, "Testing bridge");
-      GetDatabaseList();
       break;
     case TEST_MODE_TYPE_STATISTICS:
       /* Test something here */
