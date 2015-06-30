@@ -505,7 +505,9 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 				char	   *crypt_pwd2;
 
 				/* Allocate enough space for two MD5 hashes */
-				crypt_pwd = malloc(2 * (MD5_PASSWD_LEN + 1));
+				// TODO: Peloton changes - added (char *) cast
+				// to suppress compiler warning
+				crypt_pwd = (char *)malloc(2 * (MD5_PASSWD_LEN + 1));
 				if (!crypt_pwd)
 				{
 					printfPQExpBuffer(&conn->errorMessage,
@@ -807,7 +809,9 @@ PQencryptPassword(const char *passwd, const char *user)
 {
 	char	   *crypt_pwd;
 
-	crypt_pwd = malloc(MD5_PASSWD_LEN + 1);
+	// TODO: Peloton changes - added (char *) cast
+	// to suppress compiler warning
+	crypt_pwd = (char *)malloc(MD5_PASSWD_LEN + 1);
 	if (!crypt_pwd)
 		return NULL;
 

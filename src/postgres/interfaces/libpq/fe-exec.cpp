@@ -1007,6 +1007,9 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
  * active again after pqPrepareAsyncResult().  This allows the result metadata
  * (column descriptions) to be carried forward to each result row.
  */
+
+// TODO: Peloton changes - errmsgp argument is not used
+// can we change the function prototype to get rid of the 2nd argument?
 int
 pqRowProcessor(PGconn *conn, const char **errmsgp)
 {
@@ -3301,7 +3304,10 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 		return NULL;
 
 	/* Scan the string for characters that must be escaped. */
-	for (s = str; (s - str) < len && *s != '\0'; ++s)
+	// TODO: Peloton changes - added (int) cast to len
+	// so that the comparison is not between signed and unsigned integers
+	// to suppress compiler warning
+	for (s = str; (s - str) < (int)len && *s != '\0'; ++s)
 	{
 		if (*s == quote_char)
 			++num_quotes;
@@ -3315,7 +3321,7 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 			charlen = pg_encoding_mblen(conn->client_encoding, s);
 
 			/* Multibyte character overruns allowable length. */
-			if ((s - str) + charlen > len || memchr(s, 0, charlen) != NULL)
+			if ((s - str) + charlen > (int)len || memchr(s, 0, charlen) != NULL)
 			{
 				printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("incomplete multibyte character\n"));
@@ -3691,7 +3697,9 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 
 	/* Shrink the buffer to be no larger than necessary */
 	/* +1 avoids unportable behavior when buflen==0 */
-	tmpbuf = realloc(buffer, buflen + 1);
+	// TODO: Peloton changes - added (unsigned char *) cast
+	// to suppress compiler warning
+	tmpbuf = (unsigned char *)realloc(buffer, buflen + 1);
 
 	/* It would only be a very brain-dead realloc that could fail, but... */
 	if (!tmpbuf)
