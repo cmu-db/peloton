@@ -17,6 +17,7 @@
 #include "backend/catalog/index.h"
 
 #include <iostream>
+#include <algorithm>
 
 
 namespace peloton {

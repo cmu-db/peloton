@@ -16,6 +16,8 @@ namespace catalog {
 
 std::ostream& operator<<(std::ostream& os, const Constraint& constraint) {
 
+/*
+TODO :: Do it later...
     os << "\tCONSTRAINT ";
 
     os << constraint.GetName() << " " << ConstraintTypeToString(constraint.type) << "\n";
@@ -42,6 +44,7 @@ std::ostream& operator<<(std::ostream& os, const Constraint& constraint) {
     }
 
     os << "\n";
+*/
 
     return os;
 }

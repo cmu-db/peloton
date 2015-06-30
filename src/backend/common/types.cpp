@@ -557,12 +557,25 @@ std::string ConstraintTypeToString(ConstraintType type) {
     case CONSTRAINT_TYPE_INVALID: {
         return "INVALID";
     }
+    case CONSTRAINT_TYPE_CHECK: {
+        return "CHECK";
+    }
+    case CONSTRAINT_TYPE_NOTNULL: {
+        return "NOTNULL";
+    }
+    case CONSTRAINT_TYPE_UNIQUE: {
+        return "UNIQUE";
+    }
     case CONSTRAINT_TYPE_PRIMARY: {
         return "PRIMARY_KEY";
     }
     case CONSTRAINT_TYPE_FOREIGN: {
         return "FOREIGN_KEY";
     }
+    case CONSTRAINT_TYPE_EXCLUSION: {
+        return "EXCLUSION";
+    }
+ 
     }
     return "INVALID";
 }
@@ -570,10 +583,18 @@ std::string ConstraintTypeToString(ConstraintType type) {
 ConstraintType StringToConstraintType(std::string str) {
     if (str == "INVALID") {
         return CONSTRAINT_TYPE_INVALID;
+    } else if (str == "CHECK") {
+        return CONSTRAINT_TYPE_CHECK;
+    } else if (str == "NOTNULL") {
+        return CONSTRAINT_TYPE_NOTNULL;
+    } else if (str == "UNIQUE") {
+        return CONSTRAINT_TYPE_UNIQUE;
     } else if (str == "PRIMARY_KEY") {
         return CONSTRAINT_TYPE_PRIMARY;
     } else if (str == "FOREIGN_KEY") {
         return CONSTRAINT_TYPE_FOREIGN;
+    } else if (str == "EXCLUSION") {
+        return CONSTRAINT_TYPE_EXCLUSION;
     }
     return CONSTRAINT_TYPE_INVALID;
 }
