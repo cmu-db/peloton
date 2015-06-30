@@ -331,10 +331,9 @@ bool InitPeloton(const char* dbname)
               ddl_columnInfo[column_itr].valueType = pgattribute->atttypid;
               ddl_columnInfo[column_itr].column_offset = column_itr;
               ddl_columnInfo[column_itr].column_length = pgattribute->attlen;
-              ddl_columnInfo[column_itr].name = (char*) malloc( sizeof(char)*strlen(NameStr(pgattribute->attname)));
               strcpy(ddl_columnInfo[column_itr].name, NameStr(pgattribute->attname));
               ddl_columnInfo[column_itr].allow_null = ! pgattribute->attnotnull;
-              ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
+              ddl_columnInfo[column_itr].is_inlined = false; 
               ddl_columnInfo[column_itr].constraintType = NULL; // TODO :: Need to be updated ( read constraints from catalog and set it up )
               ddl_columnInfo[column_itr].conname = NULL; // TODO :: Need to be updated
               column_itr++;
@@ -347,7 +346,7 @@ bool InitPeloton(const char* dbname)
         // Create the table
         if( pgclass->relkind == 'r' )
         {
-          ret = DDL_CreateTable( NameStr(pgclass->relname) , ddl_columnInfo, column_itr, 0/* need to be updated */);
+          ret = DDL_CreateTable( NameStr(pgclass->relname) , ddl_columnInfo, column_itr, 0/* number of constraints .. need to be updated */);
           if( ret )  printf("Create Table \"%s\" in Peloton\n", NameStr(pgclass->relname));
           else       fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
         } 
@@ -365,7 +364,15 @@ bool InitPeloton(const char* dbname)
 
             if( pgindex->indexrelid == table_oid )
             {
-              DDL_CreateIndex(NameStr(pgclass->relname), get_rel_name(pgindex->indrelid), 0, pgindex->indisunique, ddl_columnInfo, column_itr);
+              char* ColumnNamesForKeySchema[column_itr];
+              int idx_itr;
+              for(idx_itr = 0 ; idx_itr < column_itr ; idx_itr ++ )
+              {
+                 ColumnNamesForKeySchema[idx_itr] = (char*)malloc(sizeof(char)*strlen(ddl_columnInfo[idx_itr].name));
+                 strcpy( ColumnNamesForKeySchema[idx_itr], ddl_columnInfo[idx_itr].name );
+              }
+
+              DDL_CreateIndex( NameStr(pgclass->relname), get_rel_name(pgindex->indrelid), 0, pgindex->indisunique, ColumnNamesForKeySchema, column_itr);
               if( ret )  printf("Create Index \"%s\" in Peloton\n", NameStr(pgclass->relname));
               else       fprintf(stderr, "DDL_CreateIndex :: %d \n", ret);
               break;
