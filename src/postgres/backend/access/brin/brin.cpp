@@ -302,7 +302,7 @@ bringetbitmap(PG_FUNCTION_ARGS)
 	 * don't look them up here; we do that lazily the first time we see a scan
 	 * key reference each of them.  We rely on zeroing fn_oid to InvalidOid.
 	 */
-	consistentFn = palloc0(sizeof(FmgrInfo) * bdesc->bd_tupdesc->natts);
+	consistentFn = static_cast<FmgrInfo *>(palloc0(sizeof(FmgrInfo) * bdesc->bd_tupdesc->natts));
 
 	/*
 	 * Setup and use a per-range memory context, which is reset every time we
@@ -759,7 +759,7 @@ brinoptions(PG_FUNCTION_ARGS)
 	if (numoptions == 0)
 		PG_RETURN_NULL();
 
-	rdopts = allocateReloptStruct(sizeof(BrinOptions), options, numoptions);
+	rdopts = static_cast<BrinOptions *>(allocateReloptStruct(sizeof(BrinOptions), options, numoptions));
 
 	fillRelOptions((void *) rdopts, sizeof(BrinOptions), options, numoptions,
 				   validate, tab, lengthof(tab));
@@ -837,7 +837,7 @@ brin_build_desc(Relation rel)
 	totalsize = offsetof(BrinDesc, bd_info) +
 		sizeof(BrinOpcInfo *) * tupdesc->natts;
 
-	bdesc = palloc(totalsize);
+	bdesc = static_cast<BrinDesc *>(palloc(totalsize));
 	bdesc->bd_context = cxt;
 	bdesc->bd_index = rel;
 	bdesc->bd_tupdesc = tupdesc;
@@ -871,7 +871,7 @@ initialize_brin_buildstate(Relation idxRel, BrinRevmap *revmap,
 {
 	BrinBuildState *state;
 
-	state = palloc(sizeof(BrinBuildState));
+	state = static_cast<BrinBuildState *>(palloc(sizeof(BrinBuildState)));
 
 	state->bs_irel = idxRel;
 	state->bs_numtuples = 0;

@@ -105,7 +105,7 @@ brin_inclusion_opcinfo(PG_FUNCTION_ARGS)
 	 * (which is expected), extra_proc_missing is set to true, indicating not
 	 * to look it up again.
 	 */
-	result = palloc0(MAXALIGN(SizeofBrinOpcInfo(3)) + sizeof(InclusionOpaque));
+	result = static_cast<BrinOpcInfo *>(palloc0(MAXALIGN(SizeofBrinOpcInfo(3)) + sizeof(InclusionOpaque)));
 	result->oi_nstored = 3;
 	result->oi_opaque = (InclusionOpaque *)
 		MAXALIGN((char *) result + SizeofBrinOpcInfo(3));

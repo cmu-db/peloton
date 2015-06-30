@@ -537,7 +537,7 @@ ginoptions(PG_FUNCTION_ARGS)
 	if (numoptions == 0)
 		PG_RETURN_NULL();
 
-	rdopts = allocateReloptStruct(sizeof(GinOptions), options, numoptions);
+	rdopts = static_cast<GinOptions *>(allocateReloptStruct(sizeof(GinOptions), options, numoptions));
 
 	fillRelOptions((void *) rdopts, sizeof(GinOptions), options, numoptions,
 				   validate, tab, lengthof(tab));
