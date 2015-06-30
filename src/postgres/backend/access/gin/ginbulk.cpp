@@ -85,7 +85,7 @@ ginAllocEntryAccumulator(void *arg)
 	 */
 	if (accum->entryallocator == NULL || accum->eas_used >= DEF_NENTRY)
 	{
-		accum->entryallocator = palloc(sizeof(GinEntryAccumulator) * DEF_NENTRY);
+		accum->entryallocator = static_cast<GinEntryAccumulator *>(palloc(sizeof(GinEntryAccumulator) * DEF_NENTRY));
 		accum->allocatedMemory += GetMemoryChunkSpace(accum->entryallocator);
 		accum->eas_used = 0;
 	}
