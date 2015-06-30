@@ -92,7 +92,7 @@ window_row_number(PG_FUNCTION_ARGS)
 /*
  * rank
  * Rank changes when key columns change.
- * The cnew rank number is the current row number.
+ * The new___ rank number is the current row number.
  */
 Datum
 window_rank(PG_FUNCTION_ARGS)

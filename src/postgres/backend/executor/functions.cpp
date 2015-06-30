@@ -1108,9 +1108,9 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	 * suspend execution between queries of the function: the only reason to
 	 * suspend execution before completion is if we are returning a row from a
 	 * lazily-evaluated SELECT.  So, when first entering this loop, we'll
-	 * either start a cnew query (and push a fresh snapshot) or re-establish
+	 * either start a new___ query (and push a fresh snapshot) or re-establish
 	 * the active snapshot from the existing query descriptor.  If we need to
-	 * start a cnew query in a subsequent execution of the loop, either we need
+	 * start a new___ query in a subsequent execution of the loop, either we need
 	 * a fresh snapshot (and pushed_snapshot is false) or the existing
 	 * snapshot is on the active stack and we can just bump its command ID.
 	 */
@@ -1124,7 +1124,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			/*
 			 * If not read-only, be sure to advance the command counter for
 			 * each command, so that all work to date in this transaction is
-			 * visible.  Take a cnew snapshot if we don't have one yet,
+			 * visible.  Take a new___ snapshot if we don't have one yet,
 			 * otherwise just bump the command ID in the existing snapshot.
 			 */
 			if (!fcache->readonly_func)
@@ -1186,8 +1186,8 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			es = (execution_state *) lfirst(eslc);
 
 			/*
-			 * Flush the current snapshot so that we will take a cnew one for
-			 * the cnew query list.  This ensures that cnew snaps are taken at
+			 * Flush the current snapshot so that we will take a new___ one for
+			 * the new___ query list.  This ensures that new___ snaps are taken at
 			 * original-query boundaries, matching the behavior of interactive
 			 * execution.
 			 */
@@ -1663,8 +1663,8 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		int			tupnatts;	/* physical number of columns in tuple */
 		int			tuplogcols; /* # of nondeleted columns in tuple */
 		int			colindex;	/* physical column index */
-		List	   *newtlist;	/* cnew non-junk tlist entries */
-		List	   *junkattrs;	/* cnew junk tlist entries */
+		List	   *newtlist;	/* new___ non-junk tlist entries */
+		List	   *junkattrs;	/* new___ junk tlist entries */
 
 		/*
 		 * If the target list is of length 1, and the type of the varnode in
@@ -1884,7 +1884,7 @@ CreateSQLFunctionDestReceiver(void)
 	self->pub.rDestroy = sqlfunction_destroy;
 	self->pub.mydest = DestSQLFunction;
 
-	/* cprivate fields will be set by postquel_start */
+	/* private___ fields will be set by postquel_start */
 
 	return (DestReceiver *) self;
 }

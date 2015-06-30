@@ -84,7 +84,7 @@ typedef struct ReplicationSlotOnDisk
 	sizeof(ReplicationSlotOnDisk) - ReplicationSlotOnDiskConstantSize
 
 #define SLOT_MAGIC		0x1051CA1		/* format identifier */
-#define SLOT_VERSION	2				/* version for cnew files */
+#define SLOT_VERSION	2				/* version for new___ files */
 
 /* Control array for replication slot management */
 ReplicationSlotCtlData *ReplicationSlotCtl = NULL;
@@ -203,7 +203,7 @@ ReplicationSlotValidateName(const char *name, int elevel)
 }
 
 /*
- * Create a cnew replication slot and mark it as used by this backend.
+ * Create a new___ replication slot and mark it as used by this backend.
  *
  * name: Name of the slot
  * db_specific: logical decoding is db specific; if the slot is going to
@@ -223,7 +223,7 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 	/*
 	 * If some other backend ran this code currently with us, we'd likely both
 	 * allocate the same slot, and that would be bad.  We'd also be at risk of
-	 * missing a name collision.  Also, we don't want to try to create a cnew
+	 * missing a name collision.  Also, we don't want to try to create a new___
 	 * slot while somebody's busy cleaning up an old one, because we might
 	 * both be monkeying with the same directory.
 	 */
@@ -492,7 +492,7 @@ ReplicationSlotDropAcquired(void)
 
 	/*
 	 * If removing the directory fails, the worst thing that will happen is
-	 * that the user won't be able to create a cnew slot with the same name
+	 * that the user won't be able to create a new___ slot with the same name
 	 * until the next server restart.  We warn about it, but that's all.
 	 */
 	if (!rmtree(tmppath, true))

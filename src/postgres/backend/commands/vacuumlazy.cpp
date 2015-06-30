@@ -108,8 +108,8 @@ typedef struct LVRelStats
 	BlockNumber	pinskipped_pages; /* # of pages we skipped due to a pin */
 	double		scanned_tuples; /* counts only tuples on scanned pages */
 	double		old_rel_tuples; /* previous value of pg_class.reltuples */
-	double		new_rel_tuples; /* cnew estimated total # of tuples */
-	double		new_dead_tuples;	/* cnew estimated total # of dead tuples */
+	double		new_rel_tuples; /* new___ estimated total # of tuples */
+	double		new_dead_tuples;	/* new___ estimated total # of dead tuples */
 	BlockNumber pages_removed;
 	double		tuples_deleted;
 	BlockNumber nonempty_pages; /* actually, last nonempty page + 1 */
@@ -281,7 +281,7 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 	 *
 	 * A corner case here is that if we scanned no pages at all because every
 	 * page is all-visible, we should not update relpages/reltuples, because
-	 * we have no cnew information to contribute.  In particular this keeps us
+	 * we have no new___ information to contribute.  In particular this keeps us
 	 * from replacing relpages=reltuples=0 (which means "unknown tuple
 	 * density") with nonzero relpages and reltuples=0 (which means "zero
 	 * tuple density") unless there's some actual evidence for the latter.
@@ -683,7 +683,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			 * the page is still uninitialized by then, it must be left over
 			 * from a crashed backend, and we can initialize it.
 			 *
-			 * We don't really need the relation lock when this is a cnew or
+			 * We don't really need the relation lock when this is a new___ or
 			 * temp relation, but it's probably not worth the code space to
 			 * check that, since this surely isn't a critical path.
 			 *
@@ -1070,7 +1070,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	vacrelstats->tuples_deleted = tups_vacuumed;
 	vacrelstats->new_dead_tuples = nkeep;
 
-	/* now we can compute the cnew value for pg_class.reltuples */
+	/* now we can compute the new___ value for pg_class.reltuples */
 	vacrelstats->new_rel_tuples = vac_estimate_reltuples(onerel, false,
 														 nblocks,
 												  vacrelstats->scanned_pages,
@@ -1492,9 +1492,9 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 		{
 			/*
 			 * Note: we intentionally don't update vacrelstats->rel_pages with
-			 * the cnew rel size here.  If we did, it would amount to assuming
-			 * that the cnew pages are empty, which is unlikely. Leaving the
-			 * numbers alone amounts to assuming that the cnew pages have the
+			 * the new___ rel size here.  If we did, it would amount to assuming
+			 * that the new___ pages are empty, which is unlikely. Leaving the
+			 * numbers alone amounts to assuming that the new___ pages have the
 			 * same tuple density as existing ones, which is less unlikely.
 			 */
 			UnlockRelation(onerel, AccessExclusiveLock);

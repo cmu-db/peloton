@@ -43,7 +43,7 @@
 
 
 /*
- * initcm - set up cnew colormap
+ * initcm - set up new___ colormap
  */
 static void
 initcm(struct vars * v,
@@ -178,7 +178,7 @@ setcolor(struct colormap * cm,
 		bottom = (shift <= BYTBITS) ? 1 : 0;
 		cb = (bottom) ? cm->cd[t->tcolor[0]].block : fillt;
 		if (t == fillt || t == cb)
-		{						/* must allocate a cnew block */
+		{						/* must allocate a new___ block */
 			newt = (union tree *) MALLOC((bottom) ?
 								sizeof(struct colors) : sizeof(struct ptrs));
 			if (newt == NULL)
@@ -216,7 +216,7 @@ maxcolor(struct colormap * cm)
 }
 
 /*
- * newcolor - find a cnew color (must be subject of setcolor at once)
+ * newcolor - find a new___ color (must be subject of setcolor at once)
  * Beware:	may relocate the colordescs.
  */
 static color					/* COLORLESS for error */
@@ -364,13 +364,13 @@ pseudocolor(struct colormap * cm)
 }
 
 /*
- * subcolor - allocate a cnew subcolor (if necessary) to this chr
+ * subcolor - allocate a new___ subcolor (if necessary) to this chr
  */
 static color
 subcolor(struct colormap * cm, chr c)
 {
 	color		co;				/* current color of c */
-	color		sco;			/* cnew subcolor */
+	color		sco;			/* new___ subcolor */
 
 	co = GETCOLOR(cm, c);
 	sco = newsub(cm, co);
@@ -389,13 +389,13 @@ subcolor(struct colormap * cm, chr c)
 }
 
 /*
- * newsub - allocate a cnew subcolor (if necessary) for a color
+ * newsub - allocate a new___ subcolor (if necessary) for a color
  */
 static color
 newsub(struct colormap * cm,
 	   pcolor co)
 {
-	color		sco;			/* cnew subcolor */
+	color		sco;			/* new___ subcolor */
 
 	sco = cm->cd[co].sub;
 	if (sco == NOSUB)
@@ -417,7 +417,7 @@ newsub(struct colormap * cm,
 }
 
 /*
- * subrange - allocate cnew subcolors to this range of chrs, fill in arcs
+ * subrange - allocate new___ subcolors to this range of chrs, fill in arcs
  */
 static void
 subrange(struct vars * v,
@@ -449,7 +449,7 @@ subrange(struct vars * v,
 }
 
 /*
- * subblock - allocate cnew subcolors for one tree block of chrs, fill in arcs
+ * subblock - allocate new___ subcolors for one tree block of chrs, fill in arcs
  *
  * Note: subcolors that are created during execution of this function
  * will not be given a useful value of firstchr; it'll be left as CHR_MIN.
@@ -479,7 +479,7 @@ subblock(struct vars * v,
 
 	assert((uc % BYTTAB) == 0);
 
-	/* find its color block, making cnew pointer blocks as needed */
+	/* find its color block, making new___ pointer blocks as needed */
 	t = cm->tree;
 	fillt = NULL;
 	for (level = 0, shift = BYTBITS * (NBYTS - 1); shift > 0;
@@ -491,7 +491,7 @@ subblock(struct vars * v,
 		assert(t != NULL);
 		fillt = &cm->tree[level + 1];
 		if (t == fillt && shift > BYTBITS)
-		{						/* need cnew ptr block */
+		{						/* need new___ ptr block */
 			t = (union tree *) MALLOC(sizeof(struct ptrs));
 			if (t == NULL)
 			{

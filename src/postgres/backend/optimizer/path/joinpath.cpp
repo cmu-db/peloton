@@ -1339,7 +1339,7 @@ select_mergejoin_clauses(PlannerInfo *root,
 		if (isouterjoin && restrictinfo->is_pushed_down)
 			continue;
 
-		/* Check that clause is a mergeable coperator clause */
+		/* Check that clause is a mergeable operator___ clause */
 		if (!restrictinfo->can_join ||
 			restrictinfo->mergeopfamilies == NIL)
 		{

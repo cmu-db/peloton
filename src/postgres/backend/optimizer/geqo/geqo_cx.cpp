@@ -3,7 +3,7 @@
 * geqo_cx.c
 *
 *	 cycle crossover [CX] routines;
-*	 CX coperator according to Oliver et al
+*	 CX operator___ according to Oliver et al
 *	 (Proc 2nd Int'l Conf on GA's)
 *
 * src/backend/optimizer/geqo/geqo_cx.c

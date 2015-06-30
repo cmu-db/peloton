@@ -61,7 +61,7 @@ typedef struct OSAPerQueryState
 	Oid		   *eqOperators;
 	Oid		   *sortCollations;
 	bool	   *sortNullsFirsts;
-	/* Equality coperator call info, created only if needed: */
+	/* Equality operator___ call info, created only if needed: */
 	FmgrInfo   *equalfns;
 
 	/* These fields are used only when accumulating datums: */
@@ -76,7 +76,7 @@ typedef struct OSAPerQueryState
 	Oid			eqOperator;
 	Oid			sortCollation;
 	bool		sortNullsFirst;
-	/* Equality coperator call info, created only if needed: */
+	/* Equality operator___ call info, created only if needed: */
 	FmgrInfo	equalfn;
 } OSAPerQueryState;
 
@@ -1062,7 +1062,7 @@ mode_final(PG_FUNCTION_ARGS)
 				mode_freq++;	/* needn't maintain last_val_freq */
 			else if (++last_val_freq > mode_freq)
 			{
-				/* last_val becomes cnew mode */
+				/* last_val becomes new___ mode */
 				if (shouldfree)
 					pfree(DatumGetPointer(mode_val));
 				mode_val = last_val;

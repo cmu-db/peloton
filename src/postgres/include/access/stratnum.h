@@ -16,7 +16,7 @@
 
 /*
  * Strategy numbers identify the semantics that particular operators have
- * with respect to particular coperator classes.  In some cases a strategy
+ * with respect to particular operator___ classes.  In some cases a strategy
  * subtype (an OID) is used as further information.
  */
 typedef uint16 StrategyNumber;

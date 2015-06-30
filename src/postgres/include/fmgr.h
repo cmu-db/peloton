@@ -320,7 +320,7 @@ extern struct varlena *pg_detoast_datum_packed(struct varlena * datum);
 /*-------------------------------------------------------------------------
  *		Support for detecting call convention of dynamically-loaded functions
  *
- * Dynamically loaded functions may use either the version-1 ("cnew style")
+ * Dynamically loaded functions may use either the version-1 ("new___ style")
  * or version-0 ("old style") calling convention.  Version 1 is the call
  * convention defined in this header file; version 0 is the old "plain C"
  * convention.  A version-1 function must be accompanied by the macro call
@@ -699,7 +699,7 @@ extern PGDLLIMPORT fmgr_hook_type fmgr_hook;
  * fmgr() is the only remaining vestige of the old-style caller support
  * functions.  It's no longer used anywhere in the Postgres distribution,
  * but we should leave it around for a release or two to ease the transition
- * for user-supplied C functions.  OidFunctionCallN() replaces it for cnew
+ * for user-supplied C functions.  OidFunctionCallN() replaces it for new___
  * code.
  */
 

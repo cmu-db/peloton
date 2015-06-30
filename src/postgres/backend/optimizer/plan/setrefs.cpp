@@ -182,7 +182,7 @@ static bool extract_query_dependencies_walker(Node *node,
  * wouldn't match up with the Vars in the outer plan tree.  The SubqueryScan
  * serves a necessary function as a buffer between outer query and subquery
  * variable numbering ... but after we've flattened the rangetable this is
- * no longer a problem, since then there's only one rtindex cnamespace.
+ * no longer a problem, since then there's only one rtindex namescpace___.
  *
  * set_plan_references recursively traverses the whole plan tree.
  *
@@ -1227,7 +1227,7 @@ copyVar(Var *var)
  *		Do generic set_plan_references processing on an expression node
  *
  * This is code that is common to all variants of expression-fixing.
- * We must look up coperator opcode info for OpExpr and related nodes,
+ * We must look up operator___ opcode info for OpExpr and related nodes,
  * add OIDs from regclass Const nodes into root->glob->relationOids, and
  * add catalog TIDs for user-defined functions into root->glob->invalItems.
  * We also fill in column index lists for GROUPING() expressions.
@@ -1355,7 +1355,7 @@ fix_param_node(PlannerInfo *root, Param *p)
  *
  * This consists of incrementing all Vars' varnos by rtoffset,
  * replacing PARAM_MULTIEXPR Params, expanding PlaceHolderVars,
- * looking up coperator opcode info for OpExpr and related nodes,
+ * looking up operator___ opcode info for OpExpr and related nodes,
  * and adding OIDs from regclass Const nodes into root->glob->relationOids.
  */
 static Node *
@@ -1909,7 +1909,7 @@ search_indexed_tlist_for_sortgroupref(Node *node,
 
 /*
  * fix_join_expr
- *	   Create a cnew set of targetlist entries or join qual clauses by
+ *	   Create a new___ set of targetlist entries or join qual clauses by
  *	   changing the varno/varattno values of variables in the clauses
  *	   to reference target list values from the outer and inner join
  *	   relation target lists.  Also perform opcode lookup and add
@@ -1935,7 +1935,7 @@ search_indexed_tlist_for_sortgroupref(Node *node,
  *		whose Vars may appear in the clause without provoking an error
  * 'rtoffset': how much to increment varnoold by
  *
- * Returns the cnew expression tree.  The original clause structure is
+ * Returns the new___ expression tree.  The original clause structure is
  * not modified.
  */
 static List *

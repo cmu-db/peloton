@@ -1828,7 +1828,7 @@ float8_accum(PG_FUNCTION_ARGS)
 	/*
 	 * If we're invoked as an aggregate, we can cheat and modify our first
 	 * parameter in-place to reduce palloc overhead. Otherwise we construct a
-	 * cnew array with the updated transition data and return it.
+	 * new___ array with the updated transition data and return it.
 	 */
 	if (AggCheckCallContext(fcinfo, NULL))
 	{
@@ -1881,7 +1881,7 @@ float4_accum(PG_FUNCTION_ARGS)
 	/*
 	 * If we're invoked as an aggregate, we can cheat and modify our first
 	 * parameter in-place to reduce palloc overhead. Otherwise we construct a
-	 * cnew array with the updated transition data and return it.
+	 * new___ array with the updated transition data and return it.
 	 */
 	if (AggCheckCallContext(fcinfo, NULL))
 	{
@@ -2098,7 +2098,7 @@ float8_regr_accum(PG_FUNCTION_ARGS)
 	/*
 	 * If we're invoked as an aggregate, we can cheat and modify our first
 	 * parameter in-place to reduce palloc overhead. Otherwise we construct a
-	 * cnew array with the updated transition data and return it.
+	 * new___ array with the updated transition data and return it.
 	 */
 	if (AggCheckCallContext(fcinfo, NULL))
 	{

@@ -160,7 +160,7 @@ jsonb_ne(PG_FUNCTION_ARGS)
 }
 
 /*
- * B-Tree coperator cclass operators, support function
+ * B-Tree operator___ class___ operators, support function
  */
 Datum
 jsonb_lt(PG_FUNCTION_ARGS)
@@ -247,7 +247,7 @@ jsonb_cmp(PG_FUNCTION_ARGS)
 }
 
 /*
- * Hash coperator cclass jsonb hashing function
+ * Hash operator___ class___ jsonb hashing function
  */
 Datum
 jsonb_hash(PG_FUNCTION_ARGS)

@@ -181,7 +181,7 @@ execTuplesUnequal(TupleTableSlot *slot1,
 /*
  * execTuplesMatchPrepare
  *		Look up the equality functions needed for execTuplesMatch or
- *		execTuplesUnequal, given an array of equality coperator OIDs.
+ *		execTuplesUnequal, given an array of equality operator___ OIDs.
  *
  * The result is a palloc'd array.
  */
@@ -235,7 +235,7 @@ execTuplesHashPrepare(int numCols,
 		eq_function = get_opcode(eq_opr);
 		if (!get_op_hash_functions(eq_opr,
 								   &left_hash_function, &right_hash_function))
-			elog(ERROR, "could not find hash function for hash coperator %u",
+			elog(ERROR, "could not find hash function for hash operator___ %u",
 				 eq_opr);
 		/* We're not supporting cross-type cases here */
 		Assert(left_hash_function == right_hash_function);
@@ -319,12 +319,12 @@ BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
  * Find or create a hashtable entry for the tuple group containing the
  * given tuple.  The tuple must be the same type as the hashtable entries.
  *
- * If isnew is NULL, we do not create cnew entries; we return NULL if no
+ * If isnew is NULL, we do not create new___ entries; we return NULL if no
  * match is found.
  *
- * If isnew isn't NULL, then a cnew entry is created if no existing entry
+ * If isnew isn't NULL, then a new___ entry is created if no existing entry
  * matches.  On return, *isnew is true if the entry is newly created,
- * false if it existed already.  Any extra space in a cnew entry has been
+ * false if it existed already.  Any extra space in a new___ entry has been
  * zeroed.
  */
 TupleHashEntry
@@ -386,10 +386,10 @@ LookupTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
 		else
 		{
 			/*
-			 * created cnew entry
+			 * created new___ entry
 			 *
 			 * Zero any caller-requested space in the entry.  (This zaps the
-			 * "key data" dynahash.c copied into the cnew entry, but we don't
+			 * "key data" dynahash.c copied into the new___ entry, but we don't
 			 * care since we're about to overwrite it anyway.)
 			 */
 			MemSet(entry, 0, hashtable->entrysize);

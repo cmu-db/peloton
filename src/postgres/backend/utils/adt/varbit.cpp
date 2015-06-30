@@ -34,7 +34,7 @@ static VarBit *bit_overlay(VarBit *t1, VarBit *t2, int sp, int sl);
  * common code for bittypmodin and varbittypmodin
  */
 static int32
-anybit_typmodin(ArrayType *ta, const char *ctypename)
+anybit_typmodin(ArrayType *ta, const char *typename___)
 {
 	int32		typmod;
 	int32	   *tl;
@@ -55,12 +55,12 @@ anybit_typmodin(ArrayType *ta, const char *ctypename)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("length for type %s must be at least 1",
-						ctypename)));
+						typename___)));
 	if (*tl > (MaxAttrSize * BITS_PER_BYTE))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("length for type %s cannot exceed %d",
-						ctypename, MaxAttrSize * BITS_PER_BYTE)));
+						typename___, MaxAttrSize * BITS_PER_BYTE)));
 
 	typmod = *tl;
 
@@ -91,7 +91,7 @@ anybit_typmodout(int32 typmod)
  *	The data structure contains the following elements:
  *	  header  -- length of the whole data structure (incl header)
  *				 in bytes. (as with all varying length datatypes)
- *	  data section -- cprivate data section for the bits data structures
+ *	  data section -- private___ data section for the bits data structures
  *		bitlength -- length of the bit string in bits
  *		bitdata   -- bit string, most significant byte first
  *
@@ -671,7 +671,7 @@ varbit_send(PG_FUNCTION_ARGS)
 
 /*
  * varbit_transform()
- * Flatten calls to varbit's length coercion function that set the cnew maximum
+ * Flatten calls to varbit's length coercion function that set the new___ maximum
  * length >= the previous maximum length.  We can ignore the isExplicit
  * argument, since that only affects truncation cases.
  */
@@ -1765,7 +1765,7 @@ bitposition(PG_FUNCTION_ARGS)
 /*
  * bitsetbit
  *
- * Given an instance of type 'bit' creates a cnew one with
+ * Given an instance of type 'bit' creates a new___ one with
  * the Nth bit set to the given value.
  *
  * The bit location is specified left-to-right in a zero-based fashion
@@ -1799,7 +1799,7 @@ bitsetbit(PG_FUNCTION_ARGS)
 	if (newBit != 0 && newBit != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("cnew bit must be 0 or 1")));
+				 errmsg("new___ bit must be 0 or 1")));
 
 	len = VARSIZE(arg1);
 	result = (VarBit *) palloc(len);

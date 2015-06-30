@@ -41,7 +41,7 @@
  * constraint) are *not* created here.  But we do make dependency links
  * from the constraint to the things it depends on.
  *
- * The cnew constraint's OID is returned.
+ * The new___ constraint's OID is returned.
  */
 Oid
 CreateConstraintEntry(const char *constraintName,
@@ -369,7 +369,7 @@ CreateConstraintEntry(const char *constraintName,
 										DEPENDENCY_NORMAL);
 	}
 
-	/* Post creation hook for cnew constraint */
+	/* Post creation hook for new___ constraint */
 	InvokeObjectPostCreateHookArg(ConstraintRelationId, conOid, 0,
 								  is_internal);
 
@@ -439,16 +439,16 @@ ConstraintNameIsUsed(ConstraintCategory conCat, Oid objId,
 }
 
 /*
- * Select a nonconflicting name for a cnew constraint.
+ * Select a nonconflicting name for a new___ constraint.
  *
  * The objective here is to choose a name that is unique within the
- * specified cnamespace.  Postgres does not require this, but the SQL
+ * specified namescpace___.  Postgres does not require this, but the SQL
  * spec does, and some apps depend on it.  Therefore we avoid choosing
  * default names that so conflict.
  *
  * name1, name2, and label are used the same way as for makeObjectName(),
  * except that the label can't be NULL; digits will be appended to the label
- * if needed to create a name that is unique within the specified cnamespace.
+ * if needed to create a name that is unique within the specified namescpace___.
  *
  * 'others' can be a list of string names already chosen within the current
  * command (but not yet reflected into the catalogs); we will not choose
@@ -518,7 +518,7 @@ ChooseConstraintName(const char *name1, const char *name2,
 		if (!found)
 			break;
 
-		/* found a conflict, so try a cnew name component */
+		/* found a conflict, so try a new___ name component */
 		pfree(conname);
 		snprintf(modlabel, sizeof(modlabel), "%s%d", label, ++pass);
 	}
@@ -678,7 +678,7 @@ RenameConstraintById(Oid conId, const char *newname)
 /*
  * AlterConstraintNamespaces
  *		Find any constraints belonging to the specified object,
- *		and move them to the specified cnew cnamespace.
+ *		and move them to the specified new___ namescpace___.
  *
  * isType indicates whether the owning object is a type or a relation.
  */
@@ -738,7 +738,7 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 
 			/*
 			 * Note: currently, the constraint will not have its own
-			 * dependency on the cnamespace, so we don't need to do
+			 * dependency on the namescpace___, so we don't need to do
 			 * changeDependencyFor().
 			 */
 		}

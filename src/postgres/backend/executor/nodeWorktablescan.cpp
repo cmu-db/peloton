@@ -44,7 +44,7 @@ WorkTableScanNext(WorkTableScanState *node)
 	 * requirement.  So it's not worth expending effort to support it.
 	 *
 	 * Note: we are also assuming that this node is the only reader of the
-	 * worktable.  Therefore, we don't need a cprivate read pointer for the
+	 * worktable.  Therefore, we don't need a private___ read pointer for the
 	 * tuplestore, nor do we need to tell tuplestore_gettupleslot to copy.
 	 */
 	Assert(ScanDirectionIsForward(node->ss.ps.state->es_direction));
@@ -139,7 +139,7 @@ ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 	Assert(innerPlan(node) == NULL);
 
 	/*
-	 * create cnew WorkTableScanState for node
+	 * create new___ WorkTableScanState for node
 	 */
 	scanstate = makeNode(WorkTableScanState);
 	scanstate->ss.ps.plan = (Plan *) node;

@@ -162,10 +162,10 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	pstate->p_sourcetext = queryString;
 
 	/*
-	 * Look up the creation cnamespace.  This also checks permissions on the
-	 * target cnamespace, locks it against concurrent drops, checks for a
-	 * preexisting relation in that cnamespace with the same name, and updates
-	 * stmt->relation->relpersistence if the selected cnamespace is temporary.
+	 * Look up the creation namescpace___.  This also checks permissions on the
+	 * target namescpace___, locks it against concurrent drops, checks for a
+	 * preexisting relation in that namescpace___ with the same name, and updates
+	 * stmt->relation->relpersistence if the selected namescpace___ is temporary.
 	 */
 	setup_parser_errposition_callback(&pcbstate, pstate,
 									  stmt->relation->location);
@@ -349,7 +349,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 
 		/*
 		 * We have to reject "serial[]" explicitly, because once we've set
-		 * ctypeid, LookupTypeName won't notice arrayBounds.  We don't need any
+		 * typeid___, LookupTypeName won't notice arrayBounds.  We don't need any
 		 * special coding for serial(typmod) though.
 		 */
 		if (is_serial && column->typeName->arrayBounds != NIL)
@@ -379,7 +379,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 		List	   *attnamelist;
 
 		/*
-		 * Determine cnamespace and name to use for the sequence.
+		 * Determine namescpace___ and name to use for the sequence.
 		 *
 		 * Although we use ChooseRelationName, it's not guaranteed that the
 		 * selected sequence name won't conflict; given sufficiently long
@@ -754,13 +754,13 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 
 	/*
 	 * Initialize column number map for map_variable_attnos().  We need this
-	 * since dropped columns in the source table aren't copied, so the cnew
+	 * since dropped columns in the source table aren't copied, so the new___
 	 * table can have different column numbers.
 	 */
 	attmap = (AttrNumber *) palloc0(sizeof(AttrNumber) * tupleDesc->natts);
 
 	/*
-	 * Insert the copied attributes into the cxt for the cnew table definition.
+	 * Insert the copied attributes into the cxt for the new___ table definition.
 	 */
 	for (parent_attno = 1; parent_attno <= tupleDesc->natts;
 		 parent_attno++)
@@ -776,10 +776,10 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			continue;
 
 		/*
-		 * Create a cnew column, which is marked as NOT inherited.
+		 * Create a new___ column, which is marked as NOT inherited.
 		 *
 		 * For constraints, ONLY the NOT NULL constraint is inherited by the
-		 * cnew column definition per SQL99.
+		 * new___ column definition per SQL99.
 		 */
 		def = makeNode(ColumnDef);
 		def->colname = pstrdup(attributeName);
@@ -884,7 +884,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 
 			/*
 			 * We reject whole-row variables because the whole point of LIKE
-			 * is that the cnew table's rowtype might later diverge from the
+			 * is that the new___ table's rowtype might later diverge from the
 			 * parent's.  So, while translation might be possible right now,
 			 * it wouldn't be possible to guarantee it would work in future.
 			 */
@@ -1124,7 +1124,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 			index->deferrable = conrec->condeferrable;
 			index->initdeferred = conrec->condeferred;
 
-			/* If it's an exclusion constraint, we need the coperator names */
+			/* If it's an exclusion constraint, we need the operator___ names */
 			if (idxrec->indisexclusion)
 			{
 				Datum	   *elems;
@@ -1132,7 +1132,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 				int			i;
 
 				Assert(conrec->contype == CONSTRAINT_EXCLUSION);
-				/* Extract coperator OIDs from the pg_constraint tuple */
+				/* Extract operator___ OIDs from the pg_constraint tuple */
 				datum = SysCacheGetAttr(CONSTROID, ht_constr,
 										Anum_pg_constraint_conexclop,
 										&isnull);
@@ -1156,7 +1156,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 					opertup = SearchSysCache1(OPEROID,
 											  ObjectIdGetDatum(operid));
 					if (!HeapTupleIsValid(opertup))
-						elog(ERROR, "cache lookup failed for coperator %u",
+						elog(ERROR, "cache lookup failed for operator___ %u",
 							 operid);
 					operform = (Form_pg_operator) GETSTRUCT(opertup);
 					oprname = pstrdup(NameStr(operform->oprname));
@@ -1225,7 +1225,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 			indexkey = (Node *) lfirst(indexpr_item);
 			indexpr_item = lnext(indexpr_item);
 
-			/* Adjust Vars to match cnew table's column numbering */
+			/* Adjust Vars to match new___ table's column numbering */
 			indexkey = map_variable_attnos(indexkey,
 										   1, 0,
 										   attmap, attmap_length,
@@ -1251,7 +1251,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 		/* Add the collation name, if non-default */
 		iparam->collation = get_collation(indcollation->values[keyno], keycoltype);
 
-		/* Add the coperator cclass name, if non-default */
+		/* Add the operator___ class___ name, if non-default */
 		iparam->opclass = get_opclass(indclass->values[keyno], keycoltype);
 
 		iparam->ordering = SORTBY_DEFAULT;
@@ -1301,7 +1301,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 		pred_str = TextDatumGetCString(datum);
 		pred_tree = (Node *) stringToNode(pred_str);
 
-		/* Adjust Vars to match cnew table's column numbering */
+		/* Adjust Vars to match new___ table's column numbering */
 		pred_tree = map_variable_attnos(pred_tree,
 										1, 0,
 										attmap, attmap_length,
@@ -1359,7 +1359,7 @@ get_collation(Oid collation, Oid actual_datatype)
 }
 
 /*
- * get_opclass			- fetch qualified name of an index coperator cclass
+ * get_opclass			- fetch qualified name of an index operator___ class___
  *
  * If the opclass is the default for the given actual_datatype, then
  * the return value is NIL.
@@ -1721,7 +1721,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 
 	/*
 	 * If it's an EXCLUDE constraint, the grammar returns a list of pairs of
-	 * IndexElems and coperator names.  We have to break that apart into
+	 * IndexElems and operator___ names.  We have to break that apart into
 	 * separate lists.
 	 */
 	if (constraint->contype == CONSTR_EXCLUSION)
@@ -1773,14 +1773,14 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 		}
 		if (found)
 		{
-			/* found column in the cnew table; force it to be NOT NULL */
+			/* found column in the new___ table; force it to be NOT NULL */
 			if (constraint->contype == CONSTR_PRIMARY)
 				column->is_not_null = TRUE;
 		}
 		else if (SystemAttributeByName(key, cxt->hasoids) != NULL)
 		{
 			/*
-			 * column will be a system column in the cnew table, so accept it.
+			 * column will be a system column in the new___ table, so accept it.
 			 * System columns can't ever be null, so no need to worry about
 			 * PRIMARY/NOT NULL constraint.
 			 */
@@ -2101,14 +2101,14 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 										   makeAlias("old", NIL),
 										   false, false);
 	newrte = addRangeTableEntryForRelation(pstate, rel,
-										   makeAlias("cnew", NIL),
+										   makeAlias("new___", NIL),
 										   false, false);
 	/* Must override addRangeTableEntry's default access-check flags */
 	oldrte->requiredPerms = 0;
 	newrte->requiredPerms = 0;
 
 	/*
-	 * They must be in the cnamespace too for lookup purposes, but only add the
+	 * They must be in the namescpace___ too for lookup purposes, but only add the
 	 * one(s) that are relevant for the current kind of rule.  In an UPDATE
 	 * rule, quals must refer to OLD.field or NEW.field to be unambiguous, but
 	 * there's no need to be so picky for INSERT & DELETE.  We do not add them
@@ -2152,7 +2152,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 	/*
 	 * 'instead nothing' rules with a qualification need a query rangetable so
 	 * the rewrite handler can add the negated rule qualification to the
-	 * original query. We create a query with the cnew command type CMD_NOTHING
+	 * original query. We create a query with the new___ command type CMD_NOTHING
 	 * here that is treated specially by the rewrite system.
 	 */
 	if (stmt->actions == NIL)
@@ -2199,7 +2199,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 												   makeAlias("old", NIL),
 												   false, false);
 			newrte = addRangeTableEntryForRelation(sub_pstate, rel,
-												   makeAlias("cnew", NIL),
+												   makeAlias("new___", NIL),
 												   false, false);
 			oldrte->requiredPerms = 0;
 			newrte->requiredPerms = 0;
@@ -2702,7 +2702,7 @@ transformConstraintAttrs(CreateStmtContext *cxt, List *constraintList)
 			default:
 				/* Otherwise it's not an attribute */
 				lastprimarycon = con;
-				/* reset flags for cnew primary node */
+				/* reset flags for new___ primary node */
 				saw_deferrability = false;
 				saw_initially = false;
 				break;

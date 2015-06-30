@@ -505,7 +505,7 @@ miss(struct vars * v,			/* used only for debug flags */
 			break;				/* NOTE BREAK OUT */
 		}
 	if (i == 0)
-	{							/* nope, need a cnew cache entry */
+	{							/* nope, need a new___ cache entry */
 		p = getvacant(v, d, cp, start);
 		assert(p != css);
 		for (i = 0; i < d->wordsper; i++)
@@ -651,7 +651,7 @@ pickss(struct vars * v,			/* used only for debug flags */
 		i = d->nssused;
 		d->nssused++;
 		ss = &d->ssets[i];
-		FDEBUG(("cnew c%d\n", i));
+		FDEBUG(("new___ c%d\n", i));
 		/* set up innards */
 		ss->states = &d->statesarea[i * d->wordsper];
 		ss->flags = 0;

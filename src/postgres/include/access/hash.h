@@ -73,7 +73,7 @@ typedef HashPageOpaqueData *HashPageOpaque;
 #define HASHO_PAGE_ID		0xFF80
 
 /*
- *	HashScanOpaqueData is cprivate state for a hash index scan.
+ *	HashScanOpaqueData is private___ state for a hash index scan.
  */
 typedef struct HashScanOpaqueData
 {
@@ -234,8 +234,8 @@ typedef HashMetaPageData *HashMetaPage;
 #define HTMaxStrategyNumber				1
 
 /*
- *	When a cnew coperator cclass is declared, we require that the user supply
- *	us with an amproc procudure for hashing a key of the cnew type.
+ *	When a new___ operator___ class___ is declared, we require that the user supply
+ *	us with an amproc procudure for hashing a key of the new___ type.
  *	Since we only have one such proc in amproc, it's number 1.
  */
 #define HASHPROC		1
@@ -282,7 +282,7 @@ extern Datum hashvarlena(PG_FUNCTION_ARGS);
 extern Datum hash_any(register const unsigned char *k, register int keylen);
 extern Datum hash_uint32(uint32 k);
 
-/* cprivate routines */
+/* private___ routines */
 
 /* hashinsert.c */
 extern void _hash_doinsert(Relation rel, IndexTuple itup);

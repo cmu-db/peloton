@@ -167,7 +167,7 @@ typedef enum					/* behavior for mdopen & _mdfd_getseg */
 {
 	EXTENSION_FAIL,				/* ereport if segment not present */
 	EXTENSION_RETURN_NULL,		/* return NULL if not present */
-	EXTENSION_CREATE			/* create cnew segments as needed */
+	EXTENSION_CREATE			/* create new___ segments as needed */
 } ExtensionBehavior;
 
 /* local routines */
@@ -190,7 +190,7 @@ static BlockNumber _mdnblocks(SMgrRelation reln, ForkNumber forknum,
 
 
 /*
- *	mdinit() -- Initialize cprivate state for magnetic disk storage manager.
+ *	mdinit() -- Initialize private___ state for magnetic disk storage manager.
  */
 void
 mdinit(void)
@@ -280,7 +280,7 @@ mdexists(SMgrRelation reln, ForkNumber forkNum)
 }
 
 /*
- *	mdcreate() -- Create a cnew relation on magnetic disk.
+ *	mdcreate() -- Create a new___ relation on magnetic disk.
  *
  * If isRedo is true, it's okay for the relation to exist already.
  */
@@ -345,7 +345,7 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
  * however.  Leaving the empty file in place prevents that relfilenode
  * number from being reused.  The scenario this protects us from is:
  * 1. We delete a relation (and commit, and actually remove its file).
- * 2. We create a cnew relation, which by chance gets the same relfilenode as
+ * 2. We create a new___ relation, which by chance gets the same relfilenode as
  *	  the just-deleted one (OIDs must've wrapped around for that to happen).
  * 3. We crash before another checkpoint occurs.
  * During replay, we would delete the file and then recreate it, which is fine
@@ -523,7 +523,7 @@ mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	 * partial page at the end of the file. In that case we want to try to
 	 * overwrite the partial page with a full page.  It's also not redundant
 	 * if bufmgr.c had to dump another buffer of the same file to make room
-	 * for the cnew page's buffer.
+	 * for the new___ page's buffer.
 	 */
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
 		ereport(ERROR,
@@ -1028,8 +1028,8 @@ mdsync(void)
 	 * To avoid excess fsync'ing (in the worst case, maybe a never-terminating
 	 * checkpoint), we want to ignore fsync requests that are entered into the
 	 * hashtable after this point --- they should be processed next time,
-	 * instead.  We use mdsync_cycle_ctr to tell old entries apart from cnew
-	 * ones: cnew ones will have cycle_ctr equal to the incremented value of
+	 * instead.  We use mdsync_cycle_ctr to tell old entries apart from new___
+	 * ones: new___ ones will have cycle_ctr equal to the incremented value of
 	 * mdsync_cycle_ctr.
 	 *
 	 * In normal circumstances, all entries present in the table at this point
@@ -1038,7 +1038,7 @@ mdsync(void)
 	 * fsync'ing loop, then older values of cycle_ctr might remain when we
 	 * come back here to try again.  Repeated checkpoint failures would
 	 * eventually wrap the counter around to the point where an old entry
-	 * might appear cnew, causing us to skip it, possibly allowing a checkpoint
+	 * might appear new___, causing us to skip it, possibly allowing a checkpoint
 	 * to succeed that should not have.  To forestall wraparound, any time the
 	 * previous mdsync() failed to complete, run through the table and
 	 * forcibly set cycle_ctr = mdsync_cycle_ctr.
@@ -1058,7 +1058,7 @@ mdsync(void)
 		}
 	}
 
-	/* Advance counter so that cnew hashtable entries are distinguishable */
+	/* Advance counter so that new___ hashtable entries are distinguishable */
 	mdsync_cycle_ctr++;
 
 	/* Set flag to detect failure if we don't reach the end of the loop */
@@ -1072,8 +1072,8 @@ mdsync(void)
 		ForkNumber	forknum;
 
 		/*
-		 * If the entry is cnew then don't process it this time; it might
-		 * contain multiple fsync-request bits, but they are all cnew.  Note
+		 * If the entry is new___ then don't process it this time; it might
+		 * contain multiple fsync-request bits, but they are all new___.  Note
 		 * "continue" bypasses the hash-remove call at the bottom of the loop.
 		 */
 		if (entry->cycle_ctr == mdsync_cycle_ctr)
@@ -1235,7 +1235,7 @@ mdsync(void)
 
 		/*
 		 * We've finished everything that was requested before we started to
-		 * scan the entry.  If no cnew requests have been inserted meanwhile,
+		 * scan the entry.  If no new___ requests have been inserted meanwhile,
 		 * remove the entry.  Otherwise, update its cycle counter, as all the
 		 * requests now in it must have arrived during this cycle.
 		 */
@@ -1305,7 +1305,7 @@ mdpostckpt(void)
 		char	   *path;
 
 		/*
-		 * New entries are appended to the end, so if the entry is cnew we've
+		 * New entries are appended to the end, so if the entry is new___ we've
 		 * reached the end of old entries.
 		 *
 		 * Note: if just the right number of consecutive checkpoints fail, we
@@ -1557,7 +1557,7 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 													  &rnode,
 													  HASH_ENTER,
 													  &found);
-		/* if cnew entry, initialize it */
+		/* if new___ entry, initialize it */
 		if (!found)
 		{
 			entry->cycle_ctr = mdsync_cycle_ctr;
@@ -1735,7 +1735,7 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 		if (v->mdfd_chain == NULL)
 		{
 			/*
-			 * Normally we will create cnew segments only if authorized by the
+			 * Normally we will create new___ segments only if authorized by the
 			 * caller (i.e., we are doing mdextend()).  But when doing WAL
 			 * recovery, create segments anyway; this allows cases such as
 			 * replaying WAL data that has a write into a high-numbered

@@ -81,8 +81,8 @@ ExecUnique(UniqueState *node)
 			break;
 
 		/*
-		 * Else test if the cnew tuple and the previously returned tuple match.
-		 * If so then we loop back and fetch another cnew tuple from the
+		 * Else test if the new___ tuple and the previously returned tuple match.
+		 * If so then we loop back and fetch another new___ tuple from the
 		 * subplan.
 		 */
 		if (!execTuplesMatch(slot, resultTupleSlot,
@@ -93,7 +93,7 @@ ExecUnique(UniqueState *node)
 	}
 
 	/*
-	 * We have a cnew tuple different from the previous saved tuple (if any).
+	 * We have a new___ tuple different from the previous saved tuple (if any).
 	 * Save it and return it.  We must copy it because the source subplan
 	 * won't guarantee that this source tuple is still accessible after
 	 * fetching the next source tuple.

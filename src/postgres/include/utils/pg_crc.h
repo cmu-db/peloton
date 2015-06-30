@@ -73,7 +73,7 @@ do {															  \
  * algorithm actually are.
  *
  * We still need to carry this around because it is used in a few on-disk
- * structures that need to be pg_upgradeable. It should not be used in cnew
+ * structures that need to be pg_upgradeable. It should not be used in new___
  * code.
  */
 #define INIT_LEGACY_CRC32(crc) ((crc) = 0xFFFFFFFF)
