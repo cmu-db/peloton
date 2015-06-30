@@ -3173,7 +3173,9 @@ PQgetCancel(PGconn *conn)
 	if (conn->sock == PGINVALID_SOCKET)
 		return NULL;
 
-	cancel = malloc(sizeof(PGcancel));
+	// TODO: Peloton changes - added (PGcancel *) cast
+	// to suppress compiler warning
+	cancel = (PGcancel *)malloc(sizeof(PGcancel));
 	if (cancel == NULL)
 		return NULL;
 
@@ -3395,7 +3397,9 @@ pqPacketSend(PGconn *conn, char pack_type,
 		return STATUS_ERROR;
 
 	/* Send the message body. */
-	if (pqPutnchar(buf, buf_len, conn))
+	// TODO: Peloton changes - added (const char *) cast
+	// to suppress compiler warning
+	if (pqPutnchar((const char *)buf, buf_len, conn))
 		return STATUS_ERROR;
 
 	/* Finish the message. */
@@ -5061,7 +5065,9 @@ conninfo_uri_decode(const char *str, PQExpBuffer errorMessage)
 	char	   *p;
 	const char *q = str;
 
-	buf = malloc(strlen(str) + 1);
+	// TODO: Peloton changes - added (char *) cast
+	// to suppress compiler warning
+	buf = (char *)malloc(strlen(str) + 1);
 	if (buf == NULL)
 	{
 		printfPQExpBuffer(errorMessage, libpq_gettext("out of memory\n"));

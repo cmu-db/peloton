@@ -369,7 +369,9 @@ pqCheckOutBufferSpace(size_t bytes_needed, PGconn *conn)
 
 	if (newsize > 0 && bytes_needed <= (size_t) newsize)
 	{
-		newbuf = realloc(conn->outBuffer, newsize);
+		// TODO: Peloton changes - added (char *) cast
+		// to suppress compiler warning
+		newbuf = (char *)realloc(conn->outBuffer, newsize);
 		if (newbuf)
 		{
 			/* realloc succeeded */
@@ -387,7 +389,9 @@ pqCheckOutBufferSpace(size_t bytes_needed, PGconn *conn)
 
 	if (newsize > 0 && bytes_needed <= (size_t) newsize)
 	{
-		newbuf = realloc(conn->outBuffer, newsize);
+		// TODO: Peloton changes - added (char *) cast
+		// to suppress compiler warning
+		newbuf = (char *)realloc(conn->outBuffer, newsize);
 		if (newbuf)
 		{
 			/* realloc succeeded */
@@ -463,7 +467,9 @@ pqCheckInBufferSpace(size_t bytes_needed, PGconn *conn)
 
 	if (newsize > 0 && bytes_needed <= (size_t) newsize)
 	{
-		newbuf = realloc(conn->inBuffer, newsize);
+		// TODO: Peloton changes - added (char *) cast
+		// to suppress compiler warning
+		newbuf = (char *)realloc(conn->inBuffer, newsize);
 		if (newbuf)
 		{
 			/* realloc succeeded */
@@ -481,7 +487,9 @@ pqCheckInBufferSpace(size_t bytes_needed, PGconn *conn)
 
 	if (newsize > 0 && bytes_needed <= (size_t) newsize)
 	{
-		newbuf = realloc(conn->inBuffer, newsize);
+		// TODO: Peloton changes - added (char *) cast
+		// to suppress compiler warning
+		newbuf = (char *)realloc(conn->inBuffer, newsize);
 		if (newbuf)
 		{
 			/* realloc succeeded */
