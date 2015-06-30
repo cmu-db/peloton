@@ -55,14 +55,14 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 	 * - in other commands, if there's a tuple in pg_db_role_setting, update
 	 * it; if it ends up empty, delete it
 	 *
-	 * - otherwise, insert a cnew pg_db_role_setting tuple, but only if the
+	 * - otherwise, insert a new___ pg_db_role_setting tuple, but only if the
 	 * command is not RESET
 	 */
 	if (setstmt->kind == VAR_RESET_ALL)
 	{
 		if (HeapTupleIsValid(tuple))
 		{
-			ArrayType  *cnew = NULL;
+			ArrayType  *new___ = NULL;
 			Datum		datum;
 			bool		isnull;
 
@@ -70,9 +70,9 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 								 RelationGetDescr(rel), &isnull);
 
 			if (!isnull)
-				cnew = GUCArrayReset(DatumGetArrayTypeP(datum));
+				new___ = GUCArrayReset(DatumGetArrayTypeP(datum));
 
-			if (cnew)
+			if (new___)
 			{
 				Datum		repl_val[Natts_pg_db_role_setting];
 				bool		repl_null[Natts_pg_db_role_setting];
@@ -82,7 +82,7 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 				memset(repl_repl, false, sizeof(repl_repl));
 
 				repl_val[Anum_pg_db_role_setting_setconfig - 1] =
-					PointerGetDatum(cnew);
+					PointerGetDatum(new___);
 				repl_repl[Anum_pg_db_role_setting_setconfig - 1] = true;
 				repl_null[Anum_pg_db_role_setting_setconfig - 1] = false;
 
@@ -139,7 +139,7 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 	}
 	else if (valuestr)
 	{
-		/* non-null valuestr means it's not RESET, so insert a cnew tuple */
+		/* non-null valuestr means it's not RESET, so insert a new___ tuple */
 		HeapTuple	newtuple;
 		Datum		values[Natts_pg_db_role_setting];
 		bool		nulls[Natts_pg_db_role_setting];

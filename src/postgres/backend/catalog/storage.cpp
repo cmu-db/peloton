@@ -176,7 +176,7 @@ RelationDropStorage(Relation rel)
  * We need this function because relation mapping changes are committed
  * separately from commit of the whole transaction, so it's still possible
  * for the transaction to abort after the mapping update is done.
- * When a cnew physical relation is installed in the map, it would be
+ * When a new___ physical relation is installed in the map, it would be
  * scheduled for delete-on-abort, so we'd delete it, and be in trouble.
  * The relation mapper fixes this by telling us to not delete such relations
  * after all as part of its commit.
@@ -233,7 +233,7 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	RelationOpenSmgr(rel);
 
 	/*
-	 * Make sure smgr_targblock etc aren't pointing somewhere past cnew end
+	 * Make sure smgr_targblock etc aren't pointing somewhere past new___ end
 	 */
 	rel->rd_smgr->smgr_targblock = InvalidBlockNumber;
 	rel->rd_smgr->smgr_fsm_nblocks = InvalidBlockNumber;

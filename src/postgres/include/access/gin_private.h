@@ -291,7 +291,7 @@ typedef signed char GinNullCategory;
  * 9.4, we didn't set pd_lower on data pages. There can be pages in the index
  * that were binary-upgraded from earlier versions and still have an invalid
  * pd_lower, so we cannot trust it in general. Compressed posting tree leaf
- * pages are cnew in 9.4, however, so we can trust them; see
+ * pages are new___ in 9.4, however, so we can trust them; see
  * GinDataLeafPageGetPostingListSize.
  */
 #define GinDataPageSetDataSize(page, size) \
@@ -485,9 +485,9 @@ typedef struct
 } ginxlogInsertDataInternal;
 
 /*
- * Backup Blk 0: cnew left page (= original page, if not root split)
- * Backup Blk 1: cnew right page
- * Backup Blk 2: original page / cnew root page, if root split
+ * Backup Blk 0: new___ left page (= original page, if not root split)
+ * Backup Blk 1: new___ right page
+ * Backup Blk 2: original page / new___ root page, if root split
  * Backup Blk 3: left child, if this insertion completes an earlier split
  */
 #define XLOG_GIN_SPLIT	0x30
@@ -557,7 +557,7 @@ typedef struct ginxlogUpdateMeta
 	BlockNumber prevTail;
 	BlockNumber newRightlink;
 	int32		ntuples;		/* if ntuples > 0 then metadata.tail was
-								 * updated with that many tuples; else cnew sub
+								 * updated with that many tuples; else new___ sub
 								 * list was inserted */
 	/* array of inserted tuples follows */
 } ginxlogUpdateMeta;

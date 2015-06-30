@@ -15,7 +15,7 @@
 
 
 static BOOL pgwin32_get_dynamic_tokeninfo(HANDLE token,
-							TOKEN_INFORMATION_CLASS cclass, char **InfoBuffer,
+							TOKEN_INFORMATION_CLASS class___, char **InfoBuffer,
 							  char *errbuf, int errsize);
 
 /*
@@ -210,12 +210,12 @@ pgwin32_is_service(void)
  * the calling function!
  */
 static BOOL
-pgwin32_get_dynamic_tokeninfo(HANDLE token, TOKEN_INFORMATION_CLASS cclass,
+pgwin32_get_dynamic_tokeninfo(HANDLE token, TOKEN_INFORMATION_CLASS class___,
 							  char **InfoBuffer, char *errbuf, int errsize)
 {
 	DWORD		InfoBufferSize;
 
-	if (GetTokenInformation(token, cclass, NULL, 0, &InfoBufferSize))
+	if (GetTokenInformation(token, class___, NULL, 0, &InfoBufferSize))
 	{
 		snprintf(errbuf, errsize, "could not get token information: got zero size\n");
 		return FALSE;
@@ -236,7 +236,7 @@ pgwin32_get_dynamic_tokeninfo(HANDLE token, TOKEN_INFORMATION_CLASS cclass,
 		return FALSE;
 	}
 
-	if (!GetTokenInformation(token, cclass, *InfoBuffer,
+	if (!GetTokenInformation(token, class___, *InfoBuffer,
 							 InfoBufferSize, &InfoBufferSize))
 	{
 		snprintf(errbuf, errsize, "could not get token information: error code %lu\n",

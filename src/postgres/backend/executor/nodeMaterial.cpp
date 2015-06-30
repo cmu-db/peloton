@@ -29,7 +29,7 @@
  *		ExecMaterial
  *
  *		As long as we are at the end of the data collected in the tuplestore,
- *		we collect one cnew row from the subplan on each call, and stash it
+ *		we collect one new___ row from the subplan on each call, and stash it
  *		aside in the tuplestore before returning it.  The tuplestore is
  *		only read if we are asked to scan backwards, rescan, or mark/restore.
  *

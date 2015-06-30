@@ -37,7 +37,7 @@
 
 #define XLOG_BRIN_OPMASK			0x70
 /*
- * When we insert the first item on a cnew page, we restore the entire page in
+ * When we insert the first item on a new___ page, we restore the entire page in
  * redo.
  */
 #define XLOG_BRIN_INIT_PAGE		0x80
@@ -57,7 +57,7 @@ typedef struct xl_brin_createidx
 /*
  * This is what we need to know about a BRIN tuple insert
  *
- * Backup block 0: main page, block data is the cnew BrinTuple.
+ * Backup block 0: main page, block data is the new___ BrinTuple.
  * Backup block 1: revmap page
  */
 typedef struct xl_brin_insert
@@ -78,7 +78,7 @@ typedef struct xl_brin_insert
  * about the old tuple.
  *
  * Like in xlog_brin_update:
- * Backup block 0: cnew page, block data includes the cnew BrinTuple.
+ * Backup block 0: new___ page, block data includes the new___ BrinTuple.
  * Backup block 1: revmap page
  *
  * And in addition:
@@ -97,7 +97,7 @@ typedef struct xl_brin_update
 /*
  * This is what we need to know about a BRIN tuple samepage update
  *
- * Backup block 0: updated page, with cnew BrinTuple as block data
+ * Backup block 0: updated page, with new___ BrinTuple as block data
  */
 typedef struct xl_brin_samepage_update
 {
@@ -110,7 +110,7 @@ typedef struct xl_brin_samepage_update
  * This is what we need to know about a revmap extension
  *
  * Backup block 0: metapage
- * Backup block 1: cnew revmap page
+ * Backup block 1: new___ revmap page
  */
 typedef struct xl_brin_revmap_extend
 {

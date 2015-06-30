@@ -128,7 +128,7 @@ initSpGistState(SpGistState *state, Relation index)
 }
 
 /*
- * Allocate a cnew page (either by recycling, or by extending the index file).
+ * Allocate a new___ page (either by recycling, or by extending the index file).
  *
  * The returned buffer is already pinned and exclusive-locked.
  * Caller is responsible for initializing the page by calling SpGistInitBuffer.
@@ -230,7 +230,7 @@ SpGistUpdateMetaPage(Relation index)
 #define GET_LUP(c, f)  (&(c)->lastUsedPages.cachedPage[((unsigned int) (f)) % SPGIST_CACHED_PAGES])
 
 /*
- * Allocate and initialize a cnew buffer of the type and parity specified by
+ * Allocate and initialize a new___ buffer of the type and parity specified by
  * flags.  The returned buffer is already pinned and exclusive-locked.
  *
  * When requesting an inner page, if we get one with the wrong parity,
@@ -350,7 +350,7 @@ SpGistGetBuffer(Relation index, int flags, int needSpace, bool *isNew)
 		if (!ConditionalLockBuffer(buffer))
 		{
 			/*
-			 * buffer is locked by another process, so return a cnew buffer
+			 * buffer is locked by another process, so return a new___ buffer
 			 */
 			ReleaseBuffer(buffer);
 			*isNew = true;
@@ -393,12 +393,12 @@ SpGistGetBuffer(Relation index, int flags, int needSpace, bool *isNew)
 		}
 
 		/*
-		 * fallback to allocation of cnew buffer
+		 * fallback to allocation of new___ buffer
 		 */
 		UnlockReleaseBuffer(buffer);
 	}
 
-	/* No success with cache, so return a cnew buffer */
+	/* No success with cache, so return a new___ buffer */
 	*isNew = true;
 	return allocNewBuffer(index, flags);
 }
@@ -771,7 +771,7 @@ spgExtractNodeLabels(SpGistState *state, SpGistInnerTuple innerTuple)
 }
 
 /*
- * Add a cnew item to the page, replacing a PLACEHOLDER item if possible.
+ * Add a new___ item to the page, replacing a PLACEHOLDER item if possible.
  * Return the location it's inserted at, or InvalidOffsetNumber on failure.
  *
  * If startOffset isn't NULL, we start searching for placeholders at

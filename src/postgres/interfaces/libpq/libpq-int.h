@@ -394,7 +394,7 @@ struct pg_conn
 	int			client_encoding;	/* encoding id */
 	bool		std_strings;	/* standard_conforming_strings */
 	PGVerbosity verbosity;		/* error/notice message verbosity */
-	PGlobjfuncs *lobjfuncs;		/* cprivate state for large-object access fns */
+	PGlobjfuncs *lobjfuncs;		/* private___ state for large-object access fns */
 
 	/* Buffer for data received from backend and not yet processed */
 	char	   *inBuffer;		/* currently allocated buffer */

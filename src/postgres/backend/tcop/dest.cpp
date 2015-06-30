@@ -18,7 +18,7 @@
  *		CreateDestReceiver - create tuple receiver object for destination
  *		EndCommand - clean up the destination at end of command
  *		NullCommand - tell dest that an empty query string was recognized
- *		ReadyForQuery - tell dest that we are ready for a cnew query
+ *		ReadyForQuery - tell dest that we are ready for a new___ query
  *
  *	 NOTES
  *		These routines do the appropriate work before and after
@@ -209,7 +209,7 @@ NullCommand(CommandDest dest)
 }
 
 /* ----------------
- *		ReadyForQuery - tell dest that we are ready for a cnew query
+ *		ReadyForQuery - tell dest that we are ready for a new___ query
  *
  *		The ReadyForQuery message is sent in protocol versions 2.0 and up
  *		so that the FE can tell when we are done processing a query string.

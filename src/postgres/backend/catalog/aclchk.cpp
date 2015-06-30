@@ -72,7 +72,7 @@
 typedef struct
 {
 	Oid			roleid;			/* owning role */
-	Oid			nspid;			/* cnamespace, or InvalidOid if none */
+	Oid			nspid;			/* namescpace___, or InvalidOid if none */
 	/* remaining fields are same as in InternalGrant: */
 	bool		is_grant;
 	GrantObjectType objtype;
@@ -799,7 +799,7 @@ objectsInSchemaToOids(GrantObjectType objtype, List *nspnames)
 /*
  * getRelationsInNamespace
  *
- * Return Oid list of relations in given cnamespace filtered by relation kind
+ * Return Oid list of relations in given namescpace___ filtered by relation kind
  */
 static List *
 getRelationsInNamespace(Oid namespaceId, char relkind)
@@ -1158,7 +1158,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 	if (old_acl != NULL)
 	{
 		/*
-		 * We need the members of both old and cnew ACLs so we can correct the
+		 * We need the members of both old and new___ ACLs so we can correct the
 		 * shared dependency information.  Collect data before
 		 * merge_acl_with_grant throws away old_acl.
 		 */
@@ -1174,7 +1174,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 	}
 
 	/*
-	 * Generate cnew ACL.  Grantor of rights is always the same as the target
+	 * Generate new___ ACL.  Grantor of rights is always the same as the target
 	 * role.
 	 */
 	new_acl = merge_acl_with_grant(old_acl,
@@ -1221,7 +1221,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 
 		if (isNew)
 		{
-			/* insert cnew entry */
+			/* insert new___ entry */
 			values[Anum_pg_default_acl_defaclrole - 1] = ObjectIdGetDatum(iacls->roleid);
 			values[Anum_pg_default_acl_defaclnamespace - 1] = ObjectIdGetDatum(iacls->nspid);
 			values[Anum_pg_default_acl_defaclobjtype - 1] = CharGetDatum(objtype);
@@ -1252,7 +1252,7 @@ SetDefaultACL(InternalDefaultACL *iacls)
 									HeapTupleGetOid(newtuple),
 									iacls->roleid);
 
-			/* dependency on cnamespace */
+			/* dependency on namescpace___ */
 			if (OidIsValid(iacls->nspid))
 			{
 				ObjectAddress myself,
@@ -1406,7 +1406,7 @@ RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid)
 				istmt.objtype = ACL_OBJECT_FDW;
 				break;
 			default:
-				elog(ERROR, "unexpected object cclass %u", classid);
+				elog(ERROR, "unexpected object class___ %u", classid);
 				break;
 		}
 		istmt.is_grant = false;
@@ -1600,7 +1600,7 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 
 	/*
 	 * In select_best_grantor we should consider existing table-level ACL bits
-	 * as well as the per-column ACL.  Build a cnew ACL that is their
+	 * as well as the per-column ACL.  Build a new___ ACL that is their
 	 * concatenation.  (This is a bit cheap and dirty compared to merging them
 	 * properly with no duplications, but it's all we need here.)
 	 */
@@ -1630,7 +1630,7 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 								 NameStr(pg_attribute_tuple->attname));
 
 	/*
-	 * Generate cnew ACL.
+	 * Generate new___ ACL.
 	 */
 	new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 								   istmt->grant_option,
@@ -1639,12 +1639,12 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 								   ownerId);
 
 	/*
-	 * We need the members of both old and cnew ACLs so we can correct the
+	 * We need the members of both old and new___ ACLs so we can correct the
 	 * shared dependency information.
 	 */
 	nnewmembers = aclmembers(new_acl, &newmembers);
 
-	/* finished building cnew ACL value, now insert it */
+	/* finished building new___ ACL value, now insert it */
 	MemSet(values, 0, sizeof(values));
 	MemSet(nulls, false, sizeof(nulls));
 	MemSet(replaces, false, sizeof(replaces));
@@ -1906,7 +1906,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 										 0, NULL);
 
 			/*
-			 * Generate cnew ACL.
+			 * Generate new___ ACL.
 			 */
 			new_acl = merge_acl_with_grant(old_acl,
 										   istmt->is_grant,
@@ -1918,12 +1918,12 @@ ExecGrant_Relation(InternalGrant *istmt)
 										   ownerId);
 
 			/*
-			 * We need the members of both old and cnew ACLs so we can correct
+			 * We need the members of both old and new___ ACLs so we can correct
 			 * the shared dependency information.
 			 */
 			nnewmembers = aclmembers(new_acl, &newmembers);
 
-			/* finished building cnew ACL value, now insert it */
+			/* finished building new___ ACL value, now insert it */
 			MemSet(values, 0, sizeof(values));
 			MemSet(nulls, false, sizeof(nulls));
 			MemSet(replaces, false, sizeof(replaces));
@@ -2100,7 +2100,7 @@ ExecGrant_Database(InternalGrant *istmt)
 									 0, NULL);
 
 		/*
-		 * Generate cnew ACL.
+		 * Generate new___ ACL.
 		 */
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
@@ -2108,12 +2108,12 @@ ExecGrant_Database(InternalGrant *istmt)
 									   grantorId, ownerId);
 
 		/*
-		 * We need the members of both old and cnew ACLs so we can correct the
+		 * We need the members of both old and new___ ACLs so we can correct the
 		 * shared dependency information.
 		 */
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
-		/* finished building cnew ACL value, now insert it */
+		/* finished building new___ ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, false, sizeof(nulls));
 		MemSet(replaces, false, sizeof(replaces));
@@ -2225,7 +2225,7 @@ ExecGrant_Fdw(InternalGrant *istmt)
 									 0, NULL);
 
 		/*
-		 * Generate cnew ACL.
+		 * Generate new___ ACL.
 		 */
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
@@ -2233,12 +2233,12 @@ ExecGrant_Fdw(InternalGrant *istmt)
 									   grantorId, ownerId);
 
 		/*
-		 * We need the members of both old and cnew ACLs so we can correct the
+		 * We need the members of both old and new___ ACLs so we can correct the
 		 * shared dependency information.
 		 */
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
-		/* finished building cnew ACL value, now insert it */
+		/* finished building new___ ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, false, sizeof(nulls));
 		MemSet(replaces, false, sizeof(replaces));
@@ -2350,7 +2350,7 @@ ExecGrant_ForeignServer(InternalGrant *istmt)
 									 0, NULL);
 
 		/*
-		 * Generate cnew ACL.
+		 * Generate new___ ACL.
 		 */
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
@@ -2358,12 +2358,12 @@ ExecGrant_ForeignServer(InternalGrant *istmt)
 									   grantorId, ownerId);
 
 		/*
-		 * We need the members of both old and cnew ACLs so we can correct the
+		 * We need the members of both old and new___ ACLs so we can correct the
 		 * shared dependency information.
 		 */
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
-		/* finished building cnew ACL value, now insert it */
+		/* finished building new___ ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, false, sizeof(nulls));
 		MemSet(replaces, false, sizeof(replaces));
@@ -2474,7 +2474,7 @@ ExecGrant_Function(InternalGrant *istmt)
 									 0, NULL);
 
 		/*
-		 * Generate cnew ACL.
+		 * Generate new___ ACL.
 		 */
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
@@ -2482,12 +2482,12 @@ ExecGrant_Function(InternalGrant *istmt)
 									   grantorId, ownerId);
 
 		/*
-		 * We need the members of both old and cnew ACLs so we can correct the
+		 * We need the members of both old and new___ ACLs so we can correct the
 		 * shared dependency information.
 		 */
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
-		/* finished building cnew ACL value, now insert it */
+		/* finished building new___ ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, false, sizeof(nulls));
 		MemSet(replaces, false, sizeof(replaces));
@@ -2604,7 +2604,7 @@ ExecGrant_Language(InternalGrant *istmt)
 									 0, NULL);
 
 		/*
-		 * Generate cnew ACL.
+		 * Generate new___ ACL.
 		 */
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
@@ -2612,12 +2612,12 @@ ExecGrant_Language(InternalGrant *istmt)
 									   grantorId, ownerId);
 
 		/*
-		 * We need the members of both old and cnew ACLs so we can correct the
+		 * We need the members of both old and new___ ACLs so we can correct the
 		 * shared dependency information.
 		 */
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
-		/* finished building cnew ACL value, now insert it */
+		/* finished building new___ ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, false, sizeof(nulls));
 		MemSet(replaces, false, sizeof(replaces));
@@ -2742,7 +2742,7 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 									 loname, 0, NULL);
 
 		/*
-		 * Generate cnew ACL.
+		 * Generate new___ ACL.
 		 */
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
@@ -2750,12 +2750,12 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 									   grantorId, ownerId);
 
 		/*
-		 * We need the members of both old and cnew ACLs so we can correct the
+		 * We need the members of both old and new___ ACLs so we can correct the
 		 * shared dependency information.
 		 */
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
-		/* finished building cnew ACL value, now insert it */
+		/* finished building new___ ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, false, sizeof(nulls));
 		MemSet(replaces, false, sizeof(replaces));
@@ -2825,7 +2825,7 @@ ExecGrant_Namespace(InternalGrant *istmt)
 
 		tuple = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(nspid));
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "cache lookup failed for cnamespace %u", nspid);
+			elog(ERROR, "cache lookup failed for namescpace___ %u", nspid);
 
 		pg_namespace_tuple = (Form_pg_namespace) GETSTRUCT(tuple);
 
@@ -2868,7 +2868,7 @@ ExecGrant_Namespace(InternalGrant *istmt)
 									 0, NULL);
 
 		/*
-		 * Generate cnew ACL.
+		 * Generate new___ ACL.
 		 */
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
@@ -2876,12 +2876,12 @@ ExecGrant_Namespace(InternalGrant *istmt)
 									   grantorId, ownerId);
 
 		/*
-		 * We need the members of both old and cnew ACLs so we can correct the
+		 * We need the members of both old and new___ ACLs so we can correct the
 		 * shared dependency information.
 		 */
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
-		/* finished building cnew ACL value, now insert it */
+		/* finished building new___ ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, false, sizeof(nulls));
 		MemSet(replaces, false, sizeof(replaces));
@@ -2992,7 +2992,7 @@ ExecGrant_Tablespace(InternalGrant *istmt)
 									 0, NULL);
 
 		/*
-		 * Generate cnew ACL.
+		 * Generate new___ ACL.
 		 */
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
@@ -3000,12 +3000,12 @@ ExecGrant_Tablespace(InternalGrant *istmt)
 									   grantorId, ownerId);
 
 		/*
-		 * We need the members of both old and cnew ACLs so we can correct the
+		 * We need the members of both old and new___ ACLs so we can correct the
 		 * shared dependency information.
 		 */
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
-		/* finished building cnew ACL value, now insert it */
+		/* finished building new___ ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, false, sizeof(nulls));
 		MemSet(replaces, false, sizeof(replaces));
@@ -3129,7 +3129,7 @@ ExecGrant_Type(InternalGrant *istmt)
 									 0, NULL);
 
 		/*
-		 * Generate cnew ACL.
+		 * Generate new___ ACL.
 		 */
 		new_acl = merge_acl_with_grant(old_acl, istmt->is_grant,
 									   istmt->grant_option, istmt->behavior,
@@ -3137,12 +3137,12 @@ ExecGrant_Type(InternalGrant *istmt)
 									   grantorId, ownerId);
 
 		/*
-		 * We need the members of both old and cnew ACLs so we can correct the
+		 * We need the members of both old and new___ ACLs so we can correct the
 		 * shared dependency information.
 		 */
 		nnewmembers = aclmembers(new_acl, &newmembers);
 
-		/* finished building cnew ACL value, now insert it */
+		/* finished building new___ ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, false, sizeof(nulls));
 		MemSet(replaces, false, sizeof(replaces));
@@ -3267,7 +3267,7 @@ static const char *const no_priv_msg[MAX_ACL_KIND] =
 	/* ACL_KIND_PROC */
 	gettext_noop("permission denied for function %s"),
 	/* ACL_KIND_OPER */
-	gettext_noop("permission denied for coperator %s"),
+	gettext_noop("permission denied for operator___ %s"),
 	/* ACL_KIND_TYPE */
 	gettext_noop("permission denied for type %s"),
 	/* ACL_KIND_LANGUAGE */
@@ -3277,9 +3277,9 @@ static const char *const no_priv_msg[MAX_ACL_KIND] =
 	/* ACL_KIND_NAMESPACE */
 	gettext_noop("permission denied for schema %s"),
 	/* ACL_KIND_OPCLASS */
-	gettext_noop("permission denied for coperator cclass %s"),
+	gettext_noop("permission denied for operator___ class___ %s"),
 	/* ACL_KIND_OPFAMILY */
-	gettext_noop("permission denied for coperator family %s"),
+	gettext_noop("permission denied for operator___ family %s"),
 	/* ACL_KIND_COLLATION */
 	gettext_noop("permission denied for collation %s"),
 	/* ACL_KIND_CONVERSION */
@@ -3313,7 +3313,7 @@ static const char *const not_owner_msg[MAX_ACL_KIND] =
 	/* ACL_KIND_PROC */
 	gettext_noop("must be owner of function %s"),
 	/* ACL_KIND_OPER */
-	gettext_noop("must be owner of coperator %s"),
+	gettext_noop("must be owner of operator___ %s"),
 	/* ACL_KIND_TYPE */
 	gettext_noop("must be owner of type %s"),
 	/* ACL_KIND_LANGUAGE */
@@ -3323,9 +3323,9 @@ static const char *const not_owner_msg[MAX_ACL_KIND] =
 	/* ACL_KIND_NAMESPACE */
 	gettext_noop("must be owner of schema %s"),
 	/* ACL_KIND_OPCLASS */
-	gettext_noop("must be owner of coperator cclass %s"),
+	gettext_noop("must be owner of operator___ class___ %s"),
 	/* ACL_KIND_OPFAMILY */
-	gettext_noop("must be owner of coperator family %s"),
+	gettext_noop("must be owner of operator___ family %s"),
 	/* ACL_KIND_COLLATION */
 	gettext_noop("must be owner of collation %s"),
 	/* ACL_KIND_CONVERSION */
@@ -3904,7 +3904,7 @@ pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
 }
 
 /*
- * Exported routine for examining a user's privileges for a cnamespace
+ * Exported routine for examining a user's privileges for a namescpace___
  */
 AclMode
 pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
@@ -3922,10 +3922,10 @@ pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 		return mask;
 
 	/*
-	 * If we have been assigned this cnamespace as a temp cnamespace, check to
+	 * If we have been assigned this namescpace___ as a temp namescpace___, check to
 	 * make sure we have CREATE TEMP permission on the database, and if so act
 	 * as though we have all standard (but not GRANT OPTION) permissions on
-	 * the cnamespace.  If we don't have CREATE TEMP, act as though we have
+	 * the namescpace___.  If we don't have CREATE TEMP, act as though we have
 	 * only USAGE (and not CREATE) rights.
 	 *
 	 * This may seem redundant given the check in InitTempTableNamespace, but
@@ -4421,7 +4421,7 @@ pg_largeobject_aclcheck_snapshot(Oid lobj_oid, Oid roleid, AclMode mode,
 }
 
 /*
- * Exported routine for checking a user's access privileges to a cnamespace
+ * Exported routine for checking a user's access privileges to a namescpace___
  */
 AclResult
 pg_namespace_aclcheck(Oid nsp_oid, Oid roleid, AclMode mode)
@@ -4535,7 +4535,7 @@ pg_type_ownercheck(Oid type_oid, Oid roleid)
 }
 
 /*
- * Ownership check for an coperator (specified by OID).
+ * Ownership check for an operator___ (specified by OID).
  */
 bool
 pg_oper_ownercheck(Oid oper_oid, Oid roleid)
@@ -4551,7 +4551,7 @@ pg_oper_ownercheck(Oid oper_oid, Oid roleid)
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("coperator with OID %u does not exist", oper_oid)));
+				 errmsg("operator___ with OID %u does not exist", oper_oid)));
 
 	ownerId = ((Form_pg_operator) GETSTRUCT(tuple))->oprowner;
 
@@ -4659,7 +4659,7 @@ pg_largeobject_ownercheck(Oid lobj_oid, Oid roleid)
 }
 
 /*
- * Ownership check for a cnamespace (specified by OID).
+ * Ownership check for a namescpace___ (specified by OID).
  */
 bool
 pg_namespace_ownercheck(Oid nsp_oid, Oid roleid)
@@ -4712,7 +4712,7 @@ pg_tablespace_ownercheck(Oid spc_oid, Oid roleid)
 }
 
 /*
- * Ownership check for an coperator cclass (specified by OID).
+ * Ownership check for an operator___ class___ (specified by OID).
  */
 bool
 pg_opclass_ownercheck(Oid opc_oid, Oid roleid)
@@ -4728,7 +4728,7 @@ pg_opclass_ownercheck(Oid opc_oid, Oid roleid)
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("coperator cclass with OID %u does not exist",
+				 errmsg("operator___ class___ with OID %u does not exist",
 						opc_oid)));
 
 	ownerId = ((Form_pg_opclass) GETSTRUCT(tuple))->opcowner;
@@ -4739,7 +4739,7 @@ pg_opclass_ownercheck(Oid opc_oid, Oid roleid)
 }
 
 /*
- * Ownership check for an coperator family (specified by OID).
+ * Ownership check for an operator___ family (specified by OID).
  */
 bool
 pg_opfamily_ownercheck(Oid opf_oid, Oid roleid)
@@ -4755,7 +4755,7 @@ pg_opfamily_ownercheck(Oid opf_oid, Oid roleid)
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("coperator family with OID %u does not exist",
+				 errmsg("operator___ family with OID %u does not exist",
 						opf_oid)));
 
 	ownerId = ((Form_pg_opfamily) GETSTRUCT(tuple))->opfowner;
@@ -5070,7 +5070,7 @@ has_bypassrls_privilege(Oid roleid)
 }
 
 /*
- * Fetch pg_default_acl entry for given role, cnamespace and object type
+ * Fetch pg_default_acl entry for given role, namescpace___ and object type
  * (object type must be given in pg_default_acl's encoding).
  * Returns NULL if no such entry.
  */

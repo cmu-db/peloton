@@ -134,9 +134,9 @@ static void base_yyerror(YYLTYPE *yylloc, core_yyscan_t yyscanner,
 						 const char *msg);
 static Node *makeColumnRef(char *colname, List *indirection,
 						   int location, core_yyscan_t yyscanner);
-static Node *makeTypeCast(Node *arg, TypeName *ctypename, int location);
+static Node *makeTypeCast(Node *arg, TypeName *typename___, int location);
 static Node *makeStringConst(char *str, int location);
-static Node *makeStringConstCast(char *str, int location, TypeName *ctypename);
+static Node *makeStringConstCast(char *str, int location, TypeName *typename___);
 static Node *makeIntConst(int val, int location);
 static Node *makeFloatConst(char *str, int location);
 static Node *makeBitStringConst(char *str, int location);
@@ -14096,11 +14096,11 @@ makeColumnRef(char *colname, List *indirection,
 }
 
 static Node *
-makeTypeCast(Node *arg, TypeName *ctypename, int location)
+makeTypeCast(Node *arg, TypeName *typename___, int location)
 {
 	TypeCast *n = makeNode(TypeCast);
 	n->arg = arg;
-	n->typeName = ctypename;
+	n->typeName = typename___;
 	n->location = location;
 	return (Node *) n;
 }
@@ -14118,11 +14118,11 @@ makeStringConst(char *str, int location)
 }
 
 static Node *
-makeStringConstCast(char *str, int location, TypeName *ctypename)
+makeStringConstCast(char *str, int location, TypeName *typename___)
 {
 	Node *s = makeStringConst(str, location);
 
-	return makeTypeCast(s, ctypename, -1);
+	return makeTypeCast(s, typename___, -1);
 }
 
 static Node *

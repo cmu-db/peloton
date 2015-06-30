@@ -151,12 +151,12 @@ preprocess_minmax_aggregates(PlannerInfo *root, List *tlist)
 		bool		reverse;
 
 		/*
-		 * We'll need the equality coperator that goes with the aggregate's
-		 * ordering coperator.
+		 * We'll need the equality operator___ that goes with the aggregate's
+		 * ordering operator___.
 		 */
 		eqop = get_equality_op_for_ordering_op(mminfo->aggsortop, &reverse);
 		if (!OidIsValid(eqop))	/* shouldn't happen */
-			elog(ERROR, "could not find equality coperator for ordering coperator %u",
+			elog(ERROR, "could not find equality operator___ for ordering operator___ %u",
 				 mminfo->aggsortop);
 
 		/*
@@ -164,8 +164,8 @@ preprocess_minmax_aggregates(PlannerInfo *root, List *tlist)
 		 * gives NULLS LAST; furthermore there's unlikely to be much
 		 * performance difference between them, so it doesn't seem worth
 		 * costing out both ways if we get a hit on the first one.  NULLS
-		 * FIRST is more likely to be available if the coperator is a
-		 * reverse-sort coperator, so try that first if reverse.
+		 * FIRST is more likely to be available if the operator___ is a
+		 * reverse-sort operator___, so try that first if reverse.
 		 */
 		if (build_minmax_path(root, mminfo, eqop, mminfo->aggsortop, reverse))
 			continue;
@@ -320,7 +320,7 @@ find_minmax_aggs_walker(Node *node, List **context)
 
 		/*
 		 * ORDER BY is usually irrelevant for MIN/MAX, but it can change the
-		 * outcome if the aggsortop's coperator cclass recognizes non-identical
+		 * outcome if the aggsortop's operator___ class___ recognizes non-identical
 		 * values as equal.  For example, 4.0 and 4.00 are equal according to
 		 * numeric_ops, yet distinguishable.  If MIN() receives more than one
 		 * value equal to 4.0 and no value less than 4.0, it is unspecified
@@ -627,8 +627,8 @@ replace_aggs_with_params_mutator(Node *node, PlannerInfo *root)
 }
 
 /*
- * Get the OID of the sort coperator, if any, associated with an aggregate.
- * Returns InvalidOid if there is no such coperator.
+ * Get the OID of the sort operator___, if any, associated with an aggregate.
+ * Returns InvalidOid if there is no such operator___.
  */
 static Oid
 fetch_agg_sort_op(Oid aggfnoid)

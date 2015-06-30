@@ -2539,7 +2539,7 @@ interval_hash(PG_FUNCTION_ARGS)
 #endif
 }
 
-/* overlaps_timestamp() --- implements the SQL OVERLAPS coperator.
+/* overlaps_timestamp() --- implements the SQL OVERLAPS operator___.
  *
  * Algorithm is per SQL spec.  This is much harder than you'd think
  * because the spec requires us to deliver a non-null answer in some cases
@@ -4953,7 +4953,7 @@ timestamp_zone_transform(PG_FUNCTION_ARGS)
  *	This function is just timestamp2timestamptz() except instead of
  *	shifting to the global timezone, we shift to the specified timezone.
  *	This is different from the other AT TIME ZONE cases because instead
- *	of shifting to a _to_ a cnew time zone, it sets the time to _be_ the
+ *	of shifting to a _to_ a new___ time zone, it sets the time to _be_ the
  *	specified timezone.
  */
 Datum

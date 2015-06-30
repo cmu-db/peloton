@@ -543,7 +543,7 @@ pclose_check(FILE *stream)
  *	This function takes the value of argv[0] rather than a full path.
  *
  * (You may be wondering why this is in exec.c.  It requires this module's
- * services and doesn't introduce any cnew dependencies, so this seems as
+ * services and doesn't introduce any new___ dependencies, so this seems as
  * good as anyplace.)
  */
 void
@@ -682,7 +682,7 @@ AddUserToTokenDacl(HANDLE hToken)
 		goto cleanup;
 	}
 
-	/* Figure out the size of the cnew ACL */
+	/* Figure out the size of the new___ ACL */
 	dwNewAclSize = asi.AclBytesInUse + sizeof(ACCESS_ALLOWED_ACE) +
 		GetLengthSid(pTokenUser->User.Sid) -sizeof(DWORD);
 
@@ -700,7 +700,7 @@ AddUserToTokenDacl(HANDLE hToken)
 		goto cleanup;
 	}
 
-	/* Loop through the existing ACEs, and build the cnew ACL */
+	/* Loop through the existing ACEs, and build the new___ ACL */
 	for (i = 0; i < (int) asi.AceCount; i++)
 	{
 		if (!GetAce(ptdd->DefaultDacl, i, (LPVOID *) &pace))
@@ -716,14 +716,14 @@ AddUserToTokenDacl(HANDLE hToken)
 		}
 	}
 
-	/* Add the cnew ACE for the current user */
+	/* Add the new___ ACE for the current user */
 	if (!AddAccessAllowedAceEx(pacl, ACL_REVISION, OBJECT_INHERIT_ACE, GENERIC_ALL, pTokenUser->User.Sid))
 	{
 		log_error("could not add access allowed ACE: error code %lu", GetLastError());
 		goto cleanup;
 	}
 
-	/* Set the cnew DACL in the token */
+	/* Set the new___ DACL in the token */
 	tddNew.DefaultDacl = pacl;
 
 	if (!SetTokenInformation(hToken, tic, (LPVOID) &tddNew, dwNewAclSize))

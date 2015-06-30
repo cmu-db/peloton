@@ -24,9 +24,9 @@
  * since it would get completely confused if someone inquired about a bogus
  * MultiXactId that pointed to an intermediate slot containing an XID.)
  *
- * XLOG interactions: this module generates an XLOG record whenever a cnew
+ * XLOG interactions: this module generates an XLOG record whenever a new___
  * OFFSETs or MEMBERs page is initialized to zeroes, as well as an XLOG record
- * whenever a cnew MultiXactId is defined.  This allows us to completely
+ * whenever a new___ MultiXactId is defined.  This allows us to completely
  * rebuild the data entered since the last checkpoint during XLOG replay.
  * Because this is possible, we need not follow the normal rule of
  * "write WAL before data"; the only correctness guarantee needed is that
@@ -53,7 +53,7 @@
  * files that correspond to multixacts older than that value are removed.
  * (These files are also removed when a restartpoint is executed.)
  *
- * When cnew multixactid values are to be created, care is taken that the
+ * When new___ multixactid values are to be created, care is taken that the
  * counter does not fall within the wraparound horizon considering the global
  * minimum value.
  *
@@ -261,7 +261,7 @@ typedef struct MultiXactStateData
 	 * that multis that have member xids that are older than the cutoff point
 	 * for xids must also be frozen, even if the multis themselves are newer
 	 * than the multixid cutoff point).  Whenever a full table vacuum happens,
-	 * the freezing point so computed is used as the cnew pg_class.relminmxid
+	 * the freezing point so computed is used as the new___ pg_class.relminmxid
 	 * value.  The minimum of all those values in a database is stored as
 	 * pg_database.datminmxid.  In turn, the minimum of all of those values is
 	 * stored in pg_control and used as truncation point for pg_multixact.  At
@@ -408,7 +408,7 @@ MultiXactIdCreate(TransactionId xid1, MultiXactStatus status1,
  * same status, just return it as-is.
  *
  * Note that we do NOT actually modify the membership of a pre-existing
- * MultiXactId; instead we create a cnew one.  This is necessary to avoid
+ * MultiXactId; instead we create a new___ one.  This is necessary to avoid
  * a race condition against code trying to wait for one MultiXactId to finish;
  * see notes in heapam.c.
  *
@@ -515,7 +515,7 @@ MultiXactIdExpand(MultiXactId multi, TransactionId xid, MultiXactStatus status)
 	pfree(members);
 	pfree(newMembers);
 
-	debug_elog3(DEBUG2, "Expand: returning cnew multi %u", newMulti);
+	debug_elog3(DEBUG2, "Expand: returning new___ multi %u", newMulti);
 
 	return newMulti;
 }
@@ -721,9 +721,9 @@ ReadNextMultiXactId(void)
 
 /*
  * MultiXactIdCreateFromMembers
- *		Make a cnew MultiXactId from the specified set of members
+ *		Make a new___ MultiXactId from the specified set of members
  *
- * Make XLOG, SLRU and cache entries for a cnew MultiXactId, recording the
+ * Make XLOG, SLRU and cache entries for a new___ MultiXactId, recording the
  * given TransactionIds as members.  Returns the newly created MultiXactId.
  *
  * NB: the passed members[] array will be sorted in-place.
@@ -765,7 +765,7 @@ MultiXactIdCreateFromMembers(int nmembers, MultiXactMember *members)
 			if (ISUPDATE_from_mxstatus(members[i].status))
 			{
 				if (has_update)
-					elog(ERROR, "cnew multixact has more than one updating member");
+					elog(ERROR, "new___ multixact has more than one updating member");
 				has_update = true;
 			}
 		}
@@ -778,7 +778,7 @@ MultiXactIdCreateFromMembers(int nmembers, MultiXactMember *members)
 	 *
 	 * Note: unlike MultiXactIdCreate and MultiXactIdExpand, we do not check
 	 * that we've called MultiXactIdSetOldestMember here.  This is because
-	 * this routine is used in some places to create cnew MultiXactIds of which
+	 * this routine is used in some places to create new___ MultiXactIds of which
 	 * the current backend is not a member, notably during freezing of multis
 	 * in vacuum.  During vacuum, in particular, it would be unacceptable to
 	 * keep OldestMulti set, in case it runs for long.
@@ -786,7 +786,7 @@ MultiXactIdCreateFromMembers(int nmembers, MultiXactMember *members)
 	multi = GetNewMultiXactId(nmembers, &offset);
 
 	/*
-	 * Make an XLOG entry describing the cnew MXID.
+	 * Make an XLOG entry describing the new___ MXID.
 	 *
 	 * Note: we need not flush this XLOG entry to disk before proceeding. The
 	 * only way for the MXID to be referenced from any data page is for
@@ -820,7 +820,7 @@ MultiXactIdCreateFromMembers(int nmembers, MultiXactMember *members)
 	/* Done with critical section */
 	END_CRIT_SECTION();
 
-	/* Store the cnew MultiXactId in the local cache, too */
+	/* Store the new___ MultiXactId in the local cache, too */
 	mXactCachePut(multi, nmembers, members);
 
 	debug_elog2(DEBUG2, "Create: all done");
@@ -830,7 +830,7 @@ MultiXactIdCreateFromMembers(int nmembers, MultiXactMember *members)
 
 /*
  * RecordNewMultiXact
- *		Write info about a cnew multixact into the offsets and members files
+ *		Write info about a new___ multixact into the offsets and members files
  *
  * This is broken out of MultiXactIdCreateFromMembers so that xlog replay can
  * use it.
@@ -958,7 +958,7 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 	 * If we're past multiVacLimit or the safe threshold for member storage space,
 	 * start trying to force autovacuum cycles.
 	 * If we're past multiWarnLimit, start issuing warnings.
-	 * If we're past multiStopLimit, refuse to create cnew MultiXactIds.
+	 * If we're past multiStopLimit, refuse to create new___ MultiXactIds.
 	 *
 	 * Note these are pretty much the same protections in GetNewTransactionId.
 	 *----------
@@ -998,14 +998,14 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 			if (oldest_datname)
 				ereport(ERROR,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-						 errmsg("database is not accepting commands that generate cnew MultiXactIds to avoid wraparound data loss in database \"%s\"",
+						 errmsg("database is not accepting commands that generate new___ MultiXactIds to avoid wraparound data loss in database \"%s\"",
 								oldest_datname),
 				 errhint("Execute a database-wide VACUUM in that database.\n"
 						 "You might also need to commit or roll back old prepared transactions.")));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-						 errmsg("database is not accepting commands that generate cnew MultiXactIds to avoid wraparound data loss in database with OID %u",
+						 errmsg("database is not accepting commands that generate new___ MultiXactIds to avoid wraparound data loss in database with OID %u",
 								oldest_datoid),
 				 errhint("Execute a database-wide VACUUM in that database.\n"
 						 "You might also need to commit or roll back old prepared transactions.")));
@@ -1517,7 +1517,7 @@ mXactCacheGetById(MultiXactId multi, MultiXactMember **members)
 
 /*
  * mXactCachePut
- *		Add a cnew MultiXactId and its composing set into the local cache.
+ *		Add a new___ MultiXactId and its composing set into the local cache.
  */
 static void
 mXactCachePut(MultiXactId multi, int nmembers, MultiXactMember *members)
@@ -1857,7 +1857,7 @@ BootStrapMultiXact(void)
  * If writeXlog is TRUE, also emit an XLOG record saying we did this.
  *
  * The page is not actually written, just set up in shared memory.
- * The slot number of the cnew page is returned.
+ * The slot number of the new___ page is returned.
  *
  * Control lock must be held at entry, and will be held at exit.
  */
@@ -1901,7 +1901,7 @@ ZeroMultiXactMemberPage(int pageno, bool writeXlog)
  * update pg_control to set the next offset value to be at that position, so
  * that tuples marked as locked by such MultiXacts would be seen as visible
  * without having to consult multixact.  However, trying to create and use a
- * cnew MultiXactId would result in an error because the page on which the cnew
+ * new___ MultiXactId would result in an error because the page on which the new___
  * value would reside does not exist.  This routine is in charge of creating
  * such pages.
  */
@@ -1920,7 +1920,7 @@ MaybeExtendOffsetSlru(void)
 
 		/*
 		 * Fortunately for us, SimpleLruWritePage is already prepared to deal
-		 * with creating a cnew segment file even if the page we're writing is
+		 * with creating a new___ segment file even if the page we're writing is
 		 * not the first in it, so this is enough.
 		 */
 		slotno = ZeroMultiXactOffsetPage(pageno, false);
@@ -2167,7 +2167,7 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 	 * multi of data loss.
 	 *
 	 * Note: This differs from the magic number used in
-	 * SetTransactionIdLimit() since vacuum itself will never generate cnew
+	 * SetTransactionIdLimit() since vacuum itself will never generate new___
 	 * multis.  XXX actually it does, if it needs to freeze old multis.
 	 */
 	multiStopLimit = multiWrapLimit - 100;
@@ -2214,7 +2214,7 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 	 * exist in the SLRU.  This is because here we're trying to compute a
 	 * threshold for activating autovacuum, which can only remove references
 	 * to multixacts, whereas there we are computing a threshold for creating
-	 * cnew multixacts, which requires the old ones to have first been
+	 * new___ multixacts, which requires the old ones to have first been
 	 * truncated away by a checkpoint.
 	 */
 	LWLockAcquire(MultiXactGenLock, LW_SHARED);
@@ -2229,7 +2229,7 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 		oldestOffset = find_multixact_start(oldest_datminmxid);
 	}
 
-	/* Grab lock for just long enough to set the cnew limit values */
+	/* Grab lock for just long enough to set the new___ limit values */
 	LWLockAcquire(MultiXactGenLock, LW_EXCLUSIVE);
 	MultiXactState->oldestMultiXactId = oldest_datminmxid;
 	MultiXactState->oldestMultiXactDB = oldest_datoid;
@@ -2731,7 +2731,7 @@ SlruScanDirCbRemoveMembers(SlruCtl ctl, char *filename, int segpage,
 
 	/*
 	 * To ensure that no segment is spuriously removed, we must keep track of
-	 * cnew segments added since the start of the directory scan; to do this,
+	 * new___ segments added since the start of the directory scan; to do this,
 	 * we update our end-of-range point as we run.
 	 *
 	 * As an optimization, we can skip looking at shared memory if we know for
@@ -2795,7 +2795,7 @@ SlruScanDirCbFindEarliest(SlruCtl ctl, char *filename, int segpage, void *data)
  * CreateRestartPoint().  In the latter case, we rely on the fact that
  * xlog_redo() will already have called MultiXactAdvanceOldest().  Our
  * latest_page_number will already have been initialized by StartupMultiXact()
- * and kept up to date as cnew pages are zeroed.
+ * and kept up to date as new___ pages are zeroed.
  */
 void
 TruncateMultiXact(void)
@@ -2864,7 +2864,7 @@ TruncateMultiXact(void)
 	/*
 	 * Now, and only now, we can advance the stop point for multixact members.
 	 * If we did it any sooner, the segments we deleted above might already
-	 * have been overwritten with cnew members.  That would be bad.
+	 * have been overwritten with new___ members.  That would be bad.
 	 */
 	DetermineSafeOldestOffset(oldestMXact);
 }

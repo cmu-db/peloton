@@ -49,7 +49,7 @@ spg_desc(StringInfo buf, XLogReaderState *record)
 							 ((spgxlogAddNode *) rec)->offnum);
 			break;
 		case XLOG_SPGIST_SPLIT_TUPLE:
-			appendStringInfo(buf, "prefix off: %u, postfix off: %u (same %d, cnew %d)",
+			appendStringInfo(buf, "prefix off: %u, postfix off: %u (same %d, new___ %d)",
 							 ((spgxlogSplitTuple *) rec)->offnumPrefix,
 							 ((spgxlogSplitTuple *) rec)->offnumPostfix,
 							 ((spgxlogSplitTuple *) rec)->postfixBlkSame,

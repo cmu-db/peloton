@@ -286,7 +286,7 @@ deleteDependencyRecordsForClass(Oid classId, Oid objectId,
  *
  * classId/objectId specify the referencing object.
  * refClassId/oldRefObjectId specify the old referenced object.
- * newRefObjectId is the cnew referenced object (must be of cclass refClassId).
+ * newRefObjectId is the new___ referenced object (must be of class___ refClassId).
  *
  * Note the lack of objsubid parameters.  If there are subobject references
  * they will all be readjusted.

@@ -3,7 +3,7 @@
  *		Implementation of inclusion opclasses for BRIN
  *
  * This module provides framework BRIN support functions for the "inclusion"
- * coperator classes.  A few SQL-level support functions are also required for
+ * operator___ classes.  A few SQL-level support functions are also required for
  * each opclass.
  *
  * The "inclusion" BRIN strategy is useful for types that support R-Tree
@@ -51,7 +51,7 @@
 
 /*
  * Subtract this from procnum to obtain index in InclusionOpaque arrays
- * (Must be equal to minimum of cprivate procnums).
+ * (Must be equal to minimum of private___ procnums).
  */
 #define		PROCNUM_BASE			11
 
@@ -128,7 +128,7 @@ brin_inclusion_opcinfo(PG_FUNCTION_ARGS)
  *
  * Examine the given index tuple (which contains partial status of a certain
  * page range) by comparing it to the given value that comes from another heap
- * tuple.  If the cnew value is outside the union specified by the existing
+ * tuple.  If the new___ value is outside the union specified by the existing
  * tuple values, update the index tuple and return true.  Otherwise, return
  * false and do not modify in this case.
  */
@@ -142,12 +142,12 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 	Oid			colloid = PG_GET_COLLATION();
 	FmgrInfo   *finfo;
 	Datum		result;
-	bool		cnew = false;  // Peloton Porting: change from cnew to cnew
+	bool		new___ = false;  // Peloton Porting: change from new___ to new___
 	AttrNumber	attno;
 	Form_pg_attribute attr;
 
 	/*
-	 * If the cnew value is null, we record that we saw it if it's the first
+	 * If the new___ value is null, we record that we saw it if it's the first
 	 * one; otherwise, there's nothing to do.
 	 */
 	if (isnull)
@@ -163,7 +163,7 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 	attr = bdesc->bd_tupdesc->attrs[attno - 1];
 
 	/*
-	 * If the recorded value is null, copy the cnew value (which we know to be
+	 * If the recorded value is null, copy the new___ value (which we know to be
 	 * not null), and we're almost done.
 	 */
 	if (column->bv_allnulls)
@@ -173,7 +173,7 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 		column->bv_values[INCLUSION_UNMERGEABLE] = BoolGetDatum(false);
 		column->bv_values[INCLUSION_CONTAINS_EMPTY] = BoolGetDatum(false);
 		column->bv_allnulls = false;
-		cnew = true;
+		new___ = true;
 	}
 
 	/*
@@ -185,7 +185,7 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 
 	/*
 	 * If the opclass supports the concept of empty values, test the passed
-	 * cnew value for emptiness; if it returns true, we need to set the
+	 * new___ value for emptiness; if it returns true, we need to set the
 	 * "contains empty" flag in the element (unless already set).
 	 */
 	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_EMPTY);
@@ -200,10 +200,10 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 	}
 
-	if (cnew)
+	if (new___)
 		PG_RETURN_BOOL(true);
 
-	/* Check if the cnew value is already contained. */
+	/* Check if the new___ value is already contained. */
 	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_CONTAINS);
 	if (finfo != NULL &&
 		DatumGetBool(FunctionCall2Coll(finfo, colloid,
@@ -212,7 +212,7 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 
 	/*
-	 * Check if the cnew value is mergeable to the existing union.  If it is
+	 * Check if the new___ value is mergeable to the existing union.  If it is
 	 * not, mark the value as containing unmergeable elements and get out.
 	 *
 	 * Note: at this point we could remove the value from the union, since
@@ -229,7 +229,7 @@ brin_inclusion_add_value(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(true);
 	}
 
-	/* Finally, merge the cnew value to the existing union. */
+	/* Finally, merge the new___ value to the existing union. */
 	finfo = inclusion_get_procinfo(bdesc, attno, PROCNUM_MERGE);
 	Assert(finfo != NULL);
 	result = FunctionCall2Coll(finfo, colloid,
@@ -298,7 +298,7 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 		 * Placement strategies
 		 *
 		 * These are implemented by logically negating the result of the
-		 * converse placement coperator; for this to work, the converse coperator
+		 * converse placement operator___; for this to work, the converse operator___
 		 * must be part of the opclass.  An error will be thrown by
 		 * inclusion_get_strategy_procinfo() if the required strategy is not
 		 * part of the opclass.
@@ -359,7 +359,7 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 			 * Overlap and contains strategies
 			 *
 			 * These strategies are simple enough that we can simply call the
-			 * coperator and return its result.  Empty elements don't change
+			 * operator___ and return its result.  Empty elements don't change
 			 * the result.
 			 */
 
@@ -377,9 +377,9 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 			/*
 			 * Contained by strategies
 			 *
-			 * We cannot just call the original coperator for the contained by
+			 * We cannot just call the original operator___ for the contained by
 			 * strategies because some elements can be contained even though
-			 * the union is not; instead we use the overlap coperator.
+			 * the union is not; instead we use the overlap operator___.
 			 *
 			 * We check for empty elements separately as they are not merged to
 			 * the union but contained by everything.
@@ -401,7 +401,7 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 			 * Adjacent strategy
 			 *
 			 * We test for overlap first but to be safe we need to call
-			 * the actual adjacent coperator also.
+			 * the actual adjacent operator___ also.
 			 *
 			 * An empty element cannot be adjacent to any other, so there is
 			 * no need to check for it.
@@ -423,7 +423,7 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 			 * Basic comparison strategies
 			 *
 			 * It is straightforward to support the equality strategies with
-			 * the contains coperator.  Generally, inequality strategies do not
+			 * the contains operator___.  Generally, inequality strategies do not
 			 * make much sense for the types which will be used with the
 			 * inclusion BRIN family of opclasses, but is is possible to
 			 * implement them with logical negation of the left-of and right-of
@@ -623,7 +623,7 @@ inclusion_get_procinfo(BrinDesc *bdesc, uint16 attno, uint16 procnum)
  *
  * Return the procedure corresponding to the given sub-type and strategy
  * number.  The data type of the index will be used as the left hand side of
- * the coperator and the given sub-type will be used as the right hand side.
+ * the operator___ and the given sub-type will be used as the right hand side.
  * Throws an error if the pg_amop row does not exist, but that should not
  * happen with a properly configured opclass.
  *
@@ -679,7 +679,7 @@ inclusion_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 								Int16GetDatum(strategynum));
 
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "missing coperator %d(%u,%u) in opfamily %u",
+			elog(ERROR, "missing operator___ %d(%u,%u) in opfamily %u",
 				 strategynum, attr->atttypid, subtype, opfamily);
 
 		oprid = DatumGetObjectId(SysCacheGetAttr(AMOPSTRATEGY, tuple,

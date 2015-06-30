@@ -344,7 +344,7 @@ typedef struct WindowFunc {
  * an array, or storing a slice.  The "store" cases work with an
  * initial array value and a source value that is inserted into the
  * appropriate part of the array; the result of the operation is an
- * entire cnew modified array value.
+ * entire new___ modified array value.
  *
  * If reflowerindexpr = NIL, then we are fetching or storing a single array
  * element at the subscripts given by refupperindexpr.  Otherwise we are
@@ -445,7 +445,7 @@ typedef struct NamedArgExpr {
 } NamedArgExpr;
 
 /*
- * OpExpr - expression node for an coperator invocation
+ * OpExpr - expression node for an operator___ invocation
  *
  * Semantically, this is essentially the same as a function call.
  *
@@ -455,13 +455,13 @@ typedef struct NamedArgExpr {
  */
 typedef struct OpExpr {
   Expr xpr;
-  Oid opno; /* PG_OPERATOR OID of the coperator */
+  Oid opno; /* PG_OPERATOR OID of the operator___ */
   Oid opfuncid; /* PG_PROC OID of underlying function */
   Oid opresulttype; /* PG_TYPE OID of result value */
-  bool opretset; /* true if coperator returns set */
+  bool opretset; /* true if operator___ returns set */
   Oid opcollid; /* OID of collation of result */
-  Oid inputcollid; /* OID of collation that coperator should use */
-  List *args; /* arguments to the coperator (1 or 2) */
+  Oid inputcollid; /* OID of collation that operator___ should use */
+  List *args; /* arguments to the operator___ (1 or 2) */
   int location; /* token location, or -1 if unknown */
 } OpExpr;
 
@@ -469,10 +469,10 @@ typedef struct OpExpr {
  * DistinctExpr - expression node for "x IS DISTINCT FROM y"
  *
  * Except for the nodetag, this is represented identically to an OpExpr
- * referencing the "=" coperator for x and y.
+ * referencing the "=" operator___ for x and y.
  * We use "=", not the more obvious "<>", because more datatypes have "="
- * than "<>".  This means the executor must invert the coperator result.
- * Note that the coperator function won't be called at all if either input
+ * than "<>".  This means the executor must invert the operator___ result.
+ * Note that the operator___ function won't be called at all if either input
  * is NULL, since then the result can be determined directly.
  */
 typedef OpExpr DistinctExpr;
@@ -481,26 +481,26 @@ typedef OpExpr DistinctExpr;
  * NullIfExpr - a NULLIF expression
  *
  * Like DistinctExpr, this is represented the same as an OpExpr referencing
- * the "=" coperator for x and y.
+ * the "=" operator___ for x and y.
  */
 typedef OpExpr NullIfExpr;
 
 /*
  * ScalarArrayOpExpr - expression node for "scalar op ANY/ALL (array)"
  *
- * The coperator must yield boolean.  It is applied to the left operand
+ * The operator___ must yield boolean.  It is applied to the left operand
  * and each element of the righthand array, and the results are combined
  * with OR or AND (for ANY or ALL respectively).  The node representation
- * is almost the same as for the underlying coperator, but we need a useOr
+ * is almost the same as for the underlying operator___, but we need a useOr
  * flag to remember whether it's ANY or ALL, and we don't have to store
  * the result type (or the collation) because it must be boolean.
  */
 typedef struct ScalarArrayOpExpr {
   Expr xpr;
-  Oid opno; /* PG_OPERATOR OID of the coperator */
+  Oid opno; /* PG_OPERATOR OID of the operator___ */
   Oid opfuncid; /* PG_PROC OID of underlying function */
   bool useOr; /* true for ANY, false for ALL */
-  Oid inputcollid; /* OID of collation that coperator should use */
+  Oid inputcollid; /* OID of collation that operator___ should use */
   List *args; /* the scalar and array operands */
   int location; /* token location, or -1 if unknown */
 } ScalarArrayOpExpr;
@@ -529,7 +529,7 @@ typedef struct BoolExpr {
  * SubLink
  *
  * A SubLink represents a subselect appearing in an expression, and in some
- * cases also the combining coperator(s) just above it.  The subLinkType
+ * cases also the combining operator___(s) just above it.  The subLinkType
  * indicates the form of the expression represented:
  *	EXISTS_SUBLINK		EXISTS(SELECT ...)
  *	ALL_SUBLINK			(lefthand) op ALL (SELECT ...)
@@ -542,7 +542,7 @@ typedef struct BoolExpr {
  * For ALL, ANY, and ROWCOMPARE, the lefthand is a list of expressions of the
  * same length as the subselect's targetlist.  ROWCOMPARE will *always* have
  * a list with more than one entry; if the subselect has just one target
- * then the parser will create an EXPR_SUBLINK instead (and any coperator
+ * then the parser will create an EXPR_SUBLINK instead (and any operator___
  * above the subselect will be represented separately).
  * ROWCOMPARE, EXPR, and MULTIEXPR require the subselect to deliver at most
  * one row (if it returns no rows, the result is NULL).
@@ -558,7 +558,7 @@ typedef struct BoolExpr {
  *
  * NOTE: in the raw output of gram.y, testexpr contains just the raw form
  * of the lefthand expression (if any), and operName is the String name of
- * the combining coperator.  Also, subselect is a raw parsetree.  During parse
+ * the combining operator___.  Also, subselect is a raw parsetree.  During parse
  * analysis, the parser transforms testexpr into a complete boolean expression
  * that compares the lefthand value(s) to PARAM_SUBLINK nodes representing the
  * output columns of the subselect.  And subselect is transformed to a Query.
@@ -592,7 +592,7 @@ typedef struct SubLink {
   SubLinkType subLinkType; /* see above */
   int subLinkId; /* ID (1..n); 0 if not MULTIEXPR */
   Node *testexpr; /* outer-query test for ALL/ANY/ROWCOMPARE */
-  List *operName; /* originally specified coperator name */
+  List *operName; /* originally specified operator___ name */
   Node *subselect; /* subselect as Query* or raw parsetree */
   int location; /* token location, or -1 if unknown */
 } SubLink;
@@ -608,7 +608,7 @@ typedef struct SubLink {
  *
  * In an ordinary subplan, testexpr points to an executable expression
  * (OpExpr, an AND/OR tree of OpExprs, or RowCompareExpr) for the combining
- * coperator(s); the left-hand arguments are the original lefthand expressions,
+ * operator___(s); the left-hand arguments are the original lefthand expressions,
  * and the right-hand arguments are PARAM_EXEC Param nodes representing the
  * outputs of the sub-select.  (NOTE: runtime coercion functions may be
  * inserted as well.)  This is just the same expression tree as testexpr in
@@ -704,7 +704,7 @@ typedef struct FieldSelect {
  * FieldStore
  *
  * FieldStore represents the operation of modifying one field in a tuple
- * value, yielding a cnew tuple value (the input is not touched!).  Like
+ * value, yielding a new___ tuple value (the input is not touched!).  Like
  * the assign case of ArrayRef, this is used to implement UPDATE of a
  * portion of a column.
  *
@@ -718,7 +718,7 @@ typedef struct FieldSelect {
 typedef struct FieldStore {
   Expr xpr;
   Expr *arg; /* input tuple value */
-  List *newvals; /* cnew value(s) for field(s) */
+  List *newvals; /* new___ value(s) for field(s) */
   List *fieldnums; /* integer list of field attnums */
   Oid resulttype; /* type of result (same as type of arg) */
   /* Like RowExpr, we deliberately omit a typmod and collation here */
@@ -945,10 +945,10 @@ typedef struct RowExpr {
 /*
  * RowCompareExpr - row-wise comparison, such as (a, b) <= (1, 2)
  *
- * We support row comparison for any coperator that can be determined to
+ * We support row comparison for any operator___ that can be determined to
  * act like =, <>, <, <=, >, or >= (we determine this by looking for the
- * coperator in btree opfamilies).  Note that the same coperator name might
- * map to a different coperator for each pair of row elements, since the
+ * operator___ in btree opfamilies).  Note that the same operator___ name might
+ * map to a different operator___ for each pair of row elements, since the
  * element datatypes can vary.
  *
  * A RowCompareExpr node is only generated for the < <= > >= cases;
@@ -970,7 +970,7 @@ typedef struct RowCompareExpr {
   Expr xpr;
   RowCompareType rctype; /* LT LE GE or GT, never EQ or NE */
   List *opnos; /* OID list of pairwise comparison ops */
-  List *opfamilies; /* OID list of containing coperator families */
+  List *opfamilies; /* OID list of containing operator___ families */
   List *inputcollids; /* OID list of collations for comparisons */
   List *largs; /* the left-hand input arguments */
   List *rargs; /* the right-hand input arguments */

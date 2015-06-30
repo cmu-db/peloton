@@ -542,7 +542,7 @@ SetLatch(volatile Latch *latch)
 	 * Postgres; and PG database processes should handle excess SIGUSR1
 	 * interrupts without a problem anyhow.
 	 *
-	 * Another sort of race condition that's possible here is for a cnew
+	 * Another sort of race condition that's possible here is for a new___
 	 * process to own the latch immediately after we look, so we don't signal
 	 * it. This is okay so long as all callers of ResetLatch/WaitLatch follow
 	 * the standard coding convention of waiting at the bottom of their loops,

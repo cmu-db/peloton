@@ -229,7 +229,7 @@ visibilitymap_pin_ok(BlockNumber heapBlk, Buffer buf)
  *
  * recptr is the LSN of the XLOG record we're replaying, if we're in recovery,
  * or InvalidXLogRecPtr in normal running.  The page LSN is advanced to the
- * one provided; in normal running, we generate a cnew XLOG record and set the
+ * one provided; in normal running, we generate a new___ XLOG record and set the
  * page LSN to that value.  cutoff_xid is the largest xmin on the page being
  * marked all-visible; it is needed for Hot Standby, and can be
  * InvalidTransactionId if the page contains no tuples.
@@ -422,7 +422,7 @@ visibilitymap_count(Relation rel)
  * other backends receive the smgr invalidation event that this function sends
  * before they access the VM again.
  *
- * nheapblocks is the cnew size of the heap.
+ * nheapblocks is the new___ size of the heap.
  */
 void
 visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
@@ -448,7 +448,7 @@ visibilitymap_truncate(Relation rel, BlockNumber nheapblocks)
 		return;
 
 	/*
-	 * Unless the cnew size is exactly at a visibility map page boundary, the
+	 * Unless the new___ size is exactly at a visibility map page boundary, the
 	 * tail bits in the last remaining map page, representing truncated heap
 	 * blocks, need to be cleared. This is not only tidy, but also necessary
 	 * because we don't get a chance to clear the bits if the heap is extended

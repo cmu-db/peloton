@@ -137,13 +137,13 @@ _hash_doinsert(Relation rel, IndexTuple itup)
 		{
 			/*
 			 * we're at the end of the bucket chain and we haven't found a
-			 * page with enough room.  allocate a cnew overflow page.
+			 * page with enough room.  allocate a new___ overflow page.
 			 */
 
 			/* release our write lock without modifying buffer */
 			_hash_chgbufaccess(rel, buf, HASH_READ, HASH_NOLOCK);
 
-			/* chain to a cnew overflow page */
+			/* chain to a new___ overflow page */
 			buf = _hash_addovflpage(rel, metabuf, buf);
 			page = BufferGetPage(buf);
 

@@ -154,9 +154,9 @@ typedef struct AlteredTableInfo
 	/* Information saved by Phases 1/2 for Phase 3: */
 	List	   *constraints;	/* List of NewConstraint */
 	List	   *newvals;		/* List of NewColumnValue */
-	bool		new_notnull;	/* T if we added cnew NOT NULL constraints */
+	bool		new_notnull;	/* T if we added new___ NOT NULL constraints */
 	int			rewrite;		/* Reason for forced rewrite, if any */
-	Oid			newTableSpace;	/* cnew tablespace; 0 means no change */
+	Oid			newTableSpace;	/* new___ tablespace; 0 means no change */
 	bool		chgPersistence; /* T if SET LOGGED/UNLOGGED is used */
 	char		newrelpersistence;		/* if above is true */
 	/* Objects to rebuild after completing ALTER TYPE operations */
@@ -166,8 +166,8 @@ typedef struct AlteredTableInfo
 	List	   *changedIndexDefs;		/* string definitions of same */
 } AlteredTableInfo;
 
-/* Struct describing one cnew constraint to check in Phase 3 scan */
-/* Note: cnew NOT NULL constraints are handled elsewhere */
+/* Struct describing one new___ constraint to check in Phase 3 scan */
+/* Note: new___ NOT NULL constraints are handled elsewhere */
 typedef struct NewConstraint
 {
 	char	   *name;			/* Constraint name, or NULL if none */
@@ -180,8 +180,8 @@ typedef struct NewConstraint
 } NewConstraint;
 
 /*
- * Struct describing one cnew column value that needs to be computed during
- * Phase 3 copy (this could be either a cnew column with a non-null default, or
+ * Struct describing one new___ column value that needs to be computed during
+ * Phase 3 copy (this could be either a new___ column with a non-null default, or
  * a column that we're changing the type of).  Columns without such an entry
  * are just copied from the old table during ATRewriteTable.  Note that the
  * expr is an expression over *old* table values.
@@ -429,12 +429,12 @@ static void RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid,
 
 /* ----------------------------------------------------------------
  *		DefineRelation
- *				Creates a cnew relation.
+ *				Creates a new___ relation.
  *
  * stmt carries parsetree information from an ordinary CREATE TABLE statement.
  * The other arguments are used to extend the behavior for other cases:
- * relkind: relkind to assign to the cnew relation
- * ownerId: if not InvalidOid, use this as the cnew relation's owner.
+ * relkind: relkind to assign to the new___ relation
+ * ownerId: if not InvalidOid, use this as the new___ relation's owner.
  * typaddress: if not null, it's set to the pg_type entry's address.
  *
  * Note that permissions checks are done against current user regardless of
@@ -442,7 +442,7 @@ static void RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid,
  * "on behalf of" someone else, so we still want to see that the current user
  * has permissions to do it.
  *
- * If successful, returns the address of the cnew relation.
+ * If successful, returns the address of the new___ relation.
  * ----------------------------------------------------------------
  */
 ObjectAddress
@@ -485,10 +485,10 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 				 errmsg("ON COMMIT can only be used on temporary tables")));
 
 	/*
-	 * Look up the cnamespace in which we are supposed to create the relation,
+	 * Look up the namescpace___ in which we are supposed to create the relation,
 	 * check we have permission to create there, lock it against concurrent
 	 * drop, and mark stmt->relation as RELPERSISTENCE_TEMP if a temporary
-	 * cnamespace is selected.
+	 * namescpace___ is selected.
 	 */
 	namespaceId =
 		RangeVarGetAndCheckCreationNamespace(stmt->relation, NoLock, NULL);
@@ -673,7 +673,7 @@ printf("%d attnum %d\n", __LINE__,  attnum);
 										  false,
 										  typaddress);
 
-	/* Store inheritance information for cnew rel. */
+	/* Store inheritance information for new___ rel. */
 	StoreCatalogInheritance(relationId, inheritOids);
 
 	/*
@@ -683,16 +683,16 @@ printf("%d attnum %d\n", __LINE__,  attnum);
 	CommandCounterIncrement();
 
 	/*
-	 * Open the cnew relation and acquire exclusive lock on it.  This isn't
+	 * Open the new___ relation and acquire exclusive lock on it.  This isn't
 	 * really necessary for locking out other backends (since they can't see
-	 * the cnew rel anyway until we commit), but it keeps the lock manager from
+	 * the new___ rel anyway until we commit), but it keeps the lock manager from
 	 * complaining about deadlock risks.
 	 */
 	rel = relation_open(relationId, AccessExclusiveLock);
 
 	/*
 	 * Now add any newly specified column default values and CHECK constraints
-	 * to the cnew relation.  These are passed to us in the form of raw
+	 * to the new___ relation.  These are passed to us in the form of raw
 	 * parsetrees; we need to transform them to executable expression trees
 	 * before they can be added. The most convenient way to do that is to
 	 * apply the parser's transformExpr routine, but transformExpr doesn't
@@ -706,7 +706,7 @@ printf("%d attnum %d\n", __LINE__,  attnum);
 	ObjectAddressSet(address, RelationRelationId, relationId);
 
 	/*
-	 * Clean up.  We keep lock on cnew relation (although it shouldn't be
+	 * Clean up.  We keep lock on new___ relation (although it shouldn't be
 	 * visible to anyone else anyway, until commit).
 	 */
 	relation_close(rel, NoLock);
@@ -880,7 +880,7 @@ RemoveRelations(DropStmt *drop)
 		 */
 		AcceptInvalidationMessages();
 
-		/* Look up the appropriate relation using cnamespace search. */
+		/* Look up the appropriate relation using namescpace___ search. */
 		state.relkind = relkind;
 		state.heapOid = InvalidOid;
 		state.concurrent = drop->concurrent;
@@ -1052,7 +1052,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 	/*
 	 * In CASCADE mode, suck in all referencing relations as well.  This
 	 * requires multiple iterations to find indirectly-dependent relations. At
-	 * each phase, we need to exclusive-lock cnew rels before looking for their
+	 * each phase, we need to exclusive-lock new___ rels before looking for their
 	 * dependencies, else we might miss something.  Also, we check each rel as
 	 * soon as we open it, to avoid a faux pas such as holding lock for a long
 	 * time on a rel we have no permissions for.
@@ -1178,7 +1178,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 		/*
 		 * Normally, we need a transaction-safe truncation here.  However, if
 		 * the table was either created in the current (sub)transaction or has
-		 * a cnew relfilenode in the current (sub)transaction, then we can just
+		 * a new___ relfilenode in the current (sub)transaction, then we can just
 		 * truncate it in-place, because a rollback would cause the whole
 		 * table or the current physical file to be thrown away anyway.
 		 */
@@ -1207,7 +1207,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 			/*
 			 * Need the full transaction-safe pushups.
 			 *
-			 * Create a cnew empty storage file for the relation, and assign it
+			 * Create a new___ empty storage file for the relation, and assign it
 			 * as the relfilenode value. The old storage file is scheduled for
 			 * deletion at commit.
 			 */
@@ -1345,7 +1345,7 @@ storage_name(char c)
 
 /*----------
  * MergeAttributes
- *		Returns cnew schema given initial schema and superclasses.
+ *		Returns new___ schema given initial schema and superclasses.
  *
  * Input arguments:
  * 'schema' is the column/attribute definition for the table. (It's a list
@@ -1397,7 +1397,7 @@ storage_name(char c)
  *		(3) If conflicting defaults are inherited from different parents
  *			(and not overridden by the child), an error is raised.
  *		(4) Otherwise the inherited default is used.
- *		Rule (3) is cnew in Postgres 7.1; in earlier releases you got a
+ *		Rule (3) is new___ in Postgres 7.1; in earlier releases you got a
  *		rather arbitrary choice of which parent default to use.
  *----------
  */
@@ -1641,7 +1641,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 			else
 			{
 				/*
-				 * No, create a cnew inherited column
+				 * No, create a new___ inherited column
 				 */
 				def = makeNode(ColumnDef);
 				def->colname = pstrdup(attributeName);
@@ -1725,7 +1725,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				if (check[i].ccnoinherit)
 					continue;
 
-				/* Adjust Vars to match cnew table's column numbering */
+				/* Adjust Vars to match new___ table's column numbering */
 				expr = map_variable_attnos(stringToNode(check[i].ccbin),
 										   1, 0,
 										   newattno, tupleDesc->natts,
@@ -1733,7 +1733,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 
 				/*
 				 * For the moment we have to reject whole-row variables. We
-				 * could convert them, if we knew the cnew table's rowtype OID,
+				 * could convert them, if we knew the new___ table's rowtype OID,
 				 * but that hasn't been assigned yet.
 				 */
 				if (found_whole_row)
@@ -1747,7 +1747,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				/* check for duplicate */
 				if (!MergeCheckConstraint(constraints, name, expr))
 				{
-					/* nope, this is a cnew one */
+					/* nope, this is a new___ one */
 					CookedConstraint *cooked;
 
 					cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
@@ -1856,7 +1856,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				def->is_local = true;
 				/* Merge of NOT NULL constraints = OR 'em together */
 				def->is_not_null |= newdef->is_not_null;
-				/* If cnew def has a default, override previous default */
+				/* If new___ def has a default, override previous default */
 				if (newdef->raw_default != NULL)
 				{
 					def->raw_default = newdef->raw_default;
@@ -1866,7 +1866,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 			else
 			{
 				/*
-				 * No, attach cnew column to result schema
+				 * No, attach new___ column to result schema
 				 */
 				inhSchema = lappend(inhSchema, newdef);
 			}
@@ -1959,7 +1959,7 @@ MergeCheckConstraint(List *constraints, char *name, Node *expr)
  * StoreCatalogInheritance
  *		Updates the system catalogs with proper inheritance information.
  *
- * supers is a list of the OIDs of the cnew relation's direct ancestors.
+ * supers is a list of the OIDs of the new___ relation's direct ancestors.
  */
 static void
 StoreCatalogInheritance(Oid relationId, List *supers)
@@ -2092,7 +2092,7 @@ findAttrByName(const char *attributeName, List *schema)
  *
  * NOTE: an important side-effect of this operation is that an SI invalidation
  * message is sent out to all backends --- including me --- causing plans
- * referencing the relation to be rebuilt with the cnew list of children.
+ * referencing the relation to be rebuilt with the new___ list of children.
  * This must happen even if we find that no change is needed in the pg_class
  * row.
  */
@@ -2162,7 +2162,7 @@ renameatt_check(Oid myrelid, Form_pg_class classform, bool recursing)
 						NameStr(classform->relname))));
 
 	/*
-	 * permissions checking.  only the owner of a cclass can change its schema.
+	 * permissions checking.  only the owner of a class___ can change its schema.
 	 */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
@@ -2302,7 +2302,7 @@ renameatt_internal(Oid myrelid,
 				 errmsg("cannot rename inherited column \"%s\"",
 						oldattname)));
 
-	/* cnew name should not already exist */
+	/* new___ name should not already exist */
 	check_for_column_name_collision(targetrelation, newattname);
 
 	/* apply the update */
@@ -2371,7 +2371,7 @@ renameatt(RenameStmt *stmt)
 	attnum =
 		renameatt_internal(relid,
 						   stmt->subname,		/* old att name */
-						   stmt->newname,		/* cnew att name */
+						   stmt->newname,		/* new___ att name */
 						   interpretInhOption(stmt->relation->inhOpt),	/* recursive? */
 						   false,		/* recursing? */
 						   0,	/* expected inhcount */
@@ -2612,7 +2612,7 @@ RenameRelationInternal(Oid myrelid, const char *newrelname, bool is_internal)
 						newrelname)));
 
 	/*
-	 * Update pg_class tuple with cnew relname.  (Scribbling on reltup is OK
+	 * Update pg_class tuple with new___ relname.  (Scribbling on reltup is OK
 	 * because it's a copy...)
 	 */
 	namestrcpy(&(relform->relname), newrelname);
@@ -2721,8 +2721,8 @@ AlterTableLookupRelation(AlterTableStmt *stmt, LOCKMODE lockmode)
  * ALTER TABLE is performed in three phases:
  *		1. Examine subcommands and perform pre-transformation checking.
  *		2. Update system catalogs.
- *		3. Scan table(s) to check cnew constraints, and optionally recopy
- *		   the data into cnew table(s).
+ *		3. Scan table(s) to check new___ constraints, and optionally recopy
+ *		   the data into new___ table(s).
  * Phase 3 is not performed unless one or more of the subcommands requires
  * it.  The intention of this design is to allow multiple independent
  * updates of the table schema to be performed with only one pass over the
@@ -2857,7 +2857,7 @@ AlterTableGetLockLevel(List *cmds)
 				/*
 				 * These subcommands may require addition of toast tables. If
 				 * we add a toast table to a table currently being scanned, we
-				 * might miss data added to the cnew toast table by concurrent
+				 * might miss data added to the new___ toast table by concurrent
 				 * insert transactions.
 				 */
 			case AT_SetStorage:/* may add toast tables, see
@@ -2975,7 +2975,7 @@ AlterTableGetLockLevel(List *cmds)
 				 * These subcommands affect inheritance behaviour. Queries
 				 * started before us will continue to see the old inheritance
 				 * behaviour, while queries started after we commit will see
-				 * cnew behaviour. No need to prevent reads or writes to the
+				 * new___ behaviour. No need to prevent reads or writes to the
 				 * subtable while we hook it up though. Changing the TupDesc
 				 * may be a problem, so keep highest lock.
 				 */
@@ -3008,7 +3008,7 @@ AlterTableGetLockLevel(List *cmds)
 				 * and maintenance, though don't change the semantic results
 				 * from normal data reads and writes. Delaying an ALTER TABLE
 				 * behind currently active writes only delays the point where
-				 * the cnew strategy begins to take effect, so there is no
+				 * the new___ strategy begins to take effect, so there is no
 				 * benefit in waiting. In this case the minimum restriction
 				 * applies: we don't currently allow concurrent catalog
 				 * updates.
@@ -3736,7 +3736,7 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 		 * persistence: on one hand, we need to ensure that the buffers
 		 * belonging to each of the two relations are marked with or without
 		 * BM_PERMANENT properly.  On the other hand, since rewriting creates
-		 * and assigns a cnew relfilenode, we automatically create or drop an
+		 * and assigns a new___ relfilenode, we automatically create or drop an
 		 * init fork for the relation as appropriate.
 		 */
 		if (tab->rewrite > 0)
@@ -3812,7 +3812,7 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 			 * Create transient table that will receive the modified data.
 			 *
 			 * Ensure it is marked correctly as logged or unlogged.  We have
-			 * to do this here so that buffers for the cnew relfilenode will
+			 * to do this here so that buffers for the new___ relfilenode will
 			 * have the right persistence set, and at the same time ensure
 			 * that the original filenode's buffers will get read in with the
 			 * correct setting (i.e. the original one).  Otherwise a rollback
@@ -3827,16 +3827,16 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 									   lockmode);
 
 			/*
-			 * Copy the heap data into the cnew table with the desired
+			 * Copy the heap data into the new___ table with the desired
 			 * modifications, and test the current data within the table
-			 * against cnew constraints generated by ALTER TABLE commands.
+			 * against new___ constraints generated by ALTER TABLE commands.
 			 */
 			ATRewriteTable(tab, OIDNewHeap, lockmode);
 
 			/*
-			 * Swap the physical files of the old and cnew heaps, then rebuild
+			 * Swap the physical files of the old and new___ heaps, then rebuild
 			 * indexes and discard the old heap.  We can use RecentXmin for
-			 * the table's cnew relfrozenxid because we rewrote all the tuples
+			 * the table's new___ relfrozenxid because we rewrote all the tuples
 			 * in ATRewriteTable, so no older Xid remains in the table.  Also,
 			 * we never try to swap toast tables by content, since we have no
 			 * interest in letting this code work on system catalogs.
@@ -3851,7 +3851,7 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 		else
 		{
 			/*
-			 * Test the current data within the table against cnew constraints
+			 * Test the current data within the table against new___ constraints
 			 * generated by ALTER TABLE commands, but don't rebuild data.
 			 */
 			if (tab->constraints != NIL || tab->new_notnull)
@@ -3950,7 +3950,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 	/*
 	 * Prepare a BulkInsertState and options for heap_insert. Because we're
-	 * building a cnew heap, we can skip WAL-logging and fsync it to disk at
+	 * building a new___ heap, we can skip WAL-logging and fsync it to disk at
 	 * the end instead (unless WAL-logging is required for archiving or
 	 * streaming replication). The FSM is empty too, so don't bother using it.
 	 */
@@ -4010,7 +4010,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 	if (newrel || tab->new_notnull)
 	{
 		/*
-		 * If we are rebuilding the tuples OR if we added any cnew NOT NULL
+		 * If we are rebuilding the tuples OR if we added any new___ NOT NULL
 		 * constraints, check all not-null constraints.  This is a bit of
 		 * overkill but it minimizes risk of bugs, and heap_attisnull is a
 		 * pretty cheap test anyway.
@@ -4061,7 +4061,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		econtext = GetPerTupleExprContext(estate);
 
 		/*
-		 * Make tuple slots for old and cnew tuples.  Note that even when the
+		 * Make tuple slots for old and new___ tuples.  Note that even when the
 		 * tuples are the same, the tupDescs might not be (consider ADD COLUMN
 		 * without a default).
 		 */
@@ -4076,7 +4076,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		memset(isnull, true, i * sizeof(bool));
 
 		/*
-		 * Any attributes that are dropped according to the cnew tuple
+		 * Any attributes that are dropped according to the new___ tuple
 		 * descriptor can be set to NULL. We precompute the list of dropped
 		 * attributes to avoid needing to do so in the per-tuple loop.
 		 */
@@ -4087,7 +4087,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 		}
 
 		/*
-		 * Scan through the rows, generating a cnew row if needed and then
+		 * Scan through the rows, generating a new___ row if needed and then
 		 * checking all the constraints.
 		 */
 		snapshot = RegisterSnapshot(GetLatestSnapshot());
@@ -4110,7 +4110,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 				if (oldTupDesc->tdhasoid)
 					tupOid = HeapTupleGetOid(tuple);
 
-				/* Set dropped attributes to null in cnew tuple */
+				/* Set dropped attributes to null in new___ tuple */
 				foreach(lc, dropped_attrs)
 					isnull[lfirst_int(lc)] = true;
 
@@ -4132,7 +4132,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 				}
 
 				/*
-				 * Form the cnew tuple. Note that we don't explicitly pfree it,
+				 * Form the new___ tuple. Note that we don't explicitly pfree it,
 				 * since the per-tuple memory context will be reset shortly.
 				 */
 				tuple = heap_form_tuple(newTupDesc, values, isnull);
@@ -4187,7 +4187,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 				}
 			}
 
-			/* Write the tuple out to the cnew relation */
+			/* Write the tuple out to the new___ relation */
 			if (newrel)
 				heap_insert(newrel, tuple, mycid, hi_options, bistate);
 
@@ -4668,7 +4668,7 @@ ATPrepAddColumn(List **wqueue, Relation rel, bool recurse, bool recursing,
 
 /*
  * Add a column to a table; this handles the AT_AddOids cases as well.  The
- * return value is the address of the cnew column in the parent relation.
+ * return value is the address of the new___ column in the parent relation.
  */
 static ObjectAddress
 ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
@@ -4767,10 +4767,10 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		elog(ERROR, "cache lookup failed for relation %u", myrelid);
 	relkind = ((Form_pg_class) GETSTRUCT(reltup))->relkind;
 
-	/* cnew name should not already exist */
+	/* new___ name should not already exist */
 	check_for_column_name_collision(rel, colDef->colname);
 
-	/* Determine the cnew attribute's number */
+	/* Determine the new___ attribute's number */
 	if (isOid)
 		newattnum = ObjectIdAttributeNumber;
 	else
@@ -4798,7 +4798,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 					   list_make1_oid(rel->rd_rel->reltype),
 					   false);
 
-	/* construct cnew attribute's pg_attribute entry */
+	/* construct new___ attribute's pg_attribute entry */
 	attribute.attrelid = myrelid;
 	namestrcpy(&(attribute.attname), colDef->colname);
 	attribute.atttypid = typeOid;
@@ -4840,7 +4840,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 	heap_freetuple(reltup);
 
-	/* Post creation hook for cnew attribute */
+	/* Post creation hook for new___ attribute */
 	InvokeObjectPostCreateHook(RelationRelationId, myrelid, newattnum);
 
 	heap_close(pgclass, RowExclusiveLock);
@@ -4877,9 +4877,9 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	 * that effectively means that the default is NULL.  The heap tuple access
 	 * routines always check for attnum > # of attributes in tuple, and return
 	 * NULL if so, so without any modification of the tuple data we will get
-	 * the effect of NULL values in the cnew column.
+	 * the effect of NULL values in the new___ column.
 	 *
-	 * An exception occurs when the cnew column is of a domain type: the domain
+	 * An exception occurs when the new___ column is of a domain type: the domain
 	 * might have a NOT NULL constraint, or a check constraint that indirectly
 	 * rejects nulls.  If there are any domain constraints then we construct
 	 * an explicit NULL default value that will be passed through
@@ -4938,7 +4938,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		}
 
 		/*
-		 * If the cnew column is NOT NULL, tell Phase 3 it needs to test that.
+		 * If the new___ column is NOT NULL, tell Phase 3 it needs to test that.
 		 * (Note we don't do this for an OID column.  OID will be marked not
 		 * null, but since it's filled specially, there's no need to test
 		 * anything.)
@@ -4954,7 +4954,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		tab->rewrite |= AT_REWRITE_ALTER_OID;
 
 	/*
-	 * Add needed dependency entries for the cnew column.
+	 * Add needed dependency entries for the new___ column.
 	 */
 	add_column_datatype_dependency(myrelid, newattnum, attribute.atttypid);
 	add_column_collation_dependency(myrelid, newattnum, attribute.attcollation);
@@ -5008,7 +5008,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 }
 
 /*
- * If a cnew or renamed column will collide with the name of an existing
+ * If a new___ or renamed column will collide with the name of an existing
  * column, error out.
  */
 static void
@@ -5324,7 +5324,7 @@ ATExecColumnDefault(Relation rel, const char *colName,
 	 * default.
 	 *
 	 * We treat removing the existing default as an internal operation when it
-	 * is preparatory to adding a cnew default, but as a user-initiated
+	 * is preparatory to adding a new___ default, but as a user-initiated
 	 * operation when the user asked for a drop.
 	 */
 	RemoveAttrDefault(RelationGetRelid(rel), attnum, DROP_RESTRICT, false,
@@ -5489,17 +5489,17 @@ ATExecSetOptions(Relation rel, const char *colName, Node *options,
 				 errmsg("cannot alter system column \"%s\"",
 						colName)));
 
-	/* Generate cnew proposed attoptions (text array) */
+	/* Generate new___ proposed attoptions (text array) */
 	Assert(IsA(options, List));
 	datum = SysCacheGetAttr(ATTNAME, tuple, Anum_pg_attribute_attoptions,
 							&isnull);
 	newOptions = transformRelOptions(isnull ? (Datum) 0 : datum,
 									 (List *) options, NULL, NULL, false,
 									 isReset);
-	/* Validate cnew options */
+	/* Validate new___ options */
 	(void) attribute_reloptions(newOptions, true);
 
-	/* Build cnew tuple. */
+	/* Build new___ tuple. */
 	memset(repl_null, false, sizeof(repl_null));
 	memset(repl_repl, false, sizeof(repl_repl));
 	if (newOptions != (Datum) 0)
@@ -5841,7 +5841,7 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
  * UNIQUE and PRIMARY KEY constraints into AT_AddIndex subcommands.  This lets
  * us schedule creation of the index at the appropriate time during ALTER.
  *
- * Return value is the address of the cnew index.
+ * Return value is the address of the new___ index.
  */
 static ObjectAddress
 ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
@@ -5874,7 +5874,7 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 						  quiet);
 
 	/*
-	 * If TryReuseIndex() stashed a relfilenode for us, we used it for the cnew
+	 * If TryReuseIndex() stashed a relfilenode for us, we used it for the new___
 	 * index instead of building from scratch.  The DROP of the old edition of
 	 * this index will have scheduled the storage for deletion at commit, so
 	 * cancel that pending deletion.
@@ -5893,7 +5893,7 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 /*
  * ALTER TABLE ADD CONSTRAINT USING INDEX
  *
- * Returns the address of the cnew constraint.
+ * Returns the address of the new___ constraint.
  */
 static ObjectAddress
 ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
@@ -5971,7 +5971,7 @@ ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
 /*
  * ALTER TABLE ADD CONSTRAINT
  *
- * Return value is the address of the cnew constraint; if no constraint was
+ * Return value is the address of the new___ constraint; if no constraint was
  * added, InvalidObjectAddress is returned.
  */
 static ObjectAddress
@@ -6182,7 +6182,7 @@ ATAddCheckConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 }
 
 /*
- * Add a foreign-key constraint to a single table; return the cnew constraint's
+ * Add a foreign-key constraint to a single table; return the new___ constraint's
  * address.
  *
  * Subroutine for ATExecAddConstraint.  Must already hold exclusive
@@ -6366,7 +6366,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		/*
 		 * Check it's a btree; currently this can never fail since no other
 		 * index AMs support unique indexes.  If we ever did have other types
-		 * of unique indexes, we'd need a way to determine which coperator
+		 * of unique indexes, we'd need a way to determine which operator___
 		 * strategy number is equality.  (Is it reasonable to insist that
 		 * every such index AM use btree's number for equality?)
 		 */
@@ -6375,14 +6375,14 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		eqstrategy = BTEqualStrategyNumber;
 
 		/*
-		 * There had better be a primary equality coperator for the index.
+		 * There had better be a primary equality operator___ for the index.
 		 * We'll use it for PK = PK comparisons.
 		 */
 		ppeqop = get_opfamily_member(opfamily, opcintype, opcintype,
 									 eqstrategy);
 
 		if (!OidIsValid(ppeqop))
-			elog(ERROR, "missing coperator %d(%u,%u) in opfamily %u",
+			elog(ERROR, "missing operator___ %d(%u,%u) in opfamily %u",
 				 eqstrategy, opcintype, opcintype, opfamily);
 
 		/*
@@ -6410,7 +6410,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		{
 			/*
 			 * Otherwise, look for an implicit cast from the FK type to the
-			 * opcintype, and if found, use the primary equality coperator.
+			 * opcintype, and if found, use the primary equality operator___.
 			 * This is a bit tricky because opcintype might be a polymorphic
 			 * type such as ANYARRAY or ANYENUM; so what we have to test is
 			 * whether the two actual column types can be concurrently cast to
@@ -6466,7 +6466,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 			Oid			new_castfunc;
 
 			/*
-			 * Identify coercion pathways from each of the old and cnew FK-side
+			 * Identify coercion pathways from each of the old and new___ FK-side
 			 * column types to the right (foreign) operand type of the pfeqop.
 			 * We may assume that pg_constraint.conkey is not changing.
 			 */
@@ -6489,7 +6489,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 			 * arbitrarily in response to get_fn_expr_argtype().  Therefore,
 			 * when the cast destination is polymorphic, we only avoid
 			 * revalidation if the input type has not changed at all.  Given
-			 * just the core data types and coperator classes, this requirement
+			 * just the core data types and operator___ classes, this requirement
 			 * prevents no would-be optimizations.
 			 *
 			 * If the cast converts from a base type to a domain thereon, then
@@ -6723,7 +6723,7 @@ ATExecAlterConstraint(Relation rel, AlterTableCmd *cmd,
 		heap_close(tgrel, RowExclusiveLock);
 
 		/*
-		 * Invalidate relcache so that others see the cnew attributes.  We must
+		 * Invalidate relcache so that others see the new___ attributes.  We must
 		 * inval both the named rel and any others having relevant triggers.
 		 * (At present there should always be exactly one other rel, but
 		 * there's no need to hard-wire such an assumption here.)
@@ -6883,7 +6883,7 @@ ATExecValidateConstraint(Relation rel, char *constrName, bool recurse,
 			validateCheckConstraint(rel, tuple);
 
 			/*
-			 * Invalidate relcache so that others see the cnew validated
+			 * Invalidate relcache so that others see the new___ validated
 			 * constraint.
 			 */
 			CacheInvalidateRelcache(rel);
@@ -7866,7 +7866,7 @@ ATPrepAlterColumnType(List **wqueue,
 	if (tab->relkind == RELKIND_RELATION)
 	{
 		/*
-		 * Set up an expression to transform the old data value to the cnew
+		 * Set up an expression to transform the old data value to the new___
 		 * type. If a USING option was given, use the expression as transformed
 		 * by transformAlterTableStmt, else just take the old value and try to
 		 * coerce it.  We do this first so that type incompatibility can be
@@ -7950,10 +7950,10 @@ ATPrepAlterColumnType(List **wqueue,
 
 /*
  * When the data type of a column is changed, a rewrite might not be required
- * if the cnew type is sufficiently identical to the old one, and the USING
+ * if the new___ type is sufficiently identical to the old one, and the USING
  * clause isn't trying to insert some other value.  It's safe to skip the
- * rewrite if the old type is binary coercible to the cnew type, or if the
- * cnew type is an unconstrained domain over the old type.  In the case of a
+ * rewrite if the old type is binary coercible to the new___ type, or if the
+ * new___ type is an unconstrained domain over the old type.  In the case of a
  * constrained domain, we could get by with scanning the table and checking
  * the constraint rather than actually rewriting it, but we don't currently
  * try to do that.
@@ -8040,13 +8040,13 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 
 	/*
 	 * If there is a default expression for the column, get it and ensure we
-	 * can coerce it to the cnew datatype.  (We must do this before changing
+	 * can coerce it to the new___ datatype.  (We must do this before changing
 	 * the column type, because build_column_default itself will try to
 	 * coerce, and will not issue the error message we want if it fails.)
 	 *
 	 * We remove any implicit coercion steps at the top level of the old
 	 * default expression; this has been agreed to satisfy the principle of
-	 * least surprise.  (The conversion to the cnew column type should act like
+	 * least surprise.  (The conversion to the new___ column type should act like
 	 * it started from what the user sees as the stored expression, and the
 	 * implicit coercions aren't going to be shown.)
 	 */
@@ -8204,7 +8204,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 				 * used in the trigger's WHEN condition.  The first case would
 				 * not require any extra work, but the second case would
 				 * require updating the WHEN expression, which will take a
-				 * significant amount of cnew code.  Since we can't easily tell
+				 * significant amount of new___ code.  Since we can't easily tell
 				 * which case applies, we punt for both.  FIXME someday.
 				 */
 				ereport(ERROR,
@@ -8277,7 +8277,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 				break;
 
 			default:
-				elog(ERROR, "unrecognized object cclass: %u",
+				elog(ERROR, "unrecognized object class___: %u",
 					 foundObject.classId);
 		}
 	}
@@ -8347,7 +8347,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 
 	heap_close(attrelation, RowExclusiveLock);
 
-	/* Install dependencies on cnew datatype and collation */
+	/* Install dependencies on new___ datatype and collation */
 	add_column_datatype_dependency(RelationGetRelid(rel), attnum, targettype);
 	add_column_collation_dependency(RelationGetRelid(rel), attnum, targetcollid);
 
@@ -8361,14 +8361,14 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 
 	/*
 	 * Update the default, if present, by brute force --- remove and re-add
-	 * the default.  Probably unsafe to take shortcuts, since the cnew version
+	 * the default.  Probably unsafe to take shortcuts, since the new___ version
 	 * may well have additional dependencies.  (It's okay to do this now,
 	 * rather than after other ALTER TYPE commands, since the default won't
 	 * depend on other column types.)
 	 */
 	if (defaultexpr)
 	{
-		/* Must make cnew row visible since it will be updated again */
+		/* Must make new___ row visible since it will be updated again */
 		CommandCounterIncrement();
 
 		/*
@@ -8450,7 +8450,7 @@ ATExecAlterColumnGenericOptions(Relation rel,
 				 errmsg("cannot alter system column \"%s\"", colName)));
 
 
-	/* Initialize buffers for cnew tuple values */
+	/* Initialize buffers for new___ tuple values */
 	memset(repl_val, 0, sizeof(repl_val));
 	memset(repl_null, false, sizeof(repl_null));
 	memset(repl_repl, false, sizeof(repl_repl));
@@ -8619,7 +8619,7 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 
 	/*
 	 * Attach each generated command to the proper place in the work queue.
-	 * Note this could result in creation of entirely cnew work-queue entries.
+	 * Note this could result in creation of entirely new___ work-queue entries.
 	 *
 	 * Also note that we have to tweak the command subtypes, because it turns
 	 * out that re-creation of indexes and constraints has to act a bit
@@ -8720,7 +8720,7 @@ TryReuseIndex(Oid oldId, IndexStmt *stmt)
 /*
  * Subroutine for ATPostAlterTypeParse().
  *
- * Stash the old P-F equality coperator into the Constraint node, for possible
+ * Stash the old P-F equality operator___ into the Constraint node, for possible
  * use by ATAddForeignKeyConstraint() in determining whether revalidation of
  * this constraint can be skipped.
  */
@@ -8755,7 +8755,7 @@ TryReuseForeignKey(Oid oldId, Constraint *con)
 		elog(ERROR, "conpfeqop is not a 1-D Oid array");
 	rawarr = (Oid *) ARR_DATA_PTR(arr);
 
-	/* stash a List of the coperator Oids in our Constraint node */
+	/* stash a List of the operator___ Oids in our Constraint node */
 	for (i = 0; i < numkeys; i++)
 		con->old_conpfeqop = lcons_oid(rawarr[i], con->old_conpfeqop);
 
@@ -8864,7 +8864,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 	}
 
 	/*
-	 * If the cnew owner is the same as the existing owner, consider the
+	 * If the new___ owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is for dump restoration purposes.
 	 */
 	if (tuple_class->relowner != newOwnerId)
@@ -8891,10 +8891,10 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 					aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 								   RelationGetRelationName(target_rel));
 
-				/* Must be able to become cnew owner */
+				/* Must be able to become new___ owner */
 				check_is_member_of_role(GetUserId(), newOwnerId);
 
-				/* New owner must have CREATE privilege on cnamespace */
+				/* New owner must have CREATE privilege on namescpace___ */
 				aclresult = pg_namespace_aclcheck(namespaceOid, newOwnerId,
 												  ACL_CREATE);
 				if (aclresult != ACLCHECK_OK)
@@ -8910,7 +8910,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 		repl_val[Anum_pg_class_relowner - 1] = ObjectIdGetDatum(newOwnerId);
 
 		/*
-		 * Determine the modified ACL for the cnew owner.  This is only
+		 * Determine the modified ACL for the new___ owner.  This is only
 		 * necessary when the ACL is non-null.
 		 */
 		aclDatum = SysCacheGetAttr(RELOID, tuple,
@@ -8932,7 +8932,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 		heap_freetuple(newtuple);
 
 		/*
-		 * We must similarly update any per-column ACLs to reflect the cnew
+		 * We must similarly update any per-column ACLs to reflect the new___
 		 * owner; for neatness reasons that's split out as a subroutine.
 		 */
 		change_owner_fix_column_acls(relationOid,
@@ -9003,7 +9003,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
  * change_owner_fix_column_acls
  *
  * Helper function for ATExecChangeOwner.  Scan the columns of the table
- * and fix any non-null column ACLs to reflect the cnew owner.
+ * and fix any non-null column ACLs to reflect the new___ owner.
  */
 static void
 change_owner_fix_column_acls(Oid relationOid, Oid oldOwnerId, Oid newOwnerId)
@@ -9138,7 +9138,7 @@ change_owner_recurse_to_sequences(Oid relationOid, Oid newOwnerId, LOCKMODE lock
  *
  * The only thing we have to do is to change the indisclustered bits.
  *
- * Return the address of the cnew clustering index.
+ * Return the address of the new___ clustering index.
  */
 static ObjectAddress
 ATExecClusterOn(Relation rel, const char *indexName, LOCKMODE lockmode)
@@ -9254,7 +9254,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 								&isnull);
 	}
 
-	/* Generate cnew proposed reloptions (text array) */
+	/* Generate new___ proposed reloptions (text array) */
 	newOptions = transformRelOptions(isnull ? (Datum) 0 : datum,
 									 defList, NULL, validnsps, false,
 									 operation == AT_ResetRelOptions);
@@ -9315,7 +9315,7 @@ ATExecSetRelOptions(Relation rel, List *defList, AlterTableType operation,
 	}
 
 	/*
-	 * All we need do here is update the pg_class row; the cnew options will be
+	 * All we need do here is update the pg_class row; the new___ options will be
 	 * propagated into relcaches during post-commit cache inval.
 	 */
 	memset(repl_val, 0, sizeof(repl_val));
@@ -9494,19 +9494,19 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	/*
 	 * Since we copy the file directly without looking at the shared buffers,
 	 * we'd better first flush out any pages of the source relation that are
-	 * in shared buffers.  We assume no cnew changes will be made while we are
+	 * in shared buffers.  We assume no new___ changes will be made while we are
 	 * holding exclusive lock on the rel.
 	 */
 	FlushRelationBuffers(rel);
 
 	/*
 	 * Relfilenodes are not unique in databases across tablespaces, so we need
-	 * to allocate a cnew one in the cnew tablespace.
+	 * to allocate a new___ one in the new___ tablespace.
 	 */
 	newrelfilenode = GetNewRelFileNode(newTableSpace, NULL,
 									   rel->rd_rel->relpersistence);
 
-	/* Open old and cnew relation */
+	/* Open old and new___ relation */
 	newrnode = rel->rd_node;
 	newrnode.relNode = newrelfilenode;
 	newrnode.spcNode = newTableSpace;
@@ -9538,7 +9538,7 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 		}
 	}
 
-	/* drop old relation, and close cnew one */
+	/* drop old relation, and close new___ one */
 	RelationDropStorage(rel);
 	smgrclose(dstrel);
 
@@ -9575,7 +9575,7 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
  * Allows a user to move all objects of some type in a given tablespace in the
  * current database to another tablespace.  Objects can be chosen based on the
  * owner of the object also, to allow users to move only their objects.
- * The user must have CREATE rights on the cnew tablespace, as usual.   The main
+ * The user must have CREATE rights on the new___ tablespace, as usual.   The main
  * permissions handling is done by the lower-level table move function.
  *
  * All to-be-moved objects are locked first. If NOWAIT is specified and the
@@ -9601,7 +9601,7 @@ AlterTableMoveAll(AlterTableMoveAllStmt *stmt)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("only tables, indexes, and materialized views exist in tablespaces")));
 
-	/* Get the orig and cnew tablespace OIDs */
+	/* Get the orig and new___ tablespace OIDs */
 	orig_tablespaceoid = get_tablespace_oid(stmt->orig_tablespacename, false);
 	new_tablespaceoid = get_tablespace_oid(stmt->new_tablespacename, false);
 
@@ -9614,7 +9614,7 @@ AlterTableMoveAll(AlterTableMoveAllStmt *stmt)
 				 errmsg("cannot move relations in to or out of pg_global tablespace")));
 
 	/*
-	 * Must have CREATE rights on the cnew tablespace, unless it is the
+	 * Must have CREATE rights on the new___ tablespace, unless it is the
 	 * database default tablespace (which all users implicitly have CREATE
 	 * rights on).
 	 */
@@ -9818,7 +9818,7 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
 	 * less obvious that we have to do it even if we did WAL-log the copied
 	 * pages. The reason is that since we're copying outside shared buffers, a
 	 * CHECKPOINT occurring during the copy has no way to flush the previously
-	 * written data to disk (indeed it won't know the cnew rel even exists).  A
+	 * written data to disk (indeed it won't know the new___ rel even exists).  A
 	 * crash later on would replay WAL from the checkpoint, therefore it
 	 * wouldn't replay our earlier WAL entries. If we do not fsync those pages
 	 * here, they might still not be on disk when the crash occurs.
@@ -9868,7 +9868,7 @@ ATPrepAddInherit(Relation child_rel)
 }
 
 /*
- * Return the address of the cnew parent relation.
+ * Return the address of the new___ parent relation.
  */
 static ObjectAddress
 ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
@@ -9918,7 +9918,7 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
 
 	/*
 	 * Check for duplicates in the list of parents, and determine the highest
-	 * inhseqno already present; we'll use the next one for the cnew parent.
+	 * inhseqno already present; we'll use the next one for the new___ parent.
 	 * (Note: get RowExclusiveLock because we will write pg_inherits below.)
 	 *
 	 * Note: we do not reject the case where the child already inherits from
@@ -10058,7 +10058,7 @@ constraints_equivalent(HeapTuple a, HeapTuple b, TupleDesc tupleDesc)
  * Called by ATExecAddInherit
  *
  * Currently all parent columns must be found in child. Missing columns are an
- * error.  One day we might consider creating cnew columns like CREATE TABLE
+ * error.  One day we might consider creating new___ columns like CREATE TABLE
  * does.  However, that is widely unpopular --- in the common use case of
  * partitioned tables it's a foot-gun.
  *
@@ -10151,7 +10151,7 @@ MergeAttributesIntoExisting(Relation child_rel, Relation parent_rel)
  * Called by ATExecAddInherit
  *
  * Currently all constraints in parent must be present in the child. One day we
- * may consider adding cnew constraints like CREATE TABLE does.
+ * may consider adding new___ constraints like CREATE TABLE does.
  *
  * XXX This is O(N^2) which may be an issue with tables with hundreds of
  * constraints. As long as tables have more like 10 constraints it shouldn't be
@@ -10538,7 +10538,7 @@ ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode)
 {
 	Oid			relid = RelationGetRelid(rel);
 	Type		typetuple;
-	Oid			ctypeid;
+	Oid			typeid___;
 	Relation	inheritsRelation,
 				relationRelation;
 	SysScanDesc scan;
@@ -10554,7 +10554,7 @@ ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode)
 	/* Validate the type. */
 	typetuple = typenameType(NULL, ofTypename, NULL);
 	check_of_type(typetuple);
-	ctypeid = HeapTupleGetOid(typetuple);
+	typeid___ = HeapTupleGetOid(typetuple);
 
 	/* Fail if the table has any inheritance parents. */
 	inheritsRelation = heap_open(InheritsRelationId, AccessShareLock);
@@ -10576,7 +10576,7 @@ ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode)
 	 * require that the order also match.  However, attnotnull need not match.
 	 * Also unlike inheritance, we do not require matching relhasoids.
 	 */
-	typeTupleDesc = lookup_rowtype_tupdesc(ctypeid, -1);
+	typeTupleDesc = lookup_rowtype_tupdesc(typeid___, -1);
 	tableTupleDesc = RelationGetDescr(rel);
 	table_attno = 1;
 	for (type_attno = 1; type_attno <= typeTupleDesc->natts; type_attno++)
@@ -10638,12 +10638,12 @@ ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode)
 	if (rel->rd_rel->reloftype)
 		drop_parent_dependency(relid, TypeRelationId, rel->rd_rel->reloftype);
 
-	/* Record a dependency on the cnew type. */
+	/* Record a dependency on the new___ type. */
 	tableobj.classId = RelationRelationId;
 	tableobj.objectId = relid;
 	tableobj.objectSubId = 0;
 	typeobj.classId = TypeRelationId;
-	typeobj.objectId = ctypeid;
+	typeobj.objectId = typeid___;
 	typeobj.objectSubId = 0;
 	recordDependencyOn(&tableobj, &typeobj, DEPENDENCY_NORMAL);
 
@@ -10652,7 +10652,7 @@ ATExecAddOf(Relation rel, const TypeName *ofTypename, LOCKMODE lockmode)
 	classtuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relid));
 	if (!HeapTupleIsValid(classtuple))
 		elog(ERROR, "cache lookup failed for relation %u", relid);
-	((Form_pg_class) GETSTRUCT(classtuple))->reloftype = ctypeid;
+	((Form_pg_class) GETSTRUCT(classtuple))->reloftype = typeid___;
 	simple_heap_update(relationRelation, &classtuple->t_self, classtuple);
 	CatalogUpdateIndexes(relationRelation, classtuple);
 
@@ -11236,9 +11236,9 @@ AlterTableNamespace(AlterObjectSchemaStmt *stmt, Oid *oldschema)
 }
 
 /*
- * The guts of relocating a table or materialized view to another cnamespace:
+ * The guts of relocating a table or materialized view to another namescpace___:
  * besides moving the relation itself, its dependent objects are relocated to
- * the cnew schema.
+ * the new___ schema.
  */
 void
 AlterTableNamespaceInternal(Relation rel, Oid oldNspOid, Oid nspOid,
@@ -11273,7 +11273,7 @@ AlterTableNamespaceInternal(Relation rel, Oid oldNspOid, Oid nspOid,
 }
 
 /*
- * The guts of relocating a relation to another cnamespace: fix the pg_class
+ * The guts of relocating a relation to another namescpace___: fix the pg_class
  * entry, and the pg_depend entry if any.  Caller must already have
  * opened and write-locked pg_class.
  */
@@ -11337,7 +11337,7 @@ AlterRelationNamespaceInternal(Relation classRel, Oid relOid,
 }
 
 /*
- * Move all indexes for the specified relation to another cnamespace.
+ * Move all indexes for the specified relation to another namescpace___.
  *
  * Note: we assume adequate permission checking was done by the caller,
  * and that the caller has a suitable lock on the owning relation.
@@ -11362,7 +11362,7 @@ AlterIndexNamespaces(Relation classRel, Relation rel,
 
 		/*
 		 * Note: currently, the index will not have its own dependency on the
-		 * cnamespace, so we don't need to do changeDependencyFor(). There's no
+		 * namescpace___, so we don't need to do changeDependencyFor(). There's no
 		 * row type in pg_type, either.
 		 *
 		 * XXX this objsMoved test may be pointless -- surely we have a single
@@ -11382,7 +11382,7 @@ AlterIndexNamespaces(Relation classRel, Relation rel,
 
 /*
  * Move all SERIAL-column sequences of the specified relation to another
- * cnamespace.
+ * namescpace___.
  *
  * Note: we assume adequate permission checking was done by the caller,
  * and that the caller has a suitable lock on the owning relation.
@@ -11446,7 +11446,7 @@ AlterSeqNamespaces(Relation classRel, Relation rel,
 
 		/*
 		 * Sequences have entries in pg_type. We need to be careful to move
-		 * them to the cnew cnamespace, too.
+		 * them to the new___ namescpace___, too.
 		 */
 		AlterTypeNamespaceInternal(RelationGetForm(seqRel)->reltype,
 								   newNspOid, false, false, objsMoved);
@@ -11781,7 +11781,7 @@ RangeVarCallbackForAlterRelation(const RangeVar *rv, Oid relid, Oid oldrelid,
 	 * Extract the specified relation type from the statement parse tree.
 	 *
 	 * Also, for ALTER .. RENAME, check permissions: the user must (still)
-	 * have CREATE rights on the containing cnamespace.
+	 * have CREATE rights on the containing namescpace___.
 	 */
 	if (IsA(stmt, RenameStmt))
 	{

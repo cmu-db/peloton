@@ -31,13 +31,13 @@
 
 CATALOG(pg_class,1259) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83) BKI_SCHEMA_MACRO
 {
-	NameData	relname;		/* cclass name */
-	Oid			relnamespace;	/* OID of cnamespace containing this cclass */
+	NameData	relname;		/* class___ name */
+	Oid			relnamespace;	/* OID of namescpace___ containing this class___ */
 	Oid			reltype;		/* OID of entry in pg_type for table's
 								 * implicit row type */
 	Oid			reloftype;		/* OID of entry in pg_type for underlying
 								 * composite type */
-	Oid			relowner;		/* cclass owner */
+	Oid			relowner;		/* class___ owner */
 	Oid			relam;			/* index access method; 0 if not an index */
 	Oid			relfilenode;	/* identifier of physical storage file */
 
@@ -56,10 +56,10 @@ CATALOG(pg_class,1259) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83) BKI_SCHEMA_MACRO
 
 	/*
 	 * Class pg_attribute must contain exactly "relnatts" user attributes
-	 * (with attnums ranging from 1 to relnatts) for this cclass.  It may also
+	 * (with attnums ranging from 1 to relnatts) for this class___.  It may also
 	 * contain entries with negative attnums for system attributes.
 	 */
-	int16		relchecks;		/* # of CHECK constraints for cclass */
+	int16		relchecks;		/* # of CHECK constraints for class___ */
 	bool		relhasoids;		/* T if we generate OIDs for rows of rel */
 	bool		relhaspkey;		/* has (or has had) PRIMARY KEY index */
 	bool		relhasrules;	/* has (or has had) any rules */

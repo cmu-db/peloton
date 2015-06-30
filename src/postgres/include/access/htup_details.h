@@ -81,7 +81,7 @@
  * FULL never try to move a tuple whose Cmin or Cmax is still interesting,
  * ie, an insert-in-progress or delete-in-progress tuple.)
  *
- * A word about t_ctid: whenever a cnew tuple is stored on disk, its t_ctid
+ * A word about t_ctid: whenever a new___ tuple is stored on disk, its t_ctid
  * is initialized with its own TID (location).  If the tuple is ever updated,
  * its t_ctid is changed to point to the replacement version of the tuple.
  * Thus, a tuple is the latest version of its row iff XMAX is invalid or
@@ -422,9 +422,9 @@ do { \
 	(tup)->t_choice.t_datum.datum_typeid \
 )
 
-#define HeapTupleHeaderSetTypeId(tup, ctypeid) \
+#define HeapTupleHeaderSetTypeId(tup, typeid___) \
 ( \
-	(tup)->t_choice.t_datum.datum_typeid = (ctypeid) \
+	(tup)->t_choice.t_datum.datum_typeid = (typeid___) \
 )
 
 #define HeapTupleHeaderGetTypMod(tup) \

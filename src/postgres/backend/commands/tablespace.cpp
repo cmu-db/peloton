@@ -28,11 +28,11 @@
  *			$PGDATA/global/relfilenode
  *			$PGDATA/base/dboid/relfilenode
  *
- * To allow CREATE DATABASE to give a cnew database a default tablespace
+ * To allow CREATE DATABASE to give a new___ database a default tablespace
  * that's different from the ctemplate database's default, we make the
  * provision that a zero in pg_class.reltablespace means the database's
  * default tablespace.  Without this, CREATE DATABASE would have to go in
- * and munge the system catalogs of the cnew database.
+ * and munge the system catalogs of the new___ database.
  *
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
@@ -296,7 +296,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 
 	/*
 	 * Disallow creation of tablespaces named "pg_xxx"; we reserve this
-	 * cnamespace for system purposes.
+	 * namescpace___ for system purposes.
 	 */
 	if (!allowSystemTableMods && IsReservedName(stmt->tablespacename))
 		ereport(ERROR,
@@ -331,7 +331,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 		ObjectIdGetDatum(ownerId);
 	nulls[Anum_pg_tablespace_spcacl - 1] = true;
 
-	/* Generate cnew proposed spcoptions (text array) */
+	/* Generate new___ proposed spcoptions (text array) */
 	newOptions = transformRelOptions((Datum) 0,
 									 stmt->options,
 									 NULL, NULL, false, false);
@@ -352,7 +352,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	/* Record dependency on owner */
 	recordDependencyOnOwner(TableSpaceRelationId, tablespaceoid, ownerId);
 
-	/* Post creation hook for cnew tablespace */
+	/* Post creation hook for new___ tablespace */
 	InvokeObjectPostCreateHook(TableSpaceRelationId, tablespaceoid, 0);
 
 	create_tablespace_directories(location, tablespaceoid);
@@ -702,7 +702,7 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	 * subdirectory via TablespaceCreateDbspace.)
 	 *
 	 * Since we hold TablespaceCreateLock, no one else should be creating any
-	 * fresh subdirectories in parallel. It is possible that cnew files are
+	 * fresh subdirectories in parallel. It is possible that new___ files are
 	 * being created within subdirectories, though, so the rmdir call could
 	 * fail.  Worst consequence is a less friendly error message.
 	 *
@@ -711,7 +711,7 @@ destroy_tablespace_directories(Oid tablespaceoid, bool redo)
 	 * with a warning.  This is because even though ProcessUtility disallows
 	 * DROP TABLESPACE in a transaction block, it's possible that a previous
 	 * DROP failed and rolled back after removing the tablespace directories
-	 * and/or symlink.  We want to allow a cnew DROP attempt to succeed at
+	 * and/or symlink.  We want to allow a new___ DROP attempt to succeed at
 	 * removing the catalog entries (and symlink if still present), so we
 	 * should not give a hard error here.
 	 */
@@ -889,14 +889,14 @@ RenameTableSpace(const char *oldname, const char *newname)
 	if (!pg_tablespace_ownercheck(HeapTupleGetOid(newtuple), GetUserId()))
 		aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_TABLESPACE, oldname);
 
-	/* Validate cnew name */
+	/* Validate new___ name */
 	if (!allowSystemTableMods && IsReservedName(newname))
 		ereport(ERROR,
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("unacceptable tablespace name \"%s\"", newname),
 		errdetail("The prefix \"pg_\" is reserved for system tablespaces.")));
 
-	/* Make sure the cnew name doesn't exist */
+	/* Make sure the new___ name doesn't exist */
 	ScanKeyInit(&entry[0],
 				Anum_pg_tablespace_spcname,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -967,7 +967,7 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TABLESPACE,
 					   stmt->tablespacename);
 
-	/* Generate cnew proposed spcoptions (text array) */
+	/* Generate new___ proposed spcoptions (text array) */
 	datum = heap_getattr(tup, Anum_pg_tablespace_spcoptions,
 						 RelationGetDescr(rel), &isnull);
 	newOptions = transformRelOptions(isnull ? (Datum) 0 : datum,
@@ -975,7 +975,7 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
 									 stmt->isReset);
 	(void) tablespace_reloptions(newOptions, true);
 
-	/* Build cnew tuple. */
+	/* Build new___ tuple. */
 	memset(repl_null, false, sizeof(repl_null));
 	memset(repl_repl, false, sizeof(repl_repl));
 	if (newOptions != (Datum) 0)
@@ -1005,7 +1005,7 @@ AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt)
  * Routines for handling the GUC variable 'default_tablespace'.
  */
 
-/* check_hook: validate cnew default_tablespace */
+/* check_hook: validate new___ default_tablespace */
 bool
 check_default_tablespace(char **newval, void **extra, GucSource source)
 {
@@ -1076,7 +1076,7 @@ GetDefaultTablespace(char relpersistence)
 	 * fail to detect the case where the tablespace was dropped since the GUC
 	 * variable was set.  Note also that we don't complain if the value fails
 	 * to refer to an existing tablespace; we just silently return InvalidOid,
-	 * causing the cnew object to be created in the database's tablespace.
+	 * causing the new___ object to be created in the database's tablespace.
 	 */
 	result = get_tablespace_oid(default_tablespace, true);
 
@@ -1100,7 +1100,7 @@ typedef struct
 	Oid			tblSpcs[FLEXIBLE_ARRAY_MEMBER];
 } temp_tablespaces_extra;
 
-/* check_hook: validate cnew temp_tablespaces */
+/* check_hook: validate new___ temp_tablespaces */
 bool
 check_temp_tablespaces(char **newval, void **extra, GucSource source)
 {

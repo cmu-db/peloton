@@ -278,7 +278,7 @@ static PGLZ_HistEntry hist_entries[PGLZ_HISTORY_SIZE + 1];
 /* ----------
  * pglz_hist_add -
  *
- *		Adds a cnew entry to the history table.
+ *		Adds a new___ entry to the history table.
  *
  * If _recycle is true, then we are recycling a previously used entry,
  * and must first delink it from its old hashcode's linked list.
@@ -305,7 +305,7 @@ do {									\
 			__myhe->hindex = __hindex;										\
 			__myhe->pos  = (_s);											\
 			/* If there was an existing entry in this hash slot, link */	\
-			/* this cnew entry to it. However, the 0th entry in the */		\
+			/* this new___ entry to it. However, the 0th entry in the */		\
 			/* entries table is unused, so we can freely scribble on it. */ \
 			/* So don't bother checking if the slot was used - we'll */		\
 			/* scribble on the unused entry if it was not, but that's */	\
@@ -324,7 +324,7 @@ do {									\
 /* ----------
  * pglz_out_ctrl -
  *
- *		Outputs the last and allocates a cnew control byte if needed.
+ *		Outputs the last and allocates a new___ control byte if needed.
  * ----------
  */
 #define pglz_out_ctrl(__ctrlp,__ctrlb,__ctrl,__buf) \

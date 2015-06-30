@@ -17,7 +17,7 @@
 #include "postmaster/bgworker.h"
 
 /*
- * List of background workers, cprivate to postmaster.
+ * List of background workers, private___ to postmaster.
  *
  * A worker that requests a database connection during registration will have
  * rw_backend set, and will be present in BackendList.  Note: do not rely on

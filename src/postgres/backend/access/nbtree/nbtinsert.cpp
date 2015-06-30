@@ -28,11 +28,11 @@
 typedef struct
 {
 	/* context data for _bt_checksplitloc */
-	Size		newitemsz;		/* size of cnew item to be inserted */
+	Size		newitemsz;		/* size of new___ item to be inserted */
 	int			fillfactor;		/* needed when splitting rightmost page */
 	bool		is_leaf;		/* T if splitting a leaf page */
 	bool		is_rightmost;	/* T if splitting a rightmost page */
-	OffsetNumber newitemoff;	/* where the cnew item is to be inserted */
+	OffsetNumber newitemoff;	/* where the new___ item is to be inserted */
 	int			leftspace;		/* space available for items on left page */
 	int			rightspace;		/* space available for items on right page */
 	int			olddataitemstotal;		/* space taken by old items */
@@ -40,7 +40,7 @@ typedef struct
 	bool		have_split;		/* found a valid split? */
 
 	/* these fields valid only if have_split is true */
-	bool		newitemonleft;	/* cnew item on left or right of best split */
+	bool		newitemonleft;	/* new___ item on left or right of best split */
 	OffsetNumber firstright;	/* best split point */
 	int			best_delta;		/* best size delta so far */
 } FindSplitData;
@@ -500,11 +500,11 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 /*
  *	_bt_findinsertloc() -- Finds an insert location for a tuple
  *
- *		If the cnew key is equal to one or more existing keys, we can
+ *		If the new___ key is equal to one or more existing keys, we can
  *		legitimately place it anywhere in the series of equal keys --- in fact,
- *		if the cnew key is equal to the page's "high key" we can place it on
+ *		if the new___ key is equal to the page's "high key" we can place it on
  *		the next page.  If it is equal to the high key, and there's not room
- *		to insert the cnew tuple on the current page without splitting, then
+ *		to insert the new___ tuple on the current page without splitting, then
  *		we can move right hoping to find more free space and avoid a split.
  *		(We should not move right indefinitely, however, since that leads to
  *		O(N^2) insertion behavior in the presence of many equal keys.)
@@ -515,15 +515,15 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
  *		removing any LP_DEAD tuples.
  *
  *		On entry, *bufptr and *offsetptr point to the first legal position
- *		where the cnew tuple could be inserted.  The caller should hold an
+ *		where the new___ tuple could be inserted.  The caller should hold an
  *		exclusive lock on *bufptr.  *offsetptr can also be set to
  *		InvalidOffsetNumber, in which case the function will search for the
  *		right location within the page if needed.  On exit, they point to the
  *		chosen insert location.  If _bt_findinsertloc decides to move right,
- *		the lock and pin on the original page will be released and the cnew
+ *		the lock and pin on the original page will be released and the new___
  *		page returned to the caller is exclusively locked instead.
  *
- *		newtup is the cnew tuple we're inserting, and scankey is an insertion
+ *		newtup is the new___ tuple we're inserting, and scankey is an insertion
  *		type scan key for it.
  */
 static void
@@ -695,7 +695,7 @@ _bt_findinsertloc(Relation rel,
  *			   split is equitable as far as post-insert free space goes).
  *			+  inserts the tuple.
  *			+  if the page was split, pops the parent stack, and finds the
- *			   right place to insert the cnew child pointer (by walking
+ *			   right place to insert the new___ child pointer (by walking
  *			   right using information stored in the parent stack).
  *			+  invokes itself with the appropriate tuple for the right
  *			   child page on the parent.
@@ -780,7 +780,7 @@ _bt_insertonpg(Relation rel,
 		 *		+  our target page has been split;
 		 *		+  the original tuple has been inserted;
 		 *		+  we have write locks on both the old (left half)
-		 *		   and cnew (right half) buffers, after the split; and
+		 *		   and new___ (right half) buffers, after the split; and
 		 *		+  we know the key we want to insert into the parent
 		 *		   (it's the "high key" on the left child page).
 		 *
@@ -830,7 +830,7 @@ _bt_insertonpg(Relation rel,
 		START_CRIT_SECTION();
 
 		if (!_bt_pgaddtup(page, itemsz, itup, newitemoff))
-			elog(PANIC, "failed to add cnew item to block %u in index \"%s\"",
+			elog(PANIC, "failed to add new___ item to block %u in index \"%s\"",
 				 itup_blkno, RelationGetRelationName(rel));
 
 		MarkBufferDirty(buf);
@@ -935,14 +935,14 @@ _bt_insertonpg(Relation rel,
  *
  *		On entry, buf is the page to split, and is pinned and write-locked.
  *		firstright is the item index of the first item to be moved to the
- *		cnew right page.  newitemoff etc. tell us about the cnew item that
+ *		new___ right page.  newitemoff etc. tell us about the new___ item that
  *		must be inserted along with the data from the old page.
  *
  *		When splitting a non-leaf page, 'cbuf' is the left-sibling of the
  *		page we're inserting the downlink for.  This function will clear the
  *		INCOMPLETE_SPLIT flag on it, and release the buffer.
  *
- *		Returns the cnew right sibling of buf, pinned and write-locked.
+ *		Returns the new___ right sibling of buf, pinned and write-locked.
  *		The pin and lock on buf are maintained.
  */
 static Buffer
@@ -972,13 +972,13 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 	bool		isroot;
 	bool		isleaf;
 
-	/* Acquire a cnew page to split into */
+	/* Acquire a new___ page to split into */
 	rbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
 
 	/*
 	 * origpage is the original page to be split.  leftpage is a temporary
 	 * buffer that receives the left-sibling data, which will be copied back
-	 * into origpage on success.  rightpage is the cnew page that receives the
+	 * into origpage on success.  rightpage is the new___ page that receives the
 	 * right-sibling data.  If we fail before reaching the critical section,
 	 * origpage hasn't been modified and leftpage is only workspace. In
 	 * principle we shouldn't need to worry about rightpage either, because it
@@ -1003,7 +1003,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 	 */
 	PageSetLSN(leftpage, PageGetLSN(origpage));
 
-	/* init btree cprivate data */
+	/* init btree private___ data */
 	oopaque = (BTPageOpaque) PageGetSpecialPointer(origpage);
 	lopaque = (BTPageOpaque) PageGetSpecialPointer(leftpage);
 	ropaque = (BTPageOpaque) PageGetSpecialPointer(rightpage);
@@ -1053,8 +1053,8 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 	}
 
 	/*
-	 * The "high key" for the cnew left page will be the first key that's going
-	 * to go into the cnew right page.  This might be either the existing data
+	 * The "high key" for the new___ left page will be the first key that's going
+	 * to go into the new___ right page.  This might be either the existing data
 	 * item at position firstright, or the incoming tuple.
 	 */
 	leftoff = P_HIKEY;
@@ -1095,7 +1095,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 		itemsz = ItemIdGetLength(itemid);
 		item = (IndexTuple) PageGetItem(origpage, itemid);
 
-		/* does cnew item belong before this one? */
+		/* does new___ item belong before this one? */
 		if (i == newitemoff)
 		{
 			if (newitemonleft)
@@ -1103,7 +1103,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 				if (!_bt_pgaddtup(leftpage, newitemsz, newitem, leftoff))
 				{
 					memset(rightpage, 0, BufferGetPageSize(rbuf));
-					elog(ERROR, "failed to add cnew item to the left sibling"
+					elog(ERROR, "failed to add new___ item to the left sibling"
 						 " while splitting block %u of index \"%s\"",
 						 origpagenumber, RelationGetRelationName(rel));
 				}
@@ -1114,7 +1114,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 				if (!_bt_pgaddtup(rightpage, newitemsz, newitem, rightoff))
 				{
 					memset(rightpage, 0, BufferGetPageSize(rbuf));
-					elog(ERROR, "failed to add cnew item to the right sibling"
+					elog(ERROR, "failed to add new___ item to the right sibling"
 						 " while splitting block %u of index \"%s\"",
 						 origpagenumber, RelationGetRelationName(rel));
 				}
@@ -1159,7 +1159,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 		if (!_bt_pgaddtup(rightpage, newitemsz, newitem, rightoff))
 		{
 			memset(rightpage, 0, BufferGetPageSize(rbuf));
-			elog(ERROR, "failed to add cnew item to the right sibling"
+			elog(ERROR, "failed to add new___ item to the right sibling"
 				 " while splitting block %u of index \"%s\"",
 				 origpagenumber, RelationGetRelationName(rel));
 		}
@@ -1206,7 +1206,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 	}
 
 	/*
-	 * Right sibling is locked, cnew siblings are prepared, but original page
+	 * Right sibling is locked, new___ siblings are prepared, but original page
 	 * is not updated yet.
 	 *
 	 * NO EREPORT(ERROR) till right sibling is updated.  We can get away with
@@ -1216,13 +1216,13 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 	START_CRIT_SECTION();
 
 	/*
-	 * By here, the original data page has been split into two cnew halves, and
+	 * By here, the original data page has been split into two new___ halves, and
 	 * these are correct.  The algorithm requires that the left page never
-	 * move during a split, so we copy the cnew left page back on top of the
+	 * move during a split, so we copy the new___ left page back on top of the
 	 * original.  Note that this is not a waste of time, since we also require
 	 * (in the page management code) that the center of a page always be
 	 * clean, and the most efficient way to guarantee this is just to compact
-	 * the data by reinserting it into a cnew left page.  (XXX the latter
+	 * the data by reinserting it into a new___ left page.  (XXX the latter
 	 * comment is probably obsolete; but in any case it's good to not scribble
 	 * on the original page until we enter the critical section.)
 	 *
@@ -1242,7 +1242,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 	}
 
 	/*
-	 * Clear INCOMPLETE_SPLIT flag on child if inserting the cnew item finishes
+	 * Clear INCOMPLETE_SPLIT flag on child if inserting the new___ item finishes
 	 * a split.
 	 */
 	if (!isleaf)
@@ -1277,10 +1277,10 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 			XLogRegisterBuffer(3, cbuf, REGBUF_STANDARD);
 
 		/*
-		 * Log the cnew item, if it was inserted on the left page. (If it was
+		 * Log the new___ item, if it was inserted on the left page. (If it was
 		 * put on the right page, we don't need to explicitly WAL log it
 		 * because it's included with all the other items on the right page.)
-		 * Show the cnew item as belonging to the left page buffer, so that it
+		 * Show the new___ item as belonging to the left page buffer, so that it
 		 * is not stored if XLogInsert decides it needs a full-page image of
 		 * the left page.  We store the offset anyway, though, to support
 		 * archive compression of these records.
@@ -1310,7 +1310,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 		 * never be stored by XLogInsert.
 		 *
 		 * Direct access to page is not good but faster - we should implement
-		 * some cnew func in page API.  Note we only store the tuples
+		 * some new___ func in page API.  Note we only store the tuples
 		 * themselves, knowing that they were inserted in item-number order
 		 * and so the item pointers can be reconstructed.  See comments for
 		 * _bt_restore_page().
@@ -1368,12 +1368,12 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
  * This is the same as nbtsort.c produces for a newly-created tree.  Note
  * that leaf and nonleaf pages use different fillfactors.
  *
- * We are passed the intended insert position of the cnew tuple, expressed as
+ * We are passed the intended insert position of the new___ tuple, expressed as
  * the offsetnumber of the tuple it must go in front of.  (This could be
  * maxoff+1 if the tuple is to go at the end.)
  *
  * We return the index of the first existing tuple that should go on the
- * righthand page, plus a boolean indicating whether the cnew tuple goes on
+ * righthand page, plus a boolean indicating whether the new___ tuple goes on
  * the left or right page.  The bool is necessary to disambiguate the case
  * where firstright == newitemoff.
  */
@@ -1463,7 +1463,7 @@ _bt_findsplitloc(Relation rel,
 		itemsz = MAXALIGN(ItemIdGetLength(itemid)) + sizeof(ItemIdData);
 
 		/*
-		 * Will the cnew item go to left or right of split?
+		 * Will the new___ item go to left or right of split?
 		 */
 		if (offnum > newitemoff)
 			_bt_checksplitloc(&state, offnum, true,
@@ -1493,8 +1493,8 @@ _bt_findsplitloc(Relation rel,
 	}
 
 	/*
-	 * If the cnew item goes as the last item, check for splitting so that all
-	 * the old items go to the left page and the cnew item goes to the right
+	 * If the new___ item goes as the last item, check for splitting so that all
+	 * the old items go to the left page and the new___ item goes to the right
 	 * page.
 	 */
 	if (newitemoff > maxoff && !goodenoughfound)
@@ -1519,7 +1519,7 @@ _bt_findsplitloc(Relation rel,
  * firstoldonright is the offset of the first item on the original page
  * that goes to the right page, and firstoldonrightsz is the size of that
  * tuple. firstoldonright can be > max offset, which means that all the old
- * items go to the left page and only the cnew item goes to the right page.
+ * items go to the left page and only the new___ item goes to the right page.
  * In that case, firstoldonrightsz is not used.
  *
  * olddataitemstoleft is the total size of all old items to the left of
@@ -1537,7 +1537,7 @@ _bt_checksplitloc(FindSplitData *state,
 	Size		firstrightitemsz;
 	bool		newitemisfirstonright;
 
-	/* Is the cnew item going to be the first item on the right page? */
+	/* Is the new___ item going to be the first item on the right page? */
 	newitemisfirstonright = (firstoldonright == state->newitemoff
 							 && !newitemonleft);
 
@@ -1557,7 +1557,7 @@ _bt_checksplitloc(FindSplitData *state,
 	 */
 	leftfree -= firstrightitemsz;
 
-	/* account for the cnew item */
+	/* account for the new___ item */
 	if (newitemonleft)
 		leftfree -= (int) state->newitemsz;
 	else
@@ -1629,10 +1629,10 @@ _bt_insert_parent(Relation rel,
 {
 	/*
 	 * Here we have to do something Lehman and Yao don't talk about: deal with
-	 * a root split and construction of a cnew root.  If our stack is empty
+	 * a root split and construction of a new___ root.  If our stack is empty
 	 * then we have just split a node on what had been the root level when we
 	 * descended the tree.  If it was still the root then we perform a
-	 * cnew-root construction.  If it *wasn't* the root anymore, search to find
+	 * new___-root construction.  If it *wasn't* the root anymore, search to find
 	 * the next higher level that someone constructed meanwhile, and find the
 	 * right place to insert as for the normal case.
 	 *
@@ -1646,7 +1646,7 @@ _bt_insert_parent(Relation rel,
 
 		Assert(stack == NULL);
 		Assert(is_only);
-		/* create a cnew root node and update the metapage */
+		/* create a new___ root node and update the metapage */
 		rootbuf = _bt_newroot(rel, buf, rbuf);
 		/* release the split buffers */
 		_bt_relbuf(rel, rootbuf);
@@ -1680,11 +1680,11 @@ _bt_insert_parent(Relation rel,
 			_bt_relbuf(rel, pbuf);
 		}
 
-		/* get high key from left page == lowest key on cnew right page */
+		/* get high key from left page == lowest key on new___ right page */
 		ritem = (IndexTuple) PageGetItem(page,
 										 PageGetItemId(page, P_HIKEY));
 
-		/* form an index tuple that points at the cnew right page */
+		/* form an index tuple that points at the new___ right page */
 		new_item = CopyIndexTuple(ritem);
 		ItemPointerSet(&(new_item->t_tid), rbknum, P_HIKEY);
 
@@ -1890,10 +1890,10 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 }
 
 /*
- *	_bt_newroot() -- Create a cnew root page for the index.
+ *	_bt_newroot() -- Create a new___ root page for the index.
  *
- *		We've just split the old root page and need to create a cnew one.
- *		In order to do this, we add a cnew root page to the file, then lock
+ *		We've just split the old root page and need to create a new___ one.
+ *		In order to do this, we add a new___ root page to the file, then lock
  *		the metadata page and update it.  This is guaranteed to be deadlock-
  *		free, because all readers release their locks on the metadata page
  *		before trying to lock the root, and all writers lock the root before
@@ -1901,10 +1901,10 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
  *		root page, so we have not introduced any cycles into the waits-for
  *		graph.
  *
- *		On entry, lbuf (the old root) and rbuf (its cnew peer) are write-
- *		locked. On exit, a cnew root page exists with entries for the
- *		two cnew children, metapage is updated and unlocked/unpinned.
- *		The cnew root buffer is returned to caller which has to unlock/unpin
+ *		On entry, lbuf (the old root) and rbuf (its new___ peer) are write-
+ *		locked. On exit, a new___ root page exists with entries for the
+ *		two new___ children, metapage is updated and unlocked/unpinned.
+ *		The new___ root buffer is returned to caller which has to unlock/unpin
  *		lbuf, rbuf & rootbuf.
  */
 static Buffer
@@ -1933,7 +1933,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	lpage = BufferGetPage(lbuf);
 	lopaque = (BTPageOpaque) PageGetSpecialPointer(lpage);
 
-	/* get a cnew root page */
+	/* get a new___ root page */
 	rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
 	rootpage = BufferGetPage(rootbuf);
 	rootblknum = BufferGetBlockNumber(rootbuf);
@@ -1981,7 +1981,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	metad->btm_fastlevel = rootopaque->btpo.level;
 
 	/*
-	 * Insert the left page pointer into the cnew root page.  The root page is
+	 * Insert the left page pointer into the new___ root page.  The root page is
 	 * the rightmost page on its level so there is no "high key" in it; the
 	 * two items will go into positions P_HIKEY and P_FIRSTKEY.
 	 *
@@ -1990,16 +1990,16 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	 */
 	if (PageAddItem(rootpage, (Item) left_item, left_item_sz, P_HIKEY,
 					false, false) == InvalidOffsetNumber)
-		elog(PANIC, "failed to add leftkey to cnew root page"
+		elog(PANIC, "failed to add leftkey to new___ root page"
 			 " while splitting block %u of index \"%s\"",
 			 BufferGetBlockNumber(lbuf), RelationGetRelationName(rel));
 
 	/*
-	 * insert the right page pointer into the cnew root page.
+	 * insert the right page pointer into the new___ root page.
 	 */
 	if (PageAddItem(rootpage, (Item) right_item, right_item_sz, P_FIRSTKEY,
 					false, false) == InvalidOffsetNumber)
-		elog(PANIC, "failed to add rightkey to cnew root page"
+		elog(PANIC, "failed to add rightkey to new___ root page"
 			 " while splitting block %u of index \"%s\"",
 			 BufferGetBlockNumber(lbuf), RelationGetRelationName(rel));
 
@@ -2037,7 +2037,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 
 		/*
 		 * Direct access to page is not good but faster - we should implement
-		 * some cnew func in page API.
+		 * some new___ func in page API.
 		 */
 		XLogRegisterBufData(0,
 					   (char *) rootpage + ((PageHeader) rootpage)->pd_upper,

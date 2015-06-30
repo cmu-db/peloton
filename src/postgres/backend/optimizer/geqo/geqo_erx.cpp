@@ -104,7 +104,7 @@ gimme_edge_table(PlannerInfo *root, Gene *tour1, Gene *tour2,
 		edge_table[i].unused_edges = 0;
 	}
 
-	/* fill edge table with cnew data */
+	/* fill edge table with new___ data */
 
 	edge_total = 0;
 
@@ -183,7 +183,7 @@ gimme_edge(PlannerInfo *root, Gene gene1, Gene gene2, Edge *edge_table)
 
 /* gimme_tour
  *
- *	  creates a cnew tour using edges from the edge table.
+ *	  creates a new___ tour using edges from the edge table.
  *	  priority is given to "shared" edges (i.e. edges which
  *	  all parent genes possess and are marked as negative
  *	  in the edge table.)
@@ -281,7 +281,7 @@ static Gene
 gimme_gene(PlannerInfo *root, Edge edge, Edge *edge_table)
 {
 	int			i;
-	Gene		cfriend;
+	Gene		friend___;
 	int			minimum_edges;
 	int			minimum_count = -1;
 	int			rand_decision;
@@ -297,7 +297,7 @@ gimme_gene(PlannerInfo *root, Edge edge, Edge *edge_table)
 
 	for (i = 0; i < edge.unused_edges; i++)
 	{
-		cfriend = (Gene) edge.edge_list[i];
+		friend___ = (Gene) edge.edge_list[i];
 
 		/*
 		 * give priority to shared edges that are negative; so return 'em
@@ -307,8 +307,8 @@ gimme_gene(PlannerInfo *root, Edge edge, Edge *edge_table)
 		 * negative values are caught here so we need not worry about
 		 * converting to absolute values
 		 */
-		if (cfriend < 0)
-			return (Gene) Abs(cfriend);
+		if (friend___ < 0)
+			return (Gene) Abs(friend___);
 
 
 		/*
@@ -327,14 +327,14 @@ gimme_gene(PlannerInfo *root, Edge edge, Edge *edge_table)
 		 */
 
 
-		if (edge_table[(int) cfriend].unused_edges < minimum_edges)
+		if (edge_table[(int) friend___].unused_edges < minimum_edges)
 		{
-			minimum_edges = edge_table[(int) cfriend].unused_edges;
+			minimum_edges = edge_table[(int) friend___].unused_edges;
 			minimum_count = 1;
 		}
 		else if (minimum_count == -1)
 			elog(ERROR, "minimum_count not set");
-		else if (edge_table[(int) cfriend].unused_edges == minimum_edges)
+		else if (edge_table[(int) friend___].unused_edges == minimum_edges)
 			minimum_count++;
 
 	}							/* for (i=0; i<edge.unused_edges; i++) */
@@ -346,15 +346,15 @@ gimme_gene(PlannerInfo *root, Edge edge, Edge *edge_table)
 
 	for (i = 0; i < edge.unused_edges; i++)
 	{
-		cfriend = (Gene) edge.edge_list[i];
+		friend___ = (Gene) edge.edge_list[i];
 
 		/* return the chosen candidate point */
-		if (edge_table[(int) cfriend].unused_edges == minimum_edges)
+		if (edge_table[(int) friend___].unused_edges == minimum_edges)
 		{
 			minimum_count--;
 
 			if (minimum_count == rand_decision)
-				return cfriend;
+				return friend___;
 		}
 	}
 

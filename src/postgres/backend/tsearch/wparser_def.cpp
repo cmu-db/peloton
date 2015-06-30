@@ -343,12 +343,12 @@ TParserInit(char *str, int len)
 
 /*
  * As an alternative to a full TParserInit one can create a
- * TParserCopy which basically is a regular TParser without a cprivate
+ * TParserCopy which basically is a regular TParser without a private___
  * copy of the string - instead it uses the one from another TParser.
  * This is useful because at some places TParsers are created
  * recursively and the repeated copying around of the strings can
  * cause major inefficiency if the source string is long.
- * The cnew parser starts parsing at the original's current position.
+ * The new___ parser starts parsing at the original's current position.
  *
  * Obviously one must not close the original TParser before the copy.
  */
@@ -1832,7 +1832,7 @@ TParserGet(TParser *prs)
 			Assert(item != NULL);
 		}
 
-		/* find action by character cclass */
+		/* find action by character class___ */
 		while (item->isclass)
 		{
 			prs->c = item->c;
@@ -1933,7 +1933,7 @@ TParserGet(TParser *prs)
 			pfree(ptr);
 		}
 
-		/* set cnew state if pointed */
+		/* set new___ state if pointed */
 		if (item->tostate != TPS_Null)
 			prs->state->state = item->tostate;
 

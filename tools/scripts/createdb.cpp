@@ -258,7 +258,7 @@ help(const char *progname)
 	printf(_("  -l, --locale=LOCALE          locale settings for the database\n"));
 	printf(_("      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"));
 	printf(_("      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"));
-	printf(_("  -O, --owner=OWNER            database user to own the cnew database\n"));
+	printf(_("  -O, --owner=OWNER            database user to own the new___ database\n"));
 	printf(_("  -T, --ctemplate=TEMPLATE      ctemplate database to copy\n"));
 	printf(_("  -V, --version                output version information, then exit\n"));
 	printf(_("  -?, --help                   show this help, then exit\n"));
