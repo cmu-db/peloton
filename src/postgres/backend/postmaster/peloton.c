@@ -62,15 +62,16 @@ static volatile sig_atomic_t got_SIGHUP = false;
  * ----------
  */
 NON_EXEC_STATIC void PelotonMain(int argc, char *argv[]) pg_attribute_noreturn();
+static void peloton_MainLoop(void);
 static void peloton_sighup_handler(SIGNAL_ARGS);
 static void peloton_sigusr2_handler(SIGNAL_ARGS);
 static void peloton_sigterm_handler(SIGNAL_ARGS);
-static void peloton_MainLoop(void);
 
 static void peloton_setheader(Peloton_MsgHdr *hdr, PelotonMsgType mtype);
 static void peloton_send(void *msg, int len);
 
 static void peloton_recv_plan(Peloton_MsgPlan *msg, int len);
+static void peloton_recv_port(Peloton_MsgPort *msg, int len);
 
 /**
  * @brief Initialize peloton
@@ -301,7 +302,11 @@ peloton_MainLoop(void)
           break;
 
         case PELOTON_MTYPE_PLAN:
-          peloton_recv_plan((Peloton_MsgPlan *) &msg, len);
+          peloton_recv_plan((Peloton_MsgPlan*) &msg, len);
+          break;
+
+        case PELOTON_MTYPE_PORT:
+          peloton_recv_port((Peloton_MsgPort*) &msg, len);
           break;
 
         default:
@@ -639,7 +644,7 @@ peloton_send(void *msg, int len)
 }
 
 /* ----------
- * peloton_ping() -
+ * peloton_send_ping() -
  *
  *  Send some junk data to the collector to increase traffic.
  * ----------
@@ -657,13 +662,13 @@ peloton_send_ping(void)
 }
 
 /* ----------
- * peloton_proc_node() -
+ * peloton_send_node() -
  *
  *  Execute the given node to return a(nother) tuple.
  * ----------
  */
 void
-peloton_send_proc_node(PlanState *node)
+peloton_send_node(PlanState *node)
 {
   Peloton_MsgPlan msg;
   MemoryContext oldcontext;
@@ -681,6 +686,39 @@ peloton_send_proc_node(PlanState *node)
   // TODO: Can we avoid copying the plan ?
   msg.m_node = (PlanState *) palloc(sizeof(PlanState));
   memcpy(msg.m_node, node, sizeof(PlanState));
+
+  /*
+   * Switch back to old context.
+   */
+  MemoryContextSwitchTo(oldcontext);
+
+  peloton_send(&msg, sizeof(msg));
+}
+
+/* ----------
+ * peloton_send_port() -
+ *
+ *  Send the port number to Peloton.
+ * ----------
+ */
+void
+peloton_send_port(Port *port)
+{
+  Peloton_MsgPort msg;
+  MemoryContext oldcontext;
+
+  if (pelotonSock == PGINVALID_SOCKET)
+    return;
+
+  peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_PORT);
+
+  /*
+   * Switch to TopSharedMemoryContext context for copying plan.
+   */
+  oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
+
+  msg.m_port = (Port *) palloc(sizeof(Port));
+  memcpy(msg.m_port, port, sizeof(Port));
 
   /*
    * Switch back to old context.
@@ -721,5 +759,33 @@ peloton_recv_plan(Peloton_MsgPlan *msg, int len)
   //SHMContextStats(TopSharedMemoryContext);
 }
 
+/* ----------
+ * peloton_recv_port() -
+ *
+ *  Process port.
+ * ----------
+ */
+static void
+peloton_recv_port(Peloton_MsgPort *msg, int len)
+{
+  Port *port;
 
+  if(msg != NULL)
+  {
+    /* Get the port */
+    port = msg->m_port;
+
+    if(port != NULL)
+    {
+      PelotonPort = port;
+
+      fprintf(stdout, "Peloton Port : dbname %s username %s socket %d\n",
+              PelotonPort->database_name,
+              PelotonPort->user_name,
+              PelotonPort->sock);
+      fflush(stdout);
+    }
+  }
+
+}
 
