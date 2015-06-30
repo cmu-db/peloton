@@ -1623,9 +1623,6 @@ ServerLoop(void)
           {
             BackendStartup(port);
 
-            /* Send the Peloton port */
-            peloton_send_port(port);
-
             /*
              * We no longer need the open socket or port structure
              * in this process
