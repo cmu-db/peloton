@@ -1,12 +1,16 @@
-/*
- * tupleTransformer.cpp
+/*-------------------------------------------------------------------------
  *
- *  Created on: Jun 22, 2015
- *      Author: vivek
+ * tuple_transformer.cpp
+ * file description
+ *
+ * Copyright(c) 2015, CMU
+ *
+ * /n-store/src/bridge/tuple_transformer.cpp
+ *
+ *-------------------------------------------------------------------------
  */
 
 #include <iostream>
-//#include <cstring>
 
 #include "backend/bridge/tuple_transformer.h"
 #include "backend/common/value_peeker.h"
@@ -18,24 +22,23 @@ extern "C" {
 #include "fmgr.h"
 #include "utils/lsyscache.h"
 }
-void TestTupleTransformer(Datum datum, Oid atttypid) {
 
+/**
+ * @brief Test tuple transformation utility.
+ * @return none.
+ */
+void TestTupleTransformer(Datum datum, Oid atttypid) {
   peloton::Value p_value;
   Datum p_datum;
-  printf("Call to DatumGetValue in Peloton\n");
-  printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+
   p_value = DatumGetValue(datum, atttypid);
-  printf("\n");
-  printf("--------------------------------\n");
-  printf("\n");
-  printf("Call to ValueGetDatum in Peloton\n");
-  printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
   p_datum = ValueGetDatum(p_value);
-  printf("\n");
-  printf("--------------------------------\n");
-  printf("\n");
 }
 
+/**
+ * @brief Convert from Datum to Value.
+ * @return converted Value.
+ */
 peloton::Value DatumGetValue(Datum datum, Oid atttypid) {
   peloton::Value value;
   peloton::Pool *data_pool = nullptr;
@@ -76,7 +79,7 @@ peloton::Value DatumGetValue(Datum datum, Oid atttypid) {
       variable_character = DatumGetCString(datum);
       printf("%s\n", variable_character);
       value = peloton::ValueFactory::GetStringValue(variable_character,
-                                                   data_pool);
+                                                    data_pool);
       break;
 
     case 1114:
@@ -88,88 +91,92 @@ peloton::Value DatumGetValue(Datum datum, Oid atttypid) {
 
     default:
       break;
-
   }
+
   return value;
 }
 
-Datum
-ValueGetDatum(peloton::Value value) {
-	peloton::ValueType value_type;
-	peloton::ValuePeeker value_peeker;
-	Datum datum;
-	int16_t smallint;
-	int32_t integer;
-	int64_t bigint;
-	double double_precision;
-	char *character;
-	std::string variable_character_string;
-	char *variable_character;
-	long int timestamp;
-	//char *timestamp_charpointer;
+/**
+ * @brief Convert from Value to Datum.
+ * @return converted Datum.
+ */
+Datum ValueGetDatum(peloton::Value value) {
+  peloton::ValueType value_type;
+  peloton::ValuePeeker value_peeker;
+  Datum datum;
+  int16_t smallint;
+  int32_t integer;
+  int64_t bigint;
+  double double_precision;
+  char *character;
+  std::string variable_character_string;
+  char *variable_character;
+  long int timestamp;
 
-	value_type = value.GetValueType();
+  value_type = value.GetValueType();
 
-	switch (value_type) {
-		//small int
-		case 4:
-			smallint = value_peeker.PeekSmallInt(value);
-			printf("%d\n", smallint);
-			datum = Int16GetDatum(smallint);
-			break;
-		// integer
-		case 5:
-			integer = value_peeker.PeekInteger(value);
-			printf("%d\n", integer);
-			datum = Int32GetDatum(integer);
-			break;
-		// big int
-		case 6:
-			bigint = value_peeker.PeekBigInt(value);
-			printf("%ld\n", bigint);
-			datum = Int64GetDatum(bigint);
-			break;
+  switch (value_type) {
+    //small int
+    case 4:
+      smallint = value_peeker.PeekSmallInt(value);
+      printf("%d\n", smallint);
+      datum = Int16GetDatum(smallint);
+      break;
+      // integer
+    case 5:
+      integer = value_peeker.PeekInteger(value);
+      printf("%d\n", integer);
+      datum = Int32GetDatum(integer);
+      break;
+      // big int
+    case 6:
+      bigint = value_peeker.PeekBigInt(value);
+      printf("%ld\n", bigint);
+      datum = Int64GetDatum(bigint);
+      break;
 
-		//double
-		case 8:
-			double_precision = value_peeker.PeekDouble(value);
-			printf("%f\n", double_precision);
-			datum = Float8GetDatum(double_precision);
-			break;
+      //double
+    case 8:
+      double_precision = value_peeker.PeekDouble(value);
+      printf("%f\n", double_precision);
+      datum = Float8GetDatum(double_precision);
+      break;
 
-		// varchar
-		case 9:
-			variable_character = (char *)value_peeker.PeekObjectValue(value);
-			printf("%s\n", variable_character);
-			datum = CStringGetDatum(variable_character);
-			break;
+      // varchar
+    case 9:
+      variable_character = (char *)value_peeker.PeekObjectValue(value);
+      printf("%s\n", variable_character);
+      datum = CStringGetDatum(variable_character);
+      break;
 
-		// timestamp
-		case 11:
-			timestamp = value_peeker.PeekTimestamp(value);
-			datum = Int64GetDatum(timestamp);
-			printf("%s\n",DatumGetCString(timestamp));
-			break;
+      // timestamp
+    case 11:
+      timestamp = value_peeker.PeekTimestamp(value);
+      datum = Int64GetDatum(timestamp);
+      printf("%s\n",DatumGetCString(timestamp));
+      break;
 
-		default:
-		  break;
+    default:
+      break;
 
-		return datum;
+      return datum;
   }
 }
 
 namespace peloton {
 namespace bridge {
-/* @brief convert a Postgres tuple into Peloton tuple
+
+/**
+ * @brief Convert a Postgres tuple into Peloton tuple
  * @param slot Postgres tuple
  * @param schema Peloton scheme of the table to which the tuple belongs
  * @return a Peloton tuple
  */
-storage::Tuple *TupleTransformer(TupleTableSlot * slot,
+storage::Tuple *TupleTransformer(TupleTableSlot *slot,
                                  const catalog::Schema *schema) {
+
   TupleDesc typeinfo = slot->tts_tupleDescriptor;
   int natts = typeinfo->natts;
-  int i;
   Datum attr;
   char *value;
   bool isnull;
@@ -185,19 +192,22 @@ storage::Tuple *TupleTransformer(TupleTableSlot * slot,
   std::vector<oid_t> oid_t_vec;
   oid_t num_columns = schema->GetColumnCount();
 
-  for (i = 0; i < natts; ++i) {
-    attr = slot_getattr(slot, i + 1, &isnull);
+  // Go over each attribute
+  for (oid_t att_itr = 0; att_itr < natts; ++att_itr) {
+
+    attr = slot_getattr(slot, att_itr + 1, &isnull);
     if (isnull)
       continue;
+
     Assert(typeinfo != NULL);
     Assert(typeinfo->attrs[i] != NULL);
-    getTypeOutputInfo(typeinfo->attrs[i]->atttypid, &typoutput, &typisvarlena);
+    getTypeOutputInfo(typeinfo->attrs[att_itr]->atttypid, &typoutput, &typisvarlena);
 
     value = OidOutputFunctionCall(typoutput, attr);
 
-    // Print the attribute.
-    attributeId = (unsigned) i + 1;
-    attributeP = typeinfo->attrs[i];
+    // Print the attribute
+    attributeId = att_itr + 1;
+    attributeP = typeinfo->attrs[att_itr];
 
     name = NameStr(attributeP->attname);
     for (oid_t column_itr = 0; column_itr < num_columns; column_itr++) {
@@ -244,15 +254,18 @@ storage::Tuple *TupleTransformer(TupleTableSlot * slot,
 
     vals.push_back(DatumGetValue(p_datum, p_oid));
   }
-  assert(vals.size() == oid_t_vec.size()); /* the num of value should be the same as schema found */
-  catalog::Schema * tuple_schema = catalog::Schema::CopySchema(schema,
-                                                               oid_t_vec);
-	storage::Tuple *tuple(new storage::Tuple(tuple_schema, true));
-	i = 0;
-	for (auto val : vals) {
-	  tuple->SetValue(i++, val);
-	}
-	return tuple;
+
+  assert(vals.size() == oid_t_vec.size()); /* the num of values should be the same as schema found */
+  catalog::Schema * tuple_schema = catalog::Schema::CopySchema(schema, oid_t_vec);
+  storage::Tuple *tuple(new storage::Tuple(tuple_schema, true));
+
+  oid_t att_itr = 0;
+  for (auto val : vals) {
+    tuple->SetValue(att_itr++, val);
+  }
+
+  return tuple;
 }
-}
-}
+
+} // namespace bridge
+} // namespace peloton

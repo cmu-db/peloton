@@ -41,7 +41,8 @@ class CreateExecutor {
   static bool CreateDatabase(std::string db_name);
 
   // TODO: Fix function
-  static bool CreateTable(catalog::Database* db, std::string table_name, DDL_ColumnInfo* columnInfo, int num_columns, catalog::Schema* schema );
+  static bool CreateTable(catalog::Database* db, std::string table_name,
+                          DDL_ColumnInfo* columnInfo, int num_columns, catalog::Schema* schema );
 
   static bool CreateIndex(catalog::Database* db,
                           std::string index_name,

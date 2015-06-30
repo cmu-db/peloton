@@ -126,7 +126,7 @@ BackendType StringToBackendType(std::string str) {
 // Value <--> String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string ValueToString(ValueType type) {
+std::string ValueTypeToString(ValueType type) {
     switch (type) {
     case VALUE_TYPE_INVALID:
         return "INVALID";
@@ -155,7 +155,7 @@ std::string ValueToString(ValueType type) {
     }
 }
 
-ValueType StringToValue(std::string str ) {
+ValueType StringToValueType(std::string str ) {
     if (str == "INVALID") {
         return VALUE_TYPE_INVALID;
     } else if (str == "NULL") {
@@ -225,7 +225,7 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString) {
 // Expression - String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string ExpressionToString(ExpressionType type) {
+std::string ExpressionTypeToString(ExpressionType type) {
     switch (type) {
     case EXPRESSION_TYPE_INVALID: {
         return "INVALID";
@@ -336,7 +336,7 @@ std::string ExpressionToString(ExpressionType type) {
     return "INVALID";
 }
 
-ExpressionType StringToExpression(std::string str ) {
+ExpressionType StringToExpressionType(std::string str ) {
     if (str == "INVALID") {
         return EXPRESSION_TYPE_INVALID;
     } else if (str == "OPERATOR_PLUS") {
@@ -437,7 +437,7 @@ IndexType StringToIndexType(std::string str) {
 // Plan Node - String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string PlanNodeToString(PlanNodeType type) {
+std::string PlanNodeTypeToString(PlanNodeType type) {
     switch (type) {
     case PLAN_NODE_TYPE_INVALID: {
         return "INVALID";
@@ -506,7 +506,7 @@ std::string PlanNodeToString(PlanNodeType type) {
     return "INVALID";
 }
 
-PlanNodeType StringToPlanNode(std::string str) {
+PlanNodeType StringToPlanNodeType(std::string str) {
     if (str == "INVALID") {
         return PLAN_NODE_TYPE_INVALID;
     } else if (str == "SEQSCAN") {

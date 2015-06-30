@@ -67,7 +67,7 @@
 #include "utils/syscache.h"
 
 // TODO: Peloton Modifications
-#include "backend/bridge/bridge.h"
+#include "bridge/bridge.h"
 #include "backend/bridge/ddl.h"
 #include "catalog/pg_am.h"
 #include "parser/parse_type.h" 
@@ -1023,6 +1023,7 @@ ProcessUtilitySlow(Node *parsetree,
                   // then the values of num_of_constraints_of_each_column will be { 2, 0, 1 }
                   int* num_of_constraints_of_each_column = (int*) malloc( sizeof(int) * schema->length);
 
+           
                   // Parse the CreateStmt and construct ddl_columnInfo
                   foreach(entry, schema){
                     int constNode_itr = 0;
@@ -1076,11 +1077,11 @@ ProcessUtilitySlow(Node *parsetree,
                   /*
                    * Now, intercept the create table request from Postgres and create a table in Peloton
                    */
-                  ret = DDL_CreateTable( Cstmt->relation->relname, ddl_columnInfo, schema->length, num_of_constraints_of_each_column);
+                  ret = DDLCreateTable( Cstmt->relation->relname, ddl_columnInfo, schema->length, num_of_constraints_of_each_column);
                 }else
                 {
                   // Create Table without column info
-                  ret = DDL_CreateTable( Cstmt->relation->relname, NULL, 0 , 0);
+                  ret = DDLCreateTable( Cstmt->relation->relname, NULL, 0 , 0);
                 }
                 fprintf(stderr, "DDL_CreateTable(%s) :: %d \n", Cstmt->relation->relname,ret);
               }// End of Peloton Modificaion
@@ -1416,14 +1417,14 @@ ProcessUtilitySlow(Node *parsetree,
             type = 0;
           }
  
-          ret = DDL_CreateIndex(stmt->idxname,
+          ret = DDLCreateIndex(stmt->idxname,
                                 stmt->relation->relname,
                                 type,
                                 stmt->unique,
                                 ColumnNamesForKeySchema,
                                 column_itr_for_KeySchema
                                );
-          fprintf(stderr, "DDL_CreateIndex :: %d \n", ret);
+          fprintf(stderr, "DDLCreateIndex :: %d \n", ret);
         }
       }
         break;
@@ -1629,15 +1630,15 @@ ProcessUtilitySlow(Node *parsetree,
             {
               List* names = ((List *) lfirst(cell));
               char* table_name = strVal(linitial(names));
-              table_oid_list[table_oid_itr++] = GetRelationOidFromRelationName(table_name);
+              table_oid_list[table_oid_itr++] = GetRelationOid(table_name);
             }
           }
           ExecDropStmt((DropStmt *) parsetree, isTopLevel);
 
           while(table_oid_itr > 0)
           {
-            ret  = DDL_DropTable(table_oid_list[--table_oid_itr]);
-            fprintf(stderr, "DDL_DropTable :: %d \n", ret);
+            ret  = DDLDropTable(table_oid_list[--table_oid_itr]);
+            fprintf(stderr, "DDLDropTable :: %d \n", ret);
           }
           /* no commands stashed for DROP */
           commandCollected = true;

@@ -1,8 +1,7 @@
-/*
- * transformer.h
+/**
+ * @brief Header for postgres plan transformer.
  *
- *  Created on: Jun 18, 2015
- *      Author: parallels
+ * Copyright(c) 2015, CMU
  */
 
 #pragma once
@@ -10,30 +9,39 @@
 extern "C" {
 #include "executor/execdesc.h"
 }
-#include <tr1/memory>
+
 #include "backend/planner/abstract_plan_node.h"
 
 namespace peloton {
 namespace bridge {
-class PlanTransformer {
- public:
-  PlanTransformer() {
-  }
-  ~PlanTransformer() {
-  }
 
-  typedef std::tr1::shared_ptr<planner::AbstractPlanNode> AbstractPlanNodePtr;
+//===--------------------------------------------------------------------===//
+// Plan Transformer (From Postgres To Peloton)
+//===--------------------------------------------------------------------===//
+
+class PlanTransformer {
+
+ public:
+  PlanTransformer(const PlanTransformer &) = delete;
+  PlanTransformer& operator=(const PlanTransformer &) = delete;
+  PlanTransformer(PlanTransformer &&) = delete;
+  PlanTransformer& operator=(PlanTransformer &&) = delete;
+
+  PlanTransformer(){};
 
   static PlanTransformer& GetInstance();
 
-  void printPostgresPlanStateTree(const PlanState *planstate) const;
+  void PrintPlanState(const PlanState *plan_state) const;
 
-  AbstractPlanNodePtr transform(const PlanState *planstate);
+  planner::AbstractPlanNode *TransformPlan(const PlanState *plan_state);
 
  private:
-  static AbstractPlanNodePtr transformModifyTable(const ModifyTableState *plan);
-  static AbstractPlanNodePtr transformInsert(const ModifyTableState *plan);
+
+  static planner::AbstractPlanNode *TransformModifyTable(const ModifyTableState *plan_state);
+
+  static planner::AbstractPlanNode *TransformInsert(const ModifyTableState *plan_state);
 
 };
-}
-}
+
+} // namespace bridge
+} // namespace peloton
