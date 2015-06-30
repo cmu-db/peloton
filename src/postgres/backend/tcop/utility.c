@@ -1044,7 +1044,9 @@ ProcessUtilitySlow(Node *parsetree,
                     ddl_columnInfo[column_itr].allow_null = !coldef->is_not_null;
                     ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
 
-                    // Set up constraint for ConlumnInfo if the column has any constraint..
+                    /*
+                     *  CONSTRAINTS
+                     */  
                     if( coldef->constraints != NULL)
                     {
                       ListCell* constNodeEntry;
@@ -1062,8 +1064,7 @@ ProcessUtilitySlow(Node *parsetree,
                           ddl_columnInfo[column_itr].conname[constNode_itr] = (char*) malloc( sizeof(char)*strlen( ConstraintNode->conname ));
                           strcpy(ddl_columnInfo[column_itr].conname[constNode_itr],ConstraintNode->conname);
                         }else
-                          ddl_columnInfo[column_itr].conname[constNode_itr] = NULL;
-
+                          ddl_columnInfo[column_itr].conname[constNode_itr] = "";
                         constNode_itr++;
                       }
                     }
@@ -1396,6 +1397,7 @@ ProcessUtilitySlow(Node *parsetree,
               ddl_columnInfoForKeySchema[column_itr_for_KeySchema].valueType = 0;  // Unnecessary in CreateIndex
               ddl_columnInfoForKeySchema[column_itr_for_KeySchema].column_offset = 0; // Unnecessary in CreateIndex
               ddl_columnInfoForKeySchema[column_itr_for_KeySchema].column_length = 0; // Unnecessary in CreateIndex
+              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].name = (char*) malloc ( sizeof(char)*strlen(indexElem->name ));
               strcpy(ddl_columnInfoForKeySchema[column_itr_for_KeySchema].name, indexElem->name );
               ddl_columnInfoForKeySchema[column_itr_for_KeySchema].allow_null = true;  // Unnecessary in CreateIndex
               ddl_columnInfoForKeySchema[column_itr_for_KeySchema].is_inlined = false; // true for int, double, char, timestamp..
