@@ -43,7 +43,7 @@ bool LimitExecutor::DInit(){
 bool LimitExecutor::DExecute(){
 
   // Grab data from plan node
-  const planner::LimitNode &node = GetNode<planner::LimitNode>();
+  const planner::LimitNode &node = GetPlanNode<planner::LimitNode>();
   const size_t limit = node.GetLimit();
   const size_t offset = node.GetOffset();
 
