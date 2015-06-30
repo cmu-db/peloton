@@ -119,7 +119,7 @@ postgres_backend_FILES = \
 						 postgres/backend/access/transam/xloginsert.cpp \
 						 postgres/backend/access/transam/xlogreader.cpp \
 						 postgres/backend/access/transam/xlogutils.cpp \
-						 postgres/backend/bootstrap/bootparse.c \
+						 postgres/backend/bootstrap/bootparse.cpp \
 						 postgres/backend/bootstrap/bootstrap.cpp \
 						 postgres/backend/catalog/aclchk.cpp \
 						 postgres/backend/catalog/catalog.cpp \
@@ -323,7 +323,7 @@ postgres_backend_FILES = \
 						 postgres/backend/optimizer/util/tlist.cpp \
 						 postgres/backend/optimizer/util/var.cpp \
 						 postgres/backend/parser/analyze.cpp \
-						 postgres/backend/parser/gram.cpp \
+						 postgres/backend/parser/gram.ypp \
 						 postgres/backend/parser/keywords.cpp \
 						 postgres/backend/parser/kwlookup.cpp \
 						 postgres/backend/parser/parse_agg.cpp \
@@ -590,3 +590,5 @@ postgres_backend_FILES = \
 postgres_backend_INCLUDES = \
 							-I$(srcdir)/postgres/include \
 							-I$(srcdir)/postgres/backend
+
+AM_YFLAGS = -d --debug
