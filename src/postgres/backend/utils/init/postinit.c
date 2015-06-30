@@ -38,6 +38,7 @@
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/postmaster.h"
+#include "postmaster/peloton.h"
 #include "replication/walsender.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
@@ -681,7 +682,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 * In standalone mode and in autovacuum worker processes, we use a fixed
 	 * ID, otherwise we figure it out from the authenticated user name.
 	 */
-	if (bootstrap || IsAutoVacuumWorkerProcess())
+	if (bootstrap || IsAutoVacuumWorkerProcess() || IsPelotonProcess())
 	{
 		InitializeSessionUserIdStandalone();
 		am_superuser = true;
