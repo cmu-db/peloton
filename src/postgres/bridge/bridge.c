@@ -43,7 +43,7 @@
  * @param tuple relevant tuple if it exists, NULL otherwise
  */
 HeapTuple
-GetPGClassTuple(Oid relation_id){
+GetPGClassTupleForRelationOid(Oid relation_id){
   Relation pg_class_rel;
   HeapTuple tuple = NULL;
 
@@ -70,7 +70,7 @@ GetPGClassTuple(Oid relation_id){
  * @param tuple relevant tuple if it exists, NULL otherwise
  */
 HeapTuple
-GetPGClassTuple(const char *relation_name){
+GetPGClassTupleForRelationName(const char *relation_name){
   Relation pg_class_rel;
   HeapTuple tuple = NULL;
   HeapScanDesc scan;
@@ -109,13 +109,13 @@ GetPGClassTuple(const char *relation_name){
  * @param relation_id relation id
  * @return Tuple if valid relation_id, otherwise null
  */
-HeapTuple
+char*
 GetRelationName(Oid relation_id){
   HeapTuple tuple;
   Form_pg_class pg_class;
   char* relation_name;
 
-  tuple = GetPGClassTuple(relation_id);
+  tuple = GetPGClassTupleForRelationOid(relation_id);
   if (!HeapTupleIsValid(tuple)) {
     return NULL;
   }
@@ -136,16 +136,13 @@ Oid
 GetRelationOid(const char *relation_name){
   Oid relation_oid = InvalidOid;
   HeapTuple tuple;
-  Form_pg_class pg_class;
-  char* rel_name;
 
-  tuple = GetPGClassTuple(relation_name);
+  tuple = GetPGClassTupleForRelationName(relation_name);
   if (!HeapTupleIsValid(tuple)) {
     return InvalidOid;
   }
 
   // Get relation oid
-  pg_class = (Form_pg_class) GETSTRUCT(tuple);
   relation_oid = HeapTupleHeaderGetOid(tuple->t_data);
 
   return relation_oid;
@@ -166,7 +163,7 @@ GetNumberOfAttributes(Oid relation_id) {
   Form_pg_class pg_class;
   int num_atts = -1;
 
-  tuple = GetPGClassTuple(relation_id);
+  tuple = GetPGClassTupleForRelationOid(relation_id);
   if (!HeapTupleIsValid(tuple)) {
     return num_atts;
   }
@@ -190,9 +187,9 @@ GetNumberOfTuples(Oid relation_id){
   Form_pg_class pg_class;
   float num_tuples;
 
-  tuple = GetPGClassTuple(relation_id);
+  tuple = GetPGClassTupleForRelationOid(relation_id);
   if (!HeapTupleIsValid(tuple)) {
-    return num_tuples;
+    return -1;
   }
 
   pg_class = (Form_pg_class) GETSTRUCT(tuple);
@@ -220,9 +217,8 @@ GetCurrentDatabaseOid(void){
  */
 bool RelationExists(const char* relation_name) {
   HeapTuple tuple;
-  Form_pg_class pg_class;
 
-  tuple = GetPGClassTuple(relation_name);
+  tuple = GetPGClassTupleForRelationName(relation_name);
   if (!HeapTupleIsValid(tuple)) {
     return false;
   }
@@ -249,14 +245,14 @@ void GetTableList(bool catalog_only) {
   scan = heap_beginscan_catalog(pg_class_rel, 0, NULL);
 
   while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
-    Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
+    Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
 
     // Check if we only need catalog tables or not ?
     if(catalog_only == false) {
-      elog(LOG, "pgclass->relname :: %s  \n", NameStr(pg_class->relname ) );
+      elog(LOG, "pgclass->relname :: %s  \n", NameStr(pgclass->relname ) );
     }
-    else if(pg_class->relnamespace==PG_PUBLIC_NAMESPACE) {
-      elog(LOG, "pgclass->relname :: %s  \n", NameStr(pg_class->relname ) );
+    else if(pgclass->relnamespace==PG_PUBLIC_NAMESPACE) {
+      elog(LOG, "pgclass->relname :: %s  \n", NameStr(pgclass->relname ) );
     }
 
   }
@@ -299,203 +295,250 @@ void GetDatabaseList(void) {
 /**
  * @brief Setting the number of tuples.
  * @param relation_id relation id
- * @param num_of_tuples number of tuples
+ * @param num_tuples number of tuples
  */
 void
 SetNumberOfTuples(Oid relation_id, float num_tuples) {
   Relation pg_class_rel;
   HeapTuple tuple;
   Form_pg_class pgclass;
-  bool dirty;
 
   StartTransactionCommand();
 
+  // Open pg_class table in exclusive mode
   pg_class_rel = heap_open(RelationRelationId,RowExclusiveLock);
 
   tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relation_id));
-  if (!HeapTupleIsValid(tuple))
-    elog(ERROR, "cache lookup failed for relation %u", relation_id);
+  if (!HeapTupleIsValid(tuple)) {
+    elog(DEBUG2, "cache lookup failed for relation %u", relation_id);
+    return;
+  }
 
   pgclass = (Form_pg_class) GETSTRUCT(tuple);
-
-  dirty = false;
-  if (pgclass->reltuples != (float4) num_tuples)
-  {
-    pgclass->reltuples = (float4) num_tuples;
-    dirty = true;
-  }
-
-  /* If anything changed, write out the tuple. */
-  if (dirty) {
-    simple_heap_update(pg_class_rel, &tuple->t_data->t_ctid, tuple);
-  }
+  pgclass->reltuples = (float4) num_tuples;
+  // update tuple
+  simple_heap_update(pg_class_rel, &tuple->t_data->t_ctid, tuple);
 
   heap_close(pg_class_rel, RowExclusiveLock);
 
   CommitTransactionCommand();
 }
 
-/**
- * @brief Setting the user table stats
- * @param relation_id relation id
- */
-struct user_pg_database {
-  char datname[10];
-  int datdba;
-  int encoding;
-};
-
-typedef struct user_pg_database *Form_user_pg_database;
-void  SetUserTableStats(Oid relation_id)
-{
-  Relation rel;
-  HeapTuple newtup;
-  //HeapTuple tup, newtup;
-  Oid relid;
-  Form_user_pg_database userpgdatabase;
-
-  StartTransactionCommand();
-  rel = heap_open(relation_id, RowExclusiveLock);
-  relid = RelationGetRelid(rel);
-
-  /* fetch the tuple from system cache */
-  newtup = SearchSysCacheCopy1(USERMAPPINGOID, ObjectIdGetDatum(relid));
-  userpgdatabase = (Form_user_pg_database) GETSTRUCT(newtup);
-
-  if (!HeapTupleIsValid(newtup))
-    elog(ERROR, "cache lookup failed for the new tuple");
-
-  printf("test11 %d \n", userpgdatabase->encoding );
-  if( userpgdatabase->encoding == 101)
-    userpgdatabase->encoding = 1001;
-  printf("test12 %d \n", userpgdatabase->encoding );
-  printf("%s %d\n", __func__, __LINE__);
-
-  /* update tuple */
-  simple_heap_update(rel, &newtup->t_self, newtup);
-
-  printf("%s %d\n", __func__, __LINE__);
-  heap_freetuple(newtup); // It may incur segmentation fault
-
-  /*
-   * Close relation, but keep lock till commit.
-   */
-  heap_close(rel, RowExclusiveLock);
-  CommitTransactionCommand();
-}
-
 
 /**
- * Initialize Peloton
- * This function constructs tables in all databases
+ * @brief This function constructs all the user-defined tables in all databases
+ * @return true or false, depending on whether we could bootstrap.
  */
-bool InitPeloton(void)
+bool BootstrapPeloton(void)
 {
   // Relations for catalog tables
   Relation pg_class_rel;
   Relation pg_attribute_rel;
-
-  HeapScanDesc scan_pg_class;
-  HeapTuple tuple_for_pg_class;
+  HeapScanDesc pg_class_scan;
+  HeapTuple pg_class_tuple;
 
   int column_itr;
-  bool ret;
+  bool status;
 
   elog(LOG, "Initializing Peloton");
 
   StartTransactionCommand();
 
+  // Open the pg_class and pg_attribute catalog tables
   pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
   pg_attribute_rel = heap_open(AttributeRelationId, AccessShareLock);
 
-  scan_pg_class = heap_beginscan_catalog(pg_class_rel, 0, NULL);
+  pg_class_scan = heap_beginscan_catalog(pg_class_rel, 0, NULL);
 
-  //TODO :: Make this one single loop
-  while (HeapTupleIsValid(tuple_for_pg_class = heap_getnext(scan_pg_class, ForwardScanDirection))) {
-    Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple_for_pg_class);
+  // Go over all tuples in pg_class
+  // pg_class catalogs tables and most everything else that has columns or is otherwise similar to a table.
+  // This includes indexes, sequences, views, composite types, and some kinds of special relation.
+  // So, each tuple can correspond to a table, index, etc.
+  while(1) {
+    Form_pg_class pg_class;
+    char *relation_name;
+    char relation_kind;
+    int attnum;
 
-    // Create only user tables
-    if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE && ( pgclass->relkind == 'r' ||  pgclass->relkind == 'i'))
+    // Get next tuple from pg_class
+    pg_class_tuple = heap_getnext(pg_class_scan, ForwardScanDirection);
+
+    if(!HeapTupleIsValid(pg_class_tuple))
+      break;
+
+    pg_class = (Form_pg_class) GETSTRUCT(pg_class_tuple);
+    relation_name = NameStr(pg_class->relname);
+    relation_kind = pg_class->relkind;
+
+    // Handle only user-defined structures, not pg-catalog structures
+    if( pg_class->relnamespace==PG_PUBLIC_NAMESPACE)
     {
-      // create columninfo as much as attnum
-      int attnum =  pgclass->relnatts ;
+
+      // TODO: Currently, we only handle relations and indexes
+      if(pg_class->relkind != 'r' && pg_class->relkind != 'i') {
+        continue;
+      }
+
+      attnum =  pg_class->relnatts;
       if( attnum > 0 )
       {
-        HeapScanDesc scan_pg_attribute;
-        HeapTuple tuple_for_pg_attribute;
-        ColumnInfo ddl_columnInfo[ pgclass->relnatts ] ;
-        Oid table_oid = HeapTupleHeaderGetOid(tuple_for_pg_class->t_data);
+        HeapScanDesc pg_attribute_scan;
+        HeapTuple pg_attribute_tuple;
+        ColumnInfo ddl_schema[attnum];
 
-        scan_pg_attribute = heap_beginscan_catalog(pg_attribute_rel, 0, NULL);
+        // This will be different from pg's attnum, as we skip system columns
+        int our_attnum;
+
+        // Get the tuple oid
+        // This can be a relation oid or index oid etc.
+        Oid tuple_oid = HeapTupleHeaderGetOid(pg_class_tuple->t_data);
+
+        // Scan the pg_attribute table for the relation oid we are interested in.
+        pg_attribute_scan = heap_beginscan_catalog(pg_attribute_rel, 0, NULL);
+
         column_itr = 0;
-        while (HeapTupleIsValid(tuple_for_pg_attribute = heap_getnext(scan_pg_attribute, ForwardScanDirection))) {
-          Form_pg_attribute pgattribute = (Form_pg_attribute) GETSTRUCT(tuple_for_pg_attribute);
-          if( pgattribute->attrelid == table_oid )
+
+        //===--------------------------------------------------------------------===//
+        // Build the schema
+        //===--------------------------------------------------------------------===//
+
+        // Go over all entries in pg_attribute
+        while (1) {
+          Form_pg_attribute pg_attribute;
+
+          // Get next <relation, attribute> tuple from pg_attribute table
+          pg_attribute_tuple = heap_getnext(pg_attribute_scan, ForwardScanDirection);
+          if(!HeapTupleIsValid(pg_attribute_tuple))
+            break;
+
+          // Check the relation oid
+          pg_attribute = (Form_pg_attribute) GETSTRUCT(pg_attribute_tuple);
+          if( pg_attribute->attrelid == tuple_oid )
           {
-            // Skip system columns..
-            if( strcmp( NameStr(pgattribute->attname),"cmax" ) &&
-                strcmp( NameStr(pgattribute->attname),"cmin" ) &&
-                strcmp( NameStr(pgattribute->attname),"ctid" ) &&
-                strcmp( NameStr(pgattribute->attname),"xmax" ) &&
-                strcmp( NameStr(pgattribute->attname),"xmin" ) &&
-                strcmp( NameStr(pgattribute->attname),"tableoid" ) )
+            // Skip system columns in the attribute list
+            if( strcmp( NameStr(pg_attribute->attname),"cmax" ) &&
+                strcmp( NameStr(pg_attribute->attname),"cmin" ) &&
+                strcmp( NameStr(pg_attribute->attname),"ctid" ) &&
+                strcmp( NameStr(pg_attribute->attname),"xmax" ) &&
+                strcmp( NameStr(pg_attribute->attname),"xmin" ) &&
+                strcmp( NameStr(pg_attribute->attname),"tableoid" ) )
             {
-              ddl_columnInfo[column_itr].type = pgattribute->atttypid;
-              ddl_columnInfo[column_itr].column_offset = column_itr;
-              ddl_columnInfo[column_itr].column_length = pgattribute->attlen;
-              strcpy(ddl_columnInfo[column_itr].name, NameStr(pgattribute->attname));
-              ddl_columnInfo[column_itr].allow_null = ! pgattribute->attnotnull;
-              ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
+              ddl_schema[column_itr].type = pg_attribute->atttypid;
+              ddl_schema[column_itr].column_offset = column_itr;
+              ddl_schema[column_itr].column_length = pg_attribute->attlen;
+              strcpy(ddl_schema[column_itr].name, NameStr(pg_attribute->attname));
+              ddl_schema[column_itr].allow_null = ! pg_attribute->attnotnull;
+              // NOTE: We set it as true later for VARCHAR.
+              ddl_schema[column_itr].is_inlined = false;
+
               column_itr++;
-            } // end if
-          } // end if
-        } // end while
+            }
 
-        heap_endscan(scan_pg_attribute);
-
-        // Create the table
-        if( pgclass->relkind == 'r' )
-        {
-          ret = DDLCreateTable( NameStr(pgclass->relname) , ddl_columnInfo, column_itr);
-          if( ret )  printf("Create Table \"%s\" in Peloton\n", NameStr(pgclass->relname));
-          else       fprintf(stderr, "DDLCreateTable :: %d \n", ret);
+          }
         }
-        // Create the index
-        else if( pgclass->relkind == 'i')
-        {
-          Relation pg_index_rel;
-          HeapScanDesc scan_pg_index;
-          HeapTuple tuple_for_pg_index;
-          pg_index_rel = heap_open(IndexRelationId, AccessShareLock);
-          scan_pg_index = heap_beginscan_catalog(pg_index_rel, 0, NULL);
 
-          while (HeapTupleIsValid(tuple_for_pg_index = heap_getnext(scan_pg_index, ForwardScanDirection))) {
-            Form_pg_index pgindex = (Form_pg_index) GETSTRUCT(tuple_for_pg_index);
+        our_attnum = column_itr;
+        heap_endscan(pg_attribute_scan);
 
-            if( pgindex->indexrelid == table_oid )
-            {
-              DDLCreateIndex(NameStr(pgclass->relname), get_rel_name(pgindex->indrelid), 0, pgindex->indisunique, ddl_columnInfo, column_itr);
-              if( ret )  printf("Create Index \"%s\" in Peloton\n", NameStr(pgclass->relname));
-              else       fprintf(stderr, "DDLCreateIndex :: %d \n", ret);
-              break;
+        //===--------------------------------------------------------------------===//
+        // Create Peloton Structures
+        //===--------------------------------------------------------------------===//
+
+        switch(relation_kind){
+
+          case 'r':
+          {
+            // Create the Peloton table
+            status = DDLCreateTable(relation_name, ddl_schema, our_attnum);
+            if(status == true) {
+              elog(LOG, "Create Table \"%s\" in Peloton\n", relation_name);
+            }
+            else {
+              elog(ERROR, "Create Table \"%s\" in Peloton\n", relation_name);
             }
           }
+          break;
 
-          heap_endscan(scan_pg_index);
-          heap_close(pg_index_rel, AccessShareLock);
+          case 'i':
+          {
+            // Create the Peloton index
+            Relation pg_index_rel;
+            HeapScanDesc pg_index_scan;
+            HeapTuple pg_index_tuple;
+
+            pg_index_rel = heap_open(IndexRelationId, AccessShareLock);
+            pg_index_scan = heap_beginscan_catalog(pg_index_rel, 0, NULL);
+
+            // Go over the pg_index catalog table looking for indexes
+            // that are associated with this table
+            while (1) {
+              Form_pg_index pg_index;
+
+              pg_index_tuple = heap_getnext(pg_index_scan, ForwardScanDirection);
+              if(!HeapTupleIsValid(pg_index_tuple))
+                break;
+
+              pg_index = (Form_pg_index) GETSTRUCT(pg_index_tuple);
+
+              // Search for the tuple in pg_index corresponding to our index
+              if( pg_index->indexrelid == tuple_oid)
+              {
+
+                DDLCreateIndex(relation_name, get_rel_name(pg_index->indrelid),
+                               0, pg_index->indisunique,
+                               ddl_schema, our_attnum);
+
+                if(status == true) {
+                  elog(LOG, "Create Index \"%s\" in Peloton\n", relation_name);
+                }
+                else {
+                  elog(ERROR, "Create Index \"%s\" in Peloton\n", relation_name);
+                }
+                break;
+              }
+            }
+
+            heap_endscan(pg_index_scan);
+            heap_close(pg_index_rel, AccessShareLock);
+          }
+          break;
+
+          default:
+            elog(ERROR, "Invalid pg_class entry type : %c \n", relation_kind);
+            break;
         }
-      }else
-      {
-        // Create Table without column info
-        ret = DDLCreateTable( NameStr(pgclass->relname) , NULL, 0);
-        if( ret )  printf("Create Table \"%s\" in Peloton\n", NameStr(pgclass->relname));
-        else       fprintf(stderr, "DDLCreateTable :: %d \n", ret);
+
       }
-    } // end if
+      // TODO: Table with no attributes. Do we need to handle this ?
+      else
+      {
+        switch(relation_kind){
 
-  } // end while
+          case 'r':
+            // Create the Peloton table
+            status = DDLCreateTable(relation_name, NULL, 0);
+            if(status == true) {
+              elog(LOG, "Create Table \"%s\" in Peloton\n", relation_name);
+            }
+            else {
+              elog(ERROR, "Create Table \"%s\" in Peloton\n", relation_name);
+            }
+            break;
 
-  heap_endscan(scan_pg_class);
+          case 'i':
+            elog(ERROR, "We don't support indexes for tables with no attributes \n");
+            break;
+
+          default:
+            elog(ERROR, "Invalid pg_class entry type : %c \n", relation_kind);
+            break;
+        }
+      }
+
+    }
+  }
+
+  heap_endscan(pg_class_scan);
   heap_close(pg_attribute_rel, AccessShareLock);
   heap_close(pg_class_rel, AccessShareLock);
 
