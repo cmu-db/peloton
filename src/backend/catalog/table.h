@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/catalog/abstract_catalog_object.h"
+#include "backend/catalog/constraint.h"
 #include "backend/catalog/column.h"
 #include "backend/catalog/index.h"
 
@@ -67,7 +68,7 @@ public:
         return indexes;
     }
 
-    std::vector<Constraint*> GetConstraints() const {
+    std::vector<catalog::Constraint*> GetConstraints() const {
         return constraints;
     }
 
@@ -115,7 +116,7 @@ private:
     std::vector<Index*> indexes;
 
     // constraints for column
-    std::vector<Constraint*> constraints;
+    std::vector<catalog::Constraint*> constraints;
 
     // underlying physical table
     storage::DataTable* physical_table = nullptr; // TODO: REMOVE THIS!

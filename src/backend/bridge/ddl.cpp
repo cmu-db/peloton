@@ -108,16 +108,18 @@ bool DDL::CreateTable(std::string table_name,
             break;
         }
  
+        /*
+         * Set up Constraints
+         */
         constraint_vec.clear();
         for(int constraint_itr = 0 ; constraint_itr < num_of_constraints_of_each_column[column_itr]; constraint_itr++)
         {
           index::Index* index = nullptr;
           storage::DataTable* table = nullptr;
 
-printf("JWKIM DEBUG %s %d %d \n", __func__, __LINE__, constraint_itr);
-          
           // Matching the ConstraintType from Postgres to Peloton
           // TODO :: Do we need both constraint types ???
+          // Make a function with followings..
           switch(ddl_columnInfo[column_itr].constraintType[constraint_itr] ){
             case CONSTR_CHECK:
               printf(" ConstraintNode->contype is CONSTR_CHECK\n");
@@ -137,6 +139,20 @@ printf("JWKIM DEBUG %s %d %d \n", __func__, __LINE__, constraint_itr);
            case CONSTR_PRIMARY:
               printf(" ConstraintNode->contype is CONSTR_PRIMARY\n");
               currentConstraintType = CONSTRAINT_TYPE_PRIMARY;
+              printf("conname %s \n",  ddl_columnInfo[column_itr].conname[constraint_itr]);
+/*
+              DDL_ColumnInfo ddl_columnInfoForKeySchema; 
+              ddl_columnInfoForKeySchema.valueType = 0; 
+              ddl_columnInfoForKeySchema.column_offset = 0;
+              ddl_columnInfoForKeySchema.column_length = 0;
+              strcpy(ddl_columnInfoForKeySchema.name, indexElem->name );
+              ddl_columnInfoForKeySchema.allow_null = true;  
+              ddl_columnInfoForKeySchema.is_inlined = false;
+              ddl_columnInfoForKeySchema.constraintType = NULL; 
+              ddl_columnInfoForKeySchema.conname = NULL; 
+              column_itr_for_KeySchema++;
+*/
+              //CreateIndex(table_name+"primary_index", table_name, 0, true, 
               break;
 
             case CONSTR_FOREIGN:
@@ -156,15 +172,9 @@ printf("JWKIM DEBUG %s %d %d \n", __func__, __LINE__, constraint_itr);
 
           catalog::Constraint* constraint = nullptr;
           std::string tmp = ConstraintTypeToString(currentConstraintType);
-printf("JWKIM DEBUG %s %d %s \n", __func__, __LINE__, tmp.c_str());
-//          if( ddl_columnInfo[column_itr].conname == NULL )
-            constraint = new catalog::Constraint( currentConstraintType );
-printf("JWKIM DEBUG %s %d\n", __func__, __LINE__);
-//          else
-//            constraint = new catalog::Constraint( ddl_columnInfo[column_itr].conname[constraint_itr], currentConstraintType);
+          constraint = new catalog::Constraint( ddl_columnInfo[column_itr].conname[constraint_itr], currentConstraintType, NULL, NULL);
 
           constraint_vec.push_back(*constraint);
-printf("JWKIM DEBUG %s %d\n", __func__, __LINE__);
         }
       
         catalog::ColumnInfo *columnInfo = new catalog::ColumnInfo( currentValueType,
@@ -180,9 +190,7 @@ printf("JWKIM DEBUG %s %d\n", __func__, __LINE__);
     }
 
     // Construct schema from vector of ColumnInfo
-printf("JWKIM DEBUG :: %s %d\n", __func__, __LINE__);
     schema = new catalog::Schema(columnInfoVect);
-printf("JWKIM DEBUG :: %s %d\n", __func__, __LINE__);
 
     // Just for debugging
     std::cout << "Print out Schema just for debugging of constraint" << std::endl;
