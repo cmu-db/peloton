@@ -212,7 +212,7 @@ PelotonMain(int argc, char *argv[])
   ereport(LOG, (errmsg("peloton: processing database \"%s\"", "postgres")));
 
   /* Init Peloton */
-  InitPeloton();
+  BootstrapPeloton();
 
   /* Start main loop */
   peloton_MainLoop();
