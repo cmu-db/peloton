@@ -25,7 +25,8 @@ void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
                                const std::vector<oid_t> column_lengths,
                                const std::vector<std::string> column_names,
                                const std::vector<bool> allow_null,
-                               const std::vector<bool> is_inlined) {
+                               const std::vector<bool> is_inlined,
+                               const std::vector<std::vector<Constraint>> constraint_vector_of_vectors) {
 
   bool tup_is_inlined = true;
   oid_t num_columns = column_types.size();
@@ -38,7 +39,8 @@ void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
                            column_lengths[column_itr],
                            column_names[column_itr],
                            allow_null[column_itr],
-                           is_inlined[column_itr]);
+                           is_inlined[column_itr],
+                           constraint_vector_of_vectors[column_itr]);
 
     column_offset += column_info.fixed_length;
 
@@ -68,6 +70,7 @@ Schema::Schema(const std::vector<ColumnInfo> columns)
   std::vector<std::string> column_names;
   std::vector<bool> allow_null;
   std::vector<bool> is_inlined;
+  std::vector<std::vector<Constraint>> constraint_vector_of_vectors;
 
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     column_types.push_back(columns[column_itr].type);
@@ -80,9 +83,10 @@ Schema::Schema(const std::vector<ColumnInfo> columns)
     column_names.push_back(columns[column_itr].name);
     allow_null.push_back(columns[column_itr].allow_null);
     is_inlined.push_back(columns[column_itr].is_inlined);
+    constraint_vector_of_vectors.push_back(columns[column_itr].constraint_vector);
   }
 
-  CreateTupleSchema(column_types, column_lengths, column_names, allow_null, is_inlined);
+  CreateTupleSchema(column_types, column_lengths, column_names, allow_null, is_inlined, constraint_vector_of_vectors);
 }
 
 /// Copy schema
@@ -190,6 +194,13 @@ std::ostream& operator<< (std::ostream& os, const ColumnInfo& column_info){
       " variable length = " << column_info.variable_length << "," <<
       " nullable = " << column_info.allow_null <<
       " inlined = " << column_info.is_inlined << std::endl;
+
+  
+  for( oid_t constraint_itr = 0; constraint_itr < column_info.constraint_vector.size(); constraint_itr++)
+  { 
+    Constraint constraint = column_info.constraint_vector[constraint_itr];
+    os << "\tConstraint " << constraint_itr << "::  type : " << ConstraintTypeToString(constraint.GetType()) << std::endl;
+  }
 
   return os;
 }

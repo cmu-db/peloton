@@ -345,10 +345,33 @@ enum ResultType {
 // Constraint Types
 //===--------------------------------------------------------------------===//
 
+enum ConstraintTypeInPostgres {
+  CONSTR_NULL                  = 0,
+
+  CONSTR_NOTNULL               = 1,
+  CONSTR_DEFAULT               = 2,
+  CONSTR_CHECK                 = 3,
+  CONSTR_PRIMARY               = 4,
+  CONSTR_UNIQUE                = 5,
+  CONSTR_EXCLUSION             = 6,
+  CONSTR_FOREIGN               = 7,
+
+  /* attributes for previous constraint node */
+  CONSTR_ATTR_DEFERRABLE       = 8,    
+  CONSTR_ATTR_NOT_DEFERRABLE   = 9,
+  CONSTR_ATTR_DEFERRED         = 10,
+  CONSTR_ATTR_IMMEDIATE        = 11,
+};
+
 enum ConstraintType {
-    CONSTRAINT_TYPE_INVALID = 0, // invalid
-    CONSTRAINT_TYPE_PRIMARY = 1, // primary key
-    CONSTRAINT_TYPE_FOREIGN = 2  // foreign key
+  CONSTRAINT_TYPE_INVALID    = 0, // invalid
+
+  CONSTRAINT_TYPE_CHECK      = 1, // unique 
+  CONSTRAINT_TYPE_NOTNULL    = 2, // notnull 
+  CONSTRAINT_TYPE_UNIQUE     = 3, // unique 
+  CONSTRAINT_TYPE_PRIMARY    = 4, // primary key
+  CONSTRAINT_TYPE_FOREIGN    = 5, // foreign key
+  CONSTRAINT_TYPE_EXCLUSION  = 6  // foreign key
 };
 
 
