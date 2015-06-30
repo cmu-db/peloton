@@ -118,7 +118,7 @@ GinFormTuple(GinState *ginstate,
 	 */
 	if (newsize != IndexTupleSize(itup))
 	{
-		itup = repalloc(itup, newsize);
+		itup = static_cast<IndexTuple>(repalloc(itup, newsize));
 
 		/*
 		 * PostgreSQL 9.3 and earlier did not clear this new___ space, so we
@@ -178,7 +178,7 @@ ginReadTuple(GinState *ginstate, OffsetNumber attnum, IndexTuple itup,
 		}
 		else
 		{
-			ipd = palloc(0);
+			ipd = static_cast<ItemPointer>(palloc(0));
 		}
 	}
 	else
@@ -524,7 +524,7 @@ entryPlaceToPage(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 				 void *insertPayload, BlockNumber updateblkno,
 				 Page *newlpage, Page *newrpage)
 {
-	GinBtreeEntryInsertData *insertData = insertPayload;
+	GinBtreeEntryInsertData *insertData = static_cast<GinBtreeEntryInsertData *>(insertPayload);
 	Page		page = BufferGetPage(buf);
 	OffsetNumber off = stack->off;
 	OffsetNumber placed;
@@ -580,7 +580,7 @@ entrySplitPage(GinBtree btree, Buffer origbuf,
 			   BlockNumber updateblkno,
 			   Page *newlpage, Page *newrpage)
 {
-	GinBtreeEntryInsertData *insertData = insertPayload;
+	GinBtreeEntryInsertData *insertData = static_cast<GinBtreeEntryInsertData *>(insertPayload);
 	OffsetNumber off = stack->off;
 	OffsetNumber i,
 				maxoff,
@@ -679,7 +679,7 @@ entryPrepareDownlink(GinBtree btree, Buffer lbuf)
 
 	itup = getRightMostTuple(lpage);
 
-	insertData = palloc(sizeof(GinBtreeEntryInsertData));
+	insertData = static_cast<GinBtreeEntryInsertData *>(palloc(sizeof(GinBtreeEntryInsertData)));
 	insertData->entry = GinFormInteriorTuple(itup, lpage, lblkno);
 	insertData->isDelete = false;
 

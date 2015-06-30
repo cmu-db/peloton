@@ -59,7 +59,7 @@ writeListPage(Relation index, Buffer buffer,
 	char	   *ptr;
 
 	/* workspace could be a local array; we use palloc for alignment */
-	workspace = palloc(BLCKSZ);
+	workspace = static_cast<char *>(palloc(BLCKSZ));
 
 	START_CRIT_SECTION();
 

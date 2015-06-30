@@ -19,7 +19,7 @@ namespace bridge {
 bool DDL::CreateTable(std::string table_name,
                       DDL_ColumnInfo* ddl_columnInfo,
                       int num_columns, 
-                      catalog::Schema* schema = nullptr){
+                      catalog::Schema* schema){
   if( ( num_columns > 0 && ddl_columnInfo == nullptr) && schema == nullptr )
     return false;
 

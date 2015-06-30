@@ -47,8 +47,8 @@ brin_minmax_opcinfo(PG_FUNCTION_ARGS)
 	 * all-uninitialized by palloc0 which sets fn_oid to InvalidOid.
 	 */
 
-	result = palloc0(MAXALIGN(SizeofBrinOpcInfo(2)) +
-					 sizeof(MinmaxOpaque));
+	result = static_cast<BrinOpcInfo *>(palloc0(MAXALIGN(SizeofBrinOpcInfo(2)) +
+					 sizeof(MinmaxOpaque)));
 	result->oi_nstored = 2;
 	result->oi_opaque = (MinmaxOpaque *)
 		MAXALIGN((char *) result + SizeofBrinOpcInfo(2));
