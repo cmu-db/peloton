@@ -57,6 +57,9 @@ static struct sockaddr_storage pelotonAddr;
 static volatile bool need_exit = false;
 static volatile sig_atomic_t got_SIGHUP = false;
 
+/* Flags to tell if we are in an peloton process */
+static bool am_peloton = false;
+
 /* ----------
  * Local function forward declarations
  * ----------
@@ -71,6 +74,13 @@ static void peloton_setheader(Peloton_MsgHdr *hdr, PelotonMsgType mtype);
 static void peloton_send(void *msg, int len);
 
 static void peloton_recv_plan(Peloton_MsgPlan *msg, int len);
+
+
+bool
+IsPelotonProcess(void)
+{
+  return am_peloton;
+}
 
 /**
  * @brief Initialize peloton
@@ -117,11 +127,16 @@ int peloton_start(void){
 NON_EXEC_STATIC void
 PelotonMain(int argc, char *argv[])
 {
+  sigjmp_buf  local_sigjmp_buf;
+
+  am_peloton = true;
+
+  ereport(LOG, (errmsg("starting peloton : pid :: %d", getpid())));
+
   /* Identify myself via ps */
   init_ps_display("peloton process", "", "", "");
 
-  ereport(LOG,
-      (errmsg("peloton started : pid :: %d", getpid())));
+  SetProcessingMode(InitProcessing);
 
   /*
    * Set up signal handlers.  We operate on databases much like a regular
@@ -129,19 +144,21 @@ PelotonMain(int argc, char *argv[])
    * tcop/postgres.c.
    */
   pqsignal(SIGHUP, peloton_sighup_handler);
+
+  /*
+   * SIGINT is used to signal canceling the current table's vacuum; SIGTERM
+   * means abort and exit cleanly, and SIGQUIT means abandon ship.
+   */
   pqsignal(SIGINT, StatementCancelHandler);
   pqsignal(SIGTERM, peloton_sigterm_handler);
-
   pqsignal(SIGQUIT, quickdie);
   InitializeTimeouts();   /* establishes SIGALRM handler */
 
   pqsignal(SIGPIPE, SIG_IGN);
-  pqsignal(SIGUSR1, procsignal_sigusr1_handler);
-  pqsignal(SIGUSR2, peloton_sigusr2_handler);
+  pqsignal(SIGUSR1, peloton_sigusr2_handler);
+  pqsignal(SIGUSR2, SIG_IGN);
   pqsignal(SIGFPE, FloatExceptionHandler);
   pqsignal(SIGCHLD, SIG_DFL);
-
-  PG_SETMASK(&UnBlockSig);
 
   /* Early initialization */
   BaseInit();
@@ -152,11 +169,56 @@ PelotonMain(int argc, char *argv[])
    * this before we can use LWLocks (and in the EXEC_BACKEND case we already
    * had to do some stuff with LWLocks).
    */
+#ifndef EXEC_BACKEND
   InitProcess();
+#endif
 
+  /*
+   * If an exception is encountered, processing resumes here.
+   *
+   * See notes in postgres.c about the design of this coding.
+   */
+  if (sigsetjmp(local_sigjmp_buf, 1) != 0)
+  {
+    /* Prevents interrupts while cleaning up */
+    HOLD_INTERRUPTS();
+
+    /* Report the error to the server log */
+    EmitErrorReport();
+
+    /*
+     * We can now go away.  Note that because we called InitProcess, a
+     * callback was registered to do ProcKill, which will clean up
+     * necessary state.
+     */
+    proc_exit(0);
+  }
+
+  /* We can now handle ereport(ERROR) */
+  PG_exception_stack = &local_sigjmp_buf;
+
+  PG_SETMASK(&UnBlockSig);
+
+  /*
+   * Connect to the selected database
+   *
+   * Note: if we have selected a just-deleted database (due to using
+   * stale stats info), we'll fail and exit here.
+   */
+  InitPostgres("postgres", InvalidOid, NULL, InvalidOid, NULL);
+  SetProcessingMode(NormalProcessing);
+  set_ps_display("postgres", false);
+
+  ereport(LOG, (errmsg("peloton: processing database \"%s\"", "postgres")));
+
+  /* Init Peloton */
+  InitPeloton("postgres");
+
+  /* Start main loop */
   peloton_MainLoop();
 
-  exit(0);
+  /* All done, go away */
+  proc_exit(0);
 }
 
 /* SIGHUP: set flag to re-read config file at next convenient time */

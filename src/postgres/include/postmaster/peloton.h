@@ -81,6 +81,9 @@ typedef union Peloton_Msg
   Peloton_MsgPlan msg_plan;
 } Peloton_Msg;
 
+/* Status inquiry functions */
+extern bool IsPelotonProcess(void);
+
 /* ----------
  * Functions called from postmaster
  * ----------
