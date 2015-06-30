@@ -591,4 +591,4 @@ postgres_backend_INCLUDES = \
 							-I$(srcdir)/postgres/include \
 							-I$(srcdir)/postgres/backend
 
-AM_YFLAGS = -d --debug
+AM_YFLAGS = -d --debug --graph=graph

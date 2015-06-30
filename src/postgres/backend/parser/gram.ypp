@@ -1,6 +1,5 @@
 %{
-
-#define YYDEBUG 1
+/*#define YYDEBUG 1 */
 /*-------------------------------------------------------------------------
  *
  * gram.y
@@ -663,6 +662,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 
 /* Precedence: lowest to highest */
+%debug
 %nonassoc	SET				/* see relation_expr_opt_alias */
 %left		UNION EXCEPT
 %left		INTERSECT
