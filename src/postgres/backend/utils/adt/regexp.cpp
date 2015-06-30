@@ -70,8 +70,8 @@ typedef struct regexp_matches_ctx
  *
  * When we first create an entry, it's inserted at the front of
  * the array, dropping the entry at the end of the array if necessary to
- * make room.  (This might seem to be weighting the cnew entry too heavily,
- * but if we insert cnew entries further back, we'll be unable to adjust to
+ * make room.  (This might seem to be weighting the new___ entry too heavily,
+ * but if we insert new___ entries further back, we'll be unable to adjust to
  * a sudden shift in the query mix where we are presented with MAX_CACHED_RES
  * never-before-seen items used circularly.  We ought to be able to handle
  * that case, so we have to insert at the front.)
@@ -168,7 +168,7 @@ RE_compile_and_cache(text *text_re, int cflags, Oid collation)
 	}
 
 	/*
-	 * Couldn't find it, so try to compile the cnew RE.  To avoid leaking
+	 * Couldn't find it, so try to compile the new___ RE.  To avoid leaking
 	 * resources on failure, we build into the re_temp local.
 	 */
 
@@ -224,7 +224,7 @@ RE_compile_and_cache(text *text_re, int cflags, Oid collation)
 	re_temp.cre_collation = collation;
 
 	/*
-	 * Okay, we have a valid cnew item in re_temp; insert it into the storage
+	 * Okay, we have a valid new___ item in re_temp; insert it into the storage
 	 * array.  Discard last entry if needed.
 	 */
 	if (num_res >= MAX_CACHED_RES)

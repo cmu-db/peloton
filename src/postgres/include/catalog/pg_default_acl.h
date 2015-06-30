@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pg_default_acl.h
- *	  definition of default ACLs for cnew objects.
+ *	  definition of default ACLs for new___ objects.
  *
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
@@ -30,7 +30,7 @@
 CATALOG(pg_default_acl,826)
 {
 	Oid			defaclrole;		/* OID of role owning this ACL */
-	Oid			defaclnamespace;	/* OID of cnamespace, or 0 for all */
+	Oid			defaclnamespace;	/* OID of namescpace___, or 0 for all */
 	char		defaclobjtype;	/* see DEFACLOBJ_xxx constants below */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */

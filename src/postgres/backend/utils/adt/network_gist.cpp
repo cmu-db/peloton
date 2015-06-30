@@ -203,7 +203,7 @@ inet_gist_consistent(PG_FUNCTION_ARGS)
 	 * Compare available common prefix bits to the query, but not beyond
 	 * either the query's netmask or the minimum netmask among the represented
 	 * values.  If these bits don't match the query, we have our answer (and
-	 * may or may not need to descend, depending on the coperator).  If they do
+	 * may or may not need to descend, depending on the operator___).  If they do
 	 * match, and we are not at a leaf, we descend in all cases.
 	 *
 	 * Note this is the final check for operators that only consider the
@@ -618,9 +618,9 @@ inet_gist_fetch(PG_FUNCTION_ARGS)
  * The GiST page split penalty function
  *
  * Charge a large penalty if address family doesn't match, or a somewhat
- * smaller one if the cnew value would degrade the union's minbits
+ * smaller one if the new___ value would degrade the union's minbits
  * (minimum netmask width).  Otherwise, penalty is inverse of the
- * cnew number of common address bits.
+ * new___ number of common address bits.
  */
 Datum
 inet_gist_penalty(PG_FUNCTION_ARGS)
@@ -629,16 +629,16 @@ inet_gist_penalty(PG_FUNCTION_ARGS)
 	GISTENTRY  *newent = (GISTENTRY *) PG_GETARG_POINTER(1);
 	float	   *penalty = (float *) PG_GETARG_POINTER(2);
 	GistInetKey *orig = DatumGetInetKeyP(origent->key),
-			   *cnew = DatumGetInetKeyP(newent->key);
+			   *new___ = DatumGetInetKeyP(newent->key);
 	int			commonbits;
 
-	if (gk_ip_family(orig) == gk_ip_family(cnew))
+	if (gk_ip_family(orig) == gk_ip_family(new___))
 	{
-		if (gk_ip_minbits(orig) <= gk_ip_minbits(cnew))
+		if (gk_ip_minbits(orig) <= gk_ip_minbits(new___))
 		{
-			commonbits = bitncommon(gk_ip_addr(orig), gk_ip_addr(cnew),
+			commonbits = bitncommon(gk_ip_addr(orig), gk_ip_addr(new___),
 									Min(gk_ip_commonbits(orig),
-										gk_ip_commonbits(cnew)));
+										gk_ip_commonbits(new___)));
 			if (commonbits > 0)
 				*penalty = 1.0f / commonbits;
 			else

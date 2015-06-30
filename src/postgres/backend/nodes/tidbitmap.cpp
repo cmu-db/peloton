@@ -318,7 +318,7 @@ tbm_add_tuples(TIDBitmap *tbm, const ItemPointer tids, int ntids,
 		if (tbm->nentries > tbm->maxentries)
 		{
 			tbm_lossify(tbm);
-			/* Page could have been converted to lossy, so force cnew lookup */
+			/* Page could have been converted to lossy, so force new___ lookup */
 			currblk = InvalidBlockNumber;
 		}
 	}
@@ -804,7 +804,7 @@ tbm_find_pageentry(const TIDBitmap *tbm, BlockNumber pageno)
 /*
  * tbm_get_pageentry - find or create a PagetableEntry for the pageno
  *
- * If cnew, the entry is marked as an exact (non-chunk) entry.
+ * If new___, the entry is marked as an exact (non-chunk) entry.
  *
  * This may cause the table to exceed the desired memory size.  It is
  * up to the caller to call tbm_lossify() at the next safe point if so.

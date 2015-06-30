@@ -246,7 +246,7 @@ typedef struct ParamRef {
  */
 typedef enum A_Expr_Kind
 {
-	AEXPR_OP,					/* normal coperator */
+	AEXPR_OP,					/* normal operator___ */
 	AEXPR_OP_ANY,				/* scalar op ANY (array) */
 	AEXPR_OP_ALL,				/* scalar op ALL (array) */
 	AEXPR_DISTINCT,				/* IS DISTINCT FROM - name must be "=" */
@@ -271,7 +271,7 @@ typedef struct A_Expr {
 #endif
 
 	A_Expr_Kind kind;			/* see above */
-	List	   *name;			/* possibly-qualified name of coperator */
+	List	   *name;			/* possibly-qualified name of operator___ */
 	Node	   *lexpr;			/* left argument, or NULL if none */
 	Node	   *rexpr;			/* right argument, or NULL if none */
 	int			location;		/* token location, or -1 if unknown */
@@ -536,7 +536,7 @@ typedef struct SortBy {
 	SortByDir	sortby_dir;		/* ASC/DESC/USING/default */
 	SortByNulls sortby_nulls;	/* NULLS FIRST/LAST */
 	List	   *useOp;			/* name of op to use, if SORTBY_USING */
-	int			location;		/* coperator location, or -1 if none/unknown */
+	int			location;		/* operator___ location, or -1 if none/unknown */
 } SortBy;
 
 /*
@@ -757,7 +757,7 @@ typedef struct IndexElem {
  * In some contexts the name can be qualified.  Also, certain SQL commands
  * allow a SET/ADD/DROP action to be attached to option settings, so it's
  * convenient to carry a field for that too.  (Note: currently, it is our
- * practice that the grammar allows cnamespace and action only in statements
+ * practice that the grammar allows namescpace___ and action only in statements
  * where they are relevant; C code can just ignore those fields in other
  * statements.)
  */
@@ -874,7 +874,7 @@ typedef struct XmlSerialize {
  *	  It's false for RTEs that are added to a query behind the scenes, such
  *	  as the NEW and OLD variables for a rule, or the subqueries of a UNION.
  *	  This flag is not used anymore during parsing, since the parser now uses
- *	  a separate "cnamespace" data structure to control visibility, but it is
+ *	  a separate "namescpace___" data structure to control visibility, but it is
  *	  needed by ruleutils.c to determine whether RTEs should be shown in
  *	  decompiled queries.
  *
@@ -1039,7 +1039,7 @@ typedef struct RangeTblFunction {
 
 /*
  * WithCheckOption -
- *		representation of WITH CHECK OPTION checks to be applied to cnew tuples
+ *		representation of WITH CHECK OPTION checks to be applied to new___ tuples
  *		when inserting/updating an auto-updatable view, or RLS WITH CHECK
  *		policies to be applied when inserting/updating a relation with RLS.
  */
@@ -1080,8 +1080,8 @@ typedef struct WithCheckOption {
  *
  * tleSortGroupRef must match ressortgroupref of exactly one entry of the
  *		query's targetlist; that is the expression to be sorted or grouped by.
- * eqop is the OID of the equality coperator.
- * sortop is the OID of the ordering coperator (a "<" or ">" coperator),
+ * eqop is the OID of the equality operator___.
+ * sortop is the OID of the ordering operator___ (a "<" or ">" operator___),
  *		or InvalidOid if not available.
  * nulls_first means about what you'd expect.  If sortop is InvalidOid
  *		then nulls_first is meaningless and should be set to false.
@@ -1098,13 +1098,13 @@ typedef struct WithCheckOption {
  * of the referenced targetlist expression to find out what it is.
  *
  * In a grouping item, eqop must be valid.  If the eqop is a btree equality
- * coperator, then sortop should be set to a compatible ordering coperator.
+ * operator___, then sortop should be set to a compatible ordering operator___.
  * We prefer to set eqop/sortop/nulls_first to match any ORDER BY item that
  * the query presents for the same tlist item.  If there is none, we just
  * use the default ordering op for the datatype.
  *
  * If the tlist item's type has a hash opclass but no btree opclass, then
- * we will set eqop to the hash equality coperator, sortop to InvalidOid,
+ * we will set eqop to the hash equality operator___, sortop to InvalidOid,
  * and nulls_first to false.  A grouping item of this kind can only be
  * implemented by hashing, and of course it'll never match an ORDER BY item.
  *
@@ -1130,8 +1130,8 @@ typedef struct SortGroupClause {
 #endif
 
 	Index		tleSortGroupRef;	/* reference into targetlist */
-	Oid			eqop;			/* the equality coperator ('=' op) */
-	Oid			sortop;			/* the ordering coperator ('<' op), or 0 */
+	Oid			eqop;			/* the equality operator___ ('=' op) */
+	Oid			sortop;			/* the ordering operator___ ('<' op), or 0 */
 	bool		nulls_first;	/* do NULLs come before normal values? */
 	bool		hashable;		/* can eqop be implemented by hashing? */
 } SortGroupClause;
@@ -1735,7 +1735,7 @@ typedef struct AlterTableCmd {
 	char	   *name;			/* column, constraint, or trigger to act on,
 								 * or tablespace */
 	Node	   *newowner;		/* RoleSpec */
-	Node	   *def;			/* definition of cnew column, index,
+	Node	   *def;			/* definition of new___ column, index,
 								 * constraint, or parent table */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
 	bool		missing_ok;		/* skip error if missing? */
@@ -1795,7 +1795,7 @@ typedef enum GrantObjectType
 	ACL_OBJECT_FUNCTION,		/* function */
 	ACL_OBJECT_LANGUAGE,		/* procedural language */
 	ACL_OBJECT_LARGEOBJECT,		/* largeobject */
-	ACL_OBJECT_NAMESPACE,		/* cnamespace */
+	ACL_OBJECT_NAMESPACE,		/* namescpace___ */
 	ACL_OBJECT_TABLESPACE,		/* tablespace */
 	ACL_OBJECT_TYPE				/* type */
 } GrantObjectType;
@@ -1983,7 +1983,7 @@ typedef struct CreateStmt {
 	List	   *tableElts;		/* column definitions (list of ColumnDef) */
 	List	   *inhRelations;	/* relations to inherit from (list of
 								 * inhRelation) */
-	TypeName   *ofTypename;		/* OF ctypename */
+	TypeName   *ofTypename;		/* OF typename___ */
 	List	   *constraints;	/* constraints (list of Constraint nodes) */
 	List	   *options;		/* options from WITH clause */
 	OnCommitAction oncommit;	/* what do we do at COMMIT? */
@@ -2011,7 +2011,7 @@ typedef struct CreateStmt {
  *
  * If skip_validation is true then we skip checking that the existing rows
  * in the table satisfy the constraint, and just install the catalog entries
- * for the constraint.  A cnew FK constraint is marked as valid iff
+ * for the constraint.  A new___ FK constraint is marked as valid iff
  * initially_valid is true.  (Usually skip_validation and initially_valid
  * are inverses, but we can set both true if the table is known empty.)
  *
@@ -2075,7 +2075,7 @@ typedef struct Constraint {
 	List	   *keys;			/* String nodes naming referenced column(s) */
 
 	/* Fields used for EXCLUSION constraints: */
-	List	   *exclusions;		/* list of (IndexElem, coperator name) pairs */
+	List	   *exclusions;		/* list of (IndexElem, operator___ name) pairs */
 
 	/* Fields used for index constraints (UNIQUE, PRIMARY KEY, EXCLUSION): */
 	List	   *options;		/* options from WITH clause */
@@ -2097,7 +2097,7 @@ typedef struct Constraint {
 
 	/* Fields used for constraints that allow a NOT VALID specification */
 	bool		skip_validation;	/* skip validation of existing rows? */
-	bool		initially_valid;	/* mark the cnew constraint as valid? */
+	bool		initially_valid;	/* mark the new___ constraint as valid? */
 } Constraint;
 
 /* ----------------------
@@ -2562,7 +2562,7 @@ typedef struct DefineStmt {
 	NodeTag		type;
 #endif
 
-	ObjectType	kind;			/* aggregate, coperator, type */
+	ObjectType	kind;			/* aggregate, operator___, type */
 	bool		oldstyle;		/* hack to signal old CREATE AGG syntax */
 	List	   *defnames;		/* qualified name (list of Value strings) */
 	List	   *args;			/* a list of TypeName (if needed) */
@@ -2617,8 +2617,8 @@ typedef struct CreateOpClassItem {
 #endif
 
 	int			itemtype;		/* see codes above */
-	/* fields used for an coperator or function item: */
-	List	   *name;			/* coperator or function name */
+	/* fields used for an operator___ or function item: */
+	List	   *name;			/* operator___ or function name */
 	List	   *args;			/* argument types */
 	int			number;			/* strategy num or support proc num */
 	List	   *order_family;	/* only used for ordering operators */
@@ -2822,14 +2822,14 @@ typedef struct IndexStmt {
 	NodeTag		type;
 #endif
 
-	char	   *idxname;		/* name of cnew index, or NULL for default */
+	char	   *idxname;		/* name of new___ index, or NULL for default */
 	RangeVar   *relation;		/* relation to build index on */
 	char	   *accessMethod;	/* name of access method (eg. btree) */
 	char	   *tableSpace;		/* tablespace, or NULL for default */
 	List	   *indexParams;	/* columns to index: a list of IndexElem */
 	List	   *options;		/* WITH clause options: a list of DefElem */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
-	List	   *excludeOpNames; /* exclusion coperator names, or NIL if none */
+	List	   *excludeOpNames; /* exclusion operator___ names, or NIL if none */
 	char	   *idxcomment;		/* comment to apply to index, or NULL */
 	Oid			indexOid;		/* OID of an existing index, if any */
 	Oid			oldNode;		/* relfilenode of existing storage, if any */
@@ -2942,7 +2942,7 @@ typedef struct RenameStmt {
 	List	   *objarg;			/* argument types, if applicable */
 	char	   *subname;		/* name of contained object (column, rule,
 								 * trigger, etc) */
-	char	   *newname;		/* the cnew name */
+	char	   *newname;		/* the new___ name */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 	bool		missing_ok;		/* skip error if missing? */
 } RenameStmt;
@@ -2962,7 +2962,7 @@ typedef struct AlterObjectSchemaStmt {
 	RangeVar   *relation;		/* in case it's a table */
 	List	   *object;			/* in case it's some other object */
 	List	   *objarg;			/* argument types, if applicable */
-	char	   *newschema;		/* the cnew schema */
+	char	   *newschema;		/* the new___ schema */
 	bool		missing_ok;		/* skip error if missing? */
 } AlterObjectSchemaStmt;
 
@@ -2981,7 +2981,7 @@ typedef struct AlterOwnerStmt {
 	RangeVar   *relation;		/* in case it's a table */
 	List	   *object;			/* in case it's some other object */
 	List	   *objarg;			/* argument types, if applicable */
-	Node	   *newowner;		/* the cnew owner */
+	Node	   *newowner;		/* the new___ owner */
 } AlterOwnerStmt;
 
 
@@ -3135,9 +3135,9 @@ typedef struct AlterEnumStmt {
 #endif
 
 	List	   *typeName;		/* qualified name (list of Value strings) */
-	char	   *newVal;			/* cnew enum value's name */
+	char	   *newVal;			/* new___ enum value's name */
 	char	   *newValNeighbor; /* neighboring enum value, if specified */
-	bool		newValIsAfter;	/* place cnew enum value after neighbor? */
+	bool		newValIsAfter;	/* place new___ enum value after neighbor? */
 	bool		skipIfExists;	/* no error if label already exists */
 } AlterEnumStmt;
 

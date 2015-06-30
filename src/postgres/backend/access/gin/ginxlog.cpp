@@ -144,7 +144,7 @@ ginRedoRecompress(Page page, ginxlogRecompressDataLeaf *data)
 	int			totalsize;
 
 	/*
-	 * If the page is in pre-9.4 format, convert to cnew format first.
+	 * If the page is in pre-9.4 format, convert to new___ format first.
 	 */
 	if (!GinPageIsCompressed(page))
 	{
@@ -212,9 +212,9 @@ ginRedoRecompress(Page page, ginxlogRecompressDataLeaf *data)
 		}
 
 		/*
-		 * ADDITEMS action is handled like REPLACE, but the cnew segment to
+		 * ADDITEMS action is handled like REPLACE, but the new___ segment to
 		 * replace the old one is reconstructed using the old segment from
-		 * disk and the cnew items from the WAL record.
+		 * disk and the new___ items from the WAL record.
 		 */
 		if (a_action == GIN_SEGMENT_ADDITEMS)
 		{
@@ -259,9 +259,9 @@ ginRedoRecompress(Page page, ginxlogRecompressDataLeaf *data)
 				break;
 
 			case GIN_SEGMENT_INSERT:
-				/* make room for the cnew segment */
+				/* make room for the new___ segment */
 				memmove(segptr + newsegsize, segptr, szleft);
-				/* copy the cnew segment in place */
+				/* copy the new___ segment in place */
 				memcpy(segptr, newseg, newsegsize);
 				segmentend += newsegsize;
 				segptr += newsegsize;
@@ -671,7 +671,7 @@ ginRedoDeleteListPages(XLogReaderState *record)
 	 *
 	 * No full-page images are taken of the deleted pages. Instead, they are
 	 * re-initialized as empty, deleted pages. Their right-links don't need to
-	 * be preserved, because no cnew readers can see the pages, as explained
+	 * be preserved, because no new___ readers can see the pages, as explained
 	 * above.
 	 */
 	for (i = 0; i < data->ndeleted; i++)

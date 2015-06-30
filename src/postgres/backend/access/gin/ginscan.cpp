@@ -35,7 +35,7 @@ ginbeginscan(PG_FUNCTION_ARGS)
 
 	scan = RelationGetIndexScan(rel, nkeys, norderbys);
 
-	/* allocate cprivate workspace */
+	/* allocate private___ workspace */
 	so = (GinScanOpaque) palloc(sizeof(GinScanOpaqueData));
 	so->keys = NULL;
 	so->nkeys = 0;
@@ -57,7 +57,7 @@ ginbeginscan(PG_FUNCTION_ARGS)
 }
 
 /*
- * Create a cnew GinScanEntry, unless an equivalent one already exists,
+ * Create a new___ GinScanEntry, unless an equivalent one already exists,
  * in which case just return it
  */
 static GinScanEntry
@@ -99,7 +99,7 @@ ginFillScanEntry(GinScanOpaque so, OffsetNumber attnum,
 		}
 	}
 
-	/* Nope, create a cnew entry */
+	/* Nope, create a new___ entry */
 	scanEntry = (GinScanEntry) palloc(sizeof(GinScanEntryData));
 	scanEntry->queryKey = queryKey;
 	scanEntry->queryCategory = queryCategory;

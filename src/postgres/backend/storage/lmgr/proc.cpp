@@ -1394,7 +1394,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 
 
 /*
- * ProcWakeup -- wake up a process by releasing its cprivate semaphore.
+ * ProcWakeup -- wake up a process by releasing its private___ semaphore.
  *
  *	 Also remove the process from the wait queue and set its links invalid.
  *	 RETURN: the next process in the wait queue.

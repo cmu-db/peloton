@@ -253,8 +253,8 @@ pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 		/*
 		 * Now process qual, showing appropriate child relids as available,
 		 * and attach any pulled-up jointree items at the right place. In the
-		 * inner-join case we put cnew JoinExprs above the existing one (much
-		 * as for a FromExpr-style join).  In outer-join cases the cnew
+		 * inner-join case we put new___ JoinExprs above the existing one (much
+		 * as for a FromExpr-style join).  In outer-join cases the new___
 		 * JoinExprs must go into the nullable side of the outer join. The
 		 * point of the available_rels machinations is to ensure that we only
 		 * pull up quals for which that's okay.
@@ -314,10 +314,10 @@ pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 /*
  * Recurse through top-level qual nodes for pull_up_sublinks()
  *
- * jtlink1 points to the link in the jointree where any cnew JoinExprs should
+ * jtlink1 points to the link in the jointree where any new___ JoinExprs should
  * be inserted if they reference available_rels1 (i.e., available_rels1
  * denotes the relations present underneath jtlink1).  Optionally, jtlink2 can
- * point to a second link where cnew JoinExprs should be inserted if they
+ * point to a second link where new___ JoinExprs should be inserted if they
  * reference available_rels2 (pass NULL for both those arguments if not used).
  * Note that SubLinks referencing both sets of variables cannot be optimized.
  * If we find multiple pull-up-able SubLinks, they'll get stacked onto jtlink1
@@ -345,7 +345,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 			if ((j = convert_ANY_sublink_to_join(root, sublink,
 												 available_rels1)) != NULL)
 			{
-				/* Yes; insert the cnew join node into the join tree */
+				/* Yes; insert the new___ join node into the join tree */
 				j->larg = *jtlink1;
 				*jtlink1 = (Node *) j;
 				/* Recursively process pulled-up jointree nodes */
@@ -371,7 +371,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 				(j = convert_ANY_sublink_to_join(root, sublink,
 												 available_rels2)) != NULL)
 			{
-				/* Yes; insert the cnew join node into the join tree */
+				/* Yes; insert the new___ join node into the join tree */
 				j->larg = *jtlink2;
 				*jtlink2 = (Node *) j;
 				/* Recursively process pulled-up jointree nodes */
@@ -399,7 +399,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 			if ((j = convert_EXISTS_sublink_to_join(root, sublink, false,
 													available_rels1)) != NULL)
 			{
-				/* Yes; insert the cnew join node into the join tree */
+				/* Yes; insert the new___ join node into the join tree */
 				j->larg = *jtlink1;
 				*jtlink1 = (Node *) j;
 				/* Recursively process pulled-up jointree nodes */
@@ -425,7 +425,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 				(j = convert_EXISTS_sublink_to_join(root, sublink, false,
 													available_rels2)) != NULL)
 			{
-				/* Yes; insert the cnew join node into the join tree */
+				/* Yes; insert the new___ join node into the join tree */
 				j->larg = *jtlink2;
 				*jtlink2 = (Node *) j;
 				/* Recursively process pulled-up jointree nodes */
@@ -465,7 +465,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 				if ((j = convert_EXISTS_sublink_to_join(root, sublink, true,
 												   available_rels1)) != NULL)
 				{
-					/* Yes; insert the cnew join node into the join tree */
+					/* Yes; insert the new___ join node into the join tree */
 					j->larg = *jtlink1;
 					*jtlink1 = (Node *) j;
 					/* Recursively process pulled-up jointree nodes */
@@ -491,7 +491,7 @@ pull_up_sublinks_qual_recurse(PlannerInfo *root, Node *node,
 					(j = convert_EXISTS_sublink_to_join(root, sublink, true,
 												   available_rels2)) != NULL)
 				{
-					/* Yes; insert the cnew join node into the join tree */
+					/* Yes; insert the new___ join node into the join tree */
 					j->larg = *jtlink2;
 					*jtlink2 = (Node *) j;
 					/* Recursively process pulled-up jointree nodes */
@@ -1309,7 +1309,7 @@ pull_up_union_leaf_queries(Node *setOp, PlannerInfo *root, int parentRTindex,
 		root->append_rel_list = lappend(root->append_rel_list, appinfo);
 
 		/*
-		 * Recursively apply pull_up_subqueries to the cnew child RTE.  (We
+		 * Recursively apply pull_up_subqueries to the new___ child RTE.  (We
 		 * must build the AppendRelInfo first, because this will modify it.)
 		 * Note that we can pass NULL for containing-join info even if we're
 		 * actually under an outer join, because the child's expressions
@@ -2352,8 +2352,8 @@ flatten_simple_union_all(PlannerInfo *root)
  *
  * The idea here is that given a query like
  *		SELECT ... FROM a LEFT JOIN b ON (...) WHERE b.y = 42;
- * we can reduce the LEFT JOIN to a plain JOIN if the "=" coperator in WHERE
- * is strict.  The strict coperator will always return NULL, causing the outer
+ * we can reduce the LEFT JOIN to a plain JOIN if the "=" operator___ in WHERE
+ * is strict.  The strict operator___ will always return NULL, causing the outer
  * WHERE to fail, on any row where the LEFT JOIN filled in NULLs for b's
  * columns.  Therefore, there's no need for the join to produce null-extended
  * rows in the first place --- which makes it a plain join not an outer join.

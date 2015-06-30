@@ -573,7 +573,7 @@ no_match:
 char *
 make_absolute_path(const char *path)
 {
-	char	   *cnew;
+	char	   *new___;
 
 	/* Returning null for null input is convenient for some callers */
 	if (path == NULL)
@@ -624,8 +624,8 @@ make_absolute_path(const char *path)
 			}
 		}
 
-		cnew = malloc(strlen(buf) + strlen(path) + 2);
-		if (!cnew)
+		new___ = malloc(strlen(buf) + strlen(path) + 2);
+		if (!new___)
 		{
 			free(buf);
 #ifndef FRONTEND
@@ -637,13 +637,13 @@ make_absolute_path(const char *path)
 			return NULL;
 #endif
 		}
-		sprintf(cnew, "%s/%s", buf, path);
+		sprintf(new___, "%s/%s", buf, path);
 		free(buf);
 	}
 	else
 	{
-		cnew = strdup(path);
-		if (!cnew)
+		new___ = strdup(path);
+		if (!new___)
 		{
 #ifndef FRONTEND
 			ereport(ERROR,
@@ -657,9 +657,9 @@ make_absolute_path(const char *path)
 	}
 
 	/* Make sure punctuation is canonical, too */
-	canonicalize_path(cnew);
+	canonicalize_path(new___);
 
-	return cnew;
+	return new___;
 }
 
 

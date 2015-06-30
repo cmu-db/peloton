@@ -7,7 +7,7 @@
  * by redirecting to a pipe, and writes it to a set of logfiles.
  * It's possible to have size and age limits for the logfile configured
  * in postgresql.conf. If these limits are reached or passed, the
- * current logfile is closed and a cnew one is created (rotated).
+ * current logfile is closed and a new___ one is created (rotated).
  * The logfiles are stored in a subdirectory (configurable in
  * postgresql.conf), using a user-selectable naming scheme.
  *
@@ -317,7 +317,7 @@ SysLoggerMain(int argc, char *argv[])
 				rotation_requested = true;
 
 				/*
-				 * Also, create cnew directory if not present; ignore errors
+				 * Also, create new___ directory if not present; ignore errors
 				 */
 				mkdir(Log_directory, S_IRWXU);
 			}
@@ -843,12 +843,12 @@ process_pipe_input(char *logbuffer, int *bytes_in_logbuffer)
 				}
 				else
 				{
-					/* First chunk of message, save in a cnew buffer */
+					/* First chunk of message, save in a new___ buffer */
 					if (free_slot == NULL)
 					{
 						/*
 						 * Need a free slot, but there isn't one in the list,
-						 * so create a cnew one and extend the list with it.
+						 * so create a new___ one and extend the list with it.
 						 */
 						free_slot = palloc(sizeof(save_buffer));
 						buffer_list = lappend(buffer_list, free_slot);
@@ -1098,7 +1098,7 @@ open_csvlogfile(void)
 }
 
 /*
- * Open a cnew logfile with proper permissions and buffering options.
+ * Open a new___ logfile with proper permissions and buffering options.
  *
  * If allow_errors is true, we just log any open failure and return NULL
  * (with errno still correct for the fopen failure).
@@ -1155,7 +1155,7 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 	rotation_requested = false;
 
 	/*
-	 * When doing a time-based rotation, invent the cnew logfile name based on
+	 * When doing a time-based rotation, invent the new___ logfile name based on
 	 * the planned rotation time, not current time, to avoid "slippage" in the
 	 * file name when we don't do the rotation immediately.
 	 */
@@ -1188,7 +1188,7 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 		{
 			/*
 			 * ENFILE/EMFILE are not too surprising on a busy system; just
-			 * keep using the old file till we manage to get a cnew one.
+			 * keep using the old file till we manage to get a new___ one.
 			 * Otherwise, assume something's wrong with Log_directory and stop
 			 * trying to create files.
 			 */
@@ -1232,7 +1232,7 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 		{
 			/*
 			 * ENFILE/EMFILE are not too surprising on a busy system; just
-			 * keep using the old file till we manage to get a cnew one.
+			 * keep using the old file till we manage to get a new___ one.
 			 * Otherwise, assume something's wrong with Log_directory and stop
 			 * trying to create files.
 			 */

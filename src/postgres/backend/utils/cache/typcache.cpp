@@ -25,7 +25,7 @@
  * We have some provisions for updating cache entries if the stored data
  * becomes obsolete.  Information dependent on opclasses is cleared if we
  * detect updates to pg_opclass.  We also support clearing the tuple
- * descriptor and coperator/function parts of a rowtype's cache entry,
+ * descriptor and operator___/function parts of a rowtype's cache entry,
  * since those may need to change as a consequence of ALTER TABLE.
  * Domain constraint changes are also tracked properly.
  *
@@ -292,7 +292,7 @@ lookup_type_cache(Oid type_id, int flags)
 	}
 
 	/*
-	 * If we need to look up equality coperator, and there's no btree opclass,
+	 * If we need to look up equality operator___, and there's no btree opclass,
 	 * force lookup of hash opclass.
 	 */
 	if ((flags & (TYPECACHE_EQ_OPR | TYPECACHE_EQ_OPR_FINFO)) &&
@@ -347,7 +347,7 @@ lookup_type_cache(Oid type_id, int flags)
 										 HTEqualStrategyNumber);
 
 		/*
-		 * If the proposed equality coperator is array_eq or record_eq, check
+		 * If the proposed equality operator___ is array_eq or record_eq, check
 		 * to see if the element type or column types support equality. If
 		 * not, array_eq or record_eq would fail at runtime, so we don't want
 		 * to report that the type has equality.
@@ -366,9 +366,9 @@ lookup_type_cache(Oid type_id, int flags)
 		typentry->eq_opr = eq_opr;
 
 		/*
-		 * Reset info about hash function whenever we pick up cnew info about
-		 * equality coperator.  This is so we can ensure that the hash function
-		 * matches the coperator.
+		 * Reset info about hash function whenever we pick up new___ info about
+		 * equality operator___.  This is so we can ensure that the hash function
+		 * matches the operator___.
 		 */
 		typentry->flags &= ~(TCFLAGS_CHECKED_HASH_PROC);
 		typentry->flags |= TCFLAGS_CHECKED_EQ_OPR;
@@ -484,11 +484,11 @@ lookup_type_cache(Oid type_id, int flags)
 	 * Set up fmgr lookup info as requested
 	 *
 	 * Note: we tell fmgr the finfo structures live in CacheMemoryContext,
-	 * which is not quite right (they're really in the hash table's cprivate
+	 * which is not quite right (they're really in the hash table's private___
 	 * memory context) but this will do for our purposes.
 	 *
 	 * Note: the code above avoids invalidating the finfo structs unless the
-	 * referenced coperator/function OID actually changes.  This is to prevent
+	 * referenced operator___/function OID actually changes.  This is to prevent
 	 * unnecessary leakage of any subsidiary data attached to an finfo, since
 	 * that would cause session-lifespan memory leaks.
 	 */
@@ -641,7 +641,7 @@ load_rangetype_info(TypeCacheEntry *typentry)
  *
  * Note: we assume we're called in a relatively short-lived context, so it's
  * okay to leak data into the current context while scanning pg_constraint.
- * We build the cnew DomainConstraintCache data in a context underneath
+ * We build the new___ DomainConstraintCache data in a context underneath
  * CurrentMemoryContext, and reparent it under CacheMemoryContext when
  * complete.
  */
@@ -945,7 +945,7 @@ InitDomainConstraintRef(Oid type_id, DomainConstraintRef *ref,
  * UpdateDomainConstraintRef --- recheck validity of domain constraint info
  *
  * If the domain's constraint set changed, ref->constraints is updated to
- * point at a cnew list of cached constraints.
+ * point at a new___ list of cached constraints.
  *
  * In the normal case where nothing happened to the domain, this is cheap
  * enough that it's reasonable (and expected) to check before *each* use
@@ -961,7 +961,7 @@ UpdateDomainConstraintRef(DomainConstraintRef *ref)
 		typentry->typtype == TYPTYPE_DOMAIN)
 		load_domaintype_info(typentry);
 
-	/* Transfer to ref object if there's cnew info, adjusting refcounts */
+	/* Transfer to ref object if there's new___ info, adjusting refcounts */
 	if (ref->dcc != typentry->domainData)
 	{
 		/* Paranoia --- be sure link is nulled before trying to release */
@@ -1177,7 +1177,7 @@ lookup_rowtype_tupdesc_internal(Oid type_id, int32 typmod, bool noError)
 /*
  * lookup_rowtype_tupdesc
  *
- * Given a ctypeid/typmod that should describe a known composite type,
+ * Given a typeid___/typmod that should describe a known composite type,
  * return the tuple descriptor for the type.  Will ereport on failure.
  *
  * Note: on success, we increment the refcount of the returned TupleDesc,
@@ -1265,7 +1265,7 @@ assign_record_type_typmod(TupleDesc tupDesc)
 			CreateCacheMemoryContext();
 	}
 
-	/* Find or create a hashtable entry for this hash cclass */
+	/* Find or create a hashtable entry for this hash class___ */
 	MemSet(hashkey, 0, sizeof(hashkey));
 	for (i = 0; i < tupDesc->natts; i++)
 	{

@@ -135,7 +135,7 @@ struct XLogReaderState
 	int			max_block_id;	/* highest block_id in use (-1 if none) */
 
 	/* ----------------------------------------
-	 * cprivate/internal state
+	 * private___/internal state
 	 * ----------------------------------------
 	 */
 
@@ -163,7 +163,7 @@ struct XLogReaderState
 	char	   *errormsg_buf;
 };
 
-/* Get a cnew XLogReader */
+/* Get a new___ XLogReader */
 extern XLogReaderState *XLogReaderAllocate(XLogPageReadCB pagereadfunc,
 				   void *private_data);
 

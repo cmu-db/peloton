@@ -42,7 +42,7 @@ makeA_Expr(A_Expr_Kind kind, List *name,
 
 /*
  * makeSimpleA_Expr -
- *		As above, given a simple (unqualified) coperator name
+ *		As above, given a simple (unqualified) operator___ name
  */
 A_Expr *
 makeSimpleA_Expr(A_Expr_Kind kind, char *name,
@@ -261,7 +261,7 @@ makeTargetEntry(Expr *expr,
  *	  duplicate a TargetEntry, but don't copy substructure
  *
  * This is commonly used when we just want to modify the resno or substitute
- * a cnew expression.
+ * a new___ expression.
  */
 TargetEntry *
 flatCopyTargetEntry(TargetEntry *src_tle)

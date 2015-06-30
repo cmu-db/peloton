@@ -111,7 +111,7 @@ static Oid	convert_server_name(text *servername);
 static AclMode convert_server_priv_string(text *priv_type_text);
 static Oid	convert_tablespace_name(text *tablespacename);
 static AclMode convert_tablespace_priv_string(text *priv_type_text);
-static Oid	convert_type_name(text *ctypename);
+static Oid	convert_type_name(text *typename___);
 static AclMode convert_type_priv_string(text *priv_type_text);
 static AclMode convert_role_priv_string(text *priv_type_text);
 static AclResult pg_role_aclcheck(Oid role_oid, Oid roleid, AclMode mode);
@@ -365,10 +365,10 @@ aclparse(const char *s, AclItem *aip)
 
 /*
  * allocacl
- *		Allocates storage for a cnew Acl with 'n' entries.
+ *		Allocates storage for a new___ Acl with 'n' entries.
  *
  * RETURNS:
- *		the cnew Acl
+ *		the new___ Acl
  */
 static Acl *
 allocacl(int n)
@@ -553,11 +553,11 @@ check_acl(const Acl *acl)
 
 /*
  * aclitemin
- *		Allocates storage for, and fills in, a cnew AclItem given a string
+ *		Allocates storage for, and fills in, a new___ AclItem given a string
  *		's' that contains an ACL specification.  See aclparse for details.
  *
  * RETURNS:
- *		the cnew AclItem
+ *		the new___ AclItem
  */
 Datum
 aclitemin(PG_FUNCTION_ARGS)
@@ -579,11 +579,11 @@ aclitemin(PG_FUNCTION_ARGS)
 
 /*
  * aclitemout
- *		Allocates storage for, and fills in, a cnew null-delimited string
+ *		Allocates storage for, and fills in, a new___ null-delimited string
  *		containing a formatted ACL specification.  See aclparse for details.
  *
  * RETURNS:
- *		the cnew string
+ *		the new___ string
  */
 Datum
 aclitemout(PG_FUNCTION_ARGS)
@@ -685,7 +685,7 @@ aclitemComparator(const void *arg1, const void *arg2)
 }
 
 /*
- * aclitem equality coperator
+ * aclitem equality operator___
  */
 Datum
 aclitem_eq(PG_FUNCTION_ARGS)
@@ -937,7 +937,7 @@ aclupdate(const Acl *old_acl, const AclItem *mod_aip,
 	/*
 	 * Search the ACL for an existing entry for this grantee and grantor. If
 	 * one exists, just modify the entry in-place (well, in the same position,
-	 * since we actually return a copy); otherwise, insert the cnew entry at
+	 * since we actually return a copy); otherwise, insert the new___ entry at
 	 * the end.
 	 */
 
@@ -955,12 +955,12 @@ aclupdate(const Acl *old_acl, const AclItem *mod_aip,
 
 	if (dst == num)
 	{
-		/* need to append a cnew item */
+		/* need to append a new___ item */
 		new_acl = allocacl(num + 1);
 		new_aip = ACL_DAT(new_acl);
 		memcpy(new_aip, old_aip, num * sizeof(AclItem));
 
-		/* initialize the cnew entry with no permissions */
+		/* initialize the new___ entry with no permissions */
 		new_aip[dst].ai_grantee = mod_aip->ai_grantee;
 		new_aip[dst].ai_grantor = mod_aip->ai_grantor;
 		ACLITEM_SET_PRIVS_GOPTIONS(new_aip[dst],
@@ -1024,7 +1024,7 @@ aclupdate(const Acl *old_acl, const AclItem *mod_aip,
  *
  *	old_acl: the input ACL array (must not be NULL)
  *	oldOwnerId: Oid of the old object owner
- *	newOwnerId: Oid of the cnew object owner
+ *	newOwnerId: Oid of the new___ object owner
  *
  * The result is a modified copy; the input object is not changed.
  *
@@ -1048,8 +1048,8 @@ aclnewowner(const Acl *old_acl, Oid oldOwnerId, Oid newOwnerId)
 	check_acl(old_acl);
 
 	/*
-	 * Make a copy of the given ACL, substituting cnew owner ID for old
-	 * wherever it appears as either grantor or grantee.  Also note if the cnew
+	 * Make a copy of the given ACL, substituting new___ owner ID for old
+	 * wherever it appears as either grantor or grantee.  Also note if the new___
 	 * owner ID is already present.
 	 */
 	num = ACL_NUM(old_acl);
@@ -1070,7 +1070,7 @@ aclnewowner(const Acl *old_acl, Oid oldOwnerId, Oid newOwnerId)
 	}
 
 	/*
-	 * If the old ACL contained any references to the cnew owner, then we may
+	 * If the old ACL contained any references to the new___ owner, then we may
 	 * now have generated an ACL containing duplicate entries.  Find them and
 	 * merge them so that there are not duplicates.  (This is relatively
 	 * expensive since we use a stupid O(N^2) algorithm, but it's unlikely to
@@ -1652,7 +1652,7 @@ convert_any_priv_string(text *priv_type_text,
 	char	   *chunk;
 	char	   *next_chunk;
 
-	/* We rely on priv_type being a cprivate, modifiable string */
+	/* We rely on priv_type being a private___, modifiable string */
 	for (chunk = priv_type; chunk; chunk = next_chunk)
 	{
 		int			chunk_len;
@@ -4205,13 +4205,13 @@ convert_tablespace_priv_string(text *priv_type_text)
 /*
  * has_type_privilege_name_name
  *		Check user privileges on a type given
- *		name username, text ctypename, and text priv name.
+ *		name username, text typename___, and text priv name.
  */
 Datum
 has_type_privilege_name_name(PG_FUNCTION_ARGS)
 {
 	Name		username = PG_GETARG_NAME(0);
-	text	   *ctypename = PG_GETARG_TEXT_P(1);
+	text	   *typename___ = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	Oid			roleid;
 	Oid			typeoid;
@@ -4219,7 +4219,7 @@ has_type_privilege_name_name(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	roleid = get_role_oid_or_public(NameStr(*username));
-	typeoid = convert_type_name(ctypename);
+	typeoid = convert_type_name(typename___);
 	mode = convert_type_priv_string(priv_type_text);
 
 	aclresult = pg_type_aclcheck(typeoid, roleid, mode);
@@ -4230,13 +4230,13 @@ has_type_privilege_name_name(PG_FUNCTION_ARGS)
 /*
  * has_type_privilege_name
  *		Check user privileges on a type given
- *		text ctypename and text priv name.
+ *		text typename___ and text priv name.
  *		current_user is assumed
  */
 Datum
 has_type_privilege_name(PG_FUNCTION_ARGS)
 {
-	text	   *ctypename = PG_GETARG_TEXT_P(0);
+	text	   *typename___ = PG_GETARG_TEXT_P(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
 	Oid			roleid;
 	Oid			typeoid;
@@ -4244,7 +4244,7 @@ has_type_privilege_name(PG_FUNCTION_ARGS)
 	AclResult	aclresult;
 
 	roleid = GetUserId();
-	typeoid = convert_type_name(ctypename);
+	typeoid = convert_type_name(typename___);
 	mode = convert_type_priv_string(priv_type_text);
 
 	aclresult = pg_type_aclcheck(typeoid, roleid, mode);
@@ -4307,19 +4307,19 @@ has_type_privilege_id(PG_FUNCTION_ARGS)
 /*
  * has_type_privilege_id_name
  *		Check user privileges on a type given
- *		roleid, text ctypename, and text priv name.
+ *		roleid, text typename___, and text priv name.
  */
 Datum
 has_type_privilege_id_name(PG_FUNCTION_ARGS)
 {
 	Oid			roleid = PG_GETARG_OID(0);
-	text	   *ctypename = PG_GETARG_TEXT_P(1);
+	text	   *typename___ = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	Oid			typeoid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	typeoid = convert_type_name(ctypename);
+	typeoid = convert_type_name(typename___);
 	mode = convert_type_priv_string(priv_type_text);
 
 	aclresult = pg_type_aclcheck(typeoid, roleid, mode);
@@ -4359,9 +4359,9 @@ has_type_privilege_id_id(PG_FUNCTION_ARGS)
  * Given a type name expressed as a string, look it up and return Oid
  */
 static Oid
-convert_type_name(text *ctypename)
+convert_type_name(text *typename___)
 {
-	char	   *typname = text_to_cstring(ctypename);
+	char	   *typname = text_to_cstring(typename___);
 	Oid			oid;
 
 	oid = DatumGetObjectId(DirectFunctionCall1(regtypein,

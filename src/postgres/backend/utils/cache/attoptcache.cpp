@@ -121,7 +121,7 @@ get_attribute_options(Oid attrelid, int attnum)
 										 HASH_FIND,
 										 NULL);
 
-	/* Not found in Attopt cache.  Construct cnew cache entry. */
+	/* Not found in Attopt cache.  Construct new___ cache entry. */
 	if (!attopt)
 	{
 		AttributeOpts *opts;

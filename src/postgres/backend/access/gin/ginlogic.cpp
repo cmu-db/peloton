@@ -3,7 +3,7 @@
  * ginlogic.c
  *	  routines for performing binary- and ternary-logic consistent checks.
  *
- * A GIN coperator cclass can provide a boolean or ternary consistent
+ * A GIN operator___ class___ can provide a boolean or ternary consistent
  * function, or both.  This file provides both boolean and ternary
  * interfaces to the rest of the GIN code, even if only one of them is
  * implemented by the opclass.

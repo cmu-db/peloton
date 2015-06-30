@@ -485,7 +485,7 @@ AggregateCreate(const char *aggName,
 		if (numArgs != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("sort coperator can only be specified for single-argument aggregates")));
+					 errmsg("sort operator___ can only be specified for single-argument aggregates")));
 		sortop = LookupOperName(NULL, aggsortopName,
 								aggArgTypes[0], aggArgTypes[0],
 								false, -1);
@@ -644,7 +644,7 @@ AggregateCreate(const char *aggName,
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
-	/* Depends on sort coperator, if any */
+	/* Depends on sort operator___, if any */
 	if (OidIsValid(sortop))
 	{
 		referenced.classId = OperatorRelationId;

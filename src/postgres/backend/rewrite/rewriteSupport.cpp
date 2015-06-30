@@ -47,7 +47,7 @@ IsDefinedRewriteRule(Oid owningRel, const char *ruleName)
  *
  * NOTE: an important side-effect of this operation is that an SI invalidation
  * message is sent out to all backends --- including me --- causing relcache
- * entries to be flushed or updated with the cnew set of rules for the table.
+ * entries to be flushed or updated with the new___ set of rules for the table.
  * This must happen even if we find that no change is needed in the pg_class
  * row.
  */

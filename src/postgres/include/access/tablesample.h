@@ -21,7 +21,7 @@ typedef struct TableSampleDesc {
 	HeapScanDesc	heapScan;
 	TupleDesc		tupDesc;	/* Mostly useful for tsmexaminetuple */
 
-	void		   *tsmdata;	/* cprivate method data */
+	void		   *tsmdata;	/* private___ method data */
 
 	/* These point to he function of the TABLESAMPLE Method. */
 	FmgrInfo		tsminit;

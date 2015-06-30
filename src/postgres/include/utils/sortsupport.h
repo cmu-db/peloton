@@ -30,7 +30,7 @@
  *
  * All sort support functions will be passed the address of the
  * SortSupportData struct when called, so they can use it to store
- * additional cprivate data as needed.  In particular, for collation-aware
+ * additional private___ data as needed.  In particular, for collation-aware
  * datatypes, the ssup_collation field is set before calling BTSORTSUPPORT
  * and is available to all support functions.  Additional opclass-dependent
  * data can be stored using the ssup_extra field.  Any such data

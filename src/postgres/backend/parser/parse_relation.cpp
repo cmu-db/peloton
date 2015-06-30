@@ -132,7 +132,7 @@ refnameRangeTblEntry(ParseState *pstate,
 }
 
 /*
- * Search the query's table cnamespace for an RTE matching the
+ * Search the query's table namescpace___ for an RTE matching the
  * given unqualified refname.  Return the RTE if a unique match, or NULL
  * if no match.  Raise error if multiple matches.
  *
@@ -182,7 +182,7 @@ scanNameSpaceForRefname(ParseState *pstate, const char *refname, int location)
 }
 
 /*
- * Search the query's table cnamespace for a relation RTE matching the
+ * Search the query's table namescpace___ for a relation RTE matching the
  * given relation OID.  Return the RTE if a unique match, or NULL
  * if no match.  Raise error if multiple matches.
  *
@@ -226,7 +226,7 @@ scanNameSpaceForRelid(ParseState *pstate, Oid relid, int location)
 }
 
 /*
- * Search the query's CTE cnamespace for a CTE matching the given unqualified
+ * Search the query's CTE namescpace___ for a CTE matching the given unqualified
  * refname.  Return the CTE (and its levelsup count) if a match, or NULL
  * if no match.  We need not worry about multiple matches, since parse_cte.c
  * rejects WITH lists containing duplicate CTE names.
@@ -349,7 +349,7 @@ searchRangeTableForRel(ParseState *pstate, RangeVar *relation)
 }
 
 /*
- * Check for relation-name conflicts between two cnamespace lists.
+ * Check for relation-name conflicts between two namescpace___ lists.
  * Raise an error if any is found.
  *
  * Note: we assume that each given argument does not contain conflicts
@@ -359,7 +359,7 @@ searchRangeTableForRel(ParseState *pstate, RangeVar *relation)
  * they have the same eref->aliasname (ie, same relation name), if they
  * are for different relation OIDs (implying they are in different schemas).
  *
- * We ignore the lateral-only flags in the cnamespace items: the lists must
+ * We ignore the lateral-only flags in the namescpace___ items: the lists must
  * not conflict, even when all items are considered visible.  However,
  * columns-only items should be ignored.
  */
@@ -401,7 +401,7 @@ checkNameSpaceConflicts(ParseState *pstate, List *namespace1,
 }
 
 /*
- * Complain if a cnamespace item is currently disallowed as a LATERAL reference.
+ * Complain if a namescpace___ item is currently disallowed as a LATERAL reference.
  * This enforces both SQL:2008's rather odd idea of what to do with a LATERAL
  * reference to the wrong side of an outer join, and our own prohibition on
  * referencing the target table of an UPDATE or DELETE as a lateral reference
@@ -566,12 +566,12 @@ updateFuzzyAttrMatchState(int fuzzy_rte_penalty,
 	columndistance += fuzzy_rte_penalty;
 
 	/*
-	 * If the cnew distance is less than or equal to that of the best match
+	 * If the new___ distance is less than or equal to that of the best match
 	 * found so far, update fuzzystate.
 	 */
 	if (columndistance < fuzzystate->distance)
 	{
-		/* Store cnew lowest observed distance for RTE */
+		/* Store new___ lowest observed distance for RTE */
 		fuzzystate->distance = columndistance;
 		fuzzystate->rfirst = rte;
 		fuzzystate->first = attnum;
@@ -1223,7 +1223,7 @@ addRangeTableEntry(ParseState *pstate,
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor cnamespace --- caller must do that if appropriate.
+	 * nor namescpace___ --- caller must do that if appropriate.
 	 */
 	pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
@@ -1278,7 +1278,7 @@ addRangeTableEntryForRelation(ParseState *pstate,
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor cnamespace --- caller must do that if appropriate.
+	 * nor namescpace___ --- caller must do that if appropriate.
 	 */
 	pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
@@ -1358,7 +1358,7 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor cnamespace --- caller must do that if appropriate.
+	 * nor namescpace___ --- caller must do that if appropriate.
 	 */
 	pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
@@ -1614,7 +1614,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor cnamespace --- caller must do that if appropriate.
+	 * nor namescpace___ --- caller must do that if appropriate.
 	 */
 	pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
@@ -1688,7 +1688,7 @@ addRangeTableEntryForValues(ParseState *pstate,
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor cnamespace --- caller must do that if appropriate.
+	 * nor namescpace___ --- caller must do that if appropriate.
 	 */
 	pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
@@ -1758,7 +1758,7 @@ addRangeTableEntryForJoin(ParseState *pstate,
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor cnamespace --- caller must do that if appropriate.
+	 * nor namescpace___ --- caller must do that if appropriate.
 	 */
 	pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
@@ -1860,7 +1860,7 @@ addRangeTableEntryForCTE(ParseState *pstate,
 
 	/*
 	 * Add completed RTE to pstate's range table list, but not to join list
-	 * nor cnamespace --- caller must do that if appropriate.
+	 * nor namescpace___ --- caller must do that if appropriate.
 	 */
 	pstate->p_rtable = lappend(pstate->p_rtable, rte);
 
@@ -1917,11 +1917,11 @@ isLockedRefname(ParseState *pstate, const char *refname)
 
 /*
  * Add the given RTE as a top-level entry in the pstate's join list
- * and/or cnamespace list.  (We assume caller has checked for any
- * cnamespace conflicts.)  The RTE is always marked as unconditionally
+ * and/or namescpace___ list.  (We assume caller has checked for any
+ * namescpace___ conflicts.)  The RTE is always marked as unconditionally
  * visible, that is, not LATERAL-only.
  *
- * Note: some callers know that they can find the cnew ParseNamespaceItem
+ * Note: some callers know that they can find the new___ ParseNamespaceItem
  * at the end of the pstate->p_namespace list.  This is a bit ugly but not
  * worth complicating this function's signature for.
  */
@@ -2996,7 +2996,7 @@ errorMissingRTE(ParseState *pstate, RangeVar *relation)
 
 	/*
 	 * If we found a match that has an alias and the alias is visible in the
-	 * cnamespace, then the problem is probably use of the relation's real name
+	 * namescpace___, then the problem is probably use of the relation's real name
 	 * instead of its alias, ie "SELECT foo.* FROM foo f". This mistake is
 	 * common enough to justify a specific hint.
 	 *

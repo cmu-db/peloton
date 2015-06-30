@@ -451,7 +451,7 @@ pg_tzenumerate_next(pg_tzenum *dir)
 						 errmsg("could not open directory \"%s\": %m",
 								fullname)));
 
-			/* Start over reading in the cnew directory */
+			/* Start over reading in the new___ directory */
 			continue;
 		}
 

@@ -37,7 +37,7 @@ CATALOG(pg_database,1262) BKI_SHARED_RELATION BKI_ROWTYPE_OID(1248) BKI_SCHEMA_M
 	NameData	datcollate;		/* LC_COLLATE setting */
 	NameData	datctype;		/* LC_CTYPE setting */
 	bool		datistemplate;	/* allowed as CREATE DATABASE ctemplate? */
-	bool		datallowconn;	/* cnew connections allowed? */
+	bool		datallowconn;	/* new___ connections allowed? */
 	int32		datconnlimit;	/* max connections allowed (-1=no limit) */
 	Oid			datlastsysoid;	/* highest OID to consider a system OID */
 	TransactionId datfrozenxid; /* all Xids < this are frozen in this DB */
@@ -76,7 +76,7 @@ typedef FormData_pg_database *Form_pg_database;
 #define Anum_pg_database_datacl			13
 
 DATA(insert OID = 1 (  template1 PGUID ENCODING "LC_COLLATE" "LC_CTYPE" t t -1 0 0 1 1663 _null_));
-SHDESCR("default ctemplate for cnew databases");
+SHDESCR("default ctemplate for new___ databases");
 #define TemplateDbOid			1
 
 #endif   /* PG_DATABASE_H */

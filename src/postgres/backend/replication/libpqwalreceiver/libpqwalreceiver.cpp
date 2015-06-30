@@ -56,7 +56,7 @@ static int	libpqrcv_receive(int timeout, char **buffer);
 static void libpqrcv_send(const char *buffer, int nbytes);
 static void libpqrcv_disconnect(void);
 
-/* Prototypes for cprivate functions */
+/* Prototypes for private___ functions */
 static bool libpq_select(int timeout_ms);
 static PGresult *libpqrcv_PQexec(const char *query);
 

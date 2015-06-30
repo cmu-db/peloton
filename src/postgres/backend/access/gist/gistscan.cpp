@@ -186,14 +186,14 @@ gistrescan(PG_FUNCTION_ARGS)
 												ALLOCSET_DEFAULT_MAXSIZE);
 	}
 
-	/* create cnew, empty RBTree for search queue */
+	/* create new___, empty RBTree for search queue */
 	oldCxt = MemoryContextSwitchTo(so->queueCxt);
 	so->queue = pairingheap_allocate(pairingheap_GISTSearchItem_cmp, scan);
 	MemoryContextSwitchTo(oldCxt);
 
 	so->firstCall = true;
 
-	/* Update scan key, if a cnew one is given */
+	/* Update scan key, if a new___ one is given */
 	if (key && scan->numberOfKeys > 0)
 	{
 		void	  **fn_extras = NULL;
@@ -215,7 +215,7 @@ gistrescan(PG_FUNCTION_ARGS)
 
 		/*
 		 * Modify the scan key so that the Consistent method is called for all
-		 * comparisons. The original coperator is passed to the Consistent
+		 * comparisons. The original operator___ is passed to the Consistent
 		 * function in the form of its strategy number, which is available
 		 * from the sk_strategy field, and its subtype from the sk_subtype
 		 * field.
@@ -249,7 +249,7 @@ gistrescan(PG_FUNCTION_ARGS)
 			pfree(fn_extras);
 	}
 
-	/* Update order-by key, if a cnew one is given */
+	/* Update order-by key, if a new___ one is given */
 	if (orderbys && scan->numberOfOrderBys > 0)
 	{
 		void	  **fn_extras = NULL;
@@ -269,7 +269,7 @@ gistrescan(PG_FUNCTION_ARGS)
 
 		/*
 		 * Modify the order-by key so that the Distance method is called for
-		 * all comparisons. The original coperator is passed to the Distance
+		 * all comparisons. The original operator___ is passed to the Distance
 		 * function in the form of its strategy number, which is available
 		 * from the sk_strategy field, and its subtype from the sk_subtype
 		 * field.
@@ -288,12 +288,12 @@ gistrescan(PG_FUNCTION_ARGS)
 			fmgr_info_copy(&(skey->sk_func), finfo, so->giststate->scanCxt);
 
 			/*
-			 * Look up the datatype returned by the original ordering coperator.
+			 * Look up the datatype returned by the original ordering operator___.
 			 * GiST always uses a float8 for the distance function, but the
-			 * ordering coperator could be anything else.
+			 * ordering operator___ could be anything else.
 			 *
 			 * XXX: The distance function is only allowed to be lossy if the
-			 * ordering coperator's result type is float4 or float8.  Otherwise
+			 * ordering operator___'s result type is float4 or float8.  Otherwise
 			 * we don't know how to return the distance to the executor.  But
 			 * we cannot check that here, as we won't know if the distance
 			 * function is lossy until it returns *recheck = true for the

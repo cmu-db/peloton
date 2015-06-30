@@ -304,7 +304,7 @@ createdb(const CreatedbStmt *stmt)
 	 * ShareLock allows two CREATE DATABASEs to work from the same ctemplate
 	 * concurrently, while ensuring no one is busy dropping it in parallel
 	 * (which would be Very Bad since we'd likely get an incomplete copy
-	 * without knowing it).  This also prevents any cnew connections from being
+	 * without knowing it).  This also prevents any new___ connections from being
 	 * made to the source until we finish copying it, so we can be sure it
 	 * won't change underneath us.
 	 */
@@ -363,7 +363,7 @@ createdb(const CreatedbStmt *stmt)
 	check_encoding_locale_matches(encoding, dbcollate, dbctype);
 
 	/*
-	 * Check that the cnew encoding and locale settings match the source
+	 * Check that the new___ encoding and locale settings match the source
 	 * database.  We insist on this because we simply copy the source data ---
 	 * any non-ASCII data would be wrongly encoded, and any indexes sorted
 	 * according to the source locale would be wrong.
@@ -377,7 +377,7 @@ createdb(const CreatedbStmt *stmt)
 		if (encoding != src_encoding)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cnew encoding (%s) is incompatible with the encoding of the ctemplate database (%s)",
+					 errmsg("new___ encoding (%s) is incompatible with the encoding of the ctemplate database (%s)",
 							pg_encoding_to_char(encoding),
 							pg_encoding_to_char(src_encoding)),
 					 errhint("Use the same encoding as in the ctemplate database, or use template0 as ctemplate.")));
@@ -385,19 +385,19 @@ createdb(const CreatedbStmt *stmt)
 		if (strcmp(dbcollate, src_collate) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cnew collation (%s) is incompatible with the collation of the ctemplate database (%s)",
+					 errmsg("new___ collation (%s) is incompatible with the collation of the ctemplate database (%s)",
 							dbcollate, src_collate),
 					 errhint("Use the same collation as in the ctemplate database, or use template0 as ctemplate.")));
 
 		if (strcmp(dbctype, src_ctype) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cnew LC_CTYPE (%s) is incompatible with the LC_CTYPE of the ctemplate database (%s)",
+					 errmsg("new___ LC_CTYPE (%s) is incompatible with the LC_CTYPE of the ctemplate database (%s)",
 							dbctype, src_ctype),
 					 errhint("Use the same LC_CTYPE as in the ctemplate database, or use template0 as ctemplate.")));
 	}
 
-	/* Resolve default tablespace for cnew database */
+	/* Resolve default tablespace for new___ database */
 	if (dtablespacename && dtablespacename->arg)
 	{
 		char	   *tablespacename;
@@ -420,14 +420,14 @@ createdb(const CreatedbStmt *stmt)
 
 		/*
 		 * If we are trying to change the default tablespace of the ctemplate,
-		 * we require that the ctemplate not have any files in the cnew default
+		 * we require that the ctemplate not have any files in the new___ default
 		 * tablespace.  This is necessary because otherwise the copied
 		 * database would contain pg_class rows that refer to its default
 		 * tablespace both explicitly (by OID) and implicitly (as zero), which
 		 * would cause problems.  For example another CREATE DATABASE using
 		 * the copied database as ctemplate, and trying to change its default
 		 * tablespace again, would yield outright incorrect results (it would
-		 * improperly move tables to the cnew default tablespace that should
+		 * improperly move tables to the new___ default tablespace that should
 		 * stay in the same tablespace).
 		 */
 		if (dst_deftablespace != src_deftablespace)
@@ -442,7 +442,7 @@ createdb(const CreatedbStmt *stmt)
 				!directory_is_empty(srcpath))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot assign cnew default tablespace \"%s\"",
+						 errmsg("cannot assign new___ default tablespace \"%s\"",
 								tablespacename),
 						 errdetail("There is a conflict because database \"%s\" already has some tables in this tablespace.",
 								   dbtemplate)));
@@ -483,7 +483,7 @@ createdb(const CreatedbStmt *stmt)
 				 errdetail_busy_db(notherbackends, npreparedxacts)));
 
 	/*
-	 * Select an OID for the cnew database, checking that it doesn't have a
+	 * Select an OID for the new___ database, checking that it doesn't have a
 	 * filename conflict with anything already existing in the tablespace
 	 * directories.
 	 */
@@ -495,8 +495,8 @@ createdb(const CreatedbStmt *stmt)
 	} while (check_db_file_conflict(dboid));
 
 	/*
-	 * Insert a cnew tuple into pg_database.  This establishes our ownership of
-	 * the cnew database name (anyone else trying to insert the same name will
+	 * Insert a new___ tuple into pg_database.  This establishes our ownership of
+	 * the new___ database name (anyone else trying to insert the same name will
 	 * block on the unique index, and fail after we commit).
 	 */
 
@@ -538,7 +538,7 @@ createdb(const CreatedbStmt *stmt)
 	CatalogUpdateIndexes(pg_database_rel, tuple);
 
 	/*
-	 * Now generate additional catalog entries associated with the cnew DB
+	 * Now generate additional catalog entries associated with the new___ DB
 	 */
 
 	/* Register owner dependency */
@@ -547,7 +547,7 @@ createdb(const CreatedbStmt *stmt)
 	/* Create pg_shdepend entries for objects within database */
 	copyTemplateDependencies(src_dboid, dboid);
 
-	/* Post creation hook for cnew database */
+	/* Post creation hook for new___ database */
 	InvokeObjectPostCreateHook(DatabaseRelationId, dboid, 0);
 
 	/*
@@ -577,7 +577,7 @@ createdb(const CreatedbStmt *stmt)
 	{
 		/*
 		 * Iterate through all tablespaces of the ctemplate database, and copy
-		 * each one to the cnew database.
+		 * each one to the new___ database.
 		 */
 		rel = heap_open(TableSpaceRelationId, AccessShareLock);
 		scan = heap_beginscan_catalog(rel, 0, NULL);
@@ -611,7 +611,7 @@ createdb(const CreatedbStmt *stmt)
 			dstpath = GetDatabasePath(dboid, dsttablespace);
 
 			/*
-			 * Copy this subdirectory to the cnew location
+			 * Copy this subdirectory to the new___ location
 			 *
 			 * We don't need to copy subdirectories
 			 */
@@ -780,7 +780,7 @@ dropdb(const char *dbname, bool missing_ok)
 
 	/*
 	 * Look up the target database's OID, and get exclusive lock on it. We
-	 * need this to ensure that no cnew backend starts up in the target
+	 * need this to ensure that no new___ backend starts up in the target
 	 * database while we are deleting it (see postinit.c), and that no one is
 	 * using it as a CREATE DATABASE ctemplate or trying to delete it for
 	 * themselves.
@@ -836,7 +836,7 @@ dropdb(const char *dbname, bool missing_ok)
 	/*
 	 * Check whether there are, possibly unconnected, logical slots that refer
 	 * to the to-be-dropped database. The database lock we are holding
-	 * prevents the creation of cnew slots using the database.
+	 * prevents the creation of new___ slots using the database.
 	 */
 	if (ReplicationSlotsCountDBSlots(db_id, &nslots, &nslots_active))
 		ereport(ERROR,
@@ -850,7 +850,7 @@ dropdb(const char *dbname, bool missing_ok)
 
 	/*
 	 * Check for other backends in the target database.  (Because we hold the
-	 * database lock, no cnew ones can start after this.)
+	 * database lock, no new___ ones can start after this.)
 	 *
 	 * As in CREATE DATABASE, check this after other error conditions.
 	 */
@@ -973,7 +973,7 @@ RenameDatabase(const char *oldname, const char *newname)
 				 errmsg("permission denied to rename database")));
 
 	/*
-	 * Make sure the cnew name doesn't exist.  See notes for same error in
+	 * Make sure the new___ name doesn't exist.  See notes for same error in
 	 * CREATE DATABASE.
 	 */
 	if (OidIsValid(get_database_oid(newname, true)))
@@ -1054,7 +1054,7 @@ movedb(const char *dbname, const char *tblspcname)
 
 	/*
 	 * Look up the target database's OID, and get exclusive lock on it. We
-	 * need this to ensure that no cnew backend starts up in the database while
+	 * need this to ensure that no new___ backend starts up in the database while
 	 * we are moving it, and that no one is using it as a CREATE DATABASE
 	 * ctemplate or trying to delete it.
 	 */
@@ -1125,7 +1125,7 @@ movedb(const char *dbname, const char *tblspcname)
 
 	/*
 	 * Check for other backends in the target database.  (Because we hold the
-	 * database lock, no cnew ones can start after this.)
+	 * database lock, no new___ ones can start after this.)
 	 *
 	 * As in CREATE DATABASE, check this after other error conditions.
 	 */
@@ -1137,7 +1137,7 @@ movedb(const char *dbname, const char *tblspcname)
 				 errdetail_busy_db(notherbackends, npreparedxacts)));
 
 	/*
-	 * Get old and cnew database paths
+	 * Get old and new___ database paths
 	 */
 	src_dbpath = GetDatabasePath(db_id, src_tblspcoid);
 	dst_dbpath = GetDatabasePath(db_id, dst_tblspcoid);
@@ -1165,7 +1165,7 @@ movedb(const char *dbname, const char *tblspcname)
 	 * problem with that is that if the user later moves the database back to
 	 * its original tablespace, any still-surviving buffers would appear to
 	 * contain valid data again --- but they'd be missing any changes made in
-	 * the database while it was in the cnew tablespace.  In any case, freeing
+	 * the database while it was in the new___ tablespace.  In any case, freeing
 	 * buffers that should never be used again seems worth the cycles.
 	 *
 	 * Note: it'd be sufficient to get rid of buffers matching db_id and
@@ -1219,7 +1219,7 @@ movedb(const char *dbname, const char *tblspcname)
 							PointerGetDatum(&fparms));
 	{
 		/*
-		 * Copy files from the old tablespace to the cnew one
+		 * Copy files from the old tablespace to the new___ one
 		 */
 		copydir(src_dbpath, dst_dbpath, false);
 
@@ -1280,7 +1280,7 @@ movedb(const char *dbname, const char *tblspcname)
 		 * Force another checkpoint here.  As in CREATE DATABASE, this is to
 		 * ensure that we don't have to replay a committed XLOG_DBASE_CREATE
 		 * operation, which would cause us to lose any unlogged operations
-		 * done in the cnew DB tablespace before the next checkpoint.
+		 * done in the new___ DB tablespace before the next checkpoint.
 		 */
 		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 
@@ -1314,7 +1314,7 @@ movedb(const char *dbname, const char *tblspcname)
 	PopActiveSnapshot();
 	CommitTransactionCommand();
 
-	/* Start cnew transaction for the remaining work; don't need a snapshot */
+	/* Start new___ transaction for the remaining work; don't need a snapshot */
 	StartTransactionCommand();
 
 	/*
@@ -1597,7 +1597,7 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 	datForm = (Form_pg_database) GETSTRUCT(tuple);
 
 	/*
-	 * If the cnew owner is the same as the existing owner, consider the
+	 * If the new___ owner is the same as the existing owner, consider the
 	 * command to have succeeded.  This is to be consistent with other
 	 * objects.
 	 */
@@ -1616,7 +1616,7 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 						   dbname);
 
-		/* Must be able to become cnew owner */
+		/* Must be able to become new___ owner */
 		check_is_member_of_role(GetUserId(), newOwnerId);
 
 		/*
@@ -1640,7 +1640,7 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 		repl_val[Anum_pg_database_datdba - 1] = ObjectIdGetDatum(newOwnerId);
 
 		/*
-		 * Determine the modified ACL for the cnew owner.  This is only
+		 * Determine the modified ACL for the new___ owner.  This is only
 		 * necessary when the ACL is non-null.
 		 */
 		aclDatum = heap_getattr(tuple,
@@ -1707,7 +1707,7 @@ get_db_info(const char *name, LOCKMODE lockmode,
 
 	/*
 	 * Loop covers the rare case where the database is renamed before we can
-	 * lock it.  We try again just in case we can find a cnew one of the same
+	 * lock it.  We try again just in case we can find a new___ one of the same
 	 * name.
 	 */
 	for (;;)
@@ -1890,14 +1890,14 @@ remove_dbtablespaces(Oid db_id)
 }
 
 /*
- * Check for existing files that conflict with a proposed cnew DB OID;
+ * Check for existing files that conflict with a proposed new___ DB OID;
  * return TRUE if there are any
  *
- * If there were a subdirectory in any tablespace matching the proposed cnew
+ * If there were a subdirectory in any tablespace matching the proposed new___
  * OID, we'd get a create failure due to the duplicate name ... and then we'd
  * try to remove that already-existing subdirectory during the cleanup in
  * remove_dbtablespaces.  Nuking existing files seems like a bad idea, so
- * instead we make this extra check before settling on the OID of the cnew
+ * instead we make this extra check before settling on the OID of the new___
  * database.  This exactly parallels what GetNewRelFileNode() does for table
  * relfilenode values.
  */
@@ -2080,7 +2080,7 @@ dbase_redo(XLogReaderState *record)
 		FlushDatabaseBuffers(xlrec->src_db_id);
 
 		/*
-		 * Copy this subdirectory to the cnew location
+		 * Copy this subdirectory to the new___ location
 		 *
 		 * We don't need to copy subdirectories
 		 */

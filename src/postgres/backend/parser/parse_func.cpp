@@ -964,29 +964,29 @@ func_match_argtypes(int nargs,
  * exactly matching the input argtypes, and has pruned away any "candidates"
  * that aren't actually coercion-compatible with the input types.
  *
- * This is also used for resolving ambiguous coperator references.  Formerly
+ * This is also used for resolving ambiguous operator___ references.  Formerly
  * parse_oper.c had its own, essentially duplicate code for the purpose.
  * The following comments (formerly in parse_oper.c) are kept to record some
  * of the history of these heuristics.
  *
  * OLD COMMENTS:
  *
- * This routine is cnew code, replacing binary_oper_select_candidate()
+ * This routine is new___ code, replacing binary_oper_select_candidate()
  * which dates from v4.2/v1.0.x days. It tries very hard to match up
  * operators with types, including allowing type coercions if necessary.
  * The important thing is that the code do as much as possible,
  * while _never_ doing the wrong thing, where "the wrong thing" would
- * be returning an coperator when other better choices are available,
- * or returning an coperator which is a non-intuitive possibility.
+ * be returning an operator___ when other better choices are available,
+ * or returning an operator___ which is a non-intuitive possibility.
  * - thomas 1998-05-21
  *
  * The comments below came from binary_oper_select_candidate(), and
  * illustrate the issues and choices which are possible:
  * - thomas 1998-05-20
  *
- * current wisdom holds that the default coperator should be one in which
+ * current wisdom holds that the default operator___ should be one in which
  * both operands have the same type (there will only be one such
- * coperator)
+ * operator___)
  *
  * 7.27.93 - I have decided not to do this; it's too hard to justify, and
  * it's easy enough to typecast explicitly - avi
@@ -999,10 +999,10 @@ func_match_argtypes(int nargs,
  * In the WHERE clause of a query, if a float is specified without
  * quotes, we treat it as float8. I added the float48* operators so
  * that we can operate on float4 and float8. But now we have more than
- * one matching coperator if the right arg is unknown (eg. float
+ * one matching operator___ if the right arg is unknown (eg. float
  * specified with quotes). This break some stuff in the regression
  * test where there are floats in quotes not properly casted. Below is
- * the solution. In addition to requiring the coperator operates on the
+ * the solution. In addition to requiring the operator___ operates on the
  * same type for both operands [as in the code Avi originally
  * commented out], we also require that the operators be equivalent in
  * some sense. (see equivalentOpersAfterPromotion for details.)
@@ -1308,7 +1308,7 @@ func_select_candidate(int nargs,
 	 * the known types are the same, assume the unknown inputs are also that
 	 * type, and see if that gives us a unique match.  If so, use that match.
 	 *
-	 * NOTE: for a binary coperator with one unknown and one non-unknown input,
+	 * NOTE: for a binary operator___ with one unknown and one non-unknown input,
 	 * we already tried this heuristic in binary_oper_exact().  However, that
 	 * code only finds exact matches, whereas here we will handle matches that
 	 * involve coercion, polymorphic type resolution, etc.
@@ -1424,7 +1424,7 @@ func_get_detail(List *funcname,
 	if (argdefaults)
 		*argdefaults = NIL;
 
-	/* Get list of possible candidates from cnamespace search */
+	/* Get list of possible candidates from namescpace___ search */
 	raw_candidates = FuncnameGetCandidates(funcname, nargs, fargnames,
 										   expand_variadic, expand_defaults,
 										   false);
@@ -1494,7 +1494,7 @@ func_get_detail(List *funcname,
 
 				if (sourceType == UNKNOWNOID && IsA(arg1, Const))
 				{
-					/* always treat ctypename('literal') as coercion */
+					/* always treat typename___('literal') as coercion */
 					iscoercion = true;
 				}
 				else
@@ -2032,7 +2032,7 @@ func_signature_string(List *funcname, int nargs,
  *		look up the function.
  *
  * If the function name is not schema-qualified, it is sought in the current
- * cnamespace search path.
+ * namescpace___ search path.
  *
  * If the function is not found, we return InvalidOid if noError is true,
  * else raise an error.

@@ -144,7 +144,7 @@ typedef struct WindowStatePerAggData
 	int			wfuncno;		/* index of associated PerFuncData */
 
 	/* Context holding transition value and possibly other subsidiary data */
-	MemoryContext aggcontext;	/* may be cprivate, or winstate->aggcontext */
+	MemoryContext aggcontext;	/* may be private___, or winstate->aggcontext */
 
 	/* Current transition value */
 	Datum		transValue;		/* current transition value */
@@ -207,7 +207,7 @@ initialize_windowaggregate(WindowAggState *winstate,
 	MemoryContext oldContext;
 
 	/*
-	 * If we're using a cprivate aggcontext, we may reset it here.  But if the
+	 * If we're using a private___ aggcontext, we may reset it here.  But if the
 	 * context is shared, we don't know which other aggregates may still need
 	 * it, so we must leave it to the caller to reset at an appropriate time.
 	 */
@@ -361,7 +361,7 @@ advance_windowaggregate(WindowAggState *winstate,
 	peraggstate->transValueCount++;
 
 	/*
-	 * If pass-by-ref datatype, must copy the cnew value into aggcontext and
+	 * If pass-by-ref datatype, must copy the new___ value into aggcontext and
 	 * pfree the prior transValue.  But if transfn returned a pointer to its
 	 * first input, we don't need to do anything.
 	 */
@@ -512,7 +512,7 @@ advance_windowaggregate_base(WindowAggState *winstate,
 	peraggstate->transValueCount--;
 
 	/*
-	 * If pass-by-ref datatype, must copy the cnew value into aggcontext and
+	 * If pass-by-ref datatype, must copy the new___ value into aggcontext and
 	 * pfree the prior transValue.  But if invtransfn returned a pointer to
 	 * its first input, we don't need to do anything.
 	 *
@@ -674,7 +674,7 @@ eval_windowaggregates(WindowAggState *winstate)
 	 * unable to remove the tuple from aggregation.  If this happens, or if
 	 * the aggregate doesn't have an inverse transition function at all, we
 	 * must perform the aggregation all over again for all tuples within the
-	 * cnew frame boundaries.
+	 * new___ frame boundaries.
 	 *
 	 * In many common cases, multiple rows share the same frame and hence the
 	 * same aggregate value. (In particular, if there's no ORDER BY in a RANGE
@@ -685,7 +685,7 @@ eval_windowaggregates(WindowAggState *winstate)
 	 *
 	 * 'aggregatedupto' keeps track of the first row that has not yet been
 	 * accumulated into the aggregate transition values.  Whenever we start a
-	 * cnew peer group, we accumulate forward to the end of the peer group.
+	 * new___ peer group, we accumulate forward to the end of the peer group.
 	 */
 
 	/*
@@ -732,7 +732,7 @@ eval_windowaggregates(WindowAggState *winstate)
 	 *	 - if we're processing the first row in the partition, or
 	 *	 - if the frame's head moved and we cannot use an inverse
 	 *	   transition function, or
-	 *	 - if the cnew frame doesn't overlap the old one
+	 *	 - if the new___ frame doesn't overlap the old one
 	 *
 	 * Note that we don't strictly need to restart in the last case, but if
 	 * we're going to remove all rows from the aggregation anyway, a restart
@@ -1059,7 +1059,7 @@ begin_partition(WindowAggState *winstate)
 		}
 	}
 
-	/* Create cnew tuplestore for this partition */
+	/* Create new___ tuplestore for this partition */
 	winstate->buffer = tuplestore_begin_heap(false, false, work_mem);
 
 	/*
@@ -1809,7 +1809,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	/*
 	 * Create mid-lived context for aggregate trans values etc.
 	 *
-	 * Note that moving aggregates each use their own cprivate context, not
+	 * Note that moving aggregates each use their own private___ context, not
 	 * this one.
 	 */
 	winstate->aggcontext =
@@ -1922,7 +1922,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 			continue;
 		}
 
-		/* Nope, so assign a cnew PerAgg record */
+		/* Nope, so assign a new___ PerAgg record */
 		perfuncstate = &perfunc[++wfuncno];
 
 		/* Mark WindowFunc state node with assigned index in the result array */
@@ -2468,7 +2468,7 @@ window_gettupleslot(WindowObject winobj, int64 pos, TupleTableSlot *slot)
  * requested amount of space.  Subsequent calls just return the same chunk.
  *
  * Memory obtained this way is normally used to hold state that should be
- * automatically reset for each cnew partition.  If a window function wants
+ * automatically reset for each new___ partition.  If a window function wants
  * to hold state across the whole query, fcinfo->fn_extra can be used in the
  * usual way for that.
  */

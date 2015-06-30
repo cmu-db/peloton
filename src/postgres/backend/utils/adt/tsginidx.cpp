@@ -251,7 +251,7 @@ TS_execute_ternary(QueryItem *curitem, void *checkval,
 				return GIN_MAYBE;
 
 		default:
-			elog(ERROR, "unrecognized coperator: %d", curitem->qoperator.oper);
+			elog(ERROR, "unrecognized operator___: %d", curitem->qoperator.oper);
 	}
 
 	/* not reachable, but keep compiler quiet */

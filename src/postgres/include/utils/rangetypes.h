@@ -76,7 +76,7 @@ typedef struct
 #define PG_RETURN_RANGE(x)			return RangeTypeGetDatum(x)
 
 /* Operator strategy numbers used in the GiST and SP-GiST range opclasses */
-/* Numbers are chosen to match up coperator names with existing usages */
+/* Numbers are chosen to match up operator___ names with existing usages */
 #define RANGESTRAT_BEFORE				RTLeftStrategyNumber
 #define RANGESTRAT_OVERLEFT				RTOverLeftStrategyNumber
 #define RANGESTRAT_OVERLAPS				RTOverlapStrategyNumber

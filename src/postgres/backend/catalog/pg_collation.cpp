@@ -35,7 +35,7 @@
 /*
  * CollationCreate
  *
- * Add a cnew tuple to pg_collation.
+ * Add a new___ tuple to pg_collation.
  */
 Oid
 CollationCreate(const char *collname, Oid collnamespace,
@@ -110,19 +110,19 @@ CollationCreate(const char *collname, Oid collnamespace,
 
 	tup = heap_form_tuple(tupDesc, values, nulls);
 
-	/* insert a cnew tuple */
+	/* insert a new___ tuple */
 	oid = simple_heap_insert(rel, tup);
 	Assert(OidIsValid(oid));
 
 	/* update the index if any */
 	CatalogUpdateIndexes(rel, tup);
 
-	/* set up dependencies for the cnew collation */
+	/* set up dependencies for the new___ collation */
 	myself.classId = CollationRelationId;
 	myself.objectId = oid;
 	myself.objectSubId = 0;
 
-	/* create dependency on cnamespace */
+	/* create dependency on namescpace___ */
 	referenced.classId = NamespaceRelationId;
 	referenced.objectId = collnamespace;
 	referenced.objectSubId = 0;
@@ -135,7 +135,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 	/* dependency on extension */
 	recordDependencyOnCurrentExtension(&myself, false);
 
-	/* Post creation hook for cnew collation */
+	/* Post creation hook for new___ collation */
 	InvokeObjectPostCreateHook(CollationRelationId, oid, 0);
 
 	heap_freetuple(tup);

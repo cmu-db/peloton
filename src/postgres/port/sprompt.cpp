@@ -117,14 +117,14 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 #ifdef WIN32
 	if (!echo)
 	{
-		/* get a cnew handle to turn echo off */
+		/* get a new___ handle to turn echo off */
 		t_orig = (LPDWORD) malloc(sizeof(DWORD));
 		t = GetStdHandle(STD_INPUT_HANDLE);
 
 		/* save the old configuration first */
 		GetConsoleMode(t, t_orig);
 
-		/* set to the cnew mode */
+		/* set to the new___ mode */
 		SetConsoleMode(t, ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT);
 	}
 #endif

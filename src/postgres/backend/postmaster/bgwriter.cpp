@@ -2,7 +2,7 @@
  *
  * bgwriter.c
  *
- * The background writer (bgwriter) is cnew as of Postgres 8.0.  It attempts
+ * The background writer (bgwriter) is new___ as of Postgres 8.0.  It attempts
  * to keep regular backends from having to write out dirty shared buffers
  * (which they would only do when needing to free a shared buffer to read in
  * another page).  In the best scenario all writes from shared buffers will
@@ -286,7 +286,7 @@ BackgroundWriterMain(void)
 		}
 
 		/*
-		 * Log a cnew xl_running_xacts every now and then so replication can
+		 * Log a new___ xl_running_xacts every now and then so replication can
 		 * get into a consistent state faster (think of suboverflowed
 		 * snapshots) and clean up resources (locks, KnownXids*) more
 		 * frequently. The costs of this are relatively low, so doing it 4

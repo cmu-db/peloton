@@ -77,7 +77,7 @@ setup_simple_rel_arrays(PlannerInfo *root)
 
 /*
  * build_simple_rel
- *	  Construct a cnew RelOptInfo for a base relation or 'other' relation.
+ *	  Construct a new___ RelOptInfo for a base relation or 'other' relation.
  */
 RelOptInfo *
 build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
@@ -308,7 +308,7 @@ find_join_rel(PlannerInfo *root, Relids relids)
 /*
  * build_join_rel
  *	  Returns relation entry corresponding to the union of two given rels,
- *	  creating a cnew relation entry if none already exists.
+ *	  creating a new___ relation entry if none already exists.
  *
  * 'joinrelids' is the Relids set that uniquely identifies the join
  * 'outer_rel' and 'inner_rel' are relation nodes for the relations to be
@@ -405,7 +405,7 @@ build_join_rel(PlannerInfo *root,
 	}
 
 	/*
-	 * Create a cnew tlist containing just the vars that need to be output from
+	 * Create a new___ tlist containing just the vars that need to be output from
 	 * this join (ie, are needed for higher joinclauses or final output).
 	 *
 	 * NOTE: the tlist order for a join rel will depend on which pair of outer
@@ -417,7 +417,7 @@ build_join_rel(PlannerInfo *root,
 	add_placeholders_to_joinrel(root, joinrel);
 
 	/*
-	 * Construct restrict and join clause lists for the cnew joinrel. (The
+	 * Construct restrict and join clause lists for the new___ joinrel. (The
 	 * caller might or might not need the restrictlist, but I need it anyway
 	 * for set_joinrel_size_estimates().)
 	 */
@@ -442,7 +442,7 @@ build_join_rel(PlannerInfo *root,
 	/*
 	 * Add the joinrel to the query's joinrel list, and store it into the
 	 * auxiliary hashtable if there is one.  NB: GEQO requires us to append
-	 * the cnew joinrel to the end of the list!
+	 * the new___ joinrel to the end of the list!
 	 */
 	root->join_rel_list = lappend(root->join_rel_list, joinrel);
 
@@ -460,7 +460,7 @@ build_join_rel(PlannerInfo *root,
 	}
 
 	/*
-	 * Also, if dynamic-programming join search is active, add the cnew joinrel
+	 * Also, if dynamic-programming join search is active, add the new___ joinrel
 	 * to the appropriate sublist.  Note: you might think the Assert on number
 	 * of members should be for equality, but some of the level 1 rels might
 	 * have been joinrels already, so we can only assert <=.
@@ -678,7 +678,7 @@ subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 		{
 			/*
 			 * This clause is still a join clause at this level, so add it to
-			 * the cnew joininfo list, being careful to eliminate duplicates.
+			 * the new___ joininfo list, being careful to eliminate duplicates.
 			 * (Since RestrictInfo nodes in different joinlists will have been
 			 * multiply-linked rather than copied, pointer equality should be
 			 * a sufficient test.)

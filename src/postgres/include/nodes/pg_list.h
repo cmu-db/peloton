@@ -270,10 +270,10 @@ extern List *list_copy(const List *list);
 extern List *list_copy_tail(const List *list, int nskip);
 
 /*
- * To ease migration to the cnew list API, a set of compatibility
+ * To ease migration to the new___ list API, a set of compatibility
  * macros are provided that reduce the impact of the list API changes
  * as far as possible. Until client code has been rewritten to use the
- * cnew list API, the ENABLE_LIST_COMPAT symbol can be defined before
+ * new___ list API, the ENABLE_LIST_COMPAT symbol can be defined before
  * including pg_list.h
  */
 #ifdef ENABLE_LIST_COMPAT
@@ -309,7 +309,7 @@ extern List *list_copy_tail(const List *list, int nskip);
 
 /*
  * Note that the old lremove() determined equality via pointer
- * comparison, whereas the cnew list_delete() uses equal(); in order to
+ * comparison, whereas the new___ list_delete() uses equal(); in order to
  * keep the same behavior, we therefore need to map lremove() calls to
  * list_delete_ptr() rather than list_delete()
  */

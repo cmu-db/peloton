@@ -461,9 +461,9 @@ transformAssignedExpr(ParseState *pstate,
 
 	/*
 	 * If there is indirection on the target column, prepare an array or
-	 * subfield assignment expression.  This will generate a cnew column value
+	 * subfield assignment expression.  This will generate a new___ column value
 	 * that the source value has been inserted into, which can then be placed
-	 * in the cnew tuple constructed by INSERT or UPDATE.
+	 * in the new___ tuple constructed by INSERT or UPDATE.
 	 */
 	if (indirection)
 	{
@@ -1719,7 +1719,7 @@ FigureColnameInternal(Node *node, char **name)
 						}
 					}
 					break;
-					/* As with other coperator-like nodes, these have no names */
+					/* As with other operator___-like nodes, these have no names */
 				case MULTIEXPR_SUBLINK:
 				case ALL_SUBLINK:
 				case ANY_SUBLINK:

@@ -177,7 +177,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		 *
 		 * If an update-in-place TOAST relfilenode is specified, force TOAST file
 		 * creation even if it seems not to need one.  This handles the case
-		 * where the old cluster needed a TOAST table but the cnew cluster
+		 * where the old cluster needed a TOAST table but the new___ cluster
 		 * would not normally create one.
 		 */
 
@@ -185,7 +185,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 		 * If a TOAST oid is not specified, skip TOAST creation as we will do
 		 * it later so we don't create a TOAST table whose OID later conflicts
 		 * with a user-supplied OID.  This handles cases where the old cluster
-		 * didn't need a TOAST table, but the cnew cluster does.
+		 * didn't need a TOAST table, but the new___ cluster does.
 		 */
 		if (!OidIsValid(binary_upgrade_next_toast_pg_class_oid))
 			return false;
@@ -252,7 +252,7 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 
 	/*
 	 * Toast tables for regular relations go in pg_toast; those for temp
-	 * relations go into the per-backend temp-toast-table cnamespace.
+	 * relations go into the per-backend temp-toast-table namescpace___.
 	 */
 	if (isTempOrTempToastNamespace(rel->rd_rel->relnamespace))
 		namespaceid = GetTempToastNamespace();
