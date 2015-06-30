@@ -23,19 +23,19 @@ Inorder to port Postgres to C++, we made the following changes:
 
 1. Avoid keyword conflict
   
-  All variables that have the same name as C++ keyword are appned "___". Details of the cases
+  All variables that have conflicts with C++ keyword are appned "___". Details of the cases
   are as follows:
 
-  * new
-  * namespace
-  * friend
-  * public
-  * private
-  * typename
-  * typeid
-  * constexpr
-  * operator
-  * class
+  * `new`
+  * `namespace`
+  * `friend`
+  * `public`
+  * `private`
+  * `typename`
+  * `typeid`
+  * `constexpr`
+  * `operator`
+  * `class`
 
 2. Make use of C++ inheritance to avoid casting
 
@@ -44,7 +44,7 @@ Inorder to port Postgres to C++, we made the following changes:
 3. Resolve error for missing operator= for volatile cases
 
     Define `operator=` manually for the cases where volatile qualifier is used. C++
-    does not generate for such case by default. The deails of the cases are as follows:
+    does not generate for such case by default. Deails of the cases are as follows:
 
     * `RelFileNode` at `include/storage/relfilnode.h`
     * `QueuePosition` at `backend/commands/async.cpp`
@@ -53,7 +53,7 @@ Inorder to port Postgres to C++, we made the following changes:
 4. Resolve implicitly deleted default constructor
 
     This union's default constructor is implictly deleted if one of its member has
-    non-trivial constructor. The work around is to define mannually. The details of
+    non-trivial constructor. The work around is to define mannually. Details of
     the cases are as follows:
 
     * `SharedInvalidationMessage` ar `include/storage/sinval.h`
@@ -66,10 +66,10 @@ Inorder to port Postgres to C++, we made the following changes:
 
 6. Resolve missing namespace for inner enum
     
-    Member enums have to be resolved by specifying class name. The details of the 
+    Member enums have to be resolved by specifying class name. Details of the 
     cases are as follows:
 
-    * JsonbValue
+    * `JsonbValue`
 
 7. Avoid redefinition
 
