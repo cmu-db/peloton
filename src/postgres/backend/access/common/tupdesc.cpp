@@ -63,7 +63,7 @@ CreateTemplateTupleDesc(int natts, bool hasoid)
 	 */
 	attroffset = sizeof(struct tupleDesc) + natts * sizeof(Form_pg_attribute);
 	attroffset = MAXALIGN(attroffset);
-	stg = palloc(attroffset + natts * MAXALIGN(ATTRIBUTE_FIXED_PART_SIZE));
+	stg = static_cast<char *>(palloc(attroffset + natts * MAXALIGN(ATTRIBUTE_FIXED_PART_SIZE)));
 	desc = (TupleDesc) stg;
 
 	if (natts > 0)
@@ -609,7 +609,7 @@ BuildDescForRelation(List *schema)
 
 	foreach(l, schema)
 	{
-		ColumnDef  *entry = lfirst(l);
+		ColumnDef  *entry = static_cast<ColumnDef *>(lfirst(l));
 		AclResult	aclresult;
 
 		/*

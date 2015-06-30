@@ -134,7 +134,7 @@ struct sigpipe_info
  *	initialized OpenSSL.
  */
 void
-PQinitSSL(int do_init)
+PQinitSSL(int UNUSED(do_init))
 {
 #ifdef USE_SSL
 	pgtls_init_library(do_init, do_init);
@@ -146,7 +146,7 @@ PQinitSSL(int do_init)
  *	initialized OpenSSL and/or libcrypto.
  */
 void
-PQinitOpenSSL(int do_ssl, int do_crypto)
+PQinitOpenSSL(int UNUSED(do_ssl), int UNUSED(do_crypto))
 {
 #ifdef USE_SSL
 	pgtls_init_library(do_ssl, do_crypto);
@@ -157,7 +157,7 @@ PQinitOpenSSL(int do_ssl, int do_crypto)
  *	Initialize global SSL context
  */
 int
-pqsecure_initialize(PGconn *conn)
+pqsecure_initialize(PGconn * UNUSED(conn))
 {
 	int			r = 0;
 
@@ -172,7 +172,7 @@ pqsecure_initialize(PGconn *conn)
  *	Begin or continue negotiating a secure session.
  */
 PostgresPollingStatusType
-pqsecure_open_client(PGconn *conn)
+pqsecure_open_client(PGconn * UNUSED(conn))
 {
 #ifdef USE_SSL
 	return pgtls_open_client(conn);
@@ -186,7 +186,7 @@ pqsecure_open_client(PGconn *conn)
  *	Close secure session.
  */
 void
-pqsecure_close(PGconn *conn)
+pqsecure_close(PGconn * UNUSED(conn))
 {
 #ifdef USE_SSL
 	if (conn->ssl_in_use)
@@ -385,31 +385,31 @@ retry_masked:
 #ifndef USE_SSL
 
 int
-PQsslInUse(PGconn *conn)
+PQsslInUse(PGconn * UNUSED(conn))
 {
 	return 0;
 }
 
 void *
-PQgetssl(PGconn *conn)
+PQgetssl(PGconn * UNUSED(conn))
 {
 	return NULL;
 }
 
 void *
-PQsslStruct(PGconn *conn, const char *struct_name)
+PQsslStruct(PGconn * UNUSED(conn), const char * UNUSED(struct_name))
 {
 	return NULL;
 }
 
 const char *
-PQsslAttribute(PGconn *conn, const char *attribute_name)
+PQsslAttribute(PGconn * UNUSED(conn), const char * UNUSED(attribute_name))
 {
 	return NULL;
 }
 
 const char **
-PQsslAttributes(PGconn *conn)
+PQsslAttributes(PGconn * UNUSED(conn))
 {
 	static const char *result[] = { NULL };
 

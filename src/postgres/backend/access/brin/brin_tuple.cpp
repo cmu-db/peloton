@@ -103,9 +103,9 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 
 	Assert(brdesc->bd_totalstored > 0);
 
-	values = palloc(sizeof(Datum) * brdesc->bd_totalstored);
-	nulls = palloc0(sizeof(bool) * brdesc->bd_totalstored);
-	phony_nullbitmap = palloc(sizeof(bits8) * BITMAPLEN(brdesc->bd_totalstored));
+	values = static_cast<Datum *>(palloc(sizeof(Datum) * brdesc->bd_totalstored));
+	nulls = static_cast<bool *>(palloc0(sizeof(bool) * brdesc->bd_totalstored));
+	phony_nullbitmap = static_cast<bits8 *>(palloc(sizeof(bits8) * BITMAPLEN(brdesc->bd_totalstored)));
 
 	/*
 	 * Set up the values/nulls arrays for heap_fill_tuple
@@ -163,7 +163,7 @@ brin_form_tuple(BrinDesc *brdesc, BlockNumber blkno, BrinMemTuple *tuple,
 
 	len += data_len;
 
-	rettuple = palloc0(len);
+	rettuple = static_cast<BrinTuple *>(palloc0(len));
 	rettuple->bt_blkno = blkno;
 	rettuple->bt_info = hoff;
 	Assert((rettuple->bt_info & BRIN_OFFSET_MASK) == hoff);
@@ -267,7 +267,7 @@ brin_form_placeholder_tuple(BrinDesc *brdesc, BlockNumber blkno, Size *size)
 	len += BITMAPLEN(brdesc->bd_tupdesc->natts * 2);
 	len = hoff = MAXALIGN(len);
 
-	rettuple = palloc0(len);
+	rettuple = static_cast<BrinTuple *>(palloc0(len));
 	rettuple->bt_blkno = blkno;
 	rettuple->bt_info = hoff;
 	rettuple->bt_info |= BRIN_NULLS_MASK | BRIN_PLACEHOLDER_MASK;
@@ -311,7 +311,7 @@ brin_copy_tuple(BrinTuple *tuple, Size len)
 {
 	BrinTuple  *newtup;
 
-	newtup = palloc(len);
+	newtup = static_cast<BrinTuple *>(palloc(len));
 	memcpy(newtup, tuple, len);
 
 	return newtup;
@@ -347,7 +347,7 @@ brin_new_memtuple(BrinDesc *brdesc)
 
 	basesize = MAXALIGN(sizeof(BrinMemTuple) +
 						sizeof(BrinValues) * brdesc->bd_tupdesc->natts);
-	dtup = palloc0(basesize + sizeof(Datum) * brdesc->bd_totalstored);
+	dtup = static_cast<BrinMemTuple *>(palloc0(basesize + sizeof(Datum) * brdesc->bd_totalstored));
 	currdatum = (char *) dtup + basesize;
 	for (i = 0; i < brdesc->bd_tupdesc->natts; i++)
 	{
@@ -408,9 +408,9 @@ brin_deform_tuple(BrinDesc *brdesc, BrinTuple *tuple)
 		dtup->bt_placeholder = true;
 	dtup->bt_blkno = tuple->bt_blkno;
 
-	values = palloc(sizeof(Datum) * brdesc->bd_totalstored);
-	allnulls = palloc(sizeof(bool) * brdesc->bd_tupdesc->natts);
-	hasnulls = palloc(sizeof(bool) * brdesc->bd_tupdesc->natts);
+	values = static_cast<Datum *>(palloc(sizeof(Datum) * brdesc->bd_totalstored));
+	allnulls = static_cast<bool *>(palloc(sizeof(bool) * brdesc->bd_tupdesc->natts));
+	hasnulls = static_cast<bool *>(palloc(sizeof(bool) * brdesc->bd_tupdesc->natts));
 
 	tp = (char *) tuple + BrinTupleDataOffset(tuple);
 
