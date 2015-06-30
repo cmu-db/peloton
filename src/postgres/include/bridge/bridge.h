@@ -16,13 +16,15 @@
 extern "C" {
 #endif
 
+#include "access/htup.h"
+
 //===--------------------------------------------------------------------===//
 // Getters
 //===--------------------------------------------------------------------===//
 
-HeapTuple GetPGClassTuple(Oid relation_id);
+HeapTuple GetPGClassTupleForRelationOid(Oid relation_id);
 
-HeapTuple GetPGClassTuple(const char *relation_name);
+HeapTuple GetPGClassTupleForRelationName(const char *relation_name);
 
 //===--------------------------------------------------------------------===//
 // Oid <--> Name
@@ -50,7 +52,7 @@ Oid GetCurrentDatabaseOid(void);
 
 void GetDatabaseList(void);
 
-void GetTableList(bool catalog_only = false);
+void GetTableList(bool catalog_only);
 
 //===--------------------------------------------------------------------===//
 // Setters
@@ -58,11 +60,9 @@ void GetTableList(bool catalog_only = false);
 
 void SetNumberOfTuples(Oid relation_id, float num_of_tuples);
 
-void SetUserTableStats(Oid relation_id);
-
 // Initialize
 
-bool InitPeloton(void);
+bool BootstrapPeloton(void);
 
 #ifdef __cplusplus
 }
