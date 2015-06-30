@@ -1718,7 +1718,7 @@ scanPendingInsert(IndexScanDesc scan, TIDBitmap *tbm, int64 *ntids)
 	LockBuffer(pos.pendingBuffer, GIN_SHARE);
 	pos.firstOffset = FirstOffsetNumber;
 	UnlockReleaseBuffer(metabuffer);
-	pos.hasMatchKey = static_cast<bool **>(palloc(sizeof(bool) * so->nkeys));
+	pos.hasMatchKey = static_cast<bool *>(palloc(sizeof(bool) * so->nkeys));
 
 	/*
 	 * loop for each heap row. scanGetCandidate returns full row or row's

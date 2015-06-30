@@ -193,7 +193,7 @@ ginCompressPostingList(const ItemPointer ipd, int nipd, int maxsize,
 
 	maxsize = SHORTALIGN_DOWN(maxsize);
 
-	result = palloc(maxsize);
+	result = static_cast<GinPostingList *>(palloc(maxsize));
 
 	maxbytes = maxsize - offsetof(GinPostingList, bytes);
 	Assert(maxbytes > 0);
@@ -297,7 +297,7 @@ ginPostingListDecodeAllSegments(GinPostingList *segment, int len, int *ndecoded_
 	 * Guess an initial size of the array.
 	 */
 	nallocated = segment->nbytes * 2 + 1;
-	result = palloc(nallocated * sizeof(ItemPointerData));
+	result = static_cast<ItemPointer>(palloc(nallocated * sizeof(ItemPointerData)));
 
 	ndecoded = 0;
 	while ((char *) segment < endseg)
@@ -306,7 +306,7 @@ ginPostingListDecodeAllSegments(GinPostingList *segment, int len, int *ndecoded_
 		if (ndecoded >= nallocated)
 		{
 			nallocated *= 2;
-			result = repalloc(result, nallocated * sizeof(ItemPointerData));
+			result = static_cast<ItemPointer>(repalloc(result, nallocated * sizeof(ItemPointerData)));
 		}
 
 		/* copy the first item */
@@ -324,7 +324,7 @@ ginPostingListDecodeAllSegments(GinPostingList *segment, int len, int *ndecoded_
 			if (ndecoded >= nallocated)
 			{
 				nallocated *= 2;
-				result = repalloc(result, nallocated * sizeof(ItemPointerData));
+				result = static_cast<ItemPointer>(repalloc(result, nallocated * sizeof(ItemPointerData)));
 			}
 
 			val += decode_varbyte(&ptr);

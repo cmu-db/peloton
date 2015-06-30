@@ -288,7 +288,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 		oldcxt = MemoryContextSwitchTo(so->queueCxt);
 
 		/* Create new___ GISTSearchItem for the right sibling index page */
-		item = palloc(SizeOfGISTSearchItem(scan->numberOfOrderBys));
+		item = static_cast<GISTSearchItem *>(palloc(SizeOfGISTSearchItem(scan->numberOfOrderBys)));
 		item->blkno = opaque->rightlink;
 		item->data.parentlsn = pageItem->data.parentlsn;
 
@@ -373,7 +373,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem, double *myDistances,
 			oldcxt = MemoryContextSwitchTo(so->queueCxt);
 
 			/* Create new___ GISTSearchItem for this item */
-			item = palloc(SizeOfGISTSearchItem(scan->numberOfOrderBys));
+			item = static_cast<GISTSearchItem *>(palloc(SizeOfGISTSearchItem(scan->numberOfOrderBys)));
 
 			if (GistPageIsLeaf(page))
 			{
