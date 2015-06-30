@@ -101,7 +101,7 @@ bool CreateExecutor::CreateTable(catalog::Database* db,
 
   // Check whether the 'table_name' table exists in the current database or not
   // It returns true if it exists
-  isExist = IsThisTableExist(table_name.c_str());
+  isExist = RelationExists(table_name.c_str());
   if( isExist )
   {
     //LOG_ERROR("Table already exists  : %s \n", table_name);
