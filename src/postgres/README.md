@@ -17,3 +17,12 @@ The following files should be automatically generated:
     /tools/pg_psql/sql_help.c
     /tools/pg_psql/psql_scan.c
 
+
+### Fixing Warnings
+
+a) Changed C-style typecasts to static_cast in multiple files at:
+	/src/postgres/interfaces/libpq
+	/src/postgres/backend/access/brin
+b) Changed 3 C-style casts in the same directory in fe-lobj.cpp file 	to reinterpret_cast
+c) Suppressed warnings for String to char * conversion (which has been 	  deprecated) by adding the CXXFLAG Wno-write-string
+d) Added a macro at the end of c.h file to suppress compiler warning 	for unused variables in various function calls. Used this UNUSED 	macro wherever variables passed to a function were unused or used 	  in #ifdef ... #endif

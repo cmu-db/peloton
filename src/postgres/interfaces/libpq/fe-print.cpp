@@ -455,9 +455,7 @@ do_header(FILE *fout, const PQprintOpt *po, const int nFields, int *fieldMax,
 			tot += fieldMax[n] + fs_len + (po->standard ? 2 : 0);
 		if (po->standard)
 			tot += fs_len * 2 + 2;
-		// TODO: Peloton changes - added (char *) cast
-		// to suppress compiler warning
-		border = (char *)malloc(tot + 1);
+		border = static_cast<char *>(malloc(tot + 1));
 		if (!border)
 		{
 			fprintf(stderr, libpq_gettext("out of memory\n"));

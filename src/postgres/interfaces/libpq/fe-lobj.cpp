@@ -289,10 +289,8 @@ lo_read(PGconn *conn, int fd, char *buf, size_t len)
 	argv[1].len = 4;
 	argv[1].u.integer = (int) len;
 
-	// TODO: Peloton changes - changed (void *) buf to (int *) buf
-	// to suppress compiler warning
 	res = PQfn(conn, conn->lobjfuncs->fn_lo_read,
-			   (int *) buf, &result_len, 0, argv, 2);
+			reinterpret_cast<int *>(buf), &result_len, 0, argv, 2);
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
 		PQclear(res);
@@ -442,10 +440,8 @@ lo_lseek64(PGconn *conn, int fd, pg_int64 offset, int whence)
 	argv[2].len = 4;
 	argv[2].u.integer = whence;
 
-	// TODO: Peloton changes - changed (void *) &retval to (int *) &retval
-	// to suppress compiler warning
 	res = PQfn(conn, conn->lobjfuncs->fn_lo_lseek64,
-			   (int *) &retval, &result_len, 0, argv, 3);
+			reinterpret_cast<int *>(&retval), &result_len, 0, argv, 3);
 	if (PQresultStatus(res) == PGRES_COMMAND_OK && result_len == 8)
 	{
 		PQclear(res);
@@ -610,10 +606,8 @@ lo_tell64(PGconn *conn, int fd)
 	argv[0].len = 4;
 	argv[0].u.integer = fd;
 
-	// TODO: Peloton changes - changed (void *) &retval to (int *) &retval
-	// to suppress compiler warning
 	res = PQfn(conn, conn->lobjfuncs->fn_lo_tell64,
-			   (int *) &retval, &result_len, 0, argv, 1);
+			reinterpret_cast<int *>(&retval), &result_len, 0, argv, 1);
 	if (PQresultStatus(res) == PGRES_COMMAND_OK && result_len == 8)
 	{
 		PQclear(res);
