@@ -56,7 +56,7 @@ GetPGClassTupleForRelationOid(Oid relation_id){
   tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relation_id));
   if (!HeapTupleIsValid(tuple)) {
     elog(DEBUG2, "cache lookup failed for relation %u", relation_id);
-    return NULL;
+    // Don't break here, we need to close heap and commit.
   }
 
   heap_close(pg_class_rel, AccessShareLock);
@@ -75,8 +75,6 @@ GetPGClassTupleForRelationName(const char *relation_name){
   HeapTuple tuple = NULL;
   HeapScanDesc scan;
 
-  StartTransactionCommand();
-
   // Open pg_class table
   pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
 
@@ -87,17 +85,17 @@ GetPGClassTupleForRelationName(const char *relation_name){
     Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
 
     if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE){
-      if(strcmp(NameStr(pgclass->relname), relation_name) == 0)
-        return tuple;
+      if(strcmp(NameStr(pgclass->relname), relation_name) == 0) {
+        // We need to end scan and close heap
+        break;
+      }
     }
   }
 
   heap_endscan(scan);
   heap_close(pg_class_rel, AccessShareLock);
 
-  CommitTransactionCommand();
-
-  return NULL;
+  return tuple;
 }
 
 //===--------------------------------------------------------------------===//
