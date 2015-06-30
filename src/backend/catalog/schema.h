@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "backend/common/types.h"
+#include "backend/catalog/constraint.h"
 
 namespace peloton {
 namespace catalog {
@@ -25,17 +26,16 @@ namespace catalog {
 
 // TODO: Why is this different than catalog::ColumnInfo?
 class ColumnInfo {
-  ColumnInfo() = delete;
+ friend class Constraint;
+
+ ColumnInfo() = delete;
 
  public:
 
   // Configures all members except offset
-  ColumnInfo(ValueType column_type,
-             oid_t column_length, std::string column_name,
+  ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name,
              bool allow_null, bool is_inlined)
- : type(column_type), offset(0),
-   name(column_name),
-   allow_null(allow_null), is_inlined(is_inlined){
+ : type(column_type), offset(0), name(column_name), allow_null(allow_null), is_inlined(is_inlined){
     if(is_inlined){
       fixed_length = column_length;
       variable_length = 0;
@@ -63,10 +63,10 @@ class ColumnInfo {
   // Configure offset as well
   ColumnInfo(ValueType column_type, oid_t column_offset,
              oid_t column_length, std::string column_name,
-             bool allow_null, bool is_inlined)
+             bool allow_null, bool is_inlined, std::vector<Constraint> column_constraint_vector)
   : type(column_type), offset(column_offset),
     name(column_name),
-    allow_null(allow_null), is_inlined(is_inlined){
+    allow_null(allow_null), is_inlined(is_inlined), constraint_vector(column_constraint_vector){
 
     if(is_inlined){
       fixed_length = column_length;
@@ -104,6 +104,9 @@ class ColumnInfo {
 
   bool allow_null;
   bool is_inlined;
+
+  // Constraints
+  std::vector<Constraint> constraint_vector;
 };
 
 //===--------------------------------------------------------------------===//
@@ -125,7 +128,8 @@ class Schema	{
                          const std::vector<oid_t> column_lengths,
                          const std::vector<std::string> column_names,
                          const std::vector<bool> allow_null,
-                         const std::vector<bool> is_inlined);
+                         const std::vector<bool> is_inlined,
+                         const std::vector<std::vector<Constraint>> constraint_vector_of_vectors);
 
   /// Construct schema from vector of ColumnInfo
   Schema(const std::vector<ColumnInfo> columns);

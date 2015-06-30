@@ -19,6 +19,7 @@ namespace bridge {
 bool DDL::CreateTable(std::string table_name,
                       DDL_ColumnInfo* ddl_columnInfo,
                       int num_columns, 
+                      int *num_of_constraints_of_each_column,
                       catalog::Schema* schema = NULL){
   if( ( num_columns > 0 && ddl_columnInfo == NULL) && schema == NULL ) 
     return false;
@@ -31,20 +32,21 @@ bool DDL::CreateTable(std::string table_name,
   if( schema == NULL ){
     std::vector<catalog::ColumnInfo> columnInfoVect;
     ValueType currentValueType;
+    ConstraintType currentConstraintType;
+    std::vector<catalog::Constraint> constraint_vec;
 
     // TODO :: Do we need this kind of table??
     // create a table without columnInfo
-    if( num_columns == 0 )
-    {
+    if( num_columns == 0 ){
           currentValueType = VALUE_TYPE_NULL;
-          catalog::ColumnInfo *columnInfo = new catalog::ColumnInfo( currentValueType, 0, 0, "", true, true);
+          catalog::ColumnInfo *columnInfo = new catalog::ColumnInfo( currentValueType, 0, 0, "", true, true, constraint_vec);
           columnInfoVect.push_back(*columnInfo);
-    }else
-    {
+    }else{
+
       for( int column_itr = 0; column_itr < num_columns; column_itr++ ){
   
-  
-        switch(ddl_columnInfo[column_itr].type ){
+        // Set up ValueType
+        switch(ddl_columnInfo[column_itr].valueType ){
           // Could not find yet corresponding types in Postgres...
           // Also - check below types again to make sure..
           // TODO :: change the numbers to enum type
@@ -102,23 +104,89 @@ bool DDL::CreateTable(std::string table_name,
             /* INVALID VALUE TYPE */
           default:
             currentValueType = VALUE_TYPE_INVALID;
-            printf("INVALID VALUE TYPE : %d \n", ddl_columnInfo[column_itr].type);
+            printf("INVALID VALUE TYPE : %d \n", ddl_columnInfo[column_itr].valueType);
             break;
         }
-  
+ 
+        constraint_vec.clear();
+        for(int constraint_itr = 0 ; constraint_itr < num_of_constraints_of_each_column[column_itr]; constraint_itr++)
+        {
+          index::Index* index = nullptr;
+          storage::DataTable* table = nullptr;
+
+printf("JWKIM DEBUG %s %d %d \n", __func__, __LINE__, constraint_itr);
+          
+          // Matching the ConstraintType from Postgres to Peloton
+          // TODO :: Do we need both constraint types ???
+          switch(ddl_columnInfo[column_itr].constraintType[constraint_itr] ){
+            case CONSTR_CHECK:
+              printf(" ConstraintNode->contype is CONSTR_CHECK\n");
+              currentConstraintType = CONSTRAINT_TYPE_CHECK;
+              break;
+
+            case CONSTR_NOTNULL:
+              printf(" ConstraintNode->contype is CONSTR_NOTNULL\n");
+              currentConstraintType = CONSTRAINT_TYPE_NOTNULL;
+              break;
+
+            case CONSTR_UNIQUE:
+              printf(" ConstraintNode->contype is CONSTR_UNIQUE\n");
+              currentConstraintType = CONSTRAINT_TYPE_UNIQUE;
+              break;
+
+           case CONSTR_PRIMARY:
+              printf(" ConstraintNode->contype is CONSTR_PRIMARY\n");
+              currentConstraintType = CONSTRAINT_TYPE_PRIMARY;
+              break;
+
+            case CONSTR_FOREIGN:
+              printf(" ConstraintNode->contype is CONST_FOREIGN\n");
+              currentConstraintType = CONSTRAINT_TYPE_NOTNULL;
+              break;
+
+           case CONSTR_EXCLUSION:
+              printf(" ConstraintNode->contype is CONSTR_EXCLUSION\n");
+              currentConstraintType = CONSTRAINT_TYPE_NOTNULL;
+              break;
+
+           default:
+              printf("INVALID CONSTRAINT TYPE : %d \n", ddl_columnInfo[column_itr].constraintType[constraint_itr]);
+              break;
+          }
+
+          catalog::Constraint* constraint = nullptr;
+          std::string tmp = ConstraintTypeToString(currentConstraintType);
+printf("JWKIM DEBUG %s %d %s \n", __func__, __LINE__, tmp.c_str());
+//          if( ddl_columnInfo[column_itr].conname == NULL )
+            constraint = new catalog::Constraint( currentConstraintType );
+printf("JWKIM DEBUG %s %d\n", __func__, __LINE__);
+//          else
+//            constraint = new catalog::Constraint( ddl_columnInfo[column_itr].conname[constraint_itr], currentConstraintType);
+
+          constraint_vec.push_back(*constraint);
+printf("JWKIM DEBUG %s %d\n", __func__, __LINE__);
+        }
+      
         catalog::ColumnInfo *columnInfo = new catalog::ColumnInfo( currentValueType,
                                                                    ddl_columnInfo[column_itr].column_offset,
                                                                    ddl_columnInfo[column_itr].column_length,
                                                                    ddl_columnInfo[column_itr].name,
                                                                    ddl_columnInfo[column_itr].allow_null,
-                                                                   ddl_columnInfo[column_itr].is_inlined );
+                                                                   ddl_columnInfo[column_itr].is_inlined,
+                                                                   constraint_vec);
         // Add current columnInfo into the columnInfoVect
         columnInfoVect.push_back(*columnInfo);
       }
     }
 
     // Construct schema from vector of ColumnInfo
+printf("JWKIM DEBUG :: %s %d\n", __func__, __LINE__);
     schema = new catalog::Schema(columnInfoVect);
+printf("JWKIM DEBUG :: %s %d\n", __func__, __LINE__);
+
+    // Just for debugging
+    std::cout << "Print out Schema just for debugging of constraint" << std::endl;
+    std::cout << *schema << std::endl;
   }
 
   // Construct backend
@@ -131,6 +199,7 @@ bool DDL::CreateTable(std::string table_name,
 
   // Store the schema for "CreateIndex"
   table->SetSchema(schema);
+
 
   //LOG_WARN("Created table : %s \n", table_name);
   return true;
@@ -227,8 +296,8 @@ bool DDL::CreateIndex(std::string index_name,
  
 
 extern "C" {
-bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns) {
-  return DDL::CreateTable(table_name, ddl_columnInfo, num_columns);
+bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns, int* num_of_constraints_of_each_column) {
+  return DDL::CreateTable(table_name, ddl_columnInfo, num_columns, num_of_constraints_of_each_column);
 }
 bool DDL_DropTable(unsigned int table_oid) {
   return DDL::DropTable(table_oid);

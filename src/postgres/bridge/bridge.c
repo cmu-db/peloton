@@ -328,12 +328,15 @@ bool InitPeloton(const char* dbname)
                 strcmp( NameStr(pgattribute->attname),"xmin" ) &&
                 strcmp( NameStr(pgattribute->attname),"tableoid" ) )
             {
-              ddl_columnInfo[column_itr].type = pgattribute->atttypid;
+              ddl_columnInfo[column_itr].valueType = pgattribute->atttypid;
               ddl_columnInfo[column_itr].column_offset = column_itr;
               ddl_columnInfo[column_itr].column_length = pgattribute->attlen;
+              ddl_columnInfo[column_itr].name = (char*) malloc( sizeof(char)*strlen(NameStr(pgattribute->attname)));
               strcpy(ddl_columnInfo[column_itr].name, NameStr(pgattribute->attname));
               ddl_columnInfo[column_itr].allow_null = ! pgattribute->attnotnull;
               ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
+              ddl_columnInfo[column_itr].constraintType = NULL; // TODO :: Need to be updated ( read constraints from catalog and set it up )
+              ddl_columnInfo[column_itr].conname = NULL; // TODO :: Need to be updated
               column_itr++;
             } // end if
           } // end if
@@ -344,7 +347,7 @@ bool InitPeloton(const char* dbname)
         // Create the table
         if( pgclass->relkind == 'r' )
         {
-          ret = DDL_CreateTable( NameStr(pgclass->relname) , ddl_columnInfo, column_itr);
+          ret = DDL_CreateTable( NameStr(pgclass->relname) , ddl_columnInfo, column_itr, 0/* need to be updated */);
           if( ret )  printf("Create Table \"%s\" in Peloton\n", NameStr(pgclass->relname));
           else       fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
         } 
@@ -375,7 +378,7 @@ bool InitPeloton(const char* dbname)
       }else
       {
         // Create Table without column info
-        ret = DDL_CreateTable( NameStr(pgclass->relname) , NULL, 0);
+        ret = DDL_CreateTable( NameStr(pgclass->relname) , NULL, 0,  0);
         if( ret )  printf("Create Table \"%s\" in Peloton\n", NameStr(pgclass->relname));
         else       fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
       }
