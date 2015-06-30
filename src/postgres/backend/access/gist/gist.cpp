@@ -316,7 +316,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 			/* Prepare a vector of all the downlinks */
 			for (ptr = dist; ptr; ptr = ptr->next)
 				ndownlinks++;
-			downlinks = palloc(sizeof(IndexTuple) * ndownlinks);
+			downlinks = static_cast<IndexTupleData **>(palloc(sizeof(IndexTuple) * ndownlinks));
 			for (i = 0, ptr = dist; ptr; ptr = ptr->next)
 				downlinks[i++] = ptr->itup;
 
@@ -334,7 +334,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 			/* Prepare split-info to be returned to caller */
 			for (ptr = dist; ptr; ptr = ptr->next)
 			{
-				GISTPageSplitInfo *si = palloc(sizeof(GISTPageSplitInfo));
+				GISTPageSplitInfo *si = static_cast<GISTPageSplitInfo *>(palloc(sizeof(GISTPageSplitInfo)));
 
 				si->buf = ptr->buffer;
 				si->downlink = ptr->itup;
@@ -798,7 +798,7 @@ gistFindPath(Relation r, BlockNumber child, OffsetNumber *downlinkoffnum)
 	while (fifo != NIL)
 	{
 		/* Get next page to visit */
-		top = linitial(fifo);
+		top = static_cast<GISTInsertStack *>(linitial(fifo));
 		fifo = list_delete_first(fifo);
 
 		buffer = ReadBuffer(r, top->blkno);
@@ -1057,7 +1057,7 @@ gistfixsplit(GISTInsertState *state, GISTSTATE *giststate)
 	 */
 	for (;;)
 	{
-		GISTPageSplitInfo *si = palloc(sizeof(GISTPageSplitInfo));
+		GISTPageSplitInfo *si = static_cast<GISTPageSplitInfo *>(palloc(sizeof(GISTPageSplitInfo)));
 		IndexTuple	downlink;
 
 		page = BufferGetPage(buf);
