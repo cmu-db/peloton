@@ -212,7 +212,7 @@ uuid_ne(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(uuid_internal_cmp(arg1, arg2) != 0);
 }
 
-/* handler for btree index coperator */
+/* handler for btree index operator___ */
 Datum
 uuid_cmp(PG_FUNCTION_ARGS)
 {

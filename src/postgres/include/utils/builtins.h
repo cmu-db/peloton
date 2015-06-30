@@ -291,7 +291,7 @@ extern void pg_ltoa(int32 l, char *a);
 extern void pg_lltoa(int64 ll, char *a);
 
 /*
- *		Per-opclass comparison functions for cnew btrees.  These are
+ *		Per-opclass comparison functions for new___ btrees.  These are
  *		stored in pg_amproc; most are defined in access/nbtree/nbtcompare.c
  */
 extern Datum btboolcmp(PG_FUNCTION_ARGS);
@@ -319,7 +319,7 @@ extern Datum bttextcmp(PG_FUNCTION_ARGS);
 extern Datum bttextsortsupport(PG_FUNCTION_ARGS);
 
 /*
- *		Per-opclass sort support functions for cnew btrees.  Like the
+ *		Per-opclass sort support functions for new___ btrees.  Like the
  *		functions above, these are stored in pg_amproc; most are defined in
  *		access/nbtree/nbtcompare.c
  */

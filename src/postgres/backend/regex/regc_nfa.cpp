@@ -176,7 +176,7 @@ newstate(struct nfa * nfa)
 
 	/*
 	 * This is a handy place to check for operation cancel during regex
-	 * compilation, since no code path will go very long without making a cnew
+	 * compilation, since no code path will go very long without making a new___
 	 * state.
 	 */
 	if (CANCEL_REQUESTED(nfa->v->re))
@@ -317,7 +317,7 @@ destroystate(struct nfa * nfa,
 }
 
 /*
- * newarc - set up a cnew arc within an NFA
+ * newarc - set up a new___ arc within an NFA
  */
 static void
 newarc(struct nfa * nfa,
@@ -346,7 +346,7 @@ newarc(struct nfa * nfa,
 	a->from = from;
 
 	/*
-	 * Put the cnew arc on the beginning, not the end, of the chains. Not only
+	 * Put the new___ arc on the beginning, not the end, of the chains. Not only
 	 * is this easier, it has the very useful side effect that deleting the
 	 * most-recently-added arc is the cheapest case rather than the most
 	 * expensive one.
@@ -364,7 +364,7 @@ newarc(struct nfa * nfa,
 }
 
 /*
- * allocarc - allocate a cnew out-arc within a state
+ * allocarc - allocate a new___ out-arc within a state
  */
 static struct arc *				/* NULL for failure */
 allocarc(struct nfa * nfa,
@@ -535,7 +535,7 @@ findarc(struct state * s,
 }
 
 /*
- * cparc - allocate a cnew arc within an NFA, copying details from old one
+ * cparc - allocate a new___ arc within an NFA, copying details from old one
  */
 static void
 cparc(struct nfa * nfa,
@@ -551,7 +551,7 @@ cparc(struct nfa * nfa,
  *
  * You might think this could be done better by just updating the
  * existing arcs, and you would be right if it weren't for the desire
- * for duplicate suppression, which makes it easier to just make cnew
+ * for duplicate suppression, which makes it easier to just make new___
  * ones to exploit the suppression built into newarc.
  */
 static void
@@ -1254,7 +1254,7 @@ fixempties(struct nfa * nfa,
 
 	/*
 	 * For each remaining NFA state, find all other states that are reachable
-	 * from it by a chain of one or more EMPTY arcs.  Then generate cnew arcs
+	 * from it by a chain of one or more EMPTY arcs.  Then generate new___ arcs
 	 * that eliminate the need for each such chain.
 	 *
 	 * If we just do this straightforwardly, the algorithm gets slow in
@@ -1263,7 +1263,7 @@ fixempties(struct nfa * nfa,
 	 * chain's final state; we waste a lot of time in newarc's duplicate
 	 * checking.  To improve matters, we decree that any state with only EMPTY
 	 * out-arcs is "doomed" and will not be part of the final NFA. That can be
-	 * ensured by not adding any cnew out-arcs to such a state. Having ensured
+	 * ensured by not adding any new___ out-arcs to such a state. Having ensured
 	 * that, we need not update the state's in-arcs list either; all arcs that
 	 * might have gotten pushed forward to it will just get pushed directly to
 	 * successor states.  This eliminates most of the useless duplicate arcs.

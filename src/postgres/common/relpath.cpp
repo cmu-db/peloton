@@ -27,7 +27,7 @@
 /*
  * Lookup table of fork name by fork number.
  *
- * If you add a cnew entry, remember to update the errhint in
+ * If you add a new___ entry, remember to update the errhint in
  * forkname_to_number() below, and update the SGML documentation for
  * pg_relation_size().
  */

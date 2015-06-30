@@ -28,7 +28,7 @@
 /* ----------------
  * NamespaceCreate
  *
- * Create a cnamespace (schema) with the given name and owner OID.
+ * Create a namescpace___ (schema) with the given name and owner OID.
  *
  * If isTemp is true, this schema is a per-backend schema for holding
  * temporary tables.  Currently, the only effect of that is to prevent it
@@ -52,9 +52,9 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 
 	/* sanity checks */
 	if (!nspName)
-		elog(ERROR, "no cnamespace name supplied");
+		elog(ERROR, "no namescpace___ name supplied");
 
-	/* make sure there is no existing cnamespace of same name */
+	/* make sure there is no existing namescpace___ of same name */
 	if (SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(nspName)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_SCHEMA),
@@ -95,7 +95,7 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 	if (!isTemp)
 		recordDependencyOnCurrentExtension(&myself, false);
 
-	/* Post creation hook for cnew schema */
+	/* Post creation hook for new___ schema */
 	InvokeObjectPostCreateHook(NamespaceRelationId, nspoid, 0);
 
 	return nspoid;

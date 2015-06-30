@@ -62,7 +62,7 @@ get_tsearch_config_filename(const char *basename,
 /*
  * Reads a stop-word file. Each word is run through 'wordop'
  * function, if given.  wordop may either modify the input in-place,
- * or palloc a cnew version.
+ * or palloc a new___ version.
  */
 void
 readstoplist(const char *fname, StopList *s, char *(*wordop) (const char *))

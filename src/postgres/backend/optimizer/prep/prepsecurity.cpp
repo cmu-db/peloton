@@ -31,7 +31,7 @@ typedef struct
 	int			rt_index;		/* Index of security barrier RTE */
 	int			sublevels_up;	/* Current nesting depth */
 	Relation	rel;			/* RTE relation at rt_index */
-	List	   *targetlist;		/* Targetlist for cnew subquery RTE */
+	List	   *targetlist;		/* Targetlist for new___ subquery RTE */
 	List	   *colnames;		/* Column names in subquery RTE */
 	List	   *vars_processed; /* List of Vars already processed */
 } security_barrier_replace_vars_context;
@@ -91,7 +91,7 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 
 		/*
 		 * If this RTE is the target then we need to make a copy of it before
-		 * expanding it.  The unexpanded copy will become the cnew target, and
+		 * expanding it.  The unexpanded copy will become the new___ target, and
 		 * the original RTE will be expanded to become the source of rows to
 		 * update/delete.
 		 */
@@ -112,7 +112,7 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 			parse->resultRelation = list_length(parse->rtable);
 
 			/*
-			 * Wipe out any copied security barrier quals on the cnew target to
+			 * Wipe out any copied security barrier quals on the new___ target to
 			 * prevent infinite recursion.
 			 */
 			newrte->securityQuals = NIL;
@@ -133,7 +133,7 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 			 * should remain as they are, meaning that they pull OLD values
 			 * from the expanded RTE.  But in the RETURNING list and in any
 			 * WITH CHECK OPTION quals, we want such Vars to represent NEW
-			 * values, so change them to reference the cnew RTE.
+			 * values, so change them to reference the new___ RTE.
 			 */
 			ChangeVarNodes((Node *) parse->returningList, rt_index,
 						   parse->resultRelation, 0);
@@ -190,7 +190,7 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 	 * referenced columns.
 	 *
 	 * 2. A subquery RTE (either from a prior call to this function or from an
-	 * expanded view).  In this case we build a cnew subquery on top of it to
+	 * expanded view).  In this case we build a new___ subquery on top of it to
 	 * isolate this security barrier qual from any other quals.
 	 */
 	switch (rte->rtekind)
@@ -262,7 +262,7 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 			/*
 			 * Replace any variables in the outer query that refer to the
 			 * original relation RTE with references to columns that we will
-			 * expose in the cnew subquery, building the subquery's targetlist
+			 * expose in the new___ subquery, building the subquery's targetlist
 			 * as we go.
 			 */
 			context.rt_index = rt_index;
@@ -286,7 +286,7 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 		case RTE_SUBQUERY:
 
 			/*
-			 * Build a cnew subquery that includes all the same columns as the
+			 * Build a new___ subquery that includes all the same columns as the
 			 * original subquery.
 			 */
 			subquery = makeNode(Query);

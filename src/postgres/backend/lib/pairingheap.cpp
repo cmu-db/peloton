@@ -11,7 +11,7 @@
  *
  *	Michael L. Fredman, Robert Sedgewick, Daniel D. Sleator, and Robert E.
  *	 Tarjan. 1986.
- *	The pairing heap: a cnew form of self-adjusting heap.
+ *	The pairing heap: a new___ form of self-adjusting heap.
  *	Algorithmica 1, 1 (January 1986), pages 111-129. DOI: 10.1007/BF01840439
  *
  * Portions Copyright (c) 2012-2015, PostgreSQL Global Development Group
@@ -113,7 +113,7 @@ pairingheap_add(pairingheap *heap, pairingheap_node *node)
 {
 	node->first_child = NULL;
 
-	/* Link the cnew node as a cnew tree */
+	/* Link the new___ node as a new___ tree */
 	heap->ph_root = merge(heap, heap->ph_root, node);
 	heap->ph_root->prev_or_parent = NULL;
 	heap->ph_root->next_sibling = NULL;
@@ -149,7 +149,7 @@ pairingheap_remove_first(pairingheap *heap)
 
 	Assert(!pairingheap_is_empty(heap));
 
-	/* Remove the root, and form a cnew heap of its children. */
+	/* Remove the root, and form a new___ heap of its children. */
 	result = heap->ph_root;
 	children = result->first_child;
 
@@ -202,7 +202,7 @@ pairingheap_remove(pairingheap *heap, pairingheap_node *node)
 	Assert(*prev_ptr == node);
 
 	/*
-	 * If this node has children, make a cnew subheap of the children and link
+	 * If this node has children, make a new___ subheap of the children and link
 	 * the subheap in place of the removed node. Otherwise just unlink this
 	 * node.
 	 */

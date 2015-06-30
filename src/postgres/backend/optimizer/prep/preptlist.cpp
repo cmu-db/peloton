@@ -44,7 +44,7 @@ static List *expand_targetlist(List *tlist, int command_type,
  * preprocess_targetlist
  *	  Driver for preprocessing the parse tree targetlist.
  *
- *	  Returns the cnew targetlist.
+ *	  Returns the new___ targetlist.
  */
 List *
 preprocess_targetlist(PlannerInfo *root, List *tlist)
@@ -185,7 +185,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
  * preprocess_onconflict_targetlist
  *	  Process ON CONFLICT SET targetlist.
  *
- *	  Returns the cnew targetlist.
+ *	  Returns the new___ targetlist.
  */
 List *
 preprocess_onconflict_targetlist(List *tlist, int result_relation, List *range_table)
@@ -258,7 +258,7 @@ expand_targetlist(List *tlist, int command_type,
 			 * exist --- this is to catch domain NOT NULL.
 			 *
 			 * For UPDATE, generate a Var reference to the existing value of
-			 * the attribute, so that it gets copied to the cnew tuple. But
+			 * the attribute, so that it gets copied to the new___ tuple. But
 			 * generate a NULL for dropped columns (we want to drop any old
 			 * values).
 			 *
@@ -348,7 +348,7 @@ expand_targetlist(List *tlist, int command_type,
 
 	/*
 	 * The remaining tlist entries should be resjunk; append them all to the
-	 * end of the cnew tlist, making sure they have resnos higher than the last
+	 * end of the new___ tlist, making sure they have resnos higher than the last
 	 * real attribute.  (Note: although the rewriter already did such
 	 * renumbering, we have to do it again here in case we are doing an UPDATE
 	 * in a table with dropped columns, or an inheritance child table with

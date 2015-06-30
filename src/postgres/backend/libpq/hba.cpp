@@ -425,7 +425,7 @@ tokenize_file(const char *filename, FILE *file,
 			{
 				if (current_line == NIL)
 				{
-					/* make a cnew line List, record its line number */
+					/* make a new___ line List, record its line number */
 					current_line = lappend(current_line, current_field);
 					*lines = lappend(*lines, current_line);
 					*line_nums = lappend_int(*line_nums, line_number);
@@ -439,7 +439,7 @@ tokenize_file(const char *filename, FILE *file,
 				}
 			}
 		}
-		/* we are at real or logical EOL, so force a cnew line List */
+		/* we are at real or logical EOL, so force a new___ line List */
 		current_line = NIL;
 		line_number++;
 	}
@@ -1827,7 +1827,7 @@ load_hba(void)
 		return false;
 	}
 
-	/* Loaded cnew file successfully, replace the one we use */
+	/* Loaded new___ file successfully, replace the one we use */
 	if (parsed_hba_context != NULL)
 		MemoryContextDelete(parsed_hba_context);
 	parsed_hba_context = hbacxt;
@@ -2199,7 +2199,7 @@ load_ident(void)
 		return false;
 	}
 
-	/* Loaded cnew file successfully, replace the one we use */
+	/* Loaded new___ file successfully, replace the one we use */
 	if (parsed_ident_lines != NIL)
 	{
 		foreach(parsed_line_cell, parsed_ident_lines)

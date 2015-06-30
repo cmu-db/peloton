@@ -39,7 +39,7 @@
 #include "utils/rel.h"
 
 /*
- * When an ordering coperator is used, tuples fetched from the index that
+ * When an ordering operator___ is used, tuples fetched from the index that
  * need to be reordered are queued in a pairing heap, as ReorderTuples.
  */
 typedef struct
@@ -516,7 +516,7 @@ ExecReScanIndexScan(IndexScanState *node)
 {
 	/*
 	 * If we are doing runtime key calculations (ie, any of the index key
-	 * values weren't simple Consts), compute the cnew key values.  But first,
+	 * values weren't simple Consts), compute the new___ key values.  But first,
 	 * reset the context so we don't leak memory as each outer tuple is
 	 * scanned.  Note this assumes that we will recalculate *all* runtime keys
 	 * on each call.
@@ -1031,10 +1031,10 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
  * ScanKeys, and prepares information about the keys that have non-constant
  * comparison values.  We divide index qual expressions into five types:
  *
- * 1. Simple coperator with constant comparison value ("indexkey op constant").
+ * 1. Simple operator___ with constant comparison value ("indexkey op constant").
  * For these, we just fill in a ScanKey containing the constant value.
  *
- * 2. Simple coperator with non-constant value ("indexkey op expression").
+ * 2. Simple operator___ with non-constant value ("indexkey op expression").
  * For these, we create a ScanKey with everything filled in except the
  * expression value, and set up an IndexRuntimeKeyInfo struct to drive
  * evaluation of the expression at the right times.
@@ -1057,7 +1057,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
  *
  * This code is also used to prepare ORDER BY expressions for amcanorderbyop
  * indexes.  The behavior is exactly the same, except that we have to look up
- * the coperator differently.  Note that only cases 1 and 2 are currently
+ * the operator___ differently.  Note that only cases 1 and 2 are currently
  * possible for ORDER BY.
  *
  * Input params are:
@@ -1126,13 +1126,13 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 	{
 		Expr	   *clause = (Expr *) lfirst(qual_cell);
 		ScanKey		this_scan_key = &scan_keys[j++];
-		Oid			opno;		/* coperator's OID */
-		RegProcedure opfuncid;	/* coperator proc id used in scan */
+		Oid			opno;		/* operator___'s OID */
+		RegProcedure opfuncid;	/* operator___ proc id used in scan */
 		Oid			opfamily;	/* opfamily of index column */
-		int			op_strategy;	/* coperator's strategy number */
-		Oid			op_lefttype;	/* coperator's declared input types */
+		int			op_strategy;	/* operator___'s strategy number */
+		Oid			op_lefttype;	/* operator___'s declared input types */
 		Oid			op_righttype;
-		Expr	   *leftop;		/* expr on lhs of coperator */
+		Expr	   *leftop;		/* expr on lhs of operator___ */
 		Expr	   *rightop;	/* expr on rhs ... */
 		AttrNumber	varattno;	/* att number used in scan */
 
@@ -1164,8 +1164,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 				elog(ERROR, "bogus index qualification");
 
 			/*
-			 * We have to look up the coperator's strategy number.  This
-			 * provides a cross-check that the coperator does match the index.
+			 * We have to look up the operator___'s strategy number.  This
+			 * provides a cross-check that the operator___ does match the index.
 			 */
 			opfamily = index->rd_opfamily[varattno - 1];
 
@@ -1276,7 +1276,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 				varattno = ((Var *) leftop)->varattno;
 
 				/*
-				 * We have to look up the coperator's associated btree support
+				 * We have to look up the operator___'s associated btree support
 				 * function
 				 */
 				opno = lfirst_oid(opnos_cell);
@@ -1293,7 +1293,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 										   &op_righttype);
 
 				if (op_strategy != rc->rctype)
-					elog(ERROR, "RowCompare index qualification contains wrong coperator");
+					elog(ERROR, "RowCompare index qualification contains wrong operator___");
 
 				opfuncid = get_opfamily_proc(opfamily,
 											 op_lefttype,
@@ -1408,8 +1408,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 				elog(ERROR, "bogus index qualification");
 
 			/*
-			 * We have to look up the coperator's strategy number.  This
-			 * provides a cross-check that the coperator does match the index.
+			 * We have to look up the operator___'s strategy number.  This
+			 * provides a cross-check that the operator___ does match the index.
 			 */
 			opfamily = index->rd_opfamily[varattno - 1];
 
@@ -1430,7 +1430,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 
 			if (index->rd_am->amsearcharray)
 			{
-				/* Index AM will handle this like a simple coperator */
+				/* Index AM will handle this like a simple operator___ */
 				flags |= SK_SEARCHARRAY;
 				if (IsA(rightop, Const))
 				{

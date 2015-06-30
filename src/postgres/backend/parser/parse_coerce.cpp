@@ -87,7 +87,7 @@ coerce_to_target_type(ParseState *pstate, Node *expr, Oid exprtype,
 
 	/*
 	 * If the input has a CollateExpr at the top, strip it off, perform the
-	 * coercion, and put a cnew one back on.  This is annoying since it
+	 * coercion, and put a new___ one back on.  This is annoying since it
 	 * duplicates logic in coerce_type, but if we don't do this then it's too
 	 * hard to tell whether coerce_type actually changed anything, and we
 	 * *must* know that to avoid possibly calling hide_coercion_node on
@@ -459,7 +459,7 @@ coerce_type(ParseState *pstate, Node *node,
 		|| typeIsOfTypedTable(inputTypeId, targetTypeId))
 	{
 		/*
-		 * Input cclass type is a subclass of target, so generate an
+		 * Input class___ type is a subclass of target, so generate an
 		 * appropriate runtime conversion (removing unneeded columns and
 		 * possibly rearranging the ones that are wanted).
 		 */
@@ -565,7 +565,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 			continue;
 
 		/*
-		 * If input is a cclass type that inherits from target, accept
+		 * If input is a class___ type that inherits from target, accept
 		 */
 		if (typeInheritsFrom(inputTypeId, targetTypeId)
 			|| typeIsOfTypedTable(inputTypeId, targetTypeId))
@@ -1193,7 +1193,7 @@ select_common_type(ParseState *pstate, List *exprs, const char *context,
 		Node	   *nexpr = (Node *) lfirst(lc);
 		Oid			ntype = getBaseType(exprType(nexpr));
 
-		/* move on to next one if no cnew information... */
+		/* move on to next one if no new___ information... */
 		if (ntype != UNKNOWNOID && ntype != ptype)
 		{
 			TYPCATEGORY ncategory;
@@ -1230,7 +1230,7 @@ select_common_type(ParseState *pstate, List *exprs, const char *context,
 					 !can_coerce_type(1, &ntype, &ptype, COERCION_IMPLICIT))
 			{
 				/*
-				 * take cnew type if can coerce to it implicitly but not the
+				 * take new___ type if can coerce to it implicitly but not the
 				 * other way; but if we have a preferred type, stay on it.
 				 */
 				pexpr = nexpr;
@@ -1584,7 +1584,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 				continue;
 			}
 			if (allow_poly && decl_type == actual_type)
-				continue;		/* no cnew information here */
+				continue;		/* no new___ information here */
 			if (OidIsValid(elem_typeid) && actual_type != elem_typeid)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1603,7 +1603,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 				continue;
 			}
 			if (allow_poly && decl_type == actual_type)
-				continue;		/* no cnew information here */
+				continue;		/* no new___ information here */
 			actual_type = getBaseType(actual_type);		/* flatten domains */
 			if (OidIsValid(array_typeid) && actual_type != array_typeid)
 				ereport(ERROR,
@@ -1623,7 +1623,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 				continue;
 			}
 			if (allow_poly && decl_type == actual_type)
-				continue;		/* no cnew information here */
+				continue;		/* no new___ information here */
 			actual_type = getBaseType(actual_type);		/* flatten domains */
 			if (OidIsValid(range_typeid) && actual_type != range_typeid)
 				ereport(ERROR,

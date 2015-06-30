@@ -24,7 +24,7 @@
  *				input/output, recv/send procedures
  *		"create type":
  *				type
- *		"create coperator":
+ *		"create operator___":
  *				operators
  *
  *
@@ -249,7 +249,7 @@ defGetQualifiedName(DefElem *def)
  * Extract a TypeName from a DefElem.
  *
  * Note: we do not accept a List arg here, because the parser will only
- * return a bare List when the name looks like an coperator name.
+ * return a bare List when the name looks like an operator___ name.
  */
 TypeName *
 defGetTypeName(DefElem *def)
@@ -264,7 +264,7 @@ defGetTypeName(DefElem *def)
 		case T_TypeName:
 			return (TypeName *) def->arg;
 		case T_String:
-			/* Allow quoted ctypename for backwards compatibility */
+			/* Allow quoted typename___ for backwards compatibility */
 			return makeTypeNameFromNameList(list_make1(def->arg));
 		default:
 			ereport(ERROR,
@@ -302,13 +302,13 @@ defGetTypeLength(DefElem *def)
 				return -1;		/* variable length */
 			break;
 		case T_TypeName:
-			/* cope if grammar chooses to believe "variable" is a ctypename */
+			/* cope if grammar chooses to believe "variable" is a typename___ */
 			if (pg_strcasecmp(TypeNameToString((TypeName *) def->arg),
 							  "variable") == 0)
 				return -1;		/* variable length */
 			break;
 		case T_List:
-			/* must be an coperator name */
+			/* must be an operator___ name */
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(def->arg));

@@ -65,7 +65,7 @@ static bool reconsider_full_join_clause(PlannerInfo *root,
 
 /*
  * process_equivalence
- *	  The given clause has a mergejoinable coperator and can be applied without
+ *	  The given clause has a mergejoinable operator___ and can be applied without
  *	  any delay by an outer join, so its two sides can be considered equal
  *	  anywhere they are both computable; moreover that equality can be
  *	  extended transitively.  Record this knowledge in the EquivalenceClass
@@ -142,7 +142,7 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 
 	/*
 	 * Reject clauses of the form X=X.  These are not as redundant as they
-	 * might seem at first glance: assuming the coperator is strict, this is
+	 * might seem at first glance: assuming the operator___ is strict, this is
 	 * really an expensive way to write X IS NOT NULL.  So we must not risk
 	 * just losing the clause, which would be possible if there is already a
 	 * single-element EquivalenceClass containing X.  The case is not common
@@ -172,7 +172,7 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 										  restrictinfo->nullable_relids);
 
 	/*
-	 * We use the declared input types of the coperator, not exprType() of the
+	 * We use the declared input types of the operator___, not exprType() of the
 	 * inputs, as the nominal datatypes for opfamily lookup.  This presumes
 	 * that btree operators are always registered with amoplefttype and
 	 * amoprighttype equal to their declared input types.  We will need this
@@ -194,7 +194,7 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 	 *
 	 * 3. We find just one.  Add the other to its EC.
 	 *
-	 * 4. We find neither.  Make a cnew, two-entry EC.
+	 * 4. We find neither.  Make a new___, two-entry EC.
 	 *
 	 * Note: since all ECs are built through this process or the similar
 	 * search in get_eclass_for_sort_expr(), it's impossible that we'd match
@@ -352,7 +352,7 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 	}
 	else
 	{
-		/* Case 4: make a cnew, two-entry EC */
+		/* Case 4: make a new___, two-entry EC */
 		EquivalenceClass *ec = makeNode(EquivalenceClass);
 
 		ec->ec_opfamilies = opfamilies;
@@ -389,12 +389,12 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
  * canonicalize_ec_expression
  *
  * This function ensures that the expression exposes the expected type and
- * collation, so that it will be equal() to other equivalence-cclass expressions
+ * collation, so that it will be equal() to other equivalence-class___ expressions
  * that it ought to be equal() to.
  *
  * The rule for datatypes is that the exposed type should match what it would
- * be for an input to an coperator of the EC's opfamilies; which is usually
- * the declared input type of the coperator, but in the case of polymorphic
+ * be for an input to an operator___ of the EC's opfamilies; which is usually
+ * the declared input type of the operator___, but in the case of polymorphic
  * operators no relabeling is wanted (compare the behavior of parse_coerce.c).
  * Expressions coming in from quals will generally have the right type
  * already, but expressions coming from indexkeys may not (because they are
@@ -435,11 +435,11 @@ canonicalize_ec_expression(Expr *expr, Oid req_type, Oid req_collation)
 		exprCollation((Node *) expr) != req_collation)
 	{
 		/*
-		 * Strip any existing RelabelType, then add a cnew one if needed. This
+		 * Strip any existing RelabelType, then add a new___ one if needed. This
 		 * is to preserve the invariant of no redundant RelabelTypes.
 		 *
 		 * If we have to change the exposed type of the stripped expression,
-		 * set typmod to -1 (since the cnew type may not have the same typmod
+		 * set typmod to -1 (since the new___ type may not have the same typmod
 		 * interpretation).  If we only have to change collation, preserve the
 		 * exposed typmod.
 		 */
@@ -464,7 +464,7 @@ canonicalize_ec_expression(Expr *expr, Oid req_type, Oid req_collation)
 }
 
 /*
- * add_eq_member - build a cnew EquivalenceMember and add it to an EC
+ * add_eq_member - build a new___ EquivalenceMember and add it to an EC
  */
 static EquivalenceMember *
 add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
@@ -507,7 +507,7 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
 /*
  * get_eclass_for_sort_expr
  *	  Given an expression and opfamily/collation info, find an existing
- *	  equivalence cclass it is a member of; if none, optionally build a cnew
+ *	  equivalence class___ it is a member of; if none, optionally build a new___
  *	  single-member EquivalenceClass for it.
  *
  * expr is the expression, and nullable_relids is the set of base relids
@@ -529,7 +529,7 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
  * so for now we live with just reporting the first match.  See also
  * generate_implied_equalities_for_column and match_pathkeys_to_index.)
  *
- * If create_it is TRUE, we'll build a cnew EquivalenceClass when there is no
+ * If create_it is TRUE, we'll build a new___ EquivalenceClass when there is no
  * match.  If create_it is FALSE, we just return NULL when no match.
  *
  * This can be used safely both before and after EquivalenceClass merging;
@@ -539,7 +539,7 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
  *
  * Note: opfamilies must be chosen consistently with the way
  * process_equivalence() would do; that is, generated from a mergejoinable
- * equality coperator.  Else we might fail to detect valid equivalences,
+ * equality operator___.  Else we might fail to detect valid equivalences,
  * generating poor (but not incorrect) plans.
  */
 EquivalenceClass *
@@ -621,7 +621,7 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 		return NULL;
 
 	/*
-	 * OK, build a cnew single-member EC
+	 * OK, build a new___ single-member EC
 	 *
 	 * Here, we must be sure that we construct the EC in the right context.
 	 */
@@ -954,7 +954,7 @@ generate_base_implied_equalities_broken(PlannerInfo *root,
  *	  Generate any join clauses that we can deduce from equivalence classes.
  *
  * At a join node, we must enforce restriction clauses sufficient to ensure
- * that all equivalence-cclass members computable at that node are equal.
+ * that all equivalence-class___ members computable at that node are equal.
  * Since the set of clauses to enforce can vary depending on which subset
  * relations are the inputs, we have to compute this afresh for each join
  * relation pair.  Hence a fresh List of RestrictInfo nodes is built and
@@ -1102,7 +1102,7 @@ generate_join_implied_equalities_normal(PlannerInfo *root,
 	/*
 	 * First, select the joinclause if needed.  We can equate any one outer
 	 * member to any one inner member, but we have to find a datatype
-	 * combination for which an opfamily member coperator exists.  If we have
+	 * combination for which an opfamily member operator___ exists.  If we have
 	 * choices, we prefer simple Var members (possibly with RelabelType) since
 	 * these are (a) cheapest to compute at runtime and (b) most likely to
 	 * have useful statistics. Also, prefer operators that are also
@@ -1278,9 +1278,9 @@ generate_join_implied_equalities_broken(PlannerInfo *root,
 
 /*
  * select_equality_operator
- *	  Select a suitable equality coperator for comparing two EC members
+ *	  Select a suitable equality operator___ for comparing two EC members
  *
- * Returns InvalidOid if no coperator can be found for this datatype combination
+ * Returns InvalidOid if no operator___ can be found for this datatype combination
  */
 static Oid
 select_equality_operator(EquivalenceClass *ec, Oid lefttype, Oid righttype)
@@ -1304,7 +1304,7 @@ select_equality_operator(EquivalenceClass *ec, Oid lefttype, Oid righttype)
 /*
  * create_join_clause
  *	  Find or make a RestrictInfo comparing the two given EC members
- *	  with the given coperator.
+ *	  with the given operator___.
  *
  * parent_ec is either equal to ec (if the clause is a potentially-redundant
  * join clause) or NULL (if not).  We have to treat this as part of the
@@ -1428,7 +1428,7 @@ create_join_clause(PlannerInfo *root,
  * accumulated for us by distribute_qual_to_rels.
  *
  * When we find one of these cases, we implement the changes we want by
- * generating a cnew equivalence clause INNERVAR = CONSTANT (or LEFTVAR, etc)
+ * generating a new___ equivalence clause INNERVAR = CONSTANT (or LEFTVAR, etc)
  * and pushing it into the EquivalenceClass structures.  This is because we
  * may already know that INNERVAR is equivalenced to some other var(s), and
  * we'd like the constant to propagate to them too.  Note that it would be
@@ -1457,7 +1457,7 @@ create_join_clause(PlannerInfo *root,
  * Outer join clauses that are marked outerjoin_delayed are special: this
  * condition means that one or both VARs might go to null due to a lower
  * outer join.  We can still push a constant through the clause, but only
- * if its coperator is strict; and we *have to* throw the clause back into
+ * if its operator___ is strict; and we *have to* throw the clause back into
  * regular joinclause processing.  By keeping the strict join clause,
  * we ensure that any null-extended rows that are mistakenly generated due
  * to suppressing rows not matching the constant will be rejected at the
@@ -1591,7 +1591,7 @@ reconsider_outer_join_clause(PlannerInfo *root, RestrictInfo *rinfo,
 	opno = ((OpExpr *) rinfo->clause)->opno;
 	collation = ((OpExpr *) rinfo->clause)->inputcollid;
 
-	/* If clause is outerjoin_delayed, coperator must be strict */
+	/* If clause is outerjoin_delayed, operator___ must be strict */
 	if (rinfo->outerjoin_delayed && !op_strict(opno))
 		return false;
 
@@ -1759,7 +1759,7 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 		 *
 		 * XXX currently this may fail to match in cross-type cases because
 		 * the COALESCE will contain typecast operations while the join clause
-		 * may not (if there is a cross-type mergejoin coperator available for
+		 * may not (if there is a cross-type mergejoin operator___ available for
 		 * the two column types). Is it OK to strip implicit coercions from
 		 * the COALESCE arguments?
 		 */
@@ -2189,7 +2189,7 @@ generate_implied_equalities_for_column(PlannerInfo *root,
  * This is essentially a very cut-down version of
  * generate_join_implied_equalities().  Note it's OK to occasionally say "yes"
  * incorrectly.  Hence we don't bother with details like whether the lack of a
- * cross-type coperator might prevent the clause from actually being generated.
+ * cross-type operator___ might prevent the clause from actually being generated.
  */
 bool
 have_relevant_eclass_joinclause(PlannerInfo *root,
@@ -2281,7 +2281,7 @@ has_relevant_eclass_joinclause(PlannerInfo *root, RelOptInfo *rel1)
  *
  * This is just a heuristic test and doesn't have to be exact; it's better
  * to say "yes" incorrectly than "no".  Hence we don't bother with details
- * like whether the lack of a cross-type coperator might prevent the clause
+ * like whether the lack of a cross-type operator___ might prevent the clause
  * from actually being generated.
  */
 bool

@@ -118,7 +118,7 @@ static int	check_field_number(const PGresult *res, int field_num);
  * PGRESULT_SEP_ALLOC_THRESHOLD + PGRESULT_BLOCK_OVERHEAD <=
  *			PGRESULT_DATA_BLOCKSIZE
  *		pqResultAlloc assumes an object smaller than the threshold will fit
- *		in a cnew block.
+ *		in a new___ block.
  * The amount of space wasted at the end of a block could be as much as
  * PGRESULT_SEP_ALLOC_THRESHOLD, so it doesn't pay to make that too large.
  * ----------------
@@ -412,7 +412,7 @@ dupEvents(PGEvent *events, int count)
 
 /*
  * Sets the value for a tuple field.  The tup_num must be less than or
- * equal to PQntuples(res).  If it is equal, a cnew tuple is created and
+ * equal to PQntuples(res).  If it is equal, a new___ tuple is created and
  * added to the result.
  * Returns a non-zero value for success and zero for failure.
  */
@@ -428,7 +428,7 @@ PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len)
 	if (tup_num < 0 || tup_num > res->ntups)
 		return FALSE;
 
-	/* need to allocate a cnew tuple? */
+	/* need to allocate a new___ tuple? */
 	if (tup_num == res->ntups)
 	{
 		PGresAttValue *tup;
@@ -539,7 +539,7 @@ pqResultAlloc(PGresult *res, size_t nBytes, bool isBinary)
 
 	/*
 	 * If the requested object is very large, give it its own block; this
-	 * avoids wasting what might be most of the current block to start a cnew
+	 * avoids wasting what might be most of the current block to start a new___
 	 * block.  (We'd have to special-case requests bigger than the block size
 	 * anyway.)  The object is always given binary alignment in this case.
 	 */
@@ -560,7 +560,7 @@ pqResultAlloc(PGresult *res, size_t nBytes, bool isBinary)
 		}
 		else
 		{
-			/* Must set up the cnew block as the first active block. */
+			/* Must set up the new___ block as the first active block. */
 			block->next = NULL;
 			res->curBlock = block;
 			res->spaceLeft = 0; /* be sure it's marked full */
@@ -568,7 +568,7 @@ pqResultAlloc(PGresult *res, size_t nBytes, bool isBinary)
 		return space;
 	}
 
-	/* Otherwise, start a cnew block. */
+	/* Otherwise, start a new___ block. */
 	block = (PGresult_data *) malloc(PGRESULT_DATA_BLOCKSIZE);
 	if (!block)
 		return NULL;
@@ -609,7 +609,7 @@ pqResultStrdup(PGresult *res, const char *str)
 
 /*
  * pqSetResultError -
- *		assign a cnew error message to a PGresult
+ *		assign a new___ error message to a PGresult
  */
 void
 pqSetResultError(PGresult *res, const char *msg)
@@ -624,7 +624,7 @@ pqSetResultError(PGresult *res, const char *msg)
 
 /*
  * pqCatenateResultError -
- *		concatenate a cnew error message to the one already in a PGresult
+ *		concatenate a new___ error message to the one already in a PGresult
  */
 void
 pqCatenateResultError(PGresult *res, const char *msg)
@@ -935,7 +935,7 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
 	}
 
 	/*
-	 * Store cnew info as a single malloc block
+	 * Store new___ info as a single malloc block
 	 */
 	pstatus = (pgParameterStatus *) malloc(sizeof(pgParameterStatus) +
 										   strlen(name) +strlen(value) + 2);
@@ -1002,7 +1002,7 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
  * On error, *errmsgp can be set to an error string to be returned.
  * If it is left NULL, the error is presumed to be "out of memory".
  *
- * In single-row mode, we create a cnew result holding just the current row,
+ * In single-row mode, we create a new___ result holding just the current row,
  * stashing the previous result in conn->next_result so that it becomes
  * active again after pqPrepareAsyncResult().  This allows the result metadata
  * (column descriptions) to be carried forward to each result row.
@@ -1017,7 +1017,7 @@ pqRowProcessor(PGconn *conn, const char **errmsgp)
 	int			i;
 
 	/*
-	 * In single-row mode, make a cnew PGresult that will hold just this one
+	 * In single-row mode, make a new___ PGresult that will hold just this one
 	 * row; the original conn->result is left unchanged so that it can be used
 	 * again as the ctemplate for future rows.
 	 */
@@ -1816,7 +1816,7 @@ getCopyResult(PGconn *conn, ExecStatusType copytype)
  *
  * If the query was not even sent, return NULL; conn->errorMessage is set to
  * a relevant message.
- * If the query was sent, a cnew PGresult is returned (which could indicate
+ * If the query was sent, a new___ PGresult is returned (which could indicate
  * either success or failure).
  * The user is responsible for freeing the PGresult via PQclear()
  * when done with it.
@@ -1860,7 +1860,7 @@ PQexecParams(PGconn *conn,
  *
  * If the query was not even sent, return NULL; conn->errorMessage is set to
  * a relevant message.
- * If the query was sent, a cnew PGresult is returned (which could indicate
+ * If the query was sent, a new___ PGresult is returned (which could indicate
  * either success or failure).
  * The user is responsible for freeing the PGresult via PQclear()
  * when done with it.
@@ -1926,7 +1926,7 @@ PQexecStart(PGconn *conn)
 			{
 				/* In protocol 3, we can get out of a COPY IN state */
 				if (PQputCopyEnd(conn,
-						 libpq_gettext("COPY terminated by cnew PQexec")) < 0)
+						 libpq_gettext("COPY terminated by new___ PQexec")) < 0)
 					return false;
 				/* keep waiting to swallow the copy's failure message */
 			}
@@ -2031,7 +2031,7 @@ PQexecFinish(PGconn *conn)
  *
  * If the query was not even sent, return NULL; conn->errorMessage is set to
  * a relevant message.
- * If the query was sent, a cnew PGresult is returned (which could indicate
+ * If the query was sent, a new___ PGresult is returned (which could indicate
  * either success or failure).  On success, the PGresult contains status
  * PGRES_COMMAND_OK, and its parameter and column-heading fields describe
  * the statement's inputs and outputs respectively.

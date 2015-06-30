@@ -307,7 +307,7 @@ ginFindParents(GinBtree btree, GinBtreeStack *stack)
 }
 
 /*
- * Insert a cnew item to a page.
+ * Insert a new___ item to a page.
  *
  * Returns true if the insertion was finished. On false, the page was split and
  * the parent needs to be updated. (a root split returns true as it doesn't
@@ -441,7 +441,7 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 
 		rbuffer = GinNewBuffer(btree->index);
 
-		/* During index build, count the cnew page */
+		/* During index build, count the new___ page */
 		if (buildStats)
 		{
 			if (btree->isData)
@@ -474,7 +474,7 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 		if (stack->parent == NULL)
 		{
 			/*
-			 * split root, so we need to allocate cnew left page and place
+			 * split root, so we need to allocate new___ left page and place
 			 * pointer on root to left and right page
 			 */
 			lbuffer = GinNewBuffer(btree->index);
@@ -495,7 +495,7 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 			GinPageGetOpaque(newlpage)->rightlink = BufferGetBlockNumber(rbuffer);
 
 			/*
-			 * Construct a cnew root page containing downlinks to the cnew left
+			 * Construct a new___ root page containing downlinks to the new___ left
 			 * and right pages. (do this in a temporary copy first rather than
 			 * overwriting the original page directly, so that we can still
 			 * abort gracefully if this fails.)
@@ -518,14 +518,14 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 		}
 
 		/*
-		 * Ok, we have the cnew contents of the left page in a temporary copy
+		 * Ok, we have the new___ contents of the left page in a temporary copy
 		 * now (newlpage), and the newly-allocated right block has been filled
 		 * in. The original page is still unchanged.
 		 *
 		 * If this is a root split, we also have a temporary page containing
-		 * the cnew contents of the root. Copy the cnew left page to a
+		 * the new___ contents of the root. Copy the new___ left page to a
 		 * newly-allocated block, and initialize the (original) root page the
-		 * cnew copy. Otherwise, copy over the temporary copy of the cnew left
+		 * new___ copy. Otherwise, copy over the temporary copy of the new___ left
 		 * page over the old left page.
 		 */
 
@@ -604,7 +604,7 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 
 		/*
 		 * If we split the root, we're done. Otherwise the split is not
-		 * complete until the downlink for the cnew page has been inserted to
+		 * complete until the downlink for the new___ page has been inserted to
 		 * the parent.
 		 */
 		if (stack->parent == NULL)
@@ -620,7 +620,7 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 }
 
 /*
- * Finish a split by inserting the downlink for the cnew page to parent.
+ * Finish a split by inserting the downlink for the new___ page to parent.
  *
  * On entry, stack->buffer is exclusively locked.
  *

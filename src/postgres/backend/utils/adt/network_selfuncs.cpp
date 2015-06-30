@@ -28,30 +28,30 @@
 #include "utils/selfuncs.h"
 
 
-/* Default selectivity for the inet overlap coperator */
+/* Default selectivity for the inet overlap operator___ */
 #define DEFAULT_OVERLAP_SEL 0.01
 
 /* Default selectivity for the various inclusion operators */
 #define DEFAULT_INCLUSION_SEL 0.005
 
-/* Default selectivity for specified coperator */
-#define DEFAULT_SEL(coperator) \
-	((coperator) == OID_INET_OVERLAP_OP ? \
+/* Default selectivity for specified operator___ */
+#define DEFAULT_SEL(operator___) \
+	((operator___) == OID_INET_OVERLAP_OP ? \
 	 DEFAULT_OVERLAP_SEL : DEFAULT_INCLUSION_SEL)
 
 /* Maximum number of items to consider in join selectivity calculations */
 #define MAX_CONSIDERED_ELEMS 1024
 
-static Selectivity networkjoinsel_inner(Oid coperator,
+static Selectivity networkjoinsel_inner(Oid operator___,
 					 VariableStatData *vardata1, VariableStatData *vardata2);
-static Selectivity networkjoinsel_semi(Oid coperator,
+static Selectivity networkjoinsel_semi(Oid operator___,
 					VariableStatData *vardata1, VariableStatData *vardata2);
 static Selectivity mcv_population(float4 *mcv_numbers, int mcv_nvalues);
 static Selectivity inet_hist_value_sel(Datum *values, int nvalues,
 					Datum constvalue, int opr_codenum);
 static Selectivity inet_mcv_join_sel(Datum *mcv1_values,
 				  float4 *mcv1_numbers, int mcv1_nvalues, Datum *mcv2_values,
-				  float4 *mcv2_numbers, int mcv2_nvalues, Oid coperator);
+				  float4 *mcv2_numbers, int mcv2_nvalues, Oid operator___);
 static Selectivity inet_mcv_hist_sel(Datum *mcv_values, float4 *mcv_numbers,
 				  int mcv_nvalues, Datum *hist_values, int hist_nvalues,
 				  int opr_codenum);
@@ -64,7 +64,7 @@ static Selectivity inet_semi_join_sel(Datum lhs_value,
 				   bool hist_exists, Datum *hist_values, int hist_nvalues,
 				   double hist_weight,
 				   FmgrInfo *proc, int opr_codenum);
-static int	inet_opr_codenum(Oid coperator);
+static int	inet_opr_codenum(Oid operator___);
 static int	inet_inclusion_cmp(inet *left, inet *right, int opr_codenum);
 static int inet_masklen_inclusion_cmp(inet *left, inet *right,
 						   int opr_codenum);
@@ -78,7 +78,7 @@ Datum
 networksel(PG_FUNCTION_ARGS)
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
-	Oid			coperator = PG_GETARG_OID(1);
+	Oid			operator___ = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	int			varRelid = PG_GETARG_INT32(3);
 	VariableStatData vardata;
@@ -101,7 +101,7 @@ networksel(PG_FUNCTION_ARGS)
 	 */
 	if (!get_restriction_variable(root, args, varRelid,
 								  &vardata, &other, &varonleft))
-		PG_RETURN_FLOAT8(DEFAULT_SEL(coperator));
+		PG_RETURN_FLOAT8(DEFAULT_SEL(operator___));
 
 	/*
 	 * Can't do anything useful if the something is not a constant, either.
@@ -109,7 +109,7 @@ networksel(PG_FUNCTION_ARGS)
 	if (!IsA(other, Const))
 	{
 		ReleaseVariableStats(vardata);
-		PG_RETURN_FLOAT8(DEFAULT_SEL(coperator));
+		PG_RETURN_FLOAT8(DEFAULT_SEL(operator___));
 	}
 
 	/* All of the operators handled here are strict. */
@@ -124,7 +124,7 @@ networksel(PG_FUNCTION_ARGS)
 	if (!HeapTupleIsValid(vardata.statsTuple))
 	{
 		ReleaseVariableStats(vardata);
-		PG_RETURN_FLOAT8(DEFAULT_SEL(coperator));
+		PG_RETURN_FLOAT8(DEFAULT_SEL(operator___));
 	}
 
 	stats = (Form_pg_statistic) GETSTRUCT(vardata.statsTuple);
@@ -136,7 +136,7 @@ networksel(PG_FUNCTION_ARGS)
 	 * to the result selectivity.  Also add up the total fraction represented
 	 * by MCV entries.
 	 */
-	fmgr_info(get_opcode(coperator), &proc);
+	fmgr_info(get_opcode(operator___), &proc);
 	mcv_selec = mcv_selectivity(&vardata, &proc, constvalue, varonleft,
 								&sumcommon);
 
@@ -152,7 +152,7 @@ networksel(PG_FUNCTION_ARGS)
 						 &hist_values, &hist_nvalues,
 						 NULL, NULL))
 	{
-		int			opr_codenum = inet_opr_codenum(coperator);
+		int			opr_codenum = inet_opr_codenum(operator___);
 
 		/* Commute if needed, so we can consider histogram to be on the left */
 		if (!varonleft)
@@ -163,7 +163,7 @@ networksel(PG_FUNCTION_ARGS)
 		free_attstatsslot(vardata.atttype, hist_values, hist_nvalues, NULL, 0);
 	}
 	else
-		non_mcv_selec = DEFAULT_SEL(coperator);
+		non_mcv_selec = DEFAULT_SEL(operator___);
 
 	/* Combine selectivities for MCV and non-MCV populations */
 	selec = mcv_selec + (1.0 - nullfrac - sumcommon) * non_mcv_selec;
@@ -198,7 +198,7 @@ Datum
 networkjoinsel(PG_FUNCTION_ARGS)
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
-	Oid			coperator = PG_GETARG_OID(1);
+	Oid			operator___ = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 #ifdef NOT_USED
 	JoinType	jointype = (JoinType) PG_GETARG_INT16(3);
@@ -222,15 +222,15 @@ networkjoinsel(PG_FUNCTION_ARGS)
 			 * Selectivity for left/full join is not exactly the same as inner
 			 * join, but we neglect the difference, as eqjoinsel does.
 			 */
-			selec = networkjoinsel_inner(coperator, &vardata1, &vardata2);
+			selec = networkjoinsel_inner(operator___, &vardata1, &vardata2);
 			break;
 		case JOIN_SEMI:
 		case JOIN_ANTI:
 			/* Here, it's important that we pass the outer var on the left. */
 			if (!join_is_reversed)
-				selec = networkjoinsel_semi(coperator, &vardata1, &vardata2);
+				selec = networkjoinsel_semi(operator___, &vardata1, &vardata2);
 			else
-				selec = networkjoinsel_semi(get_commutator(coperator),
+				selec = networkjoinsel_semi(get_commutator(operator___),
 											&vardata2, &vardata1);
 			break;
 		default:
@@ -254,7 +254,7 @@ networkjoinsel(PG_FUNCTION_ARGS)
  *
  * Calculates MCV vs MCV, MCV vs histogram and histogram vs histogram
  * selectivity for join using the subnet inclusion operators.  Unlike the
- * join selectivity function for the equality coperator, eqjoinsel_inner(),
+ * join selectivity function for the equality operator___, eqjoinsel_inner(),
  * one to one matching of the values is not enough.  Network inclusion
  * operators are likely to match many to many, so we must check all pairs.
  * (Note: it might be possible to exploit understanding of the histogram's
@@ -262,7 +262,7 @@ networkjoinsel(PG_FUNCTION_ARGS)
  * Also, MCV vs histogram selectivity is not neglected as in eqjoinsel_inner().
  */
 static Selectivity
-networkjoinsel_inner(Oid coperator,
+networkjoinsel_inner(Oid operator___,
 					 VariableStatData *vardata1, VariableStatData *vardata2)
 {
 	Form_pg_statistic stats;
@@ -337,7 +337,7 @@ networkjoinsel_inner(Oid coperator,
 			sumcommon2 = mcv_population(mcv2_numbers, mcv2_length);
 	}
 
-	opr_codenum = inet_opr_codenum(coperator);
+	opr_codenum = inet_opr_codenum(operator___);
 
 	/*
 	 * Calculate selectivity for MCV vs MCV matches.
@@ -345,12 +345,12 @@ networkjoinsel_inner(Oid coperator,
 	if (mcv1_exists && mcv2_exists)
 		selec += inet_mcv_join_sel(mcv1_values, mcv1_numbers, mcv1_length,
 								   mcv2_values, mcv2_numbers, mcv2_length,
-								   coperator);
+								   operator___);
 
 	/*
 	 * Add in selectivities for MCV vs histogram matches, scaling according to
 	 * the fractions of the populations represented by the histograms. Note
-	 * that the second case needs to commute the coperator.
+	 * that the second case needs to commute the operator___.
 	 */
 	if (mcv1_exists && hist2_exists)
 		selec += (1.0 - nullfrac2 - sumcommon2) *
@@ -379,7 +379,7 @@ networkjoinsel_inner(Oid coperator,
 	 * We can apply null fractions if known, though.
 	 */
 	if ((!mcv1_exists && !hist1_exists) || (!mcv2_exists && !hist2_exists))
-		selec = (1.0 - nullfrac1) * (1.0 - nullfrac2) * DEFAULT_SEL(coperator);
+		selec = (1.0 - nullfrac1) * (1.0 - nullfrac2) * DEFAULT_SEL(operator___);
 
 	/* Release stats. */
 	if (mcv1_exists)
@@ -405,7 +405,7 @@ networkjoinsel_inner(Oid coperator,
  * histogram selectivity for semi/anti join cases.
  */
 static Selectivity
-networkjoinsel_semi(Oid coperator,
+networkjoinsel_semi(Oid operator___,
 					VariableStatData *vardata1, VariableStatData *vardata2)
 {
 	Form_pg_statistic stats;
@@ -483,8 +483,8 @@ networkjoinsel_semi(Oid coperator,
 			sumcommon2 = mcv_population(mcv2_numbers, mcv2_length);
 	}
 
-	opr_codenum = inet_opr_codenum(coperator);
-	fmgr_info(get_opcode(coperator), &proc);
+	opr_codenum = inet_opr_codenum(operator___);
+	fmgr_info(get_opcode(operator___), &proc);
 
 	/* Estimate number of input rows represented by RHS histogram. */
 	if (hist2_exists && vardata2->rel)
@@ -546,7 +546,7 @@ networkjoinsel_semi(Oid coperator,
 	 * We can apply null fractions if known, though.
 	 */
 	if ((!mcv1_exists && !hist1_exists) || (!mcv2_exists && !hist2_exists))
-		selec = (1.0 - nullfrac1) * (1.0 - nullfrac2) * DEFAULT_SEL(coperator);
+		selec = (1.0 - nullfrac1) * (1.0 - nullfrac2) * DEFAULT_SEL(operator___);
 
 	/* Release stats. */
 	if (mcv1_exists)
@@ -617,7 +617,7 @@ mcv_population(float4 *mcv_numbers, int mcv_nvalues)
  * For a partial match, we try to calculate dividers for both of the
  * boundaries.  If the address family of a boundary value does not match the
  * constant or comparison of the length of the network parts is not correct
- * for the coperator, the divider for that boundary will not be taken into
+ * for the operator___, the divider for that boundary will not be taken into
  * account.  If both of the dividers are valid, the greater one will be used
  * to minimize the mistake in buckets that have disparate masklens.  This
  * calculation is unfair when dividers can be calculated for both of the
@@ -706,14 +706,14 @@ inet_hist_value_sel(Datum *values, int nvalues, Datum constvalue,
 static Selectivity
 inet_mcv_join_sel(Datum *mcv1_values, float4 *mcv1_numbers, int mcv1_nvalues,
 				  Datum *mcv2_values, float4 *mcv2_numbers, int mcv2_nvalues,
-				  Oid coperator)
+				  Oid operator___)
 {
 	Selectivity selec = 0.0;
 	FmgrInfo	proc;
 	int			i,
 				j;
 
-	fmgr_info(get_opcode(coperator), &proc);
+	fmgr_info(get_opcode(operator___), &proc);
 
 	for (i = 0; i < mcv1_nvalues; i++)
 	{
@@ -745,7 +745,7 @@ inet_mcv_hist_sel(Datum *mcv_values, float4 *mcv_numbers, int mcv_nvalues,
 
 	/*
 	 * We'll call inet_hist_value_selec with the histogram on the left, so we
-	 * must commute the coperator.
+	 * must commute the operator___.
 	 */
 	opr_codenum = -opr_codenum;
 
@@ -768,7 +768,7 @@ inet_mcv_hist_sel(Datum *mcv_values, float4 *mcv_numbers, int mcv_nvalues,
  * inet_hist_value_selec to see what fraction of the first histogram
  * it matches.
  *
- * We could alternatively do this the other way around using the coperator's
+ * We could alternatively do this the other way around using the operator___'s
  * commutator.  XXX would it be worthwhile to do it both ways and take the
  * average?  That would at least avoid non-commutative estimation results.
  */
@@ -847,7 +847,7 @@ inet_semi_join_sel(Datum lhs_value,
 	{
 		Selectivity hist_selec;
 
-		/* Commute coperator, since we're passing lhs_value on the right */
+		/* Commute operator___, since we're passing lhs_value on the right */
 		hist_selec = inet_hist_value_sel(hist_values, hist_nvalues,
 										 lhs_value, -opr_codenum);
 
@@ -864,12 +864,12 @@ inet_semi_join_sel(Datum lhs_value,
  * Only inet_masklen_inclusion_cmp() and inet_hist_match_divider() depend
  * on the exact codes assigned here; but many other places in this file
  * know that they can negate a code to obtain the code for the commutator
- * coperator.
+ * operator___.
  */
 static int
-inet_opr_codenum(Oid coperator)
+inet_opr_codenum(Oid operator___)
 {
-	switch (coperator)
+	switch (operator___)
 	{
 		case OID_INET_SUP_OP:
 			return -2;
@@ -882,8 +882,8 @@ inet_opr_codenum(Oid coperator)
 		case OID_INET_SUB_OP:
 			return 2;
 		default:
-			elog(ERROR, "unrecognized coperator %u for inet selectivity",
-				 coperator);
+			elog(ERROR, "unrecognized operator___ %u for inet selectivity",
+				 operator___);
 	}
 	return 0;					/* unreached, but keep compiler quiet */
 }
@@ -891,9 +891,9 @@ inet_opr_codenum(Oid coperator)
 /*
  * Comparison function for the subnet inclusion/overlap operators
  *
- * If the comparison is okay for the specified inclusion coperator, the return
+ * If the comparison is okay for the specified inclusion operator___, the return
  * value will be 0.  Otherwise the return value will be less than or greater
- * than 0 as appropriate for the coperator.
+ * than 0 as appropriate for the operator___.
  *
  * Comparison is compatible with the basic comparison function for the inet
  * type.  See network_cmp_internal() in network.c for the original.  Basic
@@ -906,7 +906,7 @@ inet_opr_codenum(Oid coperator)
  * function.  Only the first part is in this function.  The second part is
  * separated to another function for reusability.  The difference between the
  * second part and the original network_cmp_internal() is that the inclusion
- * coperator is considered while comparing the lengths of the network parts.
+ * operator___ is considered while comparing the lengths of the network parts.
  * See the inet_masklen_inclusion_cmp() function below.
  */
 static int
@@ -931,9 +931,9 @@ inet_inclusion_cmp(inet *left, inet *right, int opr_codenum)
  * Masklen comparison function for the subnet inclusion/overlap operators
  *
  * Compares the lengths of the network parts of the inputs.  If the comparison
- * is okay for the specified inclusion coperator, the return value will be 0.
+ * is okay for the specified inclusion operator___, the return value will be 0.
  * Otherwise the return value will be less than or greater than 0 as
- * appropriate for the coperator.
+ * appropriate for the operator___.
  */
 static int
 inet_masklen_inclusion_cmp(inet *left, inet *right, int opr_codenum)
@@ -943,7 +943,7 @@ inet_masklen_inclusion_cmp(inet *left, inet *right, int opr_codenum)
 	order = (int) ip_bits(left) - (int) ip_bits(right);
 
 	/*
-	 * Return 0 if the coperator would accept this combination of masklens.
+	 * Return 0 if the operator___ would accept this combination of masklens.
 	 * Note that opr_codenum zero (overlaps) will accept all cases.
 	 */
 	if ((order > 0 && opr_codenum >= 0) ||
@@ -963,7 +963,7 @@ inet_masklen_inclusion_cmp(inet *left, inet *right, int opr_codenum)
  * Inet histogram partial match divider calculation
  *
  * First the families and the lengths of the network parts are compared using
- * the subnet inclusion coperator.  If those are acceptable for the coperator,
+ * the subnet inclusion operator___.  If those are acceptable for the operator___,
  * the divider will be calculated using the masklens and the common bits of
  * the addresses.  -1 will be returned if it cannot be calculated.
  *
@@ -982,7 +982,7 @@ inet_hist_match_divider(inet *boundary, inet *query, int opr_codenum)
 
 		/*
 		 * Set decisive_bits to the masklen of the one that should contain the
-		 * other according to the coperator.
+		 * other according to the operator___.
 		 */
 		if (opr_codenum < 0)
 			decisive_bits = ip_bits(boundary);

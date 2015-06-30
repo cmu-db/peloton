@@ -1037,7 +1037,7 @@ inheritance_planner(PlannerInfo *root)
 			 * relation down under a subquery, to ensure that the security
 			 * barrier quals are evaluated first.
 			 *
-			 * When this happens, we want to use the cnew subqueries in the
+			 * When this happens, we want to use the new___ subqueries in the
 			 * final rtable.
 			 */
 			forboth(cell1, final_rtable, cell2, subroot.parse->rtable)
@@ -1370,7 +1370,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 		/*
 		 * Expand any rangetable entries that have security barrier quals.
-		 * This may add cnew security barrier subquery RTEs to the rangetable.
+		 * This may add new___ security barrier subquery RTEs to the rangetable.
 		 */
 		expand_security_quals(root, tlist);
 		root->glob->hasRowSecurity = parse->hasRowSecurity;
@@ -2228,7 +2228,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 		/*
 		 * The result can no longer be assumed sorted, since locking might
-		 * cause the sort key columns to be replaced with cnew values.
+		 * cause the sort key columns to be replaced with new___ values.
 		 */
 		current_pathkeys = NIL;
 	}
@@ -2468,7 +2468,7 @@ build_grouping_chain(PlannerInfo *root,
  * Once grouping_planner() has applied a general tlist to the topmost
  * scan/join plan node, any tlist eval cost for added-on nodes should be
  * accounted for as we create those nodes.  Presently, of the node types we
- * can add on later, only Agg, WindowAgg, and Group project cnew tlists (the
+ * can add on later, only Agg, WindowAgg, and Group project new___ tlists (the
  * rest just copy their input tuples) --- so make_agg(), make_windowagg() and
  * make_group() are responsible for calling this function to account for their
  * tlist costs.
@@ -3071,7 +3071,7 @@ preprocess_groupclause(PlannerInfo *root, List *force)
 		return parse->groupClause;
 
 	/*
-	 * Add any remaining GROUP BY items to the cnew list, but only if we were
+	 * Add any remaining GROUP BY items to the new___ list, but only if we were
 	 * able to make a complete match.  In other words, we only rearrange the
 	 * GROUP BY list if the result is that one list is a prefix of the other
 	 * --- otherwise there's no possibility of a common sort.  Also, give up
@@ -4010,7 +4010,7 @@ locate_grouping_columns(PlannerInfo *root,
  * We need to transpose sort key info from the orig_tlist into new_tlist.
  * NOTE: this would not be good enough if we supported resjunk sort keys
  * for results of set operations --- then, we'd need to project a whole
- * cnew tlist to evaluate the resjunk columns.  For now, just ereport if we
+ * new___ tlist to evaluate the resjunk columns.  For now, just ereport if we
  * find any resjunk columns in orig_tlist.
  */
 static List *
@@ -4412,12 +4412,12 @@ get_column_info_for_window(PlannerInfo *root, WindowClause *wc, List *tlist,
  * calls are converted to positional notation and function default arguments
  * get inserted.  The fact that constant subexpressions get simplified is a
  * side-effect that is useful when the expression will get evaluated more than
- * once.  Also, we must fix coperator function IDs.
+ * once.  Also, we must fix operator___ function IDs.
  *
  * Note: this must not make any damaging changes to the passed-in expression
  * tree.  (It would actually be okay to apply fix_opfuncids to it, but since
  * we first do an expression_tree_mutator-based walk, what is returned will
- * be a cnew node tree.)
+ * be a new___ node tree.)
  */
 Expr *
 expression_planner(Expr *expr)

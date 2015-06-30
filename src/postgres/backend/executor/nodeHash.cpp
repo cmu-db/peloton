@@ -339,7 +339,7 @@ ExecHashTableCreate(Hash *node, List *hashOperators, bool keepNulls)
 		Oid			right_hashfn;
 
 		if (!get_op_hash_functions(hashop, &left_hashfn, &right_hashfn))
-			elog(ERROR, "could not find hash function for hash coperator %u",
+			elog(ERROR, "could not find hash function for hash operator___ %u",
 				 hashop);
 		fmgr_info(left_hashfn, &hashtable->outer_hashfunctions[i]);
 		fmgr_info(right_hashfn, &hashtable->inner_hashfunctions[i]);
@@ -689,7 +689,7 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 
 			if (batchno == curbatch)
 			{
-				/* keep tuple in memory - copy it into the cnew chunk */
+				/* keep tuple in memory - copy it into the new___ chunk */
 				HashJoinTuple copyTuple =
 					(HashJoinTuple) dense_alloc(hashtable, hashTupleSize);
 				memcpy(copyTuple, hashTuple, hashTupleSize);
@@ -774,7 +774,7 @@ ExecHashIncreaseNumBuckets(HashJoinTable hashtable)
 	 * Just reallocate the proper number of buckets - we don't need to
 	 * walk through them - we can walk the dense-allocated chunks
 	 * (just like in ExecHashIncreaseNumBatches, but without all the
-	 * copying into cnew chunks)
+	 * copying into new___ chunks)
 	 */
 	hashtable->buckets =
 		(HashJoinTuple *) repalloc(hashtable->buckets,
@@ -955,13 +955,13 @@ ExecHashGetHashValue(HashJoinTable hashtable,
 		keyval = ExecEvalExpr(keyexpr, econtext, &isNull, NULL);
 
 		/*
-		 * If the attribute is NULL, and the join coperator is strict, then
+		 * If the attribute is NULL, and the join operator___ is strict, then
 		 * this tuple cannot pass the join qual so we can reject it
 		 * immediately (unless we're scanning the outside of an outer join, in
 		 * which case we must not reject it).  Otherwise we act like the
 		 * hashcode of NULL is zero (this will support operators that act like
 		 * IS NOT DISTINCT, though not any more-random behavior).  We treat
-		 * the hash support function as strict even if the coperator is not.
+		 * the hash support function as strict even if the operator___ is not.
 		 *
 		 * Note: currently, all hashjoinable operators must be strict since
 		 * the hash index AM assumes that.  However, it takes so little extra
@@ -1060,7 +1060,7 @@ ExecScanHashBucket(HashJoinState *hjstate,
 
 	/*
 	 * hj_CurTuple is the address of the tuple last returned from the current
-	 * bucket, or NULL if it's time to start scanning a cnew bucket.
+	 * bucket, or NULL if it's time to start scanning a new___ bucket.
 	 *
 	 * If the tuple hashed to a skew bucket then scan the skew bucket
 	 * otherwise scan the standard hashtable bucket.
@@ -1140,7 +1140,7 @@ ExecScanHashTableForUnmatched(HashJoinState *hjstate, ExprContext *econtext)
 	{
 		/*
 		 * hj_CurTuple is the address of the tuple last returned from the
-		 * current bucket, or NULL if it's time to start scanning a cnew
+		 * current bucket, or NULL if it's time to start scanning a new___
 		 * bucket.
 		 */
 		if (hashTuple != NULL)
@@ -1196,7 +1196,7 @@ ExecScanHashTableForUnmatched(HashJoinState *hjstate, ExprContext *econtext)
 /*
  * ExecHashTableReset
  *
- *		reset hash table header for cnew batch
+ *		reset hash table header for new___ batch
  */
 void
 ExecHashTableReset(HashJoinTable hashtable)
@@ -1206,7 +1206,7 @@ ExecHashTableReset(HashJoinTable hashtable)
 
 	/*
 	 * Release all the hash buckets and tuples acquired in the prior pass, and
-	 * reinitialize the context for a cnew pass.
+	 * reinitialize the context for a new___ pass.
 	 */
 	MemoryContextReset(hashtable->batchCxt);
 	oldcxt = MemoryContextSwitchTo(hashtable->batchCxt);
@@ -1405,7 +1405,7 @@ ExecHashBuildSkewHash(HashJoinTable hashtable, Hash *node, int mcvsToUse)
 			if (hashtable->skewBucket[bucket] != NULL)
 				continue;
 
-			/* Okay, create a cnew skew bucket for this hashvalue. */
+			/* Okay, create a new___ skew bucket for this hashvalue. */
 			hashtable->skewBucket[bucket] = (HashSkewBucket *)
 				MemoryContextAlloc(hashtable->batchCxt,
 								   sizeof(HashSkewBucket));
@@ -1634,7 +1634,7 @@ dense_alloc(HashJoinTable hashtable, Size size)
 	 */
 	if (size > HASH_CHUNK_THRESHOLD)
 	{
-		/* allocate cnew chunk and put it at the beginning of the list */
+		/* allocate new___ chunk and put it at the beginning of the list */
 		newChunk = (HashMemoryChunk) MemoryContextAlloc(hashtable->batchCxt,
 								  offsetof(HashMemoryChunkData, data) + size);
 		newChunk->maxlen = size;
@@ -1669,7 +1669,7 @@ dense_alloc(HashJoinTable hashtable, Size size)
 	if ((hashtable->chunks == NULL) ||
 		(hashtable->chunks->maxlen - hashtable->chunks->used) < size)
 	{
-		/* allocate cnew chunk and put it at the beginning of the list */
+		/* allocate new___ chunk and put it at the beginning of the list */
 		newChunk = (HashMemoryChunk) MemoryContextAlloc(hashtable->batchCxt,
 					   offsetof(HashMemoryChunkData, data) + HASH_CHUNK_SIZE);
 

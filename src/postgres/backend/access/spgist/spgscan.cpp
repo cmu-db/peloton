@@ -357,7 +357,7 @@ redirect:
 			buffer = ReadBuffer(index, blkno);
 			LockBuffer(buffer, BUFFER_LOCK_SHARE);
 		}
-		/* else cnew pointer points to the same page, no work needed */
+		/* else new___ pointer points to the same page, no work needed */
 
 		page = BufferGetPage(buffer);
 
@@ -531,7 +531,7 @@ redirect:
 				{
 					ScanStackEntry *newEntry;
 
-					/* Create cnew work item for this node */
+					/* Create new___ work item for this node */
 					newEntry = palloc(sizeof(ScanStackEntry));
 					newEntry->ptr = nodes[nodeN]->t_tid;
 					if (out.levelAdds)

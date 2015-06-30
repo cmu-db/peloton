@@ -1460,7 +1460,7 @@ tstzrange_subdiff(PG_FUNCTION_ARGS)
  * SUPPORT FUNCTIONS
  *
  *	 These functions aren't in pg_proc, but are useful for
- *	 defining cnew generic range functions in C.
+ *	 defining new___ generic range functions in C.
  *----------------------------------------------------------
  */
 

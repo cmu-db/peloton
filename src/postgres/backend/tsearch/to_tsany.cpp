@@ -91,7 +91,7 @@ uniqueWORD(ParsedWord *a, int32 l)
 			  strncmp(ptr->word, res->word, res->len) == 0))
 		{
 			/*
-			 * Got a cnew word, so put it in result
+			 * Got a new___ word, so put it in result
 			 */
 			res++;
 			res->len = ptr->len;

@@ -99,7 +99,7 @@ ts_typanalyze(PG_FUNCTION_ARGS)
  *	batches of size w. (The batch size is also known as "bucket size" and is
  *	equal to 1/epsilon.) Let the current batch number be b_current, starting
  *	with 1. For each element e we either increment its f count, if it's
- *	already in D, or insert a cnew triple into D with values (e, 1, b_current
+ *	already in D, or insert a new___ triple into D with values (e, 1, b_current
  *	- 1). After processing each batch we prune D, by removing from it all
  *	elements with f + delta <= b_current.  After the algorithm finishes we
  *	suppress all elements from D that do not satisfy f >= (s - epsilon) * N,
@@ -246,7 +246,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 			hash_key.lexeme = lexemesptr + curentryptr->pos;
 			hash_key.length = curentryptr->len;
 
-			/* Lookup current lexeme in hashtable, adding it if cnew */
+			/* Lookup current lexeme in hashtable, adding it if new___ */
 			item = (TrackItem *) hash_search(lexemes_tab,
 											 (const void *) &hash_key,
 											 HASH_ENTER, &found);
@@ -258,7 +258,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 			}
 			else
 			{
-				/* Initialize cnew tracking list element */
+				/* Initialize new___ tracking list element */
 				item->frequency = 1;
 				item->delta = b_current - 1;
 			}

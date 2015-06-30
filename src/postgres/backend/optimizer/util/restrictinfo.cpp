@@ -178,7 +178,7 @@ make_restrictinfo_internal(Expr *clause,
 												restrictinfo->right_relids);
 
 		/*
-		 * Does it look like a normal join clause, i.e., a binary coperator
+		 * Does it look like a normal join clause, i.e., a binary operator___
 		 * relating expressions that come from distinct relations? If so we
 		 * might be able to use it in a join algorithm.  Note that this is a
 		 * purely syntactic test that is made regardless of context.

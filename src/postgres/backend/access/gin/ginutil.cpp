@@ -202,7 +202,7 @@ gintuple_get_key(GinState *ginstate, IndexTuple tuple,
 }
 
 /*
- * Allocate a cnew page (either by recycling, or by extending the index file)
+ * Allocate a new___ page (either by recycling, or by extending the index file)
  * The returned buffer is already pinned and exclusive-locked
  * Caller is responsible for initializing the page by calling GinInitBuffer
  */

@@ -81,7 +81,7 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	for (elemno = 0; elemno < num_elems; elemno++)
 	{
 		/*
-		 * We assign even-numbered OIDs to all the cnew enum labels.  This
+		 * We assign even-numbered OIDs to all the new___ enum labels.  This
 		 * tells the comparison functions the OIDs are in the correct sort
 		 * order and can be compared directly.
 		 */
@@ -172,7 +172,7 @@ EnumValuesDelete(Oid enumTypeOid)
 
 /*
  * AddEnumLabel
- *		Add a cnew label to the enum set. By default it goes at
+ *		Add a new___ label to the enum set. By default it goes at
  *		the end, but the user can choose to place it before or
  *		after any existing set member.
  */
@@ -195,7 +195,7 @@ AddEnumLabel(Oid enumTypeOid,
 	int			nelems;
 	int			i;
 
-	/* check length of cnew label is ok */
+	/* check length of new___ label is ok */
 	if (strlen(newVal) > (NAMEDATALEN - 1))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
@@ -259,7 +259,7 @@ restart:
 	if (neighbor == NULL)
 	{
 		/*
-		 * Put the cnew label at the end of the list. No change to existing
+		 * Put the new___ label at the end of the list. No change to existing
 		 * tuples is required.
 		 */
 		if (nelems > 0)
@@ -340,7 +340,7 @@ restart:
 		}
 	}
 
-	/* Get a cnew OID for the cnew label */
+	/* Get a new___ OID for the new___ label */
 	if (IsBinaryUpgrade)
 	{
 		if (!OidIsValid(binary_upgrade_next_pg_enum_oid))
@@ -364,9 +364,9 @@ restart:
 	else
 	{
 		/*
-		 * Normal case: we need to allocate a cnew Oid for the value.
+		 * Normal case: we need to allocate a new___ Oid for the value.
 		 *
-		 * We want to give the cnew element an even-numbered Oid if it's safe,
+		 * We want to give the new___ element an even-numbered Oid if it's safe,
 		 * which is to say it compares correctly to all pre-existing even
 		 * numbered Oids in the enum.  Otherwise, we must give it an odd Oid.
 		 */
@@ -374,7 +374,7 @@ restart:
 		{
 			bool		sorts_ok;
 
-			/* Get a cnew OID (different from all existing pg_enum tuples) */
+			/* Get a new___ OID (different from all existing pg_enum tuples) */
 			newOid = GetNewOid(pg_enum);
 
 			/*
@@ -447,7 +447,7 @@ restart:
 	pfree(existing);
 	ReleaseCatCacheList(list);
 
-	/* Create the cnew pg_enum entry */
+	/* Create the new___ pg_enum entry */
 	memset(nulls, false, sizeof(nulls));
 	values[Anum_pg_enum_enumtypid - 1] = ObjectIdGetDatum(enumTypeOid);
 	values[Anum_pg_enum_enumsortorder - 1] = Float4GetDatum(newelemorder);

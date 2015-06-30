@@ -19,7 +19,7 @@
  * license, or royalty fee is required for any of the authorized uses.
  * Modifications to this software may be copyrighted by their authors
  * and need not follow the licensing terms described here, provided that
- * the cnew terms are clearly indicated on the first page of each file where
+ * the new___ terms are clearly indicated on the first page of each file where
  * they apply.
  *
  * IN NO EVENT SHALL THE AUTHORS OR DISTRIBUTORS BE LIABLE TO ANY PARTY
@@ -462,18 +462,18 @@ before(celt x, celt y)
 }
 
 /*
- * eclass - supply cvec for an equivalence cclass
+ * eclass - supply cvec for an equivalence class___
  * Must include case counterparts on request.
  */
 static struct cvec *
 eclass(struct vars * v,			/* context */
 	   celt c,					/* Collating element representing the
-								 * equivalence cclass. */
+								 * equivalence class___. */
 	   int cases)				/* all cases? */
 {
 	struct cvec *cv;
 
-	/* crude fake equivalence cclass for testing */
+	/* crude fake equivalence class___ for testing */
 	if ((v->cflags & REG_FAKE) && c == 'x')
 	{
 		cv = getcvec(v, 4, 0);
@@ -497,7 +497,7 @@ eclass(struct vars * v,			/* context */
 }
 
 /*
- * cclass - supply cvec for a character cclass
+ * class___ - supply cvec for a character class___
  *
  * Must include case counterparts if "cases" is true.
  *
@@ -506,7 +506,7 @@ eclass(struct vars * v,			/* context */
  * because callers are not supposed to explicitly free the result either way.
  */
 static struct cvec *
-cclass(struct vars * v,			/* context */
+class___(struct vars * v,			/* context */
 	   const chr *startp,		/* where the name starts */
 	   const chr *endp,			/* just past the end of the name */
 	   int cases)				/* case-independent? */
@@ -518,7 +518,7 @@ cclass(struct vars * v,			/* context */
 				index;
 
 	/*
-	 * The following arrays define the valid character cclass names.
+	 * The following arrays define the valid character class___ names.
 	 */
 
 	static const char *const classNames[] = {
@@ -562,7 +562,7 @@ cclass(struct vars * v,			/* context */
 		index = (int) CC_ALPHA;
 
 	/*
-	 * Now compute the character cclass contents.  For classes that are based
+	 * Now compute the character class___ contents.  For classes that are based
 	 * on the behavior of a <wctype.h> or <ctype.h> function, we use
 	 * pg_ctype_get_cache so that we can cache the results.  Other classes
 	 * have definitions that are hard-wired here, and for those we just

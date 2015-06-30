@@ -249,7 +249,7 @@ ExecDropSingleTupleTableSlot(TupleTableSlot *slot)
  */
 void
 ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
-					  TupleDesc tupdesc)		/* cnew tuple descriptor */
+					  TupleDesc tupdesc)		/* new___ tuple descriptor */
 {
 	/* For safety, make sure slot is empty before changing it */
 	ExecClearTuple(slot);
@@ -267,7 +267,7 @@ ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
 		pfree(slot->tts_isnull);
 
 	/*
-	 * Install the cnew descriptor; if it's refcounted, bump its refcount.
+	 * Install the new___ descriptor; if it's refcounted, bump its refcount.
 	 */
 	slot->tts_tupleDescriptor = tupdesc;
 	PinTupleDesc(tupdesc);
@@ -344,7 +344,7 @@ ExecStoreTuple(HeapTuple tuple,
 		heap_free_minimal_tuple(slot->tts_mintuple);
 
 	/*
-	 * Store the cnew tuple into the specified slot.
+	 * Store the new___ tuple into the specified slot.
 	 */
 	slot->tts_isempty = false;
 	slot->tts_shouldFree = shouldFree;
@@ -413,7 +413,7 @@ ExecStoreMinimalTuple(MinimalTuple mtup,
 	slot->tts_buffer = InvalidBuffer;
 
 	/*
-	 * Store the cnew tuple into the specified slot.
+	 * Store the new___ tuple into the specified slot.
 	 */
 	slot->tts_isempty = false;
 	slot->tts_shouldFree = false;
@@ -721,7 +721,7 @@ ExecFetchSlotTupleDatum(TupleTableSlot *slot)
  *
  *		A typical use for this operation is to prepare a computed tuple
  *		for being stored on disk.  The original data may or may not be
- *		virtual, but in any case we need a cprivate copy for heap_insert
+ *		virtual, but in any case we need a private___ copy for heap_insert
  *		to scribble on.
  * --------------------------------
  */
@@ -789,7 +789,7 @@ ExecMaterializeSlot(TupleTableSlot *slot)
  *		ExecCopySlot
  *			Copy the source slot's contents into the destination slot.
  *
- *		The destination acquires a cprivate copy that will not go away
+ *		The destination acquires a private___ copy that will not go away
  *		if the source is cleared.
  *
  *		The caller must ensure the slots have compatible tupdescs.
@@ -1061,7 +1061,7 @@ ExecTypeSetColNames(TupleDesc typeInfo, List *namesList)
 		}
 	}
 
-	/* If we modified the tupdesc, it's now a cnew record type */
+	/* If we modified the tupdesc, it's now a new___ record type */
 	if (modified)
 	{
 		typeInfo->tdtypeid = RECORDOID;
@@ -1227,11 +1227,11 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
  * to enforce that; more specifically, the rule applies only to actual Datums
  * and not to HeapTuple structures.  Therefore, HeapTupleHeaderGetDatum is
  * now a function that detects whether there are externally-toasted fields
- * and constructs a cnew tuple with inlined fields if so.  We still need
+ * and constructs a new___ tuple with inlined fields if so.  We still need
  * heap_form_tuple to insert the Datum header fields, because otherwise this
  * code would have no way to obtain a tupledesc for the tuple.
  *
- * Note that if we do build a cnew tuple, it's palloc'd in the current
+ * Note that if we do build a new___ tuple, it's palloc'd in the current
  * memory context.  Beware of code that changes context between the initial
  * heap_form_tuple/etc call and calling HeapTuple(Header)GetDatum.
  *

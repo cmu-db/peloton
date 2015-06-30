@@ -62,7 +62,7 @@ enum ReorderBufferChangeType
 };
 
 /*
- * a single 'change', can be an insert (with one tuple), an update (old, cnew),
+ * a single 'change', can be an insert (with one tuple), an update (old, new___),
  * or a delete (old).
  *
  * The same struct is also used internally for other purposes but that should
@@ -83,7 +83,7 @@ typedef struct ReorderBufferChange
 	 */
 	union
 	{
-		/* Old, cnew tuples when action == *_INSERT|UPDATE|DELETE */
+		/* Old, new___ tuples when action == *_INSERT|UPDATE|DELETE */
 		struct
 		{
 			/* relation that has been changed */
@@ -204,7 +204,7 @@ typedef struct ReorderBufferTXN
 	uint64		nentries_mem;
 
 	/*
-	 * List of ReorderBufferChange structs, including cnew Snapshots and cnew
+	 * List of ReorderBufferChange structs, including new___ Snapshots and new___
 	 * CommandIds
 	 */
 	dlist_head	changes;

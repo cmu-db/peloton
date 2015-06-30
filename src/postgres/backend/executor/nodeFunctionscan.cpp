@@ -294,7 +294,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	Assert(innerPlan(node) == NULL);
 
 	/*
-	 * create cnew ScanState for node
+	 * create new___ ScanState for node
 	 */
 	scanstate = makeNode(FunctionScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
@@ -450,7 +450,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	 *
 	 * If there is just one function without ordinality, the scan result
 	 * tupdesc is the same as the function result tupdesc --- except that we
-	 * may stuff cnew names into it below, so drop any rowtype label.
+	 * may stuff new___ names into it below, so drop any rowtype label.
 	 */
 	if (scanstate->simple)
 	{

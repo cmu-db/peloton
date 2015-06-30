@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * gist_private.h
- *	  cprivate declarations for GiST -- declarations related to the
+ *	  private___ declarations for GiST -- declarations related to the
  *	  internal implementation of GiST, not the public API
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
@@ -146,7 +146,7 @@ typedef struct GISTSearchItem
 #define SizeOfGISTSearchItem(n_distances) (offsetof(GISTSearchItem, distances) + sizeof(double) * (n_distances))
 
 /*
- * GISTScanOpaqueData: cprivate state for a scan of a GiST index
+ * GISTScanOpaqueData: private___ state for a scan of a GiST index
  */
 typedef struct GISTScanOpaqueData
 {

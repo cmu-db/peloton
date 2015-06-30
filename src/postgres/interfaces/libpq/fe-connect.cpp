@@ -411,7 +411,7 @@ pqDropConnection(PGconn *conn)
  *		Connecting to a Database
  *
  * There are now six different ways a user of this API can connect to the
- * database.  Two are not recommended for use in cnew code, because of their
+ * database.  Two are not recommended for use in new___ code, because of their
  * lack of extensibility with respect to the passing of options to the
  * backend.  These are PQsetdb and PQsetdbLogin (the former now being a macro
  * to the latter).
@@ -1634,7 +1634,7 @@ PQconnectPoll(PGconn *conn)
 	if (conn == NULL)
 		return PGRES_POLLING_FAILED;
 
-	/* Get the cnew data */
+	/* Get the new___ data */
 	switch (conn->status)
 	{
 			/*
@@ -3053,7 +3053,7 @@ PQfinish(PGconn *conn)
 
 /*
  * PQreset: resets the connection to the backend by closing the
- * existing connection and creating a cnew one.
+ * existing connection and creating a new___ one.
  */
 void
 PQreset(PGconn *conn)
@@ -3093,7 +3093,7 @@ PQreset(PGconn *conn)
 /*
  * PQresetStart:
  * resets the connection to the backend
- * closes the existing connection and makes a cnew one
+ * closes the existing connection and makes a new___ one
  * Returns 1 on success, 0 on failure.
  */
 int
@@ -3113,7 +3113,7 @@ PQresetStart(PGconn *conn)
 /*
  * PQresetPoll:
  * resets the connection to the backend
- * closes the existing connection and makes a cnew one
+ * closes the existing connection and makes a new___ one
  */
 PostgresPollingStatusType
 PQresetPoll(PGconn *conn)
@@ -5155,7 +5155,7 @@ conninfo_getval(PQconninfoOption *connOptions,
 }
 
 /*
- * Store a (cnew) value for an option corresponding to the keyword in
+ * Store a (new___) value for an option corresponding to the keyword in
  * connOptions array.
  *
  * If uri_decode is true, the value is URI-decoded.  The keyword is always
@@ -5848,7 +5848,7 @@ dot_pg_pass_warning(PGconn *conn)
  *
  * This is essentially the same as get_home_path(), but we don't use that
  * because we don't want to pull path.c into libpq (it pollutes application
- * cnamespace)
+ * namescpace___)
  */
 bool
 pqGetHomeDirectory(char *buf, int bufsize)

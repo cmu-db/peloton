@@ -86,7 +86,7 @@ static TupleTableSlot *setop_retrieve_hash_table(SetOpState *setopstate);
 
 
 /*
- * Initialize state for a cnew group of input values.
+ * Initialize state for a new___ group of input values.
  */
 static inline void
 initialize_counts(SetOpStatePerGroup pergroup)
@@ -247,7 +247,7 @@ setop_retrieve_direct(SetOpState *setopstate)
 	while (!setopstate->setop_done)
 	{
 		/*
-		 * If we don't already have the first tuple of the cnew group, fetch it
+		 * If we don't already have the first tuple of the new___ group, fetch it
 		 * from the outer plan.
 		 */
 		if (setopstate->grp_firstTuple == NULL)
@@ -277,7 +277,7 @@ setop_retrieve_direct(SetOpState *setopstate)
 					   true);
 		setopstate->grp_firstTuple = NULL;		/* don't keep two pointers */
 
-		/* Initialize working state for a cnew input tuple group */
+		/* Initialize working state for a new___ input tuple group */
 		initialize_counts(pergroup);
 
 		/* Count the first input tuple */
@@ -386,7 +386,7 @@ setop_fill_hash_table(SetOpState *setopstate)
 			entry = (SetOpHashEntry)
 				LookupTupleHashEntry(setopstate->hashtable, outerslot, &isnew);
 
-			/* If cnew tuple group, initialize counts */
+			/* If new___ tuple group, initialize counts */
 			if (isnew)
 				initialize_counts(&entry->pergroup);
 

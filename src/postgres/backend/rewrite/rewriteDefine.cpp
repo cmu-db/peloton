@@ -92,7 +92,7 @@ InsertRule(char *rulname,
 	values[Anum_pg_rewrite_ev_action - 1] = CStringGetTextDatum(actiontree);
 
 	/*
-	 * Ready to store cnew pg_rewrite tuple
+	 * Ready to store new___ pg_rewrite tuple
 	 */
 	pg_rewrite_desc = heap_open(RewriteRelationId, RowExclusiveLock);
 
@@ -142,7 +142,7 @@ InsertRule(char *rulname,
 
 	heap_freetuple(tup);
 
-	/* If replacing, get rid of old dependencies and make cnew ones */
+	/* If replacing, get rid of old dependencies and make new___ ones */
 	if (is_update)
 		deleteDependencyRecordsFor(RewriteRelationId, rewriteObjectId, false);
 
@@ -179,7 +179,7 @@ InsertRule(char *rulname,
 							   DEPENDENCY_NORMAL);
 	}
 
-	/* Post creation hook for cnew rule */
+	/* Post creation hook for new___ rule */
 	InvokeObjectPostCreateHook(RewriteRelationId, rewriteObjectId, 0);
 
 	heap_close(pg_rewrite_desc, RowExclusiveLock);
@@ -510,7 +510,7 @@ DefineQueryRewrite(char *rulename,
 		 * Set pg_class 'relhasrules' field TRUE for event relation.
 		 *
 		 * Important side effect: an SI notice is broadcast to force all
-		 * backends (including me!) to update relcache entries with the cnew
+		 * backends (including me!) to update relcache entries with the new___
 		 * rule.
 		 */
 		SetRelationRuleStatus(event_relid, true);
@@ -833,7 +833,7 @@ EnableDisableRule(Relation rel, const char *rulename,
 					   get_rel_name(eventRelationOid));
 
 	/*
-	 * Change ev_enabled if it is different from the desired cnew state.
+	 * Change ev_enabled if it is different from the desired new___ state.
 	 */
 	if (DatumGetChar(((Form_pg_rewrite) GETSTRUCT(ruletup))->ev_enabled) !=
 		fires_when)
@@ -940,7 +940,7 @@ RenameRewriteRule(RangeVar *relation, const char *oldName,
 	ruleform = (Form_pg_rewrite) GETSTRUCT(ruletup);
 	ruleOid = HeapTupleGetOid(ruletup);
 
-	/* rule with the cnew name should not already exist */
+	/* rule with the new___ name should not already exist */
 	if (IsDefinedRewriteRule(relid, newName))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
