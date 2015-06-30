@@ -1008,10 +1008,8 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
  * (column descriptions) to be carried forward to each result row.
  */
 
-// TODO: Peloton changes - errmsgp argument is not used
-// can we change the function prototype to get rid of the 2nd argument?
 int
-pqRowProcessor(PGconn *conn, const char **errmsgp)
+pqRowProcessor(PGconn *conn, const char ** UNUSED(errmsgp))
 {
 	PGresult   *res = conn->result;
 	int			nfields = res->numAttributes;
@@ -3304,10 +3302,7 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 		return NULL;
 
 	/* Scan the string for characters that must be escaped. */
-	// TODO: Peloton changes - added (int) cast to len
-	// so that the comparison is not between signed and unsigned integers
-	// to suppress compiler warning
-	for (s = str; (s - str) < (int)len && *s != '\0'; ++s)
+	for (s = str; (s - str) < static_cast<int>(len) && *s != '\0'; ++s)
 	{
 		if (*s == quote_char)
 			++num_quotes;
@@ -3697,9 +3692,7 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 
 	/* Shrink the buffer to be no larger than necessary */
 	/* +1 avoids unportable behavior when buflen==0 */
-	// TODO: Peloton changes - added (unsigned char *) cast
-	// to suppress compiler warning
-	tmpbuf = (unsigned char *)realloc(buffer, buflen + 1);
+	tmpbuf = static_cast<unsigned char *>(realloc(buffer, buflen + 1));
 
 	/* It would only be a very brain-dead realloc that could fail, but... */
 	if (!tmpbuf)

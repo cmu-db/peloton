@@ -501,8 +501,8 @@ startScanKey(GinState *ginstate, GinScanOpaque so, GinScanKey key)
 
 		key->nrequired = i + 1;
 		key->nadditional = key->nentries - key->nrequired;
-		key->requiredEntries = palloc(key->nrequired * sizeof(GinScanEntry));
-		key->additionalEntries = palloc(key->nadditional * sizeof(GinScanEntry));
+		key->requiredEntries = static_cast<GinScanEntryData **>(palloc(key->nrequired * sizeof(GinScanEntry)));
+		key->additionalEntries = static_cast<GinScanEntryData **>(palloc(key->nadditional * sizeof(GinScanEntry)));
 
 		j = 0;
 		for (i = 0; i < key->nrequired; i++)
@@ -519,7 +519,7 @@ startScanKey(GinState *ginstate, GinScanOpaque so, GinScanKey key)
 
 		key->nrequired = 1;
 		key->nadditional = 0;
-		key->requiredEntries = palloc(1 * sizeof(GinScanEntry));
+		key->requiredEntries = static_cast<GinScanEntryData **>(palloc(1 * sizeof(GinScanEntry)));
 		key->requiredEntries[0] = key->scanEntry[0];
 	}
 	MemoryContextSwitchTo(oldCtx);
@@ -1718,7 +1718,7 @@ scanPendingInsert(IndexScanDesc scan, TIDBitmap *tbm, int64 *ntids)
 	LockBuffer(pos.pendingBuffer, GIN_SHARE);
 	pos.firstOffset = FirstOffsetNumber;
 	UnlockReleaseBuffer(metabuffer);
-	pos.hasMatchKey = palloc(sizeof(bool) * so->nkeys);
+	pos.hasMatchKey = static_cast<bool **>(palloc(sizeof(bool) * so->nkeys));
 
 	/*
 	 * loop for each heap row. scanGetCandidate returns full row or row's

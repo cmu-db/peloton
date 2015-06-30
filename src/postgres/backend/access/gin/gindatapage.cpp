@@ -161,7 +161,7 @@ GinDataLeafPageGetItems(Page page, int *nitems, ItemPointerData advancePast)
 	{
 		ItemPointer tmp = dataLeafPageGetUncompressed(page, nitems);
 
-		result = palloc((*nitems) * sizeof(ItemPointerData));
+		result = static_cast<ItemPointer>(palloc((*nitems) * sizeof(ItemPointerData)));
 		memcpy(result, tmp, (*nitems) * sizeof(ItemPointerData));
 	}
 
@@ -429,7 +429,7 @@ static GinPlaceToPageRC
 dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 					void *insertdata, Page *newlpage, Page *newrpage)
 {
-	GinBtreeDataLeafInsertData *items = insertdata;
+	GinBtreeDataLeafInsertData *items = static_cast<GinBtreeDataLeafInsertData *>(insertdata);
 	ItemPointer newItems = &items->items[items->curitem];
 	int			maxitems = items->nitem - items->curitem;
 	Page		page = BufferGetPage(buf);
@@ -677,8 +677,8 @@ dataPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 													   &lastleftinfo->nitems);
 		lbound = lastleftinfo->items[lastleftinfo->nitems - 1];
 
-		*newlpage = MemoryContextAlloc(oldCxt, BLCKSZ);
-		*newrpage = MemoryContextAlloc(oldCxt, BLCKSZ);
+		*newlpage = static_cast<Page>(MemoryContextAlloc(oldCxt, BLCKSZ));
+		*newrpage = static_cast<Page>(MemoryContextAlloc(oldCxt, BLCKSZ));
 
 		dataPlaceToPageLeafSplit(buf, leaf, lbound, rbound,
 								 *newlpage, *newrpage);
@@ -859,10 +859,10 @@ registerLeafRecompressWALData(Buffer buf, disassembledLeaf *leaf)
 	}
 
 	walbufbegin =
-		palloc(sizeof(ginxlogRecompressDataLeaf) +
+			static_cast<char *>(palloc(sizeof(ginxlogRecompressDataLeaf) +
 			   BLCKSZ +			/* max size needed to hold the segment data */
 			   nmodified * 2	/* (segno + action) per action */
-		);
+		));
 	walbufend = walbufbegin;
 
 	recompress_xlog = (ginxlogRecompressDataLeaf *) walbufend;
@@ -1237,7 +1237,7 @@ dataSplitPageInternal(GinBtree btree, Buffer origbuf,
 static void *
 dataPrepareDownlink(GinBtree btree, Buffer lbuf)
 {
-	PostingItem *pitem = palloc(sizeof(PostingItem));
+	PostingItem *pitem = static_cast<PostingItem *>(palloc(sizeof(PostingItem)));
 	Page		lpage = BufferGetPage(lbuf);
 
 	PostingItemSetBlockNumber(pitem, BufferGetBlockNumber(lbuf));
@@ -1279,7 +1279,7 @@ disassembleLeaf(Page page)
 	Pointer		segbegin;
 	Pointer		segend;
 
-	leaf = palloc0(sizeof(disassembledLeaf));
+	leaf = static_cast<disassembledLeaf *>(palloc0(sizeof(disassembledLeaf)));
 	dlist_init(&leaf->segments);
 
 	if (GinPageIsCompressed(page))
@@ -1292,7 +1292,7 @@ disassembleLeaf(Page page)
 		segend = segbegin + GinDataLeafPageGetPostingListSize(page);
 		while ((Pointer) seg < segend)
 		{
-			leafSegmentInfo *seginfo = palloc(sizeof(leafSegmentInfo));
+			leafSegmentInfo *seginfo = static_cast<leafSegmentInfo *>(palloc(sizeof(leafSegmentInfo)));
 
 			seginfo->action = GIN_SEGMENT_UNMODIFIED;
 			seginfo->seg = seg;
@@ -1316,11 +1316,11 @@ disassembleLeaf(Page page)
 
 		uncompressed = dataLeafPageGetUncompressed(page, &nuncompressed);
 
-		seginfo = palloc(sizeof(leafSegmentInfo));
+		seginfo = static_cast<leafSegmentInfo *>(palloc(sizeof(leafSegmentInfo)));
 
 		seginfo->action = GIN_SEGMENT_REPLACE;
 		seginfo->seg = NULL;
-		seginfo->items = palloc(nuncompressed * sizeof(ItemPointerData));
+		seginfo->items = static_cast<ItemPointer>(palloc(nuncompressed * sizeof(ItemPointerData)));
 		memcpy(seginfo->items, uncompressed, nuncompressed * sizeof(ItemPointerData));
 		seginfo->nitems = nuncompressed;
 
@@ -1356,7 +1356,7 @@ addItemsToLeaf(disassembledLeaf *leaf, ItemPointer newItems, int nNewItems)
 	 */
 	if (dlist_is_empty(&leaf->segments))
 	{
-		newseg = palloc(sizeof(leafSegmentInfo));
+		newseg = static_cast<leafSegmentInfo *>(palloc(sizeof(leafSegmentInfo)));
 		newseg->seg = NULL;
 		newseg->items = newItems;
 		newseg->nitems = nNewItems;
@@ -1413,7 +1413,7 @@ addItemsToLeaf(disassembledLeaf *leaf, ItemPointer newItems, int nNewItems)
 			cur->seg != NULL &&
 			SizeOfGinPostingList(cur->seg) >= GinPostingListSegmentTargetSize)
 		{
-			newseg = palloc(sizeof(leafSegmentInfo));
+			newseg = static_cast<leafSegmentInfo *>(palloc(sizeof(leafSegmentInfo)));
 			newseg->seg = NULL;
 			newseg->items = nextnew;
 			newseg->nitems = nthis;
@@ -1530,7 +1530,7 @@ leafRepackItems(disassembledLeaf *leaf, ItemPointer remaining)
 					if (seginfo->action != GIN_SEGMENT_INSERT)
 						seginfo->action = GIN_SEGMENT_REPLACE;
 
-					nextseg = palloc(sizeof(leafSegmentInfo));
+					nextseg = static_cast<leafSegmentInfo *>(palloc(sizeof(leafSegmentInfo)));
 					nextseg->action = GIN_SEGMENT_INSERT;
 					nextseg->seg = NULL;
 					nextseg->items = &seginfo->items[npacked];
@@ -1654,7 +1654,7 @@ leafRepackItems(disassembledLeaf *leaf, ItemPointer remaining)
 			GinPostingList *tmp;
 
 			segsize = SizeOfGinPostingList(seginfo->seg);
-			tmp = palloc(segsize);
+			tmp = static_cast<GinPostingList *>(palloc(segsize));
 			memcpy(tmp, seginfo->seg, segsize);
 			seginfo->seg = tmp;
 		}

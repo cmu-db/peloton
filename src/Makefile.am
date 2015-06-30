@@ -68,7 +68,7 @@ libpeloton_la_CPPFLAGS = -I$(srcdir)/postgres/include \
 			 $(third_party_INCLUDES)
 
 libpeloton_la_CFLAGS = $(postgres_common_INCLUDES)
-libpeloton_la_CXXFLAGS = -std=c++11 -I. -I$(top_srcdir)/src -I.. $(third_party_INCLUDES) -msse4.2 -fPIC -fpic
+libpeloton_la_CXXFLAGS = -std=c++11 -I. -I$(top_srcdir)/src -I.. $(third_party_INCLUDES) -msse4.2 -fPIC -fpic 
 
 if BUILD_OS_IS_DARWIN
 libpeloton_la_LDFLAGS = -ldl -lm
