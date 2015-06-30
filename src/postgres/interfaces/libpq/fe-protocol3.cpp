@@ -1188,9 +1188,7 @@ reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
 		 * width.
 		 */
 		scroffset = 0;
-		// TODO: Peloton changes - added (int) cast
-		// to suppress compiler warning
-		for (; i < (int)msg->len; i += pg_encoding_mblen(encoding, &msg->data[i]))
+		for (; i < static_cast<int>(msg->len); i += pg_encoding_mblen(encoding, &msg->data[i]))
 		{
 			int			w = pg_encoding_dsplen(encoding, &msg->data[i]);
 

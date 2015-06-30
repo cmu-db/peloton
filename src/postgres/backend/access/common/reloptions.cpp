@@ -355,8 +355,8 @@ initialize_reloptions(void)
 
 	if (relOpts)
 		pfree(relOpts);
-	relOpts = MemoryContextAlloc(TopMemoryContext,
-								 (j + 1) * sizeof(relopt_gen *));
+	relOpts = static_cast<relopt_gen **>(MemoryContextAlloc(TopMemoryContext,
+								 (j + 1) * sizeof(relopt_gen *)));
 
 	j = 0;
 	for (i = 0; boolRelOpts[i].gen.name; i++)
@@ -440,13 +440,13 @@ add_reloption(relopt_gen *newoption)
 		if (max_custom_options == 0)
 		{
 			max_custom_options = 8;
-			custom_options = palloc(max_custom_options * sizeof(relopt_gen *));
+			custom_options = static_cast<relopt_gen **>(palloc(max_custom_options * sizeof(relopt_gen *)));
 		}
 		else
 		{
 			max_custom_options *= 2;
-			custom_options = repalloc(custom_options,
-								  max_custom_options * sizeof(relopt_gen *));
+			custom_options = static_cast<relopt_gen **>(repalloc(custom_options,
+								  max_custom_options * sizeof(relopt_gen *)));
 		}
 		MemoryContextSwitchTo(oldcxt);
 	}
@@ -488,7 +488,7 @@ allocate_reloption(bits32 kinds, int type, char *name, char *desc)
 			return NULL;		/* keep compiler quiet */
 	}
 
-	newoption = palloc(size);
+	newoption = static_cast<relopt_gen *>(palloc(size));
 
 	newoption->name = pstrdup(name);
 	if (desc)
@@ -497,7 +497,7 @@ allocate_reloption(bits32 kinds, int type, char *name, char *desc)
 		newoption->desc = NULL;
 	newoption->kinds = kinds;
 	newoption->namelen = strlen(name);
-	newoption->type = type;
+	newoption->type = static_cast<relopt_type>(type);
 
 	MemoryContextSwitchTo(oldcxt);
 
@@ -916,7 +916,7 @@ parseRelOptions(Datum options, bool validate, relopt_kind kind,
 		return NULL;
 	}
 
-	reloptions = palloc(numoptions * sizeof(relopt_value));
+	reloptions = static_cast<relopt_value *>(palloc(numoptions * sizeof(relopt_value)));
 
 	for (i = 0, j = 0; relOpts[i]; i++)
 	{
@@ -1234,7 +1234,7 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 	if (numoptions == 0)
 		return NULL;
 
-	rdopts = allocateReloptStruct(sizeof(StdRdOptions), options, numoptions);
+	rdopts = static_cast<StdRdOptions *>(allocateReloptStruct(sizeof(StdRdOptions), options, numoptions));
 
 	fillRelOptions((void *) rdopts, sizeof(StdRdOptions), options, numoptions,
 				   validate, tab, lengthof(tab));
@@ -1266,7 +1266,7 @@ view_reloptions(Datum reloptions, bool validate)
 	if (numoptions == 0)
 		return NULL;
 
-	vopts = allocateReloptStruct(sizeof(ViewOptions), options, numoptions);
+	vopts = static_cast<ViewOptions *>(allocateReloptStruct(sizeof(ViewOptions), options, numoptions));
 
 	fillRelOptions((void *) vopts, sizeof(ViewOptions), options, numoptions,
 				   validate, tab, lengthof(tab));
@@ -1366,7 +1366,7 @@ attribute_reloptions(Datum reloptions, bool validate)
 	if (numoptions == 0)
 		return NULL;
 
-	aopts = allocateReloptStruct(sizeof(AttributeOpts), options, numoptions);
+	aopts = static_cast<AttributeOpts *>(allocateReloptStruct(sizeof(AttributeOpts), options, numoptions));
 
 	fillRelOptions((void *) aopts, sizeof(AttributeOpts), options, numoptions,
 				   validate, tab, lengthof(tab));
@@ -1397,7 +1397,7 @@ tablespace_reloptions(Datum reloptions, bool validate)
 	if (numoptions == 0)
 		return NULL;
 
-	tsopts = allocateReloptStruct(sizeof(TableSpaceOpts), options, numoptions);
+	tsopts = static_cast<TableSpaceOpts *>(allocateReloptStruct(sizeof(TableSpaceOpts), options, numoptions));
 
 	fillRelOptions((void *) tsopts, sizeof(TableSpaceOpts), options, numoptions,
 				   validate, tab, lengthof(tab));
