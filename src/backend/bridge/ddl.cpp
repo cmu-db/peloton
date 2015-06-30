@@ -202,7 +202,7 @@ bool DDL::CreateIndex(std::string index_name,
 
   // Get the database oid and table oid
   oid_t database_oid = GetCurrentDatabaseOid();
-  oid_t table_oid = GetRelationOidFromRelationName(table_name.c_str());
+  oid_t table_oid = GetRelationOid(table_name.c_str());
 
   // Get the table location from manager
   auto table = catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);

@@ -1594,7 +1594,7 @@ ProcessUtilitySlow(Node *parsetree,
             {
               List* names = ((List *) lfirst(cell));
               char* table_name = strVal(linitial(names));
-              table_oid_list[table_oid_itr++] = GetRelationOidFromRelationName(table_name);
+              table_oid_list[table_oid_itr++] = GetRelationOid(table_name);
             }
           }
           ExecDropStmt((DropStmt *) parsetree, isTopLevel);
