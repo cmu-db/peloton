@@ -14,8 +14,6 @@
 
 
 #include "harness.h"
-#include "backend/bridge/bridge.h"
-#include "backend/bridge/plan_transformer.h"
 
 namespace peloton {
 namespace test {
