@@ -71,7 +71,6 @@ static void peloton_setheader(Peloton_MsgHdr *hdr, PelotonMsgType mtype);
 static void peloton_send(void *msg, int len);
 
 static void peloton_recv_plan(Peloton_MsgPlan *msg, int len);
-static void peloton_recv_port(Peloton_MsgPort *msg, int len);
 
 /**
  * @brief Initialize peloton
@@ -118,9 +117,6 @@ int peloton_start(void){
 NON_EXEC_STATIC void
 PelotonMain(int argc, char *argv[])
 {
-  /* Set port */
-  MyProcPort = PelotonPort;
-
   /* Identify myself via ps */
   init_ps_display("peloton process", "", "", "");
 
@@ -157,19 +153,6 @@ PelotonMain(int argc, char *argv[])
    * had to do some stuff with LWLocks).
    */
   InitProcess();
-
-  /*
-   * General initialization.
-   *
-   * NOTE: if you are tempted to add code in this vicinity, consider putting
-   * it inside InitPostgres() instead.  In particular, anything that
-   * involves database access should be there, not here.
-   */
-  // TODO: Hardcoded db and user names
-  //InitPostgres("postgres", InvalidOid, "superuser", InvalidOid, NULL);
-
-  /* Initialize Peloton here */
-  //InitPeloton(NULL);
 
   peloton_MainLoop();
 
@@ -303,10 +286,6 @@ peloton_MainLoop(void)
 
         case PELOTON_MTYPE_PLAN:
           peloton_recv_plan((Peloton_MsgPlan*) &msg, len);
-          break;
-
-        case PELOTON_MTYPE_PORT:
-          peloton_recv_port((Peloton_MsgPort*) &msg, len);
           break;
 
         default:
@@ -696,39 +675,6 @@ peloton_send_node(PlanState *node)
 }
 
 /* ----------
- * peloton_send_port() -
- *
- *  Send the port number to Peloton.
- * ----------
- */
-void
-peloton_send_port(Port *port)
-{
-  Peloton_MsgPort msg;
-  MemoryContext oldcontext;
-
-  if (pelotonSock == PGINVALID_SOCKET)
-    return;
-
-  peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_PORT);
-
-  /*
-   * Switch to TopSharedMemoryContext context for copying plan.
-   */
-  oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
-
-  msg.m_port = (Port *) palloc(sizeof(Port));
-  memcpy(msg.m_port, port, sizeof(Port));
-
-  /*
-   * Switch back to old context.
-   */
-  MemoryContextSwitchTo(oldcontext);
-
-  peloton_send(&msg, sizeof(msg));
-}
-
-/* ----------
  * peloton_recv_plan() -
  *
  *  Process plan execution requests.
@@ -757,35 +703,5 @@ peloton_recv_plan(Peloton_MsgPlan *msg, int len)
 
   /* Print stats */
   //SHMContextStats(TopSharedMemoryContext);
-}
-
-/* ----------
- * peloton_recv_port() -
- *
- *  Process port.
- * ----------
- */
-static void
-peloton_recv_port(Peloton_MsgPort *msg, int len)
-{
-  Port *port;
-
-  if(msg != NULL)
-  {
-    /* Get the port */
-    port = msg->m_port;
-
-    if(port != NULL)
-    {
-      PelotonPort = port;
-
-      fprintf(stdout, "Peloton Port : dbname %s username %s socket %d\n",
-              PelotonPort->database_name,
-              PelotonPort->user_name,
-              PelotonPort->sock);
-      fflush(stdout);
-    }
-  }
-
 }
 

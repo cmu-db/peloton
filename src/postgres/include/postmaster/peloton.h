@@ -23,7 +23,6 @@
 typedef enum PelotonMsgType
 {
   PELOTON_MTYPE_DUMMY,
-  PELOTON_MTYPE_PORT,
   PELOTON_MTYPE_PLAN
 } PelotonMsgType;
 
@@ -72,16 +71,6 @@ typedef struct Peloton_MsgPlan
 } Peloton_MsgPlan;
 
 /* ----------
- * Peloton_MsgPort     Sent by the postmaster to share the port to peloton.
- * ----------
- */
-typedef struct Peloton_MsgPort
-{
-  Peloton_MsgHdr m_hdr;
-  Port *m_port;
-} Peloton_MsgPort;
-
-/* ----------
  * Peloton_Msg         Union over all possible messages.
  * ----------
  */
@@ -90,7 +79,6 @@ typedef union Peloton_Msg
   Peloton_MsgHdr msg_hdr;
   Peloton_MsgDummy msg_dummy;
   Peloton_MsgPlan msg_plan;
-  Peloton_MsgPort msg_port;
 } Peloton_Msg;
 
 /* ----------
@@ -102,7 +90,6 @@ extern void peloton_init(void);
 extern int  peloton_start(void);
 
 extern void peloton_send_ping(void);
-extern void peloton_send_port(Port *port);
 extern void peloton_send_node(PlanState *node);
 
 #endif   /* PELOTON_H */

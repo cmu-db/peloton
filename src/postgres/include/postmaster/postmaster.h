@@ -88,6 +88,4 @@ typedef enum {
 
 extern TestMode CurrentTestModeStatus;
 
-extern Port *PelotonPort;
-
 #endif   /* _POSTMASTER_H */
