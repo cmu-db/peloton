@@ -345,24 +345,6 @@ enum ResultType {
 // Constraint Types
 //===--------------------------------------------------------------------===//
 
-enum ConstraintTypeInPostgres {
-  CONSTR_NULL                  = 0,
-
-  CONSTR_NOTNULL               = 1,
-  CONSTR_DEFAULT               = 2,
-  CONSTR_CHECK                 = 3,
-  CONSTR_PRIMARY               = 4,
-  CONSTR_UNIQUE                = 5,
-  CONSTR_EXCLUSION             = 6,
-  CONSTR_FOREIGN               = 7,
-
-  /* attributes for previous constraint node */
-  CONSTR_ATTR_DEFERRABLE       = 8,    
-  CONSTR_ATTR_NOT_DEFERRABLE   = 9,
-  CONSTR_ATTR_DEFERRED         = 10,
-  CONSTR_ATTR_IMMEDIATE        = 11,
-};
-
 enum ConstraintType {
   CONSTRAINT_TYPE_INVALID    = 0, // invalid
 
@@ -466,17 +448,17 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 std::string BackendTypeToString(BackendType type);
 BackendType StringToBackendType(std::string str );
 
-std::string ValueToString(ValueType type);
-ValueType StringToValue(std::string str );
+std::string ValueTypeToString(ValueType type);
+ValueType StringToValueType(std::string str );
 
-std::string ExpressionToString(ExpressionType type);
-ExpressionType StringToExpression(std::string str);
+std::string ExpressionTypeToString(ExpressionType type);
+ExpressionType StringToExpressionType(std::string str);
 
 std::string IndexTypeToString(IndexType type);
 IndexType StringToIndexType(std::string str);
 
-std::string PlanNodeToString(PlanNodeType type);
-PlanNodeType StringToPlanNode(std::string str);
+std::string PlanNodeTypeToString(PlanNodeType type);
+PlanNodeType StringToPlanNodeType(std::string str);
 
 std::string ConstraintTypeToString(ConstraintType type);
 ConstraintType StringToConstraintType(std::string str);

@@ -10,309 +10,348 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/bridge/ddl.h"
+#include "postgres.h"
+#include "c.h"
 
+#include "bridge/bridge.h"
+#include "nodes/parsenodes.h"
+
+#include "backend/bridge/ddl.h"
+#include "backend/catalog/catalog.h"
+#include "backend/catalog/schema.h"
+#include "backend/common/logger.h"
+#include "backend/common/types.h"
+#include "backend/index/index.h"
+#include "backend/index/index_factory.h"
+#include "backend/storage/backend_vm.h"
+#include "backend/storage/table_factory.h"
+
+#include <cassert>
 
 namespace peloton {
 namespace bridge {
 
+/**
+ * @brief Create table.
+ * @param table_name Table name
+ * @param column_info Information about the columns
+ * @param num_columns Number of columns in the table
+ * @param schema Schema for the table
+ * @return true if we created a table, false otherwise
+ */
 bool DDL::CreateTable(std::string table_name,
-                      DDL_ColumnInfo* ddl_columnInfo,
-                      int num_columns, 
-                      int *num_of_constraints_of_each_column,
-                      catalog::Schema* schema = NULL){
-  if( ( num_columns > 0 && ddl_columnInfo == NULL) && schema == NULL ) 
+                      DDL_ColumnInfo* schema,
+                      int num_columns,
+                      int *num_of_constraints_of_each_column) {
+  assert(num_columns >= 0);
+  assert(schema);
+
+  // Check db oid
+  Oid database_oid = GetCurrentDatabaseOid();
+  if(database_oid == InvalidOid)
     return false;
 
-  oid_t db_oid = GetCurrentDatabaseOid();
-  if( db_oid == 0 )
-    return false;
+  // Construct schema with column information
+  std::vector<catalog::ColumnInfo> column_infos;
+  std::vector<catalog::Constraint> constraint_vec;
 
-  // Construct schema with ddl_columnInfo
-  if( schema == NULL ){
-    //Construct schema from a vector of columnInfoVect
-    std::vector<catalog::ColumnInfo> columnInfoVect;
-    //Construct ConlumnInfo from a vector of constraints
-    std::vector<catalog::Constraint> constraint_vec;
+  ValueType column_type;
+  ConstraintType currentConstraintType;
 
-    ValueType currentValueType;
-    ConstraintType currentConstraintType;
+  if(num_columns > 0) {
+    // Go over each column to get its information
+    for( int column_itr = 0; column_itr < num_columns; column_itr++ ){
 
-    // create a table without columnInfo
-    if( num_columns == 0 ){
-          currentValueType = VALUE_TYPE_NULL;
-          catalog::ColumnInfo *columnInfo = new catalog::ColumnInfo( currentValueType, 0, 0, "", true, true, constraint_vec);
-          columnInfoVect.push_back(*columnInfo);
-    }else{
+      switch(schema[column_itr].valueType){
 
-      // Count the number of primary keys to build an index
-      // TODO :: We can change the below structure to a vector after merging with master branch
-      std::vector<std::string> ColumnNamesForKeySchema_vec;
+        // Could not find yet corresponding types in Postgres.
+        // FIXME: change the hardcoded constants to enum type
 
-      for( int column_itr = 0; column_itr < num_columns; column_itr++ ){
-  
-        // Set up ValueType
-        switch(ddl_columnInfo[column_itr].valueType ){
-          // Could not find yet corresponding types in Postgres...
-          // Also - check below types again to make sure..
-          // TODO :: change the numbers to enum type
-          // TODO :: set the size of char? according to the ... type?
-  
-          /* BOOLEAN */
-          case 16: // boolean, 'true'/'false'
-            currentValueType = VALUE_TYPE_BOOLEAN;
+        //===--------------------------------------------------------------------===//
+        // Column Type Information
+        //===--------------------------------------------------------------------===//
+
+        /* BOOLEAN */
+        case 16: // boolean, 'true'/'false'
+          column_type = VALUE_TYPE_BOOLEAN;
+          break;
+
+          /* INTEGER */
+        case 21: // -32 thousand to 32 thousand, 2-byte storage
+          column_type = VALUE_TYPE_SMALLINT;
+          schema[column_itr].is_inlined = true;
+          break;
+        case 23: // -2 billion to 2 billion integer, 4-byte storage
+          column_type = VALUE_TYPE_INTEGER;
+          schema[column_itr].is_inlined = true;
+          break;
+        case 20: // ~18 digit integer, 8-byte storage
+          column_type = VALUE_TYPE_BIGINT;
+          schema[column_itr].is_inlined = true;
+          break;
+
+          /* DOUBLE */
+        case 701: // double-precision floating point number, 8-byte storage
+          column_type = VALUE_TYPE_DOUBLE;
+          schema[column_itr].is_inlined = true;
+          break;
+
+          /* CHAR */
+        case 1014:
+        case 1042: // char(length), blank-padded string, fixed storage length
+          column_type = VALUE_TYPE_VARCHAR;
+          schema[column_itr].is_inlined = true;
+          break;
+
+          // !!! NEED TO BE UPDATED ...
+        case 1015:
+        case 1043: // varchar(length), non-blank-padded string, variable storage length;
+          column_type = VALUE_TYPE_VARCHAR;
+          schema[column_itr].is_inlined = true;
+          break;
+
+          /* TIMESTAMPS */
+        case 1114: // date and time
+        case 1184: // date and time with time zone
+          column_type = VALUE_TYPE_TIMESTAMP;
+          schema[column_itr].is_inlined = true;
+          break;
+
+          /* DECIMAL */
+        case 1700: // numeric(precision, decimal), arbitrary precision number
+          column_type = VALUE_TYPE_DECIMAL;
+          break;
+
+          /* INVALID VALUE TYPE */
+        default:
+          column_type = VALUE_TYPE_INVALID;
+          LOG_ERROR("Invalid column type : %d \n", schema[column_itr].valueType);
+          return false;
+          break;
+      }
+
+      //===--------------------------------------------------------------------===//
+      // Column Constraint Information
+      //===--------------------------------------------------------------------===//
+
+      constraint_vec.clear();
+
+      for(int constraint_itr = 0 ; constraint_itr < num_of_constraints_of_each_column[column_itr]; constraint_itr++)
+      {
+        // Matching the ConstraintType from Postgres to Peloton
+        // TODO :: Do we need both constraint types ???
+        // Make a function with followings..
+        // TODO :: Failed :: CREATE TABLE MULTI_COLUMNS_PRIMARY_KEY_EXAMPLE ( a integer, b integer, PRIMARY KEY (a, b) );
+
+        switch(schema[column_itr].constraintType[constraint_itr] ){
+          case CONSTR_CHECK:
+            printf(" ConstraintNode->contype is CONSTR_CHECK\n");
+            currentConstraintType = CONSTRAINT_TYPE_CHECK;
             break;
-  
-            /* INTEGER */
-          case 21: // -32 thousand to 32 thousand, 2-byte storage
-            currentValueType = VALUE_TYPE_SMALLINT;
-            ddl_columnInfo[column_itr].is_inlined = true;
+
+          case CONSTR_NOTNULL:
+            printf(" ConstraintNode->contype is CONSTR_NOTNULL\n");
+            currentConstraintType = CONSTRAINT_TYPE_NOTNULL;
             break;
-          case 23: // -2 billion to 2 billion integer, 4-byte storage
-            currentValueType = VALUE_TYPE_INTEGER;
-            ddl_columnInfo[column_itr].is_inlined = true;
+
+          case CONSTR_UNIQUE:
+            printf(" ConstraintNode->contype is CONSTR_UNIQUE\n");
+            currentConstraintType = CONSTRAINT_TYPE_UNIQUE;
             break;
-          case 20: // ~18 digit integer, 8-byte storage
-            currentValueType = VALUE_TYPE_BIGINT;
-            ddl_columnInfo[column_itr].is_inlined = true;
+
+          case CONSTR_PRIMARY:
+            printf(" ConstraintNode->contype is CONSTR_PRIMARY\n");
+            currentConstraintType = CONSTRAINT_TYPE_PRIMARY;
+            //key_column_info_vec.push_back(ddl
+            //num_of_PrimaryKeys++;
             break;
-  
-            /* DOUBLE */
-          case 701: // double-precision floating point number, 8-byte storage
-            currentValueType = VALUE_TYPE_DOUBLE;
-            ddl_columnInfo[column_itr].is_inlined = true;
+
+          case CONSTR_FOREIGN:
+            printf(" ConstraintNode->contype is CONST_FOREIGN\n");
+            currentConstraintType = CONSTRAINT_TYPE_NOTNULL;
             break;
-  
-            /* CHAR */
-          case 1014:
-          case 1042: // char(length), blank-padded string, fixed storage length
-            currentValueType = VALUE_TYPE_VARCHAR;
-            ddl_columnInfo[column_itr].is_inlined = true;
+
+          case CONSTR_EXCLUSION:
+            printf(" ConstraintNode->contype is CONSTR_EXCLUSION\n");
+            currentConstraintType = CONSTRAINT_TYPE_NOTNULL;
             break;
-            // !!! NEED TO BE UPDATED ...
-          case 1015:
-          case 1043: // varchar(length), non-blank-padded string, variable storage length;
-            currentValueType = VALUE_TYPE_VARCHAR;
-            ddl_columnInfo[column_itr].is_inlined = true;
-            break;
-  
-            /* TIMESTAMPS */
-          case 1114: // date and time
-          case 1184: // date and time with time zone
-            currentValueType = VALUE_TYPE_TIMESTAMP;
-            ddl_columnInfo[column_itr].is_inlined = true;
-            break;
-  
-            /* DECIMAL */
-          case 1700: // numeric(precision, decimal), arbitrary precision number
-            currentValueType = VALUE_TYPE_DECIMAL;
-            break;
-  
-            /* INVALID VALUE TYPE */
+
           default:
-            currentValueType = VALUE_TYPE_INVALID;
-            printf("INVALID VALUE TYPE : %d \n", ddl_columnInfo[column_itr].valueType);
+            printf("INVALID CONSTRAINT TYPE : %d \n", schema[column_itr].constraintType[constraint_itr]);
             break;
         }
- 
-        /*
-         * Set up Constraints
-         */
-        constraint_vec.clear();
 
-        for(int constraint_itr = 0 ; constraint_itr < num_of_constraints_of_each_column[column_itr]; constraint_itr++)
-        {
-          // Matching the ConstraintType from Postgres to Peloton
-          // TODO :: Do we need both constraint types ???
-          // Make a function with followings..
-          // TODO :: Failed :: CREATE TABLE MULTI_COLUMNS_PRIMARY_KEY_EXAMPLE ( a integer, b integer, PRIMARY KEY (a, b) );
-          switch(ddl_columnInfo[column_itr].constraintType[constraint_itr] ){
-            case CONSTR_CHECK:
-              printf(" ConstraintNode->contype is CONSTR_CHECK\n");
-              currentConstraintType = CONSTRAINT_TYPE_CHECK;
-              break;
+        catalog::Constraint* constraint = new catalog::Constraint( currentConstraintType,
+                                                                   schema[column_itr].conname[constraint_itr]);
 
-            case CONSTR_NOTNULL:
-              printf(" ConstraintNode->contype is CONSTR_NOTNULL\n");
-              currentConstraintType = CONSTRAINT_TYPE_NOTNULL;
-              break;
+        constraint_vec.push_back(*constraint);
+      }// end of set constraints
 
-            case CONSTR_UNIQUE:
-              printf(" ConstraintNode->contype is CONSTR_UNIQUE\n");
-              currentConstraintType = CONSTRAINT_TYPE_UNIQUE;
-              break;
+      catalog::ColumnInfo column_info(column_type,
+                                      schema[column_itr].column_offset,
+                                      schema[column_itr].column_length,
+                                      schema[column_itr].name,
+                                      schema[column_itr].allow_null,
+                                      schema[column_itr].is_inlined,
+                                      constraint_vec);
 
-           case CONSTR_PRIMARY:
-              printf(" ConstraintNode->contype is CONSTR_PRIMARY\n");
-              currentConstraintType = CONSTRAINT_TYPE_PRIMARY;
-              //ColumnNamesForKeySchema_vec.push_back(ddl
-              //num_of_PrimaryKeys++;
-              break;
-
-            case CONSTR_FOREIGN:
-              printf(" ConstraintNode->contype is CONST_FOREIGN\n");
-              currentConstraintType = CONSTRAINT_TYPE_NOTNULL;
-              break;
-
-           case CONSTR_EXCLUSION:
-              printf(" ConstraintNode->contype is CONSTR_EXCLUSION\n");
-              currentConstraintType = CONSTRAINT_TYPE_NOTNULL;
-              break;
-
-           default:
-              printf("INVALID CONSTRAINT TYPE : %d \n", ddl_columnInfo[column_itr].constraintType[constraint_itr]);
-              break;
-          }
-          catalog::Constraint* constraint = new catalog::Constraint( currentConstraintType,
-                                                                     ddl_columnInfo[column_itr].conname[constraint_itr]);
-          constraint_vec.push_back(*constraint);
-        }// end of set constraints
-      
-        catalog::ColumnInfo *columnInfo = new catalog::ColumnInfo( currentValueType,
-                                                                   ddl_columnInfo[column_itr].column_offset,
-                                                                   ddl_columnInfo[column_itr].column_length,
-                                                                   ddl_columnInfo[column_itr].name,
-                                                                   ddl_columnInfo[column_itr].allow_null,
-                                                                   ddl_columnInfo[column_itr].is_inlined,
-                                                                   constraint_vec);
-        // Add current columnInfo into the columnInfoVect
-        columnInfoVect.push_back(*columnInfo);
-      }
+      // Add current column to column info vector
+      column_infos.push_back(column_info);
     }
-
-    // Construct schema from vector of ColumnInfo
-    schema = new catalog::Schema(columnInfoVect);
-
-    // Just for debugging
-    std::cout << "Print out Schema just for debugging of constraint" << std::endl;
-    std::cout << *schema << std::endl;
+  }
+  // SPECIAL CASE:: No columns in table
+  else {
+    column_type = VALUE_TYPE_NULL;
+    catalog::ColumnInfo column_info(column_type, 0, 0, "",
+                                    true, true, constraint_vec);
+    column_infos.push_back(column_info);
   }
 
-  // Construct backend
-  storage::VMBackend *vmbackend = new storage::VMBackend;
+  // Construct our schema from vector of ColumnInfo
+  auto our_schema = new catalog::Schema(column_infos);
 
-  // Create a table from schema
-  storage::DataTable *table;
+  // FIXME: Construct table backend
+  storage::VMBackend *backend = new storage::VMBackend();
 
-  table =  storage::TableFactory::GetDataTable(db_oid, schema, table_name);
+  // Build a table from schema
+  storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, our_schema, table_name);
 
-  // Store the schema for "CreateIndex"
-  table->SetSchema(schema);
+  if(table != nullptr) {
+    LOG_INFO("Created table : %s\n", table_name.c_str());
+    return true;
+  }
 
-  // Build an index with primary keys if we have
-  /*
-  if( num_of_PrimaryKeys > 0 )
-    if( num_of_PrimaryKeys == 1 )
-      CreateIndex(tablename+"primary_key_index", table_name, 0, true, 
-    // TODO :: Build an index with multiple columns..
-    //else 
-    // CreateIndex(
-  */
-       
-  //LOG_WARN("Created table : %s \n", table_name);
-  return true;
+  return false;
 }
 
-bool DDL::DropTable(unsigned int table_oid)
-{
-  oid_t db_oid = GetCurrentDatabaseOid();
-  if( db_oid == 0 || table_oid == 0 )
-    return false;
+/**
+ * @brief Drop table.
+ * @param table_oid Table id.
+ * @return true if we dropped the table, false otherwise
+ */
+bool DDL::DropTable(Oid table_oid) {
 
-  bool ret = storage::TableFactory::DropDataTable(db_oid, table_oid);
-  if( !ret )
-    return false;
+  oid_t database_oid = GetCurrentDatabaseOid();
 
-  return true;
+  if(database_oid == InvalidOid || table_oid == InvalidOid) {
+    LOG_WARN("Could not drop table :: db oid : %u table oid : %u", database_oid, table_oid);
+    return false;
+  }
+
+  bool status = storage::TableFactory::DropDataTable(database_oid, table_oid);
+  if(status == true) {
+    LOG_INFO("Dropped table with oid : %u\n", table_oid);
+    return true;
+  }
+
+  return false;
 }
 
-//TODO ::  change parameters
+
+/**
+ * @brief Create index.
+ * @param index_name Index name
+ * @param table_name Table name
+ * @param type Type of the index
+ * @param unique Index is unique or not ?
+ * @param
+ * @param column_info Information about the columns
+ * @param num_columns Number of columns in the table
+ * @param schema Schema for the table
+ *
+ * @return true if we dropped the table, false otherwise
+ */
 bool DDL::CreateIndex(std::string index_name,
                       std::string table_name,
-                      int type,
-                      bool unique, 
-                      char** ColumnNamesForKeySchema,
-                      int num_columns_of_KeySchema)
-{
-  assert( index_name != "" || table_name != "" || ColumnNamesForKeySchema != NULL || num_columns_of_KeySchema > 0 );
+                      int index_type,
+                      bool unique_keys,
+                      char **key_column_names,
+                      int num_columns_in_key) {
 
-  /* Currently, we use only btree as an index method */
-  IndexType currentIndexType = INDEX_TYPE_BTREE_MULTIMAP;
-//  switch(type)
-//  {
-//    case 403: /* BTREE_AM_OID*/
-//    currentIndexType = INDEX_TYPE_BTREE_MULTIMAP; // array
-//      break;
-//    case 405: /* HASH_AM_OID*/
-//      break;
-//    case 783: /* GIST_AM_OID*/
-//      break;
-//    case 2742: /* GINH_AM_OID*/
-//      break;
-//    case 4000: /* SPGIST_AM_OID*/
-//      break;
-//    case 3580: /* BRIN_AM_OID*/
-//      break;
-//    default:
-//    currentIndexType = INDEX_TYPE_ORDERED_MAP;   // ordered map
-//    currentIndexType = INDEX_TYPE_INVALID; 
-//      break;
-//  }
+  assert( index_name != "" || table_name != "" || key_column_names != NULL || num_columns_in_key > 0 );
+
+  // NOTE: We currently only support btree as our index implementation
+  // FIXME: Support other types based on "type" argument
+  IndexType our_index_type = INDEX_TYPE_BTREE_MULTIMAP;
 
   // Get the database oid and table oid
   oid_t database_oid = GetCurrentDatabaseOid();
-  oid_t table_oid = GetRelationOidFromRelationName(table_name.c_str());
+  oid_t table_oid = GetRelationOid(table_name.c_str());
 
   // Get the table location from manager
-  storage::DataTable* table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+  auto table = catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+  storage::DataTable* data_table = (storage::DataTable*) table;
+  auto tuple_schema = data_table->GetSchema();
 
-  // Bring the tuple schema from the table
-  auto tuple_schema = table->GetSchema();
+  // Construct key schema
+  std::vector<oid_t> key_columns;
 
-  // Print out tuple_schema just for debugging
-  //std::cout << *tuple_schema << std::endl;
+  // Based on the key column info, get the oid of the given 'key' columns in the tuple schema
+  for(oid_t key_schema_column_itr = 0;  key_schema_column_itr < num_columns_in_key; key_schema_column_itr++) {
+    for( oid_t tuple_schema_column_itr = 0; tuple_schema_column_itr < tuple_schema->GetColumnCount();
+        tuple_schema_column_itr++){
 
-  // Make a vector to store selected column's oids
-  std::vector<oid_t> selected_oids_for_KeySchema;
-
-  // Based on the ColumnInfo of KeySchema, find out the given 'key' columns in the tuple schema and store it's oid 
-  for(oid_t column_itr_for_KeySchema = 0;  column_itr_for_KeySchema < num_columns_of_KeySchema; column_itr_for_KeySchema++)
-  {
-    for( oid_t column_itr_for_TupleSchema = 0; column_itr_for_TupleSchema < tuple_schema->GetColumnCount(); column_itr_for_TupleSchema++)
-    {
       // Get the current column info from tuple schema
-      catalog::ColumnInfo colInfo = tuple_schema->GetColumnInfo(column_itr_for_TupleSchema);
+      catalog::ColumnInfo column_info = tuple_schema->GetColumnInfo(tuple_schema_column_itr);
 
       // Compare Key Schema's current column name and Tuple Schema's current column name
-      if( strcmp( ColumnNamesForKeySchema[ column_itr_for_KeySchema], (colInfo.name).c_str() )== 0 )
-        selected_oids_for_KeySchema.push_back(column_itr_for_TupleSchema);
+      if(strcmp(key_column_names[key_schema_column_itr], (column_info.name).c_str() )== 0 )
+        key_columns.push_back(tuple_schema_column_itr);
     }
   }
 
-  catalog::Schema * key_schema = catalog::Schema::CopySchema(tuple_schema, selected_oids_for_KeySchema);
-  // TODO :: REMOVE :: Print out key schema just for debugging
-  //std::cout << *key_schema << std::endl;
+  auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_columns);
 
-  // Create metadata and index 
-  index::IndexMetadata* metadata = new index::IndexMetadata(index_name, currentIndexType, tuple_schema, key_schema, unique);
+  // Create index metadata and physical index
+  index::IndexMetadata* metadata = new index::IndexMetadata(index_name, our_index_type,
+                                                            tuple_schema, key_schema,
+                                                            unique_keys);
   index::Index* index = index::IndexFactory::GetInstance(metadata);
 
-  // Add an index into the table
- table->AddIndex(index);
+  // Record the built index in the table
+  data_table->AddIndex(index);
 
   return true;
 }
- 
+
+/* ------------------------------------------------------------
+ * C-style function declarations
+ * ------------------------------------------------------------
+ */
 
 extern "C" {
-bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns, int* num_of_constraints_of_each_column) {
-  return DDL::CreateTable(table_name, ddl_columnInfo, num_columns, num_of_constraints_of_each_column);
+
+bool DDLCreateTable(char* table_name,
+                    DDL_ColumnInfo* schema,
+                    int num_columns,
+                    int *num_of_constraints_of_each_column) {
+
+  return DDL::CreateTable(table_name,
+                          schema,
+                          num_columns,
+                          num_of_constraints_of_each_column);
 }
-bool DDL_DropTable(unsigned int table_oid) {
+
+bool DDLDropTable(Oid table_oid) {
+
   return DDL::DropTable(table_oid);
 }
-bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, char** ColumnNamesForKeySchema, int num_columns_of_KeySchema) {
-  return DDL::CreateIndex(index_name, table_name, type, unique, ColumnNamesForKeySchema, num_columns_of_KeySchema ) ; }
+
+bool DDLCreateIndex(char* index_name,
+                    char* table_name,
+                    int type,
+                    bool unique,
+                    char** key_column_names,
+                    int num_columns_in_key) {
+
+  return DDL::CreateIndex(index_name,
+                          table_name,
+                          type,
+                          unique,
+                          key_column_names,
+                          num_columns_in_key) ;
+}
+
 }
 
 } // namespace bridge
