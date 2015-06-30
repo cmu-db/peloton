@@ -17,3 +17,108 @@ The following files should be automatically generated:
     /tools/pg_psql/sql_help.c
     /tools/pg_psql/psql_scan.c
 
+## Porting to C++
+
+The postgres parts have been ported to C++. In order to do so, we made the following changes:
+
+1. Avoid keyword conflict
+  
+  All variables that have the same name as C++ keyword are appned "___". Details of the cases
+  are as follows:
+
+  * new
+  * namespace
+  * friend
+  * public
+  * private
+  * typename
+  * typeid
+  * constexpr
+  * operator
+  * class
+
+2. Make use of C++ inheritance to avoid casting
+
+    All derived nodes struct in `parsenodes.h` are redefined using C++ inheritance.
+
+3. Resolve error for missing operator= for volatile cases
+
+    Define `operator=` manually for the cases where volatile qualifier is used. C++
+    does not generate for such case by default. The deails of the cases are as follows:
+
+    * `RelFileNode` at `include/storage/relfilnode.h`
+    * `QueuePosition` at `backend/commands/async.cpp`
+    * `BufferTag` at `include/storage/buf_internals.h`
+
+4. Resolve implicitly deleted default constructor
+
+    This union's default constructor is implictly deleted if one of its member has
+    non-trivial constructor. The work around is to define mannually. The details of
+    the cases are as follows:
+
+    * `SharedInvalidationMessage` ar `include/storage/sinval.h`
+
+
+5. Resolve missing `operator++`
+
+    The work around is to use `operator+`, instead of `operator++`. We changed all
+    the occurrances of `forkNum++` to `forkNum = forkNum + 1`
+
+6. Resolve missing namespace for inner enum
+    
+    Member enums have to be resolved by specifying class name. The details of the 
+    cases are as follows:
+
+    * JsonbValue
+
+7. Avoid redefinition
+
+    Forward declaration for static const variables does not work in C++. The 
+    work around is to add an anonymous namespace for them. The details of the
+    the cases are as follows:
+
+    * `pg_crc32c_table` at `port/pg_crc32c_sb8.cpp`
+
+8. Resolve unreference problem for extern const variable
+
+    The work around is to add `extern` at the place where the variable is defined
+    Details of the cases are as follows:
+
+    * `sync_method_options` at `backend/access/transam/xlog.cpp`
+    * `wal_level_options` at `backend/access/rmgrdesc/xlogdesc.cpp`
+    * `dynamic_shared_memory_options` at `backend/access/transam/xlog.cpp`
+    * `archive_mode_options` at `backend/access/transam/xlog.cpp`
+
+9. Resolve the differece of function pointer in C and C++
+    
+    In C, it is possible to declare a function that takes arbitray number of argument.
+    But it is not the case in C++. The work around is to explicitly define funciton
+    pointer types for different number of arguments. The datails of the cases are 
+    as follows:
+
+    * `func_ptr0` at `backend/utils/fmgr/fmgr.c`
+    * `func_ptr1` at `backend/utils/fmgr/fmgr.c`
+    * `func_ptr2` at `backend/utils/fmgr/fmgr.c`
+    * `func_ptr3` at `backend/utils/fmgr/fmgr.c`
+    * `func_ptr4` at `backend/utils/fmgr/fmgr.c`
+    * `func_ptr5` at `backend/utils/fmgr/fmgr.c`
+    * `func_ptr6` at `backend/utils/fmgr/fmgr.c`
+    * `func_ptr7` at `backend/utils/fmgr/fmgr.c`
+    * `func_ptr8` at `backend/utils/fmgr/fmgr.c`
+    * `func_ptr9` at `backend/utils/fmgr/fmgr.c`
+    * `func_ptr10` at `backend/utils/fmgr/fmgr.c`
+    * `func_ptr11` at `backend/utils/fmgr/fmgr.c`
+    * `func_ptr12` at `backend/utils/fmgr/fmgr.c`
+    * `func_ptr13` at `backend/utils/fmgr/fmgr.c`
+    * `func_ptr14` at `backend/utils/fmgr/fmgr.c`
+    * `func_ptr15` at `backend/utils/fmgr/fmgr.c`
+    * `func_ptr16` at `backend/utils/fmgr/fmgr.c`
+    * `expression_tree_walker` at `include/nodes/nodeFunc.h`
+    * `expression_tree_mutator` at `include/nodes/nodeFunc.h`
+    * `query_tree_walker` at `include/nodes/nodeFunc.h`
+    * `query_tree_mutator` at `include/nodes/nodeFunc.h`
+    * `range_table_walker` at `include/nodes/nodeFunc.h`
+    * `range_table_mutator` at `include/nodes/nodeFunc.h`
+    * `query_or_expression_tree_walker` at `include/nodes/nodeFunc.h`
+    * `query_or_expression_tree_mutator` at `include/nodes/nodeFunc.h`
+    * `raw_expression_tree_walker` at `include/nodes/nodeFunc.h`
