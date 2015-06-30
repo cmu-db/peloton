@@ -30,18 +30,24 @@ bool DDL::CreateTable(std::string table_name,
 
   // Construct schema with ddl_columnInfo
   if( schema == NULL ){
+    //Construct schema from a vector of columnInfoVect
     std::vector<catalog::ColumnInfo> columnInfoVect;
-    ValueType currentValueType;
-    ConstraintType currentConstraintType;
+    //Construct ConlumnInfo from a vector of constraints
     std::vector<catalog::Constraint> constraint_vec;
 
-    // TODO :: Do we need this kind of table??
+    ValueType currentValueType;
+    ConstraintType currentConstraintType;
+
     // create a table without columnInfo
     if( num_columns == 0 ){
           currentValueType = VALUE_TYPE_NULL;
           catalog::ColumnInfo *columnInfo = new catalog::ColumnInfo( currentValueType, 0, 0, "", true, true, constraint_vec);
           columnInfoVect.push_back(*columnInfo);
     }else{
+
+      // Count the number of primary keys to build an index
+      // TODO :: We can change the below structure to a vector after merging with master branch
+      std::vector<std::string> ColumnNamesForKeySchema_vec;
 
       for( int column_itr = 0; column_itr < num_columns; column_itr++ ){
   
@@ -50,6 +56,7 @@ bool DDL::CreateTable(std::string table_name,
           // Could not find yet corresponding types in Postgres...
           // Also - check below types again to make sure..
           // TODO :: change the numbers to enum type
+          // TODO :: set the size of char? according to the ... type?
   
           /* BOOLEAN */
           case 16: // boolean, 'true'/'false'
@@ -112,14 +119,13 @@ bool DDL::CreateTable(std::string table_name,
          * Set up Constraints
          */
         constraint_vec.clear();
+
         for(int constraint_itr = 0 ; constraint_itr < num_of_constraints_of_each_column[column_itr]; constraint_itr++)
         {
-          index::Index* index = nullptr;
-          storage::DataTable* table = nullptr;
-
           // Matching the ConstraintType from Postgres to Peloton
           // TODO :: Do we need both constraint types ???
           // Make a function with followings..
+          // TODO :: Failed :: CREATE TABLE MULTI_COLUMNS_PRIMARY_KEY_EXAMPLE ( a integer, b integer, PRIMARY KEY (a, b) );
           switch(ddl_columnInfo[column_itr].constraintType[constraint_itr] ){
             case CONSTR_CHECK:
               printf(" ConstraintNode->contype is CONSTR_CHECK\n");
@@ -139,20 +145,8 @@ bool DDL::CreateTable(std::string table_name,
            case CONSTR_PRIMARY:
               printf(" ConstraintNode->contype is CONSTR_PRIMARY\n");
               currentConstraintType = CONSTRAINT_TYPE_PRIMARY;
-              printf("conname %s \n",  ddl_columnInfo[column_itr].conname[constraint_itr]);
-/*
-              DDL_ColumnInfo ddl_columnInfoForKeySchema; 
-              ddl_columnInfoForKeySchema.valueType = 0; 
-              ddl_columnInfoForKeySchema.column_offset = 0;
-              ddl_columnInfoForKeySchema.column_length = 0;
-              strcpy(ddl_columnInfoForKeySchema.name, indexElem->name );
-              ddl_columnInfoForKeySchema.allow_null = true;  
-              ddl_columnInfoForKeySchema.is_inlined = false;
-              ddl_columnInfoForKeySchema.constraintType = NULL; 
-              ddl_columnInfoForKeySchema.conname = NULL; 
-              column_itr_for_KeySchema++;
-*/
-              //CreateIndex(table_name+"primary_index", table_name, 0, true, 
+              ColumnNamesForKeySchema_vec.push_back(ddl
+              num_of_PrimaryKeys++;
               break;
 
             case CONSTR_FOREIGN:
@@ -169,13 +163,10 @@ bool DDL::CreateTable(std::string table_name,
               printf("INVALID CONSTRAINT TYPE : %d \n", ddl_columnInfo[column_itr].constraintType[constraint_itr]);
               break;
           }
-
-          catalog::Constraint* constraint = nullptr;
-          std::string tmp = ConstraintTypeToString(currentConstraintType);
-          constraint = new catalog::Constraint( ddl_columnInfo[column_itr].conname[constraint_itr], currentConstraintType, NULL, NULL);
-
+          catalog::Constraint* constraint = new catalog::Constraint( currentConstraintType,
+                                                                     ddl_columnInfo[column_itr].conname[constraint_itr]);
           constraint_vec.push_back(*constraint);
-        }
+        }// end of set constraints
       
         catalog::ColumnInfo *columnInfo = new catalog::ColumnInfo( currentValueType,
                                                                    ddl_columnInfo[column_itr].column_offset,
@@ -208,7 +199,16 @@ bool DDL::CreateTable(std::string table_name,
   // Store the schema for "CreateIndex"
   table->SetSchema(schema);
 
-
+  // Build an index with primary keys if we have
+  /*
+  if( num_of_PrimaryKeys > 0 )
+    if( num_of_PrimaryKeys == 1 )
+      CreateIndex(tablename+"primary_key_index", table_name, 0, true, 
+    // TODO :: Build an index with multiple columns..
+    //else 
+    // CreateIndex(
+  */
+       
   //LOG_WARN("Created table : %s \n", table_name);
   return true;
 }
@@ -226,14 +226,15 @@ bool DDL::DropTable(unsigned int table_oid)
   return true;
 }
 
-//TODO :: 
+//TODO ::  change parameters
 bool DDL::CreateIndex(std::string index_name,
                       std::string table_name,
                       int type,
                       bool unique, 
-                      DDL_ColumnInfo* ddl_columnInfoForKeySchema,
+                      char** ColumnNamesForKeySchema,
                       int num_columns_of_KeySchema)
 {
+  assert( index_name != "" || table_name != "" || ColumnNamesForKeySchema != NULL || num_columns_of_KeySchema > 0 );
 
   /* Currently, we use only btree as an index method */
   IndexType currentIndexType = INDEX_TYPE_BTREE_MULTIMAP;
@@ -283,7 +284,7 @@ bool DDL::CreateIndex(std::string index_name,
       catalog::ColumnInfo colInfo = tuple_schema->GetColumnInfo(column_itr_for_TupleSchema);
 
       // Compare Key Schema's current column name and Tuple Schema's current column name
-      if( strcmp( ddl_columnInfoForKeySchema[ column_itr_for_KeySchema].name , (colInfo.name).c_str() )== 0 )
+      if( strcmp( ColumnNamesForKeySchema[ column_itr_for_KeySchema], (colInfo.name).c_str() )== 0 )
         selected_oids_for_KeySchema.push_back(column_itr_for_TupleSchema);
     }
   }
@@ -310,8 +311,8 @@ bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_c
 bool DDL_DropTable(unsigned int table_oid) {
   return DDL::DropTable(table_oid);
 }
-bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForKeySchema, int num_columns_of_KeySchema) {
-  return DDL::CreateIndex(index_name, table_name, type, unique, ddl_columnInfoForKeySchema, num_columns_of_KeySchema ) ; }
+bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, char** ColumnNamesForKeySchema, int num_columns_of_KeySchema) {
+  return DDL::CreateIndex(index_name, table_name, type, unique, ColumnNamesForKeySchema, num_columns_of_KeySchema ) ; }
 }
 
 } // namespace bridge

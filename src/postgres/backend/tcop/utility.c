@@ -1001,31 +1001,31 @@ ProcessUtilitySlow(Node *parsetree,
                             toast_options);
 
               // TODO: Peloton Modifications
-              // Run our create table function when postgres successes to create table
-              if( address.objectId != 0 )
-              {
+
+              // Run a create table function only when postgres successes to create table
+              if( address.objectId != 0 ){
+
                 int column_itr=0;
                 bool ret;
                 CreateStmt* Cstmt = (CreateStmt*)stmt;
                 List* schema = (List*)(Cstmt->tableElts);
 
-                printf("Start CreateTable\n"); // TODO :: REmove, just for debugging with constraints..
-
-                if( schema != NULL )
-                {
+                // Construct DDL_ColumnInfo with schema
+                if( schema != NULL ){
                   ListCell   *entry;
 
+                  // All column information will be stored in DDL_ColumnInfo, it will be delivered in Peloton via DDL_functions
+                  // Allocate ddl_columnInfo as much as number of columns of the current schema
                   DDL_ColumnInfo* ddl_columnInfo = (DDL_ColumnInfo*) malloc( sizeof(DDL_ColumnInfo)*schema->length);
+
                   // Let's assume that we have column A,B, and C 
-                  // If A has two constraints and B doesn't have any constraint and C has one constraint,
-                  // then the value of num_of_constraints_of_each_column will be { 2, 0, 1 }
+                  // If column 'A' has two constraints and column 'B' doesn't have any constraint and 'C' has one,
+                  // then the values of num_of_constraints_of_each_column will be { 2, 0, 1 }
                   int* num_of_constraints_of_each_column = (int*) malloc( sizeof(int) * schema->length);
 
                   // Parse the CreateStmt and construct ddl_columnInfo
-                  foreach(entry, schema)
-                  {
+                  foreach(entry, schema){
                     int constNode_itr = 0;
-
                     ColumnDef  *coldef = lfirst(entry);
                     Type    tup;
                     Form_pg_type typ;
@@ -1039,10 +1039,9 @@ ProcessUtilitySlow(Node *parsetree,
                     ddl_columnInfo[column_itr].valueType = typoid;
                     ddl_columnInfo[column_itr].column_offset = column_itr;
                     ddl_columnInfo[column_itr].column_length = typ->typlen;
-                    ddl_columnInfo[column_itr].name = (char*) malloc ( sizeof(char)*strlen(coldef->colname));
                     strcpy(ddl_columnInfo[column_itr].name, coldef->colname);
                     ddl_columnInfo[column_itr].allow_null = !coldef->is_not_null;
-                    ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
+                    ddl_columnInfo[column_itr].is_inlined = false;
 
                     /*
                      *  CONSTRAINTS
@@ -1051,7 +1050,7 @@ ProcessUtilitySlow(Node *parsetree,
                     {
                       ListCell* constNodeEntry;
 
-                      // A single column can have multiple constraints
+                      // Allocate  constraints dynamically since a single column can have multiple constraints
                       ddl_columnInfo[column_itr].constraintType = (int*) malloc(sizeof(int)*coldef->constraints->length);
                       ddl_columnInfo[column_itr].conname = (char**) malloc(sizeof(char*)*coldef->constraints->length);
 
@@ -1059,17 +1058,15 @@ ProcessUtilitySlow(Node *parsetree,
                       {
                         Constraint* ConstraintNode = lfirst(constNodeEntry);
                         ddl_columnInfo[column_itr].constraintType[constNode_itr] = ConstraintNode->contype; 
-                        if( ConstraintNode->conname != NULL)
-                        {
-                          ddl_columnInfo[column_itr].conname[constNode_itr] = (char*) malloc( sizeof(char)*strlen( ConstraintNode->conname ));
+                        if( ConstraintNode->conname != NULL){
+                          ddl_columnInfo[column_itr].conname[constNode_itr] = (char*) malloc(sizeof(char*)*strlen(ConstraintNode->conname));
                           strcpy(ddl_columnInfo[column_itr].conname[constNode_itr],ConstraintNode->conname);
                         }else
                           ddl_columnInfo[column_itr].conname[constNode_itr] = "";
                         constNode_itr++;
                       }
                     }
-                    else
-                    {
+                    else{
                       ddl_columnInfo[column_itr].constraintType = NULL;
                       ddl_columnInfo[column_itr].conname = NULL;
                     }
@@ -1086,7 +1083,8 @@ ProcessUtilitySlow(Node *parsetree,
                   ret = DDL_CreateTable( Cstmt->relation->relname, NULL, 0 , 0);
                 }
                 fprintf(stderr, "DDL_CreateTable(%s) :: %d \n", Cstmt->relation->relname,ret);
-              }
+              }// End of Peloton Modificaion
+
             }
             else if (IsA(stmt, CreateForeignTableStmt))
             {
@@ -1381,7 +1379,7 @@ ProcessUtilitySlow(Node *parsetree,
           int type = 0;
           bool ret;
 
-          DDL_ColumnInfo *ddl_columnInfoForKeySchema = (DDL_ColumnInfo *)malloc(sizeof(DDL_ColumnInfo)*stmt->indexParams->length);
+          char**ColumnNamesForKeySchema = (char**)malloc(sizeof(char*)*stmt->indexParams->length);
 
           // Parse the IndexStmt and construct ddl_columnInfo for TupleSchema and KeySchema
           foreach(entry, stmt->indexParams)
@@ -1393,16 +1391,8 @@ ProcessUtilitySlow(Node *parsetree,
 
             if( indexElem->name != NULL )
             {
-              // TODO :: For now, we don't need any information except column name
-              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].valueType = 0;  // Unnecessary in CreateIndex
-              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].column_offset = 0; // Unnecessary in CreateIndex
-              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].column_length = 0; // Unnecessary in CreateIndex
-              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].name = (char*) malloc ( sizeof(char)*strlen(indexElem->name ));
-              strcpy(ddl_columnInfoForKeySchema[column_itr_for_KeySchema].name, indexElem->name );
-              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].allow_null = true;  // Unnecessary in CreateIndex
-              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].is_inlined = false; // true for int, double, char, timestamp..
-              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].constraintType = NULL; 
-              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].conname = NULL; 
+              ColumnNamesForKeySchema[column_itr_for_KeySchema] = (char*) malloc( sizeof(char*)*strlen(indexElem->name));
+              strcpy(ColumnNamesForKeySchema[column_itr_for_KeySchema], indexElem->name );
               column_itr_for_KeySchema++;
             }
           }
@@ -1430,7 +1420,7 @@ ProcessUtilitySlow(Node *parsetree,
                                 stmt->relation->relname,
                                 type,
                                 stmt->unique,
-                                ddl_columnInfoForKeySchema,
+                                ColumnNamesForKeySchema,
                                 column_itr_for_KeySchema
                                );
           fprintf(stderr, "DDL_CreateIndex :: %d \n", ret);

@@ -27,7 +27,7 @@ typedef struct
    int valueType;
    int column_offset;
    int column_length;
-   char* name; 
+   char name[NAMEDATALEN];
    bool allow_null;
    bool is_inlined;
    /* constraints */
@@ -47,15 +47,14 @@ namespace bridge {
 class DDL {
 public:
   static bool CreateTable(std::string table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns, int* num_of_constraints_of_each_column, catalog::Schema* schema);
-
   static bool DropTable(unsigned int table_oid);
-  static bool CreateIndex(std::string index_name, std::string table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForKeySchema, int num_columns_of_KeySchema);
+  static bool CreateIndex(std::string index_name, std::string table_name, int type, bool unique, char** ColumnNamesForKeySchema, int num_columns_of_KeySchema);
 };
 
 extern "C" {
   bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns, int* num_of_constraints_of_each_column);
   bool DDL_DropTable(unsigned int table_oid);
-  bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForKeySchema , int num_columns_of_KeySchema );
+  bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, char** ColumnNamesForKeySchema, int num_columns_of_KeySchema );
 }
 
 } // namespace bridge
@@ -64,7 +63,5 @@ extern "C" {
 #endif
 
 extern bool DDL_CreateTable(char* table_name, DDL_ColumnInfo* ddl_columnInfo, int num_columns, int* num_of_constraints_of_each_column);
-
 extern bool DDL_DropTable(unsigned int table_oid);
-
-extern bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, DDL_ColumnInfo* ddl_columnInfoForKeySchema , int num_columns_of_KeySchema);
+extern bool DDL_CreateIndex(char* index_name, char* table_name, int type, bool unique, char** ColumnNamesForKeySchema, int num_columns_of_KeySchema);

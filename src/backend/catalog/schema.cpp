@@ -198,8 +198,8 @@ std::ostream& operator<< (std::ostream& os, const ColumnInfo& column_info){
   
   for( oid_t constraint_itr = 0; constraint_itr < column_info.constraint_vector.size(); constraint_itr++)
   { 
-    Constraint constraint = column_info.constraint_vector[constraint_itr];
-    os << "\tConstraint " << constraint_itr << "::  type : " << ConstraintTypeToString(constraint.GetType()) << std::endl;
+    Constraint constraint = column_info.constraint_vector[constraint_itr] ;
+    os << "\tConstraint :: " << constraint_itr+1 << " " << constraint.GetName() << " type : " << ConstraintTypeToString(constraint.GetType()) << std::endl;
   }
 
   return os;
