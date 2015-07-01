@@ -31,6 +31,51 @@
 namespace peloton {
 namespace bridge {
 
+/* ------------------------------------------------------------
+ * C-style function declarations
+ * ------------------------------------------------------------
+ */
+
+extern "C" {
+
+bool DDLCreateTable(char* table_name,
+                    DDL_ColumnInfo* schema,
+                    int num_columns,
+                    int *num_of_constraints_of_each_column) {
+
+  return DDL::CreateTable(table_name,
+                          schema,
+                          num_columns,
+                          num_of_constraints_of_each_column);
+}
+
+bool DDLDropTable(Oid table_oid) {
+
+  return DDL::DropTable(table_oid);
+}
+
+bool DDLCreateIndex(char* index_name,
+                    char* table_name,
+                    int type,
+                    bool unique,
+                    char** key_column_names,
+                    int num_columns_in_key) {
+
+  return DDL::CreateIndex(index_name,
+                          table_name,
+                          type,
+                          unique,
+                          key_column_names,
+                          num_columns_in_key) ;
+}
+
+}
+
+
+//===--------------------------------------------------------------------===//
+// Function definitions
+//===--------------------------------------------------------------------===//
+
 /**
  * @brief Create table.
  * @param table_name Table name
@@ -42,7 +87,7 @@ namespace bridge {
 bool DDL::CreateTable(std::string table_name,
                       DDL_ColumnInfo* schema,
                       int num_columns,
-                      int *num_of_constraints_of_each_column) {
+                      int *constraints_per_column) {
   assert(num_columns >= 0);
   assert(schema);
 
@@ -136,56 +181,61 @@ bool DDL::CreateTable(std::string table_name,
 
       constraint_vec.clear();
 
-      for(int constraint_itr = 0 ; constraint_itr < num_of_constraints_of_each_column[column_itr]; constraint_itr++)
-      {
-        // Matching the ConstraintType from Postgres to Peloton
-        // TODO :: Do we need both constraint types ???
-        // Make a function with followings..
-        // TODO :: Failed :: CREATE TABLE MULTI_COLUMNS_PRIMARY_KEY_EXAMPLE ( a integer, b integer, PRIMARY KEY (a, b) );
+      // Create constraints if needed
+      if(constraints_per_column != NULL) {
 
-        switch(schema[column_itr].constraintType[constraint_itr] ){
-          case CONSTR_CHECK:
-            printf(" ConstraintNode->contype is CONSTR_CHECK\n");
-            currentConstraintType = CONSTRAINT_TYPE_CHECK;
-            break;
+        for(int constraint_itr = 0 ; constraint_itr < constraints_per_column[column_itr]; constraint_itr++)
+        {
+          // Matching the ConstraintType from Postgres to Peloton
+          // TODO :: Do we need both constraint types ???
+          // Make a function with followings..
+          // TODO :: Failed :: CREATE TABLE MULTI_COLUMNS_PRIMARY_KEY_EXAMPLE ( a integer, b integer, PRIMARY KEY (a, b) );
 
-          case CONSTR_NOTNULL:
-            printf(" ConstraintNode->contype is CONSTR_NOTNULL\n");
-            currentConstraintType = CONSTRAINT_TYPE_NOTNULL;
-            break;
+          switch(schema[column_itr].constraintType[constraint_itr] ){
+            case CONSTR_CHECK:
+              printf(" ConstraintNode->contype is CONSTR_CHECK\n");
+              currentConstraintType = CONSTRAINT_TYPE_CHECK;
+              break;
 
-          case CONSTR_UNIQUE:
-            printf(" ConstraintNode->contype is CONSTR_UNIQUE\n");
-            currentConstraintType = CONSTRAINT_TYPE_UNIQUE;
-            break;
+            case CONSTR_NOTNULL:
+              printf(" ConstraintNode->contype is CONSTR_NOTNULL\n");
+              currentConstraintType = CONSTRAINT_TYPE_NOTNULL;
+              break;
 
-          case CONSTR_PRIMARY:
-            printf(" ConstraintNode->contype is CONSTR_PRIMARY\n");
-            currentConstraintType = CONSTRAINT_TYPE_PRIMARY;
-            //key_column_info_vec.push_back(ddl
-            //num_of_PrimaryKeys++;
-            break;
+            case CONSTR_UNIQUE:
+              printf(" ConstraintNode->contype is CONSTR_UNIQUE\n");
+              currentConstraintType = CONSTRAINT_TYPE_UNIQUE;
+              break;
 
-          case CONSTR_FOREIGN:
-            printf(" ConstraintNode->contype is CONST_FOREIGN\n");
-            currentConstraintType = CONSTRAINT_TYPE_NOTNULL;
-            break;
+            case CONSTR_PRIMARY:
+              printf(" ConstraintNode->contype is CONSTR_PRIMARY\n");
+              currentConstraintType = CONSTRAINT_TYPE_PRIMARY;
+              //key_column_info_vec.push_back(ddl
+              //num_of_PrimaryKeys++;
+              break;
 
-          case CONSTR_EXCLUSION:
-            printf(" ConstraintNode->contype is CONSTR_EXCLUSION\n");
-            currentConstraintType = CONSTRAINT_TYPE_NOTNULL;
-            break;
+            case CONSTR_FOREIGN:
+              printf(" ConstraintNode->contype is CONST_FOREIGN\n");
+              currentConstraintType = CONSTRAINT_TYPE_NOTNULL;
+              break;
 
-          default:
-            printf("INVALID CONSTRAINT TYPE : %d \n", schema[column_itr].constraintType[constraint_itr]);
-            break;
+            case CONSTR_EXCLUSION:
+              printf(" ConstraintNode->contype is CONSTR_EXCLUSION\n");
+              currentConstraintType = CONSTRAINT_TYPE_NOTNULL;
+              break;
+
+            default:
+              printf("INVALID CONSTRAINT TYPE : %d \n", schema[column_itr].constraintType[constraint_itr]);
+              break;
+          }
+
+          catalog::Constraint* constraint = new catalog::Constraint( currentConstraintType,
+                                                                     schema[column_itr].conname[constraint_itr]);
+
+          constraint_vec.push_back(*constraint);
         }
 
-        catalog::Constraint* constraint = new catalog::Constraint( currentConstraintType,
-                                                                   schema[column_itr].conname[constraint_itr]);
-
-        constraint_vec.push_back(*constraint);
-      }// end of set constraints
+      }
 
       catalog::ColumnInfo column_info(column_type,
                                       schema[column_itr].column_offset,
@@ -314,45 +364,6 @@ bool DDL::CreateIndex(std::string index_name,
   return true;
 }
 
-/* ------------------------------------------------------------
- * C-style function declarations
- * ------------------------------------------------------------
- */
-
-extern "C" {
-
-bool DDLCreateTable(char* table_name,
-                    DDL_ColumnInfo* schema,
-                    int num_columns,
-                    int *num_of_constraints_of_each_column) {
-
-  return DDL::CreateTable(table_name,
-                          schema,
-                          num_columns,
-                          num_of_constraints_of_each_column);
-}
-
-bool DDLDropTable(Oid table_oid) {
-
-  return DDL::DropTable(table_oid);
-}
-
-bool DDLCreateIndex(char* index_name,
-                    char* table_name,
-                    int type,
-                    bool unique,
-                    char** key_column_names,
-                    int num_columns_in_key) {
-
-  return DDL::CreateIndex(index_name,
-                          table_name,
-                          type,
-                          unique,
-                          key_column_names,
-                          num_columns_in_key) ;
-}
-
-}
 
 } // namespace bridge
 } // namespace peloton
