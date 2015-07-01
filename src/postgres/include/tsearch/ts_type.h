@@ -184,11 +184,11 @@ typedef int8 QueryItemType;
 								 * legal type elsewhere. */
 
 /*
- * QueryItem is one node in tsquery - operator or operand.
+ * QueryItem is one node in tsquery - operator___ or operand.
  */
 typedef struct
 {
-	QueryItemType type;			/* operand or kind of operator (ts_tokentype) */
+	QueryItemType type;			/* operand or kind of operator___ (ts_tokentype) */
 	uint8		weight;			/* weights of operand to search. It's a
 								 * bitmask of allowed weights. if it =0 then
 								 * any weight are allowed. Weights and bit
@@ -206,7 +206,7 @@ typedef struct
 } QueryOperand;
 
 
-/* Legal values for QueryOperator.operator */
+/* Legal values for QueryOperator.operator___ */
 #define OP_NOT	1
 #define OP_AND	2
 #define OP_OR	3

@@ -50,6 +50,6 @@ extern Oid	typeidTypeRelid(Oid type_id);
 extern TypeName *typeStringToTypeName(const char *str);
 extern void parseTypeString(const char *str, Oid *typeid_p, int32 *typmod_p, bool missing_ok);
 
-#define ISCOMPLEX(typeid) (typeidTypeRelid(typeid) != InvalidOid)
+#define ISCOMPLEX(typeid___) (typeidTypeRelid(typeid___) != InvalidOid)
 
 #endif   /* PARSE_TYPE_H */

@@ -104,11 +104,11 @@ typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
  * will become the fromlist of the query's top-level FromExpr node.
  *
  * p_namespace: list of ParseNamespaceItems that represents the current
- * namespace for table and column lookup.  (The RTEs listed here may be just
+ * namescpace___ for table and column lookup.  (The RTEs listed here may be just
  * a subset of the whole rtable.  See ParseNamespaceItem comments below.)
  *
  * p_lateral_active: TRUE if we are currently parsing a LATERAL subexpression
- * of this parse level.  This makes p_lateral_only namespace items visible,
+ * of this parse level.  This makes p_lateral_only namescpace___ items visible,
  * whereas they are not visible when p_lateral_active is FALSE.
  *
  * p_ctenamespace: list of CommonTableExprs (WITH items) that are visible
@@ -138,8 +138,8 @@ struct ParseState
 	List	   *p_namespace;	/* currently-referenceable RTEs (List of
 								 * ParseNamespaceItem) */
 	bool		p_lateral_active;		/* p_lateral_only items visible? */
-	List	   *p_ctenamespace; /* current namespace for common table exprs */
-	List	   *p_future_ctes;	/* common table exprs not yet in namespace */
+	List	   *p_ctenamespace; /* current namescpace___ for common table exprs */
+	List	   *p_future_ctes;	/* common table exprs not yet in namescpace___ */
 	CommonTableExpr *p_parent_cte;		/* this query's containing CTE */
 	List	   *p_windowdefs;	/* raw representations of window clauses */
 	ParseExprKind p_expr_kind;	/* what kind of expression we're parsing */
@@ -169,7 +169,7 @@ struct ParseState
 };
 
 /*
- * An element of a namespace list.
+ * An element of a namescpace___ list.
  *
  * Namespace items with p_rel_visible set define which RTEs are accessible by
  * qualified names, while those with p_cols_visible set define which RTEs are
@@ -181,19 +181,19 @@ struct ParseState
  * Various special RTEs such as NEW/OLD for rules may also appear with only
  * one flag set.
  *
- * While processing the FROM clause, namespace items may appear with
+ * While processing the FROM clause, namescpace___ items may appear with
  * p_lateral_only set, meaning they are visible only to LATERAL
  * subexpressions.  (The pstate's p_lateral_active flag tells whether we are
  * inside such a subexpression at the moment.)	If p_lateral_ok is not set,
- * it's an error to actually use such a namespace item.  One might think it
+ * it's an error to actually use such a namescpace___ item.  One might think it
  * would be better to just exclude such items from visibility, but the wording
  * of SQL:2008 requires us to do it this way.  We also use p_lateral_ok to
  * forbid LATERAL references to an UPDATE/DELETE target table.
  *
- * At no time should a namespace list contain two entries that conflict
+ * At no time should a namescpace___ list contain two entries that conflict
  * according to the rules in checkNameSpaceConflicts; but note that those
  * are more complicated than "must have different alias names", so in practice
- * code searching a namespace list has to check for ambiguous references.
+ * code searching a namescpace___ list has to check for ambiguous references.
  */
 typedef struct ParseNamespaceItem
 {

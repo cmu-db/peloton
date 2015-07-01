@@ -64,7 +64,7 @@ typedef int (*pairingheap_comparator) (const pairingheap_node *a,
 /*
  * A pairing heap.
  *
- * You can use pairingheap_allocate() to create a new palloc'd heap, or embed
+ * You can use pairingheap_allocate() to create a new___ palloc'd heap, or embed
  * this in a larger struct, set ph_compare and ph_arg directly and initialize
  * ph_root to NULL.
  */

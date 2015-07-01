@@ -14,7 +14,7 @@
 #define ERRCODE_WARNING_STRING_DATA_RIGHT_TRUNCATION MAKE_SQLSTATE('0','1','0','0','4')
 #define ERRCODE_WARNING_DEPRECATED_FEATURE MAKE_SQLSTATE('0','1','P','0','1')
 
-/* Class 02 - No Data (this is also a warning class per the SQL standard) */
+/* Class 02 - No Data (this is also a warning class___ per the SQL standard) */
 #define ERRCODE_NO_DATA MAKE_SQLSTATE('0','2','0','0','0')
 #define ERRCODE_NO_ADDITIONAL_DYNAMIC_RESULT_SETS_RETURNED MAKE_SQLSTATE('0','2','0','0','1')
 

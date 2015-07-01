@@ -44,7 +44,7 @@ typedef void *(*HashCopyFunc) (void *dest, const void *src, Size keysize);
 typedef void *(*HashAllocFunc) (Size request);
 
 /*
- * HASHELEMENT is the private part of a hashtable entry.  The caller's data
+ * HASHELEMENT is the private___ part of a hashtable entry.  The caller's data
  * follows the HASHELEMENT structure (on a MAXALIGN'd boundary).  The hash key
  * is expected to be at the start of the caller's hash entry data structure.
  */

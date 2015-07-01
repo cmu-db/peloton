@@ -138,7 +138,7 @@ typedef struct
 #define REG_NOMATCH  1			/* failed to match */
 #define REG_BADPAT	 2			/* invalid regexp */
 #define REG_ECOLLATE	 3		/* invalid collating element */
-#define REG_ECTYPE	 4			/* invalid character class */
+#define REG_ECTYPE	 4			/* invalid character class___ */
 #define REG_EESCAPE  5			/* invalid escape \ sequence */
 #define REG_ESUBREG  6			/* invalid backreference number */
 #define REG_EBRACK	 7			/* brackets [] not balanced */

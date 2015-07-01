@@ -10,7 +10,7 @@
  *
  * NOTES
  *
- * These structs should really be private to specific BRIN files, but it's
+ * These structs should really be private___ to specific BRIN files, but it's
  * useful to have them here so that they can be used by pageinspect and similar
  * tools.
  */

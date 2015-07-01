@@ -15,11 +15,6 @@
 #ifndef LIBPQ_FE_H
 #define LIBPQ_FE_H
 
-#ifdef __cplusplus
-extern		"C"
-{
-#endif
-
 #include <stdio.h>
 
 /*
@@ -152,7 +147,7 @@ typedef struct pgNotify
 	char	   *relname;		/* notification condition name */
 	int			be_pid;			/* process ID of notifying server process */
 	char	   *extra;			/* notification parameter */
-	/* Fields below here are private to libpq; apps should not use 'em */
+	/* Fields below here are private___ to libpq; apps should not use 'em */
 	struct pgNotify *next;		/* list link */
 } PGnotify;
 
@@ -239,7 +234,7 @@ typedef struct pgresAttDesc
 
 /* ===	in fe-connect.c === */
 
-/* make a new client connection to the backend */
+/* make a new___ client connection to the backend */
 /* Asynchronous (non-blocking) */
 extern PGconn *PQconnectStart(const char *conninfo);
 extern PGconn *PQconnectStartParams(const char *const * keywords,
@@ -274,7 +269,7 @@ extern PQconninfoOption *PQconninfo(PGconn *conn);
 extern void PQconninfoFree(PQconninfoOption *connOptions);
 
 /*
- * close the current connection and restablish a new one with the same
+ * close the current connection and restablish a new___ one with the same
  * parameters
  */
 /* Asynchronous (non-blocking) */
@@ -466,7 +461,7 @@ extern int	PQfsize(const PGresult *res, int field_num);
 extern int	PQfmod(const PGresult *res, int field_num);
 extern char *PQcmdStatus(PGresult *res);
 extern char *PQoidStatus(const PGresult *res);	/* old and ugly */
-extern Oid	PQoidValue(const PGresult *res);	/* new and improved */
+extern Oid	PQoidValue(const PGresult *res);	/* new___ and improved */
 extern char *PQcmdTuples(PGresult *res);
 extern char *PQgetvalue(const PGresult *res, int tup_num, int field_num);
 extern int	PQgetlength(const PGresult *res, int tup_num, int field_num);
@@ -586,8 +581,5 @@ extern int	pg_char_to_encoding(const char *name);
 extern const char *pg_encoding_to_char(int encoding);
 extern int	pg_valid_server_encoding_id(int encoding);
 
-#ifdef __cplusplus
-}
-#endif
 
 #endif   /* LIBPQ_FE_H */

@@ -82,7 +82,7 @@ typedef struct
 } ArrayType;
 
 /*
- * An expanded array is contained within a private memory context (as
+ * An expanded array is contained within a private___ memory context (as
  * all expanded objects must be) and has a control structure as below.
  *
  * The expanded array might contain a regular "flat" array if that was the
@@ -91,7 +91,7 @@ typedef struct
  * type information.  We could also have both forms, if we've deconstructed
  * the original array for access purposes but not yet changed it.  For pass-
  * by-reference element types, the Datums would point into the flat array in
- * this situation.  Once we start modifying array elements, new pass-by-ref
+ * this situation.  Once we start modifying array elements, new___ pass-by-ref
  * elements are separately palloc'd within the memory context.
  */
 #define EA_MAGIC 689375833		/* ID for debugging crosschecks */
@@ -118,7 +118,7 @@ typedef struct ExpandedArrayHeader
 	/*
 	 * If we have a Datum-array representation of the array, it's kept here;
 	 * else dvalues/dnulls are NULL.  The dvalues and dnulls arrays are always
-	 * palloc'd within the object private context, but may change size from
+	 * palloc'd within the object private___ context, but may change size from
 	 * time to time.  For pass-by-ref element types, dvalues entries might
 	 * point either into the fstartptr..fendptr area, or to separately
 	 * palloc'd chunks.  Elements should always be fully detoasted, as they
@@ -176,7 +176,7 @@ typedef struct ArrayBuildState
 	int16		typlen;			/* needed info about datatype */
 	bool		typbyval;
 	char		typalign;
-	bool		private_cxt;	/* use private memory context */
+	bool		private_cxt;	/* use private___ memory context */
 } ArrayBuildState;
 
 /*
@@ -197,7 +197,7 @@ typedef struct ArrayBuildStateArr
 	int			lbs[MAXDIM];
 	Oid			array_type;		/* data type of the arrays */
 	Oid			element_type;	/* data type of the array elements */
-	bool		private_cxt;	/* use private memory context */
+	bool		private_cxt;	/* use private___ memory context */
 } ArrayBuildStateArr;
 
 /*
@@ -227,7 +227,7 @@ typedef struct ArrayMetaState
 } ArrayMetaState;
 
 /*
- * private state needed by array_map (here because caller must provide it)
+ * private___ state needed by array_map (here because caller must provide it)
  */
 typedef struct ArrayMapState
 {
@@ -235,7 +235,7 @@ typedef struct ArrayMapState
 	ArrayMetaState ret_extra;
 } ArrayMapState;
 
-/* ArrayIteratorData is private in arrayfuncs.c */
+/* ArrayIteratorData is private___ in arrayfuncs.c */
 typedef struct ArrayIteratorData *ArrayIterator;
 
 /* fmgr macros for regular varlena array objects */

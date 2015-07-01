@@ -57,7 +57,7 @@ typedef struct
  *	Access macros.  We use VARDATA_ANY so that we can process short-header
  *	varlena values without detoasting them.  This requires a trick:
  *	VARDATA_ANY assumes the varlena header is already filled in, which is
- *	not the case when constructing a new value (until SET_INET_VARSIZE is
+ *	not the case when constructing a new___ value (until SET_INET_VARSIZE is
  *	called, which we typically can't do till the end).  Therefore, we
  *	always initialize the newly-allocated value to zeroes (using palloc0).
  *	A zero length word will look like the not-1-byte case to VARDATA_ANY,

@@ -94,7 +94,7 @@
 /* Define to 1 if you have the `cbrt' function. */
 #define HAVE_CBRT 1
 
-/* Define to 1 if you have the `class' function. */
+/* Define to 1 if you have the `class___' function. */
 /* #undef HAVE_CLASS */
 
 /* Define to 1 if you have the <crtdefs.h> header file. */

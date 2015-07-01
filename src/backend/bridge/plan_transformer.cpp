@@ -10,19 +10,17 @@
  *-------------------------------------------------------------------------
  */
 
-extern "C" {
 #include "nodes/pprint.h"
 #include "utils/rel.h"
-}
-
 #include "bridge/bridge.h"
+#include "executor/executor.h"
 
 #include "backend/bridge/plan_transformer.h"
 #include "backend/bridge/tuple_transformer.h"
 #include "backend/storage/data_table.h"
 #include "backend/planner/insert_node.h"
 
-extern "C" void printPlanStateTree(const PlanState * planstate);
+void printPlanStateTree(const PlanState * planstate);
 
 namespace peloton {
 namespace bridge {

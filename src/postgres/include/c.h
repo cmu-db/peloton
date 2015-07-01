@@ -6,7 +6,7 @@
  *
  *	  Note that the definitions here are not intended to be exposed to clients
  *	  of the frontend interface libraries --- so we don't worry much about
- *	  polluting the namespace with lots of stuff...
+ *	  polluting the namescpace___ with lots of stuff...
  *
  *
  * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
@@ -21,7 +21,7 @@
  *	 TABLE OF CONTENTS
  *
  *		When adding stuff to this file, please try to put stuff
- *		into the relevant section, or add new sections as appropriate.
+ *		into the relevant section, or add new___ sections as appropriate.
  *
  *	  section	description
  *	  -------	------------------------------------------------
@@ -657,7 +657,7 @@ typedef NameData *Name;
 
 #elif defined(FRONTEND)
 
-#include <assert.h>
+#include <cassert> /*peloton porting */
 #define Assert(p) assert(p)
 #define AssertMacro(p)	((void) assert(p))
 #define AssertArg(condition) assert(condition)
@@ -723,17 +723,10 @@ typedef NameData *Name;
  * about a negative width for a struct bit-field.  This will not include a
  * helpful error message, but it beats not getting an error at all.
  */
-#ifdef HAVE__STATIC_ASSERT
 #define StaticAssertStmt(condition, errmessage) \
-	do { _Static_assert(condition, errmessage); } while(0)
-#define StaticAssertExpr(condition, errmessage) \
-	({ StaticAssertStmt(condition, errmessage); true; })
-#else							/* !HAVE__STATIC_ASSERT */
-#define StaticAssertStmt(condition, errmessage) \
-	((void) sizeof(struct { int static_assert_failure : (condition) ? 1 : -1; }))
+	((void) Assert(condition))
 #define StaticAssertExpr(condition, errmessage) \
 	StaticAssertStmt(condition, errmessage)
-#endif   /* HAVE__STATIC_ASSERT */
 
 
 /*
@@ -747,21 +740,14 @@ typedef NameData *Name;
  * the types have the same size.  This is far from ideal (especially on 32-bit
  * platforms) but it provides at least some coverage.
  */
-#ifdef HAVE__BUILTIN_TYPES_COMPATIBLE_P
-#define AssertVariableIsOfType(varname, typename) \
-	StaticAssertStmt(__builtin_types_compatible_p(__typeof__(varname), typename), \
-	CppAsString(varname) " does not have type " CppAsString(typename))
-#define AssertVariableIsOfTypeMacro(varname, typename) \
-	((void) StaticAssertExpr(__builtin_types_compatible_p(__typeof__(varname), typename), \
-	 CppAsString(varname) " does not have type " CppAsString(typename)))
-#else							/* !HAVE__BUILTIN_TYPES_COMPATIBLE_P */
-#define AssertVariableIsOfType(varname, typename) \
-	StaticAssertStmt(sizeof(varname) == sizeof(typename), \
-	CppAsString(varname) " does not have type " CppAsString(typename))
-#define AssertVariableIsOfTypeMacro(varname, typename) \
-	((void) StaticAssertExpr(sizeof(varname) == sizeof(typename),		\
-	 CppAsString(varname) " does not have type " CppAsString(typename)))
-#endif   /* HAVE__BUILTIN_TYPES_COMPATIBLE_P */
+/* Peloton Porting: CPP does not have __typeof__
+ * So we just check size :) */
+#define AssertVariableIsOfType(varname, type_name) \
+	StaticAssertStmt(sizeof(varname) == sizeof(type_name), \
+	CppAsString(varname) " does not have type " CppAsString(type_name))
+#define AssertVariableIsOfTypeMacro(varname, type_name) \
+	((void) StaticAssertExpr(sizeof(varname) == sizeof(type_name),		\
+	 CppAsString(varname) " does not have type " CppAsString(type_name)))
 
 
 /* ----------------------------------------------------------------
@@ -1114,5 +1100,14 @@ extern int	fdatasync(int fildes);
 
 /* /port compatibility functions */
 #include "port.h"
+
+#ifdef UNUSED
+#elif defined(__GNUC__)
+# define UNUSED(x) UNUSED_ ## x __attribute__((unused))
+#elif defined(__LCLINT__)
+# define UNUSED(x) /*@unused@*/ x
+#else
+# define UNUSED(x) x
+#endif
 
 #endif   /* C_H */

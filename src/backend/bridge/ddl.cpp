@@ -31,47 +31,6 @@
 namespace peloton {
 namespace bridge {
 
-/* ------------------------------------------------------------
- * C-style function declarations
- * ------------------------------------------------------------
- */
-
-extern "C" {
-
-bool DDLCreateTable(char* table_name,
-                    DDL_ColumnInfo* schema,
-                    int num_columns,
-                    int *num_of_constraints_of_each_column) {
-
-  return DDL::CreateTable(table_name,
-                          schema,
-                          num_columns,
-                          num_of_constraints_of_each_column);
-}
-
-bool DDLDropTable(Oid table_oid) {
-
-  return DDL::DropTable(table_oid);
-}
-
-bool DDLCreateIndex(char* index_name,
-                    char* table_name,
-                    int type,
-                    bool unique,
-                    char** key_column_names,
-                    int num_columns_in_key) {
-
-  return DDL::CreateIndex(index_name,
-                          table_name,
-                          type,
-                          unique,
-                          key_column_names,
-                          num_columns_in_key) ;
-}
-
-}
-
-
 //===--------------------------------------------------------------------===//
 // Function definitions
 //===--------------------------------------------------------------------===//
@@ -363,7 +322,6 @@ bool DDL::CreateIndex(std::string index_name,
 
   return true;
 }
-
 
 } // namespace bridge
 } // namespace peloton

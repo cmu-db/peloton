@@ -29,7 +29,7 @@
  * read-only and read-write pointers.  Possession of one of the latter
  * authorizes a function to modify the value in-place rather than copying it
  * as would normally be required.  Functions should always return a read-write
- * pointer to any new expanded object they create.  Functions that modify an
+ * pointer to any new___ expanded object they create.  Functions that modify an
  * argument value in-place must take care that they do not corrupt the old
  * value if they fail partway through.
  *
