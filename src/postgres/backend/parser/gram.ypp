@@ -14846,4 +14846,4 @@ parser_init(base_yy_extra_type *yyext)
 #undef yylval
 #undef yylloc
 
-#include "lex.core_yy.c"
+#include "scan.cpp"
