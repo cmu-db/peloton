@@ -8,16 +8,16 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
 > - **libtool** 
 > - **pkg-config** 
 > - **tbb** [Thread Building Blocks parallelism library]
-> - **json-spirit** [C++ JSON parser/generator]
 > - **readline** [Commandline editing library]
 > - **valgrind** [ Dynamic analysis framework ]
 > - **mm** [ Shared memory library ]
+> - **json-spirit** [C++ JSON parser/generator]
 
 ## Installation 
  
 ###	Ubuntu Quick Setup
 
-    sudo apt-get install g++ pkg-config libtool libtbb-dev libjson-spirit-dev libreadline-dev libmm 
+    sudo apt-get install g++ pkg-config libtool libtbb-dev libjson-spirit-dev libreadline-dev libmm-dev 
 
 ### OS X Setup
 
