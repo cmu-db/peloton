@@ -73,7 +73,8 @@ static void peloton_sigterm_handler(SIGNAL_ARGS);
 static void peloton_setheader(Peloton_MsgHdr *hdr, PelotonMsgType mtype);
 static void peloton_send(void *msg, int len);
 
-static void peloton_recv_plan(Peloton_MsgPlan *msg, int len);
+static void peloton_recv_dml(Peloton_MsgDML *msg, int len);
+static void peloton_recv_ddl(Peloton_MsgDDL *msg, int len);
 
 
 bool
@@ -346,8 +347,12 @@ peloton_MainLoop(void)
         case PELOTON_MTYPE_DUMMY:
           break;
 
-        case PELOTON_MTYPE_PLAN:
-          peloton_recv_plan((Peloton_MsgPlan*) &msg, len);
+        case PELOTON_MTYPE_DDL:
+          peloton_recv_ddl((Peloton_MsgDDL*) &msg, len);
+          break;
+
+        case PELOTON_MTYPE_DML:
+          peloton_recv_dml((Peloton_MsgDML*) &msg, len);
           break;
 
         default:
@@ -703,21 +708,21 @@ peloton_send_ping(void)
 }
 
 /* ----------
- * peloton_send_node() -
+ * peloton_send_dml() -
  *
  *  Execute the given node to return a(nother) tuple.
  * ----------
  */
 void
-peloton_send_planstate(PlanState *node)
+peloton_send_dml(PlanState *node)
 {
-  Peloton_MsgPlan msg;
+  Peloton_MsgDML msg;
   MemoryContext oldcontext;
 
   if (pelotonSock == PGINVALID_SOCKET)
     return;
 
-  peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_PLAN);
+  peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_DML);
 
   /*
    * Switch to TopSharedMemoryContext context for copying plan.
@@ -737,13 +742,47 @@ peloton_send_planstate(PlanState *node)
 }
 
 /* ----------
- * peloton_recv_plan() -
+ * peloton_send_ddl() -
+ *
+ *  Execute the given node to return a(nother) tuple.
+ * ----------
+ */
+void
+peloton_send_ddl(Node *parsetree)
+{
+  Peloton_MsgDDL msg;
+  MemoryContext oldcontext;
+
+  if (pelotonSock == PGINVALID_SOCKET)
+    return;
+
+  peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_DDL);
+
+  /*
+   * Switch to TopSharedMemoryContext context for copying plan.
+   */
+  oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
+
+  // TODO: Can we avoid copying the plan ?
+  msg.m_parsetree = (Node *) palloc(sizeof(Node));
+  memcpy(msg.m_parsetree, parsetree, sizeof(Node));
+
+  /*
+   * Switch back to old context.
+   */
+  MemoryContextSwitchTo(oldcontext);
+
+  peloton_send(&msg, sizeof(msg));
+}
+
+/* ----------
+ * peloton_recv_dml() -
  *
  *  Process plan execution requests.
  * ----------
  */
 static void
-peloton_recv_plan(Peloton_MsgPlan *msg, int len)
+peloton_recv_dml(Peloton_MsgDML *msg, int len)
 {
   PlanState *node;
   Plan *plan;
@@ -763,7 +802,30 @@ peloton_recv_plan(Peloton_MsgPlan *msg, int len)
     }
   }
 
-  /* Print stats */
-  //SHMContextStats(TopSharedMemoryContext);
+}
+
+/* ----------
+ * peloton_recv_ddl() -
+ *
+ *  Process ddl requests.
+ * ----------
+ */
+static void
+peloton_recv_ddl(Peloton_MsgDDL *msg, int len)
+{
+  Node *parsetree;
+
+  if(msg != NULL)
+  {
+    /* Get the parsetree */
+    parsetree = msg->m_parsetree;
+
+    if(parsetree != NULL)
+    {
+
+      fprintf(stdout, "Parsetree type : %d\n", parsetree->type);
+    }
+  }
+
 }
 
