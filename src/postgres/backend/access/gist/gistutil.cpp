@@ -95,7 +95,7 @@ gistextractpage(Page page, int *len /* out */ )
 
 	maxoff = PageGetMaxOffsetNumber(page);
 	*len = maxoff;
-	itvec = palloc(sizeof(IndexTuple) * maxoff);
+	itvec = static_cast<IndexTupleData **>(palloc(sizeof(IndexTuple) * maxoff));
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 		itvec[i - FirstOffsetNumber] = (IndexTuple) PageGetItem(page, PageGetItemId(page, i));
 
@@ -130,7 +130,7 @@ gistfillitupvec(IndexTuple *vec, int veclen, int *memlen)
 	for (i = 0; i < veclen; i++)
 		*memlen += IndexTupleSize(vec[i]);
 
-	ptr = ret = palloc(*memlen);
+	ptr = ret = static_cast<char *>(palloc(*memlen));
 
 	for (i = 0; i < veclen; i++)
 	{
@@ -828,7 +828,7 @@ gistoptions(PG_FUNCTION_ARGS)
 	if (numoptions == 0)
 		PG_RETURN_NULL();
 
-	rdopts = allocateReloptStruct(sizeof(GiSTOptions), options, numoptions);
+	rdopts = static_cast<GiSTOptions *>(allocateReloptStruct(sizeof(GiSTOptions), options, numoptions));
 
 	fillRelOptions((void *) rdopts, sizeof(GiSTOptions), options, numoptions,
 				   validate, tab, lengthof(tab));
