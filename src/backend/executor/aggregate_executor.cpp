@@ -50,7 +50,7 @@ bool AggregateExecutor::DInit() {
   LOG_TRACE("Aggregate Scan executor :: 1 child \n");
 
   // Grab info from plan node and check it
-  const planner::AggregateNode &node = GetNode<planner::AggregateNode>();
+  const planner::AggregateNode &node = GetPlanNode<planner::AggregateNode>();
 
   // Construct the output table
   auto output_table_schema = node.GetOutputTableSchema();
@@ -86,7 +86,7 @@ bool AggregateExecutor::DExecute() {
   }
 
   // Grab info from plan node
-  const planner::AggregateNode &node = GetNode<planner::AggregateNode>();
+  const planner::AggregateNode &node = GetPlanNode<planner::AggregateNode>();
   txn_id_t txn_id = transaction_->GetTransactionId();
 
   // Get an aggregator

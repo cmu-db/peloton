@@ -1,8 +1,7 @@
-/*
- * tupleTransformer.h
+/**
+ * @brief Header for tuple transformer.
  *
- *  Created on: Jun 22, 2015
- *      Author: vivek
+ * Copyright(c) 2015, CMU
  */
 
 #pragma once
@@ -16,8 +15,6 @@ extern "C" {
 #include "backend/common/value_factory.h"
 #include "backend/storage/data_table.h"
 
-//typedef peloton::Value peloton_value;
-
 extern "C" {
 
 peloton::Value DatumGetValue(Datum datum, Oid atttypid);
@@ -30,6 +27,13 @@ void TestTupleTransformer(Datum datum, Oid atttypid);
 
 namespace peloton {
 namespace bridge {
+
+//===--------------------------------------------------------------------===//
+// Tuple Transformer
+//===--------------------------------------------------------------------===//
+
 storage::Tuple *TupleTransformer(TupleTableSlot *slot, const catalog::Schema *schema);
+
+
 }
 }

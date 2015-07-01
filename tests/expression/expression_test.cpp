@@ -58,8 +58,8 @@ class AE {
   // this is how java serializes..
   // note derived class data follows the serialization of children
   virtual void Serialize(json_spirit::Object &json) {
-    json.push_back(json_spirit::Pair("TYPE", json_spirit::Value(ExpressionToString(m_type))));
-    json.push_back(json_spirit::Pair("VALUE_TYPE", json_spirit::Value(ValueToString(m_valueType))));
+    json.push_back(json_spirit::Pair("TYPE", json_spirit::Value(ExpressionTypeToString(m_type))));
+    json.push_back(json_spirit::Pair("VALUE_TYPE", json_spirit::Value(ValueTypeToString(m_valueType))));
     json.push_back(json_spirit::Pair("VALUE_SIZE", json_spirit::Value(m_valueSize)));
 
     if (left)

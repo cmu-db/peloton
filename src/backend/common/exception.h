@@ -213,7 +213,7 @@ class CastException: public Exception {
  public:
   CastException(const ValueType origType, const ValueType newType) :
     Exception(EXCEPTION_TYPE_CONVERSION,
-              "Type " + ValueToString(origType) + " can't be cast as " + ValueToString(newType)){
+              "Type " + ValueTypeToString(origType) + " can't be cast as " + ValueTypeToString(newType)){
   }
 
 };
@@ -224,16 +224,16 @@ class ValueOutOfRangeException: public Exception {
  public:
   ValueOutOfRangeException(const int64_t value, const ValueType origType, const ValueType newType) :
     Exception(EXCEPTION_TYPE_CONVERSION,
-              "Type " +	ValueToString(origType) + " with value " + std::to_string((intmax_t)value) +
+              "Type " +	ValueTypeToString(origType) + " with value " + std::to_string((intmax_t)value) +
               " can't be cast as %s because the value is out of range for the destination type " +
-              ValueToString(newType)){
+              ValueTypeToString(newType)){
   }
 
   ValueOutOfRangeException(const double value, const ValueType origType, const ValueType newType) :
     Exception(EXCEPTION_TYPE_CONVERSION,
-              "Type " +	ValueToString(origType) + " with value " + std::to_string(value) +
+              "Type " +	ValueTypeToString(origType) + " with value " + std::to_string(value) +
               " can't be cast as %s because the value is out of range for the destination type " +
-              ValueToString(newType)){
+              ValueTypeToString(newType)){
   }
 };
 
@@ -271,7 +271,7 @@ class TypeMismatchException: public Exception {
  public:
   TypeMismatchException(std::string msg, const ValueType type_1, const ValueType type_2) :
     Exception(EXCEPTION_TYPE_MISMATCH_TYPE,
-              "Type " + ValueToString(type_1) + " does not match with " + ValueToString(type_2) + msg){
+              "Type " + ValueTypeToString(type_1) + " does not match with " + ValueTypeToString(type_2) + msg){
   }
 };
 
