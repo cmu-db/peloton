@@ -10,7 +10,6 @@ AM_INIT_AUTOMAKE([1.0 foreign subdir-objects])
 
 # Silent make by default
 AM_SILENT_RULES([yes])
-AC_PROG_CC([gcc])
 
 # Enable static library
 #AC_PROG_LIBTOOL
@@ -90,10 +89,6 @@ MAKEFLAGS="-j$NPROCS"
 # PACKAGES
 ######################################################################
 
-# Check for flex and bison
-AX_PROG_FLEX([], AC_MSG_ERROR([Please install flex : flex]))
-AX_PROG_BISON([], AC_MSG_ERROR([Please install bison : bison]))
-
 # Check for readline support
 AX_LIB_READLINE
 
@@ -123,6 +118,7 @@ AC_CONFIG_FILES([Makefile
                  ])
 
 AC_CONFIG_LINKS([tests/valgrind.supp:third_party/valgrind/valgrind.supp])
+AC_CONFIG_LINKS([src/scan.cpp:src/postgres/backend/parser/scan.cpp])
 
 AC_OUTPUT
 
