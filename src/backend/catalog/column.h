@@ -12,7 +12,6 @@
 
 #include "backend/common/types.h"
 #include "backend/catalog/abstract_catalog_object.h"
-#include "backend/catalog/constraint.h"
 
 namespace peloton {
 namespace catalog {

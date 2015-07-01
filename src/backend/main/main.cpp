@@ -85,6 +85,9 @@ main(int argc, char *argv[])
    */
   MemoryContextInit();
 
+  // TODO: Peloton Changes
+  SHMContextInit();
+
   /*
    * Set up locale information from environment.  Note that LC_CTYPE and
    * LC_COLLATE will be overridden later from pg_control if we are in an

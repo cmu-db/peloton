@@ -10,8 +10,8 @@ AM_INIT_AUTOMAKE([1.0 foreign subdir-objects])
 
 # Silent make by default
 AM_SILENT_RULES([yes])
-
 AC_PROG_CC([gcc])
+
 # Enable static library
 #AC_PROG_LIBTOOL
 # Disable static library
@@ -23,6 +23,22 @@ ACX_PTHREAD([], [AC_MSG_ERROR([Please install pthread library : libpthread-stubs
 AC_LANG([C++])
 AC_PROG_CXX([g++])
 AC_SUBST([AM_CXXFLAGS], '-std=c++11 -stdlib=libc++')
+
+######################################################################
+# LIBRARIES : MM, DL, RT, and M
+######################################################################
+
+AC_CHECK_LIB([m], [cos], ,
+             AC_MSG_ERROR([Please install libm library], 1))
+
+AC_CHECK_LIB([mm], [mm_version], , 
+             AC_MSG_ERROR([Please install libmm library : libmm14], 1))
+
+AC_CHECK_LIB([dl], [dlsym], ,
+             AC_MSG_ERROR([Please install libdl library], 1))
+
+AC_CHECK_LIB([rt], [clock_gettime], ,
+             AC_MSG_ERROR([Please install librt library], 1))
 
 ######################################################################
 # OS X Support
@@ -52,6 +68,7 @@ AX_CHECK_COMPILE_FLAG([-fdiagnostics-color=auto], [CXXFLAGS="$CXXFLAGS -fdiagnos
 
 AX_VALGRIND_CHECK
 AX_CODE_COVERAGE
+
 
 ######################################################################
 # PARALLEL MAKE 

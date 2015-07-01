@@ -15,6 +15,7 @@
 #include "backend/catalog/database.h"
 
 #include <iostream>
+#include <algorithm>
 #include <mutex>
 
 namespace peloton {
