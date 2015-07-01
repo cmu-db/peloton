@@ -20,7 +20,7 @@
 /* Result list element for get_op_btree_interpretation */
 typedef struct OpBtreeInterpretation
 {
-	Oid			opfamily_id;	/* btree opfamily containing operator */
+	Oid			opfamily_id;	/* btree opfamily containing operator___ */
 	int			strategy;		/* its strategy number */
 	Oid			oplefttype;		/* declared left input datatype */
 	Oid			oprighttype;	/* declared right input datatype */

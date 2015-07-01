@@ -58,9 +58,11 @@ extern void boot_get_type_io_data(Oid typid,
 					  Oid *typinput,
 					  Oid *typoutput);
 
+
 extern int	boot_yyparse(void);
 
 extern int	boot_yylex(void);
 extern void boot_yyerror(const char *str) pg_attribute_noreturn();
+
 
 #endif   /* BOOTSTRAP_H */

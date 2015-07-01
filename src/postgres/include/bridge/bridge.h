@@ -12,10 +12,6 @@
 //  Bridge for accessing Postgres Catalog
 //===--------------------------------------------------------------------===//
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "access/htup.h"
 
 //===--------------------------------------------------------------------===//
@@ -63,7 +59,3 @@ void SetNumberOfTuples(Oid relation_id, float num_of_tuples);
 // Initialize
 
 bool BootstrapPeloton(void);
-
-#ifdef __cplusplus
-}
-#endif

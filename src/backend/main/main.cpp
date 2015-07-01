@@ -16,7 +16,6 @@
 
 #include <unistd.h>
 
-extern "C" {
 #include "postgres/include/postgres.h"
 
 #include "postgres/include/bootstrap/bootstrap.h"
@@ -30,7 +29,6 @@ extern "C" {
 #include "postgres/include/utils/memutils.h"
 #include "postgres/include/utils/pg_locale.h"
 #include "postgres/include/utils/ps_status.h"
-}
 
 const char *progname;
 

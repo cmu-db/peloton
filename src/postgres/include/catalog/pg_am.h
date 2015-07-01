@@ -41,7 +41,7 @@ CATALOG(pg_am,2601)
 	int16		amsupport;		/* total number of support functions that this
 								 * AM uses */
 	bool		amcanorder;		/* does AM support order by column value? */
-	bool		amcanorderbyop; /* does AM support order by operator result? */
+	bool		amcanorderbyop; /* does AM support order by operator___ result? */
 	bool		amcanbackward;	/* does AM support backward scan? */
 	bool		amcanunique;	/* does AM support UNIQUE indexes? */
 	bool		amcanmulticol;	/* does AM support multi-column indexes? */
@@ -60,7 +60,7 @@ CATALOG(pg_am,2601)
 	regproc		amendscan;		/* "end index scan" function */
 	regproc		ammarkpos;		/* "mark current scan position" function */
 	regproc		amrestrpos;		/* "restore marked scan position" function */
-	regproc		ambuild;		/* "build new index" function */
+	regproc		ambuild;		/* "build new___ index" function */
 	regproc		ambuildempty;	/* "build empty index" function */
 	regproc		ambulkdelete;	/* bulk-delete function */
 	regproc		amvacuumcleanup;	/* post-VACUUM cleanup function */

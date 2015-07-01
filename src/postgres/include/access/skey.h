@@ -20,23 +20,23 @@
 
 
 /*
- * A ScanKey represents the application of a comparison operator between
+ * A ScanKey represents the application of a comparison operator___ between
  * a table or index column and a constant.  When it's part of an array of
  * ScanKeys, the comparison conditions are implicitly ANDed.  The index
- * column is the left argument of the operator, if it's a binary operator.
+ * column is the left argument of the operator___, if it's a binary operator___.
  * (The data structure can support unary indexable operators too; in that
  * case sk_argument would go unused.  This is not currently implemented.)
  *
  * For an index scan, sk_strategy and sk_subtype must be set correctly for
- * the operator.  When using a ScanKey in a heap scan, these fields are not
+ * the operator___.  When using a ScanKey in a heap scan, these fields are not
  * used and may be set to InvalidStrategy/InvalidOid.
  *
- * If the operator is collation-sensitive, sk_collation must be set
+ * If the operator___ is collation-sensitive, sk_collation must be set
  * correctly as well.
  *
  * A ScanKey can also represent a ScalarArrayOpExpr, that is a condition
  * "column op ANY(ARRAY[...])".  This is signaled by the SK_SEARCHARRAY
- * flag bit.  The sk_argument is not a value of the operator's right-hand
+ * flag bit.  The sk_argument is not a value of the operator___'s right-hand
  * argument type, but rather an array of such values, and the per-element
  * comparisons are to be ORed together.
  *
@@ -50,9 +50,9 @@
  * for index scans, not heap scans; and not all index AMs support them,
  * only those that set amsearcharray or amsearchnulls respectively.
  *
- * A ScanKey can also represent an ordering operator invocation, that is
+ * A ScanKey can also represent an ordering operator___ invocation, that is
  * an ordering requirement "ORDER BY indexedcol op constant".  This looks
- * the same as a comparison operator, except that the operator doesn't
+ * the same as a comparison operator___, except that the operator___ doesn't
  * (usually) yield boolean.  We mark such ScanKeys with SK_ORDER_BY.
  * SK_SEARCHARRAY, SK_SEARCHNULL, SK_SEARCHNOTNULL cannot be used here.
  *
@@ -65,7 +65,7 @@ typedef struct ScanKeyData
 {
 	int			sk_flags;		/* flags, see below */
 	AttrNumber	sk_attno;		/* table or index column number */
-	StrategyNumber sk_strategy; /* operator strategy number */
+	StrategyNumber sk_strategy; /* operator___ strategy number */
 	Oid			sk_subtype;		/* strategy subtype */
 	Oid			sk_collation;	/* collation to use, if needed */
 	FmgrInfo	sk_func;		/* lookup info for function to call */
@@ -99,7 +99,7 @@ typedef ScanKeyData *ScanKey;
  *		sk_flags must include SK_ROW_MEMBER, plus SK_ROW_END in the last
  *				element (needed since row header does not include a count)
  *		sk_func points to the btree comparison support function for the
- *				opclass, NOT the operator's implementation function.
+ *				opclass, NOT the operator___'s implementation function.
  * sk_strategy must be the same in all elements of the subsidiary array,
  * that is, the same as in the header entry.
  * SK_SEARCHARRAY, SK_SEARCHNULL, SK_SEARCHNOTNULL cannot be used here.
@@ -113,7 +113,7 @@ typedef ScanKeyData *ScanKey;
  * individual index access methods.
  */
 #define SK_ISNULL			0x0001		/* sk_argument is NULL */
-#define SK_UNARY			0x0002		/* unary operator (not supported!) */
+#define SK_UNARY			0x0002		/* unary operator___ (not supported!) */
 #define SK_ROW_HEADER		0x0004		/* row comparison header (see above) */
 #define SK_ROW_MEMBER		0x0008		/* row comparison member (see above) */
 #define SK_ROW_END			0x0010		/* last row comparison member */

@@ -93,7 +93,7 @@ extern Relation RelationBuildLocalRelation(const char *relname,
 						   char relkind);
 
 /*
- * Routine to manage assignment of new relfilenode to a relation
+ * Routine to manage assignment of new___ relfilenode to a relation
  */
 extern void RelationSetNewRelfilenode(Relation relation, char persistence,
 						  TransactionId freezeXid, MultiXactId minmulti);

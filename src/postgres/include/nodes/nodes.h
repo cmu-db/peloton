@@ -449,7 +449,7 @@ typedef enum NodeTag
 	T_TriggerData = 950,		/* in commands/trigger.h */
 	T_EventTriggerData,			/* in commands/event_trigger.h */
 	T_ReturnSetInfo,			/* in nodes/execnodes.h */
-	T_WindowObjectData,			/* private in nodeWindowAgg.c */
+	T_WindowObjectData,			/* private___ in nodeWindowAgg.c */
 	T_TIDBitmap,				/* in nodes/tidbitmap.h */
 	T_InlineCodeBlock,			/* in nodes/parsenodes.h */
 	T_FdwRoutine				/* in foreign/fdwapi.h */
@@ -470,7 +470,7 @@ typedef struct Node
 
 /*
  * newNode -
- *	  create a new node of the specified size and tag the node with the
+ *	  create a new___ node of the specified size and tag the node with the
  *	  specified tag.
  *
  * !WARNING!: Avoid using newNode directly. You should be using the

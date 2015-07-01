@@ -32,7 +32,7 @@ CATALOG(pg_extension,3079)
 {
 	NameData	extname;		/* extension name */
 	Oid			extowner;		/* extension owner */
-	Oid			extnamespace;	/* namespace of contained objects */
+	Oid			extnamespace;	/* namescpace___ of contained objects */
 	bool		extrelocatable; /* if true, allow ALTER EXTENSION SET SCHEMA */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */

@@ -22,7 +22,7 @@
  *
  * Each active hashjoin has a HashJoinTable control block, which is
  * palloc'd in the executor's per-query context.  All other storage needed
- * for the hashjoin is kept in private memory contexts, two for each hashjoin.
+ * for the hashjoin is kept in private___ memory contexts, two for each hashjoin.
  * This makes it easy and fast to release the storage when we don't need it
  * anymore.  (Exception: data associated with the temp files lives in the
  * per-query context too, since we always call buffile.c in that context.)
@@ -171,7 +171,7 @@ typedef struct HashJoinTableData
 	 */
 	FmgrInfo   *outer_hashfunctions;	/* lookup data for hash functions */
 	FmgrInfo   *inner_hashfunctions;	/* lookup data for hash functions */
-	bool	   *hashStrict;		/* is each hash join operator strict? */
+	bool	   *hashStrict;		/* is each hash join operator___ strict? */
 
 	Size		spaceUsed;		/* memory space currently used by tuples */
 	Size		spaceAllowed;	/* upper limit for space used */

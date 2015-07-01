@@ -32,7 +32,7 @@
 CATALOG(pg_collation,3456)
 {
 	NameData	collname;		/* collation name */
-	Oid			collnamespace;	/* OID of namespace containing collation */
+	Oid			collnamespace;	/* OID of namescpace___ containing collation */
 	Oid			collowner;		/* owner of collation */
 	int32		collencoding;	/* encoding for this collation; -1 = "all" */
 	NameData	collcollate;	/* LC_COLLATE setting */

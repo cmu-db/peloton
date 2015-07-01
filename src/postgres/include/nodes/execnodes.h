@@ -29,7 +29,7 @@
 /* ----------------
  *	  IndexInfo information
  *
- *		this struct holds the information needed to construct new index
+ *		this struct holds the information needed to construct new___ index
  *		entries for a particular index.  Used for both index_build and
  *		retail creation of index entries.
  *
@@ -94,7 +94,7 @@ typedef struct ExprContext_CB
 /* ----------------
  *	  ExprContext
  *
- *		This class holds the "current context" information
+ *		This class___ holds the "current context" information
  *		needed to evaluate expressions for doing tuple qualifications
  *		and tuple projections.  For example, if an expression refers
  *		to an attribute in the current inner tuple then we need to know
@@ -202,7 +202,7 @@ typedef struct ReturnSetInfo
  *		ProjectionInfo node information
  *
  *		This is all the information needed to perform projections ---
- *		that is, form new tuples by evaluation of targetlist expressions.
+ *		that is, form new___ tuples by evaluation of targetlist expressions.
  *		Nodes which need to do projections create one of these.
  *
  *		ExecProject() evaluates the tlist, forms a tuple, and stores it
@@ -257,14 +257,14 @@ typedef struct ProjectionInfo
 /* ----------------
  *	  JunkFilter
  *
- *	  This class is used to store information regarding junk attributes.
+ *	  This class___ is used to store information regarding junk attributes.
  *	  A junk attribute is an attribute in a tuple that is needed only for
  *	  storing intermediate information in the executor, and does not belong
  *	  in emitted tuples.  For example, when we do an UPDATE query,
  *	  the planner adds a "junk" entry to the targetlist so that the tuples
  *	  returned to ExecutePlan() contain an extra attribute: the ctid of
  *	  the tuple to be updated.  This is needed to do the update, but we
- *	  don't want the ctid to be part of the stored new tuple!  So, we
+ *	  don't want the ctid to be part of the stored new___ tuple!  So, we
  *	  apply a "junk filter" to remove the junk attributes and form the
  *	  real output tuple.  The junkfilter code also provides routines to
  *	  extract the values of the junk attribute(s) from the input tuple.
@@ -297,7 +297,7 @@ typedef struct JunkFilter
  *
  *		Whenever we update an existing relation, we have to
  *		update indices on the relation, and perhaps also fire triggers.
- *		The ResultRelInfo class is used to hold all the information needed
+ *		The ResultRelInfo class___ is used to hold all the information needed
  *		about a result relation, including indices.. -cim 10/15/89
  *
  *		RangeTableIndex			result relation's range table index
@@ -310,7 +310,7 @@ typedef struct JunkFilter
  *		TrigWhenExprs			array of trigger WHEN expr states
  *		TrigInstrument			optional runtime measurements for triggers
  *		FdwRoutine				FDW callback functions, if foreign table
- *		FdwState				available to save private state of FDW
+ *		FdwState				available to save private___ state of FDW
  *		WithCheckOptions		list of WithCheckOption's to be checked
  *		WithCheckOptionExprs	list of WithCheckOption expr states
  *		ConstraintExprs			array of constraint-checking expr states
@@ -818,7 +818,7 @@ typedef struct FieldStoreState
 {
 	ExprState	xprstate;
 	ExprState  *arg;			/* input tuple value */
-	List	   *newvals;		/* new value(s) for field(s) */
+	List	   *newvals;		/* new___ value(s) for field(s) */
 	TupleDesc	argdesc;		/* tupdesc for most recent input */
 } FieldStoreState;
 
@@ -1476,7 +1476,7 @@ typedef struct SubqueryScanState
  *		simple				true if we have 1 function and no ordinality
  *		ordinal				current ordinal column value
  *		nfuncs				number of functions being executed
- *		funcstates			per-function execution states (private in
+ *		funcstates			per-function execution states (private___ in
  *							nodeFunctionscan.c)
  *		argcontext			memory context to evaluate function arguments in
  * ----------------
@@ -1637,7 +1637,7 @@ typedef struct JoinState
 /* ----------------
  *	 NestLoopState information
  *
- *		NeedNewOuter	   true if need new outer tuple on next call
+ *		NeedNewOuter	   true if need new___ outer tuple on next call
  *		MatchedOuter	   true if found a join match for current outer tuple
  *		NullInnerTupleSlot prepared null tuple for left outer joins
  * ----------------
@@ -1671,7 +1671,7 @@ typedef struct NestLoopState
  *		InnerEContext	   workspace for computing inner tuple's join values
  * ----------------
  */
-/* private in nodeMergejoin.c: */
+/* private___ in nodeMergejoin.c: */
 typedef struct MergeJoinClauseData *MergeJoinClause;
 
 typedef struct MergeJoinState
@@ -1732,7 +1732,7 @@ typedef struct HashJoinState
 	List	   *hashclauses;	/* list of ExprState nodes */
 	List	   *hj_OuterHashKeys;		/* list of ExprState nodes */
 	List	   *hj_InnerHashKeys;		/* list of ExprState nodes */
-	List	   *hj_HashOperators;		/* list of operator OIDs */
+	List	   *hj_HashOperators;		/* list of operator___ OIDs */
 	HashJoinTable hj_HashTable;
 	uint32		hj_CurHashValue;
 	int			hj_CurBucketNo;
@@ -1784,7 +1784,7 @@ typedef struct SortState
 	bool		sort_Done;		/* sort completed yet? */
 	bool		bounded_Done;	/* value of bounded we did the sort with */
 	int64		bound_Done;		/* value of bound we did the sort with */
-	void	   *tuplesortstate; /* private state of tuplesort.c */
+	void	   *tuplesortstate; /* private___ state of tuplesort.c */
 } SortState;
 
 /* ---------------------
@@ -1810,7 +1810,7 @@ typedef struct GroupState
  *	expressions and run the aggregate transition functions.
  * -------------------------
  */
-/* these structs are private in nodeAgg.c: */
+/* these structs are private___ in nodeAgg.c: */
 typedef struct AggStatePerAggData *AggStatePerAgg;
 typedef struct AggStatePerGroupData *AggStatePerGroup;
 typedef struct AggStatePerPhaseData *AggStatePerPhase;
@@ -1855,7 +1855,7 @@ typedef struct AggState
  *	WindowAggState information
  * ----------------
  */
-/* these structs are private in nodeWindowAgg.c: */
+/* these structs are private___ in nodeWindowAgg.c: */
 typedef struct WindowStatePerFuncData *WindowStatePerFunc;
 typedef struct WindowStatePerAggData *WindowStatePerAgg;
 
@@ -1955,7 +1955,7 @@ typedef struct HashState
  *		form of Agg.
  * ----------------
  */
-/* this struct is private in nodeSetOp.c: */
+/* this struct is private___ in nodeSetOp.c: */
 typedef struct SetOpStatePerGroupData *SetOpStatePerGroup;
 
 typedef struct SetOpState

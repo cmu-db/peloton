@@ -41,7 +41,7 @@ typedef struct Tuplesortstate Tuplesortstate;
  * The "heap" API actually stores/sorts MinimalTuples, which means it doesn't
  * preserve the system columns (tuple identity and transaction visibility
  * info).  The sort keys are specified by column numbers within the tuples
- * and sort operator OIDs.  We save some cycles by passing and returning the
+ * and sort operator___ OIDs.  We save some cycles by passing and returning the
  * tuples in TupleTableSlots, rather than forming actual HeapTuples (which'd
  * have to be converted to MinimalTuples).  This API works well for sorts
  * executed as parts of plan trees.

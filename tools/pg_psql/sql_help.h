@@ -354,7 +354,7 @@ static const struct _helpStruct QL_HELP[] = {
       1 },
 
     { "ALTER TEXT SEARCH TEMPLATE",
-      N_("change the definition of a text search template"),
+      N_("change the definition of a text search ctemplate"),
       sql_help_ALTER_TEXT_SEARCH_TEMPLATE,
       1 },
 
@@ -429,37 +429,37 @@ static const struct _helpStruct QL_HELP[] = {
       21 },
 
     { "CREATE AGGREGATE",
-      N_("define a new aggregate function"),
+      N_("define a new___ aggregate function"),
       sql_help_CREATE_AGGREGATE,
       46 },
 
     { "CREATE CAST",
-      N_("define a new cast"),
+      N_("define a new___ cast"),
       sql_help_CREATE_CAST,
       10 },
 
     { "CREATE COLLATION",
-      N_("define a new collation"),
+      N_("define a new___ collation"),
       sql_help_CREATE_COLLATION,
       5 },
 
     { "CREATE CONVERSION",
-      N_("define a new encoding conversion"),
+      N_("define a new___ encoding conversion"),
       sql_help_CREATE_CONVERSION,
       1 },
 
     { "CREATE DATABASE",
-      N_("create a new database"),
+      N_("create a new___ database"),
       sql_help_CREATE_DATABASE,
       9 },
 
     { "CREATE DOMAIN",
-      N_("define a new domain"),
+      N_("define a new___ domain"),
       sql_help_CREATE_DOMAIN,
       8 },
 
     { "CREATE EVENT TRIGGER",
-      N_("define a new event trigger"),
+      N_("define a new___ event trigger"),
       sql_help_CREATE_EVENT_TRIGGER,
       3 },
 
@@ -469,147 +469,147 @@ static const struct _helpStruct QL_HELP[] = {
       3 },
 
     { "CREATE FOREIGN DATA WRAPPER",
-      N_("define a new foreign-data wrapper"),
+      N_("define a new___ foreign-data wrapper"),
       sql_help_CREATE_FOREIGN_DATA_WRAPPER,
       3 },
 
     { "CREATE FOREIGN TABLE",
-      N_("define a new foreign table"),
+      N_("define a new___ foreign table"),
       sql_help_CREATE_FOREIGN_TABLE,
       20 },
 
     { "CREATE FUNCTION",
-      N_("define a new function"),
+      N_("define a new___ function"),
       sql_help_CREATE_FUNCTION,
       16 },
 
     { "CREATE GROUP",
-      N_("define a new database role"),
+      N_("define a new___ database role"),
       sql_help_CREATE_GROUP,
       17 },
 
     { "CREATE INDEX",
-      N_("define a new index"),
+      N_("define a new___ index"),
       sql_help_CREATE_INDEX,
       4 },
 
     { "CREATE LANGUAGE",
-      N_("define a new procedural language"),
+      N_("define a new___ procedural language"),
       sql_help_CREATE_LANGUAGE,
       2 },
 
     { "CREATE MATERIALIZED VIEW",
-      N_("define a new materialized view"),
+      N_("define a new___ materialized view"),
       sql_help_CREATE_MATERIALIZED_VIEW,
       5 },
 
     { "CREATE OPERATOR",
-      N_("define a new operator"),
+      N_("define a new___ operator"),
       sql_help_CREATE_OPERATOR,
       6 },
 
     { "CREATE OPERATOR CLASS",
-      N_("define a new operator class"),
+      N_("define a new___ operator class"),
       sql_help_CREATE_OPERATOR_CLASS,
       5 },
 
     { "CREATE OPERATOR FAMILY",
-      N_("define a new operator family"),
+      N_("define a new___ operator family"),
       sql_help_CREATE_OPERATOR_FAMILY,
       0 },
 
     { "CREATE POLICY",
-      N_("define a new policy for a table"),
+      N_("define a new___ policy for a table"),
       sql_help_CREATE_POLICY,
       4 },
 
     { "CREATE ROLE",
-      N_("define a new database role"),
+      N_("define a new___ database role"),
       sql_help_CREATE_ROLE,
       20 },
 
     { "CREATE RULE",
-      N_("define a new rewrite rule"),
+      N_("define a new___ rewrite rule"),
       sql_help_CREATE_RULE,
       6 },
 
     { "CREATE SCHEMA",
-      N_("define a new schema"),
+      N_("define a new___ schema"),
       sql_help_CREATE_SCHEMA,
       9 },
 
     { "CREATE SEQUENCE",
-      N_("define a new sequence generator"),
+      N_("define a new___ sequence generator"),
       sql_help_CREATE_SEQUENCE,
       3 },
 
     { "CREATE SERVER",
-      N_("define a new foreign server"),
+      N_("define a new___ foreign server"),
       sql_help_CREATE_SERVER,
       2 },
 
     { "CREATE TABLE",
-      N_("define a new table"),
+      N_("define a new___ table"),
       sql_help_CREATE_TABLE,
       56 },
 
     { "CREATE TABLE AS",
-      N_("define a new table from the results of a query"),
+      N_("define a new___ table from the results of a query"),
       sql_help_CREATE_TABLE_AS,
       6 },
 
     { "CREATE TABLESPACE",
-      N_("define a new tablespace"),
+      N_("define a new___ tablespace"),
       sql_help_CREATE_TABLESPACE,
       3 },
 
     { "CREATE TEXT SEARCH CONFIGURATION",
-      N_("define a new text search configuration"),
+      N_("define a new___ text search configuration"),
       sql_help_CREATE_TEXT_SEARCH_CONFIGURATION,
       3 },
 
     { "CREATE TEXT SEARCH DICTIONARY",
-      N_("define a new text search dictionary"),
+      N_("define a new___ text search dictionary"),
       sql_help_CREATE_TEXT_SEARCH_DICTIONARY,
       3 },
 
     { "CREATE TEXT SEARCH PARSER",
-      N_("define a new text search parser"),
+      N_("define a new___ text search parser"),
       sql_help_CREATE_TEXT_SEARCH_PARSER,
       6 },
 
     { "CREATE TEXT SEARCH TEMPLATE",
-      N_("define a new text search template"),
+      N_("define a new___ text search ctemplate"),
       sql_help_CREATE_TEXT_SEARCH_TEMPLATE,
       3 },
 
     { "CREATE TRANSFORM",
-      N_("define a new transform"),
+      N_("define a new___ transform"),
       sql_help_CREATE_TRANSFORM,
       3 },
 
     { "CREATE TRIGGER",
-      N_("define a new trigger"),
+      N_("define a new___ trigger"),
       sql_help_CREATE_TRIGGER,
       13 },
 
     { "CREATE TYPE",
-      N_("define a new data type"),
+      N_("define a new___ data type"),
       sql_help_CREATE_TYPE,
       35 },
 
     { "CREATE USER",
-      N_("define a new database role"),
+      N_("define a new___ database role"),
       sql_help_CREATE_USER,
       19 },
 
     { "CREATE USER MAPPING",
-      N_("define a new mapping of a user to a foreign server"),
+      N_("define a new___ mapping of a user to a foreign server"),
       sql_help_CREATE_USER_MAPPING,
       2 },
 
     { "CREATE VIEW",
-      N_("define a new view"),
+      N_("define a new___ view"),
       sql_help_CREATE_VIEW,
       3 },
 
@@ -789,7 +789,7 @@ static const struct _helpStruct QL_HELP[] = {
       0 },
 
     { "DROP TEXT SEARCH TEMPLATE",
-      N_("remove a text search template"),
+      N_("remove a text search ctemplate"),
       sql_help_DROP_TEXT_SEARCH_TEMPLATE,
       0 },
 
@@ -854,7 +854,7 @@ static const struct _helpStruct QL_HELP[] = {
       4 },
 
     { "INSERT",
-      N_("create new rows in a table"),
+      N_("create new___ rows in a table"),
       sql_help_INSERT,
       18 },
 
@@ -939,7 +939,7 @@ static const struct _helpStruct QL_HELP[] = {
       0 },
 
     { "SAVEPOINT",
-      N_("define a new savepoint within the current transaction"),
+      N_("define a new___ savepoint within the current transaction"),
       sql_help_SAVEPOINT,
       0 },
 
@@ -954,7 +954,7 @@ static const struct _helpStruct QL_HELP[] = {
       41 },
 
     { "SELECT INTO",
-      N_("define a new table from the results of a query"),
+      N_("define a new___ table from the results of a query"),
       sql_help_SELECT_INTO,
       14 },
 
