@@ -31,7 +31,7 @@ AC_CHECK_LIB([m], [cos], ,
              AC_MSG_ERROR([Please install libm library], 1))
 
 AC_CHECK_LIB([mm], [mm_version], , 
-             AC_MSG_ERROR([Please install libmm library : libmm14], 1))
+             AC_MSG_ERROR([Please install libmm library : libmm-dev], 1))
 
 AC_CHECK_LIB([dl], [dlsym], ,
              AC_MSG_ERROR([Please install libdl library], 1))
