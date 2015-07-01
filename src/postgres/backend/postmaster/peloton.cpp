@@ -43,6 +43,8 @@
 #include <signal.h>
 #include <time.h>
 
+#include "backend/bridge/plan_transformer.h"
+
 /* ----------
  * Local data
  * ----------
@@ -759,6 +761,10 @@ peloton_recv_plan(Peloton_MsgPlan *msg, int len)
       plan = node->plan;
 
       fprintf(stdout, "Planstate type : %d\n", plan->type);
+
+      peloton::bridge::PlanTransformer::GetInstance().PrintPlanState(node);
+
+
       //elog_node_display(LOG, "plan", plan, Debug_pretty_print);
     }
   }
