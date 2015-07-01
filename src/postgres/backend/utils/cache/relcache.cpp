@@ -2294,7 +2294,7 @@ RelationFlushRelation(Relation relation)
 	{
 		/*
 		 * New relcache entries are always rebuilt, not flushed; else we'd
-		 * forget the "new___" status of the relation, which is a useful
+		 * forget the "new" status of the relation, which is a useful
 		 * optimization to have.  Ditto for the new___-relfilenode status.
 		 *
 		 * The rel could have zero refcnt here, so temporarily increment the

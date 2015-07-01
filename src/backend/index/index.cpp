@@ -11,6 +11,8 @@
  */
 
 #include "backend/index/index.h"
+#include "backend/common/exception.h"
+#include "backend/catalog/manager.h"
 
 #include <iostream>
 

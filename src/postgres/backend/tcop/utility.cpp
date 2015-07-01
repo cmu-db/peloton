@@ -67,10 +67,11 @@
 #include "utils/syscache.h"
 
 // TODO: Peloton Modifications
-//#include "backend/bridge/bridge.h"
-//#include "backend/bridge/ddl.h"
-//#include "catalog/pg_am.h"
-//#include "parser/parse_type.h"
+#include "bridge/bridge.h"
+#include "backend/bridge/ddl.h"
+#include "catalog/pg_am.h"
+#include "parser/parse_type.h" 
+#include "nodes/parsenodes.h"
 
 /* Hook for plugins to get control in ProcessUtility() */
 ProcessUtility_hook_type ProcessUtility_hook = NULL;
@@ -1000,52 +1001,87 @@ ProcessUtilitySlow(Node *parsetree,
                             toast_options);
 
               // TODO: Peloton Modifications
-              // Run our create table function when postgres successes to create table
-//              if( address.objectId != 0 )
-//              {
-//                int column_itr=0;
-//                bool ret;
-//                CreateStmt* Cstmt = (CreateStmt*)stmt;
-//                List* schema = (List*)(Cstmt->tableElts);
-//
-//                if( schema != NULL )
-//                {
-//                 ListCell   *entry;
-//                 DDL_ColumnInfo* ddl_columnInfo = (DDL_ColumnInfo*) malloc( sizeof(DDL_ColumnInfo)*schema->length);
-//
-//                  // Parse the CreateStmt and construct ddl_columnInfo
-//                  foreach(entry, schema)
-//                  {
-//                    ColumnDef  *coldef = lfirst(entry);
-//                    Type    tup;
-//                    Form_pg_type typ;
-//                    Oid      typoid;
-//
-//                    tup = typenameType(NULL, coldef->typeName, NULL);
-//                    typ = (Form_pg_type) GETSTRUCT(tup);
-//                    typoid = HeapTupleGetOid(tup);
-//                    ReleaseSysCache(tup);
-//
-//                    ddl_columnInfo[column_itr].type = typoid;
-//                    ddl_columnInfo[column_itr].column_offset = column_itr;
-//                    ddl_columnInfo[column_itr].column_length = typ->typlen;
-//                    strcpy(ddl_columnInfo[column_itr].name, coldef->colname);
-//                    ddl_columnInfo[column_itr].allow_null = !coldef->is_not_null;
-//                    ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
-//                    column_itr++;
-//                  }
-//                  /*
-//                   * Now, intercept the create table request from Postgres and create a table in Peloton
-//                   */
-//                  ret = peloton::bridge::DDL::CreateTable( Cstmt->relation->relname, ddl_columnInfo, schema->length);
-//                }else
-//                {
-//                  // Create Table without column info
-//                  ret = peloton::bridge::DDL::CreateTable( Cstmt->relation->relname, NULL, 0 );
-//                }
-//               fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
-//              }
+              /*
+              // Run a create table function only when postgres successes to create table
+              if( address.objectId != 0 ){
 
+                int column_itr=0;
+                bool ret;
+                CreateStmt* Cstmt = (CreateStmt*)stmt;
+                List* schema = (List*)(Cstmt->tableElts);
+
+                // Construct DDL_ColumnInfo with schema
+                if( schema != NULL ){
+                  ListCell   *entry;
+
+                  // All column information will be stored in DDL_ColumnInfo, it will be delivered in Peloton via DDL_functions
+                  // Allocate ddl_columnInfo as much as number of columns of the current schema
+                  DDL_ColumnInfo* ddl_columnInfo = (DDL_ColumnInfo*) malloc( sizeof(DDL_ColumnInfo)*schema->length);
+
+                  // Let's assume that we have column A,B, and C 
+                  // If column 'A' has two constraints and column 'B' doesn't have any constraint and 'C' has one,
+                  // then the values of num_of_constraints_of_each_column will be { 2, 0, 1 }
+                  int* num_of_constraints_of_each_column = (int*) malloc( sizeof(int) * schema->length);
+
+           
+                  // Parse the CreateStmt and construct ddl_columnInfo
+                  foreach(entry, schema){
+                    int constNode_itr = 0;
+                    ColumnDef  *coldef = lfirst(entry);
+                    Type    tup;
+                    Form_pg_type typ;
+                    Oid      typoid;
+
+                    tup = typenameType(NULL, coldef->typeName, NULL);
+                    typ = (Form_pg_type) GETSTRUCT(tup);
+                    typoid = HeapTupleGetOid(tup);
+                    ReleaseSysCache(tup);
+
+                    ddl_columnInfo[column_itr].valueType = typoid;
+                    ddl_columnInfo[column_itr].column_offset = column_itr;
+                    ddl_columnInfo[column_itr].column_length = typ->typlen;
+                    strcpy(ddl_columnInfo[column_itr].name, coldef->colname);
+                    ddl_columnInfo[column_itr].allow_null = !coldef->is_not_null;
+                    ddl_columnInfo[column_itr].is_inlined = false;
+
+                    //  CONSTRAINTS
+                    if( coldef->constraints != NULL)
+                    {
+                      ListCell* constNodeEntry;
+
+                      // Allocate  constraints dynamically since a single column can have multiple constraints
+                      ddl_columnInfo[column_itr].constraintType = (int*) malloc(sizeof(int)*coldef->constraints->length);
+                      ddl_columnInfo[column_itr].conname = (char**) malloc(sizeof(char*)*coldef->constraints->length);
+
+                      foreach(constNodeEntry, coldef->constraints)
+                      {
+                        Constraint* ConstraintNode = lfirst(constNodeEntry);
+                        ddl_columnInfo[column_itr].constraintType[constNode_itr] = ConstraintNode->contype; 
+                        if( ConstraintNode->conname != NULL){
+                          ddl_columnInfo[column_itr].conname[constNode_itr] = (char*) malloc(sizeof(char*)*strlen(ConstraintNode->conname));
+                          strcpy(ddl_columnInfo[column_itr].conname[constNode_itr],ConstraintNode->conname);
+                        }else
+                          ddl_columnInfo[column_itr].conname[constNode_itr] = "";
+                        constNode_itr++;
+                      }
+                    }
+                    else{
+                      ddl_columnInfo[column_itr].constraintType = NULL;
+                      ddl_columnInfo[column_itr].conname = NULL;
+                    }
+                    num_of_constraints_of_each_column[column_itr] = constNode_itr;
+                    column_itr++;
+                  } 
+                  // Now, intercept the create table request from Postgres and create a table in Peloton
+                  ret = peloton::bridge::DDL::CreateTable( Cstmt->relation->relname, ddl_columnInfo, schema->length, num_of_constraints_of_each_column);
+                }else
+                {
+                  // Create Table without column info
+                  ret = peloton::bridge::DDL::CreateTable( Cstmt->relation->relname, NULL, 0 , 0);
+                }
+                fprintf(stderr, "DDL_CreateTable(%s) :: %d \n", Cstmt->relation->relname,ret);
+              }// End of Peloton Modificaion
+              */
 
             }
             else if (IsA(stmt, CreateForeignTableStmt))
@@ -1333,65 +1369,61 @@ ProcessUtilitySlow(Node *parsetree,
           EventTriggerAlterTableEnd();
 
         //TODO :: Peloton Modification
-//        if( address.objectId != 0 )
-//        {
-//          ListCell   *entry;
-//          int column_itr_for_KeySchema= 0;
-//          int type = 0;
-//          bool ret;
-//
-//          DDL_ColumnInfo *ddl_columnInfoForKeySchema = (DDL_ColumnInfo *)malloc(sizeof(DDL_ColumnInfo)*stmt->indexParams->length);
-//
-//          // Parse the IndexStmt and construct ddl_columnInfo for TupleSchema and KeySchema
-//          foreach(entry, stmt->indexParams)
-//          {
-//            IndexElem *indexElem = lfirst(entry);
-//
-//            //printf("index name %s \n", indexElem->name); /* name of attribute to index, or NULL */
-//            //printf("Index column %s \n", indexElem->indexcolname) ; /* name for index column; NULL = default */
-//
-//            if( indexElem->name != NULL )
-//            {
-//              // TODO :: For now, we don't need any information except column name
-//              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].type = 0;  // Unnecessary in CreateIndex
-//              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].column_offset = 0; // Unnecessary in CreateIndex
-//              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].column_length = 0; // Unnecessary in CreateIndex
-//              strcpy(ddl_columnInfoForKeySchema[column_itr_for_KeySchema].name, indexElem->name );
-//              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].allow_null = true;  // Unnecessary in CreateIndex
-//              ddl_columnInfoForKeySchema[column_itr_for_KeySchema].is_inlined = false; // true for int, double, char, timestamp..
-//              column_itr_for_KeySchema++;
-//            }
-//          }
-//
-//          /*
-//           * look up the access method, transform the method name into IndexType
-//           */
-//          if (strcmp(stmt->accessMethod, "btree") == 0){
-//            type = BTREE_AM_OID;
-//          }else if (strcmp(stmt->accessMethod, "hash") == 0){
-//            type = HASH_AM_OID;
-//          }else if (strcmp(stmt->accessMethod, "rtree") == 0 || strcmp(stmt->accessMethod, "gist") == 0){
-//            type = GIST_AM_OID;
-//          }else if (strcmp(stmt->accessMethod, "gin") == 0){
-//            type = GIN_AM_OID;
-//          }else if (strcmp(stmt->accessMethod, "spgist") == 0){
-//            type = SPGIST_AM_OID;
-//          }else if (strcmp(stmt->accessMethod, "brin") == 0){
-//            type = BRIN_AM_OID;
-//          }else{
-//            type = 0;
-//          }
-//
-//          ret = peloton::bridge::DDL::CreateIndex(stmt->idxname,
-//                                stmt->relation->relname,
-//                                type,
-//                                stmt->unique,
-//                                ddl_columnInfoForKeySchema,
-//                                column_itr_for_KeySchema
-//                               );
-//          fprintf(stderr, "DDL_CreateIndex :: %d \n", ret);
-//        }
-      }
+        // CreateIndex
+        /*
+        if( address.objectId != 0 )
+        {
+          ListCell   *entry;
+          int column_itr_for_KeySchema= 0;
+          int type = 0;
+          bool ret;
+
+          char**ColumnNamesForKeySchema = (char**)malloc(sizeof(char*)*stmt->indexParams->length);
+
+          // Parse the IndexStmt and construct ddl_columnInfo for TupleSchema and KeySchema
+          foreach(entry, stmt->indexParams)
+          {
+            IndexElem *indexElem = lfirst(entry);
+
+            //printf("index name %s \n", indexElem->name);
+            //printf("Index column %s \n", indexElem->indexcolname) ;
+
+            if( indexElem->name != NULL )
+            {
+              ColumnNamesForKeySchema[column_itr_for_KeySchema] = (char*) malloc( sizeof(char*)*strlen(indexElem->name));
+              strcpy(ColumnNamesForKeySchema[column_itr_for_KeySchema], indexElem->name );
+              column_itr_for_KeySchema++;
+            }
+          }
+
+          // look up the access method, transform the method name into IndexType
+          if (strcmp(stmt->accessMethod, "btree") == 0){
+            type = BTREE_AM_OID;
+          }else if (strcmp(stmt->accessMethod, "hash") == 0){
+            type = HASH_AM_OID;
+          }else if (strcmp(stmt->accessMethod, "rtree") == 0 || strcmp(stmt->accessMethod, "gist") == 0){
+            type = GIST_AM_OID;
+          }else if (strcmp(stmt->accessMethod, "gin") == 0){
+            type = GIN_AM_OID;
+          }else if (strcmp(stmt->accessMethod, "spgist") == 0){
+            type = SPGIST_AM_OID;
+          }else if (strcmp(stmt->accessMethod, "brin") == 0){
+            type = BRIN_AM_OID;
+          }else{
+            type = 0;
+          }
+ 
+          ret = peloton::bridge::DDL::CreateIndex(stmt->idxname,
+                                stmt->relation->relname,
+                                type,
+                                stmt->unique,
+                                ColumnNamesForKeySchema,
+                                column_itr_for_KeySchema
+                               );
+          fprintf(stderr, "DDLCreateIndex :: %d \n", ret);
+        }
+        */
+        }
         break;
 
       case T_CreateExtensionStmt:
@@ -1494,7 +1526,6 @@ ProcessUtilitySlow(Node *parsetree,
         address = AlterSequence((AlterSeqStmt *) parsetree);
         break;
 
-      // TODO ?
       case T_CreateTableAsStmt:
         address = ExecCreateTableAs((CreateTableAsStmt *) parsetree,
                   queryString, params, completionTag);
@@ -1581,32 +1612,37 @@ ProcessUtilitySlow(Node *parsetree,
       case T_DropStmt:
         //TODO :: Peloton Modification
         {
-//          DropStmt* drop;
-//          ListCell  *cell;
-//          int table_oid_itr = 0;
-//          bool ret;
-//          Oid* table_oid_list;
-//          drop = (DropStmt*) parsetree;
-//          table_oid_list = (Oid*) malloc ( sizeof(Oid)*(drop->objects->length));
-//
-//          foreach(cell, drop->objects)
-//          {
-//            if (drop->removeType == OBJECT_TABLE )
-//            {
-//              List* names = ((List *) lfirst(cell));
-//              char* table_name = strVal(linitial(names));
-//              table_oid_list[table_oid_itr++] = GetRelationOidFromRelationName(table_name);
-//            }
-//          }
-            ExecDropStmt((DropStmt *) parsetree, isTopLevel);
-//
-//          while(table_oid_itr > 0)
-//          {
-//            ret  = peloton::bridge::DDL::DropTable(table_oid_list[--table_oid_itr]);
-//            fprintf(stderr, "DDL_DropTable :: %d \n", ret);
-//          }
-//          /* no commands stashed for DROP */
-//          commandCollected = true;
+          /*
+          DropStmt* drop;
+          ListCell  *cell;
+          int table_oid_itr = 0;
+          bool ret;
+          Oid* table_oid_list;
+          drop = (DropStmt*) parsetree;
+          table_oid_list = (Oid*) malloc ( sizeof(Oid)*(drop->objects->length));
+
+          foreach(cell, drop->objects)
+          {
+            if (drop->removeType == OBJECT_TABLE )
+            {
+              List* names = ((List *) lfirst(cell));
+              char* table_name = strVal(linitial(names));
+              table_oid_list[table_oid_itr++] = GetRelationOid(table_name);
+            }
+          }
+          */
+
+          ExecDropStmt((DropStmt *) parsetree, isTopLevel);
+
+          /*
+          while(table_oid_itr > 0)
+          {
+            ret  = peloton::bridge::DDL::DropTable(table_oid_list[--table_oid_itr]);
+            fprintf(stderr, "DDLDropTable :: %d \n", ret);
+          }
+          // no commands stashed for DROP
+          commandCollected = true;
+          */
         }
         break;
 

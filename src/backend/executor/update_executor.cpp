@@ -62,7 +62,7 @@ bool UpdateExecutor::DExecute() {
     auto txn_id = transaction_->GetTransactionId();
     auto& manager = catalog::Manager::GetInstance();
 
-    const planner::UpdateNode &node = GetNode<planner::UpdateNode>();
+    const planner::UpdateNode &node = GetPlanNode<planner::UpdateNode>();
     storage::DataTable *target_table = node.GetTable();
     auto updated_cols = node.GetUpdatedColumns();
     auto updated_col_vals = node.GetUpdatedColumnValues();

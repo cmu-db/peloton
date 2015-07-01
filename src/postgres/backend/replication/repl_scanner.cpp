@@ -268,7 +268,7 @@ struct yy_buffer_state
 	 * still have a bunch of tokens to match, though, because of
 	 * possible backing-up.
 	 *
-	 * When we actually see the EOF, we change the status to "new___"
+	 * When we actually see the EOF, we change the status to "new"
 	 * (via replication_yyrestart()), so that the user can continue scanning by
 	 * just pointing replication_yyin at a new___ input file.
 	 */

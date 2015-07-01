@@ -13,6 +13,8 @@
 #ifndef _POSTMASTER_H
 #define _POSTMASTER_H
 
+#include "libpq/libpq.h"
+
 /* GUC options */
 extern bool EnableSSL;
 extern int	ReservedBackends;
