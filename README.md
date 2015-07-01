@@ -17,7 +17,7 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
  
 ###	Ubuntu Quick Setup
 
-    sudo apt-get install g++ pkg-config libtool libtbb-dev libjson-spirit-dev libreadline-dev libmm 
+    sudo apt-get install g++ pkg-config libtool libtbb-dev libjson-spirit-dev libreadline-dev libmm14 libmm-dev libmm-dbg
 
 ### OS X Setup
 
