@@ -60,8 +60,9 @@
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
 
+// TODO: Peloton Changes
 #include "nodes/pprint.h"
-
+#include "postmaster/peloton.h"
 
 /* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */
 ExecutorStart_hook_type ExecutorStart_hook = NULL;
@@ -135,9 +136,6 @@ static void EvalPlanQualStart(EPQState *epqstate, EState *parentestate,
 void
 ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
-	//PlannedStmt *plan = queryDesc->plannedstmt;
-	//elog_node_display(LOG, "plan", plan, Debug_pretty_print);
-
 	if (ExecutorStart_hook)
 		(*ExecutorStart_hook) (queryDesc, eflags);
 	else
@@ -284,11 +282,10 @@ void
 ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, long count)
 {
-	//PlannedStmt *plan = queryDesc->plannedstmt;
+  // TODO: Peloton Changes
+  //PlannedStmt *plan = queryDesc->plannedstmt;
 	//elog_node_display(LOG, "plan", plan, Debug_pretty_print);
-
-  //	printPlanStateTree(queryDesc->planstate);
-
+  peloton_send_ping();
 
 	if (ExecutorRun_hook)
 		(*ExecutorRun_hook) (queryDesc, direction, count);
@@ -1560,6 +1557,9 @@ ExecutePlan(EState *estate,
 		 */
 
 		slot = ExecProcNode(planstate);
+
+		// TODO: Peloton Changes
+		peloton_send_node(planstate);
 
 		/*
 		 * if the tuple is null, then we assume there is nothing more to

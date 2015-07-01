@@ -47,7 +47,7 @@ bool OrderByExecutor::DExecute(){
   assert(input_tiles_.size() > 0);
 
   // Grab data from plan node
-  const planner::OrderByNode &node = GetNode<planner::OrderByNode>();
+  const planner::OrderByNode &node = GetPlanNode<planner::OrderByNode>();
 
   // TODO: Should we move backend out of this executor?
   backend_ = node.GetBackend();
@@ -102,7 +102,7 @@ bool OrderByExecutor::DoSort(){
     return true;
 
   // Grab data from plan node
-  const planner::OrderByNode &node = GetNode<planner::OrderByNode>();
+  const planner::OrderByNode &node = GetPlanNode<planner::OrderByNode>();
   descend_flags_ = node.GetDescendFlags();
 
   // Extract the schema for sort keys.
