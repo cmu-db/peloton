@@ -47,7 +47,7 @@ bool InsertExecutor::DInit() {
  */
 bool InsertExecutor::DExecute() {
 
-  const planner::InsertNode &node = GetNode<planner::InsertNode>();
+  const planner::InsertNode &node = GetPlanNode<planner::InsertNode>();
   storage::DataTable *target_table = node.GetTable();
 
   // Inserting a logical tile.
