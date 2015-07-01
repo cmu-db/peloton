@@ -2101,7 +2101,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 										   makeAlias("old", NIL),
 										   false, false);
 	newrte = addRangeTableEntryForRelation(pstate, rel,
-										   makeAlias("new___", NIL),
+										   makeAlias("new", NIL),
 										   false, false);
 	/* Must override addRangeTableEntry's default access-check flags */
 	oldrte->requiredPerms = 0;
@@ -2199,7 +2199,7 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 												   makeAlias("old", NIL),
 												   false, false);
 			newrte = addRangeTableEntryForRelation(sub_pstate, rel,
-												   makeAlias("new___", NIL),
+												   makeAlias("new", NIL),
 												   false, false);
 			oldrte->requiredPerms = 0;
 			newrte->requiredPerms = 0;

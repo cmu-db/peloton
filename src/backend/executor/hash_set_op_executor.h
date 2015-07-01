@@ -5,9 +5,12 @@
  */
 #pragma once
 
+#include <unordered_map>
+
 #include "backend/common/types.h"
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/logical_tile.h"
+#include "backend/expression/container_tuple.h"
 
 
 namespace peloton {
@@ -45,10 +48,29 @@ class HashSetOpExecutor : public AbstractExecutor {
 
  private:
 
+
+  /** @brief Counter-pair type for binary set-op */
+  typedef struct {
+    size_t left = 0;
+    size_t right = 0;
+  }  counter_pair_t;
+
+  /** @brief Type definitions for hash table */
+  typedef std::unordered_map<expression::ContainerTuple<LogicalTile>,
+                             counter_pair_t,
+                             expression::ContainerTupleHasher<LogicalTile>,
+                             expression::ContainerTupleComparator<LogicalTile> >
+  HashSetOpMapType;
+
+  /* Helper functions */
+
   bool ExecuteHelper();
 
-  template <SetOpType SETOP, class HT>
-  bool UpdateHashTable(HT &htable);
+  template <SetOpType SETOP>
+  bool CalculateCopies(HashSetOpMapType &htable);
+
+  /** @brief Hash table */
+  HashSetOpMapType htable_;
 
   /** @brief The specified set-op type */
   SetOpType set_op_ = SETOP_TYPE_INVALID;
