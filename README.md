@@ -10,19 +10,18 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
 > - **tbb** [Thread Building Blocks parallelism library]
 > - **json-spirit** [C++ JSON parser/generator]
 > - **readline** [Commandline editing library]
-> - **flex** [ Lexical analyzer generator ]
-> - **bison 3.0.4** [ Parser generator ]
 > - **valgrind** [ Dynamic analysis framework ]
+> - **mm** [ Shared memory library ]
 
 ## Installation 
  
 ###	Ubuntu Quick Setup
 
-    sudo apt-get install g++ pkg-config libtool libtbb-dev libjson-spirit-dev libreadline-dev flex bison
+    sudo apt-get install g++ pkg-config libtool libtbb-dev libjson-spirit-dev libreadline-dev libmm14 libmm-dev libmm-dbg
 
 ### OS X Setup
 
-    brew install automake tbb json_spirit flex bison
+    brew install automake tbb json_spirit 
  
 ### Build Peloton
 

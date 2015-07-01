@@ -126,7 +126,7 @@ BackendType StringToBackendType(std::string str) {
 // Value <--> String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string ValueToString(ValueType type) {
+std::string ValueTypeToString(ValueType type) {
     switch (type) {
     case VALUE_TYPE_INVALID:
         return "INVALID";
@@ -155,7 +155,7 @@ std::string ValueToString(ValueType type) {
     }
 }
 
-ValueType StringToValue(std::string str ) {
+ValueType StringToValueType(std::string str ) {
     if (str == "INVALID") {
         return VALUE_TYPE_INVALID;
     } else if (str == "NULL") {
@@ -225,7 +225,7 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString) {
 // Expression - String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string ExpressionToString(ExpressionType type) {
+std::string ExpressionTypeToString(ExpressionType type) {
     switch (type) {
     case EXPRESSION_TYPE_INVALID: {
         return "INVALID";
@@ -336,7 +336,7 @@ std::string ExpressionToString(ExpressionType type) {
     return "INVALID";
 }
 
-ExpressionType StringToExpression(std::string str ) {
+ExpressionType StringToExpressionType(std::string str ) {
     if (str == "INVALID") {
         return EXPRESSION_TYPE_INVALID;
     } else if (str == "OPERATOR_PLUS") {
@@ -437,7 +437,7 @@ IndexType StringToIndexType(std::string str) {
 // Plan Node - String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string PlanNodeToString(PlanNodeType type) {
+std::string PlanNodeTypeToString(PlanNodeType type) {
     switch (type) {
     case PLAN_NODE_TYPE_INVALID: {
         return "INVALID";
@@ -506,7 +506,7 @@ std::string PlanNodeToString(PlanNodeType type) {
     return "INVALID";
 }
 
-PlanNodeType StringToPlanNode(std::string str) {
+PlanNodeType StringToPlanNodeType(std::string str) {
     if (str == "INVALID") {
         return PLAN_NODE_TYPE_INVALID;
     } else if (str == "SEQSCAN") {
@@ -557,12 +557,25 @@ std::string ConstraintTypeToString(ConstraintType type) {
     case CONSTRAINT_TYPE_INVALID: {
         return "INVALID";
     }
+    case CONSTRAINT_TYPE_CHECK: {
+        return "CHECK";
+    }
+    case CONSTRAINT_TYPE_NOTNULL: {
+        return "NOTNULL";
+    }
+    case CONSTRAINT_TYPE_UNIQUE: {
+        return "UNIQUE";
+    }
     case CONSTRAINT_TYPE_PRIMARY: {
         return "PRIMARY_KEY";
     }
     case CONSTRAINT_TYPE_FOREIGN: {
         return "FOREIGN_KEY";
     }
+    case CONSTRAINT_TYPE_EXCLUSION: {
+        return "EXCLUSION";
+    }
+ 
     }
     return "INVALID";
 }
@@ -570,10 +583,18 @@ std::string ConstraintTypeToString(ConstraintType type) {
 ConstraintType StringToConstraintType(std::string str) {
     if (str == "INVALID") {
         return CONSTRAINT_TYPE_INVALID;
+    } else if (str == "CHECK") {
+        return CONSTRAINT_TYPE_CHECK;
+    } else if (str == "NOTNULL") {
+        return CONSTRAINT_TYPE_NOTNULL;
+    } else if (str == "UNIQUE") {
+        return CONSTRAINT_TYPE_UNIQUE;
     } else if (str == "PRIMARY_KEY") {
         return CONSTRAINT_TYPE_PRIMARY;
     } else if (str == "FOREIGN_KEY") {
         return CONSTRAINT_TYPE_FOREIGN;
+    } else if (str == "EXCLUSION") {
+        return CONSTRAINT_TYPE_EXCLUSION;
     }
     return CONSTRAINT_TYPE_INVALID;
 }
