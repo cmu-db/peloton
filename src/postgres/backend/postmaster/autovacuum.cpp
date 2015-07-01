@@ -2885,7 +2885,6 @@ IsAutoVacuumWorkerProcess(void)
 	return am_autovacuum_worker;
 }
 
-
 /*
  * AutoVacuumShmemSize
  *		Compute space needed for autovacuum-related shared memory

@@ -322,8 +322,8 @@ postgres_backend_FILES = \
 						 postgres/backend/optimizer/util/restrictinfo.cpp \
 						 postgres/backend/optimizer/util/tlist.cpp \
 						 postgres/backend/optimizer/util/var.cpp \
+						 postgres/backend/parser/gram.cpp \
 						 postgres/backend/parser/analyze.cpp \
-						 postgres/backend/parser/gram.ypp \
 						 postgres/backend/parser/keywords.cpp \
 						 postgres/backend/parser/kwlookup.cpp \
 						 postgres/backend/parser/parse_agg.cpp \
@@ -352,6 +352,7 @@ postgres_backend_FILES = \
 						 postgres/backend/postmaster/bgwriter.cpp \
 						 postgres/backend/postmaster/checkpointer.cpp \
 						 postgres/backend/postmaster/fork_process.cpp \
+						 postgres/backend/postmaster/peloton.cpp \
 						 postgres/backend/postmaster/pgarch.cpp \
 						 postgres/backend/postmaster/pgstat.cpp \
 						 postgres/backend/postmaster/postmaster.cpp \
@@ -578,6 +579,8 @@ postgres_backend_FILES = \
 						 postgres/backend/utils/mmgr/aset.cpp \
 						 postgres/backend/utils/mmgr/mcxt.cpp \
 						 postgres/backend/utils/mmgr/portalmem.cpp \
+						 postgres/backend/utils/mmgr/shmctx.cpp \
+						 postgres/backend/utils/mmgr/shmset.cpp \
 						 postgres/backend/utils/resowner/resowner.cpp \
 						 postgres/backend/utils/sort/logtape.cpp \
 						 postgres/backend/utils/sort/sortsupport.cpp \
@@ -587,8 +590,11 @@ postgres_backend_FILES = \
 						 postgres/backend/utils/time/snapmgr.cpp \
 						 postgres/backend/utils/time/tqual.cpp
 
+
 postgres_backend_INCLUDES = \
 							-I$(srcdir)/postgres/include \
 							-I$(srcdir)/postgres/backend
 
-AM_YFLAGS = -d --debug --graph=graph
+
+BUILT_SOURCES = postgres/backend/parser/gram.h
+AM_YFLAGS = -d 

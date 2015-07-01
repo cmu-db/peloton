@@ -8,7 +8,6 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/bridge/bridge.h"
 #include "backend/storage/table_factory.h"
 
 #include "backend/common/exception.h"
@@ -16,6 +15,8 @@
 #include "backend/index/index.h"
 #include "backend/catalog/manager.h"
 #include "backend/storage/data_table.h"
+
+#include "bridge/bridge.h"
 
 #include <mutex>
 
@@ -37,7 +38,7 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
 
     // Check if we need this table in the catalog
     if(database_id != INVALID_OID){
-        oid_t table_oid = GetRelationOidFromRelationName(table_name.c_str());
+        oid_t table_oid = GetRelationOid(table_name.c_str());
         catalog::Manager::GetInstance().SetLocation(database_id, table_oid, table);
     }
 

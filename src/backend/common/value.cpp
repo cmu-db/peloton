@@ -617,8 +617,8 @@ int Value::CompareDoubleValue (const Value rhs) const {
       char message[128];
       snprintf(message, 128,
                "Type %s cannot be Cast for comparison to type %s",
-               ValueToString(rhs.GetValueType()).c_str(),
-               ValueToString(GetValueType()).c_str());
+               ValueTypeToString(rhs.GetValueType()).c_str(),
+               ValueTypeToString(GetValueType()).c_str());
       throw Exception(message);
       // Not reached
       return 0;
@@ -631,8 +631,8 @@ int Value::CompareStringValue (const Value rhs) const {
     char message[128];
     snprintf(message, 128,
              "Type %s cannot be Cast for comparison to type %s",
-             ValueToString(rhs.GetValueType()).c_str(),
-             ValueToString(GetValueType()).c_str());
+             ValueTypeToString(rhs.GetValueType()).c_str(),
+             ValueTypeToString(GetValueType()).c_str());
     throw Exception(message);
   }
   const char* left = reinterpret_cast<const char*>(GetObjectValue());
@@ -671,8 +671,8 @@ int Value::CompareBinaryValue (const Value rhs) const {
     char message[128];
     snprintf(message, 128,
              "Type %s cannot be Cast for comparison to type %s",
-             ValueToString(rhs.GetValueType()).c_str(),
-             ValueToString(GetValueType()).c_str());
+             ValueTypeToString(rhs.GetValueType()).c_str(),
+             ValueTypeToString(GetValueType()).c_str());
     throw Exception(message);
   }
   const char* left = reinterpret_cast<const char*>(GetObjectValue());
@@ -756,8 +756,8 @@ int Value::CompareDecimalValue(const Value rhs) const {
       char message[128];
       snprintf(message, 128,
                "Type %s cannot be Cast for comparison to type %s",
-               ValueToString(rhs.GetValueType()).c_str(),
-               ValueToString(GetValueType()).c_str());
+               ValueTypeToString(rhs.GetValueType()).c_str(),
+               ValueTypeToString(GetValueType()).c_str());
       throw TypeMismatchException(message, GetValueType(), rhs.GetValueType());
       // Not reached
       return 0;
