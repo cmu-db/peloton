@@ -7,18 +7,18 @@
 lib_LTLIBRARIES = libpq.la
 
 libpq_la_SOURCES = \
-				   postgres/interfaces/libpq/fe-print.c \
-				   postgres/interfaces/libpq/fe-auth.c \
-				   postgres/interfaces/libpq/fe-exec.c \
-				   postgres/interfaces/libpq/pqexpbuffer.c \
-				   postgres/interfaces/libpq/test/uri-regress.c \
-				   postgres/interfaces/libpq/libpq-events.c \
-				   postgres/interfaces/libpq/fe-secure.c \
-				   postgres/interfaces/libpq/fe-misc.c \
-				   postgres/interfaces/libpq/fe-protocol2.c \
-				   postgres/interfaces/libpq/fe-connect.c \
-				   postgres/interfaces/libpq/fe-protocol3.c \
-				   postgres/interfaces/libpq/fe-lobj.c
+				   postgres/interfaces/libpq/fe-print.cpp \
+				   postgres/interfaces/libpq/fe-auth.cpp \
+				   postgres/interfaces/libpq/fe-exec.cpp \
+				   postgres/interfaces/libpq/pqexpbuffer.cpp \
+				   postgres/interfaces/libpq/test/uri-regress.cpp \
+				   postgres/interfaces/libpq/libpq-events.cpp \
+				   postgres/interfaces/libpq/fe-secure.cpp \
+				   postgres/interfaces/libpq/fe-misc.cpp \
+				   postgres/interfaces/libpq/fe-protocol2.cpp \
+				   postgres/interfaces/libpq/fe-connect.cpp \
+				   postgres/interfaces/libpq/fe-protocol3.cpp \
+				   postgres/interfaces/libpq/fe-lobj.cpp
 
 libpq_la_CPPFLAGS = \
 				   -I$(srcdir)/postgres/include \

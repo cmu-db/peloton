@@ -42,6 +42,20 @@
 
 typedef struct ListCell ListCell;
 
+
+/* Peloton porting
+ * Using C++ inheritance
+ *
+ * */
+#ifdef __cplusplus
+struct List : Node
+{
+	//NodeTag		type;			/* T_List, T_IntList, or T_OidList */
+	int			length;
+	ListCell   *head;
+	ListCell   *tail;
+};
+#else
 typedef struct List
 {
 	NodeTag		type;			/* T_List, T_IntList, or T_OidList */
@@ -49,6 +63,7 @@ typedef struct List
 	ListCell   *head;
 	ListCell   *tail;
 } List;
+#endif
 
 struct ListCell
 {
@@ -112,7 +127,7 @@ list_length(const List *l)
  */
 
 #define lnext(lc)				((lc)->next)
-#define lfirst(lc)				((lc)->data.ptr_value)
+#define lfirst(lc)				(((lc)->data.ptr_value))
 #define lfirst_int(lc)			((lc)->data.int_value)
 #define lfirst_oid(lc)			((lc)->data.oid_value)
 
@@ -255,10 +270,10 @@ extern List *list_copy(const List *list);
 extern List *list_copy_tail(const List *list, int nskip);
 
 /*
- * To ease migration to the new list API, a set of compatibility
+ * To ease migration to the new___ list API, a set of compatibility
  * macros are provided that reduce the impact of the list API changes
  * as far as possible. Until client code has been rewritten to use the
- * new list API, the ENABLE_LIST_COMPAT symbol can be defined before
+ * new___ list API, the ENABLE_LIST_COMPAT symbol can be defined before
  * including pg_list.h
  */
 #ifdef ENABLE_LIST_COMPAT
@@ -294,7 +309,7 @@ extern List *list_copy_tail(const List *list, int nskip);
 
 /*
  * Note that the old lremove() determined equality via pointer
- * comparison, whereas the new list_delete() uses equal(); in order to
+ * comparison, whereas the new___ list_delete() uses equal(); in order to
  * keep the same behavior, we therefore need to map lremove() calls to
  * list_delete_ptr() rather than list_delete()
  */

@@ -199,7 +199,7 @@ extern Datum point_sub(PG_FUNCTION_ARGS);
 extern Datum point_mul(PG_FUNCTION_ARGS);
 extern Datum point_div(PG_FUNCTION_ARGS);
 
-/* private routines */
+/* private___ routines */
 extern double point_dt(Point *pt1, Point *pt2);
 extern double point_sl(Point *pt1, Point *pt2);
 extern double pg_hypot(double x, double y);

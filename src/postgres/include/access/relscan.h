@@ -79,7 +79,7 @@ typedef struct IndexScanDescData
 	bool		xactStartedInRecovery;	/* prevents killing/seeing killed
 										 * tuples */
 
-	/* index access method's private state */
+	/* index access method's private___ state */
 	void	   *opaque;			/* access-method-specific info */
 
 	/* in an index-only scan, this is valid after a successful amgettuple */
@@ -93,7 +93,7 @@ typedef struct IndexScanDescData
 	bool		xs_recheck;		/* T means scan keys must be rechecked */
 
 	/*
-	 * When fetching with an ordering operator, the values of the ORDER BY
+	 * When fetching with an ordering operator___, the values of the ORDER BY
 	 * expressions of the last returned tuple, according to the index.  If
 	 * xs_recheckorderby is true, these need to be rechecked just like the
 	 * scan keys, and the values returned here are a lower-bound on the actual

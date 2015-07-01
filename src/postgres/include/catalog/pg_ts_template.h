@@ -32,7 +32,7 @@
 
 CATALOG(pg_ts_template,3764)
 {
-	NameData	tmplname;		/* template name */
+	NameData	tmplname;		/* ctemplate name */
 	Oid			tmplnamespace;	/* name space */
 	regproc		tmplinit;		/* initialization method of dict (may be 0) */
 	regproc		tmpllexize;		/* base method of dictionary */

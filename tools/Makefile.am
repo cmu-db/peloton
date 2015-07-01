@@ -22,9 +22,9 @@ endif
 ######################################################################
 
 initdb_SOURCES = \
-				 common/fe_memutils.c \
-				 pg_initdb/findtimezone.c \
-				 pg_initdb/initdb.c
+				 common/fe_memutils.cpp \
+				 pg_initdb/findtimezone.cpp \
+				 pg_initdb/initdb.cpp
 
 initdb_CPPFLAGS = \
 				  -DFRONTEND \
@@ -38,25 +38,25 @@ initdb_LDFLAGS = $(pg_common_ldflags)
 ######################################################################
 
 psql_SOURCES = \
-			   common/dumputils.c \
-			   common/fe_memutils.c \
-			   common/keywords.c \
-			   pg_psql/command.c \
-			   pg_psql/common.c \
-			   pg_psql/copy.c \
-			   pg_psql/describe.c \
-			   pg_psql/help.c \
-			   pg_psql/input.c \
-			   pg_psql/large_obj.c \
-			   pg_psql/mainloop.c \
-			   pg_psql/mbprint.c \
-			   pg_psql/print.c \
-			   pg_psql/prompt.c \
-			   pg_psql/sql_help.c \
-			   pg_psql/startup.c \
-			   pg_psql/stringutils.c \
-			   pg_psql/tab-complete.c \
-			   pg_psql/variables.c
+			   common/dumputils.cpp \
+			   common/fe_memutils.cpp \
+			   common/keywords.cpp \
+			   pg_psql/command.cpp \
+			   pg_psql/common.cpp \
+			   pg_psql/copy.cpp \
+			   pg_psql/describe.cpp \
+			   pg_psql/help.cpp \
+			   pg_psql/input.cpp \
+			   pg_psql/large_obj.cpp \
+			   pg_psql/mainloop.cpp \
+			   pg_psql/mbprint.cpp \
+			   pg_psql/print.cpp \
+			   pg_psql/prompt.cpp \
+			   pg_psql/sql_help.cpp \
+			   pg_psql/startup.cpp \
+			   pg_psql/stringutils.cpp \
+			   pg_psql/tab-complete.cpp \
+			   pg_psql/variables.cpp
 
 psql_CPPFLAGS = \
 				-DFRONTEND \
@@ -78,13 +78,13 @@ pg_scripts_CPPFLAGS = \
 					  -I$(top_srcdir)/src/postgres/interfaces/libpq
 
 pg_scripts_SOURCES = \
-					 common/dumputils.c \
-					 common/fe_memutils.c \
-					 common/keywords.c
+					 common/dumputils.cpp \
+					 common/fe_memutils.cpp \
+					 common/keywords.cpp
 
 pg_ctl_SOURCES = \
 				 $(pg_scripts_SOURCES) \
-				 scripts/pg_ctl.c
+				 scripts/pg_ctl.cpp
 
 pg_ctl_CPPFLAGS = $(pg_scripts_CPPFLAGS)
 
@@ -92,8 +92,8 @@ pg_ctl_LDFLAGS = $(pg_common_ldflags)
 
 createdb_SOURCES = \
 				   $(pg_scripts_SOURCES) \
-				   scripts/common.c \
-				   scripts/createdb.c
+				   scripts/common.cpp \
+				   scripts/createdb.cpp
 
 createdb_CPPFLAGS = $(pg_scripts_CPPFLAGS)
 
@@ -101,8 +101,8 @@ createdb_LDFLAGS = $(pg_common_ldflags)
 
 createuser_SOURCES = \
 					 $(pg_scripts_SOURCES) \
-					 scripts/common.c \
-					 scripts/createuser.c
+					 scripts/common.cpp \
+					 scripts/createuser.cpp
 
 createuser_CPPFLAGS = $(pg_scripts_CPPFLAGS)
 
@@ -110,8 +110,8 @@ createuser_LDFLAGS = $(pg_common_ldflags)
 
 dropdb_SOURCES = \
 				 $(pg_scripts_SOURCES) \
-				 scripts/common.c \
-				 scripts/dropdb.c
+				 scripts/common.cpp \
+				 scripts/dropdb.cpp
 
 dropdb_CPPFLAGS = $(pg_scripts_CPPFLAGS)
 
@@ -119,8 +119,8 @@ dropdb_LDFLAGS = $(pg_common_ldflags)
 
 dropuser_SOURCES = \
 				   $(pg_scripts_SOURCES) \
-				   scripts/common.c \
-				   scripts/dropuser.c
+				   scripts/common.cpp \
+				   scripts/dropuser.cpp
 
 dropuser_CPPFLAGS = $(pg_scripts_CPPFLAGS)
 

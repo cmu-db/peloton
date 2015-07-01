@@ -317,4 +317,4 @@ plugin_opt_arg:
 		;
 %%
 
-#include "repl_scanner.c"
+#include "repl_scanner.cpp"

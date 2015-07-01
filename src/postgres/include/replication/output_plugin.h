@@ -36,7 +36,7 @@ typedef void (*LogicalOutputPluginInit) (struct OutputPluginCallbacks *cb);
 
 /*
  * Callback that gets called in a user-defined plugin. ctx->private_data can
- * be set to some private data.
+ * be set to some private___ data.
  *
  * "is_init" will be set to "true" if the decoding slot just got defined. When
  * the same slot is used from there one, it will be "false".
