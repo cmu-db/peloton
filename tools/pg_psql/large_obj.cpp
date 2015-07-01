@@ -199,7 +199,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 		char	   *bufptr;
 		size_t		slen = strlen(comment_arg);
 
-		cmdbuf = malloc(slen * 2 + 256);
+		cmdbuf = static_cast<char *>(malloc(slen * 2 + 256));
 		if (!cmdbuf)
 			return fail_lo_xact("\\lo_import", own_transaction);
 		sprintf(cmdbuf, "COMMENT ON LARGE OBJECT %u IS '", loid);

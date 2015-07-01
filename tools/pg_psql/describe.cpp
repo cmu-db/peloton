@@ -1414,7 +1414,7 @@ describeOneTableDetails(const char *schemaname,
 		if (!res)
 			goto error_return;
 
-		seq_values = pg_malloc((PQnfields(res) + 1) * sizeof(*seq_values));
+		seq_values = static_cast<char **>(pg_malloc((PQnfields(res) + 1) * sizeof(*seq_values)));
 
 		for (i = 0; i < PQnfields(res); i++)
 			seq_values[i] = pg_strdup(PQgetvalue(res, 0, i));
@@ -1545,7 +1545,7 @@ describeOneTableDetails(const char *schemaname,
 	{
 		show_modifiers = true;
 		headers[cols++] = gettext_noop("Modifiers");
-		modifiers = pg_malloc0((numrows + 1) * sizeof(*modifiers));
+		modifiers = static_cast<char **>(pg_malloc0((numrows + 1) * sizeof(*modifiers)));
 	}
 
 	if (tableinfo.relkind == 'S')
@@ -1657,11 +1657,11 @@ describeOneTableDetails(const char *schemaname,
 			char	   *storage = PQgetvalue(res, i, firstvcol);
 
 			/* these strings are literal in our syntax, so not translated. */
-			printTableAddCell(&cont, (storage[0] == 'p' ? "plain" :
+			printTableAddCell(&cont, static_cast<char *>((storage[0] == 'p' ? "plain" :
 									  (storage[0] == 'm' ? "main" :
 									   (storage[0] == 'x' ? "extended" :
 										(storage[0] == 'e' ? "external" :
-										 "???")))),
+										 "???"))))),
 							  false, false);
 
 			/* Statistics target, if the relkind supports this feature */
@@ -2710,7 +2710,7 @@ describeRoles(const char *pattern, bool verbose)
 		return false;
 
 	nrows = PQntuples(res);
-	attr = pg_malloc0((nrows + 1) * sizeof(*attr));
+	attr = static_cast<char **>(pg_malloc0((nrows + 1) * sizeof(*attr)));
 
 	printTableInit(&cont, &myopt, _("List of roles"), ncols, nrows);
 
