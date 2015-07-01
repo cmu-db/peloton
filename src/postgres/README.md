@@ -19,7 +19,7 @@ The following files should be automatically generated:
 
 ## Porting to C++
 
-Inorder to port Postgres to C++, we made the following changes:
+In order to port Postgres to C++, we made the following changes:
 
 1. Avoid keyword conflict
   
@@ -41,40 +41,41 @@ Inorder to port Postgres to C++, we made the following changes:
 
     All derived nodes struct in `parsenodes.h` are redefined using C++ inheritance.
 
-3. Resolve error for missing operator= for volatile cases
+3. Resolve error for missing operator=
 
     Define `operator=` manually for the cases where volatile qualifier is used. C++
-    does not generate for such case by default. Deails of the cases are as follows:
+    does not generate assignment operator for such cases by default. Deails of the cases
+    are as follows:
 
     * `RelFileNode` at `include/storage/relfilnode.h`
     * `QueuePosition` at `backend/commands/async.cpp`
     * `BufferTag` at `include/storage/buf_internals.h`
 
-4. Resolve implicitly deleted default constructor
+4. Resolve error for implicitly deleted default constructor
 
-    This union's default constructor is implictly deleted if one of its member has
-    non-trivial constructor. The work around is to define mannually. Details of
-    the cases are as follows:
+    `union`'s default constructor is implictly deleted if one of its member has
+    non-trivial constructor. The work around is to define the constructor mannually. 
+    Details of the cases are as follows:
 
     * `SharedInvalidationMessage` ar `include/storage/sinval.h`
 
 
-5. Resolve missing `operator++`
+5. Resolve error for missing `operator++`
 
     The work around is to use `operator+`, instead of `operator++`. We changed all
     the occurrances of `forkNum++` to `forkNum = forkNum + 1`
 
-6. Resolve missing namespace for inner enum
+6. Resolve error for missing namespace for inner enum
     
     Member enums have to be resolved by specifying class name. Details of the 
     cases are as follows:
 
     * `JsonbValue`
 
-7. Avoid redefinition
+7. Avoid redefinition for static array
 
-    Forward declaration for static const variables does not work in C++. The 
-    work around is to add an anonymous namespace for them. The details of the
+    Forward declaration for static array would be recognized as redefinition in C++. 
+    The work around is to add an anonymous namespace for them. The details of the
     the cases are as follows:
 
     * `pg_crc32c_table` at `port/pg_crc32c_sb8.cpp`
