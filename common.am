@@ -7,7 +7,7 @@
 ## For the "check-code-coverage" target
 
 @CODE_COVERAGE_RULES@
-CODE_COVERAGE_IGNORE_PATTERN="/usr/*" "*/third_party/*" "*/test/*"
+CODE_COVERAGE_IGNORE_PATTERN="/usr/*" "*/third_party/*" "*/test/*" "*/postgres/*" "*/build/*"
 
 ## Global CFLAGS
 AM_CPPFLAGS = $(peloton_INCLUDES) @TBB_CPPFLAGS@ @TBB_LIBS@ 
