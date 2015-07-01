@@ -80,6 +80,7 @@ typedef struct Peloton_MsgDDL
 {
   Peloton_MsgHdr m_hdr;
   Node *m_parsetree;
+  char *m_queryString;
 } Peloton_MsgDDL;
 
 /* ----------
@@ -107,7 +108,7 @@ extern int  peloton_start(void);
 
 extern void peloton_send_ping(void);
 extern void peloton_send_dml(PlanState *node);
-extern void peloton_send_ddl(Node *parsetree);
+extern void peloton_send_ddl(Node *parsetree, const char *queryString);
 
 #endif   /* PELOTON_H */
 
