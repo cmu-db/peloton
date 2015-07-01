@@ -66,14 +66,8 @@
 #include "utils/guc.h"
 #include "utils/syscache.h"
 
-// TODO: Peloton Modifications
-#include "bridge/bridge.h"
+// TODO: Peloton Changes
 #include "postmaster/peloton.h"
-#include "catalog/pg_am.h"
-#include "parser/parse_type.h" 
-#include "nodes/parsenodes.h"
-
-#include "backend/bridge/ddl.h"
 
 /* Hook for plugins to get control in ProcessUtility() */
 ProcessUtility_hook_type ProcessUtility_hook = NULL;
@@ -903,6 +897,10 @@ standard_ProcessUtility(Node *parsetree,
                  dest, completionTag);
       break;
   }
+
+  // TODO: Peloton Changes
+  peloton_send_ddl(parsetree, queryString);
+
 }
 
 /*
@@ -951,8 +949,7 @@ ProcessUtilitySlow(Node *parsetree,
 
       case T_CreateStmt:
       case T_CreateForeignTableStmt:
-                        {
-                                
+        {
           List     *stmts;
           ListCell   *l;
 
@@ -965,19 +962,18 @@ ProcessUtilitySlow(Node *parsetree,
           {
             Node     *stmt = (Node *) lfirst(l);
 
-
             if (IsA(stmt, CreateStmt))
             {
-              Datum    toast_options;
+              Datum   toast_options;
               static char *validnsps[] = HEAP_RELOPT_NAMESPACES;
 
               /* Create the table itself */
               address = DefineRelation((CreateStmt *) stmt,
-                  RELKIND_RELATION,
-                  InvalidOid, NULL);
+                           RELKIND_RELATION,
+                           InvalidOid, NULL);
               EventTriggerCollectSimpleCommand(address,
-                  secondaryObject,
-                  stmt);
+                               secondaryObject,
+                               stmt);
 
               /*
                * Let NewRelationCreateToastTable decide if this
@@ -1001,94 +997,9 @@ ProcessUtilitySlow(Node *parsetree,
 
               NewRelationCreateToastTable(address.objectId,
                             toast_options);
-
-              // TODO: Peloton Modifications
-              /*
-              // Run a create table function only when postgres successes to create table
-              if( address.objectId != 0 ){
-
-                int column_itr=0;
-                bool ret;
-                CreateStmt* Cstmt = (CreateStmt*)stmt;
-                List* schema = (List*)(Cstmt->tableElts);
-
-                // Construct DDL_ColumnInfo with schema
-                if( schema != NULL ){
-                  ListCell   *entry;
-
-                  // All column information will be stored in DDL_ColumnInfo, it will be delivered in Peloton via DDL_functions
-                  // Allocate ddl_columnInfo as much as number of columns of the current schema
-                  DDL_ColumnInfo* ddl_columnInfo = (DDL_ColumnInfo*) malloc( sizeof(DDL_ColumnInfo)*schema->length);
-
-                  // Let's assume that we have column A,B, and C 
-                  // If column 'A' has two constraints and column 'B' doesn't have any constraint and 'C' has one,
-                  // then the values of num_of_constraints_of_each_column will be { 2, 0, 1 }
-                  int* num_of_constraints_of_each_column = (int*) malloc( sizeof(int) * schema->length);
-
-           
-                  // Parse the CreateStmt and construct ddl_columnInfo
-                  foreach(entry, schema){
-                    int constNode_itr = 0;
-                    ColumnDef  *coldef = lfirst(entry);
-                    Type    tup;
-                    Form_pg_type typ;
-                    Oid      typoid;
-
-                    tup = typenameType(NULL, coldef->typeName, NULL);
-                    typ = (Form_pg_type) GETSTRUCT(tup);
-                    typoid = HeapTupleGetOid(tup);
-                    ReleaseSysCache(tup);
-
-                    ddl_columnInfo[column_itr].valueType = typoid;
-                    ddl_columnInfo[column_itr].column_offset = column_itr;
-                    ddl_columnInfo[column_itr].column_length = typ->typlen;
-                    strcpy(ddl_columnInfo[column_itr].name, coldef->colname);
-                    ddl_columnInfo[column_itr].allow_null = !coldef->is_not_null;
-                    ddl_columnInfo[column_itr].is_inlined = false;
-
-                    //  CONSTRAINTS
-                    if( coldef->constraints != NULL)
-                    {
-                      ListCell* constNodeEntry;
-
-                      // Allocate  constraints dynamically since a single column can have multiple constraints
-                      ddl_columnInfo[column_itr].constraintType = (int*) malloc(sizeof(int)*coldef->constraints->length);
-                      ddl_columnInfo[column_itr].conname = (char**) malloc(sizeof(char*)*coldef->constraints->length);
-
-                      foreach(constNodeEntry, coldef->constraints)
-                      {
-                        Constraint* ConstraintNode = lfirst(constNodeEntry);
-                        ddl_columnInfo[column_itr].constraintType[constNode_itr] = ConstraintNode->contype; 
-                        if( ConstraintNode->conname != NULL){
-                          ddl_columnInfo[column_itr].conname[constNode_itr] = (char*) malloc(sizeof(char*)*strlen(ConstraintNode->conname));
-                          strcpy(ddl_columnInfo[column_itr].conname[constNode_itr],ConstraintNode->conname);
-                        }else
-                          ddl_columnInfo[column_itr].conname[constNode_itr] = "";
-                        constNode_itr++;
-                      }
-                    }
-                    else{
-                      ddl_columnInfo[column_itr].constraintType = NULL;
-                      ddl_columnInfo[column_itr].conname = NULL;
-                    }
-                    num_of_constraints_of_each_column[column_itr] = constNode_itr;
-                    column_itr++;
-                  } 
-                  // Now, intercept the create table request from Postgres and create a table in Peloton
-                  ret = peloton::bridge::DDL::CreateTable( Cstmt->relation->relname, ddl_columnInfo, schema->length, num_of_constraints_of_each_column);
-                }else
-                {
-                  // Create Table without column info
-                  ret = peloton::bridge::DDL::CreateTable( Cstmt->relation->relname, NULL, 0 , 0);
-                }
-                fprintf(stderr, "DDL_CreateTable(%s) :: %d \n", Cstmt->relation->relname,ret);
-              }// End of Peloton Modificaion
-              */
-
             }
             else if (IsA(stmt, CreateForeignTableStmt))
             {
-              printf(":::::foreign:::::: %s %d\n", __func__, __LINE__);
               /* Create the table itself */
               address = DefineRelation((CreateStmt *) stmt,
                            RELKIND_FOREIGN_TABLE,
@@ -1106,7 +1017,6 @@ ProcessUtilitySlow(Node *parsetree,
                * call will stash the objects so created into our
                * event trigger context.
                */
-              printf(":::::recurse:::::: %s %d\n", __func__, __LINE__);
               ProcessUtility(stmt,
                        queryString,
                        PROCESS_UTILITY_SUBCOMMAND,
@@ -1131,7 +1041,7 @@ ProcessUtilitySlow(Node *parsetree,
       case T_AlterTableStmt:
         {
           AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
-          Oid      relid;
+          Oid     relid;
           List     *stmts;
           ListCell   *l;
           LOCKMODE  lockmode;
@@ -1171,7 +1081,7 @@ ProcessUtilitySlow(Node *parsetree,
                 /*
                  * Recurse for anything else.  If we need to do
                  * so, "close" the current complex-command set,
-                 * and start a new___ one at the bottom; this is
+                 * and start a new one at the bottom; this is
                  * needed to ensure the ordering of queued
                  * commands is consistent with the way they are
                  * executed here.
@@ -1215,7 +1125,7 @@ ProcessUtilitySlow(Node *parsetree,
            */
           switch (stmt->subtype)
           {
-            case 'T':    /* ALTER DOMAIN DEFAULT */
+            case 'T':   /* ALTER DOMAIN DEFAULT */
 
               /*
                * Recursively alter column default for table and,
@@ -1225,30 +1135,30 @@ ProcessUtilitySlow(Node *parsetree,
                 AlterDomainDefault(stmt->typeName,
                            stmt->def);
               break;
-            case 'N':    /* ALTER DOMAIN DROP NOT NULL */
+            case 'N':   /* ALTER DOMAIN DROP NOT NULL */
               address =
                 AlterDomainNotNull(stmt->typeName,
                            false);
               break;
-            case 'O':    /* ALTER DOMAIN SET NOT NULL */
+            case 'O':   /* ALTER DOMAIN SET NOT NULL */
               address =
                 AlterDomainNotNull(stmt->typeName,
                            true);
               break;
-            case 'C':    /* ADD CONSTRAINT */
+            case 'C':   /* ADD CONSTRAINT */
               address =
                 AlterDomainAddConstraint(stmt->typeName,
                              stmt->def,
                              &secondaryObject);
               break;
-            case 'X':    /* DROP CONSTRAINT */
+            case 'X':   /* DROP CONSTRAINT */
               address =
                 AlterDomainDropConstraint(stmt->typeName,
                               stmt->name,
                               stmt->behavior,
                               stmt->missing_ok);
               break;
-            case 'V':    /* VALIDATE CONSTRAINT */
+            case 'V':   /* VALIDATE CONSTRAINT */
               address =
                 AlterDomainValidateConstraint(stmt->typeName,
                                 stmt->name);
@@ -1320,10 +1230,10 @@ ProcessUtilitySlow(Node *parsetree,
         }
         break;
 
-      case T_IndexStmt:  /* CREATE INDEX */
+      case T_IndexStmt: /* CREATE INDEX */
         {
           IndexStmt  *stmt = (IndexStmt *) parsetree;
-          Oid      relid;
+          Oid     relid;
           LOCKMODE  lockmode;
 
           if (stmt->concurrent)
@@ -1355,9 +1265,9 @@ ProcessUtilitySlow(Node *parsetree,
           address =
             DefineIndex(relid,  /* OID of heap relation */
                   stmt,
-                  InvalidOid,    /* no predefined OID */
+                  InvalidOid,   /* no predefined OID */
                   false,  /* is_alter_table */
-                  true,  /* check_rights */
+                  true, /* check_rights */
                   false,  /* skip_build */
                   false); /* quiet */
           /*
@@ -1369,62 +1279,6 @@ ProcessUtilitySlow(Node *parsetree,
                            parsetree);
           commandCollected = true;
           EventTriggerAlterTableEnd();
-
-        //TODO :: Peloton Modification
-        // CreateIndex
-        /*
-        if( address.objectId != 0 )
-        {
-          ListCell   *entry;
-          int column_itr_for_KeySchema= 0;
-          int type = 0;
-          bool ret;
-
-          char**ColumnNamesForKeySchema = (char**)malloc(sizeof(char*)*stmt->indexParams->length);
-
-          // Parse the IndexStmt and construct ddl_columnInfo for TupleSchema and KeySchema
-          foreach(entry, stmt->indexParams)
-          {
-            IndexElem *indexElem = lfirst(entry);
-
-            //printf("index name %s \n", indexElem->name);
-            //printf("Index column %s \n", indexElem->indexcolname) ;
-
-            if( indexElem->name != NULL )
-            {
-              ColumnNamesForKeySchema[column_itr_for_KeySchema] = (char*) malloc( sizeof(char*)*strlen(indexElem->name));
-              strcpy(ColumnNamesForKeySchema[column_itr_for_KeySchema], indexElem->name );
-              column_itr_for_KeySchema++;
-            }
-          }
-
-          // look up the access method, transform the method name into IndexType
-          if (strcmp(stmt->accessMethod, "btree") == 0){
-            type = BTREE_AM_OID;
-          }else if (strcmp(stmt->accessMethod, "hash") == 0){
-            type = HASH_AM_OID;
-          }else if (strcmp(stmt->accessMethod, "rtree") == 0 || strcmp(stmt->accessMethod, "gist") == 0){
-            type = GIST_AM_OID;
-          }else if (strcmp(stmt->accessMethod, "gin") == 0){
-            type = GIN_AM_OID;
-          }else if (strcmp(stmt->accessMethod, "spgist") == 0){
-            type = SPGIST_AM_OID;
-          }else if (strcmp(stmt->accessMethod, "brin") == 0){
-            type = BRIN_AM_OID;
-          }else{
-            type = 0;
-          }
- 
-          ret = peloton::bridge::DDL::CreateIndex(stmt->idxname,
-                                stmt->relation->relname,
-                                type,
-                                stmt->unique,
-                                ColumnNamesForKeySchema,
-                                column_itr_for_KeySchema
-                               );
-          fprintf(stderr, "DDLCreateIndex :: %d \n", ret);
-        }
-        */
         }
         break;
 
@@ -1477,7 +1331,7 @@ ProcessUtilitySlow(Node *parsetree,
         commandCollected = true;
         break;
 
-      case T_CompositeTypeStmt:  /* CREATE TYPE (composite) */
+      case T_CompositeTypeStmt: /* CREATE TYPE (composite) */
         {
           CompositeTypeStmt *stmt = (CompositeTypeStmt *) parsetree;
 
@@ -1490,11 +1344,11 @@ ProcessUtilitySlow(Node *parsetree,
         address = DefineEnum((CreateEnumStmt *) parsetree);
         break;
 
-      case T_CreateRangeStmt:    /* CREATE TYPE AS RANGE */
+      case T_CreateRangeStmt:   /* CREATE TYPE AS RANGE */
         address = DefineRange((CreateRangeStmt *) parsetree);
         break;
 
-      case T_AlterEnumStmt:    /* ALTER TYPE (enum) */
+      case T_AlterEnumStmt:   /* ALTER TYPE (enum) */
         address = AlterEnum((AlterEnumStmt *) parsetree, isTopLevel);
         break;
 
@@ -1512,7 +1366,7 @@ ProcessUtilitySlow(Node *parsetree,
         address = CreateFunction((CreateFunctionStmt *) parsetree, queryString);
         break;
 
-      case T_AlterFunctionStmt:  /* ALTER FUNCTION */
+      case T_AlterFunctionStmt: /* ALTER FUNCTION */
         address = AlterFunction((AlterFunctionStmt *) parsetree);
         break;
 
@@ -1612,40 +1466,9 @@ ProcessUtilitySlow(Node *parsetree,
         break;
 
       case T_DropStmt:
-        //TODO :: Peloton Modification
-        {
-          /*
-          DropStmt* drop;
-          ListCell  *cell;
-          int table_oid_itr = 0;
-          bool ret;
-          Oid* table_oid_list;
-          drop = (DropStmt*) parsetree;
-          table_oid_list = (Oid*) malloc ( sizeof(Oid)*(drop->objects->length));
-
-          foreach(cell, drop->objects)
-          {
-            if (drop->removeType == OBJECT_TABLE )
-            {
-              List* names = ((List *) lfirst(cell));
-              char* table_name = strVal(linitial(names));
-              table_oid_list[table_oid_itr++] = GetRelationOid(table_name);
-            }
-          }
-          */
-
-          ExecDropStmt((DropStmt *) parsetree, isTopLevel);
-
-          /*
-          while(table_oid_itr > 0)
-          {
-            ret  = peloton::bridge::DDL::DropTable(table_oid_list[--table_oid_itr]);
-            fprintf(stderr, "DDLDropTable :: %d \n", ret);
-          }
-          // no commands stashed for DROP
-          commandCollected = true;
-          */
-        }
+        ExecDropStmt((DropStmt *) parsetree, isTopLevel);
+        /* no commands stashed for DROP */
+        commandCollected = true;
         break;
 
       case T_RenameStmt:
@@ -1688,7 +1511,7 @@ ProcessUtilitySlow(Node *parsetree,
         address = CreatePolicy((CreatePolicyStmt *) parsetree);
         break;
 
-      case T_AlterPolicyStmt:    /* ALTER POLICY */
+      case T_AlterPolicyStmt:   /* ALTER POLICY */
         address = AlterPolicy((AlterPolicyStmt *) parsetree);
         break;
 
@@ -1723,9 +1546,6 @@ ProcessUtilitySlow(Node *parsetree,
     PG_RE_THROW();
   }
   PG_END_TRY();
-
-  // TODO: Peloton Changes
-  peloton_send_ddl(parsetree);
 
   if (needCleanup)
     EventTriggerEndCompleteQuery();

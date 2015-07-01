@@ -29,8 +29,6 @@
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 
-#include "postmaster/peloton.h"
-
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -42,6 +40,9 @@
 #include <arpa/inet.h>
 #include <signal.h>
 #include <time.h>
+
+#include "postmaster/peloton.h"
+#include "backend/bridge/ddl.h"
 
 /* ----------
  * Local data
@@ -742,13 +743,13 @@ peloton_send_dml(PlanState *node)
 }
 
 /* ----------
- * peloton_send_ddl() -
+ * peloton_send_ddl -
  *
  *  Execute the given node to return a(nother) tuple.
  * ----------
  */
 void
-peloton_send_ddl(Node *parsetree)
+peloton_send_ddl(Node *parsetree, const char *queryString)
 {
   Peloton_MsgDDL msg;
   MemoryContext oldcontext;
@@ -763,9 +764,11 @@ peloton_send_ddl(Node *parsetree)
    */
   oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
 
-  // TODO: Can we avoid copying the plan ?
   msg.m_parsetree = (Node *) palloc(sizeof(Node));
   memcpy(msg.m_parsetree, parsetree, sizeof(Node));
+
+  msg.m_queryString = (char *) palloc(sizeof(char));
+  strcpy(msg.m_queryString, queryString);
 
   /*
    * Switch back to old context.
@@ -776,7 +779,7 @@ peloton_send_ddl(Node *parsetree)
 }
 
 /* ----------
- * peloton_recv_dml() -
+ * peloton_recv_dml -
  *
  *  Process plan execution requests.
  * ----------
@@ -822,8 +825,7 @@ peloton_recv_ddl(Peloton_MsgDDL *msg, int len)
 
     if(parsetree != NULL)
     {
-
-      fprintf(stdout, "Parsetree type : %d\n", parsetree->type);
+      peloton::bridge::DDL::ProcessUtility(msg->m_parsetree, msg->m_queryString);
     }
   }
 
