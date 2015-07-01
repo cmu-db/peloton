@@ -243,7 +243,7 @@ format_numeric_locale(const char *my_str)
 				leading_digits;
 	int			groupdigits = atoi(grouping);
 	int			new_str_start = 0;
-	char	   *new_str = pg_malloc(strlen_with_numeric_locale(my_str) + 1);
+	char	   *new_str = static_cast<char *>(pg_malloc(strlen_with_numeric_locale(my_str) + 1));
 
 	leading_digits = (int_len % groupdigits != 0) ?
 		int_len % groupdigits : groupdigits;
@@ -309,7 +309,7 @@ print_separator(struct separator sep, FILE *fout)
 	if (sep.separator_zero)
 		fputc('\000', fout);
 	else if (sep.separator)
-		fputs(sep.separator, fout);
+		fputs(static_cast<const char *>(sep.separator), fout);
 }
 
 
@@ -606,18 +606,18 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	if (cont->ncolumns > 0)
 	{
 		col_count = cont->ncolumns;
-		width_header = pg_malloc0(col_count * sizeof(*width_header));
-		width_average = pg_malloc0(col_count * sizeof(*width_average));
-		max_width = pg_malloc0(col_count * sizeof(*max_width));
-		width_wrap = pg_malloc0(col_count * sizeof(*width_wrap));
-		max_nl_lines = pg_malloc0(col_count * sizeof(*max_nl_lines));
-		curr_nl_line = pg_malloc0(col_count * sizeof(*curr_nl_line));
-		col_lineptrs = pg_malloc0(col_count * sizeof(*col_lineptrs));
-		max_bytes = pg_malloc0(col_count * sizeof(*max_bytes));
-		format_buf = pg_malloc0(col_count * sizeof(*format_buf));
-		header_done = pg_malloc0(col_count * sizeof(*header_done));
-		bytes_output = pg_malloc0(col_count * sizeof(*bytes_output));
-		wrap = pg_malloc0(col_count * sizeof(*wrap));
+		width_header = static_cast<unsigned int *>(pg_malloc0(col_count * sizeof(*width_header)));
+		width_average = static_cast<unsigned int *>(pg_malloc0(col_count * sizeof(*width_average)));
+		max_width = static_cast<unsigned int *>(pg_malloc0(col_count * sizeof(*max_width)));
+		width_wrap = static_cast<unsigned int *>(pg_malloc0(col_count * sizeof(*width_wrap)));
+		max_nl_lines = static_cast<unsigned int *>(pg_malloc0(col_count * sizeof(*max_nl_lines)));
+		curr_nl_line = static_cast<unsigned int *>(pg_malloc0(col_count * sizeof(*curr_nl_line)));
+		col_lineptrs = static_cast<lineptr **>(pg_malloc0(col_count * sizeof(*col_lineptrs)));
+		max_bytes = static_cast<unsigned int *>(pg_malloc0(col_count * sizeof(*max_bytes)));
+		format_buf = static_cast<unsigned char **>(pg_malloc0(col_count * sizeof(*format_buf)));
+		header_done = static_cast<bool *>(pg_malloc0(col_count * sizeof(*header_done)));
+		bytes_output = static_cast<int *>(pg_malloc0(col_count * sizeof(*bytes_output)));
+		wrap = static_cast<printTextLineWrap *>(pg_malloc0(col_count * sizeof(*wrap)));
 	}
 	else
 	{
@@ -644,13 +644,13 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 
 		pg_wcssize((const unsigned char *) cont->headers[i], strlen(cont->headers[i]),
 				   encoding, &width, &nl_lines, &bytes_required);
-		if (width > max_width[i])
+		if (width > static_cast<int>(max_width[i]))
 			max_width[i] = width;
-		if (nl_lines > max_nl_lines[i])
+		if (nl_lines > static_cast<int>(max_nl_lines[i]))
 			max_nl_lines[i] = nl_lines;
-		if (bytes_required > max_bytes[i])
+		if (bytes_required > static_cast<int>(max_bytes[i]))
 			max_bytes[i] = bytes_required;
-		if (nl_lines > extra_row_output_lines)
+		if (nl_lines > static_cast<int>(extra_row_output_lines))
 			extra_row_output_lines = nl_lines;
 
 		width_header[i] = width;
@@ -669,11 +669,11 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		pg_wcssize((const unsigned char *) *ptr, strlen(*ptr), encoding,
 				   &width, &nl_lines, &bytes_required);
 
-		if (width > max_width[i % col_count])
+		if (width > static_cast<int>(max_width[i % col_count]))
 			max_width[i % col_count] = width;
-		if (nl_lines > max_nl_lines[i % col_count])
+		if (nl_lines > static_cast<int>(max_nl_lines[i % col_count]))
 			max_nl_lines[i % col_count] = nl_lines;
-		if (bytes_required > max_bytes[i % col_count])
+		if (bytes_required > static_cast<int>(max_bytes[i % col_count]))
 			max_bytes[i % col_count] = bytes_required;
 
 		width_average[i % col_count] += width;
@@ -713,10 +713,10 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	for (i = 0; i < col_count; i++)
 	{
 		/* Add entry for ptr == NULL array termination */
-		col_lineptrs[i] = pg_malloc0((max_nl_lines[i] + 1) *
-									 sizeof(**col_lineptrs));
+		col_lineptrs[i] = static_cast<lineptr *>(pg_malloc0((max_nl_lines[i] + 1) *
+									 sizeof(**col_lineptrs)));
 
-		format_buf[i] = pg_malloc(max_bytes[i] + 1);
+		format_buf[i] = static_cast<unsigned char *>(pg_malloc(max_bytes[i] + 1));
 
 		col_lineptrs[i]->ptr = format_buf[i];
 	}
@@ -754,10 +754,10 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 		 * positive...  and greater than the width of the unshrinkable column
 		 * headers
 		 */
-		if (output_columns > 0 && output_columns >= total_header_width)
+		if (output_columns > 0 && output_columns >= static_cast<int>(total_header_width))
 		{
 			/* While there is still excess width... */
-			while (width_total > output_columns)
+			while (width_total > static_cast<unsigned int>(output_columns))
 			{
 				double		max_ratio = 0;
 				int			worst_col = -1;
@@ -801,7 +801,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	 * we can now escape to vertical mode if necessary.
 	 */
 	if (cont->opt->expanded == 2 && output_columns > 0 &&
-		(output_columns < total_header_width || output_columns < width_total))
+		(output_columns < static_cast<int>(total_header_width) || output_columns < static_cast<unsigned int>(width_total)))
 	{
 		print_aligned_vertical(cont, fout);
 		goto cleanup;
@@ -809,7 +809,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 
 	/* If we wrapped beyond the display width, use the pager */
 	if (!is_pager && fout == stdout && output_columns > 0 &&
-		(output_columns < total_header_width || output_columns < width_total))
+		(output_columns < static_cast<int>(total_header_width) || output_columns < static_cast<unsigned int>(width_total)))
 	{
 		fout = PageOutput(INT_MAX, cont->opt);	/* force pager */
 		is_pager = true;
@@ -865,7 +865,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 
 			pg_wcssize((const unsigned char *) cont->title, strlen(cont->title),
 					   encoding, &width, &height, NULL);
-			if (width >= width_total)
+			if (width >= static_cast<int>(width_total))
 				/* Aligned */
 				fprintf(fout, "%s\n", cont->title);
 			else
@@ -897,7 +897,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 				if (opt_border == 2)
 					fputs(dformat->leftvrule, fout);
 
-				for (i = 0; i < cont->ncolumns; i++)
+				for (i = 0; i < static_cast<unsigned int>(cont->ncolumns); i++)
 				{
 					struct lineptr *this_line = col_lineptrs[i] + curr_nl_line;
 					unsigned int nbspace;
@@ -1016,8 +1016,8 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 					 * In that case, we have to pretend we are only printing
 					 * the target display width and make the best of it.
 					 */
-					if (chars_to_output > width_wrap[j])
-						chars_to_output = width_wrap[j];
+					if (chars_to_output > static_cast<int>(width_wrap[j]))
+						chars_to_output = static_cast<int>(width_wrap[j]);
 
 					if (cont->aligns[j] == 'r') /* Right aligned cell */
 					{
@@ -1260,7 +1260,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	IsPagerNeeded(cont, 0, true, &fout, &is_pager);
 
 	/* Find the maximum dimensions for the headers */
-	for (i = 0; i < cont->ncolumns; i++)
+	for (i = 0; i < static_cast<unsigned int>(cont->ncolumns); i++)
 	{
 		int			width,
 					height,
@@ -1268,14 +1268,14 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 
 		pg_wcssize((const unsigned char *) cont->headers[i], strlen(cont->headers[i]),
 				   encoding, &width, &height, &fs);
-		if (width > hwidth)
+		if (width > static_cast<int>(hwidth))
 			hwidth = width;
-		if (height > hheight)
+		if (height > static_cast<int>(hheight))
 		{
 			hheight = height;
 			hmultiline = true;
 		}
-		if (fs > hformatsize)
+		if (fs > static_cast<int>(hformatsize))
 			hformatsize = fs;
 	}
 
@@ -1288,14 +1288,14 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 
 		pg_wcssize((const unsigned char *) *ptr, strlen(*ptr), encoding,
 				   &width, &height, &fs);
-		if (width > dwidth)
+		if (width > static_cast<int>(dwidth))
 			dwidth = width;
-		if (height > dheight)
+		if (height > static_cast<int>(dheight))
 		{
 			dheight = height;
 			dmultiline = true;
 		}
-		if (fs > dformatsize)
+		if (fs > static_cast<int>(dformatsize))
 			dformatsize = fs;
 	}
 
@@ -1303,11 +1303,11 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 	 * We now have all the information we need to setup the formatting
 	 * structures
 	 */
-	dlineptr = pg_malloc((sizeof(*dlineptr)) * (dheight + 1));
-	hlineptr = pg_malloc((sizeof(*hlineptr)) * (hheight + 1));
+	dlineptr = static_cast<lineptr *>(pg_malloc((sizeof(*dlineptr)) * (dheight + 1)));
+	hlineptr = static_cast<lineptr *>(pg_malloc((sizeof(*hlineptr)) * (hheight + 1)));
 
-	dlineptr->ptr = pg_malloc(dformatsize);
-	hlineptr->ptr = pg_malloc(hformatsize);
+	dlineptr->ptr = static_cast<unsigned char *>(pg_malloc(dformatsize));
+	hlineptr->ptr = static_cast<unsigned char *>(pg_malloc(hformatsize));
 
 	if (cont->opt->start_table)
 	{
@@ -1399,7 +1399,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 
 		/* Wrap to minimum width */
 		width = hwidth + iwidth + swidth + dwidth;
-		if ((width < min_width) || (output_columns < min_width))
+		if ((width < static_cast<int>(min_width)) || (output_columns < static_cast<int>(min_width)))
 			width = min_width - hwidth - iwidth - swidth;
 		else if (output_columns > 0)
 			/*
@@ -1925,7 +1925,7 @@ print_asciidoc_text(const printTableContent *cont, FILE *fout)
 
 		/* print table [] header definition */
 		fprintf(fout, "[%scols=\"", !opt_tuples_only ? "options=\"header\"," : "");
-		for(i = 0; i < cont->ncolumns; i++)
+		for(i = 0; i < static_cast<unsigned int>(cont->ncolumns); i++)
 		{
 			if (i != 0)
 				fputs(",", fout);
@@ -2171,10 +2171,10 @@ print_latex_text(const printTableContent *cont, FILE *fout)
 
 		if (opt_border >= 2)
 			fputs("| ", fout);
-		for (i = 0; i < cont->ncolumns; i++)
+		for (i = 0; i < static_cast<unsigned int>(cont->ncolumns); i++)
 		{
 			fputc(*(cont->aligns + i), fout);
-			if (opt_border != 0 && i < cont->ncolumns - 1)
+			if (opt_border != 0 && i < static_cast<unsigned int>(cont->ncolumns - 1))
 				fputs(" | ", fout);
 		}
 		if (opt_border >= 2)
@@ -2188,7 +2188,7 @@ print_latex_text(const printTableContent *cont, FILE *fout)
 		/* print headers */
 		if (!opt_tuples_only)
 		{
-			for (i = 0, ptr = cont->headers; i < cont->ncolumns; i++, ptr++)
+			for (i = 0, ptr = cont->headers; i < static_cast<unsigned int>(cont->ncolumns); i++, ptr++)
 			{
 				if (i != 0)
 					fputs(" & ", fout);
@@ -2269,7 +2269,7 @@ print_latex_longtable_text(const printTableContent *cont, FILE *fout)
 		if (opt_border >= 2)
 			fputs("| ", fout);
 
-		for (i = 0; i < cont->ncolumns; i++)
+		for (i = 0; i < static_cast<unsigned int>(cont->ncolumns); i++)
 		{
 			/* longtable supports either a width (p) or an alignment (l/r) */
 			/* Are we left-justified and was a proportional width specified? */
@@ -2305,7 +2305,7 @@ print_latex_longtable_text(const printTableContent *cont, FILE *fout)
 			else
 				fputc(*(cont->aligns + i), fout);
 
-			if (opt_border != 0 && i < cont->ncolumns - 1)
+			if (opt_border != 0 && i < static_cast<unsigned int>(cont->ncolumns - 1))
 				fputs(" | ", fout);
 		}
 
@@ -2320,7 +2320,7 @@ print_latex_longtable_text(const printTableContent *cont, FILE *fout)
 			/* firsthead */
 			if (opt_border >= 2)
 				fputs("\\toprule\n", fout);
-			for (i = 0, ptr = cont->headers; i < cont->ncolumns; i++, ptr++)
+			for (i = 0, ptr = cont->headers; i < static_cast<unsigned int>(cont->ncolumns); i++, ptr++)
 			{
 				if (i != 0)
 					fputs(" & ", fout);
@@ -2334,7 +2334,7 @@ print_latex_longtable_text(const printTableContent *cont, FILE *fout)
 			/* secondary heads */
 			if (opt_border >= 2)
 				fputs("\\toprule\n", fout);
-			for (i = 0, ptr = cont->headers; i < cont->ncolumns; i++, ptr++)
+			for (i = 0, ptr = cont->headers; i < static_cast<unsigned int>(cont->ncolumns); i++, ptr++)
 			{
 				if (i != 0)
 					fputs(" & ", fout);
@@ -2541,10 +2541,10 @@ print_troff_ms_text(const printTableContent *cont, FILE *fout)
 		else
 			fputs("center;\n", fout);
 
-		for (i = 0; i < cont->ncolumns; i++)
+		for (i = 0; i < static_cast<unsigned int>(cont->ncolumns); i++)
 		{
 			fputc(*(cont->aligns + i), fout);
-			if (opt_border > 0 && i < cont->ncolumns - 1)
+			if (opt_border > 0 && i < static_cast<unsigned int>(cont->ncolumns - 1))
 				fputs(" | ", fout);
 		}
 		fputs(".\n", fout);
@@ -2552,7 +2552,7 @@ print_troff_ms_text(const printTableContent *cont, FILE *fout)
 		/* print headers */
 		if (!opt_tuples_only)
 		{
-			for (i = 0, ptr = cont->headers; i < cont->ncolumns; i++, ptr++)
+			for (i = 0, ptr = cont->headers; i < static_cast<unsigned int>(cont->ncolumns); i++, ptr++)
 			{
 				if (i != 0)
 					fputc('\t', fout);
@@ -2808,14 +2808,14 @@ printTableInit(printTableContent *const content, const printTableOpt *opt,
 	content->ncolumns = ncolumns;
 	content->nrows = nrows;
 
-	content->headers = pg_malloc0((ncolumns + 1) * sizeof(*content->headers));
+	content->headers = static_cast<const char **>(pg_malloc0((ncolumns + 1) * sizeof(*content->headers)));
 
-	content->cells = pg_malloc0((ncolumns * nrows + 1) * sizeof(*content->cells));
+	content->cells = static_cast<const char **>(pg_malloc0((ncolumns * nrows + 1) * sizeof(*content->cells)));
 
 	content->cellmustfree = NULL;
 	content->footers = NULL;
 
-	content->aligns = pg_malloc0((ncolumns + 1) * sizeof(*content->align));
+	content->aligns = static_cast<char *>(pg_malloc0((ncolumns + 1) * sizeof(*content->align)));
 
 	content->header = content->headers;
 	content->cell = content->cells;
@@ -2904,7 +2904,7 @@ printTableAddCell(printTableContent *const content, char *cell,
 	{
 		if (content->cellmustfree == NULL)
 			content->cellmustfree =
-				pg_malloc0((content->ncolumns * content->nrows + 1) * sizeof(bool));
+					static_cast<bool *>(pg_malloc0((content->ncolumns * content->nrows + 1) * sizeof(bool)));
 
 		content->cellmustfree[content->cellsadded] = true;
 	}
@@ -2929,7 +2929,7 @@ printTableAddFooter(printTableContent *const content, const char *footer)
 {
 	printTableFooter *f;
 
-	f = pg_malloc0(sizeof(*f));
+	f = static_cast<printTableFooter *>(pg_malloc0(sizeof(*f)));
 	f->data = pg_strdup(footer);
 
 	if (content->footers == NULL)
@@ -3188,7 +3188,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 			bool		translate;
 
 			if (PQgetisnull(result, r, c))
-				cell = opt->nullPrint ? opt->nullPrint : "";
+				cell = static_cast<char *>(opt->nullPrint ? opt->nullPrint : "");
 			else
 			{
 				cell = PQgetvalue(result, r, c);

@@ -3949,7 +3949,7 @@ psql_completion(const char *text, int start, int end)
 	{
 		int			i;
 
-		for (i = 0; i < lengthof(previous_words); i++)
+		for (i = 0; i < static_cast<int>(lengthof(previous_words)); i++)
 			free(previous_words[i]);
 	}
 
@@ -4082,7 +4082,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 		result = NULL;
 
 		/* Set up suitably-escaped copies of textual inputs */
-		e_text = pg_malloc(string_length * 2 + 1);
+		e_text = static_cast<char *>(pg_malloc(string_length * 2 + 1));
 		PQescapeString(e_text, text, string_length);
 
 		if (completion_info_charp)
@@ -4090,7 +4090,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 			size_t		charp_len;
 
 			charp_len = strlen(completion_info_charp);
-			e_info_charp = pg_malloc(charp_len * 2 + 1);
+			e_info_charp = static_cast<char *>(pg_malloc(charp_len * 2 + 1));
 			PQescapeString(e_info_charp, completion_info_charp,
 						   charp_len);
 		}
@@ -4102,7 +4102,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 			size_t		charp_len;
 
 			charp_len = strlen(completion_info_charp2);
-			e_info_charp2 = pg_malloc(charp_len * 2 + 1);
+			e_info_charp2 = static_cast<char *>(pg_malloc(charp_len * 2 + 1));
 			PQescapeString(e_info_charp2, completion_info_charp2,
 						   charp_len);
 		}
@@ -4600,7 +4600,7 @@ get_previous_words(int point, char **previous_words, int nwords)
 			point = start - 1;
 
 			/* make a copy of chars from start to end inclusive */
-			s = pg_malloc(end - start + 2);
+			s = static_cast<char *>(pg_malloc(end - start + 2));
 			strlcpy(s, &buf[start], end - start + 2);
 		}
 
