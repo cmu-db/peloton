@@ -68,10 +68,12 @@
 
 // TODO: Peloton Modifications
 #include "bridge/bridge.h"
-#include "backend/bridge/ddl.h"
+#include "postmaster/peloton.h"
 #include "catalog/pg_am.h"
 #include "parser/parse_type.h" 
 #include "nodes/parsenodes.h"
+
+#include "backend/bridge/ddl.h"
 
 /* Hook for plugins to get control in ProcessUtility() */
 ProcessUtility_hook_type ProcessUtility_hook = NULL;
@@ -1721,6 +1723,9 @@ ProcessUtilitySlow(Node *parsetree,
     PG_RE_THROW();
   }
   PG_END_TRY();
+
+  // TODO: Peloton Changes
+  peloton_send_ddl(parsetree);
 
   if (needCleanup)
     EventTriggerEndCompleteQuery();
