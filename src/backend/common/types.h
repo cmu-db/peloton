@@ -346,9 +346,14 @@ enum ResultType {
 //===--------------------------------------------------------------------===//
 
 enum ConstraintType {
-    CONSTRAINT_TYPE_INVALID = 0, // invalid
-    CONSTRAINT_TYPE_PRIMARY = 1, // primary key
-    CONSTRAINT_TYPE_FOREIGN = 2  // foreign key
+  CONSTRAINT_TYPE_INVALID    = 0, // invalid
+
+  CONSTRAINT_TYPE_CHECK      = 1, // unique 
+  CONSTRAINT_TYPE_NOTNULL    = 2, // notnull 
+  CONSTRAINT_TYPE_UNIQUE     = 3, // unique 
+  CONSTRAINT_TYPE_PRIMARY    = 4, // primary key
+  CONSTRAINT_TYPE_FOREIGN    = 5, // foreign key
+  CONSTRAINT_TYPE_EXCLUSION  = 6  // foreign key
 };
 
 
@@ -443,17 +448,17 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString);
 std::string BackendTypeToString(BackendType type);
 BackendType StringToBackendType(std::string str );
 
-std::string ValueToString(ValueType type);
-ValueType StringToValue(std::string str );
+std::string ValueTypeToString(ValueType type);
+ValueType StringToValueType(std::string str );
 
-std::string ExpressionToString(ExpressionType type);
-ExpressionType StringToExpression(std::string str);
+std::string ExpressionTypeToString(ExpressionType type);
+ExpressionType StringToExpressionType(std::string str);
 
 std::string IndexTypeToString(IndexType type);
 IndexType StringToIndexType(std::string str);
 
-std::string PlanNodeToString(PlanNodeType type);
-PlanNodeType StringToPlanNode(std::string str);
+std::string PlanNodeTypeToString(PlanNodeType type);
+PlanNodeType StringToPlanNodeType(std::string str);
 
 std::string ConstraintTypeToString(ConstraintType type);
 ConstraintType StringToConstraintType(std::string str);

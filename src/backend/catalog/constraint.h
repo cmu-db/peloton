@@ -13,39 +13,32 @@
 #pragma once
 
 #include "backend/common/types.h"
-#include "backend/catalog/abstract_catalog_object.h"
 
 
 #include <string>
 #include <vector>
-#include <algorithm>
 #include <iostream>
 
 namespace peloton {
-namespace catalog {
 
+namespace index {
 class Index;
-class Table;
-class Column;
+}
+namespace storage {
+class DataTable;
+}
+
+namespace catalog {
 
 /**
  * Constraint Catalog Object
  */
-class Constraint : public AbstractCatalogObject {
+class Constraint
+{
 
 public:
-
-    // FIXME: Not all constraints will have foreign key information
-    //        We should make this information optional
-    Constraint(std::string name, ConstraintType type, Index* index, Table* foreign_key_table,
-               std::vector<Column*> columns, std::vector<Column*> foreign_columns)
-        : AbstractCatalogObject(static_cast<oid_t>(1), name), // FIXME
-          type(type),
-          index(index),
-          foreign_key_table(foreign_key_table),
-          columns(columns),
-          foreign_columns(foreign_columns) {
-    }
+    Constraint( ConstraintType type, std::string name = "")
+                : type(type), name(name) {}
     
     //===--------------------------------------------------------------------===//
     // ACCESSORS
@@ -55,20 +48,24 @@ public:
         return type;
     }
 
-    Index *GetIndex() const {
-        return index;
+    std::string GetName() const {
+        return name;
     }
 
-    Table *GetForeignKeyTable() const {
+    index::Index *GetIndex() const {
+        return primary_key_index;
+    }
+
+    storage::DataTable *GetForeignKeyTable() const {
         return foreign_key_table;
     }
 
-    std::vector<Column*> GetColumns() const {
-        return columns;
+    void SetIndex(index::Index* index){
+      primary_key_index = index;       
     }
 
-    std::vector<Column*> GetForeignColumns() const {
-        return foreign_columns;
+    void SetForeignKeyTable(storage::DataTable* table){
+      foreign_key_table = table;
     }
 
     // Get a string representation of this constraint
@@ -79,22 +76,18 @@ private:
     //===--------------------------------------------------------------------===//
     // MEMBERS
     //===--------------------------------------------------------------------===//
-
+    
     // The type of constraint
     ConstraintType type = CONSTRAINT_TYPE_INVALID;
 
+    // Constraint name (if needed)
+    std::string name = "";
+
     // The index used by this constraint (if needed)
-    Index* index = nullptr;
+    index::Index* primary_key_index = nullptr;
 
     // The table referenced by the foreign key (if needed)
-    Table* foreign_key_table = nullptr;
-
-    // The columns in the table referenced by the constraint (if needed)
-    std::vector<Column*> columns;
-
-    // The columns in the foreign table referenced by the constraint (if needed)
-    std::vector<Column*> foreign_columns;
-
+    storage::DataTable* foreign_key_table = nullptr;
 };
 
 } // End catalog namespace

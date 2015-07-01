@@ -67,30 +67,22 @@ libpeloton_la_CPPFLAGS = -I$(srcdir)/postgres/include \
 			 -I$(srcdir)/ \
 			 $(third_party_INCLUDES)
 
-libpeloton_la_CFLAGS = $(postgres_common_INCLUDES)
-libpeloton_la_CXXFLAGS = -std=c++11 -I. -I$(top_srcdir)/src -I.. $(third_party_INCLUDES) -msse4.2 -fPIC -fpic 
+libpeloton_la_CXXFLAGS = -std=c++11 -I. -I$(top_srcdir)/src -I.. $(third_party_INCLUDES) \
+						 -fPIC -fpic -fpermissive -Wno-write-strings -msse4.2
 
 if BUILD_OS_IS_DARWIN
-libpeloton_la_LDFLAGS = -ldl -lm
-libpeloton_la_CFLAGS  +=  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
-			  -Wendif-labels -Wmissing-format-attribute -Wformat-security \
-			  -fno-strict-aliasing -fwrapv \
-			  -fPIC -fpic -msse4.2
+libpeloton_la_LDFLAGS = -lm
 ## if build os is not darwin
 else
-libpeloton_la_LDFLAGS = -lrt -lcrypt -ldl -lm
-libpeloton_la_CFLAGS +=  -Wall -Wmissing-prototypes -Wpointer-arith -Wdeclaration-after-statement \
-			 -Wendif-labels -Wmissing-format-attribute -Wformat-security \
-			 -fno-strict-aliasing -fwrapv -fexcess-precision=standard \
-			 -fPIC -fpic -msse4.2
+libpeloton_la_LDFLAGS = -lm
 endif
 
 ######################################################################
 # PELOTON
 ######################################################################
 
-peloton_SOURCES = backend/main/peloton.cpp
-peloton_LDFLAGS = $(TBB_LIBS)
+peloton_SOURCES = backend/main/main.cpp
+peloton_LDFLAGS =
 peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES)
 peloton_LDADD = libpeloton.la $(TBB_LIBS)
 
