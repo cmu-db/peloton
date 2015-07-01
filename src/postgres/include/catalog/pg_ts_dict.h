@@ -35,7 +35,7 @@ CATALOG(pg_ts_dict,3600)
 	NameData	dictname;		/* dictionary name */
 	Oid			dictnamespace;	/* name space */
 	Oid			dictowner;		/* owner */
-	Oid			dicttemplate;	/* dictionary's template */
+	Oid			dicttemplate;	/* dictionary's ctemplate */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	text		dictinitoption; /* options passed to dict_init() */

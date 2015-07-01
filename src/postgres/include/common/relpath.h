@@ -30,7 +30,7 @@ typedef enum ForkNumber
 	INIT_FORKNUM
 
 	/*
-	 * NOTE: if you add a new fork, change MAX_FORKNUM and possibly
+	 * NOTE: if you add a new___ fork, change MAX_FORKNUM and possibly
 	 * FORKNAMECHARS below, and update the forkNames array in
 	 * src/common/relpath.c
 	 */

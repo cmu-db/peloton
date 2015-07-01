@@ -18,10 +18,9 @@
 #include "backend/common/types.h"
 #include "backend/bridge/ddl.h"
 
-extern "C" {
 #include "fmgr.h"
 #include "utils/lsyscache.h"
-}
+
 
 /**
  * @brief Test tuple transformation utility.

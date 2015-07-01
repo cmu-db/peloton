@@ -6,10 +6,7 @@
 
 #pragma once
 
-extern "C" {
 #include "executor/execdesc.h"
-}
-
 #include "backend/planner/abstract_plan_node.h"
 
 namespace peloton {

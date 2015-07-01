@@ -37,9 +37,9 @@ typedef uint64 XLogSegNo;
  * TimeLineID (TLI) - identifies different database histories to prevent
  * confusion after restoring a prior state of a database installation.
  * TLI does not change in a normal stop/restart of the database (including
- * crash-and-recover cases); but we must assign a new TLI after doing
+ * crash-and-recover cases); but we must assign a new___ TLI after doing
  * a recovery to a prior state, a/k/a point-in-time recovery.  This makes
- * the new WAL logfile sequence we generate distinguishable from the
+ * the new___ WAL logfile sequence we generate distinguishable from the
  * sequence that was generated in the previous incarnation.
  */
 typedef uint32 TimeLineID;

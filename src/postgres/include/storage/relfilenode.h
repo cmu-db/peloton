@@ -33,7 +33,7 @@
  *
  * relNode identifies the specific relation.  relNode corresponds to
  * pg_class.relfilenode (NOT pg_class.oid, because we need to be able
- * to assign new physical files to relations in some situations).
+ * to assign new___ physical files to relations in some situations).
  * Notice that relNode is only unique within a database in a particular
  * tablespace.
  *
@@ -59,6 +59,23 @@ typedef struct RelFileNode
 	Oid			spcNode;		/* tablespace */
 	Oid			dbNode;			/* database */
 	Oid			relNode;		/* relation */
+
+#ifdef __cplusplus
+	RelFileNode() {}
+
+	RelFileNode (volatile RelFileNode &other)
+	: spcNode(other.spcNode),
+	  dbNode(other.dbNode),
+	  relNode(other.relNode) {}
+
+	RelFileNode &operator=(volatile RelFileNode &rhs) {
+	  if (this == &rhs) return *this;
+	  this->spcNode = rhs.spcNode;
+	  this->dbNode = rhs.dbNode;
+	  this->relNode = rhs.relNode;
+	  return *this;
+	}
+#endif
 } RelFileNode;
 
 /*

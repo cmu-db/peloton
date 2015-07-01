@@ -37,7 +37,7 @@
  */
 #define NUMERIC_MIN_SIG_DIGITS		16
 
-/* The actual contents of Numeric are private to numeric.c */
+/* The actual contents of Numeric are private___ to numeric.c */
 struct NumericData;
 typedef struct NumericData *Numeric;
 

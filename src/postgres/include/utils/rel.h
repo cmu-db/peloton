@@ -88,13 +88,13 @@ typedef struct RelationData
 	 * the ID of the highest subtransaction the relfilenode change has
 	 * survived into, or zero if not changed in the current transaction (or we
 	 * have forgotten changing it). rd_newRelfilenodeSubid can be forgotten
-	 * when a relation has multiple new relfilenodes within a single
+	 * when a relation has multiple new___ relfilenodes within a single
 	 * transaction, with one of them occurring in a subsequently aborted
 	 * subtransaction, e.g. BEGIN; TRUNCATE t; SAVEPOINT save; TRUNCATE t;
 	 * ROLLBACK TO save; -- rd_newRelfilenode is now forgotten
 	 */
 	SubTransactionId rd_createSubid;	/* rel was created in current xact */
-	SubTransactionId rd_newRelfilenodeSubid;	/* new relfilenode assigned in
+	SubTransactionId rd_newRelfilenodeSubid;	/* new___ relfilenode assigned in
 												 * current xact */
 
 	Form_pg_class rd_rel;		/* RELATION tuple */
@@ -102,7 +102,7 @@ typedef struct RelationData
 	Oid			rd_id;			/* relation's object id */
 	LockInfoData rd_lockInfo;	/* lock mgr's info for locking relation */
 	RuleLock   *rd_rules;		/* rewrite rules */
-	MemoryContext rd_rulescxt;	/* private memory cxt for rd_rules, if any */
+	MemoryContext rd_rulescxt;	/* private___ memory cxt for rd_rules, if any */
 	TriggerDesc *trigdesc;		/* Trigger info, or NULL if rel has none */
 	/* use "struct" here to avoid needing to include rowsecurity.h: */
 	struct RowSecurityDesc *rd_rsdesc;	/* row security policies, or NULL */
@@ -138,14 +138,14 @@ typedef struct RelationData
 	 * arrays are indexed by support function number, which is a sufficient
 	 * identifier given that restriction.
 	 *
-	 * Note: rd_amcache is available for index AMs to cache private data about
+	 * Note: rd_amcache is available for index AMs to cache private___ data about
 	 * an index.  This must be just a cache since it may get reset at any time
 	 * (in particular, it will get reset by a relcache inval message for the
 	 * index).  If used, it must point to a single memory chunk palloc'd in
 	 * rd_indexcxt.  A relcache reset will include freeing that chunk and
 	 * setting rd_amcache = NULL.
 	 */
-	MemoryContext rd_indexcxt;	/* private memory cxt for this stuff */
+	MemoryContext rd_indexcxt;	/* private___ memory cxt for this stuff */
 	RelationAmInfo *rd_aminfo;	/* lookup info for funcs found in pg_am */
 	Oid		   *rd_opfamily;	/* OIDs of op families for each index col */
 	Oid		   *rd_opcintype;	/* OIDs of opclass declared input data types */
@@ -172,11 +172,11 @@ typedef struct RelationData
 	struct FdwRoutine *rd_fdwroutine;	/* cached function pointers, or NULL */
 
 	/*
-	 * Hack for CLUSTER, rewriting ALTER TABLE, etc: when writing a new
+	 * Hack for CLUSTER, rewriting ALTER TABLE, etc: when writing a new___
 	 * version of a table, we need to make any toast pointers inserted into it
 	 * have the existing toast table's OID, not the OID of the transient toast
 	 * table.  If rd_toastoid isn't InvalidOid, it is the OID to place in
-	 * toast pointers inserted into this rel.  (Note it's set on the new
+	 * toast pointers inserted into this rel.  (Note it's set on the new___
 	 * version of the main heap, not the toast table itself.)  This also
 	 * causes toast_save_datum() to try to preserve toast value OIDs.
 	 */
@@ -192,7 +192,7 @@ typedef struct RelationData
  *
  * RelationGetFillFactor() and RelationGetTargetPageFreeSpace() can only
  * be applied to relations that use this format or a superset for
- * private options data.
+ * private___ options data.
  */
  /* autovacuum-related reloptions. */
 typedef struct AutoVacOpts
@@ -360,14 +360,14 @@ typedef struct ViewOptions
  * RelationGetRelationName
  *		Returns the rel's name.
  *
- * Note that the name is only unique within the containing namespace.
+ * Note that the name is only unique within the containing namescpace___.
  */
 #define RelationGetRelationName(relation) \
 	(NameStr((relation)->rd_rel->relname))
 
 /*
  * RelationGetNamespace
- *		Returns the rel's namespace OID.
+ *		Returns the rel's namescpace___ OID.
  */
 #define RelationGetNamespace(relation) \
 	((relation)->rd_rel->relnamespace)
