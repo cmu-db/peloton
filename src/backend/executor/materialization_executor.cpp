@@ -121,7 +121,7 @@ bool MaterializationExecutor::DExecute() {
   }
   std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
 
-  const planner::MaterializationNode &node = GetNode<planner::MaterializationNode>();
+  const planner::MaterializationNode &node = GetPlanNode<planner::MaterializationNode>();
   const std::unordered_map<oid_t, oid_t> &old_to_new_cols = node.old_to_new_cols();
 
   // Generate mappings.

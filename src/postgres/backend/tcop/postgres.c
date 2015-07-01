@@ -39,7 +39,7 @@
 #include "access/parallel.h"
 #include "access/printtup.h"
 #include "access/xact.h"
-#include "../../backend/bridge/bridge.h"
+#include "bridge/bridge.h"
 #include "catalog/pg_type.h"
 #include "commands/async.h"
 #include "commands/prepare.h"
@@ -75,7 +75,6 @@
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
 #include "mb/pg_wchar.h"
-
 
 /* ----------------
  *		global variables
@@ -199,13 +198,6 @@ static bool IsTransactionStmtList(List *parseTrees);
 static void drop_unnamed_stmt(void);
 static void SigHupHandler(SIGNAL_ARGS);
 static void log_disconnections(int code, Datum arg);
-
-/* ----------------------------------------------------------------
- * Wrapper functions declarations
- * TODO: Peloton Modifications
- * ----------------------------------------------------------------
- */
-
 
 /* ----------------------------------------------------------------
  *		routines to obtain user input
@@ -936,7 +928,7 @@ exec_simple_query(const char *query_string)
   /*
    * Switch to appropriate context for constructing parsetrees.
    */
-  oldcontext = MemoryContextSwitchTo(MessageContext);
+  oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
 
   /*
    * Do basic parsing of the query or queries (this should be safe even if
@@ -1032,7 +1024,7 @@ exec_simple_query(const char *query_string)
      * Switch to appropriate context for constructing querytrees (again,
      * these must outlive the execution context).
      */
-    oldcontext = MemoryContextSwitchTo(MessageContext);
+    oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
 
     querytree_list = pg_analyze_and_rewrite(parsetree, query_string,
                                             NULL, 0);
@@ -3712,51 +3704,6 @@ PostgresMain(int argc, char *argv[],
    */
   InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
 
-  InitPeloton(dbname);
-
-  // set it up and create a table one by one
-
-  /*
-  // Get the public table list
-  // 
-  CreateStmt* Cstmt = (CreateStmt*)stmt;
-  List* schema = (List*)(Cstmt->tableElts);
-  ListCell   *entry;
-  DDL_ColumnInfo ddl_columnInfo[ schema->length ];
-  bool ret;  
-
-  // Parse the CreateStmt and construct ddl_columnInfo
-  foreach(entry, schema)
-  {
-	  ColumnDef  *coldef = lfirst(entry);
-	  Type		tup;
-	  Form_pg_type typ;
-	  Oid			typoid;
-	  int column_itr=0;
-
-	  tup = typenameType(NULL, coldef->typeName, NULL);
-	  typ = (Form_pg_type) GETSTRUCT(tup);
-	  typoid = HeapTupleGetOid(tup);
-	  ReleaseSysCache(tup);
-
-	  ddl_columnInfo[column_itr].type = typoid;
-	  ddl_columnInfo[column_itr].column_offset = column_itr;
-	  ddl_columnInfo[column_itr].column_length = typ->typlen;
-	  strcpy(ddl_columnInfo[column_itr].name, coldef->colname);
-	  ddl_columnInfo[column_itr].allow_null = !coldef->is_not_null;
-	  ddl_columnInfo[column_itr].is_inlined = false; // true for int, double, char, timestamp..
-	  column_itr++;
-  }
-
-  */
-  /*
-   * Now, Create the tables in Peloton
-   */
-  //ret = DDL_CreateTable( Cstmt->relation->relname, ddl_columnInfo, schema->length);
-  //fprintf(stderr, "DDL_CreateTable :: %d \n", ret);
-
-
-
   /*
    * If the PostmasterContext is still around, recycle the space; we don't
    * need it anymore after InitPostgres completes.  Note this does not trash
@@ -3958,24 +3905,17 @@ PostgresMain(int argc, char *argv[],
   if (!ignore_till_sync)
     send_ready_for_query = true;	/* initially, or after error */
 
-  // TODO: Peloton modifications
   switch(CurrentTestModeStatus)
   {
     case TEST_MODE_TYPE_INVALID:
-      printf("TEST_MODE_TYPE_INVALID\n");
-      // never be printed..
       break;
     case TEST_MODE_TYPE_OFF:
-      printf("TEST_MODE_TYPE_OFF\n");
-      // do nothing..
       break;
     case TEST_MODE_TYPE_BRIDGE:
-      printf("BRIDGE_TEST_MODE\n");
-      GetDatabaseList();
+      elog(LOG, "Testing bridge");
       break;
     case TEST_MODE_TYPE_STATISTICS:
-      printf("STATISTIC_TEST_MODE\n");
-      // do somethinig..
+      /* Test something here */
       break;
     default:
       break;
@@ -3998,6 +3938,14 @@ PostgresMain(int argc, char *argv[],
      */
     MemoryContextSwitchTo(MessageContext);
     MemoryContextResetAndDeleteChildren(MessageContext);
+
+    // TODO: Peloton Changes
+    /*
+     * Release storage left over from prior query cycle, and create a new
+     * query input buffer in the cleared TopSharedMemoryContext.
+     */
+    MemoryContextSwitchTo(TopSharedMemoryContext);
+    MemoryContextResetAndDeleteChildren(TopSharedMemoryContext);
 
     initStringInfo(&input_message);
 
