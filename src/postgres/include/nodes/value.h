@@ -49,9 +49,9 @@ typedef struct Value
 	}			val;
 } Value;
 
-#define intVal(v)		(((Value *)(v))->val.ival)
-#define floatVal(v)		atof(((Value *)(v))->val.str)
-#define strVal(v)		(((Value *)(v))->val.str)
+#define intVal(v)		(((::Value *)(v))->val.ival)
+#define floatVal(v)		atof(((::Value *)(v))->val.str)
+#define strVal(v)		(((::Value *)(v))->val.str)
 
 extern Value *makeInteger(long i);
 extern Value *makeFloat(char *numericStr);
