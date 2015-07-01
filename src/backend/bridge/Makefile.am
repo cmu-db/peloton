@@ -7,8 +7,7 @@
 bridge_FILES = \
 			   backend/bridge/ddl.cpp \
 			   backend/bridge/plan_transformer.cpp \
-			   backend/bridge/tuple_transformer.cpp \
-			   backend/bridge/test_util.cpp
+			   backend/bridge/tuple_transformer.cpp
 
 bridge_INCLUDES = \
                   -I$(srcdir)/backend/bridge

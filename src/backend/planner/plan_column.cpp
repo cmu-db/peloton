@@ -32,7 +32,7 @@ PlanColumn::PlanColumn(json_spirit::Object& col_object) :
       contains_type = true;
       std::string m_col_object_type_string =
           m_col_object[attr].value_.get_str();
-      m_type = StringToValue(m_col_object_type_string);
+      m_type = StringToValueType(m_col_object_type_string);
     }
     else if (m_col_object[attr].name_ == "SIZE") {
       contains_size = true;
@@ -94,7 +94,7 @@ std::ostream& operator<<(std::ostream& os, const PlanColumn& column) {
   os << "PlanColumn(";
   os << "guid=" << column.m_guid << ", ";
   os << "name=" << column.m_name << ", ";
-  os << "type=" << ValueToString(column.m_type) << ", ";
+  os << "type=" << ValueTypeToString(column.m_type) << ", ";
   os << "size=" << column.m_size << ")";
 
   return os;

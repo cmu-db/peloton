@@ -10,8 +10,6 @@
  *-------------------------------------------------------------------------
  */
 
-
-#include "backend/bridge/bridge.h"
 #include "backend/catalog/catalog.h"
 #include "backend/catalog/database.h"
 #include "backend/common/logger.h"
@@ -20,6 +18,8 @@
 #include "backend/index/index_factory.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/table_factory.h"
+
+#include "bridge/bridge.h"
 
 #include <cassert>
 #include <algorithm>
@@ -101,7 +101,7 @@ bool CreateExecutor::CreateTable(catalog::Database* db,
 
   // Check whether the 'table_name' table exists in the current database or not
   // It returns true if it exists
-  isExist = IsThisTableExist(table_name.c_str());
+  isExist = RelationExists(table_name.c_str());
   if( isExist )
   {
     //LOG_ERROR("Table already exists  : %s \n", table_name);
@@ -110,6 +110,7 @@ bool CreateExecutor::CreateTable(catalog::Database* db,
   }
 
   //Construct schema with ddl_columnInfo
+/*
   if( schema == NULL )
   {
     std::vector<catalog::ColumnInfo> columnInfoVect;
@@ -119,7 +120,7 @@ bool CreateExecutor::CreateTable(catalog::Database* db,
 
       ValueType currentValueType;
 
-      switch( ddl_columnInfo[column_itr].type ){
+      switch( ddl_columnInfo[column_itr].valueType ){
          // Could not find yet corresponding types in Postgres...
          // Also - check below types again to make sure..
          // TODO :: change the numbers to enum type
@@ -141,12 +142,10 @@ bool CreateExecutor::CreateTable(catalog::Database* db,
          //currentValueType = VALUE_TYPE_VARBINARY;
          //break;
 
-         /* BOOLEAN */
          case 16: // boolean, 'true'/'false'
          currentValueType = VALUE_TYPE_BOOLEAN;
          break;
 
-         /* INTEGER */
          case 21: // -32 thousand to 32 thousand, 2-byte storage
          currentValueType = VALUE_TYPE_SMALLINT;
          ddl_columnInfo[column_itr].is_inlined = true;
@@ -160,13 +159,11 @@ bool CreateExecutor::CreateTable(catalog::Database* db,
          ddl_columnInfo[column_itr].is_inlined = true;
          break;
 
-         /* DOUBLE */
          case 701: // double-precision floating point number, 8-byte storage
          currentValueType = VALUE_TYPE_DOUBLE;
          ddl_columnInfo[column_itr].is_inlined = true;
          break;
 
-         /* CHAR */
          case 1042: // char(length), blank-padded string, fixed storage length
          currentValueType = VALUE_TYPE_VARCHAR;
          ddl_columnInfo[column_itr].is_inlined = true;
@@ -177,22 +174,19 @@ bool CreateExecutor::CreateTable(catalog::Database* db,
          ddl_columnInfo[column_itr].is_inlined = true;
          break;
 
-         /* TIMESTAMPS */
          case 1114: // date and time
          case 1184: // date and time with time zone
          currentValueType = VALUE_TYPE_TIMESTAMP;
          ddl_columnInfo[column_itr].is_inlined = true;
          break;
 
-         /* DECIMAL */
          case 1700: // numeric(precision, decimal), arbitrary precision number
          currentValueType = VALUE_TYPE_DECIMAL;
          break;
 
-         /* INVALID VALUE TYPE */
          default:
          currentValueType = VALUE_TYPE_INVALID;
-         printf("INVALID VALUE TYPE : %d \n", ddl_columnInfo[column_itr].type);
+         printf("INVALID VALUE TYPE : %d \n", ddl_columnInfo[column_itr].valueType);
          break;
      }
      catalog::ColumnInfo *columnInfo = new catalog::ColumnInfo( currentValueType,
@@ -210,8 +204,9 @@ bool CreateExecutor::CreateTable(catalog::Database* db,
   }
 
   storage::VMBackend *vmb = new storage::VMBackend;
-  vmb->Allocate(sizeof(storage::DataTable)/*table size*/);
+  vmb->Allocate(sizeof(storage::DataTable));
 
+*/
    //Create a table from schema
   //table = new storage::DataTable(schema, /*FIX IT*/backend, table_name, /*FIX*/tuples_per_tilegroup);
 

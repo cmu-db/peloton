@@ -105,7 +105,7 @@ std::ostream& operator<< (std::ostream& os, const AbstractExpression& expr) {
 
 std::string AbstractExpression::Debug() const {
   std::ostringstream os;
-  os << "\tExpression [" << ExpressionToString(GetExpressionType())
+  os << "\tExpression [" << ExpressionTypeToString(GetExpressionType())
           << ", " << GetExpressionType() << " ]\n";
   os << DebugInfo(" ");
   return (os.str());
@@ -165,8 +165,8 @@ AbstractExpression* AbstractExpression::CreateExpressionTreeRecurse(json_spirit:
         "Couldn't find TYPE value");
   }
 
-  assert(StringToExpression(expression_type_value.get_str()) != EXPRESSION_TYPE_INVALID);
-  peek_type = StringToExpression(expression_type_value.get_str());
+  assert(StringToExpressionType(expression_type_value.get_str()) != EXPRESSION_TYPE_INVALID);
+  peek_type = StringToExpressionType(expression_type_value.get_str());
 
   // and the value type
   json_spirit::Value valueTypeValue = json_spirit::find_value(obj,
@@ -177,7 +177,7 @@ AbstractExpression* AbstractExpression::CreateExpressionTreeRecurse(json_spirit:
   }
 
   std::string value_type_string = valueTypeValue.get_str();
-  value_type = StringToValue(value_type_string);
+  value_type = StringToValueType(value_type_string);
 
   // this should be relatively safe, though it ignores overflow.
   if ((value_type == VALUE_TYPE_TINYINT)  ||
