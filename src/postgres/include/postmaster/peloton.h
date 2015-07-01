@@ -93,7 +93,7 @@ extern void peloton_init(void);
 extern int  peloton_start(void);
 
 extern void peloton_send_ping(void);
-extern void peloton_send_node(PlanState *node);
+extern void peloton_send_planstate(PlanState *node);
 
 #endif   /* PELOTON_H */
 

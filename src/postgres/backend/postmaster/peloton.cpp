@@ -212,7 +212,7 @@ PelotonMain(int argc, char *argv[])
   ereport(LOG, (errmsg("peloton: processing database \"%s\"", "postgres")));
 
   /* Init Peloton */
-  //BootstrapPeloton();
+  BootstrapPeloton();
 
   /* Start main loop */
   peloton_MainLoop();
@@ -709,7 +709,7 @@ peloton_send_ping(void)
  * ----------
  */
 void
-peloton_send_node(PlanState *node)
+peloton_send_planstate(PlanState *node)
 {
   Peloton_MsgPlan msg;
   MemoryContext oldcontext;
