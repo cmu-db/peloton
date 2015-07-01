@@ -127,7 +127,7 @@ list_length(const List *l)
  */
 
 #define lnext(lc)				((lc)->next)
-#define lfirst(lc)				(static_cast<ColumnDef *>((lc)->data.ptr_value))
+#define lfirst(lc)				(((lc)->data.ptr_value))
 #define lfirst_int(lc)			((lc)->data.int_value)
 #define lfirst_oid(lc)			((lc)->data.oid_value)
 

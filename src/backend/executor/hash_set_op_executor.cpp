@@ -4,7 +4,6 @@
  * Copyright(c) 2015, CMU
  */
 
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -64,11 +63,9 @@ bool HashSetOpExecutor::ExecuteHelper(){
   assert(!hash_done_);
 
   // Grab data from plan node
-  const planner::SetOpNode &node = GetNode<planner::SetOpNode>();
+  const planner::SetOpNode &node = GetPlanNode<planner::SetOpNode>();
   set_op_ = node.GetSetOp();
   assert(set_op_ != SETOP_TYPE_INVALID);
-
-  size_t hint_num_groups = 100; // TODO: hard code at the moment
 
   // Extract all input from left child
   while(children_[0]->Execute()){
@@ -78,76 +75,10 @@ bool HashSetOpExecutor::ExecuteHelper(){
   if(left_tiles_.size() == 0)
     return false;
 
-  // Define hash table key type
-  typedef struct ht_key_t {
-    LogicalTile* tile;
-    oid_t tuple_id;
-
-    ht_key_t(LogicalTile* t, oid_t tid)
-    : tile(t), tuple_id(tid) {
-    }
-
-    bool operator==(const ht_key_t& rhs) const {
-      return (rhs.tile == tile && rhs.tuple_id == tuple_id);
-    };
-  } ht_key_t;
-
-  // Define mapped type
-  typedef struct {
-    size_t left = 0;
-    size_t right = 0;
-  }  counter_pair_t;
-
-  // Prepare hash function object and equality test function object for hash table
-  struct TupleHasher {
-    TupleHasher(oid_t num_cols, size_t seed = 0)
-    : num_cols_(num_cols),
-      seed_(seed){
-    }
-
-    size_t operator()(const ht_key_t& key) const{
-      size_t hval = seed_;
-      for(oid_t col_id = 0; col_id < num_cols_; col_id++){
-        Value value = key.tile->GetValue(key.tuple_id, col_id);
-        value.HashCombine(hval);
-      }
-      return hval;
-    }
-
-   private:
-    const oid_t num_cols_;
-    const size_t seed_;
-  };
-
-  struct TupleComparer{
-    TupleComparer(oid_t num_cols)
-    : num_cols_(num_cols){
-    }
-
-    bool operator()(const ht_key_t& ta, const ht_key_t& tb) const{
-      for(oid_t col_id = 0; col_id < num_cols_; col_id++){
-        Value lval = ta.tile->GetValue(ta.tuple_id, col_id);
-        Value rval = tb.tile->GetValue(tb.tuple_id, col_id);
-        if(lval != rval)
-          return false;
-      }
-      return true;
-    }
-
-   private:
-    const oid_t num_cols_;
-  };
-
-  TupleHasher hf(left_tiles_[0]->GetColumnCount());
-  TupleComparer comp(left_tiles_[0]->GetColumnCount());
-
-  // Define the hash table
-  std::unordered_map<ht_key_t, counter_pair_t, TupleHasher, TupleComparer> htable(hint_num_groups, hf, comp);
-
   // Scan the left child's input and update the counters
   for(auto &tile : left_tiles_){
     for(oid_t tuple_id : *tile){
-      htable[ht_key_t(tile.get(), tuple_id)].left++;
+      htable_[HashSetOpMapType::key_type(tile.get(), tuple_id)].left++;
     }
   }
 
@@ -157,9 +88,10 @@ bool HashSetOpExecutor::ExecuteHelper(){
     std::unique_ptr<LogicalTile> tile(children_[1]->GetOutput());
 
     for(oid_t tuple_id : *tile){
-      auto it = htable.find(ht_key_t(tile.get(), tuple_id));
+      auto it = htable_.find(HashSetOpMapType::key_type(tile.get(), tuple_id));
       // Do nothing if this key never appears in the left child
-      if(it != htable.end()){
+      // because it shouldn't show up in the result anyway
+      if(it != htable_.end()){
         it->second.right++;
       }
     }
@@ -168,16 +100,16 @@ bool HashSetOpExecutor::ExecuteHelper(){
   // Calculate the output number for each key
   switch(set_op_){
     case SETOP_TYPE_INTERSECT:
-      UpdateHashTable<SETOP_TYPE_INTERSECT>(htable);
+      CalculateCopies<SETOP_TYPE_INTERSECT>(htable_);
       break;
     case SETOP_TYPE_INTERSECT_ALL:
-      UpdateHashTable<SETOP_TYPE_INTERSECT_ALL>(htable);
+      CalculateCopies<SETOP_TYPE_INTERSECT_ALL>(htable_);
       break;
     case SETOP_TYPE_EXCEPT:
-      UpdateHashTable<SETOP_TYPE_EXCEPT>(htable);
+      CalculateCopies<SETOP_TYPE_EXCEPT>(htable_);
       break;
     case SETOP_TYPE_EXCEPT_ALL:
-      UpdateHashTable<SETOP_TYPE_EXCEPT_ALL>(htable);
+      CalculateCopies<SETOP_TYPE_EXCEPT_ALL>(htable_);
       break;
     case SETOP_TYPE_INVALID:
       return false;
@@ -196,11 +128,11 @@ bool HashSetOpExecutor::ExecuteHelper(){
   // 1st round
   for(auto &tile : left_tiles_){
     for(oid_t tuple_id : *tile){
-      auto it = htable.find(ht_key_t(tile.get(), tuple_id));
+      auto it = htable_.find(HashSetOpMapType::key_type(tile.get(), tuple_id));
 
-      assert(it != htable.end());
+      assert(it != htable_.end());
 
-      if(it->first == ht_key_t(tile.get(), tuple_id))
+      if(it->first.GetContainer() == tile.get() && it->first.GetTupleId() == tuple_id)
         continue;
       else if(it->second.left > 0)
         it->second.left--;
@@ -210,10 +142,11 @@ bool HashSetOpExecutor::ExecuteHelper(){
   }
 
   // 2nd round
-  for(auto& item : htable) {
+  for(auto& item : htable_) {
+    // We should have at most one quota left
     assert(item.second.left == 1 || item.second.left == 0);
     if(item.second.left == 0) {
-      item.first.tile->InvalidateTuple(item.first.tuple_id);
+      item.first.GetContainer()->InvalidateTuple(item.first.GetTupleId());
     }
   }
 
@@ -227,8 +160,8 @@ bool HashSetOpExecutor::ExecuteHelper(){
  * calculate the number of output copies of each tuples
  * and store it in the left counter.
  */
-template <SetOpType SETOP, class HT>
-bool HashSetOpExecutor::UpdateHashTable(HT &htable){
+template <SetOpType SETOP>
+bool HashSetOpExecutor::CalculateCopies(HashSetOpMapType &htable){
   for(auto& item : htable){
     switch(SETOP){
       case SETOP_TYPE_INTERSECT:
