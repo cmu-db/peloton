@@ -821,18 +821,11 @@ peloton_recv_ddl(Peloton_MsgDDL *msg, int len)
     /* Get the queryString */
     queryString = msg->m_queryString;
 
-    if(queryString != NULL)
-    {
-      fprintf(stdout, "queryString : %s \n", queryString);
-      fflush(stdout);
-    }
-
     /* Get the parsetree */
     parsetree = msg->m_parsetree;
 
     if(parsetree != NULL)
     {
-      fprintf(stdout, "Parsetree type : %d\n", parsetree->type);
       peloton::bridge::DDL::ProcessUtility(msg->m_parsetree, msg->m_queryString);
     }
   }

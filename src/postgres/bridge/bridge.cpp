@@ -15,6 +15,7 @@
 #include "access/xact.h"
 #include "bridge/bridge.h"
 #include "backend/bridge/ddl.h"
+#include "backend/catalog/schema.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_class.h"
@@ -335,7 +336,7 @@ bool BootstrapPeloton(void)
   HeapScanDesc pg_class_scan;
   HeapTuple pg_class_tuple;
 
-  int column_itr;
+  int column_itr; // TODO :: REMOVE
   bool status;
 
   elog(LOG, "Initializing Peloton");
@@ -382,10 +383,11 @@ bool BootstrapPeloton(void)
       {
         HeapScanDesc pg_attribute_scan;
         HeapTuple pg_attribute_tuple;
-        DDL_ColumnInfo ddl_schema[attnum];
+        DDL_ColumnInfo ddl_schema[attnum]; // TODO :: REMOVE
+        std::vector<peloton::catalog::ColumnInfo> column_infos;
 
         // This will be different from pg's attnum, as we skip system columns
-        int our_attnum;
+        int our_attnum; // TODO :: REMOVE
 
         // Get the tuple oid
         // This can be a relation oid or index oid etc.
@@ -394,7 +396,7 @@ bool BootstrapPeloton(void)
         // Scan the pg_attribute table for the relation oid we are interested in.
         pg_attribute_scan = heap_beginscan_catalog(pg_attribute_rel, 0, NULL);
 
-        column_itr = 0;
+        column_itr = 0; // TODO :: REMOVE
 
         //===--------------------------------------------------------------------===//
         // Build the schema
@@ -421,26 +423,32 @@ bool BootstrapPeloton(void)
                 strcmp( NameStr(pg_attribute->attname),"xmin" ) &&
                 strcmp( NameStr(pg_attribute->attname),"tableoid" ) )
             {
-              ddl_schema[column_itr].valueType = pg_attribute->atttypid;
-              ddl_schema[column_itr].column_offset = column_itr;
-              ddl_schema[column_itr].column_length = pg_attribute->attlen;
-              strcpy(ddl_schema[column_itr].name, NameStr(pg_attribute->attname));
-              ddl_schema[column_itr].allow_null = ! pg_attribute->attnotnull;
+              ddl_schema[column_itr].valueType = pg_attribute->atttypid; // TODO :: REMOVE
+              ddl_schema[column_itr].column_offset = column_itr; // TODO :: REMOVE
+              ddl_schema[column_itr].column_length = pg_attribute->attlen; // TODO :: REMOVE
+              strcpy(ddl_schema[column_itr].name, NameStr(pg_attribute->attname)); // TODO :: REMOVE
+              ddl_schema[column_itr].allow_null = ! pg_attribute->attnotnull; // TODO :: REMOVE
 
               // NOTE: We set it as true later for VARCHAR.
-              ddl_schema[column_itr].is_inlined = false;
+              ddl_schema[column_itr].is_inlined = false; // TODO :: REMOVE
 
               // TODO :: Need to be updated ( read constraints from catalog and set it up )
-              ddl_schema[column_itr].constraintType = NULL;
-              ddl_schema[column_itr].conname = NULL;
+              ddl_schema[column_itr].constraintType = NULL; // TODO :: REMOVE
+              ddl_schema[column_itr].conname = NULL; // TODO :: REMOVE
 
-              column_itr++;
+              peloton::ValueType valueType = peloton::PostgresValueTypeToPelotonValueType( (peloton::PostgresValueType) pg_attribute->atttypid);
+              peloton::catalog::ColumnInfo* column_info = new peloton::catalog::ColumnInfo( valueType,
+                                                                                            pg_attribute->attlen,
+                                                                                            NameStr(pg_attribute->attname),   
+                                                                                            !pg_attribute->attnotnull);
+              column_infos.push_back(*column_info);
+              column_itr++; // TODO :: REMOVE
             }
 
           }
         }
 
-        our_attnum = column_itr;
+        our_attnum = column_itr; // TODO :: REMOVE
         heap_endscan(pg_attribute_scan);
 
         //===--------------------------------------------------------------------===//
@@ -453,8 +461,8 @@ bool BootstrapPeloton(void)
           {
             // Create the Peloton table
 
-            // TODO: Need to update number of constraints
-            status = peloton::bridge::DDL::CreateTable(relation_name, ddl_schema, our_attnum, 0);
+            //status = peloton::bridge::DDL::CreateTable(relation_name, ddl_schema, our_attnum, 0); // TODO :: REMOVE
+            status = peloton::bridge::DDL::CreateTable2(relation_name, column_infos);
 
             if(status == true) {
               elog(LOG, "Create Table \"%s\" in Peloton\n", relation_name);
