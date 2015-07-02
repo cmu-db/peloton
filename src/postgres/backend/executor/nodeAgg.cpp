@@ -2106,7 +2106,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	 * compare functions.  Accumulate all_grouped_cols in passing.
 	 */
 
-	aggstate->phases = palloc0(numPhases * sizeof(AggStatePerPhaseData));
+	aggstate->phases = static_cast<AggStatePerPhase >(palloc0(numPhases * sizeof(AggStatePerPhaseData)));
 
 	for (phase = 0; phase < numPhases; ++phase)
 	{
@@ -2131,8 +2131,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 		if (num_sets)
 		{
-			phasedata->gset_lengths = palloc(num_sets * sizeof(int));
-			phasedata->grouped_cols = palloc(num_sets * sizeof(Bitmapset *));
+			phasedata->gset_lengths = static_cast<int *>(palloc(num_sets * sizeof(int)));
+			phasedata->grouped_cols = static_cast<Bitmapset **>(palloc(num_sets * sizeof(Bitmapset *)));
 
 			i = 0;
 			foreach(l, aggnode->groupingSets)

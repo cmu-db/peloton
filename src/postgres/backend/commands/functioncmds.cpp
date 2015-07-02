@@ -996,7 +996,7 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 		Datum *arr;
 		int i;
 
-		arr = palloc(list_length(trftypes_list) * sizeof(Datum));
+		arr = static_cast<Datum *>(palloc(list_length(trftypes_list) * sizeof(Datum)));
 		i = 0;
 		foreach (lc, trftypes_list)
 			arr[i++] = ObjectIdGetDatum(lfirst_oid(lc));

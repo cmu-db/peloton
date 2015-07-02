@@ -303,7 +303,7 @@ RelationBuildRowSecurity(Relation relation)
 			/* Now copy everything into the cache context */
 			MemoryContextSwitchTo(rscxt);
 
-			policy = palloc0(sizeof(RowSecurityPolicy));
+			policy = static_cast<RowSecurityPolicy *>(palloc0(sizeof(RowSecurityPolicy)));
 			policy->policy_name = pstrdup(policy_name_value);
 			policy->policy_id = policy_id;
 			policy->polcmd = cmd_value;
@@ -344,7 +344,7 @@ RelationBuildRowSecurity(Relation relation)
 
 			role = ObjectIdGetDatum(ACL_ID_PUBLIC);
 
-			policy = palloc0(sizeof(RowSecurityPolicy));
+			policy = static_cast<RowSecurityPolicy *>(palloc0(sizeof(RowSecurityPolicy)));
 			policy->policy_name = pstrdup("default-deny policy");
 			policy->policy_id = InvalidOid;
 			policy->polcmd = '*';

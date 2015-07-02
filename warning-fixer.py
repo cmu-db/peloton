@@ -55,7 +55,7 @@ with open(sys.argv[1], "r+") as fd1:
 				print "criticalLine:", criticalLine
 
 				# palloc[\d]?\((.*)\);
-				regex2 = re.compile("(.*)(palloc([\d])?\((.*)\);)")
+				regex2 = re.compile("(.*)(malloc([\d])?\((.*)\);)")
 				m2 = regex2.match(criticalLine);
 				
 				if m2 is None:
@@ -93,7 +93,7 @@ with open(sys.argv[1], "r+") as fd1:
 		# END IF
 
 		found += 1
-		if found == 1: break
+		#if found == 1: break
 	
 	# END FOR
 # END WITH

@@ -1304,7 +1304,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			}
 		}
 
-		tleref_to_colnum_map = palloc((maxref + 1) * sizeof(int));
+		tleref_to_colnum_map = static_cast<int *>(palloc((maxref + 1) * sizeof(int)));
 
 		if (parse->groupingSets)
 		{
@@ -1803,7 +1803,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 			if (parse->groupingSets)
 			{
-				AttrNumber *grouping_map = palloc0(sizeof(AttrNumber) * (maxref + 1));
+				AttrNumber *grouping_map = static_cast<AttrNumber *>(palloc0(sizeof(AttrNumber) * (maxref + 1)));
 				ListCell   *lc;
 				int			i = 0;
 
@@ -2273,7 +2273,7 @@ remap_groupColIdx(PlannerInfo *root, List *groupClause)
 
 	Assert(grouping_map);
 
-	new_grpColIdx = palloc0(sizeof(AttrNumber) * list_length(groupClause));
+	new_grpColIdx = static_cast<AttrNumber *>(palloc0(sizeof(AttrNumber) * list_length(groupClause)));
 
 	i = 0;
 	foreach(lc, groupClause)
@@ -3168,10 +3168,10 @@ extract_rollup_sets(List *groupingSets)
 	 * We index all of these from 1 rather than 0 because it is convenient
 	 * to leave 0 free for the NIL node in the graph algorithm.
 	 */
-	orig_sets = palloc0((num_sets_raw + 1) * sizeof(List*));
-	set_masks = palloc0((num_sets_raw + 1) * sizeof(Bitmapset *));
-	adjacency = palloc0((num_sets_raw + 1) * sizeof(short *));
-	adjacency_buf = palloc((num_sets_raw + 1) * sizeof(short));
+	orig_sets = static_cast<List **>(palloc0((num_sets_raw + 1) * sizeof(List*)));
+	set_masks = static_cast<Bitmapset **>(palloc0((num_sets_raw + 1) * sizeof(Bitmapset *)));
+	adjacency = static_cast<short int **>(palloc0((num_sets_raw + 1) * sizeof(short *)));
+	adjacency_buf = static_cast<short int *>(palloc((num_sets_raw + 1) * sizeof(short)));
 
 	j_size = 0;
 	j = 0;
@@ -3232,7 +3232,7 @@ extract_rollup_sets(List *groupingSets)
 			if (n_adj > 0)
 			{
 				adjacency_buf[0] = n_adj;
-				adjacency[i] = palloc((n_adj + 1) * sizeof(short));
+				adjacency[i] = static_cast<short int *>(palloc((n_adj + 1) * sizeof(short)));
 				memcpy(adjacency[i], adjacency_buf, (n_adj + 1) * sizeof(short));
 			}
 			else
@@ -3255,7 +3255,7 @@ extract_rollup_sets(List *groupingSets)
 	 * pair_vu[v] = u (both will be true, but we check both so that we can do
 	 * it in one pass)
 	 */
-	chains = palloc0((num_sets + 1) * sizeof(int));
+	chains = static_cast<int *>(palloc0((num_sets + 1) * sizeof(int)));
 
 	for (i = 1; i <= num_sets; ++i)
 	{
@@ -3271,7 +3271,7 @@ extract_rollup_sets(List *groupingSets)
 	}
 
 	/* build result lists. */
-	results = palloc0((num_chains + 1) * sizeof(List*));
+	results = static_cast<List **>(palloc0((num_chains + 1) * sizeof(List*)));
 
 	for (i = 1; i <= num_sets; ++i)
 	{

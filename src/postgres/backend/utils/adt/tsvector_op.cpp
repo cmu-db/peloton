@@ -1024,7 +1024,7 @@ ts_setup_firstcall(FunctionCallInfo fcinfo, FuncCallContext *funcctx,
 
 	oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-	stat->stack = palloc0(sizeof(StatEntry *) * (stat->maxdepth + 1));
+	stat->stack = static_cast<StatEntry **>(palloc0(sizeof(StatEntry *) * (stat->maxdepth + 1)));
 	stat->stackpos = 0;
 
 	node = stat->root;
@@ -1122,7 +1122,7 @@ ts_process_call(FuncCallContext *funcctx)
 		char		nentry[16];
 		HeapTuple	tuple;
 
-		values[0] = palloc(entry->lenlexeme + 1);
+		values[0] = static_cast<char *>(palloc(entry->lenlexeme + 1));
 		memcpy(values[0], entry->lexeme, entry->lenlexeme);
 		(values[0])[entry->lenlexeme] = '\0';
 		sprintf(ndoc, "%d", entry->ndoc);
@@ -1444,7 +1444,7 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 	}
 	else
 	{
-		TSVector	out = palloc(CALCDATASIZE(0, 0));
+		TSVector	out = static_cast<TSVector >(palloc(CALCDATASIZE(0, 0)));
 
 		SET_VARSIZE(out, CALCDATASIZE(0, 0));
 		out->size = 0;

@@ -67,7 +67,7 @@ void
 parse_fixed_parameters(ParseState *pstate,
 					   Oid *paramTypes, int numParams)
 {
-	FixedParamState *parstate = palloc(sizeof(FixedParamState));
+	FixedParamState *parstate = static_cast<FixedParamState *>(palloc(sizeof(FixedParamState)));
 
 	parstate->paramTypes = paramTypes;
 	parstate->numParams = numParams;
@@ -83,7 +83,7 @@ void
 parse_variable_parameters(ParseState *pstate,
 						  Oid **paramTypes, int *numParams)
 {
-	VarParamState *parstate = palloc(sizeof(VarParamState));
+	VarParamState *parstate = static_cast<VarParamState *>(palloc(sizeof(VarParamState)));
 
 	parstate->paramTypes = paramTypes;
 	parstate->numParams = numParams;

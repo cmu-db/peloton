@@ -313,7 +313,7 @@ compute_range_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			 * because get_attstatsslot() errors if you ask for stavalues, and
 			 * it's NULL. We'll still store the empty fraction in stanumbers.
 			 */
-			length_hist_values = palloc(0);
+			length_hist_values = static_cast<Datum *>(palloc(0));
 			num_hist = 0;
 		}
 		stats->staop[slot_idx] = Float8LessOperator;

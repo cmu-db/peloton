@@ -174,7 +174,7 @@ BuildEventTriggerCache(void)
 			continue;
 
 		/* Allocate new___ cache item. */
-		item = palloc0(sizeof(EventTriggerCacheItem));
+		item = static_cast<EventTriggerCacheItem *>(palloc0(sizeof(EventTriggerCacheItem)));
 		item->fnoid = form->evtfoid;
 		item->enabled = form->evtenabled;
 
@@ -236,7 +236,7 @@ DecodeTextArrayToCString(Datum array, char ***cstringp)
 		elog(ERROR, "expected 1-D text array");
 	deconstruct_array(arr, TEXTOID, -1, false, 'i', &elems, NULL, &nelems);
 
-	cstring = palloc(nelems * sizeof(char *));
+	cstring = static_cast<char **>(palloc(nelems * sizeof(char *)));
 	for (i = 0; i < nelems; ++i)
 		cstring[i] = TextDatumGetCString(elems[i]);
 

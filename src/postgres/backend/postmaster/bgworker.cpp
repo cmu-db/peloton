@@ -879,7 +879,7 @@ RegisterDynamicBackgroundWorker(BackgroundWorker *worker,
 	 */
 	if (success && handle)
 	{
-		*handle = palloc(sizeof(BackgroundWorkerHandle));
+		*handle = static_cast<BackgroundWorkerHandle *>(palloc(sizeof(BackgroundWorkerHandle)));
 		(*handle)->slot = slotno;
 		(*handle)->generation = generation;
 	}

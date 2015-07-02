@@ -343,7 +343,7 @@ pg_ls_dir(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		fctx = palloc(sizeof(directory_fctx));
+		fctx = static_cast<directory_fctx *>(palloc(sizeof(directory_fctx)));
 		fctx->location = convert_and_check_filename(PG_GETARG_TEXT_P(0));
 
 		fctx->dirdesc = AllocateDir(fctx->location);

@@ -1197,7 +1197,7 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 				if (blk->data)
 					pfree(blk->data);
 				blk->data_bufsz = blk->data_len;
-				blk->data = palloc(blk->data_bufsz);
+				blk->data = static_cast<char *>(palloc(blk->data_bufsz));
 			}
 			memcpy(blk->data, ptr, blk->data_len);
 			ptr += blk->data_len;
@@ -1212,7 +1212,7 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 			if (state->main_data)
 				pfree(state->main_data);
 			state->main_data_bufsz = state->main_data_len;
-			state->main_data = palloc(state->main_data_bufsz);
+			state->main_data = static_cast<char *>(palloc(state->main_data_bufsz));
 		}
 		memcpy(state->main_data, ptr, state->main_data_len);
 		ptr += state->main_data_len;

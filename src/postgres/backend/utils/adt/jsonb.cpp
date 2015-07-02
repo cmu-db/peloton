@@ -1541,7 +1541,7 @@ clone_parse_state(JsonbParseState * state)
 	if (state == NULL)
 		return NULL;
 
-	result = palloc(sizeof(JsonbParseState));
+	result = static_cast<JsonbParseState *>(palloc(sizeof(JsonbParseState)));
 	icursor = state;
 	ocursor = result;
 	for(;;)
@@ -1551,7 +1551,7 @@ clone_parse_state(JsonbParseState * state)
 		icursor = icursor->next;
 		if (icursor == NULL)
 			break;
-		ocursor->next= palloc(sizeof(JsonbParseState));
+		ocursor->next= static_cast<JsonbParseState *>(palloc(sizeof(JsonbParseState)));
 		ocursor = ocursor->next;
 	}
 	ocursor->next = NULL;
@@ -1612,7 +1612,7 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 
 	if (PG_ARGISNULL(0))
 	{
-		result = palloc0(sizeof(JsonbInState));
+		result = static_cast<JsonbInState *>(palloc0(sizeof(JsonbInState)));
 		result->res = pushJsonbValue(&result->parseState,
 									 WJB_BEGIN_ARRAY, NULL);
 
@@ -1651,7 +1651,7 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 				if (v.type ==JsonbValue::jbvString)
 				{
 					/* copy string values in the aggregate context */
-					char	   *buf = palloc(v.val.string.len + 1);
+					char	   *buf = static_cast<char *>(palloc(v.val.string.len + 1));
 					snprintf(buf, v.val.string.len + 1, "%s", v.val.string.val);
 					v.val.string.val = buf;
 				}
@@ -1782,7 +1782,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 
 	if (PG_ARGISNULL(0))
 	{
-		result = palloc0(sizeof(JsonbInState));
+		result = static_cast<JsonbInState *>(palloc0(sizeof(JsonbInState)));
 		result->res = pushJsonbValue(&result->parseState,
 									 WJB_BEGIN_OBJECT, NULL);
 
@@ -1812,7 +1812,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 				if (v.type ==JsonbValue::jbvString)
 				{
 					/* copy string values in the aggregate context */
-					char	   *buf = palloc(v.val.string.len + 1);
+					char	   *buf = static_cast<char *>(palloc(v.val.string.len + 1));
 					snprintf(buf, v.val.string.len + 1, "%s", v.val.string.val);
 					v.val.string.val = buf;
 				}
@@ -1870,7 +1870,7 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 				if (v.type ==JsonbValue::jbvString)
 				{
 					/* copy string values in the aggregate context */
-					char	   *buf = palloc(v.val.string.len + 1);
+					char	   *buf = static_cast<char *>(palloc(v.val.string.len + 1));
 					snprintf(buf, v.val.string.len + 1, "%s", v.val.string.val);
 					v.val.string.val = buf;
 				}

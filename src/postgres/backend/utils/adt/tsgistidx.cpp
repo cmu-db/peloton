@@ -114,7 +114,7 @@ gtsvectorout(PG_FUNCTION_ARGS)
 
 	if (outbuf_maxlen == 0)
 		outbuf_maxlen = 2 * EXTRALEN + Max(strlen(SINGOUTSTR), strlen(ARROUTSTR)) + 1;
-	outbuf = palloc(outbuf_maxlen);
+	outbuf = static_cast<char *>(palloc(outbuf_maxlen));
 
 	if (ISARRKEY(key))
 		sprintf(outbuf, ARROUTSTR, (int) ARRNELEM(key));

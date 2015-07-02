@@ -1526,7 +1526,7 @@ socket_putmessage_noblock(char msgtype, const char *s, size_t len)
 	required = PqSendPointer + 1 + 4 + len;
 	if (required > PqSendBufferSize)
 	{
-		PqSendBuffer = repalloc(PqSendBuffer, required);
+		PqSendBuffer = restatic_cast<char *>(palloc(PqSendBuffer, required));
 		PqSendBufferSize = required;
 	}
 	res = pq_putmessage(msgtype, s, len);
