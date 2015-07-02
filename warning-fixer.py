@@ -1,0 +1,94 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import re
+
+regex1 = re.compile("((?:.*)\.(?:h|cpp)):([\d]+):([\d]+): warning: invalid conversion from \'(.*?)\' to '(.*?)' \[\-fpermissive\]")
+
+found = 0
+fixed = 0
+searchStr = "postgres"
+filePath_to_pg = "src/postgres"
+
+with open(sys.argv[1], "rw") as fd1:
+	for line in fd1:
+		m1 = regex1.match(line)
+		if m1 is None: continue
+
+		fileName = m1.group(1)
+		lineNum = int(m1.group(2))
+		offset = int(m1.group(3))
+		targetType = m1.group(5)
+
+		if targetType.find("{aka") != -1:
+			targetType = targetType.split(" ")[0]
+		#END IF
+		
+		regex3 = re.compile("([^*]*)(.*)")
+		m3 = regex3.match(targetType)
+		if m3:
+			targetType_beforespace = m3.group(1)
+			targetType_afterspace = m3.group(2)
+			targetType = targetType_beforespace + " " + targetType_afterspace
+			
+			print "targetType_beforespace:", targetType_beforespace
+			print "targetType_afterspace:", targetType_afterspace
+			
+		print m1.groups()
+
+		print "fileName:", fileName
+		print "lineNum:", lineNum
+		print "offset:", offset
+		print "targetType:", targetType
+
+		if fileName.find(searchStr) != -1:
+			filePath_from_pg = fileName.split("postgres")[1]        
+			print "filePath_from_pg:", filePath_from_pg
+			filePath_abs = filePath_to_pg + filePath_from_pg
+			print "filePath_abs:", filePath_abs
+
+			with open(filePath_abs, "rw") as fd2:
+				criticalLine = fd2.readlines()[lineNum - 1]
+				print "criticalLine:", criticalLine
+
+				# palloc[\d]?\((.*)\);
+				regex2 = re.compile("(.*)(palloc([\d])?\((.*)\);)")
+				m2 = regex2.match(criticalLine);
+				
+				if m2 is None:
+					print "didn't find palloc[digit]"
+				else:
+					beforePalloc = m2.group(1)
+					fromPalloc = m2.group(2)
+					print "beforePalloc:", beforePalloc
+					print "fromPalloc:", fromPalloc
+					
+					# update this part to include static_cast
+					substituteStr = "static_cast<" + targetType + ">(" + fromPalloc[:-1] + ");"
+					print "substituteStr:", substituteStr
+					
+					# update the entire line
+					substituteLine = beforePalloc + substituteStr
+					print "substituteLine:", substituteLine
+					
+					criticalLine = substituteLine
+					
+					# write substituteLine in place of existing line in file
+					fd2.write(criticalLine)
+					fixed += 1
+					
+				# END IF-ELSE
+				
+			# END WITH
+		# END IF
+
+		found += 1
+		if found == 1: break
+	
+	# END FOR
+# END WITH
+
+print found
+print fixed
+
