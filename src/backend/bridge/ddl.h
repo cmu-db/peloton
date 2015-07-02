@@ -11,10 +11,12 @@
 #include "c.h"
 
 #include "bridge/bridge.h"
+#include "nodes/nodes.h"
+#include "catalog/pg_am.h"
+
 #include "backend/catalog/catalog.h"
 #include "backend/catalog/constraint.h"
 #include "backend/catalog/schema.h"
-
 #include "backend/common/types.h"
 #include "backend/index/index.h"
 #include "backend/index/index_factory.h"
@@ -50,6 +52,9 @@ class DDL {
   DDL& operator=(const DDL &) = delete;
   DDL(DDL &&) = delete;
   DDL& operator=(DDL &&) = delete;
+
+  static void ProcessUtility(Node *parsetree,
+                             const char *queryString);
 
   static bool CreateTable(std::string table_name,
                           DDL_ColumnInfo *schema,
