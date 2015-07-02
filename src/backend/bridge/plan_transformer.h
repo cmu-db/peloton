@@ -35,6 +35,8 @@ class PlanTransformer {
   static planner::AbstractPlanNode *TransformModifyTable(const ModifyTableState *plan_state);
 
   static planner::AbstractPlanNode *TransformInsert(const ModifyTableState *plan_state);
+  static planner::AbstractPlanNode *TransformUpdate(const ModifyTableState *plan_state);
+  static planner::AbstractPlanNode *TransformDelete(const ModifyTableState *plan_state);
 
   static planner::AbstractPlanNode *TransformSeqScan(const SeqScanState *plan_state);
 

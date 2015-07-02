@@ -62,11 +62,12 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(const PlanState *plan_
 /**
  * @brief Convert ModifyTableState into AbstractPlanNode.
  * @return Pointer to the constructed AbstractPlanNode.
+ *
+ * Basically, it multiplexes into helper methods based on operation type.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
     const ModifyTableState *mt_plan_state) {
 
-  /* TODO: handle UPDATE, DELETE */
   /* TODO: Add logging */
   ModifyTable *plan = (ModifyTable *) mt_plan_state->ps.plan;
 
@@ -74,7 +75,12 @@ planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
     case CMD_INSERT:
       return PlanTransformer::TransformInsert(mt_plan_state);
       break;
-
+    case CMD_UPDATE:
+      return PlanTransformer::TransformUpdate(mt_plan_state);
+      break;
+    case CMD_DELETE:
+      return PlanTransformer::TransformDelete(mt_plan_state);
+      break;
     default:
       break;
   }
@@ -126,12 +132,24 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   return plan_node;
 }
 
+planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
+    const ModifyTableState* plan_state) {
+
+  return nullptr;
+}
+
+planner::AbstractPlanNode* PlanTransformer::TransformDelete(
+    const ModifyTableState* plan_state) {
+
+  return nullptr;
+}
+
 /**
  * @brief Convert a Postgres SeqScanState into a Peloton SeqScanNode.
  * @return Pointer to the constructed AbstractPlanNode.
  *
  * TODO: Can we also scan result from a child operator? (Non-base-table scan?)
- * We can't for now, but postgres can.
+ * We can't for now, but Postgres can.
  */
 planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
     const SeqScanState* ss_plan_state) {
@@ -151,8 +169,8 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
    * Grab and transform the predicate.
    *
    * TODO:
-   * The qualifying predicate should extracted from:
-   * ss_plan_state->ps.qual
+   * The qualifying predicate should be extracted from:
+   * ss_plan_state->ps.qual (null if no predicate)
    *
    * Let's just use a null predicate for now.
    */
