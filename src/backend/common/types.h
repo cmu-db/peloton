@@ -81,6 +81,28 @@ namespace peloton {
 // We do not allow for user-defined types, nor do we try to do anything dynamic.
 //===--------------------------------------------------------------------===//
 
+enum PostgresValueType {
+  POSTGRES_VALUE_TYPE_BOOLEAN = 16, 	
+
+  POSTGRES_VALUE_TYPE_SMALLINT = 21,
+  POSTGRES_VALUE_TYPE_INTEGER = 23, 
+  POSTGRES_VALUE_TYPE_BIGINT = 20,
+
+  POSTGRES_VALUE_TYPE_DOUBLE = 701,	
+
+  POSTGRES_VALUE_TYPE_BPCHAR = 1042, 
+  POSTGRES_VALUE_TYPE_BPCHAR2 = 1014, 
+
+  POSTGRES_VALUE_TYPE_VARCHAR = 1015, 
+  POSTGRES_VALUE_TYPE_VARCHAR2 = 1043, 
+
+  POSTGRES_VALUE_TYPE_TIMESTAMPS = 1114, 
+  POSTGRES_VALUE_TYPE_TIMESTAMPS2 = 1184, 
+
+  POSTGRES_VALUE_TYPE_DECIMAL = 1700
+
+};
+
 enum ValueType {
   VALUE_TYPE_INVALID = 0, 	// invalid value type
   VALUE_TYPE_NULL = 1, 		// NULL type
@@ -345,6 +367,22 @@ enum ResultType {
 // Constraint Types
 //===--------------------------------------------------------------------===//
 
+enum PostgresConstraintType{
+  POSTGRES_CONSTR_NULL,                 /* not standard SQL, but a lot of people * expect it */
+
+  POSTGRES_CONSTRAINT_NOTNULL,
+  POSTGRES_CONSTRAINT_DEFAULT,
+  POSTGRES_CONSTRAINT_CHECK,
+  POSTGRES_CONSTRAINT_PRIMARY,
+  POSTGRES_CONSTRAINT_UNIQUE,
+  POSTGRES_CONSTRAINT_EXCLUSION,
+  POSTGRES_CONSTRAINT_FOREIGN,
+  POSTGRES_CONSTRAINT_ATTR_DEFERRABLE,      /* attributes for previous constraint node */
+  POSTGRES_CONSTRAINT_ATTR_NOT_DEFERRABLE,
+  POSTGRES_CONSTRAINT_ATTR_DEFERRED,
+  POSTGRES_CONSTRAINT_ATTR_IMMEDIATE
+};
+
 enum ConstraintType {
   CONSTRAINT_TYPE_INVALID    = 0, // invalid
 
@@ -462,5 +500,8 @@ PlanNodeType StringToPlanNodeType(std::string str);
 
 std::string ConstraintTypeToString(ConstraintType type);
 ConstraintType StringToConstraintType(std::string str);
+ 
+ValueType PostgresValueTypeToPelotonValueType(PostgresValueType PostgresValType );
+ConstraintType PostgresConstraintTypeToPelotonConstraintType(PostgresConstraintType PostgresConstrType);
 
 } // End peloton namespace
