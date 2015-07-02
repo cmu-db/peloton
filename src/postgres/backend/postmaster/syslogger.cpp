@@ -850,7 +850,7 @@ process_pipe_input(char *logbuffer, int *bytes_in_logbuffer)
 						 * Need a free slot, but there isn't one in the list,
 						 * so create a new___ one and extend the list with it.
 						 */
-						free_slot = palloc(sizeof(save_buffer));
+						free_slot = static_cast<save_buffer *>(palloc(sizeof(save_buffer)));
 						buffer_list = lappend(buffer_list, free_slot);
 						buffer_lists[p.pid % NBUFFER_LISTS] = buffer_list;
 					}
@@ -1283,7 +1283,7 @@ logfile_getname(pg_time_t timestamp, const char *suffix)
 	char	   *filename;
 	int			len;
 
-	filename = palloc(MAXPGPATH);
+	filename = static_cast<char *>(palloc(MAXPGPATH));
 
 	snprintf(filename, MAXPGPATH, "%s/", Log_directory);
 

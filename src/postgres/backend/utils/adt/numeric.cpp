@@ -1600,7 +1600,7 @@ numeric_sortsupport(PG_FUNCTION_ARGS)
 		NumericSortSupport *nss;
 		MemoryContext oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
-		nss = palloc(sizeof(NumericSortSupport));
+		nss = static_cast<NumericSortSupport *>(palloc(sizeof(NumericSortSupport)));
 
 		/*
 		 * palloc a buffer for handling unaligned packed values in addition to
@@ -4814,7 +4814,7 @@ get_str_from_var(NumericVar *var)
 	if (i <= 0)
 		i = 1;
 
-	str = palloc(i + dscale + DEC_DIGITS + 2);
+	str = static_cast<char *>(palloc(i + dscale + DEC_DIGITS + 2));
 	cp = str;
 
 	/*
@@ -5009,7 +5009,7 @@ get_str_from_var_sci(NumericVar *var, int rscale)
 	 * exponent itself, and of course the null terminator.
 	 */
 	len = strlen(sig_out) + 13;
-	str = palloc(len);
+	str = static_cast<char *>(palloc(len));
 	snprintf(str, len, "%se%+03d", sig_out, exponent);
 
 	pfree(sig_out);

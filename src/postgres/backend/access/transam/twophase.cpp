@@ -920,14 +920,14 @@ save_state_data(const void *data, uint32 len)
 
 	if (padlen > records.bytes_free)
 	{
-		records.tail->next = palloc0(sizeof(StateFileChunk));
+		records.tail->next = static_cast<StateFileChunk *>(palloc0(sizeof(StateFileChunk)));
 		records.tail = records.tail->next;
 		records.tail->len = 0;
 		records.tail->next = NULL;
 		records.num_chunks++;
 
 		records.bytes_free = Max(padlen, 512);
-		records.tail->data = palloc(records.bytes_free);
+		records.tail->data = static_cast<char *>(palloc(records.bytes_free));
 	}
 
 	memcpy(((char *) records.tail->data) + records.tail->len, data, len);
@@ -954,12 +954,12 @@ StartPrepare(GlobalTransaction gxact)
 	SharedInvalidationMessage *invalmsgs;
 
 	/* Initialize linked list */
-	records.head = palloc0(sizeof(StateFileChunk));
+	records.head = static_cast<StateFileChunk *>(palloc0(sizeof(StateFileChunk)));
 	records.head->len = 0;
 	records.head->next = NULL;
 
 	records.bytes_free = Max(sizeof(TwoPhaseFileHeader), 512);
-	records.head->data = palloc(records.bytes_free);
+	records.head->data = static_cast<char *>(palloc(records.bytes_free));
 
 	records.tail = records.head;
 	records.num_chunks = 1;
@@ -1831,12 +1831,12 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 					if (nxids == 0)
 					{
 						allocsize = 10;
-						xids = palloc(allocsize * sizeof(TransactionId));
+						xids = static_cast<TransactionId *>(palloc(allocsize * sizeof(TransactionId)));
 					}
 					else
 					{
 						allocsize = allocsize * 2;
-						xids = repalloc(xids, allocsize * sizeof(TransactionId));
+						xids = restatic_cast<TransactionId *>(palloc(xids, allocsize * sizeof(TransactionId)));
 					}
 				}
 				xids[nxids++] = xid;

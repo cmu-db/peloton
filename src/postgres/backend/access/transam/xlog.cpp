@@ -9725,7 +9725,7 @@ issue_xlog_fsync(int fd, XLogSegNo segno)
 char *
 XLogFileNameP(TimeLineID tli, XLogSegNo segno)
 {
-	char	   *result = palloc(MAXFNAMELEN);
+	char	   *result = static_cast<char *>(palloc(MAXFNAMELEN));
 
 	XLogFileName(result, tli, segno);
 	return result;
@@ -10048,7 +10048,7 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 				IS_DIR_SEP(linkpath[datadirpathlen]))
 				relpath = linkpath + datadirpathlen + 1;
 
-			ti = palloc(sizeof(tablespaceinfo));
+			ti = static_cast<tablespaceinfo *>(palloc(sizeof(tablespaceinfo)));
 			ti->oid = pstrdup(de->d_name);
 			ti->path = pstrdup(buflinkpath.data);
 			ti->rpath = relpath ? pstrdup(relpath) : NULL;
@@ -10334,7 +10334,7 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 					 errmsg("could not read file \"%s\": %m",
 							BACKUP_LABEL_FILE)));
 		}
-		labelfile = palloc(statbuf.st_size + 1);
+		labelfile = static_cast<char *>(palloc(statbuf.st_size + 1));
 		r = fread(labelfile, statbuf.st_size, 1, lfp);
 		labelfile[statbuf.st_size] = '\0';
 
@@ -10813,7 +10813,7 @@ read_tablespace_map(List **tablespaces)
 			tbslinkpath = str + n;
 			i = 0;
 
-			ti = palloc(sizeof(tablespaceinfo));
+			ti = static_cast<tablespaceinfo *>(palloc(sizeof(tablespaceinfo)));
 			ti->oid = pstrdup(tbsoid);
 			ti->path = pstrdup(tbslinkpath);
 

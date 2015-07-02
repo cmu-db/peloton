@@ -173,7 +173,7 @@ get_attribute_options(Oid attrelid, int attnum)
 	/* Return results in caller's memory context. */
 	if (attopt->opts == NULL)
 		return NULL;
-	result = palloc(VARSIZE(attopt->opts));
+	result = static_cast<AttributeOpts *>(palloc(VARSIZE(attopt->opts)));
 	memcpy(result, attopt->opts, VARSIZE(attopt->opts));
 	return result;
 }

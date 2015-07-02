@@ -1107,7 +1107,7 @@ pstrdup(const char *in)
 char *
 pnstrdup(const char *in, Size len)
 {
-	char	   *out = palloc(len + 1);
+	char	   *out = static_cast<char *>(palloc(len + 1));
 
 	memcpy(out, in, len);
 	out[len] = '\0';

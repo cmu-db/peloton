@@ -54,7 +54,7 @@ tsm_bernoulli_init(PG_FUNCTION_ARGS)
 				 errmsg("invalid sample size"),
 				 errhint("Sample size must be numeric value between 0 and 100 (inclusive).")));
 
-	sampler = palloc0(sizeof(BernoulliSamplerData));
+	sampler = static_cast<BernoulliSamplerData *>(palloc0(sizeof(BernoulliSamplerData)));
 
 	/* Remember initial values for reinit */
 	sampler->seed = seed;

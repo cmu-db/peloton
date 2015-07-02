@@ -156,7 +156,7 @@ spg_quad_picksplit(PG_FUNCTION_ARGS)
 	centroid->y = sorted[in->nTuples >> 1]->y;
 #else
 	/* Use the average values of x and y as the centroid point */
-	centroid = palloc0(sizeof(*centroid));
+	centroid = static_cast<Point *>(palloc0(sizeof(*centroid)));
 
 	for (i = 0; i < in->nTuples; i++)
 	{
@@ -174,8 +174,8 @@ spg_quad_picksplit(PG_FUNCTION_ARGS)
 	out->nNodes = 4;
 	out->nodeLabels = NULL;		/* we don't need node labels */
 
-	out->mapTuplesToNodes = palloc(sizeof(int) * in->nTuples);
-	out->leafTupleDatums = palloc(sizeof(Datum) * in->nTuples);
+	out->mapTuplesToNodes = static_cast<int *>(palloc(sizeof(int) * in->nTuples));
+	out->leafTupleDatums = static_cast<Datum *>(palloc(sizeof(Datum) * in->nTuples));
 
 	for (i = 0; i < in->nTuples; i++)
 	{

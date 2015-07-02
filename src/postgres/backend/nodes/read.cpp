@@ -167,7 +167,7 @@ pg_strtok(int *length)
 char *
 debackslash(char *token, int length)
 {
-	char	   *result = palloc(length + 1);
+	char	   *result = static_cast<char *>(palloc(length + 1));
 	char	   *ptr = result;
 
 	while (length > 0)
@@ -406,7 +406,7 @@ nodeRead(char *token, int tok_len)
 			break;
 		case T_BitString:
 			{
-				char	   *val = palloc(tok_len);
+				char	   *val = static_cast<char *>(palloc(tok_len));
 
 				/* skip leading 'b' */
 				memcpy(val, token + 1, tok_len - 1);

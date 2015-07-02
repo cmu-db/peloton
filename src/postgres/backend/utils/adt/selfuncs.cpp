@@ -5253,7 +5253,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 			pfree(bstr);
 	}
 
-	match = palloc(pattlen + 1);
+	match = static_cast<char *>(palloc(pattlen + 1));
 	match_pos = 0;
 	for (pos = 0; pos < pattlen; pos++)
 	{
@@ -5945,7 +5945,7 @@ string_to_const(const char *str, Oid datatype)
 static Const *
 string_to_bytea_const(const char *str, size_t str_len)
 {
-	bytea	   *bstr = palloc(VARHDRSZ + str_len);
+	bytea	   *bstr = static_cast<bytea *>(palloc(VARHDRSZ + str_len));
 	Datum		conval;
 
 	memcpy(VARDATA(bstr), str, str_len);

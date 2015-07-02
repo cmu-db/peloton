@@ -264,7 +264,7 @@ begin_heap_rewrite(Relation old_heap, Relation new_heap, TransactionId oldest_xm
 	old_cxt = MemoryContextSwitchTo(rw_cxt);
 
 	/* Create and fill in the state struct */
-	state = palloc0(sizeof(RewriteStateData));
+	state = static_cast<RewriteState >(palloc0(sizeof(RewriteStateData)));
 
 	state->rs_old_rel = old_heap;
 	state->rs_new_rel = new_heap;
@@ -888,7 +888,7 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 
 		/* write all mappings consecutively */
 		len = src->num_mappings * sizeof(LogicalRewriteMappingData);
-		waldata_start = waldata = palloc(len);
+		waldata_start = waldata = static_cast<char *>(palloc(len));
 
 		/*
 		 * collect data we need to write out, but don't modify ondisk data yet

@@ -851,7 +851,7 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 												   splan->plan_id);
 
 	/* Label the subplan for EXPLAIN purposes */
-	splan->plan_name = palloc(32 + 12 * list_length(splan->setParam));
+	splan->plan_name = static_cast<char *>(palloc(32 + 12 * list_length(splan->setParam)));
 	sprintf(splan->plan_name, "%s %d",
 			isInitPlan ? "InitPlan" : "SubPlan",
 			splan->plan_id);

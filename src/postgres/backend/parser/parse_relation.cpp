@@ -806,7 +806,7 @@ searchRangeTableForCol(ParseState *pstate, const char *alias, char *colname,
 					   int location)
 {
 	ParseState *orig_pstate = pstate;
-	FuzzyAttrMatchState *fuzzystate = palloc(sizeof(FuzzyAttrMatchState));
+	FuzzyAttrMatchState *fuzzystate = static_cast<FuzzyAttrMatchState *>(palloc(sizeof(FuzzyAttrMatchState)));
 
 	fuzzystate->distance = MAX_FUZZY_DISTANCE + 1;
 	fuzzystate->rfirst = NULL;

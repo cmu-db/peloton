@@ -487,7 +487,7 @@ pull_row_security_policies(CmdType cmd, Relation relation, Oid user_id)
 
 		role = ObjectIdGetDatum(ACL_ID_PUBLIC);
 
-		policy = palloc0(sizeof(RowSecurityPolicy));
+		policy = static_cast<RowSecurityPolicy *>(palloc0(sizeof(RowSecurityPolicy)));
 		policy->policy_name = pstrdup("default-deny policy");
 		policy->policy_id = InvalidOid;
 		policy->polcmd = '*';

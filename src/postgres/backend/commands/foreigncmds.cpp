@@ -76,7 +76,7 @@ optionListToArray(List *options)
 
 		value = defGetString(def);
 		len = VARHDRSZ + strlen(def->defname) + 1 + strlen(value);
-		t = palloc(len + 1);
+		t = static_cast<text *>(palloc(len + 1));
 		SET_VARSIZE(t, len);
 		sprintf(VARDATA(t), "%s=%s", def->defname, value);
 

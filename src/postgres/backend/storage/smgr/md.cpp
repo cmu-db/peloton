@@ -1538,7 +1538,7 @@ RememberFsyncRequest(RelFileNode rnode, ForkNumber forknum, BlockNumber segno)
 		/* PendingUnlinkEntry doesn't store forknum, since it's always MAIN */
 		Assert(forknum == MAIN_FORKNUM);
 
-		entry = palloc(sizeof(PendingUnlinkEntry));
+		entry = static_cast<PendingUnlinkEntry *>(palloc(sizeof(PendingUnlinkEntry)));
 		entry->rnode = rnode;
 		entry->cycle_ctr = mdckpt_cycle_ctr;
 
@@ -1752,7 +1752,7 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 			{
 				if (_mdnblocks(reln, forknum, v) < RELSEG_SIZE)
 				{
-					char	   *zerobuf = palloc0(BLCKSZ);
+					char	   *zerobuf = static_cast<char *>(palloc0(BLCKSZ));
 
 					mdextend(reln, forknum,
 							 nextsegno * ((BlockNumber) RELSEG_SIZE) - 1,

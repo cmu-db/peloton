@@ -1948,7 +1948,7 @@ ReorderBufferSerializeReserve(ReorderBuffer *rb, Size sz)
 	}
 	else if (rb->outbufsize < sz)
 	{
-		rb->outbuf = repalloc(rb->outbuf, sz);
+		rb->outbuf = restatic_cast<char *>(palloc(rb->outbuf, sz));
 		rb->outbufsize = sz;
 	}
 }
@@ -2613,9 +2613,9 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 	toast_desc = RelationGetDescr(toast_rel);
 
 	/* should we allocate from stack instead? */
-	attrs = palloc0(sizeof(Datum) * desc->natts);
-	isnull = palloc0(sizeof(bool) * desc->natts);
-	free = palloc0(sizeof(bool) * desc->natts);
+	attrs = static_cast<Datum *>(palloc0(sizeof(Datum) * desc->natts));
+	isnull = static_cast<bool *>(palloc0(sizeof(bool) * desc->natts));
+	free = static_cast<bool *>(palloc0(sizeof(bool) * desc->natts));
 
 	newtup = change->data.tp.newtuple;
 
@@ -2675,7 +2675,7 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 		free[natt] = true;
 
-		reconstructed = palloc0(toast_pointer.va_rawsize);
+		reconstructed = static_cast<varlena *>(palloc0(toast_pointer.va_rawsize));
 
 		ent->reconstructed = reconstructed;
 
@@ -3023,7 +3023,7 @@ UpdateLogicalMappings(HTAB *tuplecid_data, Oid relid, Snapshot snapshot)
 			continue;
 
 		/* ok, relevant, queue for apply */
-		f = palloc(sizeof(RewriteMappingFile));
+		f = static_cast<RewriteMappingFile *>(palloc(sizeof(RewriteMappingFile)));
 		f->lsn = f_lsn;
 		strcpy(f->fname, mapping_de->d_name);
 		files = lappend(files, f);
@@ -3031,7 +3031,7 @@ UpdateLogicalMappings(HTAB *tuplecid_data, Oid relid, Snapshot snapshot)
 	FreeDir(mapping_dir);
 
 	/* build array we can easily sort */
-	files_a = palloc(list_length(files) * sizeof(RewriteMappingFile *));
+	files_a = static_cast<RewriteMappingFile **>(palloc(list_length(files) * sizeof(RewriteMappingFile *)));
 	off = 0;
 	foreach(file, files)
 	{

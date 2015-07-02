@@ -2387,7 +2387,7 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 	 * beforehand.
 	 */
 	if (needwal)
-		scratch = palloc(BLCKSZ);
+		scratch = static_cast<char *>(palloc(BLCKSZ));
 
 	/*
 	 * We're about to do the actual inserts -- but check for conflict first,
@@ -5941,7 +5941,7 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 	 * to keep.
 	 */
 	nnewmembers = 0;
-	newmembers = palloc(sizeof(MultiXactMember) * nmembers);
+	newmembers = static_cast<MultiXactMember *>(palloc(sizeof(MultiXactMember) * nmembers));
 	has_lockers = false;
 	update_xid = InvalidTransactionId;
 	update_committed = false;

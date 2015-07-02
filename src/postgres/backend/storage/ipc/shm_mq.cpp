@@ -280,7 +280,7 @@ shm_mq_get_sender(shm_mq *mq)
 shm_mq_handle *
 shm_mq_attach(shm_mq *mq, dsm_segment *seg, BackgroundWorkerHandle *handle)
 {
-	shm_mq_handle *mqh = palloc(sizeof(shm_mq_handle));
+	shm_mq_handle *mqh = static_cast<shm_mq_handle *>(palloc(sizeof(shm_mq_handle)));
 
 	Assert(mq->mq_receiver == MyProc || mq->mq_sender == MyProc);
 	mqh->mqh_queue = mq;
