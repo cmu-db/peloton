@@ -17,8 +17,10 @@
 
 #include "backend/bridge/plan_transformer.h"
 #include "backend/bridge/tuple_transformer.h"
+#include "backend/expression/abstract_expression.h"
 #include "backend/storage/data_table.h"
 #include "backend/planner/insert_node.h"
+#include "backend/planner/seq_scan_node.h"
 
 void printPlanStateTree(const PlanState * planstate);
 
@@ -53,9 +55,11 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(const PlanState *plan_
 
   switch (nodeTag(plan)) {
     case T_ModifyTable:
-      plan_node = PlanTransformer::TransformModifyTable((ModifyTableState *) plan_state);
+      plan_node = PlanTransformer::TransformModifyTable(reinterpret_cast<const ModifyTableState *>(plan_state));
       break;
-
+    case T_SeqScan:
+      plan_node = PlanTransformer::TransformSeqScan(reinterpret_cast<const SeqScanState*>(plan_state));
+      break;
     default:
       plan_node = nullptr;
       break;
@@ -128,6 +132,57 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
 
   auto plan_node = new planner::InsertNode(target_table, tuples);
 
+  return plan_node;
+}
+
+/**
+ * @brief Convert a Postgres SeqScanState into a Peloton SeqScanNode.
+ * @return Pointer to the constructed AbstractPlanNode.
+ *
+ * TODO: Can we also scan result from a child operator? (Non-base-table scan?)
+ * We can't for now, but postgres can.
+ */
+planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
+    const SeqScanState* ss_plan_state) {
+
+  assert(nodeTag(ss_plan_state) == T_SeqScanState);
+
+  // Grab Database ID and Table ID
+  assert(ss_plan_state->ss_currentRelation); // Null if not a base table scan
+  Oid database_oid = GetCurrentDatabaseOid();
+  Oid table_oid = ss_plan_state->ss_currentRelation->rd_id;
+
+  /* Grab the target table */
+  storage::DataTable *target_table = static_cast<storage::DataTable*>(catalog::Manager::GetInstance().
+      GetLocation(database_oid, table_oid));
+
+  /*
+   * Grab and transform the predicate.
+   *
+   * TODO:
+   * The qualifying predicate should extracted from:
+   * ss_plan_state->ps.qual
+   *
+   * Let's just use a null predicate for now.
+   */
+  expression::AbstractExpression* predicate = nullptr;
+
+  /*
+   * Grab and transform the output column Id's.
+   *
+   * TODO:
+   * The output columns should be extracted from:
+   * ss_plan_state->ps.ps_ProjInfo  (null if no projection)
+   *
+   * Let's just select all columns for now
+   */
+  auto schema = target_table->GetSchema();
+  std::vector<oid_t> column_ids(schema->GetColumnCount());
+  std::iota(column_ids.begin(), column_ids.end(), 0);
+  assert(column_ids.size() > 0);
+
+  /* Construct and return the Peloton plan node */
+  auto plan_node = new planner::SeqScanNode(target_table, predicate, column_ids);
   return plan_node;
 }
 
