@@ -26,19 +26,19 @@ class PlanTransformer {
 
   PlanTransformer(){};
 
-  static PlanTransformer& GetInstance();
+  static void PrintPlanState(const PlanState *plan_state);
 
-  void PrintPlanState(const PlanState *plan_state) const;
+  static planner::AbstractPlanNode *TransformPlan(const PlanState *plan_state);
 
-  planner::AbstractPlanNode *TransformPlan(const PlanState *plan_state);
-
-  PlanState *CopyPlanState(const PlanState *plan_state);
+  static PlanState *CopyPlanState(const PlanState *plan_state);
 
  private:
 
   static planner::AbstractPlanNode *TransformModifyTable(const ModifyTableState *plan_state);
 
   static planner::AbstractPlanNode *TransformInsert(const ModifyTableState *plan_state);
+
+  static planner::AbstractPlanNode *TransformSeqScan(const SeqScanState *plan_state);
 
 };
 
