@@ -2376,7 +2376,7 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 												   HEAP_DEFAULT_FILLFACTOR);
 
 	/* Toast and set header data in all the tuples */
-	heaptuples = palloc(ntuples * sizeof(HeapTuple));
+	heaptuples = static_cast<HeapTupleData **>(palloc(ntuples * sizeof(HeapTuple)));
 	for (i = 0; i < ntuples; i++)
 		heaptuples[i] = heap_prepare_insert(relation, tuples[i],
 											xid, cid, options);

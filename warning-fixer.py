@@ -7,11 +7,12 @@ import re
 regex1 = re.compile("((?:.*)\.(?:h|cpp)):([\d]+):([\d]+): warning: invalid conversion from \'(.*?)\' to '(.*?)' \[\-fpermissive\]")
 
 found = 0
+unfixed = 0
 fixed = 0
 searchStr = "postgres"
 filePath_to_pg = "src/postgres"
 
-with open(sys.argv[1], "rw") as fd1:
+with open(sys.argv[1], "r+") as fd1:
 	for line in fd1:
 		m1 = regex1.match(line)
 		if m1 is None: continue
@@ -32,24 +33,25 @@ with open(sys.argv[1], "rw") as fd1:
 			targetType_afterspace = m3.group(2)
 			targetType = targetType_beforespace + " " + targetType_afterspace
 			
-			print "targetType_beforespace:", targetType_beforespace
-			print "targetType_afterspace:", targetType_afterspace
+			#print "targetType_beforespace:", targetType_beforespace
+			#print "targetType_afterspace:", targetType_afterspace
 			
-		print m1.groups()
+		#print m1.groups()
 
-		print "fileName:", fileName
-		print "lineNum:", lineNum
-		print "offset:", offset
-		print "targetType:", targetType
+		#print "fileName:", fileName
+		#print "lineNum:", lineNum
+		#print "offset:", offset
+		#print "targetType:", targetType
 
 		if fileName.find(searchStr) != -1:
 			filePath_from_pg = fileName.split("postgres")[1]        
-			print "filePath_from_pg:", filePath_from_pg
+			#print "filePath_from_pg:", filePath_from_pg
 			filePath_abs = filePath_to_pg + filePath_from_pg
-			print "filePath_abs:", filePath_abs
+			#print "filePath_abs:", filePath_abs
 
-			with open(filePath_abs, "rw") as fd2:
-				criticalLine = fd2.readlines()[lineNum - 1]
+			with open(filePath_abs, "r+") as fd2:
+				lines = fd2.readlines()
+				criticalLine = lines[lineNum - 1]
 				print "criticalLine:", criticalLine
 
 				# palloc[\d]?\((.*)\);
@@ -57,30 +59,37 @@ with open(sys.argv[1], "rw") as fd1:
 				m2 = regex2.match(criticalLine);
 				
 				if m2 is None:
-					print "didn't find palloc[digit]"
+					#print "didn't find palloc[digit]"
+					unfixed += 1
+					
 				else:
 					beforePalloc = m2.group(1)
 					fromPalloc = m2.group(2)
-					print "beforePalloc:", beforePalloc
-					print "fromPalloc:", fromPalloc
+					#print "beforePalloc:", beforePalloc
+					#print "fromPalloc:", fromPalloc
 					
 					# update this part to include static_cast
 					substituteStr = "static_cast<" + targetType + ">(" + fromPalloc[:-1] + ");"
-					print "substituteStr:", substituteStr
+					#print "substituteStr:", substituteStr
 					
 					# update the entire line
-					substituteLine = beforePalloc + substituteStr
-					print "substituteLine:", substituteLine
+					substituteLine = beforePalloc + substituteStr + "\n"
+					#print "substituteLine:", substituteLine
 					
-					criticalLine = substituteLine
+					lines[lineNum - 1] = substituteLine
 					
 					# write substituteLine in place of existing line in file
-					fd2.write(criticalLine)
+					fd2.seek(0,0)
+					fd2.writelines(lines)
 					fixed += 1
 					
-				# END IF-ELSE
-				
+					fd2.seek(0,0)
+					newline = fd2.readlines()[lineNum - 1]
+					print "newline:", newline
+					
+				# END IF-ELSE	
 			# END WITH
+			fd2.close()
 		# END IF
 
 		found += 1
@@ -88,7 +97,9 @@ with open(sys.argv[1], "rw") as fd1:
 	
 	# END FOR
 # END WITH
+fd1.close()
 
-print found
-print fixed
+print "found:", found
+print "fixed:", fixed
+print "unfixed:", unfixed
 
