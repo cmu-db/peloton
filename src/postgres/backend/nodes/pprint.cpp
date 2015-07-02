@@ -30,25 +30,27 @@ static void print_list(FILE *DEST, const List* list, int ind);
 
 /* Utils */
 static void indent(FILE *DEST, int ind);
-static const char *logpath = "/home/parallels/git/peloton/build/minglog";
+//static const char *logpath = "/home/parallels/git/peloton/build/minglog";
 
 void printQueryDesc(const QueryDesc *queryDesc) {
-  FILE *minglog = fopen(logpath, "a+");
-  print_plan(minglog, queryDesc->planstate, NULL, NULL, 0);
-  fclose(minglog);
+  //FILE *minglog = fopen(logpath, "a+");
+  print_plan(stdout, queryDesc->planstate, NULL, NULL, 0);
+  //fclose(minglog);
 }
 
 void printPlanStateTree(const PlanState *planstate) {
-  FILE *minglog = fopen(logpath, "a+");
-  print_plan(minglog, planstate, NULL, NULL, 0);
-  fprintf(minglog, "\n");
-  fclose(minglog);
+  //FILE *minglog = fopen(logpath, "a+");
+  print_plan(stdout, planstate, NULL, NULL, 0);
+  fprintf(stdout, "\n");
+  //fclose(minglog);
 }
 
 static void print_plan(FILE *DEST, const PlanState *planstate,
                        const char * relationship, const char * plan_name,
                        int ind) {
   Plan *plan = planstate->plan;
+
+  if (plan == nullptr) return;
 
   const char* pname;  // node type for text output
   const char* sname;

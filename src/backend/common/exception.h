@@ -125,7 +125,7 @@ class Exception : public std::runtime_error {
   }
 
   // Based on :: http://panthema.net/2008/0901-stacktrace-demangled/
-  void PrintStackTrace(FILE *out = ::stderr, unsigned int max_frames = 63){
+  static void PrintStackTrace(FILE *out = ::stderr, unsigned int max_frames = 63){
     ::fprintf(out, "Stack Trace:\n");
 
     /// storage array for stack trace address data
