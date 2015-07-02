@@ -32,9 +32,67 @@ class ColumnInfo {
 
  public:
 
+ // TODO :: Scrubbing unused constructors...
+ // Configures (type, length, name, allow_null)
+ ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name, bool allow_null)
+   : type(column_type), offset(0), name(column_name), allow_null(allow_null) {
+
+      switch( type ){
+        case VALUE_TYPE_SMALLINT:
+        case VALUE_TYPE_INTEGER:
+        case VALUE_TYPE_BIGINT:
+        case VALUE_TYPE_DOUBLE:
+        case VALUE_TYPE_VARCHAR:
+        case VALUE_TYPE_TIMESTAMP:
+          is_inlined = true;
+          break;
+        default:
+          is_inlined = false;
+          break;
+      }
+
+      if(is_inlined){
+        fixed_length = column_length;
+        variable_length = 0;
+      }
+      else{
+        fixed_length = sizeof(uintptr_t);
+        variable_length = column_length;
+      }
+    }
+
+ // Configures (type, length, name, allow_null, constraint)
+ ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name, bool allow_null, std::vector<catalog::Constraint> column_constraint_vector)
+   : type(column_type), offset(0), name(column_name), allow_null(allow_null), constraint_vector(column_constraint_vector){
+
+      switch( type ){
+        case VALUE_TYPE_SMALLINT:
+        case VALUE_TYPE_INTEGER:
+        case VALUE_TYPE_BIGINT:
+        case VALUE_TYPE_DOUBLE:
+        case VALUE_TYPE_VARCHAR:
+        case VALUE_TYPE_TIMESTAMP:
+          is_inlined = true;
+          break;
+        default:
+          is_inlined = false;
+          break;
+      }
+
+      if(is_inlined){
+        fixed_length = column_length;
+        variable_length = 0;
+      }
+      else{
+        fixed_length = sizeof(uintptr_t);
+        variable_length = column_length;
+      }
+    }
+
+
+
   // Configures all members except offset and constraint
-  ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name,
-             bool allow_null, bool is_inlined)
+  ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name, bool allow_null, bool is_inlined)
  : type(column_type), offset(0), name(column_name), allow_null(allow_null), is_inlined(is_inlined){
     if(is_inlined){
       fixed_length = column_length;
@@ -46,28 +104,9 @@ class ColumnInfo {
     }
   }
 
-  // Configure offset as well
-  ColumnInfo(ValueType column_type, oid_t column_offset,
-             oid_t column_length, std::string column_name,
-             bool allow_null, bool is_inlined,
-             std::vector<Constraint> column_constraint_vector)
-  : type(column_type), offset(column_offset),
-    name(column_name),
-    allow_null(allow_null), is_inlined(is_inlined), constraint_vector(column_constraint_vector){
-
-    if(is_inlined){
-      fixed_length = column_length;
-      variable_length = 0;
-    }
-    else{
-      fixed_length = sizeof(uintptr_t);
-      variable_length = column_length;
-    }
-  }
-
-  // Configure all members 
+  // Configure all members except in_inlined
   ColumnInfo(ValueType column_type, oid_t column_offset, oid_t column_length,
-      std::string column_name, bool allow_null, std::vector<Constraint> column_constraint_vector)
+      std::string column_name, bool allow_null, std::vector<catalog::Constraint> column_constraint_vector)
     : type(column_type), offset(column_offset), name(column_name), allow_null(allow_null), 
     constraint_vector(column_constraint_vector){
 
@@ -95,13 +134,31 @@ class ColumnInfo {
       }
     }
 
+  // Configure all members
+  ColumnInfo(ValueType column_type, oid_t column_offset,
+             oid_t column_length, std::string column_name,
+             bool allow_null, bool is_inlined,
+             std::vector<catalog::Constraint> column_constraint_vector)
+  : type(column_type), offset(column_offset),
+    name(column_name),
+    allow_null(allow_null), is_inlined(is_inlined), constraint_vector(column_constraint_vector){
+
+    if(is_inlined){
+      fixed_length = column_length;
+      variable_length = 0;
+    }
+    else{
+      fixed_length = sizeof(uintptr_t);
+      variable_length = column_length;
+    }
+  }
+
   /// Compare two column info objects
   bool operator== (const ColumnInfo &other) const {
     if (other.allow_null != allow_null || other.type != type ||
         other.is_inlined != is_inlined) {
       return false;
     }
-
     return true;
   }
 
