@@ -43,14 +43,8 @@ namespace bridge {
  */
 void DDL::ProcessUtility(Node *parsetree,
                          const char *queryString){
-
   assert(parsetree != nullptr);
   assert(queryString != nullptr);
-
-  std::cout << "Parsetree type :: " << parsetree->type << "\n";
-  std::cout << queryString;
-
-  return;
 
   // Process depending on type of utility statement
   switch (nodeTag(parsetree))
@@ -61,9 +55,12 @@ void DDL::ProcessUtility(Node *parsetree,
       List     *stmts;
       ListCell   *l;
 
+  std::cout << "JWKIM DEBUG :: " << __LINE__ << "\n";
       /* Run parse analysis ... */
       stmts = transformCreateStmt((CreateStmt *) parsetree,
                                   queryString);
+return;
+  std::cout << "JWKIM DEBUG :: " << __LINE__ << "\n";
 
       /* ... and do it */
       foreach(l, stmts)
@@ -257,8 +254,78 @@ void DDL::ProcessUtility(Node *parsetree,
 
 }
 
+/**
+ * @brief Construct ColumnInfo vector from a create statement
+ * @param Cstmt a create statement 
+ * @return ColumnInfo vector 
+ */
+std::vector<catalog::ColumnInfo> ConstructColumnInfoByParsingCreateStmt( CreateStmt* Cstmt ){
+  assert(Cstmt);
 
+  // Get the column list from the create statement
+  List* ColumnList = (List*)(Cstmt->tableElts);
+  std::vector<catalog::ColumnInfo> column_infos;
 
+  //===--------------------------------------------------------------------===//
+  // Column Type Information
+  //===--------------------------------------------------------------------===//
+
+  // Parse the CreateStmt and construct ColumnInfo
+  ListCell   *entry;
+  foreach(entry, ColumnList){
+
+    ColumnDef  *coldef = lfirst(entry);
+
+    // TODO : Make it simple ..
+    Type tup = typenameType(NULL, coldef->typeName, NULL);
+    Form_pg_type typ = (Form_pg_type) GETSTRUCT(tup);
+    Oid typeoid = HeapTupleGetOid(tup);
+    ReleaseSysCache(tup);
+
+    ValueType column_valueType = PostgresValueTypeToPelotonValueType( (PostgresValueType) typeoid );
+    int column_length = typ->typlen;
+    std::string column_name = coldef->colname;
+    bool column_allow_null = !coldef->is_not_null;
+
+    //===--------------------------------------------------------------------===//
+    // Column Constraint Information
+    //===--------------------------------------------------------------------===//
+    std::vector<catalog::Constraint> column_constraints;
+
+    if( coldef->constraints != NULL){
+      ListCell* constNodeEntry;
+
+      foreach(constNodeEntry, coldef->constraints)
+      {
+        Constraint* ConstraintNode = lfirst(constNodeEntry);
+        ConstraintType contype;
+        std::string conname;
+
+        // Get constraint type
+        contype = PostgresConstraintTypeToPelotonConstraintType( (PostgresConstraintType) ConstraintNode->contype );
+        std::cout << ConstraintTypeToString(contype) << std::endl;
+
+        // Get constraint name
+        if( ConstraintNode->conname != NULL)
+          conname = ConstraintNode->conname;
+
+        catalog::Constraint* constraint = new catalog::Constraint( contype, conname );
+        column_constraints.push_back(*constraint);
+      }
+    }// end of parsing constraint 
+
+    catalog::ColumnInfo *column_info = new catalog::ColumnInfo( column_valueType, 
+                                                                column_length, 
+                                                                column_name, 
+                                                                column_allow_null,
+                                                                column_constraints);
+
+    // Insert column_info into ColumnInfos
+    column_infos.push_back(*column_info);
+  }// end of parsing column list
+
+  return column_infos;
+}
 
 /**
  * @brief Create table.
@@ -274,6 +341,7 @@ bool DDL::CreateTable(std::string table_name,
                       int *constraints_per_column) {
   assert(num_columns >= 0);
   assert(schema);
+  std::cout << "DEBUGGING : " << table_name << std::endl;
 
   // Check db oid
   Oid database_oid = GetCurrentDatabaseOid();
@@ -455,8 +523,51 @@ bool DDL::CreateTable(std::string table_name,
     return true;
   }
 
+  std::cout << "Creating table is failed.. : " << table_name << std::endl;
   return false;
 }
+
+
+//TODO :: New CreateTable 
+/**
+ * @brief Create table.
+ * @param table_name Table name
+ * @param column_infos Information about the columns
+ * @param schema Schema for the table
+ * @return true if we created a table, false otherwise
+ */
+bool DDL::CreateTable2( std::string table_name,
+                        std::vector<catalog::ColumnInfo> column_infos,
+                        catalog::Schema *schema){
+
+  //===--------------------------------------------------------------------===//
+  // Check Parameters 
+  //===--------------------------------------------------------------------===//
+  assert( !table_name.empty() );
+  assert( column_infos.size() > 0 || schema != NULL );
+
+  Oid database_oid = GetCurrentDatabaseOid();
+  if(database_oid == InvalidOid)
+  return false;
+
+  // Construct our schema from vector of ColumnInfo
+  if( schema == NULL) 
+    schema = new catalog::Schema(column_infos);
+
+  // FIXME: Construct table backend
+  storage::VMBackend *backend = new storage::VMBackend();
+
+  // Build a table from schema
+  storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, schema, table_name);
+
+  if(table != nullptr) {
+          LOG_INFO("Created table : %s\n", table_name.c_str());
+          return true;
+  }
+
+  return false;
+}
+
 
 /**
  * @brief Drop table.

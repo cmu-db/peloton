@@ -39,10 +39,14 @@ void printQueryDesc(const QueryDesc *queryDesc) {
 }
 
 void printPlanStateTree(const PlanState *planstate) {
-  FILE *minglog = fopen(logpath, "a+");
-  print_plan(minglog, planstate, NULL, NULL, 0);
-  fprintf(minglog, "\n");
-  fclose(minglog);
+  //FILE *minglog = fopen(logpath, "a+");
+
+  fprintf(stdout, "printing plan state :: \n");
+  fflush(stdout);
+
+  print_plan(stdout, planstate, NULL, NULL, 0);
+  //fprintf(minglog, "\n");
+  //fclose(minglog);
 }
 
 static void print_plan(FILE *DEST, const PlanState *planstate,
