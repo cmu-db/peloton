@@ -599,5 +599,100 @@ ConstraintType StringToConstraintType(std::string str) {
     return CONSTRAINT_TYPE_INVALID;
 }
 
+ValueType PostgresValueTypeToPelotonValueType(PostgresValueType PostgresValType){
+
+  ValueType valueType = VALUE_TYPE_INVALID;
+
+  switch(PostgresValType){
+
+    case POSTGRES_VALUE_TYPE_BOOLEAN:
+      valueType = VALUE_TYPE_BOOLEAN;
+      break;
+  
+    /* INTEGER */
+    case POSTGRES_VALUE_TYPE_SMALLINT: 
+      valueType = VALUE_TYPE_SMALLINT;
+      break;
+    case POSTGRES_VALUE_TYPE_INTEGER: 
+      valueType = VALUE_TYPE_INTEGER;
+      break;
+    case POSTGRES_VALUE_TYPE_BIGINT: 
+      valueType = VALUE_TYPE_BIGINT;
+      break;
+  
+    /* DOUBLE */
+    case POSTGRES_VALUE_TYPE_DOUBLE: 
+      valueType = VALUE_TYPE_DOUBLE;
+      break;
+  
+    /* CHAR */
+    case POSTGRES_VALUE_TYPE_BPCHAR:
+    case POSTGRES_VALUE_TYPE_BPCHAR2:
+    case POSTGRES_VALUE_TYPE_VARCHAR:
+    case POSTGRES_VALUE_TYPE_VARCHAR2:
+      valueType = VALUE_TYPE_VARCHAR;
+      break;
+  
+    /* TIMESTAMPS */
+    case POSTGRES_VALUE_TYPE_TIMESTAMPS:
+    case POSTGRES_VALUE_TYPE_TIMESTAMPS2:
+      valueType = VALUE_TYPE_TIMESTAMP;
+      break;
+  
+    /* DECIMAL */
+    case POSTGRES_VALUE_TYPE_DECIMAL:
+      valueType = VALUE_TYPE_DECIMAL;
+      break;
+  
+    /* INVALID VALUE TYPE */
+    default:
+      printf("INVALID VALUE TYPE : %d \n", PostgresValType );
+      valueType =  VALUE_TYPE_INVALID;
+      break;
+  } 
+  return valueType;
+}
+
+ConstraintType PostgresConstraintTypeToPelotonConstraintType(PostgresConstraintType PostgresConstrType){
+
+  ConstraintType constraintType = CONSTRAINT_TYPE_INVALID;
+
+  switch( PostgresConstrType ){
+    case POSTGRES_CONSTRAINT_CHECK:
+      printf(" ConstraintNode->contype is CONSTR_CHECK\n");
+      constraintType = CONSTRAINT_TYPE_CHECK;
+      break;
+
+    case POSTGRES_CONSTRAINT_NOTNULL:
+      printf(" ConstraintNode->contype is CONSTR_NOTNULL\n");
+      constraintType = CONSTRAINT_TYPE_NOTNULL;
+      break;
+
+    case POSTGRES_CONSTRAINT_UNIQUE:
+      printf(" ConstraintNode->contype is CONSTR_UNIQUE\n");
+      constraintType = CONSTRAINT_TYPE_UNIQUE;
+      break;
+
+    case POSTGRES_CONSTRAINT_PRIMARY:
+      printf(" ConstraintNode->contype is CONSTR_PRIMARY\n");
+      constraintType = CONSTRAINT_TYPE_PRIMARY;
+      break;
+
+    case POSTGRES_CONSTRAINT_FOREIGN:
+      printf(" ConstraintNode->contype is CONST_FOREIGN\n");
+      constraintType = CONSTRAINT_TYPE_NOTNULL;
+      break;
+
+    case POSTGRES_CONSTRAINT_EXCLUSION:
+      printf(" ConstraintNode->contype is CONSTR_EXCLUSION\n");
+      constraintType = CONSTRAINT_TYPE_NOTNULL;
+      break;
+
+    default:
+      printf("INVALID CONSTRAINT TYPE : %d \n", PostgresConstrType );
+      break;
+  }
+  return constraintType;
+}
 
 } // End peloton namespace
