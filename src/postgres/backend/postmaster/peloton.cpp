@@ -22,6 +22,7 @@
 #include "utils/ps_status.h"
 #include "utils/timeout.h"
 #include "utils/memutils.h"
+#include "utils/resowner.h"
 #include "postmaster/fork_process.h"
 #include "postmaster/postmaster.h"
 #include "storage/latch.h"
@@ -161,6 +162,12 @@ PelotonMain(int argc, char *argv[])
   pqsignal(SIGUSR2, SIG_IGN);
   pqsignal(SIGFPE, FloatExceptionHandler);
   pqsignal(SIGCHLD, SIG_DFL);
+
+  /*
+   * Create a resource owner to keep track of our resources (not clear that
+   * we need this, but may as well have one).
+   */
+  CurrentResourceOwner = ResourceOwnerCreate(NULL, "Peloton");
 
   /* Early initialization */
   BaseInit();
