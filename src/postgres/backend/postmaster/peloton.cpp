@@ -22,6 +22,7 @@
 #include "utils/ps_status.h"
 #include "utils/timeout.h"
 #include "utils/memutils.h"
+#include "utils/resowner.h"
 #include "postmaster/fork_process.h"
 #include "postmaster/postmaster.h"
 #include "storage/latch.h"
@@ -44,6 +45,7 @@
 #include "backend/bridge/plan_transformer.h"
 #include "postmaster/peloton.h"
 #include "backend/bridge/ddl.h"
+#include "backend/bridge/plan_transformer.h"
 
 /* ----------
  * Local data
@@ -95,7 +97,7 @@ int peloton_start(void){
   {
     case -1:
       ereport(LOG,
-          (errmsg("could not fork peloton process: %m")));
+              (errmsg("could not fork peloton process: %m")));
       return -1;
       break;
 
@@ -162,6 +164,12 @@ PelotonMain(int argc, char *argv[])
   pqsignal(SIGUSR2, SIG_IGN);
   pqsignal(SIGFPE, FloatExceptionHandler);
   pqsignal(SIGCHLD, SIG_DFL);
+
+  /*
+   * Create a resource owner to keep track of our resources (not clear that
+   * we need this, but may as well have one).
+   */
+  CurrentResourceOwner = ResourceOwnerCreate(NULL, "Peloton");
 
   /* Early initialization */
   BaseInit();
@@ -378,7 +386,7 @@ peloton_MainLoop(void)
 
   /* Normal exit from peloton is here */
   ereport(LOG,
-      (errmsg("peloton shutting down")));
+          (errmsg("peloton shutting down")));
 
   proc_exit(0);       /* done */
 }
@@ -398,8 +406,8 @@ peloton_init(void)
 {
   ACCEPT_TYPE_ARG3 alen;
   struct addrinfo *addrs = NULL,
-         *addr,
-        hints;
+      *addr,
+      hints;
   int     ret;
   fd_set    rset;
   struct timeval tv;
@@ -434,8 +442,8 @@ peloton_init(void)
   if (ret || !addrs)
   {
     ereport(LOG,
-        (errmsg("could not resolve \"localhost\": %s",
-            gai_strerror(ret))));
+            (errmsg("could not resolve \"localhost\": %s",
+                    gai_strerror(ret))));
     goto startup_failed;
   }
 
@@ -457,7 +465,7 @@ peloton_init(void)
 
     if (++tries > 1)
       ereport(LOG,
-      (errmsg("trying another address for the peloton")));
+              (errmsg("trying another address for the peloton")));
 
     /*
      * Create the socket.
@@ -465,8 +473,8 @@ peloton_init(void)
     if ((pelotonSock = socket(addr->ai_family, SOCK_DGRAM, 0)) == PGINVALID_SOCKET)
     {
       ereport(LOG,
-          (errcode_for_socket_access(),
-      errmsg("could not create socket for peloton: %m")));
+              (errcode_for_socket_access(),
+                  errmsg("could not create socket for peloton: %m")));
       continue;
     }
 
@@ -477,8 +485,8 @@ peloton_init(void)
     if (bind(pelotonSock, addr->ai_addr, addr->ai_addrlen) < 0)
     {
       ereport(LOG,
-          (errcode_for_socket_access(),
-        errmsg("could not bind socket for peloton: %m")));
+              (errcode_for_socket_access(),
+                  errmsg("could not bind socket for peloton: %m")));
       closesocket(pelotonSock);
       pelotonSock = PGINVALID_SOCKET;
       continue;
@@ -488,8 +496,8 @@ peloton_init(void)
     if (getsockname(pelotonSock, (struct sockaddr *) & pelotonAddr, &alen) < 0)
     {
       ereport(LOG,
-          (errcode_for_socket_access(),
-           errmsg("could not get address of socket for peloton: %m")));
+              (errcode_for_socket_access(),
+                  errmsg("could not get address of socket for peloton: %m")));
       closesocket(pelotonSock);
       pelotonSock = PGINVALID_SOCKET;
       continue;
@@ -504,8 +512,8 @@ peloton_init(void)
     if (connect(pelotonSock, (struct sockaddr *) & pelotonAddr, alen) < 0)
     {
       ereport(LOG,
-          (errcode_for_socket_access(),
-      errmsg("could not connect socket for peloton: %m")));
+              (errcode_for_socket_access(),
+                  errmsg("could not connect socket for peloton: %m")));
       closesocket(pelotonSock);
       pelotonSock = PGINVALID_SOCKET;
       continue;
@@ -519,14 +527,14 @@ peloton_init(void)
      */
     test_byte = TESTBYTEVAL;
 
-retry1:
+    retry1:
     if (send(pelotonSock, &test_byte, 1, 0) != 1)
     {
       if (errno == EINTR)
         goto retry1;  /* if interrupted, just retry */
       ereport(LOG,
-          (errcode_for_socket_access(),
-           errmsg("could not send test message on socket for peloton: %m")));
+              (errcode_for_socket_access(),
+                  errmsg("could not send test message on socket for peloton: %m")));
       closesocket(pelotonSock);
       pelotonSock = PGINVALID_SOCKET;
       continue;
@@ -551,8 +559,8 @@ retry1:
     if (sel_res < 0)
     {
       ereport(LOG,
-          (errcode_for_socket_access(),
-           errmsg("select() failed in peloton: %m")));
+              (errcode_for_socket_access(),
+                  errmsg("select() failed in peloton: %m")));
       closesocket(pelotonSock);
       pelotonSock = PGINVALID_SOCKET;
       continue;
@@ -566,8 +574,8 @@ retry1:
        * errno will not be set meaningfully here, so don't use it.
        */
       ereport(LOG,
-          (errcode(ERRCODE_CONNECTION_FAILURE),
-           errmsg("test message did not get through on socket for peloton")));
+              (errcode(ERRCODE_CONNECTION_FAILURE),
+                  errmsg("test message did not get through on socket for peloton")));
       closesocket(pelotonSock);
       pelotonSock = PGINVALID_SOCKET;
       continue;
@@ -575,14 +583,14 @@ retry1:
 
     test_byte++;      /* just make sure variable is changed */
 
-retry2:
+    retry2:
     if (recv(pelotonSock, &test_byte, 1, 0) != 1)
     {
       if (errno == EINTR)
         goto retry2;  /* if interrupted, just retry */
       ereport(LOG,
-          (errcode_for_socket_access(),
-           errmsg("could not receive test message on socket for peloton: %m")));
+              (errcode_for_socket_access(),
+                  errmsg("could not receive test message on socket for peloton: %m")));
       closesocket(pelotonSock);
       pelotonSock = PGINVALID_SOCKET;
       continue;
@@ -591,8 +599,8 @@ retry2:
     if (test_byte != TESTBYTEVAL) /* strictly paranoia ... */
     {
       ereport(LOG,
-          (errcode(ERRCODE_INTERNAL_ERROR),
-           errmsg("incorrect test message transmission on socket for peloton")));
+              (errcode(ERRCODE_INTERNAL_ERROR),
+                  errmsg("incorrect test message transmission on socket for peloton")));
       closesocket(pelotonSock);
       pelotonSock = PGINVALID_SOCKET;
       continue;
@@ -614,8 +622,8 @@ retry2:
   if (!pg_set_noblock(pelotonSock))
   {
     ereport(LOG,
-        (errcode_for_socket_access(),
-         errmsg("could not set peloton socket to nonblocking mode: %m")));
+            (errcode_for_socket_access(),
+                errmsg("could not set peloton socket to nonblocking mode: %m")));
     goto startup_failed;
   }
 
@@ -623,9 +631,9 @@ retry2:
 
   return;
 
-startup_failed:
+  startup_failed:
   ereport(LOG,
-    (errmsg("disabling peloton for lack of working socket")));
+          (errmsg("disabling peloton for lack of working socket")));
 
   if (addrs)
     pg_freeaddrinfo_all(hints.ai_family, addrs);
@@ -720,25 +728,17 @@ peloton_send_dml(PlanState *node)
 {
   Peloton_MsgDML msg;
   MemoryContext oldcontext;
+  PlanState *lnode;
 
   if (pelotonSock == PGINVALID_SOCKET)
     return;
 
   peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_DML);
 
-  /*
-   * Switch to TopSharedMemoryContext context for copying plan.
-   */
-  oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
+  msg.m_node = node;
 
-  // TODO: Can we avoid copying the plan ?
-  msg.m_node = (PlanState *) palloc(sizeof(PlanState));
-  memcpy(msg.m_node, node, sizeof(PlanState));
-
-  /*
-   * Switch back to old context.
-   */
-  MemoryContextSwitchTo(oldcontext);
+  fprintf(stdout, "Send DML :: Planstate : %p\n", node);
+  fflush(stdout);
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -760,21 +760,8 @@ peloton_send_ddl(Node *parsetree, const char *queryString)
 
   peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_DDL);
 
-  /*
-   * Switch to TopSharedMemoryContext context for copying plan.
-   */
-  oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
-
-  msg.m_parsetree = (Node *) palloc(sizeof(Node));
-  memcpy(msg.m_parsetree, parsetree, sizeof(Node));
-
-  msg.m_queryString = (char *) palloc(sizeof(char));
-  strcpy(msg.m_queryString, queryString);
-
-  /*
-   * Switch back to old context.
-   */
-  MemoryContextSwitchTo(oldcontext);
+  msg.m_parsetree = parsetree;
+  msg.m_queryString = queryString;
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -803,8 +790,7 @@ peloton_recv_dml(Peloton_MsgDML *msg, int len)
 
       fprintf(stdout, "Planstate type : %d\n", plan->type);
 
-      peloton::bridge::PlanTransformer::GetInstance().PrintPlanState(node);
-
+      peloton::bridge::PlanTransformer::PrintPlanState(node);
 
       //elog_node_display(LOG, "plan", plan, Debug_pretty_print);
     }
@@ -821,15 +807,20 @@ peloton_recv_dml(Peloton_MsgDML *msg, int len)
 static void
 peloton_recv_ddl(Peloton_MsgDDL *msg, int len)
 {
-  Node *parsetree;
+  Node* parsetree;
+  char* queryString;
 
   if(msg != NULL)
   {
+    /* Get the queryString */
+    queryString = msg->m_queryString;
+
     /* Get the parsetree */
     parsetree = msg->m_parsetree;
 
     if(parsetree != NULL)
     {
+      fprintf(stdout, "Parsetree type : %d\n", parsetree->type);
       peloton::bridge::DDL::ProcessUtility(msg->m_parsetree, msg->m_queryString);
     }
   }
