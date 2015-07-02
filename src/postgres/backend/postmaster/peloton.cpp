@@ -788,7 +788,7 @@ peloton_recv_dml(Peloton_MsgDML *msg, int len)
       plan = node->plan;
 
       fprintf(stdout, "Planstate type : %d\n", plan->type);
-      peloton::bridge::PlanTransformer::GetInstance().PrintPlanState(node);
+      peloton::bridge::PlanTransformer::PrintPlanState(node);
 
       //elog_node_display(LOG, "plan", plan, Debug_pretty_print);
     }
@@ -825,7 +825,7 @@ peloton_recv_ddl(Peloton_MsgDDL *msg, int len)
     if(parsetree != NULL)
     {
       fprintf(stdout, "Parsetree type : %d\n", parsetree->type);
-      //peloton::bridge::DDL::ProcessUtility(msg->m_parsetree, msg->m_queryString);
+      peloton::bridge::DDL::ProcessUtility(msg->m_parsetree, msg->m_queryString);
     }
   }
 
