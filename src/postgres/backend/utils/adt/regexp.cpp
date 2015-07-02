@@ -915,7 +915,7 @@ setup_regexp_matches(text *orig_str, text *pattern, text *flags,
 					 bool force_glob, bool use_subpatterns,
 					 bool ignore_degenerate)
 {
-	regexp_matches_ctx *matchctx = palloc0(sizeof(regexp_matches_ctx));
+	regexp_matches_ctx *matchctx = static_cast<regexp_matches_ctx *>(palloc0(sizeof(regexp_matches_ctx)));
 	int			orig_len;
 	pg_wchar   *wide_str;
 	int			wide_len;
@@ -966,7 +966,7 @@ setup_regexp_matches(text *orig_str, text *pattern, text *flags,
 	}
 
 	/* temporary output space for RE package */
-	pmatch = palloc(sizeof(regmatch_t) * pmatch_len);
+	pmatch = static_cast<regmatch_t *>(palloc(sizeof(regmatch_t) * pmatch_len));
 
 	/* the real output space (grown dynamically if needed) */
 	array_len = re_flags.glob ? 256 : 32;

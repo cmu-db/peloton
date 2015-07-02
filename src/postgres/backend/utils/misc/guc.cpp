@@ -6779,7 +6779,7 @@ replace_auto_config_value(ConfigVariable **head_p, ConfigVariable **tail_p,
 		return;
 
 	/* OK, append a new___ entry */
-	item = palloc(sizeof *item);
+	item = static_cast<ConfigVariable *>(palloc(sizeof *item));
 	item->name = pstrdup(name);
 	item->value = pstrdup(value);
 	item->filename = pstrdup("");		/* new___ item has no location */

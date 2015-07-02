@@ -634,7 +634,7 @@ contain_window_function(Node *clause)
 WindowFuncLists *
 find_window_functions(Node *clause, Index maxWinRef)
 {
-	WindowFuncLists *lists = palloc(sizeof(WindowFuncLists));
+	WindowFuncLists *lists = static_cast<WindowFuncLists *>(palloc(sizeof(WindowFuncLists)));
 
 	lists->numWindowFuncs = 0;
 	lists->maxWinRef = maxWinRef;

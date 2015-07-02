@@ -55,7 +55,7 @@
 #define COPY_POINTER_FIELD(fldname, sz) \
 	do { \
 		Size	_size = (sz); \
-		newnode->fldname = palloc(_size); \
+		newnode->fldname = static_cast<AttrNumber *>(static_cast<Oid *>(static_cast<Oid *>(static_cast<bool *>(static_cast<AttrNumber *>(static_cast<Oid *>(static_cast<Oid *>(static_cast<Oid *>(static_cast<int *>(static_cast<bool *>(static_cast<AttrNumber *>(static_cast<Oid *>(static_cast<Oid *>(static_cast<bool *>(static_cast<AttrNumber *>(static_cast<Oid *>(static_cast<AttrNumber *>(static_cast<Oid *>(static_cast<AttrNumber *>(static_cast<Oid *>(static_cast<AttrNumber *>(static_cast<Oid *>(static_cast<AttrNumber *>(static_cast<Oid *>(static_cast<AttrNumber *>(static_cast<Oid *>(palloc(_size)))))))))))))))))))))))))));
 		memcpy(newnode->fldname, from->fldname, _size); \
 	} while (0)
 

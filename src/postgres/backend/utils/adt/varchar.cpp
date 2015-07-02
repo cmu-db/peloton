@@ -326,7 +326,7 @@ bpchar(PG_FUNCTION_ARGS)
 
 	Assert(maxlen >= len);
 
-	result = palloc(maxlen + VARHDRSZ);
+	result = static_cast<BpChar *>(palloc(maxlen + VARHDRSZ));
 	SET_VARSIZE(result, maxlen + VARHDRSZ);
 	r = VARDATA(result);
 

@@ -477,7 +477,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	vacrelstats->latestRemovedXid = InvalidTransactionId;
 
 	lazy_space_alloc(vacrelstats, nblocks);
-	frozen = palloc(sizeof(xl_heap_freeze_tuple) * MaxHeapTuplesPerPage);
+	frozen = static_cast<xl_heap_freeze_tuple *>(palloc(sizeof(xl_heap_freeze_tuple) * MaxHeapTuplesPerPage));
 
 	/*
 	 * We want to skip pages that don't require vacuuming according to the

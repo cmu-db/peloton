@@ -103,7 +103,7 @@ JsonbValueToJsonb(JsonbValue *val)
 	else
 	{
 		Assert(val->type == JsonbValue::jbvBinary);
-		out = palloc(VARHDRSZ + val->val.binary.len);
+		out = static_cast<Jsonb *>(palloc(VARHDRSZ + val->val.binary.len));
 		SET_VARSIZE(out, VARHDRSZ + val->val.binary.len);
 		memcpy(VARDATA(out), val->val.binary.data, val->val.binary.len);
 	}
@@ -336,7 +336,7 @@ findJsonbValueFromContainer(JsonbContainer *container, uint32 flags,
 	if (count <= 0)
 		return NULL;
 
-	result = palloc(sizeof(JsonbValue));
+	result = static_cast<JsonbValue *>(palloc(sizeof(JsonbValue)));
 
 	if (flags & JB_FARRAY & container->header)
 	{
@@ -430,7 +430,7 @@ getIthJsonbValueFromContainer(JsonbContainer *container, uint32 i)
 	if (i >= nelements)
 		return NULL;
 
-	result = palloc(sizeof(JsonbValue));
+	result = static_cast<JsonbValue *>(palloc(sizeof(JsonbValue)));
 
 	fillJsonbValue(container, i, base_addr,
 				   getJsonbOffset(container, i),
@@ -633,7 +633,7 @@ pushJsonbValueScalar(JsonbParseState **pstate, JsonbIteratorToken seq,
 static JsonbParseState *
 pushState(JsonbParseState **pstate)
 {
-	JsonbParseState *ns = palloc(sizeof(JsonbParseState));
+	JsonbParseState *ns = static_cast<JsonbParseState *>(palloc(sizeof(JsonbParseState)));
 
 	ns->next = *pstate;
 	return ns;
@@ -900,7 +900,7 @@ iteratorFromContainer(JsonbContainer *container, JsonbIterator *parent)
 {
 	JsonbIterator *it;
 
-	it = palloc(sizeof(JsonbIterator));
+	it = static_cast<JsonbIterator *>(palloc(sizeof(JsonbIterator)));
 	it->container = container;
 	it->parent = parent;
 	it->nElems = container->header & JB_CMASK;
@@ -1143,7 +1143,7 @@ JsonbDeepContains(JsonbIterator **val, JsonbIterator **mContained)
 					uint32		j = 0;
 
 					/* Make room for all possible values */
-					lhsConts = palloc(sizeof(JsonbValue) * nLhsElems);
+					lhsConts = static_cast<JsonbValue *>(palloc(sizeof(JsonbValue) * nLhsElems));
 
 					for (i = 0; i < nLhsElems; i++)
 					{

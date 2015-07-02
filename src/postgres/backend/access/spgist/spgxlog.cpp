@@ -38,7 +38,7 @@ fillFakeState(SpGistState *state, spgxlogState stateSrc)
 
 	state->myXid = stateSrc.myXid;
 	state->isBuild = stateSrc.isBuild;
-	state->deadTupleStorage = palloc0(SGDTSIZE);
+	state->deadTupleStorage = static_cast<char *>(palloc0(SGDTSIZE));
 }
 
 /*
@@ -943,7 +943,7 @@ spgRedoVacuumRedirect(XLogReaderState *record)
 			int			max = PageGetMaxOffsetNumber(page);
 			OffsetNumber *toDelete;
 
-			toDelete = palloc(sizeof(OffsetNumber) * max);
+			toDelete = static_cast<OffsetNumber *>(palloc(sizeof(OffsetNumber) * max));
 
 			for (i = xldata->firstPlaceholder; i <= max; i++)
 				toDelete[i - xldata->firstPlaceholder] = i;

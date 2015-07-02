@@ -402,7 +402,7 @@ txid_current_snapshot(PG_FUNCTION_ARGS)
 
 	/* allocate */
 	nxip = cur->xcnt;
-	snap = palloc(TXID_SNAPSHOT_SIZE(nxip));
+	snap = static_cast<TxidSnapshot *>(palloc(TXID_SNAPSHOT_SIZE(nxip)));
 
 	/* fill */
 	snap->xmin = convert_xid(cur->xmin, &state);
@@ -497,7 +497,7 @@ txid_snapshot_recv(PG_FUNCTION_ARGS)
 	if (xmin == 0 || xmax == 0 || xmin > xmax || xmax > MAX_TXID)
 		goto bad_format;
 
-	snap = palloc(TXID_SNAPSHOT_SIZE(nxip));
+	snap = static_cast<TxidSnapshot *>(palloc(TXID_SNAPSHOT_SIZE(nxip)));
 	snap->xmin = xmin;
 	snap->xmax = xmax;
 

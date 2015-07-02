@@ -417,7 +417,7 @@ oidvectortypes(PG_FUNCTION_ARGS)
 	size_t		left;
 
 	total = 20 * numargs + 1;
-	result = palloc(total);
+	result = static_cast<char *>(palloc(total));
 	result[0] = '\0';
 	left = total - 1;
 
@@ -430,7 +430,7 @@ oidvectortypes(PG_FUNCTION_ARGS)
 		if (left < (slen + 2))
 		{
 			total += slen + 2;
-			result = repalloc(result, total);
+			result = restatic_cast<char *>(palloc(result, total));
 			left += slen + 2;
 		}
 

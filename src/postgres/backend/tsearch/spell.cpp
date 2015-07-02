@@ -96,7 +96,7 @@ compact_palloc0(IspellDict *Conf, size_t size)
 	/* Need more space? */
 	if (size > Conf->avail)
 	{
-		Conf->firstfree = palloc0(COMPACT_ALLOC_CHUNK);
+		Conf->firstfree = static_cast<char *>(palloc0(COMPACT_ALLOC_CHUNK));
 		Conf->avail = COMPACT_ALLOC_CHUNK;
 	}
 

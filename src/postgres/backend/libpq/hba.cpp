@@ -833,7 +833,7 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 	HbaToken   *token;
 	HbaLine    *parsedline;
 
-	parsedline = palloc0(sizeof(HbaLine));
+	parsedline = static_cast<HbaLine *>(palloc0(sizeof(HbaLine)));
 	parsedline->linenumber = line_num;
 	parsedline->rawline = pstrdup(raw_line);
 
@@ -1724,7 +1724,7 @@ check_hba(hbaPort *port)
 	}
 
 	/* If no matching entry was found, then implicitly reject. */
-	hba = palloc0(sizeof(HbaLine));
+	hba = static_cast<HbaLine *>(palloc0(sizeof(HbaLine)));
 	hba->auth_method = uaImplicitReject;
 	port->hba = hba;
 }
@@ -1860,7 +1860,7 @@ parse_ident_line(List *line, int line_number)
 	Assert(line != NIL);
 	field = list_head(line);
 
-	parsedline = palloc0(sizeof(IdentLine));
+	parsedline = static_cast<IdentLine *>(palloc0(sizeof(IdentLine)));
 	parsedline->linenumber = line_number;
 
 	/* Get the map token (must exist) */
@@ -1895,7 +1895,7 @@ parse_ident_line(List *line, int line_number)
 		pg_wchar   *wstr;
 		int			wlen;
 
-		wstr = palloc((strlen(parsedline->ident_user + 1) + 1) * sizeof(pg_wchar));
+		wstr = static_cast<pg_wchar *>(palloc((strlen(parsedline->ident_user + 1) + 1) * sizeof(pg_wchar)));
 		wlen = pg_mb2wchar_with_len(parsedline->ident_user + 1,
 									wstr, strlen(parsedline->ident_user + 1));
 
@@ -1953,7 +1953,7 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 		char	   *ofs;
 		char	   *regexp_pgrole;
 
-		wstr = palloc((strlen(ident_user) + 1) * sizeof(pg_wchar));
+		wstr = static_cast<pg_wchar *>(palloc((strlen(ident_user) + 1) * sizeof(pg_wchar)));
 		wlen = pg_mb2wchar_with_len(ident_user, wstr, strlen(ident_user));
 
 		r = pg_regexec(&identLine->re, wstr, wlen, 0, NULL, 2, matches, 0);
@@ -1996,7 +1996,7 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 			 * length: original length minus length of \1 plus length of match
 			 * plus null terminator
 			 */
-			regexp_pgrole = palloc0(strlen(identLine->pg_role) - 2 + (matches[1].rm_eo - matches[1].rm_so) + 1);
+			regexp_pgrole = static_cast<char *>(palloc0(strlen(identLine->pg_role) - 2 + (matches[1].rm_eo - matches[1].rm_so) + 1));
 			offset = ofs - identLine->pg_role;
 			memcpy(regexp_pgrole, identLine->pg_role, offset);
 			memcpy(regexp_pgrole + offset,

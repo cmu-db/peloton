@@ -4228,7 +4228,7 @@ arraycontained(PG_FUNCTION_ARGS)
 ArrayIterator
 array_create_iterator(ArrayType *arr, int slice_ndim, ArrayMetaState *mstate)
 {
-	ArrayIterator iterator = palloc0(sizeof(ArrayIteratorData));
+	ArrayIterator iterator = static_cast<ArrayIterator >(palloc0(sizeof(ArrayIteratorData)));
 
 	/*
 	 * Sanity-check inputs --- caller should have got this right already

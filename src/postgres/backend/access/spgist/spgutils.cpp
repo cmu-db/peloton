@@ -118,7 +118,7 @@ initSpGistState(SpGistState *state, Relation index)
 	state->attLabelType = cache->attLabelType;
 
 	/* Make workspace for constructing dead tuples */
-	state->deadTupleStorage = palloc0(SGDTSIZE);
+	state->deadTupleStorage = static_cast<char *>(palloc0(SGDTSIZE));
 
 	/* Set XID to use in redirection tuples */
 	state->myXid = GetTopTransactionIdIfAny();

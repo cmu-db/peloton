@@ -135,7 +135,7 @@ CreateParallelContext(parallel_worker_main_type entrypoint, int nworkers)
 	oldcontext = MemoryContextSwitchTo(TopTransactionContext);
 
 	/* Initialize a new___ ParallelContext. */
-	pcxt = palloc0(sizeof(ParallelContext));
+	pcxt = static_cast<ParallelContext *>(palloc0(sizeof(ParallelContext)));
 	pcxt->subid = GetCurrentSubTransactionId();
 	pcxt->nworkers = nworkers;
 	pcxt->entrypoint = entrypoint;
@@ -328,7 +328,7 @@ InitializeParallelDSM(ParallelContext *pcxt)
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_TRANSACTION_STATE, tstatespace);
 
 		/* Allocate space for worker information. */
-		pcxt->worker = palloc0(sizeof(ParallelWorkerInfo) * pcxt->nworkers);
+		pcxt->worker = static_cast<ParallelWorkerInfo *>(palloc0(sizeof(ParallelWorkerInfo) * pcxt->nworkers));
 
 		/*
 		 * Establish error queues in dynamic shared memory.
