@@ -1678,7 +1678,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				{
 					if (attrdef[i].adnum == parent_attno)
 					{
-						this_default = stringToNode(attrdef[i].adbin);
+						this_default = static_cast<Node *>(stringToNode(attrdef[i].adbin));
 						break;
 					}
 				}
@@ -3120,7 +3120,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 	 * transformations (for example, the same column may have different column
 	 * numbers in different children).
 	 */
-	cmd = copyObject(cmd);
+	cmd = static_cast<AlterTableCmd *>(copyObject(cmd));
 
 	/*
 	 * Do permissions checking, recursion to child tables if needed, and any
@@ -4857,7 +4857,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 		rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
 		rawEnt->attnum = attribute.attnum;
-		rawEnt->raw_default = copyObject(colDef->raw_default);
+		rawEnt->raw_default = static_cast<Node *>(copyObject(colDef->raw_default));
 
 		/*
 		 * This function is intended for CREATE TABLE, so it processes a
@@ -4978,7 +4978,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	/* Children should see column as singly inherited */
 	if (!recursing)
 	{
-		colDef = copyObject(colDef);
+		colDef = static_cast<ColumnDef *>(copyObject(colDef));
 		colDef->inhcount = 1;
 		colDef->is_local = false;
 	}

@@ -468,9 +468,9 @@ CommitTsShmemInit(void)
 	SimpleLruInit(CommitTsCtl, "CommitTs Ctl", CommitTsShmemBuffers(), 0,
 				  CommitTsControlLock, "pg_commit_ts");
 
-	commitTsShared = ShmemInitStruct("CommitTs shared",
+	commitTsShared = static_cast<CommitTimestampShared *>(ShmemInitStruct("CommitTs shared",
 									 sizeof(CommitTimestampShared),
-									 &found);
+									 &found));
 
 	if (!IsUnderPostmaster)
 	{

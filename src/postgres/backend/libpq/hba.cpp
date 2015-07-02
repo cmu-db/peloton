@@ -488,7 +488,7 @@ check_role(const char *role, Oid roleid, List *tokens)
 
 	foreach(cell, tokens)
 	{
-		tok = lfirst(cell);
+		tok = static_cast<HbaToken *>(lfirst(cell));
 		if (!tok->quoted && tok->string[0] == '+')
 		{
 			if (is_member(roleid, tok->string + 1))
@@ -512,7 +512,7 @@ check_db(const char *dbname, const char *role, Oid roleid, List *tokens)
 
 	foreach(cell, tokens)
 	{
-		tok = lfirst(cell);
+		tok = static_cast<HbaToken *>(lfirst(cell));
 		if (am_walsender)
 		{
 			/* walsender connections can only match replication keyword */
@@ -839,7 +839,7 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 
 	/* Check the record type. */
 	field = list_head(line);
-	tokens = lfirst(field);
+	tokens = static_cast<List *>(lfirst(field));
 	if (tokens->length > 1)
 	{
 		ereport(LOG,
@@ -850,7 +850,7 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 							line_num, HbaFileName)));
 		return NULL;
 	}
-	token = linitial(tokens);
+	token = static_cast<HbaToken *>(linitial(tokens));
 	if (strcmp(token->string, "local") == 0)
 	{
 #ifdef HAVE_UNIX_SOCKETS
@@ -928,7 +928,7 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 		return NULL;
 	}
 	parsedline->databases = NIL;
-	tokens = lfirst(field);
+	tokens = static_cast<List *>(lfirst(field));
 	foreach(tokencell, tokens)
 	{
 		parsedline->databases = lappend(parsedline->databases,
@@ -947,7 +947,7 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 		return NULL;
 	}
 	parsedline->roles = NIL;
-	tokens = lfirst(field);
+	tokens = static_cast<List *>(lfirst(field));
 	foreach(tokencell, tokens)
 	{
 		parsedline->roles = lappend(parsedline->roles,
@@ -967,7 +967,7 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 								line_num, HbaFileName)));
 			return NULL;
 		}
-		tokens = lfirst(field);
+		tokens = static_cast<List *>(lfirst(field));
 		if (tokens->length > 1)
 		{
 			ereport(LOG,
@@ -978,7 +978,7 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 								line_num, HbaFileName)));
 			return NULL;
 		}
-		token = linitial(tokens);
+		token = static_cast<HbaToken *>(linitial(tokens));
 
 		if (token_is_keyword(token, "all"))
 		{
@@ -1080,7 +1080,7 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 									  line_num, HbaFileName)));
 					return NULL;
 				}
-				tokens = lfirst(field);
+				tokens = static_cast<List *>(lfirst(field));
 				if (tokens->length > 1)
 				{
 					ereport(LOG,
@@ -1090,7 +1090,7 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 									  line_num, HbaFileName)));
 					return NULL;
 				}
-				token = linitial(tokens);
+				token = static_cast<HbaToken *>(linitial(tokens));
 
 				ret = pg_getaddrinfo_all(token->string, NULL,
 										 &hints, &gai_result);
@@ -1135,7 +1135,7 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 							line_num, HbaFileName)));
 		return NULL;
 	}
-	tokens = lfirst(field);
+	tokens = static_cast<List *>(lfirst(field));
 	if (tokens->length > 1)
 	{
 		ereport(LOG,
@@ -1146,7 +1146,7 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 							line_num, HbaFileName)));
 		return NULL;
 	}
-	token = linitial(tokens);
+	token = static_cast<HbaToken *>(linitial(tokens));
 
 	unsupauth = NULL;
 	if (strcmp(token->string, "trust") == 0)
@@ -1277,12 +1277,12 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 	/* Parse remaining arguments */
 	while ((field = lnext(field)) != NULL)
 	{
-		tokens = lfirst(field);
+		tokens = static_cast<List *>(lfirst(field));
 		foreach(tokencell, tokens)
 		{
 			char	   *val;
 
-			token = lfirst(tokencell);
+			token = static_cast<HbaToken *>(lfirst(tokencell));
 
 			str = pstrdup(token->string);
 			val = strchr(str, '=');
@@ -1864,25 +1864,25 @@ parse_ident_line(List *line, int line_number)
 	parsedline->linenumber = line_number;
 
 	/* Get the map token (must exist) */
-	tokens = lfirst(field);
+	tokens = static_cast<List *>(lfirst(field));
 	IDENT_MULTI_VALUE(tokens);
-	token = linitial(tokens);
+	token = static_cast<HbaToken *>(linitial(tokens));
 	parsedline->usermap = pstrdup(token->string);
 
 	/* Get the ident user token */
 	field = lnext(field);
 	IDENT_FIELD_ABSENT(field);
-	tokens = lfirst(field);
+	tokens = static_cast<List *>(lfirst(field));
 	IDENT_MULTI_VALUE(tokens);
-	token = linitial(tokens);
+	token = static_cast<HbaToken *>(linitial(tokens));
 	parsedline->ident_user = pstrdup(token->string);
 
 	/* Get the PG rolename token */
 	field = lnext(field);
 	IDENT_FIELD_ABSENT(field);
-	tokens = lfirst(field);
+	tokens = static_cast<List *>(lfirst(field));
 	IDENT_MULTI_VALUE(tokens);
-	token = linitial(tokens);
+	token = static_cast<HbaToken *>(linitial(tokens));
 	parsedline->pg_role = pstrdup(token->string);
 
 	if (parsedline->ident_user[0] == '/')

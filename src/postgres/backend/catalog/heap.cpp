@@ -2268,7 +2268,7 @@ AddRelationNewConstraints(Relation rel,
 			 * Here, we assume the parser will only pass us valid CHECK
 			 * expressions, so we do no particular checking.
 			 */
-			expr = stringToNode(cdef->cooked_expr);
+			expr = static_cast<Node *>(stringToNode(cdef->cooked_expr));
 		}
 
 		/*

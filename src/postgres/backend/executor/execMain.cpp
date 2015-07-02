@@ -1636,7 +1636,7 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 		for (i = 0; i < ncheck; i++)
 		{
 			/* ExecQual wants implicit-AND form */
-			qual = make_ands_implicit(stringToNode(check[i].ccbin));
+			qual = static_cast<Expr *>(make_ands_implicit(stringToNode(check[i].ccbin)));
 			resultRelInfo->ri_ConstraintExprs[i] = (List *)
 				ExecPrepareExpr((Expr *) qual, estate);
 		}
