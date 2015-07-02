@@ -51,8 +51,8 @@ spgGetCache(Relation index)
 		Buffer		metabuffer;
 		SpGistMetaPageData *metadata;
 
-		cache = MemoryContextAllocZero(index->rd_indexcxt,
-									   sizeof(SpGistCache));
+		cache = static_cast<SpGistCache *>(MemoryContextAllocZero(index->rd_indexcxt,
+									   sizeof(SpGistCache)));
 
 		/* SPGiST doesn't support multi-column indexes */
 		Assert(index->rd_att->natts == 1);

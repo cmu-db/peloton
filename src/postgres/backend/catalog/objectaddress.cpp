@@ -741,7 +741,7 @@ get_object_address(ObjectType objtype, List *objname, List *objargs,
 			case OBJECT_LARGEOBJECT:
 				Assert(list_length(objname) == 1);
 				address.classId = LargeObjectRelationId;
-				address.objectId = oidparse(linitial(objname));
+				address.objectId = oidparse(static_cast<Node *>(linitial(objname)));
 				address.objectSubId = 0;
 				if (!LargeObjectExists(address.objectId))
 				{

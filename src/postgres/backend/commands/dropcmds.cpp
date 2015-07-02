@@ -70,7 +70,7 @@ RemoveObjects(DropStmt *stmt)
 		if (stmt->arguments)
 		{
 			cell2 = (!cell2 ? list_head(stmt->arguments) : lnext(cell2));
-			objargs = lfirst(cell2);
+			objargs = static_cast<List *>(lfirst(cell2));
 		}
 
 		/* Get an ObjectAddress for the object. */

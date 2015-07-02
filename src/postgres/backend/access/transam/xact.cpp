@@ -1448,11 +1448,11 @@ AtSubCommit_childXids(void)
 		 */
 		if (s->parent->childXids == NULL)
 			new_childXids =
-				MemoryContextAlloc(TopTransactionContext,
-								   new_maxChildXids * sizeof(TransactionId));
+					static_cast<TransactionId *>(MemoryContextAlloc(TopTransactionContext,
+								   new_maxChildXids * sizeof(TransactionId)));
 		else
-			new_childXids = repalloc(s->parent->childXids,
-								   new_maxChildXids * sizeof(TransactionId));
+			new_childXids = static_cast<TransactionId *>(repalloc(s->parent->childXids,
+								   new_maxChildXids * sizeof(TransactionId)));
 
 		s->parent->childXids = new_childXids;
 		s->parent->maxChildXids = new_maxChildXids;
@@ -5412,7 +5412,7 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 			unsigned int fork; // Peloton Porting. Changed type from ForkNumber to unsigned int
 
 			for (fork = 0; fork <= MAX_FORKNUM; fork++)
-				XLogDropRelation(parsed->xnodes[i], fork);
+				XLogDropRelation(parsed->xnodes[i], static_cast<ForkNumber>(fork));
 			smgrdounlink(srel, true);
 			smgrclose(srel);
 		}
@@ -5515,7 +5515,7 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid)
 		unsigned int fork; // Peloton Porting. Changed type from ForkNumber to unsigned int
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
-			XLogDropRelation(parsed->xnodes[i], fork);
+			XLogDropRelation(parsed->xnodes[i], static_cast<ForkNumber>(fork));
 		smgrdounlink(srel, true);
 		smgrclose(srel);
 	}

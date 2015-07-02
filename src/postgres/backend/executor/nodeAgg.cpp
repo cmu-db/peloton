@@ -2117,7 +2117,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 		if (phase > 0)
 		{
-			aggnode = list_nth(node->chain, phase-1);
+			aggnode = static_cast<Agg *>(list_nth(node->chain, phase-1));
 			sortnode = (Sort *) aggnode->plan.lefttree;
 			Assert(IsA(sortnode, Sort));
 		}
@@ -2137,7 +2137,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			i = 0;
 			foreach(l, aggnode->groupingSets)
 			{
-				int current_length = list_length(lfirst(l));
+				int current_length = static_cast<const List *>(list_length(lfirst(l)));
 				Bitmapset *cols = NULL;
 
 				/* planner forces this to be correct */

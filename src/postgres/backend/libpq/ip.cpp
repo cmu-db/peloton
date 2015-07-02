@@ -200,11 +200,11 @@ getaddrinfo_unix(const char *path, const struct addrinfo * hintsp,
 		return EAI_FAIL;
 	}
 
-	aip = calloc(1, sizeof(struct addrinfo));
+	aip = static_cast<addrinfo *>(calloc(1, sizeof(struct addrinfo)));
 	if (aip == NULL)
 		return EAI_MEMORY;
 
-	unp = calloc(1, sizeof(struct sockaddr_un));
+	unp = static_cast<sockaddr_un *>(calloc(1, sizeof(struct sockaddr_un)));
 	if (unp == NULL)
 	{
 		free(aip);

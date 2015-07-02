@@ -4,7 +4,7 @@ import os
 import sys
 import re
 
-regex1 = re.compile("((?:.*)\.(?:h|cpp)):([\d]+):([\d]+): warning: invalid conversion from \'(.*?)\' to '(.*?)' \[\-fpermissive\]")
+regex1 = re.compile("((?:.*)\.(?cpp)):([\d]+):([\d]+): warning: invalid conversion from \'(.*?)\' to '(.*?)' \[\-fpermissive\]")
 
 found = 0
 unfixed = 0
@@ -55,25 +55,26 @@ with open(sys.argv[1], "r+") as fd1:
 				print "criticalLine:", criticalLine
 
 				# palloc[\d]?\((.*)\);
-				regex2 = re.compile("(.*)(malloc([\d])?\((.*)\);)")
+				#regex2 = re.compile("(.*)(malloc([\d])?\((.*)\);)")
+				regex2 = re.compile("([^=]*\=\s)(.*\(.*\);)")
 				m2 = regex2.match(criticalLine);
 				
 				if m2 is None:
-					#print "didn't find palloc[digit]"
 					unfixed += 1
+					#print "didn't find pattern"
 					
 				else:
-					beforePalloc = m2.group(1)
-					fromPalloc = m2.group(2)
-					#print "beforePalloc:", beforePalloc
-					#print "fromPalloc:", fromPalloc
+					beforeGroup = m2.group(1)
+					fromGroup = m2.group(2)
+					#print "beforeGroup:", beforeGroup
+					#print "fromGroup:", fromGroup
 					
 					# update this part to include static_cast
-					substituteStr = "static_cast<" + targetType + ">(" + fromPalloc[:-1] + ");"
+					substituteStr = "static_cast<" + targetType + ">(" + fromGroup[:-1] + ");"
 					#print "substituteStr:", substituteStr
 					
 					# update the entire line
-					substituteLine = beforePalloc + substituteStr + "\n"
+					substituteLine = beforeGroup + substituteStr + "\n"
 					#print "substituteLine:", substituteLine
 					
 					lines[lineNum - 1] = substituteLine

@@ -1295,7 +1295,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 		 * matter because the plan is unsaved and hence transient anyway.
 		 */
 		oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
-		stmt_list = copyObject(stmt_list);
+		stmt_list = static_cast<List *>(copyObject(stmt_list));
 		MemoryContextSwitchTo(oldcontext);
 		ReleaseCachedPlan(cplan, false);
 		cplan = NULL;			/* portal shouldn't depend on cplan */

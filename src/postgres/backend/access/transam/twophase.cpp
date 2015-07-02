@@ -189,9 +189,9 @@ TwoPhaseShmemInit(void)
 {
 	bool		found;
 
-	TwoPhaseState = ShmemInitStruct("Prepared Transaction Table",
+	TwoPhaseState = static_cast<TwoPhaseStateData *>(ShmemInitStruct("Prepared Transaction Table",
 									TwoPhaseShmemSize(),
-									&found);
+									&found));
 	if (!IsUnderPostmaster)
 	{
 		GlobalTransaction gxacts;
@@ -1740,7 +1740,7 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 	int			allocsize = 0;
 
 	cldir = AllocateDir(TWOPHASE_DIR);
-	while ((clde = ReadDir(cldir, TWOPHASE_DIR)) != NULL)
+	while ((clde = ReadDir(cldir, static_cast<const char *>(TWOPHASE_DIR))) != NULL)
 	{
 		if (strlen(clde->d_name) == 8 &&
 			strspn(clde->d_name, "0123456789ABCDEF") == 8)
@@ -1836,7 +1836,7 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 					else
 					{
 						allocsize = allocsize * 2;
-						xids = restatic_cast<TransactionId *>(palloc(xids, allocsize * sizeof(TransactionId)));
+						xids = static_cast<TransactionId *>(repalloc(xids, allocsize * sizeof(TransactionId)));
 					}
 				}
 				xids[nxids++] = xid;
@@ -1875,7 +1875,7 @@ StandbyRecoverPreparedTransactions(bool overwriteOK)
 	struct dirent *clde;
 
 	cldir = AllocateDir(TWOPHASE_DIR);
-	while ((clde = ReadDir(cldir, TWOPHASE_DIR)) != NULL)
+	while ((clde = ReadDir(cldir, static_cast<const char *>(TWOPHASE_DIR))) != NULL)
 	{
 		if (strlen(clde->d_name) == 8 &&
 			strspn(clde->d_name, "0123456789ABCDEF") == 8)
@@ -1957,7 +1957,7 @@ RecoverPreparedTransactions(void)
 	snprintf(dir, MAXPGPATH, "%s", TWOPHASE_DIR);
 
 	cldir = AllocateDir(dir);
-	while ((clde = ReadDir(cldir, dir)) != NULL)
+	while ((clde = ReadDir(cldir, static_cast<const char *>(dir))) != NULL)
 	{
 		if (strlen(clde->d_name) == 8 &&
 			strspn(clde->d_name, "0123456789ABCDEF") == 8)
