@@ -4699,7 +4699,7 @@ load_relcache_init_file(bool shared)
 			goto read_failed;
 		if (len > 0)
 		{
-			rel->rd_options = palloc(len);
+			rel->rd_options = static_cast<bytea *>(palloc(len));
 			if (fread(rel->rd_options, 1, len, fp) != len)
 				goto read_failed;
 			if (len != VARSIZE(rel->rd_options))

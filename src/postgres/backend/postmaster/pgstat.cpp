@@ -4697,7 +4697,7 @@ pgstat_recv_inquiry(PgStat_MsgInquiry *msg, int len)
 	/*
 	 * There's no request for this DB yet, so create one.
 	 */
-	newreq = palloc(sizeof(DBWriteRequest));
+	newreq = static_cast<DBWriteRequest *>(palloc(sizeof(DBWriteRequest)));
 
 	newreq->databaseid = msg->databaseid;
 	newreq->request_time = msg->clock_time;

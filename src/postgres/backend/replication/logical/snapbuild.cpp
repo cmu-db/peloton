@@ -295,7 +295,7 @@ AllocateSnapshotBuilder(ReorderBuffer *reorder,
 									ALLOCSET_DEFAULT_MAXSIZE);
 	oldcontext = MemoryContextSwitchTo(context);
 
-	builder = palloc0(sizeof(SnapBuild));
+	builder = static_cast<SnapBuild *>(palloc0(sizeof(SnapBuild)));
 
 	builder->state = SNAPBUILD_START;
 	builder->context = context;
@@ -305,7 +305,7 @@ AllocateSnapshotBuilder(ReorderBuffer *reorder,
 	builder->committed.xcnt = 0;
 	builder->committed.xcnt_space = 128;		/* arbitrary number */
 	builder->committed.xip =
-		palloc0(builder->committed.xcnt_space * sizeof(TransactionId));
+		static_cast<TransactionId *>(palloc0(builder->committed.xcnt_space * sizeof(TransactionId)));
 	builder->committed.includes_all_transactions = true;
 
 	builder->initial_xmin_horizon = xmin_horizon;

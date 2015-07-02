@@ -4524,7 +4524,7 @@ strlist_to_textarray(List *list)
 								   ALLOCSET_DEFAULT_MAXSIZE);
 	oldcxt = MemoryContextSwitchTo(memcxt);
 
-	datums = palloc(sizeof(text *) * list_length(list));
+	datums = static_cast<Datum *>(palloc(sizeof(text *) * list_length(list)));
 	foreach(cell, list)
 	{
 		char   *name = lfirst(cell);

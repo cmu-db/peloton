@@ -56,7 +56,7 @@ tsm_system_init(PG_FUNCTION_ARGS)
 				 errmsg("invalid sample size"),
 				 errhint("Sample size must be numeric value between 0 and 100 (inclusive).")));
 
-	sampler = palloc0(sizeof(SystemSamplerData));
+	sampler = static_cast<SystemSamplerData *>(palloc0(sizeof(SystemSamplerData)));
 
 	/* Remember initial values for reinit */
 	sampler->seed = seed;

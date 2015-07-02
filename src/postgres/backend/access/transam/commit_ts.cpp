@@ -898,7 +898,7 @@ commit_ts_redo(XLogReaderState *record)
 					sizeof(TransactionId));
 		if (nsubxids > 0)
 		{
-			subxids = palloc(sizeof(TransactionId) * nsubxids);
+			subxids = static_cast<TransactionId *>(palloc(sizeof(TransactionId) * nsubxids));
 			memcpy(subxids,
 				   XLogRecGetData(record) + SizeOfCommitTsSet,
 				   sizeof(TransactionId) * nsubxids);

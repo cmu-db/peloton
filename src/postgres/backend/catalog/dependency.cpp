@@ -2014,7 +2014,7 @@ new_object_addresses(void)
 {
 	ObjectAddresses *addrs;
 
-	addrs = palloc(sizeof(ObjectAddresses));
+	addrs = static_cast<ObjectAddresses *>(palloc(sizeof(ObjectAddresses)));
 
 	addrs->numrefs = 0;
 	addrs->maxrefs = 32;

@@ -256,7 +256,7 @@ byteain(PG_FUNCTION_ARGS)
 		size_t		len = strlen(inputText);
 
 		bc = (len - 2) / 2 + VARHDRSZ;	/* maximum possible length */
-		result = palloc(bc);
+		result = static_cast<bytea *>(palloc(bc));
 		bc = hex_decode(inputText + 2, len - 2, VARDATA(result));
 		SET_VARSIZE(result, bc + VARHDRSZ);		/* actual length */
 
@@ -347,7 +347,7 @@ byteaout(PG_FUNCTION_ARGS)
 	if (bytea_output == BYTEA_OUTPUT_HEX)
 	{
 		/* Print hex format */
-		rp = result = palloc(VARSIZE_ANY_EXHDR(vlena) * 2 + 2 + 1);
+		rp = result = static_cast<char *>(palloc(VARSIZE_ANY_EXHDR(vlena) * 2 + 2 + 1));
 		*rp++ = '\\';
 		*rp++ = 'x';
 		rp += hex_encode(VARDATA_ANY(vlena), VARSIZE_ANY_EXHDR(vlena), rp);
@@ -1825,10 +1825,10 @@ btsortsupport_worker(SortSupport ssup, Oid collid)
 	 */
 	if (abbreviate || !collate_c)
 	{
-		tss = palloc(sizeof(TextSortSupport));
-		tss->buf1 = palloc(TEXTBUFLEN);
+		tss = static_cast<TextSortSupport *>(palloc(sizeof(TextSortSupport)));
+		tss->buf1 = static_cast<char *>(palloc(TEXTBUFLEN));
 		tss->buflen1 = TEXTBUFLEN;
-		tss->buf2 = palloc(TEXTBUFLEN);
+		tss->buf2 = static_cast<char *>(palloc(TEXTBUFLEN));
 		tss->buflen2 = TEXTBUFLEN;
 #ifdef HAVE_LOCALE_T
 		tss->locale = locale;
@@ -2029,7 +2029,7 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 		{
 			pfree(tss->buf1);
 			tss->buflen1 = Max(len + 1, Min(tss->buflen1 * 2, MaxAllocSize));
-			tss->buf1 = palloc(tss->buflen1);
+			tss->buf1 = static_cast<char *>(palloc(tss->buflen1));
 		}
 
 		/* Just like strcoll(), strxfrm() expects a NUL-terminated string */
@@ -2060,7 +2060,7 @@ bttext_abbrev_convert(Datum original, SortSupport ssup)
 			pfree(tss->buf2);
 			tss->buflen2 = Max(bsize + 1,
 							   Min(tss->buflen2 * 2, MaxAllocSize));
-			tss->buf2 = palloc(tss->buflen2);
+			tss->buf2 = static_cast<char *>(palloc(tss->buflen2));
 		}
 
 		/*
@@ -4520,7 +4520,7 @@ text_reverse(PG_FUNCTION_ARGS)
 	text	   *result;
 	char	   *dst;
 
-	result = palloc(len + VARHDRSZ);
+	result = static_cast<text *>(palloc(len + VARHDRSZ));
 	dst = (char *) VARDATA(result) + len;
 	SET_VARSIZE(result, len + VARHDRSZ);
 

@@ -1237,7 +1237,7 @@ interval_scale(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(1);
 	Interval   *result;
 
-	result = palloc(sizeof(Interval));
+	result = static_cast<Interval *>(palloc(sizeof(Interval)));
 	*result = *interval;
 
 	AdjustIntervalForTypmod(result, typmod);

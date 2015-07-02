@@ -1699,7 +1699,7 @@ expand_grouping_sets(List *groupingSets, int limit)
 	if (list_length(result) > 1)
 	{
 		int		result_len = list_length(result);
-		List  **buf = palloc(sizeof(List*) * result_len);
+		List  **buf = static_cast<List **>(palloc(sizeof(List*) * result_len));
 		List  **ptr = buf;
 
 		foreach(lc, result)

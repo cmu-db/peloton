@@ -2316,7 +2316,7 @@ CopyFrom(CopyState cstate)
 	else
 	{
 		useHeapMultiInsert = true;
-		bufferedTuples = palloc(MAX_BUFFERED_TUPLES * sizeof(HeapTuple));
+		bufferedTuples = static_cast<HeapTupleData **>(palloc(MAX_BUFFERED_TUPLES * sizeof(HeapTuple)));
 	}
 
 	/* Prepare to catch AFTER triggers. */
@@ -3667,7 +3667,7 @@ CopyReadAttributesText(CopyState cstate)
 		{
 			cstate->max_fields *= 2;
 			cstate->raw_fields =
-				repalloc(cstate->raw_fields, cstate->max_fields * sizeof(char *));
+				restatic_cast<char **>(palloc(cstate->raw_fields, cstate->max_fields * sizeof(char *)));
 		}
 
 		/* Remember start of field on both input and output sides */
@@ -3897,7 +3897,7 @@ CopyReadAttributesCSV(CopyState cstate)
 		{
 			cstate->max_fields *= 2;
 			cstate->raw_fields =
-				repalloc(cstate->raw_fields, cstate->max_fields * sizeof(char *));
+				restatic_cast<char **>(palloc(cstate->raw_fields, cstate->max_fields * sizeof(char *)));
 		}
 
 		/* Remember start of field on both input and output sides */

@@ -1192,7 +1192,7 @@ CompactCheckpointerRequestQueue(void)
 	Assert(LWLockHeldByMe(CheckpointerCommLock));
 
 	/* Initialize skip_slot array */
-	skip_slot = palloc0(sizeof(bool) * CheckpointerShmem->num_requests);
+	skip_slot = static_cast<bool *>(palloc0(sizeof(bool) * CheckpointerShmem->num_requests));
 
 	/* Initialize temporary hash table */
 	MemSet(&ctl, 0, sizeof(ctl));

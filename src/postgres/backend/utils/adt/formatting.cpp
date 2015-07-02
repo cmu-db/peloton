@@ -1539,7 +1539,7 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 
 		/* Make result large enough; case change might change number of bytes */
 		result_size = curr_char * pg_database_encoding_max_length() + 1;
-		result = palloc(result_size);
+		result = static_cast<char *>(palloc(result_size));
 
 		wchar2char(result, workspace, result_size, mylocale);
 		pfree(workspace);
@@ -1659,7 +1659,7 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 
 		/* Make result large enough; case change might change number of bytes */
 		result_size = curr_char * pg_database_encoding_max_length() + 1;
-		result = palloc(result_size);
+		result = static_cast<char *>(palloc(result_size));
 
 		wchar2char(result, workspace, result_size, mylocale);
 		pfree(workspace);
@@ -1792,7 +1792,7 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 
 		/* Make result large enough; case change might change number of bytes */
 		result_size = curr_char * pg_database_encoding_max_length() + 1;
-		result = palloc(result_size);
+		result = static_cast<char *>(palloc(result_size));
 
 		wchar2char(result, workspace, result_size, mylocale);
 		pfree(workspace);
@@ -3307,7 +3307,7 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval, Oid collid)
 	/*
 	 * Allocate workspace for result as C string
 	 */
-	result = palloc((fmt_len * DCH_MAX_ITEM_SIZ) + 1);
+	result = static_cast<char *>(palloc((fmt_len * DCH_MAX_ITEM_SIZ) + 1));
 	*result = '\0';
 
 	/*

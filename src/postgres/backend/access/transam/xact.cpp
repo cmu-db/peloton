@@ -512,7 +512,7 @@ AssignTransactionId(TransactionState s)
 		TransactionState *parents;
 		size_t		parentOffset = 0;
 
-		parents = palloc(sizeof(TransactionState) * s->nestingLevel);
+		parents = static_cast<TransactionStateData **>(palloc(sizeof(TransactionState) * s->nestingLevel));
 		while (p != NULL && !TransactionIdIsValid(p->transactionId))
 		{
 			parents[parentOffset++] = p;
@@ -4842,7 +4842,7 @@ SerializeTransactionState(Size maxsize, char *start_address)
 	Assert(nxids * sizeof(TransactionId) < maxsize);
 
 	/* Copy them to our scratch space. */
-	workspace = palloc(nxids * sizeof(TransactionId));
+	workspace = static_cast<TransactionId *>(palloc(nxids * sizeof(TransactionId)));
 	for (s = CurrentTransactionState; s != NULL; s = s->parent)
 	{
 		if (TransactionIdIsValid(s->transactionId))

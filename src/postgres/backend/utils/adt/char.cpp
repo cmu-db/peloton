@@ -195,7 +195,7 @@ Datum
 char_text(PG_FUNCTION_ARGS)
 {
 	char		arg1 = PG_GETARG_CHAR(0);
-	text	   *result = palloc(VARHDRSZ + 1);
+	text	   *result = static_cast<text *>(palloc(VARHDRSZ + 1));
 
 	/*
 	 * Convert \0 to an empty string, for consistency with charout (and

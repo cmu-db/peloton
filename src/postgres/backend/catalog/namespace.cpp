@@ -1602,7 +1602,7 @@ OpernameGetCandidates(List *names, char oprkind, bool missing_schema_ok)
 							  2 * sizeof(Oid))
 
 	if (catlist->n_members > 0)
-		resultSpace = palloc(catlist->n_members * SPACE_PER_OP);
+		resultSpace = static_cast<char *>(palloc(catlist->n_members * SPACE_PER_OP));
 
 	for (i = 0; i < catlist->n_members; i++)
 	{

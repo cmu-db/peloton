@@ -995,7 +995,7 @@ rebuild_database_list(Oid newdb)
 		int			i;
 
 		/* put all the hash elements into an array */
-		dbary = palloc(nelems * sizeof(avl_dbase));
+		dbary = static_cast<avl_dbase *>(palloc(nelems * sizeof(avl_dbase)));
 
 		i = 0;
 		hash_seq_init(&seq, dbhash);
@@ -2414,7 +2414,7 @@ extract_autovac_opts(HeapTuple tup, TupleDesc pg_class_desc)
 	if (relopts == NULL)
 		return NULL;
 
-	av = palloc(sizeof(AutoVacOpts));
+	av = static_cast<AutoVacOpts *>(palloc(sizeof(AutoVacOpts)));
 	memcpy(av, &(((StdRdOptions *) relopts)->autovacuum), sizeof(AutoVacOpts));
 	pfree(relopts);
 
@@ -2565,7 +2565,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 			? avopts->multixact_freeze_table_age
 			: default_multixact_freeze_table_age;
 
-		tab = palloc(sizeof(autovac_table));
+		tab = static_cast<autovac_table *>(palloc(sizeof(autovac_table)));
 		tab->at_relid = relid;
 		tab->at_vacoptions = VACOPT_SKIPTOAST |
 			(dovacuum ? VACOPT_VACUUM : 0) |
