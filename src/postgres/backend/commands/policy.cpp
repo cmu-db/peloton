@@ -219,7 +219,7 @@ RelationBuildRowSecurity(Relation relation)
 		SysScanDesc			sscan;
 		HeapTuple			tuple;
 
-		rsdesc = MemoryContextAllocZero(rscxt, sizeof(RowSecurityDesc));
+		rsdesc = static_cast<RowSecurityDesc *>(MemoryContextAllocZero(rscxt, sizeof(RowSecurityDesc)));
 		rsdesc->rscxt = rscxt;
 
 		catalog = heap_open(PolicyRelationId, AccessShareLock);
@@ -308,8 +308,8 @@ RelationBuildRowSecurity(Relation relation)
 			policy->policy_id = policy_id;
 			policy->polcmd = cmd_value;
 			policy->roles = DatumGetArrayTypePCopy(roles_datum);
-			policy->qual = copyObject(qual_expr);
-			policy->with_check_qual = copyObject(with_check_qual);
+			policy->qual = static_cast<Expr *>(copyObject(qual_expr));
+			policy->with_check_qual = static_cast<Expr *>(copyObject(with_check_qual));
 			policy->hassublinks = checkExprHasSubLink((Node *) qual_expr) ||
 								  checkExprHasSubLink((Node *) with_check_qual);
 
@@ -353,7 +353,7 @@ RelationBuildRowSecurity(Relation relation)
 			policy->qual = (Expr *) makeConst(BOOLOID, -1, InvalidOid,
 											  sizeof(bool), BoolGetDatum(false),
 											  false, true);
-			policy->with_check_qual = copyObject(policy->qual);
+			policy->with_check_qual = static_cast<Expr *>(copyObject(policy->qual));
 			policy->hassublinks = false;
 
 			rsdesc->policies = lcons(policy, rsdesc->policies);

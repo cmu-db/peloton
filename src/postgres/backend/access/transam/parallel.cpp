@@ -299,31 +299,31 @@ InitializeParallelDSM(ParallelContext *pcxt)
 		char   *error_queue_space;
 
 		/* Serialize shared libraries we have loaded. */
-		libraryspace = shm_toc_allocate(pcxt->toc, library_len);
+		libraryspace = static_cast<char *>(shm_toc_allocate(pcxt->toc, library_len));
 		SerializeLibraryState(library_len, libraryspace);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_LIBRARY, libraryspace);
 
 		/* Serialize GUC settings. */
-		gucspace = shm_toc_allocate(pcxt->toc, guc_len);
+		gucspace = static_cast<char *>(shm_toc_allocate(pcxt->toc, guc_len));
 		SerializeGUCState(guc_len, gucspace);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_GUC, gucspace);
 
 		/* Serialize combo CID state. */
-		combocidspace = shm_toc_allocate(pcxt->toc, combocidlen);
+		combocidspace = static_cast<char *>(shm_toc_allocate(pcxt->toc, combocidlen));
 		SerializeComboCIDState(combocidlen, combocidspace);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_COMBO_CID, combocidspace);
 
 		/* Serialize transaction snapshot and active snapshot. */
-		tsnapspace = shm_toc_allocate(pcxt->toc, tsnaplen);
+		tsnapspace = static_cast<char *>(shm_toc_allocate(pcxt->toc, tsnaplen));
 		SerializeSnapshot(transaction_snapshot, tsnapspace);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_TRANSACTION_SNAPSHOT,
 					   tsnapspace);
-		asnapspace = shm_toc_allocate(pcxt->toc, asnaplen);
+		asnapspace = static_cast<char *>(shm_toc_allocate(pcxt->toc, asnaplen));
 		SerializeSnapshot(active_snapshot, asnapspace);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_ACTIVE_SNAPSHOT, asnapspace);
 
 		/* Serialize transaction state. */
-		tstatespace = shm_toc_allocate(pcxt->toc, tstatelen);
+		tstatespace = static_cast<char *>(shm_toc_allocate(pcxt->toc, tstatelen));
 		SerializeTransactionState(tstatelen, tstatespace);
 		shm_toc_insert(pcxt->toc, PARALLEL_KEY_TRANSACTION_STATE, tstatespace);
 
@@ -485,7 +485,7 @@ WaitForParallelWorkersToFinish(ParallelContext *pcxt)
 	{
 		FixedParallelState *fps;
 
-		fps = shm_toc_lookup(pcxt->toc, PARALLEL_KEY_FIXED);
+		fps = static_cast<FixedParallelState *>(shm_toc_lookup(pcxt->toc, PARALLEL_KEY_FIXED));
 		if (fps->last_xlog_end > XactLastRecEnd)
 			XactLastRecEnd = fps->last_xlog_end;
 	}
@@ -839,7 +839,7 @@ ParallelWorkerMain(Datum main_arg)
 				 errmsg("bad magic number in dynamic shared memory segment")));
 
 	/* Determine and set our worker number. */
-	fps = shm_toc_lookup(toc, PARALLEL_KEY_FIXED);
+	fps = static_cast<FixedParallelState *>(shm_toc_lookup(toc, PARALLEL_KEY_FIXED));
 	Assert(fps != NULL);
 	Assert(ParallelWorkerNumber == -1);
 	SpinLockAcquire(&fps->mutex);
@@ -858,7 +858,7 @@ ParallelWorkerMain(Datum main_arg)
 	 * errors that happen here will not be reported back to the process that
 	 * requested that this worker be launched.
 	 */
-	error_queue_space = shm_toc_lookup(toc, PARALLEL_KEY_ERROR_QUEUE);
+	error_queue_space = static_cast<char *>(shm_toc_lookup(toc, PARALLEL_KEY_ERROR_QUEUE));
 	mq = (shm_mq *) (error_queue_space +
 		ParallelWorkerNumber * PARALLEL_ERROR_QUEUE_SIZE);
 	shm_mq_set_sender(mq, MyProc);
@@ -889,7 +889,7 @@ ParallelWorkerMain(Datum main_arg)
 	 * before restoring GUCs, because the libraries might define custom
 	 * variables.
 	 */
-	libraryspace = shm_toc_lookup(toc, PARALLEL_KEY_LIBRARY);
+	libraryspace = static_cast<char *>(shm_toc_lookup(toc, PARALLEL_KEY_LIBRARY));
 	Assert(libraryspace != NULL);
 	RestoreLibraryState(libraryspace);
 
@@ -898,29 +898,29 @@ ParallelWorkerMain(Datum main_arg)
 											  fps->authenticated_user_id);
 
 	/* Restore GUC values from launching backend. */
-	gucspace = shm_toc_lookup(toc, PARALLEL_KEY_GUC);
+	gucspace = static_cast<char *>(shm_toc_lookup(toc, PARALLEL_KEY_GUC));
 	Assert(gucspace != NULL);
 	StartTransactionCommand();
 	RestoreGUCState(gucspace);
 	CommitTransactionCommand();
 
 	/* Crank up a transaction state appropriate to a parallel worker. */
-	tstatespace = shm_toc_lookup(toc, PARALLEL_KEY_TRANSACTION_STATE);
+	tstatespace = static_cast<char *>(shm_toc_lookup(toc, PARALLEL_KEY_TRANSACTION_STATE));
 	StartParallelWorkerTransaction(tstatespace);
 
 	/* Restore combo CID state. */
-	combocidspace = shm_toc_lookup(toc, PARALLEL_KEY_COMBO_CID);
+	combocidspace = static_cast<char *>(shm_toc_lookup(toc, PARALLEL_KEY_COMBO_CID));
 	Assert(combocidspace != NULL);
 	RestoreComboCIDState(combocidspace);
 
 	/* Restore transaction snapshot. */
-	tsnapspace = shm_toc_lookup(toc, PARALLEL_KEY_TRANSACTION_SNAPSHOT);
+	tsnapspace = static_cast<char *>(shm_toc_lookup(toc, PARALLEL_KEY_TRANSACTION_SNAPSHOT));
 	Assert(tsnapspace != NULL);
 	RestoreTransactionSnapshot(RestoreSnapshot(tsnapspace),
 							   fps->parallel_master_pgproc);
 
 	/* Restore active snapshot. */
-	asnapspace = shm_toc_lookup(toc, PARALLEL_KEY_ACTIVE_SNAPSHOT);
+	asnapspace = static_cast<char *>(shm_toc_lookup(toc, PARALLEL_KEY_ACTIVE_SNAPSHOT));
 	Assert(asnapspace != NULL);
 	PushActiveSnapshot(RestoreSnapshot(asnapspace));
 
@@ -970,7 +970,7 @@ ParallelExtensionTrampoline(dsm_segment *seg, shm_toc *toc)
 	char   *function_name;
 	parallel_worker_main_type entrypt;
 
-	extensionstate = shm_toc_lookup(toc, PARALLEL_KEY_EXTENSION_TRAMPOLINE);
+	extensionstate = static_cast<char *>(shm_toc_lookup(toc, PARALLEL_KEY_EXTENSION_TRAMPOLINE));
 	Assert(extensionstate != NULL);
 	library_name = extensionstate;
 	function_name = extensionstate + strlen(library_name) + 1;

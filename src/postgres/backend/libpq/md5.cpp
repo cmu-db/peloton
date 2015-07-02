@@ -323,7 +323,7 @@ pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len,
 	size_t		passwd_len = strlen(passwd);
 
 	/* +1 here is just to avoid risk of unportable malloc(0) */
-	char	   *crypt_buf = malloc(passwd_len + salt_len + 1);
+	char	   *crypt_buf = static_cast<char *>(malloc(passwd_len + salt_len + 1));
 	bool		ret;
 
 	if (!crypt_buf)

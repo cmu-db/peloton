@@ -2240,7 +2240,7 @@ mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, int highlight,
 			if (numcovers >= maxcovers)
 			{
 				maxcovers *= 2;
-				covers = restatic_cast<CoverPos *>(palloc(covers, sizeof(CoverPos) * maxcovers));
+				covers = static_cast<CoverPos *>(repalloc(covers, sizeof(CoverPos) * maxcovers));
 			}
 			covers[numcovers].startpos = startpos;
 			covers[numcovers].endpos = endpos;

@@ -1236,9 +1236,9 @@ index_constraint_create(Relation heapRelation,
 		CreateTrigStmt *trigger;
 
 		trigger = makeNode(CreateTrigStmt);
-		trigger->trigname = (constraintType == CONSTRAINT_PRIMARY) ?
+		trigger->trigname = static_cast<char *>((constraintType == CONSTRAINT_PRIMARY) ?
 			"PK_ConstraintTrigger" :
-			"Unique_ConstraintTrigger";
+			"Unique_ConstraintTrigger");
 		trigger->relation = NULL;
 		trigger->funcname = SystemFuncName("unique_key_recheck");
 		trigger->args = NIL;

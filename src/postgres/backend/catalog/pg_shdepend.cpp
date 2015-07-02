@@ -625,7 +625,7 @@ checkSharedDependencies(Oid classId, Oid objectId,
 			 */
 			foreach(cell, remDeps)
 			{
-				dep = lfirst(cell);
+				dep = static_cast<remoteDep *>(lfirst(cell));
 				if (dep->dbOid == sdepForm->dbid)
 				{
 					dep->count++;

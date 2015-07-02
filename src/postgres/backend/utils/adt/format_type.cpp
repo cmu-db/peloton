@@ -430,7 +430,7 @@ oidvectortypes(PG_FUNCTION_ARGS)
 		if (left < (slen + 2))
 		{
 			total += slen + 2;
-			result = restatic_cast<char *>(palloc(result, total));
+			result = static_cast<char *>(repalloc(result, total));
 			left += slen + 2;
 		}
 

@@ -1378,7 +1378,7 @@ retry:
 		flagsptr = (uint32 *) (MultiXactMemberCtl->shared->page_buffer[slotno] + flagsoff);
 
 		ptr[truelength].xid = *xactptr;
-		ptr[truelength].status = (*flagsptr >> bshift) & MXACT_MEMBER_XACT_BITMASK;
+		ptr[truelength].status = static_cast<MultiXactStatus>((*flagsptr >> bshift) & MXACT_MEMBER_XACT_BITMASK);
 		truelength++;
 	}
 
@@ -1798,9 +1798,9 @@ MultiXactShmemInit(void)
 				  MultiXactMemberControlLock, "pg_multixact/members");
 
 	/* Initialize our shared state struct */
-	MultiXactState = ShmemInitStruct("Shared MultiXact State",
+	MultiXactState = static_cast<MultiXactStateData *>(ShmemInitStruct("Shared MultiXact State",
 									 SHARED_MULTIXACT_STATE_SIZE,
-									 &found);
+									 &found));
 	if (!IsUnderPostmaster)
 	{
 		Assert(!found);
@@ -3074,7 +3074,7 @@ pg_get_multixact_members(PG_FUNCTION_ARGS)
 		funccxt = SRF_FIRSTCALL_INIT();
 		oldcxt = MemoryContextSwitchTo(funccxt->multi_call_memory_ctx);
 
-		multi = static_cast<pg_get_multixact_members(FunctionCallInfo)::mxact *>(palloc(sizeof(mxact)));
+		multi = static_cast<mxact *>(palloc(sizeof(mxact)));
 		/* no need to allow for old values here */
 		multi->nmembers = GetMultiXactIdMembers(mxid, &multi->members, false,
 												false);

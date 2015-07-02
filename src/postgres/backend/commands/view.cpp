@@ -524,7 +524,7 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	 * long as the CREATE command is consistent with that --- no explicit
 	 * schema name.
 	 */
-	view = copyObject(stmt->view);		/* don't corrupt original command */
+	view = static_cast<RangeVar *>(copyObject(stmt->view));
 	if (view->relpersistence == RELPERSISTENCE_PERMANENT
 		&& isQueryUsingTempRelation(viewParse))
 	{
@@ -571,4 +571,6 @@ StoreViewQuery(Oid viewOid, Query *viewParse, bool replace)
 	 * Now create the rules associated with the view.
 	 */
 	DefineViewRules(viewOid, viewParse, replace);
+}
+ replace);
 }

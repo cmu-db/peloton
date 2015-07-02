@@ -462,7 +462,7 @@ SendCopyEnd(CopyState cstate)
 static void
 CopySendData(CopyState cstate, const void *databuf, int datasize)
 {
-	appendBinaryStringInfo(cstate->fe_msgbuf, databuf, datasize);
+	appendBinaryStringInfo(cstate->fe_msgbuf, static_cast<const char *>(databuf), datasize);
 }
 
 static void
@@ -657,7 +657,7 @@ CopyGetData(CopyState cstate, void *databuf, int minread, int maxread)
 				avail = cstate->fe_msgbuf->len - cstate->fe_msgbuf->cursor;
 				if (avail > maxread)
 					avail = maxread;
-				pq_copymsgbytes(cstate->fe_msgbuf, databuf, avail);
+				pq_copymsgbytes(cstate->fe_msgbuf, static_cast<char *>(databuf), avail);
 				databuf = (void *) ((char *) databuf + avail);
 				maxread -= avail;
 				bytesread += avail;
@@ -3667,7 +3667,7 @@ CopyReadAttributesText(CopyState cstate)
 		{
 			cstate->max_fields *= 2;
 			cstate->raw_fields =
-				restatic_cast<char **>(palloc(cstate->raw_fields, cstate->max_fields * sizeof(char *)));
+				static_cast<char **>(repalloc(cstate->raw_fields, cstate->max_fields * sizeof(char *)));
 		}
 
 		/* Remember start of field on both input and output sides */
@@ -3897,7 +3897,7 @@ CopyReadAttributesCSV(CopyState cstate)
 		{
 			cstate->max_fields *= 2;
 			cstate->raw_fields =
-				restatic_cast<char **>(palloc(cstate->raw_fields, cstate->max_fields * sizeof(char *)));
+				static_cast<char **>(repalloc(cstate->raw_fields, cstate->max_fields * sizeof(char *)));
 		}
 
 		/* Remember start of field on both input and output sides */

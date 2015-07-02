@@ -211,7 +211,7 @@ tsm_bernoulli_cost(PG_FUNCTION_ARGS)
 
 	*pages = baserel->pages;
 
-	pctnode = linitial(args);
+	pctnode = static_cast<Node *>(linitial(args));
 	pctnode = estimate_expression_value(root, pctnode);
 
 	if (IsA(pctnode, RelabelType))
