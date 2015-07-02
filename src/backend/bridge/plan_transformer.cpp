@@ -17,8 +17,10 @@
 
 #include "backend/bridge/plan_transformer.h"
 #include "backend/bridge/tuple_transformer.h"
+#include "backend/expression/abstract_expression.h"
 #include "backend/storage/data_table.h"
 #include "backend/planner/insert_node.h"
+#include "backend/planner/seq_scan_node.h"
 
 void printPlanStateTree(const PlanState * planstate);
 
@@ -142,6 +144,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
  */
 planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
     const SeqScanState* ss_plan_state) {
+
+  assert(nodeTag(ss_plan_state) == T_SeqScanState);
 
   // Grab Database ID and Table ID
   assert(ss_plan_state->ss_currentRelation); // Null if not a base table scan
