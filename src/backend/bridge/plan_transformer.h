@@ -32,6 +32,8 @@ class PlanTransformer {
 
   planner::AbstractPlanNode *TransformPlan(const PlanState *plan_state);
 
+  PlanState *CopyPlanState(const PlanState *plan_state);
+
  private:
 
   static planner::AbstractPlanNode *TransformModifyTable(const ModifyTableState *plan_state);

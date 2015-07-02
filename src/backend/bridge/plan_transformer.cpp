@@ -19,6 +19,9 @@
 #include "backend/bridge/tuple_transformer.h"
 #include "backend/storage/data_table.h"
 #include "backend/planner/insert_node.h"
+#include "backend/common/logger.h"
+
+#include <cstring>
 
 void printPlanStateTree(const PlanState * planstate);
 
@@ -130,6 +133,28 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
 
   return plan_node;
 }
+
+/**
+ * @brief copy a PlanState depending on its type
+ * @return Pointer to the deep copied planstate.
+ */
+PlanState *PlanTransformer::CopyPlanState(const PlanState *other) {
+	PlanState *node;
+	Plan *plan = other->plan;
+
+	switch (nodeTag(plan->type)) {
+	case T_ModifyTable:
+		LOG_INFO("Copying ModifyTable\n");
+		node = static_cast<PlanState *>(palloc(sizeof(ModifyTableState)));
+		std::memcpy(node, other, sizeof(ModifyTableState));
+	default:
+		LOG_INFO("Copying unsupported plan state\n");
+		break;
+	}
+	return node;
+}
+
+
 
 } // namespace bridge
 } // namespace peloton
