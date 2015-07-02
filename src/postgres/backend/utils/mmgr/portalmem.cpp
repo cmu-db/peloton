@@ -105,11 +105,14 @@ EnablePortalManager(void)
 
 	Assert(PortalMemory == NULL);
 
-	PortalMemory = AllocSetContextCreate(TopMemoryContext,
-										 "PortalMemory",
-										 ALLOCSET_DEFAULT_MINSIZE,
-										 ALLOCSET_DEFAULT_INITSIZE,
-										 ALLOCSET_DEFAULT_MAXSIZE);
+  // TODO: Peloton Changes (Use TopSharedMemoryContext instead)
+  //PortalMemory = AllocSetContextCreate(TopMemoryContext,
+	PortalMemory = SHMAllocSetContextCreate(TopSharedMemoryContext,
+	                 "PortalMemory",
+                   ALLOCSET_DEFAULT_MINSIZE,
+                   ALLOCSET_DEFAULT_INITSIZE,
+                   ALLOCSET_DEFAULT_MAXSIZE,
+                   SHM_DEFAULT_SEGMENT);
 
 	ctl.keysize = MAX_PORTALNAME_LEN;
 	ctl.entrysize = sizeof(PortalHashEnt);

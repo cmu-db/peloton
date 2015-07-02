@@ -26,11 +26,9 @@ class PlanTransformer {
 
   PlanTransformer(){};
 
-  static PlanTransformer& GetInstance();
+  static void PrintPlanState(const PlanState *plan_state);
 
-  void PrintPlanState(const PlanState *plan_state) const;
-
-  planner::AbstractPlanNode *TransformPlan(const PlanState *plan_state);
+  static planner::AbstractPlanNode *TransformPlan(const PlanState *plan_state);
 
  private:
 
