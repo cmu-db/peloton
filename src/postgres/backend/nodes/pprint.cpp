@@ -42,6 +42,12 @@ void printPlanStateTree(const PlanState *planstate) {
   //FILE *minglog = fopen(logpath, "a+");
   print_plan(stdout, planstate, NULL, NULL, 0);
   fprintf(stdout, "\n");
+
+  fprintf(stdout, "printing plan state :: \n");
+  fflush(stdout);
+
+  print_plan(stdout, planstate, NULL, NULL, 0);
+  //fprintf(minglog, "\n");
   //fclose(minglog);
 }
 
