@@ -764,11 +764,8 @@ peloton_send_ddl(Node *parsetree, const char *queryString)
    */
   oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
 
-  msg.m_parsetree = (Node *) palloc(sizeof(Node));
-  memcpy(msg.m_parsetree, parsetree, sizeof(Node));
-
-  msg.m_queryString = (char *) palloc(sizeof(char));
-  strcpy(msg.m_queryString, queryString);
+  msg.m_parsetree = parsetree;
+  msg.m_queryString = queryString;
 
   /*
    * Switch back to old context.
@@ -816,15 +813,26 @@ peloton_recv_dml(Peloton_MsgDML *msg, int len)
 static void
 peloton_recv_ddl(Peloton_MsgDDL *msg, int len)
 {
-  Node *parsetree;
+  Node* parsetree;
+  char* queryString;
 
   if(msg != NULL)
   {
+    /* Get the queryString */
+    queryString = msg->m_queryString;
+
+    if(queryString != NULL)
+    {
+      fprintf(stdout, "queryString : %s \n", queryString);
+      fflush(stdout);
+    }
+
     /* Get the parsetree */
     parsetree = msg->m_parsetree;
 
     if(parsetree != NULL)
     {
+      fprintf(stdout, "Parsetree type : %d\n", parsetree->type);
       peloton::bridge::DDL::ProcessUtility(msg->m_parsetree, msg->m_queryString);
     }
   }
