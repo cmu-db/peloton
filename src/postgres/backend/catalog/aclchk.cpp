@@ -668,7 +668,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 		case ACL_OBJECT_LARGEOBJECT:
 			foreach(cell, objnames)
 			{
-				Oid			lobjOid = oidparse(lfirst(cell));
+				Oid	lobjOid = oidparse(static_cast<Node *>(lfirst(cell)));
 
 				if (!LargeObjectExists(lobjOid))
 					ereport(ERROR,

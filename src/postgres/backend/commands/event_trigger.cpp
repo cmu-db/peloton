@@ -1232,7 +1232,7 @@ EventTriggerBeginCompleteQuery(void)
 								ALLOCSET_DEFAULT_MINSIZE,
 								ALLOCSET_DEFAULT_INITSIZE,
 								ALLOCSET_DEFAULT_MAXSIZE);
-	state = MemoryContextAlloc(cxt, sizeof(EventTriggerQueryState));
+	state = static_cast<EventTriggerQueryState *>(MemoryContextAlloc(cxt, sizeof(EventTriggerQueryState)));
 	state->cxt = cxt;
 	slist_init(&(state->SQLDropList));
 	state->in_sql_drop = false;
@@ -1669,7 +1669,7 @@ EventTriggerCollectSimpleCommand(ObjectAddress address,
 
 	command->d.simple.address = address;
 	command->d.simple.secondaryObject = secondaryObject;
-	command->parsetree = copyObject(parsetree);
+	command->parsetree = static_cast<Node *>(copyObject(parsetree));
 
 	currentEventTriggerState->commandList = lappend(currentEventTriggerState->commandList,
 											  command);
@@ -1711,7 +1711,7 @@ EventTriggerAlterTableStart(Node *parsetree)
 	command->d.alterTable.classId = RelationRelationId;
 	command->d.alterTable.objectId = InvalidOid;
 	command->d.alterTable.subcmds = NIL;
-	command->parsetree = copyObject(parsetree);
+	command->parsetree = static_cast<Node *>(copyObject(parsetree));
 
 	currentEventTriggerState->currentCommand = command;
 
@@ -1759,7 +1759,7 @@ EventTriggerCollectAlterTableSubcmd(Node *subcmd, ObjectAddress address)
 
 	newsub = static_cast<CollectedATSubcmd *>(palloc(sizeof(CollectedATSubcmd)));
 	newsub->address = address;
-	newsub->parsetree = copyObject(subcmd);
+	newsub->parsetree = static_cast<Node *>(copyObject(subcmd));
 
 	currentEventTriggerState->currentCommand->d.alterTable.subcmds =
 		lappend(currentEventTriggerState->currentCommand->d.alterTable.subcmds, newsub);
@@ -1868,7 +1868,7 @@ EventTriggerCollectAlterOpFam(AlterOpFamilyStmt *stmt, Oid opfamoid,
 					 OperatorFamilyRelationId, opfamoid);
 	command->d.opfam.operators = operators;
 	command->d.opfam.procedures = procedures;
-	command->parsetree = copyObject(stmt);
+	command->parsetree = static_cast<Node *>(copyObject(stmt));
 
 	currentEventTriggerState->commandList =
 		lappend(currentEventTriggerState->commandList, command);
@@ -1901,7 +1901,7 @@ EventTriggerCollectCreateOpClass(CreateOpClassStmt *stmt, Oid opcoid,
 					 OperatorClassRelationId, opcoid);
 	command->d.createopc.operators = operators;
 	command->d.createopc.procedures = procedures;
-	command->parsetree = copyObject(stmt);
+	command->parsetree = static_cast<Node *>(copyObject(stmt));
 
 	currentEventTriggerState->commandList =
 		lappend(currentEventTriggerState->commandList, command);
@@ -1936,7 +1936,7 @@ EventTriggerCollectAlterTSConfig(AlterTSConfigurationStmt *stmt, Oid cfgId,
 	command->d.atscfg.dictIds = static_cast<Oid *>(palloc(sizeof(Oid) * ndicts));
 	memcpy(command->d.atscfg.dictIds, dictIds, sizeof(Oid) * ndicts);
 	command->d.atscfg.ndicts = ndicts;
-	command->parsetree = copyObject(stmt);
+	command->parsetree = static_cast<Node *>(copyObject(stmt));
 
 	currentEventTriggerState->commandList =
 		lappend(currentEventTriggerState->commandList, command);
@@ -1966,7 +1966,7 @@ EventTriggerCollectAlterDefPrivs(AlterDefaultPrivilegesStmt *stmt)
 	command->type = SCT_AlterDefaultPrivileges;
 	command->d.defprivs.objtype = stmt->action->objtype;
 	command->in_extension = creating_extension;
-	command->parsetree = copyObject(stmt);
+	command->parsetree = static_cast<Node *>(copyObject(stmt));
 
 	currentEventTriggerState->commandList =
 		lappend(currentEventTriggerState->commandList, command);

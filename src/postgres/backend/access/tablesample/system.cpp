@@ -161,7 +161,7 @@ tsm_system_cost(PG_FUNCTION_ARGS)
 	Node		   *pctnode;
 	float4			samplesize;
 
-	pctnode = linitial(args);
+	pctnode = static_cast<Node *>(linitial(args));
 	pctnode = estimate_expression_value(root, pctnode);
 
 	if (IsA(pctnode, RelabelType))

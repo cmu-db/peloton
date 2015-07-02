@@ -175,7 +175,7 @@ void
 pq_init(void)
 {
 	PqSendBufferSize = PQ_SEND_BUFFER_SIZE;
-	PqSendBuffer = MemoryContextAlloc(TopMemoryContext, PqSendBufferSize);
+	PqSendBuffer = static_cast<char *>(MemoryContextAlloc(TopMemoryContext, PqSendBufferSize));
 	PqSendPointer = PqSendStart = PqRecvPointer = PqRecvLength = 0;
 	PqCommBusy = false;
 	PqCommReadingMsg = false;
@@ -1526,7 +1526,7 @@ socket_putmessage_noblock(char msgtype, const char *s, size_t len)
 	required = PqSendPointer + 1 + 4 + len;
 	if (required > PqSendBufferSize)
 	{
-		PqSendBuffer = restatic_cast<char *>(palloc(PqSendBuffer, required));
+		PqSendBuffer = static_cast<char *>(repalloc(PqSendBuffer, required));
 		PqSendBufferSize = required;
 	}
 	res = pq_putmessage(msgtype, s, len);

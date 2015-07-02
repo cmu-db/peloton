@@ -1948,7 +1948,7 @@ ReorderBufferSerializeReserve(ReorderBuffer *rb, Size sz)
 	}
 	else if (rb->outbufsize < sz)
 	{
-		rb->outbuf = restatic_cast<char *>(palloc(rb->outbuf, sz));
+		rb->outbuf = static_cast<char *>(repalloc(rb->outbuf, sz));
 		rb->outbufsize = sz;
 	}
 }

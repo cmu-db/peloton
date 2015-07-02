@@ -725,7 +725,7 @@ static int	readFile = -1;
 static XLogSegNo readSegNo = 0;
 static uint32 readOff = 0;
 static uint32 readLen = 0;
-static XLogSource readSource = 0;		/* XLOG_FROM_* code */
+static XLogSource readSource = static_cast<XLogSource>(0);		/* XLOG_FROM_* code */
 
 /*
  * Keeps track of which source we're currently reading from. This is
@@ -734,7 +734,7 @@ static XLogSource readSource = 0;		/* XLOG_FROM_* code */
  * attempt to read from currentSource failed, and we should try another source
  * next.
  */
-static XLogSource currentSource = 0;	/* XLOG_FROM_* code */
+static XLogSource currentSource = static_cast<XLogSource>(0);	/* XLOG_FROM_* code */
 static bool lastSourceFailed = false;
 
 typedef struct XLogPageReadPrivate
@@ -752,8 +752,8 @@ typedef struct XLogPageReadPrivate
  * also changes when we try to read from a source and fail, while
  * XLogReceiptSource tracks where we last successfully read some WAL.)
  */
-static TimestampTz XLogReceiptTime = 0;
-static XLogSource XLogReceiptSource = 0;		/* XLOG_FROM_* code */
+static TimestampTz XLogReceiptTime = static_cast<TimestampTz>(0);
+static XLogSource XLogReceiptSource = static_cast<XLogSource>(0);		/* XLOG_FROM_* code */
 
 /* State information for XLOG reading */
 static XLogRecPtr ReadRecPtr;	/* start of last record read */
@@ -3364,8 +3364,8 @@ XLogFileRead(XLogSegNo segno, int emode, TimeLineID tli,
 		set_ps_display(activitymsg, false);
 
 		/* Track source of data in assorted state variables */
-		readSource = source;
-		XLogReceiptSource = source;
+		readSource = static_cast<XLogSource>(source);
+		XLogReceiptSource = static_cast<XLogSource>(source);
 		/* In FROM_STREAM case, caller tracks receipt time, not me */
 		if (source != XLOG_FROM_STREAM)
 			XLogReceiptTime = GetCurrentTimestamp();
@@ -4019,7 +4019,7 @@ ReadRecord(XLogReaderState *xlogreader, XLogRecPtr RecPtr, int emode,
 				 * so that we will check the archive next.
 				 */
 				lastSourceFailed = false;
-				currentSource = 0;
+				currentSource = static_cast<XLogSource>(0);
 
 				continue;
 			}
@@ -6098,7 +6098,7 @@ StartupXLOG(void)
 
 			foreach(lc, tablespaces)
 			{
-				tablespaceinfo *ti = lfirst(lc);
+				tablespaceinfo *ti = static_cast<tablespaceinfo *>(lfirst(lc));
 				char	*linkloc;
 
 				linkloc = psprintf("pg_tblspc/%s", ti->oid);
@@ -10990,7 +10990,7 @@ XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr, int reqLen,
 
 		close(readFile);
 		readFile = -1;
-		readSource = 0;
+		readSource = static_cast<XLogSource>(0);
 	}
 
 	XLByteToSeg(targetPagePtr, readSegNo);
@@ -11010,7 +11010,7 @@ retry:
 				close(readFile);
 			readFile = -1;
 			readLen = 0;
-			readSource = 0;
+			readSource = static_cast<XLogSource>(0);
 
 			return -1;
 		}
@@ -11078,7 +11078,7 @@ next_record_is_invalid:
 		close(readFile);
 	readFile = -1;
 	readLen = 0;
-	readSource = 0;
+	readSource = static_cast<XLogSource>(0);
 
 	/* In standby-mode, keep trying */
 	if (StandbyMode)

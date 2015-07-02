@@ -94,8 +94,8 @@ XLogReaderAllocate(XLogPageReadCB pagereadfunc, void *private_data)
 	state->private_data = private_data;
 	/* ReadRecPtr and EndRecPtr initialized to zeroes above */
 	/* readSegNo, readOff, readLen, readPageTLI initialized to zeroes above */
-	state->errormsg_buf = palloc_extended(MAX_ERRORMSG_LEN + 1,
-										  MCXT_ALLOC_NO_OOM);
+	state->errormsg_buf = static_cast<char *>(palloc_extended(MAX_ERRORMSG_LEN + 1,
+										  MCXT_ALLOC_NO_OOM));
 	if (!state->errormsg_buf)
 	{
 		pfree(state->readBuf);
@@ -1036,7 +1036,7 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 			blk->in_use = true;
 
 			COPY_HEADER_FIELD(&fork_flags, sizeof(uint8));
-			blk->forknum = fork_flags & BKPBLOCK_FORK_MASK;
+			blk->forknum = static_cast<ForkNumber>(fork_flags & BKPBLOCK_FORK_MASK);
 			blk->flags = fork_flags;
 			blk->has_image = ((fork_flags & BKPBLOCK_HAS_IMAGE) != 0);
 			blk->has_data = ((fork_flags & BKPBLOCK_HAS_DATA) != 0);
