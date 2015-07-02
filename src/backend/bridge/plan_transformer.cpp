@@ -28,19 +28,10 @@ namespace peloton {
 namespace bridge {
 
 /**
- * @brief Get an instance of the plan transformer.
- * @return The instance.
- */
-PlanTransformer& PlanTransformer::GetInstance() {
-  static PlanTransformer planTransformer;
-  return planTransformer;
-}
-
-/**
  * @brief Pretty print the plan state tree.
  * @return none.
  */
-void PlanTransformer::PrintPlanState(const PlanState *plan_state) const {
+void PlanTransformer::PrintPlanState(const PlanState *plan_state) {
   printPlanStateTree(plan_state);
 }
 
