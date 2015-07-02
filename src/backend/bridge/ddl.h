@@ -7,11 +7,13 @@
 
 #pragma once
 
+#include "postgres.h"
 #include "pg_config_manual.h"
 #include "c.h"
 
 #include "bridge/bridge.h"
 #include "nodes/nodes.h"
+#include "nodes/parsenodes.h"
 #include "catalog/pg_am.h"
 
 #include "backend/catalog/catalog.h"
@@ -53,15 +55,27 @@ class DDL {
   DDL(DDL &&) = delete;
   DDL& operator=(DDL &&) = delete;
 
+  //===--------------------------------------------------------------------===//
+  // Function Definition
+  //===--------------------------------------------------------------------===//
+
   static void ProcessUtility(Node *parsetree,
                              const char *queryString);
+
+  static std::vector<catalog::ColumnInfo> ConstructColumnInfoByParsingCreateStmt( CreateStmt* Cstmt );
+
+  //===--------------------------------------------------------------------===//
+  // Create Object
+  //===--------------------------------------------------------------------===//
 
   static bool CreateTable(std::string table_name,
                           DDL_ColumnInfo *schema,
                           int num_columns,
                           int *num_of_constraints_of_each_column);
 
-  static bool DropTable(Oid table_oid);
+  static bool CreateTable2( std::string table_name,
+                            std::vector<catalog::ColumnInfo> column_infos,
+                            catalog::Schema *schema = NULL);
 
   static bool CreateIndex(std::string index_name,
                           std::string table_name,
@@ -69,6 +83,15 @@ class DDL {
                           bool unique_keys,
                           char** key_column_names,
                           int num_columns_in_key);
+
+  //===--------------------------------------------------------------------===//
+  // Drop Object
+  //===--------------------------------------------------------------------===//
+
+  static bool DropTable(Oid table_oid);
+
+  // TODO : DropIndex
+  //static bool DropIndex(Oid index_oid);
 
 };
 
