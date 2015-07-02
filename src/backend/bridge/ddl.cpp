@@ -48,6 +48,9 @@ void DDL::ProcessUtility(Node *parsetree,
   assert(queryString != nullptr);
 
   std::cout << "Parsetree type :: " << parsetree->type << "\n";
+  std::cout << queryString;
+
+  return;
 
   // Process depending on type of utility statement
   switch (nodeTag(parsetree))
@@ -247,7 +250,7 @@ void DDL::ProcessUtility(Node *parsetree,
     break;
 
     default:
-      elog(ERROR, "unrecognized node type: %d",
+      elog(LOG, "unrecognized node type: %d",
            (int) nodeTag(parsetree));
       break;
   }
