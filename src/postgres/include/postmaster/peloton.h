@@ -22,8 +22,10 @@
  */
 typedef enum PelotonMsgType
 {
-  PELOTON_MTYPE_DUMMY,
-  PELOTON_MTYPE_PLAN
+  PELOTON_MTYPE_INVALID,    // Invalid message type
+  PELOTON_MTYPE_DUMMY,      // Dummy message type
+  PELOTON_MTYPE_DDL,        // DDL information
+  PELOTON_MTYPE_DML         // DML information
 } PelotonMsgType;
 
 /* ------------------------------------------------------------
@@ -61,14 +63,25 @@ typedef struct Peloton_MsgDummy
 } Peloton_MsgDummy;
 
 /* ----------
- * Peloton_MsgPlan     Sent by the backend to share the plan to peloton.
+ * Peloton_MsgDML     Sent by the backend to share the plan to peloton.
  * ----------
  */
-typedef struct Peloton_MsgPlan
+typedef struct Peloton_MsgDML
 {
   Peloton_MsgHdr m_hdr;
   PlanState *m_node;
-} Peloton_MsgPlan;
+} Peloton_MsgDML;
+
+/* ----------
+ * Peloton_MsgDDL     Sent by the backend to share the plan to peloton.
+ * ----------
+ */
+typedef struct Peloton_MsgDDL
+{
+  Peloton_MsgHdr m_hdr;
+  Node *m_parsetree;
+  char *m_queryString;
+} Peloton_MsgDDL;
 
 /* ----------
  * Peloton_Msg         Union over all possible messages.
@@ -78,7 +91,8 @@ typedef union Peloton_Msg
 {
   Peloton_MsgHdr msg_hdr;
   Peloton_MsgDummy msg_dummy;
-  Peloton_MsgPlan msg_plan;
+  Peloton_MsgDDL msg_ddl;
+  Peloton_MsgDML msg_dml;
 } Peloton_Msg;
 
 /* Status inquiry functions */
@@ -93,7 +107,8 @@ extern void peloton_init(void);
 extern int  peloton_start(void);
 
 extern void peloton_send_ping(void);
-extern void peloton_send_node(PlanState *node);
+extern void peloton_send_dml(PlanState *node);
+extern void peloton_send_ddl(Node *parsetree, const char *queryString);
 
 #endif   /* PELOTON_H */
 
