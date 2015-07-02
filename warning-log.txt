@@ -115,10 +115,6 @@ cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [e
   CXX      postgres/backend/access/gist/libpeloton_la-gistxlog.lo
   CXX      postgres/backend/access/hash/libpeloton_la-hash.lo
   CXX      postgres/backend/access/hash/libpeloton_la-hashfunc.lo
-../../src/postgres/backend/access/gist/gistxlog.cpp: In function 'IndexTupleData** decodePageSplitRecord(char*, int, int*)':
-../../src/postgres/backend/access/gist/gistxlog.cpp:154:41: warning: invalid conversion from 'void*' to 'IndexTupleData**' [-fpermissive]
-  tuples = palloc(*n * sizeof(IndexTuple));
-                                         ^
   CXX      postgres/backend/access/hash/libpeloton_la-hashinsert.lo
   CXX      postgres/backend/access/hash/libpeloton_la-hashovfl.lo
   CXX      postgres/backend/access/hash/libpeloton_la-hashpage.lo
