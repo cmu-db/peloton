@@ -18,6 +18,7 @@
 #include "parser/parse_utilcmd.h"
 #include "parser/parse_type.h"
 #include "access/htup_details.h"
+#include "utils/resowner.h"
 #include "utils/syscache.h"
 #include "catalog/pg_type.h"
 
@@ -55,12 +56,9 @@ void DDL::ProcessUtility(Node *parsetree,
       List     *stmts;
       ListCell   *l;
 
-  std::cout << "JWKIM DEBUG :: " << __LINE__ << "\n";
       /* Run parse analysis ... */
       stmts = transformCreateStmt((CreateStmt *) parsetree,
                                   queryString);
-return;
-  std::cout << "JWKIM DEBUG :: " << __LINE__ << "\n";
 
       /* ... and do it */
       foreach(l, stmts)
@@ -548,7 +546,7 @@ bool DDL::CreateTable2( std::string table_name,
 
   Oid database_oid = GetCurrentDatabaseOid();
   if(database_oid == InvalidOid)
-  return false;
+    return false;
 
   // Construct our schema from vector of ColumnInfo
   if( schema == NULL) 
@@ -561,8 +559,8 @@ bool DDL::CreateTable2( std::string table_name,
   storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, schema, table_name);
 
   if(table != nullptr) {
-          LOG_INFO("Created table : %s\n", table_name.c_str());
-          return true;
+    LOG_INFO("Created table : %s\n", table_name.c_str());
+    return true;
   }
 
   return false;

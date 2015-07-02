@@ -45,6 +45,7 @@
 #include "postmaster/peloton.h"
 #include "backend/bridge/ddl.h"
 #include "backend/bridge/plan_transformer.h"
+#include "backend/bridge/utils.h"
 
 /* ----------
  * Local data
@@ -164,12 +165,6 @@ PelotonMain(int argc, char *argv[])
   pqsignal(SIGFPE, FloatExceptionHandler);
   pqsignal(SIGCHLD, SIG_DFL);
 
-  /*
-   * Create a resource owner to keep track of our resources (not clear that
-   * we need this, but may as well have one).
-   */
-  CurrentResourceOwner = ResourceOwnerCreate(NULL, "Peloton");
-
   /* Early initialization */
   BaseInit();
 
@@ -192,6 +187,9 @@ PelotonMain(int argc, char *argv[])
   {
     /* Prevents interrupts while cleaning up */
     HOLD_INTERRUPTS();
+
+    /* Report the stack trace to the server log */
+    peloton::bridge::PrintStackTrace();
 
     /* Report the error to the server log */
     EmitErrorReport();
@@ -223,6 +221,12 @@ PelotonMain(int argc, char *argv[])
 
   /* Init Peloton */
   BootstrapPeloton();
+
+  /*
+   * Create a resource owner to keep track of our resources (not clear that
+   * we need this, but may as well have one).
+   */
+  CurrentResourceOwner = ResourceOwnerCreate(NULL, "Peloton");
 
   /* Start main loop */
   peloton_MainLoop();
@@ -278,6 +282,8 @@ peloton_MainLoop(void)
   int     len;
   Peloton_Msg  msg;
   int     wr;
+
+  assert(CurrentResourceOwner != NULL);
 
   /*
    * Loop to process messages until we get SIGQUIT or detect ungraceful
@@ -357,6 +363,9 @@ peloton_MainLoop(void)
           break;
 
         case PELOTON_MTYPE_DDL:
+
+          assert(CurrentResourceOwner != NULL);
+
           peloton_recv_ddl((Peloton_MsgDDL*) &msg, len);
           break;
 
@@ -807,6 +816,8 @@ peloton_recv_ddl(Peloton_MsgDDL *msg, int len)
 {
   Node* parsetree;
   char* queryString;
+
+  assert(CurrentResourceOwner != NULL);
 
   if(msg != NULL)
   {
