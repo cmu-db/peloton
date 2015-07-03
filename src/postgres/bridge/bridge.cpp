@@ -330,8 +330,8 @@ SetNumberOfTuples(Oid relation_id, float num_tuples) {
  * @brief This function constructs all the user-defined tables in all databases
  * @return true or false, depending on whether we could bootstrap.
  */
-bool BootstrapPeloton(void)
-{
+bool BootstrapPeloton(void){
+
   // Relations for catalog tables
   Relation pg_class_rel;
   Relation pg_attribute_rel;
@@ -380,13 +380,14 @@ bool BootstrapPeloton(void)
         continue;
       }
 
+      std::vector<peloton::catalog::ColumnInfo> column_infos;
+
       attnum =  pg_class->relnatts;
       if( attnum > 0 )
       {
         HeapScanDesc pg_attribute_scan;
         HeapTuple pg_attribute_tuple;
         DDL_ColumnInfo ddl_schema[attnum]; // TODO :: REMOVE
-        std::vector<peloton::catalog::ColumnInfo> column_infos;
 
         // This will be different from pg's attnum, as we skip system columns
         int our_attnum; // TODO :: REMOVE
@@ -437,7 +438,7 @@ bool BootstrapPeloton(void)
               ddl_schema[column_itr].constraintType = NULL; // TODO :: REMOVE
               ddl_schema[column_itr].conname = NULL; // TODO :: REMOVE
 
-              peloton::PostgresValueType postgresValueType = pg_attribute->atttypid;
+              peloton::PostgresValueType postgresValueType = (peloton::PostgresValueType) pg_attribute->atttypid;
               int column_length = pg_attribute->attlen;
               bool is_inlined = true;
               if( pg_attribute->attlen == -1){
@@ -470,8 +471,8 @@ bool BootstrapPeloton(void)
           {
             // Create the Peloton table
 
-            //status = peloton::bridge::DDL::CreateTable(relation_name, ddl_schema, our_attnum, 0); // TODO :: REMOVE
-            status = peloton::bridge::DDL::CreateTable2(relation_name, column_infos);
+            status = peloton::bridge::DDL::CreateTable(relation_name, ddl_schema, our_attnum, 0); // TODO :: REMOVE
+            //status = peloton::bridge::DDL::CreateTable2(relation_name, column_infos);
 
             if(status == true) {
               elog(LOG, "Create Table \"%s\" in Peloton\n", relation_name);
@@ -507,18 +508,23 @@ bool BootstrapPeloton(void)
               // Search for the tuple in pg_index corresponding to our index
               if( pg_index->indexrelid == tuple_oid)
               {
-                char* ColumnNamesForKeySchema[column_itr];
-                int idx_itr;
+                char* ColumnNamesForKeySchema[column_itr]; // TODO :: REMOVE
+                int idx_itr; // TODO :: REMOVE
+                std::vector<std::string> key_column_names;
 
-                for(idx_itr = 0 ; idx_itr < column_itr ; idx_itr ++ )
-                {
+                
+                //TODO :: REMOVE
+                for(idx_itr = 0 ; idx_itr < column_itr ; idx_itr ++ ){
                    ColumnNamesForKeySchema[idx_itr] = (char*) malloc(sizeof(char)*strlen(ddl_schema[idx_itr].name));
                    strcpy(ColumnNamesForKeySchema[idx_itr], ddl_schema[idx_itr].name );
                 }
 
-                peloton::bridge::DDL::CreateIndex(relation_name, get_rel_name(pg_index->indrelid),
-                               0, pg_index->indisunique,
-                               ColumnNamesForKeySchema, our_attnum);
+                //for( auto column_info : column_infos ){
+                //  key_column_names.push_back( column_info.name );
+                //}
+
+                peloton::bridge::DDL::CreateIndex(relation_name, get_rel_name(pg_index->indrelid), 0, pg_index->indisunique, ColumnNamesForKeySchema, our_attnum);
+                //peloton::bridge::DDL::CreateIndex2(relation_name, get_rel_name(pg_index->indrelid), 0, pg_index->indisunique, key_column_names );
 
                 if(status == true) {
                   elog(LOG, "Create Index \"%s\" in Peloton\n", relation_name);
@@ -548,7 +554,8 @@ bool BootstrapPeloton(void)
 
           case 'r':
             // Create the Peloton table
-            status = peloton::bridge::DDL::CreateTable(relation_name, NULL, 0, 0);
+            status = peloton::bridge::DDL::CreateTable(relation_name, NULL, 0, 0); // TODO :: REMOVE
+            //status = peloton::bridge::DDL::CreateTable2(relation_name, column_infos);
             if(status == true) {
               elog(LOG, "Create Table \"%s\" in Peloton\n", relation_name);
             }
