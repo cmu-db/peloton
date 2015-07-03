@@ -56,7 +56,8 @@ void DDL::ProcessUtility(Node *parsetree,
       List     *stmts;
       ListCell   *l;
 
-      return;
+      assert(CurrentResourceOwner != NULL);
+
       /* Run parse analysis ... */
       stmts = transformCreateStmt((CreateStmt *) parsetree,
                                   queryString);
