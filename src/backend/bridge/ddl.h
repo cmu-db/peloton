@@ -84,6 +84,14 @@ class DDL {
                           char** key_column_names,
                           int num_columns_in_key);
 
+  static bool CreateIndex2(std::string index_name,
+                           std::string table_name,
+                           int index_type,
+                           bool unique_keys,
+                           std::vector<std::string> key_column_names);
+
+
+
   //===--------------------------------------------------------------------===//
   // Drop Object
   //===--------------------------------------------------------------------===//
