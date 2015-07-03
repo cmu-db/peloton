@@ -219,6 +219,17 @@ PelotonMain(int argc, char *argv[])
 
   ereport(LOG, (errmsg("peloton: processing database \"%s\"", "postgres")));
 
+  fprintf(stdout, "Peloton :: PID :: %d \n", getpid());
+  fprintf(stdout, "Peloton :: TopMemoryContext :: %p \n", TopMemoryContext);
+  fprintf(stdout, "Peloton :: PostmasterContext :: %p \n", PostmasterContext);
+  fprintf(stdout, "Peloton :: CacheMemoryContext :: %p \n", CacheMemoryContext);
+  fprintf(stdout, "Peloton :: MessageContext :: %p \n", MessageContext);
+  fprintf(stdout, "Peloton :: TopTransactionContext :: %p \n", TopTransactionContext);
+  fprintf(stdout, "Peloton :: CurrentTransactionContext :: %p \n", CurTransactionContext);
+  fprintf(stdout, "Peloton :: ErrorContext :: %p \n", ErrorContext);
+  fprintf(stdout, "Peloton :: TopSharedMemoryContext :: %p \n", TopSharedMemoryContext);
+  fflush(stdout);
+
   /* Init Peloton */
   BootstrapPeloton();
 
@@ -227,6 +238,12 @@ PelotonMain(int argc, char *argv[])
    * we need this, but may as well have one).
    */
   CurrentResourceOwner = ResourceOwnerCreate(NULL, "Peloton");
+
+  /*
+   * Make sure we aren't in PostmasterContext anymore.  (We can't delete it
+   * just yet, though, because InitPostgres will need the HBA data.)
+   */
+  MemoryContextSwitchTo(TopMemoryContext);
 
   /* Start main loop */
   peloton_MainLoop();
@@ -282,8 +299,6 @@ peloton_MainLoop(void)
   int     len;
   Peloton_Msg  msg;
   int     wr;
-
-  assert(CurrentResourceOwner != NULL);
 
   /*
    * Loop to process messages until we get SIGQUIT or detect ungraceful
@@ -363,9 +378,6 @@ peloton_MainLoop(void)
           break;
 
         case PELOTON_MTYPE_DDL:
-
-          assert(CurrentResourceOwner != NULL);
-
           peloton_recv_ddl((Peloton_MsgDDL*) &msg, len);
           break;
 
@@ -766,6 +778,17 @@ peloton_send_ddl(Node *parsetree, const char *queryString)
   if (pelotonSock == PGINVALID_SOCKET)
     return;
 
+  fprintf(stdout, "Backend :: PID :: %d \n", getpid());
+  fprintf(stdout, "Backend :: TopMemoryContext :: %p \n", TopMemoryContext);
+  fprintf(stdout, "Backend :: PostmasterContext :: %p \n", PostmasterContext);
+  fprintf(stdout, "Backend :: CacheMemoryContext :: %p \n", CacheMemoryContext);
+  fprintf(stdout, "Backend :: MessageContext :: %p \n", MessageContext);
+  fprintf(stdout, "Backend :: TopTransactionContext :: %p \n", TopTransactionContext);
+  fprintf(stdout, "Backend :: CurrentTransactionContext :: %p \n", CurTransactionContext);
+  fprintf(stdout, "Backend :: ErrorContext :: %p \n", ErrorContext);
+  fprintf(stdout, "Backend :: TopSharedMemoryContext :: %p \n", TopSharedMemoryContext);
+  fflush(stdout);
+
   peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_DDL);
 
   msg.m_parsetree = parsetree;
@@ -830,7 +853,7 @@ peloton_recv_ddl(Peloton_MsgDDL *msg, int len)
     if(parsetree != NULL)
     {
       fprintf(stdout, "Parsetree type : %d\n", parsetree->type);
-      peloton::bridge::DDL::ProcessUtility(msg->m_parsetree, msg->m_queryString);
+      //peloton::bridge::DDL::ProcessUtility(msg->m_parsetree, msg->m_queryString);
     }
   }
 
