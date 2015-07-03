@@ -630,6 +630,7 @@ ValueType PostgresValueTypeToPelotonValueType(PostgresValueType PostgresValType)
     case POSTGRES_VALUE_TYPE_BPCHAR2:
     case POSTGRES_VALUE_TYPE_VARCHAR:
     case POSTGRES_VALUE_TYPE_VARCHAR2:
+    case POSTGRES_VALUE_TYPE_TEXT: 
       valueType = VALUE_TYPE_VARCHAR;
       break;
   
@@ -659,32 +660,26 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(PostgresConstraintT
 
   switch( PostgresConstrType ){
     case POSTGRES_CONSTRAINT_CHECK:
-      printf(" ConstraintNode->contype is CONSTR_CHECK\n");
       constraintType = CONSTRAINT_TYPE_CHECK;
       break;
 
     case POSTGRES_CONSTRAINT_NOTNULL:
-      printf(" ConstraintNode->contype is CONSTR_NOTNULL\n");
       constraintType = CONSTRAINT_TYPE_NOTNULL;
       break;
 
     case POSTGRES_CONSTRAINT_UNIQUE:
-      printf(" ConstraintNode->contype is CONSTR_UNIQUE\n");
       constraintType = CONSTRAINT_TYPE_UNIQUE;
       break;
 
     case POSTGRES_CONSTRAINT_PRIMARY:
-      printf(" ConstraintNode->contype is CONSTR_PRIMARY\n");
       constraintType = CONSTRAINT_TYPE_PRIMARY;
       break;
 
     case POSTGRES_CONSTRAINT_FOREIGN:
-      printf(" ConstraintNode->contype is CONST_FOREIGN\n");
       constraintType = CONSTRAINT_TYPE_NOTNULL;
       break;
 
     case POSTGRES_CONSTRAINT_EXCLUSION:
-      printf(" ConstraintNode->contype is CONSTR_EXCLUSION\n");
       constraintType = CONSTRAINT_TYPE_NOTNULL;
       break;
 

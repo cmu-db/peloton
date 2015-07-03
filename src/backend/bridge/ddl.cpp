@@ -276,14 +276,31 @@ std::vector<catalog::ColumnInfo> ConstructColumnInfoByParsingCreateStmt( CreateS
 
     ColumnDef  *coldef = lfirst(entry);
 
-    // TODO : Make it simple ..
-    Type tup = typenameType(NULL, coldef->typeName, NULL);
-    Form_pg_type typ = (Form_pg_type) GETSTRUCT(tup);
-    Oid typeoid = HeapTupleGetOid(tup);
+    // Parsing the column value type
+    Oid typeoid, typemod;
+    int typelen;
+
+    // Get the type oid and type mod with given typeName
+    typeoid = typenameTypeId(NULL, coldef->typeName);
+
+    typenameTypeIdAndMod(NULL, coldef->typeName, &typeoid, &typemod);
+
+    // Get type length
+    Type tup = typeidType(typeoid);
+    typelen = typeLen(tup);
     ReleaseSysCache(tup);
 
+    // For a fixed-size type, typlen is the number of bytes in the internal
+    // representation of the type. But for a variable-length type, typlen is negative.
+    if( typelen == -1 )
+    {
+      printf("%u\n", typemod);
+      // we need to get the atttypmod from pg_attribute
+    }
+     
+
     ValueType column_valueType = PostgresValueTypeToPelotonValueType( (PostgresValueType) typeoid );
-    int column_length = typ->typlen;
+    int column_length = typelen;
     std::string column_name = coldef->colname;
     bool column_allow_null = !coldef->is_not_null;
 
