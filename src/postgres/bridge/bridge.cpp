@@ -31,6 +31,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "parser/parse_type.h" // TODO :: JUST FOR DEBUGGING
+
 //===--------------------------------------------------------------------===//
 // Postgres Utility Functions
 //===--------------------------------------------------------------------===//
@@ -431,16 +433,23 @@ bool BootstrapPeloton(void)
 
               // NOTE: We set it as true later for VARCHAR.
               ddl_schema[column_itr].is_inlined = false; // TODO :: REMOVE
-
               // TODO :: Need to be updated ( read constraints from catalog and set it up )
               ddl_schema[column_itr].constraintType = NULL; // TODO :: REMOVE
               ddl_schema[column_itr].conname = NULL; // TODO :: REMOVE
 
-              peloton::ValueType valueType = peloton::PostgresValueTypeToPelotonValueType( (peloton::PostgresValueType) pg_attribute->atttypid);
+              peloton::PostgresValueType postgresValueType = pg_attribute->atttypid;
+              int column_length = pg_attribute->attlen;
+              bool is_inlined = true;
+              if( pg_attribute->attlen == -1){
+                 column_length = pg_attribute->atttypmod;
+                 is_inlined = false;
+              }
+              peloton::ValueType valueType = peloton::PostgresValueTypeToPelotonValueType( postgresValueType );
               peloton::catalog::ColumnInfo* column_info = new peloton::catalog::ColumnInfo( valueType,
-                                                                                            pg_attribute->attlen,
+                                                                                            column_length,
                                                                                             NameStr(pg_attribute->attname),   
-                                                                                            !pg_attribute->attnotnull);
+                                                                                            !pg_attribute->attnotnull,
+                                                                                            is_inlined);
               column_infos.push_back(*column_info);
               column_itr++; // TODO :: REMOVE
             }
