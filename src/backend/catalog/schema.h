@@ -91,9 +91,10 @@ class ColumnInfo {
 
 
 
-  // Configures all members except offset and constraint
+  // Configures ( type, length, name, allow_null, is_inlined )
   ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name, bool allow_null, bool is_inlined)
  : type(column_type), offset(0), name(column_name), allow_null(allow_null), is_inlined(is_inlined){
+  
     if(is_inlined){
       fixed_length = column_length;
       variable_length = 0;
