@@ -16,6 +16,7 @@
 #include "bridge/bridge.h"
 #include "backend/bridge/ddl.h"
 #include "backend/catalog/schema.h"
+#include "backend/catalog/constraint.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_class.h"
@@ -426,6 +427,8 @@ bool BootstrapPeloton(void){
                 strcmp( NameStr(pg_attribute->attname),"xmin" ) &&
                 strcmp( NameStr(pg_attribute->attname),"tableoid" ) )
             {
+              std::vector<peloton::catalog::Constraint> constraint_infos;
+
               ddl_schema[column_itr].valueType = pg_attribute->atttypid; // TODO :: REMOVE
               ddl_schema[column_itr].column_offset = column_itr; // TODO :: REMOVE
               ddl_schema[column_itr].column_length = pg_attribute->attlen; // TODO :: REMOVE
@@ -445,12 +448,20 @@ bool BootstrapPeloton(void){
                  column_length = pg_attribute->atttypmod;
                  is_inlined = false;
               }
+
               peloton::ValueType valueType = peloton::PostgresValueTypeToPelotonValueType( postgresValueType );
+
+              // Check constraints
+              if( pg_attribute->attnotnull ){
+                peloton::catalog::Constraint* constraint = new peloton::catalog::Constraint( peloton::CONSTRAINT_TYPE_NOTNULL );
+                constraint_infos.push_back(*constraint);
+              }
+
               peloton::catalog::ColumnInfo* column_info = new peloton::catalog::ColumnInfo( valueType,
                                                                                             column_length,
                                                                                             NameStr(pg_attribute->attname),   
-                                                                                            !pg_attribute->attnotnull,
-                                                                                            is_inlined);
+                                                                                            is_inlined,
+                                                                                            constraint_infos);
               column_infos.push_back(*column_info);
               column_itr++; // TODO :: REMOVE
             }
@@ -471,8 +482,8 @@ bool BootstrapPeloton(void){
           {
             // Create the Peloton table
 
-            status = peloton::bridge::DDL::CreateTable(relation_name, ddl_schema, our_attnum, 0); // TODO :: REMOVE
-            //status = peloton::bridge::DDL::CreateTable2(relation_name, column_infos);
+            //status = peloton::bridge::DDL::CreateTable(relation_name, ddl_schema, our_attnum, 0); // TODO :: REMOVE
+            status = peloton::bridge::DDL::CreateTable2(relation_name, column_infos);
 
             if(status == true) {
               elog(LOG, "Create Table \"%s\" in Peloton\n", relation_name);
@@ -523,8 +534,21 @@ bool BootstrapPeloton(void){
                 //  key_column_names.push_back( column_info.name );
                 //}
 
-                //peloton::bridge::DDL::CreateIndex(relation_name, get_rel_name(pg_index->indrelid), 0, pg_index->indisunique, ColumnNamesForKeySchema, our_attnum);
-                peloton::bridge::DDL::CreateIndex2(relation_name, get_rel_name(pg_index->indrelid), 0, pg_index->indisunique, key_column_names , pg_index->indisprimary);
+                //peloton::bridge::DDL::CreateIndex(relation_name, get_rel_name(pg_index->indrelid), 0, pg_index->indisunique, ColumnNamesForKeySchema, our_attnum); // TODO :: REMOVE
+                peloton::IndexMethodType method_type = peloton::INDEX_METHOD_TYPE_BTREE_MULTIMAP;
+                peloton::IndexType type;
+
+                if( pg_index->indisprimary ){
+                  type = peloton::INDEX_TYPE_PRIMARY_KEY;  
+                }
+                else if( pg_index->indisunique ){
+                  type = peloton::INDEX_TYPE_UNIQUE;  
+                }
+                else{
+                  type =peloton:: INDEX_TYPE_NORMAL;
+                }
+
+                peloton::bridge::DDL::CreateIndex2(relation_name, get_rel_name(pg_index->indrelid), method_type, type, pg_index->indisunique, key_column_names, true);
 
                 if(status == true) {
                   elog(LOG, "Create Index \"%s\" in Peloton\n", relation_name);
@@ -554,8 +578,8 @@ bool BootstrapPeloton(void){
 
           case 'r':
             // Create the Peloton table
-            status = peloton::bridge::DDL::CreateTable(relation_name, NULL, 0, 0); // TODO :: REMOVE
-            //status = peloton::bridge::DDL::CreateTable2(relation_name, column_infos);
+            //status = peloton::bridge::DDL::CreateTable(relation_name, NULL, 0, 0); // TODO :: REMOVE
+            status = peloton::bridge::DDL::CreateTable2(relation_name, column_infos);
             if(status == true) {
               elog(LOG, "Create Table \"%s\" in Peloton\n", relation_name);
             }

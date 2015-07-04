@@ -34,10 +34,10 @@ TEST(TileGroupTests, BasicTest) {
 
     // SCHEMA
 
-    catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", false, true);
-    catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", false, true);
-    catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", false, true);
-    catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 25, "D", false, false);
+    catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
+    catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
+    catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", true);
+    catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 25, "D", false);
 
     columns.push_back(column1);
     columns.push_back(column2);
@@ -159,10 +159,10 @@ TEST(TileGroupTests, StressTest) {
     std::vector<catalog::Schema> schemas;
 
     // SCHEMA
-    catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", false, true);
-    catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", false, true);
-    catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", false, true);
-    catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 50, "D", false, false);
+    catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
+    catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
+    catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", true);
+    catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 50, "D", false);
 
     columns.push_back(column1);
     columns.push_back(column2);
@@ -215,10 +215,10 @@ TEST(TileGroupTests, MVCCInsert) {
     std::vector<catalog::Schema> schemas;
 
     // SCHEMA
-    catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", false, true);
-    catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", false, true);
-    catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", false, true);
-    catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 50, "D", false, false);
+    catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
+    catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
+    catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", true);
+    catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 50, "D", false);
 
     columns.push_back(column1);
     columns.push_back(column2);
