@@ -66,7 +66,15 @@ public:
 
     // add an index to the table
     void AddIndex(index::Index *index);
-    
+
+    // Set primarykey index and foreign table
+    void SetPrimaryIndex(index::Index *index);
+    void SetForeignTable(storage::DataTable *table);
+
+    // Get primarykey index and foreign table
+    index::Index* DataTable::GetPrimaryIndex();
+    storage::DataTable* DataTable::GetForeignTable();
+
     inline size_t GetIndexCount() const {
         return indexes.size();
     }
@@ -101,6 +109,9 @@ protected:
     
     // INDEXES
     std::vector<index::Index*> indexes;
+
+    // Index for Primary key
+    index::Index* PrimaryKey_Index = nullptr;
 
 };
 
