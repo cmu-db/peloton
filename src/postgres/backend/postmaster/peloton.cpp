@@ -79,7 +79,7 @@ static void peloton_send(void *msg, int len);
 
 static void peloton_recv_dml(Peloton_MsgDML *msg, int len);
 static void peloton_recv_ddl(Peloton_MsgDDL *msg, int len);
-
+static void peloton_recv_query(Peloton_MsgQuery *msg, int len);
 
 bool
 IsPelotonProcess(void)
@@ -412,6 +412,10 @@ peloton_MainLoop(void)
 
         case PELOTON_MTYPE_DML:
           peloton_recv_dml((Peloton_MsgDML*) &msg, len);
+          break;
+
+        case PELOTON_MTYPE_QUERY:
+          peloton_recv_query((Peloton_MsgQuery*) &msg, len);
           break;
 
         default:
@@ -778,17 +782,6 @@ peloton_send_dml(PlanState *node)
   Peloton_MsgDML msg;
   PlanState *lnode;
 
-  fprintf(stdout, "Backend :: PID :: %d \n", getpid());
-  fprintf(stdout, "Backend :: TopMemoryContext :: %p \n", TopMemoryContext);
-  fprintf(stdout, "Backend :: PostmasterContext :: %p \n", PostmasterContext);
-  fprintf(stdout, "Backend :: CacheMemoryContext :: %p \n", CacheMemoryContext);
-  fprintf(stdout, "Backend :: MessageContext :: %p \n", MessageContext);
-  fprintf(stdout, "Backend :: TopTransactionContext :: %p \n", TopTransactionContext);
-  fprintf(stdout, "Backend :: CurrentTransactionContext :: %p \n", CurTransactionContext);
-  fprintf(stdout, "Backend :: ErrorContext :: %p \n", ErrorContext);
-  fprintf(stdout, "Backend :: TopSharedMemoryContext :: %p \n", TopSharedMemoryContext);
-  fflush(stdout);
-
   if (pelotonSock == PGINVALID_SOCKET)
     return;
 
@@ -826,6 +819,40 @@ peloton_send_ddl(Node *parsetree, const char *queryString)
 }
 
 /* ----------
+ * peloton_send_query() -
+ *
+ *  Send the query to Peloton.
+ * ----------
+ */
+void
+peloton_send_query(const char *queryString, DestReceiver *dest)
+{
+  Peloton_MsgQuery msg;
+  PlanState *lnode;
+  MemoryContext oldcontext;
+
+  if (pelotonSock == PGINVALID_SOCKET)
+    return;
+
+  peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_QUERY);
+
+  fprintf(stdout, "Send Query :: %s\n", queryString);
+  fflush(stdout);
+
+  // Copy query
+  oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
+
+  msg.m_queryString = (char *) palloc(strlen(queryString) + 1);
+  strcpy(msg.m_queryString, queryString);
+
+  MemoryContextSwitchTo(oldcontext);
+
+  msg.m_dest = dest;
+
+  peloton_send(&msg, sizeof(msg));
+}
+
+/* ----------
  * peloton_recv_dml -
  *
  *  Process plan execution requests.
@@ -849,14 +876,6 @@ peloton_recv_dml(Peloton_MsgDML *msg, int len)
 
       fprintf(stdout, "Plan : %p\n", plan);
       fflush(stdout);
-
-      if(plan != NULL)
-      {
-        fprintf(stdout, "Planstate type : %d\n", plan->type);
-        fflush(stdout);
-
-        peloton::bridge::PlanTransformer::PrintPlanState(node);
-      }
       //elog_node_display(LOG, "plan", plan, Debug_pretty_print);
     }
   }
@@ -875,8 +894,6 @@ peloton_recv_ddl(Peloton_MsgDDL *msg, int len)
   Node* parsetree;
   char* queryString;
 
-  assert(CurrentResourceOwner != NULL);
-
   if(msg != NULL)
   {
     /* Get the queryString */
@@ -892,5 +909,38 @@ peloton_recv_ddl(Peloton_MsgDDL *msg, int len)
     }
   }
 
+}
+
+/* ----------
+ * peloton_recv_query() -
+ *
+ *  Receive the query from Peloton.
+ * ----------
+ */
+void
+peloton_recv_query(Peloton_MsgQuery *msg, int len)
+{
+  char* queryString;
+  DestReceiver *dest;
+
+  if(msg != NULL)
+  {
+    /* Get the queryString */
+    queryString = msg->m_queryString;
+
+    /* Get the receiver */
+    dest = msg->m_dest;
+
+    if(queryString != NULL)
+    {
+      fprintf(stdout, "Query : %s \n", queryString);
+      fflush(stdout);
+
+      fprintf(stdout, "Receiver : %p \n", dest);
+      fflush(stdout);
+
+      //peloton::bridge::DDL::ProcessUtility(msg->m_parsetree, msg->m_queryString);
+    }
+  }
 }
 

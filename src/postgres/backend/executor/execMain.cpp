@@ -1561,8 +1561,8 @@ ExecutePlan(EState *estate,
 
 		print_slot(slot);
 
-		// TODO: Peloton Changes
-		peloton_send_dml(planstate);
+    fprintf(stdout, "Destination %p  \n", dest);
+    fflush(stdout);
 
 		/*
 		 * if the tuple is null, then we assume there is nothing more to
