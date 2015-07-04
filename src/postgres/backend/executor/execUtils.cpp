@@ -74,18 +74,28 @@ CreateExecutorState(void)
 	EState	   *estate;
 	MemoryContext qcontext;
 	MemoryContext oldcontext;
+	bool contains_context;
 
 	/*
 	 * Create the per-query context for this Executor run.
 	 */
-	// TODO: Peloton Changes (Use TopSharedMemoryContext instead)
-	//qcontext = AllocSetContextCreate(CurrentMemoryContext,
-	qcontext = SHMAllocSetContextCreate(TopSharedMemoryContext,
-									 "ExecutorState",
-									 ALLOCSET_DEFAULT_MINSIZE,
-									 ALLOCSET_DEFAULT_INITSIZE,
-									 ALLOCSET_DEFAULT_MAXSIZE,
-									 SHM_DEFAULT_SEGMENT);
+	// TODO: Peloton Changes
+	contains_context = SHMContextContains(TopSharedMemoryContext, CurrentMemoryContext);
+	if(contains_context == false) {
+	  qcontext = AllocSetContextCreate(CurrentMemoryContext,
+	                                   "ExecutorState",
+	                                   ALLOCSET_DEFAULT_MINSIZE,
+	                                   ALLOCSET_DEFAULT_INITSIZE,
+	                                   ALLOCSET_DEFAULT_MAXSIZE);
+	}
+	else {
+    qcontext = SHMAllocSetContextCreate(CurrentMemoryContext,
+                                     "ExecutorState",
+                                     ALLOCSET_DEFAULT_MINSIZE,
+                                     ALLOCSET_DEFAULT_INITSIZE,
+                                     ALLOCSET_DEFAULT_MAXSIZE,
+                                     SHM_DEFAULT_SEGMENT);
+	}
 
 	/*
 	 * Make the EState node within the per-query context.  This way, we don't
