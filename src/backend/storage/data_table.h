@@ -72,8 +72,8 @@ public:
     void SetForeignTable(storage::DataTable *table);
 
     // Get primarykey index and foreign table
-    index::Index* DataTable::GetPrimaryIndex();
-    storage::DataTable* DataTable::GetForeignTable();
+    index::Index* GetPrimaryIndex();
+    storage::DataTable* GetForeignTable();
 
     inline size_t GetIndexCount() const {
         return indexes.size();
