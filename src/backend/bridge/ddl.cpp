@@ -617,11 +617,9 @@ bool DDL::DropTable(Oid table_oid) {
  * @param type Type of the index
  * @param unique Index is unique or not ?
  * @param
- * @param column_info Information about the columns
+ * @param key_column_name key column names
  * @param num_columns Number of columns in the table
- * @param schema Schema for the table
- *
- * @return true if we dropped the table, false otherwise
+ * @return true if we create the index, false otherwise
  */
 bool DDL::CreateIndex(std::string index_name,
                       std::string table_name,
@@ -672,6 +670,71 @@ bool DDL::CreateIndex(std::string index_name,
 
   // Record the built index in the table
   data_table->AddIndex(index);
+
+  return true;
+}
+
+/**
+ * @brief Create index.
+ * @param index_name Index name
+ * @param table_name Table name
+ * @param type Type of the index
+ * @param unique Index is unique or not ?
+ * @param key_column_names column names for the key table 
+ * @return true if we create the index, false otherwise
+ */
+bool DDL::CreateIndex2(std::string index_name,
+                       std::string table_name,
+                       int index_type,
+                       bool unique_keys,
+                       std::vector<std::string> key_column_names,
+                       bool is_primarykey_index ){
+
+  assert( index_name != "" && table_name != "" && key_column_names.size() > 0  );
+
+  // NOTE: We currently only support btree as our index implementation
+  // TODO : Support other types based on "type" argument
+  IndexType our_index_type = INDEX_TYPE_BTREE_MULTIMAP;
+
+  // Get the database oid and table oid
+  oid_t database_oid = GetCurrentDatabaseOid();
+  oid_t table_oid = GetRelationOid(table_name.c_str());
+
+  // Get the table location from manager
+  auto table = catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+  storage::DataTable* data_table = (storage::DataTable*) table;
+  auto tuple_schema = data_table->GetSchema();
+
+  // Construct key schema
+  std::vector<oid_t> key_columns;
+
+  // Based on the key column info, get the oid of the given 'key' columns in the tuple schema
+  for( auto key_column_name : key_column_names ){
+    for( oid_t tuple_schema_column_itr = 0; tuple_schema_column_itr < tuple_schema->GetColumnCount();
+        tuple_schema_column_itr++){
+
+      // Get the current column info from tuple schema
+      catalog::ColumnInfo column_info = tuple_schema->GetColumnInfo(tuple_schema_column_itr);
+
+      // Compare Key Schema's current column name and Tuple Schema's current column name
+      if( key_column_name == column_info.name )
+        key_columns.push_back(tuple_schema_column_itr);
+    }
+  }
+
+  auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_columns);
+
+  // Create index metadata and physical index
+  index::IndexMetadata* metadata = new index::IndexMetadata(index_name, our_index_type,
+                                                            tuple_schema, key_schema,
+                                                            unique_keys);
+  index::Index* index = index::IndexFactory::GetInstance(metadata);
+
+  // Record the built index in the table
+  if( is_primarykey_index )
+    data_table->SetPrimaryIndex(index);
+  else
+    data_table->AddIndex(index);
 
   return true;
 }
