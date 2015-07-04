@@ -378,11 +378,11 @@ peloton_MainLoop(void)
           break;
 
         case PELOTON_MTYPE_DDL:
-          peloton_recv_ddl((Peloton_MsgDDL*) &msg, len);
+          //peloton_recv_ddl((Peloton_MsgDDL*) &msg, len);
           break;
 
         case PELOTON_MTYPE_DML:
-          peloton_recv_dml((Peloton_MsgDML*) &msg, len);
+          //peloton_recv_dml((Peloton_MsgDML*) &msg, len);
           break;
 
         default:
@@ -821,7 +821,6 @@ peloton_recv_dml(Peloton_MsgDML *msg, int len)
 
       fprintf(stdout, "Planstate type : %d\n", plan->type);
       peloton::bridge::PlanTransformer::PrintPlanState(node);
-
       //elog_node_display(LOG, "plan", plan, Debug_pretty_print);
     }
   }
