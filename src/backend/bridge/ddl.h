@@ -88,7 +88,8 @@ class DDL {
                            std::string table_name,
                            int index_type,
                            bool unique_keys,
-                           std::vector<std::string> key_column_names);
+                           std::vector<std::string> key_column_names,
+                           bool is_primarykey_index = false);
 
 
 

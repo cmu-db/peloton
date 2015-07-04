@@ -523,8 +523,8 @@ bool BootstrapPeloton(void){
                 //  key_column_names.push_back( column_info.name );
                 //}
 
-                peloton::bridge::DDL::CreateIndex(relation_name, get_rel_name(pg_index->indrelid), 0, pg_index->indisunique, ColumnNamesForKeySchema, our_attnum);
-                //peloton::bridge::DDL::CreateIndex2(relation_name, get_rel_name(pg_index->indrelid), 0, pg_index->indisunique, key_column_names );
+                //peloton::bridge::DDL::CreateIndex(relation_name, get_rel_name(pg_index->indrelid), 0, pg_index->indisunique, ColumnNamesForKeySchema, our_attnum);
+                peloton::bridge::DDL::CreateIndex2(relation_name, get_rel_name(pg_index->indrelid), 0, pg_index->indisunique, key_column_names , pg_index->indisprimary);
 
                 if(status == true) {
                   elog(LOG, "Create Index \"%s\" in Peloton\n", relation_name);
