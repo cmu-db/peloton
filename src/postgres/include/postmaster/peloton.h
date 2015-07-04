@@ -93,6 +93,7 @@ typedef struct Peloton_MsgQuery
 {
   Peloton_MsgHdr m_hdr;
   char *m_queryString;
+  DestReceiver *m_dest;
 } Peloton_MsgQuery;
 
 /* ----------
@@ -120,6 +121,7 @@ extern void peloton_init(void);
 extern int  peloton_start(void);
 
 extern void peloton_send_ping(void);
+extern void peloton_send_query(const char *queryString, DestReceiver *dest);
 extern void peloton_send_dml(PlanState *node);
 extern void peloton_send_ddl(Node *parsetree, const char *queryString);
 
