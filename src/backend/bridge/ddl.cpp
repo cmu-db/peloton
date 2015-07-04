@@ -334,7 +334,6 @@ std::vector<catalog::ColumnInfo> ConstructColumnInfoByParsingCreateStmt( CreateS
     catalog::ColumnInfo *column_info = new catalog::ColumnInfo( column_valueType, 
                                                                 column_length, 
                                                                 column_name, 
-                                                                column_allow_null,
                                                                 column_constraints);
 
     // Insert column_info into ColumnInfos
@@ -510,7 +509,6 @@ bool DDL::CreateTable(std::string table_name,
                                       schema[column_itr].column_offset,
                                       schema[column_itr].column_length,
                                       schema[column_itr].name,
-                                      schema[column_itr].allow_null,
                                       schema[column_itr].is_inlined,
                                       constraint_vec);
 
@@ -522,7 +520,7 @@ bool DDL::CreateTable(std::string table_name,
   else {
     column_type = VALUE_TYPE_NULL;
     catalog::ColumnInfo column_info(column_type, 0, 0, "",
-                                    true, true, constraint_vec);
+                                    true, constraint_vec);
     column_infos.push_back(column_info);
   }
 
@@ -632,7 +630,7 @@ bool DDL::CreateIndex(std::string index_name,
 
   // NOTE: We currently only support btree as our index implementation
   // FIXME: Support other types based on "type" argument
-  IndexType our_index_type = INDEX_TYPE_BTREE_MULTIMAP;
+  IndexMethodType our_index_type = INDEX_METHOD_TYPE_BTREE_MULTIMAP;
 
   // Get the database oid and table oid
   oid_t database_oid = GetCurrentDatabaseOid();
@@ -685,16 +683,17 @@ bool DDL::CreateIndex(std::string index_name,
  */
 bool DDL::CreateIndex2(std::string index_name,
                        std::string table_name,
-                       int index_type,
+                       IndexMethodType  index_method_type,
+                       IndexType  index_type,
                        bool unique_keys,
                        std::vector<std::string> key_column_names,
-                       bool is_primarykey_index ){
+                       bool bootstrap ){
 
   assert( index_name != "" && table_name != "" && key_column_names.size() > 0  );
 
   // NOTE: We currently only support btree as our index implementation
   // TODO : Support other types based on "type" argument
-  IndexType our_index_type = INDEX_TYPE_BTREE_MULTIMAP;
+  IndexMethodType our_index_type = INDEX_METHOD_TYPE_BTREE_MULTIMAP;
 
   // Get the database oid and table oid
   oid_t database_oid = GetCurrentDatabaseOid();
@@ -715,10 +714,24 @@ bool DDL::CreateIndex2(std::string index_name,
 
       // Get the current column info from tuple schema
       catalog::ColumnInfo column_info = tuple_schema->GetColumnInfo(tuple_schema_column_itr);
-
       // Compare Key Schema's current column name and Tuple Schema's current column name
-      if( key_column_name == column_info.name )
+      if( key_column_name == column_info.name ){
         key_columns.push_back(tuple_schema_column_itr);
+
+        // TODO :: Need to talk with Joy
+        // NOTE :: Since pg_attribute doesn't have any information about primary key and unique key,
+        //         I try to store these information when we create an unique and primary key index
+        if( bootstrap ){
+          if( index_type == INDEX_TYPE_PRIMARY_KEY ){ 
+            catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_PRIMARY );
+            tuple_schema->AddConstraint( tuple_schema_column_itr, constraint); 
+          }else if( index_type == INDEX_TYPE_UNIQUE ){ 
+            catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_UNIQUE );
+            tuple_schema->AddConstraint( tuple_schema_column_itr, constraint); 
+          }
+        }
+
+      }
     }
   }
 
@@ -731,10 +744,19 @@ bool DDL::CreateIndex2(std::string index_name,
   index::Index* index = index::IndexFactory::GetInstance(metadata);
 
   // Record the built index in the table
-  if( is_primarykey_index )
-    data_table->SetPrimaryIndex(index);
-  else
-    data_table->AddIndex(index);
+  switch(  index_type ){
+  case INDEX_TYPE_NORMAL:
+	  data_table->AddIndex(index);
+	  break;
+  case INDEX_TYPE_PRIMARY_KEY:
+	  data_table->SetPrimaryIndex(index);
+	  break;
+  case INDEX_TYPE_UNIQUE:
+	  data_table->AddUniqueIndex(index);
+	  break;
+  default:
+      elog(LOG, "unrecognized index type: %d", index_type);
+  }
 
   return true;
 }
