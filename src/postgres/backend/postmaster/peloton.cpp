@@ -14,6 +14,7 @@
 #include "c.h"
 
 #include "bridge/bridge.h"
+#include "executor/tuptable.h"
 #include "libpq/ip.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
@@ -772,10 +773,11 @@ peloton_send_ping(void)
  * ----------
  */
 void
-peloton_send_dml(PlanState *node)
+peloton_send_dml(PlanState *node, bool sendTuples, DestReceiver *dest)
 {
   Peloton_MsgDML msg;
   PlanState *lnode;
+  MemoryContext oldcontext;
 
   if (pelotonSock == PGINVALID_SOCKET)
     return;
@@ -783,6 +785,8 @@ peloton_send_dml(PlanState *node)
   peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_DML);
 
   msg.m_node = node;
+  msg.m_sendTuples = sendTuples;
+  msg.m_dest = dest;
 
   fprintf(stdout, "Send DML :: Planstate : %p\n", node);
   fflush(stdout);
@@ -836,7 +840,10 @@ peloton_recv_dml(Peloton_MsgDML *msg, int len)
       plan = node->plan;
 
       fprintf(stdout, "Plan : %p\n", plan);
+      fprintf(stdout, "SendTuples : %d\n", msg->m_sendTuples);
+      fprintf(stdout, "Dest : %p\n", msg->m_dest);
       fflush(stdout);
+
       //elog_node_display(LOG, "plan", plan, Debug_pretty_print);
     }
   }
