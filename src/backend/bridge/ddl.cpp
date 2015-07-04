@@ -687,9 +687,10 @@ bool DDL::CreateIndex2(std::string index_name,
                        std::string table_name,
                        int index_type,
                        bool unique_keys,
-                       std::vector<std::string> key_column_names){
+                       std::vector<std::string> key_column_names,
+                       bool is_primarykey_index ){
 
-  assert( index_name != "" || table_name != "" || key_column_names.size() != 0  );
+  assert( index_name != "" && table_name != "" && key_column_names.size() > 0  );
 
   // NOTE: We currently only support btree as our index implementation
   // TODO : Support other types based on "type" argument
@@ -730,7 +731,10 @@ bool DDL::CreateIndex2(std::string index_name,
   index::Index* index = index::IndexFactory::GetInstance(metadata);
 
   // Record the built index in the table
-  data_table->AddIndex(index);
+  if( is_primarykey_index )
+    data_table->SetPrimaryIndex(index);
+  else
+    data_table->AddIndex(index);
 
   return true;
 }
