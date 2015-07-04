@@ -283,11 +283,6 @@ void
 ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, long count)
 {
-  // TODO: Peloton Changes
-  //PlannedStmt *plan = queryDesc->plannedstmt;
-	//elog_node_display(LOG, "plan", plan, Debug_pretty_print);
-  peloton_send_ping();
-
 	if (ExecutorRun_hook)
 		(*ExecutorRun_hook) (queryDesc, direction, count);
 	else
@@ -1561,8 +1556,8 @@ ExecutePlan(EState *estate,
 
 		print_slot(slot);
 
-    fprintf(stdout, "Destination %p  \n", dest);
-    fflush(stdout);
+		// TODO: Peloton Changes
+		peloton_send_dml(planstate);
 
 		/*
 		 * if the tuple is null, then we assume there is nothing more to
