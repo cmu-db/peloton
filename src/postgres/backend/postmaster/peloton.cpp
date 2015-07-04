@@ -240,11 +240,12 @@ PelotonMain(int argc, char *argv[])
    * MessageContext is reset once per iteration of the main loop, ie, upon
    * completion of processing of each command message from the client.
    */
-  MessageContext = AllocSetContextCreate(TopMemoryContext,
-                                         "MessageContext",
-                                         ALLOCSET_DEFAULT_MINSIZE,
-                                         ALLOCSET_DEFAULT_INITSIZE,
-                                         ALLOCSET_DEFAULT_MAXSIZE);
+  MessageContext = SHMAllocSetContextCreate(TopSharedMemoryContext,
+                                            "MessageContext",
+                                            ALLOCSET_DEFAULT_MINSIZE,
+                                            ALLOCSET_DEFAULT_INITSIZE,
+                                            ALLOCSET_DEFAULT_MAXSIZE,
+                                            SHM_DEFAULT_SEGMENT);
 
   ereport(LOG, (errmsg("peloton: processing database \"%s\"", "postgres")));
 
@@ -844,7 +845,7 @@ peloton_recv_dml(Peloton_MsgDML *msg, int len)
       fprintf(stdout, "Dest : %p\n", msg->m_dest);
       fflush(stdout);
 
-      //elog_node_display(LOG, "plan", plan, Debug_pretty_print);
+      elog_node_display(LOG, "plan", plan, Debug_pretty_print);
     }
   }
 
