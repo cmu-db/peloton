@@ -108,8 +108,15 @@ int peloton_start(void){
       /* Close the postmaster's sockets */
       ClosePostmasterPorts(false);
 
+      /*
+       * Make sure we aren't in PostmasterContext anymore.  (We can't delete it
+       * just yet, though, because InitPostgres will need the HBA data.)
+       */
+      MemoryContextSwitchTo(TopMemoryContext);
+
       /* Do some stuff */
       PelotonMain(0, NULL);
+
       return 0;
       break;
 
@@ -188,9 +195,6 @@ PelotonMain(int argc, char *argv[])
     /* Prevents interrupts while cleaning up */
     HOLD_INTERRUPTS();
 
-    /* Report the stack trace to the server log */
-    peloton::bridge::PrintStackTrace();
-
     /* Report the error to the server log */
     EmitErrorReport();
 
@@ -215,7 +219,32 @@ PelotonMain(int argc, char *argv[])
    */
   InitPostgres("postgres", InvalidOid, NULL, InvalidOid, NULL);
 
+  /*
+   * If the PostmasterContext is still around, recycle the space; we don't
+   * need it anymore after InitPostgres completes.  Note this does not trash
+   * *MyProcPort, because ConnCreate() allocated that space with malloc()
+   * ... else we'd need to copy the Port data first.  Also, subsidiary data
+   * such as the username isn't lost either; see ProcessStartupPacket().
+   */
+  if (PostmasterContext)
+  {
+    MemoryContextDelete(PostmasterContext);
+    PostmasterContext = NULL;
+  }
+
   SetProcessingMode(NormalProcessing);
+
+  /*
+   * Create the memory context we will use in the main loop.
+   *
+   * MessageContext is reset once per iteration of the main loop, ie, upon
+   * completion of processing of each command message from the client.
+   */
+  MessageContext = AllocSetContextCreate(TopMemoryContext,
+                                         "MessageContext",
+                                         ALLOCSET_DEFAULT_MINSIZE,
+                                         ALLOCSET_DEFAULT_INITSIZE,
+                                         ALLOCSET_DEFAULT_MAXSIZE);
 
   ereport(LOG, (errmsg("peloton: processing database \"%s\"", "postgres")));
 
@@ -378,11 +407,11 @@ peloton_MainLoop(void)
           break;
 
         case PELOTON_MTYPE_DDL:
-          //peloton_recv_ddl((Peloton_MsgDDL*) &msg, len);
+          peloton_recv_ddl((Peloton_MsgDDL*) &msg, len);
           break;
 
         case PELOTON_MTYPE_DML:
-          //peloton_recv_dml((Peloton_MsgDML*) &msg, len);
+          peloton_recv_dml((Peloton_MsgDML*) &msg, len);
           break;
 
         default:
@@ -744,11 +773,24 @@ peloton_send_ping(void)
  * ----------
  */
 void
-peloton_send_dml(PlanState *node)
+peloton_send_dml(PlanState *node,
+                 MemoryContext cache_memory_context,
+                 MemoryContext top_transaction_context,
+                 MemoryContext cur_transaction_context)
 {
   Peloton_MsgDML msg;
-  MemoryContext oldcontext;
   PlanState *lnode;
+
+  fprintf(stdout, "Backend :: PID :: %d \n", getpid());
+  fprintf(stdout, "Backend :: TopMemoryContext :: %p \n", TopMemoryContext);
+  fprintf(stdout, "Backend :: PostmasterContext :: %p \n", PostmasterContext);
+  fprintf(stdout, "Backend :: CacheMemoryContext :: %p \n", CacheMemoryContext);
+  fprintf(stdout, "Backend :: MessageContext :: %p \n", MessageContext);
+  fprintf(stdout, "Backend :: TopTransactionContext :: %p \n", TopTransactionContext);
+  fprintf(stdout, "Backend :: CurrentTransactionContext :: %p \n", CurTransactionContext);
+  fprintf(stdout, "Backend :: ErrorContext :: %p \n", ErrorContext);
+  fprintf(stdout, "Backend :: TopSharedMemoryContext :: %p \n", TopSharedMemoryContext);
+  fflush(stdout);
 
   if (pelotonSock == PGINVALID_SOCKET)
     return;
@@ -777,17 +819,6 @@ peloton_send_ddl(Node *parsetree, const char *queryString)
 
   if (pelotonSock == PGINVALID_SOCKET)
     return;
-
-  fprintf(stdout, "Backend :: PID :: %d \n", getpid());
-  fprintf(stdout, "Backend :: TopMemoryContext :: %p \n", TopMemoryContext);
-  fprintf(stdout, "Backend :: PostmasterContext :: %p \n", PostmasterContext);
-  fprintf(stdout, "Backend :: CacheMemoryContext :: %p \n", CacheMemoryContext);
-  fprintf(stdout, "Backend :: MessageContext :: %p \n", MessageContext);
-  fprintf(stdout, "Backend :: TopTransactionContext :: %p \n", TopTransactionContext);
-  fprintf(stdout, "Backend :: CurrentTransactionContext :: %p \n", CurTransactionContext);
-  fprintf(stdout, "Backend :: ErrorContext :: %p \n", ErrorContext);
-  fprintf(stdout, "Backend :: TopSharedMemoryContext :: %p \n", TopSharedMemoryContext);
-  fflush(stdout);
 
   peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_DDL);
 
@@ -819,8 +850,16 @@ peloton_recv_dml(Peloton_MsgDML *msg, int len)
       /* Get the plan */
       plan = node->plan;
 
-      fprintf(stdout, "Planstate type : %d\n", plan->type);
-      peloton::bridge::PlanTransformer::PrintPlanState(node);
+      fprintf(stdout, "Plan : %p\n", plan);
+      fflush(stdout);
+
+      if(plan != NULL)
+      {
+        fprintf(stdout, "Planstate type : %d\n", plan->type);
+        fflush(stdout);
+
+        peloton::bridge::PlanTransformer::PrintPlanState(node);
+      }
       //elog_node_display(LOG, "plan", plan, Debug_pretty_print);
     }
   }
