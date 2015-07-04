@@ -773,10 +773,7 @@ peloton_send_ping(void)
  * ----------
  */
 void
-peloton_send_dml(PlanState *node,
-                 MemoryContext cache_memory_context,
-                 MemoryContext top_transaction_context,
-                 MemoryContext cur_transaction_context)
+peloton_send_dml(PlanState *node)
 {
   Peloton_MsgDML msg;
   PlanState *lnode;
