@@ -105,13 +105,13 @@ EnablePortalManager(void)
 
 	Assert(PortalMemory == NULL);
 
-  // TODO: Peloton Changes (Use TopSharedMemoryContext instead)
-	//PortalMemory = SHMAllocSetContextCreate(TopSharedMemoryContext,
-  PortalMemory = AllocSetContextCreate(TopMemoryContext,
-	                 "PortalMemory",
-                   ALLOCSET_DEFAULT_MINSIZE,
-                   ALLOCSET_DEFAULT_INITSIZE,
-                   ALLOCSET_DEFAULT_MAXSIZE);
+  // TODO: Peloton Changes
+	PortalMemory = SHMAllocSetContextCreate(TopSharedMemoryContext,
+	                                        "PortalMemory",
+	                                        ALLOCSET_DEFAULT_MINSIZE,
+	                                        ALLOCSET_DEFAULT_INITSIZE,
+	                                        ALLOCSET_DEFAULT_MAXSIZE,
+	                                        SHM_DEFAULT_SEGMENT);
 
 	ctl.keysize = MAX_PORTALNAME_LEN;
 	ctl.entrysize = sizeof(PortalHashEnt);
@@ -220,11 +220,12 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 	portal = (Portal) MemoryContextAllocZero(PortalMemory, sizeof *portal);
 
 	/* initialize portal heap context; typically it won't store much */
-	portal->heap = AllocSetContextCreate(PortalMemory,
-										 "PortalHeapMemory",
-										 ALLOCSET_SMALL_MINSIZE,
-										 ALLOCSET_SMALL_INITSIZE,
-										 ALLOCSET_SMALL_MAXSIZE);
+	portal->heap = SHMAllocSetContextCreate(PortalMemory,
+	                                        "PortalHeapMemory",
+	                                        ALLOCSET_SMALL_MINSIZE,
+	                                        ALLOCSET_SMALL_INITSIZE,
+	                                        ALLOCSET_SMALL_MAXSIZE,
+	                                        SHM_DEFAULT_SEGMENT);
 
 	/* create a resource owner for the portal */
 	portal->resowner = ResourceOwnerCreate(CurTransactionResourceOwner,
