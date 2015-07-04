@@ -24,7 +24,6 @@ namespace catalog {
 void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
                                const std::vector<oid_t> column_lengths,
                                const std::vector<std::string> column_names,
-                               const std::vector<bool> allow_null,
                                const std::vector<bool> is_inlined,
                                const std::vector<std::vector<Constraint>> constraint_vector_of_vectors) {
 
@@ -38,7 +37,6 @@ void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
                            column_offset,
                            column_lengths[column_itr],
                            column_names[column_itr],
-                           allow_null[column_itr],
                            is_inlined[column_itr],
                            constraint_vector_of_vectors[column_itr]);
 
@@ -68,7 +66,6 @@ Schema::Schema(const std::vector<ColumnInfo> columns)
   std::vector<ValueType> column_types;
   std::vector<oid_t> column_lengths;
   std::vector<std::string> column_names;
-  std::vector<bool> allow_null;
   std::vector<bool> is_inlined;
   std::vector<std::vector<Constraint>> constraint_vector_of_vectors;
 
@@ -81,12 +78,11 @@ Schema::Schema(const std::vector<ColumnInfo> columns)
       column_lengths.push_back(columns[column_itr].variable_length);
 
     column_names.push_back(columns[column_itr].name);
-    allow_null.push_back(columns[column_itr].allow_null);
     is_inlined.push_back(columns[column_itr].is_inlined);
     constraint_vector_of_vectors.push_back(columns[column_itr].constraint_vector);
   }
 
-  CreateTupleSchema(column_types, column_lengths, column_names, allow_null, is_inlined, constraint_vector_of_vectors);
+  CreateTupleSchema(column_types, column_lengths, column_names, is_inlined, constraint_vector_of_vectors);
 }
 
 /// Copy schema
@@ -192,7 +188,6 @@ std::ostream& operator<< (std::ostream& os, const ColumnInfo& column_info){
       " offset = " << column_info.offset << "," <<
       " fixed length = " << column_info.fixed_length << "," <<
       " variable length = " << column_info.variable_length << "," <<
-      " nullable = " << column_info.allow_null <<
       " inlined = " << column_info.is_inlined << std::endl;
 
   
