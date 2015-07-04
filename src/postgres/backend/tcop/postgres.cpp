@@ -931,7 +931,7 @@ exec_simple_query(const char *query_string)
   /*
    * Switch to appropriate context for constructing parsetrees.
    */
-  oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
+  oldcontext = MemoryContextSwitchTo(MessageContext);
 
   /*
    * Do basic parsing of the query or queries (this should be safe even if
@@ -1027,7 +1027,7 @@ exec_simple_query(const char *query_string)
      * Switch to appropriate context for constructing querytrees (again,
      * these must outlive the execution context).
      */
-    oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
+    oldcontext = MemoryContextSwitchTo(MessageContext);
 
     querytree_list = pg_analyze_and_rewrite(parsetree, query_string,
                                             NULL, 0);
@@ -3947,14 +3947,6 @@ PostgresMain(int argc, char *argv[],
      */
     MemoryContextSwitchTo(MessageContext);
     MemoryContextResetAndDeleteChildren(MessageContext);
-
-    // TODO: Peloton Changes
-    /*
-     * Release storage left over from prior query cycle, and create a new
-     * query input buffer in the cleared TopSharedMemoryContext.
-     */
-    MemoryContextSwitchTo(TopSharedMemoryContext);
-    MemoryContextResetAndDeleteChildren(TopSharedMemoryContext);
 
     initStringInfo(&input_message);
 
