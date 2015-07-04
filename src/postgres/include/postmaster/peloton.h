@@ -25,7 +25,8 @@ typedef enum PelotonMsgType
   PELOTON_MTYPE_INVALID,    // Invalid message type
   PELOTON_MTYPE_DUMMY,      // Dummy message type
   PELOTON_MTYPE_DDL,        // DDL information
-  PELOTON_MTYPE_DML         // DML information
+  PELOTON_MTYPE_DML,        // DML information
+  PELOTON_MTYPE_QUERY       // Query type
 } PelotonMsgType;
 
 /* ------------------------------------------------------------
@@ -83,6 +84,17 @@ typedef struct Peloton_MsgDDL
   char *m_queryString;
 } Peloton_MsgDDL;
 
+
+/* ----------
+ * Peloton_MsgQuery     Sent by the backend to share the query to peloton.
+ * ----------
+ */
+typedef struct Peloton_MsgQuery
+{
+  Peloton_MsgHdr m_hdr;
+  char *m_queryString;
+} Peloton_MsgQuery;
+
 /* ----------
  * Peloton_Msg         Union over all possible messages.
  * ----------
@@ -93,6 +105,7 @@ typedef union Peloton_Msg
   Peloton_MsgDummy msg_dummy;
   Peloton_MsgDDL msg_ddl;
   Peloton_MsgDML msg_dml;
+  Peloton_MsgQuery msg_query;
 } Peloton_Msg;
 
 /* Status inquiry functions */
