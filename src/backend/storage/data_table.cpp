@@ -42,6 +42,14 @@ void DataTable::AddIndex(index::Index *index) {
   indexes.push_back(index);
 }
 
+void DataTable::SetPrimaryIndex(index::Index *index) {
+  PrimaryKey_Index = index;
+}
+
+index::Index*  DataTable::GetPrimaryIndex(){
+  return PrimaryKey_Index;
+}
+
 ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple, bool update) {
 
   // TODO: Check basic integrity constraints!
