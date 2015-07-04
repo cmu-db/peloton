@@ -1095,6 +1095,9 @@ exec_simple_query(const char *query_string)
     if (dest == DestRemote)
       SetRemoteDestReceiverParams(receiver, portal);
 
+    fprintf(stdout, "Backend :: Receiver %p  \n", receiver);
+    fflush(stdout);
+
     /*
      * Switch back to transaction context for execution.
      */
@@ -3559,6 +3562,9 @@ PostgresMain(int argc, char *argv[],
   StringInfoData input_message;
   sigjmp_buf	local_sigjmp_buf;
   volatile bool send_ready_for_query = true;
+
+  fprintf(stdout, "Backend :: Port %p Sock %d Proc %d \n", MyProcPort, MyProcPort->sock, MyProcPid);
+  fflush(stdout);
 
   /* Initialize startup process environment if necessary. */
   if (!IsUnderPostmaster)
