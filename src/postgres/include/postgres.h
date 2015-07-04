@@ -719,6 +719,4 @@ extern void ExceptionalCondition(const char *conditionName,
 					 const char *errorType,
 			   const char *fileName, int lineNumber) pg_attribute_noreturn();
 
-extern void exec_simple_query(const char *query_string);
-
 #endif   /* POSTGRES_H */
