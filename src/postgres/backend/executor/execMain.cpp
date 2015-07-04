@@ -62,7 +62,6 @@
 
 // TODO: Peloton Changes
 #include "nodes/pprint.h"
-#include "nodes/print.h"
 #include "postmaster/peloton.h"
 
 /* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */
@@ -1551,13 +1550,10 @@ ExecutePlan(EState *estate,
 		/*
 		 * Execute the plan and obtain a tuple
 		 */
-
 		slot = ExecProcNode(planstate);
 
-		print_slot(slot);
-
 		// TODO: Peloton Changes
-		peloton_send_dml(planstate);
+		peloton_send_dml(planstate, sendTuples, dest);
 
 		/*
 		 * if the tuple is null, then we assume there is nothing more to
