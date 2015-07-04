@@ -76,6 +76,9 @@
 #include "utils/timestamp.h"
 #include "mb/pg_wchar.h"
 
+
+#include "postmaster/peloton.h"
+
 /* ----------------
  *		global variables
  * ----------------
@@ -1095,7 +1098,7 @@ exec_simple_query(const char *query_string)
     if (dest == DestRemote)
       SetRemoteDestReceiverParams(receiver, portal);
 
-    fprintf(stdout, "Backend :: Receiver %p  \n", receiver);
+    fprintf(stdout, "Receiver %p  \n", receiver);
     fflush(stdout);
 
     /*
@@ -4044,8 +4047,11 @@ PostgresMain(int argc, char *argv[],
 
         if (am_walsender)
           exec_replication_command(query_string);
-        else
+        else {
           exec_simple_query(query_string);
+
+          peloton_send_query(query_string, NULL);
+        }
 
         send_ready_for_query = true;
       }
