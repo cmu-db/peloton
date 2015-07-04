@@ -70,6 +70,8 @@ typedef struct Peloton_MsgDML
 {
   Peloton_MsgHdr m_hdr;
   PlanState *m_node;
+  bool m_sendTuples;
+  DestReceiver *m_dest;
 } Peloton_MsgDML;
 
 /* ----------
@@ -107,7 +109,7 @@ extern void peloton_init(void);
 extern int  peloton_start(void);
 
 extern void peloton_send_ping(void);
-extern void peloton_send_dml(PlanState *node);
+extern void peloton_send_dml(PlanState *node, bool sendTuples, DestReceiver *dest);
 extern void peloton_send_ddl(Node *parsetree, const char *queryString);
 
 #endif   /* PELOTON_H */
