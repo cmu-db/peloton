@@ -78,6 +78,7 @@
 
 
 #include "postmaster/peloton.h"
+#include "utils/memutils.h"
 
 /* ----------------
  *		global variables
@@ -3781,11 +3782,12 @@ PostgresMain(int argc, char *argv[],
    * MessageContext is reset once per iteration of the main loop, ie, upon
    * completion of processing of each command message from the client.
    */
-  MessageContext = AllocSetContextCreate(TopMemoryContext,
-                                         "MessageContext",
-                                         ALLOCSET_DEFAULT_MINSIZE,
-                                         ALLOCSET_DEFAULT_INITSIZE,
-                                         ALLOCSET_DEFAULT_MAXSIZE);
+  MessageContext = SHMAllocSetContextCreate(TopSharedMemoryContext,
+                                            "MessageContext",
+                                            ALLOCSET_DEFAULT_MINSIZE,
+                                            ALLOCSET_DEFAULT_INITSIZE,
+                                            ALLOCSET_DEFAULT_MAXSIZE,
+                                            SHM_DEFAULT_SEGMENT);
 
   /*
    * Remember stand-alone backend startup time
@@ -3934,6 +3936,17 @@ PostgresMain(int argc, char *argv[],
     default:
       break;
   }
+
+  fprintf(stdout, "Backend :: PID :: %d \n", getpid());
+  fprintf(stdout, "Backend :: TopMemoryContext :: %p \n", TopMemoryContext);
+  fprintf(stdout, "Backend :: PostmasterContext :: %p \n", PostmasterContext);
+  fprintf(stdout, "Backend :: CacheMemoryContext :: %p \n", CacheMemoryContext);
+  fprintf(stdout, "Backend :: MessageContext :: %p \n", MessageContext);
+  fprintf(stdout, "Backend :: TopTransactionContext :: %p \n", TopTransactionContext);
+  fprintf(stdout, "Backend :: CurrentTransactionContext :: %p \n", CurTransactionContext);
+  fprintf(stdout, "Backend :: ErrorContext :: %p \n", ErrorContext);
+  fprintf(stdout, "Backend :: TopSharedMemoryContext :: %p \n", TopSharedMemoryContext);
+  fflush(stdout);
 
   /*
    * Non-error queries loop here.
