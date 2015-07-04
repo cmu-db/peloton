@@ -274,7 +274,7 @@ bool CreateExecutor::CreateIndex(catalog::Database* db,
   catalog::Schema *key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(index_name,
-                                                                  INDEX_TYPE_BTREE_MULTIMAP,
+                                                                  INDEX_METHOD_TYPE_BTREE_MULTIMAP,
                                                                   tuple_schema,
                                                                   key_schema,
                                                                   unique);
@@ -282,7 +282,7 @@ bool CreateExecutor::CreateIndex(catalog::Database* db,
   index::Index *physical_index = index::IndexFactory::GetInstance(index_metadata);
 
   catalog::Index *index = new catalog::Index(index_name,
-                                             INDEX_TYPE_BTREE_MULTIMAP,
+                                             INDEX_METHOD_TYPE_BTREE_MULTIMAP,
                                              unique,
                                              key_columns);
 
