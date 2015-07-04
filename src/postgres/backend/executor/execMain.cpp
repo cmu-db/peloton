@@ -62,6 +62,7 @@
 
 // TODO: Peloton Changes
 #include "nodes/pprint.h"
+#include "nodes/print.h"
 #include "postmaster/peloton.h"
 
 /* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */
@@ -1557,6 +1558,8 @@ ExecutePlan(EState *estate,
 		 */
 
 		slot = ExecProcNode(planstate);
+
+		print_slot(slot);
 
 		// TODO: Peloton Changes
 		peloton_send_dml(planstate);
