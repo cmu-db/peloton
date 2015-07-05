@@ -293,11 +293,12 @@ lookup_ts_dictionary_cache(Oid dictId)
 			Assert(!found);		/* it wasn't there a moment ago */
 
 			/* Create private___ memory context the first time through */
-			saveCtx = AllocSetContextCreate(CacheMemoryContext,
-											NameStr(dict->dictname),
-											ALLOCSET_SMALL_MINSIZE,
-											ALLOCSET_SMALL_INITSIZE,
-											ALLOCSET_SMALL_MAXSIZE);
+			saveCtx = SHMAllocSetContextCreate(CacheMemoryContext,
+			                                   NameStr(dict->dictname),
+			                                   ALLOCSET_SMALL_MINSIZE,
+			                                   ALLOCSET_SMALL_INITSIZE,
+			                                   ALLOCSET_SMALL_MAXSIZE,
+			                                   SHM_DEFAULT_SEGMENT);
 		}
 		else
 		{
