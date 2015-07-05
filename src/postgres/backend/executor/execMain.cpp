@@ -63,6 +63,7 @@
 // TODO: Peloton Changes
 #include "nodes/pprint.h"
 #include "postmaster/peloton.h"
+#include "backend/bridge/plan_transformer.h"
 
 /* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */
 ExecutorStart_hook_type ExecutorStart_hook = NULL;
@@ -441,8 +442,9 @@ ExecutorEnd(QueryDesc *queryDesc)
 {
 	if (ExecutorEnd_hook)
 		(*ExecutorEnd_hook) (queryDesc);
-	else
+	else {
 		standard_ExecutorEnd(queryDesc);
+	}
 }
 
 void
@@ -450,6 +452,7 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 {
 	EState	   *estate;
 	MemoryContext oldcontext;
+	PlanState *planstate = queryDesc->planstate;
 
 	/* sanity checks */
 	Assert(queryDesc != NULL);
@@ -472,6 +475,7 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
 
 	ExecEndPlan(queryDesc->planstate, estate);
+	elog(LOG, "Free Insert into table with Oid %u", ((ModifyTableState*)planstate)->resultRelInfo->ri_RelationDesc->rd_id);
 
 	/* do away with our snapshots */
 	UnregisterSnapshot(estate->es_snapshot);
@@ -482,12 +486,14 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 	 */
 	MemoryContextSwitchTo(oldcontext);
 
+	elog(LOG, "Free2 Insert into table with Oid %u", ((ModifyTableState*)planstate)->resultRelInfo->ri_RelationDesc->rd_id);
 	/*
 	 * Release EState and per-query memory context.  This should release
 	 * everything the executor has allocated.
 	 */
 	FreeExecutorState(estate);
 
+	elog(LOG, "Free3 Insert into table with Oid %u", ((ModifyTableState*)planstate)->resultRelInfo->ri_RelationDesc->rd_id);
 	/* Reset queryDesc fields that no longer point to anything */
 	queryDesc->tupDesc = NULL;
 	queryDesc->estate = NULL;
@@ -1481,8 +1487,10 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 	for (i = estate->es_num_result_relations; i > 0; i--)
 	{
 		/* Close indices and then the relation itself */
-		ExecCloseIndices(resultRelInfo);
-		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
+	  // Peloton changes: wait, dont close now
+		//ExecCloseIndices(resultRelInfo);
+		//heap_close(resultRelInfo->ri_RelationDesc, NoLock);
+	  elog(LOG, "Wait, do not close relation: %p, now", resultRelInfo->ri_RelationDesc);
 		resultRelInfo++;
 	}
 
@@ -1559,7 +1567,18 @@ ExecutePlan(EState *estate,
 		slot = ExecProcNode(planstate);
 
 		// TODO: Peloton Changes
+		if (nodeTag(planstate->plan) == T_ModifyTable) {
+			elog(LOG, "Insert into table with Oid %u", ((ModifyTableState*)planstate)->resultRelInfo->ri_RelationDesc->rd_id);
+			elog(LOG, "%p, %p, %p, %p", planstate, ((ModifyTableState*)planstate)->resultRelInfo, ((ModifyTableState*)planstate)->resultRelInfo->ri_RelationDesc, &(((ModifyTableState*)planstate)->resultRelInfo->ri_RelationDesc->rd_id));
+			elog(LOG, "%u, %u, %u, %u", sizeof(ModifyTableState), sizeof(ResultRelInfo), sizeof(RelationData), sizeof(Oid));
+		}
+
+		peloton::bridge::PlanTransformer::HexDump("Postgres ModifyTableState", planstate, sizeof(ModifyTableState));
+		peloton::bridge::PlanTransformer::HexDump("Postgres ResultRelInfo",((ModifyTableState*)planstate)->resultRelInfo , sizeof(ResultRelInfo));
+		peloton::bridge::PlanTransformer::HexDump("Postgres RelationData",((ModifyTableState*)planstate)->resultRelInfo->ri_RelationDesc, sizeof(RelationData));
+
 		peloton_send_dml(planstate);
+
 
 		/*
 		 * if the tuple is null, then we assume there is nothing more to
