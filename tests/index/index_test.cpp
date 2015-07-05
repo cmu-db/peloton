@@ -30,10 +30,10 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
 
   // SCHEMA
 
-  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", false, true);
-  catalog::ColumnInfo column2(VALUE_TYPE_VARCHAR, 25, "B", false, true);
-  catalog::ColumnInfo column3(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "C", false, true);
-  catalog::ColumnInfo column4(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "D", false, true);
+  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
+  catalog::ColumnInfo column2(VALUE_TYPE_VARCHAR, 25, "B", true);
+  catalog::ColumnInfo column3(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "C", true);
+  catalog::ColumnInfo column4(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "D", true);
 
   columns.push_back(column1);
   columns.push_back(column2);
@@ -49,7 +49,7 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   // BTREE INDEX
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata("btree_index",
-                                                                  INDEX_TYPE_BTREE_MULTIMAP,
+                                                                  INDEX_METHOD_TYPE_BTREE_MULTIMAP,
                                                                   tuple_schema,
                                                                   key_schema,
                                                                   true);

@@ -17,6 +17,7 @@
 
 #include "backend/bridge/plan_transformer.h"
 #include "backend/bridge/tuple_transformer.h"
+#include "backend/common/logger.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/storage/data_table.h"
 #include "backend/planner/delete_node.h"
@@ -96,6 +97,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
 planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     const ModifyTableState *mt_plan_state) {
 
+  LOG_INFO("Insert Plan Node \n");
+
   /* Resolve result table */
   ResultRelInfo *result_rel_info = mt_plan_state->resultRelInfo;
   Relation result_relation_desc = result_rel_info->ri_RelationDesc;
@@ -111,6 +114,11 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   /* Get the target table */
   storage::DataTable *target_table = static_cast<storage::DataTable*>(catalog::Manager::GetInstance().
       GetLocation(database_oid, table_oid));
+
+  if(target_table == nullptr) {
+    LOG_ERROR("Target table is not found : database oid %u table oid %u", database_oid, table_oid);
+    return nullptr;
+  }
 
   /* Get the tuple schema */
   auto schema = target_table->GetSchema();

@@ -899,7 +899,9 @@ standard_ProcessUtility(Node *parsetree,
   }
 
   // TODO: Peloton Changes
-  peloton_send_ddl(parsetree, queryString);
+  peloton_send_ddl(parsetree, queryString,
+                   TopTransactionContext,
+                   CurTransactionContext);
 
 }
 
