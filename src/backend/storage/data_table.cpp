@@ -42,6 +42,11 @@ void DataTable::AddIndex(index::Index *index) {
   indexes.push_back(index);
 }
 
+void DataTable::AddUniqueIndex(index::Index *index) {
+  std::lock_guard<std::mutex> lock(table_unique_index_mutex);
+  unique_indexes.push_back(index);
+}
+
 void DataTable::SetPrimaryIndex(index::Index *index) {
   PrimaryKey_Index = index;
 }
