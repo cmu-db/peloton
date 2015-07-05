@@ -8,10 +8,13 @@
 #include "postgres.h"
 
 #include <ctype.h>
+#include <cassert>
 
 #include "executor/execdesc.h"
 #include "foreign/fdwapi.h"
 #include "nodes/pprint.h"
+
+
 
 /* static helpers */
 static void print_plan(FILE *DEST, const PlanState *planstate,
@@ -42,11 +45,6 @@ void printPlanStateTree(const PlanState *planstate) {
   //FILE *minglog = fopen(logpath, "a+");
   print_plan(stdout, planstate, NULL, NULL, 0);
   fprintf(stdout, "\n");
-
-  fprintf(stdout, "printing plan state :: \n");
-  fflush(stdout);
-
-  print_plan(stdout, planstate, NULL, NULL, 0);
   //fprintf(minglog, "\n");
   //fclose(minglog);
 }
@@ -56,7 +54,7 @@ static void print_plan(FILE *DEST, const PlanState *planstate,
                        int ind) {
   Plan *plan = planstate->plan;
 
-  if (plan == nullptr) return;
+  assert(plan != nullptr);
 
   const char* pname;  // node type for text output
   const char* sname;
