@@ -37,7 +37,7 @@ class Index : public AbstractCatalogObject {
 
 public:
 
-    Index(std::string name, IndexType type, bool unique, std::vector<Column*> columns)
+    Index(std::string name, IndexMethodType type, bool unique, std::vector<Column*> columns)
         : AbstractCatalogObject(static_cast<oid_t>(1), name), // FIXME
           type(type),
           unique(unique),
@@ -53,7 +53,7 @@ public:
     // ACCESSORS
     //===--------------------------------------------------------------------===//
 
-    IndexType GetType() const {
+    IndexMethodType GetType() const {
         return type;
     }
 
@@ -85,7 +85,7 @@ private:
     //===--------------------------------------------------------------------===//
     
     // What data structure is the index using ?
-    IndexType type = INDEX_TYPE_INVALID;
+    IndexMethodType type = INDEX_METHOD_TYPE_INVALID;
 
     // Can the index contain duplicate keys?
     bool unique = false;
