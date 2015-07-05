@@ -1275,11 +1275,12 @@ exec_parse_message(const char *query_string,	/* string to execute */
     drop_unnamed_stmt();
     /* Create context for parsing */
     unnamed_stmt_context =
-        AllocSetContextCreate(MessageContext,
-                              "unnamed prepared statement",
-                              ALLOCSET_DEFAULT_MINSIZE,
-                              ALLOCSET_DEFAULT_INITSIZE,
-                              ALLOCSET_DEFAULT_MAXSIZE);
+        SHMAllocSetContextCreate(MessageContext,
+                                 "unnamed prepared statement",
+                                 ALLOCSET_DEFAULT_MINSIZE,
+                                 ALLOCSET_DEFAULT_INITSIZE,
+                                 ALLOCSET_DEFAULT_MAXSIZE,
+                                 SHM_DEFAULT_SEGMENT);
     oldcontext = MemoryContextSwitchTo(unnamed_stmt_context);
   }
 
@@ -3936,17 +3937,6 @@ PostgresMain(int argc, char *argv[],
     default:
       break;
   }
-
-  fprintf(stdout, "Backend :: PID :: %d \n", getpid());
-  fprintf(stdout, "Backend :: TopMemoryContext :: %p \n", TopMemoryContext);
-  fprintf(stdout, "Backend :: PostmasterContext :: %p \n", PostmasterContext);
-  fprintf(stdout, "Backend :: CacheMemoryContext :: %p \n", CacheMemoryContext);
-  fprintf(stdout, "Backend :: MessageContext :: %p \n", MessageContext);
-  fprintf(stdout, "Backend :: TopTransactionContext :: %p \n", TopTransactionContext);
-  fprintf(stdout, "Backend :: CurrentTransactionContext :: %p \n", CurTransactionContext);
-  fprintf(stdout, "Backend :: ErrorContext :: %p \n", ErrorContext);
-  fprintf(stdout, "Backend :: TopSharedMemoryContext :: %p \n", TopSharedMemoryContext);
-  fflush(stdout);
 
   /*
    * Non-error queries loop here.
