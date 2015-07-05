@@ -251,10 +251,10 @@ void GetTableList(bool catalog_only) {
 
     // Check if we only need catalog tables or not ?
     if(catalog_only == false) {
-      elog(LOG, "pgclass->relname :: %s  \n", NameStr(pgclass->relname ) );
+      elog(LOG, "pgclass->relname :: %s ", NameStr(pgclass->relname ) );
     }
     else if(pgclass->relnamespace==PG_PUBLIC_NAMESPACE) {
-      elog(LOG, "pgclass->relname :: %s  \n", NameStr(pgclass->relname ) );
+      elog(LOG, "pgclass->relname :: %s ", NameStr(pgclass->relname ) );
     }
 
   }
@@ -285,7 +285,7 @@ void GetTableListAndColumnInformation() {
     if(pgclass->relnamespace==PG_PUBLIC_NAMESPACE) {
 
       if( pgclass->relkind == 'r' ){
-        printf("relname %s\n",NameStr(pgclass->relname));
+        printf("relname %s  \n",NameStr(pgclass->relname));
         peloton::oid_t database_oid = GetCurrentDatabaseOid();
         peloton::oid_t table_oid = GetRelationOid( NameStr(pgclass->relname));
 
@@ -339,7 +339,7 @@ void GetDatabaseList(void) {
 
   while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection)))  {
     Form_pg_database pg_database = (Form_pg_database) GETSTRUCT(tup);
-    elog(LOG, "pgdatabase->datname  :: %s\n", NameStr(pg_database->datname) );
+    elog(LOG, "pgdatabase->datname  :: %s ", NameStr(pg_database->datname) );
   }
 
   heap_endscan(scan);
@@ -544,10 +544,10 @@ bool BootstrapPeloton(void){
             status = peloton::bridge::DDL::CreateTable2(relation_name, column_infos);
 
             if(status == true) {
-              elog(LOG, "Create Table \"%s\" in Peloton\n", relation_name);
+              elog(LOG, "Create Table \"%s\" in Peloton", relation_name);
             }
             else {
-              elog(ERROR, "Create Table \"%s\" in Peloton\n", relation_name);
+              elog(ERROR, "Create Table \"%s\" in Peloton", relation_name);
             }
 
           }
@@ -609,10 +609,10 @@ bool BootstrapPeloton(void){
                 peloton::bridge::DDL::CreateIndex2(relation_name, get_rel_name(pg_index->indrelid), method_type, type, pg_index->indisunique, key_column_names, true);
 
                 if(status == true) {
-                  elog(LOG, "Create Index \"%s\" in Peloton\n", relation_name);
+                  elog(LOG, "Create Index \"%s\" in Peloton", relation_name);
                 }
                 else {
-                  elog(ERROR, "Create Index \"%s\" in Peloton\n", relation_name);
+                  elog(ERROR, "Create Index \"%s\" in Peloton", relation_name);
                 }
                 break;
               }
@@ -624,7 +624,7 @@ bool BootstrapPeloton(void){
           break;
 
           default:
-            elog(ERROR, "Invalid pg_class entry type : %c \n", relation_kind);
+            elog(ERROR, "Invalid pg_class entry type : %c", relation_kind);
             break;
         }
 
@@ -639,29 +639,28 @@ bool BootstrapPeloton(void){
             //status = peloton::bridge::DDL::CreateTable(relation_name, NULL, 0, 0); // TODO :: REMOVE
             status = peloton::bridge::DDL::CreateTable2(relation_name, column_infos);
             if(status == true) {
-              elog(LOG, "Create Table \"%s\" in Peloton\n", relation_name);
+              elog(LOG, "Create Table \"%s\" in Peloton", relation_name);
             }
             else {
-              elog(ERROR, "Create Table \"%s\" in Peloton\n", relation_name);
+              elog(ERROR, "Create Table \"%s\" in Peloton", relation_name);
             }
             break;
 
           case 'i':
-            elog(ERROR, "We don't support indexes for tables with no attributes \n");
+            elog(ERROR, "We don't support indexes for tables with no attributes");
             break;
 
           default:
-            elog(ERROR, "Invalid pg_class entry type : %c \n", relation_kind);
+            elog(ERROR, "Invalid pg_class entry type : %c", relation_kind);
             break;
         }
       }
 
     }
   }
-
   
-  printf("Print all relation's schema information\n");
-  GetTableListAndColumnInformation();
+  //printf("Print all relation's schema information\n");
+  //GetTableListAndColumnInformation();
 
   heap_endscan(pg_class_scan);
   heap_close(pg_attribute_rel, AccessShareLock);
