@@ -33,9 +33,9 @@ class ColumnInfo {
  public:
 
  // TODO :: Scrubbing unused constructors...
- // Configures (type, length, name, allow_null)
- ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name, bool allow_null)
-   : type(column_type), offset(0), name(column_name), allow_null(allow_null) {
+ // Configures (type, length, name)
+ ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name)
+   : type(column_type), offset(0), name(column_name) {
 
       switch( type ){
         case VALUE_TYPE_SMALLINT:
@@ -61,9 +61,9 @@ class ColumnInfo {
       }
     }
 
- // Configures (type, length, name, allow_null, constraint)
- ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name, bool allow_null, std::vector<catalog::Constraint> column_constraint_vector)
-   : type(column_type), offset(0), name(column_name), allow_null(allow_null), constraint_vector(column_constraint_vector){
+ // Configures (type, length, name, constraint)
+ ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name, std::vector<catalog::Constraint> column_constraint_vector)
+   : type(column_type), offset(0), name(column_name), constraint_vector(column_constraint_vector){
 
       switch( type ){
         case VALUE_TYPE_SMALLINT:
@@ -91,9 +91,10 @@ class ColumnInfo {
 
 
 
-  // Configures all members except offset and constraint
-  ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name, bool allow_null, bool is_inlined)
- : type(column_type), offset(0), name(column_name), allow_null(allow_null), is_inlined(is_inlined){
+  // Configures ( type, length, name, is_inlined )
+  ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name, bool is_inlined)
+ : type(column_type), offset(0), name(column_name), is_inlined(is_inlined){
+
     if(is_inlined){
       fixed_length = column_length;
       variable_length = 0;
@@ -104,44 +105,28 @@ class ColumnInfo {
     }
   }
 
-  // Configure all members except in_inlined
-  ColumnInfo(ValueType column_type, oid_t column_offset, oid_t column_length,
-      std::string column_name, bool allow_null, std::vector<catalog::Constraint> column_constraint_vector)
-    : type(column_type), offset(column_offset), name(column_name), allow_null(allow_null), 
-    constraint_vector(column_constraint_vector){
-
-      switch( type ){
-        case VALUE_TYPE_SMALLINT:
-        case VALUE_TYPE_INTEGER:
-        case VALUE_TYPE_BIGINT:
-        case VALUE_TYPE_DOUBLE:
-        case VALUE_TYPE_VARCHAR:
-        case VALUE_TYPE_TIMESTAMP:
-          is_inlined = true;
-          break;
-        default:
-          is_inlined = false;
-          break;
-      }
-
-      if(is_inlined){
-        fixed_length = column_length;
-        variable_length = 0;
-      }
-      else{
-        fixed_length = sizeof(uintptr_t);
-        variable_length = column_length;
-      }
+  // Configures ( type, length, name, is_inlined, constraint )
+  ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name, bool is_inlined, std::vector<catalog::Constraint> column_constraint_vector)
+ : type(column_type), offset(0), name(column_name), is_inlined(is_inlined), constraint_vector(column_constraint_vector){
+ 
+    if(is_inlined){
+      fixed_length = column_length;
+      variable_length = 0;
     }
+    else{
+      fixed_length = sizeof(uintptr_t);
+      variable_length = column_length;
+    }
+  }
 
-  // Configure all members
+  // Configure all members (type, offset, length, name, is_inlined, constraint )
   ColumnInfo(ValueType column_type, oid_t column_offset,
              oid_t column_length, std::string column_name,
-             bool allow_null, bool is_inlined,
+              bool is_inlined,
              std::vector<catalog::Constraint> column_constraint_vector)
   : type(column_type), offset(column_offset),
     name(column_name),
-    allow_null(allow_null), is_inlined(is_inlined), constraint_vector(column_constraint_vector){
+    is_inlined(is_inlined), constraint_vector(column_constraint_vector){
 
     if(is_inlined){
       fixed_length = column_length;
@@ -151,12 +136,17 @@ class ColumnInfo {
       fixed_length = sizeof(uintptr_t);
       variable_length = column_length;
     }
+  }
+  
+  // add a constraint to the column info
+  void AddConstraint(catalog::Constraint* constraint){
+    // TODO :: Mutex lock need?
+    constraint_vector.push_back(*constraint);
   }
 
   /// Compare two column info objects
   bool operator== (const ColumnInfo &other) const {
-    if (other.allow_null != allow_null || other.type != type ||
-        other.is_inlined != is_inlined) {
+    if ( other.type != type || other.is_inlined != is_inlined){
       return false;
     }
     return true;
@@ -191,7 +181,6 @@ class ColumnInfo {
   // column name
   std::string name;
 
-  bool allow_null;
   bool is_inlined;
 
   // Constraints
@@ -216,7 +205,6 @@ class Schema	{
   void CreateTupleSchema(const std::vector<ValueType> column_types,
                          const std::vector<oid_t> column_lengths,
                          const std::vector<std::string> column_names,
-                         const std::vector<bool> allow_null,
                          const std::vector<bool> is_inlined,
                          const std::vector<std::vector<Constraint>> constraint_vector_of_vectors);
 
@@ -277,18 +265,16 @@ class Schema	{
     return columns[column_id].variable_length;
   }
 
-  //// Get the nullability of the column at a given index.
-  inline bool AllowNull(const oid_t column_id) const {
-    return columns[column_id].allow_null;
-  }
-
-
   inline bool IsInlined(const oid_t column_id) const {
     return columns[column_id].is_inlined;
   }
 
   const ColumnInfo GetColumnInfo(const oid_t column_id) const {
     return columns[column_id];
+  }
+
+  void AddConstraintInColumn( const oid_t column_id, catalog::Constraint* constraint ) {
+    columns[column_id].AddConstraint(constraint);
   }
 
   oid_t GetUninlinedColumnIndex(const oid_t column_id) const {
@@ -311,6 +297,15 @@ class Schema	{
   /// Return the number of bytes used by one tuple.
   inline oid_t GetLength() const {
     return length;
+  }
+
+  //// Get the nullability of the column at a given index.
+  inline bool AllowNull(const oid_t column_id) const {
+    for( auto constraint :  columns[column_id].constraint_vector ){
+    	if( constraint.GetType() == CONSTRAINT_TYPE_NOTNULL )
+    		return false;
+    }
+    return true;
   }
 
   /// Returns a flag indicating whether all columns are inlined

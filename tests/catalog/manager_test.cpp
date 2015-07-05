@@ -37,7 +37,7 @@ void AddTileGroup() {
     std::vector<catalog::ColumnInfo> columns;
 
     // SCHEMA
-    catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", false, true);
+    catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
     columns.push_back(column1);
 
     catalog::Schema *schema1 = new catalog::Schema(columns);

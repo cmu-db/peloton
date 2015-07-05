@@ -16,6 +16,7 @@
 #include "bridge/bridge.h"
 #include "backend/bridge/ddl.h"
 #include "backend/catalog/schema.h"
+#include "backend/catalog/constraint.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_class.h"
@@ -30,6 +31,8 @@
 
 #include <sys/types.h>
 #include <unistd.h>
+
+#include "parser/parse_type.h" // TODO :: JUST FOR DEBUGGING
 
 //===--------------------------------------------------------------------===//
 // Postgres Utility Functions
@@ -263,6 +266,64 @@ void GetTableList(bool catalog_only) {
 }
 
 /**
+ * @brief Print all tables and their column information for dubugging
+ */
+void GetTableListAndColumnInformation() {
+  Relation pg_class_rel;
+  HeapScanDesc scan;
+  HeapTuple tuple;
+
+  //StartTransactionCommand();
+
+  // Scan pg class table
+  pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
+  scan = heap_beginscan_catalog(pg_class_rel, 0, NULL);
+
+  while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
+    Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
+
+    if(pgclass->relnamespace==PG_PUBLIC_NAMESPACE) {
+
+      if( pgclass->relkind == 'r' ){
+        printf("relname %s\n",NameStr(pgclass->relname));
+        peloton::oid_t database_oid = GetCurrentDatabaseOid();
+        peloton::oid_t table_oid = GetRelationOid( NameStr(pgclass->relname));
+
+        // Get the table location from manager
+        auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+        peloton::storage::DataTable* data_table = (peloton::storage::DataTable*) table;
+        auto tuple_schema = data_table->GetSchema();
+        std::cout << *tuple_schema << std::endl;
+
+        if( data_table->ishasPrimaryKey()  ){
+          printf("print primary key index \n");
+          std::cout<< *(data_table->GetPrimaryIndex()) << std::endl;
+        }else if ( data_table->ishasUnique()){
+          printf("print unique index \n");
+          for( int i =0 ; i<  data_table->GetUniqueIndexCount(); i++){
+            std::cout << *(data_table->GetUniqueIndex(i)) << std::endl;
+          }
+        }else if ( data_table->GetIndexCount() > 0 ){
+          printf("print index \n");
+          for( int i =0 ; i<  data_table->GetIndexCount(); i++){
+            std::cout << *(data_table->GetIndex(i)) << std::endl;
+          }
+        }
+      }
+
+    }
+
+  }
+
+  heap_endscan(scan);
+  heap_close(pg_class_rel, AccessShareLock);
+
+  //CommitTransactionCommand();
+}
+
+
+
+/**
  * @brief Print all databases using catalog table pg_database
  */
 void GetDatabaseList(void) {
@@ -328,8 +389,8 @@ SetNumberOfTuples(Oid relation_id, float num_tuples) {
  * @brief This function constructs all the user-defined tables in all databases
  * @return true or false, depending on whether we could bootstrap.
  */
-bool BootstrapPeloton(void)
-{
+bool BootstrapPeloton(void){
+
   // Relations for catalog tables
   Relation pg_class_rel;
   Relation pg_attribute_rel;
@@ -378,13 +439,14 @@ bool BootstrapPeloton(void)
         continue;
       }
 
+      std::vector<peloton::catalog::ColumnInfo> column_infos;
+
       attnum =  pg_class->relnatts;
       if( attnum > 0 )
       {
         HeapScanDesc pg_attribute_scan;
         HeapTuple pg_attribute_tuple;
         DDL_ColumnInfo ddl_schema[attnum]; // TODO :: REMOVE
-        std::vector<peloton::catalog::ColumnInfo> column_infos;
 
         // This will be different from pg's attnum, as we skip system columns
         int our_attnum; // TODO :: REMOVE
@@ -423,6 +485,8 @@ bool BootstrapPeloton(void)
                 strcmp( NameStr(pg_attribute->attname),"xmin" ) &&
                 strcmp( NameStr(pg_attribute->attname),"tableoid" ) )
             {
+              std::vector<peloton::catalog::Constraint> constraint_infos;
+
               ddl_schema[column_itr].valueType = pg_attribute->atttypid; // TODO :: REMOVE
               ddl_schema[column_itr].column_offset = column_itr; // TODO :: REMOVE
               ddl_schema[column_itr].column_length = pg_attribute->attlen; // TODO :: REMOVE
@@ -431,16 +495,31 @@ bool BootstrapPeloton(void)
 
               // NOTE: We set it as true later for VARCHAR.
               ddl_schema[column_itr].is_inlined = false; // TODO :: REMOVE
-
               // TODO :: Need to be updated ( read constraints from catalog and set it up )
               ddl_schema[column_itr].constraintType = NULL; // TODO :: REMOVE
               ddl_schema[column_itr].conname = NULL; // TODO :: REMOVE
 
-              peloton::ValueType valueType = peloton::PostgresValueTypeToPelotonValueType( (peloton::PostgresValueType) pg_attribute->atttypid);
+              peloton::PostgresValueType postgresValueType = (peloton::PostgresValueType) pg_attribute->atttypid;
+              int column_length = pg_attribute->attlen;
+              bool is_inlined = true;
+              if( pg_attribute->attlen == -1){
+                 column_length = pg_attribute->atttypmod;
+                 is_inlined = false;
+              }
+
+              peloton::ValueType valueType = peloton::PostgresValueTypeToPelotonValueType( postgresValueType );
+
+              // Check constraints
+              if( pg_attribute->attnotnull ){
+                peloton::catalog::Constraint* constraint = new peloton::catalog::Constraint( peloton::CONSTRAINT_TYPE_NOTNULL );
+                constraint_infos.push_back(*constraint);
+              }
+
               peloton::catalog::ColumnInfo* column_info = new peloton::catalog::ColumnInfo( valueType,
-                                                                                            pg_attribute->attlen,
+                                                                                            column_length,
                                                                                             NameStr(pg_attribute->attname),   
-                                                                                            !pg_attribute->attnotnull);
+                                                                                            is_inlined,
+                                                                                            constraint_infos);
               column_infos.push_back(*column_info);
               column_itr++; // TODO :: REMOVE
             }
@@ -498,18 +577,36 @@ bool BootstrapPeloton(void)
               // Search for the tuple in pg_index corresponding to our index
               if( pg_index->indexrelid == tuple_oid)
               {
-                char* ColumnNamesForKeySchema[column_itr];
-                int idx_itr;
+                char* ColumnNamesForKeySchema[column_itr]; // TODO :: REMOVE
+                int idx_itr; // TODO :: REMOVE
+                std::vector<std::string> key_column_names;
 
-                for(idx_itr = 0 ; idx_itr < column_itr ; idx_itr ++ )
-                {
+                
+                //TODO :: REMOVE
+                for(idx_itr = 0 ; idx_itr < column_itr ; idx_itr ++ ){
                    ColumnNamesForKeySchema[idx_itr] = (char*) malloc(sizeof(char)*strlen(ddl_schema[idx_itr].name));
                    strcpy(ColumnNamesForKeySchema[idx_itr], ddl_schema[idx_itr].name );
                 }
 
-                peloton::bridge::DDL::CreateIndex(relation_name, get_rel_name(pg_index->indrelid),
-                               0, pg_index->indisunique,
-                               ColumnNamesForKeySchema, our_attnum);
+                for( auto column_info : column_infos ){
+                  key_column_names.push_back( column_info.name );
+                }
+
+                //peloton::bridge::DDL::CreateIndex(relation_name, get_rel_name(pg_index->indrelid), 0, pg_index->indisunique, ColumnNamesForKeySchema, our_attnum); // TODO :: REMOVE
+                peloton::IndexMethodType method_type = peloton::INDEX_METHOD_TYPE_BTREE_MULTIMAP;
+                peloton::IndexType type;
+
+                if( pg_index->indisprimary ){
+                  type = peloton::INDEX_TYPE_PRIMARY_KEY;  
+                }
+                else if( pg_index->indisunique ){
+                  type = peloton::INDEX_TYPE_UNIQUE;  
+                }
+                else{
+                  type =peloton:: INDEX_TYPE_NORMAL;
+                }
+
+                peloton::bridge::DDL::CreateIndex2(relation_name, get_rel_name(pg_index->indrelid), method_type, type, pg_index->indisunique, key_column_names, true);
 
                 if(status == true) {
                   elog(LOG, "Create Index \"%s\" in Peloton\n", relation_name);
@@ -539,7 +636,8 @@ bool BootstrapPeloton(void)
 
           case 'r':
             // Create the Peloton table
-            status = peloton::bridge::DDL::CreateTable(relation_name, NULL, 0, 0);
+            //status = peloton::bridge::DDL::CreateTable(relation_name, NULL, 0, 0); // TODO :: REMOVE
+            status = peloton::bridge::DDL::CreateTable2(relation_name, column_infos);
             if(status == true) {
               elog(LOG, "Create Table \"%s\" in Peloton\n", relation_name);
             }
@@ -560,6 +658,10 @@ bool BootstrapPeloton(void)
 
     }
   }
+
+  
+  printf("Print all relation's schema information\n");
+  GetTableListAndColumnInformation();
 
   heap_endscan(pg_class_scan);
   heap_close(pg_attribute_rel, AccessShareLock);
