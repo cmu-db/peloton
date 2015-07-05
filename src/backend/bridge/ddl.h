@@ -86,11 +86,11 @@ class DDL {
 
   static bool CreateIndex2(std::string index_name,
                            std::string table_name,
-                           int index_type,
+                           IndexMethodType  index_method_type,
+                           IndexType  index_type,
                            bool unique_keys,
                            std::vector<std::string> key_column_names,
-                           bool is_primarykey_index = false);
-
+                           bool bootstrap = false );
 
 
   //===--------------------------------------------------------------------===//
