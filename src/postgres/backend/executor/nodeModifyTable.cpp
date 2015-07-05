@@ -1675,8 +1675,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
      */
     CheckValidResultRel(resultRelInfo->ri_RelationDesc, operation);
 
-    elog(LOG, "Oid = %u", resultRelInfo->ri_RelationDesc->rd_id);
-
     /*
      * If there are indices on the result relation, open them and save
      * descriptors in the result relation info, so that we can add new___

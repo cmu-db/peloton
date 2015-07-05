@@ -18,6 +18,7 @@
 #include "parser/parse_utilcmd.h"
 #include "parser/parse_type.h"
 #include "access/htup_details.h"
+#include "utils/resowner.h"
 #include "utils/syscache.h"
 #include "catalog/pg_type.h"
 
@@ -55,12 +56,11 @@ void DDL::ProcessUtility(Node *parsetree,
       List     *stmts;
       ListCell   *l;
 
-  std::cout << "JWKIM DEBUG :: " << __LINE__ << "\n";
+      assert(CurrentResourceOwner != NULL);
+
       /* Run parse analysis ... */
       stmts = transformCreateStmt((CreateStmt *) parsetree,
                                   queryString);
-return;
-  std::cout << "JWKIM DEBUG :: " << __LINE__ << "\n";
 
       /* ... and do it */
       foreach(l, stmts)
@@ -276,14 +276,32 @@ std::vector<catalog::ColumnInfo> ConstructColumnInfoByParsingCreateStmt( CreateS
 
     ColumnDef  *coldef = lfirst(entry);
 
-    // TODO : Make it simple ..
-    Type tup = typenameType(NULL, coldef->typeName, NULL);
-    Form_pg_type typ = (Form_pg_type) GETSTRUCT(tup);
-    Oid typeoid = HeapTupleGetOid(tup);
+    // Parsing the column value type
+    Oid typeoid;
+    int32 typemod;
+    int typelen;
+
+    // Get the type oid and type mod with given typeName
+    typeoid = typenameTypeId(NULL, coldef->typeName);
+
+    typenameTypeIdAndMod(NULL, coldef->typeName, &typeoid, &typemod);
+
+    // Get type length
+    Type tup = typeidType(typeoid);
+    typelen = typeLen(tup);
     ReleaseSysCache(tup);
 
+    // For a fixed-size type, typlen is the number of bytes in the internal
+    // representation of the type. But for a variable-length type, typlen is negative.
+    if( typelen == -1 )
+    {
+      printf("%u\n", typemod);
+      // we need to get the atttypmod from pg_attribute
+    }
+     
+
     ValueType column_valueType = PostgresValueTypeToPelotonValueType( (PostgresValueType) typeoid );
-    int column_length = typ->typlen;
+    int column_length = typelen;
     std::string column_name = coldef->colname;
     bool column_allow_null = !coldef->is_not_null;
 
@@ -317,7 +335,6 @@ std::vector<catalog::ColumnInfo> ConstructColumnInfoByParsingCreateStmt( CreateS
     catalog::ColumnInfo *column_info = new catalog::ColumnInfo( column_valueType, 
                                                                 column_length, 
                                                                 column_name, 
-                                                                column_allow_null,
                                                                 column_constraints);
 
     // Insert column_info into ColumnInfos
@@ -493,7 +510,6 @@ bool DDL::CreateTable(std::string table_name,
                                       schema[column_itr].column_offset,
                                       schema[column_itr].column_length,
                                       schema[column_itr].name,
-                                      schema[column_itr].allow_null,
                                       schema[column_itr].is_inlined,
                                       constraint_vec);
 
@@ -505,7 +521,7 @@ bool DDL::CreateTable(std::string table_name,
   else {
     column_type = VALUE_TYPE_NULL;
     catalog::ColumnInfo column_info(column_type, 0, 0, "",
-                                    true, true, constraint_vec);
+                                    true, constraint_vec);
     column_infos.push_back(column_info);
   }
 
@@ -548,7 +564,7 @@ bool DDL::CreateTable2( std::string table_name,
 
   Oid database_oid = GetCurrentDatabaseOid();
   if(database_oid == InvalidOid)
-  return false;
+    return false;
 
   // Construct our schema from vector of ColumnInfo
   if( schema == NULL) 
@@ -561,8 +577,8 @@ bool DDL::CreateTable2( std::string table_name,
   storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, schema, table_name);
 
   if(table != nullptr) {
-          LOG_INFO("Created table : %s\n", table_name.c_str());
-          return true;
+    LOG_INFO("Created table : %s\n", table_name.c_str());
+    return true;
   }
 
   return false;
@@ -600,11 +616,9 @@ bool DDL::DropTable(Oid table_oid) {
  * @param type Type of the index
  * @param unique Index is unique or not ?
  * @param
- * @param column_info Information about the columns
+ * @param key_column_name key column names
  * @param num_columns Number of columns in the table
- * @param schema Schema for the table
- *
- * @return true if we dropped the table, false otherwise
+ * @return true if we create the index, false otherwise
  */
 bool DDL::CreateIndex(std::string index_name,
                       std::string table_name,
@@ -617,7 +631,7 @@ bool DDL::CreateIndex(std::string index_name,
 
   // NOTE: We currently only support btree as our index implementation
   // FIXME: Support other types based on "type" argument
-  IndexType our_index_type = INDEX_TYPE_BTREE_MULTIMAP;
+  IndexMethodType our_index_type = INDEX_METHOD_TYPE_BTREE_MULTIMAP;
 
   // Get the database oid and table oid
   oid_t database_oid = GetCurrentDatabaseOid();
@@ -655,6 +669,97 @@ bool DDL::CreateIndex(std::string index_name,
 
   // Record the built index in the table
   data_table->AddIndex(index);
+
+  return true;
+}
+
+/**
+ * @brief Create index.
+ * @param index_name Index name
+ * @param table_name Table name
+ * @param type Type of the index
+ * @param unique Index is unique or not ?
+ * @param key_column_names column names for the key table 
+ * @return true if we create the index, false otherwise
+ */
+bool DDL::CreateIndex2(std::string index_name,
+                       std::string table_name,
+                       IndexMethodType  index_method_type,
+                       IndexType  index_type,
+                       bool unique_keys,
+                       std::vector<std::string> key_column_names,
+                       bool bootstrap ){
+
+  assert( index_name != "" );
+  assert( table_name != "" );
+  assert( key_column_names.size() > 0  );
+
+  // NOTE: We currently only support btree as our index implementation
+  // TODO : Support other types based on "type" argument
+  IndexMethodType our_index_type = INDEX_METHOD_TYPE_BTREE_MULTIMAP;
+
+  // Get the database oid and table oid
+  oid_t database_oid = GetCurrentDatabaseOid();
+  oid_t table_oid = GetRelationOid(table_name.c_str());
+
+  // Get the table location from manager
+  auto table = catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+  storage::DataTable* data_table = (storage::DataTable*) table;
+  auto tuple_schema = data_table->GetSchema();
+
+  // Construct key schema
+  std::vector<oid_t> key_columns;
+
+  // Based on the key column info, get the oid of the given 'key' columns in the tuple schema
+  for( auto key_column_name : key_column_names ){
+    for( oid_t tuple_schema_column_itr = 0; tuple_schema_column_itr < tuple_schema->GetColumnCount();
+        tuple_schema_column_itr++){
+
+      // Get the current column info from tuple schema
+      catalog::ColumnInfo column_info = tuple_schema->GetColumnInfo(tuple_schema_column_itr);
+      // Compare Key Schema's current column name and Tuple Schema's current column name
+      if( key_column_name == column_info.name ){
+        key_columns.push_back(tuple_schema_column_itr);
+
+        // TODO :: Need to talk with Joy
+        // NOTE :: Since pg_attribute doesn't have any information about primary key and unique key,
+        //         I try to store these information when we create an unique and primary key index
+        if( bootstrap ){
+          if( index_type == INDEX_TYPE_PRIMARY_KEY ){ 
+            catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_PRIMARY );
+            tuple_schema->AddConstraintInColumn( tuple_schema_column_itr, constraint); 
+          }else if( index_type == INDEX_TYPE_UNIQUE ){ 
+            catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_UNIQUE );
+            tuple_schema->AddConstraintInColumn( tuple_schema_column_itr, constraint); 
+          }
+        }
+
+      }
+    }
+  }
+
+  auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_columns);
+
+  // Create index metadata and physical index
+  index::IndexMetadata* metadata = new index::IndexMetadata(index_name, our_index_type,
+                                                            tuple_schema, key_schema,
+                                                            unique_keys);
+  index::Index* index = index::IndexFactory::GetInstance(metadata);
+
+  // Record the built index in the table
+  switch(  index_type ){
+  case INDEX_TYPE_NORMAL:
+	  data_table->AddIndex(index);
+	  break;
+  case INDEX_TYPE_PRIMARY_KEY:
+	  data_table->SetPrimaryIndex(index);
+	  break;
+  case INDEX_TYPE_UNIQUE:
+	  data_table->AddUniqueIndex(index);
+	  break;
+  default:
+      elog(LOG, "unrecognized index type: %d", index_type);
+  }
 
   return true;
 }
