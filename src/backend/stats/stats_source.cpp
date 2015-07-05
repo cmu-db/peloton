@@ -39,11 +39,11 @@ std::vector<catalog::ColumnInfo> StatsSource::CreateBaseStatsTableSchema() {
 
 	std::vector<catalog::ColumnInfo> columns;
 
-	catalog::ColumnInfo column1(VALUE_TYPE_BIGINT, GetTypeSize(VALUE_TYPE_BIGINT), false, true);
-	catalog::ColumnInfo column2(VALUE_TYPE_BIGINT, GetTypeSize(VALUE_TYPE_BIGINT), false, true);
-	catalog::ColumnInfo column3(VALUE_TYPE_VARCHAR, VARCHAR_LENGTH_LONG , false, true);
-	catalog::ColumnInfo column4(VALUE_TYPE_BIGINT, GetTypeSize(VALUE_TYPE_BIGINT), false, true);
-	catalog::ColumnInfo column5(VALUE_TYPE_BIGINT, GetTypeSize(VALUE_TYPE_BIGINT), false, true);
+	catalog::ColumnInfo column1(VALUE_TYPE_BIGINT, GetTypeSize(VALUE_TYPE_BIGINT), false);
+	catalog::ColumnInfo column2(VALUE_TYPE_BIGINT, GetTypeSize(VALUE_TYPE_BIGINT), false);
+	catalog::ColumnInfo column3(VALUE_TYPE_VARCHAR, VARCHAR_LENGTH_LONG , false);
+	catalog::ColumnInfo column4(VALUE_TYPE_BIGINT, GetTypeSize(VALUE_TYPE_BIGINT), false);
+	catalog::ColumnInfo column5(VALUE_TYPE_BIGINT, GetTypeSize(VALUE_TYPE_BIGINT), false);
 
 	columns.push_back(column1);
 	columns.push_back(column2);

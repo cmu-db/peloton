@@ -10,7 +10,6 @@
 //  Bridge for managing Postgres
 //===--------------------------------------------------------------------===//
 
-
 #include "nodes/pprint.h"
 
 char* GetRelationName(unsigned int relation_id);

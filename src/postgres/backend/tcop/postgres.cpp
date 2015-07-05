@@ -76,6 +76,10 @@
 #include "utils/timestamp.h"
 #include "mb/pg_wchar.h"
 
+
+#include "postmaster/peloton.h"
+#include "utils/memutils.h"
+
 /* ----------------
  *		global variables
  * ----------------
@@ -931,7 +935,7 @@ exec_simple_query(const char *query_string)
   /*
    * Switch to appropriate context for constructing parsetrees.
    */
-  oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
+  oldcontext = MemoryContextSwitchTo(MessageContext);
 
   /*
    * Do basic parsing of the query or queries (this should be safe even if
@@ -1027,7 +1031,7 @@ exec_simple_query(const char *query_string)
      * Switch to appropriate context for constructing querytrees (again,
      * these must outlive the execution context).
      */
-    oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
+    oldcontext = MemoryContextSwitchTo(MessageContext);
 
     querytree_list = pg_analyze_and_rewrite(parsetree, query_string,
                                             NULL, 0);
@@ -1087,6 +1091,14 @@ exec_simple_query(const char *query_string)
       }
     }
     PortalSetResultFormat(portal, 1, &format);
+
+    /*
+     * Switch back to transaction context for execution.
+     */
+    MemoryContextSwitchTo(oldcontext);
+
+    // TODO: Peloton Changes
+    oldcontext = MemoryContextSwitchTo(TopSharedMemoryContext);
 
     /*
      * Now we can create the destination receiver object.
@@ -1263,11 +1275,12 @@ exec_parse_message(const char *query_string,	/* string to execute */
     drop_unnamed_stmt();
     /* Create context for parsing */
     unnamed_stmt_context =
-        AllocSetContextCreate(MessageContext,
-                              "unnamed prepared statement",
-                              ALLOCSET_DEFAULT_MINSIZE,
-                              ALLOCSET_DEFAULT_INITSIZE,
-                              ALLOCSET_DEFAULT_MAXSIZE);
+        SHMAllocSetContextCreate(MessageContext,
+                                 "unnamed prepared statement",
+                                 ALLOCSET_DEFAULT_MINSIZE,
+                                 ALLOCSET_DEFAULT_INITSIZE,
+                                 ALLOCSET_DEFAULT_MAXSIZE,
+                                 SHM_DEFAULT_SEGMENT);
     oldcontext = MemoryContextSwitchTo(unnamed_stmt_context);
   }
 
@@ -3770,11 +3783,12 @@ PostgresMain(int argc, char *argv[],
    * MessageContext is reset once per iteration of the main loop, ie, upon
    * completion of processing of each command message from the client.
    */
-  MessageContext = AllocSetContextCreate(TopMemoryContext,
-                                         "MessageContext",
-                                         ALLOCSET_DEFAULT_MINSIZE,
-                                         ALLOCSET_DEFAULT_INITSIZE,
-                                         ALLOCSET_DEFAULT_MAXSIZE);
+  MessageContext = SHMAllocSetContextCreate(TopSharedMemoryContext,
+                                            "MessageContext",
+                                            ALLOCSET_DEFAULT_MINSIZE,
+                                            ALLOCSET_DEFAULT_INITSIZE,
+                                            ALLOCSET_DEFAULT_MAXSIZE,
+                                            SHM_DEFAULT_SEGMENT);
 
   /*
    * Remember stand-alone backend startup time
@@ -3941,14 +3955,6 @@ PostgresMain(int argc, char *argv[],
      */
     MemoryContextSwitchTo(MessageContext);
     MemoryContextResetAndDeleteChildren(MessageContext);
-
-    // TODO: Peloton Changes
-    /*
-     * Release storage left over from prior query cycle, and create a new
-     * query input buffer in the cleared TopSharedMemoryContext.
-     */
-    MemoryContextSwitchTo(TopSharedMemoryContext);
-    MemoryContextResetAndDeleteChildren(TopSharedMemoryContext);
 
     initStringInfo(&input_message);
 

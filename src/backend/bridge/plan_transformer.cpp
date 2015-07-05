@@ -22,6 +22,7 @@
 #include "backend/bridge/tuple_transformer.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/storage/data_table.h"
+#include "backend/planner/delete_node.h"
 #include "backend/planner/insert_node.h"
 #include "backend/planner/seq_scan_node.h"
 
@@ -67,11 +68,12 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(const PlanState *plan_
 /**
  * @brief Convert ModifyTableState into AbstractPlanNode.
  * @return Pointer to the constructed AbstractPlanNode.
+ *
+ * Basically, it multiplexes into helper methods based on operation type.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
     const ModifyTableState *mt_plan_state) {
 
-  /* TODO: handle UPDATE, DELETE */
   /* TODO: Add logging */
   ModifyTable *plan = (ModifyTable *) mt_plan_state->ps.plan;
 
@@ -79,7 +81,12 @@ planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
     case CMD_INSERT:
       return PlanTransformer::TransformInsert(mt_plan_state);
       break;
-
+    case CMD_UPDATE:
+      return PlanTransformer::TransformUpdate(mt_plan_state);
+      break;
+    case CMD_DELETE:
+      return PlanTransformer::TransformDelete(mt_plan_state);
+      break;
     default:
       break;
   }
@@ -94,13 +101,13 @@ planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
 planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     const ModifyTableState *mt_plan_state) {
 
-	LOG_INFO("%u, %u, %u, %u", sizeof(ModifyTableState), sizeof(ResultRelInfo), sizeof(RelationData), sizeof(Oid));
-  LOG_INFO("Insert into table with Oid %u", ((ModifyTableState*)mt_plan_state)->resultRelInfo->ri_RelationDesc->rd_id);
-  LOG_INFO("%p, %p, %p", mt_plan_state, ((ModifyTableState*)mt_plan_state)->resultRelInfo, ((ModifyTableState*)mt_plan_state)->resultRelInfo->ri_RelationDesc);
+	//LOG_INFO("%u, %u, %u, %u", sizeof(ModifyTableState), sizeof(ResultRelInfo), sizeof(RelationData), sizeof(Oid));
+  //LOG_INFO("Insert into table with Oid %u", ((ModifyTableState*)mt_plan_state)->resultRelInfo->ri_RelationDesc->rd_id);
+  //LOG_INFO("%p, %p, %p", mt_plan_state, ((ModifyTableState*)mt_plan_state)->resultRelInfo, ((ModifyTableState*)mt_plan_state)->resultRelInfo->ri_RelationDesc);
 
-  peloton::bridge::PlanTransformer::HexDump("Peloton ModifyTableState", mt_plan_state, sizeof(ModifyTableState));
-	peloton::bridge::PlanTransformer::HexDump("Peloton ResultRelInfo",((ModifyTableState*)mt_plan_state)->resultRelInfo , sizeof(ResultRelInfo));
-	peloton::bridge::PlanTransformer::HexDump("Peloton RelationData",((ModifyTableState*)mt_plan_state)->resultRelInfo->ri_RelationDesc, sizeof(RelationData));
+  //peloton::bridge::PlanTransformer::HexDump("Peloton ModifyTableState", mt_plan_state, sizeof(ModifyTableState));
+	//peloton::bridge::PlanTransformer::HexDump("Peloton ResultRelInfo",((ModifyTableState*)mt_plan_state)->resultRelInfo , sizeof(ResultRelInfo));
+	//peloton::bridge::PlanTransformer::HexDump("Peloton RelationData",((ModifyTableState*)mt_plan_state)->resultRelInfo->ri_RelationDesc, sizeof(RelationData));
 
 
 
@@ -113,7 +120,6 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   /* Currently, we only support plain insert statement.
    * So, the number of subplan must be exactly 1.
    * TODO: can it be 0? */
-  assert(mt_plan_state->mt_nplans == 1);
 
   Oid database_oid = GetCurrentDatabaseOid();
   Oid table_oid = result_relation_desc->rd_id;
@@ -128,17 +134,20 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   auto schema = target_table->GetSchema();
 
   /* Should be only one which is a Result Plan */
+  assert(mt_plan_state->mt_nplans == 1);
+  assert(mt_plan_state->mt_plans != nullptr);
   PlanState *subplan_state = mt_plan_state->mt_plans[0];
   TupleTableSlot *plan_slot;
   std::vector<storage::Tuple *> tuples;
 
-  /*
   plan_slot = ExecProcNode(subplan_state);
   assert(!TupIsNull(plan_slot)); // The tuple should not be null
 
   auto tuple = TupleTransformer(plan_slot, schema);
+
+  std::cout << (*tuple);
+
   tuples.push_back(tuple);
-  */
 
   auto plan_node = new planner::InsertNode(target_table, tuples);
 
@@ -146,12 +155,57 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
 }
 
 
-/*
+planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
+    const ModifyTableState* mt_plan_state) {
+
+  return nullptr;
+}
+
+/**
+ * @brief Convert a Postgres ModifyTableState with DELETE operation
+ * into a Peloton DeleteNode.
+ * @return Pointer to the constructed AbstractPlanNode.
+ *
+ * Just like Peloton,
+ * the delete plan state in Postgres simply deletes tuples
+ *  returned by a subplan.
+ * So we don't need to handle predicates locally .
+ */
+planner::AbstractPlanNode* PlanTransformer::TransformDelete(
+    const ModifyTableState* mt_plan_state) {
+
+
+  // Grab Database ID and Table ID
+  assert(mt_plan_state->resultRelInfo); // Input must come from a subplan
+  assert(mt_plan_state->mt_nplans == 1);  // Maybe relax later. I don't know when they can have >1 subplans.
+  Oid database_oid = GetCurrentDatabaseOid();
+  Oid table_oid = mt_plan_state->resultRelInfo[0].ri_RelationDesc->rd_id;
+
+  /* Grab the target table */
+  storage::DataTable *target_table = static_cast<storage::DataTable*>(catalog::Manager::GetInstance().
+      GetLocation(database_oid, table_oid));
+
+  /* Grab the subplan -> child plan node */
+  assert(mt_plan_state->mt_nplans == 1);
+  PlanState *sub_planstate = mt_plan_state->mt_plans[0];
+
+  bool truncate = false;
+ 
+  // Create the peloton plan node
+  auto plan_node = new planner::DeleteNode(target_table, truncate);
+  
+  // Add child plan node(s)
+  plan_node->AddChild(TransformPlan(sub_planstate));
+
+  return plan_node;
+}
+
+/**
  * @brief Convert a Postgres SeqScanState into a Peloton SeqScanNode.
  * @return Pointer to the constructed AbstractPlanNode.
  *
  * TODO: Can we also scan result from a child operator? (Non-base-table scan?)
- * We can't for now, but postgres can.
+ * We can't for now, but Postgres can.
  */
 planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
     const SeqScanState* ss_plan_state) {
@@ -171,8 +225,8 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
    * Grab and transform the predicate.
    *
    * TODO:
-   * The qualifying predicate should extracted from:
-   * ss_plan_state->ps.qual
+   * The qualifying predicate should be extracted from:
+   * ss_plan_state->ps.qual (null if no predicate)
    *
    * Let's just use a null predicate for now.
    */
