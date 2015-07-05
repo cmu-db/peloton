@@ -577,7 +577,7 @@ bool DDL::CreateTable2( std::string table_name,
   storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, schema, table_name);
 
   if(table != nullptr) {
-    LOG_INFO("Created table : %s\n", table_name.c_str());
+    LOG_INFO("Created table : %s", table_name.c_str());
     return true;
   }
 

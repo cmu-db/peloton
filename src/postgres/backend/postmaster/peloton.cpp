@@ -249,17 +249,6 @@ PelotonMain(int argc, char *argv[])
 
   ereport(LOG, (errmsg("peloton: processing database \"%s\"", "postgres")));
 
-  fprintf(stdout, "Peloton :: PID :: %d \n", getpid());
-  fprintf(stdout, "Peloton :: TopMemoryContext :: %p \n", TopMemoryContext);
-  fprintf(stdout, "Peloton :: PostmasterContext :: %p \n", PostmasterContext);
-  fprintf(stdout, "Peloton :: CacheMemoryContext :: %p \n", CacheMemoryContext);
-  fprintf(stdout, "Peloton :: MessageContext :: %p \n", MessageContext);
-  fprintf(stdout, "Peloton :: TopTransactionContext :: %p \n", TopTransactionContext);
-  fprintf(stdout, "Peloton :: CurrentTransactionContext :: %p \n", CurTransactionContext);
-  fprintf(stdout, "Peloton :: ErrorContext :: %p \n", ErrorContext);
-  fprintf(stdout, "Peloton :: TopSharedMemoryContext :: %p \n", TopSharedMemoryContext);
-  fflush(stdout);
-
   /* Init Peloton */
   BootstrapPeloton();
 
@@ -789,9 +778,6 @@ peloton_send_dml(PlanState *node, bool sendTuples, DestReceiver *dest)
   msg.m_sendTuples = sendTuples;
   msg.m_dest = dest;
 
-  fprintf(stdout, "Send DML :: Planstate : %p\n", node);
-  fflush(stdout);
-
   peloton_send(&msg, sizeof(msg));
 }
 
@@ -845,9 +831,6 @@ peloton_recv_dml(Peloton_MsgDML *msg, int len)
       plan = planstate->plan;
 
       fprintf(stdout, "Plan : %p\n", plan);
-      fprintf(stdout, "SendTuples : %d\n", msg->m_sendTuples);
-      fprintf(stdout, "Dest : %p\n", msg->m_dest);
-      fflush(stdout);
 
       peloton::bridge::PlanTransformer::TransformPlan(planstate);
     }
@@ -881,7 +864,6 @@ peloton_recv_ddl(Peloton_MsgDDL *msg, int len)
     if(parsetree != NULL)
     {
       fprintf(stdout, "Parsetree type : %d\n", parsetree);
-      fprintf(stdout, "Query : %s\n", queryString);
 
       peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
     }
