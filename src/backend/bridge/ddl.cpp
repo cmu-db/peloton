@@ -277,7 +277,8 @@ std::vector<catalog::ColumnInfo> ConstructColumnInfoByParsingCreateStmt( CreateS
     ColumnDef  *coldef = lfirst(entry);
 
     // Parsing the column value type
-    Oid typeoid, typemod;
+    Oid typeoid;
+    int32 typemod;
     int typelen;
 
     // Get the type oid and type mod with given typeName
@@ -689,7 +690,9 @@ bool DDL::CreateIndex2(std::string index_name,
                        std::vector<std::string> key_column_names,
                        bool bootstrap ){
 
-  assert( index_name != "" && table_name != "" && key_column_names.size() > 0  );
+  assert( index_name != "" );
+  assert( table_name != "" );
+  assert( key_column_names.size() > 0  );
 
   // NOTE: We currently only support btree as our index implementation
   // TODO : Support other types based on "type" argument
@@ -724,10 +727,10 @@ bool DDL::CreateIndex2(std::string index_name,
         if( bootstrap ){
           if( index_type == INDEX_TYPE_PRIMARY_KEY ){ 
             catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_PRIMARY );
-            tuple_schema->AddConstraint( tuple_schema_column_itr, constraint); 
+            tuple_schema->AddConstraintInColumn( tuple_schema_column_itr, constraint); 
           }else if( index_type == INDEX_TYPE_UNIQUE ){ 
             catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_UNIQUE );
-            tuple_schema->AddConstraint( tuple_schema_column_itr, constraint); 
+            tuple_schema->AddConstraintInColumn( tuple_schema_column_itr, constraint); 
           }
         }
 

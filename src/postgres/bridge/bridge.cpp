@@ -266,6 +266,64 @@ void GetTableList(bool catalog_only) {
 }
 
 /**
+ * @brief Print all tables and their column information for dubugging
+ */
+void GetTableListAndColumnInformation() {
+  Relation pg_class_rel;
+  HeapScanDesc scan;
+  HeapTuple tuple;
+
+  //StartTransactionCommand();
+
+  // Scan pg class table
+  pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
+  scan = heap_beginscan_catalog(pg_class_rel, 0, NULL);
+
+  while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
+    Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
+
+    if(pgclass->relnamespace==PG_PUBLIC_NAMESPACE) {
+
+      if( pgclass->relkind == 'r' ){
+        printf("relname %s\n",NameStr(pgclass->relname));
+        peloton::oid_t database_oid = GetCurrentDatabaseOid();
+        peloton::oid_t table_oid = GetRelationOid( NameStr(pgclass->relname));
+
+        // Get the table location from manager
+        auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+        peloton::storage::DataTable* data_table = (peloton::storage::DataTable*) table;
+        auto tuple_schema = data_table->GetSchema();
+        std::cout << *tuple_schema << std::endl;
+
+        if( data_table->ishasPrimaryKey()  ){
+          printf("print primary key index \n");
+          std::cout<< *(data_table->GetPrimaryIndex()) << std::endl;
+        }else if ( data_table->ishasUnique()){
+          printf("print unique index \n");
+          for( int i =0 ; i<  data_table->GetUniqueIndexCount(); i++){
+            std::cout << *(data_table->GetUniqueIndex(i)) << std::endl;
+          }
+        }else if ( data_table->GetIndexCount() > 0 ){
+          printf("print index \n");
+          for( int i =0 ; i<  data_table->GetIndexCount(); i++){
+            std::cout << *(data_table->GetIndex(i)) << std::endl;
+          }
+        }
+      }
+
+    }
+
+  }
+
+  heap_endscan(scan);
+  heap_close(pg_class_rel, AccessShareLock);
+
+  //CommitTransactionCommand();
+}
+
+
+
+/**
  * @brief Print all databases using catalog table pg_database
  */
 void GetDatabaseList(void) {
@@ -530,9 +588,9 @@ bool BootstrapPeloton(void){
                    strcpy(ColumnNamesForKeySchema[idx_itr], ddl_schema[idx_itr].name );
                 }
 
-                //for( auto column_info : column_infos ){
-                //  key_column_names.push_back( column_info.name );
-                //}
+                for( auto column_info : column_infos ){
+                  key_column_names.push_back( column_info.name );
+                }
 
                 //peloton::bridge::DDL::CreateIndex(relation_name, get_rel_name(pg_index->indrelid), 0, pg_index->indisunique, ColumnNamesForKeySchema, our_attnum); // TODO :: REMOVE
                 peloton::IndexMethodType method_type = peloton::INDEX_METHOD_TYPE_BTREE_MULTIMAP;
@@ -600,6 +658,10 @@ bool BootstrapPeloton(void){
 
     }
   }
+
+  
+  printf("Print all relation's schema information\n");
+  GetTableListAndColumnInformation();
 
   heap_endscan(pg_class_scan);
   heap_close(pg_attribute_rel, AccessShareLock);
