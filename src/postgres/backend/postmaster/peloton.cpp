@@ -845,7 +845,7 @@ peloton_recv_dml(Peloton_MsgDML *msg, int len)
       fprintf(stdout, "Dest : %p\n", msg->m_dest);
       fflush(stdout);
 
-      elog_node_display(LOG, "plan", plan, Debug_pretty_print);
+      //elog_node_display(LOG, "plan", plan, Debug_pretty_print);
     }
   }
 
