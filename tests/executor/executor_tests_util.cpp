@@ -47,7 +47,6 @@ namespace test {
 
 /** @brief Helper function for defining schema */
 catalog::ColumnInfo ExecutorTestsUtil::GetColumnInfo(int index) {
-  const bool allow_null = false;
   const bool is_inlined = true;
 
   switch(index) {
@@ -56,7 +55,6 @@ catalog::ColumnInfo ExecutorTestsUtil::GetColumnInfo(int index) {
           VALUE_TYPE_INTEGER,
           GetTypeSize(VALUE_TYPE_INTEGER),
           "COL_A",
-          allow_null,
           is_inlined);
       break;
 
@@ -65,7 +63,6 @@ catalog::ColumnInfo ExecutorTestsUtil::GetColumnInfo(int index) {
           VALUE_TYPE_INTEGER,
           GetTypeSize(VALUE_TYPE_INTEGER),
           "COL_B",
-          allow_null,
           is_inlined);
       break;
 
@@ -74,7 +71,6 @@ catalog::ColumnInfo ExecutorTestsUtil::GetColumnInfo(int index) {
           VALUE_TYPE_DOUBLE,
           GetTypeSize(VALUE_TYPE_DOUBLE),
           "COL_C",
-          allow_null,
           is_inlined);
       break;
 
@@ -83,7 +79,6 @@ catalog::ColumnInfo ExecutorTestsUtil::GetColumnInfo(int index) {
           VALUE_TYPE_VARCHAR,
           25, // Column length.
           "COL_D",
-          allow_null,
           !is_inlined); // inlined.
       break;
 
@@ -309,7 +304,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_coun
   key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
   unique = true;
   index_metadata = new index::IndexMetadata("primary_btree_index",
-                                            INDEX_TYPE_BTREE_MULTIMAP,
+                                            INDEX_METHOD_TYPE_BTREE_MULTIMAP,
                                             tuple_schema,
                                             key_schema,
                                             unique);
@@ -322,7 +317,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_coun
   key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
   unique = false;
   index_metadata = new index::IndexMetadata("secondary_btree_index",
-                                            INDEX_TYPE_BTREE_MULTIMAP,
+                                            INDEX_METHOD_TYPE_BTREE_MULTIMAP,
                                             tuple_schema,
                                             key_schema,
                                             unique);
