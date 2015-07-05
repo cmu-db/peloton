@@ -514,7 +514,7 @@ bool BootstrapPeloton(void){
           case 'r':
           {
             // Create the Peloton table
-            status = peloton::bridge::DDL::CreateTable2(relation_name, column_infos);
+            status = peloton::bridge::DDL::CreateTable(relation_name, column_infos);
 
             if(status == true) {
               elog(LOG, "Create Table \"%s\" in Peloton", relation_name);
@@ -597,7 +597,7 @@ bool BootstrapPeloton(void){
 
           case 'r':
             // Create the Peloton table
-            status = peloton::bridge::DDL::CreateTable2(relation_name, column_infos);
+            status = peloton::bridge::DDL::CreateTable(relation_name, column_infos);
             if(status == true) {
               elog(LOG, "Create Table \"%s\" in Peloton", relation_name);
             }
