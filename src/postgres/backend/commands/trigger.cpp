@@ -3338,11 +3338,12 @@ afterTriggerAddEvent(AfterTriggerEventList *events,
 		/* Create event context if we didn't already */
 		if (afterTriggers.event_cxt == NULL)
 			afterTriggers.event_cxt =
-				AllocSetContextCreate(TopTransactionContext,
+				SHMAllocSetContextCreate(TopTransactionContext,
 									  "AfterTriggerEvents",
 									  ALLOCSET_DEFAULT_MINSIZE,
 									  ALLOCSET_DEFAULT_INITSIZE,
-									  ALLOCSET_DEFAULT_MAXSIZE);
+									  ALLOCSET_DEFAULT_MAXSIZE,
+									  SHM_DEFAULT_SEGMENT);
 
 		/*
 		 * Chunk size starts at 1KB and is allowed to increase up to 1MB.
@@ -3779,11 +3780,11 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 
 	/* Make a per-tuple memory context for trigger function calls */
 	per_tuple_context =
-		AllocSetContextCreate(CurrentMemoryContext,
-							  "AfterTriggerTupleContext",
-							  ALLOCSET_DEFAULT_MINSIZE,
-							  ALLOCSET_DEFAULT_INITSIZE,
-							  ALLOCSET_DEFAULT_MAXSIZE);
+	    AllocSetContextCreate(CurrentMemoryContext,
+	                          "AfterTriggerTupleContext",
+	                          ALLOCSET_DEFAULT_MINSIZE,
+	                          ALLOCSET_DEFAULT_INITSIZE,
+	                          ALLOCSET_DEFAULT_MAXSIZE);
 
 	for_each_chunk(chunk, *events)
 	{
