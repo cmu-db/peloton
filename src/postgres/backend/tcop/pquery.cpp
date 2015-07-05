@@ -484,9 +484,6 @@ PortalStart(Portal portal, ParamListInfo params,
 
 		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
-    fprintf(stdout, "Portal Context : %p \n", PortalContext);
-    fflush(stdout);
-
 		/* Must remember portal param list, if any */
 		portal->portalParams = params;
 
@@ -519,9 +516,6 @@ PortalStart(Portal portal, ParamListInfo params,
 											None_Receiver,
 											params,
 											0);
-
-		    fprintf(stdout, "Query Desc : %p \n", queryDesc);
-		    fflush(stdout);
 
 				/*
 				 * If it's a scrollable cursor, executor needs to support
