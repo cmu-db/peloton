@@ -13,8 +13,9 @@
 #ifndef PELOTON_H
 #define PELOTON_H
 
-#include "nodes/execnodes.h"
 #include "libpq/libpq-be.h"
+#include "nodes/execnodes.h"
+#include "utils/memutils.h"
 
 /* ----------
  * The types of backend -> peloton messages
@@ -69,7 +70,7 @@ typedef struct Peloton_MsgDummy
 typedef struct Peloton_MsgDML
 {
   Peloton_MsgHdr m_hdr;
-  PlanState *m_node;
+  PlanState *m_planstate;
   bool m_sendTuples;
   DestReceiver *m_dest;
 } Peloton_MsgDML;
@@ -83,6 +84,8 @@ typedef struct Peloton_MsgDDL
   Peloton_MsgHdr m_hdr;
   Node *m_parsetree;
   char *m_queryString;
+  MemoryContext m_top_transaction_context;
+  MemoryContext m_cur_transaction_context;
 } Peloton_MsgDDL;
 
 /* ----------
@@ -110,7 +113,9 @@ extern int  peloton_start(void);
 
 extern void peloton_send_ping(void);
 extern void peloton_send_dml(PlanState *node, bool sendTuples, DestReceiver *dest);
-extern void peloton_send_ddl(Node *parsetree, const char *queryString);
+extern void peloton_send_ddl(Node *parsetree, const char *queryString,
+                             MemoryContext top_transaction_context,
+                             MemoryContext cur_transaction_context);
 
 #endif   /* PELOTON_H */
 

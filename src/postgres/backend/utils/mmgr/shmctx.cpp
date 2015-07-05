@@ -414,8 +414,12 @@ SHMContextCreate(NodeTag tag, Size size,
 
     }
   }
+  // We got a wrong parent context
   else
+  {
     Assert(false);
+    elog(ERROR, "Trying to create shared memory context with wrong parent \n");
+  }
 
   /* Initialize the node as best we can */
   MemSet(node, 0, size);
