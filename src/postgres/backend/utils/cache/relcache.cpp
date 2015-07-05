@@ -667,11 +667,12 @@ RelationBuildRuleLock(Relation relation)
 	 * Make the private___ context.  Parameters are set on the assumption that
 	 * it'll probably not contain much data.
 	 */
-	rulescxt = AllocSetContextCreate(CacheMemoryContext,
-									 RelationGetRelationName(relation),
-									 ALLOCSET_SMALL_MINSIZE,
-									 ALLOCSET_SMALL_INITSIZE,
-									 ALLOCSET_SMALL_MAXSIZE);
+	rulescxt = SHMAllocSetContextCreate(CacheMemoryContext,
+	                                    RelationGetRelationName(relation),
+	                                    ALLOCSET_SMALL_MINSIZE,
+	                                    ALLOCSET_SMALL_INITSIZE,
+	                                    ALLOCSET_SMALL_MAXSIZE,
+	                                    SHM_DEFAULT_SEGMENT);
 	relation->rd_rulescxt = rulescxt;
 
 	/*
@@ -1231,11 +1232,12 @@ RelationInitIndexAccessInfo(Relation relation)
 	 * Context parameters are set on the assumption that it'll probably not
 	 * contain much data.
 	 */
-	indexcxt = AllocSetContextCreate(CacheMemoryContext,
-									 RelationGetRelationName(relation),
-									 ALLOCSET_SMALL_MINSIZE,
-									 ALLOCSET_SMALL_INITSIZE,
-									 ALLOCSET_SMALL_MAXSIZE);
+	indexcxt = SHMAllocSetContextCreate(CacheMemoryContext,
+	                                    RelationGetRelationName(relation),
+	                                    ALLOCSET_SMALL_MINSIZE,
+	                                    ALLOCSET_SMALL_INITSIZE,
+	                                    ALLOCSET_SMALL_MAXSIZE,
+	                                    SHM_DEFAULT_SEGMENT);
 	relation->rd_indexcxt = indexcxt;
 
 	/*
@@ -4760,11 +4762,12 @@ load_relcache_init_file(bool shared)
 			 * prepare index info context --- parameters should match
 			 * RelationInitIndexAccessInfo
 			 */
-			indexcxt = AllocSetContextCreate(CacheMemoryContext,
+			indexcxt = SHMAllocSetContextCreate(CacheMemoryContext,
 											 RelationGetRelationName(rel),
 											 ALLOCSET_SMALL_MINSIZE,
 											 ALLOCSET_SMALL_INITSIZE,
-											 ALLOCSET_SMALL_MAXSIZE);
+											 ALLOCSET_SMALL_MAXSIZE,
+											 SHM_DEFAULT_SEGMENT);
 			rel->rd_indexcxt = indexcxt;
 
 			/* next, read the vector of opfamily OIDs */
