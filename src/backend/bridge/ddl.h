@@ -68,12 +68,7 @@ class DDL {
   // Create Object
   //===--------------------------------------------------------------------===//
 
-  static bool CreateTable(std::string table_name,
-                          DDL_ColumnInfo *schema,
-                          int num_columns,
-                          int *num_of_constraints_of_each_column);
-
-  static bool CreateTable2( std::string table_name,
+  static bool CreateTable( std::string table_name,
                             std::vector<catalog::ColumnInfo> column_infos,
                             catalog::Schema *schema = NULL);
 
