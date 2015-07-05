@@ -12,8 +12,10 @@
 
 #include "nodes/pprint.h"
 #include "utils/rel.h"
+#include "utils/lsyscache.h"
 #include "bridge/bridge.h"
 #include "executor/executor.h"
+#include "parser/parsetree.h"
 
 #include "backend/common/logger.h"
 #include "backend/bridge/plan_transformer.h"
@@ -92,7 +94,19 @@ planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
 planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     const ModifyTableState *mt_plan_state) {
 
+	LOG_INFO("%u, %u, %u, %u", sizeof(ModifyTableState), sizeof(ResultRelInfo), sizeof(RelationData), sizeof(Oid));
+  LOG_INFO("Insert into table with Oid %u", ((ModifyTableState*)mt_plan_state)->resultRelInfo->ri_RelationDesc->rd_id);
+  LOG_INFO("%p, %p, %p", mt_plan_state, ((ModifyTableState*)mt_plan_state)->resultRelInfo, ((ModifyTableState*)mt_plan_state)->resultRelInfo->ri_RelationDesc);
+
+  peloton::bridge::PlanTransformer::HexDump("Peloton ModifyTableState", mt_plan_state, sizeof(ModifyTableState));
+	peloton::bridge::PlanTransformer::HexDump("Peloton ResultRelInfo",((ModifyTableState*)mt_plan_state)->resultRelInfo , sizeof(ResultRelInfo));
+	peloton::bridge::PlanTransformer::HexDump("Peloton RelationData",((ModifyTableState*)mt_plan_state)->resultRelInfo->ri_RelationDesc, sizeof(RelationData));
+
+
+
+
   /* Resolve result table */
+  //ResultRelInfo *result_rel_info = mt_plan_state->resultRelInfo;
   ResultRelInfo *result_rel_info = mt_plan_state->resultRelInfo;
   Relation result_relation_desc = result_rel_info->ri_RelationDesc;
 
@@ -103,6 +117,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
 
   Oid database_oid = GetCurrentDatabaseOid();
   Oid table_oid = result_relation_desc->rd_id;
+
+  LOG_INFO("Insert into table with Oid %u", table_oid);
 
   /* Get the target table */
   storage::DataTable *target_table = static_cast<storage::DataTable*>(catalog::Manager::GetInstance().
@@ -199,6 +215,57 @@ PlanState *PlanTransformer::CopyPlanState(const PlanState *other) {
 		break;
 	}
 	return node;
+}
+
+void PlanTransformer::HexDump (const char *desc, const void *addr, int len) {
+    int i;
+    unsigned char buff[17];       // stores the ASCII data
+    unsigned char *pc = addr;     // cast to make the code cleaner.
+
+    // Output description if given.
+
+    if (desc != NULL)
+        printf ("%s:\n", desc);
+
+    // Process every byte in the data.
+
+    for (i = 0; i < len; i++) {
+        // Multiple of 16 means new line (with line offset).
+
+        if ((i % 16) == 0) {
+            // Just don't print ASCII for the zeroth line.
+
+            if (i != 0)
+                printf ("  %s\n", buff);
+
+            // Output the offset.
+
+            printf ("  %04x ", i);
+        }
+
+        // Now the hex code for the specific character.
+
+        printf (" %02x", pc[i]);
+
+        // And store a printable ASCII character for later.
+
+        if ((pc[i] < 0x20) || (pc[i] > 0x7e))
+            buff[i % 16] = '.';
+        else
+            buff[i % 16] = pc[i];
+        buff[(i % 16) + 1] = '\0';
+    }
+
+    // Pad out last line if not exactly 16 characters.
+
+    while ((i % 16) != 0) {
+        printf ("   ");
+        i++;
+    }
+
+    // And print the final ASCII bit.
+
+    printf ("  %s\n", buff);
 }
 
 } // namespace bridge
