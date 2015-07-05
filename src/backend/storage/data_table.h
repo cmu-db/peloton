@@ -66,9 +66,36 @@ public:
 
     // add an index to the table
     void AddIndex(index::Index *index);
-    
+
+    // add the unique index to the table
+    void AddUniqueIndex(index::Index *index);
+
+    // Set the index for PrimaryKey
+    void SetPrimaryIndex(index::Index *index);
+
+    // Get the PrimaryKey index
+    index::Index* GetPrimaryIndex();
+
+    inline bool ishasPrimaryKey(){
+        if( PrimaryKey_Index != nullptr )
+          return true;
+        else
+          return false;
+    }
+
+    inline bool ishasUnique(){
+        if( unique_indexes.size() > 0 )
+          return true;
+        else
+          return false;
+    }
+
     inline size_t GetIndexCount() const {
         return indexes.size();
+    }
+
+    inline size_t GetUniqueIndexCount() const {
+        return unique_indexes.size();
     }
 
     inline index::Index *GetIndex(oid_t index_id) const {
@@ -76,7 +103,13 @@ public:
         return indexes[index_id];
     }
 
+    inline index::Index *GetUniqueIndex(oid_t index_id) const {
+        assert(index_id < unique_indexes.size());
+        return unique_indexes[index_id];
+    }
+
     void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+
     bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
     void DeleteInIndexes(const storage::Tuple *tuple);
@@ -101,6 +134,12 @@ protected:
     
     // INDEXES
     std::vector<index::Index*> indexes;
+
+    // Index for Unique constraint
+    std::vector<index::Index*> unique_indexes;
+
+    // Index for Primary key
+    index::Index* PrimaryKey_Index = nullptr;
 
 };
 
