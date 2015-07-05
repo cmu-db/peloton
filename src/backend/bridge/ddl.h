@@ -68,12 +68,7 @@ class DDL {
   // Create Object
   //===--------------------------------------------------------------------===//
 
-  static bool CreateTable(std::string table_name,
-                          DDL_ColumnInfo *schema,
-                          int num_columns,
-                          int *num_of_constraints_of_each_column);
-
-  static bool CreateTable2( std::string table_name,
+  static bool CreateTable( std::string table_name,
                             std::vector<catalog::ColumnInfo> column_infos,
                             catalog::Schema *schema = NULL);
 
@@ -86,11 +81,11 @@ class DDL {
 
   static bool CreateIndex2(std::string index_name,
                            std::string table_name,
-                           int index_type,
+                           IndexMethodType  index_method_type,
+                           IndexType  index_type,
                            bool unique_keys,
                            std::vector<std::string> key_column_names,
-                           bool is_primarykey_index = false);
-
+                           bool bootstrap = false );
 
 
   //===--------------------------------------------------------------------===//
