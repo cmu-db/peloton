@@ -240,24 +240,14 @@ PelotonMain(int argc, char *argv[])
    * MessageContext is reset once per iteration of the main loop, ie, upon
    * completion of processing of each command message from the client.
    */
-  MessageContext = AllocSetContextCreate(TopMemoryContext,
-                                         "MessageContext",
-                                         ALLOCSET_DEFAULT_MINSIZE,
-                                         ALLOCSET_DEFAULT_INITSIZE,
-                                         ALLOCSET_DEFAULT_MAXSIZE);
+  MessageContext = SHMAllocSetContextCreate(TopSharedMemoryContext,
+                                            "MessageContext",
+                                            ALLOCSET_DEFAULT_MINSIZE,
+                                            ALLOCSET_DEFAULT_INITSIZE,
+                                            ALLOCSET_DEFAULT_MAXSIZE,
+                                            SHM_DEFAULT_SEGMENT);
 
   ereport(LOG, (errmsg("peloton: processing database \"%s\"", "postgres")));
-
-  fprintf(stdout, "Peloton :: PID :: %d \n", getpid());
-  fprintf(stdout, "Peloton :: TopMemoryContext :: %p \n", TopMemoryContext);
-  fprintf(stdout, "Peloton :: PostmasterContext :: %p \n", PostmasterContext);
-  fprintf(stdout, "Peloton :: CacheMemoryContext :: %p \n", CacheMemoryContext);
-  fprintf(stdout, "Peloton :: MessageContext :: %p \n", MessageContext);
-  fprintf(stdout, "Peloton :: TopTransactionContext :: %p \n", TopTransactionContext);
-  fprintf(stdout, "Peloton :: CurrentTransactionContext :: %p \n", CurTransactionContext);
-  fprintf(stdout, "Peloton :: ErrorContext :: %p \n", ErrorContext);
-  fprintf(stdout, "Peloton :: TopSharedMemoryContext :: %p \n", TopSharedMemoryContext);
-  fflush(stdout);
 
   /* Init Peloton */
   BootstrapPeloton();
@@ -784,12 +774,9 @@ peloton_send_dml(PlanState *node, bool sendTuples, DestReceiver *dest)
 
   peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_DML);
 
-  msg.m_node = node;
+  msg.m_planstate = node;
   msg.m_sendTuples = sendTuples;
   msg.m_dest = dest;
-
-  fprintf(stdout, "Send DML :: Planstate : %p\n", node);
-  fflush(stdout);
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -801,7 +788,9 @@ peloton_send_dml(PlanState *node, bool sendTuples, DestReceiver *dest)
  * ----------
  */
 void
-peloton_send_ddl(Node *parsetree, const char *queryString)
+peloton_send_ddl(Node *parsetree, const char *queryString,
+                 MemoryContext top_transaction_context,
+                 MemoryContext cur_transaction_context)
 {
   Peloton_MsgDDL msg;
   MemoryContext oldcontext;
@@ -813,6 +802,8 @@ peloton_send_ddl(Node *parsetree, const char *queryString)
 
   msg.m_parsetree = parsetree;
   msg.m_queryString = queryString;
+  msg.m_top_transaction_context = top_transaction_context;
+  msg.m_cur_transaction_context = cur_transaction_context;
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -826,25 +817,22 @@ peloton_send_ddl(Node *parsetree, const char *queryString)
 static void
 peloton_recv_dml(Peloton_MsgDML *msg, int len)
 {
-  PlanState *node;
+  PlanState *planstate;
   Plan *plan;
 
   if(msg != NULL)
   {
     /* Get the planstate */
-    node = msg->m_node;
+    planstate = msg->m_planstate;
 
-    if(node != NULL)
+    if(planstate != NULL)
     {
       /* Get the plan */
-      plan = node->plan;
+      plan = planstate->plan;
 
       fprintf(stdout, "Plan : %p\n", plan);
-      fprintf(stdout, "SendTuples : %d\n", msg->m_sendTuples);
-      fprintf(stdout, "Dest : %p\n", msg->m_dest);
-      fflush(stdout);
 
-      //elog_node_display(LOG, "plan", plan, Debug_pretty_print);
+      peloton::bridge::PlanTransformer::TransformPlan(planstate);
     }
   }
 
@@ -870,10 +858,14 @@ peloton_recv_ddl(Peloton_MsgDDL *msg, int len)
     /* Get the parsetree */
     parsetree = msg->m_parsetree;
 
+    TopTransactionContext = msg->m_top_transaction_context;
+    CurTransactionContext = msg->m_cur_transaction_context;
+
     if(parsetree != NULL)
     {
-      fprintf(stdout, "Parsetree type : %d\n", parsetree->type);
-      //peloton::bridge::DDL::ProcessUtility(msg->m_parsetree, msg->m_queryString);
+      fprintf(stdout, "Parsetree type : %d\n", parsetree);
+
+      peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
     }
   }
 
