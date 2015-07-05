@@ -121,6 +121,12 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   std::vector<storage::Tuple *> tuples;
 
   /*
+   * We are only making the plan,
+   * so we should definitely not call ExecProcNode() here.
+   * In Postgres, tuple-to-insert is retrieved from a child plan
+   * called "Result".
+   * Shall we make something similar in Peloton?
+
   plan_slot = ExecProcNode(subplan_state);
   assert(!TupIsNull(plan_slot)); // The tuple should not be null
 
