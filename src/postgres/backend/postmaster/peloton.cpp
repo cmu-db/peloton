@@ -879,7 +879,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg, int len)
 
     if(parsetree != NULL)
     {
-      // peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
+      peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
     }
   }
 
@@ -933,9 +933,9 @@ peloton_get_status(Peloton_Status *status)
       return PELOTON_STYPE_INVALID;
     }
 
+    // Max retries over
     if(retry < 0)
     {
-      elog(LOG, "Finished max retries while getting Peloton status");
       return PELOTON_STYPE_INVALID;
     }
   }
