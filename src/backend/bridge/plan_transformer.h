@@ -30,10 +30,6 @@ class PlanTransformer {
 
   static planner::AbstractPlanNode *TransformPlan(const PlanState *plan_state);
 
-  static PlanState *CopyPlanState(const PlanState *plan_state);
-
-  static void HexDump(const char *desc, const void *mem, int len);
-
  private:
 
   static planner::AbstractPlanNode *TransformModifyTable(const ModifyTableState *plan_state);
