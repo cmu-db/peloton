@@ -63,6 +63,7 @@
 // TODO: Peloton Changes
 #include "nodes/pprint.h"
 #include "postmaster/peloton.h"
+#include "backend/bridge/plan_transformer.h"
 
 /* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */
 ExecutorStart_hook_type ExecutorStart_hook = NULL;
@@ -436,8 +437,9 @@ ExecutorEnd(QueryDesc *queryDesc)
 {
 	if (ExecutorEnd_hook)
 		(*ExecutorEnd_hook) (queryDesc);
-	else
-		standard_ExecutorEnd(queryDesc);
+	else {
+		//standard_ExecutorEnd(queryDesc);
+	}
 }
 
 void
@@ -445,6 +447,7 @@ standard_ExecutorEnd(QueryDesc *queryDesc)
 {
 	EState	   *estate;
 	MemoryContext oldcontext;
+	PlanState *planstate = queryDesc->planstate;
 
 	/* sanity checks */
 	Assert(queryDesc != NULL);
@@ -1476,8 +1479,10 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 	for (i = estate->es_num_result_relations; i > 0; i--)
 	{
 		/* Close indices and then the relation itself */
+	  // Peloton changes: wait, dont close now
 		ExecCloseIndices(resultRelInfo);
 		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
+	  //elog(LOG, "Wait, do not close relation: %p, now", resultRelInfo->ri_RelationDesc);
 		resultRelInfo++;
 	}
 
@@ -1528,6 +1533,10 @@ ExecutePlan(EState *estate,
 {
 	TupleTableSlot *slot;
 	long		current_tuple_count;
+	Peloton_Status *status;
+	int status_code;
+
+  status = peloton_create_status();
 
 	/*
 	 * initialize local variables
@@ -1553,7 +1562,8 @@ ExecutePlan(EState *estate,
 		slot = ExecProcNode(planstate);
 
 		// TODO: Peloton Changes
-		peloton_send_dml(planstate, sendTuples, dest);
+		peloton_send_dml(status, planstate, sendTuples, dest);
+
 
 		/*
 		 * if the tuple is null, then we assume there is nothing more to
@@ -1597,6 +1607,10 @@ ExecutePlan(EState *estate,
 		if (numberTuples && numberTuples == current_tuple_count)
 			break;
 	}
+
+  status_code = peloton_get_status(status);
+  elog(LOG, "Peloton status code : %d \n", status_code);
+  peloton_destroy_status(status);
 }
 
 

@@ -170,6 +170,7 @@ CreateExecutorState(void)
 void
 FreeExecutorState(EState *estate)
 {
+  elog(LOG, "Free estate of %u, at execUtils", estate->es_plannedstmt->type);
 	/*
 	 * Shut down and free any remaining ExprContexts.  We do this explicitly
 	 * to ensure that any remaining shutdown callbacks get called (since they
