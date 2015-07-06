@@ -45,18 +45,24 @@ void PlanTransformer::PrintPlanState(const PlanState *plan_state) {
  * @brief Convert Postgres PlanState into AbstractPlanNode.
  * @return Pointer to the constructed AbstractPlanNode.
  */
-planner::AbstractPlanNode *PlanTransformer::TransformPlan(const PlanState *plan_state) {
+planner::AbstractPlanNode *PlanTransformer::TransformPlan(
+    const PlanState *plan_state) {
 
   Plan *plan = plan_state->plan;
   planner::AbstractPlanNode *plan_node;
 
   switch (nodeTag(plan)) {
     case T_ModifyTable:
-      plan_node = PlanTransformer::TransformModifyTable(reinterpret_cast<const ModifyTableState *>(plan_state));
+      plan_node = PlanTransformer::TransformModifyTable(
+          reinterpret_cast<const ModifyTableState *>(plan_state));
       break;
     case T_SeqScan:
-      plan_node = PlanTransformer::TransformSeqScan(reinterpret_cast<const SeqScanState*>(plan_state));
+      plan_node = PlanTransformer::TransformSeqScan(
+          reinterpret_cast<const SeqScanState*>(plan_state));
       break;
+    case T_Result:
+      plan_node = PlanTransformer::TransformResult(
+          reinterpret_cast<const ResultState*>(plan_state));
     default:
       plan_node = nullptr;
       break;
@@ -101,16 +107,13 @@ planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
 planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     const ModifyTableState *mt_plan_state) {
 
-	//LOG_INFO("%u, %u, %u, %u", sizeof(ModifyTableState), sizeof(ResultRelInfo), sizeof(RelationData), sizeof(Oid));
+  //LOG_INFO("%u, %u, %u, %u", sizeof(ModifyTableState), sizeof(ResultRelInfo), sizeof(RelationData), sizeof(Oid));
   //LOG_INFO("Insert into table with Oid %u", ((ModifyTableState*)mt_plan_state)->resultRelInfo->ri_RelationDesc->rd_id);
   //LOG_INFO("%p, %p, %p", mt_plan_state, ((ModifyTableState*)mt_plan_state)->resultRelInfo, ((ModifyTableState*)mt_plan_state)->resultRelInfo->ri_RelationDesc);
 
   //peloton::bridge::PlanTransformer::HexDump("Peloton ModifyTableState", mt_plan_state, sizeof(ModifyTableState));
-	//peloton::bridge::PlanTransformer::HexDump("Peloton ResultRelInfo",((ModifyTableState*)mt_plan_state)->resultRelInfo , sizeof(ResultRelInfo));
-	//peloton::bridge::PlanTransformer::HexDump("Peloton RelationData",((ModifyTableState*)mt_plan_state)->resultRelInfo->ri_RelationDesc, sizeof(RelationData));
-
-
-
+  //peloton::bridge::PlanTransformer::HexDump("Peloton ResultRelInfo",((ModifyTableState*)mt_plan_state)->resultRelInfo , sizeof(ResultRelInfo));
+  //peloton::bridge::PlanTransformer::HexDump("Peloton RelationData",((ModifyTableState*)mt_plan_state)->resultRelInfo->ri_RelationDesc, sizeof(RelationData));
 
   /* Resolve result table */
   //ResultRelInfo *result_rel_info = mt_plan_state->resultRelInfo;
@@ -127,8 +130,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   LOG_INFO("Insert into table with Oid %u", table_oid);
 
   /* Get the target table */
-  storage::DataTable *target_table = static_cast<storage::DataTable*>(catalog::Manager::GetInstance().
-      GetLocation(database_oid, table_oid));
+  storage::DataTable *target_table =
+      static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
+          .GetLocation(database_oid, table_oid));
 
   /* Get the tuple schema */
   auto schema = target_table->GetSchema();
@@ -140,20 +144,22 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   TupleTableSlot *plan_slot;
   std::vector<storage::Tuple *> tuples;
 
+
+  auto result_plan_node = PlanTransformer::TransformResult(reinterpret_cast<ResultState*>(subplan_state));
+  /*
   plan_slot = ExecProcNode(subplan_state);
-  assert(!TupIsNull(plan_slot)); // The tuple should not be null
+  assert(!TupIsNull(plan_slot));  // The tuple should not be null
 
   auto tuple = TupleTransformer(plan_slot, schema);
 
   std::cout << (*tuple);
 
   tuples.push_back(tuple);
-
+  */
   auto plan_node = new planner::InsertNode(target_table, tuples);
 
   return plan_node;
 }
-
 
 planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
     const ModifyTableState* mt_plan_state) {
@@ -174,26 +180,26 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
 planner::AbstractPlanNode* PlanTransformer::TransformDelete(
     const ModifyTableState* mt_plan_state) {
 
-
   // Grab Database ID and Table ID
-  assert(mt_plan_state->resultRelInfo); // Input must come from a subplan
+  assert(mt_plan_state->resultRelInfo);  // Input must come from a subplan
   assert(mt_plan_state->mt_nplans == 1);  // Maybe relax later. I don't know when they can have >1 subplans.
   Oid database_oid = GetCurrentDatabaseOid();
   Oid table_oid = mt_plan_state->resultRelInfo[0].ri_RelationDesc->rd_id;
 
   /* Grab the target table */
-  storage::DataTable *target_table = static_cast<storage::DataTable*>(catalog::Manager::GetInstance().
-      GetLocation(database_oid, table_oid));
+  storage::DataTable *target_table =
+      static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
+          .GetLocation(database_oid, table_oid));
 
   /* Grab the subplan -> child plan node */
   assert(mt_plan_state->mt_nplans == 1);
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
 
   bool truncate = false;
- 
+
   // Create the peloton plan node
   auto plan_node = new planner::DeleteNode(target_table, truncate);
-  
+
   // Add child plan node(s)
   plan_node->AddChild(TransformPlan(sub_planstate));
 
@@ -213,13 +219,14 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   assert(nodeTag(ss_plan_state) == T_SeqScanState);
 
   // Grab Database ID and Table ID
-  assert(ss_plan_state->ss_currentRelation); // Null if not a base table scan
+  assert(ss_plan_state->ss_currentRelation);  // Null if not a base table scan
   Oid database_oid = GetCurrentDatabaseOid();
   Oid table_oid = ss_plan_state->ss_currentRelation->rd_id;
 
   /* Grab the target table */
-  storage::DataTable *target_table = static_cast<storage::DataTable*>(catalog::Manager::GetInstance().
-      GetLocation(database_oid, table_oid));
+  storage::DataTable *target_table =
+      static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
+          .GetLocation(database_oid, table_oid));
 
   /*
    * Grab and transform the predicate.
@@ -247,80 +254,107 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   assert(column_ids.size() > 0);
 
   /* Construct and return the Peloton plan node */
-  auto plan_node = new planner::SeqScanNode(target_table, predicate, column_ids);
+  auto plan_node = new planner::SeqScanNode(target_table, predicate,
+                                            column_ids);
   return plan_node;
 }
 
 /**
- * @brief copy a PlanState depending on its type
- * @return Pointer to the deep copied planstate.
+ * @brief Convert a Postgres ResultState into a Peloton ResultPlanNode
+ * @return Pointer to the constructed AbstractPlanNode
  */
-PlanState *PlanTransformer::CopyPlanState(const PlanState *other) {
-	PlanState *node;
-	Plan *plan = other->plan;
+planner::AbstractPlanNode *PlanTransformer::TransformResult(
+    const ResultState *node) {
+  ProjectionInfo *projInfo = node->ps.ps_ProjInfo;
+  int numSimpleVars = projInfo->pi_numSimpleVars;
+  ExprDoneCond *itemIsDone = projInfo->pi_itemIsDone;
+	ExprContext *econtext = projInfo->pi_exprContext;
 
-	switch (nodeTag(plan->type)) {
-	case T_ModifyTable:
-		LOG_INFO("Copying ModifyTable\n");
-		node = static_cast<PlanState *>(palloc(sizeof(ModifyTableState)));
-		std::memcpy(node, other, sizeof(ModifyTableState));
-	default:
-		LOG_INFO("Copying unsupported plan state\n");
-		break;
-	}
-	return node;
-}
+  if (node->rs_checkqual) {
+    LOG_INFO("We can not handle constant qualifications now");
+  }
 
-void PlanTransformer::HexDump (const char *desc, const void *addr, int len) {
-    int i;
-    unsigned char buff[17];       // stores the ASCII data
-    unsigned char *pc = addr;     // cast to make the code cleaner.
+  if (numSimpleVars > 0) {
+    LOG_INFO("We can not handle simple vars now");
+  }
 
-    // Output description if given.
+  if (projInfo->pi_targetlist) {
+    ListCell *tl;
+    List *targetList = projInfo->pi_targetlist;
 
-    if (desc != NULL)
-        printf ("%s:\n", desc);
+    LOG_INFO("The number of target in list is %d", list_length(targetList));
 
-    // Process every byte in the data.
 
-    for (i = 0; i < len; i++) {
-        // Multiple of 16 means new line (with line offset).
-
-        if ((i % 16) == 0) {
-            // Just don't print ASCII for the zeroth line.
-
-            if (i != 0)
-                printf ("  %s\n", buff);
-
-            // Output the offset.
-
-            printf ("  %04x ", i);
-        }
-
-        // Now the hex code for the specific character.
-
-        printf (" %02x", pc[i]);
-
-        // And store a printable ASCII character for later.
-
-        if ((pc[i] < 0x20) || (pc[i] > 0x7e))
-            buff[i % 16] = '.';
-        else
-            buff[i % 16] = pc[i];
-        buff[(i % 16) + 1] = '\0';
+    foreach(tl, targetList)
+    {
+      GenericExprState *gstate = (GenericExprState *) lfirst(tl);
+      TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
+      AttrNumber resind = tle->resno - 1;
+      bool isnull;
+      Datum value = ExecEvalExpr(gstate->arg,
+									  econtext,
+									  &isnull,
+									  &itemIsDone[resind]);
+      int integer = DatumGetInt32(value);
+      LOG_INFO("The datum is %d", integer);
     }
 
-    // Pad out last line if not exactly 16 characters.
-
-    while ((i % 16) != 0) {
-        printf ("   ");
-        i++;
-    }
-
-    // And print the final ASCII bit.
-
-    printf ("  %s\n", buff);
+  } else {
+    LOG_INFO("We can not handle case where targelist is null");
+  }
+  return nullptr;
 }
 
-} // namespace bridge
-} // namespace peloton
+void PlanTransformer::HexDump(const char *desc, const void *addr, int len) {
+  int i;
+  unsigned char buff[17];       // stores the ASCII data
+  unsigned char *pc = addr;     // cast to make the code cleaner.
+
+  // Output description if given.
+
+  if (desc != NULL)
+    printf("%s:\n", desc);
+
+  // Process every byte in the data.
+
+  for (i = 0; i < len; i++) {
+    // Multiple of 16 means new line (with line offset).
+
+    if ((i % 16) == 0) {
+      // Just don't print ASCII for the zeroth line.
+
+      if (i != 0)
+        printf("  %s\n", buff);
+
+      // Output the offset.
+
+      printf("  %04x ", i);
+    }
+
+    // Now the hex code for the specific character.
+
+    printf(" %02x", pc[i]);
+
+    // And store a printable ASCII character for later.
+
+    if ((pc[i] < 0x20) || (pc[i] > 0x7e))
+      buff[i % 16] = '.';
+    else
+      buff[i % 16] = pc[i];
+    buff[(i % 16) + 1] = '\0';
+  }
+
+  // Pad out last line if not exactly 16 characters.
+
+  while ((i % 16) != 0) {
+    printf("   ");
+    i++;
+  }
+
+  // And print the final ASCII bit.
+
+  printf("  %s\n", buff);
+}
+
+}  // namespace bridge
+}  // namespace peloton
