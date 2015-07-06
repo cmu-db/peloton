@@ -55,7 +55,7 @@
 #define COPY_POINTER_FIELD(fldname, sz) \
 	do { \
 		Size	_size = (sz); \
-		newnode->fldname = static_cast<AttrNumber *>(static_cast<Oid *>(static_cast<Oid *>(static_cast<bool *>(static_cast<AttrNumber *>(static_cast<Oid *>(static_cast<Oid *>(static_cast<Oid *>(static_cast<int *>(static_cast<bool *>(static_cast<AttrNumber *>(static_cast<Oid *>(static_cast<Oid *>(static_cast<bool *>(static_cast<AttrNumber *>(static_cast<Oid *>(static_cast<AttrNumber *>(static_cast<Oid *>(static_cast<AttrNumber *>(static_cast<Oid *>(static_cast<AttrNumber *>(static_cast<Oid *>(static_cast<AttrNumber *>(static_cast<Oid *>(static_cast<AttrNumber *>(static_cast<Oid *>(palloc(_size)))))))))))))))))))))))))));
+		newnode->fldname = palloc(_size); \
 		memcpy(newnode->fldname, from->fldname, _size); \
 	} while (0)
 
@@ -4193,300 +4193,300 @@ copyObject(const void *from)
 			 * PLAN NODES
 			 */
 		case T_PlannedStmt:
-			retval = _copyPlannedStmt(from);
+			retval = _copyPlannedStmt(static_cast<const PlannedStmt *>(from));
 			break;
 		case T_Plan:
-			retval = _copyPlan(from);
+			retval = _copyPlan(static_cast<const Plan *>(from));
 			break;
 		case T_Result:
-			retval = _copyResult(from);
+			retval = _copyResult(static_cast<const Result *>(from));
 			break;
 		case T_ModifyTable:
-			retval = _copyModifyTable(from);
+			retval = _copyModifyTable(static_cast<const ModifyTable *>(from));
 			break;
 		case T_Append:
-			retval = _copyAppend(from);
+			retval = _copyAppend(static_cast<const Append *>(from));
 			break;
 		case T_MergeAppend:
-			retval = _copyMergeAppend(from);
+			retval = _copyMergeAppend(static_cast<const MergeAppend *>(from));
 			break;
 		case T_RecursiveUnion:
-			retval = _copyRecursiveUnion(from);
+			retval = _copyRecursiveUnion(static_cast<const RecursiveUnion *>(from));
 			break;
 		case T_BitmapAnd:
-			retval = _copyBitmapAnd(from);
+			retval = _copyBitmapAnd(static_cast<const BitmapAnd *>(from));
 			break;
 		case T_BitmapOr:
-			retval = _copyBitmapOr(from);
+			retval = _copyBitmapOr(static_cast<const BitmapOr *>(from));
 			break;
 		case T_Scan:
-			retval = _copyScan(from);
+			retval = _copyScan(static_cast<const Scan *>(from));
 			break;
 		case T_SeqScan:
-			retval = _copySeqScan(from);
+			retval = _copySeqScan(static_cast<const Scan *>(from));
 			break;
 		case T_IndexScan:
-			retval = _copyIndexScan(from);
+			retval = _copyIndexScan(static_cast<const IndexScan *>(from));
 			break;
 		case T_IndexOnlyScan:
-			retval = _copyIndexOnlyScan(from);
+			retval = _copyIndexOnlyScan(static_cast<const IndexOnlyScan *>(from));
 			break;
 		case T_BitmapIndexScan:
-			retval = _copyBitmapIndexScan(from);
+			retval = _copyBitmapIndexScan(static_cast<const BitmapIndexScan *>(from));
 			break;
 		case T_BitmapHeapScan:
-			retval = _copyBitmapHeapScan(from);
+			retval = _copyBitmapHeapScan(static_cast<const BitmapHeapScan *>(from));
 			break;
 		case T_TidScan:
-			retval = _copyTidScan(from);
+			retval = _copyTidScan(static_cast<const TidScan *>(from));
 			break;
 		case T_SubqueryScan:
-			retval = _copySubqueryScan(from);
+			retval = _copySubqueryScan(static_cast<const SubqueryScan *>(from));
 			break;
 		case T_FunctionScan:
-			retval = _copyFunctionScan(from);
+			retval = _copyFunctionScan(static_cast<const FunctionScan *>(from));
 			break;
 		case T_ValuesScan:
-			retval = _copyValuesScan(from);
+			retval = _copyValuesScan(static_cast<const ValuesScan *>(from));
 			break;
 		case T_CteScan:
-			retval = _copyCteScan(from);
+			retval = _copyCteScan(static_cast<const CteScan *>(from));
 			break;
 		case T_WorkTableScan:
-			retval = _copyWorkTableScan(from);
+			retval = _copyWorkTableScan(static_cast<const WorkTableScan *>(from));
 			break;
 		case T_ForeignScan:
-			retval = _copyForeignScan(from);
+			retval = _copyForeignScan(static_cast<const ForeignScan *>(from));
 			break;
 		case T_CustomScan:
-			retval = _copyCustomScan(from);
+			retval = _copyCustomScan(static_cast<const CustomScan *>(from));
 			break;
 		case T_SampleScan:
-			retval = _copySampleScan(from);
+			retval = _copySampleScan(static_cast<const Scan *>(from));
 			break;
 		case T_Join:
-			retval = _copyJoin(from);
+			retval = _copyJoin(static_cast<const Join *>(from));
 			break;
 		case T_NestLoop:
-			retval = _copyNestLoop(from);
+			retval = _copyNestLoop(static_cast<const NestLoop *>(from));
 			break;
 		case T_MergeJoin:
-			retval = _copyMergeJoin(from);
+			retval = _copyMergeJoin(static_cast<const MergeJoin *>(from));
 			break;
 		case T_HashJoin:
-			retval = _copyHashJoin(from);
+			retval = _copyHashJoin(static_cast<const HashJoin *>(from));
 			break;
 		case T_Material:
-			retval = _copyMaterial(from);
+			retval = _copyMaterial(static_cast<const Material *>(from));
 			break;
 		case T_Sort:
-			retval = _copySort(from);
+			retval = _copySort(static_cast<const Sort *>(from));
 			break;
 		case T_Group:
-			retval = _copyGroup(from);
+			retval = _copyGroup(static_cast<const Group *>(from));
 			break;
 		case T_Agg:
-			retval = _copyAgg(from);
+			retval = _copyAgg(static_cast<const Agg *>(from));
 			break;
 		case T_WindowAgg:
-			retval = _copyWindowAgg(from);
+			retval = _copyWindowAgg(static_cast<const WindowAgg *>(from));
 			break;
 		case T_Unique:
-			retval = _copyUnique(from);
+			retval = _copyUnique(static_cast<const Unique *>(from));
 			break;
 		case T_Hash:
-			retval = _copyHash(from);
+			retval = _copyHash(static_cast<const Hash *>(from));
 			break;
 		case T_SetOp:
-			retval = _copySetOp(from);
+			retval = _copySetOp(static_cast<const SetOp *>(from));
 			break;
 		case T_LockRows:
-			retval = _copyLockRows(from);
+			retval = _copyLockRows(static_cast<const LockRows *>(from));
 			break;
 		case T_Limit:
-			retval = _copyLimit(from);
+			retval = _copyLimit(static_cast<const Limit *>(from));
 			break;
 		case T_NestLoopParam:
-			retval = _copyNestLoopParam(from);
+			retval = _copyNestLoopParam(static_cast<const NestLoopParam *>(from));
 			break;
 		case T_PlanRowMark:
-			retval = _copyPlanRowMark(from);
+			retval = _copyPlanRowMark(static_cast<const PlanRowMark *>(from));
 			break;
 		case T_PlanInvalItem:
-			retval = _copyPlanInvalItem(from);
+			retval = _copyPlanInvalItem(static_cast<const PlanInvalItem *>(from));
 			break;
 
 			/*
 			 * PRIMITIVE NODES
 			 */
 		case T_Alias:
-			retval = _copyAlias(from);
+			retval = _copyAlias(static_cast<const Alias *>(from));
 			break;
 		case T_RangeVar:
-			retval = _copyRangeVar(from);
+			retval = _copyRangeVar(static_cast<const RangeVar *>(from));
 			break;
 		case T_IntoClause:
-			retval = _copyIntoClause(from);
+			retval = _copyIntoClause(static_cast<const IntoClause *>(from));
 			break;
 		case T_Var:
-			retval = _copyVar(from);
+			retval = _copyVar(static_cast<const Var *>(from));
 			break;
 		case T_Const:
-			retval = _copyConst(from);
+			retval = _copyConst(static_cast<const Const *>(from));
 			break;
 		case T_Param:
-			retval = _copyParam(from);
+			retval = _copyParam(static_cast<const Param *>(from));
 			break;
 		case T_Aggref:
-			retval = _copyAggref(from);
+			retval = _copyAggref(static_cast<const Aggref *>(from));
 			break;
 		case T_GroupingFunc:
-			retval = _copyGroupingFunc(from);
+			retval = _copyGroupingFunc(static_cast<const GroupingFunc *>(from));
 			break;
 		case T_WindowFunc:
-			retval = _copyWindowFunc(from);
+			retval = _copyWindowFunc(static_cast<const WindowFunc *>(from));
 			break;
 		case T_ArrayRef:
-			retval = _copyArrayRef(from);
+			retval = _copyArrayRef(static_cast<const ArrayRef *>(from));
 			break;
 		case T_FuncExpr:
-			retval = _copyFuncExpr(from);
+			retval = _copyFuncExpr(static_cast<const FuncExpr *>(from));
 			break;
 		case T_NamedArgExpr:
-			retval = _copyNamedArgExpr(from);
+			retval = _copyNamedArgExpr(static_cast<const NamedArgExpr *>(from));
 			break;
 		case T_OpExpr:
-			retval = _copyOpExpr(from);
+			retval = _copyOpExpr(static_cast<const OpExpr *>(from));
 			break;
 		case T_DistinctExpr:
-			retval = _copyDistinctExpr(from);
+			retval = _copyDistinctExpr(static_cast<const OpExpr *>(from));
 			break;
 		case T_NullIfExpr:
-			retval = _copyNullIfExpr(from);
+			retval = _copyNullIfExpr(static_cast<const OpExpr *>(from));
 			break;
 		case T_ScalarArrayOpExpr:
-			retval = _copyScalarArrayOpExpr(from);
+			retval = _copyScalarArrayOpExpr(static_cast<const ScalarArrayOpExpr *>(from));
 			break;
 		case T_BoolExpr:
-			retval = _copyBoolExpr(from);
+			retval = _copyBoolExpr(static_cast<const BoolExpr *>(from));
 			break;
 		case T_SubLink:
-			retval = _copySubLink(from);
+			retval = _copySubLink(static_cast<const SubLink *>(from));
 			break;
 		case T_SubPlan:
-			retval = _copySubPlan(from);
+			retval = _copySubPlan(static_cast<const SubPlan *>(from));
 			break;
 		case T_AlternativeSubPlan:
-			retval = _copyAlternativeSubPlan(from);
+			retval = _copyAlternativeSubPlan(static_cast<const AlternativeSubPlan *>(from));
 			break;
 		case T_FieldSelect:
-			retval = _copyFieldSelect(from);
+			retval = _copyFieldSelect(static_cast<const FieldSelect *>(from));
 			break;
 		case T_FieldStore:
-			retval = _copyFieldStore(from);
+			retval = _copyFieldStore(static_cast<const FieldStore *>(from));
 			break;
 		case T_RelabelType:
-			retval = _copyRelabelType(from);
+			retval = _copyRelabelType(static_cast<const RelabelType *>(from));
 			break;
 		case T_CoerceViaIO:
-			retval = _copyCoerceViaIO(from);
+			retval = _copyCoerceViaIO(static_cast<const CoerceViaIO *>(from));
 			break;
 		case T_ArrayCoerceExpr:
-			retval = _copyArrayCoerceExpr(from);
+			retval = _copyArrayCoerceExpr(static_cast<const ArrayCoerceExpr *>(from));
 			break;
 		case T_ConvertRowtypeExpr:
-			retval = _copyConvertRowtypeExpr(from);
+			retval = _copyConvertRowtypeExpr(static_cast<const ConvertRowtypeExpr *>(from));
 			break;
 		case T_CollateExpr:
-			retval = _copyCollateExpr(from);
+			retval = _copyCollateExpr(static_cast<const CollateExpr *>(from));
 			break;
 		case T_CaseExpr:
-			retval = _copyCaseExpr(from);
+			retval = _copyCaseExpr(static_cast<const CaseExpr *>(from));
 			break;
 		case T_CaseWhen:
-			retval = _copyCaseWhen(from);
+			retval = _copyCaseWhen(static_cast<const CaseWhen *>(from));
 			break;
 		case T_CaseTestExpr:
-			retval = _copyCaseTestExpr(from);
+			retval = _copyCaseTestExpr(static_cast<const CaseTestExpr *>(from));
 			break;
 		case T_ArrayExpr:
-			retval = _copyArrayExpr(from);
+			retval = _copyArrayExpr(static_cast<const ArrayExpr *>(from));
 			break;
 		case T_RowExpr:
-			retval = _copyRowExpr(from);
+			retval = _copyRowExpr(static_cast<const RowExpr *>(from));
 			break;
 		case T_RowCompareExpr:
-			retval = _copyRowCompareExpr(from);
+			retval = _copyRowCompareExpr(static_cast<const RowCompareExpr *>(from));
 			break;
 		case T_CoalesceExpr:
-			retval = _copyCoalesceExpr(from);
+			retval = _copyCoalesceExpr(static_cast<const CoalesceExpr *>(from));
 			break;
 		case T_MinMaxExpr:
-			retval = _copyMinMaxExpr(from);
+			retval = _copyMinMaxExpr(static_cast<const MinMaxExpr *>(from));
 			break;
 		case T_XmlExpr:
-			retval = _copyXmlExpr(from);
+			retval = _copyXmlExpr(static_cast<const XmlExpr *>(from));
 			break;
 		case T_NullTest:
-			retval = _copyNullTest(from);
+			retval = _copyNullTest(static_cast<const NullTest *>(from));
 			break;
 		case T_BooleanTest:
-			retval = _copyBooleanTest(from);
+			retval = _copyBooleanTest(static_cast<const BooleanTest *>(from));
 			break;
 		case T_CoerceToDomain:
-			retval = _copyCoerceToDomain(from);
+			retval = _copyCoerceToDomain(static_cast<const CoerceToDomain *>(from));
 			break;
 		case T_CoerceToDomainValue:
-			retval = _copyCoerceToDomainValue(from);
+			retval = _copyCoerceToDomainValue(static_cast<const CoerceToDomainValue *>(from));
 			break;
 		case T_SetToDefault:
-			retval = _copySetToDefault(from);
+			retval = _copySetToDefault(static_cast<const SetToDefault *>(from));
 			break;
 		case T_CurrentOfExpr:
-			retval = _copyCurrentOfExpr(from);
+			retval = _copyCurrentOfExpr(static_cast<const CurrentOfExpr *>(from));
 			break;
 		case T_InferenceElem:
-			retval = _copyInferenceElem(from);
+			retval = _copyInferenceElem(static_cast<const InferenceElem *>(from));
 			break;
 		case T_TargetEntry:
-			retval = _copyTargetEntry(from);
+			retval = _copyTargetEntry(static_cast<const TargetEntry *>(from));
 			break;
 		case T_RangeTblRef:
-			retval = _copyRangeTblRef(from);
+			retval = _copyRangeTblRef(static_cast<const RangeTblRef *>(from));
 			break;
 		case T_JoinExpr:
-			retval = _copyJoinExpr(from);
+			retval = _copyJoinExpr(static_cast<const JoinExpr *>(from));
 			break;
 		case T_FromExpr:
-			retval = _copyFromExpr(from);
+			retval = _copyFromExpr(static_cast<const FromExpr *>(from));
 			break;
 		case T_OnConflictExpr:
-			retval = _copyOnConflictExpr(from);
+			retval = _copyOnConflictExpr(static_cast<const OnConflictExpr *>(from));
 			break;
 
 			/*
 			 * RELATION NODES
 			 */
 		case T_PathKey:
-			retval = _copyPathKey(from);
+			retval = _copyPathKey(static_cast<const PathKey *>(from));
 			break;
 		case T_RestrictInfo:
-			retval = _copyRestrictInfo(from);
+			retval = _copyRestrictInfo(static_cast<const RestrictInfo *>(from));
 			break;
 		case T_PlaceHolderVar:
-			retval = _copyPlaceHolderVar(from);
+			retval = _copyPlaceHolderVar(static_cast<const PlaceHolderVar *>(from));
 			break;
 		case T_SpecialJoinInfo:
-			retval = _copySpecialJoinInfo(from);
+			retval = _copySpecialJoinInfo(static_cast<const SpecialJoinInfo *>(from));
 			break;
 		case T_LateralJoinInfo:
-			retval = _copyLateralJoinInfo(from);
+			retval = _copyLateralJoinInfo(static_cast<const LateralJoinInfo *>(from));
 			break;
 		case T_AppendRelInfo:
-			retval = _copyAppendRelInfo(from);
+			retval = _copyAppendRelInfo(static_cast<const AppendRelInfo *>(from));
 			break;
 		case T_PlaceHolderInfo:
-			retval = _copyPlaceHolderInfo(from);
+			retval = _copyPlaceHolderInfo(static_cast<const PlaceHolderInfo *>(from));
 			break;
 
 			/*
@@ -4497,14 +4497,14 @@ copyObject(const void *from)
 		case T_String:
 		case T_BitString:
 		case T_Null:
-			retval = _copyValue(from);
+			retval = _copyValue(static_cast<const Value *>(from));
 			break;
 
 			/*
 			 * LIST NODES
 			 */
 		case T_List:
-			retval = _copyList(from);
+			retval = _copyList(static_cast<const List *>(from));
 			break;
 
 			/*
@@ -4513,443 +4513,443 @@ copyObject(const void *from)
 			 */
 		case T_IntList:
 		case T_OidList:
-			retval = list_copy(from);
+			retval = list_copy(static_cast<const List *>(from));
 			break;
 
 			/*
 			 * PARSE NODES
 			 */
 		case T_Query:
-			retval = _copyQuery(from);
+			retval = _copyQuery(static_cast<const Query *>(from));
 			break;
 		case T_InsertStmt:
-			retval = _copyInsertStmt(from);
+			retval = _copyInsertStmt(static_cast<const InsertStmt *>(from));
 			break;
 		case T_DeleteStmt:
-			retval = _copyDeleteStmt(from);
+			retval = _copyDeleteStmt(static_cast<const DeleteStmt *>(from));
 			break;
 		case T_UpdateStmt:
-			retval = _copyUpdateStmt(from);
+			retval = _copyUpdateStmt(static_cast<const UpdateStmt *>(from));
 			break;
 		case T_SelectStmt:
-			retval = _copySelectStmt(from);
+			retval = _copySelectStmt(static_cast<const SelectStmt *>(from));
 			break;
 		case T_SetOperationStmt:
-			retval = _copySetOperationStmt(from);
+			retval = _copySetOperationStmt(static_cast<const SetOperationStmt *>(from));
 			break;
 		case T_AlterTableStmt:
-			retval = _copyAlterTableStmt(from);
+			retval = _copyAlterTableStmt(static_cast<const AlterTableStmt *>(from));
 			break;
 		case T_AlterTableCmd:
-			retval = _copyAlterTableCmd(from);
+			retval = _copyAlterTableCmd(static_cast<const AlterTableCmd *>(from));
 			break;
 		case T_AlterDomainStmt:
-			retval = _copyAlterDomainStmt(from);
+			retval = _copyAlterDomainStmt(static_cast<const AlterDomainStmt *>(from));
 			break;
 		case T_GrantStmt:
-			retval = _copyGrantStmt(from);
+			retval = _copyGrantStmt(static_cast<const GrantStmt *>(from));
 			break;
 		case T_GrantRoleStmt:
-			retval = _copyGrantRoleStmt(from);
+			retval = _copyGrantRoleStmt(static_cast<const GrantRoleStmt *>(from));
 			break;
 		case T_AlterDefaultPrivilegesStmt:
-			retval = _copyAlterDefaultPrivilegesStmt(from);
+			retval = _copyAlterDefaultPrivilegesStmt(static_cast<const AlterDefaultPrivilegesStmt *>(from));
 			break;
 		case T_DeclareCursorStmt:
-			retval = _copyDeclareCursorStmt(from);
+			retval = _copyDeclareCursorStmt(static_cast<const DeclareCursorStmt *>(from));
 			break;
 		case T_ClosePortalStmt:
-			retval = _copyClosePortalStmt(from);
+			retval = _copyClosePortalStmt(static_cast<const ClosePortalStmt *>(from));
 			break;
 		case T_ClusterStmt:
-			retval = _copyClusterStmt(from);
+			retval = _copyClusterStmt(static_cast<const ClusterStmt *>(from));
 			break;
 		case T_CopyStmt:
-			retval = _copyCopyStmt(from);
+			retval = _copyCopyStmt(static_cast<const CopyStmt *>(from));
 			break;
 		case T_CreateStmt:
-			retval = _copyCreateStmt(from);
+			retval = _copyCreateStmt(static_cast<const CreateStmt *>(from));
 			break;
 		case T_TableLikeClause:
-			retval = _copyTableLikeClause(from);
+			retval = _copyTableLikeClause(static_cast<const TableLikeClause *>(from));
 			break;
 		case T_DefineStmt:
-			retval = _copyDefineStmt(from);
+			retval = _copyDefineStmt(static_cast<const DefineStmt *>(from));
 			break;
 		case T_DropStmt:
-			retval = _copyDropStmt(from);
+			retval = _copyDropStmt(static_cast<const DropStmt *>(from));
 			break;
 		case T_TruncateStmt:
-			retval = _copyTruncateStmt(from);
+			retval = _copyTruncateStmt(static_cast<const TruncateStmt *>(from));
 			break;
 		case T_CommentStmt:
-			retval = _copyCommentStmt(from);
+			retval = _copyCommentStmt(static_cast<const CommentStmt *>(from));
 			break;
 		case T_SecLabelStmt:
-			retval = _copySecLabelStmt(from);
+			retval = _copySecLabelStmt(static_cast<const SecLabelStmt *>(from));
 			break;
 		case T_FetchStmt:
-			retval = _copyFetchStmt(from);
+			retval = _copyFetchStmt(static_cast<const FetchStmt *>(from));
 			break;
 		case T_IndexStmt:
-			retval = _copyIndexStmt(from);
+			retval = _copyIndexStmt(static_cast<const IndexStmt *>(from));
 			break;
 		case T_CreateFunctionStmt:
-			retval = _copyCreateFunctionStmt(from);
+			retval = _copyCreateFunctionStmt(static_cast<const CreateFunctionStmt *>(from));
 			break;
 		case T_FunctionParameter:
-			retval = _copyFunctionParameter(from);
+			retval = _copyFunctionParameter(static_cast<const FunctionParameter *>(from));
 			break;
 		case T_AlterFunctionStmt:
-			retval = _copyAlterFunctionStmt(from);
+			retval = _copyAlterFunctionStmt(static_cast<const AlterFunctionStmt *>(from));
 			break;
 		case T_DoStmt:
-			retval = _copyDoStmt(from);
+			retval = _copyDoStmt(static_cast<const DoStmt *>(from));
 			break;
 		case T_RenameStmt:
-			retval = _copyRenameStmt(from);
+			retval = _copyRenameStmt(static_cast<const RenameStmt *>(from));
 			break;
 		case T_AlterObjectSchemaStmt:
-			retval = _copyAlterObjectSchemaStmt(from);
+			retval = _copyAlterObjectSchemaStmt(static_cast<const AlterObjectSchemaStmt *>(from));
 			break;
 		case T_AlterOwnerStmt:
-			retval = _copyAlterOwnerStmt(from);
+			retval = _copyAlterOwnerStmt(static_cast<const AlterOwnerStmt *>(from));
 			break;
 		case T_RuleStmt:
-			retval = _copyRuleStmt(from);
+			retval = _copyRuleStmt(static_cast<const RuleStmt *>(from));
 			break;
 		case T_NotifyStmt:
-			retval = _copyNotifyStmt(from);
+			retval = _copyNotifyStmt(static_cast<const NotifyStmt *>(from));
 			break;
 		case T_ListenStmt:
-			retval = _copyListenStmt(from);
+			retval = _copyListenStmt(static_cast<const ListenStmt *>(from));
 			break;
 		case T_UnlistenStmt:
-			retval = _copyUnlistenStmt(from);
+			retval = _copyUnlistenStmt(static_cast<const UnlistenStmt *>(from));
 			break;
 		case T_TransactionStmt:
-			retval = _copyTransactionStmt(from);
+			retval = _copyTransactionStmt(static_cast<const TransactionStmt *>(from));
 			break;
 		case T_CompositeTypeStmt:
-			retval = _copyCompositeTypeStmt(from);
+			retval = _copyCompositeTypeStmt(static_cast<const CompositeTypeStmt *>(from));
 			break;
 		case T_CreateEnumStmt:
-			retval = _copyCreateEnumStmt(from);
+			retval = _copyCreateEnumStmt(static_cast<const CreateEnumStmt *>(from));
 			break;
 		case T_CreateRangeStmt:
-			retval = _copyCreateRangeStmt(from);
+			retval = _copyCreateRangeStmt(static_cast<const CreateRangeStmt *>(from));
 			break;
 		case T_AlterEnumStmt:
-			retval = _copyAlterEnumStmt(from);
+			retval = _copyAlterEnumStmt(static_cast<const AlterEnumStmt *>(from));
 			break;
 		case T_ViewStmt:
-			retval = _copyViewStmt(from);
+			retval = _copyViewStmt(static_cast<const ViewStmt *>(from));
 			break;
 		case T_LoadStmt:
-			retval = _copyLoadStmt(from);
+			retval = _copyLoadStmt(static_cast<const LoadStmt *>(from));
 			break;
 		case T_CreateDomainStmt:
-			retval = _copyCreateDomainStmt(from);
+			retval = _copyCreateDomainStmt(static_cast<const CreateDomainStmt *>(from));
 			break;
 		case T_CreateOpClassStmt:
-			retval = _copyCreateOpClassStmt(from);
+			retval = _copyCreateOpClassStmt(static_cast<const CreateOpClassStmt *>(from));
 			break;
 		case T_CreateOpClassItem:
-			retval = _copyCreateOpClassItem(from);
+			retval = _copyCreateOpClassItem(static_cast<const CreateOpClassItem *>(from));
 			break;
 		case T_CreateOpFamilyStmt:
-			retval = _copyCreateOpFamilyStmt(from);
+			retval = _copyCreateOpFamilyStmt(static_cast<const CreateOpFamilyStmt *>(from));
 			break;
 		case T_AlterOpFamilyStmt:
-			retval = _copyAlterOpFamilyStmt(from);
+			retval = _copyAlterOpFamilyStmt(static_cast<const AlterOpFamilyStmt *>(from));
 			break;
 		case T_CreatedbStmt:
-			retval = _copyCreatedbStmt(from);
+			retval = _copyCreatedbStmt(static_cast<const CreatedbStmt *>(from));
 			break;
 		case T_AlterDatabaseStmt:
-			retval = _copyAlterDatabaseStmt(from);
+			retval = _copyAlterDatabaseStmt(static_cast<const AlterDatabaseStmt *>(from));
 			break;
 		case T_AlterDatabaseSetStmt:
-			retval = _copyAlterDatabaseSetStmt(from);
+			retval = _copyAlterDatabaseSetStmt(static_cast<const AlterDatabaseSetStmt *>(from));
 			break;
 		case T_DropdbStmt:
-			retval = _copyDropdbStmt(from);
+			retval = _copyDropdbStmt(static_cast<const DropdbStmt *>(from));
 			break;
 		case T_VacuumStmt:
-			retval = _copyVacuumStmt(from);
+			retval = _copyVacuumStmt(static_cast<const VacuumStmt *>(from));
 			break;
 		case T_ExplainStmt:
-			retval = _copyExplainStmt(from);
+			retval = _copyExplainStmt(static_cast<const ExplainStmt *>(from));
 			break;
 		case T_CreateTableAsStmt:
-			retval = _copyCreateTableAsStmt(from);
+			retval = _copyCreateTableAsStmt(static_cast<const CreateTableAsStmt *>(from));
 			break;
 		case T_RefreshMatViewStmt:
-			retval = _copyRefreshMatViewStmt(from);
+			retval = _copyRefreshMatViewStmt(static_cast<const RefreshMatViewStmt *>(from));
 			break;
 		case T_ReplicaIdentityStmt:
-			retval = _copyReplicaIdentityStmt(from);
+			retval = _copyReplicaIdentityStmt(static_cast<const ReplicaIdentityStmt *>(from));
 			break;
 		case T_AlterSystemStmt:
-			retval = _copyAlterSystemStmt(from);
+			retval = _copyAlterSystemStmt(static_cast<const AlterSystemStmt *>(from));
 			break;
 		case T_CreateSeqStmt:
-			retval = _copyCreateSeqStmt(from);
+			retval = _copyCreateSeqStmt(static_cast<const CreateSeqStmt *>(from));
 			break;
 		case T_AlterSeqStmt:
-			retval = _copyAlterSeqStmt(from);
+			retval = _copyAlterSeqStmt(static_cast<const AlterSeqStmt *>(from));
 			break;
 		case T_VariableSetStmt:
-			retval = _copyVariableSetStmt(from);
+			retval = _copyVariableSetStmt(static_cast<const VariableSetStmt *>(from));
 			break;
 		case T_VariableShowStmt:
-			retval = _copyVariableShowStmt(from);
+			retval = _copyVariableShowStmt(static_cast<const VariableShowStmt *>(from));
 			break;
 		case T_DiscardStmt:
-			retval = _copyDiscardStmt(from);
+			retval = _copyDiscardStmt(static_cast<const DiscardStmt *>(from));
 			break;
 		case T_CreateTableSpaceStmt:
-			retval = _copyCreateTableSpaceStmt(from);
+			retval = _copyCreateTableSpaceStmt(static_cast<const CreateTableSpaceStmt *>(from));
 			break;
 		case T_DropTableSpaceStmt:
-			retval = _copyDropTableSpaceStmt(from);
+			retval = _copyDropTableSpaceStmt(static_cast<const DropTableSpaceStmt *>(from));
 			break;
 		case T_AlterTableSpaceOptionsStmt:
-			retval = _copyAlterTableSpaceOptionsStmt(from);
+			retval = _copyAlterTableSpaceOptionsStmt(static_cast<const AlterTableSpaceOptionsStmt *>(from));
 			break;
 		case T_AlterTableMoveAllStmt:
-			retval = _copyAlterTableMoveAllStmt(from);
+			retval = _copyAlterTableMoveAllStmt(static_cast<const AlterTableMoveAllStmt *>(from));
 			break;
 		case T_CreateExtensionStmt:
-			retval = _copyCreateExtensionStmt(from);
+			retval = _copyCreateExtensionStmt(static_cast<const CreateExtensionStmt *>(from));
 			break;
 		case T_AlterExtensionStmt:
-			retval = _copyAlterExtensionStmt(from);
+			retval = _copyAlterExtensionStmt(static_cast<const AlterExtensionStmt *>(from));
 			break;
 		case T_AlterExtensionContentsStmt:
-			retval = _copyAlterExtensionContentsStmt(from);
+			retval = _copyAlterExtensionContentsStmt(static_cast<const AlterExtensionContentsStmt *>(from));
 			break;
 		case T_CreateFdwStmt:
-			retval = _copyCreateFdwStmt(from);
+			retval = _copyCreateFdwStmt(static_cast<const CreateFdwStmt *>(from));
 			break;
 		case T_AlterFdwStmt:
-			retval = _copyAlterFdwStmt(from);
+			retval = _copyAlterFdwStmt(static_cast<const AlterFdwStmt *>(from));
 			break;
 		case T_CreateForeignServerStmt:
-			retval = _copyCreateForeignServerStmt(from);
+			retval = _copyCreateForeignServerStmt(static_cast<const CreateForeignServerStmt *>(from));
 			break;
 		case T_AlterForeignServerStmt:
-			retval = _copyAlterForeignServerStmt(from);
+			retval = _copyAlterForeignServerStmt(static_cast<const AlterForeignServerStmt *>(from));
 			break;
 		case T_CreateUserMappingStmt:
-			retval = _copyCreateUserMappingStmt(from);
+			retval = _copyCreateUserMappingStmt(static_cast<const CreateUserMappingStmt *>(from));
 			break;
 		case T_AlterUserMappingStmt:
-			retval = _copyAlterUserMappingStmt(from);
+			retval = _copyAlterUserMappingStmt(static_cast<const AlterUserMappingStmt *>(from));
 			break;
 		case T_DropUserMappingStmt:
-			retval = _copyDropUserMappingStmt(from);
+			retval = _copyDropUserMappingStmt(static_cast<const DropUserMappingStmt *>(from));
 			break;
 		case T_CreateForeignTableStmt:
-			retval = _copyCreateForeignTableStmt(from);
+			retval = _copyCreateForeignTableStmt(static_cast<const CreateForeignTableStmt *>(from));
 			break;
 		case T_ImportForeignSchemaStmt:
-			retval = _copyImportForeignSchemaStmt(from);
+			retval = _copyImportForeignSchemaStmt(static_cast<const ImportForeignSchemaStmt *>(from));
 			break;
 		case T_CreateTransformStmt:
-			retval = _copyCreateTransformStmt(from);
+			retval = _copyCreateTransformStmt(static_cast<const CreateTransformStmt *>(from));
 			break;
 		case T_CreateTrigStmt:
-			retval = _copyCreateTrigStmt(from);
+			retval = _copyCreateTrigStmt(static_cast<const CreateTrigStmt *>(from));
 			break;
 		case T_CreateEventTrigStmt:
-			retval = _copyCreateEventTrigStmt(from);
+			retval = _copyCreateEventTrigStmt(static_cast<const CreateEventTrigStmt *>(from));
 			break;
 		case T_AlterEventTrigStmt:
-			retval = _copyAlterEventTrigStmt(from);
+			retval = _copyAlterEventTrigStmt(static_cast<const AlterEventTrigStmt *>(from));
 			break;
 		case T_CreatePLangStmt:
-			retval = _copyCreatePLangStmt(from);
+			retval = _copyCreatePLangStmt(static_cast<const CreatePLangStmt *>(from));
 			break;
 		case T_CreateRoleStmt:
-			retval = _copyCreateRoleStmt(from);
+			retval = _copyCreateRoleStmt(static_cast<const CreateRoleStmt *>(from));
 			break;
 		case T_AlterRoleStmt:
-			retval = _copyAlterRoleStmt(from);
+			retval = _copyAlterRoleStmt(static_cast<const AlterRoleStmt *>(from));
 			break;
 		case T_AlterRoleSetStmt:
-			retval = _copyAlterRoleSetStmt(from);
+			retval = _copyAlterRoleSetStmt(static_cast<const AlterRoleSetStmt *>(from));
 			break;
 		case T_DropRoleStmt:
-			retval = _copyDropRoleStmt(from);
+			retval = _copyDropRoleStmt(static_cast<const DropRoleStmt *>(from));
 			break;
 		case T_LockStmt:
-			retval = _copyLockStmt(from);
+			retval = _copyLockStmt(static_cast<const LockStmt *>(from));
 			break;
 		case T_ConstraintsSetStmt:
-			retval = _copyConstraintsSetStmt(from);
+			retval = _copyConstraintsSetStmt(static_cast<const ConstraintsSetStmt *>(from));
 			break;
 		case T_ReindexStmt:
-			retval = _copyReindexStmt(from);
+			retval = _copyReindexStmt(static_cast<const ReindexStmt *>(from));
 			break;
 		case T_CheckPointStmt:
-			retval = (void *) makeNode(CheckPointStmt);
+			retval = static_cast<void *>(makeNode(CheckPointStmt));
 			break;
 		case T_CreateSchemaStmt:
-			retval = _copyCreateSchemaStmt(from);
+			retval = _copyCreateSchemaStmt(static_cast<const CreateSchemaStmt *>(from));
 			break;
 		case T_CreateConversionStmt:
-			retval = _copyCreateConversionStmt(from);
+			retval = _copyCreateConversionStmt(static_cast<const CreateConversionStmt *>(from));
 			break;
 		case T_CreateCastStmt:
-			retval = _copyCreateCastStmt(from);
+			retval = _copyCreateCastStmt(static_cast<const CreateCastStmt *>(from));
 			break;
 		case T_PrepareStmt:
-			retval = _copyPrepareStmt(from);
+			retval = _copyPrepareStmt(static_cast<const PrepareStmt *>(from));
 			break;
 		case T_ExecuteStmt:
-			retval = _copyExecuteStmt(from);
+			retval = _copyExecuteStmt(static_cast<const ExecuteStmt *>(from));
 			break;
 		case T_DeallocateStmt:
-			retval = _copyDeallocateStmt(from);
+			retval = _copyDeallocateStmt(static_cast<const DeallocateStmt *>(from));
 			break;
 		case T_DropOwnedStmt:
-			retval = _copyDropOwnedStmt(from);
+			retval = _copyDropOwnedStmt(static_cast<const DropOwnedStmt *>(from));
 			break;
 		case T_ReassignOwnedStmt:
-			retval = _copyReassignOwnedStmt(from);
+			retval = _copyReassignOwnedStmt(static_cast<const ReassignOwnedStmt *>(from));
 			break;
 		case T_AlterTSDictionaryStmt:
-			retval = _copyAlterTSDictionaryStmt(from);
+			retval = _copyAlterTSDictionaryStmt(static_cast<const AlterTSDictionaryStmt *>(from));
 			break;
 		case T_AlterTSConfigurationStmt:
-			retval = _copyAlterTSConfigurationStmt(from);
+			retval = _copyAlterTSConfigurationStmt(static_cast<const AlterTSConfigurationStmt *>(from));
 			break;
 		case T_CreatePolicyStmt:
-			retval = _copyCreatePolicyStmt(from);
+			retval = _copyCreatePolicyStmt(static_cast<const CreatePolicyStmt *>(from));
 			break;
 		case T_AlterPolicyStmt:
-			retval = _copyAlterPolicyStmt(from);
+			retval = _copyAlterPolicyStmt(static_cast<const AlterPolicyStmt *>(from));
 			break;
 		case T_A_Expr:
-			retval = _copyAExpr(from);
+			retval = _copyAExpr(static_cast<const A_Expr *>(from));
 			break;
 		case T_ColumnRef:
-			retval = _copyColumnRef(from);
+			retval = _copyColumnRef(static_cast<const ColumnRef *>(from));
 			break;
 		case T_ParamRef:
-			retval = _copyParamRef(from);
+			retval = _copyParamRef(static_cast<const ParamRef *>(from));
 			break;
 		case T_A_Const:
-			retval = _copyAConst(from);
+			retval = _copyAConst(static_cast<const A_Const *>(from));
 			break;
 		case T_FuncCall:
-			retval = _copyFuncCall(from);
+			retval = _copyFuncCall(static_cast<const FuncCall *>(from));
 			break;
 		case T_A_Star:
-			retval = _copyAStar(from);
+			retval = _copyAStar(static_cast<const A_Star *>(from));
 			break;
 		case T_A_Indices:
-			retval = _copyAIndices(from);
+			retval = _copyAIndices(static_cast<const A_Indices *>(from));
 			break;
 		case T_A_Indirection:
-			retval = _copyA_Indirection(from);
+			retval = _copyA_Indirection(static_cast<const A_Indirection *>(from));
 			break;
 		case T_A_ArrayExpr:
-			retval = _copyA_ArrayExpr(from);
+			retval = _copyA_ArrayExpr(static_cast<const A_ArrayExpr *>(from));
 			break;
 		case T_ResTarget:
-			retval = _copyResTarget(from);
+			retval = _copyResTarget(static_cast<const ResTarget *>(from));
 			break;
 		case T_MultiAssignRef:
-			retval = _copyMultiAssignRef(from);
+			retval = _copyMultiAssignRef(static_cast<const MultiAssignRef *>(from));
 			break;
 		case T_TypeCast:
-			retval = _copyTypeCast(from);
+			retval = _copyTypeCast(static_cast<const TypeCast *>(from));
 			break;
 		case T_CollateClause:
-			retval = _copyCollateClause(from);
+			retval = _copyCollateClause(static_cast<const CollateClause *>(from));
 			break;
 		case T_SortBy:
-			retval = _copySortBy(from);
+			retval = _copySortBy(static_cast<const SortBy *>(from));
 			break;
 		case T_WindowDef:
-			retval = _copyWindowDef(from);
+			retval = _copyWindowDef(static_cast<const WindowDef *>(from));
 			break;
 		case T_RangeSubselect:
-			retval = _copyRangeSubselect(from);
+			retval = _copyRangeSubselect(static_cast<const RangeSubselect *>(from));
 			break;
 		case T_RangeFunction:
-			retval = _copyRangeFunction(from);
+			retval = _copyRangeFunction(static_cast<const RangeFunction *>(from));
 			break;
 		case T_TypeName:
-			retval = _copyTypeName(from);
+			retval = _copyTypeName(static_cast<const TypeName *>(from));
 			break;
 		case T_IndexElem:
-			retval = _copyIndexElem(from);
+			retval = _copyIndexElem(static_cast<const IndexElem *>(from));
 			break;
 		case T_ColumnDef:
-			retval = _copyColumnDef(from);
+			retval = _copyColumnDef(static_cast<const ColumnDef *>(from));
 			break;
 		case T_Constraint:
-			retval = _copyConstraint(from);
+			retval = _copyConstraint(static_cast<const Constraint *>(from));
 			break;
 		case T_DefElem:
-			retval = _copyDefElem(from);
+			retval = _copyDefElem(static_cast<const DefElem *>(from));
 			break;
 		case T_LockingClause:
-			retval = _copyLockingClause(from);
+			retval = _copyLockingClause(static_cast<const LockingClause *>(from));
 			break;
 		case T_RangeTblEntry:
-			retval = _copyRangeTblEntry(from);
+			retval = _copyRangeTblEntry(static_cast<const RangeTblEntry *>(from));
 			break;
 		case T_RangeTblFunction:
-			retval = _copyRangeTblFunction(from);
+			retval = _copyRangeTblFunction(static_cast<const RangeTblFunction *>(from));
 			break;
 		case T_WithCheckOption:
-			retval = _copyWithCheckOption(from);
+			retval = _copyWithCheckOption(static_cast<const WithCheckOption *>(from));
 			break;
 		case T_SortGroupClause:
-			retval = _copySortGroupClause(from);
+			retval = _copySortGroupClause(static_cast<const SortGroupClause *>(from));
 			break;
 		case T_GroupingSet:
-			retval = _copyGroupingSet(from);
+			retval = _copyGroupingSet(static_cast<const GroupingSet *>(from));
 			break;
 		case T_WindowClause:
-			retval = _copyWindowClause(from);
+			retval = _copyWindowClause(static_cast<const WindowClause *>(from));
 			break;
 		case T_RowMarkClause:
-			retval = _copyRowMarkClause(from);
+			retval = _copyRowMarkClause(static_cast<const RowMarkClause *>(from));
 			break;
 		case T_WithClause:
-			retval = _copyWithClause(from);
+			retval = _copyWithClause(static_cast<const WithClause *>(from));
 			break;
 		case T_InferClause:
-			retval = _copyInferClause(from);
+			retval = _copyInferClause(static_cast<const InferClause *>(from));
 			break;
 		case T_OnConflictClause:
-			retval = _copyOnConflictClause(from);
+			retval = _copyOnConflictClause(static_cast<const OnConflictClause *>(from));
 			break;
 		case T_CommonTableExpr:
-			retval = _copyCommonTableExpr(from);
+			retval = _copyCommonTableExpr(static_cast<const CommonTableExpr *>(from));
 			break;
 		case T_RangeTableSample:
-			retval = _copyRangeTableSample(from);
+			retval = _copyRangeTableSample(static_cast<const RangeTableSample *>(from));
 			break;
 		case T_TableSampleClause:
-			retval = _copyTableSampleClause(from);
+			retval = _copyTableSampleClause(static_cast<const TableSampleClause *>(from));
 			break;
 		case T_FuncWithArgs:
-			retval = _copyFuncWithArgs(from);
+			retval = _copyFuncWithArgs(static_cast<const FuncWithArgs *>(from));
 			break;
 		case T_AccessPriv:
-			retval = _copyAccessPriv(from);
+			retval = _copyAccessPriv(static_cast<const AccessPriv *>(from));
 			break;
 		case T_XmlSerialize:
-			retval = _copyXmlSerialize(from);
+			retval = _copyXmlSerialize(static_cast<const XmlSerialize *>(from));
 			break;
 		case T_RoleSpec:
-			retval = _copyRoleSpec(from);
+			retval = _copyRoleSpec(static_cast<const RoleSpec *>(from));
 			break;
 
 		default:

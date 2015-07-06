@@ -219,5 +219,3 @@ scanner_isspace(char ch)
 		return true;
 	return false;
 }
- false;
-}

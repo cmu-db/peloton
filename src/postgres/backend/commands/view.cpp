@@ -572,5 +572,3 @@ StoreViewQuery(Oid viewOid, Query *viewParse, bool replace)
 	 */
 	DefineViewRules(viewOid, viewParse, replace);
 }
- replace);
-}

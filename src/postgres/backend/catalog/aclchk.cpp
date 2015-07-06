@@ -995,7 +995,7 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 
 		foreach(rolecell, rolespecs)
 		{
-			RoleSpec   *rolespec = lfirst(rolecell);
+			RoleSpec   *rolespec = static_cast<RoleSpec *>(lfirst(rolecell));
 
 			iacls.roleid = get_rolespec_oid((Node *) rolespec, false);
 

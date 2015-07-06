@@ -5027,7 +5027,7 @@ l5:
 				old_status = MultiXactStatusNoKeyUpdate;
 		}
 
-		old_mode = TUPLOCK_from_mxstatus(old_status);
+		old_mode = static_cast<LockTupleMode>(TUPLOCK_from_mxstatus(old_status));
 
 		/*
 		 * If the lock to be acquired is for the same TransactionId as the
@@ -6323,7 +6323,7 @@ GetMultiXactIdHintBits(MultiXactId multi, uint16 *new_infomask,
 		 * Remember the strongest lock mode held by any member of the
 		 * multixact.
 		 */
-		mode = TUPLOCK_from_mxstatus(members[i].status);
+		mode = static_cast<LockTupleMode>(TUPLOCK_from_mxstatus(members[i].status));
 		if (mode > strongest)
 			strongest = mode;
 

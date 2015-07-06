@@ -116,7 +116,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		InvalidAttrNumber,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
-		-1,
+		static_cast<AclObjectKind>(-1),
 		false
 	},
 	{
@@ -140,7 +140,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		Anum_pg_constraint_connamespace,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
-		-1,
+		static_cast<AclObjectKind>(-1),
 		false
 	},
 	{
@@ -284,7 +284,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		InvalidAttrNumber,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
-		-1,
+		static_cast<AclObjectKind>(-1),
 		true
 	},
 	{
@@ -296,7 +296,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		InvalidAttrNumber,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
-		-1,
+		static_cast<AclObjectKind>(-1),
 		false
 	},
 	{
@@ -362,7 +362,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		InvalidAttrNumber,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
-		-1,
+		static_cast<AclObjectKind>(-1),
 		false
 	},
 	{
@@ -410,7 +410,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		Anum_pg_ts_parser_prsnamespace,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
-		-1,
+		static_cast<AclObjectKind>(-1),
 		true
 	},
 	{
@@ -422,7 +422,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		Anum_pg_ts_template_tmplnamespace,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
-		-1,
+		static_cast<AclObjectKind>(-1),
 		true,
 	},
 	{
@@ -459,18 +459,18 @@ ObjectTypeMap[] =
 	{ "table", OBJECT_TABLE },
 	{ "index", OBJECT_INDEX },
 	{ "sequence", OBJECT_SEQUENCE },
-	{ "toast table", -1 },		/* unmapped */
+	{ "toast table", static_cast<ObjectType>(-1) },		/* unmapped */
 	{ "view", OBJECT_VIEW },
 	{ "materialized view", OBJECT_MATVIEW },
-	{ "composite type", -1 },	/* unmapped */
+	{ "composite type", static_cast<ObjectType>(-1) },	/* unmapped */
 	{ "foreign table", OBJECT_FOREIGN_TABLE },
 	{ "table column", OBJECT_COLUMN },
-	{ "index column", -1 },		/* unmapped */
-	{ "sequence column", -1 },	/* unmapped */
-	{ "toast table column", -1 },	/* unmapped */
-	{ "view column", -1 },		/* unmapped */
-	{ "materialized view column", -1 },	/* unmapped */
-	{ "composite type column", -1 },	/* unmapped */
+	{ "index column", static_cast<ObjectType>(-1) },		/* unmapped */
+	{ "sequence column", static_cast<ObjectType>(-1) },	/* unmapped */
+	{ "toast table column", static_cast<ObjectType>(-1) },	/* unmapped */
+	{ "view column", static_cast<ObjectType>(-1) },		/* unmapped */
+	{ "materialized view column", static_cast<ObjectType>(-1) },	/* unmapped */
+	{ "composite type column", static_cast<ObjectType>(-1) },	/* unmapped */
 	{ "foreign table column", OBJECT_COLUMN },
 	/* OCLASS_PROC */
 	{ "aggregate", OBJECT_AGGREGATE },
@@ -4527,7 +4527,7 @@ strlist_to_textarray(List *list)
 	datums = static_cast<Datum *>(palloc(sizeof(text *) * list_length(list)));
 	foreach(cell, list)
 	{
-		char   *name = lfirst(cell);
+		char   *name = static_cast<char *>(lfirst(cell));
 
 		datums[j++] = CStringGetTextDatum(name);
 	}
