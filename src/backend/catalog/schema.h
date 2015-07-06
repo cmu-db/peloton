@@ -139,9 +139,16 @@ class ColumnInfo {
   }
   
   // add a constraint to the column info
-  void AddConstraint(catalog::Constraint* constraint){
+  void AddConstraint(catalog::Constraint* _constraint){
+    bool redundancy_check = false;
     // TODO :: Mutex lock need?
-    constraint_vector.push_back(*constraint);
+    for( auto constraint : constraint_vector ){
+      if( _constraint->GetType() == constraint.GetType() ){
+        redundancy_check = true;
+      }
+    }
+    if( !redundancy_check )
+      constraint_vector.push_back(*_constraint);
   }
 
   std::vector<Constraint> GetConstraint(){
