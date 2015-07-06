@@ -2675,7 +2675,7 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 		free[natt] = true;
 
-		reconstructed = static_cast<varlena *>(palloc0(toast_pointer.va_rawsize));
+		reconstructed = static_cast<struct varlena *>(palloc0(toast_pointer.va_rawsize));
 
 		ent->reconstructed = reconstructed;
 

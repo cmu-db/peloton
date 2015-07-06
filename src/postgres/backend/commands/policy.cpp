@@ -529,12 +529,12 @@ CreatePolicy(CreatePolicyStmt *stmt)
 	addRTEtoQuery(with_check_pstate, rte, false, true, true);
 
 	qual = transformWhereClause(qual_pstate,
-								copyObject(stmt->qual),
+								static_cast<Node *>(copyObject(stmt->qual)),
 								EXPR_KIND_WHERE,
 								"POLICY");
 
 	with_check_qual = transformWhereClause(with_check_pstate,
-								copyObject(stmt->with_check),
+								static_cast<Node *>(copyObject(stmt->with_check)),
 								EXPR_KIND_WHERE,
 								"POLICY");
 
@@ -677,7 +677,8 @@ AlterPolicy(AlterPolicyStmt *stmt)
 
 		addRTEtoQuery(qual_pstate, rte, false, true, true);
 
-		qual = transformWhereClause(qual_pstate, copyObject(stmt->qual),
+		qual = transformWhereClause(qual_pstate,
+									static_cast<Node *>(copyObject(stmt->qual)),
 									EXPR_KIND_WHERE,
 									"POLICY");
 
@@ -697,7 +698,7 @@ AlterPolicy(AlterPolicyStmt *stmt)
 		addRTEtoQuery(with_check_pstate, rte, false, true, true);
 
 		with_check_qual = transformWhereClause(with_check_pstate,
-											   copyObject(stmt->with_check),
+											   static_cast<Node *>(copyObject(stmt->with_check)),
 											   EXPR_KIND_WHERE,
 											   "POLICY");
 

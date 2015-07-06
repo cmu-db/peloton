@@ -338,7 +338,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 
 		/* Transform expression.  Copy to be sure we don't modify original */
 		whenClause = transformWhereClause(pstate,
-										  copyObject(stmt->whenClause),
+										  static_cast<Node *>(copyObject(stmt->whenClause)),
 										  EXPR_KIND_TRIGGER_WHEN,
 										  "WHEN");
 		/* we have to fix its collations too */

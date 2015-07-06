@@ -2137,7 +2137,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			i = 0;
 			foreach(l, aggnode->groupingSets)
 			{
-				int current_length = static_cast<const List *>(list_length(lfirst(l)));
+				int current_length = list_length(static_cast<const List *>(lfirst(l)));
 				Bitmapset *cols = NULL;
 
 				/* planner forces this to be correct */
