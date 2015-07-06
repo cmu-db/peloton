@@ -144,6 +144,10 @@ class ColumnInfo {
     constraint_vector.push_back(*constraint);
   }
 
+  std::vector<Constraint> GetConstraint(){
+    return constraint_vector;
+  }
+
   /// Compare two column info objects
   bool operator== (const ColumnInfo &other) const {
     if ( other.type != type || other.is_inlined != is_inlined){
@@ -185,6 +189,7 @@ class ColumnInfo {
 
   // Constraints
   std::vector<Constraint> constraint_vector;
+
 };
 
 //===--------------------------------------------------------------------===//
