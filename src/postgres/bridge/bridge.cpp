@@ -18,8 +18,9 @@
 #include "backend/catalog/schema.h"
 #include "backend/catalog/constraint.h"
 #include "catalog/pg_attribute.h"
-#include "catalog/pg_database.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
 #include "common/fe_memutils.h"
 #include "utils/rel.h"
@@ -285,10 +286,11 @@ void GetTableListAndColumnInformation() {
       if( pgclass->relkind == 'r' ){
         printf("relname %s  \n",NameStr(pgclass->relname));
         peloton::oid_t database_oid = GetCurrentDatabaseOid();
-        peloton::oid_t table_oid = GetRelationOid( NameStr(pgclass->relname));
+       // peloton::oid_t table_oid = GetRelationOid( NameStr(pgclass->relname));
+       std::string table_name =  NameStr(pgclass->relname);
 
         // Get the table location from manager
-        auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+        auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, table_name);
         peloton::storage::DataTable* data_table = (peloton::storage::DataTable*) table;
         auto tuple_schema = data_table->GetSchema();
         std::cout << *tuple_schema << std::endl;
@@ -296,21 +298,29 @@ void GetTableListAndColumnInformation() {
         if( data_table->ishasPrimaryKey()  ){
           printf("print primary key index \n");
           std::cout<< *(data_table->GetPrimaryIndex()) << std::endl;
-        }else if ( data_table->ishasUnique()){
+        }
+        if ( data_table->ishasUnique()){
           printf("print unique index \n");
           for( int i =0 ; i<  data_table->GetUniqueIndexCount(); i++){
             std::cout << *(data_table->GetUniqueIndex(i)) << std::endl;
           }
-        }else if ( data_table->GetIndexCount() > 0 ){
+        }
+        if ( data_table->GetIndexCount() > 0 ){
           printf("print index \n");
           for( int i =0 ; i<  data_table->GetIndexCount(); i++){
             std::cout << *(data_table->GetIndex(i)) << std::endl;
           }
         }
+        if ( data_table->ishasReferenceTable() ){
+          printf("print foreign tables \n");
+          for( int i =0 ; i<  data_table->GetReferenceTableCount(); i++){
+            peloton::storage::DataTable *temp_table = data_table->GetReferenceTable(i);
+            peloton::catalog::Schema* temp_our_schema = temp_table->GetSchema();
+            std::cout << *temp_our_schema << std::endl;
+          }
+        }
       }
-
     }
-
   }
 
   heap_endscan(scan);
@@ -396,6 +406,7 @@ bool BootstrapPeloton(void){
   HeapTuple pg_class_tuple;
 
   bool status;
+  std::vector<peloton::bridge::IndexInfo> index_infos;
 
   elog(LOG, "Initializing Peloton");
 
@@ -564,17 +575,17 @@ bool BootstrapPeloton(void){
                 }else if( pg_index->indisunique ){
                   type = peloton::INDEX_TYPE_UNIQUE;  
                 }else{
-                  type =peloton:: INDEX_TYPE_NORMAL;
+                  type = peloton::INDEX_TYPE_NORMAL;
                 }
 
-                peloton::bridge::DDL::CreateIndex2(relation_name, get_rel_name(pg_index->indrelid), method_type, type, pg_index->indisunique, key_column_names, true);
+                peloton::bridge::IndexInfo* indexinfo = new peloton::bridge::IndexInfo(relation_name,
+                                                                                       get_rel_name(pg_index->indrelid),
+                                                                                       method_type, 
+                                                                                       type,
+                                                                                       pg_index->indisunique,
+                                                                                       key_column_names);
+                index_infos.push_back(*indexinfo);
 
-                if(status == true) {
-                  elog(LOG, "Create Index \"%s\" in Peloton", relation_name);
-                }
-                else {
-                  elog(ERROR, "Create Index \"%s\" in Peloton", relation_name);
-                }
                 break;
               }
             }
@@ -618,7 +629,69 @@ bool BootstrapPeloton(void){
 
     }
   }
-  
+
+  //===--------------------------------------------------------------------===//
+  // Create Peloton Indexes
+  //===--------------------------------------------------------------------===//
+
+  for( auto index_info : index_infos){
+    bool status;
+    status = peloton::bridge::DDL::CreateIndex( index_info.GetIndexName(),
+    		index_info.GetTableName(),
+    		index_info.GetMethodType(),
+    		index_info.GetType(),
+    		index_info.IsUnique(),
+    		index_info.GetKeyColumnNames(),
+    		true);
+
+    if(status == true) {
+      elog(LOG, "Create Index \"%s\" in Peloton", index_info.GetIndexName().c_str());
+    }
+    else {
+      elog(ERROR, "Create Index \"%s\" in Peloton", index_info.GetIndexName().c_str());
+    }
+  }
+  index_infos.clear();
+
+  //===--------------------------------------------------------------------===//
+  // Create Peloton Foreign Key Constraints 
+  //===--------------------------------------------------------------------===//
+  {
+    Relation pg_constraint_rel;
+    HeapScanDesc pg_constraint_scan;
+    HeapTuple pg_constraint_tuple;
+
+    peloton::oid_t database_oid = GetCurrentDatabaseOid();
+    assert( database_oid );
+
+    pg_constraint_rel = heap_open( ConstraintRelationId, AccessShareLock);
+    pg_constraint_scan = heap_beginscan_catalog(pg_constraint_rel, 0, NULL);
+
+    // Go over the pg_index catalog table looking for foreign key constraints
+    while (1) {
+      Form_pg_constraint pg_constraint;
+
+      pg_constraint_tuple = heap_getnext(pg_constraint_scan, ForwardScanDirection);
+      if(!HeapTupleIsValid(pg_constraint_tuple))
+        break;
+
+      pg_constraint = (Form_pg_constraint) GETSTRUCT(pg_constraint_tuple);
+
+      if( pg_constraint->contype == 'f')
+      {
+        char* current_table_name = get_rel_name(pg_constraint->conrelid);
+        char* foreign_table_name = get_rel_name(pg_constraint->confrelid);
+
+        peloton::storage::DataTable* current_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, current_table_name);
+        peloton::storage::DataTable* reference_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, foreign_table_name);
+
+        current_table->AddReferenceTable(reference_table);
+      }
+    }
+    heap_endscan(pg_constraint_scan);
+    heap_close(pg_constraint_rel, AccessShareLock);
+  }
+
   //printf("Print all relation's schema information\n");
   //GetTableListAndColumnInformation();
 
