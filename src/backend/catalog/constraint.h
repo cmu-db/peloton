@@ -37,8 +37,9 @@ class Constraint
 {
 
 public:
-    Constraint( ConstraintType type, std::string name = "")
-                : type(type), name(name) {}
+    Constraint( ConstraintType type, std::string name = "", std::string reference_table_name = "" )
+                : type(type), name(name), reference_table_name(reference_table_name) {}
+ 
     
     //===--------------------------------------------------------------------===//
     // ACCESSORS
@@ -50,6 +51,10 @@ public:
 
     std::string GetName() const {
         return name;
+    }
+
+    std::string GetReferenceTableName() const {
+        return reference_table_name;
     }
 
     // Get a string representation of this constraint
@@ -66,6 +71,9 @@ private:
 
     // Constraint name (if needed)
     std::string name = "";
+
+    // reference table names
+    std::string reference_table_name = "";
 };
 
 } // End catalog namespace
