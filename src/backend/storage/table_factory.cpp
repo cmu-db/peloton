@@ -39,8 +39,7 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
     // Check if we need this table in the catalog
     if(database_id != INVALID_OID){
         oid_t table_oid = GetRelationOid(table_name.c_str());
-        LOG_INFO("table name = %s, table oid = %u\n", table_name.c_str(), table_oid);
-        catalog::Manager::GetInstance().SetLocation(database_id, table_oid, table);
+        catalog::Manager::GetInstance().SetLocation(database_id, table_name, table);
     }
 
     return table;
@@ -51,6 +50,17 @@ bool TableFactory::DropDataTable(oid_t database_oid, oid_t table_oid)
 {
 
     DataTable* table = (DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+
+    if(table == nullptr)
+      return false;
+
+    delete table;
+    return true;
+}
+bool TableFactory::DropDataTable(oid_t database_oid, std::string table_name)
+{
+
+    DataTable* table = (DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, table_name);
 
     if(table == nullptr)
       return false;

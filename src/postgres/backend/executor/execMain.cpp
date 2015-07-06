@@ -1533,6 +1533,10 @@ ExecutePlan(EState *estate,
 {
 	TupleTableSlot *slot;
 	long		current_tuple_count;
+	Peloton_Status *status;
+	int status_code;
+
+  status = peloton_create_status();
 
 	/*
 	 * initialize local variables
@@ -1558,7 +1562,7 @@ ExecutePlan(EState *estate,
 		slot = ExecProcNode(planstate);
 
 		// TODO: Peloton Changes
-		peloton_send_dml(planstate, sendTuples, dest);
+		peloton_send_dml(status, planstate, sendTuples, dest);
 
 
 		/*
@@ -1603,6 +1607,10 @@ ExecutePlan(EState *estate,
 		if (numberTuples && numberTuples == current_tuple_count)
 			break;
 	}
+
+  status_code = peloton_get_status(status);
+  elog(LOG, "Peloton status code : %d \n", status_code);
+  peloton_destroy_status(status);
 }
 
 
