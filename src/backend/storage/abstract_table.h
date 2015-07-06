@@ -119,6 +119,7 @@ protected:
     
     std::mutex table_mutex;
     std::mutex table_unique_index_mutex;
+    std::mutex table_reference_table_mutex;
 
 };
 

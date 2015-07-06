@@ -122,7 +122,7 @@ class DDL {
   static void ProcessUtility(Node *parsetree,
                              const char *queryString);
 
-  static std::vector<catalog::ColumnInfo> ConstructColumnInfoByParsingCreateStmt( CreateStmt* Cstmt );
+  static std::vector<catalog::ColumnInfo> ConstructColumnInfoByParsingCreateStmt( CreateStmt* Cstmt, std::vector<std::string>& reference_table_names );
   static IndexInfo* ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt );
 
   //===--------------------------------------------------------------------===//
