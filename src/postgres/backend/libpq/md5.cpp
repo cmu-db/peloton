@@ -291,7 +291,7 @@ pg_md5_hash(const void *buff, size_t len, char *hexsum)
 {
 	uint8		sum[16];
 
-	if (!calculateDigestFromBuffer(buff, len, sum))
+	if (!calculateDigestFromBuffer(static_cast<const unsigned char *>(buff), len, sum))
 		return false;
 
 	bytesToHex(sum, hexsum);
@@ -301,7 +301,7 @@ pg_md5_hash(const void *buff, size_t len, char *hexsum)
 bool
 pg_md5_binary(const void *buff, size_t len, void *outbuf)
 {
-	if (!calculateDigestFromBuffer(buff, len, outbuf))
+	if (!calculateDigestFromBuffer(static_cast<const unsigned char *>(buff), len, static_cast<unsigned char *>(outbuf)))
 		return false;
 	return true;
 }

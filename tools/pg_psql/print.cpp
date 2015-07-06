@@ -3188,7 +3188,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *f
 			bool		translate;
 
 			if (PQgetisnull(result, r, c))
-				cell = static_cast<char *>(opt->nullPrint ? opt->nullPrint : "");
+				cell = opt->nullPrint ? opt->nullPrint : static_cast<char *>("");
 			else
 			{
 				cell = PQgetvalue(result, r, c);

@@ -598,7 +598,7 @@ DropAllPreparedStatements(void)
 
 	/* walk over cache */
 	hash_seq_init(&seq, prepared_queries);
-	while ((entry = hash_seq_search(&seq)) != NULL)
+	while ((entry = static_cast<PreparedStatement *>(hash_seq_search(&seq))) != NULL)
 	{
 		/* Release the plancache entry */
 		DropCachedPlan(entry->plansource);
@@ -743,7 +743,7 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 		PreparedStatement *prep_stmt;
 
 		hash_seq_init(&hash_seq, prepared_queries);
-		while ((prep_stmt = hash_seq_search(&hash_seq)) != NULL)
+		while ((prep_stmt = static_cast<PreparedStatement *>(hash_seq_search(&hash_seq))) != NULL)
 		{
 			Datum		values[5];
 			bool		nulls[5];

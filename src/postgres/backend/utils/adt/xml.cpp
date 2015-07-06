@@ -2204,7 +2204,7 @@ static char *
 _SPI_strdup(const char *s)
 {
 	size_t		len = strlen(s) + 1;
-	char	   *ret = SPI_static_cast<char *>(palloc(len));
+	char	   *ret = static_cast<char *>(SPI_palloc(len));
 
 	memcpy(ret, s, len);
 	return ret;
