@@ -38,7 +38,7 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
 
     // Check if we need this table in the catalog
     if(database_id != INVALID_OID){
-        //oid_t table_oid = GetRelationOid(table_name.c_str());
+        oid_t table_oid = GetRelationOid(table_name.c_str());
         catalog::Manager::GetInstance().SetLocation(database_id, table_name, table);
     }
 
