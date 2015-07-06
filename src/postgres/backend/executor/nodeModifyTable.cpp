@@ -324,58 +324,11 @@ ExecInsert(ModifyTableState *mtstate,
   Oid			newId;
   List	   *recheckIndexes = NIL;
 
-/*
-  TupleTableSlot *slot_copy;
-  HeapTuple  tuple_copy;
-  Datum      *dvalues;
-  bool       *nulls;
-  TupleDesc typeinfo;
-  int     natts;
-  int     i;
-  bool    isnull;
-*/
-
   /*
    * get the heap tuple out of the tuple table slot, making sure we have a
    * writable copy
    */
   tuple = ExecMaterializeSlot(slot);
-
-
-  // TODO: Peloton changes
-  PrintTupleTableSlot(slot);
-
- /*
-  // Create another copy of this tuple.
-  Assert(slot != NULL);
-  typeinfo = slot->tts_tupleDescriptor;
-  Assert(typeinfo != NULL);
-  natts = typeinfo->natts;
-  dvalues = (Datum *) palloc0(natts * sizeof(Datum));
-  nulls = (bool *) palloc(natts * sizeof(bool));
-
-  Assert(dvalues != NULL);
-  Assert(nulls != NULL);
-  for (i = 0; i < natts; ++i) {
-    dvalues[i] = slot_getattr(slot, i + 1, &isnull);
-    nulls[i] = isnull;
-  }
-  tuple_copy = heap_form_tuple(typeinfo, dvalues, nulls);
-
-  slot_copy = MakeTupleTableSlot();
-
-  Assert(slot_copy != NULL);
-  ExecSetSlotDescriptor(slot_copy, typeinfo);
-  slot_copy->tts_tuple = tuple_copy;
-
-  printf("\t Copied tuple :: \n");
-  PrintTupleTableSlot(slot_copy);
-
-  // Clean up space
-  pfree(dvalues);
-  pfree(nulls);
-  pfree(tuple_copy);
-*/
 
   /*
    * get information on the (current) result relation
