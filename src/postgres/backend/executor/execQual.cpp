@@ -5354,8 +5354,6 @@ ExecTargetList(List *targetlist,
 	 */
 	haveDoneSets = false;		/* any exhausted set exprs in tlist? */
 
-	elog(LOG, "In ExecTargetList");
-
 	foreach(tl, targetlist)
 	{
 		GenericExprState *gstate = (GenericExprState *) lfirst(tl);
@@ -5366,9 +5364,6 @@ ExecTargetList(List *targetlist,
 									  econtext,
 									  &isnull[resind],
 									  &itemIsDone[resind]);
-
-		int integer = DatumGetInt32(values[resind]);
-		elog(LOG, "Datum is %d", integer);
 
 		if (itemIsDone[resind] != ExprSingleResult)
 		{
@@ -5512,7 +5507,6 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	 * return the slot as-is if we decide no rows can be projected.)
 	 */
 	ExecClearTuple(slot);
-	elog(LOG, "In ExecProject");
 
 	/*
 	 * Force extraction of all input values that we'll need.  The
@@ -5534,7 +5528,6 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 	 * slots ... a mite ugly, but fast ...
 	 */
 	numSimpleVars = projInfo->pi_numSimpleVars;
-	elog(LOG, "The number of simple vars is %d", numSimpleVars);
 	if (numSimpleVars > 0)
 	{
 		Datum	   *values = slot->tts_values;
@@ -5542,7 +5535,6 @@ ExecProject(ProjectionInfo *projInfo, ExprDoneCond *isDone)
 		int		   *varSlotOffsets = projInfo->pi_varSlotOffsets;
 		int		   *varNumbers = projInfo->pi_varNumbers;
 		int			i;
-
 
 		if (projInfo->pi_directMap)
 		{
