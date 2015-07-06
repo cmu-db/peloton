@@ -183,7 +183,7 @@ void DDL::ProcessUtility(Node *parsetree,
           Oid table_oid = GetRelationOid(table_name);
 
           status = peloton::bridge::DDL::DropTable( table_oid );
-          fprintf(stderr, "DDLDropTable :: %d \n", ret);
+          fprintf(stderr, "DDLDropTable :: %d \n", status);
         }
       }
     }
