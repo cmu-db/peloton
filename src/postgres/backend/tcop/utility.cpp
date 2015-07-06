@@ -358,6 +358,8 @@ standard_ProcessUtility(Node *parsetree,
             char *completionTag)
 {
   bool    isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
+  Peloton_Status *status;
+  int status_code;
 
   check_xact_readonly(parsetree);
 
@@ -898,11 +900,16 @@ standard_ProcessUtility(Node *parsetree,
       break;
   }
 
+  status = peloton_create_status();
+
   // TODO: Peloton Changes
-  peloton_send_ddl(parsetree, queryString,
+  peloton_send_ddl(status, parsetree, queryString,
                    TopTransactionContext,
                    CurTransactionContext);
 
+  status_code = peloton_get_status(status);
+  elog(LOG, "Peloton status code : %d \n", status_code);
+  peloton_destroy_status(status);
 }
 
 /*
