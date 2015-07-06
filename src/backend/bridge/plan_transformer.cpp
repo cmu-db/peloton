@@ -64,6 +64,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
     case T_Result:
       plan_node = PlanTransformer::TransformResult(
           reinterpret_cast<const ResultState*>(plan_state));
+      break;
     default:
       plan_node = nullptr;
       break;
@@ -136,30 +137,35 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   /* Get the tuple schema */
   auto schema = target_table->GetSchema();
 
-  /* Should be only one which is a Result Plan */
+  /* Should be only one which is either a Result Plan or a ValuesScan plan */
   assert(mt_plan_state->mt_nplans == 1);
   assert(mt_plan_state->mt_plans != nullptr);
+
   PlanState *subplan_state = mt_plan_state->mt_plans[0];
+
   std::vector<storage::Tuple *> tuples;
 
+  if(nodeTag(subplan_state->plan) == T_Result) {  // Child is a result node
+    LOG_INFO("Child of Insert is Result");
+    auto result_ps = reinterpret_cast<ResultState*>(subplan_state);
 
-  auto result_plan_node = PlanTransformer::TransformResult(reinterpret_cast<ResultState*>(subplan_state));
-  /*
-   * We are only making the plan,
-   * so we should definitely not call ExecProcNode() here.
-   * In Postgres, tuple-to-insert is retrieved from a child plan
-   * called "Result".
-   * Shall we make something similar in Peloton?
+    // Make use of Postgres functions to get a tuple
+    TupleTableSlot *result_slot;
+    ExprDoneCond isDone;
+    result_slot = ExecProject(result_ps->ps.ps_ProjInfo, &isDone);
+    assert(!TupIsNull(result_slot));
+    assert(isDone != ExprEndResult);
 
-  plan_slot = ExecProcNode(subplan_state);
-  assert(!TupIsNull(plan_slot));  // The tuple should not be null
+    auto tuple = TupleTransformer(result_slot, schema);
+    tuples.push_back(tuple);
 
-  auto tuple = TupleTransformer(plan_slot, schema);
+    // TODO: How to free a postgres tupleslot?
 
-  std::cout << (*tuple);
+  }
+  else {
+    LOG_ERROR("Unsupported child type of Insert: %u", nodeTag(subplan_state->plan));
+  }
 
-  tuples.push_back(tuple);
-  */
   auto plan_node = new planner::InsertNode(target_table, tuples);
 
   return plan_node;
@@ -299,8 +305,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformResult(
 									  econtext,
 									  &isnull,
 									  &itemIsDone[resind]);
-      int integer = DatumGetInt32(value);
-      LOG_INFO("The datum is %d", integer);
+//      int integer = DatumGetInt32(value);
+//      LOG_INFO("The datum is %d", integer);
     }
 
   } else {
