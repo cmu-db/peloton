@@ -38,6 +38,8 @@
 namespace peloton {
 namespace bridge {
 
+static std::vector<IndexInfo> index_infos;
+
 /**
  * @brief Process utility statement.
  * @param parsetree Parse tree
@@ -73,92 +75,68 @@ void DDL::ProcessUtility(Node *parsetree,
 
           char* relation_name = Cstmt->relation->relname;
           std::vector<peloton::catalog::ColumnInfo> column_infos;
+          std::vector<std::string> reference_table_names;
 
           bool status;
 
           // Construct DDL_ColumnInfo with schema
           if( schema != NULL ){
-            column_infos = peloton::bridge::DDL::ConstructColumnInfoByParsingCreateStmt( Cstmt );
+            column_infos = peloton::bridge::DDL::ConstructColumnInfoByParsingCreateStmt( Cstmt, reference_table_names );
             status = peloton::bridge::DDL::CreateTable( relation_name, column_infos );
           }
           else {
             // Create Table without column info
             status = peloton::bridge::DDL::CreateTable( relation_name, column_infos );
           }
-          fprintf(stderr, "DDL_CreateTable(%s) :: %d \n", Cstmt->relation->relname,status);
+
+          fprintf(stderr, "DDL_CreateTable(%s) :: %d \n", relation_name, status);
+
+          // TODO :: Change location or 
+          // Foreign keys
+          for( auto reference_table_name : reference_table_names ){
+               oid_t database_oid = GetCurrentDatabaseOid();
+               assert( database_oid );
+               storage::DataTable* current_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, relation_name);
+               storage::DataTable* reference_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, reference_table_name);
+
+               current_table->AddReferenceTable(reference_table);
+          }
+           
         }
       }
     }
+
     break;
 
     case T_IndexStmt:  /* CREATE INDEX */
     {
-      IndexStmt  *stmt = (IndexStmt *) parsetree;
-      Oid      relid;
+      bool status;
+      IndexStmt  *Istmt = (IndexStmt *) parsetree;
 
-      // CreateIndex
-      ListCell   *entry;
-      int column_itr_for_KeySchema= 0;
-      int type = 0;
-      bool ret;
+      // Construct IndexInfo 
+      IndexInfo* index_info = ConstructIndexInfoByParsingIndexStmt( Istmt );
 
-      char**ColumnNamesForKeySchema = (char**)malloc(sizeof(char*)*stmt->indexParams->length);
-
-      // Parse the IndexStmt and construct ddl_columnInfo for TupleSchema and KeySchema
-      foreach(entry, stmt->indexParams)
-      {
-        IndexElem *indexElem = lfirst(entry);
-
-        //printf("index name %s \n", indexElem->name);
-        //printf("Index column %s \n", indexElem->indexcolname) ;
-
-        if( indexElem->name != NULL )
-        {
-          ColumnNamesForKeySchema[column_itr_for_KeySchema] = (char*) malloc( sizeof(char*)*strlen(indexElem->name));
-          strcpy(ColumnNamesForKeySchema[column_itr_for_KeySchema], indexElem->name );
-          column_itr_for_KeySchema++;
-        }
+      // If this index is either unique or primary key, store the index information and skip
+      // the rest part since the table has not been created yet.
+      if( Istmt->isconstraint ){
+         index_infos.push_back(*index_info);
+         break;
       }
 
-      // look up the access method, transform the method name into IndexType
-      if (strcmp(stmt->accessMethod, "btree") == 0){
-        type = BTREE_AM_OID;
-      }
-      else if (strcmp(stmt->accessMethod, "hash") == 0){
-        type = HASH_AM_OID;
-      }
-      else if (strcmp(stmt->accessMethod, "rtree") == 0 || strcmp(stmt->accessMethod, "gist") == 0){
-        type = GIST_AM_OID;
-      }
-      else if (strcmp(stmt->accessMethod, "gin") == 0){
-        type = GIN_AM_OID;
-      }
-      else if (strcmp(stmt->accessMethod, "spgist") == 0){
-        type = SPGIST_AM_OID;
-      }
-      else if (strcmp(stmt->accessMethod, "brin") == 0){
-        type = BRIN_AM_OID;
-      }
-      else{
-        type = 0;
-      }
+      status = peloton::bridge::DDL::CreateIndex( index_info->GetIndexName(),
+                                                  index_info->GetTableName(),
+                                                  index_info->GetMethodType(), 
+                                                  index_info->GetType(),
+                                                  index_info->IsUnique(),
+                                                  index_info->GetKeyColumnNames());
 
-      ret = peloton::bridge::DDL::CreateIndex(stmt->idxname,
-                                              stmt->relation->relname,
-                                              type,
-                                              stmt->unique,
-                                              ColumnNamesForKeySchema,
-                                              column_itr_for_KeySchema
-      );
-
-      fprintf(stderr, "DDLCreateIndex :: %d \n", ret);
+      fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info->GetIndexName().c_str(), status);
 
     }
     break;
 
     case T_DropStmt:
-    {
-      DropStmt* drop;
+    { DropStmt* drop;
       ListCell  *cell;
       int table_oid_itr = 0;
       bool ret;
@@ -198,7 +176,7 @@ void DDL::ProcessUtility(Node *parsetree,
  * @param Cstmt a create statement 
  * @return ColumnInfo vector 
  */
-std::vector<catalog::ColumnInfo> DDL::ConstructColumnInfoByParsingCreateStmt( CreateStmt* Cstmt ){
+std::vector<catalog::ColumnInfo> DDL::ConstructColumnInfoByParsingCreateStmt( CreateStmt* Cstmt, std::vector<std::string>& reference_table_names){
   assert(Cstmt);
 
   // Get the column list from the create statement
@@ -220,9 +198,9 @@ std::vector<catalog::ColumnInfo> DDL::ConstructColumnInfoByParsingCreateStmt( Cr
     int32 typemod;
     int typelen;
 
+
     // Get the type oid and type mod with given typeName
     typeoid = typenameTypeId(NULL, coldef->typeName);
-
     typenameTypeIdAndMod(NULL, coldef->typeName, &typeoid, &typemod);
 
     // Get type length
@@ -230,19 +208,25 @@ std::vector<catalog::ColumnInfo> DDL::ConstructColumnInfoByParsingCreateStmt( Cr
     typelen = typeLen(tup);
     ReleaseSysCache(tup);
 
+    /* TODO :: Simple version, but need to check whether it is the same with above or not
+    // Get the type oid
+    typeoid = typenameTypeId(NULL, coldef->typeName);
+
+    // type mod
+    typemod = get_typmodin(typeoid);
+
+    // Get type length
+    typelen = get_typlen(typeoid);
+    */
+
     // For a fixed-size type, typlen is the number of bytes in the internal
     // representation of the type. But for a variable-length type, typlen is negative.
-    if( typelen == -1 )
-    {
-      printf("%u\n", typemod);
-      // we need to get the atttypmod from pg_attribute
-    }
-     
+    if( typelen == - 1 )
+      typelen = typemod;
 
     ValueType column_valueType = PostgresValueTypeToPelotonValueType( (PostgresValueType) typeoid );
     int column_length = typelen;
     std::string column_name = coldef->colname;
-    bool column_allow_null = !coldef->is_not_null;
 
     //===--------------------------------------------------------------------===//
     // Column Constraint Information
@@ -257,16 +241,21 @@ std::vector<catalog::ColumnInfo> DDL::ConstructColumnInfoByParsingCreateStmt( Cr
         Constraint* ConstraintNode = lfirst(constNodeEntry);
         ConstraintType contype;
         std::string conname;
+        std::string reference_table_name;
 
         // Get constraint type
         contype = PostgresConstraintTypeToPelotonConstraintType( (PostgresConstraintType) ConstraintNode->contype );
-        std::cout << ConstraintTypeToString(contype) << std::endl;
+
+        if( ConstraintNode->pktable != NULL ){
+          reference_table_name = ConstraintNode->pktable->relname;
+          reference_table_names.push_back( reference_table_name );
+        }
 
         // Get constraint name
         if( ConstraintNode->conname != NULL)
           conname = ConstraintNode->conname;
 
-        catalog::Constraint* constraint = new catalog::Constraint( contype, conname );
+        catalog::Constraint* constraint = new catalog::Constraint( contype, conname, reference_table_name );
         column_constraints.push_back(*constraint);
       }
     }// end of parsing constraint 
@@ -281,6 +270,61 @@ std::vector<catalog::ColumnInfo> DDL::ConstructColumnInfoByParsingCreateStmt( Cr
   }// end of parsing column list
 
   return column_infos;
+}
+
+/**
+ * @brief Construct IndexInfo from a index statement
+ * @param Istmt an index statement 
+ * @return IndexInfo  
+ */
+IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
+  std::string index_name;
+  std::string table_name;
+  IndexMethodType method_type;
+  IndexType type;
+  bool unique_keys;
+  std::vector<std::string> key_column_names;
+
+  // Table name
+  table_name = Istmt->relation->relname;
+
+  // Key column names
+  ListCell   *entry;
+  foreach(entry, Istmt->indexParams){
+    IndexElem *indexElem = lfirst(entry);
+    if( indexElem->name != NULL ){
+      key_column_names.push_back(indexElem->name);
+    }
+  }
+
+  // Index name and index type
+  if( Istmt->idxname == NULL && Istmt->isconstraint ){
+    if( Istmt->primary ) {
+      index_name = table_name+"_pkey";
+      type = INDEX_TYPE_PRIMARY_KEY;
+    }else if( Istmt->unique ){
+      index_name = table_name;
+      for( auto column_name : key_column_names ){
+        index_name += "_"+column_name+"_";
+      }
+        index_name += "key";
+      type = INDEX_TYPE_UNIQUE;
+    }
+  }else{
+    type = INDEX_TYPE_NORMAL;
+  }
+
+  // Index method type
+  // TODO :: More access method types need
+  method_type = INDEX_METHOD_TYPE_BTREE_MULTIMAP;
+  
+  IndexInfo* index_info = new IndexInfo( index_name, 
+                                         table_name, 
+                                         method_type,
+                                         type,
+                                         Istmt->unique,
+                                         key_column_names);
+  return index_info;
 }
 
 /**
@@ -313,14 +357,28 @@ bool DDL::CreateTable( std::string table_name,
 
   // Build a table from schema
   storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, schema, table_name);
-
   catalog::Schema* our_schema = table->GetSchema();
 
-  
-  std::cout << "Print out created table schema for debugginh " << std::endl << *our_schema << std::endl;
 
+  /* DEBUGGING */
+  //std::cout << "table name : " << table_name << "\n" << *our_schema << std::endl;
 
-  if(table != nullptr) {
+  // In Postgres, indexes such as primary key index, unique indexy are created before table.
+  // In Peloton, however, the table is required to create an index. For that reason, index information
+  // was stored before and now it will be created. 
+  for( auto index_info : index_infos){
+    bool status;
+    status = peloton::bridge::DDL::CreateIndex( index_info.GetIndexName(),
+        index_info.GetTableName(),
+        index_info.GetMethodType(), 
+        index_info.GetType(),
+        index_info.IsUnique(),
+        index_info.GetKeyColumnNames());
+    fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info.GetIndexName().c_str(), status);
+  }
+  index_infos.clear();
+
+ if(table != nullptr) {
     LOG_INFO("Created table : %s", table_name.c_str());
     return true;
   }
@@ -352,71 +410,6 @@ bool DDL::DropTable(Oid table_oid) {
   return false;
 }
 
-
-/**
- * @brief Create index.
- * @param index_name Index name
- * @param table_name Table name
- * @param type Type of the index
- * @param unique Index is unique or not ?
- * @param
- * @param key_column_name key column names
- * @param num_columns Number of columns in the table
- * @return true if we create the index, false otherwise
- */
-bool DDL::CreateIndex(std::string index_name,
-                      std::string table_name,
-                      int index_type,
-                      bool unique_keys,
-                      char **key_column_names,
-                      int num_columns_in_key) {
-
-  assert( index_name != "" || table_name != "" || key_column_names != NULL || num_columns_in_key > 0 );
-
-  // NOTE: We currently only support btree as our index implementation
-  // FIXME: Support other types based on "type" argument
-  IndexMethodType our_index_type = INDEX_METHOD_TYPE_BTREE_MULTIMAP;
-
-  // Get the database oid and table oid
-  oid_t database_oid = GetCurrentDatabaseOid();
-  oid_t table_oid = GetRelationOid(table_name.c_str());
-
-  // Get the table location from manager
-  auto table = catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
-  storage::DataTable* data_table = (storage::DataTable*) table;
-  auto tuple_schema = data_table->GetSchema();
-
-  // Construct key schema
-  std::vector<oid_t> key_columns;
-
-  // Based on the key column info, get the oid of the given 'key' columns in the tuple schema
-  for(oid_t key_schema_column_itr = 0;  key_schema_column_itr < num_columns_in_key; key_schema_column_itr++) {
-    for( oid_t tuple_schema_column_itr = 0; tuple_schema_column_itr < tuple_schema->GetColumnCount();
-        tuple_schema_column_itr++){
-
-      // Get the current column info from tuple schema
-      catalog::ColumnInfo column_info = tuple_schema->GetColumnInfo(tuple_schema_column_itr);
-
-      // Compare Key Schema's current column name and Tuple Schema's current column name
-      if(strcmp(key_column_names[key_schema_column_itr], (column_info.name).c_str() )== 0 )
-        key_columns.push_back(tuple_schema_column_itr);
-    }
-  }
-
-  auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_columns);
-
-  // Create index metadata and physical index
-  index::IndexMetadata* metadata = new index::IndexMetadata(index_name, our_index_type,
-                                                            tuple_schema, key_schema,
-                                                            unique_keys);
-  index::Index* index = index::IndexFactory::GetInstance(metadata);
-
-  // Record the built index in the table
-  data_table->AddIndex(index);
-
-  return true;
-}
-
 /**
  * @brief Create index.
  * @param index_name Index name
@@ -426,16 +419,16 @@ bool DDL::CreateIndex(std::string index_name,
  * @param key_column_names column names for the key table 
  * @return true if we create the index, false otherwise
  */
-bool DDL::CreateIndex2(std::string index_name,
-                       std::string table_name,
-                       IndexMethodType  index_method_type,
-                       IndexType  index_type,
-                       bool unique_keys,
-                       std::vector<std::string> key_column_names,
-                       bool bootstrap ){
+bool DDL::CreateIndex(std::string index_name,
+                      std::string table_name,
+                      IndexMethodType  index_method_type,
+                      IndexType  index_type,
+                      bool unique_keys,
+                      std::vector<std::string> key_column_names,
+                      bool bootstrap ){
 
-  assert( index_name != "" );
-  assert( table_name != "" );
+  assert( !index_name.empty() );
+  assert( !table_name.empty() );
   assert( key_column_names.size() > 0  );
 
   // NOTE: We currently only support btree as our index implementation
@@ -444,10 +437,12 @@ bool DDL::CreateIndex2(std::string index_name,
 
   // Get the database oid and table oid
   oid_t database_oid = GetCurrentDatabaseOid();
-  oid_t table_oid = GetRelationOid(table_name.c_str());
+  assert( database_oid );
+
+  //oid_t table_oid = GetRelationOid(table_name.c_str());
 
   // Get the table location from manager
-  auto table = catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+  auto table = catalog::Manager::GetInstance().GetLocation(database_oid, table_name);
   storage::DataTable* data_table = (storage::DataTable*) table;
   auto tuple_schema = data_table->GetSchema();
 
@@ -491,7 +486,7 @@ bool DDL::CreateIndex2(std::string index_name,
   index::Index* index = index::IndexFactory::GetInstance(metadata);
 
   // Record the built index in the table
-  switch(  index_type ){
+  switch( index_type ){
   case INDEX_TYPE_NORMAL:
 	  data_table->AddIndex(index);
 	  break;

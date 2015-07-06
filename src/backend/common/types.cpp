@@ -710,7 +710,7 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(PostgresConstraintT
       break;
 
     case POSTGRES_CONSTRAINT_FOREIGN:
-      constraintType = CONSTRAINT_TYPE_NOTNULL;
+      constraintType = CONSTRAINT_TYPE_FOREIGN;
       break;
 
     case POSTGRES_CONSTRAINT_EXCLUSION:
