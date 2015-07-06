@@ -316,7 +316,7 @@ void GetDBCatalog(Oid database_oid){
           printf("print foreign tables \n");
           for( int i =0 ; i<  data_table->GetReferenceTableCount(); i++){
             peloton::storage::DataTable *temp_table = data_table->GetReferenceTable(i);
-            peloton::catalog::Schema* temp_our_schema = temp_table->GetSchema();
+            const peloton::catalog::Schema* temp_our_schema = temp_table->GetSchema();
             std::cout << *temp_our_schema << std::endl;
           }
         }
@@ -381,7 +381,7 @@ void GetTableCatalog(Oid database_oid, Oid table_oid ){
           printf("print foreign tables \n");
           for( int i =0 ; i<  data_table->GetReferenceTableCount(); i++){
             peloton::storage::DataTable *temp_table = data_table->GetReferenceTable(i);
-            peloton::catalog::Schema* temp_our_schema = temp_table->GetSchema();
+            const peloton::catalog::Schema* temp_our_schema = temp_table->GetSchema();
             std::cout << *temp_our_schema << std::endl;
           }
         }

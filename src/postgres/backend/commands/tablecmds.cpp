@@ -621,7 +621,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 
 			rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
 			rawEnt->attnum = attnum;
-printf("%d attnum %d\n", __LINE__,  attnum);
 			rawEnt->raw_default = colDef->raw_default;
 			rawDefaults = lappend(rawDefaults, rawEnt);
 			descriptor->attrs[attnum - 1]->atthasdef = true;
