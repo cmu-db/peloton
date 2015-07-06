@@ -120,21 +120,14 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     return nullptr;
   }
 
+  LOG_INFO("Target table found : database oid %u table oid %u", database_oid, table_oid);
+
   /* Get the tuple schema */
   auto schema = target_table->GetSchema();
 
   /* Should be only one which is a Result Plan */
   PlanState *subplan_state = mt_plan_state->mt_plans[0];
-  TupleTableSlot *plan_slot;
   std::vector<storage::Tuple *> tuples;
-
-  /*
-  plan_slot = ExecProcNode(subplan_state);
-  assert(!TupIsNull(plan_slot)); // The tuple should not be null
-
-  auto tuple = TupleTransformer(plan_slot, schema);
-  tuples.push_back(tuple);
-  */
 
   auto plan_node = new planner::InsertNode(target_table, tuples);
 
