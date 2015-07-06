@@ -49,7 +49,7 @@ class OrderByNode : public AbstractPlanNode {
 //    backend_ = new storage::VMBackend();
 //  }
 
-    storage::AbstractBackend* GetBackend() const {
+  storage::AbstractBackend* GetBackend() const {
     return backend_;
   }
 
