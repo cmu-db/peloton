@@ -932,7 +932,7 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 	foreach(tokencell, tokens)
 	{
 		parsedline->databases = lappend(parsedline->databases,
-										copy_hba_token(lfirst(tokencell)));
+										copy_hba_token(static_cast<HbaToken *>(lfirst(tokencell))));
 	}
 
 	/* Get the roles. */
@@ -951,7 +951,7 @@ parse_hba_line(List *line, int line_num, char *raw_line)
 	foreach(tokencell, tokens)
 	{
 		parsedline->roles = lappend(parsedline->roles,
-									copy_hba_token(lfirst(tokencell)));
+									copy_hba_token(static_cast<HbaToken *>(lfirst(tokencell))));
 	}
 
 	if (parsedline->conntype != ctLocal)
@@ -1780,7 +1780,7 @@ load_hba(void)
 	{
 		HbaLine    *newline;
 
-		if ((newline = parse_hba_line(lfirst(line), lfirst_int(line_num), lfirst(raw_line))) == NULL)
+		if ((newline = parse_hba_line(static_cast<List *>(lfirst(line)), lfirst_int(line_num), static_cast<char *>(lfirst(raw_line)))) == NULL)
 		{
 			/*
 			 * Parse error in the file, so indicate there's a problem.  NB: a
@@ -2093,7 +2093,7 @@ check_usermap(const char *usermap_name,
 
 		foreach(line_cell, parsed_ident_lines)
 		{
-			check_ident_usermap(lfirst(line_cell), usermap_name,
+			check_ident_usermap(static_cast<IdentLine *>(lfirst(line_cell)), usermap_name,
 								pg_role, auth_user, case_insensitive,
 								&found_entry, &error);
 			if (found_entry || error)
@@ -2155,7 +2155,7 @@ load_ident(void)
 	oldcxt = MemoryContextSwitchTo(ident_context);
 	forboth(line_cell, ident_lines, num_cell, ident_line_nums)
 	{
-		if ((newline = parse_ident_line(lfirst(line_cell), lfirst_int(num_cell))) == NULL)
+		if ((newline = parse_ident_line(static_cast<List *>(lfirst(line_cell)), lfirst_int(num_cell))) == NULL)
 		{
 			/*
 			 * Parse error in the file, so indicate there's a problem.  Free

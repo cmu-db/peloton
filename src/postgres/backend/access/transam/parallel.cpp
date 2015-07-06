@@ -338,8 +338,8 @@ InitializeParallelDSM(ParallelContext *pcxt)
 		 * should be transmitted via separate (possibly larger?) queues.
 		 */
 		error_queue_space =
-		   shm_toc_allocate(pcxt->toc,
-							PARALLEL_ERROR_QUEUE_SIZE * pcxt->nworkers);
+				static_cast<char *>(shm_toc_allocate(pcxt->toc,
+							PARALLEL_ERROR_QUEUE_SIZE * pcxt->nworkers));
 		for (i = 0; i < pcxt->nworkers; ++i)
 		{
 			char *start;
@@ -358,8 +358,8 @@ InitializeParallelDSM(ParallelContext *pcxt)
 			Size	lnamelen = strlen(pcxt->library_name);
 			char *extensionstate;
 
-			extensionstate = shm_toc_allocate(pcxt->toc, lnamelen
-										  + strlen(pcxt->function_name) + 2);
+			extensionstate = static_cast<char *>(shm_toc_allocate(pcxt->toc, lnamelen
+										  + strlen(pcxt->function_name) + 2));
 			strcpy(extensionstate, pcxt->library_name);
 			strcpy(extensionstate + lnamelen + 1, pcxt->function_name);
 			shm_toc_insert(pcxt->toc, PARALLEL_KEY_EXTENSION_TRAMPOLINE,
@@ -655,7 +655,7 @@ HandleParallelMessages(void)
 					StringInfoData	msg;
 
 					initStringInfo(&msg);
-					appendBinaryStringInfo(&msg, data, nbytes);
+					appendBinaryStringInfo(&msg, static_cast<const char *>(data), nbytes);
 					HandleParallelMessage(pcxt, i, &msg);
 					pfree(msg.data);
 				}

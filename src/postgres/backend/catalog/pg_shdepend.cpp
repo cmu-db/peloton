@@ -591,12 +591,12 @@ checkSharedDependencies(Oid classId, Oid objectId,
 			{
 				numReportedDeps++;
 				storeObjectDescription(&descs, LOCAL_OBJECT, &object,
-									   sdepForm->deptype, 0);
+						static_cast<SharedDependencyType>(sdepForm->deptype), 0);
 			}
 			else
 				numNotReportedDeps++;
-			storeObjectDescription(&alldescs, LOCAL_OBJECT, &object,
-								   sdepForm->deptype, 0);
+				storeObjectDescription(&alldescs, LOCAL_OBJECT, &object,
+						static_cast<SharedDependencyType>(sdepForm->deptype), 0);
 		}
 		else if (sdepForm->dbid == InvalidOid)
 		{
@@ -604,12 +604,12 @@ checkSharedDependencies(Oid classId, Oid objectId,
 			{
 				numReportedDeps++;
 				storeObjectDescription(&descs, SHARED_OBJECT, &object,
-									   sdepForm->deptype, 0);
+						static_cast<SharedDependencyType>(sdepForm->deptype), 0);
 			}
 			else
 				numNotReportedDeps++;
 			storeObjectDescription(&alldescs, SHARED_OBJECT, &object,
-								   sdepForm->deptype, 0);
+					static_cast<SharedDependencyType>(sdepForm->deptype), 0);
 		}
 		else
 		{
@@ -652,7 +652,7 @@ checkSharedDependencies(Oid classId, Oid objectId,
 	 */
 	foreach(cell, remDeps)
 	{
-		remoteDep  *dep = lfirst(cell);
+		remoteDep  *dep = static_cast<remoteDep *>(lfirst(cell));
 
 		object.classId = DatabaseRelationId;
 		object.objectId = dep->dbOid;

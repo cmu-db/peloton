@@ -1657,11 +1657,11 @@ describeOneTableDetails(const char *schemaname,
 			char	   *storage = PQgetvalue(res, i, firstvcol);
 
 			/* these strings are literal in our syntax, so not translated. */
-			printTableAddCell(&cont, static_cast<char *>((storage[0] == 'p' ? "plain" :
-									  (storage[0] == 'm' ? "main" :
-									   (storage[0] == 'x' ? "extended" :
-										(storage[0] == 'e' ? "external" :
-										 "???"))))),
+			printTableAddCell(&cont, (storage[0] == 'p' ? static_cast<char *>("plain") :
+									  (storage[0] == 'm' ? static_cast<char *>("main") :
+									   (storage[0] == 'x' ? static_cast<char *>("extended") :
+										(storage[0] == 'e' ? static_cast<char *>("external") :
+										 "???")))),
 							  false, false);
 
 			/* Statistics target, if the relkind supports this feature */

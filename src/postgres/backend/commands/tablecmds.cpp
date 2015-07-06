@@ -1412,7 +1412,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 	int			parentsWithOids = 0;
 	bool		have_bogus_defaults = false;
 	int			child_attno;
-	static Node bogus_marker = {0};		/* marks conflicting defaults */
+	static Node bogus_marker = {static_cast<NodeTag>(0)};		/* marks conflicting defaults */
 
 	/*
 	 * Check for and reject tables with too many columns. We perform this
@@ -1726,7 +1726,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 					continue;
 
 				/* Adjust Vars to match new___ table's column numbering */
-				expr = map_variable_attnos(stringToNode(check[i].ccbin),
+				expr = map_variable_attnos(static_cast<Node *>(stringToNode(check[i].ccbin)),
 										   1, 0,
 										   newattno, tupleDesc->natts,
 										   &found_whole_row);
@@ -9530,10 +9530,10 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	/* copy those extra forks that exist */
 	for (forkNum = MAIN_FORKNUM + 1; forkNum <= MAX_FORKNUM; forkNum++)
 	{
-		if (smgrexists(rel->rd_smgr, forkNum))
+		if (smgrexists(rel->rd_smgr, static_cast<ForkNumber>(forkNum)))
 		{
-			smgrcreate(dstrel, forkNum, false);
-			copy_relation_data(rel->rd_smgr, dstrel, forkNum,
+			smgrcreate(dstrel, static_cast<ForkNumber>(forkNum), false);
+			copy_relation_data(rel->rd_smgr, dstrel, static_cast<ForkNumber>(forkNum),
 							   rel->rd_rel->relpersistence);
 		}
 	}

@@ -1109,7 +1109,7 @@ ExecEvalParamExec(ExprState *exprstate, ExprContext *econtext,
 	if (prm->execPlan != NULL)
 	{
 		/* Parameter not evaluated yet, so go do it */
-		ExecSetParamPlan(prm->execPlan, econtext);
+		ExecSetParamPlan(static_cast<SubPlanState *>(prm->execPlan), econtext);
 		/* ExecSetParamPlan should have processed this param... */
 		Assert(prm->execPlan == NULL);
 	}

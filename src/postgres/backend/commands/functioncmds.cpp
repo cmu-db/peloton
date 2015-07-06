@@ -938,7 +938,7 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 
 		foreach (lc, (List *) transformDefElem)
 		{
-			Oid typeid___ = static_cast<const TypeName *>(typenameTypeId(NULL, lfirst(lc)));
+			Oid typeid___ = typenameTypeId(NULL, static_cast<const TypeName *>(lfirst(lc)));
 			Oid elt = get_base_element_type(typeid___);
 			typeid___ = elt ? elt : typeid___;
 

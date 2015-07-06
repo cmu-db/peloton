@@ -654,8 +654,8 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 		hashtable->nbuckets = hashtable->nbuckets_optimal;
 		hashtable->log2_nbuckets = hashtable->log2_nbuckets_optimal;
 
-		hashtable->buckets = repalloc(hashtable->buckets,
-									  sizeof(HashJoinTuple) * hashtable->nbuckets);
+		hashtable->buckets = static_cast<HashJoinTupleData **>(repalloc(hashtable->buckets,
+									  sizeof(HashJoinTuple) * hashtable->nbuckets));
 	}
 
 	/*
