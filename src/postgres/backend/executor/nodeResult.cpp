@@ -110,7 +110,7 @@ ExecResult(ResultState *node)
 	 * storage allocated in the previous tuple cycle.  Note this can't happen
 	 * until we're done projecting out tuples from a scan tuple.
 	 */
-	//ResetExprContext(econtext);
+	ResetExprContext(econtext);
 
 	/*
 	 * if rs_done is true then it means that we were asked to return a

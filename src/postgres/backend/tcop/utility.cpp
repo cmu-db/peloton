@@ -908,7 +908,6 @@ standard_ProcessUtility(Node *parsetree,
                    CurTransactionContext);
 
   status_code = peloton_get_status(status);
-  elog(LOG, "Peloton status code : %d \n", status_code);
   peloton_destroy_status(status);
 }
 
