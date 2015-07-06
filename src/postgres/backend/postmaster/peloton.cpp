@@ -830,7 +830,9 @@ peloton_recv_dml(Peloton_MsgDML *msg, int len)
       /* Get the plan */
       plan = planstate->plan;
 
-      fprintf(stdout, "Plan : %p\n", plan);
+      // fprintf(stdout, "Plan : %p\n", plan);
+
+      elog_node_display(LOG, "plan", plan, Debug_pretty_print);
 
       peloton::bridge::PlanTransformer::TransformPlan(planstate);
     }
