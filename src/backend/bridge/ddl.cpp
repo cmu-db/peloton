@@ -130,7 +130,7 @@ void DDL::ProcessUtility(Node *parsetree,
                                                   index_info->IsUnique(),
                                                   index_info->GetKeyColumnNames());
 
-      fprintf(stderr, "DDLCreateIndex :: %d \n", status);
+      fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info->GetIndexName().c_str(), status);
 
     }
     break;
@@ -288,20 +288,6 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
   // Table name
   table_name = Istmt->relation->relname;
 
-  // Index name and index type
-  if( Istmt->idxname == NULL && Istmt->isconstraint ){
-    if( Istmt->primary ) {
-      index_name = table_name+"_pkey";
-      type = INDEX_TYPE_PRIMARY_KEY;
-    }else if( Istmt->unique ){
-      index_name = table_name+"_key";
-      type = INDEX_TYPE_UNIQUE;
-    }
-  }else{
-    type = INDEX_TYPE_NORMAL;
-  }
-
-
   // Key column names
   ListCell   *entry;
   foreach(entry, Istmt->indexParams){
@@ -309,6 +295,23 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
     if( indexElem->name != NULL ){
       key_column_names.push_back(indexElem->name);
     }
+  }
+
+  // Index name and index type
+  if( Istmt->idxname == NULL && Istmt->isconstraint ){
+    if( Istmt->primary ) {
+      index_name = table_name+"_pkey";
+      type = INDEX_TYPE_PRIMARY_KEY;
+    }else if( Istmt->unique ){
+      index_name = table_name;
+      for( auto column_name : key_column_names ){
+        index_name += "_"+column_name+"_";
+      }
+        index_name += "key";
+      type = INDEX_TYPE_UNIQUE;
+    }
+  }else{
+    type = INDEX_TYPE_NORMAL;
   }
 
   // Index method type
@@ -371,7 +374,7 @@ bool DDL::CreateTable( std::string table_name,
         index_info.GetType(),
         index_info.IsUnique(),
         index_info.GetKeyColumnNames());
-    fprintf(stderr, "DDLCreateIndex :: %d \n", status);
+    fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info.GetIndexName().c_str(), status);
   }
   index_infos.clear();
 
