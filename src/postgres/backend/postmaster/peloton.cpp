@@ -849,9 +849,9 @@ peloton_process_dml(Peloton_MsgDML *msg, int len)
       /* Get the plan */
       plan = planstate->plan;
 
-      elog_node_display(LOG, "plan", plan, Debug_pretty_print);
+      //elog_node_display(LOG, "plan", plan, Debug_pretty_print);
 
-      peloton::bridge::PlanTransformer::TransformPlan(planstate);
+      //peloton::bridge::PlanTransformer::TransformPlan(planstate);
     }
   }
 
@@ -886,7 +886,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg, int len)
     {
       fprintf(stdout, "Parsetree type : %d\n", parsetree);
 
-      peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
+      // peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
     }
   }
 
