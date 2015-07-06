@@ -740,6 +740,8 @@ execute_sql_string(const char *sql, const char *filename)
 				ExecutorFinish(qdesc);
 				ExecutorEnd(qdesc);
 
+				// PelotonChange: do not free now
+				elog(LOG, "Do not free now at extension.cpp");
 				FreeQueryDesc(qdesc);
 			}
 			else
