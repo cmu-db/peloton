@@ -265,9 +265,10 @@ void GetTableList(bool catalog_only) {
 }
 
 /**
- * @brief Print all tables and their column information for dubugging
+ * @brief Print all relation's schema information with given database oid
+ * @param database_oid database oid 
  */
-void GetTableListAndColumnInformation() {
+void GetDBCatalog(Oid database_oid){
   Relation pg_class_rel;
   HeapScanDesc scan;
   HeapTuple tuple;
@@ -326,10 +327,72 @@ void GetTableListAndColumnInformation() {
   heap_endscan(scan);
   heap_close(pg_class_rel, AccessShareLock);
 
-  //CommitTransactionCommand();
 }
 
+/**
+ * @brief Print all relation's schema information with given database oid
+ * @param database_oid database oid 
+ * @param table_oid table oid 
+ */
+void GetTableCatalog(Oid database_oid, Oid table_oid ){
+  Relation pg_class_rel;
+  HeapScanDesc scan;
+  HeapTuple tuple;
+  char* relation_name = get_rel_name(table_oid);
 
+  // Scan pg class table
+  pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
+  scan = heap_beginscan_catalog(pg_class_rel, 0, NULL);
+
+  while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
+    Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
+
+    if(pgclass->relnamespace==PG_PUBLIC_NAMESPACE && strcmp(NameStr(pgclass->relname), relation_name) == 0 ) {
+
+      if( pgclass->relkind == 'r' ){
+        printf("relname %s  \n",NameStr(pgclass->relname));
+        peloton::oid_t database_oid = GetCurrentDatabaseOid();
+       // peloton::oid_t table_oid = GetRelationOid( NameStr(pgclass->relname));
+       std::string table_name =  NameStr(pgclass->relname);
+
+        // Get the table location from manager
+        auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, table_name);
+        peloton::storage::DataTable* data_table = (peloton::storage::DataTable*) table;
+        auto tuple_schema = data_table->GetSchema();
+        std::cout << *tuple_schema << std::endl;
+
+        if( data_table->ishasPrimaryKey()  ){
+          printf("print primary key index \n");
+          std::cout<< *(data_table->GetPrimaryIndex()) << std::endl;
+        }
+        if ( data_table->ishasUnique()){
+          printf("print unique index \n");
+          for( int i =0 ; i<  data_table->GetUniqueIndexCount(); i++){
+            std::cout << *(data_table->GetUniqueIndex(i)) << std::endl;
+          }
+        }
+        if ( data_table->GetIndexCount() > 0 ){
+          printf("print index \n");
+          for( int i =0 ; i<  data_table->GetIndexCount(); i++){
+            std::cout << *(data_table->GetIndex(i)) << std::endl;
+          }
+        }
+        if ( data_table->ishasReferenceTable() ){
+          printf("print foreign tables \n");
+          for( int i =0 ; i<  data_table->GetReferenceTableCount(); i++){
+            peloton::storage::DataTable *temp_table = data_table->GetReferenceTable(i);
+            peloton::catalog::Schema* temp_our_schema = temp_table->GetSchema();
+            std::cout << *temp_our_schema << std::endl;
+          }
+        }
+      }
+    }
+  }
+
+  heap_endscan(scan);
+  heap_close(pg_class_rel, AccessShareLock);
+
+}
 
 /**
  * @brief Print all databases using catalog table pg_database
@@ -692,8 +755,9 @@ bool BootstrapPeloton(void){
     heap_close(pg_constraint_rel, AccessShareLock);
   }
 
-  //printf("Print all relation's schema information\n");
-  //GetTableListAndColumnInformation();
+  printf("Print all relation's schema information\n");
+  peloton::oid_t database_oid = GetCurrentDatabaseOid();
+  GetDBCatalog(database_oid);
 
   heap_endscan(pg_class_scan);
   heap_close(pg_attribute_rel, AccessShareLock);
