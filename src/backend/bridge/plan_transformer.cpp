@@ -20,6 +20,7 @@
 #include "backend/common/logger.h"
 #include "backend/bridge/plan_transformer.h"
 #include "backend/bridge/tuple_transformer.h"
+#include "backend/common/logger.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/storage/data_table.h"
 #include "backend/planner/delete_node.h"
@@ -107,16 +108,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
 planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     const ModifyTableState *mt_plan_state) {
 
-  //LOG_INFO("%u, %u, %u, %u", sizeof(ModifyTableState), sizeof(ResultRelInfo), sizeof(RelationData), sizeof(Oid));
-  //LOG_INFO("Insert into table with Oid %u", ((ModifyTableState*)mt_plan_state)->resultRelInfo->ri_RelationDesc->rd_id);
-  //LOG_INFO("%p, %p, %p", mt_plan_state, ((ModifyTableState*)mt_plan_state)->resultRelInfo, ((ModifyTableState*)mt_plan_state)->resultRelInfo->ri_RelationDesc);
-
-  //peloton::bridge::PlanTransformer::HexDump("Peloton ModifyTableState", mt_plan_state, sizeof(ModifyTableState));
-  //peloton::bridge::PlanTransformer::HexDump("Peloton ResultRelInfo",((ModifyTableState*)mt_plan_state)->resultRelInfo , sizeof(ResultRelInfo));
-  //peloton::bridge::PlanTransformer::HexDump("Peloton RelationData",((ModifyTableState*)mt_plan_state)->resultRelInfo->ri_RelationDesc, sizeof(RelationData));
-
   /* Resolve result table */
-  //ResultRelInfo *result_rel_info = mt_plan_state->resultRelInfo;
   ResultRelInfo *result_rel_info = mt_plan_state->resultRelInfo;
   Relation result_relation_desc = result_rel_info->ri_RelationDesc;
 
@@ -134,6 +126,13 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
           .GetLocation(database_oid, table_oid));
 
+  if(target_table == nullptr) {
+    LOG_ERROR("Target table is not found : database oid %u table oid %u", database_oid, table_oid);
+    return nullptr;
+  }
+
+  LOG_INFO("Target table found : database oid %u table oid %u", database_oid, table_oid);
+
   /* Get the tuple schema */
   auto schema = target_table->GetSchema();
 
@@ -141,7 +140,6 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   assert(mt_plan_state->mt_nplans == 1);
   assert(mt_plan_state->mt_plans != nullptr);
   PlanState *subplan_state = mt_plan_state->mt_plans[0];
-  TupleTableSlot *plan_slot;
   std::vector<storage::Tuple *> tuples;
 
 
@@ -303,57 +301,6 @@ planner::AbstractPlanNode *PlanTransformer::TransformResult(
     LOG_INFO("We can not handle case where targelist is null");
   }
   return nullptr;
-}
-
-void PlanTransformer::HexDump(const char *desc, const void *addr, int len) {
-  int i;
-  unsigned char buff[17];       // stores the ASCII data
-  unsigned char *pc = addr;     // cast to make the code cleaner.
-
-  // Output description if given.
-
-  if (desc != NULL)
-    printf("%s:\n", desc);
-
-  // Process every byte in the data.
-
-  for (i = 0; i < len; i++) {
-    // Multiple of 16 means new line (with line offset).
-
-    if ((i % 16) == 0) {
-      // Just don't print ASCII for the zeroth line.
-
-      if (i != 0)
-        printf("  %s\n", buff);
-
-      // Output the offset.
-
-      printf("  %04x ", i);
-    }
-
-    // Now the hex code for the specific character.
-
-    printf(" %02x", pc[i]);
-
-    // And store a printable ASCII character for later.
-
-    if ((pc[i] < 0x20) || (pc[i] > 0x7e))
-      buff[i % 16] = '.';
-    else
-      buff[i % 16] = pc[i];
-    buff[(i % 16) + 1] = '\0';
-  }
-
-  // Pad out last line if not exactly 16 characters.
-
-  while ((i % 16) != 0) {
-    printf("   ");
-    i++;
-  }
-
-  // And print the final ASCII bit.
-
-  printf("  %s\n", buff);
 }
 
 }  // namespace bridge
