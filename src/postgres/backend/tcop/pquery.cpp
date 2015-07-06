@@ -222,9 +222,10 @@ ProcessQuery(PlannedStmt *plan,
 	/*
 	 * Now, we close down all the scans and free allocated resources.
 	 */
+	elog(LOG, "Do not free now, at pquery.cpp");
 	ExecutorFinish(queryDesc);
 	ExecutorEnd(queryDesc);
-
+	// PelotonChange: do not free now
 	FreeQueryDesc(queryDesc);
 }
 
@@ -774,6 +775,8 @@ PortalRun(Portal portal, long count, bool isTopLevel,
 		PortalContext = PortalGetHeapMemory(portal);
 
 		MemoryContextSwitchTo(PortalContext);
+
+		elog(LOG, "Portal strategy: %d", portal->strategy);
 
 		switch (portal->strategy)
 		{
