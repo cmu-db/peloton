@@ -259,7 +259,10 @@ enum PlanNodeType {
     PLAN_NODE_TYPE_LIMIT            = 56,
     PLAN_NODE_TYPE_DISTINCT         = 57,
     PLAN_NODE_TYPE_SETOP            = 58,   // set operation
-    PLAN_NODE_TYPE_APPEND           = 59    // append
+    PLAN_NODE_TYPE_APPEND           = 59,    // append
+
+    // Utility
+    PLAN_NODE_TYPE_RESULT           = 70
 };
 
 //===--------------------------------------------------------------------===//
