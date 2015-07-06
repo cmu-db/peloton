@@ -1124,8 +1124,6 @@ exec_simple_query(const char *query_string)
 
     (*receiver->rDestroy) (receiver);
 
-    //Peloton change: do not drop now
-    elog(LOG, "Do not drop the portal now");
     PortalDrop(portal, false);
 
     if (IsA(parsetree, TransactionStmt))

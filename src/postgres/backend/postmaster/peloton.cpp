@@ -846,11 +846,6 @@ peloton_process_dml(Peloton_MsgDML *msg, int len)
 
     if(planstate != NULL)
     {
-      /* Get the plan */
-      plan = planstate->plan;
-
-      //elog_node_display(LOG, "plan", plan, Debug_pretty_print);
-
       //peloton::bridge::PlanTransformer::TransformPlan(planstate);
     }
   }
@@ -884,8 +879,6 @@ peloton_process_ddl(Peloton_MsgDDL *msg, int len)
 
     if(parsetree != NULL)
     {
-      fprintf(stdout, "Parsetree type : %d\n", parsetree);
-
       // peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
     }
   }
@@ -921,6 +914,7 @@ peloton_get_status(Peloton_Status *status)
 {
   struct timespec duration = {0, 1000 * 100}; // 100 us
   int code;
+  int retry = 10;
 
   if(status == NULL)
     return PELOTON_STYPE_INVALID;
@@ -929,12 +923,19 @@ peloton_get_status(Peloton_Status *status)
   while(status->m_code == PELOTON_STYPE_INVALID)
   {
     int rc;
+    retry--;
 
     rc = nanosleep(&duration, NULL);
     if(rc < 0)
     {
       ereport(LOG,
               (errmsg("could not sleep waiting for Peloton: %m")));
+      return PELOTON_STYPE_INVALID;
+    }
+
+    if(retry < 0)
+    {
+      elog(LOG, "Finished max retries while getting Peloton status");
       return PELOTON_STYPE_INVALID;
     }
   }
