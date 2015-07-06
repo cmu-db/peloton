@@ -40,6 +40,8 @@ class PlanTransformer {
 
   static planner::AbstractPlanNode *TransformSeqScan(const SeqScanState *plan_state);
 
+  static planner::AbstractPlanNode *TransformResult(const ResultState *plan_state);
+
 };
 
 } // namespace bridge

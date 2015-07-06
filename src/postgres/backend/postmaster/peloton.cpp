@@ -43,6 +43,7 @@
 #include <signal.h>
 #include <time.h>
 
+#include "backend/bridge/plan_transformer.h"
 #include "postmaster/peloton.h"
 #include "backend/bridge/ddl.h"
 #include "backend/bridge/plan_transformer.h"
@@ -78,8 +79,8 @@ static void peloton_sigterm_handler(SIGNAL_ARGS);
 static void peloton_setheader(Peloton_MsgHdr *hdr, PelotonMsgType mtype);
 static void peloton_send(void *msg, int len);
 
-static void peloton_recv_dml(Peloton_MsgDML *msg, int len);
-static void peloton_recv_ddl(Peloton_MsgDDL *msg, int len);
+static void peloton_process_dml(Peloton_MsgDML *msg, int len);
+static void peloton_process_ddl(Peloton_MsgDDL *msg, int len);
 
 bool
 IsPelotonProcess(void)
@@ -373,7 +374,7 @@ peloton_MainLoop(void)
           break;    /* out of inner loop */
         ereport(ERROR,
                 (errcode_for_socket_access(),
-                    errmsg("could not read statistics message: %m")));
+                    errmsg("could not read message from backend to peloton: %m")));
       }
 
       /*
@@ -397,11 +398,11 @@ peloton_MainLoop(void)
           break;
 
         case PELOTON_MTYPE_DDL:
-          peloton_recv_ddl((Peloton_MsgDDL*) &msg, len);
+          peloton_process_ddl((Peloton_MsgDDL*) &msg, len);
           break;
 
         case PELOTON_MTYPE_DML:
-          peloton_recv_dml((Peloton_MsgDML*) &msg, len);
+          peloton_process_dml((Peloton_MsgDML*) &msg, len);
           break;
 
         default:
@@ -757,13 +758,27 @@ peloton_send_ping(void)
 }
 
 /* ----------
+ * peloton_send_reply() -
+ *
+ *  Send reply to backend.
+ * ----------
+ */
+void
+peloton_send_reply(int status)
+{
+}
+
+/* ----------
  * peloton_send_dml() -
  *
  *  Execute the given node to return a(nother) tuple.
  * ----------
  */
 void
-peloton_send_dml(PlanState *node, bool sendTuples, DestReceiver *dest)
+peloton_send_dml(Peloton_Status *status,
+                 PlanState *node,
+                 bool sendTuples,
+                 DestReceiver *dest)
 {
   Peloton_MsgDML msg;
   PlanState *lnode;
@@ -774,6 +789,7 @@ peloton_send_dml(PlanState *node, bool sendTuples, DestReceiver *dest)
 
   peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_DML);
 
+  msg.m_status = status;
   msg.m_planstate = node;
   msg.m_sendTuples = sendTuples;
   msg.m_dest = dest;
@@ -784,11 +800,13 @@ peloton_send_dml(PlanState *node, bool sendTuples, DestReceiver *dest)
 /* ----------
  * peloton_send_ddl -
  *
- *  Execute the given node to return a(nother) tuple.
+ *  Send DDL requests to Peloton.
  * ----------
  */
 void
-peloton_send_ddl(Node *parsetree, const char *queryString,
+peloton_send_ddl(Peloton_Status *status,
+                 Node *parsetree,
+                 const char *queryString,
                  MemoryContext top_transaction_context,
                  MemoryContext cur_transaction_context)
 {
@@ -800,6 +818,7 @@ peloton_send_ddl(Node *parsetree, const char *queryString,
 
   peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_DDL);
 
+  msg.m_status = status;
   msg.m_parsetree = parsetree;
   msg.m_queryString = queryString;
   msg.m_top_transaction_context = top_transaction_context;
@@ -809,13 +828,13 @@ peloton_send_ddl(Node *parsetree, const char *queryString,
 }
 
 /* ----------
- * peloton_recv_dml -
+ * peloton_process_dml -
  *
- *  Process plan execution requests.
+ *  Process DML requests in Peloton.
  * ----------
  */
 static void
-peloton_recv_dml(Peloton_MsgDML *msg, int len)
+peloton_process_dml(Peloton_MsgDML *msg, int len)
 {
   PlanState *planstate;
   Plan *plan;
@@ -830,22 +849,24 @@ peloton_recv_dml(Peloton_MsgDML *msg, int len)
       /* Get the plan */
       plan = planstate->plan;
 
-      fprintf(stdout, "Plan : %p\n", plan);
+      elog_node_display(LOG, "plan", plan, Debug_pretty_print);
 
       peloton::bridge::PlanTransformer::TransformPlan(planstate);
     }
   }
 
+  // Set Status
+  msg->m_status->m_code = PELOTON_STYPE_SUCCESS;
 }
 
 /* ----------
- * peloton_recv_ddl() -
+ * peloton_process_ddl() -
  *
- *  Process ddl requests.
+ *  Process DDL requests in Peloton.
  * ----------
  */
 static void
-peloton_recv_ddl(Peloton_MsgDDL *msg, int len)
+peloton_process_ddl(Peloton_MsgDDL *msg, int len)
 {
   Node* parsetree;
   char* queryString;
@@ -869,6 +890,67 @@ peloton_recv_ddl(Peloton_MsgDDL *msg, int len)
     }
   }
 
+  // Set Status
+  msg->m_status->m_code = PELOTON_STYPE_SUCCESS;
 }
 
+/* ----------
+ * peloton_create_status() -
+ *
+ *  Allocate and initialize status space.
+ * ----------
+ */
+Peloton_Status *
+peloton_create_status()
+{
+  Peloton_Status *status = static_cast<Peloton_Status *>(palloc(sizeof(Peloton_Status)));
 
+  status->m_code = PELOTON_STYPE_INVALID;
+
+  return status;
+}
+
+/* ----------
+ * peloton_get_status() -
+ *
+ *  Busy wait till we get status from Peloton.
+ * ----------
+ */
+int
+peloton_get_status(Peloton_Status *status)
+{
+  struct timespec duration = {0, 1000 * 100}; // 100 us
+  int code;
+
+  if(status == NULL)
+    return PELOTON_STYPE_INVALID;
+
+  // Busy wait till we get a valid result
+  while(status->m_code == PELOTON_STYPE_INVALID)
+  {
+    int rc;
+
+    rc = nanosleep(&duration, NULL);
+    if(rc < 0)
+    {
+      ereport(LOG,
+              (errmsg("could not sleep waiting for Peloton: %m")));
+      return PELOTON_STYPE_INVALID;
+    }
+  }
+
+  code = status->m_code;
+  return code;
+}
+
+/* ----------
+ * peloton_destroy_status() -
+ *
+ *  Deallocate status
+ * ----------
+ */
+void
+peloton_destroy_status(Peloton_Status *status)
+{
+  pfree(status);
+}

@@ -25,9 +25,21 @@ typedef enum PelotonMsgType
 {
   PELOTON_MTYPE_INVALID,    // Invalid message type
   PELOTON_MTYPE_DUMMY,      // Dummy message type
-  PELOTON_MTYPE_DDL,        // DDL information
-  PELOTON_MTYPE_DML         // DML information
+  PELOTON_MTYPE_DDL,        // DDL information to Peloton
+  PELOTON_MTYPE_DML,        // DML information to Peloton
+  PELOTON_MTYPE_REPLY       // Reply message from Peloton to Backend
 } PelotonMsgType;
+
+/* ----------
+ * The types of peloton status
+ * ----------
+ */
+typedef enum PelotonStatusType
+{
+  PELOTON_STYPE_INVALID,    // Invalid status type
+  PELOTON_STYPE_SUCCESS,    // Success
+  PELOTON_STYPE_FAILURE     // Failure
+} PelotonStatusType;
 
 /* ------------------------------------------------------------
  * Message formats follow
@@ -43,6 +55,15 @@ typedef struct Peloton_MsgHdr
   PelotonMsgType m_type;
   int     m_size;
 } Peloton_MsgHdr;
+
+/* ----------
+ * Peloton_Status     Sent by the peloton to share the status with backend.
+ * ----------
+ */
+typedef struct Peloton_Status
+{
+  PelotonStatusType  m_code;
+} Peloton_Status;
 
 /* ----------
  * Space available in a message.  This will keep the UDP packets below 1K,
@@ -70,6 +91,7 @@ typedef struct Peloton_MsgDummy
 typedef struct Peloton_MsgDML
 {
   Peloton_MsgHdr m_hdr;
+  Peloton_Status  *m_status;
   PlanState *m_planstate;
   bool m_sendTuples;
   DestReceiver *m_dest;
@@ -82,6 +104,7 @@ typedef struct Peloton_MsgDML
 typedef struct Peloton_MsgDDL
 {
   Peloton_MsgHdr m_hdr;
+  Peloton_Status  *m_status;
   Node *m_parsetree;
   char *m_queryString;
   MemoryContext m_top_transaction_context;
@@ -112,10 +135,26 @@ extern void peloton_init(void);
 extern int  peloton_start(void);
 
 extern void peloton_send_ping(void);
-extern void peloton_send_dml(PlanState *node, bool sendTuples, DestReceiver *dest);
-extern void peloton_send_ddl(Node *parsetree, const char *queryString,
+
+/* ----------
+ * Functions called from execMain and utility
+ * ----------
+ */
+
+extern void peloton_send_dml(Peloton_Status  *status,
+                             PlanState *node,
+                             bool sendTuples,
+                             DestReceiver *dest);
+extern void peloton_send_ddl(Peloton_Status  *status,
+                             Node *parsetree,
+                             const char *queryString,
                              MemoryContext top_transaction_context,
                              MemoryContext cur_transaction_context);
+
+extern Peloton_Status *peloton_create_status();
+extern int peloton_get_status(Peloton_Status *status);
+extern void peloton_destroy_status(Peloton_Status *status);
+
 
 #endif   /* PELOTON_H */
 
