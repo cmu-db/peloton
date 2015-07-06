@@ -102,10 +102,44 @@ void DDL::ProcessUtility(Node *parsetree,
                current_table->AddReferenceTable(reference_table);
           }
            
+          { // DEBUGGING CREATE TABLE
+            oid_t database_oid = GetCurrentDatabaseOid();
+            auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, relation_name);
+            peloton::storage::DataTable* data_table = (peloton::storage::DataTable*) table;
+            auto tuple_schema = data_table->GetSchema();
+            
+            std::cout << "Relation Name : " << relation_name << "\n" <<  *tuple_schema << std::endl;
+
+            if( data_table->ishasPrimaryKey()  ){
+              printf("print primary key index \n");
+              std::cout<< *(data_table->GetPrimaryIndex()) << std::endl;
+            }
+            if ( data_table->ishasUnique()){
+              printf("print unique index \n");
+              for( int i =0 ; i<  data_table->GetUniqueIndexCount(); i++){
+                std::cout << *(data_table->GetUniqueIndex(i)) << std::endl;
+              }
+            }
+            if ( data_table->GetIndexCount() > 0 ){
+              printf("print index \n");
+              for( int i =0 ; i<  data_table->GetIndexCount(); i++){
+                std::cout << *(data_table->GetIndex(i)) << std::endl;
+              }
+            }
+            if ( data_table->ishasReferenceTable() ){
+              printf("print foreign tables \n");
+              for( int i =0 ; i<  data_table->GetReferenceTableCount(); i++){
+                peloton::storage::DataTable *temp_table = data_table->GetReferenceTable(i);
+                const peloton::catalog::Schema* temp_our_schema = temp_table->GetSchema();
+                std::cout << "table name : " << temp_table->GetName() << " " << *temp_our_schema << std::endl;
+              }
+            }
+          } // DEBUGGING CREATE TABLE
         }
       }
     }
 
+    
     break;
 
     case T_IndexStmt:  /* CREATE INDEX */
@@ -136,32 +170,25 @@ void DDL::ProcessUtility(Node *parsetree,
     break;
 
     case T_DropStmt:
-    { DropStmt* drop;
-      ListCell  *cell;
-      int table_oid_itr = 0;
-      bool ret;
-      Oid* table_oid_list;
-      drop = (DropStmt*) parsetree;
-      table_oid_list = (Oid*) malloc ( sizeof(Oid)*(drop->objects->length));
+    {
+      DropStmt* drop = (DropStmt*) parsetree;
+      bool status;
 
-      foreach(cell, drop->objects)
-      {
-        if (drop->removeType == OBJECT_TABLE )
-        {
+      ListCell  *cell;
+      foreach(cell, drop->objects){
+        if (drop->removeType == OBJECT_TABLE ){
           List* names = ((List *) lfirst(cell));
+
           char* table_name = strVal(linitial(names));
-          table_oid_list[table_oid_itr++] = GetRelationOid(table_name);
+          Oid table_oid = GetRelationOid(table_name);
+
+          status = peloton::bridge::DDL::DropTable( table_oid );
+          fprintf(stderr, "DDLDropTable :: %d \n", ret);
         }
       }
-
-      while(table_oid_itr > 0)
-      {
-        ret  = peloton::bridge::DDL::DropTable(table_oid_list[--table_oid_itr]);
-        fprintf(stderr, "DDLDropTable :: %d \n", ret);
-      }
-
     }
     break;
+    // End of DropStmt
 
     default:
       elog(LOG, "unrecognized node type: %d",
@@ -463,14 +490,12 @@ bool DDL::CreateIndex(std::string index_name,
         // TODO :: Need to talk with Joy
         // NOTE :: Since pg_attribute doesn't have any information about primary key and unique key,
         //         I try to store these information when we create an unique and primary key index
-        if( bootstrap ){
-          if( index_type == INDEX_TYPE_PRIMARY_KEY ){ 
-            catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_PRIMARY );
-            tuple_schema->AddConstraintInColumn( tuple_schema_column_itr, constraint); 
-          }else if( index_type == INDEX_TYPE_UNIQUE ){ 
-            catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_UNIQUE );
-            tuple_schema->AddConstraintInColumn( tuple_schema_column_itr, constraint); 
-          }
+        if( index_type == INDEX_TYPE_PRIMARY_KEY ){ 
+          catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_PRIMARY );
+          tuple_schema->AddConstraintInColumn( tuple_schema_column_itr, constraint); 
+        }else if( index_type == INDEX_TYPE_UNIQUE ){ 
+          catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_UNIQUE );
+          tuple_schema->AddConstraintInColumn( tuple_schema_column_itr, constraint); 
         }
 
       }
