@@ -287,11 +287,10 @@ void GetDBCatalog(Oid database_oid){
       if( pgclass->relkind == 'r' ){
         printf("relname %s  \n",NameStr(pgclass->relname));
         peloton::oid_t database_oid = GetCurrentDatabaseOid();
-       // peloton::oid_t table_oid = GetRelationOid( NameStr(pgclass->relname));
-       std::string table_name =  NameStr(pgclass->relname);
+        peloton::oid_t table_oid = GetRelationOid( NameStr(pgclass->relname));
 
         // Get the table location from manager
-        auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, table_name);
+        auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
         peloton::storage::DataTable* data_table = (peloton::storage::DataTable*) table;
         auto tuple_schema = data_table->GetSchema();
         std::cout << *tuple_schema << std::endl;
@@ -352,11 +351,10 @@ void GetTableCatalog(Oid database_oid, Oid table_oid ){
       if( pgclass->relkind == 'r' ){
         printf("relname %s  \n",NameStr(pgclass->relname));
         peloton::oid_t database_oid = GetCurrentDatabaseOid();
-       // peloton::oid_t table_oid = GetRelationOid( NameStr(pgclass->relname));
-       std::string table_name =  NameStr(pgclass->relname);
+        peloton::oid_t table_oid = GetRelationOid( NameStr(pgclass->relname));
 
         // Get the table location from manager
-        auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, table_name);
+        auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
         peloton::storage::DataTable* data_table = (peloton::storage::DataTable*) table;
         auto tuple_schema = data_table->GetSchema();
         std::cout << *tuple_schema << std::endl;
@@ -488,6 +486,7 @@ bool BootstrapPeloton(void){
   while(1) {
     Form_pg_class pg_class;
     char *relation_name;
+    Oid relation_oid;
     char relation_kind;
     int attnum;
 
@@ -499,6 +498,7 @@ bool BootstrapPeloton(void){
 
     pg_class = (Form_pg_class) GETSTRUCT(pg_class_tuple);
     relation_name = NameStr(pg_class->relname);
+    relation_oid = GetRelationOid(relation_name);
     relation_kind = pg_class->relkind;
 
     // Handle only user-defined structures, not pg-catalog structures
@@ -557,8 +557,8 @@ bool BootstrapPeloton(void){
               int column_length = pg_attribute->attlen;
               bool is_inlined = true;
               if( pg_attribute->attlen == -1){
-                 column_length = pg_attribute->atttypmod;
-                 is_inlined = false;
+                column_length = pg_attribute->atttypmod;
+                is_inlined = false;
               }
 
               // Check constraints
@@ -588,7 +588,7 @@ bool BootstrapPeloton(void){
           case 'r':
           {
             // Create the Peloton table
-            status = peloton::bridge::DDL::CreateTable(relation_name, column_infos);
+            status = peloton::bridge::DDL::CreateTable(relation_oid, relation_name, column_infos);
 
             if(status == true) {
               elog(LOG, "Create Table \"%s\" in Peloton", relation_name);
@@ -671,7 +671,7 @@ bool BootstrapPeloton(void){
 
           case 'r':
             // Create the Peloton table
-            status = peloton::bridge::DDL::CreateTable(relation_name, column_infos);
+            status = peloton::bridge::DDL::CreateTable(relation_oid, relation_name, column_infos);
             if(status == true) {
               elog(LOG, "Create Table \"%s\" in Peloton", relation_name);
             }
@@ -700,12 +700,12 @@ bool BootstrapPeloton(void){
   for( auto index_info : index_infos){
     bool status;
     status = peloton::bridge::DDL::CreateIndex( index_info.GetIndexName(),
-    		index_info.GetTableName(),
-    		index_info.GetMethodType(),
-    		index_info.GetType(),
-    		index_info.IsUnique(),
-    		index_info.GetKeyColumnNames(),
-    		true);
+                                                index_info.GetTableName(),
+                                                index_info.GetMethodType(),
+                                                index_info.GetType(),
+                                                index_info.IsUnique(),
+                                                index_info.GetKeyColumnNames(),
+                                                true);
 
     if(status == true) {
       elog(LOG, "Create Index \"%s\" in Peloton", index_info.GetIndexName().c_str());
@@ -745,10 +745,11 @@ bool BootstrapPeloton(void){
         char* current_table_name = get_rel_name(pg_constraint->conrelid);
         char* foreign_table_name = get_rel_name(pg_constraint->confrelid);
 
-        peloton::storage::DataTable* current_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, current_table_name);
-        peloton::storage::DataTable* reference_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, foreign_table_name);
+        // FIXME
+        //peloton::storage::DataTable* current_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, current_table_name);
+        //peloton::storage::DataTable* reference_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, foreign_table_name);
 
-        current_table->AddReferenceTable(reference_table);
+        //current_table->AddReferenceTable(reference_table);
       }
     }
     heap_endscan(pg_constraint_scan);

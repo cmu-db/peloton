@@ -45,7 +45,8 @@ static std::vector<IndexInfo> index_infos;
  * @param parsetree Parse tree
  */
 void DDL::ProcessUtility(Node *parsetree,
-                         const char *queryString){
+                         const char *queryString,
+                         Oid relation_oid){
   assert(parsetree != nullptr);
   assert(queryString != nullptr);
 
@@ -59,6 +60,8 @@ void DDL::ProcessUtility(Node *parsetree,
       ListCell   *l;
 
       assert(CurrentResourceOwner != NULL);
+
+      std::cout << "Relation Oid :: " << relation_oid << "\n";
 
       /* Run parse analysis ... */
       stmts = transformCreateStmt((CreateStmt *) parsetree,
@@ -82,32 +85,34 @@ void DDL::ProcessUtility(Node *parsetree,
           // Construct DDL_ColumnInfo with schema
           if( schema != NULL ){
             column_infos = peloton::bridge::DDL::ConstructColumnInfoByParsingCreateStmt( Cstmt, reference_table_names );
-            status = peloton::bridge::DDL::CreateTable( relation_name, column_infos );
+            status = peloton::bridge::DDL::CreateTable( relation_oid, relation_name, column_infos );
           }
           else {
             // Create Table without column info
-            status = peloton::bridge::DDL::CreateTable( relation_name, column_infos );
+            status = peloton::bridge::DDL::CreateTable( relation_oid, relation_name, column_infos );
           }
 
-          fprintf(stderr, "DDL_CreateTable(%s) :: %d \n", relation_name, status);
+          fprintf(stderr, "DDL_CreateTable(%s) :: Oid : %d Status : %d \n", relation_name, relation_oid, status);
 
           // TODO :: Change location or 
           // Foreign keys
           for( auto reference_table_name : reference_table_names ){
-               oid_t database_oid = GetCurrentDatabaseOid();
-               assert( database_oid );
-               storage::DataTable* current_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, relation_name);
-               storage::DataTable* reference_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, reference_table_name);
+            oid_t database_oid = GetCurrentDatabaseOid();
+            assert( database_oid );
 
-               current_table->AddReferenceTable(reference_table);
+            storage::DataTable* current_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, relation_oid);
+
+            // TODO: Fix this
+            //storage::DataTable* reference_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, reference_table_name);
+            //current_table->AddReferenceTable(reference_table);
           }
-           
+
           { // DEBUGGING CREATE TABLE
             oid_t database_oid = GetCurrentDatabaseOid();
-            auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, relation_name);
+            auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, relation_oid);
             peloton::storage::DataTable* data_table = (peloton::storage::DataTable*) table;
             auto tuple_schema = data_table->GetSchema();
-            
+
             std::cout << "Relation Name : " << relation_name << "\n" <<  *tuple_schema << std::endl;
 
             if( data_table->ishasPrimaryKey()  ){
@@ -139,7 +144,7 @@ void DDL::ProcessUtility(Node *parsetree,
       }
     }
 
-    
+
     break;
 
     case T_IndexStmt:  /* CREATE INDEX */
@@ -153,8 +158,8 @@ void DDL::ProcessUtility(Node *parsetree,
       // If this index is either unique or primary key, store the index information and skip
       // the rest part since the table has not been created yet.
       if( Istmt->isconstraint ){
-         index_infos.push_back(*index_info);
-         break;
+        index_infos.push_back(*index_info);
+        break;
       }
 
       status = peloton::bridge::DDL::CreateIndex( index_info->GetIndexName(),
@@ -244,7 +249,7 @@ std::vector<catalog::ColumnInfo> DDL::ConstructColumnInfoByParsingCreateStmt( Cr
 
     // Get type length
     typelen = get_typlen(typeoid);
-    */
+     */
 
     // For a fixed-size type, typlen is the number of bytes in the internal
     // representation of the type. But for a variable-length type, typlen is negative.
@@ -334,7 +339,7 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
       for( auto column_name : key_column_names ){
         index_name += "_"+column_name+"_";
       }
-        index_name += "key";
+      index_name += "key";
       type = INDEX_TYPE_UNIQUE;
     }
   }else{
@@ -344,7 +349,7 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
   // Index method type
   // TODO :: More access method types need
   method_type = INDEX_METHOD_TYPE_BTREE_MULTIMAP;
-  
+
   IndexInfo* index_info = new IndexInfo( index_name, 
                                          table_name, 
                                          method_type,
@@ -361,9 +366,10 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
  * @param schema Schema for the table
  * @return true if we created a table, false otherwise
  */
-bool DDL::CreateTable( std::string table_name,
-                        std::vector<catalog::ColumnInfo> column_infos,
-                        catalog::Schema *schema){
+bool DDL::CreateTable( Oid relation_oid,
+                       std::string table_name,
+                       std::vector<catalog::ColumnInfo> column_infos,
+                       catalog::Schema *schema){
 
   //===--------------------------------------------------------------------===//
   // Check Parameters 
@@ -383,7 +389,7 @@ bool DDL::CreateTable( std::string table_name,
   storage::VMBackend *backend = new storage::VMBackend();
 
   // Build a table from schema
-  storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, schema, table_name);
+  storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, relation_oid, schema, table_name);
   catalog::Schema* our_schema = table->GetSchema();
 
 
@@ -396,16 +402,16 @@ bool DDL::CreateTable( std::string table_name,
   for( auto index_info : index_infos){
     bool status;
     status = peloton::bridge::DDL::CreateIndex( index_info.GetIndexName(),
-        index_info.GetTableName(),
-        index_info.GetMethodType(), 
-        index_info.GetType(),
-        index_info.IsUnique(),
-        index_info.GetKeyColumnNames());
+                                                index_info.GetTableName(),
+                                                index_info.GetMethodType(),
+                                                index_info.GetType(),
+                                                index_info.IsUnique(),
+                                                index_info.GetKeyColumnNames());
     fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info.GetIndexName().c_str(), status);
   }
   index_infos.clear();
 
- if(table != nullptr) {
+  if(table != nullptr) {
     LOG_INFO("Created table : %s", table_name.c_str());
     return true;
   }
@@ -466,10 +472,10 @@ bool DDL::CreateIndex(std::string index_name,
   oid_t database_oid = GetCurrentDatabaseOid();
   assert( database_oid );
 
-  //oid_t table_oid = GetRelationOid(table_name.c_str());
+  oid_t table_oid = GetRelationOid(table_name.c_str());
 
   // Get the table location from manager
-  auto table = catalog::Manager::GetInstance().GetLocation(database_oid, table_name);
+  auto table = catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
   storage::DataTable* data_table = (storage::DataTable*) table;
   auto tuple_schema = data_table->GetSchema();
 
@@ -512,16 +518,16 @@ bool DDL::CreateIndex(std::string index_name,
 
   // Record the built index in the table
   switch( index_type ){
-  case INDEX_TYPE_NORMAL:
-	  data_table->AddIndex(index);
-	  break;
-  case INDEX_TYPE_PRIMARY_KEY:
-	  data_table->SetPrimaryIndex(index);
-	  break;
-  case INDEX_TYPE_UNIQUE:
-	  data_table->AddUniqueIndex(index);
-	  break;
-  default:
+    case INDEX_TYPE_NORMAL:
+      data_table->AddIndex(index);
+      break;
+    case INDEX_TYPE_PRIMARY_KEY:
+      data_table->SetPrimaryIndex(index);
+      break;
+    case INDEX_TYPE_UNIQUE:
+      data_table->AddUniqueIndex(index);
+      break;
+    default:
       elog(LOG, "unrecognized index type: %d", index_type);
   }
 

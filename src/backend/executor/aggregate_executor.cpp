@@ -60,6 +60,7 @@ bool AggregateExecutor::DInit() {
   result_itr = START_OID;
 
   output_table = storage::TableFactory::GetDataTable(INVALID_OID,
+                                                     INVALID_OID,
                                                      output_table_schema,
                                                      "temp_table");
 
