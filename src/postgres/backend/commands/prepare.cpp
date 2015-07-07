@@ -97,7 +97,7 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString)
 
 		foreach(l, stmt->argtypes)
 		{
-			TypeName   *tn = lfirst(l);
+			TypeName   *tn = static_cast<TypeName *>(lfirst(l));
 			Oid			toid = typenameTypeId(pstate, tn);
 
 			argtypes[i++] = toid;
@@ -350,7 +350,7 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 	i = 0;
 	foreach(l, params)
 	{
-		Node	   *expr = lfirst(l);
+		Node	   *expr = static_cast<Node *>(lfirst(l));
 		Oid			expected_type_id = param_types[i];
 		Oid			given_type_id;
 
@@ -396,7 +396,7 @@ EvaluateParams(PreparedStatement *pstmt, List *params,
 	i = 0;
 	foreach(l, exprstates)
 	{
-		ExprState  *n = lfirst(l);
+		ExprState  *n = static_cast<ExprState *>(lfirst(l));
 		ParamExternData *prm = &paramLI->params[i];
 
 		prm->ptype = param_types[i];

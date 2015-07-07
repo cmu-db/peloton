@@ -745,7 +745,7 @@ EventTriggerCommonSetup(Node *parsetree,
 	 */
 	foreach(lc, cachelist)
 	{
-		EventTriggerCacheItem *item = lfirst(lc);
+		EventTriggerCacheItem *item = static_cast<EventTriggerCacheItem *>(lfirst(lc));
 
 		if (filter_event_trigger(&tag, item))
 		{
@@ -2023,7 +2023,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 
 	foreach(lc, currentEventTriggerState->commandList)
 	{
-		CollectedCommand *cmd = lfirst(lc);
+		CollectedCommand *cmd = static_cast<CollectedCommand *>(lfirst(lc));
 		Datum		values[9];
 		bool		nulls[9];
 		ObjectAddress addr;

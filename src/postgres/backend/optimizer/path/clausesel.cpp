@@ -156,18 +156,18 @@ clauselist_selectivity(PlannerInfo *root,
 			if (rinfo)
 			{
 				ok = (bms_membership(rinfo->clause_relids) == BMS_SINGLETON) &&
-					(is_pseudo_constant_clause_relids(lsecond(expr->args),
+					(is_pseudo_constant_clause_relids(static_cast<Node *>(lsecond(expr->args)),
 													  rinfo->right_relids) ||
 					 (varonleft = false,
-					  is_pseudo_constant_clause_relids(linitial(expr->args),
+					  is_pseudo_constant_clause_relids(static_cast<Node *>(linitial(expr->args)),
 													   rinfo->left_relids)));
 			}
 			else
 			{
 				ok = (NumRelids(clause) == 1) &&
-					(is_pseudo_constant_clause(lsecond(expr->args)) ||
+					(is_pseudo_constant_clause(static_cast<Node *>(lsecond(expr->args))) ||
 					 (varonleft = false,
-					  is_pseudo_constant_clause(linitial(expr->args))));
+					  is_pseudo_constant_clause(static_cast<Node *>(linitial(expr->args)))));
 			}
 
 			if (ok)

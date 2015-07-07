@@ -156,7 +156,7 @@ policy_role_list_to_array(List *roles)
 
 	foreach(cell, roles)
 	{
-		RoleSpec *spec = lfirst(cell);
+		RoleSpec *spec = static_cast<RoleSpec *>(lfirst(cell));
 
 		/*
 		 * PUBLIC covers all roles, so it only makes sense alone.
