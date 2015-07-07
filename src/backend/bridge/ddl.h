@@ -142,7 +142,7 @@ class DDL {
                           IndexType  index_type,
                           bool unique_keys,
                           std::vector<std::string> key_column_names,
-                          bool bootstrap = false);
+                          Oid table_oid = INVALID_OID);
 
 
   //===--------------------------------------------------------------------===//
