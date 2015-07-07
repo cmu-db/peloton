@@ -322,7 +322,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		i = 0;
 		foreach(lc, walFileList)
 		{
-			walFiles[i++] = lfirst(lc);
+			walFiles[i++] = static_cast<char *>(lfirst(lc));
 		}
 		qsort(walFiles, nWalFiles, sizeof(char *), compareWalFileNames);
 
