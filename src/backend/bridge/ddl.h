@@ -141,8 +141,7 @@ class DDL {
                           IndexMethodType  index_method_type,  /* name of access method (eg. btree) */
                           IndexType  index_type,
                           bool unique_keys,
-                          std::vector<std::string> key_column_names,
-                          bool bootstrap = false);
+                          std::vector<std::string> key_column_names);
 
 
   //===--------------------------------------------------------------------===//
