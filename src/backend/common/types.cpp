@@ -693,20 +693,24 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(PostgresConstraintT
   ConstraintType constraintType = CONSTRAINT_TYPE_INVALID;
 
   switch( PostgresConstrType ){
-    case POSTGRES_CONSTRAINT_CHECK:
-      constraintType = CONSTRAINT_TYPE_CHECK;
-      break;
-
     case POSTGRES_CONSTRAINT_NOTNULL:
       constraintType = CONSTRAINT_TYPE_NOTNULL;
       break;
 
-    case POSTGRES_CONSTRAINT_UNIQUE:
-      constraintType = CONSTRAINT_TYPE_UNIQUE;
+    case POSTGRES_CONSTRAINT_DEFAULT:
+      constraintType = CONSTRAINT_TYPE_DEFAULT;
+      break;
+
+    case POSTGRES_CONSTRAINT_CHECK:
+      constraintType = CONSTRAINT_TYPE_CHECK;
       break;
 
     case POSTGRES_CONSTRAINT_PRIMARY:
       constraintType = CONSTRAINT_TYPE_PRIMARY;
+      break;
+
+    case POSTGRES_CONSTRAINT_UNIQUE:
+      constraintType = CONSTRAINT_TYPE_UNIQUE;
       break;
 
     case POSTGRES_CONSTRAINT_FOREIGN:

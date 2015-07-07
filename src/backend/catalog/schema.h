@@ -14,6 +14,8 @@
 
 #include <vector>
 
+#include "nodes/nodes.h"
+
 #include "backend/common/types.h"
 #include "backend/catalog/constraint.h"
 
@@ -285,7 +287,7 @@ class Schema	{
     return columns[column_id];
   }
 
-  void AddConstraintInColumn( const oid_t column_id, catalog::Constraint* constraint ) {
+  void AddConstraintInColumn(  oid_t column_id, catalog::Constraint* constraint ) {
     columns[column_id].AddConstraint(constraint);
   }
 
