@@ -141,7 +141,8 @@ class DDL {
                           IndexMethodType  index_method_type,  /* name of access method (eg. btree) */
                           IndexType  index_type,
                           bool unique_keys,
-                          std::vector<std::string> key_column_names);
+                          std::vector<std::string> key_column_names,
+                          Oid table_oid = INVALID_OID);
 
 
   //===--------------------------------------------------------------------===//
