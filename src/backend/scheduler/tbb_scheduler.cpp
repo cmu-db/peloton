@@ -39,11 +39,13 @@ TBBScheduler::~TBBScheduler() {
 
   // clean up state
   delete state;
+
+  // wait for some time
 }
 
 void TBBScheduler::AddTask(AbstractTask *task) {
 
-  AbstractTask *tbb_task = new(state->root->allocate_child()) AbstractTask(task->GetTask(), task->GetArgs());
+  TBBTask *tbb_task = new(state->root->allocate_child()) TBBTask(task->GetTask(), task->GetArgs());
   state->root->increment_ref_count();
   auto priority = tbb_task->GetPriority();
 
