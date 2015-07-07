@@ -421,7 +421,8 @@ bool DDL::CreateTable( Oid relation_oid,
                                                 index_info.GetMethodType(),
                                                 index_info.GetType(),
                                                 index_info.IsUnique(),
-                                                index_info.GetKeyColumnNames());
+                                                index_info.GetKeyColumnNames(),
+                                                relation_oid);
     fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info.GetIndexName().c_str(), status);
   }
   index_infos.clear();
@@ -472,7 +473,8 @@ bool DDL::CreateIndex(std::string index_name,
                       IndexMethodType  index_method_type,
                       IndexType  index_type,
                       bool unique_keys,
-                      std::vector<std::string> key_column_names){
+                      std::vector<std::string> key_column_names,
+                      Oid table_oid){
 
   assert( !index_name.empty() );
   assert( !table_name.empty() );
@@ -486,7 +488,9 @@ bool DDL::CreateIndex(std::string index_name,
   oid_t database_oid = GetCurrentDatabaseOid();
   assert( database_oid );
 
-  oid_t table_oid = GetRelationOid(table_name.c_str());
+  if( table_oid == INVALID_OID )
+    table_oid = GetRelationOid(table_name.c_str());
+  
   assert( table_oid );
 
   // Get the table location from manager
