@@ -98,12 +98,12 @@ void DDL::ProcessUtility(Node *parsetree,
           for( auto reference_table_name : reference_table_names ){
             oid_t database_oid = GetCurrentDatabaseOid();
             assert( database_oid );
+            oid_t reference_table_oid = GetRelationOid(reference_table_name.c_str());
+            assert(reference_table_oid);
 
             storage::DataTable* current_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, relation_oid);
-
-            // TODO: Fix this
-            //storage::DataTable* reference_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, reference_table_name);
-            //current_table->AddReferenceTable(reference_table);
+            storage::DataTable* reference_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, reference_table_oid);
+            current_table->AddReferenceTable(reference_table);
           }
 
           { // DEBUGGING CREATE TABLE
