@@ -56,6 +56,10 @@ void DataTable::SetPrimaryIndex(index::Index *index) {
   PrimaryKey_Index = index;
 }
 
+void DataTable::SetRawCheckExpr(Node* _raw_check_expr){
+  raw_check_expr = (Node*) copyObject ( (void*) _raw_check_expr );
+}
+
 index::Index*  DataTable::GetPrimaryIndex(){
   return PrimaryKey_Index;
 }

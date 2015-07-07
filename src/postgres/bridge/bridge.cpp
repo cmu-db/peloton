@@ -743,13 +743,12 @@ bool BootstrapPeloton(void){
 
       if( pg_constraint->contype == 'f')
       {
-        char* current_table_name = get_rel_name(pg_constraint->conrelid);
-        char* foreign_table_name = get_rel_name(pg_constraint->confrelid);
+        Oid current_table_oid = pg_constraint->conrelid;
+        Oid foreign_table_oid = pg_constraint->confrelid;
 
-        // FIXME
-        //peloton::storage::DataTable* current_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, current_table_name);
-        //peloton::storage::DataTable* reference_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, foreign_table_name);
-        //current_table->AddReferenceTable(reference_table);
+        peloton::storage::DataTable* current_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, current_table_oid);
+        peloton::storage::DataTable* reference_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, foreign_table_oid);
+        current_table->AddReferenceTable(reference_table);
       }
     }
     heap_endscan(pg_constraint_scan);
