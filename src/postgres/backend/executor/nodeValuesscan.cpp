@@ -27,7 +27,8 @@
 #include "executor/nodeValuesscan.h"
 
 
-static TupleTableSlot *ValuesNext(ValuesScanState *node);
+//static
+TupleTableSlot *ValuesNext(ValuesScanState *node);
 
 
 /* ----------------------------------------------------------------
@@ -41,7 +42,8 @@ static TupleTableSlot *ValuesNext(ValuesScanState *node);
  *		This is a workhorse for ExecValuesScan
  * ----------------------------------------------------------------
  */
-static TupleTableSlot *
+// static
+TupleTableSlot *
 ValuesNext(ValuesScanState *node)
 {
 	TupleTableSlot *slot;

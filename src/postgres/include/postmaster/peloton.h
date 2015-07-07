@@ -95,6 +95,8 @@ typedef struct Peloton_MsgDML
   PlanState *m_planstate;
   bool m_sendTuples;
   DestReceiver *m_dest;
+  MemoryContext m_top_transaction_context;
+  MemoryContext m_cur_transaction_context;
 } Peloton_MsgDML;
 
 /* ----------
@@ -144,7 +146,9 @@ extern void peloton_send_ping(void);
 extern void peloton_send_dml(Peloton_Status  *status,
                              PlanState *node,
                              bool sendTuples,
-                             DestReceiver *dest);
+                             DestReceiver *dest,
+                             MemoryContext top_transaction_context,
+                             MemoryContext cur_transaction_context);
 
 extern void peloton_send_ddl(Peloton_Status  *status,
                              Node *parsetree,

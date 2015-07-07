@@ -47,7 +47,7 @@
 #include "postmaster/peloton.h"
 #include "backend/bridge/ddl.h"
 #include "backend/bridge/plan_transformer.h"
-#include "backend/bridge/utils.h"
+#include "backend/bridge/plan_executor.h"
 
 /* ----------
  * Local data
@@ -778,7 +778,9 @@ void
 peloton_send_dml(Peloton_Status *status,
                  PlanState *node,
                  bool sendTuples,
-                 DestReceiver *dest)
+                 DestReceiver *dest,
+                 MemoryContext top_transaction_context,
+                 MemoryContext cur_transaction_context)
 {
   Peloton_MsgDML msg;
   PlanState *lnode;
@@ -793,6 +795,8 @@ peloton_send_dml(Peloton_Status *status,
   msg.m_planstate = node;
   msg.m_sendTuples = sendTuples;
   msg.m_dest = dest;
+  msg.m_top_transaction_context = top_transaction_context;
+  msg.m_cur_transaction_context = cur_transaction_context;
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -844,9 +848,16 @@ peloton_process_dml(Peloton_MsgDML *msg, int len)
     /* Get the planstate */
     planstate = msg->m_planstate;
 
+    TopTransactionContext = msg->m_top_transaction_context;
+    CurTransactionContext = msg->m_cur_transaction_context;
+
     if(planstate != NULL)
     {
-      //peloton::bridge::PlanTransformer::TransformPlan(planstate);
+      auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
+      peloton::bridge::PlanExecutor::PrintPlan(plan);
+      peloton::bridge::PlanExecutor::ExecutePlan(plan);
+
+      // TODO: The plan tree also needs to be destroyed.
     }
   }
 
@@ -880,7 +891,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg, int len)
 
     if(parsetree != NULL)
     {
-      peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
+      //peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
     }
   }
 

@@ -17,6 +17,8 @@
 #include "executor/executor.h"
 #include "parser/parsetree.h"
 
+#include "executor/nodeValuesscan.h"
+
 #include "backend/common/logger.h"
 #include "backend/bridge/plan_transformer.h"
 #include "backend/bridge/tuple_transformer.h"
@@ -120,8 +122,6 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   Oid database_oid = GetCurrentDatabaseOid();
   Oid table_oid = result_relation_desc->rd_id;
 
-  LOG_INFO("Insert into table with Oid %u", table_oid);
-
   /* Get the target table */
   storage::DataTable *target_table =
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
@@ -132,7 +132,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     return nullptr;
   }
 
-  LOG_INFO("Target table found : database oid %u table oid %u", database_oid, table_oid);
+  LOG_INFO("Insert into: database oid %u table oid %u", database_oid, table_oid);
 
   /* Get the tuple schema */
   auto schema = target_table->GetSchema();
@@ -141,31 +141,72 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   assert(mt_plan_state->mt_nplans == 1);
   assert(mt_plan_state->mt_plans != nullptr);
 
-  PlanState *subplan_state = mt_plan_state->mt_plans[0];
+  PlanState *sub_planstate = mt_plan_state->mt_plans[0];
 
   std::vector<storage::Tuple *> tuples;
 
-  if(nodeTag(subplan_state->plan) == T_Result) {  // Child is a result node
+  /*
+   * In below, we invoke Postgres functions to construct the tuples-to-insert,
+   * saving our own effort.
+   * However, two potential problems:
+   * 1. We need many of the Postgres memory contexts in order to execute the functions.
+   *    Not desired?
+   * 2. Maybe too costly for the planning stage (especially for a long VALUES list).
+   */
+  if(nodeTag(sub_planstate->plan) == T_Result) {  // Child is a result node
     LOG_INFO("Child of Insert is Result");
-    auto result_ps = reinterpret_cast<ResultState*>(subplan_state);
+    auto result_ps = reinterpret_cast<ResultState*>(sub_planstate);
 
-    // Make use of Postgres functions to get a tuple
-    TupleTableSlot *result_slot;
+    TupleTableSlot *tupleslot;
     ExprDoneCond isDone;
-    result_slot = ExecProject(result_ps->ps.ps_ProjInfo, &isDone);
-    assert(!TupIsNull(result_slot));
+    tupleslot = ExecProject(result_ps->ps.ps_ProjInfo, &isDone);
+    assert(!TupIsNull(tupleslot));
     assert(isDone != ExprEndResult);
 
-    auto tuple = TupleTransformer(result_slot, schema);
+    auto tuple = TupleTransformer(tupleslot, schema);
+    assert(tuple);
     tuples.push_back(tuple);
 
-    // TODO: How to free a postgres tupleslot?
+    std::cout << "Tuple to insert: " << *tuple << std::endl;
+
+    // TODO: Is this the correct way to free a postgres tupleslot?
+    pfree(tupleslot);
 
   }
+//  else if(nodeTag(sub_planstate->plan) == T_ValuesScan){  // Child is a values-scan node
+//    LOG_INFO("Child of Insert is ValuesScan");
+//
+//    auto values_scan_ps = reinterpret_cast<ValuesScanState*>(sub_planstate);
+//
+//    // Dirty hack to force restart of ValuesScan
+//    //ExecReScanValuesScan(values_scan_ps);
+//    values_scan_ps->curr_idx = -1;
+//
+//    for(;;) {
+//      TupleTableSlot *tupleslot;
+//
+//      // Ugly but inevitable ...
+//      // tupleslot = ExecValuesScan(values_scan_ps);
+//      //tupleslot = ExecProcNode(sub_planstate);
+//      tupleslot = ValuesNext(values_scan_ps);
+//
+//      if(TupIsNull(tupleslot))
+//        break;
+//
+//      auto tuple = TupleTransformer(tupleslot, schema);
+//      assert(tuple);
+//      tuples.push_back(tuple);
+//
+//      std::cout << "Tuple to insert: " << *tuple << std::endl;
+//    }
+//
+//    LOG_INFO("Retrieved %u tuples", tuples.size());
+//  }
   else {
-    LOG_ERROR("Unsupported child type of Insert: %u", nodeTag(subplan_state->plan));
+    LOG_ERROR("Unsupported child type of Insert: %u", nodeTag(sub_planstate->plan));
   }
 
+  /* TODO: Who's responsible for deleting the vector of tuples? */
   auto plan_node = new planner::InsertNode(target_table, tuples);
 
   return plan_node;
@@ -201,6 +242,9 @@ planner::AbstractPlanNode* PlanTransformer::TransformDelete(
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
           .GetLocation(database_oid, table_oid));
 
+  assert(target_table);
+    LOG_INFO("Delete from: database oid %u table oid %u", database_oid, table_oid);
+
   /* Grab the subplan -> child plan node */
   assert(mt_plan_state->mt_nplans == 1);
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
@@ -228,6 +272,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
 
   assert(nodeTag(ss_plan_state) == T_SeqScanState);
 
+
   // Grab Database ID and Table ID
   assert(ss_plan_state->ss_currentRelation);  // Null if not a base table scan
   Oid database_oid = GetCurrentDatabaseOid();
@@ -237,6 +282,9 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   storage::DataTable *target_table =
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
           .GetLocation(database_oid, table_oid));
+
+  assert(target_table);
+  LOG_INFO("SeqScan: database oid %u table oid %u", database_oid, table_oid);
 
   /*
    * Grab and transform the predicate.
