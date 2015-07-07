@@ -35,6 +35,11 @@
 #include <cassert>
 #include <iostream>
 
+#include "parser/parse_node.h" // make pstate cook default
+#include "parser/parse_expr.h" // cook default
+#include "parser/parse_expr.h" // cook default
+
+
 namespace peloton {
 namespace bridge {
 
@@ -74,14 +79,14 @@ void DDL::ProcessUtility(Node *parsetree,
           char* relation_name = Cstmt->relation->relname;
           Oid relation_oid = ((CreateStmt *)parsetree)->relation_id;
 
-          std::cout << "Relation Oid :: " << relation_oid << "\n";
-
           std::vector<peloton::catalog::ColumnInfo> column_infos;
           std::vector<std::string> reference_table_names;
 
           bool status;
 
-          // Construct DDL_ColumnInfo with schema
+          //===--------------------------------------------------------------------===//
+          // CreateStmt --> ColumnInfo --> CreateTable
+          //===--------------------------------------------------------------------===//
           if( schema != NULL ){
             column_infos = peloton::bridge::DDL::ConstructColumnInfoByParsingCreateStmt( Cstmt, reference_table_names );
             status = peloton::bridge::DDL::CreateTable( relation_oid, relation_name, column_infos );
@@ -93,8 +98,35 @@ void DDL::ProcessUtility(Node *parsetree,
 
           fprintf(stderr, "DDL_CreateTable(%s) :: Oid : %d Status : %d \n", relation_name, relation_oid, status);
 
-          // TODO :: Change location or 
-          // Foreign keys
+          //===--------------------------------------------------------------------===//
+          // Check Constraint
+          //===--------------------------------------------------------------------===//
+          // TODO : Cook the data..
+          if( Cstmt->constraints != NULL){
+            oid_t database_oid = GetCurrentDatabaseOid();
+            assert( database_oid );
+            auto table = catalog::Manager::GetInstance().GetLocation(database_oid, relation_oid);
+            storage::DataTable* data_table = (storage::DataTable*) table;
+
+            ListCell* constraint;
+            foreach(constraint, Cstmt->constraints)
+            {
+              Constraint* ConstraintNode = lfirst(constraint);
+
+              // Or we can get cooked infomation from catalog
+              //ex)
+              //ConstrCheck *check = rel->rd_att->constr->check;
+              //AttrDefault *defval = rel->rd_att->constr->defval;
+
+              if( ConstraintNode->raw_expr != NULL ){
+                data_table->SetRawCheckExpr(ConstraintNode->raw_expr);
+              }
+            }
+          }
+
+          //===--------------------------------------------------------------------===//
+          // Foreign Keys 
+          //===--------------------------------------------------------------------===//
           for( auto reference_table_name : reference_table_names ){
             oid_t database_oid = GetCurrentDatabaseOid();
             assert( database_oid );
@@ -106,9 +138,9 @@ void DDL::ProcessUtility(Node *parsetree,
             current_table->AddReferenceTable(reference_table);
           }
 
-          // In Postgres, indexes such as primary key index, unique indexy are created before table.
-          // In Peloton, however, the table is required to create an index. For that reason, index information
-          // was stored before and now it will be created. 
+          //===--------------------------------------------------------------------===//
+          // Primary Key and Unique Indexes 
+          //===--------------------------------------------------------------------===//
           for( auto index_info : index_infos){
             bool status;
             status = peloton::bridge::DDL::CreateIndex( index_info.GetIndexName(),
@@ -116,13 +148,14 @@ void DDL::ProcessUtility(Node *parsetree,
                                                         index_info.GetMethodType(), 
                                                         index_info.GetType(),
                                                         index_info.IsUnique(),
-                                                        index_info.GetKeyColumnNames());
+                                                        index_info.GetKeyColumnNames(),
+                                                        relation_oid );
             fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info.GetIndexName().c_str(), status);
           }
           index_infos.clear();
 
-
-          { // DEBUGGING CREATE TABLE
+         /*{
+            // DEBUGGING CREATE TABLE
             oid_t database_oid = GetCurrentDatabaseOid();
             auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, relation_oid);
             peloton::storage::DataTable* data_table = (peloton::storage::DataTable*) table;
@@ -154,7 +187,7 @@ void DDL::ProcessUtility(Node *parsetree,
                 std::cout << "table name : " << temp_table->GetName() << " " << *temp_our_schema << std::endl;
               }
             }
-          } // DEBUGGING CREATE TABLE
+          }*/ // DEBUGGING CREATE TABLE
         }
       }
    }
@@ -231,8 +264,47 @@ std::vector<catalog::ColumnInfo> DDL::ConstructColumnInfoByParsingCreateStmt( Cr
   std::vector<catalog::ColumnInfo> column_infos;
 
   //===--------------------------------------------------------------------===//
-  // Column Type Information
+  // Table-level constraints - multi column check and foreign tables
   //===--------------------------------------------------------------------===//
+  // Parse multi column constraints
+/*
+  if( Cstmt->constraints != NULL){
+    ListCell* constraint;
+
+    foreach(constraint, Cstmt->constraints){
+      //printf("\nPrint Multi column constraint\n");
+      Constraint* ConstraintNode = lfirst(constraint);
+      ConstraintType contype;
+      std::string conname;
+      std::string reference_table_name;
+
+      // Get constraint type
+      contype = PostgresConstraintTypeToPelotonConstraintType( (PostgresConstraintType) ConstraintNode->contype );
+      printf("Constraint type %s \n", ConstraintTypeToString( contype ).c_str());
+
+      // Get constraint name
+      if( ConstraintNode->conname != NULL){
+        conname = ConstraintNode->conname;
+        printf("Constraint name %s \n", conname.c_str() );
+      }
+
+      // Get reference table name 
+      if( ConstraintNode->pktable != NULL ){
+        reference_table_name = ConstraintNode->pktable->relname;
+        printf("Constraint name %s \n", reference_table_name.c_str() );
+      }
+
+      // Check
+	    // ConstrCheck *check = rel->rd_att->constr->check;
+      // Get raw expr node, 
+      if( ConstraintNode->raw_expr != NULL ){
+        printf("raw expr is not null \n");
+      }
+
+      printf("\n");
+    }
+  }
+*/
 
   // Parse the CreateStmt and construct ColumnInfo
   ListCell   *entry;
@@ -255,13 +327,11 @@ std::vector<catalog::ColumnInfo> DDL::ConstructColumnInfoByParsingCreateStmt( Cr
     typelen = typeLen(tup);
     ReleaseSysCache(tup);
 
-    /* TODO :: Simple version, but need to check whether it is the same with above or not
+    /* TODO :: Simple version, but need to check it is correct
     // Get the type oid
     typeoid = typenameTypeId(NULL, coldef->typeName);
-
     // type mod
     typemod = get_typmodin(typeoid);
-
     // Get type length
     typelen = get_typlen(typeoid);
      */
@@ -276,9 +346,18 @@ std::vector<catalog::ColumnInfo> DDL::ConstructColumnInfoByParsingCreateStmt( Cr
     std::string column_name = coldef->colname;
 
     //===--------------------------------------------------------------------===//
-    // Column Constraint Information
+    // Column-level constraints - default value
     //===--------------------------------------------------------------------===//
     std::vector<catalog::Constraint> column_constraints;
+
+    if( coldef->raw_default != NULL){
+      catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_DEFAULT, coldef->raw_default );
+      column_constraints.push_back(*constraint);
+    };
+
+    //===--------------------------------------------------------------------===//
+    // Atomic-level constraints - TODO :: Rename
+    //===--------------------------------------------------------------------===//
 
     if( coldef->constraints != NULL){
       ListCell* constNodeEntry;
@@ -293,14 +372,16 @@ std::vector<catalog::ColumnInfo> DDL::ConstructColumnInfoByParsingCreateStmt( Cr
         // Get constraint type
         contype = PostgresConstraintTypeToPelotonConstraintType( (PostgresConstraintType) ConstraintNode->contype );
 
+        // Get constraint name
+        if( ConstraintNode->conname != NULL){
+          conname = ConstraintNode->conname;
+        }
+
+        // Get reference table name 
         if( ConstraintNode->pktable != NULL ){
           reference_table_name = ConstraintNode->pktable->relname;
           reference_table_names.push_back( reference_table_name );
         }
-
-        // Get constraint name
-        if( ConstraintNode->conname != NULL)
-          conname = ConstraintNode->conname;
 
         catalog::Constraint* constraint = new catalog::Constraint( contype, conname, reference_table_name );
         column_constraints.push_back(*constraint);
@@ -392,7 +473,6 @@ bool DDL::CreateTable( Oid relation_oid,
   assert( !table_name.empty() );
   assert( column_infos.size() > 0 || schema != NULL );
 
-
   Oid database_oid = GetCurrentDatabaseOid();
   if(database_oid == InvalidOid)
     return false;
@@ -406,26 +486,6 @@ bool DDL::CreateTable( Oid relation_oid,
 
   // Build a table from schema
   storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, relation_oid, schema, table_name);
-  catalog::Schema* our_schema = table->GetSchema();
-
-  /* DEBUGGING */
-  //std::cout << "table name : " << table_name << "\n" << *our_schema << std::endl;
-
-  // In Postgres, indexes such as primary key index, unique indexy are created before table.
-  // In Peloton, however, the table is required to create an index. For that reason, index information
-  // was stored before and now it will be created. 
-  for( auto index_info : index_infos){
-    bool status;
-    status = peloton::bridge::DDL::CreateIndex( index_info.GetIndexName(),
-                                                index_info.GetTableName(),
-                                                index_info.GetMethodType(),
-                                                index_info.GetType(),
-                                                index_info.IsUnique(),
-                                                index_info.GetKeyColumnNames(),
-                                                relation_oid);
-    fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info.GetIndexName().c_str(), status);
-  }
-  index_infos.clear();
 
   if(table != nullptr) {
     LOG_INFO("Created table : %s", table_name.c_str());
@@ -512,7 +572,6 @@ bool DDL::CreateIndex(std::string index_name,
       if( key_column_name == column_info.name ){
         key_columns.push_back(tuple_schema_column_itr);
 
-        // TODO :: Need to talk with Joy
         // NOTE :: Since pg_attribute doesn't have any information about primary key and unique key,
         //         I try to store these information when we create an unique and primary key index
         if( index_type == INDEX_TYPE_PRIMARY_KEY ){ 
