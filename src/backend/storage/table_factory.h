@@ -42,7 +42,6 @@ public:
      * For a given table name, drop the table from database
      */
     static bool DropDataTable(oid_t database_oid, oid_t table_oid);
-    static bool DropDataTable(oid_t database_oid, std::string table_name);
 
 
 };
