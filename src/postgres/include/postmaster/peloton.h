@@ -109,6 +109,7 @@ typedef struct Peloton_MsgDDL
   char *m_queryString;
   MemoryContext m_top_transaction_context;
   MemoryContext m_cur_transaction_context;
+  Oid m_relation_oid;
 } Peloton_MsgDDL;
 
 /* ----------
@@ -145,11 +146,13 @@ extern void peloton_send_dml(Peloton_Status  *status,
                              PlanState *node,
                              bool sendTuples,
                              DestReceiver *dest);
+
 extern void peloton_send_ddl(Peloton_Status  *status,
                              Node *parsetree,
                              const char *queryString,
                              MemoryContext top_transaction_context,
-                             MemoryContext cur_transaction_context);
+                             MemoryContext cur_transaction_context,
+                             Oid *relation_oid_ptr);
 
 extern Peloton_Status *peloton_create_status();
 extern int peloton_get_status(Peloton_Status *status);

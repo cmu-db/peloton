@@ -31,13 +31,6 @@ void Manager::SetLocation(const oid_t db_oid, const oid_t table_oid, void *locat
 
     global_locator.insert(std::pair<std::pair<oid_t, oid_t>, void*>(db_and_table_oid_pair, location));
 }
-void Manager::SetLocation(const oid_t db_oid, const std::string table_name, void *location) {
-    std::pair<oid_t, std::string> db_and_table_name_pair;
-    db_and_table_name_pair = std::make_pair(db_oid, table_name);
-
-    global_locator_safe.insert(std::pair<std::pair<oid_t, std::string>, void*>(db_and_table_name_pair, location));
-}
-
 
 void *Manager::GetLocation(const oid_t oid) const {
     void *location = nullptr;
@@ -54,16 +47,6 @@ void *Manager::GetLocation(const oid_t database_oid, const oid_t table_oid) cons
     void *location = nullptr;
     try {
         location = catalog::Manager::GetInstance().global_locator.at(std::make_pair(database_oid, table_oid));
-    }
-    catch(std::exception& e) {
-        // FIXME
-    }
-    return location;
-}
-void *Manager::GetLocation(const oid_t database_oid, const std::string  table_name) const {
-    void *location = nullptr;
-    try {
-        location = catalog::Manager::GetInstance().global_locator_safe.at(std::make_pair(database_oid, table_name));
     }
     catch(std::exception& e) {
         // FIXME
