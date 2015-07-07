@@ -27,8 +27,6 @@ namespace catalog {
 
 typedef tbb::concurrent_unordered_map<oid_t, void*> lookup_dir;
 typedef tbb::concurrent_unordered_map<std::pair<oid_t, oid_t>, void*> global_lookup_dir; 
-typedef tbb::concurrent_unordered_map<std::pair<oid_t, std::string>, void*> global_lookup_dir_safe;
-
 
 class Manager {
 
@@ -49,15 +47,11 @@ public:
 
     // Store table location with two keys
     void SetLocation(const oid_t oid1, const oid_t oid2, void *location);
-    void SetLocation(const oid_t oid1, const std::string name, void *location);
-
 
     void *GetLocation(const oid_t oid) const;
 
     // Look up the address with two keys
     void *GetLocation(const oid_t database_oid, const oid_t table_oid) const;
-    void *GetLocation(const oid_t database_oid, const std::string  table_name) const;
-
 
     Manager() {}
 
@@ -71,7 +65,6 @@ public:
 
     lookup_dir locator;
     global_lookup_dir global_locator;
-    global_lookup_dir_safe global_locator_safe;
 
 };
 

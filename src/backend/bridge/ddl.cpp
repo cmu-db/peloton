@@ -96,15 +96,22 @@ void DDL::ProcessUtility(Node *parsetree,
           for( auto reference_table_name : reference_table_names ){
                oid_t database_oid = GetCurrentDatabaseOid();
                assert( database_oid );
-               storage::DataTable* current_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, relation_name);
-               storage::DataTable* reference_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, reference_table_name);
+               oid_t table_oid = GetRelationOid(relation_name);
+               assert( table_oid );
+               oid_t ref_table_oid = GetRelationOid(reference_table_name.c_str());
+               assert( ref_table_oid );
+
+               storage::DataTable* current_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+               storage::DataTable* reference_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, ref_table_oid);
 
                current_table->AddReferenceTable(reference_table);
           }
            
           { // DEBUGGING CREATE TABLE
             oid_t database_oid = GetCurrentDatabaseOid();
-            auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, relation_name);
+            oid_t table_oid = GetRelationOid(relation_name);
+            assert ( table_oid );
+            auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
             peloton::storage::DataTable* data_table = (peloton::storage::DataTable*) table;
             auto tuple_schema = data_table->GetSchema();
             
@@ -137,6 +144,20 @@ void DDL::ProcessUtility(Node *parsetree,
           } // DEBUGGING CREATE TABLE
         }
       }
+      // In Postgres, indexes such as primary key index, unique indexy are created before table.
+      // In Peloton, however, the table is required to create an index. For that reason, index information
+      // was stored before and now it will be created. 
+      for( auto index_info : index_infos){
+        bool status;
+        status = peloton::bridge::DDL::CreateIndex( index_info.GetIndexName(),
+            index_info.GetTableName(),
+            index_info.GetMethodType(), 
+            index_info.GetType(),
+            index_info.IsUnique(),
+            index_info.GetKeyColumnNames());
+        fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info.GetIndexName().c_str(), status);
+      }
+      index_infos.clear();
     }
 
     
@@ -371,6 +392,7 @@ bool DDL::CreateTable( std::string table_name,
   assert( !table_name.empty() );
   assert( column_infos.size() > 0 || schema != NULL );
 
+
   Oid database_oid = GetCurrentDatabaseOid();
   if(database_oid == InvalidOid)
     return false;
@@ -386,24 +408,8 @@ bool DDL::CreateTable( std::string table_name,
   storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, schema, table_name);
   catalog::Schema* our_schema = table->GetSchema();
 
-
   /* DEBUGGING */
   //std::cout << "table name : " << table_name << "\n" << *our_schema << std::endl;
-
-  // In Postgres, indexes such as primary key index, unique indexy are created before table.
-  // In Peloton, however, the table is required to create an index. For that reason, index information
-  // was stored before and now it will be created. 
-  for( auto index_info : index_infos){
-    bool status;
-    status = peloton::bridge::DDL::CreateIndex( index_info.GetIndexName(),
-        index_info.GetTableName(),
-        index_info.GetMethodType(), 
-        index_info.GetType(),
-        index_info.IsUnique(),
-        index_info.GetKeyColumnNames());
-    fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info.GetIndexName().c_str(), status);
-  }
-  index_infos.clear();
 
  if(table != nullptr) {
     LOG_INFO("Created table : %s", table_name.c_str());
@@ -466,10 +472,11 @@ bool DDL::CreateIndex(std::string index_name,
   oid_t database_oid = GetCurrentDatabaseOid();
   assert( database_oid );
 
-  //oid_t table_oid = GetRelationOid(table_name.c_str());
+  oid_t table_oid = GetRelationOid(table_name.c_str());
+  assert( table_oid );
 
   // Get the table location from manager
-  auto table = catalog::Manager::GetInstance().GetLocation(database_oid, table_name);
+  auto table = catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
   storage::DataTable* data_table = (storage::DataTable*) table;
   auto tuple_schema = data_table->GetSchema();
 
@@ -478,7 +485,7 @@ bool DDL::CreateIndex(std::string index_name,
 
   // Based on the key column info, get the oid of the given 'key' columns in the tuple schema
   for( auto key_column_name : key_column_names ){
-    for( oid_t tuple_schema_column_itr = 0; tuple_schema_column_itr < tuple_schema->GetColumnCount();
+    for( oid_t  tuple_schema_column_itr = 0; tuple_schema_column_itr < tuple_schema->GetColumnCount();
         tuple_schema_column_itr++){
 
       // Get the current column info from tuple schema
@@ -495,7 +502,7 @@ bool DDL::CreateIndex(std::string index_name,
           tuple_schema->AddConstraintInColumn( tuple_schema_column_itr, constraint); 
         }else if( index_type == INDEX_TYPE_UNIQUE ){ 
           catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_UNIQUE );
-          tuple_schema->AddConstraintInColumn( tuple_schema_column_itr, constraint); 
+          tuple_schema->AddConstraintInColumn( tuple_schema_column_itr, constraint);
         }
 
       }
