@@ -14,6 +14,7 @@
 
 #include "backend/common/types.h"
 
+#include "nodes/nodes.h" // TODO :: REMOVE, just for raw expr
 
 #include <string>
 #include <vector>
@@ -39,6 +40,8 @@ class Constraint
 public:
     Constraint( ConstraintType type, std::string name = "", std::string reference_table_name = "" )
                 : type(type), name(name), reference_table_name(reference_table_name) {}
+    Constraint( ConstraintType type, Node* _raw_default_expr )
+                : type(type) { raw_default_expr = (Node*) copyObject((void*) _raw_default_expr ); }
  
     
     //===--------------------------------------------------------------------===//
@@ -74,6 +77,9 @@ private:
 
     // reference table names
     std::string reference_table_name = "";
+
+    // raw_default_expr
+    Node* raw_default_expr;
 
 };
 
