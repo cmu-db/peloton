@@ -157,9 +157,13 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     assert(isDone != ExprEndResult);
 
     auto tuple = TupleTransformer(result_slot, schema);
+    assert(tuple);
     tuples.push_back(tuple);
 
-    // TODO: How to free a postgres tupleslot?
+    std::cout << "Tuple to insert: " << *tuple << std::endl;
+
+    // TODO: Is this the correct way to free a postgres tupleslot?
+    pfree(result_slot);
 
   }
   else {
@@ -201,6 +205,9 @@ planner::AbstractPlanNode* PlanTransformer::TransformDelete(
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
           .GetLocation(database_oid, table_oid));
 
+  assert(target_table);
+    LOG_INFO("Target table found : database oid %u table oid %u", database_oid, table_oid);
+
   /* Grab the subplan -> child plan node */
   assert(mt_plan_state->mt_nplans == 1);
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
@@ -228,6 +235,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
 
   assert(nodeTag(ss_plan_state) == T_SeqScanState);
 
+
   // Grab Database ID and Table ID
   assert(ss_plan_state->ss_currentRelation);  // Null if not a base table scan
   Oid database_oid = GetCurrentDatabaseOid();
@@ -237,6 +245,9 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   storage::DataTable *target_table =
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
           .GetLocation(database_oid, table_oid));
+
+  assert(target_table);
+  LOG_INFO("Target table found : database oid %u table oid %u", database_oid, table_oid);
 
   /*
    * Grab and transform the predicate.
