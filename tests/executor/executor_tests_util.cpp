@@ -291,7 +291,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_coun
   std::string table_name("TEST_TABLE");
 
   // Create table.
-  storage::DataTable *table = storage::TableFactory::GetDataTable(INVALID_OID, table_schema, table_name, tuples_per_tilegroup_count);
+  storage::DataTable *table = storage::TableFactory::GetDataTable(INVALID_OID, INVALID_OID, table_schema, table_name, tuples_per_tilegroup_count);
 
   // PRIMARY INDEX
   std::vector<oid_t> key_attrs;
