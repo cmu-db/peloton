@@ -29,18 +29,16 @@ namespace test {
 TEST(SchedulerTests, KernelTest) {
   ResultType (*kernel_func)(const char*) = &backend::Kernel::Handler;
 
-  std::unique_ptr<scheduler::AbstractTask> task1(new scheduler::AbstractTask(kernel_func,
-                                                                   (void *)
-                                                                   "CREATE DATABASE TEST;"
-                                                                   "CREATE TABLE T (T_ID INTEGER NOT NULL,"
-                                                                   "DESCRIPTION VARCHAR(300),"
-                                                                   "PRIMARY KEY (T_ID)"
-                                                                   ");"));
+  std::unique_ptr<scheduler::TBBTask> task1(new scheduler::TBBTask(kernel_func,
+                                                                   "CREATE DATABASE TESTDB;"));
 
-  scheduler::TBBScheduler::GetInstance().AddTask(task1.get());
+  auto& tbb_scheduler = scheduler::TBBScheduler::GetInstance();
+
+  tbb_scheduler.AddTask(task1.get());
 
   // final wait
-  scheduler::TBBScheduler::GetInstance().Execute();
+  tbb_scheduler.Execute();
+
 }
 
 } // End test namespace
