@@ -47,7 +47,7 @@
 #include "postmaster/peloton.h"
 #include "backend/bridge/ddl.h"
 #include "backend/bridge/plan_transformer.h"
-#include "backend/bridge/utils.h"
+#include "backend/bridge/plan_executor.h"
 
 /* ----------
  * Local data
@@ -853,7 +853,9 @@ peloton_process_dml(Peloton_MsgDML *msg, int len)
 
     if(planstate != NULL)
     {
-      peloton::bridge::PlanTransformer::TransformPlan(planstate);
+      //auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
+      //peloton::bridge::PlanExecutor::PrintPlan(plan);
+      //peloton::bridge::PlanExecutor::ExecutePlan(plan);
     }
   }
 
@@ -887,7 +889,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg, int len)
 
     if(parsetree != NULL)
     {
-      peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
+      //peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
     }
   }
 

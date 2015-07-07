@@ -44,7 +44,7 @@ public:
 
     void AddChild(AbstractPlanNode* child);
 
-    std::vector<AbstractPlanNode*>& GetChildren();
+    const std::vector<AbstractPlanNode*>& GetChildren() const;
 
     AbstractPlanNode* GetParent();
 
