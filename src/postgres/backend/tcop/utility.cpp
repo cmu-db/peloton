@@ -361,7 +361,6 @@ standard_ProcessUtility(Node *parsetree,
   bool    isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
   Peloton_Status *status;
   int status_code;
-  Oid *relation_oid_ptr = NULL;
 
   check_xact_readonly(parsetree);
 
@@ -895,13 +894,11 @@ standard_ProcessUtility(Node *parsetree,
       }
 
     default:
-      relation_oid_ptr = static_cast<Oid *>(palloc(sizeof(Oid)));
 
       /* All other statement types have event trigger support */
       ProcessUtilitySlow(parsetree, queryString,
                  context, params,
-                 dest, completionTag,
-                 relation_oid_ptr);
+                 dest, completionTag);
       break;
   }
 
@@ -910,13 +907,10 @@ standard_ProcessUtility(Node *parsetree,
   // TODO: Peloton Changes
   peloton_send_ddl(status, parsetree, queryString,
                  TopTransactionContext,
-                 CurTransactionContext,
-                 relation_oid_ptr);
+                 CurTransactionContext);
 
   status_code = peloton_get_status(status);
   peloton_destroy_status(status);
-
-  pfree(relation_oid_ptr);
 }
 
 /*
@@ -993,10 +987,7 @@ ProcessUtilitySlow(Node *parsetree,
                                stmt);
 
               // TODO: Peloton Changes
-              if(relation_oid != NULL)
-              {
-                *relation_oid = address.objectId;
-              }
+              ((CreateStmt *)parsetree)->relation_id = address.objectId;
 
               /*
                * Let NewRelationCreateToastTable decide if this
