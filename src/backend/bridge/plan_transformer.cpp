@@ -122,8 +122,6 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   Oid database_oid = GetCurrentDatabaseOid();
   Oid table_oid = result_relation_desc->rd_id;
 
-  LOG_INFO("Insert into table with Oid %u", table_oid);
-
   /* Get the target table */
   storage::DataTable *target_table =
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
@@ -134,7 +132,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     return nullptr;
   }
 
-  LOG_INFO("Target table found : database oid %u table oid %u", database_oid, table_oid);
+  LOG_INFO("Insert into: database oid %u table oid %u", database_oid, table_oid);
 
   /* Get the tuple schema */
   auto schema = target_table->GetSchema();
@@ -245,7 +243,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformDelete(
           .GetLocation(database_oid, table_oid));
 
   assert(target_table);
-    LOG_INFO("Target table found : database oid %u table oid %u", database_oid, table_oid);
+    LOG_INFO("Delete from: database oid %u table oid %u", database_oid, table_oid);
 
   /* Grab the subplan -> child plan node */
   assert(mt_plan_state->mt_nplans == 1);
@@ -286,7 +284,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
           .GetLocation(database_oid, table_oid));
 
   assert(target_table);
-  LOG_INFO("Target table found : database oid %u table oid %u", database_oid, table_oid);
+  LOG_INFO("SeqScan: database oid %u table oid %u", database_oid, table_oid);
 
   /*
    * Grab and transform the predicate.
