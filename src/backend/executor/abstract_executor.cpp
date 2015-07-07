@@ -28,7 +28,7 @@ void AbstractExecutor::SetOutput(LogicalTile* table) {
 
 // Transfers ownership
 LogicalTile* AbstractExecutor::GetOutput() {
-  assert(output.get() != nullptr);
+  // assert(output.get() != nullptr);
   return output.release();
 }
 
