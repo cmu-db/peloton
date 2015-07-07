@@ -1273,7 +1273,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 		forboth(lc, colexprs[i], lc2, exprsLists)
 		{
 			Node	   *col = (Node *) lfirst(lc);
-			List	   *sublist = lfirst(lc2);
+			List	   *sublist = static_cast<List *>(lfirst(lc2));
 
 			/* sublist pointer in exprsLists won't need adjustment */
 			(void) lappend(sublist, col);

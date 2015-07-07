@@ -960,7 +960,7 @@ rebuild_database_list(Oid newdb)
 	dblist = get_database_list();
 	foreach(cell, dblist)
 	{
-		avw_dbase  *avdb = lfirst(cell);
+		avw_dbase  *avdb = static_cast<avw_dbase *>(lfirst(cell));
 		avl_dbase  *db;
 		bool		found;
 		PgStat_StatDBEntry *entry;
@@ -1151,7 +1151,7 @@ do_start_worker(void)
 	current_time = GetCurrentTimestamp();
 	foreach(cell, dblist)
 	{
-		avw_dbase  *tmp = lfirst(cell);
+		avw_dbase  *tmp = static_cast<avw_dbase *>(lfirst(cell));
 		dlist_iter	iter;
 
 		/* Check to see if this one is at risk of wraparound */

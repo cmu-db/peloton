@@ -1996,7 +1996,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 		foreach(l, node->chain)
 		{
-			Agg	   *agg = lfirst(l);
+			Agg	   *agg = static_cast<Agg *>(lfirst(l));
 
 			numGroupingSets = Max(numGroupingSets,
 								  list_length(agg->groupingSets));

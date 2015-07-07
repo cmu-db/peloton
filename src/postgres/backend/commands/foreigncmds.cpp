@@ -69,7 +69,7 @@ optionListToArray(List *options)
 
 	foreach(cell, options)
 	{
-		DefElem    *def = lfirst(cell);
+		DefElem    *def = static_cast<DefElem *>(lfirst(cell));
 		const char *value;
 		Size		len;
 		text	   *t;
@@ -117,7 +117,7 @@ transformGenericOptions(Oid catalogId,
 
 	foreach(optcell, options)
 	{
-		DefElem    *od = lfirst(optcell);
+		DefElem    *od = static_cast<DefElem *>(lfirst(optcell));
 		ListCell   *cell;
 		ListCell   *prev = NULL;
 
@@ -127,7 +127,7 @@ transformGenericOptions(Oid catalogId,
 		 */
 		foreach(cell, resultOptions)
 		{
-			DefElem    *def = lfirst(cell);
+			DefElem    *def = static_cast<DefElem *>(lfirst(cell));
 
 			if (strcmp(def->defname, od->defname) == 0)
 				break;
@@ -1571,7 +1571,7 @@ ImportForeignSchema(ImportForeignSchemaStmt *stmt)
 		 */
 		foreach(lc2, raw_parsetree_list)
 		{
-			CreateForeignTableStmt *cstmt = lfirst(lc2);
+			CreateForeignTableStmt *cstmt = static_cast<CreateForeignTableStmt *>(lfirst(lc2));
 
 			/*
 			 * Because we only allow CreateForeignTableStmt, we can skip parse

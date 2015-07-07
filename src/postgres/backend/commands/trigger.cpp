@@ -4515,7 +4515,7 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 
 		foreach(lc, stmt->constraints)
 		{
-			RangeVar   *constraint = lfirst(lc);
+			RangeVar   *constraint = static_cast<RangeVar *>(lfirst(lc));
 			bool		found;
 			List	   *namespacelist;
 			ListCell   *nslc;

@@ -609,7 +609,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 
 	foreach(listptr, schema)
 	{
-		ColumnDef  *colDef = lfirst(listptr);
+		ColumnDef  *colDef = static_cast<ColumnDef *>(lfirst(listptr));
 
 		attnum++;
 
@@ -1009,7 +1009,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 	 */
 	foreach(cell, stmt->relations)
 	{
-		RangeVar   *rv = lfirst(cell);
+		RangeVar   *rv = static_cast<RangeVar *>(lfirst(cell));
 		Relation	rel;
 		bool		recurse = interpretInhOption(rv->inhOpt);
 		Oid			myrelid;
@@ -1440,7 +1440,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 	 */
 	foreach(entry, schema)
 	{
-		ColumnDef  *coldef = lfirst(entry);
+		ColumnDef  *coldef = static_cast<ColumnDef *>(lfirst(entry));
 		ListCell   *rest = lnext(entry);
 		ListCell   *prev = entry;
 
@@ -1458,7 +1458,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 
 		while (rest != NULL)
 		{
-			ColumnDef  *restdef = lfirst(rest);
+			ColumnDef  *restdef = static_cast<ColumnDef *>(lfirst(rest));
 			ListCell   *next = lnext(rest);		/* need to save it in case we
 												 * delete it */
 
@@ -1786,7 +1786,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 
 		foreach(entry, schema)
 		{
-			ColumnDef  *newdef = lfirst(entry);
+			ColumnDef  *newdef = static_cast<ColumnDef *>(lfirst(entry));
 			char	   *attributeName = newdef->colname;
 			int			exist_attno;
 
@@ -1893,7 +1893,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 	{
 		foreach(entry, schema)
 		{
-			ColumnDef  *def = lfirst(entry);
+			ColumnDef  *def = static_cast<ColumnDef *>(lfirst(entry));
 
 			if (def->cooked_default == &bogus_marker)
 				ereport(ERROR,
@@ -2072,7 +2072,7 @@ findAttrByName(const char *attributeName, List *schema)
 
 	foreach(s, schema)
 	{
-		ColumnDef  *def = lfirst(s);
+		ColumnDef  *def = static_cast<ColumnDef *>(lfirst(s));
 
 		if (strcmp(attributeName, def->colname) == 0)
 			return i;
@@ -3881,7 +3881,7 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 
 		foreach(lcon, tab->constraints)
 		{
-			NewConstraint *con = lfirst(lcon);
+			NewConstraint *con = static_cast<NewConstraint *>(lfirst(lcon));
 
 			if (con->contype == CONSTR_FOREIGN)
 			{
@@ -3980,7 +3980,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 	/* Build the needed expression execution states */
 	foreach(l, tab->constraints)
 	{
-		NewConstraint *con = lfirst(l);
+		NewConstraint *con = static_cast<NewConstraint *>(lfirst(l));
 
 		switch (con->contype)
 		{
@@ -4000,7 +4000,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 	foreach(l, tab->newvals)
 	{
-		NewColumnValue *ex = lfirst(l);
+		NewColumnValue *ex = static_cast<NewColumnValue *>(lfirst(l));
 
 		/* expr already planned */
 		ex->exprstate = ExecInitExpr((Expr *) ex->expr, NULL);
@@ -4123,7 +4123,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 				foreach(l, tab->newvals)
 				{
-					NewColumnValue *ex = lfirst(l);
+					NewColumnValue *ex = static_cast<NewColumnValue *>(lfirst(l));
 
 					values[ex->attnum - 1] = ExecEvalExpr(ex->exprstate,
 														  econtext,
@@ -4166,7 +4166,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 			foreach(l, tab->constraints)
 			{
-				NewConstraint *con = lfirst(l);
+				NewConstraint *con = static_cast<NewConstraint *>(lfirst(l));
 
 				switch (con->contype)
 				{

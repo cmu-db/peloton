@@ -645,7 +645,7 @@ transformAssignmentIndirection(ParseState *pstate,
 	 */
 	for_each_cell(i, indirection)
 	{
-		Node	   *n = lfirst(i);
+		Node	   *n = static_cast<Node *>(lfirst(i));
 
 		if (IsA(n, A_Indices))
 		{
@@ -1617,7 +1617,7 @@ FigureColnameInternal(Node *node, char **name)
 				/* find last field name, if any, ignoring "*" */
 				foreach(l, ((ColumnRef *) node)->fields)
 				{
-					Node	   *i = lfirst(l);
+					Node	   *i = static_cast<Node *>(lfirst(l));
 
 					if (IsA(i, String))
 						fname = strVal(i);
@@ -1638,7 +1638,7 @@ FigureColnameInternal(Node *node, char **name)
 				/* find last field name, if any, ignoring "*" and subscripts */
 				foreach(l, ind->indirection)
 				{
-					Node	   *i = lfirst(l);
+					Node	   *i = static_cast<Node *>(lfirst(l));
 
 					if (IsA(i, String))
 						fname = strVal(i);

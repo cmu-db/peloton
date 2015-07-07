@@ -2524,7 +2524,7 @@ reduce_outer_joins_pass2(Node *jtnode,
 		Assert(list_length(f->fromlist) == list_length(state->sub_states));
 		forboth(l, f->fromlist, s, state->sub_states)
 		{
-			reduce_outer_joins_state *sub_state = lfirst(s);
+			reduce_outer_joins_state *sub_state = static_cast<reduce_outer_joins_state *>(lfirst(s));
 
 			if (sub_state->contains_outer)
 				reduce_outer_joins_pass2(lfirst(l), sub_state, root,
@@ -2540,8 +2540,8 @@ reduce_outer_joins_pass2(Node *jtnode,
 		JoinExpr   *j = (JoinExpr *) jtnode;
 		int			rtindex = j->rtindex;
 		JoinType	jointype = j->jointype;
-		reduce_outer_joins_state *left_state = linitial(state->sub_states);
-		reduce_outer_joins_state *right_state = lsecond(state->sub_states);
+		reduce_outer_joins_state *left_state = static_cast<reduce_outer_joins_state *>(linitial(state->sub_states));
+		reduce_outer_joins_state *right_state = static_cast<reduce_outer_joins_state *>(lsecond(state->sub_states));
 		List	   *local_nonnullable_vars = NIL;
 		bool		computed_local_nonnullable_vars = false;
 

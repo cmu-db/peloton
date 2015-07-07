@@ -259,7 +259,7 @@ print_rt(const List *rtable)
 	printf("-----\t---------\t-----\t--------\n");
 	foreach(l, rtable)
 	{
-		RangeTblEntry *rte = lfirst(l);
+		RangeTblEntry *rte = static_cast<RangeTblEntry *>(lfirst(l));
 
 		switch (rte->rtekind)
 		{
@@ -396,7 +396,7 @@ print_expr(const Node *expr, const List *rtable)
 		printf("%s(", ((funcname != NULL) ? funcname : "(invalid function)"));
 		foreach(l, e->args)
 		{
-			print_expr(lfirst(l), rtable);
+			print_expr(static_cast<const Node *>(lfirst(l)), rtable);
 			if (lnext(l))
 				printf(",");
 		}

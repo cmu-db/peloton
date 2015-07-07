@@ -461,7 +461,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		 */
 		foreach(lc, historyFileList)
 		{
-			char	   *fname = lfirst(lc);
+			char	   *fname = static_cast<char *>(lfirst(lc));
 
 			snprintf(pathbuf, MAXPGPATH, XLOGDIR "/%s", fname);
 
@@ -685,7 +685,7 @@ SendBackupHeader(List *tablespaces)
 
 	foreach(lc, tablespaces)
 	{
-		tablespaceinfo *ti = lfirst(lc);
+		tablespaceinfo *ti = static_cast<tablespaceinfo *>(lfirst(lc));
 
 		/* Send one datarow message */
 		pq_beginmessage(&buf, 'D');
