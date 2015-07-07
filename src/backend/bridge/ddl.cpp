@@ -106,6 +106,22 @@ void DDL::ProcessUtility(Node *parsetree,
             current_table->AddReferenceTable(reference_table);
           }
 
+          // In Postgres, indexes such as primary key index, unique indexy are created before table.
+          // In Peloton, however, the table is required to create an index. For that reason, index information
+          // was stored before and now it will be created. 
+          for( auto index_info : index_infos){
+            bool status;
+            status = peloton::bridge::DDL::CreateIndex( index_info.GetIndexName(),
+                                                        index_info.GetTableName(),
+                                                        index_info.GetMethodType(), 
+                                                        index_info.GetType(),
+                                                        index_info.IsUnique(),
+                                                        index_info.GetKeyColumnNames());
+            fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info.GetIndexName().c_str(), status);
+          }
+          index_infos.clear();
+
+
           { // DEBUGGING CREATE TABLE
             oid_t database_oid = GetCurrentDatabaseOid();
             auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, relation_oid);
@@ -141,21 +157,7 @@ void DDL::ProcessUtility(Node *parsetree,
           } // DEBUGGING CREATE TABLE
         }
       }
-      // In Postgres, indexes such as primary key index, unique indexy are created before table.
-      // In Peloton, however, the table is required to create an index. For that reason, index information
-      // was stored before and now it will be created. 
-      for( auto index_info : index_infos){
-        bool status;
-        status = peloton::bridge::DDL::CreateIndex( index_info.GetIndexName(),
-            index_info.GetTableName(),
-            index_info.GetMethodType(), 
-            index_info.GetType(),
-            index_info.IsUnique(),
-            index_info.GetKeyColumnNames());
-        fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info.GetIndexName().c_str(), status);
-      }
-      index_infos.clear();
-    }
+   }
 
 
     break;
@@ -419,7 +421,8 @@ bool DDL::CreateTable( Oid relation_oid,
                                                 index_info.GetMethodType(),
                                                 index_info.GetType(),
                                                 index_info.IsUnique(),
-                                                index_info.GetKeyColumnNames());
+                                                index_info.GetKeyColumnNames(),
+                                                relation_oid);
     fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info.GetIndexName().c_str(), status);
   }
   index_infos.clear();
@@ -471,7 +474,7 @@ bool DDL::CreateIndex(std::string index_name,
                       IndexType  index_type,
                       bool unique_keys,
                       std::vector<std::string> key_column_names,
-                      bool bootstrap ){
+                      Oid table_oid){
 
   assert( !index_name.empty() );
   assert( !table_name.empty() );
@@ -485,7 +488,9 @@ bool DDL::CreateIndex(std::string index_name,
   oid_t database_oid = GetCurrentDatabaseOid();
   assert( database_oid );
 
-  oid_t table_oid = GetRelationOid(table_name.c_str());
+  if( table_oid == INVALID_OID )
+    table_oid = GetRelationOid(table_name.c_str());
+  
   assert( table_oid );
 
   // Get the table location from manager

@@ -591,17 +591,23 @@ std::string ConstraintTypeToString(ConstraintType type) {
     case CONSTRAINT_TYPE_INVALID: {
         return "INVALID";
     }
-    case CONSTRAINT_TYPE_CHECK: {
-        return "CHECK";
+    case CONSTRAINT_TYPE_NULL: {
+        return "NULL";
     }
     case CONSTRAINT_TYPE_NOTNULL: {
         return "NOTNULL";
     }
-    case CONSTRAINT_TYPE_UNIQUE: {
-        return "UNIQUE";
+    case CONSTRAINT_TYPE_DEFAULT: {
+        return "DEFAULT";
+    }
+    case CONSTRAINT_TYPE_CHECK: {
+        return "CHECK";
     }
     case CONSTRAINT_TYPE_PRIMARY: {
         return "PRIMARY_KEY";
+    }
+    case CONSTRAINT_TYPE_UNIQUE: {
+        return "UNIQUE";
     }
     case CONSTRAINT_TYPE_FOREIGN: {
         return "FOREIGN_KEY";
@@ -617,13 +623,17 @@ std::string ConstraintTypeToString(ConstraintType type) {
 ConstraintType StringToConstraintType(std::string str) {
     if (str == "INVALID") {
         return CONSTRAINT_TYPE_INVALID;
-    } else if (str == "CHECK") {
-        return CONSTRAINT_TYPE_CHECK;
+    } else if (str == "NULL") {
+        return CONSTRAINT_TYPE_NULL;
     } else if (str == "NOTNULL") {
         return CONSTRAINT_TYPE_NOTNULL;
-    } else if (str == "UNIQUE") {
+    } else if (str == "CHECK") {
+        return CONSTRAINT_TYPE_DEFAULT;
+    } else if (str == "DEFAULT") {
         return CONSTRAINT_TYPE_UNIQUE;
     } else if (str == "PRIMARY_KEY") {
+        return CONSTRAINT_TYPE_CHECK;
+    } else if (str == "UNIQUE") {
         return CONSTRAINT_TYPE_PRIMARY;
     } else if (str == "FOREIGN_KEY") {
         return CONSTRAINT_TYPE_FOREIGN;
@@ -693,6 +703,10 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(PostgresConstraintT
   ConstraintType constraintType = CONSTRAINT_TYPE_INVALID;
 
   switch( PostgresConstrType ){
+    case POSTGRES_CONSTRAINT_NULL:
+      constraintType = CONSTRAINT_TYPE_NULL;
+      break;
+
     case POSTGRES_CONSTRAINT_NOTNULL:
       constraintType = CONSTRAINT_TYPE_NOTNULL;
       break;
@@ -718,7 +732,7 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(PostgresConstraintT
       break;
 
     case POSTGRES_CONSTRAINT_EXCLUSION:
-      constraintType = CONSTRAINT_TYPE_NOTNULL;
+      constraintType = CONSTRAINT_TYPE_EXCLUSION;
       break;
 
     default:
