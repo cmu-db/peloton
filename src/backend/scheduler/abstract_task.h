@@ -13,7 +13,6 @@
 #pragma once
 
 #include "backend/catalog/manager.h"
-#include "tbb/tbb.h"
 #include "backend/common/types.h"
 
 #include <iostream>
@@ -21,13 +20,13 @@
 namespace peloton {
 namespace scheduler {
 
+typedef  ResultType (*handler)(void*);
+
 //===--------------------------------------------------------------------===//
 // Abstract Task
 //===--------------------------------------------------------------------===//
 
-class AbstractTask : public tbb::task {
-
-  typedef  ResultType (*handler)(void*);
+class AbstractTask {
 
  public:
   AbstractTask(handler function_pointer, void *args)
@@ -38,15 +37,6 @@ class AbstractTask : public tbb::task {
     // Get a task id
     task_id = catalog::Manager::GetInstance().GetNextOid();
 
-  }
-
-  tbb::task* execute() {
-
-    std::cout << "Starting task \n";
-    output = (*function_pointer)(args);
-    std::cout << "Stopping task \n";
-
-    return nullptr;
   }
 
   oid_t GetTaskId() {
