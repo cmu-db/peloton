@@ -22,13 +22,15 @@ namespace peloton {
 namespace scheduler {
 
 //===--------------------------------------------------------------------===//
-// Task
+// Abstract Task
 //===--------------------------------------------------------------------===//
 
-class Task : public tbb::task {
+class AbstractTask : public tbb::task {
+
+  typedef  ResultType (*handler)(void*);
 
  public:
-  Task(ResultType (*function_pointer)(void*), void *args)
+  AbstractTask(handler function_pointer, void *args)
  : function_pointer(function_pointer),
    args(args),
    output(RESULT_TYPE_INVALID){
@@ -55,12 +57,26 @@ class Task : public tbb::task {
     return output;
   }
 
+  void *GetArgs() {
+    return args;
+  }
+
+  handler GetTask() {
+    return function_pointer;
+  }
+
+  TaskPriorityType GetPriority() {
+    return priority;
+  }
+
  protected:
   oid_t task_id;
 
-  ResultType (*function_pointer)(void*);
+  handler function_pointer;
   void *args;
   ResultType output;
+
+  TaskPriorityType priority = TaskPriorityType::TASK_PRIORTY_TYPE_NORMAL;
 };
 
 
