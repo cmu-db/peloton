@@ -689,7 +689,7 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 	}
 	else if (splan->parParam == NIL && subLinkType == EXPR_SUBLINK)
 	{
-		TargetEntry *te = linitial(plan->targetlist);
+		TargetEntry *te = static_cast<TargetEntry *>(linitial(plan->targetlist));
 		Param	   *prm;
 
 		Assert(!te->resjunk);
@@ -704,7 +704,7 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 	}
 	else if (splan->parParam == NIL && subLinkType == ARRAY_SUBLINK)
 	{
-		TargetEntry *te = linitial(plan->targetlist);
+		TargetEntry *te = static_cast<TargetEntry *>(linitial(plan->targetlist));
 		Oid			arraytype;
 		Param	   *prm;
 
@@ -1087,7 +1087,7 @@ hash_ok_operator(OpExpr *expr)
 	{
 		/* array_eq is strict, but must check input type to ensure hashable */
 		/* XXX record_eq will need same treatment when it becomes hashable */
-		Node	   *leftarg = linitial(expr->args);
+		Node	   *leftarg = static_cast<Node *>(linitial(expr->args));
 
 		return op_hashjoinable(opid, exprType(leftarg));
 	}

@@ -240,17 +240,17 @@ nodeTokenType(char *token, int length)
 	 * always treat them as single-byte tokens
 	 */
 	else if (*token == '(')
-		retval = LEFT_PAREN;
+		retval = static_cast<NodeTag>(LEFT_PAREN);
 	else if (*token == ')')
-		retval = RIGHT_PAREN;
+		retval = static_cast<NodeTag>(RIGHT_PAREN);
 	else if (*token == '{')
-		retval = LEFT_BRACE;
+		retval = static_cast<NodeTag>(LEFT_BRACE);
 	else if (*token == '\"' && length > 1 && token[length - 1] == '\"')
 		retval = T_String;
 	else if (*token == 'b')
 		retval = T_BitString;
 	else
-		retval = OTHER_TOKEN;
+		retval = static_cast<NodeTag>(OTHER_TOKEN);
 	return retval;
 }
 

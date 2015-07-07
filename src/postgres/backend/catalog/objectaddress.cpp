@@ -350,7 +350,7 @@ static const ObjectPropertyType ObjectProperty[] =
 		InvalidAttrNumber,
 		InvalidAttrNumber,
 		InvalidAttrNumber,
-		-1,
+		static_cast<AclObjectKind>(-1),
 		false
 	},
 	{

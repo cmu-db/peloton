@@ -4740,7 +4740,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 			sep = "";
 			foreach(l, query->groupingSets)
 			{
-				GroupingSet *grp = lfirst(l);
+				GroupingSet *grp = static_cast<GroupingSet *>(lfirst(l));
 
 				appendStringInfoString(buf, sep);
 				get_rule_groupingset(grp, query->targetList, true, context);
@@ -7169,7 +7169,7 @@ get_rule_expr(Node *node, deparse_context *context,
 		case T_BoolExpr:
 			{
 				BoolExpr   *expr = (BoolExpr *) node;
-				Node	   *first_arg = linitial(expr->args);
+				Node	   *first_arg = static_cast<Node *>(linitial(expr->args));
 				ListCell   *arg = lnext(list_head(expr->args));
 
 				switch (expr->boolop)
@@ -8077,7 +8077,7 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 	if (expr->funcformat == COERCE_EXPLICIT_CAST ||
 		expr->funcformat == COERCE_IMPLICIT_CAST)
 	{
-		Node	   *arg = linitial(expr->args);
+		Node	   *arg = static_cast<Node *>(linitial(expr->args));
 		Oid			rettype = expr->funcresulttype;
 		int32		coercedTypmod;
 

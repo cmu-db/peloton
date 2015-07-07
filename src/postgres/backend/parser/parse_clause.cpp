@@ -118,7 +118,7 @@ transformFromClause(ParseState *pstate, List *frmList)
 	 */
 	foreach(fl, frmList)
 	{
-		Node	   *n = lfirst(fl);
+		Node	   *n = static_cast<Node *>(lfirst(fl));
 		RangeTblEntry *rte;
 		int			rtindex;
 		List	   *namescpace___;
@@ -2036,7 +2036,7 @@ transformGroupingSet(List **flatresult,
 
 	foreach(gl, gset->content)
 	{
-		Node   *n = lfirst(gl);
+		Node   *n = static_cast<Node *>(lfirst(gl));
 
 		if (IsA(n, List))
 		{

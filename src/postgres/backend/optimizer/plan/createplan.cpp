@@ -951,7 +951,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 
 	foreach(l, uniq_exprs)
 	{
-		Node	   *uniqexpr = lfirst(l);
+		Node	   *uniqexpr = static_cast<Node *>(lfirst(l));
 		TargetEntry *tle;
 
 		tle = tlist_member(uniqexpr, newtlist);
@@ -994,7 +994,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	groupColPos = 0;
 	foreach(l, uniq_exprs)
 	{
-		Node	   *uniqexpr = lfirst(l);
+		Node	   *uniqexpr = static_cast<Node *>(lfirst(l));
 		TargetEntry *tle;
 
 		tle = tlist_member(uniqexpr, newtlist);

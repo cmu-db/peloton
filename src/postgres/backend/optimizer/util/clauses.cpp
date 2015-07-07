@@ -4423,7 +4423,7 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	i = 0;
 	foreach(arg, args)
 	{
-		Node	   *param = lfirst(arg);
+		Node	   *param = static_cast<Node *>(lfirst(arg));
 
 		if (usecounts[i] == 0)
 		{

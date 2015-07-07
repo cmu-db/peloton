@@ -246,7 +246,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 */
 	foreach(elements, stmt->tableElts)
 	{
-		Node	   *element = lfirst(elements);
+		Node	   *element = static_cast<Node *>(lfirst(elements));
 
 		switch (nodeTag(element))
 		{
@@ -1470,7 +1470,7 @@ transformIndexConstraints(CreateStmtContext *cxt)
 
 		foreach(k, cxt->alist)
 		{
-			IndexStmt  *priorindex = lfirst(k);
+			IndexStmt  *priorindex = static_cast<IndexStmt *>(lfirst(k));
 
 			if (equal(index->indexParams, priorindex->indexParams) &&
 				equal(index->whereClause, priorindex->whereClause) &&
@@ -2789,7 +2789,7 @@ transformCreateSchemaStmt(CreateSchemaStmt *stmt)
 	 */
 	foreach(elements, stmt->schemaElts)
 	{
-		Node	   *element = lfirst(elements);
+		Node	   *element = static_cast<Node *>(lfirst(elements));
 
 		switch (nodeTag(element))
 		{

@@ -968,7 +968,7 @@ ExecTypeFromTLInternal(List *targetList, bool hasoid, bool skipjunk)
 
 	foreach(l, targetList)
 	{
-		TargetEntry *tle = lfirst(l);
+		TargetEntry *tle = static_cast<TargetEntry *>(lfirst(l));
 
 		if (skipjunk && tle->resjunk)
 			continue;
@@ -1004,7 +1004,7 @@ ExecTypeFromExprList(List *exprList)
 
 	foreach(lc, exprList)
 	{
-		Node	   *e = lfirst(lc);
+		Node	   *e = static_cast<Node *>(lfirst(lc));
 
 		TupleDescInitEntry(typeInfo,
 						   cur_resno,

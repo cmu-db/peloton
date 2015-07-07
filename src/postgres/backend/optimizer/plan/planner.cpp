@@ -1298,7 +1298,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 			foreach(lc, parse->groupClause)
 			{
-				SortGroupClause *gc = lfirst(lc);
+				SortGroupClause *gc = static_cast<SortGroupClause *>(lfirst(lc));
 				if (gc->tleSortGroupRef > maxref)
 					maxref = gc->tleSortGroupRef;
 			}
@@ -1332,7 +1332,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 				foreach(lc, groupclause)
 				{
-					SortGroupClause *gc = lfirst(lc);
+					SortGroupClause *gc = static_cast<SortGroupClause *>(lfirst(lc));
 					tleref_to_colnum_map[gc->tleSortGroupRef] = ref++;
 				}
 
@@ -1496,7 +1496,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 					foreach(lc3, lfirst(lc2))
 					{
-						List   *gset = lfirst(lc3);
+						List   *gset = static_cast<List *>(lfirst(lc3));
 
 						dNumGroups += estimate_num_groups(root,
 														  groupExprs,
@@ -1809,7 +1809,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 				foreach(lc, parse->groupClause)
 				{
-					SortGroupClause *gc = lfirst(lc);
+					SortGroupClause *gc = static_cast<SortGroupClause *>(lfirst(lc));
 					grouping_map[gc->tleSortGroupRef] = groupColIdx[i++];
 				}
 
@@ -2278,7 +2278,7 @@ remap_groupColIdx(PlannerInfo *root, List *groupClause)
 	i = 0;
 	foreach(lc, groupClause)
 	{
-		SortGroupClause *clause = lfirst(lc);
+		SortGroupClause *clause = static_cast<SortGroupClause *>(lfirst(lc));
 		new_grpColIdx[i++] = grouping_map[clause->tleSortGroupRef];
 	}
 
@@ -2347,8 +2347,8 @@ build_grouping_chain(PlannerInfo *root,
 	 */
 	while (list_length(rollup_groupclauses) > 1)
 	{
-		List	   *groupClause = linitial(rollup_groupclauses);
-		List	   *gsets = linitial(rollup_lists);
+		List	   *groupClause = static_cast<List *>(linitial(rollup_groupclauses));
+		List	   *gsets = static_cast<List *>(linitial(rollup_lists));
 		AttrNumber *new_grpColIdx;
 		Plan	   *sort_plan;
 		Plan	   *agg_plan;
@@ -2399,7 +2399,7 @@ build_grouping_chain(PlannerInfo *root,
 	 * Now make the final Agg node
 	 */
 	{
-		List	   *groupClause = linitial(rollup_groupclauses);
+		List	   *groupClause = static_cast<List *>(linitial(rollup_groupclauses));
 		List	   *gsets = rollup_lists ? linitial(rollup_lists) : NIL;
 		int			numGroupCols;
 		ListCell   *lc;
@@ -2429,7 +2429,7 @@ build_grouping_chain(PlannerInfo *root,
 		 */
 		foreach(lc, chain)
 		{
-			Plan   *subplan = lfirst(lc);
+			Plan   *subplan = static_cast<Plan *>(lfirst(lc));
 
 			result_plan->total_cost += subplan->total_cost;
 
@@ -3179,7 +3179,7 @@ extract_rollup_sets(List *groupingSets)
 
 	for_each_cell(lc, lc1)
 	{
-		List	   *candidate = lfirst(lc);
+		List	   *candidate = static_cast<List *>(lfirst(lc));
 		Bitmapset  *candidate_set = NULL;
 		ListCell   *lc2;
 		int			dup_of = 0;
@@ -3334,7 +3334,7 @@ reorder_grouping_sets(List *groupingsets, List *sortclause)
 
 	foreach(lc, groupingsets)
 	{
-		List   *candidate = lfirst(lc);
+		List   *candidate = static_cast<List *>(lfirst(lc));
 		List   *new_elems = list_difference_int(candidate, previous);
 
 		if (list_length(new_elems) > 0)

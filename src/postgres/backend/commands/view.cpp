@@ -82,7 +82,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 	attrList = NIL;
 	foreach(t, tlist)
 	{
-		TargetEntry *tle = lfirst(t);
+		TargetEntry *tle = static_cast<TargetEntry *>(lfirst(t));
 
 		if (!tle->resjunk)
 		{

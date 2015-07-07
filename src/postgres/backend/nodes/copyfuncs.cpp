@@ -41,7 +41,7 @@
 
 /* Copy a field that is a pointer to some kind of Node or Node tree */
 #define COPY_NODE_FIELD(fldname) \
-	(newnode->fldname = copyObject(from->fldname))
+	(newnode->fldname = static_cast<decltype(newnode->fldname)>(copyObject(from->fldname)))
 
 /* Copy a field that is a pointer to a Bitmapset */
 #define COPY_BITMAPSET_FIELD(fldname) \
@@ -55,7 +55,7 @@
 #define COPY_POINTER_FIELD(fldname, sz) \
 	do { \
 		Size	_size = (sz); \
-		newnode->fldname = palloc(_size); \
+		newnode->fldname = static_cast<decltype(newnode->fldname)>(palloc(_size)); \
 		memcpy(newnode->fldname, from->fldname, _size); \
 	} while (0)
 

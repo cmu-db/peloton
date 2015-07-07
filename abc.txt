@@ -1,0 +1,627 @@
+criticalLine:  		List	   *objname = lfirst(cell1);
+
+replacementLine:  		List	   *objname = static_cast<List *>(lfirst(cell1));
+
+newLine:  		List	   *objname = static_cast<List *>(lfirst(cell1));
+
+criticalLine:  				TypeName   *typ = linitial(objname);
+
+replacementLine:  				TypeName   *typ = static_cast<TypeName *>(linitial(objname));
+
+newLine:  				TypeName   *typ = static_cast<TypeName *>(linitial(objname));
+
+criticalLine:  		EventTriggerCacheItem *item = lfirst(lc);
+
+replacementLine:  		EventTriggerCacheItem *item = static_cast<EventTriggerCacheItem *>(lfirst(lc));
+
+newLine:  		EventTriggerCacheItem *item = static_cast<EventTriggerCacheItem *>(lfirst(lc));
+
+criticalLine:  		CollectedCommand *cmd = lfirst(lc);
+
+replacementLine:  		CollectedCommand *cmd = static_cast<CollectedCommand *>(lfirst(lc));
+
+newLine:  		CollectedCommand *cmd = static_cast<CollectedCommand *>(lfirst(lc));
+
+criticalLine:  		Agg *aggnode = lfirst(lc);
+
+replacementLine:  		Agg *aggnode = static_cast<Agg *>(lfirst(lc));
+
+newLine:  		Agg *aggnode = static_cast<Agg *>(lfirst(lc));
+
+criticalLine:  		DefElem    *def = lfirst(cell);
+
+replacementLine:  		DefElem    *def = static_cast<DefElem *>(lfirst(cell));
+
+newLine:  		DefElem    *def = static_cast<DefElem *>(lfirst(cell));
+
+criticalLine:  		DefElem    *od = lfirst(optcell);
+
+replacementLine:  		DefElem    *od = static_cast<DefElem *>(lfirst(optcell));
+
+newLine:  		DefElem    *od = static_cast<DefElem *>(lfirst(optcell));
+
+criticalLine:  			DefElem    *def = lfirst(cell);
+
+replacementLine:  			DefElem    *def = static_cast<DefElem *>(lfirst(cell));
+
+newLine:  			DefElem    *def = static_cast<DefElem *>(lfirst(cell));
+
+criticalLine:  			CreateForeignTableStmt *cstmt = lfirst(lc2);
+
+replacementLine:  			CreateForeignTableStmt *cstmt = static_cast<CreateForeignTableStmt *>(lfirst(lc2));
+
+newLine:  			CreateForeignTableStmt *cstmt = static_cast<CreateForeignTableStmt *>(lfirst(lc2));
+
+criticalLine:  		CreateOpClassItem *item = lfirst(l);
+
+replacementLine:  		CreateOpClassItem *item = static_cast<CreateOpClassItem *>(lfirst(l));
+
+newLine:  		CreateOpClassItem *item = static_cast<CreateOpClassItem *>(lfirst(l));
+
+criticalLine:  		CreateOpClassItem *item = lfirst(l);
+
+replacementLine:  		CreateOpClassItem *item = static_cast<CreateOpClassItem *>(lfirst(l));
+
+newLine:  		CreateOpClassItem *item = static_cast<CreateOpClassItem *>(lfirst(l));
+
+criticalLine:  		CreateOpClassItem *item = lfirst(l);
+
+replacementLine:  		CreateOpClassItem *item = static_cast<CreateOpClassItem *>(lfirst(l));
+
+newLine:  		CreateOpClassItem *item = static_cast<CreateOpClassItem *>(lfirst(l));
+
+criticalLine:  		RoleSpec *spec = lfirst(cell);
+
+replacementLine:  		RoleSpec *spec = static_cast<RoleSpec *>(lfirst(cell));
+
+newLine:  		RoleSpec *spec = static_cast<RoleSpec *>(lfirst(cell));
+
+criticalLine:  			TypeName   *tn = lfirst(l);
+
+replacementLine:  			TypeName   *tn = static_cast<TypeName *>(lfirst(l));
+
+newLine:  			TypeName   *tn = static_cast<TypeName *>(lfirst(l));
+
+criticalLine:  		Node	   *expr = lfirst(l);
+
+replacementLine:  		Node	   *expr = static_cast<Node *>(lfirst(l));
+
+newLine:  		Node	   *expr = static_cast<Node *>(lfirst(l));
+
+criticalLine:  		ExprState  *n = lfirst(l);
+
+replacementLine:  		ExprState  *n = static_cast<ExprState *>(lfirst(l));
+
+newLine:  		ExprState  *n = static_cast<ExprState *>(lfirst(l));
+
+criticalLine:  			LabelProvider *lp = lfirst(lc);
+
+replacementLine:  			LabelProvider *lp = static_cast<LabelProvider *>(lfirst(lc));
+
+newLine:  			LabelProvider *lp = static_cast<LabelProvider *>(lfirst(lc));
+
+criticalLine:  		ColumnDef  *colDef = lfirst(listptr);
+
+replacementLine:  		ColumnDef  *colDef = static_cast<ColumnDef *>(lfirst(listptr));
+
+newLine:  		ColumnDef  *colDef = static_cast<ColumnDef *>(lfirst(listptr));
+
+criticalLine:  		RangeVar   *rv = lfirst(cell);
+
+replacementLine:  		RangeVar   *rv = static_cast<RangeVar *>(lfirst(cell));
+
+newLine:  		RangeVar   *rv = static_cast<RangeVar *>(lfirst(cell));
+
+criticalLine:  		ColumnDef  *coldef = lfirst(entry);
+
+replacementLine:  		ColumnDef  *coldef = static_cast<ColumnDef *>(lfirst(entry));
+
+newLine:  		ColumnDef  *coldef = static_cast<ColumnDef *>(lfirst(entry));
+
+criticalLine:  			ColumnDef  *restdef = lfirst(rest);
+
+replacementLine:  			ColumnDef  *restdef = static_cast<ColumnDef *>(lfirst(rest));
+
+newLine:  			ColumnDef  *restdef = static_cast<ColumnDef *>(lfirst(rest));
+
+criticalLine:  			ColumnDef  *newdef = lfirst(entry);
+
+replacementLine:  			ColumnDef  *newdef = static_cast<ColumnDef *>(lfirst(entry));
+
+newLine:  			ColumnDef  *newdef = static_cast<ColumnDef *>(lfirst(entry));
+
+criticalLine:  			ColumnDef  *def = lfirst(entry);
+
+replacementLine:  			ColumnDef  *def = static_cast<ColumnDef *>(lfirst(entry));
+
+newLine:  			ColumnDef  *def = static_cast<ColumnDef *>(lfirst(entry));
+
+criticalLine:  		ColumnDef  *def = lfirst(s);
+
+replacementLine:  		ColumnDef  *def = static_cast<ColumnDef *>(lfirst(s));
+
+newLine:  		ColumnDef  *def = static_cast<ColumnDef *>(lfirst(s));
+
+criticalLine:  			NewConstraint *con = lfirst(lcon);
+
+replacementLine:  			NewConstraint *con = static_cast<NewConstraint *>(lfirst(lcon));
+
+newLine:  			NewConstraint *con = static_cast<NewConstraint *>(lfirst(lcon));
+
+criticalLine:  		NewConstraint *con = lfirst(l);
+
+replacementLine:  		NewConstraint *con = static_cast<NewConstraint *>(lfirst(l));
+
+newLine:  		NewConstraint *con = static_cast<NewConstraint *>(lfirst(l));
+
+criticalLine:  		NewColumnValue *ex = lfirst(l);
+
+replacementLine:  		NewColumnValue *ex = static_cast<NewColumnValue *>(lfirst(l));
+
+newLine:  		NewColumnValue *ex = static_cast<NewColumnValue *>(lfirst(l));
+
+criticalLine:  					NewColumnValue *ex = lfirst(l);
+
+replacementLine:  					NewColumnValue *ex = static_cast<NewColumnValue *>(lfirst(l));
+
+newLine:  					NewColumnValue *ex = static_cast<NewColumnValue *>(lfirst(l));
+
+criticalLine:  				NewConstraint *con = lfirst(l);
+
+replacementLine:  				NewConstraint *con = static_cast<NewConstraint *>(lfirst(l));
+
+newLine:  				NewConstraint *con = static_cast<NewConstraint *>(lfirst(l));
+
+criticalLine:  			RangeVar   *constraint = lfirst(lc);
+
+replacementLine:  			RangeVar   *constraint = static_cast<RangeVar *>(lfirst(lc));
+
+newLine:  			RangeVar   *constraint = static_cast<RangeVar *>(lfirst(lc));
+
+criticalLine:  		Constraint *constr = lfirst(listptr);
+
+replacementLine:  		Constraint *constr = static_cast<Constraint *>(lfirst(listptr));
+
+newLine:  		Constraint *constr = static_cast<Constraint *>(lfirst(listptr));
+
+criticalLine:  		Constraint *constr = lfirst(listptr);
+
+replacementLine:  		Constraint *constr = static_cast<Constraint *>(lfirst(listptr));
+
+newLine:  		Constraint *constr = static_cast<Constraint *>(lfirst(listptr));
+
+criticalLine:  		RoleSpec   *oldrole = lfirst(item);
+
+replacementLine:  		RoleSpec   *oldrole = static_cast<RoleSpec *>(lfirst(item));
+
+newLine:  		RoleSpec   *oldrole = static_cast<RoleSpec *>(lfirst(item));
+
+criticalLine:  		RoleSpec   *rolspec = lfirst(item);
+
+replacementLine:  		RoleSpec   *rolspec = static_cast<RoleSpec *>(lfirst(item));
+
+newLine:  		RoleSpec   *rolspec = static_cast<RoleSpec *>(lfirst(item));
+
+criticalLine:  		RoleSpec   *memberRole = lfirst(specitem);
+
+replacementLine:  		RoleSpec   *memberRole = static_cast<RoleSpec *>(lfirst(specitem));
+
+newLine:  		RoleSpec   *memberRole = static_cast<RoleSpec *>(lfirst(specitem));
+
+criticalLine:  		RoleSpec   *memberRole = lfirst(specitem);
+
+replacementLine:  		RoleSpec   *memberRole = static_cast<RoleSpec *>(lfirst(specitem));
+
+newLine:  		RoleSpec   *memberRole = static_cast<RoleSpec *>(lfirst(specitem));
+
+criticalLine:  		TargetEntry *tle = lfirst(t);
+
+replacementLine:  		TargetEntry *tle = static_cast<TargetEntry *>(lfirst(t));
+
+newLine:  		TargetEntry *tle = static_cast<TargetEntry *>(lfirst(t));
+
+criticalLine:  			TargetEntry *tle = lfirst(t);
+
+replacementLine:  			TargetEntry *tle = static_cast<TargetEntry *>(lfirst(t));
+
+newLine:  			TargetEntry *tle = static_cast<TargetEntry *>(lfirst(t));
+
+criticalLine:  				TargetEntry *tle = lfirst(t);
+
+replacementLine:  				TargetEntry *tle = static_cast<TargetEntry *>(lfirst(t));
+
+newLine:  				TargetEntry *tle = static_cast<TargetEntry *>(lfirst(t));
+
+criticalLine:  		TargetEntry *tle = lfirst(t);
+
+replacementLine:  		TargetEntry *tle = static_cast<TargetEntry *>(lfirst(t));
+
+newLine:  		TargetEntry *tle = static_cast<TargetEntry *>(lfirst(t));
+
+criticalLine:  	ExprState  *clause = linitial(notclause->args);
+
+replacementLine:  	ExprState  *clause = static_cast<ExprState *>(linitial(notclause->args));
+
+newLine:  	ExprState  *clause = static_cast<ExprState *>(linitial(notclause->args));
+
+criticalLine:  		CaseWhenState *wclause = lfirst(clause);
+
+replacementLine:  		CaseWhenState *wclause = static_cast<CaseWhenState *>(lfirst(clause));
+
+newLine:  		CaseWhenState *wclause = static_cast<CaseWhenState *>(lfirst(clause));
+
+criticalLine:  		TargetEntry *tle = lfirst(l);
+
+replacementLine:  		TargetEntry *tle = static_cast<TargetEntry *>(lfirst(l));
+
+newLine:  		TargetEntry *tle = static_cast<TargetEntry *>(lfirst(l));
+
+criticalLine:  		Node	   *e = lfirst(lc);
+
+replacementLine:  		Node	   *e = static_cast<Node *>(lfirst(lc));
+
+newLine:  		Node	   *e = static_cast<Node *>(lfirst(lc));
+
+criticalLine:  			Agg	   *agg = lfirst(l);
+
+replacementLine:  			Agg	   *agg = static_cast<Agg *>(lfirst(l));
+
+newLine:  			Agg	   *agg = static_cast<Agg *>(lfirst(l));
+
+criticalLine:  		RangeTblEntry *rte = lfirst(l);
+
+replacementLine:  		RangeTblEntry *rte = static_cast<RangeTblEntry *>(lfirst(l));
+
+newLine:  		RangeTblEntry *rte = static_cast<RangeTblEntry *>(lfirst(l));
+
+criticalLine:  		Node	   *uniqexpr = lfirst(l);
+
+replacementLine:  		Node	   *uniqexpr = static_cast<Node *>(lfirst(l));
+
+newLine:  		Node	   *uniqexpr = static_cast<Node *>(lfirst(l));
+
+criticalLine:  		Node	   *uniqexpr = lfirst(l);
+
+replacementLine:  		Node	   *uniqexpr = static_cast<Node *>(lfirst(l));
+
+newLine:  		Node	   *uniqexpr = static_cast<Node *>(lfirst(l));
+
+criticalLine:  				SortGroupClause *gc = lfirst(lc);
+
+replacementLine:  				SortGroupClause *gc = static_cast<SortGroupClause *>(lfirst(lc));
+
+newLine:  				SortGroupClause *gc = static_cast<SortGroupClause *>(lfirst(lc));
+
+criticalLine:  					SortGroupClause *gc = lfirst(lc);
+
+replacementLine:  					SortGroupClause *gc = static_cast<SortGroupClause *>(lfirst(lc));
+
+newLine:  					SortGroupClause *gc = static_cast<SortGroupClause *>(lfirst(lc));
+
+criticalLine:  						List   *gset = lfirst(lc3);
+
+replacementLine:  						List   *gset = static_cast<List *>(lfirst(lc3));
+
+newLine:  						List   *gset = static_cast<List *>(lfirst(lc3));
+
+criticalLine:  					SortGroupClause *gc = lfirst(lc);
+
+replacementLine:  					SortGroupClause *gc = static_cast<SortGroupClause *>(lfirst(lc));
+
+newLine:  					SortGroupClause *gc = static_cast<SortGroupClause *>(lfirst(lc));
+
+criticalLine:  		SortGroupClause *clause = lfirst(lc);
+
+replacementLine:  		SortGroupClause *clause = static_cast<SortGroupClause *>(lfirst(lc));
+
+newLine:  		SortGroupClause *clause = static_cast<SortGroupClause *>(lfirst(lc));
+
+criticalLine:  		List	   *groupClause = linitial(rollup_groupclauses);
+
+replacementLine:  		List	   *groupClause = static_cast<List *>(linitial(rollup_groupclauses));
+
+newLine:  		List	   *groupClause = static_cast<List *>(linitial(rollup_groupclauses));
+
+criticalLine:  		List	   *gsets = linitial(rollup_lists);
+
+replacementLine:  		List	   *gsets = static_cast<List *>(linitial(rollup_lists));
+
+newLine:  		List	   *gsets = static_cast<List *>(linitial(rollup_lists));
+
+criticalLine:  		List	   *groupClause = linitial(rollup_groupclauses);
+
+replacementLine:  		List	   *groupClause = static_cast<List *>(linitial(rollup_groupclauses));
+
+newLine:  		List	   *groupClause = static_cast<List *>(linitial(rollup_groupclauses));
+
+criticalLine:  			Plan   *subplan = lfirst(lc);
+
+replacementLine:  			Plan   *subplan = static_cast<Plan *>(lfirst(lc));
+
+newLine:  			Plan   *subplan = static_cast<Plan *>(lfirst(lc));
+
+criticalLine:  		List	   *candidate = lfirst(lc);
+
+replacementLine:  		List	   *candidate = static_cast<List *>(lfirst(lc));
+
+newLine:  		List	   *candidate = static_cast<List *>(lfirst(lc));
+
+criticalLine:  		List   *candidate = lfirst(lc);
+
+replacementLine:  		List   *candidate = static_cast<List *>(lfirst(lc));
+
+newLine:  		List   *candidate = static_cast<List *>(lfirst(lc));
+
+criticalLine:  		TargetEntry *te = linitial(plan->targetlist);
+
+replacementLine:  		TargetEntry *te = static_cast<TargetEntry *>(linitial(plan->targetlist));
+
+newLine:  		TargetEntry *te = static_cast<TargetEntry *>(linitial(plan->targetlist));
+
+criticalLine:  		TargetEntry *te = linitial(plan->targetlist);
+
+replacementLine:  		TargetEntry *te = static_cast<TargetEntry *>(linitial(plan->targetlist));
+
+newLine:  		TargetEntry *te = static_cast<TargetEntry *>(linitial(plan->targetlist));
+
+criticalLine:  		Node	   *leftarg = linitial(expr->args);
+
+replacementLine:  		Node	   *leftarg = static_cast<Node *>(linitial(expr->args));
+
+newLine:  		Node	   *leftarg = static_cast<Node *>(linitial(expr->args));
+
+criticalLine:  			reduce_outer_joins_state *sub_state = lfirst(s);
+
+replacementLine:  			reduce_outer_joins_state *sub_state = static_cast<reduce_outer_joins_state *>(lfirst(s));
+
+newLine:  			reduce_outer_joins_state *sub_state = static_cast<reduce_outer_joins_state *>(lfirst(s));
+
+criticalLine:  		reduce_outer_joins_state *left_state = linitial(state->sub_states);
+
+replacementLine:  		reduce_outer_joins_state *left_state = static_cast<reduce_outer_joins_state *>(linitial(state->sub_states));
+
+newLine:  		reduce_outer_joins_state *left_state = static_cast<reduce_outer_joins_state *>(linitial(state->sub_states));
+
+criticalLine:  		reduce_outer_joins_state *right_state = lsecond(state->sub_states);
+
+replacementLine:  		reduce_outer_joins_state *right_state = static_cast<reduce_outer_joins_state *>(lsecond(state->sub_states));
+
+newLine:  		reduce_outer_joins_state *right_state = static_cast<reduce_outer_joins_state *>(lsecond(state->sub_states));
+
+criticalLine:  		Node	   *param = lfirst(arg);
+
+replacementLine:  		Node	   *param = static_cast<Node *>(lfirst(arg));
+
+newLine:  		Node	   *param = static_cast<Node *>(lfirst(arg));
+
+criticalLine:  		OpBtreeInterpretation *pred_op_info = lfirst(lcp);
+
+replacementLine:  		OpBtreeInterpretation *pred_op_info = static_cast<OpBtreeInterpretation *>(lfirst(lcp));
+
+newLine:  		OpBtreeInterpretation *pred_op_info = static_cast<OpBtreeInterpretation *>(lfirst(lcp));
+
+criticalLine:  			OpBtreeInterpretation *clause_op_info = lfirst(lcc);
+
+replacementLine:  			OpBtreeInterpretation *clause_op_info = static_cast<OpBtreeInterpretation *>(lfirst(lcc));
+
+newLine:  			OpBtreeInterpretation *clause_op_info = static_cast<OpBtreeInterpretation *>(lfirst(lcc));
+
+criticalLine:  			List	   *sublist = lfirst(lc2);
+
+replacementLine:  			List	   *sublist = static_cast<List *>(lfirst(lc2));
+
+newLine:  			List	   *sublist = static_cast<List *>(lfirst(lc2));
+
+criticalLine:  		Node	   *n = lfirst(fl);
+
+replacementLine:  		Node	   *n = static_cast<Node *>(lfirst(fl));
+
+newLine:  		Node	   *n = static_cast<Node *>(lfirst(fl));
+
+criticalLine:  		TargetEntry *tle = lfirst(l);
+
+replacementLine:  		TargetEntry *tle = static_cast<TargetEntry *>(lfirst(l));
+
+newLine:  		TargetEntry *tle = static_cast<TargetEntry *>(lfirst(l));
+
+criticalLine:  			TargetEntry *tle = lfirst(gl);
+
+replacementLine:  			TargetEntry *tle = static_cast<TargetEntry *>(lfirst(gl));
+
+newLine:  			TargetEntry *tle = static_cast<TargetEntry *>(lfirst(gl));
+
+criticalLine:  				Node   *expr = lfirst(lc);
+
+replacementLine:  				Node   *expr = static_cast<Node *>(lfirst(lc));
+
+newLine:  				Node   *expr = static_cast<Node *>(lfirst(lc));
+
+criticalLine:  							TargetEntry *tle = lfirst(gl);
+
+replacementLine:  							TargetEntry *tle = static_cast<TargetEntry *>(lfirst(gl));
+
+newLine:  							TargetEntry *tle = static_cast<TargetEntry *>(lfirst(gl));
+
+criticalLine:  						TargetEntry *tle = lfirst(gl);
+
+replacementLine:  						TargetEntry *tle = static_cast<TargetEntry *>(lfirst(gl));
+
+newLine:  						TargetEntry *tle = static_cast<TargetEntry *>(lfirst(gl));
+
+criticalLine:  		GroupingSet *gs = lfirst(lc);
+
+replacementLine:  		GroupingSet *gs = static_cast<GroupingSet *>(lfirst(lc));
+
+newLine:  		GroupingSet *gs = static_cast<GroupingSet *>(lfirst(lc));
+
+criticalLine:  		List	   *p = lfirst(lc);
+
+replacementLine:  		List	   *p = static_cast<List *>(lfirst(lc));
+
+newLine:  		List	   *p = static_cast<List *>(lfirst(lc));
+
+criticalLine:  			List	   *q = lfirst(lc2);
+
+replacementLine:  			List	   *q = static_cast<List *>(lfirst(lc2));
+
+newLine:  			List	   *q = static_cast<List *>(lfirst(lc2));
+
+criticalLine:  		Node   *n = lfirst(gl);
+
+replacementLine:  		Node   *n = static_cast<Node *>(lfirst(gl));
+
+newLine:  		Node   *n = static_cast<Node *>(lfirst(gl));
+
+criticalLine:  		Node	   *n = lfirst(i);
+
+replacementLine:  		Node	   *n = static_cast<Node *>(lfirst(i));
+
+newLine:  		Node	   *n = static_cast<Node *>(lfirst(i));
+
+criticalLine:  			OpBtreeInterpretation *opinfo = lfirst(j);
+
+replacementLine:  			OpBtreeInterpretation *opinfo = static_cast<OpBtreeInterpretation *>(lfirst(j));
+
+newLine:  			OpBtreeInterpretation *opinfo = static_cast<OpBtreeInterpretation *>(lfirst(j));
+
+criticalLine:  			OpBtreeInterpretation *opinfo = lfirst(j);
+
+replacementLine:  			OpBtreeInterpretation *opinfo = static_cast<OpBtreeInterpretation *>(lfirst(j));
+
+newLine:  			OpBtreeInterpretation *opinfo = static_cast<OpBtreeInterpretation *>(lfirst(j));
+
+criticalLine:  		Node	   *arg = lfirst(l);
+
+replacementLine:  		Node	   *arg = static_cast<Node *>(lfirst(l));
+
+newLine:  		Node	   *arg = static_cast<Node *>(lfirst(l));
+
+criticalLine:  		Node	   *arg = lfirst(l);
+
+replacementLine:  		Node	   *arg = static_cast<Node *>(lfirst(l));
+
+newLine:  		Node	   *arg = static_cast<Node *>(lfirst(l));
+
+criticalLine:  				Node	   *arg1 = linitial(fargs);
+
+replacementLine:  				Node	   *arg1 = static_cast<Node *>(linitial(fargs));
+
+newLine:  				Node	   *arg1 = static_cast<Node *>(linitial(fargs));
+
+criticalLine:  			RangeTblEntry *rte = lfirst(rtable);
+
+replacementLine:  			RangeTblEntry *rte = static_cast<RangeTblEntry *>(lfirst(rtable));
+
+newLine:  			RangeTblEntry *rte = static_cast<RangeTblEntry *>(lfirst(rtable));
+
+criticalLine:  		Node	   *n = lfirst(i);
+
+replacementLine:  		Node	   *n = static_cast<Node *>(lfirst(i));
+
+newLine:  		Node	   *n = static_cast<Node *>(lfirst(i));
+
+criticalLine:  					Node	   *i = lfirst(l);
+
+replacementLine:  					Node	   *i = static_cast<Node *>(lfirst(l));
+
+newLine:  					Node	   *i = static_cast<Node *>(lfirst(l));
+
+criticalLine:  					Node	   *i = lfirst(l);
+
+replacementLine:  					Node	   *i = static_cast<Node *>(lfirst(l));
+
+newLine:  					Node	   *i = static_cast<Node *>(lfirst(l));
+
+criticalLine:  		Node	   *element = lfirst(elements);
+
+replacementLine:  		Node	   *element = static_cast<Node *>(lfirst(elements));
+
+newLine:  		Node	   *element = static_cast<Node *>(lfirst(elements));
+
+criticalLine:  			IndexStmt  *priorindex = lfirst(k);
+
+replacementLine:  			IndexStmt  *priorindex = static_cast<IndexStmt *>(lfirst(k));
+
+newLine:  			IndexStmt  *priorindex = static_cast<IndexStmt *>(lfirst(k));
+
+criticalLine:  		Node	   *element = lfirst(elements);
+
+replacementLine:  		Node	   *element = static_cast<Node *>(lfirst(elements));
+
+newLine:  		Node	   *element = static_cast<Node *>(lfirst(elements));
+
+criticalLine:  		avw_dbase  *avdb = lfirst(cell);
+
+replacementLine:  		avw_dbase  *avdb = static_cast<avw_dbase *>(lfirst(cell));
+
+newLine:  		avw_dbase  *avdb = static_cast<avw_dbase *>(lfirst(cell));
+
+criticalLine:  		avw_dbase  *tmp = lfirst(cell);
+
+replacementLine:  		avw_dbase  *tmp = static_cast<avw_dbase *>(lfirst(cell));
+
+newLine:  		avw_dbase  *tmp = static_cast<avw_dbase *>(lfirst(cell));
+
+criticalLine:  			char	   *fname = lfirst(lc);
+
+replacementLine:  			char	   *fname = static_cast<char *>(lfirst(lc));
+
+newLine:  			char	   *fname = static_cast<char *>(lfirst(lc));
+
+criticalLine:  		tablespaceinfo *ti = lfirst(lc);
+
+replacementLine:  		tablespaceinfo *ti = static_cast<tablespaceinfo *>(lfirst(lc));
+
+newLine:  		tablespaceinfo *ti = static_cast<tablespaceinfo *>(lfirst(lc));
+
+criticalLine:  			RangeTblRef *rtr = lfirst(l);
+
+replacementLine:  			RangeTblRef *rtr = static_cast<RangeTblRef *>(lfirst(l));
+
+newLine:  			RangeTblRef *rtr = static_cast<RangeTblRef *>(lfirst(l));
+
+criticalLine:  			Query	   *rule_action = lfirst(r);
+
+replacementLine:  			Query	   *rule_action = static_cast<Query *>(lfirst(r));
+
+newLine:  			Query	   *rule_action = static_cast<Query *>(lfirst(r));
+
+criticalLine:  		LOCKTAG    *locktag = lfirst(lc);
+
+replacementLine:  		LOCKTAG    *locktag = static_cast<LOCKTAG *>(lfirst(lc));
+
+newLine:  		LOCKTAG    *locktag = static_cast<LOCKTAG *>(lfirst(lc));
+
+criticalLine:  		VirtualTransactionId *lockholders = lfirst(lc);
+
+replacementLine:  		VirtualTransactionId *lockholders = static_cast<VirtualTransactionId *>(lfirst(lc));
+
+newLine:  		VirtualTransactionId *lockholders = static_cast<VirtualTransactionId *>(lfirst(lc));
+
+criticalLine:                  DefElem    *elem = lfirst(cell);
+
+replacementLine:                  DefElem    *elem = static_cast<DefElem *>(lfirst(cell));
+
+newLine:                  DefElem    *elem = static_cast<DefElem *>(lfirst(cell));
+
+criticalLine:  				GroupingSet *grp = lfirst(l);
+
+replacementLine:  				GroupingSet *grp = static_cast<GroupingSet *>(lfirst(l));
+
+newLine:  				GroupingSet *grp = static_cast<GroupingSet *>(lfirst(l));
+
+criticalLine:  				Node	   *first_arg = linitial(expr->args);
+
+replacementLine:  				Node	   *first_arg = static_cast<Node *>(linitial(expr->args));
+
+newLine:  				Node	   *first_arg = static_cast<Node *>(linitial(expr->args));
+
+criticalLine:  		Node	   *arg = linitial(expr->args);
+
+replacementLine:  		Node	   *arg = static_cast<Node *>(linitial(expr->args));
+
+newLine:  		Node	   *arg = static_cast<Node *>(linitial(expr->args));
+
+found:  117
+fixed:  104
+unfixed:  13
