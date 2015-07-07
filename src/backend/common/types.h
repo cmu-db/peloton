@@ -381,7 +381,7 @@ enum ResultType {
 //===--------------------------------------------------------------------===//
 
 enum PostgresConstraintType{
-  POSTGRES_CONSTR_NULL,                 /* not standard SQL, but a lot of people * expect it */
+  POSTGRES_CONSTRAINT_NULL,                 /* not standard SQL, but a lot of people * expect it */
 
   POSTGRES_CONSTRAINT_NOTNULL,
   POSTGRES_CONSTRAINT_DEFAULT,
@@ -399,13 +399,14 @@ enum PostgresConstraintType{
 enum ConstraintType {
   CONSTRAINT_TYPE_INVALID    = 0, // invalid
 
-  CONSTRAINT_TYPE_NOTNULL    = 1, // notnull 
-  CONSTRAINT_TYPE_DEFAULT    = 2, // default 
-  CONSTRAINT_TYPE_CHECK      = 3, // check 
-  CONSTRAINT_TYPE_PRIMARY    = 4, // primary key
-  CONSTRAINT_TYPE_UNIQUE     = 5, // unique 
-  CONSTRAINT_TYPE_FOREIGN    = 6, // foreign key
-  CONSTRAINT_TYPE_EXCLUSION  = 7  // foreign key
+  CONSTRAINT_TYPE_NULL       = 1, // notnull 
+  CONSTRAINT_TYPE_NOTNULL    = 2, // notnull 
+  CONSTRAINT_TYPE_DEFAULT    = 3, // default 
+  CONSTRAINT_TYPE_CHECK      = 4, // check 
+  CONSTRAINT_TYPE_PRIMARY    = 5, // primary key
+  CONSTRAINT_TYPE_UNIQUE     = 6, // unique 
+  CONSTRAINT_TYPE_FOREIGN    = 7, // foreign key
+  CONSTRAINT_TYPE_EXCLUSION  = 8  // foreign key
 };
 
 

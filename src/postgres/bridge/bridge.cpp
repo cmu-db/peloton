@@ -583,6 +583,7 @@ bool BootstrapPeloton(void){
         //===--------------------------------------------------------------------===//
         // Create Peloton Structures
         //===--------------------------------------------------------------------===//
+        printf("Start creating Peloton Structures...\n");
 
         switch(relation_kind){
 
@@ -705,8 +706,7 @@ bool BootstrapPeloton(void){
                                                 index_info.GetMethodType(),
                                                 index_info.GetType(),
                                                 index_info.IsUnique(),
-                                                index_info.GetKeyColumnNames(),
-                                                true);
+                                                index_info.GetKeyColumnNames());
 
     if(status == true) {
       elog(LOG, "Create Index \"%s\" in Peloton", index_info.GetIndexName().c_str());
