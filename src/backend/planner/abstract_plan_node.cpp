@@ -37,7 +37,7 @@ void AbstractPlanNode::AddChild(AbstractPlanNode* child) {
     children_.push_back(child);
 }
 
-std::vector<AbstractPlanNode*>& AbstractPlanNode::GetChildren() {
+const std::vector<AbstractPlanNode*>& AbstractPlanNode::GetChildren() const{
     return children_;
 }
 

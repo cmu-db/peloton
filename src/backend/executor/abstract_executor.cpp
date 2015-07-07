@@ -40,6 +40,10 @@ void AbstractExecutor::AddChild(AbstractExecutor *child) {
   children_.push_back(child);
 }
 
+const std::vector<AbstractExecutor*>& AbstractExecutor::GetChildren() const {
+  return children_;
+}
+
 /**
  * @brief Initializes the executor.
  *
