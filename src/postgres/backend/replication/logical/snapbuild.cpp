@@ -440,7 +440,7 @@ SnapBuildBuildSnapshot(SnapBuild *builder, TransactionId xid)
 		+ sizeof(TransactionId) * builder->committed.xcnt
 		+ sizeof(TransactionId) * 1 /* toplevel xid */ ;
 
-	snapshot = MemoryContextAllocZero(builder->context, ssize);
+	snapshot = static_cast<Snapshot>(MemoryContextAllocZero(builder->context, ssize));
 
 	snapshot->satisfies = HeapTupleSatisfiesHistoricMVCC;
 
@@ -740,8 +740,8 @@ SnapBuildTxnIsRunning(SnapBuild *builder, TransactionId xid)
 		NormalTransactionIdPrecedes(xid, builder->running.xmax))
 	{
 		TransactionId *search =
-		bsearch(&xid, builder->running.xip, builder->running.xcnt_space,
-				sizeof(TransactionId), xidComparator);
+				static_cast<TransactionId *>(bsearch(&xid, builder->running.xip, builder->running.xcnt_space,
+											 sizeof(TransactionId), xidComparator));
 
 		if (search != NULL)
 		{
@@ -819,8 +819,8 @@ SnapBuildAddCommittedTxn(SnapBuild *builder, TransactionId xid)
 		elog(DEBUG1, "increasing space for committed transactions to %u",
 			 (uint32) builder->committed.xcnt_space);
 
-		builder->committed.xip = repalloc(builder->committed.xip,
-					  builder->committed.xcnt_space * sizeof(TransactionId));
+		builder->committed.xip = static_cast<TransactionId *>(repalloc(builder->committed.xip,
+					  	  	  	  	  	  	  	  	  	  	  builder->committed.xcnt_space * sizeof(TransactionId)));
 	}
 
 	/*
@@ -849,8 +849,8 @@ SnapBuildPurgeCommittedTxn(SnapBuild *builder)
 
 	/* TODO: Neater algorithm than just copying and iterating? */
 	workspace =
-		MemoryContextAlloc(builder->context,
-						   builder->committed.xcnt * sizeof(TransactionId));
+			static_cast<TransactionId *>(MemoryContextAlloc(builder->context,
+						   builder->committed.xcnt * sizeof(TransactionId)));
 
 	/* copy xids that still are interesting to workspace */
 	for (off = 0; off < builder->committed.xcnt; off++)
@@ -1312,8 +1312,8 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 		builder->running.xcnt = running->xcnt;
 		builder->running.xcnt_space = running->xcnt;
 		builder->running.xip =
-			MemoryContextAlloc(builder->context,
-							   builder->running.xcnt * sizeof(TransactionId));
+				static_cast<TransactionId *>(MemoryContextAlloc(builder->context,
+							   	   	   	   	   builder->running.xcnt * sizeof(TransactionId)));
 		memcpy(builder->running.xip, running->xids,
 			   builder->running.xcnt * sizeof(TransactionId));
 
@@ -1524,7 +1524,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 		sizeof(TransactionId) * builder->running.xcnt_space +
 		sizeof(TransactionId) * builder->committed.xcnt;
 
-	ondisk_c = MemoryContextAllocZero(builder->context, needed_length);
+	ondisk_c = static_cast<char *>(MemoryContextAllocZero(builder->context, needed_length));
 	ondisk = (SnapBuildOnDisk *) ondisk_c;
 	ondisk->magic = SNAPBUILD_MAGIC;
 	ondisk->version = SNAPBUILD_VERSION;
@@ -1705,7 +1705,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 
 	/* restore running xacts information */
 	sz = sizeof(TransactionId) * ondisk.builder.running.xcnt_space;
-	ondisk.builder.running.xip = MemoryContextAllocZero(builder->context, sz);
+	ondisk.builder.running.xip = static_cast<TransactionId *>(MemoryContextAllocZero(builder->context, sz));
 	readBytes = read(fd, ondisk.builder.running.xip, sz);
 	if (readBytes != sz)
 	{
@@ -1719,7 +1719,7 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 
 	/* restore committed xacts information */
 	sz = sizeof(TransactionId) * ondisk.builder.committed.xcnt;
-	ondisk.builder.committed.xip = MemoryContextAllocZero(builder->context, sz);
+	ondisk.builder.committed.xip = static_cast<TransactionId *>(MemoryContextAllocZero(builder->context, sz));
 	readBytes = read(fd, ondisk.builder.committed.xip, sz);
 	if (readBytes != sz)
 	{
