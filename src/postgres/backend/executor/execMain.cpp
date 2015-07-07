@@ -1558,7 +1558,9 @@ ExecutePlan(EState *estate,
 		slot = ExecProcNode(planstate);
 
 		// TODO: Peloton Changes
-		peloton_send_dml(status, planstate, sendTuples, dest);
+		peloton_send_dml(status, planstate, sendTuples, dest,
+		                 TopTransactionContext,
+		                 CurTransactionContext);
 
 		/*
 		 * if the tuple is null, then we assume there is nothing more to
