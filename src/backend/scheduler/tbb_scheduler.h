@@ -13,7 +13,7 @@
 #pragma once
 
 #include "backend/scheduler/abstract_scheduler.h"
-#include "backend/scheduler/abstract_task.h"
+#include "backend/scheduler/tbb_task.h"
 #include "tbb/task_scheduler_init.h"
 
 namespace peloton {
