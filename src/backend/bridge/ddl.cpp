@@ -259,14 +259,10 @@ void DDL::ProcessUtility(Node *parsetree,
 std::vector<catalog::ColumnInfo> DDL::ConstructColumnInfoByParsingCreateStmt( CreateStmt* Cstmt, std::vector<std::string>& reference_table_names){
   assert(Cstmt);
 
-  // Get the column list from the create statement
-  List* ColumnList = (List*)(Cstmt->tableElts);
-  std::vector<catalog::ColumnInfo> column_infos;
-
+ //===--------------------------------------------------------------------===//
+  // Table-level Constraint Information - multi columns check constraint,
+  //                                      multi column foreign table references
   //===--------------------------------------------------------------------===//
-  // Table-level constraints - multi column check and foreign tables
-  //===--------------------------------------------------------------------===//
-  // Parse multi column constraints
 /*
   if( Cstmt->constraints != NULL){
     ListCell* constraint;
@@ -294,17 +290,18 @@ std::vector<catalog::ColumnInfo> DDL::ConstructColumnInfoByParsingCreateStmt( Cr
         printf("Constraint name %s \n", reference_table_name.c_str() );
       }
 
-      // Check
-	    // ConstrCheck *check = rel->rd_att->constr->check;
-      // Get raw expr node, 
-      if( ConstraintNode->raw_expr != NULL ){
-        printf("raw expr is not null \n");
-      }
-
       printf("\n");
     }
   }
 */
+
+  //===--------------------------------------------------------------------===//
+  // Column Infomation 
+  //===--------------------------------------------------------------------===//
+
+  // Get the column list from the create statement
+  List* ColumnList = (List*)(Cstmt->tableElts);
+  std::vector<catalog::ColumnInfo> column_infos;
 
   // Parse the CreateStmt and construct ColumnInfo
   ListCell   *entry;
@@ -345,9 +342,6 @@ std::vector<catalog::ColumnInfo> DDL::ConstructColumnInfoByParsingCreateStmt( Cr
     int column_length = typelen;
     std::string column_name = coldef->colname;
 
-    //===--------------------------------------------------------------------===//
-    // Column-level constraints - default value
-    //===--------------------------------------------------------------------===//
     std::vector<catalog::Constraint> column_constraints;
 
     if( coldef->raw_default != NULL){
@@ -356,7 +350,7 @@ std::vector<catalog::ColumnInfo> DDL::ConstructColumnInfoByParsingCreateStmt( Cr
     };
 
     //===--------------------------------------------------------------------===//
-    // Atomic-level constraints - TODO :: Rename
+    // Constraint Information
     //===--------------------------------------------------------------------===//
 
     if( coldef->constraints != NULL){

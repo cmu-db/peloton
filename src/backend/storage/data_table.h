@@ -12,8 +12,9 @@
 
 #include "backend/storage/abstract_table.h"
 #include "backend/storage/backend_vm.h"
-
 #include "backend/index/index.h"
+
+#include "nodes/nodes.h" // TODO :: REMOVE, just for raw expr
 
 #include <string>
 
@@ -75,6 +76,9 @@ public:
 
     // Set the index for PrimaryKey
     void SetPrimaryIndex(index::Index *index);
+
+    // Set raw check expr
+    void SetRawCheckExpr(Node* _raw_check_expr);
 
     // Get the PrimaryKey index
     index::Index* GetPrimaryIndex();
@@ -162,6 +166,9 @@ protected:
 
     // Index for Primary key
     index::Index* PrimaryKey_Index = nullptr;
+
+    // Raw check expr
+    Node* raw_check_expr;
 
 };
 
