@@ -808,8 +808,7 @@ peloton_send_ddl(Peloton_Status *status,
                  Node *parsetree,
                  const char *queryString,
                  MemoryContext top_transaction_context,
-                 MemoryContext cur_transaction_context,
-                 Oid *relation_oid_ptr)
+                 MemoryContext cur_transaction_context)
 {
   Peloton_MsgDDL msg;
   MemoryContext oldcontext;
@@ -824,11 +823,6 @@ peloton_send_ddl(Peloton_Status *status,
   msg.m_queryString = queryString;
   msg.m_top_transaction_context = top_transaction_context;
   msg.m_cur_transaction_context = cur_transaction_context;
-
-  if(relation_oid_ptr != NULL)
-    msg.m_relation_oid = *relation_oid_ptr;
-  else
-    msg.m_relation_oid = InvalidOid;
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -883,11 +877,10 @@ peloton_process_ddl(Peloton_MsgDDL *msg, int len)
 
     TopTransactionContext = msg->m_top_transaction_context;
     CurTransactionContext = msg->m_cur_transaction_context;
-    relation_oid = msg->m_relation_oid;
 
     if(parsetree != NULL)
     {
-      peloton::bridge::DDL::ProcessUtility(parsetree, queryString, relation_oid);
+      peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
     }
   }
 

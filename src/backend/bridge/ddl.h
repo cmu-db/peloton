@@ -120,20 +120,21 @@ class DDL {
   //===--------------------------------------------------------------------===//
 
   static void ProcessUtility(Node *parsetree,
-                             const char *queryString,
-                             Oid relation_oid);
+                             const char *queryString );
 
-  static std::vector<catalog::ColumnInfo> ConstructColumnInfoByParsingCreateStmt( CreateStmt* Cstmt, std::vector<std::string>& reference_table_names );
-  static IndexInfo* ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt );
+  static std::vector<catalog::ColumnInfo> ConstructColumnInfoByParsingCreateStmt(CreateStmt* Cstmt,
+                                                                                 std::vector<std::string>& reference_table_names);
+
+  static IndexInfo* ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt);
 
   //===--------------------------------------------------------------------===//
   // Create Object
   //===--------------------------------------------------------------------===//
 
-  static bool CreateTable( Oid relation_oid,
-                           std::string table_name,
-                           std::vector<catalog::ColumnInfo> column_infos,
-                           catalog::Schema *schema = NULL);
+  static bool CreateTable(Oid relation_oid,
+                          std::string table_name,
+                          std::vector<catalog::ColumnInfo> column_infos,
+                          catalog::Schema *schema = NULL);
 
   static bool CreateIndex(std::string index_name,
                           std::string table_name,
@@ -141,7 +142,7 @@ class DDL {
                           IndexType  index_type,
                           bool unique_keys,
                           std::vector<std::string> key_column_names,
-                          bool bootstrap = false );
+                          bool bootstrap = false);
 
 
   //===--------------------------------------------------------------------===//

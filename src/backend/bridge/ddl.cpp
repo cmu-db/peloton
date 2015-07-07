@@ -45,8 +45,7 @@ static std::vector<IndexInfo> index_infos;
  * @param parsetree Parse tree
  */
 void DDL::ProcessUtility(Node *parsetree,
-                         const char *queryString,
-                         Oid relation_oid){
+                         const char *queryString){
   assert(parsetree != nullptr);
   assert(queryString != nullptr);
 
@@ -58,10 +57,6 @@ void DDL::ProcessUtility(Node *parsetree,
     {
       List     *stmts;
       ListCell   *l;
-
-      assert(CurrentResourceOwner != NULL);
-
-      std::cout << "Relation Oid :: " << relation_oid << "\n";
 
       /* Run parse analysis ... */
       stmts = transformCreateStmt((CreateStmt *) parsetree,
@@ -77,6 +72,10 @@ void DDL::ProcessUtility(Node *parsetree,
           List* schema = (List*)(Cstmt->tableElts);
 
           char* relation_name = Cstmt->relation->relname;
+          Oid relation_oid = ((CreateStmt *)parsetree)->relation_id;
+
+          std::cout << "Relation Oid :: " << relation_oid << "\n";
+
           std::vector<peloton::catalog::ColumnInfo> column_infos;
           std::vector<std::string> reference_table_names;
 
