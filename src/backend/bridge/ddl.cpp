@@ -142,6 +142,20 @@ void DDL::ProcessUtility(Node *parsetree,
           } // DEBUGGING CREATE TABLE
         }
       }
+      // In Postgres, indexes such as primary key index, unique indexy are created before table.
+      // In Peloton, however, the table is required to create an index. For that reason, index information
+      // was stored before and now it will be created. 
+      for( auto index_info : index_infos){
+        bool status;
+        status = peloton::bridge::DDL::CreateIndex( index_info.GetIndexName(),
+            index_info.GetTableName(),
+            index_info.GetMethodType(), 
+            index_info.GetType(),
+            index_info.IsUnique(),
+            index_info.GetKeyColumnNames());
+        fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info.GetIndexName().c_str(), status);
+      }
+      index_infos.clear();
     }
 
 
@@ -377,6 +391,7 @@ bool DDL::CreateTable( Oid relation_oid,
   assert( !table_name.empty() );
   assert( column_infos.size() > 0 || schema != NULL );
 
+
   Oid database_oid = GetCurrentDatabaseOid();
   if(database_oid == InvalidOid)
     return false;
@@ -391,7 +406,6 @@ bool DDL::CreateTable( Oid relation_oid,
   // Build a table from schema
   storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, relation_oid, schema, table_name);
   catalog::Schema* our_schema = table->GetSchema();
-
 
   /* DEBUGGING */
   //std::cout << "table name : " << table_name << "\n" << *our_schema << std::endl;
@@ -473,6 +487,7 @@ bool DDL::CreateIndex(std::string index_name,
   assert( database_oid );
 
   oid_t table_oid = GetRelationOid(table_name.c_str());
+  assert( table_oid );
 
   // Get the table location from manager
   auto table = catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
@@ -484,7 +499,7 @@ bool DDL::CreateIndex(std::string index_name,
 
   // Based on the key column info, get the oid of the given 'key' columns in the tuple schema
   for( auto key_column_name : key_column_names ){
-    for( oid_t tuple_schema_column_itr = 0; tuple_schema_column_itr < tuple_schema->GetColumnCount();
+    for( oid_t  tuple_schema_column_itr = 0; tuple_schema_column_itr < tuple_schema->GetColumnCount();
         tuple_schema_column_itr++){
 
       // Get the current column info from tuple schema
@@ -501,7 +516,7 @@ bool DDL::CreateIndex(std::string index_name,
           tuple_schema->AddConstraintInColumn( tuple_schema_column_itr, constraint); 
         }else if( index_type == INDEX_TYPE_UNIQUE ){ 
           catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_UNIQUE );
-          tuple_schema->AddConstraintInColumn( tuple_schema_column_itr, constraint); 
+          tuple_schema->AddConstraintInColumn( tuple_schema_column_itr, constraint);
         }
 
       }

@@ -239,7 +239,7 @@ void GetTableList(bool catalog_only) {
   HeapScanDesc scan;
   HeapTuple tuple;
 
-  StartTransactionCommand();
+  //StartTransactionCommand();
 
   // Scan pg class table
   pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
@@ -261,7 +261,7 @@ void GetTableList(bool catalog_only) {
   heap_endscan(scan);
   heap_close(pg_class_rel, AccessShareLock);
 
-  CommitTransactionCommand();
+  //CommitTransactionCommand();
 }
 
 /**
@@ -288,6 +288,7 @@ void GetDBCatalog(Oid database_oid){
         printf("relname %s  \n",NameStr(pgclass->relname));
         peloton::oid_t database_oid = GetCurrentDatabaseOid();
         peloton::oid_t table_oid = GetRelationOid( NameStr(pgclass->relname));
+        assert(table_oid);
 
         // Get the table location from manager
         auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
@@ -748,7 +749,6 @@ bool BootstrapPeloton(void){
         // FIXME
         //peloton::storage::DataTable* current_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, current_table_name);
         //peloton::storage::DataTable* reference_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, foreign_table_name);
-
         //current_table->AddReferenceTable(reference_table);
       }
     }
@@ -756,9 +756,9 @@ bool BootstrapPeloton(void){
     heap_close(pg_constraint_rel, AccessShareLock);
   }
 
-  printf("Print all relation's schema information\n");
-  peloton::oid_t database_oid = GetCurrentDatabaseOid();
-  GetDBCatalog(database_oid);
+  //printf("Print all relation's schema information\n");
+  //peloton::oid_t database_oid = GetCurrentDatabaseOid();
+  //GetDBCatalog(database_oid);
 
   heap_endscan(pg_class_scan);
   heap_close(pg_attribute_rel, AccessShareLock);

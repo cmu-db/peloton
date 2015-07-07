@@ -74,6 +74,7 @@ private:
 
     // reference table names
     std::string reference_table_name = "";
+
 };
 
 } // End catalog namespace
