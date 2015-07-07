@@ -78,7 +78,8 @@ static void ProcessUtilitySlow(Node *parsetree,
            ProcessUtilityContext context,
            ParamListInfo params,
            DestReceiver *dest,
-           char *completionTag);
+           char *completionTag,
+           Oid *relation_oid = NULL);
 static void ExecDropStmt(DropStmt *stmt, bool isTopLevel);
 
 
@@ -360,6 +361,7 @@ standard_ProcessUtility(Node *parsetree,
   bool    isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
   Peloton_Status *status;
   int status_code;
+  Oid *relation_oid_ptr = NULL;
 
   check_xact_readonly(parsetree);
 
@@ -893,10 +895,13 @@ standard_ProcessUtility(Node *parsetree,
       }
 
     default:
+      relation_oid_ptr = static_cast<Oid *>(palloc(sizeof(Oid)));
+
       /* All other statement types have event trigger support */
       ProcessUtilitySlow(parsetree, queryString,
                  context, params,
-                 dest, completionTag);
+                 dest, completionTag,
+                 relation_oid_ptr);
       break;
   }
 
@@ -904,11 +909,14 @@ standard_ProcessUtility(Node *parsetree,
 
   // TODO: Peloton Changes
   peloton_send_ddl(status, parsetree, queryString,
-                   TopTransactionContext,
-                   CurTransactionContext);
+                 TopTransactionContext,
+                 CurTransactionContext,
+                 relation_oid_ptr);
 
   status_code = peloton_get_status(status);
   peloton_destroy_status(status);
+
+  pfree(relation_oid_ptr);
 }
 
 /*
@@ -922,7 +930,8 @@ ProcessUtilitySlow(Node *parsetree,
            ProcessUtilityContext context,
            ParamListInfo params,
            DestReceiver *dest,
-           char *completionTag)
+           char *completionTag,
+           Oid *relation_oid)
 {
   bool    isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
   bool    isCompleteQuery = (context <= PROCESS_UTILITY_QUERY);
@@ -982,6 +991,12 @@ ProcessUtilitySlow(Node *parsetree,
               EventTriggerCollectSimpleCommand(address,
                                secondaryObject,
                                stmt);
+
+              // TODO: Peloton Changes
+              if(relation_oid != NULL)
+              {
+                *relation_oid = address.objectId;
+              }
 
               /*
                * Let NewRelationCreateToastTable decide if this

@@ -33,6 +33,7 @@ public:
      * For a given Schema, instantiate a DataTable object and return it
      */
     static DataTable* GetDataTable(oid_t database_id,
+                                   oid_t relation_id,
                                    const catalog::Schema *schema,
                                    std::string table_name,
                                    size_t tuples_per_tile_group_count = DEFAULT_TUPLES_PER_TILEGROUP);
