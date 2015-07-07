@@ -216,9 +216,6 @@ In file included from ../../src/postgres/backend/catalog/dependency.cpp:68:0:
   CXX      postgres/backend/catalog/libpeloton_la-objectaccess.lo
   CXX      postgres/backend/catalog/libpeloton_la-objectaddress.lo
   CXX      postgres/backend/catalog/libpeloton_la-pg_aggregate.lo
-../../src/postgres/backend/catalog/objectaddress.cpp:440:1: warning: invalid conversion from 'int' to 'AclObjectKind' [-fpermissive]
- };
- ^
   CXX      postgres/backend/catalog/libpeloton_la-pg_collation.lo
   CXX      postgres/backend/catalog/libpeloton_la-pg_constraint.lo
   CXX      postgres/backend/catalog/libpeloton_la-pg_conversion.lo
@@ -325,6 +322,7 @@ In file included from ../../src/postgres/include/access/tupdesc.h:19:0,
   CXX      postgres/backend/executor/libpeloton_la-execScan.lo
   CXX      postgres/backend/executor/libpeloton_la-execTuples.lo
   CXX      postgres/backend/executor/libpeloton_la-execUtils.lo
+  CXX      postgres/backend/executor/libpeloton_la-functions.lo
 ../../src/postgres/backend/executor/execUtils.cpp: In function 'bool get_last_attnums(Node*, ProjectionInfo*)':
 ../../src/postgres/backend/executor/execUtils.cpp:653:28: warning: invalid conversion from 'bool (*)(Node*, ProjectionInfo*)' to 'bool (*)(Node*, void*)' [-fpermissive]
            (void *) projInfo);
@@ -333,7 +331,6 @@ In file included from ../../src/postgres/backend/executor/execUtils.cpp:44:0:
 ../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
  extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
              ^
-  CXX      postgres/backend/executor/libpeloton_la-functions.lo
   CXX      postgres/backend/executor/libpeloton_la-instrument.lo
   CXX      postgres/backend/executor/libpeloton_la-nodeAgg.lo
   CXX      postgres/backend/executor/libpeloton_la-nodeAppend.lo
@@ -404,7 +401,6 @@ In file included from ../../src/postgres/include/utils/array.h:64:0,
   CXX      postgres/backend/executor/libpeloton_la-nodeWorktablescan.lo
   CXX      postgres/backend/executor/libpeloton_la-spi.lo
   CXX      postgres/backend/executor/libpeloton_la-tstoreReceiver.lo
-  CXX      postgres/backend/foreign/libpeloton_la-foreign.lo
 In file included from ../../src/postgres/include/utils/array.h:64:0,
                  from ../../src/postgres/include/utils/acl.h:29,
                  from ../../src/postgres/include/catalog/objectaddress.h:18,
@@ -438,6 +434,7 @@ In file included from ../../src/postgres/include/utils/array.h:64:0,
 ../../src/postgres/backend/executor/nodeWindowAgg.cpp:996:2: note: in expansion of macro 'InitFunctionCallInfoData'
   InitFunctionCallInfoData(fcinfo, &(perfuncstate->flinfo),
   ^
+  CXX      postgres/backend/foreign/libpeloton_la-foreign.lo
   CXX      postgres/backend/lib/libpeloton_la-binaryheap.lo
   CXX      postgres/backend/lib/libpeloton_la-bipartite_match.lo
   CXX      postgres/backend/lib/libpeloton_la-hyperloglog.lo
@@ -469,880 +466,7 @@ In file included from ../../src/postgres/include/utils/array.h:64:0,
   CXX      postgres/backend/nodes/libpeloton_la-print.lo
   CXX      postgres/backend/nodes/libpeloton_la-read.lo
   CXX      postgres/backend/nodes/libpeloton_la-readfuncs.lo
-../../src/postgres/backend/nodes/print.cpp: In function 'void print_expr(const Node*, const List*)':
-../../src/postgres/backend/nodes/print.cpp:399:32: warning: invalid conversion from 'void*' to 'const Node*' [-fpermissive]
-    print_expr(lfirst(l), rtable);
-                                ^
-../../src/postgres/backend/nodes/print.cpp:308:1: warning:   initializing argument 1 of 'void print_expr(const Node*, const List*)' [-fpermissive]
- print_expr(const Node *expr, const List *rtable)
- ^
-../../src/postgres/backend/nodes/read.cpp: In function 'NodeTag nodeTokenType(char*, int)':
-../../src/postgres/backend/nodes/read.cpp:243:10: warning: invalid conversion from 'int' to 'NodeTag' [-fpermissive]
-   retval = LEFT_PAREN;
-          ^
-../../src/postgres/backend/nodes/read.cpp:245:10: warning: invalid conversion from 'int' to 'NodeTag' [-fpermissive]
-   retval = RIGHT_PAREN;
-          ^
-../../src/postgres/backend/nodes/read.cpp:247:10: warning: invalid conversion from 'int' to 'NodeTag' [-fpermissive]
-   retval = LEFT_BRACE;
-          ^
-../../src/postgres/backend/nodes/read.cpp:253:10: warning: invalid conversion from 'int' to 'NodeTag' [-fpermissive]
-   retval = OTHER_TOKEN;
-          ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'Query* _readQuery()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:202:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(utilityStmt);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:212:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(cteList);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:213:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(rtable);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'FromExpr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:214:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(jointree);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:215:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(targetList);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:216:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(withCheckOptions);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'OnConflictExpr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:217:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(onConflict);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:218:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(returningList);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:219:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(groupClause);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:220:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(groupingSets);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:221:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(havingQual);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:222:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(windowClause);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:223:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(distinctClause);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:224:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(sortClause);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:225:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(limitOffset);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:226:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(limitCount);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:227:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(rowMarks);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:228:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(setOperations);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:229:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(constraintDeps);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'DeclareCursorStmt* _readDeclareCursorStmt()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:258:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(query);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'WithCheckOption* _readWithCheckOption()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:273:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(qual);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'GroupingSet* _readGroupingSet()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:305:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(content);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'WindowClause* _readWindowClause()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:321:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(partitionClause);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:322:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(orderClause);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:324:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(startOffset);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:325:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(endOffset);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'CommonTableExpr* _readCommonTableExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:357:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(aliascolnames);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:358:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(ctequery);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:362:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(ctecolnames);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:363:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(ctecoltypes);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:364:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(ctecoltypmods);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:365:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(ctecolcollations);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'RangeTableSample* _readRangeTableSample()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'RangeVar*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:378:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(relation);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:380:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(repeatable);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:381:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(args);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'TableSampleClause* _readTableSampleClause()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:404:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(repeatable);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:405:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(args);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'SetOperationStmt* _readSetOperationStmt()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:420:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(larg);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:421:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(rarg);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:422:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(colTypes);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:423:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(colTypmods);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:424:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(colCollations);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:425:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(groupClauses);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'Alias* _readAlias()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:441:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(colnames);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'RangeVar* _readRangeVar()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Alias*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:458:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(alias);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'IntoClause* _readIntoClause()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'RangeVar*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:469:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(rel);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:470:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(colNames);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:471:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(options);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:474:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(viewQuery);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'Aggref* _readAggref()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:556:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(aggdirectargs);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:557:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(args);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:558:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(aggorder);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:559:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(aggdistinct);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:560:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(aggfilter);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'GroupingFunc* _readGroupingFunc()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:578:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(args);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:579:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(refs);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:580:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(cols);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'WindowFunc* _readWindowFunc()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:599:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(args);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:600:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(aggfilter);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'ArrayRef* _readArrayRef()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:621:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(refupperindexpr);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:622:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(reflowerindexpr);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:623:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(refexpr);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:624:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(refassgnexpr);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'FuncExpr* _readFuncExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:644:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(args);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'NamedArgExpr* _readNamedArgExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:658:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(arg);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'OpExpr* _readOpExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:691:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(args);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'DistinctExpr* _readDistinctExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:722:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(args);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'NullIfExpr* _readNullIfExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:753:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(args);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'ScalarArrayOpExpr* _readScalarArrayOpExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:782:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(args);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'BoolExpr* _readBoolExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:808:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(args);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'SubLink* _readSubLink()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:824:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(testexpr);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:825:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(operName);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:826:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(subselect);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'FieldSelect* _readFieldSelect()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:844:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(arg);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'FieldStore* _readFieldStore()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:861:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(arg);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:862:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(newvals);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:863:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(fieldnums);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'RelabelType* _readRelabelType()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:877:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(arg);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'CoerceViaIO* _readCoerceViaIO()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:895:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(arg);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'ArrayCoerceExpr* _readArrayCoerceExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:912:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(arg);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'ConvertRowtypeExpr* _readConvertRowtypeExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:932:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(arg);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'CollateExpr* _readCollateExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:948:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(arg);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'CaseExpr* _readCaseExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:965:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(arg);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:966:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(args);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:967:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(defresult);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'CaseWhen* _readCaseWhen()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:981:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(expr);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:982:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(result);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'ArrayExpr* _readArrayExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1014:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(elements);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'RowExpr* _readRowExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1029:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(args);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1032:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(colnames);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'RowCompareExpr* _readRowCompareExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1047:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(opnos);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1048:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(opfamilies);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1049:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(inputcollids);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1050:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(largs);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1051:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(rargs);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'CoalesceExpr* _readCoalesceExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1066:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(args);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'MinMaxExpr* _readMinMaxExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1084:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(args);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'XmlExpr* _readXmlExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1100:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(named_args);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1101:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(arg_names);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1102:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(args);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'NullTest* _readNullTest()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1119:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(arg);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'BooleanTest* _readBooleanTest()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1135:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(arg);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'CoerceToDomain* _readCoerceToDomain()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1150:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(arg);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'InferenceElem* _readInferenceElem()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1215:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(expr);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'TargetEntry* _readTargetEntry()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1230:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(expr);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'JoinExpr* _readJoinExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1264:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(larg);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1265:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(rarg);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1266:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(usingClause);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1267:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(quals);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Alias*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1268:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(alias);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'FromExpr* _readFromExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1282:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(fromlist);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1283:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(quals);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'OnConflictExpr* _readOnConflictExpr()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1297:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(arbiterElems);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1298:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(arbiterWhere);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1299:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(onConflictSet);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1300:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(onConflictWhere);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1303:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(exclRelTlist);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'RangeTblEntry* _readRangeTblEntry()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Alias*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1321:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(alias);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Alias*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1322:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(eref);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'TableSampleClause*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1330:4: note: in expansion of macro 'READ_NODE_FIELD'
-    READ_NODE_FIELD(tablesample);
-    ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Query*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1333:4: note: in expansion of macro 'READ_NODE_FIELD'
-    READ_NODE_FIELD(subquery);
-    ^
   CXX      postgres/backend/nodes/libpeloton_la-tidbitmap.lo
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1338:4: note: in expansion of macro 'READ_NODE_FIELD'
-    READ_NODE_FIELD(joinaliasvars);
-    ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1341:4: note: in expansion of macro 'READ_NODE_FIELD'
-    READ_NODE_FIELD(functions);
-    ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1345:4: note: in expansion of macro 'READ_NODE_FIELD'
-    READ_NODE_FIELD(values_lists);
-    ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1346:4: note: in expansion of macro 'READ_NODE_FIELD'
-    READ_NODE_FIELD(values_collations);
-    ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1352:4: note: in expansion of macro 'READ_NODE_FIELD'
-    READ_NODE_FIELD(ctecoltypes);
-    ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1353:4: note: in expansion of macro 'READ_NODE_FIELD'
-    READ_NODE_FIELD(ctecoltypmods);
-    ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1354:4: note: in expansion of macro 'READ_NODE_FIELD'
-    READ_NODE_FIELD(ctecolcollations);
-    ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1370:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(securityQuals);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp: In function 'RangeTblFunction* _readRangeTblFunction()':
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1383:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(funcexpr);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1385:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(funccolnames);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1386:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(funccoltypes);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1387:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(funccoltypmods);
-  ^
-../../src/postgres/backend/nodes/readfuncs.cpp:117:40: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  local_node->fldname = nodeRead(NULL, 0)
-                                        ^
-../../src/postgres/backend/nodes/readfuncs.cpp:1388:2: note: in expansion of macro 'READ_NODE_FIELD'
-  READ_NODE_FIELD(funccolcollations);
-  ^
   CXX      postgres/backend/nodes/libpeloton_la-value.lo
   CXX      postgres/backend/nodes/libpeloton_la-pprint.lo
   CXX      postgres/backend/optimizer/geqo/libpeloton_la-geqo_copy.lo
@@ -1364,39 +488,6 @@ In file included from ../../src/postgres/include/utils/array.h:64:0,
   CXX      postgres/backend/optimizer/path/libpeloton_la-clausesel.lo
   CXX      postgres/backend/optimizer/path/libpeloton_la-costsize.lo
   CXX      postgres/backend/optimizer/path/libpeloton_la-equivclass.lo
-../../src/postgres/backend/optimizer/path/clausesel.cpp: In function 'Selectivity clauselist_selectivity(PlannerInfo*, List*, int, JoinType, SpecialJoinInfo*)':
-../../src/postgres/backend/optimizer/path/clausesel.cpp:160:35: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-                rinfo->right_relids) ||
-                                   ^
-In file included from ../../src/postgres/backend/optimizer/path/clausesel.cpp:19:0:
-../../src/postgres/include/optimizer/clauses.h:74:13: warning:   initializing argument 1 of 'bool is_pseudo_constant_clause_relids(Node*, Relids)' [-fpermissive]
- extern bool is_pseudo_constant_clause_relids(Node *clause, Relids relids);
-             ^
-../../src/postgres/backend/optimizer/path/clausesel.cpp:163:35: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-                 rinfo->left_relids)));
-                                   ^
-In file included from ../../src/postgres/backend/optimizer/path/clausesel.cpp:19:0:
-../../src/postgres/include/optimizer/clauses.h:74:13: warning:   initializing argument 1 of 'bool is_pseudo_constant_clause_relids(Node*, Relids)' [-fpermissive]
- extern bool is_pseudo_constant_clause_relids(Node *clause, Relids relids);
-             ^
-../../src/postgres/backend/optimizer/path/clausesel.cpp:168:52: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-      (is_pseudo_constant_clause(lsecond(expr->args)) ||
-                                                    ^
-In file included from ../../src/postgres/backend/optimizer/path/clausesel.cpp:19:0:
-../../src/postgres/include/optimizer/clauses.h:73:13: warning:   initializing argument 1 of 'bool is_pseudo_constant_clause(Node*)' [-fpermissive]
- extern bool is_pseudo_constant_clause(Node *clause);
-             ^
-../../src/postgres/backend/optimizer/path/clausesel.cpp:170:54: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-        is_pseudo_constant_clause(linitial(expr->args))));
-                                                      ^
-In file included from ../../src/postgres/backend/optimizer/path/clausesel.cpp:19:0:
-../../src/postgres/include/optimizer/clauses.h:73:13: warning:   initializing argument 1 of 'bool is_pseudo_constant_clause(Node*)' [-fpermissive]
- extern bool is_pseudo_constant_clause(Node *clause);
-             ^
-../../src/postgres/backend/optimizer/path/allpaths.cpp: In function 'void set_subquery_pathlist(PlannerInfo*, RelOptInfo*, Index, RangeTblEntry*)':
-../../src/postgres/backend/optimizer/path/allpaths.cpp:1201:32: warning: invalid conversion from 'void*' to 'Query*' [-fpermissive]
-  subquery = copyObject(subquery);
-                                ^
 ../../src/postgres/backend/optimizer/path/costsize.cpp: In function 'bool cost_qual_eval_walker(Node*, cost_qual_eval_context*)':
 ../../src/postgres/backend/optimizer/path/costsize.cpp:3248:27: warning: invalid conversion from 'bool (*)(Node*, cost_qual_eval_context*)' to 'bool (*)(Node*, void*)' [-fpermissive]
            (void *) context);
@@ -1405,88 +496,15 @@ In file included from ../../src/postgres/backend/optimizer/path/costsize.cpp:80:
 ../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
  extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
              ^
-../../src/postgres/backend/optimizer/path/equivclass.cpp: In function 'EquivalenceClass* get_eclass_for_sort_expr(PlannerInfo*, Expr*, Relids, List*, Oid, Oid, Index, Relids, bool)':
-../../src/postgres/backend/optimizer/path/equivclass.cpp:647:46: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-  newem = add_eq_member(newec, copyObject(expr), expr_relids,
-                                              ^
-../../src/postgres/backend/optimizer/path/equivclass.cpp:470:1: warning:   initializing argument 2 of 'EquivalenceMember* add_eq_member(EquivalenceClass*, Expr*, Relids, Relids, bool, Oid)' [-fpermissive]
- add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
- ^
   CXX      postgres/backend/optimizer/path/libpeloton_la-indxpath.lo
-../../src/postgres/backend/optimizer/path/indxpath.cpp: In function 'Expr* adjust_rowcompare_for_index(RowCompareExpr*, IndexOptInfo*, int, List**, bool*)':
-../../src/postgres/backend/optimizer/path/indxpath.cpp:3836:43: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-         copyObject(linitial(clause->largs)),
-                                           ^
-In file included from ../../src/postgres/backend/optimizer/path/indxpath.cpp:28:0:
-../../src/postgres/include/optimizer/clauses.h:31:14: warning:   initializing argument 4 of 'Expr* make_opclause(Oid, Oid, bool, Expr*, Expr*, Oid, Oid)' [-fpermissive]
- extern Expr *make_opclause(Oid opno, Oid opresulttype, bool opretset,
-              ^
-../../src/postgres/backend/optimizer/path/indxpath.cpp:3837:43: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
-         copyObject(linitial(clause->rargs)),
-                                           ^
-In file included from ../../src/postgres/backend/optimizer/path/indxpath.cpp:28:0:
-../../src/postgres/include/optimizer/clauses.h:31:14: warning:   initializing argument 5 of 'Expr* make_opclause(Oid, Oid, bool, Expr*, Expr*, Oid, Oid)' [-fpermissive]
- extern Expr *make_opclause(Oid opno, Oid opresulttype, bool opretset,
-              ^
   CXX      postgres/backend/optimizer/path/libpeloton_la-joinpath.lo
   CXX      postgres/backend/optimizer/path/libpeloton_la-joinrels.lo
   CXX      postgres/backend/optimizer/path/libpeloton_la-pathkeys.lo
   CXX      postgres/backend/optimizer/path/libpeloton_la-tidpath.lo
   CXX      postgres/backend/optimizer/plan/libpeloton_la-analyzejoins.lo
-../../src/postgres/backend/optimizer/path/tidpath.cpp: In function 'bool IsTidEqualClause(OpExpr*, int)':
-../../src/postgres/backend/optimizer/path/tidpath.cpp:77:7: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  arg1 = linitial(node->args);
-       ^
-../../src/postgres/backend/optimizer/path/tidpath.cpp:78:7: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  arg2 = lsecond(node->args);
-       ^
-../../src/postgres/backend/optimizer/path/tidpath.cpp: In function 'bool IsTidEqualAnyClause(ScalarArrayOpExpr*, int)':
-../../src/postgres/backend/optimizer/path/tidpath.cpp:128:7: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  arg1 = linitial(node->args);
-       ^
-../../src/postgres/backend/optimizer/path/tidpath.cpp:129:7: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  arg2 = lsecond(node->args);
-       ^
   CXX      postgres/backend/optimizer/plan/libpeloton_la-createplan.lo
   CXX      postgres/backend/optimizer/plan/libpeloton_la-initsplan.lo
-../../src/postgres/backend/optimizer/plan/initsplan.cpp: In function 'void add_base_rels_to_query(PlannerInfo*, Node*)':
-../../src/postgres/backend/optimizer/plan/initsplan.cpp:117:42: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-    add_base_rels_to_query(root, lfirst(l));
-                                          ^
-../../src/postgres/backend/optimizer/plan/initsplan.cpp:101:1: warning:   initializing argument 2 of 'void add_base_rels_to_query(PlannerInfo*, Node*)' [-fpermissive]
- add_base_rels_to_query(PlannerInfo *root, Node *jtnode)
- ^
-../../src/postgres/backend/optimizer/plan/initsplan.cpp: In function 'void extract_lateral_references(PlannerInfo*, RelOptInfo*, Index)':
-../../src/postgres/backend/optimizer/plan/initsplan.cpp:330:25: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-   node = copyObject(node);
-                         ^
-../../src/postgres/backend/optimizer/plan/initsplan.cpp: In function 'List* deconstruct_recurse(PlannerInfo*, Node*, bool, Bitmapset**, Bitmapset**, List**)':
-../../src/postgres/backend/optimizer/plan/initsplan.cpp:738:37: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-               &child_postponed_quals);
-                                     ^
-../../src/postgres/backend/optimizer/plan/initsplan.cpp:689:1: warning:   initializing argument 2 of 'List* deconstruct_recurse(PlannerInfo*, Node*, bool, Bitmapset**, Bitmapset**, List**)' [-fpermissive]
- deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
- ^
-../../src/postgres/backend/optimizer/plan/initsplan.cpp: In function 'void compute_semijoin_info(SpecialJoinInfo*, List*)':
-../../src/postgres/backend/optimizer/plan/initsplan.cpp:1335:13: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-   left_expr = linitial(op->args);
-             ^
-../../src/postgres/backend/optimizer/plan/initsplan.cpp:1336:14: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-   right_expr = lsecond(op->args);
-              ^
   CXX      postgres/backend/optimizer/plan/libpeloton_la-planagg.lo
-../../src/postgres/backend/optimizer/plan/initsplan.cpp: In function 'void check_mergejoinable(RestrictInfo*)':
-../../src/postgres/backend/optimizer/plan/initsplan.cpp:2262:10: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  leftarg = linitial(((OpExpr *) clause)->args);
-          ^
-../../src/postgres/backend/optimizer/plan/initsplan.cpp: In function 'void check_hashjoinable(RestrictInfo*)':
-../../src/postgres/backend/optimizer/plan/initsplan.cpp:2299:10: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  leftarg = linitial(((OpExpr *) clause)->args);
-          ^
-../../src/postgres/backend/optimizer/plan/createplan.cpp: In function 'Plan* create_scan_plan(PlannerInfo*, Path*)':
-../../src/postgres/backend/optimizer/plan/createplan.cpp:310:71: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-    tlist = copyObject(((IndexPath *) best_path)->indexinfo->indextlist);
-                                                                       ^
   CXX      postgres/backend/optimizer/plan/libpeloton_la-planmain.lo
 ../../src/postgres/backend/optimizer/plan/createplan.cpp: In function 'Node* replace_nestloop_params_mutator(Node*, PlannerInfo*)':
 ../../src/postgres/backend/optimizer/plan/createplan.cpp:2850:25: warning: invalid conversion from 'Node* (*)(Node*, PlannerInfo*)' to 'Node* (*)(Node*, void*)' [-fpermissive]
@@ -1496,62 +514,7 @@ In file included from ../../src/postgres/backend/optimizer/plan/createplan.cpp:2
 ../../src/postgres/include/nodes/nodeFuncs.h:45:14: warning:   initializing argument 2 of 'Node* expression_tree_mutator(Node*, Node* (*)(Node*, void*), void*)' [-fpermissive]
  extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
               ^
-../../src/postgres/backend/optimizer/plan/createplan.cpp: In function 'void process_subquery_nestloop_params(PlannerInfo*, List*)':
-../../src/postgres/backend/optimizer/plan/createplan.cpp:2900:35: warning: invalid conversion from 'void*' to 'Var*' [-fpermissive]
-     nlp->paramval = copyObject(var);
-                                   ^
-../../src/postgres/backend/optimizer/plan/createplan.cpp:2930:35: warning: invalid conversion from 'void*' to 'Var*' [-fpermissive]
-     nlp->paramval = copyObject(phv);
-                                   ^
-../../src/postgres/backend/optimizer/plan/createplan.cpp: In function 'List* fix_indexqual_references(PlannerInfo*, IndexPath*)':
-../../src/postgres/backend/optimizer/plan/createplan.cpp:3004:25: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-                 indexcol);
-                         ^
-../../src/postgres/backend/optimizer/plan/createplan.cpp:99:14: warning:   initializing argument 1 of 'Node* fix_indexqual_operand(Node*, IndexOptInfo*, int)' [-fpermissive]
- static Node *fix_indexqual_operand(Node *node, IndexOptInfo *index, int indexcol);
-              ^
-../../src/postgres/backend/optimizer/plan/createplan.cpp:3047:30: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-              lfirst_int(lcai));
-                              ^
-../../src/postgres/backend/optimizer/plan/createplan.cpp:99:14: warning:   initializing argument 1 of 'Node* fix_indexqual_operand(Node*, IndexOptInfo*, int)' [-fpermissive]
- static Node *fix_indexqual_operand(Node *node, IndexOptInfo *index, int indexcol);
-              ^
-../../src/postgres/backend/optimizer/plan/createplan.cpp:3059:24: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-                indexcol);
-                        ^
-../../src/postgres/backend/optimizer/plan/createplan.cpp:99:14: warning:   initializing argument 1 of 'Node* fix_indexqual_operand(Node*, IndexOptInfo*, int)' [-fpermissive]
- static Node *fix_indexqual_operand(Node *node, IndexOptInfo *index, int indexcol);
-              ^
-../../src/postgres/backend/optimizer/plan/createplan.cpp: In function 'List* fix_indexorderby_references(PlannerInfo*, IndexPath*)':
-../../src/postgres/backend/optimizer/plan/createplan.cpp:3126:25: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-                 indexcol);
-                         ^
-../../src/postgres/backend/optimizer/plan/createplan.cpp:99:14: warning:   initializing argument 1 of 'Node* fix_indexqual_operand(Node*, IndexOptInfo*, int)' [-fpermissive]
- static Node *fix_indexqual_operand(Node *node, IndexOptInfo *index, int indexcol);
-              ^
-../../src/postgres/backend/optimizer/plan/createplan.cpp: In function 'Node* fix_indexqual_operand(Node*, IndexOptInfo*, int)':
-../../src/postgres/backend/optimizer/plan/createplan.cpp:3197:40: warning: invalid conversion from 'void*' to 'const Node*' [-fpermissive]
-           exprType(lfirst(indexpr_item)), -1,
-                                        ^
-In file included from ../../src/postgres/backend/optimizer/plan/createplan.cpp:28:0:
-../../src/postgres/include/nodes/nodeFuncs.h:29:12: warning:   initializing argument 1 of 'Oid exprType(const Node*)' [-fpermissive]
- extern Oid exprType(const Node *expr);
-            ^
-../../src/postgres/backend/optimizer/plan/createplan.cpp:3198:45: warning: invalid conversion from 'void*' to 'const Node*' [-fpermissive]
-           exprCollation(lfirst(indexpr_item)),
-                                             ^
-In file included from ../../src/postgres/backend/optimizer/plan/createplan.cpp:28:0:
-../../src/postgres/include/nodes/nodeFuncs.h:36:12: warning:   initializing argument 1 of 'Oid exprCollation(const Node*)' [-fpermissive]
- extern Oid exprCollation(const Node *expr);
-            ^
 ../../src/postgres/backend/optimizer/plan/createplan.cpp: In function 'Plan* prepare_sort_from_pathkeys(PlannerInfo*, Plan*, List*, Relids, const AttrNumber*, bool, int*, AttrNumber**, Oid**, Oid**, bool**)':
-../../src/postgres/backend/optimizer/plan/createplan.cpp:4182:55: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-      if (!tlist_member_ignore_relabel(lfirst(k), tlist))
-                                                       ^
-In file included from ../../src/postgres/backend/optimizer/plan/createplan.cpp:40:0:
-../../src/postgres/include/optimizer/tlist.h:21:21: warning:   initializing argument 1 of 'TargetEntry* tlist_member_ignore_relabel(Node*, List*)' [-fpermissive]
- extern TargetEntry *tlist_member_ignore_relabel(Node *node, List *targetlist);
-                     ^
 ../../src/postgres/backend/optimizer/plan/createplan.cpp:4202:29: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
      tlist = copyObject(tlist);
                              ^
@@ -1596,88 +559,6 @@ In file included from ../../src/postgres/backend/optimizer/plan/planagg.cpp:35:0
               ^
   CXX      postgres/backend/optimizer/plan/libpeloton_la-planner.lo
   CXX      postgres/backend/optimizer/plan/libpeloton_la-setrefs.lo
-  CXX      postgres/backend/optimizer/plan/libpeloton_la-subselect.lo
-../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'void flatten_unplanned_rtes(PlannerGlobal*, RangeTblEntry*)':
-../../src/postgres/backend/optimizer/plan/setrefs.cpp:341:25: warning: invalid conversion from 'bool (*)(Node*, PlannerGlobal*)' to 'bool (*)(Node*, void*)' [-fpermissive]
-         QTW_EXAMINE_RTES);
-                         ^
-In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
-../../src/postgres/include/nodes/nodeFuncs.h:48:13: warning:   initializing argument 2 of 'bool query_tree_walker(Query*, bool (*)(Node*, void*), void*, int)' [-fpermissive]
- extern bool query_tree_walker(Query *query, bool (*walker) (Node *, void *),   /* Peloton porting: change functioin pointer to contain two arguments */
-             ^
-../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'bool flatten_rtes_walker(Node*, PlannerGlobal*)':
-../../src/postgres/backend/optimizer/plan/setrefs.cpp:364:26: warning: invalid conversion from 'bool (*)(Node*, PlannerGlobal*)' to 'bool (*)(Node*, void*)' [-fpermissive]
-          QTW_EXAMINE_RTES);
-                          ^
-In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
-../../src/postgres/include/nodes/nodeFuncs.h:48:13: warning:   initializing argument 2 of 'bool query_tree_walker(Query*, bool (*)(Node*, void*), void*, int)' [-fpermissive]
- extern bool query_tree_walker(Query *query, bool (*walker) (Node *, void *),   /* Peloton porting: change functioin pointer to contain two arguments */
-             ^
-../../src/postgres/backend/optimizer/plan/setrefs.cpp:367:24: warning: invalid conversion from 'bool (*)(Node*, PlannerGlobal*)' to 'bool (*)(Node*, void*)' [-fpermissive]
-           (void *) glob);
-                        ^
-In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
-../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
- extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
-             ^
-../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'Plan* set_plan_refs(PlannerInfo*, Plan*, int)':
-../../src/postgres/backend/optimizer/plan/setrefs.cpp:750:57: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-      splan->plan.targetlist = copyObject(linitial(newRL));
-                                                         ^
-../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'Node* fix_param_node(PlannerInfo*, Param*)':
-../../src/postgres/backend/optimizer/plan/setrefs.cpp:1347:48: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-   return copyObject(list_nth(params, colno - 1));
-                                                ^
-../../src/postgres/backend/optimizer/plan/setrefs.cpp:1349:21: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  return copyObject(p);
-                     ^
-../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'Node* fix_scan_expr_mutator(Node*, fix_scan_expr_context*)':
-../../src/postgres/backend/optimizer/plan/setrefs.cpp:1435:28: warning: invalid conversion from 'Node* (*)(Node*, fix_scan_expr_context*)' to 'Node* (*)(Node*, void*)' [-fpermissive]
-            (void *) context);
-                            ^
-In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
-../../src/postgres/include/nodes/nodeFuncs.h:45:14: warning:   initializing argument 2 of 'Node* expression_tree_mutator(Node*, Node* (*)(Node*, void*), void*)' [-fpermissive]
- extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
-              ^
-../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'bool fix_scan_expr_walker(Node*, fix_scan_expr_context*)':
-../../src/postgres/backend/optimizer/plan/setrefs.cpp:1446:27: warning: invalid conversion from 'bool (*)(Node*, fix_scan_expr_context*)' to 'bool (*)(Node*, void*)' [-fpermissive]
-           (void *) context);
-                           ^
-In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
-../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
- extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
-             ^
-../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'Node* fix_join_expr_mutator(Node*, fix_join_expr_context*)':
-../../src/postgres/backend/optimizer/plan/setrefs.cpp:2052:28: warning: invalid conversion from 'Node* (*)(Node*, fix_join_expr_context*)' to 'Node* (*)(Node*, void*)' [-fpermissive]
-            (void *) context);
-                            ^
-In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
-../../src/postgres/include/nodes/nodeFuncs.h:45:14: warning:   initializing argument 2 of 'Node* expression_tree_mutator(Node*, Node* (*)(Node*, void*), void*)' [-fpermissive]
- extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
-              ^
-../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'Node* fix_upper_expr_mutator(Node*, fix_upper_expr_context*)':
-../../src/postgres/backend/optimizer/plan/setrefs.cpp:2148:28: warning: invalid conversion from 'Node* (*)(Node*, fix_upper_expr_context*)' to 'Node* (*)(Node*, void*)' [-fpermissive]
-            (void *) context);
-                            ^
-In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
-../../src/postgres/include/nodes/nodeFuncs.h:45:14: warning:   initializing argument 2 of 'Node* expression_tree_mutator(Node*, Node* (*)(Node*, void*), void*)' [-fpermissive]
- extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
-              ^
-../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'bool extract_query_dependencies_walker(Node*, PlannerInfo*)':
-../../src/postgres/backend/optimizer/plan/setrefs.cpp:2393:29: warning: invalid conversion from 'bool (*)(Node*, PlannerInfo*)' to 'bool (*)(Node*, void*)' [-fpermissive]
-          (void *) context, 0);
-                             ^
-In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
-../../src/postgres/include/nodes/nodeFuncs.h:48:13: warning:   initializing argument 2 of 'bool query_tree_walker(Query*, bool (*)(Node*, void*), void*, int)' [-fpermissive]
- extern bool query_tree_walker(Query *query, bool (*walker) (Node *, void *),   /* Peloton porting: change functioin pointer to contain two arguments */
-             ^
-../../src/postgres/backend/optimizer/plan/setrefs.cpp:2396:27: warning: invalid conversion from 'bool (*)(Node*, PlannerInfo*)' to 'bool (*)(Node*, void*)' [-fpermissive]
-           (void *) context);
-                           ^
-In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
-../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
- extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
-             ^
 ../../src/postgres/backend/optimizer/plan/planner.cpp: In function 'void preprocess_qual_conditions(PlannerInfo*, Node*)':
 ../../src/postgres/backend/optimizer/plan/planner.cpp:782:46: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
     preprocess_qual_conditions(root, lfirst(l));
@@ -1788,6 +669,88 @@ In file included from ../../src/postgres/include/access/tupdesc.h:19:0,
 ../../src/postgres/backend/optimizer/plan/planner.cpp:3344:69: warning: invalid conversion from 'void*' to 'SortGroupClause*' [-fpermissive]
      SortGroupClause *sc = list_nth(sortclause, list_length(previous));
                                                                      ^
+../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'void flatten_unplanned_rtes(PlannerGlobal*, RangeTblEntry*)':
+../../src/postgres/backend/optimizer/plan/setrefs.cpp:341:25: warning: invalid conversion from 'bool (*)(Node*, PlannerGlobal*)' to 'bool (*)(Node*, void*)' [-fpermissive]
+         QTW_EXAMINE_RTES);
+                         ^
+In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
+../../src/postgres/include/nodes/nodeFuncs.h:48:13: warning:   initializing argument 2 of 'bool query_tree_walker(Query*, bool (*)(Node*, void*), void*, int)' [-fpermissive]
+ extern bool query_tree_walker(Query *query, bool (*walker) (Node *, void *),   /* Peloton porting: change functioin pointer to contain two arguments */
+             ^
+../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'bool flatten_rtes_walker(Node*, PlannerGlobal*)':
+../../src/postgres/backend/optimizer/plan/setrefs.cpp:364:26: warning: invalid conversion from 'bool (*)(Node*, PlannerGlobal*)' to 'bool (*)(Node*, void*)' [-fpermissive]
+          QTW_EXAMINE_RTES);
+                          ^
+In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
+../../src/postgres/include/nodes/nodeFuncs.h:48:13: warning:   initializing argument 2 of 'bool query_tree_walker(Query*, bool (*)(Node*, void*), void*, int)' [-fpermissive]
+ extern bool query_tree_walker(Query *query, bool (*walker) (Node *, void *),   /* Peloton porting: change functioin pointer to contain two arguments */
+             ^
+../../src/postgres/backend/optimizer/plan/setrefs.cpp:367:24: warning: invalid conversion from 'bool (*)(Node*, PlannerGlobal*)' to 'bool (*)(Node*, void*)' [-fpermissive]
+           (void *) glob);
+                        ^
+In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
+../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
+ extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
+             ^
+  CXX      postgres/backend/optimizer/plan/libpeloton_la-subselect.lo
+../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'Plan* set_plan_refs(PlannerInfo*, Plan*, int)':
+../../src/postgres/backend/optimizer/plan/setrefs.cpp:750:57: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
+      splan->plan.targetlist = copyObject(linitial(newRL));
+                                                         ^
+../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'Node* fix_param_node(PlannerInfo*, Param*)':
+../../src/postgres/backend/optimizer/plan/setrefs.cpp:1347:48: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
+   return copyObject(list_nth(params, colno - 1));
+                                                ^
+../../src/postgres/backend/optimizer/plan/setrefs.cpp:1349:21: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
+  return copyObject(p);
+                     ^
+../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'Node* fix_scan_expr_mutator(Node*, fix_scan_expr_context*)':
+../../src/postgres/backend/optimizer/plan/setrefs.cpp:1435:28: warning: invalid conversion from 'Node* (*)(Node*, fix_scan_expr_context*)' to 'Node* (*)(Node*, void*)' [-fpermissive]
+            (void *) context);
+                            ^
+In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
+../../src/postgres/include/nodes/nodeFuncs.h:45:14: warning:   initializing argument 2 of 'Node* expression_tree_mutator(Node*, Node* (*)(Node*, void*), void*)' [-fpermissive]
+ extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
+              ^
+../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'bool fix_scan_expr_walker(Node*, fix_scan_expr_context*)':
+../../src/postgres/backend/optimizer/plan/setrefs.cpp:1446:27: warning: invalid conversion from 'bool (*)(Node*, fix_scan_expr_context*)' to 'bool (*)(Node*, void*)' [-fpermissive]
+           (void *) context);
+                           ^
+In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
+../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
+ extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
+             ^
+../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'Node* fix_join_expr_mutator(Node*, fix_join_expr_context*)':
+../../src/postgres/backend/optimizer/plan/setrefs.cpp:2052:28: warning: invalid conversion from 'Node* (*)(Node*, fix_join_expr_context*)' to 'Node* (*)(Node*, void*)' [-fpermissive]
+            (void *) context);
+                            ^
+In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
+../../src/postgres/include/nodes/nodeFuncs.h:45:14: warning:   initializing argument 2 of 'Node* expression_tree_mutator(Node*, Node* (*)(Node*, void*), void*)' [-fpermissive]
+ extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
+              ^
+../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'Node* fix_upper_expr_mutator(Node*, fix_upper_expr_context*)':
+../../src/postgres/backend/optimizer/plan/setrefs.cpp:2148:28: warning: invalid conversion from 'Node* (*)(Node*, fix_upper_expr_context*)' to 'Node* (*)(Node*, void*)' [-fpermissive]
+            (void *) context);
+                            ^
+In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
+../../src/postgres/include/nodes/nodeFuncs.h:45:14: warning:   initializing argument 2 of 'Node* expression_tree_mutator(Node*, Node* (*)(Node*, void*), void*)' [-fpermissive]
+ extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
+              ^
+../../src/postgres/backend/optimizer/plan/setrefs.cpp: In function 'bool extract_query_dependencies_walker(Node*, PlannerInfo*)':
+../../src/postgres/backend/optimizer/plan/setrefs.cpp:2393:29: warning: invalid conversion from 'bool (*)(Node*, PlannerInfo*)' to 'bool (*)(Node*, void*)' [-fpermissive]
+          (void *) context, 0);
+                             ^
+In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
+../../src/postgres/include/nodes/nodeFuncs.h:48:13: warning:   initializing argument 2 of 'bool query_tree_walker(Query*, bool (*)(Node*, void*), void*, int)' [-fpermissive]
+ extern bool query_tree_walker(Query *query, bool (*walker) (Node *, void *),   /* Peloton porting: change functioin pointer to contain two arguments */
+             ^
+../../src/postgres/backend/optimizer/plan/setrefs.cpp:2396:27: warning: invalid conversion from 'bool (*)(Node*, PlannerInfo*)' to 'bool (*)(Node*, void*)' [-fpermissive]
+           (void *) context);
+                           ^
+In file included from ../../src/postgres/backend/optimizer/plan/setrefs.cpp:21:0:
+../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
+ extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
+             ^
 ../../src/postgres/backend/optimizer/plan/subselect.cpp: In function 'Node* convert_testexpr_mutator(Node*, convert_testexpr_context*)':
 ../../src/postgres/backend/optimizer/plan/subselect.cpp:1006:28: warning: invalid conversion from 'Node* (*)(Node*, convert_testexpr_context*)' to 'Node* (*)(Node*, void*)' [-fpermissive]
             (void *) context);
@@ -2059,39 +1022,10 @@ In file included from ../../src/postgres/backend/optimizer/prep/prepunion.cpp:40
               ^
   CXX      postgres/backend/optimizer/util/libpeloton_la-orclauses.lo
   CXX      postgres/backend/optimizer/util/libpeloton_la-pathnode.lo
-In file included from ../../src/postgres/include/access/tupdesc.h:19:0,
-                 from ../../src/postgres/include/access/htup_details.h:18,
-                 from ../../src/postgres/backend/optimizer/util/clauses.cpp:22:
-../../src/postgres/backend/optimizer/util/clauses.cpp: In function 'Node* get_leftop(const Expr*)':
-../../src/postgres/include/nodes/pg_list.h:130:44: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
- #define lfirst(lc)    ((lc)->data.ptr_value)
-                                            ^
-../../src/postgres/include/nodes/pg_list.h:134:24: note: in expansion of macro 'lfirst'
- #define linitial(l)    lfirst(list_head(l))
-                        ^
-../../src/postgres/backend/optimizer/util/clauses.cpp:192:10: note: in expansion of macro 'linitial'
-   return linitial(expr->args);
-          ^
-../../src/postgres/backend/optimizer/util/clauses.cpp: In function 'Node* get_rightop(const Expr*)':
-../../src/postgres/include/nodes/pg_list.h:130:44: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
- #define lfirst(lc)    ((lc)->data.ptr_value)
-                                            ^
-../../src/postgres/include/nodes/pg_list.h:138:23: note: in expansion of macro 'lfirst'
- #define lsecond(l)    lfirst(lnext(list_head(l)))
-                       ^
-../../src/postgres/backend/optimizer/util/clauses.cpp:209:10: note: in expansion of macro 'lsecond'
-   return lsecond(expr->args);
-          ^
 ../../src/postgres/backend/optimizer/util/clauses.cpp: In function 'Expr* get_notclausearg(Expr*)':
-../../src/postgres/include/nodes/pg_list.h:130:44: warning: invalid conversion from 'void*' to 'Expr*' [-fpermissive]
- #define lfirst(lc)    ((lc)->data.ptr_value)
-                                            ^
-../../src/postgres/include/nodes/pg_list.h:134:24: note: in expansion of macro 'lfirst'
- #define linitial(l)    lfirst(list_head(l))
-                        ^
-../../src/postgres/backend/optimizer/util/clauses.cpp:255:9: note: in expansion of macro 'linitial'
-  return linitial(((BoolExpr *) notclause)->args);
-         ^
+../../src/postgres/backend/optimizer/util/clauses.cpp:255:69: warning: invalid conversion from 'Node*' to 'Expr*' [-fpermissive]
+  return static_cast<Node *>(linitial(((BoolExpr *) notclause)->args));
+                                                                     ^
 ../../src/postgres/backend/optimizer/util/clauses.cpp: In function 'bool count_agg_clauses_walker(Node*, count_agg_clauses_context*)':
 ../../src/postgres/backend/optimizer/util/clauses.cpp:605:27: warning: invalid conversion from 'bool (*)(Node*, count_agg_clauses_context*)' to 'bool (*)(Node*, void*)' [-fpermissive]
            (void *) context);
@@ -2116,39 +1050,6 @@ In file included from ../../src/postgres/backend/optimizer/util/clauses.cpp:33:0
 ../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
  extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
              ^
-../../src/postgres/backend/optimizer/util/clauses.cpp: In function 'Bitmapset* find_nonnullable_rels_walker(Node*, bool)':
-../../src/postgres/backend/optimizer/util/clauses.cpp:1575:27: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-                  top_level));
-                           ^
-../../src/postgres/backend/optimizer/util/clauses.cpp:1546:1: warning:   initializing argument 1 of 'Bitmapset* find_nonnullable_rels_walker(Node*, bool)' [-fpermissive]
- find_nonnullable_rels_walker(Node *node, bool top_level)
- ^
-../../src/postgres/backend/optimizer/util/clauses.cpp:1635:26: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-                 top_level);
-                          ^
-../../src/postgres/backend/optimizer/util/clauses.cpp:1546:1: warning:   initializing argument 1 of 'Bitmapset* find_nonnullable_rels_walker(Node*, bool)' [-fpermissive]
- find_nonnullable_rels_walker(Node *node, bool top_level)
- ^
-../../src/postgres/backend/optimizer/util/clauses.cpp: In function 'List* find_nonnullable_vars_walker(Node*, bool)':
-../../src/postgres/backend/optimizer/util/clauses.cpp:1783:27: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-                  top_level));
-                           ^
-../../src/postgres/backend/optimizer/util/clauses.cpp:1754:1: warning:   initializing argument 1 of 'List* find_nonnullable_vars_walker(Node*, bool)' [-fpermissive]
- find_nonnullable_vars_walker(Node *node, bool top_level)
- ^
-../../src/postgres/backend/optimizer/util/clauses.cpp:1843:26: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-                 top_level);
-                          ^
-../../src/postgres/backend/optimizer/util/clauses.cpp:1754:1: warning:   initializing argument 1 of 'List* find_nonnullable_vars_walker(Node*, bool)' [-fpermissive]
- find_nonnullable_vars_walker(Node *node, bool top_level)
- ^
-../../src/postgres/backend/optimizer/util/clauses.cpp: In function 'List* find_forced_null_vars(Node*)':
-../../src/postgres/backend/optimizer/util/clauses.cpp:1965:41: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-          find_forced_null_vars(lfirst(l)));
-                                         ^
-../../src/postgres/backend/optimizer/util/clauses.cpp:1941:1: warning:   initializing argument 1 of 'List* find_forced_null_vars(Node*)' [-fpermissive]
- find_forced_null_vars(Node *node)
- ^
 ../../src/postgres/backend/optimizer/util/clauses.cpp: In function 'void CommuteOpExpr(OpExpr*)':
 ../../src/postgres/backend/optimizer/util/clauses.cpp:2190:7: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
   temp = linitial(clause->args);
@@ -2168,12 +1069,6 @@ In file included from ../../src/postgres/backend/optimizer/util/clauses.cpp:33:0
 ../../src/postgres/include/nodes/nodeFuncs.h:45:14: warning:   initializing argument 2 of 'Node* expression_tree_mutator(Node*, Node* (*)(Node*, void*), void*)' [-fpermissive]
  extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
               ^
-../../src/postgres/backend/optimizer/util/clauses.cpp:2765:25: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-                  context);
-                         ^
-../../src/postgres/backend/optimizer/util/clauses.cpp:2382:1: warning:   initializing argument 1 of 'Node* eval_const_expressions_mutator(Node*, eval_const_expressions_context*)' [-fpermissive]
- eval_const_expressions_mutator(Node *node,
- ^
 ../../src/postgres/backend/optimizer/util/clauses.cpp:3145:41: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
       return copyObject(context->case_val);
                                          ^
@@ -2203,13 +1098,6 @@ In file included from ../../src/postgres/backend/optimizer/util/clauses.cpp:33:0
  extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
               ^
 ../../src/postgres/backend/optimizer/util/clauses.cpp: In function 'Expr* inline_function(Oid, Oid, Oid, Oid, List*, bool, HeapTuple, eval_const_expressions_context*)':
-../../src/postgres/backend/optimizer/util/clauses.cpp:4338:72: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-  querytree = transformTopLevelStmt(pstate, linitial(raw_parsetree_list));
-                                                                        ^
-In file included from ../../src/postgres/backend/optimizer/util/clauses.cpp:39:0:
-../../src/postgres/include/parser/analyze.h:34:15: warning:   initializing argument 2 of 'Query* transformTopLevelStmt(ParseState*, Node*)' [-fpermissive]
- extern Query *transformTopLevelStmt(ParseState *pstate, Node *parseTree);
-               ^
 ../../src/postgres/backend/optimizer/util/clauses.cpp:4468:30: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
   newexpr = copyObject(newexpr);
                               ^
@@ -2225,13 +1113,6 @@ In file included from ../../src/postgres/backend/optimizer/util/clauses.cpp:33:0
  extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
               ^
 ../../src/postgres/backend/optimizer/util/clauses.cpp: In function 'Query* inline_set_returning_function(PlannerInfo*, RangeTblEntry*)':
-../../src/postgres/backend/optimizer/util/clauses.cpp:4862:21: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-                pinfo);
-                     ^
-In file included from ../../src/postgres/backend/optimizer/util/clauses.cpp:44:0:
-../../src/postgres/include/tcop/tcopprot.h:52:14: warning:   initializing argument 1 of 'List* pg_analyze_and_rewrite_params(Node*, const char*, ParserSetupHook, void*)' [-fpermissive]
- extern List *pg_analyze_and_rewrite_params(Node *parsetree,
-              ^
 ../../src/postgres/backend/optimizer/util/clauses.cpp:4865:12: warning: invalid conversion from 'void*' to 'Query*' [-fpermissive]
   querytree = linitial(querytree_list);
             ^
@@ -2287,11 +1168,11 @@ In file included from ../../src/postgres/backend/optimizer/util/clauses.cpp:33:0
  ^
   CXX      postgres/backend/optimizer/util/libpeloton_la-plancat.lo
   CXX      postgres/backend/optimizer/util/libpeloton_la-predtest.lo
-  CXX      postgres/backend/optimizer/util/libpeloton_la-relnode.lo
 ../../src/postgres/backend/optimizer/util/plancat.cpp: In function 'List* get_relation_constraints(PlannerInfo*, Oid, RelOptInfo*, bool)':
 ../../src/postgres/backend/optimizer/util/plancat.cpp:1041:47: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
     cexpr = stringToNode(constr->check[i].ccbin);
                                                ^
+  CXX      postgres/backend/optimizer/util/libpeloton_la-relnode.lo
 ../../src/postgres/backend/optimizer/util/predtest.cpp: In function 'Node* list_next_fn(PredIterInfo)':
 ../../src/postgres/backend/optimizer/util/predtest.cpp:844:4: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
   n = lfirst(l);
@@ -2320,6 +1201,7 @@ In file included from ../../src/postgres/backend/optimizer/util/tlist.cpp:17:0:
 ../../src/postgres/include/nodes/makefuncs.h:41:21: warning:   initializing argument 1 of 'TargetEntry* makeTargetEntry(Expr*, AttrNumber, char*, bool)' [-fpermissive]
  extern TargetEntry *makeTargetEntry(Expr *expr,
                      ^
+  CXX      postgres/backend/parser/libpeloton_la-gram.lo
 ../../src/postgres/backend/optimizer/util/var.cpp: In function 'Bitmapset* pull_varnos(Node*)':
 ../../src/postgres/backend/optimizer/util/var.cpp:110:11: warning: invalid conversion from 'bool (*)(Node*, pull_varnos_context*)' to 'bool (*)(Node*, void*)' [-fpermissive]
           0);
@@ -2436,6 +1318,7 @@ In file included from ../../src/postgres/backend/optimizer/util/var.cpp:24:0:
 ../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
  extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
              ^
+  CXX      postgres/backend/parser/libpeloton_la-analyze.lo
 ../../src/postgres/backend/optimizer/util/var.cpp: In function 'Node* flatten_join_alias_vars_mutator(Node*, flatten_join_alias_vars_context*)':
 ../../src/postgres/backend/optimizer/util/var.cpp:691:31: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
      newvar = copyObject(newvar);
@@ -2464,8 +1347,6 @@ In file included from ../../src/postgres/backend/optimizer/util/var.cpp:24:0:
 ../../src/postgres/include/nodes/nodeFuncs.h:45:14: warning:   initializing argument 2 of 'Node* expression_tree_mutator(Node*, Node* (*)(Node*, void*), void*)' [-fpermissive]
  extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
               ^
-  CXX      postgres/backend/parser/libpeloton_la-gram.lo
-  CXX      postgres/backend/parser/libpeloton_la-analyze.lo
   CXX      postgres/backend/parser/libpeloton_la-keywords.lo
   CXX      postgres/backend/parser/libpeloton_la-kwlookup.lo
 In file included from ../../src/postgres/include/postgres.h:48:0,
@@ -2688,7 +1569,6 @@ In file included from ../../src/postgres/backend/parser/parse_clause.cpp:27:0:
 ../../src/postgres/backend/parser/parse_clause.cpp:2375:52: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
      wc->orderClause = copyObject(refwc->orderClause);
                                                     ^
-  CXX      postgres/backend/parser/libpeloton_la-parse_coerce.lo
 In file included from ../../src/postgres/include/catalog/objectaddress.h:16:0,
                  from ../../src/postgres/include/catalog/index.h:17,
                  from ../../src/postgres/backend/parser/gram.ypp:51:
@@ -2702,7 +1582,7 @@ In file included from ../../src/postgres/include/catalog/objectaddress.h:16:0,
 ../../src/postgres/backend/parser/gram.ypp:138:14: warning:   initializing argument 1 of 'Node* makeStringConst(char*, int)' [-fpermissive]
  static Node *makeStringConst(char *str, int location);
               ^
-  CXX      postgres/backend/parser/libpeloton_la-parse_collate.lo
+  CXX      postgres/backend/parser/libpeloton_la-parse_coerce.lo
 ../../src/postgres/backend/parser/gram.ypp:4500:13: warning: invalid conversion from 'int' to 'ImportForeignSchemaType' [-fpermissive]
      n->type = $1;
              ^
@@ -2739,6 +1619,7 @@ In file included from ../../src/postgres/include/catalog/objectaddress.h:16:0,
 ../../src/postgres/backend/parser/gram.ypp:7363:15: warning: invalid conversion from 'void*' to 'FuncWithArgs*' [-fpermissive]
       n->tosql = lsecond($9);
                ^
+  CXX      postgres/backend/parser/libpeloton_la-parse_collate.lo
 ../../src/postgres/backend/parser/gram.ypp:7411:14: warning: invalid conversion from 'int' to 'ReindexObjectType' [-fpermissive]
       n->kind = $2;
               ^
@@ -2841,6 +1722,37 @@ In file included from ../../src/postgres/include/catalog/objectaddress.h:16:0,
 ../../src/postgres/backend/parser/gram.ypp:10482:20: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
       n->coldeflist = lsecond($3);
                     ^
+../../src/postgres/backend/parser/gram.ypp:11169:14: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
+      typname = $2 ? "varbit" : "bit";
+              ^
+../../src/postgres/backend/parser/gram.ypp:11252:19: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
+           { $$ = $2 ? "varchar": "bpchar"; }
+                   ^
+../../src/postgres/backend/parser/gram.ypp:11254:19: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
+           { $$ = $2 ? "varchar": "bpchar"; }
+                   ^
+../../src/postgres/backend/parser/gram.ypp:11258:19: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
+           { $$ = $3 ? "varchar": "bpchar"; }
+                   ^
+../../src/postgres/backend/parser/gram.ypp:11260:19: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
+           { $$ = $3 ? "varchar": "bpchar"; }
+                   ^
+../../src/postgres/backend/parser/gram.ypp:11262:19: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
+           { $$ = $2 ? "varchar": "bpchar"; }
+                   ^
+../../src/postgres/backend/parser/gram.ypp:11786:21: warning: invalid conversion from 'int' to 'SubLinkType' [-fpermissive]
+      n->subLinkType = $3;
+                     ^
+../../src/postgres/backend/parser/gram.ypp:12454:19: warning: invalid conversion from 'int' to 'XmlOptionType' [-fpermissive]
+      x->xmloption = $3;
+                   ^
+../../src/postgres/backend/parser/gram.ypp:12473:19: warning: invalid conversion from 'int' to 'XmlOptionType' [-fpermissive]
+      n->xmloption = $3;
+                   ^
+../../src/postgres/backend/parser/gram.ypp: In function 'Node* makeBoolAConst(bool, int)':
+../../src/postgres/backend/parser/gram.ypp:14208:17: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
+  n->val.val.str = (state ? "t" : "f");
+                 ^
 ../../src/postgres/backend/parser/parse_collate.cpp: In function 'void assign_query_collations(ParseState*, Query*)':
 ../../src/postgres/backend/parser/parse_collate.cpp:113:34: warning: invalid conversion from 'bool (*)(Node*, ParseState*)' to 'bool (*)(Node*, void*)' [-fpermissive]
          QTW_IGNORE_CTE_SUBQUERIES);
@@ -2899,40 +1811,9 @@ In file included from ../../src/postgres/backend/parser/parse_collate.cpp:46:0:
 ../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
  extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
              ^
-../../src/postgres/backend/parser/gram.ypp:11169:14: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
-      typname = $2 ? "varbit" : "bit";
-              ^
-../../src/postgres/backend/parser/gram.ypp:11252:19: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
-           { $$ = $2 ? "varchar": "bpchar"; }
-                   ^
-../../src/postgres/backend/parser/gram.ypp:11254:19: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
-           { $$ = $2 ? "varchar": "bpchar"; }
-                   ^
-../../src/postgres/backend/parser/gram.ypp:11258:19: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
-           { $$ = $3 ? "varchar": "bpchar"; }
-                   ^
-../../src/postgres/backend/parser/gram.ypp:11260:19: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
-           { $$ = $3 ? "varchar": "bpchar"; }
-                   ^
-../../src/postgres/backend/parser/gram.ypp:11262:19: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
-           { $$ = $2 ? "varchar": "bpchar"; }
-                   ^
-../../src/postgres/backend/parser/gram.ypp:11786:21: warning: invalid conversion from 'int' to 'SubLinkType' [-fpermissive]
-      n->subLinkType = $3;
-                     ^
-../../src/postgres/backend/parser/gram.ypp:12454:19: warning: invalid conversion from 'int' to 'XmlOptionType' [-fpermissive]
-      x->xmloption = $3;
-                   ^
 ../../src/postgres/backend/parser/parse_coerce.cpp: In function 'CoercionPathType find_coercion_pathway(Oid, Oid, CoercionContext, Oid*)':
 ../../src/postgres/backend/parser/parse_coerce.cpp:2143:17: warning: invalid conversion from 'int' to 'CoercionContext' [-fpermissive]
      castcontext = 0; /* keep compiler quiet */
-                 ^
-../../src/postgres/backend/parser/gram.ypp:12473:19: warning: invalid conversion from 'int' to 'XmlOptionType' [-fpermissive]
-      n->xmloption = $3;
-                   ^
-../../src/postgres/backend/parser/gram.ypp: In function 'Node* makeBoolAConst(bool, int)':
-../../src/postgres/backend/parser/gram.ypp:14208:17: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
-  n->val.val.str = (state ? "t" : "f");
                  ^
 In file included from ../../src/postgres/backend/parser/gram.ypp:14849:0:
 ../../src/postgres/backend/parser/scan.lpp: In function 'char* litbufdup(core_yyscan_t)':
@@ -3134,11 +2015,11 @@ In file included from ../../src/postgres/backend/parser/parse_utilcmd.cpp:56:0:
                                         ^
   CXX      postgres/backend/postmaster/libpeloton_la-checkpointer.lo
   CXX      postgres/backend/postmaster/libpeloton_la-fork_process.lo
+  CXX      postgres/backend/postmaster/libpeloton_la-peloton.lo
 ../../src/postgres/backend/postmaster/checkpointer.cpp: In function 'bool CompactCheckpointerRequestQueue()':
 ../../src/postgres/backend/postmaster/checkpointer.cpp:1235:58: warning: invalid conversion from 'void*' to 'CompactCheckpointerRequestQueue()::CheckpointerSlotMapping*' [-fpermissive]
    slotmap = hash_search(htab, request, HASH_ENTER, &found);
                                                           ^
-  CXX      postgres/backend/postmaster/libpeloton_la-peloton.lo
   CXX      postgres/backend/postmaster/libpeloton_la-pgarch.lo
   CXX      postgres/backend/postmaster/libpeloton_la-pgstat.lo
   CXX      postgres/backend/postmaster/libpeloton_la-postmaster.lo
@@ -3184,23 +2065,9 @@ In file included from ../../src/postgres/backend/postmaster/pgstat.cpp:32:0:
 ../../src/postgres/include/pgstat.h:194:14: note: and the implicitly-defined constructor does not initialize 'StatMsgType PgStat_MsgHdr::m_type'
   StatMsgType m_type;
               ^
-../../src/postgres/backend/postmaster/postmaster.cpp: In function 'int ProcessStartupPacket(Port*, bool)':
-../../src/postgres/backend/postmaster/postmaster.cpp:1844:27: warning: invalid conversion from 'void*' to 'char*' [-fpermissive]
-   if (pq_getbytes(buf, len) == EOF)
-                           ^
-In file included from ../../src/postgres/backend/postmaster/postmaster.cpp:101:0:
-../../src/postgres/include/libpq/libpq.h:63:12: warning:   initializing argument 1 of 'int pq_getbytes(char*, size_t)' [-fpermissive]
- extern int pq_getbytes(char *s, size_t len);
-            ^
-../../src/postgres/backend/postmaster/postmaster.cpp: In function 'bool assign_backendlist_entry(RegisteredBgWorker*)':
-../../src/postgres/backend/postmaster/postmaster.cpp:5587:44: warning: invalid conversion from 'void*' to 'Backend* {aka bkend*}' [-fpermissive]
-     Backend    *bn = malloc(sizeof(Backend));
-                                            ^
   CXX      postgres/backend/postmaster/libpeloton_la-syslogger.lo
   CXX      postgres/backend/postmaster/libpeloton_la-walwriter.lo
   CXX      postgres/backend/regex/libpeloton_la-regcomp.lo
-  CXX      postgres/backend/regex/libpeloton_la-regerror.lo
-  CXX      postgres/backend/regex/libpeloton_la-regexec.lo
 ../../src/postgres/backend/regex/regcomp.cpp: In function 'int pg_regcomp(regex_t*, const chr*, size_t, int, Oid)':
 ../../src/postgres/backend/regex/regcomp.cpp:355:13: warning: invalid conversion from 'void*' to 'char*' [-fpermissive]
   re->re_fns = VS(&functions);
@@ -3208,29 +2075,15 @@ In file included from ../../src/postgres/backend/postmaster/postmaster.cpp:101:0
 ../../src/postgres/backend/regex/regcomp.cpp:358:14: warning: invalid conversion from 'void*' to 'char*' [-fpermissive]
   re->re_guts = VS(MALLOC(sizeof(struct guts)));
               ^
+  CXX      postgres/backend/regex/libpeloton_la-regerror.lo
+  CXX      postgres/backend/regex/libpeloton_la-regexec.lo
   CXX      postgres/backend/regex/libpeloton_la-regexport.lo
   CXX      postgres/backend/regex/libpeloton_la-regfree.lo
   CXX      postgres/backend/regex/libpeloton_la-regprefix.lo
   CXX      postgres/backend/replication/libpeloton_la-basebackup.lo
   CXX      postgres/backend/replication/logical/libpeloton_la-decode.lo
-../../src/postgres/backend/replication/basebackup.cpp: In function 'void perform_base_backup(basebackup_options*, DIR*)':
-../../src/postgres/backend/replication/basebackup.cpp:325:18: warning: invalid conversion from 'void*' to 'char*' [-fpermissive]
-    walFiles[i++] = lfirst(lc);
-                  ^
   CXX      postgres/backend/replication/logical/libpeloton_la-logical.lo
   CXX      postgres/backend/replication/logical/libpeloton_la-logicalfuncs.lo
-../../src/postgres/backend/replication/logical/logical.cpp: In function 'void begin_cb_wrapper(ReorderBuffer*, ReorderBufferTXN*)':
-../../src/postgres/backend/replication/logical/logical.cpp:636:39: warning: invalid conversion from 'void*' to 'LogicalDecodingContext*' [-fpermissive]
-  LogicalDecodingContext *ctx = cache->private_data;
-                                       ^
-../../src/postgres/backend/replication/logical/logical.cpp: In function 'void commit_cb_wrapper(ReorderBuffer*, ReorderBufferTXN*, XLogRecPtr)':
-../../src/postgres/backend/replication/logical/logical.cpp:665:39: warning: invalid conversion from 'void*' to 'LogicalDecodingContext*' [-fpermissive]
-  LogicalDecodingContext *ctx = cache->private_data;
-                                       ^
-../../src/postgres/backend/replication/logical/logical.cpp: In function 'void change_cb_wrapper(ReorderBuffer*, ReorderBufferTXN*, Relation, ReorderBufferChange*)':
-../../src/postgres/backend/replication/logical/logical.cpp:694:39: warning: invalid conversion from 'void*' to 'LogicalDecodingContext*' [-fpermissive]
-  LogicalDecodingContext *ctx = cache->private_data;
-                                       ^
   CXX      postgres/backend/replication/logical/libpeloton_la-origin.lo
   CXX      postgres/backend/replication/logical/libpeloton_la-reorderbuffer.lo
   CXX      postgres/backend/replication/logical/libpeloton_la-snapbuild.lo
@@ -3246,54 +2099,7 @@ In file included from ../../src/postgres/include/storage/shmem.h:24:0,
 ../../src/postgres/include/utils/hsearch.h:126:14: warning:   initializing argument 3 of 'void* hash_search(HTAB*, const void*, HASHACTION, bool*)' [-fpermissive]
  extern void *hash_search(HTAB *hashp, const void *keyPtr, HASHACTION action,
               ^
-../../src/postgres/backend/replication/logical/reorderbuffer.cpp: In function 'SnapshotData* ReorderBufferCopySnap(ReorderBuffer*, Snapshot, ReorderBufferTXN*, CommandId)':
-../../src/postgres/backend/replication/logical/reorderbuffer.cpp:1189:49: warning: invalid conversion from 'void*' to 'Snapshot' [-fpermissive]
-  snap = MemoryContextAllocZero(rb->context, size);
-                                                 ^
-../../src/postgres/backend/replication/logical/reorderbuffer.cpp: In function 'void ReorderBufferSerializeReserve(ReorderBuffer*, Size)':
-../../src/postgres/backend/replication/logical/reorderbuffer.cpp:1946:50: warning: invalid conversion from 'void*' to 'char*' [-fpermissive]
-   rb->outbuf = MemoryContextAlloc(rb->context, sz);
-                                                  ^
-../../src/postgres/backend/replication/logical/reorderbuffer.cpp: In function 'void ReorderBufferRestoreChange(ReorderBuffer*, ReorderBufferTXN*, char*)':
-../../src/postgres/backend/replication/logical/reorderbuffer.cpp:2366:69: warning: invalid conversion from 'void*' to 'Snapshot' [-fpermissive]
-     change->data.snapshot = MemoryContextAllocZero(rb->context, size);
-                                                                     ^
-../../src/postgres/backend/replication/logical/reorderbuffer.cpp: In function 'void UpdateLogicalMappings(HTAB*, Oid, Snapshot)':
-../../src/postgres/backend/replication/logical/reorderbuffer.cpp:3038:18: warning: invalid conversion from 'void*' to 'RewriteMappingFile*' [-fpermissive]
-   files_a[off++] = lfirst(file);
-                  ^
   CXX      postgres/backend/replication/libpeloton_la-slot.lo
-../../src/postgres/backend/replication/logical/snapbuild.cpp: In function 'SnapshotData* SnapBuildBuildSnapshot(SnapBuild*, TransactionId)':
-../../src/postgres/backend/replication/logical/snapbuild.cpp:443:59: warning: invalid conversion from 'void*' to 'Snapshot' [-fpermissive]
-  snapshot = MemoryContextAllocZero(builder->context, ssize);
-                                                           ^
-../../src/postgres/backend/replication/logical/snapbuild.cpp: In function 'bool SnapBuildTxnIsRunning(SnapBuild*, TransactionId)':
-../../src/postgres/backend/replication/logical/snapbuild.cpp:744:41: warning: invalid conversion from 'void*' to 'TransactionId* {aka unsigned int*}' [-fpermissive]
-     sizeof(TransactionId), xidComparator);
-                                         ^
-../../src/postgres/backend/replication/logical/snapbuild.cpp: In function 'void SnapBuildAddCommittedTxn(SnapBuild*, TransactionId)':
-../../src/postgres/backend/replication/logical/snapbuild.cpp:823:61: warning: invalid conversion from 'void*' to 'TransactionId* {aka unsigned int*}' [-fpermissive]
-        builder->committed.xcnt_space * sizeof(TransactionId));
-                                                             ^
-../../src/postgres/backend/replication/logical/snapbuild.cpp: In function 'void SnapBuildPurgeCommittedTxn(SnapBuild*)':
-../../src/postgres/backend/replication/logical/snapbuild.cpp:853:57: warning: invalid conversion from 'void*' to 'TransactionId* {aka unsigned int*}' [-fpermissive]
-          builder->committed.xcnt * sizeof(TransactionId));
-                                                         ^
-../../src/postgres/backend/replication/logical/snapbuild.cpp: In function 'bool SnapBuildFindSnapshot(SnapBuild*, XLogRecPtr, xl_running_xacts*)':
-../../src/postgres/backend/replication/logical/snapbuild.cpp:1316:56: warning: invalid conversion from 'void*' to 'TransactionId* {aka unsigned int*}' [-fpermissive]
-           builder->running.xcnt * sizeof(TransactionId));
-                                                        ^
-../../src/postgres/backend/replication/logical/snapbuild.cpp: In function 'void SnapBuildSerialize(SnapBuild*, XLogRecPtr)':
-../../src/postgres/backend/replication/logical/snapbuild.cpp:1527:67: warning: invalid conversion from 'void*' to 'char*' [-fpermissive]
-  ondisk_c = MemoryContextAllocZero(builder->context, needed_length);
-                                                                   ^
-../../src/postgres/backend/replication/logical/snapbuild.cpp: In function 'bool SnapBuildRestore(SnapBuild*, XLogRecPtr)':
-../../src/postgres/backend/replication/logical/snapbuild.cpp:1708:74: warning: invalid conversion from 'void*' to 'TransactionId* {aka unsigned int*}' [-fpermissive]
-  ondisk.builder.running.xip = MemoryContextAllocZero(builder->context, sz);
-                                                                          ^
-../../src/postgres/backend/replication/logical/snapbuild.cpp:1722:76: warning: invalid conversion from 'void*' to 'TransactionId* {aka unsigned int*}' [-fpermissive]
-  ondisk.builder.committed.xip = MemoryContextAllocZero(builder->context, sz);
-                                                                            ^
   CXX      postgres/backend/replication/libpeloton_la-slotfuncs.lo
   CXX      postgres/backend/replication/libpeloton_la-syncrep.lo
   CXX      postgres/backend/replication/libpeloton_la-walreceiver.lo
@@ -3301,7 +2107,6 @@ In file included from ../../src/postgres/include/storage/shmem.h:24:0,
   CXX      postgres/backend/replication/libpeloton_la-walsender.lo
   CXX      postgres/backend/rewrite/libpeloton_la-rewriteDefine.lo
   CXX      postgres/backend/rewrite/libpeloton_la-rewriteHandler.lo
-  CXX      postgres/backend/rewrite/libpeloton_la-rewriteManip.lo
 ../../src/postgres/backend/rewrite/rewriteDefine.cpp: In function 'bool setRuleCheckAsUser_walker(Node*, Oid*)':
 ../../src/postgres/backend/rewrite/rewriteDefine.cpp:763:27: warning: invalid conversion from 'bool (*)(Node*, Oid*) {aka bool (*)(Node*, unsigned int*)}' to 'bool (*)(Node*, void*)' [-fpermissive]
            (void *) context);
@@ -3318,6 +2123,7 @@ In file included from ../../src/postgres/backend/rewrite/rewriteDefine.cpp:31:0:
 ../../src/postgres/include/nodes/nodeFuncs.h:48:13: warning:   initializing argument 2 of 'bool query_tree_walker(Query*, bool (*)(Node*, void*), void*, int)' [-fpermissive]
  extern bool query_tree_walker(Query *query, bool (*walker) (Node *, void *),   /* Peloton porting: change functioin pointer to contain two arguments */
              ^
+  CXX      postgres/backend/rewrite/libpeloton_la-rewriteManip.lo
 ../../src/postgres/backend/rewrite/rewriteHandler.cpp: In function 'void AcquireRewriteLocks(Query*, bool, bool)':
 ../../src/postgres/backend/rewrite/rewriteHandler.cpp:277:33: warning: invalid conversion from 'bool (*)(Node*, acquireLocksOnSubLinks_context*)' to 'bool (*)(Node*, void*)' [-fpermissive]
          QTW_IGNORE_RC_SUBQUERIES);
@@ -3352,6 +2158,64 @@ In file included from ../../src/postgres/include/catalog/objectaddress.h:16:0,
 ../../src/postgres/backend/rewrite/rewriteHandler.cpp:1038:43: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
      expr = stringToNode(defval[ndef].adbin);
                                            ^
+../../src/postgres/backend/rewrite/rewriteHandler.cpp: In function 'Query* ApplyRetrieveRule(Query*, RewriteRule*, int, Relation, List*, bool)':
+../../src/postgres/backend/rewrite/rewriteHandler.cpp:1403:27: warning: invalid conversion from 'void*' to 'RangeTblEntry*' [-fpermissive]
+    newrte = copyObject(rte);
+                           ^
+../../src/postgres/backend/rewrite/rewriteHandler.cpp:1427:66: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
+    parsetree->returningList = copyObject(parsetree->returningList);
+                                                                  ^
+../../src/postgres/backend/rewrite/rewriteHandler.cpp:1449:50: warning: invalid conversion from 'void*' to 'Query*' [-fpermissive]
+  rule_action = copyObject(linitial(rule->actions));
+                                                  ^
+../../src/postgres/backend/rewrite/rewriteHandler.cpp: In function 'void markQueryForLocking(Query*, Node*, LockClauseStrength, LockWaitPolicy, bool)':
+../../src/postgres/backend/rewrite/rewriteHandler.cpp:1546:72: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
+    markQueryForLocking(qry, lfirst(l), strength, waitPolicy, pushedDown);
+                                                                        ^
+../../src/postgres/backend/rewrite/rewriteHandler.cpp:1515:1: warning:   initializing argument 2 of 'void markQueryForLocking(Query*, Node*, LockClauseStrength, LockWaitPolicy, bool)' [-fpermissive]
+ markQueryForLocking(Query *qry, Node *jtnode,
+ ^
+../../src/postgres/backend/rewrite/rewriteHandler.cpp: In function 'bool fireRIRonSubLink(Node*, List*)':
+../../src/postgres/backend/rewrite/rewriteHandler.cpp:1594:30: warning: invalid conversion from 'bool (*)(Node*, List*)' to 'bool (*)(Node*, void*)' [-fpermissive]
+           (void *) activeRIRs);
+                              ^
+In file included from ../../src/postgres/backend/rewrite/rewriteHandler.cpp:21:0:
+../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
+ extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
+             ^
+../../src/postgres/backend/rewrite/rewriteHandler.cpp: In function 'Query* fireRIRrules(Query*, List*, bool)':
+../../src/postgres/backend/rewrite/rewriteHandler.cpp:1716:11: warning: invalid conversion from 'void*' to 'RewriteRule*' [-fpermissive]
+      rule = lfirst(l);
+           ^
+../../src/postgres/backend/rewrite/rewriteHandler.cpp:1748:33: warning: invalid conversion from 'bool (*)(Node*, List*)' to 'bool (*)(Node*, void*)' [-fpermissive]
+         QTW_IGNORE_RC_SUBQUERIES);
+                                 ^
+In file included from ../../src/postgres/backend/rewrite/rewriteHandler.cpp:21:0:
+../../src/postgres/include/nodes/nodeFuncs.h:48:13: warning:   initializing argument 2 of 'bool query_tree_walker(Query*, bool (*)(Node*, void*), void*, int)' [-fpermissive]
+ extern bool query_tree_walker(Query *query, bool (*walker) (Node *, void *),   /* Peloton porting: change functioin pointer to contain two arguments */
+             ^
+../../src/postgres/backend/rewrite/rewriteHandler.cpp:1799:47: warning: invalid conversion from 'bool (*)(Node*, List*)' to 'bool (*)(Node*, void*)' [-fpermissive]
+           fireRIRonSubLink, (void*)activeRIRs );
+                                               ^
+In file included from ../../src/postgres/backend/rewrite/rewriteHandler.cpp:21:0:
+../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
+ extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
+             ^
+../../src/postgres/backend/rewrite/rewriteHandler.cpp:1802:47: warning: invalid conversion from 'bool (*)(Node*, List*)' to 'bool (*)(Node*, void*)' [-fpermissive]
+           fireRIRonSubLink, (void*)activeRIRs );
+                                               ^
+In file included from ../../src/postgres/backend/rewrite/rewriteHandler.cpp:21:0:
+../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
+ extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
+             ^
+../../src/postgres/backend/rewrite/rewriteHandler.cpp: In function 'List* fireRules(Query*, int, CmdType, List*, bool*, bool*, Query**)':
+../../src/postgres/backend/rewrite/rewriteHandler.cpp:1970:42: warning: invalid conversion from 'void*' to 'Query*' [-fpermissive]
+      *qual_product = copyObject(parsetree);
+                                          ^
+../../src/postgres/backend/rewrite/rewriteHandler.cpp: In function 'Query* rewriteTargetView(Query*, Relation)':
+../../src/postgres/backend/rewrite/rewriteHandler.cpp:2763:52: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
+  view_targetlist = copyObject(viewquery->targetList);
+                                                    ^
 ../../src/postgres/backend/rewrite/rewriteManip.cpp: In function 'bool contain_aggs_of_level(Node*, int)':
 ../../src/postgres/backend/rewrite/rewriteManip.cpp:80:15: warning: invalid conversion from 'bool (*)(Node*, contain_aggs_of_level_context*)' to 'bool (*)(Node*, void*)' [-fpermissive]
               0);
@@ -3406,10 +2270,6 @@ In file included from ../../src/postgres/backend/rewrite/rewriteManip.cpp:18:0:
 ../../src/postgres/include/nodes/nodeFuncs.h:58:13: warning:   initializing argument 2 of 'bool query_or_expression_tree_walker(Node*, bool (*)(Node*, void*), void*, int)' [-fpermissive]
  extern bool query_or_expression_tree_walker(Node *node, bool (*walker) (Node*, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
              ^
-../../src/postgres/backend/rewrite/rewriteHandler.cpp: In function 'Query* ApplyRetrieveRule(Query*, RewriteRule*, int, Relation, List*, bool)':
-../../src/postgres/backend/rewrite/rewriteHandler.cpp:1403:27: warning: invalid conversion from 'void*' to 'RangeTblEntry*' [-fpermissive]
-    newrte = copyObject(rte);
-                           ^
 ../../src/postgres/backend/rewrite/rewriteManip.cpp: In function 'bool locate_windowfunc_walker(Node*, locate_windowfunc_context*)':
 ../../src/postgres/backend/rewrite/rewriteManip.cpp:269:27: warning: invalid conversion from 'bool (*)(Node*, locate_windowfunc_context*)' to 'bool (*)(Node*, void*)' [-fpermissive]
            (void *) context);
@@ -3418,12 +2278,6 @@ In file included from ../../src/postgres/backend/rewrite/rewriteManip.cpp:18:0:
 ../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
  extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
              ^
-../../src/postgres/backend/rewrite/rewriteHandler.cpp:1427:66: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-    parsetree->returningList = copyObject(parsetree->returningList);
-                                                                  ^
-../../src/postgres/backend/rewrite/rewriteHandler.cpp:1449:50: warning: invalid conversion from 'void*' to 'Query*' [-fpermissive]
-  rule_action = copyObject(linitial(rule->actions));
-                                                  ^
 ../../src/postgres/backend/rewrite/rewriteManip.cpp: In function 'bool OffsetVarNodes_walker(Node*, OffsetVarNodes_context*)':
 ../../src/postgres/backend/rewrite/rewriteManip.cpp:416:31: warning: invalid conversion from 'bool (*)(Node*, OffsetVarNodes_context*)' to 'bool (*)(Node*, void*)' [-fpermissive]
             (void *) context, 0);
@@ -3439,13 +2293,6 @@ In file included from ../../src/postgres/backend/rewrite/rewriteManip.cpp:18:0:
 ../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
  extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
              ^
-../../src/postgres/backend/rewrite/rewriteHandler.cpp: In function 'void markQueryForLocking(Query*, Node*, LockClauseStrength, LockWaitPolicy, bool)':
-../../src/postgres/backend/rewrite/rewriteHandler.cpp:1546:72: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
-    markQueryForLocking(qry, lfirst(l), strength, waitPolicy, pushedDown);
-                                                                        ^
-../../src/postgres/backend/rewrite/rewriteHandler.cpp:1515:1: warning:   initializing argument 2 of 'void markQueryForLocking(Query*, Node*, LockClauseStrength, LockWaitPolicy, bool)' [-fpermissive]
- markQueryForLocking(Query *qry, Node *jtnode,
- ^
 ../../src/postgres/backend/rewrite/rewriteManip.cpp: In function 'void OffsetVarNodes(Node*, int, int)':
 ../../src/postgres/backend/rewrite/rewriteManip.cpp:466:29: warning: invalid conversion from 'bool (*)(Node*, OffsetVarNodes_context*)' to 'bool (*)(Node*, void*)' [-fpermissive]
          (void *) &context, 0);
@@ -3453,14 +2300,6 @@ In file included from ../../src/postgres/backend/rewrite/rewriteManip.cpp:18:0:
 In file included from ../../src/postgres/backend/rewrite/rewriteManip.cpp:18:0:
 ../../src/postgres/include/nodes/nodeFuncs.h:48:13: warning:   initializing argument 2 of 'bool query_tree_walker(Query*, bool (*)(Node*, void*), void*, int)' [-fpermissive]
  extern bool query_tree_walker(Query *query, bool (*walker) (Node *, void *),   /* Peloton porting: change functioin pointer to contain two arguments */
-             ^
-../../src/postgres/backend/rewrite/rewriteHandler.cpp: In function 'bool fireRIRonSubLink(Node*, List*)':
-../../src/postgres/backend/rewrite/rewriteHandler.cpp:1594:30: warning: invalid conversion from 'bool (*)(Node*, List*)' to 'bool (*)(Node*, void*)' [-fpermissive]
-           (void *) activeRIRs);
-                              ^
-In file included from ../../src/postgres/backend/rewrite/rewriteHandler.cpp:21:0:
-../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
- extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
              ^
 ../../src/postgres/backend/rewrite/rewriteManip.cpp: In function 'bool ChangeVarNodes_walker(Node*, ChangeVarNodes_context*)':
 ../../src/postgres/backend/rewrite/rewriteManip.cpp:600:31: warning: invalid conversion from 'bool (*)(Node*, ChangeVarNodes_context*)' to 'bool (*)(Node*, void*)' [-fpermissive]
@@ -3477,10 +2316,6 @@ In file included from ../../src/postgres/backend/rewrite/rewriteManip.cpp:18:0:
 ../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
  extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
              ^
-../../src/postgres/backend/rewrite/rewriteHandler.cpp: In function 'Query* fireRIRrules(Query*, List*, bool)':
-../../src/postgres/backend/rewrite/rewriteHandler.cpp:1716:11: warning: invalid conversion from 'void*' to 'RewriteRule*' [-fpermissive]
-      rule = lfirst(l);
-           ^
 ../../src/postgres/backend/rewrite/rewriteManip.cpp: In function 'void ChangeVarNodes(Node*, int, int, int)':
 ../../src/postgres/backend/rewrite/rewriteManip.cpp:653:29: warning: invalid conversion from 'bool (*)(Node*, ChangeVarNodes_context*)' to 'bool (*)(Node*, void*)' [-fpermissive]
          (void *) &context, 0);
@@ -3488,20 +2323,6 @@ In file included from ../../src/postgres/backend/rewrite/rewriteManip.cpp:18:0:
 In file included from ../../src/postgres/backend/rewrite/rewriteManip.cpp:18:0:
 ../../src/postgres/include/nodes/nodeFuncs.h:48:13: warning:   initializing argument 2 of 'bool query_tree_walker(Query*, bool (*)(Node*, void*), void*, int)' [-fpermissive]
  extern bool query_tree_walker(Query *query, bool (*walker) (Node *, void *),   /* Peloton porting: change functioin pointer to contain two arguments */
-             ^
-../../src/postgres/backend/rewrite/rewriteHandler.cpp:1748:33: warning: invalid conversion from 'bool (*)(Node*, List*)' to 'bool (*)(Node*, void*)' [-fpermissive]
-         QTW_IGNORE_RC_SUBQUERIES);
-                                 ^
-In file included from ../../src/postgres/backend/rewrite/rewriteHandler.cpp:21:0:
-../../src/postgres/include/nodes/nodeFuncs.h:48:13: warning:   initializing argument 2 of 'bool query_tree_walker(Query*, bool (*)(Node*, void*), void*, int)' [-fpermissive]
- extern bool query_tree_walker(Query *query, bool (*walker) (Node *, void *),   /* Peloton porting: change functioin pointer to contain two arguments */
-             ^
-../../src/postgres/backend/rewrite/rewriteHandler.cpp:1799:47: warning: invalid conversion from 'bool (*)(Node*, List*)' to 'bool (*)(Node*, void*)' [-fpermissive]
-           fireRIRonSubLink, (void*)activeRIRs );
-                                               ^
-In file included from ../../src/postgres/backend/rewrite/rewriteHandler.cpp:21:0:
-../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
- extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
              ^
 ../../src/postgres/backend/rewrite/rewriteManip.cpp: In function 'bool IncrementVarSublevelsUp_walker(Node*, IncrementVarSublevelsUp_context*)':
 ../../src/postgres/backend/rewrite/rewriteManip.cpp:766:28: warning: invalid conversion from 'bool (*)(Node*, IncrementVarSublevelsUp_context*)' to 'bool (*)(Node*, void*)' [-fpermissive]
@@ -3514,14 +2335,7 @@ In file included from ../../src/postgres/backend/rewrite/rewriteManip.cpp:18:0:
 ../../src/postgres/backend/rewrite/rewriteManip.cpp:771:27: warning: invalid conversion from 'bool (*)(Node*, IncrementVarSublevelsUp_context*)' to 'bool (*)(Node*, void*)' [-fpermissive]
            (void *) context);
                            ^
-../../src/postgres/backend/rewrite/rewriteHandler.cpp:1802:47: warning: invalid conversion from 'bool (*)(Node*, List*)' to 'bool (*)(Node*, void*)' [-fpermissive]
-           fireRIRonSubLink, (void*)activeRIRs );
-                                               ^
 In file included from ../../src/postgres/backend/rewrite/rewriteManip.cpp:18:0:
-../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
- extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
-             ^
-In file included from ../../src/postgres/backend/rewrite/rewriteHandler.cpp:21:0:
 ../../src/postgres/include/nodes/nodeFuncs.h:43:13: warning:   initializing argument 2 of 'bool expression_tree_walker(Node*, bool (*)(Node*, void*), void*)' [-fpermissive]
  extern bool expression_tree_walker(Node *node, bool (*walker) (Node *, void *),  /* Peloton porting: change functioin pointer to contain two arguments */
              ^
@@ -3541,10 +2355,6 @@ In file included from ../../src/postgres/backend/rewrite/rewriteManip.cpp:18:0:
 ../../src/postgres/include/nodes/nodeFuncs.h:53:13: warning:   initializing argument 2 of 'bool range_table_walker(List*, bool (*)(Node*, void*), void*, int)' [-fpermissive]
  extern bool range_table_walker(List *rtable, bool (*walker) (Node *, void *),   /* Peloton porting: change functioin pointer to contain two arguments */
              ^
-../../src/postgres/backend/rewrite/rewriteHandler.cpp: In function 'List* fireRules(Query*, int, CmdType, List*, bool*, bool*, Query**)':
-../../src/postgres/backend/rewrite/rewriteHandler.cpp:1970:42: warning: invalid conversion from 'void*' to 'Query*' [-fpermissive]
-      *qual_product = copyObject(parsetree);
-                                          ^
 ../../src/postgres/backend/rewrite/rewriteManip.cpp: In function 'bool rangeTableEntry_used_walker(Node*, rangeTableEntry_used_context*)':
 ../../src/postgres/backend/rewrite/rewriteManip.cpp:883:31: warning: invalid conversion from 'bool (*)(Node*, rangeTableEntry_used_context*)' to 'bool (*)(Node*, void*)' [-fpermissive]
             (void *) context, 0);
@@ -3618,10 +2428,6 @@ In file included from ../../src/postgres/backend/rewrite/rewriteManip.cpp:18:0:
 ../../src/postgres/include/nodes/nodeFuncs.h:60:14: warning:   initializing argument 2 of 'Node* query_or_expression_tree_mutator(Node*, Node* (*)(Node*, void*), void*, int)' [-fpermissive]
  extern Node *query_or_expression_tree_mutator(Node *node, Node *(*mutator) (Node *, void *), /* Peloton porting: change functioin pointer to contain two arguments */
               ^
-../../src/postgres/backend/rewrite/rewriteHandler.cpp: In function 'Query* rewriteTargetView(Query*, Relation)':
-../../src/postgres/backend/rewrite/rewriteHandler.cpp:2763:52: warning: invalid conversion from 'void*' to 'List*' [-fpermissive]
-  view_targetlist = copyObject(viewquery->targetList);
-                                                    ^
 ../../src/postgres/backend/rewrite/rewriteManip.cpp: In function 'Node* ReplaceVarsFromTargetList_callback(Var*, replace_rte_variables_context*)':
 ../../src/postgres/backend/rewrite/rewriteManip.cpp:1418:42: warning: invalid conversion from 'void*' to 'Node*' [-fpermissive]
    Node    *newnode = copyObject(tle->expr);
@@ -3728,11 +2534,11 @@ In file included from ../../src/postgres/backend/rewrite/rewriteManip.cpp:18:0:
   CXX      postgres/backend/storage/lmgr/libpeloton_la-deadlock.lo
   CXX      postgres/backend/storage/lmgr/libpeloton_la-lmgr.lo
   CXX      postgres/backend/storage/lmgr/libpeloton_la-lock.lo
+  CXX      postgres/backend/storage/lmgr/libpeloton_la-lwlock.lo
 ../../src/postgres/backend/storage/lmgr/lock.cpp: In function 'void InitLocks()':
 ../../src/postgres/backend/storage/lmgr/lock.cpp:426:53: warning: invalid conversion from 'void*' to 'volatile FastPathStrongRelationLockData*' [-fpermissive]
        sizeof(FastPathStrongRelationLockData), &found);
                                                      ^
-  CXX      postgres/backend/storage/lmgr/libpeloton_la-lwlock.lo
   CXX      postgres/backend/storage/lmgr/libpeloton_la-predicate.lo
   CXX      postgres/backend/storage/lmgr/libpeloton_la-proc.lo
 ../../src/postgres/backend/storage/lmgr/predicate.cpp: In function 'void InitPredicateLocks()':
@@ -3816,7 +2622,6 @@ In file included from ../../src/postgres/backend/rewrite/rewriteManip.cpp:18:0:
 ../../src/postgres/backend/storage/smgr/md.cpp:1507:65: warning: invalid conversion from 'int' to 'ForkNumber' [-fpermissive]
      for (forknum = 0; forknum <= MAX_FORKNUM; forknum = forknum + 1)
                                                                  ^
-  CXX      postgres/backend/tcop/libpeloton_la-dest.lo
 ../../src/postgres/backend/storage/smgr/smgr.cpp: In function 'void smgrclose(SMgrRelation)':
 ../../src/postgres/backend/storage/smgr/smgr.cpp:299:15: warning: invalid conversion from 'int' to 'ForkNumber' [-fpermissive]
   for (forknum = 0; forknum <= MAX_FORKNUM; forknum = forknum + 1)
@@ -3844,6 +2649,7 @@ In file included from ../../src/postgres/backend/rewrite/rewriteManip.cpp:18:0:
 ../../src/postgres/backend/storage/smgr/smgr.cpp:529:63: warning: invalid conversion from 'int' to 'ForkNumber' [-fpermissive]
    for (forknum = 0; forknum <= MAX_FORKNUM; forknum = forknum + 1)
                                                                ^
+  CXX      postgres/backend/tcop/libpeloton_la-dest.lo
   CXX      postgres/backend/tcop/libpeloton_la-fastpath.lo
   CXX      postgres/backend/tcop/libpeloton_la-postgres.lo
   CXX      postgres/backend/tcop/libpeloton_la-pquery.lo
@@ -4009,11 +2815,11 @@ In file included from ../../src/postgres/backend/rewrite/rewriteManip.cpp:18:0:
        ^
   CXX      postgres/backend/utils/adt/libpeloton_la-jsonb.lo
   CXX      postgres/backend/utils/adt/libpeloton_la-jsonb_gin.lo
-  CXX      postgres/backend/utils/adt/libpeloton_la-jsonb_op.lo
 ../../src/postgres/backend/utils/adt/jsonb.cpp: In function 'void datum_to_jsonb(Datum, bool, JsonbInState*, JsonbTypeCategory, Oid, bool)':
 ../../src/postgres/backend/utils/adt/jsonb.cpp:733:16: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
       outputstr = DatumGetBool(val) ? "true" : "false";
                 ^
+  CXX      postgres/backend/utils/adt/libpeloton_la-jsonb_op.lo
   CXX      postgres/backend/utils/adt/libpeloton_la-jsonb_util.lo
   CXX      postgres/backend/utils/adt/libpeloton_la-json.lo
   CXX      postgres/backend/utils/adt/libpeloton_la-jsonfuncs.lo
@@ -4056,6 +2862,7 @@ In file included from ../../src/postgres/backend/rewrite/rewriteManip.cpp:18:0:
 ../../src/postgres/backend/utils/adt/jsonfuncs.cpp:2995:70: warning: invalid conversion from 'void*' to 'JsonHashEntry*' [-fpermissive]
   hashentry = hash_search(_state->json_hash, fname, HASH_ENTER, &found);
                                                                       ^
+  CXX      postgres/backend/utils/adt/libpeloton_la-like.lo
 ../../src/postgres/backend/utils/adt/jsonfuncs.cpp: In function 'Datum jsonb_strip_nulls(FunctionCallInfo)':
 ../../src/postgres/backend/utils/adt/jsonfuncs.cpp:3208:46: warning: invalid conversion from 'int' to 'JsonbIteratorToken' [-fpermissive]
     res = pushJsonbValue(&parseState, type, &v);
@@ -4233,7 +3040,6 @@ In file included from ../../src/postgres/backend/utils/adt/jsonfuncs.cpp:31:0:
 ../../src/postgres/include/utils/jsonb.h:420:20: warning:   initializing argument 2 of 'JsonbValue* pushJsonbValue(JsonbParseState**, JsonbIteratorToken, JsonbValue*)' [-fpermissive]
  extern JsonbValue *pushJsonbValue(JsonbParseState **pstate,
                     ^
-  CXX      postgres/backend/utils/adt/libpeloton_la-like.lo
   CXX      postgres/backend/utils/adt/libpeloton_la-lockfuncs.lo
   CXX      postgres/backend/utils/adt/libpeloton_la-mac.lo
   CXX      postgres/backend/utils/adt/libpeloton_la-misc.lo
@@ -4260,11 +3066,11 @@ In file included from ../../src/postgres/backend/utils/adt/jsonfuncs.cpp:31:0:
   CXX      postgres/backend/utils/adt/libpeloton_la-oracle_compat.lo
   CXX      postgres/backend/utils/adt/libpeloton_la-orderedsetaggs.lo
   CXX      postgres/backend/utils/adt/libpeloton_la-pg_locale.lo
+  CXX      postgres/backend/utils/adt/libpeloton_la-pg_lsn.lo
 ../../src/postgres/backend/utils/adt/pg_locale.cpp: In function 'collation_cache_entry* lookup_collation_cache(Oid, bool)':
 ../../src/postgres/backend/utils/adt/pg_locale.cpp:896:75: warning: invalid conversion from 'void*' to 'collation_cache_entry*' [-fpermissive]
   cache_entry = hash_search(collation_cache, &collation, HASH_ENTER, &found);
                                                                            ^
-  CXX      postgres/backend/utils/adt/libpeloton_la-pg_lsn.lo
   CXX      postgres/backend/utils/adt/libpeloton_la-pgstatfuncs.lo
   CXX      postgres/backend/utils/adt/libpeloton_la-pg_upgrade_support.lo
 ../../src/postgres/backend/utils/adt/pgstatfuncs.cpp: In function 'Datum pg_stat_get_backend_idset(FunctionCallInfo)':
@@ -4617,11 +3423,11 @@ In file included from ../../src/postgres/backend/utils/cache/plancache.cpp:57:0:
                                                                            ^
   CXX      postgres/backend/utils/cache/libpeloton_la-spccache.lo
   CXX      postgres/backend/utils/cache/libpeloton_la-syscache.lo
-  CXX      postgres/backend/utils/cache/libpeloton_la-ts_cache.lo
 ../../src/postgres/backend/utils/cache/spccache.cpp: In function 'TableSpaceCacheEntry* get_tablespace(Oid)':
 ../../src/postgres/backend/utils/cache/spccache.cpp:153:69: warning: invalid conversion from 'void*' to 'TableSpaceOpts*' [-fpermissive]
     opts = MemoryContextAlloc(CacheMemoryContext, VARSIZE(bytea_opts));
                                                                      ^
+  CXX      postgres/backend/utils/cache/libpeloton_la-ts_cache.lo
   CXX      postgres/backend/utils/cache/libpeloton_la-typcache.lo
   CXX      postgres/backend/utils/error/libpeloton_la-assert.lo
 ../../src/postgres/backend/utils/cache/typcache.cpp: In function 'EnumItem* find_enumitem(TypeCacheEnumData*, Oid)':
@@ -4713,7 +3519,6 @@ In file included from ../../src/postgres/backend/utils/cache/plancache.cpp:57:0:
 ../../src/postgres/backend/utils/misc/guc.cpp:4586:56: warning: invalid conversion from 'void*' to 'char*' [-fpermissive]
           strlen(configdir) + strlen(IDENT_FILENAME) + 2);
                                                         ^
-  CXX      postgres/backend/utils/misc/libpeloton_la-rls.lo
 ../../src/postgres/backend/utils/misc/guc.cpp: In function 'void ParseLongOption(const char*, char**, char**)':
 ../../src/postgres/backend/utils/misc/guc.cpp:9031:42: warning: invalid conversion from 'void*' to 'char*' [-fpermissive]
    *name = guc_malloc(FATAL, equal_pos + 1);
@@ -4725,6 +3530,7 @@ In file included from ../../src/postgres/backend/utils/cache/plancache.cpp:57:0:
 ../../src/postgres/backend/utils/misc/guc.cpp:10033:47: warning: invalid conversion from 'void*' to 'char*' [-fpermissive]
   tname = guc_malloc(ERROR, strlen(newval) + 12);  /* /global.tmp */
                                                ^
+  CXX      postgres/backend/utils/misc/libpeloton_la-rls.lo
 ../../src/postgres/backend/utils/misc/guc.cpp:10035:47: warning: invalid conversion from 'void*' to 'char*' [-fpermissive]
   fname = guc_malloc(ERROR, strlen(newval) + 13);  /* /global.stat */
                                                ^
@@ -4752,7 +3558,6 @@ In file included from ../../src/postgres/backend/utils/misc/guc.cpp:10104:0:
   CXX      postgres/backend/utils/mmgr/libpeloton_la-mcxt.lo
   CXX      postgres/backend/utils/mmgr/libpeloton_la-portalmem.lo
   CXX      postgres/backend/utils/mmgr/libpeloton_la-shmctx.lo
-  CXX      postgres/backend/utils/mmgr/libpeloton_la-shmset.lo
 ../../src/postgres/backend/utils/mmgr/portalmem.cpp: In function 'void PortalHashTableDeleteAll()':
 ../../src/postgres/backend/utils/mmgr/portalmem.cpp:591:42: warning: invalid conversion from 'void*' to 'PortalHashEnt* {aka portalhashent*}' [-fpermissive]
   while ((hentry = hash_seq_search(&status)) != NULL)
@@ -4761,22 +3566,23 @@ In file included from ../../src/postgres/backend/utils/misc/guc.cpp:10104:0:
 ../../src/postgres/backend/utils/mmgr/portalmem.cpp:1027:44: warning: invalid conversion from 'void*' to 'PortalHashEnt* {aka portalhashent*}' [-fpermissive]
   while ((hentry = hash_seq_search(&hash_seq)) != NULL)
                                             ^
+  CXX      postgres/backend/utils/mmgr/libpeloton_la-shmset.lo
   CXX      postgres/backend/utils/resowner/libpeloton_la-resowner.lo
   CXX      postgres/backend/utils/sort/libpeloton_la-logtape.lo
   CXX      postgres/backend/utils/sort/libpeloton_la-sortsupport.lo
   CXX      postgres/backend/utils/sort/libpeloton_la-tuplesort.lo
   CXX      postgres/backend/utils/sort/libpeloton_la-tuplestore.lo
   CXX      postgres/backend/utils/time/libpeloton_la-combocid.lo
-../../src/postgres/backend/utils/sort/tuplesort.cpp: In function 'void tuplesort_putindextuplevalues(Tuplesortstate*, Relation, ItemPointer, Datum*, bool*)':
-../../src/postgres/backend/utils/sort/tuplesort.cpp:1296:10: warning: invalid conversion from 'void*' to 'IndexTuple' [-fpermissive]
-    tuple = mtup->tuple;
-          ^
 ../../src/postgres/backend/utils/sort/tuplestore.cpp: In function 'void tuplestore_puttuple(Tuplestorestate*, HeapTuple)':
 ../../src/postgres/backend/utils/sort/tuplestore.cpp:182:60: warning: invalid conversion from 'void*' to 'HeapTuple' [-fpermissive]
  #define COPYTUP(state,tup) ((*(state)->copytup) (state, tup))
                                                             ^
 ../../src/postgres/backend/utils/sort/tuplestore.cpp:716:10: note: in expansion of macro 'COPYTUP'
   tuple = COPYTUP(state, tuple);
+          ^
+../../src/postgres/backend/utils/sort/tuplesort.cpp: In function 'void tuplesort_putindextuplevalues(Tuplesortstate*, Relation, ItemPointer, Datum*, bool*)':
+../../src/postgres/backend/utils/sort/tuplesort.cpp:1296:10: warning: invalid conversion from 'void*' to 'IndexTuple' [-fpermissive]
+    tuple = mtup->tuple;
           ^
 ../../src/postgres/backend/utils/sort/tuplesort.cpp: In function 'HeapTupleData* tuplesort_getheaptuple(Tuplesortstate*, bool, bool*)':
 ../../src/postgres/backend/utils/sort/tuplesort.cpp:1891:14: warning: invalid conversion from 'void*' to 'HeapTuple' [-fpermissive]
@@ -4855,11 +3661,11 @@ In file included from ../../src/postgres/backend/utils/misc/guc.cpp:10104:0:
   CXX      postgres/port/libpeloton_la-mkdtemp.lo
   CXX      postgres/port/libpeloton_la-noblock.lo
   CXX      postgres/port/libpeloton_la-open.lo
+  CXX      postgres/port/libpeloton_la-path.lo
 ../../src/postgres/port/mkdtemp.cpp: In function 'int GETTEMP(char*, int*, int)':
 ../../src/postgres/port/mkdtemp.cpp:106:24: warning: initializer-string for array of chars is too long [-fpermissive]
   static char xtra[2] = "aa";
                         ^
-  CXX      postgres/port/libpeloton_la-path.lo
   CXX      postgres/port/libpeloton_la-pgcheckdir.lo
   CXX      postgres/port/libpeloton_la-pg_crc32c_choose.lo
 ../../src/postgres/port/path.cpp: In function 'char* make_absolute_path(const char*)':
@@ -4876,16 +3682,15 @@ In file included from ../../src/postgres/backend/utils/misc/guc.cpp:10104:0:
    const unsigned char *p = data;
                             ^
   CXX      postgres/port/libpeloton_la-pgmkdirp.lo
+  CXX      postgres/port/libpeloton_la-pgsleep.lo
 ../../src/postgres/port/pg_crc32c_sse42.cpp: In function 'pg_crc32c pg_comp_crc32c_sse42(pg_crc32c, const void*, size_t)':
 ../../src/postgres/port/pg_crc32c_sse42.cpp:24:27: warning: invalid conversion from 'const void*' to 'const unsigned char*' [-fpermissive]
   const unsigned char *p = data;
                            ^
-  CXX      postgres/port/libpeloton_la-pgsleep.lo
   CXX      postgres/port/libpeloton_la-pgstrcasecmp.lo
-  CXX      postgres/port/libpeloton_la-pqsignal.lo
   CXX      postgres/port/libpeloton_la-qsort_arg.lo
+  CXX      postgres/port/libpeloton_la-pqsignal.lo
   CXX      postgres/port/libpeloton_la-qsort.lo
-  CXX      postgres/port/libpeloton_la-quotes.lo
 ../../src/postgres/port/qsort_arg.cpp: In function 'void qsort_arg(void*, size_t, size_t, qsort_arg_comparator, void*)':
 ../../src/postgres/port/qsort_arg.cpp:90:30: warning: invalid conversion from 'void*' to 'char*' [-fpermissive]
    swapfunc(a, b, es, swaptype)
@@ -4905,6 +3710,7 @@ In file included from ../../src/postgres/backend/utils/misc/guc.cpp:10104:0:
 ../../src/postgres/port/qsort_arg.cpp:76:1: warning:   initializing argument 1 of 'void swapfunc(char*, char*, size_t, int)' [-fpermissive]
  swapfunc(char *a, char *b, size_t n, int swaptype)
  ^
+  CXX      postgres/port/libpeloton_la-quotes.lo
 ../../src/postgres/port/qsort.cpp: In function 'void pg_qsort(void*, size_t, size_t, int (*)(const void*, const void*))':
 ../../src/postgres/port/qsort.cpp:90:30: warning: invalid conversion from 'void*' to 'char*' [-fpermissive]
    swapfunc(a, b, es, swaptype)
@@ -4940,6 +3746,7 @@ In file included from ../../src/postgres/backend/utils/misc/guc.cpp:10104:0:
   CXX      postgres/timezone/libpeloton_la-ialloc.lo
   CXX      postgres/timezone/libpeloton_la-localtime.lo
   CXX      postgres/timezone/libpeloton_la-pgtz.lo
+  CXX      postgres/timezone/libpeloton_la-scheck.lo
 ../../src/postgres/timezone/ialloc.cpp: In function 'char* imalloc(int)':
 ../../src/postgres/timezone/ialloc.cpp:19:35: warning: invalid conversion from 'void*' to 'char*' [-fpermissive]
   return malloc((size_t) nonzero(n));
@@ -4952,7 +3759,6 @@ In file included from ../../src/postgres/backend/utils/misc/guc.cpp:10104:0:
 ../../src/postgres/timezone/ialloc.cpp:52:51: warning: invalid conversion from 'void*' to 'char*' [-fpermissive]
   if ((result = irealloc(old, oldsize + newsize + 1)) != NULL)
                                                    ^
-  CXX      postgres/timezone/libpeloton_la-scheck.lo
   CXX      postgres/timezone/libpeloton_la-strftime.lo
   CXX      backend/main/peloton-main.o
   CXXLD    libpq.la
@@ -4992,6 +3798,12 @@ make[2]: Entering directory `/home/vivek/git/peloton/build/tools'
   CXX      common/pg_ctl-keywords.o
   CXX      scripts/pg_ctl-pg_ctl.o
   CXX      common/psql-dumputils.o
+../../tools/common/dumputils.cpp:746:1: warning: unused parameter ‘name’ [-Wunused-parameter]
+ parseAclItem(const char *item, const char *type,
+ ^
+../../tools/common/dumputils.cpp:1175:1: warning: unused parameter ‘conn’ [-Wunused-parameter]
+ buildShSecLabelQuery(PGconn *conn, const char *catalog_name, uint32 objectId,
+ ^
 ../../tools/scripts/pg_ctl.cpp: In function ‘char** readfile(const char*)’:
 ../../tools/scripts/pg_ctl.cpp:347:40: warning: invalid conversion from ‘void*’ to ‘char*’ [-fpermissive]
   buffer = pg_malloc(statbuf.st_size + 1);
@@ -4999,9 +3811,6 @@ make[2]: Entering directory `/home/vivek/git/peloton/build/tools'
 ../../tools/scripts/pg_ctl.cpp:381:41: warning: invalid conversion from ‘void*’ to ‘char*’ [-fpermissive]
     char    *linebuf = pg_malloc(slen + 1);
                                          ^
-../../tools/common/dumputils.cpp:746:1: warning: unused parameter ‘name’ [-Wunused-parameter]
- parseAclItem(const char *item, const char *type,
- ^
 ../../tools/scripts/pg_ctl.cpp: At global scope:
 ../../tools/scripts/pg_ctl.cpp:478:1: warning: unused parameter ‘do_checkpoint’ [-Wunused-parameter]
  test_postmaster_connection(bool do_checkpoint)
@@ -5010,9 +3819,6 @@ make[2]: Entering directory `/home/vivek/git/peloton/build/tools'
 ../../tools/scripts/pg_ctl.cpp:775:34: warning: invalid conversion from ‘void*’ to ‘char*’ [-fpermissive]
   found_path = pg_malloc(MAXPGPATH);
                                   ^
-../../tools/common/dumputils.cpp:1175:1: warning: unused parameter ‘conn’ [-Wunused-parameter]
- buildShSecLabelQuery(PGconn *conn, const char *catalog_name, uint32 objectId,
- ^
 cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
   CXX      common/psql-fe_memutils.o
   CXX      common/psql-keywords.o
@@ -5022,32 +3828,10 @@ At global scope:
 cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
   CXX      pg_psql/psql-common.o
   CXX      pg_psql/psql-copy.o
-../../tools/pg_initdb/initdb.cpp: At global scope:
-../../tools/pg_initdb/initdb.cpp:2087:1: warning: ‘void setup_conversion()’ defined but not used [-Wunused-function]
- setup_conversion(void)
- ^
-../../tools/pg_initdb/initdb.cpp:2122:1: warning: ‘void setup_dictionary()’ defined but not used [-Wunused-function]
- setup_dictionary(void)
- ^
-../../tools/pg_initdb/initdb.cpp:2292:1: warning: ‘void load_plpgsql()’ defined but not used [-Wunused-function]
- load_plpgsql(void)
- ^
-cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
-../../tools/pg_psql/copy.cpp: In function ‘copy_options* parse_slash_copy(const char*)’:
-../../tools/pg_psql/copy.cpp:102:49: warning: invalid conversion from ‘void*’ to ‘copy_options*’ [-fpermissive]
-  result = pg_malloc0(sizeof(struct copy_options));
-                                                 ^
 ../../tools/pg_psql/command.cpp: In function ‘backslashResult exec_command(const char*, PsqlScanState, PQExpBuffer)’:
 ../../tools/pg_psql/command.cpp:1155:65: warning: invalid conversion from ‘void*’ to ‘char*’ [-fpermissive]
      newval = pg_realloc(newval, strlen(newval) + strlen(opt) + 1);
                                                                  ^
-../../tools/pg_psql/copy.cpp: In function ‘bool handleCopyOut(PGconn*, FILE*, PGresult**)’:
-../../tools/pg_psql/copy.cpp:453:49: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
-    if (OK && fwrite(buf, 1, ret, copystream) != ret)
-                                                 ^
-../../tools/pg_psql/common.cpp:166:1: warning: unused parameter ‘postgres_signal_arg’ [-Wunused-parameter]
- handle_sigint(SIGNAL_ARGS)
- ^
 ../../tools/pg_psql/command.cpp: In function ‘bool do_connect(char*, char*, char*, char*)’:
 ../../tools/pg_psql/command.cpp:1681:74: warning: invalid conversion from ‘void*’ to ‘const char**’ [-fpermissive]
    const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
@@ -5072,9 +3856,32 @@ cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [e
 ../../tools/pg_psql/command.cpp:2783:46: warning: invalid conversion from ‘void*’ to ‘char*’ [-fpermissive]
   char    *ret = pg_malloc(strlen(str) * 2 + 3);
                                               ^
+../../tools/pg_psql/common.cpp:166:1: warning: unused parameter ‘postgres_signal_arg’ [-Wunused-parameter]
+ handle_sigint(SIGNAL_ARGS)
+ ^
+../../tools/pg_psql/copy.cpp: In function ‘copy_options* parse_slash_copy(const char*)’:
+../../tools/pg_psql/copy.cpp:102:49: warning: invalid conversion from ‘void*’ to ‘copy_options*’ [-fpermissive]
+  result = pg_malloc0(sizeof(struct copy_options));
+                                                 ^
+../../tools/pg_psql/copy.cpp: In function ‘bool handleCopyOut(PGconn*, FILE*, PGresult**)’:
+../../tools/pg_psql/copy.cpp:453:49: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
+    if (OK && fwrite(buf, 1, ret, copystream) != ret)
+                                                 ^
+../../tools/pg_initdb/initdb.cpp: At global scope:
+../../tools/pg_initdb/initdb.cpp:2087:1: warning: ‘void setup_conversion()’ defined but not used [-Wunused-function]
+ setup_conversion(void)
+ ^
+../../tools/pg_initdb/initdb.cpp:2122:1: warning: ‘void setup_dictionary()’ defined but not used [-Wunused-function]
+ setup_dictionary(void)
+ ^
+../../tools/pg_initdb/initdb.cpp:2292:1: warning: ‘void load_plpgsql()’ defined but not used [-Wunused-function]
+ load_plpgsql(void)
+ ^
+cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
   CXX      pg_psql/psql-describe.o
 At global scope:
 cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
+  CXX      pg_psql/psql-help.o
 ../../tools/pg_psql/describe.cpp:59:1: warning: unused parameter ‘verbose’ [-Wunused-parameter]
  describeAggregates(const char *pattern, bool verbose, bool showSystem)
  ^
@@ -5087,14 +3894,13 @@ In file included from ../../tools/pg_psql/common.h:15:0,
 ../../tools/pg_psql/print.h:180:13: warning:   initializing argument 2 of ‘void printTableAddCell(printTableContent*, char*, bool, bool)’ [-fpermissive]
  extern void printTableAddCell(printTableContent *const content,
              ^
-  CXX      pg_psql/psql-help.o
 In file included from ../../tools/pg_psql/help.cpp:30:0:
 ../../tools/pg_psql/sql_help.h:1033:1: warning: missing initializer for member ‘_helpStruct::nl_count’ [-Wmissing-field-initializers]
  };
  ^
 cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
-cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
   CXX      pg_psql/psql-input.o
+cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
   CXX      pg_psql/psql-large_obj.o
 ../../tools/pg_psql/large_obj.cpp:97:1: warning: unused parameter ‘operation’ [-Wunused-parameter]
  finish_lo_xact(const char *operation, bool own_transaction)
@@ -5109,11 +3915,11 @@ cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [e
 ../../tools/pg_psql/mainloop.cpp:322:27: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]
      if (query_buf->len == added_nl_pos)
                            ^
-At global scope:
-cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
 In file included from ../../tools/pg_psql/mainloop.cpp:463:0:
 /home/parallels/git/postgres/orig/../src/bin/psql/psqlscan.l: In function ‘yy_buffer_state* prepare_buffer(const char*, int, char**)’:
 /home/parallels/git/postgres/orig/../src/bin/psql/psqlscan.l:1842:28: warning: invalid conversion from ‘void*’ to ‘char*’ [-fpermissive]
+At global scope:
+cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
   CXX      pg_psql/psql-print.o
   CXX      pg_psql/psql-prompt.o
 ../../tools/pg_psql/print.cpp:93:23: warning: uninitialized const ‘pg_utf8format’ [-fpermissive]
@@ -5150,55 +3956,55 @@ At global scope:
 cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
   CXX      pg_psql/psql-stringutils.o
   CXX      pg_psql/psql-tab-complete.o
-../../tools/pg_psql/tab-complete.cpp:809:1: warning: invalid conversion from ‘const SchemaQuery*’ to ‘SchemaQuery*’ [-fpermissive]
- };
- ^
-../../tools/pg_psql/tab-complete.cpp:753:2: warning:   initializing argument 3 of ‘pgsql_thing_t::pgsql_thing_t(char*, char*, SchemaQuery*, bits32)’ [-fpermissive]
-  pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
-  ^
-../../tools/pg_psql/tab-complete.cpp:809:1: warning: invalid conversion from ‘const SchemaQuery*’ to ‘SchemaQuery*’ [-fpermissive]
- };
- ^
-../../tools/pg_psql/tab-complete.cpp:753:2: warning:   initializing argument 3 of ‘pgsql_thing_t::pgsql_thing_t(char*, char*, SchemaQuery*, bits32)’ [-fpermissive]
-  pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
-  ^
-../../tools/pg_psql/tab-complete.cpp:809:1: warning: invalid conversion from ‘const SchemaQuery*’ to ‘SchemaQuery*’ [-fpermissive]
- };
- ^
-../../tools/pg_psql/tab-complete.cpp:753:2: warning:   initializing argument 3 of ‘pgsql_thing_t::pgsql_thing_t(char*, char*, SchemaQuery*, bits32)’ [-fpermissive]
-  pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
-  ^
-../../tools/pg_psql/tab-complete.cpp:809:1: warning: invalid conversion from ‘const SchemaQuery*’ to ‘SchemaQuery*’ [-fpermissive]
- };
- ^
-../../tools/pg_psql/tab-complete.cpp:753:2: warning:   initializing argument 3 of ‘pgsql_thing_t::pgsql_thing_t(char*, char*, SchemaQuery*, bits32)’ [-fpermissive]
-  pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
-  ^
-../../tools/pg_psql/tab-complete.cpp:809:1: warning: invalid conversion from ‘const SchemaQuery*’ to ‘SchemaQuery*’ [-fpermissive]
- };
- ^
-../../tools/pg_psql/tab-complete.cpp:753:2: warning:   initializing argument 3 of ‘pgsql_thing_t::pgsql_thing_t(char*, char*, SchemaQuery*, bits32)’ [-fpermissive]
-  pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
-  ^
-../../tools/pg_psql/tab-complete.cpp:809:1: warning: invalid conversion from ‘const SchemaQuery*’ to ‘SchemaQuery*’ [-fpermissive]
- };
- ^
-../../tools/pg_psql/tab-complete.cpp:753:2: warning:   initializing argument 3 of ‘pgsql_thing_t::pgsql_thing_t(char*, char*, SchemaQuery*, bits32)’ [-fpermissive]
-  pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
-  ^
-../../tools/pg_psql/tab-complete.cpp:809:1: warning: invalid conversion from ‘const SchemaQuery*’ to ‘SchemaQuery*’ [-fpermissive]
- };
- ^
-../../tools/pg_psql/tab-complete.cpp:753:2: warning:   initializing argument 3 of ‘pgsql_thing_t::pgsql_thing_t(char*, char*, SchemaQuery*, bits32)’ [-fpermissive]
-  pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
-  ^
-../../tools/pg_psql/tab-complete.cpp:809:1: warning: invalid conversion from ‘const SchemaQuery*’ to ‘SchemaQuery*’ [-fpermissive]
- };
- ^
-../../tools/pg_psql/tab-complete.cpp:753:2: warning:   initializing argument 3 of ‘pgsql_thing_t::pgsql_thing_t(char*, char*, SchemaQuery*, bits32)’ [-fpermissive]
-  pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
-  ^
   CXX      pg_psql/psql-variables.o
+../../tools/pg_psql/tab-complete.cpp:809:1: warning: invalid conversion from ‘const SchemaQuery*’ to ‘SchemaQuery*’ [-fpermissive]
+ };
+ ^
+../../tools/pg_psql/tab-complete.cpp:753:2: warning:   initializing argument 3 of ‘pgsql_thing_t::pgsql_thing_t(char*, char*, SchemaQuery*, bits32)’ [-fpermissive]
+  pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
+  ^
+../../tools/pg_psql/tab-complete.cpp:809:1: warning: invalid conversion from ‘const SchemaQuery*’ to ‘SchemaQuery*’ [-fpermissive]
+ };
+ ^
+../../tools/pg_psql/tab-complete.cpp:753:2: warning:   initializing argument 3 of ‘pgsql_thing_t::pgsql_thing_t(char*, char*, SchemaQuery*, bits32)’ [-fpermissive]
+  pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
+  ^
+../../tools/pg_psql/tab-complete.cpp:809:1: warning: invalid conversion from ‘const SchemaQuery*’ to ‘SchemaQuery*’ [-fpermissive]
+ };
+ ^
+../../tools/pg_psql/tab-complete.cpp:753:2: warning:   initializing argument 3 of ‘pgsql_thing_t::pgsql_thing_t(char*, char*, SchemaQuery*, bits32)’ [-fpermissive]
+  pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
+  ^
+../../tools/pg_psql/tab-complete.cpp:809:1: warning: invalid conversion from ‘const SchemaQuery*’ to ‘SchemaQuery*’ [-fpermissive]
+ };
+ ^
+../../tools/pg_psql/tab-complete.cpp:753:2: warning:   initializing argument 3 of ‘pgsql_thing_t::pgsql_thing_t(char*, char*, SchemaQuery*, bits32)’ [-fpermissive]
+  pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
+  ^
+../../tools/pg_psql/tab-complete.cpp:809:1: warning: invalid conversion from ‘const SchemaQuery*’ to ‘SchemaQuery*’ [-fpermissive]
+ };
+ ^
+../../tools/pg_psql/tab-complete.cpp:753:2: warning:   initializing argument 3 of ‘pgsql_thing_t::pgsql_thing_t(char*, char*, SchemaQuery*, bits32)’ [-fpermissive]
+  pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
+  ^
+../../tools/pg_psql/tab-complete.cpp:809:1: warning: invalid conversion from ‘const SchemaQuery*’ to ‘SchemaQuery*’ [-fpermissive]
+ };
+ ^
+../../tools/pg_psql/tab-complete.cpp:753:2: warning:   initializing argument 3 of ‘pgsql_thing_t::pgsql_thing_t(char*, char*, SchemaQuery*, bits32)’ [-fpermissive]
+  pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
+  ^
+../../tools/pg_psql/tab-complete.cpp:809:1: warning: invalid conversion from ‘const SchemaQuery*’ to ‘SchemaQuery*’ [-fpermissive]
+ };
+ ^
+../../tools/pg_psql/tab-complete.cpp:753:2: warning:   initializing argument 3 of ‘pgsql_thing_t::pgsql_thing_t(char*, char*, SchemaQuery*, bits32)’ [-fpermissive]
+  pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
+  ^
+../../tools/pg_psql/tab-complete.cpp:809:1: warning: invalid conversion from ‘const SchemaQuery*’ to ‘SchemaQuery*’ [-fpermissive]
+ };
+ ^
+../../tools/pg_psql/tab-complete.cpp:753:2: warning:   initializing argument 3 of ‘pgsql_thing_t::pgsql_thing_t(char*, char*, SchemaQuery*, bits32)’ [-fpermissive]
+  pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
+  ^
   CXX      common/createdb-dumputils.o
 ../../tools/common/dumputils.cpp:746:1: warning: unused parameter ‘name’ [-Wunused-parameter]
  parseAclItem(const char *item, const char *type,
@@ -5212,63 +4018,39 @@ cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [e
 cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
   CXX      common/createdb-keywords.o
   CXX      scripts/createdb-common.o
-cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
-  CXX      scripts/createdb-createdb.o
-  CXX      common/createuser-dumputils.o
-../../tools/scripts/common.cpp: In function ‘PGconn* connectDatabase(const char*, const char*, const char*, const char*, trivalue, const char*, bool)’:
-../../tools/scripts/common.cpp:77:74: warning: invalid conversion from ‘void*’ to ‘const char**’ [-fpermissive]
-   const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-                                                                          ^
-../../tools/scripts/common.cpp:78:70: warning: invalid conversion from ‘void*’ to ‘const char**’ [-fpermissive]
-   const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
-                                                                      ^
-../../tools/scripts/common.cpp: At global scope:
 ../../tools/scripts/common.cpp:351:1: warning: unused parameter ‘postgres_signal_arg’ [-Wunused-parameter]
  handle_sigint(SIGNAL_ARGS)
  ^
+  CXX      scripts/createdb-createdb.o
+cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
+  CXX      common/createuser-dumputils.o
+cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
+  CXX      common/createuser-fe_memutils.o
 ../../tools/common/dumputils.cpp:746:1: warning: unused parameter ‘name’ [-Wunused-parameter]
  parseAclItem(const char *item, const char *type,
  ^
 ../../tools/common/dumputils.cpp:1175:1: warning: unused parameter ‘conn’ [-Wunused-parameter]
  buildShSecLabelQuery(PGconn *conn, const char *catalog_name, uint32 objectId,
  ^
-cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
-  CXX      common/createuser-fe_memutils.o
   CXX      common/createuser-keywords.o
   CXX      scripts/createuser-common.o
   CXX      scripts/createuser-createuser.o
-../../tools/scripts/common.cpp: In function ‘PGconn* connectDatabase(const char*, const char*, const char*, const char*, trivalue, const char*, bool)’:
-../../tools/scripts/common.cpp:77:74: warning: invalid conversion from ‘void*’ to ‘const char**’ [-fpermissive]
-   const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-                                                                          ^
-../../tools/scripts/common.cpp:78:70: warning: invalid conversion from ‘void*’ to ‘const char**’ [-fpermissive]
-   const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
-                                                                      ^
-../../tools/scripts/common.cpp: At global scope:
 ../../tools/scripts/common.cpp:351:1: warning: unused parameter ‘postgres_signal_arg’ [-Wunused-parameter]
  handle_sigint(SIGNAL_ARGS)
  ^
 cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
   CXX      common/dropdb-dumputils.o
-cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
+  CXX      common/dropdb-fe_memutils.o
 ../../tools/common/dumputils.cpp:746:1: warning: unused parameter ‘name’ [-Wunused-parameter]
  parseAclItem(const char *item, const char *type,
  ^
 ../../tools/common/dumputils.cpp:1175:1: warning: unused parameter ‘conn’ [-Wunused-parameter]
  buildShSecLabelQuery(PGconn *conn, const char *catalog_name, uint32 objectId,
  ^
-  CXX      common/dropdb-fe_memutils.o
+cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [enabled by default]
   CXX      common/dropdb-keywords.o
   CXX      scripts/dropdb-common.o
   CXX      scripts/dropdb-dropdb.o
-../../tools/scripts/common.cpp: In function ‘PGconn* connectDatabase(const char*, const char*, const char*, const char*, trivalue, const char*, bool)’:
-../../tools/scripts/common.cpp:77:74: warning: invalid conversion from ‘void*’ to ‘const char**’ [-fpermissive]
-   const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-                                                                          ^
-../../tools/scripts/common.cpp:78:70: warning: invalid conversion from ‘void*’ to ‘const char**’ [-fpermissive]
-   const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
-                                                                      ^
-../../tools/scripts/common.cpp: At global scope:
 ../../tools/scripts/common.cpp:351:1: warning: unused parameter ‘postgres_signal_arg’ [-Wunused-parameter]
  handle_sigint(SIGNAL_ARGS)
  ^
@@ -5285,14 +4067,6 @@ cc1plus: warning: unrecognized command line option "-Wno-deprecated-register" [e
   CXX      common/dropuser-keywords.o
   CXX      scripts/dropuser-common.o
   CXX      scripts/dropuser-dropuser.o
-../../tools/scripts/common.cpp: In function ‘PGconn* connectDatabase(const char*, const char*, const char*, const char*, trivalue, const char*, bool)’:
-../../tools/scripts/common.cpp:77:74: warning: invalid conversion from ‘void*’ to ‘const char**’ [-fpermissive]
-   const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-                                                                          ^
-../../tools/scripts/common.cpp:78:70: warning: invalid conversion from ‘void*’ to ‘const char**’ [-fpermissive]
-   const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
-                                                                      ^
-../../tools/scripts/common.cpp: At global scope:
 ../../tools/scripts/common.cpp:351:1: warning: unused parameter ‘postgres_signal_arg’ [-Wunused-parameter]
  handle_sigint(SIGNAL_ARGS)
  ^

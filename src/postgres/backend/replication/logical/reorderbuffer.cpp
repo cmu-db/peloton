@@ -1186,7 +1186,7 @@ ReorderBufferCopySnap(ReorderBuffer *rb, Snapshot orig_snap,
 		sizeof(TransactionId) * orig_snap->xcnt +
 		sizeof(TransactionId) * (txn->nsubtxns + 1);
 
-	snap = MemoryContextAllocZero(rb->context, size);
+	snap = static_cast<Snapshot>(MemoryContextAllocZero(rb->context, size));
 	memcpy(snap, orig_snap, sizeof(SnapshotData));
 
 	snap->copied = true;
@@ -1943,7 +1943,7 @@ ReorderBufferSerializeReserve(ReorderBuffer *rb, Size sz)
 {
 	if (!rb->outbufsize)
 	{
-		rb->outbuf = MemoryContextAlloc(rb->context, sz);
+		rb->outbuf = static_cast<char *>(MemoryContextAlloc(rb->context, sz));
 		rb->outbufsize = sz;
 	}
 	else if (rb->outbufsize < sz)
@@ -2363,7 +2363,7 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 					sizeof(TransactionId) * oldsnap->xcnt +
 					sizeof(TransactionId) * (oldsnap->subxcnt + 0);
 
-				change->data.snapshot = MemoryContextAllocZero(rb->context, size);
+				change->data.snapshot = static_cast<Snapshot>(MemoryContextAllocZero(rb->context, size));
 
 				newsnap = change->data.snapshot;
 
@@ -3035,7 +3035,7 @@ UpdateLogicalMappings(HTAB *tuplecid_data, Oid relid, Snapshot snapshot)
 	off = 0;
 	foreach(file, files)
 	{
-		files_a[off++] = lfirst(file);
+		files_a[off++] = static_cast<RewriteMappingFile *>(lfirst(file));
 	}
 
 	/* sort files so we apply them in LSN order */

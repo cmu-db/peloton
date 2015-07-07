@@ -189,7 +189,7 @@ get_leftop(const Expr *clause)
 	const OpExpr *expr = (const OpExpr *) clause;
 
 	if (expr->args != NIL)
-		return linitial(expr->args);
+		return static_cast<Node *>(linitial(expr->args));
 	else
 		return NULL;
 }
@@ -206,7 +206,7 @@ get_rightop(const Expr *clause)
 	const OpExpr *expr = (const OpExpr *) clause;
 
 	if (list_length(expr->args) >= 2)
-		return lsecond(expr->args);
+		return static_cast<Node *>(lsecond(expr->args));
 	else
 		return NULL;
 }
@@ -252,7 +252,7 @@ make_notclause(Expr *notclause)
 Expr *
 get_notclausearg(Expr *notclause)
 {
-	return linitial(((BoolExpr *) notclause)->args);
+	return static_cast<Node *>(linitial(((BoolExpr *) notclause)->args));
 }
 
 /*****************************************************************************
@@ -1571,7 +1571,7 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 		foreach(l, (List *) node)
 		{
 			result = bms_join(result,
-							  find_nonnullable_rels_walker(lfirst(l),
+							  find_nonnullable_rels_walker(static_cast<Node *>(lfirst(l)),
 														   top_level));
 		}
 	}
@@ -1631,7 +1631,7 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 				{
 					Relids		subresult;
 
-					subresult = find_nonnullable_rels_walker(lfirst(l),
+					subresult = find_nonnullable_rels_walker(static_cast<Node *>(lfirst(l)),
 															 top_level);
 					if (result == NULL) /* first subresult? */
 						result = subresult;
@@ -1779,7 +1779,7 @@ find_nonnullable_vars_walker(Node *node, bool top_level)
 		foreach(l, (List *) node)
 		{
 			result = list_concat(result,
-								 find_nonnullable_vars_walker(lfirst(l),
+								 find_nonnullable_vars_walker(static_cast<Node *>(lfirst(l)),
 															  top_level));
 		}
 	}
@@ -1839,7 +1839,7 @@ find_nonnullable_vars_walker(Node *node, bool top_level)
 				{
 					List	   *subresult;
 
-					subresult = find_nonnullable_vars_walker(lfirst(l),
+					subresult = find_nonnullable_vars_walker(static_cast<Node *>(lfirst(l)),
 															 top_level);
 					if (result == NIL)	/* first subresult? */
 						result = subresult;
@@ -1962,7 +1962,7 @@ find_forced_null_vars(Node *node)
 		foreach(l, (List *) node)
 		{
 			result = list_concat(result,
-								 find_forced_null_vars(lfirst(l)));
+								 find_forced_null_vars(static_cast<Node *>(lfirst(l))));
 		}
 	}
 	else if (IsA(node, BoolExpr))
@@ -2761,7 +2761,7 @@ eval_const_expressions_mutator(Node *node,
 							Node	   *arg;
 
 							Assert(list_length(expr->args) == 1);
-							arg = eval_const_expressions_mutator(linitial(expr->args),
+							arg = eval_const_expressions_mutator(static_cast<Node *>(linitial(expr->args)),
 																 context);
 
 							/*
@@ -4335,7 +4335,7 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	pstate->p_sourcetext = src;
 	sql_fn_parser_setup(pstate, pinfo);
 
-	querytree = transformTopLevelStmt(pstate, linitial(raw_parsetree_list));
+	querytree = transformTopLevelStmt(pstate, static_cast<Node *>(linitial(raw_parsetree_list)));
 
 	free_parsestate(pstate);
 
@@ -4856,7 +4856,7 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	if (list_length(raw_parsetree_list) != 1)
 		goto fail;
 
-	querytree_list = pg_analyze_and_rewrite_params(linitial(raw_parsetree_list),
+	querytree_list = pg_analyze_and_rewrite_params(static_cast<Node *>(linitial(raw_parsetree_list)),
 												   src,
 									   (ParserSetupHook) sql_fn_parser_setup,
 												   pinfo);
