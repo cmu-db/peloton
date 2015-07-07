@@ -617,7 +617,7 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
 	{
 		foreach(l, newjointree)
 		{
-			RangeTblRef *rtr = lfirst(l);
+			RangeTblRef *rtr = static_cast<RangeTblRef *>(lfirst(l));
 
 			if (IsA(rtr, RangeTblRef) &&
 				rtr->rtindex == rt_index)
@@ -1978,7 +1978,7 @@ fireRules(Query *parsetree,
 		/* Now process the rule's actions and add them to the result list */
 		foreach(r, actions)
 		{
-			Query	   *rule_action = lfirst(r);
+			Query	   *rule_action = static_cast<Query *>(lfirst(r));
 
 			if (rule_action->commandType == CMD_NOTHING)
 				continue;

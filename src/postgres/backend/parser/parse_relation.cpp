@@ -3127,7 +3127,7 @@ isQueryUsingTempRelation_walker(Node *node, void *context)
 
 		foreach(rtable, query->rtable)
 		{
-			RangeTblEntry *rte = lfirst(rtable);
+			RangeTblEntry *rte = static_cast<RangeTblEntry *>(lfirst(rtable));
 
 			if (rte->rtekind == RTE_RELATION)
 			{

@@ -68,7 +68,7 @@ ExecSecLabelStmt(SecLabelStmt *stmt)
 	{
 		foreach(lc, label_provider_list)
 		{
-			LabelProvider *lp = lfirst(lc);
+			LabelProvider *lp = static_cast<LabelProvider *>(lfirst(lc));
 
 			if (strcmp(stmt->provider, lp->provider_name) == 0)
 			{

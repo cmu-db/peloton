@@ -1058,7 +1058,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	have_non_var_grouping = false;
 	foreach(l, groupClauses)
 	{
-		TargetEntry *tle = lfirst(l);
+		TargetEntry *tle = static_cast<TargetEntry *>(lfirst(l));
 		if (!IsA(tle->expr, Var))
 		{
 			have_non_var_grouping = true;
@@ -1222,7 +1222,7 @@ check_ungrouped_columns_walker(Node *node,
 	{
 		foreach(gl, context->groupClauses)
 		{
-			TargetEntry *tle = lfirst(gl);
+			TargetEntry *tle = static_cast<TargetEntry *>(lfirst(gl));
 
 			if (equal(node, tle->expr))
 				return false;	/* acceptable, do not descend more */
@@ -1422,7 +1422,7 @@ finalize_grouping_exprs_walker(Node *node,
 
 			foreach(lc, grp->args)
 			{
-				Node   *expr = lfirst(lc);
+				Node   *expr = static_cast<Node *>(lfirst(lc));
 				Index	ref = 0;
 
 				if (context->root)
@@ -1442,7 +1442,7 @@ finalize_grouping_exprs_walker(Node *node,
 					{
 						foreach(gl, context->groupClauses)
 						{
-							TargetEntry *tle = lfirst(gl);
+							TargetEntry *tle = static_cast<TargetEntry *>(lfirst(gl));
 							Var		   *gvar = (Var *) tle->expr;
 
 							if (IsA(gvar, Var) &&
@@ -1461,7 +1461,7 @@ finalize_grouping_exprs_walker(Node *node,
 				{
 					foreach(gl, context->groupClauses)
 					{
-						TargetEntry *tle = lfirst(gl);
+						TargetEntry *tle = static_cast<TargetEntry *>(lfirst(gl));
 
 						if (equal(expr, tle->expr))
 						{
@@ -1651,7 +1651,7 @@ expand_grouping_sets(List *groupingSets, int limit)
 	foreach(lc, groupingSets)
 	{
 		List *current_result = NIL;
-		GroupingSet *gs = lfirst(lc);
+		GroupingSet *gs = static_cast<GroupingSet *>(lfirst(lc));
 
 		current_result = expand_groupingset_node(gs);
 
@@ -1678,13 +1678,13 @@ expand_grouping_sets(List *groupingSets, int limit)
 
 	for_each_cell(lc, lnext(list_head(expanded_groups)))
 	{
-		List	   *p = lfirst(lc);
+		List	   *p = static_cast<List *>(lfirst(lc));
 		List	   *new_result = NIL;
 		ListCell   *lc2;
 
 		foreach(lc2, result)
 		{
-			List	   *q = lfirst(lc2);
+			List	   *q = static_cast<List *>(lfirst(lc2));
 			ListCell   *lc3;
 
 			foreach(lc3, p)

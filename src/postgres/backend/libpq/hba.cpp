@@ -343,17 +343,17 @@ tokenize_inc_file(List *tokens,
 
 	foreach(inc_line, inc_lines)
 	{
-		List	   *inc_fields = lfirst(inc_line);
+		List	   *inc_fields = static_cast<List *>(lfirst(inc_line));
 		ListCell   *inc_field;
 
 		foreach(inc_field, inc_fields)
 		{
-			List	   *inc_tokens = lfirst(inc_field);
+			List	   *inc_tokens = static_cast<List *>(lfirst(inc_field));
 			ListCell   *inc_token;
 
 			foreach(inc_token, inc_tokens)
 			{
-				HbaToken   *token = lfirst(inc_token);
+				HbaToken   *token = static_cast<HbaToken *>(lfirst(inc_token));
 
 				tokens = lappend(tokens, copy_hba_token(token));
 			}
