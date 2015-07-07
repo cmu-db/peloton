@@ -1,39 +1,38 @@
 /*-------------------------------------------------------------------------
  *
- * scheduler.cpp
+ * tbb_scheduler.cpp
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/scheduler/scheduler.cpp
+ * /n-store/src/scheduler/tbb_scheduler.cpp
  *
  *-------------------------------------------------------------------------
  */
 
-#include <cassert>
-
-#include "backend/scheduler/scheduler.h"
-#include "tbb/task_scheduler_init.h"
+#include "backend/scheduler/tbb_scheduler.h"
 #include "backend/common/exception.h"
+
+#include <cassert>
 #include <string>
 
 namespace peloton {
 namespace scheduler {
 
 
-Scheduler& Scheduler::GetInstance() {
-  static Scheduler scheduler;
+TBBScheduler& TBBScheduler::GetInstance() {
+  static TBBScheduler scheduler;
   return scheduler;
 }
 
-Scheduler::Scheduler() :
+TBBScheduler::TBBScheduler() :
             init(tbb::task_scheduler_init::default_num_threads()) {
 
   // set up state
-  state = new SchedulerState();
+  state = new TBBSchedulerState();
 }
 
-Scheduler::~Scheduler() {
+TBBScheduler::~TBBScheduler() {
 
   // stop scheduler
   init.terminate();
@@ -42,25 +41,24 @@ Scheduler::~Scheduler() {
   delete state;
 }
 
-void Scheduler::AddTask(ResultType (*function_pointer)(void*),
-                        void *args,
-                        TaskPriorityType priority) {
+void TBBScheduler::AddTask(AbstractTask *task) {
 
-  Task *task = new(state->root->allocate_child()) Task(function_pointer, args);
+  AbstractTask *tbb_task = new(state->root->allocate_child()) AbstractTask(task->GetTask(), task->GetArgs());
   state->root->increment_ref_count();
+  auto priority = tbb_task->GetPriority();
 
   // Enqueue task with appropriate priority
   switch(priority) {
     case TaskPriorityType::TASK_PRIORTY_TYPE_NORMAL:
-      state->root->enqueue(*task);
+      state->root->enqueue(*tbb_task);
       break;
 
     case TaskPriorityType::TASK_PRIORTY_TYPE_LOW:
-      state->root->enqueue(*task, tbb::priority_low);
+      state->root->enqueue(*tbb_task, tbb::priority_low);
       break;
 
     case TaskPriorityType::TASK_PRIORTY_TYPE_HIGH:
-      state->root->enqueue(*task, tbb::priority_high);
+      state->root->enqueue(*tbb_task, tbb::priority_high);
       break;
 
     case TaskPriorityType::TASK_PRIORTY_TYPE_INVALID:
@@ -72,7 +70,7 @@ void Scheduler::AddTask(ResultType (*function_pointer)(void*),
   std::cout << "Enqueued task \n";
 }
 
-void Scheduler::Wait() {
+void TBBScheduler::Execute() {
 
   std::cout << "WAITING for tasks \n";
   state->root->wait_for_all();
