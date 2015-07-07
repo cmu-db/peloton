@@ -43,23 +43,10 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
   }
 
   return table;
-
 }
 
 bool TableFactory::DropDataTable(oid_t database_oid, oid_t table_oid)
 {
-  DataTable* table = (DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
-
-  if(table == nullptr)
-    return false;
-
-  delete table;
-  return true;
-}
-
-bool TableFactory::DropDataTable(oid_t database_oid, std::string table_name)
-{
-  Oid table_oid = GetRelationOid(table_name.c_str());
   DataTable* table = (DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
 
   if(table == nullptr)
