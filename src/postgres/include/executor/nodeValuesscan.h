@@ -21,4 +21,7 @@ extern TupleTableSlot *ExecValuesScan(ValuesScanState *node);
 extern void ExecEndValuesScan(ValuesScanState *node);
 extern void ExecReScanValuesScan(ValuesScanState *node);
 
+
+extern TupleTableSlot *ValuesNext(ValuesScanState *node);
+
 #endif   /* NODEVALUESSCAN_H */

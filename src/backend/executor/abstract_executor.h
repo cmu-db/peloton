@@ -38,6 +38,8 @@ class AbstractExecutor {
 
   void AddChild(AbstractExecutor *child);
 
+  const std::vector<AbstractExecutor*>& GetChildren() const;
+
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//
