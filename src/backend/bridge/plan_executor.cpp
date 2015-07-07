@@ -30,16 +30,18 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * @param The plan tree
  * @return none.
  */
-void PlanExecutor::PrintPlan(const planner::AbstractPlanNode *plan) {
+void PlanExecutor::PrintPlan(const planner::AbstractPlanNode *plan, std::string prefix) {
   if(plan == nullptr)
     return;
 
-  LOG_INFO("Plan Type :: %d \n", plan->GetPlanNodeType());
+  prefix += "  ";
+
+  LOG_INFO("%s->Plan Type :: %d \n", prefix.c_str(), plan->GetPlanNodeType());
 
   auto children = plan->GetChildren();
 
   for(auto child : children) {
-    PrintPlan(child);
+    PrintPlan(child, prefix);
   }
 
 }
@@ -134,13 +136,30 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan) {
   // Build the executor tree
   executor::AbstractExecutor *executor_tree = BuildExecutorTree(nullptr, plan, txn);
 
+  LOG_INFO("Initializing the executor tree\n");
+  // Init the executor tree
+  bool status_init = executor_tree->Init();
+
+  assert(status_init);
+
   LOG_INFO("Running the executor tree\n");
 
   // Execute the tree
   bool status = executor_tree->Execute();
 
-  if(status == true)
+  if(status == true) {
+    // Try to print the first tile's content
+    std::unique_ptr<executor::LogicalTile> tile(executor_tree->GetOutput());
+    if(tile.get()){
+      std::cout << *tile.get() << std::endl;
+      for(auto tuple_id : *tile){
+        for(oid_t col_id = 0; col_id < tile->GetColumnCount(); col_id++)
+          std::cout << tile->GetValue(tuple_id, col_id) << ", ";
+        std::cout << std::endl;
+      }
+    }
     txn_manager.CommitTransaction(txn);
+  }
   else
     txn_manager.AbortTransaction(txn);
 

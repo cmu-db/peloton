@@ -32,7 +32,7 @@ class PlanExecutor {
 
   PlanExecutor(){};
 
-  static void PrintPlan(const planner::AbstractPlanNode *plan);
+  static void PrintPlan(const planner::AbstractPlanNode *plan, std::string prefix = "");
 
   static bool ExecutePlan(planner::AbstractPlanNode *plan);
 
