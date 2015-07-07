@@ -28,7 +28,7 @@ void AbstractExecutor::SetOutput(LogicalTile* table) {
 
 // Transfers ownership
 LogicalTile* AbstractExecutor::GetOutput() {
-  assert(output.get() != nullptr);
+  // assert(output.get() != nullptr);
   return output.release();
 }
 
@@ -38,6 +38,10 @@ LogicalTile* AbstractExecutor::GetOutput() {
  */
 void AbstractExecutor::AddChild(AbstractExecutor *child) {
   children_.push_back(child);
+}
+
+const std::vector<AbstractExecutor*>& AbstractExecutor::GetChildren() const {
+  return children_;
 }
 
 /**
