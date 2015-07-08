@@ -139,7 +139,7 @@ void DDL::ProcessUtility(Node *parsetree,
           }
 
           //===--------------------------------------------------------------------===//
-          // Primary Key and Unique Indexes 
+          // Create Primary Key and Unique Indexes 
           //===--------------------------------------------------------------------===//
           for( auto index_info : index_infos){
             bool status;
