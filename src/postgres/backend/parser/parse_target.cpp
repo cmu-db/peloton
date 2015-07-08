@@ -1220,7 +1220,7 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind,
 	Node	   *expr;
 
 	/* Strip off the '*' to create a reference to the rowtype object */
-	ind = copyObject(ind);
+	ind = static_cast<A_Indirection *>(copyObject(ind));
 	ind->indirection = list_truncate(ind->indirection,
 									 list_length(ind->indirection) - 1);
 

@@ -117,9 +117,9 @@ BackgroundWorkerShmemInit(void)
 {
 	bool		found;
 
-	BackgroundWorkerData = ShmemInitStruct("Background Worker Data",
+	BackgroundWorkerData = static_cast<BackgroundWorkerArray *>(ShmemInitStruct("Background Worker Data",
 										   BackgroundWorkerShmemSize(),
-										   &found);
+										   &found));
 	if (!IsUnderPostmaster)
 	{
 		slist_iter	siter;
@@ -281,7 +281,7 @@ BackgroundWorkerStateChange(void)
 		/*
 		 * Copy the registration data into the registered workers list.
 		 */
-		rw = malloc(sizeof(RegisteredBgWorker));
+		rw = static_cast<RegisteredBgWorker *>(malloc(sizeof(RegisteredBgWorker)));
 		if (rw == NULL)
 		{
 			ereport(LOG,
@@ -788,7 +788,7 @@ RegisterBackgroundWorker(BackgroundWorker *worker)
 	/*
 	 * Copy the registration data into the registered workers list.
 	 */
-	rw = malloc(sizeof(RegisteredBgWorker));
+	rw = static_cast<RegisteredBgWorker *>(malloc(sizeof(RegisteredBgWorker)));
 	if (rw == NULL)
 	{
 		ereport(LOG,
