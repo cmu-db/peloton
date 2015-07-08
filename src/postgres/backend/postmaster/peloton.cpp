@@ -48,6 +48,7 @@
 #include "backend/bridge/ddl.h"
 #include "backend/bridge/plan_transformer.h"
 #include "backend/bridge/plan_executor.h"
+#include "backend/common/stack_trace.h"
 
 /* ----------
  * Local data
@@ -75,6 +76,8 @@ static void peloton_MainLoop(void);
 static void peloton_sighup_handler(SIGNAL_ARGS);
 static void peloton_sigusr2_handler(SIGNAL_ARGS);
 static void peloton_sigterm_handler(SIGNAL_ARGS);
+static void peloton_sighup_handler(SIGNAL_ARGS);
+static void peloton_sigsegv_handler(SIGNAL_ARGS);
 
 static void peloton_setheader(Peloton_MsgHdr *hdr, PelotonMsgType mtype);
 static void peloton_send(void *msg, int len);
@@ -164,6 +167,7 @@ PelotonMain(int argc, char *argv[])
    */
   pqsignal(SIGINT, StatementCancelHandler);
   pqsignal(SIGTERM, peloton_sigterm_handler);
+  pqsignal(SIGSEGV, peloton_sigsegv_handler);
   pqsignal(SIGQUIT, quickdie);
   InitializeTimeouts();   /* establishes SIGALRM handler */
 
@@ -307,6 +311,25 @@ peloton_sigterm_handler(SIGNAL_ARGS)
 
   errno = save_errno;
 }
+
+/* SIGSEGV: time to die */
+static void
+peloton_sigsegv_handler(SIGNAL_ARGS)
+{
+  int     save_errno = errno;
+
+  need_exit = true;
+  SetLatch(MyLatch);
+
+  // Get stack trace
+  peloton::GetStackTrace();
+
+  errno = save_errno;
+
+  // We can now go away.
+  proc_exit(0);
+}
+
 
 /*
  * peloton_MainLoop
@@ -810,7 +833,7 @@ peloton_send_dml(Peloton_Status *status,
 void
 peloton_send_ddl(Peloton_Status *status,
                  Node *parsetree,
-                 const char *queryString,
+                 char *queryString,
                  MemoryContext top_transaction_context,
                  MemoryContext cur_transaction_context)
 {
@@ -891,7 +914,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg, int len)
 
     if(parsetree != NULL)
     {
-      //peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
+      peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
     }
   }
 
