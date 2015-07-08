@@ -69,6 +69,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
       break;
     default:
       plan_node = nullptr;
+      LOG_ERROR("Unsupported Postgres Plan Tag: %u", nodeTag(plan));
       break;
   }
 
@@ -234,6 +235,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformDelete(
   // Grab Database ID and Table ID
   assert(mt_plan_state->resultRelInfo);  // Input must come from a subplan
   assert(mt_plan_state->mt_nplans == 1);  // Maybe relax later. I don't know when they can have >1 subplans.
+
   Oid database_oid = GetCurrentDatabaseOid();
   Oid table_oid = mt_plan_state->resultRelInfo[0].ri_RelationDesc->rd_id;
 
@@ -243,7 +245,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformDelete(
           .GetLocation(database_oid, table_oid));
 
   assert(target_table);
-    LOG_INFO("Delete from: database oid %u table oid %u", database_oid, table_oid);
+  LOG_INFO("Delete from: database oid %u table oid %u", database_oid, table_oid);
 
   /* Grab the subplan -> child plan node */
   assert(mt_plan_state->mt_nplans == 1);

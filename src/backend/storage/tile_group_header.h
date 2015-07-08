@@ -73,9 +73,9 @@ public:
 			std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
 
 			//  first, check free slots
-			if(free_slots.empty() == false) {
-			  tuple_slot_id = free_slots.front();
-			  free_slots.pop();
+			if(empty_slots.empty() == false) {
+			  tuple_slot_id = empty_slots.front();
+			  empty_slots.pop();
 			}
       // check tile group capacity
 			else if(next_tuple_slot < num_tuple_slots) {
@@ -91,7 +91,7 @@ public:
 
     {
       std::lock_guard<std::mutex> tile_header_lock(tile_header_mutex);
-      free_slots.push(tuple_slot_id);
+      empty_slots.push(tuple_slot_id);
     }
 
 	}
@@ -217,7 +217,7 @@ private:
   std::atomic<oid_t> active_tuple_slots;
 
   // free slots
-  std::queue<oid_t> free_slots;
+  std::queue<oid_t> empty_slots;
 
 	// synch helpers
 	std::mutex tile_header_mutex;

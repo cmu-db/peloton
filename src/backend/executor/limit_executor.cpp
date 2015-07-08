@@ -57,7 +57,7 @@ bool LimitExecutor::DExecute(){
 
       // "below" tuples
       if(num_skipped_ < offset){
-        tile->InvalidateTuple(tuple_id);
+        tile->RemoveVisibility(tuple_id);
         num_skipped_++;
       }
       // good tuples
@@ -66,7 +66,7 @@ bool LimitExecutor::DExecute(){
       }
       // "above" tuples
       else{
-        tile->InvalidateTuple(tuple_id);
+        tile->RemoveVisibility(tuple_id);
       }
 
     }
