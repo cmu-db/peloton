@@ -297,7 +297,7 @@ SHMAllocSetContextCreate(MemoryContext parent,
     block = (SHMAllocBlock) mm_malloc(shmcxt, blksize);
     if (block == NULL)
     {
-      MemoryContextStats(TopMemoryContext);
+      MemoryContextStats(TopSharedMemoryContext);
       elog(ERROR, "Memory exhausted in SHMAllocSetContextCreate(%lu)",
            (unsigned long) minContextSize);
     }
@@ -474,7 +474,7 @@ SHMAllocSetAlloc(MemoryContext context, Size size)
     block = (SHMAllocBlock) mm_malloc(mmcxt, blksize);
     if (block == NULL)
     {
-      MemoryContextStats(TopMemoryContext);
+      MemoryContextStats(TopSharedMemoryContext);
       elog(ERROR, "Memory exhausted in SHMAllocSetAlloc(%lu)",
            (unsigned long) size);
     }
@@ -675,7 +675,7 @@ SHMAllocSetAlloc(MemoryContext context, Size size)
 
     if (block == NULL)
     {
-      MemoryContextStats(TopMemoryContext);
+      MemoryContextStats(TopSharedMemoryContext);
       elog(ERROR, "Memory exhausted in SHMAllocSetAlloc(%lu)",
            (unsigned long) size);
     }
@@ -870,7 +870,7 @@ SHMAllocSetRealloc(MemoryContext context, void *pointer, Size size)
     block = (SHMAllocBlock) mm_realloc(mmcxt, block, blksize);
     if (block == NULL)
     {
-      MemoryContextStats(TopMemoryContext);
+      MemoryContextStats(TopSharedMemoryContext);
       elog(ERROR, "Memory exhausted in SHMAllocSetReAlloc(%lu)",
            (unsigned long) size);
     }
