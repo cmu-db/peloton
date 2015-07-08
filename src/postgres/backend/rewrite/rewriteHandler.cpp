@@ -273,7 +273,7 @@ AcquireRewriteLocks(Query *parsetree,
 	 * the rtable and cteList.
 	 */
 	if (parsetree->hasSubLinks)
-		query_tree_walker(parsetree, acquireLocksOnSubLinks, &context,
+		query_tree_walker(parsetree, reinterpret_cast<query_tree_walker_fptr>(acquireLocksOnSubLinks), &context,
 						  QTW_IGNORE_RC_SUBQUERIES);
 }
 
@@ -300,7 +300,7 @@ acquireLocksOnSubLinks(Node *node, acquireLocksOnSubLinks_context *context)
 	 * Do NOT recurse into Query nodes, because AcquireRewriteLocks already
 	 * processed subselects of subselects for us.
 	 */
-	return expression_tree_walker(node, acquireLocksOnSubLinks, context);
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(acquireLocksOnSubLinks), context);
 }
 
 
@@ -521,7 +521,7 @@ rewriteRuleAction(Query *parsetree,
 
 		/* OK, it's safe to combine the CTE lists */
 		sub_action->cteList = list_concat(sub_action->cteList,
-										  copyObject(parsetree->cteList));
+										  static_cast<List *>(copyObject(parsetree->cteList)));
 	}
 
 	/*
@@ -610,7 +610,7 @@ rewriteRuleAction(Query *parsetree,
 static List *
 adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
 {
-	List	   *newjointree = copyObject(parsetree->jointree->fromlist);
+	List	   *newjointree = static_cast<List *>(copyObject(parsetree->jointree->fromlist));
 	ListCell   *l;
 
 	if (removert)
@@ -1035,7 +1035,7 @@ build_column_default(Relation rel, int attrno)
 				/*
 				 * Found it, convert string representation to node tree.
 				 */
-				expr = stringToNode(defval[ndef].adbin);
+				expr = static_cast<Node *>(stringToNode(defval[ndef].adbin));
 				break;
 			}
 		}
@@ -1400,7 +1400,7 @@ ApplyRetrieveRule(Query *parsetree,
 			RangeTblEntry *newrte;
 
 			rte = rt_fetch(rt_index, parsetree->rtable);
-			newrte = copyObject(rte);
+			newrte = static_cast<RangeTblEntry *>(copyObject(rte));
 			parsetree->rtable = lappend(parsetree->rtable, newrte);
 			parsetree->resultRelation = list_length(parsetree->rtable);
 
@@ -1424,7 +1424,7 @@ ApplyRetrieveRule(Query *parsetree,
 			 * Since ChangeVarNodes scribbles on the tree in-place, copy the
 			 * RETURNING list first for safety.
 			 */
-			parsetree->returningList = copyObject(parsetree->returningList);
+			parsetree->returningList = static_cast<List *>(copyObject(parsetree->returningList));
 			ChangeVarNodes((Node *) parsetree->returningList, rt_index,
 						   parsetree->resultRelation, 0);
 
@@ -1446,7 +1446,7 @@ ApplyRetrieveRule(Query *parsetree,
 	 * Make a modifiable copy of the view query, and acquire needed locks on
 	 * the relations it mentions.
 	 */
-	rule_action = copyObject(linitial(rule->actions));
+	rule_action = static_cast<Query *>(copyObject(linitial(rule->actions)));
 
 	AcquireRewriteLocks(rule_action, true, forUpdatePushedDown);
 
@@ -1543,7 +1543,7 @@ markQueryForLocking(Query *qry, Node *jtnode,
 		ListCell   *l;
 
 		foreach(l, f->fromlist)
-			markQueryForLocking(qry, lfirst(l), strength, waitPolicy, pushedDown);
+			markQueryForLocking(qry, static_cast<Node *>(lfirst(l)), strength, waitPolicy, pushedDown);
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
@@ -1590,7 +1590,7 @@ fireRIRonSubLink(Node *node, List *activeRIRs)
 	 * Do NOT recurse into Query nodes, because fireRIRrules already processed
 	 * subselects of subselects for us.
 	 */
-	return expression_tree_walker(node, fireRIRonSubLink,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(fireRIRonSubLink),
 								  (void *) activeRIRs);
 }
 
@@ -1713,7 +1713,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 
 				foreach(l, locks)
 				{
-					rule = lfirst(l);
+					rule = static_cast<RewriteRule *>(lfirst(l));
 
 					parsetree = ApplyRetrieveRule(parsetree,
 												  rule,
@@ -1744,7 +1744,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 	 * the rtable and cteList.
 	 */
 	if (parsetree->hasSubLinks)
-		query_tree_walker(parsetree, fireRIRonSubLink, (void *) activeRIRs,
+		query_tree_walker(parsetree, reinterpret_cast<query_tree_walker_fptr>(fireRIRonSubLink), (void *) activeRIRs,
 						  QTW_IGNORE_RC_SUBQUERIES);
 
 	/*
@@ -1796,10 +1796,10 @@ fireRIRrules(Query *parsetree, List *activeRIRs, bool forUpdatePushedDown)
 				activeRIRs = lcons_oid(RelationGetRelid(rel), activeRIRs);
 
 				expression_tree_walker( (Node*) securityQuals,
-										fireRIRonSubLink, (void*)activeRIRs );
+				                        reinterpret_cast<expression_tree_walker_fptr>(fireRIRonSubLink), (void*)activeRIRs );
 
 				expression_tree_walker( (Node*) withCheckOptions,
-										fireRIRonSubLink, (void*)activeRIRs );
+				                        reinterpret_cast<expression_tree_walker_fptr>(fireRIRonSubLink), (void*)activeRIRs );
 
 				activeRIRs = list_delete_first(activeRIRs);
 			}
@@ -1967,7 +1967,7 @@ fireRules(Query *parsetree,
 			if (!*instead_flag)
 			{
 				if (*qual_product == NULL)
-					*qual_product = copyObject(parsetree);
+					*qual_product = static_cast<Query *>(copyObject(parsetree));
 				*qual_product = CopyAndAddInvertedQual(*qual_product,
 													   event_qual,
 													   rt_index,
@@ -2760,7 +2760,7 @@ rewriteTargetView(Query *parsetree, Relation view)
 	 * outer query.  The tlist will provide the replacement expressions used
 	 * by ReplaceVarsFromTargetList below.
 	 */
-	view_targetlist = copyObject(viewquery->targetList);
+	view_targetlist = static_cast<List *>(copyObject(viewquery->targetList));
 
 	ChangeVarNodes((Node *) view_targetlist,
 				   base_rt_index,

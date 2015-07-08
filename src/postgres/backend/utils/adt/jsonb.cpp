@@ -730,7 +730,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 			case JSONBTYPE_BOOL:
 				if (key_scalar)
 				{
-					outputstr = DatumGetBool(val) ? "true" : "false";
+					outputstr = DatumGetBool(val) ? static_cast<char *>("true") : static_cast<char *>("false");
 					jb.type = JsonbValue::jbvString;
 					jb.val.string.len = strlen(outputstr);
 					jb.val.string.val = outputstr;

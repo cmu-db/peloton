@@ -422,8 +422,8 @@ InitLocks(void)
 	 * Allocate fast-path structures.
 	 */
 	FastPathStrongRelationLocks =
-		ShmemInitStruct("Fast Path Strong Relation Lock Data",
-						sizeof(FastPathStrongRelationLockData), &found);
+	    static_cast<FastPathStrongRelationLockData *>(ShmemInitStruct("Fast Path Strong Relation Lock Data",
+						sizeof(FastPathStrongRelationLockData), &found));
 	if (!found)
 		SpinLockInit(&FastPathStrongRelationLocks->mutex);
 

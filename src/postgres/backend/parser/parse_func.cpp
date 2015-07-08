@@ -191,7 +191,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 	if (fargs)
 	{
-		first_arg = linitial(fargs);
+		first_arg = static_cast<Node *>(linitial(fargs));
 		Assert(first_arg != NULL);
 	}
 
@@ -256,7 +256,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		 * We interpreted it as a type coercion. coerce_type can handle these
 		 * cases, so why duplicate code...
 		 */
-		return coerce_type(pstate, linitial(fargs),
+		return coerce_type(pstate, static_cast<Node *>(linitial(fargs)),
 						   actual_arg_types[0], rettype, -1,
 						   COERCION_EXPLICIT, COERCE_EXPLICIT_CALL, location);
 	}

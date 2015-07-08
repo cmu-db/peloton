@@ -496,7 +496,7 @@ pull_row_security_policies(CmdType cmd, Relation relation, Oid user_id)
 		policy->qual = (Expr *) makeConst(BOOLOID, -1, InvalidOid,
 										  sizeof(bool), BoolGetDatum(false),
 										  false, true);
-		policy->with_check_qual = copyObject(policy->qual);
+		policy->with_check_qual = static_cast<Expr *>(copyObject(policy->qual));
 		policy->hassublinks = false;
 
 		policies = list_make1(policy);

@@ -367,8 +367,8 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 	}
 
 	/* Map it. */
-	address = mmap(NULL, request_size, PROT_READ | PROT_WRITE,
-				   MAP_SHARED | MAP_HASSEMAPHORE | MAP_NOSYNC, fd, 0);
+	address = static_cast<char *>(mmap(NULL, request_size, PROT_READ | PROT_WRITE,
+				   MAP_SHARED | MAP_HASSEMAPHORE | MAP_NOSYNC, fd, 0));
 	if (address == MAP_FAILED)
 	{
 		int			save_errno;
@@ -475,7 +475,7 @@ dsm_impl_sysv(dsm_op op, dsm_handle handle, Size request_size,
 	 */
 	if (*impl_private != NULL)
 	{
-		ident_cache = *impl_private;
+		ident_cache = static_cast<int *>(*impl_private);
 		ident = *ident_cache;
 	}
 	else
@@ -487,7 +487,7 @@ dsm_impl_sysv(dsm_op op, dsm_handle handle, Size request_size,
 		 * Allocate the memory BEFORE acquiring the resource, so that we don't
 		 * leak the resource if memory allocation fails.
 		 */
-		ident_cache = MemoryContextAlloc(TopMemoryContext, sizeof(int));
+		ident_cache = static_cast<int *>(MemoryContextAlloc(TopMemoryContext, sizeof(int)));
 
 		/*
 		 * When using shmget to find an existing segment, we must pass the
@@ -564,7 +564,7 @@ dsm_impl_sysv(dsm_op op, dsm_handle handle, Size request_size,
 	}
 
 	/* Map it. */
-	address = shmat(ident, NULL, PG_SHMAT_FLAGS);
+	address = static_cast<char *>(shmat(ident, NULL, PG_SHMAT_FLAGS));
 	if (address == (void *) -1)
 	{
 		int			save_errno;
@@ -959,8 +959,8 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 	}
 
 	/* Map it. */
-	address = mmap(NULL, request_size, PROT_READ | PROT_WRITE,
-				   MAP_SHARED | MAP_HASSEMAPHORE | MAP_NOSYNC, fd, 0);
+	address = static_cast<char *>(mmap(NULL, request_size, PROT_READ | PROT_WRITE,
+				   MAP_SHARED | MAP_HASSEMAPHORE | MAP_NOSYNC, fd, 0));
 	if (address == MAP_FAILED)
 	{
 		int			save_errno;

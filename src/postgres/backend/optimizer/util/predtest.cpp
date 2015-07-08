@@ -841,7 +841,7 @@ list_next_fn(PredIterInfo info)
 
 	if (l == NULL)
 		return NULL;
-	n = lfirst(l);
+	n = static_cast<Node *>(lfirst(l));
 	info->state = (void *) lnext(l);
 	return n;
 }

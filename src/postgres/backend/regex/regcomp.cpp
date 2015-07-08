@@ -352,10 +352,10 @@ pg_regcomp(regex_t *re,
 	re->re_csize = sizeof(chr);
 	re->re_collation = collation;
 	re->re_guts = NULL;
-	re->re_fns = VS(&functions);
+	re->re_fns = static_cast<char *>(VS(&functions));
 
 	/* more complex setup, malloced things */
-	re->re_guts = VS(MALLOC(sizeof(struct guts)));
+	re->re_guts = static_cast<char *>(VS(MALLOC(sizeof(struct guts))));
 	if (re->re_guts == NULL)
 		return freev(v, REG_ESPACE);
 	g = (struct guts *) re->re_guts;

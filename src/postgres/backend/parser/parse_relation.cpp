@@ -1312,7 +1312,7 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	rte->subquery = subquery;
 	rte->alias = alias;
 
-	eref = copyObject(alias);
+	eref = static_cast<Alias *>(copyObject(alias));
 	numaliases = list_length(eref->colnames);
 
 	/* fill in any unspecified alias columns */
@@ -1413,7 +1413,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	if (alias)
 		aliasname = alias->aliasname;
 	else
-		aliasname = linitial(funcnames);
+		aliasname = static_cast<char *>(linitial(funcnames));
 
 	eref = makeAlias(aliasname, NIL);
 	rte->eref = eref;
@@ -1649,7 +1649,7 @@ addRangeTableEntryForValues(ParseState *pstate,
 	rte->values_collations = collations;
 	rte->alias = alias;
 
-	eref = alias ? copyObject(alias) : makeAlias(refname, NIL);
+	eref = alias ? static_cast<Alias *>(copyObject(alias)) : makeAlias(refname, NIL);
 
 	/* fill in any unspecified alias columns */
 	numcolumns = list_length((List *) linitial(exprs));
@@ -1822,7 +1822,7 @@ addRangeTableEntryForCTE(ParseState *pstate,
 
 	rte->alias = alias;
 	if (alias)
-		eref = copyObject(alias);
+		eref = static_cast<Alias *>(copyObject(alias));
 	else
 		eref = makeAlias(refname, NIL);
 	numaliases = list_length(eref->colnames);

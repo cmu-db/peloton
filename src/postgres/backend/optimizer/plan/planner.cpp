@@ -779,7 +779,7 @@ preprocess_qual_conditions(PlannerInfo *root, Node *jtnode)
 		ListCell   *l;
 
 		foreach(l, f->fromlist)
-			preprocess_qual_conditions(root, lfirst(l));
+			preprocess_qual_conditions(root, static_cast<Node *>(lfirst(l)));
 
 		f->quals = preprocess_expression(root, f->quals, EXPRKIND_QUAL);
 	}
@@ -968,7 +968,7 @@ inheritance_planner(PlannerInfo *root)
 					ChangeVarNodes((Node *) subroot.parse, rti, newrti, 0);
 					ChangeVarNodes((Node *) subroot.rowMarks, rti, newrti, 0);
 					ChangeVarNodes((Node *) subroot.append_rel_list, rti, newrti, 0);
-					rte = copyObject(rte);
+					rte = static_cast<RangeTblEntry *>(copyObject(rte));
 					ChangeVarNodes((Node *) rte->securityQuals, rti, newrti, 0);
 					subroot.parse->rtable = lappend(subroot.parse->rtable,
 													rte);
@@ -1234,7 +1234,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 */
 		Assert(parse->commandType == CMD_SELECT);
 
-		tlist = postprocess_setop_tlist(copyObject(result_plan->targetlist),
+		tlist = postprocess_setop_tlist(static_cast<List *>(copyObject(result_plan->targetlist)),
 										tlist);
 
 		/*
@@ -1315,11 +1315,11 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 			foreach(lc_set, sets)
 			{
-				List   *current_sets = reorder_grouping_sets(lfirst(lc_set),
+				List   *current_sets = reorder_grouping_sets(static_cast<List *>(lfirst(lc_set)),
 													(list_length(sets) == 1
 													 ? parse->sortClause
 													 : NIL));
-				List   *groupclause = preprocess_groupclause(root, linitial(current_sets));
+				List   *groupclause = preprocess_groupclause(root, static_cast<List *>(linitial(current_sets)));
 				int		ref = 0;
 
 				/*
@@ -1447,7 +1447,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		/* Set up data needed by standard_qp_callback */
 		qp_extra.tlist = tlist;
 		qp_extra.activeWindows = activeWindows;
-		qp_extra.groupClause = llast(rollup_groupclauses);
+		qp_extra.groupClause = static_cast<List *>(llast(rollup_groupclauses));
 
 		/*
 		 * Generate the best unsorted and presorted paths for this Query (but
@@ -1491,10 +1491,10 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				{
 					ListCell   *lc3;
 
-					groupExprs = get_sortgrouplist_exprs(lfirst(lc),
+					groupExprs = get_sortgrouplist_exprs(static_cast<List *>(lfirst(lc)),
 														 parse->targetList);
 
-					foreach(lc3, lfirst(lc2))
+					foreach(lc3, static_cast<const List *>(lfirst(lc2)))
 					{
 						List   *gset = static_cast<List *>(lfirst(lc3));
 
@@ -1847,7 +1847,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 * grouping expressions.
 				 */
 				if (list_length(rollup_groupclauses) == 1
-					&& list_length(linitial(rollup_groupclauses)) > 0)
+					&& list_length(static_cast<const List *>(linitial(rollup_groupclauses))) > 0)
 					current_pathkeys = root->group_pathkeys;
 				else
 					current_pathkeys = NIL;
@@ -2326,7 +2326,7 @@ build_grouping_chain(PlannerInfo *root,
 		Assert(rollup_lists && llast(rollup_lists));
 
 		top_grpColIdx =
-			remap_groupColIdx(root, llast(rollup_groupclauses));
+			remap_groupColIdx(root, static_cast<List *>(llast(rollup_groupclauses)));
 	}
 
 	/*
@@ -2336,7 +2336,7 @@ build_grouping_chain(PlannerInfo *root,
 	{
 		result_plan = (Plan *)
 			make_sort_from_groupcols(root,
-									 llast(rollup_groupclauses),
+									 static_cast<List *>(llast(rollup_groupclauses)),
 									 top_grpColIdx,
 									 result_plan);
 	}
@@ -2378,7 +2378,7 @@ build_grouping_chain(PlannerInfo *root,
 									 (List *) parse->havingQual,
 									 AGG_SORTED,
 									 agg_costs,
-									 list_length(linitial(gsets)),
+									 list_length(static_cast<const List *>(linitial(gsets))),
 									 new_grpColIdx,
 									 extract_grouping_ops(groupClause),
 									 gsets,
@@ -2400,12 +2400,12 @@ build_grouping_chain(PlannerInfo *root,
 	 */
 	{
 		List	   *groupClause = static_cast<List *>(linitial(rollup_groupclauses));
-		List	   *gsets = rollup_lists ? linitial(rollup_lists) : NIL;
+		List	   *gsets = rollup_lists ? static_cast<List *>(linitial(rollup_lists)) : NIL;
 		int			numGroupCols;
 		ListCell   *lc;
 
 		if (gsets)
-			numGroupCols = list_length(linitial(gsets));
+			numGroupCols = list_length(static_cast<const List *>(linitial(gsets)));
 		else
 			numGroupCols = list_length(parse->groupClause);
 
@@ -2560,7 +2560,7 @@ get_base_rel_indexes(Node *jtnode)
 		result = NULL;
 		foreach(l, f->fromlist)
 			result = bms_join(result,
-							  get_base_rel_indexes(lfirst(l)));
+							  get_base_rel_indexes(static_cast<Node *>(lfirst(l))));
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
@@ -3341,7 +3341,7 @@ reorder_grouping_sets(List *groupingsets, List *sortclause)
 		{
 			while (list_length(sortclause) > list_length(previous))
 			{
-				SortGroupClause *sc = list_nth(sortclause, list_length(previous));
+				SortGroupClause *sc = static_cast<SortGroupClause *>(list_nth(sortclause, list_length(previous)));
 				int ref = sc->tleSortGroupRef;
 				if (list_member_int(new_elems, ref))
 				{

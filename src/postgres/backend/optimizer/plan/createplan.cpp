@@ -2846,7 +2846,7 @@ replace_nestloop_params_mutator(Node *node, PlannerInfo *root)
 		return (Node *) param;
 	}
 	return expression_tree_mutator(node,
-								   replace_nestloop_params_mutator,
+	                 reinterpret_cast<expression_tree_mutator_fptr>(replace_nestloop_params_mutator),
 								   (void *) root);
 }
 
@@ -4199,7 +4199,7 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 				!is_projection_capable_plan(lefttree))
 			{
 				/* copy needed so we don't modify input's tlist below */
-				tlist = copyObject(tlist);
+				tlist = static_cast<List *>(copyObject(tlist));
 				lefttree = (Plan *) make_result(root, tlist, NULL,
 												lefttree);
 			}

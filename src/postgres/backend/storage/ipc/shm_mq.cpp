@@ -163,7 +163,7 @@ MAXALIGN(offsetof(shm_mq, mq_ring)) + MAXIMUM_ALIGNOF;
 shm_mq *
 shm_mq_create(void *address, Size size)
 {
-	shm_mq	   *mq = address;
+	shm_mq	   *mq = static_cast<shm_mq *>(address);
 	Size		data_offset = MAXALIGN(offsetof(shm_mq, mq_ring));
 
 	/* If the size isn't MAXALIGN'd, just discard the odd bytes. */
@@ -319,7 +319,7 @@ shm_mq_send(shm_mq_handle *mqh, Size nbytes, const void *data, bool nowait)
 {
 	shm_mq_iovec	iov;
 
-	iov.data = data;
+	iov.data = static_cast<const char *>(data);
 	iov.len = nbytes;
 
 	return shm_mq_sendv(mqh, &iov, 1, nowait);
@@ -574,8 +574,8 @@ shm_mq_receive(shm_mq_handle *mqh, Size *nbytesp, void **datap, bool nowait)
 			/* Message word is split; need buffer to reassemble. */
 			if (mqh->mqh_buffer == NULL)
 			{
-				mqh->mqh_buffer = MemoryContextAlloc(mqh->mqh_context,
-													 MQH_INITIAL_BUFSIZE);
+				mqh->mqh_buffer = static_cast<char *>(MemoryContextAlloc(mqh->mqh_context,
+													 MQH_INITIAL_BUFSIZE));
 				mqh->mqh_buflen = MQH_INITIAL_BUFSIZE;
 			}
 			Assert(mqh->mqh_buflen >= sizeof(Size));
@@ -640,7 +640,7 @@ shm_mq_receive(shm_mq_handle *mqh, Size *nbytesp, void **datap, bool nowait)
 				mqh->mqh_buffer = NULL;
 				mqh->mqh_buflen = 0;
 			}
-			mqh->mqh_buffer = MemoryContextAlloc(mqh->mqh_context, newbuflen);
+			mqh->mqh_buffer = static_cast<char *>(MemoryContextAlloc(mqh->mqh_context, newbuflen));
 			mqh->mqh_buflen = newbuflen;
 		}
 	}

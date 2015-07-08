@@ -267,7 +267,7 @@ check_variable_parameters(ParseState *pstate, Query *query)
 	/* If numParams is zero then no Params were generated, so no work */
 	if (*parstate->numParams > 0)
 		(void) query_tree_walker(query,
-								 check_parameter_resolution_walker,
+		             reinterpret_cast<query_tree_walker_fptr>(check_parameter_resolution_walker),
 								 (void *) pstate, 0);
 }
 
@@ -311,10 +311,10 @@ check_parameter_resolution_walker(Node *node, ParseState *pstate)
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
 		return query_tree_walker((Query *) node,
-								 check_parameter_resolution_walker,
+		             reinterpret_cast<query_tree_walker_fptr>(check_parameter_resolution_walker),
 								 (void *) pstate, 0);
 	}
-	return expression_tree_walker(node, check_parameter_resolution_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(check_parameter_resolution_walker),
 								  (void *) pstate);
 }
 

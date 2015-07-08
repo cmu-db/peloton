@@ -567,8 +567,8 @@ pushJsonbValueScalar(JsonbParseState **pstate, JsonbIteratorToken seq,
 			{
 				(*pstate)->size = 4;
 			}
-			(*pstate)->contVal.val.array.elems = palloc(sizeof(JsonbValue) *
-														(*pstate)->size);
+			(*pstate)->contVal.val.array.elems = static_cast<JsonbValue *>(palloc(sizeof(JsonbValue) *
+														(*pstate)->size));
 			break;
 		case WJB_BEGIN_OBJECT:
 			Assert(!scalarVal);
@@ -577,8 +577,8 @@ pushJsonbValueScalar(JsonbParseState **pstate, JsonbIteratorToken seq,
 			(*pstate)->contVal.type = JsonbValue::jbvObject;
 			(*pstate)->contVal.val.object.nPairs = 0;
 			(*pstate)->size = 4;
-			(*pstate)->contVal.val.object.pairs = palloc(sizeof(JsonbPair) *
-														 (*pstate)->size);
+			(*pstate)->contVal.val.object.pairs = static_cast<JsonbPair *>(palloc(sizeof(JsonbPair) *
+														 (*pstate)->size));
 			break;
 		case WJB_KEY:
 			Assert(scalarVal->type == JsonbValue::jbvString);
@@ -659,8 +659,8 @@ appendKey(JsonbParseState *pstate, JsonbValue *string)
 	if (object->val.object.nPairs >= pstate->size)
 	{
 		pstate->size *= 2;
-		object->val.object.pairs = repalloc(object->val.object.pairs,
-											sizeof(JsonbPair) * pstate->size);
+		object->val.object.pairs = static_cast<JsonbPair *>(repalloc(object->val.object.pairs,
+											sizeof(JsonbPair) * pstate->size));
 	}
 
 	object->val.object.pairs[object->val.object.nPairs].key = *string;
@@ -700,8 +700,8 @@ appendElement(JsonbParseState *pstate, JsonbValue *scalarVal)
 	if (array->val.array.nElems >= pstate->size)
 	{
 		pstate->size *= 2;
-		array->val.array.elems = repalloc(array->val.array.elems,
-										  sizeof(JsonbValue) * pstate->size);
+		array->val.array.elems = static_cast<JsonbValue *>(repalloc(array->val.array.elems,
+										  sizeof(JsonbValue) * pstate->size));
 	}
 
 	array->val.array.elems[array->val.array.nElems++] = *scalarVal;
@@ -889,7 +889,7 @@ recurse:
 	}
 
 	elog(ERROR, "invalid iterator state");
-	return -1;
+	return static_cast<JsonbIteratorToken *>(-1);
 }
 
 /*
