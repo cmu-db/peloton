@@ -137,7 +137,7 @@ bool HashSetOpExecutor::ExecuteHelper(){
       else if(it->second.left > 0)
         it->second.left--;
       else
-        tile->InvalidateTuple(tuple_id);
+        tile->RemoveVisibility(tuple_id);
     }
   }
 
@@ -146,7 +146,7 @@ bool HashSetOpExecutor::ExecuteHelper(){
     // We should have at most one quota left
     assert(item.second.left == 1 || item.second.left == 0);
     if(item.second.left == 0) {
-      item.first.GetContainer()->InvalidateTuple(item.first.GetTupleId());
+      item.first.GetContainer()->RemoveVisibility(item.first.GetTupleId());
     }
   }
 
