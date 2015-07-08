@@ -120,6 +120,7 @@ class DDL {
   // Function Definition
   //===--------------------------------------------------------------------===//
 
+
   static void ProcessUtility(Node *parsetree,
                              const char *queryString );
 
@@ -127,6 +128,9 @@ class DDL {
                                                                                  std::vector<std::string>& reference_table_names);
 
   static IndexInfo* ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt);
+
+  static bool AddConstraint( Oid relation_oid, 
+                             Constraint* constraint );
 
   //===--------------------------------------------------------------------===//
   // Create Object
@@ -144,6 +148,9 @@ class DDL {
                           bool unique_keys,
                           std::vector<std::string> key_column_names,
                           Oid table_oid = INVALID_OID);
+
+  static bool AlterTable(  Oid relation_oid,
+                           AlterTableStmt* Astmt );
 
 
   //===--------------------------------------------------------------------===//

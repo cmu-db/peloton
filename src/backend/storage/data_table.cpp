@@ -53,10 +53,18 @@ void DataTable::AddReferenceTable(storage::DataTable *table){
 }
 
 void DataTable::AddReferenceTable(storage::DataTable *table, 
+                       std::vector<std::string> column_names,
+                       catalog::Constraint* constraint,
                        std::string _fk_update_action, 
                        std::string _fk_delete_action ){
+
   std::lock_guard<std::mutex> lock(table_reference_table_mutex);
   reference_tables.push_back(table);
+
+  const catalog::Schema* schema = this->GetSchema();
+  for( auto column_name : column_names)
+    schema->AddConstraintByColumnName( column_name, constraint );
+
   fk_update_action = _fk_update_action;
   fk_delete_action = _fk_delete_action;
 }

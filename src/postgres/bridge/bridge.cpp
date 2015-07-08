@@ -313,7 +313,7 @@ void GetDBCatalog(Oid database_oid){
           }
         }
         if ( data_table->ishasReferenceTable() ){
-          printf("print foreign tables \n");
+          printf("print reference tables \n");
           for( int i =0 ; i<  data_table->GetReferenceTableCount(); i++){
             peloton::storage::DataTable *temp_table = data_table->GetReferenceTable(i);
             const peloton::catalog::Schema* temp_our_schema = temp_table->GetSchema();
