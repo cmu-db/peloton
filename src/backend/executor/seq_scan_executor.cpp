@@ -84,7 +84,7 @@ bool SeqScanExecutor::DExecute() {
       for (oid_t tuple_id : *tile) {
         expression::ContainerTuple<LogicalTile> tuple(tile.get(), tuple_id);
         if (predicate_->Evaluate(&tuple, nullptr).IsFalse()) {
-          tile->InvalidateTuple(tuple_id);
+          tile->RemoveVisibility(tuple_id);
         }
       }
     }
@@ -110,7 +110,7 @@ bool SeqScanExecutor::DExecute() {
     cid_t commit_id = transaction_->GetLastCommitId();
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
-    //tile_group_header->PrintVisibility(txn_id, commit_id);
+    tile_group_header->PrintVisibility(txn_id, commit_id);
 
     // Construct position list by looping through tile group
     // and applying the predicate.
