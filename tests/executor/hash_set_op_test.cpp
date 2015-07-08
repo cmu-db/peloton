@@ -99,8 +99,8 @@ TEST(HashSetOptTests, ExceptTest){
       executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0)));
 
   for(oid_t id = 0; id < tile_size*2/5; id++){
-    source_logical_tile1->InvalidateTuple(id);
-    source_logical_tile2->InvalidateTuple(tile_size -1 - id);
+    source_logical_tile1->RemoveVisibility(id);
+    source_logical_tile2->RemoveVisibility(tile_size -1 - id);
   }
 
   EXPECT_CALL(child_executor1, GetOutput())
@@ -178,10 +178,10 @@ TEST(HashSetOptTests, ExceptAllTest){
       executor::LogicalTileFactory::WrapTileGroup(data_table4->GetTileGroup(0)));
 
   for(oid_t id = 0; id < tile_size*2/5; id++){
-    source_logical_tile1->InvalidateTuple(id);
-    source_logical_tile2->InvalidateTuple(tile_size -1 - id);
-    source_logical_tile3->InvalidateTuple(id);
-    source_logical_tile4->InvalidateTuple(tile_size -1 - id);
+    source_logical_tile1->RemoveVisibility(id);
+    source_logical_tile2->RemoveVisibility(tile_size -1 - id);
+    source_logical_tile3->RemoveVisibility(id);
+    source_logical_tile4->RemoveVisibility(tile_size -1 - id);
   }
 
   EXPECT_CALL(child_executor1, GetOutput())
@@ -247,8 +247,8 @@ TEST(HashSetOptTests, IntersectTest){
       executor::LogicalTileFactory::WrapTileGroup(data_table2->GetTileGroup(0)));
 
   for(oid_t id = 0; id < tile_size*2/5; id++){
-    source_logical_tile1->InvalidateTuple(id);
-    source_logical_tile2->InvalidateTuple(tile_size -1 - id);
+    source_logical_tile1->RemoveVisibility(id);
+    source_logical_tile2->RemoveVisibility(tile_size -1 - id);
   }
 
   EXPECT_CALL(child_executor1, GetOutput())
@@ -325,10 +325,10 @@ TEST(HashSetOptTests, IntersectAllTest){
       executor::LogicalTileFactory::WrapTileGroup(data_table4->GetTileGroup(0)));
 
   for(oid_t id = 0; id < tile_size*2/5; id++){
-    source_logical_tile1->InvalidateTuple(id);
-    source_logical_tile2->InvalidateTuple(tile_size -1 - id);
-    source_logical_tile3->InvalidateTuple(id);
-    source_logical_tile4->InvalidateTuple(tile_size -1 - id);
+    source_logical_tile1->RemoveVisibility(id);
+    source_logical_tile2->RemoveVisibility(tile_size -1 - id);
+    source_logical_tile3->RemoveVisibility(id);
+    source_logical_tile4->RemoveVisibility(tile_size -1 - id);
   }
 
   EXPECT_CALL(child_executor1, GetOutput())

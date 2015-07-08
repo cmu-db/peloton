@@ -141,7 +141,7 @@ int LogicalTile::AddPositionList(std::vector<oid_t> &&position_list) {
 
   if (position_lists_.size() == 0) {
     num_tuples_ = position_list.size();
-    valid_rows_.resize(position_list.size(), true);
+    visible_rows_.resize(position_list.size(), true);
   }
 
   position_lists_.push_back(std::move(position_list));
@@ -149,14 +149,14 @@ int LogicalTile::AddPositionList(std::vector<oid_t> &&position_list) {
 }
 
 /**
- * @brief Invalidates the specified tuple in the logical tile.
+ * @brief Remove visibility the specified tuple in the logical tile.
  * @param tuple_id Id of the specified tuple.
  */
-void LogicalTile::InvalidateTuple(oid_t tuple_id) {
-  assert(tuple_id < valid_rows_.size());
-  assert(valid_rows_[tuple_id]);
+void LogicalTile::RemoveVisibility(oid_t tuple_id) {
+  assert(tuple_id < visible_rows_.size());
+  assert(visible_rows_[tuple_id]);
 
-  valid_rows_[tuple_id] = false;
+  visible_rows_[tuple_id] = false;
   num_tuples_--;
 }
 
@@ -182,8 +182,8 @@ storage::Tile *LogicalTile::GetBaseTile(oid_t column_id) {
 // TODO Amortize schema lookups by using iterator instead?
 Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
   assert(column_id < schema_.size());
-  assert(tuple_id < valid_rows_.size());
-  assert(valid_rows_[tuple_id]);
+  assert(tuple_id < visible_rows_.size());
+  assert(visible_rows_[tuple_id]);
 
   ColumnInfo &cp = schema_[column_id];
   oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
@@ -195,7 +195,7 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
 }
 
 /**
- * @brief Returns the number of valid tuples in this logical tile.
+ * @brief Returns the number of visible tuples in this logical tile.
  *
  * @return Number of tuples.
  */
@@ -245,14 +245,14 @@ LogicalTile::iterator::iterator(LogicalTile *tile, bool begin)
     return;
   }
 
-  // Find first valid tuple.
+  // Find first visible tuple.
   pos_ = 0;
-  while(pos_ < tile_->valid_rows_.size() && !tile_->valid_rows_[pos_]) {
+  while(pos_ < tile_->visible_rows_.size() && !tile_->visible_rows_[pos_]) {
     pos_++;
   }
 
-  // If no valid tuples...
-  if (pos_ == tile_->valid_rows_.size()) {
+  // If no visible tuples...
+  if (pos_ == tile_->visible_rows_.size()) {
     pos_ = INVALID_OID;
   }
 }
@@ -260,17 +260,17 @@ LogicalTile::iterator::iterator(LogicalTile *tile, bool begin)
 /**
  * @brief Increment operator.
  *
- * It ignores invalidated tuples.
+ * It ignores invisible tuples.
  *
  * @return iterator after the increment.
  */
 LogicalTile::iterator& LogicalTile::iterator::operator++() {
-  // Find next valid tuple.
+  // Find next visible tuple.
   do {
     pos_++;
-  } while(pos_ < tile_->valid_rows_.size() && !tile_->valid_rows_[pos_]);
+  } while(pos_ < tile_->visible_rows_.size() && !tile_->visible_rows_[pos_]);
 
-  if (pos_ == tile_->valid_rows_.size()) {
+  if (pos_ == tile_->visible_rows_.size()) {
     pos_ = INVALID_OID;
   }
 
@@ -280,7 +280,7 @@ LogicalTile::iterator& LogicalTile::iterator::operator++() {
 /**
  * @brief Increment operator.
  *
- * It ignores invalidated tuples.
+ * It ignores invisible tuples.
  *
  * @return iterator before the increment.
  */
@@ -337,10 +337,10 @@ std::ostream& operator<<(std::ostream& os, const LogicalTile& lt) {
   }
 
   os << "\t-----------------------------------------------------------\n";
-  os << "\t VALID ROWS : ";
+  os << "\t VISIBLE ROWS : ";
 
-  for (unsigned int i = 0; i < lt.valid_rows_.size(); i++) {
-    os << lt.valid_rows_[i] << " ";
+  for (unsigned int i = 0; i < lt.visible_rows_.size(); i++) {
+    os << lt.visible_rows_[i] << " ";
   }
 
   os << std::endl;
