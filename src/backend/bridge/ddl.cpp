@@ -222,6 +222,64 @@ void DDL::ProcessUtility(Node *parsetree,
     }
     break;
 
+//    case T_AlterTableStmt:
+//    {
+//      AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
+//      Oid     relation_oid = GetRelationOid( atstmt->relation->relname );
+//      List     *stmts;
+//      ListCell   *l;
+//
+//      /* Run parse analysis ... */
+//      stmts = transformAlterTableStmt(relation_oid, atstmt, queryString);
+//
+//      /* ... and do it */
+//      foreach(l, stmts){
+//        Node *stmt = (Node *) lfirst(l);
+//
+//        if (IsA(stmt, AlterTableStmt)){
+//
+//          // lockmode control..
+//          /* Do the table alteration proper */
+//          //AlterTable(relation_oid, lockmode, (AlterTableStmt *) stmt);
+//          AlterTableStmt* Astmt = (AlterTableStmt*)stmt;
+//
+//          ListCell* lcmd;
+//          foreach( lcmd, Astmt->cmds)
+//          {
+//            AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
+//            switch (cmd->subtype){
+//                case AT_AddConstraint:	/* ADD CONSTRAINT */
+//                printf("name %s \n",cmd->name);
+//                Constraint* constraint = cmd->def;
+//                ConstraintType contype = PostgresConstraintTypeToPelotonConstraintType( (PostgresConstraintType) constraint->contype );
+//                std::cout << "const type : " << ConstraintTypeToString( contype ) << std::endl;
+//                switch( contype )
+//                {
+//                  case CONSTRAINT_TYPE_FOREIGN:
+//                    oid_t database_oid = GetCurrentDatabaseOid();
+//                    assert( database_oid );
+//                    oid_t reference_table_oid = GetRelationOid( constraint->pktable->relname );
+//                    assert(reference_table_oid);
+//
+//                    storage::DataTable* current_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, relation_oid);
+//                    storage::DataTable* reference_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, reference_table_oid);
+//                    const char* fk_del_action = nullptr;
+//                    if( constraint->fk_del_action )
+//                      fk_del_action = constraint->fk_del_action;
+//
+//                    current_table->AddReferenceTable(reference_table, fk_del_action);
+//
+//                    printf("successfully ...\n"); 
+//                  break;
+//                }
+//              break;
+//            }
+//          }
+//        }
+//      }
+//    }
+//    break;
+
     case T_DropStmt:
     {
       DropStmt* drop = (DropStmt*) parsetree;
@@ -478,6 +536,7 @@ bool DDL::CreateTable( Oid relation_oid,
   // FIXME: Construct table backend
   storage::VMBackend *backend = new storage::VMBackend();
 
+printf("JWKIM DEBUG %s %d \n", __func__, __LINE__);
   // Build a table from schema
   storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, relation_oid, schema, table_name);
 
