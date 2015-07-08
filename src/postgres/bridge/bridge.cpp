@@ -464,6 +464,7 @@ bool BootstrapPeloton(void){
   // Relations for catalog tables
   Relation pg_class_rel;
   Relation pg_attribute_rel;
+
   HeapScanDesc pg_class_scan;
   HeapTuple pg_class_tuple;
 
@@ -562,10 +563,16 @@ bool BootstrapPeloton(void){
                 is_inlined = false;
               }
 
-              // Check constraints
+              // not null constraint
               if( pg_attribute->attnotnull ){
                 peloton::catalog::Constraint* constraint = new peloton::catalog::Constraint( peloton::CONSTRAINT_TYPE_NOTNULL );
                 constraint_infos.push_back(*constraint);
+              }
+
+              // Default value constraint 
+              if( pg_attribute->atthasdef ){
+                  peloton::catalog::Constraint* constraint = new peloton::catalog::Constraint( peloton::CONSTRAINT_TYPE_DEFAULT );
+                  constraint_infos.push_back(*constraint);
               }
 
               peloton::catalog::ColumnInfo* column_info = new peloton::catalog::ColumnInfo( valueType,
@@ -643,6 +650,7 @@ bool BootstrapPeloton(void){
                   type = peloton::INDEX_TYPE_NORMAL;
                 }
 
+                // Store all indexes' information to create indexes at once after all tables are created
                 peloton::bridge::IndexInfo* indexinfo = new peloton::bridge::IndexInfo(relation_name,
                                                                                        get_rel_name(pg_index->indrelid),
                                                                                        method_type, 
@@ -718,7 +726,7 @@ bool BootstrapPeloton(void){
   index_infos.clear();
 
   //===--------------------------------------------------------------------===//
-  // Create Peloton Foreign Key Constraints 
+  // Link Reference tables in Peloton
   //===--------------------------------------------------------------------===//
   {
     Relation pg_constraint_rel;
