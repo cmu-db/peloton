@@ -272,6 +272,9 @@ SHMContextStatsInternal(MemoryContext context, int level)
   MemoryContext child;
   MM       *mmcxt = SHMFindMMContext(context);
 
+  if(level >= 2)
+    return;
+
   mm_lock(mmcxt, MM_LOCK_RW);
   AssertArg(MemoryContextIsValid(context));
 
