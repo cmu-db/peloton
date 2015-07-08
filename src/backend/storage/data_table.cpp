@@ -52,6 +52,15 @@ void DataTable::AddReferenceTable(storage::DataTable *table){
   reference_tables.push_back(table);
 }
 
+void DataTable::AddReferenceTable(storage::DataTable *table, 
+                       std::string _fk_update_action, 
+                       std::string _fk_delete_action ){
+  std::lock_guard<std::mutex> lock(table_reference_table_mutex);
+  reference_tables.push_back(table);
+  fk_update_action = _fk_update_action;
+  fk_delete_action = _fk_delete_action;
+}
+
 void DataTable::SetPrimaryIndex(index::Index *index) {
   PrimaryKey_Index = index;
 }
