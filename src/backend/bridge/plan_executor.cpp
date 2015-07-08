@@ -128,6 +128,8 @@ void CleanExecutorTree(executor::AbstractExecutor *root){
  */
 bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan) {
 
+  assert(plan);
+
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
