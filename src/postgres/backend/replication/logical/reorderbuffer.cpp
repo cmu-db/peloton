@@ -1144,7 +1144,7 @@ ReorderBufferBuildTupleCidHash(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		ent = (ReorderBufferTupleCidEnt *)
 			hash_search(txn->tuplecid_hash,
 						(void *) &key,
-						HASH_ENTER | HASH_FIND,
+						static_cast<HASHACTION>(HASH_ENTER | HASH_FIND),
 						&found);
 		if (!found)
 		{

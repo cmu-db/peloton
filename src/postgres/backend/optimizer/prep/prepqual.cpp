@@ -163,7 +163,7 @@ negate_clause(Node *node)
 							foreach(lc, expr->args)
 							{
 								nargs = lappend(nargs,
-												negate_clause(lfirst(lc)));
+												negate_clause(static_cast<Node *>(lfirst(lc))));
 							}
 							return (Node *) make_orclause(nargs);
 						}
@@ -176,7 +176,7 @@ negate_clause(Node *node)
 							foreach(lc, expr->args)
 							{
 								nargs = lappend(nargs,
-												negate_clause(lfirst(lc)));
+												negate_clause(static_cast<Node *>(lfirst(lc))));
 							}
 							return (Node *) make_andclause(nargs);
 						}

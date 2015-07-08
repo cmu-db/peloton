@@ -671,7 +671,7 @@ findTheLexeme(DictThesaurus *d, char *lexeme)
 	key.lexeme = lexeme;
 	key.entries = NULL;
 
-	res = bsearch(&key, d->wrds, d->nwrds, sizeof(TheLexeme), cmpLexemeQ);
+	res = static_cast<TheLexeme *>(bsearch(&key, d->wrds, d->nwrds, sizeof(TheLexeme), cmpLexemeQ));
 
 	if (res == NULL)
 		return NULL;

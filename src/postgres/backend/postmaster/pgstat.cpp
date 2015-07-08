@@ -1527,8 +1527,8 @@ pgstat_init_function_usage(FunctionCallInfoData *fcinfo,
 	}
 
 	/* Get the stats entry for this function, create if necessary */
-	htabent = hash_search(pgStatFunctions, &fcinfo->flinfo->fn_oid,
-						  HASH_ENTER, &found);
+	htabent = static_cast<PgStat_BackendFunctionEntry *>(hash_search(pgStatFunctions, &fcinfo->flinfo->fn_oid,
+						  HASH_ENTER, &found));
 	if (!found)
 		MemSet(&htabent->f_counts, 0, sizeof(PgStat_FunctionCounts));
 

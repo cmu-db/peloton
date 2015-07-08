@@ -107,7 +107,7 @@ assign_query_collations(ParseState *pstate, Query *query)
 	 * to them would not get created with the right collation).
 	 */
 	(void) query_tree_walker(query,
-							 assign_query_collations_walker,
+							 reinterpret_cast<query_tree_walker_fptr>(assign_query_collations_walker),
 							 (void *) pstate,
 							 QTW_IGNORE_RANGE_TABLE |
 							 QTW_IGNORE_CTE_SUBQUERIES);
@@ -294,7 +294,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 				CollateExpr *expr = (CollateExpr *) node;
 
 				(void) expression_tree_walker(node,
-											  assign_collations_walker,
+											  reinterpret_cast<expression_tree_walker_fptr>(assign_collations_walker),
 											  (void *) &loccontext);
 
 				collation = expr->collOid;
@@ -316,7 +316,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 
 				/* ... but first, recurse */
 				(void) expression_tree_walker(node,
-											  assign_collations_walker,
+				                reinterpret_cast<expression_tree_walker_fptr>(assign_collations_walker),
 											  (void *) &loccontext);
 
 				if (OidIsValid(expr->resultcollid))
@@ -402,7 +402,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 
 				/* ... but first, recurse */
 				(void) expression_tree_walker(node,
-											  assign_collations_walker,
+				                reinterpret_cast<expression_tree_walker_fptr>(assign_collations_walker),
 											  (void *) &loccontext);
 
 				if (OidIsValid(typcollation))
@@ -443,7 +443,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 			break;
 		case T_TargetEntry:
 			(void) expression_tree_walker(node,
-										  assign_collations_walker,
+			                reinterpret_cast<expression_tree_walker_fptr>(assign_collations_walker),
 										  (void *) &loccontext);
 
 			/*
@@ -486,7 +486,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 		case T_OnConflictExpr:
 		case T_SortGroupClause:
 			(void) expression_tree_walker(node,
-										  assign_collations_walker,
+			                reinterpret_cast<expression_tree_walker_fptr>(assign_collations_walker),
 										  (void *) &loccontext);
 
 			/*
@@ -527,7 +527,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 			break;
 		case T_List:
 			(void) expression_tree_walker(node,
-										  assign_collations_walker,
+			                reinterpret_cast<expression_tree_walker_fptr>(assign_collations_walker),
 										  (void *) &loccontext);
 
 			/*
@@ -677,7 +677,7 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 						 * equally to loccontext.
 						 */
 						(void) expression_tree_walker(node,
-													assign_collations_walker,
+						                reinterpret_cast<expression_tree_walker_fptr>(assign_collations_walker),
 													  (void *) &loccontext);
 						break;
 				}

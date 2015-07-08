@@ -190,10 +190,10 @@ ReservePrivateRefCountEntry(void)
 		Assert(ReservedRefCountEntry->buffer != InvalidBuffer);
 
 		/* enter victim array entry into hashtable */
-		hashent = hash_search(PrivateRefCountHash,
+		hashent = static_cast<PrivateRefCountEntry *>(hash_search(PrivateRefCountHash,
 							  (void *) &(ReservedRefCountEntry->buffer),
 							  HASH_ENTER,
-							  &found);
+							  &found));
 		Assert(!found);
 		hashent->refcount = ReservedRefCountEntry->refcount;
 
@@ -265,10 +265,10 @@ GetPrivateRefCountEntry(Buffer buffer, bool do_move)
 	if (PrivateRefCountOverflowed == 0)
 		return NULL;
 
-	res = hash_search(PrivateRefCountHash,
+	res = static_cast<PrivateRefCountEntry *>(hash_search(PrivateRefCountHash,
 					  (void *) &buffer,
 					  HASH_FIND,
-					  NULL);
+					  NULL));
 
 	if (res == NULL)
 		return NULL;
@@ -2661,9 +2661,9 @@ DropRelFileNodesAllBuffers(RelFileNodeBackend *rnodes, int nnodes)
 		}
 		else
 		{
-			rnode = bsearch((const void *) &(bufHdr->tag.rnode),
+			rnode = static_cast<RelFileNode *>(bsearch((const void *) &(bufHdr->tag.rnode),
 							nodes, n, sizeof(RelFileNode),
-							rnode_comparator);
+							rnode_comparator));
 		}
 
 		/* buffer doesn't belong to any of the given relfilenodes; skip it */

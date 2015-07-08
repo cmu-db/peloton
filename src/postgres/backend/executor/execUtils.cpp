@@ -649,7 +649,7 @@ get_last_attnums(Node *node, ProjectionInfo *projInfo)
 		return false;
 	if (IsA(node, WindowFunc))
 		return false;
-	return expression_tree_walker(node, get_last_attnums,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(get_last_attnums),
 								  (void *) projInfo);
 }
 
