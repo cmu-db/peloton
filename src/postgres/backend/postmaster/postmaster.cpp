@@ -2889,9 +2889,9 @@ processCancelRequest(Port *port, void *pkt)
         if (!EXIT_STATUS_0(exitstatus))
           LogChildExit(LOG, _("peloton process"),
                        pid, exitstatus);
-        // FIXME: Disable automatic restart for now.
-        //if (pmState == PM_RUN)
-        //  PelotonPID = peloton_start();
+        // TODO: Disable automatic restart ?
+        if (pmState == PM_RUN)
+          PelotonPID = peloton_start();
         continue;
       }
 
