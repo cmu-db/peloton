@@ -355,8 +355,6 @@ planner::AbstractPlanNode *PlanTransformer::TransformResult(
 									  econtext,
 									  &isnull,
 									  &itemIsDone[resind]);
-//      int integer = DatumGetInt32(value);
-//      LOG_INFO("The datum is %d", integer);
     }
 
   } else {
