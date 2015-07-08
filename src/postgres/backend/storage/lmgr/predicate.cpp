@@ -1165,9 +1165,9 @@ InitPredicateLocks(void)
 	 */
 	max_table_size *= 10;
 
-	PredXact = ShmemInitStruct("PredXactList",
+	PredXact = static_cast<PredXactList>(ShmemInitStruct("PredXactList",
 							   PredXactListDataSize,
-							   &found);
+							   &found));
 	if (!found)
 	{
 		int			i;
@@ -1182,7 +1182,7 @@ InitPredicateLocks(void)
 		PredXact->HavePartialClearedThrough = 0;
 		requestSize = mul_size((Size) max_table_size,
 							   PredXactListElementDataSize);
-		PredXact->element = ShmemAlloc(requestSize);
+		PredXact->element = static_cast<PredXactListElement>(ShmemAlloc(requestSize));
 		if (PredXact->element == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -1243,9 +1243,9 @@ InitPredicateLocks(void)
 	 */
 	max_table_size *= 5;
 
-	RWConflictPool = ShmemInitStruct("RWConflictPool",
+	RWConflictPool = static_cast<RWConflictPoolHeader>(ShmemInitStruct("RWConflictPool",
 									 RWConflictPoolHeaderDataSize,
-									 &found);
+									 &found));
 	if (!found)
 	{
 		int			i;
@@ -1253,7 +1253,7 @@ InitPredicateLocks(void)
 		SHMQueueInit(&RWConflictPool->availableList);
 		requestSize = mul_size((Size) max_table_size,
 							   RWConflictDataSize);
-		RWConflictPool->element = ShmemAlloc(requestSize);
+		RWConflictPool->element = static_cast<RWConflict>(ShmemAlloc(requestSize));
 		if (RWConflictPool->element == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -2046,10 +2046,10 @@ RemoveTargetIfNoLongerUsed(PREDICATELOCKTARGET *target, uint32 targettaghash)
 		return;
 
 	/* Actually remove the target. */
-	rmtarget = hash_search_with_hash_value(PredicateLockTargetHash,
+	rmtarget = static_cast<PREDICATELOCKTARGET *>(hash_search_with_hash_value(PredicateLockTargetHash,
 										   &target->tag,
 										   targettaghash,
-										   HASH_REMOVE, NULL);
+										   HASH_REMOVE, NULL));
 	Assert(rmtarget == target);
 }
 
@@ -2107,12 +2107,12 @@ DeleteChildTargetLocks(const PREDICATELOCKTARGETTAG *newtargettag)
 
 			SHMQueueDelete(predlocksxactlink);
 			SHMQueueDelete(&(predlock->targetLink));
-			rmpredlock = hash_search_with_hash_value
+			rmpredlock = static_cast<PREDICATELOCK *>(hash_search_with_hash_value
 				(PredicateLockHash,
 				 &oldlocktag,
 				 PredicateLockHashCodeFromTargetHashCode(&oldlocktag,
 														 oldtargettaghash),
-				 HASH_REMOVE, NULL);
+				 HASH_REMOVE, NULL));
 			Assert(rmpredlock == predlock);
 
 			RemoveTargetIfNoLongerUsed(oldtarget, oldtargettaghash);
@@ -2656,10 +2656,10 @@ TransferPredicateLocksToNewTarget(PREDICATELOCKTARGETTAG oldtargettag,
 	 * walk its list of predicate locks and move or copy them to the new___
 	 * target.
 	 */
-	oldtarget = hash_search_with_hash_value(PredicateLockTargetHash,
+	oldtarget = static_cast<PREDICATELOCKTARGET *>(hash_search_with_hash_value(PredicateLockTargetHash,
 											&oldtargettag,
 											oldtargettaghash,
-											HASH_FIND, NULL);
+											HASH_FIND, NULL));
 
 	if (oldtarget)
 	{
@@ -2667,10 +2667,10 @@ TransferPredicateLocksToNewTarget(PREDICATELOCKTARGETTAG oldtargettag,
 		PREDICATELOCK *oldpredlock;
 		PREDICATELOCKTAG newpredlocktag;
 
-		newtarget = hash_search_with_hash_value(PredicateLockTargetHash,
+		newtarget = static_cast<PREDICATELOCKTARGET *>(hash_search_with_hash_value(PredicateLockTargetHash,
 												&newtargettag,
 												newtargettaghash,
-												HASH_ENTER_NULL, &found);
+												HASH_ENTER_NULL, &found));
 
 		if (!newtarget)
 		{
@@ -2911,10 +2911,10 @@ DropAllPredicateLocksFromTable(Relation relation, bool transfer)
 
 			SET_PREDICATELOCKTARGETTAG_RELATION(heaptargettag, dbId, heapId);
 			heaptargettaghash = PredicateLockTargetTagHashCode(&heaptargettag);
-			heaptarget = hash_search_with_hash_value(PredicateLockTargetHash,
+			heaptarget = static_cast<PREDICATELOCKTARGET *>(hash_search_with_hash_value(PredicateLockTargetHash,
 													 &heaptargettag,
 													 heaptargettaghash,
-													 HASH_ENTER, &found);
+													 HASH_ENTER, &found));
 			if (!found)
 				SHMQueueInit(&heaptarget->predicateLocks);
 		}
@@ -3726,10 +3726,10 @@ ReleaseOneSerializableXact(SERIALIZABLEXACT *sxact, bool partial,
 
 			/* Fold into dummy transaction list. */
 			tag.myXact = OldCommittedSxact;
-			predlock = hash_search_with_hash_value(PredicateLockHash, &tag,
+			predlock = static_cast<PREDICATELOCK *>(hash_search_with_hash_value(PredicateLockHash, &tag,
 								PredicateLockHashCodeFromTargetHashCode(&tag,
 															  targettaghash),
-												   HASH_ENTER_NULL, &found);
+												   HASH_ENTER_NULL, &found));
 			if (!predlock)
 				ereport(ERROR,
 						(errcode(ERRCODE_OUT_OF_MEMORY),

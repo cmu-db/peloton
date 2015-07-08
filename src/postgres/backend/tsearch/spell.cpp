@@ -917,9 +917,9 @@ MergeAffix(IspellDict *Conf, int a1, int a2)
 	}
 
 	ptr = Conf->AffixData + Conf->nAffixData;
-	*ptr = cpalloc(strlen(Conf->AffixData[a1]) +
+	*ptr = static_cast<char *>(cpalloc(strlen(Conf->AffixData[a1]) +
 				   strlen(Conf->AffixData[a2]) +
-				   1 /* space */ + 1 /* \0 */ );
+				   1 /* space */ + 1 /* \0 */ ));
 	sprintf(*ptr, "%s %s", Conf->AffixData[a1], Conf->AffixData[a2]);
 	ptr++;
 	*ptr = NULL;

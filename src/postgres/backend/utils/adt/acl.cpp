@@ -594,10 +594,10 @@ aclitemout(PG_FUNCTION_ARGS)
 	HeapTuple	htup;
 	unsigned	i;
 
-	out = palloc(strlen("=/") +
+	out = static_cast<char *>(palloc(strlen("=/") +
 				 2 * N_ACL_RIGHTS +
 				 2 * (2 * NAMEDATALEN + 2) +
-				 1);
+				 1));
 
 	p = out;
 	*p = '\0';
@@ -845,7 +845,7 @@ acldefault_sql(PG_FUNCTION_ARGS)
 {
 	char		objtypec = PG_GETARG_CHAR(0);
 	Oid			owner = PG_GETARG_OID(1);
-	GrantObjectType objtype = 0;
+	GrantObjectType objtype = static_cast<GrantObjectType>(0);
 
 	switch (objtypec)
 	{

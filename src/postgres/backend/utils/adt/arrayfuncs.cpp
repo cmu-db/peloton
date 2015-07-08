@@ -5571,7 +5571,7 @@ generate_subscripts(PG_FUNCTION_ARGS)
 
 	funcctx = SRF_PERCALL_SETUP();
 
-	fctx = funcctx->user_fctx;
+	fctx = static_cast<generate_subscripts_fctx *>(funcctx->user_fctx);
 
 	if (fctx->lower <= fctx->upper)
 	{
@@ -5938,7 +5938,7 @@ array_unnest(PG_FUNCTION_ARGS)
 
 	/* stuff done on every call of the function */
 	funcctx = SRF_PERCALL_SETUP();
-	fctx = funcctx->user_fctx;
+	fctx = static_cast<array_unnest_fctx *>(funcctx->user_fctx);
 
 	if (fctx->nextelem < fctx->numelems)
 	{

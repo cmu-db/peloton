@@ -805,7 +805,7 @@ static const KeyWord DCH_keywords[] = {
 	{"y", 1, DCH_Y, TRUE, FROM_CHAR_DATE_GREGORIAN},
 
 	/* last */
-	{NULL, 0, 0, 0, 0}
+	{NULL, 0, 0, 0, static_cast<FromCharDateMode>(0)}
 };
 
 /* ----------

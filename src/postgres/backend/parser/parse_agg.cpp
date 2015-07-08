@@ -543,11 +543,11 @@ check_agg_arguments(ParseState *pstate,
 	context.sublevels_up = 0;
 
 	(void) expression_tree_walker((Node *) args,
-								  check_agg_arguments_walker,
+	                reinterpret_cast<expression_tree_walker_fptr>(check_agg_arguments_walker),
 								  (void *) &context);
 
 	(void) expression_tree_walker((Node *) filter,
-								  check_agg_arguments_walker,
+	                reinterpret_cast<expression_tree_walker_fptr>(check_agg_arguments_walker),
 								  (void *) &context);
 
 	/*
@@ -596,7 +596,7 @@ check_agg_arguments(ParseState *pstate,
 		context.min_varlevel = -1;
 		context.min_agglevel = -1;
 		(void) expression_tree_walker((Node *) directargs,
-									  check_agg_arguments_walker,
+		                reinterpret_cast<expression_tree_walker_fptr>(check_agg_arguments_walker),
 									  (void *) &context);
 		if (context.min_varlevel >= 0 && context.min_varlevel < agglevel)
 			ereport(ERROR,
@@ -682,7 +682,7 @@ check_agg_arguments_walker(Node *node,
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node,
-								   check_agg_arguments_walker,
+		               reinterpret_cast<query_tree_walker_fptr>(check_agg_arguments_walker),
 								   (void *) context,
 								   0);
 		context->sublevels_up--;
@@ -690,7 +690,7 @@ check_agg_arguments_walker(Node *node,
 	}
 
 	return expression_tree_walker(node,
-								  check_agg_arguments_walker,
+	                reinterpret_cast<expression_tree_walker_fptr>(check_agg_arguments_walker),
 								  (void *) context);
 }
 
@@ -971,13 +971,13 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 		 * The intersection will often be empty, so help things along by
 		 * seeding the intersect with the smallest set.
 		 */
-		gset_common = linitial(gsets);
+		gset_common = static_cast<List *>(linitial(gsets));
 
 		if (gset_common)
 		{
 			for_each_cell(l, lnext(list_head(gsets)))
 			{
-				gset_common = list_intersection_int(gset_common, lfirst(l));
+				gset_common = list_intersection_int(gset_common, static_cast<const List *>(lfirst(l)));
 				if (!gset_common)
 					break;
 			}
@@ -1322,13 +1322,13 @@ check_ungrouped_columns_walker(Node *node,
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node,
-								   check_ungrouped_columns_walker,
+		               reinterpret_cast<query_tree_walker_fptr>(check_ungrouped_columns_walker),
 								   (void *) context,
 								   0);
 		context->sublevels_up--;
 		return result;
 	}
-	return expression_tree_walker(node, check_ungrouped_columns_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(check_ungrouped_columns_walker),
 								  (void *) context);
 }
 
@@ -1495,13 +1495,13 @@ finalize_grouping_exprs_walker(Node *node,
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node,
-								   finalize_grouping_exprs_walker,
+		               reinterpret_cast<query_tree_walker_fptr>(finalize_grouping_exprs_walker),
 								   (void *) context,
 								   0);
 		context->sublevels_up--;
 		return result;
 	}
-	return expression_tree_walker(node, finalize_grouping_exprs_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(finalize_grouping_exprs_walker),
 								  (void *) context);
 }
 
@@ -1611,7 +1611,7 @@ expand_groupingset_node(GroupingSet *gs)
 
 				foreach(lc, gs->content)
 				{
-					List *current_result = expand_groupingset_node(lfirst(lc));
+					List *current_result = expand_groupingset_node(static_cast<GroupingSet *>(lfirst(lc)));
 
 					result = list_concat(result, current_result);
 				}
@@ -1704,7 +1704,7 @@ expand_grouping_sets(List *groupingSets, int limit)
 
 		foreach(lc, result)
 		{
-			*ptr++ = lfirst(lc);
+			*ptr++ = static_cast<List *>(lfirst(lc));
 		}
 
 		qsort(buf, result_len, sizeof(List*), cmp_list_len_asc);
