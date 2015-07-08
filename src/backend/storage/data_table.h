@@ -74,6 +74,11 @@ public:
     // add the reference(foreignkey) to the table
     void AddReferenceTable(storage::DataTable *table);
 
+    // add the reference to the table with update/delete actions
+    void AddReferenceTable(storage::DataTable *table,
+                           std::string _fk_update_action, 
+                           std::string _fk_delete_action );
+
     // Set the index for PrimaryKey
     void SetPrimaryIndex(index::Index *index);
 
@@ -163,6 +168,9 @@ protected:
 
     // reference tables
     std::vector<storage::DataTable*> reference_tables;
+    // foreignkey actions (update, delete)
+    std::string fk_update_action;
+    std::string fk_delete_action;
 
     // Index for Primary key
     index::Index* PrimaryKey_Index = nullptr;

@@ -60,6 +60,7 @@ void DDL::ProcessUtility(Node *parsetree,
     case T_CreateStmt:
     case T_CreateForeignTableStmt:
     {
+      printf("JWKIM DEBUG :: %d\n", __LINE__);
       List     *stmts;
       ListCell   *l;
 
@@ -219,6 +220,74 @@ void DDL::ProcessUtility(Node *parsetree,
 
       fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info->GetIndexName().c_str(), status);
 
+    }
+    break;
+
+    case T_AlterTableStmt:
+    {
+      printf("AlterTableStmt\n");
+      AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
+      Oid     relation_oid = GetRelationOid( atstmt->relation->relname );
+      List     *stmts;
+      ListCell   *l;
+
+      /* Run parse analysis ... */
+      stmts = transformAlterTableStmt(relation_oid, atstmt, queryString);
+
+      /* ... and do it */
+      foreach(l, stmts){
+        Node *stmt = (Node *) lfirst(l);
+
+        if (IsA(stmt, AlterTableStmt)){
+
+          // lockmode control..
+          /* Do the table alteration proper */
+          //AlterTable(relation_oid, lockmode, (AlterTableStmt *) stmt);
+          AlterTableStmt* Astmt = (AlterTableStmt*)stmt;
+
+          ListCell* lcmd;
+          foreach( lcmd, Astmt->cmds)
+          {
+            AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
+            switch (cmd->subtype){
+                case AT_AddConstraint:	/* ADD CONSTRAINT */
+                printf("name %s \n",cmd->name);
+                Constraint* constraint = cmd->def;
+                ConstraintType contype = PostgresConstraintTypeToPelotonConstraintType( (PostgresConstraintType) constraint->contype );
+                std::cout << "const type : " << ConstraintTypeToString( contype ) << std::endl;
+                switch( contype )
+                {
+                  case CONSTRAINT_TYPE_FOREIGN:
+                    oid_t database_oid = GetCurrentDatabaseOid();
+                    assert( database_oid );
+                    oid_t reference_table_oid = GetRelationOid( constraint->pktable->relname );
+                    assert(reference_table_oid);
+
+                    storage::DataTable* current_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, relation_oid);
+                    storage::DataTable* reference_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, reference_table_oid);
+
+                    std::cout << "Before add fk constraint\n" << *(current_table->GetSchema()) << std::endl;
+
+                    std::string fk_update_action = "";
+                    std::string fk_delete_action = "";
+
+                    if( constraint->fk_upd_action )
+                      fk_update_action = constraint->fk_upd_action;
+                    if( constraint->fk_del_action )
+                      fk_delete_action = constraint->fk_del_action;
+
+                    current_table->AddReferenceTable(reference_table, fk_update_action, fk_delete_action);
+
+                    std::cout <<"After add fk constraint\n" <<  *(current_table->GetSchema()) << std::endl;
+
+                    printf("successfully ...\n"); 
+                  break;
+                }
+              break;
+            }
+          }
+        }
+      }
     }
     break;
 
