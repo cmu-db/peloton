@@ -61,25 +61,32 @@ bool DeleteExecutor::DExecute() {
 
   storage::Tile *tile = source_tile->GetBaseTile(0);
   storage::TileGroup *tile_group = tile->GetTileGroup();
+
+  auto& pos_lists = source_tile.get()->GetPositionLists();
   auto tile_group_id = tile_group->GetTileGroupId();
   auto txn_id = transaction_->GetTransactionId();
 
   LOG_TRACE("Source tile : %p Tuples : %lu \n", source_tile.get(), source_tile->NumTuples());
 
+  LOG_INFO("Transaction ID: %lu\n", txn_id);
+
   // Delete each tuple
-  for (oid_t tuple_id : *source_tile) {
-    LOG_TRACE("Tuple id : %lu \n", tuple_id);
+  for (oid_t visible_tuple_id : *source_tile) {
+    LOG_INFO("Visible Tuple id : %lu \n", visible_tuple_id);
+    oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
+
+    LOG_INFO("Physical Tuple id : %lu \n", physical_tuple_id);
 
     // try to delete the tuple
     // this might fail due to a concurrent operation that has latched the tuple
-    bool status = tile_group->DeleteTuple(txn_id, tuple_id);
+    bool status = tile_group->DeleteTuple(txn_id, physical_tuple_id);
     if(status == false) {
       auto& txn_manager = concurrency::TransactionManager::GetInstance();
       txn_manager.AbortTransaction(transaction_);
 
       return false;
     }
-    transaction_->RecordDelete(ItemPointer(tile_group_id, tuple_id));
+    transaction_->RecordDelete(ItemPointer(tile_group_id, visible_tuple_id));
   }
 
   return true;
