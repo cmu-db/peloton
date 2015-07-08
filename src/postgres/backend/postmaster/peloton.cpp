@@ -876,9 +876,10 @@ peloton_process_dml(Peloton_MsgDML *msg, int len)
 
     if(planstate != NULL)
     {
-      auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
-      peloton::bridge::PlanExecutor::PrintPlan(plan);
-      peloton::bridge::PlanExecutor::ExecutePlan(plan);
+      // FIXME :: 
+      //auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
+      //peloton::bridge::PlanExecutor::PrintPlan(plan);
+      //peloton::bridge::PlanExecutor::ExecutePlan(plan);
 
       // TODO: The plan tree also needs to be destroyed.
     }
@@ -914,7 +915,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg, int len)
 
     if(parsetree != NULL)
     {
-      //peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
+      peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
     }
   }
 
