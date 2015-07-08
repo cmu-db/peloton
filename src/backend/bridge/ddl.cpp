@@ -60,7 +60,6 @@ void DDL::ProcessUtility(Node *parsetree,
     case T_CreateStmt:
     case T_CreateForeignTableStmt:
     {
-      printf("JWKIM DEBUG :: %d\n", __LINE__);
       List     *stmts;
       ListCell   *l;
 
@@ -228,64 +227,21 @@ void DDL::ProcessUtility(Node *parsetree,
       printf("AlterTableStmt\n");
       AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
       Oid     relation_oid = GetRelationOid( atstmt->relation->relname );
-      List     *stmts;
-      ListCell   *l;
-
-      /* Run parse analysis ... */
-      stmts = transformAlterTableStmt(relation_oid, atstmt, queryString);
+      List     *stmts = transformAlterTableStmt(relation_oid, atstmt, queryString);
+      bool status;
 
       /* ... and do it */
+      ListCell   *l;
       foreach(l, stmts){
+
         Node *stmt = (Node *) lfirst(l);
 
         if (IsA(stmt, AlterTableStmt)){
+          // TODO :: Lock control?
+          status = peloton::bridge::DDL::AlterTable( relation_oid, (AlterTableStmt*)stmt );
 
-          // lockmode control..
-          /* Do the table alteration proper */
-          //AlterTable(relation_oid, lockmode, (AlterTableStmt *) stmt);
-          AlterTableStmt* Astmt = (AlterTableStmt*)stmt;
+          fprintf(stderr, "DDLAlterTable :: %d \n", status);
 
-          ListCell* lcmd;
-          foreach( lcmd, Astmt->cmds)
-          {
-            AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
-            switch (cmd->subtype){
-                case AT_AddConstraint:	/* ADD CONSTRAINT */
-                printf("name %s \n",cmd->name);
-                Constraint* constraint = cmd->def;
-                ConstraintType contype = PostgresConstraintTypeToPelotonConstraintType( (PostgresConstraintType) constraint->contype );
-                std::cout << "const type : " << ConstraintTypeToString( contype ) << std::endl;
-                switch( contype )
-                {
-                  case CONSTRAINT_TYPE_FOREIGN:
-                    oid_t database_oid = GetCurrentDatabaseOid();
-                    assert( database_oid );
-                    oid_t reference_table_oid = GetRelationOid( constraint->pktable->relname );
-                    assert(reference_table_oid);
-
-                    storage::DataTable* current_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, relation_oid);
-                    storage::DataTable* reference_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, reference_table_oid);
-
-                    std::cout << "Before add fk constraint\n" << *(current_table->GetSchema()) << std::endl;
-
-                    std::string fk_update_action = "";
-                    std::string fk_delete_action = "";
-
-                    if( constraint->fk_upd_action )
-                      fk_update_action = constraint->fk_upd_action;
-                    if( constraint->fk_del_action )
-                      fk_delete_action = constraint->fk_del_action;
-
-                    current_table->AddReferenceTable(reference_table, fk_update_action, fk_delete_action);
-
-                    std::cout <<"After add fk constraint\n" <<  *(current_table->GetSchema()) << std::endl;
-
-                    printf("successfully ...\n"); 
-                  break;
-                }
-              break;
-            }
-          }
         }
       }
     }
@@ -639,10 +595,10 @@ bool DDL::CreateIndex(std::string index_name,
         //         I try to store these information when we create an unique and primary key index
         if( index_type == INDEX_TYPE_PRIMARY_KEY ){ 
           catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_PRIMARY );
-          tuple_schema->AddConstraintInColumn( tuple_schema_column_itr, constraint); 
+          tuple_schema->AddConstraintByColumnId( tuple_schema_column_itr, constraint); 
         }else if( index_type == INDEX_TYPE_UNIQUE ){ 
           catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_UNIQUE );
-          tuple_schema->AddConstraintInColumn( tuple_schema_column_itr, constraint);
+          tuple_schema->AddConstraintByColumnId( tuple_schema_column_itr, constraint);
         }
 
       }
@@ -674,6 +630,79 @@ bool DDL::CreateIndex(std::string index_name,
 
   return true;
 }
+
+bool DDL::AddConstraint(Oid relation_oid, Constraint* constraint )
+{
+  ConstraintType contype = PostgresConstraintTypeToPelotonConstraintType( (PostgresConstraintType) constraint->contype );
+  // Create a new constraint 
+  catalog::Constraint* constr = new catalog::Constraint( contype, constraint->conname);
+
+
+  switch( contype )
+  {
+    std::cout << "const type : " << ConstraintTypeToString( contype ) << std::endl;
+
+    case CONSTRAINT_TYPE_FOREIGN:
+      oid_t database_oid = GetCurrentDatabaseOid();
+      assert( database_oid );
+      oid_t reference_table_oid = GetRelationOid( constraint->pktable->relname );
+      assert(reference_table_oid);
+
+      storage::DataTable* current_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, relation_oid);
+      storage::DataTable* reference_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, reference_table_oid);
+
+      std::cout << "Before add fk constraint\n" << *(current_table->GetSchema()) << std::endl;
+
+      std::string fk_update_action = "";
+      std::string fk_delete_action = "";
+
+      if( constraint->fk_upd_action )
+        fk_update_action = constraint->fk_upd_action;
+      if( constraint->fk_del_action )
+        fk_delete_action = constraint->fk_del_action;
+
+      std::vector<std::string> column_names;
+      ListCell *l;
+      foreach(l, constraint->fk_attrs){
+        char* attname = strVal(lfirst(l));
+        column_names.push_back( attname );
+      }
+
+      current_table->AddReferenceTable(reference_table,
+                                       column_names,
+                                       constr,
+                                       fk_update_action, 
+                                       fk_delete_action);
+
+      std::cout <<"After add fk constraint\n" <<  *(current_table->GetSchema()) << std::endl;
+
+      break;
+  }
+
+}
+
+bool DDL::AlterTable( Oid relation_oid, AlterTableStmt* Astmt ){
+
+  ListCell* lcmd;
+  foreach( lcmd, Astmt->cmds)
+  {
+    AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
+
+    switch (cmd->subtype){
+	    //case AT_AddColumn:				/* add column */
+	    //case AT_DropColumn:				/* drop column */
+
+      case AT_AddConstraint:	/* ADD CONSTRAINT */
+        bool status = peloton::bridge::DDL::AddConstraint( relation_oid, (Constraint*) cmd->def );
+        fprintf(stderr, "DDLAddConstraint :: %d \n", status);
+        break;
+
+      break;
+    }
+  }
+}
+
+
 
 } // namespace bridge
 } // namespace peloton
