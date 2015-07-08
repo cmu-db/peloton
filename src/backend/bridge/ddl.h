@@ -26,6 +26,7 @@
 #include "backend/storage/table_factory.h"
 
 
+//TODO :: REMOVE
 typedef struct 
 {
   int valueType;
