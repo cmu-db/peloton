@@ -55,7 +55,7 @@ class LogicalTile {
 
   int AddPositionList(std::vector<oid_t> &&position_list);
 
-  void InvalidateTuple(oid_t tuple_id);
+  void RemoveVisibility(oid_t tuple_id);
 
   storage::Tile *GetBaseTile(oid_t column_id);
 
@@ -82,7 +82,7 @@ class LogicalTile {
   /**
    * @brief Iterates through tuple ids in this logical tile.
    *
-   * This provides easy access to tuples that have not been invalidated.
+   * This provides easy access to tuples that are visible.
    */
   class iterator : public std::iterator<std::input_iterator_tag, oid_t> {
     // It's a friend so it can call this iterator's private constructor.
@@ -148,12 +148,12 @@ class LogicalTile {
   std::vector<std::vector<oid_t> > position_lists_;
 
   /**
-   * @brief Bit-vector storing validity of each row in the position lists.
+   * @brief Bit-vector storing visibility of each row in the position lists.
    * Used to cheaply invalidate rows of positions.
    */
-  std::vector<bool> valid_rows_;
+  std::vector<bool> visible_rows_;
 
-  /** @brief Keeps track of the number of tuples that are still valid. */
+  /** @brief Keeps track of the number of tuples that are still visible. */
   oid_t num_tuples_ = 0;
 
   /** @brief Set of base tiles owned (memory-wise) by this logical tile. */
