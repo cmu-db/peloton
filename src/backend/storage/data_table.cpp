@@ -47,9 +47,10 @@ void DataTable::AddUniqueIndex(index::Index *index) {
   unique_indexes.push_back(index);
 }
 
-void DataTable::AddReferenceTable(storage::DataTable *table) {
+void DataTable::AddReferenceTable(storage::DataTable *table, std::string _fk_del_action) {
   std::lock_guard<std::mutex> lock(table_reference_table_mutex);
   reference_tables.push_back(table);
+  fk_del_action = _fk_del_action;
 }
 
 void DataTable::SetPrimaryIndex(index::Index *index) {
