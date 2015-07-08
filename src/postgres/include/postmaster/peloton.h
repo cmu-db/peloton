@@ -152,7 +152,7 @@ extern void peloton_send_dml(Peloton_Status  *status,
 
 extern void peloton_send_ddl(Peloton_Status  *status,
                              Node *parsetree,
-                             const char *queryString,
+                             char *queryString,
                              MemoryContext top_transaction_context,
                              MemoryContext cur_transaction_context);
 
