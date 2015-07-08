@@ -76,6 +76,8 @@ public:
 
     // add the reference to the table with update/delete actions
     void AddReferenceTable(storage::DataTable *table,
+                           std::vector<std::string> column_names,
+                           catalog::Constraint* constraint,
                            std::string _fk_update_action, 
                            std::string _fk_delete_action );
 
