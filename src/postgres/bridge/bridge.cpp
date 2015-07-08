@@ -726,7 +726,7 @@ bool BootstrapPeloton(void){
   index_infos.clear();
 
   //===--------------------------------------------------------------------===//
-  // Link Reference tables in Peloton
+  // Link Reference tables 
   //===--------------------------------------------------------------------===//
   {
     Relation pg_constraint_rel;
