@@ -107,6 +107,13 @@ class DDL {
 
   static IndexInfo* ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt);
 
+  // Set reference tables to the table based on given relation oid
+  static bool SetReferenceTables( std::vector<std::string> reference_table_names, oid_t relation_oid );
+
+  // Create the indexes using indexinfos and add to the table
+  static bool CreateIndexesWithIndexInfos(oid_t relation_oid = INVALID_OID);
+
+  //Add the constraint to the table
   static bool AddConstraint( Oid relation_oid, 
                              Constraint* constraint );
 
@@ -136,6 +143,7 @@ class DDL {
   // Drop Object
   //===--------------------------------------------------------------------===//
 
+  // NOTE :: If table has 
   static bool DropTable(Oid table_oid);
 
   // TODO : DropIndex

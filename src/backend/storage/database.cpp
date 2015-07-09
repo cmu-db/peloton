@@ -34,16 +34,17 @@ Database* Database::GetDatabaseById(oid_t database_oid){
 bool Database::AddTable(storage::DataTable* table){
 
   std::string table_name = table->GetName();
+  assert( table_name != "");
   oid_t table_oid = table->GetId();
+  assert( table_oid);
 
   try {
     table_oid = table_oid_locator.at( table_name );
+    LOG_WARN("Table(%u) already exists in database(%u) ", table_oid, database_oid);
     return false; // table already exists
   }catch (const std::out_of_range& oor)  {
-    table_oid_locator.insert( std::pair<std::string,oid_t>
-        ( table_name, table_oid ));
-    table_address_locator.insert( std::pair<oid_t, storage::DataTable*>
-        ( table_oid, table ));
+    table_oid_locator.insert( std::pair<std::string,oid_t> ( table_name, table_oid ));
+    table_address_locator.insert( std::pair<oid_t, storage::DataTable*> ( table_oid, table ));
   }
 
   return true;
@@ -92,8 +93,10 @@ storage::DataTable* Database::GetTableByPosition(const oid_t table_position) con
         curr_position++;
       });
 
-  if( table == nullptr )
-    LOG_WARN("GetTableByPosition :: Not exist here curr %u size %u table posi %u ", curr_position,  table_oid_locator.size(),  table_position );
+  if( table == nullptr ){
+    LOG_WARN("GetTableByPosition :: Not exist here");
+  }
+  
 
   return table;
 }
@@ -104,11 +107,37 @@ std::ostream& operator<<(std::ostream& os, const Database& database) {
   os << "DATABASE(" << database.GetDatabaseOid() << ") : \n";
 
   oid_t number_of_tables = database.GetTableCount();
+  std::cout << "The number of tables : " << number_of_tables  << "\n";
 
   for (oid_t table_itr = 0 ; table_itr < number_of_tables ; table_itr++) {
     storage::DataTable* table = database.GetTableByPosition( table_itr );
-    if( table != nullptr )
-      std::cout << *(table->GetSchema()) << std::endl;
+    if( table != nullptr ){
+      std::cout << "Table Name : " << table->GetName() << "\n" <<  *(table->GetSchema()) << std::endl;
+      if( table->ishasPrimaryKey()  ){
+        printf("print primary key index \n");
+        std::cout<< *(table->GetPrimaryIndex()) << std::endl;
+      }
+      if ( table->ishasUnique()){
+        printf("print unique index \n");
+        for( int i =0 ; i<  table->GetUniqueIndexCount(); i++){
+          std::cout << *(table->GetUniqueIndex(i)) << std::endl;
+        }
+      }
+      if ( table->GetIndexCount() > 0 ){
+        printf("print index \n");
+        for( int i =0 ; i<  table->GetIndexCount(); i++){
+          std::cout << *(table->GetIndex(i)) << std::endl;
+        }
+      }
+      if ( table->ishasReferenceTable() ){
+        printf("print foreign tables \n");
+        for( int i =0 ; i<  table->GetReferenceTableCount(); i++){
+          peloton::storage::DataTable *temp_table = table->GetReferenceTable(i);
+          const peloton::catalog::Schema* temp_our_schema = temp_table->GetSchema();
+          std::cout << "table name : " << temp_table->GetName() << " " << *temp_our_schema << std::endl;
+        }
+      }
+    }
   }
 
   std::cout << "The number of tables : " << number_of_tables  << "\n";
