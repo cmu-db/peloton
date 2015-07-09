@@ -46,12 +46,16 @@ public:
     DataTable(const catalog::Schema *schema,
               AbstractBackend *backend,
               std::string table_name,
+              oid_t table_oid,
               size_t tuples_per_tilegroup);
 
     ~DataTable();
 
     std::string GetName() const {
         return table_name;
+    }
+    oid_t  GetId() const {
+        return table_oid;
     }
     
     //===--------------------------------------------------------------------===//
@@ -76,6 +80,8 @@ public:
 
     // add the reference to the table with update/delete actions
     void AddReferenceTable(storage::DataTable *table,
+                           std::vector<std::string> column_names,
+                           catalog::Constraint* constraint,
                            std::string _fk_update_action, 
                            std::string _fk_delete_action );
 
@@ -159,6 +165,7 @@ protected:
     //===--------------------------------------------------------------------===//
 
     std::string table_name;
+    oid_t table_oid;
     
     // INDEXES
     std::vector<index::Index*> indexes;

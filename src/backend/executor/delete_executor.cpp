@@ -72,8 +72,10 @@ bool DeleteExecutor::DExecute() {
 
   // Delete each tuple
   for (oid_t visible_tuple_id : *source_tile) {
+
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
     LOG_INFO("Visible Tuple id : %lu, Physical Tuple id : %lu \n", visible_tuple_id, physical_tuple_id);
+
 
     // try to delete the tuple
     // this might fail due to a concurrent operation that has latched the tuple
