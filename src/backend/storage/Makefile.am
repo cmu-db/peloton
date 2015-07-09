@@ -6,6 +6,7 @@
 
 storage_FILES = \
 				backend/storage/abstract_table.cpp \
+				backend/storage/database.cpp \
 				backend/storage/data_table.cpp \
 				backend/storage/table_factory.cpp \
 				backend/storage/tile.cpp \
