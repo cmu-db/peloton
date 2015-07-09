@@ -77,6 +77,25 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
 }
 
 /**
+ * @brief Recursively destroy the nodes in a plan node tree.
+ */
+bool PlanTransformer::CleanPlanNodeTree(planner::AbstractPlanNode* root) {
+  if(!root)
+    return false;
+
+  // Clean all children subtrees
+  auto children = root->GetChildren();
+  for(auto child : children) {
+    auto rv = CleanPlanNodeTree(child);
+    assert(rv);
+  }
+
+  // Clean the root
+  delete root;
+  return true;
+}
+
+/**
  * @brief Convert ModifyTableState into AbstractPlanNode.
  * @return Pointer to the constructed AbstractPlanNode.
  *
@@ -365,3 +384,4 @@ planner::AbstractPlanNode *PlanTransformer::TransformResult(
 
 }  // namespace bridge
 }  // namespace peloton
+
