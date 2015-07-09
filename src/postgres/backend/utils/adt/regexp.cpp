@@ -210,7 +210,7 @@ RE_compile_and_cache(text *text_re, int cflags, Oid collation)
 	 * out-of-memory.  The Max() is because some malloc implementations return
 	 * NULL for malloc(0).
 	 */
-	re_temp.cre_pat = malloc(Max(text_re_len, 1));
+	re_temp.cre_pat = static_cast<char *>(malloc(Max(text_re_len, 1)));
 	if (re_temp.cre_pat == NULL)
 	{
 		pg_regfree(&re_temp.cre_re);

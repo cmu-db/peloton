@@ -12,7 +12,7 @@ CODE_COVERAGE_IGNORE_PATTERN="/usr/*" "*/third_party/*" "*/test/*"
 ## Global CFLAGS
 AM_CPPFLAGS = $(peloton_INCLUDES) @TBB_CPPFLAGS@ @TBB_LIBS@ 
 
-AM_CXXFLAGS = -std=c++11 -Wall -fpermissive -Wextra -fno-strict-aliasing -Wno-deprecated-register \
+AM_CXXFLAGS = -std=c++11 -Wall -fpermissive -Wextra -fno-strict-aliasing \
               $(CODE_COVERAGE_CFLAGS) -Wno-write-strings
               
 AM_LDFLAGS  = $(CODE_COVERAGE_LDFLAGS) @TBB_LDFLAGS@ 

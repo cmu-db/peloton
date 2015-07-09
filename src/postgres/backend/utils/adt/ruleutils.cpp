@@ -843,7 +843,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 
 		appendStringInfoString(&buf, "WHEN (");
 
-		qual = stringToNode(TextDatumGetCString(value));
+		qual = static_cast<Node *>(stringToNode(TextDatumGetCString(value)));
 
 		relkind = get_rel_relkind(trigrec->tgrelid);
 
@@ -1533,7 +1533,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 						 constraintId);
 
 				conbin = TextDatumGetCString(val);
-				expr = stringToNode(conbin);
+				expr = static_cast<Node *>(stringToNode(conbin));
 
 				/* Set up deparsing context for Var nodes in constraint */
 				if (conForm->conrelid != InvalidOid)
@@ -2451,7 +2451,7 @@ pg_get_function_arg_default(PG_FUNCTION_ARGS)
 		ReleaseSysCache(proctup);
 		PG_RETURN_NULL();
 	}
-	node = list_nth(argdefaults, nth_default);
+	node = static_cast<Node *>(list_nth(argdefaults, nth_default));
 	str = deparse_expression(node, NIL, false, false);
 
 	ReleaseSysCache(proctup);
@@ -4093,7 +4093,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			appendStringInfoString(buf, "\n  ");
 		appendStringInfoString(buf, " WHERE ");
 
-		qual = stringToNode(ev_qual);
+		qual = static_cast<Node *>(stringToNode(ev_qual));
 
 		/*
 		 * We need to make a context for recognizing any Vars in the qual
