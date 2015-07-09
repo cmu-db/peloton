@@ -17,6 +17,7 @@
 #include "backend/bridge/ddl.h"
 #include "backend/catalog/schema.h"
 #include "backend/catalog/constraint.h"
+#include "backend/storage/database.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_class.h"
@@ -460,6 +461,9 @@ SetNumberOfTuples(Oid relation_id, float num_tuples) {
  * @return true or false, depending on whether we could bootstrap.
  */
 bool BootstrapPeloton(void){
+
+  // Create db with current database oid
+  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid()  );
 
   // Relations for catalog tables
   Relation pg_class_rel;
