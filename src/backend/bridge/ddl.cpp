@@ -31,6 +31,7 @@
 #include "backend/index/index_factory.h"
 #include "backend/storage/backend_vm.h"
 #include "backend/storage/table_factory.h"
+#include "backend/storage/database.h"
 
 #include <cassert>
 #include <iostream>
@@ -496,6 +497,9 @@ bool DDL::CreateTable( Oid relation_oid,
   if(database_oid == InvalidOid)
     return false;
 
+  // Get db with current database oid
+  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+
   // Construct our schema from vector of ColumnInfo
   if( schema == NULL) 
     schema = new catalog::Schema(column_infos);
@@ -505,6 +509,19 @@ bool DDL::CreateTable( Oid relation_oid,
 
   // Build a table from schema
   storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, relation_oid, schema, table_name);
+  bool status = db->AddTable(table);
+
+  if( status == false){
+     LOG_WARN("Could not add table :: db oid : %u table oid : %u", database_oid,  relation_oid);
+  } else{
+     LOG_INFO("Add table :: db oid : %u table oid : %u", database_oid,  relation_oid); // TODO :: REMOVE, debugging now
+  }
+  storage::DataTable* temp_table = db->GetTableByName( table_name);
+  if( temp_table != nullptr )
+    std::cout << *( temp_table->GetSchema()) << std::endl;
+  else
+     LOG_WARN("Could not get table :: db oid : %u table oid : %u", database_oid,  relation_oid);
+
 
   if(table != nullptr) {
     LOG_INFO("Created table : %s", table_name.c_str());
