@@ -52,15 +52,6 @@
 #include "utils/rel.h"
 #include "utils/tqual.h"
 
-// TODO: Peloton changes
-#include "access/printtup.h"
-#include "utils/lsyscache.h"
-
-/** @brief Helper function to print a tuple table slot */
-void PrintTupleTableSlot(TupleTableSlot *slot);
-
-extern void TestTupleTransformer(Datum datum,Oid oid);
-
 static bool ExecOnConflictUpdate(ModifyTableState *mtstate,
                                  ResultRelInfo *resultRelInfo,
                                  ItemPointer conflictTid,
@@ -213,92 +204,6 @@ ExecCheckTIDVisible(EState *estate,
   ExecCheckHeapTupleVisible(estate, &tuple, buffer);
   ReleaseBuffer(buffer);
 }
-
-/* ----------------
- *      PrintTuple - print one tuple for an interactive backend
- * ----------------
- */
-
-
-void
-PrintTupleTableSlot(TupleTableSlot *slot){
-  TupleDesc typeinfo = slot->tts_tupleDescriptor;
-  int     natts = typeinfo->natts;
-  int     i;
-  Datum   attr;
-  char     *value;
-  bool    isnull;
-  Oid     typoutput;
-  bool    typisvarlena;
-  unsigned attributeId;
-  Form_pg_attribute attributeP;
-
-  Datum p_datum;
-  Oid p_oid;
-
-  for (i = 0; i < natts; ++i) {
-		attr = slot_getattr(slot, i + 1, &isnull);
-		if (isnull)
-		  continue;
-		Assert(typeinfo != NULL);
-		Assert(typeinfo->attrs[i] != NULL);
-		getTypeOutputInfo(typeinfo->attrs[i]->atttypid,
-						  &typoutput, &typisvarlena);
-
-		value = OidOutputFunctionCall(typoutput, attr);
-
-		// Print the attribute.
-		attributeId = (unsigned) i + 1;
-		attributeP = typeinfo->attrs[i];
-
-		printf("\t%2d: %s%s%s%s\t(typeid___ = %u, len = %d, typmod = %d, byval = %c)\n",
-			   attributeId,
-			   NameStr(attributeP->attname),
-			   value != NULL ? " = \"" : "",
-				   value != NULL ? value : "",
-					   value != NULL ? "\"" : "",
-						   (unsigned int) (attributeP->atttypid),
-						   attributeP->attlen,
-						   attributeP->atttypmod,
-						   attributeP->attbyval ? 't' : 'f');
-
-		p_oid = attributeP->atttypid;
-
-		switch(p_oid) {
-			// short int
-			case 21:	p_datum = Int16GetDatum((short)(atoi(value)));
-						break;
-			// integer
-			case 23:	p_datum = Int32GetDatum(atoi(value));
-						break;
-			// big int
-			case 20:	p_datum = Int64GetDatum(strtol(value,NULL,10));
-						break;
-			// real
-			case 700:	p_datum = Float4GetDatum(strtof(value,NULL));
-						break;
-			// double
-			case 701:	p_datum = Float8GetDatum(strtod(value,NULL));
-						break;
-			// char
-			case 1042:	p_datum = CStringGetDatum(value);
-						break;
-			// varchar
-			case 1043:	p_datum = CStringGetDatum(value);
-						break;
-
-			case 1114:	p_datum = CStringGetDatum(value);
-						break;
-
-			default:	p_datum = CStringGetDatum(value);
-						break;
-		}
-
-		TestTupleTransformer(p_datum,p_oid);
-    }
-		printf("\t----\n");
-}
-
 
 /* ----------------------------------------------------------------
  *		ExecInsert

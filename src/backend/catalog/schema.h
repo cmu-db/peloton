@@ -287,8 +287,16 @@ class Schema	{
     return columns[column_id];
   }
 
-  void AddConstraintInColumn(  oid_t column_id, catalog::Constraint* constraint ) {
+  void AddConstraintByColumnId(  oid_t column_id, catalog::Constraint* constraint ) {
     columns[column_id].AddConstraint(constraint);
+  }
+
+  void AddConstraintByColumnName(  std::string column_name, catalog::Constraint* constraint ) {
+    for(size_t column_itr = 0; column_itr < columns.size(); column_itr++){
+      if( columns[column_itr].name == column_name ) {
+        columns[column_itr].AddConstraint(constraint);
+      }
+    }
   }
 
   oid_t GetUninlinedColumnIndex(const oid_t column_id) const {

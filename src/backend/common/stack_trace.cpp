@@ -51,7 +51,7 @@ void GetStackTrace(){
   char** symbol_list = backtrace_symbols(addrlist, addrlen);
 
   /// allocate string which will be filled with the demangled function name
-  size_t func_name_size = 1024;
+  size_t func_name_size = 4096;
   char* func_name = (char*) malloc(func_name_size);
 
   /// iterate over the returned symbol lines. skip the first, it is the
@@ -83,26 +83,35 @@ void GetStackTrace(){
       char* ret = abi::__cxa_demangle(begin_name, func_name, &func_name_size, &status);
       if (status == 0) {
         func_name = ret; // use possibly realloc()-ed string
-        stack_trace << symbol_list[i] << ": " << func_name << " + " << begin_offset << "\n";
+        stack_trace << std::left << std::setw(15) << addrlist[i] << " :: "
+            << symbol_list[i] << " [ "
+            << func_name << " "
+            << begin_offset << " ]\n";
       }
       else {
         /// demangling failed. Output function name as a C function with
         /// no arguments.
-        stack_trace << symbol_list[i] << ": " << begin_name << " + " << begin_offset << "\n";
+        stack_trace << std::left << std::setw(15) << addrlist[i] << " :: "
+            << symbol_list[i] << " [ "
+            << begin_name << " "
+            << begin_offset << " ]\n";
       }
     }
-    else
-    {
+    else {
       /// couldn't parse the line ? print the whole line.
-      stack_trace << symbol_list[i] << "\n";
+      stack_trace << std::left << std::setw(15) << addrlist[i] << " :: "
+          << std::setw(30) << symbol_list[i] << "\n";
     }
   }
 
   internal_info << "process : "  << getpid() << " thread : " << std::this_thread::get_id();
 
   LOG_INFO("segmentation fault");
-  LOG_INFO("info : %s", internal_info.str().c_str());
-  LOG_INFO("stack trace :\n%s", stack_trace.str().c_str());
+  LOG_INFO("%s", internal_info.str().c_str());
+  LOG_INFO("stack trace :\n");
+  LOG_INFO("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+  LOG_INFO("\n%s", stack_trace.str().c_str());
+  LOG_INFO("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
 
   free(func_name);
   free(symbol_list);

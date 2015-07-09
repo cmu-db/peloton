@@ -153,7 +153,7 @@ void DeleteTuple(storage::DataTable *table){
   delete_executor.AddChild(&seq_scan_executor);
 
   EXPECT_TRUE(delete_executor.Init());
-  EXPECT_FALSE(delete_executor.Execute());
+  EXPECT_TRUE(delete_executor.Execute());
 
   txn_manager.CommitTransaction(txn);
 }
