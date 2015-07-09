@@ -20,12 +20,25 @@ namespace bridge {
 // Tuple Transformer
 //===--------------------------------------------------------------------===//
 
-Value DatumGetValue(Datum datum, Oid atttypid);
+class TupleTransformer {
 
-Datum ValueGetDatum(peloton::Value value);
+ public:
+  TupleTransformer(const TupleTransformer &) = delete;
+  TupleTransformer& operator=(const TupleTransformer &) = delete;
+  TupleTransformer(TupleTransformer &&) = delete;
+  TupleTransformer& operator=(TupleTransformer &&) = delete;
 
-storage::Tuple *TupleTransformer(TupleTableSlot *slot, const catalog::Schema *schema);
+  TupleTransformer(){};
+
+  static Value DatumGetValue(Datum datum, Oid atttypid);
+
+  static Datum ValueGetDatum(peloton::Value value);
+
+  static storage::Tuple *TransformTuple(TupleTableSlot *slot,
+                                        const catalog::Schema *schema);
 
 
-}
-}
+};
+
+}  // namespace bridge
+}  // namespace peloton

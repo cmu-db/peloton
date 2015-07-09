@@ -28,7 +28,7 @@ namespace bridge {
  * @brief Convert from Datum to Value.
  * @return converted Value.
  */
-Value DatumGetValue(Datum datum, Oid atttypid) {
+Value TupleTransformer::DatumGetValue(Datum datum, Oid atttypid) {
   Value value;
 
   switch (atttypid) {
@@ -71,7 +71,7 @@ Value DatumGetValue(Datum datum, Oid atttypid) {
       Pool *data_pool = nullptr;
       printf("%s\n", varlen_character);
       value = ValueFactory::GetStringValue(varlen_character,
-                                                    data_pool);
+                                           data_pool);
     }
     break;
 
@@ -95,7 +95,7 @@ Value DatumGetValue(Datum datum, Oid atttypid) {
  * @brief Convert from Value to Datum.
  * @return converted Datum.
  */
-Datum ValueGetDatum(Value value) {
+Datum TupleTransformer::ValueGetDatum(Value value) {
   ValueType value_type;
   Datum datum;
 
@@ -163,100 +163,28 @@ Datum ValueGetDatum(Value value) {
  * @param schema Peloton scheme of the table to which the tuple belongs
  * @return a Peloton tuple
  */
-storage::Tuple *TupleTransformer(TupleTableSlot *slot,
-                                 const catalog::Schema *schema) {
+storage::Tuple *TupleTransformer::TransformTuple(TupleTableSlot *slot,
+                                                 const catalog::Schema *schema) {
+  assert(slot);
 
-  TupleDesc typeinfo = slot->tts_tupleDescriptor;
-  int natts = typeinfo->natts;
-  Datum attr;
-  char *value;
+  TupleDesc tuple_desc = slot->tts_tupleDescriptor;
+  int natts = tuple_desc->natts;
   bool isnull;
-  Oid typoutput;
-  bool typisvarlena;
-  unsigned attributeId;
-  Form_pg_attribute attributeP;
-  char *name;
 
-  Datum p_datum;
-  Oid p_oid;
-  std::vector<Value> vals;
-  std::vector<oid_t> oid_t_vec;
-  oid_t num_columns = schema->GetColumnCount();
+  // Allocate space for a new tuple with given schema
+  storage::Tuple *tuple = new storage::Tuple(schema, true);
 
-  // Go over each attribute
+  // Go over each attribute and convert value to Datum
   for (oid_t att_itr = 0; att_itr < natts; ++att_itr) {
-
-    attr = slot_getattr(slot, att_itr + 1, &isnull);
+    Datum attr = slot_getattr(slot, att_itr + 1, &isnull);
     if (isnull)
       continue;
 
-    Assert(typeinfo != NULL);
-    Assert(typeinfo->attrs[i] != NULL);
-    getTypeOutputInfo(typeinfo->attrs[att_itr]->atttypid, &typoutput, &typisvarlena);
+    Form_pg_attribute attribute_info = tuple_desc->attrs[att_itr];
+    Oid attribute_type_id = attribute_info->atttypid;
 
-    value = OidOutputFunctionCall(typoutput, attr);
-
-    // Print the attribute
-    attributeId = att_itr + 1;
-    attributeP = typeinfo->attrs[att_itr];
-
-    name = NameStr(attributeP->attname);
-    for (oid_t column_itr = 0; column_itr < num_columns; column_itr++) {
-      // GetColumns and iterate it and compare with .. this.. one ..
-      if (!strcmp(name, (schema->GetColumnInfo(column_itr).name).c_str()))
-        oid_t_vec.push_back(column_itr);
-    }
-
-    p_oid = attributeP->atttypid;
-
-    switch (p_oid) {
-      // short int
-      case 21:
-        p_datum = Int16GetDatum((short )(atoi(value)));
-        break;
-        // integer
-      case 23:
-        p_datum = Int32GetDatum(atoi(value));
-        break;
-        // big int
-      case 20:
-        p_datum = Int64GetDatum(strtol(value,NULL,10));
-        break;
-        // real
-      case 700:
-        p_datum = Float4GetDatum(strtof(value, NULL));
-        break;
-        // double
-      case 701:
-        p_datum = Float8GetDatum(strtod(value, NULL));
-        break;
-        // char
-      case 1042:
-        p_datum = CStringGetDatum(value);
-        break;
-        // varchar
-      case 1043:
-        p_datum = CStringGetDatum(value);
-        break;
-      default:
-        p_datum = CStringGetDatum(value);
-        break;
-    }
-
-    vals.push_back(DatumGetValue(p_datum, p_oid));
-  }
-
-  // the num of values should be the same as schema found
-  assert(vals.size() == oid_t_vec.size());
-
-  catalog::Schema * tuple_schema = catalog::Schema::CopySchema(schema, oid_t_vec);
-
-  // Allocate space for a new tuple with given schema
-  storage::Tuple *tuple = new storage::Tuple(tuple_schema, true);
-
-  oid_t att_itr = 0;
-  for (auto val : vals) {
-    tuple->SetValue(att_itr++, val);
+    Value value = DatumGetValue(attr, attribute_type_id);
+    tuple->SetValue(att_itr++, value);
   }
 
   return tuple;

@@ -72,6 +72,10 @@ class AbstractExecutor {
     return *node;
   }
 
+  const planner::AbstractPlanNode *GetRawNode() const{
+    return node_;
+  }
+
   /** @brief Children nodes of this executor in the executor tree. */
   std::vector<AbstractExecutor*> children_;
 
