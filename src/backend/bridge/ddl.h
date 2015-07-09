@@ -33,14 +33,8 @@ namespace bridge {
 // DDL Class 
 //===--------------------------------------------------------------------===//
 
-//TODO :: Move to other place?
 class IndexInfo{
  public:
-  // TODO :: Copy operator~
-  //IndexInfo(const IndexInfo &) = delete;
-  //IndexInfo& operator=(const IndexInfo &) = delete;
-  //IndexInfo(IndexInfo &&) = delete;
-  //IndexInfo& operator=(IndexInfo &&) = delete;
   IndexInfo(std::string index_name,
             std::string table_name,
             IndexMethodType method_type,
