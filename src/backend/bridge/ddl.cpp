@@ -510,18 +510,13 @@ bool DDL::CreateTable( Oid relation_oid,
   // Build a table from schema
   storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, relation_oid, schema, table_name);
   bool status = db->AddTable(table);
+  std::cout << *db << std::endl;
 
   if( status == false){
      LOG_WARN("Could not add table :: db oid : %u table oid : %u", database_oid,  relation_oid);
   } else{
      LOG_INFO("Add table :: db oid : %u table oid : %u", database_oid,  relation_oid); // TODO :: REMOVE, debugging now
   }
-  storage::DataTable* temp_table = db->GetTableByName( table_name);
-  if( temp_table != nullptr )
-    std::cout << *( temp_table->GetSchema()) << std::endl;
-  else
-     LOG_WARN("Could not get table :: db oid : %u table oid : %u", database_oid,  relation_oid);
-
 
   if(table != nullptr) {
     LOG_INFO("Created table : %s", table_name.c_str());
