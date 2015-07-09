@@ -11,25 +11,12 @@
  */
 
 #include "backend/storage/database.h"
+#include "backend/storage/table_factory.h"
 
 #include <sstream>
 
 namespace peloton {
 namespace storage {
-
-Database* Database::GetDatabaseById(oid_t database_oid){
-  Database* db_address;
-
-  try {
-    db_address = database_address_locator.at( database_oid );
-  }catch (const std::out_of_range& oor) {
-    Database* db = new Database( database_oid ); 
-    db_address = db;
-    database_address_locator.insert( std::pair<oid_t,Database*>( database_oid,
-          db_address ));
-  }
-  return db_address;
-}
 
 bool Database::AddTable(storage::DataTable* table){
 
@@ -39,12 +26,106 @@ bool Database::AddTable(storage::DataTable* table){
   assert( table_oid);
 
   try {
-    table_oid = table_oid_locator.at( table_name );
+    table_oid = table_name_to_oid.at( table_name );
     LOG_WARN("Table(%u) already exists in database(%u) ", table_oid, database_oid);
     return false; // table already exists
   }catch (const std::out_of_range& oor)  {
-    table_oid_locator.insert( std::pair<std::string,oid_t> ( table_name, table_oid ));
-    table_address_locator.insert( std::pair<oid_t, storage::DataTable*> ( table_oid, table ));
+    table_name_to_oid.insert( std::pair<std::string,oid_t> ( table_name, table_oid ));
+    table_oid_to_name.insert( std::pair<oid_t,std::string> ( table_oid, table_name ));
+    table_oid_to_address.insert( std::pair<oid_t, storage::DataTable*> ( table_oid, table ));
+  }
+
+  return true;
+}
+
+Database* Database::GetDatabaseById(oid_t database_oid){
+  Database* db_address;
+
+  try {
+    db_address = database_oid_to_address.at( database_oid );
+  }catch (const std::out_of_range& oor) {
+    Database* db = new Database( database_oid ); 
+    db_address = db;
+    database_oid_to_address.insert( std::pair<oid_t,Database*>( database_oid,
+          db_address ));
+  }
+  return db_address;
+}
+
+bool Database::DeleteTableById(oid_t table_oid )
+{
+  bool status;
+  std::string table_name;
+
+  try {
+    table_name = table_oid_to_name.at( table_oid );
+  } catch ( const std::out_of_range & oor ) {
+    LOG_WARN("Table(%u) doesn't exist in database(%u) ", table_oid, database_oid );
+    return false;
+  }
+
+  status = table_name_to_oid.unsafe_erase( table_name );
+  if( status == false ){ // TODO :: SHOULD BE REMOVED NOW, IT'S JUST FOR DEBUGGING
+    LOG_WARN("Failed to erase table(%u) in database(%u) ", table_oid, database_oid );
+    return status;
+  }
+
+  status = table_oid_to_name.unsafe_erase( table_oid );
+  if( status == false ){ // TODO :: SHOULD BE REMOVED NOW, IT'S JUST FOR DEBUGGING
+    LOG_WARN("Failed to erase table(%u) in database(%u) ", table_oid, database_oid );
+    return status;
+  }
+
+  status = table_oid_to_address.unsafe_erase( table_oid );
+  if( status == false ){ // TODO :: SHOULD BE REMOVED NOW, IT'S JUST FOR DEBUGGING
+    LOG_WARN("Failed to erase table(%u) in database(%u) ", table_oid, database_oid );
+    return status;
+  }
+
+  status = storage::TableFactory::DropDataTable(database_oid, table_oid);
+  if(status == false) {
+    LOG_WARN("Failed to erase table(%u) in DropDataTable", table_oid );
+    return status;
+  }
+  
+  return status;
+}
+
+bool Database::DeleteTableByName(std::string table_name )
+{
+  bool status;
+  oid_t table_oid;
+
+  try {
+    table_oid = table_name_to_oid.at( table_name );
+  } catch ( const std::out_of_range & oor ) {
+    LOG_WARN("Table(%s) doesn't exist in database(%u) ", table_name.c_str(), database_oid );
+    return false;
+  }
+  
+  status = DeleteTableById( table_oid );
+  return status;
+}
+
+bool Database::DeleteAllTables()
+{
+  try {
+    table_name_to_oid.clear();
+  } catch ( const std::out_of_range & oor ) {
+    LOG_WARN("Could not clear the tables in table_name_to_oid");
+    return false;
+  }
+  try {
+    table_oid_to_name.clear();
+  } catch ( const std::out_of_range & oor ) {
+    LOG_WARN("Could not clear the tables in table_oid_to_name");
+    return false;
+  }
+  try {
+    table_oid_to_address.clear();
+  } catch ( const std::out_of_range & oor ) {
+    LOG_WARN("Could not clear the tables in table_oid_to_address");
+    return false;
   }
 
   return true;
@@ -55,11 +136,11 @@ storage::DataTable* Database::GetTableByName(const std::string table_name) const
   storage::DataTable* table = nullptr;
   oid_t table_oid;
   try {
-    table_oid = table_oid_locator.at( table_name );
+    table_oid = table_name_to_oid.at( table_name );
   } catch  (const std::out_of_range& oor) {
     return table; // return nullptr
   }
-  table = table_address_locator.at( table_oid );
+  table = table_oid_to_address.at( table_oid );
 
   return table;
 }
@@ -67,7 +148,7 @@ storage::DataTable* Database::GetTableById(const oid_t table_oid) const{
 
   storage::DataTable* table = nullptr;
   try {
-    table = table_address_locator.at( table_oid );
+    table = table_oid_to_address.at( table_oid );
   } catch  (const std::out_of_range& oor) {
     table = nullptr;
   }
@@ -78,12 +159,12 @@ storage::DataTable* Database::GetTableByPosition(const oid_t table_position) con
   storage::DataTable* table = nullptr;
   oid_t curr_position = 0;
 
-  if( table_position < 0 || table_position >= table_oid_locator.size() ){
-    LOG_WARN("GetTableByPosition :: Out of range %u/%hu ", table_position, table_oid_locator.size() );
+  if( table_position < 0 || table_position >= table_oid_to_address.size() ){
+    LOG_WARN("GetTableByPosition :: Out of range %u/%hu ", table_position, table_name_to_oid.size() );
     return table; // out of range
   }
 
-  std::for_each(begin(table_address_locator), end(table_address_locator),
+  std::for_each(begin(table_oid_to_address), end(table_oid_to_address),
       [&] (const std::pair<oid_t, storage::DataTable*>& curr_table){
 
       if( curr_position == table_position ){
