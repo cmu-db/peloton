@@ -94,7 +94,7 @@ start_lo_xact(const char *operation, bool *own_transaction)
  * Clean up after a successful LO operation
  */
 static bool
-finish_lo_xact(const char *operation, bool own_transaction)
+finish_lo_xact(const char *UNUSED(operation), bool own_transaction)
 {
 	PGresult   *res;
 
@@ -117,7 +117,7 @@ finish_lo_xact(const char *operation, bool own_transaction)
  * Clean up after a failed LO operation
  */
 static bool
-fail_lo_xact(const char *operation, bool own_transaction)
+fail_lo_xact(const char *UNUSED(operation), bool own_transaction)
 {
 	PGresult   *res;
 

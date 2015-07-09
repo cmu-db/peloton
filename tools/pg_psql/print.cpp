@@ -90,7 +90,7 @@ const printTextFormat pg_asciiformat_old =
 };
 
 /* Default unicode linestyle format */
-const printTextFormat pg_utf8format;
+const printTextFormat pg_utf8format = {NULL, {NULL,NULL,NULL,NULL}, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false};
 
 typedef struct unicodeStyleRowFormat {
 	const char *horizontal;
@@ -801,7 +801,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 	 * we can now escape to vertical mode if necessary.
 	 */
 	if (cont->opt->expanded == 2 && output_columns > 0 &&
-		(output_columns < static_cast<int>(total_header_width) || output_columns < static_cast<unsigned int>(width_total)))
+		(output_columns < static_cast<int>(total_header_width) || output_columns < static_cast<int>(width_total)))
 	{
 		print_aligned_vertical(cont, fout);
 		goto cleanup;
@@ -809,7 +809,7 @@ print_aligned_text(const printTableContent *cont, FILE *fout)
 
 	/* If we wrapped beyond the display width, use the pager */
 	if (!is_pager && fout == stdout && output_columns > 0 &&
-		(output_columns < static_cast<int>(total_header_width) || output_columns < static_cast<unsigned int>(width_total)))
+		(output_columns < static_cast<int>(total_header_width) || output_columns < static_cast<int>(width_total)))
 	{
 		fout = PageOutput(INT_MAX, cont->opt);	/* force pager */
 		is_pager = true;
@@ -1399,7 +1399,7 @@ print_aligned_vertical(const printTableContent *cont, FILE *fout)
 
 		/* Wrap to minimum width */
 		width = hwidth + iwidth + swidth + dwidth;
-		if ((width < static_cast<int>(min_width)) || (output_columns < static_cast<int>(min_width)))
+		if ((width < min_width) || (output_columns < static_cast<int>(min_width)))
 			width = min_width - hwidth - iwidth - swidth;
 		else if (output_columns > 0)
 			/*

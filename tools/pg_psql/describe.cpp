@@ -56,7 +56,7 @@ static bool listOneExtensionContents(const char *extname, const char *oid);
  * Takes an optional regexp to select particular aggregates
  */
 bool
-describeAggregates(const char *pattern, bool verbose, bool showSystem)
+describeAggregates(const char *pattern, bool UNUSED(verbose), bool showSystem)
 {
 	PQExpBufferData buf;
 	PGresult   *res;

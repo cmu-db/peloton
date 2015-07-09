@@ -336,7 +336,7 @@ advance_windowaggregate(WindowAggState *winstate,
 	InitFunctionCallInfoData(*fcinfo, &(peraggstate->transfn),
 							 numArguments + 1,
 							 perfuncstate->winCollation,
-							 (void *) winstate, NULL);
+							 reinterpret_cast<fmNodePtr>(winstate), NULL);
 	fcinfo->arg[0] = peraggstate->transValue;
 	fcinfo->argnull[0] = peraggstate->transValueIsNull;
 	winstate->curaggcontext = peraggstate->aggcontext;
@@ -492,7 +492,7 @@ advance_windowaggregate_base(WindowAggState *winstate,
 	InitFunctionCallInfoData(*fcinfo, &(peraggstate->invtransfn),
 							 numArguments + 1,
 							 perfuncstate->winCollation,
-							 (void *) winstate, NULL);
+							 reinterpret_cast<fmNodePtr>(winstate), NULL);
 	fcinfo->arg[0] = peraggstate->transValue;
 	fcinfo->argnull[0] = peraggstate->transValueIsNull;
 	winstate->curaggcontext = peraggstate->aggcontext;
@@ -567,7 +567,7 @@ finalize_windowaggregate(WindowAggState *winstate,
 		InitFunctionCallInfoData(fcinfo, &(peraggstate->finalfn),
 								 numFinalArgs,
 								 perfuncstate->winCollation,
-								 (void *) winstate, NULL);
+								 reinterpret_cast<fmNodePtr>(winstate), NULL);
 		fcinfo.arg[0] = peraggstate->transValue;
 		fcinfo.argnull[0] = peraggstate->transValueIsNull;
 		anynull = peraggstate->transValueIsNull;
@@ -996,7 +996,7 @@ eval_windowfunction(WindowAggState *winstate, WindowStatePerFunc perfuncstate,
 	InitFunctionCallInfoData(fcinfo, &(perfuncstate->flinfo),
 							 perfuncstate->numArguments,
 							 perfuncstate->winCollation,
-							 (void *) perfuncstate->winobj, NULL);
+							 reinterpret_cast<fmNodePtr>(perfuncstate->winobj), NULL);
 	/* Just in case, make all the regular argument slots be null */
 	memset(fcinfo.argnull, true, perfuncstate->numArguments);
 	/* Window functions don't have a current aggregate context, either */
