@@ -26,21 +26,6 @@
 #include "backend/storage/table_factory.h"
 
 
-//TODO :: REMOVE
-typedef struct 
-{
-  int valueType;
-  int column_offset;
-  int column_length;
-  char name[NAMEDATALEN];
-  bool allow_null;
-  bool is_inlined;
-
-  // constraints 
-  int* constraintType;
-  char** conname;
-} DDL_ColumnInfo;
-
 namespace peloton {
 namespace bridge {
 
@@ -48,15 +33,8 @@ namespace bridge {
 // DDL Class 
 //===--------------------------------------------------------------------===//
 
-
-//TODO :: Move to other place?
 class IndexInfo{
  public:
-  // TODO :: Copy operator~
-  //IndexInfo(const IndexInfo &) = delete;
-  //IndexInfo& operator=(const IndexInfo &) = delete;
-  //IndexInfo(IndexInfo &&) = delete;
-  //IndexInfo& operator=(IndexInfo &&) = delete;
   IndexInfo(std::string index_name,
             std::string table_name,
             IndexMethodType method_type,
@@ -120,6 +98,7 @@ class DDL {
   // Function Definition
   //===--------------------------------------------------------------------===//
 
+
   static void ProcessUtility(Node *parsetree,
                              const char *queryString );
 
@@ -128,9 +107,20 @@ class DDL {
 
   static IndexInfo* ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt);
 
+  // Set reference tables to the table based on given relation oid
+  static bool SetReferenceTables( std::vector<std::string> reference_table_names, oid_t relation_oid );
+
+  // Create the indexes using indexinfos and add to the table
+  static bool CreateIndexesWithIndexInfos(oid_t relation_oid = INVALID_OID);
+
+  //Add the constraint to the table
+  static bool AddConstraint( Oid relation_oid, 
+                             Constraint* constraint );
+
   //===--------------------------------------------------------------------===//
   // Create Object
   //===--------------------------------------------------------------------===//
+
 
   static bool CreateTable(Oid relation_oid,
                           std::string table_name,
@@ -145,11 +135,15 @@ class DDL {
                           std::vector<std::string> key_column_names,
                           Oid table_oid = INVALID_OID);
 
+  static bool AlterTable(  Oid relation_oid,
+                           AlterTableStmt* Astmt );
+
 
   //===--------------------------------------------------------------------===//
   // Drop Object
   //===--------------------------------------------------------------------===//
 
+  // NOTE :: If table has 
   static bool DropTable(Oid table_oid);
 
   // TODO : DropIndex

@@ -13,14 +13,6 @@
 #include "backend/common/value_factory.h"
 #include "backend/storage/data_table.h"
 
-
-peloton::Value DatumGetValue(Datum datum, Oid atttypid);
-
-Datum ValueGetDatum(peloton::Value value);
-
-void TestTupleTransformer(Datum datum, Oid atttypid);
-
-
 namespace peloton {
 namespace bridge {
 
@@ -28,8 +20,25 @@ namespace bridge {
 // Tuple Transformer
 //===--------------------------------------------------------------------===//
 
-storage::Tuple *TupleTransformer(TupleTableSlot *slot, const catalog::Schema *schema);
+class TupleTransformer {
+
+ public:
+  TupleTransformer(const TupleTransformer &) = delete;
+  TupleTransformer& operator=(const TupleTransformer &) = delete;
+  TupleTransformer(TupleTransformer &&) = delete;
+  TupleTransformer& operator=(TupleTransformer &&) = delete;
+
+  TupleTransformer(){};
+
+  static Value DatumGetValue(Datum datum, Oid atttypid);
+
+  static Datum ValueGetDatum(peloton::Value value);
+
+  static storage::Tuple *TransformTuple(TupleTableSlot *slot,
+                                        const catalog::Schema *schema);
 
 
-}
-}
+};
+
+}  // namespace bridge
+}  // namespace peloton
