@@ -743,7 +743,7 @@ void
 pgstat_report_stat(bool force)
 {
 	/* we assume this inits to all zeroes: */
-	static const PgStat_TableCounts all_zeroes;
+	static const PgStat_TableCounts all_zeroes = {0,0,0,0,0,0,0,false,0,0,0,0,0};
 	static TimestampTz last_report = 0;
 
 	TimestampTz now;
@@ -883,7 +883,7 @@ static void
 pgstat_send_funcstats(void)
 {
 	/* we assume this inits to all zeroes: */
-	static const PgStat_FunctionCounts all_zeroes;
+	static const PgStat_FunctionCounts all_zeroes {0,0,0,0,0,0,0,false,0,0,0,0,0};
 
 	PgStat_MsgFuncstat msg;
 	PgStat_BackendFunctionEntry *entry;
@@ -3268,7 +3268,7 @@ void
 pgstat_send_bgwriter(void)
 {
 	/* We assume this initializes to zeroes */
-	static const PgStat_MsgBgWriter all_zeroes;
+	static const PgStat_MsgBgWriter all_zeroes {0,0,0,0,0,0,0,false,0,0,0,0,0};
 
 	/*
 	 * This function can be called even if nothing at all has happened. In

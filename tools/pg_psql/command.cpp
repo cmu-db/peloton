@@ -1152,7 +1152,7 @@ exec_command(const char *cmd,
 			while ((opt = psql_scan_slash_option(scan_state,
 												 OT_NORMAL, NULL, false)))
 			{
-				newval = pg_realloc(newval, strlen(newval) + strlen(opt) + 1);
+				newval = static_cast<char *>(pg_realloc(newval, strlen(newval) + strlen(opt) + 1));
 				strcat(newval, opt);
 				free(opt);
 			}
@@ -1846,10 +1846,10 @@ connection_warnings(bool in_startup)
 static void
 printSSLInfo(void)
 {
-	const char *protocol;
-	const char *cipher;
-	const char *bits;
-	const char *compression;
+	const char *UNUSED(protocol);
+	const char *UNUSED(cipher);
+	const char *UNUSED(bits);
+	const char *UNUSED(compression);
 
   // TODO: Peloton changes
 	/*

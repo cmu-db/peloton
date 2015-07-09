@@ -113,7 +113,7 @@ compact_palloc0(IspellDict *Conf, size_t size)
 static char *
 cpstrdup(IspellDict *Conf, const char *str)
 {
-	char	   *res = cpalloc(strlen(str) + 1);
+	char	   *res = static_cast<char *>(cpalloc(strlen(str) + 1));
 
 	strcpy(res, str);
 	return res;
