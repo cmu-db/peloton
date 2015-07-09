@@ -26,21 +26,6 @@
 #include "backend/storage/table_factory.h"
 
 
-//TODO :: REMOVE
-typedef struct 
-{
-  int valueType;
-  int column_offset;
-  int column_length;
-  char name[NAMEDATALEN];
-  bool allow_null;
-  bool is_inlined;
-
-  // constraints 
-  int* constraintType;
-  char** conname;
-} DDL_ColumnInfo;
-
 namespace peloton {
 namespace bridge {
 
@@ -48,15 +33,8 @@ namespace bridge {
 // DDL Class 
 //===--------------------------------------------------------------------===//
 
-
-//TODO :: Move to other place?
 class IndexInfo{
  public:
-  // TODO :: Copy operator~
-  //IndexInfo(const IndexInfo &) = delete;
-  //IndexInfo& operator=(const IndexInfo &) = delete;
-  //IndexInfo(IndexInfo &&) = delete;
-  //IndexInfo& operator=(IndexInfo &&) = delete;
   IndexInfo(std::string index_name,
             std::string table_name,
             IndexMethodType method_type,
@@ -135,6 +113,7 @@ class DDL {
   //===--------------------------------------------------------------------===//
   // Create Object
   //===--------------------------------------------------------------------===//
+
 
   static bool CreateTable(Oid relation_oid,
                           std::string table_name,

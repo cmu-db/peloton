@@ -25,9 +25,10 @@ namespace storage {
 DataTable::DataTable(const catalog::Schema *schema,
                      AbstractBackend *backend,
                      std::string table_name,
+                     oid_t table_oid,
                      size_t tuples_per_tilegroup)
 : AbstractTable(schema, backend, tuples_per_tilegroup),
-  table_name(table_name) {
+  table_name(table_name), table_oid(table_oid) {
 }
 
 DataTable::~DataTable() {
