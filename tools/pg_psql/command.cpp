@@ -1678,8 +1678,8 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	while (true)
 	{
 #define PARAMS_ARRAY_SIZE	8
-		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
+		const char **keywords = static_cast<const char **>(pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords)));
+		const char **values = static_cast<const char **>(pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values)));
 		int			paramnum = 0;
 
 		keywords[0] = "dbname";
@@ -2780,7 +2780,7 @@ pset_bool_string(bool val)
 static char *
 pset_quoted_string(const char *str)
 {
-	char	   *ret = pg_malloc(strlen(str) * 2 + 3);
+	char	   *ret = static_cast<char *>(pg_malloc(strlen(str) * 2 + 3));
 	char	   *r = ret;
 
 	*r++ = '\'';

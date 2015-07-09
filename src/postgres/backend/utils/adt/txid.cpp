@@ -611,7 +611,7 @@ txid_snapshot_xip(PG_FUNCTION_ARGS)
 		fctx = SRF_FIRSTCALL_INIT();
 
 		/* make a copy of user snapshot */
-		snap = MemoryContextAlloc(fctx->multi_call_memory_ctx, VARSIZE(arg));
+		snap = static_cast<TxidSnapshot *>(MemoryContextAlloc(fctx->multi_call_memory_ctx, VARSIZE(arg)));
 		memcpy(snap, arg, VARSIZE(arg));
 
 		fctx->user_fctx = snap;
@@ -619,7 +619,7 @@ txid_snapshot_xip(PG_FUNCTION_ARGS)
 
 	/* return values one-by-one */
 	fctx = SRF_PERCALL_SETUP();
-	snap = fctx->user_fctx;
+	snap = static_cast<TxidSnapshot *>(fctx->user_fctx);
 	if (fctx->call_cntr < snap->nxip)
 	{
 		value = snap->xip[fctx->call_cntr];

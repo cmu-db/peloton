@@ -757,8 +757,8 @@ MakeSharedInvalidMessagesArray(const SharedInvalidationMessage *msgs, int n)
 		 * Although this is being palloc'd we don't actually free it directly.
 		 * We're so close to EOXact that we now we're going to lose it anyhow.
 		 */
-		SharedInvalidMessagesArray = palloc(maxSharedInvalidMessagesArray
-										* sizeof(SharedInvalidationMessage));
+		SharedInvalidMessagesArray = static_cast<SharedInvalidationMessage *>(palloc(maxSharedInvalidMessagesArray
+										* sizeof(SharedInvalidationMessage)));
 	}
 
 	if ((numSharedInvalidMessagesArray + n) > maxSharedInvalidMessagesArray)
@@ -766,9 +766,9 @@ MakeSharedInvalidMessagesArray(const SharedInvalidationMessage *msgs, int n)
 		while ((numSharedInvalidMessagesArray + n) > maxSharedInvalidMessagesArray)
 			maxSharedInvalidMessagesArray *= 2;
 
-		SharedInvalidMessagesArray = repalloc(SharedInvalidMessagesArray,
+		SharedInvalidMessagesArray = static_cast<SharedInvalidationMessage *>(repalloc(SharedInvalidMessagesArray,
 											  maxSharedInvalidMessagesArray
-										* sizeof(SharedInvalidationMessage));
+										* sizeof(SharedInvalidationMessage)));
 	}
 
 	/*
