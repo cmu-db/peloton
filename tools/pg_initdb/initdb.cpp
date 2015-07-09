@@ -2919,7 +2919,7 @@ setup_bin_paths(const char *argv0)
 
 	if (!share_path)
 	{
-		share_path = pg_malloc(MAXPGPATH);
+		share_path = static_cast<char *>(pg_malloc(MAXPGPATH));
 		get_share_path(backend_exec, share_path);
 	}
 	else if (!is_absolute_path(share_path))

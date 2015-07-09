@@ -87,12 +87,12 @@ inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size)
 	switch (af)
 	{
 		case PGSQL_AF_INET:
-			return (inet_net_ntop_ipv4(src, bits, dst, size));
+			return (inet_net_ntop_ipv4(static_cast<const u_char *>(src), bits, dst, size));
 		case PGSQL_AF_INET6:
 #if defined(AF_INET6) && AF_INET6 != PGSQL_AF_INET6
 		case AF_INET6:
 #endif
-			return (inet_net_ntop_ipv6(src, bits, dst, size));
+			return (inet_net_ntop_ipv6(static_cast<const u_char *>(src), bits, dst, size));
 		default:
 			errno = EAFNOSUPPORT;
 			return (NULL);

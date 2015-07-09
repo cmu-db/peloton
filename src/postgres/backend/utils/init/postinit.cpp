@@ -1038,10 +1038,10 @@ process_startup_options(Port *port, bool am_superuser)
 		char	   *name;
 		char	   *value;
 
-		name = lfirst(gucopts);
+		name = static_cast<char *>(lfirst(gucopts));
 		gucopts = lnext(gucopts);
 
-		value = lfirst(gucopts);
+		value = static_cast<char *>(lfirst(gucopts));
 		gucopts = lnext(gucopts);
 
 		SetConfigOption(name, value, gucctx, PGC_S_CLIENT);

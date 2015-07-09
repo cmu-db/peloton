@@ -344,7 +344,7 @@ readfile(const char *path)
 		*result = NULL;
 		return result;
 	}
-	buffer = pg_malloc(statbuf.st_size + 1);
+	buffer = static_cast<char *>(pg_malloc(statbuf.st_size + 1));
 
 	len = read(fd, buffer, statbuf.st_size + 1);
 	close(fd);
@@ -378,7 +378,7 @@ readfile(const char *path)
 		if (buffer[i] == '\n')
 		{
 			int			slen = &buffer[i] - linebegin + 1;
-			char	   *linebuf = pg_malloc(slen + 1);
+			char	   *linebuf = static_cast<char *>(pg_malloc(slen + 1));
 
 			memcpy(linebuf, linebegin, slen);
 			linebuf[slen] = '\0';
@@ -772,7 +772,7 @@ find_other_exec_or_die(const char *argv0, const char *target, const char *versio
 	int			ret;
 	char	   *found_path;
 
-	found_path = pg_malloc(MAXPGPATH);
+	found_path = static_cast<char *>(pg_malloc(MAXPGPATH));
 
 	if ((ret = find_other_exec(argv0, target, versionstr, found_path)) < 0)
 	{

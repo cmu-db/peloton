@@ -1617,7 +1617,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	/* End-of-list marker */
 	{
-		{NULL, 0, 0, NULL, NULL}, NULL, false, NULL, NULL, NULL
+		{NULL, static_cast<GucContext>(0), static_cast<config_group>(0), NULL, NULL}, NULL, false, NULL, NULL, NULL
 	}
 };
 
@@ -2672,7 +2672,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	/* End-of-list marker */
 	{
-		{NULL, 0, 0, NULL, NULL}, NULL, 0, 0, 0, NULL, NULL, NULL
+		{NULL, static_cast<GucContext>(0), static_cast<config_group>(0), NULL, NULL}, NULL, 0, 0, 0, NULL, NULL, NULL
 	}
 };
 
@@ -2813,7 +2813,7 @@ static struct config_real ConfigureNamesReal[] =
 
 	/* End-of-list marker */
 	{
-		{NULL, 0, 0, NULL, NULL}, NULL, 0.0, 0.0, 0.0, NULL, NULL, NULL
+		{NULL, static_cast<GucContext>(0), static_cast<config_group>(0), NULL, NULL}, NULL, 0.0, 0.0, 0.0, NULL, NULL, NULL
 	}
 };
 
@@ -3395,7 +3395,7 @@ static struct config_string ConfigureNamesString[] =
 
 	/* End-of-list marker */
 	{
-		{NULL, 0, 0, NULL, NULL}, NULL, NULL, NULL, NULL, NULL
+		{NULL, static_cast<GucContext>(0), static_cast<config_group>(0), NULL, NULL}, NULL, NULL, NULL, NULL, NULL
 	}
 };
 
@@ -3651,7 +3651,7 @@ static struct config_enum ConfigureNamesEnum[] =
 
 	/* End-of-list marker */
 	{
-		{NULL, 0, 0, NULL, NULL}, NULL, 0, NULL, NULL, NULL, NULL
+		{NULL, static_cast<GucContext>(0), static_cast<config_group>(0), NULL, NULL}, NULL, 0, NULL, NULL, NULL, NULL
 	}
 };
 
@@ -4466,8 +4466,8 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 		fname = make_absolute_path(ConfigFileName);
 	else if (configdir)
 	{
-		fname = guc_malloc(FATAL,
-						   strlen(configdir) + strlen(CONFIG_FILENAME) + 2);
+		fname = static_cast<char *>(guc_malloc(FATAL,
+						   strlen(configdir) + strlen(CONFIG_FILENAME) + 2));
 		sprintf(fname, "%s/%s", configdir, CONFIG_FILENAME);
 	}
 	else
@@ -4559,8 +4559,8 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 		fname = make_absolute_path(HbaFileName);
 	else if (configdir)
 	{
-		fname = guc_malloc(FATAL,
-						   strlen(configdir) + strlen(HBA_FILENAME) + 2);
+		fname = static_cast<char *>(guc_malloc(FATAL,
+						   strlen(configdir) + strlen(HBA_FILENAME) + 2));
 		sprintf(fname, "%s/%s", configdir, HBA_FILENAME);
 	}
 	else
@@ -4582,8 +4582,8 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 		fname = make_absolute_path(IdentFileName);
 	else if (configdir)
 	{
-		fname = guc_malloc(FATAL,
-						   strlen(configdir) + strlen(IDENT_FILENAME) + 2);
+		fname = static_cast<char *>(guc_malloc(FATAL,
+						   strlen(configdir) + strlen(IDENT_FILENAME) + 2));
 		sprintf(fname, "%s/%s", configdir, IDENT_FILENAME);
 	}
 	else
@@ -9028,7 +9028,7 @@ ParseLongOption(const char *string, char **name, char **value)
 
 	if (string[equal_pos] == '=')
 	{
-		*name = guc_malloc(FATAL, equal_pos + 1);
+		*name = static_cast<char *>(guc_malloc(FATAL, equal_pos + 1));
 		strlcpy(*name, string, equal_pos + 1);
 
 		*value = guc_strdup(FATAL, &string[equal_pos + 1]);
@@ -10026,13 +10026,13 @@ assign_pgstat_temp_directory(const char *newval, void *extra)
 	char	   *fname;
 
 	/* directory */
-	dname = guc_malloc(ERROR, strlen(newval) + 1);		/* runtime dir */
+	dname = static_cast<char *>(guc_malloc(ERROR, strlen(newval) + 1));		/* runtime dir */
 	sprintf(dname, "%s", newval);
 
 	/* global stats */
-	tname = guc_malloc(ERROR, strlen(newval) + 12);		/* /global.tmp */
+	tname = static_cast<char *>(guc_malloc(ERROR, strlen(newval) + 12));		/* /global.tmp */
 	sprintf(tname, "%s/global.tmp", newval);
-	fname = guc_malloc(ERROR, strlen(newval) + 13);		/* /global.stat */
+	fname = static_cast<char *>(guc_malloc(ERROR, strlen(newval) + 13));		/* /global.stat */
 	sprintf(fname, "%s/global.stat", newval);
 
 	if (pgstat_stat_directory)

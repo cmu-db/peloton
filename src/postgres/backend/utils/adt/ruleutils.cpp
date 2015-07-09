@@ -5138,7 +5138,7 @@ get_rule_groupingset(GroupingSet *gset, List *targetlist,
 	foreach(l, gset->content)
 	{
 		appendStringInfoString(buf, sep);
-		get_rule_groupingset(lfirst(l), targetlist, omit_child_parens, context);
+		get_rule_groupingset(static_cast<GroupingSet *>(lfirst(l)), targetlist, omit_child_parens, context);
 		sep = ", ";
 	}
 
@@ -7464,7 +7464,7 @@ get_rule_expr(Node *node, deparse_context *context,
 							List	   *args = ((OpExpr *) w)->args;
 
 							if (list_length(args) == 2 &&
-								IsA(strip_implicit_coercions(linitial(args)),
+								IsA(strip_implicit_coercions(static_cast<Node *>(linitial(args))),
 									CaseTestExpr))
 								w = (Node *) lsecond(args);
 						}
@@ -7613,8 +7613,8 @@ get_rule_expr(Node *node, deparse_context *context,
 				 */
 				appendStringInfo(buf, ") %s ROW(",
 						  generate_operator_name(linitial_oid(rcexpr->opnos),
-										   exprType(linitial(rcexpr->largs)),
-										 exprType(linitial(rcexpr->rargs))));
+										   exprType(static_cast<const Node *>(linitial(rcexpr->largs))),
+										 exprType(static_cast<const Node *>(linitial(rcexpr->rargs)))));
 				sep = "";
 				foreach(arg, rcexpr->rargs)
 				{
@@ -8553,10 +8553,10 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 			/* single combining operator___ */
 			OpExpr	   *opexpr = (OpExpr *) sublink->testexpr;
 
-			get_rule_expr(linitial(opexpr->args), context, true);
+			get_rule_expr(static_cast<Node *>(linitial(opexpr->args)), context, true);
 			opname = generate_operator_name(opexpr->opno,
-											exprType(linitial(opexpr->args)),
-											exprType(lsecond(opexpr->args)));
+											exprType(static_cast<const Node *>(linitial(opexpr->args))),
+											exprType(static_cast<const Node *>(lsecond(opexpr->args))));
 		}
 		else if (IsA(sublink->testexpr, BoolExpr))
 		{
@@ -8572,11 +8572,11 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 
 				Assert(IsA(opexpr, OpExpr));
 				appendStringInfoString(buf, sep);
-				get_rule_expr(linitial(opexpr->args), context, true);
+				get_rule_expr(static_cast<Node *>(linitial(opexpr->args)), context, true);
 				if (!opname)
 					opname = generate_operator_name(opexpr->opno,
-											exprType(linitial(opexpr->args)),
-											exprType(lsecond(opexpr->args)));
+											exprType(static_cast<const Node *>(linitial(opexpr->args))),
+											exprType(static_cast<const Node *>(lsecond(opexpr->args))));
 				sep = ", ";
 			}
 			appendStringInfoChar(buf, ')');
@@ -8589,8 +8589,8 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 			appendStringInfoChar(buf, '(');
 			get_rule_expr((Node *) rcexpr->largs, context, true);
 			opname = generate_operator_name(linitial_oid(rcexpr->opnos),
-											exprType(linitial(rcexpr->largs)),
-										  exprType(linitial(rcexpr->rargs)));
+											exprType(static_cast<const Node *>(linitial(rcexpr->largs))),
+										  exprType(static_cast<const Node *>(linitial(rcexpr->rargs))));
 			appendStringInfoChar(buf, ')');
 		}
 		else

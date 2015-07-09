@@ -889,7 +889,7 @@ recurse:
 	}
 
 	elog(ERROR, "invalid iterator state");
-	return static_cast<JsonbIteratorToken *>(-1);
+	return static_cast<JsonbIteratorToken>(-1);
 }
 
 /*
