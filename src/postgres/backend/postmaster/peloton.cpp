@@ -167,7 +167,7 @@ PelotonMain(int argc, char *argv[])
    */
   pqsignal(SIGINT, StatementCancelHandler);
   pqsignal(SIGTERM, peloton_sigterm_handler);
-  pqsignal(SIGSEGV, peloton_sigsegv_handler);
+  //pqsignal(SIGSEGV, peloton_sigsegv_handler);
   pqsignal(SIGQUIT, quickdie);
   InitializeTimeouts();   /* establishes SIGALRM handler */
 

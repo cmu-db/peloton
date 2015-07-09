@@ -183,7 +183,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     assert(!TupIsNull(tupleslot));
     assert(isDone != ExprEndResult);
 
-    auto tuple = TupleTransformer(tupleslot, schema);
+    auto tuple = TupleTransformer::TransformTuple(tupleslot, schema);
     assert(tuple);
     tuples.push_back(tuple);
 
@@ -374,8 +374,6 @@ planner::AbstractPlanNode *PlanTransformer::TransformResult(
 									  econtext,
 									  &isnull,
 									  &itemIsDone[resind]);
-//      int integer = DatumGetInt32(value);
-//      LOG_INFO("The datum is %d", integer);
     }
 
   } else {
