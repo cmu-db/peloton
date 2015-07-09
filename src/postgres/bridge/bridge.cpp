@@ -464,6 +464,7 @@ bool BootstrapPeloton(void){
 
   // Create db with current database oid
   peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid()  );
+  std::cout << *db << std::endl;
 
   // Relations for catalog tables
   Relation pg_class_rel;
