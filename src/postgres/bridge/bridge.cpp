@@ -17,6 +17,7 @@
 #include "backend/bridge/ddl.h"
 #include "backend/catalog/schema.h"
 #include "backend/catalog/constraint.h"
+#include "backend/common/logger.h"
 #include "backend/storage/database.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_constraint.h"
@@ -464,7 +465,6 @@ bool BootstrapPeloton(void){
 
   // Create db with current database oid
   peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid()  );
-  std::cout << *db << std::endl;
 
   // Relations for catalog tables
   Relation pg_class_rel;
@@ -595,7 +595,6 @@ bool BootstrapPeloton(void){
         //===--------------------------------------------------------------------===//
         // Create Peloton Structures
         //===--------------------------------------------------------------------===//
-        printf("Start creating Peloton Structures...\n");
 
         switch(relation_kind){
 
@@ -709,26 +708,13 @@ bool BootstrapPeloton(void){
   }
 
   //===--------------------------------------------------------------------===//
-  // Create Peloton Indexes
+  // Create Indexes
   //===--------------------------------------------------------------------===//
 
-  for( auto index_info : index_infos){
-    bool status;
-    status = peloton::bridge::DDL::CreateIndex( index_info.GetIndexName(),
-                                                index_info.GetTableName(),
-                                                index_info.GetMethodType(),
-                                                index_info.GetType(),
-                                                index_info.IsUnique(),
-                                                index_info.GetKeyColumnNames());
-
-    if(status == true) {
-      elog(LOG, "Create Index \"%s\" in Peloton", index_info.GetIndexName().c_str());
-    }
-    else {
-      elog(ERROR, "Create Index \"%s\" in Peloton", index_info.GetIndexName().c_str());
-    }
+  status = peloton::bridge::DDL::CreateIndexesWithIndexInfos();
+  if(status == false) {
+    peloton::LOG_WARN("Could not create an index in Peloton");
   }
-  index_infos.clear();
 
   //===--------------------------------------------------------------------===//
   // Link Reference tables 
