@@ -21,72 +21,68 @@
 #include "fmgr.h"
 #include "utils/lsyscache.h"
 
-
-/**
- * @brief Test tuple transformation utility.
- * @return none.
- */
-void TestTupleTransformer(Datum datum, Oid atttypid) {
-  peloton::Value p_value;
-  Datum p_datum;
-
-  p_value = DatumGetValue(datum, atttypid);
-  p_datum = ValueGetDatum(p_value);
-}
+namespace peloton {
+namespace bridge {
 
 /**
  * @brief Convert from Datum to Value.
  * @return converted Value.
  */
-peloton::Value DatumGetValue(Datum datum, Oid atttypid) {
-  peloton::Value value;
-  peloton::Pool *data_pool = nullptr;
-  int16_t smallint;
-  int32_t integer;
-  int64_t bigint;
-  char *character;
-  char *variable_character;
-  long int timestamp;
-  char *timestamp_charpointer;
+Value DatumGetValue(Datum datum, Oid atttypid) {
+  Value value;
 
   switch (atttypid) {
     case 21:
-      smallint = DatumGetInt16(datum);
+    {
+      int16_t smallint = DatumGetInt16(datum);
       printf("%d\n", smallint);
-      value = peloton::ValueFactory::GetSmallIntValue(smallint);
-      break;
+      value = ValueFactory::GetSmallIntValue(smallint);
+    }
+    break;
 
     case 23:
-      integer = DatumGetInt32(datum);
+    {
+      int32_t integer = DatumGetInt32(datum);
       printf("%d\n", integer);
-      value = peloton::ValueFactory::GetIntegerValue(integer);
-      break;
+      value = ValueFactory::GetIntegerValue(integer);
+    }
+    break;
 
     case 20:
-      bigint = DatumGetInt64(datum);
+    {
+      int64_t bigint = DatumGetInt64(datum);
       printf("%ld\n", bigint);
-      value = peloton::ValueFactory::GetBigIntValue(bigint);
-      break;
+      value = ValueFactory::GetBigIntValue(bigint);
+    }
+    break;
 
     case 1042:
-      character = DatumGetCString(datum);
+    {
+      char *character = DatumGetCString(datum);
+      Pool *data_pool = nullptr;
       printf("%s\n", character);
-      value = peloton::ValueFactory::GetStringValue(character, data_pool);
-      break;
+      value = ValueFactory::GetStringValue(character, data_pool);
+    }
+    break;
 
     case 1043:
-      variable_character = DatumGetCString(datum);
-      printf("%s\n", variable_character);
-      value = peloton::ValueFactory::GetStringValue(variable_character,
+    {
+      char * varlen_character = DatumGetCString(datum);
+      Pool *data_pool = nullptr;
+      printf("%s\n", varlen_character);
+      value = ValueFactory::GetStringValue(varlen_character,
                                                     data_pool);
-      break;
+    }
+    break;
 
     case 1114:
-      timestamp = DatumGetInt64(datum);
-      timestamp_charpointer = DatumGetCString(datum);
-      printf("%s\n", timestamp_charpointer);
-      value = peloton::ValueFactory::GetTimestampValue(timestamp);
-      break;
+    {
+      long int timestamp = DatumGetInt64(datum);
+      char *timestamp_cstring = DatumGetCString(datum);
+      printf("%s\n", timestamp_cstring);
+      value = ValueFactory::GetTimestampValue(timestamp);
+    }
+    break;
 
     default:
       break;
@@ -99,71 +95,67 @@ peloton::Value DatumGetValue(Datum datum, Oid atttypid) {
  * @brief Convert from Value to Datum.
  * @return converted Datum.
  */
-Datum ValueGetDatum(peloton::Value value) {
-  peloton::ValueType value_type;
-  peloton::ValuePeeker value_peeker;
+Datum ValueGetDatum(Value value) {
+  ValueType value_type;
   Datum datum;
-  int16_t smallint;
-  int32_t integer;
-  int64_t bigint;
-  double double_precision;
-  char *character;
-  std::string variable_character_string;
-  char *variable_character;
-  long int timestamp;
 
   value_type = value.GetValueType();
-
   switch (value_type) {
-    //small int
+
     case 4:
-      smallint = value_peeker.PeekSmallInt(value);
+    {
+      int16_t smallint = ValuePeeker::PeekSmallInt(value);
       printf("%d\n", smallint);
       datum = Int16GetDatum(smallint);
-      break;
-      // integer
+    }
+    break;
+
     case 5:
-      integer = value_peeker.PeekInteger(value);
+    {
+      int32_t integer = ValuePeeker::PeekInteger(value);
       printf("%d\n", integer);
       datum = Int32GetDatum(integer);
-      break;
-      // big int
+    }
+    break;
+
     case 6:
-      bigint = value_peeker.PeekBigInt(value);
+    {
+      int64_t bigint = ValuePeeker::PeekBigInt(value);
       printf("%ld\n", bigint);
       datum = Int64GetDatum(bigint);
-      break;
+    }
+    break;
 
-      //double
     case 8:
-      double_precision = value_peeker.PeekDouble(value);
+    {
+      double double_precision = ValuePeeker::PeekDouble(value);
       printf("%f\n", double_precision);
       datum = Float8GetDatum(double_precision);
-      break;
+    }
+    break;
 
-      // varchar
     case 9:
-      variable_character = (char *)value_peeker.PeekObjectValue(value);
+    {
+      char *variable_character = (char *) ValuePeeker::PeekObjectValue(value);
       printf("%s\n", variable_character);
       datum = CStringGetDatum(variable_character);
-      break;
+    }
+    break;
 
-      // timestamp
     case 11:
-      timestamp = value_peeker.PeekTimestamp(value);
+    {
+      long int timestamp = ValuePeeker::PeekTimestamp(value);
       datum = Int64GetDatum(timestamp);
       printf("%s\n",DatumGetCString(timestamp));
-      break;
+    }
+    break;
 
     default:
       break;
-
-      return datum;
   }
-}
 
-namespace peloton {
-namespace bridge {
+  return datum;
+}
 
 /**
  * @brief Convert a Postgres tuple into Peloton tuple
@@ -254,9 +246,13 @@ storage::Tuple *TupleTransformer(TupleTableSlot *slot,
     vals.push_back(DatumGetValue(p_datum, p_oid));
   }
 
-  assert(vals.size() == oid_t_vec.size()); /* the num of values should be the same as schema found */
+  // the num of values should be the same as schema found
+  assert(vals.size() == oid_t_vec.size());
+
   catalog::Schema * tuple_schema = catalog::Schema::CopySchema(schema, oid_t_vec);
-  storage::Tuple *tuple(new storage::Tuple(tuple_schema, true));
+
+  // Allocate space for a new tuple with given schema
+  storage::Tuple *tuple = new storage::Tuple(tuple_schema, true);
 
   oid_t att_itr = 0;
   for (auto val : vals) {
