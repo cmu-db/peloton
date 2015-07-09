@@ -1659,9 +1659,9 @@ describeOneTableDetails(const char *schemaname,
 			/* these strings are literal in our syntax, so not translated. */
 			printTableAddCell(&cont, (storage[0] == 'p' ? static_cast<char *>("plain") :
 									  (storage[0] == 'm' ? static_cast<char *>("main") :
-									   (storage[0] == 'x' ? static_cast<char *>("extended") :
+									  (storage[0] == 'x' ? static_cast<char *>("extended") :
 										(storage[0] == 'e' ? static_cast<char *>("external") :
-										 "???")))),
+										static_cast<char *>("???"))))),
 							  false, false);
 
 			/* Statistics target, if the relkind supports this feature */

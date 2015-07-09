@@ -1921,13 +1921,13 @@ bttextfastcmp_locale(Datum x, Datum y, SortSupport ssup)
 	{
 		pfree(tss->buf1);
 		tss->buflen1 = Max(len1 + 1, Min(tss->buflen1 * 2, MaxAllocSize));
-		tss->buf1 = MemoryContextAlloc(ssup->ssup_cxt, tss->buflen1);
+		tss->buf1 = static_cast<char *>(MemoryContextAlloc(ssup->ssup_cxt, tss->buflen1));
 	}
 	if (len2 >= tss->buflen2)
 	{
 		pfree(tss->buf2);
 		tss->buflen2 = Max(len2 + 1, Min(tss->buflen2 * 2, MaxAllocSize));
-		tss->buf2 = MemoryContextAlloc(ssup->ssup_cxt, tss->buflen2);
+		tss->buf2 = static_cast<char *>(MemoryContextAlloc(ssup->ssup_cxt, tss->buflen2));
 	}
 
 	memcpy(tss->buf1, a1p, len1);

@@ -463,8 +463,8 @@ RelationParseRelOptions(Relation relation, HeapTuple tuple)
 	 */
 	if (options)
 	{
-		relation->rd_options = MemoryContextAlloc(CacheMemoryContext,
-												  VARSIZE(options));
+		relation->rd_options = static_cast<bytea *>(MemoryContextAlloc(CacheMemoryContext,
+												  VARSIZE(options)));
 		memcpy(relation->rd_options, options, VARSIZE(options));
 		pfree(options);
 	}
@@ -719,7 +719,7 @@ RelationBuildRuleLock(Relation relation)
 
 		rule->ruleId = HeapTupleGetOid(rewrite_tuple);
 
-		rule->event = rewrite_form->ev_type - '0';
+		rule->event = static_cast<CmdType>(rewrite_form->ev_type - '0');
 		rule->enabled = rewrite_form->ev_enabled;
 		rule->isInstead = rewrite_form->is_instead;
 

@@ -918,7 +918,7 @@ insertStatEntry(MemoryContext persistentContext, TSVectorStat *stat, TSVector tx
 
 	if (node == NULL)
 	{
-		node = MemoryContextAlloc(persistentContext, STATENTRYHDRSZ + we->len);
+		node = static_cast<StatEntry *>(MemoryContextAlloc(persistentContext, STATENTRYHDRSZ + we->len));
 		node->left = node->right = NULL;
 		node->ndoc = 1;
 		node->nentry = n;
@@ -987,7 +987,7 @@ ts_accum(MemoryContext persistentContext, TSVectorStat *stat, Datum data)
 
 	if (stat == NULL)
 	{							/* Init in first */
-		stat = MemoryContextAllocZero(persistentContext, sizeof(TSVectorStat));
+		stat = static_cast<TSVectorStat *>(MemoryContextAllocZero(persistentContext, sizeof(TSVectorStat)));
 		stat->maxdepth = 1;
 	}
 
@@ -1172,7 +1172,7 @@ ts_stat_sql(MemoryContext persistentContext, text *txt, text *ws)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("ts_stat query must return one tsvector column")));
 
-	stat = MemoryContextAllocZero(persistentContext, sizeof(TSVectorStat));
+	stat = static_cast<TSVectorStat *>(MemoryContextAllocZero(persistentContext, sizeof(TSVectorStat)));
 	stat->maxdepth = 1;
 
 	if (ws)
