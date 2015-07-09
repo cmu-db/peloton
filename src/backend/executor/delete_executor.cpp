@@ -72,10 +72,10 @@ bool DeleteExecutor::DExecute() {
 
   // Delete each tuple
   for (oid_t visible_tuple_id : *source_tile) {
-    LOG_INFO("Visible Tuple id : %d \n", visible_tuple_id);
-    oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
 
-    LOG_INFO("Physical Tuple id : %d \n", physical_tuple_id);
+    oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
+    LOG_INFO("Visible Tuple id : %lu, Physical Tuple id : %lu \n", visible_tuple_id, physical_tuple_id);
+
 
     // try to delete the tuple
     // this might fail due to a concurrent operation that has latched the tuple
@@ -86,7 +86,7 @@ bool DeleteExecutor::DExecute() {
 
       return false;
     }
-    transaction_->RecordDelete(ItemPointer(tile_group_id, visible_tuple_id));
+    transaction_->RecordDelete(ItemPointer(tile_group_id, physical_tuple_id));
   }
 
   return true;

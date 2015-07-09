@@ -55,6 +55,7 @@ bool UpdateExecutor::DExecute() {
 
     std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
 
+    auto& pos_lists = source_tile.get()->GetPositionLists();
     storage::Tile *tile = source_tile->GetBaseTile(0);
     storage::TileGroup *tile_group = tile->GetTileGroup();
 
@@ -68,20 +69,23 @@ bool UpdateExecutor::DExecute() {
     auto updated_col_vals = node.GetUpdatedColumnValues();
 
     // Update tuples in given table
-    for (oid_t tuple_id : *source_tile) {
+    for (oid_t visible_tuple_id : *source_tile) {
+
+      oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
+      LOG_INFO("Visible Tuple id : %lu, Physical Tuple id : %lu \n", visible_tuple_id, physical_tuple_id);
 
         // (A) try to delete the tuple first
         // this might fail due to a concurrent operation that has latched the tuple
-        bool status = tile_group->DeleteTuple(txn_id, tuple_id);
+        bool status = tile_group->DeleteTuple(txn_id, physical_tuple_id);
         if(status == false) {
             auto& txn_manager = concurrency::TransactionManager::GetInstance();
             txn_manager.AbortTransaction(transaction_);
             return false;
         }
-        transaction_->RecordDelete(ItemPointer(tile_group_id, tuple_id));
+        transaction_->RecordDelete(ItemPointer(tile_group_id, physical_tuple_id));
 
         // (B) now, make a copy of the original tuple
-        storage::Tuple *tuple = tile_group->SelectTuple(tuple_id);
+        storage::Tuple *tuple = tile_group->SelectTuple(physical_tuple_id);
 
         // and update the relevant values
         oid_t col_itr = 0;
@@ -108,7 +112,7 @@ bool UpdateExecutor::DExecute() {
         // (C) set back pointer in tile group header of updated tuple
         auto updated_tile_group = static_cast<storage::TileGroup*>(manager.locator[location.block]);
         auto updated_tile_group_header = updated_tile_group->GetHeader();
-        updated_tile_group_header->SetPrevItemPointer(location.offset, ItemPointer(tile_group_id, tuple_id));
+        updated_tile_group_header->SetPrevItemPointer(location.offset, ItemPointer(tile_group_id, physical_tuple_id));
     }
 
     SetOutput(source_tile.release());
