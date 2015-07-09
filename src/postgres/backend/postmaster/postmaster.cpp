@@ -2890,8 +2890,8 @@ processCancelRequest(Port *port, void *pkt)
           LogChildExit(LOG, _("peloton process"),
                        pid, exitstatus);
         // TODO: Disable automatic restart ?
-        if (pmState == PM_RUN)
-          PelotonPID = peloton_start();
+        //if (pmState == PM_RUN)
+        //  PelotonPID = peloton_start();
         continue;
       }
 
