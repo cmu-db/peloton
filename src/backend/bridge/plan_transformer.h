@@ -30,6 +30,9 @@ class PlanTransformer {
 
   static planner::AbstractPlanNode *TransformPlan(const PlanState *plan_state);
 
+  /* TODO: Is this a good place to have the function? */
+  static bool CleanPlanNodeTree(planner::AbstractPlanNode *root);
+
  private:
 
   static planner::AbstractPlanNode *TransformModifyTable(const ModifyTableState *plan_state);
