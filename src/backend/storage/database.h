@@ -50,7 +50,7 @@ public:
     // OPERATIONS
     //===--------------------------------------------------------------------===//
     
-    static Database* GetInstance(oid_t database_oid){
+    static Database* GetDatabaseById(oid_t database_oid){
       Database* db_address;
 
       try {
@@ -66,10 +66,10 @@ public:
 
     // TODO :: relation id will be removed when we can get oid from catalog stably
     //         or store relation id in the table
-    bool AddTable(storage::DataTable* table, oid_t relation_id){
+    bool AddTable(storage::DataTable* table){
 
       std::string table_name = table->GetName();
-      oid_t table_oid = relation_id;
+      oid_t table_oid = table->GetId();
 
       try {
         table_oid = table_oid_locator.at( table_name );
@@ -77,9 +77,10 @@ public:
       }catch (const std::out_of_range& oor)  {
         table_oid_locator.insert( std::pair<std::string,oid_t>
                                            ( table_name, table_oid ));
-      }
       table_address_locator.insert( std::pair<oid_t, storage::DataTable*>
                                              ( table_oid, table ));
+      }
+
       return true;
     }
 
@@ -89,8 +90,10 @@ public:
       try {
         table_oid = table_oid_locator.at( table_name );
       } catch  (const std::out_of_range& oor) {
-        table = table_address_locator.at( table_oid );
+    	  return table; // return nullptr
       }
+      table = table_address_locator.at( table_oid );
+
       return table;
     }
 
@@ -106,7 +109,9 @@ public:
 
     /*
     GetTableCount()
-    GetAllDataTable()
+    GetAllTableList()
+    RemoveTableByName()
+    RemoveTableById()
     DropAllDataTable()
     */
 
