@@ -22,7 +22,6 @@ LogicalTile::~LogicalTile() {
 
   // Frees owned base tiles.
   for (storage::Tile *base_tile : owned_base_tiles_) {
-    std::cout << "Free logical tile \n";
     delete base_tile;
   }
 }
