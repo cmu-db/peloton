@@ -33,7 +33,7 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
   //        directly inside of the table object?
   AbstractBackend* backend = new VMBackend();
 
-  DataTable *table =  new DataTable(schema, backend, table_name,
+  DataTable *table =  new DataTable(schema, backend, table_name, relation_id,
                                     tuples_per_tilegroup_count);
   table->database_id = database_id;
 
