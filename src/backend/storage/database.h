@@ -13,6 +13,7 @@ l* database.h
 #include "tbb/concurrent_unordered_map.h"
 #include "backend/common/types.h"
 #include "backend/storage/data_table.h"
+#include "backend/common/logger.h"
 
 #include <iostream>
 
@@ -50,68 +51,27 @@ public:
     // OPERATIONS
     //===--------------------------------------------------------------------===//
     
-    static Database* GetDatabaseById(oid_t database_oid){
-      Database* db_address;
+    static Database* GetDatabaseById(oid_t database_oid);
 
-      try {
-        db_address = database_address_locator.at( database_oid );
-      }catch (const std::out_of_range& oor) {
-        Database* db = new Database( database_oid ); 
-        db_address = db;
-        database_address_locator.insert( std::pair<oid_t,Database*>( database_oid,
-                                                                     db_address ));
-      }
-      return db_address;
+    bool AddTable(storage::DataTable* table);
+
+    storage::DataTable* GetTableByName(const std::string table_name) const;
+    storage::DataTable* GetTableById(const oid_t table_oid) const;
+    storage::DataTable* GetTableByPosition(const oid_t table_position) const;
+
+    inline size_t GetTableCount() const{
+      return table_address_locator.size();  
     }
 
-    // TODO :: relation id will be removed when we can get oid from catalog stably
-    //         or store relation id in the table
-    bool AddTable(storage::DataTable* table){
-
-      std::string table_name = table->GetName();
-      oid_t table_oid = table->GetId();
-
-      try {
-        table_oid = table_oid_locator.at( table_name );
-        return false; // table already exists
-      }catch (const std::out_of_range& oor)  {
-        table_oid_locator.insert( std::pair<std::string,oid_t>
-                                           ( table_name, table_oid ));
-      table_address_locator.insert( std::pair<oid_t, storage::DataTable*>
-                                             ( table_oid, table ));
-      }
-
-      return true;
-    }
-
-    inline storage::DataTable* GetTableByName(const std::string table_name) const{
-      storage::DataTable* table = nullptr;
-      oid_t table_oid;
-      try {
-        table_oid = table_oid_locator.at( table_name );
-      } catch  (const std::out_of_range& oor) {
-    	  return table; // return nullptr
-      }
-      table = table_address_locator.at( table_oid );
-
-      return table;
-    }
-
-    inline storage::DataTable* GetTableById(const oid_t table_oid) const{
-      storage::DataTable* table = nullptr;
-      try {
-        table = table_address_locator.at( table_oid );
-      } catch  (const std::out_of_range& oor) {
-        table = nullptr;
-      }
-      return table;
+    inline size_t GetDatabaseOid() const{
+      return database_oid;
     }
 
     /*
-    GetTableCount()
+    TODO :: 
     GetAllTableList()
-    RemoveTableByName()
-    RemoveTableById()
+    DeleteTableByName()
+    DeleteTableById()
     DropAllDataTable()
     */
 
@@ -119,7 +79,7 @@ public:
     // UTILITIES
     //===--------------------------------------------------------------------===//
 
-    // Get a string representation of this table
+    // Get a string representation of this database
     friend std::ostream& operator<<(std::ostream& os, const Database& database);
 
 protected:
