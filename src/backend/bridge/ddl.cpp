@@ -542,29 +542,6 @@ bool DDL::CreateTable( Oid relation_oid,
 
 
 /**
- * @brief Drop table.
- * @param table_oid Table id.
- * @return true if we dropped the table, false otherwise
- */
-bool DDL::DropTable(Oid table_oid) {
-
-  oid_t database_oid = GetCurrentDatabaseOid();
-
-  if(database_oid == InvalidOid || table_oid == InvalidOid) {
-    LOG_WARN("Could not drop table :: db oid : %u table oid : %u", database_oid, table_oid);
-    return false;
-  }
-
-  bool status = storage::TableFactory::DropDataTable(database_oid, table_oid);
-  if(status == true) {
-    LOG_INFO("Dropped table with oid : %u\n", table_oid);
-    return true;
-  }
-
-  return false;
-}
-
-/**
  * @brief Create index.
  * @param index_name Index name
  * @param table_name Table name
@@ -730,14 +707,45 @@ bool DDL::AlterTable( Oid relation_oid, AlterTableStmt* Astmt ){
 	    //case AT_DropColumn:  /* drop column */
 
       case AT_AddConstraint:	/* ADD CONSTRAINT */
+      {
         bool status = peloton::bridge::DDL::AddConstraint( relation_oid, (Constraint*) cmd->def );
         fprintf(stderr, "DDLAddConstraint :: %d \n", status);
         break;
-
-      break;
+      }
+      default:
+    	  break;
     }
   }
 }
+
+/**
+ * @brief Drop table.
+ * @param table_oid Table id.
+ * @return true if we dropped the table, false otherwise
+ */
+bool DDL::DropTable(Oid table_oid) {
+
+  oid_t database_oid = GetCurrentDatabaseOid();
+  bool status;
+
+  if(database_oid == InvalidOid || table_oid == InvalidOid) {
+    LOG_WARN("Could not drop table :: db oid : %u table oid : %u", database_oid, table_oid);
+    return false;
+  }
+
+  // Get db with current database oid
+  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+  status = db->DeleteTableById( table_oid );
+
+  if(status == true) {
+    LOG_INFO("Dropped table with oid : %u\n", table_oid);
+    return true;
+  }
+
+  return false;
+}
+
+
 
 
 
