@@ -88,6 +88,7 @@ bool CreateExecutor::CreateDatabase(std::string db_name) {
 }
 
 // TODO :: Remove
+/*
 bool CreateExecutor::CreateTable(catalog::Database* db,
                                  std::string table_name,
                                  DDL_ColumnInfo* ddl_columnInfo,
@@ -110,128 +111,12 @@ bool CreateExecutor::CreateTable(catalog::Database* db,
   }
 
   //Construct schema with ddl_columnInfo
-/*
-  if( schema == NULL )
-  {
-    std::vector<catalog::ColumnInfo> columnInfoVect;
-
-    //for( auto columnInfo_itr : columnInfo){
-    for( int column_itr = 0; column_itr < num_columns; column_itr++ ){
-
-      ValueType currentValueType;
-
-      switch( ddl_columnInfo[column_itr].valueType ){
-         // Could not find yet corresponding types in Postgres...
-         // Also - check below types again to make sure..
-         // TODO :: change the numbers to enum type
-
-         //case ??:
-         //currentValueType = VALUE_TYPE_NULL;
-         //break;
-
-         //case ??:
-         //currentValueType = VALUE_TYPE_TINYINT;
-         //ddl_columnInfo[column_itr].is_inlined = true;
-
-         //break;
-         //case ??:
-         //currentValueType = VALUE_TYPE_ADDRESS;
-         //break;
-
-         //case ??:
-         //currentValueType = VALUE_TYPE_VARBINARY;
-         //break;
-
-         case 16: // boolean, 'true'/'false'
-         currentValueType = VALUE_TYPE_BOOLEAN;
-         break;
-
-         case 21: // -32 thousand to 32 thousand, 2-byte storage
-         currentValueType = VALUE_TYPE_SMALLINT;
-         ddl_columnInfo[column_itr].is_inlined = true;
-         break;
-         case 23: // -2 billion to 2 billion integer, 4-byte storage
-         currentValueType = VALUE_TYPE_INTEGER;
-         ddl_columnInfo[column_itr].is_inlined = true;
-         break;
-         case 20: // ~18 digit integer, 8-byte storage
-         currentValueType = VALUE_TYPE_BIGINT;
-         ddl_columnInfo[column_itr].is_inlined = true;
-         break;
-
-         case 701: // double-precision floating point number, 8-byte storage
-         currentValueType = VALUE_TYPE_DOUBLE;
-         ddl_columnInfo[column_itr].is_inlined = true;
-         break;
-
-         case 1042: // char(length), blank-padded string, fixed storage length
-         currentValueType = VALUE_TYPE_VARCHAR;
-         ddl_columnInfo[column_itr].is_inlined = true;
-         break;
-         // !!! NEED TO BE UPDATED ...
-         case 1043: // varchar(length), non-blank-padded string, variable storage length;
-         currentValueType = VALUE_TYPE_VARCHAR;
-         ddl_columnInfo[column_itr].is_inlined = true;
-         break;
-
-         case 1114: // date and time
-         case 1184: // date and time with time zone
-         currentValueType = VALUE_TYPE_TIMESTAMP;
-         ddl_columnInfo[column_itr].is_inlined = true;
-         break;
-
-         case 1700: // numeric(precision, decimal), arbitrary precision number
-         currentValueType = VALUE_TYPE_DECIMAL;
-         break;
-
-         default:
-         currentValueType = VALUE_TYPE_INVALID;
-         printf("INVALID VALUE TYPE : %d \n", ddl_columnInfo[column_itr].valueType);
-         break;
-     }
-     catalog::ColumnInfo *columnInfo = new catalog::ColumnInfo( currentValueType,
-                                                                ddl_columnInfo[column_itr].column_offset,
-                                                                ddl_columnInfo[column_itr].column_length,
-                                                                ddl_columnInfo[column_itr].name,
-                                                                ddl_columnInfo[column_itr].allow_null,
-                                                                ddl_columnInfo[column_itr].is_inlined );
-    //Add current columnInfo into the columnInfoVect
-    columnInfoVect.push_back(*columnInfo);
-    }
-
-    // Construct schema from vector of ColumnInfo
-    schema = new catalog::Schema(columnInfoVect);
-  }
-
-  storage::VMBackend *vmb = new storage::VMBackend;
-  vmb->Allocate(sizeof(storage::DataTable));
-
-*/
-   //Create a table from schema
-  //table = new storage::DataTable(schema, /*FIX IT*/backend, table_name, /*FIX*/tuples_per_tilegroup);
-
-  /* TODO :: 
-  // lock database
-  {
-    db->Lock();
-
-    bool status = db->AddTable(table); // FIX
-    if (status == false) {
-      //LOG_ERROR("Could not create table : %s \n", table_name);
-      printf("Could not create table : %s \n", table_name.c_str());
-      delete table;
-      db->Unlock();
-      return false;
-    }
-
-    db->Unlock();
-  }
-  */
 
   //LOG_WARN("Created table : %s \n", table_name);
   printf("Created table : %s \n", table_name.c_str());
   return true;
 }
+*/
 
 
 bool CreateExecutor::CreateIndex(catalog::Database* db,
