@@ -110,7 +110,7 @@ void GetStackTrace(){
   LOG_INFO("%s", internal_info.str().c_str());
   LOG_INFO("stack trace :\n");
   LOG_INFO("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
-  LOG_INFO("%s", stack_trace.str().c_str());
+  LOG_INFO("\n%s", stack_trace.str().c_str());
   LOG_INFO("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
 
   free(func_name);
