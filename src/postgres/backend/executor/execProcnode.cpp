@@ -116,6 +116,9 @@
 #include "miscadmin.h"
 
 
+//#include "nodes/print.h"
+
+
 /* ------------------------------------------------------------------------
  *		ExecInitNode
  *
@@ -528,6 +531,10 @@ ExecProcNode(PlanState *node)
 
 	if (node->instrument)
 		InstrStopNode(node->instrument, TupIsNull(result) ? 0.0 : 1.0);
+
+//	printf("nodeTag : %u\n", nodeTag(node));
+//	print_slot(result);
+//	fflush(stdout);
 
 	return result;
 }
