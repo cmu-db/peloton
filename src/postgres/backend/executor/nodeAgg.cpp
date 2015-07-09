@@ -1057,7 +1057,7 @@ finalize_aggregate(AggState *aggstate,
 		InitFunctionCallInfoData(fcinfo, &peraggstate->finalfn,
 								 numFinalArgs,
 								 peraggstate->aggCollation,
-								 (void *) aggstate, NULL);
+								 reinterpret_cast<fmNodePtr>(aggstate), NULL);
 
 		/* Fill in the transition state value */
 		fcinfo.arg[0] = pergroupstate->transValue;
@@ -2408,7 +2408,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 								 &peraggstate->transfn,
 								 peraggstate->numTransInputs + 1,
 								 peraggstate->aggCollation,
-								 (void *) aggstate, NULL);
+								 reinterpret_cast<fmNodePtr>(aggstate), NULL);
 
 		/* get info about relevant datatypes */
 		get_typlenbyval(aggref->aggtype,

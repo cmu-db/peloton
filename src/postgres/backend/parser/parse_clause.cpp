@@ -2353,7 +2353,7 @@ transformWindowDefinitions(ParseState *pstate,
 				errmsg("cannot override PARTITION BY clause of window \"%s\"",
 					   windef->refname),
 						 parser_errposition(pstate, windef->location)));
-			wc->partitionClause = copyObject(refwc->partitionClause);
+			wc->partitionClause = static_cast<List *>(copyObject(refwc->partitionClause));
 		}
 		else
 			wc->partitionClause = static_cast<List *>(partitionClause);

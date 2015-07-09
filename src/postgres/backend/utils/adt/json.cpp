@@ -1412,7 +1412,7 @@ datum_to_json(Datum val, bool is_null, StringInfo result,
 			composite_to_json(val, result, false);
 			break;
 		case JSONTYPE_BOOL:
-			outputstr = DatumGetBool(val) ? "true" : "false";
+			outputstr = DatumGetBool(val) ? static_cast<char *>("true") : static_cast<char *>("false");
 			if (key_scalar)
 				escape_json(result, outputstr);
 			else

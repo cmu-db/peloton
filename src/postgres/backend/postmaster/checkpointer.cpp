@@ -1232,7 +1232,7 @@ CompactCheckpointerRequestQueue(void)
 		 * contain no pad bytes.
 		 */
 		request = &CheckpointerShmem->requests[n];
-		slotmap = hash_search(htab, request, HASH_ENTER, &found);
+		slotmap = static_cast<CheckpointerSlotMapping *>(hash_search(htab, request, HASH_ENTER, &found));
 		if (found)
 		{
 			/* Duplicate, so mark the previous occurrence as skippable */

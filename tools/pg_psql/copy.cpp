@@ -450,7 +450,7 @@ handleCopyOut(PGconn *conn, FILE *copystream, PGresult **res)
 
 		if (buf)
 		{
-			if (OK && fwrite(buf, 1, ret, copystream) != ret)
+			if (OK && fwrite(buf, 1, ret, copystream) != static_cast<unsigned int>(ret))
 			{
 				psql_error("could not write COPY data: %s\n",
 						   strerror(errno));

@@ -1399,7 +1399,7 @@ generate_series_step_numeric(PG_FUNCTION_ARGS)
 	 * Get the saved state and use current state as the result of this
 	 * iteration.
 	 */
-	fctx = funcctx->user_fctx;
+	fctx = static_cast<generate_series_numeric_fctx *>(funcctx->user_fctx);
 
 	if ((fctx->step.sign == NUMERIC_POS &&
 		 cmp_var(&fctx->current, &fctx->stop) <= 0) ||
@@ -1632,7 +1632,7 @@ numeric_sortsupport(PG_FUNCTION_ARGS)
 static Datum
 numeric_abbrev_convert(Datum original_datum, SortSupport ssup)
 {
-	NumericSortSupport *nss = ssup->ssup_extra;
+	NumericSortSupport *nss = static_cast<NumericSortSupport *>(ssup->ssup_extra);
 	void	   *original_varatt = PG_DETOAST_DATUM_PACKED(original_datum);
 	Numeric		value;
 	Datum		result;
@@ -1689,7 +1689,7 @@ numeric_abbrev_convert(Datum original_datum, SortSupport ssup)
 static bool
 numeric_abbrev_abort(int memtupcount, SortSupport ssup)
 {
-	NumericSortSupport *nss = ssup->ssup_extra;
+	NumericSortSupport *nss = static_cast<NumericSortSupport *>(ssup->ssup_extra);
 	double		abbr_card;
 
 	if (memtupcount < 10000 || nss->input_count < 10000 || !nss->estimating)

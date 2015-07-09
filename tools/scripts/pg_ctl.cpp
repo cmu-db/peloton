@@ -475,7 +475,7 @@ start_postmaster(void)
  * manager checkpoint, it's got nothing to do with database checkpoints!!
  */
 static PGPing
-test_postmaster_connection(bool do_checkpoint)
+test_postmaster_connection(bool UNUSED(do_checkpoint))
 {
 	PGPing		ret = PQPING_NO_RESPONSE;
 	bool		found_stale_pidfile = false;

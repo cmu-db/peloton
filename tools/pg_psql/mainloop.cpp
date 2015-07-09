@@ -319,7 +319,7 @@ MainLoop(FILE *source)
 				 * history entry; we don't want SQL and backslash commands
 				 * intermixed in history if at all possible.
 				 */
-				if (query_buf->len == added_nl_pos)
+				if (query_buf->len == static_cast<unsigned int>(added_nl_pos))
 				{
 					query_buf->data[--query_buf->len] = '\0';
 					pg_send_history(history_buf);
