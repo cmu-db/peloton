@@ -119,18 +119,43 @@ bool MaterializationExecutor::DExecute() {
   if (!success) {
     return false;
   }
-  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
 
-  const planner::MaterializationNode &node = GetPlanNode<planner::MaterializationNode>();
-  const std::unordered_map<oid_t, oid_t> &old_to_new_cols = node.old_to_new_cols();
+  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
+  std::unique_ptr<catalog::Schema> source_tile_schema(source_tile.get()->GetPhysicalSchema());
+
+  // Check the number of tuples in input logical tile
+  // If none, then just return false
+  const int num_tuples = source_tile->GetTupleCount();
+  if(num_tuples == 0){
+    return false;
+  }
+
+  std::unordered_map<oid_t, oid_t> old_to_new_cols;
+  const catalog::Schema *output_schema;
+  auto node = GetRawNode();
+
+  // Create a default identity mapping node if we did not get one
+  if(node == nullptr) {
+    assert(source_tile_schema.get());
+    output_schema = source_tile_schema.get();
+    oid_t column_count = output_schema->GetColumnCount();
+    for (oid_t col = 0; col < column_count; col++) {
+      old_to_new_cols[col] = col;
+    }
+  }
+  // Else use the mapping in the given plan node
+  else {
+    const planner::MaterializationNode &node = GetPlanNode<planner::MaterializationNode>();
+    old_to_new_cols = node.old_to_new_cols();
+    output_schema = node.GetSchema();
+  }
 
   // Generate mappings.
   std::unordered_map<storage::Tile *, std::vector<oid_t> > tile_to_cols;
   GenerateTileToColMap(old_to_new_cols, source_tile.get(), tile_to_cols);
 
   // Create new physical tile.
-  const int num_tuples = source_tile->GetTupleCount();
-  std::unique_ptr<storage::Tile> dest_tile(storage::TileFactory::GetTempTile(node.schema(), num_tuples));
+  std::unique_ptr<storage::Tile> dest_tile(storage::TileFactory::GetTempTile(*output_schema, num_tuples));
 
   // Proceed to materialize logical tile by physical tile at a time.
   MaterializeByTiles( source_tile.get(), old_to_new_cols, tile_to_cols, dest_tile.get());

@@ -55,22 +55,8 @@ TEST(MaterializationTests, SingleBaseTileTest) {
         { source_base_tile },
         own_base_tiles));
 
-  // Create materialization node for this test.
-  std::unique_ptr<catalog::Schema> output_schema(catalog::Schema::CopySchema(
-      source_base_tile->GetSchema()));
-  std::unordered_map<oid_t, oid_t> old_to_new_cols;
-
-  unsigned int column_count = output_schema->GetColumnCount();
-  for (oid_t col = 0; col < column_count; col++) {
-    // Create identity mapping.
-    old_to_new_cols[col] = col;
-  }
-  planner::MaterializationNode node(
-      old_to_new_cols,
-      output_schema.release());
-
   // Pass through materialization executor.
-  executor::MaterializationExecutor executor(&node);
+  executor::MaterializationExecutor executor(nullptr);
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
       ExecutorTestsUtil::ExecuteTile(&executor, source_logical_tile.release()));
 

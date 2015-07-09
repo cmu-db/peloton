@@ -1532,8 +1532,6 @@ ExecutePlan(EState *estate,
 	Peloton_Status *status;
 	int status_code;
 
-  status = peloton_create_status();
-
 	/*
 	 * initialize local variables
 	 */
@@ -1556,11 +1554,6 @@ ExecutePlan(EState *estate,
 		 * Execute the plan and obtain a tuple
 		 */
 		slot = ExecProcNode(planstate);
-
-		// TODO: Peloton Changes
-		peloton_send_dml(status, planstate, sendTuples, dest,
-		                 TopTransactionContext,
-		                 CurTransactionContext);
 
 		/*
 		 * if the tuple is null, then we assume there is nothing more to
@@ -1604,6 +1597,13 @@ ExecutePlan(EState *estate,
 		if (numberTuples && numberTuples == current_tuple_count)
 			break;
 	}
+
+  // TODO: Peloton Changes
+	status = peloton_create_status();
+
+  peloton_send_dml(status, planstate, sendTuples, dest,
+                   TopTransactionContext,
+                   CurTransactionContext);
 
   status_code = peloton_get_status(status);
   peloton_destroy_status(status);
