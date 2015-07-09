@@ -46,12 +46,16 @@ public:
     DataTable(const catalog::Schema *schema,
               AbstractBackend *backend,
               std::string table_name,
+              oid_t table_oid,
               size_t tuples_per_tilegroup);
 
     ~DataTable();
 
     std::string GetName() const {
         return table_name;
+    }
+    oid_t  GetId() const {
+        return table_oid;
     }
     
     //===--------------------------------------------------------------------===//
@@ -161,6 +165,7 @@ protected:
     //===--------------------------------------------------------------------===//
 
     std::string table_name;
+    oid_t table_oid;
     
     // INDEXES
     std::vector<index::Index*> indexes;
