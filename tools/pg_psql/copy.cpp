@@ -99,7 +99,7 @@ parse_slash_copy(const char *args)
 		return NULL;
 	}
 
-	result = pg_malloc0(sizeof(struct copy_options));
+	result = static_cast<copy_options *>(pg_malloc0(sizeof(struct copy_options)));
 
 	result->before_tofrom = pg_strdup("");		/* initialize for appending */
 

@@ -588,7 +588,7 @@ PortalHashTableDeleteAll(void)
 		return;
 
 	hash_seq_init(&status, PortalHashTable);
-	while ((hentry = hash_seq_search(&status)) != NULL)
+	while ((hentry = static_cast<PortalHashEnt *>(hash_seq_search(&status))) != NULL)
 	{
 		Portal		portal = hentry->portal;
 
@@ -1024,7 +1024,7 @@ pg_cursor(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	hash_seq_init(&hash_seq, PortalHashTable);
-	while ((hentry = hash_seq_search(&hash_seq)) != NULL)
+	while ((hentry = static_cast<PortalHashEnt *>(hash_seq_search(&hash_seq))) != NULL)
 	{
 		Portal		portal = hentry->portal;
 		Datum		values[6];

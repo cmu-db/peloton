@@ -167,7 +167,7 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 	 * since querying invalid values isn't supposed to be a frequent thing,
 	 * but it's basically free.
 	 */
-	entry = hash_search(RelfilenodeMapHash, (void *) &key, HASH_FIND, &found);
+	entry = static_cast<RelfilenodeMapEntry *>(hash_search(RelfilenodeMapHash, (void *) &key, HASH_FIND, &found));
 
 	if (found)
 		return entry->relid;
@@ -250,7 +250,7 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 	 * caused cache invalidations to be executed which would have deleted a
 	 * new___ entry if we had entered it above.
 	 */
-	entry = hash_search(RelfilenodeMapHash, (void *) &key, HASH_ENTER, &found);
+	entry = static_cast<RelfilenodeMapEntry *>(hash_search(RelfilenodeMapHash, (void *) &key, HASH_ENTER, &found));
 	if (found)
 		elog(ERROR, "corrupted hashtable");
 	entry->relid = relid;

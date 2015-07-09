@@ -5067,7 +5067,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 
 				/* Fetch first tuple in reverse direction */
 				if ((tup = index_getnext(index_scan,
-										 -indexscandir)) != NULL)
+				           static_cast<ScanDirection>(-indexscandir))) != NULL)
 				{
 					/* Extract the index column values from the heap tuple */
 					ExecStoreTuple(tup, slot, InvalidBuffer, false);
@@ -6198,7 +6198,7 @@ genericcostestimate(PlannerInfo *root,
 		if (IsA(rinfo->clause, ScalarArrayOpExpr))
 		{
 			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) rinfo->clause;
-			int			alength = estimate_array_length(lsecond(saop->args));
+			int			alength = estimate_array_length(static_cast<Node *>(lsecond(saop->args)));
 
 			if (alength > 1)
 				num_sa_scans *= alength;

@@ -188,7 +188,7 @@ BuildEventTriggerCache(void)
 		}
 
 		/* Add to cache entry. */
-		entry = hash_search(cache, &event, HASH_ENTER, &found);
+		entry = static_cast<EventTriggerCacheEntry *>(hash_search(cache, &event, HASH_ENTER, &found));
 		if (found)
 			entry->triggerlist = lappend(entry->triggerlist, item);
 		else
