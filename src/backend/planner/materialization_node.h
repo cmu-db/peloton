@@ -33,26 +33,29 @@ class MaterializationNode : public AbstractPlanNode {
   MaterializationNode(
       const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
       catalog::Schema *schema)
-    : old_to_new_cols_(old_to_new_cols),
-      schema_(schema) {
+  : old_to_new_cols_(old_to_new_cols),
+    schema_(schema) {
+  }
+
+  ~MaterializationNode() {
+    // Clean up schema
+    delete schema_;
   }
 
   inline const std::unordered_map<oid_t, oid_t>& old_to_new_cols() const {
     return old_to_new_cols_;
   }
 
-  inline const catalog::Schema& schema() const {
-    return *schema_;
+  inline const catalog::Schema *GetSchema() const {
+    return schema_;
   }
 
   inline PlanNodeType GetPlanNodeType() const {
-    //TODO Implement.
-    return PLAN_NODE_TYPE_INVALID;
+    return PLAN_NODE_TYPE_MATERIALIZE;
   }
 
   inline std::string GetInfo() const {
-    //TODO Implement.
-    return "";
+    return "Materialize";
   }
 
  private:
@@ -62,7 +65,7 @@ class MaterializationNode : public AbstractPlanNode {
   std::unordered_map<oid_t, oid_t> old_to_new_cols_;
 
   /** @brief Schema of newly materialized tile. */
-  std::unique_ptr<catalog::Schema> schema_;
+  catalog::Schema *schema_;
 };
 
 } // namespace planner

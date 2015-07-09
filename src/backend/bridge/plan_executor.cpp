@@ -15,13 +15,15 @@
 #include "backend/common/logger.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/executor/executors.h"
+#include "backend/storage/tile_iterator.h"
 
 namespace peloton {
 namespace bridge {
 
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               planner::AbstractPlanNode *plan,
-                                              concurrency::Transaction *txn);
+                                              concurrency::Transaction *txn,
+                                              bool materialized = false);
 
 void CleanExecutorTree(executor::AbstractExecutor *root);
 
@@ -36,7 +38,7 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlanNode *plan, std::string 
 
   prefix += "  ";
 
-  LOG_INFO("%s->Plan Type :: %d \n", prefix.c_str(), plan->GetPlanNodeType());
+  LOG_INFO("%s->Plan Type :: %d ", prefix.c_str(), plan->GetPlanNodeType());
 
   auto children = plan->GetChildren();
 
@@ -55,7 +57,8 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlanNode *plan, std::string 
  */
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               planner::AbstractPlanNode *plan,
-                                              concurrency::Transaction *txn) {
+                                              concurrency::Transaction *txn,
+                                              bool materialized) {
   // Base case
   if(plan == nullptr)
     return root;
@@ -65,11 +68,20 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
   auto plan_node_type = plan->GetPlanNodeType();
   switch(plan_node_type) {
     case PLAN_NODE_TYPE_INVALID:
-      LOG_ERROR("Invalid plan node type \n");
+      LOG_ERROR("Invalid plan node type ");
       break;
 
     case PLAN_NODE_TYPE_SEQSCAN:
+      // Materialized ?
+      if(materialized == false) {
+        child_executor = new executor::MaterializationExecutor(nullptr);
+        materialized = true;
+        break;
+      }
+
+      // Already materialized.
       child_executor = new executor::SeqScanExecutor(plan, txn);
+      materialized = false;
       break;
 
     case PLAN_NODE_TYPE_INSERT:
@@ -81,7 +93,7 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       break;
 
     default:
-      LOG_INFO("Unsupported plan node type : %d \n", plan_node_type);
+      LOG_INFO("Unsupported plan node type : %d ", plan_node_type);
       break;
   }
 
@@ -97,6 +109,11 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
   auto children = plan->GetChildren();
   for(auto child : children) {
     child_executor = BuildExecutorTree(child_executor, child, txn);
+  }
+
+  // Materialize
+  if(materialized == true) {
+    BuildExecutorTree(child_executor, plan, txn, true);
   }
 
   return root;
@@ -130,49 +147,67 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan) {
 
   assert(plan);
 
+  bool status;
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
-  LOG_INFO("Building the executor tree\n");
+  LOG_TRACE("Building the executor tree");
 
   // Build the executor tree
-  executor::AbstractExecutor *executor_tree = BuildExecutorTree(nullptr, plan, txn);
+  executor::AbstractExecutor *executor_tree = BuildExecutorTree(nullptr,
+                                                                plan, txn);
 
-  LOG_INFO("Initializing the executor tree\n");
-  // Init the executor tree
-  bool status_init = executor_tree->Init();
+  LOG_TRACE("Initializing the executor tree");
 
-  assert(status_init);
+  // Initialize the executor tree
+  status = executor_tree->Init();
 
-  LOG_INFO("Running the executor tree\n");
+  // Abort and cleanup
+  if(status == false) {
+    txn_manager.AbortTransaction(txn);
+    txn_manager.EndTransaction(txn);
+    CleanExecutorTree(executor_tree);
+    return false;
+  }
 
-  // Execute the tree
-  bool status = executor_tree->Execute();
+  LOG_TRACE("Running the executor tree");
 
-  if(status == true) {
+  // Execute the tree until we get result tiles from root node
+  for(;;) {
+    status = executor_tree->Execute();
+
+    // Abort and cleanup
+    if(status == false) {
+      txn_manager.AbortTransaction(txn);
+      txn_manager.EndTransaction(txn);
+      CleanExecutorTree(executor_tree);
+      return false;
+    }
+
     // Try to print the first tile's content
     std::unique_ptr<executor::LogicalTile> tile(executor_tree->GetOutput());
-    if(tile.get()){
-      std::cout << *tile.get() << std::endl;
-      for(auto tuple_id : *tile){
-        for(oid_t col_id = 0; col_id < tile->GetColumnCount(); col_id++)
-          std::cout << tile->GetValue(tuple_id, col_id) << ", ";
-        std::cout << std::endl;
-      }
+
+    if(tile.get() == nullptr)
+      break;
+
+    // Get result base tile and iterate over it
+    auto base_tile = tile.get()->GetBaseTile(0);
+    assert(base_tile);
+    storage::TileIterator tile_itr(base_tile);
+    storage::Tuple tuple(base_tile->GetSchema());
+
+    while (tile_itr.Next(tuple)) {
+      std::cout << tuple;
     }
-    txn_manager.CommitTransaction(txn);
+
   }
-  else
-    txn_manager.AbortTransaction(txn);
 
+  // Commit and cleanup
+  txn_manager.CommitTransaction(txn);
   txn_manager.EndTransaction(txn);
-
-  LOG_INFO("Cleaning up the executor tree\n");
-
-  // Clean up the executor tree
   CleanExecutorTree(executor_tree);
 
-  return status;
+  return true;
 }
 
 
