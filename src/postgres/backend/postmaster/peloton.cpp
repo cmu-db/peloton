@@ -167,7 +167,7 @@ PelotonMain(int argc, char *argv[])
    */
   pqsignal(SIGINT, StatementCancelHandler);
   pqsignal(SIGTERM, peloton_sigterm_handler);
-  pqsignal(SIGSEGV, peloton_sigsegv_handler);
+  //pqsignal(SIGSEGV, peloton_sigsegv_handler);
   pqsignal(SIGQUIT, quickdie);
   InitializeTimeouts();   /* establishes SIGALRM handler */
 
@@ -876,10 +876,8 @@ peloton_process_dml(Peloton_MsgDML *msg, int len)
 
     if(planstate != NULL)
     {
-      // FIXME :: 
-      //auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
-      //peloton::bridge::PlanExecutor::PrintPlan(plan);
-      //peloton::bridge::PlanExecutor::ExecutePlan(plan);
+      auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
+      peloton::bridge::PlanExecutor::ExecutePlan(plan);
 
       // TODO: The plan tree also needs to be destroyed.
     }

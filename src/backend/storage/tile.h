@@ -76,7 +76,14 @@ class Tile {
 
   // active tuple slots
   inline virtual oid_t GetActiveTupleCount() const {
-    return tile_group_header->GetNextTupleSlot();
+    // For normal tiles
+    if(tile_group_header != nullptr) {
+      return tile_group_header->GetNextTupleSlot();
+    }
+    // For temp tiles
+    else {
+      return num_tuple_slots;
+    }
   }
 
   int GetTupleOffset(const char *tuple_address) const;

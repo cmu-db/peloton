@@ -66,9 +66,6 @@ public:
   }
 
 	bool HasNext() {
-    //std::cout << "Tile Itr :: " << tile_itr << " Active   :: "
-    //		<< tile_group_header->GetActiveTupleCount() << "\n";
-
     return (tile_itr < tile->GetActiveTupleCount());
   }
 

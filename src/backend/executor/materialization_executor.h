@@ -32,7 +32,9 @@ class MaterializationExecutor : public AbstractExecutor {
   MaterializationExecutor(MaterializationExecutor &&) = delete;
   MaterializationExecutor& operator=(MaterializationExecutor &&) = delete;
 
-  explicit MaterializationExecutor(planner::AbstractPlanNode *node);
+  // If node is null, then we will create a default node in DExecute()
+  // Else, we will apply the column mapping on the logical tile based on node.
+  explicit MaterializationExecutor(planner::AbstractPlanNode *node = nullptr);
 
  protected:
   bool DInit();
