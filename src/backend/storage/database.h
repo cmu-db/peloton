@@ -74,7 +74,7 @@ public:
       try {
         table_oid = table_oid_locator.at( table_name );
         return false; // table already exists
-      }catch (const std::out_of_range& oor) {
+      }catch (const std::out_of_range& oor)  {
         table_oid_locator.insert( std::pair<std::string,oid_t>
                                            ( table_name, table_oid ));
       }
@@ -82,19 +82,33 @@ public:
                                              ( table_oid, table ));
       return true;
     }
-    /*
-    TODO ::
+
     inline storage::DataTable* GetTableByName(const std::string table_name) const{
-      global_locator.insert(std::pair<std::pair<oid_t, oid_t>, void*>(db_and_table_oid_pair, location));
-      table_name_to_oid
-      //table_oid_locator.insert( std::pair<std::string,oid_t>( table_name, table_oid ))
-      oid = table_oid_locator.at( table_name ); 
+      storage::DataTable* table = nullptr;
+      oid_t table_oid;
+      try {
+        table_oid = table_oid_locator.at( table_name );
+      } catch  (const std::out_of_range& oor) {
+        table = table_address_locator.at( table_oid );
+      }
+      return table;
     }
-    GetTableById(oid table_oid);
+
+    inline storage::DataTable* GetTableById(const oid_t table_oid) const{
+      storage::DataTable* table = nullptr;
+      try {
+        table = table_address_locator.at( table_oid );
+      } catch  (const std::out_of_range& oor) {
+        table = nullptr;
+      }
+      return table;
+    }
+
+    /*
     GetTableCount()
     GetAllDataTable()
     DropAllDataTable()
-   */
+    */
 
     //===--------------------------------------------------------------------===//
     // UTILITIES
