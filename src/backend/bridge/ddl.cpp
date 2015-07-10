@@ -21,6 +21,7 @@
 #include "utils/resowner.h"
 #include "utils/syscache.h"
 #include "catalog/pg_type.h"
+#include "commands/dbcommands.h"
 
 #include "backend/bridge/ddl.h"
 #include "backend/catalog/catalog.h"
@@ -59,10 +60,12 @@ void DDL::ProcessUtility(Node *parsetree,
   switch (nodeTag(parsetree))
   {
     case T_CreatedbStmt:
+    {
       printf("T_Createdb\n");
-    // TODO ::
-    //  createdb((CreatedbStmt *) parsetree);
-      break;
+      CreatedbStmt* CdbStmt = (CreatedbStmt*) parsetree;
+      peloton::bridge::DDL::CreateDatabase( CdbStmt->database_id );
+    }
+    break;
 
     case T_CreateStmt:
     case T_CreateForeignTableStmt:
@@ -209,6 +212,17 @@ void DDL::ProcessUtility(Node *parsetree,
       }
     }
     break;
+    
+    case T_DropdbStmt:
+    {
+      DropdbStmt *Dstmt = (DropdbStmt *) parsetree;
+
+      Oid database_oid = get_database_oid( Dstmt->dbname, Dstmt->missing_ok );
+
+      bool status = peloton::bridge::DDL::DropDatabase( database_oid );
+      fprintf(stderr, "DDL Database :: %d \n", status);
+    }
+    break;
 
     case T_DropStmt:
     {
@@ -217,27 +231,282 @@ void DDL::ProcessUtility(Node *parsetree,
 
       ListCell  *cell;
       foreach(cell, drop->objects){
-        if (drop->removeType == OBJECT_TABLE ){
-          List* names = ((List *) lfirst(cell));
+      List* names = ((List *) lfirst(cell));
+ 
 
-          char* table_name = strVal(linitial(names));
-          Oid table_oid = GetRelationOid(table_name);
+        switch( drop->removeType ){
 
-          status = peloton::bridge::DDL::DropTable( table_oid );
-          fprintf(stderr, "DDLDropTable :: %d \n", status);
+          case OBJECT_DATABASE:
+          {
+            char* database_name = strVal(linitial(names));
+            Oid database_oid = get_database_oid( database_name, true );
+
+            status = peloton::bridge::DDL::DropDatabase( database_oid );
+            fprintf(stderr, "DDL Database :: %d \n", status);
+          }
+          break;
+
+          case OBJECT_TABLE:
+          {
+            char* table_name = strVal(linitial(names));
+            Oid table_oid = GetRelationOid(table_name);
+
+            status = peloton::bridge::DDL::DropTable( table_oid );
+            fprintf(stderr, "DDL DropTable :: %d \n", status);
+          }
+          break;
+
+          default:
+          {
+              LOG_WARN("Unsupported drop object %d ", drop->removeType);
+          }
+          break;
         }
+
       }
     }
     break;
     // End of DropStmt
 
     default:
+    {
       elog(LOG, "unrecognized node type: %d",
-           (int) nodeTag(parsetree));
-      break;
+          (int) nodeTag(parsetree));
+    }
+    break;
   }
 
 }
+
+//===--------------------------------------------------------------------===//
+// Create Object
+//===--------------------------------------------------------------------===//
+
+bool DDL::CreateDatabase( Oid database_oid ){
+  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+}
+
+/**
+ * @brief Create table.
+ * @param table_name Table name
+ * @param column_infos Information about the columns
+ * @param schema Schema for the table
+ * @return true if we created a table, false otherwise
+ */
+bool DDL::CreateTable( Oid relation_oid,
+                       std::string table_name,
+                       std::vector<catalog::ColumnInfo> column_infos,
+                       catalog::Schema *schema){
+
+  //===--------------------------------------------------------------------===//
+  // Check Parameters 
+  //===--------------------------------------------------------------------===//
+  assert( !table_name.empty() );
+  assert( column_infos.size() > 0 || schema != NULL );
+
+  Oid database_oid = GetCurrentDatabaseOid();
+  if(database_oid == InvalidOid)
+    return false;
+
+  // Get db with current database oid
+  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+
+  // Construct our schema from vector of ColumnInfo
+  if( schema == NULL) 
+    schema = new catalog::Schema(column_infos);
+
+  // FIXME: Construct table backend
+  storage::VMBackend *backend = new storage::VMBackend();
+
+  // Build a table from schema
+  storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, relation_oid, schema, table_name);
+  bool status = db->AddTable(table);
+  if( status == false ){
+     LOG_WARN("Could not add table :: db oid : %u table oid : %u", database_oid,  relation_oid);
+  }
+
+  if(table != nullptr) {
+    LOG_INFO("Created table(%u) : %s", relation_oid, table_name.c_str());
+    return true;
+  }
+
+  return false;
+}
+
+
+/**
+ * @brief Create index.
+ * @param index_name Index name
+ * @param table_name Table name
+ * @param type Type of the index
+ * @param unique Index is unique or not ?
+ * @param key_column_names column names for the key table 
+ * @return true if we create the index, false otherwise
+ */
+bool DDL::CreateIndex(std::string index_name,
+                      std::string table_name,
+                      IndexMethodType  index_method_type,
+                      IndexType  index_type,
+                      bool unique_keys,
+                      std::vector<std::string> key_column_names,
+                      Oid table_oid){
+
+  assert( !index_name.empty() );
+  assert( !table_name.empty() );
+  assert( key_column_names.size() > 0  );
+
+  // NOTE: We currently only support btree as our index implementation
+  // TODO : Support other types based on "type" argument
+  IndexMethodType our_index_type = INDEX_METHOD_TYPE_BTREE_MULTIMAP;
+
+  // Get the database oid and table oid
+  oid_t database_oid = GetCurrentDatabaseOid();
+  assert( database_oid );
+
+  if( table_oid == INVALID_OID )
+    table_oid = GetRelationOid(table_name.c_str());
+  
+  assert( table_oid );
+
+  // Get the table location from manager
+  auto table = catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+  storage::DataTable* data_table = (storage::DataTable*) table;
+  auto tuple_schema = data_table->GetSchema();
+
+  // Construct key schema
+  std::vector<oid_t> key_columns;
+
+  // Based on the key column info, get the oid of the given 'key' columns in the tuple schema
+  for( auto key_column_name : key_column_names ){
+    for( oid_t  tuple_schema_column_itr = 0; tuple_schema_column_itr < tuple_schema->GetColumnCount();
+        tuple_schema_column_itr++){
+
+      // Get the current column info from tuple schema
+      catalog::ColumnInfo column_info = tuple_schema->GetColumnInfo(tuple_schema_column_itr);
+      // Compare Key Schema's current column name and Tuple Schema's current column name
+      if( key_column_name == column_info.name ){
+        key_columns.push_back(tuple_schema_column_itr);
+
+        // NOTE :: Since pg_attribute doesn't have any information about primary key and unique key,
+        //         I try to store these information when we create an unique and primary key index
+        if( index_type == INDEX_TYPE_PRIMARY_KEY ){ 
+          catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_PRIMARY );
+          tuple_schema->AddConstraintByColumnId( tuple_schema_column_itr, constraint); 
+        }else if( index_type == INDEX_TYPE_UNIQUE ){ 
+          catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_UNIQUE );
+          tuple_schema->AddConstraintByColumnId( tuple_schema_column_itr, constraint);
+        }
+
+      }
+    }
+  }
+
+  auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_columns);
+
+  // Create index metadata and physical index
+  index::IndexMetadata* metadata = new index::IndexMetadata(index_name, our_index_type,
+                                                            tuple_schema, key_schema,
+                                                            unique_keys);
+  index::Index* index = index::IndexFactory::GetInstance(metadata);
+
+  // Record the built index in the table
+  switch( index_type ){
+    case INDEX_TYPE_NORMAL:
+      data_table->AddIndex(index);
+      break;
+    case INDEX_TYPE_PRIMARY_KEY:
+      data_table->SetPrimaryIndex(index);
+      break;
+    case INDEX_TYPE_UNIQUE:
+      data_table->AddUniqueIndex(index);
+      break;
+    default:
+      elog(LOG, "unrecognized index type: %d", index_type);
+  }
+
+  return true;
+}
+
+//===--------------------------------------------------------------------===//
+// Alter Object
+//===--------------------------------------------------------------------===//
+
+/**
+ * @brief AlterTable with given AlterTableStmt
+ * @param relation_oid relation oid 
+ * @param Astmt AlterTableStmt 
+ * @return true if we alter the table successfully, false otherwise
+ */
+bool DDL::AlterTable( Oid relation_oid, AlterTableStmt* Astmt ){
+
+  ListCell* lcmd;
+  foreach( lcmd, Astmt->cmds)
+  {
+    AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
+
+    switch (cmd->subtype){
+	    //case AT_AddColumn:  /* add column */
+	    //case AT_DropColumn:  /* drop column */
+
+      case AT_AddConstraint:	/* ADD CONSTRAINT */
+      {
+        bool status = peloton::bridge::DDL::AddConstraint( relation_oid, (Constraint*) cmd->def );
+        fprintf(stderr, "DDLAddConstraint :: %d \n", status);
+        break;
+      }
+      default:
+    	  break;
+    }
+  }
+}
+
+
+//===--------------------------------------------------------------------===//
+// Drop Object
+//===--------------------------------------------------------------------===//
+
+/**
+ * @brief Drop database.
+ * @param database_oid database id.
+ * @return true if we dropped the database, false otherwise
+ */
+static bool DDL::DropDatabase( Oid database_oid ){
+  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+  bool status = db->DeleteDatabaseById( database_oid );
+  return status;
+}
+
+/**
+ * @brief Drop table.
+ * @param table_oid Table id.
+ * @return true if we dropped the table, false otherwise
+ */
+// FIXME :: Dependencies btw indexes and tables
+bool DDL::DropTable(Oid table_oid) {
+
+  oid_t database_oid = GetCurrentDatabaseOid();
+  bool status;
+
+  if(database_oid == InvalidOid || table_oid == InvalidOid) {
+    LOG_WARN("Could not drop table :: db oid : %u table oid : %u", database_oid, table_oid);
+    return false;
+  }
+
+  // Get db with current database oid
+  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+  status = db->DeleteTableById( table_oid );
+
+  if(status == true) {
+    LOG_INFO("Dropped table with oid : %u\n", table_oid);
+    return true;
+  }
+
+  return false;
+}
+
+//===--------------------------------------------------------------------===//
+// Misc. 
+//===--------------------------------------------------------------------===//
 
 /**
  * @brief Construct ColumnInfo vector from a create statement
@@ -492,171 +761,6 @@ bool DDL::CreateIndexesWithIndexInfos(oid_t relation_oid ){
   return true;
 }
 
-
-/**
- * @brief Create table.
- * @param table_name Table name
- * @param column_infos Information about the columns
- * @param schema Schema for the table
- * @return true if we created a table, false otherwise
- */
-bool DDL::CreateTable( Oid relation_oid,
-                       std::string table_name,
-                       std::vector<catalog::ColumnInfo> column_infos,
-                       catalog::Schema *schema){
-
-  //===--------------------------------------------------------------------===//
-  // Check Parameters 
-  //===--------------------------------------------------------------------===//
-  assert( !table_name.empty() );
-  assert( column_infos.size() > 0 || schema != NULL );
-
-  Oid database_oid = GetCurrentDatabaseOid();
-  if(database_oid == InvalidOid)
-    return false;
-
-  // Get db with current database oid
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
-
-  // Construct our schema from vector of ColumnInfo
-  if( schema == NULL) 
-    schema = new catalog::Schema(column_infos);
-
-  // FIXME: Construct table backend
-  storage::VMBackend *backend = new storage::VMBackend();
-
-  // Build a table from schema
-  storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, relation_oid, schema, table_name);
-  bool status = db->AddTable(table);
-  if( status == false ){
-     LOG_WARN("Could not add table :: db oid : %u table oid : %u", database_oid,  relation_oid);
-  }
-
-  if(table != nullptr) {
-    LOG_INFO("Created table(%u) : %s", relation_oid, table_name.c_str());
-    return true;
-  }
-
-  return false;
-}
-
-
-/**
- * @brief Drop table.
- * @param table_oid Table id.
- * @return true if we dropped the table, false otherwise
- */
-bool DDL::DropTable(Oid table_oid) {
-
-  oid_t database_oid = GetCurrentDatabaseOid();
-
-  if(database_oid == InvalidOid || table_oid == InvalidOid) {
-    LOG_WARN("Could not drop table :: db oid : %u table oid : %u", database_oid, table_oid);
-    return false;
-  }
-
-  bool status = storage::TableFactory::DropDataTable(database_oid, table_oid);
-  if(status == true) {
-    LOG_INFO("Dropped table with oid : %u\n", table_oid);
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * @brief Create index.
- * @param index_name Index name
- * @param table_name Table name
- * @param type Type of the index
- * @param unique Index is unique or not ?
- * @param key_column_names column names for the key table 
- * @return true if we create the index, false otherwise
- */
-bool DDL::CreateIndex(std::string index_name,
-                      std::string table_name,
-                      IndexMethodType  index_method_type,
-                      IndexType  index_type,
-                      bool unique_keys,
-                      std::vector<std::string> key_column_names,
-                      Oid table_oid){
-
-  assert( !index_name.empty() );
-  assert( !table_name.empty() );
-  assert( key_column_names.size() > 0  );
-
-  // NOTE: We currently only support btree as our index implementation
-  // TODO : Support other types based on "type" argument
-  IndexMethodType our_index_type = INDEX_METHOD_TYPE_BTREE_MULTIMAP;
-
-  // Get the database oid and table oid
-  oid_t database_oid = GetCurrentDatabaseOid();
-  assert( database_oid );
-
-  if( table_oid == INVALID_OID )
-    table_oid = GetRelationOid(table_name.c_str());
-  
-  assert( table_oid );
-
-  // Get the table location from manager
-  auto table = catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
-  storage::DataTable* data_table = (storage::DataTable*) table;
-  auto tuple_schema = data_table->GetSchema();
-
-  // Construct key schema
-  std::vector<oid_t> key_columns;
-
-  // Based on the key column info, get the oid of the given 'key' columns in the tuple schema
-  for( auto key_column_name : key_column_names ){
-    for( oid_t  tuple_schema_column_itr = 0; tuple_schema_column_itr < tuple_schema->GetColumnCount();
-        tuple_schema_column_itr++){
-
-      // Get the current column info from tuple schema
-      catalog::ColumnInfo column_info = tuple_schema->GetColumnInfo(tuple_schema_column_itr);
-      // Compare Key Schema's current column name and Tuple Schema's current column name
-      if( key_column_name == column_info.name ){
-        key_columns.push_back(tuple_schema_column_itr);
-
-        // NOTE :: Since pg_attribute doesn't have any information about primary key and unique key,
-        //         I try to store these information when we create an unique and primary key index
-        if( index_type == INDEX_TYPE_PRIMARY_KEY ){ 
-          catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_PRIMARY );
-          tuple_schema->AddConstraintByColumnId( tuple_schema_column_itr, constraint); 
-        }else if( index_type == INDEX_TYPE_UNIQUE ){ 
-          catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_UNIQUE );
-          tuple_schema->AddConstraintByColumnId( tuple_schema_column_itr, constraint);
-        }
-
-      }
-    }
-  }
-
-  auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_columns);
-
-  // Create index metadata and physical index
-  index::IndexMetadata* metadata = new index::IndexMetadata(index_name, our_index_type,
-                                                            tuple_schema, key_schema,
-                                                            unique_keys);
-  index::Index* index = index::IndexFactory::GetInstance(metadata);
-
-  // Record the built index in the table
-  switch( index_type ){
-    case INDEX_TYPE_NORMAL:
-      data_table->AddIndex(index);
-      break;
-    case INDEX_TYPE_PRIMARY_KEY:
-      data_table->SetPrimaryIndex(index);
-      break;
-    case INDEX_TYPE_UNIQUE:
-      data_table->AddUniqueIndex(index);
-      break;
-    default:
-      elog(LOG, "unrecognized index type: %d", index_type);
-  }
-
-  return true;
-}
-
 /**
  * @brief Add new constraint to the table
  * @param relation_oid relation oid 
@@ -711,35 +815,6 @@ bool DDL::AddConstraint(Oid relation_oid, Constraint* constraint )
       break;
   }
 }
-
-/**
- * @brief AlterTable with given AlterTableStmt
- * @param relation_oid relation oid 
- * @param Astmt AlterTableStmt 
- * @return true if we alter the table successfully, false otherwise
- */
-bool DDL::AlterTable( Oid relation_oid, AlterTableStmt* Astmt ){
-
-  ListCell* lcmd;
-  foreach( lcmd, Astmt->cmds)
-  {
-    AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
-
-    switch (cmd->subtype){
-	    //case AT_AddColumn:  /* add column */
-	    //case AT_DropColumn:  /* drop column */
-
-      case AT_AddConstraint:	/* ADD CONSTRAINT */
-        bool status = peloton::bridge::DDL::AddConstraint( relation_oid, (Constraint*) cmd->def );
-        fprintf(stderr, "DDLAddConstraint :: %d \n", status);
-        break;
-
-      break;
-    }
-  }
-}
-
-
 
 } // namespace bridge
 } // namespace peloton

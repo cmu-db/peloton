@@ -86,7 +86,7 @@ expression::AbstractExpression* ExprTransformer::TransformConstant(
     value = ValueFactory::GetNullValue();
   }
   else {  // non null
-    value = TupleTransformer::DatumGetValue(const_expr->constvalue, const_expr->consttype);
+    value = TupleTransformer::GetValue(const_expr->constvalue, const_expr->consttype);
   }
 
   // A Const Expr has no children.

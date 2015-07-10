@@ -572,9 +572,16 @@ standard_ProcessUtility(Node *parsetree,
       break;
 
     case T_CreatedbStmt:
+      {
       /* no event triggers for global objects */
       PreventTransactionChain(isTopLevel, "CREATE DATABASE");
       createdb((CreatedbStmt *) parsetree);
+
+      // TODO: Peloton Changes
+      CreatedbStmt* CdbStmt = (CreatedbStmt*) parsetree;
+      CdbStmt->database_id = get_database_oid( CdbStmt->dbname, true );
+
+      }
       break;
 
     case T_AlterDatabaseStmt:
