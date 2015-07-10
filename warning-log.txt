@@ -4,6 +4,7 @@ Making all in src
 make[2]: Entering directory `/home/vivek/git/peloton/build/src'
 make  all-am
 make[3]: Entering directory `/home/vivek/git/peloton/build/src'
+  CXX      backend/main/peloton-main.o
   CXX      postgres/interfaces/libpq/libpq_la-fe-print.lo
   CXX      postgres/interfaces/libpq/libpq_la-fe-auth.lo
   CXX      postgres/interfaces/libpq/libpq_la-fe-exec.lo
@@ -409,7 +410,6 @@ make[3]: Entering directory `/home/vivek/git/peloton/build/src'
   CXX      postgres/backend/parser/libpeloton_la-parse_agg.lo
   CXX      postgres/backend/parser/libpeloton_la-parse_clause.lo
   CXX      postgres/backend/parser/libpeloton_la-parse_coerce.lo
-  CXX      postgres/backend/parser/libpeloton_la-parse_collate.lo
 In file included from ../../src/postgres/backend/parser/gram.ypp:14849:0:
 ../../src/postgres/backend/parser/scan.lpp: In function 'char* litbufdup(core_yyscan_t)':
 ../../src/postgres/backend/parser/scan.lpp:1194:26: warning: invalid conversion from 'void*' to 'char*' [-fpermissive]
@@ -419,6 +419,7 @@ In file included from ../../src/postgres/backend/parser/gram.ypp:14849:0:
 ../../src/postgres/backend/parser/scan.lpp:1316:41: warning: invalid conversion from 'void*' to 'char*' [-fpermissive]
  
                                          ^
+  CXX      postgres/backend/parser/libpeloton_la-parse_collate.lo
   CXX      postgres/backend/parser/libpeloton_la-parse_cte.lo
   CXX      postgres/backend/parser/libpeloton_la-parse_expr.lo
   CXX      postgres/backend/parser/libpeloton_la-parse_func.lo
@@ -446,43 +447,14 @@ In file included from ../../src/postgres/backend/parser/gram.ypp:14849:0:
   CXX      postgres/backend/postmaster/libpeloton_la-pgstat.lo
   CXX      postgres/backend/postmaster/libpeloton_la-postmaster.lo
   CXX      postgres/backend/postmaster/libpeloton_la-startup.lo
-../../src/postgres/backend/postmaster/pgstat.cpp: In function 'void pgstat_report_stat(bool)':
-../../src/postgres/backend/postmaster/pgstat.cpp:746:34: warning: uninitialized const 'all_zeroes' [-fpermissive]
-  static const PgStat_TableCounts all_zeroes;
-                                  ^
-In file included from ../../src/postgres/backend/postmaster/pgstat.cpp:32:0:
-../../src/postgres/include/pgstat.h:96:16: note: 'const PgStat_TableCounts {aka const struct PgStat_TableCounts}' has no user-provided default constructor
- typedef struct PgStat_TableCounts
-                ^
-../../src/postgres/include/pgstat.h:98:17: note: and the implicitly-defined constructor does not initialize 'PgStat_Counter PgStat_TableCounts::t_numscans'
-  PgStat_Counter t_numscans;
-                 ^
-../../src/postgres/backend/postmaster/pgstat.cpp: In function 'void pgstat_send_funcstats()':
-../../src/postgres/backend/postmaster/pgstat.cpp:886:37: warning: uninitialized const 'all_zeroes' [-fpermissive]
-  static const PgStat_FunctionCounts all_zeroes;
-                                     ^
-In file included from ../../src/postgres/backend/postmaster/pgstat.cpp:32:0:
-../../src/postgres/include/pgstat.h:444:16: note: 'const PgStat_FunctionCounts {aka const struct PgStat_FunctionCounts}' has no user-provided default constructor
- typedef struct PgStat_FunctionCounts
-                ^
-../../src/postgres/include/pgstat.h:446:17: note: and the implicitly-defined constructor does not initialize 'PgStat_Counter PgStat_FunctionCounts::f_numcalls'
-  PgStat_Counter f_numcalls;
-                 ^
 ../../src/postgres/backend/postmaster/pgstat.cpp: In function 'void pgstat_bestart()':
-../../src/postgres/backend/postmaster/pgstat.cpp:2692:25: warning: passing 'volatile SockAddr' as 'this' argument of 'SockAddr& SockAddr::operator=(const SockAddr&)' discards qualifiers [-fpermissive]
+../../src/postgres/backend/postmaster/pgstat.cpp:2693:25: warning: passing 'volatile SockAddr' as 'this' argument of 'SockAddr& SockAddr::operator=(const SockAddr&)' discards qualifiers [-fpermissive]
   beentry->st_clientaddr = clientaddr;
                          ^
 ../../src/postgres/backend/postmaster/pgstat.cpp: In function 'void pgstat_send_bgwriter()':
-../../src/postgres/backend/postmaster/pgstat.cpp:3271:34: warning: uninitialized const 'all_zeroes' [-fpermissive]
-  static const PgStat_MsgBgWriter all_zeroes;
-                                  ^
-In file included from ../../src/postgres/backend/postmaster/pgstat.cpp:32:0:
-../../src/postgres/include/pgstat.h:394:16: note: 'const PgStat_MsgBgWriter {aka const struct PgStat_MsgBgWriter}' has no user-provided default constructor
- typedef struct PgStat_MsgBgWriter
-                ^
-../../src/postgres/include/pgstat.h:194:14: note: and the implicitly-defined constructor does not initialize 'StatMsgType PgStat_MsgHdr::m_type'
-  StatMsgType m_type;
-              ^
+../../src/postgres/backend/postmaster/pgstat.cpp:3272:71: warning: invalid conversion from 'int' to 'StatMsgType' [-fpermissive]
+  static const PgStat_MsgBgWriter all_zeroes {{0,0},0,0,0,0,0,0,0,0,0,0};
+                                                                       ^
   CXX      postgres/backend/postmaster/libpeloton_la-syslogger.lo
   CXX      postgres/backend/postmaster/libpeloton_la-walwriter.lo
   CXX      postgres/backend/regex/libpeloton_la-regcomp.lo
@@ -515,11 +487,11 @@ In file included from ../../src/postgres/backend/postmaster/pgstat.cpp:32:0:
   CXX      postgres/backend/storage/buffer/libpeloton_la-bufmgr.lo
   CXX      postgres/backend/storage/buffer/libpeloton_la-buf_table.lo
   CXX      postgres/backend/storage/buffer/libpeloton_la-freelist.lo
-  CXX      postgres/backend/storage/buffer/libpeloton_la-localbuf.lo
 ../../src/postgres/backend/storage/buffer/bufmgr.cpp: In function 'volatile BufferDesc* BufferAlloc(SMgrRelation, char, ForkNumber, BlockNumber, BufferAccessStrategy, bool*)':
 ../../src/postgres/backend/storage/buffer/bufmgr.cpp:1171:11: warning: passing 'volatile BufferTag' as 'this' argument of 'BufferTag& BufferTag::operator=(volatile BufferTag&)' discards qualifiers [-fpermissive]
   buf->tag = newTag;
            ^
+  CXX      postgres/backend/storage/buffer/libpeloton_la-localbuf.lo
   CXX      postgres/backend/storage/file/libpeloton_la-buffile.lo
   CXX      postgres/backend/storage/file/libpeloton_la-copydir.lo
   CXX      postgres/backend/storage/file/libpeloton_la-fd.lo
@@ -688,8 +660,8 @@ In file included from ../../src/postgres/backend/postmaster/pgstat.cpp:32:0:
   CXX      postgres/backend/utils/hash/libpeloton_la-dynahash.lo
   CXX      postgres/backend/utils/hash/libpeloton_la-hashfn.lo
   CXX      postgres/backend/utils/hash/libpeloton_la-pg_crc.lo
-  CXX      postgres/backend/utils/init/libpeloton_la-miscinit.lo
   CXX      postgres/backend/utils/init/libpeloton_la-globals.lo
+  CXX      postgres/backend/utils/init/libpeloton_la-miscinit.lo
   CXX      postgres/backend/utils/init/libpeloton_la-postinit.lo
   CXX      postgres/backend/utils/mb/libpeloton_la-conv.lo
   CXX      postgres/backend/utils/mb/libpeloton_la-encnames.lo
@@ -701,6 +673,7 @@ In file included from ../../src/postgres/backend/postmaster/pgstat.cpp:32:0:
   CXX      postgres/backend/utils/misc/libpeloton_la-help_config.lo
   CXX      postgres/backend/utils/misc/libpeloton_la-pg_rusage.lo
   CXX      postgres/backend/utils/misc/libpeloton_la-ps_status.lo
+  CXX      postgres/backend/utils/misc/libpeloton_la-rls.lo
 In file included from ../../src/postgres/backend/utils/misc/guc.cpp:10104:0:
 /home/parallels/git/postgres/orig/../src/backend/utils/misc/guc-file.l: In function 'bool ParseConfigFp(FILE*, const char*, int, int, ConfigVariable**, ConfigVariable**)':
 /home/parallels/git/postgres/orig/../src/backend/utils/misc/guc-file.l:748:30: warning: invalid conversion from 'void*' to 'ConfigVariable*' [-fpermissive]
@@ -709,7 +682,6 @@ In file included from ../../src/postgres/backend/utils/misc/guc.cpp:10104:0:
 /home/parallels/git/postgres/orig/../src/backend/utils/misc/guc-file.l:884:70: warning: invalid conversion from 'void*' to 'char**' [-fpermissive]
 /home/parallels/git/postgres/orig/../src/backend/utils/misc/guc-file.l: In function 'char* GUC_scanstr(const char*)':
 /home/parallels/git/postgres/orig/../src/backend/utils/misc/guc-file.l:986:21: warning: invalid conversion from 'void*' to 'char*' [-fpermissive]
-  CXX      postgres/backend/utils/misc/libpeloton_la-rls.lo
   CXX      postgres/backend/utils/misc/libpeloton_la-sampling.lo
   CXX      postgres/backend/utils/misc/libpeloton_la-superuser.lo
   CXX      postgres/backend/utils/misc/libpeloton_la-timeout.lo
@@ -746,14 +718,14 @@ In file included from ../../src/postgres/backend/utils/misc/guc.cpp:10104:0:
   CXX      postgres/port/libpeloton_la-getopt.lo
   CXX      postgres/port/libpeloton_la-getopt_long.lo
   CXX      postgres/port/libpeloton_la-getpeereid.lo
-../../src/postgres/port/getopt.cpp: In function 'int getopt(int, char* const*, const char*)':
-../../src/postgres/port/getopt.cpp:92:30: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
-   !(oli = strchr(ostr, optopt)))
-                              ^
 ../../src/postgres/port/getopt_long.cpp: In function 'int getopt_long(int, char* const*, const char*, const option*, int*)':
 ../../src/postgres/port/getopt_long.cpp:171:32: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
   oli = strchr(optstring, optopt);
                                 ^
+../../src/postgres/port/getopt.cpp: In function 'int getopt(int, char* const*, const char*)':
+../../src/postgres/port/getopt.cpp:92:30: warning: invalid conversion from 'const char*' to 'char*' [-fpermissive]
+   !(oli = strchr(ostr, optopt)))
+                              ^
   CXX      postgres/port/libpeloton_la-inet_net_ntop.lo
   CXX      postgres/port/libpeloton_la-isinf.lo
   CXX      postgres/port/libpeloton_la-kill.lo
@@ -786,7 +758,6 @@ In file included from ../../src/postgres/backend/utils/misc/guc.cpp:10104:0:
   CXX      postgres/timezone/libpeloton_la-pgtz.lo
   CXX      postgres/timezone/libpeloton_la-scheck.lo
   CXX      postgres/timezone/libpeloton_la-strftime.lo
-  CXX      backend/main/peloton-main.o
   CXXLD    libpq.la
   CXXLD    libpeloton.la
   CXXLD    peloton
@@ -798,7 +769,59 @@ make[2]: Nothing to be done for `all'.
 make[2]: Leaving directory `/home/vivek/git/peloton/build/tests'
 Making all in tools
 make[2]: Entering directory `/home/vivek/git/peloton/build/tools'
+  CXX      common/createdb-fe_memutils.o
+  CXX      common/createdb-dumputils.o
+  CXX      common/createdb-keywords.o
+  CXX      scripts/createdb-common.o
+  CXX      scripts/createdb-createdb.o
+In file included from ../../src/postgres/include/postgres_fe.h:25:0,
+                 from ../../tools/scripts/common.cpp:15:
+../../src/postgres/include/c.h:1056:26: warning: unused parameter ‘postgres_signal_arg’ [-Wunused-parameter]
+ #define SIGNAL_ARGS  int postgres_signal_arg
+                          ^
+../../tools/scripts/common.cpp:351:15: note: in expansion of macro ‘SIGNAL_ARGS’
+ handle_sigint(SIGNAL_ARGS)
+               ^
+  CXX      common/createuser-dumputils.o
+  CXX      common/createuser-fe_memutils.o
+  CXX      common/createuser-keywords.o
+  CXX      scripts/createuser-common.o
+  CXX      scripts/createuser-createuser.o
+In file included from ../../src/postgres/include/postgres_fe.h:25:0,
+                 from ../../tools/scripts/common.cpp:15:
+../../src/postgres/include/c.h:1056:26: warning: unused parameter ‘postgres_signal_arg’ [-Wunused-parameter]
+ #define SIGNAL_ARGS  int postgres_signal_arg
+                          ^
+../../tools/scripts/common.cpp:351:15: note: in expansion of macro ‘SIGNAL_ARGS’
+ handle_sigint(SIGNAL_ARGS)
+               ^
+  CXX      common/dropdb-dumputils.o
+  CXX      common/dropdb-fe_memutils.o
+  CXX      common/dropdb-keywords.o
+  CXX      scripts/dropdb-common.o
+  CXX      scripts/dropdb-dropdb.o
+  CXX      common/dropuser-dumputils.o
+In file included from ../../src/postgres/include/postgres_fe.h:25:0,
+                 from ../../tools/scripts/common.cpp:15:
+../../src/postgres/include/c.h:1056:26: warning: unused parameter ‘postgres_signal_arg’ [-Wunused-parameter]
+ #define SIGNAL_ARGS  int postgres_signal_arg
+                          ^
+../../tools/scripts/common.cpp:351:15: note: in expansion of macro ‘SIGNAL_ARGS’
+ handle_sigint(SIGNAL_ARGS)
+               ^
+  CXX      common/dropuser-fe_memutils.o
+  CXX      common/dropuser-keywords.o
+  CXX      scripts/dropuser-common.o
+  CXX      scripts/dropuser-dropuser.o
   CXX      common/initdb-fe_memutils.o
+In file included from ../../src/postgres/include/postgres_fe.h:25:0,
+                 from ../../tools/scripts/common.cpp:15:
+../../src/postgres/include/c.h:1056:26: warning: unused parameter ‘postgres_signal_arg’ [-Wunused-parameter]
+ #define SIGNAL_ARGS  int postgres_signal_arg
+                          ^
+../../tools/scripts/common.cpp:351:15: note: in expansion of macro ‘SIGNAL_ARGS’
+ handle_sigint(SIGNAL_ARGS)
+               ^
   CXX      pg_initdb/initdb-findtimezone.o
   CXX      pg_initdb/initdb-initdb.o
   CXX      common/pg_ctl-dumputils.o
@@ -834,6 +857,17 @@ In file included from ../../tools/pg_psql/mainloop.cpp:463:0:
 /home/parallels/git/postgres/orig/../src/bin/psql/psqlscan.l:1842:28: warning: invalid conversion from ‘void*’ to ‘char*’ [-fpermissive]
   CXX      pg_psql/psql-print.o
   CXX      pg_psql/psql-prompt.o
+../../tools/pg_psql/print.cpp:93:23: warning: uninitialized const ‘pg_utf8format’ [-fpermissive]
+ const printTextFormat pg_utf8format; //TODO: Peloton Changes: segfault if initialized = {"", {"","","",""}, "","","","","","","","","", false};
+                       ^
+In file included from ../../tools/pg_psql/common.h:15:0,
+                 from ../../tools/pg_psql/print.cpp:27:
+../../tools/pg_psql/print.h:54:16: note: ‘const printTextFormat {aka const struct printTextFormat}’ has no user-provided default constructor
+ typedef struct printTextFormat
+                ^
+../../tools/pg_psql/print.h:57:14: note: and the implicitly-defined constructor does not initialize ‘const char* printTextFormat::name’
+  const char *name;   /* for display purposes */
+              ^
   CXX      pg_psql/psql-sql_help.o
 In file included from ../../tools/pg_psql/sql_help.cpp:10:0:
 ../../tools/pg_psql/sql_help.h:1033:1: warning: missing initializer for member ‘_helpStruct::nl_count’ [-Wmissing-field-initializers]
@@ -843,64 +877,12 @@ In file included from ../../tools/pg_psql/sql_help.cpp:10:0:
   CXX      pg_psql/psql-stringutils.o
   CXX      pg_psql/psql-tab-complete.o
   CXX      pg_psql/psql-variables.o
-  CXX      common/createdb-dumputils.o
-  CXX      common/createdb-fe_memutils.o
-  CXX      common/createdb-keywords.o
-  CXX      scripts/createdb-common.o
-  CXX      scripts/createdb-createdb.o
-In file included from ../../src/postgres/include/postgres_fe.h:25:0,
-                 from ../../tools/scripts/common.cpp:15:
-../../src/postgres/include/c.h:1056:26: warning: unused parameter ‘postgres_signal_arg’ [-Wunused-parameter]
- #define SIGNAL_ARGS  int postgres_signal_arg
-                          ^
-../../tools/scripts/common.cpp:351:15: note: in expansion of macro ‘SIGNAL_ARGS’
- handle_sigint(SIGNAL_ARGS)
-               ^
-  CXX      common/createuser-dumputils.o
-  CXX      common/createuser-fe_memutils.o
-  CXX      common/createuser-keywords.o
-  CXX      scripts/createuser-common.o
-  CXX      scripts/createuser-createuser.o
-In file included from ../../src/postgres/include/postgres_fe.h:25:0,
-                 from ../../tools/scripts/common.cpp:15:
-../../src/postgres/include/c.h:1056:26: warning: unused parameter ‘postgres_signal_arg’ [-Wunused-parameter]
- #define SIGNAL_ARGS  int postgres_signal_arg
-                          ^
-../../tools/scripts/common.cpp:351:15: note: in expansion of macro ‘SIGNAL_ARGS’
- handle_sigint(SIGNAL_ARGS)
-               ^
-  CXX      common/dropdb-dumputils.o
-  CXX      common/dropdb-fe_memutils.o
-  CXX      common/dropdb-keywords.o
-  CXX      scripts/dropdb-common.o
-  CXX      scripts/dropdb-dropdb.o
-In file included from ../../src/postgres/include/postgres_fe.h:25:0,
-                 from ../../tools/scripts/common.cpp:15:
-../../src/postgres/include/c.h:1056:26: warning: unused parameter ‘postgres_signal_arg’ [-Wunused-parameter]
- #define SIGNAL_ARGS  int postgres_signal_arg
-                          ^
-../../tools/scripts/common.cpp:351:15: note: in expansion of macro ‘SIGNAL_ARGS’
- handle_sigint(SIGNAL_ARGS)
-               ^
-  CXX      common/dropuser-dumputils.o
-  CXX      common/dropuser-fe_memutils.o
-  CXX      common/dropuser-keywords.o
-  CXX      scripts/dropuser-common.o
-  CXX      scripts/dropuser-dropuser.o
-In file included from ../../src/postgres/include/postgres_fe.h:25:0,
-                 from ../../tools/scripts/common.cpp:15:
-../../src/postgres/include/c.h:1056:26: warning: unused parameter ‘postgres_signal_arg’ [-Wunused-parameter]
- #define SIGNAL_ARGS  int postgres_signal_arg
-                          ^
-../../tools/scripts/common.cpp:351:15: note: in expansion of macro ‘SIGNAL_ARGS’
- handle_sigint(SIGNAL_ARGS)
-               ^
-  CXXLD    initdb
-  CXXLD    pg_ctl
   CXXLD    createdb
   CXXLD    createuser
   CXXLD    dropdb
   CXXLD    dropuser
+  CXXLD    initdb
+  CXXLD    pg_ctl
   CXXLD    psql
 make[2]: Leaving directory `/home/vivek/git/peloton/build/tools'
 make[2]: Entering directory `/home/vivek/git/peloton/build'
