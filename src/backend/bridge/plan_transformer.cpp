@@ -86,12 +86,12 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
  * @brief Recursively destroy the nodes in a plan node tree.
  */
 bool PlanTransformer::CleanPlanNodeTree(planner::AbstractPlanNode* root) {
-  if(!root)
+  if (!root)
     return false;
 
   // Clean all children subtrees
   auto children = root->GetChildren();
-  for(auto child : children) {
+  for (auto child : children) {
     auto rv = CleanPlanNodeTree(child);
     assert(rv);
   }
@@ -388,7 +388,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformResult(
 /**
  * @brief Convert a Postgres LimitState into a Peloton LimitPlanNode
  *        does not support LIMIT ALL
- *        does not support no LIMIT
+ *        does not support cases where there is only OFFSET
  * @return Pointer to the constructed AbstractPlanNode
  */
 planner::AbstractPlanNode *PlanTransformer::TransformLimit(
@@ -410,8 +410,10 @@ planner::AbstractPlanNode *PlanTransformer::TransformLimit(
       offset = 0;
     else {
       offset = DatumGetInt64(val);
-      if (offset < 0)
-        LOG_ERROR("OFFSET must not be negative");
+      if (offset < 0) {
+        LOG_ERROR("OFFSET must not be negative, offset = %ld", offset);
+      }
+      noOffset = false;
     }
   } else {
     /* No OFFSET supplied */
@@ -427,8 +429,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformLimit(
       noLimit = true;
     } else {
       limit = DatumGetInt64(val);
-      if (limit < 0)
-        LOG_ERROR("OFFSET must not be negative");
+      if (limit < 0) {
+        LOG_ERROR("LIMIT must not be negative, limit = %ld", limit);
+      }
       noLimit = false;
     }
   } else {
