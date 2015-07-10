@@ -20,6 +20,7 @@
 #include "executor/nodeValuesscan.h"
 
 #include "backend/common/logger.h"
+#include "backend/bridge/expr_transformer.h"
 #include "backend/bridge/plan_transformer.h"
 #include "backend/bridge/tuple_transformer.h"
 #include "backend/common/logger.h"
@@ -28,6 +29,7 @@
 #include "backend/planner/delete_node.h"
 #include "backend/planner/insert_node.h"
 #include "backend/planner/seq_scan_node.h"
+#include "backend/planner/update_node.h"
 
 #include <cstring>
 
@@ -235,7 +237,79 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
 planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
     const ModifyTableState* mt_plan_state) {
 
-  return nullptr;
+  /*
+   * NOTE:
+   * In Postgres, the new tuple is returned by an underlying Scan node
+   * (by means of non-trivial projections),
+   * and the Postgres Update (ModifyTable) node merely replace the old tuple with it.
+   * In Peloton, we want to shift the responsibility of constructing the
+   * new tuple to the Update node.
+   * Therefore, we peek at the subplan of the Postgres Update node and extract the
+   * Update information from there.
+   */
+
+  /* Should be only one sub plan which is a SeqScan */
+  assert(mt_plan_state->mt_nplans == 1);
+  assert(mt_plan_state->mt_plans != nullptr);
+
+  /* Resolve result table */
+  ResultRelInfo result_rel_info = mt_plan_state->resultRelInfo[0];
+  Relation result_relation_desc = result_rel_info.ri_RelationDesc;
+
+  Oid database_oid = GetCurrentDatabaseOid();
+  Oid table_oid = result_relation_desc->rd_id;
+
+  /* Get the target table */
+  storage::DataTable *target_table =
+      static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
+          .GetLocation(database_oid, table_oid));
+
+  if(target_table == nullptr) {
+    LOG_ERROR("Target table is not found : database oid %u table oid %u", database_oid, table_oid);
+    return nullptr;
+  }
+
+  LOG_INFO("Update table : database oid %u table oid %u", database_oid, table_oid);
+
+  /* Get the first sub plan state */
+  PlanState *sub_planstate = mt_plan_state->mt_plans[0];
+
+  /* Get the tuple schema */
+  auto schema = target_table->GetSchema();
+
+  planner::UpdateNode::ColumnExprs update_column_exprs;
+
+  if(nodeTag(sub_planstate->plan) == T_SeqScan) { // Sub plan is SeqScan
+    // Retrieve the non-trivial projection info from SeqScan
+    // and put it in our update node
+    auto seqscan_state = reinterpret_cast<SeqScanState*>(sub_planstate);
+    ListCell *tl;
+    List *targetList  = seqscan_state->ps.ps_ProjInfo->pi_targetlist;
+
+    foreach(tl, targetList)
+    {
+      GenericExprState *gstate = (GenericExprState *) lfirst(tl);
+      TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
+      AttrNumber  resind = tle->resno - 1;
+
+      if(!(resind < schema->GetColumnCount()))
+          continue; // skip junk attributes
+
+      LOG_INFO("Update resind : %u , Top-level expr tag : %u", resind, nodeTag(gstate->arg->expr));
+
+      oid_t col_id = static_cast<oid_t>(resind);
+      auto peloton_expr = ExprTransformer::TransformExpr(gstate->arg);
+
+      update_column_exprs.emplace_back(col_id, peloton_expr);
+    }
+  }
+  else {
+    LOG_ERROR("Unsupported sub plan type of Update : %u \n", nodeTag(sub_planstate->plan));
+  }
+
+  auto plan_node = new planner::UpdateNode(target_table, update_column_exprs);
+
+  return plan_node;
 }
 
 /**
