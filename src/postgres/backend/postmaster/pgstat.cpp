@@ -2690,7 +2690,7 @@ pgstat_bestart(void)
 	beentry->st_databaseid = MyDatabaseId;
 	beentry->st_userid = userid;
 
-	beentry->st_clientaddr = clientaddr;
+	*(const_cast<SockAddr*>(&(beentry->st_clientaddr))) = clientaddr;
 	if (MyProcPort && MyProcPort->remote_hostname)
 		strlcpy(beentry->st_clienthostname, MyProcPort->remote_hostname,
 				NAMEDATALEN);
@@ -3269,7 +3269,7 @@ void
 pgstat_send_bgwriter(void)
 {
 	/* We assume this initializes to zeroes */
-	static const PgStat_MsgBgWriter all_zeroes {{0,0},0,0,0,0,0,0,0,0,0,0};
+	static const PgStat_MsgBgWriter all_zeroes {{static_cast<StatMsgType>(0),0},0,0,0,0,0,0,0,0,0,0};
 
 	/*
 	 * This function can be called even if nothing at all has happened. In

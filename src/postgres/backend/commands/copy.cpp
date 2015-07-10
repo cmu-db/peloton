@@ -278,7 +278,9 @@ if (1) \
 	goto not_end_of_copy; \
 } else ((void) 0)
 
-static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
+// TODO: Peloton Changes
+//static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
+static const char BinarySignature[13] = "PGCOPY\n\377\r\n\0";
 
 
 /* non-export function prototypes */

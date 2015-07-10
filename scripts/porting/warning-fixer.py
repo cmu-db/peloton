@@ -25,17 +25,17 @@ with open(sys.argv[1], "r+") as fd1:
 		if targetType.find("{aka") != -1:
 			targetType = targetType.split(" ")[0]
 		#END IF
-		
+
 		regex3 = re.compile("([^*]*)(.*)")
 		m3 = regex3.match(targetType)
 		if m3:
 			targetType_beforespace = m3.group(1)
 			targetType_afterspace = m3.group(2)
 			targetType = targetType_beforespace + " " + targetType_afterspace
-			
+
 			#print "targetType_beforespace:", targetType_beforespace
 			#print "targetType_afterspace:", targetType_afterspace
-			
+
 		#print m1.groups()
 
 		#print "fileName:", fileName
@@ -44,7 +44,7 @@ with open(sys.argv[1], "r+") as fd1:
 		#print "targetType:", targetType
 
 		if fileName.find(searchStr) != -1:
-			filePath_from_pg = fileName.split("postgres")[1]        
+			filePath_from_pg = fileName.split("postgres")[1]
 			#print "filePath_from_pg:", filePath_from_pg
 			filePath_abs = filePath_to_pg + filePath_from_pg
 			#print "filePath_abs:", filePath_abs
@@ -58,44 +58,44 @@ with open(sys.argv[1], "r+") as fd1:
 				#regex2 = re.compile("(.*)(malloc([\d])?\((.*)\);)")
 				regex2 = re.compile("([^=]*\=\s)(.*\(.*\);)")
 				m2 = regex2.match(criticalLine);
-				
+
 				if m2 is None:
 					unfixed += 1
 					#print "didn't find pattern"
-					
+
 				else:
 					beforeGroup = m2.group(1)
 					fromGroup = m2.group(2)
 					#print "beforeGroup:", beforeGroup
 					#print "fromGroup:", fromGroup
-					
+
 					# update this part to include static_cast
 					substituteStr = "static_cast<" + targetType + ">(" + fromGroup[:-1] + ");"
 					#print "substituteStr:", substituteStr
-					
+
 					# update the entire line
 					substituteLine = beforeGroup + substituteStr + "\n"
 					#print "substituteLine:", substituteLine
-					
+
 					lines[lineNum - 1] = substituteLine
-					
+
 					# write substituteLine in place of existing line in file
 					fd2.seek(0,0)
 					fd2.writelines(lines)
 					fixed += 1
-					
+
 					fd2.seek(0,0)
 					newline = fd2.readlines()[lineNum - 1]
 					print "newline:", newline
-					
-				# END IF-ELSE	
+
+				# END IF-ELSE
 			# END WITH
 			fd2.close()
 		# END IF
 
 		found += 1
 		#if found == 1: break
-	
+
 	# END FOR
 # END WITH
 fd1.close()
