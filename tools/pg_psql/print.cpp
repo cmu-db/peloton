@@ -90,7 +90,7 @@ const printTextFormat pg_asciiformat_old =
 };
 
 /* Default unicode linestyle format */
-const printTextFormat pg_utf8format = {NULL, {NULL,NULL,NULL,NULL}, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, false};
+const printTextFormat pg_utf8format; //TODO: Peloton Changes: segfault if initialized = {"", {"","","",""}, "","","","","","","","","", false};
 
 typedef struct unicodeStyleRowFormat {
 	const char *horizontal;
