@@ -22,7 +22,7 @@
 namespace peloton {
 namespace storage {
 
-DataTable::DataTable(const catalog::Schema *schema,
+DataTable::DataTable(catalog::Schema *schema,
                      AbstractBackend *backend,
                      std::string table_name,
                      oid_t table_oid,
@@ -62,7 +62,7 @@ void DataTable::AddReferenceTable(storage::DataTable *table,
   std::lock_guard<std::mutex> lock(table_reference_table_mutex);
   reference_tables.push_back(table);
 
-  const catalog::Schema* schema = this->GetSchema();
+  catalog::Schema* schema = this->GetSchema();
   for( auto column_name : column_names)
     schema->AddConstraintByColumnName( column_name, constraint );
 
