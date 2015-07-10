@@ -1312,7 +1312,7 @@ litbuf_udeescape(unsigned char escape, core_yyscan_t yyscanner)
 	 * This relies on the subtle assumption that a UTF-8 expansion
 	 * cannot be longer than its escaped representation.
 	 */
-	new___ = static_cast<char *>(palloc(yyextra->literallen + 1));
+	new___ = static_cast<char*>(palloc(yyextra->literallen + 1));
 
 	in = litbuf;
 	out = new___;
