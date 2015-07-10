@@ -30,7 +30,7 @@ namespace peloton {
 namespace bridge {
 
 //===--------------------------------------------------------------------===//
-// DDL Class 
+// IndexInfo Class 
 //===--------------------------------------------------------------------===//
 
 class IndexInfo{
@@ -49,7 +49,7 @@ class IndexInfo{
    key_column_names(key_column_names) { }
 
   //===--------------------------------------------------------------------===//
-  // IndexInfo accessors
+  // Accessors
   //===--------------------------------------------------------------------===//
 
   inline std::string GetIndexName(){
@@ -85,6 +85,10 @@ class IndexInfo{
   std::vector<std::string> key_column_names;
 };
 
+//===--------------------------------------------------------------------===//
+// DDL Class 
+//===--------------------------------------------------------------------===//
+
 class DDL {
 
  public:
@@ -95,59 +99,74 @@ class DDL {
 
 
   //===--------------------------------------------------------------------===//
-  // Function Definition
-  //===--------------------------------------------------------------------===//
-
-
-  static void ProcessUtility(Node *parsetree,
-                             const char *queryString );
-
-  static std::vector<catalog::ColumnInfo> ConstructColumnInfoByParsingCreateStmt(CreateStmt* Cstmt,
-                                                                                 std::vector<std::string>& reference_table_names);
-
-  static IndexInfo* ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt);
-
-  // Set reference tables to the table based on given relation oid
-  static bool SetReferenceTables( std::vector<std::string> reference_table_names, oid_t relation_oid );
-
-  // Create the indexes using indexinfos and add to the table
-  static bool CreateIndexesWithIndexInfos(oid_t relation_oid = INVALID_OID);
-
-  //Add the constraint to the table
-  static bool AddConstraint( Oid relation_oid, 
-                             Constraint* constraint );
-
-  //===--------------------------------------------------------------------===//
   // Create Object
   //===--------------------------------------------------------------------===//
 
+  static bool CreateDatabase( Oid database_oid );
 
-  static bool CreateTable(Oid relation_oid,
-                          std::string table_name,
-                          std::vector<catalog::ColumnInfo> column_infos,
-                          catalog::Schema *schema = NULL);
+  static bool CreateTable( Oid relation_oid,
+                           std::string table_name,
+                           std::vector<catalog::ColumnInfo> column_infos,
+                           catalog::Schema *schema = NULL );
 
-  static bool CreateIndex(std::string index_name,
-                          std::string table_name,
-                          IndexMethodType  index_method_type,  /* name of access method (eg. btree) */
-                          IndexType  index_type,
-                          bool unique_keys,
-                          std::vector<std::string> key_column_names,
-                          Oid table_oid = INVALID_OID);
+  static bool CreateIndex( std::string index_name,
+                           std::string table_name,
+                           IndexMethodType  index_method_type,  /* name of access method (eg. btree) */
+                           IndexType  index_type,
+                           bool unique_keys,
+                           std::vector<std::string> key_column_names,
+                           Oid table_oid = INVALID_OID );
 
-  static bool AlterTable(  Oid relation_oid,
-                           AlterTableStmt* Astmt );
+  //===--------------------------------------------------------------------===//
+  // Alter Object
+  //===--------------------------------------------------------------------===//
+
+  // TODO
+  //static bool AlterDatabase( );
+
+  static bool AlterTable( Oid relation_oid,
+                          AlterTableStmt* Astmt );
+
+  // TODO
+  //static bool AlterIndex( );
 
 
   //===--------------------------------------------------------------------===//
   // Drop Object
   //===--------------------------------------------------------------------===//
 
-  // NOTE :: If table has 
-  static bool DropTable(Oid table_oid);
+  // TODO 
+  static bool DropDatabase( Oid database_oid );
+
+  static bool DropTable( Oid table_oid );
 
   // TODO : DropIndex
   //static bool DropIndex(Oid index_oid);
+
+  //===--------------------------------------------------------------------===//
+  // Misc. 
+  //===--------------------------------------------------------------------===//
+
+  static void ProcessUtility( Node *parsetree,
+                              const char *queryString );
+
+  // Parse IndexStmt and store reference table names and return ColumnInfo
+  static std::vector<catalog::ColumnInfo> ConstructColumnInfoByParsingCreateStmt( CreateStmt* Cstmt,
+                                                                                  std::vector<std::string>& reference_table_names );
+
+  // Parse IndexStmt and return IndexInfo
+  static IndexInfo* ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt );
+
+  // Set reference tables to the table based on given relation oid
+  static bool SetReferenceTables( std::vector<std::string> reference_table_names,
+                                  oid_t relation_oid );
+
+  // Create the indexes using indexinfos and add to the table
+  static bool CreateIndexesWithIndexInfos( oid_t relation_oid = INVALID_OID );
+
+  //Add the constraint to the table
+  static bool AddConstraint( Oid relation_oid, 
+                             Constraint* constraint );
 
 };
 
