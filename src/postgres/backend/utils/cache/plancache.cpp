@@ -181,7 +181,7 @@ CreateCachedPlan(Node *raw_parse_tree,
 
 	plansource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
 	plansource->magic = CACHEDPLANSOURCE_MAGIC;
-	plansource->raw_parse_tree = copyObject(raw_parse_tree);
+	plansource->raw_parse_tree = static_cast<Node *>(copyObject(raw_parse_tree));
 	plansource->query_string = pstrdup(query_string);
 	plansource->commandTag = commandTag;
 	plansource->param_types = NULL;
@@ -698,7 +698,7 @@ RevalidateCachedQuery(CachedPlanSource *plansource)
 	 * its input, so we must copy the raw parse tree to prevent corruption of
 	 * the cache.
 	 */
-	rawtree = copyObject(plansource->raw_parse_tree);
+	rawtree = static_cast<Node *>(copyObject(plansource->raw_parse_tree));
 	if (rawtree == NULL)
 		tlist = NIL;
 	else if (plansource->parserSetup != NULL)
@@ -1343,7 +1343,7 @@ CopyCachedPlan(CachedPlanSource *plansource)
 
 	newsource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
 	newsource->magic = CACHEDPLANSOURCE_MAGIC;
-	newsource->raw_parse_tree = copyObject(plansource->raw_parse_tree);
+	newsource->raw_parse_tree = static_cast<Node *>(copyObject(plansource->raw_parse_tree));
 	newsource->query_string = pstrdup(plansource->query_string);
 	newsource->commandTag = plansource->commandTag;
 	if (plansource->num_params > 0)
@@ -1605,7 +1605,7 @@ ScanQueryForLocks(Query *parsetree, bool acquire)
 	 */
 	if (parsetree->hasSubLinks)
 	{
-		query_tree_walker(parsetree, ScanQueryWalker,
+		query_tree_walker(parsetree, reinterpret_cast<query_tree_walker_fptr>(ScanQueryWalker),
 						  (void *) &acquire,
 						  QTW_IGNORE_RC_SUBQUERIES);
 	}
@@ -1632,13 +1632,13 @@ ScanQueryWalker(Node *node, bool *acquire)
 	 * Do NOT recurse into Query nodes, because ScanQueryForLocks already
 	 * processed subselects of subselects for us.
 	 */
-	return expression_tree_walker(node, ScanQueryWalker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(ScanQueryWalker),
 								  (void *) acquire);
 }
 
 /*
  * plan_list_is_transient: check if any of the plans in the list are transient.
- */
+) */
 static bool
 plan_list_is_transient(List *stmt_list)
 {

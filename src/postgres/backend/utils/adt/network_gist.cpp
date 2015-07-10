@@ -544,7 +544,7 @@ inet_gist_compress(PG_FUNCTION_ARGS)
 
 	if (entry->leafkey)
 	{
-		retval = palloc(sizeof(GISTENTRY));
+		retval = static_cast<GISTENTRY *>(palloc(sizeof(GISTENTRY)));
 		if (DatumGetPointer(entry->key) != NULL)
 		{
 			inet	   *in = DatumGetInetPP(entry->key);
@@ -607,7 +607,7 @@ inet_gist_fetch(PG_FUNCTION_ARGS)
 	memcpy(ip_addr(dst), gk_ip_addr(key), ip_addrsize(dst));
 	SET_INET_VARSIZE(dst);
 
-	retval = palloc(sizeof(GISTENTRY));
+	retval = static_cast<GISTENTRY *>(palloc(sizeof(GISTENTRY)));
 	gistentryinit(*retval, InetPGetDatum(dst), entry->rel, entry->page,
 				  entry->offset, FALSE);
 

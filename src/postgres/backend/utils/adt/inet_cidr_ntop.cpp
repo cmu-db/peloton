@@ -59,9 +59,9 @@ inet_cidr_ntop(int af, const void *src, int bits, char *dst, size_t size)
 	switch (af)
 	{
 		case PGSQL_AF_INET:
-			return (inet_cidr_ntop_ipv4(src, bits, dst, size));
+			return (inet_cidr_ntop_ipv4(static_cast<const u_char *>(src), bits, dst, size));
 		case PGSQL_AF_INET6:
-			return (inet_cidr_ntop_ipv6(src, bits, dst, size));
+			return (inet_cidr_ntop_ipv6(static_cast<const u_char *>(src), bits, dst, size));
 		default:
 			errno = EAFNOSUPPORT;
 			return (NULL);

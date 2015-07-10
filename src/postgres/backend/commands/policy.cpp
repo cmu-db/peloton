@@ -156,7 +156,7 @@ policy_role_list_to_array(List *roles)
 
 	foreach(cell, roles)
 	{
-		RoleSpec *spec = lfirst(cell);
+		RoleSpec *spec = static_cast<RoleSpec *>(lfirst(cell));
 
 		/*
 		 * PUBLIC covers all roles, so it only makes sense alone.
@@ -220,7 +220,7 @@ RelationBuildRowSecurity(Relation relation)
 		SysScanDesc			sscan;
 		HeapTuple			tuple;
 
-		rsdesc = MemoryContextAllocZero(rscxt, sizeof(RowSecurityDesc));
+		rsdesc = static_cast<RowSecurityDesc *>(MemoryContextAllocZero(rscxt, sizeof(RowSecurityDesc)));
 		rsdesc->rscxt = rscxt;
 
 		catalog = heap_open(PolicyRelationId, AccessShareLock);
@@ -304,13 +304,13 @@ RelationBuildRowSecurity(Relation relation)
 			/* Now copy everything into the cache context */
 			MemoryContextSwitchTo(rscxt);
 
-			policy = palloc0(sizeof(RowSecurityPolicy));
+			policy = static_cast<RowSecurityPolicy *>(palloc0(sizeof(RowSecurityPolicy)));
 			policy->policy_name = pstrdup(policy_name_value);
 			policy->policy_id = policy_id;
 			policy->polcmd = cmd_value;
 			policy->roles = DatumGetArrayTypePCopy(roles_datum);
-			policy->qual = copyObject(qual_expr);
-			policy->with_check_qual = copyObject(with_check_qual);
+			policy->qual = static_cast<Expr *>(copyObject(qual_expr));
+			policy->with_check_qual = static_cast<Expr *>(copyObject(with_check_qual));
 			policy->hassublinks = checkExprHasSubLink((Node *) qual_expr) ||
 								  checkExprHasSubLink((Node *) with_check_qual);
 
@@ -345,7 +345,7 @@ RelationBuildRowSecurity(Relation relation)
 
 			role = ObjectIdGetDatum(ACL_ID_PUBLIC);
 
-			policy = palloc0(sizeof(RowSecurityPolicy));
+			policy = static_cast<RowSecurityPolicy *>(palloc0(sizeof(RowSecurityPolicy)));
 			policy->policy_name = pstrdup("default-deny policy");
 			policy->policy_id = InvalidOid;
 			policy->polcmd = '*';
@@ -354,7 +354,7 @@ RelationBuildRowSecurity(Relation relation)
 			policy->qual = (Expr *) makeConst(BOOLOID, -1, InvalidOid,
 											  sizeof(bool), BoolGetDatum(false),
 											  false, true);
-			policy->with_check_qual = copyObject(policy->qual);
+			policy->with_check_qual = static_cast<Expr *>(copyObject(policy->qual));
 			policy->hassublinks = false;
 
 			rsdesc->policies = lcons(policy, rsdesc->policies);
@@ -530,12 +530,12 @@ CreatePolicy(CreatePolicyStmt *stmt)
 	addRTEtoQuery(with_check_pstate, rte, false, true, true);
 
 	qual = transformWhereClause(qual_pstate,
-								copyObject(stmt->qual),
+								static_cast<Node *>(copyObject(stmt->qual)),
 								EXPR_KIND_WHERE,
 								"POLICY");
 
 	with_check_qual = transformWhereClause(with_check_pstate,
-								copyObject(stmt->with_check),
+								static_cast<Node *>(copyObject(stmt->with_check)),
 								EXPR_KIND_WHERE,
 								"POLICY");
 
@@ -678,7 +678,8 @@ AlterPolicy(AlterPolicyStmt *stmt)
 
 		addRTEtoQuery(qual_pstate, rte, false, true, true);
 
-		qual = transformWhereClause(qual_pstate, copyObject(stmt->qual),
+		qual = transformWhereClause(qual_pstate,
+									static_cast<Node *>(copyObject(stmt->qual)),
 									EXPR_KIND_WHERE,
 									"POLICY");
 
@@ -698,7 +699,7 @@ AlterPolicy(AlterPolicyStmt *stmt)
 		addRTEtoQuery(with_check_pstate, rte, false, true, true);
 
 		with_check_qual = transformWhereClause(with_check_pstate,
-											   copyObject(stmt->with_check),
+											   static_cast<Node *>(copyObject(stmt->with_check)),
 											   EXPR_KIND_WHERE,
 											   "POLICY");
 

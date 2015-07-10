@@ -68,7 +68,7 @@ ExecSecLabelStmt(SecLabelStmt *stmt)
 	{
 		foreach(lc, label_provider_list)
 		{
-			LabelProvider *lp = lfirst(lc);
+			LabelProvider *lp = static_cast<LabelProvider *>(lfirst(lc));
 
 			if (strcmp(stmt->provider, lp->provider_name) == 0)
 			{
@@ -502,7 +502,7 @@ register_label_provider(const char *provider_name, check_object_relabel_type hoo
 	MemoryContext oldcxt;
 
 	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
-	provider = palloc(sizeof(LabelProvider));
+	provider = static_cast<LabelProvider *>(palloc(sizeof(LabelProvider)));
 	provider->provider_name = pstrdup(provider_name);
 	provider->hook = hook;
 	label_provider_list = lappend(label_provider_list, provider);

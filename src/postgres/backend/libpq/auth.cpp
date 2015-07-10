@@ -2347,7 +2347,7 @@ CheckRADIUSAuth(Port *port)
 	 * RADIUS password attributes are calculated as: e[0] = p[0] XOR
 	 * MD5(secret + vector)
 	 */
-	cryptvector = palloc(RADIUS_VECTOR_LENGTH + strlen(port->hba->radiussecret));
+	cryptvector = static_cast<uint8 *>(palloc(RADIUS_VECTOR_LENGTH + strlen(port->hba->radiussecret)));
 	memcpy(cryptvector, port->hba->radiussecret, strlen(port->hba->radiussecret));
 	memcpy(cryptvector + strlen(port->hba->radiussecret), packet->vector, RADIUS_VECTOR_LENGTH);
 	if (!pg_md5_binary(cryptvector, RADIUS_VECTOR_LENGTH + strlen(port->hba->radiussecret), encryptedpassword))
@@ -2535,7 +2535,7 @@ CheckRADIUSAuth(Port *port)
 		 * Verify the response authenticator, which is calculated as
 		 * MD5(Code+ID+Length+RequestAuthenticator+Attributes+Secret)
 		 */
-		cryptvector = palloc(packetlength + strlen(port->hba->radiussecret));
+		cryptvector = static_cast<uint8 *>(palloc(packetlength + strlen(port->hba->radiussecret)));
 
 		memcpy(cryptvector, receivepacket, 4);	/* code+id+length */
 		memcpy(cryptvector + 4, packet->vector, RADIUS_VECTOR_LENGTH);	/* request

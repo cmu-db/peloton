@@ -338,7 +338,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 
 		/* Transform expression.  Copy to be sure we don't modify original */
 		whenClause = transformWhereClause(pstate,
-										  copyObject(stmt->whenClause),
+										  static_cast<Node *>(copyObject(stmt->whenClause)),
 										  EXPR_KIND_TRIGGER_WHEN,
 										  "WHEN");
 		/* we have to fix its collations too */
@@ -952,7 +952,7 @@ ConvertTriggerToFK(CreateTrigStmt *stmt, Oid funcoid)
 		 errdetail_internal("%s", _(funcdescr[funcnum]))));
 		oldContext = MemoryContextSwitchTo(TopMemoryContext);
 		info = (OldTriggerInfo *) palloc0(sizeof(OldTriggerInfo));
-		info->args = copyObject(stmt->args);
+		info->args = static_cast<List *>(copyObject(stmt->args));
 		info->funcoids[funcnum] = funcoid;
 		info_list = lappend(info_list, info);
 		MemoryContextSwitchTo(oldContext);
@@ -2894,7 +2894,7 @@ TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
 			Node	   *tgqual;
 
 			oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
-			tgqual = stringToNode(trigger->tgqual);
+			tgqual = static_cast<Node *>(stringToNode(trigger->tgqual));
 			/* Change references to OLD and NEW to INNER_VAR and OUTER_VAR */
 			ChangeVarNodes(tgqual, PRS2_OLD_VARNO, INNER_VAR, 0);
 			ChangeVarNodes(tgqual, PRS2_NEW_VARNO, OUTER_VAR, 0);
@@ -3381,7 +3381,7 @@ afterTriggerAddEvent(AfterTriggerEventList *events,
 				chunksize /= 2; /* too many shared records */
 			chunksize = Min(chunksize, MAX_CHUNK_SIZE);
 		}
-		chunk = MemoryContextAlloc(afterTriggers.event_cxt, chunksize);
+		chunk = static_cast<AfterTriggerEventChunk *>(MemoryContextAlloc(afterTriggers.event_cxt, chunksize));
 		chunk->next = NULL;
 		chunk->freeptr = CHUNK_DATA_START(chunk);
 		chunk->endptr = chunk->endfree = (char *) chunk + chunksize;
@@ -4516,7 +4516,7 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 
 		foreach(lc, stmt->constraints)
 		{
-			RangeVar   *constraint = lfirst(lc);
+			RangeVar   *constraint = static_cast<RangeVar *>(lfirst(lc));
 			bool		found;
 			List	   *namespacelist;
 			ListCell   *nslc;

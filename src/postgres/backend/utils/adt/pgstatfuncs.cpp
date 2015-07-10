@@ -497,8 +497,8 @@ pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
 
-		fctx = MemoryContextAlloc(funcctx->multi_call_memory_ctx,
-								  2 * sizeof(int));
+		fctx = static_cast<int *>(MemoryContextAlloc(funcctx->multi_call_memory_ctx,
+								  2 * sizeof(int)));
 		funcctx->user_fctx = fctx;
 
 		fctx[0] = 0;
@@ -507,7 +507,7 @@ pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 
 	/* stuff done on every call of the function */
 	funcctx = SRF_PERCALL_SETUP();
-	fctx = funcctx->user_fctx;
+	fctx = static_cast<int *>(funcctx->user_fctx);
 
 	fctx[0] += 1;
 	result = fctx[0];

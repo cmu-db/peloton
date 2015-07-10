@@ -16,7 +16,7 @@
 char *
 imalloc(int n)
 {
-	return malloc((size_t) nonzero(n));
+	return static_cast<char *>(malloc((size_t) nonzero(n)));
 }
 
 char *
@@ -24,7 +24,7 @@ icalloc(int nelem, int elsize)
 {
 	if (nelem == 0 || elsize == 0)
 		nelem = elsize = 1;
-	return calloc((size_t) nelem, (size_t) elsize);
+	return static_cast<char *>(calloc((size_t) nelem, (size_t) elsize));
 }
 
 void *
@@ -49,7 +49,7 @@ icatalloc(char *old, const char *new___)
 		return old;
 	else
 		oldsize = strlen(old);
-	if ((result = irealloc(old, oldsize + newsize + 1)) != NULL)
+	if ((result = static_cast<char *>(irealloc(old, oldsize + newsize + 1))) != NULL)
 		if (new___ != NULL)
 			(void) strcpy(result + oldsize, new___);
 	return result;

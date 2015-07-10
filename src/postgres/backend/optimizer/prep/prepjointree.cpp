@@ -203,7 +203,7 @@ pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 			Relids		childrelids;
 
 			newchild = pull_up_sublinks_jointree_recurse(root,
-														 lfirst(l),
+														 static_cast<Node *>(lfirst(l)),
 														 &childrelids);
 			newfromlist = lappend(newfromlist, newchild);
 			frelids = bms_join(frelids, childrelids);
@@ -759,7 +759,7 @@ pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 										   lnext(l) != NULL ||
 										   f == root->parse->jointree);
 
-			lfirst(l) = pull_up_subqueries_recurse(root, lfirst(l),
+			lfirst(l) = pull_up_subqueries_recurse(root, static_cast<Node *>(lfirst(l)),
 												   lowest_outer_join,
 												   lowest_nulling_outer_join,
 												   NULL,
@@ -884,7 +884,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * problems if the same subquery is referenced from multiple jointree
 	 * items (which can't happen normally, but might after rule rewriting).
 	 */
-	subquery = copyObject(rte->subquery);
+	subquery = static_cast<Query *>(copyObject(rte->subquery));
 
 	/*
 	 * Create a PlannerInfo data structure for this subquery.
@@ -1014,8 +1014,8 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 						   containing_appendrel != NULL);
 	rvcontext.wrap_non_vars = (containing_appendrel != NULL);
 	/* initialize cache array with indexes 0 .. length(tlist) */
-	rvcontext.rv_cache = palloc0((list_length(subquery->targetList) + 1) *
-								 sizeof(Node *));
+	rvcontext.rv_cache = static_cast<Node **>(palloc0((list_length(subquery->targetList) + 1) *
+								 sizeof(Node *)));
 
 	/*
 	 * Replace all of the top query's references to the subquery's outputs
@@ -1212,7 +1212,7 @@ pull_up_simple_union_all(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte)
 	 * upper-level Vars in it.  There are no such Vars in the setOperations
 	 * tree proper, so fixing the rtable should be sufficient.
 	 */
-	rtable = copyObject(subquery->rtable);
+	rtable = static_cast<List *>(copyObject(subquery->rtable));
 
 	/*
 	 * Upper-level vars in subquery are now one level closer to their parent
@@ -1594,8 +1594,8 @@ pull_up_simple_values(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte)
 	rvcontext.need_phvs = false;
 	rvcontext.wrap_non_vars = false;
 	/* initialize cache array with indexes 0 .. length(tlist) */
-	rvcontext.rv_cache = palloc0((list_length(tlist) + 1) *
-								 sizeof(Node *));
+	rvcontext.rv_cache = static_cast<Node **>(palloc0((list_length(tlist) + 1) *
+								 sizeof(Node *)));
 
 	/*
 	 * Replace all of the top query's references to the RTE's outputs with
@@ -1790,7 +1790,7 @@ is_safe_append_member(Query *subquery)
 			return false;
 		if (list_length(jtnode->fromlist) != 1)
 			return false;
-		jtnode = linitial(jtnode->fromlist);
+		jtnode = static_cast<FromExpr *>(linitial(jtnode->fromlist));
 	}
 	if (!IsA(jtnode, RangeTblRef))
 		return false;
@@ -1824,7 +1824,7 @@ jointree_contains_lateral_outer_refs(Node *jtnode, bool restricted,
 		/* First, recurse to check child joins */
 		foreach(l, f->fromlist)
 		{
-			if (jointree_contains_lateral_outer_refs(lfirst(l),
+			if (jointree_contains_lateral_outer_refs(static_cast<Node *>(lfirst(l)),
 													 restricted,
 													 safe_upper_varnos))
 				return true;
@@ -1940,7 +1940,7 @@ replace_vars_in_jointree(Node *jtnode,
 		ListCell   *l;
 
 		foreach(l, f->fromlist)
-			replace_vars_in_jointree(lfirst(l), context,
+			replace_vars_in_jointree(static_cast<Node *>(lfirst(l)), context,
 									 lowest_nulling_outer_join);
 		f->quals = pullup_replace_vars(f->quals, context);
 	}
@@ -2009,7 +2009,7 @@ pullup_replace_vars_callback(Var *var,
 		rcon->rv_cache[varattno] != NULL)
 	{
 		/* Just copy the entry and fall through to adjust its varlevelsup */
-		newnode = copyObject(rcon->rv_cache[varattno]);
+		newnode = static_cast<Node *>(copyObject(rcon->rv_cache[varattno]));
 	}
 	else if (varattno == InvalidAttrNumber)
 	{
@@ -2065,7 +2065,7 @@ pullup_replace_vars_callback(Var *var,
 									  (Expr *) newnode,
 									  bms_make_singleton(rcon->varno));
 			/* cache it with the PHV, and with varlevelsup still zero */
-			rcon->rv_cache[InvalidAttrNumber] = copyObject(newnode);
+			rcon->rv_cache[InvalidAttrNumber] = static_cast<Node *>(copyObject(newnode));
 		}
 	}
 	else
@@ -2078,7 +2078,7 @@ pullup_replace_vars_callback(Var *var,
 				 varattno);
 
 		/* Make a copy of the tlist item to return */
-		newnode = copyObject(tle->expr);
+		newnode = static_cast<Node *>(copyObject(tle->expr));
 
 		/* Insert PlaceHolderVar if needed */
 		if (rcon->need_phvs)
@@ -2161,7 +2161,7 @@ pullup_replace_vars_callback(Var *var,
 			 */
 			if (varattno > InvalidAttrNumber &&
 				varattno <= list_length(rcon->targetlist))
-				rcon->rv_cache[varattno] = copyObject(newnode);
+				rcon->rv_cache[varattno] = static_cast<Node *>(copyObject(newnode));
 		}
 	}
 
@@ -2311,7 +2311,7 @@ flatten_simple_union_all(PlannerInfo *root)
 	 * (We must do things this way because the upper query's Vars have to be
 	 * seen as referring to the whole appendrel.)
 	 */
-	childRTE = copyObject(leftmostRTE);
+	childRTE = static_cast<RangeTblEntry *>(copyObject(leftmostRTE));
 	parse->rtable = lappend(parse->rtable, childRTE);
 	childRTI = list_length(parse->rtable);
 
@@ -2440,7 +2440,7 @@ reduce_outer_joins_pass1(Node *jtnode)
 		{
 			reduce_outer_joins_state *sub_state;
 
-			sub_state = reduce_outer_joins_pass1(lfirst(l));
+			sub_state = reduce_outer_joins_pass1(static_cast<Node *>(lfirst(l)));
 			result->relids = bms_add_members(result->relids,
 											 sub_state->relids);
 			result->contains_outer |= sub_state->contains_outer;
@@ -2524,10 +2524,10 @@ reduce_outer_joins_pass2(Node *jtnode,
 		Assert(list_length(f->fromlist) == list_length(state->sub_states));
 		forboth(l, f->fromlist, s, state->sub_states)
 		{
-			reduce_outer_joins_state *sub_state = lfirst(s);
+			reduce_outer_joins_state *sub_state = static_cast<reduce_outer_joins_state *>(lfirst(s));
 
 			if (sub_state->contains_outer)
-				reduce_outer_joins_pass2(lfirst(l), sub_state, root,
+				reduce_outer_joins_pass2(static_cast<Node *>(lfirst(l)), sub_state, root,
 										 pass_nonnullable_rels,
 										 pass_nonnullable_vars,
 										 pass_forced_null_vars);
@@ -2540,8 +2540,8 @@ reduce_outer_joins_pass2(Node *jtnode,
 		JoinExpr   *j = (JoinExpr *) jtnode;
 		int			rtindex = j->rtindex;
 		JoinType	jointype = j->jointype;
-		reduce_outer_joins_state *left_state = linitial(state->sub_states);
-		reduce_outer_joins_state *right_state = lsecond(state->sub_states);
+		reduce_outer_joins_state *left_state = static_cast<reduce_outer_joins_state *>(linitial(state->sub_states));
+		reduce_outer_joins_state *right_state = static_cast<reduce_outer_joins_state *>(lsecond(state->sub_states));
 		List	   *local_nonnullable_vars = NIL;
 		bool		computed_local_nonnullable_vars = false;
 
@@ -2602,8 +2602,8 @@ reduce_outer_joins_pass2(Node *jtnode,
 			j->larg = j->rarg;
 			j->rarg = tmparg;
 			jointype = JOIN_LEFT;
-			right_state = linitial(state->sub_states);
-			left_state = lsecond(state->sub_states);
+			right_state = static_cast<reduce_outer_joins_state *>(linitial(state->sub_states));
+			left_state = static_cast<reduce_outer_joins_state *>(lsecond(state->sub_states));
 		}
 
 		/*
@@ -2806,7 +2806,7 @@ substitute_multiple_relids_walker(Node *node,
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node,
-								   substitute_multiple_relids_walker,
+		               reinterpret_cast<query_tree_walker_fptr>(substitute_multiple_relids_walker),
 								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
@@ -2818,7 +2818,7 @@ substitute_multiple_relids_walker(Node *node,
 	Assert(!IsA(node, PlaceHolderInfo));
 	Assert(!IsA(node, MinMaxAggInfo));
 
-	return expression_tree_walker(node, substitute_multiple_relids_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(substitute_multiple_relids_walker),
 								  (void *) context);
 }
 
@@ -2835,7 +2835,7 @@ substitute_multiple_relids(Node *node, int varno, Relids subrelids)
 	 * Must be prepared to start with a Query or a bare expression tree.
 	 */
 	query_or_expression_tree_walker(node,
-									substitute_multiple_relids_walker,
+	                reinterpret_cast<expression_tree_walker_fptr>(substitute_multiple_relids_walker),
 									(void *) &context,
 									0);
 }
@@ -2909,7 +2909,7 @@ get_relids_in_jointree(Node *jtnode, bool include_joins)
 		foreach(l, f->fromlist)
 		{
 			result = bms_join(result,
-							  get_relids_in_jointree(lfirst(l),
+							  get_relids_in_jointree(static_cast<Node *>(lfirst(l)),
 													 include_joins));
 		}
 	}
@@ -2968,7 +2968,7 @@ find_jointree_node_for_rel(Node *jtnode, int relid)
 
 		foreach(l, f->fromlist)
 		{
-			jtnode = find_jointree_node_for_rel(lfirst(l), relid);
+			jtnode = find_jointree_node_for_rel(static_cast<Node *>(lfirst(l)), relid);
 			if (jtnode)
 				return jtnode;
 		}

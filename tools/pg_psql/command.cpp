@@ -1152,7 +1152,7 @@ exec_command(const char *cmd,
 			while ((opt = psql_scan_slash_option(scan_state,
 												 OT_NORMAL, NULL, false)))
 			{
-				newval = pg_realloc(newval, strlen(newval) + strlen(opt) + 1);
+				newval = static_cast<char *>(pg_realloc(newval, strlen(newval) + strlen(opt) + 1));
 				strcat(newval, opt);
 				free(opt);
 			}
@@ -1678,8 +1678,8 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	while (true)
 	{
 #define PARAMS_ARRAY_SIZE	8
-		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
+		const char **keywords = static_cast<const char **>(pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords)));
+		const char **values = static_cast<const char **>(pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values)));
 		int			paramnum = 0;
 
 		keywords[0] = "dbname";
@@ -1846,10 +1846,10 @@ connection_warnings(bool in_startup)
 static void
 printSSLInfo(void)
 {
-	const char *protocol;
-	const char *cipher;
-	const char *bits;
-	const char *compression;
+	const char *UNUSED(protocol);
+	const char *UNUSED(cipher);
+	const char *UNUSED(bits);
+	const char *UNUSED(compression);
 
   // TODO: Peloton changes
 	/*
@@ -2780,7 +2780,7 @@ pset_bool_string(bool val)
 static char *
 pset_quoted_string(const char *str)
 {
-	char	   *ret = pg_malloc(strlen(str) * 2 + 3);
+	char	   *ret = static_cast<char *>(pg_malloc(strlen(str) * 2 + 3));
 	char	   *r = ret;
 
 	*r++ = '\'';

@@ -2268,7 +2268,7 @@ AddRelationNewConstraints(Relation rel,
 			 * Here, we assume the parser will only pass us valid CHECK
 			 * expressions, so we do no particular checking.
 			 */
-			expr = stringToNode(cdef->cooked_expr);
+			expr = static_cast<Node *>(stringToNode(cdef->cooked_expr));
 		}
 
 		/*
@@ -2763,7 +2763,7 @@ heap_truncate(List *relids)
 	/* OK to do it */
 	foreach(cell, relations)
 	{
-		Relation	rel = lfirst(cell);
+		Relation	rel = static_cast<Relation>(lfirst(cell));
 
 		/* Truncate the relation */
 		heap_truncate_one_rel(rel);
@@ -2834,7 +2834,7 @@ heap_truncate_check_FKs(List *relations, bool tempTables)
 	 */
 	foreach(cell, relations)
 	{
-		Relation	rel = lfirst(cell);
+		Relation	rel = static_cast<Relation>(lfirst(cell));
 
 		if (rel->rd_rel->relhastriggers)
 			oids = lappend_oid(oids, RelationGetRelid(rel));

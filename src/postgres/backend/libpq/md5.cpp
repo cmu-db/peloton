@@ -291,7 +291,7 @@ pg_md5_hash(const void *buff, size_t len, char *hexsum)
 {
 	uint8		sum[16];
 
-	if (!calculateDigestFromBuffer(buff, len, sum))
+	if (!calculateDigestFromBuffer(static_cast<const unsigned char *>(buff), len, sum))
 		return false;
 
 	bytesToHex(sum, hexsum);
@@ -301,7 +301,7 @@ pg_md5_hash(const void *buff, size_t len, char *hexsum)
 bool
 pg_md5_binary(const void *buff, size_t len, void *outbuf)
 {
-	if (!calculateDigestFromBuffer(buff, len, outbuf))
+	if (!calculateDigestFromBuffer(static_cast<const unsigned char *>(buff), len, static_cast<unsigned char *>(outbuf)))
 		return false;
 	return true;
 }
@@ -323,7 +323,7 @@ pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len,
 	size_t		passwd_len = strlen(passwd);
 
 	/* +1 here is just to avoid risk of unportable malloc(0) */
-	char	   *crypt_buf = malloc(passwd_len + salt_len + 1);
+	char	   *crypt_buf = static_cast<char *>(malloc(passwd_len + salt_len + 1));
 	bool		ret;
 
 	if (!crypt_buf)

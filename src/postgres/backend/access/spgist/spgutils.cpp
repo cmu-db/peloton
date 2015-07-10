@@ -51,8 +51,8 @@ spgGetCache(Relation index)
 		Buffer		metabuffer;
 		SpGistMetaPageData *metadata;
 
-		cache = MemoryContextAllocZero(index->rd_indexcxt,
-									   sizeof(SpGistCache));
+		cache = static_cast<SpGistCache *>(MemoryContextAllocZero(index->rd_indexcxt,
+									   sizeof(SpGistCache)));
 
 		/* SPGiST doesn't support multi-column indexes */
 		Assert(index->rd_att->natts == 1);
@@ -118,7 +118,7 @@ initSpGistState(SpGistState *state, Relation index)
 	state->attLabelType = cache->attLabelType;
 
 	/* Make workspace for constructing dead tuples */
-	state->deadTupleStorage = palloc0(SGDTSIZE);
+	state->deadTupleStorage = static_cast<char *>(palloc0(SGDTSIZE));
 
 	/* Set XID to use in redirection tuples */
 	state->myXid = GetTopTransactionIdIfAny();
