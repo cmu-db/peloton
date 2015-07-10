@@ -3197,6 +3197,9 @@ typedef struct CreatedbStmt {
 
 	char	   *dbname;			/* name of database to create */
 	List	   *options;		/* List of DefElem nodes */
+
+	// TODO: Peloton Changes
+	Oid      database_id;   /* cache the database id for DDL */
 } CreatedbStmt;
 
 /* ----------------------
