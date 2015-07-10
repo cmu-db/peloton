@@ -35,7 +35,7 @@ static bool hk_depth_search(BipartiteMatchState *state, int u, int depth);
 BipartiteMatchState *
 BipartiteMatch(int u_size, int v_size, short **adjacency)
 {
-	BipartiteMatchState *state = palloc(sizeof(BipartiteMatchState));
+	BipartiteMatchState *state = static_cast<BipartiteMatchState *>(palloc(sizeof(BipartiteMatchState)));
 
 	Assert(u_size < SHRT_MAX);
 	Assert(v_size < SHRT_MAX);
@@ -44,10 +44,10 @@ BipartiteMatch(int u_size, int v_size, short **adjacency)
 	state->v_size = v_size;
 	state->matching = 0;
 	state->adjacency = adjacency;
-	state->pair_uv = palloc0((u_size + 1) * sizeof(short));
-	state->pair_vu = palloc0((v_size + 1) * sizeof(short));
-	state->distance = palloc((u_size + 1) * sizeof(float));
-	state->queue = palloc((u_size + 2) * sizeof(short));
+	state->pair_uv = static_cast<short int *>(palloc0((u_size + 1) * sizeof(short)));
+	state->pair_vu = static_cast<short int *>(palloc0((v_size + 1) * sizeof(short)));
+	state->distance = static_cast<float *>(palloc((u_size + 1) * sizeof(float)));
+	state->queue = static_cast<short int *>(palloc((u_size + 2) * sizeof(short)));
 
 	while (hk_breadth_search(state))
 	{

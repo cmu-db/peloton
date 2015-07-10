@@ -302,12 +302,12 @@ jsonb_object_keys(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		state = palloc(sizeof(OkeysState));
+		state = static_cast<OkeysState *>(palloc(sizeof(OkeysState)));
 
 		state->result_size = JB_ROOT_COUNT(jb);
 		state->result_count = 0;
 		state->sent_count = 0;
-		state->result = palloc(state->result_size * sizeof(char *));
+		state->result = static_cast<char **>(palloc(state->result_size * sizeof(char *)));
 
 		it = JsonbIteratorInit(&jb->root);
 
@@ -319,7 +319,7 @@ jsonb_object_keys(PG_FUNCTION_ARGS)
 			{
 				char	   *cstr;
 
-				cstr = palloc(v.val.string.len + 1 * sizeof(char));
+				cstr = static_cast<char *>(palloc(v.val.string.len + 1 * sizeof(char)));
 				memcpy(cstr, v.val.string.val, v.val.string.len);
 				cstr[v.val.string.len] = '\0';
 				state->result[state->result_count++] = cstr;
@@ -367,14 +367,14 @@ json_object_keys(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		state = palloc(sizeof(OkeysState));
-		sem = palloc0(sizeof(JsonSemAction));
+		state = static_cast<OkeysState *>(palloc(sizeof(OkeysState)));
+		sem = static_cast<JsonSemAction *>(palloc0(sizeof(JsonSemAction)));
 
 		state->lex = lex;
 		state->result_size = 256;
 		state->result_count = 0;
 		state->sent_count = 0;
-		state->result = palloc(256 * sizeof(char *));
+		state->result = static_cast<char **>(palloc(256 * sizeof(char *)));
 
 		sem->semstate = (void *) state;
 		sem->array_start = okeys_array_start;
@@ -706,8 +706,8 @@ get_path_all(FunctionCallInfo fcinfo, bool as_text)
 	deconstruct_array(path, TEXTOID, -1, false, 'i',
 					  &pathtext, &pathnulls, &npath);
 
-	tpath = palloc(npath * sizeof(char *));
-	ipath = palloc(npath * sizeof(int));
+	tpath = static_cast<char **>(palloc(npath * sizeof(char *)));
+	ipath = static_cast<int *>(palloc(npath * sizeof(int)));
 
 	for (i = 0; i < npath; i++)
 	{
@@ -767,8 +767,8 @@ get_worker(text *json,
 		   bool normalize_results)
 {
 	JsonLexContext *lex = makeJsonLexContext(json, true);
-	JsonSemAction *sem = palloc0(sizeof(JsonSemAction));
-	GetState   *state = palloc0(sizeof(GetState));
+	JsonSemAction *sem = static_cast<JsonSemAction *>(palloc0(sizeof(JsonSemAction)));
+	GetState   *state = static_cast<GetState *>(palloc0(sizeof(GetState)));
 
 	Assert(npath >= 0);
 
@@ -778,8 +778,8 @@ get_worker(text *json,
 	state->npath = npath;
 	state->path_names = tpath;
 	state->path_indexes = ipath;
-	state->pathok = palloc0(sizeof(bool) * npath);
-	state->array_cur_index = palloc(sizeof(int) * npath);
+	state->pathok = static_cast<bool *>(palloc0(sizeof(bool) * npath));
+	state->array_cur_index = static_cast<int *>(palloc(sizeof(int) * npath));
 
 	if (npath > 0)
 		state->pathok[0] = true;
@@ -1277,8 +1277,8 @@ json_array_length(PG_FUNCTION_ARGS)
 	JsonSemAction *sem;
 
 	lex = makeJsonLexContext(json, false);
-	state = palloc0(sizeof(AlenState));
-	sem = palloc0(sizeof(JsonSemAction));
+	state = static_cast<AlenState *>(palloc0(sizeof(AlenState)));
+	sem = static_cast<JsonSemAction *>(palloc0(sizeof(JsonSemAction)));
 
 	/* palloc0 does this for us */
 #if 0
@@ -1536,8 +1536,8 @@ each_worker(FunctionCallInfo fcinfo, bool as_text)
 	EachState  *state;
 
 	lex = makeJsonLexContext(json, true);
-	state = palloc0(sizeof(EachState));
-	sem = palloc0(sizeof(JsonSemAction));
+	state = static_cast<EachState *>(palloc0(sizeof(EachState)));
+	sem = static_cast<JsonSemAction *>(palloc0(sizeof(JsonSemAction)));
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
@@ -1855,8 +1855,8 @@ elements_worker(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 	TupleDesc	tupdesc;
 	ElementsState *state;
 
-	state = palloc0(sizeof(ElementsState));
-	sem = palloc0(sizeof(JsonSemAction));
+	state = static_cast<ElementsState *>(palloc0(sizeof(ElementsState)));
+	sem = static_cast<JsonSemAction *>(palloc0(sizeof(JsonSemAction)));
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
@@ -2220,9 +2220,9 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 
 		if (jtype == JSONOID)
 		{
-			hashentry = hash_search(json_hash,
+			hashentry = static_cast<JsonHashEntry *>(hash_search(json_hash,
 									NameStr(tupdesc->attrs[i]->attname),
-									HASH_FIND, NULL);
+									HASH_FIND, NULL));
 		}
 		else
 		{
@@ -2332,8 +2332,8 @@ get_json_object_as_hash(text *json, const char *funcname)
 					  &ctl,
 					  HASH_ELEM | HASH_CONTEXT);
 
-	state = palloc0(sizeof(JHashState));
-	sem = palloc0(sizeof(JsonSemAction));
+	state = static_cast<JHashState *>(palloc0(sizeof(JHashState)));
+	sem = static_cast<JsonSemAction *>(palloc0(sizeof(JsonSemAction)));
 
 	state->function_name = funcname;
 	state->hash = tab;
@@ -2394,7 +2394,7 @@ hash_object_field_end(void *state, char *fname, bool isnull)
 	if (strlen(fname) >= NAMEDATALEN)
 		return;
 
-	hashentry = hash_search(_state->hash, fname, HASH_ENTER, &found);
+	hashentry = static_cast<JsonHashEntry *>(hash_search(_state->hash, fname, HASH_ENTER, &found));
 
 	/*
 	 * found being true indicates a duplicate. We don't do anything about
@@ -2405,7 +2405,7 @@ hash_object_field_end(void *state, char *fname, bool isnull)
 	if (_state->save_json_start != NULL)
 	{
 		int			len = _state->lex->prev_token_terminator - _state->save_json_start;
-		char	   *val = palloc((len + 1) * sizeof(char));
+		char	   *val = static_cast<char *>(palloc((len + 1) * sizeof(char)));
 
 		memcpy(val, _state->save_json_start, len);
 		val[len] = '\0';
@@ -2690,7 +2690,7 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 		my_extra->ncolumns = ncolumns;
 	}
 
-	state = palloc0(sizeof(PopulateRecordsetState));
+	state = static_cast<PopulateRecordsetState *>(palloc0(sizeof(PopulateRecordsetState)));
 
 	/* make these in a sufficiently long-lived memory context */
 	old_cxt = MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
@@ -2712,7 +2712,7 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 		JsonLexContext *lex;
 		JsonSemAction *sem;
 
-		sem = palloc0(sizeof(JsonSemAction));
+		sem = static_cast<JsonSemAction *>(palloc0(sizeof(JsonSemAction)));
 
 		lex = makeJsonLexContext(json, true);
 
@@ -2858,9 +2858,9 @@ populate_recordset_object_end(void *state)
 			continue;
 		}
 
-		hashentry = hash_search(json_hash,
+		hashentry = static_cast<JsonHashEntry *>(hash_search(json_hash,
 								NameStr(tupdesc->attrs[i]->attname),
-								HASH_FIND, NULL);
+								HASH_FIND, NULL));
 
 		/*
 		 * we can't just skip here if the key wasn't found since we might have
@@ -2992,7 +2992,7 @@ populate_recordset_object_field_end(void *state, char *fname, bool isnull)
 	if (strlen(fname) >= NAMEDATALEN)
 		return;
 
-	hashentry = hash_search(_state->json_hash, fname, HASH_ENTER, &found);
+	hashentry = static_cast<JsonHashEntry *>(hash_search(_state->json_hash, fname, HASH_ENTER, &found));
 
 	/*
 	 * found being true indicates a duplicate. We don't do anything about
@@ -3003,7 +3003,7 @@ populate_recordset_object_field_end(void *state, char *fname, bool isnull)
 	if (_state->save_json_start != NULL)
 	{
 		int			len = _state->lex->prev_token_terminator - _state->save_json_start;
-		char	   *val = palloc((len + 1) * sizeof(char));
+		char	   *val = static_cast<char *>(palloc((len + 1) * sizeof(char)));
 
 		memcpy(val, _state->save_json_start, len);
 		val[len] = '\0';
@@ -3137,8 +3137,8 @@ json_strip_nulls(PG_FUNCTION_ARGS)
 	JsonSemAction *sem;
 
 	lex = makeJsonLexContext(json, true);
-	state = palloc0(sizeof(StripnullState));
-	sem = palloc0(sizeof(JsonSemAction));
+	state = static_cast<StripnullState *>(palloc0(sizeof(StripnullState)));
+	sem = static_cast<JsonSemAction *>(palloc0(sizeof(JsonSemAction)));
 
 	state->strval = makeStringInfo();
 	state->skip_next_null = false;
@@ -3205,9 +3205,9 @@ jsonb_strip_nulls(PG_FUNCTION_ARGS)
 		}
 
 		if (type == WJB_VALUE || type == WJB_ELEM)
-			res = pushJsonbValue(&parseState, type, &v);
+			res = pushJsonbValue(&parseState, static_cast<JsonbIteratorToken>(type), &v);
 		else
-			res = pushJsonbValue(&parseState, type, NULL);
+			res = pushJsonbValue(&parseState, static_cast<JsonbIteratorToken>(type), NULL);
 	}
 
 	Assert(res != NULL);
@@ -3259,9 +3259,9 @@ addJsonbToParseState(JsonbParseState **jbps, Jsonb * jb)
 		while ((type = JsonbIteratorNext(&it, &v, false)) != WJB_DONE)
 		{
 			if (type == WJB_KEY || type == WJB_VALUE || type == WJB_ELEM)
-				(void) pushJsonbValue(jbps, type, &v);
+				(void) pushJsonbValue(jbps, static_cast<JsonbIteratorToken>(type), &v);
 			else
-				(void) pushJsonbValue(jbps, type, NULL);
+				(void) pushJsonbValue(jbps, static_cast<JsonbIteratorToken>(type), NULL);
 		}
 	}
 
@@ -3294,7 +3294,7 @@ jsonb_concat(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jb1 = PG_GETARG_JSONB(0);
 	Jsonb	   *jb2 = PG_GETARG_JSONB(1);
-	Jsonb	   *out = palloc(VARSIZE(jb1) + VARSIZE(jb2));
+	Jsonb	   *out = static_cast<Jsonb *>(palloc(VARSIZE(jb1) + VARSIZE(jb2)));
 	JsonbParseState *state = NULL;
 	JsonbValue *res;
 	JsonbIterator  *it1,
@@ -3381,7 +3381,7 @@ jsonb_delete(PG_FUNCTION_ARGS)
 			continue;
 		}
 
-		res = pushJsonbValue(&state, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
+		res = pushJsonbValue(&state, static_cast<JsonbIteratorToken>(r), r < WJB_BEGIN_ARRAY ? &v : NULL);
 	}
 
 	Assert(res != NULL);
@@ -3436,7 +3436,7 @@ jsonb_delete_idx(PG_FUNCTION_ARGS)
 	if (idx >= n)
 		PG_RETURN_JSONB(in);
 
-	pushJsonbValue(&state, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
+	pushJsonbValue(&state, static_cast<JsonbIteratorToken>(r), r < WJB_BEGIN_ARRAY ? &v : NULL);
 
 	while ((r = JsonbIteratorNext(&it, &v, true)) != 0)
 	{
@@ -3450,7 +3450,7 @@ jsonb_delete_idx(PG_FUNCTION_ARGS)
 			}
 		}
 
-		res = pushJsonbValue(&state, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
+		res = pushJsonbValue(&state, static_cast<JsonbIteratorToken>(r), r < WJB_BEGIN_ARRAY ? &v : NULL);
 	}
 
 	Assert (res != NULL);
@@ -3580,7 +3580,7 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
 		 * Append the all tokens from v1 to res, except last WJB_END_OBJECT
 		 * (because res will not be finished yet).
 		 */
-		(void) pushJsonbValue(state, r1, NULL);
+		(void) pushJsonbValue(state, static_cast<JsonbIteratorToken>(r1), NULL);
 		while ((r1 = JsonbIteratorNext(it1, &v1, false)) != 0)
 		{
 			if (r1 == WJB_BEGIN_OBJECT)
@@ -3589,7 +3589,7 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
 				--level;
 
 			if (level != 0)
-				res = pushJsonbValue(state, r1, r1 < WJB_BEGIN_ARRAY ? &v1 : NULL);
+				res = pushJsonbValue(state, static_cast<JsonbIteratorToken>(r1), r1 < WJB_BEGIN_ARRAY ? &v1 : NULL);
 		}
 
 		/*
@@ -3597,7 +3597,7 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
 		 * (the concatenation will be completed).
 		 */
 		while ((r2 = JsonbIteratorNext(it2, &v2, false)) != 0)
-			res = pushJsonbValue(state, r2, r2 < WJB_BEGIN_ARRAY ? &v2 : NULL);
+			res = pushJsonbValue(state, static_cast<JsonbIteratorToken>(r2), r2 < WJB_BEGIN_ARRAY ? &v2 : NULL);
 	}
 
 	/*
@@ -3605,7 +3605,7 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
 	 */
 	else if (rk1 == WJB_BEGIN_ARRAY && rk2 == WJB_BEGIN_ARRAY)
 	{
-		res = pushJsonbValue(state, r1, NULL);
+		res = pushJsonbValue(state, static_cast<JsonbIteratorToken>(r1), NULL);
 		for (;;)
 		{
 			r1 = JsonbIteratorNext(it1, &v1, true);
@@ -3613,7 +3613,7 @@ IteratorConcat(JsonbIterator **it1, JsonbIterator **it2,
 				break;
 
 			Assert(r1 == WJB_KEY || r1 == WJB_VALUE || r1 == WJB_ELEM);
-			pushJsonbValue(state, r1, &v1);
+			pushJsonbValue(state, static_cast<JsonbIteratorToken>(r1), &v1);
 		}
 
 		while ((r2 = JsonbIteratorNext(it2, &v2, true)) != 0)
@@ -3700,7 +3700,7 @@ walkJsonb(JsonbIterator **it, JsonbParseState **state, bool stop_at_level_zero)
 		if (stop_at_level_zero && level == 0)
 			break;
 
-		res = pushJsonbValue(state, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
+		res = pushJsonbValue(state, static_cast<JsonbIteratorToken>(r), r < WJB_BEGIN_ARRAY ? &v : NULL);
 	}
 
 	return res;
@@ -3724,26 +3724,26 @@ replacePath(JsonbIterator **it, Datum *path_elems,
 	switch (r)
 	{
 		case WJB_BEGIN_ARRAY:
-			(void) pushJsonbValue(st, r, NULL);
+			(void) pushJsonbValue(st, static_cast<JsonbIteratorToken>(r), NULL);
 			replacePathArray(it, path_elems, path_nulls, path_len, st, level,
 							 newval, v.val.array.nElems);
 			r = JsonbIteratorNext(it, &v, false);
 			Assert(r == WJB_END_ARRAY);
-			res = pushJsonbValue(st, r, NULL);
+			res = pushJsonbValue(st, static_cast<JsonbIteratorToken>(r), NULL);
 
 			break;
 		case WJB_BEGIN_OBJECT:
-			(void) pushJsonbValue(st, r, NULL);
+			(void) pushJsonbValue(st, static_cast<JsonbIteratorToken>(r), NULL);
 			replacePathObject(it, path_elems, path_nulls, path_len, st, level,
 							  newval, v.val.object.nPairs);
 			r = JsonbIteratorNext(it, &v, true);
 			Assert(r == WJB_END_OBJECT);
-			res = pushJsonbValue(st, r, NULL);
+			res = pushJsonbValue(st, static_cast<JsonbIteratorToken>(r), NULL);
 
 			break;
 		case WJB_ELEM:
 		case WJB_VALUE:
-			res = pushJsonbValue(st, r, &v);
+			res = pushJsonbValue(st, static_cast<JsonbIteratorToken>(r), &v);
 			break;
 		default:
 			elog(ERROR, "impossible state");
@@ -3789,16 +3789,16 @@ replacePathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 			}
 			else
 			{
-				(void) pushJsonbValue(st, r, &k);
+				(void) pushJsonbValue(st, static_cast<JsonbIteratorToken>(r), &k);
 				replacePath(it, path_elems, path_nulls, path_len,
 							st, level + 1, newval);
 			}
 		}
 		else
 		{
-			(void) pushJsonbValue(st, r, &k);
+			(void) pushJsonbValue(st, static_cast<JsonbIteratorToken>(r), &k);
 			r = JsonbIteratorNext(it, &v, false);
-			(void) pushJsonbValue(st, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
+			(void) pushJsonbValue(st, static_cast<JsonbIteratorToken>(r), r < WJB_BEGIN_ARRAY ? &v : NULL);
 			if (r == WJB_BEGIN_ARRAY || r == WJB_BEGIN_OBJECT)
 			{
 				int		walking_level = 1;
@@ -3812,7 +3812,7 @@ replacePathObject(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 					if (r == WJB_END_ARRAY || r == WJB_END_OBJECT)
 						--walking_level;
 
-					(void) pushJsonbValue(st, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
+					(void) pushJsonbValue(st, static_cast<JsonbIteratorToken>(r), r < WJB_BEGIN_ARRAY ? &v : NULL);
 				}
 			}
 		}
@@ -3877,7 +3877,7 @@ replacePathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 		{
 			r = JsonbIteratorNext(it, &v, false);
 
-			(void) pushJsonbValue(st, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
+			(void) pushJsonbValue(st, static_cast<JsonbIteratorToken>(r), r < WJB_BEGIN_ARRAY ? &v : NULL);
 
 			if (r == WJB_BEGIN_ARRAY || r == WJB_BEGIN_OBJECT)
 			{
@@ -3892,7 +3892,7 @@ replacePathArray(JsonbIterator **it, Datum *path_elems, bool *path_nulls,
 					if (r == WJB_END_ARRAY || r == WJB_END_OBJECT)
 						--walking_level;
 
-					(void) pushJsonbValue(st, r, r < WJB_BEGIN_ARRAY ? &v : NULL);
+					(void) pushJsonbValue(st, static_cast<JsonbIteratorToken>(r), r < WJB_BEGIN_ARRAY ? &v : NULL);
 				}
 			}
 		}

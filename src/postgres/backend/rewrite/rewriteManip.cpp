@@ -75,7 +75,7 @@ contain_aggs_of_level(Node *node, int levelsup)
 	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	return query_or_expression_tree_walker(node,
-										   contain_aggs_of_level_walker,
+	                     reinterpret_cast<query_or_expression_tree_walker_fptr>(contain_aggs_of_level_walker),
 										   (void *) &context,
 										   0);
 }
@@ -105,12 +105,12 @@ contain_aggs_of_level_walker(Node *node,
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node,
-								   contain_aggs_of_level_walker,
+		                           reinterpret_cast<query_tree_walker_fptr>(contain_aggs_of_level_walker),
 								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
 	}
-	return expression_tree_walker(node, contain_aggs_of_level_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(contain_aggs_of_level_walker),
 								  (void *) context);
 }
 
@@ -140,7 +140,7 @@ locate_agg_of_level(Node *node, int levelsup)
 	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	(void) query_or_expression_tree_walker(node,
-										   locate_agg_of_level_walker,
+	                     reinterpret_cast<query_or_expression_tree_walker_fptr>(locate_agg_of_level_walker),
 										   (void *) &context,
 										   0);
 
@@ -179,12 +179,12 @@ locate_agg_of_level_walker(Node *node,
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node,
-								   locate_agg_of_level_walker,
+		               reinterpret_cast<query_tree_walker_fptr>(locate_agg_of_level_walker),
 								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
 	}
-	return expression_tree_walker(node, locate_agg_of_level_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(locate_agg_of_level_walker),
 								  (void *) context);
 }
 
@@ -243,7 +243,7 @@ locate_windowfunc(Node *node)
 	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	(void) query_or_expression_tree_walker(node,
-										   locate_windowfunc_walker,
+	                                       reinterpret_cast<query_or_expression_tree_walker_fptr>(locate_windowfunc_walker),
 										   (void *) &context,
 										   0);
 
@@ -265,7 +265,7 @@ locate_windowfunc_walker(Node *node, locate_windowfunc_context *context)
 		/* else fall through to examine argument */
 	}
 	/* Mustn't recurse into subselects */
-	return expression_tree_walker(node, locate_windowfunc_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(locate_windowfunc_walker),
 								  (void *) context);
 }
 
@@ -412,12 +412,12 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 		bool		result;
 
 		context->sublevels_up++;
-		result = query_tree_walker((Query *) node, OffsetVarNodes_walker,
+		result = query_tree_walker((Query *) node, reinterpret_cast<query_tree_walker_fptr>(OffsetVarNodes_walker),
 								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
 	}
-	return expression_tree_walker(node, OffsetVarNodes_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(OffsetVarNodes_walker),
 								  (void *) context);
 }
 
@@ -462,7 +462,7 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 				rc->rti += offset;
 			}
 		}
-		query_tree_walker(qry, OffsetVarNodes_walker,
+		query_tree_walker(qry, reinterpret_cast<query_tree_walker_fptr>(OffsetVarNodes_walker),
 						  (void *) &context, 0);
 	}
 	else
@@ -596,12 +596,12 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 		bool		result;
 
 		context->sublevels_up++;
-		result = query_tree_walker((Query *) node, ChangeVarNodes_walker,
+		result = query_tree_walker((Query *) node, reinterpret_cast<query_tree_walker_fptr>(ChangeVarNodes_walker),
 								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
 	}
-	return expression_tree_walker(node, ChangeVarNodes_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(ChangeVarNodes_walker),
 								  (void *) context);
 }
 
@@ -649,7 +649,7 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 					rc->rti = new_index;
 			}
 		}
-		query_tree_walker(qry, ChangeVarNodes_walker,
+		query_tree_walker(qry, reinterpret_cast<query_tree_walker_fptr>(ChangeVarNodes_walker),
 						  (void *) &context, 0);
 	}
 	else
@@ -761,13 +761,13 @@ IncrementVarSublevelsUp_walker(Node *node,
 
 		context->min_sublevels_up++;
 		result = query_tree_walker((Query *) node,
-								   IncrementVarSublevelsUp_walker,
+		               reinterpret_cast<query_tree_walker_fptr>(IncrementVarSublevelsUp_walker),
 								   (void *) context,
 								   QTW_EXAMINE_RTES);
 		context->min_sublevels_up--;
 		return result;
 	}
-	return expression_tree_walker(node, IncrementVarSublevelsUp_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(IncrementVarSublevelsUp_walker),
 								  (void *) context);
 }
 
@@ -785,7 +785,7 @@ IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	query_or_expression_tree_walker(node,
-									IncrementVarSublevelsUp_walker,
+	                reinterpret_cast<query_or_expression_tree_walker_fptr>(IncrementVarSublevelsUp_walker),
 									(void *) &context,
 									QTW_EXAMINE_RTES);
 }
@@ -804,7 +804,7 @@ IncrementVarSublevelsUp_rtable(List *rtable, int delta_sublevels_up,
 	context.min_sublevels_up = min_sublevels_up;
 
 	range_table_walker(rtable,
-					   IncrementVarSublevelsUp_walker,
+	           reinterpret_cast<range_table_walker_fptr>(IncrementVarSublevelsUp_walker),
 					   (void *) &context,
 					   QTW_EXAMINE_RTES);
 }
@@ -879,12 +879,12 @@ rangeTableEntry_used_walker(Node *node,
 		bool		result;
 
 		context->sublevels_up++;
-		result = query_tree_walker((Query *) node, rangeTableEntry_used_walker,
+		result = query_tree_walker((Query *) node, reinterpret_cast<query_tree_walker_fptr>(rangeTableEntry_used_walker),
 								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
 	}
-	return expression_tree_walker(node, rangeTableEntry_used_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(rangeTableEntry_used_walker),
 								  (void *) context);
 }
 
@@ -901,7 +901,7 @@ rangeTableEntry_used(Node *node, int rt_index, int sublevels_up)
 	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	return query_or_expression_tree_walker(node,
-										   rangeTableEntry_used_walker,
+	                     reinterpret_cast<query_or_expression_tree_walker_fptr>(rangeTableEntry_used_walker),
 										   (void *) &context,
 										   0);
 }
@@ -1019,7 +1019,7 @@ AddQual(Query *parsetree, Node *qual)
 	}
 
 	/* INTERSECT want's the original, but we need to copy - Jan */
-	copy = copyObject(qual);
+	copy = static_cast<Node *>(copyObject(qual))  ;
 
 	parsetree->jointree->quals = make_and_qual(parsetree->jointree->quals,
 											   copy);
@@ -1113,7 +1113,7 @@ replace_rte_variables(Node *node, int target_varno, int sublevels_up,
 	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	result = query_or_expression_tree_mutator(node,
-											  replace_rte_variables_mutator,
+	                      reinterpret_cast<query_or_expression_tree_mutator_fptr>(replace_rte_variables_mutator),
 											  (void *) &context,
 											  0);
 
@@ -1183,7 +1183,7 @@ replace_rte_variables_mutator(Node *node,
 		save_inserted_sublink = context->inserted_sublink;
 		context->inserted_sublink = ((Query *) node)->hasSubLinks;
 		newnode = query_tree_mutator((Query *) node,
-									 replace_rte_variables_mutator,
+		                             reinterpret_cast<query_tree_mutator_fptr>(replace_rte_variables_mutator),
 									 (void *) context,
 									 0);
 		newnode->hasSubLinks |= context->inserted_sublink;
@@ -1191,7 +1191,7 @@ replace_rte_variables_mutator(Node *node,
 		context->sublevels_up--;
 		return (Node *) newnode;
 	}
-	return expression_tree_mutator(node, replace_rte_variables_mutator,
+	return expression_tree_mutator(node, reinterpret_cast<expression_tree_mutator_fptr>(replace_rte_variables_mutator),
 								   (void *) context);
 }
 
@@ -1272,13 +1272,13 @@ map_variable_attnos_mutator(Node *node,
 
 		context->sublevels_up++;
 		newnode = query_tree_mutator((Query *) node,
-									 map_variable_attnos_mutator,
+		               reinterpret_cast<query_tree_mutator_fptr>(map_variable_attnos_mutator),
 									 (void *) context,
 									 0);
 		context->sublevels_up--;
 		return (Node *) newnode;
 	}
-	return expression_tree_mutator(node, map_variable_attnos_mutator,
+	return expression_tree_mutator(node, reinterpret_cast<expression_tree_mutator_fptr>(map_variable_attnos_mutator),
 								   (void *) context);
 }
 
@@ -1303,7 +1303,7 @@ map_variable_attnos(Node *node,
 	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	return query_or_expression_tree_mutator(node,
-											map_variable_attnos_mutator,
+	                    reinterpret_cast<query_or_expression_tree_mutator_fptr>(map_variable_attnos_mutator),
 											(void *) &context,
 											0);
 }
@@ -1415,7 +1415,7 @@ ReplaceVarsFromTargetList_callback(Var *var,
 	else
 	{
 		/* Make a copy of the tlist item to return */
-		Node	   *newnode = copyObject(tle->expr);
+		Node	   *newnode = static_cast<Node *>(copyObject(tle->expr));
 
 		/* Must adjust varlevelsup if tlist item is from higher query */
 		if (var->varlevelsup > 0)

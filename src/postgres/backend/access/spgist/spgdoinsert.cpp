@@ -86,7 +86,7 @@ addNode(SpGistState *state, SpGistInnerTuple tuple, Datum label, int offset)
 	else if (offset > tuple->nNodes)
 		elog(ERROR, "invalid offset for adding node to SPGiST inner tuple");
 
-	nodes = palloc(sizeof(SpGistNodeTuple) * (tuple->nNodes + 1));
+	nodes = static_cast<SpGistNodeTupleData **>(palloc(sizeof(SpGistNodeTuple) * (tuple->nNodes + 1)));
 	SGITITERATE(tuple, i, node)
 	{
 		if (i < offset)
@@ -451,7 +451,7 @@ moveLeafs(Relation index, SpGistState *state,
 	nblkno = BufferGetBlockNumber(nbuf);
 	Assert(nblkno != current->blkno);
 
-	leafdata = leafptr = palloc(size);
+	leafdata = leafptr = static_cast<char *>(palloc(size));
 
 	START_CRIT_SECTION();
 
@@ -847,7 +847,7 @@ doPickSplit(Relation index, SpGistState *state,
 		out.hasPrefix = false;
 		out.nNodes = 1;
 		out.nodeLabels = NULL;
-		out.mapTuplesToNodes = palloc0(sizeof(int) * in.nTuples);
+		out.mapTuplesToNodes = static_cast<int *>(palloc0(sizeof(int) * in.nTuples));
 
 		/*
 		 * Form new___ leaf tuples and count up the total space needed.
@@ -1707,7 +1707,7 @@ spgSplitNodeAction(Relation index, SpGistState *state,
 	 * same node datums, but with the prefix specified by the picksplit
 	 * function.
 	 */
-	nodes = palloc(sizeof(SpGistNodeTuple) * innerTuple->nNodes);
+	nodes = static_cast<SpGistNodeTupleData **>(palloc(sizeof(SpGistNodeTuple) * innerTuple->nNodes));
 	SGITITERATE(innerTuple, i, node)
 	{
 		nodes[i] = node;

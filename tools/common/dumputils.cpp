@@ -744,7 +744,7 @@ buildDefaultACLCommands(const char *type, const char *nspname,
  */
 static bool
 parseAclItem(const char *item, const char *type,
-			 const char *name, const char *subname, int remoteVersion,
+			 const char *UNUSED(name), const char *subname, int remoteVersion,
 			 PQExpBuffer grantee, PQExpBuffer grantor,
 			 PQExpBuffer privs, PQExpBuffer privswgo)
 {
@@ -1172,7 +1172,7 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
  * Build a query to retrieve security labels for a shared object.
  */
 void
-buildShSecLabelQuery(PGconn *conn, const char *catalog_name, uint32 objectId,
+buildShSecLabelQuery(PGconn *UNUSED(conn), const char *catalog_name, uint32 objectId,
 					 PQExpBuffer sql)
 {
 	appendPQExpBuffer(sql,

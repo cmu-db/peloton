@@ -191,6 +191,7 @@ handle_sigint(SIGNAL_ARGS)
 		{
 			rc = write_stderr("Could not send cancel request: ");
 			(void) rc;			/* ignore errors, nothing we can do here */
+      sprintf(errbuf, "signal: %d\n", postgres_signal_arg);
 			rc = write_stderr(errbuf);
 			(void) rc;			/* ignore errors, nothing we can do here */
 		}

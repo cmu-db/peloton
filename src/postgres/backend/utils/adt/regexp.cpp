@@ -210,7 +210,7 @@ RE_compile_and_cache(text *text_re, int cflags, Oid collation)
 	 * out-of-memory.  The Max() is because some malloc implementations return
 	 * NULL for malloc(0).
 	 */
-	re_temp.cre_pat = malloc(Max(text_re_len, 1));
+	re_temp.cre_pat = static_cast<char *>(malloc(Max(text_re_len, 1)));
 	if (re_temp.cre_pat == NULL)
 	{
 		pg_regfree(&re_temp.cre_re);
@@ -915,7 +915,7 @@ setup_regexp_matches(text *orig_str, text *pattern, text *flags,
 					 bool force_glob, bool use_subpatterns,
 					 bool ignore_degenerate)
 {
-	regexp_matches_ctx *matchctx = palloc0(sizeof(regexp_matches_ctx));
+	regexp_matches_ctx *matchctx = static_cast<regexp_matches_ctx *>(palloc0(sizeof(regexp_matches_ctx)));
 	int			orig_len;
 	pg_wchar   *wide_str;
 	int			wide_len;
@@ -966,7 +966,7 @@ setup_regexp_matches(text *orig_str, text *pattern, text *flags,
 	}
 
 	/* temporary output space for RE package */
-	pmatch = palloc(sizeof(regmatch_t) * pmatch_len);
+	pmatch = static_cast<regmatch_t *>(palloc(sizeof(regmatch_t) * pmatch_len));
 
 	/* the real output space (grown dynamically if needed) */
 	array_len = re_flags.glob ? 256 : 32;

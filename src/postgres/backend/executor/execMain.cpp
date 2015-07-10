@@ -1672,7 +1672,7 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 		for (i = 0; i < ncheck; i++)
 		{
 			/* ExecQual wants implicit-AND form */
-			qual = make_ands_implicit(stringToNode(check[i].ccbin));
+			qual = make_ands_implicit(static_cast<Expr *>(stringToNode(check[i].ccbin)));
 			resultRelInfo->ri_ConstraintExprs[i] = (List *)
 				ExecPrepareExpr((Expr *) qual, estate);
 		}
@@ -2342,7 +2342,7 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 			 */
 			test = heap_lock_tuple(relation, &tuple,
 								   estate->es_output_cid,
-								   lockmode, wait_policy,
+								   static_cast<LockTupleMode>(lockmode), wait_policy,
 								   false, &buffer, &hufd);
 			/* We now have two pins on the buffer, get rid of one */
 			ReleaseBuffer(buffer);

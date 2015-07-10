@@ -349,7 +349,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 		ExecInitExpr((Expr *) node->scan.plan.qual,
 					 (PlanState *) scanstate);
 
-	scanstate->funcstates = palloc(nfuncs * sizeof(FunctionScanPerFuncState));
+	scanstate->funcstates = static_cast<FunctionScanPerFuncState *>(palloc(nfuncs * sizeof(FunctionScanPerFuncState)));
 
 	natts = 0;
 	i = 0;

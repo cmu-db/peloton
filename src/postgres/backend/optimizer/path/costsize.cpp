@@ -3244,7 +3244,7 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 	}
 
 	/* recurse into children */
-	return expression_tree_walker(node, cost_qual_eval_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(cost_qual_eval_walker),
 								  (void *) context);
 }
 

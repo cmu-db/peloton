@@ -232,7 +232,7 @@ dsynonym_lexize(PG_FUNCTION_ARGS)
 	if (!found)
 		PG_RETURN_POINTER(NULL);
 
-	res = palloc0(sizeof(TSLexeme) * 2);
+	res = static_cast<TSLexeme *>(palloc0(sizeof(TSLexeme) * 2));
 	res[0].lexeme = pnstrdup(found->out, found->outlen);
 	res[0].flags = found->flags;
 

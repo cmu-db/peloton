@@ -749,8 +749,9 @@ struct pgsql_thing_t
 	const SchemaQuery *squery;	/* schema query, or NULL */
 	const bits32 flags;			/* visibility flags, see below */
 
-	/* Peloton porting: add default ctor to avoid uninitialized const member error */
-	pgsql_thing_t(char *name, char *query = NULL, SchemaQuery *squery = NULL, bits32 flags = 0)
+	// TODO: Peloton Changes
+	// Add default ctor to avoid uninitialized const member error
+	pgsql_thing_t(char *name, char *query = NULL, const SchemaQuery *squery = NULL, bits32 flags = 0)
 	: name(name), query(query), squery(squery), flags(flags) {}
 };
 
@@ -759,7 +760,7 @@ struct pgsql_thing_t
 #define THING_NO_SHOW		(THING_NO_CREATE | THING_NO_DROP)
 
 static const pgsql_thing_t words_after_create[] = {
-	{"AGGREGATE", NULL, &Query_for_list_of_aggregates},
+	{"AGGREGATE", NULL, &Query_for_list_of_domains},
 	{"CAST", NULL, NULL},		/* Casts have complex structures for names, so
 								 * skip it */
 	{"COLLATION", "SELECT pg_catalog.quote_ident(collname) FROM pg_catalog.pg_collation WHERE collencoding IN (-1, pg_catalog.pg_char_to_encoding(pg_catalog.getdatabaseencoding())) AND substring(pg_catalog.quote_ident(collname),1,%d)='%s'"},
@@ -777,10 +778,10 @@ static const pgsql_thing_t words_after_create[] = {
 	{"EXTENSION", Query_for_list_of_extensions},
 	{"FOREIGN DATA WRAPPER", NULL, NULL},
 	{"FOREIGN TABLE", NULL, NULL},
-	{"FUNCTION", NULL, &Query_for_list_of_functions},
+	{"FUNCTION", NULL, &Query_for_list_of_domains},
 	{"GROUP", Query_for_list_of_roles},
 	{"LANGUAGE", Query_for_list_of_languages},
-	{"INDEX", NULL, &Query_for_list_of_indexes},
+	{"INDEX", NULL, &Query_for_list_of_domains},
 	{"MATERIALIZED VIEW", NULL, NULL},
 	{"OPERATOR", NULL, NULL},	/* Querying for this is probably not such a
 								 * good idea. */
@@ -790,21 +791,21 @@ static const pgsql_thing_t words_after_create[] = {
 	{"ROLE", Query_for_list_of_roles},
 	{"RULE", "SELECT pg_catalog.quote_ident(rulename) FROM pg_catalog.pg_rules WHERE substring(pg_catalog.quote_ident(rulename),1,%d)='%s'"},
 	{"SCHEMA", Query_for_list_of_schemas},
-	{"SEQUENCE", NULL, &Query_for_list_of_sequences},
+	{"SEQUENCE", NULL, &Query_for_list_of_domains},
 	{"SERVER", Query_for_list_of_servers},
-	{"TABLE", NULL, &Query_for_list_of_tables},
+	{"TABLE", NULL, &Query_for_list_of_domains},
 	{"TABLESPACE", Query_for_list_of_tablespaces},
 	{"TEMP", NULL, NULL, THING_NO_DROP},		/* for CREATE TEMP TABLE ... */
 	{"TEMPLATE", Query_for_list_of_ts_templates, NULL, THING_NO_SHOW},
 	{"TEXT SEARCH", NULL, NULL},
 	{"TRIGGER", "SELECT pg_catalog.quote_ident(tgname) FROM pg_catalog.pg_trigger WHERE substring(pg_catalog.quote_ident(tgname),1,%d)='%s' AND NOT tgisinternal"},
-	{"TYPE", NULL, &Query_for_list_of_datatypes},
+	{"TYPE", NULL, &Query_for_list_of_domains},
 	{"UNIQUE", NULL, NULL, THING_NO_DROP},		/* for CREATE UNIQUE INDEX ... */
 	{"UNLOGGED", NULL, NULL, THING_NO_DROP},	/* for CREATE UNLOGGED TABLE
 												 * ... */
 	{"USER", Query_for_list_of_roles},
 	{"USER MAPPING FOR", NULL, NULL},
-	{"VIEW", NULL, &Query_for_list_of_views},
+	{"VIEW", NULL, &Query_for_list_of_domains},
 	{NULL}						/* end of list */
 };
 
@@ -3949,7 +3950,7 @@ psql_completion(const char *text, int start, int end)
 	{
 		int			i;
 
-		for (i = 0; i < lengthof(previous_words); i++)
+		for (i = 0; i < static_cast<int>(lengthof(previous_words)); i++)
 			free(previous_words[i]);
 	}
 
@@ -4082,7 +4083,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 		result = NULL;
 
 		/* Set up suitably-escaped copies of textual inputs */
-		e_text = pg_malloc(string_length * 2 + 1);
+		e_text = static_cast<char *>(pg_malloc(string_length * 2 + 1));
 		PQescapeString(e_text, text, string_length);
 
 		if (completion_info_charp)
@@ -4090,7 +4091,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 			size_t		charp_len;
 
 			charp_len = strlen(completion_info_charp);
-			e_info_charp = pg_malloc(charp_len * 2 + 1);
+			e_info_charp = static_cast<char *>(pg_malloc(charp_len * 2 + 1));
 			PQescapeString(e_info_charp, completion_info_charp,
 						   charp_len);
 		}
@@ -4102,7 +4103,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 			size_t		charp_len;
 
 			charp_len = strlen(completion_info_charp2);
-			e_info_charp2 = pg_malloc(charp_len * 2 + 1);
+			e_info_charp2 = static_cast<char *>(pg_malloc(charp_len * 2 + 1));
 			PQescapeString(e_info_charp2, completion_info_charp2,
 						   charp_len);
 		}
@@ -4600,7 +4601,7 @@ get_previous_words(int point, char **previous_words, int nwords)
 			point = start - 1;
 
 			/* make a copy of chars from start to end inclusive */
-			s = pg_malloc(end - start + 2);
+			s = static_cast<char *>(pg_malloc(end - start + 2));
 			strlcpy(s, &buf[start], end - start + 2);
 		}
 

@@ -55,7 +55,7 @@ binary_encode(PG_FUNCTION_ARGS)
 				 errmsg("unrecognized encoding: \"%s\"", namebuf)));
 
 	resultlen = enc->encode_len(VARDATA(data), datalen);
-	result = palloc(VARHDRSZ + resultlen);
+	result = static_cast<text *>(palloc(VARHDRSZ + resultlen));
 
 	res = enc->encode(VARDATA(data), datalen, VARDATA(result));
 
@@ -91,7 +91,7 @@ binary_decode(PG_FUNCTION_ARGS)
 				 errmsg("unrecognized encoding: \"%s\"", namebuf)));
 
 	resultlen = enc->decode_len(VARDATA(data), datalen);
-	result = palloc(VARHDRSZ + resultlen);
+	result = static_cast<bytea *>(palloc(VARHDRSZ + resultlen));
 
 	res = enc->decode(VARDATA(data), datalen, VARDATA(result));
 

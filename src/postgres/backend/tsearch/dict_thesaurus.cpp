@@ -89,7 +89,7 @@ newLexeme(DictThesaurus *d, char *b, char *e, uint32 idsubst, uint16 posinsubst)
 	ptr = d->wrds + d->nwrds;
 	d->nwrds++;
 
-	ptr->lexeme = palloc(e - b + 1);
+	ptr->lexeme = static_cast<char *>(palloc(e - b + 1));
 
 	memcpy(ptr->lexeme, b, e - b);
 	ptr->lexeme[e - b] = '\0';
@@ -145,7 +145,7 @@ addWrd(DictThesaurus *d, char *b, char *e, uint32 idsubst, uint16 nwrd, uint16 p
 		}
 	}
 
-	ptr->res[nres].lexeme = palloc(e - b + 1);
+	ptr->res[nres].lexeme = static_cast<char *>(palloc(e - b + 1));
 	memcpy(ptr->res[nres].lexeme, b, e - b);
 	ptr->res[nres].lexeme[e - b] = '\0';
 
@@ -671,7 +671,7 @@ findTheLexeme(DictThesaurus *d, char *lexeme)
 	key.lexeme = lexeme;
 	key.entries = NULL;
 
-	res = bsearch(&key, d->wrds, d->nwrds, sizeof(TheLexeme), cmpLexemeQ);
+	res = static_cast<TheLexeme *>(bsearch(&key, d->wrds, d->nwrds, sizeof(TheLexeme), cmpLexemeQ));
 
 	if (res == NULL)
 		return NULL;

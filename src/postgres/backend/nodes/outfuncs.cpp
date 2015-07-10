@@ -38,60 +38,60 @@
 
 /* Write the label for the node type */
 #define WRITE_NODE_TYPE(nodelabel) \
-	appendStringInfoString(str, nodelabel)
+		appendStringInfoString(str, nodelabel)
 
 /* Write an integer field (anything written as ":fldname %d") */
 #define WRITE_INT_FIELD(fldname) \
-	appendStringInfo(str, " :" CppAsString(fldname) " %d", node->fldname)
+		appendStringInfo(str, " :" CppAsString(fldname) " %d", node->fldname)
 
 /* Write an unsigned integer field (anything written as ":fldname %u") */
 #define WRITE_UINT_FIELD(fldname) \
-	appendStringInfo(str, " :" CppAsString(fldname) " %u", node->fldname)
+		appendStringInfo(str, " :" CppAsString(fldname) " %u", node->fldname)
 
 /* Write an OID field (don't hard-wire assumption that OID is same as uint) */
 #define WRITE_OID_FIELD(fldname) \
-	appendStringInfo(str, " :" CppAsString(fldname) " %u", node->fldname)
+		appendStringInfo(str, " :" CppAsString(fldname) " %u", node->fldname)
 
 /* Write a long-integer field */
 #define WRITE_LONG_FIELD(fldname) \
-	appendStringInfo(str, " :" CppAsString(fldname) " %ld", node->fldname)
+		appendStringInfo(str, " :" CppAsString(fldname) " %ld", node->fldname)
 
 /* Write a char field (ie, one ascii character) */
 #define WRITE_CHAR_FIELD(fldname) \
-	appendStringInfo(str, " :" CppAsString(fldname) " %c", node->fldname)
+		appendStringInfo(str, " :" CppAsString(fldname) " %c", node->fldname)
 
 /* Write an enumerated-type field as an integer code */
 #define WRITE_ENUM_FIELD(fldname, enumtype) \
-	appendStringInfo(str, " :" CppAsString(fldname) " %d", \
-					 (int) node->fldname)
+		appendStringInfo(str, " :" CppAsString(fldname) " %d", \
+				(int) node->fldname)
 
 /* Write a float field --- caller must give format to define precision */
 #define WRITE_FLOAT_FIELD(fldname,format) \
-	appendStringInfo(str, " :" CppAsString(fldname) " " format, node->fldname)
+		appendStringInfo(str, " :" CppAsString(fldname) " " format, node->fldname)
 
 /* Write a boolean field */
 #define WRITE_BOOL_FIELD(fldname) \
-	appendStringInfo(str, " :" CppAsString(fldname) " %s", \
-					 booltostr(node->fldname))
+		appendStringInfo(str, " :" CppAsString(fldname) " %s", \
+				booltostr(node->fldname))
 
 /* Write a character-string (possibly NULL) field */
 #define WRITE_STRING_FIELD(fldname) \
-	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
-	 _outToken(str, node->fldname))
+		(appendStringInfo(str, " :" CppAsString(fldname) " "), \
+				_outToken(str, node->fldname))
 
 /* Write a parse location field (actually same as INT case) */
 #define WRITE_LOCATION_FIELD(fldname) \
-	appendStringInfo(str, " :" CppAsString(fldname) " %d", node->fldname)
+		appendStringInfo(str, " :" CppAsString(fldname) " %d", node->fldname)
 
 /* Write a Node field */
 #define WRITE_NODE_FIELD(fldname) \
-	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
-	 _outNode(str, node->fldname))
+		(appendStringInfo(str, " :" CppAsString(fldname) " "), \
+				_outNode(str, node->fldname))
 
 /* Write a bitmapset field */
 #define WRITE_BITMAPSET_FIELD(fldname) \
-	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
-	 _outBitmapset(str, node->fldname))
+		(appendStringInfo(str, " :" CppAsString(fldname) " "), \
+				_outBitmapset(str, node->fldname))
 
 
 #define booltostr(x)  ((x) ? "true" : "false")
@@ -122,17 +122,17 @@ _outToken(StringInfo str, const char *s)
 	 */
 	/* These characters only need to be quoted at the start of the string */
 	if (*s == '<' ||
-		*s == '\"' ||
-		isdigit((unsigned char) *s) ||
-		((*s == '+' || *s == '-') &&
-		 (isdigit((unsigned char) s[1]) || s[1] == '.')))
+			*s == '\"' ||
+			isdigit((unsigned char) *s) ||
+			((*s == '+' || *s == '-') &&
+					(isdigit((unsigned char) s[1]) || s[1] == '.')))
 		appendStringInfoChar(str, '\\');
 	while (*s)
 	{
 		/* These chars must be backslashed anywhere in the string */
 		if (*s == ' ' || *s == '\n' || *s == '\t' ||
-			*s == '(' || *s == ')' || *s == '{' || *s == '}' ||
-			*s == '\\')
+				*s == '(' || *s == ')' || *s == '{' || *s == '}' ||
+				*s == '\\')
 			appendStringInfoChar(str, '\\');
 		appendStringInfoChar(str, *s++);
 	}
@@ -169,7 +169,7 @@ _outList(StringInfo str, const List *node)
 			appendStringInfo(str, " %u", lfirst_oid(lc));
 		else
 			elog(ERROR, "unrecognized list node type: %d",
-				 (int) node->type);
+					(int) node->type);
 	}
 
 	appendStringInfoChar(str, ')');
@@ -201,7 +201,7 @@ static void
 _outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
 {
 	Size		length,
-				i;
+	i;
 	char	   *s;
 
 	length = datumGetSize(value, typbyval, typlen);
@@ -1145,15 +1145,15 @@ _outBoolExpr(StringInfo str, const BoolExpr *node)
 	/* do-it-yourself enum representation */
 	switch (node->boolop)
 	{
-		case AND_EXPR:
-			opstr = "and";
-			break;
-		case OR_EXPR:
-			opstr = "or";
-			break;
-		case NOT_EXPR:
-			opstr = "not";
-			break;
+	case AND_EXPR:
+		opstr = "and";
+		break;
+	case OR_EXPR:
+		opstr = "or";
+		break;
+	case NOT_EXPR:
+		opstr = "not";
+		break;
 	}
 	appendStringInfoString(str, " :boolop ");
 	_outToken(str, opstr);
@@ -2347,15 +2347,15 @@ _outQuery(StringInfo str, const Query *node)
 	{
 		switch (nodeTag(node->utilityStmt))
 		{
-			case T_CreateStmt:
-			case T_IndexStmt:
-			case T_NotifyStmt:
-			case T_DeclareCursorStmt:
-				WRITE_NODE_FIELD(utilityStmt);
-				break;
-			default:
-				appendStringInfoString(str, " :utilityStmt ?");
-				break;
+		case T_CreateStmt:
+		case T_IndexStmt:
+		case T_NotifyStmt:
+		case T_DeclareCursorStmt:
+			WRITE_NODE_FIELD(utilityStmt);
+			break;
+		default:
+			appendStringInfoString(str, " :utilityStmt ?");
+			break;
 		}
 	}
 	else
@@ -2534,38 +2534,38 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 
 	switch (node->rtekind)
 	{
-		case RTE_RELATION:
-			WRITE_OID_FIELD(relid);
-			WRITE_CHAR_FIELD(relkind);
-			WRITE_NODE_FIELD(tablesample);
-			break;
-		case RTE_SUBQUERY:
-			WRITE_NODE_FIELD(subquery);
-			WRITE_BOOL_FIELD(security_barrier);
-			break;
-		case RTE_JOIN:
-			WRITE_ENUM_FIELD(jointype, JoinType);
-			WRITE_NODE_FIELD(joinaliasvars);
-			break;
-		case RTE_FUNCTION:
-			WRITE_NODE_FIELD(functions);
-			WRITE_BOOL_FIELD(funcordinality);
-			break;
-		case RTE_VALUES:
-			WRITE_NODE_FIELD(values_lists);
-			WRITE_NODE_FIELD(values_collations);
-			break;
-		case RTE_CTE:
-			WRITE_STRING_FIELD(ctename);
-			WRITE_UINT_FIELD(ctelevelsup);
-			WRITE_BOOL_FIELD(self_reference);
-			WRITE_NODE_FIELD(ctecoltypes);
-			WRITE_NODE_FIELD(ctecoltypmods);
-			WRITE_NODE_FIELD(ctecolcollations);
-			break;
-		default:
-			elog(ERROR, "unrecognized RTE kind: %d", (int) node->rtekind);
-			break;
+	case RTE_RELATION:
+		WRITE_OID_FIELD(relid);
+		WRITE_CHAR_FIELD(relkind);
+		WRITE_NODE_FIELD(tablesample);
+		break;
+	case RTE_SUBQUERY:
+		WRITE_NODE_FIELD(subquery);
+		WRITE_BOOL_FIELD(security_barrier);
+		break;
+	case RTE_JOIN:
+		WRITE_ENUM_FIELD(jointype, JoinType);
+		WRITE_NODE_FIELD(joinaliasvars);
+		break;
+	case RTE_FUNCTION:
+		WRITE_NODE_FIELD(functions);
+		WRITE_BOOL_FIELD(funcordinality);
+		break;
+	case RTE_VALUES:
+		WRITE_NODE_FIELD(values_lists);
+		WRITE_NODE_FIELD(values_collations);
+		break;
+	case RTE_CTE:
+		WRITE_STRING_FIELD(ctename);
+		WRITE_UINT_FIELD(ctelevelsup);
+		WRITE_BOOL_FIELD(self_reference);
+		WRITE_NODE_FIELD(ctecoltypes);
+		WRITE_NODE_FIELD(ctecoltypmods);
+		WRITE_NODE_FIELD(ctecolcollations);
+		break;
+	default:
+		elog(ERROR, "unrecognized RTE kind: %d", (int) node->rtekind);
+		break;
 	}
 
 	WRITE_BOOL_FIELD(lateral);
@@ -2600,70 +2600,70 @@ _outAExpr(StringInfo str, const A_Expr *node)
 
 	switch (node->kind)
 	{
-		case AEXPR_OP:
-			appendStringInfoChar(str, ' ');
-			WRITE_NODE_FIELD(name);
-			break;
-		case AEXPR_OP_ANY:
-			appendStringInfoChar(str, ' ');
-			WRITE_NODE_FIELD(name);
-			appendStringInfoString(str, " ANY ");
-			break;
-		case AEXPR_OP_ALL:
-			appendStringInfoChar(str, ' ');
-			WRITE_NODE_FIELD(name);
-			appendStringInfoString(str, " ALL ");
-			break;
-		case AEXPR_DISTINCT:
-			appendStringInfoString(str, " DISTINCT ");
-			WRITE_NODE_FIELD(name);
-			break;
-		case AEXPR_NULLIF:
-			appendStringInfoString(str, " NULLIF ");
-			WRITE_NODE_FIELD(name);
-			break;
-		case AEXPR_OF:
-			appendStringInfoString(str, " OF ");
-			WRITE_NODE_FIELD(name);
-			break;
-		case AEXPR_IN:
-			appendStringInfoString(str, " IN ");
-			WRITE_NODE_FIELD(name);
-			break;
-		case AEXPR_LIKE:
-			appendStringInfoString(str, " LIKE ");
-			WRITE_NODE_FIELD(name);
-			break;
-		case AEXPR_ILIKE:
-			appendStringInfoString(str, " ILIKE ");
-			WRITE_NODE_FIELD(name);
-			break;
-		case AEXPR_SIMILAR:
-			appendStringInfoString(str, " SIMILAR ");
-			WRITE_NODE_FIELD(name);
-			break;
-		case AEXPR_BETWEEN:
-			appendStringInfoString(str, " BETWEEN ");
-			WRITE_NODE_FIELD(name);
-			break;
-		case AEXPR_NOT_BETWEEN:
-			appendStringInfoString(str, " NOT_BETWEEN ");
-			WRITE_NODE_FIELD(name);
-			break;
-		case AEXPR_BETWEEN_SYM:
-			appendStringInfoString(str, " BETWEEN_SYM ");
-			WRITE_NODE_FIELD(name);
-			break;
-		case AEXPR_NOT_BETWEEN_SYM:
-			appendStringInfoString(str, " NOT_BETWEEN_SYM ");
-			WRITE_NODE_FIELD(name);
-			break;
-		case AEXPR_PAREN:
-			appendStringInfoString(str, " PAREN");
-			break;
-		default:
-			appendStringInfoString(str, " ??");
-			break;
+	case AEXPR_OP:
+		appendStringInfoChar(str, ' ');
+		WRITE_NODE_FIELD(name);
+		break;
+	case AEXPR_OP_ANY:
+		appendStringInfoChar(str, ' ');
+		WRITE_NODE_FIELD(name);
+		appendStringInfoString(str, " ANY ");
+		break;
+	case AEXPR_OP_ALL:
+		appendStringInfoChar(str, ' ');
+		WRITE_NODE_FIELD(name);
+		appendStringInfoString(str, " ALL ");
+		break;
+	case AEXPR_DISTINCT:
+		appendStringInfoString(str, " DISTINCT ");
+		WRITE_NODE_FIELD(name);
+		break;
+	case AEXPR_NULLIF:
+		appendStringInfoString(str, " NULLIF ");
+		WRITE_NODE_FIELD(name);
+		break;
+	case AEXPR_OF:
+		appendStringInfoString(str, " OF ");
+		WRITE_NODE_FIELD(name);
+		break;
+	case AEXPR_IN:
+		appendStringInfoString(str, " IN ");
+		WRITE_NODE_FIELD(name);
+		break;
+	case AEXPR_LIKE:
+		appendStringInfoString(str, " LIKE ");
+		WRITE_NODE_FIELD(name);
+		break;
+	case AEXPR_ILIKE:
+		appendStringInfoString(str, " ILIKE ");
+		WRITE_NODE_FIELD(name);
+		break;
+	case AEXPR_SIMILAR:
+		appendStringInfoString(str, " SIMILAR ");
+		WRITE_NODE_FIELD(name);
+		break;
+	case AEXPR_BETWEEN:
+		appendStringInfoString(str, " BETWEEN ");
+		WRITE_NODE_FIELD(name);
+		break;
+	case AEXPR_NOT_BETWEEN:
+		appendStringInfoString(str, " NOT_BETWEEN ");
+		WRITE_NODE_FIELD(name);
+		break;
+	case AEXPR_BETWEEN_SYM:
+		appendStringInfoString(str, " BETWEEN_SYM ");
+		WRITE_NODE_FIELD(name);
+		break;
+	case AEXPR_NOT_BETWEEN_SYM:
+		appendStringInfoString(str, " NOT_BETWEEN_SYM ");
+		WRITE_NODE_FIELD(name);
+		break;
+	case AEXPR_PAREN:
+		appendStringInfoString(str, " PAREN");
+		break;
+	default:
+		appendStringInfoString(str, " ??");
+		break;
 	}
 
 	WRITE_NODE_FIELD(lexpr);
@@ -2676,39 +2676,39 @@ _outValue(StringInfo str, const Value *value)
 {
 	switch (value->type)
 	{
-		case T_Integer:
-			appendStringInfo(str, "%ld", value->val.ival);
-			break;
-		case T_Float:
+	case T_Integer:
+		appendStringInfo(str, "%ld", value->val.ival);
+		break;
+	case T_Float:
 
-			/*
-			 * We assume the value is a valid numeric literal and so does not
-			 * need quoting.
-			 */
-			appendStringInfoString(str, value->val.str);
-			break;
-		case T_String:
+		/*
+		 * We assume the value is a valid numeric literal and so does not
+		 * need quoting.
+		 */
+		appendStringInfoString(str, value->val.str);
+		break;
+	case T_String:
 
-			/*
-			 * We use _outToken to provide escaping of the string's content,
-			 * but we don't want it to do anything with an empty string.
-			 */
-			appendStringInfoChar(str, '"');
-			if (value->val.str[0] != '\0')
-				_outToken(str, value->val.str);
-			appendStringInfoChar(str, '"');
-			break;
-		case T_BitString:
-			/* internal representation already has leading 'b' */
-			appendStringInfoString(str, value->val.str);
-			break;
-		case T_Null:
-			/* this is seen only within A_Const, not in transformed trees */
-			appendStringInfoString(str, "NULL");
-			break;
-		default:
-			elog(ERROR, "unrecognized node type: %d", (int) value->type);
-			break;
+		/*
+		 * We use _outToken to provide escaping of the string's content,
+		 * but we don't want it to do anything with an empty string.
+		 */
+		appendStringInfoChar(str, '"');
+		if (value->val.str[0] != '\0')
+			_outToken(str, value->val.str);
+		appendStringInfoChar(str, '"');
+		break;
+	case T_BitString:
+		/* internal representation already has leading 'b' */
+		appendStringInfoString(str, value->val.str);
+		break;
+	case T_Null:
+		/* this is seen only within A_Const, not in transformed trees */
+		appendStringInfoString(str, "NULL");
+		break;
+	default:
+		elog(ERROR, "unrecognized node type: %d", (int) value->type);
+		break;
 	}
 }
 
@@ -2857,89 +2857,89 @@ _outConstraint(StringInfo str, const Constraint *node)
 	appendStringInfoString(str, " :contype ");
 	switch (node->contype)
 	{
-		case CONSTR_NULL:
-			appendStringInfoString(str, "NULL");
-			break;
+	case CONSTR_NULL:
+		appendStringInfoString(str, "NULL");
+		break;
 
-		case CONSTR_NOTNULL:
-			appendStringInfoString(str, "NOT_NULL");
-			break;
+	case CONSTR_NOTNULL:
+		appendStringInfoString(str, "NOT_NULL");
+		break;
 
-		case CONSTR_DEFAULT:
-			appendStringInfoString(str, "DEFAULT");
-			WRITE_NODE_FIELD(raw_expr);
-			WRITE_STRING_FIELD(cooked_expr);
-			break;
+	case CONSTR_DEFAULT:
+		appendStringInfoString(str, "DEFAULT");
+		WRITE_NODE_FIELD(raw_expr);
+		WRITE_STRING_FIELD(cooked_expr);
+		break;
 
-		case CONSTR_CHECK:
-			appendStringInfoString(str, "CHECK");
-			WRITE_BOOL_FIELD(is_no_inherit);
-			WRITE_NODE_FIELD(raw_expr);
-			WRITE_STRING_FIELD(cooked_expr);
-			break;
+	case CONSTR_CHECK:
+		appendStringInfoString(str, "CHECK");
+		WRITE_BOOL_FIELD(is_no_inherit);
+		WRITE_NODE_FIELD(raw_expr);
+		WRITE_STRING_FIELD(cooked_expr);
+		break;
 
-		case CONSTR_PRIMARY:
-			appendStringInfoString(str, "PRIMARY_KEY");
-			WRITE_NODE_FIELD(keys);
-			WRITE_NODE_FIELD(options);
-			WRITE_STRING_FIELD(indexname);
-			WRITE_STRING_FIELD(indexspace);
-			/* access_method and where_clause not currently used */
-			break;
+	case CONSTR_PRIMARY:
+		appendStringInfoString(str, "PRIMARY_KEY");
+		WRITE_NODE_FIELD(keys);
+		WRITE_NODE_FIELD(options);
+		WRITE_STRING_FIELD(indexname);
+		WRITE_STRING_FIELD(indexspace);
+		/* access_method and where_clause not currently used */
+		break;
 
-		case CONSTR_UNIQUE:
-			appendStringInfoString(str, "UNIQUE");
-			WRITE_NODE_FIELD(keys);
-			WRITE_NODE_FIELD(options);
-			WRITE_STRING_FIELD(indexname);
-			WRITE_STRING_FIELD(indexspace);
-			/* access_method and where_clause not currently used */
-			break;
+	case CONSTR_UNIQUE:
+		appendStringInfoString(str, "UNIQUE");
+		WRITE_NODE_FIELD(keys);
+		WRITE_NODE_FIELD(options);
+		WRITE_STRING_FIELD(indexname);
+		WRITE_STRING_FIELD(indexspace);
+		/* access_method and where_clause not currently used */
+		break;
 
-		case CONSTR_EXCLUSION:
-			appendStringInfoString(str, "EXCLUSION");
-			WRITE_NODE_FIELD(exclusions);
-			WRITE_NODE_FIELD(options);
-			WRITE_STRING_FIELD(indexname);
-			WRITE_STRING_FIELD(indexspace);
-			WRITE_STRING_FIELD(access_method);
-			WRITE_NODE_FIELD(where_clause);
-			break;
+	case CONSTR_EXCLUSION:
+		appendStringInfoString(str, "EXCLUSION");
+		WRITE_NODE_FIELD(exclusions);
+		WRITE_NODE_FIELD(options);
+		WRITE_STRING_FIELD(indexname);
+		WRITE_STRING_FIELD(indexspace);
+		WRITE_STRING_FIELD(access_method);
+		WRITE_NODE_FIELD(where_clause);
+		break;
 
-		case CONSTR_FOREIGN:
-			appendStringInfoString(str, "FOREIGN_KEY");
-			WRITE_NODE_FIELD(pktable);
-			WRITE_NODE_FIELD(fk_attrs);
-			WRITE_NODE_FIELD(pk_attrs);
-			WRITE_CHAR_FIELD(fk_matchtype);
-			WRITE_CHAR_FIELD(fk_upd_action);
-			WRITE_CHAR_FIELD(fk_del_action);
-			WRITE_NODE_FIELD(old_conpfeqop);
-			WRITE_OID_FIELD(old_pktable_oid);
-			WRITE_BOOL_FIELD(skip_validation);
-			WRITE_BOOL_FIELD(initially_valid);
-			break;
+	case CONSTR_FOREIGN:
+		appendStringInfoString(str, "FOREIGN_KEY");
+		WRITE_NODE_FIELD(pktable);
+		WRITE_NODE_FIELD(fk_attrs);
+		WRITE_NODE_FIELD(pk_attrs);
+		WRITE_CHAR_FIELD(fk_matchtype);
+		WRITE_CHAR_FIELD(fk_upd_action);
+		WRITE_CHAR_FIELD(fk_del_action);
+		WRITE_NODE_FIELD(old_conpfeqop);
+		WRITE_OID_FIELD(old_pktable_oid);
+		WRITE_BOOL_FIELD(skip_validation);
+		WRITE_BOOL_FIELD(initially_valid);
+		break;
 
-		case CONSTR_ATTR_DEFERRABLE:
-			appendStringInfoString(str, "ATTR_DEFERRABLE");
-			break;
+	case CONSTR_ATTR_DEFERRABLE:
+		appendStringInfoString(str, "ATTR_DEFERRABLE");
+		break;
 
-		case CONSTR_ATTR_NOT_DEFERRABLE:
-			appendStringInfoString(str, "ATTR_NOT_DEFERRABLE");
-			break;
+	case CONSTR_ATTR_NOT_DEFERRABLE:
+		appendStringInfoString(str, "ATTR_NOT_DEFERRABLE");
+		break;
 
-		case CONSTR_ATTR_DEFERRED:
-			appendStringInfoString(str, "ATTR_DEFERRED");
-			break;
+	case CONSTR_ATTR_DEFERRED:
+		appendStringInfoString(str, "ATTR_DEFERRED");
+		break;
 
-		case CONSTR_ATTR_IMMEDIATE:
-			appendStringInfoString(str, "ATTR_IMMEDIATE");
-			break;
+	case CONSTR_ATTR_IMMEDIATE:
+		appendStringInfoString(str, "ATTR_IMMEDIATE");
+		break;
 
-		default:
-			appendStringInfo(str, "<unrecognized_constraint %d>",
-							 (int) node->contype);
-			break;
+	default:
+		appendStringInfo(str, "<unrecognized_constraint %d>",
+				(int) node->contype);
+		break;
 	}
 }
 
@@ -2954,518 +2954,517 @@ _outNode(StringInfo str, const void *obj)
 	if (obj == NULL)
 		appendStringInfoString(str, "<>");
 	else if (IsA(obj, List) ||IsA(obj, IntList) || IsA(obj, OidList))
-		_outList(str, obj);
-	else if (IsA(obj, Integer) ||
-			 IsA(obj, Float) ||
-			 IsA(obj, String) ||
-			 IsA(obj, BitString))
-	{
-		/* nodeRead does not want to see { } around these! */
-		_outValue(str, obj);
-	}
-	else
-	{
-		appendStringInfoChar(str, '{');
-		switch (nodeTag(obj))
+		_outList(str, static_cast<const List *>(obj));	else if (IsA(obj, Integer) ||
+				IsA(obj, Float) ||
+				IsA(obj, String) ||
+				IsA(obj, BitString))
 		{
+			/* nodeRead does not want to see { } around these! */
+			_outValue(str, static_cast<const Value *>(obj));
+		}
+		else
+		{
+			appendStringInfoChar(str, '{');
+			switch (nodeTag(obj))
+			{
 			case T_PlannedStmt:
-				_outPlannedStmt(str, obj);
+				_outPlannedStmt(str, static_cast<const PlannedStmt *>(obj));
 				break;
 			case T_Plan:
-				_outPlan(str, obj);
+				_outPlan(str, static_cast<const Plan *>(obj));
 				break;
 			case T_Result:
-				_outResult(str, obj);
+				_outResult(str, static_cast<const Result *>(obj));
 				break;
 			case T_ModifyTable:
-				_outModifyTable(str, obj);
+				_outModifyTable(str, static_cast<const ModifyTable *>(obj));
 				break;
 			case T_Append:
-				_outAppend(str, obj);
+				_outAppend(str, static_cast<const Append *>(obj));
 				break;
 			case T_MergeAppend:
-				_outMergeAppend(str, obj);
+				_outMergeAppend(str, static_cast<const MergeAppend *>(obj));
 				break;
 			case T_RecursiveUnion:
-				_outRecursiveUnion(str, obj);
+				_outRecursiveUnion(str, static_cast<const RecursiveUnion *>(obj));
 				break;
 			case T_BitmapAnd:
-				_outBitmapAnd(str, obj);
+				_outBitmapAnd(str, static_cast<const BitmapAnd *>(obj));
 				break;
 			case T_BitmapOr:
-				_outBitmapOr(str, obj);
+				_outBitmapOr(str, static_cast<const BitmapOr *>(obj));
 				break;
 			case T_Scan:
-				_outScan(str, obj);
+				_outScan(str, static_cast<const Scan *>(obj));
 				break;
 			case T_SeqScan:
-				_outSeqScan(str, obj);
+				_outSeqScan(str, static_cast<const SeqScan *>(obj));
 				break;
 			case T_IndexScan:
-				_outIndexScan(str, obj);
+				_outIndexScan(str, static_cast<const IndexScan *>(obj));
 				break;
 			case T_IndexOnlyScan:
-				_outIndexOnlyScan(str, obj);
+				_outIndexOnlyScan(str, static_cast<const IndexOnlyScan *>(obj));
 				break;
 			case T_BitmapIndexScan:
-				_outBitmapIndexScan(str, obj);
+				_outBitmapIndexScan(str, static_cast<const BitmapIndexScan *>(obj));
 				break;
 			case T_BitmapHeapScan:
-				_outBitmapHeapScan(str, obj);
+				_outBitmapHeapScan(str, static_cast<const BitmapHeapScan *>(obj));
 				break;
 			case T_TidScan:
-				_outTidScan(str, obj);
+				_outTidScan(str, static_cast<const TidScan *>(obj));
 				break;
 			case T_SubqueryScan:
-				_outSubqueryScan(str, obj);
+				_outSubqueryScan(str, static_cast<const SubqueryScan *>(obj));
 				break;
 			case T_FunctionScan:
-				_outFunctionScan(str, obj);
+				_outFunctionScan(str, static_cast<const FunctionScan *>(obj));
 				break;
 			case T_ValuesScan:
-				_outValuesScan(str, obj);
+				_outValuesScan(str, static_cast<const ValuesScan *>(obj));
 				break;
 			case T_CteScan:
-				_outCteScan(str, obj);
+				_outCteScan(str, static_cast<const CteScan *>(obj));
 				break;
 			case T_WorkTableScan:
-				_outWorkTableScan(str, obj);
+				_outWorkTableScan(str, static_cast<const WorkTableScan *>(obj));
 				break;
 			case T_ForeignScan:
-				_outForeignScan(str, obj);
+				_outForeignScan(str, static_cast<const ForeignScan *>(obj));
 				break;
 			case T_CustomScan:
-				_outCustomScan(str, obj);
+				_outCustomScan(str, static_cast<const CustomScan *>(obj));
 				break;
 			case T_SampleScan:
-				_outSampleScan(str, obj);
+				_outSampleScan(str, static_cast<const SampleScan *>(obj));
 				break;
 			case T_Join:
-				_outJoin(str, obj);
+				_outJoin(str, static_cast<const Join *>(obj));
 				break;
 			case T_NestLoop:
-				_outNestLoop(str, obj);
+				_outNestLoop(str, static_cast<const NestLoop *>(obj));
 				break;
 			case T_MergeJoin:
-				_outMergeJoin(str, obj);
+				_outMergeJoin(str, static_cast<const MergeJoin *>(obj));
 				break;
 			case T_HashJoin:
-				_outHashJoin(str, obj);
+				_outHashJoin(str, static_cast<const HashJoin *>(obj));
 				break;
 			case T_Agg:
-				_outAgg(str, obj);
+				_outAgg(str, static_cast<const Agg *>(obj));
 				break;
 			case T_WindowAgg:
-				_outWindowAgg(str, obj);
+				_outWindowAgg(str, static_cast<const WindowAgg *>(obj));
 				break;
 			case T_Group:
-				_outGroup(str, obj);
+				_outGroup(str, static_cast<const Group *>(obj));
 				break;
 			case T_Material:
-				_outMaterial(str, obj);
+				_outMaterial(str, static_cast<const Material *>(obj));
 				break;
 			case T_Sort:
-				_outSort(str, obj);
+				_outSort(str, static_cast<const Sort *>(obj));
 				break;
 			case T_Unique:
-				_outUnique(str, obj);
+				_outUnique(str, static_cast<const Unique *>(obj));
 				break;
 			case T_Hash:
-				_outHash(str, obj);
+				_outHash(str, static_cast<const Hash *>(obj));
 				break;
 			case T_SetOp:
-				_outSetOp(str, obj);
+				_outSetOp(str, static_cast<const SetOp *>(obj));
 				break;
 			case T_LockRows:
-				_outLockRows(str, obj);
+				_outLockRows(str, static_cast<const LockRows *>(obj));
 				break;
 			case T_Limit:
-				_outLimit(str, obj);
+				_outLimit(str, static_cast<const Limit *>(obj));
 				break;
 			case T_NestLoopParam:
-				_outNestLoopParam(str, obj);
+				_outNestLoopParam(str, static_cast<const NestLoopParam *>(obj));
 				break;
 			case T_PlanRowMark:
-				_outPlanRowMark(str, obj);
+				_outPlanRowMark(str, static_cast<const PlanRowMark *>(obj));
 				break;
 			case T_PlanInvalItem:
-				_outPlanInvalItem(str, obj);
+				_outPlanInvalItem(str, static_cast<const PlanInvalItem *>(obj));
 				break;
 			case T_Alias:
-				_outAlias(str, obj);
+				_outAlias(str, static_cast<const Alias *>(obj));
 				break;
 			case T_RangeVar:
-				_outRangeVar(str, obj);
+				_outRangeVar(str, static_cast<const RangeVar *>(obj));
 				break;
 			case T_IntoClause:
-				_outIntoClause(str, obj);
+				_outIntoClause(str, static_cast<const IntoClause *>(obj));
 				break;
 			case T_Var:
-				_outVar(str, obj);
+				_outVar(str, static_cast<const Var *>(obj));
 				break;
 			case T_Const:
-				_outConst(str, obj);
+				_outConst(str, static_cast<const Const *>(obj));
 				break;
 			case T_Param:
-				_outParam(str, obj);
+				_outParam(str, static_cast<const Param *>(obj));
 				break;
 			case T_Aggref:
-				_outAggref(str, obj);
+				_outAggref(str, static_cast<const Aggref *>(obj));
 				break;
 			case T_GroupingFunc:
-				_outGroupingFunc(str, obj);
+				_outGroupingFunc(str, static_cast<const GroupingFunc *>(obj));
 				break;
 			case T_WindowFunc:
-				_outWindowFunc(str, obj);
+				_outWindowFunc(str, static_cast<const WindowFunc *>(obj));
 				break;
 			case T_ArrayRef:
-				_outArrayRef(str, obj);
+				_outArrayRef(str, static_cast<const ArrayRef *>(obj));
 				break;
 			case T_FuncExpr:
-				_outFuncExpr(str, obj);
+				_outFuncExpr(str, static_cast<const FuncExpr *>(obj));
 				break;
 			case T_NamedArgExpr:
-				_outNamedArgExpr(str, obj);
+				_outNamedArgExpr(str, static_cast<const NamedArgExpr *>(obj));
 				break;
 			case T_OpExpr:
-				_outOpExpr(str, obj);
+				_outOpExpr(str, static_cast<const OpExpr *>(obj));
 				break;
 			case T_DistinctExpr:
-				_outDistinctExpr(str, obj);
+				_outDistinctExpr(str, static_cast<const DistinctExpr *>(obj));
 				break;
 			case T_NullIfExpr:
-				_outNullIfExpr(str, obj);
+				_outNullIfExpr(str, static_cast<const NullIfExpr *>(obj));
 				break;
 			case T_ScalarArrayOpExpr:
-				_outScalarArrayOpExpr(str, obj);
+				_outScalarArrayOpExpr(str, static_cast<const ScalarArrayOpExpr *>(obj));
 				break;
 			case T_BoolExpr:
-				_outBoolExpr(str, obj);
+				_outBoolExpr(str, static_cast<const BoolExpr *>(obj));
 				break;
 			case T_SubLink:
-				_outSubLink(str, obj);
+				_outSubLink(str, static_cast<const SubLink *>(obj));
 				break;
 			case T_SubPlan:
-				_outSubPlan(str, obj);
+				_outSubPlan(str, static_cast<const SubPlan *>(obj));
 				break;
 			case T_AlternativeSubPlan:
-				_outAlternativeSubPlan(str, obj);
+				_outAlternativeSubPlan(str, static_cast<const AlternativeSubPlan *>(obj));
 				break;
 			case T_FieldSelect:
-				_outFieldSelect(str, obj);
+				_outFieldSelect(str, static_cast<const FieldSelect *>(obj));
 				break;
 			case T_FieldStore:
-				_outFieldStore(str, obj);
+				_outFieldStore(str, static_cast<const FieldStore *>(obj));
 				break;
 			case T_RelabelType:
-				_outRelabelType(str, obj);
+				_outRelabelType(str, static_cast<const RelabelType *>(obj));
 				break;
 			case T_CoerceViaIO:
-				_outCoerceViaIO(str, obj);
+				_outCoerceViaIO(str, static_cast<const CoerceViaIO *>(obj));
 				break;
 			case T_ArrayCoerceExpr:
-				_outArrayCoerceExpr(str, obj);
+				_outArrayCoerceExpr(str, static_cast<const ArrayCoerceExpr *>(obj));
 				break;
 			case T_ConvertRowtypeExpr:
-				_outConvertRowtypeExpr(str, obj);
+				_outConvertRowtypeExpr(str, static_cast<const ConvertRowtypeExpr *>(obj));
 				break;
 			case T_CollateExpr:
-				_outCollateExpr(str, obj);
+				_outCollateExpr(str, static_cast<const CollateExpr *>(obj));
 				break;
 			case T_CaseExpr:
-				_outCaseExpr(str, obj);
+				_outCaseExpr(str, static_cast<const CaseExpr *>(obj));
 				break;
 			case T_CaseWhen:
-				_outCaseWhen(str, obj);
+				_outCaseWhen(str, static_cast<const CaseWhen *>(obj));
 				break;
 			case T_CaseTestExpr:
-				_outCaseTestExpr(str, obj);
+				_outCaseTestExpr(str, static_cast<const CaseTestExpr *>(obj));
 				break;
 			case T_ArrayExpr:
-				_outArrayExpr(str, obj);
+				_outArrayExpr(str, static_cast<const ArrayExpr *>(obj));
 				break;
 			case T_RowExpr:
-				_outRowExpr(str, obj);
+				_outRowExpr(str, static_cast<const RowExpr *>(obj));
 				break;
 			case T_RowCompareExpr:
-				_outRowCompareExpr(str, obj);
+				_outRowCompareExpr(str, static_cast<const RowCompareExpr *>(obj));
 				break;
 			case T_CoalesceExpr:
-				_outCoalesceExpr(str, obj);
+				_outCoalesceExpr(str, static_cast<const CoalesceExpr *>(obj));
 				break;
 			case T_MinMaxExpr:
-				_outMinMaxExpr(str, obj);
+				_outMinMaxExpr(str, static_cast<const MinMaxExpr *>(obj));
 				break;
 			case T_XmlExpr:
-				_outXmlExpr(str, obj);
+				_outXmlExpr(str, static_cast<const XmlExpr *>(obj));
 				break;
 			case T_NullTest:
-				_outNullTest(str, obj);
+				_outNullTest(str, static_cast<const NullTest *>(obj));
 				break;
 			case T_BooleanTest:
-				_outBooleanTest(str, obj);
+				_outBooleanTest(str, static_cast<const BooleanTest *>(obj));
 				break;
 			case T_CoerceToDomain:
-				_outCoerceToDomain(str, obj);
+				_outCoerceToDomain(str, static_cast<const CoerceToDomain *>(obj));
 				break;
 			case T_CoerceToDomainValue:
-				_outCoerceToDomainValue(str, obj);
+				_outCoerceToDomainValue(str, static_cast<const CoerceToDomainValue *>(obj));
 				break;
 			case T_SetToDefault:
-				_outSetToDefault(str, obj);
+				_outSetToDefault(str, static_cast<const SetToDefault *>(obj));
 				break;
 			case T_CurrentOfExpr:
-				_outCurrentOfExpr(str, obj);
+				_outCurrentOfExpr(str, static_cast<const CurrentOfExpr *>(obj));
 				break;
 			case T_InferenceElem:
-				_outInferenceElem(str, obj);
+				_outInferenceElem(str, static_cast<const InferenceElem *>(obj));
 				break;
 			case T_TargetEntry:
-				_outTargetEntry(str, obj);
+				_outTargetEntry(str, static_cast<const TargetEntry *>(obj));
 				break;
 			case T_RangeTblRef:
-				_outRangeTblRef(str, obj);
+				_outRangeTblRef(str, static_cast<const RangeTblRef *>(obj));
 				break;
 			case T_JoinExpr:
-				_outJoinExpr(str, obj);
+				_outJoinExpr(str, static_cast<const JoinExpr *>(obj));
 				break;
 			case T_FromExpr:
-				_outFromExpr(str, obj);
+				_outFromExpr(str, static_cast<const FromExpr *>(obj));
 				break;
 			case T_OnConflictExpr:
-				_outOnConflictExpr(str, obj);
+				_outOnConflictExpr(str, static_cast<const OnConflictExpr *>(obj));
 				break;
 			case T_Path:
-				_outPath(str, obj);
+				_outPath(str, static_cast<const Path *>(obj));
 				break;
 			case T_IndexPath:
-				_outIndexPath(str, obj);
+				_outIndexPath(str, static_cast<const IndexPath *>(obj));
 				break;
 			case T_BitmapHeapPath:
-				_outBitmapHeapPath(str, obj);
+				_outBitmapHeapPath(str, static_cast<const BitmapHeapPath *>(obj));
 				break;
 			case T_BitmapAndPath:
-				_outBitmapAndPath(str, obj);
+				_outBitmapAndPath(str, static_cast<const BitmapAndPath *>(obj));
 				break;
 			case T_BitmapOrPath:
-				_outBitmapOrPath(str, obj);
+				_outBitmapOrPath(str, static_cast<const BitmapOrPath *>(obj));
 				break;
 			case T_TidPath:
-				_outTidPath(str, obj);
+				_outTidPath(str, static_cast<const TidPath *>(obj));
 				break;
 			case T_ForeignPath:
-				_outForeignPath(str, obj);
+				_outForeignPath(str, static_cast<const ForeignPath *>(obj));
 				break;
 			case T_CustomPath:
-				_outCustomPath(str, obj);
+				_outCustomPath(str, static_cast<const CustomPath *>(obj));
 				break;
 			case T_AppendPath:
-				_outAppendPath(str, obj);
+				_outAppendPath(str, static_cast<const AppendPath *>(obj));
 				break;
 			case T_MergeAppendPath:
-				_outMergeAppendPath(str, obj);
+				_outMergeAppendPath(str, static_cast<const MergeAppendPath *>(obj));
 				break;
 			case T_ResultPath:
-				_outResultPath(str, obj);
+				_outResultPath(str, static_cast<const ResultPath *>(obj));
 				break;
 			case T_MaterialPath:
-				_outMaterialPath(str, obj);
+				_outMaterialPath(str, static_cast<const MaterialPath *>(obj));
 				break;
 			case T_UniquePath:
-				_outUniquePath(str, obj);
+				_outUniquePath(str, static_cast<const UniquePath *>(obj));
 				break;
 			case T_NestPath:
-				_outNestPath(str, obj);
+				_outNestPath(str, static_cast<const NestPath *>(obj));
 				break;
 			case T_MergePath:
-				_outMergePath(str, obj);
+				_outMergePath(str, static_cast<const MergePath *>(obj));
 				break;
 			case T_HashPath:
-				_outHashPath(str, obj);
+				_outHashPath(str, static_cast<const HashPath *>(obj));
 				break;
 			case T_PlannerGlobal:
-				_outPlannerGlobal(str, obj);
+				_outPlannerGlobal(str, static_cast<const PlannerGlobal *>(obj));
 				break;
 			case T_PlannerInfo:
-				_outPlannerInfo(str, obj);
+				_outPlannerInfo(str, static_cast<const PlannerInfo *>(obj));
 				break;
 			case T_RelOptInfo:
-				_outRelOptInfo(str, obj);
+				_outRelOptInfo(str, static_cast<const RelOptInfo *>(obj));
 				break;
 			case T_IndexOptInfo:
-				_outIndexOptInfo(str, obj);
+				_outIndexOptInfo(str, static_cast<const IndexOptInfo *>(obj));
 				break;
 			case T_EquivalenceClass:
-				_outEquivalenceClass(str, obj);
+				_outEquivalenceClass(str, static_cast<const EquivalenceClass *>(obj));
 				break;
 			case T_EquivalenceMember:
-				_outEquivalenceMember(str, obj);
+				_outEquivalenceMember(str, static_cast<const EquivalenceMember *>(obj));
 				break;
 			case T_PathKey:
-				_outPathKey(str, obj);
+				_outPathKey(str, static_cast<const PathKey *>(obj));
 				break;
 			case T_ParamPathInfo:
-				_outParamPathInfo(str, obj);
+				_outParamPathInfo(str, static_cast<const ParamPathInfo *>(obj));
 				break;
 			case T_RestrictInfo:
-				_outRestrictInfo(str, obj);
+				_outRestrictInfo(str, static_cast<const RestrictInfo *>(obj));
 				break;
 			case T_PlaceHolderVar:
-				_outPlaceHolderVar(str, obj);
+				_outPlaceHolderVar(str, static_cast<const PlaceHolderVar *>(obj));
 				break;
 			case T_SpecialJoinInfo:
-				_outSpecialJoinInfo(str, obj);
+				_outSpecialJoinInfo(str, static_cast<const SpecialJoinInfo *>(obj));
 				break;
 			case T_LateralJoinInfo:
-				_outLateralJoinInfo(str, obj);
+				_outLateralJoinInfo(str, static_cast<const LateralJoinInfo *>(obj));
 				break;
 			case T_AppendRelInfo:
-				_outAppendRelInfo(str, obj);
+				_outAppendRelInfo(str, static_cast<const AppendRelInfo *>(obj));
 				break;
 			case T_PlaceHolderInfo:
-				_outPlaceHolderInfo(str, obj);
+				_outPlaceHolderInfo(str, static_cast<const PlaceHolderInfo *>(obj));
 				break;
 			case T_MinMaxAggInfo:
-				_outMinMaxAggInfo(str, obj);
+				_outMinMaxAggInfo(str, static_cast<const MinMaxAggInfo *>(obj));
 				break;
 			case T_PlannerParamItem:
-				_outPlannerParamItem(str, obj);
+				_outPlannerParamItem(str, static_cast<const PlannerParamItem *>(obj));
 				break;
 
 			case T_CreateStmt:
-				_outCreateStmt(str, obj);
+				_outCreateStmt(str, static_cast<const CreateStmt *>(obj));
 				break;
 			case T_CreateForeignTableStmt:
-				_outCreateForeignTableStmt(str, obj);
+				_outCreateForeignTableStmt(str, static_cast<const CreateForeignTableStmt *>(obj));
 				break;
 			case T_ImportForeignSchemaStmt:
-				_outImportForeignSchemaStmt(str, obj);
+				_outImportForeignSchemaStmt(str, static_cast<const ImportForeignSchemaStmt *>(obj));
 				break;
 			case T_IndexStmt:
-				_outIndexStmt(str, obj);
+				_outIndexStmt(str, static_cast<const IndexStmt *>(obj));
 				break;
 			case T_NotifyStmt:
-				_outNotifyStmt(str, obj);
+				_outNotifyStmt(str, static_cast<const NotifyStmt *>(obj));
 				break;
 			case T_DeclareCursorStmt:
-				_outDeclareCursorStmt(str, obj);
+				_outDeclareCursorStmt(str, static_cast<const DeclareCursorStmt *>(obj));
 				break;
 			case T_SelectStmt:
-				_outSelectStmt(str, obj);
+				_outSelectStmt(str, static_cast<const SelectStmt *>(obj));
 				break;
 			case T_ColumnDef:
-				_outColumnDef(str, obj);
+				_outColumnDef(str, static_cast<const ColumnDef *>(obj));
 				break;
 			case T_TypeName:
-				_outTypeName(str, obj);
+				_outTypeName(str, static_cast<const TypeName *>(obj));
 				break;
 			case T_TypeCast:
-				_outTypeCast(str, obj);
+				_outTypeCast(str, static_cast<const TypeCast *>(obj));
 				break;
 			case T_CollateClause:
-				_outCollateClause(str, obj);
+				_outCollateClause(str, static_cast<const CollateClause *>(obj));
 				break;
 			case T_IndexElem:
-				_outIndexElem(str, obj);
+				_outIndexElem(str, static_cast<const IndexElem *>(obj));
 				break;
 			case T_Query:
-				_outQuery(str, obj);
+				_outQuery(str, static_cast<const Query *>(obj));
 				break;
 			case T_WithCheckOption:
-				_outWithCheckOption(str, obj);
+				_outWithCheckOption(str, static_cast<const WithCheckOption *>(obj));
 				break;
 			case T_SortGroupClause:
-				_outSortGroupClause(str, obj);
+				_outSortGroupClause(str, static_cast<const SortGroupClause *>(obj));
 				break;
 			case T_GroupingSet:
-				_outGroupingSet(str, obj);
+				_outGroupingSet(str, static_cast<const GroupingSet *>(obj));
 				break;
 			case T_WindowClause:
-				_outWindowClause(str, obj);
+				_outWindowClause(str, static_cast<const WindowClause *>(obj));
 				break;
 			case T_RowMarkClause:
-				_outRowMarkClause(str, obj);
+				_outRowMarkClause(str, static_cast<const RowMarkClause *>(obj));
 				break;
 			case T_WithClause:
-				_outWithClause(str, obj);
+				_outWithClause(str, static_cast<const WithClause *>(obj));
 				break;
 			case T_CommonTableExpr:
-				_outCommonTableExpr(str, obj);
+				_outCommonTableExpr(str, static_cast<const CommonTableExpr *>(obj));
 				break;
 			case T_RangeTableSample:
-				_outRangeTableSample(str, obj);
+				_outRangeTableSample(str, static_cast<const RangeTableSample *>(obj));
 				break;
 			case T_TableSampleClause:
-				_outTableSampleClause(str, obj);
+				_outTableSampleClause(str, static_cast<const TableSampleClause *>(obj));
 				break;
 			case T_SetOperationStmt:
-				_outSetOperationStmt(str, obj);
+				_outSetOperationStmt(str, static_cast<const SetOperationStmt *>(obj));
 				break;
 			case T_RangeTblEntry:
-				_outRangeTblEntry(str, obj);
+				_outRangeTblEntry(str, static_cast<const RangeTblEntry *>(obj));
 				break;
 			case T_RangeTblFunction:
-				_outRangeTblFunction(str, obj);
+				_outRangeTblFunction(str, static_cast<const RangeTblFunction *>(obj));
 				break;
 			case T_A_Expr:
-				_outAExpr(str, obj);
+				_outAExpr(str, static_cast<const A_Expr *>(obj));
 				break;
 			case T_ColumnRef:
-				_outColumnRef(str, obj);
+				_outColumnRef(str, static_cast<const ColumnRef *>(obj));
 				break;
 			case T_ParamRef:
-				_outParamRef(str, obj);
+				_outParamRef(str, static_cast<const ParamRef *>(obj));
 				break;
 			case T_A_Const:
-				_outAConst(str, obj);
+				_outAConst(str, static_cast<const A_Const *>(obj));
 				break;
 			case T_A_Star:
-				_outA_Star(str, obj);
+				_outA_Star(str, static_cast<const A_Star *>(obj));
 				break;
 			case T_A_Indices:
-				_outA_Indices(str, obj);
+				_outA_Indices(str, static_cast<const A_Indices *>(obj));
 				break;
 			case T_A_Indirection:
-				_outA_Indirection(str, obj);
+				_outA_Indirection(str, static_cast<const A_Indirection *>(obj));
 				break;
 			case T_A_ArrayExpr:
-				_outA_ArrayExpr(str, obj);
+				_outA_ArrayExpr(str, static_cast<const A_ArrayExpr *>(obj));
 				break;
 			case T_ResTarget:
-				_outResTarget(str, obj);
+				_outResTarget(str, static_cast<const ResTarget *>(obj));
 				break;
 			case T_MultiAssignRef:
-				_outMultiAssignRef(str, obj);
+				_outMultiAssignRef(str, static_cast<const MultiAssignRef *>(obj));
 				break;
 			case T_SortBy:
-				_outSortBy(str, obj);
+				_outSortBy(str, static_cast<const SortBy *>(obj));
 				break;
 			case T_WindowDef:
-				_outWindowDef(str, obj);
+				_outWindowDef(str, static_cast<const WindowDef *>(obj));
 				break;
 			case T_RangeSubselect:
-				_outRangeSubselect(str, obj);
+				_outRangeSubselect(str, static_cast<const RangeSubselect *>(obj));
 				break;
 			case T_RangeFunction:
-				_outRangeFunction(str, obj);
+				_outRangeFunction(str, static_cast<const RangeFunction *>(obj));
 				break;
 			case T_Constraint:
-				_outConstraint(str, obj);
+				_outConstraint(str, static_cast<const Constraint *>(obj));
 				break;
 			case T_FuncCall:
-				_outFuncCall(str, obj);
+				_outFuncCall(str, static_cast<const FuncCall *>(obj));
 				break;
 			case T_DefElem:
-				_outDefElem(str, obj);
+				_outDefElem(str, static_cast<const DefElem *>(obj));
 				break;
 			case T_TableLikeClause:
-				_outTableLikeClause(str, obj);
+				_outTableLikeClause(str, static_cast<const TableLikeClause *>(obj));
 				break;
 			case T_LockingClause:
-				_outLockingClause(str, obj);
+				_outLockingClause(str, static_cast<const LockingClause *>(obj));
 				break;
 			case T_XmlSerialize:
-				_outXmlSerialize(str, obj);
+				_outXmlSerialize(str, static_cast<const XmlSerialize *>(obj));
 				break;
 
 			default:
@@ -3475,11 +3474,11 @@ _outNode(StringInfo str, const void *obj)
 				 * dump structures that _outNode only understands part of.
 				 */
 				elog(WARNING, "could not dump unrecognized node type: %d",
-					 (int) nodeTag(obj));
+						(int) nodeTag(obj));
 				break;
+			}
+			appendStringInfoChar(str, '}');
 		}
-		appendStringInfoChar(str, '}');
-	}
 }
 
 /*
