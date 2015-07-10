@@ -1,5 +1,5 @@
 
-#line 3 "lex.core_yy.c"
+#line 3 "scan.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -1080,7 +1080,7 @@ extern void core_yyset_column(int column_no, yyscan_t yyscanner);
  * Note that xcstart must appear before operator, as explained above!
  *  Also whitespace (comment) must appear before operator.
  */
-#line 1084 "lex.core_yy.c"
+#line 1084 "scan.cpp"
 
 #define INITIAL 0
 #define xb 1
@@ -1339,7 +1339,7 @@ YY_DECL
 #line 391 "../../src/postgres/backend/parser/scan.lpp"
 
 
-#line 1343 "lex.core_yy.c"
+#line 1343 "scan.cpp"
 
     yylval = yylval_param;
 
@@ -2351,7 +2351,7 @@ YY_RULE_SETUP
 #line 1006 "../../src/postgres/backend/parser/scan.lpp"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 2355 "lex.core_yy.c"
+#line 2355 "scan.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
