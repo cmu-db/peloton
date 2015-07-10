@@ -145,8 +145,6 @@ extern void peloton_send_ping(void);
 
 extern void peloton_send_dml(Peloton_Status  *status,
                              PlanState *node,
-                             bool sendTuples,
-                             DestReceiver *dest,
                              MemoryContext top_transaction_context,
                              MemoryContext cur_transaction_context);
 
