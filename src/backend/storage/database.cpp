@@ -18,7 +18,34 @@
 namespace peloton {
 namespace storage {
 
-bool Database::AddTable(storage::DataTable* table){
+
+Database* Database::GetDatabaseById( oid_t database_oid ){
+  Database* db_address;
+
+  try {
+    db_address = database_oid_to_address.at( database_oid );
+  }catch (const std::out_of_range& oor) {
+    Database* db = new Database( database_oid ); 
+    db_address = db;
+    database_oid_to_address.insert( std::pair<oid_t,Database*>( database_oid,
+          db_address ));
+  }
+  return db_address;
+}
+
+bool Database::DeleteDatabaseById( oid_t database_oid ){
+
+  try {
+    Database* db_address = database_oid_to_address.at( database_oid );
+    delete db_address;
+  }catch (const std::out_of_range& oor) {
+    LOG_WARN("Not exist database(%u)", database_oid);
+    return false;
+  }
+  return true;
+}
+
+bool Database::AddTable( storage::DataTable* table ){
 
   std::string table_name = table->GetName();
   assert( table_name != "");
@@ -38,21 +65,8 @@ bool Database::AddTable(storage::DataTable* table){
   return true;
 }
 
-Database* Database::GetDatabaseById(oid_t database_oid){
-  Database* db_address;
 
-  try {
-    db_address = database_oid_to_address.at( database_oid );
-  }catch (const std::out_of_range& oor) {
-    Database* db = new Database( database_oid ); 
-    db_address = db;
-    database_oid_to_address.insert( std::pair<oid_t,Database*>( database_oid,
-          db_address ));
-  }
-  return db_address;
-}
-
-bool Database::DeleteTableById(oid_t table_oid )
+bool Database::DeleteTableById( oid_t table_oid )
 {
   bool status;
   std::string table_name;
@@ -91,7 +105,7 @@ bool Database::DeleteTableById(oid_t table_oid )
   return status;
 }
 
-bool Database::DeleteTableByName(std::string table_name )
+bool Database::DeleteTableByName( std::string table_name )
 {
   bool status;
   oid_t table_oid;
@@ -109,29 +123,23 @@ bool Database::DeleteTableByName(std::string table_name )
 
 bool Database::DeleteAllTables()
 {
+
   try {
-    table_name_to_oid.clear();
+    std::for_each(begin(table_name_to_oid), end(table_name_to_oid),
+        [&] (const std::pair<std::string, oid_t>& curr_table){
+
+        DeleteTableById( curr_table.second );
+
+        });
   } catch ( const std::out_of_range & oor ) {
-    LOG_WARN("Could not clear the tables in table_name_to_oid");
-    return false;
-  }
-  try {
-    table_oid_to_name.clear();
-  } catch ( const std::out_of_range & oor ) {
-    LOG_WARN("Could not clear the tables in table_oid_to_name");
-    return false;
-  }
-  try {
-    table_oid_to_address.clear();
-  } catch ( const std::out_of_range & oor ) {
-    LOG_WARN("Could not clear the tables in table_oid_to_address");
+    LOG_WARN("Failed to delete all tables in database(%u) ", database_oid );
     return false;
   }
 
   return true;
 }
 
-storage::DataTable* Database::GetTableByName(const std::string table_name) const{
+storage::DataTable* Database::GetTableByName( const std::string table_name ) const{
 
   storage::DataTable* table = nullptr;
   oid_t table_oid;
@@ -144,7 +152,7 @@ storage::DataTable* Database::GetTableByName(const std::string table_name) const
 
   return table;
 }
-storage::DataTable* Database::GetTableById(const oid_t table_oid) const{
+storage::DataTable* Database::GetTableById( const oid_t table_oid ) const{
 
   storage::DataTable* table = nullptr;
   try {
@@ -155,7 +163,7 @@ storage::DataTable* Database::GetTableById(const oid_t table_oid) const{
   return table;
 }
 
-storage::DataTable* Database::GetTableByPosition(const oid_t table_position) const{
+storage::DataTable* Database::GetTableByPosition( const oid_t table_position ) const{
   storage::DataTable* table = nullptr;
   oid_t curr_position = 0;
 
@@ -183,7 +191,7 @@ storage::DataTable* Database::GetTableByPosition(const oid_t table_position) con
 }
 
 
-std::ostream& operator<<(std::ostream& os, const Database& database) {
+std::ostream& operator<<( std::ostream& os, const Database& database ) {
   os << "=====================================================\n";
   os << "DATABASE(" << database.GetDatabaseOid() << ") : \n";
 
