@@ -84,7 +84,8 @@ static void ExecutePlan(EState *estate, PlanState *planstate,
 			bool sendTuples,
 			long numberTuples,
 			ScanDirection direction,
-			DestReceiver *dest);
+			DestReceiver *dest,
+			TupleDesc tupDesc);
 static bool ExecCheckRTEPerms(RangeTblEntry *rte);
 static bool ExecCheckRTEPermsModified(Oid relOid, Oid userid,
 						  Bitmapset *modifiedCols,
@@ -344,7 +345,8 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 					sendTuples,
 					count,
 					direction,
-					dest);
+					dest,
+          queryDesc->tupDesc);
 
 	/*
 	 * shutdown tuple receiver, if we started it
@@ -1525,7 +1527,8 @@ ExecutePlan(EState *estate,
 			bool sendTuples,
 			long numberTuples,
 			ScanDirection direction,
-			DestReceiver *dest)
+			DestReceiver *dest,
+			TupleDesc tupDesc)
 {
 	TupleTableSlot *slot;
 	long		current_tuple_count;
@@ -1601,7 +1604,7 @@ ExecutePlan(EState *estate,
   // TODO: Peloton Changes
 	status = peloton_create_status();
 
-  peloton_send_dml(status, planstate, sendTuples, dest,
+  peloton_send_dml(status, planstate,
                    TopTransactionContext,
                    CurTransactionContext);
 

@@ -26,6 +26,7 @@
 #include "utils/resowner.h"
 #include "postmaster/fork_process.h"
 #include "postmaster/postmaster.h"
+#include "postmaster/peloton.h"
 #include "storage/latch.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
@@ -44,11 +45,11 @@
 #include <time.h>
 
 #include "backend/bridge/plan_transformer.h"
-#include "postmaster/peloton.h"
+#include "backend/common/logger.h"
+#include "backend/common/stack_trace.h"
 #include "backend/bridge/ddl.h"
 #include "backend/bridge/plan_transformer.h"
 #include "backend/bridge/plan_executor.h"
-#include "backend/common/stack_trace.h"
 
 /* ----------
  * Local data
@@ -800,8 +801,6 @@ peloton_send_reply(int status)
 void
 peloton_send_dml(Peloton_Status *status,
                  PlanState *node,
-                 bool sendTuples,
-                 DestReceiver *dest,
                  MemoryContext top_transaction_context,
                  MemoryContext cur_transaction_context)
 {
@@ -816,8 +815,6 @@ peloton_send_dml(Peloton_Status *status,
 
   msg.m_status = status;
   msg.m_planstate = node;
-  msg.m_sendTuples = sendTuples;
-  msg.m_dest = dest;
   msg.m_top_transaction_context = top_transaction_context;
   msg.m_cur_transaction_context = cur_transaction_context;
 
@@ -864,7 +861,6 @@ static void
 peloton_process_dml(Peloton_MsgDML *msg, int len)
 {
   PlanState *planstate;
-  Plan *plan;
 
   if(msg != NULL)
   {
@@ -880,7 +876,7 @@ peloton_process_dml(Peloton_MsgDML *msg, int len)
 
       if(plan){
 //        peloton::bridge::PlanExecutor::PrintPlan(plan);
-//        peloton::bridge::PlanExecutor::ExecutePlan(plan);
+        peloton::bridge::PlanExecutor::ExecutePlan(plan);
 //        peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
       }
 
