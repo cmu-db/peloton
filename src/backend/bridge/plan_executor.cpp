@@ -12,10 +12,15 @@
 
 
 #include "backend/bridge/plan_executor.h"
+#include "backend/bridge/tuple_transformer.h"
 #include "backend/common/logger.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/executor/executors.h"
 #include "backend/storage/tile_iterator.h"
+
+#include "access/tupdesc.h"
+#include "nodes/print.h"
+#include "utils/memutils.h"
 
 namespace peloton {
 namespace bridge {
@@ -143,11 +148,16 @@ void CleanExecutorTree(executor::AbstractExecutor *root){
  * @brief Build a executor tree and execute it.
  * @return status of execution.
  */
-bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan) {
+bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
+                               TupleDesc tuple_desc,
+                               Peloton_Status *pstatus) {
 
   assert(plan);
 
   bool status;
+  MemoryContext oldContext;
+  List *slots = NULL;
+
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
@@ -196,11 +206,27 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan) {
     storage::TileIterator tile_itr(base_tile);
     storage::Tuple tuple(base_tile->GetSchema());
 
+    // Switch to TopSharedMemoryContext to construct list and slots
+    oldContext = MemoryContextSwitchTo(TopSharedMemoryContext);
+
+    // Go over tile and get result slots
     while (tile_itr.Next(tuple)) {
-      std::cout << tuple;
+      auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
+      slots = lappend(slots, slot);
     }
 
+    // Go back to previous context
+    MemoryContextSwitchTo(oldContext);
+
   }
+
+  fprintf(stdout, "Status : %p \n", pstatus);
+  fflush(stdout);
+
+  pstatus->m_result_slots = slots;
+
+  fprintf(stdout, "Status slots : %p \n", pstatus->m_result_slots);
+  fflush(stdout);
 
   // Commit and cleanup
   txn_manager.CommitTransaction(txn);
