@@ -883,7 +883,7 @@ static void
 pgstat_send_funcstats(void)
 {
 	/* we assume this inits to all zeroes: */
-	static const PgStat_FunctionCounts all_zeroes {0,0,0,0,0,0,0,false,0,0,0,0,0};
+	static const PgStat_FunctionCounts all_zeroes = {0,{0,0},{0,0}};
 
 	PgStat_MsgFuncstat msg;
 	PgStat_BackendFunctionEntry *entry;
@@ -2689,6 +2689,7 @@ pgstat_bestart(void)
 	beentry->st_xact_start_timestamp = 0;
 	beentry->st_databaseid = MyDatabaseId;
 	beentry->st_userid = userid;
+
 	beentry->st_clientaddr = clientaddr;
 	if (MyProcPort && MyProcPort->remote_hostname)
 		strlcpy(beentry->st_clienthostname, MyProcPort->remote_hostname,
@@ -3268,7 +3269,7 @@ void
 pgstat_send_bgwriter(void)
 {
 	/* We assume this initializes to zeroes */
-	static const PgStat_MsgBgWriter all_zeroes {0,0,0,0,0,0,0,false,0,0,0,0,0};
+	static const PgStat_MsgBgWriter all_zeroes {{0,0},0,0,0,0,0,0,0,0,0,0};
 
 	/*
 	 * This function can be called even if nothing at all has happened. In
