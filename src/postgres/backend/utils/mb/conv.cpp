@@ -454,8 +454,8 @@ UtfToLocal(const unsigned char *utf, int len,
 				cutf[0] = iutf;
 				cutf[1] = iutf2;
 
-				cp = bsearch(cutf, cmap, cmapsize,
-							 sizeof(pg_utf_to_local_combined), compare3);
+				cp = static_cast<pg_utf_to_local_combined *>(bsearch(cutf, cmap, cmapsize,
+							 sizeof(pg_utf_to_local_combined), compare3));
 
 				if (cp)
 				{
@@ -471,8 +471,8 @@ UtfToLocal(const unsigned char *utf, int len,
 		}
 
 		/* Now check ordinary map */
-		p = bsearch(&iutf, map, mapsize,
-					sizeof(pg_utf_to_local), compare1);
+		p = static_cast<pg_utf_to_local *>(bsearch(&iutf, map, mapsize,
+					sizeof(pg_utf_to_local), compare1));
 
 		if (p)
 		{
@@ -591,8 +591,8 @@ LocalToUtf(const unsigned char *iso, int len,
 		}
 
 		/* First check ordinary map */
-		p = bsearch(&iiso, map, mapsize,
-					sizeof(pg_local_to_utf), compare2);
+		p = static_cast<pg_local_to_utf *>(bsearch(&iiso, map, mapsize,
+					sizeof(pg_local_to_utf), compare2));
 
 		if (p)
 		{
@@ -603,8 +603,8 @@ LocalToUtf(const unsigned char *iso, int len,
 		/* If there's a combined character map, try that */
 		if (cmap)
 		{
-			cp = bsearch(&iiso, cmap, cmapsize,
-						 sizeof(pg_local_to_utf_combined), compare4);
+			cp = static_cast<pg_local_to_utf_combined *>(bsearch(&iiso, cmap, cmapsize,
+						 sizeof(pg_local_to_utf_combined), compare4));
 
 			if (cp)
 			{

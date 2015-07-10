@@ -1399,7 +1399,7 @@ generate_series_step_numeric(PG_FUNCTION_ARGS)
 	 * Get the saved state and use current state as the result of this
 	 * iteration.
 	 */
-	fctx = funcctx->user_fctx;
+	fctx = static_cast<generate_series_numeric_fctx *>(funcctx->user_fctx);
 
 	if ((fctx->step.sign == NUMERIC_POS &&
 		 cmp_var(&fctx->current, &fctx->stop) <= 0) ||
@@ -1600,7 +1600,7 @@ numeric_sortsupport(PG_FUNCTION_ARGS)
 		NumericSortSupport *nss;
 		MemoryContext oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
-		nss = palloc(sizeof(NumericSortSupport));
+		nss = static_cast<NumericSortSupport *>(palloc(sizeof(NumericSortSupport)));
 
 		/*
 		 * palloc a buffer for handling unaligned packed values in addition to
@@ -1632,7 +1632,7 @@ numeric_sortsupport(PG_FUNCTION_ARGS)
 static Datum
 numeric_abbrev_convert(Datum original_datum, SortSupport ssup)
 {
-	NumericSortSupport *nss = ssup->ssup_extra;
+	NumericSortSupport *nss = static_cast<NumericSortSupport *>(ssup->ssup_extra);
 	void	   *original_varatt = PG_DETOAST_DATUM_PACKED(original_datum);
 	Numeric		value;
 	Datum		result;
@@ -1689,7 +1689,7 @@ numeric_abbrev_convert(Datum original_datum, SortSupport ssup)
 static bool
 numeric_abbrev_abort(int memtupcount, SortSupport ssup)
 {
-	NumericSortSupport *nss = ssup->ssup_extra;
+	NumericSortSupport *nss = static_cast<NumericSortSupport *>(ssup->ssup_extra);
 	double		abbr_card;
 
 	if (memtupcount < 10000 || nss->input_count < 10000 || !nss->estimating)
@@ -4814,7 +4814,7 @@ get_str_from_var(NumericVar *var)
 	if (i <= 0)
 		i = 1;
 
-	str = palloc(i + dscale + DEC_DIGITS + 2);
+	str = static_cast<char *>(palloc(i + dscale + DEC_DIGITS + 2));
 	cp = str;
 
 	/*
@@ -5009,7 +5009,7 @@ get_str_from_var_sci(NumericVar *var, int rscale)
 	 * exponent itself, and of course the null terminator.
 	 */
 	len = strlen(sig_out) + 13;
-	str = palloc(len);
+	str = static_cast<char *>(palloc(len));
 	snprintf(str, len, "%se%+03d", sig_out, exponent);
 
 	pfree(sig_out);

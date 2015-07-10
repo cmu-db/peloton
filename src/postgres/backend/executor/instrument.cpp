@@ -30,7 +30,7 @@ InstrAlloc(int n, int instrument_options)
 	Instrumentation *instr;
 
 	/* initialize all fields to zeroes, then modify as needed */
-	instr = palloc0(n * sizeof(Instrumentation));
+	instr = static_cast<Instrumentation *>(palloc0(n * sizeof(Instrumentation)));
 	if (instrument_options & (INSTRUMENT_BUFFERS | INSTRUMENT_TIMER))
 	{
 		bool		need_buffers = (instrument_options & INSTRUMENT_BUFFERS) != 0;

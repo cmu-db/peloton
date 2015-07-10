@@ -157,7 +157,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			statrelpath = pgstat_stat_directory;
 
 		/* Add a node for the base directory at the end */
-		ti = palloc0(sizeof(tablespaceinfo));
+		ti = static_cast<tablespaceinfo *>(palloc0(sizeof(tablespaceinfo)));
 		ti->size = opt->progress ? sendDir(".", 1, true, tablespaces, true) : -1;
 		tablespaces = lappend(tablespaces, ti);
 
@@ -318,11 +318,11 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		 * recycled before we get a chance to send it over.
 		 */
 		nWalFiles = list_length(walFileList);
-		walFiles = palloc(nWalFiles * sizeof(char *));
+		walFiles = static_cast<char **>(palloc(nWalFiles * sizeof(char *)));
 		i = 0;
 		foreach(lc, walFileList)
 		{
-			walFiles[i++] = lfirst(lc);
+			walFiles[i++] = static_cast<char *>(lfirst(lc));
 		}
 		qsort(walFiles, nWalFiles, sizeof(char *), compareWalFileNames);
 
@@ -461,7 +461,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 		 */
 		foreach(lc, historyFileList)
 		{
-			char	   *fname = lfirst(lc);
+			char	   *fname = static_cast<char *>(lfirst(lc));
 
 			snprintf(pathbuf, MAXPGPATH, XLOGDIR "/%s", fname);
 
@@ -685,7 +685,7 @@ SendBackupHeader(List *tablespaces)
 
 	foreach(lc, tablespaces)
 	{
-		tablespaceinfo *ti = lfirst(lc);
+		tablespaceinfo *ti = static_cast<tablespaceinfo *>(lfirst(lc));
 
 		/* Send one datarow message */
 		pq_beginmessage(&buf, 'D');

@@ -189,9 +189,9 @@ TwoPhaseShmemInit(void)
 {
 	bool		found;
 
-	TwoPhaseState = ShmemInitStruct("Prepared Transaction Table",
+	TwoPhaseState = static_cast<TwoPhaseStateData *>(ShmemInitStruct("Prepared Transaction Table",
 									TwoPhaseShmemSize(),
-									&found);
+									&found));
 	if (!IsUnderPostmaster)
 	{
 		GlobalTransaction gxacts;
@@ -920,14 +920,14 @@ save_state_data(const void *data, uint32 len)
 
 	if (padlen > records.bytes_free)
 	{
-		records.tail->next = palloc0(sizeof(StateFileChunk));
+		records.tail->next = static_cast<StateFileChunk *>(palloc0(sizeof(StateFileChunk)));
 		records.tail = records.tail->next;
 		records.tail->len = 0;
 		records.tail->next = NULL;
 		records.num_chunks++;
 
 		records.bytes_free = Max(padlen, 512);
-		records.tail->data = palloc(records.bytes_free);
+		records.tail->data = static_cast<char *>(palloc(records.bytes_free));
 	}
 
 	memcpy(((char *) records.tail->data) + records.tail->len, data, len);
@@ -954,12 +954,12 @@ StartPrepare(GlobalTransaction gxact)
 	SharedInvalidationMessage *invalmsgs;
 
 	/* Initialize linked list */
-	records.head = palloc0(sizeof(StateFileChunk));
+	records.head = static_cast<StateFileChunk *>(palloc0(sizeof(StateFileChunk)));
 	records.head->len = 0;
 	records.head->next = NULL;
 
 	records.bytes_free = Max(sizeof(TwoPhaseFileHeader), 512);
-	records.head->data = palloc(records.bytes_free);
+	records.head->data = static_cast<char *>(palloc(records.bytes_free));
 
 	records.tail = records.head;
 	records.num_chunks = 1;
@@ -1740,7 +1740,7 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 	int			allocsize = 0;
 
 	cldir = AllocateDir(TWOPHASE_DIR);
-	while ((clde = ReadDir(cldir, TWOPHASE_DIR)) != NULL)
+	while ((clde = ReadDir(cldir, static_cast<const char *>(TWOPHASE_DIR))) != NULL)
 	{
 		if (strlen(clde->d_name) == 8 &&
 			strspn(clde->d_name, "0123456789ABCDEF") == 8)
@@ -1831,12 +1831,12 @@ PrescanPreparedTransactions(TransactionId **xids_p, int *nxids_p)
 					if (nxids == 0)
 					{
 						allocsize = 10;
-						xids = palloc(allocsize * sizeof(TransactionId));
+						xids = static_cast<TransactionId *>(palloc(allocsize * sizeof(TransactionId)));
 					}
 					else
 					{
 						allocsize = allocsize * 2;
-						xids = repalloc(xids, allocsize * sizeof(TransactionId));
+						xids = static_cast<TransactionId *>(repalloc(xids, allocsize * sizeof(TransactionId)));
 					}
 				}
 				xids[nxids++] = xid;
@@ -1875,7 +1875,7 @@ StandbyRecoverPreparedTransactions(bool overwriteOK)
 	struct dirent *clde;
 
 	cldir = AllocateDir(TWOPHASE_DIR);
-	while ((clde = ReadDir(cldir, TWOPHASE_DIR)) != NULL)
+	while ((clde = ReadDir(cldir, static_cast<const char *>(TWOPHASE_DIR))) != NULL)
 	{
 		if (strlen(clde->d_name) == 8 &&
 			strspn(clde->d_name, "0123456789ABCDEF") == 8)
@@ -1957,7 +1957,7 @@ RecoverPreparedTransactions(void)
 	snprintf(dir, MAXPGPATH, "%s", TWOPHASE_DIR);
 
 	cldir = AllocateDir(dir);
-	while ((clde = ReadDir(cldir, dir)) != NULL)
+	while ((clde = ReadDir(cldir, static_cast<const char *>(dir))) != NULL)
 	{
 		if (strlen(clde->d_name) == 8 &&
 			strspn(clde->d_name, "0123456789ABCDEF") == 8)

@@ -340,12 +340,12 @@ smgrDoPendingDeletes(bool isCommit)
 				if (maxrels == 0)
 				{
 					maxrels = 8;
-					srels = palloc(sizeof(SMgrRelation) * maxrels);
+					srels = static_cast<SMgrRelationData **>(palloc(sizeof(SMgrRelation) * maxrels));
 				}
 				else if (maxrels <= nrels)
 				{
 					maxrels *= 2;
-					srels = repalloc(srels, sizeof(SMgrRelation) * maxrels);
+					srels = static_cast<SMgrRelationData **>(repalloc(srels, sizeof(SMgrRelation) * maxrels));
 				}
 
 				srels[nrels++] = srel;

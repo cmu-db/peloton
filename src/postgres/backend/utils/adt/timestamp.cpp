@@ -1237,7 +1237,7 @@ interval_scale(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(1);
 	Interval   *result;
 
-	result = palloc(sizeof(Interval));
+	result = static_cast<Interval *>(palloc(sizeof(Interval)));
 	*result = *interval;
 
 	AdjustIntervalForTypmod(result, typmod);
@@ -5358,7 +5358,7 @@ generate_series_timestamp(PG_FUNCTION_ARGS)
 	/*
 	 * get the saved state and use current as the result for this iteration
 	 */
-	fctx = funcctx->user_fctx;
+	fctx = static_cast<generate_series_timestamp_fctx *>(funcctx->user_fctx);
 	result = fctx->current;
 
 	if (fctx->step_sign > 0 ?
@@ -5439,7 +5439,7 @@ generate_series_timestamptz(PG_FUNCTION_ARGS)
 	/*
 	 * get the saved state and use current as the result for this iteration
 	 */
-	fctx = funcctx->user_fctx;
+	fctx = static_cast<generate_series_timestamptz_fctx *>(funcctx->user_fctx);
 	result = fctx->current;
 
 	if (fctx->step_sign > 0 ?

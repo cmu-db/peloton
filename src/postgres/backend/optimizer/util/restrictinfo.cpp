@@ -272,7 +272,7 @@ make_sub_restrictinfos(Expr *clause,
 
 		foreach(temp, ((BoolExpr *) clause)->args)
 			orlist = lappend(orlist,
-							 make_sub_restrictinfos(lfirst(temp),
+							 make_sub_restrictinfos(static_cast<Expr *>(lfirst(temp)),
 													is_pushed_down,
 													outerjoin_delayed,
 													pseudoconstant,
@@ -295,7 +295,7 @@ make_sub_restrictinfos(Expr *clause,
 
 		foreach(temp, ((BoolExpr *) clause)->args)
 			andlist = lappend(andlist,
-							  make_sub_restrictinfos(lfirst(temp),
+							  make_sub_restrictinfos(static_cast<Expr *>(lfirst(temp)),
 													 is_pushed_down,
 													 outerjoin_delayed,
 													 pseudoconstant,

@@ -512,7 +512,7 @@ AssignTransactionId(TransactionState s)
 		TransactionState *parents;
 		size_t		parentOffset = 0;
 
-		parents = palloc(sizeof(TransactionState) * s->nestingLevel);
+		parents = static_cast<TransactionStateData **>(palloc(sizeof(TransactionState) * s->nestingLevel));
 		while (p != NULL && !TransactionIdIsValid(p->transactionId))
 		{
 			parents[parentOffset++] = p;
@@ -1451,11 +1451,11 @@ AtSubCommit_childXids(void)
 		 */
 		if (s->parent->childXids == NULL)
 			new_childXids =
-				MemoryContextAlloc(TopTransactionContext,
-								   new_maxChildXids * sizeof(TransactionId));
+					static_cast<TransactionId *>(MemoryContextAlloc(TopTransactionContext,
+								   new_maxChildXids * sizeof(TransactionId)));
 		else
-			new_childXids = repalloc(s->parent->childXids,
-								   new_maxChildXids * sizeof(TransactionId));
+			new_childXids = static_cast<TransactionId *>(repalloc(s->parent->childXids,
+								   new_maxChildXids * sizeof(TransactionId)));
 
 		s->parent->childXids = new_childXids;
 		s->parent->maxChildXids = new_maxChildXids;
@@ -3836,7 +3836,7 @@ ReleaseSavepoint(List *options)
 
 	foreach(cell, options)
 	{
-		DefElem    *elem = lfirst(cell);
+		DefElem    *elem = static_cast<DefElem *>(lfirst(cell));
 
 		if (strcmp(elem->defname, "savepoint_name") == 0)
 			name = strVal(elem->arg);
@@ -3948,7 +3948,7 @@ RollbackToSavepoint(List *options)
 
 	foreach(cell, options)
 	{
-		DefElem    *elem = lfirst(cell);
+		DefElem    *elem = static_cast<DefElem *>(lfirst(cell));
 
 		if (strcmp(elem->defname, "savepoint_name") == 0)
 			name = strVal(elem->arg);
@@ -4845,7 +4845,7 @@ SerializeTransactionState(Size maxsize, char *start_address)
 	Assert(nxids * sizeof(TransactionId) < maxsize);
 
 	/* Copy them to our scratch space. */
-	workspace = palloc(nxids * sizeof(TransactionId));
+	workspace = static_cast<TransactionId *>(palloc(nxids * sizeof(TransactionId)));
 	for (s = CurrentTransactionState; s != NULL; s = s->parent)
 	{
 		if (TransactionIdIsValid(s->transactionId))
@@ -5415,7 +5415,7 @@ xact_redo_commit(xl_xact_parsed_commit *parsed,
 			unsigned int fork; // Peloton Porting. Changed type from ForkNumber to unsigned int
 
 			for (fork = 0; fork <= MAX_FORKNUM; fork++)
-				XLogDropRelation(parsed->xnodes[i], fork);
+				XLogDropRelation(parsed->xnodes[i], static_cast<ForkNumber>(fork));
 			smgrdounlink(srel, true);
 			smgrclose(srel);
 		}
@@ -5518,7 +5518,7 @@ xact_redo_abort(xl_xact_parsed_abort *parsed, TransactionId xid)
 		unsigned int fork; // Peloton Porting. Changed type from ForkNumber to unsigned int
 
 		for (fork = 0; fork <= MAX_FORKNUM; fork++)
-			XLogDropRelation(parsed->xnodes[i], fork);
+			XLogDropRelation(parsed->xnodes[i], static_cast<ForkNumber>(fork));
 		smgrdounlink(srel, true);
 		smgrclose(srel);
 	}

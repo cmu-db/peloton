@@ -509,7 +509,7 @@ deflist_to_tuplestore(ReturnSetInfo *rsinfo, List *options)
 
 	foreach(cell, options)
 	{
-		DefElem    *def = lfirst(cell);
+		DefElem    *def = static_cast<DefElem *>(lfirst(cell));
 
 		values[0] = CStringGetTextDatum(def->defname);
 		nulls[0] = false;
@@ -621,7 +621,7 @@ postgresql_fdw_validator(PG_FUNCTION_ARGS)
 
 	foreach(cell, options_list)
 	{
-		DefElem    *def = lfirst(cell);
+		DefElem    *def = static_cast<DefElem *>(lfirst(cell));
 
 		if (!is_conninfo_option(def->defname, catalog))
 		{

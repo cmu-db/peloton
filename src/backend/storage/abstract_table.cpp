@@ -21,7 +21,7 @@
 namespace peloton {
 namespace storage {
 
-AbstractTable::AbstractTable(const catalog::Schema *schema,
+AbstractTable::AbstractTable(catalog::Schema *schema,
         AbstractBackend *backend,
         size_t tuples_per_tilegroup)
 : database_id(INVALID_OID),

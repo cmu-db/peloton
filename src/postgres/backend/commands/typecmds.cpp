@@ -872,7 +872,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	 */
 	foreach(listptr, schema)
 	{
-		Constraint *constr = lfirst(listptr);
+		Constraint *constr = static_cast<Constraint *>(lfirst(listptr));
 
 		if (!IsA(constr, Constraint))
 			elog(ERROR, "unrecognized node type: %d",
@@ -1062,7 +1062,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	 */
 	foreach(listptr, schema)
 	{
-		Constraint *constr = lfirst(listptr);
+		Constraint *constr = static_cast<Constraint *>(lfirst(listptr));
 
 		/* it must be a Constraint, per check above */
 

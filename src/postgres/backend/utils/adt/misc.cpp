@@ -264,7 +264,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		fctx = palloc(sizeof(ts_db_fctx));
+		fctx = static_cast<ts_db_fctx *>(palloc(sizeof(ts_db_fctx)));
 
 		if (tablespaceOid == GLOBALTABLESPACE_OID)
 		{

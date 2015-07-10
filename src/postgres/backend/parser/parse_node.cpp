@@ -45,7 +45,7 @@ make_parsestate(ParseState *parentParseState)
 {
 	ParseState *pstate;
 
-	pstate = palloc0(sizeof(ParseState));
+	pstate = static_cast<ParseState *>(palloc0(sizeof(ParseState)));
 
 	pstate->parentParseState = parentParseState;
 
