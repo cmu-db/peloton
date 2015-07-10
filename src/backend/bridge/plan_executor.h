@@ -41,6 +41,8 @@ class PlanExecutor {
   static bool ExecutePlan(planner::AbstractPlanNode *plan, TupleDesc tuple_desc,
                           Peloton_Status *pstatus);
 
+  static executor::AbstractExecutor *AddMaterialization(executor::AbstractExecutor *root);
+
  private:
 
 };
