@@ -62,6 +62,7 @@
 
 // TODO: Peloton Changes
 #include "nodes/pprint.h"
+#include "nodes/pg_list.h"
 #include "postmaster/peloton.h"
 #include "backend/bridge/plan_transformer.h"
 
@@ -1605,8 +1606,36 @@ ExecutePlan(EState *estate,
 	status = peloton_create_status();
 
   peloton_send_dml(status, planstate,
+                   tupDesc,
                    TopTransactionContext,
                    CurTransactionContext);
+
+  fprintf(stdout, "Slots : %p \n", status->m_result_slots);
+  fflush(stdout);
+
+  // Go over any result slots
+  if(status->m_result_slots != NULL)
+  {
+    ListCell   *lc;
+    foreach(lc, status->m_result_slots)
+    {
+      TupleTableSlot *slot = (TupleTableSlot *) lfirst(lc);
+
+      /*
+       * If we are supposed to send the tuple somewhere, do so. (In
+       * practice, this is probably always the case at this point.)
+       */
+      if (sendTuples)
+        (*dest->receiveSlot) (slot, dest);
+
+      // Clean up slot
+      pfree(slot);
+    }
+
+    // Clean up list
+    pfree(status->m_result_slots);
+  }
+
 
   status_code = peloton_get_status(status);
   peloton_destroy_status(status);

@@ -15,6 +15,10 @@
 #include "backend/common/types.h"
 #include "backend/executor/abstract_executor.h"
 
+#include "postgres.h"
+#include "access/tupdesc.h"
+#include "postmaster/peloton.h"
+
 namespace peloton {
 namespace bridge {
 
@@ -34,7 +38,8 @@ class PlanExecutor {
 
   static void PrintPlan(const planner::AbstractPlanNode *plan, std::string prefix = "");
 
-  static bool ExecutePlan(planner::AbstractPlanNode *plan);
+  static bool ExecutePlan(planner::AbstractPlanNode *plan, TupleDesc tuple_desc,
+                          Peloton_Status *pstatus);
 
  private:
 
