@@ -164,7 +164,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     assert(!TupIsNull(tupleslot));
     assert(isDone != ExprEndResult);
 
-    auto tuple = TupleTransformer::TransformTuple(tupleslot, schema);
+    auto tuple = TupleTransformer::GetPelotonTuple(tupleslot, schema);
     assert(tuple);
     tuples.push_back(tuple);
 
