@@ -112,7 +112,7 @@ spg_kd_picksplit(PG_FUNCTION_ARGS)
 	SortedPoint *sorted;
 	double		coord;
 
-	sorted = palloc(sizeof(*sorted) * in->nTuples);
+	sorted = static_cast<SortedPoint *>(palloc(sizeof(*sorted) * in->nTuples));
 	for (i = 0; i < in->nTuples; i++)
 	{
 		sorted[i].p = DatumGetPointP(in->datums[i]);
@@ -130,8 +130,8 @@ spg_kd_picksplit(PG_FUNCTION_ARGS)
 	out->nNodes = 2;
 	out->nodeLabels = NULL;		/* we don't need node labels */
 
-	out->mapTuplesToNodes = palloc(sizeof(int) * in->nTuples);
-	out->leafTupleDatums = palloc(sizeof(Datum) * in->nTuples);
+	out->mapTuplesToNodes = static_cast<int *>(palloc(sizeof(int) * in->nTuples));
+	out->leafTupleDatums = static_cast<Datum *>(palloc(sizeof(Datum) * in->nTuples));
 
 	/*
 	 * Note: points that have coordinates exactly equal to coord may get

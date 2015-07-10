@@ -545,7 +545,7 @@ PushActiveSnapshot(Snapshot snap)
 
 	Assert(snap != InvalidSnapshot);
 
-	newactive = MemoryContextAlloc(TopTransactionContext, sizeof(ActiveSnapshotElt));
+	newactive = static_cast<ActiveSnapshotElt *>(MemoryContextAlloc(TopTransactionContext, sizeof(ActiveSnapshotElt)));
 
 	/*
 	 * Checking SecondarySnapshot is probably useless here, but it seems
@@ -1592,5 +1592,5 @@ RestoreSnapshot(char *start_address)
 void
 RestoreTransactionSnapshot(Snapshot snapshot, void *master_pgproc)
 {
-	SetTransactionSnapshot(snapshot, InvalidTransactionId, master_pgproc);
+	SetTransactionSnapshot(snapshot, InvalidTransactionId, static_cast<PGPROC *>(master_pgproc));
 }

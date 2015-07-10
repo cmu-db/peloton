@@ -1198,7 +1198,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * (really really need to fix the planner to not scribble on its input,
 	 * someday ... but see remove_unused_subquery_outputs to start with).
 	 */
-	subquery = copyObject(subquery);
+	subquery = static_cast<Query *>(copyObject(subquery));
 
 	/*
 	 * If it's a LATERAL subquery, it might contain some Vars of the current

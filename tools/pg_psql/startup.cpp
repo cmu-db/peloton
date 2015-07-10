@@ -204,8 +204,8 @@ main(int argc, char *argv[])
 	do
 	{
 #define PARAMS_ARRAY_SIZE	8
-		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
+		const char **keywords = static_cast<const char **>(pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords)));
+		const char **values = static_cast<const char **>(pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values)));
 
 		keywords[0] = "host";
 		values[0] = options.host;

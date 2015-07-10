@@ -99,7 +99,7 @@ parse_slash_copy(const char *args)
 		return NULL;
 	}
 
-	result = pg_malloc0(sizeof(struct copy_options));
+	result = static_cast<copy_options *>(pg_malloc0(sizeof(struct copy_options)));
 
 	result->before_tofrom = pg_strdup("");		/* initialize for appending */
 
@@ -450,7 +450,7 @@ handleCopyOut(PGconn *conn, FILE *copystream, PGresult **res)
 
 		if (buf)
 		{
-			if (OK && fwrite(buf, 1, ret, copystream) != ret)
+			if (OK && fwrite(buf, 1, ret, copystream) != static_cast<unsigned int>(ret))
 			{
 				psql_error("could not write COPY data: %s\n",
 						   strerror(errno));

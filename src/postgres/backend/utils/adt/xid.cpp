@@ -43,7 +43,7 @@ xidout(PG_FUNCTION_ARGS)
 	TransactionId transactionId = PG_GETARG_TRANSACTIONID(0);
 
 	/* maximum 32 bit unsigned integer representation takes 10 chars */
-	char	   *str = palloc(11);
+	char	   *str = static_cast<char *>(palloc(11));
 
 	snprintf(str, 11, "%lu", (unsigned long) transactionId);
 

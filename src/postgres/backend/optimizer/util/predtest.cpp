@@ -841,7 +841,7 @@ list_next_fn(PredIterInfo info)
 
 	if (l == NULL)
 		return NULL;
-	n = lfirst(l);
+	n = static_cast<Node *>(lfirst(l));
 	info->state = (void *) lnext(l);
 	return n;
 }
@@ -1763,12 +1763,12 @@ lookup_proof_cache(Oid pred_op, Oid clause_op, bool refute_it)
 
 	foreach(lcp, pred_op_infos)
 	{
-		OpBtreeInterpretation *pred_op_info = lfirst(lcp);
+		OpBtreeInterpretation *pred_op_info = static_cast<OpBtreeInterpretation *>(lfirst(lcp));
 		Oid			opfamily_id = pred_op_info->opfamily_id;
 
 		foreach(lcc, clause_op_infos)
 		{
-			OpBtreeInterpretation *clause_op_info = lfirst(lcc);
+			OpBtreeInterpretation *clause_op_info = static_cast<OpBtreeInterpretation *>(lfirst(lcc));
 			StrategyNumber pred_strategy,
 						clause_strategy,
 						test_strategy;

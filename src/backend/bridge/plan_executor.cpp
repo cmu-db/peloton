@@ -220,13 +220,7 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
 
   }
 
-  fprintf(stdout, "Status : %p \n", pstatus);
-  fflush(stdout);
-
   pstatus->m_result_slots = slots;
-
-  fprintf(stdout, "Status slots : %p \n", pstatus->m_result_slots);
-  fflush(stdout);
 
   // Commit and cleanup
   txn_manager.CommitTransaction(txn);

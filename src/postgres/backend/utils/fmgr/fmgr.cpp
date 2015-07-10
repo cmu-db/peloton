@@ -837,7 +837,7 @@ static Datum fmgr_security_definer(PG_FUNCTION_ARGS) {
     bool isnull;
     MemoryContext oldcxt;
 
-    fcache = MemoryContextAllocZero(fcinfo->flinfo->fn_mcxt, sizeof(*fcache));
+    fcache = static_cast<fmgr_security_definer_cache *>(MemoryContextAllocZero(fcinfo->flinfo->fn_mcxt, sizeof(*fcache)));
 
     fmgr_info_cxt_security(fcinfo->flinfo->fn_oid, &fcache->flinfo,
                            fcinfo->flinfo->fn_mcxt, true);
@@ -863,7 +863,7 @@ static Datum fmgr_security_definer(PG_FUNCTION_ARGS) {
 
     fcinfo->flinfo->fn_extra = fcache;
   } else
-    fcache = fcinfo->flinfo->fn_extra;
+    fcache = static_cast<fmgr_security_definer_cache *>(fcinfo->flinfo->fn_extra);
 
   /* GetUserIdAndSecContext is cheap enough that no harm in a wasted call */
   GetUserIdAndSecContext(&save_userid, &save_sec_context);

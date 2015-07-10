@@ -105,7 +105,7 @@ pull_varnos(Node *node)
 	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	query_or_expression_tree_walker(node,
-									pull_varnos_walker,
+	                reinterpret_cast<query_or_expression_tree_walker_fptr>(pull_varnos_walker),
 									(void *) &context,
 									0);
 
@@ -130,7 +130,7 @@ pull_varnos_of_level(Node *node, int levelsup)
 	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	query_or_expression_tree_walker(node,
-									pull_varnos_walker,
+	                                reinterpret_cast<query_or_expression_tree_walker_fptr>(pull_varnos_walker),
 									(void *) &context,
 									0);
 
@@ -192,12 +192,12 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 		bool		result;
 
 		context->sublevels_up++;
-		result = query_tree_walker((Query *) node, pull_varnos_walker,
+		result = query_tree_walker((Query *) node, reinterpret_cast<query_tree_walker_fptr>(pull_varnos_walker),
 								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
 	}
-	return expression_tree_walker(node, pull_varnos_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(pull_varnos_walker),
 								  (void *) context);
 }
 
@@ -248,7 +248,7 @@ pull_varattnos_walker(Node *node, pull_varattnos_context *context)
 	/* Should not find an unplanned subquery */
 	Assert(!IsA(node, Query));
 
-	return expression_tree_walker(node, pull_varattnos_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(pull_varattnos_walker),
 								  (void *) context);
 }
 
@@ -273,7 +273,7 @@ pull_vars_of_level(Node *node, int levelsup)
 	 * it's a Query, we don't want to increment sublevels_up.
 	 */
 	query_or_expression_tree_walker(node,
-									pull_vars_walker,
+	                reinterpret_cast<query_or_expression_tree_walker_fptr>(pull_vars_walker),
 									(void *) &context,
 									0);
 
@@ -308,12 +308,12 @@ pull_vars_walker(Node *node, pull_vars_context *context)
 		bool		result;
 
 		context->sublevels_up++;
-		result = query_tree_walker((Query *) node, pull_vars_walker,
+		result = query_tree_walker((Query *) node, reinterpret_cast<query_tree_walker_fptr>(pull_vars_walker),
 								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
 	}
-	return expression_tree_walker(node, pull_vars_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(pull_vars_walker),
 								  (void *) context);
 }
 
@@ -372,7 +372,7 @@ contain_vars_of_level(Node *node, int levelsup)
 	int			sublevels_up = levelsup;
 
 	return query_or_expression_tree_walker(node,
-										   contain_vars_of_level_walker,
+	                     reinterpret_cast<query_or_expression_tree_walker_fptr>(contain_vars_of_level_walker),
 										   (void *) &sublevels_up,
 										   0);
 }
@@ -407,14 +407,14 @@ contain_vars_of_level_walker(Node *node, int *sublevels_up)
 
 		(*sublevels_up)++;
 		result = query_tree_walker((Query *) node,
-								   contain_vars_of_level_walker,
+		               reinterpret_cast<query_tree_walker_fptr>(contain_vars_of_level_walker),
 								   (void *) sublevels_up,
 								   0);
 		(*sublevels_up)--;
 		return result;
 	}
 	return expression_tree_walker(node,
-								  contain_vars_of_level_walker,
+	                reinterpret_cast<expression_tree_walker_fptr>(contain_vars_of_level_walker),
 								  (void *) sublevels_up);
 }
 
@@ -443,7 +443,7 @@ locate_var_of_level(Node *node, int levelsup)
 	context.sublevels_up = levelsup;
 
 	(void) query_or_expression_tree_walker(node,
-										   locate_var_of_level_walker,
+	                     reinterpret_cast<query_or_expression_tree_walker_fptr>(locate_var_of_level_walker),
 										   (void *) &context,
 										   0);
 
@@ -481,14 +481,14 @@ locate_var_of_level_walker(Node *node,
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node,
-								   locate_var_of_level_walker,
+		               reinterpret_cast<query_tree_walker_fptr>(locate_var_of_level_walker),
 								   (void *) context,
 								   0);
 		context->sublevels_up--;
 		return result;
 	}
 	return expression_tree_walker(node,
-								  locate_var_of_level_walker,
+	                reinterpret_cast<expression_tree_walker_fptr>(locate_var_of_level_walker),
 								  (void *) context);
 }
 
@@ -606,7 +606,7 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
 				break;
 		}
 	}
-	return expression_tree_walker(node, pull_var_clause_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(pull_var_clause_walker),
 								  (void *) context);
 }
 
@@ -688,7 +688,7 @@ flatten_join_alias_vars_mutator(Node *node,
 				/* Ignore dropped columns */
 				if (newvar == NULL)
 					continue;
-				newvar = copyObject(newvar);
+				newvar = static_cast<Node *>(copyObject(newvar));
 
 				/*
 				 * If we are expanding an alias carried down from an upper
@@ -720,7 +720,7 @@ flatten_join_alias_vars_mutator(Node *node,
 		Assert(var->varattno > 0);
 		newvar = (Node *) list_nth(rte->joinaliasvars, var->varattno - 1);
 		Assert(newvar != NULL);
-		newvar = copyObject(newvar);
+		newvar = static_cast<Node *>(copyObject(newvar));
 
 		/*
 		 * If we are expanding an alias carried down from an upper query, must
@@ -748,7 +748,7 @@ flatten_join_alias_vars_mutator(Node *node,
 		PlaceHolderVar *phv;
 
 		phv = (PlaceHolderVar *) expression_tree_mutator(node,
-											 flatten_join_alias_vars_mutator,
+		                         reinterpret_cast<expression_tree_mutator_fptr>(flatten_join_alias_vars_mutator),
 														 (void *) context);
 		/* now fix PlaceHolderVar's relid sets */
 		if (phv->phlevelsup == context->sublevels_up)
@@ -769,7 +769,7 @@ flatten_join_alias_vars_mutator(Node *node,
 		save_inserted_sublink = context->inserted_sublink;
 		context->inserted_sublink = ((Query *) node)->hasSubLinks;
 		newnode = query_tree_mutator((Query *) node,
-									 flatten_join_alias_vars_mutator,
+		               reinterpret_cast<query_tree_mutator_fptr>(flatten_join_alias_vars_mutator),
 									 (void *) context,
 									 QTW_IGNORE_JOINALIASES);
 		newnode->hasSubLinks |= context->inserted_sublink;
@@ -785,7 +785,7 @@ flatten_join_alias_vars_mutator(Node *node,
 	Assert(!IsA(node, PlaceHolderInfo));
 	Assert(!IsA(node, MinMaxAggInfo));
 
-	return expression_tree_mutator(node, flatten_join_alias_vars_mutator,
+	return expression_tree_mutator(node, reinterpret_cast<expression_tree_mutator_fptr>(flatten_join_alias_vars_mutator),
 								   (void *) context);
 }
 

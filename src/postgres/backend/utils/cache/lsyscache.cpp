@@ -2125,7 +2125,7 @@ get_typdefault(Oid typid)
 	if (!isNull)
 	{
 		/* We have an expression default */
-		expr = stringToNode(TextDatumGetCString(datum));
+		expr = static_cast<Node *>(stringToNode(TextDatumGetCString(datum)));
 	}
 	else
 	{

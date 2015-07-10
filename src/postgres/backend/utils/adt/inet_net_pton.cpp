@@ -66,12 +66,12 @@ inet_net_pton(int af, const char *src, void *dst, size_t size)
 	{
 		case PGSQL_AF_INET:
 			return size == -1 ?
-				inet_net_pton_ipv4(src, dst) :
-				inet_cidr_pton_ipv4(src, dst, size);
+				inet_net_pton_ipv4(src, static_cast<u_char *>(dst)) :
+				inet_cidr_pton_ipv4(src, static_cast<u_char *>(dst), size);
 		case PGSQL_AF_INET6:
 			return size == -1 ?
-				inet_net_pton_ipv6(src, dst) :
-				inet_cidr_pton_ipv6(src, dst, size);
+				inet_net_pton_ipv6(src, static_cast<u_char *>(dst)) :
+				inet_cidr_pton_ipv6(src, static_cast<u_char *>(dst), size);
 		default:
 			errno = EAFNOSUPPORT;
 			return (-1);
