@@ -62,6 +62,7 @@
 
 // TODO: Peloton Changes
 #include "nodes/pprint.h"
+#include "nodes/pg_list.h"
 #include "postmaster/peloton.h"
 #include "backend/bridge/plan_transformer.h"
 
@@ -84,7 +85,8 @@ static void ExecutePlan(EState *estate, PlanState *planstate,
 			bool sendTuples,
 			long numberTuples,
 			ScanDirection direction,
-			DestReceiver *dest);
+			DestReceiver *dest,
+			TupleDesc tupDesc);
 static bool ExecCheckRTEPerms(RangeTblEntry *rte);
 static bool ExecCheckRTEPermsModified(Oid relOid, Oid userid,
 						  Bitmapset *modifiedCols,
@@ -344,7 +346,8 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 					sendTuples,
 					count,
 					direction,
-					dest);
+					dest,
+          queryDesc->tupDesc);
 
 	/*
 	 * shutdown tuple receiver, if we started it
@@ -1525,7 +1528,8 @@ ExecutePlan(EState *estate,
 			bool sendTuples,
 			long numberTuples,
 			ScanDirection direction,
-			DestReceiver *dest)
+			DestReceiver *dest,
+			TupleDesc tupDesc)
 {
 	TupleTableSlot *slot;
 	long		current_tuple_count;
@@ -1601,9 +1605,37 @@ ExecutePlan(EState *estate,
   // TODO: Peloton Changes
 	status = peloton_create_status();
 
-  peloton_send_dml(status, planstate, sendTuples, dest,
+  peloton_send_dml(status, planstate,
+                   tupDesc,
                    TopTransactionContext,
                    CurTransactionContext);
+
+  fprintf(stdout, "Slots : %p \n", status->m_result_slots);
+  fflush(stdout);
+
+  // Go over any result slots
+  if(status->m_result_slots != NULL)
+  {
+    ListCell   *lc;
+    foreach(lc, status->m_result_slots)
+    {
+      TupleTableSlot *slot = (TupleTableSlot *) lfirst(lc);
+
+      /*
+       * If we are supposed to send the tuple somewhere, do so. (In
+       * practice, this is probably always the case at this point.)
+       */
+      if (sendTuples)
+        (*dest->receiveSlot) (slot, dest);
+
+      // Clean up slot
+      pfree(slot);
+    }
+
+    // Clean up list
+    pfree(status->m_result_slots);
+  }
+
 
   status_code = peloton_get_status(status);
   peloton_destroy_status(status);

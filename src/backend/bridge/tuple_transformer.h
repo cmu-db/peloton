@@ -30,13 +30,15 @@ class TupleTransformer {
 
   TupleTransformer(){};
 
-  static Value DatumGetValue(Datum datum, Oid atttypid);
+  static Value GetValue(Datum datum, Oid atttypid);
 
-  static Datum ValueGetDatum(peloton::Value value);
+  static Datum GetDatum(peloton::Value value);
 
-  static storage::Tuple *TransformTuple(TupleTableSlot *slot,
+  static storage::Tuple *GetPelotonTuple(TupleTableSlot *slot,
                                         const catalog::Schema *schema);
 
+  static TupleTableSlot *GetPostgresTuple(storage::Tuple *tuple,
+                                          TupleDesc tuple_desc);
 
 };
 
