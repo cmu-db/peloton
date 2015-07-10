@@ -801,6 +801,7 @@ peloton_send_reply(int status)
 void
 peloton_send_dml(Peloton_Status *status,
                  PlanState *node,
+                 TupleDesc tuple_desc,
                  MemoryContext top_transaction_context,
                  MemoryContext cur_transaction_context)
 {
@@ -815,6 +816,7 @@ peloton_send_dml(Peloton_Status *status,
 
   msg.m_status = status;
   msg.m_planstate = node;
+  msg.m_tuple_desc = tuple_desc;
   msg.m_top_transaction_context = top_transaction_context;
   msg.m_cur_transaction_context = cur_transaction_context;
 
@@ -876,7 +878,7 @@ peloton_process_dml(Peloton_MsgDML *msg, int len)
 
       if(plan){
 //        peloton::bridge::PlanExecutor::PrintPlan(plan);
-        peloton::bridge::PlanExecutor::ExecutePlan(plan);
+        peloton::bridge::PlanExecutor::ExecutePlan(plan, msg->m_tuple_desc, msg->m_status);
 //        peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
       }
 
@@ -933,6 +935,7 @@ peloton_create_status()
   Peloton_Status *status = static_cast<Peloton_Status *>(palloc(sizeof(Peloton_Status)));
 
   status->m_code = PELOTON_STYPE_INVALID;
+  status->m_result_slots = NULL;
 
   return status;
 }
