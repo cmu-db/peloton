@@ -387,6 +387,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformResult(
 }
 /**
  * @brief Convert a Postgres LimitState into a Peloton LimitPlanNode
+ *        does not support LIMIT ALL
+ *        does not support no LIMIT
  * @return Pointer to the constructed AbstractPlanNode
  */
 planner::AbstractPlanNode *PlanTransformer::TransformLimit(
@@ -399,6 +401,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformLimit(
   bool noLimit;
   bool noOffset;
 
+  /* Resolve limit and offset */
   if (node->limitOffset) {
     val = ExecEvalExprSwitchContext(node->limitOffset, econtext, &isNull,
     NULL);
@@ -418,7 +421,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformLimit(
   if (node->limitCount) {
     val = ExecEvalExprSwitchContext(node->limitCount, econtext, &isNull,
     NULL);
-    /* Interpret NULL count as no count (LIMIT ALL) */
+    /* Interpret NULL count as no limit (LIMIT ALL) */
     if (isNull) {
       limit = 0;
       noLimit = true;
@@ -439,7 +442,13 @@ planner::AbstractPlanNode *PlanTransformer::TransformLimit(
    * The is safe */
   /* TODO: handle no limit and no offset cases, in which the corresponding value is 0 */
   LOG_INFO("Limit: %ld, Offset: %ld", limit, offset);
-  return new planner::LimitNode(limit, offset);
+  auto plan_node = new planner::LimitNode(limit, offset);
+
+  /* Resolve child plan */
+  PlanState *subplan_state = outerPlanState(node);
+  assert(subplan_state != nullptr);
+  plan_node->AddChild(PlanTransformer::TransformPlan(subplan_state));
+  return plan_node;
 }
 
 }  // namespace bridge
