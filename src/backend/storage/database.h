@@ -40,35 +40,38 @@ public:
     Database(Database const&) = delete;  
 
     // Constructor
-    Database( oid_t database_oid ) : database_oid(database_oid){}
+    Database( oid_t database_oid ) 
+    : database_oid(database_oid) { }
 
-    ~Database()
-    {
+    ~Database(){
       //drop all tables in current db
+      DeleteAllTables();
     };
 
     //===--------------------------------------------------------------------===//
     // OPERATIONS
     //===--------------------------------------------------------------------===//
     
-    static Database* GetDatabaseById(oid_t database_oid);
+    // Create a new database 
+    static Database* GetDatabaseById( oid_t database_oid );
+    static bool DeleteDatabaseById( oid_t database_oid );
 
-    bool AddTable(storage::DataTable* table);
+    bool AddTable( storage::DataTable* table );
 
-    bool DeleteTableById(oid_t table_oid );
-    bool DeleteTableByName(std::string table_name );
+    bool DeleteTableById( oid_t table_oid );
+    bool DeleteTableByName( std::string table_name );
     bool DeleteAllTables();
 
-    storage::DataTable* GetTableByName(const std::string table_name) const;
-    storage::DataTable* GetTableById(const oid_t table_oid) const;
-    storage::DataTable* GetTableByPosition(const oid_t table_position) const;
+    storage::DataTable* GetTableByName( const std::string table_name ) const;
+    storage::DataTable* GetTableById( const oid_t table_oid ) const;
+    storage::DataTable* GetTableByPosition( const oid_t table_position ) const;
 
 
-    inline size_t GetTableCount() const{
+    inline size_t GetTableCount() const {
       return table_oid_to_address.size();
     }
 
-    inline size_t GetDatabaseOid() const{
+    inline size_t GetDatabaseOid() const {
       return database_oid;
     }
 
@@ -88,15 +91,14 @@ protected:
     // database oid
     oid_t database_oid;
 
+    // table name -> table oid
+    string_to_oid_t table_name_to_oid;
 
-  // table name -> table oid
-   string_to_oid_t table_name_to_oid;
+    // table oid -> table name
+    oid_t_to_string table_oid_to_name;
 
-  // table oid -> table name
-   oid_t_to_string table_oid_to_name;
-
-  // table oid -> table address
-   oid_t_to_datatable_ptr table_oid_to_address;
+    // table oid -> table address
+    oid_t_to_datatable_ptr table_oid_to_address;
 };
 
 
