@@ -68,6 +68,8 @@ bool UpdateExecutor::DExecute() {
     auto updated_cols = node.GetUpdatedColumns();
     auto updated_col_vals = node.GetUpdatedColumnValues();
 
+    auto updated_col_exprs = node.GetUpdatedColumnExprs();
+
     // Update tuples in given table
     for (oid_t visible_tuple_id : *source_tile) {
 
@@ -87,11 +89,17 @@ bool UpdateExecutor::DExecute() {
         // (B) now, make a copy of the original tuple
         storage::Tuple *tuple = tile_group->SelectTuple(physical_tuple_id);
 
-        // and update the relevant values
+        // and (B.1) update the relevant values
         oid_t col_itr = 0;
         for(auto col : updated_cols) {
             Value val = updated_col_vals[col_itr++];
             tuple->SetValue(col, val);
+        }
+
+        // and (B.2) update with expressions
+        for(auto entry : updated_col_exprs) {
+          Value val = entry.second->Evaluate(tuple, nullptr);
+          tuple->SetValue(entry.first, val);
         }
 
         // and finally insert into the table in update mode
