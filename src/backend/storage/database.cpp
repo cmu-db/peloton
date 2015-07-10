@@ -167,11 +167,6 @@ storage::DataTable* Database::GetTableByPosition( const oid_t table_position ) c
   storage::DataTable* table = nullptr;
   oid_t curr_position = 0;
 
-  if( table_position < 0 || table_position >= table_oid_to_address.size() ){
-    LOG_WARN("GetTableByPosition :: Out of range %u/%lu ", table_position, table_name_to_oid.size() );
-    return table; // out of range
-  }
-
   std::for_each(begin(table_oid_to_address), end(table_oid_to_address),
       [&] (const std::pair<oid_t, storage::DataTable*>& curr_table){
 

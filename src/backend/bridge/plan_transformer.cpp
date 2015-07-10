@@ -374,11 +374,15 @@ planner::AbstractPlanNode *PlanTransformer::TransformResult(
 									  econtext,
 									  &isnull,
 									  &itemIsDone[resind]);
+
+      LOG_INFO("Datum : %lu \n", value);
     }
 
-  } else {
+  }
+  else {
     LOG_INFO("We can not handle case where targelist is null");
   }
+
   return nullptr;
 }
 

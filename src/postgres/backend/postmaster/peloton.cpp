@@ -78,7 +78,7 @@ static void peloton_sighup_handler(SIGNAL_ARGS);
 static void peloton_sigusr2_handler(SIGNAL_ARGS);
 static void peloton_sigterm_handler(SIGNAL_ARGS);
 static void peloton_sighup_handler(SIGNAL_ARGS);
-static void peloton_sigsegv_handler(SIGNAL_ARGS);
+static void  __attribute__ ((unused)) peloton_sigsegv_handler(SIGNAL_ARGS);
 
 static void peloton_setheader(Peloton_MsgHdr *hdr, PelotonMsgType mtype);
 static void peloton_send(void *msg, int len);
@@ -806,8 +806,6 @@ peloton_send_dml(Peloton_Status *status,
                  MemoryContext cur_transaction_context)
 {
   Peloton_MsgDML msg;
-  PlanState *lnode;
-  MemoryContext oldcontext;
 
   if (pelotonSock == PGINVALID_SOCKET)
     return;
@@ -832,12 +830,11 @@ peloton_send_dml(Peloton_Status *status,
 void
 peloton_send_ddl(Peloton_Status *status,
                  Node *parsetree,
-                 char *queryString,
+                 const char *queryString,
                  MemoryContext top_transaction_context,
                  MemoryContext cur_transaction_context)
 {
   Peloton_MsgDDL msg;
-  MemoryContext oldcontext;
 
   if (pelotonSock == PGINVALID_SOCKET)
     return;
@@ -872,16 +869,20 @@ peloton_process_dml(Peloton_MsgDML *msg, int len)
     TopTransactionContext = msg->m_top_transaction_context;
     CurTransactionContext = msg->m_cur_transaction_context;
 
+    fprintf(stdout, "PID : %d TTContext : %p CTContext : %p \n", getpid(), TopTransactionContext, CurTransactionContext);
+    fflush(stdout);
+
     if(planstate != NULL)
     {
+      /*
       auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
 
       if(plan){
-//        peloton::bridge::PlanExecutor::PrintPlan(plan);
+        peloton::bridge::PlanExecutor::PrintPlan(plan);
         peloton::bridge::PlanExecutor::ExecutePlan(plan, msg->m_tuple_desc, msg->m_status);
-//        peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
+        peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
       }
-
+      */
     }
   }
 
@@ -899,14 +900,9 @@ static void
 peloton_process_ddl(Peloton_MsgDDL *msg, int len)
 {
   Node* parsetree;
-  char* queryString;
-  Oid relation_oid;
 
   if(msg != NULL)
   {
-    /* Get the queryString */
-    queryString = msg->m_queryString;
-
     /* Get the parsetree */
     parsetree = msg->m_parsetree;
 
@@ -915,7 +911,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg, int len)
 
     if(parsetree != NULL)
     {
-      peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
+      //peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
     }
   }
 
