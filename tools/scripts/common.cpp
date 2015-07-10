@@ -363,6 +363,8 @@ handle_sigint(SIGNAL_ARGS)
 		}
 		else
 			fprintf(stderr, _("Could not send cancel request: %s"), errbuf);
+
+    fprintf(stderr, "signal: %d\n", postgres_signal_arg);
 	}
 	else
 		CancelRequested = true;

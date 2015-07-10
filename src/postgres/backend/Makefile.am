@@ -322,7 +322,7 @@ postgres_backend_FILES = \
 						 postgres/backend/optimizer/util/restrictinfo.cpp \
 						 postgres/backend/optimizer/util/tlist.cpp \
 						 postgres/backend/optimizer/util/var.cpp \
-						 postgres/backend/parser/gram.ypp \
+						 postgres/backend/parser/gram.cpp \
 						 postgres/backend/parser/analyze.cpp \
 						 postgres/backend/parser/keywords.cpp \
 						 postgres/backend/parser/kwlookup.cpp \

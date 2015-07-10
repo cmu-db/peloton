@@ -302,7 +302,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 
 	/* Terminating entry --- MUST BE LAST */
 	{NULL, NULL, NULL, NULL,
-	NULL, NULL, 0}
+	NULL, NULL, 0, -1}
 };
 
 static const PQEnvironmentOption EnvironmentOptions[] =

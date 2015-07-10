@@ -3654,7 +3654,7 @@ litbufdup(core_yyscan_t yyscanner)
 	int			llen = yyextra->literallen;
 	char	   *new___;
 
-	new___ = palloc(llen + 1);
+	new___ = static_cast<char *>(palloc(llen + 1));
 	memcpy(new___, yyextra->literalbuf, llen);
 	new___[llen] = '\0';
 	return new___;
@@ -3776,7 +3776,7 @@ litbuf_udeescape(unsigned char escape, core_yyscan_t yyscanner)
 	 * This relies on the subtle assumption that a UTF-8 expansion
 	 * cannot be longer than its escaped representation.
 	 */
-	new___ = palloc(yyextra->literallen + 1);
+	new___ = static_cast<char *>(palloc(yyextra->literallen + 1));
 
 	in = litbuf;
 	out = new___;
