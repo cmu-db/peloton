@@ -7,7 +7,7 @@
  *
  */
 
-#include "sql_help.h"
+#include "../pg_psql/sql_help.h"
 
 void
 sql_help_ABORT(PQExpBuffer buf)
