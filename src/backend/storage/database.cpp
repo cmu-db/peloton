@@ -168,7 +168,7 @@ storage::DataTable* Database::GetTableByPosition( const oid_t table_position ) c
   oid_t curr_position = 0;
 
   if( table_position < 0 || table_position >= table_oid_to_address.size() ){
-    LOG_WARN("GetTableByPosition :: Out of range %u/%hu ", table_position, table_name_to_oid.size() );
+    LOG_WARN("GetTableByPosition :: Out of range %u/%lu ", table_position, table_name_to_oid.size() );
     return table; // out of range
   }
 
@@ -185,7 +185,6 @@ storage::DataTable* Database::GetTableByPosition( const oid_t table_position ) c
   if( table == nullptr ){
     LOG_WARN("GetTableByPosition :: Not exist here");
   }
-  
 
   return table;
 }
