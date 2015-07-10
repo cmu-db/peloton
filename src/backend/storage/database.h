@@ -21,14 +21,14 @@ namespace peloton {
 namespace storage {
 
 class Database;
-// database oid -> database address
-typedef tbb::concurrent_unordered_map<oid_t, Database*> database_oid_to_address;
-// table name -> table oid
-typedef tbb::concurrent_unordered_map<std::string, oid_t> table_name_to_oid;
-// table oid -> table address
-typedef tbb::concurrent_unordered_map<oid_t, storage::DataTable*> table_oid_to_address;
 
-static database_oid_to_address database_address_locator;
+typedef tbb::concurrent_unordered_map<oid_t, Database*> oid_t_to_database_ptr;
+typedef tbb::concurrent_unordered_map<std::string, oid_t> string_to_oid_t;
+typedef tbb::concurrent_unordered_map<oid_t, std::string> oid_t_to_string;
+typedef tbb::concurrent_unordered_map<oid_t, storage::DataTable*> oid_t_to_datatable_ptr;
+
+// database oid -> database address
+static oid_t_to_database_ptr database_oid_to_address;
 
 //===--------------------------------------------------------------------===//
 // DataBase
@@ -55,25 +55,22 @@ public:
 
     bool AddTable(storage::DataTable* table);
 
+    bool DeleteTableById(oid_t table_oid );
+    bool DeleteTableByName(std::string table_name );
+    bool DeleteAllTables();
+
     storage::DataTable* GetTableByName(const std::string table_name) const;
     storage::DataTable* GetTableById(const oid_t table_oid) const;
     storage::DataTable* GetTableByPosition(const oid_t table_position) const;
 
+
     inline size_t GetTableCount() const{
-      return table_address_locator.size();  
+      return table_oid_to_address.size();
     }
 
     inline size_t GetDatabaseOid() const{
       return database_oid;
     }
-
-    /*
-    TODO :: 
-    GetAllTableList()
-    DeleteTableByName()
-    DeleteTableById()
-    DropAllDataTable()
-    */
 
     //===--------------------------------------------------------------------===//
     // UTILITIES
@@ -91,10 +88,15 @@ protected:
     // database oid
     oid_t database_oid;
 
-    // map from table name to table oid
-    table_name_to_oid table_oid_locator;
-    // map from table oid to table address
-    table_oid_to_address table_address_locator;
+
+  // table name -> table oid
+   string_to_oid_t table_name_to_oid;
+
+  // table oid -> table name
+   oid_t_to_string table_oid_to_name;
+
+  // table oid -> table address
+   oid_t_to_datatable_ptr table_oid_to_address;
 };
 
 
