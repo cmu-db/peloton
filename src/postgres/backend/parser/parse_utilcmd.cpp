@@ -246,7 +246,7 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 */
 	foreach(elements, stmt->tableElts)
 	{
-		Node	   *element = lfirst(elements);
+		Node	   *element = static_cast<Node *>(lfirst(elements));
 
 		switch (nodeTag(element))
 		{
@@ -488,7 +488,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 
 	foreach(clist, column->constraints)
 	{
-		constraint = lfirst(clist);
+		constraint = static_cast<Constraint *>(lfirst(clist));
 		Assert(IsA(constraint, Constraint));
 
 		switch (constraint->contype)
@@ -821,7 +821,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			{
 				if (attrdef[i].adnum == parent_attno)
 				{
-					this_default = stringToNode(attrdef[i].adbin);
+					this_default = static_cast<Node *>(stringToNode(attrdef[i].adbin));
 					break;
 				}
 			}
@@ -877,7 +877,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			Node	   *ccbin_node;
 			bool		found_whole_row;
 
-			ccbin_node = map_variable_attnos(stringToNode(ccbin),
+			ccbin_node = map_variable_attnos(static_cast<Node *>(stringToNode(ccbin)),
 											 1, 0,
 											 attmap, tupleDesc->natts,
 											 &found_whole_row);
@@ -1462,7 +1462,7 @@ transformIndexConstraints(CreateStmtContext *cxt)
 		bool		keep = true;
 		ListCell   *k;
 
-		index = lfirst(lc);
+		index = static_cast<IndexStmt *>(lfirst(lc));
 
 		/* if it's pkey, it's already in cxt->alist */
 		if (index == cxt->pkey)
@@ -1470,7 +1470,7 @@ transformIndexConstraints(CreateStmtContext *cxt)
 
 		foreach(k, cxt->alist)
 		{
-			IndexStmt  *priorindex = lfirst(k);
+			IndexStmt  *priorindex = static_cast<IndexStmt *>(lfirst(k));
 
 			if (equal(index->indexParams, priorindex->indexParams) &&
 				equal(index->whereClause, priorindex->whereClause) &&
@@ -1539,7 +1539,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 		index->idxname = NULL;	/* DefineIndex will choose name */
 
 	index->relation = cxt->relation;
-	index->accessMethod = constraint->access_method ? constraint->access_method : DEFAULT_INDEX_TYPE;
+	index->accessMethod = constraint->access_method ? constraint->access_method : static_cast<char *>(DEFAULT_INDEX_TYPE);
 	index->options = constraint->options;
 	index->tableSpace = constraint->indexspace;
 	index->whereClause = constraint->where_clause;
@@ -2789,7 +2789,7 @@ transformCreateSchemaStmt(CreateSchemaStmt *stmt)
 	 */
 	foreach(elements, stmt->schemaElts)
 	{
-		Node	   *element = lfirst(elements);
+		Node	   *element = static_cast<Node *>(lfirst(elements));
 
 		switch (nodeTag(element))
 		{

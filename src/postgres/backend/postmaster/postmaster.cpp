@@ -1841,7 +1841,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
   else
     buf = palloc0(len + 1);
 
-  if (pq_getbytes(buf, len) == EOF)
+  if (pq_getbytes(static_cast<char *>(buf), len) == EOF)
   {
     ereport(COMMERROR,
             (errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -5585,7 +5585,7 @@ processCancelRequest(Port *port, void *pkt)
   static bool
   assign_backendlist_entry(RegisteredBgWorker *rw)
   {
-    Backend    *bn = malloc(sizeof(Backend));
+    Backend    *bn = static_cast<Backend *>(malloc(sizeof(Backend)));
 
     if (bn == NULL)
     {

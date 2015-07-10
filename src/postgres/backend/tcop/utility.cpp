@@ -452,7 +452,7 @@ standard_ProcessUtility(Node *parsetree,
 
               foreach(cell, stmt->options)
               {
-                DefElem    *elem = lfirst(cell);
+                DefElem    *elem = static_cast<DefElem *>(lfirst(cell));
 
                 if (strcmp(elem->defname, "savepoint_name") == 0)
                   name = strVal(elem->arg);

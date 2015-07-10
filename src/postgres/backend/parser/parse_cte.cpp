@@ -365,7 +365,7 @@ analyzeCTETargetList(ParseState *pstate, CommonTableExpr *cte, List *tlist)
 	 * as the output column set; but we allow it to be shorter for consistency
 	 * with Alias handling.)
 	 */
-	cte->ctecolnames = copyObject(cte->aliascolnames);
+	cte->ctecolnames = static_cast<List *>(copyObject(cte->aliascolnames));
 	cte->ctecoltypes = cte->ctecoltypmods = cte->ctecolcollations = NIL;
 	numaliases = list_length(cte->aliascolnames);
 	varattno = 0;
@@ -528,7 +528,7 @@ makeDependencyGraphWalker(Node *node, CteState *cstate)
 					(void) makeDependencyGraphWalker(cte->ctequery, cstate);
 				}
 				(void) raw_expression_tree_walker(node,
-												  makeDependencyGraphWalker,
+				                  reinterpret_cast<raw_expression_tree_walker_fptr>(makeDependencyGraphWalker),
 												  (void *) cstate);
 				cstate->innerwiths = list_delete_first(cstate->innerwiths);
 			}
@@ -550,7 +550,7 @@ makeDependencyGraphWalker(Node *node, CteState *cstate)
 					lfirst(cell1) = lappend((List *) lfirst(cell1), cte);
 				}
 				(void) raw_expression_tree_walker(node,
-												  makeDependencyGraphWalker,
+				                  reinterpret_cast<raw_expression_tree_walker_fptr>(makeDependencyGraphWalker),
 												  (void *) cstate);
 				cstate->innerwiths = list_delete_first(cstate->innerwiths);
 			}
@@ -569,7 +569,7 @@ makeDependencyGraphWalker(Node *node, CteState *cstate)
 		return false;
 	}
 	return raw_expression_tree_walker(node,
-									  makeDependencyGraphWalker,
+	                  reinterpret_cast<raw_expression_tree_walker_fptr>(makeDependencyGraphWalker),
 									  (void *) cstate);
 }
 
@@ -899,7 +899,7 @@ checkWellFormedRecursionWalker(Node *node, CteState *cstate)
 		return false;
 	}
 	return raw_expression_tree_walker(node,
-									  checkWellFormedRecursionWalker,
+	                  reinterpret_cast<raw_expression_tree_walker_fptr>(checkWellFormedRecursionWalker),
 									  (void *) cstate);
 }
 
@@ -916,7 +916,7 @@ checkWellFormedSelectStmt(SelectStmt *stmt, CteState *cstate)
 	{
 		/* just recurse without changing state */
 		raw_expression_tree_walker((Node *) stmt,
-								   checkWellFormedRecursionWalker,
+		               reinterpret_cast<raw_expression_tree_walker_fptr>(checkWellFormedRecursionWalker),
 								   (void *) cstate);
 	}
 	else
@@ -926,7 +926,7 @@ checkWellFormedSelectStmt(SelectStmt *stmt, CteState *cstate)
 			case SETOP_NONE:
 			case SETOP_UNION:
 				raw_expression_tree_walker((Node *) stmt,
-										   checkWellFormedRecursionWalker,
+				               reinterpret_cast<raw_expression_tree_walker_fptr>(checkWellFormedRecursionWalker),
 										   (void *) cstate);
 				break;
 			case SETOP_INTERSECT:

@@ -264,7 +264,7 @@ begin_heap_rewrite(Relation old_heap, Relation new_heap, TransactionId oldest_xm
 	old_cxt = MemoryContextSwitchTo(rw_cxt);
 
 	/* Create and fill in the state struct */
-	state = palloc0(sizeof(RewriteStateData));
+	state = static_cast<RewriteState >(palloc0(sizeof(RewriteStateData)));
 
 	state->rs_old_rel = old_heap;
 	state->rs_new_rel = new_heap;
@@ -322,7 +322,7 @@ end_heap_rewrite(RewriteState state)
 	 */
 	hash_seq_init(&seq_status, state->rs_unresolved_tups);
 
-	while ((unresolved = hash_seq_search(&seq_status)) != NULL)
+	while ((unresolved = static_cast<UnresolvedTup>(hash_seq_search(&seq_status))) != NULL)
 	{
 		ItemPointerSetInvalid(&unresolved->tuple->t_data->t_ctid);
 		raw_heap_insert(state, unresolved->tuple);
@@ -456,8 +456,8 @@ rewrite_heap_tuple(RewriteState state,
 			 */
 			UnresolvedTup unresolved;
 
-			unresolved = hash_search(state->rs_unresolved_tups, &hashkey,
-									 HASH_ENTER, &found);
+			unresolved = static_cast<UnresolvedTup>(hash_search(state->rs_unresolved_tups, &hashkey,
+									 HASH_ENTER, &found));
 			Assert(!found);
 
 			unresolved->old_tid = old_tuple->t_self;
@@ -512,8 +512,8 @@ rewrite_heap_tuple(RewriteState state,
 			hashkey.xmin = HeapTupleHeaderGetXmin(new_tuple->t_data);
 			hashkey.tid = old_tid;
 
-			unresolved = hash_search(state->rs_unresolved_tups, &hashkey,
-									 HASH_FIND, NULL);
+			unresolved = static_cast<UnresolvedTup>(hash_search(state->rs_unresolved_tups, &hashkey,
+									 HASH_FIND, NULL));
 
 			if (unresolved != NULL)
 			{
@@ -548,8 +548,8 @@ rewrite_heap_tuple(RewriteState state,
 				 */
 				OldToNewMapping mapping;
 
-				mapping = hash_search(state->rs_old_new_tid_map, &hashkey,
-									  HASH_ENTER, &found);
+				mapping = static_cast<OldToNewMapping>(hash_search(state->rs_old_new_tid_map, &hashkey,
+									  HASH_ENTER, &found));
 				Assert(!found);
 
 				mapping->new_tid = new_tid;
@@ -600,8 +600,8 @@ rewrite_heap_dead_tuple(RewriteState state, HeapTuple old_tuple)
 	hashkey.xmin = HeapTupleHeaderGetXmin(old_tuple->t_data);
 	hashkey.tid = old_tuple->t_self;
 
-	unresolved = hash_search(state->rs_unresolved_tups, &hashkey,
-							 HASH_FIND, NULL);
+	unresolved = static_cast<UnresolvedTup>(hash_search(state->rs_unresolved_tups, &hashkey,
+							 HASH_FIND, NULL));
 
 	if (unresolved != NULL)
 	{
@@ -888,7 +888,7 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 
 		/* write all mappings consecutively */
 		len = src->num_mappings * sizeof(LogicalRewriteMappingData);
-		waldata_start = waldata = palloc(len);
+		waldata_start = waldata = static_cast<char *>(palloc(len));
 
 		/*
 		 * collect data we need to write out, but don't modify ondisk data yet
@@ -983,8 +983,8 @@ logical_rewrite_log_mapping(RewriteState state, TransactionId xid,
 	relid = RelationGetRelid(state->rs_old_rel);
 
 	/* look for existing mappings for this 'mapped' xid */
-	src = hash_search(state->rs_logical_mappings, &xid,
-					  HASH_ENTER, &found);
+	src = static_cast<RewriteMappingFile *>(hash_search(state->rs_logical_mappings, &xid,
+					  HASH_ENTER, &found));
 
 	/*
 	 * We haven't yet had the need to map anything for this xid, create
@@ -1020,8 +1020,8 @@ logical_rewrite_log_mapping(RewriteState state, TransactionId xid,
 					 errmsg("could not create file \"%s\": %m", path)));
 	}
 
-	pmap = MemoryContextAlloc(state->rs_cxt,
-							  sizeof(RewriteMappingDataEntry));
+	pmap = static_cast<RewriteMappingDataEntry *>(MemoryContextAlloc(state->rs_cxt,
+							  sizeof(RewriteMappingDataEntry)));
 	memcpy(&pmap->map, map, sizeof(LogicalRewriteMappingData));
 	dlist_push_tail(&src->mappings, &pmap->node);
 	src->num_mappings++;
@@ -1212,7 +1212,7 @@ CheckPointLogicalRewriteHeap(void)
 		cutoff = redo;
 
 	mappings_dir = AllocateDir("pg_logical/mappings");
-	while ((mapping_de = ReadDir(mappings_dir, "pg_logical/mappings")) != NULL)
+	while ((mapping_de = ReadDir(mappings_dir, static_cast<const char *>("pg_logical/mappings"))) != NULL)
 	{
 		struct stat statbuf;
 		Oid			dboid;

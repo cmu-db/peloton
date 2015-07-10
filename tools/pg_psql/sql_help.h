@@ -1029,7 +1029,7 @@ static const struct _helpStruct QL_HELP[] = {
       41 },
 
 
-    { NULL, NULL, NULL }    /* End of list marker */
+    { NULL, NULL, NULL, 0 }    /* End of list marker */
 };
 
 

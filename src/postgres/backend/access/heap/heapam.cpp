@@ -2376,7 +2376,7 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 												   HEAP_DEFAULT_FILLFACTOR);
 
 	/* Toast and set header data in all the tuples */
-	heaptuples = palloc(ntuples * sizeof(HeapTuple));
+	heaptuples = static_cast<HeapTupleData **>(palloc(ntuples * sizeof(HeapTuple)));
 	for (i = 0; i < ntuples; i++)
 		heaptuples[i] = heap_prepare_insert(relation, tuples[i],
 											xid, cid, options);
@@ -2387,7 +2387,7 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 	 * beforehand.
 	 */
 	if (needwal)
-		scratch = palloc(BLCKSZ);
+		scratch = static_cast<char *>(palloc(BLCKSZ));
 
 	/*
 	 * We're about to do the actual inserts -- but check for conflict first,
@@ -5027,7 +5027,7 @@ l5:
 				old_status = MultiXactStatusNoKeyUpdate;
 		}
 
-		old_mode = TUPLOCK_from_mxstatus(old_status);
+		old_mode = static_cast<LockTupleMode>(TUPLOCK_from_mxstatus(old_status));
 
 		/*
 		 * If the lock to be acquired is for the same TransactionId as the
@@ -5941,7 +5941,7 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 	 * to keep.
 	 */
 	nnewmembers = 0;
-	newmembers = palloc(sizeof(MultiXactMember) * nmembers);
+	newmembers = static_cast<MultiXactMember *>(palloc(sizeof(MultiXactMember) * nmembers));
 	has_lockers = false;
 	update_xid = InvalidTransactionId;
 	update_committed = false;
@@ -6323,7 +6323,7 @@ GetMultiXactIdHintBits(MultiXactId multi, uint16 *new_infomask,
 		 * Remember the strongest lock mode held by any member of the
 		 * multixact.
 		 */
-		mode = TUPLOCK_from_mxstatus(members[i].status);
+		mode = static_cast<LockTupleMode>(TUPLOCK_from_mxstatus(members[i].status));
 		if (mode > strongest)
 			strongest = mode;
 

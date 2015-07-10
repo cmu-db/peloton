@@ -54,7 +54,7 @@ commit_ts_desc(StringInfo buf, XLogReaderState *record)
 			int		i;
 			TransactionId *subxids;
 
-			subxids = palloc(sizeof(TransactionId) * nsubxids);
+			subxids = static_cast<TransactionId *>(palloc(sizeof(TransactionId) * nsubxids));
 			memcpy(subxids,
 				   XLogRecGetData(record) + SizeOfCommitTsSet,
 				   sizeof(TransactionId) * nsubxids);

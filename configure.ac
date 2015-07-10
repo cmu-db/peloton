@@ -23,6 +23,9 @@ AC_LANG([C++])
 AC_PROG_CXX([g++])
 AC_SUBST([AM_CXXFLAGS], '-std=c++11 -stdlib=libc++')
 
+AC_PROG_YACC
+AC_PROG_LEX
+
 ######################################################################
 # LIBRARIES : MM, DL, RT, and M
 ######################################################################
@@ -118,7 +121,24 @@ AC_CONFIG_FILES([Makefile
                  ])
 
 AC_CONFIG_LINKS([tests/valgrind.supp:third_party/valgrind/valgrind.supp])
+#####################################################################
+# Workaround for Code Coverage
+#####################################################################
 AC_CONFIG_LINKS([src/scan.cpp:src/postgres/backend/parser/scan.cpp])
+AC_CONFIG_LINKS([src/postgres/backend/parser/gram.cpp:src/postgres/backend/parser/gram.cpp])
+AC_CONFIG_LINKS([src/guc-file.cpp:src/postgres/backend/utils/misc/guc-file.cpp])
+AC_CONFIG_LINKS([src/postgres/backend/bootstrap/bootparse.cpp:src/postgres/backend/bootstrap/bootparse.cpp])
+AC_CONFIG_LINKS([src/postgres/backend/bootstrap/bootparse.y:src/postgres/backend/bootstrap/bootparse.y])
+AC_CONFIG_LINKS([src/postgres/backend/bootstrap/bootscanner.cpp:src/postgres/backend/bootstrap/bootscanner.cpp])
+AC_CONFIG_LINKS([src/postgres/backend/bootstrap/bootscanner.l:src/postgres/backend/bootstrap/bootscanner.l])
+AC_CONFIG_LINKS([src/postgres/backend/replication/repl_gram.cpp:src/postgres/backend/replication/repl_gram.cpp])
+AC_CONFIG_LINKS([src/postgres/backend/replication/repl_gram.y:src/postgres/backend/replication/repl_gram.y])
+AC_CONFIG_LINKS([src/postgres/backend/replication/repl_scanner.cpp:src/postgres/backend/replication/repl_scanner.cpp])
+AC_CONFIG_LINKS([src/postgres/backend/replication/repl_scanner.l:src/postgres/backend/replication/repl_scanner.l])
+AC_CONFIG_LINKS([src/postgres/backend/replication/fmgrtab.cpp:src/postgres/backend/utils/fmgrtab.cpp])
+AC_CONFIG_LINKS([src/postgres/backend/utils/sort/qsort_tuple.cpp:src/postgres/backend/utils/sort/qsort_tuple.cpp])
+AC_CONFIG_LINKS([tools/pg_psql/sql_help.cpp:tools/pg_psql/sql_help.cpp])
+AC_CONFIG_LINKS([tools/pg_psql/psqlscan.cpp:tools/pg_psql/psqlscan.cpp])
 
 AC_OUTPUT
 

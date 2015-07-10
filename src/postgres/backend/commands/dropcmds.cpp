@@ -62,7 +62,7 @@ RemoveObjects(DropStmt *stmt)
 	foreach(cell1, stmt->objects)
 	{
 		ObjectAddress address;
-		List	   *objname = lfirst(cell1);
+		List	   *objname = static_cast<List *>(lfirst(cell1));
 		List	   *objargs = NIL;
 		Relation	relation = NULL;
 		Oid			namespaceId;
@@ -70,7 +70,7 @@ RemoveObjects(DropStmt *stmt)
 		if (stmt->arguments)
 		{
 			cell2 = (!cell2 ? list_head(stmt->arguments) : lnext(cell2));
-			objargs = lfirst(cell2);
+			objargs = static_cast<List *>(lfirst(cell2));
 		}
 
 		/* Get an ObjectAddress for the object. */
@@ -265,7 +265,7 @@ does_not_exist_skipping(ObjectType objtype, List *objname, List *objargs)
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:
 			{
-				TypeName   *typ = linitial(objname);
+				TypeName   *typ = static_cast<TypeName *>(linitial(objname));
 
 				if (!schema_does_not_exist_skipping(typ->names, &msg, &name))
 				{

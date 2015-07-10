@@ -84,12 +84,12 @@ gistbeginscan(PG_FUNCTION_ARGS)
 	so->queueCxt = giststate->scanCxt;	/* see gistrescan */
 
 	/* workspaces with size dependent on numberOfOrderBys: */
-	so->distances = palloc(sizeof(double) * scan->numberOfOrderBys);
+	so->distances = static_cast<double *>(palloc(sizeof(double) * scan->numberOfOrderBys));
 	so->qual_ok = true;			/* in case there are zero keys */
 	if (scan->numberOfOrderBys > 0)
 	{
-		scan->xs_orderbyvals = palloc0(sizeof(Datum) * scan->numberOfOrderBys);
-		scan->xs_orderbynulls = palloc(sizeof(bool) * scan->numberOfOrderBys);
+		scan->xs_orderbyvals = static_cast<Datum *>(palloc0(sizeof(Datum) * scan->numberOfOrderBys));
+		scan->xs_orderbynulls = static_cast<bool *>(palloc(sizeof(bool) * scan->numberOfOrderBys));
 		memset(scan->xs_orderbynulls, true, sizeof(bool) * scan->numberOfOrderBys);
 	}
 

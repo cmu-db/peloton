@@ -699,8 +699,8 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 	v->spl_nright = 0;
 
 	/* Allocate bounding boxes of left and right groups */
-	leftBox = palloc0(sizeof(BOX));
-	rightBox = palloc0(sizeof(BOX));
+	leftBox = static_cast<BOX *>(palloc0(sizeof(BOX)));
+	rightBox = static_cast<BOX *>(palloc0(sizeof(BOX)));
 
 	/*
 	 * Allocate an array for "common entries" - entries which can be placed to
@@ -1182,9 +1182,9 @@ gist_point_compress(PG_FUNCTION_ARGS)
 
 	if (entry->leafkey)			/* Point, actually */
 	{
-		BOX		   *box = palloc(sizeof(BOX));
+		BOX		   *box = static_cast<BOX *>(palloc(sizeof(BOX)));
 		Point	   *point = DatumGetPointP(entry->key);
-		GISTENTRY  *retval = palloc(sizeof(GISTENTRY));
+		GISTENTRY  *retval = static_cast<GISTENTRY *>(palloc(sizeof(GISTENTRY)));
 
 		box->high = box->low = *point;
 
@@ -1211,7 +1211,7 @@ gist_point_fetch(PG_FUNCTION_ARGS)
 	Point	   *r;
 	GISTENTRY  *retval;
 
-	retval = palloc(sizeof(GISTENTRY));
+	retval = static_cast<GISTENTRY *>(palloc(sizeof(GISTENTRY)));
 
 	r = (Point *) palloc(sizeof(Point));
 	r->x = in->high.x;

@@ -251,7 +251,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 				strlcpy(OutputFileName, optarg, MAXPGPATH);
 				break;
 			case 'x':
-				MyAuxProcType = atoi(optarg);
+				MyAuxProcType = static_cast<AuxProcType >(atoi(optarg));
 				break;
 			case 'c':
 			case '-':

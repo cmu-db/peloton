@@ -1687,7 +1687,7 @@ ProcessNotifyInterrupt(void)
 static void
 asyncQueueReadAllNotifications(void)
 {
-	volatile QueuePosition pos;
+  volatile QueuePosition pos;
 	QueuePosition oldpos;
 	QueuePosition head;
 	bool		advanceTail;
@@ -1703,7 +1703,7 @@ asyncQueueReadAllNotifications(void)
 	LWLockAcquire(AsyncQueueLock, LW_SHARED);
 	/* Assert checks that we have a valid state entry */
 	Assert(MyProcPid == QUEUE_BACKEND_PID(MyBackendId));
-	pos = oldpos = QUEUE_BACKEND_POS(MyBackendId);
+	*(const_cast<QueuePosition*>(&pos)) = oldpos = QUEUE_BACKEND_POS(MyBackendId);
 	head = QUEUE_HEAD;
 	LWLockRelease(AsyncQueueLock);
 
@@ -1890,7 +1890,7 @@ asyncQueueProcessPageEntries(volatile QueuePosition *current,
 				 * from a transaction that is not yet visible to snapshots;
 				 * compare the comments at the head of tqual.c.
 				 */
-				*current = thisentry;
+			  *(const_cast<QueuePosition*>(current)) = thisentry;
 				reachedStop = true;
 				break;
 			}

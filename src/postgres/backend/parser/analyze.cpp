@@ -810,8 +810,8 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("INSERT has more expressions than target columns"),
 				 parser_errposition(pstate,
-									exprLocation(list_nth(exprlist,
-												  list_length(icolumns))))));
+									exprLocation(static_cast<const Node *>(list_nth(exprlist,
+												  list_length(icolumns)))))));
 	if (stmtcols != NIL &&
 		list_length(exprlist) < list_length(icolumns))
 	{
@@ -828,12 +828,12 @@ transformInsertRow(ParseState *pstate, List *exprlist,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("INSERT has more target columns than expressions"),
 				 ((list_length(exprlist) == 1 &&
-				   count_rowexpr_columns(pstate, linitial(exprlist)) ==
+				   count_rowexpr_columns(pstate, static_cast<Node *>(linitial(exprlist))) ==
 				   list_length(icolumns)) ?
 				  errhint("The insertion source is a row expression containing the same number of columns expected by the INSERT. Did you accidentally use extra parentheses?") : 0),
 				 parser_errposition(pstate,
-									exprLocation(list_nth(icolumns,
-												  list_length(exprlist))))));
+									exprLocation(static_cast<const Node *>(list_nth(icolumns,
+												  list_length(exprlist)))))));
 	}
 
 	/*
@@ -1273,7 +1273,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 		forboth(lc, colexprs[i], lc2, exprsLists)
 		{
 			Node	   *col = (Node *) lfirst(lc);
-			List	   *sublist = lfirst(lc2);
+			List	   *sublist = static_cast<List *>(lfirst(lc2));
 
 			/* sublist pointer in exprsLists won't need adjustment */
 			(void) lappend(sublist, col);
@@ -1554,7 +1554,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 				 errdetail("Only result column names can be used, not expressions or functions."),
 				 errhint("Add the expression/function to every SELECT, or move the UNION into a FROM clause."),
 				 parser_errposition(pstate,
-						   exprLocation(list_nth(qry->targetList, tllen)))));
+						   exprLocation(static_cast<const Node *>(list_nth(qry->targetList, tllen))))));
 
 	qry->limitOffset = transformLimitClause(pstate, limitOffset,
 											EXPR_KIND_OFFSET, "OFFSET");
@@ -2160,7 +2160,7 @@ transformReturningList(ParseState *pstate, List *returningList)
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("RETURNING must have at least one column"),
 				 parser_errposition(pstate,
-									exprLocation(linitial(returningList)))));
+									exprLocation(static_cast<const Node *>(linitial(returningList))))));
 
 	/* mark column origins */
 	markTargetListOrigins(pstate, rlist);
@@ -2352,7 +2352,7 @@ transformCreateTableAsStmt(ParseState *pstate, CreateTableAsStmt *stmt)
 		 * in the IntoClause because that's where intorel_startup() can
 		 * conveniently get it from.
 		 */
-		stmt->into->viewQuery = copyObject(query);
+		stmt->into->viewQuery = static_cast<Node *>(copyObject(query));
 	}
 
 	/* represent the command as a utility Query */

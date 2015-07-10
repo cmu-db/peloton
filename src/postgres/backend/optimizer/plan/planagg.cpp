@@ -113,7 +113,7 @@ preprocess_minmax_aggregates(PlannerInfo *root, List *tlist)
 	{
 		if (list_length(jtnode->fromlist) != 1)
 			return;
-		jtnode = linitial(jtnode->fromlist);
+		jtnode = static_cast<FromExpr *>(linitial(jtnode->fromlist));
 	}
 	if (!IsA(jtnode, RangeTblRef))
 		return;
@@ -269,7 +269,7 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist,
 	 * now, those won't be examined after this point.
 	 */
 	mutate_eclass_expressions(root,
-							  replace_aggs_with_params_mutator,
+	              reinterpret_cast<Node *(*)(Node*, void*)>(replace_aggs_with_params_mutator),
 							  (void *) root,
 							  false);
 
@@ -384,7 +384,7 @@ find_minmax_aggs_walker(Node *node, List **context)
 		return false;
 	}
 	Assert(!IsA(node, SubLink));
-	return expression_tree_walker(node, find_minmax_aggs_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(find_minmax_aggs_walker),
 								  (void *) context);
 }
 
@@ -430,7 +430,7 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	Assert(subroot->placeholder_list == NIL);
 
 	/* single tlist entry that is the aggregate target */
-	tle = makeTargetEntry(copyObject(mminfo->target),
+	tle = makeTargetEntry(static_cast<Expr *>(copyObject(mminfo->target)),
 						  (AttrNumber) 1,
 						  pstrdup("agg_target"),
 						  false);
@@ -446,7 +446,7 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	/* Build "target IS NOT NULL" expression */
 	ntest = makeNode(NullTest);
 	ntest->nulltesttype = IS_NOT_NULL;
-	ntest->arg = copyObject(mminfo->target);
+	ntest->arg = static_cast<Expr *>(copyObject(mminfo->target));
 	/* we checked it wasn't a rowtype in find_minmax_aggs_walker */
 	ntest->argisrow = false;
 	ntest->location = -1;
@@ -622,7 +622,7 @@ replace_aggs_with_params_mutator(Node *node, PlannerInfo *root)
 		elog(ERROR, "failed to re-find MinMaxAggInfo record");
 	}
 	Assert(!IsA(node, SubLink));
-	return expression_tree_mutator(node, replace_aggs_with_params_mutator,
+	return expression_tree_mutator(node, reinterpret_cast<expression_tree_mutator_fptr>(replace_aggs_with_params_mutator),
 								   (void *) root);
 }
 

@@ -85,13 +85,13 @@ dsimple_lexize(PG_FUNCTION_ARGS)
 	{
 		/* reject as stopword */
 		pfree(txt);
-		res = palloc0(sizeof(TSLexeme) * 2);
+		res = static_cast<TSLexeme *>(palloc0(sizeof(TSLexeme) * 2));
 		PG_RETURN_POINTER(res);
 	}
 	else if (d->accept)
 	{
 		/* accept */
-		res = palloc0(sizeof(TSLexeme) * 2);
+		res = static_cast<TSLexeme *>(palloc0(sizeof(TSLexeme) * 2));
 		res[0].lexeme = txt;
 		PG_RETURN_POINTER(res);
 	}

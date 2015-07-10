@@ -36,7 +36,7 @@ public:
 protected:
         
     // Table constructor
-    AbstractTable(const catalog::Schema *schema,
+    AbstractTable(catalog::Schema *schema,
                   AbstractBackend *backend,
                   size_t tuples_per_tilegroup);
 
@@ -53,7 +53,11 @@ public:
     const catalog::Schema *GetSchema() const {
         return schema;
     }
-    
+
+    catalog::Schema *GetSchema() {
+        return schema;
+    }
+
     AbstractBackend *GetBackend() const {
         return backend;
     }
@@ -108,7 +112,7 @@ protected:
     AbstractBackend *backend;
 
     // table schema
-    const catalog::Schema *schema;
+    catalog::Schema *schema;
 
     // set of tile groups
     std::vector<oid_t> tile_groups;
