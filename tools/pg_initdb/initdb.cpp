@@ -242,12 +242,12 @@ static void setup_depend(void);
 static void setup_sysviews(void);
 static void setup_description(void);
 static void setup_collation(void);
-static void setup_conversion(void);
-static void setup_dictionary(void);
+static void setup_conversion(void) pg_attribute_unused();
+static void setup_dictionary(void) pg_attribute_unused();
 static void setup_privileges(void);
 static void set_info_version(void);
 static void setup_schema(void);
-static void load_plpgsql(void);
+static void load_plpgsql(void) pg_attribute_unused();
 static void vacuum_db(void);
 static void make_template0(void);
 static void make_postgres(void);
@@ -1991,7 +1991,7 @@ setup_collation(void)
 		 * them out.
 		 */
 		skip = false;
-		for (i = 0; i < len; i++)
+		for (i = 0; i < static_cast<int>(len); i++)
 		{
 			if (IS_HIGHBIT_SET(localebuf[i]))
 			{
@@ -2919,7 +2919,7 @@ setup_bin_paths(const char *argv0)
 
 	if (!share_path)
 	{
-		share_path = pg_malloc(MAXPGPATH);
+		share_path = static_cast<char *>(pg_malloc(MAXPGPATH));
 		get_share_path(backend_exec, share_path);
 	}
 	else if (!is_absolute_path(share_path))
@@ -3328,7 +3328,7 @@ initialize_data_directory(void)
 	printf(_("creating subdirectories ... "));
 	fflush(stdout);
 
-	for (i = 0; i < (sizeof(subdirs) / sizeof(char *)); i++)
+	for (i = 0; i < static_cast<int>((sizeof(subdirs) / sizeof(char *))); i++)
 	{
 		if (!mkdatadir(subdirs[i]))
 			exit_nicely();

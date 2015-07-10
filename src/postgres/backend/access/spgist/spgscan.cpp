@@ -532,7 +532,7 @@ redirect:
 					ScanStackEntry *newEntry;
 
 					/* Create new___ work item for this node */
-					newEntry = palloc(sizeof(ScanStackEntry));
+					newEntry = static_cast<ScanStackEntry *>(palloc(sizeof(ScanStackEntry)));
 					newEntry->ptr = nodes[nodeN]->t_tid;
 					if (out.levelAdds)
 						newEntry->level = stackEntry->level + out.levelAdds[i];

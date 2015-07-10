@@ -64,7 +64,7 @@ ginVacuumItemPointers(GinVacuumState *gvs, ItemPointerData *items,
 				 * First TID to be deleted: allocate memory to hold the
 				 * remaining items.
 				 */
-				tmpitems = palloc(sizeof(ItemPointerData) * nitem);
+				tmpitems = static_cast<ItemPointer>(palloc(sizeof(ItemPointerData) * nitem));
 				memcpy(tmpitems, items, sizeof(ItemPointerData) * i);
 			}
 		}

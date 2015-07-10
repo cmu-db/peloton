@@ -1838,7 +1838,7 @@ prepare_buffer(const char *txt, int len, char **txtcopy)
 	char	   *newtxt;
 
 	/* Flex wants two \0 characters after the actual data */
-	newtxt = pg_malloc(len + 2);
+	newtxt = static_cast<char *>(pg_malloc(len + 2));
 	*txtcopy = newtxt;
 	newtxt[len] = newtxt[len + 1] = YY_END_OF_BUFFER_CHAR;
 

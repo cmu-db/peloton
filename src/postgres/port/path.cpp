@@ -587,7 +587,7 @@ make_absolute_path(const char *path)
 		buflen = MAXPGPATH;
 		for (;;)
 		{
-			buf = malloc(buflen);
+			buf = static_cast<char *>(malloc(buflen));
 			if (!buf)
 			{
 #ifndef FRONTEND
@@ -624,7 +624,7 @@ make_absolute_path(const char *path)
 			}
 		}
 
-		new___ = malloc(strlen(buf) + strlen(path) + 2);
+		new___ = static_cast<char *>(malloc(strlen(buf) + strlen(path) + 2));
 		if (!new___)
 		{
 			free(buf);

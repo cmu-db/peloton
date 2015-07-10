@@ -117,12 +117,12 @@ void DDL::ProcessUtility(Node *parsetree,
             oid_t database_oid = GetCurrentDatabaseOid();
             assert( database_oid );
             auto table = catalog::Manager::GetInstance().GetLocation(database_oid, relation_oid);
-            storage::DataTable* data_table = (storage::DataTable*) table;
+            storage::DataTable* data_table = static_cast<storage::DataTable*>(table);
 
             ListCell* constraint;
             foreach(constraint, Cstmt->constraints)
             {
-              Constraint* ConstraintNode = lfirst(constraint);
+              Constraint* ConstraintNode = static_cast<Constraint*>(lfirst(constraint));
 
               // Or we can get cooked infomation from catalog
               //ex)
@@ -371,7 +371,7 @@ bool DDL::CreateIndex(std::string index_name,
   // Get the table location from manager
   auto table = catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
   storage::DataTable* data_table = (storage::DataTable*) table;
-  auto tuple_schema = data_table->GetSchema();
+  catalog::Schema *tuple_schema = data_table->GetSchema();
 
   // Construct key schema
   std::vector<oid_t> key_columns;
@@ -470,7 +470,7 @@ bool DDL::AlterTable( Oid relation_oid, AlterTableStmt* Astmt ){
  * @param database_oid database id.
  * @return true if we dropped the database, false otherwise
  */
-static bool DDL::DropDatabase( Oid database_oid ){
+bool DDL::DropDatabase( Oid database_oid ){
   peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
   bool status = db->DeleteDatabaseById( database_oid );
   return status;
@@ -564,7 +564,7 @@ std::vector<catalog::ColumnInfo> DDL::ConstructColumnInfoByParsingCreateStmt( Cr
   ListCell   *entry;
   foreach(entry, ColumnList){
 
-    ColumnDef  *coldef = lfirst(entry);
+    ColumnDef  *coldef = static_cast<ColumnDef *>(lfirst(entry));
 
     // Parsing the column value type
     Oid typeoid;
@@ -615,7 +615,7 @@ std::vector<catalog::ColumnInfo> DDL::ConstructColumnInfoByParsingCreateStmt( Cr
 
       foreach(constNodeEntry, coldef->constraints)
       {
-        Constraint* ConstraintNode = lfirst(constNodeEntry);
+        Constraint* ConstraintNode = static_cast<Constraint*>(lfirst(constNodeEntry));
         ConstraintType contype;
         std::string conname;
         std::string reference_table_name;
@@ -670,7 +670,7 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
   // Key column names
   ListCell   *entry;
   foreach(entry, Istmt->indexParams){
-    IndexElem *indexElem = lfirst(entry);
+    IndexElem *indexElem = static_cast<IndexElem *>(lfirst(entry));
     if( indexElem->name != NULL ){
       key_column_names.push_back(indexElem->name);
     }

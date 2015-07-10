@@ -610,7 +610,7 @@ find_in_dynamic_libpath(const char *basename)
 		else
 			len = piece - p;
 
-		piece = palloc(len + 1);
+		piece = static_cast<char *>(palloc(len + 1));
 		strlcpy(piece, p, len + 1);
 
 		mangled = substitute_libpath_macro(piece);
@@ -624,7 +624,7 @@ find_in_dynamic_libpath(const char *basename)
 					(errcode(ERRCODE_INVALID_NAME),
 					 errmsg("component in parameter \"dynamic_library_path\" is not an absolute path")));
 
-		full = palloc(strlen(mangled) + 1 + baselen + 1);
+		full = static_cast<char *>(palloc(strlen(mangled) + 1 + baselen + 1));
 		sprintf(full, "%s/%s", mangled, basename);
 		pfree(mangled);
 

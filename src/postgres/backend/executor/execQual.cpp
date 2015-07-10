@@ -1109,7 +1109,7 @@ ExecEvalParamExec(ExprState *exprstate, ExprContext *econtext,
 	if (prm->execPlan != NULL)
 	{
 		/* Parameter not evaluated yet, so go do it */
-		ExecSetParamPlan(prm->execPlan, econtext);
+		ExecSetParamPlan(static_cast<SubPlanState *>(prm->execPlan), econtext);
 		/* ExecSetParamPlan should have processed this param... */
 		Assert(prm->execPlan == NULL);
 	}
@@ -2716,7 +2716,7 @@ static Datum
 ExecEvalNot(BoolExprState *notclause, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone)
 {
-	ExprState  *clause = linitial(notclause->args);
+	ExprState  *clause = static_cast<ExprState *>(linitial(notclause->args));
 	Datum		expr_value;
 
 	if (isDone)
@@ -2964,7 +2964,7 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 	 */
 	foreach(clause, clauses)
 	{
-		CaseWhenState *wclause = lfirst(clause);
+		CaseWhenState *wclause = static_cast<CaseWhenState *>(lfirst(clause));
 		Datum		clause_value;
 
 		clause_value = ExecEvalExpr(wclause->expr,

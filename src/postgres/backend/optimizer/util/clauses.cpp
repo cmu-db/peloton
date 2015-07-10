@@ -189,7 +189,7 @@ get_leftop(const Expr *clause)
 	const OpExpr *expr = (const OpExpr *) clause;
 
 	if (expr->args != NIL)
-		return linitial(expr->args);
+		return static_cast<Node *>(linitial(expr->args));
 	else
 		return NULL;
 }
@@ -206,7 +206,7 @@ get_rightop(const Expr *clause)
 	const OpExpr *expr = (const OpExpr *) clause;
 
 	if (list_length(expr->args) >= 2)
-		return lsecond(expr->args);
+		return static_cast<Node *>(lsecond(expr->args));
 	else
 		return NULL;
 }
@@ -252,7 +252,7 @@ make_notclause(Expr *notclause)
 Expr *
 get_notclausearg(Expr *notclause)
 {
-	return linitial(((BoolExpr *) notclause)->args);
+	return static_cast<Expr *>(linitial(((BoolExpr *) notclause)->args));
 }
 
 /*****************************************************************************
@@ -601,7 +601,7 @@ count_agg_clauses_walker(Node *node, count_agg_clauses_context *context)
 		return false;
 	}
 	Assert(!IsA(node, SubLink));
-	return expression_tree_walker(node, count_agg_clauses_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(count_agg_clauses_walker),
 								  (void *) context);
 }
 
@@ -634,7 +634,7 @@ contain_window_function(Node *clause)
 WindowFuncLists *
 find_window_functions(Node *clause, Index maxWinRef)
 {
-	WindowFuncLists *lists = palloc(sizeof(WindowFuncLists));
+	WindowFuncLists *lists = static_cast<WindowFuncLists *>(palloc(sizeof(WindowFuncLists)));
 
 	lists->numWindowFuncs = 0;
 	lists->maxWinRef = maxWinRef;
@@ -669,7 +669,7 @@ find_window_functions_walker(Node *node, WindowFuncLists *lists)
 		return false;
 	}
 	Assert(!IsA(node, SubLink));
-	return expression_tree_walker(node, find_window_functions_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(find_window_functions_walker),
 								  (void *) lists);
 }
 
@@ -753,7 +753,7 @@ expression_returns_set_rows_walker(Node *node, double *count)
 	if (IsA(node, XmlExpr))
 		return false;
 
-	return expression_tree_walker(node, expression_returns_set_rows_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(expression_returns_set_rows_walker),
 								  (void *) count);
 }
 
@@ -1571,7 +1571,7 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 		foreach(l, (List *) node)
 		{
 			result = bms_join(result,
-							  find_nonnullable_rels_walker(lfirst(l),
+							  find_nonnullable_rels_walker(static_cast<Node *>(lfirst(l)),
 														   top_level));
 		}
 	}
@@ -1631,7 +1631,7 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 				{
 					Relids		subresult;
 
-					subresult = find_nonnullable_rels_walker(lfirst(l),
+					subresult = find_nonnullable_rels_walker(static_cast<Node *>(lfirst(l)),
 															 top_level);
 					if (result == NULL) /* first subresult? */
 						result = subresult;
@@ -1779,7 +1779,7 @@ find_nonnullable_vars_walker(Node *node, bool top_level)
 		foreach(l, (List *) node)
 		{
 			result = list_concat(result,
-								 find_nonnullable_vars_walker(lfirst(l),
+								 find_nonnullable_vars_walker(static_cast<Node *>(lfirst(l)),
 															  top_level));
 		}
 	}
@@ -1839,7 +1839,7 @@ find_nonnullable_vars_walker(Node *node, bool top_level)
 				{
 					List	   *subresult;
 
-					subresult = find_nonnullable_vars_walker(lfirst(l),
+					subresult = find_nonnullable_vars_walker(static_cast<Node *>(lfirst(l)),
 															 top_level);
 					if (result == NIL)	/* first subresult? */
 						result = subresult;
@@ -1962,7 +1962,7 @@ find_forced_null_vars(Node *node)
 		foreach(l, (List *) node)
 		{
 			result = list_concat(result,
-								 find_forced_null_vars(lfirst(l)));
+								 find_forced_null_vars(static_cast<Node *>(lfirst(l))));
 		}
 	}
 	else if (IsA(node, BoolExpr))
@@ -2187,7 +2187,7 @@ CommuteOpExpr(OpExpr *clause)
 	clause->opfuncid = InvalidOid;
 	/* opresulttype, opretset, opcollid, inputcollid need not change */
 
-	temp = linitial(clause->args);
+	temp = static_cast<Node *>(linitial(clause->args));
 	linitial(clause->args) = lsecond(clause->args);
 	lsecond(clause->args) = temp;
 }
@@ -2466,7 +2466,7 @@ eval_const_expressions_mutator(Node *node,
 				/* Now, recursively simplify the args (which are a List) */
 				args = (List *)
 					expression_tree_mutator((Node *) args,
-											eval_const_expressions_mutator,
+					            reinterpret_cast<expression_tree_mutator_fptr>(eval_const_expressions_mutator),
 											(void *) context);
 				/* ... and the filter expression, which isn't */
 				aggfilter = (Expr *)
@@ -2610,7 +2610,7 @@ eval_const_expressions_mutator(Node *node,
 				 * self.
 				 */
 				args = (List *) expression_tree_mutator((Node *) expr->args,
-											  eval_const_expressions_mutator,
+											  reinterpret_cast<expression_tree_mutator_fptr>(eval_const_expressions_mutator),
 														(void *) context);
 
 				/*
@@ -2761,7 +2761,7 @@ eval_const_expressions_mutator(Node *node,
 							Node	   *arg;
 
 							Assert(list_length(expr->args) == 1);
-							arg = eval_const_expressions_mutator(linitial(expr->args),
+							arg = eval_const_expressions_mutator(static_cast<Node *>(linitial(expr->args)),
 																 context);
 
 							/*
@@ -3142,9 +3142,9 @@ eval_const_expressions_mutator(Node *node,
 				 * return the placeholder as-is.
 				 */
 				if (context->case_val)
-					return copyObject(context->case_val);
+					return static_cast<Node *>(copyObject(context->case_val));
 				else
-					return copyObject(node);
+					return static_cast<Node *>(copyObject(node));
 			}
 		case T_ArrayExpr:
 			{
@@ -3474,7 +3474,7 @@ eval_const_expressions_mutator(Node *node,
 	 * cannot eliminate an ArrayRef node, but we might be able to simplify
 	 * constant expressions in its subscripts.
 	 */
-	return expression_tree_mutator(node, eval_const_expressions_mutator,
+	return expression_tree_mutator(node, reinterpret_cast<expression_tree_mutator_fptr>(eval_const_expressions_mutator),
 								   (void *) context);
 }
 
@@ -3716,8 +3716,8 @@ simplify_boolean_equality(Oid opno, List *args)
 	Node	   *rightop;
 
 	Assert(list_length(args) == 2);
-	leftop = linitial(args);
-	rightop = lsecond(args);
+	leftop = static_cast<Node *>(linitial(args));
+	rightop = static_cast<Node *>(lsecond(args));
 	if (leftop && IsA(leftop, Const))
 	{
 		Assert(!((Const *) leftop)->constisnull);
@@ -3816,7 +3816,7 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
 	{
 		args = expand_function_arguments(args, result_type, func_tuple);
 		args = (List *) expression_tree_mutator((Node *) args,
-											  eval_const_expressions_mutator,
+		                    reinterpret_cast<expression_tree_mutator_fptr>(eval_const_expressions_mutator),
 												(void *) context);
 		/* Argument processing done, give it back to the caller */
 		*args_p = args;
@@ -4335,7 +4335,7 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	pstate->p_sourcetext = src;
 	sql_fn_parser_setup(pstate, pinfo);
 
-	querytree = transformTopLevelStmt(pstate, linitial(raw_parsetree_list));
+	querytree = transformTopLevelStmt(pstate, static_cast<Node *>(linitial(raw_parsetree_list)));
 
 	free_parsestate(pstate);
 
@@ -4423,7 +4423,7 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	i = 0;
 	foreach(arg, args)
 	{
-		Node	   *param = lfirst(arg);
+		Node	   *param = static_cast<Node *>(lfirst(arg));
 
 		if (usecounts[i] == 0)
 		{
@@ -4465,7 +4465,7 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	 */
 	MemoryContextSwitchTo(oldcxt);
 
-	newexpr = copyObject(newexpr);
+	newexpr = static_cast<Node *>(newexpr);
 
 	MemoryContextDelete(mycxt);
 
@@ -4555,9 +4555,9 @@ substitute_actual_parameters_mutator(Node *node,
 
 		/* Select the appropriate actual arg and replace the Param with it */
 		/* We don't need to copy at this time (it'll get done later) */
-		return list_nth(context->args, param->paramid - 1);
+		return static_cast<Node *>(list_nth(context->args, param->paramid - 1));
 	}
-	return expression_tree_mutator(node, substitute_actual_parameters_mutator,
+	return expression_tree_mutator(node, reinterpret_cast<expression_tree_mutator_fptr>(substitute_actual_parameters_mutator),
 								   (void *) context);
 }
 
@@ -4856,13 +4856,13 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	if (list_length(raw_parsetree_list) != 1)
 		goto fail;
 
-	querytree_list = pg_analyze_and_rewrite_params(linitial(raw_parsetree_list),
+	querytree_list = pg_analyze_and_rewrite_params(static_cast<Node *>(linitial(raw_parsetree_list)),
 												   src,
 									   (ParserSetupHook) sql_fn_parser_setup,
 												   pinfo);
 	if (list_length(querytree_list) != 1)
 		goto fail;
-	querytree = linitial(querytree_list);
+	querytree = static_cast<Query *>(linitial(querytree_list));
 
 	/*
 	 * The single command must be a plain SELECT.
@@ -4925,11 +4925,11 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	 */
 	MemoryContextSwitchTo(oldcxt);
 
-	querytree = copyObject(querytree);
+	querytree = static_cast<Query *>(copyObject(querytree));
 
 	/* copy up any new___ invalItems, too */
 	root->glob->invalItems = list_concat(saveInvalItems,
-										 copyObject(root->glob->invalItems));
+	                                     static_cast<List *>(copyObject(root->glob->invalItems)));
 
 	MemoryContextDelete(mycxt);
 	error_context_stack = sqlerrcontext.previous;
@@ -4975,7 +4975,7 @@ substitute_actual_srf_parameters(Query *expr, int nargs, List *args)
 	context.sublevels_up = 1;
 
 	return query_tree_mutator(expr,
-							  substitute_actual_srf_parameters_mutator,
+	              reinterpret_cast<query_tree_mutator_fptr>(substitute_actual_srf_parameters_mutator),
 							  &context,
 							  0);
 }
@@ -4992,7 +4992,7 @@ substitute_actual_srf_parameters_mutator(Node *node,
 	{
 		context->sublevels_up++;
 		result = (Node *) query_tree_mutator((Query *) node,
-									substitute_actual_srf_parameters_mutator,
+		                                     reinterpret_cast<query_tree_mutator_fptr>(substitute_actual_srf_parameters_mutator),
 											 (void *) context,
 											 0);
 		context->sublevels_up--;
@@ -5011,13 +5011,13 @@ substitute_actual_srf_parameters_mutator(Node *node,
 			 * Since the parameter is being inserted into a subquery, we must
 			 * adjust levels.
 			 */
-			result = copyObject(list_nth(context->args, param->paramid - 1));
+			result = static_cast<Node *>(copyObject(list_nth(context->args, param->paramid - 1)));
 			IncrementVarSublevelsUp(result, context->sublevels_up, 0);
 			return result;
 		}
 	}
 	return expression_tree_mutator(node,
-								   substitute_actual_srf_parameters_mutator,
+	                 reinterpret_cast<expression_tree_mutator_fptr>(substitute_actual_srf_parameters_mutator),
 								   (void *) context);
 }
 

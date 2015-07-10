@@ -1903,7 +1903,7 @@ pg_verify_mbstr_len(int encoding, const char *mbstr, int len, bool noError)
 	 */
 	if (pg_encoding_max_length(encoding) <= 1)
 	{
-		const char *nullpos = memchr(mbstr, 0, len);
+		const char *nullpos = static_cast<const char *>(memchr(mbstr, 0, len));
 
 		if (nullpos == NULL)
 			return len;

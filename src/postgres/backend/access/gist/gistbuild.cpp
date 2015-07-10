@@ -780,7 +780,7 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 		i = 0;
 		foreach(lc, splitinfo)
 		{
-			GISTPageSplitInfo *splitinfo = lfirst(lc);
+			GISTPageSplitInfo *splitinfo = static_cast<GISTPageSplitInfo *>(lfirst(lc));
 
 			/*
 			 * Remember the parent of each new___ child page in our parent map.

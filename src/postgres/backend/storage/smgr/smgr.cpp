@@ -296,7 +296,7 @@ smgrclose(SMgrRelation reln)
 	SMgrRelation *owner;
 	ForkNumber	forknum;
 
-	for (forknum = 0; forknum <= MAX_FORKNUM; forknum = forknum + 1)
+	for (forknum = static_cast<ForkNumber>(0); forknum <= MAX_FORKNUM; forknum = static_cast<ForkNumber>(forknum + 1))
 		(*(smgrsw[reln->smgr_which].smgr_close)) (reln, forknum);
 
 	owner = reln->smgr_owner;
@@ -416,7 +416,7 @@ smgrdounlink(SMgrRelation reln, bool isRedo)
 	ForkNumber	forknum;
 
 	/* Close the forks at smgr level */
-	for (forknum = 0; forknum <= MAX_FORKNUM; forknum = forknum + 1)
+	for (forknum = static_cast<ForkNumber>(0); forknum <= MAX_FORKNUM; forknum = static_cast<ForkNumber>(forknum + 1))
 		(*(smgrsw[which].smgr_close)) (reln, forknum);
 
 	/*
@@ -479,7 +479,7 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 	 * create an array which contains all relations to be dropped, and close
 	 * each relation's forks at the smgr level while at it
 	 */
-	rnodes = palloc(sizeof(RelFileNodeBackend) * nrels);
+	rnodes = static_cast<RelFileNodeBackend *>(palloc(sizeof(RelFileNodeBackend) * nrels));
 	for (i = 0; i < nrels; i++)
 	{
 		RelFileNodeBackend rnode = rels[i]->smgr_rnode;
@@ -488,7 +488,7 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 		rnodes[i] = rnode;
 
 		/* Close the forks at smgr level */
-		for (forknum = 0; forknum <= MAX_FORKNUM; forknum = forknum + 1)
+		for (forknum = static_cast<ForkNumber>(0); forknum <= MAX_FORKNUM; forknum = static_cast<ForkNumber>(forknum + 1))
 			(*(smgrsw[which].smgr_close)) (rels[i], forknum);
 	}
 
@@ -526,7 +526,7 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 	{
 		int			which = rels[i]->smgr_which;
 
-		for (forknum = 0; forknum <= MAX_FORKNUM; forknum = forknum + 1)
+		for (forknum = static_cast<ForkNumber>(0); forknum <= MAX_FORKNUM; forknum = static_cast<ForkNumber>(forknum + 1))
 			(*(smgrsw[which].smgr_unlink)) (rnodes[i], forknum, isRedo);
 	}
 

@@ -430,7 +430,7 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 	 */
 	foreach(i, indirection)
 	{
-		Node	   *n = lfirst(i);
+		Node	   *n = static_cast<Node *>(lfirst(i));
 
 		if (IsA(n, A_Indices))
 			subscripts = lappend(subscripts, n);
@@ -1071,7 +1071,7 @@ transformAExprOf(ParseState *pstate, A_Expr *a)
 	ltype = exprType(lexpr);
 	foreach(telem, (List *) a->rexpr)
 	{
-		rtype = typenameTypeId(pstate, lfirst(telem));
+		rtype = typenameTypeId(pstate, static_cast<const TypeName *>(lfirst(telem)));
 		matched = (rtype == ltype);
 		if (matched)
 			break;
@@ -1133,7 +1133,7 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 	rexprs = rvars = rnonvars = NIL;
 	foreach(l, (List *) a->rexpr)
 	{
-		Node	   *rexpr = transformExprRecurse(pstate, lfirst(l));
+		Node	   *rexpr = transformExprRecurse(pstate, static_cast<Node *>(lfirst(l)));
 
 		rexprs = lappend(rexprs, rexpr);
 		if (contain_vars_of_level(rexpr, 0))
@@ -1234,7 +1234,7 @@ transformAExprIn(ParseState *pstate, A_Expr *a)
 			/* Ordinary scalar operator___ */
 			cmp = (Node *) make_op(pstate,
 								   a->name,
-								   copyObject(lexpr),
+								   static_cast<Node *>(copyObject(lexpr)),
 								   rexpr,
 								   a->location);
 		}
@@ -1304,7 +1304,7 @@ transformAExprBetween(ParseState *pstate, A_Expr *a)
 											   aexpr, bexpr,
 											   a->location),
 							  makeSimpleA_Expr(AEXPR_OP, "<=",
-											   copyObject(aexpr), cexpr,
+									  	  	   static_cast<Node *>(copyObject(aexpr)), cexpr,
 											   a->location));
 			result = (Node *) makeBoolExpr(AND_EXPR, args, a->location);
 			break;
@@ -1313,7 +1313,7 @@ transformAExprBetween(ParseState *pstate, A_Expr *a)
 											   aexpr, bexpr,
 											   a->location),
 							  makeSimpleA_Expr(AEXPR_OP, ">",
-											   copyObject(aexpr), cexpr,
+									  	  	   static_cast<Node *>(copyObject(aexpr)), cexpr,
 											   a->location));
 			result = (Node *) makeBoolExpr(OR_EXPR, args, a->location);
 			break;
@@ -1322,14 +1322,14 @@ transformAExprBetween(ParseState *pstate, A_Expr *a)
 											   aexpr, bexpr,
 											   a->location),
 							  makeSimpleA_Expr(AEXPR_OP, "<=",
-											   copyObject(aexpr), cexpr,
+									  	  	   static_cast<Node *>(copyObject(aexpr)), cexpr,
 											   a->location));
 			sub1 = (Node *) makeBoolExpr(AND_EXPR, args, a->location);
 			args = list_make2(makeSimpleA_Expr(AEXPR_OP, ">=",
-										copyObject(aexpr), copyObject(cexpr),
+											   static_cast<Node *>(copyObject(aexpr)), static_cast<Node *>(copyObject(cexpr)),
 											   a->location),
 							  makeSimpleA_Expr(AEXPR_OP, "<=",
-										copyObject(aexpr), copyObject(bexpr),
+									  	  	   static_cast<Node *>(copyObject(aexpr)), static_cast<Node *>(copyObject(bexpr)),
 											   a->location));
 			sub2 = (Node *) makeBoolExpr(AND_EXPR, args, a->location);
 			args = list_make2(sub1, sub2);
@@ -1340,14 +1340,14 @@ transformAExprBetween(ParseState *pstate, A_Expr *a)
 											   aexpr, bexpr,
 											   a->location),
 							  makeSimpleA_Expr(AEXPR_OP, ">",
-											   copyObject(aexpr), cexpr,
+									  	  	   static_cast<Node *>(copyObject(aexpr)), cexpr,
 											   a->location));
 			sub1 = (Node *) makeBoolExpr(OR_EXPR, args, a->location);
 			args = list_make2(makeSimpleA_Expr(AEXPR_OP, "<",
-										copyObject(aexpr), copyObject(cexpr),
+											   static_cast<Node *>(copyObject(aexpr)), static_cast<Node *>(copyObject(cexpr)),
 											   a->location),
 							  makeSimpleA_Expr(AEXPR_OP, ">",
-										copyObject(aexpr), copyObject(bexpr),
+									  	  	   static_cast<Node *>(copyObject(aexpr)), static_cast<Node *>(copyObject(bexpr)),
 											   a->location));
 			sub2 = (Node *) makeBoolExpr(OR_EXPR, args, a->location);
 			args = list_make2(sub1, sub2);
@@ -2676,7 +2676,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 		this_strats = NULL;
 		foreach(j, opinfo_lists[i])
 		{
-			OpBtreeInterpretation *opinfo = lfirst(j);
+			OpBtreeInterpretation *opinfo = static_cast<OpBtreeInterpretation *>(lfirst(j));
 
 			this_strats = bms_add_member(this_strats, opinfo->strategy);
 		}
@@ -2726,7 +2726,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 
 		foreach(j, opinfo_lists[i])
 		{
-			OpBtreeInterpretation *opinfo = lfirst(j);
+			OpBtreeInterpretation *opinfo = static_cast<OpBtreeInterpretation *>(lfirst(j));
 
 			if (opinfo->strategy == rctype)
 			{

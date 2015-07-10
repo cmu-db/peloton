@@ -74,8 +74,8 @@ IsTidEqualClause(OpExpr *node, int varno)
 		return false;
 	if (list_length(node->args) != 2)
 		return false;
-	arg1 = linitial(node->args);
-	arg2 = lsecond(node->args);
+	arg1 = static_cast<Node *>(linitial(node->args));
+	arg2 = static_cast<Node *>(lsecond(node->args));
 
 	/* Look for CTID as either argument */
 	other = NULL;
@@ -125,8 +125,8 @@ IsTidEqualAnyClause(ScalarArrayOpExpr *node, int varno)
 	if (!node->useOr)
 		return false;
 	Assert(list_length(node->args) == 2);
-	arg1 = linitial(node->args);
-	arg2 = lsecond(node->args);
+	arg1 = static_cast<Node *>(linitial(node->args));
+	arg2 = static_cast<Node *>(lsecond(node->args));
 
 	/* CTID must be first argument */
 	if (arg1 && IsA(arg1, Var))

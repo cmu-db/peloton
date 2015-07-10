@@ -741,7 +741,7 @@ WaitForLockersMultiple(List *locktags, LOCKMODE lockmode)
 	/* Collect the transactions we need to wait on */
 	foreach(lc, locktags)
 	{
-		LOCKTAG    *locktag = lfirst(lc);
+		LOCKTAG    *locktag = static_cast<LOCKTAG *>(lfirst(lc));
 
 		holders = lappend(holders, GetLockConflicts(locktag, lockmode));
 	}
@@ -755,7 +755,7 @@ WaitForLockersMultiple(List *locktags, LOCKMODE lockmode)
 	/* Finally wait for each such transaction to complete */
 	foreach(lc, holders)
 	{
-		VirtualTransactionId *lockholders = lfirst(lc);
+		VirtualTransactionId *lockholders = static_cast<VirtualTransactionId *>(lfirst(lc));
 
 		while (VirtualTransactionIdIsValid(*lockholders))
 		{

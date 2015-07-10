@@ -134,7 +134,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	nargs = 0;
 	for (l = list_head(fargs); l != NULL; l = nextl)
 	{
-		Node	   *arg = lfirst(l);
+		Node	   *arg = static_cast<Node *>(lfirst(l));
 		Oid			argtype = exprType(arg);
 
 		nextl = lnext(l);
@@ -160,7 +160,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	argnames = NIL;
 	foreach(l, fargs)
 	{
-		Node	   *arg = lfirst(l);
+		Node	   *arg = static_cast<Node *>(lfirst(l));
 
 		if (IsA(arg, NamedArgExpr))
 		{
@@ -191,7 +191,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 	if (fargs)
 	{
-		first_arg = linitial(fargs);
+		first_arg = static_cast<Node *>(linitial(fargs));
 		Assert(first_arg != NULL);
 	}
 
@@ -256,7 +256,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		 * We interpreted it as a type coercion. coerce_type can handle these
 		 * cases, so why duplicate code...
 		 */
-		return coerce_type(pstate, linitial(fargs),
+		return coerce_type(pstate, static_cast<Node *>(linitial(fargs)),
 						   actual_arg_types[0], rettype, -1,
 						   COERCION_EXPLICIT, COERCE_EXPLICIT_CALL, location);
 	}
@@ -1489,7 +1489,7 @@ func_get_detail(List *funcname,
 			if (OidIsValid(targetType))
 			{
 				Oid			sourceType = argtypes[0];
-				Node	   *arg1 = linitial(fargs);
+				Node	   *arg1 = static_cast<Node *>(linitial(fargs));
 				bool		iscoercion;
 
 				if (sourceType == UNKNOWNOID && IsA(arg1, Const))

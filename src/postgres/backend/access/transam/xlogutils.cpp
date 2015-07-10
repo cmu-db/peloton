@@ -532,7 +532,7 @@ CreateFakeRelcacheEntry(RelFileNode rnode)
 	Assert(InRecovery);
 
 	/* Allocate the Relation struct and all related space in one block. */
-	fakeentry = palloc0(sizeof(FakeRelCacheEntryData));
+	fakeentry = static_cast<FakeRelCacheEntry >(palloc0(sizeof(FakeRelCacheEntryData)));
 	rel = (Relation) fakeentry;
 
 	rel->rd_rel = &fakeentry->pgc;

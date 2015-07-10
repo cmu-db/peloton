@@ -2509,7 +2509,7 @@ ParseConfigFp(FILE *fp, const char *config_file, int depth, int elevel,
 		else
 		{
 			/* ordinary variable, append to list */
-			item = palloc(sizeof *item);
+			item = static_cast<ConfigVariable*>(palloc(sizeof *item));
 			item->name = opt_name;
 			item->value = opt_value;
 			item->filename = pstrdup(config_file);
@@ -2643,9 +2643,9 @@ ParseConfigDirectory(const char *includedir,
 					size_filenames += 32;
 					if (num_filenames == 0)
 						/* Must initialize, repalloc won't take NULL input */
-						filenames = palloc(size_filenames * sizeof(char *));
+						filenames = static_cast<char**>(palloc(size_filenames * sizeof(char *)));
 					else
-						filenames = repalloc(filenames, size_filenames * sizeof(char *));
+						filenames = static_cast<char**>(repalloc(filenames, size_filenames * sizeof(char *)));
 				}
 				filenames[num_filenames] = pstrdup(filename);
 				num_filenames++;
@@ -2747,7 +2747,7 @@ GUC_scanstr(const char *s)
 	s++, len--;
 
 	/* Since len still includes trailing quote, this is enough space */
-	newStr = palloc(len);
+	newStr = static_cast<char*>(palloc(len));
 
 	for (i = 0, j = 0; i < len; i++)
 	{
