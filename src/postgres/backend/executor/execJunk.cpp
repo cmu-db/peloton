@@ -97,7 +97,7 @@ ExecInitJunkFilter(List *targetList, bool hasoid, TupleTableSlot *slot)
 		cleanResno = 1;
 		foreach(t, targetList)
 		{
-			TargetEntry *tle = lfirst(t);
+			TargetEntry *tle = static_cast<TargetEntry *>(lfirst(t));
 
 			if (!tle->resjunk)
 			{
@@ -172,7 +172,7 @@ ExecInitJunkFilterConversion(List *targetList,
 				continue;		/* map entry is already zero */
 			for (;;)
 			{
-				TargetEntry *tle = lfirst(t);
+				TargetEntry *tle = static_cast<TargetEntry *>(lfirst(t));
 
 				t = lnext(t);
 				if (!tle->resjunk)
@@ -224,7 +224,7 @@ ExecFindJunkAttributeInTlist(List *targetlist, const char *attrName)
 
 	foreach(t, targetlist)
 	{
-		TargetEntry *tle = lfirst(t);
+		TargetEntry *tle = static_cast<TargetEntry *>(lfirst(t));
 
 		if (tle->resjunk && tle->resname &&
 			(strcmp(tle->resname, attrName) == 0))

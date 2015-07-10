@@ -89,7 +89,7 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv,
 	phinfo = makeNode(PlaceHolderInfo);
 
 	phinfo->phid = phv->phid;
-	phinfo->ph_var = copyObject(phv);
+	phinfo->ph_var = static_cast<PlaceHolderVar *>(copyObject(phv));
 
 	/*
 	 * Any referenced rels that are outside the PHV's syntactic scope are
@@ -177,7 +177,7 @@ find_placeholders_recurse(PlannerInfo *root, Node *jtnode)
 		 */
 		foreach(l, f->fromlist)
 		{
-			find_placeholders_recurse(root, lfirst(l));
+			find_placeholders_recurse(root, static_cast<Node *>(lfirst(l)));
 		}
 
 		/*

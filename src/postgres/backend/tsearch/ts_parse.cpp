@@ -448,7 +448,7 @@ hladdword(HeadlineParsedText *prs, char *buf, int buflen, int type)
 	memset(&(prs->words[prs->curwords]), 0, sizeof(HeadlineWordEntry));
 	prs->words[prs->curwords].type = (uint8) type;
 	prs->words[prs->curwords].len = buflen;
-	prs->words[prs->curwords].word = palloc(buflen);
+	prs->words[prs->curwords].word = static_cast<char *>(palloc(buflen));
 	memcpy(prs->words[prs->curwords].word, buf, buflen);
 	prs->curwords++;
 }

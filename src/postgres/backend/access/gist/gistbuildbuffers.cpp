@@ -50,7 +50,7 @@ gistInitBuildBuffers(int pagesPerBuffer, int levelStep, int maxLevel)
 	GISTBuildBuffers *gfbb;
 	HASHCTL		hashCtl;
 
-	gfbb = palloc(sizeof(GISTBuildBuffers));
+	gfbb = static_cast<GISTBuildBuffers *>(palloc(sizeof(GISTBuildBuffers)));
 	gfbb->pagesPerBuffer = pagesPerBuffer;
 	gfbb->levelStep = levelStep;
 
@@ -558,8 +558,8 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	 * Get the node buffer of the splitted page.
 	 */
 	blocknum = BufferGetBlockNumber(buffer);
-	nodeBuffer = hash_search(gfbb->nodeBuffersTab, &blocknum,
-							 HASH_FIND, &found);
+	nodeBuffer = static_cast<GISTNodeBuffer *>(hash_search(gfbb->nodeBuffersTab, &blocknum,
+							 HASH_FIND, &found));
 	if (!found)
 	{
 		/* The page has no buffer, so we have nothing to do. */

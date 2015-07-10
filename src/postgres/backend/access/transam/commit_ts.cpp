@@ -468,9 +468,9 @@ CommitTsShmemInit(void)
 	SimpleLruInit(CommitTsCtl, "CommitTs Ctl", CommitTsShmemBuffers(), 0,
 				  CommitTsControlLock, "pg_commit_ts");
 
-	commitTsShared = ShmemInitStruct("CommitTs shared",
+	commitTsShared = static_cast<CommitTimestampShared *>(ShmemInitStruct("CommitTs shared",
 									 sizeof(CommitTimestampShared),
-									 &found);
+									 &found));
 
 	if (!IsUnderPostmaster)
 	{
@@ -898,7 +898,7 @@ commit_ts_redo(XLogReaderState *record)
 					sizeof(TransactionId));
 		if (nsubxids > 0)
 		{
-			subxids = palloc(sizeof(TransactionId) * nsubxids);
+			subxids = static_cast<TransactionId *>(palloc(sizeof(TransactionId) * nsubxids));
 			memcpy(subxids,
 				   XLogRecGetData(record) + SizeOfCommitTsSet,
 				   sizeof(TransactionId) * nsubxids);

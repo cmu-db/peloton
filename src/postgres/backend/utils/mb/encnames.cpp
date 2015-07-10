@@ -399,7 +399,7 @@ const pg_enc2gettext pg_enc2gettext_tbl[] =
 	{PG_GB18030, "GB18030"},
 	{PG_JOHAB, "JOHAB"},
 	{PG_SHIFT_JIS_2004, "SHIFT_JISX0213"},
-	{0, NULL}
+	{static_cast<pg_enc>(0), NULL}
 };
 
 

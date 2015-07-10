@@ -644,7 +644,7 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 	if (newec->ec_has_volatile && sortref == 0) /* should not happen */
 		elog(ERROR, "volatile EquivalenceClass has no sortref");
 
-	newem = add_eq_member(newec, copyObject(expr), expr_relids,
+	newem = add_eq_member(newec, static_cast<Expr *>(copyObject(expr)), expr_relids,
 						  nullable_relids, false, opcintype);
 
 	/*

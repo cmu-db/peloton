@@ -67,7 +67,7 @@ EventCacheLookup(EventTriggerEvent event)
 
 	if (EventTriggerCacheState != ETCS_VALID)
 		BuildEventTriggerCache();
-	entry = hash_search(EventTriggerCache, &event, HASH_FIND, NULL);
+	entry = static_cast<EventTriggerCacheEntry *>(hash_search(EventTriggerCache, &event, HASH_FIND, NULL));
 	return entry != NULL ? entry->triggerlist : NULL;
 }
 
@@ -175,7 +175,7 @@ BuildEventTriggerCache(void)
 			continue;
 
 		/* Allocate new___ cache item. */
-		item = palloc0(sizeof(EventTriggerCacheItem));
+		item = static_cast<EventTriggerCacheItem *>(palloc0(sizeof(EventTriggerCacheItem)));
 		item->fnoid = form->evtfoid;
 		item->enabled = form->evtenabled;
 
@@ -189,7 +189,7 @@ BuildEventTriggerCache(void)
 		}
 
 		/* Add to cache entry. */
-		entry = hash_search(cache, &event, HASH_ENTER, &found);
+		entry = static_cast<EventTriggerCacheEntry *>(hash_search(cache, &event, HASH_ENTER, &found));
 		if (found)
 			entry->triggerlist = lappend(entry->triggerlist, item);
 		else
@@ -237,7 +237,7 @@ DecodeTextArrayToCString(Datum array, char ***cstringp)
 		elog(ERROR, "expected 1-D text array");
 	deconstruct_array(arr, TEXTOID, -1, false, 'i', &elems, NULL, &nelems);
 
-	cstring = palloc(nelems * sizeof(char *));
+	cstring = static_cast<char **>(palloc(nelems * sizeof(char *)));
 	for (i = 0; i < nelems; ++i)
 		cstring[i] = TextDatumGetCString(elems[i]);
 

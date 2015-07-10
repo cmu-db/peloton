@@ -2140,7 +2140,7 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 			default:
 				elog(ERROR, "unrecognized castcontext: %d",
 					 (int) castForm->castcontext);
-				castcontext = 0;	/* keep compiler quiet */
+				castcontext = static_cast<CoercionContext>(0);	/* keep compiler quiet */
 				break;
 		}
 

@@ -190,10 +190,10 @@ ReservePrivateRefCountEntry(void)
 		Assert(ReservedRefCountEntry->buffer != InvalidBuffer);
 
 		/* enter victim array entry into hashtable */
-		hashent = hash_search(PrivateRefCountHash,
+		hashent = static_cast<PrivateRefCountEntry *>(hash_search(PrivateRefCountHash,
 							  (void *) &(ReservedRefCountEntry->buffer),
 							  HASH_ENTER,
-							  &found);
+							  &found));
 		Assert(!found);
 		hashent->refcount = ReservedRefCountEntry->refcount;
 
@@ -265,10 +265,10 @@ GetPrivateRefCountEntry(Buffer buffer, bool do_move)
 	if (PrivateRefCountOverflowed == 0)
 		return NULL;
 
-	res = hash_search(PrivateRefCountHash,
+	res = static_cast<PrivateRefCountEntry *>(hash_search(PrivateRefCountHash,
 					  (void *) &buffer,
 					  HASH_FIND,
-					  NULL);
+					  NULL));
 
 	if (res == NULL)
 		return NULL;
@@ -1168,7 +1168,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	 * the old content is no longer relevant.  (The usage_count starts out at
 	 * 1 so that the buffer can survive one clock-sweep pass.)
 	 */
-	buf->tag = newTag;
+	*const_cast<BufferTag*>(&(buf->tag)) = newTag;
 	buf->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_CHECKPOINT_NEEDED | BM_IO_ERROR | BM_PERMANENT);
 	if (relpersistence == RELPERSISTENCE_PERMANENT)
 		buf->flags |= BM_TAG_VALID | BM_PERMANENT;
@@ -2600,7 +2600,7 @@ DropRelFileNodesAllBuffers(RelFileNodeBackend *rnodes, int nnodes)
 	if (nnodes == 0)
 		return;
 
-	nodes = palloc(sizeof(RelFileNode) * nnodes);		/* non-local relations */
+	nodes = static_cast<RelFileNode *>(palloc(sizeof(RelFileNode) * nnodes));
 
 	/* If it's a local relation, it's localbuf.c's problem. */
 	for (i = 0; i < nnodes; i++)
@@ -2661,9 +2661,9 @@ DropRelFileNodesAllBuffers(RelFileNodeBackend *rnodes, int nnodes)
 		}
 		else
 		{
-			rnode = bsearch((const void *) &(bufHdr->tag.rnode),
+			rnode = static_cast<RelFileNode *>(bsearch((const void *) &(bufHdr->tag.rnode),
 							nodes, n, sizeof(RelFileNode),
-							rnode_comparator);
+							rnode_comparator));
 		}
 
 		/* buffer doesn't belong to any of the given relfilenodes; skip it */

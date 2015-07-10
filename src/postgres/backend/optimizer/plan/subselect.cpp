@@ -689,7 +689,7 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 	}
 	else if (splan->parParam == NIL && subLinkType == EXPR_SUBLINK)
 	{
-		TargetEntry *te = linitial(plan->targetlist);
+		TargetEntry *te = static_cast<TargetEntry *>(linitial(plan->targetlist));
 		Param	   *prm;
 
 		Assert(!te->resjunk);
@@ -704,7 +704,7 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 	}
 	else if (splan->parParam == NIL && subLinkType == ARRAY_SUBLINK)
 	{
-		TargetEntry *te = linitial(plan->targetlist);
+		TargetEntry *te = static_cast<TargetEntry *>(linitial(plan->targetlist));
 		Oid			arraytype;
 		Param	   *prm;
 
@@ -851,7 +851,7 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 												   splan->plan_id);
 
 	/* Label the subplan for EXPLAIN purposes */
-	splan->plan_name = palloc(32 + 12 * list_length(splan->setParam));
+	splan->plan_name = static_cast<char *>(palloc(32 + 12 * list_length(splan->setParam)));
 	sprintf(splan->plan_name, "%s %d",
 			isInitPlan ? "InitPlan" : "SubPlan",
 			splan->plan_id);
@@ -1002,7 +1002,7 @@ convert_testexpr_mutator(Node *node,
 		return node;
 	}
 	return expression_tree_mutator(node,
-								   convert_testexpr_mutator,
+	                 reinterpret_cast<expression_tree_mutator_fptr>(convert_testexpr_mutator),
 								   (void *) context);
 }
 
@@ -1087,7 +1087,7 @@ hash_ok_operator(OpExpr *expr)
 	{
 		/* array_eq is strict, but must check input type to ensure hashable */
 		/* XXX record_eq will need same treatment when it becomes hashable */
-		Node	   *leftarg = linitial(expr->args);
+		Node	   *leftarg = static_cast<Node *>(linitial(expr->args));
 
 		return op_hashjoinable(opid, exprType(leftarg));
 	}
@@ -1901,7 +1901,7 @@ replace_correlation_vars_mutator(Node *node, PlannerInfo *root)
 			return (Node *) replace_outer_grouping(root, (GroupingFunc *) node);
 	}
 	return expression_tree_mutator(node,
-								   replace_correlation_vars_mutator,
+	                 reinterpret_cast<expression_tree_mutator_fptr>(replace_correlation_vars_mutator),
 								   (void *) root);
 }
 
@@ -2006,7 +2006,7 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 		{
 			Node	   *newarg;
 
-			newarg = process_sublinks_mutator(lfirst(l), &locContext);
+			newarg = process_sublinks_mutator(static_cast<Node *>(lfirst(l)), &locContext);
 			if (and_clause(newarg))
 				newargs = list_concat(newargs, ((BoolExpr *) newarg)->args);
 			else
@@ -2027,7 +2027,7 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 		{
 			Node	   *newarg;
 
-			newarg = process_sublinks_mutator(lfirst(l), &locContext);
+			newarg = process_sublinks_mutator(static_cast<Node *>(lfirst(l)), &locContext);
 			if (or_clause(newarg))
 				newargs = list_concat(newargs, ((BoolExpr *) newarg)->args);
 			else
@@ -2043,7 +2043,7 @@ process_sublinks_mutator(Node *node, process_sublinks_context *context)
 	locContext.isTopQual = false;
 
 	return expression_tree_mutator(node,
-								   process_sublinks_mutator,
+	                 reinterpret_cast<expression_tree_mutator_fptr>(process_sublinks_mutator),
 								   (void *) &locContext);
 }
 
@@ -2675,7 +2675,7 @@ finalize_primnode(Node *node, finalize_primnode_context *context)
 
 		return false;			/* no more to do here */
 	}
-	return expression_tree_walker(node, finalize_primnode,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(finalize_primnode),
 								  (void *) context);
 }
 
