@@ -758,7 +758,7 @@ tsqueryout(PG_FUNCTION_ARGS)
 
 	if (query->size == 0)
 	{
-		char	   *b = palloc(1);
+		char	   *b = static_cast<char *>(palloc(1));
 
 		*b = '\0';
 		PG_RETURN_POINTER(b);
@@ -845,7 +845,7 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 		elog(ERROR, "invalid size of tsquery");
 
 	/* Allocate space to temporarily hold operand strings */
-	operands = palloc(size * sizeof(char *));
+	operands = static_cast<const char **>(palloc(size * sizeof(char *)));
 
 	/* Allocate space for all the QueryItems. */
 	len = HDRSIZETQ + sizeof(QueryItem) * size;

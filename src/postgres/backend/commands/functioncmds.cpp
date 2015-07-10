@@ -938,7 +938,7 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 
 		foreach (lc, (List *) transformDefElem)
 		{
-			Oid typeid___ = typenameTypeId(NULL, lfirst(lc));
+			Oid typeid___ = typenameTypeId(NULL, static_cast<const TypeName *>(lfirst(lc)));
 			Oid elt = get_base_element_type(typeid___);
 			typeid___ = elt ? elt : typeid___;
 
@@ -996,7 +996,7 @@ CreateFunction(CreateFunctionStmt *stmt, const char *queryString)
 		Datum *arr;
 		int i;
 
-		arr = palloc(list_length(trftypes_list) * sizeof(Datum));
+		arr = static_cast<Datum *>(palloc(list_length(trftypes_list) * sizeof(Datum)));
 		i = 0;
 		foreach (lc, trftypes_list)
 			arr[i++] = ObjectIdGetDatum(lfirst_oid(lc));

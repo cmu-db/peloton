@@ -431,7 +431,7 @@ spg_text_inner_consistent(PG_FUNCTION_ARGS)
 		maxReconstrLen += prefixSize;
 	}
 
-	reconstrText = palloc(VARHDRSZ + maxReconstrLen);
+	reconstrText = static_cast<text *>(palloc(VARHDRSZ + maxReconstrLen));
 	SET_VARSIZE(reconstrText, VARHDRSZ + maxReconstrLen);
 
 	if (in->level)
@@ -572,7 +572,7 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		text	   *fullText = palloc(VARHDRSZ + fullLen);
+		text	   *fullText = static_cast<text *>(palloc(VARHDRSZ + fullLen));
 
 		SET_VARSIZE(fullText, VARHDRSZ + fullLen);
 		fullValue = VARDATA(fullText);

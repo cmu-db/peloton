@@ -745,7 +745,7 @@ EventTriggerCommonSetup(Node *parsetree,
 	 */
 	foreach(lc, cachelist)
 	{
-		EventTriggerCacheItem *item = lfirst(lc);
+		EventTriggerCacheItem *item = static_cast<EventTriggerCacheItem *>(lfirst(lc));
 
 		if (filter_event_trigger(&tag, item))
 		{
@@ -1232,7 +1232,7 @@ EventTriggerBeginCompleteQuery(void)
 								ALLOCSET_DEFAULT_MINSIZE,
 								ALLOCSET_DEFAULT_INITSIZE,
 								ALLOCSET_DEFAULT_MAXSIZE);
-	state = MemoryContextAlloc(cxt, sizeof(EventTriggerQueryState));
+	state = static_cast<EventTriggerQueryState *>(MemoryContextAlloc(cxt, sizeof(EventTriggerQueryState)));
 	state->cxt = cxt;
 	slist_init(&(state->SQLDropList));
 	state->in_sql_drop = false;
@@ -1328,7 +1328,7 @@ EventTriggerSQLDropAddObject(const ObjectAddress *object, bool original, bool no
 
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
-	obj = palloc0(sizeof(SQLDropObject));
+	obj = static_cast<SQLDropObject *>(palloc0(sizeof(SQLDropObject)));
 	obj->address = *object;
 	obj->original = original;
 	obj->normal = normal;
@@ -1662,14 +1662,14 @@ EventTriggerCollectSimpleCommand(ObjectAddress address,
 
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
-	command = palloc(sizeof(CollectedCommand));
+	command = static_cast<CollectedCommand *>(palloc(sizeof(CollectedCommand)));
 
 	command->type = SCT_Simple;
 	command->in_extension = creating_extension;
 
 	command->d.simple.address = address;
 	command->d.simple.secondaryObject = secondaryObject;
-	command->parsetree = copyObject(parsetree);
+	command->parsetree = static_cast<Node *>(copyObject(parsetree));
 
 	currentEventTriggerState->commandList = lappend(currentEventTriggerState->commandList,
 											  command);
@@ -1703,7 +1703,7 @@ EventTriggerAlterTableStart(Node *parsetree)
 
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
-	command = palloc(sizeof(CollectedCommand));
+	command = static_cast<CollectedCommand *>(palloc(sizeof(CollectedCommand)));
 
 	command->type = SCT_AlterTable;
 	command->in_extension = creating_extension;
@@ -1711,7 +1711,7 @@ EventTriggerAlterTableStart(Node *parsetree)
 	command->d.alterTable.classId = RelationRelationId;
 	command->d.alterTable.objectId = InvalidOid;
 	command->d.alterTable.subcmds = NIL;
-	command->parsetree = copyObject(parsetree);
+	command->parsetree = static_cast<Node *>(copyObject(parsetree));
 
 	currentEventTriggerState->currentCommand = command;
 
@@ -1757,9 +1757,9 @@ EventTriggerCollectAlterTableSubcmd(Node *subcmd, ObjectAddress address)
 
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
-	newsub = palloc(sizeof(CollectedATSubcmd));
+	newsub = static_cast<CollectedATSubcmd *>(palloc(sizeof(CollectedATSubcmd)));
 	newsub->address = address;
-	newsub->parsetree = copyObject(subcmd);
+	newsub->parsetree = static_cast<Node *>(copyObject(subcmd));
 
 	currentEventTriggerState->currentCommand->d.alterTable.subcmds =
 		lappend(currentEventTriggerState->currentCommand->d.alterTable.subcmds, newsub);
@@ -1821,7 +1821,7 @@ EventTriggerCollectGrant(InternalGrant *istmt)
 	/*
 	 * This is tedious, but necessary.
 	 */
-	icopy = palloc(sizeof(InternalGrant));
+	icopy = static_cast<InternalGrant *>(palloc(sizeof(InternalGrant)));
 	memcpy(icopy, istmt, sizeof(InternalGrant));
 	icopy->objects = list_copy(istmt->objects);
 	icopy->grantees = list_copy(istmt->grantees);
@@ -1830,7 +1830,7 @@ EventTriggerCollectGrant(InternalGrant *istmt)
 		icopy->col_privs = lappend(icopy->col_privs, copyObject(lfirst(cell)));
 
 	/* Now collect it, using the copied InternalGrant */
-	command = palloc(sizeof(CollectedCommand));
+	command = static_cast<CollectedCommand *>(palloc(sizeof(CollectedCommand)));
 	command->type = SCT_Grant;
 	command->in_extension = creating_extension;
 	command->d.grant.istmt = icopy;
@@ -1861,14 +1861,14 @@ EventTriggerCollectAlterOpFam(AlterOpFamilyStmt *stmt, Oid opfamoid,
 
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
-	command = palloc(sizeof(CollectedCommand));
+	command = static_cast<CollectedCommand *>(palloc(sizeof(CollectedCommand)));
 	command->type = SCT_AlterOpFamily;
 	command->in_extension = creating_extension;
 	ObjectAddressSet(command->d.opfam.address,
 					 OperatorFamilyRelationId, opfamoid);
 	command->d.opfam.operators = operators;
 	command->d.opfam.procedures = procedures;
-	command->parsetree = copyObject(stmt);
+	command->parsetree = static_cast<Node *>(copyObject(stmt));
 
 	currentEventTriggerState->commandList =
 		lappend(currentEventTriggerState->commandList, command);
@@ -1894,14 +1894,14 @@ EventTriggerCollectCreateOpClass(CreateOpClassStmt *stmt, Oid opcoid,
 
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
-	command = palloc0(sizeof(CollectedCommand));
+	command = static_cast<CollectedCommand *>(palloc0(sizeof(CollectedCommand)));
 	command->type = SCT_CreateOpClass;
 	command->in_extension = creating_extension;
 	ObjectAddressSet(command->d.createopc.address,
 					 OperatorClassRelationId, opcoid);
 	command->d.createopc.operators = operators;
 	command->d.createopc.procedures = procedures;
-	command->parsetree = copyObject(stmt);
+	command->parsetree = static_cast<Node *>(copyObject(stmt));
 
 	currentEventTriggerState->commandList =
 		lappend(currentEventTriggerState->commandList, command);
@@ -1928,15 +1928,15 @@ EventTriggerCollectAlterTSConfig(AlterTSConfigurationStmt *stmt, Oid cfgId,
 
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
-	command = palloc0(sizeof(CollectedCommand));
+	command = static_cast<CollectedCommand *>(palloc0(sizeof(CollectedCommand)));
 	command->type = SCT_AlterTSConfig;
 	command->in_extension = creating_extension;
 	ObjectAddressSet(command->d.atscfg.address,
 					 TSConfigRelationId, cfgId);
-	command->d.atscfg.dictIds = palloc(sizeof(Oid) * ndicts);
+	command->d.atscfg.dictIds = static_cast<Oid *>(palloc(sizeof(Oid) * ndicts));
 	memcpy(command->d.atscfg.dictIds, dictIds, sizeof(Oid) * ndicts);
 	command->d.atscfg.ndicts = ndicts;
-	command->parsetree = copyObject(stmt);
+	command->parsetree = static_cast<Node *>(copyObject(stmt));
 
 	currentEventTriggerState->commandList =
 		lappend(currentEventTriggerState->commandList, command);
@@ -1962,11 +1962,11 @@ EventTriggerCollectAlterDefPrivs(AlterDefaultPrivilegesStmt *stmt)
 
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
-	command = palloc0(sizeof(CollectedCommand));
+	command = static_cast<CollectedCommand *>(palloc0(sizeof(CollectedCommand)));
 	command->type = SCT_AlterDefaultPrivileges;
 	command->d.defprivs.objtype = stmt->action->objtype;
 	command->in_extension = creating_extension;
-	command->parsetree = copyObject(stmt);
+	command->parsetree = static_cast<Node *>(copyObject(stmt));
 
 	currentEventTriggerState->commandList =
 		lappend(currentEventTriggerState->commandList, command);
@@ -2023,7 +2023,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 
 	foreach(lc, currentEventTriggerState->commandList)
 	{
-		CollectedCommand *cmd = lfirst(lc);
+		CollectedCommand *cmd = static_cast<CollectedCommand *>(lfirst(lc));
 		Datum		values[9];
 		bool		nulls[9];
 		ObjectAddress addr;

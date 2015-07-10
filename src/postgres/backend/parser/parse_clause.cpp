@@ -118,7 +118,7 @@ transformFromClause(ParseState *pstate, List *frmList)
 	 */
 	foreach(fl, frmList)
 	{
-		Node	   *n = lfirst(fl);
+		Node	   *n = static_cast<Node *>(lfirst(fl));
 		RangeTblEntry *rte;
 		int			rtindex;
 		List	   *namescpace___;
@@ -366,7 +366,7 @@ transformJoinUsingClause(ParseState *pstate,
 
 		/* Now create the lvar = rvar join condition */
 		e = makeSimpleA_Expr(AEXPR_OP, "=",
-							 copyObject(lvar), copyObject(rvar),
+		           static_cast<Node *>(copyObject(lvar)), static_cast<Node *>(copyObject(rvar)),
 							 -1);
 
 		/* Prepare to combine into an AND clause, if multiple join columns */
@@ -1056,9 +1056,9 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 							 errmsg("column \"%s\" specified in USING clause does not exist in right table",
 									u_colname)));
 
-				l_colvar = list_nth(l_colvars, l_index);
+				l_colvar = static_cast<Var *>(list_nth(l_colvars, l_index));
 				l_usingvars = lappend(l_usingvars, l_colvar);
-				r_colvar = list_nth(r_colvars, r_index);
+				r_colvar = static_cast<Var *>(list_nth(r_colvars, r_index));
 				r_usingvars = lappend(r_usingvars, r_colvar);
 
 				res_colnames = lappend(res_colnames, lfirst(ucol));
@@ -1800,7 +1800,7 @@ flatten_grouping_sets(Node *expr, bool toplevel, bool *hasGroupingSets)
 
 				foreach(l2, gset->content)
 				{
-					Node   *n2 = flatten_grouping_sets(lfirst(l2), false, NULL);
+					Node   *n2 = flatten_grouping_sets(static_cast<Node *>(lfirst(l2)), false, NULL);
 
 					result_set = lappend(result_set, n2);
 				}
@@ -1825,7 +1825,7 @@ flatten_grouping_sets(Node *expr, bool toplevel, bool *hasGroupingSets)
 
 				foreach(l, (List *)expr)
 				{
-					Node   *n = flatten_grouping_sets(lfirst(l), toplevel, hasGroupingSets);
+					Node   *n = flatten_grouping_sets(static_cast<Node *>(lfirst(l)), toplevel, hasGroupingSets);
 					if (n != (Node *) NIL)
 					{
 						if (IsA(n,List))
@@ -1927,7 +1927,7 @@ transformGroupClauseExpr(List **flatresult, Bitmapset *seen_local,
 
 			if (sc->tleSortGroupRef == tle->ressortgroupref)
 			{
-				SortGroupClause *grpc = copyObject(sc);
+				SortGroupClause *grpc = static_cast<SortGroupClause *>(copyObject(sc));
 				if (!toplevel)
 					grpc->nulls_first = false;
 				*flatresult = lappend(*flatresult, grpc);
@@ -2036,7 +2036,7 @@ transformGroupingSet(List **flatresult,
 
 	foreach(gl, gset->content)
 	{
-		Node   *n = lfirst(gl);
+		Node   *n = static_cast<Node *>(lfirst(gl));
 
 		if (IsA(n, List))
 		{
@@ -2353,10 +2353,10 @@ transformWindowDefinitions(ParseState *pstate,
 				errmsg("cannot override PARTITION BY clause of window \"%s\"",
 					   windef->refname),
 						 parser_errposition(pstate, windef->location)));
-			wc->partitionClause = copyObject(refwc->partitionClause);
+			wc->partitionClause = static_cast<List *>(copyObject(refwc->partitionClause));
 		}
 		else
-			wc->partitionClause = partitionClause;
+			wc->partitionClause = static_cast<List *>(partitionClause);
 		if (refwc)
 		{
 			if (orderClause && refwc->orderClause)
@@ -2372,7 +2372,7 @@ transformWindowDefinitions(ParseState *pstate,
 			}
 			else
 			{
-				wc->orderClause = copyObject(refwc->orderClause);
+				wc->orderClause = static_cast<List *>(copyObject(refwc->orderClause));
 				wc->copiedOrder = true;
 			}
 		}

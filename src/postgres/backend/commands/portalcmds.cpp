@@ -75,7 +75,7 @@ PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
 
 	oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
-	stmt = copyObject(stmt);
+	stmt = static_cast<PlannedStmt *>(copyObject(stmt));
 	stmt->utilityStmt = NULL;	/* make it look like plain SELECT */
 
 	queryString = pstrdup(queryString);

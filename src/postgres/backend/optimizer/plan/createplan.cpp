@@ -307,7 +307,7 @@ create_scan_plan(PlannerInfo *root, Path *best_path)
 		if (best_path->pathtype == T_IndexOnlyScan)
 		{
 			/* For index-only scan, the preferred tlist is the index's */
-			tlist = copyObject(((IndexPath *) best_path)->indexinfo->indextlist);
+			tlist = static_cast<List *>(copyObject(((IndexPath *) best_path)->indexinfo->indextlist));
 		}
 		else
 		{
@@ -951,7 +951,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 
 	foreach(l, uniq_exprs)
 	{
-		Node	   *uniqexpr = lfirst(l);
+		Node	   *uniqexpr = static_cast<Node *>(lfirst(l));
 		TargetEntry *tle;
 
 		tle = tlist_member(uniqexpr, newtlist);
@@ -994,7 +994,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	groupColPos = 0;
 	foreach(l, uniq_exprs)
 	{
-		Node	   *uniqexpr = lfirst(l);
+		Node	   *uniqexpr = static_cast<Node *>(lfirst(l));
 		TargetEntry *tle;
 
 		tle = tlist_member(uniqexpr, newtlist);
@@ -2846,7 +2846,7 @@ replace_nestloop_params_mutator(Node *node, PlannerInfo *root)
 		return (Node *) param;
 	}
 	return expression_tree_mutator(node,
-								   replace_nestloop_params_mutator,
+	                 reinterpret_cast<expression_tree_mutator_fptr>(replace_nestloop_params_mutator),
 								   (void *) root);
 }
 
@@ -2897,7 +2897,7 @@ process_subquery_nestloop_params(PlannerInfo *root, List *subplan_params)
 				/* No, so add it */
 				nlp = makeNode(NestLoopParam);
 				nlp->paramno = pitem->paramId;
-				nlp->paramval = copyObject(var);
+				nlp->paramval = static_cast<Var *>(copyObject(var));
 				root->curOuterParams = lappend(root->curOuterParams, nlp);
 			}
 		}
@@ -2927,7 +2927,7 @@ process_subquery_nestloop_params(PlannerInfo *root, List *subplan_params)
 				/* No, so add it */
 				nlp = makeNode(NestLoopParam);
 				nlp->paramno = pitem->paramId;
-				nlp->paramval = copyObject(phv);
+				nlp->paramval = static_cast<Var *>(copyObject(phv));
 				root->curOuterParams = lappend(root->curOuterParams, nlp);
 			}
 		}
@@ -2999,7 +2999,7 @@ fix_indexqual_references(PlannerInfo *root, IndexPath *index_path)
 			/*
 			 * Now replace the indexkey expression with an index Var.
 			 */
-			linitial(op->args) = fix_indexqual_operand(linitial(op->args),
+			linitial(op->args) = fix_indexqual_operand(static_cast<Node *>(linitial(op->args)),
 													   index,
 													   indexcol);
 		}
@@ -3042,7 +3042,7 @@ fix_indexqual_references(PlannerInfo *root, IndexPath *index_path)
 			Assert(list_length(rc->largs) == list_length(indexcolnos));
 			forboth(lca, rc->largs, lcai, indexcolnos)
 			{
-				lfirst(lca) = fix_indexqual_operand(lfirst(lca),
+				lfirst(lca) = fix_indexqual_operand(static_cast<Node *>(lfirst(lca)),
 													index,
 													lfirst_int(lcai));
 			}
@@ -3054,7 +3054,7 @@ fix_indexqual_references(PlannerInfo *root, IndexPath *index_path)
 			/* Never need to commute... */
 
 			/* Replace the indexkey expression with an index Var. */
-			linitial(saop->args) = fix_indexqual_operand(linitial(saop->args),
+			linitial(saop->args) = fix_indexqual_operand(static_cast<Node *>(linitial(saop->args)),
 														 index,
 														 indexcol);
 		}
@@ -3121,7 +3121,7 @@ fix_indexorderby_references(PlannerInfo *root, IndexPath *index_path)
 			/*
 			 * Now replace the indexkey expression with an index Var.
 			 */
-			linitial(op->args) = fix_indexqual_operand(linitial(op->args),
+			linitial(op->args) = fix_indexqual_operand(static_cast<Node *>(linitial(op->args)),
 													   index,
 													   indexcol);
 		}
@@ -3194,8 +3194,8 @@ fix_indexqual_operand(Node *node, IndexOptInfo *index, int indexcol)
 				if (equal(node, indexkey))
 				{
 					result = makeVar(INDEX_VAR, indexcol + 1,
-									 exprType(lfirst(indexpr_item)), -1,
-									 exprCollation(lfirst(indexpr_item)),
+									 exprType(static_cast<const Node *>(lfirst(indexpr_item))), -1,
+									 exprCollation(static_cast<const Node *>(lfirst(indexpr_item))),
 									 0);
 					return (Node *) result;
 				}
@@ -4179,7 +4179,7 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 										   PVC_INCLUDE_PLACEHOLDERS);
 				foreach(k, exprvars)
 				{
-					if (!tlist_member_ignore_relabel(lfirst(k), tlist))
+					if (!tlist_member_ignore_relabel(static_cast<Node *>(lfirst(k)), tlist))
 						break;
 				}
 				list_free(exprvars);
@@ -4199,7 +4199,7 @@ prepare_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
 				!is_projection_capable_plan(lefttree))
 			{
 				/* copy needed so we don't modify input's tlist below */
-				tlist = copyObject(tlist);
+				tlist = static_cast<List *>(copyObject(tlist));
 				lefttree = (Plan *) make_result(root, tlist, NULL,
 												lefttree);
 			}

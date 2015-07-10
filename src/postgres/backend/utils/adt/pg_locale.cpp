@@ -893,7 +893,7 @@ lookup_collation_cache(Oid collation, bool set_flags)
 									  HASH_ELEM | HASH_BLOBS);
 	}
 
-	cache_entry = hash_search(collation_cache, &collation, HASH_ENTER, &found);
+	cache_entry = static_cast<collation_cache_entry *>(hash_search(collation_cache, &collation, HASH_ENTER, &found));
 	if (!found)
 	{
 		/*

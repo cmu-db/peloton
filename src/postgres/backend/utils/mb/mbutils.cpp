@@ -377,7 +377,7 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 		 errdetail("String of %d bytes is too long for encoding conversion.",
 				   len)));
 
-	result = palloc(len * MAX_CONVERSION_GROWTH + 1);
+	result = static_cast<unsigned char *>(palloc(len * MAX_CONVERSION_GROWTH + 1));
 
 	OidFunctionCall5(proc,
 					 Int32GetDatum(src_encoding),
@@ -710,7 +710,7 @@ perform_default_encoding_conversion(const char *src, int len,
 		 errdetail("String of %d bytes is too long for encoding conversion.",
 				   len)));
 
-	result = palloc(len * MAX_CONVERSION_GROWTH + 1);
+	result = static_cast<char *>(palloc(len * MAX_CONVERSION_GROWTH + 1));
 
 	FunctionCall5(flinfo,
 				  Int32GetDatum(src_encoding),

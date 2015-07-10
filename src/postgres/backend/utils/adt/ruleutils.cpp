@@ -843,7 +843,7 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 
 		appendStringInfoString(&buf, "WHEN (");
 
-		qual = stringToNode(TextDatumGetCString(value));
+		qual = static_cast<Node *>(stringToNode(TextDatumGetCString(value)));
 
 		relkind = get_rel_relkind(trigrec->tgrelid);
 
@@ -1533,7 +1533,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 						 constraintId);
 
 				conbin = TextDatumGetCString(val);
-				expr = stringToNode(conbin);
+				expr = static_cast<Node *>(stringToNode(conbin));
 
 				/* Set up deparsing context for Var nodes in constraint */
 				if (conForm->conrelid != InvalidOid)
@@ -2451,7 +2451,7 @@ pg_get_function_arg_default(PG_FUNCTION_ARGS)
 		ReleaseSysCache(proctup);
 		PG_RETURN_NULL();
 	}
-	node = list_nth(argdefaults, nth_default);
+	node = static_cast<Node *>(list_nth(argdefaults, nth_default));
 	str = deparse_expression(node, NIL, false, false);
 
 	ReleaseSysCache(proctup);
@@ -4093,7 +4093,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			appendStringInfoString(buf, "\n  ");
 		appendStringInfoString(buf, " WHERE ");
 
-		qual = stringToNode(ev_qual);
+		qual = static_cast<Node *>(stringToNode(ev_qual));
 
 		/*
 		 * We need to make a context for recognizing any Vars in the qual
@@ -4740,7 +4740,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 			sep = "";
 			foreach(l, query->groupingSets)
 			{
-				GroupingSet *grp = lfirst(l);
+				GroupingSet *grp = static_cast<GroupingSet *>(lfirst(l));
 
 				appendStringInfoString(buf, sep);
 				get_rule_groupingset(grp, query->targetList, true, context);
@@ -5138,7 +5138,7 @@ get_rule_groupingset(GroupingSet *gset, List *targetlist,
 	foreach(l, gset->content)
 	{
 		appendStringInfoString(buf, sep);
-		get_rule_groupingset(lfirst(l), targetlist, omit_child_parens, context);
+		get_rule_groupingset(static_cast<GroupingSet *>(lfirst(l)), targetlist, omit_child_parens, context);
 		sep = ", ";
 	}
 
@@ -7169,7 +7169,7 @@ get_rule_expr(Node *node, deparse_context *context,
 		case T_BoolExpr:
 			{
 				BoolExpr   *expr = (BoolExpr *) node;
-				Node	   *first_arg = linitial(expr->args);
+				Node	   *first_arg = static_cast<Node *>(linitial(expr->args));
 				ListCell   *arg = lnext(list_head(expr->args));
 
 				switch (expr->boolop)
@@ -7464,7 +7464,7 @@ get_rule_expr(Node *node, deparse_context *context,
 							List	   *args = ((OpExpr *) w)->args;
 
 							if (list_length(args) == 2 &&
-								IsA(strip_implicit_coercions(linitial(args)),
+								IsA(strip_implicit_coercions(static_cast<Node *>(linitial(args))),
 									CaseTestExpr))
 								w = (Node *) lsecond(args);
 						}
@@ -7613,8 +7613,8 @@ get_rule_expr(Node *node, deparse_context *context,
 				 */
 				appendStringInfo(buf, ") %s ROW(",
 						  generate_operator_name(linitial_oid(rcexpr->opnos),
-										   exprType(linitial(rcexpr->largs)),
-										 exprType(linitial(rcexpr->rargs))));
+										   exprType(static_cast<const Node *>(linitial(rcexpr->largs))),
+										 exprType(static_cast<const Node *>(linitial(rcexpr->rargs)))));
 				sep = "";
 				foreach(arg, rcexpr->rargs)
 				{
@@ -8077,7 +8077,7 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 	if (expr->funcformat == COERCE_EXPLICIT_CAST ||
 		expr->funcformat == COERCE_IMPLICIT_CAST)
 	{
-		Node	   *arg = linitial(expr->args);
+		Node	   *arg = static_cast<Node *>(linitial(expr->args));
 		Oid			rettype = expr->funcresulttype;
 		int32		coercedTypmod;
 
@@ -8553,10 +8553,10 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 			/* single combining operator___ */
 			OpExpr	   *opexpr = (OpExpr *) sublink->testexpr;
 
-			get_rule_expr(linitial(opexpr->args), context, true);
+			get_rule_expr(static_cast<Node *>(linitial(opexpr->args)), context, true);
 			opname = generate_operator_name(opexpr->opno,
-											exprType(linitial(opexpr->args)),
-											exprType(lsecond(opexpr->args)));
+											exprType(static_cast<const Node *>(linitial(opexpr->args))),
+											exprType(static_cast<const Node *>(lsecond(opexpr->args))));
 		}
 		else if (IsA(sublink->testexpr, BoolExpr))
 		{
@@ -8572,11 +8572,11 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 
 				Assert(IsA(opexpr, OpExpr));
 				appendStringInfoString(buf, sep);
-				get_rule_expr(linitial(opexpr->args), context, true);
+				get_rule_expr(static_cast<Node *>(linitial(opexpr->args)), context, true);
 				if (!opname)
 					opname = generate_operator_name(opexpr->opno,
-											exprType(linitial(opexpr->args)),
-											exprType(lsecond(opexpr->args)));
+											exprType(static_cast<const Node *>(linitial(opexpr->args))),
+											exprType(static_cast<const Node *>(lsecond(opexpr->args))));
 				sep = ", ";
 			}
 			appendStringInfoChar(buf, ')');
@@ -8589,8 +8589,8 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 			appendStringInfoChar(buf, '(');
 			get_rule_expr((Node *) rcexpr->largs, context, true);
 			opname = generate_operator_name(linitial_oid(rcexpr->opnos),
-											exprType(linitial(rcexpr->largs)),
-										  exprType(linitial(rcexpr->rargs)));
+											exprType(static_cast<const Node *>(linitial(rcexpr->largs))),
+										  exprType(static_cast<const Node *>(linitial(rcexpr->rargs))));
 			appendStringInfoChar(buf, ')');
 		}
 		else

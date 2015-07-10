@@ -1144,7 +1144,7 @@ ReorderBufferBuildTupleCidHash(ReorderBuffer *rb, ReorderBufferTXN *txn)
 		ent = (ReorderBufferTupleCidEnt *)
 			hash_search(txn->tuplecid_hash,
 						(void *) &key,
-						HASH_ENTER | HASH_FIND,
+						static_cast<HASHACTION>(HASH_ENTER | HASH_FIND),
 						&found);
 		if (!found)
 		{
@@ -1186,7 +1186,7 @@ ReorderBufferCopySnap(ReorderBuffer *rb, Snapshot orig_snap,
 		sizeof(TransactionId) * orig_snap->xcnt +
 		sizeof(TransactionId) * (txn->nsubtxns + 1);
 
-	snap = MemoryContextAllocZero(rb->context, size);
+	snap = static_cast<Snapshot>(MemoryContextAllocZero(rb->context, size));
 	memcpy(snap, orig_snap, sizeof(SnapshotData));
 
 	snap->copied = true;
@@ -1943,12 +1943,12 @@ ReorderBufferSerializeReserve(ReorderBuffer *rb, Size sz)
 {
 	if (!rb->outbufsize)
 	{
-		rb->outbuf = MemoryContextAlloc(rb->context, sz);
+		rb->outbuf = static_cast<char *>(MemoryContextAlloc(rb->context, sz));
 		rb->outbufsize = sz;
 	}
 	else if (rb->outbufsize < sz)
 	{
-		rb->outbuf = repalloc(rb->outbuf, sz);
+		rb->outbuf = static_cast<char *>(repalloc(rb->outbuf, sz));
 		rb->outbufsize = sz;
 	}
 }
@@ -2363,7 +2363,7 @@ ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
 					sizeof(TransactionId) * oldsnap->xcnt +
 					sizeof(TransactionId) * (oldsnap->subxcnt + 0);
 
-				change->data.snapshot = MemoryContextAllocZero(rb->context, size);
+				change->data.snapshot = static_cast<Snapshot>(MemoryContextAllocZero(rb->context, size));
 
 				newsnap = change->data.snapshot;
 
@@ -2613,9 +2613,9 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 	toast_desc = RelationGetDescr(toast_rel);
 
 	/* should we allocate from stack instead? */
-	attrs = palloc0(sizeof(Datum) * desc->natts);
-	isnull = palloc0(sizeof(bool) * desc->natts);
-	free = palloc0(sizeof(bool) * desc->natts);
+	attrs = static_cast<Datum *>(palloc0(sizeof(Datum) * desc->natts));
+	isnull = static_cast<bool *>(palloc0(sizeof(bool) * desc->natts));
+	free = static_cast<bool *>(palloc0(sizeof(bool) * desc->natts));
 
 	newtup = change->data.tp.newtuple;
 
@@ -2675,7 +2675,7 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 		free[natt] = true;
 
-		reconstructed = palloc0(toast_pointer.va_rawsize);
+		reconstructed = static_cast<struct varlena *>(palloc0(toast_pointer.va_rawsize));
 
 		ent->reconstructed = reconstructed;
 
@@ -3023,7 +3023,7 @@ UpdateLogicalMappings(HTAB *tuplecid_data, Oid relid, Snapshot snapshot)
 			continue;
 
 		/* ok, relevant, queue for apply */
-		f = palloc(sizeof(RewriteMappingFile));
+		f = static_cast<RewriteMappingFile *>(palloc(sizeof(RewriteMappingFile)));
 		f->lsn = f_lsn;
 		strcpy(f->fname, mapping_de->d_name);
 		files = lappend(files, f);
@@ -3031,11 +3031,11 @@ UpdateLogicalMappings(HTAB *tuplecid_data, Oid relid, Snapshot snapshot)
 	FreeDir(mapping_dir);
 
 	/* build array we can easily sort */
-	files_a = palloc(list_length(files) * sizeof(RewriteMappingFile *));
+	files_a = static_cast<RewriteMappingFile **>(palloc(list_length(files) * sizeof(RewriteMappingFile *)));
 	off = 0;
 	foreach(file, files)
 	{
-		files_a[off++] = lfirst(file);
+		files_a[off++] = static_cast<RewriteMappingFile *>(lfirst(file));
 	}
 
 	/* sort files so we apply them in LSN order */

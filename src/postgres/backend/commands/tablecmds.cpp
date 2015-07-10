@@ -609,7 +609,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 
 	foreach(listptr, schema)
 	{
-		ColumnDef  *colDef = lfirst(listptr);
+		ColumnDef  *colDef = static_cast<ColumnDef *>(lfirst(listptr));
 
 		attnum++;
 
@@ -1008,7 +1008,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 	 */
 	foreach(cell, stmt->relations)
 	{
-		RangeVar   *rv = lfirst(cell);
+		RangeVar   *rv = static_cast<RangeVar *>(lfirst(cell));
 		Relation	rel;
 		bool		recurse = interpretInhOption(rv->inhOpt);
 		Oid			myrelid;
@@ -1411,7 +1411,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 	int			parentsWithOids = 0;
 	bool		have_bogus_defaults = false;
 	int			child_attno;
-	static Node bogus_marker = {0};		/* marks conflicting defaults */
+	static Node bogus_marker = {static_cast<NodeTag>(0)};		/* marks conflicting defaults */
 
 	/*
 	 * Check for and reject tables with too many columns. We perform this
@@ -1439,7 +1439,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 	 */
 	foreach(entry, schema)
 	{
-		ColumnDef  *coldef = lfirst(entry);
+		ColumnDef  *coldef = static_cast<ColumnDef *>(lfirst(entry));
 		ListCell   *rest = lnext(entry);
 		ListCell   *prev = entry;
 
@@ -1457,7 +1457,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 
 		while (rest != NULL)
 		{
-			ColumnDef  *restdef = lfirst(rest);
+			ColumnDef  *restdef = static_cast<ColumnDef *>(lfirst(rest));
 			ListCell   *next = lnext(rest);		/* need to save it in case we
 												 * delete it */
 
@@ -1677,7 +1677,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				{
 					if (attrdef[i].adnum == parent_attno)
 					{
-						this_default = stringToNode(attrdef[i].adbin);
+						this_default = static_cast<Node *>(stringToNode(attrdef[i].adbin));
 						break;
 					}
 				}
@@ -1725,7 +1725,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 					continue;
 
 				/* Adjust Vars to match new___ table's column numbering */
-				expr = map_variable_attnos(stringToNode(check[i].ccbin),
+				expr = map_variable_attnos(static_cast<Node *>(stringToNode(check[i].ccbin)),
 										   1, 0,
 										   newattno, tupleDesc->natts,
 										   &found_whole_row);
@@ -1785,7 +1785,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 
 		foreach(entry, schema)
 		{
-			ColumnDef  *newdef = lfirst(entry);
+			ColumnDef  *newdef = static_cast<ColumnDef *>(lfirst(entry));
 			char	   *attributeName = newdef->colname;
 			int			exist_attno;
 
@@ -1892,7 +1892,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 	{
 		foreach(entry, schema)
 		{
-			ColumnDef  *def = lfirst(entry);
+			ColumnDef  *def = static_cast<ColumnDef *>(lfirst(entry));
 
 			if (def->cooked_default == &bogus_marker)
 				ereport(ERROR,
@@ -2071,7 +2071,7 @@ findAttrByName(const char *attributeName, List *schema)
 
 	foreach(s, schema)
 	{
-		ColumnDef  *def = lfirst(s);
+		ColumnDef  *def = static_cast<ColumnDef *>(lfirst(s));
 
 		if (strcmp(attributeName, def->colname) == 0)
 			return i;
@@ -3119,7 +3119,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 	 * transformations (for example, the same column may have different column
 	 * numbers in different children).
 	 */
-	cmd = copyObject(cmd);
+	cmd = static_cast<AlterTableCmd *>(copyObject(cmd));
 
 	/*
 	 * Do permissions checking, recursion to child tables if needed, and any
@@ -3880,7 +3880,7 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode)
 
 		foreach(lcon, tab->constraints)
 		{
-			NewConstraint *con = lfirst(lcon);
+			NewConstraint *con = static_cast<NewConstraint *>(lfirst(lcon));
 
 			if (con->contype == CONSTR_FOREIGN)
 			{
@@ -3979,7 +3979,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 	/* Build the needed expression execution states */
 	foreach(l, tab->constraints)
 	{
-		NewConstraint *con = lfirst(l);
+		NewConstraint *con = static_cast<NewConstraint *>(lfirst(l));
 
 		switch (con->contype)
 		{
@@ -3999,7 +3999,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 	foreach(l, tab->newvals)
 	{
-		NewColumnValue *ex = lfirst(l);
+		NewColumnValue *ex = static_cast<NewColumnValue *>(lfirst(l));
 
 		/* expr already planned */
 		ex->exprstate = ExecInitExpr((Expr *) ex->expr, NULL);
@@ -4122,7 +4122,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 				foreach(l, tab->newvals)
 				{
-					NewColumnValue *ex = lfirst(l);
+					NewColumnValue *ex = static_cast<NewColumnValue *>(lfirst(l));
 
 					values[ex->attnum - 1] = ExecEvalExpr(ex->exprstate,
 														  econtext,
@@ -4165,7 +4165,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap, LOCKMODE lockmode)
 
 			foreach(l, tab->constraints)
 			{
-				NewConstraint *con = lfirst(l);
+				NewConstraint *con = static_cast<NewConstraint *>(lfirst(l));
 
 				switch (con->contype)
 				{
@@ -4856,7 +4856,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 		rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
 		rawEnt->attnum = attribute.attnum;
-		rawEnt->raw_default = copyObject(colDef->raw_default);
+		rawEnt->raw_default = static_cast<Node *>(copyObject(colDef->raw_default));
 
 		/*
 		 * This function is intended for CREATE TABLE, so it processes a
@@ -4977,7 +4977,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	/* Children should see column as singly inherited */
 	if (!recursing)
 	{
-		colDef = copyObject(colDef);
+		colDef = static_cast<ColumnDef *>(copyObject(colDef));
 		colDef->inhcount = 1;
 		colDef->is_local = false;
 	}
@@ -9529,10 +9529,10 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	/* copy those extra forks that exist */
 	for (forkNum = MAIN_FORKNUM + 1; forkNum <= MAX_FORKNUM; forkNum++)
 	{
-		if (smgrexists(rel->rd_smgr, forkNum))
+		if (smgrexists(rel->rd_smgr, static_cast<ForkNumber>(forkNum)))
 		{
-			smgrcreate(dstrel, forkNum, false);
-			copy_relation_data(rel->rd_smgr, dstrel, forkNum,
+			smgrcreate(dstrel, static_cast<ForkNumber>(forkNum), false);
+			copy_relation_data(rel->rd_smgr, dstrel, static_cast<ForkNumber>(forkNum),
 							   rel->rd_rel->relpersistence);
 		}
 	}

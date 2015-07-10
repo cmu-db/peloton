@@ -1471,7 +1471,7 @@ makeObjectName(const char *name1, const char *name2, const char *label)
 		name2chars = pg_mbcliplen(name2, name2chars, name2chars);
 
 	/* Now construct the string using the chosen lengths */
-	name = palloc(name1chars + name2chars + overhead + 1);
+	name = static_cast<char *>(palloc(name1chars + name2chars + overhead + 1));
 	memcpy(name, name1, name1chars);
 	ndx = name1chars;
 	if (name2)
