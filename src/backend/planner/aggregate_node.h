@@ -36,7 +36,7 @@ class AggregateNode : public AbstractPlanNode {
                 const catalog::Schema *group_by_key_schema,
                 const std::map<oid_t, oid_t>& pass_through_columns_map,
                 const std::vector<ExpressionType>& aggregate_types,
-                const catalog::Schema *output_table_schema)
+                catalog::Schema *output_table_schema)
   : aggregate_columns_(aggregate_columns),
     aggregate_columns_map_(aggregate_columns_map),
     group_by_columns_(group_by_columns),
@@ -74,7 +74,7 @@ class AggregateNode : public AbstractPlanNode {
     return aggregate_types_;
   }
 
-  const catalog::Schema *GetOutputTableSchema() const {
+  catalog::Schema *GetOutputTableSchema() const {
     return output_table_schema_;
   }
 
@@ -99,7 +99,7 @@ class AggregateNode : public AbstractPlanNode {
   const std::vector<ExpressionType> aggregate_types_;
 
   /** @brief Output columns */
-  const catalog::Schema *output_table_schema_;
+  catalog::Schema *output_table_schema_;
 
 };
 
