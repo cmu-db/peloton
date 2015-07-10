@@ -97,6 +97,10 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       child_executor = new executor::DeleteExecutor(plan, txn);
       break;
 
+    case PLAN_NODE_TYPE_LIMIT:
+      child_executor = new executor::LimitExecutor(plan, txn);
+      break;
+
     default:
       LOG_INFO("Unsupported plan node type : %d ", plan_node_type);
       break;
