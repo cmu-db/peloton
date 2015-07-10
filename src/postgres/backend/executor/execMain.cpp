@@ -1534,7 +1534,6 @@ ExecutePlan(EState *estate,
 	TupleTableSlot *slot;
 	long		current_tuple_count;
 	Peloton_Status *status;
-	int status_code;
 
 	/*
 	 * initialize local variables
@@ -1636,8 +1635,7 @@ ExecutePlan(EState *estate,
     pfree(status->m_result_slots);
   }
 
-
-  status_code = peloton_get_status(status);
+  peloton_get_status(status);
   peloton_destroy_status(status);
 }
 

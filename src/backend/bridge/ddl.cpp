@@ -284,6 +284,10 @@ void DDL::ProcessUtility(Node *parsetree,
 
 bool DDL::CreateDatabase( Oid database_oid ){
   peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+
+  fprintf(stderr, "DDLCreateDatabase :: %u %p \n", database_oid, db);
+
+  return true;
 }
 
 /**
@@ -314,9 +318,6 @@ bool DDL::CreateTable( Oid relation_oid,
   // Construct our schema from vector of ColumnInfo
   if( schema == NULL) 
     schema = new catalog::Schema(column_infos);
-
-  // FIXME: Construct table backend
-  storage::VMBackend *backend = new storage::VMBackend();
 
   // Build a table from schema
   storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, relation_oid, schema, table_name);
@@ -458,6 +459,8 @@ bool DDL::AlterTable( Oid relation_oid, AlterTableStmt* Astmt ){
     	  break;
     }
   }
+
+  return true;
 }
 
 
@@ -661,7 +664,6 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
   std::string table_name;
   IndexMethodType method_type;
   IndexType type;
-  bool unique_keys;
   std::vector<std::string> key_column_names;
 
   // Table name
@@ -779,6 +781,7 @@ bool DDL::AddConstraint(Oid relation_oid, Constraint* constraint )
     std::cout << "const type : " << ConstraintTypeToString( contype ) << std::endl;
 
     case CONSTRAINT_TYPE_FOREIGN:
+    {
       oid_t database_oid = GetCurrentDatabaseOid();
       assert( database_oid );
       oid_t reference_table_oid = GetRelationOid( constraint->pktable->relname );
@@ -811,9 +814,15 @@ bool DDL::AddConstraint(Oid relation_oid, Constraint* constraint )
                                        fk_delete_action);
 
       std::cout <<"After add fk constraint\n" <<  *(current_table->GetSchema()) << std::endl;
+    }
+    break;
 
+    default:
+      LOG_WARN("Constraint type not handled : %d \n", contype);
       break;
   }
+
+  return true;
 }
 
 } // namespace bridge
