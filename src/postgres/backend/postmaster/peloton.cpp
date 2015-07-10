@@ -874,9 +874,12 @@ peloton_process_dml(Peloton_MsgDML *msg, int len)
     {
       auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
 
-      peloton::bridge::PlanExecutor::ExecutePlan(plan);
+      if(plan){
+//        peloton::bridge::PlanExecutor::PrintPlan(plan);
+        peloton::bridge::PlanExecutor::ExecutePlan(plan);
+//        peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
+      }
 
-      // TODO: The plan tree also needs to be destroyed.
     }
   }
 
