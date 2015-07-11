@@ -5067,7 +5067,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 
 				/* Fetch first tuple in reverse direction */
 				if ((tup = index_getnext(index_scan,
-										 -indexscandir)) != NULL)
+				           static_cast<ScanDirection>(-indexscandir))) != NULL)
 				{
 					/* Extract the index column values from the heap tuple */
 					ExecStoreTuple(tup, slot, InvalidBuffer, false);
@@ -5253,7 +5253,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 			pfree(bstr);
 	}
 
-	match = palloc(pattlen + 1);
+	match = static_cast<char *>(palloc(pattlen + 1));
 	match_pos = 0;
 	for (pos = 0; pos < pattlen; pos++)
 	{
@@ -5945,7 +5945,7 @@ string_to_const(const char *str, Oid datatype)
 static Const *
 string_to_bytea_const(const char *str, size_t str_len)
 {
-	bytea	   *bstr = palloc(VARHDRSZ + str_len);
+	bytea	   *bstr = static_cast<bytea *>(palloc(VARHDRSZ + str_len));
 	Datum		conval;
 
 	memcpy(VARDATA(bstr), str, str_len);
@@ -6198,7 +6198,7 @@ genericcostestimate(PlannerInfo *root,
 		if (IsA(rinfo->clause, ScalarArrayOpExpr))
 		{
 			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) rinfo->clause;
-			int			alength = estimate_array_length(lsecond(saop->args));
+			int			alength = estimate_array_length(static_cast<Node *>(lsecond(saop->args)));
 
 			if (alength > 1)
 				num_sa_scans *= alength;

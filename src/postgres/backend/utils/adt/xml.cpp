@@ -292,7 +292,7 @@ xml_out(PG_FUNCTION_ARGS)
 	 * different client encoding, so we'd do more harm than good by including
 	 * it.
 	 */
-	PG_RETURN_CSTRING(xml_out_internal(x, 0));
+	PG_RETURN_CSTRING(xml_out_internal(x, static_cast<pg_enc>(0)));
 }
 
 
@@ -374,7 +374,7 @@ xml_send(PG_FUNCTION_ARGS)
 	 * xml_out_internal doesn't convert the encoding, it just prints the right
 	 * declaration. pq_sendtext will do the conversion.
 	 */
-	outval = xml_out_internal(x, pg_get_client_encoding());
+	outval = xml_out_internal(x, static_cast<pg_enc>(pg_get_client_encoding()));
 
 	pq_begintypsend(&buf);
 	pq_sendtext(&buf, outval, strlen(outval));
@@ -546,7 +546,7 @@ texttoxml(PG_FUNCTION_ARGS)
 {
 	text	   *data = PG_GETARG_TEXT_P(0);
 
-	PG_RETURN_XML_P(xmlparse(data, xmloption, true));
+	PG_RETURN_XML_P(xmlparse(data, static_cast<XmlOptionType>(xmloption), true));
 }
 
 
@@ -2204,7 +2204,7 @@ static char *
 _SPI_strdup(const char *s)
 {
 	size_t		len = strlen(s) + 1;
-	char	   *ret = SPI_palloc(len);
+	char	   *ret = static_cast<char *>(SPI_palloc(len));
 
 	memcpy(ret, s, len);
 	return ret;
@@ -3104,7 +3104,7 @@ map_sql_schema_to_xmlschema_types(Oid nspid, List *relid_list, bool nulls,
 		Oid			relid = lfirst_oid(cell);
 		char	   *relname = get_rel_name(relid);
 		char	   *xmltn = map_sql_identifier_to_xml_name(relname, true, false);
-		char	   *tabletypename = map_multipart_sql_identifier_to_xml_name(tableforest ? "RowType" : "TableType",
+		char	   *tabletypename = map_multipart_sql_identifier_to_xml_name(tableforest ? static_cast<char *>("RowType") : static_cast<char *>("TableType"),
 																	  dbname,
 																	 nspname,
 																	relname);
@@ -3285,7 +3285,7 @@ map_sql_type_to_xml_name(Oid typeoid, int typmod)
 				typtuple = (Form_pg_type) GETSTRUCT(tuple);
 
 				appendStringInfoString(&result,
-									   map_multipart_sql_identifier_to_xml_name((typtuple->typtype == TYPTYPE_DOMAIN) ? "Domain" : "UDT",
+									   map_multipart_sql_identifier_to_xml_name((typtuple->typtype == TYPTYPE_DOMAIN) ? static_cast<char *>("Domain") : static_cast<char *>("UDT"),
 											 get_database_name(MyDatabaseId),
 								  get_namespace_name(typtuple->typnamespace),
 												NameStr(typtuple->typname)));

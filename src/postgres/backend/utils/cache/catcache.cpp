@@ -777,7 +777,7 @@ InitCatCache(int id,
 	 * Note: we rely on zeroing to initialize all the dlist headers correctly
 	 */
 	cp = (CatCache *) palloc0(sizeof(CatCache));
-	cp->cc_bucket = palloc0(nbuckets * sizeof(dlist_head));
+	cp->cc_bucket = static_cast<dlist_head *>(palloc0(nbuckets * sizeof(dlist_head)));
 
 	/*
 	 * initialize the cache's relation information for the relation

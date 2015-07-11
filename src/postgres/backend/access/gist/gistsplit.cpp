@@ -373,7 +373,7 @@ genericPickSplit(GISTSTATE *giststate, GistEntryVector *entryvec, GIST_SPLITVEC 
 	/*
 	 * Form union datums for each side
 	 */
-	evec = palloc(sizeof(GISTENTRY) * entryvec->n + GEVHDRSZ);
+	evec = static_cast<GistEntryVector *>(palloc(sizeof(GISTENTRY) * entryvec->n + GEVHDRSZ));
 
 	evec->n = v->spl_nleft;
 	memcpy(evec->vector, entryvec->vector + FirstOffsetNumber,
@@ -630,7 +630,7 @@ gistSplitByKey(Relation r, Page page, IndexTuple *itup, int len,
 
 	/* generate the item array, and identify tuples with null keys */
 	/* note that entryvec->vector[0] goes unused in this code */
-	entryvec = palloc(GEVHDRSZ + (len + 1) * sizeof(GISTENTRY));
+	entryvec = static_cast<GistEntryVector *>(palloc(GEVHDRSZ + (len + 1) * sizeof(GISTENTRY)));
 	entryvec->n = len + 1;
 	offNullTuples = (OffsetNumber *) palloc(len * sizeof(OffsetNumber));
 

@@ -2219,7 +2219,7 @@ mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, int highlight,
 				maxitems;
 	CoverPos   *covers;
 
-	covers = palloc(maxcovers * sizeof(CoverPos));
+	covers = static_cast<CoverPos *>(palloc(maxcovers * sizeof(CoverPos)));
 
 	/* get all covers */
 	while (hlCover(prs, query, &p, &q))
@@ -2240,7 +2240,7 @@ mark_hl_fragments(HeadlineParsedText *prs, TSQuery query, int highlight,
 			if (numcovers >= maxcovers)
 			{
 				maxcovers *= 2;
-				covers = repalloc(covers, sizeof(CoverPos) * maxcovers);
+				covers = static_cast<CoverPos *>(repalloc(covers, sizeof(CoverPos) * maxcovers));
 			}
 			covers[numcovers].startpos = startpos;
 			covers[numcovers].endpos = endpos;

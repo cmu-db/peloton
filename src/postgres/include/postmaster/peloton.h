@@ -63,6 +63,7 @@ typedef struct Peloton_MsgHdr
 typedef struct Peloton_Status
 {
   PelotonStatusType  m_code;
+  List *m_result_slots;
 } Peloton_Status;
 
 /* ----------
@@ -93,8 +94,7 @@ typedef struct Peloton_MsgDML
   Peloton_MsgHdr m_hdr;
   Peloton_Status  *m_status;
   PlanState *m_planstate;
-  bool m_sendTuples;
-  DestReceiver *m_dest;
+  TupleDesc m_tuple_desc;
   MemoryContext m_top_transaction_context;
   MemoryContext m_cur_transaction_context;
 } Peloton_MsgDML;
@@ -108,7 +108,7 @@ typedef struct Peloton_MsgDDL
   Peloton_MsgHdr m_hdr;
   Peloton_Status  *m_status;
   Node *m_parsetree;
-  char *m_queryString;
+  const char *m_queryString;
   MemoryContext m_top_transaction_context;
   MemoryContext m_cur_transaction_context;
 } Peloton_MsgDDL;
@@ -145,12 +145,13 @@ extern void peloton_send_ping(void);
 
 extern void peloton_send_dml(Peloton_Status  *status,
                              PlanState *node,
+                             TupleDesc tuple_desc,
                              MemoryContext top_transaction_context,
                              MemoryContext cur_transaction_context);
 
 extern void peloton_send_ddl(Peloton_Status  *status,
                              Node *parsetree,
-                             char *queryString,
+                             const char *queryString,
                              MemoryContext top_transaction_context,
                              MemoryContext cur_transaction_context);
 

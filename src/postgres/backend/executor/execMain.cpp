@@ -62,6 +62,7 @@
 
 // TODO: Peloton Changes
 #include "nodes/pprint.h"
+#include "nodes/pg_list.h"
 #include "postmaster/peloton.h"
 #include "backend/bridge/plan_transformer.h"
 
@@ -1533,7 +1534,6 @@ ExecutePlan(EState *estate,
 	TupleTableSlot *slot;
 	long		current_tuple_count;
 	Peloton_Status *status;
-	int status_code;
 
 	/*
 	 * initialize local variables
@@ -1605,10 +1605,37 @@ ExecutePlan(EState *estate,
 	status = peloton_create_status();
 
   peloton_send_dml(status, planstate,
+                   tupDesc,
                    TopTransactionContext,
                    CurTransactionContext);
 
-  status_code = peloton_get_status(status);
+  fprintf(stdout, "Slots : %p \n", status->m_result_slots);
+  fflush(stdout);
+
+  // Go over any result slots
+  if(status->m_result_slots != NULL)
+  {
+    ListCell   *lc;
+    foreach(lc, status->m_result_slots)
+    {
+      TupleTableSlot *slot = (TupleTableSlot *) lfirst(lc);
+
+      /*
+       * If we are supposed to send the tuple somewhere, do so. (In
+       * practice, this is probably always the case at this point.)
+       */
+      if (sendTuples)
+        (*dest->receiveSlot) (slot, dest);
+
+      // Clean up slot
+      pfree(slot);
+    }
+
+    // Clean up list
+    pfree(status->m_result_slots);
+  }
+
+  peloton_get_status(status);
   peloton_destroy_status(status);
 }
 
@@ -1643,7 +1670,7 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 		for (i = 0; i < ncheck; i++)
 		{
 			/* ExecQual wants implicit-AND form */
-			qual = make_ands_implicit(stringToNode(check[i].ccbin));
+			qual = make_ands_implicit(static_cast<Expr *>(stringToNode(check[i].ccbin)));
 			resultRelInfo->ri_ConstraintExprs[i] = (List *)
 				ExecPrepareExpr((Expr *) qual, estate);
 		}
@@ -2313,7 +2340,7 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 			 */
 			test = heap_lock_tuple(relation, &tuple,
 								   estate->es_output_cid,
-								   lockmode, wait_policy,
+								   static_cast<LockTupleMode>(lockmode), wait_policy,
 								   false, &buffer, &hufd);
 			/* We now have two pins on the buffer, get rid of one */
 			ReleaseBuffer(buffer);

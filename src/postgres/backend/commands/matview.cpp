@@ -330,7 +330,7 @@ refresh_matview_datafill(DestReceiver *dest, Query *query,
 	Query	   *copied_query;
 
 	/* Lock and rewrite, using a copy to preserve the original query. */
-	copied_query = copyObject(query);
+	copied_query = static_cast<Query *>(copyObject(query));
 	AcquireRewriteLocks(copied_query, true, false);
 	rewritten = QueryRewrite(copied_query);
 

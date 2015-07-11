@@ -35,7 +35,7 @@ extern const uint32 pg_crc32c_table[8][256];
 #endif
 
 pg_crc32c pg_comp_crc32c_sb8(pg_crc32c crc, const void *data, size_t len) {
-  const unsigned char *p = data;
+  const unsigned char *p = static_cast<const unsigned char *>(data);
   const uint32 *p4;
 
   /*

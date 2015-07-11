@@ -12,18 +12,22 @@
 
 
 #include "backend/bridge/plan_executor.h"
+#include "backend/bridge/tuple_transformer.h"
 #include "backend/common/logger.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/executor/executors.h"
 #include "backend/storage/tile_iterator.h"
+
+#include "access/tupdesc.h"
+#include "nodes/print.h"
+#include "utils/memutils.h"
 
 namespace peloton {
 namespace bridge {
 
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               planner::AbstractPlanNode *plan,
-                                              concurrency::Transaction *txn,
-                                              bool materialized = false);
+                                              concurrency::Transaction *txn);
 
 void CleanExecutorTree(executor::AbstractExecutor *root);
 
@@ -57,8 +61,7 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlanNode *plan, std::string 
  */
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               planner::AbstractPlanNode *plan,
-                                              concurrency::Transaction *txn,
-                                              bool materialized) {
+                                              concurrency::Transaction *txn) {
   // Base case
   if(plan == nullptr)
     return root;
@@ -72,16 +75,7 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       break;
 
     case PLAN_NODE_TYPE_SEQSCAN:
-      // Materialized ?
-      if(materialized == false) {
-        child_executor = new executor::MaterializationExecutor(nullptr);
-        materialized = true;
-        break;
-      }
-
-      // Already materialized.
       child_executor = new executor::SeqScanExecutor(plan, txn);
-      materialized = false;
       break;
 
     case PLAN_NODE_TYPE_INSERT:
@@ -90,6 +84,10 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
 
     case PLAN_NODE_TYPE_DELETE:
       child_executor = new executor::DeleteExecutor(plan, txn);
+      break;
+
+    case PLAN_NODE_TYPE_LIMIT:
+      child_executor = new executor::LimitExecutor(plan, txn);
       break;
 
     default:
@@ -109,11 +107,6 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
   auto children = plan->GetChildren();
   for(auto child : children) {
     child_executor = BuildExecutorTree(child_executor, child, txn);
-  }
-
-  // Materialize
-  if(materialized == true) {
-    BuildExecutorTree(child_executor, plan, txn, true);
   }
 
   return root;
@@ -138,16 +131,46 @@ void CleanExecutorTree(executor::AbstractExecutor *root){
   delete root;
 }
 
+/**
+ * @brief Add a Materialization node if the root of the exector tree is seqscan or limit
+ * @param the current executor tree
+ * @return new root of the executor tree
+ */
+executor::AbstractExecutor *PlanExecutor::AddMaterialization(executor::AbstractExecutor *root) {
+  if (root == nullptr) return root;
+  auto type = root->GetRawNode()->GetPlanNodeType();
+  executor::AbstractExecutor *new_root = root;
+
+  switch (type) {
+    case PLAN_NODE_TYPE_SEQSCAN:
+      /* FALL THRU */
+    case PLAN_NODE_TYPE_LIMIT:
+      new_root = new executor::MaterializationExecutor(nullptr);
+      new_root->AddChild(root);
+      LOG_INFO("Added materialization, the original root executor type is %d", type);
+      break;
+    default:
+      break;
+  }
+
+  return new_root;
+}
+
 
 /**
  * @brief Build a executor tree and execute it.
  * @return status of execution.
  */
-bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan) {
+bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
+                               TupleDesc tuple_desc,
+                               Peloton_Status *pstatus) {
 
   assert(plan);
 
   bool status;
+  MemoryContext oldContext;
+  List *slots = NULL;
+
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
@@ -156,6 +179,8 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan) {
   // Build the executor tree
   executor::AbstractExecutor *executor_tree = BuildExecutorTree(nullptr,
                                                                 plan, txn);
+  // Add materialization if the root if seqscan or limit
+  executor_tree = AddMaterialization(executor_tree);
 
   LOG_TRACE("Initializing the executor tree");
 
@@ -196,11 +221,23 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan) {
     storage::TileIterator tile_itr(base_tile);
     storage::Tuple tuple(base_tile->GetSchema());
 
+    // Switch to TopSharedMemoryContext to construct list and slots
+    oldContext = MemoryContextSwitchTo(TopSharedMemoryContext);
+
+    // Go over tile and get result slots
     while (tile_itr.Next(tuple)) {
+      auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
       std::cout << tuple;
+      slots = lappend(slots, slot);
     }
 
+
+    // Go back to previous context
+    MemoryContextSwitchTo(oldContext);
+
   }
+
+  pstatus->m_result_slots = slots;
 
   // Commit and cleanup
   txn_manager.CommitTransaction(txn);

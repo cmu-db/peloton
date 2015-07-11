@@ -43,7 +43,7 @@ class DataTable : public AbstractTable {
 
 public:
     // Table constructor
-    DataTable(const catalog::Schema *schema,
+    DataTable(catalog::Schema *schema,
               AbstractBackend *backend,
               std::string table_name,
               oid_t table_oid,
@@ -174,7 +174,7 @@ protected:
 
 
     // Raw check expr
-    Node* raw_check_expr;
+    Node* raw_check_expr = nullptr;
 
 };
 

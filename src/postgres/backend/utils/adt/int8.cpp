@@ -1488,7 +1488,7 @@ generate_series_step_int8(PG_FUNCTION_ARGS)
 	/*
 	 * get the saved state and use current as the result for this iteration
 	 */
-	fctx = funcctx->user_fctx;
+	fctx = static_cast<generate_series_fctx *>(funcctx->user_fctx);
 	result = fctx->current;
 
 	if ((fctx->step > 0 && fctx->current <= fctx->finish) ||

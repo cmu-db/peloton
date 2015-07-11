@@ -1038,7 +1038,7 @@ get_relation_constraints(PlannerInfo *root,
 			if (!constr->check[i].ccvalid)
 				continue;
 
-			cexpr = stringToNode(constr->check[i].ccbin);
+			cexpr = static_cast<Node *>(stringToNode(constr->check[i].ccbin));
 
 			/*
 			 * Run each expression through const-simplification and

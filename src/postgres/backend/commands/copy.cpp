@@ -278,7 +278,9 @@ if (1) \
 	goto not_end_of_copy; \
 } else ((void) 0)
 
-static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
+// TODO: Peloton Changes
+//static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
+static const char BinarySignature[13] = "PGCOPY\n\377\r\n\0";
 
 
 /* non-export function prototypes */
@@ -462,7 +464,7 @@ SendCopyEnd(CopyState cstate)
 static void
 CopySendData(CopyState cstate, const void *databuf, int datasize)
 {
-	appendBinaryStringInfo(cstate->fe_msgbuf, databuf, datasize);
+	appendBinaryStringInfo(cstate->fe_msgbuf, static_cast<const char *>(databuf), datasize);
 }
 
 static void
@@ -657,7 +659,7 @@ CopyGetData(CopyState cstate, void *databuf, int minread, int maxread)
 				avail = cstate->fe_msgbuf->len - cstate->fe_msgbuf->cursor;
 				if (avail > maxread)
 					avail = maxread;
-				pq_copymsgbytes(cstate->fe_msgbuf, databuf, avail);
+				pq_copymsgbytes(cstate->fe_msgbuf, static_cast<char *>(databuf), avail);
 				databuf = (void *) ((char *) databuf + avail);
 				maxread -= avail;
 				bytesread += avail;
@@ -1167,10 +1169,10 @@ ProcessCopyOptions(CopyState cstate,
 
 	/* Set defaults for omitted options */
 	if (!cstate->delim)
-		cstate->delim = cstate->csv_mode ? "," : "\t";
+		cstate->delim = cstate->csv_mode ? static_cast<char *>(",") : static_cast<char *>("\t");
 
 	if (!cstate->null_print)
-		cstate->null_print = cstate->csv_mode ? "" : "\\N";
+		cstate->null_print = cstate->csv_mode ? static_cast<char *>("") : static_cast<char *>("\\N");
 	cstate->null_print_len = strlen(cstate->null_print);
 
 	if (cstate->csv_mode)
@@ -2316,7 +2318,7 @@ CopyFrom(CopyState cstate)
 	else
 	{
 		useHeapMultiInsert = true;
-		bufferedTuples = palloc(MAX_BUFFERED_TUPLES * sizeof(HeapTuple));
+		bufferedTuples = static_cast<HeapTupleData **>(palloc(MAX_BUFFERED_TUPLES * sizeof(HeapTuple)));
 	}
 
 	/* Prepare to catch AFTER triggers. */
@@ -3667,7 +3669,7 @@ CopyReadAttributesText(CopyState cstate)
 		{
 			cstate->max_fields *= 2;
 			cstate->raw_fields =
-				repalloc(cstate->raw_fields, cstate->max_fields * sizeof(char *));
+				static_cast<char **>(repalloc(cstate->raw_fields, cstate->max_fields * sizeof(char *)));
 		}
 
 		/* Remember start of field on both input and output sides */
@@ -3897,7 +3899,7 @@ CopyReadAttributesCSV(CopyState cstate)
 		{
 			cstate->max_fields *= 2;
 			cstate->raw_fields =
-				repalloc(cstate->raw_fields, cstate->max_fields * sizeof(char *));
+				static_cast<char **>(repalloc(cstate->raw_fields, cstate->max_fields * sizeof(char *)));
 		}
 
 		/* Remember start of field on both input and output sides */

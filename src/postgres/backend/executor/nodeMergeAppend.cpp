@@ -126,7 +126,7 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 	 * initialize sort-key information
 	 */
 	mergestate->ms_nkeys = node->numCols;
-	mergestate->ms_sortkeys = palloc0(sizeof(SortSupportData) * node->numCols);
+	mergestate->ms_sortkeys = static_cast<SortSupport >(palloc0(sizeof(SortSupportData) * node->numCols));
 
 	for (i = 0; i < node->numCols; i++)
 	{

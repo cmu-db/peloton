@@ -1895,7 +1895,7 @@ show_grouping_sets(PlanState *planstate, Agg *agg,
 
 	foreach(lc, agg->chain)
 	{
-		Agg *aggnode = lfirst(lc);
+		Agg *aggnode = static_cast<Agg *>(lfirst(lc));
 		Sort *sortnode = (Sort *) aggnode->plan.lefttree;
 
 		show_grouping_set_keys(planstate, aggnode, sortnode,

@@ -114,7 +114,7 @@ add_base_rels_to_query(PlannerInfo *root, Node *jtnode)
 		ListCell   *l;
 
 		foreach(l, f->fromlist)
-			add_base_rels_to_query(root, lfirst(l));
+			add_base_rels_to_query(root, static_cast<Node *>(lfirst(l)));
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
@@ -327,7 +327,7 @@ extract_lateral_references(PlannerInfo *root, RelOptInfo *brel, Index rtindex)
 	{
 		Node	   *node = (Node *) lfirst(lc);
 
-		node = copyObject(node);
+		node = static_cast<Node *>(copyObject(node));
 		if (IsA(node, Var))
 		{
 			Var		   *var = (Var *) node;
@@ -731,7 +731,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			List	   *sub_joinlist;
 			int			sub_members;
 
-			sub_joinlist = deconstruct_recurse(root, lfirst(l),
+			sub_joinlist = deconstruct_recurse(root, static_cast<Node *>(lfirst(l)),
 											   below_outer_join,
 											   &sub_qualscope,
 											   inner_join_rels,
@@ -1332,8 +1332,8 @@ compute_semijoin_info(SpecialJoinInfo *sjinfo, List *clause)
 
 		/* Extract data from binary opclause */
 		opno = op->opno;
-		left_expr = linitial(op->args);
-		right_expr = lsecond(op->args);
+		left_expr = static_cast<Node *>(linitial(op->args));
+		right_expr = static_cast<Node *>(lsecond(op->args));
 		left_varnos = pull_varnos(left_expr);
 		right_varnos = pull_varnos(right_expr);
 		all_varnos = bms_union(left_varnos, right_varnos);
@@ -2259,7 +2259,7 @@ check_mergejoinable(RestrictInfo *restrictinfo)
 		return;
 
 	opno = ((OpExpr *) clause)->opno;
-	leftarg = linitial(((OpExpr *) clause)->args);
+	leftarg = static_cast<Node *>(linitial(((OpExpr *) clause)->args));
 
 	if (op_mergejoinable(opno, exprType(leftarg)) &&
 		!contain_volatile_functions((Node *) clause))
@@ -2296,7 +2296,7 @@ check_hashjoinable(RestrictInfo *restrictinfo)
 		return;
 
 	opno = ((OpExpr *) clause)->opno;
-	leftarg = linitial(((OpExpr *) clause)->args);
+	leftarg = static_cast<Node *>(linitial(((OpExpr *) clause)->args));
 
 	if (op_hashjoinable(opno, exprType(leftarg)) &&
 		!contain_volatile_functions((Node *) clause))

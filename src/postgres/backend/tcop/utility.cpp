@@ -360,7 +360,6 @@ standard_ProcessUtility(Node *parsetree,
 {
   bool    isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
   Peloton_Status *status;
-  int status_code;
 
   check_xact_readonly(parsetree);
 
@@ -452,7 +451,7 @@ standard_ProcessUtility(Node *parsetree,
 
               foreach(cell, stmt->options)
               {
-                DefElem    *elem = lfirst(cell);
+                DefElem    *elem = static_cast<DefElem *>(lfirst(cell));
 
                 if (strcmp(elem->defname, "savepoint_name") == 0)
                   name = strVal(elem->arg);
@@ -917,7 +916,7 @@ standard_ProcessUtility(Node *parsetree,
                  TopTransactionContext,
                  CurTransactionContext);
 
-  status_code = peloton_get_status(status);
+  peloton_get_status(status);
   peloton_destroy_status(status);
 }
 

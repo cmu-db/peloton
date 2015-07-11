@@ -1293,7 +1293,7 @@ tuplesort_putindextuplevalues(Tuplesortstate *state, Relation rel,
 		{
 			SortTuple *mtup = &state->memtuples[i];
 
-			tuple = mtup->tuple;
+			tuple = static_cast<IndexTuple>(mtup->tuple);
 			mtup->datum1 = index_getattr(tuple,
 										 1,
 										 RelationGetDescr(state->indexRel),
@@ -1888,7 +1888,7 @@ tuplesort_getheaptuple(Tuplesortstate *state, bool forward, bool *should_free)
 
 	MemoryContextSwitchTo(oldcontext);
 
-	return stup.tuple;
+	return static_cast<HeapTuple>(stup.tuple);
 }
 
 /*
