@@ -7,13 +7,15 @@
 ## For the "check-code-coverage" target
 
 @CODE_COVERAGE_RULES@
-CODE_COVERAGE_IGNORE_PATTERN="/usr/*" "*/third_party/*" "*/test/*"
+CODE_COVERAGE_IGNORE_PATTERN="/usr/*" "*/third_party/*" "*/test/*" "*/postgres/*" "*/build/*"
 
 ## Global CFLAGS
 AM_CPPFLAGS = $(peloton_INCLUDES) @TBB_CPPFLAGS@ @TBB_LIBS@ 
 
-AM_CXXFLAGS = -std=c++11 -Wall -fpermissive -Wextra -fno-strict-aliasing -Wno-deprecated-register \
-              $(CODE_COVERAGE_CFLAGS) -Wno-write-strings
-              
+AM_CXXFLAGS = -std=c++11 \
+              -Wall -Wextra -Werror \
+              -fPIC -fpermissive -fno-strict-aliasing \
+              $(CODE_COVERAGE_CFLAGS) 
+
 AM_LDFLAGS  = $(CODE_COVERAGE_LDFLAGS) @TBB_LDFLAGS@ 
-              
+

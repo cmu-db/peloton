@@ -56,7 +56,7 @@ alloc_pool(PlannerInfo *root, int pool_size, int string_length)
 	/* all gene */
 	chromo = (Chromosome *) new_pool->data;		/* vector of all chromos */
 	for (i = 0; i < pool_size; i++)
-		chromo[i].string = palloc((string_length + 1) * sizeof(Gene));
+		chromo[i].string = static_cast<Gene *>(palloc((string_length + 1) * sizeof(Gene)));
 
 	return new_pool;
 }

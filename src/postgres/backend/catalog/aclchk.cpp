@@ -668,7 +668,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 		case ACL_OBJECT_LARGEOBJECT:
 			foreach(cell, objnames)
 			{
-				Oid			lobjOid = oidparse(lfirst(cell));
+				Oid	lobjOid = oidparse(static_cast<Node *>(lfirst(cell)));
 
 				if (!LargeObjectExists(lobjOid))
 					ereport(ERROR,
@@ -995,7 +995,7 @@ ExecAlterDefaultPrivilegesStmt(AlterDefaultPrivilegesStmt *stmt)
 
 		foreach(rolecell, rolespecs)
 		{
-			RoleSpec   *rolespec = lfirst(rolecell);
+			RoleSpec   *rolespec = static_cast<RoleSpec *>(lfirst(rolecell));
 
 			iacls.roleid = get_rolespec_oid((Node *) rolespec, false);
 

@@ -392,7 +392,7 @@ verify_dictoptions(Oid tmplId, List *dictoptions)
 		 * Copy the options just in case init method thinks it can scribble on
 		 * them ...
 		 */
-		dictoptions = copyObject(dictoptions);
+		dictoptions = static_cast<List *>(copyObject(dictoptions));
 
 		/*
 		 * Call the init method and see if it complains.  We don't worry about

@@ -114,7 +114,7 @@
 #define READ_NODE_FIELD(fldname) \
 	token = pg_strtok(&length);		/* skip :fldname */ \
 	(void) token;				/* in case not used elsewhere */ \
-	local_node->fldname = nodeRead(NULL, 0)
+	local_node->fldname = static_cast<decltype(local_node->fldname)>(nodeRead(NULL, 0))
 
 /* Read a bitmapset field */
 #define READ_BITMAPSET_FIELD(fldname) \

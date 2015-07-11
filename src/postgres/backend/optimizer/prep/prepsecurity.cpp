@@ -97,7 +97,7 @@ expand_security_quals(PlannerInfo *root, List *tlist)
 		 */
 		if (rt_index == parse->resultRelation)
 		{
-			RangeTblEntry *newrte = copyObject(rte);
+			RangeTblEntry *newrte = static_cast<RangeTblEntry *>(copyObject(rte));
 
 			/*
 			 * We need to let expand_security_qual know if this is the target
@@ -205,7 +205,7 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 			subquery->commandType = CMD_SELECT;
 			subquery->querySource = QSRC_INSTEAD_RULE;
 
-			subrte = copyObject(rte);
+			subrte = static_cast<RangeTblEntry *>(copyObject(rte));
 			subrte->inFromCl = true;
 			subrte->securityQuals = NIL;
 			subquery->rtable = list_make1(subrte);
@@ -313,7 +313,7 @@ expand_security_qual(PlannerInfo *root, List *tlist, int rt_index,
 			subrte->rtekind = RTE_SUBQUERY;
 			subrte->subquery = rte->subquery;
 			subrte->security_barrier = rte->security_barrier;
-			subrte->eref = copyObject(rte->eref);
+			subrte->eref = static_cast<Alias *>(copyObject(rte->eref));
 			subrte->inFromCl = true;
 			subquery->rtable = list_make1(subrte);
 
@@ -355,7 +355,7 @@ security_barrier_replace_vars(Node *node,
 	 */
 	if (node && IsA(node, Query))
 		query_tree_walker((Query *) node,
-						  security_barrier_replace_vars_walker,
+		          reinterpret_cast<query_tree_walker_fptr>(security_barrier_replace_vars_walker),
 						  (void *) context, 0);
 	else
 		security_barrier_replace_vars_walker(node, context);
@@ -435,7 +435,7 @@ security_barrier_replace_vars_walker(Node *node,
 			}
 
 			/* New variable for subquery targetlist */
-			newvar = copyObject(var);
+			newvar = static_cast<Var *>(copyObject(var));
 			newvar->varno = newvar->varnoold = 1;
 
 			attno = list_length(context->targetlist) + 1;
@@ -465,12 +465,12 @@ security_barrier_replace_vars_walker(Node *node,
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node,
-								   security_barrier_replace_vars_walker,
+		               reinterpret_cast<query_tree_walker_fptr>(security_barrier_replace_vars_walker),
 								   (void *) context, 0);
 		context->sublevels_up--;
 		return result;
 	}
 
-	return expression_tree_walker(node, security_barrier_replace_vars_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(security_barrier_replace_vars_walker),
 								  (void *) context);
 }

@@ -22,7 +22,7 @@
 namespace peloton {
 namespace storage {
 
-DataTable::DataTable(const catalog::Schema *schema,
+DataTable::DataTable(catalog::Schema *schema,
                      AbstractBackend *backend,
                      std::string table_name,
                      oid_t table_oid,

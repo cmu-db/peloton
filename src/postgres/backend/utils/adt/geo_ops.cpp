@@ -299,7 +299,7 @@ path_encode(enum path_delim path_delim, int npts, Point *pt)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("too many points requested")));
 
-	result = palloc(size);
+	result = static_cast<char *>(palloc(size));
 
 	cp = result;
 	switch (path_delim)
@@ -4660,7 +4660,7 @@ circle_out(PG_FUNCTION_ARGS)
 	char	   *result;
 	char	   *cp;
 
-	result = palloc(2 * P_MAXLEN + 6);
+	result = static_cast<char *>(palloc(2 * P_MAXLEN + 6));
 
 	cp = result;
 	*cp++ = LDELIM_C;

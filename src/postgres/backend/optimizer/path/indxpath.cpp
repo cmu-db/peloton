@@ -3833,8 +3833,8 @@ adjust_rowcompare_for_index(RowCompareExpr *clause,
 	else
 	{
 		return make_opclause(linitial_oid(new_ops), BOOLOID, false,
-							 copyObject(linitial(clause->largs)),
-							 copyObject(linitial(clause->rargs)),
+							static_cast<Expr *>(copyObject(linitial(clause->largs))),
+							static_cast<Expr *>(copyObject(linitial(clause->rargs))),
 							 InvalidOid,
 							 linitial_oid(clause->inputcollids));
 	}

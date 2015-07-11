@@ -132,7 +132,7 @@ StartupDecodingContext(List *output_plugin_options,
 									ALLOCSET_DEFAULT_INITSIZE,
 									ALLOCSET_DEFAULT_MAXSIZE);
 	old_context = MemoryContextSwitchTo(context);
-	ctx = palloc0(sizeof(LogicalDecodingContext));
+	ctx = static_cast<LogicalDecodingContext *>(palloc0(sizeof(LogicalDecodingContext)));
 
 	ctx->context = context;
 
@@ -633,7 +633,7 @@ shutdown_cb_wrapper(LogicalDecodingContext *ctx)
 static void
 begin_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn)
 {
-	LogicalDecodingContext *ctx = cache->private_data;
+	LogicalDecodingContext *ctx = static_cast<LogicalDecodingContext *>(cache->private_data);
 	LogicalErrorCallbackState state;
 	ErrorContextCallback errcallback;
 
@@ -662,7 +662,7 @@ static void
 commit_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 				  XLogRecPtr commit_lsn)
 {
-	LogicalDecodingContext *ctx = cache->private_data;
+	LogicalDecodingContext *ctx = static_cast<LogicalDecodingContext *>(cache->private_data);
 	LogicalErrorCallbackState state;
 	ErrorContextCallback errcallback;
 
@@ -691,7 +691,7 @@ static void
 change_cb_wrapper(ReorderBuffer *cache, ReorderBufferTXN *txn,
 				  Relation relation, ReorderBufferChange *change)
 {
-	LogicalDecodingContext *ctx = cache->private_data;
+	LogicalDecodingContext *ctx = static_cast<LogicalDecodingContext *>(cache->private_data);
 	LogicalErrorCallbackState state;
 	ErrorContextCallback errcallback;
 

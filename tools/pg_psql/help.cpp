@@ -477,12 +477,12 @@ helpSQL(const char *topic, unsigned short int pager)
 								 * word(s) */
 			{
 				wordlen = j = 1;
-				while (topic[j] != ' ' && j++ < len)
+				while (topic[j] != ' ' && j++ < static_cast<int>(len))
 					wordlen++;
 				if (x == 2)
 				{
 					j++;
-					while (topic[j] != ' ' && j++ <= len)
+					while (topic[j] != ' ' && j++ <= static_cast<int>(len))
 						wordlen++;
 				}
 				if (wordlen >= len)		/* Don't try again if the same word */

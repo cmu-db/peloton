@@ -607,7 +607,7 @@ strip_implicit_coercions(Node *node)
 		FuncExpr   *f = (FuncExpr *) node;
 
 		if (f->funcformat == COERCE_IMPLICIT_CAST)
-			return strip_implicit_coercions(linitial(f->args));
+			return strip_implicit_coercions(static_cast<Node *>(linitial(f->args)));
 	}
 	else if (IsA(node, RelabelType))
 	{
@@ -2839,7 +2839,7 @@ query_tree_mutator(Query *query,
 	if (!(flags & QTW_IGNORE_CTE_SUBQUERIES))
 		MUTATE(query->cteList, query->cteList, List *);
 	else	/* else copy CTE list as-is */
-		query->cteList = copyObject(query->cteList);
+		query->cteList = static_cast<List *>(copyObject(query->cteList));
 	query->rtable = range_table_mutator(query->rtable,
 										mutator, context, flags);
 	return query;
@@ -2888,7 +2888,7 @@ range_table_mutator(List *rtable,
 				else
 				{
 					/* else, copy RT subqueries as-is */
-					newrte->subquery = copyObject(rte->subquery);
+					newrte->subquery = static_cast<Query *>(copyObject(rte->subquery));
 				}
 				break;
 			case RTE_JOIN:
@@ -2897,7 +2897,7 @@ range_table_mutator(List *rtable,
 				else
 				{
 					/* else, copy join aliases as-is */
-					newrte->joinaliasvars = copyObject(rte->joinaliasvars);
+					newrte->joinaliasvars = static_cast<List *>(copyObject(rte->joinaliasvars));
 				}
 				break;
 			case RTE_FUNCTION:

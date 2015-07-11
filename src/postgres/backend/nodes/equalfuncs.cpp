@@ -2698,179 +2698,179 @@ equal(const void *a, const void *b)
 			 * PRIMITIVE NODES
 			 */
 		case T_Alias:
-			retval = _equalAlias(a, b);
+			retval = _equalAlias(static_cast<const Alias *>(a), static_cast<const Alias *>(b));
 			break;
 		case T_RangeVar:
-			retval = _equalRangeVar(a, b);
+			retval = _equalRangeVar(static_cast<const RangeVar *>(a), static_cast<const RangeVar *>(b));
 			break;
 		case T_IntoClause:
-			retval = _equalIntoClause(a, b);
+			retval = _equalIntoClause(static_cast<const IntoClause *>(a), static_cast<const IntoClause *>(b));
 			break;
 		case T_Var:
-			retval = _equalVar(a, b);
+			retval = _equalVar(static_cast<const Var *>(a), static_cast<const Var *>(b));
 			break;
 		case T_Const:
-			retval = _equalConst(a, b);
+			retval = _equalConst(static_cast<const Const *>(a), static_cast<const Const *>(b));
 			break;
 		case T_Param:
-			retval = _equalParam(a, b);
+			retval = _equalParam(static_cast<const Param *>(a), static_cast<const Param *>(b));
 			break;
 		case T_Aggref:
-			retval = _equalAggref(a, b);
+			retval = _equalAggref(static_cast<const Aggref *>(a), static_cast<const Aggref *>(b));
 			break;
 		case T_GroupingFunc:
-			retval = _equalGroupingFunc(a, b);
+			retval = _equalGroupingFunc(static_cast<const GroupingFunc *>(a), static_cast<const GroupingFunc *>(b));
 			break;
 		case T_WindowFunc:
-			retval = _equalWindowFunc(a, b);
+			retval = _equalWindowFunc(static_cast<const WindowFunc *>(a), static_cast<const WindowFunc *>(b));
 			break;
 		case T_ArrayRef:
-			retval = _equalArrayRef(a, b);
+			retval = _equalArrayRef(static_cast<const ArrayRef *>(a), static_cast<const ArrayRef *>(b));
 			break;
 		case T_FuncExpr:
-			retval = _equalFuncExpr(a, b);
+			retval = _equalFuncExpr(static_cast<const FuncExpr *>(a), static_cast<const FuncExpr *>(b));
 			break;
 		case T_NamedArgExpr:
-			retval = _equalNamedArgExpr(a, b);
+			retval = _equalNamedArgExpr(static_cast<const NamedArgExpr *>(a), static_cast<const NamedArgExpr *>(b));
 			break;
 		case T_OpExpr:
-			retval = _equalOpExpr(a, b);
+			retval = _equalOpExpr(static_cast<const OpExpr *>(a), static_cast<const OpExpr *>(b));
 			break;
 		case T_DistinctExpr:
-			retval = _equalDistinctExpr(a, b);
+			retval = _equalDistinctExpr(static_cast<const OpExpr *>(a), static_cast<const OpExpr *>(b));
 			break;
 		case T_NullIfExpr:
-			retval = _equalNullIfExpr(a, b);
+			retval = _equalNullIfExpr(static_cast<const OpExpr *>(a), static_cast<const OpExpr *>(b));
 			break;
 		case T_ScalarArrayOpExpr:
-			retval = _equalScalarArrayOpExpr(a, b);
+			retval = _equalScalarArrayOpExpr(static_cast<const ScalarArrayOpExpr *>(a), static_cast<const ScalarArrayOpExpr *>(b));
 			break;
 		case T_BoolExpr:
-			retval = _equalBoolExpr(a, b);
+			retval = _equalBoolExpr(static_cast<const BoolExpr *>(a), static_cast<const BoolExpr *>(b));
 			break;
 		case T_SubLink:
-			retval = _equalSubLink(a, b);
+			retval = _equalSubLink(static_cast<const SubLink *>(a), static_cast<const SubLink *>(b));
 			break;
 		case T_SubPlan:
-			retval = _equalSubPlan(a, b);
+			retval = _equalSubPlan(static_cast<const SubPlan *>(a), static_cast<const SubPlan *>(b));
 			break;
 		case T_AlternativeSubPlan:
-			retval = _equalAlternativeSubPlan(a, b);
+			retval = _equalAlternativeSubPlan(static_cast<const AlternativeSubPlan *>(a), static_cast<const AlternativeSubPlan *>(b));
 			break;
 		case T_FieldSelect:
-			retval = _equalFieldSelect(a, b);
+			retval = _equalFieldSelect(static_cast<const FieldSelect *>(a), static_cast<const FieldSelect *>(b));
 			break;
 		case T_FieldStore:
-			retval = _equalFieldStore(a, b);
+			retval = _equalFieldStore(static_cast<const FieldStore *>(a), static_cast<const FieldStore *>(b));
 			break;
 		case T_RelabelType:
-			retval = _equalRelabelType(a, b);
+			retval = _equalRelabelType(static_cast<const RelabelType *>(a), static_cast<const RelabelType *>(b));
 			break;
 		case T_CoerceViaIO:
-			retval = _equalCoerceViaIO(a, b);
+			retval = _equalCoerceViaIO(static_cast<const CoerceViaIO *>(a), static_cast<const CoerceViaIO *>(b));
 			break;
 		case T_ArrayCoerceExpr:
-			retval = _equalArrayCoerceExpr(a, b);
+			retval = _equalArrayCoerceExpr(static_cast<const ArrayCoerceExpr *>(a), static_cast<const ArrayCoerceExpr *>(b));
 			break;
 		case T_ConvertRowtypeExpr:
-			retval = _equalConvertRowtypeExpr(a, b);
+			retval = _equalConvertRowtypeExpr(static_cast<const ConvertRowtypeExpr *>(a), static_cast<const ConvertRowtypeExpr *>(b));
 			break;
 		case T_CollateExpr:
-			retval = _equalCollateExpr(a, b);
+			retval = _equalCollateExpr(static_cast<const CollateExpr *>(a), static_cast<const CollateExpr *>(b));
 			break;
 		case T_CaseExpr:
-			retval = _equalCaseExpr(a, b);
+			retval = _equalCaseExpr(static_cast<const CaseExpr *>(a), static_cast<const CaseExpr *>(b));
 			break;
 		case T_CaseWhen:
-			retval = _equalCaseWhen(a, b);
+			retval = _equalCaseWhen(static_cast<const CaseWhen *>(a), static_cast<const CaseWhen *>(b));
 			break;
 		case T_CaseTestExpr:
-			retval = _equalCaseTestExpr(a, b);
+			retval = _equalCaseTestExpr(static_cast<const CaseTestExpr *>(a), static_cast<const CaseTestExpr *>(b));
 			break;
 		case T_ArrayExpr:
-			retval = _equalArrayExpr(a, b);
+			retval = _equalArrayExpr(static_cast<const ArrayExpr *>(a), static_cast<const ArrayExpr *>(b));
 			break;
 		case T_RowExpr:
-			retval = _equalRowExpr(a, b);
+			retval = _equalRowExpr(static_cast<const RowExpr *>(a), static_cast<const RowExpr *>(b));
 			break;
 		case T_RowCompareExpr:
-			retval = _equalRowCompareExpr(a, b);
+			retval = _equalRowCompareExpr(static_cast<const RowCompareExpr *>(a), static_cast<const RowCompareExpr *>(b));
 			break;
 		case T_CoalesceExpr:
-			retval = _equalCoalesceExpr(a, b);
+			retval = _equalCoalesceExpr(static_cast<const CoalesceExpr *>(a), static_cast<const CoalesceExpr *>(b));
 			break;
 		case T_MinMaxExpr:
-			retval = _equalMinMaxExpr(a, b);
+			retval = _equalMinMaxExpr(static_cast<const MinMaxExpr *>(a), static_cast<const MinMaxExpr *>(b));
 			break;
 		case T_XmlExpr:
-			retval = _equalXmlExpr(a, b);
+			retval = _equalXmlExpr(static_cast<const XmlExpr *>(a), static_cast<const XmlExpr *>(b));
 			break;
 		case T_NullTest:
-			retval = _equalNullTest(a, b);
+			retval = _equalNullTest(static_cast<const NullTest *>(a), static_cast<const NullTest *>(b));
 			break;
 		case T_BooleanTest:
-			retval = _equalBooleanTest(a, b);
+			retval = _equalBooleanTest(static_cast<const BooleanTest *>(a), static_cast<const BooleanTest *>(b));
 			break;
 		case T_CoerceToDomain:
-			retval = _equalCoerceToDomain(a, b);
+			retval = _equalCoerceToDomain(static_cast<const CoerceToDomain *>(a), static_cast<const CoerceToDomain *>(b));
 			break;
 		case T_CoerceToDomainValue:
-			retval = _equalCoerceToDomainValue(a, b);
+			retval = _equalCoerceToDomainValue(static_cast<const CoerceToDomainValue *>(a), static_cast<const CoerceToDomainValue *>(b));
 			break;
 		case T_SetToDefault:
-			retval = _equalSetToDefault(a, b);
+			retval = _equalSetToDefault(static_cast<const SetToDefault *>(a), static_cast<const SetToDefault *>(b));
 			break;
 		case T_CurrentOfExpr:
-			retval = _equalCurrentOfExpr(a, b);
+			retval = _equalCurrentOfExpr(static_cast<const CurrentOfExpr *>(a), static_cast<const CurrentOfExpr *>(b));
 			break;
 		case T_InferenceElem:
-			retval = _equalInferenceElem(a, b);
+			retval = _equalInferenceElem(static_cast<const InferenceElem *>(a), static_cast<const InferenceElem *>(b));
 			break;
 		case T_TargetEntry:
-			retval = _equalTargetEntry(a, b);
+			retval = _equalTargetEntry(static_cast<const TargetEntry *>(a), static_cast<const TargetEntry *>(b));
 			break;
 		case T_RangeTblRef:
-			retval = _equalRangeTblRef(a, b);
+			retval = _equalRangeTblRef(static_cast<const RangeTblRef *>(a), static_cast<const RangeTblRef *>(b));
 			break;
 		case T_FromExpr:
-			retval = _equalFromExpr(a, b);
+			retval = _equalFromExpr(static_cast<const FromExpr *>(a), static_cast<const FromExpr *>(b));
 			break;
 		case T_OnConflictExpr:
-			retval = _equalOnConflictExpr(a, b);
+			retval = _equalOnConflictExpr(static_cast<const OnConflictExpr *>(a), static_cast<const OnConflictExpr *>(b));
 			break;
 		case T_JoinExpr:
-			retval = _equalJoinExpr(a, b);
+			retval = _equalJoinExpr(static_cast<const JoinExpr *>(a), static_cast<const JoinExpr *>(b));
 			break;
 
 			/*
 			 * RELATION NODES
 			 */
 		case T_PathKey:
-			retval = _equalPathKey(a, b);
+			retval = _equalPathKey(static_cast<const PathKey *>(a), static_cast<const PathKey *>(b));
 			break;
 		case T_RestrictInfo:
-			retval = _equalRestrictInfo(a, b);
+			retval = _equalRestrictInfo(static_cast<const RestrictInfo *>(a), static_cast<const RestrictInfo *>(b));
 			break;
 		case T_PlaceHolderVar:
-			retval = _equalPlaceHolderVar(a, b);
+			retval = _equalPlaceHolderVar(static_cast<const PlaceHolderVar *>(a), static_cast<const PlaceHolderVar *>(b));
 			break;
 		case T_SpecialJoinInfo:
-			retval = _equalSpecialJoinInfo(a, b);
+			retval = _equalSpecialJoinInfo(static_cast<const SpecialJoinInfo *>(a), static_cast<const SpecialJoinInfo *>(b));
 			break;
 		case T_LateralJoinInfo:
-			retval = _equalLateralJoinInfo(a, b);
+			retval = _equalLateralJoinInfo(static_cast<const LateralJoinInfo *>(a), static_cast<const LateralJoinInfo *>(b));
 			break;
 		case T_AppendRelInfo:
-			retval = _equalAppendRelInfo(a, b);
+			retval = _equalAppendRelInfo(static_cast<const AppendRelInfo *>(a), static_cast<const AppendRelInfo *>(b));
 			break;
 		case T_PlaceHolderInfo:
-			retval = _equalPlaceHolderInfo(a, b);
+			retval = _equalPlaceHolderInfo(static_cast<const PlaceHolderInfo *>(a), static_cast<const PlaceHolderInfo *>(b));
 			break;
 
 		case T_List:
 		case T_IntList:
 		case T_OidList:
-			retval = _equalList(a, b);
+			retval = _equalList(static_cast<const List *>(a), static_cast<const List *>(b));
 			break;
 
 		case T_Integer:
@@ -2878,443 +2878,443 @@ equal(const void *a, const void *b)
 		case T_String:
 		case T_BitString:
 		case T_Null:
-			retval = _equalValue(a, b);
+			retval = _equalValue(static_cast<const Value *>(a), static_cast<const Value *>(b));
 			break;
 
 			/*
 			 * PARSE NODES
 			 */
 		case T_Query:
-			retval = _equalQuery(a, b);
+			retval = _equalQuery(static_cast<const Query *>(a), static_cast<const Query *>(b));
 			break;
 		case T_InsertStmt:
-			retval = _equalInsertStmt(a, b);
+			retval = _equalInsertStmt(static_cast<const InsertStmt *>(a), static_cast<const InsertStmt *>(b));
 			break;
 		case T_DeleteStmt:
-			retval = _equalDeleteStmt(a, b);
+			retval = _equalDeleteStmt(static_cast<const DeleteStmt *>(a), static_cast<const DeleteStmt *>(b));
 			break;
 		case T_UpdateStmt:
-			retval = _equalUpdateStmt(a, b);
+			retval = _equalUpdateStmt(static_cast<const UpdateStmt *>(a), static_cast<const UpdateStmt *>(b));
 			break;
 		case T_SelectStmt:
-			retval = _equalSelectStmt(a, b);
+			retval = _equalSelectStmt(static_cast<const SelectStmt *>(a), static_cast<const SelectStmt *>(b));
 			break;
 		case T_SetOperationStmt:
-			retval = _equalSetOperationStmt(a, b);
+			retval = _equalSetOperationStmt(static_cast<const SetOperationStmt *>(a), static_cast<const SetOperationStmt *>(b));
 			break;
 		case T_AlterTableStmt:
-			retval = _equalAlterTableStmt(a, b);
+			retval = _equalAlterTableStmt(static_cast<const AlterTableStmt *>(a), static_cast<const AlterTableStmt *>(b));
 			break;
 		case T_AlterTableCmd:
-			retval = _equalAlterTableCmd(a, b);
+			retval = _equalAlterTableCmd(static_cast<const AlterTableCmd *>(a), static_cast<const AlterTableCmd *>(b));
 			break;
 		case T_AlterDomainStmt:
-			retval = _equalAlterDomainStmt(a, b);
+			retval = _equalAlterDomainStmt(static_cast<const AlterDomainStmt *>(a), static_cast<const AlterDomainStmt *>(b));
 			break;
 		case T_GrantStmt:
-			retval = _equalGrantStmt(a, b);
+			retval = _equalGrantStmt(static_cast<const GrantStmt *>(a), static_cast<const GrantStmt *>(b));
 			break;
 		case T_GrantRoleStmt:
-			retval = _equalGrantRoleStmt(a, b);
+			retval = _equalGrantRoleStmt(static_cast<const GrantRoleStmt *>(a), static_cast<const GrantRoleStmt *>(b));
 			break;
 		case T_AlterDefaultPrivilegesStmt:
-			retval = _equalAlterDefaultPrivilegesStmt(a, b);
+			retval = _equalAlterDefaultPrivilegesStmt(static_cast<const AlterDefaultPrivilegesStmt *>(a), static_cast<const AlterDefaultPrivilegesStmt *>(b));
 			break;
 		case T_DeclareCursorStmt:
-			retval = _equalDeclareCursorStmt(a, b);
+			retval = _equalDeclareCursorStmt(static_cast<const DeclareCursorStmt *>(a), static_cast<const DeclareCursorStmt *>(b));
 			break;
 		case T_ClosePortalStmt:
-			retval = _equalClosePortalStmt(a, b);
+			retval = _equalClosePortalStmt(static_cast<const ClosePortalStmt *>(a), static_cast<const ClosePortalStmt *>(b));
 			break;
 		case T_ClusterStmt:
-			retval = _equalClusterStmt(a, b);
+			retval = _equalClusterStmt(static_cast<const ClusterStmt *>(a), static_cast<const ClusterStmt *>(b));
 			break;
 		case T_CopyStmt:
-			retval = _equalCopyStmt(a, b);
+			retval = _equalCopyStmt(static_cast<const CopyStmt *>(a), static_cast<const CopyStmt *>(b));
 			break;
 		case T_CreateStmt:
-			retval = _equalCreateStmt(a, b);
+			retval = _equalCreateStmt(static_cast<const CreateStmt *>(a), static_cast<const CreateStmt *>(b));
 			break;
 		case T_TableLikeClause:
-			retval = _equalTableLikeClause(a, b);
+			retval = _equalTableLikeClause(static_cast<const TableLikeClause *>(a), static_cast<const TableLikeClause *>(b));
 			break;
 		case T_DefineStmt:
-			retval = _equalDefineStmt(a, b);
+			retval = _equalDefineStmt(static_cast<const DefineStmt *>(a), static_cast<const DefineStmt *>(b));
 			break;
 		case T_DropStmt:
-			retval = _equalDropStmt(a, b);
+			retval = _equalDropStmt(static_cast<const DropStmt *>(a), static_cast<const DropStmt *>(b));
 			break;
 		case T_TruncateStmt:
-			retval = _equalTruncateStmt(a, b);
+			retval = _equalTruncateStmt(static_cast<const TruncateStmt *>(a), static_cast<const TruncateStmt *>(b));
 			break;
 		case T_CommentStmt:
-			retval = _equalCommentStmt(a, b);
+			retval = _equalCommentStmt(static_cast<const CommentStmt *>(a), static_cast<const CommentStmt *>(b));
 			break;
 		case T_SecLabelStmt:
-			retval = _equalSecLabelStmt(a, b);
+			retval = _equalSecLabelStmt(static_cast<const SecLabelStmt *>(a), static_cast<const SecLabelStmt *>(b));
 			break;
 		case T_FetchStmt:
-			retval = _equalFetchStmt(a, b);
+			retval = _equalFetchStmt(static_cast<const FetchStmt *>(a), static_cast<const FetchStmt *>(b));
 			break;
 		case T_IndexStmt:
-			retval = _equalIndexStmt(a, b);
+			retval = _equalIndexStmt(static_cast<const IndexStmt *>(a), static_cast<const IndexStmt *>(b));
 			break;
 		case T_CreateFunctionStmt:
-			retval = _equalCreateFunctionStmt(a, b);
+			retval = _equalCreateFunctionStmt(static_cast<const CreateFunctionStmt *>(a), static_cast<const CreateFunctionStmt *>(b));
 			break;
 		case T_FunctionParameter:
-			retval = _equalFunctionParameter(a, b);
+			retval = _equalFunctionParameter(static_cast<const FunctionParameter *>(a), static_cast<const FunctionParameter *>(b));
 			break;
 		case T_AlterFunctionStmt:
-			retval = _equalAlterFunctionStmt(a, b);
+			retval = _equalAlterFunctionStmt(static_cast<const AlterFunctionStmt *>(a), static_cast<const AlterFunctionStmt *>(b));
 			break;
 		case T_DoStmt:
-			retval = _equalDoStmt(a, b);
+			retval = _equalDoStmt(static_cast<const DoStmt *>(a), static_cast<const DoStmt *>(b));
 			break;
 		case T_RenameStmt:
-			retval = _equalRenameStmt(a, b);
+			retval = _equalRenameStmt(static_cast<const RenameStmt *>(a), static_cast<const RenameStmt *>(b));
 			break;
 		case T_AlterObjectSchemaStmt:
-			retval = _equalAlterObjectSchemaStmt(a, b);
+			retval = _equalAlterObjectSchemaStmt(static_cast<const AlterObjectSchemaStmt *>(a), static_cast<const AlterObjectSchemaStmt *>(b));
 			break;
 		case T_AlterOwnerStmt:
-			retval = _equalAlterOwnerStmt(a, b);
+			retval = _equalAlterOwnerStmt(static_cast<const AlterOwnerStmt *>(a), static_cast<const AlterOwnerStmt *>(b));
 			break;
 		case T_RuleStmt:
-			retval = _equalRuleStmt(a, b);
+			retval = _equalRuleStmt(static_cast<const RuleStmt *>(a), static_cast<const RuleStmt *>(b));
 			break;
 		case T_NotifyStmt:
-			retval = _equalNotifyStmt(a, b);
+			retval = _equalNotifyStmt(static_cast<const NotifyStmt *>(a), static_cast<const NotifyStmt *>(b));
 			break;
 		case T_ListenStmt:
-			retval = _equalListenStmt(a, b);
+			retval = _equalListenStmt(static_cast<const ListenStmt *>(a), static_cast<const ListenStmt *>(b));
 			break;
 		case T_UnlistenStmt:
-			retval = _equalUnlistenStmt(a, b);
+			retval = _equalUnlistenStmt(static_cast<const UnlistenStmt *>(a), static_cast<const UnlistenStmt *>(b));
 			break;
 		case T_TransactionStmt:
-			retval = _equalTransactionStmt(a, b);
+			retval = _equalTransactionStmt(static_cast<const TransactionStmt *>(a), static_cast<const TransactionStmt *>(b));
 			break;
 		case T_CompositeTypeStmt:
-			retval = _equalCompositeTypeStmt(a, b);
+			retval = _equalCompositeTypeStmt(static_cast<const CompositeTypeStmt *>(a), static_cast<const CompositeTypeStmt *>(b));
 			break;
 		case T_CreateEnumStmt:
-			retval = _equalCreateEnumStmt(a, b);
+			retval = _equalCreateEnumStmt(static_cast<const CreateEnumStmt *>(a), static_cast<const CreateEnumStmt *>(b));
 			break;
 		case T_CreateRangeStmt:
-			retval = _equalCreateRangeStmt(a, b);
+			retval = _equalCreateRangeStmt(static_cast<const CreateRangeStmt *>(a), static_cast<const CreateRangeStmt *>(b));
 			break;
 		case T_AlterEnumStmt:
-			retval = _equalAlterEnumStmt(a, b);
+			retval = _equalAlterEnumStmt(static_cast<const AlterEnumStmt *>(a), static_cast<const AlterEnumStmt *>(b));
 			break;
 		case T_ViewStmt:
-			retval = _equalViewStmt(a, b);
+			retval = _equalViewStmt(static_cast<const ViewStmt *>(a), static_cast<const ViewStmt *>(b));
 			break;
 		case T_LoadStmt:
-			retval = _equalLoadStmt(a, b);
+			retval = _equalLoadStmt(static_cast<const LoadStmt *>(a), static_cast<const LoadStmt *>(b));
 			break;
 		case T_CreateDomainStmt:
-			retval = _equalCreateDomainStmt(a, b);
+			retval = _equalCreateDomainStmt(static_cast<const CreateDomainStmt *>(a), static_cast<const CreateDomainStmt *>(b));
 			break;
 		case T_CreateOpClassStmt:
-			retval = _equalCreateOpClassStmt(a, b);
+			retval = _equalCreateOpClassStmt(static_cast<const CreateOpClassStmt *>(a), static_cast<const CreateOpClassStmt *>(b));
 			break;
 		case T_CreateOpClassItem:
-			retval = _equalCreateOpClassItem(a, b);
+			retval = _equalCreateOpClassItem(static_cast<const CreateOpClassItem *>(a), static_cast<const CreateOpClassItem *>(b));
 			break;
 		case T_CreateOpFamilyStmt:
-			retval = _equalCreateOpFamilyStmt(a, b);
+			retval = _equalCreateOpFamilyStmt(static_cast<const CreateOpFamilyStmt *>(a), static_cast<const CreateOpFamilyStmt *>(b));
 			break;
 		case T_AlterOpFamilyStmt:
-			retval = _equalAlterOpFamilyStmt(a, b);
+			retval = _equalAlterOpFamilyStmt(static_cast<const AlterOpFamilyStmt *>(a), static_cast<const AlterOpFamilyStmt *>(b));
 			break;
 		case T_CreatedbStmt:
-			retval = _equalCreatedbStmt(a, b);
+			retval = _equalCreatedbStmt(static_cast<const CreatedbStmt *>(a), static_cast<const CreatedbStmt *>(b));
 			break;
 		case T_AlterDatabaseStmt:
-			retval = _equalAlterDatabaseStmt(a, b);
+			retval = _equalAlterDatabaseStmt(static_cast<const AlterDatabaseStmt *>(a), static_cast<const AlterDatabaseStmt *>(b));
 			break;
 		case T_AlterDatabaseSetStmt:
-			retval = _equalAlterDatabaseSetStmt(a, b);
+			retval = _equalAlterDatabaseSetStmt(static_cast<const AlterDatabaseSetStmt *>(a), static_cast<const AlterDatabaseSetStmt *>(b));
 			break;
 		case T_DropdbStmt:
-			retval = _equalDropdbStmt(a, b);
+			retval = _equalDropdbStmt(static_cast<const DropdbStmt *>(a), static_cast<const DropdbStmt *>(b));
 			break;
 		case T_VacuumStmt:
-			retval = _equalVacuumStmt(a, b);
+			retval = _equalVacuumStmt(static_cast<const VacuumStmt *>(a), static_cast<const VacuumStmt *>(b));
 			break;
 		case T_ExplainStmt:
-			retval = _equalExplainStmt(a, b);
+			retval = _equalExplainStmt(static_cast<const ExplainStmt *>(a), static_cast<const ExplainStmt *>(b));
 			break;
 		case T_CreateTableAsStmt:
-			retval = _equalCreateTableAsStmt(a, b);
+			retval = _equalCreateTableAsStmt(static_cast<const CreateTableAsStmt *>(a), static_cast<const CreateTableAsStmt *>(b));
 			break;
 		case T_RefreshMatViewStmt:
-			retval = _equalRefreshMatViewStmt(a, b);
+			retval = _equalRefreshMatViewStmt(static_cast<const RefreshMatViewStmt *>(a), static_cast<const RefreshMatViewStmt *>(b));
 			break;
 		case T_ReplicaIdentityStmt:
-			retval = _equalReplicaIdentityStmt(a, b);
+			retval = _equalReplicaIdentityStmt(static_cast<const ReplicaIdentityStmt *>(a), static_cast<const ReplicaIdentityStmt *>(b));
 			break;
 		case T_AlterSystemStmt:
-			retval = _equalAlterSystemStmt(a, b);
+			retval = _equalAlterSystemStmt(static_cast<const AlterSystemStmt *>(a), static_cast<const AlterSystemStmt *>(b));
 			break;
 		case T_CreateSeqStmt:
-			retval = _equalCreateSeqStmt(a, b);
+			retval = _equalCreateSeqStmt(static_cast<const CreateSeqStmt *>(a), static_cast<const CreateSeqStmt *>(b));
 			break;
 		case T_AlterSeqStmt:
-			retval = _equalAlterSeqStmt(a, b);
+			retval = _equalAlterSeqStmt(static_cast<const AlterSeqStmt *>(a), static_cast<const AlterSeqStmt *>(b));
 			break;
 		case T_VariableSetStmt:
-			retval = _equalVariableSetStmt(a, b);
+			retval = _equalVariableSetStmt(static_cast<const VariableSetStmt *>(a), static_cast<const VariableSetStmt *>(b));
 			break;
 		case T_VariableShowStmt:
-			retval = _equalVariableShowStmt(a, b);
+			retval = _equalVariableShowStmt(static_cast<const VariableShowStmt *>(a), static_cast<const VariableShowStmt *>(b));
 			break;
 		case T_DiscardStmt:
-			retval = _equalDiscardStmt(a, b);
+			retval = _equalDiscardStmt(static_cast<const DiscardStmt *>(a), static_cast<const DiscardStmt *>(b));
 			break;
 		case T_CreateTableSpaceStmt:
-			retval = _equalCreateTableSpaceStmt(a, b);
+			retval = _equalCreateTableSpaceStmt(static_cast<const CreateTableSpaceStmt *>(a), static_cast<const CreateTableSpaceStmt *>(b));
 			break;
 		case T_DropTableSpaceStmt:
-			retval = _equalDropTableSpaceStmt(a, b);
+			retval = _equalDropTableSpaceStmt(static_cast<const DropTableSpaceStmt *>(a), static_cast<const DropTableSpaceStmt *>(b));
 			break;
 		case T_AlterTableSpaceOptionsStmt:
-			retval = _equalAlterTableSpaceOptionsStmt(a, b);
+			retval = _equalAlterTableSpaceOptionsStmt(static_cast<const AlterTableSpaceOptionsStmt *>(a), static_cast<const AlterTableSpaceOptionsStmt *>(b));
 			break;
 		case T_AlterTableMoveAllStmt:
-			retval = _equalAlterTableMoveAllStmt(a, b);
+			retval = _equalAlterTableMoveAllStmt(static_cast<const AlterTableMoveAllStmt *>(a), static_cast<const AlterTableMoveAllStmt *>(b));
 			break;
 		case T_CreateExtensionStmt:
-			retval = _equalCreateExtensionStmt(a, b);
+			retval = _equalCreateExtensionStmt(static_cast<const CreateExtensionStmt *>(a), static_cast<const CreateExtensionStmt *>(b));
 			break;
 		case T_AlterExtensionStmt:
-			retval = _equalAlterExtensionStmt(a, b);
+			retval = _equalAlterExtensionStmt(static_cast<const AlterExtensionStmt *>(a), static_cast<const AlterExtensionStmt *>(b));
 			break;
 		case T_AlterExtensionContentsStmt:
-			retval = _equalAlterExtensionContentsStmt(a, b);
+			retval = _equalAlterExtensionContentsStmt(static_cast<const AlterExtensionContentsStmt *>(a), static_cast<const AlterExtensionContentsStmt *>(b));
 			break;
 		case T_CreateFdwStmt:
-			retval = _equalCreateFdwStmt(a, b);
+			retval = _equalCreateFdwStmt(static_cast<const CreateFdwStmt *>(a), static_cast<const CreateFdwStmt *>(b));
 			break;
 		case T_AlterFdwStmt:
-			retval = _equalAlterFdwStmt(a, b);
+			retval = _equalAlterFdwStmt(static_cast<const AlterFdwStmt *>(a), static_cast<const AlterFdwStmt *>(b));
 			break;
 		case T_CreateForeignServerStmt:
-			retval = _equalCreateForeignServerStmt(a, b);
+			retval = _equalCreateForeignServerStmt(static_cast<const CreateForeignServerStmt *>(a), static_cast<const CreateForeignServerStmt *>(b));
 			break;
 		case T_AlterForeignServerStmt:
-			retval = _equalAlterForeignServerStmt(a, b);
+			retval = _equalAlterForeignServerStmt(static_cast<const AlterForeignServerStmt *>(a), static_cast<const AlterForeignServerStmt *>(b));
 			break;
 		case T_CreateUserMappingStmt:
-			retval = _equalCreateUserMappingStmt(a, b);
+			retval = _equalCreateUserMappingStmt(static_cast<const CreateUserMappingStmt *>(a), static_cast<const CreateUserMappingStmt *>(b));
 			break;
 		case T_AlterUserMappingStmt:
-			retval = _equalAlterUserMappingStmt(a, b);
+			retval = _equalAlterUserMappingStmt(static_cast<const AlterUserMappingStmt *>(a), static_cast<const AlterUserMappingStmt *>(b));
 			break;
 		case T_DropUserMappingStmt:
-			retval = _equalDropUserMappingStmt(a, b);
+			retval = _equalDropUserMappingStmt(static_cast<const DropUserMappingStmt *>(a), static_cast<const DropUserMappingStmt *>(b));
 			break;
 		case T_CreateForeignTableStmt:
-			retval = _equalCreateForeignTableStmt(a, b);
+			retval = _equalCreateForeignTableStmt(static_cast<const CreateForeignTableStmt *>(a), static_cast<const CreateForeignTableStmt *>(b));
 			break;
 		case T_ImportForeignSchemaStmt:
-			retval = _equalImportForeignSchemaStmt(a, b);
+			retval = _equalImportForeignSchemaStmt(static_cast<const ImportForeignSchemaStmt *>(a), static_cast<const ImportForeignSchemaStmt *>(b));
 			break;
 		case T_CreateTransformStmt:
-			retval = _equalCreateTransformStmt(a, b);
+			retval = _equalCreateTransformStmt(static_cast<const CreateTransformStmt *>(a), static_cast<const CreateTransformStmt *>(b));
 			break;
 		case T_CreateTrigStmt:
-			retval = _equalCreateTrigStmt(a, b);
+			retval = _equalCreateTrigStmt(static_cast<const CreateTrigStmt *>(a), static_cast<const CreateTrigStmt *>(b));
 			break;
 		case T_CreateEventTrigStmt:
-			retval = _equalCreateEventTrigStmt(a, b);
+			retval = _equalCreateEventTrigStmt(static_cast<const CreateEventTrigStmt *>(a), static_cast<const CreateEventTrigStmt *>(b));
 			break;
 		case T_AlterEventTrigStmt:
-			retval = _equalAlterEventTrigStmt(a, b);
+			retval = _equalAlterEventTrigStmt(static_cast<const AlterEventTrigStmt *>(a), static_cast<const AlterEventTrigStmt *>(b));
 			break;
 		case T_CreatePLangStmt:
-			retval = _equalCreatePLangStmt(a, b);
+			retval = _equalCreatePLangStmt(static_cast<const CreatePLangStmt *>(a), static_cast<const CreatePLangStmt *>(b));
 			break;
 		case T_CreateRoleStmt:
-			retval = _equalCreateRoleStmt(a, b);
+			retval = _equalCreateRoleStmt(static_cast<const CreateRoleStmt *>(a), static_cast<const CreateRoleStmt *>(b));
 			break;
 		case T_AlterRoleStmt:
-			retval = _equalAlterRoleStmt(a, b);
+			retval = _equalAlterRoleStmt(static_cast<const AlterRoleStmt *>(a), static_cast<const AlterRoleStmt *>(b));
 			break;
 		case T_AlterRoleSetStmt:
-			retval = _equalAlterRoleSetStmt(a, b);
+			retval = _equalAlterRoleSetStmt(static_cast<const AlterRoleSetStmt *>(a), static_cast<const AlterRoleSetStmt *>(b));
 			break;
 		case T_DropRoleStmt:
-			retval = _equalDropRoleStmt(a, b);
+			retval = _equalDropRoleStmt(static_cast<const DropRoleStmt *>(a), static_cast<const DropRoleStmt *>(b));
 			break;
 		case T_LockStmt:
-			retval = _equalLockStmt(a, b);
+			retval = _equalLockStmt(static_cast<const LockStmt *>(a), static_cast<const LockStmt *>(b));
 			break;
 		case T_ConstraintsSetStmt:
-			retval = _equalConstraintsSetStmt(a, b);
+			retval = _equalConstraintsSetStmt(static_cast<const ConstraintsSetStmt *>(a), static_cast<const ConstraintsSetStmt *>(b));
 			break;
 		case T_ReindexStmt:
-			retval = _equalReindexStmt(a, b);
+			retval = _equalReindexStmt(static_cast<const ReindexStmt *>(a), static_cast<const ReindexStmt *>(b));
 			break;
 		case T_CheckPointStmt:
 			retval = true;
 			break;
 		case T_CreateSchemaStmt:
-			retval = _equalCreateSchemaStmt(a, b);
+			retval = _equalCreateSchemaStmt(static_cast<const CreateSchemaStmt *>(a), static_cast<const CreateSchemaStmt *>(b));
 			break;
 		case T_CreateConversionStmt:
-			retval = _equalCreateConversionStmt(a, b);
+			retval = _equalCreateConversionStmt(static_cast<const CreateConversionStmt *>(a), static_cast<const CreateConversionStmt *>(b));
 			break;
 		case T_CreateCastStmt:
-			retval = _equalCreateCastStmt(a, b);
+			retval = _equalCreateCastStmt(static_cast<const CreateCastStmt *>(a), static_cast<const CreateCastStmt *>(b));
 			break;
 		case T_PrepareStmt:
-			retval = _equalPrepareStmt(a, b);
+			retval = _equalPrepareStmt(static_cast<const PrepareStmt *>(a), static_cast<const PrepareStmt *>(b));
 			break;
 		case T_ExecuteStmt:
-			retval = _equalExecuteStmt(a, b);
+			retval = _equalExecuteStmt(static_cast<const ExecuteStmt *>(a), static_cast<const ExecuteStmt *>(b));
 			break;
 		case T_DeallocateStmt:
-			retval = _equalDeallocateStmt(a, b);
+			retval = _equalDeallocateStmt(static_cast<const DeallocateStmt *>(a), static_cast<const DeallocateStmt *>(b));
 			break;
 		case T_DropOwnedStmt:
-			retval = _equalDropOwnedStmt(a, b);
+			retval = _equalDropOwnedStmt(static_cast<const DropOwnedStmt *>(a), static_cast<const DropOwnedStmt *>(b));
 			break;
 		case T_ReassignOwnedStmt:
-			retval = _equalReassignOwnedStmt(a, b);
+			retval = _equalReassignOwnedStmt(static_cast<const ReassignOwnedStmt *>(a), static_cast<const ReassignOwnedStmt *>(b));
 			break;
 		case T_AlterTSDictionaryStmt:
-			retval = _equalAlterTSDictionaryStmt(a, b);
+			retval = _equalAlterTSDictionaryStmt(static_cast<const AlterTSDictionaryStmt *>(a), static_cast<const AlterTSDictionaryStmt *>(b));
 			break;
 		case T_AlterTSConfigurationStmt:
-			retval = _equalAlterTSConfigurationStmt(a, b);
+			retval = _equalAlterTSConfigurationStmt(static_cast<const AlterTSConfigurationStmt *>(a), static_cast<const AlterTSConfigurationStmt *>(b));
 			break;
 		case T_CreatePolicyStmt:
-			retval = _equalCreatePolicyStmt(a, b);
+			retval = _equalCreatePolicyStmt(static_cast<const CreatePolicyStmt *>(a), static_cast<const CreatePolicyStmt *>(b));
 			break;
 		case T_AlterPolicyStmt:
-			retval = _equalAlterPolicyStmt(a, b);
+			retval = _equalAlterPolicyStmt(static_cast<const AlterPolicyStmt *>(a), static_cast<const AlterPolicyStmt *>(b));
 			break;
 		case T_A_Expr:
-			retval = _equalAExpr(a, b);
+			retval = _equalAExpr(static_cast<const A_Expr *>(a), static_cast<const A_Expr *>(b));
 			break;
 		case T_ColumnRef:
-			retval = _equalColumnRef(a, b);
+			retval = _equalColumnRef(static_cast<const ColumnRef *>(a), static_cast<const ColumnRef *>(b));
 			break;
 		case T_ParamRef:
-			retval = _equalParamRef(a, b);
+			retval = _equalParamRef(static_cast<const ParamRef *>(a), static_cast<const ParamRef *>(b));
 			break;
 		case T_A_Const:
-			retval = _equalAConst(a, b);
+			retval = _equalAConst(static_cast<const A_Const *>(a), static_cast<const A_Const *>(b));
 			break;
 		case T_FuncCall:
-			retval = _equalFuncCall(a, b);
+			retval = _equalFuncCall(static_cast<const FuncCall *>(a), static_cast<const FuncCall *>(b));
 			break;
 		case T_A_Star:
-			retval = _equalAStar(a, b);
+			retval = _equalAStar(static_cast<const A_Star *>(a), static_cast<const A_Star *>(b));
 			break;
 		case T_A_Indices:
-			retval = _equalAIndices(a, b);
+			retval = _equalAIndices(static_cast<const A_Indices *>(a), static_cast<const A_Indices *>(b));
 			break;
 		case T_A_Indirection:
-			retval = _equalA_Indirection(a, b);
+			retval = _equalA_Indirection(static_cast<const A_Indirection *>(a), static_cast<const A_Indirection *>(b));
 			break;
 		case T_A_ArrayExpr:
-			retval = _equalA_ArrayExpr(a, b);
+			retval = _equalA_ArrayExpr(static_cast<const A_ArrayExpr *>(a), static_cast<const A_ArrayExpr *>(b));
 			break;
 		case T_ResTarget:
-			retval = _equalResTarget(a, b);
+			retval = _equalResTarget(static_cast<const ResTarget *>(a), static_cast<const ResTarget *>(b));
 			break;
 		case T_MultiAssignRef:
-			retval = _equalMultiAssignRef(a, b);
+			retval = _equalMultiAssignRef(static_cast<const MultiAssignRef *>(a), static_cast<const MultiAssignRef *>(b));
 			break;
 		case T_TypeCast:
-			retval = _equalTypeCast(a, b);
+			retval = _equalTypeCast(static_cast<const TypeCast *>(a), static_cast<const TypeCast *>(b));
 			break;
 		case T_CollateClause:
-			retval = _equalCollateClause(a, b);
+			retval = _equalCollateClause(static_cast<const CollateClause *>(a), static_cast<const CollateClause *>(b));
 			break;
 		case T_SortBy:
-			retval = _equalSortBy(a, b);
+			retval = _equalSortBy(static_cast<const SortBy *>(a), static_cast<const SortBy *>(b));
 			break;
 		case T_WindowDef:
-			retval = _equalWindowDef(a, b);
+			retval = _equalWindowDef(static_cast<const WindowDef *>(a), static_cast<const WindowDef *>(b));
 			break;
 		case T_RangeSubselect:
-			retval = _equalRangeSubselect(a, b);
+			retval = _equalRangeSubselect(static_cast<const RangeSubselect *>(a), static_cast<const RangeSubselect *>(b));
 			break;
 		case T_RangeFunction:
-			retval = _equalRangeFunction(a, b);
+			retval = _equalRangeFunction(static_cast<const RangeFunction *>(a), static_cast<const RangeFunction *>(b));
 			break;
 		case T_TypeName:
-			retval = _equalTypeName(a, b);
+			retval = _equalTypeName(static_cast<const TypeName *>(a), static_cast<const TypeName *>(b));
 			break;
 		case T_IndexElem:
-			retval = _equalIndexElem(a, b);
+			retval = _equalIndexElem(static_cast<const IndexElem *>(a), static_cast<const IndexElem *>(b));
 			break;
 		case T_ColumnDef:
-			retval = _equalColumnDef(a, b);
+			retval = _equalColumnDef(static_cast<const ColumnDef *>(a), static_cast<const ColumnDef *>(b));
 			break;
 		case T_Constraint:
-			retval = _equalConstraint(a, b);
+			retval = _equalConstraint(static_cast<const Constraint *>(a), static_cast<const Constraint *>(b));
 			break;
 		case T_DefElem:
-			retval = _equalDefElem(a, b);
+			retval = _equalDefElem(static_cast<const DefElem *>(a), static_cast<const DefElem *>(b));
 			break;
 		case T_LockingClause:
-			retval = _equalLockingClause(a, b);
+			retval = _equalLockingClause(static_cast<const LockingClause *>(a), static_cast<const LockingClause *>(b));
 			break;
 		case T_RangeTblEntry:
-			retval = _equalRangeTblEntry(a, b);
+			retval = _equalRangeTblEntry(static_cast<const RangeTblEntry *>(a), static_cast<const RangeTblEntry *>(b));
 			break;
 		case T_RangeTblFunction:
-			retval = _equalRangeTblFunction(a, b);
+			retval = _equalRangeTblFunction(static_cast<const RangeTblFunction *>(a), static_cast<const RangeTblFunction *>(b));
 			break;
 		case T_WithCheckOption:
-			retval = _equalWithCheckOption(a, b);
+			retval = _equalWithCheckOption(static_cast<const WithCheckOption *>(a), static_cast<const WithCheckOption *>(b));
 			break;
 		case T_SortGroupClause:
-			retval = _equalSortGroupClause(a, b);
+			retval = _equalSortGroupClause(static_cast<const SortGroupClause *>(a), static_cast<const SortGroupClause *>(b));
 			break;
 		case T_GroupingSet:
-			retval = _equalGroupingSet(a, b);
+			retval = _equalGroupingSet(static_cast<const GroupingSet *>(a), static_cast<const GroupingSet *>(b));
 			break;
 		case T_WindowClause:
-			retval = _equalWindowClause(a, b);
+			retval = _equalWindowClause(static_cast<const WindowClause *>(a), static_cast<const WindowClause *>(b));
 			break;
 		case T_RowMarkClause:
-			retval = _equalRowMarkClause(a, b);
+			retval = _equalRowMarkClause(static_cast<const RowMarkClause *>(a), static_cast<const RowMarkClause *>(b));
 			break;
 		case T_WithClause:
-			retval = _equalWithClause(a, b);
+			retval = _equalWithClause(static_cast<const WithClause *>(a), static_cast<const WithClause *>(b));
 			break;
 		case T_InferClause:
-			retval = _equalInferClause(a, b);
+			retval = _equalInferClause(static_cast<const InferClause *>(a), static_cast<const InferClause *>(b));
 			break;
 		case T_OnConflictClause:
-			retval = _equalOnConflictClause(a, b);
+			retval = _equalOnConflictClause(static_cast<const OnConflictClause *>(a), static_cast<const OnConflictClause *>(b));
 			break;
 		case T_CommonTableExpr:
-			retval = _equalCommonTableExpr(a, b);
+			retval = _equalCommonTableExpr(static_cast<const CommonTableExpr *>(a), static_cast<const CommonTableExpr *>(b));
 			break;
 		case T_RangeTableSample:
-			retval = _equalRangeTableSample(a, b);
+			retval = _equalRangeTableSample(static_cast<const RangeTableSample *>(a), static_cast<const RangeTableSample *>(b));
 			break;
 		case T_TableSampleClause:
-			retval = _equalTableSampleClause(a, b);
+			retval = _equalTableSampleClause(static_cast<const TableSampleClause *>(a), static_cast<const TableSampleClause *>(b));
 			break;
 		case T_FuncWithArgs:
-			retval = _equalFuncWithArgs(a, b);
+			retval = _equalFuncWithArgs(static_cast<const FuncWithArgs *>(a), static_cast<const FuncWithArgs *>(b));
 			break;
 		case T_AccessPriv:
-			retval = _equalAccessPriv(a, b);
+			retval = _equalAccessPriv(static_cast<const AccessPriv *>(a), static_cast<const AccessPriv *>(b));
 			break;
 		case T_XmlSerialize:
-			retval = _equalXmlSerialize(a, b);
+			retval = _equalXmlSerialize(static_cast<const XmlSerialize *>(a), static_cast<const XmlSerialize *>(b));
 			break;
 		case T_RoleSpec:
-			retval = _equalRoleSpec(a, b);
+			retval = _equalRoleSpec(static_cast<const RoleSpec *>(a), static_cast<const RoleSpec *>(b));
 			break;
 
 		default:

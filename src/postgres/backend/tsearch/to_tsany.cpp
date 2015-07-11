@@ -229,7 +229,7 @@ to_tsvector_byid(PG_FUNCTION_ARGS)
 	else
 	{
 		pfree(prs.words);
-		out = palloc(CALCDATASIZE(0, 0));
+		out = static_cast<TSVector >(palloc(CALCDATASIZE(0, 0)));
 		SET_VARSIZE(out, CALCDATASIZE(0, 0));
 		out->size = 0;
 	}

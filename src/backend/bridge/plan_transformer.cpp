@@ -28,6 +28,7 @@
 #include "backend/planner/delete_node.h"
 #include "backend/planner/insert_node.h"
 #include "backend/planner/seq_scan_node.h"
+#include "backend/planner/limit_node.h"
 
 #include <cstring>
 
@@ -67,9 +68,14 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
       plan_node = PlanTransformer::TransformResult(
           reinterpret_cast<const ResultState*>(plan_state));
       break;
+    case T_Limit:
+      plan_node = PlanTransformer::TransformLimit(
+          reinterpret_cast<const LimitState*>(plan_state));
+      break;
     default:
       plan_node = nullptr;
-      LOG_ERROR("Unsupported Postgres Plan Tag: %u", nodeTag(plan));
+      LOG_ERROR("Unsupported Postgres Plan Tag: %u", nodeTag(plan))
+      ;
       break;
   }
 
@@ -80,12 +86,12 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
  * @brief Recursively destroy the nodes in a plan node tree.
  */
 bool PlanTransformer::CleanPlanNodeTree(planner::AbstractPlanNode* root) {
-  if(!root)
+  if (!root)
     return false;
 
   // Clean all children subtrees
   auto children = root->GetChildren();
-  for(auto child : children) {
+  for (auto child : children) {
     auto rv = CleanPlanNodeTree(child);
     assert(rv);
   }
@@ -147,8 +153,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
           .GetLocation(database_oid, table_oid));
 
-  if(target_table == nullptr) {
-    LOG_ERROR("Target table is not found : database oid %u table oid %u", database_oid, table_oid);
+  if (target_table == nullptr) {
+    LOG_ERROR("Target table is not found : database oid %u table oid %u",
+              database_oid, table_oid);
     return nullptr;
   }
 
@@ -173,7 +180,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
    *    Not desired?
    * 2. Maybe too costly for the planning stage (especially for a long VALUES list).
    */
-  if(nodeTag(sub_planstate->plan) == T_Result) {  // Child is a result node
+  if (nodeTag(sub_planstate->plan) == T_Result) {  // Child is a result node
     LOG_INFO("Child of Insert is Result");
     auto result_ps = reinterpret_cast<ResultState*>(sub_planstate);
 
@@ -223,7 +230,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
 //    LOG_INFO("Retrieved %u tuples", tuples.size());
 //  }
   else {
-    LOG_ERROR("Unsupported child type of Insert: %u", nodeTag(sub_planstate->plan));
+    LOG_ERROR("Unsupported child type of Insert: %u",
+              nodeTag(sub_planstate->plan));
   }
 
   /* TODO: Who's responsible for deleting the vector of tuples? */
@@ -293,7 +301,6 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
 
   assert(nodeTag(ss_plan_state) == T_SeqScanState);
 
-
   // Grab Database ID and Table ID
   assert(ss_plan_state->ss_currentRelation);  // Null if not a base table scan
   Oid database_oid = GetCurrentDatabaseOid();
@@ -347,7 +354,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformResult(
   ProjectionInfo *projInfo = node->ps.ps_ProjInfo;
   int numSimpleVars = projInfo->pi_numSimpleVars;
   ExprDoneCond *itemIsDone = projInfo->pi_itemIsDone;
-	ExprContext *econtext = projInfo->pi_exprContext;
+  ExprContext *econtext = projInfo->pi_exprContext;
 
   if (node->rs_checkqual) {
     LOG_INFO("We can not handle constant qualifications now");
@@ -363,23 +370,92 @@ planner::AbstractPlanNode *PlanTransformer::TransformResult(
 
     LOG_INFO("The number of target in list is %d", list_length(targetList));
 
-
     foreach(tl, targetList)
     {
       GenericExprState *gstate = (GenericExprState *) lfirst(tl);
       TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
       AttrNumber resind = tle->resno - 1;
       bool isnull;
-      Datum value = ExecEvalExpr(gstate->arg,
-									  econtext,
-									  &isnull,
-									  &itemIsDone[resind]);
+      Datum value = ExecEvalExpr(gstate->arg, econtext, &isnull,
+                                 &itemIsDone[resind]);
+      LOG_INFO("Datum : %lu \n", value);
     }
 
-  } else {
+  }
+  else {
     LOG_INFO("We can not handle case where targelist is null");
   }
+
   return nullptr;
+}
+/**
+ * @brief Convert a Postgres LimitState into a Peloton LimitPlanNode
+ *        does not support LIMIT ALL
+ *        does not support cases where there is only OFFSET
+ * @return Pointer to the constructed AbstractPlanNode
+ */
+planner::AbstractPlanNode *PlanTransformer::TransformLimit(
+    const LimitState *node) {
+  ExprContext *econtext = node->ps.ps_ExprContext;
+  Datum val;
+  bool isNull;
+  int64 limit;
+  int64 offset;
+  bool noLimit;
+  bool noOffset;
+
+  /* Resolve limit and offset */
+  if (node->limitOffset) {
+    val = ExecEvalExprSwitchContext(node->limitOffset, econtext, &isNull,
+    NULL);
+    /* Interpret NULL offset as no offset */
+    if (isNull)
+      offset = 0;
+    else {
+      offset = DatumGetInt64(val);
+      if (offset < 0) {
+        LOG_ERROR("OFFSET must not be negative, offset = %ld", offset);
+      }
+      noOffset = false;
+    }
+  } else {
+    /* No OFFSET supplied */
+    offset = 0;
+  }
+
+  if (node->limitCount) {
+    val = ExecEvalExprSwitchContext(node->limitCount, econtext, &isNull,
+    NULL);
+    /* Interpret NULL count as no limit (LIMIT ALL) */
+    if (isNull) {
+      limit = 0;
+      noLimit = true;
+    } else {
+      limit = DatumGetInt64(val);
+      if (limit < 0) {
+        LOG_ERROR("LIMIT must not be negative, limit = %ld", limit);
+      }
+      noLimit = false;
+    }
+  } else {
+    /* No LIMIT supplied */
+    limit = 0;
+    noLimit = true;
+  }
+
+  /* TODO: does not do pass down bound to child node
+   * In Peloton, they are both unsigned. But both of them cannot be negative,
+   * The is safe */
+  /* TODO: handle no limit and no offset cases, in which the corresponding value is 0 */
+  LOG_INFO("Flags :: Limit: %d, Offset: %d", noLimit, noOffset);
+  LOG_INFO("Limit: %ld, Offset: %ld", limit, offset);
+  auto plan_node = new planner::LimitNode(limit, offset);
+
+  /* Resolve child plan */
+  PlanState *subplan_state = outerPlanState(node);
+  assert(subplan_state != nullptr);
+  plan_node->AddChild(PlanTransformer::TransformPlan(subplan_state));
+  return plan_node;
 }
 
 }  // namespace bridge
