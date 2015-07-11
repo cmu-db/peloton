@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/common/types.h"
+#include "backend/common/logger.h"
 
 #include "nodes/nodes.h" // TODO :: REMOVE, just for raw expr
 
@@ -31,15 +32,21 @@ class DataTable;
 
 namespace catalog {
 
-/**
- * Constraint Catalog Object
- */
+class ReferenceTableInfo;
+
+//===--------------------------------------------------------------------===//
+// Constraint Class
+//===--------------------------------------------------------------------===//
+
 class Constraint
 {
 
 public:
-    Constraint( ConstraintType type, std::string name = "", std::string reference_table_name = "" )
-                : type(type), name(name), reference_table_name(reference_table_name) {}
+    // Configure ( type [, name] )
+    Constraint( ConstraintType type, std::string name = "" )
+                : type(type), name(name) {}
+
+    // Configure ( type, raw expression )
     Constraint( ConstraintType type, Node* _raw_default_expr )
                 : type(type) { raw_default_expr = (Node*) copyObject((void*) _raw_default_expr ); }
  
@@ -56,11 +63,22 @@ public:
         return name;
     }
 
-    std::string GetReferenceTableName() const {
-        return reference_table_name;
+    inline void SetReferenceTablePosition( int position ) {
+      if( position < 0 ){
+        LOG_ERROR(" ReferenceTable position can be negative !!");
+      }
+      reference_table_position = position;
+    }
+
+    inline void SetUniqueIndexPosition( int position ) {
+      if( position < 0 ){
+        LOG_ERROR(" Unique Index position can be negative !!");
+      }
+      unique_index_position = position;
     }
 
     // Get a string representation of this constraint
+    // TODO Print out 
     friend std::ostream& operator<<(std::ostream& os, const Constraint& constraint);
 
 private:
@@ -72,16 +90,66 @@ private:
     // The type of constraint
     ConstraintType type = CONSTRAINT_TYPE_INVALID;
 
-    // Constraint name (if needed)
+    // Constraint name ( if needed )
     std::string name = "";
 
-    // reference table names
-    std::string reference_table_name = "";
+    // FIXME :: Cooked expr
+    // Raw_default_expr ( if needed )
+    Node* raw_default_expr = nullptr;
 
-    // raw_default_expr
-    Node* raw_default_expr;
+    // Unique index and reference table position in Table
+    int reference_table_position = -1;
+    int unique_index_position = -1;
 
 };
+
+
+//===--------------------------------------------------------------------===//
+// ReferenceTable Class
+//===--------------------------------------------------------------------===//
+
+class ReferenceTableInfo {
+
+  public:
+  ReferenceTableInfo( storage::DataTable* PrimaryKeyTable,
+                      std::vector<std::string> pk_column_names,
+                      std::vector<std::string> fk_column_names,
+                      std::string fk_update_action,
+                      std::string fk_delete_action,
+                      std::string conname = "") 
+
+                      : PrimaryKeyTable(PrimaryKeyTable),
+                      pk_column_names(pk_column_names),
+                      fk_column_names(fk_column_names),
+                      fk_update_action(fk_update_action),
+                      fk_delete_action(fk_delete_action),
+                      conname(conname)
+                      { }
+
+  std::vector<std::string> GetFKColumnNames(){
+    return fk_column_names;
+  }
+
+  storage::DataTable* GetPrimaryKeyTable()
+  {
+    return PrimaryKeyTable;
+  }
+
+  private:
+
+  storage::DataTable* PrimaryKeyTable = nullptr;
+
+  std::string conname = "";
+
+  std::vector<std::string> pk_column_names;
+  std::vector<std::string> fk_column_names;
+
+  std::string fk_update_action = "";
+  std::string fk_delete_action = "";
+
+};
+
+
 
 } // End catalog namespace
 } // End peloton namespace
