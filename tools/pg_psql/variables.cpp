@@ -49,7 +49,7 @@ CreateVariableSpace(void)
 {
 	struct _variable *ptr;
 
-	ptr = pg_malloc(sizeof *ptr);
+	ptr = static_cast<_variable *>(pg_malloc(sizeof *ptr));
 	ptr->name = NULL;
 	ptr->value = NULL;
 	ptr->assign_hook = NULL;
@@ -216,7 +216,7 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 	}
 
 	/* not present, make new___ entry */
-	current = pg_malloc(sizeof *current);
+	current = static_cast<_variable *>(pg_malloc(sizeof *current));
 	current->name = pg_strdup(name);
 	current->value = pg_strdup(value);
 	current->assign_hook = NULL;
@@ -254,7 +254,7 @@ SetVariableAssignHook(VariableSpace space, const char *name, VariableAssignHook 
 	}
 
 	/* not present, make new___ entry */
-	current = pg_malloc(sizeof *current);
+	current = static_cast<_variable *>(pg_malloc(sizeof *current));
 	current->name = pg_strdup(name);
 	current->value = NULL;
 	current->assign_hook = hook;

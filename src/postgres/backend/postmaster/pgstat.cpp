@@ -743,7 +743,7 @@ void
 pgstat_report_stat(bool force)
 {
 	/* we assume this inits to all zeroes: */
-	static const PgStat_TableCounts all_zeroes;
+	static const PgStat_TableCounts all_zeroes = {0,0,0,0,0,0,0,false,0,0,0,0,0};
 	static TimestampTz last_report = 0;
 
 	TimestampTz now;
@@ -883,7 +883,7 @@ static void
 pgstat_send_funcstats(void)
 {
 	/* we assume this inits to all zeroes: */
-	static const PgStat_FunctionCounts all_zeroes;
+	static const PgStat_FunctionCounts all_zeroes = {0,{0,0},{0,0}};
 
 	PgStat_MsgFuncstat msg;
 	PgStat_BackendFunctionEntry *entry;
@@ -1527,8 +1527,8 @@ pgstat_init_function_usage(FunctionCallInfoData *fcinfo,
 	}
 
 	/* Get the stats entry for this function, create if necessary */
-	htabent = hash_search(pgStatFunctions, &fcinfo->flinfo->fn_oid,
-						  HASH_ENTER, &found);
+	htabent = static_cast<PgStat_BackendFunctionEntry *>(hash_search(pgStatFunctions, &fcinfo->flinfo->fn_oid,
+						  HASH_ENTER, &found));
 	if (!found)
 		MemSet(&htabent->f_counts, 0, sizeof(PgStat_FunctionCounts));
 
@@ -2689,7 +2689,8 @@ pgstat_bestart(void)
 	beentry->st_xact_start_timestamp = 0;
 	beentry->st_databaseid = MyDatabaseId;
 	beentry->st_userid = userid;
-	beentry->st_clientaddr = clientaddr;
+
+	*(const_cast<SockAddr*>(&(beentry->st_clientaddr))) = clientaddr;
 	if (MyProcPort && MyProcPort->remote_hostname)
 		strlcpy(beentry->st_clienthostname, MyProcPort->remote_hostname,
 				NAMEDATALEN);
@@ -3268,7 +3269,7 @@ void
 pgstat_send_bgwriter(void)
 {
 	/* We assume this initializes to zeroes */
-	static const PgStat_MsgBgWriter all_zeroes;
+	static const PgStat_MsgBgWriter all_zeroes {{static_cast<StatMsgType>(0),0},0,0,0,0,0,0,0,0,0,0};
 
 	/*
 	 * This function can be called even if nothing at all has happened. In
@@ -4697,7 +4698,7 @@ pgstat_recv_inquiry(PgStat_MsgInquiry *msg, int len)
 	/*
 	 * There's no request for this DB yet, so create one.
 	 */
-	newreq = palloc(sizeof(DBWriteRequest));
+	newreq = static_cast<DBWriteRequest *>(palloc(sizeof(DBWriteRequest)));
 
 	newreq->databaseid = msg->databaseid;
 	newreq->request_time = msg->clock_time;

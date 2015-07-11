@@ -1494,7 +1494,7 @@ set_rest_more:	/* Generic SET syntaxes: */
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_VALUE;
 					n->name = "xmloption";
-					n->args = list_make1(makeStringConst($3 == XMLOPTION_DOCUMENT ? "DOCUMENT" : "CONTENT", @3));
+					n->args = list_make1(makeStringConst($3 == XMLOPTION_DOCUMENT ? static_cast<char *>("DOCUMENT") : static_cast<char *>("CONTENT"), @3));
 					$$ = n;
 				}
 			/* Special syntaxes invented by PostgreSQL: */
@@ -4497,7 +4497,7 @@ import_qualification:
 		import_qualification_type '(' relation_expr_list ')'
 			{
 				ImportQual *n = (ImportQual *) palloc(sizeof(ImportQual));
-				n->type = $1;
+				n->type = static_cast<ImportForeignSchemaType>($1);
 				n->table_names = $3;
 				$$ = n;
 			}
@@ -6517,7 +6517,7 @@ DefACLAction:
 					n->is_grant = true;
 					n->privileges = $2;
 					n->targtype = ACL_TARGET_DEFAULTS;
-					n->objtype = $4;
+					n->objtype = static_cast<GrantObjectType>($4);
 					n->objects = NIL;
 					n->grantees = $6;
 					n->grant_option = $7;
@@ -6531,7 +6531,7 @@ DefACLAction:
 					n->grant_option = false;
 					n->privileges = $2;
 					n->targtype = ACL_TARGET_DEFAULTS;
-					n->objtype = $4;
+					n->objtype = static_cast<GrantObjectType>($4);
 					n->objects = NIL;
 					n->grantees = $6;
 					n->behavior = $7;
@@ -6545,7 +6545,7 @@ DefACLAction:
 					n->grant_option = true;
 					n->privileges = $5;
 					n->targtype = ACL_TARGET_DEFAULTS;
-					n->objtype = $7;
+					n->objtype = static_cast<GrantObjectType>($7);
 					n->objects = NIL;
 					n->grantees = $9;
 					n->behavior = $10;
@@ -6660,8 +6660,8 @@ index_elem:	ColId opt_collate opt_class opt_asc_desc opt_nulls_order
 					$$->indexcolname = NULL;
 					$$->collation = $2;
 					$$->opclass = $3;
-					$$->ordering = $4;
-					$$->nulls_ordering = $5;
+					$$->ordering = static_cast<SortByDir>($4);
+					$$->nulls_ordering = static_cast<SortByNulls>($5);
 				}
 			| func_expr_windowless opt_collate opt_class opt_asc_desc opt_nulls_order
 				{
@@ -6671,8 +6671,8 @@ index_elem:	ColId opt_collate opt_class opt_asc_desc opt_nulls_order
 					$$->indexcolname = NULL;
 					$$->collation = $2;
 					$$->opclass = $3;
-					$$->ordering = $4;
-					$$->nulls_ordering = $5;
+					$$->ordering = static_cast<SortByDir>($4);
+					$$->nulls_ordering = static_cast<SortByNulls>($5);
 				}
 			| '(' a_expr ')' opt_collate opt_class opt_asc_desc opt_nulls_order
 				{
@@ -6682,8 +6682,8 @@ index_elem:	ColId opt_collate opt_class opt_asc_desc opt_nulls_order
 					$$->indexcolname = NULL;
 					$$->collation = $4;
 					$$->opclass = $5;
-					$$->ordering = $6;
-					$$->nulls_ordering = $7;
+					$$->ordering = static_cast<SortByDir>($6);
+					$$->nulls_ordering = static_cast<SortByNulls>($7);
 				}
 		;
 
@@ -7359,8 +7359,8 @@ CreateTransformStmt: CREATE opt_or_replace TRANSFORM FOR Typename LANGUAGE name 
 					n->replace = $2;
 					n->type_name = $5;
 					n->lang = $7;
-					n->fromsql = linitial($9);
-					n->tosql = lsecond($9);
+					n->fromsql = static_cast<FuncWithArgs *>(linitial($9));
+					n->tosql = static_cast<FuncWithArgs *>(lsecond($9));
 					$$ = (Node *)n;
 				}
 		;
@@ -7408,7 +7408,7 @@ ReindexStmt:
 			REINDEX reindex_target_type qualified_name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
-					n->kind = $2;
+					n->kind = static_cast<ReindexObjectType>($2);
 					n->relation = $3;
 					n->name = NULL;
 					n->options = 0;
@@ -7417,7 +7417,7 @@ ReindexStmt:
 			| REINDEX reindex_target_multitable name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
-					n->kind = $2;
+					n->kind = static_cast<ReindexObjectType>($2);
 					n->name = $3;
 					n->relation = NULL;
 					n->options = 0;
@@ -7426,7 +7426,7 @@ ReindexStmt:
 			| REINDEX '(' reindex_option_list ')' reindex_target_type qualified_name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
-					n->kind = $5;
+					n->kind = static_cast<ReindexObjectType>($5);
 					n->relation = $6;
 					n->name = NULL;
 					n->options = $3;
@@ -7435,7 +7435,7 @@ ReindexStmt:
 			| REINDEX '(' reindex_option_list ')' reindex_target_multitable name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
-					n->kind = $5;
+					n->kind = static_cast<ReindexObjectType>($5);
 					n->name = $6;
 					n->relation = NULL;
 					n->options = $3;
@@ -8375,7 +8375,7 @@ RuleStmt:	CREATE opt_or_replace RULE name AS
 					n->relation = $9;
 					n->rulename = $4;
 					n->whereClause = $10;
-					n->event = $7;
+					n->event = static_cast<CmdType>($7);
 					n->instead = $12;
 					n->actions = $13;
 					$$ = (Node *)n;
@@ -8675,7 +8675,7 @@ ViewStmt: CREATE OptTemp VIEW qualified_name opt_column_list opt_reloptions
 					n->query = $8;
 					n->replace = false;
 					n->options = $6;
-					n->withCheckOption = $9;
+					n->withCheckOption = static_cast<ViewCheckOption>($9);
 					$$ = (Node *) n;
 				}
 		| CREATE OR REPLACE OptTemp VIEW qualified_name opt_column_list opt_reloptions
@@ -8688,7 +8688,7 @@ ViewStmt: CREATE OptTemp VIEW qualified_name opt_column_list opt_reloptions
 					n->query = $10;
 					n->replace = true;
 					n->options = $8;
-					n->withCheckOption = $11;
+					n->withCheckOption = static_cast<ViewCheckOption>($11);
 					$$ = (Node *) n;
 				}
 		| CREATE OptTemp RECURSIVE VIEW qualified_name '(' columnList ')' opt_reloptions
@@ -8701,7 +8701,7 @@ ViewStmt: CREATE OptTemp VIEW qualified_name opt_column_list opt_reloptions
 					n->query = makeRecursiveViewSelect(n->view->relname, n->aliases, $11);
 					n->replace = false;
 					n->options = $9;
-					n->withCheckOption = $12;
+					n->withCheckOption = static_cast<ViewCheckOption>($12);
 					if (n->withCheckOption != NO_CHECK_OPTION)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -8719,7 +8719,7 @@ ViewStmt: CREATE OptTemp VIEW qualified_name opt_column_list opt_reloptions
 					n->query = makeRecursiveViewSelect(n->view->relname, n->aliases, $13);
 					n->replace = true;
 					n->options = $11;
-					n->withCheckOption = $14;
+					n->withCheckOption = static_cast<ViewCheckOption>($14);
 					if (n->withCheckOption != NO_CHECK_OPTION)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -9899,7 +9899,7 @@ select_no_parens:
 			| select_clause opt_sort_clause for_locking_clause opt_select_limit
 				{
 					insertSelectOptions((SelectStmt *) $1, $2, $3,
-										list_nth($4, 0), list_nth($4, 1),
+										static_cast<Node *>(list_nth($4, 0)), static_cast<Node *>(list_nth($4, 1)),
 										NULL,
 										yyscanner);
 					$$ = $1;
@@ -9907,7 +9907,7 @@ select_no_parens:
 			| select_clause opt_sort_clause select_limit opt_for_locking_clause
 				{
 					insertSelectOptions((SelectStmt *) $1, $2, $4,
-										list_nth($3, 0), list_nth($3, 1),
+										static_cast<Node *>(list_nth($3, 0)), static_cast<Node *>(list_nth($3, 1)),
 										NULL,
 										yyscanner);
 					$$ = $1;
@@ -9931,7 +9931,7 @@ select_no_parens:
 			| with_clause select_clause opt_sort_clause for_locking_clause opt_select_limit
 				{
 					insertSelectOptions((SelectStmt *) $2, $3, $4,
-										list_nth($5, 0), list_nth($5, 1),
+										static_cast<Node *>(list_nth($5, 0)), static_cast<Node *>(list_nth($5, 1)),
 										$1,
 										yyscanner);
 					$$ = $2;
@@ -9939,7 +9939,7 @@ select_no_parens:
 			| with_clause select_clause opt_sort_clause select_limit opt_for_locking_clause
 				{
 					insertSelectOptions((SelectStmt *) $2, $3, $5,
-										list_nth($4, 0), list_nth($4, 1),
+										static_cast<Node *>(list_nth($4, 0)), static_cast<Node *>(list_nth($4, 1)),
 										$1,
 										yyscanner);
 					$$ = $2;
@@ -10209,7 +10209,7 @@ sortby:		a_expr USING qual_all_Op opt_nulls_order
 					$$ = makeNode(SortBy);
 					$$->node = $1;
 					$$->sortby_dir = SORTBY_USING;
-					$$->sortby_nulls = $4;
+					$$->sortby_nulls = static_cast<SortByNulls>($4);
 					$$->useOp = $3;
 					$$->location = @3;
 				}
@@ -10217,8 +10217,8 @@ sortby:		a_expr USING qual_all_Op opt_nulls_order
 				{
 					$$ = makeNode(SortBy);
 					$$->node = $1;
-					$$->sortby_dir = $2;
-					$$->sortby_nulls = $3;
+					$$->sortby_dir = static_cast<SortByDir>($2);
+					$$->sortby_nulls = static_cast<SortByNulls>($3);
 					$$->useOp = NIL;
 					$$->location = -1;		/* no operator */
 				}
@@ -10402,8 +10402,8 @@ for_locking_item:
 				{
 					LockingClause *n = makeNode(LockingClause);
 					n->lockedRels = $2;
-					n->strength = $1;
-					n->waitPolicy = $3;
+					n->strength = static_cast<LockClauseStrength>($1);
+					n->waitPolicy = static_cast<LockWaitPolicy>($3);
 					$$ = (Node *) n;
 				}
 		;
@@ -10470,16 +10470,16 @@ table_ref:	relation_expr opt_alias_clause
 			| func_table func_alias_clause
 				{
 					RangeFunction *n = (RangeFunction *) $1;
-					n->alias = linitial($2);
-					n->coldeflist = lsecond($2);
+					n->alias = static_cast<Alias *>(linitial($2));
+					n->coldeflist = static_cast<List *>(lsecond($2));
 					$$ = (Node *) n;
 				}
 			| LATERAL_P func_table func_alias_clause
 				{
 					RangeFunction *n = (RangeFunction *) $2;
 					n->lateral = true;
-					n->alias = linitial($3);
-					n->coldeflist = lsecond($3);
+					n->alias = static_cast<Alias *>(linitial($3));
+					n->coldeflist = static_cast<List *>(lsecond($3));
 					$$ = (Node *) n;
 				}
 			| select_with_parens opt_alias_clause
@@ -11166,7 +11166,7 @@ BitWithLength:
 				{
 					char *typname;
 
-					typname = $2 ? "varbit" : "bit";
+					typname = $2 ? static_cast<char *>("varbit") : static_cast<char *>("bit");
 					$$ = SystemTypeName(typname);
 					$$->typmods = $4;
 					$$->location = @1;
@@ -11249,17 +11249,17 @@ CharacterWithoutLength:	 character opt_charset
 		;
 
 character:	CHARACTER opt_varying
-										{ $$ = $2 ? "varchar": "bpchar"; }
+										{ $$ = $2 ? static_cast<char *>("varchar"): static_cast<char *>("bpchar"); }
 			| CHAR_P opt_varying
-										{ $$ = $2 ? "varchar": "bpchar"; }
+										{ $$ = $2 ? static_cast<char *>("varchar"): static_cast<char *>("bpchar"); }
 			| VARCHAR
-										{ $$ = "varchar"; }
+										{ $$ = static_cast<char *>("varchar"); }
 			| NATIONAL CHARACTER opt_varying
-										{ $$ = $3 ? "varchar": "bpchar"; }
+										{ $$ = $3 ? static_cast<char *>("varchar"): static_cast<char *>("bpchar"); }
 			| NATIONAL CHAR_P opt_varying
-										{ $$ = $3 ? "varchar": "bpchar"; }
+										{ $$ = $3 ? static_cast<char *>("varchar"): static_cast<char *>("bpchar"); }
 			| NCHAR opt_varying
-										{ $$ = $2 ? "varchar": "bpchar"; }
+										{ $$ = $2 ? static_cast<char *>("varchar"): static_cast<char *>("bpchar"); }
 		;
 
 opt_varying:
@@ -11783,7 +11783,7 @@ a_expr:		c_expr									{ $$ = $1; }
 			| a_expr subquery_Op sub_type select_with_parens	%prec Op
 				{
 					SubLink *n = makeNode(SubLink);
-					n->subLinkType = $3;
+					n->subLinkType = static_cast<SubLinkType>($3);
 					n->subLinkId = 0;
 					n->testexpr = $1;
 					n->operName = $2;
@@ -12451,7 +12451,7 @@ func_expr_common_subexpr:
 						makeXmlExpr(IS_XMLPARSE, NULL, NIL,
 									list_make2($4, makeBoolAConst($5, -1)),
 									@1);
-					x->xmloption = $3;
+					x->xmloption = static_cast<XmlOptionType>($3);
 					$$ = (Node *)x;
 				}
 			| XMLPI '(' NAME_P ColLabel ')'
@@ -12470,7 +12470,7 @@ func_expr_common_subexpr:
 			| XMLSERIALIZE '(' document_or_content a_expr AS SimpleTypename ')'
 				{
 					XmlSerialize *n = makeNode(XmlSerialize);
-					n->xmloption = $3;
+					n->xmloption = static_cast<XmlOptionType>($3);
 					n->expr = $4;
 					n->typeName = $6;
 					n->location = @1;
@@ -14205,7 +14205,7 @@ makeBoolAConst(bool state, int location)
 	A_Const *n = makeNode(A_Const);
 
 	n->val.type = T_String;
-	n->val.val.str = (state ? "t" : "f");
+	n->val.val.str = (state ? static_cast<char *>("t") : static_cast<char *>("f"));
 	n->location = location;
 
 	return makeTypeCast((Node *)n, SystemTypeName("bool"), -1);
@@ -14846,4 +14846,4 @@ parser_init(base_yy_extra_type *yyext)
 #undef yylval
 #undef yylloc
 
-#include "lex.core_yy.c"
+#include "scan.cpp"

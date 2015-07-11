@@ -1720,8 +1720,8 @@ find_enumitem(TypeCacheEnumData *enumdata, Oid arg)
 		return NULL;
 
 	srch.enum_oid = arg;
-	return bsearch(&srch, enumdata->enum_values, enumdata->num_values,
-				   sizeof(EnumItem), enum_oid_cmp);
+	return static_cast<EnumItem *>(bsearch(&srch, enumdata->enum_values, enumdata->num_values,
+				   sizeof(EnumItem), enum_oid_cmp));
 }
 
 /*

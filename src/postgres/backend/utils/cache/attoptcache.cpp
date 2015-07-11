@@ -152,8 +152,8 @@ get_attribute_options(Oid attrelid, int attnum)
 			{
 				bytea	   *bytea_opts = attribute_reloptions(datum, false);
 
-				opts = MemoryContextAlloc(CacheMemoryContext,
-										  VARSIZE(bytea_opts));
+				opts = static_cast<AttributeOpts *>(MemoryContextAlloc(CacheMemoryContext,
+										  VARSIZE(bytea_opts)));
 				memcpy(opts, bytea_opts, VARSIZE(bytea_opts));
 			}
 			ReleaseSysCache(tp);
@@ -173,7 +173,7 @@ get_attribute_options(Oid attrelid, int attnum)
 	/* Return results in caller's memory context. */
 	if (attopt->opts == NULL)
 		return NULL;
-	result = palloc(VARSIZE(attopt->opts));
+	result = static_cast<AttributeOpts *>(palloc(VARSIZE(attopt->opts)));
 	memcpy(result, attopt->opts, VARSIZE(attopt->opts));
 	return result;
 }

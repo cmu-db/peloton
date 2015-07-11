@@ -94,8 +94,8 @@ XLogReaderAllocate(XLogPageReadCB pagereadfunc, void *private_data)
 	state->private_data = private_data;
 	/* ReadRecPtr and EndRecPtr initialized to zeroes above */
 	/* readSegNo, readOff, readLen, readPageTLI initialized to zeroes above */
-	state->errormsg_buf = palloc_extended(MAX_ERRORMSG_LEN + 1,
-										  MCXT_ALLOC_NO_OOM);
+	state->errormsg_buf = static_cast<char *>(palloc_extended(MAX_ERRORMSG_LEN + 1,
+										  MCXT_ALLOC_NO_OOM));
 	if (!state->errormsg_buf)
 	{
 		pfree(state->readBuf);
@@ -1036,7 +1036,7 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 			blk->in_use = true;
 
 			COPY_HEADER_FIELD(&fork_flags, sizeof(uint8));
-			blk->forknum = fork_flags & BKPBLOCK_FORK_MASK;
+			blk->forknum = static_cast<ForkNumber>(fork_flags & BKPBLOCK_FORK_MASK);
 			blk->flags = fork_flags;
 			blk->has_image = ((fork_flags & BKPBLOCK_HAS_IMAGE) != 0);
 			blk->has_data = ((fork_flags & BKPBLOCK_HAS_DATA) != 0);
@@ -1197,7 +1197,7 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 				if (blk->data)
 					pfree(blk->data);
 				blk->data_bufsz = blk->data_len;
-				blk->data = palloc(blk->data_bufsz);
+				blk->data = static_cast<char *>(palloc(blk->data_bufsz));
 			}
 			memcpy(blk->data, ptr, blk->data_len);
 			ptr += blk->data_len;
@@ -1212,7 +1212,7 @@ DecodeXLogRecord(XLogReaderState *state, XLogRecord *record, char **errormsg)
 			if (state->main_data)
 				pfree(state->main_data);
 			state->main_data_bufsz = state->main_data_len;
-			state->main_data = palloc(state->main_data_bufsz);
+			state->main_data = static_cast<char *>(palloc(state->main_data_bufsz));
 		}
 		memcpy(state->main_data, ptr, state->main_data_len);
 		ptr += state->main_data_len;

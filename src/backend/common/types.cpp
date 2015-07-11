@@ -536,6 +536,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PLAN_NODE_TYPE_APPEND: {
         return "APPEND";
     }
+    case PLAN_NODE_TYPE_RESULT: {
+        return "RESULT";
+    }
     }
     return "INVALID";
 }

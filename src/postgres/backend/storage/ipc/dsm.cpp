@@ -187,7 +187,7 @@ dsm_postmaster_startup(PGShmemHeader *shim)
 						&dsm_control_mapped_size, ERROR))
 			break;
 	}
-	dsm_control = dsm_control_address;
+	dsm_control = static_cast<dsm_control_header *>(dsm_control_address);
 	on_shmem_exit(dsm_postmaster_shutdown, PointerGetDatum(shim));
 	elog(DEBUG2,
 		 "created dynamic shared memory control segment %u (%zu bytes)",
@@ -391,7 +391,7 @@ dsm_postmaster_shutdown(int code, Datum arg)
 	dsm_impl_op(DSM_OP_DESTROY, dsm_control_handle, 0,
 				&dsm_control_impl_private, &dsm_control_address,
 				&dsm_control_mapped_size, LOG);
-	dsm_control = dsm_control_address;
+	dsm_control = static_cast<dsm_control_header *>(dsm_control_address);
 	shim->dsm_control = 0;
 }
 
@@ -920,8 +920,8 @@ on_dsm_detach(dsm_segment *seg, on_dsm_detach_callback function, Datum arg)
 {
 	dsm_segment_detach_callback *cb;
 
-	cb = MemoryContextAlloc(TopMemoryContext,
-							sizeof(dsm_segment_detach_callback));
+	cb = static_cast<dsm_segment_detach_callback *>(MemoryContextAlloc(TopMemoryContext,
+							sizeof(dsm_segment_detach_callback)));
 	cb->function = function;
 	cb->arg = arg;
 	slist_push_head(&seg->on_detach, &cb->node);
@@ -991,7 +991,7 @@ dsm_create_descriptor(void)
 
 	ResourceOwnerEnlargeDSMs(CurrentResourceOwner);
 
-	seg = MemoryContextAlloc(TopMemoryContext, sizeof(dsm_segment));
+	seg = static_cast<dsm_segment *>(MemoryContextAlloc(TopMemoryContext, sizeof(dsm_segment)));
 	dlist_push_head(&dsm_segment_list, &seg->node);
 
 	/* seg->handle must be initialized by the caller */

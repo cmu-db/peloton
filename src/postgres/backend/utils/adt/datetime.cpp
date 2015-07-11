@@ -4472,7 +4472,7 @@ ConvertTimeZoneAbbrevs(struct tzEntry *abbrevs, int n)
 	}
 
 	/* Alloc the result ... */
-	tbl = malloc(tbl_size);
+	tbl = static_cast<TimeZoneAbbrevTable *>(malloc(tbl_size));
 	if (!tbl)
 		return NULL;
 

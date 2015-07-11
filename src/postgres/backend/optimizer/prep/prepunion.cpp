@@ -1344,7 +1344,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		 * and relkind, and set inh = false.  Also, set requiredPerms to zero
 		 * since all required permissions checks are done on the original RTE.
 		 */
-		childrte = copyObject(rte);
+		childrte = static_cast<RangeTblEntry *>(copyObject(rte));
 		childrte->relid = childOID;
 		childrte->relkind = newrelation->rd_rel->relkind;
 		childrte->inh = false;
@@ -1620,7 +1620,7 @@ adjust_appendrel_attrs(PlannerInfo *root, Node *node, AppendRelInfo *appinfo)
 		Query	   *newnode;
 
 		newnode = query_tree_mutator((Query *) node,
-									 adjust_appendrel_attrs_mutator,
+									 reinterpret_cast<query_tree_mutator_fptr>(adjust_appendrel_attrs_mutator),
 									 (void *) &context,
 									 QTW_IGNORE_RC_SUBQUERIES);
 		if (newnode->resultRelation == appinfo->parent_relid)
@@ -1664,8 +1664,8 @@ adjust_appendrel_attrs_mutator(Node *node,
 				if (var->varattno > list_length(appinfo->translated_vars))
 					elog(ERROR, "attribute %d of relation \"%s\" does not exist",
 						 var->varattno, get_rel_name(appinfo->parent_reloid));
-				newnode = copyObject(list_nth(appinfo->translated_vars,
-											  var->varattno - 1));
+				newnode = static_cast<Node *>(copyObject(list_nth(appinfo->translated_vars,
+											  var->varattno - 1)));
 				if (newnode == NULL)
 					elog(ERROR, "attribute %d of relation \"%s\" does not exist",
 						 var->varattno, get_rel_name(appinfo->parent_reloid));
@@ -1727,7 +1727,7 @@ adjust_appendrel_attrs_mutator(Node *node,
 					rowexpr->args = fields;
 					rowexpr->row_typeid = var->vartype;
 					rowexpr->row_format = COERCE_IMPLICIT_CAST;
-					rowexpr->colnames = copyObject(rte->eref->colnames);
+					rowexpr->colnames = static_cast<List *>(copyObject(rte->eref->colnames));
 					rowexpr->location = -1;
 
 					return (Node *) rowexpr;
@@ -1761,7 +1761,7 @@ adjust_appendrel_attrs_mutator(Node *node,
 		JoinExpr   *j;
 
 		j = (JoinExpr *) expression_tree_mutator(node,
-											  adjust_appendrel_attrs_mutator,
+											  reinterpret_cast<expression_tree_mutator_fptr>(adjust_appendrel_attrs_mutator),
 												 (void *) context);
 		/* now fix JoinExpr's rtindex (probably never happens) */
 		if (context->sublevels_up == 0 &&
@@ -1775,7 +1775,7 @@ adjust_appendrel_attrs_mutator(Node *node,
 		PlaceHolderVar *phv;
 
 		phv = (PlaceHolderVar *) expression_tree_mutator(node,
-											  adjust_appendrel_attrs_mutator,
+		                         reinterpret_cast<expression_tree_mutator_fptr>(adjust_appendrel_attrs_mutator),
 														 (void *) context);
 		/* now fix PlaceHolderVar's relid sets */
 		if (phv->phlevelsup == context->sublevels_up)
@@ -1868,13 +1868,13 @@ adjust_appendrel_attrs_mutator(Node *node,
 
 		context->sublevels_up++;
 		newnode = query_tree_mutator((Query *) node,
-									 adjust_appendrel_attrs_mutator,
+		               reinterpret_cast<query_tree_mutator_fptr>(adjust_appendrel_attrs_mutator),
 									 (void *) context, 0);
 		context->sublevels_up--;
 		return (Node *) newnode;
 	}
 
-	return expression_tree_mutator(node, adjust_appendrel_attrs_mutator,
+	return expression_tree_mutator(node, reinterpret_cast<expression_tree_mutator_fptr>(adjust_appendrel_attrs_mutator),
 								   (void *) context);
 }
 

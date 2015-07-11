@@ -336,7 +336,7 @@ flatten_unplanned_rtes(PlannerGlobal *glob, RangeTblEntry *rte)
 {
 	/* Use query_tree_walker to find all RTEs in the parse tree */
 	(void) query_tree_walker(rte->subquery,
-							 flatten_rtes_walker,
+	             reinterpret_cast<query_tree_walker_fptr>(flatten_rtes_walker),
 							 (void *) glob,
 							 QTW_EXAMINE_RTES);
 }
@@ -359,11 +359,11 @@ flatten_rtes_walker(Node *node, PlannerGlobal *glob)
 	{
 		/* Recurse into subselects */
 		return query_tree_walker((Query *) node,
-								 flatten_rtes_walker,
+		             reinterpret_cast<query_tree_walker_fptr>(flatten_rtes_walker),
 								 (void *) glob,
 								 QTW_EXAMINE_RTES);
 	}
-	return expression_tree_walker(node, flatten_rtes_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(flatten_rtes_walker),
 								  (void *) glob);
 }
 
@@ -747,7 +747,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 					 * we don't have to do set_returning_clause_references()
 					 * twice on identical targetlists.
 					 */
-					splan->plan.targetlist = copyObject(linitial(newRL));
+					splan->plan.targetlist = static_cast<List *>(copyObject(linitial(newRL)));
 				}
 
 				/*
@@ -1344,9 +1344,9 @@ fix_param_node(PlannerInfo *root, Param *p)
 		params = (List *) list_nth(root->multiexpr_params, subqueryid - 1);
 		if (colno <= 0 || colno > list_length(params))
 			elog(ERROR, "unexpected PARAM_MULTIEXPR ID: %d", p->paramid);
-		return copyObject(list_nth(params, colno - 1));
+		return static_cast<Node *>(copyObject(list_nth(params, colno - 1)));
 	}
-	return copyObject(p);
+	return static_cast<Node *>(copyObject(p));
 }
 
 /*
@@ -1431,7 +1431,7 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 		return fix_scan_expr_mutator((Node *) phv->phexpr, context);
 	}
 	fix_expr_common(context->root, node);
-	return expression_tree_mutator(node, fix_scan_expr_mutator,
+	return expression_tree_mutator(node, reinterpret_cast<expression_tree_mutator_fptr>(fix_scan_expr_mutator),
 								   (void *) context);
 }
 
@@ -1442,8 +1442,9 @@ fix_scan_expr_walker(Node *node, fix_scan_expr_context *context)
 		return false;
 	Assert(!IsA(node, PlaceHolderVar));
 	fix_expr_common(context->root, node);
-	return expression_tree_walker(node, fix_scan_expr_walker,
-								  (void *) context);
+	return expression_tree_walker(node,
+			reinterpret_cast<expression_tree_walker_fptr>(fix_scan_expr_walker),
+			(void *) context);
 }
 
 /*
@@ -2048,7 +2049,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 	}
 	fix_expr_common(context->root, node);
 	return expression_tree_mutator(node,
-								   fix_join_expr_mutator,
+								   reinterpret_cast<expression_tree_mutator_fptr>(fix_join_expr_mutator),
 								   (void *) context);
 }
 
@@ -2144,7 +2145,7 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
 	}
 	fix_expr_common(context->root, node);
 	return expression_tree_mutator(node,
-								   fix_upper_expr_mutator,
+	                 reinterpret_cast<expression_tree_mutator_fptr>(fix_upper_expr_mutator),
 								   (void *) context);
 }
 
@@ -2389,9 +2390,9 @@ extract_query_dependencies_walker(Node *node, PlannerInfo *context)
 		}
 
 		/* And recurse into the query's subexpressions */
-		return query_tree_walker(query, extract_query_dependencies_walker,
+		return query_tree_walker(query, reinterpret_cast<query_tree_walker_fptr>(extract_query_dependencies_walker),
 								 (void *) context, 0);
 	}
-	return expression_tree_walker(node, extract_query_dependencies_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(extract_query_dependencies_walker),
 								  (void *) context);
 }

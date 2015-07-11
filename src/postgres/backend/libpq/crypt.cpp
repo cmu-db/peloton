@@ -82,7 +82,7 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass,
 	switch (port->hba->auth_method)
 	{
 		case uaMD5:
-			crypt_pwd = palloc(MD5_PASSWD_LEN + 1);
+			crypt_pwd = static_cast<char *>(palloc(MD5_PASSWD_LEN + 1));
 			if (isMD5(shadow_pass))
 			{
 				/* stored password already encrypted, only do salt */
@@ -97,7 +97,7 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass,
 			else
 			{
 				/* stored password is plain, double-encrypt */
-				char	   *crypt_pwd2 = palloc(MD5_PASSWD_LEN + 1);
+				char	   *crypt_pwd2 = static_cast<char *>(palloc(MD5_PASSWD_LEN + 1));
 
 				if (!pg_md5_encrypt(shadow_pass,
 									port->user_name,
@@ -124,7 +124,7 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass,
 			if (isMD5(shadow_pass))
 			{
 				/* Encrypt user-supplied password to match stored MD5 */
-				crypt_client_pass = palloc(MD5_PASSWD_LEN + 1);
+				crypt_client_pass = static_cast<char *>(palloc(MD5_PASSWD_LEN + 1));
 				if (!pg_md5_encrypt(client_pass,
 									port->user_name,
 									strlen(port->user_name),

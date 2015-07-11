@@ -485,7 +485,7 @@ TypeCreate(Oid newTypeOid,
 								 baseType,
 								 typeCollation,
 								 (defaultTypeBin ?
-								  stringToNode(defaultTypeBin) :
+								  static_cast<Node *>(stringToNode(defaultTypeBin)) :
 								  NULL),
 								 rebuildDeps);
 

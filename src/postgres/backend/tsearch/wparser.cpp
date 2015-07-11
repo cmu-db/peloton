@@ -184,7 +184,7 @@ prs_setup_firstcall(FuncCallContext *funcctx, Oid prsid, text *txt)
 			st->len = 2 * st->len;
 			st->list = (LexemeEntry *) repalloc(st->list, sizeof(LexemeEntry) * st->len);
 		}
-		st->list[st->cur].lexeme = palloc(llen + 1);
+		st->list[st->cur].lexeme = static_cast<char *>(palloc(llen + 1));
 		memcpy(st->list[st->cur].lexeme, lex, llen);
 		st->list[st->cur].lexeme[llen] = '\0';
 		st->list[st->cur].type = type;

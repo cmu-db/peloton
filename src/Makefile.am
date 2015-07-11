@@ -63,12 +63,14 @@ libpeloton_la_SOURCES = \
 ## HACK: To make use of different include flags for peloton and postgres.
 
 libpeloton_la_CPPFLAGS = -I$(srcdir)/postgres/include \
-			 -I$(srcdir)/postgres/backend \
-			 -I$(srcdir)/ \
-			 $(third_party_INCLUDES)
+						 -I$(srcdir)/postgres/backend \
+						 -I$(srcdir)/ \
+						 -I. -I$(top_srcdir)/src -I.. \
+						 $(third_party_INCLUDES)
 
-libpeloton_la_CXXFLAGS = -std=c++11 -I. -I$(top_srcdir)/src -I.. $(third_party_INCLUDES) \
-						 -fPIC -fpic -fpermissive -Wno-write-strings -msse4.2
+libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS) -msse4.2 \
+						 -Wno-write-strings -Wno-sign-compare \
+						 -Wno-unused-parameter -Wno-missing-field-initializers
 
 if BUILD_OS_IS_DARWIN
 libpeloton_la_LDFLAGS = -lm

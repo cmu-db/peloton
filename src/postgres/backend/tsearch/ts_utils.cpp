@@ -52,7 +52,7 @@ get_tsearch_config_filename(const char *basename,
 						basename)));
 
 	get_share_path(my_exec_path, sharepath);
-	result = palloc(MAXPGPATH);
+	result = static_cast<char *>(palloc(MAXPGPATH));
 	snprintf(result, MAXPGPATH, "%s/tsearch_data/%s.%s",
 			 sharepath, basename, extension);
 

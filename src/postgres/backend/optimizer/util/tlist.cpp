@@ -151,7 +151,7 @@ add_to_flat_tlist(List *tlist, List *exprs)
 		{
 			TargetEntry *tle;
 
-			tle = makeTargetEntry(copyObject(expr),		/* copy needed?? */
+			tle = makeTargetEntry(static_cast<Expr *>(copyObject(expr)),		/* copy needed?? */
 								  next_resno++,
 								  NULL,
 								  false);

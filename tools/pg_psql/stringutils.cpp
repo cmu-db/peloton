@@ -77,7 +77,7 @@ strtokx(const char *s,
 		 * tokens.  2X the space is a gross overestimate, but it's unlikely
 		 * that this code will be used on huge strings anyway.
 		 */
-		storage = pg_malloc(2 * strlen(s) + 1);
+		storage = static_cast<char *>(pg_malloc(2 * strlen(s) + 1));
 		strcpy(storage, s);
 		string = storage;
 	}
@@ -300,7 +300,7 @@ quote_if_needed(const char *source, const char *entails_quote,
 	Assert(quote != '\0');
 
 	src = source;
-	dst = ret = pg_malloc(2 * strlen(src) + 3); /* excess */
+	dst = ret = static_cast<char *>(pg_malloc(2 * strlen(src) + 3)); /* excess */
 
 	*dst++ = quote;
 

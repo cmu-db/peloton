@@ -429,7 +429,7 @@ CreateRole(CreateRoleStmt *stmt)
 	 */
 	foreach(item, addroleto)
 	{
-		RoleSpec   *oldrole = lfirst(item);
+		RoleSpec   *oldrole = static_cast<RoleSpec *>(lfirst(item));
 		HeapTuple	oldroletup = get_rolespec_tuple((Node *) oldrole);
 		Oid			oldroleid = HeapTupleGetOid(oldroletup);
 		char	   *oldrolename = NameStr(((Form_pg_authid) GETSTRUCT(oldroletup))->rolname);
@@ -952,7 +952,7 @@ DropRole(DropRoleStmt *stmt)
 
 	foreach(item, stmt->roles)
 	{
-		RoleSpec   *rolspec = lfirst(item);
+		RoleSpec   *rolspec = static_cast<RoleSpec *>(lfirst(item));
 		char	   *role;
 		HeapTuple	tuple,
 					tmp_tuple;
@@ -1436,7 +1436,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 
 	forboth(specitem, memberSpecs, iditem, memberIds)
 	{
-		RoleSpec   *memberRole = lfirst(specitem);
+		RoleSpec   *memberRole = static_cast<RoleSpec *>(lfirst(specitem));
 		Oid			memberid = lfirst_oid(iditem);
 		HeapTuple	authmem_tuple;
 		HeapTuple	tuple;
@@ -1567,7 +1567,7 @@ DelRoleMems(const char *rolename, Oid roleid,
 
 	forboth(specitem, memberSpecs, iditem, memberIds)
 	{
-		RoleSpec   *memberRole = lfirst(specitem);
+		RoleSpec   *memberRole = static_cast<RoleSpec *>(lfirst(specitem));
 		Oid			memberid = lfirst_oid(iditem);
 		HeapTuple	authmem_tuple;
 

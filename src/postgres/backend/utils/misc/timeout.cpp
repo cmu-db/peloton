@@ -348,7 +348,7 @@ InitializeTimeouts(void)
 
 	for (i = 0; i < MAX_TIMEOUTS; i++)
 	{
-		all_timeouts[i].index = i;
+		all_timeouts[i].index = static_cast<TimeoutId>(i);
 		all_timeouts[i].indicator = false;
 		all_timeouts[i].timeout_handler = NULL;
 		all_timeouts[i].start_time = 0;
@@ -379,7 +379,7 @@ RegisterTimeout(TimeoutId id, timeout_handler_proc handler)
 	if (id >= USER_TIMEOUT)
 	{
 		/* Allocate a user-defined timeout reason */
-		for (id = USER_TIMEOUT; id < MAX_TIMEOUTS; id = id + 1)
+		for (id = USER_TIMEOUT; id < MAX_TIMEOUTS; id = static_cast<TimeoutId>(id + 1))
 			if (all_timeouts[id].timeout_handler == NULL)
 				break;
 		if (id >= MAX_TIMEOUTS)
