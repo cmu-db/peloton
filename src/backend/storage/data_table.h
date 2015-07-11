@@ -63,33 +63,26 @@ public:
     //===--------------------------------------------------------------------===//
     
     // insert tuple in table
-    ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple, bool update = false);
+    ItemPointer InsertTuple( txn_id_t transaction_id, const Tuple *tuple, bool update = false );
     
     //===--------------------------------------------------------------------===//
     // INDEXES
     //===--------------------------------------------------------------------===//
 
-    // add an index to the table
-    void AddIndex(index::Index *index);
+    // Add an index to the table
+    void AddIndex( index::Index *index );
 
-    // add the unique index to the table
-    void AddUniqueIndex(index::Index *index);
+    // Add the unique index to the table
+    void AddUniqueIndex( index::Index *index );
 
-    // add the reference(foreignkey) to the table
-    void AddReferenceTable(storage::DataTable *table);
-
-    // add the reference to the table with update/delete actions
-    void AddReferenceTable(storage::DataTable *table,
-                           std::vector<std::string> column_names,
-                           catalog::Constraint* constraint,
-                           std::string _fk_update_action, 
-                           std::string _fk_delete_action );
+    // Add the reference table to the table
+    void AddReferenceTable( catalog::ReferenceTableInfo *referenceTableInfo );
 
     // Set the index for PrimaryKey
-    void SetPrimaryIndex(index::Index *index);
+    void SetPrimaryIndex( index::Index *index );
 
     // Set raw check expr
-    void SetRawCheckExpr(Node* _raw_check_expr);
+    void SetRawCheckExpr( Node* _raw_check_expr );
 
     // Get the PrimaryKey index
     index::Index* GetPrimaryIndex();
@@ -109,7 +102,7 @@ public:
     }
 
     inline bool ishasReferenceTable(){
-        if( reference_tables.size() > 0 )
+        if( reference_table_infos.size() > 0 )
           return true;
         else
           return false;
@@ -124,7 +117,7 @@ public:
     }
 
     inline size_t GetReferenceTableCount() const {
-        return reference_tables.size();
+        return reference_table_infos.size();
     }
 
     inline index::Index *GetIndex(oid_t index_id) const {
@@ -137,9 +130,9 @@ public:
         return unique_indexes[index_id];
     }
 
-    inline storage::DataTable *GetReferenceTable(oid_t table_id) const {
-        assert(table_id < reference_tables.size());
-        return reference_tables[table_id];
+    inline storage::DataTable *GetReferenceTable(int position) const {
+        assert( position < reference_table_infos.size() );
+        return reference_table_infos[position]->GetPrimaryKeyTable();
     }
 
     void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
@@ -170,17 +163,15 @@ protected:
     // INDEXES
     std::vector<index::Index*> indexes;
 
-    // Index for Unique constraint
+    // Primary key Index
+    index::Index* PrimaryKey_Index = nullptr;
+
+    // Unique Index
     std::vector<index::Index*> unique_indexes;
 
-    // reference tables
-    std::vector<storage::DataTable*> reference_tables;
-    // foreignkey actions (update, delete)
-    std::string fk_update_action;
-    std::string fk_delete_action;
+    // Reference tables
+    std::vector<catalog::ReferenceTableInfo*> reference_table_infos;
 
-    // Index for Primary key
-    index::Index* PrimaryKey_Index = nullptr;
 
     // Raw check expr
     Node* raw_check_expr;
