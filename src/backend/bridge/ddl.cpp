@@ -60,9 +60,7 @@ bool DDL::CreateDatabase( Oid database_oid ){
 
   peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
 
-  if( db == nullptr ){
-    return false;
-  }
+  fprintf(stderr, "DDLCreateDatabase :: %u %p \n", database_oid, db);
 
   return true;
 }
@@ -92,9 +90,6 @@ bool DDL::CreateTable( Oid relation_oid,
   // Construct our schema from vector of ColumnInfo
   if( schema == NULL) 
     schema = new catalog::Schema(column_infos);
-
-  // FIXME: Construct table backend
-  storage::VMBackend *backend = new storage::VMBackend();
 
   // Build a table from schema
   storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, relation_oid, schema, table_name);
@@ -151,7 +146,7 @@ bool DDL::CreateIndex(std::string index_name,
   // Get the table location from manager
   auto table = catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
   storage::DataTable* data_table = (storage::DataTable*) table;
-  auto tuple_schema = data_table->GetSchema();
+  catalog::Schema *tuple_schema = data_table->GetSchema();
 
   // Construct key schema
   std::vector<oid_t> key_columns;
@@ -240,6 +235,8 @@ bool DDL::AlterTable( Oid relation_oid, AlterTableStmt* Astmt ){
     	  break;
     }
   }
+
+  return true;
 }
 
 
@@ -587,7 +584,7 @@ void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
   ListCell   *entry;
   foreach(entry, ColumnList){
 
-    ColumnDef  *coldef = lfirst(entry);
+    ColumnDef  *coldef = static_cast<ColumnDef *>(lfirst(entry));
 
     // Get the type oid and type mod with given typeName
     Oid typeoid = typenameTypeId(NULL, coldef->typeName);
@@ -633,7 +630,7 @@ void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
 
       foreach(constNodeEntry, coldef->constraints)
       {
-        Constraint* ConstraintNode = lfirst(constNodeEntry);
+        Constraint* ConstraintNode = static_cast<Constraint*>(lfirst(constNodeEntry));
         ConstraintType contype;
         std::string conname = "";
 
@@ -701,7 +698,6 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
   std::string table_name;
   IndexMethodType method_type;
   IndexType type;
-  bool unique_keys;
   std::vector<std::string> key_column_names;
 
   // Table name
@@ -710,7 +706,7 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
   // Key column names
   ListCell   *entry;
   foreach(entry, Istmt->indexParams){
-    IndexElem *indexElem = lfirst(entry);
+    IndexElem *indexElem = static_cast<IndexElem *>(lfirst(entry));
     if( indexElem->name != NULL ){
       key_column_names.push_back(indexElem->name);
     }

@@ -1057,7 +1057,7 @@ finalize_aggregate(AggState *aggstate,
 		InitFunctionCallInfoData(fcinfo, &peraggstate->finalfn,
 								 numFinalArgs,
 								 peraggstate->aggCollation,
-								 (void *) aggstate, NULL);
+								 reinterpret_cast<fmNodePtr>(aggstate), NULL);
 
 		/* Fill in the transition state value */
 		fcinfo.arg[0] = pergroupstate->transValue;
@@ -1291,7 +1291,7 @@ find_unaggregated_cols_walker(Node *node, Bitmapset **colnos)
 		/* do not descend into aggregate exprs */
 		return false;
 	}
-	return expression_tree_walker(node, find_unaggregated_cols_walker,
+	return expression_tree_walker(node, reinterpret_cast<expression_tree_walker_fptr>(find_unaggregated_cols_walker),
 								  (void *) colnos);
 }
 
@@ -1996,7 +1996,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 		foreach(l, node->chain)
 		{
-			Agg	   *agg = lfirst(l);
+			Agg	   *agg = static_cast<Agg *>(lfirst(l));
 
 			numGroupingSets = Max(numGroupingSets,
 								  list_length(agg->groupingSets));
@@ -2106,7 +2106,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	 * compare functions.  Accumulate all_grouped_cols in passing.
 	 */
 
-	aggstate->phases = palloc0(numPhases * sizeof(AggStatePerPhaseData));
+	aggstate->phases = static_cast<AggStatePerPhase >(palloc0(numPhases * sizeof(AggStatePerPhaseData)));
 
 	for (phase = 0; phase < numPhases; ++phase)
 	{
@@ -2117,7 +2117,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 		if (phase > 0)
 		{
-			aggnode = list_nth(node->chain, phase-1);
+			aggnode = static_cast<Agg *>(list_nth(node->chain, phase-1));
 			sortnode = (Sort *) aggnode->plan.lefttree;
 			Assert(IsA(sortnode, Sort));
 		}
@@ -2131,13 +2131,13 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 		if (num_sets)
 		{
-			phasedata->gset_lengths = palloc(num_sets * sizeof(int));
-			phasedata->grouped_cols = palloc(num_sets * sizeof(Bitmapset *));
+			phasedata->gset_lengths = static_cast<int *>(palloc(num_sets * sizeof(int)));
+			phasedata->grouped_cols = static_cast<Bitmapset **>(palloc(num_sets * sizeof(Bitmapset *)));
 
 			i = 0;
 			foreach(l, aggnode->groupingSets)
 			{
-				int current_length = list_length(lfirst(l));
+				int current_length = list_length(static_cast<const List *>(lfirst(l)));
 				Bitmapset *cols = NULL;
 
 				/* planner forces this to be correct */
@@ -2408,7 +2408,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 								 &peraggstate->transfn,
 								 peraggstate->numTransInputs + 1,
 								 peraggstate->aggCollation,
-								 (void *) aggstate, NULL);
+								 reinterpret_cast<fmNodePtr>(aggstate), NULL);
 
 		/* get info about relevant datatypes */
 		get_typlenbyval(aggref->aggtype,

@@ -581,7 +581,7 @@ StandbyAcquireAccessExclusiveLock(TransactionId xid, Oid dbOid, Oid relOid)
 	/* dbOid is InvalidOid when we are locking a shared relation. */
 	Assert(OidIsValid(relOid));
 
-	newlock = palloc(sizeof(xl_standby_lock));
+	newlock = static_cast<xl_standby_lock *>(palloc(sizeof(xl_standby_lock)));
 	newlock->xid = xid;
 	newlock->dbOid = dbOid;
 	newlock->relOid = relOid;

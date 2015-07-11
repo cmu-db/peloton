@@ -164,7 +164,7 @@ typedef struct printQueryOpt
 
 extern const printTextFormat pg_asciiformat;
 extern const printTextFormat pg_asciiformat_old;
-extern const printTextFormat pg_utf8format;
+extern printTextFormat pg_utf8format;
 
 
 extern FILE *PageOutput(int lines, const printTableOpt *topt);

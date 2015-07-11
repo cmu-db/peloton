@@ -143,7 +143,7 @@ copy_file(char *fromfile, char *tofile)
 	/* Use palloc to ensure we get a maxaligned buffer */
 #define COPY_BUF_SIZE (8 * BLCKSZ)
 
-	buffer = palloc(COPY_BUF_SIZE);
+	buffer = static_cast<char *>(palloc(COPY_BUF_SIZE));
 
 	/*
 	 * Open the files

@@ -463,9 +463,6 @@ SetNumberOfTuples(Oid relation_id, float num_tuples) {
  */
 bool BootstrapPeloton(void){
 
-  // Create db with current database oid
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid()  );
-
   // Relations for catalog tables
   Relation pg_class_rel;
   Relation pg_attribute_rel;

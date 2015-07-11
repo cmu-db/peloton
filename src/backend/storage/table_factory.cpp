@@ -25,7 +25,7 @@ namespace storage {
 
 DataTable* TableFactory::GetDataTable(oid_t database_id,
                                       oid_t relation_id,
-                                      const catalog::Schema* schema,
+                                      catalog::Schema* schema,
                                       std::string table_name,
                                       size_t tuples_per_tilegroup_count) {
   // create a new backend

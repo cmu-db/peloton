@@ -291,7 +291,7 @@ gin_tsquery_consistent(PG_FUNCTION_ARGS)
 		res = TS_execute(GETQUERY(query),
 						 &gcv,
 						 true,
-						 checkcondition_gin);
+						 reinterpret_cast<bool (*)(void*, QueryOperand*)>(checkcondition_gin));
 	}
 
 	PG_RETURN_BOOL(res);

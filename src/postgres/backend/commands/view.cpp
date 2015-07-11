@@ -82,7 +82,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 	attrList = NIL;
 	foreach(t, tlist)
 	{
-		TargetEntry *tle = lfirst(t);
+		TargetEntry *tle = static_cast<TargetEntry *>(lfirst(t));
 
 		if (!tle->resjunk)
 		{
@@ -524,7 +524,7 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	 * long as the CREATE command is consistent with that --- no explicit
 	 * schema name.
 	 */
-	view = copyObject(stmt->view);		/* don't corrupt original command */
+	view = static_cast<RangeVar *>(copyObject(stmt->view));
 	if (view->relpersistence == RELPERSISTENCE_PERMANENT
 		&& isQueryUsingTempRelation(viewParse))
 	{

@@ -96,7 +96,7 @@ compact_palloc0(IspellDict *Conf, size_t size)
 	/* Need more space? */
 	if (size > Conf->avail)
 	{
-		Conf->firstfree = palloc0(COMPACT_ALLOC_CHUNK);
+		Conf->firstfree = static_cast<char *>(palloc0(COMPACT_ALLOC_CHUNK));
 		Conf->avail = COMPACT_ALLOC_CHUNK;
 	}
 
@@ -113,7 +113,7 @@ compact_palloc0(IspellDict *Conf, size_t size)
 static char *
 cpstrdup(IspellDict *Conf, const char *str)
 {
-	char	   *res = cpalloc(strlen(str) + 1);
+	char	   *res = static_cast<char *>(cpalloc(strlen(str) + 1));
 
 	strcpy(res, str);
 	return res;
@@ -917,9 +917,9 @@ MergeAffix(IspellDict *Conf, int a1, int a2)
 	}
 
 	ptr = Conf->AffixData + Conf->nAffixData;
-	*ptr = cpalloc(strlen(Conf->AffixData[a1]) +
+	*ptr = static_cast<char *>(cpalloc(strlen(Conf->AffixData[a1]) +
 				   strlen(Conf->AffixData[a2]) +
-				   1 /* space */ + 1 /* \0 */ );
+				   1 /* space */ + 1 /* \0 */ ));
 	sprintf(*ptr, "%s %s", Conf->AffixData[a1], Conf->AffixData[a2]);
 	ptr++;
 	*ptr = NULL;

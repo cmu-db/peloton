@@ -45,7 +45,7 @@ scanstr(const char *s)
 
 	len = strlen(s);
 
-	newStr = palloc(len + 1);	/* string cannot get longer */
+	newStr = static_cast<char *>(palloc(len + 1));
 
 	for (i = 0, j = 0; i < len; i++)
 	{
@@ -134,7 +134,7 @@ downcase_truncate_identifier(const char *ident, int len, bool warn)
 	int			i;
 	bool		enc_is_single_byte;
 
-	result = palloc(len + 1);
+	result = static_cast<char *>(palloc(len + 1));
 	enc_is_single_byte = pg_database_encoding_max_length() == 1;
 
 	/*

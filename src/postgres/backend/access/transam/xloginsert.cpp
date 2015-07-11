@@ -1007,8 +1007,8 @@ InitXLogInsert(void)
 	}
 	if (rdatas == NULL)
 	{
-		rdatas = MemoryContextAlloc(xloginsert_cxt,
-									sizeof(XLogRecData) * XLR_NORMAL_RDATAS);
+		rdatas = static_cast<XLogRecData *>(MemoryContextAlloc(xloginsert_cxt,
+									sizeof(XLogRecData) * XLR_NORMAL_RDATAS));
 		max_rdatas = XLR_NORMAL_RDATAS;
 	}
 
@@ -1016,6 +1016,6 @@ InitXLogInsert(void)
 	 * Allocate a buffer to hold the header information for a WAL record.
 	 */
 	if (hdr_scratch == NULL)
-		hdr_scratch = MemoryContextAllocZero(xloginsert_cxt,
-											 HEADER_SCRATCH_SIZE);
+		hdr_scratch = static_cast<char *>(MemoryContextAllocZero(xloginsert_cxt,
+											 HEADER_SCRATCH_SIZE));
 }

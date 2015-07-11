@@ -151,8 +151,7 @@ decodePageSplitRecord(char *begin, int len, int *n)
 	memcpy(n, begin, sizeof(int));
 	ptr = begin + sizeof(int);
 
-	tuples = palloc(*n * sizeof(IndexTuple));
-
+	tuples = static_cast<IndexTuple *>(palloc(*n * sizeof(IndexTuple)));
 	for (i = 0; i < *n; i++)
 	{
 		Assert(ptr - begin < len);
