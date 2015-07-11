@@ -48,26 +48,21 @@ void DataTable::AddUniqueIndex(index::Index *index) {
   unique_indexes.push_back(index);
 }
 
-void DataTable::AddReferenceTable(storage::DataTable *table){
-  std::lock_guard<std::mutex> lock(table_reference_table_mutex);
-  reference_tables.push_back(table);
-}
+// FIXME
+void DataTable::AddReferenceTable( catalog::ReferenceTableInfo *referenceTableInfo){
 
-void DataTable::AddReferenceTable(storage::DataTable *table, 
-                       std::vector<std::string> column_names,
-                       catalog::Constraint* constraint,
-                       std::string _fk_update_action, 
-                       std::string _fk_delete_action ){
-
-  std::lock_guard<std::mutex> lock(table_reference_table_mutex);
-  reference_tables.push_back(table);
+  std::lock_guard<std::mutex> lock( table_reference_table_mutex );
+  reference_table_infos.push_back( referenceTableInfo );
 
   const catalog::Schema* schema = this->GetSchema();
-  for( auto column_name : column_names)
+ 
+  for( auto column_name : referenceTableInfo->GetFKColumnNames() )
+  {
+    catalog::Constraint *constraint = new catalog::Constraint( CONSTRAINT_TYPE_FOREIGN );
+    constraint->SetReferenceTablePosition( this->GetReferenceTableCount() ) ;
     schema->AddConstraintByColumnName( column_name, constraint );
+  }
 
-  fk_update_action = _fk_update_action;
-  fk_delete_action = _fk_delete_action;
 }
 
 void DataTable::SetPrimaryIndex(index::Index *index) {
