@@ -719,46 +719,47 @@ bool BootstrapPeloton(void){
   //===--------------------------------------------------------------------===//
   // Link Reference tables 
   //===--------------------------------------------------------------------===//
-  {
-    Relation pg_constraint_rel;
-    HeapScanDesc pg_constraint_scan;
-    HeapTuple pg_constraint_tuple;
-
-    peloton::oid_t database_oid = GetCurrentDatabaseOid();
-    assert( database_oid );
-
-    pg_constraint_rel = heap_open( ConstraintRelationId, AccessShareLock);
-    pg_constraint_scan = heap_beginscan_catalog(pg_constraint_rel, 0, NULL);
-
-    // Go over the pg_index catalog table looking for foreign key constraints
-    while (1) {
-      Form_pg_constraint pg_constraint;
-
-      pg_constraint_tuple = heap_getnext(pg_constraint_scan, ForwardScanDirection);
-      if(!HeapTupleIsValid(pg_constraint_tuple))
-        break;
-
-      pg_constraint = (Form_pg_constraint) GETSTRUCT(pg_constraint_tuple);
-
-      if( pg_constraint->contype == 'f')
-      {
-        // TODO :: Make this as a function
-        Oid current_table_oid = pg_constraint->conrelid;
-        assert( current_table_oid );
-        Oid foreign_table_oid = pg_constraint->confrelid;
-        assert( foreign_table_oid );
-
-        peloton::storage::DataTable* current_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, current_table_oid);
-        assert( current_table );
-        peloton::storage::DataTable* reference_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, foreign_table_oid);
-        assert( reference_table );
-
-        current_table->AddReferenceTable(reference_table);
-      }
-    }
-    heap_endscan(pg_constraint_scan);
-    heap_close(pg_constraint_rel, AccessShareLock);
-  }
+//FIXME
+//  {
+//    Relation pg_constraint_rel;
+//    HeapScanDesc pg_constraint_scan;
+//    HeapTuple pg_constraint_tuple;
+//
+//    peloton::oid_t database_oid = GetCurrentDatabaseOid();
+//    assert( database_oid );
+//
+//    pg_constraint_rel = heap_open( ConstraintRelationId, AccessShareLock);
+//    pg_constraint_scan = heap_beginscan_catalog(pg_constraint_rel, 0, NULL);
+//
+//    // Go over the pg_index catalog table looking for foreign key constraints
+//    while (1) {
+//      Form_pg_constraint pg_constraint;
+//
+//      pg_constraint_tuple = heap_getnext(pg_constraint_scan, ForwardScanDirection);
+//      if(!HeapTupleIsValid(pg_constraint_tuple))
+//        break;
+//
+//      pg_constraint = (Form_pg_constraint) GETSTRUCT(pg_constraint_tuple);
+//
+//      if( pg_constraint->contype == 'f')
+//      {
+//        // TODO :: Make this as a function
+//        Oid current_table_oid = pg_constraint->conrelid;
+//        assert( current_table_oid );
+//        Oid foreign_table_oid = pg_constraint->confrelid;
+//        assert( foreign_table_oid );
+//
+//        peloton::storage::DataTable* current_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, current_table_oid);
+//        assert( current_table );
+//        peloton::storage::DataTable* reference_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, foreign_table_oid);
+//        assert( reference_table );
+//
+//        current_table->AddReferenceTable(reference_table);
+//      }
+//    }
+//    heap_endscan(pg_constraint_scan);
+//    heap_close(pg_constraint_rel, AccessShareLock);
+//  }
 
   //printf("Print all relation's schema information\n");
   //peloton::oid_t database_oid = GetCurrentDatabaseOid();

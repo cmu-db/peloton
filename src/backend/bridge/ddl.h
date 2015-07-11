@@ -29,61 +29,7 @@
 namespace peloton {
 namespace bridge {
 
-//===--------------------------------------------------------------------===//
-// IndexInfo Class 
-//===--------------------------------------------------------------------===//
-
-class IndexInfo{
- public:
-  IndexInfo(std::string index_name,
-            std::string table_name,
-            IndexMethodType method_type,
-            IndexType type,
-            bool unique_keys,  // TODO :: Remove..
-            std::vector<std::string> key_column_names)
- : index_name(index_name),
-   table_name(table_name),
-   method_type(method_type),
-   type(type),
-   unique_keys(unique_keys),
-   key_column_names(key_column_names) { }
-
-  //===--------------------------------------------------------------------===//
-  // Accessors
-  //===--------------------------------------------------------------------===//
-
-  inline std::string GetIndexName(){
-    return index_name;
-  }
-
-  inline std::string GetTableName(){
-    return table_name;
-  }
-
-  inline IndexMethodType GetMethodType(){
-    return method_type;
-  }
-
-  inline IndexType GetType(){
-    return type;
-  }
-
-  inline bool IsUnique(){
-    return unique_keys;
-  }
-
-  inline std::vector<std::string> GetKeyColumnNames(){
-    return key_column_names;
-  }
-
- private:
-  std::string index_name = "";
-  std::string table_name = "";
-  IndexMethodType method_type = INDEX_METHOD_TYPE_BTREE_MULTIMAP;
-  IndexType type = INDEX_TYPE_NORMAL;
-  bool unique_keys = false;
-  std::vector<std::string> key_column_names;
-};
+class IndexInfo;
 
 //===--------------------------------------------------------------------===//
 // DDL Class 
@@ -143,6 +89,7 @@ class DDL {
   // TODO : DropIndex
   //static bool DropIndex(Oid index_oid);
 
+
   //===--------------------------------------------------------------------===//
   // Misc. 
   //===--------------------------------------------------------------------===//
@@ -150,15 +97,17 @@ class DDL {
   static void ProcessUtility( Node *parsetree,
                               const char *queryString );
 
-  // Parse IndexStmt and store reference table names and return ColumnInfo
-  static std::vector<catalog::ColumnInfo> ConstructColumnInfoByParsingCreateStmt( CreateStmt* Cstmt,
-                                                                                  std::vector<std::string>& reference_table_names );
+  // Parse IndexStmt and construct ColumnInfo and ReferenceTableInfos
+  static void ParsingCreateStmt( CreateStmt* Cstmt,
+                                 std::vector<catalog::ColumnInfo>& column_infos,
+                                 std::vector<catalog::ReferenceTableInfo>& reference_table_infos
+                                 );
 
   // Parse IndexStmt and return IndexInfo
   static IndexInfo* ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt );
 
   // Set reference tables to the table based on given relation oid
-  static bool SetReferenceTables( std::vector<std::string> reference_table_names,
+  static bool SetReferenceTables( std::vector<catalog::ReferenceTableInfo> reference_table_infos,
                                   oid_t relation_oid );
 
   // Create the indexes using indexinfos and add to the table
@@ -168,6 +117,63 @@ class DDL {
   static bool AddConstraint( Oid relation_oid, 
                              Constraint* constraint );
 
+};
+
+
+//===--------------------------------------------------------------------===//
+// IndexInfo Class 
+//===--------------------------------------------------------------------===//
+
+class IndexInfo{
+ public:
+  IndexInfo(std::string index_name,
+            std::string table_name,
+            IndexMethodType method_type,
+            IndexType type,
+            bool unique_keys,  // TODO :: Remove..
+            std::vector<std::string> key_column_names)
+ : index_name(index_name),
+   table_name(table_name),
+   method_type(method_type),
+   type(type),
+   unique_keys(unique_keys),
+   key_column_names(key_column_names) { }
+
+  //===--------------------------------------------------------------------===//
+  // Accessors
+  //===--------------------------------------------------------------------===//
+
+  inline std::string GetIndexName(){
+    return index_name;
+  }
+
+  inline std::string GetTableName(){
+    return table_name;
+  }
+
+  inline IndexMethodType GetMethodType(){
+    return method_type;
+  }
+
+  inline IndexType GetType(){
+    return type;
+  }
+
+  inline bool IsUnique(){
+    return unique_keys;
+  }
+
+  inline std::vector<std::string> GetKeyColumnNames(){
+    return key_column_names;
+  }
+
+ private:
+  std::string index_name = "";
+  std::string table_name = "";
+  IndexMethodType method_type = INDEX_METHOD_TYPE_BTREE_MULTIMAP;
+  IndexType type = INDEX_TYPE_NORMAL;
+  bool unique_keys = false;
+  std::vector<std::string> key_column_names;
 };
 
 } // namespace bridge
