@@ -368,7 +368,7 @@ void DDL::ProcessUtility(Node *parsetree,
             ListCell* constraint;
             foreach(constraint, Cstmt->constraints)
             {
-              Constraint* ConstraintNode = lfirst(constraint);
+              Constraint* ConstraintNode = ( Constraint* ) lfirst(constraint);
 
               // Or we can get cooked infomation from catalog
               //ex)
@@ -632,7 +632,7 @@ void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
       {
         Constraint* ConstraintNode = static_cast<Constraint*>(lfirst(constNodeEntry));
         ConstraintType contype;
-        std::string conname = "";
+        std::string conname;
 
         // CONSTRAINT TYPE
         contype = PostgresConstraintTypeToPelotonConstraintType( (PostgresConstraintType) ConstraintNode->contype );
@@ -640,6 +640,8 @@ void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
         // CONSTRAINT NAME
         if( ConstraintNode->conname != NULL){
           conname = ConstraintNode->conname;
+        }else{
+          conname = "";
         }
 
         // REFERENCE TABLE NAME AND ACTION OPTION
@@ -666,7 +668,7 @@ void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
                                                                                              pk_column_names,  
                                                                                              fk_column_names,  
                                                                                              ConstraintNode->fk_upd_action,  
-                                                                                             ConstraintNode->fk_del_action,
+                                                                                             ConstraintNode->fk_del_action, 
                                                                                              conname );
 
           reference_table_infos.push_back( *referenceTableInfo );
@@ -694,10 +696,10 @@ void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
  * @return IndexInfo  
  */
 IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
-  std::string index_name;
+  std::string index_name = Istmt->idxname;
   std::string table_name;
   IndexMethodType method_type;
-  IndexType type;
+  IndexType type = INDEX_TYPE_NORMAL;
   std::vector<std::string> key_column_names;
 
   // Table name
@@ -725,9 +727,6 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
       index_name += "key";
       type = INDEX_TYPE_UNIQUE;
     }
-  }else{
-    index_name = Istmt->idxname;
-    type = INDEX_TYPE_NORMAL;
   }
 
   // Index method type

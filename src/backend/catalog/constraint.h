@@ -114,16 +114,16 @@ class ReferenceTableInfo {
   ReferenceTableInfo( storage::DataTable* PrimaryKeyTable,
                       std::vector<std::string> pk_column_names,
                       std::vector<std::string> fk_column_names,
-                      std::string fk_update_action,
-                      std::string fk_delete_action,
-                      std::string conname = "") 
+                      char fk_update_action,
+                      char fk_delete_action,
+                      std::string& name ) 
 
                       : PrimaryKeyTable(PrimaryKeyTable),
                       pk_column_names(pk_column_names),
                       fk_column_names(fk_column_names),
                       fk_update_action(fk_update_action),
                       fk_delete_action(fk_delete_action),
-                      conname(conname)
+                      name(name)
                       { }
 
   std::vector<std::string> GetFKColumnNames(){
@@ -139,13 +139,13 @@ class ReferenceTableInfo {
 
   storage::DataTable* PrimaryKeyTable = nullptr;
 
-  std::string conname = "";
-
   std::vector<std::string> pk_column_names;
   std::vector<std::string> fk_column_names;
 
-  std::string fk_update_action = "";
-  std::string fk_delete_action = "";
+  char fk_update_action;
+  char fk_delete_action;
+
+  std::string name ;
 
 };
 
