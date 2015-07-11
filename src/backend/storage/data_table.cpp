@@ -54,7 +54,7 @@ void DataTable::AddReferenceTable( catalog::ReferenceTableInfo *referenceTableIn
   std::lock_guard<std::mutex> lock( table_reference_table_mutex );
   reference_table_infos.push_back( referenceTableInfo );
 
-  const catalog::Schema* schema = this->GetSchema();
+  catalog::Schema* schema = this->GetSchema();
  
   for( auto column_name : referenceTableInfo->GetFKColumnNames() )
   {
