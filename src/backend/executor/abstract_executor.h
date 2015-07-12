@@ -14,7 +14,6 @@
 #include "backend/concurrency/transaction.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/planner/abstract_plan_node.h"
-#include "backend/bridge/plan_executor.h"
 
 namespace peloton {
 namespace executor {

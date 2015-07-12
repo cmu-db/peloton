@@ -61,13 +61,6 @@ MemoryContext CurTransactionContext = NULL;
  */
 MemoryContext TopSharedMemoryContext = NULL;
 
-/*
- * A subcontext of the TopSharedMemoryContext for each query that is passed
- * between the TelegraphCQ frontend and backend.
- * Memory ownership is passed between processes by handing off this context.
- */
-MemoryContext shmQueryContext = NULL;
-
 /* This is a transient link to the active portal's memory context: */
 MemoryContext PortalContext = NULL;
 
