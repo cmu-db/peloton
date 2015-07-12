@@ -906,8 +906,6 @@ peloton_process_dml(Peloton_MsgDML *msg)
 
   }
 
-  SHMContextStats(TopSharedMemoryContext);
-
   // Set Status
   msg->m_status->m_code = PELOTON_STYPE_SUCCESS;
   return peloton::ResultType::RESULT_TYPE_SUCCESS;
