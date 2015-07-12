@@ -28,7 +28,7 @@ Database* Database::GetDatabaseById( oid_t database_oid ){
     Database* db = new Database( database_oid ); 
     db_address = db;
     database_oid_to_address.insert( std::pair<oid_t,Database*>( database_oid,
-          db_address ));
+                                                                db_address ));
   }
   return db_address;
 }
