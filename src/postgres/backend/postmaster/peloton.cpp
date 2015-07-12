@@ -435,8 +435,8 @@ peloton_MainLoop(void)
         {
           std::unique_ptr<peloton::scheduler::TBBTask> task(
               new peloton::scheduler::TBBTask(
-              reinterpret_cast<peloton::scheduler::handler>(peloton_process_ddl),
-              reinterpret_cast<Peloton_MsgDDL*>(&msg)));
+                  reinterpret_cast<peloton::scheduler::handler>(peloton_process_ddl),
+                  reinterpret_cast<Peloton_MsgDDL*>(&msg)));
 
           scheduler.get()->Run(task.get());
         }
@@ -446,8 +446,8 @@ peloton_MainLoop(void)
         {
           std::unique_ptr<peloton::scheduler::TBBTask> task(
               new peloton::scheduler::TBBTask(
-              reinterpret_cast<peloton::scheduler::handler>(peloton_process_dml),
-              reinterpret_cast<Peloton_MsgDML*>(&msg)));
+                  reinterpret_cast<peloton::scheduler::handler>(peloton_process_dml),
+                  reinterpret_cast<Peloton_MsgDML*>(&msg)));
 
           scheduler.get()->Run(task.get());
         }
@@ -836,13 +836,6 @@ peloton_send_dml(Peloton_Status *status,
 
   peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_DML);
 
-  std::cout << "Backend :: TID : " << std::this_thread::get_id() << " ";
-  fprintf(stdout, "PID : %d TTContext : %p CTContext : %p \n",
-          getpid(),
-          TopTransactionContext,
-          CurTransactionContext);
-  fflush(stdout);
-
   msg.m_status = status;
   msg.m_planstate = node;
   msg.m_tuple_desc = tuple_desc;
@@ -897,23 +890,21 @@ peloton_process_dml(Peloton_MsgDML *msg)
     /* Get the planstate */
     planstate = msg->m_planstate;
 
+    /* Ignore invalid plans */
+    if(planstate == NULL || nodeTag(planstate) == T_Invalid)
+      return peloton::ResultType::RESULT_TYPE_SUCCESS;
+
     TopTransactionContext = msg->m_top_transaction_context;
     CurTransactionContext = msg->m_cur_transaction_context;
 
-    if(planstate != NULL)
-    {
-      auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
+    auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
 
-      std::cout << "Peloton :: TID : " << std::this_thread::get_id()
-      << " PID : " << getpid() << "\n";
-      fflush(stdout);
-
-      if(plan){
-        peloton::bridge::PlanExecutor::PrintPlan(plan);
-        peloton::bridge::PlanExecutor::ExecutePlan(plan, msg->m_tuple_desc, msg->m_status);
-        peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
-      }
+    if(plan){
+      peloton::bridge::PlanExecutor::PrintPlan(plan);
+      peloton::bridge::PlanExecutor::ExecutePlan(plan, msg->m_tuple_desc, msg->m_status);
+      peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
     }
+
   }
 
   // Set Status
@@ -935,16 +926,20 @@ peloton_process_ddl(Peloton_MsgDDL *msg)
 
   if(msg != NULL)
   {
-    /* Get the query string */
-    queryString = msg->m_queryString;
-
     /* Get the parsetree */
     parsetree = msg->m_parsetree;
+
+    /* Ignore invalid parsetrees */
+    if(parsetree == NULL || nodeTag(parsetree) == T_Invalid)
+      return peloton::ResultType::RESULT_TYPE_SUCCESS;
 
     TopTransactionContext = msg->m_top_transaction_context;
     CurTransactionContext = msg->m_cur_transaction_context;
 
-    if(parsetree != NULL && queryString != NULL)
+    /* Get the query string */
+    queryString = msg->m_queryString;
+
+    if(queryString != NULL)
     {
       peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
     }
