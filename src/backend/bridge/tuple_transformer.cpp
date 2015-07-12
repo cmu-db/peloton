@@ -151,6 +151,8 @@ Datum TupleTransformer::GetDatum(Value value) {
     break;
 
     default:
+      datum = PointerGetDatum(nullptr);
+      printf("Unreconginized value type : %u\n", value_type);
       break;
   }
 
