@@ -73,10 +73,11 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
           reinterpret_cast<const LimitState*>(plan_state));
       break;
     default:
+    {
       plan_node = nullptr;
-      LOG_ERROR("Unsupported Postgres Plan Tag: %u", nodeTag(plan))
-      ;
+      LOG_ERROR("Unsupported Postgres Plan Tag: %u Plan : %p", nodeTag(plan), plan);
       break;
+    }
   }
 
   return plan_node;
