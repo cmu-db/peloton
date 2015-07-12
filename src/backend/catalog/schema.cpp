@@ -20,6 +20,36 @@
 namespace peloton {
 namespace catalog {
 
+void ColumnInfo::SetInlined()
+{
+  switch( type ){
+    case VALUE_TYPE_SMALLINT:
+    case VALUE_TYPE_INTEGER:
+    case VALUE_TYPE_BIGINT:
+    case VALUE_TYPE_DOUBLE:
+    case VALUE_TYPE_VARCHAR:
+    case VALUE_TYPE_TIMESTAMP:
+      is_inlined = true;
+      break;
+    default:
+      is_inlined = false;
+      break;
+  }
+}
+void ColumnInfo::SetLength( oid_t column_length )
+{
+  if(is_inlined){
+    fixed_length = column_length;
+    variable_length = 0;
+  }
+  else{
+    fixed_length = sizeof(uintptr_t);
+    variable_length = column_length;
+  }
+}
+
+
+
 /// Helper function for creating TupleSchema
 void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
                                const std::vector<oid_t> column_lengths,
