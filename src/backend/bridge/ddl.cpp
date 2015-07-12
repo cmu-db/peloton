@@ -198,7 +198,7 @@ bool DDL::CreateIndex(std::string index_name,
       data_table->AddUniqueIndex(index);
       break;
     default:
-      elog(LOG, "unrecognized index type: %d", index_type);
+      LOG_WARN("unrecognized index type: %d", index_type);
   }
 
   return true;
@@ -516,8 +516,7 @@ void DDL::ProcessUtility(Node *parsetree,
 
     default:
     {
-      elog(LOG, "unrecognized node type: %d",
-          (int) nodeTag(parsetree));
+      LOG_WARN("unrecognized node type: %d", (int) nodeTag(parsetree));
     }
     break;
   }
