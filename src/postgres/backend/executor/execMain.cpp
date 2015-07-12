@@ -1584,14 +1584,6 @@ ExecutePlan(EState *estate,
 			(*dest->receiveSlot) (slot, dest);
 
 		/*
-		 * Count tuples processed, if this is a SELECT.  (For other operation
-		 * types, the ModifyTable plan node must count the appropriate
-		 * events.)
-		 */
-		if (operation == CMD_SELECT)
-			(estate->es_processed)++;
-
-		/*
 		 * check our tuple count.. if we've processed the proper number then
 		 * quit, else loop again and process more tuples.  Zero numberTuples
 		 * means no limit.
@@ -1613,9 +1605,17 @@ ExecutePlan(EState *estate,
   if(status->m_result_slots != NULL)
   {
     ListCell   *lc;
+
     foreach(lc, status->m_result_slots)
     {
       TupleTableSlot *slot = (TupleTableSlot *) lfirst(lc);
+
+      /*
+       * if the tuple is null, then we assume there is nothing more to
+       * process so we just end the loop...
+       */
+      if (TupIsNull(slot))
+        break;
 
       /*
        * If we are supposed to send the tuple somewhere, do so. (In
