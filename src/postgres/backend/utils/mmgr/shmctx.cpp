@@ -170,6 +170,9 @@ SHMContextDelete(MemoryContext context)
 {
   MM		   *mmcxt = SHMFindMMContext(context);
 
+  fprintf(stdout, "SHMContextDelete \n");
+  fflush(stdout);
+
   mm_lock(mmcxt, MM_LOCK_RW);
   AssertArg(MemoryContextIsValid(context));
   /* We had better not be deleting TopMemoryContext ... */
