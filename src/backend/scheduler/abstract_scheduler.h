@@ -28,11 +28,11 @@ class AbstractScheduler {
   AbstractScheduler() {}
   virtual ~AbstractScheduler() {};
 
-  // add task to queue
-  virtual void AddTask(AbstractTask *task) = 0;
+  // run task
+  virtual void Run(AbstractTask *task) = 0;
 
   // wait for execution of all tasks
-  virtual void Execute() = 0;
+  virtual void Wait() = 0;
 
 };
 

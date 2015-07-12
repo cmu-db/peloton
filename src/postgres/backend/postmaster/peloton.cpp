@@ -43,6 +43,7 @@
 #include <arpa/inet.h>
 #include <signal.h>
 #include <time.h>
+#include <thread>
 
 #include "backend/bridge/plan_transformer.h"
 #include "backend/common/logger.h"
@@ -50,6 +51,7 @@
 #include "backend/bridge/ddl.h"
 #include "backend/bridge/plan_transformer.h"
 #include "backend/bridge/plan_executor.h"
+#include "backend/scheduler/tbb_scheduler.h"
 
 /* ----------
  * Local data
@@ -83,8 +85,8 @@ static void  __attribute__ ((unused)) peloton_sigsegv_handler(SIGNAL_ARGS);
 static void peloton_setheader(Peloton_MsgHdr *hdr, PelotonMsgType mtype);
 static void peloton_send(void *msg, int len);
 
-static void peloton_process_dml(Peloton_MsgDML *msg, int len);
-static void peloton_process_ddl(Peloton_MsgDDL *msg, int len);
+static peloton::ResultType peloton_process_dml(Peloton_MsgDML *msg);
+static peloton::ResultType peloton_process_ddl(Peloton_MsgDDL *msg);
 
 bool
 IsPelotonProcess(void)
@@ -344,6 +346,14 @@ peloton_MainLoop(void)
   Peloton_Msg  msg;
   int     wr;
 
+  /* Start our scheduler */
+  std::unique_ptr<peloton::scheduler::TBBScheduler> scheduler(new peloton::scheduler::TBBScheduler());
+  if(scheduler.get() == NULL)
+  {
+    elog(ERROR, "Could not create peloton scheduler \n");
+    return;
+  }
+
   /*
    * Loop to process messages until we get SIGQUIT or detect ungraceful
    * death of our parent postmaster.
@@ -422,12 +432,26 @@ peloton_MainLoop(void)
           break;
 
         case PELOTON_MTYPE_DDL:
-          peloton_process_ddl((Peloton_MsgDDL*) &msg, len);
-          break;
+        {
+          std::unique_ptr<peloton::scheduler::TBBTask> task(
+              new peloton::scheduler::TBBTask(
+              reinterpret_cast<peloton::scheduler::handler>(peloton_process_ddl),
+              reinterpret_cast<Peloton_MsgDDL*>(&msg)));
+
+          scheduler.get()->Run(task.get());
+        }
+        break;
 
         case PELOTON_MTYPE_DML:
-          peloton_process_dml((Peloton_MsgDML*) &msg, len);
-          break;
+        {
+          std::unique_ptr<peloton::scheduler::TBBTask> task(
+              new peloton::scheduler::TBBTask(
+              reinterpret_cast<peloton::scheduler::handler>(peloton_process_dml),
+              reinterpret_cast<Peloton_MsgDML*>(&msg)));
+
+          scheduler.get()->Run(task.get());
+        }
+        break;
 
         default:
           break;
@@ -812,6 +836,13 @@ peloton_send_dml(Peloton_Status *status,
 
   peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_DML);
 
+  std::cout << "Backend :: TID : " << std::this_thread::get_id() << " ";
+  fprintf(stdout, "PID : %d TTContext : %p CTContext : %p \n",
+          getpid(),
+          TopTransactionContext,
+          CurTransactionContext);
+  fflush(stdout);
+
   msg.m_status = status;
   msg.m_planstate = node;
   msg.m_tuple_desc = tuple_desc;
@@ -856,8 +887,8 @@ peloton_send_ddl(Peloton_Status *status,
  *  Process DML requests in Peloton.
  * ----------
  */
-static void
-peloton_process_dml(Peloton_MsgDML *msg, int len)
+static peloton::ResultType
+peloton_process_dml(Peloton_MsgDML *msg)
 {
   PlanState *planstate;
 
@@ -869,25 +900,25 @@ peloton_process_dml(Peloton_MsgDML *msg, int len)
     TopTransactionContext = msg->m_top_transaction_context;
     CurTransactionContext = msg->m_cur_transaction_context;
 
-    fprintf(stdout, "PID : %d TTContext : %p CTContext : %p \n", getpid(), TopTransactionContext, CurTransactionContext);
-    fflush(stdout);
-
     if(planstate != NULL)
     {
-      /*
       auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
+
+      std::cout << "Peloton :: TID : " << std::this_thread::get_id()
+      << " PID : " << getpid() << "\n";
+      fflush(stdout);
 
       if(plan){
         peloton::bridge::PlanExecutor::PrintPlan(plan);
         peloton::bridge::PlanExecutor::ExecutePlan(plan, msg->m_tuple_desc, msg->m_status);
         peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
       }
-      */
     }
   }
 
   // Set Status
   msg->m_status->m_code = PELOTON_STYPE_SUCCESS;
+  return peloton::ResultType::RESULT_TYPE_SUCCESS;
 }
 
 /* ----------
@@ -896,27 +927,32 @@ peloton_process_dml(Peloton_MsgDML *msg, int len)
  *  Process DDL requests in Peloton.
  * ----------
  */
-static void
-peloton_process_ddl(Peloton_MsgDDL *msg, int len)
+static peloton::ResultType
+peloton_process_ddl(Peloton_MsgDDL *msg)
 {
   Node* parsetree;
+  const char *queryString;
 
   if(msg != NULL)
   {
+    /* Get the query string */
+    queryString = msg->m_queryString;
+
     /* Get the parsetree */
     parsetree = msg->m_parsetree;
 
     TopTransactionContext = msg->m_top_transaction_context;
     CurTransactionContext = msg->m_cur_transaction_context;
 
-    if(parsetree != NULL)
+    if(parsetree != NULL && queryString != NULL)
     {
-      //peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
+      peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
     }
   }
 
   // Set Status
   msg->m_status->m_code = PELOTON_STYPE_SUCCESS;
+  return peloton::ResultType::RESULT_TYPE_SUCCESS;
 }
 
 /* ----------

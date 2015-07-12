@@ -1609,9 +1609,6 @@ ExecutePlan(EState *estate,
                    TopTransactionContext,
                    CurTransactionContext);
 
-  fprintf(stdout, "Slots : %p \n", status->m_result_slots);
-  fflush(stdout);
-
   // Go over any result slots
   if(status->m_result_slots != NULL)
   {
