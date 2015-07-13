@@ -362,8 +362,8 @@ static struct timeval random_start_time;
 static DNSServiceRef bonjour_sdref = NULL;
 #endif
 
-// Test Mode Status
-TestMode CurrentTestModeStatus = TEST_MODE_TYPE_OFF;
+// Peloton Test Mode
+bool PelotonTestMode = false;
 
 /*
  * postmaster.c - function prototypes
@@ -545,7 +545,6 @@ PostmasterMain(int argc, char *argv[])
   char	   *userDoption = NULL;
   bool		listen_addr_saved = false;
   int			i;
-  int arg_itr;
   char	   *output_config_variable = NULL;
 
   MyProcPid = PostmasterPid = getpid();
@@ -617,7 +616,7 @@ PostmasterMain(int argc, char *argv[])
    * tcop/postgres.c (the option sets should not conflict) and with the
    * common help() function in main/main.c.
    */
-  while ((opt = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:-:")) != -1)
+  while ((opt = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:Z-:")) != -1)
   {
     switch (opt)
     {
@@ -782,26 +781,17 @@ PostmasterMain(int argc, char *argv[])
         break;
       }
 
+      case 'Z':
+      {
+        // TODO: Peloton Changes
+        PelotonTestMode = true;
+        break;
+      }
+
       default:
         write_stderr("Try \"%s --help\" for more information.\n",
                      progname);
         ExitPostmaster(1);
-    }
-  }
-
-  /*
-   * Parse command-line option for setting test mode
-   */
-  for(arg_itr = 0; arg_itr < argc; arg_itr++)
-  {
-    if( strstr(argv[arg_itr], "-testmode="))
-    {
-      char* user_input = &argv[arg_itr][10];
-
-      if(strcmp(user_input, "TEST_MODE_TYPE_BRIDGE") == 0)
-        CurrentTestModeStatus = TEST_MODE_TYPE_BRIDGE;
-      else if(strcmp(user_input, "TEST_MODE_TYPE_STATISTICS") == 0)
-        CurrentTestModeStatus = TEST_MODE_TYPE_STATISTICS;
     }
   }
 
