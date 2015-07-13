@@ -26,7 +26,8 @@ class AbstractExecutor {
   AbstractExecutor(AbstractExecutor &&) = delete;
   AbstractExecutor& operator=(AbstractExecutor &&) = delete;
 
-  virtual ~AbstractExecutor(){}
+  virtual ~AbstractExecutor() {
+  }
 
   bool Init();
 
@@ -48,9 +49,14 @@ class AbstractExecutor {
   // in test cases.
   virtual LogicalTile *GetOutput();
 
+  const planner::AbstractPlanNode *GetRawNode() const {
+    return node_;
+  }
+
  protected:
   explicit AbstractExecutor(planner::AbstractPlanNode *node);
-  explicit AbstractExecutor(planner::AbstractPlanNode *node, concurrency::Transaction *context);
+  explicit AbstractExecutor(planner::AbstractPlanNode *node,
+                            concurrency::Transaction *context);
 
   /** @brief Init function to be overriden by derived class. */
   virtual bool DInit() = 0;
@@ -66,14 +72,10 @@ class AbstractExecutor {
    *
    * @return Reference to plan node.
    */
-  template <class T> inline const T& GetPlanNode() {
+  template<class T> inline const T& GetPlanNode() {
     const T *node = dynamic_cast<const T *>(node_);
     assert(node);
     return *node;
-  }
-
-  const planner::AbstractPlanNode *GetRawNode() const{
-    return node_;
   }
 
   /** @brief Children nodes of this executor in the executor tree. */
@@ -92,5 +94,5 @@ class AbstractExecutor {
   const planner::AbstractPlanNode *node_ = nullptr;
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

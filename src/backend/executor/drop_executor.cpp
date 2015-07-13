@@ -26,8 +26,6 @@
 namespace peloton {
 namespace executor {
 
-// TODO: Fix function
-static bool Execute();
 /*
 bool DropExecutor::Execute() {
 

@@ -48,8 +48,8 @@ MemoryContext ErrorContext = NULL;
 MemoryContext PostmasterContext = NULL;
 MemoryContext CacheMemoryContext = NULL;
 MemoryContext MessageContext = NULL;
-MemoryContext TopTransactionContext = NULL;
-MemoryContext CurTransactionContext = NULL;
+thread_local MemoryContext TopTransactionContext = NULL;
+thread_local MemoryContext CurTransactionContext = NULL;
 
 // TODO: Peloton Changes
 /*
@@ -60,13 +60,6 @@ MemoryContext CurTransactionContext = NULL;
  * and can be destroyed at postmaster exit via a call to SHMContextShutdown
  */
 MemoryContext TopSharedMemoryContext = NULL;
-
-/*
- * A subcontext of the TopSharedMemoryContext for each query that is passed
- * between the TelegraphCQ frontend and backend.
- * Memory ownership is passed between processes by handing off this context.
- */
-MemoryContext shmQueryContext = NULL;
 
 /* This is a transient link to the active portal's memory context: */
 MemoryContext PortalContext = NULL;
@@ -512,6 +505,9 @@ MemoryContextStatsInternal(MemoryContext context, int level)
 	MemoryContext child;
 
 	AssertArg(MemoryContextIsValid(context));
+
+  if(level >= 2)
+    return;
 
 	(*context->methods->stats) (context, level);
 	for (child = context->firstchild; child != NULL; child = child->nextchild)

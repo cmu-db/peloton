@@ -3918,22 +3918,6 @@ PostgresMain(int argc, char *argv[],
   if (!ignore_till_sync)
     send_ready_for_query = true;	/* initially, or after error */
 
-  switch(CurrentTestModeStatus)
-  {
-    case TEST_MODE_TYPE_INVALID:
-      break;
-    case TEST_MODE_TYPE_OFF:
-      break;
-    case TEST_MODE_TYPE_BRIDGE:
-      elog(LOG, "Testing bridge");
-      break;
-    case TEST_MODE_TYPE_STATISTICS:
-      /* Test something here */
-      break;
-    default:
-      break;
-  }
-
   /*
    * Non-error queries loop here.
    */
@@ -3951,6 +3935,7 @@ PostgresMain(int argc, char *argv[],
      */
     MemoryContextSwitchTo(MessageContext);
     MemoryContextResetAndDeleteChildren(MessageContext);
+    MemoryContextStats(TopSharedMemoryContext);
 
     initStringInfo(&input_message);
 
@@ -4256,6 +4241,10 @@ PostgresMain(int argc, char *argv[],
          */
       case 'X':
       case EOF:
+
+        // TODO: Peloton Changes
+        MemoryContextDelete(MessageContext);
+        MemoryContextDelete(CacheMemoryContext);
 
         /*
          * Reset whereToSendOutput to prevent ereport from attempting

@@ -27,17 +27,17 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 TEST(SchedulerTests, KernelTest) {
-  ResultType (*kernel_func)(const char*) = &backend::Kernel::Handler;
+  auto kernel_func = &backend::Kernel::Handler;
 
-  std::unique_ptr<scheduler::TBBTask> task1(new scheduler::TBBTask(kernel_func,
-                                                                   "CREATE DATABASE TESTDB;"));
+  std::unique_ptr<scheduler::TBBTask> task1(new scheduler::TBBTask(reinterpret_cast<scheduler::handler>(kernel_func),
+                                                                   const_cast<char*>("CREATE DATABASE TESTDB;")));
 
-  auto& tbb_scheduler = scheduler::TBBScheduler::GetInstance();
+  std::unique_ptr<scheduler::TBBScheduler> tbb_scheduler(new scheduler::TBBScheduler());
 
-  tbb_scheduler.AddTask(task1.get());
+  tbb_scheduler->Run(task1.get());
 
   // final wait
-  tbb_scheduler.Execute();
+  tbb_scheduler->Wait();
 
 }
 

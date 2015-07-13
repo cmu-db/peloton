@@ -26,7 +26,6 @@ namespace catalog {
 // Column Information
 //===--------------------------------------------------------------------===//
 
-// TODO: Why is this different than catalog::ColumnInfo?
 class ColumnInfo {
  friend class Constraint;
 
@@ -34,91 +33,39 @@ class ColumnInfo {
 
  public:
 
- // TODO :: Scrubbing unused constructors...
- // Configures (type, length, name)
  ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name)
    : type(column_type), offset(0), name(column_name) {
 
-      switch( type ){
-        case VALUE_TYPE_SMALLINT:
-        case VALUE_TYPE_INTEGER:
-        case VALUE_TYPE_BIGINT:
-        case VALUE_TYPE_DOUBLE:
-        case VALUE_TYPE_VARCHAR:
-        case VALUE_TYPE_TIMESTAMP:
-          is_inlined = true;
-          break;
-        default:
-          is_inlined = false;
-          break;
-      }
+     SetInlined ();
+     SetLength ( column_length );
 
-      if(is_inlined){
-        fixed_length = column_length;
-        variable_length = 0;
-      }
-      else{
-        fixed_length = sizeof(uintptr_t);
-        variable_length = column_length;
-      }
-    }
+   }
 
  // Configures (type, length, name, constraint)
  ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name, std::vector<catalog::Constraint> column_constraint_vector)
    : type(column_type), offset(0), name(column_name), constraint_vector(column_constraint_vector){
 
-      switch( type ){
-        case VALUE_TYPE_SMALLINT:
-        case VALUE_TYPE_INTEGER:
-        case VALUE_TYPE_BIGINT:
-        case VALUE_TYPE_DOUBLE:
-        case VALUE_TYPE_VARCHAR:
-        case VALUE_TYPE_TIMESTAMP:
-          is_inlined = true;
-          break;
-        default:
-          is_inlined = false;
-          break;
-      }
+     SetInlined ();
+     SetLength ( column_length );
 
-      if(is_inlined){
-        fixed_length = column_length;
-        variable_length = 0;
-      }
-      else{
-        fixed_length = sizeof(uintptr_t);
-        variable_length = column_length;
-      }
-    }
+   }
 
 
 
-  // Configures ( type, length, name, is_inlined )
-  ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name, bool is_inlined)
- : type(column_type), offset(0), name(column_name), is_inlined(is_inlined){
+ // Configures ( type, length, name, is_inlined )
+ ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name, bool is_inlined)
+   : type(column_type), offset(0), name(column_name), is_inlined(is_inlined){
 
-    if(is_inlined){
-      fixed_length = column_length;
-      variable_length = 0;
-    }
-    else{
-      fixed_length = sizeof(uintptr_t);
-      variable_length = column_length;
-    }
-  }
+     SetLength ( column_length );
+
+   }
 
   // Configures ( type, length, name, is_inlined, constraint )
   ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name, bool is_inlined, std::vector<catalog::Constraint> column_constraint_vector)
  : type(column_type), offset(0), name(column_name), is_inlined(is_inlined), constraint_vector(column_constraint_vector){
  
-    if(is_inlined){
-      fixed_length = column_length;
-      variable_length = 0;
-    }
-    else{
-      fixed_length = sizeof(uintptr_t);
-      variable_length = column_length;
-    }
+    SetLength ( column_length );
+
   }
 
   // Configure all members (type, offset, length, name, is_inlined, constraint )
@@ -130,14 +77,12 @@ class ColumnInfo {
     name(column_name),
     is_inlined(is_inlined), constraint_vector(column_constraint_vector){
 
-    if(is_inlined){
-      fixed_length = column_length;
-      variable_length = 0;
-    }
-    else{
-      fixed_length = sizeof(uintptr_t);
-      variable_length = column_length;
-    }
+    SetLength ( column_length );
+
+  }
+  inline std::string GetName()
+  {
+    return name;
   }
   
   // add a constraint to the column info
@@ -169,6 +114,8 @@ class ColumnInfo {
     return !(*this == other);
   }
 
+  void SetInlined ();
+  void SetLength ( oid_t column_length );
 
   /// Get a string representation for debugging
   friend std::ostream& operator<< (std::ostream& os, const ColumnInfo& column_info);

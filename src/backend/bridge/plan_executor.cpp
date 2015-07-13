@@ -90,6 +90,10 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       child_executor = new executor::UpdateExecutor(plan, txn);
       break;
 
+    case PLAN_NODE_TYPE_LIMIT:
+      child_executor = new executor::LimitExecutor(plan, txn);
+      break;
+
     default:
       LOG_INFO("Unsupported plan node type : %d ", plan_node_type);
       break;
@@ -131,6 +135,31 @@ void CleanExecutorTree(executor::AbstractExecutor *root){
   delete root;
 }
 
+/**
+ * @brief Add a Materialization node if the root of the exector tree is seqscan or limit
+ * @param the current executor tree
+ * @return new root of the executor tree
+ */
+executor::AbstractExecutor *PlanExecutor::AddMaterialization(executor::AbstractExecutor *root) {
+  if (root == nullptr) return root;
+  auto type = root->GetRawNode()->GetPlanNodeType();
+  executor::AbstractExecutor *new_root = root;
+
+  switch (type) {
+    case PLAN_NODE_TYPE_SEQSCAN:
+      /* FALL THRU */
+    case PLAN_NODE_TYPE_LIMIT:
+      new_root = new executor::MaterializationExecutor(nullptr);
+      new_root->AddChild(root);
+      LOG_INFO("Added materialization, the original root executor type is %d", type);
+      break;
+    default:
+      break;
+  }
+
+  return new_root;
+}
+
 
 /**
  * @brief Build a executor tree and execute it.
@@ -154,6 +183,8 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   // Build the executor tree
   executor::AbstractExecutor *executor_tree = BuildExecutorTree(nullptr,
                                                                 plan, txn);
+  // Add materialization if the root if seqscan or limit
+  executor_tree = AddMaterialization(executor_tree);
 
   LOG_TRACE("Initializing the executor tree");
 
@@ -202,6 +233,7 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
       auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
       slots = lappend(slots, slot);
     }
+
 
     // Go back to previous context
     MemoryContextSwitchTo(oldContext);
