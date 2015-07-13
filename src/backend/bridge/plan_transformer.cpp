@@ -273,13 +273,16 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
 
   /* Get the first sub plan state */
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
+  assert(sub_planstate);
 
   /* Get the tuple schema */
   auto schema = target_table->GetSchema();
 
   planner::UpdateNode::ColumnExprs update_column_exprs;
+  planner::AbstractPlanNode* plan_node;
 
   if(nodeTag(sub_planstate->plan) == T_SeqScan) { // Sub plan is SeqScan
+    LOG_INFO("Child of Update is SeqScan \n");
     // Retrieve the non-trivial projection info from SeqScan
     // and put it in our update node
     auto seqscan_state = reinterpret_cast<SeqScanState*>(sub_planstate);
@@ -302,12 +305,14 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
 
       update_column_exprs.emplace_back(col_id, peloton_expr);
     }
+
+    plan_node = new planner::UpdateNode(target_table, update_column_exprs);
+    plan_node->AddChild(TransformPlan(sub_planstate));
+
   }
   else {
     LOG_ERROR("Unsupported sub plan type of Update : %u \n", nodeTag(sub_planstate->plan));
   }
-
-  auto plan_node = new planner::UpdateNode(target_table, update_column_exprs);
 
   return plan_node;
 }
