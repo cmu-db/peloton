@@ -14,6 +14,7 @@
 #include "c.h"
 
 #include "bridge/bridge.h"
+#include "catalog/pg_namespace.h"
 #include "executor/tuptable.h"
 #include "libpq/ip.h"
 #include "libpq/pqsignal.h"
@@ -24,6 +25,7 @@
 #include "utils/timeout.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
+#include "utils/rel.h"
 #include "postmaster/fork_process.h"
 #include "postmaster/postmaster.h"
 #include "postmaster/peloton.h"
@@ -1031,3 +1033,42 @@ peloton_destroy_status(Peloton_Status *status)
 {
   pfree(status);
 }
+
+/* ----------
+ * IsPelotonQuery -
+ *
+ *  Does the query access peloton tables or not ?
+ * ----------
+ */
+bool IsPelotonQuery(List *relationOids) {
+  bool peloton_query = false;
+
+  if(relationOids != NULL) {
+    ListCell   *lc;
+
+    // Go over each relation on which the plan depends
+    foreach(lc, relationOids)
+    {
+      Oid relationOid = lfirst_oid(lc);
+      Relation relation = relation_open(relationOid, AccessShareLock);
+
+      if(relation != NULL)
+      {
+        Oid relationNamespaceOid = RelationGetNamespace(relation);
+
+        // Check if peloton table
+        if(relationNamespaceOid == PG_PUBLIC_NAMESPACE)
+        {
+          peloton_query = true;
+          relation_close(relation, AccessShareLock);
+          break;
+        }
+      }
+
+      relation_close(relation, AccessShareLock);
+    }
+  }
+
+  return peloton_query;
+}
+
