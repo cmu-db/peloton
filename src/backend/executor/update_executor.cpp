@@ -123,6 +123,7 @@ bool UpdateExecutor::DExecute() {
         updated_tile_group_header->SetPrevItemPointer(location.offset, ItemPointer(tile_group_id, physical_tuple_id));
     }
 
+    // By default, update should return nothing?
     // SetOutput(source_tile.release());
     return true;
 }

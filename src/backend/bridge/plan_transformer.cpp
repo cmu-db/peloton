@@ -10,12 +10,14 @@
  *-------------------------------------------------------------------------
  */
 
+
 #include "nodes/pprint.h"
 #include "utils/rel.h"
 #include "utils/lsyscache.h"
 #include "bridge/bridge.h"
 #include "executor/executor.h"
 #include "parser/parsetree.h"
+#include "nodes/print.h"
 
 #include "executor/nodeValuesscan.h"
 
@@ -28,9 +30,10 @@
 #include "backend/storage/data_table.h"
 #include "backend/planner/delete_node.h"
 #include "backend/planner/insert_node.h"
+#include "backend/planner/limit_node.h"
 #include "backend/planner/seq_scan_node.h"
 #include "backend/planner/update_node.h"
-#include "backend/planner/limit_node.h"
+
 
 #include <cstring>
 
@@ -187,17 +190,24 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     LOG_INFO("Child of Insert is Result");
     auto result_ps = reinterpret_cast<ResultState*>(sub_planstate);
 
+    assert(outerPlanState(result_ps) == nullptr); /* We only handle single-constant-tuple here,
+                                                  i.e., ResultState should have no children */
+
     TupleTableSlot *tupleslot;
     ExprDoneCond isDone;
     tupleslot = ExecProject(result_ps->ps.ps_ProjInfo, &isDone);
     assert(!TupIsNull(tupleslot));
     assert(isDone != ExprEndResult);
 
+    LOG_INFO("Tuple (pg) to insert: ");
+    print_slot(tupleslot);
+
     auto tuple = TupleTransformer::GetPelotonTuple(tupleslot, schema);
     assert(tuple);
     tuples.push_back(tuple);
 
-    std::cout << "Tuple to insert: " << *tuple << std::endl;
+    LOG_INFO("Tuple (pl) to insert:");
+    std::cout << *tuple << std::endl;
 
     // TODO: Is this the correct way to free a postgres tupleslot?
     pfree(tupleslot);
@@ -307,9 +317,11 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
       if(!(resind < schema->GetColumnCount()))
           continue; // skip junk attributes
 
-      LOG_INFO("Update resind : %u , Top-level expr tag : %u", resind, nodeTag(gstate->arg->expr));
+      LOG_INFO("Update column id : %u , Top-level (pg) expr tag : %u \n", resind, nodeTag(gstate->arg->expr));
 
       oid_t col_id = static_cast<oid_t>(resind);
+
+      // TODO: Somebody should be responsible for freeing the expression tree.
       auto peloton_expr = ExprTransformer::TransformExpr(gstate->arg);
 
       update_column_exprs.emplace_back(col_id, peloton_expr);
@@ -333,7 +345,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
  *
  * Just like Peloton,
  * the delete plan state in Postgres simply deletes tuples
- *  returned by a subplan.
+ *  returned by a subplan (mostly Scan).
  * So we don't need to handle predicates locally .
  */
 planner::AbstractPlanNode* PlanTransformer::TransformDelete(
