@@ -1,34 +1,37 @@
 /*-------------------------------------------------------------------------
  *
- * plan_transformer_test.cpp
+ * bridge_test.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * Author: Ming Fang
+ * /peloton/tests/bridge/bridge_test.h
  *
  *-------------------------------------------------------------------------
  */
 
-#include "gtest/gtest.h"
-
-
-#include "harness.h"
+#pragma once
 
 namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// Plan Transformer Tests
+// Bridge Tests
 //===--------------------------------------------------------------------===//
 
-TEST(PlanTransformerTests, PrintPlanTest) {
-  std::string query = "SELECT * FROM pg_class;";
+class BridgeTest {
 
-  //PlanState *planstate = bridge::TestUtil::PlanQuery(query.c_str());
-  //bridge::PlanTransformer::GetInstance().printPostgresPlanStateTree(planstate);
-}
+ public:
+  BridgeTest(const BridgeTest &) = delete;
+  BridgeTest& operator=(const BridgeTest &) = delete;
+  BridgeTest(BridgeTest &&) = delete;
+  BridgeTest& operator=(BridgeTest &&) = delete;
+
+  static void RunTests();
+
+  static void TestCatalog();
+
+};
 
 } // End test namespace
 } // End peloton namespace
-
