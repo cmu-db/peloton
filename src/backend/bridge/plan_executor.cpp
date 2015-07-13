@@ -27,8 +27,7 @@ namespace bridge {
 
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               planner::AbstractPlanNode *plan,
-                                              concurrency::Transaction *txn,
-                                              bool materialized = false);
+                                              concurrency::Transaction *txn);
 
 void CleanExecutorTree(executor::AbstractExecutor *root);
 
@@ -62,8 +61,7 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlanNode *plan, std::string 
  */
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               planner::AbstractPlanNode *plan,
-                                              concurrency::Transaction *txn,
-                                              bool materialized) {
+                                              concurrency::Transaction *txn) {
   // Base case
   if(plan == nullptr)
     return root;
@@ -77,16 +75,7 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       break;
 
     case PLAN_NODE_TYPE_SEQSCAN:
-      // Materialized ?
-      if(materialized == false) {
-        child_executor = new executor::MaterializationExecutor(nullptr);
-        materialized = true;
-        break;
-      }
-
-      // Already materialized.
       child_executor = new executor::SeqScanExecutor(plan, txn);
-      materialized = false;
       break;
 
     case PLAN_NODE_TYPE_INSERT:
@@ -95,6 +84,10 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
 
     case PLAN_NODE_TYPE_DELETE:
       child_executor = new executor::DeleteExecutor(plan, txn);
+      break;
+
+    case PLAN_NODE_TYPE_UPDATE:
+      child_executor = new executor::UpdateExecutor(plan, txn);
       break;
 
     default:
@@ -114,11 +107,6 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
   auto children = plan->GetChildren();
   for(auto child : children) {
     child_executor = BuildExecutorTree(child_executor, child, txn);
-  }
-
-  // Materialize
-  if(materialized == true) {
-    BuildExecutorTree(child_executor, plan, txn, true);
   }
 
   return root;
