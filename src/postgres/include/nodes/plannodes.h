@@ -71,6 +71,8 @@ typedef struct PlannedStmt
 	int			nParamExec;		/* number of PARAM_EXEC Params used */
 
 	bool		hasRowSecurity; /* row security applied? */
+
+	bool    pelotonQuery;  /* peloton query i.e. accesses peloton tables ? */
 } PlannedStmt;
 
 /* macro for fetching the Plan associated with a SubPlan node */
