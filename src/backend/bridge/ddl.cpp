@@ -294,6 +294,8 @@ void DDL::ProcessUtility(Node *parsetree,
    */
   set_stack_base();
 
+  printf(COLOR_RED "ProcessUtility %d" COLOR_RESET "\n", (int)nodeTag(parsetree));
+
   // Process depending on type of utility statement
   switch ( nodeTag( parsetree ))
   {
@@ -410,9 +412,9 @@ void DDL::ProcessUtility(Node *parsetree,
       // Construct IndexInfo 
       IndexInfo* index_info = ConstructIndexInfoByParsingIndexStmt( Istmt );
 
-      // If this index is either unique or primary key, store the index information and skip
-      // the rest of this function since the table has not been created yet.
-      if( Istmt->isconstraint ){
+      // If table has not been created yet, skip the rest part of this function
+      peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+      if( nullptr == db->GetTableByName( Istmt->relation->relname )){
         index_infos.push_back(*index_info);
         break;
       }
@@ -516,8 +518,8 @@ void DDL::ProcessUtility(Node *parsetree,
   }
 
   // TODO :: This is for debugging
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
-  std::cout << *db << std::endl;
+  //peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+  //std::cout << *db << std::endl;
 
 }
 
