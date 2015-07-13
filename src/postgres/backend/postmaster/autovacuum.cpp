@@ -1637,6 +1637,9 @@ AutoVacWorkerMain(int argc, char *argv[])
 		do_autovacuum();
 	}
 
+  // TODO: Peloton Changes
+  MemoryContextDelete(CacheMemoryContext);
+
 	/*
 	 * The launcher will be notified of my death in ProcKill, *if* we managed
 	 * to get a worker slot at all
