@@ -173,8 +173,9 @@ storage::DataTable* Database::GetTableByPosition( const oid_t table_position ) c
       if( curr_position == table_position ){
         table =  curr_table.second; // find it
       }
-      else
-        curr_position++;
+
+      curr_position++;
+
       });
 
   if( table == nullptr ){
@@ -182,6 +183,32 @@ storage::DataTable* Database::GetTableByPosition( const oid_t table_position ) c
   }
 
   return table;
+}
+
+oid_t Database::GetTableIdByName( const std::string table_name ) const{
+
+  oid_t table_oid = INVALID_OID;
+
+  try {
+    table_oid = table_name_to_oid.at( table_name );
+  } catch  (const std::out_of_range& oor) {
+    return table_oid ; 
+  }
+
+  return table_oid;
+}
+
+std::string Database::GetTableNameById( const oid_t table_oid ) const{
+
+  std::string table_name = "";
+
+  try {
+    table_name = table_oid_to_name.at( table_oid );
+  } catch  (const std::out_of_range& oor) {
+    return table_name ; 
+  }
+
+  return table_name;
 }
 
 
@@ -195,7 +222,7 @@ std::ostream& operator<<( std::ostream& os, const Database& database ) {
   for (oid_t table_itr = 0 ; table_itr < number_of_tables ; table_itr++) {
     storage::DataTable* table = database.GetTableByPosition( table_itr );
     if( table != nullptr ){
-      std::cout << "Table Name : " << table->GetName() << "\n" <<  *(table->GetSchema()) << std::endl;
+      std::cout << "(" <<table_itr+1 <<"/" << number_of_tables<< ")Table Name : " << table->GetName() << "\n" <<  *(table->GetSchema()) << std::endl;
       if( table->ishasPrimaryKey()  ){
         printf("print primary key index \n");
         std::cout<< *(table->GetPrimaryIndex()) << std::endl;
