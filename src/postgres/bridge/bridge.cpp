@@ -35,6 +35,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <iostream>
+
 //===--------------------------------------------------------------------===//
 // Postgres Utility Functions
 //===--------------------------------------------------------------------===//
@@ -708,7 +710,7 @@ bool BootstrapPeloton(void){
   // Create Indexes
   //===--------------------------------------------------------------------===//
 
-  status = peloton::bridge::DDL::CreateIndexesWithIndexInfos();
+  status = peloton::bridge::DDL::CreateIndexesWithIndexInfos( index_infos );
   if(status == false) {
     peloton::LOG_WARN("Could not create an index in Peloton");
   }
@@ -716,51 +718,89 @@ bool BootstrapPeloton(void){
   //===--------------------------------------------------------------------===//
   // Link Reference tables 
   //===--------------------------------------------------------------------===//
-//FIXME
-//  {
-//    Relation pg_constraint_rel;
-//    HeapScanDesc pg_constraint_scan;
-//    HeapTuple pg_constraint_tuple;
-//
-//    peloton::oid_t database_oid = GetCurrentDatabaseOid();
-//    assert( database_oid );
-//
-//    pg_constraint_rel = heap_open( ConstraintRelationId, AccessShareLock);
-//    pg_constraint_scan = heap_beginscan_catalog(pg_constraint_rel, 0, NULL);
-//
-//    // Go over the pg_index catalog table looking for foreign key constraints
-//    while (1) {
-//      Form_pg_constraint pg_constraint;
-//
-//      pg_constraint_tuple = heap_getnext(pg_constraint_scan, ForwardScanDirection);
-//      if(!HeapTupleIsValid(pg_constraint_tuple))
-//        break;
-//
-//      pg_constraint = (Form_pg_constraint) GETSTRUCT(pg_constraint_tuple);
-//
-//      if( pg_constraint->contype == 'f')
-//      {
-//        // TODO :: Make this as a function
-//        Oid current_table_oid = pg_constraint->conrelid;
-//        assert( current_table_oid );
-//        Oid foreign_table_oid = pg_constraint->confrelid;
-//        assert( foreign_table_oid );
-//
-//        peloton::storage::DataTable* current_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, current_table_oid);
-//        assert( current_table );
-//        peloton::storage::DataTable* reference_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, foreign_table_oid);
-//        assert( reference_table );
-//
-//        current_table->AddReferenceTable(reference_table);
-//      }
-//    }
-//    heap_endscan(pg_constraint_scan);
-//    heap_close(pg_constraint_rel, AccessShareLock);
-//  }
+  {
+    Relation pg_constraint_rel;
+    HeapScanDesc pg_constraint_scan;
+    HeapTuple pg_constraint_tuple;
 
-  //printf("Print all relation's schema information\n");
-  //peloton::oid_t database_oid = GetCurrentDatabaseOid();
-  //GetDBCatalog(database_oid);
+    peloton::oid_t database_oid = GetCurrentDatabaseOid();
+    assert( database_oid );
+
+    pg_constraint_rel = heap_open( ConstraintRelationId, AccessShareLock);
+    pg_constraint_scan = heap_beginscan_catalog(pg_constraint_rel, 0, NULL);
+
+    // Go over the pg_index catalog table looking for foreign key constraints
+    while (1) {
+      Form_pg_constraint pg_constraint;
+
+      pg_constraint_tuple = heap_getnext(pg_constraint_scan, ForwardScanDirection);
+      if(!HeapTupleIsValid(pg_constraint_tuple))
+        break;
+
+      pg_constraint = (Form_pg_constraint) GETSTRUCT(pg_constraint_tuple);
+
+      if( pg_constraint->contype == 'f')
+      {
+        // TODO :: Make this as a function
+
+        //Extract oid 
+        Oid current_table_oid = pg_constraint->conrelid;
+        assert( current_table_oid );
+        Oid reference_table_oid = pg_constraint->confrelid;
+        assert( reference_table_oid );
+
+        peloton::storage::DataTable* current_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, current_table_oid);
+        assert( current_table );
+        peloton::storage::DataTable* reference_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, reference_table_oid);
+        assert( reference_table );
+
+        // TODO :: Find better way..
+        bool isNull;
+        Datum curr_datum = heap_getattr(pg_constraint_tuple, Anum_pg_constraint_conkey, RelationGetDescr(pg_constraint_rel), &isNull);
+        Datum ref_datum = heap_getattr(pg_constraint_tuple, Anum_pg_constraint_confkey, RelationGetDescr(pg_constraint_rel), &isNull);
+        ArrayType *curr_arr = DatumGetArrayTypeP(curr_datum); 
+        ArrayType *ref_arr = DatumGetArrayTypeP(ref_datum);
+        int16 *curr_attnums = (int16 *) ARR_DATA_PTR(curr_arr);
+        int16 *ref_attnums = (int16 *) ARR_DATA_PTR(ref_arr);
+        int curr_numkeys = ARR_DIMS(curr_arr)[0];
+        int ref_numkeys = ARR_DIMS(ref_arr)[0];
+
+        std::vector<std::string> pk_column_names;
+        std::vector<std::string> fk_column_names;
+        
+        peloton::catalog::Schema* curr_schema = current_table->GetSchema();
+        peloton::catalog::Schema* ref_schema = reference_table->GetSchema();
+
+        for (int i = 0; i < curr_numkeys; i++) {
+          AttrNumber attnum = curr_attnums[i];
+          peloton::catalog::ColumnInfo column = curr_schema->GetColumnInfo(attnum-1);
+          fk_column_names.push_back( column.GetName() );
+        }
+        for (int i = 0; i < ref_numkeys; i++) {
+          AttrNumber attnum = ref_attnums[i];
+          peloton::catalog::ColumnInfo column = ref_schema->GetColumnInfo(attnum-1);
+          pk_column_names.push_back( column.GetName() );
+        }
+
+        std::string conname = NameStr(pg_constraint->conname);
+
+        peloton::catalog::ReferenceTableInfo *referecen_table_info = 
+                                              new peloton::catalog::ReferenceTableInfo( reference_table_oid,
+                                                                                        pk_column_names,
+                                                                                        fk_column_names,
+                                                                                        pg_constraint->confupdtype,
+                                                                                        pg_constraint->confdeltype,
+                                                                                        conname );
+        current_table->AddReferenceTable( referecen_table_info );
+      }
+    }
+    heap_endscan(pg_constraint_scan);
+    heap_close(pg_constraint_rel, AccessShareLock);
+  }
+
+  printf("Print all relation's schema information\n");
+  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+  std::cout << *db << std::endl;
 
   heap_endscan(pg_class_scan);
   heap_close(pg_attribute_rel, AccessShareLock);

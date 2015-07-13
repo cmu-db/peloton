@@ -11,6 +11,7 @@
  */
 
 #include "backend/storage/data_table.h"
+#include "backend/storage/database.h"
 
 #include "backend/common/exception.h"
 #include "backend/index/index.h"
@@ -48,20 +49,21 @@ void DataTable::AddUniqueIndex(index::Index *index) {
   unique_indexes.push_back(index);
 }
 
-// FIXME
-void DataTable::AddReferenceTable( catalog::ReferenceTableInfo *referenceTableInfo){
+void DataTable::AddReferenceTable( catalog::ReferenceTableInfo *reference_table_info){
 
   std::lock_guard<std::mutex> lock( table_reference_table_mutex );
-  reference_table_infos.push_back( referenceTableInfo );
+  //FIXME? TODO?
+  catalog::ReferenceTableInfo* ref = new catalog::ReferenceTableInfo( *reference_table_info );
+  reference_table_infos.push_back( ref );
 
-  catalog::Schema* schema = this->GetSchema();
- 
-  for( auto column_name : referenceTableInfo->GetFKColumnNames() )
-  {
-    catalog::Constraint *constraint = new catalog::Constraint( CONSTRAINT_TYPE_FOREIGN );
-    constraint->SetReferenceTablePosition( this->GetReferenceTableCount() ) ;
-    schema->AddConstraintByColumnName( column_name, constraint );
-  }
+// FIXME
+//  catalog::Schema* schema = this->GetSchema();
+//  for( auto column_name : reference_table_info->GetFKColumnNames() )
+//  {
+//    catalog::Constraint *constraint = new catalog::Constraint( CONSTRAINT_TYPE_FOREIGN );
+//    constraint->SetReferenceTablePosition( this->GetReferenceTableCount() ) ;
+//    schema->AddConstraintByColumnName( column_name, constraint );
+//  }
 
 }
 
@@ -109,6 +111,17 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple
 
   return location;
 }
+storage::DataTable* DataTable::GetReferenceTable(int position) {
+  assert( position < reference_table_infos.size() );
+
+  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+
+  oid_t relation_id = reference_table_infos[position]->GetPrimaryKeyTableId();
+
+  return db->GetTableById( relation_id );
+}
+
+
 
 void DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer location) {
   for (auto index : indexes) {
