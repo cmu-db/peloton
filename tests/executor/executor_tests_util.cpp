@@ -20,6 +20,7 @@
 #include <memory>
 #include <vector>
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "backend/catalog/schema.h"
