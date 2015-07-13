@@ -13,6 +13,7 @@
 #include <iostream>
 
 #include "backend/bridge/tuple_transformer.h"
+#include "backend/common/logger.h"
 #include "backend/common/value_peeker.h"
 #include "backend/storage/tuple.h"
 #include "backend/common/types.h"
@@ -35,7 +36,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     case 21:
     {
       int16_t smallint = DatumGetInt16(datum);
-      printf("%d\n", smallint);
+      LOG_INFO("%d\n", smallint);
       value = ValueFactory::GetSmallIntValue(smallint);
     }
     break;
@@ -43,7 +44,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     case 23:
     {
       int32_t integer = DatumGetInt32(datum);
-      printf("%d\n", integer);
+      LOG_INFO("%d\n", integer);
       value = ValueFactory::GetIntegerValue(integer);
     }
     break;
@@ -51,7 +52,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     case 20:
     {
       int64_t bigint = DatumGetInt64(datum);
-      printf("%ld\n", bigint);
+      LOG_INFO("%ld\n", bigint);
       value = ValueFactory::GetBigIntValue(bigint);
     }
     break;
@@ -60,7 +61,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     {
       char *character = DatumGetCString(datum);
       Pool *data_pool = nullptr;
-      printf("%s\n", character);
+      LOG_INFO("%s\n", character);
       value = ValueFactory::GetStringValue(character, data_pool);
     }
     break;
@@ -69,7 +70,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     {
       char * varlen_character = DatumGetCString(datum);
       Pool *data_pool = nullptr;
-      printf("%s\n", varlen_character);
+      LOG_INFO("%s\n", varlen_character);
       value = ValueFactory::GetStringValue(varlen_character,
                                            data_pool);
     }
@@ -79,7 +80,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     {
       long int timestamp = DatumGetInt64(datum);
       char *timestamp_cstring = DatumGetCString(datum);
-      printf("%s\n", timestamp_cstring);
+      LOG_INFO("%s\n", timestamp_cstring);
       value = ValueFactory::GetTimestampValue(timestamp);
     }
     break;
@@ -105,7 +106,7 @@ Datum TupleTransformer::GetDatum(Value value) {
     case 4:
     {
       int16_t smallint = ValuePeeker::PeekSmallInt(value);
-      printf("%d\n", smallint);
+      LOG_INFO("%d\n", smallint);
       datum = Int16GetDatum(smallint);
     }
     break;
@@ -113,7 +114,7 @@ Datum TupleTransformer::GetDatum(Value value) {
     case 5:
     {
       int32_t integer = ValuePeeker::PeekInteger(value);
-      printf("%d\n", integer);
+      LOG_INFO("%d\n", integer);
       datum = Int32GetDatum(integer);
     }
     break;
@@ -121,7 +122,7 @@ Datum TupleTransformer::GetDatum(Value value) {
     case 6:
     {
       int64_t bigint = ValuePeeker::PeekBigInt(value);
-      printf("%ld\n", bigint);
+      LOG_INFO("%ld\n", bigint);
       datum = Int64GetDatum(bigint);
     }
     break;
@@ -129,7 +130,7 @@ Datum TupleTransformer::GetDatum(Value value) {
     case 8:
     {
       double double_precision = ValuePeeker::PeekDouble(value);
-      printf("%f\n", double_precision);
+      LOG_INFO("%f\n", double_precision);
       datum = Float8GetDatum(double_precision);
     }
     break;
@@ -137,7 +138,7 @@ Datum TupleTransformer::GetDatum(Value value) {
     case 9:
     {
       char *variable_character = (char *) ValuePeeker::PeekObjectValue(value);
-      printf("%s\n", variable_character);
+      LOG_INFO("%s\n", variable_character);
       datum = CStringGetDatum(variable_character);
     }
     break;
@@ -146,13 +147,13 @@ Datum TupleTransformer::GetDatum(Value value) {
     {
       long int timestamp = ValuePeeker::PeekTimestamp(value);
       datum = Int64GetDatum(timestamp);
-      printf("%s\n",DatumGetCString(timestamp));
+      LOG_INFO("%s\n",DatumGetCString(timestamp));
     }
     break;
 
     default:
       datum = PointerGetDatum(nullptr);
-      printf("Unreconginized value type : %u\n", value_type);
+      LOG_INFO("Unrecognized value type : %u\n", value_type);
       break;
   }
 

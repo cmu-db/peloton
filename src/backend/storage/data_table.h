@@ -78,13 +78,13 @@ public:
     index::Index* GetIndexById(oid_t index_oid );
 
     // Add the unique index to the table
-    void AddUniqueIndex( index::Index *index );
+    bool AddUniqueIndex( index::Index *index, oid_t index_oid );
 
     // Add the reference table to the table
     void AddReferenceTable( catalog::ReferenceTableInfo *referenceTableInfo );
 
     // Set the index for PrimaryKey
-    void SetPrimaryIndex( index::Index *index );
+    bool SetPrimaryIndex( index::Index *index, oid_t index_oid );
 
     // Get the PrimaryKey index
     index::Index* GetPrimaryIndex();

@@ -187,10 +187,10 @@ bool DDL::CreateIndex( IndexInfo index_info ){
       data_table->AddIndex(index, index_oid);
       break;
     case INDEX_TYPE_PRIMARY_KEY:
-      data_table->SetPrimaryIndex(index);
+      data_table->SetPrimaryIndex(index, index_oid);
       break;
     case INDEX_TYPE_UNIQUE:
-      data_table->AddUniqueIndex(index);
+      data_table->AddUniqueIndex(index, index_oid);
       break;
     default:
       LOG_WARN("unrecognized index type: %d", index_type);

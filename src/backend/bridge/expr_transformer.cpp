@@ -29,8 +29,9 @@ namespace bridge {
 
 void ExprTransformer::PrintPostgressExprTree(const ExprState* expr_state, std::string prefix) {
   auto tag = nodeTag(expr_state->expr);
-  tag = tag;  // silence compiler
-  // TODO stub
+
+  // TODO Not complete.
+  LOG_INFO("%u ", tag);
 }
 
 /**
