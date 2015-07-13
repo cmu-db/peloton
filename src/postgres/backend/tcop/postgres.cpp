@@ -4258,6 +4258,10 @@ PostgresMain(int argc, char *argv[],
       case 'X':
       case EOF:
 
+        // TODO: Peloton Changes
+        MemoryContextDelete(MessageContext);
+        MemoryContextDelete(CacheMemoryContext);
+
         /*
          * Reset whereToSendOutput to prevent ereport from attempting
          * to send any more messages to client.
