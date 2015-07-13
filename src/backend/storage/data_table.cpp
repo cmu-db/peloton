@@ -42,7 +42,7 @@ DataTable::~DataTable() {
 
 bool DataTable::AddIndex(index::Index *index, oid_t index_oid ) {
   std::lock_guard<std::mutex> lock(table_mutex);
-  indexes.push_back(index);
+  indexes.push_back(index); // TODO Move to inside catch
 
   try {
     index = index_oid_to_address.at( index_oid );
@@ -67,9 +67,20 @@ index::Index* DataTable::GetIndexById(oid_t index_oid ) {
   return index;
 }
 
-void DataTable::AddUniqueIndex(index::Index *index) {
+bool DataTable::AddUniqueIndex(index::Index *index, oid_t index_oid) {
   std::lock_guard<std::mutex> lock(table_unique_index_mutex);
-  unique_indexes.push_back(index);
+  unique_indexes.push_back(index); // TODO :: Move to inside of catch
+
+  try {
+    index = index_oid_to_address.at( index_oid );
+    LOG_WARN("Index(%u) already exists in this table(%u) ", index_oid, table_oid );
+    return false;
+
+  }catch (const std::out_of_range& oor)  {
+    index_oid_to_address.insert( std::pair<oid_t, index::Index* > ( index_oid, index ));
+  }
+
+  return true;
 }
 
 void DataTable::AddReferenceTable( catalog::ReferenceTableInfo *reference_table_info){
@@ -89,11 +100,21 @@ void DataTable::AddReferenceTable( catalog::ReferenceTableInfo *reference_table_
 
 }
 
-void DataTable::SetPrimaryIndex(index::Index *index) {
-  PrimaryKey_Index = index;
+bool DataTable::SetPrimaryIndex(index::Index *index, oid_t index_oid ) {
+  PrimaryKey_Index = index; // TODO :: Move to inside of catch
+
+  try {
+    index = index_oid_to_address.at( index_oid );
+    LOG_WARN("Index(%u) already exists in this table(%u) ", index_oid, table_oid );
+    return false;
+  }catch (const std::out_of_range& oor)  {
+    index_oid_to_address.insert( std::pair<oid_t, index::Index* > ( index_oid, index ));
+  }
+  return true;
 }
 
 index::Index*  DataTable::GetPrimaryIndex(){
+
   return PrimaryKey_Index;
 }
 
