@@ -223,23 +223,28 @@ std::ostream& operator<<( std::ostream& os, const Database& database ) {
     storage::DataTable* table = database.GetTableByPosition( table_itr );
     if( table != nullptr ){
       std::cout << "(" <<table_itr+1 <<"/" << number_of_tables<< ")Table Name : " << table->GetName() << "\n" <<  *(table->GetSchema()) << std::endl;
-      if( table->ishasPrimaryKey()  ){
-        printf("print primary key index \n");
-        std::cout<< *(table->GetPrimaryIndex()) << std::endl;
-      }
-      if ( table->ishasUnique()){
-        printf("print unique index \n");
-        for( int i =0 ; i<  table->GetUniqueIndexCount(); i++){
-          std::cout << *(table->GetUniqueIndex(i)) << std::endl;
-        }
-      }
+
+      std::cout << "index count : " <<  table->GetIndexCount() << std::endl;
       if ( table->GetIndexCount() > 0 ){
-        printf("print index \n");
         for( int i =0 ; i<  table->GetIndexCount(); i++){
-          std::cout << *(table->GetIndex(i)) << std::endl;
+           index::Index* index = table->GetIndex(i);
+
+           switch( index->GetIndexType() ){
+             case INDEX_TYPE_PRIMARY_KEY:
+               printf("print primary key index \n");
+               break;
+             case INDEX_TYPE_UNIQUE:
+               printf("print unique index \n");
+               break;
+             default:
+               printf("print index \n");
+               break;
+          }
+           std::cout << *index << std::endl;
         }
       }
-      if ( table->ishasReferenceTable() ){
+
+     if ( table->ishasReferenceTable() ){
         printf("print foreign tables \n");
         for( int i =0 ; i<  table->GetReferenceTableCount(); i++){
           peloton::storage::DataTable *temp_table = table->GetReferenceTable(i);

@@ -46,6 +46,14 @@
 namespace peloton {
 namespace bridge {
 
+#define COLOR_RED     "\x1b[31m"
+#define COLOR_GREEN   "\x1b[32m"
+#define COLOR_YELLOW  "\x1b[33m"
+#define COLOR_BLUE    "\x1b[34m"
+#define COLOR_MAGENTA "\x1b[35m"
+#define COLOR_CYAN    "\x1b[36m"
+#define COLOR_RESET   "\x1b[0m"
+
 static std::vector<IndexInfo> index_infos;
 
 //===--------------------------------------------------------------------===//
@@ -176,25 +184,14 @@ bool DDL::CreateIndex( IndexInfo index_info ){
   auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_columns);
 
   // Create index metadata and physical index
-  index::IndexMetadata* metadata = new index::IndexMetadata(index_name, our_index_type,
+  index::IndexMetadata* metadata = new index::IndexMetadata(index_name, our_index_type, index_type,
                                                             tuple_schema, key_schema,
                                                             unique_keys);
   index::Index* index = index::IndexFactory::GetInstance(metadata);
 
   // Record the built index in the table
-  switch( index_type ){
-    case INDEX_TYPE_NORMAL:
-      data_table->AddIndex(index, index_oid);
-      break;
-    case INDEX_TYPE_PRIMARY_KEY:
-      data_table->SetPrimaryIndex(index, index_oid);
-      break;
-    case INDEX_TYPE_UNIQUE:
-      data_table->AddUniqueIndex(index, index_oid);
-      break;
-    default:
-      LOG_WARN("unrecognized index type: %d", index_type);
-  }
+  std::cout << "\n\n\n\nAddIndex\n\n\n\n" <<  std::endl;
+  data_table->AddIndex(index, index_oid);
 
   return true;
 }
@@ -281,14 +278,6 @@ bool DDL::DropTable(Oid table_oid) {
 //===--------------------------------------------------------------------===//
 // Misc. 
 //===--------------------------------------------------------------------===//
-
-#define COLOR_RED     "\x1b[31m"
-#define COLOR_GREEN   "\x1b[32m"
-#define COLOR_YELLOW  "\x1b[33m"
-#define COLOR_BLUE    "\x1b[34m"
-#define COLOR_MAGENTA "\x1b[35m"
-#define COLOR_CYAN    "\x1b[36m"
-#define COLOR_RESET   "\x1b[0m"
 
 /**
  * @brief Process utility statement.

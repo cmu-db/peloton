@@ -160,6 +160,7 @@ bool CreateExecutor::CreateIndex(catalog::Database* db,
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(index_name,
                                                                   INDEX_METHOD_TYPE_BTREE_MULTIMAP,
+                                                                  INDEX_TYPE_NORMAL,
                                                                   tuple_schema,
                                                                   key_schema,
                                                                   unique);
