@@ -506,6 +506,9 @@ MemoryContextStatsInternal(MemoryContext context, int level)
 
 	AssertArg(MemoryContextIsValid(context));
 
+  if(level >= 2)
+    return;
+
 	(*context->methods->stats) (context, level);
 	for (child = context->firstchild; child != NULL; child = child->nextchild)
 		MemoryContextStatsInternal(child, level + 1);
