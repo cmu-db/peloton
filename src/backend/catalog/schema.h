@@ -80,6 +80,10 @@ class ColumnInfo {
     SetLength ( column_length );
 
   }
+  inline std::string GetName()
+  {
+    return name;
+  }
   
   // add a constraint to the column info
   void AddConstraint(catalog::Constraint* _constraint){

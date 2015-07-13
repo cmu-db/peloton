@@ -111,14 +111,14 @@ private:
 class ReferenceTableInfo {
 
   public:
-  ReferenceTableInfo( storage::DataTable* PrimaryKeyTable,
+  ReferenceTableInfo( oid_t PrimaryKeyTableId,
                       std::vector<std::string> pk_column_names,
                       std::vector<std::string> fk_column_names,
                       char fk_update_action,
                       char fk_delete_action,
-                      std::string& name ) 
+                      std::string name ) 
 
-                      : PrimaryKeyTable(PrimaryKeyTable),
+                      : PrimaryKeyTableId(PrimaryKeyTableId),
                       pk_column_names(pk_column_names),
                       fk_column_names(fk_column_names),
                       fk_update_action(fk_update_action),
@@ -126,18 +126,19 @@ class ReferenceTableInfo {
                       name(name)
                       { }
 
-  std::vector<std::string> GetFKColumnNames(){
+  std::vector<std::string> GetFKColumnNames()
+  {
     return fk_column_names;
   }
 
-  storage::DataTable* GetPrimaryKeyTable()
+  oid_t GetPrimaryKeyTableId()
   {
-    return PrimaryKeyTable;
+    return PrimaryKeyTableId;
   }
 
   private:
 
-  storage::DataTable* PrimaryKeyTable = nullptr;
+  oid_t PrimaryKeyTableId = INVALID_OID;
 
   std::vector<std::string> pk_column_names;
   std::vector<std::string> fk_column_names;
@@ -145,7 +146,7 @@ class ReferenceTableInfo {
   char fk_update_action;
   char fk_delete_action;
 
-  std::string name ;
+  std::string name;
 
 };
 
