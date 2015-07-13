@@ -10,14 +10,16 @@
  *-------------------------------------------------------------------------
  */
 
+#include "postgres.h"
 
+#include "nodes/print.h"
 #include "nodes/pprint.h"
 #include "utils/rel.h"
 #include "utils/lsyscache.h"
 #include "bridge/bridge.h"
 #include "executor/executor.h"
 #include "parser/parsetree.h"
-#include "nodes/print.h"
+
 
 #include "executor/nodeValuesscan.h"
 
@@ -41,6 +43,14 @@ void printPlanStateTree(const PlanState * planstate);
 
 namespace peloton {
 namespace bridge {
+
+/**
+ * @brief Helper function: transforms a non-trivial projection target list
+ * (ProjectionInfo.pi_targetList) in Postgres
+ * to a Peloton one.
+ */
+std::vector<std::pair<oid_t, expression::AbstractExpression*>>
+TransformTargetList(List* target_list, oid_t column_count);
 
 /**
  * @brief Pretty print the plan state tree.
@@ -147,10 +157,6 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   ResultRelInfo *result_rel_info = mt_plan_state->resultRelInfo;
   Relation result_relation_desc = result_rel_info->ri_RelationDesc;
 
-  /* Currently, we only support plain insert statement.
-   * So, the number of subplan must be exactly 1.
-   * TODO: can it be 0? */
-
   Oid database_oid = GetCurrentDatabaseOid();
   Oid table_oid = result_relation_desc->rd_id;
 
@@ -170,7 +176,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   /* Get the tuple schema */
   auto schema = target_table->GetSchema();
 
-  /* Should be only one which is either a Result Plan or a ValuesScan plan */
+  /* Should be only one sub plan which is a Result  */
   assert(mt_plan_state->mt_nplans == 1);
   assert(mt_plan_state->mt_plans != nullptr);
 
@@ -179,75 +185,38 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   std::vector<storage::Tuple *> tuples;
 
   /*
-   * In below, we invoke Postgres functions to construct the tuples-to-insert,
-   * saving our own effort.
-   * However, two potential problems:
-   * 1. We need many of the Postgres memory contexts in order to execute the functions.
-   *    Not desired?
-   * 2. Maybe too costly for the planning stage (especially for a long VALUES list).
+   * We eat our child like Zeus's father to avoid
+   * creating a child that returns just a tuple.
+   * The cost is to make calls to AbstractExpression->Evaluate() here.
    */
   if (nodeTag(sub_planstate->plan) == T_Result) {  // Child is a result node
     LOG_INFO("Child of Insert is Result");
     auto result_ps = reinterpret_cast<ResultState*>(sub_planstate);
 
-    assert(outerPlanState(result_ps) == nullptr); /* We only handle single-constant-tuple here,
-                                                  i.e., ResultState should have no children */
+    assert(outerPlanState(result_ps) == nullptr); /* We only handle single-constant-tuple for now,
+                                                  i.e., ResultState should have no children/sub plans */
 
-    TupleTableSlot *tupleslot;
-    ExprDoneCond isDone;
-    tupleslot = ExecProject(result_ps->ps.ps_ProjInfo, &isDone);
-    assert(!TupIsNull(tupleslot));
-    assert(isDone != ExprEndResult);
+    auto tuple = new storage::Tuple(schema, true);
+    auto proj_list = TransformTargetList(result_ps->ps.ps_ProjInfo->pi_targetlist,
+                                         schema->GetColumnCount());
 
-    LOG_INFO("Tuple (pg) to insert: ");
-    print_slot(tupleslot);
-
-    auto tuple = TupleTransformer::GetPelotonTuple(tupleslot, schema);
-    assert(tuple);
-    tuples.push_back(tuple);
+    for(auto proj : proj_list) {
+      Value value = proj.second->Evaluate(nullptr, nullptr);  // Constant is expected
+      tuple->SetValue(proj.first, value);
+    }
 
     LOG_INFO("Tuple (pl) to insert:");
     std::cout << *tuple << std::endl;
 
-    // TODO: Is this the correct way to free a postgres tupleslot?
-    pfree(tupleslot);
+    // TODO Who's responsible for freeing the tuple?
+    tuples.push_back(tuple);
 
   }
-//  else if(nodeTag(sub_planstate->plan) == T_ValuesScan){  // Child is a values-scan node
-//    LOG_INFO("Child of Insert is ValuesScan");
-//
-//    auto values_scan_ps = reinterpret_cast<ValuesScanState*>(sub_planstate);
-//
-//    // Dirty hack to force restart of ValuesScan
-//    //ExecReScanValuesScan(values_scan_ps);
-//    values_scan_ps->curr_idx = -1;
-//
-//    for(;;) {
-//      TupleTableSlot *tupleslot;
-//
-//      // Ugly but inevitable ...
-//      // tupleslot = ExecValuesScan(values_scan_ps);
-//      //tupleslot = ExecProcNode(sub_planstate);
-//      tupleslot = ValuesNext(values_scan_ps);
-//
-//      if(TupIsNull(tupleslot))
-//        break;
-//
-//      auto tuple = TupleTransformer(tupleslot, schema);
-//      assert(tuple);
-//      tuples.push_back(tuple);
-//
-//      std::cout << "Tuple to insert: " << *tuple << std::endl;
-//    }
-//
-//    LOG_INFO("Retrieved %u tuples", tuples.size());
-//  }
   else {
     LOG_ERROR("Unsupported child type of Insert: %u",
               nodeTag(sub_planstate->plan));
   }
 
-  /* TODO: Who's responsible for deleting the vector of tuples? */
   auto plan_node = new planner::InsertNode(target_table, tuples);
 
   return plan_node;
@@ -263,8 +232,8 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
    * and the Postgres Update (ModifyTable) node merely replace the old tuple with it.
    * In Peloton, we want to shift the responsibility of constructing the
    * new tuple to the Update node.
-   * Therefore, we peek at the subplan of the Postgres Update node and extract the
-   * Update information from there.
+   * So, we peek and steal the projection info from our child,
+   * but leave it to process the WHERE clause.
    */
 
   /* Should be only one sub plan which is a SeqScan */
@@ -302,30 +271,12 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
 
   if(nodeTag(sub_planstate->plan) == T_SeqScan) { // Sub plan is SeqScan
     LOG_INFO("Child of Update is SeqScan \n");
-    // Retrieve the non-trivial projection info from SeqScan
+    // Extract the non-trivial projection info from SeqScan
     // and put it in our update node
     auto seqscan_state = reinterpret_cast<SeqScanState*>(sub_planstate);
-    ListCell *tl;
-    List *targetList  = seqscan_state->ps.ps_ProjInfo->pi_targetlist;
 
-    foreach(tl, targetList)
-    {
-      GenericExprState *gstate = (GenericExprState *) lfirst(tl);
-      TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
-      AttrNumber  resind = tle->resno - 1;
-
-      if(!(resind < schema->GetColumnCount()))
-          continue; // skip junk attributes
-
-      LOG_INFO("Update column id : %u , Top-level (pg) expr tag : %u \n", resind, nodeTag(gstate->arg->expr));
-
-      oid_t col_id = static_cast<oid_t>(resind);
-
-      // TODO: Somebody should be responsible for freeing the expression tree.
-      auto peloton_expr = ExprTransformer::TransformExpr(gstate->arg);
-
-      update_column_exprs.emplace_back(col_id, peloton_expr);
-    }
+    update_column_exprs = TransformTargetList(seqscan_state->ps.ps_ProjInfo->pi_targetlist,
+                                              schema->GetColumnCount());
 
     plan_node = new planner::UpdateNode(target_table, update_column_exprs);
     plan_node->AddChild(TransformPlan(sub_planstate));
@@ -443,43 +394,44 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
  */
 planner::AbstractPlanNode *PlanTransformer::TransformResult(
     const ResultState *node) {
-  ProjectionInfo *projInfo = node->ps.ps_ProjInfo;
-  int numSimpleVars = projInfo->pi_numSimpleVars;
-  ExprDoneCond *itemIsDone = projInfo->pi_itemIsDone;
-  ExprContext *econtext = projInfo->pi_exprContext;
-
-  if (node->rs_checkqual) {
-    LOG_INFO("We can not handle constant qualifications now");
-  }
-
-  if (numSimpleVars > 0) {
-    LOG_INFO("We can not handle simple vars now");
-  }
-
-  if (projInfo->pi_targetlist) {
-    ListCell *tl;
-    List *targetList = projInfo->pi_targetlist;
-
-    LOG_INFO("The number of target in list is %d", list_length(targetList));
-
-    foreach(tl, targetList)
-    {
-      GenericExprState *gstate = (GenericExprState *) lfirst(tl);
-      TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
-      AttrNumber resind = tle->resno - 1;
-      bool isnull;
-      Datum value = ExecEvalExpr(gstate->arg, econtext, &isnull,
-                                 &itemIsDone[resind]);
-      LOG_INFO("Datum : %lu \n", value);
-    }
-
-  }
-  else {
-    LOG_INFO("We can not handle case where targelist is null");
-  }
+//  ProjectionInfo *projInfo = node->ps.ps_ProjInfo;
+//  int numSimpleVars = projInfo->pi_numSimpleVars;
+//  ExprDoneCond *itemIsDone = projInfo->pi_itemIsDone;
+//  ExprContext *econtext = projInfo->pi_exprContext;
+//
+//  if (node->rs_checkqual) {
+//    LOG_INFO("We can not handle constant qualifications now");
+//  }
+//
+//  if (numSimpleVars > 0) {
+//    LOG_INFO("We can not handle simple vars now");
+//  }
+//
+//  if (projInfo->pi_targetlist) {
+//    ListCell *tl;
+//    List *targetList = projInfo->pi_targetlist;
+//
+//    LOG_INFO("The number of target in list is %d", list_length(targetList));
+//
+//    foreach(tl, targetList)
+//    {
+//      GenericExprState *gstate = (GenericExprState *) lfirst(tl);
+//      TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
+//      AttrNumber resind = tle->resno - 1;
+//      bool isnull;
+//      Datum value = ExecEvalExpr(gstate->arg, econtext, &isnull,
+//                                 &itemIsDone[resind]);
+//      LOG_INFO("Datum : %lu \n", value);
+//    }
+//
+//  }
+//  else {
+//    LOG_INFO("We can not handle case where targelist is null");
+//  }
 
   return nullptr;
 }
+
 /**
  * @brief Convert a Postgres LimitState into a Peloton LimitPlanNode
  *        does not support LIMIT ALL
@@ -549,6 +501,36 @@ planner::AbstractPlanNode *PlanTransformer::TransformLimit(
   plan_node->AddChild(PlanTransformer::TransformPlan(subplan_state));
   return plan_node;
 }
+
+
+std::vector<std::pair<oid_t, expression::AbstractExpression*>>
+TransformTargetList(List* target_list, oid_t column_count) {
+
+  std::vector<std::pair<oid_t, expression::AbstractExpression*>> proj_list;
+  ListCell *tl;
+
+  foreach(tl, target_list)
+  {
+    GenericExprState *gstate = (GenericExprState *) lfirst(tl);
+    TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
+    AttrNumber  resind = tle->resno - 1;
+
+    if(!(resind < column_count))
+        continue; // skip junk attributes
+
+    LOG_INFO("Target list : column id : %u , Top-level (pg) expr tag : %u \n", resind, nodeTag(gstate->arg->expr));
+
+    oid_t col_id = static_cast<oid_t>(resind);
+
+    // TODO: Somebody should be responsible for freeing the expression tree.
+    auto peloton_expr = ExprTransformer::TransformExpr(gstate->arg);
+
+    proj_list.emplace_back(col_id, peloton_expr);
+  }
+
+  return proj_list;
+}
+
 
 }  // namespace bridge
 }  // namespace peloton
