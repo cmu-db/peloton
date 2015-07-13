@@ -22,6 +22,8 @@
 namespace peloton {
 namespace storage {
 
+typedef tbb::concurrent_unordered_map<oid_t, index::Index*> oid_t_to_index_ptr;
+
 //===--------------------------------------------------------------------===//
 // DataTable
 //===--------------------------------------------------------------------===//
@@ -71,7 +73,9 @@ public:
     //===--------------------------------------------------------------------===//
 
     // Add an index to the table
-    void AddIndex( index::Index *index );
+    bool AddIndex( index::Index *index , oid_t index_oid);
+
+    index::Index* GetIndexById(oid_t index_oid );
 
     // Add the unique index to the table
     void AddUniqueIndex( index::Index *index );
@@ -81,9 +85,6 @@ public:
 
     // Set the index for PrimaryKey
     void SetPrimaryIndex( index::Index *index );
-
-    // Set raw check expr
-    void SetRawCheckExpr( Node* _raw_check_expr );
 
     // Get the PrimaryKey index
     index::Index* GetPrimaryIndex();
@@ -172,6 +173,8 @@ protected:
 
     // Raw check expr
     Node* raw_check_expr = nullptr;
+
+    oid_t_to_index_ptr index_oid_to_address;
 
 };
 
