@@ -51,6 +51,7 @@
 #include "backend/bridge/ddl.h"
 #include "backend/bridge/plan_transformer.h"
 #include "backend/bridge/plan_executor.h"
+#include "backend/bridge/bridge_test.h"
 #include "backend/scheduler/tbb_scheduler.h"
 
 /* ----------
@@ -272,7 +273,15 @@ PelotonMain(int argc, char *argv[])
   MemoryContextSwitchTo(TopMemoryContext);
 
   /* Start main loop */
-  peloton_MainLoop();
+  if(PelotonTestMode == false)
+  {
+    peloton_MainLoop();
+  }
+  /* Testing mode */
+  else
+  {
+    peloton::test::BridgeTest::RunTests();
+  }
 
   // TODO: Peloton Changes
   MemoryContextDelete(MessageContext);
