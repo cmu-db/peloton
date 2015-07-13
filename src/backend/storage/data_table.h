@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "backend/bridge/bridge.h"
 #include "backend/storage/abstract_table.h"
 #include "backend/storage/backend_vm.h"
 #include "backend/index/index.h"
@@ -130,10 +131,7 @@ public:
         return unique_indexes[index_id];
     }
 
-    inline storage::DataTable *GetReferenceTable(int position) const {
-        assert( position < reference_table_infos.size() );
-        return reference_table_infos[position]->GetPrimaryKeyTable();
-    }
+    storage::DataTable *GetReferenceTable(int position) ;
 
     void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
@@ -171,7 +169,6 @@ protected:
 
     // Reference tables
     std::vector<catalog::ReferenceTableInfo*> reference_table_infos;
-
 
     // Raw check expr
     Node* raw_check_expr = nullptr;
