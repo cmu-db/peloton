@@ -133,6 +133,8 @@ extern bool IsPelotonProcess(void);
  * ----------
  */
 
+extern bool IsPelotonQuery(List *relationOids);
+
 extern void peloton_init(void);
 extern int  peloton_start(void);
 
