@@ -43,14 +43,9 @@ class Constraint
 
 public:
     // Configure ( type [, name] )
-    Constraint( ConstraintType type, std::string name = "" )
-                : type(type), name(name) {}
+    Constraint( ConstraintType type, std::string name = "", Node* raw_expr = nullptr )
+                : type(type), name(name) { raw_expr = (Node*) copyObject((void*) raw_expr ); }
 
-    // Configure ( type, raw expression )
-    Constraint( ConstraintType type, Node* _raw_default_expr )
-                : type(type) { raw_default_expr = (Node*) copyObject((void*) _raw_default_expr ); }
- 
-    
     //===--------------------------------------------------------------------===//
     // ACCESSORS
     //===--------------------------------------------------------------------===//
@@ -95,7 +90,7 @@ private:
 
     // FIXME :: Cooked expr
     // Raw_default_expr ( if needed )
-    Node* raw_default_expr = nullptr;
+    Node* raw_expr = nullptr;
 
     // Unique index and reference table position in Table
     int reference_table_position = -1;
@@ -134,6 +129,11 @@ class ReferenceTableInfo {
   oid_t GetPrimaryKeyTableId()
   {
     return PrimaryKeyTableId;
+  }
+
+  std::string GetName()
+  {
+    return name;
   }
 
   private:
