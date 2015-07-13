@@ -31,6 +31,8 @@ class BridgeTest {
 
   static void TestCatalog();
 
+  static void DDL_CreateObject();
+
 };
 
 } // End test namespace
