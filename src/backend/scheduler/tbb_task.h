@@ -27,6 +27,10 @@ namespace scheduler {
 class TBBTask : public AbstractTask, public tbb::task {
 
  public:
+  TBBTask(const TBBTask &) = delete;
+  TBBTask& operator=(const TBBTask &) = delete;
+  TBBTask(TBBTask &&) = delete;
+  TBBTask& operator=(TBBTask &&) = delete;
 
   TBBTask(handler function_pointer, void *args)
  : AbstractTask(function_pointer, args){
@@ -35,9 +39,7 @@ class TBBTask : public AbstractTask, public tbb::task {
 
   tbb::task* execute() {
 
-    std::cout << "Starting task \n";
     output = (*function_pointer)(args);
-    std::cout << "Stopping task \n";
 
     return nullptr;
   }

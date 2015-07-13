@@ -1000,13 +1000,12 @@ AtStart_Memory(void)
 	 * size, so that space will be reserved immediately.
 	 */
 	if (TransactionAbortContext == NULL)
-		TransactionAbortContext =
-		    SHMAllocSetContextCreate(TopSharedMemoryContext,
-								  "TransactionAbortContext",
-								  32 * 1024,
-								  32 * 1024,
-								  32 * 1024,
-								  SHM_DEFAULT_SEGMENT);
+	  TransactionAbortContext =
+	      AllocSetContextCreate(TopMemoryContext,
+	                            "TransactionAbortContext",
+	                            32 * 1024,
+	                            32 * 1024,
+	                            32 * 1024);
 
 	/*
 	 * We shouldn't have a transaction context already.
