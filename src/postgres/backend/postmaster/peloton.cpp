@@ -911,6 +911,7 @@ peloton_process_dml(Peloton_MsgDML *msg)
     TopTransactionContext = msg->m_top_transaction_context;
     CurTransactionContext = msg->m_cur_transaction_context;
 
+
     auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
 
     if(plan){
