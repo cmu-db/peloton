@@ -21,7 +21,7 @@
 namespace peloton {
 namespace test {
 
-void BridgeTest::RunTests() {
+void BridgeTest::DDL_CreateObject() {
 
   //===--------------------------------------------------------------------===//
   // CreateTable TEST 
@@ -41,13 +41,8 @@ void BridgeTest::RunTests() {
 
     bool status = peloton::bridge::DDL::CreateTable( INVALID_OID, "test_table1", column_infos );
     assert ( status );
-  }
 
-  //===--------------------------------------------------------------------===//
-  // CreateTable TEST with Constraint
-  //===--------------------------------------------------------------------===//
-  {
-    std::vector<catalog::ColumnInfo> column_infos;
+    // CONSTRAINT 
     std::vector<catalog::Constraint> constraint_infos;
 
     catalog::Constraint *notnull_constraint = new catalog::Constraint( CONSTRAINT_TYPE_NOTNULL );
@@ -60,23 +55,24 @@ void BridgeTest::RunTests() {
     constraint_infos.push_back( *unique_constraint );
     constraint_infos.push_back( *foreign_constraint );
 
-    catalog::ColumnInfo *column_info1 = new catalog::ColumnInfo( VALUE_TYPE_INTEGER, 4, "id", constraint_infos); 
-    catalog::ColumnInfo *column_info2 = new catalog::ColumnInfo( VALUE_TYPE_VARCHAR, 68, "name", constraint_infos); 
-    catalog::ColumnInfo *column_info3 = new catalog::ColumnInfo( VALUE_TYPE_TIMESTAMP, 8, "time", constraint_infos); 
-    catalog::ColumnInfo *column_info4 = new catalog::ColumnInfo( VALUE_TYPE_DOUBLE, 8, "salary", constraint_infos); 
+    catalog::ColumnInfo *column_info5 = new catalog::ColumnInfo( VALUE_TYPE_INTEGER, 4, "id", constraint_infos); 
+    catalog::ColumnInfo *column_info6 = new catalog::ColumnInfo( VALUE_TYPE_VARCHAR, 68, "name", constraint_infos); 
+    catalog::ColumnInfo *column_info7 = new catalog::ColumnInfo( VALUE_TYPE_TIMESTAMP, 8, "time", constraint_infos); 
+    catalog::ColumnInfo *column_info8 = new catalog::ColumnInfo( VALUE_TYPE_DOUBLE, 8, "salary", constraint_infos); 
 
-    column_infos.push_back(*column_info1);
-    column_infos.push_back(*column_info2);
-    column_infos.push_back(*column_info3);
-    column_infos.push_back(*column_info4);
+    column_infos.push_back(*column_info5);
+    column_infos.push_back(*column_info6);
+    column_infos.push_back(*column_info7);
+    column_infos.push_back(*column_info8);
 
-    bool status = peloton::bridge::DDL::CreateTable( INVALID_OID, "test_table2", column_infos );
+    status = peloton::bridge::DDL::CreateTable( INVALID_OID, "test_table2", column_infos );
     assert ( status );
+
   }
 
+}
 
-
-
+void BridgeTest::RunTests() {
   TestCatalog();
 }
 
