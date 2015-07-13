@@ -20,6 +20,7 @@
 #include <memory>
 #include <vector>
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "backend/catalog/schema.h"
@@ -312,7 +313,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_coun
                                             unique);
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
 
-  table->AddIndex(pkey_index);
+  table->AddIndex(pkey_index, INVALID_OID);
 
   // SECONDARY INDEX
   key_attrs = { 0, 1 };
@@ -325,7 +326,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_coun
                                             unique);
   index::Index *sec_index = index::IndexFactory::GetInstance(index_metadata);
 
-  table->AddIndex(sec_index);
+  table->AddIndex(sec_index, INVALID_OID);
 
   return table;
 }
