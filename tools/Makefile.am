@@ -16,6 +16,10 @@ else
 pg_common_ldflags = -L$(top_builddir)/src/.libs -lpeloton -lpq $(TBB_LIBS) -lrt -lm -lreadline
 endif
 
+pg_common_cxxflags = $(AM_CXXFLAGS) \
+					 -Wno-write-strings -Wno-sign-compare \
+					 -Wno-unused-parameter -Wno-missing-field-initializers
+
 
 ######################################################################
 # INITDB
@@ -32,6 +36,8 @@ initdb_CPPFLAGS = \
 				  -I$(top_srcdir)/src/postgres/timezone
 
 initdb_LDFLAGS = $(pg_common_ldflags)
+
+initdb_CXXFLAGS = $(pg_common_cxxflags)
 
 ######################################################################
 # PSQL
@@ -67,6 +73,8 @@ psql_CPPFLAGS = \
 
 psql_LDFLAGS = $(pg_common_ldflags)
 
+psql_CXXFLAGS = $(pg_common_cxxflags)
+
 ######################################################################
 # PSQL & SCRIPTS
 ######################################################################
@@ -82,6 +90,9 @@ pg_scripts_SOURCES = \
 					 common/fe_memutils.cpp \
 					 common/keywords.cpp
 
+pg_scripts_CXXFLAGS = $(pg_common_cxxflags)
+
+
 pg_ctl_SOURCES = \
 				 $(pg_scripts_SOURCES) \
 				 scripts/pg_ctl.cpp
@@ -89,6 +100,9 @@ pg_ctl_SOURCES = \
 pg_ctl_CPPFLAGS = $(pg_scripts_CPPFLAGS)
 
 pg_ctl_LDFLAGS = $(pg_common_ldflags)
+
+pg_ctl_CXXFLAGS = $(pg_common_cxxflags)
+
 
 createdb_SOURCES = \
 				   $(pg_scripts_SOURCES) \
@@ -99,6 +113,9 @@ createdb_CPPFLAGS = $(pg_scripts_CPPFLAGS)
 
 createdb_LDFLAGS = $(pg_common_ldflags)
 
+createdb_CXXFLAGS = $(pg_common_cxxflags)
+
+
 createuser_SOURCES = \
 					 $(pg_scripts_SOURCES) \
 					 scripts/common.cpp \
@@ -107,6 +124,9 @@ createuser_SOURCES = \
 createuser_CPPFLAGS = $(pg_scripts_CPPFLAGS)
 
 createuser_LDFLAGS = $(pg_common_ldflags)
+
+createuser_CXXFLAGS = $(pg_common_cxxflags)
+
 
 dropdb_SOURCES = \
 				 $(pg_scripts_SOURCES) \
@@ -117,6 +137,9 @@ dropdb_CPPFLAGS = $(pg_scripts_CPPFLAGS)
 
 dropdb_LDFLAGS = $(pg_common_ldflags)
 
+dropdb_CXXFLAGS = $(pg_common_cxxflags)
+
+
 dropuser_SOURCES = \
 				   $(pg_scripts_SOURCES) \
 				   scripts/common.cpp \
@@ -125,6 +148,9 @@ dropuser_SOURCES = \
 dropuser_CPPFLAGS = $(pg_scripts_CPPFLAGS)
 
 dropuser_LDFLAGS = $(pg_common_ldflags)
+
+dropuser_CXXFLAGS = $(pg_common_cxxflags)
+
 
 ######################################################################
 # PELOTON CONFIGURATION

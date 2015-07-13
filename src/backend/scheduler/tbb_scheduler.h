@@ -34,10 +34,9 @@ class TBBSchedulerState {
   }
 
   ~TBBSchedulerState() {
-    std::cout << "Destroying root task \n";
+    // Destroy root task
     root->set_ref_count(0);
     root->destroy(*root);
-    std::cout << "Destroyed root task \n";
   }
 
 };
@@ -50,17 +49,14 @@ class TBBSchedulerState {
 class TBBScheduler : public AbstractScheduler {
 
  public:
-  // singleton
-  static TBBScheduler& GetInstance();
 
   TBBScheduler();
   ~TBBScheduler();
 
-  // add task to queue
-  void AddTask(AbstractTask *task);
+  void Run(AbstractTask *task);
 
   // wait for all tasks
-  void Execute();
+  void Wait();
 
  private:
   tbb::task_scheduler_init init;

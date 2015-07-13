@@ -19,31 +19,25 @@
 namespace peloton {
 namespace scheduler {
 
-
-TBBScheduler& TBBScheduler::GetInstance() {
-  static TBBScheduler scheduler;
-  return scheduler;
-}
-
 TBBScheduler::TBBScheduler() :
             init(tbb::task_scheduler_init::default_num_threads()) {
 
   // set up state
   state = new TBBSchedulerState();
+
 }
 
 TBBScheduler::~TBBScheduler() {
 
-  // stop scheduler
+  // Stop scheduler
   init.terminate();
 
-  // clean up state
+  // Clean up state
   delete state;
 
-  // wait for some time
 }
 
-void TBBScheduler::AddTask(AbstractTask *task) {
+void TBBScheduler::Run(AbstractTask *task) {
 
   TBBTask *tbb_task = new(state->root->allocate_child()) TBBTask(task->GetTask(), task->GetArgs());
   state->root->increment_ref_count();
@@ -69,15 +63,13 @@ void TBBScheduler::AddTask(AbstractTask *task) {
       break;
   }
 
-  std::cout << "Enqueued task \n";
 }
 
-void TBBScheduler::Execute() {
+void TBBScheduler::Wait() {
 
-  std::cout << "WAITING for tasks \n";
+  // Wait for all tasks
   state->root->wait_for_all();
   state->root->increment_ref_count();
-  std::cout << "End of WAIT \n";
 
 }
 
