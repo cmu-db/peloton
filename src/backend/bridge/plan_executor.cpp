@@ -86,6 +86,10 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       child_executor = new executor::DeleteExecutor(plan, txn);
       break;
 
+    case PLAN_NODE_TYPE_UPDATE:
+      child_executor = new executor::UpdateExecutor(plan, txn);
+      break;
+
     case PLAN_NODE_TYPE_LIMIT:
       child_executor = new executor::LimitExecutor(plan, txn);
       break;
