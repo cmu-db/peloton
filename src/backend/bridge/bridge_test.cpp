@@ -50,20 +50,27 @@ void BridgeTest::RunTests() {
     std::vector<catalog::ColumnInfo> column_infos;
     std::vector<catalog::Constraint> constraint_infos;
 
-    catalog::Constraint *constraint1 = new catalog::Constraint( CONSTRAINT_TYPE_NOTNULL );
-    constraint_infos.push_back( *constraint1 );
+    catalog::Constraint *notnull_constraint = new catalog::Constraint( CONSTRAINT_TYPE_NOTNULL );
+    catalog::Constraint *primary_constraint = new catalog::Constraint( CONSTRAINT_TYPE_PRIMARY );
+    catalog::Constraint *unique_constraint = new catalog::Constraint( CONSTRAINT_TYPE_UNIQUE );
+    catalog::Constraint *foreign_constraint = new catalog::Constraint( CONSTRAINT_TYPE_FOREIGN );
+
+    constraint_infos.push_back( *notnull_constraint );
+    constraint_infos.push_back( *primary_constraint );
+    constraint_infos.push_back( *unique_constraint );
+    constraint_infos.push_back( *foreign_constraint );
 
     catalog::ColumnInfo *column_info1 = new catalog::ColumnInfo( VALUE_TYPE_INTEGER, 4, "id", constraint_infos); 
-    catalog::ColumnInfo *column_info2 = new catalog::ColumnInfo( VALUE_TYPE_VARCHAR, 68, "name"); 
-    catalog::ColumnInfo *column_info3 = new catalog::ColumnInfo( VALUE_TYPE_TIMESTAMP, 8, "time"); 
-    catalog::ColumnInfo *column_info4 = new catalog::ColumnInfo( VALUE_TYPE_DOUBLE, 8, "salary"); 
+    catalog::ColumnInfo *column_info2 = new catalog::ColumnInfo( VALUE_TYPE_VARCHAR, 68, "name", constraint_infos); 
+    catalog::ColumnInfo *column_info3 = new catalog::ColumnInfo( VALUE_TYPE_TIMESTAMP, 8, "time", constraint_infos); 
+    catalog::ColumnInfo *column_info4 = new catalog::ColumnInfo( VALUE_TYPE_DOUBLE, 8, "salary", constraint_infos); 
 
     column_infos.push_back(*column_info1);
     column_infos.push_back(*column_info2);
     column_infos.push_back(*column_info3);
     column_infos.push_back(*column_info4);
 
-    bool status = peloton::bridge::DDL::CreateTable( INVALID_OID, "test_table1", column_infos );
+    bool status = peloton::bridge::DDL::CreateTable( INVALID_OID, "test_table2", column_infos );
     assert ( status );
   }
 
