@@ -66,6 +66,9 @@ public:
     storage::DataTable* GetTableById( const oid_t table_oid ) const;
     storage::DataTable* GetTableByPosition( const oid_t table_position ) const;
 
+    oid_t GetTableIdByName( const std::string table_name ) const;
+    std::string GetTableNameById( const oid_t table_oid ) const;
+
 
     inline size_t GetTableCount() const {
       return table_oid_to_address.size();

@@ -11,6 +11,7 @@
  */
 
 #include "postgres.h"
+#include "miscadmin.h"
 #include "c.h"
 
 #include "bridge/bridge.h"
@@ -78,7 +79,7 @@ bool DDL::CreateTable( Oid relation_oid,
                        catalog::Schema *schema){
 
   assert( !table_name.empty() );
-  assert( column_infos.size() > 0 || schema != NULL );
+  //assert( column_infos.size() > 0 || schema != NULL );
 
   Oid database_oid = GetCurrentDatabaseOid();
   if(database_oid == InvalidOid)
@@ -287,6 +288,15 @@ bool DDL::DropTable(Oid table_oid) {
 // Misc. 
 //===--------------------------------------------------------------------===//
 
+#define COLOR_RED     "\x1b[31m"
+#define COLOR_GREEN   "\x1b[32m"
+#define COLOR_YELLOW  "\x1b[33m"
+#define COLOR_BLUE    "\x1b[34m"
+#define COLOR_MAGENTA "\x1b[35m"
+#define COLOR_CYAN    "\x1b[36m"
+#define COLOR_RESET   "\x1b[0m"
+
+
 /**
  * @brief Process utility statement.
  * @param parsetree Parse tree
@@ -296,12 +306,18 @@ void DDL::ProcessUtility(Node *parsetree,
   assert( parsetree != nullptr );
   assert( queryString != nullptr );
 
+  /* When we call a backend function from different thread, the thread's stack
+   * is at a different location than the main thread's stack. so it sets up
+   * reference point for stack depth checking
+   */
+  set_stack_base();
+
   // Process depending on type of utility statement
   switch ( nodeTag( parsetree ))
   {
     case T_CreatedbStmt:
     {
-      printf("T_Createdb\n");
+      printf(COLOR_RED "T_Createdb" COLOR_RESET "\n");
       CreatedbStmt* CdbStmt = (CreatedbStmt*) parsetree;
       peloton::bridge::DDL::CreateDatabase( CdbStmt->database_id );
     }
@@ -310,10 +326,10 @@ void DDL::ProcessUtility(Node *parsetree,
     case T_CreateStmt:
     case T_CreateForeignTableStmt:
     {
-      printf("T_CreateTable\n");
+      printf(COLOR_RED "T_CreateTable" COLOR_RESET "\n");
 
       /* Run parse analysis ... */
-      List     *stmts = transformCreateStmt((CreateStmt *) parsetree,
+     List     *stmts = transformCreateStmt((CreateStmt *) parsetree,
                                   queryString);
 
       /* ... and do it */
@@ -394,7 +410,8 @@ void DDL::ProcessUtility(Node *parsetree,
           //===--------------------------------------------------------------------===//
           // Add Primary Key and Unique Indexes to the table
           //===--------------------------------------------------------------------===//
-          status = peloton::bridge::DDL::CreateIndexesWithIndexInfos(relation_oid);
+          status = peloton::bridge::DDL::CreateIndexesWithIndexInfos( index_infos,
+                                                                      relation_oid );
           if( status == false ){
             LOG_WARN("Failed to create primary key and unique index");
           }
@@ -410,6 +427,7 @@ void DDL::ProcessUtility(Node *parsetree,
 
     case T_IndexStmt:  /* CREATE INDEX */
     {
+      printf(COLOR_RED "T_IndexStmt" COLOR_RESET "\n");
       bool status;
       IndexStmt  *Istmt = (IndexStmt *) parsetree;
 
@@ -430,16 +448,19 @@ void DDL::ProcessUtility(Node *parsetree,
                                                   index_info->IsUnique(),
                                                   index_info->GetKeyColumnNames());
 
-      fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info->GetIndexName().c_str(), status);
 
+      fprintf(stderr, "DDLCreateIndex :: %d \n", status);
     }
     break;
 
     case T_AlterTableStmt:
     {
-      printf("AlterTableStmt\n");
+      printf(COLOR_RED "T_AlterTableStmt" COLOR_RESET "\n");
+
+      break; // still working on here.... 
+
       AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
-      Oid     relation_oid = GetRelationOid( atstmt->relation->relname );
+      Oid     relation_oid = atstmt->relation_id;
       List     *stmts = transformAlterTableStmt(relation_oid, atstmt, queryString);
       bool status;
 
@@ -461,6 +482,7 @@ void DDL::ProcessUtility(Node *parsetree,
     
     case T_DropdbStmt:
     {
+      printf(COLOR_RED "T_DropdbStmt" COLOR_RESET "\n" );
       DropdbStmt *Dstmt = (DropdbStmt *) parsetree;
 
       Oid database_oid = get_database_oid( Dstmt->dbname, Dstmt->missing_ok );
@@ -472,6 +494,7 @@ void DDL::ProcessUtility(Node *parsetree,
 
     case T_DropStmt:
     {
+      printf(COLOR_RED "T_DropStmt" COLOR_RESET "\n");
       DropStmt* drop = (DropStmt*) parsetree;
       bool status;
 
@@ -649,21 +672,32 @@ void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
           peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
 
           // PrimaryKey Table
-          storage::DataTable* PrimaryKeyTable = db->GetTableByName( ConstraintNode->pktable->relname );
+          oid_t PrimaryKeyTableId = db->GetTableIdByName( ConstraintNode->pktable->relname );
 
           // Each table column names
           std::vector<std::string> pk_column_names;
           std::vector<std::string> fk_column_names;
 
-          ListCell   *column;
-          foreach(column, ConstraintNode->pk_attrs ){
-            pk_column_names.push_back( strVal( column ) );
-          }
-          foreach(column, ConstraintNode->fk_attrs ){
-            fk_column_names.push_back( strVal( column ) );
-          }
-
-          catalog::ReferenceTableInfo *referenceTableInfo = new catalog::ReferenceTableInfo( PrimaryKeyTable,
+          // FIXME after implementing AlterTable
+//          ListCell   *column;
+//          printf("JWKIM DEBUG :: %s %d \n", __func__, __LINE__ );
+//          if( ConstraintNode->pk_attrs != NULL && ConstraintNode->pk_attrs->length > 0 ){
+//          printf("JWKIM DEBUG :: %s %d \n", __func__, __LINE__ );
+//            foreach(column, ConstraintNode->pk_attrs ){
+//              printf("column name %s\n", strVal( column ) );
+//              pk_column_names.push_back( strVal( column ) );
+//            }
+//          }
+//          printf("JWKIM DEBUG :: %s %d \n", __func__, __LINE__ );
+//          if( ConstraintNode->fk_attrs != NULL && ConstraintNode->fk_attrs->length > 0 ){
+//          printf("JWKIM DEBUG :: %s %d %d\n", __func__, __LINE__ , ConstraintNode->fk_attrs->length);
+//            foreach(column, ConstraintNode->fk_attrs ){
+//              printf("column name %s\n", strVal( column ) );
+//              fk_column_names.push_back( strVal( column ) );
+//            }
+//          }
+//
+          catalog::ReferenceTableInfo *referenceTableInfo = new catalog::ReferenceTableInfo( PrimaryKeyTableId,
                                                                                              pk_column_names,  
                                                                                              fk_column_names,  
                                                                                              ConstraintNode->fk_upd_action,  
@@ -695,7 +729,7 @@ void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
  * @return IndexInfo  
  */
 IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
-  std::string index_name = Istmt->idxname;
+  std::string index_name;
   std::string table_name;
   IndexMethodType method_type;
   IndexType type = INDEX_TYPE_NORMAL;
@@ -714,18 +748,24 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
   }
 
   // Index name and index type
-  if( Istmt->idxname == NULL && Istmt->isconstraint ){
-    if( Istmt->primary ) {
-      index_name = table_name+"_pkey";
-      type = INDEX_TYPE_PRIMARY_KEY;
-    }else if( Istmt->unique ){
-      index_name = table_name;
-      for( auto column_name : key_column_names ){
-        index_name += "_"+column_name+"_";
+  if( Istmt->idxname == NULL ){
+    if( Istmt->isconstraint ){
+      if( Istmt->primary ) {
+        index_name = table_name+"_pkey";
+        type = INDEX_TYPE_PRIMARY_KEY;
+      }else if( Istmt->unique ){
+        index_name = table_name;
+        for( auto column_name : key_column_names ){
+          index_name += "_"+column_name+"_";
+        }
+        index_name += "key";
+        type = INDEX_TYPE_UNIQUE;
       }
-      index_name += "key";
-      type = INDEX_TYPE_UNIQUE;
+    }else{
+      LOG_WARN("No index name");
     }
+  }else{
+      index_name = Istmt->idxname;
   }
 
   // Index method type
@@ -747,7 +787,7 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
  * @param relation_oid relation oid 
  * @return true if we set the reference tables, false otherwise
  */
-bool DDL::SetReferenceTables( std::vector<catalog::ReferenceTableInfo> reference_table_infos, 
+bool DDL::SetReferenceTables( std::vector<catalog::ReferenceTableInfo>& reference_table_infos, 
                              oid_t relation_oid ){
   assert( relation_oid );
   oid_t database_oid = GetCurrentDatabaseOid();
@@ -766,7 +806,8 @@ bool DDL::SetReferenceTables( std::vector<catalog::ReferenceTableInfo> reference
  * @param relation_oid relation oid 
  * @return true if we create all the indexes, false otherwise
  */
-bool DDL::CreateIndexesWithIndexInfos(oid_t relation_oid ){
+bool DDL::CreateIndexesWithIndexInfos( std::vector<IndexInfo> index_infos
+                                     , oid_t relation_oid ){
 
   for( auto index_info : index_infos){
     bool status;

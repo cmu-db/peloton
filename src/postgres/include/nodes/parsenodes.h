@@ -1648,6 +1648,9 @@ typedef struct AlterTableStmt {
 	List	   *cmds;			/* list of subcommands */
 	ObjectType	relkind;		/* type of object */
 	bool		missing_ok;		/* skip error if table missing */
+
+	// TODO: Peloton Changes
+	Oid      relation_id;   /* cache the relation id for DDL */
 } AlterTableStmt;
 
 typedef enum AlterTableType
