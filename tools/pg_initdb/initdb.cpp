@@ -238,10 +238,10 @@ static void setup_config(void);
 static void bootstrap_template1(void);
 static void setup_auth(void);
 static void get_set_pwd(void);
-static void setup_depend(void);
+static void setup_depend(void) pg_attribute_unused();
 static void setup_sysviews(void);
-static void setup_description(void);
-static void setup_collation(void);
+static void setup_description(void) pg_attribute_unused();
+static void setup_collation(void) pg_attribute_unused();
 static void setup_conversion(void) pg_attribute_unused();
 static void setup_dictionary(void) pg_attribute_unused();
 static void setup_privileges(void);
@@ -3360,13 +3360,13 @@ initialize_data_directory(void)
 	if (pwprompt || pwfilename)
 		get_set_pwd();
 
-	setup_depend();
+	//setup_depend();
 
 	setup_sysviews();
 
-	setup_description();
+	//setup_description();
 
-	setup_collation();
+	//setup_collation();
 
 	// TODO: Peloton changes
 	//setup_conversion();
