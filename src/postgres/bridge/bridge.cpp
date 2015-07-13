@@ -805,9 +805,9 @@ bool BootstrapPeloton(void){
     heap_close(pg_constraint_rel, AccessShareLock);
   }
 
-  printf("Print all relation's schema information\n");
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
-  std::cout << *db << std::endl;
+  //printf("Print all relation's schema information\n");
+  //peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+  //std::cout << *db << std::endl;
 
   heap_endscan(pg_class_scan);
   heap_close(pg_attribute_rel, AccessShareLock);
