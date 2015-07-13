@@ -75,10 +75,11 @@ bool ExprTransformer::CleanExprTree(
 expression::AbstractExpression* ExprTransformer::TransformConstant(
     const ExprState* expr_state) {
 
-  auto const_expr = reinterpret_cast<Const*>(expr_state->expr);
+  auto const_expr = reinterpret_cast<const Const*>(expr_state->expr);
 
-  if(!const_expr->constbyval)
+  if(!(const_expr->constbyval)) {
     LOG_ERROR("Sorry, we don't handle by-reference constant values currently.\n");
+  }
 
   Value value;
 
