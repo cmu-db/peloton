@@ -23,6 +23,7 @@
 namespace peloton {
 namespace storage {
 
+
 DataTable::DataTable(catalog::Schema *schema,
                      AbstractBackend *backend,
                      std::string table_name,
@@ -39,9 +40,31 @@ DataTable::~DataTable() {
   }
 }
 
-void DataTable::AddIndex(index::Index *index) {
+bool DataTable::AddIndex(index::Index *index, oid_t index_oid ) {
   std::lock_guard<std::mutex> lock(table_mutex);
   indexes.push_back(index);
+
+  try {
+    index = index_oid_to_address.at( index_oid );
+    LOG_WARN("Index(%u) already exists in this table(%u) ", index_oid, table_oid );
+    return false;
+  }catch (const std::out_of_range& oor)  {
+    index_oid_to_address.insert( std::pair<oid_t, index::Index* > ( index_oid, index ));
+  }
+
+  return true;
+}
+
+index::Index* DataTable::GetIndexById(oid_t index_oid ) {
+  index::Index* index = nullptr;
+
+  try {
+    index = index_oid_to_address.at( index_oid );
+  }catch (const std::out_of_range& oor)  {
+    LOG_WARN("Not exists Index(%u) in this table(%u) ", index_oid, table_oid );
+  }
+
+  return index;
 }
 
 void DataTable::AddUniqueIndex(index::Index *index) {
@@ -56,23 +79,18 @@ void DataTable::AddReferenceTable( catalog::ReferenceTableInfo *reference_table_
   catalog::ReferenceTableInfo* ref = new catalog::ReferenceTableInfo( *reference_table_info );
   reference_table_infos.push_back( ref );
 
-// FIXME
-//  catalog::Schema* schema = this->GetSchema();
-//  for( auto column_name : reference_table_info->GetFKColumnNames() )
-//  {
-//    catalog::Constraint *constraint = new catalog::Constraint( CONSTRAINT_TYPE_FOREIGN );
-//    constraint->SetReferenceTablePosition( this->GetReferenceTableCount() ) ;
-//    schema->AddConstraintByColumnName( column_name, constraint );
-//  }
+  catalog::Schema* schema = this->GetSchema();
+  for( auto column_name : ref->GetFKColumnNames() )
+  {
+    catalog::Constraint *constraint = new catalog::Constraint( CONSTRAINT_TYPE_FOREIGN, ref->GetName());
+    constraint->SetReferenceTablePosition( this->GetReferenceTableCount() ) ;
+    schema->AddConstraintByColumnName( column_name, constraint );
+  }
 
 }
 
 void DataTable::SetPrimaryIndex(index::Index *index) {
   PrimaryKey_Index = index;
-}
-
-void DataTable::SetRawCheckExpr(Node* _raw_check_expr){
-  raw_check_expr = (Node*) copyObject ( (void*) _raw_check_expr );
 }
 
 index::Index*  DataTable::GetPrimaryIndex(){

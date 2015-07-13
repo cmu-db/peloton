@@ -655,6 +655,7 @@ bool BootstrapPeloton(void){
 
                 // Store all indexes' information to create indexes at once after all tables are created
                 peloton::bridge::IndexInfo* indexinfo = new peloton::bridge::IndexInfo(relation_name,
+                                                                                       pg_index->indexrelid,
                                                                                        get_rel_name(pg_index->indrelid),
                                                                                        method_type, 
                                                                                        type,

@@ -55,13 +55,7 @@ class DDL {
                            std::vector<catalog::ColumnInfo> column_infos,
                            catalog::Schema *schema = NULL );
 
-  static bool CreateIndex( std::string index_name,
-                           std::string table_name,
-                           IndexMethodType  index_method_type,  /* name of access method (eg. btree) */
-                           IndexType  index_type,
-                           bool unique_keys,
-                           std::vector<std::string> key_column_names,
-                           Oid table_oid = INVALID_OID );
+  static bool CreateIndex( IndexInfo index_info );
 
   //===--------------------------------------------------------------------===//
   // Alter Object
@@ -111,8 +105,7 @@ class DDL {
                                   oid_t relation_oid );
 
   // Create the indexes using indexinfos and add to the table
-  static bool CreateIndexesWithIndexInfos( std::vector<IndexInfo> index_infos,
-                                           oid_t relation_oid = INVALID_OID );
+  static bool CreateIndexesWithIndexInfos( std::vector<IndexInfo> index_infos );
 
   //Add the constraint to the table
   static bool AddConstraint( Oid relation_oid, 
@@ -128,12 +121,14 @@ class DDL {
 class IndexInfo{
  public:
   IndexInfo(std::string index_name,
+            oid_t index_oid,
             std::string table_name,
             IndexMethodType method_type,
             IndexType type,
             bool unique_keys,  // TODO :: Remove..
             std::vector<std::string> key_column_names)
  : index_name(index_name),
+   index_oid(index_oid),
    table_name(table_name),
    method_type(method_type),
    type(type),
@@ -146,6 +141,10 @@ class IndexInfo{
 
   inline std::string GetIndexName(){
     return index_name;
+  }
+
+  inline oid_t GetIndexId(){
+    return index_oid;
   }
 
   inline std::string GetTableName(){
@@ -170,6 +169,7 @@ class IndexInfo{
 
  private:
   std::string index_name = "";
+  oid_t index_oid = INVALID_OID;
   std::string table_name = "";
   IndexMethodType method_type = INDEX_METHOD_TYPE_BTREE_MULTIMAP;
   IndexType type = INDEX_TYPE_NORMAL;
