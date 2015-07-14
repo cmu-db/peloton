@@ -13,6 +13,7 @@
 #include "postgres.h"
 #include "c.h"
 
+#include "access/xact.h"
 #include "bridge/bridge.h"
 #include "catalog/pg_namespace.h"
 #include "executor/tuptable.h"
@@ -85,7 +86,11 @@ static void peloton_sigterm_handler(SIGNAL_ARGS);
 static void peloton_sighup_handler(SIGNAL_ARGS);
 static void  __attribute__ ((unused)) peloton_sigsegv_handler(SIGNAL_ARGS);
 
-static void peloton_setheader(Peloton_MsgHdr *hdr, PelotonMsgType mtype);
+static void peloton_setheader(Peloton_MsgHdr *hdr,
+                              PelotonMsgType mtype,
+                              TransactionId txn_id,
+                              MemoryContext top_transaction_context,
+                              MemoryContext cur_transaction_context);
 static void peloton_send(void *msg, int len);
 
 static peloton::ResultType peloton_process_dml(Peloton_MsgDML *msg);
@@ -766,9 +771,16 @@ peloton_init(void)
  * ----------
  */
 static void
-peloton_setheader(Peloton_MsgHdr *hdr, PelotonMsgType mtype)
+peloton_setheader(Peloton_MsgHdr *hdr,
+                  PelotonMsgType mtype,
+                  TransactionId txn_id,
+                  MemoryContext top_transaction_context,
+                  MemoryContext cur_transaction_context)
 {
   hdr->m_type = mtype;
+  hdr->m_top_transaction_context = top_transaction_context;
+  hdr->m_cur_transaction_context = cur_transaction_context;
+  hdr->m_txn_id = txn_id;
 }
 
 
@@ -815,7 +827,12 @@ peloton_send_ping(void)
   if (pelotonSock == PGINVALID_SOCKET)
     return;
 
-  peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_DUMMY);
+  peloton_setheader(&msg.m_hdr,
+                    PELOTON_MTYPE_DUMMY,
+                    InvalidOid,
+                    NULL,
+                    NULL);
+
   peloton_send(&msg, sizeof(msg));
 }
 
@@ -837,24 +854,30 @@ peloton_send_reply(int status)
  * ----------
  */
 void
-peloton_send_dml(Peloton_Status *status,
+peloton_send_dml(Peloton_Status  *status,
                  PlanState *node,
-                 TupleDesc tuple_desc,
-                 MemoryContext top_transaction_context,
-                 MemoryContext cur_transaction_context)
+                 TupleDesc tuple_desc)
 {
   Peloton_MsgDML msg;
 
   if (pelotonSock == PGINVALID_SOCKET)
     return;
 
-  peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_DML);
+  // Set header
+  auto transaction_id = GetTopTransactionId();
+  auto top_transaction_context = TopTransactionContext;
+  auto cur_transaction_context = CurTransactionContext;
 
+  peloton_setheader(&msg.m_hdr,
+                    PELOTON_MTYPE_DML,
+                    transaction_id,
+                    top_transaction_context,
+                    cur_transaction_context);
+
+  // Set msg-specific information
   msg.m_status = status;
   msg.m_planstate = node;
   msg.m_tuple_desc = tuple_desc;
-  msg.m_top_transaction_context = top_transaction_context;
-  msg.m_cur_transaction_context = cur_transaction_context;
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -866,24 +889,30 @@ peloton_send_dml(Peloton_Status *status,
  * ----------
  */
 void
-peloton_send_ddl(Peloton_Status *status,
+peloton_send_ddl(Peloton_Status  *status,
                  Node *parsetree,
-                 const char *queryString,
-                 MemoryContext top_transaction_context,
-                 MemoryContext cur_transaction_context)
+                 const char *queryString)
 {
   Peloton_MsgDDL msg;
 
   if (pelotonSock == PGINVALID_SOCKET)
     return;
 
-  peloton_setheader(&msg.m_hdr, PELOTON_MTYPE_DDL);
+  // Set header
+  auto transaction_id = GetTopTransactionId();
+  auto top_transaction_context = TopTransactionContext;
+  auto cur_transaction_context = CurTransactionContext;
 
+  peloton_setheader(&msg.m_hdr,
+                    PELOTON_MTYPE_DDL,
+                    transaction_id,
+                    top_transaction_context,
+                    cur_transaction_context);
+
+  // Set msg-specific information
   msg.m_status = status;
   msg.m_parsetree = parsetree;
   msg.m_queryString = queryString;
-  msg.m_top_transaction_context = top_transaction_context;
-  msg.m_cur_transaction_context = cur_transaction_context;
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -908,15 +937,21 @@ peloton_process_dml(Peloton_MsgDML *msg)
     if(planstate == NULL || nodeTag(planstate) == T_Invalid)
       return peloton::ResultType::RESULT_TYPE_SUCCESS;
 
-    TopTransactionContext = msg->m_top_transaction_context;
-    CurTransactionContext = msg->m_cur_transaction_context;
+    TopTransactionContext = msg->m_hdr.m_top_transaction_context;
+    CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
 
+    //std::cout << "Transaction ID :: " << msg->m_hdr.m_txn_id << "\n";
 
     auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
 
     if(plan){
-      peloton::bridge::PlanExecutor::PrintPlan(plan);
-      peloton::bridge::PlanExecutor::ExecutePlan(plan, msg->m_tuple_desc, msg->m_status);
+      /* Execute the plantree */
+      peloton::bridge::PlanExecutor::ExecutePlan(plan,
+                                                 msg->m_tuple_desc,
+                                                 msg->m_status,
+                                                 nullptr);
+
+      /* Clean up the plantree */
       peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
     }
 
@@ -948,8 +983,8 @@ peloton_process_ddl(Peloton_MsgDDL *msg)
     if(parsetree == NULL || nodeTag(parsetree) == T_Invalid)
       return peloton::ResultType::RESULT_TYPE_SUCCESS;
 
-    TopTransactionContext = msg->m_top_transaction_context;
-    CurTransactionContext = msg->m_cur_transaction_context;
+    TopTransactionContext = msg->m_hdr.m_top_transaction_context;
+    CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
 
     /* Get the query string */
     queryString = msg->m_queryString;

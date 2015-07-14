@@ -314,6 +314,26 @@ AbstractExpression *ConjunctionFactory(ExpressionType et, AbstractExpression *lc
   }
 }
 
+/**
+ * @brief Construct a conjunction expression from a list of AND'ed or OR'ed expressions
+ * @return A constructed peloton expression
+ */
+AbstractExpression *ConjunctionFactory(ExpressionType et, std::list<AbstractExpression*> exprs) {
+  if (exprs.empty()) return expression::ConstantValueFactory(ValueFactory::GetTrue());
+
+  AbstractExpression *front = exprs.front();
+  exprs.pop_front();
+
+  if (exprs.empty()) return front;
+  switch (et) {
+    case (EXPRESSION_TYPE_CONJUNCTION_AND):
+        return new expression::ConjunctionExpression<ConjunctionAnd>(et, front, expression::ConjunctionFactory(et, exprs));
+    case (EXPRESSION_TYPE_CONJUNCTION_OR):
+        return new expression::ConjunctionExpression<ConjunctionOr>(et, front, expression::ConjunctionFactory(et, exprs));
+    default:
+      return nullptr;
+  }
+}
 
 // Given an expression type and a valuetype, find the best
 // templated ctor to invoke. Several helpers, above, aid in this
