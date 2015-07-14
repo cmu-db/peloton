@@ -811,6 +811,13 @@ pg_plan_query(Query *querytree, int cursorOptions, ParamListInfo boundParams)
   /* call the optimizer */
   plan = planner(querytree, cursorOptions, boundParams);
 
+  // TODO: Peloton Changes
+  /* figure out if catalog query or user query */
+  plan->pelotonQuery = IsPelotonQuery(plan->relationOids);
+
+  fprintf(stdout, "IsPelotonQuery : %d \n", plan->pelotonQuery);
+
+
   if (log_planner_stats)
     ShowUsage("PLANNER STATISTICS");
 
@@ -4241,6 +4248,9 @@ PostgresMain(int argc, char *argv[],
          */
       case 'X':
       case EOF:
+
+        // TODO: Peloton Changes
+        MemoryContextDelete(MessageContext);
 
         /*
          * Reset whereToSendOutput to prevent ereport from attempting
