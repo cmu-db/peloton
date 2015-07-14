@@ -77,6 +77,10 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
       plan_node = PlanTransformer::TransformSeqScan(
           reinterpret_cast<const SeqScanState*>(plan_state));
       break;
+    case T_IndexScan:
+      plan_node = PlanTransformer::TransformIndexScan(
+          reinterpret_cast<const IndexScanState*>(plan_state));
+      break;
     case T_IndexOnlyScan:
       plan_node = PlanTransformer::TransformIndexOnlyScan(
           reinterpret_cast<const IndexOnlyScanState*>(plan_state));
@@ -417,6 +421,46 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   return plan_node;
 }
 
+planner::AbstractPlanNode* PlanTransformer::TransformIndexScan(
+    const IndexScanState* iss_plan_state) {
+ /* Resolve target relation */
+  Oid table_oid = iss_plan_state->ss.ss_currentRelation->rd_id;
+  Oid database_oid = GetCurrentDatabaseOid();
+  const IndexScan* iss_plan =
+      reinterpret_cast<IndexScan*>(iss_plan_state->ss.ps.plan);
+
+  storage::DataTable *target_table =
+      static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
+          .GetLocation(database_oid, table_oid));
+
+  assert(target_table);
+
+  /* Resolve index  */
+  index::Index *table_index = target_table->GetIndexByOid(iss_plan->indexid);
+  LOG_INFO("Index scan on oid %u, index name: %s", iss_plan->indexid,
+           table_index->GetName().c_str());
+
+  /* Resolve index order */
+  /* Only support forward scan direction */
+  assert(iss_plan->indexorderdir == ForwardScanDirection);
+
+  /* index qualifier */
+  const ExprState* expr_state = reinterpret_cast<ExprState *>(iss_plan_state->indexqualorig);
+  /* Only support op expr */
+  LOG_INFO("Index qual type : %d", expr_state->type);
+  expression::AbstractExpression *peleton_expr = ExprTransformer::TransformExpr(
+      expr_state);
+  std::cout << peleton_expr << std::endl;
+  //assert(expr_state->type == T_OpExpr);
+
+  /* target list */
+  //ioss_plan_state->ss.ps.targetlist;
+  /* ORDER BY, not support */
+
+  /* Plan qual, not support */
+  //ioss_plan_state->ss.ps.qual;
+  return nullptr;
+}
 /**
  * @brief Convert a Postgres IndexOnlyScanState into a Peloton IndexScanNode.
  * @return Pointer to the constructed AbstractPlanNode.
@@ -427,6 +471,8 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexOnlyScan(
   /* Resolve target relation */
   Oid table_oid = ioss_plan_state->ss.ss_currentRelation->rd_id;
   Oid database_oid = GetCurrentDatabaseOid();
+  const IndexOnlyScan* ioss_plan =
+      reinterpret_cast<IndexOnlyScan*>(ioss_plan_state->ss.ps.plan);
 
   storage::DataTable *target_table =
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
@@ -435,10 +481,31 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexOnlyScan(
   assert(target_table);
 
   /* Resolve index  */
+  index::Index *table_index = target_table->GetIndexByOid(ioss_plan->indexid);
+  LOG_INFO("Index only scan on oid %u, index name: %s", ioss_plan->indexid,
+           table_index->GetName().c_str());
+
   //target_table->GetIndex();
   /* Resolve index order */
+  /* Only support forward scan direction */
+  assert(ioss_plan->indexorderdir == ForwardScanDirection);
 
-  /* Resolve index qualifier */
+  /* index qualifier */
+  const ExprState* expr_state = reinterpret_cast<ExprState *>(ioss_plan_state
+      ->indexqual);
+  /* Only support op expr */
+  LOG_INFO("Index qual type : %d", expr_state->type);
+  expression::AbstractExpression *peleton_expr = ExprTransformer::TransformExpr(
+      expr_state);
+  std::cout << peleton_expr << std::endl;
+  //assert(expr_state->type == T_OpExpr);
+
+  /* target list */
+  //ioss_plan_state->ss.ps.targetlist;
+  /* ORDER BY, not support */
+
+  /* Plan qual, not support */
+  //ioss_plan_state->ss.ps.qual;
 
   return nullptr;
 }
