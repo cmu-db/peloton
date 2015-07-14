@@ -379,21 +379,25 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
 
   if(ss_plan_state->ps.qual){
 
-    int i=0;
-    List       *qual = ss_plan_state->ps.qual;
-    ListCell   *l;
+    const ExprState* expr_state = reinterpret_cast<ExprState *>(ss_plan_state->ps.qual);
+    predicate = ExprTransformer::TransformExpr(expr_state);
 
-    assert(list_length(qual) == 1);
 
-    foreach(l, qual)
-    {
-      ExprState  *clause = (ExprState *) lfirst(l);
-
-      if(i == 0) {  // Let's just get the first predicate now
-        predicate = ExprTransformer::TransformExpr(clause);
-      }
-      i++;
-    }
+//       int i=0;
+//    List       *qual = ss_plan_state->ps.qual;
+//    ListCell   *l;
+//
+//    assert(list_length(qual) == 1);
+//
+//    foreach(l, qual)
+//    {
+//      ExprState  *clause = (ExprState *) lfirst(l);
+//
+//      if(i == 0) {  // Let's just get the first predicate now
+//        predicate = ExprTransformer::TransformExpr(clause);
+//      }
+//      i++;
+//    }
   }
 
   if(predicate){
