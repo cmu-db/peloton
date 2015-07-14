@@ -46,6 +46,14 @@
 namespace peloton {
 namespace bridge {
 
+#define COLOR_RED     "\x1b[31m"
+#define COLOR_GREEN   "\x1b[32m"
+#define COLOR_YELLOW  "\x1b[33m"
+#define COLOR_BLUE    "\x1b[34m"
+#define COLOR_MAGENTA "\x1b[35m"
+#define COLOR_CYAN    "\x1b[36m"
+#define COLOR_RESET   "\x1b[0m"
+
 static std::vector<IndexInfo> index_infos;
 
 //===--------------------------------------------------------------------===//
@@ -81,7 +89,7 @@ bool DDL::CreateTable( Oid relation_oid,
   assert( !table_name.empty() );
 
   Oid database_oid = GetCurrentDatabaseOid();
-  if(database_oid == InvalidOid)
+  if(database_oid == INVALID_OID || relation_oid == INVALID_OID )
     return false;
 
   // Get db oid
@@ -176,25 +184,14 @@ bool DDL::CreateIndex( IndexInfo index_info ){
   auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_columns);
 
   // Create index metadata and physical index
-  index::IndexMetadata* metadata = new index::IndexMetadata(index_name, our_index_type,
+  index::IndexMetadata* metadata = new index::IndexMetadata(index_name, our_index_type, index_type,
                                                             tuple_schema, key_schema,
                                                             unique_keys);
   index::Index* index = index::IndexFactory::GetInstance(metadata);
 
   // Record the built index in the table
-  switch( index_type ){
-    case INDEX_TYPE_NORMAL:
-      data_table->AddIndex(index, index_oid);
-      break;
-    case INDEX_TYPE_PRIMARY_KEY:
-      data_table->SetPrimaryIndex(index, index_oid);
-      break;
-    case INDEX_TYPE_UNIQUE:
-      data_table->AddUniqueIndex(index, index_oid);
-      break;
-    default:
-      LOG_WARN("unrecognized index type: %d", index_type);
-  }
+  std::cout << "\n\n\n\nAddIndex\n\n\n\n" <<  std::endl;
+  data_table->AddIndex(index, index_oid);
 
   return true;
 }
@@ -282,14 +279,6 @@ bool DDL::DropTable(Oid table_oid) {
 // Misc. 
 //===--------------------------------------------------------------------===//
 
-#define COLOR_RED     "\x1b[31m"
-#define COLOR_GREEN   "\x1b[32m"
-#define COLOR_YELLOW  "\x1b[33m"
-#define COLOR_BLUE    "\x1b[34m"
-#define COLOR_MAGENTA "\x1b[35m"
-#define COLOR_CYAN    "\x1b[36m"
-#define COLOR_RESET   "\x1b[0m"
-
 /**
  * @brief Process utility statement.
  * @param parsetree Parse tree
@@ -304,6 +293,8 @@ void DDL::ProcessUtility(Node *parsetree,
    * reference point for stack depth checking
    */
   set_stack_base();
+
+  printf(COLOR_RED "ProcessUtility %d" COLOR_RESET "\n", (int)nodeTag(parsetree));
 
   // Process depending on type of utility statement
   switch ( nodeTag( parsetree ))
@@ -421,9 +412,9 @@ void DDL::ProcessUtility(Node *parsetree,
       // Construct IndexInfo 
       IndexInfo* index_info = ConstructIndexInfoByParsingIndexStmt( Istmt );
 
-      // If this index is either unique or primary key, store the index information and skip
-      // the rest of this function since the table has not been created yet.
-      if( Istmt->isconstraint ){
+      // If table has not been created yet, skip the rest part of this function
+      peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+      if( nullptr == db->GetTableByName( Istmt->relation->relname )){
         index_infos.push_back(*index_info);
         break;
       }
@@ -527,8 +518,8 @@ void DDL::ProcessUtility(Node *parsetree,
   }
 
   // TODO :: This is for debugging
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
-  std::cout << *db << std::endl;
+  //peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+  //std::cout << *db << std::endl;
 
 }
 
