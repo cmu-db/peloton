@@ -40,14 +40,14 @@ void BridgeTest::DDL_CreateTable_TEST_INVALID_OID() {
   // ColumnInfo
   std::vector<catalog::ColumnInfo> column_infos;
 
-  bool status = peloton::bridge::DDL::CreateTable( INVALID_OID, "test_table_invalid_oid", column_infos );
+  bool status = bridge::DDL::CreateTable( INVALID_OID, "test_table_invalid_oid", column_infos );
   assert( status == false );
   printf("%s has been finished successfully\n", __func__ );
 }
 
 void BridgeTest::DDL_CreateTable_TEST_BASIC_COLUMNS() {
  
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+  storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
 
   // ColumnInfo
   std::vector<catalog::ColumnInfo> column_infos;
@@ -62,7 +62,7 @@ void BridgeTest::DDL_CreateTable_TEST_BASIC_COLUMNS() {
   column_infos.push_back(*column_info3);
   column_infos.push_back(*column_info4);
 
-  bool status = peloton::bridge::DDL::CreateTable( 20000, "test_table_basic_column", column_infos );
+  bool status = bridge::DDL::CreateTable( 20000, "test_table_basic_column", column_infos );
   assert( status );
 
   storage::DataTable* table = db->GetTableById(20000);
@@ -115,7 +115,7 @@ void BridgeTest::DDL_CreateTable_TEST_BASIC_COLUMNS() {
 
 void BridgeTest::DDL_CreateTable_TEST_NOTNULL_CONSTRAINT() {
 
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+  storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
 
   // constraint
   std::vector<catalog::Constraint> constraint_infos;
@@ -139,7 +139,7 @@ void BridgeTest::DDL_CreateTable_TEST_NOTNULL_CONSTRAINT() {
   column_infos.push_back(*column_info4);
 
   // Create a table
-  bool status = peloton::bridge::DDL::CreateTable( 20001, "test_table_notnull_constraint", column_infos );
+  bool status = bridge::DDL::CreateTable( 20001, "test_table_notnull_constraint", column_infos );
   assert ( status );
 
   storage::DataTable* table = db->GetTableById(20001);

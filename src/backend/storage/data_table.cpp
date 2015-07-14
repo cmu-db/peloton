@@ -128,7 +128,7 @@ storage::DataTable* DataTable::GetReferenceTable(int position) {
 
   peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
 
-  oid_t relation_id = reference_table_infos[position]->GetPrimaryKeyTableId();
+  oid_t relation_id = reference_table_infos[position]->GetReferenceTableId();
 
   return db->GetTableById( relation_id );
 }

@@ -13,6 +13,7 @@
 #include "backend/common/types.h"
 #include "backend/common/exception.h"
 
+#include <sstream>
 #include <cstring>
 
 namespace peloton {
