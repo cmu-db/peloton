@@ -161,7 +161,7 @@ proc_exit_prepare(int code)
 	proc_exit_inprogress = true;
 
 	// TODO: Peloton Changes
-	peloton::GetStackTrace();
+	//peloton::GetStackTrace();
 
 	/*
 	 * Forget any pending cancel or die requests; we're doing our best to
