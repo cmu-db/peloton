@@ -1596,10 +1596,7 @@ ExecutePlan(EState *estate,
   // TODO: Peloton Changes
 	status = peloton_create_status();
 
-  peloton_send_dml(status, planstate,
-                   tupDesc,
-                   TopTransactionContext,
-                   CurTransactionContext);
+  peloton_send_dml(status, planstate, tupDesc);
 
   peloton_get_status(status);
 
