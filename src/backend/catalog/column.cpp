@@ -18,16 +18,29 @@
 namespace peloton {
 namespace catalog {
 
-std::ostream& operator<<(std::ostream& os, const Column& column) {
+void Column::SetLength(oid_t column_length) {
 
-    os << "\tCOLUMN ";
+  // Set the column length based on whether it is inlined
+  if(is_inlined){
+    fixed_length = column_length;
+    variable_length = 0;
+  }
+  else{
+    fixed_length = sizeof(uintptr_t);
+    variable_length = column_length;
+  }
+}
 
-    os << column.offset << " : " << column.GetName() << " "
-       << GetTypeName(column.type) << " " << column.size << " " << column.not_null;
+std::ostream& operator<< (std::ostream& os, const Column& column){
 
-    os << "\n";
+  os << " name = " << column.GetName() << "," <<
+      " type = " << GetTypeName(column.GetType()) << "," <<
+      " offset = " << column.column_offset << "," <<
+      " fixed length = " << column.fixed_length << "," <<
+      " variable length = " << column.variable_length << "," <<
+      " inlined = " << column.is_inlined << std::endl;
 
-    return os;
+  return os;
 }
 
 } // End catalog namespace

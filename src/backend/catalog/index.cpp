@@ -11,7 +11,7 @@
  */
 
 #include "backend/catalog/index.h"
-#include "backend/catalog/column.h"
+#include "backend/index/index.h"
 
 namespace peloton {
 namespace catalog {
@@ -19,13 +19,13 @@ namespace catalog {
 std::ostream& operator<<(std::ostream& os, const Index& index) {
 
     os << "\tINDEX :: " << index.GetName();
-    os << " Type : " << IndexMethodTypeToString(index.type);
-    os << " Unique : " << index.unique << "\n";
-    os << " Columns : ";
-    for(auto col : index.columns) {
-        os << col->GetName() << " ";
+
+    // Get underlying physical index
+    auto physical_index = index.GetPhysicalIndex();
+    if(physical_index != nullptr) {
+      os << " Type : " << physical_index->GetTypeName();
+      os << " Unique : " << physical_index->HasUniqueKeys() << "\n";
     }
-    os << "\n";
 
     return os;
 }

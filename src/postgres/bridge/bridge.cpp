@@ -522,7 +522,7 @@ bool BootstrapPeloton(void){
         continue;
       }
 
-      std::vector<peloton::catalog::ColumnInfo> column_infos;
+      std::vector<peloton::catalog::Column> column_infos;
 
       attnum =  pg_class->relnatts;
       if( attnum > 0 )
@@ -585,7 +585,7 @@ bool BootstrapPeloton(void){
                   constraint_infos.push_back(*constraint);
               }
 
-              peloton::catalog::ColumnInfo* column_info = new peloton::catalog::ColumnInfo( valueType,
+              peloton::catalog::Column* column_info = new peloton::catalog::Column( valueType,
                                                                                             column_length,
                                                                                             NameStr(pg_attribute->attname),   
                                                                                             is_inlined,
@@ -780,12 +780,12 @@ bool BootstrapPeloton(void){
 
         for (int i = 0; i < curr_numkeys; i++) {
           AttrNumber attnum = curr_attnums[i];
-          peloton::catalog::ColumnInfo column = curr_schema->GetColumnInfo(attnum-1);
+          peloton::catalog::Column column = curr_schema->GetColumn(attnum-1);
           fk_column_names.push_back( column.GetName() );
         }
         for (int i = 0; i < ref_numkeys; i++) {
           AttrNumber attnum = ref_attnums[i];
-          peloton::catalog::ColumnInfo column = ref_schema->GetColumnInfo(attnum-1);
+          peloton::catalog::Column column = ref_schema->GetColumn(attnum-1);
           pk_column_names.push_back( column.GetName() );
         }
 

@@ -25,15 +25,15 @@ namespace test {
 TEST(IndexTests, BtreeMultimapIndexTest) {
 
   std::vector<std::vector<std::string> > column_names;
-  std::vector<catalog::ColumnInfo> columns;
+  std::vector<catalog::Column> columns;
   std::vector<catalog::Schema*> schemas;
 
   // SCHEMA
 
-  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
-  catalog::ColumnInfo column2(VALUE_TYPE_VARCHAR, 25, "B", true);
-  catalog::ColumnInfo column3(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "C", true);
-  catalog::ColumnInfo column4(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "D", true);
+  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
+  catalog::Column column2(VALUE_TYPE_VARCHAR, 25, "B", true);
+  catalog::Column column3(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "C", true);
+  catalog::Column column4(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "D", true);
 
   columns.push_back(column1);
   columns.push_back(column2);
