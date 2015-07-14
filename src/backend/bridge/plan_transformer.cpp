@@ -363,10 +363,36 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
    * TODO:
    * The qualifying predicate should be extracted from:
    * ss_plan_state->ps.qual (null if no predicate)
+   * And remember to free it.
    *
    * Let's just use a null predicate for now.
    */
   expression::AbstractExpression* predicate = nullptr;
+
+
+  if(ss_plan_state->ps.qual){
+
+    int i=0;
+    List       *qual = ss_plan_state->ps.qual;
+    ListCell   *l;
+
+    assert(list_length(qual) == 1);
+
+    foreach(l, qual)
+    {
+      ExprState  *clause = (ExprState *) lfirst(l);
+
+      if(i == 0) {  // Let's just get the first predicate now
+        predicate = ExprTransformer::TransformExpr(clause);
+      }
+      i++;
+    }
+  }
+
+  if(predicate){
+    LOG_INFO("Predicate :");
+    std::cout << predicate->DebugInfo(" ");
+  }
 
   /*
    * Grab and transform the output column Id's.
@@ -530,6 +556,7 @@ TransformTargetList(List* target_list, oid_t column_count) {
 
   return proj_list;
 }
+
 
 
 }  // namespace bridge
