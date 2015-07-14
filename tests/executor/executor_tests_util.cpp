@@ -308,6 +308,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_coun
   unique = true;
   index_metadata = new index::IndexMetadata("primary_btree_index",
                                             INDEX_METHOD_TYPE_BTREE_MULTIMAP,
+                                            INDEX_TYPE_PRIMARY_KEY,
                                             tuple_schema,
                                             key_schema,
                                             unique);
@@ -321,6 +322,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_coun
   unique = false;
   index_metadata = new index::IndexMetadata("secondary_btree_index",
                                             INDEX_METHOD_TYPE_BTREE_MULTIMAP,
+                                            INDEX_TYPE_NORMAL,
                                             tuple_schema,
                                             key_schema,
                                             unique);
