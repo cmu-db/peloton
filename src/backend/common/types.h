@@ -16,7 +16,7 @@
 #include <cstdint>
 #include <climits>
 #include <limits>
-#include <sstream>
+#include <cassert>
 
 namespace peloton {
 
@@ -518,5 +518,28 @@ ConstraintType StringToConstraintType(std::string str);
  
 ValueType PostgresValueTypeToPelotonValueType(PostgresValueType PostgresValType );
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(PostgresConstraintType PostgresConstrType);
+
+
+//===--------------------------------------------------------------------===//
+// Asserts
+//===--------------------------------------------------------------------===//
+
+#ifndef NDEBUG
+
+#define AssertMsg(condition, message) \
+    do { \
+        if (! (condition)) { \
+            std::cerr << "Assertion `" #condition "` failed in " << __FILE__ \
+                      << " line " << __LINE__ << ": " << message << std::endl; \
+            std::exit(EXIT_FAILURE); \
+        } \
+    } while (false)
+
+#else
+
+#define AssertMsg(condition, message) do { } while (false)
+
+#endif
+
 
 } // End peloton namespace
