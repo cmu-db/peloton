@@ -1601,6 +1601,8 @@ ExecutePlan(EState *estate,
                    TopTransactionContext,
                    CurTransactionContext);
 
+  peloton_get_status(status);
+
   // Go over any result slots
   if(status->m_result_slots != NULL)
   {
@@ -1632,7 +1634,6 @@ ExecutePlan(EState *estate,
     pfree(status->m_result_slots);
   }
 
-  peloton_get_status(status);
   peloton_destroy_status(status);
 }
 
