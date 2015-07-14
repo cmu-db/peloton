@@ -139,7 +139,10 @@ bool DDL::CreateIndex( IndexInfo index_info ){
   assert( !table_name.empty() );
   assert( key_column_names.size() > 0  );
 
+  LOG_INFO("Create index %s on %s.", index_name.c_str(), table_name.c_str());
   // TODO: We currently only support btree as our index implementation
+  // NOTE: We currently only support btree as our index implementation
+  // TODO : Support other types based on "type" argument
   IndexMethodType our_index_type = INDEX_METHOD_TYPE_BTREE_MULTIMAP;
 
   // Get the database oid and table oid

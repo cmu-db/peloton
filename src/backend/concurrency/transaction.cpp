@@ -69,6 +69,15 @@ void Transaction::DecrementRefCount() {
     }
 }
 
+void Transaction::SetStatus(ResultType status) {
+  txn_status = status;
+}
+
+ResultType Transaction::GetStatus() const {
+  return txn_status;
+}
+
+
 std::ostream& operator<<(std::ostream& os, const Transaction& txn) {
 
     os << "\tTxn :: @" <<  &txn << " ID : " << std::setw(4) << txn.txn_id
