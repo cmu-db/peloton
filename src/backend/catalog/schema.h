@@ -50,8 +50,6 @@ class ColumnInfo {
 
    }
 
-
-
  // Configures ( type, length, name, is_inlined )
  ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name, bool is_inlined)
    : type(column_type), offset(0), name(column_name), is_inlined(is_inlined){
