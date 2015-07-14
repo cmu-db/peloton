@@ -300,22 +300,25 @@ void GetDBCatalog(Oid database_oid){
         auto tuple_schema = data_table->GetSchema();
         std::cout << *tuple_schema << std::endl;
 
-        if( data_table->ishasPrimaryKey()  ){
-          printf("print primary key index \n");
-          std::cout<< *(data_table->GetPrimaryIndex()) << std::endl;
-        }
-        if ( data_table->ishasUnique()){
-          printf("print unique index \n");
-          for( int i =0 ; i<  data_table->GetUniqueIndexCount(); i++){
-            std::cout << *(data_table->GetUniqueIndex(i)) << std::endl;
-          }
-        }
         if ( data_table->GetIndexCount() > 0 ){
-          printf("print index \n");
           for( int i =0 ; i<  data_table->GetIndexCount(); i++){
-            std::cout << *(data_table->GetIndex(i)) << std::endl;
+            peloton::index::Index* index = data_table->GetIndex(i);
+
+            switch( index->GetIndexType() ){
+              case peloton::INDEX_TYPE_PRIMARY_KEY:
+                printf("print primary key index \n");
+                break;
+              case peloton::INDEX_TYPE_UNIQUE:
+                printf("print unique index \n");
+                break;
+              default:
+                printf("print index \n");
+                break;
+            }
+            std::cout << *index << std::endl;
           }
         }
+
         if ( data_table->ishasReferenceTable() ){
           printf("print reference tables \n");
           for( int i =0 ; i<  data_table->GetReferenceTableCount(); i++){
@@ -364,22 +367,25 @@ void GetTableCatalog(Oid database_oid, Oid table_oid ){
         auto tuple_schema = data_table->GetSchema();
         std::cout << *tuple_schema << std::endl;
 
-        if( data_table->ishasPrimaryKey()  ){
-          printf("print primary key index \n");
-          std::cout<< *(data_table->GetPrimaryIndex()) << std::endl;
-        }
-        if ( data_table->ishasUnique()){
-          printf("print unique index \n");
-          for( int i =0 ; i<  data_table->GetUniqueIndexCount(); i++){
-            std::cout << *(data_table->GetUniqueIndex(i)) << std::endl;
-          }
-        }
         if ( data_table->GetIndexCount() > 0 ){
-          printf("print index \n");
           for( int i =0 ; i<  data_table->GetIndexCount(); i++){
-            std::cout << *(data_table->GetIndex(i)) << std::endl;
+            peloton::index::Index* index = data_table->GetIndex(i);
+
+            switch( index->GetIndexType() ){
+              case peloton::INDEX_TYPE_PRIMARY_KEY:
+                printf("print primary key index \n");
+                break;
+              case peloton::INDEX_TYPE_UNIQUE:
+                printf("print unique index \n");
+                break;
+              default:
+                printf("print index \n");
+                break;
+            }
+            std::cout << *index << std::endl;
           }
         }
+
         if ( data_table->ishasReferenceTable() ){
           printf("print foreign tables \n");
           for( int i =0 ; i<  data_table->GetReferenceTableCount(); i++){
@@ -799,9 +805,9 @@ bool BootstrapPeloton(void){
     heap_close(pg_constraint_rel, AccessShareLock);
   }
 
-  printf("Print all relation's schema information\n");
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
-  std::cout << *db << std::endl;
+  //printf("Print all relation's schema information\n");
+  //peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+  //std::cout << *db << std::endl;
 
   heap_endscan(pg_class_scan);
   heap_close(pg_attribute_rel, AccessShareLock);

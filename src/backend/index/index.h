@@ -35,13 +35,15 @@ class IndexMetadata {
  public:
 
   IndexMetadata(std::string identifier,
-                IndexMethodType type,
+                IndexMethodType method_type,
+                IndexType type,
                 const catalog::Schema *tuple_schema,
                 const catalog::Schema *key_schema,
                 bool unique_keys)
 
  : identifier(identifier),
-   method_type(type),
+   method_type(method_type),
+   type(type),
    tuple_schema(tuple_schema),
    key_schema(key_schema),
    unique_keys(unique_keys) {
@@ -55,11 +57,8 @@ class IndexMetadata {
     // no need to clean the tuple schema
   }
 
-  void SetIndexMethodType(IndexMethodType _type) {
-    method_type = _type;
-  }
-  void SetIndexType(IndexType _type) {
-    type = _type;
+  IndexType GetIndexType() {
+    return type;
   }
 
   std::string identifier;
@@ -158,7 +157,6 @@ class Index
     return unique_keys;
   }
 
-
   int GetColumnCount() const {
     return column_count;
   }
@@ -169,6 +167,10 @@ class Index
 
   const catalog::Schema *GetKeySchema() const {
     return key_schema;
+  }
+
+  IndexType GetIndexType() const {
+    return metadata->GetIndexType();
   }
 
   // Get a string representation of this index

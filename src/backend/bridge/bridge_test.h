@@ -31,6 +31,11 @@ class BridgeTest {
 
   static void TestCatalog();
 
+  static void DDL_CreateTable();
+  static void DDL_CreateTable_TEST_INVALID_OID();
+  static void DDL_CreateTable_TEST_BASIC_COLUMNS();
+  static void DDL_CreateTable_TEST_NOTNULL_CONSTRAINT();
+
 };
 
 } // End test namespace

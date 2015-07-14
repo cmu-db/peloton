@@ -1305,7 +1305,7 @@ ProcessUtilitySlow(Node *parsetree,
           EventTriggerAlterTableEnd();
 
           // TODO: Peloton Changes
-          ((IndexStmt *)parsetree)->index_id = address.objectId;
+          ((IndexStmt *)parsetree)->index_id =  address.objectId;
         }
         break;
 

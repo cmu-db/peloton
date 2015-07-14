@@ -54,85 +54,67 @@ public:
 
     ~DataTable();
 
+   //===--------------------------------------------------------------------===//
+    // OPERATIONS
+    //===--------------------------------------------------------------------===//
+
     std::string GetName() const {
         return table_name;
     }
     oid_t  GetId() const {
         return table_oid;
     }
-    
-    //===--------------------------------------------------------------------===//
-    // OPERATIONS
-    //===--------------------------------------------------------------------===//
-    
-    // insert tuple in table
-    ItemPointer InsertTuple( txn_id_t transaction_id, const Tuple *tuple, bool update = false );
-    
-    //===--------------------------------------------------------------------===//
-    // INDEXES
-    //===--------------------------------------------------------------------===//
 
+    index::Index* GetIndexByOid(oid_t index_oid );
+    
     // Add an index to the table
     bool AddIndex( index::Index *index , oid_t index_oid);
 
-    index::Index* GetIndexById(oid_t index_oid );
-
-    // Add the unique index to the table
-    bool AddUniqueIndex( index::Index *index, oid_t index_oid );
-
-    // Add the reference table to the table
     void AddReferenceTable( catalog::ReferenceTableInfo *referenceTableInfo );
-
-    // Set the index for PrimaryKey
-    bool SetPrimaryIndex( index::Index *index, oid_t index_oid );
-
-    // Get the PrimaryKey index
-    index::Index* GetPrimaryIndex();
-
-    inline bool ishasPrimaryKey(){
-        if( PrimaryKey_Index != nullptr )
-          return true;
-        else
-          return false;
-    }
-
-    inline bool ishasUnique(){
-        if( unique_indexes.size() > 0 )
-          return true;
-        else
-          return false;
-    }
-
-    inline bool ishasReferenceTable(){
-        if( reference_table_infos.size() > 0 )
-          return true;
-        else
-          return false;
-    }
-
-    inline size_t GetIndexCount() const {
-        return indexes.size();
-    }
-
-    inline size_t GetUniqueIndexCount() const {
-        return unique_indexes.size();
-    }
-
-    inline size_t GetReferenceTableCount() const {
-        return reference_table_infos.size();
-    }
 
     inline index::Index *GetIndex(oid_t index_id) const {
         assert(index_id < indexes.size());
         return indexes[index_id];
     }
 
-    inline index::Index *GetUniqueIndex(oid_t index_id) const {
-        assert(index_id < unique_indexes.size());
-        return unique_indexes[index_id];
+
+    inline bool ishasPrimaryKey(){
+      if( primary_key_count > 0 )
+        return true;
+      else
+        return false;
+    }
+
+    inline bool ishasUnique(){
+      if( unique_count > 0 )
+        return true;
+      else
+        return false;
+    }
+
+    inline bool ishasReferenceTable(){
+      if( reference_table_infos.size() > 0 )
+        return true;
+      else
+        return false;
+    }
+
+    inline size_t GetIndexCount() const {
+      return indexes.size();
+    }
+
+    inline size_t GetUniqueIndexCount() const {
+      return unique_count;
+    }
+
+    inline size_t GetReferenceTableCount() const {
+        return reference_table_infos.size();
     }
 
     storage::DataTable *GetReferenceTable(int position) ;
+
+    // insert tuple in table
+    ItemPointer InsertTuple( txn_id_t transaction_id, const Tuple *tuple, bool update = false );
 
     void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
@@ -156,24 +138,21 @@ protected:
     // MEMBERS
     //===--------------------------------------------------------------------===//
 
+    // table name and oid
     std::string table_name;
     oid_t table_oid;
     
     // INDEXES
     std::vector<index::Index*> indexes;
 
-    // Primary key Index
-    index::Index* PrimaryKey_Index = nullptr;
-
-    // Unique Index
-    std::vector<index::Index*> unique_indexes;
+    // Primary key and unique key count
+    unsigned int primary_key_count = 0;
+    unsigned int unique_count = 0;
 
     // Reference tables
     std::vector<catalog::ReferenceTableInfo*> reference_table_infos;
 
-    // Raw check expr
-    Node* raw_check_expr = nullptr;
-
+    // Convert index oid to index address
     oid_t_to_index_ptr index_oid_to_address;
 
 };
