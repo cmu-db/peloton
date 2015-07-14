@@ -50,8 +50,6 @@ class ColumnInfo {
 
    }
 
-
-
  // Configures ( type, length, name, is_inlined )
  ColumnInfo(ValueType column_type, oid_t column_length, std::string column_name, bool is_inlined)
    : type(column_type), offset(0), name(column_name), is_inlined(is_inlined){
@@ -80,11 +78,35 @@ class ColumnInfo {
     SetLength ( column_length );
 
   }
+
   inline std::string GetName()
   {
     return name;
   }
-  
+
+  inline size_t GetOffset()
+  {
+    return offset;
+  }
+
+  inline size_t GetLength()
+  {
+    if( is_inlined )
+      return fixed_length;
+    else
+      return variable_length;
+  }
+
+  inline ValueType GetType()
+  {
+    return type;
+  }
+
+  inline std::vector<Constraint> GetConstraints()
+  {
+    return constraint_vector;
+  }
+
   // add a constraint to the column info
   void AddConstraint(catalog::Constraint* _constraint){
     bool redundancy_check = false;

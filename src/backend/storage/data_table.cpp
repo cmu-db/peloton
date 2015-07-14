@@ -44,6 +44,13 @@ bool DataTable::AddIndex(index::Index *index, oid_t index_oid ) {
   std::lock_guard<std::mutex> lock(table_mutex);
   indexes.push_back(index); // TODO Move to inside catch
 
+  IndexType type = index->GetIndexType();
+
+  if( type == INDEX_TYPE_UNIQUE)
+    unique_count++;
+  else if( type == INDEX_TYPE_PRIMARY_KEY)
+    primary_key_count++;
+
   try {
     index = index_oid_to_address.at( index_oid );
     LOG_WARN("Index(%u) already exists in this table(%u) ", index_oid, table_oid );
@@ -55,7 +62,7 @@ bool DataTable::AddIndex(index::Index *index, oid_t index_oid ) {
   return true;
 }
 
-index::Index* DataTable::GetIndexById(oid_t index_oid ) {
+index::Index* DataTable::GetIndexByOid(oid_t index_oid ) {
   index::Index* index = nullptr;
 
   try {
@@ -65,22 +72,6 @@ index::Index* DataTable::GetIndexById(oid_t index_oid ) {
   }
 
   return index;
-}
-
-bool DataTable::AddUniqueIndex(index::Index *index, oid_t index_oid) {
-  std::lock_guard<std::mutex> lock(table_unique_index_mutex);
-  unique_indexes.push_back(index); // TODO :: Move to inside of catch
-
-  try {
-    index = index_oid_to_address.at( index_oid );
-    LOG_WARN("Index(%u) already exists in this table(%u) ", index_oid, table_oid );
-    return false;
-
-  }catch (const std::out_of_range& oor)  {
-    index_oid_to_address.insert( std::pair<oid_t, index::Index* > ( index_oid, index ));
-  }
-
-  return true;
 }
 
 void DataTable::AddReferenceTable( catalog::ReferenceTableInfo *reference_table_info){
@@ -98,24 +89,6 @@ void DataTable::AddReferenceTable( catalog::ReferenceTableInfo *reference_table_
     schema->AddConstraintByColumnName( column_name, constraint );
   }
 
-}
-
-bool DataTable::SetPrimaryIndex(index::Index *index, oid_t index_oid ) {
-  PrimaryKey_Index = index; // TODO :: Move to inside of catch
-
-  try {
-    index = index_oid_to_address.at( index_oid );
-    LOG_WARN("Index(%u) already exists in this table(%u) ", index_oid, table_oid );
-    return false;
-  }catch (const std::out_of_range& oor)  {
-    index_oid_to_address.insert( std::pair<oid_t, index::Index* > ( index_oid, index ));
-  }
-  return true;
-}
-
-index::Index*  DataTable::GetPrimaryIndex(){
-
-  return PrimaryKey_Index;
 }
 
 ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple, bool update) {
