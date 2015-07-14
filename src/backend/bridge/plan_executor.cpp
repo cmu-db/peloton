@@ -78,6 +78,10 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       child_executor = new executor::SeqScanExecutor(plan, txn);
       break;
 
+    case PLAN_NODE_TYPE_INDEXSCAN:
+      child_executor = new executor::IndexScanExecutor(plan, txn);
+      break;
+
     case PLAN_NODE_TYPE_INSERT:
       child_executor = new executor::InsertExecutor(plan, txn);
       break;
@@ -147,6 +151,7 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(executor::AbstractE
 
   switch (type) {
     case PLAN_NODE_TYPE_SEQSCAN:
+    case PLAN_NODE_TYPE_INDEXSCAN:
       /* FALL THRU */
     case PLAN_NODE_TYPE_LIMIT:
       new_root = new executor::MaterializationExecutor(nullptr);
