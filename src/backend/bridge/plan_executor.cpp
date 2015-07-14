@@ -205,19 +205,17 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   for(;;) {
     status = executor_tree->Execute();
 
-    // Abort and cleanup
+    // Stop
     if(status == false) {
-      txn_manager.AbortTransaction(txn);
-      txn_manager.EndTransaction(txn);
-      CleanExecutorTree(executor_tree);
-      return false;
+      break;
     }
 
     // Try to print the first tile's content
     std::unique_ptr<executor::LogicalTile> tile(executor_tree->GetOutput());
 
-    if(tile.get() == nullptr)
+    if(tile.get() == nullptr) {
       break;
+    }
 
     // Get result base tile and iterate over it
     auto base_tile = tile.get()->GetBaseTile(0);
@@ -232,12 +230,11 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     while (tile_itr.Next(tuple)) {
       auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
       slots = lappend(slots, slot);
+      //std::cout << tuple;
     }
-
 
     // Go back to previous context
     MemoryContextSwitchTo(oldContext);
-
   }
 
   pstatus->m_result_slots = slots;
