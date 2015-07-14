@@ -67,7 +67,7 @@ static std::vector<IndexInfo> index_infos;
  */
 bool DDL::CreateDatabase( Oid database_oid ){
 
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+  storage::Database* db = storage::Database::GetDatabaseById( database_oid );
 
   fprintf(stderr, "DDLCreateDatabase :: %u %p \n", database_oid, db);
 
@@ -83,7 +83,7 @@ bool DDL::CreateDatabase( Oid database_oid ){
  */
 bool DDL::CreateTable( Oid relation_oid,
                        std::string table_name,
-                       std::vector<catalog::ColumnInfo> column_infos,
+                       std::vector<catalog::Column> column_infos,
                        catalog::Schema *schema){
 
   assert( !table_name.empty() );
@@ -93,7 +93,7 @@ bool DDL::CreateTable( Oid relation_oid,
     return false;
 
   // Get db oid
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+  storage::Database* db = storage::Database::GetDatabaseById( database_oid );
 
   // Construct our schema from vector of ColumnInfo
   if( schema == NULL) 
@@ -105,7 +105,7 @@ bool DDL::CreateTable( Oid relation_oid,
   bool status = db->AddTable(table);
 
   if( status == false ){
-     LOG_WARN("Could not add table :: db oid : %u table oid : %u", database_oid,  relation_oid);
+    LOG_WARN("Could not add table :: db oid : %u table oid : %u", database_oid,  relation_oid);
   }
 
   if(table != nullptr) {
@@ -150,7 +150,7 @@ bool DDL::CreateIndex( IndexInfo index_info ){
   assert( database_oid );
 
   // Get the table location from db
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+  storage::Database* db = storage::Database::GetDatabaseById( database_oid );
   storage::DataTable* data_table = db->GetTableByName( table_name );
 
   catalog::Schema *tuple_schema = data_table->GetSchema();
@@ -164,9 +164,9 @@ bool DDL::CreateIndex( IndexInfo index_info ){
         tuple_schema_column_itr++){
 
       // Get the current column info from tuple schema
-      catalog::ColumnInfo column_info = tuple_schema->GetColumnInfo(tuple_schema_column_itr);
+      catalog::Column column_info = tuple_schema->GetColumn(tuple_schema_column_itr);
       // Compare Key Schema's current column name and Tuple Schema's current column name
-      if( key_column_name == column_info.name ){
+      if( key_column_name == column_info.GetName() ){
         key_columns.push_back(tuple_schema_column_itr);
 
         // NOTE :: Since pg_attribute doesn't have any information about primary key and unique key,
@@ -217,17 +217,17 @@ bool DDL::AlterTable( Oid relation_oid, AlterTableStmt* Astmt ){
     AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
 
     switch (cmd->subtype){
-	    //case AT_AddColumn:  /* add column */
-	    //case AT_DropColumn:  /* drop column */
+      //case AT_AddColumn:  /* add column */
+      //case AT_DropColumn:  /* drop column */
 
       case AT_AddConstraint:	/* ADD CONSTRAINT */
       {
-        bool status = peloton::bridge::DDL::AddConstraint( relation_oid, (Constraint*) cmd->def );
+        bool status = bridge::DDL::AddConstraint( relation_oid, (Constraint*) cmd->def );
         fprintf(stderr, "DDLAddConstraint :: %d \n", status);
         break;
       }
       default:
-    	  break;
+        break;
     }
   }
 
@@ -245,7 +245,7 @@ bool DDL::AlterTable( Oid relation_oid, AlterTableStmt* Astmt ){
  * @return true if we dropped the database, false otherwise
  */
 bool DDL::DropDatabase( Oid database_oid ){
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+  storage::Database* db = storage::Database::GetDatabaseById( database_oid );
   bool status = db->DeleteDatabaseById( database_oid );
   return status;
 }
@@ -267,7 +267,7 @@ bool DDL::DropTable(Oid table_oid) {
   }
 
   // Get db with current database oid
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+  storage::Database* db = storage::Database::GetDatabaseById( database_oid );
   status = db->DeleteTableById( table_oid );
 
   if(status == true) {
@@ -306,7 +306,7 @@ void DDL::ProcessUtility(Node *parsetree,
     {
       printf(COLOR_RED "T_Createdb" COLOR_RESET "\n");
       CreatedbStmt* CdbStmt = (CreatedbStmt*) parsetree;
-      peloton::bridge::DDL::CreateDatabase( CdbStmt->database_id );
+      bridge::DDL::CreateDatabase( CdbStmt->database_id );
     }
     break;
 
@@ -316,8 +316,8 @@ void DDL::ProcessUtility(Node *parsetree,
       printf(COLOR_RED "T_CreateTable" COLOR_RESET "\n");
 
       /* Run parse analysis ... */
-     List     *stmts = transformCreateStmt((CreateStmt *) parsetree,
-                                  queryString);
+      List     *stmts = transformCreateStmt((CreateStmt *) parsetree,
+                                            queryString);
 
       /* ... and do it */
       ListCell   *l;
@@ -332,8 +332,8 @@ void DDL::ProcessUtility(Node *parsetree,
           char* relation_name = Cstmt->relation->relname;
           Oid relation_oid = ((CreateStmt *)parsetree)->relation_id;
 
-          std::vector<peloton::catalog::ColumnInfo> column_infos;
-          std::vector<peloton::catalog::ReferenceTableInfo> reference_table_infos;
+          std::vector<catalog::Column> column_infos;
+          std::vector<catalog::ReferenceTableInfo> reference_table_infos;
 
           bool status;
 
@@ -341,16 +341,16 @@ void DDL::ProcessUtility(Node *parsetree,
           // CreateStmt --> ColumnInfo --> CreateTable
           //===--------------------------------------------------------------------===//
           if( schema != NULL ){
-            peloton::bridge::DDL::ParsingCreateStmt( Cstmt, 
+            bridge::DDL::ParsingCreateStmt( Cstmt,
                                                      column_infos,
                                                      reference_table_infos );
 
-            status = peloton::bridge::DDL::CreateTable( relation_oid, 
+            status = bridge::DDL::CreateTable( relation_oid,
                                                         relation_name, 
                                                         column_infos );
           } else {
             // SPECIAL CASE : CREATE TABLE WITHOUT COLUMN INFO
-            status = peloton::bridge::DDL::CreateTable( relation_oid, 
+            status = bridge::DDL::CreateTable( relation_oid,
                                                         relation_name, 
                                                         column_infos );
           }
@@ -361,32 +361,32 @@ void DDL::ProcessUtility(Node *parsetree,
           // Check Constraint
           //===--------------------------------------------------------------------===//
           // TODO : Cook the data..
-//          if( Cstmt->constraints != NULL){
-//            oid_t database_oid = GetCurrentDatabaseOid();
-//            assert( database_oid );
-//            auto table = catalog::Manager::GetInstance().GetLocation(database_oid, relation_oid);
-//            storage::DataTable* data_table = (storage::DataTable*) table;
-//
-//            ListCell* constraint;
-//            foreach(constraint, Cstmt->constraints)
-//            {
-//              Constraint* ConstraintNode = ( Constraint* ) lfirst(constraint);
-//
-//              // Or we can get cooked infomation from catalog
-//              //ex)
-//              //ConstrCheck *check = rel->rd_att->constr->check;
-//              //AttrDefault *defval = rel->rd_att->constr->defval;
-//
-//              if( ConstraintNode->raw_expr != NULL ){
-//                data_table->SetRawCheckExpr(ConstraintNode->raw_expr);
-//              }
-//            }
-//          }
+          //          if( Cstmt->constraints != NULL){
+          //            oid_t database_oid = GetCurrentDatabaseOid();
+          //            assert( database_oid );
+          //            auto table = catalog::Manager::GetInstance().GetLocation(database_oid, relation_oid);
+          //            storage::DataTable* data_table = (storage::DataTable*) table;
+          //
+          //            ListCell* constraint;
+          //            foreach(constraint, Cstmt->constraints)
+          //            {
+          //              Constraint* ConstraintNode = ( Constraint* ) lfirst(constraint);
+          //
+          //              // Or we can get cooked infomation from catalog
+          //              //ex)
+          //              //ConstrCheck *check = rel->rd_att->constr->check;
+          //              //AttrDefault *defval = rel->rd_att->constr->defval;
+          //
+          //              if( ConstraintNode->raw_expr != NULL ){
+          //                data_table->SetRawCheckExpr(ConstraintNode->raw_expr);
+          //              }
+          //            }
+          //          }
 
           //===--------------------------------------------------------------------===//
           // Set Reference Tables
           //===--------------------------------------------------------------------===//
-          status = peloton::bridge::DDL::SetReferenceTables( reference_table_infos, 
+          status = bridge::DDL::SetReferenceTables( reference_table_infos,
                                                              relation_oid );
           if( status == false ){
             LOG_WARN("Failed to set reference tables");
@@ -396,7 +396,7 @@ void DDL::ProcessUtility(Node *parsetree,
           //===--------------------------------------------------------------------===//
           // Add Primary Key and Unique Indexes to the table
           //===--------------------------------------------------------------------===//
-          status = peloton::bridge::DDL::CreateIndexesWithIndexInfos( index_infos );
+          status = bridge::DDL::CreateIndexesWithIndexInfos( index_infos );
           if( status == false ){
             LOG_WARN("Failed to create primary key and unique index");
           }
@@ -416,13 +416,13 @@ void DDL::ProcessUtility(Node *parsetree,
       IndexInfo* index_info = ConstructIndexInfoByParsingIndexStmt( Istmt );
 
       // If table has not been created yet, skip the rest part of this function
-      peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+      storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
       if( nullptr == db->GetTableByName( Istmt->relation->relname )){
         index_infos.push_back(*index_info);
         break;
       }
 
-      status = peloton::bridge::DDL::CreateIndex( *index_info );
+      status = bridge::DDL::CreateIndex( *index_info );
 
 
       fprintf(stderr, "DDLCreateIndex :: %d \n", status);
@@ -447,7 +447,7 @@ void DDL::ProcessUtility(Node *parsetree,
         Node *stmt = (Node *) lfirst(l);
 
         if (IsA(stmt, AlterTableStmt)){
-          status = peloton::bridge::DDL::AlterTable( relation_oid, (AlterTableStmt*)stmt );
+          status = bridge::DDL::AlterTable( relation_oid, (AlterTableStmt*)stmt );
 
           fprintf(stderr, "DDLAlterTable :: %d \n", status);
 
@@ -455,7 +455,7 @@ void DDL::ProcessUtility(Node *parsetree,
       }
     }
     break;
-    
+
     case T_DropdbStmt:
     {
       printf(COLOR_RED "T_DropdbStmt" COLOR_RESET "\n" );
@@ -463,7 +463,7 @@ void DDL::ProcessUtility(Node *parsetree,
 
       Oid database_oid = get_database_oid( Dstmt->dbname, Dstmt->missing_ok );
 
-      bool status = peloton::bridge::DDL::DropDatabase( database_oid );
+      bool status = bridge::DDL::DropDatabase( database_oid );
       fprintf(stderr, "DDL Database :: %d \n", status);
     }
     break;
@@ -476,8 +476,8 @@ void DDL::ProcessUtility(Node *parsetree,
 
       ListCell  *cell;
       foreach(cell, drop->objects){
-      List* names = ((List *) lfirst(cell));
- 
+        List* names = ((List *) lfirst(cell));
+
 
         switch( drop->removeType ){
 
@@ -486,7 +486,7 @@ void DDL::ProcessUtility(Node *parsetree,
             char* database_name = strVal(linitial(names));
             Oid database_oid = get_database_oid( database_name, true );
 
-            status = peloton::bridge::DDL::DropDatabase( database_oid );
+            status = bridge::DDL::DropDatabase( database_oid );
             fprintf(stderr, "DDL Database :: %d \n", status);
           }
           break;
@@ -496,14 +496,14 @@ void DDL::ProcessUtility(Node *parsetree,
             char* table_name = strVal(linitial(names));
             Oid table_oid = GetRelationOid(table_name);
 
-            status = peloton::bridge::DDL::DropTable( table_oid );
+            status = bridge::DDL::DropTable( table_oid );
             fprintf(stderr, "DDL DropTable :: %d \n", status);
           }
           break;
 
           default:
           {
-              LOG_WARN("Unsupported drop object %d ", drop->removeType);
+            LOG_WARN("Unsupported drop object %d ", drop->removeType);
           }
           break;
         }
@@ -521,7 +521,7 @@ void DDL::ProcessUtility(Node *parsetree,
   }
 
   // TODO :: This is for debugging
-  //peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+  //storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
   //std::cout << *db << std::endl;
 
 }
@@ -535,15 +535,15 @@ void DDL::ProcessUtility(Node *parsetree,
  * @param refernce_table_infos to store reference table to the table
  */
 void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
-                             std::vector<catalog::ColumnInfo>& column_infos,
+                             std::vector<catalog::Column>& column_infos,
                              std::vector<catalog::ReferenceTableInfo>& reference_table_infos
-                             ) {
+) {
   assert(Cstmt);
 
- //===--------------------------------------------------------------------===//
- // Table Constraint
- //===--------------------------------------------------------------------===//
-/*
+  //===--------------------------------------------------------------------===//
+  // Table Constraint
+  //===--------------------------------------------------------------------===//
+  /*
 //TODO
   if( Cstmt->constraints != NULL){
     ListCell* constraint;
@@ -574,7 +574,7 @@ void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
       printf("\n");
     }
   }
-*/
+   */
 
   //===--------------------------------------------------------------------===//
   // Column Infomation 
@@ -666,50 +666,50 @@ void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
           case CONSTRAINT_TYPE_UNIQUE:
             continue;
           case CONSTRAINT_TYPE_FOREIGN:
-            {
-              // REFERENCE TABLE NAME AND ACTION OPTION
-              if( ConstraintNode->pktable != NULL ){
+          {
+            // REFERENCE TABLE NAME AND ACTION OPTION
+            if( ConstraintNode->pktable != NULL ){
 
-                peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+              storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
 
-                // PrimaryKey Table
-                oid_t PrimaryKeyTableId = db->GetTableIdByName( ConstraintNode->pktable->relname );
+              // PrimaryKey Table
+              oid_t PrimaryKeyTableId = db->GetTableIdByName( ConstraintNode->pktable->relname );
 
-                // Each table column names
-                std::vector<std::string> pk_column_names;
-                std::vector<std::string> fk_column_names;
+              // Each table column names
+              std::vector<std::string> pk_column_names;
+              std::vector<std::string> fk_column_names;
 
-                ListCell   *column;
-                if( ConstraintNode->pk_attrs != NULL && ConstraintNode->pk_attrs->length > 0 ){
-                  foreach(column, ConstraintNode->pk_attrs ){
-                    char* attname = strVal(lfirst(column));
-                    pk_column_names.push_back(  attname  );
-                  }
+              ListCell   *column;
+              if( ConstraintNode->pk_attrs != NULL && ConstraintNode->pk_attrs->length > 0 ){
+                foreach(column, ConstraintNode->pk_attrs ){
+                  char* attname = strVal(lfirst(column));
+                  pk_column_names.push_back(  attname  );
                 }
-                if( ConstraintNode->fk_attrs != NULL && ConstraintNode->fk_attrs->length > 0 ){
-                  foreach(column, ConstraintNode->fk_attrs ){
-                    char* attname = strVal(lfirst(column));
-                    fk_column_names.push_back(  attname  );
-                  }
-                }
-
-                catalog::ReferenceTableInfo *reference_table_info = new catalog::ReferenceTableInfo( PrimaryKeyTableId,
-                                                                                                     pk_column_names,  
-                                                                                                     fk_column_names,  
-                                                                                                     ConstraintNode->fk_upd_action,  
-                                                                                                     ConstraintNode->fk_del_action, 
-                                                                                                     conname );
-
-                reference_table_infos.push_back( *reference_table_info );
               }
-              continue;
+              if( ConstraintNode->fk_attrs != NULL && ConstraintNode->fk_attrs->length > 0 ){
+                foreach(column, ConstraintNode->fk_attrs ){
+                  char* attname = strVal(lfirst(column));
+                  fk_column_names.push_back(  attname  );
+                }
+              }
+
+              catalog::ReferenceTableInfo *reference_table_info = new catalog::ReferenceTableInfo( PrimaryKeyTableId,
+                                                                                                   pk_column_names,
+                                                                                                   fk_column_names,
+                                                                                                   ConstraintNode->fk_upd_action,
+                                                                                                   ConstraintNode->fk_del_action,
+                                                                                                   conname );
+
+              reference_table_infos.push_back( *reference_table_info );
             }
-            default:
-            {
-                constraint = new catalog::Constraint( contype, conname );
-                LOG_WARN("Unrecognized constraint type %d\n", (int) contype );
-              break;
-            }
+            continue;
+          }
+          default:
+          {
+            constraint = new catalog::Constraint( contype, conname );
+            LOG_WARN("Unrecognized constraint type %d\n", (int) contype );
+            break;
+          }
         }
 
 
@@ -717,10 +717,10 @@ void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
       }
     }// end of parsing constraint 
 
-    catalog::ColumnInfo *column_info = new catalog::ColumnInfo( column_valueType, 
-                                                                column_length, 
-                                                                column_name, 
-                                                                column_constraints);
+    catalog::Column *column_info = new catalog::Column( column_valueType, 
+                                                        column_length,
+                                                        column_name,
+                                                        column_constraints);
 
     // Insert column_info into ColumnInfos
     column_infos.push_back(*column_info);
@@ -770,7 +770,7 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
       LOG_WARN("No index name");
     }
   }else{
-      index_name = Istmt->idxname;
+    index_name = Istmt->idxname;
   }
 
   // Index method type
@@ -794,7 +794,7 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
  * @return true if we set the reference tables, false otherwise
  */
 bool DDL::SetReferenceTables( std::vector<catalog::ReferenceTableInfo>& reference_table_infos, 
-                             oid_t relation_oid ){
+                              oid_t relation_oid ){
   assert( relation_oid );
   oid_t database_oid = GetCurrentDatabaseOid();
   assert( database_oid );
@@ -816,7 +816,7 @@ bool DDL::CreateIndexesWithIndexInfos( std::vector<IndexInfo> index_infos ){
 
   for( auto index_info : index_infos){
     bool status;
-    status = peloton::bridge::DDL::CreateIndex( index_info );
+    status = bridge::DDL::CreateIndex( index_info );
 
     fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info.GetIndexName().c_str(), status);
   }
@@ -834,7 +834,7 @@ bool DDL::AddConstraint(Oid relation_oid, Constraint* constraint )
 {
 
   ConstraintType contype = PostgresConstraintTypeToPelotonConstraintType( (PostgresConstraintType) constraint->contype );
-  std::vector<peloton::catalog::ReferenceTableInfo> reference_table_infos;
+  std::vector<catalog::ReferenceTableInfo> reference_table_infos;
 
   std::string conname;
   if( constraint->conname != NULL){
@@ -855,7 +855,7 @@ bool DDL::AddConstraint(Oid relation_oid, Constraint* constraint )
     {
       oid_t database_oid = GetCurrentDatabaseOid();
       assert( database_oid );
-      peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+      storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
 
       // PrimaryKey Table
       oid_t PrimaryKeyTableId = db->GetTableIdByName( constraint->pktable->relname );
@@ -887,15 +887,15 @@ bool DDL::AddConstraint(Oid relation_oid, Constraint* constraint )
       //new_constraint  = new catalog::Constraint( contype, conname);
       reference_table_infos.push_back( *reference_table_info );
 
-   }
+    }
     break;
     default:
       LOG_WARN("Unrecognized constraint type %d\n", (int) contype );
-    break;
+      break;
   }
 
   // FIXME : 
-  bool status = peloton::bridge::DDL::SetReferenceTables( reference_table_infos, relation_oid );
+  bool status = bridge::DDL::SetReferenceTables( reference_table_infos, relation_oid );
   if( status == false ){
     LOG_WARN("Failed to set reference tables");
   } 

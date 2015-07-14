@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "backend/catalog/abstract_catalog_object.h"
+#include "backend/catalog/catalog_object.h"
 #include "backend/catalog/table.h"
 
 #include <iostream>
@@ -23,41 +23,23 @@ namespace catalog {
 // Database
 //===--------------------------------------------------------------------===//
 
-class Database : public AbstractCatalogObject {
+class Database : public CatalogObject {
 
-public:
+ public:
 
-    Database(std::string name)
-        : AbstractCatalogObject(static_cast<oid_t>(1), name) { // FIXME
-    }
+  Database(oid_t database_oid,
+           std::string database_name,
+           CatalogObject *parent,
+           CatalogObject *root)
+ : CatalogObject(database_oid,
+                 database_name,
+                 parent,
+                 root) {
+  }
 
-    ~Database() {
+  // Get a string representation of this database
+  friend std::ostream& operator<<(std::ostream& os, const Database& database);
 
-        // clean up tables
-        for(auto table : tables) {
-            delete table;
-        }
-    }
-    
-    //===--------------------------------------------------------------------===//
-    // ACCESSORS
-    //===--------------------------------------------------------------------===//
-
-    bool AddTable(Table* table);
-    Table* GetTable(const std::string &table_name) const;
-    bool RemoveTable(const std::string &table_name);
-
-    // Get a string representation of this database
-    friend std::ostream& operator<<(std::ostream& os, const Database& database);
-
-private:
-    
-    //===--------------------------------------------------------------------===//
-    // MEMBERS
-    //===--------------------------------------------------------------------===//
-
-    // tables in db
-    std::vector<Table*> tables;
 };
 
 } // End catalog namespace

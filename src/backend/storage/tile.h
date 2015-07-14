@@ -134,7 +134,7 @@ class Tile {
   };
 
   const std::string GetColumnName(const oid_t column_index) const {
-    return schema.GetColumnInfo(column_index).name;
+    return schema.GetColumn(column_index).name;
   }
 
   int GetColumnCount() const {
