@@ -1044,6 +1044,10 @@ peloton_destroy_status(Peloton_Status *status)
 bool IsPelotonQuery(List *relationOids) {
   bool peloton_query = false;
 
+  // Check if we are in Postmaster environment */
+  if(IsPostmasterEnvironment == false)
+    return false;
+
   if(relationOids != NULL) {
     ListCell   *lc;
 
@@ -1052,11 +1056,9 @@ bool IsPelotonQuery(List *relationOids) {
     {
       Oid relationOid = lfirst_oid(lc);
       Relation relation = relation_open(relationOid, AccessShareLock);
-
       if(relation != NULL)
       {
         Oid relationNamespaceOid = RelationGetNamespace(relation);
-
         // Check if peloton table
         if(relationNamespaceOid == PG_PUBLIC_NAMESPACE)
         {
@@ -1065,7 +1067,6 @@ bool IsPelotonQuery(List *relationOids) {
           break;
         }
       }
-
       relation_close(relation, AccessShareLock);
     }
   }
