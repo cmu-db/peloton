@@ -80,11 +80,35 @@ class ColumnInfo {
     SetLength ( column_length );
 
   }
+
   inline std::string GetName()
   {
     return name;
   }
-  
+
+  inline size_t GetOffset()
+  {
+    return offset;
+  }
+
+  inline size_t GetLength()
+  {
+    if( is_inlined )
+      return fixed_length;
+    else
+      return variable_length;
+  }
+
+  inline ValueType GetType()
+  {
+    return type;
+  }
+
+  inline std::vector<Constraint> GetConstraints()
+  {
+    return constraint_vector;
+  }
+
   // add a constraint to the column info
   void AddConstraint(catalog::Constraint* _constraint){
     bool redundancy_check = false;
