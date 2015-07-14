@@ -26,13 +26,11 @@ namespace test {
 // CreateTable TEST 
 //===--------------------------------------------------------------------===//
 
-void BridgeTest::DDL_CreateTable() {
+void BridgeTest::DDL_CreateTable_TEST() {
 
   DDL_CreateTable_TEST_INVALID_OID();
-
-  DDL_CreateTable_TEST_BASIC_COLUMNS();
-
-  DDL_CreateTable_TEST_NOTNULL_CONSTRAINT();
+  DDL_CreateTable_TEST_COLUMNS();
+  DDL_CreateTable_TEST_CONSTRAINTS();
 
 }
 void BridgeTest::DDL_CreateTable_TEST_INVALID_OID() {
@@ -45,7 +43,7 @@ void BridgeTest::DDL_CreateTable_TEST_INVALID_OID() {
   printf("%s has been finished successfully\n", __func__ );
 }
 
-void BridgeTest::DDL_CreateTable_TEST_BASIC_COLUMNS() {
+void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
  
   peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
 
@@ -113,25 +111,37 @@ void BridgeTest::DDL_CreateTable_TEST_BASIC_COLUMNS() {
   printf("%s has been finished successfully\n", __func__ );
 }
 
-void BridgeTest::DDL_CreateTable_TEST_NOTNULL_CONSTRAINT() {
+void BridgeTest::DDL_CreateTable_TEST_CONSTRAINTS() {
 
   peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
 
   // constraint
   std::vector<catalog::Constraint> constraint_infos;
 
-  // NOT NULL
-  // Create constraints
   catalog::Constraint *notnull_constraint = new catalog::Constraint( CONSTRAINT_TYPE_NOTNULL );
-  constraint_infos.push_back( *notnull_constraint );
+  catalog::Constraint *primary_key_constraint = new catalog::Constraint( CONSTRAINT_TYPE_PRIMARY, "THIS_IS_PRIMARY_KEY_CONSTRAINT" );
+  catalog::Constraint *unique_constraint = new catalog::Constraint( CONSTRAINT_TYPE_UNIQUE, "THIS_IS_UNIQUE_CONSTRAINT" );
+  catalog::Constraint *foreign_constraint = new catalog::Constraint( CONSTRAINT_TYPE_FOREIGN, "THIS_IS_FOREIGN_CONSTRAINT" );
+
 
   // ColumnInfo
   std::vector<catalog::ColumnInfo> column_infos;
 
+  constraint_infos.push_back( *notnull_constraint );
   catalog::ColumnInfo *column_info1 = new catalog::ColumnInfo( VALUE_TYPE_INTEGER, 4, "id", constraint_infos); 
+  constraint_infos.clear();
+
+  constraint_infos.push_back( *primary_key_constraint );
   catalog::ColumnInfo *column_info2 = new catalog::ColumnInfo( VALUE_TYPE_VARCHAR, 68, "name", constraint_infos); 
+  constraint_infos.clear();
+
+  constraint_infos.push_back( *unique_constraint );
   catalog::ColumnInfo *column_info3 = new catalog::ColumnInfo( VALUE_TYPE_TIMESTAMP, 8, "time", constraint_infos); 
+  constraint_infos.clear();
+
+  constraint_infos.push_back( *foreign_constraint );
   catalog::ColumnInfo *column_info4 = new catalog::ColumnInfo( VALUE_TYPE_DOUBLE, 8, "salary", constraint_infos); 
+  constraint_infos.clear();
 
   column_infos.push_back(*column_info1);
   column_infos.push_back(*column_info2);
@@ -139,13 +149,13 @@ void BridgeTest::DDL_CreateTable_TEST_NOTNULL_CONSTRAINT() {
   column_infos.push_back(*column_info4);
 
   // Create a table
-  bool status = peloton::bridge::DDL::CreateTable( 20001, "test_table_notnull_constraint", column_infos );
+  bool status = peloton::bridge::DDL::CreateTable( 20001, "test_table_constraints", column_infos );
   assert ( status );
 
   storage::DataTable* table = db->GetTableById(20001);
 
   // Table name and oid
-  assert( strcmp( (table->GetName()).c_str(), "test_table_notnull_constraint") == 0 );
+  assert( strcmp( (table->GetName()).c_str(), "test_table_constraints") == 0 );
   assert( table->GetId() == 20001 );
 
   // Schema
@@ -166,6 +176,7 @@ void BridgeTest::DDL_CreateTable_TEST_NOTNULL_CONSTRAINT() {
   ConstraintType type = constraint_infos[0].GetType();
   assert( type == CONSTRAINT_TYPE_NOTNULL );
 
+
   // The second column
   column = schema->GetColumnInfo(1);
 
@@ -179,7 +190,9 @@ void BridgeTest::DDL_CreateTable_TEST_NOTNULL_CONSTRAINT() {
   constraint_infos = column.GetConstraints();
   assert( constraint_infos.size() == 1 );
   type = constraint_infos[0].GetType();
-  assert( type == CONSTRAINT_TYPE_NOTNULL );
+  assert( type == CONSTRAINT_TYPE_PRIMARY );
+  std::string name = constraint_infos[0].GetName();
+  assert( strcmp( name.c_str(), "THIS_IS_PRIMARY_KEY_CONSTRAINT") == 0 );
 
   // The third column
   column = schema->GetColumnInfo(2);
@@ -194,7 +207,10 @@ void BridgeTest::DDL_CreateTable_TEST_NOTNULL_CONSTRAINT() {
   constraint_infos = column.GetConstraints();
   assert( constraint_infos.size() == 1 );
   type = constraint_infos[0].GetType();
-  assert( type == CONSTRAINT_TYPE_NOTNULL );
+  assert( type == CONSTRAINT_TYPE_UNIQUE );
+  name = constraint_infos[0].GetName();
+  assert( strcmp( name.c_str(), "THIS_IS_UNIQUE_CONSTRAINT") == 0 );
+
 
   // The fourth column
   column = schema->GetColumnInfo(3);
@@ -209,14 +225,16 @@ void BridgeTest::DDL_CreateTable_TEST_NOTNULL_CONSTRAINT() {
   constraint_infos = column.GetConstraints();
   assert( constraint_infos.size() == 1 );
   type = constraint_infos[0].GetType();
-  assert( type == CONSTRAINT_TYPE_NOTNULL );
+  assert( type == CONSTRAINT_TYPE_FOREIGN );
+  name = constraint_infos[0].GetName();
+  assert( strcmp( name.c_str(), "THIS_IS_FOREIGN_CONSTRAINT") == 0 );
 
   printf("%s has been finished successfully\n", __func__ );
 
 }
 
 void BridgeTest::RunTests() {
-  DDL_CreateTable();
+  DDL_CreateTable_TEST();
 }
 
 void BridgeTest::TestCatalog() {
