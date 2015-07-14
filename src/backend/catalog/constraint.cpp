@@ -15,14 +15,14 @@ namespace catalog {
 
 std::ostream& operator<<(std::ostream& os, const Constraint& constraint) {
 
-    // TODO :: Print every members..
-    os << "\tCONSTRAINT ";
+  os << "\tCONSTRAINT ";
 
-    os << constraint.GetName() << " " << ConstraintTypeToString(constraint.type) << "\n";
+  os << constraint.GetName() << " "
+      << ConstraintTypeToString(constraint.constraint_type) << "\n";
 
-    os << "\n";
+  os << "\n";
 
-    return os;
+  return os;
 }
 
 

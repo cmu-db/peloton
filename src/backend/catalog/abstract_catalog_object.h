@@ -20,7 +20,6 @@ namespace catalog {
 
 /**
  * Base class for all catalog objects
- * @author pavlo
  */
 class AbstractCatalogObject {
     
@@ -33,7 +32,6 @@ protected:
     AbstractCatalogObject(oid_t id, std::string name) :
         id_(id),
         name_(name) {
-        
         // Nothing else to do!
     }
     
