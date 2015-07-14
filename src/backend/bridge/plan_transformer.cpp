@@ -628,8 +628,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformLimit(
   return plan_node;
 }
 
-std::vector<std::pair<oid_t, expression::AbstractExpression*>> TransformTargetList(
-    List* target_list, oid_t column_count) {
+std::vector<std::pair<oid_t, expression::AbstractExpression*>>
+TransformTargetList(List* target_list, oid_t column_count) {
 
   std::vector<std::pair<oid_t, expression::AbstractExpression*>> proj_list;
   ListCell *tl;
