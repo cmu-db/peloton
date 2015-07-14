@@ -89,7 +89,7 @@ bool DDL::CreateTable( Oid relation_oid,
   assert( !table_name.empty() );
 
   Oid database_oid = GetCurrentDatabaseOid();
-  if(database_oid == InvalidOid)
+  if(database_oid == INVALID_OID || relation_oid == INVALID_OID )
     return false;
 
   // Get db oid
