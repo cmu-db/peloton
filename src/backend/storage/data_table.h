@@ -54,35 +54,29 @@ public:
 
     ~DataTable();
 
+   //===--------------------------------------------------------------------===//
+    // OPERATIONS
+    //===--------------------------------------------------------------------===//
+
     std::string GetName() const {
         return table_name;
     }
     oid_t  GetId() const {
         return table_oid;
     }
-    
-    //===--------------------------------------------------------------------===//
-    // OPERATIONS
-    //===--------------------------------------------------------------------===//
-    
-    // insert tuple in table
-    ItemPointer InsertTuple( txn_id_t transaction_id, const Tuple *tuple, bool update = false );
-    
-    //===--------------------------------------------------------------------===//
-    // INDEXES
-    //===--------------------------------------------------------------------===//
 
+    index::Index* GetIndexByOid(oid_t index_oid );
+    
     // Add an index to the table
     bool AddIndex( index::Index *index , oid_t index_oid);
-    void AddReferenceTable( catalog::ReferenceTableInfo *referenceTableInfo );
 
+    void AddReferenceTable( catalog::ReferenceTableInfo *referenceTableInfo );
 
     inline index::Index *GetIndex(oid_t index_id) const {
         assert(index_id < indexes.size());
         return indexes[index_id];
     }
 
-    index::Index* GetIndexByOid(oid_t index_oid );
 
     inline bool ishasPrimaryKey(){
       if( primary_key_count > 0 )
@@ -105,7 +99,6 @@ public:
         return false;
     }
 
-
     inline size_t GetIndexCount() const {
       return indexes.size();
     }
@@ -119,6 +112,9 @@ public:
     }
 
     storage::DataTable *GetReferenceTable(int position) ;
+
+    // insert tuple in table
+    ItemPointer InsertTuple( txn_id_t transaction_id, const Tuple *tuple, bool update = false );
 
     void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
