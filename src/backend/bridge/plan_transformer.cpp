@@ -267,7 +267,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
   auto schema = target_table->GetSchema();
 
   planner::UpdateNode::ColumnExprs update_column_exprs;
-  planner::AbstractPlanNode* plan_node;
+  planner::AbstractPlanNode* plan_node = nullptr;
 
   if(nodeTag(sub_planstate->plan) == T_SeqScan) { // Sub plan is SeqScan
     LOG_INFO("Child of Update is SeqScan \n");
@@ -283,7 +283,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
 
   }
   else {
-    LOG_ERROR("Unsupported sub plan type of Update : %u \n", nodeTag(sub_planstate->plan));
+    LOG_ERROR("Unsupported (PG) sub plan type of Update : %u \n", nodeTag(sub_planstate->plan));
   }
 
   return plan_node;
