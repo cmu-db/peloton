@@ -20,7 +20,6 @@
 #include "executor/executor.h"
 #include "parser/parsetree.h"
 
-
 #include "executor/nodeValuesscan.h"
 
 #include "backend/common/logger.h"
@@ -35,7 +34,6 @@
 #include "backend/planner/limit_node.h"
 #include "backend/planner/seq_scan_node.h"
 #include "backend/planner/update_node.h"
-
 
 #include <cstring>
 
@@ -79,6 +77,14 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
       plan_node = PlanTransformer::TransformSeqScan(
           reinterpret_cast<const SeqScanState*>(plan_state));
       break;
+    case T_IndexScan:
+      plan_node = PlanTransformer::TransformIndexScan(
+          reinterpret_cast<const IndexScanState*>(plan_state));
+      break;
+    case T_IndexOnlyScan:
+      plan_node = PlanTransformer::TransformIndexOnlyScan(
+          reinterpret_cast<const IndexOnlyScanState*>(plan_state));
+      break;
     case T_Result:
       plan_node = PlanTransformer::TransformResult(
           reinterpret_cast<const ResultState*>(plan_state));
@@ -87,10 +93,10 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
       plan_node = PlanTransformer::TransformLimit(
           reinterpret_cast<const LimitState*>(plan_state));
       break;
-    default:
-    {
+    default: {
       plan_node = nullptr;
-      LOG_ERROR("Unsupported Postgres Plan Tag: %u Plan : %p", nodeTag(plan), plan);
+      LOG_ERROR("Unsupported Postgres Plan Tag: %u Plan : %p", nodeTag(plan),
+                plan);
       break;
     }
   }
@@ -194,13 +200,13 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     auto result_ps = reinterpret_cast<ResultState*>(sub_planstate);
 
     assert(outerPlanState(result_ps) == nullptr); /* We only handle single-constant-tuple for now,
-                                                  i.e., ResultState should have no children/sub plans */
+     i.e., ResultState should have no children/sub plans */
 
     auto tuple = new storage::Tuple(schema, true);
-    auto proj_list = TransformTargetList(result_ps->ps.ps_ProjInfo->pi_targetlist,
-                                         schema->GetColumnCount());
+    auto proj_list = TransformTargetList(
+        result_ps->ps.ps_ProjInfo->pi_targetlist, schema->GetColumnCount());
 
-    for(auto proj : proj_list) {
+    for (auto proj : proj_list) {
       Value value = proj.second->Evaluate(nullptr, nullptr);  // Constant is expected
       tuple->SetValue(proj.first, value);
     }
@@ -211,8 +217,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     // TODO Who's responsible for freeing the tuple?
     tuples.push_back(tuple);
 
-  }
-  else {
+  } else {
     LOG_ERROR("Unsupported child type of Insert: %u",
               nodeTag(sub_planstate->plan));
   }
@@ -252,12 +257,14 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
           .GetLocation(database_oid, table_oid));
 
-  if(target_table == nullptr) {
-    LOG_ERROR("Target table is not found : database oid %u table oid %u", database_oid, table_oid);
+  if (target_table == nullptr) {
+    LOG_ERROR("Target table is not found : database oid %u table oid %u",
+              database_oid, table_oid);
     return nullptr;
   }
 
-  LOG_INFO("Update table : database oid %u table oid %u", database_oid, table_oid);
+  LOG_INFO("Update table : database oid %u table oid %u", database_oid,
+           table_oid);
 
   /* Get the first sub plan state */
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
@@ -269,21 +276,21 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
   planner::UpdateNode::ColumnExprs update_column_exprs;
   planner::AbstractPlanNode* plan_node;
 
-  if(nodeTag(sub_planstate->plan) == T_SeqScan) { // Sub plan is SeqScan
+  if (nodeTag(sub_planstate->plan) == T_SeqScan) {  // Sub plan is SeqScan
     LOG_INFO("Child of Update is SeqScan \n");
     // Extract the non-trivial projection info from SeqScan
     // and put it in our update node
     auto seqscan_state = reinterpret_cast<SeqScanState*>(sub_planstate);
 
-    update_column_exprs = TransformTargetList(seqscan_state->ps.ps_ProjInfo->pi_targetlist,
-                                              schema->GetColumnCount());
+    update_column_exprs = TransformTargetList(
+        seqscan_state->ps.ps_ProjInfo->pi_targetlist, schema->GetColumnCount());
 
     plan_node = new planner::UpdateNode(target_table, update_column_exprs);
     plan_node->AddChild(TransformPlan(sub_planstate));
 
-  }
-  else {
-    LOG_ERROR("Unsupported sub plan type of Update : %u \n", nodeTag(sub_planstate->plan));
+  } else {
+    LOG_ERROR("Unsupported sub plan type of Update : %u \n",
+              nodeTag(sub_planstate->plan));
   }
 
   return plan_node;
@@ -363,10 +370,36 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
    * TODO:
    * The qualifying predicate should be extracted from:
    * ss_plan_state->ps.qual (null if no predicate)
+   * And remember to free it.
    *
    * Let's just use a null predicate for now.
    */
   expression::AbstractExpression* predicate = nullptr;
+
+
+  if(ss_plan_state->ps.qual){
+
+    int i=0;
+    List       *qual = ss_plan_state->ps.qual;
+    ListCell   *l;
+
+    assert(list_length(qual) == 1);
+
+    foreach(l, qual)
+    {
+      ExprState  *clause = (ExprState *) lfirst(l);
+
+      if(i == 0) {  // Let's just get the first predicate now
+        predicate = ExprTransformer::TransformExpr(clause);
+      }
+      i++;
+    }
+  }
+
+  if(predicate){
+    LOG_INFO("Predicate :");
+    std::cout << predicate->DebugInfo(" ");
+  }
 
   /*
    * Grab and transform the output column Id's.
@@ -386,6 +419,95 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   auto plan_node = new planner::SeqScanNode(target_table, predicate,
                                             column_ids);
   return plan_node;
+}
+
+planner::AbstractPlanNode* PlanTransformer::TransformIndexScan(
+    const IndexScanState* iss_plan_state) {
+ /* Resolve target relation */
+  Oid table_oid = iss_plan_state->ss.ss_currentRelation->rd_id;
+  Oid database_oid = GetCurrentDatabaseOid();
+  const IndexScan* iss_plan =
+      reinterpret_cast<IndexScan*>(iss_plan_state->ss.ps.plan);
+
+  storage::DataTable *target_table =
+      static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
+          .GetLocation(database_oid, table_oid));
+
+  assert(target_table);
+
+  /* Resolve index  */
+  index::Index *table_index = target_table->GetIndexByOid(iss_plan->indexid);
+  LOG_INFO("Index scan on oid %u, index name: %s", iss_plan->indexid,
+           table_index->GetName().c_str());
+
+  /* Resolve index order */
+  /* Only support forward scan direction */
+  assert(iss_plan->indexorderdir == ForwardScanDirection);
+
+  /* index qualifier */
+  const ExprState* expr_state = reinterpret_cast<ExprState *>(iss_plan_state->indexqualorig);
+  /* Only support op expr */
+  LOG_INFO("Index qual type : %d", expr_state->type);
+  expression::AbstractExpression *peleton_expr = ExprTransformer::TransformExpr(
+      expr_state);
+  std::cout << peleton_expr << std::endl;
+  //assert(expr_state->type == T_OpExpr);
+
+  /* target list */
+  //ioss_plan_state->ss.ps.targetlist;
+  /* ORDER BY, not support */
+
+  /* Plan qual, not support */
+  //ioss_plan_state->ss.ps.qual;
+  return nullptr;
+}
+/**
+ * @brief Convert a Postgres IndexOnlyScanState into a Peloton IndexScanNode.
+ * @return Pointer to the constructed AbstractPlanNode.
+ */
+planner::AbstractPlanNode* PlanTransformer::TransformIndexOnlyScan(
+    const IndexOnlyScanState* ioss_plan_state) {
+
+  /* Resolve target relation */
+  Oid table_oid = ioss_plan_state->ss.ss_currentRelation->rd_id;
+  Oid database_oid = GetCurrentDatabaseOid();
+  const IndexOnlyScan* ioss_plan =
+      reinterpret_cast<IndexOnlyScan*>(ioss_plan_state->ss.ps.plan);
+
+  storage::DataTable *target_table =
+      static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
+          .GetLocation(database_oid, table_oid));
+
+  assert(target_table);
+
+  /* Resolve index  */
+  index::Index *table_index = target_table->GetIndexByOid(ioss_plan->indexid);
+  LOG_INFO("Index only scan on oid %u, index name: %s", ioss_plan->indexid,
+           table_index->GetName().c_str());
+
+  //target_table->GetIndex();
+  /* Resolve index order */
+  /* Only support forward scan direction */
+  assert(ioss_plan->indexorderdir == ForwardScanDirection);
+
+  /* index qualifier */
+  const ExprState* expr_state = reinterpret_cast<ExprState *>(ioss_plan_state
+      ->indexqual);
+  /* Only support op expr */
+  LOG_INFO("Index qual type : %d", expr_state->type);
+  expression::AbstractExpression *peloton_expr = ExprTransformer::TransformExpr(
+      expr_state);
+  LOG_INFO("%s", peloton_expr->Debug(" ").c_str());
+  //assert(expr_state->type == T_OpExpr);
+
+  /* target list */
+  //ioss_plan_state->ss.ps.targetlist;
+  /* ORDER BY, not support */
+
+  /* Plan qual, not support */
+  //ioss_plan_state->ss.ps.qual;
+
+  return nullptr;
 }
 
 /**
@@ -502,9 +624,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformLimit(
   return plan_node;
 }
 
-
-std::vector<std::pair<oid_t, expression::AbstractExpression*>>
-TransformTargetList(List* target_list, oid_t column_count) {
+std::vector<std::pair<oid_t, expression::AbstractExpression*>> TransformTargetList(
+    List* target_list, oid_t column_count) {
 
   std::vector<std::pair<oid_t, expression::AbstractExpression*>> proj_list;
   ListCell *tl;
@@ -513,12 +634,13 @@ TransformTargetList(List* target_list, oid_t column_count) {
   {
     GenericExprState *gstate = (GenericExprState *) lfirst(tl);
     TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
-    AttrNumber  resind = tle->resno - 1;
+    AttrNumber resind = tle->resno - 1;
 
-    if(!(resind < column_count))
-        continue; // skip junk attributes
+    if (!(resind < column_count))
+      continue;  // skip junk attributes
 
-    LOG_INFO("Target list : column id : %u , Top-level (pg) expr tag : %u \n", resind, nodeTag(gstate->arg->expr));
+    LOG_INFO("Target list : column id : %u , Top-level (pg) expr tag : %u \n",
+             resind, nodeTag(gstate->arg->expr));
 
     oid_t col_id = static_cast<oid_t>(resind);
 
@@ -530,7 +652,6 @@ TransformTargetList(List* target_list, oid_t column_count) {
 
   return proj_list;
 }
-
 
 }  // namespace bridge
 }  // namespace peloton
