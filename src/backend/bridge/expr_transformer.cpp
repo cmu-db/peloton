@@ -17,7 +17,6 @@
 
 #include "expr_transformer.h"
 
-
 #include "backend/bridge/tuple_transformer.h"
 #include "backend/common/logger.h"
 #include "backend/common/value.h"
@@ -36,7 +35,8 @@ ReMapPgFunc(Oid func_id,
                 expression::AbstractExpression* lc,
                 expression::AbstractExpression* rc);
 
-void ExprTransformer::PrintPostgressExprTree(const ExprState* expr_state, std::string prefix) {
+void ExprTransformer::PrintPostgressExprTree(const ExprState* expr_state,
+                                             std::string prefix) {
   auto tag = nodeTag(expr_state->expr);
 
   // TODO Not complete.
@@ -49,17 +49,29 @@ void ExprTransformer::PrintPostgressExprTree(const ExprState* expr_state, std::s
 expression::AbstractExpression* ExprTransformer::TransformExpr(
     const ExprState* expr_state) {
 
-  if(!expr_state)
+  if (!expr_state)
     return nullptr;
 
-  expression::AbstractExpression* peloton_expr;
+  expression::AbstractExpression* peloton_expr = nullptr;
+
+  /* If it is a List, do not get type from expr */
+  switch (expr_state->type) {
+     case T_List:
+      peloton_expr = TransformList(
+          reinterpret_cast<const List*>(expr_state));
+      break;
+    default:
+      break;
+  }
+
+  if (peloton_expr != nullptr) return peloton_expr;
 
   /*
    * NOTICE:
    * In Postgres, Expr and ExprState is NOT one-to-one.
    * Be careful of the Expr tag and ExprState type.
    */
-  switch(nodeTag(expr_state->expr)){
+  switch (nodeTag(expr_state->expr)) {
     case T_Const:
       peloton_expr = TransformConstant(expr_state);
       break;
@@ -70,20 +82,17 @@ expression::AbstractExpression* ExprTransformer::TransformExpr(
 
     case T_Var:
       peloton_expr = TransformVar(expr_state);
-      break;
-
+     break;
     default:
-      LOG_ERROR("Unsupported Postgres Expr type: %u\n", nodeTag(expr_state->expr));
+      LOG_ERROR("Unsupported Postgres Expr type: %u\n",
+                nodeTag(expr_state->expr))
+      ;
   }
-
-
-
 
   return peloton_expr;
 }
 
-bool ExprTransformer::CleanExprTree(
-    expression::AbstractExpression* root) {
+bool ExprTransformer::CleanExprTree(expression::AbstractExpression* root) {
 
   // AbstractExpression's destructor already handles deleting children
   delete root;
@@ -96,17 +105,20 @@ expression::AbstractExpression* ExprTransformer::TransformConstant(
 
   auto const_expr = reinterpret_cast<const Const*>(es->expr);
 
-  if(!(const_expr->constbyval)) {
-    LOG_ERROR("Sorry, we don't handle by-reference constant values currently.\n");
+  LOG_INFO("Handle Const");
+
+  if (!(const_expr->constbyval)) {
+    LOG_ERROR(
+        "Sorry, we don't handle by-reference constant values currently.\n");
   }
 
   Value value;
 
-  if(const_expr->constisnull){ // Constant is null
+  if (const_expr->constisnull) {  // Constant is null
     value = ValueFactory::GetNullValue();
-  }
-  else {  // non null
-    value = TupleTransformer::GetValue(const_expr->constvalue, const_expr->consttype);
+  } else {  // non null
+    value = TupleTransformer::GetValue(const_expr->constvalue,
+                                       const_expr->consttype);
   }
 
   LOG_INFO("Const : ");
@@ -186,6 +198,39 @@ ReMapPgFunc(Oid func_id,
     case 165:
       return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_NE, lc, rc);
 
+    case 56:
+    case 64:
+    case 66:
+    case 160:
+    case 161:
+    case 1246:
+      return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_LT, lc, rc);
+
+    case 57:
+    case 73:
+    case 146:
+    case 147:
+    case 162:
+    case 163:
+      return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_GT, lc, rc);
+
+    case 74:
+    case 150:
+    case 151:
+    case 168:
+    case 169:
+    case 1692:
+      return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_GTE, lc, rc);
+
+    case 72:
+    case 148:
+    case 149:
+    case 166:
+    case 167:
+    case 1691:
+      return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_LTE, lc, rc);
+
+
     default:
       LOG_ERROR("Unsupported PG Function ID : %u (check fmgrtab.cpp)\n", func_id);
   }
@@ -193,6 +238,24 @@ ReMapPgFunc(Oid func_id,
 }
 
 
+
+expression::AbstractExpression* ExprTransformer::TransformList(
+    const List* list) {
+  ListCell *l;
+  int length = list_length(list);
+  assert(length > 0);
+  LOG_INFO("Handle List of length %d", length);
+  std::list<expression::AbstractExpression*> exprs; // a list of AND'ed expressions
+
+  foreach(l, list)
+  {
+    const ExprState *expr_state = reinterpret_cast<const ExprState*>(lfirst(l));
+    exprs.push_back(ExprTransformer::TransformExpr(expr_state));
+  }
+
+  return expression::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND, exprs);
+
+}
 
 } /* namespace bridge */
 } /* namespace peloton */
