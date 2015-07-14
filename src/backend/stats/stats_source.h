@@ -59,7 +59,7 @@ public:
 	 * Populates the other schema information which is present for
 	 * every stats table.
 	 */
-	std::vector<catalog::ColumnInfo> CreateBaseStatsTableSchema();
+	std::vector<catalog::Column> CreateBaseStatsTableSchema();
 
 	/// Configure for a set of statistics.
 	void Configure(std::string stats_identifier, Oid host_id, Oid site_id, 	Oid database_id);
@@ -115,7 +115,7 @@ protected:
 	 * Same pattern as generateStatsColumnNames except the return value is used as
 	 * an offset into the tuple schema instead of appending to end of a list.
 	 */
-	virtual std::vector<catalog::ColumnInfo> CreateStatsTableSchema();
+	virtual std::vector<catalog::Column> CreateStatsTableSchema();
 
 	/**
 	 * Map describing the mapping from column names to column indices in the stats tuple.

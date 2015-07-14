@@ -52,7 +52,7 @@ class DDL {
 
   static bool CreateTable( Oid relation_oid,
                            std::string table_name,
-                           std::vector<catalog::ColumnInfo> column_infos,
+                           std::vector<catalog::Column> column_infos,
                            catalog::Schema *schema = NULL );
 
   static bool CreateIndex( IndexInfo index_info );
@@ -93,7 +93,7 @@ class DDL {
 
   // Parse IndexStmt and construct ColumnInfo and ReferenceTableInfos
   static void ParsingCreateStmt( CreateStmt* Cstmt,
-                                 std::vector<catalog::ColumnInfo>& column_infos,
+                                 std::vector<catalog::Column>& column_infos,
                                  std::vector<catalog::ReferenceTableInfo>& reference_table_infos
                                  );
 

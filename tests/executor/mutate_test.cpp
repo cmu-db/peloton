@@ -216,7 +216,7 @@ TEST(MutateTests, StressTests) {
 
   // PRIMARY KEY
   auto pkey_index = table->GetIndex(0);
-  std::vector<catalog::ColumnInfo> columns;
+  std::vector<catalog::Column> columns;
 
   columns.push_back(ExecutorTestsUtil::GetColumnInfo(0));
   catalog::Schema *key_schema = new catalog::Schema(columns);
