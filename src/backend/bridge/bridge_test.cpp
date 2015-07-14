@@ -36,7 +36,7 @@ void BridgeTest::DDL_CreateTable_TEST() {
 void BridgeTest::DDL_CreateTable_TEST_INVALID_OID() {
 
   // ColumnInfo
-  std::vector<catalog::ColumnInfo> column_infos;
+  std::vector<catalog::Column> column_infos;
 
   bool status = bridge::DDL::CreateTable( INVALID_OID, "test_table_invalid_oid", column_infos );
   assert( status == false );
@@ -48,12 +48,12 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
   storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
 
   // ColumnInfo
-  std::vector<catalog::ColumnInfo> column_infos;
+  std::vector<catalog::Column> column_infos;
 
-  catalog::ColumnInfo *column_info1 = new catalog::ColumnInfo( VALUE_TYPE_INTEGER, 4, "id"); 
-  catalog::ColumnInfo *column_info2 = new catalog::ColumnInfo( VALUE_TYPE_VARCHAR, 68, "name"); 
-  catalog::ColumnInfo *column_info3 = new catalog::ColumnInfo( VALUE_TYPE_TIMESTAMP, 8, "time"); 
-  catalog::ColumnInfo *column_info4 = new catalog::ColumnInfo( VALUE_TYPE_DOUBLE, 8, "salary"); 
+  catalog::Column *column_info1 = new catalog::Column( VALUE_TYPE_INTEGER, 4, "id"); 
+  catalog::Column *column_info2 = new catalog::Column( VALUE_TYPE_VARCHAR, 68, "name"); 
+  catalog::Column *column_info3 = new catalog::Column( VALUE_TYPE_TIMESTAMP, 8, "time"); 
+  catalog::Column *column_info4 = new catalog::Column( VALUE_TYPE_DOUBLE, 8, "salary"); 
 
   column_infos.push_back(*column_info1);
   column_infos.push_back(*column_info2);
@@ -73,7 +73,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
   catalog::Schema* schema = table->GetSchema();
 
   // The first column
-  catalog::ColumnInfo column = schema->GetColumnInfo(0);
+  catalog::Column column = schema->GetColumn(0);
 
   // Column name, offset, length, type
   assert( strcmp( column.GetName().c_str(), "id" ) == 0 );
@@ -82,7 +82,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
   assert( column.GetType() == VALUE_TYPE_INTEGER );
 
   // The second column
-  column = schema->GetColumnInfo(1);
+  column = schema->GetColumn(1);
 
   // Column name, offset, length, type
   assert( strcmp( column.GetName().c_str(), "name" ) == 0 );
@@ -91,7 +91,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
   assert( column.GetType() == VALUE_TYPE_VARCHAR );
 
   // The third column
-  column = schema->GetColumnInfo(2);
+  column = schema->GetColumn(2);
 
   // Column name, offset, length, type
   assert( strcmp( column.GetName().c_str(), "time" ) == 0 );
@@ -100,7 +100,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
   assert( column.GetType() == VALUE_TYPE_TIMESTAMP );
 
   // The fourth column
-  column = schema->GetColumnInfo(3);
+  column = schema->GetColumn(3);
 
   // Column name, offset, length, type
   assert( strcmp( column.GetName().c_str(), "salary" ) == 0 );
@@ -125,22 +125,22 @@ void BridgeTest::DDL_CreateTable_TEST_CONSTRAINTS() {
 
 
   // ColumnInfo
-  std::vector<catalog::ColumnInfo> column_infos;
+  std::vector<catalog::Column> column_infos;
 
   constraint_infos.push_back( *notnull_constraint );
-  catalog::ColumnInfo *column_info1 = new catalog::ColumnInfo( VALUE_TYPE_INTEGER, 4, "id", constraint_infos); 
+  catalog::Column *column_info1 = new catalog::Column( VALUE_TYPE_INTEGER, 4, "id", constraint_infos); 
   constraint_infos.clear();
 
   constraint_infos.push_back( *primary_key_constraint );
-  catalog::ColumnInfo *column_info2 = new catalog::ColumnInfo( VALUE_TYPE_VARCHAR, 68, "name", constraint_infos); 
+  catalog::Column *column_info2 = new catalog::Column( VALUE_TYPE_VARCHAR, 68, "name", constraint_infos); 
   constraint_infos.clear();
 
   constraint_infos.push_back( *unique_constraint );
-  catalog::ColumnInfo *column_info3 = new catalog::ColumnInfo( VALUE_TYPE_TIMESTAMP, 8, "time", constraint_infos); 
+  catalog::Column *column_info3 = new catalog::Column( VALUE_TYPE_TIMESTAMP, 8, "time", constraint_infos); 
   constraint_infos.clear();
 
   constraint_infos.push_back( *foreign_constraint );
-  catalog::ColumnInfo *column_info4 = new catalog::ColumnInfo( VALUE_TYPE_DOUBLE, 8, "salary", constraint_infos); 
+  catalog::Column *column_info4 = new catalog::Column( VALUE_TYPE_DOUBLE, 8, "salary", constraint_infos); 
   constraint_infos.clear();
 
   column_infos.push_back(*column_info1);
@@ -162,7 +162,7 @@ void BridgeTest::DDL_CreateTable_TEST_CONSTRAINTS() {
   catalog::Schema* schema = table->GetSchema();
 
   // The first column
-  catalog::ColumnInfo column = schema->GetColumnInfo(0);
+  catalog::Column column = schema->GetColumn(0);
 
   // Column name, offset, length, type, constraint not null
   assert( strcmp( column.GetName().c_str(), "id" ) == 0 );
@@ -178,7 +178,7 @@ void BridgeTest::DDL_CreateTable_TEST_CONSTRAINTS() {
 
 
   // The second column
-  column = schema->GetColumnInfo(1);
+  column = schema->GetColumn(1);
 
   // Column name, offset, length, type, constraint not null
   assert( strcmp( column.GetName().c_str(), "name" ) == 0 );
@@ -195,7 +195,7 @@ void BridgeTest::DDL_CreateTable_TEST_CONSTRAINTS() {
   assert( strcmp( name.c_str(), "THIS_IS_PRIMARY_KEY_CONSTRAINT") == 0 );
 
   // The third column
-  column = schema->GetColumnInfo(2);
+  column = schema->GetColumn(2);
 
   // Column name, offset, length, type, constraint not null
   assert( strcmp( column.GetName().c_str(), "time" ) == 0 );
@@ -213,7 +213,7 @@ void BridgeTest::DDL_CreateTable_TEST_CONSTRAINTS() {
 
 
   // The fourth column
-  column = schema->GetColumnInfo(3);
+  column = schema->GetColumn(3);
 
   // Column name, offset, length, type, constraint not null
   assert( strcmp( column.GetName().c_str(), "salary" ) == 0 );

@@ -47,12 +47,12 @@ namespace peloton {
 namespace test {
 
 /** @brief Helper function for defining schema */
-catalog::ColumnInfo ExecutorTestsUtil::GetColumnInfo(int index) {
+catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
   const bool is_inlined = true;
 
   switch(index) {
     case 0:
-      return catalog::ColumnInfo(
+      return catalog::Column(
           VALUE_TYPE_INTEGER,
           GetTypeSize(VALUE_TYPE_INTEGER),
           "COL_A",
@@ -60,7 +60,7 @@ catalog::ColumnInfo ExecutorTestsUtil::GetColumnInfo(int index) {
       break;
 
     case 1:
-      return catalog::ColumnInfo(
+      return catalog::Column(
           VALUE_TYPE_INTEGER,
           GetTypeSize(VALUE_TYPE_INTEGER),
           "COL_B",
@@ -68,7 +68,7 @@ catalog::ColumnInfo ExecutorTestsUtil::GetColumnInfo(int index) {
       break;
 
     case 2:
-      return catalog::ColumnInfo(
+      return catalog::Column(
           VALUE_TYPE_DOUBLE,
           GetTypeSize(VALUE_TYPE_DOUBLE),
           "COL_C",
@@ -76,7 +76,7 @@ catalog::ColumnInfo ExecutorTestsUtil::GetColumnInfo(int index) {
       break;
 
     case 3:
-      return catalog::ColumnInfo(
+      return catalog::Column(
           VALUE_TYPE_VARCHAR,
           25, // Column length.
           "COL_D",
@@ -108,7 +108,7 @@ catalog::ColumnInfo ExecutorTestsUtil::GetColumnInfo(int index) {
 storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(
     storage::AbstractBackend *backend,
     int tuple_count) {
-  std::vector<catalog::ColumnInfo> columns;
+  std::vector<catalog::Column> columns;
   std::vector<catalog::Schema> schemas;
 
   columns.push_back(GetColumnInfo(0));

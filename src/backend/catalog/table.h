@@ -12,114 +12,73 @@
 
 #pragma once
 
-#include "backend/catalog/abstract_catalog_object.h"
+#include <iostream>
+#include <algorithm>
+
+#include "backend/catalog/catalog_object.h"
 #include "backend/catalog/constraint.h"
 #include "backend/catalog/column.h"
 #include "backend/catalog/index.h"
 
-#include <iostream>
-#include <algorithm>
-
-
 namespace peloton {
-
-namespace storage {
-class DataTable;
-}
-
 namespace catalog {
 
-/**
- * Table Catalog Object 
- */
-class Table : public AbstractCatalogObject {
+//===--------------------------------------------------------------------===//
+// Table
+//===--------------------------------------------------------------------===//
 
-public:
+class Table : public CatalogObject {
 
-    Table(std::string name)
-        : AbstractCatalogObject(static_cast<oid_t>(1), name) { // FIXME
-        // Light em up!
-    }
+ public:
 
-    ~Table() {
+  Table(oid_t table_oid,
+        std::string table_name,
+        CatalogObject *parent,
+        CatalogObject *root)
+ : CatalogObject(table_oid,
+                 table_name,
+                 parent,
+                 root) {
+  }
 
-        // clean up indices
-        for(auto index : indexes)
-            delete index;
+  //===--------------------------------------------------------------------===//
+  // ACCESSORS
+  //===--------------------------------------------------------------------===//
 
-        // clean up constraints
-        for(auto constraint : constraints)
-            delete constraint;
+  storage::DataTable *GetTable() const {
+    return data_table_;
+  }
 
-        // clean up columns
-        for(auto col : columns)
-            delete col;
-    }
-    
-    //===--------------------------------------------------------------------===//
-    // ACCESSORS
-    //===--------------------------------------------------------------------===//
+  void SetDataTable(storage::DataTable* table) {
+    data_table_ = table;
+  }
 
-    std::vector<Column*> GetColumns() const {
-        return columns;
-    }
+  bool SetSchema(catalog::Schema *schema){
+    return CreateChild(schema_child_oid, static_cast<CatalogObject*>(schema));
+  }
 
-    std::vector<Index*> GetIndices() const {
-        return indexes;
-    }
+  storage::DataTable *GetDataTable() {
+    return data_table_;
+  }
 
-    std::vector<catalog::Constraint*> GetConstraints() const {
-        return constraints;
-    }
+  catalog::Schema *GetSchema() const {
+    return GetChild(schema_child_oid);
+  }
 
-    // TODO: REMOVE THIS!
-    storage::DataTable *GetTable() const {
-        return physical_table;
-    }
+  // Get a string representation of this table
+  friend std::ostream& operator<<(std::ostream& os, const Table& table);
 
-    // TODO: REMOVE THIS!
-    void SetPhysicalTable(storage::DataTable* table_) {
-        physical_table = table_;
-    }
+ private:
 
-    // TODO: REMOVE THIS!
-    storage::DataTable *GetPhysicalTable() {
-        return physical_table;
-    }
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
 
-    bool AddColumn(Column* column);
-    Column* GetColumn(const std::string &column_name) const;
-    bool RemoveColumn(const std::string &column_name);
+  // underlying physical table
+  storage::DataTable *data_table_ = nullptr;
 
-    bool AddIndex(Index* index);
-    Index* GetIndex(const std::string &index_name) const;
-    bool RemoveIndex(const std::string &index_name);
-
-    bool AddConstraint(Constraint* constraint);
-    Constraint* GetConstraint(const std::string &constraint_name) const;
-    bool RemoveConstraint(const std::string &constraint_name);
-
-    // Get a string representation of this table
-    friend std::ostream& operator<<(std::ostream& os, const Table& table);
-    
-
-private:
-    
-    //===--------------------------------------------------------------------===//
-    // MEMBERS
-    //===--------------------------------------------------------------------===//
-
-    // columns in table
-    std::vector<Column*> columns;
-
-    // indexes for table
-    std::vector<Index*> indexes;
-
-    // constraints for column
-    std::vector<catalog::Constraint*> constraints;
-
-    // underlying physical table
-    storage::DataTable* physical_table = nullptr; // TODO: REMOVE THIS!
+  // schema oid
+  constexpr static oid_t schema_child_oid = 1;
 
 };
 

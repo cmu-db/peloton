@@ -12,89 +12,59 @@
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/catalog/abstract_catalog_object.h"
-
 #include <mutex>
 #include <vector>
 #include <iostream>
 
+#include "backend/common/types.h"
+#include "backend/catalog/catalog_object.h"
+
 namespace peloton {
-
-namespace index {
-class Index;
-}
-
 namespace catalog {
 
 class Column;
 
+//===--------------------------------------------------------------------===//
+// Index
+//===--------------------------------------------------------------------===//
 
-/**
- * Index Catalog Object
- */
-class Index : public AbstractCatalogObject {
+class Index : public CatalogObject {
 
-public:
+ public:
 
-    Index(std::string name, IndexMethodType type, bool unique, std::vector<Column*> columns)
-        : AbstractCatalogObject(static_cast<oid_t>(1), name), // FIXME
-          type(type),
-          unique(unique),
-          columns(columns) {
-    }
+  Index(oid_t index_oid,
+        std::string index_name,
+        CatalogObject *parent,
+        CatalogObject *root)
+ : CatalogObject(index_oid,
+                 index_name,
+                 parent,
+                 root) {
+  }
 
-    ~Index() {
-        // don't clean up columns here
-        // they will cleaned in their respective tables
-    }
-    
-    //===--------------------------------------------------------------------===//
-    // ACCESSORS
-    //===--------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
+  // ACCESSORS
+  //===--------------------------------------------------------------------===//
 
-    IndexMethodType GetType() const {
-        return type;
-    }
+  void SetPhysicalIndex(index::Index* index) {
+    physical_index = index;
+  }
 
-    bool IsUnique() const {
-        return unique;
-    }
+  index::Index *GetPhysicalIndex() const {
+    return physical_index;
+  }
 
-    std::vector<Column*> GetColumns() const {
-        return columns;
-    }
+  // Get a string representation of this index
+  friend std::ostream& operator<<(std::ostream& os, const Index& index);
 
-    // FIXME: REMOVE THIS!
-    void SetPhysicalIndex(index::Index* index) {
-        physical_index = index;
-    }
+ private:
 
-    // FIXME: REMOVE THIS!
-    index::Index *GetPhysicalIndex() {
-        return physical_index;
-    }
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
 
-    // Get a string representation of this index
-    friend std::ostream& operator<<(std::ostream& os, const Index& index);
-
-private:
-
-    //===--------------------------------------------------------------------===//
-    // MEMBERS
-    //===--------------------------------------------------------------------===//
-    
-    // What data structure is the index using ?
-    IndexMethodType type = INDEX_METHOD_TYPE_INVALID;
-
-    // Can the index contain duplicate keys?
-    bool unique = false;
-
-    // Columns referenced by the index
-    std::vector<Column*> columns;
-
-    // underlying physical index
-    index::Index* physical_index = nullptr; // FIXME: REMOVE THIS!
+  // underlying physical index
+  index::Index* physical_index = nullptr;
 
 };
 

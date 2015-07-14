@@ -64,9 +64,9 @@ TEST(AggregateTests, DistinctTest){
   // Create output table schema
   auto data_table_schema = data_table.get()->GetSchema();
   std::vector<oid_t> set = { 0, 1, 2, 3};
-  std::vector<catalog::ColumnInfo> columns;
+  std::vector<catalog::Column> columns;
   for(auto column_index : set){
-    columns.push_back(data_table_schema->GetColumnInfo(column_index));
+    columns.push_back(data_table_schema->GetColumn(column_index));
   }
 
   auto output_table_schema = new catalog::Schema(columns);
@@ -140,9 +140,9 @@ TEST(AggregateTests, GroupByTest){
   // Create output table schema
   auto data_table_schema = data_table.get()->GetSchema();
   std::vector<oid_t> set = { 0, 1, 2, 3};
-  std::vector<catalog::ColumnInfo> columns;
+  std::vector<catalog::Column> columns;
   for(auto column_index : set){
-    columns.push_back(data_table_schema->GetColumnInfo(column_index));
+    columns.push_back(data_table_schema->GetColumn(column_index));
   }
 
   auto output_table_schema = new catalog::Schema(columns);
@@ -222,9 +222,9 @@ TEST(AggregateTests, AggregateTest){
   // More complex schema construction
   auto data_table_schema = data_table.get()->GetSchema();
   std::vector<oid_t> set = { 0, 1, 2, 2};
-  std::vector<catalog::ColumnInfo> columns;
+  std::vector<catalog::Column> columns;
   for(auto column_index : set){
-    columns.push_back(data_table_schema->GetColumnInfo(column_index));
+    columns.push_back(data_table_schema->GetColumn(column_index));
   }
 
   auto output_table_schema = new catalog::Schema(columns);

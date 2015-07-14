@@ -22,88 +22,13 @@
 #include "nodes/nodes.h"
 
 namespace peloton {
-
-namespace index {
-class Index;
-}
-namespace storage {
-class DataTable;
-}
-
 namespace catalog {
-
-class ReferenceTableInfo;
-
-//===--------------------------------------------------------------------===//
-// Constraint Class
-//===--------------------------------------------------------------------===//
-
-class Constraint
-{
-
- public:
-  // Configure ( type [, name] )
-  Constraint(ConstraintType type, std::string constraint_name = "", Node* raw_expr = nullptr)
- : constraint_type(type),
-   constraint_name(constraint_name) {
-    raw_expr = (Node*) copyObject((void*) raw_expr );
-  }
-
-  //===--------------------------------------------------------------------===//
-  // ACCESSORS
-  //===--------------------------------------------------------------------===//
-
-  ConstraintType GetType() const {
-    return constraint_type;
-  }
-
-  std::string GetName() const {
-    return constraint_name;
-  }
-
-  // Offset into the list of "reference tables" in the Table.
-  inline void SetReferenceTablePosition(int position) {
-    AssertMsg(position < 0, "ReferenceTable position can't be negative");
-    reference_table_list_offset = position;
-  }
-
-  // Offset into the list of "unique indices" in the Table.
-  inline void SetUniqueIndexPosition( int position ) {
-    AssertMsg(position < 0, "Unique Index position can't be negative.");
-    unique_index_list_offset = position;
-  }
-
-  // Get a string representation of this constraint
-  friend std::ostream& operator<<(std::ostream& os, const Constraint& constraint);
-
- private:
-
-  //===--------------------------------------------------------------------===//
-  // MEMBERS
-  //===--------------------------------------------------------------------===//
-
-  // The type of constraint
-  ConstraintType constraint_type = CONSTRAINT_TYPE_INVALID;
-
-  // Constraint name
-  std::string constraint_name;
-
-  // Raw_default_expr
-  // FIXME :: Cooked expr
-  Node* raw_expr = nullptr;
-
-  // Offsets into the Unique index and reference table lists in Table
-  int reference_table_list_offset = -1;
-
-  int unique_index_list_offset = -1;
-
-};
-
 
 //===--------------------------------------------------------------------===//
 // ReferenceTableInfo Class
 //===--------------------------------------------------------------------===//
 
+// Represent the sink tables of foreign key constraints
 class ReferenceTableInfo {
 
  public:
@@ -154,6 +79,71 @@ class ReferenceTableInfo {
 
 };
 
+//===--------------------------------------------------------------------===//
+// Constraint Class
+//===--------------------------------------------------------------------===//
+
+class Constraint : public CatalogObject {
+
+ public:
+
+  Constraint(oid_t constraint_oid,
+             std::string constraint_name,
+             CatalogObject *parent,
+             CatalogObject *root,
+             ConstraintType type,
+             Node* raw_expr = nullptr)
+ :  CatalogObject(constraint_oid,
+                  constraint_name,
+                  parent,
+                  root),
+                  constraint_type(type) {
+
+    // Copy the raw expression
+    raw_expr = (Node*) copyObject((void*) raw_expr );
+
+  }
+
+  //===--------------------------------------------------------------------===//
+  // ACCESSORS
+  //===--------------------------------------------------------------------===//
+
+  ConstraintType GetType() const {
+    return constraint_type;
+  }
+
+  // Offset into the list of "reference tables" in the Table.
+  inline void SetReferenceTablePosition(oid_t position) {
+    reference_table_list_offset = position;
+  }
+
+  // Offset into the list of "unique indices" in the Table.
+  inline void SetUniqueIndexPosition(oid_t position ) {
+    unique_index_list_offset = position;
+  }
+
+  // Get a string representation of this constraint
+  friend std::ostream& operator<<(std::ostream& os, const Constraint& constraint);
+
+ private:
+
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
+
+  // The type of constraint
+  ConstraintType constraint_type = CONSTRAINT_TYPE_INVALID;
+
+  // Raw_default_expr
+  // FIXME :: Cooked expr
+  Node* raw_expr = nullptr;
+
+  // Offsets into the Unique index and reference table lists in Table
+  oid_t reference_table_list_offset = INVALID_OID;
+
+  oid_t unique_index_list_offset = INVALID_OID;
+
+};
 
 
 } // End catalog namespace
