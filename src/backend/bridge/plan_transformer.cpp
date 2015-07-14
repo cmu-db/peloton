@@ -33,6 +33,7 @@
 #include "backend/planner/insert_node.h"
 #include "backend/planner/limit_node.h"
 #include "backend/planner/seq_scan_node.h"
+#include "backend/planner/index_scan_node.h"
 #include "backend/planner/update_node.h"
 
 #include <cstring>
@@ -287,8 +288,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
 
     plan_node = new planner::UpdateNode(target_table, update_column_exprs);
     plan_node->AddChild(TransformPlan(sub_planstate));
-  }
-  else {
+  } else {
     LOG_ERROR("Unsupported sub plan type of Update : %u \n",
               nodeTag(sub_planstate->plan));
   }
@@ -376,12 +376,11 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
    */
   expression::AbstractExpression* predicate = nullptr;
 
+  if (ss_plan_state->ps.qual) {
 
-  if(ss_plan_state->ps.qual){
-
-    const ExprState* expr_state = reinterpret_cast<ExprState *>(ss_plan_state->ps.qual);
+    const ExprState* expr_state = reinterpret_cast<ExprState *>(ss_plan_state
+        ->ps.qual);
     predicate = ExprTransformer::TransformExpr(expr_state);
-
 
 //       int i=0;
 //    List       *qual = ss_plan_state->ps.qual;
@@ -400,7 +399,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
 //    }
   }
 
-  if(predicate){
+  if (predicate) {
     LOG_INFO("Predicate :");
     std::cout << predicate->DebugInfo(" ");
   }
@@ -427,20 +426,28 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
 
 planner::AbstractPlanNode* PlanTransformer::TransformIndexScan(
     const IndexScanState* iss_plan_state) {
- /* Resolve target relation */
+  /* info needed to initialize plan node */
+  storage::DataTable *target_table = nullptr;
+  index::Index *table_index = nullptr;
+  storage::Tuple *start_key = nullptr;
+  storage::Tuple *end_key = nullptr;
+  bool start_inclusive = false;
+  bool end_inclusive = false;
+
+  /* Resolve target relation */
   Oid table_oid = iss_plan_state->ss.ss_currentRelation->rd_id;
   Oid database_oid = GetCurrentDatabaseOid();
-  const IndexScan* iss_plan =
-      reinterpret_cast<IndexScan*>(iss_plan_state->ss.ps.plan);
+  const IndexScan* iss_plan = reinterpret_cast<IndexScan*>(iss_plan_state->ss.ps
+      .plan);
 
-  storage::DataTable *target_table =
+  target_table =
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
           .GetLocation(database_oid, table_oid));
 
   assert(target_table);
 
   /* Resolve index  */
-  index::Index *table_index = target_table->GetIndexByOid(iss_plan->indexid);
+  table_index = target_table->GetIndexByOid(iss_plan->indexid);
   LOG_INFO("Index scan on oid %u, index name: %s", iss_plan->indexid,
            table_index->GetName().c_str());
 
@@ -449,12 +456,76 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexScan(
   assert(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier */
-  const ExprState* expr_state = reinterpret_cast<ExprState *>(iss_plan_state->indexqualorig);
+  const ExprState* expr_state = reinterpret_cast<ExprState *>(iss_plan_state
+      ->indexqualorig);
   /* Only support op expr */
   LOG_INFO("Index qual type : %d", expr_state->type);
-  expression::AbstractExpression *peleton_expr = ExprTransformer::TransformExpr(
+  expression::AbstractExpression *peloton_expr = ExprTransformer::TransformExpr(
       expr_state);
-  std::cout << peleton_expr << std::endl;
+
+  /* handle simple cases */
+
+  if (peloton_expr->GetExpressionType() == EXPRESSION_TYPE_CONJUNCTION_AND) {
+    const expression::AbstractExpression *left = peloton_expr->GetLeft();
+    const expression::AbstractExpression *right = peloton_expr->GetRight();
+    assert(left->GetLeft()->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
+    assert(
+        left->GetRight()->GetExpressionType()
+            == EXPRESSION_TYPE_VALUE_CONSTANT);
+    assert(
+        right->GetLeft()->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
+    assert(
+        right->GetRight()->GetExpressionType()
+            == EXPRESSION_TYPE_VALUE_CONSTANT);
+
+    switch (left->GetExpressionType()) {
+      case EXPRESSION_TYPE_COMPARE_GT:
+      case EXPRESSION_TYPE_COMPARE_GTE:
+      case EXPRESSION_TYPE_COMPARE_LT:
+      case EXPRESSION_TYPE_COMPARE_LTE:
+      default:
+        LOG_ERROR("Cannot handle %s", left->GetName());
+        break;
+    }
+  } else {
+    const expression::AbstractExpression *left = peloton_expr->GetLeft();
+    const expression::AbstractExpression *right = peloton_expr->GetRight();
+    assert(left->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
+    assert(right->GetExpressionType() == EXPRESSION_TYPE_VALUE_CONSTANT);
+    switch (peloton_expr->GetExpressionType()) {
+      case EXPRESSION_TYPE_COMPARE_EQ:
+        start_inclusive = true;
+        end_inclusive = true;
+        start_key = new storage::Tuple(table_index->GetKeySchema(), true);
+        end_key = new storage::Tuple(table_index->GetKeySchema(), true);
+        start_key->SetValue(0, right->Evaluate(nullptr, nullptr));
+        end_key->SetValue(0, right->Evaluate(nullptr, nullptr));
+        break;
+      case EXPRESSION_TYPE_COMPARE_GT:
+        start_inclusive = false;
+        start_key = new storage::Tuple(table_index->GetKeySchema(), true);
+        start_key->SetValue(0, right->Evaluate(nullptr, nullptr));
+        break;
+      case EXPRESSION_TYPE_COMPARE_GTE:
+        start_inclusive = true;
+        start_key = new storage::Tuple(table_index->GetKeySchema(), true);
+        start_key->SetValue(0, right->Evaluate(nullptr, nullptr));
+        break;
+      case EXPRESSION_TYPE_COMPARE_LT:
+        end_inclusive = false;
+        end_key = new storage::Tuple(table_index->GetKeySchema(), true);
+        end_key->SetValue(0, right->Evaluate(nullptr, nullptr));
+        break;
+      case EXPRESSION_TYPE_COMPARE_LTE:
+        end_inclusive = false;
+        end_key = new storage::Tuple(table_index->GetKeySchema(), true);
+        end_key->SetValue(0, right->Evaluate(nullptr, nullptr));
+        break;
+      default:
+        LOG_ERROR("Cannot handle %s", left->GetName());
+        break;
+    }
+  }
   //assert(expr_state->type == T_OpExpr);
 
   /* target list */
@@ -463,7 +534,14 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexScan(
 
   /* Plan qual, not support */
   //ioss_plan_state->ss.ps.qual;
-  return nullptr;
+  auto schema = target_table->GetSchema();
+  std::vector<oid_t> column_ids(schema->GetColumnCount());
+  std::iota(column_ids.begin(), column_ids.end(), 0);
+  assert(column_ids.size() > 0);
+
+  return new planner::IndexScanNode(target_table, table_index, start_key,
+                                    end_key, start_inclusive, end_inclusive,
+                                    column_ids);
 }
 /**
  * @brief Convert a Postgres IndexOnlyScanState into a Peloton IndexScanNode.
@@ -471,6 +549,13 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexScan(
  */
 planner::AbstractPlanNode* PlanTransformer::TransformIndexOnlyScan(
     const IndexOnlyScanState* ioss_plan_state) {
+  /* info needed to initialize plan node */
+  storage::DataTable *target_table = nullptr;
+  index::Index *table_index = nullptr;
+  storage::Tuple *start_key = nullptr;
+  storage::Tuple *end_key = nullptr;
+  bool start_inclusive = false;
+  bool end_inclusive = false;
 
   /* Resolve target relation */
   Oid table_oid = ioss_plan_state->ss.ss_currentRelation->rd_id;
@@ -478,14 +563,14 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexOnlyScan(
   const IndexOnlyScan* ioss_plan =
       reinterpret_cast<IndexOnlyScan*>(ioss_plan_state->ss.ps.plan);
 
-  storage::DataTable *target_table =
+  target_table =
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
           .GetLocation(database_oid, table_oid));
 
   assert(target_table);
 
   /* Resolve index  */
-  index::Index *table_index = target_table->GetIndexByOid(ioss_plan->indexid);
+  table_index = target_table->GetIndexByOid(ioss_plan->indexid);
   LOG_INFO("Index only scan on oid %u, index name: %s", ioss_plan->indexid,
            table_index->GetName().c_str());
 
@@ -501,7 +586,70 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexOnlyScan(
   LOG_INFO("Index qual type : %d", expr_state->type);
   expression::AbstractExpression *peloton_expr = ExprTransformer::TransformExpr(
       expr_state);
-  LOG_INFO("%s", peloton_expr->Debug(" ").c_str());
+
+  /* handle simple cases */
+
+  if (peloton_expr->GetExpressionType() == EXPRESSION_TYPE_CONJUNCTION_AND) {
+    const expression::AbstractExpression *left = peloton_expr->GetLeft();
+    const expression::AbstractExpression *right = peloton_expr->GetRight();
+    assert(left->GetLeft()->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
+    assert(
+        left->GetRight()->GetExpressionType()
+            == EXPRESSION_TYPE_VALUE_CONSTANT);
+    assert(
+        right->GetLeft()->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
+    assert(
+        right->GetRight()->GetExpressionType()
+            == EXPRESSION_TYPE_VALUE_CONSTANT);
+
+    switch (left->GetExpressionType()) {
+      case EXPRESSION_TYPE_COMPARE_GT:
+      case EXPRESSION_TYPE_COMPARE_GTE:
+      case EXPRESSION_TYPE_COMPARE_LT:
+      case EXPRESSION_TYPE_COMPARE_LTE:
+      default:
+        LOG_ERROR("Cannot handle %s", left->GetName());
+        break;
+    }
+  } else {
+    const expression::AbstractExpression *left = peloton_expr->GetLeft();
+    const expression::AbstractExpression *right = peloton_expr->GetRight();
+    assert(left->GetExpressionType() == EXPRESSION_TYPE_VALUE_TUPLE);
+    assert(right->GetExpressionType() == EXPRESSION_TYPE_VALUE_CONSTANT);
+    switch (peloton_expr->GetExpressionType()) {
+      case EXPRESSION_TYPE_COMPARE_EQ:
+        start_inclusive = true;
+        end_inclusive = true;
+        start_key = new storage::Tuple(table_index->GetKeySchema(), true);
+        end_key = new storage::Tuple(table_index->GetKeySchema(), true);
+        start_key->SetValue(0, right->Evaluate(nullptr, nullptr));
+        end_key->SetValue(0, right->Evaluate(nullptr, nullptr));
+        break;
+      case EXPRESSION_TYPE_COMPARE_GT:
+        start_inclusive = false;
+        start_key = new storage::Tuple(table_index->GetKeySchema(), true);
+        start_key->SetValue(0, right->Evaluate(nullptr, nullptr));
+        break;
+      case EXPRESSION_TYPE_COMPARE_GTE:
+        start_inclusive = true;
+        start_key = new storage::Tuple(table_index->GetKeySchema(), true);
+        start_key->SetValue(0, right->Evaluate(nullptr, nullptr));
+        break;
+      case EXPRESSION_TYPE_COMPARE_LT:
+        end_inclusive = false;
+        end_key = new storage::Tuple(table_index->GetKeySchema(), true);
+        end_key->SetValue(0, right->Evaluate(nullptr, nullptr));
+        break;
+      case EXPRESSION_TYPE_COMPARE_LTE:
+        end_inclusive = false;
+        end_key = new storage::Tuple(table_index->GetKeySchema(), true);
+        end_key->SetValue(0, right->Evaluate(nullptr, nullptr));
+        break;
+      default:
+        LOG_ERROR("Cannot handle %s", left->GetName());
+        break;
+    }
+  }
   //assert(expr_state->type == T_OpExpr);
 
   /* target list */
@@ -510,8 +658,15 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexOnlyScan(
 
   /* Plan qual, not support */
   //ioss_plan_state->ss.ps.qual;
+  auto schema = target_table->GetSchema();
+  std::vector<oid_t> column_ids(schema->GetColumnCount());
+  std::iota(column_ids.begin(), column_ids.end(), 0);
+  assert(column_ids.size() > 0);
 
-  return nullptr;
+  return new planner::IndexScanNode(target_table, table_index, start_key,
+                                    end_key, start_inclusive, end_inclusive,
+                                    column_ids);
+
 }
 
 /**
