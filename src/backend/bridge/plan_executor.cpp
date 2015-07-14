@@ -167,16 +167,20 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(executor::AbstractE
  */
 bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
                                TupleDesc tuple_desc,
-                               Peloton_Status *pstatus) {
+                               Peloton_Status *pstatus,
+                               concurrency::Transaction *txn) {
 
   assert(plan);
 
   bool status;
   MemoryContext oldContext;
   List *slots = NULL;
-
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
+
+  // Start a new transaction if needed ?
+  if(txn == nullptr) {
+    txn = txn_manager.BeginTransaction();
+  }
 
   LOG_TRACE("Building the executor tree");
 
