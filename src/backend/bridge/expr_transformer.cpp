@@ -198,6 +198,39 @@ ReMapPgFunc(Oid func_id,
     case 165:
       return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_NE, lc, rc);
 
+    case 56:
+    case 64:
+    case 66:
+    case 160:
+    case 161:
+    case 1246:
+      return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_LT, lc, rc);
+
+    case 57:
+    case 73:
+    case 146:
+    case 147:
+    case 162:
+    case 163:
+      return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_GT, lc, rc);
+
+    case 74:
+    case 150:
+    case 151:
+    case 168:
+    case 169:
+    case 1692:
+      return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_GTE, lc, rc);
+
+    case 72:
+    case 148:
+    case 149:
+    case 166:
+    case 167:
+    case 1691:
+      return expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_LTE, lc, rc);
+
+
     default:
       LOG_ERROR("Unsupported PG Function ID : %u (check fmgrtab.cpp)\n", func_id);
   }
@@ -212,16 +245,15 @@ expression::AbstractExpression* ExprTransformer::TransformList(
   int length = list_length(list);
   assert(length > 0);
   LOG_INFO("Handle List of length %d", length);
-
-  expression::AbstractExpression *peloton_expr;
+  std::list<expression::AbstractExpression*> exprs; // a list of AND'ed expressions
 
   foreach(l, list)
   {
     const ExprState *expr_state = reinterpret_cast<const ExprState*>(lfirst(l));
-    peloton_expr = ExprTransformer::TransformExpr(expr_state);
+    exprs.push_back(ExprTransformer::TransformExpr(expr_state));
   }
 
-  return peloton_expr;
+  return expression::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND, exprs);
 
 }
 
