@@ -30,11 +30,17 @@ namespace bridge {
 /**
  * @brief Helper function: re-map Postgres's builtin function Oid
  * to proper expression type in Peloton
+ *
+ * @param pg_func_id  PG Function Id used to lookup function in \b fmrg_builtin[]
+ * (see Postgres source file 'fmgrtab.cpp')
+ * @param lc          Left child.
+ * @param rc          Right child.
+ * @return            Corresponding expression tree in peloton.
  */
 expression::AbstractExpression*
-ReMapPgFunc(Oid func_id,
-                expression::AbstractExpression* lc,
-                expression::AbstractExpression* rc);
+ReMapPgFunc(Oid pg_func_id,
+            expression::AbstractExpression* lc,
+            expression::AbstractExpression* rc);
 
 void ExprTransformer::PrintPostgressExprTree(const ExprState* expr_state, std::string prefix) {
   auto tag = nodeTag(expr_state->expr);
@@ -52,13 +58,8 @@ expression::AbstractExpression* ExprTransformer::TransformExpr(
   if(!expr_state)
     return nullptr;
 
-  expression::AbstractExpression* peloton_expr;
+  expression::AbstractExpression* peloton_expr = nullptr;
 
-  /*
-   * NOTICE:
-   * In Postgres, Expr and ExprState is NOT one-to-one.
-   * Be careful of the Expr tag and ExprState type.
-   */
   switch(nodeTag(expr_state->expr)){
     case T_Const:
       peloton_expr = TransformConstant(expr_state);
@@ -124,20 +125,25 @@ expression::AbstractExpression* ExprTransformer::TransformOp(
   auto func_state = reinterpret_cast<const FuncExprState*>(es);
 
   assert(op_expr->opfuncid != 0); // Hopefully it has been filled in by PG planner
-  assert(list_length(func_state->args) == 2);   // Hopefully it has two parameters
+  assert(list_length(func_state->args) <= 2);   // Hopefully it has at most two parameters
 
   expression::AbstractExpression* lc = nullptr;
   expression::AbstractExpression* rc = nullptr;
 
-  // Add children
+  // Add function arguments as children
   int i = 0;
   ListCell   *arg;
   foreach(arg, func_state->args)
   {
     ExprState  *argstate = (ExprState *) lfirst(arg);
 
-    (i == 0) ? (lc = TransformExpr(argstate))
-              :(rc = TransformExpr(argstate));
+    if(i == 0)
+      lc = TransformExpr(argstate);
+    else if(i == 1)
+      rc = TransformExpr(argstate);
+    else
+      break; // skip >2 arguments
+
     i++;
   }
 
@@ -152,11 +158,12 @@ expression::AbstractExpression* ExprTransformer::TransformVar(
 
   assert(var_expr->varattno != InvalidAttrNumber);
 
-  oid_t tuple_idx = static_cast<oid_t>(var_expr->varno);  // Need to loot more carefully at PG code to determine this.
+  oid_t tuple_idx = (var_expr->varno == OUTER_VAR ? 1 : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
   oid_t value_idx = static_cast<oid_t>(var_expr->varattno - 1); // Damnit attno is 1-index
 
   LOG_INFO("tuple_idx = %u , value_idx = %u \n", tuple_idx, value_idx);
 
+  // TupleValue expr has no children.
   return expression::TupleValueFactory(tuple_idx, value_idx);
 
 }
