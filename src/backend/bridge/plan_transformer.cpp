@@ -495,9 +495,9 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexOnlyScan(
       ->indexqual);
   /* Only support op expr */
   LOG_INFO("Index qual type : %d", expr_state->type);
-  expression::AbstractExpression *peleton_expr = ExprTransformer::TransformExpr(
+  expression::AbstractExpression *peloton_expr = ExprTransformer::TransformExpr(
       expr_state);
-  std::cout << peleton_expr << std::endl;
+  LOG_INFO("%s", peloton_expr->Debug(" ").c_str());
   //assert(expr_state->type == T_OpExpr);
 
   /* target list */
