@@ -82,6 +82,7 @@ bool UpdateExecutor::DExecute() {
         if(status == false) {
             auto& txn_manager = concurrency::TransactionManager::GetInstance();
             txn_manager.AbortTransaction(transaction_);
+            transaction_->SetStatus(ResultType::RESULT_TYPE_FAILURE);
             return false;
         }
         transaction_->RecordDelete(ItemPointer(tile_group_id, physical_tuple_id));

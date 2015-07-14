@@ -911,10 +911,7 @@ standard_ProcessUtility(Node *parsetree,
   status = peloton_create_status();
 
   // TODO: Peloton Changes
-  
-  peloton_send_ddl(status, parsetree, queryString,
-                 TopTransactionContext,
-                 CurTransactionContext);
+  peloton_send_ddl(status, parsetree, queryString);
 
   peloton_get_status(status);
   peloton_destroy_status(status);
