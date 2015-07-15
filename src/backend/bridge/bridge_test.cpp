@@ -22,25 +22,27 @@
 namespace peloton {
 namespace test {
 
+#define COLOR_RED     "\x1b[31m"
+#define COLOR_GREEN   "\x1b[32m"
+#define COLOR_YELLOW  "\x1b[33m"
+#define COLOR_BLUE    "\x1b[34m"
+#define COLOR_MAGENTA "\x1b[35m"
+#define COLOR_CYAN    "\x1b[36m"
+#define COLOR_RESET   "\x1b[0m"
+
 //===--------------------------------------------------------------------===//
 // CreateTable TEST 
 //===--------------------------------------------------------------------===//
 
 void BridgeTest::DDL_CreateTable_TEST() {
-  printf("::Start %s\n", __func__ );
 
   DDL_CreateTable_TEST_INVALID_OID();
   DDL_CreateTable_TEST_COLUMNS();
-  DDL_CreateTable_TEST_CONSTRAINTS();
+  DDL_CreateTable_TEST_COLUMN_CONSTRAINTS();
 
-  printf("::End %s\n", __func__ );
 }
 void BridgeTest::DDL_COMPREHENSIVE_TEST(){
-  printf("::Start %s\n", __func__ );
 
-  DDL_TEST_SCENARIO_1();
-
-  printf("::End %s\n", __func__ );
 }
 
 void BridgeTest::DDL_CreateTable_TEST_INVALID_OID() {
@@ -48,9 +50,12 @@ void BridgeTest::DDL_CreateTable_TEST_INVALID_OID() {
   // ColumnInfo
   std::vector<catalog::ColumnInfo> column_infos;
 
-  bool status = bridge::DDL::CreateTable( INVALID_OID, "test_table_invalid_oid", column_infos );
+  std::string table_name = "test_table_invalid_oid";
+  oid_t table_oid = INVALID_OID;
+
+  // Create a table
+  bool status = bridge::DDL::CreateTable( table_oid, table_name, column_infos );
   assert( status == false );
-  printf("%s has been finished successfully\n", __func__ );
 }
 
 void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
@@ -70,14 +75,18 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
   column_infos.push_back(*column_info3);
   column_infos.push_back(*column_info4);
 
-  bool status = bridge::DDL::CreateTable( 20000, "test_table_basic_column", column_infos );
-  assert( status );
+  std::string table_name = "test_table_basic_columns";
+  oid_t table_oid = 20001;
 
-  storage::DataTable* table = db->GetTableById(20000);
+  // Create a table
+  bool status = bridge::DDL::CreateTable( table_oid, table_name, column_infos );
+  assert ( status );
+
+  storage::DataTable* table = db->GetTableById(table_oid);
 
   // Table name and oid
-  assert( strcmp( (table->GetName()).c_str(), "test_table_basic_column") == 0 );
-  assert( table->GetId() == 20000 );
+  assert( strcmp( (table->GetName()).c_str(), table_name.c_str()) == 0 );
+  assert( table->GetId() == table_oid );
 
   // Schema
   catalog::Schema* schema = table->GetSchema();
@@ -118,10 +127,11 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
   assert( column.GetLength() == 8 );
   assert( column.GetType() == VALUE_TYPE_DOUBLE );
 
-  printf("%s has been finished successfully\n", __func__ );
 }
 
-void BridgeTest::DDL_CreateTable_TEST_CONSTRAINTS() {
+// Create a table and Column-level constraints
+// such as primary key, unique, and reference table 
+void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
 
   storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
 
@@ -158,15 +168,18 @@ void BridgeTest::DDL_CreateTable_TEST_CONSTRAINTS() {
   column_infos.push_back(*column_info3);
   column_infos.push_back(*column_info4);
 
+  std::string table_name = "test_table_scenario_1";
+  oid_t table_oid = 20003;
+
   // Create a table
-  bool status = bridge::DDL::CreateTable( 20001, "test_table_notnull_constraint", column_infos );
+  bool status = bridge::DDL::CreateTable( table_oid, table_name, column_infos );
   assert ( status );
 
-  storage::DataTable* table = db->GetTableById(20001);
+  storage::DataTable* table = db->GetTableById(table_oid);
 
   // Table name and oid
-  assert( strcmp( (table->GetName()).c_str(), "test_table_constraints") == 0 );
-  assert( table->GetId() == 20001 );
+  assert( strcmp( (table->GetName()).c_str(), table_name.c_str()) == 0 );
+  assert( table->GetId() == table_oid );
 
   // Schema
   catalog::Schema* schema = table->GetSchema();
@@ -185,7 +198,6 @@ void BridgeTest::DDL_CreateTable_TEST_CONSTRAINTS() {
   assert( constraint_infos.size() == 1 );
   ConstraintType type = constraint_infos[0].GetType();
   assert( type == CONSTRAINT_TYPE_NOTNULL );
-
 
   // The second column
   column = schema->GetColumnInfo(1);
@@ -239,17 +251,34 @@ void BridgeTest::DDL_CreateTable_TEST_CONSTRAINTS() {
   name = constraint_infos[0].GetName();
   assert( strcmp( name.c_str(), "THIS_IS_FOREIGN_CONSTRAINT") == 0 );
 
-  printf("%s has been finished successfully\n", __func__ );
 
-}
+  std::vector<std::string> key_column_names;
+  key_column_names.push_back("name");
 
-void BridgeTest::DDL_TEST_SCENARIO_1(){
+  // Create a primary key index  and add it to the table
+  bridge::IndexInfo* index_info = new bridge::IndexInfo( "THIS_IS_PRIMARY_KEY_CONSTRAINT",
+                                                         20004,
+                                                         table_name, 
+                                                         INDEX_METHOD_TYPE_BTREE_MULTIMAP,
+                                                         INDEX_TYPE_PRIMARY_KEY,
+                                                         true,
+                                                         key_column_names);
+
+  status = bridge::DDL::CreateIndex( *index_info );
+  assert( status );
+
+  //index::Index *index = table->GetIndex( 20004 );
+
+  // CreateReferecen and add it to the table
+
+
 }
 
 void BridgeTest::RunTests() {
+  printf( COLOR_GREEN "::Start %s" COLOR_RESET "\n", __func__ );
   DDL_CreateTable_TEST();
-
   DDL_COMPREHENSIVE_TEST();
+  printf( COLOR_GREEN "::End %s" COLOR_RESET "\n", __func__ );
 }
 
 void BridgeTest::TestCatalog() {
