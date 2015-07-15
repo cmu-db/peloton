@@ -98,9 +98,16 @@ bool UpdateExecutor::DExecute() {
         }
 
         // and (B.2) update with expressions
+        // WARNING: updated values should be calculated based on OLD attribute values
+        // So we should do it in two steps.
+        std::vector<peloton::Value> updated_expr_values;
         for(auto entry : updated_col_exprs) {
-          Value val = entry.second->Evaluate(tuple, nullptr);
-          tuple->SetValue(entry.first, val);
+          updated_expr_values.push_back(entry.second->Evaluate(tuple, nullptr));
+        }
+
+        for(size_t i = 0; i < updated_col_exprs.size(); i++){
+          tuple->SetValue(updated_col_exprs[i].first,
+                          updated_expr_values[i]);
         }
 
         // and finally insert into the table in update mode
