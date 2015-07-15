@@ -83,21 +83,15 @@ class ReferenceTableInfo {
 // Constraint Class
 //===--------------------------------------------------------------------===//
 
-class Constraint : public CatalogObject {
+class Constraint {
 
  public:
 
-  Constraint(oid_t constraint_oid,
-             std::string constraint_name,
-             CatalogObject *parent,
-             CatalogObject *root,
-             ConstraintType type,
+  Constraint(ConstraintType type,
+             std::string constraint_name = "",
              Node* raw_expr = nullptr)
- :  CatalogObject(constraint_oid,
-                  constraint_name,
-                  parent,
-                  root),
-                  constraint_type(type) {
+ : constraint_type(type),
+   constraint_name(constraint_name) {
 
     // Copy the raw expression
     raw_expr = (Node*) copyObject((void*) raw_expr );
@@ -122,6 +116,10 @@ class Constraint : public CatalogObject {
     unique_index_list_offset = position;
   }
 
+  std::string GetName() const {
+    return constraint_name;
+  }
+
   // Get a string representation of this constraint
   friend std::ostream& operator<<(std::ostream& os, const Constraint& constraint);
 
@@ -142,6 +140,8 @@ class Constraint : public CatalogObject {
   oid_t reference_table_list_offset = INVALID_OID;
 
   oid_t unique_index_list_offset = INVALID_OID;
+
+  std::string constraint_name;
 
 };
 

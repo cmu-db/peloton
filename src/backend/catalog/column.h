@@ -20,28 +20,24 @@ namespace catalog {
 // Column
 //===--------------------------------------------------------------------===//
 
-class Column : public CatalogObject {
+class Column {
   friend class Constraint;
 
  public:
 
-  Column(oid_t column_oid,
-         std::string column_name,
-         CatalogObject *parent,
-         CatalogObject *root,
-         ValueType value_type,
-         oid_t column_offset,
+  Column(ValueType value_type,
          oid_t column_length,
-         bool is_inlined)
- : CatalogObject(column_oid,
-                 column_name,
-                 parent,
-                 root),
-                 value_type(value_type),
-                 column_offset(column_offset),
-                 is_inlined(is_inlined){
+         std::string column_name,
+         bool is_inlined = false,
+         oid_t column_offset = INVALID_OID)
+ :
+   column_type(value_type),
+   column_name(column_name),
+   is_inlined(is_inlined),
+   column_offset(column_offset){
 
-    // Set the appropriate column length
+    SetInlined();
+
     SetLength(column_length);
 
   }
@@ -50,8 +46,18 @@ class Column : public CatalogObject {
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
+  // Set inlined
+  void SetInlined();
+
+  // Set the appropriate column length
+  void SetLength(oid_t column_length);
+
   oid_t GetOffset() const {
     return column_offset;
+  }
+
+  std::string GetName() const {
+    return column_name;
   }
 
   oid_t GetLength() const {
@@ -70,16 +76,25 @@ class Column : public CatalogObject {
   }
 
   ValueType GetType() const {
-    return value_type;
+    return column_type;
   }
 
   bool IsInlined() const {
     return is_inlined;
   }
 
+  // Add a constraint to the column
+  void AddConstraint(const catalog::Constraint& constraint){
+    constraints.push_back(constraint);
+  }
+
+  const std::vector<Constraint>& GetConstraints() const{
+    return constraints;
+  }
+
   // Compare two column objects
   bool operator== (const Column &other) const {
-    if ( other.value_type != value_type || other.is_inlined != is_inlined){
+    if ( other.column_type != column_type || other.is_inlined != is_inlined){
       return false;
     }
     return true;
@@ -92,19 +107,12 @@ class Column : public CatalogObject {
   // Get a string representation for debugging
   friend std::ostream& operator<< (std::ostream& os, const Column& column);
 
- private:
-
-  void SetLength(oid_t column_length);
-
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
 
   // value type of column
-  ValueType value_type;
-
-  // offset of column in tuple
-  oid_t column_offset;
+  ValueType column_type;
 
   // if the column is not inlined, this is set to pointer size
   // else, it is set to length of the fixed length column
@@ -114,8 +122,17 @@ class Column : public CatalogObject {
   // else, it is set to length of the variable length column
   oid_t variable_length = INVALID_OID;
 
+  // name of the column
+  std::string column_name;
+
   // is the column inlined ?
-  bool is_inlined;
+  bool is_inlined = false;
+
+  // offset of column in tuple
+  oid_t column_offset = INVALID_OID;
+
+  // Constraints
+  std::vector<Constraint> constraints;
 
 };
 
