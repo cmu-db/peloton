@@ -77,6 +77,7 @@ index::Index* DataTable::GetIndexByOid(oid_t index_oid ) {
 void DataTable::AddReferenceTable( catalog::ReferenceTableInfo *reference_table_info){
 
   std::lock_guard<std::mutex> lock( table_reference_table_mutex );
+
   //FIXME? TODO?
   catalog::ReferenceTableInfo* ref = new catalog::ReferenceTableInfo( *reference_table_info );
   reference_table_infos.push_back( ref );
