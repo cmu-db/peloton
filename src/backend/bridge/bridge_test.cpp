@@ -54,6 +54,8 @@ void BridgeTest::DDL_CreateTable_TEST_INVALID_OID() {
   // Create a table
   bool status = bridge::DDL::CreateTable( table_oid, table_name, column_infos );
   assert( status == false );
+  printf( COLOR_GREEN ":::::: %s DONE" COLOR_RESET "\n", __func__ );
+
 }
 
 void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
@@ -121,6 +123,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
   assert( column.GetLength() == 8 );
   assert( column.GetType() == VALUE_TYPE_DOUBLE );
 
+  printf( COLOR_GREEN ":::::: %s DONE" COLOR_RESET "\n", __func__ );
 }
 
 // Create a table and Column-level constraints
@@ -320,12 +323,13 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
   assert ( index->GetIndexType() == INDEX_TYPE_UNIQUE);
   assert ( index->HasUniqueKeys()  == true);
 
+  printf( COLOR_GREEN ":::::: %s DONE" COLOR_RESET "\n", __func__ );
 }
 
 void BridgeTest::RunTests() {
-  printf( COLOR_GREEN "::Start %s" COLOR_RESET "\n", __func__ );
+  printf( COLOR_BLUE "::::::::::::::::::::::::::::::::::::::::  TEST CASES START ::::::::::::::::::::::::::::::::::::::::" COLOR_RESET "\n" );
   DDL_CreateTable_TEST();
-  printf( COLOR_GREEN "::End %s" COLOR_RESET "\n", __func__ );
+  printf( COLOR_BLUE "::::::::::::::::::::::::::::::::::::::::  TEST CASES END ::::::::::::::::::::::::::::::::::::::::::::" COLOR_RESET "\n");
 }
 
 void BridgeTest::TestCatalog() {
