@@ -29,13 +29,10 @@ class BridgeTest {
 
   static void RunTests();
 
-  static void DDL_COMPREHENSIVE_TEST();
-  static void DDL_TEST_SCENARIO_1();
-
   static void DDL_CreateTable_TEST();
   static void DDL_CreateTable_TEST_INVALID_OID();
   static void DDL_CreateTable_TEST_COLUMNS();
-  static void DDL_CreateTable_TEST_CONSTRAINTS();
+  static void DDL_CreateTable_TEST_COLUMN_CONSTRAINTS();
 
 
 

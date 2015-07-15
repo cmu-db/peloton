@@ -283,6 +283,8 @@ void GetDBCatalog(Oid database_oid){
   pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
   scan = heap_beginscan_catalog(pg_class_rel, 0, NULL);
 
+ peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+
   while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
     Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
 
@@ -290,12 +292,11 @@ void GetDBCatalog(Oid database_oid){
 
       if( pgclass->relkind == 'r' ){
         printf("relname %s  \n",NameStr(pgclass->relname));
-        peloton::oid_t database_oid = GetCurrentDatabaseOid();
         peloton::oid_t table_oid = GetRelationOid( NameStr(pgclass->relname));
         assert(table_oid);
 
         // Get the table location from manager
-        auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+        auto table =db->GetTableById(  table_oid );
         peloton::storage::DataTable* data_table = (peloton::storage::DataTable*) table;
         auto tuple_schema = data_table->GetSchema();
         std::cout << *tuple_schema << std::endl;
@@ -345,6 +346,7 @@ void GetTableCatalog(Oid database_oid, Oid table_oid ){
   Relation pg_class_rel;
   HeapScanDesc scan;
   HeapTuple tuple;
+  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
   char* relation_name = get_rel_name(table_oid);
 
   // Scan pg class table
@@ -358,11 +360,10 @@ void GetTableCatalog(Oid database_oid, Oid table_oid ){
 
       if( pgclass->relkind == 'r' ){
         printf("relname %s  \n",NameStr(pgclass->relname));
-        peloton::oid_t database_oid = GetCurrentDatabaseOid();
         peloton::oid_t table_oid = GetRelationOid( NameStr(pgclass->relname));
 
         // Get the table location from manager
-        auto table = peloton::catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+        auto table =db->GetTableById(  table_oid);
         peloton::storage::DataTable* data_table = (peloton::storage::DataTable*) table;
         auto tuple_schema = data_table->GetSchema();
         std::cout << *tuple_schema << std::endl;
@@ -756,9 +757,10 @@ bool BootstrapPeloton(void){
         Oid reference_table_oid = pg_constraint->confrelid;
         assert( reference_table_oid );
 
-        peloton::storage::DataTable* current_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, current_table_oid);
+        peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+        peloton::storage::DataTable* current_table = db->GetTableById( current_table_oid);
         assert( current_table );
-        peloton::storage::DataTable* reference_table = (peloton::storage::DataTable*) peloton::catalog::Manager::GetInstance().GetLocation(database_oid, reference_table_oid);
+        peloton::storage::DataTable* reference_table = db->GetTableById(  reference_table_oid);
         assert( reference_table );
 
         // TODO :: Find better way..

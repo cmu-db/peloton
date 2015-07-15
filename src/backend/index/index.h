@@ -183,6 +183,10 @@ class Index
     return metadata->GetKeySchema();
   }
 
+  IndexMethodType GetIndexMethodType() {
+    return metadata->GetIndexMethodType();
+  }
+
   IndexType GetIndexType() const {
     return metadata->GetIndexType();
   }
