@@ -21,7 +21,7 @@ namespace index {
 
 Index::Index(IndexMetadata *metadata)
 : metadata(metadata),
-  identifier(metadata->identifier),
+  index_name(metadata->identifier),
   key_schema(metadata->key_schema),
   tuple_schema(metadata->tuple_schema),
   unique_keys(metadata->unique_keys) {
@@ -52,7 +52,7 @@ std::ostream& operator<<(std::ostream& os, const Index& index) {
 
 void Index::GetInfo() const {
 
-  std::cout << identifier << ",";
+  std::cout << index_name << ",";
   std::cout << GetTypeName() << ",";
   std::cout << lookup_counter << ",";
   std::cout << insert_counter << ",";
