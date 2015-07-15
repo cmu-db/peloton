@@ -65,18 +65,18 @@ public:
         return table_oid;
     }
 
-    index::Index* GetIndexByOid(oid_t index_oid );
     
     // Add an index to the table
     bool AddIndex( index::Index *index , oid_t index_oid);
 
     void AddReferenceTable( catalog::ReferenceTableInfo *referenceTableInfo );
 
-    inline index::Index *GetIndex(oid_t index_id) const {
-        assert(index_id < indexes.size());
-        return indexes[index_id];
+    inline index::Index *GetIndex(oid_t index_offset) const {
+        assert(index_offset < indexes.size());
+        return indexes[index_offset];
     }
 
+    index::Index* GetIndexByOid(oid_t index_oid );
 
     inline bool ishasPrimaryKey(){
       if( primary_key_count > 0 )
