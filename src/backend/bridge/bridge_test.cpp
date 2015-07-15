@@ -50,15 +50,15 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
   // ColumnInfo
   std::vector<catalog::Column> column_infos;
 
-  catalog::Column *column_info1 = new catalog::Column( VALUE_TYPE_INTEGER, 4, "id"); 
-  catalog::Column *column_info2 = new catalog::Column( VALUE_TYPE_VARCHAR, 68, "name"); 
-  catalog::Column *column_info3 = new catalog::Column( VALUE_TYPE_TIMESTAMP, 8, "time"); 
-  catalog::Column *column_info4 = new catalog::Column( VALUE_TYPE_DOUBLE, 8, "salary"); 
+  catalog::Column column_info1( VALUE_TYPE_INTEGER, 4, "id");
+  catalog::Column column_info2( VALUE_TYPE_VARCHAR, 68, "name");
+  catalog::Column column_info3( VALUE_TYPE_TIMESTAMP, 8, "time");
+  catalog::Column column_info4( VALUE_TYPE_DOUBLE, 8, "salary");
 
-  column_infos.push_back(*column_info1);
-  column_infos.push_back(*column_info2);
-  column_infos.push_back(*column_info3);
-  column_infos.push_back(*column_info4);
+  column_infos.push_back(column_info1);
+  column_infos.push_back(column_info2);
+  column_infos.push_back(column_info3);
+  column_infos.push_back(column_info4);
 
   bool status = bridge::DDL::CreateTable( 20000, "test_table_basic_column", column_infos );
   assert( status );
@@ -115,38 +115,35 @@ void BridgeTest::DDL_CreateTable_TEST_CONSTRAINTS() {
 
   storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
 
-  // constraint
-  std::vector<catalog::Constraint> constraint_infos;
+  // constraints
+  std::vector<catalog::Constraint> constraints;
 
-  catalog::Constraint *notnull_constraint = new catalog::Constraint( CONSTRAINT_TYPE_NOTNULL );
-  catalog::Constraint *primary_key_constraint = new catalog::Constraint( CONSTRAINT_TYPE_PRIMARY, "THIS_IS_PRIMARY_KEY_CONSTRAINT" );
-  catalog::Constraint *unique_constraint = new catalog::Constraint( CONSTRAINT_TYPE_UNIQUE, "THIS_IS_UNIQUE_CONSTRAINT" );
-  catalog::Constraint *foreign_constraint = new catalog::Constraint( CONSTRAINT_TYPE_FOREIGN, "THIS_IS_FOREIGN_CONSTRAINT" );
+  // constraint
+  catalog::Constraint notnull_constraint( CONSTRAINT_TYPE_NOTNULL );
+  catalog::Constraint primary_key_constraint( CONSTRAINT_TYPE_PRIMARY, "THIS_IS_PRIMARY_KEY_CONSTRAINT" );
+  catalog::Constraint unique_constraint( CONSTRAINT_TYPE_UNIQUE, "THIS_IS_UNIQUE_CONSTRAINT" );
+  catalog::Constraint foreign_constraint( CONSTRAINT_TYPE_FOREIGN, "THIS_IS_FOREIGN_CONSTRAINT" );
 
 
   // ColumnInfo
   std::vector<catalog::Column> column_infos;
 
-  constraint_infos.push_back( *notnull_constraint );
-  catalog::Column *column_info1 = new catalog::Column( VALUE_TYPE_INTEGER, 4, "id", constraint_infos); 
-  constraint_infos.clear();
+  catalog::Column column_info1( VALUE_TYPE_INTEGER, 4, "id");
+  column_info1.AddConstraint(notnull_constraint);
 
-  constraint_infos.push_back( *primary_key_constraint );
-  catalog::Column *column_info2 = new catalog::Column( VALUE_TYPE_VARCHAR, 68, "name", constraint_infos); 
-  constraint_infos.clear();
+  catalog::Column column_info2( VALUE_TYPE_VARCHAR, 68, "name");
+  column_info2.AddConstraint(primary_key_constraint);
 
-  constraint_infos.push_back( *unique_constraint );
-  catalog::Column *column_info3 = new catalog::Column( VALUE_TYPE_TIMESTAMP, 8, "time", constraint_infos); 
-  constraint_infos.clear();
+  catalog::Column column_info3( VALUE_TYPE_TIMESTAMP, 8, "time");
+  column_info3.AddConstraint(unique_constraint);
 
-  constraint_infos.push_back( *foreign_constraint );
-  catalog::Column *column_info4 = new catalog::Column( VALUE_TYPE_DOUBLE, 8, "salary", constraint_infos); 
-  constraint_infos.clear();
+  catalog::Column column_info4( VALUE_TYPE_DOUBLE, 8, "salary");
+  column_info4.AddConstraint(foreign_constraint);
 
-  column_infos.push_back(*column_info1);
-  column_infos.push_back(*column_info2);
-  column_infos.push_back(*column_info3);
-  column_infos.push_back(*column_info4);
+  column_infos.push_back(column_info1);
+  column_infos.push_back(column_info2);
+  column_infos.push_back(column_info3);
+  column_infos.push_back(column_info4);
 
   // Create a table
   bool status = bridge::DDL::CreateTable( 20001, "test_table_notnull_constraint", column_infos );
@@ -170,10 +167,10 @@ void BridgeTest::DDL_CreateTable_TEST_CONSTRAINTS() {
   assert( column.GetLength() == 4 );
   assert( column.GetType() == VALUE_TYPE_INTEGER );
 
-  constraint_infos.clear();
-  constraint_infos = column.GetConstraints();
-  assert( constraint_infos.size() == 1 );
-  ConstraintType type = constraint_infos[0].GetType();
+  constraints.clear();
+  constraints = column.GetConstraints();
+  assert( constraints.size() == 1 );
+  ConstraintType type = constraints[0].GetType();
   assert( type == CONSTRAINT_TYPE_NOTNULL );
 
 
@@ -186,12 +183,12 @@ void BridgeTest::DDL_CreateTable_TEST_CONSTRAINTS() {
   assert( column.GetLength() == 68 );
   assert( column.GetType() == VALUE_TYPE_VARCHAR );
 
-  constraint_infos.clear();
-  constraint_infos = column.GetConstraints();
-  assert( constraint_infos.size() == 1 );
-  type = constraint_infos[0].GetType();
+  constraints.clear();
+  constraints = column.GetConstraints();
+  assert( constraints.size() == 1 );
+  type = constraints[0].GetType();
   assert( type == CONSTRAINT_TYPE_PRIMARY );
-  std::string name = constraint_infos[0].GetName();
+  std::string name = constraints[0].GetName();
   assert( strcmp( name.c_str(), "THIS_IS_PRIMARY_KEY_CONSTRAINT") == 0 );
 
   // The third column
@@ -203,12 +200,12 @@ void BridgeTest::DDL_CreateTable_TEST_CONSTRAINTS() {
   assert( column.GetLength() == 8 );
   assert( column.GetType() == VALUE_TYPE_TIMESTAMP );
 
-  constraint_infos.clear();
-  constraint_infos = column.GetConstraints();
-  assert( constraint_infos.size() == 1 );
-  type = constraint_infos[0].GetType();
+  constraints.clear();
+  constraints = column.GetConstraints();
+  assert( constraints.size() == 1 );
+  type = constraints[0].GetType();
   assert( type == CONSTRAINT_TYPE_UNIQUE );
-  name = constraint_infos[0].GetName();
+  name = constraints[0].GetName();
   assert( strcmp( name.c_str(), "THIS_IS_UNIQUE_CONSTRAINT") == 0 );
 
 
@@ -221,12 +218,12 @@ void BridgeTest::DDL_CreateTable_TEST_CONSTRAINTS() {
   assert( column.GetLength() == 8 );
   assert( column.GetType() == VALUE_TYPE_DOUBLE );
 
-  constraint_infos.clear();
-  constraint_infos = column.GetConstraints();
-  assert( constraint_infos.size() == 1 );
-  type = constraint_infos[0].GetType();
+  constraints.clear();
+  constraints = column.GetConstraints();
+  assert( constraints.size() == 1 );
+  type = constraints[0].GetType();
   assert( type == CONSTRAINT_TYPE_FOREIGN );
-  name = constraint_infos[0].GetName();
+  name = constraints[0].GetName();
   assert( strcmp( name.c_str(), "THIS_IS_FOREIGN_CONSTRAINT") == 0 );
 
   printf("%s has been finished successfully\n", __func__ );

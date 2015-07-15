@@ -146,6 +146,9 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   std::cout << "Value : " << logical_tile->GetValue(1, 2) << "\n";
   std::cout << "Value : " << logical_tile->GetValue(1, 3) << "\n";
 
+  tuple1.FreeUninlinedData();
+  tuple2.FreeUninlinedData();
+
 }
 
 } // End test namespace

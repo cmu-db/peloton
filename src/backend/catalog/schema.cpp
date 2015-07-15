@@ -10,19 +10,17 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/catalog/schema.h"
-
 #include <cassert>
-
 #include <algorithm>
 #include <sstream>
+
+#include "backend/catalog/schema.h"
 
 namespace peloton {
 namespace catalog {
 
-// Helper function for creating TupleSchema
-void Schema::CreateTupleSchema(const std::vector<oid_t> column_oids,
-                               const std::vector<ValueType> column_types,
+/// Helper function for creating TupleSchema
+void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
                                const std::vector<oid_t> column_lengths,
                                const std::vector<std::string> column_names,
                                const std::vector<bool> is_inlined) {
@@ -31,21 +29,17 @@ void Schema::CreateTupleSchema(const std::vector<oid_t> column_oids,
   oid_t num_columns = column_types.size();
   oid_t column_offset = 0;
 
-  for(oid_t column_itr = 0 ; column_itr < num_columns ; column_itr++)	{
+  for(oid_t column_itr = 0 ; column_itr < num_columns ; column_itr++) {
 
-    Column *column = new Column(column_oids[column_itr],
-                                column_names[column_itr],
-                                this,
-                                GetRoot(),
-                                column_types[column_itr],
-                                column_offset,
-                                column_lengths[column_itr],
-                                is_inlined[column_itr]);
+    Column column(column_types[column_itr],
+                  column_lengths[column_itr],
+                  column_names[column_itr],
+                  is_inlined[column_itr],
+                  column_offset);
 
-    column_offset += column->GetFixedLength();
+    column_offset += column.fixed_length;
 
-    // Add column as child
-    CreateChild(static_cast<CatalogObject*>(column));
+    columns.push_back(column);
 
     if(is_inlined[column_itr] == false){
       tup_is_inlined = false;
@@ -56,51 +50,45 @@ void Schema::CreateTupleSchema(const std::vector<oid_t> column_oids,
   length = column_offset;
   tuple_is_inlined = tup_is_inlined;
 
-  column_count = num_columns;
+  column_count = columns.size();
   uninlined_column_count = uninlined_columns.size();
 }
 
-// Construct schema from vector of ColumnInfo
-Schema::Schema(oid_t schema_oid,
-               std::string schema_name,
-               CatalogObject *parent,
-               CatalogObject *root,
-               const std::vector<Column> columns)
-: CatalogObject(schema_oid,
-                schema_name,
-                parent,
-                root),
-                length(0),
-                tuple_is_inlined(false) {
+/// Construct schema from vector of Column
+Schema::Schema(const std::vector<Column> columns)
+: length(0),
+  tuple_is_inlined(false) {
   oid_t column_count = columns.size();
 
-  std::vector<oid_t> column_oids;
   std::vector<ValueType> column_types;
   std::vector<oid_t> column_lengths;
   std::vector<std::string> column_names;
   std::vector<bool> is_inlined;
 
-  // Set up arguments for helper function
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-    column_oids.push_back(columns[column_itr].GetOid());
-    column_types.push_back(columns[column_itr].GetType());
+    column_types.push_back(columns[column_itr].column_type);
 
     if(columns[column_itr].is_inlined)
       column_lengths.push_back(columns[column_itr].fixed_length);
     else
       column_lengths.push_back(columns[column_itr].variable_length);
 
-    column_names.push_back(columns[column_itr].GetName());
+    column_names.push_back(columns[column_itr].column_name);
     is_inlined.push_back(columns[column_itr].is_inlined);
   }
 
-  // Invoke helper function
-  CreateTupleSchema(column_oids, column_types, column_lengths,
-                    column_names, is_inlined);
+  CreateTupleSchema(column_types, column_lengths, column_names, is_inlined);
+
+  // Add constraints
+  for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
+    for(auto constraint : columns[column_itr].constraints)
+      AddConstraint(column_itr, constraint);
+  }
+
 }
 
-// Copy schema
-Schema* Schema::CopySchema(const Schema	*schema) {
+/// Copy schema
+Schema* Schema::CopySchema(const Schema *schema) {
   oid_t column_count = schema->GetColumnCount();
   std::vector<oid_t> set;
 
@@ -110,7 +98,7 @@ Schema* Schema::CopySchema(const Schema	*schema) {
   return CopySchema(schema, set);
 }
 
-// Copy subset of columns in the given schema
+/// Copy subset of columns in the given schema
 Schema* Schema::CopySchema(const Schema *schema,
                            const std::vector<oid_t>& set){
   oid_t column_count = schema->GetColumnCount();
@@ -119,7 +107,7 @@ Schema* Schema::CopySchema(const Schema *schema,
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     // If column exists in set
     if(std::find(set.begin(), set.end(), column_itr) != set.end()) {
-      columns.push_back(schema->GetColumn(column_itr));
+      columns.push_back(schema->columns[column_itr]);
     }
   }
 
@@ -127,13 +115,13 @@ Schema* Schema::CopySchema(const Schema *schema,
   return ret_schema;
 }
 
-// Append two schema objects
+/// Append two schema objects
 Schema* Schema::AppendSchema(Schema *first, Schema *second){
 
   return AppendSchemaPtrList({first, second});
 }
 
-// Append subset of columns in the two given schemas
+/// Append subset of columns in the two given schemas
 Schema* Schema::AppendSchema(
     Schema *first,
     std::vector<oid_t>& first_set,
@@ -144,7 +132,7 @@ Schema* Schema::AppendSchema(
   return AppendSchemaPtrList(schema_list, subsets);
 }
 
-// Append given schemas.
+/// Append given schemas.
 Schema *Schema::AppendSchemaList(std::vector<Schema> &schema_list) {
   // All we do here is convert vector<Schema> to vector<Schema *>.
   // This is a convenience function.
@@ -155,7 +143,7 @@ Schema *Schema::AppendSchemaList(std::vector<Schema> &schema_list) {
   return AppendSchemaPtrList(schema_ptr_list);
 }
 
-// Append given schemas.
+/// Append given schemas.
 Schema *Schema::AppendSchemaPtrList(const std::vector<Schema *> &schema_list) {
   std::vector<std::vector<oid_t> > subsets;
 
@@ -171,7 +159,7 @@ Schema *Schema::AppendSchemaPtrList(const std::vector<Schema *> &schema_list) {
   return AppendSchemaPtrList(schema_list, subsets);
 }
 
-// Append subsets of columns in the given schemas.
+/// Append subsets of columns in the given schemas.
 Schema *Schema::AppendSchemaPtrList(
     const std::vector<Schema *> &schema_list,
     const std::vector<std::vector<oid_t> > &subsets) {
@@ -186,7 +174,7 @@ Schema *Schema::AppendSchemaPtrList(
     for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
       // If column exists in set.
       if(std::find(subset.begin(), subset.end(), column_itr) != subset.end()) {
-        columns.push_back(schema->GetColumn(column_itr));
+        columns.push_back(schema->columns[column_itr]);
       }
     }
   }
@@ -196,7 +184,7 @@ Schema *Schema::AppendSchemaPtrList(
   return ret_schema;
 }
 
-// Get a string representation of this schema for debugging
+/// Get a string representation of this schema for debugging
 std::ostream& operator<< (std::ostream& os, const Schema& schema){
   os << "\tSchema :: " <<
       " column_count = " << schema.column_count <<
@@ -205,16 +193,17 @@ std::ostream& operator<< (std::ostream& os, const Schema& schema){
       " uninlined_column_count = " << schema.uninlined_column_count << std::endl;
 
   for (oid_t column_itr = 0; column_itr < schema.column_count; column_itr++) {
-    os << "\t Column " << column_itr << " :: " << schema.GetColumn(column_itr);
+    os << "\t Column " << column_itr << " :: " << schema.columns[column_itr];
   }
 
   return os;
 }
 
-// Compare two schemas
+/// Compare two schemas
 bool Schema::operator== (const Schema &other) const {
 
   if (other.GetColumnCount() != GetColumnCount() ||
+      other.GetUninlinedColumnCount() != GetUninlinedColumnCount() ||
       other.IsInlined() != IsInlined()) {
     return false;
   }

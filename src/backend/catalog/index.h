@@ -20,6 +20,11 @@
 #include "backend/catalog/catalog_object.h"
 
 namespace peloton {
+
+namespace index{
+class Index;
+}
+
 namespace catalog {
 
 class Column;
@@ -37,9 +42,9 @@ class Index : public CatalogObject {
         CatalogObject *parent,
         CatalogObject *root)
  : CatalogObject(index_oid,
-                 index_name,
                  parent,
-                 root) {
+                 root),
+                 index_name(index_name){
   }
 
   //===--------------------------------------------------------------------===//
@@ -54,6 +59,10 @@ class Index : public CatalogObject {
     return physical_index;
   }
 
+  std::string GetName() const {
+    return index_name;
+  }
+
   // Get a string representation of this index
   friend std::ostream& operator<<(std::ostream& os, const Index& index);
 
@@ -65,6 +74,8 @@ class Index : public CatalogObject {
 
   // underlying physical index
   index::Index* physical_index = nullptr;
+
+  std::string index_name;
 
 };
 

@@ -10,6 +10,9 @@ expression_test_SOURCES = expression/expression_test.cpp
 
 expression_test_LDADD = \
 						$(obj_DIR)/catalog/libpeloton_la-schema.lo \
+						$(obj_DIR)/catalog/libpeloton_la-catalog_object.lo \
+						$(obj_DIR)/catalog/libpeloton_la-column.lo \
+						$(obj_DIR)/catalog/libpeloton_la-constraint.lo \
 						$(obj_DIR)/common/libpeloton_la-types.lo \
 						$(obj_DIR)/common/libpeloton_la-value.lo \
 						$(obj_DIR)/common/libpeloton_la-varlen.lo \

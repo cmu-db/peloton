@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "backend/catalog/catalog_object.h"
-#include "backend/catalog/table.h"
-
 #include <iostream>
 #include <mutex>
+
+#include "backend/catalog/catalog_object.h"
+#include "backend/catalog/table.h"
 
 namespace peloton {
 namespace catalog {
@@ -32,14 +32,35 @@ class Database : public CatalogObject {
            CatalogObject *parent,
            CatalogObject *root)
  : CatalogObject(database_oid,
-                 database_name,
                  parent,
-                 root) {
+                 root),
+                 database_name(database_name){
+  }
+
+  std::string GetName() const {
+    return database_name;
+  }
+
+  void Lock() {
+    database_mutex.lock();
+  }
+
+  void Unlock() {
+    database_mutex.unlock();
   }
 
   // Get a string representation of this database
   friend std::ostream& operator<<(std::ostream& os, const Database& database);
 
+ private:
+
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
+
+  std::string database_name;
+
+  std::mutex database_mutex;
 };
 
 } // End catalog namespace

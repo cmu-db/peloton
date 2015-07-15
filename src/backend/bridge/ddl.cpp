@@ -172,12 +172,12 @@ bool DDL::CreateIndex( IndexInfo index_info ){
         // NOTE :: Since pg_attribute doesn't have any information about primary key and unique key,
         //         I try to store these information when we create an unique and primary key index
         if( index_type == INDEX_TYPE_PRIMARY_KEY ){ 
-          catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_PRIMARY, index_name );
-          tuple_schema->AddConstraintByColumnId( tuple_schema_column_itr, constraint); 
+          catalog::Constraint constraint( CONSTRAINT_TYPE_PRIMARY, index_name );
+          tuple_schema->AddConstraint( tuple_schema_column_itr, constraint);
         }else if( index_type == INDEX_TYPE_UNIQUE ){ 
-          catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_UNIQUE, index_name );
-          constraint->SetUniqueIndexPosition( data_table->GetUniqueIndexCount() );
-          tuple_schema->AddConstraintByColumnId( tuple_schema_column_itr, constraint);
+          catalog::Constraint constraint( CONSTRAINT_TYPE_UNIQUE, index_name );
+          constraint.SetUniqueIndexPosition( data_table->GetUniqueIndexCount() );
+          tuple_schema->AddConstraint( tuple_schema_column_itr, constraint);
         }
 
       }
@@ -342,17 +342,17 @@ void DDL::ProcessUtility(Node *parsetree,
           //===--------------------------------------------------------------------===//
           if( schema != NULL ){
             bridge::DDL::ParsingCreateStmt( Cstmt,
-                                                     column_infos,
-                                                     reference_table_infos );
+                                            column_infos,
+                                            reference_table_infos );
 
             status = bridge::DDL::CreateTable( relation_oid,
-                                                        relation_name, 
-                                                        column_infos );
+                                               relation_name,
+                                               column_infos );
           } else {
             // SPECIAL CASE : CREATE TABLE WITHOUT COLUMN INFO
             status = bridge::DDL::CreateTable( relation_oid,
-                                                        relation_name, 
-                                                        column_infos );
+                                               relation_name,
+                                               column_infos );
           }
 
           fprintf(stderr, "DDL_CreateTable(%s) :: Oid : %d Status : %d \n", relation_name, relation_oid, status);
@@ -387,7 +387,7 @@ void DDL::ProcessUtility(Node *parsetree,
           // Set Reference Tables
           //===--------------------------------------------------------------------===//
           status = bridge::DDL::SetReferenceTables( reference_table_infos,
-                                                             relation_oid );
+                                                    relation_oid );
           if( status == false ){
             LOG_WARN("Failed to set reference tables");
           } 
@@ -624,8 +624,8 @@ void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
     std::vector<catalog::Constraint> column_constraints;
 
     if( coldef->raw_default != NULL){
-      catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_DEFAULT, "", coldef->raw_default );
-      column_constraints.push_back(*constraint);
+      catalog::Constraint constraint(CONSTRAINT_TYPE_DEFAULT, "", coldef->raw_default);
+      column_constraints.push_back(constraint);
     };
 
     if( coldef->constraints != NULL){
@@ -717,13 +717,13 @@ void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
       }
     }// end of parsing constraint 
 
-    catalog::Column *column_info = new catalog::Column( column_valueType, 
-                                                        column_length,
-                                                        column_name,
-                                                        column_constraints);
+    catalog::Column column_info( column_valueType,
+                                 column_length,
+                                 column_name,
+                                 false);
 
     // Insert column_info into ColumnInfos
-    column_infos.push_back(*column_info);
+    column_infos.push_back(column_info);
   }// end of parsing column list
 }
 

@@ -14,10 +14,8 @@
 
 #include <vector>
 
-#include "backend/common/types.h"
+#include "backend/catalog/catalog_object.h"
 #include "backend/catalog/column.h"
-
-#include "nodes/nodes.h"
 
 namespace peloton {
 namespace catalog {
@@ -26,20 +24,22 @@ namespace catalog {
 // Schema
 //===--------------------------------------------------------------------===//
 
-class Schema : public CatalogObject 	{
+class Schema : public CatalogObject  {
 
  public:
-
-  // Construct schema from vector of ColumnInfo
-  Schema(oid_t schema_oid,
-         std::string schema_name,
-         CatalogObject *parent,
-         CatalogObject *root,
-         const std::vector<Column> columns);
 
   //===--------------------------------------------------------------------===//
   // Static factory methods to construct schema objects
   //===--------------------------------------------------------------------===//
+
+  // Construct schema
+  void CreateTupleSchema(const std::vector<ValueType> column_types,
+                         const std::vector<oid_t> column_lengths,
+                         const std::vector<std::string> column_names,
+                         const std::vector<bool> is_inlined);
+
+  // Construct schema from vector of Column
+  Schema(const std::vector<Column> columns);
 
   // Copy schema
   static Schema *CopySchema(const Schema *schema);
@@ -75,57 +75,53 @@ class Schema : public CatalogObject 	{
   bool operator!= (const Schema &other) const;
 
   //===--------------------------------------------------------------------===//
-  // ACCESSORS
+  // Schema accessors
   //===--------------------------------------------------------------------===//
 
-  size_t GetOffset(const oid_t column_id) const {
-    Column *column = GetChild(column_id);
-    return column->GetOffset();
+  inline size_t GetOffset(const oid_t column_id) const {
+    return columns[column_id].column_offset;
   }
 
-  ValueType GetType(const oid_t column_id) const {
-    Column *column = GetChild(column_id);
-    return column->GetType();
+  inline ValueType GetType(const oid_t column_id) const {
+    return columns[column_id].column_type;
   }
 
   // Returns fixed length
-  size_t GetLength(const oid_t column_id) const {
-    Column *column = GetChild(column_id);
-    return column->GetFixedLength();
+  inline size_t GetLength(const oid_t column_id) const {
+    return columns[column_id].fixed_length;
   }
 
-  size_t GetVariableLength(const oid_t column_id) const {
-    Column *column = GetChild(column_id);
-    return column->GetVariableLength();
+  inline size_t GetVariableLength(const oid_t column_id) const {
+    return columns[column_id].variable_length;
   }
 
-  bool IsInlined(const oid_t column_id) const {
-    Column *column = GetChild(column_id);
-    return column->IsInlined();
+  inline bool IsInlined(const oid_t column_id) const {
+    return columns[column_id].is_inlined;
   }
 
   const Column GetColumn(const oid_t column_id) const {
-    Column *column = GetChild(column_id);
-    // Make a copy here
-    return *column;
+    return columns[column_id];
   }
 
-  // Offset based on list of uninlined columns
   oid_t GetUninlinedColumn(const oid_t column_id) const {
     return uninlined_columns[column_id];
   }
 
+  std::vector<Column> GetColumns() const {
+    return columns;
+  }
+
   // Return the number of columns in the schema for the tuple.
-  oid_t GetColumnCount() const {
+  inline oid_t GetColumnCount() const {
     return column_count;
   }
 
   oid_t GetUninlinedColumnCount() const {
-    return uninlined_columns.size();
+    return uninlined_column_count;
   }
 
   // Return the number of bytes used by one tuple.
-  oid_t GetLength() const {
+  inline oid_t GetLength() const {
     return length;
   }
 
@@ -134,39 +130,51 @@ class Schema : public CatalogObject 	{
     return tuple_is_inlined;
   }
 
+  // Get the nullability of the column at a given index.
+  bool AllowNull(const oid_t column_id) const {
+    for(auto constraint :  columns[column_id].constraints){
+      if(constraint.GetType() == CONSTRAINT_TYPE_NOTNULL)
+        return false;
+    }
+    return true;
+  }
+
+  // Add constraint for column by id
+  void AddConstraint(oid_t column_id,
+                     const catalog::Constraint& constraint) {
+    columns[column_id].AddConstraint(constraint);
+  }
+
+  // Add constraint for column by name
+  void AddConstraint(std::string column_name,
+                     const catalog::Constraint& constraint) {
+    for(size_t column_itr = 0; column_itr < columns.size(); column_itr++){
+      if(columns[column_itr].column_name == column_name) {
+        columns[column_itr].AddConstraint(constraint);
+      }
+    }
+  }
+
   // Get a string representation of this schema
   friend std::ostream& operator<<(std::ostream& os, const Schema& schema);
 
  private:
-
-  // Helper method to construct schema
-  void CreateTupleSchema(const std::vector<oid_t> column_oids,
-                         const std::vector<ValueType> column_types,
-                         const std::vector<oid_t> column_lengths,
-                         const std::vector<std::string> column_names,
-                         const std::vector<bool> is_inlined);
-
-  //===--------------------------------------------------------------------===//
-  // MEMBERS
-  //===--------------------------------------------------------------------===//
-
   // size of fixed length columns
   size_t length;
 
-  // are all columns inlined
-  bool tuple_is_inlined;
+  // all inlined and uninlined columns in the tuple
+  std::vector<Column> columns;
 
-  // TODO: We currently need to ensure that this cached info is
-  // always in sync. It is not safe for concurrent accesses.
-
-  // track uninlined columns
+  // keeps track of unlined columns
   std::vector<oid_t> uninlined_columns;
 
-  // column count
-  oid_t column_count;
+  // keep these in sync with the vectors above
+  oid_t column_count = INVALID_OID;
 
-  // uninlined column count
-  oid_t uninlined_column_count;
+  oid_t uninlined_column_count = INVALID_OID;
+
+  // are all columns inlined
+  bool tuple_is_inlined;
 
 };
 

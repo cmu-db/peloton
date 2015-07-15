@@ -37,11 +37,8 @@ class Catalog : CatalogObject {
   // Get the singleton catalog instance
   static Catalog& GetInstance();
 
-  Catalog(std::string catalog_name = "peloton",
-          CatalogObject *parent,
-          CatalogObject *root)
+  Catalog()
   : CatalogObject(INVALID_OID,
-                  catalog_name,
                   nullptr,
                   this) {
   }

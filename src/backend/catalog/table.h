@@ -14,13 +14,22 @@
 
 #include <iostream>
 #include <algorithm>
+#include <cassert>
 
 #include "backend/catalog/catalog_object.h"
-#include "backend/catalog/constraint.h"
-#include "backend/catalog/column.h"
+#include "backend/catalog/schema.h"
 #include "backend/catalog/index.h"
 
 namespace peloton {
+
+namespace storage {
+class DataTable;
+}
+
+namespace index{
+class Index;
+}
+
 namespace catalog {
 
 //===--------------------------------------------------------------------===//
@@ -36,9 +45,9 @@ class Table : public CatalogObject {
         CatalogObject *parent,
         CatalogObject *root)
  : CatalogObject(table_oid,
-                 table_name,
                  parent,
-                 root) {
+                 root),
+                 table_name(table_name){
   }
 
   //===--------------------------------------------------------------------===//
@@ -53,16 +62,37 @@ class Table : public CatalogObject {
     data_table_ = table;
   }
 
-  bool SetSchema(catalog::Schema *schema){
-    return CreateChild(schema_child_oid, static_cast<CatalogObject*>(schema));
-  }
-
   storage::DataTable *GetDataTable() {
     return data_table_;
   }
 
-  catalog::Schema *GetSchema() const {
-    return GetChild(schema_child_oid);
+  void SetSchema(catalog::Schema *schema) {
+    assert(GetChildrenCount(schema_collection) == 0);
+    AddChild(schema_collection, static_cast<CatalogObject*>(schema));
+  }
+
+  void AddIndex(catalog::Index *index) {
+    AddChild(index_collection, static_cast<CatalogObject*>(index));
+  }
+
+  catalog::Schema *GetSchema() {
+    return static_cast<catalog::Schema *>(GetChild(schema_collection, 0));
+  }
+
+  catalog::Index *GetIndex(const oid_t index_offset) {
+    return static_cast<catalog::Index *>(GetChild(index_collection, index_offset));
+  }
+
+  std::string GetName() const {
+    return table_name;
+  }
+
+  void Lock() {
+    table_mutex.lock();
+  }
+
+  void Unlock() {
+    table_mutex.unlock();
   }
 
   // Get a string representation of this table
@@ -77,8 +107,15 @@ class Table : public CatalogObject {
   // underlying physical table
   storage::DataTable *data_table_ = nullptr;
 
-  // schema oid
-  constexpr static oid_t schema_child_oid = 1;
+  // schema child offset
+  constexpr static oid_t schema_collection = 0;
+
+  // indices child offset
+  constexpr static oid_t index_collection = 1;
+
+  std::string table_name;
+
+  std::mutex table_mutex;
 
 };
 
