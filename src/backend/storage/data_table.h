@@ -111,7 +111,8 @@ public:
         return reference_table_infos.size();
     }
 
-    storage::DataTable *GetReferenceTable(int position) ;
+    storage::DataTable *GetReferenceTable(int offset) ;
+    catalog::ReferenceTableInfo *GetReferenceTableInfo(int offset) ;
 
     // insert tuple in table
     ItemPointer InsertTuple( txn_id_t transaction_id, const Tuple *tuple, bool update = false );
