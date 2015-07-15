@@ -176,7 +176,7 @@ bool DDL::CreateIndex( IndexInfo index_info ){
           tuple_schema->AddConstraintByColumnId( tuple_schema_column_itr, constraint); 
         }else if( index_type == INDEX_TYPE_UNIQUE ){ 
           catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_UNIQUE, index_name );
-          constraint->SetUniqueIndexPosition( data_table->GetUniqueIndexCount() );
+          constraint->SetUniqueIndexOffset( data_table->GetIndexCount() );
           tuple_schema->AddConstraintByColumnId( tuple_schema_column_itr, constraint);
         }
 

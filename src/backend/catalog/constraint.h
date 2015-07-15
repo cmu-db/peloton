@@ -62,15 +62,15 @@ class Constraint
   }
 
   // Offset into the list of "reference tables" in the Table.
-  inline void SetReferenceTablePosition(int position) {
-    AssertMsg(position < 0, "ReferenceTable position can't be negative");
-    reference_table_list_offset = position;
+  inline void SetReferenceTableOffset(int offset) {
+    AssertMsg(offset < 0, "ReferenceTable offset can't be negative");
+    reference_table_list_offset = offset;
   }
 
   // Offset into the list of "unique indices" in the Table.
-  inline void SetUniqueIndexPosition( int position ) {
-    AssertMsg(position < 0, "Unique Index position can't be negative.");
-    unique_index_list_offset = position;
+  inline void SetUniqueIndexOffset( int offset ) {
+    AssertMsg(offset < 0, "Unique Index offset can't be negative.");
+    unique_index_list_offset = offset;
   }
 
   // Get a string representation of this constraint

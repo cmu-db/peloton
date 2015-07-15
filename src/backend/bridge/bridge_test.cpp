@@ -27,12 +27,22 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 void BridgeTest::DDL_CreateTable_TEST() {
+  printf("::Start %s\n", __func__ );
 
   DDL_CreateTable_TEST_INVALID_OID();
   DDL_CreateTable_TEST_COLUMNS();
   DDL_CreateTable_TEST_CONSTRAINTS();
 
+  printf("::End %s\n", __func__ );
 }
+void BridgeTest::DDL_COMPREHENSIVE_TEST(){
+  printf("::Start %s\n", __func__ );
+
+  DDL_TEST_SCENARIO_1();
+
+  printf("::End %s\n", __func__ );
+}
+
 void BridgeTest::DDL_CreateTable_TEST_INVALID_OID() {
 
   // ColumnInfo
@@ -233,8 +243,13 @@ void BridgeTest::DDL_CreateTable_TEST_CONSTRAINTS() {
 
 }
 
+void BridgeTest::DDL_TEST_SCENARIO_1(){
+}
+
 void BridgeTest::RunTests() {
   DDL_CreateTable_TEST();
+
+  DDL_COMPREHENSIVE_TEST();
 }
 
 void BridgeTest::TestCatalog() {
