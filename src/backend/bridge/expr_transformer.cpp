@@ -40,7 +40,10 @@ void ExprTransformer::PrintPostgressExprTree(const ExprState* expr_state,
                                              std::string prefix) {
   auto tag = nodeTag(expr_state->expr);
 
-  // TODO Not complete.
+  /* TODO Not complete.
+   * Not all ExprState has a child / children list,
+   * so it would take some multiplexing to print it recursively here.
+   */
   LOG_INFO("%u ", tag);
 }
 
@@ -128,6 +131,8 @@ expression::AbstractExpression* ExprTransformer::TransformConstant(
 expression::AbstractExpression* ExprTransformer::TransformOp(
     const ExprState* es) {
 
+  LOG_INFO("Transform Op \n");
+
   auto op_expr = reinterpret_cast<const OpExpr*>(es->expr);
   auto func_state = reinterpret_cast<const FuncExprState*>(es);
 
@@ -165,7 +170,7 @@ expression::AbstractExpression* ExprTransformer::TransformVar(
 
   assert(var_expr->varattno != InvalidAttrNumber);
 
-  oid_t tuple_idx = (var_expr->varno == OUTER_VAR ? 1 : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
+  oid_t tuple_idx = (var_expr->varno == INNER_VAR ? 1 : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
   oid_t value_idx = static_cast<oid_t>(var_expr->varattno - 1); // Damnit attno is 1-index
 
   LOG_INFO("tuple_idx = %u , value_idx = %u \n", tuple_idx, value_idx);
