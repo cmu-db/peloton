@@ -41,7 +41,7 @@ class IndexMetadata {
                 const catalog::Schema *key_schema,
                 bool unique_keys)
 
- : identifier(index_name),
+ : index_name(index_name),
    method_type(method_type),
    index_type(index_type),
    tuple_schema(tuple_schema),
@@ -53,15 +53,34 @@ class IndexMetadata {
   ~IndexMetadata(){
     // clean up key schema
     delete key_schema;
-
     // no need to clean the tuple schema
   }
 
-  IndexType GetIndexType() {
+  const std::string& GetName() const {
+    return index_name;
+  }
+
+  IndexMethodType GetIndexMethodType() {
+    return method_type;
+  }
+
+IndexType GetIndexType() {
     return index_type;
   }
 
-  std::string identifier;
+ const catalog::Schema *GetKeySchema() const {
+    return key_schema;
+  }
+
+  int GetColumnCount() const {
+    return  GetKeySchema()->GetColumnCount();
+  }
+
+ bool HasUniqueKeys() const {
+    return unique_keys;
+  }
+
+  std::string index_name;
 
   IndexMethodType method_type;
 
@@ -149,19 +168,19 @@ class Index
    * performance of UniqueIndex.
    */
   bool HasUniqueKeys() const {
-    return unique_keys;
+    return metadata->HasUniqueKeys();
   }
 
   int GetColumnCount() const {
-    return column_count;
+    return metadata->GetColumnCount();
   }
 
   const std::string& GetName() const {
-    return index_name;
+    return metadata->GetName();
   }
 
   const catalog::Schema *GetKeySchema() const {
-    return key_schema;
+    return metadata->GetKeySchema();
   }
 
   IndexType GetIndexType() const {
@@ -186,16 +205,6 @@ class Index
   //===--------------------------------------------------------------------===//
 
   IndexMetadata *metadata;
-
-  std::string index_name;
-
-  const catalog::Schema *key_schema;
-
-  const catalog::Schema *tuple_schema;
-
-  int column_count;
-
-  bool unique_keys;
 
   // access counters
   int lookup_counter;
