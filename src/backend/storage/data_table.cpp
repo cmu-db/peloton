@@ -85,7 +85,7 @@ void DataTable::AddReferenceTable( catalog::ReferenceTableInfo *reference_table_
   for( auto column_name : ref->GetFKColumnNames() )
   {
     catalog::Constraint *constraint = new catalog::Constraint( CONSTRAINT_TYPE_FOREIGN, ref->GetName());
-    constraint->SetReferenceTablePosition( this->GetReferenceTableCount() ) ;
+    constraint->SetReferenceTableOffset( this->GetIndexCount() ) ;
     schema->AddConstraintByColumnName( column_name, constraint );
   }
 
