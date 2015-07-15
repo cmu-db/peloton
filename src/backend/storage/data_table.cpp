@@ -85,8 +85,8 @@ void DataTable::AddReferenceTable( catalog::ReferenceTableInfo *reference_table_
   catalog::Schema* schema = this->GetSchema();
   for( auto column_name : ref->GetFKColumnNames() )
   {
-    catalog::Constraint *constraint = new catalog::Constraint( CONSTRAINT_TYPE_FOREIGN, ref->GetName());
-    constraint->SetReferenceTableOffset( this->GetIndexCount() ) ;
+    catalog::Constraint *constraint = new catalog::Constraint( CONSTRAINT_TYPE_FOREIGN, ref->GetConstraintName());
+    constraint->SetReferenceTableOffset( this->GetReferenceTableCount()  ) ;
     schema->AddConstraintByColumnName( column_name, constraint );
   }
 
@@ -124,14 +124,20 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple
 
   return location;
 }
-storage::DataTable* DataTable::GetReferenceTable(int position) {
-  assert( position < reference_table_infos.size() );
+storage::DataTable* DataTable::GetReferenceTable(int offset) {
+  assert( offset < reference_table_infos.size() );
 
   peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
 
-  oid_t relation_id = reference_table_infos[position]->GetReferenceTableId();
+  oid_t relation_id = reference_table_infos[offset]->GetReferenceTableId();
 
   return db->GetTableById( relation_id );
+}
+
+catalog::ReferenceTableInfo* DataTable::GetReferenceTableInfo(int offset) {
+  assert( offset < reference_table_infos.size() );
+
+  return reference_table_infos[offset];
 }
 
 
