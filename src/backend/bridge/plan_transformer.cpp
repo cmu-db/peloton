@@ -428,15 +428,25 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
                                             column_ids);
   return plan_node;
 }
-
+/**
+ * @brief Convert a Postgres IndexScanState into a Peloton IndexScanNode.
+ *        able to handle:
+ *          1. simple operator with constant comparison value: indexkey op constant)
+ *        unable to handle:
+ *          2. redundant simple qualifier: WHERE id > 4 and id > 3
+ *          3. simple operator with non-constant value
+ *          4. row compare expr: (indexkey, indexkey) op (expr, expr)
+ *          5. scalar array op expr: indexkey op ANY (array-expression)
+ *          6. null test: indexkey IS NULL/IS NOT NULL
+ *          7. order by
+ *          8. unary op
+ * @return Pointer to the constructed AbstractPlanNode.
+ */
 planner::AbstractPlanNode* PlanTransformer::TransformIndexScan(
     const IndexScanState* iss_plan_state) {
   /* info needed to initialize plan node */
   planner::IndexScanNode::IndexScanDesc index_scan_desc;
-  assert(index_scan_desc.end_inclusive == false);
-  assert(index_scan_desc.start_inclusive == false);
-
-  /* Resolve target relation */
+   /* Resolve target relation */
   Oid table_oid = iss_plan_state->ss.ss_currentRelation->rd_id;
   Oid database_oid = GetCurrentDatabaseOid();
   const IndexScan* iss_plan = reinterpret_cast<IndexScan*>(iss_plan_state->ss.ps
@@ -471,6 +481,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexScan(
   auto schema = table->GetSchema();
   index_scan_desc.column_ids.resize(schema->GetColumnCount());
   std::iota(index_scan_desc.column_ids.begin(), index_scan_desc.column_ids.end(), 0);
+
   return new planner::IndexScanNode(table, index_scan_desc);
 }
 /**
@@ -482,7 +493,6 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexScan(
  * @param num_keys the number of scan keys
  * @param index_scan_desc the index scan node descriptor in Peloton
  * @return Void
- *
  */
 static void BuildScanKey(const ScanKey scan_keys, int num_keys, planner::IndexScanNode::IndexScanDesc &index_scan_desc) {
   const catalog::Schema *schema = index_scan_desc.index->GetKeySchema();
@@ -541,6 +551,16 @@ static void BuildScanKey(const ScanKey scan_keys, int num_keys, planner::IndexSc
 
 /**
  * @brief Convert a Postgres IndexOnlyScanState into a Peloton IndexScanNode.
+ *        able to handle:
+ *          1. simple operator with constant comparison value: indexkey op constant)
+ *        unable to handle:
+ *          2. redundant simple qualifier: WHERE id > 4 and id > 3
+ *          3. simple operator with non-constant value
+ *          4. row compare expr: (indexkey, indexkey) op (expr, expr)
+ *          5. scalar array op expr: indexkey op ANY (array-expression)
+ *          6. null test: indexkey IS NULL/IS NOT NULL
+ *          7. order by
+ *          8. unary op
  * @return Pointer to the constructed AbstractPlanNode.
  */
 planner::AbstractPlanNode* PlanTransformer::TransformIndexOnlyScan(
