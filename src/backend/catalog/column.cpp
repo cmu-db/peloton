@@ -31,14 +31,37 @@ void Column::SetLength(oid_t column_length) {
   }
 }
 
-std::ostream& operator<< (std::ostream& os, const Column& column){
+void Column::SetInlined() {
 
-  os << " name = " << column.GetName() << "," <<
-      " type = " << GetTypeName(column.GetType()) << "," <<
-      " offset = " << column.column_offset << "," <<
-      " fixed length = " << column.fixed_length << "," <<
-      " variable length = " << column.variable_length << "," <<
-      " inlined = " << column.is_inlined << std::endl;
+  switch(column_type){
+    case VALUE_TYPE_SMALLINT:
+    case VALUE_TYPE_INTEGER:
+    case VALUE_TYPE_BIGINT:
+    case VALUE_TYPE_DOUBLE:
+    case VALUE_TYPE_VARCHAR:
+    case VALUE_TYPE_TIMESTAMP:
+      is_inlined = true;
+      break;
+
+    default:
+      is_inlined = false;
+      break;
+  }
+
+}
+
+// Get a string representation
+std::ostream& operator<< (std::ostream& os, const Column& column_info){
+  os << " name = " << column_info.column_name << "," <<
+      " type = " << GetTypeName(column_info.column_type) << "," <<
+      " offset = " << column_info.column_offset << "," <<
+      " fixed length = " << column_info.fixed_length << "," <<
+      " variable length = " << column_info.variable_length << "," <<
+      " inlined = " << column_info.is_inlined << std::endl;
+
+  for(auto constraint : column_info.constraints) {
+    os << constraint;
+  }
 
   return os;
 }

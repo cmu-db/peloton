@@ -10,6 +10,9 @@ check_PROGRAMS += catalog_test \
 
 catalog_tests_common_ld = \
 						  $(obj_DIR)/catalog/libpeloton_la-manager.lo \
+						  $(obj_DIR)/catalog/libpeloton_la-catalog_object.lo \
+						  $(obj_DIR)/catalog/libpeloton_la-column.lo \
+						  $(obj_DIR)/catalog/libpeloton_la-constraint.lo \
 						  $(obj_DIR)/catalog/libpeloton_la-schema.lo \
 						  $(obj_DIR)/common/libpeloton_la-types.lo \
 						  $(obj_DIR)/common/libpeloton_la-value.lo \
@@ -34,5 +37,4 @@ manager_test_LDADD = \
 tuple_schema_test_SOURCES = catalog/tuple_schema_test.cpp
 
 tuple_schema_test_LDADD = \
-						  $(obj_DIR)/catalog/libpeloton_la-schema.lo \
-						  $(obj_DIR)/common/libpeloton_la-types.lo
+					      $(catalog_tests_common_ld)

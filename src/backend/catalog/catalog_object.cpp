@@ -10,7 +10,9 @@
  *-------------------------------------------------------------------------
  */
 
+
 #include <mutex>
+#include <cassert>
 
 #include "backend/catalog/catalog_object.h"
 
@@ -19,69 +21,91 @@ namespace catalog {
 
 CatalogObject::~CatalogObject() {
 
-  // Clean up all the children
-  for(auto child : children_)
-    delete child;
-
-}
-
-
-bool CatalogObject::CreateChild(CatalogObject *child){
-
-  // Access the children map safely
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
-    children_.push_back(child);
-  }
-
-  return true;
-}
-
-CatalogObject *CatalogObject::GetChild(const oid_t child_offset) const {
-
-  // Access the children map safely
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    if(child_offset >= children_.size())
-      return nullptr;
-
-    return children_[child_offset];
-  }
-
-}
-
-CatalogObject *CatalogObject::GetChildWithOid(const oid_t child_id) const {
-
-  // Access the children map safely
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    // Go over all children checking their oid
-    for(auto child : children_) {
-      if(child->oid_ == child_id)
-        return child;
+  // Clean up all the collections
+  for(auto collection : children_) {
+    // Clean up all the children
+    for(auto child : collection.second) {
+      delete child;
     }
-
-    return nullptr;
   }
 
 }
 
-bool CatalogObject::DropChild(const oid_t child_id) {
+void CatalogObject::AddChild(const oid_t collection_offset,
+                                CatalogObject *child){
+  assert(collection_offset < children_.size());
 
-  // Access the children map safely
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
+  // Add the child in the collection
+  children_[collection_offset].push_back(child);
+}
 
-    if(child_id >= children_.size())
-      return false;
+CatalogObject *CatalogObject::GetChild(const oid_t collection_offset,
+                                       const oid_t child_offset) const {
+  assert(collection_offset < children_.size());
 
-    children_.erase(children_.begin() + child_id);
+  // Get the collection
+  auto& collection = children_.at(collection_offset);
+  assert(child_offset < collection.size());
+
+  // Get the child
+  return collection[child_offset];
+}
+
+CatalogObject *CatalogObject::GetChildWithID(const oid_t collection_offset,
+                                              const oid_t child_id) const {
+  assert(collection_offset < children_.size());
+
+  // Get the collection
+  auto& collection = children_.at(collection_offset);
+
+  // Get the child
+  for(auto child : collection) {
+    if(child->oid_ == child_id)
+      return child;
   }
 
-  return true;
+  return nullptr;
+}
+
+void CatalogObject::DropChild(const oid_t collection_offset,
+                              const oid_t child_offset) {
+  assert(collection_offset < children_.size());
+
+  // Get the collection
+  auto collection = children_.at(collection_offset);
+  assert(child_offset < collection.size());
+
+  // Drop the child
+  collection.erase(collection.begin() + child_offset);
 };
+
+void CatalogObject::DropChildWithID(const oid_t collection_offset,
+                                     const oid_t child_id) {
+  assert(collection_offset < children_.size());
+
+  // Get the collection
+  auto collection = children_.at(collection_offset);
+
+  // Get the child offset
+  oid_t child_offset = 0;
+  for(auto child : collection) {
+    if(child->oid_ == child_id)
+      break;
+    child_offset++;
+  }
+  assert(child_offset < collection.size());
+
+  // Drop the child
+  collection.erase(collection.begin() + child_offset);
+};
+
+size_t CatalogObject::GetChildrenCount(const oid_t collection_offset) const {
+  assert(collection_offset < children_.size());
+
+  // Get the collection
+  auto& collection = children_.at(collection_offset);
+  return collection.size();
+}
 
 } // End catalog namespace
 } // End peloton namespace
