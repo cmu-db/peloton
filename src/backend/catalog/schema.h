@@ -110,6 +110,7 @@ class ColumnInfo {
   // add a constraint to the column info
   void AddConstraint(catalog::Constraint* _constraint){
     bool redundancy_check = false;
+
     // TODO :: Mutex lock need?
     for( auto constraint : constraint_vector ){
       if( _constraint->GetType() == constraint.GetType() ){
