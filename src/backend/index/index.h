@@ -34,16 +34,16 @@ class IndexMetadata {
 
  public:
 
-  IndexMetadata(std::string identifier,
+  IndexMetadata(std::string index_name,
                 IndexMethodType method_type,
-                IndexType type,
+                IndexType index_type,
                 const catalog::Schema *tuple_schema,
                 const catalog::Schema *key_schema,
                 bool unique_keys)
 
- : identifier(identifier),
+ : identifier(index_name),
    method_type(method_type),
-   type(type),
+   index_type(index_type),
    tuple_schema(tuple_schema),
    key_schema(key_schema),
    unique_keys(unique_keys) {
@@ -58,25 +58,20 @@ class IndexMetadata {
   }
 
   IndexType GetIndexType() {
-    return type;
+    return index_type;
   }
 
   std::string identifier;
 
   IndexMethodType method_type;
 
-  IndexType type;
+  IndexType index_type;
 
   // schema of tuple values
   const catalog::Schema *tuple_schema;
 
   // schema of keys
   const catalog::Schema *key_schema;
-
-  // table columns in key schema
-  // if column "i" of table schema is present in key schema
-  // then the value "i" will be present in this vector
-  std::vector<oid_t> table_columns_in_key;
 
   // unique keys ?
   bool unique_keys;
@@ -162,7 +157,7 @@ class Index
   }
 
   const std::string& GetName() const {
-    return identifier;
+    return index_name;
   }
 
   const catalog::Schema *GetKeySchema() const {
@@ -192,7 +187,7 @@ class Index
 
   IndexMetadata *metadata;
 
-  std::string identifier;
+  std::string index_name;
 
   const catalog::Schema *key_schema;
 
