@@ -205,6 +205,8 @@ TEST(MutateTests, StressTests) {
 
   txn_manager.CommitTransaction(context);
 
+  std::cout << "Start tests \n";
+
   LaunchParallelTest(1, InsertTuple, table);
   //std::cout << (*table);
 

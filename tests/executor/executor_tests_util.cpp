@@ -188,8 +188,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
         std::to_string(PopulatedValue(random ? std::rand()%(num_rows/2):populate_value, 3)));
     tuple.SetValue(3, string_value);
 
-    if(group_by)
-      std::cout << "INSERT TUPLE :: " << tuple;
+    std::cout << "INSERT TUPLE :: " << tuple;
 
     ItemPointer tuple_slot_id = table->InsertTuple(txn_id, &tuple, false);
     EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
@@ -314,7 +313,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_coun
                                             unique);
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
 
-  table->AddIndex(pkey_index, INVALID_OID);
+  table->AddIndex(pkey_index, 123);
 
   // SECONDARY INDEX
   key_attrs = { 0, 1 };
@@ -328,7 +327,7 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_coun
                                             unique);
   index::Index *sec_index = index::IndexFactory::GetInstance(index_metadata);
 
-  table->AddIndex(sec_index, INVALID_OID);
+  table->AddIndex(sec_index, 124);
 
   return table;
 }

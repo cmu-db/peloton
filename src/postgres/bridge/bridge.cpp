@@ -588,8 +588,7 @@ bool BootstrapPeloton(void){
               peloton::catalog::Column* column_info = new peloton::catalog::Column( valueType,
                                                                                             column_length,
                                                                                             NameStr(pg_attribute->attname),   
-                                                                                            is_inlined,
-                                                                                            constraint_infos);
+                                                                                            is_inlined);
               column_infos.push_back(*column_info);
             }
 
@@ -645,7 +644,7 @@ bool BootstrapPeloton(void){
                 std::vector<std::string> key_column_names;
 
                 for( auto column_info : column_infos ){
-                  key_column_names.push_back( column_info.name );
+                  key_column_names.push_back( column_info.column_name);
                 }
 
                 peloton::IndexMethodType method_type = peloton::INDEX_METHOD_TYPE_BTREE_MULTIMAP;

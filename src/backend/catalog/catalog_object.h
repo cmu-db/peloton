@@ -11,8 +11,8 @@
 #pragma once
 
 #include <string>
-#include <mutex>
 #include <vector>
+#include <map>
 
 #include "backend/common/types.h"
 
@@ -25,22 +25,19 @@ namespace catalog {
 
 /**
  * Base type of all catalog objects
+ * Each object has a set of collections.
+ * Each collection has a set of children.
+ * For instance, each DB has a list of tables.
  */
 class CatalogObject {
 
  public:
-  CatalogObject(const CatalogObject &) = delete;
-  CatalogObject& operator=(const CatalogObject &) = delete;
-  CatalogObject(CatalogObject &&) = delete;
-  CatalogObject& operator=(CatalogObject &&) = delete;
 
   // Constructor
-  CatalogObject(oid_t oid,
-                std::string name,
-                CatalogObject *parent,
-                CatalogObject *root) :
+  CatalogObject(oid_t oid = INVALID_OID,
+                CatalogObject *parent = nullptr,
+                CatalogObject *root = nullptr) :
     oid_(oid),
-    name_(name),
     parent_(parent),
     root_(root){
 
@@ -59,37 +56,52 @@ class CatalogObject {
     return oid_;
   }
 
-  std::string GetName() const {
-    return name_;
-  }
-
   /**
    * @brief Adds a child to this catalog object.
+   * @param collection_offset the offset of the collection
    * @param child pointer to the child itself, which must also be a CatalogObject.
-   * @return true if successful, false otherwise
    */
-  bool CreateChild(CatalogObject *child);
+  void AddChild(const oid_t collection_offset, CatalogObject *child);
 
   /**
    * @brief Get child from this catalog object based on its offset
+   * @param collection_offset the offset of the collection
    * @param child_offset the offset of the child
    * @return the child if successful, nullptr otherwise
    */
-  CatalogObject *GetChild(const oid_t child_offset) const;
+  CatalogObject *GetChild(const oid_t collection_offset,
+                          const oid_t child_offset) const;
 
   /**
    * @brief Get child from this catalog object based on its oid
-   * @param child_ the identifier for the child that is unique atleast within this object.
+   * @param collection_offset the offset of the collection
+   * @param child_id the identifier for the child that is unique atleast within this object.
    * @return the child if successful, nullptr otherwise
    */
-  CatalogObject *GetChildWithOid(const oid_t child_id) const;
+  CatalogObject *GetChildWithID(const oid_t collection_offset,
+                                const oid_t child_id) const;
 
   /**
-   * @brief Drop the child from this catalog object.
-   * @param child_id the offset of the child
-   * @return true if successful, false otherwise
+   * @brief Drop the child at given offset from this catalog object.
+   * @param collection_offset the offset of the collection
+   * @param child_offset the offset of the child
    */
-  bool DropChild(const oid_t child_id);
+  void DropChild(const oid_t collection_offset,
+                 const oid_t child_offset);
+
+  /**
+   * @brief Drop the child with given id from this catalog object.
+   * @param collection_offset the offset of the collection
+   * @param child_id the id of the child
+   */
+  void DropChildWithID(const oid_t collection_offset,
+                       const oid_t child_id);
+
+  /**
+   * @brief Get the count of children.
+   * @param collection_offset the offset of the collection
+   */
+  size_t GetChildrenCount(const oid_t collection_offset) const;
 
   // Get the parent
   CatalogObject *GetParent() const {
@@ -107,22 +119,17 @@ class CatalogObject {
   // MEMBERS
   //===--------------------------------------------------------------------===//
   // unique within a database
-  oid_t oid_ = INVALID_OID;
-
-  // name of this catalog object
-  std::string name_;
+  oid_t oid_;
 
   // parent of this CatalogType instance
   CatalogObject *parent_;
 
-  // children
-  std::vector<CatalogObject*> children_;
+  // children list
+  std::map<oid_t, std::vector<CatalogObject*> > children_;
 
   // pointer to the root Catalog instance
   CatalogObject *root_;
 
-  // Synch accesses to the children map
-  std::mutex mutex_;
 };
 
 } // End catalog namespace
