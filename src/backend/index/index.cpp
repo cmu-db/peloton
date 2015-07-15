@@ -20,14 +20,7 @@ namespace peloton {
 namespace index {
 
 Index::Index(IndexMetadata *metadata)
-: metadata(metadata),
-  identifier(metadata->identifier),
-  key_schema(metadata->key_schema),
-  tuple_schema(metadata->tuple_schema),
-  unique_keys(metadata->unique_keys) {
-
-  // # of columns in key
-  column_count = metadata->key_schema->GetColumnCount();
+: metadata(metadata) {
 
   // initialize counters
   lookup_counter = insert_counter = delete_counter = update_counter = 0;
@@ -43,7 +36,7 @@ std::ostream& operator<<(std::ostream& os, const Index& index) {
   os << index.GetTypeName() << "\t(" << index.GetName() << ")";
   os << (index.HasUniqueKeys() ? " UNIQUE " : " NON-UNIQUE") << "\n";
 
-  os << "\tValue schema : " << *(index.key_schema);
+  os << "\tValue schema : " << *(index.GetKeySchema() );
 
   os << "\t-----------------------------------------------------------\n";
 
@@ -52,7 +45,7 @@ std::ostream& operator<<(std::ostream& os, const Index& index) {
 
 void Index::GetInfo() const {
 
-  std::cout << identifier << ",";
+  std::cout << this->GetName() << ",";
   std::cout << GetTypeName() << ",";
   std::cout << lookup_counter << ",";
   std::cout << insert_counter << ",";
