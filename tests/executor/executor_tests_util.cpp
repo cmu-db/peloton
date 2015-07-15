@@ -188,7 +188,8 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
         std::to_string(PopulatedValue(random ? std::rand()%(num_rows/2):populate_value, 3)));
     tuple.SetValue(3, string_value);
 
-    std::cout << "INSERT TUPLE :: " << tuple;
+    if(group_by)
+      std::cout << "INSERT TUPLE :: " << tuple;
 
     ItemPointer tuple_slot_id = table->InsertTuple(txn_id, &tuple, false);
     EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);

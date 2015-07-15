@@ -34,17 +34,14 @@ void Column::SetLength(oid_t column_length) {
 void Column::SetInlined() {
 
   switch(column_type){
-    case VALUE_TYPE_SMALLINT:
-    case VALUE_TYPE_INTEGER:
-    case VALUE_TYPE_BIGINT:
-    case VALUE_TYPE_DOUBLE:
+
     case VALUE_TYPE_VARCHAR:
-    case VALUE_TYPE_TIMESTAMP:
-      is_inlined = true;
+    case VALUE_TYPE_VARBINARY:
+      is_inlined = false;
       break;
 
     default:
-      is_inlined = false;
+      is_inlined = true;
       break;
   }
 
