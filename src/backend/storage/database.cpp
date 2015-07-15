@@ -163,23 +163,23 @@ storage::DataTable* Database::GetTableById( const oid_t table_oid ) const{
   return table;
 }
 
-storage::DataTable* Database::GetTableByPosition( const oid_t table_position ) const{
+storage::DataTable* Database::GetTableByOffset( const oid_t table_offset ) const{
   storage::DataTable* table = nullptr;
-  oid_t curr_position = 0;
+  oid_t curr_offset = 0;
 
   std::for_each(begin(table_oid_to_address), end(table_oid_to_address),
       [&] (const std::pair<oid_t, storage::DataTable*>& curr_table){
 
-      if( curr_position == table_position ){
+      if( curr_offset == table_offset ){
         table =  curr_table.second; // find it
       }
 
-      curr_position++;
+      curr_offset++;
 
       });
 
   if( table == nullptr ){
-    LOG_WARN("GetTableByPosition :: Not exist here");
+    LOG_WARN("GetTableByOffset :: Not exist here");
   }
 
   return table;
@@ -220,7 +220,7 @@ std::ostream& operator<<( std::ostream& os, const Database& database ) {
   std::cout << "The number of tables : " << number_of_tables  << "\n";
 
   for (oid_t table_itr = 0 ; table_itr < number_of_tables ; table_itr++) {
-    storage::DataTable* table = database.GetTableByPosition( table_itr );
+    storage::DataTable* table = database.GetTableByOffset( table_itr );
     if( table != nullptr ){
       std::cout << "(" <<table_itr+1 <<"/" << number_of_tables<< ")Table Name : " << table->GetName() << "\n" <<  *(table->GetSchema()) << std::endl;
 
