@@ -67,7 +67,7 @@ static std::vector<IndexInfo> index_infos;
  */
 bool DDL::CreateDatabase( Oid database_oid ){
 
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+  storage::Database* db = storage::Database::GetDatabaseById( database_oid );
 
   fprintf(stderr, "DDLCreateDatabase :: %u %p \n", database_oid, db);
 
@@ -93,7 +93,7 @@ bool DDL::CreateTable( Oid relation_oid,
     return false;
 
   // Get db oid
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+  storage::Database* db = storage::Database::GetDatabaseById( database_oid );
 
   // Construct our schema from vector of ColumnInfo
   if( schema == NULL) 
@@ -150,7 +150,7 @@ bool DDL::CreateIndex( IndexInfo index_info ){
   assert( database_oid );
 
   // Get the table location from db
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+  storage::Database* db = storage::Database::GetDatabaseById( database_oid );
   storage::DataTable* data_table = db->GetTableByName( table_name );
 
   catalog::Schema *tuple_schema = data_table->GetSchema();
@@ -221,7 +221,7 @@ bool DDL::AlterTable( Oid relation_oid, AlterTableStmt* Astmt ){
 
       case AT_AddConstraint:	/* ADD CONSTRAINT */
       {
-        bool status = peloton::bridge::DDL::AddConstraint( relation_oid, (Constraint*) cmd->def );
+        bool status = bridge::DDL::AddConstraint( relation_oid, (Constraint*) cmd->def );
         fprintf(stderr, "DDLAddConstraint :: %d \n", status);
         break;
       }
@@ -244,7 +244,7 @@ bool DDL::AlterTable( Oid relation_oid, AlterTableStmt* Astmt ){
  * @return true if we dropped the database, false otherwise
  */
 bool DDL::DropDatabase( Oid database_oid ){
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+  storage::Database* db = storage::Database::GetDatabaseById( database_oid );
   bool status = db->DeleteDatabaseById( database_oid );
   return status;
 }
@@ -266,7 +266,7 @@ bool DDL::DropTable(Oid table_oid) {
   }
 
   // Get db with current database oid
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( database_oid );
+  storage::Database* db = storage::Database::GetDatabaseById( database_oid );
   status = db->DeleteTableById( table_oid );
 
   if(status == true) {
@@ -305,7 +305,7 @@ void DDL::ProcessUtility(Node *parsetree,
     {
       printf(COLOR_RED "T_Createdb" COLOR_RESET "\n");
       CreatedbStmt* CdbStmt = (CreatedbStmt*) parsetree;
-      peloton::bridge::DDL::CreateDatabase( CdbStmt->database_id );
+      bridge::DDL::CreateDatabase( CdbStmt->database_id );
     }
     break;
 
@@ -331,8 +331,8 @@ void DDL::ProcessUtility(Node *parsetree,
           char* relation_name = Cstmt->relation->relname;
           Oid relation_oid = ((CreateStmt *)parsetree)->relation_id;
 
-          std::vector<peloton::catalog::ColumnInfo> column_infos;
-          std::vector<peloton::catalog::ReferenceTableInfo> reference_table_infos;
+          std::vector<catalog::ColumnInfo> column_infos;
+          std::vector<catalog::ReferenceTableInfo> reference_table_infos;
 
           bool status;
 
@@ -340,16 +340,16 @@ void DDL::ProcessUtility(Node *parsetree,
           // CreateStmt --> ColumnInfo --> CreateTable
           //===--------------------------------------------------------------------===//
           if( schema != NULL ){
-            peloton::bridge::DDL::ParsingCreateStmt( Cstmt, 
+            bridge::DDL::ParsingCreateStmt( Cstmt,
                                                      column_infos,
                                                      reference_table_infos );
 
-            status = peloton::bridge::DDL::CreateTable( relation_oid, 
+            status = bridge::DDL::CreateTable( relation_oid,
                                                         relation_name, 
                                                         column_infos );
           } else {
             // SPECIAL CASE : CREATE TABLE WITHOUT COLUMN INFO
-            status = peloton::bridge::DDL::CreateTable( relation_oid, 
+            status = bridge::DDL::CreateTable( relation_oid,
                                                         relation_name, 
                                                         column_infos );
           }
@@ -385,7 +385,7 @@ void DDL::ProcessUtility(Node *parsetree,
           //===--------------------------------------------------------------------===//
           // Set Reference Tables
           //===--------------------------------------------------------------------===//
-          status = peloton::bridge::DDL::SetReferenceTables( reference_table_infos, 
+          status = bridge::DDL::SetReferenceTables( reference_table_infos,
                                                              relation_oid );
           if( status == false ){
             LOG_WARN("Failed to set reference tables");
@@ -395,7 +395,7 @@ void DDL::ProcessUtility(Node *parsetree,
           //===--------------------------------------------------------------------===//
           // Add Primary Key and Unique Indexes to the table
           //===--------------------------------------------------------------------===//
-          status = peloton::bridge::DDL::CreateIndexesWithIndexInfos( index_infos );
+          status = bridge::DDL::CreateIndexesWithIndexInfos( index_infos );
           if( status == false ){
             LOG_WARN("Failed to create primary key and unique index");
           }
@@ -415,13 +415,13 @@ void DDL::ProcessUtility(Node *parsetree,
       IndexInfo* index_info = ConstructIndexInfoByParsingIndexStmt( Istmt );
 
       // If table has not been created yet, skip the rest part of this function
-      peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+      storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
       if( nullptr == db->GetTableByName( Istmt->relation->relname )){
         index_infos.push_back(*index_info);
         break;
       }
 
-      status = peloton::bridge::DDL::CreateIndex( *index_info );
+      status = bridge::DDL::CreateIndex( *index_info );
 
 
       fprintf(stderr, "DDLCreateIndex :: %d \n", status);
@@ -446,7 +446,7 @@ void DDL::ProcessUtility(Node *parsetree,
         Node *stmt = (Node *) lfirst(l);
 
         if (IsA(stmt, AlterTableStmt)){
-          status = peloton::bridge::DDL::AlterTable( relation_oid, (AlterTableStmt*)stmt );
+          status = bridge::DDL::AlterTable( relation_oid, (AlterTableStmt*)stmt );
 
           fprintf(stderr, "DDLAlterTable :: %d \n", status);
 
@@ -462,7 +462,7 @@ void DDL::ProcessUtility(Node *parsetree,
 
       Oid database_oid = get_database_oid( Dstmt->dbname, Dstmt->missing_ok );
 
-      bool status = peloton::bridge::DDL::DropDatabase( database_oid );
+      bool status = bridge::DDL::DropDatabase( database_oid );
       fprintf(stderr, "DDL Database :: %d \n", status);
     }
     break;
@@ -485,7 +485,7 @@ void DDL::ProcessUtility(Node *parsetree,
             char* database_name = strVal(linitial(names));
             Oid database_oid = get_database_oid( database_name, true );
 
-            status = peloton::bridge::DDL::DropDatabase( database_oid );
+            status = bridge::DDL::DropDatabase( database_oid );
             fprintf(stderr, "DDL Database :: %d \n", status);
           }
           break;
@@ -495,7 +495,7 @@ void DDL::ProcessUtility(Node *parsetree,
             char* table_name = strVal(linitial(names));
             Oid table_oid = GetRelationOid(table_name);
 
-            status = peloton::bridge::DDL::DropTable( table_oid );
+            status = bridge::DDL::DropTable( table_oid );
             fprintf(stderr, "DDL DropTable :: %d \n", status);
           }
           break;
@@ -520,7 +520,7 @@ void DDL::ProcessUtility(Node *parsetree,
   }
 
   // TODO :: This is for debugging
-  //peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+  //storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
   //std::cout << *db << std::endl;
 
 }
@@ -669,7 +669,7 @@ void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
               // REFERENCE TABLE NAME AND ACTION OPTION
               if( ConstraintNode->pktable != NULL ){
 
-                peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+                storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
 
                 // PrimaryKey Table
                 oid_t PrimaryKeyTableId = db->GetTableIdByName( ConstraintNode->pktable->relname );
@@ -797,9 +797,10 @@ bool DDL::SetReferenceTables( std::vector<catalog::ReferenceTableInfo>& referenc
   assert( relation_oid );
   oid_t database_oid = GetCurrentDatabaseOid();
   assert( database_oid );
+  storage::Database* db = storage::Database::GetDatabaseById( database_oid );
+  storage::DataTable* current_table = db->GetTableById( relation_oid );
 
   for( auto reference_table_info : reference_table_infos) {
-    storage::DataTable* current_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, relation_oid);
     current_table->AddReferenceTable( &reference_table_info );
   }
 
@@ -815,7 +816,7 @@ bool DDL::CreateIndexesWithIndexInfos( std::vector<IndexInfo> index_infos ){
 
   for( auto index_info : index_infos){
     bool status;
-    status = peloton::bridge::DDL::CreateIndex( index_info );
+    status = bridge::DDL::CreateIndex( index_info );
 
     fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info.GetIndexName().c_str(), status);
   }
@@ -833,7 +834,7 @@ bool DDL::AddConstraint(Oid relation_oid, Constraint* constraint )
 {
 
   ConstraintType contype = PostgresConstraintTypeToPelotonConstraintType( (PostgresConstraintType) constraint->contype );
-  std::vector<peloton::catalog::ReferenceTableInfo> reference_table_infos;
+  std::vector<catalog::ReferenceTableInfo> reference_table_infos;
 
   std::string conname;
   if( constraint->conname != NULL){
@@ -854,7 +855,7 @@ bool DDL::AddConstraint(Oid relation_oid, Constraint* constraint )
     {
       oid_t database_oid = GetCurrentDatabaseOid();
       assert( database_oid );
-      peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+      storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
 
       // PrimaryKey Table
       oid_t PrimaryKeyTableId = db->GetTableIdByName( constraint->pktable->relname );
@@ -894,7 +895,7 @@ bool DDL::AddConstraint(Oid relation_oid, Constraint* constraint )
   }
 
   // FIXME : 
-  bool status = peloton::bridge::DDL::SetReferenceTables( reference_table_infos, relation_oid );
+  bool status = bridge::DDL::SetReferenceTables( reference_table_infos, relation_oid );
   if( status == false ){
     LOG_WARN("Failed to set reference tables");
   } 
