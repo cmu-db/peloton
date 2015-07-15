@@ -193,7 +193,6 @@ bool DDL::CreateIndex( IndexInfo index_info ){
   index::Index* index = index::IndexFactory::GetInstance(metadata);
 
   // Record the built index in the table
-  std::cout << "AddIndex" <<  std::endl;
   data_table->AddIndex(index, index_oid);
 
   return true;
