@@ -268,12 +268,14 @@ TEST(MutateTests, InsertTest) {
   auto txn = txn_manager.BeginTransaction();
 
   // We are going to insert a tile group into a table in this test
-  std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateAndPopulateTable());
+  std::unique_ptr<storage::DataTable> source_data_table(ExecutorTestsUtil::CreateAndPopulateTable());
+  std::unique_ptr<storage::DataTable> dest_data_table(ExecutorTestsUtil::CreateTable());
   const std::vector<storage::Tuple *> tuples;
 
-  EXPECT_EQ(data_table->GetTileGroupCount(), 3);
+  EXPECT_EQ(source_data_table->GetTileGroupCount(), 3);
+  EXPECT_EQ(dest_data_table->GetTileGroupCount(), 1);
 
-  planner::InsertNode node(data_table.get(), tuples);
+  planner::InsertNode node(dest_data_table.get(), tuples);
   executor::InsertExecutor executor(&node, txn);
 
   MockExecutor child_executor;
@@ -288,7 +290,7 @@ TEST(MutateTests, InsertTest) {
   .WillOnce(Return(true))
   .WillOnce(Return(false));
 
-  auto physical_tile = data_table->GetTileGroup(0)->GetTile(0);
+  auto physical_tile = source_data_table->GetTileGroup(0)->GetTile(0);
   std::vector<storage::Tile *> physical_tiles;
   physical_tiles.push_back(physical_tile);
 
@@ -307,7 +309,7 @@ TEST(MutateTests, InsertTest) {
   txn_manager.EndTransaction(txn);
 
   // We have inserted all the tuples in this logical tile
-  EXPECT_EQ(data_table->GetTileGroupCount(), 4);
+  EXPECT_EQ(dest_data_table->GetTileGroupCount(), 1);
 }
 
 } // namespace test
