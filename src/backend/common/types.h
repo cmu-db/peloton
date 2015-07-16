@@ -209,19 +209,19 @@ enum BackendType {
 // Index Types
 //===--------------------------------------------------------------------===//
 
-enum IndexMethodType {
-  INDEX_METHOD_TYPE_INVALID = 0,     // invalid index type
+enum IndexType {
+  INDEX_CONSTRAINT_TYPE_INVALID = 0,              // invalid index type
 
-  INDEX_METHOD_TYPE_BTREE_MULTIMAP = 1,       // array
-  INDEX_METHOD_TYPE_ORDERED_MAP = 2  // ordered map
+  INDEX_TYPE_BTREE_MULTIMAP = 1,                  // array
+  INDEX_TYPE_ORDERED_MAP = 2                      // ordered map
 };
 
-enum IndexType {
-  INDEX_TYPE_INVALID  = 0,
+enum IndexConstraintType {
+  INDEX_CONSTRAINT_TYPE_INVALID  = 0,             // invalid index constraint type
 
-  INDEX_TYPE_NORMAL = 1,
-  INDEX_TYPE_PRIMARY_KEY  = 2,
-  INDEX_TYPE_UNIQUE = 3
+  INDEX_CONSTRAINT_TYPE_DEFAULT = 1,              // default type - not used to enforce constraints
+  INDEX_CONSTRAINT_TYPE_PRIMARY_KEY = 2,          // used to enforce primary key constraint
+  INDEX_CONSTRAINT_TYPE_UNIQUE = 3                // used for unique constraint
 };
 
 //===--------------------------------------------------------------------===//
@@ -507,8 +507,8 @@ ValueType StringToValueType(std::string str );
 std::string ExpressionTypeToString(ExpressionType type);
 ExpressionType StringToExpressionType(std::string str);
 
-std::string IndexMethodTypeToString(IndexMethodType type);
-IndexMethodType StringToIndexMethodType(std::string str);
+std::string IndexMethodTypeToString(IndexType type);
+IndexType StringToIndexMethodType(std::string str);
 
 std::string PlanNodeTypeToString(PlanNodeType type);
 PlanNodeType StringToPlanNodeType(std::string str);
