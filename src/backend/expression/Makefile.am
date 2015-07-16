@@ -6,7 +6,8 @@
 
 expression_FILES = \
 				   backend/expression/abstract_expression.cpp \
-				   backend/expression/expression_util.cpp
+				   backend/expression/expression_util.cpp \
+				   backend/expression/projection.cpp
 
 expression_INCLUDES = \
 					  -I$(srcdir)/backend/expression    
