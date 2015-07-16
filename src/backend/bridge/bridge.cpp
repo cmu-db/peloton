@@ -11,6 +11,11 @@
 #include <unistd.h>
 
 #include "backend/bridge/bridge.h"
+#include "backend/bridge/ddl.h"
+#include "backend/catalog/schema.h"
+#include "backend/catalog/constraint.h"
+#include "backend/common/logger.h"
+#include "backend/storage/database.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -19,11 +24,6 @@
 #include "access/htup_details.h"
 #include "access/xact.h"
 #include "bridge/bridge.h"
-#include "backend/bridge/ddl.h"
-#include "backend/catalog/schema.h"
-#include "backend/catalog/constraint.h"
-#include "backend/common/logger.h"
-#include "backend/storage/database.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_class.h"

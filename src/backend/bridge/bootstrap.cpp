@@ -15,27 +15,18 @@
 #include <unistd.h>
 #include <cassert>
 
-#include "backend/bridge/bridge.h"
+#include "backend/bridge/bootstrap.h"
 
-#include "postgres.h"
-#include "c.h"
-#include "miscadmin.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/xact.h"
 #include "bridge/bridge.h"
-#include "backend/bridge/ddl.h"
-#include "backend/catalog/schema.h"
-#include "backend/catalog/constraint.h"
-#include "backend/common/logger.h"
-#include "backend/storage/database.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
 #include "common/fe_memutils.h"
-#include "utils/rel.h"
 #include "utils/ruleutils.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -45,11 +36,11 @@
 namespace peloton {
 namespace bridge {
 
-const std::vector<peloton::catalog::Column>&
+std::vector<catalog::Column>
 Bootstrap::GetRelationColumns(Oid tuple_oid, Relation pg_attribute_rel){
   HeapScanDesc pg_attribute_scan;
   HeapTuple pg_attribute_tuple;
-  std::vector<peloton::catalog::Column> columns;
+  std::vector<catalog::Column> columns;
 
   // Scan the pg_attribute table for the relation oid we are interested in.
   pg_attribute_scan = heap_beginscan_catalog(pg_attribute_rel, 0, NULL);
@@ -77,10 +68,10 @@ Bootstrap::GetRelationColumns(Oid tuple_oid, Relation pg_attribute_rel){
           strcmp( NameStr(pg_attribute->attname),"xmax" ) &&
           strcmp( NameStr(pg_attribute->attname),"xmin" ) &&
           strcmp( NameStr(pg_attribute->attname),"tableoid" ) ) {
-        std::vector<peloton::catalog::Constraint> constraint_infos;
+        std::vector<catalog::Constraint> constraint_infos;
 
-        peloton::PostgresValueType postgresValueType = (peloton::PostgresValueType) pg_attribute->atttypid;
-        peloton::ValueType value_type = peloton::PostgresValueTypeToPelotonValueType( postgresValueType );
+        PostgresValueType postgresValueType = (PostgresValueType) pg_attribute->atttypid;
+        ValueType value_type = PostgresValueTypeToPelotonValueType( postgresValueType );
         int column_length = pg_attribute->attlen;
         bool is_inlined = true;
         if( pg_attribute->attlen == -1){
@@ -90,17 +81,17 @@ Bootstrap::GetRelationColumns(Oid tuple_oid, Relation pg_attribute_rel){
 
         // NOT NULL constraint
         if( pg_attribute->attnotnull ){
-          peloton::catalog::Constraint constraint(peloton::CONSTRAINT_TYPE_NOTNULL );
+          catalog::Constraint constraint(CONSTRAINT_TYPE_NOTNULL );
           constraint_infos.push_back(constraint);
         }
 
         // DEFAULT value constraint
         if( pg_attribute->atthasdef ){
-          peloton::catalog::Constraint constraint(peloton::CONSTRAINT_TYPE_DEFAULT );
+          catalog::Constraint constraint(CONSTRAINT_TYPE_DEFAULT );
           constraint_infos.push_back(constraint);
         }
 
-        peloton::catalog::Column column(value_type,
+        catalog::Column column(value_type,
                                         column_length,
                                         NameStr(pg_attribute->attname),
                                         is_inlined);
@@ -119,8 +110,8 @@ Bootstrap::GetRelationColumns(Oid tuple_oid, Relation pg_attribute_rel){
 void Bootstrap::CreatePelotonStructure(char relation_kind,
                                        char *relation_name,
                                        Oid tuple_oid,
-                                       const std::vector<peloton::catalog::Column>& columns,
-                                       std::vector<peloton::bridge::DDL::IndexInfo>& index_infos) {
+                                       const std::vector<catalog::Column>& columns,
+                                       std::vector<bridge::DDL::IndexInfo>& index_infos) {
   bool status = false;
 
   switch(relation_kind){
@@ -131,7 +122,7 @@ void Bootstrap::CreatePelotonStructure(char relation_kind,
       Oid relation_oid;
       relation_oid = GetRelationOid(relation_name);
 
-      status = peloton::bridge::DDL::CreateTable(relation_oid, relation_name, columns);
+      status = bridge::DDL::CreateTable(relation_oid, relation_name, columns);
 
       if(status == true) {
         elog(LOG, "Create Table \"%s\" in Peloton", relation_name);
@@ -172,22 +163,22 @@ void Bootstrap::CreatePelotonStructure(char relation_kind,
             key_column_names.push_back( column_info.column_name);
           }
 
-          peloton::IndexType method_type = peloton::INDEX_TYPE_BTREE_MULTIMAP;
-          peloton::IndexConstraintType type;
+          IndexType method_type = INDEX_TYPE_BTREE_MULTIMAP;
+          IndexConstraintType type;
 
           if( pg_index->indisprimary ){
-            type = peloton::INDEX_CONSTRAINT_TYPE_PRIMARY_KEY;
+            type = INDEX_CONSTRAINT_TYPE_PRIMARY_KEY;
           }else if( pg_index->indisunique ){
-            type = peloton::INDEX_CONSTRAINT_TYPE_UNIQUE;
+            type = INDEX_CONSTRAINT_TYPE_UNIQUE;
           }else{
-            type = peloton::INDEX_CONSTRAINT_TYPE_DEFAULT;
+            type = INDEX_CONSTRAINT_TYPE_DEFAULT;
           }
 
           // Store all index information here
           // This is required because we can only create indexes at once
           // after all tables are created
           // The order of table and index entries in pg_class table can be arbitrary
-          peloton::bridge::DDL::IndexInfo indexinfo(relation_name,
+          bridge::DDL::IndexInfo indexinfo(relation_name,
                                                     pg_index->indexrelid,
                                                     get_rel_name(pg_index->indrelid),
                                                     method_type,
@@ -217,7 +208,7 @@ void Bootstrap::LinkForeignKeys(void) {
   HeapScanDesc pg_constraint_scan;
   HeapTuple pg_constraint_tuple;
 
-  peloton::oid_t database_oid = GetCurrentDatabaseOid();
+  oid_t database_oid = GetCurrentDatabaseOid();
   assert(database_oid);
 
   pg_constraint_rel = heap_open( ConstraintRelationId, AccessShareLock);
@@ -243,7 +234,7 @@ void Bootstrap::LinkForeignKeys(void) {
     Oid sink_table_oid = pg_constraint->confrelid;
     assert(sink_table_oid);
 
-    auto& manager = peloton::catalog::Manager::GetInstance();
+    auto& manager = catalog::Manager::GetInstance();
     auto source_table = manager.GetTableWithOid(database_oid, source_table_oid);
     assert(source_table);
     auto sink_table = manager.GetTableWithOid(database_oid, sink_table_oid);
@@ -272,20 +263,20 @@ void Bootstrap::LinkForeignKeys(void) {
     // Populate foreign key column names
     for (int source_key_itr = 0; source_key_itr < source_numkeys; source_key_itr++) {
       AttrNumber attnum = curr_attnums[source_key_itr];
-      peloton::catalog::Column column = source_table_schema->GetColumn(attnum-1);
+      catalog::Column column = source_table_schema->GetColumn(attnum-1);
       fk_column_names.push_back(column.GetName());
     }
 
     // Populate primary key column names
     for (int sink_key_itr = 0; sink_key_itr < ref_numkeys; sink_key_itr++) {
       AttrNumber attnum = ref_attnums[sink_key_itr];
-      peloton::catalog::Column column = sink_table_schema->GetColumn(attnum-1);
+      catalog::Column column = sink_table_schema->GetColumn(attnum-1);
       pk_column_names.push_back(column.GetName());
     }
 
     std::string constraint_name = NameStr(pg_constraint->conname);
 
-    auto foreign_key = new peloton::catalog::ForeignKey(sink_table_oid,
+    auto foreign_key = new catalog::ForeignKey(sink_table_oid,
                                                         pk_column_names,
                                                         fk_column_names,
                                                         pg_constraint->confupdtype,
@@ -310,7 +301,7 @@ bool Bootstrap::BootstrapPeloton(void) {
   HeapScanDesc pg_class_scan;
   HeapTuple pg_class_tuple;
 
-  std::vector<peloton::bridge::DDL::IndexInfo> index_infos;
+  std::vector<bridge::DDL::IndexInfo> index_infos;
   bool status;
 
   elog(LOG, "Initializing Peloton");
@@ -369,7 +360,7 @@ bool Bootstrap::BootstrapPeloton(void) {
   }
 
   // Create Indexes
-  status = peloton::bridge::DDL::CreateIndexes(index_infos);
+  status = bridge::DDL::CreateIndexes(index_infos);
   if(status == false) {
     elog(LOG, "Could not create an index in Peloton");
   }
@@ -378,7 +369,7 @@ bool Bootstrap::BootstrapPeloton(void) {
   LinkForeignKeys();
 
   //printf("Print all relation's schema information\n");
-  //peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+  //storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
   //std::cout << *db << std::endl;
 
   heap_endscan(pg_class_scan);
