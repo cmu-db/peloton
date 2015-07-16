@@ -210,7 +210,7 @@ enum BackendType {
 //===--------------------------------------------------------------------===//
 
 enum IndexType {
-  INDEX_CONSTRAINT_TYPE_INVALID = 0,              // invalid index type
+  INDEX_TYPE_INVALID = 0,                         // invalid index type
 
   INDEX_TYPE_BTREE_MULTIMAP = 1,                  // array
   INDEX_TYPE_ORDERED_MAP = 2                      // ordered map

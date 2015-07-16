@@ -50,13 +50,23 @@ class Constraint {
   }
 
   // Offset into the list of "reference tables" in the Table.
-  void SetFKListOffset(oid_t offset) {
+  void SetForeignKeyListOffset(oid_t offset) {
     fk_list_offset = offset;
   }
 
   // Offset into the list of "unique indices" in the Table.
   void SetUniqueIndexOffset(oid_t offset ) {
     unique_index_list_offset = offset;
+  }
+
+  // Get the offset
+  oid_t GetForeignKeyListOffset() const {
+    return fk_list_offset;
+  }
+
+  // Get the offset
+  oid_t GetUniqueIndexOffset() const {
+    return unique_index_list_offset;
   }
 
   std::string GetName() const {
