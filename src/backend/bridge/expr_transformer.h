@@ -38,7 +38,13 @@ class ExprTransformer {
 
  private:
 
-  static expression::AbstractExpression* TransformConstant(const ExprState* es);
+  /*
+   * This set of TransformXXX methods should transform an PG ExprState tree
+   * rooted at a ExprState pointing to a XXX Expr node.
+   * A XXX Expr node should have a nodeTag of T_XXX.
+   */
+
+  static expression::AbstractExpression* TransformConst(const ExprState* es);
   static expression::AbstractExpression* TransformOp(const ExprState* es);
   static expression::AbstractExpression* TransformVar(const ExprState* es);
   static expression::AbstractExpression* TransformBool(const ExprState* es);
