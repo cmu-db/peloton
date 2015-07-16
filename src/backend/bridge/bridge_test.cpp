@@ -36,31 +36,31 @@ void BridgeTest::DDL_CreateTable_TEST() {
 void BridgeTest::DDL_CreateTable_TEST_INVALID_OID() {
 
   // ColumnInfo
-  std::vector<catalog::Column> column_infos;
+  std::vector<catalog::Column> columns;
 
-  bool status = bridge::DDL::CreateTable( INVALID_OID, "test_table_invalid_oid", column_infos );
+  bool status = bridge::DDL::CreateTable( INVALID_OID, "test_table_invalid_oid", columns );
   assert( status == false );
   printf("%s has been finished successfully\n", __func__ );
 }
 
 void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
- 
+
   storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
 
   // ColumnInfo
-  std::vector<catalog::Column> column_infos;
+  std::vector<catalog::Column> columns;
 
-  catalog::Column column_info1( VALUE_TYPE_INTEGER, 4, "id");
-  catalog::Column column_info2( VALUE_TYPE_VARCHAR, 68, "name");
-  catalog::Column column_info3( VALUE_TYPE_TIMESTAMP, 8, "time");
-  catalog::Column column_info4( VALUE_TYPE_DOUBLE, 8, "salary");
+  catalog::Column column1( VALUE_TYPE_INTEGER, 4, "id");
+  catalog::Column column2( VALUE_TYPE_VARCHAR, 68, "name");
+  catalog::Column column3( VALUE_TYPE_TIMESTAMP, 8, "time");
+  catalog::Column column4( VALUE_TYPE_DOUBLE, 8, "salary");
 
-  column_infos.push_back(column_info1);
-  column_infos.push_back(column_info2);
-  column_infos.push_back(column_info3);
-  column_infos.push_back(column_info4);
+  columns.push_back(column1);
+  columns.push_back(column2);
+  columns.push_back(column3);
+  columns.push_back(column4);
 
-  bool status = bridge::DDL::CreateTable( 20000, "test_table_basic_column", column_infos );
+  bool status = bridge::DDL::CreateTable( 20000, "test_table_basic_column", columns );
   assert( status );
 
   storage::DataTable* table = db->GetTableById(20000);
@@ -71,6 +71,8 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
 
   // Schema
   catalog::Schema* schema = table->GetSchema();
+
+  std::cout << (*schema);
 
   // The first column
   catalog::Column column = schema->GetColumn(0);
@@ -126,27 +128,27 @@ void BridgeTest::DDL_CreateTable_TEST_CONSTRAINTS() {
 
 
   // ColumnInfo
-  std::vector<catalog::Column> column_infos;
+  std::vector<catalog::Column> columns;
 
-  catalog::Column column_info1( VALUE_TYPE_INTEGER, 4, "id");
-  column_info1.AddConstraint(notnull_constraint);
+  catalog::Column column1( VALUE_TYPE_INTEGER, 4, "id");
+  column1.AddConstraint(notnull_constraint);
 
-  catalog::Column column_info2( VALUE_TYPE_VARCHAR, 68, "name");
-  column_info2.AddConstraint(primary_key_constraint);
+  catalog::Column column2( VALUE_TYPE_VARCHAR, 68, "name");
+  column2.AddConstraint(primary_key_constraint);
 
-  catalog::Column column_info3( VALUE_TYPE_TIMESTAMP, 8, "time");
-  column_info3.AddConstraint(unique_constraint);
+  catalog::Column column3( VALUE_TYPE_TIMESTAMP, 8, "time");
+  column3.AddConstraint(unique_constraint);
 
-  catalog::Column column_info4( VALUE_TYPE_DOUBLE, 8, "salary");
-  column_info4.AddConstraint(foreign_constraint);
+  catalog::Column column4( VALUE_TYPE_DOUBLE, 8, "salary");
+  column4.AddConstraint(foreign_constraint);
 
-  column_infos.push_back(column_info1);
-  column_infos.push_back(column_info2);
-  column_infos.push_back(column_info3);
-  column_infos.push_back(column_info4);
+  columns.push_back(column1);
+  columns.push_back(column2);
+  columns.push_back(column3);
+  columns.push_back(column4);
 
   // Create a table
-  bool status = bridge::DDL::CreateTable( 20001, "test_table_notnull_constraint", column_infos );
+  bool status = bridge::DDL::CreateTable( 20001, "test_table_notnull_constraint", columns );
   assert ( status );
 
   storage::DataTable* table = db->GetTableById(20001);
