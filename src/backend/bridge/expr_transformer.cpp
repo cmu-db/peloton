@@ -68,7 +68,7 @@ expression::AbstractExpression* ExprTransformer::TransformExpr(
 
   switch (nodeTag(expr_state->expr)) {
     case T_Const:
-      peloton_expr = TransformConstant(expr_state);
+      peloton_expr = TransformConst(expr_state);
       break;
 
     case T_OpExpr:
@@ -99,7 +99,7 @@ bool ExprTransformer::CleanExprTree(expression::AbstractExpression* root) {
   return true;
 }
 
-expression::AbstractExpression* ExprTransformer::TransformConstant(
+expression::AbstractExpression* ExprTransformer::TransformConst(
     const ExprState* es) {
 
   auto const_expr = reinterpret_cast<const Const*>(es->expr);
@@ -218,7 +218,7 @@ expression::AbstractExpression* ExprTransformer::TransformBool(
     }
 
     default:
-      LOG_ERROR("Unrecognized boolean type (BoolExpr) : %u", bool_op);
+      LOG_ERROR("Unrecognized BoolExpr : %u", bool_op);
   }
 
   return nullptr;
