@@ -19,7 +19,7 @@
 namespace peloton {
 namespace catalog {
 
-/// Helper function for creating TupleSchema
+// Helper function for creating TupleSchema
 void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
                                const std::vector<oid_t> column_lengths,
                                const std::vector<std::string> column_names,
@@ -54,7 +54,7 @@ void Schema::CreateTupleSchema(const std::vector<ValueType> column_types,
   uninlined_column_count = uninlined_columns.size();
 }
 
-/// Construct schema from vector of Column
+// Construct schema from vector of Column
 Schema::Schema(const std::vector<Column> columns)
 : length(0),
   tuple_is_inlined(false) {
@@ -87,7 +87,7 @@ Schema::Schema(const std::vector<Column> columns)
 
 }
 
-/// Copy schema
+// Copy schema
 Schema* Schema::CopySchema(const Schema *schema) {
   oid_t column_count = schema->GetColumnCount();
   std::vector<oid_t> set;
@@ -98,7 +98,7 @@ Schema* Schema::CopySchema(const Schema *schema) {
   return CopySchema(schema, set);
 }
 
-/// Copy subset of columns in the given schema
+// Copy subset of columns in the given schema
 Schema* Schema::CopySchema(const Schema *schema,
                            const std::vector<oid_t>& set){
   oid_t column_count = schema->GetColumnCount();
@@ -115,13 +115,13 @@ Schema* Schema::CopySchema(const Schema *schema,
   return ret_schema;
 }
 
-/// Append two schema objects
+// Append two schema objects
 Schema* Schema::AppendSchema(Schema *first, Schema *second){
 
   return AppendSchemaPtrList({first, second});
 }
 
-/// Append subset of columns in the two given schemas
+// Append subset of columns in the two given schemas
 Schema* Schema::AppendSchema(
     Schema *first,
     std::vector<oid_t>& first_set,
@@ -132,7 +132,7 @@ Schema* Schema::AppendSchema(
   return AppendSchemaPtrList(schema_list, subsets);
 }
 
-/// Append given schemas.
+// Append given schemas.
 Schema *Schema::AppendSchemaList(std::vector<Schema> &schema_list) {
   // All we do here is convert vector<Schema> to vector<Schema *>.
   // This is a convenience function.
@@ -143,7 +143,7 @@ Schema *Schema::AppendSchemaList(std::vector<Schema> &schema_list) {
   return AppendSchemaPtrList(schema_ptr_list);
 }
 
-/// Append given schemas.
+// Append given schemas.
 Schema *Schema::AppendSchemaPtrList(const std::vector<Schema *> &schema_list) {
   std::vector<std::vector<oid_t> > subsets;
 
@@ -159,7 +159,7 @@ Schema *Schema::AppendSchemaPtrList(const std::vector<Schema *> &schema_list) {
   return AppendSchemaPtrList(schema_list, subsets);
 }
 
-/// Append subsets of columns in the given schemas.
+// Append subsets of columns in the given schemas.
 Schema *Schema::AppendSchemaPtrList(
     const std::vector<Schema *> &schema_list,
     const std::vector<std::vector<oid_t> > &subsets) {
@@ -184,7 +184,7 @@ Schema *Schema::AppendSchemaPtrList(
   return ret_schema;
 }
 
-/// Get a string representation of this schema for debugging
+// Get a string representation of this schema for debugging
 std::ostream& operator<< (std::ostream& os, const Schema& schema){
   os << "\tSchema :: " <<
       " column_count = " << schema.column_count <<
@@ -199,7 +199,7 @@ std::ostream& operator<< (std::ostream& os, const Schema& schema){
   return os;
 }
 
-/// Compare two schemas
+// Compare two schemas
 bool Schema::operator== (const Schema &other) const {
 
   if (other.GetColumnCount() != GetColumnCount() ||

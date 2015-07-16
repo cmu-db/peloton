@@ -175,9 +175,15 @@ bool DDL::CreateIndex( IndexInfo index_info ){
           catalog::Constraint constraint( CONSTRAINT_TYPE_PRIMARY, index_name );
           tuple_schema->AddConstraint( tuple_schema_column_itr, constraint);
         }else if( index_type == INDEX_TYPE_UNIQUE ){ 
+<<<<<<< HEAD
           catalog::Constraint constraint( CONSTRAINT_TYPE_UNIQUE, index_name );
           constraint.SetUniqueIndexPosition( data_table->GetUniqueIndexCount() );
           tuple_schema->AddConstraint( tuple_schema_column_itr, constraint);
+=======
+          catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_UNIQUE, index_name );
+          constraint->SetUniqueIndexOffset( data_table->GetIndexCount() );
+          tuple_schema->AddConstraintByColumnId( tuple_schema_column_itr, constraint);
+>>>>>>> bridge
         }
 
       }
@@ -193,7 +199,6 @@ bool DDL::CreateIndex( IndexInfo index_info ){
   index::Index* index = index::IndexFactory::GetInstance(metadata);
 
   // Record the built index in the table
-  std::cout << "AddIndex" <<  std::endl;
   data_table->AddIndex(index, index_oid);
 
   return true;
@@ -332,8 +337,12 @@ void DDL::ProcessUtility(Node *parsetree,
           char* relation_name = Cstmt->relation->relname;
           Oid relation_oid = ((CreateStmt *)parsetree)->relation_id;
 
+<<<<<<< HEAD
           std::vector<catalog::Column> column_infos;
-          std::vector<catalog::ReferenceTableInfo> reference_table_infos;
+=======
+          std::vector<catalog::ColumnInfo> column_infos;
+>>>>>>> bridge
+          std::vector<catalog::ForeignKeyInfo> reference_table_infos;
 
           bool status;
 
@@ -342,6 +351,7 @@ void DDL::ProcessUtility(Node *parsetree,
           //===--------------------------------------------------------------------===//
           if( schema != NULL ){
             bridge::DDL::ParsingCreateStmt( Cstmt,
+<<<<<<< HEAD
                                             column_infos,
                                             reference_table_infos );
 
@@ -353,6 +363,19 @@ void DDL::ProcessUtility(Node *parsetree,
             status = bridge::DDL::CreateTable( relation_oid,
                                                relation_name,
                                                column_infos );
+=======
+                                                     column_infos,
+                                                     reference_table_infos );
+
+            status = bridge::DDL::CreateTable( relation_oid,
+                                                        relation_name, 
+                                                        column_infos );
+          } else {
+            // SPECIAL CASE : CREATE TABLE WITHOUT COLUMN INFO
+            status = bridge::DDL::CreateTable( relation_oid,
+                                                        relation_name, 
+                                                        column_infos );
+>>>>>>> bridge
           }
 
           fprintf(stderr, "DDL_CreateTable(%s) :: Oid : %d Status : %d \n", relation_name, relation_oid, status);
@@ -387,7 +410,11 @@ void DDL::ProcessUtility(Node *parsetree,
           // Set Reference Tables
           //===--------------------------------------------------------------------===//
           status = bridge::DDL::SetReferenceTables( reference_table_infos,
+<<<<<<< HEAD
                                                     relation_oid );
+=======
+                                                             relation_oid );
+>>>>>>> bridge
           if( status == false ){
             LOG_WARN("Failed to set reference tables");
           } 
@@ -536,7 +563,7 @@ void DDL::ProcessUtility(Node *parsetree,
  */
 void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
                              std::vector<catalog::Column>& column_infos,
-                             std::vector<catalog::ReferenceTableInfo>& reference_table_infos
+                             std::vector<catalog::ForeignKeyInfo>& reference_table_infos
 ) {
   assert(Cstmt);
 
@@ -670,7 +697,11 @@ void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
             // REFERENCE TABLE NAME AND ACTION OPTION
             if( ConstraintNode->pktable != NULL ){
 
+<<<<<<< HEAD
               storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+=======
+                storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+>>>>>>> bridge
 
               // PrimaryKey Table
               oid_t PrimaryKeyTableId = db->GetTableIdByName( ConstraintNode->pktable->relname );
@@ -693,7 +724,7 @@ void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
                 }
               }
 
-              catalog::ReferenceTableInfo *reference_table_info = new catalog::ReferenceTableInfo( PrimaryKeyTableId,
+              catalog::ForeignKeyInfo *reference_table_info = new catalog::ForeignKeyInfo( PrimaryKeyTableId,
                                                                                                    pk_column_names,
                                                                                                    fk_column_names,
                                                                                                    ConstraintNode->fk_upd_action,
@@ -793,14 +824,19 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
  * @param relation_oid relation oid 
  * @return true if we set the reference tables, false otherwise
  */
-bool DDL::SetReferenceTables( std::vector<catalog::ReferenceTableInfo>& reference_table_infos, 
+bool DDL::SetReferenceTables( std::vector<catalog::ForeignKeyInfo>& reference_table_infos, 
                               oid_t relation_oid ){
   assert( relation_oid );
   oid_t database_oid = GetCurrentDatabaseOid();
   assert( database_oid );
+  storage::Database* db = storage::Database::GetDatabaseById( database_oid );
+  storage::DataTable* current_table = db->GetTableById( relation_oid );
 
   for( auto reference_table_info : reference_table_infos) {
+<<<<<<< HEAD
     storage::DataTable* current_table = (storage::DataTable*) catalog::Manager::GetInstance().GetTable(database_oid, relation_oid);
+=======
+>>>>>>> bridge
     current_table->AddReferenceTable( &reference_table_info );
   }
 
@@ -834,7 +870,7 @@ bool DDL::AddConstraint(Oid relation_oid, Constraint* constraint )
 {
 
   ConstraintType contype = PostgresConstraintTypeToPelotonConstraintType( (PostgresConstraintType) constraint->contype );
-  std::vector<catalog::ReferenceTableInfo> reference_table_infos;
+  std::vector<catalog::ForeignKeyInfo> reference_table_infos;
 
   std::string conname;
   if( constraint->conname != NULL){
@@ -878,7 +914,7 @@ bool DDL::AddConstraint(Oid relation_oid, Constraint* constraint )
         }
       }
 
-      catalog::ReferenceTableInfo *reference_table_info = new catalog::ReferenceTableInfo( PrimaryKeyTableId,
+      catalog::ForeignKeyInfo *reference_table_info = new catalog::ForeignKeyInfo( PrimaryKeyTableId,
                                                                                            pk_column_names,  
                                                                                            fk_column_names,  
                                                                                            constraint->fk_upd_action,  
