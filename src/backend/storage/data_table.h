@@ -11,11 +11,10 @@
 #pragma once
 
 #include "backend/bridge/bridge.h"
+#include "backend/catalog/foreign_key.h"
 #include "backend/storage/abstract_table.h"
 #include "backend/storage/backend_vm.h"
 #include "backend/index/index.h"
-
-#include "nodes/nodes.h" // TODO :: REMOVE, just for raw expr
 
 #include <string>
 
@@ -61,57 +60,10 @@ public:
     std::string GetName() const {
         return table_name;
     }
+
     oid_t  GetId() const {
         return table_oid;
     }
-
-    index::Index* GetIndexByOid(oid_t index_oid );
-    
-    // Add an index to the table
-    bool AddIndex( index::Index *index , oid_t index_oid);
-
-    void AddReferenceTable( catalog::ReferenceTableInfo *referenceTableInfo );
-
-    inline index::Index *GetIndex(oid_t index_id) const {
-        assert(index_id < indexes.size());
-        return indexes[index_id];
-    }
-
-
-    inline bool ishasPrimaryKey(){
-      if( primary_key_count > 0 )
-        return true;
-      else
-        return false;
-    }
-
-    inline bool ishasUnique(){
-      if( unique_count > 0 )
-        return true;
-      else
-        return false;
-    }
-
-    inline bool ishasReferenceTable(){
-      if( reference_table_infos.size() > 0 )
-        return true;
-      else
-        return false;
-    }
-
-    inline size_t GetIndexCount() const {
-      return indexes.size();
-    }
-
-    inline size_t GetUniqueIndexCount() const {
-      return unique_count;
-    }
-
-    inline size_t GetReferenceTableCount() const {
-        return reference_table_infos.size();
-    }
-
-    storage::DataTable *GetReferenceTable(int position) ;
 
     // insert tuple in table
     ItemPointer InsertTuple( txn_id_t transaction_id, const Tuple *tuple, bool update = false );
@@ -124,6 +76,56 @@ public:
 
     bool CheckNulls(const storage::Tuple *tuple) const;
 
+    // Add an index to the table
+    bool AddIndex(index::Index *index, oid_t index_oid);
+
+    // Add a foreign key to the table
+    void AddForeignKey(catalog::ForeignKey *foreign_key);
+
+    //===--------------------------------------------------------------------===//
+     // ACCESSORS
+     //===--------------------------------------------------------------------===//
+
+    index::Index *GetIndex(oid_t index_offset) const;
+
+    index::Index* GetIndexByOid(oid_t index_oid);
+
+    bool ishasPrimaryKey(){
+      if( primary_key_count > 0 )
+        return true;
+      else
+        return false;
+    }
+
+    bool ishasUnique(){
+      if( unique_count > 0 )
+        return true;
+      else
+        return false;
+    }
+
+    bool ishasReferenceTable(){
+      if( reference_table_infos.size() > 0 )
+        return true;
+      else
+        return false;
+    }
+
+    size_t GetIndexCount() const {
+      return indexes.size();
+    }
+
+    size_t GetUniqueIndexCount() const {
+      return unique_count;
+    }
+
+    size_t GetReferenceTableCount() const {
+        return reference_table_infos.size();
+    }
+
+    storage::DataTable *GetReferenceTable(int offset) ;
+
+    catalog::ForeignKeyInfo *GetReferenceTableInfo(int offset) ;
 
     //===--------------------------------------------------------------------===//
     // UTILITIES
@@ -140,20 +142,22 @@ protected:
 
     // table name and oid
     std::string table_name;
+
+    // catalog info
     oid_t table_oid;
+    oid_t database_oid;
     
     // INDEXES
     std::vector<index::Index*> indexes;
+
+    // CONSTRAINT INFO
 
     // Primary key and unique key count
     unsigned int primary_key_count = 0;
     unsigned int unique_count = 0;
 
     // Reference tables
-    std::vector<catalog::ReferenceTableInfo*> reference_table_infos;
-
-    // Convert index oid to index address
-    oid_t_to_index_ptr index_oid_to_address;
+    std::vector<catalog::ForeignKey*> reference_table_infos;
 
 };
 

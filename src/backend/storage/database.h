@@ -64,7 +64,7 @@ public:
 
     storage::DataTable* GetTableByName( const std::string table_name ) const;
     storage::DataTable* GetTableById( const oid_t table_oid ) const;
-    storage::DataTable* GetTableByPosition( const oid_t table_position ) const;
+    storage::DataTable* GetTableByOffset( const oid_t table_offset ) const;
 
     oid_t GetTableIdByName( const std::string table_name ) const;
     std::string GetTableNameById( const oid_t table_oid ) const;

@@ -23,11 +23,11 @@ BtreeMultimapIndex::BtreeMultimapIndex(IndexMetadata *metadata)
   size_t pool_size = 1024;
   unsigned int bits = 16;
 
-  btree_manager = bt_mgr ((char *) metadata->identifier.c_str(), bits, pool_size);
+  btree_manager = bt_mgr ((char *) metadata->index_name .c_str(), bits, pool_size);
 
   btree_db = bt_open (btree_manager);
 
-  btree_db->key_schema = key_schema;
+  btree_db->key_schema = this->GetKeySchema();
 
   unique_keys = metadata->unique_keys;
 }
@@ -88,7 +88,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::Scan() const{
   int len = 0;
   unsigned int slot;
 
-  storage::Tuple tuple(key_schema);
+  storage::Tuple tuple(this->GetKeySchema());
   ItemPointer *item;
 
   do {
@@ -141,7 +141,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKey(const storage::T
   BtVal *val;
   ItemPointer *item;
 
-  storage::Tuple tuple(key_schema);
+  storage::Tuple tuple(this->GetKeySchema());
 
   if( (slot = bt_loadpage (btree_db, set, key->GetData(), 0, BtLockRead)) ) {
 
@@ -173,7 +173,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKey(const storage::T
       if( slotptr(set->page, slot)->dead )
         continue;
 
-      if( !keycmp (ptr, key->GetData(), key_schema) ) {
+      if( !keycmp (ptr, key->GetData(), this->GetKeySchema()) ) {
         val = valptr (set->page,slot);
 
         tuple.Move(ptr->key);
@@ -208,7 +208,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyBetween(const sto
   BtVal *val;
   ItemPointer *item;
 
-  storage::Tuple tuple(key_schema);
+  storage::Tuple tuple(this->GetKeySchema());
 
   if( (slot = bt_loadpage (btree_db, set, start->GetData(), 0, BtLockRead)) ) {
 
@@ -244,7 +244,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyBetween(const sto
       // Comparator
       //===--------------------------------------------------------------------===//
 
-      if( keycmp (ptr, end->GetData(), key_schema) <= 0 ) {
+      if( keycmp (ptr, end->GetData(), this->GetKeySchema()) <= 0 ) {
         val = valptr (set->page,slot);
 
         tuple.Move(ptr->key);
@@ -283,7 +283,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLT(const storage:
   int len = 0;
   unsigned int slot;
 
-  storage::Tuple tuple(key_schema);
+  storage::Tuple tuple(this->GetKeySchema());
   ItemPointer *item;
 
   do {
@@ -309,7 +309,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLT(const storage:
           // Comparator
           //===--------------------------------------------------------------------===//
 
-          if( keycmp (ptr, key->GetData(), key_schema) == 0 )
+          if( keycmp (ptr, key->GetData(), this->GetKeySchema()) == 0 )
             break;
 
           tuple.Move(ptr->key);
@@ -343,7 +343,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLTE(const storage
   int len = 0;
   unsigned int slot;
 
-  storage::Tuple tuple(key_schema);
+  storage::Tuple tuple(this->GetKeySchema());
   ItemPointer *item;
 
   do {
@@ -369,7 +369,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyLTE(const storage
           // Comparator
           //===--------------------------------------------------------------------===//
 
-          if( keycmp (ptr, key->GetData(), key_schema) == 1 )
+          if( keycmp (ptr, key->GetData(), this->GetKeySchema()) == 1 )
             break;
 
           tuple.Move(ptr->key);
@@ -397,7 +397,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyGT(const storage:
   BtKey *ptr;
   BtVal *val;
   ItemPointer *item;
-  storage::Tuple tuple(key_schema);
+  storage::Tuple tuple(this->GetKeySchema());
 
   if( (slot = bt_loadpage (btree_db, set, key->GetData(), 0, BtLockRead)) ) {
 
@@ -433,7 +433,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyGT(const storage:
       // Comparator
       //===--------------------------------------------------------------------===//
 
-      if( keycmp (ptr, key->GetData(), key_schema) == 0 )
+      if( keycmp (ptr, key->GetData(), this->GetKeySchema()) == 0 )
         continue;
 
       val = valptr (set->page,slot);
@@ -463,7 +463,7 @@ std::vector<ItemPointer> BtreeMultimapIndex::GetLocationsForKeyGTE(const storage
     BtVal *val;
     ItemPointer *item;
 
-    storage::Tuple tuple(key_schema);
+    storage::Tuple tuple(this->GetKeySchema());
 
     if( (slot = bt_loadpage (btree_db, set, key->GetData(), 0, BtLockRead)) ) {
 

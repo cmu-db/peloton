@@ -58,8 +58,8 @@ public:
     catalog::Database *GetDatabase(const oid_t database_id) const;
 
     // Look up the table
-    storage::DataTable *GetTable(const oid_t database_id,
-                                 const oid_t table_id) const;
+    catalog::Table *GetTable(const oid_t database_id,
+                             const oid_t table_id) const;
 
     Manager(Manager const&) = delete;
 
