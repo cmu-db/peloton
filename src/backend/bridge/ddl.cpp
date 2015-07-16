@@ -175,15 +175,9 @@ bool DDL::CreateIndex( IndexInfo index_info ){
           catalog::Constraint constraint( CONSTRAINT_TYPE_PRIMARY, index_name );
           tuple_schema->AddConstraint( tuple_schema_column_itr, constraint);
         }else if( index_type == INDEX_TYPE_UNIQUE ){ 
-<<<<<<< HEAD
           catalog::Constraint constraint( CONSTRAINT_TYPE_UNIQUE, index_name );
           constraint.SetUniqueIndexPosition( data_table->GetUniqueIndexCount() );
           tuple_schema->AddConstraint( tuple_schema_column_itr, constraint);
-=======
-          catalog::Constraint* constraint = new catalog::Constraint( CONSTRAINT_TYPE_UNIQUE, index_name );
-          constraint->SetUniqueIndexOffset( data_table->GetIndexCount() );
-          tuple_schema->AddConstraintByColumnId( tuple_schema_column_itr, constraint);
->>>>>>> bridge
         }
 
       }

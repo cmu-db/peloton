@@ -12,6 +12,7 @@
 
 #include "backend/bridge/bridge.h"
 #include "backend/catalog/foreign_key.h"
+#include "backend/catalog/table.h"
 #include "backend/storage/abstract_table.h"
 #include "backend/storage/backend_vm.h"
 #include "backend/index/index.h"
@@ -45,7 +46,8 @@ class DataTable : public AbstractTable {
 
 public:
     // Table constructor
-    DataTable(catalog::Schema *schema,
+    DataTable(catalog::Table *catalog_table,
+              catalog::Schema *schema,
               AbstractBackend *backend,
               std::string table_name,
               oid_t table_oid,
@@ -90,42 +92,15 @@ public:
 
     index::Index* GetIndexByOid(oid_t index_oid);
 
-    bool ishasPrimaryKey(){
-      if( primary_key_count > 0 )
-        return true;
-      else
-        return false;
+    catalog::ForeignKey *GetForeignKey(oid_t key_offset) ;
+
+    oid_t GetIndexCount() const {
+      return catalog_table->GetIndexCount();
     }
 
-    bool ishasUnique(){
-      if( unique_count > 0 )
-        return true;
-      else
-        return false;
+    oid_t GetForeignKeyCount() const {
+      return catalog_table->GetForeignKeyCount();
     }
-
-    bool ishasReferenceTable(){
-      if( reference_table_infos.size() > 0 )
-        return true;
-      else
-        return false;
-    }
-
-    size_t GetIndexCount() const {
-      return indexes.size();
-    }
-
-    size_t GetUniqueIndexCount() const {
-      return unique_count;
-    }
-
-    size_t GetReferenceTableCount() const {
-        return reference_table_infos.size();
-    }
-
-    storage::DataTable *GetReferenceTable(int offset) ;
-
-    catalog::ForeignKeyInfo *GetReferenceTableInfo(int offset) ;
 
     //===--------------------------------------------------------------------===//
     // UTILITIES
@@ -145,20 +120,9 @@ protected:
 
     // catalog info
     oid_t table_oid;
-    oid_t database_oid;
     
-    // INDEXES
-    std::vector<index::Index*> indexes;
-
-    // CONSTRAINT INFO
-
-    // Primary key and unique key count
-    unsigned int primary_key_count = 0;
-    unsigned int unique_count = 0;
-
-    // Reference tables
-    std::vector<catalog::ForeignKey*> reference_table_infos;
-
+    // Catalog table
+    catalog::Table *catalog_table;
 };
 
 
