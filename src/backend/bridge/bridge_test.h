@@ -36,16 +36,26 @@ class BridgeTest {
 
   static void RunTests();
 
+ private:
+
+  //===--------------------------------------------------------------------===//
+  // Tests
+  //===--------------------------------------------------------------------===//
+
   static void DDL_CreateTable_TEST();
+
   static void DDL_CreateTable_TEST_INVALID_OID();
+
   static void DDL_CreateTable_TEST_COLUMNS();
+
   static void DDL_CreateTable_TEST_COLUMN_CONSTRAINTS();
+
+  //===--------------------------------------------------------------------===//
+  // Utilities
+  //===--------------------------------------------------------------------===//
 
   static std::vector<catalog::ColumnInfo> CreateSimpleColumns();
 
-  static void TestCatalog();
-
-  
 };
 
 } // End test namespace

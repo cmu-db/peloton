@@ -94,7 +94,7 @@ oid_t Manager::GetDatabaseCount() const {
 // CONVENIENCE WRAPPERS
 //===--------------------------------------------------------------------===//
 
-storage::DataTable *Manager::GetTableWitOid(const oid_t database_oid,
+storage::DataTable *Manager::GetTableWithOid(const oid_t database_oid,
                                             const oid_t table_oid) const {
 
   // Lookup DB
@@ -114,7 +114,7 @@ index::Index *Manager::GetIndexWithOid(const oid_t database_oid,
                                        const oid_t index_oid) const {
 
   // Lookup table
-  auto table = GetTableWitOid(database_oid, table_oid);
+  auto table = GetTableWithOid(database_oid, table_oid);
 
   // Lookup index
   if(table != nullptr) {

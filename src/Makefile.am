@@ -24,7 +24,6 @@ include $(srcdir)/backend/scheduler/Makefile.am
 include $(srcdir)/backend/storage/Makefile.am
 
 include $(srcdir)/postgres/backend/Makefile.am
-include $(srcdir)/postgres/bridge/Makefile.am
 include $(srcdir)/postgres/common/Makefile.am
 include $(srcdir)/postgres/interfaces/Makefile.am
 include $(srcdir)/postgres/port/Makefile.am
@@ -55,7 +54,6 @@ libpeloton_la_SOURCES = \
 			$(scheduler_FILES) \
 			$(storage_FILES) \
 			$(postgres_backend_FILES) \
-			$(postgres_bridge_FILES) \
 			$(postgres_common_FILES) \
 			$(postgres_port_FILES) \
 			$(postgres_timezone_FILES)

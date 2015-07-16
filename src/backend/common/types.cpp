@@ -408,65 +408,65 @@ ExpressionType StringToExpressionType(std::string str ) {
 // Index Method Type - String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string IndexMethodTypeToString(IndexMethodType type) {
+std::string IndexMethodTypeToString(IndexType type) {
     switch (type) {
-    case INDEX_METHOD_TYPE_INVALID: {
+    case INDEX_CONSTRAINT_TYPE_INVALID: {
         return "INVALID";
     }
-    case INDEX_METHOD_TYPE_BTREE_MULTIMAP: {
+    case INDEX_TYPE_BTREE_MULTIMAP: {
         return "BTREE_MULTIMAP";
     }
-    case INDEX_METHOD_TYPE_ORDERED_MAP: {
+    case INDEX_TYPE_ORDERED_MAP: {
         return "ORDERED_MAP";
     }
     }
     return "INVALID";
 }
 
-IndexMethodType StringToIndexMethodType(std::string str) {
+IndexType StringToIndexMethodType(std::string str) {
     if (str == "INVALID") {
-        return INDEX_METHOD_TYPE_INVALID;
+        return INDEX_CONSTRAINT_TYPE_INVALID;
     } else if (str == "BTREE_MULTIMAP") {
-        return INDEX_METHOD_TYPE_BTREE_MULTIMAP;
+        return INDEX_TYPE_BTREE_MULTIMAP;
     } else if (str == "ORDERED_MAP") {
-        return INDEX_METHOD_TYPE_ORDERED_MAP;
+        return INDEX_TYPE_ORDERED_MAP;
     }
-    return INDEX_METHOD_TYPE_INVALID;
+    return INDEX_CONSTRAINT_TYPE_INVALID;
 }
 
 //===--------------------------------------------------------------------===//
 // Index  Type - String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string IndexTypeToString(IndexType type) {
+std::string IndexTypeToString(IndexConstraintType type) {
     switch (type) {
-    case INDEX_TYPE_INVALID: {
+    case INDEX_CONSTRAINT_TYPE_INVALID: {
         return "INVALID";
     }
-    case INDEX_TYPE_NORMAL: {
+    case INDEX_CONSTRAINT_TYPE_DEFAULT: {
         return "NORMAL";
     }
-    case INDEX_TYPE_PRIMARY_KEY: {
+    case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY: {
         return "PRIMARY_KEY";
     }
-    case INDEX_TYPE_UNIQUE: {
+    case INDEX_CONSTRAINT_TYPE_UNIQUE: {
         return "UNIQUE";
     }
     }
     return "INVALID";
 }
 
-IndexType StringToIndexType(std::string str) {
+IndexConstraintType StringToIndexType(std::string str) {
     if (str == "INVALID") {
-        return INDEX_TYPE_INVALID;
+        return INDEX_CONSTRAINT_TYPE_INVALID;
     } else if (str == "NORMAL") {
-        return INDEX_TYPE_NORMAL;
+        return INDEX_CONSTRAINT_TYPE_DEFAULT;
     } else if (str == "PRIMARY_KEY") {
-        return INDEX_TYPE_PRIMARY_KEY;
+        return INDEX_CONSTRAINT_TYPE_PRIMARY_KEY;
     }else if (str == "UNIQUE") {
-        return INDEX_TYPE_UNIQUE;
+        return INDEX_CONSTRAINT_TYPE_UNIQUE;
     }
-    return INDEX_TYPE_INVALID;
+    return INDEX_CONSTRAINT_TYPE_INVALID;
 }
 //===--------------------------------------------------------------------===//
 // Plan Node - String Utilities
