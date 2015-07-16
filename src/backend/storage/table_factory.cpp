@@ -43,7 +43,7 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
 bool TableFactory::DropDataTable(oid_t database_oid, oid_t table_oid)
 {
   auto& manager = catalog::Manager::GetInstance();
-  DataTable* table = (DataTable*) manager.GetTable(database_oid, table_oid);
+  DataTable* table = (DataTable*) manager.GetTableWitOid(database_oid, table_oid);
 
   if(table == nullptr)
     return false;

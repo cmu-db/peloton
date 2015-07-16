@@ -10,7 +10,8 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/catalog/catalog.h"
+#include <cassert>
+
 #include "backend/catalog/manager.h"
 
 namespace peloton {
@@ -20,6 +21,10 @@ Manager& Manager::GetInstance() {
   static Manager manager;
   return manager;
 }
+
+//===--------------------------------------------------------------------===//
+// OBJECT MAP
+//===--------------------------------------------------------------------===//
 
 void Manager::SetLocation(const oid_t oid, void *location) {
   locator.insert(std::pair<oid_t, void*>(oid, location));
@@ -36,69 +41,88 @@ void *Manager::GetLocation(const oid_t oid) const {
   return location;
 }
 
-catalog::Database *Manager::GetDatabase(const oid_t database_id) const {
-  auto& catalog = catalog::Catalog::GetInstance();
+//===--------------------------------------------------------------------===//
+// DATABASE
+//===--------------------------------------------------------------------===//
 
-  // Lookup DB
-  catalog::Database *database = catalog.GetDatabase(database_id);
 
+void Manager::AddDatabase(storage::Database *database){
+  {
+    std::lock_guard<std::mutex> lock(catalog_mutex);
+    databases.push_back(database);
+  }
+}
+
+storage::Database *Manager::GetDatabaseWithOid(const oid_t database_oid) const {
+  for(auto database : databases)
+    if(database->GetOid() == database_oid)
+      return database;
+
+  return nullptr;
+}
+
+void Manager::DropDatabaseWithOid(const oid_t database_oid) {
+  {
+    std::lock_guard<std::mutex> lock(catalog_mutex);
+
+    oid_t database_offset = 0;
+    for(auto database : databases) {
+      if(database->GetOid() == database_oid)
+        break;
+      database_offset++;
+    }
+    assert(database_offset < databases.size());
+
+    // Drop the database
+    databases.erase(databases.begin() + database_offset);
+  }
+}
+
+storage::Database *Manager::GetDatabase(const oid_t database_offset) const {
+  assert(database_offset < databases.size());
+  auto database = databases.at(database_offset);
   return database;
 }
 
-catalog::Table *Manager::GetTable(const oid_t database_id,
-                                  const oid_t table_id) const {
-  auto& catalog = catalog::Catalog::GetInstance();
+oid_t Manager::GetDatabaseCount() const {
+  return databases.size();
+}
+
+//===--------------------------------------------------------------------===//
+// CONVENIENCE WRAPPERS
+//===--------------------------------------------------------------------===//
+
+storage::DataTable *Manager::GetTableWitOid(const oid_t database_oid,
+                                            const oid_t table_oid) const {
 
   // Lookup DB
-  catalog::Database *database = catalog.GetDatabase(database_id);
+  auto database = GetDatabaseWithOid(database_oid);
 
   // Lookup table
   if(database != nullptr) {
-    catalog::Table *table = database->GetTable(table_id);
+    auto table = database->GetTableWithOid(table_oid);
     return table;
   }
 
   return nullptr;
 }
 
-catalog::Index *Manager::GetIndex(const oid_t database_id,
-                                  const oid_t table_id,
-                                  const oid_t index_id) const {
-  auto& catalog = catalog::Catalog::GetInstance();
-
-  // Lookup DB
-  catalog::Database *database = catalog.GetDatabase(database_id);
+index::Index *Manager::GetIndexWithOid(const oid_t database_oid,
+                                       const oid_t table_oid,
+                                       const oid_t index_oid) const {
 
   // Lookup table
-  if(database != nullptr) {
-    catalog::Table *table = database->GetTable(table_id);
+  auto table = GetTableWitOid(database_oid, table_oid);
 
-    // Get index
-    if(table != nullptr)
-      return table->GetIndex(index_id);
+  // Lookup index
+  if(table != nullptr) {
+    auto index = table->GetIndexWithOid(index_oid);
+    return index;
   }
 
   return nullptr;
 }
 
-catalog::Schema *Manager::GetSchema(const oid_t database_id,
-                                    const oid_t table_id) const {
-  auto& catalog = catalog::Catalog::GetInstance();
-
-  // Lookup DB
-  catalog::Database *database = catalog.GetDatabase(database_id);
-
-  // Lookup table
-  if(database != nullptr) {
-    catalog::Table *table = database->GetTable(table_id);
-
-    // Get schema
-    if(table != nullptr)
-      return table->GetSchema();
-  }
-
-  return nullptr;
-}
 
 } // End catalog namespace
 } // End peloton namespace

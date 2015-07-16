@@ -50,12 +50,12 @@ class Constraint {
   }
 
   // Offset into the list of "reference tables" in the Table.
-  inline void SetFKListOffset(oid_t offset) {
+  void SetFKListOffset(oid_t offset) {
     fk_list_offset = offset;
   }
 
   // Offset into the list of "unique indices" in the Table.
-  inline void SetUniqueIndexOffset(oid_t offset ) {
+  void SetUniqueIndexOffset(oid_t offset ) {
     unique_index_list_offset = offset;
   }
 
