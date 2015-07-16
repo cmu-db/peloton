@@ -94,7 +94,7 @@ TEST(TupleTests, VarcharTest) {
 	tuple->SetValue(3, val2);
 
 	EXPECT_NE(tuple->GetValue(3), val);
-  EXPECT_EQ(tuple->GetValue(3), val2);
+	EXPECT_EQ(tuple->GetValue(3), val2);
 
 	std::cout << (*tuple);
 
