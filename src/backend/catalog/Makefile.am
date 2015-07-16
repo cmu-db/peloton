@@ -5,11 +5,6 @@
 ######################################################################
 
 catalog_FILES = \
-				backend/catalog/catalog_object.cpp \
-				backend/catalog/catalog.cpp \
-				backend/catalog/database.cpp \
-				backend/catalog/table.cpp \
-				backend/catalog/index.cpp \
 				backend/catalog/column.cpp \
 				backend/catalog/schema.cpp \
 				backend/catalog/constraint.cpp \

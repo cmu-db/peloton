@@ -24,43 +24,18 @@ namespace peloton {
 namespace storage {
 
 
-DataTable::DataTable(catalog::Table *catalog_table,
-                     catalog::Schema *schema,
+DataTable::DataTable(catalog::Schema *schema,
                      AbstractBackend *backend,
                      std::string table_name,
                      oid_t table_oid,
                      size_t tuples_per_tilegroup)
 : AbstractTable(schema, backend, tuples_per_tilegroup),
-  catalog_table(catalog_table),
   table_name(table_name),
   table_oid(table_oid) {
 }
 
 DataTable::~DataTable() {
   // Nothing to do here
-}
-
-index::Index *DataTable::GetIndex(oid_t index_offset) const {
-  index::Index* index = nullptr;
-  auto catalog_index = catalog_table->GetIndex(index_offset);
-  if(catalog_index != nullptr) {
-    index = catalog_index->GetPhysicalIndex();
-  }
-  return index;
-}
-
-index::Index* DataTable::GetIndexByOid(oid_t index_oid) {
-  index::Index* index = nullptr;
-  auto catalog_index = catalog_table->GetIndexWithID(index_oid);
-  if(catalog_index != nullptr) {
-    index = catalog_index->GetPhysicalIndex();
-  }
-  return index;
-}
-
-catalog::ForeignKey *DataTable::GetForeignKey(oid_t key_offset) {
-  auto foreign_key = catalog_table->GetForeignKey(key_offset);
-  return foreign_key;
 }
 
 ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple, bool update) {
@@ -97,9 +72,7 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple
 }
 
 void DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer location) {
-  int index_count = GetIndexCount();
-  for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
-    auto index = GetIndex(index_itr);
+  for (auto index : indexes) {
     if (index->InsertEntry(tuple, location) == false) {
       throw ExecutorException("Failed to insert tuple into index");
     }
@@ -143,9 +116,7 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer loca
 }
 
 void DataTable::DeleteInIndexes(const storage::Tuple *tuple) {
-  int index_count = GetIndexCount();
-  for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
-    auto index = GetIndex(index_itr);
+  for (auto index : indexes) {
     if (index->DeleteEntry(tuple) == false) {
       throw ExecutorException("Failed to delete tuple from index " +
                               GetName() + "." + index->GetName() + " " +index->GetTypeName());
@@ -178,6 +149,92 @@ std::ostream& operator<<(std::ostream& os, const DataTable& table) {
 
   return os;
 }
+
+//===--------------------------------------------------------------------===//
+// INDEX
+//===--------------------------------------------------------------------===//
+
+void DataTable::AddIndex(index::Index *index) {
+  {
+    std::lock_guard<std::mutex> lock(table_mutex);
+    indexes.push_back(index);
+  }
+
+  // Update index stats
+  auto index_type = index->GetIndexType();
+  if(index_type == INDEX_TYPE_PRIMARY_KEY) {
+    has_primary_key = true;
+  }
+  else if(index_type == INDEX_TYPE_UNIQUE) {
+    unique_constraint_count++;
+  }
+
+}
+
+index::Index* DataTable::GetIndexWithOid(const oid_t index_oid) const {
+  for(auto index : indexes)
+    if(index->GetOid() == index_oid)
+      return index;
+
+  return nullptr;
+}
+
+void DataTable::DropIndexWithOid(const oid_t index_id) {
+  {
+    std::lock_guard<std::mutex> lock(table_mutex);
+
+    oid_t index_offset = 0;
+    for(auto index : indexes) {
+      if(index->GetOid() == index_id)
+        break;
+      index_offset++;
+    }
+    assert(index_offset < indexes.size());
+
+    // Drop the index
+    indexes.erase(indexes.begin() + index_offset);
+  }
+}
+
+index::Index *DataTable::GetIndex(const oid_t index_offset) const {
+  assert(index_offset < indexes.size());
+  auto index = indexes.at(index_offset);
+  return index;
+}
+
+oid_t DataTable::GetIndexCount() const {
+  return indexes.size();
+}
+
+//===--------------------------------------------------------------------===//
+// FOREIGN KEYS
+//===--------------------------------------------------------------------===//
+
+void DataTable::AddForeignKey(catalog::ForeignKey *key) {
+  {
+    std::lock_guard<std::mutex> lock(table_mutex);
+    foreign_keys.push_back(key);
+  }
+}
+
+catalog::ForeignKey *DataTable::GetForeignKey(const oid_t key_offset) const {
+  catalog::ForeignKey *key = nullptr;
+  key = foreign_keys.at(key_offset);
+  return key;
+}
+
+void DataTable::DropForeignKey(const oid_t key_offset) {
+  {
+    std::lock_guard<std::mutex> lock(table_mutex);
+    assert(key_offset < foreign_keys.size());
+    foreign_keys.erase(foreign_keys.begin() + key_offset);
+  }
+}
+
+oid_t DataTable::GetForeignKeyCount() const {
+  return foreign_keys.size();
+}
+
 
 } // End storage namespace
 } // End peloton namespace

@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "backend/catalog/catalog_object.h"
 #include "backend/catalog/constraint.h"
 
 namespace peloton {

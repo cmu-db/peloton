@@ -45,7 +45,7 @@ class ForeignKey {
   }
 
 
-  oid_t GetSinkTableId() const {
+  oid_t GetSinkTableOid() const {
     return sink_table_id;
   }
 
