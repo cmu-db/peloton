@@ -16,7 +16,6 @@
 #include "nodes/parsenodes.h"
 #include "catalog/pg_am.h"
 
-#include "backend/catalog/catalog.h"
 #include "backend/catalog/constraint.h"
 #include "backend/catalog/schema.h"
 #include "backend/common/types.h"
@@ -94,14 +93,14 @@ class DDL {
   // Parse IndexStmt and construct ColumnInfo and ReferenceTableInfos
   static void ParsingCreateStmt( CreateStmt* Cstmt,
                                  std::vector<catalog::Column>& column_infos,
-                                 std::vector<catalog::ForeignKeyInfo>& reference_table_infos
+                                 std::vector<catalog::ForeignKey>& reference_table_infos
                                  );
 
   // Parse IndexStmt and return IndexInfo
   static IndexInfo* ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt );
 
   // Set reference tables to the table based on given relation oid
-  static bool SetReferenceTables( std::vector<catalog::ForeignKeyInfo>& reference_table_infos,
+  static bool SetReferenceTables( std::vector<catalog::ForeignKey>& reference_table_infos,
                                   oid_t relation_oid );
 
   // Create the indexes using indexinfos and add to the table

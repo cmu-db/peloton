@@ -82,7 +82,7 @@ void DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer locatio
 bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location) {
 
   int index_count = GetIndexCount();
-  for (oid_t index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
     auto index = GetIndex(index_itr);
 
     // No need to check if it does not have unique keys
@@ -105,7 +105,7 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer loca
     }
 
     // Undo insert in other indexes as well
-    for (oid_t prev_index_itr = index_itr + 1; prev_index_itr < index_count; ++prev_index_itr) {
+    for (int prev_index_itr = index_itr + 1; prev_index_itr < index_count; ++prev_index_itr) {
       auto prev_index = GetIndex(prev_index_itr);
       prev_index->DeleteEntry(tuple);
     }
