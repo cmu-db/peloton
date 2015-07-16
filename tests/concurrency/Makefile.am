@@ -14,6 +14,7 @@ transaction_test_SOURCES = \
 transaction_test_LDADD = \
 					$(obj_DIR)/catalog/libpeloton_la-manager.lo \
 					$(obj_DIR)/catalog/libpeloton_la-catalog_object.lo \
+					$(obj_DIR)/catalog/libpeloton_la-catalog.lo \
 					$(obj_DIR)/catalog/libpeloton_la-column.lo \
 					$(obj_DIR)/catalog/libpeloton_la-constraint.lo \
 					$(obj_DIR)/catalog/libpeloton_la-schema.lo \

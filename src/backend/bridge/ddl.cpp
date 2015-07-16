@@ -800,7 +800,7 @@ bool DDL::SetReferenceTables( std::vector<catalog::ReferenceTableInfo>& referenc
   assert( database_oid );
 
   for( auto reference_table_info : reference_table_infos) {
-    storage::DataTable* current_table = (storage::DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, relation_oid);
+    storage::DataTable* current_table = (storage::DataTable*) catalog::Manager::GetInstance().GetTable(database_oid, relation_oid);
     current_table->AddReferenceTable( &reference_table_info );
   }
 

@@ -37,17 +37,13 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
                                     tuples_per_tilegroup_count);
   table->database_id = database_id;
 
-  // Check if we need this table in the catalog
-  if(database_id != INVALID_OID){
-    catalog::Manager::GetInstance().SetLocation(database_id, relation_id, table);
-  }
-
   return table;
 }
 
 bool TableFactory::DropDataTable(oid_t database_oid, oid_t table_oid)
 {
-  DataTable* table = (DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+  auto& manager = catalog::Manager::GetInstance();
+  DataTable* table = (DataTable*) manager.GetTable(database_oid, table_oid);
 
   if(table == nullptr)
     return false;

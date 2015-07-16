@@ -41,12 +41,27 @@ class Database : public CatalogObject {
     return database_name;
   }
 
-  void Lock() {
-    database_mutex.lock();
+  void AddTable(catalog::Table *table) {
+    {
+      std::lock_guard<std::mutex> lock(database_mutex);
+      AddChild(table_collection, static_cast<CatalogObject*>(table));
+    }
   }
 
-  void Unlock() {
-    database_mutex.unlock();
+  catalog::Table *GetTable(const oid_t table_id) {
+    catalog::Table *table = nullptr;
+    {
+      std::lock_guard<std::mutex> lock(database_mutex);
+      table = static_cast<catalog::Table *>(GetChildWithID(table_collection, table_id));
+    }
+    return table;
+  }
+
+  void DropTable(const oid_t table_id) {
+    {
+      std::lock_guard<std::mutex> lock(database_mutex);
+      DropChildWithID(table_collection, table_id);
+    }
   }
 
   // Get a string representation of this database
@@ -58,9 +73,15 @@ class Database : public CatalogObject {
   // MEMBERS
   //===--------------------------------------------------------------------===//
 
+  // database name
   std::string database_name;
 
+  // table collection
+  constexpr static oid_t table_collection = 0;
+
+  // database mutex
   std::mutex database_mutex;
+
 };
 
 } // End catalog namespace
