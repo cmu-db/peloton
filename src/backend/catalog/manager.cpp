@@ -13,6 +13,8 @@
 #include <cassert>
 
 #include "backend/catalog/manager.h"
+#include "backend/storage/database.h"
+#include "backend/storage/data_table.h"
 
 namespace peloton {
 namespace catalog {

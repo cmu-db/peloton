@@ -142,10 +142,10 @@ class DataTable : public AbstractTable {
   oid_t table_oid;
 
   // has a primary key ?
-  std::atomic<bool> has_primary_key = false;
+  std::atomic<bool> has_primary_key = ATOMIC_VAR_INIT(false);
 
   // # of unique constraints
-  std::atomic<oid_t> unique_constraint_count = 0;
+  std::atomic<oid_t> unique_constraint_count = ATOMIC_VAR_INIT(START_OID);
 
   // table mutex
   std::mutex table_mutex;
