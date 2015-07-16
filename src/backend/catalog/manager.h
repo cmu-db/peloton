@@ -14,11 +14,22 @@
 
 #include <atomic>
 #include <utility>
+#include <mutex>
+#include <vector>
 
 #include "tbb/concurrent_unordered_map.h"
 #include "backend/common/types.h"
 
 namespace peloton {
+
+namespace storage{
+class DataTable;
+class Database;
+}
+namespace index{
+class Index;
+}
+
 namespace catalog {
 
 //===--------------------------------------------------------------------===//
