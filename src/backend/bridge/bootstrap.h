@@ -12,6 +12,17 @@
 
 #pragma once
 
+#include <vector>
+
+#include "postgres.h"
+#include "c.h"
+#include "miscadmin.h"
+#include "access/htup.h"
+#include "utils/rel.h"
+
+#include "backend/catalog/schema.h"
+#include "backend/bridge/ddl.h"
+
 namespace peloton {
 namespace bridge {
 
@@ -33,18 +44,18 @@ class Bootstrap {
  private:
 
   // Transform a pg class tuple to a list of columns
-  const std::vector<peloton::catalog::Column>&
+  static std::vector<peloton::catalog::Column>
   GetRelationColumns(Oid tuple_oid, Relation pg_attribute_rel);
 
   // Create a peloton table or index
-  void CreatePelotonStructure(char relation_kind,
+  static void CreatePelotonStructure(char relation_kind,
                               char *relation_name,
                               Oid tuple_oid,
-                              const std::vector<peloton::catalog::Column>& columns,
-                              std::vector<peloton::bridge::DDL::IndexInfo>& index_infos);
+                              const std::vector<catalog::Column>& columns,
+                              std::vector<bridge::DDL::IndexInfo>& index_infos);
 
   // Set up the foreign keys constraints
-  void LinkForeignKeys();
+  static void LinkForeignKeys();
 
 };
 

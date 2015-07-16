@@ -17,7 +17,7 @@
 namespace peloton {
 
 namespace catalog {
-class ColumnInfo;
+class Column;
 }
 
 namespace test {
@@ -54,7 +54,7 @@ class BridgeTest {
   // Utilities
   //===--------------------------------------------------------------------===//
 
-  static std::vector<catalog::ColumnInfo> CreateSimpleColumns();
+  static std::vector<catalog::Column> CreateSimpleColumns();
 
 };
 
