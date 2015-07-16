@@ -12,7 +12,14 @@
 
 #pragma once
 
+#include <vector>
+
 namespace peloton {
+
+namespace catalog {
+class ColumnInfo;
+}
+
 namespace test {
 
 //===--------------------------------------------------------------------===//
@@ -29,13 +36,16 @@ class BridgeTest {
 
   static void RunTests();
 
-  static void TestCatalog();
-
   static void DDL_CreateTable_TEST();
   static void DDL_CreateTable_TEST_INVALID_OID();
   static void DDL_CreateTable_TEST_COLUMNS();
-  static void DDL_CreateTable_TEST_CONSTRAINTS();
+  static void DDL_CreateTable_TEST_COLUMN_CONSTRAINTS();
 
+  static std::vector<catalog::ColumnInfo> CreateSimpleColumns();
+
+  static void TestCatalog();
+
+  
 };
 
 } // End test namespace

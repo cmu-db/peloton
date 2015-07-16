@@ -41,7 +41,13 @@ DataTable::~DataTable() {
 }
 
 bool DataTable::AddIndex(index::Index *index, oid_t index_oid ) {
-  std::lock_guard<std::mutex> lock(table_mutex);
+
+  // This is a convenience wrapper around catalog functions
+  auto& manager = catalog::Manager::GetInstance();
+  auto catalog_table = manager.GetTable(database_oid, table_oid);
+
+  catalog_table->AddIndex();
+
   indexes.push_back(index); // TODO Move to inside catch
 
   IndexType type = index->GetIndexType();
@@ -62,6 +68,11 @@ bool DataTable::AddIndex(index::Index *index, oid_t index_oid ) {
   return true;
 }
 
+index::Index *DataTable::GetIndex(oid_t index_offset) const {
+    assert(index_offset < indexes.size());
+    return indexes[index_offset];
+}
+
 index::Index* DataTable::GetIndexByOid(oid_t index_oid ) {
   index::Index* index = nullptr;
 
@@ -74,11 +85,12 @@ index::Index* DataTable::GetIndexByOid(oid_t index_oid ) {
   return index;
 }
 
-void DataTable::AddReferenceTable( catalog::ReferenceTableInfo *reference_table_info){
+void DataTable::AddReferenceTable( catalog::ForeignKey *reference_table_info){
 
   std::lock_guard<std::mutex> lock( table_reference_table_mutex );
+
   //FIXME? TODO?
-  catalog::ReferenceTableInfo* ref = new catalog::ReferenceTableInfo( *reference_table_info );
+  catalog::ForeignKey* ref = new catalog::ForeignKey( *reference_table_info );
   reference_table_infos.push_back( ref );
 
   catalog::Schema* schema = this->GetSchema();
@@ -88,7 +100,22 @@ void DataTable::AddReferenceTable( catalog::ReferenceTableInfo *reference_table_
     constraint.SetReferenceTablePosition(this->GetReferenceTableCount()) ;
     schema->AddConstraint(column_name, constraint );
   }
+}
 
+storage::DataTable* DataTable::GetReferenceTable(int offset) {
+  assert( offset < reference_table_infos.size() );
+
+  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
+
+  oid_t relation_id = reference_table_infos[offset]->GetReferencedTableId();
+
+  return db->GetTableById( relation_id );
+}
+
+catalog::ForeignKey* DataTable::GetReferenceTableInfo(int offset) {
+  assert( offset < reference_table_infos.size() );
+
+  return reference_table_infos[offset];
 }
 
 ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple, bool update) {
@@ -123,17 +150,6 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple
 
   return location;
 }
-storage::DataTable* DataTable::GetReferenceTable(int position) {
-  assert( position < reference_table_infos.size() );
-
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
-
-  oid_t relation_id = reference_table_infos[position]->GetReferenceTableId();
-
-  return db->GetTableById( relation_id );
-}
-
-
 
 void DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer location) {
   for (auto index : indexes) {
