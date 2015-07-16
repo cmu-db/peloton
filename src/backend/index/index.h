@@ -34,16 +34,16 @@ class IndexMetadata {
 
  public:
 
-  IndexMetadata(std::string identifier,
+  IndexMetadata(std::string index_name,
                 IndexMethodType method_type,
-                IndexType type,
+                IndexType index_type,
                 const catalog::Schema *tuple_schema,
                 const catalog::Schema *key_schema,
                 bool unique_keys)
 
- : identifier(identifier),
+ : index_name(index_name),
    method_type(method_type),
-   type(type),
+   index_type(index_type),
    tuple_schema(tuple_schema),
    key_schema(key_schema),
    unique_keys(unique_keys) {
@@ -53,30 +53,44 @@ class IndexMetadata {
   ~IndexMetadata(){
     // clean up key schema
     delete key_schema;
-
     // no need to clean the tuple schema
   }
 
-  IndexType GetIndexType() {
-    return type;
+  const std::string& GetName() const {
+    return index_name;
   }
 
-  std::string identifier;
+  IndexMethodType GetIndexMethodType() {
+    return method_type;
+  }
+
+IndexType GetIndexType() {
+    return index_type;
+  }
+
+ const catalog::Schema *GetKeySchema() const {
+    return key_schema;
+  }
+
+  int GetColumnCount() const {
+    return  GetKeySchema()->GetColumnCount();
+  }
+
+ bool HasUniqueKeys() const {
+    return unique_keys;
+  }
+
+  std::string index_name;
 
   IndexMethodType method_type;
 
-  IndexType type;
+  IndexType index_type;
 
   // schema of tuple values
   const catalog::Schema *tuple_schema;
 
   // schema of keys
   const catalog::Schema *key_schema;
-
-  // table columns in key schema
-  // if column "i" of table schema is present in key schema
-  // then the value "i" will be present in this vector
-  std::vector<oid_t> table_columns_in_key;
 
   // unique keys ?
   bool unique_keys;
@@ -154,19 +168,23 @@ class Index
    * performance of UniqueIndex.
    */
   bool HasUniqueKeys() const {
-    return unique_keys;
+    return metadata->HasUniqueKeys();
   }
 
   int GetColumnCount() const {
-    return column_count;
+    return metadata->GetColumnCount();
   }
 
   const std::string& GetName() const {
-    return identifier;
+    return metadata->GetName();
   }
 
   const catalog::Schema *GetKeySchema() const {
-    return key_schema;
+    return metadata->GetKeySchema();
+  }
+
+  IndexMethodType GetIndexMethodType() {
+    return metadata->GetIndexMethodType();
   }
 
   IndexType GetIndexType() const {
@@ -191,16 +209,6 @@ class Index
   //===--------------------------------------------------------------------===//
 
   IndexMetadata *metadata;
-
-  std::string identifier;
-
-  const catalog::Schema *key_schema;
-
-  const catalog::Schema *tuple_schema;
-
-  int column_count;
-
-  bool unique_keys;
 
   // access counters
   int lookup_counter;

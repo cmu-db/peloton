@@ -45,8 +45,8 @@ catalog::Database *Manager::GetDatabase(const oid_t database_id) const {
   return database;
 }
 
-storage::DataTable *Manager::GetTable(const oid_t database_id,
-                                      const oid_t table_id) const {
+catalog::Table *Manager::GetTable(const oid_t database_id,
+                                  const oid_t table_id) const {
   auto& catalog = catalog::Catalog::GetInstance();
 
   // Lookup DB
@@ -55,10 +55,7 @@ storage::DataTable *Manager::GetTable(const oid_t database_id,
   // Lookup table
   if(database != nullptr) {
     catalog::Table *table = database->GetTable(table_id);
-
-    if(table != nullptr) {
-      return table->GetDataTable();
-    }
+    return table;
   }
 
   return nullptr;
