@@ -54,6 +54,10 @@ class Table : public CatalogObject {
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
+  std::string GetName() const {
+    return table_name;
+  }
+
   storage::DataTable *GetTable() const {
     return data_table_;
   }
@@ -68,31 +72,42 @@ class Table : public CatalogObject {
 
   void SetSchema(catalog::Schema *schema) {
     assert(GetChildrenCount(schema_collection) == 0);
-    AddChild(schema_collection, static_cast<CatalogObject*>(schema));
-  }
-
-  void AddIndex(catalog::Index *index) {
-    AddChild(index_collection, static_cast<CatalogObject*>(index));
+    {
+      std::lock_guard<std::mutex> lock(table_mutex);
+      AddChild(schema_collection, static_cast<CatalogObject*>(schema));
+    }
   }
 
   catalog::Schema *GetSchema() {
-    return static_cast<catalog::Schema *>(GetChild(schema_collection, 0));
+    catalog::Schema *schema = nullptr;
+    {
+      std::lock_guard<std::mutex> lock(table_mutex);
+      schema = static_cast<catalog::Schema *>(GetChildWithID(schema_collection, 0));
+    }
+    return schema;
   }
 
-  catalog::Index *GetIndex(const oid_t index_offset) {
-    return static_cast<catalog::Index *>(GetChild(index_collection, index_offset));
+  void AddIndex(catalog::Index *catalog) {
+    {
+      std::lock_guard<std::mutex> lock(table_mutex);
+      AddChild(index_collection, static_cast<CatalogObject*>(catalog));
+    }
   }
 
-  std::string GetName() const {
-    return table_name;
+  catalog::Index *GetIndex(const oid_t index_id) {
+    catalog::Index *index = nullptr;
+    {
+      std::lock_guard<std::mutex> lock(table_mutex);
+      index = static_cast<catalog::Index *>(GetChildWithID(index_collection, index_id));
+    }
+    return index;
   }
 
-  void Lock() {
-    table_mutex.lock();
-  }
-
-  void Unlock() {
-    table_mutex.unlock();
+  void DropIndex(const oid_t index_id) {
+    {
+      std::lock_guard<std::mutex> lock(table_mutex);
+      DropChildWithID(index_collection, index_id);
+    }
   }
 
   // Get a string representation of this table
@@ -107,14 +122,16 @@ class Table : public CatalogObject {
   // underlying physical table
   storage::DataTable *data_table_ = nullptr;
 
-  // schema child offset
-  constexpr static oid_t schema_collection = 0;
-
-  // indices child offset
-  constexpr static oid_t index_collection = 1;
-
+  // table name
   std::string table_name;
 
+  // schema collection
+  constexpr static oid_t schema_collection = 0;
+
+  // index collection
+  constexpr static oid_t index_collection = 1;
+
+  // table mutex
   std::mutex table_mutex;
 
 };
