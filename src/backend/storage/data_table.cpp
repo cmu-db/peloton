@@ -24,98 +24,43 @@ namespace peloton {
 namespace storage {
 
 
-DataTable::DataTable(catalog::Schema *schema,
+DataTable::DataTable(catalog::Table *catalog_table,
+                     catalog::Schema *schema,
                      AbstractBackend *backend,
                      std::string table_name,
                      oid_t table_oid,
                      size_t tuples_per_tilegroup)
 : AbstractTable(schema, backend, tuples_per_tilegroup),
-  table_name(table_name), table_oid(table_oid) {
+  catalog_table(catalog_table),
+  table_name(table_name),
+  table_oid(table_oid) {
 }
 
 DataTable::~DataTable() {
-  // clean up indices
-  for (auto index : indexes) {
-    delete index;
-  }
-}
-
-bool DataTable::AddIndex(index::Index *index, oid_t index_oid ) {
-
-  // This is a convenience wrapper around catalog functions
-  auto& manager = catalog::Manager::GetInstance();
-  auto catalog_table = manager.GetTable(database_oid, table_oid);
-
-  catalog_table->AddIndex();
-
-  indexes.push_back(index); // TODO Move to inside catch
-
-  IndexType type = index->GetIndexType();
-
-  if( type == INDEX_TYPE_UNIQUE)
-    unique_count++;
-  else if( type == INDEX_TYPE_PRIMARY_KEY)
-    primary_key_count++;
-
-  try {
-    index = index_oid_to_address.at( index_oid );
-    LOG_WARN("Index(%u) already exists in this table(%u) ", index_oid, table_oid );
-    return false;
-  }catch (const std::out_of_range& oor)  {
-    index_oid_to_address.insert( std::pair<oid_t, index::Index* > ( index_oid, index ));
-  }
-
-  return true;
+  // Nothing to do here
 }
 
 index::Index *DataTable::GetIndex(oid_t index_offset) const {
-    assert(index_offset < indexes.size());
-    return indexes[index_offset];
-}
-
-index::Index* DataTable::GetIndexByOid(oid_t index_oid ) {
   index::Index* index = nullptr;
-
-  try {
-    index = index_oid_to_address.at( index_oid );
-  }catch (const std::out_of_range& oor)  {
-    LOG_WARN("Not exists Index(%u) in this table(%u) ", index_oid, table_oid );
+  auto catalog_index = catalog_table->GetIndex(index_offset);
+  if(catalog_index != nullptr) {
+    index = catalog_index->GetPhysicalIndex();
   }
-
   return index;
 }
 
-void DataTable::AddReferenceTable( catalog::ForeignKey *reference_table_info){
-
-  std::lock_guard<std::mutex> lock( table_reference_table_mutex );
-
-  //FIXME? TODO?
-  catalog::ForeignKey* ref = new catalog::ForeignKey( *reference_table_info );
-  reference_table_infos.push_back( ref );
-
-  catalog::Schema* schema = this->GetSchema();
-  for( auto column_name : ref->GetFKColumnNames() )
-  {
-    catalog::Constraint constraint( CONSTRAINT_TYPE_FOREIGN, ref->GetName());
-    constraint.SetReferenceTablePosition(this->GetReferenceTableCount()) ;
-    schema->AddConstraint(column_name, constraint );
+index::Index* DataTable::GetIndexByOid(oid_t index_oid) {
+  index::Index* index = nullptr;
+  auto catalog_index = catalog_table->GetIndexWithID(index_oid);
+  if(catalog_index != nullptr) {
+    index = catalog_index->GetPhysicalIndex();
   }
+  return index;
 }
 
-storage::DataTable* DataTable::GetReferenceTable(int offset) {
-  assert( offset < reference_table_infos.size() );
-
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
-
-  oid_t relation_id = reference_table_infos[offset]->GetReferencedTableId();
-
-  return db->GetTableById( relation_id );
-}
-
-catalog::ForeignKey* DataTable::GetReferenceTableInfo(int offset) {
-  assert( offset < reference_table_infos.size() );
-
-  return reference_table_infos[offset];
+catalog::ForeignKey *DataTable::GetForeignKey(oid_t key_offset) {
+  auto foreign_key = catalog_table->GetForeignKey(key_offset);
+  return foreign_key;
 }
 
 ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple, bool update) {
@@ -152,7 +97,9 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple
 }
 
 void DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer location) {
-  for (auto index : indexes) {
+  int index_count = GetIndexCount();
+  for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
+    auto index = GetIndex(index_itr);
     if (index->InsertEntry(tuple, location) == false) {
       throw ExecutorException("Failed to insert tuple into index");
     }
@@ -162,30 +109,32 @@ void DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer locatio
 bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location) {
 
   int index_count = GetIndexCount();
-  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+  for (oid_t index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+    auto index = GetIndex(index_itr);
 
     // No need to check if it does not have unique keys
-    if(indexes[index_itr]->HasUniqueKeys() == false) {
-      bool status = indexes[index_itr]->InsertEntry(tuple, location);
+    if(index->HasUniqueKeys() == false) {
+      bool status = index->InsertEntry(tuple, location);
       if (status == true)
         continue;
     }
 
     // Check if key already exists
-    if (indexes[index_itr]->Exists(tuple) == true) {
+    if (index->Exists(tuple) == true) {
       LOG_ERROR("Failed to insert into index %s.%s [%s]",
-                GetName().c_str(), indexes[index_itr]->GetName().c_str(),
-                indexes[index_itr]->GetTypeName().c_str());
+                GetName().c_str(), index->GetName().c_str(),
+                index->GetTypeName().c_str());
     }
     else {
-      bool status = indexes[index_itr]->InsertEntry(tuple, location);
+      bool status = index->InsertEntry(tuple, location);
       if (status == true)
         continue;
     }
 
     // Undo insert in other indexes as well
-    for (int prev_index_itr = index_itr + 1; prev_index_itr < index_count; ++prev_index_itr) {
-      indexes[prev_index_itr]->DeleteEntry(tuple);
+    for (oid_t prev_index_itr = index_itr + 1; prev_index_itr < index_count; ++prev_index_itr) {
+      auto prev_index = GetIndex(prev_index_itr);
+      prev_index->DeleteEntry(tuple);
     }
     return false;
   }
@@ -194,7 +143,9 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer loca
 }
 
 void DataTable::DeleteInIndexes(const storage::Tuple *tuple) {
-  for (auto index : indexes) {
+  int index_count = GetIndexCount();
+  for (oid_t index_itr = 0; index_itr < index_count; index_itr++) {
+    auto index = GetIndex(index_itr);
     if (index->DeleteEntry(tuple) == false) {
       throw ExecutorException("Failed to delete tuple from index " +
                               GetName() + "." + index->GetName() + " " +index->GetTypeName());

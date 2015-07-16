@@ -244,9 +244,9 @@ std::ostream& operator<<( std::ostream& os, const Database& database ) {
         }
       }
 
-     if ( table->ishasReferenceTable() ){
+     if ( table->HasReferenceTable() ){
         printf("print foreign tables \n");
-        for( int i =0 ; i<  table->GetReferenceTableCount(); i++){
+        for( int i =0 ; i<  table->GetForeignKeyCount(); i++){
           peloton::storage::DataTable *temp_table = table->GetReferenceTable(i);
           const peloton::catalog::Schema* temp_our_schema = temp_table->GetSchema();
           std::cout << "table name : " << temp_table->GetName() << " " << *temp_our_schema << std::endl;

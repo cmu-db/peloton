@@ -61,6 +61,45 @@ catalog::Table *Manager::GetTable(const oid_t database_id,
   return nullptr;
 }
 
+catalog::Index *Manager::GetIndex(const oid_t database_id,
+                                  const oid_t table_id,
+                                  const oid_t index_id) const {
+  auto& catalog = catalog::Catalog::GetInstance();
+
+  // Lookup DB
+  catalog::Database *database = catalog.GetDatabase(database_id);
+
+  // Lookup table
+  if(database != nullptr) {
+    catalog::Table *table = database->GetTable(table_id);
+
+    // Get index
+    if(table != nullptr)
+      return table->GetIndex(index_id);
+  }
+
+  return nullptr;
+}
+
+catalog::Schema *Manager::GetSchema(const oid_t database_id,
+                                    const oid_t table_id) const {
+  auto& catalog = catalog::Catalog::GetInstance();
+
+  // Lookup DB
+  catalog::Database *database = catalog.GetDatabase(database_id);
+
+  // Lookup table
+  if(database != nullptr) {
+    catalog::Table *table = database->GetTable(table_id);
+
+    // Get schema
+    if(table != nullptr)
+      return table->GetSchema();
+  }
+
+  return nullptr;
+}
+
 } // End catalog namespace
 } // End peloton namespace
 
