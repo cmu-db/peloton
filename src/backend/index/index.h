@@ -35,8 +35,8 @@ class IndexMetadata {
  public:
 
   IndexMetadata(std::string index_name,
-                IndexMethodType method_type,
-                IndexType index_type,
+                IndexType method_type,
+                IndexConstraintType index_type,
                 const catalog::Schema *tuple_schema,
                 const catalog::Schema *key_schema,
                 bool unique_keys)
@@ -60,11 +60,11 @@ class IndexMetadata {
     return index_name;
   }
 
-  IndexMethodType GetIndexMethodType() {
+  IndexType GetIndexMethodType() {
     return method_type;
   }
 
-IndexType GetIndexType() {
+IndexConstraintType GetIndexType() {
     return index_type;
   }
 
@@ -82,9 +82,9 @@ IndexType GetIndexType() {
 
   std::string index_name;
 
-  IndexMethodType method_type;
+  IndexType method_type;
 
-  IndexType index_type;
+  IndexConstraintType index_type;
 
   // schema of tuple values
   const catalog::Schema *tuple_schema;
@@ -190,11 +190,11 @@ class Index
     return metadata->GetKeySchema();
   }
 
-  IndexMethodType GetIndexMethodType() {
+  IndexType GetIndexMethodType() {
     return metadata->GetIndexMethodType();
   }
 
-  IndexType GetIndexType() const {
+  IndexConstraintType GetIndexType() const {
     return metadata->GetIndexType();
   }
 

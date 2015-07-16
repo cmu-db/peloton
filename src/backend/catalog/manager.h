@@ -81,7 +81,7 @@ class Manager {
   //===--------------------------------------------------------------------===//
 
   // Look up the table
-  storage::DataTable *GetTableWitOid(const oid_t database_oid,
+  storage::DataTable *GetTableWithOid(const oid_t database_oid,
                                      const oid_t table_oid) const;
 
   // Look up the index

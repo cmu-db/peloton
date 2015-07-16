@@ -10,19 +10,8 @@
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
-#include "miscadmin.h"
-#include "c.h"
-
-#include "bridge/bridge.h"
-#include "nodes/parsenodes.h"
-#include "parser/parse_utilcmd.h"
-#include "parser/parse_type.h"
-#include "access/htup_details.h"
-#include "utils/resowner.h"
-#include "utils/syscache.h"
-#include "catalog/pg_type.h"
-#include "commands/dbcommands.h"
+#include <cassert>
+#include <iostream>
 
 #include "backend/bridge/ddl.h"
 #include "backend/catalog/schema.h"
@@ -34,13 +23,21 @@
 #include "backend/storage/table_factory.h"
 #include "backend/storage/database.h"
 
-#include <cassert>
-#include <iostream>
+#include "postgres.h"
+#include "miscadmin.h"
+#include "c.h"
+#include "bridge/bridge.h"
+#include "nodes/parsenodes.h"
+#include "parser/parse_utilcmd.h"
+#include "parser/parse_type.h"
+#include "access/htup_details.h"
+#include "utils/resowner.h"
+#include "utils/syscache.h"
+#include "catalog/pg_type.h"
+#include "commands/dbcommands.h"
 
 #include "parser/parse_node.h" // make pstate cook default
 #include "parser/parse_expr.h" // cook default
-#include "parser/parse_expr.h" // cook default
-
 
 namespace peloton {
 namespace bridge {
@@ -131,7 +128,7 @@ bool DDL::CreateIndex( IndexInfo index_info ){
   std::string index_name = index_info.GetIndexName();
   oid_t index_oid = index_info.GetIndexId();
   std::string table_name = index_info.GetTableName();
-  IndexType index_type = index_info.GetType();
+  IndexConstraintType index_type = index_info.GetType();
   bool unique_keys = index_info.IsUnique();
   std::vector<std::string> key_column_names = index_info.GetKeyColumnNames();
 
@@ -143,7 +140,7 @@ bool DDL::CreateIndex( IndexInfo index_info ){
   // TODO: We currently only support btree as our index implementation
   // NOTE: We currently only support btree as our index implementation
   // TODO : Support other types based on "type" argument
-  IndexMethodType our_index_type = INDEX_METHOD_TYPE_BTREE_MULTIMAP;
+  IndexType our_index_type = INDEX_TYPE_BTREE_MULTIMAP;
 
   // Get the database oid and table oid
   oid_t database_oid = GetCurrentDatabaseOid();
@@ -172,10 +169,10 @@ bool DDL::CreateIndex( IndexInfo index_info ){
 
         // NOTE :: Since pg_attribute doesn't have any information about primary key and unique key,
         //         I try to store these information when we create an unique and primary key index
-        if( index_type == INDEX_TYPE_PRIMARY_KEY ){ 
+        if( index_type == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY ){ 
           catalog::Constraint constraint( CONSTRAINT_TYPE_PRIMARY, index_name );
           tuple_schema->AddConstraint( tuple_schema_column_itr, constraint);
-        }else if( index_type == INDEX_TYPE_UNIQUE ){ 
+        }else if( index_type == INDEX_CONSTRAINT_TYPE_UNIQUE ){ 
           catalog::Constraint constraint( CONSTRAINT_TYPE_UNIQUE, index_name );
           constraint.SetUniqueIndexPosition( data_table->GetUniqueIndexCount() );
           tuple_schema->AddConstraint( tuple_schema_column_itr, constraint);
@@ -418,7 +415,7 @@ void DDL::ProcessUtility(Node *parsetree,
           //===--------------------------------------------------------------------===//
           // Add Primary Key and Unique Indexes to the table
           //===--------------------------------------------------------------------===//
-          status = bridge::DDL::CreateIndexesWithIndexInfos( index_infos );
+          status = bridge::DDL::CreateIndexes( index_infos );
           if( status == false ){
             LOG_WARN("Failed to create primary key and unique index");
           }
@@ -762,8 +759,8 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
   std::string index_name;
   oid_t index_oid = Istmt->index_id;
   std::string table_name;
-  IndexMethodType method_type;
-  IndexType type = INDEX_TYPE_NORMAL;
+  IndexType method_type;
+  IndexConstraintType type = INDEX_CONSTRAINT_TYPE_DEFAULT;
   std::vector<std::string> key_column_names;
 
   // Table name
@@ -783,14 +780,14 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
     if( Istmt->isconstraint ){
       if( Istmt->primary ) {
         index_name = table_name+"_pkey";
-        type = INDEX_TYPE_PRIMARY_KEY;
+        type = INDEX_CONSTRAINT_TYPE_PRIMARY_KEY;
       }else if( Istmt->unique ){
         index_name = table_name;
         for( auto column_name : key_column_names ){
           index_name += "_"+column_name+"_";
         }
         index_name += "key";
-        type = INDEX_TYPE_UNIQUE;
+        type = INDEX_CONSTRAINT_TYPE_UNIQUE;
       }
     }else{
       LOG_WARN("No index name");
@@ -801,7 +798,7 @@ IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt( IndexStmt* Istmt ){
 
   // Index method type
   // TODO :: More access method types need
-  method_type = INDEX_METHOD_TYPE_BTREE_MULTIMAP;
+  method_type = INDEX_TYPE_BTREE_MULTIMAP;
 
   IndexInfo* index_info = new IndexInfo( index_name, 
                                          index_oid,
@@ -843,7 +840,7 @@ bool DDL::SetReferenceTables( std::vector<catalog::ForeignKeyInfo>& reference_ta
  * @param relation_oid relation oid 
  * @return true if we create all the indexes, false otherwise
  */
-bool DDL::CreateIndexesWithIndexInfos( std::vector<IndexInfo> index_infos ){
+bool DDL::CreateIndexes( std::vector<IndexInfo> index_infos ){
 
   for( auto index_info : index_infos){
     bool status;

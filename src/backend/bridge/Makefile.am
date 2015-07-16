@@ -5,6 +5,10 @@
 ######################################################################
 
 bridge_FILES = \
+			   backend/bridge/bridge.cpp \
+			   backend/bridge/bootstrap.cpp \
+			   backend/bridge/ddl.cpp \
+			   backend/bridge/bridge_test.cpp \
 			   backend/bridge/plan_transformer.cpp \
 			   backend/bridge/tuple_transformer.cpp \
 			   backend/bridge/plan_executor.cpp \

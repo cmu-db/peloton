@@ -162,10 +162,10 @@ void DataTable::AddIndex(index::Index *index) {
 
   // Update index stats
   auto index_type = index->GetIndexType();
-  if(index_type == INDEX_TYPE_PRIMARY_KEY) {
+  if(index_type == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
     has_primary_key = true;
   }
-  else if(index_type == INDEX_TYPE_UNIQUE) {
+  else if(index_type == INDEX_CONSTRAINT_TYPE_UNIQUE) {
     unique_constraint_count++;
   }
 
