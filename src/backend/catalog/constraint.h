@@ -73,6 +73,16 @@ class Constraint
     unique_index_list_offset = offset;
   }
 
+  // Return offset of "reference tables" in the Table.
+   inline int GetReferenceTableOffset( ) const  {
+     return reference_table_list_offset ;
+   }
+
+   // Return offset of "unique indices" in the Table.
+   inline int GetUniqueIndexOffset( ) const {
+     return unique_index_list_offset;
+   }
+
   // Get a string representation of this constraint
   friend std::ostream& operator<<(std::ostream& os, const Constraint& constraint);
 
@@ -122,15 +132,27 @@ class ReferenceTableInfo {
    constraint_name(constraint_name) {
   }
 
-  std::vector<std::string> GetFKColumnNames() {
-    return fk_column_names;
-  }
 
-  oid_t GetReferenceTableId() {
+  oid_t GetReferenceTableId() const {
     return reference_table_id;
   }
 
-  std::string GetName() {
+ std::vector<std::string> GetPKColumnNames() const {
+    return pk_column_names;
+  }
+ std::vector<std::string> GetFKColumnNames() const {
+    return fk_column_names;
+  }
+
+  char GetUpdateAction()const {
+    return fk_update_action;
+  }
+
+  char GetDeleteAction()const {
+    return fk_delete_action;
+  }
+
+  std::string& GetConstraintName() {
     return constraint_name;
   }
 
