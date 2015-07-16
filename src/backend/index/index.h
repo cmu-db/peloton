@@ -112,8 +112,15 @@ class Index
 
  public:
 
-  virtual ~Index(){
+  oid_t GetOid() const {
+    return index_oid;
+  }
 
+  IndexMetadata *GetMetadata() const {
+    return metadata;
+  }
+
+  virtual ~Index(){
     // clean up metadata
     delete metadata;
   }
@@ -191,14 +198,10 @@ class Index
     return metadata->GetIndexType();
   }
 
-  // Get a string representation of this index
-  friend std::ostream& operator<<(std::ostream& os, const Index& index);
-
   void GetInfo() const;
 
-  IndexMetadata *GetMetadata() const {
-    return metadata;
-  }
+  // Get a string representation of this index
+  friend std::ostream& operator<<(std::ostream& os, const Index& index);
 
  protected:
 
@@ -209,6 +212,8 @@ class Index
   //===--------------------------------------------------------------------===//
 
   IndexMetadata *metadata;
+
+  oid_t index_oid = INVALID_OID;
 
   // access counters
   int lookup_counter;

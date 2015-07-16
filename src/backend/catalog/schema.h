@@ -14,7 +14,6 @@
 
 #include <vector>
 
-#include "backend/catalog/catalog_object.h"
 #include "backend/catalog/column.h"
 
 namespace peloton {
@@ -24,7 +23,7 @@ namespace catalog {
 // Schema
 //===--------------------------------------------------------------------===//
 
-class Schema : public CatalogObject  {
+class Schema {
 
  public:
 

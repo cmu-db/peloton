@@ -25,7 +25,6 @@
 #include "commands/dbcommands.h"
 
 #include "backend/bridge/ddl.h"
-#include "backend/catalog/catalog.h"
 #include "backend/catalog/schema.h"
 #include "backend/common/logger.h"
 #include "backend/common/types.h"
@@ -93,7 +92,8 @@ bool DDL::CreateTable( Oid relation_oid,
     return false;
 
   // Get db oid
-  storage::Database* db = storage::Database::GetDatabaseById( database_oid );
+  auto& manager = catalog::Manager::GetInstance();
+  storage::Database* db = manager.GetDatabaseWithOid(database_oid);
 
   // Construct our schema from vector of ColumnInfo
   if( schema == NULL) 
@@ -150,7 +150,8 @@ bool DDL::CreateIndex( IndexInfo index_info ){
   assert( database_oid );
 
   // Get the table location from db
-  storage::Database* db = storage::Database::GetDatabaseById( database_oid );
+  auto& manager = catalog::Manager::GetInstance();
+  storage::Database* db = manager.GetDatabaseWithOid(database_oid);
   storage::DataTable* data_table = db->GetTableByName( table_name );
 
   catalog::Schema *tuple_schema = data_table->GetSchema();
