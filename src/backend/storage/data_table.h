@@ -12,7 +12,6 @@
 
 #include "backend/bridge/bridge.h"
 #include "backend/catalog/foreign_key.h"
-#include "backend/catalog/table.h"
 #include "backend/storage/abstract_table.h"
 #include "backend/storage/backend_vm.h"
 #include "backend/index/index.h"
@@ -38,91 +37,126 @@ typedef tbb::concurrent_unordered_map<oid_t, index::Index*> oid_t_to_index_ptr;
  *
  */
 class DataTable : public AbstractTable {
-    friend class TileGroup;
-    friend class TableFactory;
+  friend class TileGroup;
+  friend class TableFactory;
 
-    DataTable() = delete;
-    DataTable(DataTable const&) = delete;
+  DataTable() = delete;
+  DataTable(DataTable const&) = delete;
 
-public:
-    // Table constructor
-    DataTable(catalog::Table *catalog_table,
-              catalog::Schema *schema,
-              AbstractBackend *backend,
-              std::string table_name,
-              oid_t table_oid,
-              size_t tuples_per_tilegroup);
+ public:
+  // Table constructor
+  DataTable(catalog::Schema *schema,
+            AbstractBackend *backend,
+            std::string table_name,
+            oid_t table_oid,
+            size_t tuples_per_tilegroup);
 
-    ~DataTable();
+  ~DataTable();
 
-   //===--------------------------------------------------------------------===//
-    // OPERATIONS
-    //===--------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
+  // OPERATIONS
+  //===--------------------------------------------------------------------===//
 
-    std::string GetName() const {
-        return table_name;
-    }
+  std::string GetName() const {
+    return table_name;
+  }
 
-    oid_t  GetId() const {
-        return table_oid;
-    }
+  oid_t  GetOid() const {
+    return table_oid;
+  }
 
-    // insert tuple in table
-    ItemPointer InsertTuple( txn_id_t transaction_id, const Tuple *tuple, bool update = false );
+  // insert tuple in table
+  ItemPointer InsertTuple( txn_id_t transaction_id, const Tuple *tuple, bool update = false );
 
-    void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+  void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
-    bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+  bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
-    void DeleteInIndexes(const storage::Tuple *tuple);
+  void DeleteInIndexes(const storage::Tuple *tuple);
 
-    bool CheckNulls(const storage::Tuple *tuple) const;
+  bool CheckNulls(const storage::Tuple *tuple) const;
 
-    // Add an index to the table
-    bool AddIndex(index::Index *index, oid_t index_oid);
+  //===--------------------------------------------------------------------===//
+  // SCHEMA
+  //===--------------------------------------------------------------------===//
 
-    // Add a foreign key to the table
-    void AddForeignKey(catalog::ForeignKey *foreign_key);
+  catalog::Schema *GetSchema() {
+    return schema;
+  }
 
-    //===--------------------------------------------------------------------===//
-     // ACCESSORS
-     //===--------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
+  // INDEX
+  //===--------------------------------------------------------------------===//
 
-    index::Index *GetIndex(oid_t index_offset) const;
+  void AddIndex(index::Index *index);
 
-    index::Index* GetIndexByOid(oid_t index_oid);
+  index::Index* GetIndexWithOid(const oid_t index_oid) const;
 
-    catalog::ForeignKey *GetForeignKey(oid_t key_offset) ;
+  void DropIndexWithOid(const oid_t index_oid);
 
-    oid_t GetIndexCount() const {
-      return catalog_table->GetIndexCount();
-    }
+  index::Index *GetIndex(const oid_t index_offset) const;
 
-    oid_t GetForeignKeyCount() const {
-      return catalog_table->GetForeignKeyCount();
-    }
+  oid_t GetIndexCount() const;
 
-    //===--------------------------------------------------------------------===//
-    // UTILITIES
-    //===--------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
+  // FOREIGN KEYS
+  //===--------------------------------------------------------------------===//
 
-    // Get a string representation of this table
-    friend std::ostream& operator<<(std::ostream& os, const DataTable& table);
+  void AddForeignKey(catalog::ForeignKey *key);
 
-protected:
+  catalog::ForeignKey *GetForeignKey(const oid_t key_offset) const;
 
-    //===--------------------------------------------------------------------===//
-    // MEMBERS
-    //===--------------------------------------------------------------------===//
+  void DropForeignKey(const oid_t key_offset);
 
-    // table name and oid
-    std::string table_name;
+  oid_t GetForeignKeyCount() const;
 
-    // catalog info
-    oid_t table_oid;
-    
-    // Catalog table
-    catalog::Table *catalog_table;
+  //===--------------------------------------------------------------------===//
+  // UTILITIES
+  //===--------------------------------------------------------------------===//
+
+  bool HasPrimaryKey(){
+    return has_primary_key;
+  }
+
+  bool HasUniqueConstraints(){
+    return (unique_constraint_count > 0);
+  }
+
+  bool HasForeignKeys(){
+    return (GetForeignKeyCount() > 0);
+  }
+
+  // Get a string representation of this table
+  friend std::ostream& operator<<(std::ostream& os, const DataTable& table);
+
+ private:
+
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
+
+  // table name
+  std::string table_name;
+
+  // catalog info
+  oid_t table_oid;
+
+  // has a primary key ?
+  std::atomic<bool> has_primary_key = false;
+
+  // # of unique constraints
+  std::atomic<oid_t> unique_constraint_count = 0;
+
+  // table mutex
+  std::mutex table_mutex;
+
+  // INDEXES
+
+  std::vector<index::Index*> indexes;
+
+  // CONSTRAINTS
+
+  std::vector<catalog::ForeignKey*> foreign_keys;
 };
 
 

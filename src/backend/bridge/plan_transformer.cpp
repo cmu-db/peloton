@@ -180,7 +180,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   /* Get the target table */
   storage::DataTable *target_table =
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
-          .GetTable(database_oid, table_oid));
+          .GetTableWitOid(database_oid, table_oid));
 
   if (target_table == nullptr) {
     LOG_ERROR("Target table is not found : database oid %u table oid %u",
@@ -266,7 +266,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
   /* Get the target table */
   storage::DataTable *target_table =
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
-          .GetTable(database_oid, table_oid));
+          .GetTableWitOid(database_oid, table_oid));
 
   if (target_table == nullptr) {
     LOG_ERROR("Target table is not found : database oid %u table oid %u",
@@ -330,7 +330,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformDelete(
   /* Grab the target table */
   storage::DataTable *target_table =
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
-          .GetTable(database_oid, table_oid));
+          .GetTableWitOid(database_oid, table_oid));
 
   assert(target_table);
   LOG_INFO("Delete from: database oid %u table oid %u", database_oid, table_oid);
@@ -370,7 +370,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   /* Grab the target table */
   storage::DataTable *target_table =
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
-          .GetTable(database_oid, table_oid));
+          .GetTableWitOid(database_oid, table_oid));
 
   assert(target_table);
   LOG_INFO("SeqScan: database oid %u table oid %u", database_oid, table_oid);
@@ -460,12 +460,12 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexScan(
 
   storage::DataTable *table =
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
-          .GetTable(database_oid, table_oid));
+          .GetTableWitOid(database_oid, table_oid));
 
   assert(table);
 
   /* Resolve index  */
-  index_scan_desc.index = table->GetIndexByOid(iss_plan->indexid);
+  index_scan_desc.index = table->GetIndexWithOid(iss_plan->indexid);
   LOG_INFO("Index scan on oid %u, index name: %s", iss_plan->indexid,
            index_scan_desc.index->GetName().c_str());
 
@@ -582,12 +582,12 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexOnlyScan(
 
   storage::DataTable *table =
       static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
-          .GetTable(database_oid, table_oid));
+          .GetTableWitOid(database_oid, table_oid));
 
   assert(table);
 
   /* Resolve index  */
-  index_scan_desc.index = table->GetIndexByOid(iss_plan->indexid);
+  index_scan_desc.index = table->GetIndexWithOid(iss_plan->indexid);
   LOG_INFO("Index scan on oid %u, index name: %s", iss_plan->indexid,
            index_scan_desc.index->GetName().c_str());
 

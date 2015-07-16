@@ -19,14 +19,7 @@
 #include "backend/common/types.h"
 
 namespace peloton {
-
-namespace storage {
-class DataTable;
-}
-
 namespace catalog {
-
-class Database;
 
 //===--------------------------------------------------------------------===//
 // Manager
@@ -42,11 +35,15 @@ class Manager {
   // Singleton
   static Manager& GetInstance();
 
+  //===--------------------------------------------------------------------===//
+  // OBJECT MAP
+  //===--------------------------------------------------------------------===//
+
   oid_t GetNextOid() {
     return ++oid;
   }
 
-  oid_t GetOid() {
+  oid_t GetCurrentOid() {
     return oid;
   }
 
@@ -54,21 +51,32 @@ class Manager {
 
   void *GetLocation(const oid_t oid) const;
 
-  // Look up the database
-  catalog::Database *GetDatabase(const oid_t database_id) const;
+  //===--------------------------------------------------------------------===//
+  // DATABASE
+  //===--------------------------------------------------------------------===//
+
+  void AddDatabase(storage::Database *database);
+
+  storage::Database *GetDatabase(const oid_t database_offset) const;
+
+  storage::Database *GetDatabaseWithOid(const oid_t database_oid) const;
+
+  oid_t GetDatabaseCount() const;
+
+  void DropDatabaseWithOid(const oid_t database_oid);
+
+  //===--------------------------------------------------------------------===//
+  // CONVENIENCE WRAPPERS
+  //===--------------------------------------------------------------------===//
 
   // Look up the table
-  catalog::Table *GetTable(const oid_t database_id,
-                           const oid_t table_id) const;
+  storage::DataTable *GetTableWitOid(const oid_t database_oid,
+                                     const oid_t table_oid) const;
 
   // Look up the index
-  catalog::Index *GetIndex(const oid_t database_id,
-                           const oid_t table_id,
-                           const oid_t index_id) const;
-
-  // Look up the schema
-  catalog::Schema *GetSchema(const oid_t database_id,
-                             const oid_t table_id) const;
+  index::Index *GetIndexWithOid(const oid_t database_oid,
+                                const oid_t table_oid,
+                                const oid_t index_oid) const;
 
   Manager(Manager const&) = delete;
 
@@ -79,6 +87,12 @@ class Manager {
   std::atomic<oid_t> oid = ATOMIC_VAR_INIT(START_OID);
 
   lookup_dir locator;
+
+  // DATABASES
+
+  std::vector<storage::Database*> databases;
+
+  std::mutex catalog_mutex;
 
 };
 
