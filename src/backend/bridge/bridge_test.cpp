@@ -26,6 +26,12 @@ namespace test {
  */
 void BridgeTest::DDL_CreateTable_TEST() {
 
+  // Create the storage database and add it to the manager
+  storage::Database* db = new storage::Database( bridge::Bridge::GetCurrentDatabaseOid());
+  auto& manager = catalog::Manager::GetInstance();
+  manager.AddDatabase(db);
+
+
   DDL_CreateTable_TEST_INVALID_OID();
 
   DDL_CreateTable_TEST_COLUMNS();
@@ -41,14 +47,14 @@ void BridgeTest::DDL_CreateTable_TEST() {
 void BridgeTest::DDL_CreateTable_TEST_INVALID_OID() {
 
   // Empty Column
-  std::vector<catalog::Column> column_infos;
+  std::vector<catalog::Column> columns;
 
   // Table name and oid
   std::string table_name = "test_table_invalid_oid";
   oid_t table_oid = INVALID_OID;
 
   // Create a table
-  bool status = bridge::DDL::CreateTable(table_oid, table_name, column_infos);
+  bool status = bridge::DDL::CreateTable(table_oid, table_name, columns);
 
   // CHECK :: status must be false
   assert(status == false);
@@ -84,16 +90,18 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
 
   auto& manager = catalog::Manager::GetInstance();
   storage::Database* db = manager.GetDatabaseWithOid(bridge::Bridge::GetCurrentDatabaseOid());
+  assert( db );
 
   // Get the simple columns
-  std::vector<catalog::Column> column_infos = CreateSimpleColumns();
+  std::vector<catalog::Column> columns = CreateSimpleColumns();
+  assert( columns.size() > 0 );
 
   // Table name and oid
   std::string table_name = "test_table_basic_columns";
   oid_t table_oid = 20001;
 
   // Create a table
-  bool status = bridge::DDL::CreateTable(table_oid, table_name, column_infos);
+  bool status = bridge::DDL::CreateTable(table_oid, table_name, columns);
   assert(status);
 
   // Get the table pointer
@@ -154,14 +162,14 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
   storage::Database* db = manager.GetDatabaseWithOid(bridge::Bridge::GetCurrentDatabaseOid());
 
   // Get the simple columns
-  std::vector<catalog::Column> column_infos = CreateSimpleColumns();
+  std::vector<catalog::Column> columns = CreateSimpleColumns();
 
   // Table name and oid
   std::string table_name = "test_table_column_constraint";
   oid_t table_oid = 20002;
 
   // Create a table
-  bool status = bridge::DDL::CreateTable(table_oid, table_name, column_infos);
+  bool status = bridge::DDL::CreateTable(table_oid, table_name, columns);
   assert(status);
 
   // Get the table pointer and schema
@@ -183,6 +191,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
   std::vector<std::string> key_column_names;
   key_column_names.push_back("name");
   bridge::DDL::IndexInfo* index_info = new bridge::DDL::IndexInfo("THIS_IS_PRIMARY_KEY_CONSTRAINT",
+                                                                  30001,
                                                                   table_name,
                                                                   INDEX_TYPE_BTREE_MULTIMAP,
                                                                   INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
@@ -195,6 +204,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
   key_column_names.clear();
   key_column_names.push_back("time");
   index_info = new bridge::DDL::IndexInfo("THIS_IS_UNIQUE_CONSTRAINT",
+                                          30002,
                                           table_name,
                                           INDEX_TYPE_BTREE_MULTIMAP,
                                           INDEX_CONSTRAINT_TYPE_UNIQUE,
@@ -207,7 +217,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
   // Create a reference table that will be referenced by another table
   std::string pktable_name = "pktable";
   oid_t pktable_oid = 20003;
-  status = bridge::DDL::CreateTable(pktable_oid, pktable_name, column_infos);
+  status = bridge::DDL::CreateTable(pktable_oid, pktable_name, columns);
   assert(status);
 
   // Construct ForeignKey
@@ -215,17 +225,17 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
   std::vector<std::string> fk_column_names;
   pk_column_names.push_back("name");
   fk_column_names.push_back("salary");
-  std::vector<catalog::ForeignKey> reference_table_infos;
-  catalog::ForeignKey *reference_table_info = new catalog::ForeignKey(pktable_oid,
+  std::vector<catalog::ForeignKey> foreign_keys;
+  catalog::ForeignKey *foreign_key = new catalog::ForeignKey(pktable_oid,
                                                                       pk_column_names,
                                                                       fk_column_names,
                                                                       'r',
                                                                       'c',
                                                                       "THIS_IS_FOREIGN_CONSTRAINT");
-  reference_table_infos.push_back(*reference_table_info);
+  foreign_keys.push_back(*foreign_key);
 
   // Current table ----> reference table
-  status = peloton::bridge::DDL::SetReferenceTables(reference_table_infos, table_oid);
+  status = peloton::bridge::DDL::SetReferenceTables(foreign_keys, table_oid);
   assert(status);
 
 
@@ -236,6 +246,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
   catalog::Column column = schema->GetColumn(0);
   std::vector<catalog::Constraint> constraint_infos = column.GetConstraints();
   assert(constraint_infos[0].GetType() == CONSTRAINT_TYPE_NOTNULL);
+
 
   // The second column
   // TODO::CHECK :: Primary key constraint type, name
