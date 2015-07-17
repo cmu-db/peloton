@@ -16,6 +16,8 @@
 #include <cassert>
 
 #include "backend/bridge/bootstrap.h"
+#include "backend/bridge/ddl_table.h"
+#include "backend/bridge/ddl_index.h"
 #include "backend/storage/database.h"
 
 #include "access/heapam.h"
@@ -109,7 +111,7 @@ Bootstrap::GetRelationColumns(Oid tuple_oid, Relation pg_attribute_rel){
 void Bootstrap::CreateIndexInfos(oid_t tuple_oid, 
                                  char* relation_name, 
                                  const std::vector<catalog::Column>& columns,
-                                 std::vector<bridge::DDL::IndexInfo>& index_infos ){
+                                 std::vector<IndexInfo>& index_infos ){
 
   Relation pg_index_rel;
   HeapScanDesc pg_index_scan;
@@ -152,7 +154,7 @@ void Bootstrap::CreateIndexInfos(oid_t tuple_oid,
       // This is required because we can only create indexes at once
       // after all tables are created
       // The order of table and index entries in pg_class table can be arbitrary
-      bridge::DDL::IndexInfo indexinfo(relation_name,
+      IndexInfo indexinfo(relation_name,
           pg_index->indexrelid,
           get_rel_name(pg_index->indrelid),
           method_type,
@@ -173,7 +175,7 @@ void Bootstrap::CreatePelotonStructure(char relation_kind,
                                        char *relation_name,
                                        Oid tuple_oid,
                                        const std::vector<catalog::Column>& columns,
-                                       std::vector<bridge::DDL::IndexInfo>& index_infos) {
+                                       std::vector<IndexInfo>& index_infos) {
   bool status = false;
 
   switch(relation_kind){
@@ -181,7 +183,7 @@ void Bootstrap::CreatePelotonStructure(char relation_kind,
     // Create the Peloton table
     case 'r':
     {
-      status = bridge::DDL::CreateTable(tuple_oid, relation_name, columns);
+      status = DDLTable::CreateTable(tuple_oid, relation_name, columns);
 
       if(status == true) {
         elog(LOG, "Create Table \"%s\" in Peloton", relation_name);
@@ -310,7 +312,7 @@ bool Bootstrap::BootstrapPeloton(void) {
   HeapScanDesc pg_class_scan;
   HeapTuple pg_class_tuple;
 
-  std::vector<bridge::DDL::IndexInfo> index_infos;
+  std::vector<IndexInfo> index_infos;
   bool status;
 
   elog(LOG, "Initializing Peloton");
@@ -369,7 +371,7 @@ bool Bootstrap::BootstrapPeloton(void) {
   }
 
   // Create Indexes
-  status = bridge::DDL::CreateIndexes(index_infos);
+  status = DDLIndex::CreateIndexes(index_infos);
   if(status == false) {
     elog(LOG, "Could not create an index in Peloton");
   }

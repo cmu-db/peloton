@@ -14,11 +14,13 @@
 
 #include "backend/bridge/bridge.h"
 #include "backend/bridge/ddl.h"
+#include "backend/bridge/ddl_table.h"
+#include "backend/bridge/ddl_index.h"
 #include "backend/catalog/manager.h"
 #include "backend/storage/database.h"
 
 namespace peloton {
-namespace test {
+namespace bridge {
 
 /**
  * @brief Test "DDL::CreateTable" function
@@ -27,7 +29,7 @@ namespace test {
 void BridgeTest::DDL_CreateTable_TEST() {
 
   // Create the new storage database and add it to the manager
-  storage::Database* db = new storage::Database( bridge::Bridge::GetCurrentDatabaseOid());
+  storage::Database* db = new storage::Database( Bridge::GetCurrentDatabaseOid());
   auto& manager = catalog::Manager::GetInstance();
   manager.AddDatabase(db);
 
@@ -54,7 +56,7 @@ void BridgeTest::DDL_CreateTable_TEST_INVALID_OID() {
   oid_t table_oid = INVALID_OID;
 
   // Create a table
-  bool status = bridge::DDL::CreateTable(table_oid, table_name, columns);
+  bool status = DDLTable::CreateTable(table_oid, table_name, columns);
 
   // CHECK :: status must be false
   assert(status == false);
@@ -89,7 +91,7 @@ std::vector<catalog::Column> BridgeTest::CreateSimpleColumns() {
 void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
 
   auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(bridge::Bridge::GetCurrentDatabaseOid());
+  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
   assert( db );
 
   // Get the simple columns
@@ -101,7 +103,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
   oid_t table_oid = 20001;
 
   // Create a table
-  bool status = bridge::DDL::CreateTable(table_oid, table_name, columns);
+  bool status = DDLTable::CreateTable(table_oid, table_name, columns);
   assert(status);
 
   // Get the table pointer
@@ -159,7 +161,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
 void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
 
   auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(bridge::Bridge::GetCurrentDatabaseOid());
+  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
 
   // Get the simple columns
   std::vector<catalog::Column> columns = CreateSimpleColumns();
@@ -169,7 +171,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
   oid_t table_oid = 20002;
 
   // Create a table
-  bool status = bridge::DDL::CreateTable(table_oid, table_name, columns);
+  bool status = DDLTable::CreateTable(table_oid, table_name, columns);
   assert(status);
 
   // Get the table pointer and schema
@@ -190,20 +192,20 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
   // NOTE:: It must be called automatically in active or bootstrap mode
   std::vector<std::string> key_column_names;
   key_column_names.push_back("name");
-  bridge::DDL::IndexInfo* index_info = new bridge::DDL::IndexInfo("THIS_IS_PRIMARY_KEY_CONSTRAINT",
+  IndexInfo* index_info = new IndexInfo("THIS_IS_PRIMARY_KEY_CONSTRAINT",
                                                                   30001,
                                                                   table_name,
                                                                   INDEX_TYPE_BTREE_MULTIMAP,
                                                                   INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
                                                                   true,
                                                                   key_column_names);
-  status = bridge::DDL::CreateIndex(*index_info);
+  status = DDLIndex::CreateIndex(*index_info);
   assert(status);
 
   // Create a unique index
   key_column_names.clear();
   key_column_names.push_back("time");
-  index_info = new bridge::DDL::IndexInfo("THIS_IS_UNIQUE_CONSTRAINT",
+  index_info = new bridge::IndexInfo("THIS_IS_UNIQUE_CONSTRAINT",
                                           30002,
                                           table_name,
                                           INDEX_TYPE_BTREE_MULTIMAP,
@@ -211,13 +213,13 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
                                           true,
                                           key_column_names);
 
-  status = bridge::DDL::CreateIndex(*index_info);
+  status = DDLIndex::CreateIndex(*index_info);
   assert(status);
 
   // Create a reference table that will be referenced by another table
   std::string pktable_name = "pktable";
   oid_t pktable_oid = 20003;
-  status = bridge::DDL::CreateTable(pktable_oid, pktable_name, columns);
+  status = DDLTable::CreateTable(pktable_oid, pktable_name, columns);
   assert(status);
 
   // Construct ForeignKey
@@ -236,7 +238,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
 
 
   // Current table ----> reference table
-  status = peloton::bridge::DDL::SetReferenceTables(foreign_keys, table_oid);
+  status = DDLTable::SetReferenceTables(foreign_keys, table_oid);
   assert(status);
 
   // TODO::CHECK :: check only regarding constraint. Skip others, such as, column name, length, etc.
@@ -316,6 +318,6 @@ void BridgeTest::RunTests() {
   std::cout<< ":::::::::::::  TEST CASES END   :::::::::::::\n";
 }
 
-} // End test namespace
+} // End bridge namespace
 } // End peloton namespace
 
