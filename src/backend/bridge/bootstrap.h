@@ -22,6 +22,7 @@
 
 #include "backend/catalog/schema.h"
 #include "backend/bridge/ddl.h"
+#include "backend/bridge/ddl_index.h"
 
 namespace peloton {
 namespace bridge {
@@ -52,13 +53,13 @@ class Bootstrap {
                               char *relation_name,
                               Oid tuple_oid,
                               const std::vector<catalog::Column>& columns,
-                              std::vector<bridge::DDL::IndexInfo>& index_infos);
+                              std::vector<IndexInfo>& index_infos);
 
   // Set up the foreign keys constraints
   static void CreateIndexInfos(oid_t tuple_oid, 
                                char* relation_name,
                                const std::vector<catalog::Column>& columns,
-                               std::vector<bridge::DDL::IndexInfo>& index_infos);
+                               std::vector<IndexInfo>& index_infos);
 
   // Set up the foreign keys constraints
   static void LinkForeignKeys();

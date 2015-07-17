@@ -1,111 +1,30 @@
 /*-------------------------------------------------------------------------
  *
- * ddl_create.cpp
+ * ddl_index.cpp
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/bridge/ddl_create.cpp
+ * /peloton/src/backend/bridge/ddl_index.cpp
  *
  *-------------------------------------------------------------------------
  */
 
-#include <cassert>
-#include <iostream>
+#include <vector>
 
-#include "backend/bridge/ddl.h"
+#include "backend/bridge/ddl_index.h"
 #include "backend/bridge/bridge.h"
-#include "backend/catalog/schema.h"
+#include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
-#include "backend/common/types.h"
 #include "backend/index/index.h"
 #include "backend/index/index_factory.h"
-#include "backend/storage/backend_vm.h"
-#include "backend/storage/table_factory.h"
+#include "backend/storage/data_table.h"
 #include "backend/storage/database.h"
 
-#include "postgres.h"
-#include "miscadmin.h"
-#include "c.h"
-#include "nodes/parsenodes.h"
-#include "parser/parse_utilcmd.h"
-#include "parser/parse_type.h"
-#include "access/htup_details.h"
-#include "utils/resowner.h"
-#include "utils/syscache.h"
-#include "catalog/pg_type.h"
-#include "commands/dbcommands.h"
-
-#include "parser/parse_node.h" // make pstate cook default
-#include "parser/parse_expr.h" // cook default
+#include "nodes/pg_list.h"
 
 namespace peloton {
 namespace bridge {
-
-static std::vector<DDL::IndexInfo> index_infos;
-
-//===--------------------------------------------------------------------===//
-// Create Object
-//===--------------------------------------------------------------------===//
-
-/**
- * @brief Create database.
- * @param database_oid database id
- * @return true if we created a database, false otherwise
- */
-bool DDL::CreateDatabase(Oid database_oid){
-
-  auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(Bridge::Bridge::GetCurrentDatabaseOid());
-
-  if(db == nullptr){
-    LOG_WARN("Failed to create a database (%u)", database_oid);
-    return false;
-  }
-
-  LOG_INFO("Create database (%u)", database_oid);
-  return true;
-}
-
-/**
- * @brief Create table.
- * @param table_name Table name
- * @param column_infos Information about the columns
- * @param schema Schema for the table
- * @return true if we created a table, false otherwise
- */
-bool DDL::CreateTable(Oid relation_oid,
-                       std::string table_name,
-                       std::vector<catalog::Column> column_infos,
-                       catalog::Schema *schema){
-
-  assert(!table_name.empty());
-
-  Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  if(database_oid == INVALID_OID || relation_oid == INVALID_OID)
-    return false;
-
-  // Get db oid
-  auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(database_oid);
-
-  // Construct our schema from vector of ColumnInfo
-  if(schema == NULL) 
-    schema = new catalog::Schema(column_infos);
-
-  // Build a table from schema
-  storage::DataTable *table = storage::TableFactory::GetDataTable(database_oid, relation_oid, schema, table_name);
-
-  db->AddTable(table);
-
-  if(table != nullptr) {
-    LOG_INFO("Created table(%u) : %s", relation_oid, table_name.c_str());
-    return true;
-  }
-
-  return false;
-}
-
 
 /**
  * @brief Create index.
@@ -113,10 +32,10 @@ bool DDL::CreateTable(Oid relation_oid,
  * @param table_name Table name
  * @param type Type of the index
  * @param unique Index is unique or not ?
- * @param key_column_names column names for the key table 
+ * @param key_column_names column names for the key table
  * @return true if we create the index, false otherwise
  */
-bool DDL::CreateIndex(IndexInfo index_info){
+bool DDLIndex::CreateIndex(IndexInfo index_info){
 
   std::string index_name = index_info.GetIndexName();
   oid_t index_oid = index_info.GetOid();
@@ -160,10 +79,10 @@ bool DDL::CreateIndex(IndexInfo index_info){
 
         // NOTE :: Since pg_attribute doesn't have any information about primary key and unique key,
         //         I try to store these information when we create an unique and primary key index
-        if(index_type == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY){ 
+        if(index_type == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY){
           catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, index_name);
           tuple_schema->AddConstraint(tuple_schema_column_itr, constraint);
-        }else if(index_type == INDEX_CONSTRAINT_TYPE_UNIQUE){ 
+        }else if(index_type == INDEX_CONSTRAINT_TYPE_UNIQUE){
           catalog::Constraint constraint(CONSTRAINT_TYPE_UNIQUE, index_name);
           constraint.SetUniqueIndexOffset(data_table->GetIndexCount());
           tuple_schema->AddConstraint(tuple_schema_column_itr, constraint);
@@ -188,6 +107,82 @@ bool DDL::CreateIndex(IndexInfo index_info){
 
   return true;
 }
+
+
+/**
+ * @brief Construct IndexInfo from a index statement
+ * @param Istmt an index statement
+ * @return IndexInfo
+ */
+IndexInfo* DDLIndex::ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt){
+  std::string index_name;
+  oid_t index_oid = Istmt->index_id;
+  std::string table_name;
+  IndexType method_type;
+  IndexConstraintType type = INDEX_CONSTRAINT_TYPE_DEFAULT;
+  std::vector<std::string> key_column_names;
+
+  // Table name
+  table_name = Istmt->relation->relname;
+
+  // Key column names
+  ListCell   *entry;
+  foreach(entry, Istmt->indexParams){
+    IndexElem *indexElem = static_cast<IndexElem *>(lfirst(entry));
+    if(indexElem->name != NULL){
+      key_column_names.push_back(indexElem->name);
+    }
+  }
+
+  // Index name and index type
+  if(Istmt->idxname == NULL){
+    if(Istmt->isconstraint){
+      if(Istmt->primary) {
+        index_name = table_name+"_pkey";
+        type = INDEX_CONSTRAINT_TYPE_PRIMARY_KEY;
+      }else if(Istmt->unique){
+        index_name = table_name;
+        for(auto column_name : key_column_names){
+          index_name += "_"+column_name+"_";
+        }
+        index_name += "key";
+        type = INDEX_CONSTRAINT_TYPE_UNIQUE;
+      }
+    }else{
+      LOG_WARN("No index name");
+    }
+  }else{
+    index_name = Istmt->idxname;
+  }
+
+  // Index method type
+  // TODO :: More access method types need
+  method_type = INDEX_TYPE_BTREE_MULTIMAP;
+
+  IndexInfo* index_info = new IndexInfo(index_name,
+                                        index_oid,
+                                        table_name,
+                                        method_type,
+                                        type,
+                                        Istmt->unique,
+                                        key_column_names);
+  return index_info;
+}
+
+/**
+ * @brief Create the indexes using IndexInfos and add it to the table
+ * @param relation_oid relation oid
+ * @return true if we create all the indexes, false otherwise
+ */
+bool DDLIndex::CreateIndexes(std::vector<IndexInfo> index_infos){
+
+  for(auto index_info : index_infos){
+    CreateIndex(index_info);
+  }
+  index_infos.clear();
+  return true;
+}
+
 
 } // namespace bridge
 } // namespace peloton
