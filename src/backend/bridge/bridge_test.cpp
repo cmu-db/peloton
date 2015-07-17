@@ -83,7 +83,7 @@ std::vector<catalog::Column> BridgeTest::CreateSimpleColumns() {
 void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
 
   auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(GetCurrentDatabaseOid());
+  storage::Database* db = manager.GetDatabaseWithOid(bridge::Bridge::GetCurrentDatabaseOid());
 
   // Get the simple columns
   std::vector<catalog::Column> column_infos = CreateSimpleColumns();
@@ -151,7 +151,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
 void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
 
   auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(GetCurrentDatabaseOid());
+  storage::Database* db = manager.GetDatabaseWithOid(bridge::Bridge::GetCurrentDatabaseOid());
 
   // Get the simple columns
   std::vector<catalog::Column> column_infos = CreateSimpleColumns();
@@ -183,7 +183,6 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
   std::vector<std::string> key_column_names;
   key_column_names.push_back("name");
   bridge::DDL::IndexInfo* index_info = new bridge::DDL::IndexInfo("THIS_IS_PRIMARY_KEY_CONSTRAINT",
-                                                                  30001,
                                                                   table_name,
                                                                   INDEX_TYPE_BTREE_MULTIMAP,
                                                                   INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
@@ -196,7 +195,6 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
   key_column_names.clear();
   key_column_names.push_back("time");
   index_info = new bridge::DDL::IndexInfo("THIS_IS_UNIQUE_CONSTRAINT",
-                                          30002,
                                           table_name,
                                           INDEX_TYPE_BTREE_MULTIMAP,
                                           INDEX_CONSTRAINT_TYPE_UNIQUE,
@@ -282,22 +280,22 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
   assert(constraint_infos[0].GetForeignKeyListOffset() == 1);
 
   // TODO::CHECK:: pktable name and oid
-  storage::DataTable* pktable = table->GetForeignKey(0);
-  assert(strcmp((pktable->GetName()).c_str(), "pktable") == 0);
-  assert(table->GetOid() == table_oid);
+  catalog::ForeignKey* pktable = table->GetForeignKey(0);
+  assert(strcmp((pktable->GetConstraintName()).c_str(), "THIS_IS_FOREIGN_CONSTRAINT") == 0);
+  assert(pktable->GetSinkTableOid() == pktable_oid);
 
   // TODO::CHECK:: pktable size name, update/delete action
   pk_column_names.clear();
   fk_column_names.clear();
-  pk_column_names  = table->GetForeignKey(0)->GetPKColumnNames();
-  fk_column_names  = table->GetForeignKey(0)->GetFKColumnNames();
+  pk_column_names  = pktable->GetPKColumnNames();
+  fk_column_names  = pktable->GetFKColumnNames();
   assert(pk_column_names.size() == 1);
   assert(fk_column_names.size() == 1);
   assert(strcmp(pk_column_names[0].c_str(), "name") == 0);
   assert(strcmp(fk_column_names[0].c_str(), "salary") == 0);
 
-  assert(table->GetForeignKey(0)->GetUpdateAction() == 'r');
-  assert(table->GetForeignKey(0)->GetDeleteAction() == 'c');
+  assert(pktable->GetUpdateAction() == 'r');
+  assert(pktable->GetDeleteAction() == 'c');
 
   std::cout << ":::::: " << __func__ << " DONE\n";
 }

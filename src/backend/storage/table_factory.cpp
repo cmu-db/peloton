@@ -16,7 +16,6 @@
 #include "backend/catalog/manager.h"
 #include "backend/storage/data_table.h"
 
-#include "bridge/bridge.h"
 
 #include <mutex>
 

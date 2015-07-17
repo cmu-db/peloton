@@ -14,7 +14,6 @@
 #include "c.h"
 
 #include "access/xact.h"
-#include "bridge/bridge.h"
 #include "catalog/pg_namespace.h"
 #include "executor/tuptable.h"
 #include "libpq/ip.h"
@@ -48,6 +47,7 @@
 #include <time.h>
 #include <thread>
 
+#include "backend/bridge/bootstrap.h"
 #include "backend/bridge/plan_transformer.h"
 #include "backend/common/logger.h"
 #include "backend/common/stack_trace.h"
@@ -265,7 +265,7 @@ PelotonMain(int argc, char *argv[])
   ereport(LOG, (errmsg("peloton: processing database \"%s\"", "postgres")));
 
   /* Init Peloton */
-  BootstrapPeloton();
+  peloton::bridge::Bootstrap::BootstrapPeloton();
 
   /*
    * Create a resource owner to keep track of our resources (not clear that

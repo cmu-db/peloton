@@ -408,9 +408,9 @@ ExpressionType StringToExpressionType(std::string str ) {
 // Index Method Type - String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string IndexMethodTypeToString(IndexType type) {
+std::string IndexTypeToString(IndexType type) {
     switch (type) {
-    case INDEX_CONSTRAINT_TYPE_INVALID: {
+    case INDEX_TYPE_INVALID: {
         return "INVALID";
     }
     case INDEX_TYPE_BTREE_MULTIMAP: {
@@ -423,22 +423,22 @@ std::string IndexMethodTypeToString(IndexType type) {
     return "INVALID";
 }
 
-IndexType StringToIndexMethodType(std::string str) {
+IndexType StringToIndexType(std::string str) {
     if (str == "INVALID") {
-        return INDEX_CONSTRAINT_TYPE_INVALID;
+        return INDEX_TYPE_INVALID;
     } else if (str == "BTREE_MULTIMAP") {
         return INDEX_TYPE_BTREE_MULTIMAP;
     } else if (str == "ORDERED_MAP") {
         return INDEX_TYPE_ORDERED_MAP;
     }
-    return INDEX_CONSTRAINT_TYPE_INVALID;
+    return INDEX_TYPE_INVALID;
 }
 
 //===--------------------------------------------------------------------===//
 // Index  Type - String Utilities
 //===--------------------------------------------------------------------===//
 
-std::string IndexTypeToString(IndexConstraintType type) {
+std::string IndexConstraintTypeToString(IndexConstraintType type) {
     switch (type) {
     case INDEX_CONSTRAINT_TYPE_INVALID: {
         return "INVALID";
@@ -456,7 +456,7 @@ std::string IndexTypeToString(IndexConstraintType type) {
     return "INVALID";
 }
 
-IndexConstraintType StringToIndexType(std::string str) {
+IndexConstraintType StringToIndexConstraintType(std::string str) {
     if (str == "INVALID") {
         return INDEX_CONSTRAINT_TYPE_INVALID;
     } else if (str == "NORMAL") {

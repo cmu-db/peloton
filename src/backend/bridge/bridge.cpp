@@ -23,7 +23,6 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/xact.h"
-#include "bridge/bridge.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_class.h"
