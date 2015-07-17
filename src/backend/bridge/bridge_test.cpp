@@ -66,47 +66,6 @@ void BridgeTest::DDL_CreateTable_TEST_INVALID_OID() {
 }
 
 /**
- * @brief Create a simple Column just for convenience
- * @return the vector of Column
- */
-std::vector<catalog::Column> BridgeTest::CreateSimpleColumns() {
-  // Column
-  std::vector<catalog::Column> columns;
-
-  catalog::Column column1(VALUE_TYPE_INTEGER, 4, "id");
-  catalog::Column column2(VALUE_TYPE_VARCHAR, 68, "name");
-  catalog::Column column3(VALUE_TYPE_TIMESTAMP, 8, "time");
-  catalog::Column column4(VALUE_TYPE_DOUBLE, 8, "salary");
-
-  columns.push_back(column1);
-  columns.push_back(column2);
-  columns.push_back(column3);
-  columns.push_back(column4);
-
-  return columns;
-}
-
-/**
- * @brief Compare the given column's members with given information
- * @param column column what we want to check
- * @param column_name column_name to compare with column 
- * @param length length to compare with column 
- * @param type valueType to compare with column 
- * @return the vector of Column
- */
-bool BridgeTest::CheckColumn(catalog::Column& column,
-                             std::string column_name, 
-                             int length, 
-                             ValueType type){
-
-  assert(strcmp(column.GetName().c_str(), column_name.c_str()) == 0);
-  assert(column.GetLength() == length);
-  assert(column.GetType() == type);
-
-  return true;
-}
-
-/**
  * @brief Create a table with simple Columns
  */
 void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
@@ -130,7 +89,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
   // Get the table pointer
   storage::DataTable* table = db->GetTableWithOid(table_oid);
 
-  // TODO::Check the table name and oid
+  // Check the table name and oid
   assert(strcmp((table->GetName()).c_str(), table_name.c_str()) == 0);
   assert(table->GetOid() == table_oid);
 
@@ -138,19 +97,19 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
   catalog::Schema* schema = table->GetSchema();
   std::cout <<(*schema);
 
-  // TODO::Check the first column' name, length and value type
+  // Check the first column' name, length and value type
   catalog::Column column = schema->GetColumn(0);
   assert( CheckColumn( column, "id", 4, VALUE_TYPE_INTEGER ));
 
-  // TODO::Check the second column' name, length and value type
+  // Check the second column' name, length and value type
   column = schema->GetColumn(1);
   assert( CheckColumn( column, "name", 68, VALUE_TYPE_VARCHAR ));
 
-  // TODO::Check the third column' name, length and value type
+  // Check the third column' name, length and value type
   column = schema->GetColumn(2);
   assert( CheckColumn( column, "time", 8, VALUE_TYPE_TIMESTAMP ));
 
-  // TODO::Check the fourth column' name, length and value type
+  // Check the fourth column' name, length and value type
   column = schema->GetColumn(3);
   assert( CheckColumn( column, "salary", 8, VALUE_TYPE_DOUBLE ));
 
@@ -184,134 +143,42 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
 
   // Create the constrains
   catalog::Constraint notnull_constraint(CONSTRAINT_TYPE_NOTNULL);
-  catalog::Constraint primary_key_constraint(CONSTRAINT_TYPE_PRIMARY, "THIS_IS_PRIMARY_KEY_CONSTRAINT");
-  catalog::Constraint unique_constraint(CONSTRAINT_TYPE_UNIQUE, "THIS_IS_UNIQUE_CONSTRAINT");
 
   // Add one constraint to the one column
-  schema->AddConstraint("id",    notnull_constraint);
-  schema->AddConstraint("name",  primary_key_constraint);
-  schema->AddConstraint("time",  unique_constraint);
+  schema->AddConstraint("id", notnull_constraint);
 
-  // Create a primary key index
-  // NOTE:: It must be called automatically in active or bootstrap mode
-  std::vector<std::string> key_column_names;
-  key_column_names.push_back("name");
-  bridge::DDL::IndexInfo* index_info = new bridge::DDL::IndexInfo("THIS_IS_PRIMARY_KEY_CONSTRAINT",
-                                                                  30001,
-                                                                  table_name,
-                                                                  INDEX_TYPE_BTREE_MULTIMAP,
-                                                                  INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
-                                                                  true,
-                                                                  key_column_names);
-  status = bridge::DDL::CreateIndex(*index_info);
-  assert(status);
+  // Create a primary key index and added primary key constraint to the 'name' column
+  CreateSamplePrimaryKeyIndex(table_name, 30001);
 
-  // Create a unique index
-  key_column_names.clear();
-  key_column_names.push_back("time");
-  index_info = new bridge::DDL::IndexInfo("THIS_IS_UNIQUE_CONSTRAINT",
-                                          30002,
-                                          table_name,
-                                          INDEX_TYPE_BTREE_MULTIMAP,
-                                          INDEX_CONSTRAINT_TYPE_UNIQUE,
-                                          true,
-                                          key_column_names);
+  // Create a unique index and added unique constraint to the 'time' column
+  CreateSampleUniqueIndex(table_name, 30002);
 
-  status = bridge::DDL::CreateIndex(*index_info);
-  assert(status);
-
-  // Create a reference table that will be referenced by another table
+  // Create a reference table and foreign key constraint and added unique constraint to the 'salary' column
   std::string pktable_name = "pktable";
   oid_t pktable_oid = 20003;
-  status = bridge::DDL::CreateTable(pktable_oid, pktable_name, columns);
-  assert(status);
+  CreateSampleForeignKey(pktable_oid, pktable_name, columns, table_oid);
 
-  // Construct ForeignKey
-  std::vector<std::string> pk_column_names;
-  std::vector<std::string> fk_column_names;
-  pk_column_names.push_back("name");
-  fk_column_names.push_back("salary");
-  std::vector<catalog::ForeignKey> foreign_keys;
-  catalog::ForeignKey *foreign_key = new catalog::ForeignKey(pktable_oid,
-                                                             pk_column_names,
-                                                             fk_column_names,
-                                                             'r',
-                                                             'c',
-                                                             "THIS_IS_FOREIGN_CONSTRAINT");
-  foreign_keys.push_back(*foreign_key);
-
-
-  // Current table ----> reference table
-  status = peloton::bridge::DDL::SetReferenceTables(foreign_keys, table_oid);
-  assert(status);
-
-  // TODO::CHECK :: check only regarding constraint. Skip others, such as, column name, length, etc.
-
-  // The first column
-  // TODO::CHECK :: Not null constraint type 
+  // Check the first column's constraint 
   catalog::Column column = schema->GetColumn(0);
-  std::vector<catalog::Constraint> constraint_infos = column.GetConstraints();
-  assert(constraint_infos[0].GetType() == CONSTRAINT_TYPE_NOTNULL);
+  CheckColumnWithConstraint( column, CONSTRAINT_TYPE_NOTNULL, "", 1);
 
-
-  // The second column
-  // TODO::CHECK :: Primary key constraint type, name
+  // Check the second column's constraint and index
   column = schema->GetColumn(1);
-  constraint_infos = column.GetConstraints();
-  assert(constraint_infos[0].GetType() == CONSTRAINT_TYPE_PRIMARY);
-  assert(strcmp(constraint_infos[0].GetName().c_str(), "THIS_IS_PRIMARY_KEY_CONSTRAINT") == 0);
-
-  // TODO::CHECK :: the primary key index name, type, etc.
+  CheckColumnWithConstraint( column, CONSTRAINT_TYPE_PRIMARY, table_name+"_pkey", 1);
   index::Index *index = table->GetIndexWithOid(30001);
-  assert(strcmp(index->GetName().c_str(), "THIS_IS_PRIMARY_KEY_CONSTRAINT") == 0);
-  assert(index->GetColumnCount() == 1);
-  assert(index->GetIndexMethodType() == INDEX_TYPE_BTREE_MULTIMAP);
-  assert(index->GetIndexType() == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY);
-  assert(index->HasUniqueKeys()  == true);
+  CheckIndex(index, table_name+"_pkey", 1, INDEX_TYPE_BTREE_MULTIMAP, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, true);
 
-
-  // The third column
-  // TODO::CHECK :: Unique constraint name, type, etc.
+  // Check the third column's constraint and index
   column = schema->GetColumn(2);
-  constraint_infos = column.GetConstraints();
-  assert(constraint_infos[0].GetType() == CONSTRAINT_TYPE_UNIQUE);
-  assert(strcmp(constraint_infos[0].GetName().c_str(), "THIS_IS_UNIQUE_CONSTRAINT") == 0);
-
-  // TODO::Check  index for unique constraint
+  CheckColumnWithConstraint( column, CONSTRAINT_TYPE_UNIQUE, table_name+"_key", 1);
   index = table->GetIndexWithOid(30002);
-  assert(strcmp(index->GetName().c_str(), "THIS_IS_UNIQUE_CONSTRAINT") == 0);
-  assert(index->GetColumnCount() == 1);
-  assert(index->GetIndexMethodType() == INDEX_TYPE_BTREE_MULTIMAP);
-  assert(index->GetIndexType() == INDEX_CONSTRAINT_TYPE_UNIQUE);
-  assert(index->HasUniqueKeys()  == true);
+  CheckIndex(index, table_name+"_key", 1, INDEX_TYPE_BTREE_MULTIMAP, INDEX_CONSTRAINT_TYPE_UNIQUE, true);
 
-  // The fourth column
+  // Check the fourth column's constraint and foreign key
   column = schema->GetColumn(3);
-  constraint_infos = column.GetConstraints();
-  assert(constraint_infos.size() == 1);
-
-  // TODO::CHECK::  reference table
-  assert(constraint_infos[0].GetType() == CONSTRAINT_TYPE_FOREIGN);
-  assert(strcmp(constraint_infos[0].GetName().c_str(), "THIS_IS_FOREIGN_CONSTRAINT") == 0);
-  assert(constraint_infos[0].GetForeignKeyListOffset() == 0);
-
-  // TODO::CHECK:: pktable name and oid
+  CheckColumnWithConstraint( column, CONSTRAINT_TYPE_FOREIGN, "THIS_IS_FOREIGN_CONSTRAINT", 1, 0);
   catalog::ForeignKey *pktable = table->GetForeignKey(0);
-  assert(pktable->GetSinkTableOid() == pktable_oid);
-  assert(strcmp((pktable->GetConstraintName()).c_str(), "THIS_IS_FOREIGN_CONSTRAINT") == 0);
-
-  // TODO::CHECK:: pktable size name, update/delete action
-  pk_column_names.clear();
-  fk_column_names.clear();
-  pk_column_names  = pktable->GetPKColumnNames();
-  fk_column_names  = pktable->GetFKColumnNames();
-  assert(pk_column_names.size() == 1);
-  assert(fk_column_names.size() == 1);
-  assert(strcmp(pk_column_names[0].c_str(), "name") == 0);
-  assert(strcmp(fk_column_names[0].c_str(), "salary") == 0);
-
-  assert(pktable->GetUpdateAction() == 'r');
-  assert(pktable->GetDeleteAction() == 'c');
+  CheckForeignKey( pktable, pktable_oid, "THIS_IS_FOREIGN_CONSTRAINT", 1, 1, 'r', 'c' );
 
   std::cout << ":::::: " << __func__ << " DONE\n";
 }
