@@ -39,7 +39,6 @@
 #include "access/parallel.h"
 #include "access/printtup.h"
 #include "access/xact.h"
-#include "bridge/bridge.h"
 #include "catalog/pg_type.h"
 #include "commands/async.h"
 #include "commands/prepare.h"

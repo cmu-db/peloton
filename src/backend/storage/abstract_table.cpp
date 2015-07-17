@@ -119,6 +119,7 @@ void AbstractTable::AddTileGroup(TileGroup *tile_group) {
 
 }
 
+
 size_t AbstractTable::GetTileGroupCount() const {
   size_t size = tile_groups.size();
   return size;
