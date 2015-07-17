@@ -101,6 +101,8 @@ bool DDL::CreateTable(Oid relation_oid,
   if(table != nullptr) {
     LOG_INFO("Created table(%u) : %s", relation_oid, table_name.c_str());
     return true;
+  }else{
+    LOG_WARN("Failed to create a table(%u) : %s", relation_oid, table_name.c_str());
   }
 
   return false;
