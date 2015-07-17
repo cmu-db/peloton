@@ -35,7 +35,12 @@ DataTable::DataTable(catalog::Schema *schema,
 }
 
 DataTable::~DataTable() {
-  // Nothing to do here
+
+  // clean up indices
+  for (auto index : indexes) {
+    delete index;
+  }
+
 }
 
 ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple, bool update) {
