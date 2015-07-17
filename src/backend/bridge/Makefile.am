@@ -9,6 +9,7 @@ bridge_FILES = \
 			   backend/bridge/ddl_index.cpp \
 			   backend/bridge/ddl_table.cpp \
 			   backend/bridge/ddl_utils.cpp \
+			   backend/bridge/ddl_transaction.cpp \
 			   backend/bridge/ddl.cpp \
 			   backend/bridge/bridge.cpp \
 			   backend/bridge/bootstrap.cpp \
