@@ -20,7 +20,7 @@ namespace catalog {
 class Column;
 }
 
-namespace test {
+namespace bridge {
 
 //===--------------------------------------------------------------------===//
 // Bridge Tests
@@ -58,5 +58,5 @@ class BridgeTest {
 
 };
 
-} // End test namespace
+} // End bridge namespace
 } // End peloton namespace
