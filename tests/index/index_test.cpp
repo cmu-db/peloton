@@ -49,8 +49,9 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   // BTREE INDEX
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata("btree_index",
-                                                                  INDEX_METHOD_TYPE_BTREE_MULTIMAP,
-                                                                  INDEX_TYPE_NORMAL,
+                                                                  125,
+                                                                  INDEX_TYPE_BTREE_MULTIMAP,
+                                                                  INDEX_CONSTRAINT_TYPE_DEFAULT,
                                                                   tuple_schema,
                                                                   key_schema,
                                                                   true);

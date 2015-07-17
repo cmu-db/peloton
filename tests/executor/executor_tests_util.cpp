@@ -307,28 +307,30 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_coun
   key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
   unique = true;
   index_metadata = new index::IndexMetadata("primary_btree_index",
-                                            INDEX_METHOD_TYPE_BTREE_MULTIMAP,
-                                            INDEX_TYPE_PRIMARY_KEY,
+                                            123,
+                                            INDEX_TYPE_BTREE_MULTIMAP,
+                                            INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
                                             tuple_schema,
                                             key_schema,
                                             unique);
   index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
 
-  table->AddIndex(pkey_index, 123);
+  table->AddIndex(pkey_index);
 
   // SECONDARY INDEX
   key_attrs = { 0, 1 };
   key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
   unique = false;
   index_metadata = new index::IndexMetadata("secondary_btree_index",
-                                            INDEX_METHOD_TYPE_BTREE_MULTIMAP,
-                                            INDEX_TYPE_NORMAL,
+                                            124,
+                                            INDEX_TYPE_BTREE_MULTIMAP,
+                                            INDEX_CONSTRAINT_TYPE_DEFAULT,
                                             tuple_schema,
                                             key_schema,
                                             unique);
   index::Index *sec_index = index::IndexFactory::GetInstance(index_metadata);
 
-  table->AddIndex(sec_index, 124);
+  table->AddIndex(sec_index);
 
   return table;
 }
