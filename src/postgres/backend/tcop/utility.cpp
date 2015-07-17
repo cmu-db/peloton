@@ -1300,6 +1300,10 @@ ProcessUtilitySlow(Node *parsetree,
                            parsetree);
           commandCollected = true;
           EventTriggerAlterTableEnd();
+
+          // TODO: Peloton Changes
+          ((IndexStmt *)parsetree)->index_id =  address.objectId;
+
         }
         break;
 

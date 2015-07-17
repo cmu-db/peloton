@@ -179,6 +179,7 @@ void Bootstrap::CreatePelotonStructure(char relation_kind,
           // after all tables are created
           // The order of table and index entries in pg_class table can be arbitrary
           bridge::DDL::IndexInfo indexinfo(relation_name,
+                                           pg_index->indexrelid,
                                            get_rel_name(pg_index->indrelid),
                                            method_type,
                                            type,
