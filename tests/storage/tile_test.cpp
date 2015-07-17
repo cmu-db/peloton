@@ -142,18 +142,15 @@ TEST(TileTests, BasicTest) {
 	std::vector<catalog::ColumnInfo> new_columns = old_schema->GetColumns();
 	const catalog::Schema *new_schema = new catalog::Schema(columns);
 
-	storage::TileGroupHeader *new_header = new storage::TileGroupHeader(backend, tuple_count);
+	storage::AbstractBackend *new_backend = new storage::VMBackend();
+	Pool *new_pool = new Pool(new_backend);
+	storage::TileGroupHeader *new_header = new storage::TileGroupHeader(new_backend, tuple_count);
 	storage::Tile *new_tile = storage::TileFactory::GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
-											  new_header, backend, *new_schema, nullptr, old_tile_allocated_tuple_count);
-
-	::memcpy(static_cast<void *>(new_tile), static_cast<void *>(tile), old_tile_size);
-
-	Pool *new_pool = new_tile->GetPool();
-	std::cout << "address of new pool: " << static_cast<void *>(new_pool) << std::endl;
-	int64_t new_pool_size = new_pool->GetAllocatedMemory();
-	std::cout << "size of new pool: " << new_pool_size << std::endl;
+											  new_header, new_backend, *new_schema, nullptr, old_tile_allocated_tuple_count);
 
 	//::memcpy(new_pool,old_pool,old_pool_size);
+	::memcpy(static_cast<void *>(new_tile), static_cast<void *>(tile), old_tile_size);
+
 
 	/*
 	 * Print details of new tile
