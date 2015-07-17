@@ -13,8 +13,8 @@
 #include "bridge_test.h"
 
 #include "backend/bridge/bridge.h"
-#include "backend/catalog/manager.h"
 #include "backend/bridge/ddl.h"
+#include "backend/catalog/manager.h"
 #include "backend/storage/database.h"
 
 namespace peloton {
@@ -26,7 +26,7 @@ namespace test {
  */
 void BridgeTest::DDL_CreateTable_TEST() {
 
-  // Create the storage database and add it to the manager
+  // Create the new storage database and add it to the manager
   storage::Database* db = new storage::Database( bridge::Bridge::GetCurrentDatabaseOid());
   auto& manager = catalog::Manager::GetInstance();
   manager.AddDatabase(db);
