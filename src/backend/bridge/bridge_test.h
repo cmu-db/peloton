@@ -13,6 +13,9 @@
 #pragma once
 
 #include <vector>
+#include <string>
+
+#include <backend/common/types.h>
 
 namespace peloton {
 
@@ -55,6 +58,13 @@ class BridgeTest {
   //===--------------------------------------------------------------------===//
 
   static std::vector<catalog::Column> CreateSimpleColumns();
+
+  static bool CheckColumn(catalog::Column& column,
+                          std::string column_name, 
+                          int length, 
+                          ValueType type);
+
+
 
 };
 
