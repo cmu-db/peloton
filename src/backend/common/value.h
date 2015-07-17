@@ -528,6 +528,8 @@ class Value {
       else
       {
         Varlen* sref = *reinterpret_cast<Varlen* const*>(value_data);
+        // TODO: Peloton Changes
+        std::cout << "Varlen object stored at: " << static_cast<void *>(sref) << std::endl;
         value = sref->Get() + GetObjectLengthLength();
       }
       return value;
