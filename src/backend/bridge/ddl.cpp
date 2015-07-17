@@ -119,6 +119,7 @@ bool DDL::CreateTable(Oid relation_oid,
 bool DDL::CreateIndex(IndexInfo index_info){
 
   std::string index_name = index_info.GetIndexName();
+  oid_t index_oid = index_info.GetOid();
   std::string table_name = index_info.GetTableName();
   IndexConstraintType index_type = index_info.GetType();
   bool unique_keys = index_info.IsUnique();
@@ -176,7 +177,7 @@ bool DDL::CreateIndex(IndexInfo index_info){
   auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_columns);
 
   // Create index metadata and physical index
-  index::IndexMetadata* metadata = new index::IndexMetadata(index_name, our_index_type, index_type,
+  index::IndexMetadata* metadata = new index::IndexMetadata(index_name, index_oid, our_index_type, index_type,
                                                             tuple_schema, key_schema,
                                                             unique_keys);
   index::Index* index = index::IndexFactory::GetInstance(metadata);
@@ -712,6 +713,7 @@ void DDL::ParsingCreateStmt(CreateStmt* Cstmt,
  */
 DDL::IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt){
   std::string index_name;
+  oid_t index_oid = Istmt->index_id;
   std::string table_name;
   IndexType method_type;
   IndexConstraintType type = INDEX_CONSTRAINT_TYPE_DEFAULT;
@@ -755,11 +757,12 @@ DDL::IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt){
   method_type = INDEX_TYPE_BTREE_MULTIMAP;
 
   IndexInfo* index_info = new IndexInfo(index_name, 
-                                         table_name, 
-                                         method_type,
-                                         type,
-                                         Istmt->unique,
-                                         key_column_names);
+                                        index_oid,
+                                        table_name, 
+                                        method_type,
+                                        type,
+                                        Istmt->unique,
+                                        key_column_names);
   return index_info;
 }
 
