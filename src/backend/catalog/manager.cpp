@@ -95,7 +95,7 @@ oid_t Manager::GetDatabaseCount() const {
 //===--------------------------------------------------------------------===//
 
 storage::DataTable *Manager::GetTableWithOid(const oid_t database_oid,
-                                            const oid_t table_oid) const {
+                                             const oid_t table_oid) const {
 
   // Lookup DB
   auto database = GetDatabaseWithOid(database_oid);
@@ -103,6 +103,21 @@ storage::DataTable *Manager::GetTableWithOid(const oid_t database_oid,
   // Lookup table
   if(database != nullptr) {
     auto table = database->GetTableWithOid(table_oid);
+    return table;
+  }
+
+  return nullptr;
+}
+
+storage::DataTable *Manager::GetTableWithName(const oid_t database_oid,
+                                              const std::string table_name) const {
+
+  // Lookup DB
+  auto database = GetDatabaseWithOid(database_oid);
+
+  // Lookup table
+  if(database != nullptr) {
+    auto table = database->GetTableWithName(table_name);
     return table;
   }
 
