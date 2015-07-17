@@ -34,10 +34,10 @@ void AddTileGroup() {
     column_names.push_back(tile_column_names);
 
     std::vector<catalog::Schema> schemas;
-    std::vector<catalog::ColumnInfo> columns;
+    std::vector<catalog::Column> columns;
 
     // SCHEMA
-    catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
+    catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
     columns.push_back(column1);
 
     catalog::Schema *schema1 = new catalog::Schema(columns);
@@ -67,9 +67,9 @@ TEST(ManagerTests, TransactionTest) {
 
     LaunchParallelTest(8, AddTileGroup);
 
-    std::cout << "Catalog allocations :: " << catalog::Manager::GetInstance().GetOid() << "\n";
+    std::cout << "Catalog allocations :: " << catalog::Manager::GetInstance().GetCurrentOid() << "\n";
 
-    EXPECT_EQ(catalog::Manager::GetInstance().GetOid(), 800);
+    EXPECT_EQ(catalog::Manager::GetInstance().GetCurrentOid(), 800);
 
 }
 

@@ -58,11 +58,11 @@ const std::vector<LogicalTile::ColumnInfo>& LogicalTile::GetSchema() const{
  */
 catalog::Schema* LogicalTile::GetPhysicalSchema() const {
 
-  std::vector<catalog::ColumnInfo> physical_columns;
+  std::vector<catalog::Column> physical_columns;
 
   for(ColumnInfo column : schema_) {
     auto schema = column.base_tile->GetSchema();
-    auto physical_column = schema->GetColumnInfo(column.origin_column_id);
+    auto physical_column = schema->GetColumn(column.origin_column_id);
     physical_columns.push_back(physical_column);
   }
 

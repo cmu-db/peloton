@@ -279,10 +279,10 @@ TEST(ExpressionTest, SimpleFilter) {
 
   // TUPLE
 
-  std::vector<catalog::ColumnInfo> columns;
+  std::vector<catalog::Column> columns;
 
-  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
-  catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
+  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
+  catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
   columns.push_back(column1);
   columns.push_back(column2);
   catalog::Schema *schema(new catalog::Schema(columns));
@@ -329,10 +329,10 @@ TEST(ExpressionTest, OrFilter) {
 
   // TUPLE
 
-  std::vector<catalog::ColumnInfo> columns;
+  std::vector<catalog::Column> columns;
 
-  catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
-  catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
+  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
+  catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
   columns.push_back(column1);
   columns.push_back(column2);
   catalog::Schema *schema(new catalog::Schema(columns));

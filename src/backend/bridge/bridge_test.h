@@ -17,10 +17,10 @@
 namespace peloton {
 
 namespace catalog {
-class ColumnInfo;
+class Column;
 }
 
-namespace test {
+namespace bridge {
 
 //===--------------------------------------------------------------------===//
 // Bridge Tests
@@ -36,17 +36,27 @@ class BridgeTest {
 
   static void RunTests();
 
+ private:
+
+  //===--------------------------------------------------------------------===//
+  // Tests
+  //===--------------------------------------------------------------------===//
+
   static void DDL_CreateTable_TEST();
+
   static void DDL_CreateTable_TEST_INVALID_OID();
+
   static void DDL_CreateTable_TEST_COLUMNS();
+
   static void DDL_CreateTable_TEST_COLUMN_CONSTRAINTS();
 
-  static std::vector<catalog::ColumnInfo> CreateSimpleColumns();
+  //===--------------------------------------------------------------------===//
+  // Utilities
+  //===--------------------------------------------------------------------===//
 
-  static void TestCatalog();
+  static std::vector<catalog::Column> CreateSimpleColumns();
 
-  
 };
 
-} // End test namespace
+} // End bridge namespace
 } // End peloton namespace
