@@ -13,7 +13,6 @@
 #include "nodes/pprint.h"
 #include "utils/rel.h"
 #include "utils/lsyscache.h"
-#include "bridge/bridge.h"
 #include "executor/executor.h"
 #include "parser/parsetree.h"
 

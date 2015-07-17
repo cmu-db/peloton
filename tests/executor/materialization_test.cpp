@@ -108,11 +108,11 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
 
   // Create materialization node for this test.
   // Construct output schema. We drop column 3 and reorder the others to 3,1,0.
-  std::vector<catalog::ColumnInfo> output_columns;
+  std::vector<catalog::Column> output_columns;
   // Note that Column 3 in the tile group is column 1 in the second tile.
-  output_columns.push_back(source_base_tiles[1]->GetSchema()->GetColumnInfo(1));
-  output_columns.push_back(source_base_tiles[0]->GetSchema()->GetColumnInfo(1));
-  output_columns.push_back(source_base_tiles[0]->GetSchema()->GetColumnInfo(0));
+  output_columns.push_back(source_base_tiles[1]->GetSchema()->GetColumn(1));
+  output_columns.push_back(source_base_tiles[0]->GetSchema()->GetColumn(1));
+  output_columns.push_back(source_base_tiles[0]->GetSchema()->GetColumn(0));
   std::unique_ptr<catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
 

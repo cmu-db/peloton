@@ -22,6 +22,7 @@ namespace index {
 Index::Index(IndexMetadata *metadata)
 : metadata(metadata) {
 
+  index_oid = metadata->GetOid();
   // initialize counters
   lookup_counter = insert_counter = delete_counter = update_counter = 0;
 

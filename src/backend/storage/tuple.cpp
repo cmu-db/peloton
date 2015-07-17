@@ -93,7 +93,7 @@ void Tuple::Copy(const void *source, Pool *pool) {
     // Copy each uninlined column doing an allocation for copies.
     for (oid_t column_itr = 0; column_itr < uninlineable_column_count; column_itr++) {
       const oid_t unlineable_column_id =
-          tuple_schema->GetUninlinedColumnIndex(column_itr);
+          tuple_schema->GetUninlinedColumn(column_itr);
 
       // Get original value from uninlined pool
       Value value = GetValue(unlineable_column_id);
@@ -344,7 +344,7 @@ void Tuple::FreeUninlinedData() {
   const uint16_t unlinlined_column_count = tuple_schema->GetUninlinedColumnCount();
 
   for (int column_itr = 0; column_itr < unlinlined_column_count; column_itr++) {
-    GetValue(tuple_schema->GetUninlinedColumnIndex(column_itr)).FreeUninlinedData();
+    GetValue(tuple_schema->GetUninlinedColumn(column_itr)).FreeUninlinedData();
   }
 }
 

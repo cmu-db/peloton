@@ -30,64 +30,15 @@ DataTable::DataTable(catalog::Schema *schema,
                      oid_t table_oid,
                      size_t tuples_per_tilegroup)
 : AbstractTable(schema, backend, tuples_per_tilegroup),
-  table_name(table_name), table_oid(table_oid) {
+  table_name(table_name),
+  table_oid(table_oid) {
 }
 
 DataTable::~DataTable() {
+
   // clean up indices
   for (auto index : indexes) {
     delete index;
-  }
-}
-
-bool DataTable::AddIndex(index::Index *index, oid_t index_oid ) {
-  std::lock_guard<std::mutex> lock(table_mutex);
-  indexes.push_back(index); // TODO Move to inside catch
-
-  IndexType type = index->GetIndexType();
-
-  if( type == INDEX_TYPE_UNIQUE)
-    unique_count++;
-  else if( type == INDEX_TYPE_PRIMARY_KEY)
-    primary_key_count++;
-
-  try {
-    index = index_oid_to_address.at( index_oid );
-    LOG_WARN("Index(%u) already exists in this table(%u) ", index_oid, table_oid );
-    return false;
-  }catch (const std::out_of_range& oor)  {
-    index_oid_to_address.insert( std::pair<oid_t, index::Index* > ( index_oid, index ));
-  }
-
-  return true;
-}
-
-index::Index* DataTable::GetIndexByOid(oid_t index_oid ) {
-  index::Index* index = nullptr;
-
-  try {
-    index = index_oid_to_address.at( index_oid );
-  }catch (const std::out_of_range& oor)  {
-    LOG_WARN("Not exists Index(%u) in this table(%u) ", index_oid, table_oid );
-  }
-
-  return index;
-}
-
-void DataTable::AddReferenceTable( catalog::ReferenceTableInfo *reference_table_info){
-
-  std::lock_guard<std::mutex> lock( table_reference_table_mutex );
-
-  //FIXME? TODO?
-  catalog::ReferenceTableInfo* ref = new catalog::ReferenceTableInfo( *reference_table_info );
-  reference_table_infos.push_back( ref );
-
-  catalog::Schema* schema = this->GetSchema();
-  for( auto column_name : ref->GetFKColumnNames() )
-  {
-    catalog::Constraint *constraint = new catalog::Constraint( CONSTRAINT_TYPE_FOREIGN, ref->GetConstraintName());
-    constraint->SetReferenceTableOffset( this->GetReferenceTableCount()  ) ;
-    schema->AddConstraintByColumnName( column_name, constraint );
   }
 
 }
@@ -124,23 +75,6 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple
 
   return location;
 }
-storage::DataTable* DataTable::GetReferenceTable(int offset) {
-  assert( offset < reference_table_infos.size() );
-
-  peloton::storage::Database* db = peloton::storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
-
-  oid_t relation_id = reference_table_infos[offset]->GetReferenceTableId();
-
-  return db->GetTableById( relation_id );
-}
-
-catalog::ReferenceTableInfo* DataTable::GetReferenceTableInfo(int offset) {
-  assert( offset < reference_table_infos.size() );
-
-  return reference_table_infos[offset];
-}
-
-
 
 void DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer location) {
   for (auto index : indexes) {
@@ -154,29 +88,31 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer loca
 
   int index_count = GetIndexCount();
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+    auto index = GetIndex(index_itr);
 
     // No need to check if it does not have unique keys
-    if(indexes[index_itr]->HasUniqueKeys() == false) {
-      bool status = indexes[index_itr]->InsertEntry(tuple, location);
+    if(index->HasUniqueKeys() == false) {
+      bool status = index->InsertEntry(tuple, location);
       if (status == true)
         continue;
     }
 
     // Check if key already exists
-    if (indexes[index_itr]->Exists(tuple) == true) {
+    if (index->Exists(tuple) == true) {
       LOG_ERROR("Failed to insert into index %s.%s [%s]",
-                GetName().c_str(), indexes[index_itr]->GetName().c_str(),
-                indexes[index_itr]->GetTypeName().c_str());
+                GetName().c_str(), index->GetName().c_str(),
+                index->GetTypeName().c_str());
     }
     else {
-      bool status = indexes[index_itr]->InsertEntry(tuple, location);
+      bool status = index->InsertEntry(tuple, location);
       if (status == true)
         continue;
     }
 
     // Undo insert in other indexes as well
     for (int prev_index_itr = index_itr + 1; prev_index_itr < index_count; ++prev_index_itr) {
-      indexes[prev_index_itr]->DeleteEntry(tuple);
+      auto prev_index = GetIndex(prev_index_itr);
+      prev_index->DeleteEntry(tuple);
     }
     return false;
   }
@@ -218,6 +154,100 @@ std::ostream& operator<<(std::ostream& os, const DataTable& table) {
 
   return os;
 }
+
+//===--------------------------------------------------------------------===//
+// INDEX
+//===--------------------------------------------------------------------===//
+
+void DataTable::AddIndex(index::Index *index) {
+  {
+    std::lock_guard<std::mutex> lock(table_mutex);
+    indexes.push_back(index);
+  }
+
+  // Update index stats
+  auto index_type = index->GetIndexType();
+  if(index_type == INDEX_CONSTRAINT_TYPE_PRIMARY_KEY) {
+    has_primary_key = true;
+  }
+  else if(index_type == INDEX_CONSTRAINT_TYPE_UNIQUE) {
+    unique_constraint_count++;
+  }
+
+}
+
+index::Index* DataTable::GetIndexWithOid(const oid_t index_oid) const {
+  for(auto index : indexes)
+    if(index->GetOid() == index_oid)
+      return index;
+
+  return nullptr;
+}
+
+void DataTable::DropIndexWithOid(const oid_t index_id) {
+  {
+    std::lock_guard<std::mutex> lock(table_mutex);
+
+    oid_t index_offset = 0;
+    for(auto index : indexes) {
+      if(index->GetOid() == index_id)
+        break;
+      index_offset++;
+    }
+    assert(index_offset < indexes.size());
+
+    // Drop the index
+    indexes.erase(indexes.begin() + index_offset);
+  }
+}
+
+index::Index *DataTable::GetIndex(const oid_t index_offset) const {
+  assert(index_offset < indexes.size());
+  auto index = indexes.at(index_offset);
+  return index;
+}
+
+oid_t DataTable::GetIndexCount() const {
+  return indexes.size();
+}
+
+//===--------------------------------------------------------------------===//
+// FOREIGN KEYS
+//===--------------------------------------------------------------------===//
+
+void DataTable::AddForeignKey(catalog::ForeignKey *key) {
+  {
+    std::lock_guard<std::mutex> lock(table_mutex);
+    catalog::Schema * schema = this->GetSchema();
+    catalog::Constraint constraint( CONSTRAINT_TYPE_FOREIGN, key->GetConstraintName());
+    constraint.SetForeignKeyListOffset(GetForeignKeyCount());
+    for( auto fk_column : key->GetFKColumnNames()){
+      schema->AddConstraint(fk_column, constraint);
+    }
+    //TODO :: We need this one..
+    catalog::ForeignKey* fk = new catalog::ForeignKey( *key );
+    foreign_keys.push_back(fk);
+  }
+}
+
+catalog::ForeignKey *DataTable::GetForeignKey(const oid_t key_offset) const {
+  catalog::ForeignKey *key = nullptr;
+  key = foreign_keys.at(key_offset);
+  return key;
+}
+
+void DataTable::DropForeignKey(const oid_t key_offset) {
+  {
+    std::lock_guard<std::mutex> lock(table_mutex);
+    assert(key_offset < foreign_keys.size());
+    foreign_keys.erase(foreign_keys.begin() + key_offset);
+  }
+}
+
+oid_t DataTable::GetForeignKeyCount() const {
+  return foreign_keys.size();
+}
+
 
 } // End storage namespace
 } // End peloton namespace
