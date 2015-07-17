@@ -67,6 +67,7 @@ doc/
 .classpath
 .project
 .cproject
+.pydevproject
 .settings
 .autotools
 

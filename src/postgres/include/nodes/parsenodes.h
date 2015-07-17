@@ -2848,8 +2848,9 @@ typedef struct IndexStmt {
 	bool		concurrent;		/* should this be a concurrent index build? */
 	bool		if_not_exists;	/* just do nothing if index already exists? */
 
-	// TODO: Peloton Changes
-	Oid      index_id;   /* cache the index id for DDL */
+
+        // TODO: Peloton Changes
+        Oid      index_id;   /* cache the index id for DDL */
 } IndexStmt;
 
 /* ----------------------

@@ -12,31 +12,47 @@
 
 #pragma once
 
+#include <iostream>
+
 #include "backend/catalog/manager.h"
 #include "backend/common/types.h"
+#include "backend/common/logger.h"
+#include "backend/scheduler/abstract_task.h"
 
-#include <iostream>
+#include "tbb/tbb.h"
 
 namespace peloton {
 namespace scheduler {
 
+//===--------------------------------------------------------------------===//
+// Task
+//===--------------------------------------------------------------------===//
+
 typedef  ResultType (*handler)(void*);
 
-//===--------------------------------------------------------------------===//
-// Abstract Task
-//===--------------------------------------------------------------------===//
-
-class AbstractTask {
+class AbstractTask : public tbb::task {
 
  public:
-  AbstractTask(handler function_pointer, void *args)
+  AbstractTask(handler function_pointer,
+       void *args,
+       TaskPriorityType priority)
  : function_pointer(function_pointer),
    args(args),
-   output(RESULT_TYPE_INVALID){
+   output(RESULT_TYPE_INVALID),
+   priority(priority){
 
     // Get a task id
     task_id = catalog::Manager::GetInstance().GetNextOid();
 
+  }
+
+  tbb::task* execute() {
+
+    LOG_TRACE("Starting task \n");
+    output = (*function_pointer)(args);
+    LOG_TRACE("Stopping task \n");
+
+    return nullptr;
   }
 
   oid_t GetTaskId() {
@@ -63,7 +79,9 @@ class AbstractTask {
   oid_t task_id;
 
   handler function_pointer;
+
   void *args;
+
   ResultType output;
 
   TaskPriorityType priority = TaskPriorityType::TASK_PRIORTY_TYPE_NORMAL;

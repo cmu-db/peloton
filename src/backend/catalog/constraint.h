@@ -14,39 +14,31 @@
 
 #include <string>
 #include <vector>
-#include <iostream>
 
 #include "backend/common/types.h"
-#include "backend/common/logger.h"
 
 #include "nodes/nodes.h"
 
 namespace peloton {
-
-namespace index {
-class Index;
-}
-namespace storage {
-class DataTable;
-}
-
 namespace catalog {
-
-class ReferenceTableInfo;
 
 //===--------------------------------------------------------------------===//
 // Constraint Class
 //===--------------------------------------------------------------------===//
 
-class Constraint
-{
+class Constraint {
 
  public:
-  // Configure ( type [, name] )
-  Constraint(ConstraintType type, std::string constraint_name = "", Node* raw_expr = nullptr)
+
+  Constraint(ConstraintType type,
+             std::string constraint_name = "",
+             Node* raw_expr = nullptr)
  : constraint_type(type),
    constraint_name(constraint_name) {
+
+    // Copy the raw expression
     raw_expr = (Node*) copyObject((void*) raw_expr );
+
   }
 
   //===--------------------------------------------------------------------===//
@@ -57,31 +49,29 @@ class Constraint
     return constraint_type;
   }
 
-  std::string GetName() const {
-    return constraint_name;
-  }
-
   // Offset into the list of "reference tables" in the Table.
-  inline void SetReferenceTableOffset(int offset) {
-    AssertMsg(offset  >= 0, "ReferenceTable offset can't be negative");
-    reference_table_list_offset = offset;
+  void SetForeignKeyListOffset(oid_t offset) {
+    fk_list_offset = offset;
   }
 
   // Offset into the list of "unique indices" in the Table.
-  inline void SetUniqueIndexOffset( int offset ) {
-    AssertMsg(offset >=  0, "Unique Index offset can't be negative.");
+  void SetUniqueIndexOffset(oid_t offset ) {
     unique_index_list_offset = offset;
   }
 
-  // Return offset of "reference tables" in the Table.
-   inline int GetReferenceTableOffset( ) const  {
-     return reference_table_list_offset ;
-   }
+  // Get the offset
+  oid_t GetForeignKeyListOffset() const {
+    return fk_list_offset;
+  }
 
-   // Return offset of "unique indices" in the Table.
-   inline int GetUniqueIndexOffset( ) const {
-     return unique_index_list_offset;
-   }
+  // Get the offset
+  oid_t GetUniqueIndexOffset() const {
+    return unique_index_list_offset;
+  }
+
+  std::string GetName() const {
+    return constraint_name;
+  }
 
   // Get a string representation of this constraint
   friend std::ostream& operator<<(std::ostream& os, const Constraint& constraint);
@@ -95,87 +85,18 @@ class Constraint
   // The type of constraint
   ConstraintType constraint_type = CONSTRAINT_TYPE_INVALID;
 
-  // Constraint name
-  std::string constraint_name;
-
   // Raw_default_expr
   // FIXME :: Cooked expr
   Node* raw_expr = nullptr;
 
   // Offsets into the Unique index and reference table lists in Table
-  int reference_table_list_offset = -1;
+  oid_t fk_list_offset = INVALID_OID;
 
-  int unique_index_list_offset = -1;
-
-};
-
-
-//===--------------------------------------------------------------------===//
-// ReferenceTableInfo Class
-//===--------------------------------------------------------------------===//
-
-class ReferenceTableInfo {
-
- public:
-  ReferenceTableInfo(oid_t reference_table_id,
-                     std::vector<std::string> pk_column_names,
-                     std::vector<std::string> fk_column_names,
-                     char fk_update_action,
-                     char fk_delete_action,
-                     std::string constraint_name)
-
- : reference_table_id(reference_table_id),
-   pk_column_names(pk_column_names),
-   fk_column_names(fk_column_names),
-   fk_update_action(fk_update_action),
-   fk_delete_action(fk_delete_action),
-   constraint_name(constraint_name) {
-  }
-
-
-  oid_t GetReferenceTableId() const {
-    return reference_table_id;
-  }
-
- std::vector<std::string> GetPKColumnNames() const {
-    return pk_column_names;
-  }
- std::vector<std::string> GetFKColumnNames() const {
-    return fk_column_names;
-  }
-
-  char GetUpdateAction()const {
-    return fk_update_action;
-  }
-
-  char GetDeleteAction()const {
-    return fk_delete_action;
-  }
-
-  std::string& GetConstraintName() {
-    return constraint_name;
-  }
-
- private:
-
-  oid_t reference_table_id = INVALID_OID;
-
-  // Columns in the reference table (sink)
-  std::vector<std::string> pk_column_names;
-
-  // Columns in the current table (source)
-  // Can be a single column or multiple columns depending on the constraint
-  std::vector<std::string> fk_column_names;
-
-  // What to do when foreign key is updated or deleted ?
-  // FIXME: Not used in our executors currently
-  char fk_update_action;
-  char fk_delete_action;
+  oid_t unique_index_list_offset = INVALID_OID;
 
   std::string constraint_name;
 
 };
-
 
 
 } // End catalog namespace

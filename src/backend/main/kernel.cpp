@@ -10,15 +10,14 @@
  *-------------------------------------------------------------------------
  */
 
+#include <iostream>
+#include <cstdio>
 
 #include "backend/main/kernel.h"
 #include "backend/common/logger.h"
-#include "backend/executor/executors.h"
 
 #include "tbb/tbb.h"
 #include "tbb/flow_graph.h"
-
-#include <stdio.h>
 
 namespace peloton {
 namespace backend {

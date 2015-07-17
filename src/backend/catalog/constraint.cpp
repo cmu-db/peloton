@@ -9,6 +9,9 @@
  */
 
 #include "backend/catalog/constraint.h"
+#include "backend/common/types.h"
+
+#include <sstream>
 
 namespace peloton {
 namespace catalog {

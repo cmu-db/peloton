@@ -1303,6 +1303,7 @@ ProcessUtilitySlow(Node *parsetree,
 
           // TODO: Peloton Changes
           ((IndexStmt *)parsetree)->index_id =  address.objectId;
+
         }
         break;
 

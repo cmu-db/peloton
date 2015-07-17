@@ -107,9 +107,9 @@ bool OrderByExecutor::DoSort(){
 
   // Extract the schema for sort keys.
   input_schema_.reset(input_tiles_[0]->GetPhysicalSchema());
-  std::vector<catalog::ColumnInfo> sort_key_columns;
+  std::vector<catalog::Column> sort_key_columns;
   for(auto id : node.GetSortKeys()){
-    sort_key_columns.push_back(input_schema_->GetColumnInfo(id));
+    sort_key_columns.push_back(input_schema_->GetColumn(id));
   }
   sort_key_tuple_schema_.reset(new catalog::Schema(sort_key_columns));
 
