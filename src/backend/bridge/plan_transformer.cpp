@@ -16,13 +16,13 @@
 #include "nodes/pprint.h"
 #include "utils/rel.h"
 #include "utils/lsyscache.h"
-#include "bridge/bridge.h"
 #include "executor/executor.h"
 #include "parser/parsetree.h"
 
 #include "executor/nodeValuesscan.h"
 
 #include "backend/common/logger.h"
+#include "backend/bridge/bridge.h"
 #include "backend/bridge/expr_transformer.h"
 #include "backend/bridge/plan_transformer.h"
 #include "backend/bridge/tuple_transformer.h"
@@ -174,7 +174,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   ResultRelInfo *result_rel_info = mt_plan_state->resultRelInfo;
   Relation result_relation_desc = result_rel_info->ri_RelationDesc;
 
-  Oid database_oid = GetCurrentDatabaseOid();
+  Oid database_oid = Bridge::GetCurrentDatabaseOid();
   Oid table_oid = result_relation_desc->rd_id;
 
   /* Get the target table */
@@ -260,7 +260,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
   ResultRelInfo result_rel_info = mt_plan_state->resultRelInfo[0];
   Relation result_relation_desc = result_rel_info.ri_RelationDesc;
 
-  Oid database_oid = GetCurrentDatabaseOid();
+  Oid database_oid = Bridge::GetCurrentDatabaseOid();
   Oid table_oid = result_relation_desc->rd_id;
 
   /* Get the target table */
@@ -324,7 +324,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformDelete(
   assert(mt_plan_state->resultRelInfo);  // Input must come from a subplan
   assert(mt_plan_state->mt_nplans == 1);  // Maybe relax later. I don't know when they can have >1 subplans.
 
-  Oid database_oid = GetCurrentDatabaseOid();
+  Oid database_oid = Bridge::GetCurrentDatabaseOid();
   Oid table_oid = mt_plan_state->resultRelInfo[0].ri_RelationDesc->rd_id;
 
   /* Grab the target table */
@@ -364,7 +364,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
 
   // Grab Database ID and Table ID
   assert(ss_plan_state->ss_currentRelation);  // Null if not a base table scan
-  Oid database_oid = GetCurrentDatabaseOid();
+  Oid database_oid = Bridge::GetCurrentDatabaseOid();
   Oid table_oid = ss_plan_state->ss_currentRelation->rd_id;
 
   /* Grab the target table */
@@ -454,7 +454,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexScan(
   planner::IndexScanNode::IndexScanDesc index_scan_desc;
    /* Resolve target relation */
   Oid table_oid = iss_plan_state->ss.ss_currentRelation->rd_id;
-  Oid database_oid = GetCurrentDatabaseOid();
+  Oid database_oid = Bridge::GetCurrentDatabaseOid();
   const IndexScan* iss_plan = reinterpret_cast<IndexScan*>(iss_plan_state->ss.ps
       .plan);
 
@@ -576,7 +576,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexOnlyScan(
 
   /* Resolve target relation */
   Oid table_oid = ioss_plan_state->ss.ss_currentRelation->rd_id;
-  Oid database_oid = GetCurrentDatabaseOid();
+  Oid database_oid = Bridge::GetCurrentDatabaseOid();
   const IndexScan* iss_plan = reinterpret_cast<IndexScan*>(ioss_plan_state->ss.ps
       .plan);
 

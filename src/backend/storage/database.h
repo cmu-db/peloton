@@ -49,6 +49,8 @@ class Database{
 
   storage::DataTable *GetTableWithOid(const oid_t table_oid) const;
 
+  storage::DataTable *GetTableWithName(const std::string table_name) const;
+
   oid_t GetTableCount() const;
 
   void DropTableWithOid(const oid_t table_oid);
