@@ -12,7 +12,7 @@ bridge_FILES = \
 			   backend/bridge/ddl_drop.cpp \
 			   backend/bridge/ddl_utility.cpp \
 			   backend/bridge/bridge_test.cpp \
-			   backend/bridge/bridge_test_utility.cpp \
+			   backend/bridge/bridge_test_helper.cpp \
 			   backend/bridge/plan_transformer.cpp \
 			   backend/bridge/tuple_transformer.cpp \
 			   backend/bridge/plan_executor.cpp \
