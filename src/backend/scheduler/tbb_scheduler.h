@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * tbb_scheduler.h
+ * scheduler.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/scheduler/tbb_scheduler.h
+ * /n-store/src/scheduler/scheduler.h
  *
  *-------------------------------------------------------------------------
  */
@@ -13,7 +13,8 @@
 #pragma once
 
 #include "backend/scheduler/abstract_scheduler.h"
-#include "backend/scheduler/tbb_task.h"
+#include "backend/common/logger.h"
+
 #include "tbb/task_scheduler_init.h"
 
 namespace peloton {
@@ -34,16 +35,18 @@ class TBBSchedulerState {
   }
 
   ~TBBSchedulerState() {
-    // Destroy root task
+
+    LOG_TRACE("Destroying root task \n");
     root->set_ref_count(0);
     root->destroy(*root);
+    LOG_TRACE("Destroyed root task \n");
   }
 
 };
 
 
 //===--------------------------------------------------------------------===//
-// TBB Scheduler
+// Scheduler
 //===--------------------------------------------------------------------===//
 
 class TBBScheduler : public AbstractScheduler {
@@ -53,7 +56,10 @@ class TBBScheduler : public AbstractScheduler {
   TBBScheduler();
   ~TBBScheduler();
 
-  void Run(AbstractTask *task);
+  // add task to queue
+  void Run(handler function_pointer,
+           void *args,
+           TaskPriorityType priority = TASK_PRIORTY_TYPE_NORMAL);
 
   // wait for all tasks
   void Wait();
