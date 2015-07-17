@@ -130,7 +130,6 @@ bool DDL::CreateIndex(IndexInfo index_info){
   assert(key_column_names.size() > 0);
 
   // TODO: We currently only support btree as our index implementation
-  // NOTE: We currently only support btree as our index implementation
   // TODO : Support other types based on "type" argument
   IndexType our_index_type = INDEX_TYPE_BTREE_MULTIMAP;
 
