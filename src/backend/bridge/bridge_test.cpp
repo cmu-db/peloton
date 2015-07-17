@@ -227,17 +227,17 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
   fk_column_names.push_back("salary");
   std::vector<catalog::ForeignKey> foreign_keys;
   catalog::ForeignKey *foreign_key = new catalog::ForeignKey(pktable_oid,
-                                                                      pk_column_names,
-                                                                      fk_column_names,
-                                                                      'r',
-                                                                      'c',
-                                                                      "THIS_IS_FOREIGN_CONSTRAINT");
+                                                             pk_column_names,
+                                                             fk_column_names,
+                                                             'r',
+                                                             'c',
+                                                             "THIS_IS_FOREIGN_CONSTRAINT");
   foreign_keys.push_back(*foreign_key);
+
 
   // Current table ----> reference table
   status = peloton::bridge::DDL::SetReferenceTables(foreign_keys, table_oid);
   assert(status);
-
 
   // TODO::CHECK :: check only regarding constraint. Skip others, such as, column name, length, etc.
 
@@ -280,7 +280,6 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
   assert(index->HasUniqueKeys()  == true);
 
   // The fourth column
-
   column = schema->GetColumn(3);
   constraint_infos = column.GetConstraints();
   assert(constraint_infos.size() == 1);
@@ -288,12 +287,12 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
   // TODO::CHECK::  reference table
   assert(constraint_infos[0].GetType() == CONSTRAINT_TYPE_FOREIGN);
   assert(strcmp(constraint_infos[0].GetName().c_str(), "THIS_IS_FOREIGN_CONSTRAINT") == 0);
-  assert(constraint_infos[0].GetForeignKeyListOffset() == 1);
+  assert(constraint_infos[0].GetForeignKeyListOffset() == 0);
 
   // TODO::CHECK:: pktable name and oid
-  catalog::ForeignKey* pktable = table->GetForeignKey(0);
-  assert(strcmp((pktable->GetConstraintName()).c_str(), "THIS_IS_FOREIGN_CONSTRAINT") == 0);
+  catalog::ForeignKey *pktable = table->GetForeignKey(0);
   assert(pktable->GetSinkTableOid() == pktable_oid);
+  assert(strcmp((pktable->GetConstraintName()).c_str(), "THIS_IS_FOREIGN_CONSTRAINT") == 0);
 
   // TODO::CHECK:: pktable size name, update/delete action
   pk_column_names.clear();
