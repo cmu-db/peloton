@@ -6,12 +6,9 @@
 
 #pragma once
 
-#include "backend/catalog/constraint.h"
-
 #include "postgres.h"
 #include "c.h"
 #include "nodes/nodes.h"
-#include "nodes/parsenodes.h"
 
 namespace peloton {
 namespace bridge {
@@ -34,10 +31,6 @@ class DDL {
 
   static void ProcessUtility(Node *parsetree,
                              const char *queryString);
-
-  //Add the constraint to the table
-  static bool AddConstraint(Oid relation_oid,
-                            Constraint* constraint);
 
 };
 
