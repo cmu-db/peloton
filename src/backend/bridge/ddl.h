@@ -46,12 +46,14 @@ class DDL {
   class IndexInfo {
    public:
     IndexInfo(std::string index_name,
+              oid_t index_oid,
               std::string table_name,
               IndexType method_type,
               IndexConstraintType type,
               bool unique_keys,
               std::vector<std::string> key_column_names)
    : index_name(index_name),
+     index_oid(index_oid),
      table_name(table_name),
      method_type(method_type),
      constraint_type(type),
@@ -64,6 +66,10 @@ class DDL {
 
     std::string GetIndexName(){
       return index_name;
+    }
+
+    oid_t GetOid(){
+      return index_oid;
     }
 
     std::string GetTableName(){
@@ -88,6 +94,8 @@ class DDL {
 
    private:
     std::string index_name;
+
+    oid_t index_oid;
 
     std::string table_name;
 
