@@ -55,6 +55,12 @@ class Bootstrap {
                               std::vector<bridge::DDL::IndexInfo>& index_infos);
 
   // Set up the foreign keys constraints
+  static void CreateIndexInfos(oid_t tuple_oid, 
+                               char* relation_name,
+                               const std::vector<catalog::Column>& columns,
+                               std::vector<bridge::DDL::IndexInfo>& index_infos);
+
+  // Set up the foreign keys constraints
   static void LinkForeignKeys();
 
 };

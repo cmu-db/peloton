@@ -16,7 +16,7 @@
 #include <cassert>
 
 #include "backend/bridge/bootstrap.h"
-#include "backend/bridge/bridge.h"
+#include "backend/storage/database.h"
 
 #include "access/heapam.h"
 #include "access/htup_details.h"
@@ -106,6 +106,68 @@ Bootstrap::GetRelationColumns(Oid tuple_oid, Relation pg_attribute_rel){
   return columns;
 }
 
+void Bootstrap::CreateIndexInfos(oid_t tuple_oid, 
+                                 char* relation_name, 
+                                 const std::vector<catalog::Column>& columns,
+                                 std::vector<bridge::DDL::IndexInfo>& index_infos ){
+
+  Relation pg_index_rel;
+  HeapScanDesc pg_index_scan;
+  HeapTuple pg_index_tuple;
+
+  pg_index_rel = heap_open(IndexRelationId, AccessShareLock);
+  pg_index_scan = heap_beginscan_catalog(pg_index_rel, 0, NULL);
+
+  // Go over the pg_index catalog table looking for indexes
+  // that are associated with this table
+  while (1) {
+    Form_pg_index pg_index;
+
+    pg_index_tuple = heap_getnext(pg_index_scan, ForwardScanDirection);
+    if(!HeapTupleIsValid(pg_index_tuple))
+      break;
+
+    pg_index = (Form_pg_index) GETSTRUCT(pg_index_tuple);
+
+    // Search for the tuple in pg_index corresponding to our index
+    if(pg_index->indexrelid == tuple_oid) {
+      std::vector<std::string> key_column_names;
+
+      for(auto column_info : columns ){
+        key_column_names.push_back( column_info.column_name);
+      }
+
+      IndexType method_type = INDEX_TYPE_BTREE_MULTIMAP;
+      IndexConstraintType type;
+
+      if( pg_index->indisprimary ){
+        type = INDEX_CONSTRAINT_TYPE_PRIMARY_KEY;
+      }else if( pg_index->indisunique ){
+        type = INDEX_CONSTRAINT_TYPE_UNIQUE;
+      }else{
+        type = INDEX_CONSTRAINT_TYPE_DEFAULT;
+      }
+
+      // Store all index information here
+      // This is required because we can only create indexes at once
+      // after all tables are created
+      // The order of table and index entries in pg_class table can be arbitrary
+      bridge::DDL::IndexInfo indexinfo(relation_name,
+          pg_index->indexrelid,
+          get_rel_name(pg_index->indrelid),
+          method_type,
+          type,
+          pg_index->indisunique,
+          key_column_names);
+
+      index_infos.push_back(indexinfo);
+      break;
+    }
+  }
+
+  heap_endscan(pg_index_scan);
+  heap_close(pg_index_rel, AccessShareLock);
+}
 
 void Bootstrap::CreatePelotonStructure(char relation_kind,
                                        char *relation_name,
@@ -119,10 +181,7 @@ void Bootstrap::CreatePelotonStructure(char relation_kind,
     // Create the Peloton table
     case 'r':
     {
-      Oid relation_oid;
-      relation_oid = Bridge::GetRelationOid(relation_name);
-
-      status = bridge::DDL::CreateTable(relation_oid, relation_name, columns);
+      status = bridge::DDL::CreateTable(tuple_oid, relation_name, columns);
 
       if(status == true) {
         elog(LOG, "Create Table \"%s\" in Peloton", relation_name);
@@ -137,62 +196,7 @@ void Bootstrap::CreatePelotonStructure(char relation_kind,
     // Create the Peloton index
     case 'i':
     {
-      Relation pg_index_rel;
-      HeapScanDesc pg_index_scan;
-      HeapTuple pg_index_tuple;
-
-      pg_index_rel = heap_open(IndexRelationId, AccessShareLock);
-      pg_index_scan = heap_beginscan_catalog(pg_index_rel, 0, NULL);
-
-      // Go over the pg_index catalog table looking for indexes
-      // that are associated with this table
-      while (1) {
-        Form_pg_index pg_index;
-
-        pg_index_tuple = heap_getnext(pg_index_scan, ForwardScanDirection);
-        if(!HeapTupleIsValid(pg_index_tuple))
-          break;
-
-        pg_index = (Form_pg_index) GETSTRUCT(pg_index_tuple);
-
-        // Search for the tuple in pg_index corresponding to our index
-        if(pg_index->indexrelid == tuple_oid) {
-          std::vector<std::string> key_column_names;
-
-          for(auto column_info : columns ){
-            key_column_names.push_back( column_info.column_name);
-          }
-
-          IndexType method_type = INDEX_TYPE_BTREE_MULTIMAP;
-          IndexConstraintType type;
-
-          if( pg_index->indisprimary ){
-            type = INDEX_CONSTRAINT_TYPE_PRIMARY_KEY;
-          }else if( pg_index->indisunique ){
-            type = INDEX_CONSTRAINT_TYPE_UNIQUE;
-          }else{
-            type = INDEX_CONSTRAINT_TYPE_DEFAULT;
-          }
-
-          // Store all index information here
-          // This is required because we can only create indexes at once
-          // after all tables are created
-          // The order of table and index entries in pg_class table can be arbitrary
-          bridge::DDL::IndexInfo indexinfo(relation_name,
-                                           pg_index->indexrelid,
-                                           get_rel_name(pg_index->indrelid),
-                                           method_type,
-                                           type,
-                                           pg_index->indisunique,
-                                           key_column_names);
-
-          index_infos.push_back(indexinfo);
-          break;
-        }
-      }
-
-      heap_endscan(pg_index_scan);
-      heap_close(pg_index_rel, AccessShareLock);
+      CreateIndexInfos(tuple_oid, relation_name, columns, index_infos);
     }
     break;
 
@@ -293,6 +297,11 @@ void Bootstrap::LinkForeignKeys(void) {
 }
 
 bool Bootstrap::BootstrapPeloton(void) {
+
+  // Create the new storage database and add it to the manager
+  storage::Database* db = new storage::Database( bridge::Bridge::GetCurrentDatabaseOid());
+  auto& manager = catalog::Manager::GetInstance();
+  manager.AddDatabase(db);
 
   // Relations for catalog tables
   Relation pg_class_rel;
