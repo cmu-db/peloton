@@ -42,15 +42,7 @@
 namespace peloton {
 namespace bridge {
 
-#define COLOR_RED     "\x1b[31m"
-#define COLOR_GREEN   "\x1b[32m"
-#define COLOR_YELLOW  "\x1b[33m"
-#define COLOR_BLUE    "\x1b[34m"
-#define COLOR_MAGENTA "\x1b[35m"
-#define COLOR_CYAN    "\x1b[36m"
-#define COLOR_RESET   "\x1b[0m"
-
-static std::vector<IndexInfo> index_infos;
+static std::vector<DDL::IndexInfo> index_infos;
 
 //===--------------------------------------------------------------------===//
 // Create Object
@@ -63,10 +55,15 @@ static std::vector<IndexInfo> index_infos;
  */
 bool DDL::CreateDatabase( Oid database_oid ){
 
-  storage::Database* db = storage::Database::GetDatabaseById( database_oid );
+  auto& manager = catalog::Manager::GetInstance();
+  storage::Database* db = manager.GetDatabaseWithOid(GetCurrentDatabaseOid());
 
-  fprintf(stderr, "DDLCreateDatabase :: %u %p \n", database_oid, db);
+  if( db == nullptr ){
+    LOG_WARN("Failed to create a database (%u)", CdbStmt->database_id);
+    return false;
+  }
 
+  LOG_INFO("Create database (%u) : %s", , CdbStmt->database_id);
   return true;
 }
 
@@ -136,7 +133,6 @@ bool DDL::CreateIndex( IndexInfo index_info ){
   assert( !table_name.empty() );
   assert( key_column_names.size() > 0  );
 
-  LOG_INFO("Create index %s on %s.", index_name.c_str(), table_name.c_str());
   // TODO: We currently only support btree as our index implementation
   // NOTE: We currently only support btree as our index implementation
   // TODO : Support other types based on "type" argument
@@ -193,6 +189,8 @@ bool DDL::CreateIndex( IndexInfo index_info ){
   // Record the built index in the table
   data_table->AddIndex(index, index_oid);
 
+  LOG_INFO("Create index %s on %s.", index_name.c_str(), table_name.c_str());
+
   return true;
 }
 
@@ -220,7 +218,10 @@ bool DDL::AlterTable( Oid relation_oid, AlterTableStmt* Astmt ){
       case AT_AddConstraint:	/* ADD CONSTRAINT */
       {
         bool status = bridge::DDL::AddConstraint( relation_oid, (Constraint*) cmd->def );
-        fprintf(stderr, "DDLAddConstraint :: %d \n", status);
+
+        if( status == false ){
+          LOG_WARN("Failed to add constraint");
+        }
         break;
       }
       default:
@@ -228,6 +229,7 @@ bool DDL::AlterTable( Oid relation_oid, AlterTableStmt* Astmt ){
     }
   }
 
+  LOG_INFO("Alter the table (%u)\n", relation_oid);
   return true;
 }
 
@@ -244,7 +246,14 @@ bool DDL::AlterTable( Oid relation_oid, AlterTableStmt* Astmt ){
 bool DDL::DropDatabase( Oid database_oid ){
   storage::Database* db = storage::Database::GetDatabaseById( database_oid );
   bool status = db->DeleteDatabaseById( database_oid );
-  return status;
+
+  if(status == false) {
+    LOG_WARN("Failed to drop the database with oid : %u\n", database_oid);
+    return false;
+  }
+
+  LOG_INFO("Dropped table with oid : %u\n", table_oid);
+  return true;
 }
 
 /**
@@ -294,14 +303,12 @@ void DDL::ProcessUtility(Node *parsetree,
    */
   set_stack_base();
 
-  printf(COLOR_RED "ProcessUtility %d" COLOR_RESET "\n", (int)nodeTag(parsetree));
 
   // Process depending on type of utility statement
   switch ( nodeTag( parsetree ))
   {
     case T_CreatedbStmt:
     {
-      printf(COLOR_RED "T_Createdb" COLOR_RESET "\n");
       CreatedbStmt* CdbStmt = (CreatedbStmt*) parsetree;
       bridge::DDL::CreateDatabase( CdbStmt->database_id );
     }
@@ -310,7 +317,6 @@ void DDL::ProcessUtility(Node *parsetree,
     case T_CreateStmt:
     case T_CreateForeignTableStmt:
     {
-      printf(COLOR_RED "T_CreateTable" COLOR_RESET "\n");
 
       /* Run parse analysis ... */
       List     *stmts = transformCreateStmt((CreateStmt *) parsetree,
@@ -329,11 +335,7 @@ void DDL::ProcessUtility(Node *parsetree,
           char* relation_name = Cstmt->relation->relname;
           Oid relation_oid = ((CreateStmt *)parsetree)->relation_id;
 
-<<<<<<< HEAD
           std::vector<catalog::Column> column_infos;
-=======
-          std::vector<catalog::ColumnInfo> column_infos;
->>>>>>> bridge
           std::vector<catalog::ForeignKeyInfo> reference_table_infos;
 
           bool status;
@@ -343,34 +345,19 @@ void DDL::ProcessUtility(Node *parsetree,
           //===--------------------------------------------------------------------===//
           if( schema != NULL ){
             bridge::DDL::ParsingCreateStmt( Cstmt,
-<<<<<<< HEAD
                                             column_infos,
                                             reference_table_infos );
 
-            status = bridge::DDL::CreateTable( relation_oid,
+            bridge::DDL::CreateTable( relation_oid,
                                                relation_name,
                                                column_infos );
           } else {
             // SPECIAL CASE : CREATE TABLE WITHOUT COLUMN INFO
-            status = bridge::DDL::CreateTable( relation_oid,
+            bridge::DDL::CreateTable( relation_oid,
                                                relation_name,
                                                column_infos );
-=======
-                                                     column_infos,
-                                                     reference_table_infos );
-
-            status = bridge::DDL::CreateTable( relation_oid,
-                                                        relation_name, 
-                                                        column_infos );
-          } else {
-            // SPECIAL CASE : CREATE TABLE WITHOUT COLUMN INFO
-            status = bridge::DDL::CreateTable( relation_oid,
-                                                        relation_name, 
-                                                        column_infos );
->>>>>>> bridge
           }
 
-          fprintf(stderr, "DDL_CreateTable(%s) :: Oid : %d Status : %d \n", relation_name, relation_oid, status);
 
           //===--------------------------------------------------------------------===//
           // Check Constraint
@@ -402,11 +389,7 @@ void DDL::ProcessUtility(Node *parsetree,
           // Set Reference Tables
           //===--------------------------------------------------------------------===//
           status = bridge::DDL::SetReferenceTables( reference_table_infos,
-<<<<<<< HEAD
                                                     relation_oid );
-=======
-                                                             relation_oid );
->>>>>>> bridge
           if( status == false ){
             LOG_WARN("Failed to set reference tables");
           } 
@@ -427,8 +410,6 @@ void DDL::ProcessUtility(Node *parsetree,
 
     case T_IndexStmt:  /* CREATE INDEX */
     {
-      printf(COLOR_RED "T_IndexStmt" COLOR_RESET "\n");
-      bool status;
       IndexStmt  *Istmt = (IndexStmt *) parsetree;
 
       // Construct IndexInfo 
@@ -441,23 +422,18 @@ void DDL::ProcessUtility(Node *parsetree,
         break;
       }
 
-      status = bridge::DDL::CreateIndex( *index_info );
-
-
-      fprintf(stderr, "DDLCreateIndex :: %d \n", status);
+      bridge::DDL::CreateIndex( *index_info );
     }
     break;
 
     case T_AlterTableStmt:
     {
-      printf(COLOR_RED "T_AlterTableStmt" COLOR_RESET "\n");
 
       break; // still working on here.... 
 
       AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
       Oid     relation_oid = atstmt->relation_id;
       List     *stmts = transformAlterTableStmt(relation_oid, atstmt, queryString);
-      bool status;
 
       /* ... and do it */
       ListCell   *l;
@@ -466,9 +442,7 @@ void DDL::ProcessUtility(Node *parsetree,
         Node *stmt = (Node *) lfirst(l);
 
         if (IsA(stmt, AlterTableStmt)){
-          status = bridge::DDL::AlterTable( relation_oid, (AlterTableStmt*)stmt );
-
-          fprintf(stderr, "DDLAlterTable :: %d \n", status);
+          bridge::DDL::AlterTable( relation_oid, (AlterTableStmt*)stmt );
 
         }
       }
@@ -477,21 +451,17 @@ void DDL::ProcessUtility(Node *parsetree,
 
     case T_DropdbStmt:
     {
-      printf(COLOR_RED "T_DropdbStmt" COLOR_RESET "\n" );
       DropdbStmt *Dstmt = (DropdbStmt *) parsetree;
 
       Oid database_oid = get_database_oid( Dstmt->dbname, Dstmt->missing_ok );
 
-      bool status = bridge::DDL::DropDatabase( database_oid );
-      fprintf(stderr, "DDL Database :: %d \n", status);
+      bridge::DDL::DropDatabase( database_oid );
     }
     break;
 
     case T_DropStmt:
     {
-      printf(COLOR_RED "T_DropStmt" COLOR_RESET "\n");
       DropStmt* drop = (DropStmt*) parsetree; // TODO drop->behavior;		/* RESTRICT or CASCADE behavior */
-      bool status;
 
       ListCell  *cell;
       foreach(cell, drop->objects){
@@ -505,8 +475,7 @@ void DDL::ProcessUtility(Node *parsetree,
             char* database_name = strVal(linitial(names));
             Oid database_oid = get_database_oid( database_name, true );
 
-            status = bridge::DDL::DropDatabase( database_oid );
-            fprintf(stderr, "DDL Database :: %d \n", status);
+            bridge::DDL::DropDatabase( database_oid );
           }
           break;
 
@@ -515,8 +484,7 @@ void DDL::ProcessUtility(Node *parsetree,
             char* table_name = strVal(linitial(names));
             Oid table_oid = GetRelationOid(table_name);
 
-            status = bridge::DDL::DropTable( table_oid );
-            fprintf(stderr, "DDL DropTable :: %d \n", status);
+            bridge::DDL::DropTable( table_oid );
           }
           break;
 
@@ -689,11 +657,7 @@ void DDL::ParsingCreateStmt( CreateStmt* Cstmt,
             // REFERENCE TABLE NAME AND ACTION OPTION
             if( ConstraintNode->pktable != NULL ){
 
-<<<<<<< HEAD
               storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
-=======
-                storage::Database* db = storage::Database::GetDatabaseById( GetCurrentDatabaseOid() );
->>>>>>> bridge
 
               // PrimaryKey Table
               oid_t PrimaryKeyTableId = db->GetTableIdByName( ConstraintNode->pktable->relname );
@@ -821,14 +785,10 @@ bool DDL::SetReferenceTables( std::vector<catalog::ForeignKeyInfo>& reference_ta
   assert( relation_oid );
   oid_t database_oid = GetCurrentDatabaseOid();
   assert( database_oid );
-  storage::Database* db = storage::Database::GetDatabaseById( database_oid );
-  storage::DataTable* current_table = db->GetTableById( relation_oid );
+
+  storage::DataTable* current_table = (storage::DataTable*) catalog::Manager::GetInstance().GetTable(database_oid, relation_oid);
 
   for( auto reference_table_info : reference_table_infos) {
-<<<<<<< HEAD
-    storage::DataTable* current_table = (storage::DataTable*) catalog::Manager::GetInstance().GetTable(database_oid, relation_oid);
-=======
->>>>>>> bridge
     current_table->AddReferenceTable( &reference_table_info );
   }
 
@@ -843,10 +803,7 @@ bool DDL::SetReferenceTables( std::vector<catalog::ForeignKeyInfo>& reference_ta
 bool DDL::CreateIndexes( std::vector<IndexInfo> index_infos ){
 
   for( auto index_info : index_infos){
-    bool status;
-    status = bridge::DDL::CreateIndex( index_info );
-
-    fprintf(stderr, "DDLCreateIndex %s :: %d \n", index_info.GetIndexName().c_str(), status);
+    bridge::DDL::CreateIndex( index_info );
   }
   index_infos.clear();
   return true;

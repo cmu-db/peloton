@@ -20,14 +20,6 @@
 namespace peloton {
 namespace test {
 
-#define COLOR_RED     "\x1b[31m"
-#define COLOR_GREEN   "\x1b[32m"
-#define COLOR_YELLOW  "\x1b[33m"
-#define COLOR_BLUE    "\x1b[34m"
-#define COLOR_MAGENTA "\x1b[35m"
-#define COLOR_CYAN    "\x1b[36m"
-#define COLOR_RESET   "\x1b[0m"
-
 /**
  * @brief Test "DDL::CreateTable" function
  *        with various test cases
@@ -61,7 +53,7 @@ void BridgeTest::DDL_CreateTable_TEST_INVALID_OID() {
   // CHECK :: status must be false
   assert(status == false);
 
-  printf(COLOR_GREEN ":::::: %s DONE" COLOR_RESET "\n", __func__);
+  std::cout << ":::::: " << __func__ << " DONE\n";
 }
 
 /**
@@ -148,7 +140,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
   assert(column.GetLength() == 8);
   assert(column.GetType() == VALUE_TYPE_DOUBLE);
 
-  printf(COLOR_GREEN ":::::: %s DONE" COLOR_RESET "\n", __func__);
+  std::cout << ":::::: " << __func__ << " DONE\n";
 }
 
 /**
@@ -307,13 +299,13 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
   assert(table->GetForeignKey(0)->GetUpdateAction() == 'r');
   assert(table->GetForeignKey(0)->GetDeleteAction() == 'c');
 
-  printf(COLOR_GREEN ":::::: %s DONE" COLOR_RESET "\n", __func__);
+  std::cout << ":::::: " << __func__ << " DONE\n";
 }
 
 void BridgeTest::RunTests() {
-  printf(COLOR_BLUE ":::::::::::::  TEST CASES START :::::::::::::" COLOR_RESET "\n");
+  std::cout<< ":::::::::::::  TEST CASES START :::::::::::::\n";
   DDL_CreateTable_TEST();
-  printf(COLOR_BLUE ":::::::::::::  TEST CASES END :::::::::::::::::" COLOR_RESET "\n");
+  std::cout<< ":::::::::::::  TEST CASES END   :::::::::::::\n";
 }
 
 } // End test namespace
