@@ -7,5 +7,3 @@
 check_PROGRAMS += index_test
 
 index_test_SOURCES = index/index_test.cpp
-
-index_test_LDADD = $(peloton_tests_common_ld)

@@ -7,5 +7,3 @@
 check_PROGRAMS += scheduler_test
 
 scheduler_test_SOURCES = scheduler/scheduler_test.cpp
-
-scheduler_test_LDADD = $(peloton_tests_common_ld)

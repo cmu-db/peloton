@@ -5,18 +5,11 @@
 ######################################################################
 
 check_PROGRAMS += catalog_test \
-			manager_test \
-			tuple_schema_test
-
+				  manager_test \
+				  tuple_schema_test
 
 catalog_test_SOURCES = catalog/catalog_test.cpp
 
-catalog_test_LDADD = $(peloton_tests_common_ld)
-
 manager_test_SOURCES = catalog/manager_test.cpp
 
-manager_test_LDADD = $(peloton_tests_common_ld)
-
 tuple_schema_test_SOURCES = catalog/tuple_schema_test.cpp
-
-tuple_schema_test_LDADD = $(peloton_tests_common_ld)
