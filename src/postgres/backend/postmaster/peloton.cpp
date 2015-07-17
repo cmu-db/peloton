@@ -287,7 +287,7 @@ PelotonMain(int argc, char *argv[])
   /* Testing mode */
   else
   {
-    peloton::test::BridgeTest::RunTests();
+    peloton::bridge::BridgeTest::RunTests();
   }
 
   // TODO: Peloton Changes
@@ -932,7 +932,7 @@ peloton_process_dml(Peloton_MsgDML *msg)
     TopTransactionContext = msg->m_hdr.m_top_transaction_context;
     CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
 
-    //std::cout << "Transaction ID :: " << msg->m_hdr.m_txn_id << "\n";
+    std::cout << "Transaction ID :: " << msg->m_hdr.m_txn_id << "\n";
 
     auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
 

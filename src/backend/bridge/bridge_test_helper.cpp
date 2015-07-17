@@ -14,12 +14,14 @@
 
 #include "backend/bridge/bridge.h"
 #include "backend/bridge/ddl.h"
+#include "backend/bridge/ddl_table.h"
+#include "backend/bridge/ddl_index.h"
 #include "backend/catalog/manager.h"
 #include "backend/catalog/foreign_key.h"
 #include "backend/storage/database.h"
 
 namespace peloton {
-namespace test {
+namespace bridge {
 
 /**
  * @brief Create a simple Column just for convenience
@@ -161,17 +163,17 @@ void BridgeTest::CreateSamplePrimaryKeyIndex(std::string table_name,
   bool status;
   std::vector<std::string> key_column_names;
   key_column_names.push_back("name");
-  bridge::DDL::IndexInfo* index_info;
+  IndexInfo* index_info;
 
-  index_info = new bridge::DDL::IndexInfo(table_name+"_pkey",
-                                           index_oid,
-                                           table_name,
-                                           INDEX_TYPE_BTREE_MULTIMAP,
-                                           INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
-                                           true,
-                                           key_column_names);
+  index_info = new IndexInfo(table_name+"_pkey",
+                             index_oid,
+                             table_name,
+                             INDEX_TYPE_BTREE_MULTIMAP,
+                             INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
+                             true,
+                             key_column_names);
 
-  status = bridge::DDL::CreateIndex(*index_info);
+  status = DDLIndex::CreateIndex(*index_info);
   assert(status);
 }
 
@@ -185,17 +187,17 @@ void BridgeTest::CreateSampleUniqueIndex(std::string table_name,
   bool status;
   std::vector<std::string> key_column_names;
   key_column_names.push_back("time");
-  bridge::DDL::IndexInfo* index_info;
+  IndexInfo* index_info;
 
-  index_info = new bridge::DDL::IndexInfo(table_name+"_key",
-                                          index_oid,
-                                          table_name,
-                                          INDEX_TYPE_BTREE_MULTIMAP,
-                                          INDEX_CONSTRAINT_TYPE_UNIQUE,
-                                          true,
-                                          key_column_names);
+  index_info = new IndexInfo(table_name+"_key",
+                             index_oid,
+                             table_name,
+                             INDEX_TYPE_BTREE_MULTIMAP,
+                             INDEX_CONSTRAINT_TYPE_UNIQUE,
+                             true,
+                             key_column_names);
 
-  status = bridge::DDL::CreateIndex(*index_info);
+  status = DDLIndex::CreateIndex(*index_info);
   assert(status);
 }
 
@@ -212,7 +214,7 @@ void BridgeTest::CreateSampleForeignKey(oid_t pktable_oid,
                                         oid_t table_oid){
   bool status;
   // Create a sample table that has primary key index
-  status = bridge::DDL::CreateTable(pktable_oid, pktable_name, columns);
+  status = DDLTable::CreateTable(pktable_oid, pktable_name, columns);
   assert(status);
 
   std::vector<std::string> pk_column_names;
@@ -229,7 +231,7 @@ void BridgeTest::CreateSampleForeignKey(oid_t pktable_oid,
   foreign_keys.push_back(*foreign_key);
 
   // Current table ----> reference table
-  status = peloton::bridge::DDL::SetReferenceTables(foreign_keys, table_oid);
+  status = DDLTable::SetReferenceTables(foreign_keys, table_oid);
   assert(status);
 }
 
