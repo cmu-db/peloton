@@ -12,7 +12,9 @@ GMOCK_BUILDDIR = $(top_builddir)/$(GMOCK_DIR)
 # check_PROGRAMS -- Programs built by "make check" but not necessarily run
 # this is populated by the makefiles in the subdirs
 
+check_SCRIPTS =
 check_PROGRAMS =
+TEST_EXTENSIONS =
 
 AM_CPPFLAGS += \
 	       -isystem $(GMOCK_SRCDIR) \
@@ -53,9 +55,9 @@ include $(srcdir)/planner/Makefile.am
 include $(srcdir)/scheduler/Makefile.am
 include $(srcdir)/storage/Makefile.am
 
-#include $(srcdir)/postgres/bridge/Makefile.am
+include $(srcdir)/postgres/Makefile.am
 
-TESTS = $(check_PROGRAMS) 
+TESTS = $(check_PROGRAMS) $(check_SCRIPTS)
 LOG_COMPILER = $(srcdir)/test-driver.sh 
 
 CLEANFILES = /tmp/*.peloton
