@@ -14,11 +14,13 @@
 
 #include "backend/bridge/bridge.h"
 #include "backend/bridge/ddl.h"
+#include "backend/bridge/ddl_table.h"
+#include "backend/bridge/ddl_index.h"
 #include "backend/catalog/manager.h"
 #include "backend/storage/database.h"
 
 namespace peloton {
-namespace test {
+namespace bridge {
 
 /**
  * @brief Test "DDL::CreateTable" function
@@ -27,7 +29,7 @@ namespace test {
 void BridgeTest::DDL_CreateTable_TEST() {
 
   // Create the new storage database and add it to the manager
-  storage::Database* db = new storage::Database( bridge::Bridge::GetCurrentDatabaseOid());
+  storage::Database* db = new storage::Database( Bridge::GetCurrentDatabaseOid());
   auto& manager = catalog::Manager::GetInstance();
   manager.AddDatabase(db);
 
@@ -57,7 +59,7 @@ void BridgeTest::DDL_CreateTable_TEST_INVALID_OID() {
   oid_t table_oid = INVALID_OID;
 
   // Create a table
-  bool status = bridge::DDL::CreateTable(table_oid, table_name, columns);
+  bool status = DDLTable::CreateTable(table_oid, table_name, columns);
 
   // CHECK :: status must be false
   assert(status == false);
@@ -71,7 +73,7 @@ void BridgeTest::DDL_CreateTable_TEST_INVALID_OID() {
 void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
 
   auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(bridge::Bridge::GetCurrentDatabaseOid());
+  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
   assert( db );
 
   // Get the simple columns
@@ -83,7 +85,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
   oid_t table_oid = 20001;
 
   // Create a table
-  bool status = bridge::DDL::CreateTable(table_oid, table_name, columns);
+  bool status = DDLTable::CreateTable(table_oid, table_name, columns);
   assert(status);
 
   // Get the table pointer
@@ -124,7 +126,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMNS() {
 void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
 
   auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(bridge::Bridge::GetCurrentDatabaseOid());
+  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
 
   // Get the simple columns
   std::vector<catalog::Column> columns = CreateSimpleColumns();
@@ -134,7 +136,7 @@ void BridgeTest::DDL_CreateTable_TEST_COLUMN_CONSTRAINTS() {
   oid_t table_oid = 20002;
 
   // Create a table
-  bool status = bridge::DDL::CreateTable(table_oid, table_name, columns);
+  bool status = DDLTable::CreateTable(table_oid, table_name, columns);
   assert(status);
 
   // Get the table pointer and schema
@@ -189,6 +191,6 @@ void BridgeTest::RunTests() {
   std::cout<< ":::::::::::::  TEST CASES END   :::::::::::::\n";
 }
 
-} // End test namespace
+} // End bridge namespace
 } // End peloton namespace
 
