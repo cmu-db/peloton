@@ -35,15 +35,15 @@ std::vector<std::string> StatsSource::GetBaseStatsTableColumnNames() {
 	return column_names;
 }
 
-std::vector<catalog::ColumnInfo> StatsSource::CreateBaseStatsTableSchema() {
+std::vector<catalog::Column> StatsSource::CreateBaseStatsTableSchema() {
 
-	std::vector<catalog::ColumnInfo> columns;
+	std::vector<catalog::Column> columns;
 
-	catalog::ColumnInfo column1(VALUE_TYPE_BIGINT, GetTypeSize(VALUE_TYPE_BIGINT), false);
-	catalog::ColumnInfo column2(VALUE_TYPE_BIGINT, GetTypeSize(VALUE_TYPE_BIGINT), false);
-	catalog::ColumnInfo column3(VALUE_TYPE_VARCHAR, VARCHAR_LENGTH_LONG , false);
-	catalog::ColumnInfo column4(VALUE_TYPE_BIGINT, GetTypeSize(VALUE_TYPE_BIGINT), false);
-	catalog::ColumnInfo column5(VALUE_TYPE_BIGINT, GetTypeSize(VALUE_TYPE_BIGINT), false);
+	catalog::Column column1(VALUE_TYPE_BIGINT, GetTypeSize(VALUE_TYPE_BIGINT), false);
+	catalog::Column column2(VALUE_TYPE_BIGINT, GetTypeSize(VALUE_TYPE_BIGINT), false);
+	catalog::Column column3(VALUE_TYPE_VARCHAR, VARCHAR_LENGTH_LONG , false);
+	catalog::Column column4(VALUE_TYPE_BIGINT, GetTypeSize(VALUE_TYPE_BIGINT), false);
+	catalog::Column column5(VALUE_TYPE_BIGINT, GetTypeSize(VALUE_TYPE_BIGINT), false);
 
 	columns.push_back(column1);
 	columns.push_back(column2);
@@ -62,7 +62,7 @@ void StatsSource::Configure(std::string _identifier, Oid _host_id, Oid _site_id,
 	identifier = _identifier;
 
 	std::vector<std::string> column_names = GetBaseStatsTableColumnNames();
-	std::vector<catalog::ColumnInfo> columns;
+	std::vector<catalog::Column> columns;
 
 	columns = CreateBaseStatsTableSchema();
 
@@ -148,7 +148,7 @@ std::ostream& operator<< (std::ostream& os, const StatsSource& stats_source){
  * Same pattern as generateStatsColumnNames except the return value is used as
  * an offset into the tuple schema instead of appending to end of a list.
  */
-std::vector<catalog::ColumnInfo> StatsSource::CreateStatsTableSchema() {
+std::vector<catalog::Column> StatsSource::CreateStatsTableSchema() {
 	return StatsSource::CreateBaseStatsTableSchema();
 }
 

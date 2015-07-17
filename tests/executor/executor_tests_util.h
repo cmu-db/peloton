@@ -18,7 +18,7 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 namespace catalog {
-class ColumnInfo;
+class Column;
 class Manager;
 }
 
@@ -63,7 +63,7 @@ public:
 
     static void PopulateTiles(storage::TileGroup *tile_group, int num_rows);
 
-    static catalog::ColumnInfo GetColumnInfo(int index);
+    static catalog::Column GetColumnInfo(int index);
 
     static executor::LogicalTile *ExecuteTile(
         executor::AbstractExecutor *executor,
