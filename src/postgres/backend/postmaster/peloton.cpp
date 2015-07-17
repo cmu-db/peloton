@@ -14,7 +14,6 @@
 #include "c.h"
 
 #include "access/xact.h"
-#include "bridge/bridge.h"
 #include "catalog/pg_namespace.h"
 #include "executor/tuptable.h"
 #include "libpq/ip.h"
@@ -48,6 +47,8 @@
 #include <time.h>
 #include <thread>
 
+#include "../../../backend/scheduler/tbb_scheduler.h"
+#include "backend/bridge/bootstrap.h"
 #include "backend/bridge/plan_transformer.h"
 #include "backend/common/logger.h"
 #include "backend/common/stack_trace.h"
@@ -55,7 +56,6 @@
 #include "backend/bridge/plan_transformer.h"
 #include "backend/bridge/plan_executor.h"
 #include "backend/bridge/bridge_test.h"
-#include "backend/scheduler/tbb_scheduler.h"
 
 /* ----------
  * Local data
@@ -265,7 +265,7 @@ PelotonMain(int argc, char *argv[])
   ereport(LOG, (errmsg("peloton: processing database \"%s\"", "postgres")));
 
   /* Init Peloton */
-  BootstrapPeloton();
+  peloton::bridge::Bootstrap::BootstrapPeloton();
 
   /*
    * Create a resource owner to keep track of our resources (not clear that
@@ -452,23 +452,15 @@ peloton_MainLoop(void)
 
         case PELOTON_MTYPE_DDL:
         {
-          std::unique_ptr<peloton::scheduler::TBBTask> task(
-              new peloton::scheduler::TBBTask(
-                  reinterpret_cast<peloton::scheduler::handler>(peloton_process_ddl),
-                  reinterpret_cast<Peloton_MsgDDL*>(&msg)));
-
-          scheduler.get()->Run(task.get());
+          scheduler.get()->Run(reinterpret_cast<peloton::scheduler::handler>(peloton_process_ddl),
+                               reinterpret_cast<Peloton_MsgDDL*>(&msg));
         }
         break;
 
         case PELOTON_MTYPE_DML:
         {
-          std::unique_ptr<peloton::scheduler::TBBTask> task(
-              new peloton::scheduler::TBBTask(
-                  reinterpret_cast<peloton::scheduler::handler>(peloton_process_dml),
-                  reinterpret_cast<Peloton_MsgDML*>(&msg)));
-
-          scheduler.get()->Run(task.get());
+          scheduler.get()->Run(reinterpret_cast<peloton::scheduler::handler>(peloton_process_dml),
+                               reinterpret_cast<Peloton_MsgDML*>(&msg));
         }
         break;
 
