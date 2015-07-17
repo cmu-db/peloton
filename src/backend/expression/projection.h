@@ -18,9 +18,17 @@
 namespace peloton {
 namespace expression {
 
+/**
+ * TODO: Move this class to a separate directory?
+ */
 class Projection {
 
  public:
+
+  Projection(Projection &) = delete;
+  Projection operator= (Projection &) = delete;
+  Projection(Projection &&) = delete;
+  Projection operator= (Projection &&) = delete;
 
   /**
    * @brief Generic specification of a projection entry:
@@ -30,27 +38,18 @@ class Projection {
       std::pair<oid_t, expression::AbstractExpression*>
   ProjectionEntry;
 
-  Projection(){
-  }
-
-  Projection(std::vector<ProjectionEntry>& projection_entries)
-    : projection_entries_(projection_entries){
-  }
-
-  Projection(std::vector<ProjectionEntry>&& projection_entries)
-    : projection_entries_(projection_entries){
-  }
-
   virtual ~Projection();
 
-  virtual std::vector<ProjectionEntry>& GetProjectionEntries() {
+  virtual const std::vector<ProjectionEntry>& GetProjectionEntries() {
     return projection_entries_;
+  }
+
+  virtual void AddProjectionEntry(ProjectionEntry pe) {
+    projection_entries_.push_back(pe);
   }
 
   virtual bool
   Evaluate(storage::Tuple* dest, const AbstractTuple* src1, const AbstractTuple* src2) const;
-
-
 
  protected:
 
