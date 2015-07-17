@@ -1,20 +1,20 @@
 /*-------------------------------------------------------------------------
  *
- * tbb_scheduler.cpp
+ * scheduler.cpp
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/scheduler/tbb_scheduler.cpp
+ * /n-store/src/scheduler/scheduler.cpp
  *
  *-------------------------------------------------------------------------
  */
 
+#include <string>
+#include <cassert>
+
 #include "backend/scheduler/tbb_scheduler.h"
 #include "backend/common/exception.h"
-
-#include <cassert>
-#include <string>
 
 namespace peloton {
 namespace scheduler {
@@ -24,37 +24,40 @@ TBBScheduler::TBBScheduler() :
 
   // set up state
   state = new TBBSchedulerState();
+  LOG_TRACE("STATE : %p \n", state);
 
 }
 
 TBBScheduler::~TBBScheduler() {
 
-  // Stop scheduler
+  // stop scheduler
   init.terminate();
 
-  // Clean up state
+  // clean up state
   delete state;
-
 }
 
-void TBBScheduler::Run(AbstractTask *task) {
+void TBBScheduler::Run(handler function_pointer,
+                    void *args,
+                    TaskPriorityType priority) {
 
-  TBBTask *tbb_task = new(state->root->allocate_child()) TBBTask(task->GetTask(), task->GetArgs());
+  AbstractTask *task = new(state->root->allocate_child()) AbstractTask(function_pointer, args, priority);
+  assert(task);
+
   state->root->increment_ref_count();
-  auto priority = tbb_task->GetPriority();
 
   // Enqueue task with appropriate priority
   switch(priority) {
     case TaskPriorityType::TASK_PRIORTY_TYPE_NORMAL:
-      state->root->enqueue(*tbb_task);
+      state->root->enqueue(*task);
       break;
 
     case TaskPriorityType::TASK_PRIORTY_TYPE_LOW:
-      state->root->enqueue(*tbb_task, tbb::priority_low);
+      state->root->enqueue(*task, tbb::priority_low);
       break;
 
     case TaskPriorityType::TASK_PRIORTY_TYPE_HIGH:
-      state->root->enqueue(*tbb_task, tbb::priority_high);
+      state->root->enqueue(*task, tbb::priority_high);
       break;
 
     case TaskPriorityType::TASK_PRIORTY_TYPE_INVALID:
@@ -63,13 +66,15 @@ void TBBScheduler::Run(AbstractTask *task) {
       break;
   }
 
+  LOG_TRACE("Enqueued task \n");
 }
 
 void TBBScheduler::Wait() {
 
-  // Wait for all tasks
+  LOG_TRACE("WAITING for tasks \n");
   state->root->wait_for_all();
   state->root->increment_ref_count();
+  LOG_TRACE("End of WAIT \n");
 
 }
 
