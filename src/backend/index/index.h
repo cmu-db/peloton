@@ -35,13 +35,15 @@ class IndexMetadata {
  public:
 
   IndexMetadata(std::string index_name,
-                IndexMethodType method_type,
-                IndexType index_type,
+                oid_t index_oid,
+                IndexType method_type,
+                IndexConstraintType index_type,
                 const catalog::Schema *tuple_schema,
                 const catalog::Schema *key_schema,
                 bool unique_keys)
 
  : index_name(index_name),
+   index_oid(index_oid),
    method_type(method_type),
    index_type(index_type),
    tuple_schema(tuple_schema),
@@ -60,11 +62,15 @@ class IndexMetadata {
     return index_name;
   }
 
-  IndexMethodType GetIndexMethodType() {
+  oid_t GetOid() {
+    return index_oid;
+  }
+
+  IndexType GetIndexMethodType() {
     return method_type;
   }
 
-IndexType GetIndexType() {
+  IndexConstraintType GetIndexType() {
     return index_type;
   }
 
@@ -82,9 +88,11 @@ IndexType GetIndexType() {
 
   std::string index_name;
 
-  IndexMethodType method_type;
+  oid_t index_oid;
 
-  IndexType index_type;
+  IndexType method_type;
+
+  IndexConstraintType index_type;
 
   // schema of tuple values
   const catalog::Schema *tuple_schema;
@@ -112,8 +120,15 @@ class Index
 
  public:
 
-  virtual ~Index(){
+  oid_t GetOid() const {
+    return index_oid;
+  }
 
+  IndexMetadata *GetMetadata() const {
+    return metadata;
+  }
+
+  virtual ~Index(){
     // clean up metadata
     delete metadata;
   }
@@ -183,22 +198,18 @@ class Index
     return metadata->GetKeySchema();
   }
 
-  IndexMethodType GetIndexMethodType() {
+  IndexType GetIndexMethodType() {
     return metadata->GetIndexMethodType();
   }
 
-  IndexType GetIndexType() const {
+  IndexConstraintType GetIndexType() const {
     return metadata->GetIndexType();
   }
 
-  // Get a string representation of this index
-  friend std::ostream& operator<<(std::ostream& os, const Index& index);
-
   void GetInfo() const;
 
-  IndexMetadata *GetMetadata() const {
-    return metadata;
-  }
+  // Get a string representation of this index
+  friend std::ostream& operator<<(std::ostream& os, const Index& index);
 
  protected:
 
@@ -209,6 +220,8 @@ class Index
   //===--------------------------------------------------------------------===//
 
   IndexMetadata *metadata;
+
+  oid_t index_oid = INVALID_OID;
 
   // access counters
   int lookup_counter;

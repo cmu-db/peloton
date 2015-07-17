@@ -27,11 +27,11 @@ namespace test {
 
 TEST(TupleTests, BasicTest) {
 
-	std::vector<catalog::ColumnInfo> columns;
+	std::vector<catalog::Column> columns;
 
-	catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
-	catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
-	catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", true);
+	catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
+	catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
+	catalog::Column column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", true);
 
 	columns.push_back(column1);
 	columns.push_back(column2);
@@ -61,12 +61,12 @@ TEST(TupleTests, BasicTest) {
 }
 
 TEST(TupleTests, VarcharTest) {
-	std::vector<catalog::ColumnInfo> columns;
+	std::vector<catalog::Column> columns;
 
-	catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
-	catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
-	catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", true);
-	catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 25, "D", false);
+	catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
+	catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
+	catalog::Column column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", true);
+	catalog::Column column4(VALUE_TYPE_VARCHAR, 25, "D", false);
 
 	columns.push_back(column1);
 	columns.push_back(column2);

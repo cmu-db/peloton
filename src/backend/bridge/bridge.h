@@ -6,34 +6,52 @@
 
 #pragma once
 
+#include "c.h"
+#include "access/htup.h"
+
+namespace peloton {
+namespace bridge {
+
 //===--------------------------------------------------------------------===//
-//  Bridge for managing Postgres
+// Bridge
 //===--------------------------------------------------------------------===//
 
-#include "nodes/pprint.h"
+//  Bridge for accessing Postgres Catalog
+class Bridge {
 
-char* GetRelationName(unsigned int relation_id);
+ public:
 
-int GetNumberOfAttributes(unsigned int relation_id);
+  //===--------------------------------------------------------------------===//
+  // Getters
+  //===--------------------------------------------------------------------===//
 
-float GetNumberOfTuples(unsigned int relation_id);
+  static HeapTuple GetPGClassTupleForRelationOid(Oid relation_id);
 
-unsigned int GetCurrentDatabaseOid(void);
+  static HeapTuple GetPGClassTupleForRelationName(const char *relation_name);
 
-void SetNumberOfTuples(unsigned int relation_id, float num_of_tuples);
+  static char* GetRelationName(Oid relation_id);
 
-void GetDatabaseList(void);
+  static Oid GetRelationOid(const char *relation_name);
 
-void GetTableList(void);
+  static int GetNumberOfAttributes(Oid relation_id);
 
-void GetPublicTableList(void);
+  static float GetNumberOfTuples(Oid relation_id);
 
-bool IsThisTableExist(const char* table_name);
+  static bool RelationExists(const char* relation_name);
 
-bool InitPeloton(const char* dbname);
+  static Oid GetCurrentDatabaseOid(void);
 
-unsigned int GetRelationOidFromRelationName(const char *table_name);
+  static void GetDatabaseList(void);
 
-void SetUserTableStats(unsigned int relation_id);
+  static void GetTableList(bool catalog_only);
 
-void FunctionTest(void);
+  //===--------------------------------------------------------------------===//
+  // Setters
+  //===--------------------------------------------------------------------===//
+
+  static void SetNumberOfTuples(Oid relation_id, float num_of_tuples);
+
+};
+
+} // namespace bridge
+} // namespace peloton
