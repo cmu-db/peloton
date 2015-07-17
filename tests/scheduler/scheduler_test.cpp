@@ -15,7 +15,6 @@
 #include "harness.h"
 #include "backend/scheduler/tbb_scheduler.h"
 #include "backend/main/kernel.h"
-#include "backend/catalog/catalog.h"
 
 #include <sstream>
 
