@@ -84,6 +84,9 @@ class Manager {
   storage::DataTable *GetTableWithOid(const oid_t database_oid,
                                      const oid_t table_oid) const;
 
+  storage::DataTable *GetTableWithName(const oid_t database_oid,
+                                       const std::string table_name) const;
+
   // Look up the index
   index::Index *GetIndexWithOid(const oid_t database_oid,
                                 const oid_t table_oid,

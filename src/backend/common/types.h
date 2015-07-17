@@ -507,8 +507,8 @@ ValueType StringToValueType(std::string str );
 std::string ExpressionTypeToString(ExpressionType type);
 ExpressionType StringToExpressionType(std::string str);
 
-std::string IndexMethodTypeToString(IndexType type);
-IndexType StringToIndexMethodType(std::string str);
+std::string IndexTypeToString(IndexType type);
+IndexType StringToIndexType(std::string str);
 
 std::string PlanNodeTypeToString(PlanNodeType type);
 PlanNodeType StringToPlanNodeType(std::string str);

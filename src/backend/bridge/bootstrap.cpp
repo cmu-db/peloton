@@ -16,11 +16,11 @@
 #include <cassert>
 
 #include "backend/bridge/bootstrap.h"
+#include "backend/bridge/bridge.h"
 
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/xact.h"
-#include "bridge/bridge.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_class.h"
@@ -120,7 +120,7 @@ void Bootstrap::CreatePelotonStructure(char relation_kind,
     case 'r':
     {
       Oid relation_oid;
-      relation_oid = GetRelationOid(relation_name);
+      relation_oid = Bridge::GetRelationOid(relation_name);
 
       status = bridge::DDL::CreateTable(relation_oid, relation_name, columns);
 
@@ -179,12 +179,11 @@ void Bootstrap::CreatePelotonStructure(char relation_kind,
           // after all tables are created
           // The order of table and index entries in pg_class table can be arbitrary
           bridge::DDL::IndexInfo indexinfo(relation_name,
-                                                    pg_index->indexrelid,
-                                                    get_rel_name(pg_index->indrelid),
-                                                    method_type,
-                                                    type,
-                                                    pg_index->indisunique,
-                                                    key_column_names);
+                                           get_rel_name(pg_index->indrelid),
+                                           method_type,
+                                           type,
+                                           pg_index->indisunique,
+                                           key_column_names);
 
           index_infos.push_back(indexinfo);
           break;
@@ -208,7 +207,7 @@ void Bootstrap::LinkForeignKeys(void) {
   HeapScanDesc pg_constraint_scan;
   HeapTuple pg_constraint_tuple;
 
-  oid_t database_oid = GetCurrentDatabaseOid();
+  oid_t database_oid = Bridge::GetCurrentDatabaseOid();
   assert(database_oid);
 
   pg_constraint_rel = heap_open( ConstraintRelationId, AccessShareLock);

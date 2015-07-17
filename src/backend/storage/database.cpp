@@ -43,6 +43,14 @@ storage::DataTable *Database::GetTableWithOid(const oid_t table_oid) const {
   return nullptr;
 }
 
+storage::DataTable *Database::GetTableWithName(const std::string table_name) const {
+  for(auto table : tables)
+    if(table->GetName() == table_name)
+      return table;
+
+  return nullptr;
+}
+
 void Database::DropTableWithOid(const oid_t table_oid){
   {
     std::lock_guard<std::mutex> lock(database_mutex);
@@ -97,10 +105,10 @@ std::ostream& operator<<( std::ostream& os, const Database& database ) {
           index::Index* index = table->GetIndex(index_itr);
 
           switch( index->GetIndexType() ){
-            case INDEX_TYPE_PRIMARY_KEY:
+            case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
               std::cout << "primary key index \n";
               break;
-            case INDEX_TYPE_UNIQUE:
+            case INDEX_CONSTRAINT_TYPE_UNIQUE:
               std::cout << "unique index \n";
               break;
             default:
