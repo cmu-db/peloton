@@ -82,9 +82,13 @@ TEST(TupleTests, VarcharTest) {
 	tuple->SetValue(2, ValueFactory::GetTinyIntValue(1));
 
 	storage::AbstractBackend *backend = new storage::VMBackend();
-	Pool *pool = new Pool(backend);
+	peloton::Pool *pool = new peloton::Pool(backend);
 
 	Value val = ValueFactory::GetStringValue("hello hello world", pool);
+	std::cout << "size of value: " << sizeof(val) << std::endl;
+	//std::cout << "size of value_type: " << sizeof(val.GetValueType()) << std::endl;
+	//std::cout << "size of is_inlined: " << sizeof(bool) << std::endl;
+
 	tuple->SetValue(3, val);
 	EXPECT_EQ(tuple->GetValue(3), val);
 
