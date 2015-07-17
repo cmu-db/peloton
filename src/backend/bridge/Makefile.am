@@ -5,12 +5,13 @@
 ######################################################################
 
 bridge_FILES = \
+			   backend/bridge/ddl_database.cpp \
+			   backend/bridge/ddl_index.cpp \
+			   backend/bridge/ddl_table.cpp \
+			   backend/bridge/ddl_utils.cpp \
+			   backend/bridge/ddl.cpp \
 			   backend/bridge/bridge.cpp \
 			   backend/bridge/bootstrap.cpp \
-			   backend/bridge/ddl_create.cpp \
-			   backend/bridge/ddl_alter.cpp \
-			   backend/bridge/ddl_drop.cpp \
-			   backend/bridge/ddl_utility.cpp \
 			   backend/bridge/bridge_test.cpp \
 			   backend/bridge/plan_transformer.cpp \
 			   backend/bridge/tuple_transformer.cpp \
