@@ -325,7 +325,7 @@ void DDL::ProcessUtility(Node *parsetree,
           Oid relation_oid = ((CreateStmt *)parsetree)->relation_id;
 
           std::vector<catalog::Column> column_infos;
-          std::vector<catalog::ForeignKey> reference_table_infos;
+          std::vector<catalog::ForeignKey> foreign_keys;
 
           bool status;
 
@@ -335,7 +335,7 @@ void DDL::ProcessUtility(Node *parsetree,
           if(schema != NULL){
             bridge::DDL::ParsingCreateStmt(Cstmt,
                                             column_infos,
-                                            reference_table_infos);
+                                            foreign_keys);
 
             bridge::DDL::CreateTable(relation_oid,
                                                relation_name,
@@ -377,7 +377,7 @@ void DDL::ProcessUtility(Node *parsetree,
           //===--------------------------------------------------------------------===//
           // Set Reference Tables
           //===--------------------------------------------------------------------===//
-          status = bridge::DDL::SetReferenceTables(reference_table_infos,
+          status = bridge::DDL::SetReferenceTables(foreign_keys,
                                                     relation_oid);
           if(status == false){
             LOG_WARN("Failed to set reference tables");
@@ -514,7 +514,7 @@ void DDL::ProcessUtility(Node *parsetree,
  */
 void DDL::ParsingCreateStmt(CreateStmt* Cstmt,
                              std::vector<catalog::Column>& column_infos,
-                             std::vector<catalog::ForeignKey>& reference_table_infos
+                             std::vector<catalog::ForeignKey>& foreign_keys
 ) {
   assert(Cstmt);
 
@@ -672,14 +672,14 @@ void DDL::ParsingCreateStmt(CreateStmt* Cstmt,
                 }
               }
 
-              catalog::ForeignKey*reference_table_info = new catalog::ForeignKey(PrimaryKeyTableId,
+              catalog::ForeignKey*foreign_key = new catalog::ForeignKey(PrimaryKeyTableId,
                                                                                                    pk_column_names,
                                                                                                    fk_column_names,
                                                                                                    ConstraintNode->fk_upd_action,
                                                                                                    ConstraintNode->fk_del_action,
                                                                                                    conname);
 
-              reference_table_infos.push_back(*reference_table_info);
+              foreign_keys.push_back(*foreign_key);
             }
             continue;
           }
@@ -772,7 +772,7 @@ DDL::IndexInfo* DDL::ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt){
  * @param relation_oid relation oid 
  * @return true if we set the reference tables, false otherwise
  */
-bool DDL::SetReferenceTables(std::vector<catalog::ForeignKey>& reference_table_infos, 
+bool DDL::SetReferenceTables(std::vector<catalog::ForeignKey>& foreign_keys, 
                               oid_t relation_oid){
   assert(relation_oid);
   oid_t database_oid = Bridge::GetCurrentDatabaseOid();
@@ -780,8 +780,8 @@ bool DDL::SetReferenceTables(std::vector<catalog::ForeignKey>& reference_table_i
 
   storage::DataTable* current_table = (storage::DataTable*) catalog::Manager::GetInstance().GetTableWithOid(database_oid, relation_oid);
 
-  for(auto reference_table_info : reference_table_infos) {
-    current_table->AddForeignKey(&reference_table_info);
+  for(auto foreign_key : foreign_keys) {
+    current_table->AddForeignKey(&foreign_key);
   }
 
   return true;
@@ -811,7 +811,7 @@ bool DDL::AddConstraint(Oid relation_oid, Constraint* constraint)
 {
 
   ConstraintType contype = PostgresConstraintTypeToPelotonConstraintType((PostgresConstraintType) constraint->contype);
-  std::vector<catalog::ForeignKey> reference_table_infos;
+  std::vector<catalog::ForeignKey> foreign_keys;
 
   std::string conname;
   if(constraint->conname != NULL){
@@ -857,14 +857,14 @@ bool DDL::AddConstraint(Oid relation_oid, Constraint* constraint)
         }
       }
 
-      catalog::ForeignKey*reference_table_info = new catalog::ForeignKey(PrimaryKeyTableId,
+      catalog::ForeignKey*foreign_key = new catalog::ForeignKey(PrimaryKeyTableId,
                                                                                            pk_column_names,  
                                                                                            fk_column_names,  
                                                                                            constraint->fk_upd_action,  
                                                                                            constraint->fk_del_action, 
                                                                                            conname);
       //new_constraint  = new catalog::Constraint(contype, conname);
-      reference_table_infos.push_back(*reference_table_info);
+      foreign_keys.push_back(*foreign_key);
 
     }
     break;
@@ -874,7 +874,7 @@ bool DDL::AddConstraint(Oid relation_oid, Constraint* constraint)
   }
 
   // FIXME : 
-  bool status = bridge::DDL::SetReferenceTables(reference_table_infos, relation_oid);
+  bool status = bridge::DDL::SetReferenceTables(foreign_keys, relation_oid);
   if(status == false){
     LOG_WARN("Failed to set reference tables");
   } 
