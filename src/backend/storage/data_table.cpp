@@ -213,7 +213,15 @@ oid_t DataTable::GetIndexCount() const {
 void DataTable::AddForeignKey(catalog::ForeignKey *key) {
   {
     std::lock_guard<std::mutex> lock(table_mutex);
-    foreign_keys.push_back(key);
+    catalog::Schema * schema = this->GetSchema();
+    catalog::Constraint constraint( CONSTRAINT_TYPE_FOREIGN, key->GetConstraintName());
+    constraint.SetForeignKeyListOffset(GetForeignKeyCount());
+    for( auto fk_column : key->GetFKColumnNames()){
+      schema->AddConstraint(fk_column, constraint);
+    }
+    //TODO :: We need this one..
+    catalog::ForeignKey* fk = new catalog::ForeignKey( *key );
+    foreign_keys.push_back(fk);
   }
 }
 
