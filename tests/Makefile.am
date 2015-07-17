@@ -12,11 +12,6 @@ GMOCK_BUILDDIR = $(top_builddir)/$(GMOCK_DIR)
 # check_PROGRAMS -- Programs built by "make check" but not necessarily run
 # this is populated by the makefiles in the subdirs
 
-peloton_tests_common_ld = \
-						  $(top_builddir)/src/libpeloton.la \
-						  $(TBB_LIBS)
-
-obj_DIR = $(top_builddir)/src/backend
 check_PROGRAMS =
 
 AM_CPPFLAGS += \
@@ -34,12 +29,14 @@ if BUILD_OS_IS_DARWIN
 AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -static \
 			  $(GMOCK_BUILDDIR)/libgmock.la \
 			  $(GMOCK_BUILDDIR)/libgmock_main.la \
+			  $(top_builddir)/src/libpeloton.la \
 			  $(TBB_LIBS)
 else
 AM_LDFLAGS += $(GTEST_LDFLAGS) $(GTEST_LIBS) -static -pthread \
 			  $(GMOCK_BUILDDIR)/libgmock.la \
 			  $(GMOCK_BUILDDIR)/libgmock_main.la \
-			  $(TBB_LIBS)
+			  $(top_builddir)/src/libpeloton.la \
+			  $(TBB_LIBS) 
 endif
 
 ######################################################################

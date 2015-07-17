@@ -10,5 +10,3 @@ check_PROGRAMS += \
 transaction_test_SOURCES = \
 						   concurrency/transaction_test.cpp \
 						   harness.cpp
-
-transaction_test_LDADD =  $(peloton_tests_common_ld)
