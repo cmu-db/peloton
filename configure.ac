@@ -25,6 +25,7 @@ AC_SUBST([AM_CXXFLAGS], '-std=c++11 -stdlib=libc++')
 
 AC_PROG_YACC
 AC_PROG_LEX
+AM_PATH_PYTHON
 
 ######################################################################
 # LIBRARIES : MM, DL, RT, and M
