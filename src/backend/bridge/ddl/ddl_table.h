@@ -41,6 +41,8 @@ class DDLTable {
 
   static bool ExecDropStmt(Node* parsertree);
 
+  static bool ExecTrucateStmt(Node* parsetree);
+
   static bool CreateTable(Oid relation_oid,
                           std::string table_name,
                           std::vector<catalog::Column> column_infos,
