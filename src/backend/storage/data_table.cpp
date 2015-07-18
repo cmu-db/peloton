@@ -16,46 +16,91 @@
 #include "backend/common/exception.h"
 #include "backend/index/index.h"
 #include "backend/common/logger.h"
-#include "backend/catalog/manager.h"
 
 #include <mutex>
 
 namespace peloton {
 namespace storage {
 
-
 DataTable::DataTable(catalog::Schema *schema,
                      AbstractBackend *backend,
                      std::string table_name,
                      oid_t table_oid,
                      size_t tuples_per_tilegroup)
-: AbstractTable(schema, backend, tuples_per_tilegroup),
-  table_name(table_name),
-  table_oid(table_oid) {
+: AbstractTable(table_oid, table_name, schema),
+  backend(backend),
+  tuples_per_tilegroup(tuples_per_tilegroup) {
+
+  // Create a tile group.
+  AddDefaultTileGroup();
+
 }
 
 DataTable::~DataTable() {
+
+  // clean up tile groups
+  oid_t tile_group_count = GetTileGroupCount();
+  for(oid_t tile_group_itr = 0 ; tile_group_itr < tile_group_count; tile_group_itr++){
+    auto tile_group = GetTileGroup(tile_group_itr);
+    delete tile_group;
+  }
 
   // clean up indices
   for (auto index : indexes) {
     delete index;
   }
 
-  // clean up foreignkeys
+  // clean up foreign keys
   for (auto foreign_key : foreign_keys) {
     delete foreign_key;
   }
+
+  // table owns its backend
+  // TODO: Should we really be doing this here?
+  delete backend;
+
+  // AbstractTable cleans up the schema
 }
 
-ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple, bool update) {
+//===--------------------------------------------------------------------===//
+// TUPLE OPERATIONS
+//===--------------------------------------------------------------------===//
 
-  // TODO: Check basic integrity constraints!
-  //       We don't want to do uniqueness or fkey checks here because
-  //       that would be additional index look-ups per tuple
-  //       But this is where we can do basic things like evaluate non-negative checks
+ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
+                                   const storage::Tuple *tuple,
+                                   bool update) {
 
-  // Insert the tuples in the base table
-  ItemPointer location = AbstractTable::InsertTuple(transaction_id, tuple);
+  assert(tuple);
+
+  // (A) Not NULL checks
+  if (CheckNulls(tuple) == false) {
+    throw ConstraintException("Not NULL constraint violated : " + tuple->GetInfo());
+    return ItemPointer();
+  }
+
+  TileGroup *tile_group = nullptr;
+  oid_t tuple_slot = INVALID_OID;
+  oid_t tile_group_offset = INVALID_OID;
+
+  while (tuple_slot == INVALID_OID) {
+
+    // (B) Figure out last tile group
+    {
+      std::lock_guard<std::mutex> lock(table_mutex);
+      tile_group_offset = GetTileGroupCount()-1;
+      LOG_TRACE("Tile group offset :: %d \n", tile_group_offset);
+    }
+
+    // (C) Try to insert
+    tile_group = GetTileGroup(tile_group_offset);
+    tuple_slot = tile_group->InsertTuple(transaction_id, tuple);
+    if (tuple_slot == INVALID_OID) {
+      AddDefaultTileGroup();
+    }
+  }
+
+  // Return Location
+  ItemPointer location = ItemPointer(tile_group->GetTileGroupId(), tuple_slot);
 
   // Index checks and updates
   if (update == false) {
@@ -64,7 +109,7 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple
       // FIXME
       // Need to think about how we want to actually do this, because right
       // now there is no way to get back the target TileGroup and slot from
-      // AbstractTable::InsertTuple
+      // DataTable::InsertTuple
       // tile_group->ReclaimTuple(tuple_slot);
 
       throw ConstraintException("Index constraint violated : " + tuple->GetInfo());
@@ -133,26 +178,128 @@ void DataTable::DeleteInIndexes(const storage::Tuple *tuple) {
   }
 }
 
+bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
+  assert (schema->GetColumnCount() == tuple->GetColumnCount());
+
+  oid_t column_count = schema->GetColumnCount();
+  for (int column_itr = column_count - 1; column_itr >= 0; --column_itr) {
+    if (tuple->IsNull(column_itr) && schema->AllowNull(column_itr) == false) {
+      LOG_TRACE ("%d th attribute in the tuple was NULL. It is non-nullable attribute.", column_itr);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
+//===--------------------------------------------------------------------===//
+// TILE GROUP
+//===--------------------------------------------------------------------===//
+
+oid_t DataTable::AddDefaultTileGroup() {
+  oid_t tile_group_id = INVALID_OID;
+
+  std::vector<catalog::Schema> schemas;
+  std::vector<std::vector<std::string> > column_names;
+
+  tile_group_id = catalog::Manager::GetInstance().GetNextOid();
+  schemas.push_back(*schema);
+
+  TileGroup* tile_group = TileGroupFactory::GetTileGroup(database_oid, table_oid, tile_group_id,
+                                                         this, backend,
+                                                         schemas, tuples_per_tilegroup);
+
+  LOG_TRACE("Trying to add a tile group \n");
+  {
+    std::lock_guard<std::mutex> lock(table_mutex);
+
+    // Check if we actually need to allocate a tile group
+
+    // (A) no tile groups in table
+    if (tile_groups.empty()) {
+      LOG_TRACE("Added first tile group \n");
+      tile_groups.push_back(tile_group->GetTileGroupId());
+      // add tile group metadata in locator
+      catalog::Manager::GetInstance().SetLocation(tile_group_id, tile_group);
+      LOG_TRACE("Recording tile group : %d \n", tile_group_id);
+      return tile_group_id;
+    }
+
+    // (B) no slots in last tile group in table
+    auto last_tile_group_offset = GetTileGroupCount() - 1;
+    auto last_tile_group = GetTileGroup(last_tile_group_offset);
+
+    oid_t active_tuple_count = last_tile_group->GetNextTupleSlot();
+    oid_t allocated_tuple_count = last_tile_group->GetAllocatedTupleCount();
+    if (active_tuple_count < allocated_tuple_count) {
+      LOG_TRACE("Slot exists in last tile group :: %d %d \n", active_tuple_count, allocated_tuple_count);
+      delete tile_group;
+      return INVALID_OID;
+    }
+
+    LOG_TRACE("Added a tile group \n");
+    tile_groups.push_back(tile_group->GetTileGroupId());
+
+    // add tile group metadata in locator
+    catalog::Manager::GetInstance().SetLocation(tile_group_id, tile_group);
+    LOG_TRACE("Recording tile group : %d \n", tile_group_id);
+  }
+
+  return tile_group_id;
+}
+
+void DataTable::AddTileGroup(TileGroup *tile_group) {
+
+  {
+    std::lock_guard<std::mutex> lock(table_mutex);
+
+    tile_groups.push_back(tile_group->GetTileGroupId());
+    oid_t tile_group_id = tile_group->GetTileGroupId();
+
+    // add tile group metadata in locator
+    catalog::Manager::GetInstance().SetLocation(tile_group_id, tile_group);
+    LOG_TRACE("Recording tile group : %d \n", tile_group_id);
+  }
+
+}
+
+
+size_t DataTable::GetTileGroupCount() const {
+  size_t size = tile_groups.size();
+  return size;
+}
+
+TileGroup *DataTable::GetTileGroup(oid_t tile_group_id) const {
+  assert(tile_group_id < GetTileGroupCount());
+
+  auto& manager = catalog::Manager::GetInstance();
+  storage::TileGroup *tile_group = static_cast<storage::TileGroup *>(manager.GetLocation(tile_groups[tile_group_id]));
+  assert(tile_group);
+
+  return tile_group;
+}
+
 
 std::ostream& operator<<(std::ostream& os, const DataTable& table) {
   os << "=====================================================\n";
   os << "TABLE :\n";
 
   oid_t tile_group_count = table.GetTileGroupCount();
-  std::cout << "Tile Group Count : " << tile_group_count << "\n";
+  os << "Tile Group Count : " << tile_group_count << "\n";
 
   oid_t tuple_count = 0;
   for (oid_t tile_group_itr = 0 ; tile_group_itr < tile_group_count ; tile_group_itr++) {
     auto tile_group = table.GetTileGroup(tile_group_itr);
     auto tile_tuple_count = tile_group->GetNextTupleSlot();
 
-    std::cout << "Tile Group Id  : " << tile_group_itr << " Tuple Count : " << tile_tuple_count << "\n";
-    std::cout << (*tile_group);
+    os << "Tile Group Id  : " << tile_group_itr << " Tuple Count : " << tile_tuple_count << "\n";
+    os << (*tile_group);
 
     tuple_count += tile_tuple_count;
   }
 
-  std::cout << "Table Tuple Count :: " << tuple_count << "\n";
+  os << "Table Tuple Count :: " << tuple_count << "\n";
 
   os << "=====================================================\n";
 
