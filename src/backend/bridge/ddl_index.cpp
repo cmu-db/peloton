@@ -44,9 +44,14 @@ bool DDLIndex::CreateIndex(IndexInfo index_info){
   bool unique_keys = index_info.IsUnique();
   std::vector<std::string> key_column_names = index_info.GetKeyColumnNames();
 
-  assert(!index_name.empty());
-  assert(!table_name.empty());
-  assert(key_column_names.size() > 0);
+  if( index_oid == INVALID_OID ) 
+    return false;
+  if( index_name.empty() )
+    return false;
+  if( table_name.empty() )
+    return false;
+  if( key_column_names.size() <= 0 )
+    return false;
 
   // TODO: We currently only support btree as our index implementation
   // TODO : Support other types based on "type" argument
