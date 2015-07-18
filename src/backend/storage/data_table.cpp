@@ -41,6 +41,10 @@ DataTable::~DataTable() {
     delete index;
   }
 
+  // clean up foreignkeys
+  for (auto foreign_key : foreign_keys) {
+    delete foreign_key;
+  }
 }
 
 ItemPointer DataTable::InsertTuple(txn_id_t transaction_id, const storage::Tuple *tuple, bool update) {

@@ -64,7 +64,7 @@
 #include "nodes/pprint.h"
 #include "nodes/pg_list.h"
 #include "postmaster/peloton.h"
-#include "backend/bridge/plan_transformer.h"
+#include "backend/bridge/dml/plan_transformer.h"
 
 /* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */
 ExecutorStart_hook_type ExecutorStart_hook = NULL;

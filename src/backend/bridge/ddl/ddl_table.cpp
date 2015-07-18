@@ -14,13 +14,17 @@
 #include <iostream>
 #include <vector>
 
-#include "backend/bridge/ddl_table.h"
+#include "backend/bridge/ddl/ddl_table.h"
+#include "backend/bridge/ddl/ddl_database.h"
+#include "backend/bridge/ddl/ddl_utils.h"
 #include "backend/common/logger.h"
 #include "backend/storage/backend_vm.h"
 #include "backend/storage/table_factory.h"
 #include "backend/storage/database.h"
 
+#include "commands/dbcommands.h"
 #include "nodes/pg_list.h"
+#include "parser/parse_utilcmd.h"
 
 namespace peloton {
 namespace bridge {
@@ -28,6 +32,137 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 // Table DDL
 //===--------------------------------------------------------------------===//
+
+/**
+ * @brief Execute the create stmt.
+ * @param the parse tree
+ * @param query string
+ * @param index info to store index information
+ * @return true if we handled it correctly, false otherwise
+ */
+bool DDLTable::ExecCreateStmt(Node* parsetree, const char* queryString, std::vector<IndexInfo> index_infos){
+
+  /* Run parse analysis ... */
+  List     *stmts = transformCreateStmt((CreateStmt *) parsetree,
+      queryString);
+
+  /* ... and do it */
+  ListCell   *l;
+  foreach(l, stmts)
+  {
+    Node     *stmt = (Node *) lfirst(l);
+    if (IsA(stmt, CreateStmt)){
+      CreateStmt* Cstmt = (CreateStmt*)stmt;
+      List* schema = (List*)(Cstmt->tableElts);
+
+      // Relation name and oid
+      char* relation_name = Cstmt->relation->relname;
+      Oid relation_oid = ((CreateStmt *)parsetree)->relation_id;
+
+      std::vector<catalog::Column> column_infos;
+      std::vector<catalog::ForeignKey> foreign_keys;
+
+      bool status;
+
+      //===--------------------------------------------------------------------===//
+      // CreateStmt --> ColumnInfo --> CreateTable
+      //===--------------------------------------------------------------------===//
+      if(schema != NULL){
+        DDLUtils::ParsingCreateStmt(Cstmt,
+            column_infos,
+            foreign_keys);
+
+        DDLTable::CreateTable(relation_oid,
+            relation_name,
+            column_infos);
+      }
+
+      //===--------------------------------------------------------------------===//
+      // Set Reference Tables
+      //===--------------------------------------------------------------------===//
+      status = DDLTable::SetReferenceTables(foreign_keys,
+          relation_oid);
+      if(status == false){
+        LOG_WARN("Failed to set reference tables");
+      }
+
+
+      //===--------------------------------------------------------------------===//
+      // Add Primary Key and Unique Indexes to the table
+      //===--------------------------------------------------------------------===//
+      status = DDLIndex::CreateIndexes(index_infos);
+      if(status == false){
+        LOG_WARN("Failed to create primary key and unique index");
+      }
+    }
+  }
+  return true;
+}
+
+/**
+ * @brief Execute the alter stmt.
+ * @param the parse tree
+ * @param query string
+ * @return true if we handled it correctly, false otherwise
+ */
+bool DDLTable::ExecAlterTableStmt(Node* parsetree, const char* queryString){
+  AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
+  Oid     relation_oid = atstmt->relation_id;
+  List     *stmts = transformAlterTableStmt(relation_oid, atstmt, queryString);
+
+  /* ... and do it */
+  ListCell   *l;
+  foreach(l, stmts){
+
+    Node *stmt = (Node *) lfirst(l);
+    if (IsA(stmt, AlterTableStmt)){
+      DDLTable::AlterTable(relation_oid, (AlterTableStmt*)stmt);
+    }
+  }
+  return true;
+}
+
+/**
+ * @brief Execute the drop stmt.
+ * @param the parse tree
+ * @return true if we handled it correctly, false otherwise
+ */
+bool DDLTable::ExecDropStmt(Node* parsetree){
+  DropStmt* drop = (DropStmt*) parsetree;
+  // TODO drop->behavior;   /* RESTRICT or CASCADE behavior */
+
+  ListCell  *cell;
+  foreach(cell, drop->objects){
+    List* names = ((List *) lfirst(cell));
+
+    switch(drop->removeType){
+      case OBJECT_DATABASE:
+        {
+          char* database_name = strVal(linitial(names));
+          Oid database_oid = get_database_oid(database_name, true);
+
+          DDLDatabase::DropDatabase(database_oid);
+        }
+        break;
+
+      case OBJECT_TABLE:
+        {
+          char* table_name = strVal(linitial(names));
+          Oid table_oid = Bridge::GetRelationOid(table_name);
+
+          DDLTable::DropTable(table_oid);
+        }
+        break;
+
+      default:
+        {
+          LOG_WARN("Unsupported drop object %d ", drop->removeType);
+        }
+        break;
+    }
+  }
+  return true;
+}
 
 /**
  * @brief Create table.
