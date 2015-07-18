@@ -21,7 +21,7 @@ namespace peloton {
 namespace bridge {
 
 /**
- * @brief Test "DDLIndex::CreateIndex" function
+ * @brief Test "DDLIndex" function
  */
 void BridgeTest::DDL_Index_TEST() {
 

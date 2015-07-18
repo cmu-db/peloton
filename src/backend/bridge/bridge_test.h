@@ -14,6 +14,7 @@
 
 #include <vector>
 #include <string>
+#include <iostream>
 
 #include <backend/common/types.h>
 
@@ -46,6 +47,16 @@ class BridgeTest {
   static void RunTests();
 
  private:
+
+  //===--------------------------------------------------------------------===//
+  // Database Test
+  //===--------------------------------------------------------------------===//
+
+  static void DDL_Database_TEST();
+
+  static void DDL_CreateDatabase_TEST_WITH_INVALID_OID();
+
+  static void DDL_CreateDatabase_TEST_WITH_VALID_OID();
 
   //===--------------------------------------------------------------------===//
   // Table Test
@@ -119,10 +130,6 @@ class BridgeTest {
                                      std::string pktable_name,
                                      std::vector<catalog::Column>& columns,
                                      oid_t table_oid);
-
-
-
-
 };
 
 } // End bridge namespace

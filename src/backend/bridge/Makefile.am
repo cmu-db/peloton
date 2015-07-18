@@ -15,6 +15,7 @@ bridge_FILES = \
 			   backend/bridge/bootstrap.cpp \
 			   backend/bridge/bridge_test_main.cpp \
 			   backend/bridge/bridge_test_helper.cpp \
+			   backend/bridge/bridge_test_database.cpp \
 			   backend/bridge/bridge_test_table.cpp \
 			   backend/bridge/bridge_test_index.cpp \
 			   backend/bridge/bridge_test_mix.cpp \
