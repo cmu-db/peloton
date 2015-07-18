@@ -92,7 +92,7 @@ void DDL::ProcessUtility(Node *parsetree,
     case T_TruncateStmt:
     {
       //TODO :: For now, only control the Postgres catalog
-      DDLTable::ExecTrucateStmt(parsetree);
+      //DDLTable::ExecTrucateStmt(parsetree);
       break;
     }
 
