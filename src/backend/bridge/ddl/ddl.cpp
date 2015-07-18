@@ -55,40 +55,46 @@ void DDL::ProcessUtility(Node *parsetree,
     case T_CreatedbStmt:
     {
       DDLDatabase::ExecCreatedbStmt(parsetree);
+      break;
     }
-    break;
 
     case T_DropdbStmt:
     {
       DDLDatabase::ExecDropdbStmt(parsetree);
+      break;
     }
-    break;
 
     case T_CreateStmt:
     case T_CreateForeignTableStmt:
     {
       DDLTable::ExecCreateStmt(parsetree, queryString, index_infos);
+      break;
     }
-    break;
 
     case T_AlterTableStmt:
     {
-      break; // Still working on here....
       DDLTable::ExecAlterTableStmt(parsetree, queryString);
+      break;
     }
-    break;
 
     case T_DropStmt:
     {
       DDLTable::ExecDropStmt(parsetree);
+      break;
     }
-    break;
 
     case T_IndexStmt: 
     {
       DDLIndex::ExecIndexStmt(parsetree, index_infos);
+      break;
     }
-    break;
+
+    case T_TruncateStmt:
+    {
+      //TODO :: For now, only control the Postgres catalog
+      DDLTable::ExecTrucateStmt(parsetree);
+      break;
+    }
 
     case T_TransactionStmt: {
       TransactionStmt *stmt = (TransactionStmt *) parsetree;
