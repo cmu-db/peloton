@@ -69,6 +69,10 @@
 // TODO: Peloton Changes
 #include "postmaster/peloton.h"
 
+void peloton_ProcessUtility(Node *parsetree, const char *queryString,
+                            ProcessUtilityContext context, ParamListInfo params,
+                            DestReceiver *dest, char *completionTag);
+
 /* Hook for plugins to get control in ProcessUtility() */
 ProcessUtility_hook_type ProcessUtility_hook = NULL;
 
@@ -334,9 +338,16 @@ ProcessUtility(Node *parsetree,
                 context, params,
                 dest, completionTag);
   else
+  {
     standard_ProcessUtility(parsetree, queryString,
                 context, params,
                 dest, completionTag);
+
+    // TODO: Peloton Changes
+    peloton_ProcessUtility(parsetree, queryString,
+                context, params,
+                dest, completionTag);
+  }
 }
 
 /*
@@ -359,7 +370,6 @@ standard_ProcessUtility(Node *parsetree,
             char *completionTag)
 {
   bool    isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
-  Peloton_Status *status;
 
   check_xact_readonly(parsetree);
 
@@ -906,6 +916,18 @@ standard_ProcessUtility(Node *parsetree,
                  dest, completionTag);
       break;
   }
+
+}
+
+void
+peloton_ProcessUtility(Node *parsetree,
+            const char *queryString,
+            ProcessUtilityContext context,
+            ParamListInfo params,
+            DestReceiver *dest,
+            char *completionTag)
+{
+  Peloton_Status *status;
 
   status = peloton_create_status();
 

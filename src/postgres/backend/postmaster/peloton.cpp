@@ -10,30 +10,6 @@
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
-#include "c.h"
-
-#include "access/xact.h"
-#include "catalog/pg_namespace.h"
-#include "executor/tuptable.h"
-#include "libpq/ip.h"
-#include "libpq/pqsignal.h"
-#include "miscadmin.h"
-#include "nodes/print.h"
-#include "utils/guc.h"
-#include "utils/ps_status.h"
-#include "utils/timeout.h"
-#include "utils/memutils.h"
-#include "utils/resowner.h"
-#include "utils/rel.h"
-#include "postmaster/fork_process.h"
-#include "postmaster/postmaster.h"
-#include "postmaster/peloton.h"
-#include "storage/latch.h"
-#include "storage/ipc.h"
-#include "storage/proc.h"
-#include "tcop/tcopprot.h"
-
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -55,6 +31,30 @@
 #include "backend/bridge/dml/plan_transformer.h"
 #include "backend/bridge/dml/plan_executor.h"
 #include "backend/common/stack_trace.h"
+
+#include "postgres.h"
+#include "c.h"
+#include "access/xact.h"
+#include "access/transam.h"
+#include "catalog/pg_namespace.h"
+#include "executor/tuptable.h"
+#include "libpq/ip.h"
+#include "libpq/pqsignal.h"
+#include "miscadmin.h"
+#include "nodes/print.h"
+#include "utils/guc.h"
+#include "utils/ps_status.h"
+#include "utils/timeout.h"
+#include "utils/memutils.h"
+#include "utils/resowner.h"
+#include "utils/rel.h"
+#include "postmaster/fork_process.h"
+#include "postmaster/postmaster.h"
+#include "postmaster/peloton.h"
+#include "storage/latch.h"
+#include "storage/ipc.h"
+#include "storage/proc.h"
+#include "tcop/tcopprot.h"
 
 /* ----------
  * Local data
@@ -278,16 +278,13 @@ PelotonMain(int argc, char *argv[])
    */
   MemoryContextSwitchTo(TopMemoryContext);
 
-  /* Start main loop */
-  if(PelotonTestMode == false)
-  {
-    peloton_MainLoop();
-  }
   /* Testing mode */
-  else
-  {
+  if(PelotonTestMode == true) {
     peloton::bridge::BridgeTest::RunTests();
   }
+
+  /* Start main loop */
+  peloton_MainLoop();
 
   // TODO: Peloton Changes
   MemoryContextDelete(MessageContext);
@@ -1084,19 +1081,12 @@ bool IsPelotonQuery(List *relationOids) {
     foreach(lc, relationOids)
     {
       Oid relationOid = lfirst_oid(lc);
-      Relation relation = relation_open(relationOid, AccessShareLock);
-      if(relation != NULL)
+      // Fast check to determine if the relation is a peloton relation
+      if(relationOid > FirstNormalObjectId)
       {
-        Oid relationNamespaceOid = RelationGetNamespace(relation);
-        // Check if peloton table
-        if(relationNamespaceOid == PG_PUBLIC_NAMESPACE)
-        {
-          peloton_query = true;
-          relation_close(relation, AccessShareLock);
-          break;
-        }
+        peloton_query = true;
+        break;
       }
-      relation_close(relation, AccessShareLock);
     }
   }
 
