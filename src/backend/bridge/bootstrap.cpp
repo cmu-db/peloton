@@ -299,11 +299,35 @@ void Bootstrap::LinkForeignKeys(void) {
   heap_close(pg_constraint_rel, AccessShareLock);
 }
 
+/**
+ * @brief create all databases using catalog table pg_database
+ */
+void Bootstrap::CreateDatabases() {
+  Relation pg_database_rel;
+  HeapScanDesc scan;
+  HeapTuple tup;
+
+  StartTransactionCommand();
+
+  // Scan pg database table
+  pg_database_rel = heap_open(DatabaseRelationId, AccessShareLock);
+  scan = heap_beginscan_catalog(pg_database_rel, 0, NULL);
+
+  while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection)))  {
+    Oid database_oid = HeapTupleHeaderGetOid(tup->t_data);
+    DDLDatabase::CreateDatabase( database_oid );
+  }
+
+  heap_endscan(scan);
+  heap_close(pg_database_rel, AccessShareLock);
+
+  CommitTransactionCommand();
+}
+
 bool Bootstrap::BootstrapPeloton(void) {
 
-  
   // Create the new storage database and add it to the manager
-  DDLDatabase::CreateDatabase(bridge::Bridge::GetCurrentDatabaseOid() );
+  CreateDatabases();
 
   // Relations for catalog tables
   Relation pg_class_rel;

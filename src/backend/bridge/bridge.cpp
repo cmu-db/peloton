@@ -271,7 +271,8 @@ void Bridge::GetDatabaseList(void) {
 
   while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection)))  {
     Form_pg_database pg_database = (Form_pg_database) GETSTRUCT(tup);
-    elog(LOG, "pgdatabase->datname  :: %s ", NameStr(pg_database->datname) );
+    Oid database_oid = HeapTupleHeaderGetOid(tup->t_data);
+    elog(LOG, "pgdatabase->datname  :: %s oid %d ", NameStr(pg_database->datname), (int) database_oid );
   }
 
   heap_endscan(scan);
