@@ -1,0 +1,136 @@
+/*-------------------------------------------------------------------------
+ *
+ * bridge_test_index.cpp
+ * file description
+ *
+ * Copyright(c) 2015, CMU
+ *
+ * /peloton/tests/bridge/bridge_test_index.cpp
+ *
+ *-------------------------------------------------------------------------
+ */
+
+#include "bridge_test.h"
+
+#include "backend/bridge/bridge.h"
+#include "backend/bridge/ddl.h"
+#include "backend/bridge/ddl_table.h"
+#include "backend/bridge/ddl_index.h"
+
+namespace peloton {
+namespace bridge {
+
+/**
+ * @brief Test "DDLIndex::CreateIndex" function
+ */
+void BridgeTest::DDL_CreateIndex_TEST() {
+
+  DDL_CreateIndex_TEST_WITH_INVALID_OID();
+
+  DDL_CreateIndex_TEST_WITH_NO_TABLE_NAME();
+
+  DDL_CreateIndex_TEST_WITH_TABLE();
+
+}
+
+/**
+ * @brief CreateIndex with INVALID OID
+ *        It MUST return false 
+ */
+void BridgeTest::DDL_CreateIndex_TEST_WITH_INVALID_OID() {
+
+  std::vector<std::string> key_column_names;
+  key_column_names.push_back("id");
+  key_column_names.push_back("name");
+
+  std::string table_name = "test_table";
+
+  IndexInfo* index_info;
+  index_info = new IndexInfo("test_index_with_invalid_oid",
+                             INVALID_OID,
+                             table_name,
+                             INDEX_TYPE_BTREE_MULTIMAP,
+                             INDEX_CONSTRAINT_TYPE_DEFAULT,
+                             true,
+                             key_column_names);
+
+  bool status = DDLIndex::CreateIndex(*index_info);
+ 
+  // CHECK :: status must be false
+  assert(status == false);
+
+  std::cout << ":::::: " << __func__ << " DONE\n";
+}
+
+/**
+ * @brief CreateIndex with NO TABLE NAME
+ *        It MUST return false 
+ */
+void BridgeTest::DDL_CreateIndex_TEST_WITH_NO_TABLE_NAME() {
+
+  std::vector<std::string> key_column_names;
+  key_column_names.push_back("id");
+  key_column_names.push_back("name");
+
+  std::string table_name = "";
+
+  IndexInfo* index_info;
+  index_info = new IndexInfo("test_index_with_no_table_name",
+                             30001,
+                             table_name,
+                             INDEX_TYPE_BTREE_MULTIMAP,
+                             INDEX_CONSTRAINT_TYPE_DEFAULT,
+                             true,
+                             key_column_names);
+
+  bool status = DDLIndex::CreateIndex(*index_info);
+ 
+  // CHECK :: status must be false
+  assert(status == false);
+
+  std::cout << ":::::: " << __func__ << " DONE\n";
+}
+
+/**
+ * @brief Create an index with simple table
+ */
+void BridgeTest::DDL_CreateIndex_TEST_WITH_TABLE() {
+
+  // Get the simple columns
+  std::vector<catalog::Column> columns = CreateSimpleColumns();
+  assert( columns.size() > 0 );
+
+  // Table name and oid
+  std::string table_name = "simple_table";
+  oid_t table_oid = 30002;
+
+  // Create a table
+  bool status = DDLTable::CreateTable(table_oid, table_name, columns);
+  assert(status);
+
+  // Create an index info
+  std::vector<std::string> key_column_names;
+  key_column_names.push_back("id");
+  key_column_names.push_back("name");
+
+  IndexInfo* index_info;
+  index_info = new IndexInfo("simple_index",
+                             30003,
+                             table_name,
+                             INDEX_TYPE_BTREE_MULTIMAP,
+                             INDEX_CONSTRAINT_TYPE_DEFAULT,
+                             true,
+                             key_column_names);
+
+  // Create an index
+  status = DDLIndex::CreateIndex(*index_info);
+ 
+  // CHECK :: status must be false
+  assert(status);
+
+  std::cout << ":::::: " << __func__ << " DONE\n";
+
+}
+
+} // End bridge namespace
+} // End peloton namespace
