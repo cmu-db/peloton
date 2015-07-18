@@ -30,7 +30,8 @@ class DDL {
   //===--------------------------------------------------------------------===//
 
   static void ProcessUtility(Node *parsetree,
-                             const char *queryString);
+                             const char *queryString,
+                             TransactionId txn_id);
 
 };
 
