@@ -64,6 +64,9 @@ class Bootstrap {
   // Set up the foreign keys constraints
   static void LinkForeignKeys();
 
+  // Create databases
+  static void CreateDatabases();
+
 };
 
 } // namespace bridge
