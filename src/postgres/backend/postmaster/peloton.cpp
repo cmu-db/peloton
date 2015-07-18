@@ -47,10 +47,10 @@
 #include <time.h>
 #include <thread>
 
-#include "../../../backend/scheduler/tbb_scheduler.h"
+#include "backend/common/logger.h"
+#include "backend/scheduler/tbb_scheduler.h"
 #include "backend/bridge/bootstrap.h"
 #include "backend/bridge/plan_transformer.h"
-#include "backend/common/logger.h"
 #include "backend/common/stack_trace.h"
 #include "backend/bridge/ddl.h"
 #include "backend/bridge/plan_transformer.h"
@@ -931,8 +931,9 @@ peloton_process_dml(Peloton_MsgDML *msg)
 
     TopTransactionContext = msg->m_hdr.m_top_transaction_context;
     CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
+    TransactionId txn_id = msg->m_hdr.m_txn_id;
 
-    std::cout << "Transaction ID :: " << msg->m_hdr.m_txn_id << "\n";
+    std::cout << "Transaction ID :: " << txn_id << "\n";
 
     auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
 
@@ -941,7 +942,7 @@ peloton_process_dml(Peloton_MsgDML *msg)
       peloton::bridge::PlanExecutor::ExecutePlan(plan,
                                                  msg->m_tuple_desc,
                                                  msg->m_status,
-                                                 nullptr);
+                                                 txn_id);
 
       /* Clean up the plantree */
       peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
@@ -977,13 +978,15 @@ peloton_process_ddl(Peloton_MsgDDL *msg)
 
     TopTransactionContext = msg->m_hdr.m_top_transaction_context;
     CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
+    TransactionId txn_id = msg->m_hdr.m_txn_id;
 
-    /* Get the query string */
     queryString = msg->m_queryString;
 
     if(queryString != NULL)
     {
-      peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
+      peloton::bridge::DDL::ProcessUtility(parsetree,
+                                           queryString,
+                                           txn_id);
     }
   }
 
