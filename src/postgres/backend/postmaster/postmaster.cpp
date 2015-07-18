@@ -364,6 +364,7 @@ static DNSServiceRef bonjour_sdref = NULL;
 
 // Peloton Test Mode
 bool PelotonTestMode = false;
+bool PelotonDualMode = false;
 
 /*
  * postmaster.c - function prototypes
@@ -616,7 +617,7 @@ PostmasterMain(int argc, char *argv[])
    * tcop/postgres.c (the option sets should not conflict) and with the
    * common help() function in main/main.c.
    */
-  while ((opt = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:Z-:")) != -1)
+  while ((opt = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:YZ-:")) != -1)
   {
     switch (opt)
     {
@@ -781,9 +782,17 @@ PostmasterMain(int argc, char *argv[])
         break;
       }
 
+      // TODO: Peloton Changes
+      case 'Y':
+      {
+        // Run DML queries using both Peloton and PG executors
+        PelotonDualMode = true;
+        break;
+      }
+
       case 'Z':
       {
-        // TODO: Peloton Changes
+        // Runs the Peloton bridge tests, if set to true
         PelotonTestMode = true;
         break;
       }
