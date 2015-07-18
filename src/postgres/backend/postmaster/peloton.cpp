@@ -49,13 +49,12 @@
 
 #include "backend/common/logger.h"
 #include "backend/scheduler/tbb_scheduler.h"
-#include "backend/bridge/bootstrap.h"
-#include "backend/bridge/plan_transformer.h"
+#include "backend/bridge/ddl/bootstrap.h"
+#include "backend/bridge/ddl/ddl.h"
+#include "backend/bridge/ddl/tests/bridge_test.h"
+#include "backend/bridge/dml/plan_transformer.h"
+#include "backend/bridge/dml/plan_executor.h"
 #include "backend/common/stack_trace.h"
-#include "backend/bridge/ddl.h"
-#include "backend/bridge/plan_transformer.h"
-#include "backend/bridge/plan_executor.h"
-#include "backend/bridge/bridge_test.h"
 
 /* ----------
  * Local data

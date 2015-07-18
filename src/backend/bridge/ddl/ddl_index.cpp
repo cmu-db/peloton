@@ -12,8 +12,8 @@
 
 #include <vector>
 
-#include "backend/bridge/ddl_index.h"
-#include "backend/bridge/bridge.h"
+#include "backend/bridge/ddl/ddl_index.h"
+#include "backend/bridge/ddl/bridge.h"
 #include "backend/catalog/manager.h"
 #include "backend/common/logger.h"
 #include "backend/index/index.h"
@@ -25,6 +25,31 @@
 
 namespace peloton {
 namespace bridge {
+
+/**
+ * @brief Execute the index stmt.
+ * @param the parse tree
+ * @param index info to store index information
+ * @return true if we handled it correctly, false otherwise
+ */
+bool DDLIndex::ExecIndexStmt(Node* parsetree, std::vector<IndexInfo>& index_infos ){
+  IndexStmt  *Istmt = (IndexStmt *) parsetree;
+
+  // Construct IndexInfo
+  IndexInfo* index_info = DDLIndex::ConstructIndexInfoByParsingIndexStmt(Istmt);
+
+  // If table has not been created yet, skip the rest part of this function
+  auto& manager = catalog::Manager::GetInstance();
+  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+
+  if(nullptr == db->GetTableWithName(Istmt->relation->relname)){
+    index_infos.push_back(*index_info);
+    return true;
+  }
+
+  DDLIndex::CreateIndex(*index_info);
+  return true;
+}
 
 /**
  * @brief Create index.
@@ -44,9 +69,14 @@ bool DDLIndex::CreateIndex(IndexInfo index_info){
   bool unique_keys = index_info.IsUnique();
   std::vector<std::string> key_column_names = index_info.GetKeyColumnNames();
 
-  assert(!index_name.empty());
-  assert(!table_name.empty());
-  assert(key_column_names.size() > 0);
+  if( index_oid == INVALID_OID ) 
+    return false;
+  if( index_name.empty() )
+    return false;
+  if( table_name.empty() )
+    return false;
+  if( key_column_names.size() <= 0 )
+    return false;
 
   // TODO: We currently only support btree as our index implementation
   // TODO : Support other types based on "type" argument
