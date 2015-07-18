@@ -37,10 +37,14 @@ LOG.setLevel(logging.INFO)
 ## CONFIGURATION
 ## ==============================================
 
-BASE_DIR = os.path.dirname(__file__)
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+ROOT_DIR = reduce(os.path.join, [BASE_DIR, os.path.pardir, os.path.pardir])
+BUILD_DIR = reduce(os.path.join, [ROOT_DIR, "build"])
+SRC_DIR = reduce(os.path.join, [BUILD_DIR, "src"])
+TOOLS_DIR = reduce(os.path.join, [BUILD_DIR, "tools"])
 
-initdb = 'initdb'
-pg_ctl = 'pg_ctl'
+initdb = os.path.join(TOOLS_DIR, "initdb")
+pg_ctl = os.path.join(TOOLS_DIR, "pg_ctl")
 
 ## ==============================================
 ## UTILS
@@ -64,6 +68,8 @@ def exec_cmd(cmd):
 ## MAIN
 ## ==============================================
 if __name__ == '__main__':    
+    LOG.info("Linking peloton")
+    cmd = 'ln' + ' ' + os.path.join(SRC_DIR, ".libs") + ' ' + os.path.join(TOOLS_DIR, ".libs")
     
     LOG.info("Setting up temp data dir")
     temp_dir_path = tempfile.mkdtemp()
