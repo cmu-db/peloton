@@ -27,9 +27,12 @@ namespace bridge {
  * @return true if we created a database, false otherwise
  */
 bool DDLDatabase::CreateDatabase(Oid database_oid){
+  if(database_oid == INVALID_OID)
+    return false;
 
   auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(Bridge::Bridge::GetCurrentDatabaseOid());
+  storage::Database* db = new storage::Database(database_oid);
+  manager.AddDatabase(db);
 
   if(db == nullptr){
     LOG_WARN("Failed to create a database (%u)", database_oid);
