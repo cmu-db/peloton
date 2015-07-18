@@ -81,7 +81,11 @@ expression::AbstractExpression* ExprTransformer::TransformExpr(
     case T_BoolExpr:
       peloton_expr = TransformBool(expr_state);
       break;
-     
+
+    case T_Param:
+      peloton_expr = TransformParam(expr_state);
+      break;
+
     default:
       LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')\n",
                 nodeTag(expr_state->expr));
@@ -218,6 +222,22 @@ expression::AbstractExpression* ExprTransformer::TransformBool(
 
     default:
       LOG_ERROR("Unrecognized boolean type (BoolExpr) : %u", bool_op);
+  }
+
+  return nullptr;
+}
+
+expression::AbstractExpression* ExprTransformer::TransformParam(const ExprState *es) {
+
+  auto param_expr = reinterpret_cast<const Param*>(es->expr);
+
+  switch (param_expr->paramkind) {
+    case PARAM_EXTERN:
+      return expression::ParameterValueFactory(param_expr->paramid + 1); // 1 indexed
+      break;
+    default:
+      LOG_ERROR("Unrecognized param kind %d", param_expr->paramkind);
+      break;
   }
 
   return nullptr;

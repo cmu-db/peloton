@@ -54,6 +54,7 @@ TransformTargetList(List* target_list, oid_t column_count);
  * @brief transform a expr tree into info that a index scan node needs
  * */
 static void BuildScanKey(const ScanKey scan_keys, int num_keys, planner::IndexScanNode::IndexScanDesc &index_scan_desc);
+static ValueArray *BuildParams(const ParamListInfo param_list);
 
 /**
  * @brief Pretty print the plan state tree.
@@ -73,22 +74,26 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
   Plan *plan = plan_state->plan;
   planner::AbstractPlanNode *plan_node;
 
+  LOG_INFO("planstate %d", nodeTag(plan_state));
+
+  ValueArray *params = BuildParams(plan_state->state->es_param_list_info);
+
   switch (nodeTag(plan)) {
     case T_ModifyTable:
       plan_node = PlanTransformer::TransformModifyTable(
-          reinterpret_cast<const ModifyTableState *>(plan_state));
+          reinterpret_cast<const ModifyTableState *>(plan_state), *params);
       break;
     case T_SeqScan:
       plan_node = PlanTransformer::TransformSeqScan(
-          reinterpret_cast<const SeqScanState*>(plan_state));
+          reinterpret_cast<const SeqScanState*>(plan_state), *params);
       break;
     case T_IndexScan:
       plan_node = PlanTransformer::TransformIndexScan(
-          reinterpret_cast<const IndexScanState*>(plan_state));
+          reinterpret_cast<const IndexScanState*>(plan_state), *params);
       break;
     case T_IndexOnlyScan:
       plan_node = PlanTransformer::TransformIndexOnlyScan(
-          reinterpret_cast<const IndexOnlyScanState*>(plan_state));
+          reinterpret_cast<const IndexOnlyScanState*>(plan_state), *params);
       break;
     case T_Result:
       plan_node = PlanTransformer::TransformResult(
@@ -135,24 +140,24 @@ bool PlanTransformer::CleanPlanNodeTree(planner::AbstractPlanNode* root) {
  * Basically, it multiplexes into helper methods based on operation type.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
-    const ModifyTableState *mt_plan_state) {
+    const ModifyTableState *mt_plan_state, const ValueArray &params) {
 
   ModifyTable *plan = (ModifyTable *) mt_plan_state->ps.plan;
 
   switch (plan->operation) {
     case CMD_INSERT:
       LOG_INFO("CMD_INSERT");
-      return PlanTransformer::TransformInsert(mt_plan_state);
+      return PlanTransformer::TransformInsert(mt_plan_state, params);
       break;
 
     case CMD_UPDATE:
       LOG_INFO("CMD_UPDATE");
-      return PlanTransformer::TransformUpdate(mt_plan_state);
+      return PlanTransformer::TransformUpdate(mt_plan_state, params);
       break;
 
     case CMD_DELETE:
       LOG_INFO("CMD_DELETE");
-      return PlanTransformer::TransformDelete(mt_plan_state);
+      return PlanTransformer::TransformDelete(mt_plan_state, params);
       break;
 
     default:
@@ -168,7 +173,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
  * @return Pointer to the constructed AbstractPlanNode.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformInsert(
-    const ModifyTableState *mt_plan_state) {
+    const ModifyTableState *mt_plan_state, const ValueArray &params) {
 
   /* Resolve result table */
   ResultRelInfo *result_rel_info = mt_plan_state->resultRelInfo;
@@ -218,7 +223,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
         result_ps->ps.ps_ProjInfo->pi_targetlist, schema->GetColumnCount());
 
     for (auto proj : proj_list) {
+      proj.second->Substitute(params);
       Value value = proj.second->Evaluate(nullptr, nullptr);  // Constant is expected
+      std::cout << "Value = " << value << "\n";
       tuple->SetValue(proj.first, value);
     }
 
@@ -239,7 +246,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
 }
 
 planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
-    const ModifyTableState* mt_plan_state) {
+    const ModifyTableState* mt_plan_state, const ValueArray &params) {
 
   /*
    * NOTE:
@@ -318,7 +325,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
  * So we don't need to handle predicates locally .
  */
 planner::AbstractPlanNode* PlanTransformer::TransformDelete(
-    const ModifyTableState* mt_plan_state) {
+    const ModifyTableState* mt_plan_state, const ValueArray &params) {
 
   // Grab Database ID and Table ID
   assert(mt_plan_state->resultRelInfo);  // Input must come from a subplan
@@ -358,7 +365,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformDelete(
  * We can't for now, but Postgres can.
  */
 planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
-    const SeqScanState* ss_plan_state) {
+    const SeqScanState* ss_plan_state, const ValueArray &params) {
 
   assert(nodeTag(ss_plan_state) == T_SeqScanState);
 
@@ -449,7 +456,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
  * @return Pointer to the constructed AbstractPlanNode.
  */
 planner::AbstractPlanNode* PlanTransformer::TransformIndexScan(
-    const IndexScanState* iss_plan_state) {
+    const IndexScanState* iss_plan_state, const ValueArray &params) {
   /* info needed to initialize plan node */
   planner::IndexScanNode::IndexScanDesc index_scan_desc;
    /* Resolve target relation */
@@ -570,7 +577,7 @@ static void BuildScanKey(const ScanKey scan_keys, int num_keys, planner::IndexSc
  * @return Pointer to the constructed AbstractPlanNode.
  */
 planner::AbstractPlanNode* PlanTransformer::TransformIndexOnlyScan(
-    const IndexOnlyScanState* ioss_plan_state) {
+    const IndexOnlyScanState* ioss_plan_state, const ValueArray &params) {
   /* info needed to initialize plan node */
   planner::IndexScanNode::IndexScanDesc index_scan_desc;
 
@@ -847,6 +854,17 @@ TransformTargetList(List* target_list, oid_t column_count) {
 
   return proj_list;
 }
+
+ValueArray *BuildParams(const ParamListInfo param_list) {
+  if (param_list == nullptr) return nullptr;
+  ValueArray *params = new ValueArray(param_list->numParams);
+  for (int i = 0; i < params->GetSize(); ++i) {
+    ParamExternData param = param_list->params[i];
+    (*params)[i] = TupleTransformer::GetValue(param.value, param.ptype);
+  }
+  return params;
+}
+
 
 }  // namespace bridge
 }  // namespace peloton
