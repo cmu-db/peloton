@@ -31,7 +31,6 @@ void BridgeTest::DDL_MIX_TEST() {
 
 }
 
-
 /**
  * @brief Create a table with simple columns that contain
  *        column-level constraints such as single column 

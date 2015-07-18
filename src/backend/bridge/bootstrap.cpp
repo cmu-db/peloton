@@ -16,6 +16,7 @@
 #include <cassert>
 
 #include "backend/bridge/bootstrap.h"
+#include "backend/bridge/ddl_database.h"
 #include "backend/bridge/ddl_table.h"
 #include "backend/bridge/ddl_index.h"
 #include "backend/storage/database.h"
@@ -300,10 +301,9 @@ void Bootstrap::LinkForeignKeys(void) {
 
 bool Bootstrap::BootstrapPeloton(void) {
 
+  
   // Create the new storage database and add it to the manager
-  storage::Database* db = new storage::Database( bridge::Bridge::GetCurrentDatabaseOid());
-  auto& manager = catalog::Manager::GetInstance();
-  manager.AddDatabase(db);
+  DDLDatabase::CreateDatabase(bridge::Bridge::GetCurrentDatabaseOid() );
 
   // Relations for catalog tables
   Relation pg_class_rel;
