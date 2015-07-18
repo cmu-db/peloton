@@ -13,8 +13,10 @@ bridge_FILES = \
 			   backend/bridge/ddl.cpp \
 			   backend/bridge/bridge.cpp \
 			   backend/bridge/bootstrap.cpp \
-			   backend/bridge/bridge_test.cpp \
+			   backend/bridge/bridge_test_main.cpp \
 			   backend/bridge/bridge_test_helper.cpp \
+			   backend/bridge/bridge_test_table.cpp \
+			   backend/bridge/bridge_test_index.cpp \
 			   backend/bridge/plan_transformer.cpp \
 			   backend/bridge/tuple_transformer.cpp \
 			   backend/bridge/plan_executor.cpp \

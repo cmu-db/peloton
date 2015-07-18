@@ -42,21 +42,32 @@ class BridgeTest {
   BridgeTest(BridgeTest &&) = delete;
   BridgeTest& operator=(BridgeTest &&) = delete;
 
+  // Bridge Test Main Function
   static void RunTests();
 
  private:
 
   //===--------------------------------------------------------------------===//
-  // Tests
+  // Table Test
   //===--------------------------------------------------------------------===//
 
   static void DDL_CreateTable_TEST();
 
-  static void DDL_CreateTable_TEST_INVALID_OID();
+  static void DDL_CreateTable_TEST_WITH_INVALID_OID();
 
-  static void DDL_CreateTable_TEST_COLUMNS();
+  static void DDL_CreateTable_TEST_WITH_COLUMNS();
 
-  static void DDL_CreateTable_TEST_COLUMN_CONSTRAINTS();
+  //===--------------------------------------------------------------------===//
+  // Index Test
+  //===--------------------------------------------------------------------===//
+
+  static void DDL_CreateIndex_TEST();
+
+  static void DDL_CreateIndex_TEST_WITH_INVALID_OID();
+
+  static void DDL_CreateIndex_TEST_WITH_NO_TABLE_NAME();
+
+  static void DDL_CreateIndex_TEST_WITH_TABLE();
 
   //===--------------------------------------------------------------------===//
   // Utilities

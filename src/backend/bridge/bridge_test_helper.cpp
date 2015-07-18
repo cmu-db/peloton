@@ -4,7 +4,7 @@
  * file description
  *
  * Copyright(c) 2015, CMU
-
+ *
  * /peloton/tests/bridge/bridge_test_helper.cpp
  *
  *-------------------------------------------------------------------------
