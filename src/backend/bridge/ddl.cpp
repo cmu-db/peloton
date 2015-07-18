@@ -54,7 +54,8 @@ static std::vector<IndexInfo> index_infos;
  * @param parsetree Parse tree
  */
 void DDL::ProcessUtility(Node *parsetree,
-                         const char *queryString){
+                         const char *queryString,
+                         TransactionId txn_id){
   assert(parsetree != nullptr);
   assert(queryString != nullptr);
 
@@ -261,14 +262,10 @@ void DDL::ProcessUtility(Node *parsetree,
     }
     break;
 
-    /*
-     * ******************** transactions ********************
-     */
-    case T_TransactionStmt:
-    {
+    case T_TransactionStmt: {
       TransactionStmt *stmt = (TransactionStmt *) parsetree;
 
-      DDLTransaction::ExecTransactionStmt(stmt);
+      DDLTransaction::ExecTransactionStmt(stmt, txn_id);
     }
     break;
 
