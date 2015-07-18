@@ -27,6 +27,31 @@ namespace peloton {
 namespace bridge {
 
 /**
+ * @brief Execute the index stmt.
+ * @param the parse tree
+ * @param index info to store index information
+ * @return true if we handled it correctly, false otherwise
+ */
+bool DDLIndex::ExecIndexStmt(Node* parsetree, std::vector<IndexInfo>& index_infos ){
+  IndexStmt  *Istmt = (IndexStmt *) parsetree;
+
+  // Construct IndexInfo
+  IndexInfo* index_info = DDLIndex::ConstructIndexInfoByParsingIndexStmt(Istmt);
+
+  // If table has not been created yet, skip the rest part of this function
+  auto& manager = catalog::Manager::GetInstance();
+  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+
+  if(nullptr == db->GetTableWithName(Istmt->relation->relname)){
+    index_infos.push_back(*index_info);
+    return true;
+  }
+
+  DDLIndex::CreateIndex(*index_info);
+  return true;
+}
+
+/**
  * @brief Create index.
  * @param index_name Index name
  * @param table_name Table name
