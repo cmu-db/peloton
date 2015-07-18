@@ -89,7 +89,7 @@ class BridgeTest {
   static void DDL_MIX_TEST_1();
 
   //===--------------------------------------------------------------------===//
-  // Utilities
+  // Helper Functions
   //===--------------------------------------------------------------------===//
 
   static std::vector<catalog::Column> CreateSimpleColumns();

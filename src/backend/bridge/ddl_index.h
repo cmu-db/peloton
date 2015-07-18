@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * ddl_table.h
+ * ddl_index.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/bridge/ddl_table.h
+ * /peloton/src/backend/bridge/ddl_index.h
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,8 @@ class DDLIndex {
   DDLIndex& operator=(const DDLIndex &) = delete;
   DDLIndex(DDLIndex &&) = delete;
   DDLIndex& operator=(DDLIndex &&) = delete;
+
+  static bool ExecIndexStmt(Node* parsetree, std::vector<IndexInfo>& index_infos);
 
   static bool CreateIndex(IndexInfo index_info);
 
