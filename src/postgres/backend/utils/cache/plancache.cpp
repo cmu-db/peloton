@@ -75,8 +75,8 @@
  * cached plan's subject statement is a transaction control command.
  */
 #define IsTransactionStmtPlan(plansource)  \
-	((plansource)->raw_parse_tree && \
-	 IsA((plansource)->raw_parse_tree, TransactionStmt))
+    ((plansource)->raw_parse_tree && \
+        IsA((plansource)->raw_parse_tree, TransactionStmt))
 
 /*
  * This is the head of the backend's list of "saved" CachedPlanSources (i.e.,
@@ -159,19 +159,14 @@ CreateCachedPlan(Node *raw_parse_tree, const char *query_string,
    * child of the caller's context (which we assume to be transient), so
    * that it will be cleaned up on error.
    */
+  // TODO: Peloton Changes
   source_context = SHMAllocSetContextCreate(CurrentMemoryContext,
                                             "CachedPlanSource",
                                             ALLOCSET_DEFAULT_MINSIZE,
                                             ALLOCSET_DEFAULT_INITSIZE,
                                             ALLOCSET_DEFAULT_MAXSIZE,
                                             SHM_DEFAULT_SEGMENT);
-  /*
-   source_context = AllocSetContextCreate(CurrentMemoryContext,
-   "CachedPlanSource",
-   ALLOCSET_SMALL_MINSIZE,
-   ALLOCSET_SMALL_INITSIZE,
-   ALLOCSET_DEFAULT_MAXSIZE);
-   */
+
   /*
    * Create and fill the CachedPlanSource struct within the new___ context.
    * Most fields are just left empty for the moment.
@@ -348,6 +343,7 @@ void CompleteCachedPlan(CachedPlanSource *plansource, List *querytree_list,
     MemoryContextSwitchTo(querytree_context);
   } else {
     /* Again, it's a good bet the querytree_context can be small */
+    // TODO: Peloton Changes
     querytree_context = SHMAllocSetContextCreate(source_context,
                                                  "CachedPlanQuery",
                                                  ALLOCSET_DEFAULT_MINSIZE,
@@ -815,7 +811,7 @@ static bool CheckCachedPlan(CachedPlanSource *plansource) {
      * advanced, and if so invalidate it.
      */
     if (plan->is_valid && TransactionIdIsValid(plan->saved_xmin) &&
-    !TransactionIdEquals(plan->saved_xmin, TransactionXmin))
+        !TransactionIdEquals(plan->saved_xmin, TransactionXmin))
       plan->is_valid = false;
 
     /*
@@ -1281,19 +1277,13 @@ CopyCachedPlan(CachedPlanSource *plansource) {
   if (plansource->is_oneshot)
     elog(ERROR, "cannot copy a one-shot cached plan");
 
-
+  // TODO: Peloton Changes
   source_context = SHMAllocSetContextCreate(CurrentMemoryContext,
                                             "CachedPlanQuery",
                                             ALLOCSET_DEFAULT_MINSIZE,
                                             ALLOCSET_DEFAULT_INITSIZE,
                                             ALLOCSET_DEFAULT_MAXSIZE,
                                             SHM_DEFAULT_SEGMENT);
-  /*
-  source_context = AllocSetContextCreate(CurrentMemoryContext,
-                                         "CachedPlanSource",
-                                         ALLOCSET_SMALL_MINSIZE,
-                                         ALLOCSET_SMALL_INITSIZE,
-                                         ALLOCSET_DEFAULT_MAXSIZE); */
 
   oldcxt = MemoryContextSwitchTo(source_context);
 
@@ -1321,12 +1311,13 @@ CopyCachedPlan(CachedPlanSource *plansource) {
     newsource->resultDesc = NULL;
   newsource->context = source_context;
 
+  // TODO: Peloton Changes
   querytree_context = SHMAllocSetContextCreate(source_context,
-                                            "CachedPlanQuery",
-                                            ALLOCSET_DEFAULT_MINSIZE,
-                                            ALLOCSET_DEFAULT_INITSIZE,
-                                            ALLOCSET_DEFAULT_MAXSIZE,
-                                            SHM_DEFAULT_SEGMENT);
+                                               "CachedPlanQuery",
+                                               ALLOCSET_DEFAULT_MINSIZE,
+                                               ALLOCSET_DEFAULT_INITSIZE,
+                                               ALLOCSET_DEFAULT_MAXSIZE,
+                                               SHM_DEFAULT_SEGMENT);
   /*
   querytree_context = AllocSetContextCreate(source_context, "CachedPlanQuery",
   ALLOCSET_SMALL_MINSIZE,
@@ -1750,7 +1741,7 @@ static void PlanCacheFuncCallback(Datum arg, int cacheid, uint32 hashvalue) {
      */
     if (plansource->gplan && plansource->gplan->is_valid) {
       foreach(lc, plansource->gplan->stmt_list)
-      {
+          {
         PlannedStmt *plannedstmt = (PlannedStmt *) lfirst(lc);
         ListCell *lc3;
 
@@ -1771,7 +1762,7 @@ static void PlanCacheFuncCallback(Datum arg, int cacheid, uint32 hashvalue) {
         }
         if (!plansource->gplan->is_valid)
           break; /* out of stmt_list scan */
-      }
+          }
     }
   }
 }
