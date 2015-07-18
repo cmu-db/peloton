@@ -787,6 +787,7 @@ PostmasterMain(int argc, char *argv[])
       {
         // Run DML queries using both Peloton and PG executors
         PelotonDualMode = true;
+        elog(LOG, "Enabled dual mode\n");
         break;
       }
 
