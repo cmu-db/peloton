@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "backend/bridge/bridge.h"
+#include "backend/bridge/ddl/bridge.h"
 #include "backend/catalog/foreign_key.h"
 #include "backend/storage/abstract_table.h"
 #include "backend/storage/backend_vm.h"

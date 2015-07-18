@@ -12,12 +12,12 @@
 
 #include <iostream>
 
-#include "backend/bridge/tuple_transformer.h"
+#include "backend/bridge/dml/tuple_transformer.h"
 #include "backend/common/logger.h"
 #include "backend/common/value_peeker.h"
 #include "backend/storage/tuple.h"
 #include "backend/common/types.h"
-#include "backend/bridge/ddl.h"
+#include "backend/bridge/ddl/ddl.h"
 
 #include "access/htup_details.h"
 #include "nodes/print.h"

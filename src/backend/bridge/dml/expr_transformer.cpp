@@ -18,7 +18,7 @@
 
 #include "expr_transformer.h"
 
-#include "backend/bridge/tuple_transformer.h"
+#include "backend/bridge/dml/tuple_transformer.h"
 #include "backend/common/logger.h"
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"

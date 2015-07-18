@@ -13,7 +13,7 @@
 #include <iostream>
 #include <cassert>
 
-#include "backend/bridge/ddl_transaction.h"
+#include "backend/bridge/ddl/ddl_transaction.h"
 #include "backend/common/logger.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/concurrency/transaction.h"
