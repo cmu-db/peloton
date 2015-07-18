@@ -22,7 +22,7 @@ namespace peloton {
 namespace bridge {
 
 /**
- * @brief Test "DDLTable::CreateTable" function
+ * @brief Test "DDLTable" function
  */
 void BridgeTest::DDL_Table_TEST() {
 
