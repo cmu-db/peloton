@@ -23,7 +23,7 @@ namespace bridge {
 /**
  * @brief Test "DDLIndex::CreateIndex" function
  */
-void BridgeTest::DDL_CreateIndex_TEST() {
+void BridgeTest::DDL_Index_TEST() {
 
   DDL_CreateIndex_TEST_WITH_INVALID_OID();
 

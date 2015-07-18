@@ -51,7 +51,7 @@ class BridgeTest {
   // Table Test
   //===--------------------------------------------------------------------===//
 
-  static void DDL_CreateTable_TEST();
+  static void DDL_Table_TEST();
 
   static void DDL_CreateTable_TEST_WITH_INVALID_OID();
 
@@ -61,13 +61,21 @@ class BridgeTest {
   // Index Test
   //===--------------------------------------------------------------------===//
 
-  static void DDL_CreateIndex_TEST();
+  static void DDL_Index_TEST();
 
   static void DDL_CreateIndex_TEST_WITH_INVALID_OID();
 
   static void DDL_CreateIndex_TEST_WITH_NO_TABLE_NAME();
 
   static void DDL_CreateIndex_TEST_WITH_TABLE();
+
+  //===--------------------------------------------------------------------===//
+  // Mix Test
+  //===--------------------------------------------------------------------===//
+  
+  static void DDL_MIX_TEST();
+
+  static void DDL_MIX_TEST_1();
 
   //===--------------------------------------------------------------------===//
   // Utilities
