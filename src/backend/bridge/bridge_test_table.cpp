@@ -24,7 +24,7 @@ namespace bridge {
 /**
  * @brief Test "DDLTable::CreateTable" function
  */
-void BridgeTest::DDL_CreateTable_TEST() {
+void BridgeTest::DDL_Table_TEST() {
 
   DDL_CreateTable_TEST_WITH_INVALID_OID();
 
