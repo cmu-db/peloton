@@ -10,9 +10,12 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/bridge/ddl_database.h"
+#include "backend/bridge/ddl/ddl_database.h"
 #include "backend/common/logger.h"
 #include "backend/storage/database.h"
+
+#include "nodes/parsenodes.h"
+#include "commands/dbcommands.h"
 
 namespace peloton {
 namespace bridge {
@@ -22,14 +25,40 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 /**
+ * @brief Execute the create db stmt.
+ * @param the parse tree
+ * @return true if we handled it correctly, false otherwise
+ */
+bool DDLDatabase::ExecCreatedbStmt(Node* parsetree){
+  CreatedbStmt* stmt = (CreatedbStmt*) parsetree;
+  DDLDatabase::CreateDatabase(stmt->database_id);
+  return true;
+}
+
+/**
+ * @brief Execute the drop db stmt.
+ * @param the parse tree
+ * @return true if we handled it correctly, false otherwise
+ */
+bool DDLDatabase::ExecDropdbStmt(Node* parsetree){
+  DropdbStmt *stmt = (DropdbStmt *) parsetree;
+  Oid database_oid = get_database_oid(stmt->dbname, stmt->missing_ok);
+  DDLDatabase::DropDatabase(database_oid);
+  return true;
+}
+
+/**
  * @brief Create database.
  * @param database_oid database id
  * @return true if we created a database, false otherwise
  */
 bool DDLDatabase::CreateDatabase(Oid database_oid){
+  if(database_oid == INVALID_OID)
+    return false;
 
   auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(Bridge::Bridge::GetCurrentDatabaseOid());
+  storage::Database* db = new storage::Database(database_oid);
+  manager.AddDatabase(db);
 
   if(db == nullptr){
     LOG_WARN("Failed to create a database (%u)", database_oid);

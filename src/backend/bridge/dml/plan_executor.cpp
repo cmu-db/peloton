@@ -12,8 +12,8 @@
 
 #include <cassert>
 
-#include "backend/bridge/plan_executor.h"
-#include "backend/bridge/tuple_transformer.h"
+#include "backend/bridge/dml/plan_executor.h"
+#include "backend/bridge/dml/tuple_transformer.h"
 #include "backend/common/logger.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/executor/executors.h"
