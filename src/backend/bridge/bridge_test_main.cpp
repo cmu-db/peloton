@@ -28,9 +28,11 @@ void BridgeTest::RunTests() {
 
   std::cout<< ":::::::::::::  TEST CASES START :::::::::::::\n";
 
-  DDL_CreateTable_TEST();
+  DDL_Table_TEST();
 
-  DDL_CreateIndex_TEST();
+  DDL_Index_TEST();
+
+  DDL_MIX_TEST();
 
   std::cout<< ":::::::::::::  TEST CASES END   :::::::::::::\n";
 }
