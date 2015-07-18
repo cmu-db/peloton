@@ -14,12 +14,38 @@
 #include "backend/common/logger.h"
 #include "backend/storage/database.h"
 
+#include "nodes/parsenodes.h"
+#include "commands/dbcommands.h"
+
 namespace peloton {
 namespace bridge {
 
 //===--------------------------------------------------------------------===//
 // Database DDL
 //===--------------------------------------------------------------------===//
+
+/**
+ * @brief Execute the create db stmt.
+ * @param the parse tree
+ * @return true if we handled it correctly, false otherwise
+ */
+bool DDLDatabase::ExecCreatedbStmt(Node* parsetree){
+  CreatedbStmt* stmt = (CreatedbStmt*) parsetree;
+  DDLDatabase::CreateDatabase(stmt->database_id);
+  return true;
+}
+
+/**
+ * @brief Execute the drop db stmt.
+ * @param the parse tree
+ * @return true if we handled it correctly, false otherwise
+ */
+bool DDLDatabase::ExecDropdbStmt(Node* parsetree){
+  DropdbStmt *stmt = (DropdbStmt *) parsetree;
+  Oid database_oid = get_database_oid(stmt->dbname, stmt->missing_ok);
+  DDLDatabase::DropDatabase(database_oid);
+  return true;
+}
 
 /**
  * @brief Create database.
