@@ -10,12 +10,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "backend/bridge/bridge.h"
-#include "backend/bridge/ddl.h"
-#include "backend/catalog/schema.h"
-#include "backend/catalog/constraint.h"
+#include "backend/bridge/ddl/bridge.h"
 #include "backend/common/logger.h"
-#include "backend/storage/database.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -271,7 +267,8 @@ void Bridge::GetDatabaseList(void) {
 
   while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection)))  {
     Form_pg_database pg_database = (Form_pg_database) GETSTRUCT(tup);
-    elog(LOG, "pgdatabase->datname  :: %s ", NameStr(pg_database->datname) );
+    Oid database_oid = HeapTupleHeaderGetOid(tup->t_data);
+    elog(LOG, "pgdatabase->datname  :: %s oid %d ", NameStr(pg_database->datname), (int) database_oid );
   }
 
   heap_endscan(scan);

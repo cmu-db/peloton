@@ -48,6 +48,9 @@ class ExprTransformer {
   static expression::AbstractExpression* TransformOp(const ExprState* es);
   static expression::AbstractExpression* TransformVar(const ExprState* es);
   static expression::AbstractExpression* TransformBool(const ExprState* es);
+  static expression::AbstractExpression* TransformParam(const ExprState *es);
+  static expression::AbstractExpression* TransformRelabelType(const ExprState *es);
+  static expression::AbstractExpression* TransformFunc(const ExprState *es);
 
   static expression::AbstractExpression* TransformList(const ExprState* es,
                                                        ExpressionType et = EXPRESSION_TYPE_CONJUNCTION_AND);

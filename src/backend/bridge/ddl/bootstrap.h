@@ -21,8 +21,8 @@
 #include "utils/rel.h"
 
 #include "backend/catalog/schema.h"
-#include "backend/bridge/ddl.h"
-#include "backend/bridge/ddl_index.h"
+#include "backend/bridge/ddl/ddl.h"
+#include "backend/bridge/ddl/ddl_index.h"
 
 namespace peloton {
 namespace bridge {
@@ -63,6 +63,9 @@ class Bootstrap {
 
   // Set up the foreign keys constraints
   static void LinkForeignKeys();
+
+  // Create databases
+  static void CreateDatabases();
 
 };
 

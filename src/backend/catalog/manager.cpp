@@ -69,8 +69,9 @@ void Manager::DropDatabaseWithOid(const oid_t database_oid) {
 
     oid_t database_offset = 0;
     for(auto database : databases) {
-      if(database->GetOid() == database_oid)
+      if(database->GetOid() == database_oid){
         break;
+      }
       database_offset++;
     }
     assert(database_offset < databases.size());
