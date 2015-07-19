@@ -10,11 +10,13 @@
 
 #pragma once
 
-#include "backend/bridge/bridge.h"
+#include "backend/bridge/ddl/bridge.h"
 #include "backend/catalog/foreign_key.h"
+#include "backend/index/index.h"
 #include "backend/storage/abstract_table.h"
 #include "backend/storage/backend_vm.h"
-#include "backend/index/index.h"
+#include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_factory.h"
 
 #include <string>
 
@@ -38,6 +40,7 @@ typedef tbb::concurrent_unordered_map<oid_t, index::Index*> oid_t_to_index_ptr;
  */
 class DataTable : public AbstractTable {
   friend class TileGroup;
+  friend class TileGroupFactory;
   friend class TableFactory;
 
   DataTable() = delete;
@@ -54,16 +57,8 @@ class DataTable : public AbstractTable {
   ~DataTable();
 
   //===--------------------------------------------------------------------===//
-  // OPERATIONS
+  // TUPLE OPERATIONS
   //===--------------------------------------------------------------------===//
-
-  std::string GetName() const {
-    return table_name;
-  }
-
-  oid_t  GetOid() const {
-    return table_oid;
-  }
 
   // insert tuple in table
   ItemPointer InsertTuple( txn_id_t transaction_id, const Tuple *tuple, bool update = false );
@@ -77,12 +72,20 @@ class DataTable : public AbstractTable {
   bool CheckNulls(const storage::Tuple *tuple) const;
 
   //===--------------------------------------------------------------------===//
-  // SCHEMA
+  // TILE GROUP
   //===--------------------------------------------------------------------===//
 
-  catalog::Schema *GetSchema() {
-    return schema;
-  }
+  // add a default unpartitioned tile group to table
+  oid_t AddDefaultTileGroup();
+
+  // add a customized tile group to table
+  void AddTileGroup(TileGroup *tile_group);
+
+  // NOTE: This must go through the manager's locator
+  // This allows us to "TRANSFORM" tile groups atomically
+  TileGroup *GetTileGroup(oid_t tile_group_id) const;
+
+  size_t GetTileGroupCount() const;
 
   //===--------------------------------------------------------------------===//
   // INDEX
@@ -126,6 +129,10 @@ class DataTable : public AbstractTable {
     return (GetForeignKeyCount() > 0);
   }
 
+  AbstractBackend *GetBackend() const {
+    return backend;
+  }
+
   // Get a string representation of this table
   friend std::ostream& operator<<(std::ostream& os, const DataTable& table);
 
@@ -135,11 +142,24 @@ class DataTable : public AbstractTable {
   // MEMBERS
   //===--------------------------------------------------------------------===//
 
-  // table name
-  std::string table_name;
+  // backend
+  AbstractBackend *backend;
 
-  // catalog info
-  oid_t table_oid;
+  // TODO need some policy ?
+  // number of tuples allocated per tilegroup
+  size_t tuples_per_tilegroup;
+
+  // set of tile groups
+  std::vector<oid_t> tile_groups;
+
+  // INDEXES
+  std::vector<index::Index*> indexes;
+
+  // CONSTRAINTS
+  std::vector<catalog::ForeignKey*> foreign_keys;
+
+  // table mutex
+  std::mutex table_mutex;
 
   // has a primary key ?
   std::atomic<bool> has_primary_key = ATOMIC_VAR_INIT(false);
@@ -147,16 +167,6 @@ class DataTable : public AbstractTable {
   // # of unique constraints
   std::atomic<oid_t> unique_constraint_count = ATOMIC_VAR_INIT(START_OID);
 
-  // table mutex
-  std::mutex table_mutex;
-
-  // INDEXES
-
-  std::vector<index::Index*> indexes;
-
-  // CONSTRAINTS
-
-  std::vector<catalog::ForeignKey*> foreign_keys;
 };
 
 

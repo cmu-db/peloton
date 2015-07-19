@@ -10,9 +10,10 @@
  *-------------------------------------------------------------------------
  */
 
+#include <cassert>
 
-#include "backend/bridge/plan_executor.h"
-#include "backend/bridge/tuple_transformer.h"
+#include "backend/bridge/dml/plan_executor.h"
+#include "backend/bridge/dml/tuple_transformer.h"
 #include "backend/common/logger.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/executor/executors.h"
@@ -173,25 +174,30 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(executor::AbstractE
 bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
                                TupleDesc tuple_desc,
                                Peloton_Status *pstatus,
-                               concurrency::Transaction *txn) {
+                               TransactionId txn_id) {
 
   assert(plan);
 
   bool status;
+  bool single_statement_txn = false;
   MemoryContext oldContext;
   List *slots = NULL;
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
 
-  // Start a new transaction if needed ?
+  auto& txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.GetPGTransaction(txn_id);
+  // This happens for single statement queries in PG
   if(txn == nullptr) {
-    txn = txn_manager.BeginTransaction();
+    single_statement_txn = true;
+    txn = txn_manager.StartPGTransaction(txn_id);
   }
+  assert(txn);
 
   LOG_TRACE("Building the executor tree");
 
   // Build the executor tree
   executor::AbstractExecutor *executor_tree = BuildExecutorTree(nullptr,
-                                                                plan, txn);
+                                                                plan,
+                                                                txn);
   // Add materialization if the root if seqscan or limit
   executor_tree = AddMaterialization(executor_tree);
 
@@ -204,7 +210,9 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   if(status == false) {
     txn_manager.AbortTransaction(txn);
     txn_manager.EndTransaction(txn);
+
     CleanExecutorTree(executor_tree);
+
     return false;
   }
 
@@ -248,9 +256,13 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
 
   pstatus->m_result_slots = slots;
 
-  // Commit and cleanup
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
+  if(single_statement_txn == true) {
+    // Commit
+    txn_manager.CommitTransaction(txn);
+    txn_manager.EndTransaction(txn);
+  }
+
+  // clean up
   CleanExecutorTree(executor_tree);
 
   return true;

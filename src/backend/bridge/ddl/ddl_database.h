@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * ddl_table.h
+ * ddl_database.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/bridge/ddl_table.h
+ * /peloton/src/backend/bridge/ddl_database.h
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,8 @@
 
 #include "postgres.h"
 #include "c.h"
+
+#include "nodes/nodes.h"
 
 namespace peloton {
 namespace bridge {
@@ -29,6 +31,10 @@ class DDLDatabase {
   DDLDatabase& operator=(const DDLDatabase &) = delete;
   DDLDatabase(DDLDatabase &&) = delete;
   DDLDatabase& operator=(DDLDatabase &&) = delete;
+
+  static bool ExecCreatedbStmt(Node* parsetree);
+
+  static bool ExecDropdbStmt(Node* parsetree);
 
   static bool CreateDatabase(Oid database_oid);
 

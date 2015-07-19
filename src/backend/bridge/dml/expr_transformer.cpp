@@ -18,7 +18,7 @@
 
 #include "expr_transformer.h"
 
-#include "backend/bridge/tuple_transformer.h"
+#include "backend/bridge/dml/tuple_transformer.h"
 #include "backend/common/logger.h"
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
@@ -81,7 +81,19 @@ expression::AbstractExpression* ExprTransformer::TransformExpr(
     case T_BoolExpr:
       peloton_expr = TransformBool(expr_state);
       break;
-     
+
+    case T_Param:
+      peloton_expr = TransformParam(expr_state);
+      break;
+
+    case T_RelabelType:
+      peloton_expr = TransformRelabelType(expr_state);
+      break;
+
+    case T_FuncExpr:
+      peloton_expr = TransformFunc(expr_state);
+      break;
+
     default:
       LOG_ERROR("Unsupported Postgres Expr type: %u (see 'nodes.h')\n",
                 nodeTag(expr_state->expr));
@@ -221,6 +233,60 @@ expression::AbstractExpression* ExprTransformer::TransformBool(
   }
 
   return nullptr;
+}
+
+expression::AbstractExpression* ExprTransformer::TransformParam(const ExprState *es) {
+
+  auto param_expr = reinterpret_cast<const Param*>(es->expr);
+
+  switch (param_expr->paramkind) {
+    case PARAM_EXTERN:
+      LOG_INFO("Handle EXTREN PARAM");
+      return expression::ParameterValueFactory(param_expr->paramid + 1); // 1 indexed
+      break;
+    default:
+      LOG_ERROR("Unrecognized param kind %d", param_expr->paramkind);
+      break;
+  }
+
+  return nullptr;
+}
+
+
+expression::AbstractExpression* ExprTransformer::TransformRelabelType(const ExprState *es) {
+  auto state = reinterpret_cast<const GenericExprState*>(es);
+  auto expr = reinterpret_cast<const RelabelType *>(es->expr);
+  auto child_state = state->arg;
+  auto child_expr = expr->arg;
+
+  assert(expr->xpr.type == T_RelabelType);
+
+  LOG_INFO("child is of type %d, %d", child_expr->type, child_state->type);
+  LOG_INFO("%d, %d", expr->resulttype, expr->relabelformat);
+  expression::AbstractExpression *child = ExprTransformer::TransformExpr(child_state);
+
+  //TODO: not implemented yet
+
+
+  return child;
+}
+
+expression::AbstractExpression* ExprTransformer::TransformFunc(const ExprState *es) {
+  auto state = reinterpret_cast<const FuncExprState*>(es);
+  auto expr = reinterpret_cast<const FuncExpr*>(es->expr);
+  auto expr_args = reinterpret_cast<const ExprState*>(state->args);
+
+  assert(expr->xpr.type == T_FuncExpr);
+
+  LOG_INFO("Return type: %d, isReturn %d, Coercion: %d", expr->funcresulttype, expr->funcretset, expr->funcformat);
+  expression::AbstractExpression *args = ExprTransformer::TransformExpr(expr_args);
+  LOG_INFO("args : %s", args->DebugInfo(" ").c_str());
+
+  //TODO: not implemented yet
+
+
+  return nullptr;
+
 }
 
 expression::AbstractExpression*
