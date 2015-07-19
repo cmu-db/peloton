@@ -10,10 +10,32 @@
  *-------------------------------------------------------------------------
  */
 
+#include <sys/types.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/param.h>
+#include <sys/time.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <signal.h>
+#include <time.h>
+#include <thread>
+
+#include "backend/common/logger.h"
+#include "backend/scheduler/tbb_scheduler.h"
+#include "backend/bridge/ddl/bootstrap.h"
+#include "backend/bridge/ddl/ddl.h"
+#include "backend/bridge/ddl/tests/bridge_test.h"
+#include "backend/bridge/dml/plan_transformer.h"
+#include "backend/bridge/dml/plan_executor.h"
+#include "backend/common/stack_trace.h"
+
 #include "postgres.h"
 #include "c.h"
-
 #include "access/xact.h"
+#include "access/transam.h"
 #include "catalog/pg_namespace.h"
 #include "executor/tuptable.h"
 #include "libpq/ip.h"
@@ -33,29 +55,6 @@
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
-
-#include <sys/types.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <signal.h>
-#include <time.h>
-#include <thread>
-
-#include "../../../backend/scheduler/tbb_scheduler.h"
-#include "backend/bridge/bootstrap.h"
-#include "backend/bridge/plan_transformer.h"
-#include "backend/common/logger.h"
-#include "backend/common/stack_trace.h"
-#include "backend/bridge/ddl.h"
-#include "backend/bridge/plan_transformer.h"
-#include "backend/bridge/plan_executor.h"
-#include "backend/bridge/bridge_test.h"
 
 /* ----------
  * Local data
@@ -279,16 +278,13 @@ PelotonMain(int argc, char *argv[])
    */
   MemoryContextSwitchTo(TopMemoryContext);
 
-  /* Start main loop */
-  if(PelotonTestMode == false)
-  {
-    peloton_MainLoop();
-  }
   /* Testing mode */
-  else
-  {
+  if(PelotonTestMode == true) {
     peloton::bridge::BridgeTest::RunTests();
   }
+
+  /* Start main loop */
+  peloton_MainLoop();
 
   // TODO: Peloton Changes
   MemoryContextDelete(MessageContext);
@@ -931,8 +927,9 @@ peloton_process_dml(Peloton_MsgDML *msg)
 
     TopTransactionContext = msg->m_hdr.m_top_transaction_context;
     CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
+    TransactionId txn_id = msg->m_hdr.m_txn_id;
 
-    std::cout << "Transaction ID :: " << msg->m_hdr.m_txn_id << "\n";
+    std::cout << "Transaction ID :: " << txn_id << "\n";
 
     auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
 
@@ -941,7 +938,7 @@ peloton_process_dml(Peloton_MsgDML *msg)
       peloton::bridge::PlanExecutor::ExecutePlan(plan,
                                                  msg->m_tuple_desc,
                                                  msg->m_status,
-                                                 nullptr);
+                                                 txn_id);
 
       /* Clean up the plantree */
       peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
@@ -977,13 +974,15 @@ peloton_process_ddl(Peloton_MsgDDL *msg)
 
     TopTransactionContext = msg->m_hdr.m_top_transaction_context;
     CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
+    TransactionId txn_id = msg->m_hdr.m_txn_id;
 
-    /* Get the query string */
     queryString = msg->m_queryString;
 
     if(queryString != NULL)
     {
-      peloton::bridge::DDL::ProcessUtility(parsetree, queryString);
+      peloton::bridge::DDL::ProcessUtility(parsetree,
+                                           queryString,
+                                           txn_id);
     }
   }
 
@@ -1082,19 +1081,12 @@ bool IsPelotonQuery(List *relationOids) {
     foreach(lc, relationOids)
     {
       Oid relationOid = lfirst_oid(lc);
-      Relation relation = relation_open(relationOid, AccessShareLock);
-      if(relation != NULL)
+      // Fast check to determine if the relation is a peloton relation
+      if(relationOid > FirstNormalObjectId)
       {
-        Oid relationNamespaceOid = RelationGetNamespace(relation);
-        // Check if peloton table
-        if(relationNamespaceOid == PG_PUBLIC_NAMESPACE)
-        {
-          peloton_query = true;
-          relation_close(relation, AccessShareLock);
-          break;
-        }
+        peloton_query = true;
+        break;
       }
-      relation_close(relation, AccessShareLock);
     }
   }
 

@@ -11,11 +11,8 @@
 #pragma once
 
 #include "backend/catalog/manager.h"
+#include "backend/catalog/schema.h"
 #include "backend/common/types.h"
-#include "backend/storage/tile_group.h"
-#include "backend/storage/backend_vm.h"
-
-#include "backend/index/index.h"
 
 #include <string>
 
@@ -26,104 +23,62 @@ namespace storage {
  * Base class for all tables
  */
 class AbstractTable {
-    friend class TileGroup;
-    friend class TableFactory;
 
-public:
-    
-    virtual ~AbstractTable();
-    
-protected:
-        
-    // Table constructor
-    AbstractTable(catalog::Schema *schema,
-                  AbstractBackend *backend,
-                  size_t tuples_per_tilegroup);
+ public:
 
-public:    
-    
-    //===--------------------------------------------------------------------===//
-    // ACCESSORS
-    //===--------------------------------------------------------------------===//
-    
-    void SetSchema(catalog::Schema* given_schema) {
-      schema = given_schema;
-    }
+  virtual ~AbstractTable();
 
-    const catalog::Schema *GetSchema() const {
-        return schema;
-    }
+ protected:
 
-    catalog::Schema *GetSchema() {
-        return schema;
-    }
+  // Table constructor
+  AbstractTable(oid_t table_oid,
+                std::string table_name,
+                catalog::Schema *schema);
 
-    AbstractBackend *GetBackend() const {
-        return backend;
-    }
-    
-    oid_t GetDatabaseId() const {
-        return database_id;
-    }
-    
-    oid_t GetTableId() const {
-        return table_id;
-    }
+ public:
 
-    //===--------------------------------------------------------------------===//
-    // OPERATIONS
-    //===--------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
+  // ACCESSORS
+  //===--------------------------------------------------------------------===//
 
-    // add a default unpartitioned tile group to table
-    oid_t AddDefaultTileGroup();
+  std::string GetName() const {
+    return table_name;
+  }
 
-    // add a customized tile group to table
-    void AddTileGroup(TileGroup *tile_group);
+  oid_t GetOid() const {
+    return table_oid;
+  }
 
-    // NOTE: This must go through the manager's locator
-    // This allows us to "TRANSFORM" tile groups atomically
-    TileGroup *GetTileGroup(oid_t tile_group_id) const;
+  void SetSchema(catalog::Schema* given_schema) {
+    schema = given_schema;
+  }
 
-    size_t GetTileGroupCount() const;
+  const catalog::Schema *GetSchema() const {
+    return schema;
+  }
 
-    // insert tuple in table
-    ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple);
+  catalog::Schema *GetSchema() {
+    return schema;
+  }
 
-    //===--------------------------------------------------------------------===//
-    // UTILITIES
-    //===--------------------------------------------------------------------===//
-    
-    bool CheckNulls(const storage::Tuple *tuple) const;
+  // Get a string representation of this table
+  friend std::ostream& operator<<(std::ostream& os, const AbstractTable& table);
 
-    // Get a string representation of this table
-    friend std::ostream& operator<<(std::ostream& os, const AbstractTable& table);
+ protected:
 
-protected:
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
 
-    //===--------------------------------------------------------------------===//
-    // MEMBERS
-    //===--------------------------------------------------------------------===//
+  // Catalog information
+  oid_t table_oid;
+  oid_t database_oid;
 
-    // Catalog information
-    oid_t database_id;
-    oid_t table_id;
+  // table name
+  std::string table_name;
 
-    // backend
-    AbstractBackend *backend;
-
-    // table schema
-    catalog::Schema *schema;
-
-    // set of tile groups
-    std::vector<oid_t> tile_groups;
-
-    // TODO need some policy ?
-    // number of tuples allocated per tilegroup for this table
-    size_t tuples_per_tilegroup;
-    
-    std::mutex table_mutex;
-    std::mutex table_unique_index_mutex;
-    std::mutex table_reference_table_mutex;
+  // table schema
+  catalog::Schema *schema;
 
 };
 

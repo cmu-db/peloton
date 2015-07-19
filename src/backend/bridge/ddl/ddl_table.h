@@ -14,6 +14,7 @@
 
 #include "backend/catalog/schema.h"
 #include "backend/catalog/foreign_key.h"
+#include "backend/bridge/ddl/ddl_index.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -34,6 +35,13 @@ class DDLTable {
   DDLTable(DDLTable &&) = delete;
   DDLTable& operator=(DDLTable &&) = delete;
 
+  static bool ExecCreateStmt(Node* parsetree, const char* queryString, std::vector<IndexInfo> index_infos);
+
+  static bool ExecAlterTableStmt(Node* parsetree, const char* queryString);
+
+  static bool ExecDropStmt(Node* parsertree);
+
+  static bool ExecTrucateStmt(Node* parsetree);
 
   static bool CreateTable(Oid relation_oid,
                           std::string table_name,

@@ -75,6 +75,8 @@ class LogicalTile {
 
   void SetPositionLists(std::vector<std::vector<oid_t> >&& position_lists);
 
+  friend std::ostream& operator<<(std::ostream& os, const LogicalTile& logical_tile);
+
   //===--------------------------------------------------------------------===//
   // Logical Tile Iterator
   //===--------------------------------------------------------------------===//
@@ -113,9 +115,11 @@ class LogicalTile {
 
   iterator end();
 
-  friend std::ostream& operator<<(std::ostream& os, const LogicalTile& logical_tile);
-
   private:
+
+  //===--------------------------------------------------------------------===//
+  // Column Info
+  //===--------------------------------------------------------------------===//
 
   /** @brief Column metadata for logical tile */
   struct ColumnInfo {

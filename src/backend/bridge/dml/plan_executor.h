@@ -41,7 +41,7 @@ class PlanExecutor {
   static bool ExecutePlan(planner::AbstractPlanNode *plan,
                           TupleDesc tuple_desc,
                           Peloton_Status *pstatus,
-                          concurrency::Transaction *txn);
+                          TransactionId txn_id);
 
   static executor::AbstractExecutor *AddMaterialization(executor::AbstractExecutor *root);
 
