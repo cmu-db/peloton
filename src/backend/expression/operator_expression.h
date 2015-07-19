@@ -26,9 +26,9 @@ class OperatorUnaryNotExpression : public AbstractExpression {
     left_expr = left;
   };
 
-  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const {
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2, ExpressionContext* ec) const {
     assert (m_left);
-    return m_left->Evaluate(tuple1, tuple2).OpNegate();
+    return m_left->Evaluate(tuple1, tuple2, ec).OpNegate();
   }
 
   std::string DebugInfo(const std::string &spacer) const {
@@ -49,9 +49,9 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
     left_expr = left;
   };
 
-  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const {
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2, ExpressionContext* ec) const {
     assert (m_left);
-    return m_left->Evaluate(tuple1, tuple2).OpMultiply(ValueFactory::GetTinyIntValue(-1));
+    return m_left->Evaluate(tuple1, tuple2, ec).OpMultiply(ValueFactory::GetTinyIntValue(-1));
   }
 
   std::string DebugInfo(const std::string &spacer) const {
@@ -94,10 +94,11 @@ class OperatorExpression : public AbstractExpression {
  : AbstractExpression(type, left, right) {
   }
 
-  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const {
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2, ExpressionContext* ec) const {
     assert(left_expr);
     assert(right_expr);
-    return oper.op(left_expr->Evaluate(tuple1, tuple2), right_expr->Evaluate(tuple1, tuple2));
+    return oper.op(left_expr->Evaluate(tuple1, tuple2, ec),
+                   right_expr->Evaluate(tuple1, tuple2, ec));
   }
 
   std::string DebugInfo(const std::string &spacer) const {

@@ -30,8 +30,14 @@ class ParameterValueExpression : public AbstractExpression, public ParameterValu
     this->m_valueIdx = value_idx;
  };
 
-  Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1, __attribute__((unused)) const AbstractTuple *tuple2) const {
-    return this->m_paramValue;
+  Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
+                 __attribute__((unused)) const AbstractTuple *tuple2,
+                 ExpressionContext* econtext) const {
+
+    assert(econtext);
+
+    auto& params = econtext->GetParams();
+    return params[this->m_valueIdx];
   }
 
   bool HasParameter() const {

@@ -19,6 +19,8 @@
 #include "backend/common/value.h"
 #include "backend/common/value_vector.h"
 #include "backend/common/abstract_tuple.h"
+#include "backend/expression/expression_context.h"
+
 #include <json_spirit.h>
 
 namespace peloton {
@@ -34,15 +36,32 @@ class SerializeOutput;
 /**
  * Predicate objects for filtering tuples during query execution.
  * These objects are stored in query plans and passed to Storage Access Manager.
+ *
+ * An expression usually has a longer life cycle than an execution, because,
+ * for example, it can be reused for several executions of the same query template.
+ * Moreover, those executions can run simultaneously.
+ * So, an expression should not store per-execution information in its states.
+ * An expression tree (along with the plan node tree containing it) should remain
+ * constant and read-only during an execution.
+ * Substituted values are passed as parameter to Evaluate().
+ * - Qiang, 7/17/15
  */
-
 class AbstractExpression {
 
  public:
     // destroy this node and all children
     virtual ~AbstractExpression();
 
-    virtual Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const = 0;
+    /**
+     * @brief Evaluate the expression tree recursively and return a Value.
+     * @param tuple1 The left tuple.
+     * @param tuple2 The right tuple.
+     * @param exprcontex  The expression context that is passed through the tree.
+     * It is used when needed and no cost otherwise.
+     */
+    virtual Value Evaluate(const AbstractTuple *tuple1,
+                           const AbstractTuple *tuple2,
+                           ExpressionContext* exprcontex = nullptr) const = 0;
 
     // set parameter values for this node and its descendants
     virtual void Substitute(const ValueArray &params);
