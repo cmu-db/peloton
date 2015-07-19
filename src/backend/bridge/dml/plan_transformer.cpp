@@ -54,7 +54,7 @@ TransformTargetList(List* target_list, oid_t column_count);
  * @brief transform a expr tree into info that a index scan node needs
  * */
 static void BuildScanKey(const ScanKey scan_keys, int num_keys, planner::IndexScanNode::IndexScanDesc &index_scan_desc);
-static ValueArray *BuildParams(const ParamListInfo param_list);
+static inline const ValueArray BuildParams(const ParamListInfo param_list);
 
 /**
  * @brief Pretty print the plan state tree.
@@ -66,7 +66,7 @@ void PlanTransformer::PrintPlanState(const PlanState *plan_state) {
 
 /**
  * @brief Convert Postgres PlanState (tree) into AbstractPlanNode (tree).
- * @return Pointer to the constructed AbstractPlanNode.
+ * @return Pointer to the constructed AbstractPlan`Node.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformPlan(
     const PlanState *plan_state) {
@@ -74,26 +74,26 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
   Plan *plan = plan_state->plan;
   planner::AbstractPlanNode *plan_node;
 
-  LOG_INFO("planstate %d", nodeTag(plan_state));
+  LOG_INFO("planstate %d with #param", nodeTag(plan_state));
 
-  ValueArray *params = BuildParams(plan_state->state->es_param_list_info);
+  ValueArray params = BuildParams(plan_state->state->es_param_list_info);
 
   switch (nodeTag(plan)) {
     case T_ModifyTable:
       plan_node = PlanTransformer::TransformModifyTable(
-          reinterpret_cast<const ModifyTableState *>(plan_state), *params);
+          reinterpret_cast<const ModifyTableState *>(plan_state), params);
       break;
     case T_SeqScan:
       plan_node = PlanTransformer::TransformSeqScan(
-          reinterpret_cast<const SeqScanState*>(plan_state), *params);
+          reinterpret_cast<const SeqScanState*>(plan_state), params);
       break;
     case T_IndexScan:
       plan_node = PlanTransformer::TransformIndexScan(
-          reinterpret_cast<const IndexScanState*>(plan_state), *params);
+          reinterpret_cast<const IndexScanState*>(plan_state), params);
       break;
     case T_IndexOnlyScan:
       plan_node = PlanTransformer::TransformIndexOnlyScan(
-          reinterpret_cast<const IndexOnlyScanState*>(plan_state), *params);
+          reinterpret_cast<const IndexOnlyScanState*>(plan_state), params);
       break;
     case T_Result:
       plan_node = PlanTransformer::TransformResult(
@@ -855,13 +855,16 @@ TransformTargetList(List* target_list, oid_t column_count) {
   return proj_list;
 }
 
-ValueArray *BuildParams(const ParamListInfo param_list) {
-  if (param_list == nullptr) return nullptr;
-  ValueArray *params = new ValueArray(param_list->numParams);
-  for (int i = 0; i < params->GetSize(); ++i) {
-    ParamExternData param = param_list->params[i];
-    (*params)[i] = TupleTransformer::GetValue(param.value, param.ptype);
+inline const ValueArray BuildParams(const ParamListInfo param_list) {
+  ValueArray params;
+  if (param_list != nullptr) {
+    params.Reset(param_list->numParams);
+    for (int i = 0; i < params.GetSize(); ++i) {
+      ParamExternData param = param_list->params[i];
+      params[i] = TupleTransformer::GetValue(param.value, param.ptype);
+    }
   }
+  LOG_INFO("Built param list of size %d", params.GetSize());
   return params;
 }
 
