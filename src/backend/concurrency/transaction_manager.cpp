@@ -11,6 +11,7 @@
 #include <chrono>
 #include <thread>
 #include <iomanip>
+#include <mutex>
 
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/concurrency/transaction.h"
@@ -40,11 +41,57 @@ TransactionManager::~TransactionManager() {
 
 // Get entry in table
 Transaction *TransactionManager::GetTransaction(txn_id_t txn_id) {
-  if(txn_table.count(txn_id) != 0) {
-    return txn_table.at(txn_id);
+
+  {
+    std::lock_guard<std::mutex> lock(txn_table_mutex);
+    if(txn_table.count(txn_id) != 0) {
+      return txn_table.at(txn_id);
+    }
   }
+
   return nullptr;
 }
+
+// Store an entry in PG Transaction table
+Transaction *TransactionManager::StartPGTransaction(TransactionId txn_id) {
+
+  {
+    std::lock_guard<std::mutex> lock(pg_txn_table_mutex);
+
+    // If entry already exists
+    if(pg_txn_table.count(txn_id) != 0)
+      return nullptr;
+
+    // Else, create one for this new pg txn id
+    auto txn = GetInstance().BeginTransaction();
+    auto status = pg_txn_table.insert(std::make_pair(txn_id, txn));
+    if(status.second == true) {
+      LOG_INFO("Starting peloton txn : %lu \n", txn->GetTransactionId());
+      return txn;
+    }
+  }
+
+  return nullptr;
+}
+
+
+// Get entry in PG Transaction table
+Transaction *TransactionManager::GetPGTransaction(TransactionId txn_id) {
+
+  {
+    std::lock_guard<std::mutex> lock(pg_txn_table_mutex);
+
+    // If entry already exists
+    if(pg_txn_table.count(txn_id) != 0) {
+      auto txn = pg_txn_table.at(txn_id);
+      LOG_INFO("Peloton txn : %lu \n", txn->GetTransactionId());
+      return txn;
+    }
+  }
+
+  return nullptr;
+}
+
 
 txn_id_t TransactionManager::GetNextTransactionId(){
   if (next_txn_id == MAX_TXN_ID) {
@@ -68,8 +115,12 @@ Transaction *TransactionManager::BuildTransaction() {
 std::vector<Transaction *> TransactionManager::GetCurrentTransactions() {
   std::vector<Transaction *> txns;
 
-  for(auto entry : GetInstance().txn_table)
-    txns.push_back(entry.second);
+  {
+    std::lock_guard<std::mutex> lock(txn_table_mutex);
+    for(auto entry : GetInstance().txn_table)
+      txns.push_back(entry.second);
+  }
+
   return txns;
 }
 
@@ -80,9 +131,12 @@ bool TransactionManager::IsValid(txn_id_t txn_id) {
 void TransactionManager::EndTransaction(Transaction *txn, bool sync __attribute__((unused))) {
 
   // XXX LOG :: record commit entry
+  {
+    std::lock_guard<std::mutex> lock(txn_table_mutex);
+    // erase entry in transaction table
+    txn_table.erase(txn->txn_id);
+  }
 
-  // erase entry in transaction table
-  txn_table.erase(txn->txn_id);
 }
 
 //===--------------------------------------------------------------------===//
@@ -247,34 +301,39 @@ void TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
 // Abort Processing
 //===--------------------------------------------------------------------===//
 
-void TransactionManager::WaitForCurrentTransactions() const {
+void TransactionManager::WaitForCurrentTransactions() {
 
   std::vector<txn_id_t> current_txns;
 
-  // record all currently running transactions
-  for(auto entry : txn_table)
-    current_txns.push_back(entry.first);
+  {
+    std::lock_guard<std::mutex> lock(txn_table_mutex);
+
+    // record all currently running transactions
+    for(auto entry : txn_table)
+      current_txns.push_back(entry.first);
 
 
-  // block until all current txns are finished
-  while (true) {
+    // block until all current txns are finished
+    while (true) {
 
-    // remove all finished txns from list
-    for(auto txn_id : current_txns) {
-      if(txn_table.count(txn_id) == 0) {
-        auto location = std::find(current_txns.begin(), current_txns.end(), txn_id);
-        if (location != current_txns.end())
-          current_txns.erase(location);
+      // remove all finished txns from list
+      for(auto txn_id : current_txns) {
+        if(txn_table.count(txn_id) == 0) {
+          auto location = std::find(current_txns.begin(), current_txns.end(), txn_id);
+          if (location != current_txns.end())
+            current_txns.erase(location);
+        }
       }
+
+      // all transactions in waiting list finished ?
+      if(current_txns.empty())
+        break;
+
+      // sleep for some time
+      std::chrono::milliseconds sleep_time(10); // 10 ms
+      std::this_thread::sleep_for(sleep_time);
     }
 
-    // all transactions in waiting list finished ?
-    if(current_txns.empty())
-      break;
-
-    // sleep for some time
-    std::chrono::milliseconds sleep_time(10); // 10 ms
-    std::this_thread::sleep_for(sleep_time);
   }
 
 }

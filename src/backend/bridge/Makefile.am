@@ -5,18 +5,24 @@
 ######################################################################
 
 bridge_FILES = \
-			   backend/bridge/ddl_database.cpp \
-			   backend/bridge/ddl_index.cpp \
-			   backend/bridge/ddl_table.cpp \
-			   backend/bridge/ddl_utils.cpp \
-			   backend/bridge/ddl.cpp \
-			   backend/bridge/bridge.cpp \
-			   backend/bridge/bootstrap.cpp \
-			   backend/bridge/bridge_test.cpp \
-			   backend/bridge/plan_transformer.cpp \
-			   backend/bridge/tuple_transformer.cpp \
-			   backend/bridge/plan_executor.cpp \
-			   backend/bridge/expr_transformer.cpp
+			   backend/bridge/ddl/ddl_database.cpp \
+			   backend/bridge/ddl/ddl_index.cpp \
+			   backend/bridge/ddl/ddl_table.cpp \
+			   backend/bridge/ddl/ddl_utils.cpp \
+			   backend/bridge/ddl/ddl_transaction.cpp \
+			   backend/bridge/ddl/ddl.cpp \
+			   backend/bridge/ddl/bridge.cpp \
+			   backend/bridge/ddl/bootstrap.cpp \
+			   backend/bridge/ddl/tests/bridge_test_main.cpp \
+			   backend/bridge/ddl/tests/bridge_test_helper.cpp \
+			   backend/bridge/ddl/tests/bridge_test_database.cpp \
+			   backend/bridge/ddl/tests/bridge_test_table.cpp \
+			   backend/bridge/ddl/tests/bridge_test_index.cpp \
+			   backend/bridge/ddl/tests/bridge_test_mix.cpp \
+			   backend/bridge/dml/plan_transformer.cpp \
+			   backend/bridge/dml/tuple_transformer.cpp \
+			   backend/bridge/dml/plan_executor.cpp \
+			   backend/bridge/dml/expr_transformer.cpp
 
 bridge_INCLUDES = \
                   -I$(srcdir)/backend/bridge

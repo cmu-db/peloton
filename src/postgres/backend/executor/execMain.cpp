@@ -64,7 +64,17 @@
 #include "nodes/pprint.h"
 #include "nodes/pg_list.h"
 #include "postmaster/peloton.h"
-#include "backend/bridge/plan_transformer.h"
+#include "backend/bridge/dml/plan_transformer.h"
+
+extern bool PelotonDualMode;
+
+static void peloton_ExecutePlan(EState *estate, PlanState *planstate,
+                                CmdType operation,
+                                bool sendTuples,
+                                long numberTuples,
+                                ScanDirection direction,
+                                DestReceiver *dest,
+                                TupleDesc tupDesc);
 
 /* Hooks for plugins to get control in ExecutorStart/Run/Finish/End */
 ExecutorStart_hook_type ExecutorStart_hook = NULL;
@@ -340,14 +350,60 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	 * run plan
 	 */
 	if (!ScanDirectionIsNoMovement(direction))
-		ExecutePlan(estate,
-					queryDesc->planstate,
-					operation,
-					sendTuples,
-					count,
-					direction,
-					dest,
-          queryDesc->tupDesc);
+	{
+	  // Single Mode
+	  if(PelotonDualMode == false)
+	  {
+	    // PG Query
+	    if(queryDesc->plannedstmt->pelotonQuery == false)
+	    {
+	      ExecutePlan(estate,
+	                  queryDesc->planstate,
+	                  operation,
+	                  sendTuples,
+	                  count,
+	                  direction,
+	                  dest,
+	                  queryDesc->tupDesc);
+	    }
+	    // Peloton Query
+	    else
+	    {
+	      peloton_ExecutePlan(estate,
+	                          queryDesc->planstate,
+	                          operation,
+	                          sendTuples,
+	                          count,
+	                          direction,
+	                          dest,
+	                          queryDesc->tupDesc);
+	    }
+	  }
+	  // Dual Mode
+	  else
+	  {
+
+      ExecutePlan(estate,
+                  queryDesc->planstate,
+                  operation,
+                  sendTuples,
+                  count,
+                  direction,
+                  dest,
+                  queryDesc->tupDesc);
+
+      peloton_ExecutePlan(estate,
+                          queryDesc->planstate,
+                          operation,
+                          sendTuples,
+                          count,
+                          direction,
+                          dest,
+                          queryDesc->tupDesc);
+
+	  }
+
+	}
 
 	/*
 	 * shutdown tuple receiver, if we started it
@@ -1533,7 +1589,6 @@ ExecutePlan(EState *estate,
 {
 	TupleTableSlot *slot;
 	long		current_tuple_count;
-	Peloton_Status *status;
 
 	/*
 	 * initialize local variables
@@ -1592,9 +1647,35 @@ ExecutePlan(EState *estate,
 		if (numberTuples && numberTuples == current_tuple_count)
 			break;
 	}
+}
 
-  // TODO: Peloton Changes
-	status = peloton_create_status();
+/* ----------------------------------------------------------------
+ *    peloton_ExecutePlan
+ *
+ *    Processes the query plan using Peloton executors.
+ *    Until we have retrieved 'numberTuples' tuples,
+ *    moving in the specified direction.
+ *
+ *    Runs to completion if numberTuples is 0
+ *
+ * Note: the ctid attribute is a 'junk' attribute that is removed before the
+ * user can see it
+ * ----------------------------------------------------------------
+ */
+static void
+peloton_ExecutePlan(EState *estate,
+      PlanState *planstate,
+      CmdType operation,
+      bool sendTuples,
+      long numberTuples,
+      ScanDirection direction,
+      DestReceiver *dest,
+      TupleDesc tupDesc)
+{
+  TupleTableSlot *slot;
+  Peloton_Status *status;
+
+  status = peloton_create_status();
 
   peloton_send_dml(status, planstate, tupDesc);
 
@@ -1607,7 +1688,7 @@ ExecutePlan(EState *estate,
 
     foreach(lc, status->m_result_slots)
     {
-      TupleTableSlot *slot = (TupleTableSlot *) lfirst(lc);
+      slot = (TupleTableSlot *) lfirst(lc);
 
       /*
        * if the tuple is null, then we assume there is nothing more to
@@ -1633,7 +1714,6 @@ ExecutePlan(EState *estate,
 
   peloton_destroy_status(status);
 }
-
 
 /*
  * ExecRelCheck --- check that tuple meets constraints for result relation

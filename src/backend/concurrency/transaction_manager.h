@@ -10,13 +10,16 @@
 
 #pragma once
 
-#include "backend/common/types.h"
-
 #include <atomic>
 #include <cassert>
 #include <vector>
 #include <map>
 #include <mutex>
+
+#include "backend/common/types.h"
+
+#include "postgres.h"
+#include "c.h"
 
 namespace peloton {
 namespace concurrency {
@@ -85,7 +88,13 @@ public:
 
     void AbortTransaction(Transaction *txn);
 
-    void WaitForCurrentTransactions() const;
+    void WaitForCurrentTransactions();
+
+    // Store PG Transaction
+    Transaction *StartPGTransaction(TransactionId txn_id);
+
+    // Get PG Transaction
+    Transaction *GetPGTransaction(TransactionId txn_id);
 
 private:
 
@@ -102,10 +111,18 @@ private:
     Transaction *last_txn __attribute__((aligned(16)));
 
     // Table tracking all active transactions
+    // Our transaction id -> our transaction
+    // Sync access with txn_table_mutex
     std::map<txn_id_t, Transaction *> txn_table;
 
-    // synch helpers
-    std::mutex txn_manager_mutex;
+    std::mutex txn_table_mutex;
+
+    // Postgres transaction id -> our transaction
+    // Sync access with pg_txn_table_mutex
+    std::map<TransactionId, Transaction *> pg_txn_table;
+
+    std::mutex pg_txn_table_mutex;
+
 };
 
 } // End concurrency namespace

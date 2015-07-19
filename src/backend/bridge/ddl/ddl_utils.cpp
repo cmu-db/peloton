@@ -13,7 +13,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "backend/bridge/ddl_utils.h"
+#include "backend/bridge/ddl/ddl_utils.h"
 #include "backend/common/logger.h"
 #include "backend/storage/database.h"
 
