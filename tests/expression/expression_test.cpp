@@ -293,10 +293,10 @@ TEST(ExpressionTest, SimpleFilter) {
   tuple->SetValue(1, ValueFactory::GetIntegerValue(45));
 
   std::cout << (*equal);
-  EXPECT_EQ(equal->Evaluate(tuple, NULL).IsTrue(), true);
+  EXPECT_EQ(equal->Evaluate(tuple, NULL, NULL).IsTrue(), true);
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(50));
-  EXPECT_EQ(equal->Evaluate(tuple, NULL).IsTrue(), false);
+  EXPECT_EQ(equal->Evaluate(tuple, NULL, NULL).IsTrue(), false);
 
   // delete the root to destroy the full tree.
   delete equal;
@@ -342,10 +342,10 @@ TEST(ExpressionTest, OrFilter) {
   tuple->SetValue(0, ValueFactory::GetIntegerValue(45));
   tuple->SetValue(1, ValueFactory::GetIntegerValue(20));
 
-  EXPECT_EQ(predicate->Evaluate(tuple, NULL).IsTrue(), true);
+  EXPECT_EQ(predicate->Evaluate(tuple, NULL, NULL).IsTrue(), true);
 
   tuple->SetValue(0, ValueFactory::GetIntegerValue(30));
-  EXPECT_EQ(predicate->Evaluate(tuple, NULL).IsTrue(), true);
+  EXPECT_EQ(predicate->Evaluate(tuple, NULL, NULL).IsTrue(), true);
 
   // delete the root to cleanup the full tree
   delete predicate;

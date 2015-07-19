@@ -60,11 +60,13 @@ class ComparisonExpression : public AbstractExpression {
     this->m_right = right;
   };
 
-  inline Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const {
+  inline Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                        ExpressionContext* ec) const {
     assert(m_left != NULL);
     assert(m_right != NULL);
 
-    return this->compare.cmp(this->m_left->Evaluate(tuple1, tuple2), this->m_right->Evaluate(tuple1, tuple2));
+    return this->compare.cmp(this->m_left->Evaluate(tuple1, tuple2, ec),
+                             this->m_right->Evaluate(tuple1, tuple2, ec));
   }
 
   std::string DebugInfo(const std::string &spacer) const {
@@ -100,8 +102,8 @@ class InlinedComparisonExpression : public AbstractExpression {
     assert (m_rightTyped != NULL);
   };
 
-  inline Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2 ) const {
-    return this->compare.cmp(this->left_expr->Evaluate(tuple1, tuple2), this->right_expr->Evaluate(tuple1, tuple2));
+  inline Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2, ExpressionContext* ec ) const {
+    return this->compare.cmp(this->left_expr->Evaluate(tuple1, tuple2, ec), this->right_expr->Evaluate(tuple1, tuple2, ec));
   }
 
   std::string DebugInfo(const std::string &spacer) const {
