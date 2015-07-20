@@ -19,10 +19,17 @@ bridge_FILES = \
 			   backend/bridge/ddl/tests/bridge_test_table.cpp \
 			   backend/bridge/ddl/tests/bridge_test_index.cpp \
 			   backend/bridge/ddl/tests/bridge_test_mix.cpp \
-			   backend/bridge/dml/plan_transformer.cpp \
-			   backend/bridge/dml/tuple_transformer.cpp \
-			   backend/bridge/dml/plan_executor.cpp \
-			   backend/bridge/dml/expr_transformer.cpp
+			   backend/bridge/dml/mapper/mapper.cpp \
+			   backend/bridge/dml/mapper/mapper_modify_table.cpp \
+			   backend/bridge/dml/mapper/mapper_seq_scan.cpp \
+			   backend/bridge/dml/mapper/mapper_index_scan.cpp \
+			   backend/bridge/dml/mapper/mapper_limit.cpp \
+			   backend/bridge/dml/mapper/mapper_target_list.cpp \
+			   backend/bridge/dml/mapper/mapper_projection.cpp \
+			   backend/bridge/dml/mapper/mapper_utils.cpp \
+			   backend/bridge/dml/tuple/tuple_transformer.cpp \
+			   backend/bridge/dml/executor/executor.cpp \
+			   backend/bridge/dml/expr/expr_transformer.cpp
 
 bridge_INCLUDES = \
                   -I$(srcdir)/backend/bridge
