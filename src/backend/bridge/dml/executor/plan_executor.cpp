@@ -10,8 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "executor.h"
-
+#include "plan_executor.h"
 #include <cassert>
 
 #include "backend/bridge/dml/tuple/tuple_transformer.h"
@@ -70,6 +69,9 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
 
   executor::AbstractExecutor *child_executor = nullptr;
 
+  // TODO: Set params
+  executor::ExecutorContext *executor_context = new executor::ExecutorContext(txn);
+
   auto plan_node_type = plan->GetPlanNodeType();
   switch(plan_node_type) {
     case PLAN_NODE_TYPE_INVALID:
@@ -77,27 +79,27 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       break;
 
     case PLAN_NODE_TYPE_SEQSCAN:
-      child_executor = new executor::SeqScanExecutor(plan, txn);
+      child_executor = new executor::SeqScanExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_INDEXSCAN:
-      child_executor = new executor::IndexScanExecutor(plan, txn);
+      child_executor = new executor::IndexScanExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_INSERT:
-      child_executor = new executor::InsertExecutor(plan, txn);
+      child_executor = new executor::InsertExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_DELETE:
-      child_executor = new executor::DeleteExecutor(plan, txn);
+      child_executor = new executor::DeleteExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_UPDATE:
-      child_executor = new executor::UpdateExecutor(plan, txn);
+      child_executor = new executor::UpdateExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_LIMIT:
-      child_executor = new executor::LimitExecutor(plan, txn);
+      child_executor = new executor::LimitExecutor(plan);
       break;
 
     default:

@@ -66,9 +66,7 @@ TEST(LimitTests, NonLeafLimitOffsetTest){
   planner::LimitNode node(limit, offset);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::LimitExecutor executor(&node, txn);
+  executor::LimitExecutor executor(&node);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -94,9 +92,6 @@ TEST(LimitTests, NonLeafLimitOffsetTest){
   .WillOnce(Return(source_logical_tile2.release()));
 
   RunTest(executor, 2, offset, limit);
-
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 }
 
 TEST(LimitTests, NonLeafSkipAllTest){
@@ -107,9 +102,7 @@ TEST(LimitTests, NonLeafSkipAllTest){
   planner::LimitNode node(limit, offset);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::LimitExecutor executor(&node, txn);
+  executor::LimitExecutor executor(&node);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -136,9 +129,6 @@ TEST(LimitTests, NonLeafSkipAllTest){
   .WillOnce(Return(source_logical_tile2.release()));
 
   RunTest(executor, 0, INVALID_OID, 0);
-
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 }
 
 TEST(LimitTests, NonLeafReturnAllTest){
@@ -149,9 +139,7 @@ TEST(LimitTests, NonLeafReturnAllTest){
   planner::LimitNode node(limit, offset);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::LimitExecutor executor(&node, txn);
+  executor::LimitExecutor executor(&node);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -178,9 +166,6 @@ TEST(LimitTests, NonLeafReturnAllTest){
   .WillOnce(Return(source_logical_tile2.release()));
 
   RunTest(executor, 2, offset, tile_size*2);
-
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 }
 
 TEST(LimitTests, NonLeafHugeLimitTest){
@@ -191,9 +176,7 @@ TEST(LimitTests, NonLeafHugeLimitTest){
   planner::LimitNode node(limit, offset);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::LimitExecutor executor(&node, txn);
+  executor::LimitExecutor executor(&node);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -220,9 +203,6 @@ TEST(LimitTests, NonLeafHugeLimitTest){
   .WillOnce(Return(source_logical_tile2.release()));
 
   RunTest(executor, 2, offset, tile_size*2 - offset);
-
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 }
 
 
