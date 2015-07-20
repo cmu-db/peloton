@@ -11,6 +11,7 @@
  */
 
 #include <cstring>
+#include <cassert>
 
 #include "backend/bridge/dml/mapper/mapper.h"
 
@@ -41,13 +42,20 @@ void PlanTransformer::PrintPlanState(const PlanState *plan_state) {
  */
 planner::AbstractPlanNode *PlanTransformer::TransformPlan(
     const PlanState *plan_state) {
+  assert(plan_state);
 
   Plan *plan = plan_state->plan;
+
+  if(plan == nullptr)
+    return nullptr;
+
   planner::AbstractPlanNode *plan_node;
+  ValueArray params;
 
   LOG_INFO("planstate %d with #param", nodeTag(plan_state));
 
-  ValueArray params = BuildParams(plan_state->state->es_param_list_info);
+  if(plan_state->state != nullptr)
+    params = BuildParams(plan_state->state->es_param_list_info);
 
   switch (nodeTag(plan)) {
     case T_ModifyTable:
