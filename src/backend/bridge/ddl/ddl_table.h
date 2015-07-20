@@ -41,8 +41,6 @@ class DDLTable {
 
   static bool ExecDropStmt(Node* parsertree);
 
-  static bool ExecTrucateStmt(Node* parsetree);
-
   static bool CreateTable(Oid relation_oid,
                           std::string table_name,
                           std::vector<catalog::Column> column_infos,
@@ -58,6 +56,8 @@ class DDLTable {
   // Set reference tables to the table based on given relation oid
   static bool SetReferenceTables(std::vector<catalog::ForeignKey>& foreign_keys,
                                  oid_t relation_oid);
+
+  static void CheatingPostgres(oid_t relation_oid, int number_of_tuples);
 
  private:
 
