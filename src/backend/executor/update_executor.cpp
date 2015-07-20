@@ -103,7 +103,7 @@ bool UpdateExecutor::DExecute() {
         // So we should do it in two steps.
         std::vector<peloton::Value> updated_expr_values;
         for(auto entry : updated_col_exprs) {
-          updated_expr_values.push_back(entry.second->Evaluate(tuple, nullptr));
+          updated_expr_values.push_back(entry.second->Evaluate(tuple, nullptr, executor_context_));
         }
 
         for(size_t i = 0; i < updated_col_exprs.size(); i++){

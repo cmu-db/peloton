@@ -3,10 +3,10 @@
  *
  */
 
-#include "projection.h"
+#include "../executor/projection.h"
 
 namespace peloton {
-namespace expression {
+namespace executor {
 
 Projection::~Projection(){
   // Delete the expressions
@@ -31,7 +31,7 @@ bool Projection::Evaluate(storage::Tuple* dest,
   for(auto e : projection_entries_){
     auto col_id = e.first;
     auto expression = e.second;
-    Value val = expression->Evaluate(src1, src2);
+    Value val = expression->Evaluate(src1, src2, nullptr );
     dest->SetValue(col_id, val);
   }
   return true;
