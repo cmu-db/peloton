@@ -35,6 +35,7 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "../../../backend/bridge/dml/mapper/mapper.h"
 #include "postgres.h"
 
 #include "access/htup_details.h"
@@ -64,7 +65,6 @@
 #include "nodes/pprint.h"
 #include "nodes/pg_list.h"
 #include "postmaster/peloton.h"
-#include "backend/bridge/dml/plan_transformer.h"
 
 extern bool PelotonDualMode;
 
