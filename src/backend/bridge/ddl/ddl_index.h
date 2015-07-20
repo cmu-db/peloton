@@ -46,7 +46,7 @@ class DDLIndex {
   //static bool DropIndex(Oid index_oid);
 
   // Create the indexes using indexinfos and add to the table
-  static bool CreateIndexes(std::vector<IndexInfo> index_infos);
+  static bool CreateIndexes(std::vector<IndexInfo>& index_infos);
 
   // Parse IndexStmt and return IndexInfo
   static IndexInfo* ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt);
