@@ -52,7 +52,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
   planner::AbstractPlanNode *plan_node;
   ValueArray params;
 
-  LOG_INFO("planstate %d with #param", nodeTag(plan_state));
+  LOG_INFO("planstate %d", nodeTag(plan_state));
 
   if(plan_state->state != nullptr)
     params = BuildParams(plan_state->state->es_param_list_info);
