@@ -25,8 +25,8 @@ namespace executor {
  * @param node Delete node corresponding to this executor.
  */
 DeleteExecutor::DeleteExecutor(planner::AbstractPlanNode *node,
-                               concurrency::Transaction *transaction)
-: AbstractExecutor(node, transaction){
+                               ExecutorContext *executor_context)
+: AbstractExecutor(node, executor_context){
 }
 
 /**
@@ -35,7 +35,7 @@ DeleteExecutor::DeleteExecutor(planner::AbstractPlanNode *node,
  */
 bool DeleteExecutor::DInit() {
   assert(children_.size() <= 1);
-  assert(transaction_);
+  assert(executor_context_);
 
   // Delete tuples in logical tile
   LOG_TRACE("Delete executor :: 1 child \n");
@@ -64,6 +64,7 @@ bool DeleteExecutor::DExecute() {
 
   auto& pos_lists = source_tile.get()->GetPositionLists();
   auto tile_group_id = tile_group->GetTileGroupId();
+  auto transaction_ = executor_context_->GetTransaction();
   auto txn_id = transaction_->GetTransactionId();
 
   LOG_TRACE("Source tile : %p Tuples : %lu \n", source_tile.get(), source_tile->NumTuples());

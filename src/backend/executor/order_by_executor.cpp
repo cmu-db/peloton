@@ -18,8 +18,8 @@ namespace executor {
  * @brief Constructor
  * @param node  OrderByNode plan node corresponding to this executor
  */
-OrderByExecutor::OrderByExecutor(planner::AbstractPlanNode *node, concurrency::Transaction* transaction)
-  : AbstractExecutor(node, transaction){
+OrderByExecutor::OrderByExecutor(planner::AbstractPlanNode *node)
+  : AbstractExecutor(node){
 }
 
 bool OrderByExecutor::DInit(){
