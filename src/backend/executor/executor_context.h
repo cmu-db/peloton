@@ -44,7 +44,7 @@ class ExecutorContext {
     return transaction_;
   }
 
-  ValueArray GetParams() const {
+  const ValueArray& GetParams() const {
     return params_;
   }
 

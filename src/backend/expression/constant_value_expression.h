@@ -32,7 +32,7 @@ class ConstantValueExpression : public AbstractExpression {
 
   Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
                  __attribute__((unused)) const AbstractTuple *tuple2,
-                 __attribute__((unused)) ExpressionContext*) const {
+                 __attribute__((unused)) executor::ExecutorContext*) const {
     return this->value;
   }
 

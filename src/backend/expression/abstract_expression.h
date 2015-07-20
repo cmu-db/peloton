@@ -19,7 +19,7 @@
 #include "backend/common/value.h"
 #include "backend/common/value_vector.h"
 #include "backend/common/abstract_tuple.h"
-#include "backend/expression/expression_context.h"
+#include "backend/executor/executor_context.h"
 
 #include <json_spirit.h>
 
@@ -61,7 +61,7 @@ class AbstractExpression {
      */
     virtual Value Evaluate(const AbstractTuple *tuple1,
                            const AbstractTuple *tuple2,
-                           ExpressionContext* exprcontex = nullptr) const = 0;
+                           executor::ExecutorContext *context = nullptr) const = 0;
 
     // set parameter values for this node and its descendants
     virtual void Substitute(const ValueArray &params);
