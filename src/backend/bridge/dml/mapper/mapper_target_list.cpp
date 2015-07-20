@@ -19,15 +19,16 @@ namespace bridge {
 // Target List
 //===--------------------------------------------------------------------===//
 
+
 /**
  * @brief Transforms a non-trivial projection target list
  * (ProjectionInfo.pi_targetList) in Postgres
  * to a Peloton one.
  */
-std::vector<std::pair<oid_t, expression::AbstractExpression*>>
+expression::ProjExprVector
 TransformTargetList(List* target_list, oid_t column_count) {
 
-  std::vector<std::pair<oid_t, expression::AbstractExpression*>> proj_list;
+  expression::ProjExprVector proj_list;
   ListCell *tl;
 
   foreach(tl, target_list)

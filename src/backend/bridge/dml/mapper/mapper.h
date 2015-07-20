@@ -48,15 +48,15 @@ class PlanTransformer {
 
  private:
 
-  static planner::AbstractPlanNode *TransformModifyTable(const ModifyTableState *plan_state, const ValueArray &params);
+  static planner::AbstractPlanNode *TransformModifyTable(const ModifyTableState *plan_state);
 
-  static planner::AbstractPlanNode *TransformInsert(const ModifyTableState *plan_state, const ValueArray &params);
-  static planner::AbstractPlanNode *TransformUpdate(const ModifyTableState *plan_state, const ValueArray &params);
-  static planner::AbstractPlanNode *TransformDelete(const ModifyTableState *plan_state, const ValueArray &params);
+  static planner::AbstractPlanNode *TransformInsert(const ModifyTableState *plan_state);
+  static planner::AbstractPlanNode *TransformUpdate(const ModifyTableState *plan_state);
+  static planner::AbstractPlanNode *TransformDelete(const ModifyTableState *plan_state);
 
-  static planner::AbstractPlanNode *TransformSeqScan(const SeqScanState *plan_state, const ValueArray &params);
-  static planner::AbstractPlanNode *TransformIndexScan(const IndexScanState *plan_state, const ValueArray &params);
-  static planner::AbstractPlanNode *TransformIndexOnlyScan(const IndexOnlyScanState *plan_state, const ValueArray &params);
+  static planner::AbstractPlanNode *TransformSeqScan(const SeqScanState *plan_state);
+  static planner::AbstractPlanNode *TransformIndexScan(const IndexScanState *plan_state);
+  static planner::AbstractPlanNode *TransformIndexOnlyScan(const IndexOnlyScanState *plan_state);
 
   static planner::AbstractPlanNode *TransformLimit(const LimitState *plan_state);
   static planner::AbstractPlanNode *TransformResult(const ResultState *plan_state);
