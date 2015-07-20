@@ -54,7 +54,7 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
 
 ### Testing
 
-    make check -j4        // Build and execute tests
+    make check -j4                  // Build and execute tests
     cd tests; make check-build -j4  // Only build the tests.
 
 ## Development        
