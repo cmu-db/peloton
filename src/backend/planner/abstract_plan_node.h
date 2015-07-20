@@ -22,12 +22,14 @@ class LogicalTile;
 
 namespace planner {
 
+
 //===--------------------------------------------------------------------===//
 // Abstract Plan Node
 //===--------------------------------------------------------------------===//
 
 class AbstractPlanNode {
 public:
+
     AbstractPlanNode(const AbstractPlanNode &) = delete;
     AbstractPlanNode& operator=(const AbstractPlanNode &) = delete;
     AbstractPlanNode(AbstractPlanNode &&) = delete;
