@@ -50,18 +50,26 @@ bool DDLTransaction::ExecTransactionStmt(TransactionStmt* stmt,
     case TRANS_STMT_COMMIT:
     {
       auto txn = txn_manager.GetPGTransaction(txn_id);
-      assert(txn);
-      LOG_INFO("Committing peloton txn : %lu \n", txn->GetTransactionId());
-      txn_manager.CommitTransaction(txn);
+      if(txn) {
+        LOG_INFO("Committing peloton txn : %lu \n", txn->GetTransactionId());
+        txn_manager.CommitTransaction(txn);
+      }
+      else {
+        LOG_WARN("Could not find peloton txn : %lu \n", txn->GetTransactionId());
+      }
     }
     break;
 
     case TRANS_STMT_ROLLBACK:
     {
       auto txn = txn_manager.GetPGTransaction(txn_id);
-      assert(txn);
-      LOG_INFO("Aborting peloton txn : %lu \n", txn->GetTransactionId());
-      txn_manager.AbortTransaction(txn);
+      if(txn) {
+        LOG_INFO("Aborting peloton txn : %lu \n", txn->GetTransactionId());
+        txn_manager.AbortTransaction(txn);
+      }
+      else {
+        LOG_WARN("Could not find peloton txn : %lu \n", txn->GetTransactionId());
+      }
     }
     break;
 
