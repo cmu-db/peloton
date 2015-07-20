@@ -1083,7 +1083,7 @@ bool IsPelotonQuery(List *relationOids) {
     {
       Oid relationOid = lfirst_oid(lc);
       // Fast check to determine if the relation is a peloton relation
-      if(relationOid > FirstNormalObjectId)
+      if(relationOid >= FirstNormalObjectId)
       {
         peloton_query = true;
         break;
