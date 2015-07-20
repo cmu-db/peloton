@@ -21,7 +21,7 @@ class SeqScanExecutor : public AbstractExecutor {
   SeqScanExecutor& operator=(SeqScanExecutor &&) = delete;
 
   explicit SeqScanExecutor(planner::AbstractPlanNode *node,
-                           concurrency::Transaction *transaction);
+                           ExecutorContext *executor_context);
 
  protected:
   bool DInit();

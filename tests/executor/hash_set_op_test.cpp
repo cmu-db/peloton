@@ -56,9 +56,7 @@ TEST(HashSetOptTests, ExceptTest){
   planner::SetOpNode node(SETOP_TYPE_EXCEPT);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::HashSetOpExecutor executor(&node, txn);
+  executor::HashSetOpExecutor executor(&node);
 
   MockExecutor child_executor1;
   MockExecutor child_executor2;
@@ -111,8 +109,6 @@ TEST(HashSetOptTests, ExceptTest){
 
   RunTest(executor, tile_size*2/5);
 
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 }
 
 
@@ -121,9 +117,7 @@ TEST(HashSetOptTests, ExceptAllTest){
   planner::SetOpNode node(SETOP_TYPE_EXCEPT_ALL);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::HashSetOpExecutor executor(&node, txn);
+  executor::HashSetOpExecutor executor(&node);
 
   MockExecutor child_executor1;
   MockExecutor child_executor2;
@@ -195,8 +189,6 @@ TEST(HashSetOptTests, ExceptAllTest){
 
   RunTest(executor, 2*(tile_size*2/5));
 
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 }
 
 TEST(HashSetOptTests, IntersectTest){
@@ -204,9 +196,7 @@ TEST(HashSetOptTests, IntersectTest){
   planner::SetOpNode node(SETOP_TYPE_INTERSECT);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::HashSetOpExecutor executor(&node, txn);
+  executor::HashSetOpExecutor executor(&node);
 
   MockExecutor child_executor1;
   MockExecutor child_executor2;
@@ -258,9 +248,6 @@ TEST(HashSetOptTests, IntersectTest){
     .WillOnce(Return(source_logical_tile2.release()));
 
   RunTest(executor, tile_size - 2 * (tile_size*2/5));
-
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 }
 
 TEST(HashSetOptTests, IntersectAllTest){
@@ -268,9 +255,7 @@ TEST(HashSetOptTests, IntersectAllTest){
   planner::SetOpNode node(SETOP_TYPE_INTERSECT_ALL);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::HashSetOpExecutor executor(&node, txn);
+  executor::HashSetOpExecutor executor(&node);
 
   MockExecutor child_executor1;
   MockExecutor child_executor2;
@@ -342,8 +327,6 @@ TEST(HashSetOptTests, IntersectAllTest){
 
   RunTest(executor, 2*(tile_size - 2 * (tile_size*2/5)));
 
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 }
 
 }
