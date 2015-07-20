@@ -130,8 +130,8 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
                                        const_expr->consttype);
   }
   else {
-    LOG_ERROR("Unknown Const profile: constlen = %d , constbyval = %d, constvalue = %u \n",
-              const_expr->constlen, const_expr->constbyval, const_expr->constvalue);
+    LOG_ERROR("Unknown Const profile: constlen = %d , constbyval = %d, constvalue = %lu \n",
+              const_expr->constlen, const_expr->constbyval, (long unsigned)const_expr->constvalue);
   }
 
   LOG_INFO("Const : ");
