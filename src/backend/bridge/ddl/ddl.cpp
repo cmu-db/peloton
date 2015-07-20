@@ -89,13 +89,6 @@ void DDL::ProcessUtility(Node *parsetree,
       break;
     }
 
-    case T_TruncateStmt:
-    {
-      //TODO :: For now, only control the Postgres catalog
-      //DDLTable::ExecTrucateStmt(parsetree);
-      break;
-    }
-
     case T_TransactionStmt: {
       TransactionStmt *stmt = (TransactionStmt *) parsetree;
 
