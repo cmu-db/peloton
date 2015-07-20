@@ -98,29 +98,26 @@ bool InsertExecutor::DExecute() {
     // Extract expressions from plan node and construct the tuple.
     // For now we just handle a single tuple
     auto schema = target_table->GetSchema();
-    auto tuple = new storage::Tuple(schema, true);
+    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
     auto projs = node.GetProjs();
 
     for(auto proj : projs) {
-      Value value = proj.second->Evaluate(nullptr, nullptr, executor_context_);
+      peloton::Value value = proj.second->Evaluate(nullptr, nullptr, executor_context_);
       tuple->SetValue(proj.first, value);
     }
 
-    LOG_INFO("Tuple (pl) to isnert :");
+    LOG_INFO("Tuple (pl) to insert : ");
     std::cout << *tuple << std::endl;
 
     // Carry out insertion
-    ItemPointer location = target_table->InsertTuple(transaction_->GetTransactionId(), tuple);
+    ItemPointer location = target_table->InsertTuple(transaction_->GetTransactionId(), tuple.get());
     if (location.block == INVALID_OID) {
       auto& txn_manager = concurrency::TransactionManager::GetInstance();
       txn_manager.AbortTransaction(transaction_);
       transaction_->SetStatus(ResultType::RESULT_TYPE_FAILURE);
-      delete tuple;
       return false;
     }
     transaction_->RecordInsert(location);
-
-    delete tuple;
 
     return true;
   }
