@@ -6,9 +6,19 @@
 
 #pragma once
 
-#include "executor/execdesc.h"
-#include "backend/planner/abstract_plan_node.h"
+#include "backend/bridge/ddl/bridge.h"
+#include "backend/bridge/dml/expr/expr_transformer.h"
+#include "backend/bridge/dml/tuple/tuple_transformer.h"
+#include "backend/expression/abstract_expression.h"
+#include "backend/expression/expression_util.h"
 #include "backend/common/value_vector.h"
+#include "backend/common/logger.h"
+#include "backend/planner/abstract_plan_node.h"
+
+#include "postgres.h"
+#include "c.h"
+#include "executor/execdesc.h"
+#include "utils/rel.h"
 
 namespace peloton {
 namespace bridge {
