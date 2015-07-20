@@ -48,29 +48,25 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
     return nullptr;
 
   planner::AbstractPlanNode *plan_node;
-  ValueArray params;
 
-  LOG_INFO("planstate %d with #param", nodeTag(plan_state));
-
-  if(plan_state->state != nullptr)
-    params = BuildParams(plan_state->state->es_param_list_info);
+  LOG_INFO("planstate %d", nodeTag(plan_state));
 
   switch (nodeTag(plan)) {
     case T_ModifyTable:
       plan_node = PlanTransformer::TransformModifyTable(
-          reinterpret_cast<const ModifyTableState *>(plan_state), params);
+          reinterpret_cast<const ModifyTableState *>(plan_state));
       break;
     case T_SeqScan:
       plan_node = PlanTransformer::TransformSeqScan(
-          reinterpret_cast<const SeqScanState*>(plan_state), params);
+          reinterpret_cast<const SeqScanState*>(plan_state));
       break;
     case T_IndexScan:
       plan_node = PlanTransformer::TransformIndexScan(
-          reinterpret_cast<const IndexScanState*>(plan_state), params);
+          reinterpret_cast<const IndexScanState*>(plan_state));
       break;
     case T_IndexOnlyScan:
       plan_node = PlanTransformer::TransformIndexOnlyScan(
-          reinterpret_cast<const IndexOnlyScanState*>(plan_state), params);
+          reinterpret_cast<const IndexOnlyScanState*>(plan_state));
       break;
     case T_Limit:
       plan_node = PlanTransformer::TransformLimit(

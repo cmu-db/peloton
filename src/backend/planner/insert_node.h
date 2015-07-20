@@ -7,14 +7,17 @@
 #pragma once
 
 #include "backend/planner/abstract_plan_node.h"
+#include "backend/expression/abstract_expression.h"
 #include "backend/common/types.h"
 #include "backend/storage/data_table.h"
+
 
 namespace peloton {
 namespace planner {
 
 class InsertNode : public AbstractPlanNode {
 public:
+
     InsertNode() = delete;
     InsertNode(const InsertNode &) = delete;
     InsertNode& operator=(const InsertNode &) = delete;
@@ -22,9 +25,9 @@ public:
     InsertNode& operator=(InsertNode &&) = delete;
 
     explicit InsertNode(storage::DataTable* table,
-                        const std::vector<storage::Tuple *>& tuples)
+                        const expression::ProjExprVector &projs)
         : target_table_(table),
-          tuples(tuples) {
+          projs_(projs) {
     }
 
     inline PlanNodeType GetPlanNodeType() const {
@@ -39,17 +42,18 @@ public:
         return target_table_->GetName();
     }
 
-    const std::vector<storage::Tuple *>& GetTuples() const {
-        return tuples;
+    const expression::ProjExprVector& GetProjs() const {
+        return projs_;
     }
 
 private:
     /** @brief Target table. */
     storage::DataTable *target_table_;
 
-    // tuples to be inserted
-    std::vector<storage::Tuple *> tuples;
+    // proj list
+    expression::ProjExprVector projs_;
 };
 
 } // namespace planner
 } // namespace peloton
+
