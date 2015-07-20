@@ -15,13 +15,11 @@
 namespace peloton {
 namespace bridge {
 
-static inline const ValueArray BuildParams(const ParamListInfo param_list);
-
 //===--------------------------------------------------------------------===//
 // Utils
 //===--------------------------------------------------------------------===//
 
-inline const ValueArray BuildParams(const ParamListInfo param_list) {
+const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
   ValueArray params;
   if (param_list != nullptr) {
     params.Reset(param_list->numParams);

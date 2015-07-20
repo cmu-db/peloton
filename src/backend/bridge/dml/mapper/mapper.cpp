@@ -15,18 +15,16 @@
 
 #include "backend/bridge/dml/mapper/mapper.h"
 
+#include "../executor/plan_executor.h"
 #include "nodes/print.h"
 #include "nodes/pprint.h"
 #include "utils/lsyscache.h"
-#include "executor/executor.h"
 #include "parser/parsetree.h"
 
 void printPlanStateTree(const PlanState * planstate);
 
 namespace peloton {
 namespace bridge {
-
-extern const ValueArray BuildParams(const ParamListInfo param_list);
 
 /**
  * @brief Pretty print the plan state tree.
@@ -106,19 +104,6 @@ bool PlanTransformer::CleanPlanNodeTree(planner::AbstractPlanNode* root) {
   // Clean the root
   delete root;
   return true;
-}
-
-inline const ValueArray BuildParams(const ParamListInfo param_list) {
-  ValueArray params;
-  if (param_list != nullptr) {
-    params.Reset(param_list->numParams);
-    ParamExternData *postgres_param = param_list->params;
-    for (int i = 0; i < params.GetSize(); ++i, ++postgres_param) {
-      params[i] = TupleTransformer::GetValue(postgres_param->value, postgres_param->ptype);
-    }
-  }
-  LOG_INFO("Built param list of size %d", params.GetSize());
-  return params;
 }
 
 }  // namespace bridge
