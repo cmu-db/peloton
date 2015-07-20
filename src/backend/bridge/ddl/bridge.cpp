@@ -47,7 +47,7 @@ HeapTuple Bridge::GetPGClassTupleForRelationOid(Oid relation_id){
   Relation pg_class_rel;
   HeapTuple tuple = NULL;
 
-  StartTransactionCommand();
+  //StartTransactionCommand();
 
   // Open pg_class table
   pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
@@ -60,7 +60,7 @@ HeapTuple Bridge::GetPGClassTupleForRelationOid(Oid relation_id){
   }
 
   heap_close(pg_class_rel, AccessShareLock);
-  CommitTransactionCommand();
+  //CommitTransactionCommand();
 
   return tuple;
 }
@@ -291,7 +291,7 @@ void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
   HeapTuple tuple;
   Form_pg_class pgclass;
 
-  StartTransactionCommand();
+  //StartTransactionCommand();
 
   // Open pg_class table in exclusive mode
   pg_class_rel = heap_open(RelationRelationId,RowExclusiveLock);
@@ -309,7 +309,7 @@ void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
 
   heap_close(pg_class_rel, RowExclusiveLock);
 
-  CommitTransactionCommand();
+  //CommitTransactionCommand();
 }
 
 } // namespace bridge
