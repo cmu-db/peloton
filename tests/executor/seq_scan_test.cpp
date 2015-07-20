@@ -234,8 +234,10 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
 
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
 
-  executor::SeqScanExecutor executor(&node, txn);
+  executor::SeqScanExecutor executor(&node, context.get());
   RunTest(executor, table->GetTileGroupCount(), column_ids.size());
 
   txn_manager.CommitTransaction(txn);
@@ -259,7 +261,10 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
   // Set up executor and its child.
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  executor::SeqScanExecutor executor(&node, txn);
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
+
+  executor::SeqScanExecutor executor(&node, context.get());
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 

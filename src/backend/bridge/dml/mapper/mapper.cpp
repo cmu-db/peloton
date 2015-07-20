@@ -15,10 +15,10 @@
 
 #include "backend/bridge/dml/mapper/mapper.h"
 
+#include "../executor/plan_executor.h"
 #include "nodes/print.h"
 #include "nodes/pprint.h"
 #include "utils/lsyscache.h"
-#include "executor/executor.h"
 #include "parser/parsetree.h"
 
 void printPlanStateTree(const PlanState * planstate);
