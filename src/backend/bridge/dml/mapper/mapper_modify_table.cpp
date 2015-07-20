@@ -102,11 +102,6 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
 
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
 
-  /*
-   * We absorb the child of Insert to avoid
-   * creating a child that returns just a tuple.
-   * The cost is to make calls to AbstractExpression->Evaluate() here.
-   */
   if (nodeTag(sub_planstate->plan) == T_Result) {  // Child is a result node
     LOG_INFO("Child of Insert is Result");
     auto result_ps = reinterpret_cast<ResultState*>(sub_planstate);
