@@ -38,7 +38,7 @@ class SerializeOutput;
  * These objects are stored in query plans and passed to Storage Access Manager.
  *
  * An expression usually has a longer life cycle than an execution, because,
- * for example, it can be reused for several executions of the same query template.
+ * for example, it can be cached reused for several executions of the same query template.
  * Moreover, those executions can run simultaneously.
  * So, an expression should not store per-execution information in its states.
  * An expression tree (along with the plan node tree containing it) should remain

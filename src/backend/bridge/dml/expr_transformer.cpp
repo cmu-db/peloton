@@ -117,18 +117,27 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
 
   LOG_INFO("Handle Const");
 
-  if (!(const_expr->constbyval)) {
-    LOG_ERROR(
-        "Sorry, we don't handle by-reference constant values currently.\n");
-  }
+//  if (!(const_expr->constbyval)) {
+//    LOG_ERROR(
+//        "Sorry, we don't handle by-reference constant values currently.\n");
+//  }
 
   Value value;
 
   if (const_expr->constisnull) {  // Constant is null
     value = ValueFactory::GetNullValue();
-  } else {  // non null
+  }
+  else if(const_expr->constbyval){  // non null
     value = TupleTransformer::GetValue(const_expr->constvalue,
                                        const_expr->consttype);
+  }
+  else if(const_expr->constlen == -1) {
+    LOG_INFO("Probably handing a string constant \n");
+    value = TupleTransformer::GetValue(reinterpret_cast<Datum>(reinterpret_cast<struct varlena*>(const_expr->constvalue)->vl_dat),
+                                       const_expr->consttype);
+  }
+  else {
+    LOG_ERROR("Unknown Const profile. \n");
   }
 
   LOG_INFO("Const : ");

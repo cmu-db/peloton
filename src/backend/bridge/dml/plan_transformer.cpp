@@ -207,7 +207,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   std::vector<storage::Tuple *> tuples;
 
   /*
-   * We eat our child like Zeus's father to avoid
+   * We absorb the child of Insert to avoid
    * creating a child that returns just a tuple.
    * The cost is to make calls to AbstractExpression->Evaluate() here.
    */
