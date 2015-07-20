@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "nodes/execnodes.h"
-
 #include "backend/expression/abstract_expression.h"
 
+#include "postgres.h"
+#include "nodes/execnodes.h"
 
 namespace peloton {
 namespace bridge {
@@ -59,6 +59,6 @@ class ExprTransformer {
 
 };
 
-} /* namespace bridge */
-} /* namespace peloton */
+}  // namespace bridge
+}  // namespace peloton
 

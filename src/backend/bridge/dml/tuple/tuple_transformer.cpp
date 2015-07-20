@@ -12,7 +12,7 @@
 
 #include <iostream>
 
-#include "backend/bridge/dml/tuple_transformer.h"
+#include "backend/bridge/dml/tuple/tuple_transformer.h"
 #include "backend/common/logger.h"
 #include "backend/common/value_peeker.h"
 #include "backend/storage/tuple.h"
