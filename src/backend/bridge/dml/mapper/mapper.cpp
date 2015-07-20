@@ -26,8 +26,6 @@ void printPlanStateTree(const PlanState * planstate);
 namespace peloton {
 namespace bridge {
 
-extern const ValueArray BuildParams(const ParamListInfo param_list);
-
 /**
  * @brief Pretty print the plan state tree.
  * @return none.
@@ -106,19 +104,6 @@ bool PlanTransformer::CleanPlanNodeTree(planner::AbstractPlanNode* root) {
   // Clean the root
   delete root;
   return true;
-}
-
-inline const ValueArray BuildParams(const ParamListInfo param_list) {
-  ValueArray params;
-  if (param_list != nullptr) {
-    params.Reset(param_list->numParams);
-    for (int i = 0; i < params.GetSize(); ++i) {
-      ParamExternData param = param_list->params[i];
-      params[i] = TupleTransformer::GetValue(param.value, param.ptype);
-    }
-  }
-  LOG_INFO("Built param list of size %d", params.GetSize());
-  return params;
 }
 
 }  // namespace bridge
