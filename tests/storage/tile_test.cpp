@@ -143,13 +143,22 @@ TEST(TileTests, BasicTest) {
 	const catalog::Schema *new_schema = new catalog::Schema(columns);
 
 	storage::AbstractBackend *new_backend = new storage::VMBackend();
-	Pool *new_pool = new Pool(new_backend);
 	storage::TileGroupHeader *new_header = new storage::TileGroupHeader(new_backend, tuple_count);
 	storage::Tile *new_tile = storage::TileFactory::GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
 											  new_header, new_backend, *new_schema, nullptr, old_tile_allocated_tuple_count);
+	Pool *new_pool = new_tile->GetPool();
 
 	//::memcpy(new_pool,old_pool,old_pool_size);
-	::memcpy(static_cast<void *>(new_tile), static_cast<void *>(tile), old_tile_size);
+	//::memcpy(static_cast<void *>(new_tile), static_cast<void *>(tile), old_tile_size);
+
+	storage::Tuple *old_tuple;
+
+	for(int old_tup_itr=0; old_tup_itr<old_tile_active_tuple_count; old_tup_itr++)
+	{
+		old_tuple = tile->GetTuple(old_tup_itr);
+		new_tile->InsertTuple(old_tup_itr,old_tuple);
+	}
+
 
 
 	/*
@@ -188,6 +197,13 @@ TEST(TileTests, BasicTest) {
 
 	std::cout << "Pool associated with new tile is at address: " << static_cast<void *>(new_pool) << std::endl;
 
+	int64_t new_pool_size = new_pool->GetAllocatedMemory();
+	std::cout << "size of new pool: " << new_pool_size << std::endl;
+
+	std::cout << "------------------------------------" << std:: endl;
+	std::cout << "In case some columns are not inlined" << std:: endl;
+	std::cout << "------------------------------------" << std:: endl;
+
 	//std::cout << (*new_tile);
 
 	/*
@@ -215,30 +231,78 @@ TEST(TileTests, BasicTest) {
 		int uninlined_col_cnt = new_schema->GetUninlinedColumnCount();
 		//std::cout << "uninlined column count: " << uninlined_col_cnt << std::endl;
 
-		int next_uninlined_col_index;
-		Value uninlined_col_value;
+		int uninlined_col_index;
+		Value uninlined_col_value, new_uninlined_col_value;
+		storage::Tuple *new_tuple;
 
 		for(int col_itr=0; col_itr<uninlined_col_cnt; col_itr++) {
 
-			next_uninlined_col_index = new_schema->GetUninlinedColumnIndex(col_itr);
-			//std::cout << "index of next uninlined column: " << next_uninlined_col_index << std::endl;
+			uninlined_col_index = new_schema->GetUninlinedColumnIndex(col_itr);
+			std::cout << "----------------------------------" << std::endl;
+			std::cout << "index of next uninlined column: " << uninlined_col_index << std::endl;
+			std::cout << "----------------------------------" << std::endl  << std::endl;
 
 			for(int tup_itr=0; tup_itr<new_tile_active_tuple_count; tup_itr++) {
 
-				uninlined_col_value = new_tile->GetValue(tup_itr,next_uninlined_col_index);
+				std::cout << "\t -----------------------------------------------------" + tup_itr << std::endl;
+				std::cout << "\t Before associating new pool to new data for tuple: " + tup_itr << std::endl;
+				std::cout << "\t -----------------------------------------------------" + tup_itr << std::endl;
+
+				new_tuple = new_tile->GetTuple(tup_itr);
+				std::cout << "\t address of new_tuple: " << static_cast<void *>(new_tuple) << std::endl << std::endl;
+
+				uninlined_col_value = new_tile->GetValue(tup_itr,uninlined_col_index);
+				std::cout << "\t uninlined column value: " << uninlined_col_value << std::endl;
 
 				size_t uninlined_col_object_len = ValuePeeker::PeekObjectLength(uninlined_col_value);
-				std::cout << "size of uninlined column object: " << uninlined_col_object_len << std::endl;
+				std::cout << "\t size of uninlined column object: " << uninlined_col_object_len << std::endl;
 
 				unsigned char* uninlined_col_object_ptr = static_cast<unsigned char *>(ValuePeeker::PeekObjectValue(uninlined_col_value));
-				std::cout << "uninlined column object pointer: " << static_cast<void *>(uninlined_col_object_ptr) << std::endl;
+				std::cout << "\t uninlined column object pointer: " << static_cast<void *>(uninlined_col_object_ptr) << std::endl;
 
-				std::string uninlined_varchar_str( reinterpret_cast<char const*>(uninlined_col_object_ptr), uninlined_col_object_len);
-				std::cout << "the data stored uninlined is: " << uninlined_varchar_str << std::endl;
+				std::string uninlined_varchar_str(reinterpret_cast<char const*>(uninlined_col_object_ptr), uninlined_col_object_len);
+				std::cout << "\t the data stored uninlined is: " << uninlined_varchar_str << std::endl << std::endl;
+
+				//char *xyz = new_tuple->GetData();
+				//tile->GetValue(tup_itr,next_uninlined_col_index);
+
+				// std::string copy_uninlined_varchar_str;
+				// Create a new Value object with the uninlined string w.r.t. the new pool
+				Value new_val = ValueFactory::GetStringValue(uninlined_varchar_str, new_pool);
+				// Set the newly created value object to the tuple
+				// new_tuple->SetValue(uninlined_col_index, uninlined_col_value);
+				new_tile->SetValue(new_val, tup_itr, uninlined_col_index);
+
+
+				std::cout << "\t ---------------------------------------------" + tup_itr << std::endl;
+				std::cout << "\t Associated new pool to new data for tuple: " + tup_itr << std::endl;
+				std::cout << "\t ---------------------------------------------" + tup_itr << std::endl;
+
+				new_uninlined_col_value = new_tile->GetValue(tup_itr,uninlined_col_index);
+				std::cout << "\t new uninlined column value: " << new_uninlined_col_value << std::endl;
+
+				size_t new_uninlined_col_object_len = ValuePeeker::PeekObjectLength(new_uninlined_col_value);
+				std::cout << "\t size of uninlined column object: " << new_uninlined_col_object_len << std::endl;
+
+				unsigned char* new_uninlined_col_object_ptr = static_cast<unsigned char *>(ValuePeeker::PeekObjectValue(new_uninlined_col_value));
+				std::cout << "\t new uninlined column object pointer: " << static_cast<void *>(new_uninlined_col_object_ptr) << std::endl;
+
+				std::string new_uninlined_varchar_str( reinterpret_cast<char const*>(new_uninlined_col_object_ptr), uninlined_col_object_len);
+				std::cout << "\t the new data stored uninlined is: " << new_uninlined_varchar_str << std::endl << std::endl;
 			}
 		}
+
+		delete new_tuple;
 	}
 
+	if(tile==new_tile)
+			std::cout << "old and new tiles are the same ..." << std::endl;
+
+	std::string str1 = "hello world";
+	std::string str2 = str1;
+
+	std::cout << "add of str1: " << &str1 << std::endl;
+	std::cout << "add of str2: " << &str2 << std::endl;
 
 
 
