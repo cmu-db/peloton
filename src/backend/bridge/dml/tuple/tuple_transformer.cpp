@@ -36,7 +36,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     case POSTGRES_VALUE_TYPE_SMALLINT:
     {
       int16_t smallint = DatumGetInt16(datum);
-      LOG_INFO("%d\n", smallint);
+      LOG_INFO("%d", smallint);
       value = ValueFactory::GetSmallIntValue(smallint);
     }
     break;
@@ -44,7 +44,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     case POSTGRES_VALUE_TYPE_INTEGER:
     {
       int32_t integer = DatumGetInt32(datum);
-      LOG_INFO("%d\n", integer);
+      LOG_INFO("%d", integer);
       value = ValueFactory::GetIntegerValue(integer);
     }
     break;
@@ -52,7 +52,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     case POSTGRES_VALUE_TYPE_BIGINT:
     {
       int64_t bigint = DatumGetInt64(datum);
-      LOG_INFO("%ld\n", bigint);
+      LOG_INFO("%ld", bigint);
       value = ValueFactory::GetBigIntValue(bigint);
     }
     break;
@@ -108,13 +108,13 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     {
       long int timestamp = DatumGetInt64(datum);
       char *timestamp_cstring = DatumGetCString(datum);
-      LOG_INFO("%s\n", timestamp_cstring);
+      LOG_INFO("%s", timestamp_cstring);
       value = ValueFactory::GetTimestampValue(timestamp);
     }
     break;
 
     default:
-      LOG_ERROR("Unknown atttypeid : %u \n", atttypid);
+      LOG_ERROR("Unknown atttypeid : %u ", atttypid);
       break;
   }
 
@@ -135,7 +135,7 @@ Datum TupleTransformer::GetDatum(Value value) {
     case VALUE_TYPE_SMALLINT:
     {
       int16_t smallint = ValuePeeker::PeekSmallInt(value);
-      LOG_INFO("%d\n", smallint);
+      LOG_INFO("%d", smallint);
       datum = Int16GetDatum(smallint);
     }
     break;
@@ -143,7 +143,7 @@ Datum TupleTransformer::GetDatum(Value value) {
     case VALUE_TYPE_INTEGER:
     {
       int32_t integer = ValuePeeker::PeekInteger(value);
-      LOG_INFO("%d\n", integer);
+      LOG_INFO("%d", integer);
       datum = Int32GetDatum(integer);
     }
     break;
@@ -151,7 +151,7 @@ Datum TupleTransformer::GetDatum(Value value) {
     case VALUE_TYPE_BIGINT:
     {
       int64_t bigint = ValuePeeker::PeekBigInt(value);
-      LOG_INFO("%ld\n", bigint);
+      LOG_INFO("%ld", bigint);
       datum = Int64GetDatum(bigint);
     }
     break;
@@ -159,7 +159,7 @@ Datum TupleTransformer::GetDatum(Value value) {
     case VALUE_TYPE_DOUBLE:
     {
       double double_precision = ValuePeeker::PeekDouble(value);
-      LOG_INFO("%f\n", double_precision);
+      LOG_INFO("%f", double_precision);
       datum = Float8GetDatum(double_precision);
     }
     break;
@@ -167,7 +167,7 @@ Datum TupleTransformer::GetDatum(Value value) {
     case VALUE_TYPE_VARCHAR:
     {
       char *variable_character = (char *) ValuePeeker::PeekObjectValue(value);
-      LOG_INFO("%s\n", variable_character);
+      LOG_INFO("%s", variable_character);
       datum = CStringGetDatum(variable_character);
     }
     break;
@@ -176,13 +176,13 @@ Datum TupleTransformer::GetDatum(Value value) {
     {
       long int timestamp = ValuePeeker::PeekTimestamp(value);
       datum = Int64GetDatum(timestamp);
-      LOG_INFO("%s\n",DatumGetCString(timestamp));
+      LOG_INFO("%s",DatumGetCString(timestamp));
     }
     break;
 
     default:
       datum = PointerGetDatum(nullptr);
-      LOG_INFO("Unrecognized value type : %u\n", value_type);
+      LOG_INFO("Unrecognized value type : %u", value_type);
       break;
   }
 

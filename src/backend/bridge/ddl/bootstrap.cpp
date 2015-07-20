@@ -19,6 +19,7 @@
 #include "backend/bridge/ddl/ddl_database.h"
 #include "backend/bridge/ddl/ddl_table.h"
 #include "backend/storage/database.h"
+#include "backend/common/logger.h"
 
 #include "access/heapam.h"
 #include "access/htup_details.h"
@@ -163,6 +164,7 @@ void Bootstrap::CreateIndexInfos(oid_t tuple_oid,
           key_column_names);
 
       index_infos.push_back(indexinfo);
+      LOG_INFO("Create index %s on %s", indexinfo.GetIndexName().c_str(), indexinfo.GetTableName().c_str());
       break;
     }
   }
