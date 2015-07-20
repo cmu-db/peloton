@@ -245,7 +245,7 @@ expression::AbstractExpression* ExprTransformer::TransformParam(const ExprState 
   switch (param_expr->paramkind) {
     case PARAM_EXTERN:
       LOG_INFO("Handle EXTREN PARAM");
-      return expression::ParameterValueFactory(param_expr->paramid + 1); // 1 indexed
+      return expression::ParameterValueFactory(param_expr->paramid - 1); // 1 indexed
       break;
     default:
       LOG_ERROR("Unrecognized param kind %d", param_expr->paramkind);
