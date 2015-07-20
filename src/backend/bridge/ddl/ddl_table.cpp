@@ -59,21 +59,6 @@ bool DDLTable::ExecCreateStmt(Node* parsetree, const char* queryString, std::vec
       char* relation_name = Cstmt->relation->relname;
       Oid relation_oid = ((CreateStmt *)parsetree)->relation_id;
 
-      //Cheating ...
-      if( strcmp(relation_name, "t4") == 0 ){
-        Oid fake_relation_oid = Bridge::GetRelationOid("t1");
-        CheatingPostgres(fake_relation_oid, 10);
-        std::cout << "Cheating the Postgres t4(" << relation_oid << ")" << std::endl;
-      }else if( strcmp(relation_name, "t5") == 0 ){
-        Oid fake_relation_oid = Bridge::GetRelationOid("t2");
-        CheatingPostgres(fake_relation_oid, 100);
-        std::cout << "Cheating the Postgres t5(" << relation_oid << ")" << std::endl;
-      }else if( strcmp(relation_name, "t6") == 0 ){
-        Oid fake_relation_oid = Bridge::GetRelationOid("t3");
-        CheatingPostgres(fake_relation_oid, 50);
-        std::cout << "Cheating the Postgres t6(" << relation_oid << ")" << std::endl;
-      }
-
       std::vector<catalog::Column> column_infos;
       std::vector<catalog::ForeignKey> foreign_keys;
 
