@@ -22,7 +22,7 @@ class InsertExecutor : public AbstractExecutor {
   InsertExecutor& operator=(InsertExecutor &&) = delete;
 
   explicit InsertExecutor(planner::AbstractPlanNode *node,
-                          concurrency::Transaction *transaction);
+                          ExecutorContext *executor_context);
 
  protected:
   bool DInit();
