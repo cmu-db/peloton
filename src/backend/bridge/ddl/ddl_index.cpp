@@ -204,7 +204,7 @@ IndexInfo* DDLIndex::ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt){
  * @param relation_oid relation oid
  * @return true if we create all the indexes, false otherwise
  */
-bool DDLIndex::CreateIndexes(std::vector<IndexInfo> index_infos){
+bool DDLIndex::CreateIndexes(std::vector<IndexInfo>& index_infos){
 
   for(auto index_info : index_infos){
     CreateIndex(index_info);
