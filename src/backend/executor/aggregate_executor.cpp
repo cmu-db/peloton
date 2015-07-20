@@ -29,8 +29,8 @@ namespace executor {
  * @param node Aggregate node corresponding to this executor.
  */
 AggregateExecutor::AggregateExecutor(planner::AbstractPlanNode *node,
-                                     concurrency::Transaction *transaction)
-: AbstractExecutor(node, transaction) {
+                                     ExecutorContext *executor_context)
+: AbstractExecutor(node, executor_context) {
 }
 
 AggregateExecutor::~AggregateExecutor() {
@@ -88,6 +88,7 @@ bool AggregateExecutor::DExecute() {
 
   // Grab info from plan node
   const planner::AggregateNode &node = GetPlanNode<planner::AggregateNode>();
+  auto transaction_ = executor_context_->GetTransaction();
   txn_id_t txn_id = transaction_->GetTransactionId();
 
   // Get an aggregator

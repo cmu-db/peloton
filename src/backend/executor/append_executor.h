@@ -25,8 +25,7 @@ class AppendExecutor : public AbstractExecutor {
   AppendExecutor(const AppendExecutor &&) = delete;
   AppendExecutor& operator=(const AppendExecutor &&) = delete;
 
-  explicit AppendExecutor(planner::AbstractPlanNode *node,
-                          concurrency::Transaction *transaction);
+  explicit AppendExecutor(planner::AbstractPlanNode *node);
 
  protected:
   bool DInit();

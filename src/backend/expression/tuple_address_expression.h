@@ -24,7 +24,7 @@ class TupleAddressExpression : public AbstractExpression {
 
   inline Value Evaluate(const AbstractTuple *tuple1,
                         __attribute__((unused)) const AbstractTuple *tuple2,
-                        __attribute__((unused)) ExpressionContext*)  const {
+                        __attribute__((unused)) executor::ExecutorContext*)  const {
     return ValueFactory::GetAddressValue(tuple1->GetData());
   }
 

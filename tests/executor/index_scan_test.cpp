@@ -58,9 +58,11 @@ TEST(IndexScanTests, IndexPredicateTest) {
 
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
 
   // Run the executor
-  executor::IndexScanExecutor executor(&node, txn);
+  executor::IndexScanExecutor executor(&node, context.get());
   int expected_num_tiles = 3;
 
   EXPECT_TRUE(executor.Init());
@@ -101,7 +103,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
   auto txn2 = txn_manager.BeginTransaction();
 
   // Run the executor
-  executor::IndexScanExecutor executor2(&node2, txn2);
+  executor::IndexScanExecutor executor2(&node2, context.get());
   expected_num_tiles = 1;
 
   result_tiles.clear();

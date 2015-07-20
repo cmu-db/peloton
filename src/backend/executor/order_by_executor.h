@@ -28,8 +28,7 @@ class OrderByExecutor : public AbstractExecutor {
   OrderByExecutor(const OrderByExecutor &&) = delete;
   OrderByExecutor& operator=(const OrderByExecutor &&) = delete;
 
-  explicit OrderByExecutor(planner::AbstractPlanNode *node,
-                           concurrency::Transaction *transaction);
+  explicit OrderByExecutor(planner::AbstractPlanNode *node);
 
  protected:
   bool DInit();

@@ -27,8 +27,9 @@ namespace executor {
  * @brief Constructor for indexscan executor.
  * @param node Indexscan node corresponding to this executor.
  */
-IndexScanExecutor::IndexScanExecutor(planner::AbstractPlanNode *node, concurrency::Transaction *transaction)
-: AbstractExecutor(node, transaction) {
+IndexScanExecutor::IndexScanExecutor(planner::AbstractPlanNode *node,
+                                     ExecutorContext *executor_context)
+: AbstractExecutor(node, executor_context) {
 }
 
 /**
@@ -37,7 +38,7 @@ IndexScanExecutor::IndexScanExecutor(planner::AbstractPlanNode *node, concurrenc
  */
 bool IndexScanExecutor::DInit() {
   assert(children_.size() == 0);
-  assert(transaction_);
+  assert(executor_context_);
 
   LOG_TRACE("Index Scan executor :: 0 child \n");
 
@@ -115,6 +116,7 @@ bool IndexScanExecutor::DExecute() {
   if(tuple_locations.size() == 0)
     return false;
 
+  auto transaction_ = executor_context_->GetTransaction();
   txn_id_t txn_id = transaction_->GetTransactionId();
   cid_t commit_id = transaction_->GetLastCommitId();
 
