@@ -32,7 +32,7 @@ class ParameterValueExpression : public AbstractExpression, public ParameterValu
 
   Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
                  __attribute__((unused)) const AbstractTuple *tuple2,
-                 ExpressionContext* econtext) const {
+                 executor::ExecutorContext* econtext) const {
 
     assert(econtext);
 

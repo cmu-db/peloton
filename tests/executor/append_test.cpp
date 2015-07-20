@@ -52,9 +52,7 @@ TEST(AppendTests, AppendTwoTest) {
   planner::AppendNode node;
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::AppendExecutor executor(&node, txn);
+  executor::AppendExecutor executor(&node);
 
   MockExecutor child_executor1;
   MockExecutor child_executor2;
@@ -98,10 +96,6 @@ TEST(AppendTests, AppendTwoTest) {
   .WillOnce(Return(ltile2.release()));
 
   RunTest(executor, tile_size*3);
-
-
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 }
 
 }

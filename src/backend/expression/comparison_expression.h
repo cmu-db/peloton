@@ -61,7 +61,7 @@ class ComparisonExpression : public AbstractExpression {
   };
 
   inline Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-                        ExpressionContext* ec) const {
+                        executor::ExecutorContext* ec) const {
     assert(m_left != NULL);
     assert(m_right != NULL);
 
@@ -102,7 +102,7 @@ class InlinedComparisonExpression : public AbstractExpression {
     assert (m_rightTyped != NULL);
   };
 
-  inline Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2, ExpressionContext* ec ) const {
+  inline Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2, executor::ExecutorContext *ec) const {
     return this->compare.cmp(this->left_expr->Evaluate(tuple1, tuple2, ec), this->right_expr->Evaluate(tuple1, tuple2, ec));
   }
 

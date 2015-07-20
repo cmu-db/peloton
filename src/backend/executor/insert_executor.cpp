@@ -26,8 +26,8 @@ namespace executor {
  * @param node Insert node corresponding to this executor.
  */
 InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
-                               concurrency::Transaction *transaction)
-: AbstractExecutor(node, transaction) {
+                               ExecutorContext *executor_context)
+: AbstractExecutor(node, executor_context) {
 }
 
 /**
@@ -36,7 +36,7 @@ InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
  */
 bool InsertExecutor::DInit() {
   assert(children_.size() == 0 || children_.size() == 1);
-  assert(transaction_);
+  assert(executor_context_);
 
   return true;
 }
@@ -49,6 +49,7 @@ bool InsertExecutor::DExecute() {
 
   const planner::InsertNode &node = GetPlanNode<planner::InsertNode>();
   storage::DataTable *target_table = node.GetTable();
+  auto transaction_ = executor_context_->GetTransaction();
 
   // Inserting a logical tile.
   if (children_.size() == 1) {
