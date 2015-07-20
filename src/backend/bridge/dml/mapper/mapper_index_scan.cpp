@@ -41,7 +41,7 @@ static void BuildScanKey(const ScanKey scan_keys, int num_keys,
  * @return Pointer to the constructed AbstractPlanNode.
  */
 planner::AbstractPlanNode* PlanTransformer::TransformIndexScan(
-    const IndexScanState* iss_plan_state, const ValueArray &params) {
+    const IndexScanState* iss_plan_state) {
   /* info needed to initialize plan node */
   planner::IndexScanNode::IndexScanDesc index_scan_desc;
   /* Resolve target relation */
@@ -162,7 +162,7 @@ static void BuildScanKey(const ScanKey scan_keys, int num_keys, planner::IndexSc
  * @return Pointer to the constructed AbstractPlanNode.
  */
 planner::AbstractPlanNode* PlanTransformer::TransformIndexOnlyScan(
-    const IndexOnlyScanState* ioss_plan_state, const ValueArray &params) {
+    const IndexOnlyScanState* ioss_plan_state) {
   /* info needed to initialize plan node */
   planner::IndexScanNode::IndexScanDesc index_scan_desc;
 
