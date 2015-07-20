@@ -13,6 +13,7 @@
 #include "plan_executor.h"
 #include <cassert>
 
+#include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/dml/tuple/tuple_transformer.h"
 #include "backend/common/logger.h"
 #include "backend/concurrency/transaction_manager.h"
@@ -28,6 +29,7 @@ namespace bridge {
 
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               planner::AbstractPlanNode *plan,
+                                              PlanState *planstate,
                                               concurrency::Transaction *txn);
 
 void CleanExecutorTree(executor::AbstractExecutor *root);
@@ -62,6 +64,7 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlanNode *plan, std::string 
  */
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               planner::AbstractPlanNode *plan,
+                                              PlanState *planstate,
                                               concurrency::Transaction *txn) {
   // Base case
   if(plan == nullptr)
@@ -70,7 +73,14 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
   executor::AbstractExecutor *child_executor = nullptr;
 
   // TODO: Set params
-  executor::ExecutorContext *executor_context = new executor::ExecutorContext(txn);
+  assert(planstate);
+  assert(planstate->state);
+
+  const ParamListInfo param_list = planstate->state->es_param_list_info;
+  ValueArray params = PlanTransformer::BuildParams(param_list);
+
+  executor::ExecutorContext *executor_context = new executor::ExecutorContext(txn,
+                                                                              params);
 
   auto plan_node_type = plan->GetPlanNodeType();
   switch(plan_node_type) {
@@ -118,7 +128,7 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
   // Recurse
   auto children = plan->GetChildren();
   for(auto child : children) {
-    child_executor = BuildExecutorTree(child_executor, child, txn);
+    child_executor = BuildExecutorTree(child_executor, child, planstate, txn);
   }
 
   return root;
@@ -175,6 +185,7 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(executor::AbstractE
  * @return status of execution.
  */
 bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
+                               PlanState *planstate,
                                TupleDesc tuple_desc,
                                Peloton_Status *pstatus,
                                TransactionId txn_id) {
@@ -200,6 +211,7 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   // Build the executor tree
   executor::AbstractExecutor *executor_tree = BuildExecutorTree(nullptr,
                                                                 plan,
+                                                                planstate,
                                                                 txn);
   // Add materialization if the root if seqscan or limit
   executor_tree = AddMaterialization(executor_tree);
