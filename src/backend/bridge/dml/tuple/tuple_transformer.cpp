@@ -78,7 +78,10 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
 
     case POSTGRES_VALUE_TYPE_TEXT:
     {
-
+      char * text = DatumGetCString(datum);
+      Pool *data_pool = nullptr;
+      LOG_INFO("%s\n", text);
+      value = ValueFactory::GetStringValue(text, data_pool);
     }
     break;
 
