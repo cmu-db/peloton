@@ -133,7 +133,9 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
   }
   else if(const_expr->constlen == -1) {
     LOG_INFO("Probably handing a string constant \n");
-    value = TupleTransformer::GetValue(reinterpret_cast<Datum>(reinterpret_cast<struct varlena*>(const_expr->constvalue)->vl_dat),
+//    value = TupleTransformer::GetValue(reinterpret_cast<Datum>(reinterpret_cast<struct varlena*>(const_expr->constvalue)->vl_dat),
+//                                       const_expr->consttype);
+    value = TupleTransformer::GetValue(const_expr->constvalue,
                                        const_expr->consttype);
   }
   else {
