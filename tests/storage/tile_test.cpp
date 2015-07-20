@@ -58,10 +58,6 @@ TEST(TileTests, BasicTest) {
 													  	  header, backend, *schema, nullptr, tuple_count);
 
 
-	//std::cout << "tile size: " << tile->GetInlinedSize() << std::endl;
-	//std::cout << "allocated tuple count: " << tile->GetAllocatedTupleCount() << std::endl;
-
-
 	storage::Tuple *tuple1 = new storage::Tuple(schema, true);
 	storage::Tuple *tuple2 = new storage::Tuple(schema, true);
 	storage::Tuple *tuple3 = new storage::Tuple(schema, true);
@@ -98,7 +94,6 @@ TEST(TileTests, BasicTest) {
 	/*
 	 * Print details of old tile
 	 */
-
 	const catalog::Schema *old_schema;
 	bool old_tile_is_inlined;
 	uint16_t old_tile_allocated_tuple_count, old_tile_active_tuple_count;
@@ -148,9 +143,6 @@ TEST(TileTests, BasicTest) {
 											  new_header, new_backend, *new_schema, nullptr, old_tile_allocated_tuple_count);
 	Pool *new_pool = new_tile->GetPool();
 
-	//::memcpy(new_pool,old_pool,old_pool_size);
-	//::memcpy(static_cast<void *>(new_tile), static_cast<void *>(tile), old_tile_size);
-
 	storage::Tuple *old_tuple;
 
 	for(int old_tup_itr=0; old_tup_itr<old_tile_active_tuple_count; old_tup_itr++)
@@ -164,8 +156,6 @@ TEST(TileTests, BasicTest) {
 	/*
 	 * Print details of new tile
 	 */
-
-
 	bool new_tile_is_inlined;
 	uint16_t new_tile_allocated_tuple_count, new_tile_active_tuple_count;
 	uint32_t new_tile_size;
@@ -204,32 +194,10 @@ TEST(TileTests, BasicTest) {
 	std::cout << "In case some columns are not inlined" << std:: endl;
 	std::cout << "------------------------------------" << std:: endl;
 
-	//std::cout << (*new_tile);
-
-	/*
-	 * Iterate over the tile and print the tuples
-	 */
-	//storage::TileIterator tile_itr(new_tile);
-	//storage::Tuple *new_tuple = new storage::Tuple(old_schema, true);
-	//storage::Tuple& new_tuple_ref = *new_tuple;
-
-/*
-	while(tile_itr.Next(new_tuple_ref) == true)
-	{
-		std::cout << (new_tuple_ref);
-		tile_itr++;
-	}
-*/
-
-
 
 	if(!new_tile_is_inlined)
 	{
-		//int col_cnt = old_schema->GetColumnCount();
-		//std::cout << "total column count: " << col_cnt << std::endl;
-
 		int uninlined_col_cnt = new_schema->GetUninlinedColumnCount();
-		//std::cout << "uninlined column count: " << uninlined_col_cnt << std::endl;
 
 		int uninlined_col_index;
 		Value uninlined_col_value, new_uninlined_col_value;
@@ -238,15 +206,15 @@ TEST(TileTests, BasicTest) {
 		for(int col_itr=0; col_itr<uninlined_col_cnt; col_itr++) {
 
 			uninlined_col_index = new_schema->GetUninlinedColumnIndex(col_itr);
-			std::cout << "----------------------------------" << std::endl;
-			std::cout << "index of next uninlined column: " << uninlined_col_index << std::endl;
-			std::cout << "----------------------------------" << std::endl  << std::endl;
+			std::cout << " ----------------------------------" << std::endl;
+			std::cout << " index of next uninlined column: " << uninlined_col_index << std::endl;
+			std::cout << " ----------------------------------" << std::endl << std::endl;
 
 			for(int tup_itr=0; tup_itr<new_tile_active_tuple_count; tup_itr++) {
 
-				std::cout << "\t -----------------------------------------------------" + tup_itr << std::endl;
-				std::cout << "\t Before associating new pool to new data for tuple: " + tup_itr << std::endl;
-				std::cout << "\t -----------------------------------------------------" + tup_itr << std::endl;
+				std::cout << "\t -----------------------------------------------------" << std::endl;
+				std::cout << "\t Before associating new pool to new data for tuple: " << tup_itr << std::endl;
+				std::cout << "\t -----------------------------------------------------" << std::endl;
 
 				new_tuple = new_tile->GetTuple(tup_itr);
 				std::cout << "\t address of new_tuple: " << static_cast<void *>(new_tuple) << std::endl << std::endl;
@@ -263,20 +231,16 @@ TEST(TileTests, BasicTest) {
 				std::string uninlined_varchar_str(reinterpret_cast<char const*>(uninlined_col_object_ptr), uninlined_col_object_len);
 				std::cout << "\t the data stored uninlined is: " << uninlined_varchar_str << std::endl << std::endl;
 
-				//char *xyz = new_tuple->GetData();
-				//tile->GetValue(tup_itr,next_uninlined_col_index);
 
-				// std::string copy_uninlined_varchar_str;
 				// Create a new Value object with the uninlined string w.r.t. the new pool
 				Value new_val = ValueFactory::GetStringValue(uninlined_varchar_str, new_pool);
 				// Set the newly created value object to the tuple
-				// new_tuple->SetValue(uninlined_col_index, uninlined_col_value);
 				new_tile->SetValue(new_val, tup_itr, uninlined_col_index);
 
 
-				std::cout << "\t ---------------------------------------------" + tup_itr << std::endl;
-				std::cout << "\t Associated new pool to new data for tuple: " + tup_itr << std::endl;
-				std::cout << "\t ---------------------------------------------" + tup_itr << std::endl;
+				std::cout << "\t ---------------------------------------------" << std::endl;
+				std::cout << "\t Associated new pool to new data for tuple: " << tup_itr << std::endl;
+				std::cout << "\t ---------------------------------------------" << std::endl;
 
 				new_uninlined_col_value = new_tile->GetValue(tup_itr,uninlined_col_index);
 				std::cout << "\t new uninlined column value: " << new_uninlined_col_value << std::endl;
@@ -294,17 +258,6 @@ TEST(TileTests, BasicTest) {
 
 		delete new_tuple;
 	}
-
-	if(tile==new_tile)
-			std::cout << "old and new tiles are the same ..." << std::endl;
-
-	std::string str1 = "hello world";
-	std::string str2 = str1;
-
-	std::cout << "add of str1: " << &str1 << std::endl;
-	std::cout << "add of str2: " << &str2 << std::endl;
-
-
 
 
 	delete tuple1;
