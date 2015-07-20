@@ -146,7 +146,7 @@ bool NestedLoopJoinExecutor::DExecute() {
                 expression::ContainerTuple<executor::LogicalTile> right_tuple(right_tile.get(), right_tile_row_itr);
 
                 // Join predicate is false. Skip pair and continue.
-                if(predicate_->Evaluate(&left_tuple, &right_tuple).IsFalse()) {
+                if(predicate_->Evaluate(&left_tuple, &right_tuple, executor_context_).IsFalse()) {
                     continue;
                 }
             }
