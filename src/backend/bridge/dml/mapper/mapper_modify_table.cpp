@@ -36,24 +36,24 @@ TransformTargetList(List* target_list, oid_t column_count);
  * Basically, it multiplexes into helper methods based on operation type.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
-    const ModifyTableState *mt_plan_state, const ValueArray &params) {
+    const ModifyTableState *mt_plan_state) {
 
   ModifyTable *plan = (ModifyTable *) mt_plan_state->ps.plan;
 
   switch (plan->operation) {
     case CMD_INSERT:
       LOG_INFO("CMD_INSERT");
-      return PlanTransformer::TransformInsert(mt_plan_state, params);
+      return PlanTransformer::TransformInsert(mt_plan_state);
       break;
 
     case CMD_UPDATE:
       LOG_INFO("CMD_UPDATE");
-      return PlanTransformer::TransformUpdate(mt_plan_state, params);
+      return PlanTransformer::TransformUpdate(mt_plan_state);
       break;
 
     case CMD_DELETE:
       LOG_INFO("CMD_DELETE");
-      return PlanTransformer::TransformDelete(mt_plan_state, params);
+      return PlanTransformer::TransformDelete(mt_plan_state);
       break;
 
     default:
@@ -69,7 +69,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
  * @return Pointer to the constructed AbstractPlanNode.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformInsert(
-    const ModifyTableState *mt_plan_state, const ValueArray &params) {
+    const ModifyTableState *mt_plan_state) {
+
+  planner::AbstractPlanNode *plan_node = nullptr;
 
   /* Resolve result table */
   ResultRelInfo *result_rel_info = mt_plan_state->resultRelInfo;
@@ -100,8 +102,6 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
 
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
 
-  std::vector<storage::Tuple *> tuples;
-
   /*
    * We absorb the child of Insert to avoid
    * creating a child that returns just a tuple.
@@ -114,35 +114,22 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     assert(outerPlanState(result_ps) == nullptr); /* We only handle single-constant-tuple for now,
      i.e., ResultState should have no children/sub plans */
 
-    auto tuple = new storage::Tuple(schema, true);
-    auto proj_list = TransformTargetList(
+    auto projs = TransformTargetList(
         result_ps->ps.ps_ProjInfo->pi_targetlist, schema->GetColumnCount());
 
-    for (auto proj : proj_list) {
-      proj.second->Substitute(params);
-      Value value = proj.second->Evaluate(nullptr, nullptr);  // Constant is expected
-      std::cout << "Value = " << value << "\n";
-      tuple->SetValue(proj.first, value);
-    }
-
-    LOG_INFO("Tuple (pl) to insert:");
-    std::cout << *tuple << std::endl;
-
-    // TODO Who's responsible for freeing the tuple?
-    tuples.push_back(tuple);
+    plan_node = new planner::InsertNode(target_table, projs);
 
   } else {
     LOG_ERROR("Unsupported child type of Insert: %u",
               nodeTag(sub_planstate->plan));
   }
 
-  auto plan_node = new planner::InsertNode(target_table, tuples);
 
   return plan_node;
 }
 
 planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
-    const ModifyTableState* mt_plan_state, const ValueArray &params) {
+    const ModifyTableState* mt_plan_state) {
 
   /*
    * NOTE:
@@ -221,7 +208,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
  * So we don't need to handle predicates locally .
  */
 planner::AbstractPlanNode* PlanTransformer::TransformDelete(
-    const ModifyTableState* mt_plan_state, const ValueArray &params) {
+    const ModifyTableState* mt_plan_state) {
 
   // Grab Database ID and Table ID
   assert(mt_plan_state->resultRelInfo);  // Input must come from a subplan
