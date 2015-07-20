@@ -53,6 +53,8 @@ void InsertTuple(storage::DataTable *table){
 
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
 
   std::vector<storage::Tuple *> tuples;
 
@@ -63,7 +65,7 @@ void InsertTuple(storage::DataTable *table){
 
   // Bulk insert
   planner::InsertNode node(table, tuples);
-  executor::InsertExecutor executor(&node, txn);
+  executor::InsertExecutor executor(&node, context.get());
   executor.Execute();
 
   for(auto tuple : tuples) {
@@ -78,6 +80,8 @@ void UpdateTuple(storage::DataTable *table){
 
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
 
   std::vector<storage::Tuple *> tuples;
 
@@ -89,7 +93,7 @@ void UpdateTuple(storage::DataTable *table){
   values.push_back(update_val);
 
   planner::UpdateNode update_node(table, update_column_ids, values);
-  executor::UpdateExecutor update_executor(&update_node, txn);
+  executor::UpdateExecutor update_executor(&update_node, context.get());
 
   // Predicate
 
@@ -107,7 +111,7 @@ void UpdateTuple(storage::DataTable *table){
       table,
       predicate,
       column_ids);
-  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, txn);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
   // Parent-Child relationship
   update_node.AddChild(&seq_scan_node);
@@ -123,12 +127,14 @@ void DeleteTuple(storage::DataTable *table){
 
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
 
   std::vector<storage::Tuple *> tuples;
 
   // Delete
   planner::DeleteNode delete_node(table, false);
-  executor::DeleteExecutor delete_executor(&delete_node, txn);
+  executor::DeleteExecutor delete_executor(&delete_node, context.get());
 
   // Predicate
 
@@ -146,7 +152,7 @@ void DeleteTuple(storage::DataTable *table){
       table,
       predicate,
       column_ids);
-  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, txn);
+  executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
   // Parent-Child relationship
   delete_node.AddChild(&seq_scan_node);
@@ -161,7 +167,10 @@ void DeleteTuple(storage::DataTable *table){
 TEST(MutateTests, StressTests) {
 
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto context = txn_manager.BeginTransaction();
+  auto txn = txn_manager.BeginTransaction();
+
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
 
   // Create insert node for this test.
   storage::DataTable *table = ExecutorTestsUtil::CreateTable();
@@ -173,7 +182,7 @@ TEST(MutateTests, StressTests) {
   tuple = ExecutorTestsUtil::GetNullTuple(table);
   tuples.push_back(tuple);
   planner::InsertNode node(table, tuples);
-  executor::InsertExecutor executor(&node, context);
+  executor::InsertExecutor executor(&node, context.get());
 
   try{
     executor.Execute();
@@ -189,7 +198,7 @@ TEST(MutateTests, StressTests) {
   tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
   tuples.push_back(tuple);
   planner::InsertNode node2(table, tuples);
-  executor::InsertExecutor executor2(&node2, context);
+  executor::InsertExecutor executor2(&node2, context.get());
   executor2.Execute();
 
   try{
@@ -203,7 +212,7 @@ TEST(MutateTests, StressTests) {
   delete tuple;
   tuples.clear();
 
-  txn_manager.CommitTransaction(context);
+  txn_manager.CommitTransaction(txn);
 
   std::cout << "Start tests \n";
 
@@ -266,6 +275,8 @@ TEST(MutateTests, InsertTest) {
 
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
 
   // We are going to insert a tile group into a table in this test
   std::unique_ptr<storage::DataTable> source_data_table(ExecutorTestsUtil::CreateAndPopulateTable());
@@ -276,7 +287,7 @@ TEST(MutateTests, InsertTest) {
   EXPECT_EQ(dest_data_table->GetTileGroupCount(), 1);
 
   planner::InsertNode node(dest_data_table.get(), tuples);
-  executor::InsertExecutor executor(&node, txn);
+  executor::InsertExecutor executor(&node, context.get());
 
   MockExecutor child_executor;
   executor.AddChild(&child_executor);

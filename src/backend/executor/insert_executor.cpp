@@ -26,8 +26,8 @@ namespace executor {
  * @param node Insert node corresponding to this executor.
  */
 InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
-                               concurrency::Transaction *transaction)
-: AbstractExecutor(node, transaction) {
+                               ExecutorContext *executor_context)
+: AbstractExecutor(node, executor_context) {
 }
 
 /**
@@ -36,7 +36,7 @@ InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
  */
 bool InsertExecutor::DInit() {
   assert(children_.size() == 0 || children_.size() == 1);
-  assert(transaction_);
+  assert(executor_context_);
 
   return true;
 }
@@ -49,6 +49,7 @@ bool InsertExecutor::DExecute() {
 
   const planner::InsertNode &node = GetPlanNode<planner::InsertNode>();
   storage::DataTable *target_table = node.GetTable();
+  auto transaction_ = executor_context_->GetTransaction();
 
   // Inserting a logical tile.
   if (children_.size() == 1) {
@@ -76,7 +77,6 @@ bool InsertExecutor::DExecute() {
     storage::TileIterator tile_iterator = physical_tile->GetIterator();
     storage::Tuple tuple(physical_tile->GetSchema());
 
-    // Finally, Insert given tuples into table
     while (tile_iterator.Next(tuple)) {
       ItemPointer location = target_table->InsertTuple(transaction_->GetTransactionId(), &tuple);
       if (location.block == INVALID_OID) {
@@ -95,19 +95,29 @@ bool InsertExecutor::DExecute() {
 
     LOG_TRACE("Insert executor :: 0 child \n");
 
-    // Insert given tuples into table
-    auto tuples = node.GetTuples();
+    // Extract expressions from plan node and construct the tuple.
+    // For now we just handle a single tuple
+    auto schema = target_table->GetSchema();
+    std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
+    auto projs = node.GetProjs();
 
-    for (auto tuple : tuples) {
-      ItemPointer location = target_table->InsertTuple(transaction_->GetTransactionId(), tuple);
-      if (location.block == INVALID_OID) {
-        auto& txn_manager = concurrency::TransactionManager::GetInstance();
-        txn_manager.AbortTransaction(transaction_);
-        transaction_->SetStatus(ResultType::RESULT_TYPE_FAILURE);
-        return false;
-      }
-      transaction_->RecordInsert(location);
+    for(auto proj : projs) {
+      peloton::Value value = proj.second->Evaluate(nullptr, nullptr, executor_context_);
+      tuple->SetValue(proj.first, value);
     }
+
+    LOG_INFO("Tuple (pl) to insert : ");
+    std::cout << *tuple << std::endl;
+
+    // Carry out insertion
+    ItemPointer location = target_table->InsertTuple(transaction_->GetTransactionId(), tuple.get());
+    if (location.block == INVALID_OID) {
+      auto& txn_manager = concurrency::TransactionManager::GetInstance();
+      txn_manager.AbortTransaction(transaction_);
+      transaction_->SetStatus(ResultType::RESULT_TYPE_FAILURE);
+      return false;
+    }
+    transaction_->RecordInsert(location);
 
     return true;
   }
