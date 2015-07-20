@@ -16,10 +16,10 @@
 
 
 namespace peloton {
-namespace expression {
+namespace executor {
 
 /**
- * TODO: Move this class to a separate directory?
+ * TODO: Under Construction.
  */
 class Projection {
 
