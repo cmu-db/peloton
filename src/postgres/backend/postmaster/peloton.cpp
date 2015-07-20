@@ -936,6 +936,7 @@ peloton_process_dml(Peloton_MsgDML *msg)
     if(plan){
       /* Execute the plantree */
       peloton::bridge::PlanExecutor::ExecutePlan(plan,
+                                                 planstate,
                                                  msg->m_tuple_desc,
                                                  msg->m_status,
                                                  txn_id);
