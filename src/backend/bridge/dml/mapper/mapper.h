@@ -44,17 +44,19 @@ class PlanTransformer {
   /* TODO: Is this a good place to have the function? */
   static bool CleanPlanNodeTree(planner::AbstractPlanNode *root);
 
+  static const ValueArray BuildParams(const ParamListInfo param_list);
+
  private:
 
-  static planner::AbstractPlanNode *TransformModifyTable(const ModifyTableState *plan_state, const ValueArray &params);
+  static planner::AbstractPlanNode *TransformModifyTable(const ModifyTableState *plan_state);
 
-  static planner::AbstractPlanNode *TransformInsert(const ModifyTableState *plan_state, const ValueArray &params);
-  static planner::AbstractPlanNode *TransformUpdate(const ModifyTableState *plan_state, const ValueArray &params);
-  static planner::AbstractPlanNode *TransformDelete(const ModifyTableState *plan_state, const ValueArray &params);
+  static planner::AbstractPlanNode *TransformInsert(const ModifyTableState *plan_state);
+  static planner::AbstractPlanNode *TransformUpdate(const ModifyTableState *plan_state);
+  static planner::AbstractPlanNode *TransformDelete(const ModifyTableState *plan_state);
 
-  static planner::AbstractPlanNode *TransformSeqScan(const SeqScanState *plan_state, const ValueArray &params);
-  static planner::AbstractPlanNode *TransformIndexScan(const IndexScanState *plan_state, const ValueArray &params);
-  static planner::AbstractPlanNode *TransformIndexOnlyScan(const IndexOnlyScanState *plan_state, const ValueArray &params);
+  static planner::AbstractPlanNode *TransformSeqScan(const SeqScanState *plan_state);
+  static planner::AbstractPlanNode *TransformIndexScan(const IndexScanState *plan_state);
+  static planner::AbstractPlanNode *TransformIndexOnlyScan(const IndexOnlyScanState *plan_state);
 
   static planner::AbstractPlanNode *TransformLimit(const LimitState *plan_state);
   static planner::AbstractPlanNode *TransformResult(const ResultState *plan_state);

@@ -79,9 +79,7 @@ TEST(OrderByTests, IntAscTest){
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::OrderByExecutor executor(&node, txn);
+  executor::OrderByExecutor executor(&node);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -111,8 +109,6 @@ TEST(OrderByTests, IntAscTest){
 
   RunTest(executor, tile_size*2, sort_keys, descend_flags);
 
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
   delete backend;
 }
 
@@ -125,9 +121,7 @@ TEST(OrderByTests, IntDescTest){
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::OrderByExecutor executor(&node, txn);
+  executor::OrderByExecutor executor(&node);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -157,8 +151,6 @@ TEST(OrderByTests, IntDescTest){
 
   RunTest(executor, tile_size*2, sort_keys, descend_flags);
 
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
   delete backend;
 }
 
@@ -171,9 +163,7 @@ TEST(OrderByTests, StringDescTest){
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::OrderByExecutor executor(&node, txn);
+  executor::OrderByExecutor executor(&node);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -203,8 +193,6 @@ TEST(OrderByTests, StringDescTest){
 
   RunTest(executor, tile_size*2, sort_keys, descend_flags);
 
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
   delete backend;
 }
 
@@ -217,9 +205,7 @@ TEST(OrderByTests, IntAscStringDescTest){
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::OrderByExecutor executor(&node, txn);
+  executor::OrderByExecutor executor(&node);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -249,8 +235,6 @@ TEST(OrderByTests, IntAscStringDescTest){
 
   RunTest(executor, tile_size*2, sort_keys, descend_flags);
 
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
   delete backend;
 }
 
@@ -266,9 +250,7 @@ TEST(OrderByTests, StringDescIntAscTest){
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  executor::OrderByExecutor executor(&node, txn);
+  executor::OrderByExecutor executor(&node);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -298,8 +280,6 @@ TEST(OrderByTests, StringDescIntAscTest){
 
   RunTest(executor, tile_size*2, sort_keys, descend_flags);
 
-  txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
   delete backend;
 }
 
