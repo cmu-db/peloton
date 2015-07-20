@@ -66,7 +66,6 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
      * VARSIZE(ptr), VARDATA(ptr) and VARHDRSZ.
      * NB1: VARSIZE(ptr) is the size of the meat PLUS the header.
      * NB2: DON'T assume strings have terminating-null's.
-     * NB3: Seems it's a bit different for TEXT?
      */
     case POSTGRES_VALUE_TYPE_BPCHAR:
     {
@@ -95,10 +94,13 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
 
     case POSTGRES_VALUE_TYPE_TEXT:
     {
-      char * text = DatumGetCString(datum);
-      Pool *data_pool = nullptr;
-      LOG_INFO("%s\n", text);
-      value = ValueFactory::GetStringValue(text, data_pool);
+      struct varlena* textptr = reinterpret_cast<struct varlena*>(datum);
+      int len = VARSIZE(textptr) - VARHDRSZ;
+      char* varchar = static_cast<char *>(VARDATA(textptr));
+      Pool* data_pool = nullptr;
+      std::string str(varchar, len);
+      LOG_INFO("VARSIZE = %d , text = \"%s\"", len, str.c_str());
+      value = ValueFactory::GetStringValue(str, data_pool);
     }
     break;
 
