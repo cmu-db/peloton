@@ -25,8 +25,8 @@ namespace executor {
  * @param node Update node corresponding to this executor.
  */
 UpdateExecutor::UpdateExecutor(planner::AbstractPlanNode *node,
-                               concurrency::Transaction *context)
-    : AbstractExecutor(node, context) {
+                               ExecutorContext *executor_context)
+    : AbstractExecutor(node, executor_context) {
 }
 
 /**
@@ -44,7 +44,7 @@ bool UpdateExecutor::DInit() {
  */
 bool UpdateExecutor::DExecute() {
     assert(children_.size() == 1);
-    assert(transaction_);
+    assert(executor_context_);
 
     // We are scanning over a logical tile.
     LOG_TRACE("Update executor :: 1 child \n");
@@ -58,6 +58,7 @@ bool UpdateExecutor::DExecute() {
     auto& pos_lists = source_tile.get()->GetPositionLists();
     storage::Tile *tile = source_tile->GetBaseTile(0);
     storage::TileGroup *tile_group = tile->GetTileGroup();
+    auto transaction_ = executor_context_->GetTransaction();
 
     auto tile_group_id = tile_group->GetTileGroupId();
     auto txn_id = transaction_->GetTransactionId();

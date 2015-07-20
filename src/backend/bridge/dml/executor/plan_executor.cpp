@@ -10,10 +10,10 @@
  *-------------------------------------------------------------------------
  */
 
-#include "executor.h"
-
+#include "plan_executor.h"
 #include <cassert>
 
+#include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/dml/tuple/tuple_transformer.h"
 #include "backend/common/logger.h"
 #include "backend/concurrency/transaction_manager.h"
@@ -29,6 +29,7 @@ namespace bridge {
 
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               planner::AbstractPlanNode *plan,
+                                              PlanState *planstate,
                                               concurrency::Transaction *txn);
 
 void CleanExecutorTree(executor::AbstractExecutor *root);
@@ -63,12 +64,23 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlanNode *plan, std::string 
  */
 executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               planner::AbstractPlanNode *plan,
+                                              PlanState *planstate,
                                               concurrency::Transaction *txn) {
   // Base case
   if(plan == nullptr)
     return root;
 
   executor::AbstractExecutor *child_executor = nullptr;
+
+  // TODO: Set params
+  assert(planstate);
+  assert(planstate->state);
+
+  const ParamListInfo param_list = planstate->state->es_param_list_info;
+  ValueArray params = PlanTransformer::BuildParams(param_list);
+
+  executor::ExecutorContext *executor_context = new executor::ExecutorContext(txn,
+                                                                              params);
 
   auto plan_node_type = plan->GetPlanNodeType();
   switch(plan_node_type) {
@@ -77,27 +89,27 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       break;
 
     case PLAN_NODE_TYPE_SEQSCAN:
-      child_executor = new executor::SeqScanExecutor(plan, txn);
+      child_executor = new executor::SeqScanExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_INDEXSCAN:
-      child_executor = new executor::IndexScanExecutor(plan, txn);
+      child_executor = new executor::IndexScanExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_INSERT:
-      child_executor = new executor::InsertExecutor(plan, txn);
+      child_executor = new executor::InsertExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_DELETE:
-      child_executor = new executor::DeleteExecutor(plan, txn);
+      child_executor = new executor::DeleteExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_UPDATE:
-      child_executor = new executor::UpdateExecutor(plan, txn);
+      child_executor = new executor::UpdateExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_LIMIT:
-      child_executor = new executor::LimitExecutor(plan, txn);
+      child_executor = new executor::LimitExecutor(plan);
       break;
 
     default:
@@ -116,7 +128,7 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
   // Recurse
   auto children = plan->GetChildren();
   for(auto child : children) {
-    child_executor = BuildExecutorTree(child_executor, child, txn);
+    child_executor = BuildExecutorTree(child_executor, child, planstate, txn);
   }
 
   return root;
@@ -173,6 +185,7 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(executor::AbstractE
  * @return status of execution.
  */
 bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
+                               PlanState *planstate,
                                TupleDesc tuple_desc,
                                Peloton_Status *pstatus,
                                TransactionId txn_id) {
@@ -198,6 +211,7 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   // Build the executor tree
   executor::AbstractExecutor *executor_tree = BuildExecutorTree(nullptr,
                                                                 plan,
+                                                                planstate,
                                                                 txn);
   // Add materialization if the root if seqscan or limit
   executor_tree = AddMaterialization(executor_tree);
