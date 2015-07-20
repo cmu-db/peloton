@@ -55,7 +55,7 @@ bool DDLTransaction::ExecTransactionStmt(TransactionStmt* stmt,
         txn_manager.CommitTransaction(txn);
       }
       else {
-        LOG_WARN("Could not find peloton txn : %lu \n", txn->GetTransactionId());
+        LOG_WARN("Could not find peloton txn : %u \n", txn_id);
       }
     }
     break;
@@ -68,7 +68,7 @@ bool DDLTransaction::ExecTransactionStmt(TransactionStmt* stmt,
         txn_manager.AbortTransaction(txn);
       }
       else {
-        LOG_WARN("Could not find peloton txn : %lu \n", txn->GetTransactionId());
+        LOG_WARN("Could not find peloton txn : %u \n", txn_id);
       }
     }
     break;
