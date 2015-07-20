@@ -57,31 +57,50 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     }
     break;
 
+    /*
+     * In PG, BPCHAR and VARCHAR and TEXT are represented using
+     * 'struct varlena',
+     * which is a 4-byte header followed by the meat.
+     * However, the 4-byte header should not be accessed directly.
+     * It should be used in MACROS:
+     * VARSIZE(ptr), VARDATA(ptr) and VARHDRSZ.
+     * NB1: VARSIZE(ptr) is the size of the meat PLUS the header.
+     * NB2: DON'T assume strings have terminating-null's.
+     */
     case POSTGRES_VALUE_TYPE_BPCHAR:
     {
-      char *character = DatumGetCString(datum);
-      Pool *data_pool = nullptr;
-      LOG_INFO("%s\n", character);
-      value = ValueFactory::GetStringValue(character, data_pool);
+      struct varlena* bpcharptr = reinterpret_cast<struct varlena*>(datum);
+      int len = VARSIZE(bpcharptr) - VARHDRSZ;
+      char* varchar = static_cast<char *>(VARDATA(bpcharptr));
+      Pool* data_pool = nullptr;
+      std::string str(varchar, len);
+      LOG_INFO("VARSIZE = %d , bpchar = \"%s\"", len, str.c_str());
+      value = ValueFactory::GetStringValue(str, data_pool);
+
     }
     break;
 
     case POSTGRES_VALUE_TYPE_VARCHAR2:
     {
-      char * varlen_character = DatumGetCString(datum);
-      Pool *data_pool = nullptr;
-      LOG_INFO("%s\n", varlen_character);
-      value = ValueFactory::GetStringValue(varlen_character,
-                                           data_pool);
+      struct varlena* varlenptr = reinterpret_cast<struct varlena*>(datum);
+      int len = VARSIZE(varlenptr) - VARHDRSZ;
+      char* varchar = static_cast<char *>(VARDATA(varlenptr));
+      Pool* data_pool = nullptr;
+      std::string str(varchar, len);
+      LOG_INFO("VARSIZE = %d , varchar = \"%s\"", len, str.c_str());
+      value = ValueFactory::GetStringValue(str, data_pool);
     }
     break;
 
     case POSTGRES_VALUE_TYPE_TEXT:
     {
-      char * text = DatumGetCString(datum);
-      Pool *data_pool = nullptr;
-      LOG_INFO("%s\n", text);
-      value = ValueFactory::GetStringValue(text, data_pool);
+      struct varlena* textptr = reinterpret_cast<struct varlena*>(datum);
+      int len = VARSIZE(textptr) - VARHDRSZ;
+      char* varchar = static_cast<char *>(VARDATA(textptr));
+      Pool* data_pool = nullptr;
+      std::string str(varchar, len);
+      LOG_INFO("VARSIZE = %d , text = \"%s\"", len, str.c_str());
+      value = ValueFactory::GetStringValue(str, data_pool);
     }
     break;
 

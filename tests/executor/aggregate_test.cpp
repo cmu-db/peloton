@@ -83,8 +83,10 @@ TEST(AggregateTests, DistinctTest){
   // Create and set up executor
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
 
-  executor::AggregateExecutor executor(&node, txn);
+  executor::AggregateExecutor executor(&node, context.get());
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -159,8 +161,10 @@ TEST(AggregateTests, GroupByTest){
   // Create and set up executor
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
 
-  executor::AggregateExecutor executor(&node, txn);
+  executor::AggregateExecutor executor(&node, context.get());
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -241,8 +245,10 @@ TEST(AggregateTests, AggregateTest){
   // Create and set up executor
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
 
-  executor::AggregateExecutor executor(&node, txn);
+  executor::AggregateExecutor executor(&node, context.get());
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 

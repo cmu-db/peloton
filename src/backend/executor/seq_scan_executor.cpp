@@ -33,8 +33,9 @@ namespace executor {
  * @brief Constructor for seqscan executor.
  * @param node Seqscan node corresponding to this executor.
  */
-SeqScanExecutor::SeqScanExecutor(planner::AbstractPlanNode *node, concurrency::Transaction *transaction)
-: AbstractExecutor(node, transaction) {
+SeqScanExecutor::SeqScanExecutor(planner::AbstractPlanNode *node,
+                                 ExecutorContext *executor_context)
+: AbstractExecutor(node, executor_context) {
 }
 
 /**
@@ -106,6 +107,7 @@ bool SeqScanExecutor::DExecute() {
 
     storage::TileGroup *tile_group = table_->GetTileGroup(current_tile_group_id_++);
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
+    auto transaction_ = executor_context_->GetTransaction();
     txn_id_t txn_id = transaction_->GetTransactionId();
     cid_t commit_id = transaction_->GetLastCommitId();
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
