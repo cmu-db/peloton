@@ -14,12 +14,9 @@ namespace executor {
  * @brief Constructor for AbstractExecutor.
  * @param node Abstract plan node corresponding to this executor.
  */
-AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node)
-: node_(node) {
-}
-
-AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node, concurrency::Transaction *transaction)
-: transaction_(transaction), node_(node) {
+AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node,
+                                   ExecutorContext *executor_context)
+: node_(node), executor_context_(executor_context) {
 }
 
 void AbstractExecutor::SetOutput(LogicalTile* table) {

@@ -68,11 +68,16 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
 
     case POSTGRES_VALUE_TYPE_VARCHAR2:
     {
-      char * varlen_character = DatumGetCString(datum);
-      Pool *data_pool = nullptr;
-      LOG_INFO("%s\n", varlen_character);
-      value = ValueFactory::GetStringValue(varlen_character,
-                                           data_pool);
+      /*
+       * See 'struct varlena' in 'c.h'
+       */
+      struct varlena* varlenptr = reinterpret_cast<struct varlena*>(datum);
+      int len = VARSIZE(varlenptr) - VARHDRSZ;
+      char* varchar = static_cast<char *>(VARDATA(varlenptr));
+      Pool* data_pool = nullptr;
+      std::string str(varchar, len);
+      LOG_INFO("VARSIZE = %d , varchar = \"%s\"", len, str.c_str());
+      value = ValueFactory::GetStringValue(str, data_pool);
     }
     break;
 

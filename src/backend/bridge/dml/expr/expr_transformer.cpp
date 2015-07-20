@@ -13,12 +13,12 @@
 #include "nodes/pprint.h"
 #include "utils/rel.h"
 #include "utils/lsyscache.h"
-#include "executor/executor.h"
 #include "parser/parsetree.h"
 
 #include "backend/bridge/dml/tuple/tuple_transformer.h"
 #include "backend/bridge/dml/expr/pg_func_map.h"
 #include "backend/bridge/dml/expr/expr_transformer.h"
+#include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/common/logger.h"
 #include "backend/common/value.h"
 #include "backend/common/value_factory.h"
@@ -133,7 +133,9 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
   }
   else if(const_expr->constlen == -1) {
     LOG_INFO("Probably handing a string constant \n");
-    value = TupleTransformer::GetValue(reinterpret_cast<Datum>(reinterpret_cast<struct varlena*>(const_expr->constvalue)->vl_dat),
+//    value = TupleTransformer::GetValue(reinterpret_cast<Datum>(reinterpret_cast<struct varlena*>(const_expr->constvalue)->vl_dat),
+//                                       const_expr->consttype);
+    value = TupleTransformer::GetValue(const_expr->constvalue,
                                        const_expr->consttype);
   }
   else {
