@@ -28,6 +28,8 @@
 #include "backend/bridge/ddl/bootstrap.h"
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/tests/bridge_test.h"
+#include "backend/bridge/dml/executor/plan_executor.h"
+#include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/common/stack_trace.h"
 
 #include "postgres.h"
@@ -49,9 +51,6 @@
 #include "postmaster/fork_process.h"
 #include "postmaster/postmaster.h"
 #include "postmaster/peloton.h"
-
-#include "../../../backend/bridge/dml/executor/executor.h"
-#include "../../../backend/bridge/dml/mapper/mapper.h"
 #include "storage/latch.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
@@ -937,6 +936,7 @@ peloton_process_dml(Peloton_MsgDML *msg)
     if(plan){
       /* Execute the plantree */
       peloton::bridge::PlanExecutor::ExecutePlan(plan,
+                                                 planstate,
                                                  msg->m_tuple_desc,
                                                  msg->m_status,
                                                  txn_id);

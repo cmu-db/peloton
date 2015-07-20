@@ -28,7 +28,7 @@ namespace bridge {
  * We can't for now, but Postgres can.
  */
 planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
-    const SeqScanState* ss_plan_state, const ValueArray &params) {
+    const SeqScanState* ss_plan_state) {
 
   assert(nodeTag(ss_plan_state) == T_SeqScanState);
 

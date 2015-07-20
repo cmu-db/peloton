@@ -15,19 +15,17 @@
 namespace peloton {
 namespace bridge {
 
-static inline const ValueArray BuildParams(const ParamListInfo param_list);
-
 //===--------------------------------------------------------------------===//
 // Utils
 //===--------------------------------------------------------------------===//
 
-inline const ValueArray BuildParams(const ParamListInfo param_list) {
+const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
   ValueArray params;
   if (param_list != nullptr) {
     params.Reset(param_list->numParams);
-    for (int i = 0; i < params.GetSize(); ++i) {
-      ParamExternData *param = &(param_list->params[i]);
-      params[i] = TupleTransformer::GetValue(param->value, param->ptype);
+    ParamExternData *postgres_param = param_list->params;
+    for (int i = 0; i < params.GetSize(); ++i, ++postgres_param) {
+      params[i] = TupleTransformer::GetValue(postgres_param->value, postgres_param->ptype);
     }
   }
   LOG_INFO("Built param list of size %d", params.GetSize());
