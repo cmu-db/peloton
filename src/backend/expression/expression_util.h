@@ -50,6 +50,8 @@ AbstractExpression *TupleValueFactory(int tuple_idx, int value_idx);
 AbstractExpression *ConjunctionFactory(ExpressionType, AbstractExpression*, AbstractExpression*);
 AbstractExpression *ConjunctionFactory(ExpressionType, std::list<AbstractExpression*>);
 
+AbstractExpression *CastFactory(PostgresValueType, AbstractExpression *);
+
 std::string GetTypeName(ExpressionType type);
 
 // If the passed vector contains only TupleValueExpression, it
