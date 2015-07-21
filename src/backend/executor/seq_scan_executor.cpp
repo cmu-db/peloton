@@ -84,7 +84,7 @@ bool SeqScanExecutor::DExecute() {
       // Invalidate tuples that don't satisfy the predicate.
       for (oid_t tuple_id : *tile) {
         expression::ContainerTuple<LogicalTile> tuple(tile.get(), tuple_id);
-        if (predicate_->Evaluate(&tuple, nullptr).IsFalse()) {
+        if (predicate_->Evaluate(&tuple, nullptr, executor_context_).IsFalse()) {
           tile->RemoveVisibility(tuple_id);
         }
       }
@@ -124,7 +124,7 @@ bool SeqScanExecutor::DExecute() {
       }
 
       expression::ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_id);
-      if (predicate_ == nullptr || predicate_->Evaluate(&tuple, nullptr).IsTrue()) {
+      if (predicate_ == nullptr || predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue()) {
         position_list.push_back(tuple_id);
       }
     }

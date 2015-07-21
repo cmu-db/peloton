@@ -171,6 +171,10 @@ public:
 	// Return the amount of memory allocated for non-inlined objects
 	size_t GetUninlinedMemorySize() const;
 
+	// This sets the relevant columns from the source tuple
+	void SetFromTuple(const storage::Tuple *tuple,
+	                  const std::vector<oid_t>& columns);
+
 	//===--------------------------------------------------------------------===//
 	// Serialization utilities
 	//===--------------------------------------------------------------------===//

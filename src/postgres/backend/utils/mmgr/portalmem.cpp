@@ -792,7 +792,7 @@ AtAbort_Portals(void)
 		 * The cleanup hook was the last thing that might have needed data
 		 * there.
 		 */
-		MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
+		SHMContextDeleteChildren(PortalGetHeapMemory(portal));
 	}
 }
 
@@ -929,7 +929,7 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 		 * The cleanup hook was the last thing that might have needed data
 		 * there.
 		 */
-		MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
+		SHMContextDeleteChildren(PortalGetHeapMemory(portal));
 	}
 }
 

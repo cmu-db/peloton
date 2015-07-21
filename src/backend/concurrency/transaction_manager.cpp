@@ -60,13 +60,12 @@ Transaction *TransactionManager::StartPGTransaction(TransactionId txn_id) {
 
     // If entry already exists
     if(pg_txn_table.count(txn_id) != 0)
-      return nullptr;
+      return pg_txn_table.at(txn_id);
 
     // Else, create one for this new pg txn id
     auto txn = GetInstance().BeginTransaction();
     auto status = pg_txn_table.insert(std::make_pair(txn_id, txn));
     if(status.second == true) {
-      LOG_INFO("Starting peloton txn : %lu \n", txn->GetTransactionId());
       return txn;
     }
   }

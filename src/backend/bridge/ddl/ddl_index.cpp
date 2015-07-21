@@ -123,6 +123,7 @@ bool DDLIndex::CreateIndex(IndexInfo index_info){
   }
 
   auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_columns);
+  key_schema->SetIndexedColumns(key_columns);
 
   // Create index metadata and physical index
   index::IndexMetadata* metadata = new index::IndexMetadata(index_name, index_oid, our_index_type, index_type,

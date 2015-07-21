@@ -260,9 +260,9 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
 
     // Go over tile and get result slots
     while (tile_itr.Next(tuple)) {
+      //std::cout << tuple;
       auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
       slots = lappend(slots, slot);
-      //std::cout << tuple;
     }
 
     // Go back to previous context
@@ -273,8 +273,13 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
 
   if(single_statement_txn == true) {
     // Commit
-    txn_manager.CommitTransaction(txn);
-    txn_manager.EndTransaction(txn);
+    try {
+      txn_manager.CommitTransaction(txn);
+      txn_manager.EndTransaction(txn);
+    }
+    catch(...){
+      LOG_WARN("Could not commit transaction \n");
+    }
   }
 
   // clean up
