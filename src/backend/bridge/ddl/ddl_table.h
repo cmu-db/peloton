@@ -57,8 +57,6 @@ class DDLTable {
   static bool SetReferenceTables(std::vector<catalog::ForeignKey>& foreign_keys,
                                  oid_t relation_oid);
 
-  static void CheatingPostgres(oid_t relation_oid, int number_of_tuples);
-
  private:
 
   static bool AddConstraint(Oid relation_oid, Constraint* constraint);
