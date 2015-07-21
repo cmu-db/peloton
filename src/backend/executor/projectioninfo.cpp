@@ -3,12 +3,12 @@
  *
  */
 
-#include "../executor/projection.h"
+#include "projectioninfo.h"
 
 namespace peloton {
 namespace executor {
 
-Projection::~Projection(){
+ProjectionInfo::~ProjectionInfo(){
   // Delete the expressions
   for(auto e : projection_entries_){
     delete e.second;
@@ -24,7 +24,7 @@ Projection::~Projection(){
  * @param src2 Source tuple2 passed to expressions.
  * @return  True if successful. Otherwise false.
  */
-bool Projection::Evaluate(storage::Tuple* dest,
+bool ProjectionInfo::Evaluate(storage::Tuple* dest,
                           const AbstractTuple* src1,
                           const AbstractTuple* src2) const {
 

@@ -21,26 +21,34 @@ namespace executor {
 /**
  * TODO: Under Construction.
  */
-class Projection {
+class ProjectionInfo {
 
  public:
 
-  Projection(Projection &) = delete;
-  Projection operator= (Projection &) = delete;
-  Projection(Projection &&) = delete;
-  Projection operator= (Projection &&) = delete;
+  ProjectionInfo(ProjectionInfo &) = delete;
+  ProjectionInfo operator= (ProjectionInfo &) = delete;
+  ProjectionInfo(ProjectionInfo &&) = delete;
+  ProjectionInfo operator= (ProjectionInfo &&) = delete;
 
   /**
-   * @brief Generic specification of a projection entry:
-   *        < dest_column_id, expression >
+   * @brief Generic specification of a projection target:
+   *        < dest_column_id , expression >
    */
-  typedef
-      std::pair<oid_t, expression::AbstractExpression*>
-  ProjectionEntry;
+  typedef std::pair<oid_t, expression::AbstractExpression*> Target;
 
-  virtual ~Projection();
+  typedef std::vector<Target> TargetList;
 
-  virtual const std::vector<ProjectionEntry>& GetProjectionEntries() {
+  /**
+   * @brief Generic specification of a direct map:
+   *        < old_col_id , new_col_id >
+   */
+  typedef std::pair<oid_t, oid_t> DirectMap;
+
+  typedef std::vector<DirectMap> DirectMapList;
+
+  virtual ~ProjectionInfo();
+
+  virtual const std::vector<Target>& GetProjectionEntries() {
     return projection_entries_;
   }
 
