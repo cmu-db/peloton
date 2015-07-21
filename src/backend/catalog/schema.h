@@ -129,6 +129,14 @@ class Schema {
     return tuple_is_inlined;
   }
 
+  void SetIndexedColumns(const std::vector<oid_t>& indexed_columns) {
+    indexed_columns_ = indexed_columns;
+  }
+
+  std::vector<oid_t> GetIndexedColumns() const{
+    return indexed_columns_;
+  }
+
   // Get the nullability of the column at a given index.
   bool AllowNull(const oid_t column_id) const {
     for(auto constraint :  columns[column_id].constraints){
@@ -174,6 +182,9 @@ class Schema {
 
   // are all columns inlined
   bool tuple_is_inlined;
+
+  // keeps track of indexed columns in original table
+  std::vector<oid_t> indexed_columns_;
 
 };
 
