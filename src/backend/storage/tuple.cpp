@@ -74,6 +74,20 @@ void Tuple::SetValueAllocate(const oid_t column_id,
   value.SerializeWithAllocation(dataPtr, is_inlined, column_length, dataPool);
 }
 
+void Tuple::SetFromTuple(const storage::Tuple *tuple,
+                         const std::vector<oid_t>& columns) {
+
+  // We don't do any checks here about the source tuple and
+  // this tuple's schema
+  oid_t this_col_itr = 0;
+  for(auto col : columns) {
+    SetValue(this_col_itr, tuple->GetValue(col));
+    this_col_itr++;
+  }
+
+}
+
+
 // For an insert, the copy should do an allocation for all uninlinable columns
 // This does not do any schema checks. They must match.
 void Tuple::Copy(const void *source, Pool *pool) {
