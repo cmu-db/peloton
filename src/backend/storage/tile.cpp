@@ -184,13 +184,16 @@ Tile * Tile::CopyTileToBackend(storage::AbstractBackend *new_backend) {
 	 * Create a new tile from the old tile
 	 */
 	const catalog::Schema *new_schema = schema;
-	storage::TileGroupHeader *new_header = new storage::TileGroupHeader(backend, allocated_tuple_count);
+	//storage::TileGroupHeader *new_header = new storage::TileGroupHeader(backend, allocated_tuple_count);
+	// Get reference for TileGroupHeader from the current tile
+	storage::TileGroupHeader *new_header = GetHeader();
 	storage::Tile *new_tile = storage::TileFactory::GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
 											  new_header, new_backend, *new_schema, nullptr, allocated_tuple_count);
 	Pool *new_pool = new_tile->GetPool();
 	//::memcpy(static_cast<void *>(new_tile), static_cast<void *>(this), tile_size);
 
 	// TODO: Peloton Changes
+	// currently copying tile tuple by tuple
 	// can this be replaced by a strcpy of data buffer?
 	// tried... getting null pointer exception
 	storage::Tuple *old_tuple;
