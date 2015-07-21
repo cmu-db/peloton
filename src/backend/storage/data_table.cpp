@@ -106,7 +106,7 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
   if (update == false) {
     if (TryInsertInIndexes(tuple, location) == false) {
       tile_group->ReclaimTuple(tuple_slot);
-      LOG_INFO("Index constraint violated : %s\n", tuple->GetInfo().c_str());
+      LOG_WARN("Index constraint violated : %s\n", tuple->GetInfo().c_str());
       return INVALID_ITEMPOINTER;
     }
   }
@@ -147,32 +147,23 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer loca
     storage::Tuple *key = new storage::Tuple(index_schema, true);
     key->SetFromTuple(tuple, indexed_columns);
 
-    std::cout << "KEY  :: " << *(key);
-
     // No need to check if it does not have unique keys
     if(index->HasUniqueKeys() == false) {
       bool status = index->InsertEntry(key, location);
-      LOG_INFO("A.1");
-
       if (status == true) {
         delete key;
         continue;
       }
     }
 
-    LOG_INFO("B");
-
     // Check if key already exists
     if (index->Exists(key) == true) {
       LOG_ERROR("Failed to insert into index %s.%s [%s]",
                 GetName().c_str(), index->GetName().c_str(),
                 index->GetTypeName().c_str());
-      LOG_INFO("B.1");
     }
     else {
       bool status = index->InsertEntry(key, location);
-      LOG_INFO("B.2");
-
       if (status == true) {
         delete key;
         continue;
@@ -181,13 +172,9 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer loca
 
     // Undo insert in other indexes as well
     for (int prev_index_itr = index_itr + 1; prev_index_itr < index_count; ++prev_index_itr) {
-      LOG_INFO("C.2");
-
       auto prev_index = GetIndex(prev_index_itr);
       prev_index->DeleteEntry(key);
     }
-
-    LOG_INFO("D");
 
     delete key;
     return false;
@@ -205,8 +192,9 @@ void DataTable::DeleteInIndexes(const storage::Tuple *tuple) {
 
     if (index->DeleteEntry(key) == false) {
       delete key;
-      throw ExecutorException("Failed to delete tuple from index " +
-                              GetName() + "." + index->GetName() + " " +index->GetTypeName());
+      LOG_WARN("Failed to delete tuple from index %s . %s %s",
+               GetName().c_str(), index->GetName().c_str(),
+               index->GetTypeName().c_str());
     }
 
     delete key;
