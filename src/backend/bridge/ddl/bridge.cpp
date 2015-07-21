@@ -293,7 +293,7 @@ void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
   Form_pg_class pgclass;
 
   // Open target table in exclusive mode
-  pg_class_rel = heap_open(relation_id,RowExclusiveLock);
+  pg_class_rel = heap_open(RelationRelationId,RowExclusiveLock);
   tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relation_id));
   if (!HeapTupleIsValid(tuple)) {
     elog(DEBUG2, "cache lookup failed for relation %u", relation_id);
