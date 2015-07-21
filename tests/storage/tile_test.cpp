@@ -124,7 +124,7 @@ TEST(TileTests, BasicTest) {
 	old_tile_is_inlined = old_schema->IsInlined();
 	std::cout << "Is the entire old tile inlined? " << (old_tile_is_inlined? "true" : "false") << std::endl;
 
-	Pool *old_pool = tile->GetPool();
+	peloton::Pool *old_pool = tile->GetPool();
 	std::cout << "Pool associated with old tile is at address: " << static_cast<void *>(old_pool) << std::endl;
 
 	int64_t old_pool_size = old_pool->GetAllocatedMemory();
@@ -134,8 +134,9 @@ TEST(TileTests, BasicTest) {
 	/*
 	 * Create a new tile from the old tile
 	 */
-	std::vector<catalog::ColumnInfo> new_columns = old_schema->GetColumns();
-	const catalog::Schema *new_schema = new catalog::Schema(columns);
+	//std::vector<catalog::ColumnInfo> new_columns = old_schema->GetColumns();
+	//const catalog::Schema *new_schema = new catalog::Schema(columns);
+/*	const catalog::Schema *new_schema = old_schema;
 
 	storage::AbstractBackend *new_backend = new storage::VMBackend();
 	storage::TileGroupHeader *new_header = new storage::TileGroupHeader(new_backend, tuple_count);
@@ -150,8 +151,12 @@ TEST(TileTests, BasicTest) {
 		old_tuple = tile->GetTuple(old_tup_itr);
 		new_tile->InsertTuple(old_tup_itr,old_tuple);
 	}
+*/
 
-
+	const catalog::Schema *new_schema = old_schema;
+	storage::AbstractBackend *new_backend = new storage::VMBackend();
+	storage::Tile *new_tile = tile->CopyTileToBackend(new_backend);
+	peloton::Pool *new_pool = new_tile->GetPool();
 
 	/*
 	 * Print details of new tile
@@ -194,14 +199,14 @@ TEST(TileTests, BasicTest) {
 	std::cout << "In case some columns are not inlined" << std:: endl;
 	std::cout << "------------------------------------" << std:: endl;
 
-
+/*
 	if(!new_tile_is_inlined)
 	{
 		int uninlined_col_cnt = new_schema->GetUninlinedColumnCount();
 
 		int uninlined_col_index;
 		Value uninlined_col_value, new_uninlined_col_value;
-		storage::Tuple *new_tuple;
+		//storage::Tuple *new_tuple;
 
 		for(int col_itr=0; col_itr<uninlined_col_cnt; col_itr++) {
 
@@ -216,7 +221,7 @@ TEST(TileTests, BasicTest) {
 				std::cout << "\t Before associating new pool to new data for tuple: " << tup_itr << std::endl;
 				std::cout << "\t -----------------------------------------------------" << std::endl;
 
-				new_tuple = new_tile->GetTuple(tup_itr);
+				//new_tuple = new_tile->GetTuple(tup_itr);
 				std::cout << "\t address of new_tuple: " << static_cast<void *>(new_tuple) << std::endl << std::endl;
 
 				uninlined_col_value = new_tile->GetValue(tup_itr,uninlined_col_index);
@@ -256,9 +261,52 @@ TEST(TileTests, BasicTest) {
 			}
 		}
 
-		delete new_tuple;
+		//delete new_tuple;
 	}
+*/
 
+	int uninlined_col_index;
+	Value uninlined_col_value, new_uninlined_col_value;
+	size_t uninlined_col_object_len, new_uninlined_col_object_len;
+	unsigned char *uninlined_col_object_ptr, *new_uninlined_col_object_ptr;
+
+	for(int col_itr=0; col_itr<2; col_itr++) {
+
+		uninlined_col_index = new_schema->GetUninlinedColumnIndex(col_itr);
+
+		for(int tup_itr=0; tup_itr<new_tile_active_tuple_count; tup_itr++) {
+
+			std::cout << "Old ..." << std::endl;
+			std::cout << "====>>>" << std::endl;
+
+			uninlined_col_value = tile->GetValue(tup_itr,uninlined_col_index);
+			std::cout << "\t uninlined column value: " << uninlined_col_value << std::endl;
+
+			uninlined_col_object_len = ValuePeeker::PeekObjectLength(uninlined_col_value);
+			std::cout << "\t size of uninlined column object: " << uninlined_col_object_len << std::endl;
+
+			uninlined_col_object_ptr = static_cast<unsigned char *>(ValuePeeker::PeekObjectValue(uninlined_col_value));
+			std::cout << "\t uninlined column object pointer: " << static_cast<void *>(uninlined_col_object_ptr) << std::endl;
+
+			std::string uninlined_varchar_str(reinterpret_cast<char const*>(uninlined_col_object_ptr), uninlined_col_object_len);
+			std::cout << "\t the data stored uninlined is: " << uninlined_varchar_str << std::endl << std::endl;
+
+			std::cout << "New ..." << std::endl;
+			std::cout << "====>>>" << std::endl;
+
+			new_uninlined_col_value = new_tile->GetValue(tup_itr,uninlined_col_index);
+			std::cout << "\t uninlined column value: " << new_uninlined_col_value << std::endl;
+
+			new_uninlined_col_object_len = ValuePeeker::PeekObjectLength(new_uninlined_col_value);
+			std::cout << "\t size of uninlined column object: " << new_uninlined_col_object_len << std::endl;
+
+			new_uninlined_col_object_ptr = static_cast<unsigned char *>(ValuePeeker::PeekObjectValue(new_uninlined_col_value));
+			std::cout << "\t uninlined column object pointer: " << static_cast<void *>(new_uninlined_col_object_ptr) << std::endl;
+
+			std::string new_uninlined_varchar_str(reinterpret_cast<char const*>(new_uninlined_col_object_ptr), new_uninlined_col_object_len);
+			std::cout << "\t the data stored uninlined is: " << new_uninlined_varchar_str << std::endl << std::endl;
+		}
+	}
 
 	delete tuple1;
 	delete tuple2;
