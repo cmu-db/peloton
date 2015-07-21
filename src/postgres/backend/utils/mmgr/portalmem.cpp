@@ -106,12 +106,11 @@ EnablePortalManager(void)
 	Assert(PortalMemory == NULL);
 
   // TODO: Peloton Changes
-	PortalMemory = SHMAllocSetContextCreate(TopSharedMemoryContext,
+	PortalMemory = AllocSetContextCreate(TopMemoryContext,
 	                                     "PortalMemory",
 	                                     ALLOCSET_DEFAULT_MINSIZE,
 	                                     ALLOCSET_DEFAULT_INITSIZE,
-	                                     ALLOCSET_DEFAULT_MAXSIZE,
-	                                     SHM_DEFAULT_SEGMENT);
+	                                     ALLOCSET_DEFAULT_MAXSIZE);
 
 	ctl.keysize = MAX_PORTALNAME_LEN;
 	ctl.entrysize = sizeof(PortalHashEnt);
@@ -221,7 +220,7 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 
 	/* initialize portal heap context; typically it won't store much */
 	// TODO: Peloton Changes, params for prepared stmt are built in heap
-	portal->heap = SHMAllocSetContextCreate(PortalMemory,
+	portal->heap = SHMAllocSetContextCreate(TopSharedMemoryContext,
 	                                        "PortalHeapMemory",
 	                                        ALLOCSET_SMALL_MINSIZE,
 	                                        ALLOCSET_SMALL_INITSIZE,
@@ -360,12 +359,11 @@ PortalCreateHoldStore(Portal portal)
 	 * Note this is NOT a child of the portal's heap memory.
 	 */
 	portal->holdContext =
-		SHMAllocSetContextCreate(PortalMemory,
+		AllocSetContextCreate(PortalMemory,
 							  "PortalHoldContext",
 							  ALLOCSET_DEFAULT_MINSIZE,
 							  ALLOCSET_DEFAULT_INITSIZE,
-							  ALLOCSET_DEFAULT_MAXSIZE,
-							  SHM_DEFAULT_SEGMENT);
+							  ALLOCSET_DEFAULT_MAXSIZE);
 
 	/*
 	 * Create the tuple store, selecting cross-transaction temp files, and
@@ -569,7 +567,7 @@ PortalDrop(Portal portal, bool isTopCommit)
 
 	/* delete tuplestore storage, if any */
 	if (portal->holdContext)
-		SHMContextDelete(portal->holdContext);
+		MemoryContextDelete(portal->holdContext);
 
 	/* release subsidiary storage */
 	SHMContextDelete(PortalGetHeapMemory(portal));
