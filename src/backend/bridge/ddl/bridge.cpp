@@ -19,6 +19,7 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/xact.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_class.h"
@@ -291,25 +292,24 @@ void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
   HeapTuple tuple;
   Form_pg_class pgclass;
 
-  //StartTransactionCommand();
-
-  // Open pg_class table in exclusive mode
-  pg_class_rel = heap_open(RelationRelationId,RowExclusiveLock);
-
+  // Open target table in exclusive mode
+  pg_class_rel = heap_open(relation_id,RowExclusiveLock);
   tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relation_id));
   if (!HeapTupleIsValid(tuple)) {
     elog(DEBUG2, "cache lookup failed for relation %u", relation_id);
     return;
   }
-
   pgclass = (Form_pg_class) GETSTRUCT(tuple);
   pgclass->reltuples = (float4) num_tuples;
+
   // update tuple
-  simple_heap_update(pg_class_rel, &tuple->t_data->t_ctid, tuple);
+  simple_heap_update(pg_class_rel, &tuple->t_self, tuple);
 
+  /* keep the catalog indexes up to date */
+  CatalogUpdateIndexes(pg_class_rel, tuple);
+
+  heap_freetuple(tuple);
   heap_close(pg_class_rel, RowExclusiveLock);
-
-  //CommitTransactionCommand();
 }
 
 } // namespace bridge
