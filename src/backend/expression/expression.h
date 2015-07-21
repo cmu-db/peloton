@@ -24,3 +24,4 @@
 #include "backend/expression/parser_expression.h"
 #include "backend/expression/tuple_address_expression.h"
 #include "backend/expression/tuple_value_expression.h"
+#include "backend/expression/cast_expression.h"
