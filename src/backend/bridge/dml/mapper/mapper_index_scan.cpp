@@ -204,6 +204,55 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexOnlyScan(
   return new planner::IndexScanNode(table, index_scan_desc);
 }
 
+/**
+ * @brief Convert a Postgres BitmapScan into a Peloton IndexScanNode
+ *        We currently only handle the case where the lower plan is a BitmapIndexScan
+ *
+ * @return Pointer to the constructed AbstractPlanNode
+ */
+planner::AbstractPlanNode* PlanTransformer::TransformBitmapScan(const BitmapHeapScanState* bhss_plan_state) {
+  planner::IndexScanNode::IndexScanDesc index_scan_desc;
+
+  /* resolve target relation */
+  Oid table_oid = bhss_plan_state->ss.ss_currentRelation->rd_id;
+  Oid database_oid = Bridge::GetCurrentDatabaseOid();
+
+  assert(nodeTag(outerPlanState(bhss_plan_state)) == T_BitmapIndexScanState); // only support a bitmap index scan at lower level
+
+  const BitmapIndexScanState *biss_state = reinterpret_cast<const BitmapIndexScanState*>(outerPlanState(bhss_plan_state));
+  const BitmapIndexScan *biss_plan = reinterpret_cast<const BitmapIndexScan *>(biss_state->ss.ps.plan);
+
+  storage::DataTable *table =
+      static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
+  .GetTableWithOid(database_oid, table_oid));
+
+  assert(table);
+
+
+  /* Resolve index  */
+  index_scan_desc.index = table->GetIndexWithOid(biss_plan->indexid);
+  LOG_INFO("BitmapIdxmap scan on oid %u, index name: %s", biss_plan->indexid,
+           index_scan_desc.index->GetName().c_str());
+
+  /* Resolve index order */
+  /* Only support forward scan direction */
+
+  /* index qualifier and scan keys */
+  LOG_INFO("num of scan keys = %d", biss_state->biss_NumScanKeys);
+  BuildScanKey(biss_state->biss_ScanKeys, biss_state->biss_NumScanKeys, index_scan_desc);
+
+  /* handle simple cases */
+  /* target list */
+  /* ORDER BY, not support */
+
+  /* Plan qual, not support */
+
+  auto schema = table->GetSchema();
+  index_scan_desc.column_ids.resize(schema->GetColumnCount());
+  std::iota(index_scan_desc.column_ids.begin(), index_scan_desc.column_ids.end(), 0);
+  return new planner::IndexScanNode(table, index_scan_desc);
+}
+
 
 } // namespace bridge
 } // namespace peloton
