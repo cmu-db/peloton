@@ -105,14 +105,8 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
   // Index checks and updates
   if (update == false) {
     if (TryInsertInIndexes(tuple, location) == false) {
-
-      // FIXME
-      // Need to think about how we want to actually do this, because right
-      // now there is no way to get back the target TileGroup and slot from
-      // DataTable::InsertTuple
-      // tile_group->ReclaimTuple(tuple_slot);
-
-      throw ConstraintException("Index constraint violated : " + tuple->GetInfo());
+      tile_group->ReclaimTuple(tuple_slot);
+      LOG_INFO("Index constraint violated : %s\n", tuple->GetInfo().c_str());
       return INVALID_ITEMPOINTER;
     }
   }
@@ -128,7 +122,8 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
 void DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer location) {
   for (auto index : indexes) {
     if (index->InsertEntry(tuple, location) == false) {
-      throw ExecutorException("Failed to insert tuple into index");
+      location = INVALID_ITEMPOINTER;
+      LOG_INFO("Failed to insert tuple into index : %s \n",  tuple->GetInfo().c_str());
     }
   }
 }
