@@ -15,6 +15,8 @@ public class PelotonTest {
   private final String INSERT = "INSERT INTO peloton_test VALUES (?,?)";
   private final String SEQSCAN = "SELECT * FROM peloton_test WHERE id != ?";
   private final String INDEXSCAN = "SELECT * FROM peloton_test WHERE id = ?";
+  private final String UPDATE_BY_INDEXSCAN = "UPDATE peloton_test SET data=? WHERE id=?";
+  private final String UPDATE_BY_SCANSCAN = "UPDATE peloton_test SET data=?";
 
   private final Connection conn;
 
@@ -93,6 +95,28 @@ public class PelotonTest {
     }
   }
 
+  public void UpdateByIndex(int i) throws SQLException {
+    System.out.println("Update Test: ? = " + i);
+    System.out.println("Query: " + UPDATE_BY_INDEXSCAN);
+    PreparedStatement stmt = conn.prepareStatement(UPDATE_BY_INDEXSCAN);
+    stmt.setInt(2, i);
+    stmt.setString(1, "Updated");
+    stmt.executeUpdate();
+    System.out.println("Inserted: id: " + i + ", data: Updated");
+
+  }
+
+
+  public void UpdateBySeqScan() throws SQLException {
+    System.out.println("Update Test: ");
+    System.out.println("Query: " + UPDATE_BY_SCANSCAN);
+    PreparedStatement stmt = conn.prepareStatement(UPDATE_BY_SCANSCAN);
+    stmt.setString(1, "Updated");
+    stmt.executeUpdate();
+    System.out.println("Inserted: data: Updated");
+
+  }
+
 
   static public void main(String[] args) throws Exception {
     PelotonTest pt = new PelotonTest();
@@ -101,6 +125,8 @@ public class PelotonTest {
     pt.Insert(2);
     pt.Insert(3);
     pt.Insert(4);
+    pt.IndexScan(3);
+    pt.UpdateBySeqScan();
     pt.IndexScan(3);
     pt.Close();
   }
