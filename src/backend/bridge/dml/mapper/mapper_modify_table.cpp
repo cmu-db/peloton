@@ -91,7 +91,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     return nullptr;
   }
 
-  LOG_INFO("Insert into: database oid %u table oid %u", database_oid, table_oid);
+  LOG_TRACE("Insert into: database oid %u table oid %u", database_oid, table_oid);
 
   /* Get the tuple schema */
   auto schema = target_table->GetSchema();
@@ -103,7 +103,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
 
   if (nodeTag(sub_planstate->plan) == T_Result) {  // Child is a result node
-    LOG_INFO("Child of Insert is Result");
+    LOG_TRACE("Child of Insert is Result");
     auto result_ps = reinterpret_cast<ResultState*>(sub_planstate);
 
     assert(outerPlanState(result_ps) == nullptr); /* We only handle single-constant-tuple for now,
@@ -159,7 +159,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
     return nullptr;
   }
 
-  LOG_INFO("Update table : database oid %u table oid %u", database_oid,
+  LOG_TRACE("Update table : database oid %u table oid %u", database_oid,
            table_oid);
 
   /* Get the first sub plan state */
@@ -173,7 +173,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
   planner::AbstractPlanNode* plan_node = nullptr;
 
   if (nodeTag(sub_planstate->plan) == T_SeqScan) {  // Sub plan is SeqScan
-    LOG_INFO("Child of Update is SeqScan \n");
+    LOG_TRACE("Child of Update is SeqScan \n");
     // Extract the non-trivial projection info from SeqScan
     // and put it in our update node
     auto seqscan_state = reinterpret_cast<SeqScanState*>(sub_planstate);
@@ -218,7 +218,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformDelete(
   .GetTableWithOid(database_oid, table_oid));
 
   assert(target_table);
-  LOG_INFO("Delete from: database oid %u table oid %u", database_oid, table_oid);
+  LOG_TRACE("Delete from: database oid %u table oid %u", database_oid, table_oid);
 
   /* Grab the subplan -> child plan node */
   assert(mt_plan_state->mt_nplans == 1);
