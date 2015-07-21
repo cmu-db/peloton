@@ -125,7 +125,7 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
                                        const_expr->consttype);
   }
   else if(const_expr->constlen == -1) {
-    LOG_INFO("Probably handing a string constant \n");
+    LOG_TRACE("Probably handing a string constant \n");
     value = TupleTransformer::GetValue(const_expr->constvalue,
                                        const_expr->consttype);
   }
@@ -134,7 +134,7 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
               const_expr->constlen, const_expr->constbyval, (long unsigned)const_expr->constvalue);
   }
 
-  LOG_INFO("Const : ");
+  LOG_TRACE("Const : ");
   std::cout << value << std::endl;
 
   // A Const Expr has no children.
@@ -145,7 +145,7 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
 expression::AbstractExpression* ExprTransformer::TransformOp(
     const ExprState* es) {
 
-  LOG_INFO("Transform Op \n");
+  LOG_TRACE("Transform Op \n");
 
   auto op_expr = reinterpret_cast<const OpExpr*>(es->expr);
   auto func_state = reinterpret_cast<const FuncExprState*>(es);
@@ -187,7 +187,7 @@ expression::AbstractExpression* ExprTransformer::TransformVar(
   oid_t tuple_idx = (var_expr->varno == INNER_VAR ? 1 : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
   oid_t value_idx = static_cast<oid_t>(var_expr->varattno - 1); // Damnit attno is 1-index
 
-  LOG_INFO("tuple_idx = %u , value_idx = %u \n", tuple_idx, value_idx);
+  LOG_TRACE("tuple_idx = %u , value_idx = %u \n", tuple_idx, value_idx);
 
   // TupleValue expr has no children.
   return expression::TupleValueFactory(tuple_idx, value_idx);
@@ -216,16 +216,16 @@ expression::AbstractExpression* ExprTransformer::TransformBool(
   switch(bool_op){
 
     case AND_EXPR:
-      LOG_INFO("Bool AND list \n");
+      LOG_TRACE("Bool AND list \n");
       return TransformList(reinterpret_cast<const ExprState*>(args), EXPRESSION_TYPE_CONJUNCTION_AND);
 
     case OR_EXPR:
-      LOG_INFO("Bool OR list \n");
+      LOG_TRACE("Bool OR list \n");
       return TransformList(reinterpret_cast<const ExprState*>(args), EXPRESSION_TYPE_CONJUNCTION_OR);
 
     case NOT_EXPR:
     {
-      LOG_INFO("Bool NOT \n");
+      LOG_TRACE("Bool NOT \n");
       auto child_es = reinterpret_cast<const ExprState*>(lfirst(list_head(args)));
       auto child = TransformExpr(child_es);
       return expression::OperatorFactory(EXPRESSION_TYPE_OPERATOR_NOT, child, nullptr);
@@ -244,7 +244,7 @@ expression::AbstractExpression* ExprTransformer::TransformParam(const ExprState 
 
   switch (param_expr->paramkind) {
     case PARAM_EXTERN:
-      LOG_INFO("Handle EXTREN PARAM");
+      LOG_TRACE("Handle EXTREN PARAM");
       return expression::ParameterValueFactory(param_expr->paramid - 1); // 1 indexed
       break;
     default:
@@ -272,15 +272,15 @@ expression::AbstractExpression* ExprTransformer::TransformRelabelType(const Expr
 }
 
 expression::AbstractExpression* ExprTransformer::TransformFunc(const ExprState *es) {
-  auto state = reinterpret_cast<const FuncExprState*>(es);
+  //auto state = reinterpret_cast<const FuncExprState*>(es);
   auto expr = reinterpret_cast<const FuncExpr*>(es->expr);
-  auto expr_args = reinterpret_cast<const ExprState*>(state->args);
+  //auto expr_args = reinterpret_cast<const ExprState*>(state->args);
 
   assert(expr->xpr.type == T_FuncExpr);
 
-  LOG_INFO("Return type: %d, isReturn %d, Coercion: %d", expr->funcresulttype, expr->funcretset, expr->funcformat);
-  expression::AbstractExpression *args = ExprTransformer::TransformExpr(expr_args);
-  LOG_INFO("args : %s", args->DebugInfo(" ").c_str());
+  LOG_TRACE("Return type: %d, isReturn %d, Coercion: %d", expr->funcresulttype, expr->funcretset, expr->funcformat);
+  //expression::AbstractExpression *args = ExprTransformer::TransformExpr(expr_args);
+  //LOG_TRACE("args : %s", args->DebugInfo(" ").c_str());
 
   //TODO: not implemented yet
 
@@ -298,7 +298,7 @@ ExprTransformer::TransformList(const ExprState* es, ExpressionType et) {
   ListCell *l;
   int length = list_length(list);
   assert(length > 0);
-  LOG_INFO("Expression List of length %d", length);
+  LOG_TRACE("Expression List of length %d", length);
   std::list<expression::AbstractExpression*> exprs; // a list of AND'ed expressions
 
   foreach(l, list)
