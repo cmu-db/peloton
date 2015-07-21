@@ -163,6 +163,84 @@ void Tile::SetValue(
       pool);
 }
 
+// TODO: Peloton Changes
+// Added function CopyTileToBackend
+Tile * Tile::CopyTileToBackend(storage::AbstractBackend *new_backend) {
+
+	const catalog::Schema *schema;
+	bool tile_is_inlined;
+	uint16_t allocated_tuple_count, active_tuple_count;
+	//uint32_t tile_size;
+
+	schema = GetSchema();
+	allocated_tuple_count = GetAllocatedTupleCount();
+	active_tuple_count = GetActiveTupleCount();
+	active_tuple_count = 3;
+	//tile_size = GetInlinedSize();
+	tile_is_inlined = schema->IsInlined();
+
+
+	/*
+	 * Create a new tile from the old tile
+	 */
+	const catalog::Schema *new_schema = schema;
+	storage::TileGroupHeader *new_header = new storage::TileGroupHeader(backend, allocated_tuple_count);
+	storage::Tile *new_tile = storage::TileFactory::GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+											  new_header, new_backend, *new_schema, nullptr, allocated_tuple_count);
+	Pool *new_pool = new_tile->GetPool();
+	//::memcpy(static_cast<void *>(new_tile), static_cast<void *>(this), tile_size);
+
+	// TODO: Peloton Changes
+	// can this be replaced by a strcpy of data buffer?
+	// tried... getting null pointer exception
+	storage::Tuple *old_tuple;
+	for(int old_tup_itr=0; old_tup_itr<active_tuple_count; old_tup_itr++)
+	{
+		old_tuple = GetTuple(old_tup_itr);
+		new_tile->InsertTuple(old_tup_itr,old_tuple);
+	}
+
+	/*
+	 * If some of the columns are uninlined, change those entries to point to the new pool
+	 */
+	if(!tile_is_inlined) {
+
+		int uninlined_col_cnt = new_schema->GetUninlinedColumnCount();
+
+		int uninlined_col_index;
+		Value uninlined_col_value, new_uninlined_col_value;
+		//storage::Tuple *new_tuple;
+
+		for(int col_itr=0; col_itr<uninlined_col_cnt; col_itr++) {
+
+			uninlined_col_index = new_schema->GetUninlinedColumnIndex(col_itr);
+
+			for(int tup_itr=0; tup_itr<active_tuple_count; tup_itr++) {
+
+				// Get the Value object for the uninlined column of the current tuple
+				uninlined_col_value = new_tile->GetValue(tup_itr,uninlined_col_index);
+
+				// Get the length of the uninlined string
+				size_t uninlined_col_object_len = ValuePeeker::PeekObjectLength(uninlined_col_value);
+
+				// Get a pointer to the uninlined string
+				unsigned char* uninlined_col_object_ptr = static_cast<unsigned char *>(ValuePeeker::PeekObjectValue(uninlined_col_value));
+
+				// Get the uninlined string itself
+				std::string uninlined_varchar_str(reinterpret_cast<char const*>(uninlined_col_object_ptr), uninlined_col_object_len);
+
+				// Create a new Value object with the uninlined string residing in the new pool
+				Value new_val = ValueFactory::GetStringValue(uninlined_varchar_str, new_pool);
+
+				// Set the newly created value object to the tuple
+				new_tile->SetValue(new_val, tup_itr, uninlined_col_index);
+			}
+		}
+	}
+
+	return new_tile;
+}
+
 //===--------------------------------------------------------------------===//
 // Utilities
 //===--------------------------------------------------------------------===//
