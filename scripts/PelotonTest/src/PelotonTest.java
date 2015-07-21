@@ -15,6 +15,7 @@ public class PelotonTest {
   private final String INSERT = "INSERT INTO peloton_test VALUES (?,?)";
   private final String SEQSCAN = "SELECT * FROM peloton_test WHERE id != ?";
   private final String INDEXSCAN = "SELECT * FROM peloton_test WHERE id = ?";
+  private final String BITMAPSCAN = "SELECT * FROM peloton_test WHERE id < ?";
   private final String UPDATE_BY_INDEXSCAN = "UPDATE peloton_test SET data=? WHERE id=?";
   private final String UPDATE_BY_SCANSCAN = "UPDATE peloton_test SET data=?";
 
@@ -91,7 +92,23 @@ public class PelotonTest {
     stmt.setInt(1, i);
     ResultSet r = stmt.executeQuery();
     while (r.next()) {
-      System.out.println("IndexScanText got tuple: id: " + r.getString(1) + ", data: " + r.getString(2));
+      System.out.println("IndexScanTest got tuple: id: " + r.getString(1) + ", data: " + r.getString(2));
+    }
+  }
+
+  /**
+   * Perform Index Scan with a simple equal qualifier
+   * @param i the param for the equal qualifier
+   * @throws SQLException
+   */
+  public void BitmapScan(int i) throws SQLException {
+    System.out.println("BitmapScan Test: ? = " + i);
+    System.out.println("Query: " + BITMAPSCAN);
+    PreparedStatement stmt = conn.prepareStatement(BITMAPSCAN);
+    stmt.setInt(1, i);
+    ResultSet r = stmt.executeQuery();
+    while (r.next()) {
+      System.out.println("BitmapScanTest got tuple: id: " + r.getString(1) + ", data: " + r.getString(2));
     }
   }
 
@@ -121,13 +138,12 @@ public class PelotonTest {
   static public void main(String[] args) throws Exception {
     PelotonTest pt = new PelotonTest();
     pt.Init();
-    pt.Insert(1);
-    pt.Insert(2);
-    pt.Insert(3);
-    pt.Insert(4);
-    pt.IndexScan(3);
-    pt.UpdateBySeqScan();
-    pt.IndexScan(3);
+    for (int i = 0; i < 10; i++) {
+      pt.Insert(i);
+    }
+    pt.BitmapScan(5);
+    //pt.UpdateBySeqScan();
+    //pt.IndexScan(3);
     pt.Close();
   }
 }
