@@ -49,14 +49,14 @@ template<> inline Value
 ConjunctionExpression<ConjunctionAnd>::Evaluate(const AbstractTuple *tuple1,
                                                 const AbstractTuple *tuple2,
                                                 executor::ExecutorContext* ec) const {
-  return m_left->Evaluate(tuple1, tuple2, ec).OpAnd(m_right->Evaluate(tuple1, tuple2));
+  return m_left->Evaluate(tuple1, tuple2, ec).OpAnd(m_right->Evaluate(tuple1, tuple2, ec));
 }
 
 template<> inline Value
 ConjunctionExpression<ConjunctionOr>::Evaluate(const AbstractTuple *tuple1,
                                                const AbstractTuple *tuple2,
                                                executor::ExecutorContext* ec) const {
-  return m_left->Evaluate(tuple1, tuple2, ec).OpOr(m_right->Evaluate(tuple1, tuple2));
+  return m_left->Evaluate(tuple1, tuple2, ec).OpOr(m_right->Evaluate(tuple1, tuple2, ec));
 }
 
 } // End expression namespace
