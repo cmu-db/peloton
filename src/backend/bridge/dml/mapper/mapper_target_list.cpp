@@ -40,7 +40,7 @@ TransformTargetList(List* target_list, oid_t column_count) {
     if (!(resind < column_count))
       continue;  // skip junk attributes
 
-    LOG_INFO("Target list : column id : %u , Top-level (pg) expr tag : %u \n",
+    LOG_TRACE("Target list : column id : %u , Top-level (pg) expr tag : %u \n",
              resind, nodeTag(gstate->arg->expr));
 
     oid_t col_id = static_cast<oid_t>(resind);

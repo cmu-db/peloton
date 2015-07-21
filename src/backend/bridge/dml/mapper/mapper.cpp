@@ -43,13 +43,11 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
   assert(plan_state);
 
   Plan *plan = plan_state->plan;
-
+  // Ignore empty plans
   if(plan == nullptr)
     return nullptr;
 
-  planner::AbstractPlanNode *plan_node;
-
-  LOG_INFO("planstate %d", nodeTag(plan_state));
+  planner::AbstractPlanNode *plan_node = nullptr;
 
   switch (nodeTag(plan)) {
     case T_ModifyTable:
@@ -68,14 +66,18 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
       plan_node = PlanTransformer::TransformIndexOnlyScan(
           reinterpret_cast<const IndexOnlyScanState*>(plan_state));
       break;
+     case T_BitmapHeapScan:
+      plan_node = PlanTransformer::TransformBitmapScan(
+          reinterpret_cast<const BitmapHeapScanState*>(plan_state));
+      break;
     case T_Limit:
       plan_node = PlanTransformer::TransformLimit(
           reinterpret_cast<const LimitState*>(plan_state));
       break;
     default: {
-      plan_node = nullptr;
-      LOG_ERROR("Unsupported Postgres Plan Tag: %u Plan : %p", nodeTag(plan),
-                plan);
+      LOG_ERROR("Unsupported Postgres Plan State Tag: %u Plan Tag: %u ",
+                nodeTag(plan_state),
+                nodeTag(plan));
       break;
     }
   }

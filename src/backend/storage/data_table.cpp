@@ -105,14 +105,8 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
   // Index checks and updates
   if (update == false) {
     if (TryInsertInIndexes(tuple, location) == false) {
-
-      // FIXME
-      // Need to think about how we want to actually do this, because right
-      // now there is no way to get back the target TileGroup and slot from
-      // DataTable::InsertTuple
-      // tile_group->ReclaimTuple(tuple_slot);
-
-      throw ConstraintException("Index constraint violated : " + tuple->GetInfo());
+      tile_group->ReclaimTuple(tuple_slot);
+      LOG_WARN("Index constraint violated : %s\n", tuple->GetInfo().c_str());
       return INVALID_ITEMPOINTER;
     }
   }
@@ -127,9 +121,19 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
 
 void DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer location) {
   for (auto index : indexes) {
-    if (index->InsertEntry(tuple, location) == false) {
-      throw ExecutorException("Failed to insert tuple into index");
+    auto index_schema = index->GetKeySchema();
+    auto indexed_columns = index_schema->GetIndexedColumns();
+    storage::Tuple *key = new storage::Tuple(index_schema, true);
+    key->SetFromTuple(tuple, indexed_columns);
+
+    if (index->InsertEntry(key, location) == false) {
+      location = INVALID_ITEMPOINTER;
+      LOG_ERROR("Failed to insert key into index : %s \n",  key->GetInfo().c_str());
+      delete key;
+      break;
     }
+
+    delete key;
   }
 }
 
@@ -138,31 +142,41 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer loca
   int index_count = GetIndexCount();
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
     auto index = GetIndex(index_itr);
+    auto index_schema = index->GetKeySchema();
+    auto indexed_columns = index_schema->GetIndexedColumns();
+    storage::Tuple *key = new storage::Tuple(index_schema, true);
+    key->SetFromTuple(tuple, indexed_columns);
 
     // No need to check if it does not have unique keys
     if(index->HasUniqueKeys() == false) {
-      bool status = index->InsertEntry(tuple, location);
-      if (status == true)
+      bool status = index->InsertEntry(key, location);
+      if (status == true) {
+        delete key;
         continue;
+      }
     }
 
     // Check if key already exists
-    if (index->Exists(tuple) == true) {
+    if (index->Exists(key) == true) {
       LOG_ERROR("Failed to insert into index %s.%s [%s]",
                 GetName().c_str(), index->GetName().c_str(),
                 index->GetTypeName().c_str());
     }
     else {
-      bool status = index->InsertEntry(tuple, location);
-      if (status == true)
+      bool status = index->InsertEntry(key, location);
+      if (status == true) {
+        delete key;
         continue;
+      }
     }
 
     // Undo insert in other indexes as well
     for (int prev_index_itr = index_itr + 1; prev_index_itr < index_count; ++prev_index_itr) {
       auto prev_index = GetIndex(prev_index_itr);
-      prev_index->DeleteEntry(tuple);
+      prev_index->DeleteEntry(key);
     }
+
+    delete key;
     return false;
   }
 
@@ -171,11 +185,21 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer loca
 
 void DataTable::DeleteInIndexes(const storage::Tuple *tuple) {
   for (auto index : indexes) {
-    if (index->DeleteEntry(tuple) == false) {
-      throw ExecutorException("Failed to delete tuple from index " +
-                              GetName() + "." + index->GetName() + " " +index->GetTypeName());
+    auto index_schema = index->GetKeySchema();
+    auto indexed_columns = index_schema->GetIndexedColumns();
+    storage::Tuple *key = new storage::Tuple(index_schema, true);
+    key->SetFromTuple(tuple, indexed_columns);
+
+    if (index->DeleteEntry(key) == false) {
+      delete key;
+      LOG_WARN("Failed to delete tuple from index %s . %s %s",
+               GetName().c_str(), index->GetName().c_str(),
+               index->GetTypeName().c_str());
     }
+
+    delete key;
   }
+
 }
 
 bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
