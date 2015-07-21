@@ -112,7 +112,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     break;
 
     default:
-      LOG_ERROR("Unknown atttypeid : %u \n", atttypid);
+      LOG_ERROR("Unknown atttypeid : %u ", atttypid);
       break;
   }
 
