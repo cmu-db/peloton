@@ -39,6 +39,7 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   columns.push_back(column2);
 
   catalog::Schema *key_schema = new catalog::Schema(columns);
+  key_schema->SetIndexedColumns({0, 1});
 
   columns.push_back(column3);
   columns.push_back(column4);
