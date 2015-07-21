@@ -257,6 +257,8 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
   // Go over each attribute and convert Value to Datum
   for (oid_t att_itr = 0; att_itr < natts; ++att_itr) {
     Value value = tuple->GetValue(att_itr);
+
+    // NB: this may allocate varlena
     Datum datum = GetDatum(value);
 
     datums[att_itr] = datum;
@@ -264,16 +266,38 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
   }
 
   // Construct tuple
+  /*
+   * I believe PG does a deep copy in heap_form_tuple(),
+   * which means datums[] should be freed in the current function.
+   * - Qiang 7/21/15
+   */
   heap_tuple = heap_form_tuple(tuple_desc, datums, nulls);
 
   // Construct slot
   slot = MakeSingleTupleTableSlot(tuple_desc);
 
   // Store tuple in slot
+  /*
+   * This function just sets a point in slot to
+   * the heap_tuple.
+   */
   ExecStoreTuple(heap_tuple, slot, InvalidBuffer, true);
 
-  // Clean up
+  // Clean up (A-B): seems we have to do the cleaning manually (no PG utility?)
+  // (A) Clean up any possible varlena's
+  for (oid_t att_itr = 0; att_itr < natts; ++att_itr) {
+    if(tuple_desc->attrs[att_itr]->attlen < 0){ // should be a varlen
+
+      assert(tuple_desc->attrs[att_itr]->attbyval == false);
+      // For now, only VARCHAR would be transformed to a varlena (see GetDatum() above)
+      assert(tuple->GetValue(att_itr).GetValueType() == VALUE_TYPE_VARCHAR);
+
+      pfree((void*)(datums[att_itr]));
+    }
+  }
+  // (B) Free the datum array itself
   pfree(datums);
+
   pfree(nulls);
 
   return slot;
