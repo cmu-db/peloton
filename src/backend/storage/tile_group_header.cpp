@@ -28,7 +28,7 @@ std::ostream& operator<<(std::ostream& os, const TileGroupHeader& tile_group_hea
 	os << "\tTILE GROUP HEADER \n";
 
 	oid_t active_tuple_slots = tile_group_header.GetNextTupleSlot();
-  ItemPointer item;
+	ItemPointer item;
 
 	for(oid_t header_itr = 0 ; header_itr < active_tuple_slots ; header_itr++){
 
