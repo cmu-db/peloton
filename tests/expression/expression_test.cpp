@@ -227,7 +227,7 @@ TEST(ExpressionTest, SimpleAddition) {
   e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1, (int64_t)4));
   std::unique_ptr<expression::AbstractExpression> testexp(ConvertToExpression(e));
 
-  Value result = testexp->Evaluate(&junk,nullptr);
+  Value result = testexp->Evaluate(&junk,nullptr,nullptr);
   std::cout << (*testexp);
 
   EXPECT_EQ(ValuePeeker::PeekAsBigInt(result), 5LL);
@@ -248,7 +248,7 @@ TEST(ExpressionTest, SimpleMultiplication) {
   e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1, (int64_t)5));
 
   std::unique_ptr<expression::AbstractExpression> e1(ConvertToExpression(e));
-  Value r1 = e1->Evaluate(&junk, nullptr);
+  Value r1 = e1->Evaluate(&junk, nullptr,nullptr);
   std::cout << (*e1);
   EXPECT_EQ(ValuePeeker::PeekAsBigInt(r1), 25LL);
 
@@ -260,7 +260,7 @@ TEST(ExpressionTest, SimpleMultiplication) {
   e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1, (int64_t)3));
 
   std::unique_ptr<expression::AbstractExpression> e2(ConvertToExpression(e));
-  Value r2 = e2->Evaluate(&junk,nullptr);
+  Value r2 = e2->Evaluate(&junk,nullptr,nullptr);
   std::cout << (*e2);
   EXPECT_EQ(ValuePeeker::PeekAsBigInt(r2), 13LL);
 }

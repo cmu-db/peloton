@@ -1,4 +1,4 @@
- /**
+/**
  * @brief Implementation of utility functions for executor tests.
  *
  * Repeated code in many of the executor tests are factored out and placed
@@ -283,7 +283,8 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
   return result_logical_tile.release();
 }
 
-storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_count) {
+storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_count,
+                                                   bool indexes) {
 
   catalog::Schema *table_schema = new catalog::Schema( {
     GetColumnInfo(0), GetColumnInfo(1),
@@ -296,41 +297,50 @@ storage::DataTable *ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_coun
                                                                   table_schema, table_name,
                                                                   tuples_per_tilegroup_count);
 
-  // PRIMARY INDEX
-  std::vector<oid_t> key_attrs;
-  auto tuple_schema = table->GetSchema();
-  catalog::Schema *key_schema;
-  index::IndexMetadata *index_metadata;
-  bool unique;
+  if(indexes == true) {
+    // PRIMARY INDEX
+    std::vector<oid_t> key_attrs;
 
-  key_attrs = { 0 };
-  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-  unique = true;
-  index_metadata = new index::IndexMetadata("primary_btree_index",
-                                            123,
-                                            INDEX_TYPE_BTREE_MULTIMAP,
-                                            INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
-                                            tuple_schema,
-                                            key_schema,
-                                            unique);
-  index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+    auto tuple_schema = table->GetSchema();
+    catalog::Schema *key_schema;
+    index::IndexMetadata *index_metadata;
+    bool unique;
 
-  table->AddIndex(pkey_index);
+    key_attrs = { 0 };
+    key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+    key_schema->SetIndexedColumns(key_attrs);
 
-  // SECONDARY INDEX
-  key_attrs = { 0, 1 };
-  key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
-  unique = false;
-  index_metadata = new index::IndexMetadata("secondary_btree_index",
-                                            124,
-                                            INDEX_TYPE_BTREE_MULTIMAP,
-                                            INDEX_CONSTRAINT_TYPE_DEFAULT,
-                                            tuple_schema,
-                                            key_schema,
-                                            unique);
-  index::Index *sec_index = index::IndexFactory::GetInstance(index_metadata);
+    unique = true;
 
-  table->AddIndex(sec_index);
+    index_metadata = new index::IndexMetadata("primary_btree_index",
+                                              123,
+                                              INDEX_TYPE_BTREE_MULTIMAP,
+                                              INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
+                                              tuple_schema,
+                                              key_schema,
+                                              unique);
+
+    index::Index *pkey_index = index::IndexFactory::GetInstance(index_metadata);
+
+    table->AddIndex(pkey_index);
+
+    // SECONDARY INDEX
+    key_attrs = { 0, 1 };
+    key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+    key_schema->SetIndexedColumns(key_attrs);
+
+    unique = false;
+    index_metadata = new index::IndexMetadata("secondary_btree_index",
+                                              124,
+                                              INDEX_TYPE_BTREE_MULTIMAP,
+                                              INDEX_CONSTRAINT_TYPE_DEFAULT,
+                                              tuple_schema,
+                                              key_schema,
+                                              unique);
+    index::Index *sec_index = index::IndexFactory::GetInstance(index_metadata);
+
+    table->AddIndex(sec_index);
+  }
 
   return table;
 }

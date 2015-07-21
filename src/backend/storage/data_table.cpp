@@ -121,10 +121,19 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
 
 void DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer location) {
   for (auto index : indexes) {
-    if (index->InsertEntry(tuple, location) == false) {
+    auto index_schema = index->GetKeySchema();
+    auto indexed_columns = index_schema->GetIndexedColumns();
+    storage::Tuple *key = new storage::Tuple(index_schema, true);
+    key->SetFromTuple(tuple, indexed_columns);
+
+    if (index->InsertEntry(key, location) == false) {
       location = INVALID_ITEMPOINTER;
-      LOG_INFO("Failed to insert tuple into index : %s \n",  tuple->GetInfo().c_str());
+      LOG_ERROR("Failed to insert key into index : %s \n",  key->GetInfo().c_str());
+      delete key;
+      break;
     }
+
+    delete key;
   }
 }
 
@@ -133,31 +142,54 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer loca
   int index_count = GetIndexCount();
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
     auto index = GetIndex(index_itr);
+    auto index_schema = index->GetKeySchema();
+    auto indexed_columns = index_schema->GetIndexedColumns();
+    storage::Tuple *key = new storage::Tuple(index_schema, true);
+    key->SetFromTuple(tuple, indexed_columns);
+
+    std::cout << "KEY  :: " << *(key);
 
     // No need to check if it does not have unique keys
     if(index->HasUniqueKeys() == false) {
-      bool status = index->InsertEntry(tuple, location);
-      if (status == true)
+      bool status = index->InsertEntry(key, location);
+      LOG_INFO("A.1");
+
+      if (status == true) {
+        delete key;
         continue;
+      }
     }
 
+    LOG_INFO("B");
+
     // Check if key already exists
-    if (index->Exists(tuple) == true) {
+    if (index->Exists(key) == true) {
       LOG_ERROR("Failed to insert into index %s.%s [%s]",
                 GetName().c_str(), index->GetName().c_str(),
                 index->GetTypeName().c_str());
+      LOG_INFO("B.1");
     }
     else {
-      bool status = index->InsertEntry(tuple, location);
-      if (status == true)
+      bool status = index->InsertEntry(key, location);
+      LOG_INFO("B.2");
+
+      if (status == true) {
+        delete key;
         continue;
+      }
     }
 
     // Undo insert in other indexes as well
     for (int prev_index_itr = index_itr + 1; prev_index_itr < index_count; ++prev_index_itr) {
+      LOG_INFO("C.2");
+
       auto prev_index = GetIndex(prev_index_itr);
-      prev_index->DeleteEntry(tuple);
+      prev_index->DeleteEntry(key);
     }
+
+    LOG_INFO("D");
+
+    delete key;
     return false;
   }
 
@@ -166,11 +198,20 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer loca
 
 void DataTable::DeleteInIndexes(const storage::Tuple *tuple) {
   for (auto index : indexes) {
-    if (index->DeleteEntry(tuple) == false) {
+    auto index_schema = index->GetKeySchema();
+    auto indexed_columns = index_schema->GetIndexedColumns();
+    storage::Tuple *key = new storage::Tuple(index_schema, true);
+    key->SetFromTuple(tuple, indexed_columns);
+
+    if (index->DeleteEntry(key) == false) {
+      delete key;
       throw ExecutorException("Failed to delete tuple from index " +
                               GetName() + "." + index->GetName() + " " +index->GetTypeName());
     }
+
+    delete key;
   }
+
 }
 
 bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
