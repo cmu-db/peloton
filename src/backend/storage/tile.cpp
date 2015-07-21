@@ -176,7 +176,6 @@ Tile * Tile::CopyTileToBackend(storage::AbstractBackend *new_backend) {
 	allocated_tuple_count = GetAllocatedTupleCount();
 	active_tuple_count = GetActiveTupleCount();
 	active_tuple_count = 3;
-	//tile_size = GetInlinedSize();
 	tile_is_inlined = schema->IsInlined();
 
 
@@ -184,24 +183,14 @@ Tile * Tile::CopyTileToBackend(storage::AbstractBackend *new_backend) {
 	 * Create a new tile from the old tile
 	 */
 	const catalog::Schema *new_schema = schema;
-	//storage::TileGroupHeader *new_header = new storage::TileGroupHeader(backend, allocated_tuple_count);
-	// Get reference for TileGroupHeader from the current tile
 	storage::TileGroupHeader *new_header = GetHeader();
 	storage::Tile *new_tile = storage::TileFactory::GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
 											  new_header, new_backend, *new_schema, nullptr, allocated_tuple_count);
 	Pool *new_pool = new_tile->GetPool();
-	//::memcpy(static_cast<void *>(new_tile), static_cast<void *>(this), tile_size);
+	std::cout << "new_pool before memcpy: " << static_cast<void *>(new_pool) << std::endl;
+	::memcpy(static_cast<void *>(new_tile->data), static_cast<void *>(data), tile_size);
+	std::cout << "new_pool after memcpy: " << static_cast<void *>(new_pool) << std::endl;
 
-	// TODO: Peloton Changes
-	// currently copying tile tuple by tuple
-	// can this be replaced by a strcpy of data buffer?
-	// tried... getting null pointer exception
-	storage::Tuple *old_tuple;
-	for(int old_tup_itr=0; old_tup_itr<active_tuple_count; old_tup_itr++)
-	{
-		old_tuple = GetTuple(old_tup_itr);
-		new_tile->InsertTuple(old_tup_itr,old_tuple);
-	}
 
 	/*
 	 * If some of the columns are uninlined, change those entries to point to the new pool
@@ -212,7 +201,6 @@ Tile * Tile::CopyTileToBackend(storage::AbstractBackend *new_backend) {
 
 		int uninlined_col_index;
 		Value uninlined_col_value, new_uninlined_col_value;
-		//storage::Tuple *new_tuple;
 
 		for(int col_itr=0; col_itr<uninlined_col_cnt; col_itr++) {
 
