@@ -333,6 +333,9 @@ std::string ExpressionTypeToString(ExpressionType type) {
     case EXPRESSION_TYPE_FUNCTION_REF : {
         return "FUNCTION_REF";
     }
+    case EXPRESSION_TYPE_CAST : {
+      return "CAST";
+    }
     }
     return "INVALID";
 }
