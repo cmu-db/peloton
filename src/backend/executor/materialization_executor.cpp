@@ -98,7 +98,7 @@ void MaterializationExecutor::MaterializeByTiles(
 
       // Copy all values in the column to the physical tile
       for (oid_t old_tuple_id : *source_tile) {
-        Value value = source_tile->GetValue(old_tuple_id, old_col_id);
+        peloton::Value value = source_tile->GetValue(old_tuple_id, old_col_id);
         dest_tile->SetValue(value, new_tuple_id++, new_col_id);
       }
     }
