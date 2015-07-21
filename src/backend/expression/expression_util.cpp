@@ -335,6 +335,14 @@ AbstractExpression *ConjunctionFactory(ExpressionType et, std::list<AbstractExpr
   }
 }
 
+/**
+ * @brief Construct a cast expression
+ * @return A constructed peloton expression
+ */
+AbstractExpression *CastFactory(PostgresValueType type, AbstractExpression *child) {
+  return new expression::CastExpression(type, child);
+}
+
 // Given an expression type and a valuetype, find the best
 // templated ctor to invoke. Several helpers, above, aid in this
 // pursuit. Each instantiated expression must consume any
