@@ -51,7 +51,8 @@ public:
         int allocate_tuple_count = TESTS_TUPLES_PER_TILEGROUP);
 
     /** @brief Creates a basic table with allocated but not populated tuples */
-    static storage::DataTable *CreateTable(int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP);
+    static storage::DataTable *CreateTable(int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP,
+                                           bool indexes = true);
 
     /** @brief Creates a basic table with allocated and populated tuples */
     static storage::DataTable *CreateAndPopulateTable();
