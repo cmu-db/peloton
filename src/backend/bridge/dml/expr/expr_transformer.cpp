@@ -263,7 +263,7 @@ expression::AbstractExpression* ExprTransformer::TransformRelabelType(const Expr
 
   assert(expr->relabelformat == COERCE_IMPLICIT_CAST);
 
-  LOG_INFO("Handle relabel as %d", expr->resulttype);
+  LOG_TRACE("Handle relabel as %d", expr->resulttype);
   expression::AbstractExpression *child = ExprTransformer::TransformExpr(child_state);
 
   PostgresValueType type = static_cast<PostgresValueType>(expr->resulttype);
