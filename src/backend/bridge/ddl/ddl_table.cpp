@@ -59,6 +59,8 @@ bool DDLTable::ExecCreateStmt(Node* parsetree, const char* queryString, std::vec
       char* relation_name = Cstmt->relation->relname;
       Oid relation_oid = ((CreateStmt *)parsetree)->relation_id;
 
+      Bridge::SetNumberOfTuples(relation_oid, 10);
+
       std::vector<catalog::Column> column_infos;
       std::vector<catalog::ForeignKey> foreign_keys;
 
@@ -161,14 +163,6 @@ bool DDLTable::ExecDropStmt(Node* parsetree){
     }
   }
   return true;
-}
-
-// TODO :: Set the catalog # of tuples in Peloton
-void DDLTable::CheatingPostgres(oid_t relation_oid, int number_of_tuples){
-  std::cout << "relation oid " << relation_oid << std::endl;
-  std::cout << "# of tuples in " << relation_oid << " : " << Bridge::GetNumberOfTuples(relation_oid) << std::endl;
-  Bridge::SetNumberOfTuples(relation_oid, number_of_tuples);
-  std::cout << "# of tuples in " << relation_oid << " : " << Bridge::GetNumberOfTuples(relation_oid) << std::endl;
 }
 
 /**
