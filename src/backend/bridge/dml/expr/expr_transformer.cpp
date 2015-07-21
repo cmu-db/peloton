@@ -260,18 +260,15 @@ expression::AbstractExpression* ExprTransformer::TransformRelabelType(const Expr
   auto state = reinterpret_cast<const GenericExprState*>(es);
   auto expr = reinterpret_cast<const RelabelType *>(es->expr);
   auto child_state = state->arg;
-  auto child_expr = expr->arg;
 
-  assert(expr->xpr.type == T_RelabelType);
+  assert(expr->relabelformat == COERCE_IMPLICIT_CAST);
 
-  LOG_INFO("child is of type %d, %d", child_expr->type, child_state->type);
-  LOG_INFO("%d, %d", expr->resulttype, expr->relabelformat);
+  LOG_INFO("Handle relabel as %d", expr->resulttype);
   expression::AbstractExpression *child = ExprTransformer::TransformExpr(child_state);
 
-  //TODO: not implemented yet
+  PostgresValueType type = static_cast<PostgresValueType>(expr->resulttype);
 
-
-  return child;
+  return expression::CastFactory(type, child);
 }
 
 expression::AbstractExpression* ExprTransformer::TransformFunc(const ExprState *es) {
