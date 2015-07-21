@@ -106,9 +106,6 @@ bool InsertExecutor::DExecute() {
       tuple->SetValue(proj.first, value);
     }
 
-    LOG_INFO("Tuple (pl) to insert : ");
-    std::cout << *tuple << std::endl;
-
     // Carry out insertion
     ItemPointer location = target_table->InsertTuple(transaction_->GetTransactionId(), tuple.get());
     if (location.block == INVALID_OID) {
