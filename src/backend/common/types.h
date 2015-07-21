@@ -191,7 +191,12 @@ enum ExpressionType {
   EXPRESSION_TYPE_STAR                            = 50,
   EXPRESSION_TYPE_PLACEHOLDER                     = 51,
   EXPRESSION_TYPE_COLUMN_REF                      = 52,
-  EXPRESSION_TYPE_FUNCTION_REF                    = 53
+  EXPRESSION_TYPE_FUNCTION_REF                    = 53,
+
+  //===--------------------------------------------------------------------===//
+  // Misc
+  //===--------------------------------------------------------------------===//
+  EXPRESSION_TYPE_CAST                            = 60
 };
 
 //===--------------------------------------------------------------------===//
