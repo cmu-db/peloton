@@ -164,9 +164,22 @@ Datum TupleTransformer::GetDatum(Value value) {
 
     case VALUE_TYPE_VARCHAR:
     {
-      char *variable_character = (char *) ValuePeeker::PeekObjectValue(value);
-      LOG_TRACE("%s\n", variable_character);
-      datum = CStringGetDatum(variable_character);
+      // VARCHAR should be stored in a varlena in PG
+      // We use palloc() to create a new varlena here.
+      auto data_len = ValuePeeker::PeekObjectLength(value);
+      auto data = ValuePeeker::PeekObjectValue(value);
+      auto va_len = data_len + VARHDRSZ;
+      struct varlena* vaptr = (struct varlena*)palloc(va_len);
+      SET_VARSIZE(vaptr, va_len);
+      ::memcpy(VARDATA(vaptr), data, data_len);
+
+      LOG_INFO("len = %d , str = \"%s\" \n", data_len, std::string((char*)data, data_len).c_str());
+
+      datum = (Datum)vaptr;
+
+//      char *variable_character = (char *) ValuePeeker::PeekObjectValue(value);
+//      LOG_TRACE("%s\n", variable_character);
+//      datum = CStringGetDatum(variable_character);
     }
     break;
 
