@@ -288,9 +288,12 @@ void Bridge::GetDatabaseList(void) {
  * @param num_tuples number of tuples
  */
 void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
+
   Relation pg_class_rel;
   HeapTuple tuple;
   Form_pg_class pgclass;
+
+  StartTransactionCommand();
 
   // Open target table in exclusive mode
   pg_class_rel = heap_open(RelationRelationId,RowExclusiveLock);
@@ -311,6 +314,8 @@ void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
 
   heap_freetuple(tuple);
   heap_close(pg_class_rel, RowExclusiveLock);
+
+  CommitTransactionCommand();
 }
 
 } // namespace bridge
