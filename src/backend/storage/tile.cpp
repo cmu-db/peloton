@@ -197,7 +197,7 @@ Tile *Tile::CopyTile(storage::AbstractBackend *new_backend) {
 	if(!tile_is_inlined) {
 
 		int uninlined_col_cnt = new_schema->GetUninlinedColumnCount();
-		TileIterator tile_itr(this);
+		//TileIterator tile_itr = GetIterator();
 		//Tuple tuple(new_schema);
 
 		int uninlined_col_index;
@@ -209,11 +209,12 @@ Tile *Tile::CopyTile(storage::AbstractBackend *new_backend) {
 			//int tup_itr=0;
 
 			for(int tup_itr=0; tup_itr<active_tuple_count; tup_itr++) {
-			//while (tile_itr.Next(tuple)) {
+			//while (tile_itr.HasNext()) {
 
 				// Get the Value object for the uninlined column of the current tuple
 				uninlined_col_value = new_tile->GetValue(tup_itr,uninlined_col_index);
 				//uninlined_col_value = tuple.GetValue(uninlined_col_index);
+
 
 				// Get the length of the uninlined string
 				size_t uninlined_col_object_len = ValuePeeker::PeekObjectLength(uninlined_col_value);
@@ -228,9 +229,9 @@ Tile *Tile::CopyTile(storage::AbstractBackend *new_backend) {
 				Value new_val = ValueFactory::GetStringValue(uninlined_varchar_str, new_pool);
 
 				// Set the newly created value object to the tuple
-				 new_tile->SetValue(new_val, tup_itr, uninlined_col_index);
+				new_tile->SetValue(new_val, tup_itr, uninlined_col_index);
 				//tuple.SetValue(uninlined_col_index, new_val);
-				//new_tile->InsertTuple(tup_itr, tuple);
+				//new_tile->InsertTuple(tup_itr, &tuple);
 
 				//tup_itr++;
 			}

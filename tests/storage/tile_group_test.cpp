@@ -371,6 +371,12 @@ TEST(TileGroupTests, TileCopyTest) {
     //LaunchParallelTest(6, TileGroupInsert, tile_group, schema);
     //EXPECT_EQ(6000, tile_group->GetActiveTupleCount());
 
+    auto& txn_manager = concurrency::TransactionManager::GetInstance();
+	auto txn = txn_manager.BeginTransaction();
+	txn_id_t txn_id1 = txn->GetTransactionId();
+	//	cid_t cid1 = txn->GetLastCommitId();
+	oid_t tuple_slot_id = INVALID_OID;
+
 
     storage::Tuple *tuple1 = new storage::Tuple(schema, true);
 	storage::Tuple *tuple2 = new storage::Tuple(schema, true);
@@ -394,9 +400,16 @@ TEST(TileGroupTests, TileCopyTest) {
 	tuple3->SetValue(3, ValueFactory::GetStringValue("jinwoong kim", tile->GetPool()));
 	tuple3->SetValue(4, ValueFactory::GetStringValue("jinwoong kim again", tile->GetPool()));
 
-	tile->InsertTuple(0, tuple1);
-	tile->InsertTuple(1, tuple2);
-	tile->InsertTuple(2, tuple3);
+	//tile->InsertTuple(0, tuple1);
+	//tile->InsertTuple(1, tuple2);
+	//tile->InsertTuple(2, tuple3);
+
+	tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple1);
+	EXPECT_EQ(0, tuple_slot_id);
+	tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple2);
+	EXPECT_EQ(1, tuple_slot_id);
+	tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple3);
+	EXPECT_EQ(2, tuple_slot_id);
 
 	std::cout << (*tile);
 
@@ -553,6 +566,9 @@ TEST(TileGroupTests, TileCopyTest) {
 			}
 		}
 	}
+
+	txn_manager.CommitTransaction(txn);
+	txn_manager.EndTransaction(txn);
 
 
 	delete tuple1;
