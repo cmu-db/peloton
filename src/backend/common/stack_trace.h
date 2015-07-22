@@ -18,6 +18,6 @@ namespace peloton {
 //  Stack Trace
 //===--------------------------------------------------------------------===//
 
-void GetStackTrace();
+void GetStackTrace(int signum);
 
 } // namespace peloton

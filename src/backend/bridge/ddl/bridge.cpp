@@ -301,6 +301,7 @@ void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
   }
   pgclass = (Form_pg_class) GETSTRUCT(tuple);
   pgclass->reltuples = (float4) num_tuples;
+  pgclass->relpages = (int32) 1;
 
   // update tuple
   simple_heap_update(pg_class_rel, &tuple->t_self, tuple);
@@ -311,6 +312,85 @@ void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
   heap_freetuple(tuple);
   heap_close(pg_class_rel, RowExclusiveLock);
 }
+
+/**
+ * @brief Increase the the number of tuples by 1
+ * @param relation_id relation id
+ */
+void Bridge::IncreaseNumberOfTuplesByOne(Oid relation_id) {
+  Relation pg_class_rel;
+  HeapTuple tuple;
+  Form_pg_class pgclass;
+
+  // Open target table in exclusive mode
+  pg_class_rel = heap_open(RelationRelationId,RowExclusiveLock);
+  tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relation_id));
+  if (!HeapTupleIsValid(tuple)) {
+    elog(DEBUG2, "cache lookup failed for relation %u", relation_id);
+    return;
+  }
+  pgclass = (Form_pg_class) GETSTRUCT(tuple);
+
+  // Get the number of tuples from pg_class and increase it by 1
+  float4 reltuples = pgclass->reltuples+(float4)1;
+  pgclass->reltuples = reltuples;
+
+  // Set the relpages as 1 so that we can cheat the Postgres
+  pgclass->relpages = (int32) 1;
+
+  // update tuple
+  simple_heap_update(pg_class_rel, &tuple->t_self, tuple);
+
+  /* keep the catalog indexes up to date */
+  CatalogUpdateIndexes(pg_class_rel, tuple);
+
+  heap_freetuple(tuple);
+  heap_close(pg_class_rel, RowExclusiveLock);
+
+}
+
+/**
+ * @brief Decrease the the number of tuples by 1
+ * @param relation_id relation id
+ */
+void Bridge::DecreaseNumberOfTuplesByOne(Oid relation_id) {
+  Relation pg_class_rel;
+  HeapTuple tuple;
+  Form_pg_class pgclass;
+
+  // Open target table in exclusive mode
+  pg_class_rel = heap_open(RelationRelationId,RowExclusiveLock);
+  tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relation_id));
+  if (!HeapTupleIsValid(tuple)) {
+    elog(DEBUG2, "cache lookup failed for relation %u", relation_id);
+    return;
+  }
+  pgclass = (Form_pg_class) GETSTRUCT(tuple);
+
+  // Get the number of tuples from pg_class and decrease it by 1
+  float4 reltuples = pgclass->reltuples-(float4)1;
+
+  // Reltuples can be negative
+  if( reltuples < 0 )
+    reltuples = 0;
+
+  pgclass->reltuples = reltuples;
+
+  // Set the relpages as 1 so that we can cheat the Postgres
+  pgclass->relpages = (int32) 1;
+
+  // update tuple
+  simple_heap_update(pg_class_rel, &tuple->t_self, tuple);
+
+  /* keep the catalog indexes up to date */
+  CatalogUpdateIndexes(pg_class_rel, tuple);
+
+  heap_freetuple(tuple);
+  heap_close(pg_class_rel, RowExclusiveLock);
+
+}
+
+
 
 } // namespace bridge
 } // namespace peloton
