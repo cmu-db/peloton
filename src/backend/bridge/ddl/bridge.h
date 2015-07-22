@@ -51,6 +51,10 @@ class Bridge {
 
   static void SetNumberOfTuples(Oid relation_id, float num_of_tuples);
 
+  static void IncreaseNumberOfTuplesByOne(Oid relation_id);
+
+  static void DecreaseNumberOfTuplesByOne(Oid relation_id);
+
 };
 
 } // namespace bridge
