@@ -43,7 +43,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
   assert(plan_state);
 
   Plan *plan = plan_state->plan;
-  assert(plan);
+  // Ignore empty plans
+  if(plan == nullptr)
+    return nullptr;
 
   planner::AbstractPlanNode *plan_node = nullptr;
 
