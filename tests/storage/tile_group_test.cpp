@@ -321,6 +321,234 @@ TEST(TileGroupTests, MVCCInsert) {
     delete schema2;
 }
 
+// TODO: Peloton Changes
+// Introducing CopyTile test
+TEST(TileGroupTests, TileCopyTest) {
+
+	std::vector<catalog::ColumnInfo> columns;
+	std::vector<std::string> tile_column_names;
+	std::vector<std::vector<std::string> > column_names;
+	std::vector<catalog::Schema> schemas;
+
+
+	catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
+	catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
+	catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", true);
+	catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 25, "D", false);
+	catalog::ColumnInfo column5(VALUE_TYPE_VARCHAR, 25, "E", false);
+
+	columns.push_back(column1);
+	columns.push_back(column2);
+	columns.push_back(column3);
+	columns.push_back(column4);
+	columns.push_back(column5);
+
+
+	catalog::Schema *schema = new catalog::Schema(columns);
+	schemas.push_back(*schema);
+
+
+	tile_column_names.push_back("COL 1");
+	tile_column_names.push_back("COL 2");
+	tile_column_names.push_back("COL 3");
+	tile_column_names.push_back("COL 4");
+	tile_column_names.push_back("COL 5");
+
+    column_names.push_back(tile_column_names);
+
+
+	const int tuple_count = 6;
+
+
+    storage::AbstractBackend *backend = new storage::VMBackend();
+    storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
+                                     nullptr, backend, schemas, tuple_count);
+    storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
+
+    storage::Tile *tile = storage::TileFactory::GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+    												tile_group_header, backend, *schema, nullptr, tuple_count);
+
+    //LaunchParallelTest(6, TileGroupInsert, tile_group, schema);
+    //EXPECT_EQ(6000, tile_group->GetActiveTupleCount());
+
+
+    storage::Tuple *tuple1 = new storage::Tuple(schema, true);
+	storage::Tuple *tuple2 = new storage::Tuple(schema, true);
+	storage::Tuple *tuple3 = new storage::Tuple(schema, true);
+
+	tuple1->SetValue(0, ValueFactory::GetIntegerValue(1));
+	tuple1->SetValue(1, ValueFactory::GetIntegerValue(1));
+	tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1));
+	tuple1->SetValue(3, ValueFactory::GetStringValue("vivek sengupta", tile->GetPool()));
+	tuple1->SetValue(4, ValueFactory::GetStringValue("vivek sengupta again", tile->GetPool()));
+
+	tuple2->SetValue(0, ValueFactory::GetIntegerValue(2));
+	tuple2->SetValue(1, ValueFactory::GetIntegerValue(2));
+	tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2));
+	tuple2->SetValue(3, ValueFactory::GetStringValue("ming fang", tile->GetPool()));
+	tuple2->SetValue(4, ValueFactory::GetStringValue("ming fang again", tile->GetPool()));
+
+	tuple3->SetValue(0, ValueFactory::GetIntegerValue(3));
+	tuple3->SetValue(1, ValueFactory::GetIntegerValue(3));
+	tuple3->SetValue(2, ValueFactory::GetTinyIntValue(3));
+	tuple3->SetValue(3, ValueFactory::GetStringValue("jinwoong kim", tile->GetPool()));
+	tuple3->SetValue(4, ValueFactory::GetStringValue("jinwoong kim again", tile->GetPool()));
+
+	tile->InsertTuple(0, tuple1);
+	tile->InsertTuple(1, tuple2);
+	tile->InsertTuple(2, tuple3);
+
+	std::cout << (*tile);
+
+
+	/*
+	 * Print details of old tile
+	 */
+	const catalog::Schema *old_schema;
+	bool old_tile_is_inlined;
+	uint16_t old_tile_allocated_tuple_count, old_tile_active_tuple_count;
+	uint32_t old_tile_size;
+	uint32_t old_tile_tuple_size;
+
+
+	std::cout << "-------------------" << std::endl;
+	std::cout << "Details of old tile" << std::endl;
+	std::cout << "-------------------" << std::endl;
+
+	std::cout << "base address of old tile: " << static_cast<void *>(tile) << std::endl;
+
+	old_tile_size = tile->GetInlinedSize();
+	std::cout << "old tile size: " << old_tile_size << std:: endl;
+
+	old_tile_allocated_tuple_count = tile->GetAllocatedTupleCount();
+	std::cout << "old tile allocated tuple count: " << old_tile_allocated_tuple_count << std:: endl;
+
+	old_tile_active_tuple_count = tile->GetActiveTupleCount();
+	std::cout << "old tile active tuple count: " << old_tile_active_tuple_count << std:: endl;
+	old_tile_active_tuple_count = 3;
+
+	old_tile_tuple_size = old_tile_size / old_tile_allocated_tuple_count;
+	std::cout << "size of each tuple in old tile: " << old_tile_tuple_size << std::endl;
+
+	old_schema = tile->GetSchema();
+	old_tile_is_inlined = old_schema->IsInlined();
+	std::cout << "Is the entire old tile inlined? " << (old_tile_is_inlined? "true" : "false") << std::endl;
+
+	peloton::Pool *old_pool = tile->GetPool();
+	std::cout << "Pool associated with old tile is at address: " << static_cast<void *>(old_pool) << std::endl;
+
+	int64_t old_pool_size = old_pool->GetAllocatedMemory();
+	std::cout << "size of old pool: " << old_pool_size << std::endl;
+
+
+
+	const catalog::Schema *new_schema = old_schema;
+	storage::AbstractBackend *new_backend = new storage::VMBackend();
+	storage::Tile *new_tile = tile->CopyTile(new_backend);
+	peloton::Pool *new_pool = new_tile->GetPool();
+
+
+	/*
+	 * Print details of new tile
+	 */
+	bool new_tile_is_inlined;
+	uint16_t new_tile_allocated_tuple_count, new_tile_active_tuple_count;
+	uint32_t new_tile_size;
+	uint32_t new_tile_tuple_size;
+
+
+	std::cout << "-------------------" << std::endl;
+	std::cout << "Details of new tile" << std::endl;
+	std::cout << "-------------------" << std::endl;
+
+	std::cout << "base address of new tile: " << static_cast<void *>(new_tile) << std::endl;
+
+	new_tile_size = new_tile->GetInlinedSize();
+	std::cout << "new tile size: " << new_tile_size << std:: endl;
+
+	new_tile_allocated_tuple_count = tile->GetAllocatedTupleCount();
+	std::cout << "new tile allocated tuple count: " << new_tile_allocated_tuple_count << std:: endl;
+
+	new_tile_active_tuple_count = tile->GetActiveTupleCount();
+	std::cout << "new tile active tuple count: " << new_tile_active_tuple_count << std:: endl;
+	new_tile_active_tuple_count = 3;
+
+	new_tile_tuple_size = new_tile_size / new_tile_allocated_tuple_count;
+	std::cout << "size of each tuple in new tile: " << new_tile_tuple_size << std::endl;
+
+	new_schema = new_tile->GetSchema();
+	new_tile_is_inlined = new_schema->IsInlined();
+	std::cout << "Is the entire new tile inlined? " << (new_tile_is_inlined? "true" : "false") << std::endl;
+
+	std::cout << "Pool associated with new tile is at address: " << static_cast<void *>(new_pool) << std::endl;
+
+	int64_t new_pool_size = new_pool->GetAllocatedMemory();
+	std::cout << "size of new pool: " << new_pool_size << std::endl;
+
+	std::cout << "------------------------------------" << std:: endl;
+	std::cout << "In case some columns are not inlined" << std:: endl;
+	std::cout << "------------------------------------" << std:: endl;
+
+
+	/*
+	 * Test results of copying by printing
+	 * Need to be changed to for loop comparison
+	 */
+	int uninlined_col_index;
+	Value uninlined_col_value, new_uninlined_col_value;
+	size_t uninlined_col_object_len, new_uninlined_col_object_len;
+	unsigned char *uninlined_col_object_ptr, *new_uninlined_col_object_ptr;
+
+	for(int col_itr=0; col_itr<2; col_itr++) {
+
+		uninlined_col_index = new_schema->GetUninlinedColumnIndex(col_itr);
+
+		for(int tup_itr=0; tup_itr<new_tile_active_tuple_count; tup_itr++) {
+
+			std::cout << "Old ..." << std::endl;
+			std::cout << "====>>>" << std::endl;
+
+			uninlined_col_value = tile->GetValue(tup_itr,uninlined_col_index);
+			std::cout << "\t uninlined column value: " << uninlined_col_value << std::endl;
+
+			uninlined_col_object_len = ValuePeeker::PeekObjectLength(uninlined_col_value);
+			std::cout << "\t size of uninlined column object: " << uninlined_col_object_len << std::endl;
+
+			uninlined_col_object_ptr = static_cast<unsigned char *>(ValuePeeker::PeekObjectValue(uninlined_col_value));
+			std::cout << "\t uninlined column object pointer: " << static_cast<void *>(uninlined_col_object_ptr) << std::endl;
+
+			std::string uninlined_varchar_str(reinterpret_cast<char const*>(uninlined_col_object_ptr), uninlined_col_object_len);
+			std::cout << "\t the data stored uninlined is: " << uninlined_varchar_str << std::endl << std::endl;
+
+			std::cout << "New ..." << std::endl;
+			std::cout << "====>>>" << std::endl;
+
+			new_uninlined_col_value = new_tile->GetValue(tup_itr,uninlined_col_index);
+			std::cout << "\t uninlined column value: " << new_uninlined_col_value << std::endl;
+
+			new_uninlined_col_object_len = ValuePeeker::PeekObjectLength(new_uninlined_col_value);
+			std::cout << "\t size of uninlined column object: " << new_uninlined_col_object_len << std::endl;
+
+			new_uninlined_col_object_ptr = static_cast<unsigned char *>(ValuePeeker::PeekObjectValue(new_uninlined_col_value));
+			std::cout << "\t uninlined column object pointer: " << static_cast<void *>(new_uninlined_col_object_ptr) << std::endl;
+
+			std::string new_uninlined_varchar_str(reinterpret_cast<char const*>(new_uninlined_col_object_ptr), new_uninlined_col_object_len);
+			std::cout << "\t the data stored uninlined is: " << new_uninlined_varchar_str << std::endl << std::endl;
+		}
+	}
+
+
+	delete tuple1;
+	delete tuple2;
+	delete tuple3;
+	delete tile;
+	delete new_tile;
+    delete tile_group;
+    delete backend;
+    delete new_backend;
+    delete schema;
+}
+
 } // End test namespace
 } // End peloton namespace
 

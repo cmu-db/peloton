@@ -109,7 +109,7 @@ class Tile {
 
   // TODO: Peloton Changes
   // Copy current tile to given Backend and return a reference to the new tile
-  Tile *CopyTileToBackend(AbstractBackend *);
+  Tile *CopyTile(AbstractBackend *);
 
   //===--------------------------------------------------------------------===//
   // Size Stats
