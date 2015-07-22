@@ -48,6 +48,35 @@ bool DDLDatabase::ExecDropdbStmt(Node* parsetree){
 }
 
 /**
+ * @brief Execute the vacuum stmt.
+ * @param the parse tree
+ * @return true if we handled it correctly, false otherwise
+ */
+bool DDLDatabase::ExecVacuumStmt(Node* parsetree){
+  VacuumStmt* vacuum = (VacuumStmt*) parsetree;
+  std::string relation_name = vacuum->relation->relname;
+
+  // Get database oid
+  oid_t database_oid = Bridge::GetCurrentDatabaseOid(); 
+
+  // Get data table based on dabase oid and table name
+  auto& manager = catalog::Manager::GetInstance();
+  auto db = manager.GetDatabaseWithOid(database_oid);
+
+  // Update every table and index
+  if(relation_name.empty()){
+    db->UpdateStats();
+  }
+  // Otherwise, update the specific table
+  else{
+    oid_t relation_oid = (db->GetTableWithName(relation_name))->GetOid();
+    db->UpdateStatsWithOid(relation_oid);
+  }
+
+  return true;
+}
+
+/**
  * @brief Create database.
  * @param database_oid database id
  * @return true if we created a database, false otherwise

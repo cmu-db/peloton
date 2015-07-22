@@ -91,7 +91,7 @@ void DDL::ProcessUtility(Node *parsetree,
 
     case T_VacuumStmt:
     {
-      DDLTable::ExecVacuumStmt(parsetree);
+      DDLDatabase::ExecVacuumStmt(parsetree);
       break;
     }
 
