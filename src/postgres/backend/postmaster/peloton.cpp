@@ -1037,9 +1037,9 @@ peloton_create_status()
 int
 peloton_get_status(Peloton_Status *status)
 {
-  struct timespec duration = {0, 1000 * 100}; // 100 us
+  struct timespec duration = {0, 1000 * 10}; // 10 us
   int code;
-  int retry = 10;
+  int retry = 22; // upto 80s
 
   if(status == NULL)
     return PELOTON_STYPE_INVALID;
@@ -1051,6 +1051,9 @@ peloton_get_status(Peloton_Status *status)
     retry--;
 
     rc = nanosleep(&duration, NULL);
+    // multiplicative increase
+    duration.tv_nsec = duration.tv_nsec * 2;
+
     if(rc < 0)
     {
       ereport(LOG,
