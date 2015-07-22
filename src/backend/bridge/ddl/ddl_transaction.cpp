@@ -52,6 +52,10 @@ bool DDLTransaction::ExecTransactionStmt(TransactionStmt* stmt,
     {
       LOG_TRACE("COMMIT");
       auto txn = txn_manager.GetPGTransaction(txn_id);
+      if(txn == nullptr)
+      {
+        txn = txn_manager.StartPGTransaction(txn_id);
+      }
       assert(txn);
       LOG_TRACE("Committing peloton txn : %lu \n", txn->GetTransactionId());
       txn_manager.CommitTransaction(txn);
@@ -62,8 +66,13 @@ bool DDLTransaction::ExecTransactionStmt(TransactionStmt* stmt,
     {
       LOG_TRACE("ROLLBACK");
       auto txn = txn_manager.GetPGTransaction(txn_id);
+      if(txn == nullptr)
+      {
+        txn = txn_manager.StartPGTransaction(txn_id);
+      }
       assert(txn);
       LOG_TRACE("Aborting peloton txn : %lu \n", txn->GetTransactionId());
+      txn_manager.AbortTransaction(txn);
     }
     break;
 
