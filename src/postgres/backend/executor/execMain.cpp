@@ -1707,8 +1707,10 @@ peloton_ExecutePlan(EState *estate,
       /*
        * Free the underlying heap_tuple as long as
        * the TupleTableSlot itself.
+       * FIXME the tuple_desc has been refcounted, which makes it to be deallocated.
+       * So ... not our job to free it here?
        */
-      ExecDropSingleTupleTableSlot(slot);
+//      ExecDropSingleTupleTableSlot(slot);
     }
 
     // Clean up list

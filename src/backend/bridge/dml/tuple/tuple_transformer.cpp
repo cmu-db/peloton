@@ -241,6 +241,7 @@ storage::Tuple *TupleTransformer::GetPelotonTuple(TupleTableSlot *slot,
 TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
                                                    TupleDesc tuple_desc) {
   assert(tuple);
+  assert(tuple_desc);
 
   TupleTableSlot *slot = NULL;
   HeapTuple heap_tuple;
