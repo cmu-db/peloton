@@ -163,14 +163,6 @@ bool DDLTable::ExecDropStmt(Node* parsetree){
   return true;
 }
 
-// TODO :: Set the catalog # of tuples in Peloton
-void DDLTable::CheatingPostgres(oid_t relation_oid, int number_of_tuples){
-  std::cout << "relation oid " << relation_oid << std::endl;
-  std::cout << "# of tuples in " << relation_oid << " : " << Bridge::GetNumberOfTuples(relation_oid) << std::endl;
-  Bridge::SetNumberOfTuples(relation_oid, number_of_tuples);
-  std::cout << "# of tuples in " << relation_oid << " : " << Bridge::GetNumberOfTuples(relation_oid) << std::endl;
-}
-
 /**
  * @brief Create table.
  * @param table_name Table name
