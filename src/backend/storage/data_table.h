@@ -71,12 +71,6 @@ class DataTable : public AbstractTable {
 
   bool CheckNulls(const storage::Tuple *tuple) const;
 
-  void IncreaseNumberOfTuplesByOne(oid_t relation_id);
-
-  void DecreaseNumberOfTuplesByOne(oid_t relation_id);
-
-  void UpdateNumberOfTuples();
-
   //===--------------------------------------------------------------------===//
   // TILE GROUP
   //===--------------------------------------------------------------------===//
@@ -118,6 +112,18 @@ class DataTable : public AbstractTable {
   void DropForeignKey(const oid_t key_offset);
 
   oid_t GetForeignKeyCount() const;
+
+  //===--------------------------------------------------------------------===//
+  // STATS 
+  //===--------------------------------------------------------------------===//
+
+  void IncreaseNumberOfTuplesBy(const float amount);
+
+  void DecreaseNumberOfTuplesBy(const float amount);
+
+  void SetNumberOfTuples(const float num_tuples);
+
+  float GetNumberOfTuples() const;
 
   //===--------------------------------------------------------------------===//
   // UTILITIES
@@ -174,7 +180,7 @@ class DataTable : public AbstractTable {
   std::atomic<oid_t> unique_constraint_count = ATOMIC_VAR_INIT(START_OID);
 
   // # of tuples
-  oid_t number_of_tuples;
+  float number_of_tuples = 0.0;
 
 };
 

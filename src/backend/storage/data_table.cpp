@@ -217,34 +217,35 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
 }
 
 /**
- * @brief Increase the the number of tuples by 1
+ * @brief Increase the number of tuples in this table
+ * @param amount amount to increase
  */
-void DataTable::IncreaseNumberOfTuplesByOne(oid_t relation_id){
-  ++number_of_tuples;
-
-  bridge::Bridge::SetNumberOfTuples(relation_id, number_of_tuples);
+void DataTable::IncreaseNumberOfTuplesBy(const float amount){
+  number_of_tuples += amount;
 }
 
 /**
- * @brief Decrease the the number of tuples by 1
- *  only if it is greater than 0
+ * @brief Decrease the number of tuples in this table
+ * @param amount amount to decrease
  */
-void DataTable::DecreaseNumberOfTuplesByOne(oid_t relation_id){
-
-  if( number_of_tuples > 0.0 )
-    number_of_tuples -= 1.0;
-  else
-    number_of_tuples = 0;
-
-  bridge::Bridge::SetNumberOfTuples(relation_id, number_of_tuples);
+void DataTable::DecreaseNumberOfTuplesBy(const float amount){
+  number_of_tuples -= amount;
 }
 
 /**
- * @brief Updating the number of tuples to the pg_class in Postgres
+ * @brief Set the number of tuples in this table
+ * @param num_tuples number of tuples
  */
-//TODO :: for some reasons, it doesn't seem to update the catalog in Postgres
-void DataTable::UpdateNumberOfTuples(){
-  bridge::Bridge::SetNumberOfTuples(this->GetOid(), number_of_tuples);
+void DataTable::SetNumberOfTuples(const float num_tuples){
+  number_of_tuples = num_tuples;
+}
+
+/**
+ * @brief Get the number of tuples in this table
+ * @return number of tuples
+ */
+float DataTable::GetNumberOfTuples() const{
+  return number_of_tuples;
 }
 
 //===--------------------------------------------------------------------===//
