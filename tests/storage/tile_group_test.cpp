@@ -411,7 +411,7 @@ TEST(TileGroupTests, TileCopyTest) {
 	tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple3);
 	EXPECT_EQ(2, tuple_slot_id);
 
-	std::cout << (*tile);
+	//std::cout << (*tile);
 
 
 	/*
@@ -459,6 +459,10 @@ TEST(TileGroupTests, TileCopyTest) {
 	storage::AbstractBackend *new_backend = new storage::VMBackend();
 	storage::Tile *new_tile = tile->CopyTile(new_backend);
 	peloton::Pool *new_pool = new_tile->GetPool();
+
+	txn_manager.CommitTransaction(txn);
+	txn_manager.EndTransaction(txn);
+
 
 
 	/*
@@ -567,8 +571,7 @@ TEST(TileGroupTests, TileCopyTest) {
 		}
 	}
 
-	txn_manager.CommitTransaction(txn);
-	txn_manager.EndTransaction(txn);
+
 
 
 	delete tuple1;
