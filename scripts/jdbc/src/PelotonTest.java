@@ -15,7 +15,7 @@ public class PelotonTest {
   private final String INSERT = "INSERT INTO peloton_test VALUES (?,?)";
   private final String SEQSCAN = "SELECT * FROM peloton_test WHERE id != ?";
   private final String INDEXSCAN = "SELECT * FROM peloton_test WHERE id = ?";
-  private final String BITMAPSCAN = "SELECT * FROM peloton_test WHERE id < ?";
+  private final String BITMAPSCAN = "SELECT * FROM peloton_test";
   private final String UPDATE_BY_INDEXSCAN = "UPDATE peloton_test SET data=? WHERE id=?";
   private final String UPDATE_BY_SCANSCAN = "UPDATE peloton_test SET data=?";
 
@@ -49,7 +49,7 @@ public class PelotonTest {
     Statement stmt = conn.createStatement();
     stmt.execute(DROP);
     stmt.execute(DDL);
-    conn.setAutoCommit(false);
+    conn.setAutoCommit(true);
     System.out.println("Test db created.");
   }
 
@@ -105,7 +105,7 @@ public class PelotonTest {
     System.out.println("BitmapScan Test: ? = " + i);
     System.out.println("Query: " + BITMAPSCAN);
     PreparedStatement stmt = conn.prepareStatement(BITMAPSCAN);
-    stmt.setInt(1, i);
+    //stmt.setInt(1, i);
     ResultSet r = stmt.executeQuery();
     while (r.next()) {
       System.out.println("BitmapScanTest got tuple: id: " + r.getString(1) + ", data: " + r.getString(2));
