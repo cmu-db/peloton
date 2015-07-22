@@ -50,7 +50,7 @@ public class PelotonTest {
     Statement stmt = conn.createStatement();
     stmt.execute(DROP);
     stmt.execute(DDL);
-    conn.setAutoCommit(false);
+    conn.setAutoCommit(true);
     System.out.println("Test db created.");
   }
 
@@ -153,9 +153,9 @@ public class PelotonTest {
       pt.Insert(i);
     }
     //pt.BitmapScan(2, 5);
-    pt.SeqScan();
-    pt.DeleteByIndexScan(3);
-    pt.SeqScan();
+    //pt.SeqScan();
+    //pt.DeleteByIndexScan(3);
+    //pt.SeqScan();
     //pt.UpdateBySeqScan();
     //pt.IndexScan(3);
     pt.Close();
