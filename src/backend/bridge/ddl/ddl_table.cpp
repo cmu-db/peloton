@@ -164,6 +164,28 @@ bool DDLTable::ExecDropStmt(Node* parsetree){
 }
 
 /**
+ * @brief Execute the vacuum stmt.
+ * @param the parse tree
+ * @return true if we handled it correctly, false otherwise
+ */
+bool DDLTable::ExecVacuumStmt(Node* parsetree){
+  VacuumStmt* vacuum = (VacuumStmt*) parsetree;
+  std::string relation_name = vacuum->relation->relname;
+
+  // Get database oid
+  oid_t database_oid = Bridge::GetCurrentDatabaseOid(); 
+
+  // Get data table based on dabase oid and table name
+  auto& manager = catalog::Manager::GetInstance();
+  auto table = manager.GetTableWithName(database_oid, relation_name);
+
+  //Update the table's number of tuples to the pg_class in Postgres
+  table->UpdateNumberOfTuples();
+
+  return true;
+}
+
+/**
  * @brief Create table.
  * @param table_name Table name
  * @param column_infos Information about the columns
