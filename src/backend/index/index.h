@@ -172,6 +172,18 @@ class Index
   virtual std::vector<ItemPointer> GetLocationsForKeyGTE(const storage::Tuple *key)  const = 0;
 
   //===--------------------------------------------------------------------===//
+  // STATS 
+  //===--------------------------------------------------------------------===//
+
+  void IncreaseNumberOfTuplesBy(const float amount);
+
+  void DecreaseNumberOfTuplesBy(const float amount);
+
+  void SetNumberOfTuples(const float num_tuples);
+
+  float GetNumberOfTuples() const;
+
+  //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//
 
@@ -228,6 +240,9 @@ class Index
   int insert_counter;
   int delete_counter;
   int update_counter;
+
+  // number of tuples
+  float number_of_tuples = 0.0;
 
 };
 
