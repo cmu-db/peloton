@@ -330,8 +330,12 @@ void Bridge::IncreaseNumberOfTuplesByOne(Oid relation_id) {
     return;
   }
   pgclass = (Form_pg_class) GETSTRUCT(tuple);
+
+  // Get the number of tuples from pg_class and increase it by 1
   float4 reltuples = pgclass->reltuples+(float4)1;
   pgclass->reltuples = reltuples;
+
+  // Set the relpages as 1 so that we can cheat the Postgres
   pgclass->relpages = (int32) 1;
 
   // update tuple
@@ -362,10 +366,17 @@ void Bridge::DecreaseNumberOfTuplesByOne(Oid relation_id) {
     return;
   }
   pgclass = (Form_pg_class) GETSTRUCT(tuple);
+
+  // Get the number of tuples from pg_class and decrease it by 1
   float4 reltuples = pgclass->reltuples-(float4)1;
+
+  // Reltuples can be negative
   if( reltuples < 0 )
     reltuples = 0;
+
   pgclass->reltuples = reltuples;
+
+  // Set the relpages as 1 so that we can cheat the Postgres
   pgclass->relpages = (int32) 1;
 
   // update tuple
