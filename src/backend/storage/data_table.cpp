@@ -72,9 +72,6 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
 
   assert(tuple);
 
-  // Increase the number of tuples by 1
-  IncreaseNumberOfTuples();
-
   // (A) Not NULL checks
   if (CheckNulls(tuple) == false) {
     throw ConstraintException("Not NULL constraint violated : " + tuple->GetInfo());
@@ -222,24 +219,24 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
 /**
  * @brief Increase the the number of tuples by 1
  */
-void DataTable::IncreaseNumberOfTuples(){
+void DataTable::IncreaseNumberOfTuplesByOne(oid_t relation_id){
   ++number_of_tuples;
 
-  bridge::Bridge::SetNumberOfTuples(this->GetOid(), number_of_tuples);
+  bridge::Bridge::SetNumberOfTuples(relation_id, number_of_tuples);
 }
 
 /**
  * @brief Decrease the the number of tuples by 1
  *  only if it is greater than 0
  */
-void DataTable::DecreaseNumberOfTuples(){
+void DataTable::DecreaseNumberOfTuplesByOne(oid_t relation_id){
 
   if( number_of_tuples > 0.0 )
     number_of_tuples -= 1.0;
   else
     number_of_tuples = 0;
 
-  bridge::Bridge::SetNumberOfTuples(this->GetOid(), number_of_tuples);
+  bridge::Bridge::SetNumberOfTuples(relation_id, number_of_tuples);
 }
 
 /**
