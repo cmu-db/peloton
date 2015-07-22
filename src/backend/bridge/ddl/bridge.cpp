@@ -7,6 +7,7 @@
  */
 
 #include <iostream>
+#include <assert.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -288,6 +289,8 @@ void Bridge::GetDatabaseList(void) {
  * @param num_tuples number of tuples
  */
 void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
+
+  assert(relation_id);
 
   Relation pg_class_rel;
   HeapTuple tuple;

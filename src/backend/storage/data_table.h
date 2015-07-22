@@ -71,11 +71,9 @@ class DataTable : public AbstractTable {
 
   bool CheckNulls(const storage::Tuple *tuple) const;
 
-  void IncreaseNumberOfTuples();
+  void IncreaseNumberOfTuplesByOne(oid_t relation_id);
 
-  void DecreaseNumberOfTuples();
-
-  float GetNumberOfTuples();
+  void DecreaseNumberOfTuplesByOne(oid_t relation_id);
 
   void UpdateNumberOfTuples();
 
