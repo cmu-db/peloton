@@ -301,6 +301,7 @@ void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
   }
   pgclass = (Form_pg_class) GETSTRUCT(tuple);
   pgclass->reltuples = (float4) num_tuples;
+  pgclass->relpages = (int32) 1;
 
   // update tuple
   simple_heap_update(pg_class_rel, &tuple->t_self, tuple);
