@@ -224,6 +224,7 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
  */
 void DataTable::IncreaseNumberOfTuples(){
   ++number_of_tuples;
+
   bridge::Bridge::SetNumberOfTuples(this->GetOid(), number_of_tuples);
 }
 
@@ -242,19 +243,11 @@ void DataTable::DecreaseNumberOfTuples(){
 }
 
 /**
- * @brief Getting the number of tuples 
- * @return number_of_tuples 
- */
-float DataTable::GetNumberOfTuples(){
-  return number_of_tuples;
-}
-
-/**
  * @brief Updating the number of tuples to the pg_class in Postgres
  */
 //TODO :: for some reasons, it doesn't seem to update the catalog in Postgres
 void DataTable::UpdateNumberOfTuples(){
-  bridge::Bridge::SetNumberOfTuples(this->GetOid(), GetNumberOfTuples());
+  bridge::Bridge::SetNumberOfTuples(this->GetOid(), number_of_tuples);
 }
 
 //===--------------------------------------------------------------------===//
