@@ -25,7 +25,7 @@ Database::~Database() {
 }
 
 //===--------------------------------------------------------------------===//
-// DATABASE
+// TABLE
 //===--------------------------------------------------------------------===//
 
 void Database::AddTable(storage::DataTable *table) {
@@ -76,6 +76,36 @@ storage::DataTable *Database::GetTable(const oid_t table_offset) const {
 
 oid_t Database::GetTableCount() const {
   return tables.size();
+}
+
+//===--------------------------------------------------------------------===//
+// STATS
+//===--------------------------------------------------------------------===//
+
+void Database::UpdateStats(){
+
+  for( int table_offset=0; table_offset<GetTableCount(); table_offset++){
+    auto table = GetTable(table_offset);
+    bridge::Bridge::SetNumberOfTuples(table->GetOid(), table->GetNumberOfTuples());
+
+    for( int index_offset=0; index_offset<table->GetIndexCount(); index_offset++){
+      auto index = table->GetIndex(index_offset);
+      bridge::Bridge::SetNumberOfTuples(index->GetOid(), index->GetNumberOfTuples());
+    }
+  }
+
+}
+
+void Database::UpdateStatsWithOid(const oid_t table_oid){
+
+  auto table = GetTableWithOid(table_oid);
+  bridge::Bridge::SetNumberOfTuples(table_oid, table->GetNumberOfTuples());
+
+  for( int index_offset=0; index_offset<table->GetIndexCount(); index_offset++){
+    auto index = table->GetIndex(index_offset);
+    bridge::Bridge::SetNumberOfTuples(index->GetOid(), index->GetNumberOfTuples());
+  }
+
 }
 
 //===--------------------------------------------------------------------===//
