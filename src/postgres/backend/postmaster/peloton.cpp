@@ -1058,8 +1058,6 @@ peloton_get_status(Peloton_Status *status)
 
     if(rc < 0)
     {
-      ereport(LOG,
-              (errmsg("could not sleep waiting for Peloton: %m")));
       return PELOTON_STYPE_INVALID;
     }
 
