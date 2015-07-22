@@ -83,7 +83,7 @@ static void peloton_sighup_handler(SIGNAL_ARGS);
 static void peloton_sigusr2_handler(SIGNAL_ARGS);
 static void peloton_sigterm_handler(SIGNAL_ARGS);
 static void peloton_sighup_handler(SIGNAL_ARGS);
-static void  __attribute__ ((unused)) peloton_sigsegv_handler(SIGNAL_ARGS);
+static void peloton_sigsegv_handler(SIGNAL_ARGS);
 
 static void peloton_setheader(Peloton_MsgHdr *hdr,
                               PelotonMsgType mtype,
@@ -177,7 +177,8 @@ PelotonMain(int argc, char *argv[])
    */
   pqsignal(SIGINT, StatementCancelHandler);
   pqsignal(SIGTERM, peloton_sigterm_handler);
-  //pqsignal(SIGSEGV, peloton_sigsegv_handler);
+  pqsignal(SIGSEGV, peloton_sigsegv_handler);
+  pqsignal(SIGABRT, peloton_sigsegv_handler);
   pqsignal(SIGQUIT, quickdie);
   InitializeTimeouts();   /* establishes SIGALRM handler */
 
@@ -336,11 +337,11 @@ peloton_sigsegv_handler(SIGNAL_ARGS)
 {
   int     save_errno = errno;
 
-  need_exit = true;
-  SetLatch(MyLatch);
-
   // Get stack trace
   peloton::GetStackTrace();
+
+  need_exit = true;
+  SetLatch(MyLatch);
 
   errno = save_errno;
 
