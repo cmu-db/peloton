@@ -84,6 +84,7 @@ static void peloton_sigusr2_handler(SIGNAL_ARGS);
 static void peloton_sigterm_handler(SIGNAL_ARGS);
 static void peloton_sighup_handler(SIGNAL_ARGS);
 static void peloton_sigsegv_handler(SIGNAL_ARGS);
+static void peloton_sigabrt_handler(SIGNAL_ARGS);
 
 static void peloton_setheader(Peloton_MsgHdr *hdr,
                               PelotonMsgType mtype,
@@ -178,7 +179,7 @@ PelotonMain(int argc, char *argv[])
   pqsignal(SIGINT, StatementCancelHandler);
   pqsignal(SIGTERM, peloton_sigterm_handler);
   pqsignal(SIGSEGV, peloton_sigsegv_handler);
-  pqsignal(SIGABRT, peloton_sigsegv_handler);
+  pqsignal(SIGABRT, peloton_sigabrt_handler);
   pqsignal(SIGQUIT, quickdie);
   InitializeTimeouts();   /* establishes SIGALRM handler */
 
@@ -338,7 +339,7 @@ peloton_sigsegv_handler(SIGNAL_ARGS)
   int     save_errno = errno;
 
   // Get stack trace
-  peloton::GetStackTrace();
+  peloton::GetStackTrace(SIGSEGV);
 
   need_exit = true;
   SetLatch(MyLatch);
@@ -349,6 +350,23 @@ peloton_sigsegv_handler(SIGNAL_ARGS)
   proc_exit(0);
 }
 
+/* SIGABRT: time to die */
+static void
+peloton_sigabrt_handler(SIGNAL_ARGS)
+{
+  int     save_errno = errno;
+
+  // Get stack trace
+  peloton::GetStackTrace(SIGABRT);
+
+  need_exit = true;
+  SetLatch(MyLatch);
+
+  errno = save_errno;
+
+  // We can now go away.
+  proc_exit(0);
+}
 
 /*
  * peloton_MainLoop
