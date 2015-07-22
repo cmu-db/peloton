@@ -534,6 +534,23 @@ TEST(TileGroupTests, TileCopyTest) {
 
 			std::string new_uninlined_varchar_str(reinterpret_cast<char const*>(new_uninlined_col_object_ptr), new_uninlined_col_object_len);
 			std::cout << "\t the data stored uninlined is: " << new_uninlined_varchar_str << std::endl << std::endl;
+
+			/*
+			 * Check whether old and new information are same
+			 */
+			int is_value_same = uninlined_col_value.Compare(new_uninlined_col_value);
+			std::cout << "is_value_same: " << is_value_same << std::endl;
+			int is_length_same = uninlined_col_object_len == uninlined_col_object_len;
+			std::cout << "is_length_same: " << is_length_same << std::endl;
+			int is_pointer_same = uninlined_col_object_ptr == new_uninlined_col_object_ptr;
+			std::cout << "is_pointer_same: " << is_pointer_same << std::endl;
+			int is_data_same = std::strcmp(uninlined_varchar_str.c_str(), new_uninlined_varchar_str.c_str());
+			std::cout << "is_data_same: " << is_data_same << std::endl;
+
+
+			if(!is_value_same && is_length_same && !is_pointer_same && !is_data_same){
+				std::cout << "passed CopyTile test" << std::endl;
+			}
 		}
 	}
 
