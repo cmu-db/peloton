@@ -71,6 +71,14 @@ class DataTable : public AbstractTable {
 
   bool CheckNulls(const storage::Tuple *tuple) const;
 
+  void IncreaseNumberOfTuples();
+
+  void DecreaseNumberOfTuples();
+
+  float GetNumberOfTuples();
+
+  void UpdateNumberOfTuples();
+
   //===--------------------------------------------------------------------===//
   // TILE GROUP
   //===--------------------------------------------------------------------===//
@@ -166,6 +174,9 @@ class DataTable : public AbstractTable {
 
   // # of unique constraints
   std::atomic<oid_t> unique_constraint_count = ATOMIC_VAR_INIT(START_OID);
+
+  // # of tuples
+  oid_t number_of_tuples;
 
 };
 
