@@ -59,6 +59,8 @@ bool DDLTable::ExecCreateStmt(Node* parsetree, const char* queryString, std::vec
       char* relation_name = Cstmt->relation->relname;
       Oid relation_oid = ((CreateStmt *)parsetree)->relation_id;
 
+      assert(relation_oid);
+
       std::vector<catalog::Column> column_infos;
       std::vector<catalog::ForeignKey> foreign_keys;
 
