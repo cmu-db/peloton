@@ -23,6 +23,8 @@
 #include <sstream>
 #include <thread>
 #include <iomanip>
+#include <string.h>
+#include <signal.h>
 
 #include "backend/common/stack_trace.h"
 #include "backend/common/logger.h"
@@ -30,7 +32,7 @@
 namespace peloton {
 
 // Based on :: http://panthema.net/2008/0901-stacktrace-demangled/
-void GetStackTrace(){
+void GetStackTrace(int signum){
   std::stringstream stack_trace;
   std::stringstream internal_info;
   unsigned int max_frames = 63;
@@ -106,7 +108,7 @@ void GetStackTrace(){
 
   internal_info << "process : "  << getpid() << " thread : " << std::this_thread::get_id();
 
-  LOG_INFO("segmentation fault");
+  LOG_INFO("signal : %s", strsignal(signum));
   LOG_INFO("%s", internal_info.str().c_str());
   LOG_INFO("stack trace :\n");
   LOG_INFO("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
