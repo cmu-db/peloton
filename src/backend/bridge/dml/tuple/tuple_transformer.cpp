@@ -252,7 +252,7 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
   Datum *datums;
   bool *nulls;
 
-  if(tuple->GetColumnCount() == natts) {
+  if(tuple->GetColumnCount() != natts) {
     LOG_WARN("tuple attr count : %u tuple desc attr count : %d \n",
              tuple->GetColumnCount(), natts);
     return nullptr;
