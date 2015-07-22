@@ -15,9 +15,10 @@ public class PelotonTest {
   private final String INSERT = "INSERT INTO peloton_test VALUES (?,?)";
   private final String SEQSCAN = "SELECT * FROM peloton_test WHERE id != ?";
   private final String INDEXSCAN = "SELECT * FROM peloton_test WHERE id = ?";
-  private final String BITMAPSCAN = "SELECT * FROM peloton_test WHERE id < ?";
+  private final String BITMAPSCAN = "SELECT * FROM peloton_test WHERE id > ? and id < ?";
   private final String UPDATE_BY_INDEXSCAN = "UPDATE peloton_test SET data=? WHERE id=?";
   private final String UPDATE_BY_SCANSCAN = "UPDATE peloton_test SET data=?";
+  private final String DELETE_BY_INDEXSCAN = "DELETE FROM peloton_test WHERE id = ?";
 
   private final Connection conn;
 
@@ -101,11 +102,12 @@ public class PelotonTest {
    * @param i the param for the equal qualifier
    * @throws SQLException
    */
-  public void BitmapScan(int i) throws SQLException {
-    System.out.println("BitmapScan Test: ? = " + i);
+  public void BitmapScan(int i, int j) throws SQLException {
+    System.out.println("BitmapScan Test: ? = " + i + ", " + j);
     System.out.println("Query: " + BITMAPSCAN);
     PreparedStatement stmt = conn.prepareStatement(BITMAPSCAN);
     stmt.setInt(1, i);
+    stmt.setInt(2, j);
     ResultSet r = stmt.executeQuery();
     while (r.next()) {
       System.out.println("BitmapScanTest got tuple: id: " + r.getString(1) + ", data: " + r.getString(2));
@@ -135,13 +137,25 @@ public class PelotonTest {
   }
 
 
+  public void DeleteByIndexScan(int i) throws SQLException {
+    System.out.println("Delete Test: ");
+    System.out.println("Query: " + DELETE_BY_INDEXSCAN);
+    PreparedStatement stmt = conn.prepareStatement(DELETE_BY_INDEXSCAN);
+    stmt.setInt(1, i);
+    stmt.executeUpdate();
+    System.out.println("Deleted: id = " + i);
+
+  }
   static public void main(String[] args) throws Exception {
     PelotonTest pt = new PelotonTest();
     pt.Init();
     for (int i = 0; i < 10; i++) {
       pt.Insert(i);
     }
-    pt.BitmapScan(5);
+    //pt.BitmapScan(2, 5);
+    pt.SeqScan();
+    pt.DeleteByIndexScan(3);
+    pt.SeqScan();
     //pt.UpdateBySeqScan();
     //pt.IndexScan(3);
     pt.Close();
