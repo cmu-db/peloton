@@ -242,9 +242,10 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
       break;
     }
 
-    // Try to print the first tile's content
     std::unique_ptr<executor::LogicalTile> tile(executor_tree->GetOutput());
 
+    // FIXME Some executor just doesn't return tiles (e.g., Update).
+    // Should we continue instead of break here?
     if(tile.get() == nullptr) {
       break;
     }
