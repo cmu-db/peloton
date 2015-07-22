@@ -64,7 +64,8 @@ class Exception : public std::runtime_error {
     std::string exception_message = "Message :: " +	message + "\n";
     std::cerr << exception_message;
 
-    PrintStackTrace();
+    // raise hell here !
+    raise(SIGSEGV);
   }
 
   Exception(ExceptionType exception_type, std::string message) :
@@ -75,7 +76,8 @@ class Exception : public std::runtime_error {
         ExpectionTypeToString(exception_type) + "\nMessage :: " +	message + "\n";
     std::cerr << exception_message;
 
-    PrintStackTrace();
+    // raise hell here !
+    raise(SIGSEGV);
   }
 
   std::string ExpectionTypeToString(ExceptionType type){
