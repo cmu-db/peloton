@@ -25,6 +25,7 @@ namespace test {
 
 TEST(TileTests, BasicTest) {
 
+	// Columns
 	std::vector<catalog::ColumnInfo> columns;
 
 	catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
@@ -37,10 +38,12 @@ TEST(TileTests, BasicTest) {
 	columns.push_back(column2);
 	columns.push_back(column3);
 	columns.push_back(column4);
-	columns.push_back(column4);
+	columns.push_back(column5);
 
+	// Schema
 	catalog::Schema *schema = new catalog::Schema(columns);
 
+	// Column Names
 	std::vector<std::string> column_names;
 
 	column_names.push_back("COL 1");
@@ -49,6 +52,7 @@ TEST(TileTests, BasicTest) {
 	column_names.push_back("COL 4");
 	column_names.push_back("COL 5");
 
+	// Allocated Tuple Count
 	const int tuple_count = 6;
 
 	storage::AbstractBackend *backend = new storage::VMBackend();
@@ -84,7 +88,7 @@ TEST(TileTests, BasicTest) {
 	tile->InsertTuple(1, tuple2);
 	tile->InsertTuple(2, tuple3);
 
-	//std::cout << (*tile);
+	std::cout << (*tile);
 
 	//tile->InsertTuple(2, tuple1);
 
@@ -155,7 +159,7 @@ TEST(TileTests, BasicTest) {
 
 	const catalog::Schema *new_schema = old_schema;
 	storage::AbstractBackend *new_backend = new storage::VMBackend();
-	storage::Tile *new_tile = tile->CopyTileToBackend(new_backend);
+	storage::Tile *new_tile = tile->CopyTile(new_backend);
 	peloton::Pool *new_pool = new_tile->GetPool();
 
 	/*
@@ -315,6 +319,9 @@ TEST(TileTests, BasicTest) {
 	delete header;
 	delete schema;
 	delete backend;
+
+	delete new_tile;
+	delete new_backend;
 }
 
 } // End test namespace
