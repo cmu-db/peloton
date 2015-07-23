@@ -53,8 +53,12 @@ bool DDLDatabase::ExecDropdbStmt(Node* parsetree){
  * @return true if we handled it correctly, false otherwise
  */
 bool DDLDatabase::ExecVacuumStmt(Node* parsetree){
+/*
   VacuumStmt* vacuum = (VacuumStmt*) parsetree;
-  std::string relation_name = vacuum->relation->relname;
+  std::string relation_name;
+
+  if( vacuum->relation != NULL )
+    relation_name = vacuum->relation->relname;
 
   // Get database oid
   oid_t database_oid = Bridge::GetCurrentDatabaseOid(); 
@@ -65,13 +69,16 @@ bool DDLDatabase::ExecVacuumStmt(Node* parsetree){
 
   // Update every table and index
   if(relation_name.empty()){
+    printf("Update All Stats\n");
     db->UpdateStats();
   }
   // Otherwise, update the specific table
   else{
     oid_t relation_oid = (db->GetTableWithName(relation_name))->GetOid();
+    printf("Update table(%u) Stats\n",relation_oid );
     db->UpdateStatsWithOid(relation_oid);
   }
+  */
 
   return true;
 }
