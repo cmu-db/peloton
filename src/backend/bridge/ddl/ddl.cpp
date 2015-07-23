@@ -108,10 +108,6 @@ void DDL::ProcessUtility(Node *parsetree,
     break;
   }
 
-  // TODO :: This is for debugging
-  //storage::Database* db = storage::Database::GetDatabaseById(Bridge::GetCurrentDatabaseOid());
-  //std::cout << *db << std::endl;
-
 }
 
 } // namespace bridge

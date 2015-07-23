@@ -936,7 +936,8 @@ peloton_ProcessUtility(Node *parsetree,
   // TODO: Peloton Changes
   peloton_send_ddl(status, parsetree, queryString);
 
-  peloton_get_status(status);
+  peloton_process_status(status);
+
   peloton_destroy_status(status);
 }
 
