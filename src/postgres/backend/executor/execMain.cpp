@@ -1679,7 +1679,7 @@ peloton_ExecutePlan(EState *estate,
 
   peloton_send_dml(status, planstate, tupDesc);
 
-  peloton_get_status(status);
+  peloton_process_status(status);
 
   // Go over any result slots
   if(status->m_result_slots != NULL)
