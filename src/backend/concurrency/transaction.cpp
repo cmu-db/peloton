@@ -61,10 +61,7 @@ void Transaction::IncrementRefCount() {
 }
 
 void Transaction::DecrementRefCount() {
-    std::cout << "DecrementRefCont(): ref_cont = " << ref_count << std::endl;
-    //assert(ref_count > 0);
-    if (ref_count <= 0)
-      return;
+    assert(ref_count > 0);
 
     // DROP transaction when ref count reaches 1
     if (ref_count.fetch_sub(1) == 1) {
@@ -72,20 +69,29 @@ void Transaction::DecrementRefCount() {
     }
 }
 
-void Transaction::SetStatus(ResultType status) {
-  txn_status = status;
+void Transaction::SetResult(Result result) {
+  result_ = result;
 }
 
-ResultType Transaction::GetStatus() const {
-  return txn_status;
+Result Transaction::GetResult() const {
+  return result_;
 }
 
+void Transaction::SetStatus(int status) {
+  status_ = status;
+}
+
+int Transaction::GetStatus() const {
+  return status_;
+}
 
 std::ostream& operator<<(std::ostream& os, const Transaction& txn) {
 
     os << "\tTxn :: @" <<  &txn << " ID : " << std::setw(4) << txn.txn_id
        << " Commit ID : " << std::setw(4) << txn.cid
-       << " Last Commit ID : " << std::setw(4) << txn.last_cid;
+       << " Last Commit ID : " << std::setw(4) << txn.last_cid
+       << " Result : " << txn.result_
+       << " Status : " << txn.status_;
 
     if(txn.next == nullptr) {
         os << " Next : " << std::setw(4) << txn.next;

@@ -100,8 +100,8 @@ class aggregator_task {
   }
 };
 
-ResultType Kernel::Handler(const char* query) {
-  ResultType status = RESULT_TYPE_INVALID;
+Result Kernel::Handler(const char* query) {
+  Result status = RESULT_INVALID;
 
   std::cout << query << "\n";
 
@@ -126,7 +126,7 @@ ResultType Kernel::Handler(const char* query) {
   std::cout << "Parallel Sum is    : " << sum << "\n";
   */
 
-  status = RESULT_TYPE_SUCCESS;
+  status = RESULT_SUCCESS;
   return status;
 }
 
