@@ -927,6 +927,11 @@ peloton_process_dml(Peloton_MsgDML *msg)
     /* Clean up the plantree */
     peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
   }
+  else {
+    /* Could not get the plan */
+    msg->m_status->m_code = peloton::ResultType::RESULT_TYPE_FAILURE;
+  }
+
 }
 
 /* ----------
