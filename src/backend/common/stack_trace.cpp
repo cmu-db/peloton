@@ -119,5 +119,80 @@ void GetStackTrace(int signum){
   free(symbol_list);
 }
 
+// Based on :: https://github.com/bombela/backward-cpp/blob/master/backward.hpp
+std::vector<int> StackTracer::make_default_signals() {
+  const int signals[] = {
+      // default action: Core
+      SIGABRT,
+      SIGSEGV,
+  };
+  return std::vector<int>(signals, signals + sizeof signals / sizeof signals[0] );
+}
+
+StackTracer::StackTracer(const std::vector<int>& signals):
+        _loaded(false) {
+  bool success = true;
+
+  const size_t stack_size = 1024 * 1024 * 8;
+  _stack_content.reset((char*)malloc(stack_size));
+  if (_stack_content) {
+    stack_t ss;
+    ss.ss_sp = _stack_content.get();
+    ss.ss_size = stack_size;
+    ss.ss_flags = 0;
+    if (sigaltstack(&ss, 0) < 0) {
+      success = false;
+    }
+  } else {
+    success = false;
+  }
+
+  for (size_t i = 0; i < signals.size(); ++i) {
+    struct sigaction action;
+    memset(&action, 0, sizeof action);
+    action.sa_flags = (SA_SIGINFO | SA_ONSTACK | SA_NODEFER |
+        SA_RESETHAND);
+    sigfillset(&action.sa_mask);
+    sigdelset(&action.sa_mask, signals[i]);
+    action.sa_sigaction = &sig_handler;
+
+    int r = sigaction(signals[i], &action, 0);
+    if (r < 0) success = false;
+  }
+
+  _loaded = success;
+}
+
+void StackTracer::sig_handler(int, siginfo_t* info, void* _ctx) {
+  ucontext_t *uctx = (ucontext_t*) _ctx;
+
+  backward::StackTrace st;
+  void* error_addr = 0;
+#ifdef REG_RIP // x86_64
+  error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.gregs[REG_RIP]);
+#elif defined(REG_EIP) // x86_32
+  error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.gregs[REG_EIP]);
+#else
+# warning ":/ sorry, ain't know no nothing none not of your architecture!"
+#endif
+  if (error_addr) {
+    st.load_from(error_addr, 32);
+  } else {
+    st.load_here(32);
+  }
+
+  backward::Printer printer;
+  printer.address = true;
+  printer.print(st, stderr);
+
+  psiginfo(info, 0);
+
+  // try to forward the signal.
+  raise(info->si_signo);
+
+  // terminate the process immediately.
+  puts("watf? exit");
+  _exit(EXIT_FAILURE);
+}
 
 } // namespace peloton

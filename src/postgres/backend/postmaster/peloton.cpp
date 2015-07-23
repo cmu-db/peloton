@@ -83,8 +83,6 @@ static void peloton_sighup_handler(SIGNAL_ARGS);
 static void peloton_sigusr2_handler(SIGNAL_ARGS);
 static void peloton_sigterm_handler(SIGNAL_ARGS);
 static void peloton_sighup_handler(SIGNAL_ARGS);
-static void peloton_sigsegv_handler(SIGNAL_ARGS);
-static void peloton_sigabrt_handler(SIGNAL_ARGS);
 
 static void peloton_setheader(Peloton_MsgHdr *hdr,
                               PelotonMsgType mtype,
@@ -178,8 +176,6 @@ PelotonMain(int argc, char *argv[])
    */
   pqsignal(SIGINT, StatementCancelHandler);
   pqsignal(SIGTERM, peloton_sigterm_handler);
-  pqsignal(SIGSEGV, peloton_sigsegv_handler);
-  pqsignal(SIGABRT, peloton_sigabrt_handler);
   pqsignal(SIGQUIT, quickdie);
   InitializeTimeouts();   /* establishes SIGALRM handler */
 
@@ -250,6 +246,8 @@ PelotonMain(int argc, char *argv[])
   }
 
   SetProcessingMode(NormalProcessing);
+
+  peloton::StackTracer st;
 
   /*
    * Create the memory context we will use in the main loop.
@@ -332,41 +330,6 @@ peloton_sigterm_handler(SIGNAL_ARGS)
   errno = save_errno;
 }
 
-/* SIGSEGV: time to die */
-static void
-peloton_sigsegv_handler(SIGNAL_ARGS)
-{
-  int     save_errno = errno;
-
-  // Get stack trace
-  peloton::GetStackTrace(SIGSEGV);
-
-  need_exit = true;
-  SetLatch(MyLatch);
-
-  errno = save_errno;
-
-  // We can now go away.
-  proc_exit(0);
-}
-
-/* SIGABRT: time to die */
-static void
-peloton_sigabrt_handler(SIGNAL_ARGS)
-{
-  int     save_errno = errno;
-
-  // Get stack trace
-  peloton::GetStackTrace(SIGABRT);
-
-  need_exit = true;
-  SetLatch(MyLatch);
-
-  errno = save_errno;
-
-  // We can now go away.
-  proc_exit(0);
-}
 
 /*
  * peloton_MainLoop
@@ -948,8 +911,6 @@ peloton_process_dml(Peloton_MsgDML *msg)
     CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
     TransactionId txn_id = msg->m_hdr.m_txn_id;
 
-    std::cout << "Transaction ID :: " << txn_id << "\n";
-
     auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
 
     if(plan){
@@ -1039,7 +1000,7 @@ peloton_get_status(Peloton_Status *status)
 {
   struct timespec duration = {0, 1000 * 100}; // 100 us
   int code;
-  int retry = 10;
+  int retry = 10 * 1000; // upto 1 s
 
   if(status == NULL)
     return PELOTON_STYPE_INVALID;
@@ -1053,14 +1014,13 @@ peloton_get_status(Peloton_Status *status)
     rc = nanosleep(&duration, NULL);
     if(rc < 0)
     {
-      ereport(LOG,
-              (errmsg("could not sleep waiting for Peloton: %m")));
       return PELOTON_STYPE_INVALID;
     }
 
     // Max retries over
     if(retry < 0)
     {
+      ereport(LOG, (errmsg("peloton_get_status() has waited too long and decided to quit. \n")));
       return PELOTON_STYPE_INVALID;
     }
   }

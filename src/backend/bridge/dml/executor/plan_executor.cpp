@@ -191,6 +191,7 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
                                TransactionId txn_id) {
 
   assert(plan);
+  assert(tuple_desc->tdrefcount == -1); // Should Not  be refcounting?
 
   bool status;
   bool single_statement_txn = false;
@@ -242,9 +243,10 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
       break;
     }
 
-    // Try to print the first tile's content
     std::unique_ptr<executor::LogicalTile> tile(executor_tree->GetOutput());
 
+    // FIXME Some executor just doesn't return tiles (e.g., Update).
+    // Should we continue instead of break here?
     if(tile.get() == nullptr) {
       break;
     }
@@ -262,7 +264,8 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     while (tile_itr.Next(tuple)) {
       //std::cout << tuple;
       auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
-      slots = lappend(slots, slot);
+      if(slot != nullptr)
+        slots = lappend(slots, slot);
     }
 
     // Go back to previous context

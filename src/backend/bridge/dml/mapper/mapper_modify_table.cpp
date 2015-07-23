@@ -172,21 +172,25 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
   planner::UpdateNode::ColumnExprs update_column_exprs;
   planner::AbstractPlanNode* plan_node = nullptr;
 
-  if (nodeTag(sub_planstate->plan) == T_SeqScan) {  // Sub plan is SeqScan
-    LOG_TRACE("Child of Update is SeqScan \n");
-    // Extract the non-trivial projection info from SeqScan
-    // and put it in our update node
-    auto seqscan_state = reinterpret_cast<SeqScanState*>(sub_planstate);
+  auto child_tag = nodeTag(sub_planstate->plan);
 
-    //    update_column_exprs = TransformTargetList(
-    //        seqscan_state->ps.ps_ProjInfo->pi_targetlist, schema->GetColumnCount());
-    update_column_exprs = TransformProjInfo(seqscan_state->ps.ps_ProjInfo, schema->GetColumnCount());
+  if (child_tag == T_SeqScan
+      || child_tag == T_IndexScan
+      || child_tag == T_IndexOnlyScan
+      || child_tag == T_BitmapHeapScan) {  // Sub plan is a Scan of any type
+
+    LOG_TRACE("Child of Update is %u \n", child_tag);
+    // Extract the non-trivial projection info from the underlying scan
+    // and put it in our update node
+    auto scan_state = reinterpret_cast<ScanState*>(sub_planstate);
+
+    update_column_exprs = TransformProjInfo(scan_state->ps.ps_ProjInfo, schema->GetColumnCount());
 
     plan_node = new planner::UpdateNode(target_table, update_column_exprs);
     plan_node->AddChild(TransformPlan(sub_planstate));
   } else {
-    LOG_ERROR("Unsupported sub plan type of Update : %u \n",
-              nodeTag(sub_planstate->plan));
+
+    LOG_ERROR("Unsupported sub plan type of Update : %u \n", child_tag);
   }
 
   return plan_node;
