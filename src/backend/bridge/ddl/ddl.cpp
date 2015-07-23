@@ -23,6 +23,7 @@
 #include "postgres.h"
 #include "miscadmin.h"
 #include "c.h"
+#include "access/xact.h"
 
 namespace peloton {
 namespace bridge {
