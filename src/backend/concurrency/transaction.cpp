@@ -61,7 +61,10 @@ void Transaction::IncrementRefCount() {
 }
 
 void Transaction::DecrementRefCount() {
-    assert(ref_count > 0);
+    std::cout << "DecrementRefCont(): ref_cont = " << ref_count << std::endl;
+    //assert(ref_count > 0);
+    if (ref_count <= 0)
+      return;
 
     // DROP transaction when ref count reaches 1
     if (ref_count.fetch_sub(1) == 1) {
