@@ -23,6 +23,7 @@
 #include "postgres.h"
 #include "miscadmin.h"
 #include "c.h"
+#include "access/xact.h"
 
 namespace peloton {
 namespace bridge {
@@ -67,7 +68,9 @@ void DDL::ProcessUtility(Node *parsetree,
     case T_CreateStmt:
     case T_CreateForeignTableStmt:
     {
+      StartTransactionCommand();
       DDLTable::ExecCreateStmt(parsetree, index_infos);
+      CommitTransactionCommand();
       break;
     }
 
