@@ -35,7 +35,7 @@ class DDLTable {
   DDLTable(DDLTable &&) = delete;
   DDLTable& operator=(DDLTable &&) = delete;
 
-  static bool ExecCreateStmt(Node* parsetree, const char* queryString, std::vector<IndexInfo>& index_infos);
+  static bool ExecCreateStmt(Node* parsetree, std::vector<IndexInfo>& index_infos);
 
   static bool ExecAlterTableStmt(Node* parsetree, const char* queryString);
 
