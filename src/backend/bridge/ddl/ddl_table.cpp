@@ -40,11 +40,10 @@ namespace bridge {
  * @param index info to store index information
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLTable::ExecCreateStmt(Node* parsetree, const char* queryString, std::vector<IndexInfo>& index_infos){
+bool DDLTable::ExecCreateStmt(Node* parsetree, std::vector<IndexInfo>& index_infos){
 
-  /* Run parse analysis ... */
-  List     *stmts = transformCreateStmt((CreateStmt *) parsetree,
-      queryString);
+  CreateStmt* stmt = (CreateStmt*)parsetree;
+  List *stmts = (List*)copyObject((void*)stmt->stmts);
 
   /* ... and do it */
   ListCell   *l;
