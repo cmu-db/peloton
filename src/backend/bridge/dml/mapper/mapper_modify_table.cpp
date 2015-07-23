@@ -203,7 +203,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
  *
  * Just like Peloton,
  * the delete plan state in Postgres simply deletes tuples
- *  returned by a subplan (mostly Scan).
+ * returned by a subplan (mostly Scan).
  * So we don't need to handle predicates locally .
  */
 planner::AbstractPlanNode* PlanTransformer::TransformDelete(
