@@ -32,37 +32,44 @@ class ProjectionInfo {
 
   /**
    * @brief Generic specification of a projection target:
-   *        < dest_column_id , expression >
+   *        < DEST_column_id , expression >
    */
-  typedef std::pair<oid_t, expression::AbstractExpression*> Target;
+  typedef std::pair<oid_t, const expression::AbstractExpression*> Target;
 
   typedef std::vector<Target> TargetList;
 
   /**
    * @brief Generic specification of a direct map:
-   *        < old_col_id , new_col_id >
+   *        < NEW_col_id , OLD_col_id >
    */
   typedef std::pair<oid_t, oid_t> DirectMap;
 
   typedef std::vector<DirectMap> DirectMapList;
 
-  virtual ~ProjectionInfo();
+  ProjectionInfo(TargetList& tl, DirectMapList& dml)
+    : target_list_(tl), direct_map_list_(dml){
 
-  virtual const std::vector<Target>& GetProjectionEntries() {
-    return projection_entries_;
   }
 
-  virtual void AddProjectionEntry(ProjectionEntry pe) {
-    projection_entries_.push_back(pe);
+  ProjectionInfo(TargetList&& tl, DirectMapList&& dml)
+    : target_list_(tl), direct_map_list_(dml){
+
   }
 
-  virtual bool
-  Evaluate(storage::Tuple* dest, const AbstractTuple* src1, const AbstractTuple* src2) const;
+  const TargetList& GetTargetList() const {
+    return target_list_;
+  }
 
- protected:
+  const DirectMapList& GetDirectMapList() const {
+    return direct_map_list_;
+  }
+
+  ~ProjectionInfo();
 
 
-  std::vector<ProjectionEntry> projection_entries_;
+ private:
+  TargetList target_list_;
+  DirectMapList direct_map_list_;
 
 };
 
