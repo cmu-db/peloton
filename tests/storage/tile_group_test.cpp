@@ -413,6 +413,11 @@ TEST(TileGroupTests, TileCopyTest) {
 
 	//std::cout << (*tile);
 
+	txn_manager.CommitTransaction(txn);
+	txn_manager.EndTransaction(txn);
+
+	std::cout << (*tile);
+
 
 	/*
 	 * Print details of old tile
@@ -423,45 +428,12 @@ TEST(TileGroupTests, TileCopyTest) {
 	uint32_t old_tile_size;
 	uint32_t old_tile_tuple_size;
 
-
-	std::cout << "-------------------" << std::endl;
-	std::cout << "Details of old tile" << std::endl;
-	std::cout << "-------------------" << std::endl;
-
-	std::cout << "base address of old tile: " << static_cast<void *>(tile) << std::endl;
-
-	old_tile_size = tile->GetInlinedSize();
-	std::cout << "old tile size: " << old_tile_size << std:: endl;
-
-	old_tile_allocated_tuple_count = tile->GetAllocatedTupleCount();
-	std::cout << "old tile allocated tuple count: " << old_tile_allocated_tuple_count << std:: endl;
-
-	old_tile_active_tuple_count = tile->GetActiveTupleCount();
-	std::cout << "old tile active tuple count: " << old_tile_active_tuple_count << std:: endl;
-	old_tile_active_tuple_count = 3;
-
-	old_tile_tuple_size = old_tile_size / old_tile_allocated_tuple_count;
-	std::cout << "size of each tuple in old tile: " << old_tile_tuple_size << std::endl;
-
-	old_schema = tile->GetSchema();
-	old_tile_is_inlined = old_schema->IsInlined();
-	std::cout << "Is the entire old tile inlined? " << (old_tile_is_inlined? "true" : "false") << std::endl;
-
-	peloton::Pool *old_pool = tile->GetPool();
-	std::cout << "Pool associated with old tile is at address: " << static_cast<void *>(old_pool) << std::endl;
-
-	int64_t old_pool_size = old_pool->GetAllocatedMemory();
-	std::cout << "size of old pool: " << old_pool_size << std::endl;
-
-
-
 	const catalog::Schema *new_schema = old_schema;
 	storage::AbstractBackend *new_backend = new storage::VMBackend();
 	storage::Tile *new_tile = tile->CopyTile(new_backend);
 	peloton::Pool *new_pool = new_tile->GetPool();
 
-	txn_manager.CommitTransaction(txn);
-	txn_manager.EndTransaction(txn);
+
 
 
 
