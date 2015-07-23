@@ -52,6 +52,8 @@ void DDL::ProcessUtility(Node *parsetree,
   // Process depending on type of utility statement
   switch (nodeTag(parsetree))
   {
+    StartTransactionCommand();
+
     case T_CreatedbStmt:
     {
       DDLDatabase::ExecCreatedbStmt(parsetree);
@@ -94,6 +96,8 @@ void DDL::ProcessUtility(Node *parsetree,
       DDLDatabase::ExecVacuumStmt(parsetree);
       break;
     }
+
+    CommitTransactionCommand();
 
     case T_TransactionStmt: {
       TransactionStmt *stmt = (TransactionStmt *) parsetree;
