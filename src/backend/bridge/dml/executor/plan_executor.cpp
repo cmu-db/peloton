@@ -191,7 +191,6 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
                                TransactionId txn_id) {
 
   assert(plan);
-  assert(tuple_desc->tdrefcount == -1); // Should Not  be refcounting?
 
   bool status;
   bool single_statement_txn = false;

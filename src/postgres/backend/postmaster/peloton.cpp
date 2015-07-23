@@ -1000,7 +1000,7 @@ peloton_get_status(Peloton_Status *status)
 {
   struct timespec duration = {0, 1000 * 100}; // 100 us
   int code;
-  int retry = 10 * 1000; // upto 1 s
+  int retry = 10 * 100; // upto 1 s
 
   if(status == NULL)
     return PELOTON_STYPE_INVALID;

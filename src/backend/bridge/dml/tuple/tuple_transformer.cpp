@@ -21,6 +21,7 @@
 
 #include "access/htup_details.h"
 #include "nodes/print.h"
+#include "utils/builtins.h"
 
 namespace peloton {
 namespace bridge {
@@ -164,27 +165,10 @@ Datum TupleTransformer::GetDatum(Value value) {
 
     case VALUE_TYPE_VARCHAR:
     {
-      // VARCHAR should be stored in a varlena in PG
-      // We use palloc() to create a new varlena here.
-      auto data_len = ValuePeeker::PeekObjectLength(value);
       auto data = ValuePeeker::PeekObjectValue(value);
-      auto va_len = data_len + VARHDRSZ;
-
-      if(va_len > 200) {
-        LOG_INFO("VARLENA :: %d data_len : %d ", va_len, data_len);
-      }
-
-      struct varlena* vaptr = (struct varlena*)palloc(va_len);
-      SET_VARSIZE(vaptr, va_len);
-      ::memcpy(VARDATA(vaptr), data, data_len);
-
-      LOG_TRACE("len = %d , str = \"%s\" \n", data_len, std::string((char*)data, data_len).c_str());
-
-      datum = (Datum)vaptr;
-
-//      char *variable_character = (char *) ValuePeeker::PeekObjectValue(value);
-//      LOG_TRACE("%s\n", variable_character);
-//      datum = CStringGetDatum(variable_character);
+      // We use palloc() to create a new varlena here.
+      datum = CStringGetTextDatum(static_cast<const char*>(data));
+      LOG_TRACE("%s\n", DatumGetCString(datum));
     }
     break;
 
@@ -261,14 +245,12 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
   }
 
   // Allocate space for datums
-  datums = (Datum *) palloc(natts * sizeof(Datum));
-  nulls = (bool *) palloc(natts * sizeof(bool));
+  datums = (Datum *) palloc0(natts * sizeof(Datum));
+  nulls = (bool *) palloc0(natts * sizeof(bool));
 
   // Go over each attribute and convert Value to Datum
   for (oid_t att_itr = 0; att_itr < natts; ++att_itr) {
     Value value = tuple->GetValue(att_itr);
-
-    // NB: this may allocate varlena
     Datum datum = GetDatum(value);
 
     datums[att_itr] = datum;
@@ -276,38 +258,18 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
   }
 
   // Construct tuple
-  /*
-   * I believe PG does a deep copy in heap_form_tuple(),
-   * which means datums[] should be freed in the current function.
-   * - Qiang 7/21/15
-   */
+  // PG does a deep copy in heap_form_tuple()
   heap_tuple = heap_form_tuple(tuple_desc, datums, nulls);
 
   // Construct slot
   slot = MakeSingleTupleTableSlot(tuple_desc);
 
   // Store tuple in slot
-  /*
-   * This function just sets a point in slot to
-   * the heap_tuple.
-   */
+  // This function just sets a point in slot to the heap_tuple.
   ExecStoreTuple(heap_tuple, slot, InvalidBuffer, true);
 
-  // Clean up (A-B): seems we have to do the cleaning manually (no PG utility?)
-  // (A) Clean up any possible varlena's
-  for (oid_t att_itr = 0; att_itr < natts; ++att_itr) {
-    if(tuple_desc->attrs[att_itr]->attlen < 0){ // should be a varlen
-
-      assert(tuple_desc->attrs[att_itr]->attbyval == false);
-      // For now, only VARCHAR would be transformed to a varlena (see GetDatum() above)
-      assert(tuple->GetValue(att_itr).GetValueType() == VALUE_TYPE_VARCHAR);
-
-      pfree((void*)(datums[att_itr]));
-    }
-  }
-  // (B) Free the datum array itself
+  // Free the datum array itself
   pfree(datums);
-
   pfree(nulls);
 
   return slot;
