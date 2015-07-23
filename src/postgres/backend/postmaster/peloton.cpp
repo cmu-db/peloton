@@ -43,6 +43,7 @@
 #include "miscadmin.h"
 #include "nodes/print.h"
 #include "utils/guc.h"
+#include "utils/errcodes.h"
 #include "utils/ps_status.h"
 #include "utils/timeout.h"
 #include "utils/memutils.h"
@@ -91,8 +92,8 @@ static void peloton_setheader(Peloton_MsgHdr *hdr,
                               MemoryContext cur_transaction_context);
 static void peloton_send(void *msg, int len);
 
-static peloton::ResultType peloton_process_dml(Peloton_MsgDML *msg);
-static peloton::ResultType peloton_process_ddl(Peloton_MsgDDL *msg);
+static void peloton_process_dml(Peloton_MsgDML *msg);
+static void peloton_process_ddl(Peloton_MsgDDL *msg);
 
 bool
 IsPelotonProcess(void)
@@ -893,43 +894,39 @@ peloton_send_ddl(Peloton_Status  *status,
  *  Process DML requests in Peloton.
  * ----------
  */
-static peloton::ResultType
+static void
 peloton_process_dml(Peloton_MsgDML *msg)
 {
   PlanState *planstate;
+  assert(msg);
 
-  if(msg != NULL)
+  /* Get the planstate */
+  planstate = msg->m_planstate;
+
+  /* Ignore invalid plans */
+  if(planstate == NULL || nodeTag(planstate) == T_Invalid)
   {
-    /* Get the planstate */
-    planstate = msg->m_planstate;
-
-    /* Ignore invalid plans */
-    if(planstate == NULL || nodeTag(planstate) == T_Invalid)
-      return peloton::ResultType::RESULT_TYPE_SUCCESS;
-
-    TopTransactionContext = msg->m_hdr.m_top_transaction_context;
-    CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
-    TransactionId txn_id = msg->m_hdr.m_txn_id;
-
-    auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
-
-    if(plan){
-      /* Execute the plantree */
-      peloton::bridge::PlanExecutor::ExecutePlan(plan,
-                                                 planstate,
-                                                 msg->m_tuple_desc,
-                                                 msg->m_status,
-                                                 txn_id);
-
-      /* Clean up the plantree */
-      peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
-    }
-
+    msg->m_status->m_code =  peloton::ResultType::RESULT_TYPE_FAILURE;
+    return;
   }
 
-  // Set Status
-  msg->m_status->m_code = PELOTON_STYPE_SUCCESS;
-  return peloton::ResultType::RESULT_TYPE_SUCCESS;
+  TopTransactionContext = msg->m_hdr.m_top_transaction_context;
+  CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
+  TransactionId txn_id = msg->m_hdr.m_txn_id;
+
+  auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
+
+  if(plan){
+    /* Execute the plantree */
+    peloton::bridge::PlanExecutor::ExecutePlan(plan,
+                                               planstate,
+                                               msg->m_tuple_desc,
+                                               msg->m_status,
+                                               txn_id);
+
+    /* Clean up the plantree */
+    peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
+  }
 }
 
 /* ----------
@@ -938,38 +935,39 @@ peloton_process_dml(Peloton_MsgDML *msg)
  *  Process DDL requests in Peloton.
  * ----------
  */
-static peloton::ResultType
+static void
 peloton_process_ddl(Peloton_MsgDDL *msg)
 {
   Node* parsetree;
   const char *queryString;
+  assert(msg);
 
-  if(msg != NULL)
+  /* Get the parsetree */
+  parsetree = msg->m_parsetree;
+
+  /* Ignore invalid parsetrees */
+  if(parsetree == NULL || nodeTag(parsetree) == T_Invalid)
   {
-    /* Get the parsetree */
-    parsetree = msg->m_parsetree;
-
-    /* Ignore invalid parsetrees */
-    if(parsetree == NULL || nodeTag(parsetree) == T_Invalid)
-      return peloton::ResultType::RESULT_TYPE_SUCCESS;
-
-    TopTransactionContext = msg->m_hdr.m_top_transaction_context;
-    CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
-    TransactionId txn_id = msg->m_hdr.m_txn_id;
-
-    queryString = msg->m_queryString;
-
-    if(queryString != NULL)
-    {
-      peloton::bridge::DDL::ProcessUtility(parsetree,
-                                           queryString,
-                                           txn_id);
-    }
+    msg->m_status->m_code =  peloton::ResultType::RESULT_TYPE_FAILURE;
+    return;
   }
 
+  TopTransactionContext = msg->m_hdr.m_top_transaction_context;
+  CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
+  TransactionId txn_id = msg->m_hdr.m_txn_id;
+
+  queryString = msg->m_queryString;
+
+  if(queryString != NULL)
+  {
+    peloton::bridge::DDL::ProcessUtility(parsetree,
+                                         queryString,
+                                         txn_id);
+  }
+
+
   // Set Status
-  msg->m_status->m_code = PELOTON_STYPE_SUCCESS;
-  return peloton::ResultType::RESULT_TYPE_SUCCESS;
+  msg->m_status->m_code = peloton::ResultType::RESULT_TYPE_SUCCESS;
 }
 
 /* ----------
@@ -983,35 +981,34 @@ peloton_create_status()
 {
   Peloton_Status *status = static_cast<Peloton_Status *>(palloc(sizeof(Peloton_Status)));
 
-  status->m_code = PELOTON_STYPE_INVALID;
+  status->m_code = peloton::ResultType::RESULT_TYPE_INVALID;
   status->m_result_slots = NULL;
 
   return status;
 }
 
 /* ----------
- * peloton_get_status() -
+ * peloton_process_status() -
  *
  *  Busy wait till we get status from Peloton.
  * ----------
  */
-int
-peloton_get_status(Peloton_Status *status)
+void
+peloton_process_status(Peloton_Status *status)
 {
   struct timespec duration = {0, 100}; // 100 us
   int code;
   int rc;
 
-  if(status == NULL)
-    return PELOTON_STYPE_INVALID;
+  assert(status);
 
   // Busy wait till we get a valid result
-  while(status->m_code == PELOTON_STYPE_INVALID)
+  while(status->m_code == peloton::ResultType::RESULT_TYPE_INVALID)
   {
     rc = nanosleep(&duration, NULL);
     if(rc < 0)
     {
-      return PELOTON_STYPE_INVALID;
+      break;
     }
 
     /* additive increase */
@@ -1019,8 +1016,27 @@ peloton_get_status(Peloton_Status *status)
     elog(DEBUG2, "Busy waiting");
   }
 
+  // Process the status code
   code = status->m_code;
-  return code;
+  switch(code)
+  {
+    case peloton::ResultType::RESULT_TYPE_SUCCESS:
+    {
+      // Nothing to do here.
+    }
+    break;
+
+    case peloton::ResultType::RESULT_TYPE_INVALID:
+    case peloton::ResultType::RESULT_TYPE_FAILURE:
+    default:
+    {
+      ereport(ERROR,
+              (errcode(ERRCODE_INTEGRITY_CONSTRAINT_VIOLATION),
+                  errmsg("transaction failed")));
+    }
+    break;
+  }
+
 }
 
 /* ----------

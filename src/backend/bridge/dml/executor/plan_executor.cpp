@@ -184,7 +184,7 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(executor::AbstractE
  * @brief Build a executor tree and execute it.
  * @return status of execution.
  */
-bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
+void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
                                PlanState *planstate,
                                TupleDesc tuple_desc,
                                Peloton_Status *pstatus,
@@ -227,8 +227,8 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     txn_manager.EndTransaction(txn);
 
     CleanExecutorTree(executor_tree);
-
-    return false;
+    pstatus->m_code = txn->GetStatus();
+    return;
   }
 
   LOG_TRACE("Running the executor tree");
@@ -287,7 +287,8 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   // clean up
   CleanExecutorTree(executor_tree);
 
-  return true;
+  pstatus->m_code = txn->GetStatus();
+  return;
 }
 
 
