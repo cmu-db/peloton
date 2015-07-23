@@ -1020,6 +1020,7 @@ peloton_get_status(Peloton_Status *status)
     // Max retries over
     if(retry < 0)
     {
+      ereport(LOG, (errmsg("peloton_get_status() has waited too long and decided to quit. \n")));
       return PELOTON_STYPE_INVALID;
     }
   }
