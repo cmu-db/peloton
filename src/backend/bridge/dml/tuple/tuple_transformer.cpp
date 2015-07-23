@@ -37,7 +37,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     case POSTGRES_VALUE_TYPE_SMALLINT:
     {
       int16_t smallint = DatumGetInt16(datum);
-      LOG_TRACE("%d\n", smallint);
+      LOG_INFO("%d\n", smallint);
       value = ValueFactory::GetSmallIntValue(smallint);
     }
     break;
@@ -45,7 +45,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     case POSTGRES_VALUE_TYPE_INTEGER:
     {
       int32_t integer = DatumGetInt32(datum);
-      LOG_TRACE("%d\n", integer);
+      LOG_INFO("%d\n", integer);
       value = ValueFactory::GetIntegerValue(integer);
     }
     break;
@@ -53,7 +53,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     case POSTGRES_VALUE_TYPE_BIGINT:
     {
       int64_t bigint = DatumGetInt64(datum);
-      LOG_TRACE("%ld\n", bigint);
+      LOG_INFO("%ld\n", bigint);
       value = ValueFactory::GetBigIntValue(bigint);
     }
     break;
@@ -75,7 +75,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       char* varchar = static_cast<char *>(VARDATA(bpcharptr));
       Pool* data_pool = nullptr;
       std::string str(varchar, len);
-      LOG_TRACE("VARSIZE = %d , bpchar = \"%s\"", len, str.c_str());
+      LOG_INFO("len = %d , bpchar = \"%s\"", len, str.c_str());
       value = ValueFactory::GetStringValue(str, data_pool);
 
     }
@@ -88,7 +88,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       char* varchar = static_cast<char *>(VARDATA(varlenptr));
       Pool* data_pool = nullptr;
       std::string str(varchar, len);
-      LOG_TRACE("VARSIZE = %d , varchar = \"%s\"", len, str.c_str());
+      LOG_INFO("len = %d , varchar = \"%s\"", len, str.c_str());
       value = ValueFactory::GetStringValue(str, data_pool);
     }
     break;
@@ -100,7 +100,7 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
       char* varchar = static_cast<char *>(VARDATA(textptr));
       Pool* data_pool = nullptr;
       std::string str(varchar, len);
-      LOG_TRACE("VARSIZE = %d , text = \"%s\"", len, str.c_str());
+      LOG_INFO("len = %d , text = \"%s\"", len, str.c_str());
       value = ValueFactory::GetStringValue(str, data_pool);
     }
     break;
@@ -134,7 +134,7 @@ Datum TupleTransformer::GetDatum(Value value) {
     case VALUE_TYPE_SMALLINT:
     {
       int16_t smallint = ValuePeeker::PeekSmallInt(value);
-      LOG_TRACE("%d\n", smallint);
+      LOG_INFO("%d\n", smallint);
       datum = Int16GetDatum(smallint);
     }
     break;
@@ -142,7 +142,7 @@ Datum TupleTransformer::GetDatum(Value value) {
     case VALUE_TYPE_INTEGER:
     {
       int32_t integer = ValuePeeker::PeekInteger(value);
-      LOG_TRACE("%d\n", integer);
+      LOG_INFO("%d\n", integer);
       datum = Int32GetDatum(integer);
     }
     break;
@@ -150,7 +150,7 @@ Datum TupleTransformer::GetDatum(Value value) {
     case VALUE_TYPE_BIGINT:
     {
       int64_t bigint = ValuePeeker::PeekBigInt(value);
-      LOG_TRACE("%ld\n", bigint);
+      LOG_INFO("%ld\n", bigint);
       datum = Int64GetDatum(bigint);
     }
     break;
@@ -158,17 +158,27 @@ Datum TupleTransformer::GetDatum(Value value) {
     case VALUE_TYPE_DOUBLE:
     {
       double double_precision = ValuePeeker::PeekDouble(value);
-      LOG_TRACE("%f\n", double_precision);
+      LOG_INFO("%f\n", double_precision);
       datum = Float8GetDatum(double_precision);
     }
     break;
 
     case VALUE_TYPE_VARCHAR:
     {
-      auto data = ValuePeeker::PeekObjectValue(value);
-      // We use palloc() to create a new varlena here.
-      datum = CStringGetTextDatum(static_cast<const char*>(data));
-      LOG_TRACE("%s\n", DatumGetCString(datum));
+      auto data_ptr = ValuePeeker::PeekObjectValue(value);
+      auto data_len = ValuePeeker::PeekObjectLength(value);
+
+      // Create a new varlena text with PG utility
+      // NB: Peloton object don't have terminating-null's, so
+      // we should use PG functions that take explicit length.
+      datum = PointerGetDatum(cstring_to_text_with_len((char*)data_ptr, data_len));
+
+      auto cstr = text_to_cstring((text*)datum);
+      LOG_INFO("\"%s\" \n", cstr);
+      pfree(cstr);
+
+//      datum = CStringGetTextDatum(static_cast<const char*>(data));
+//      LOG_INFO("%s\n", DatumGetCString(datum));
     }
     break;
 
@@ -176,13 +186,13 @@ Datum TupleTransformer::GetDatum(Value value) {
     {
       long int timestamp = ValuePeeker::PeekTimestamp(value);
       datum = Int64GetDatum(timestamp);
-      LOG_TRACE("%s\n",DatumGetCString(timestamp));
+      LOG_INFO("%s\n",DatumGetCString(timestamp));
     }
     break;
 
     default:
       datum = PointerGetDatum(nullptr);
-      LOG_TRACE("Unrecognized value type : %u\n", value_type);
+      LOG_INFO("Unrecognized value type : %u\n", value_type);
       break;
   }
 
@@ -253,6 +263,10 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
     Value value = tuple->GetValue(att_itr);
     Datum datum = GetDatum(value);
 
+    assert(tuple_desc->attrs[att_itr]->attbyval == true
+           || value.GetValueType() == VALUE_TYPE_VARCHAR
+           || value.GetValueType() == VALUE_TYPE_VARBINARY);
+
     datums[att_itr] = datum;
     nulls[att_itr] = tuple->IsNull(att_itr) ? true : false;
   }
@@ -268,8 +282,20 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
   // This function just sets a point in slot to the heap_tuple.
   ExecStoreTuple(heap_tuple, slot, InvalidBuffer, true);
 
-  // Free the datum array itself
+  // Clean up Datums (A-B): seems we have to do the cleaning manually (no PG utility?)
+
+  // (A) Clean up any possible varlena's
+  for (oid_t att_itr = 0; att_itr < natts; ++att_itr) {
+    if(tuple_desc->attrs[att_itr]->attlen < 0){ // should be a varlena
+      assert(tuple_desc->attrs[att_itr]->attbyval == false);
+
+      pfree((void*)(datums[att_itr]));
+    }
+  }
+
+  // (B) Free the datum array itself
   pfree(datums);
+
   pfree(nulls);
 
   return slot;
