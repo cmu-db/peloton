@@ -13,6 +13,8 @@
 #ifndef PELOTON_H
 #define PELOTON_H
 
+#include "backend/common/types.h"
+
 #include "libpq/libpq-be.h"
 #include "nodes/execnodes.h"
 #include "utils/memutils.h"
@@ -29,17 +31,6 @@ typedef enum PelotonMsgType
   PELOTON_MTYPE_DML,        // DML information to Peloton
   PELOTON_MTYPE_REPLY       // Reply message from Peloton to Backend
 } PelotonMsgType;
-
-/* ----------
- * The types of peloton status
- * ----------
- */
-typedef enum PelotonStatusType
-{
-  PELOTON_STYPE_INVALID,    // Invalid status type
-  PELOTON_STYPE_SUCCESS,    // Success
-  PELOTON_STYPE_FAILURE     // Failure
-} PelotonStatusType;
 
 /* ------------------------------------------------------------
  * Message formats follow
@@ -65,7 +56,7 @@ typedef struct Peloton_MsgHdr
  */
 typedef struct Peloton_Status
 {
-  PelotonStatusType  m_code;
+  peloton::ResultType  m_code;
   List *m_result_slots;
 } Peloton_Status;
 
@@ -153,7 +144,9 @@ extern void peloton_send_ddl(Peloton_Status  *status,
                              const char *queryString);
 
 extern Peloton_Status *peloton_create_status();
-extern int peloton_get_status(Peloton_Status *status);
+
+extern void peloton_process_status(Peloton_Status *status);
+
 extern void peloton_destroy_status(Peloton_Status *status);
 
 
