@@ -36,7 +36,10 @@ class DDLDatabase {
 
   static bool ExecDropdbStmt(Node* parsetree);
 
+  static bool ExecVacuumStmt(Node* parsetree);
+
   static bool CreateDatabase(Oid database_oid);
+
 
   // TODO
   //static bool AlterDatabase( );
