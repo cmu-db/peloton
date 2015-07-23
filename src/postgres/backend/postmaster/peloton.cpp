@@ -1013,7 +1013,7 @@ peloton_process_status(Peloton_Status *status)
 
     /* additive increase */
     duration.tv_nsec += 100;
-    elog(DEBUG2, "Busy waiting");
+    //elog(DEBUG2, "Busy waiting");
   }
 
   // Process the status code
