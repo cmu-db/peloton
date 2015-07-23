@@ -53,7 +53,6 @@ bool DDLDatabase::ExecDropdbStmt(Node* parsetree){
  * @return true if we handled it correctly, false otherwise
  */
 bool DDLDatabase::ExecVacuumStmt(Node* parsetree){
-/*
   VacuumStmt* vacuum = (VacuumStmt*) parsetree;
   std::string relation_name;
 
@@ -69,16 +68,15 @@ bool DDLDatabase::ExecVacuumStmt(Node* parsetree){
 
   // Update every table and index
   if(relation_name.empty()){
-    printf("Update All Stats\n");
+    LOG_INFO("Update All Stats in Database(%u)", database_oid);
     db->UpdateStats();
   }
   // Otherwise, update the specific table
   else{
     oid_t relation_oid = (db->GetTableWithName(relation_name))->GetOid();
-    printf("Update table(%u) Stats\n",relation_oid );
+    LOG_INFO("Update table %s(%u)'s stats in Database(%u)", relation_name.c_str(), relation_oid, database_oid);
     db->UpdateStatsWithOid(relation_oid);
   }
-  */
 
   return true;
 }
