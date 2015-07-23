@@ -227,7 +227,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     txn_manager.EndTransaction(txn);
 
     CleanExecutorTree(executor_tree);
-    pstatus->m_code = txn->GetStatus();
+    pstatus->m_result = txn->GetResult();
     return;
   }
 
@@ -287,7 +287,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   // clean up
   CleanExecutorTree(executor_tree);
 
-  pstatus->m_code = txn->GetStatus();
+  pstatus->m_result = txn->GetResult();
   return;
 }
 

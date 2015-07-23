@@ -56,8 +56,9 @@ typedef struct Peloton_MsgHdr
  */
 typedef struct Peloton_Status
 {
-  peloton::ResultType  m_code;
+  peloton::Result m_result;
   List *m_result_slots;
+  int m_status;
 } Peloton_Status;
 
 /* ----------
