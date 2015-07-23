@@ -26,7 +26,7 @@ class Kernel {
 
  public:
 
-  static ResultType Handler(const char* query);
+  static Result Handler(const char* query);
 
 };
 

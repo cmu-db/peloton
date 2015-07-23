@@ -28,7 +28,7 @@ namespace scheduler {
 // Task
 //===--------------------------------------------------------------------===//
 
-typedef  ResultType (*handler)(void*);
+typedef  Result (*handler)(void*);
 
 class AbstractTask : public tbb::task {
 
@@ -38,7 +38,7 @@ class AbstractTask : public tbb::task {
        TaskPriorityType priority)
  : function_pointer(function_pointer),
    args(args),
-   output(RESULT_TYPE_INVALID),
+   output(RESULT_INVALID),
    priority(priority){
 
     // Get a task id
@@ -59,7 +59,7 @@ class AbstractTask : public tbb::task {
     return task_id;
   }
 
-  ResultType GetOuput() {
+  Result GetOuput() {
     return output;
   }
 
@@ -82,7 +82,7 @@ class AbstractTask : public tbb::task {
 
   void *args;
 
-  ResultType output;
+  Result output;
 
   TaskPriorityType priority = TaskPriorityType::TASK_PRIORTY_TYPE_NORMAL;
 };
