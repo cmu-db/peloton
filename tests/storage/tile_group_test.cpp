@@ -357,7 +357,7 @@ TEST(TileGroupTests, TileCopyTest) {
     column_names.push_back(tile_column_names);
 
 
-	const int tuple_count = 6;
+	const int tuple_count = 4;
 
 
     storage::AbstractBackend *backend = new storage::VMBackend();
@@ -400,9 +400,9 @@ TEST(TileGroupTests, TileCopyTest) {
 	tuple3->SetValue(3, ValueFactory::GetStringValue("jinwoong kim", tile->GetPool()));
 	tuple3->SetValue(4, ValueFactory::GetStringValue("jinwoong kim again", tile->GetPool()));
 
-	//tile->InsertTuple(0, tuple1);
-	//tile->InsertTuple(1, tuple2);
-	//tile->InsertTuple(2, tuple3);
+	tile->InsertTuple(0, tuple1);
+	tile->InsertTuple(1, tuple2);
+	tile->InsertTuple(2, tuple3);
 
 	tuple_slot_id = tile_group->InsertTuple(txn_id1, tuple1);
 	EXPECT_EQ(0, tuple_slot_id);
@@ -570,6 +570,8 @@ TEST(TileGroupTests, TileCopyTest) {
 			}
 		}
 	}
+
+	std::cout << "new tile printed using overloaded << operator" << (*new_tile) << std::endl;
 
 
 
