@@ -927,6 +927,11 @@ peloton_process_dml(Peloton_MsgDML *msg)
     /* Clean up the plantree */
     peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
   }
+  else {
+    /* Could not get the plan */
+    msg->m_status->m_code = peloton::ResultType::RESULT_TYPE_FAILURE;
+  }
+
 }
 
 /* ----------
@@ -1013,7 +1018,7 @@ peloton_process_status(Peloton_Status *status)
 
     /* additive increase */
     duration.tv_nsec += 100;
-    elog(DEBUG2, "Busy waiting");
+    //elog(DEBUG2, "Busy waiting");
   }
 
   // Process the status code
