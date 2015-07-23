@@ -24,6 +24,7 @@ bridge_FILES = \
 			   backend/bridge/dml/mapper/mapper_seq_scan.cpp \
 			   backend/bridge/dml/mapper/mapper_index_scan.cpp \
 			   backend/bridge/dml/mapper/mapper_limit.cpp \
+			   backend/bridge/dml/mapper/mapper_lock_rows.cpp \
 			   backend/bridge/dml/mapper/mapper_target_list.cpp \
 			   backend/bridge/dml/mapper/mapper_projection.cpp \
 			   backend/bridge/dml/mapper/mapper_utils.cpp \
