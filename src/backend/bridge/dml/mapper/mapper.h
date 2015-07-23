@@ -59,6 +59,7 @@ class PlanTransformer {
   static planner::AbstractPlanNode *TransformIndexOnlyScan(const IndexOnlyScanState *plan_state);
   static planner::AbstractPlanNode *TransformBitmapScan(const BitmapHeapScanState *plan_state);
 
+  static planner::AbstractPlanNode *TransformLockRows(const LockRowsState *plan_state);
 
   static planner::AbstractPlanNode *TransformLimit(const LimitState *plan_state);
   static planner::AbstractPlanNode *TransformResult(const ResultState *plan_state);
