@@ -168,13 +168,14 @@ Tile *Tile::CopyTile(storage::AbstractBackend *new_backend) {
 
 	const catalog::Schema *schema;
 	bool tile_is_inlined;
-	uint16_t allocated_tuple_count;//, active_tuple_count;
+	uint16_t allocated_tuple_count, active_tuple_count;
 
 	schema = GetSchema();
 	allocated_tuple_count = GetAllocatedTupleCount();
 	std::cout << "allocated_tuple_count: " << allocated_tuple_count << std::endl;
-	//active_tuple_count = GetActiveTupleCount();
+	active_tuple_count = GetActiveTupleCount();
 	//active_tuple_count = 3;
+	std::cout << "active_tuple_count: " << active_tuple_count << std::endl;
 	tile_is_inlined = schema->IsInlined();
 
 
@@ -198,8 +199,8 @@ Tile *Tile::CopyTile(storage::AbstractBackend *new_backend) {
 	if(!tile_is_inlined) {
 
 		int uninlined_col_cnt = new_schema->GetUninlinedColumnCount();
-		TileIterator tile_itr = GetIterator();
-		Tuple tuple(schema);
+		//TileIterator tile_itr = GetIterator();
+		//Tuple tuple(schema);
 
 		int uninlined_col_index;
 		Value uninlined_col_value, new_uninlined_col_value;
@@ -208,12 +209,10 @@ Tile *Tile::CopyTile(storage::AbstractBackend *new_backend) {
 
 			uninlined_col_index = new_schema->GetUninlinedColumnIndex(col_itr);
 			std::cout << "next uninlined column index: " << uninlined_col_index << std::endl;
-			int tup_itr=0;
+			//int tup_itr=0;
 
-			//for(int tup_itr=0; tup_itr<active_tuple_count; tup_itr++) {
-			//bool tile_has_tuple = tile_itr.Next(tuple);
-			//std::cout << "tile has tuple? " << tile_has_tuple << std::endl;
-			while (tile_itr.Next(tuple)) {
+			for(int tup_itr=0; tup_itr<active_tuple_count; tup_itr++) {
+			//while (tile_itr.Next(tuple)) {
 
 				// Get the Value object for the uninlined column of the current tuple
 				uninlined_col_value = new_tile->GetValue(tup_itr,uninlined_col_index);
@@ -221,7 +220,6 @@ Tile *Tile::CopyTile(storage::AbstractBackend *new_backend) {
 				std::cout << "uninlined_col_value: " << uninlined_col_value << std::endl;
 
 				//std::cout << "before PeekObjectLength" << std::endl;
-
 				// Get the length of the uninlined string
 				size_t uninlined_col_object_len = ValuePeeker::PeekObjectLength(uninlined_col_value);
 				std::cout << "uninlined_col_object_len: " << uninlined_col_object_len << std::endl;
@@ -237,13 +235,12 @@ Tile *Tile::CopyTile(storage::AbstractBackend *new_backend) {
 				Value new_val = ValueFactory::GetStringValue(uninlined_varchar_str, new_pool);
 				std::cout << "new_val: " << new_val << std::endl;
 
-				// Set the newly created value object to the tuple
-				tuple.SetValue(uninlined_col_index, new_val);
+				// Set the newly created value object to the new tile
+				//tuple.SetValue(uninlined_col_index, new_val);
 				new_tile->SetValue(new_val, tup_itr, uninlined_col_index);
 				//new_tile->InsertTuple(tup_itr, &tuple);
 
 				tup_itr++;
-				tile_itr.IncrementIterator();
 			}
 		}
 	}
