@@ -83,8 +83,6 @@ static void peloton_sighup_handler(SIGNAL_ARGS);
 static void peloton_sigusr2_handler(SIGNAL_ARGS);
 static void peloton_sigterm_handler(SIGNAL_ARGS);
 static void peloton_sighup_handler(SIGNAL_ARGS);
-static void peloton_sigsegv_handler(SIGNAL_ARGS);
-static void peloton_sigabrt_handler(SIGNAL_ARGS);
 
 static void peloton_setheader(Peloton_MsgHdr *hdr,
                               PelotonMsgType mtype,
@@ -178,8 +176,6 @@ PelotonMain(int argc, char *argv[])
    */
   pqsignal(SIGINT, StatementCancelHandler);
   pqsignal(SIGTERM, peloton_sigterm_handler);
-  pqsignal(SIGSEGV, peloton_sigsegv_handler);
-  pqsignal(SIGABRT, peloton_sigabrt_handler);
   pqsignal(SIGQUIT, quickdie);
   InitializeTimeouts();   /* establishes SIGALRM handler */
 
@@ -334,41 +330,6 @@ peloton_sigterm_handler(SIGNAL_ARGS)
   errno = save_errno;
 }
 
-/* SIGSEGV: time to die */
-static void
-peloton_sigsegv_handler(SIGNAL_ARGS)
-{
-  int     save_errno = errno;
-
-  // Get stack trace
-  peloton::GetStackTrace(SIGSEGV);
-
-  need_exit = true;
-  SetLatch(MyLatch);
-
-  errno = save_errno;
-
-  // We can now go away.
-  proc_exit(0);
-}
-
-/* SIGABRT: time to die */
-static void
-peloton_sigabrt_handler(SIGNAL_ARGS)
-{
-  int     save_errno = errno;
-
-  // Get stack trace
-  peloton::GetStackTrace(SIGABRT);
-
-  need_exit = true;
-  SetLatch(MyLatch);
-
-  errno = save_errno;
-
-  // We can now go away.
-  proc_exit(0);
-}
 
 /*
  * peloton_MainLoop
@@ -1037,9 +998,9 @@ peloton_create_status()
 int
 peloton_get_status(Peloton_Status *status)
 {
-  struct timespec duration = {0, 1000 * 10}; // 10 us
+  struct timespec duration = {0, 1000 * 100}; // 100 us
   int code;
-  int retry = 22; // upto 80s
+  int retry = 10 * 1000; // upto 1 s
 
   if(status == NULL)
     return PELOTON_STYPE_INVALID;
@@ -1051,9 +1012,6 @@ peloton_get_status(Peloton_Status *status)
     retry--;
 
     rc = nanosleep(&duration, NULL);
-    // multiplicative increase
-    duration.tv_nsec = duration.tv_nsec * 2;
-
     if(rc < 0)
     {
       return PELOTON_STYPE_INVALID;
