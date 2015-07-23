@@ -72,6 +72,12 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
 
   assert(tuple);
 
+  // Increase the table's number of tuples by 1
+  IncreaseNumberOfTuplesBy(1);
+  // Increase the indexes' number of tuples by 1 as well
+  for(auto index : indexes)
+    index->IncreaseNumberOfTuplesBy(1);
+
   // (A) Not NULL checks
   if (CheckNulls(tuple) == false) {
     throw ConstraintException("Not NULL constraint violated : " + tuple->GetInfo());
@@ -198,8 +204,13 @@ void DataTable::DeleteInIndexes(const storage::Tuple *tuple) {
     }
 
     delete key;
-  }
 
+    // Decrease the indexes' number of tuples by 1
+    for(auto index : indexes)
+      index->DecreaseNumberOfTuplesBy(1);
+  }
+  // Decrease the table's number of tuples by 1 as well
+  DecreaseNumberOfTuplesBy(1);
 }
 
 bool DataTable::CheckNulls(const storage::Tuple *tuple) const {

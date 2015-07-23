@@ -67,7 +67,7 @@ void DDL::ProcessUtility(Node *parsetree,
     case T_CreateStmt:
     case T_CreateForeignTableStmt:
     {
-      DDLTable::ExecCreateStmt(parsetree, queryString, index_infos);
+      DDLTable::ExecCreateStmt(parsetree, index_infos);
       break;
     }
 
