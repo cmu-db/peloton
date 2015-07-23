@@ -83,7 +83,6 @@ Transaction *TransactionManager::GetPGTransaction(TransactionId txn_id) {
     // If entry already exists
     if(pg_txn_table.count(txn_id) != 0) {
       auto txn = pg_txn_table.at(txn_id);
-      LOG_INFO("Peloton txn : %lu \n", txn->GetTransactionId());
       return txn;
     }
   }

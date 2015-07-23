@@ -22,12 +22,13 @@
 /* see palloc.h.  Must be before postgres.h */
 #define MCXT_INCLUDE_DEFINITIONS
 
+#include <signal.h>
+
 #include "postgres.h"
 
 #include "miscadmin.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
-
 
 /*****************************************************************************
  *	  GLOBAL MEMORY															 *
@@ -688,7 +689,10 @@ MemoryContextAlloc(MemoryContext context, Size size)
 	AssertNotInCriticalSection(context);
 
 	if (!AllocSizeIsValid(size))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+		raise(SIGSEGV);
+	}
 
 	context->isReset = false;
 
@@ -723,7 +727,10 @@ MemoryContextAllocZero(MemoryContext context, Size size)
 	AssertNotInCriticalSection(context);
 
 	if (!AllocSizeIsValid(size))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+    raise(SIGSEGV);
+	}
 
 	context->isReset = false;
 
@@ -760,7 +767,10 @@ MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 	AssertNotInCriticalSection(context);
 
 	if (!AllocSizeIsValid(size))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+    raise(SIGSEGV);
+	}
 
 	context->isReset = false;
 
@@ -831,7 +841,10 @@ palloc(Size size)
 	AssertNotInCriticalSection(CurrentMemoryContext);
 
 	if (!AllocSizeIsValid(size))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+    raise(SIGSEGV);
+	}
 
 	CurrentMemoryContext->isReset = false;
 
@@ -860,7 +873,10 @@ palloc0(Size size)
 	AssertNotInCriticalSection(CurrentMemoryContext);
 
 	if (!AllocSizeIsValid(size))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+    raise(SIGSEGV);
+	}
 
 	CurrentMemoryContext->isReset = false;
 
@@ -892,7 +908,10 @@ palloc_extended(Size size, int flags)
 
 	if (((flags & MCXT_ALLOC_HUGE) != 0 && !AllocHugeSizeIsValid(size)) ||
 		((flags & MCXT_ALLOC_HUGE) == 0 && !AllocSizeIsValid(size)))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+    raise(SIGSEGV);
+	}
 
 	CurrentMemoryContext->isReset = false;
 
@@ -958,7 +977,10 @@ repalloc(void *pointer, Size size)
 	void	   *ret;
 
 	if (!AllocSizeIsValid(size))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+    raise(SIGSEGV);
+	}
 
 	/*
 	 * Try to detect bogus pointers handed to us, poorly though we can.
@@ -1007,7 +1029,10 @@ MemoryContextAllocHuge(MemoryContext context, Size size)
 	AssertNotInCriticalSection(context);
 
 	if (!AllocHugeSizeIsValid(size))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+    raise(SIGSEGV);
+	}
 
 	context->isReset = false;
 
@@ -1038,7 +1063,10 @@ repalloc_huge(void *pointer, Size size)
 	void	   *ret;
 
 	if (!AllocHugeSizeIsValid(size))
+	{
 		elog(ERROR, "invalid memory alloc request size %zu", size);
+    raise(SIGSEGV);
+	}
 
 	/*
 	 * Try to detect bogus pointers handed to us, poorly though we can.
