@@ -1995,7 +1995,6 @@ typedef struct CreateStmt {
 
 	// TODO: Peloton Changes
 	Oid      relation_id;   /* cache the relation id for DDL */
-        List     *stmts;        /* cache the transformed statement for DDL */
 } CreateStmt;
 
 /* ----------
