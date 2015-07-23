@@ -51,9 +51,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
    * TODO:
    * The qualifying predicate should be extracted from:
    * ss_plan_state->ps.qual (null if no predicate)
-   * And remember to free it.
-   *
-   * Let's just use a null predicate for now.
+   * And remember to free it at some point
    */
   expression::AbstractExpression* predicate = nullptr;
 
@@ -62,22 +60,6 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
     const ExprState* expr_state = reinterpret_cast<ExprState *>(ss_plan_state
         ->ps.qual);
     predicate = ExprTransformer::TransformExpr(expr_state);
-
-//       int i=0;
-//    List       *qual = ss_plan_state->ps.qual;
-//    ListCell   *l;
-//
-//    assert(list_length(qual) == 1);
-//
-//    foreach(l, qual)
-//    {
-//      ExprState  *clause = (ExprState *) lfirst(l);
-//
-//      if(i == 0) {  // Let's just get the first predicate now
-//        predicate = ExprTransformer::TransformExpr(clause);
-//      }
-//      i++;
-//    }
   }
 
   if (predicate) {
