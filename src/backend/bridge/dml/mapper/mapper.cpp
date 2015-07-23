@@ -70,6 +70,10 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
       plan_node = PlanTransformer::TransformBitmapScan(
           reinterpret_cast<const BitmapHeapScanState*>(plan_state));
       break;
+    case T_LockRows:
+      plan_node = PlanTransformer::TransformLockRows(
+          reinterpret_cast<const LockRowsState*>(plan_state));
+      break;
     case T_Limit:
       plan_node = PlanTransformer::TransformLimit(
           reinterpret_cast<const LimitState*>(plan_state));
