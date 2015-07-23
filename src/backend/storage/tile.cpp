@@ -168,14 +168,9 @@ Tile *Tile::CopyTile(storage::AbstractBackend *new_backend) {
 
 	const catalog::Schema *schema;
 	bool tile_is_inlined;
-	uint16_t allocated_tuple_count;//, active_tuple_count;
-
+	uint16_t allocated_tuple_count;
 	schema = GetSchema();
 	allocated_tuple_count = GetAllocatedTupleCount();
-	std::cout << "allocated_tuple_count: " << allocated_tuple_count << std::endl;
-	//active_tuple_count = GetActiveTupleCount();
-	//active_tuple_count = 3;
-	//std::cout << "active_tuple_count: " << active_tuple_count << std::endl;
 	tile_is_inlined = schema->IsInlined();
 
 
@@ -184,13 +179,11 @@ Tile *Tile::CopyTile(storage::AbstractBackend *new_backend) {
 	 */
 	const catalog::Schema *new_schema = schema;
 	TileGroupHeader *new_header = GetHeader();
-	//TileGroup *new_group = GetTileGroup();
 	Tile *new_tile = TileFactory::GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
 											  new_header, new_backend, *new_schema, tile_group, allocated_tuple_count);
 	Pool *new_pool = new_tile->GetPool();
-	std::cout << "new_pool before memcpy: " << static_cast<void *>(new_pool) << std::endl;
+
 	::memcpy(static_cast<void *>(new_tile->data), static_cast<void *>(data), tile_size);
-	std::cout << "new_pool after memcpy: " << static_cast<void *>(new_pool) << std::endl;
 
 
 	/*
@@ -207,24 +200,19 @@ Tile *Tile::CopyTile(storage::AbstractBackend *new_backend) {
 		for(int col_itr=0; col_itr<uninlined_col_cnt; col_itr++) {
 
 			uninlined_col_index = new_schema->GetUninlinedColumnIndex(col_itr);
-			std::cout << "next uninlined column index: " << uninlined_col_index << std::endl;
+
 			int tup_itr=0;
 			TileIterator tile_itr = GetIterator();
+
 			Tuple tuple(schema);
 
-			//for(int tup_itr=0; tup_itr<active_tuple_count; tup_itr++) {
 			while (tile_itr.Next(tuple)) {
 
 				// Get the Value object for the uninlined column of the current tuple
 				uninlined_col_value = new_tile->GetValue(tup_itr,uninlined_col_index);
-				//uninlined_col_value = tuple.GetValue(uninlined_col_index);
-				std::cout << "uninlined_col_value: " << uninlined_col_value << std::endl;
 
-				//std::cout << "before PeekObjectLength" << std::endl;
 				// Get the length of the uninlined string
 				size_t uninlined_col_object_len = ValuePeeker::PeekObjectLength(uninlined_col_value);
-				std::cout << "uninlined_col_object_len: " << uninlined_col_object_len << std::endl;
-				//std::cout << "after PeekObjectLength" << std::endl;
 
 				// Get a pointer to the uninlined string
 				unsigned char* uninlined_col_object_ptr = static_cast<unsigned char *>(ValuePeeker::PeekObjectValue(uninlined_col_value));
@@ -234,20 +222,14 @@ Tile *Tile::CopyTile(storage::AbstractBackend *new_backend) {
 
 				// Create a new Value object with the uninlined string residing in the new pool
 				Value new_val = ValueFactory::GetStringValue(uninlined_varchar_str, new_pool);
-				std::cout << "new_val: " << new_val << std::endl;
 
 				// Set the newly created value object to the new tile
-				//tuple.SetValue(uninlined_col_index, new_val);
 				new_tile->SetValue(new_val, tup_itr, uninlined_col_index);
-				//new_tile->InsertTuple(tup_itr, &tuple);
 
 				tup_itr++;
 			}
 		}
 	}
-
-	std::cout << "test for operator<< functionality" << std::endl;
-	std::cout << (*new_tile) << std::endl;
 
 	return new_tile;
 }
