@@ -360,12 +360,17 @@ TEST(TileGroupTests, TileCopyTest) {
 
 
     storage::AbstractBackend *backend = new storage::VMBackend();
-    storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(INVALID_OID, INVALID_OID, INVALID_OID,
-                                     nullptr, backend, schemas, tuple_count);
+    storage::TileGroup *tile_group =
+    		storage::TileGroupFactory::GetTileGroup(
+    				INVALID_OID, INVALID_OID, INVALID_OID,
+    				nullptr, backend, schemas, tuple_count);
+
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
-    storage::Tile *tile = storage::TileFactory::GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
-    												tile_group_header, backend, *schema, nullptr, tuple_count);
+    storage::Tile *tile =
+    		storage::TileFactory::GetTile(
+    				INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+    				tile_group_header, backend, *schema, nullptr, tuple_count);
 
 
     auto& txn_manager = concurrency::TransactionManager::GetInstance();
@@ -381,20 +386,26 @@ TEST(TileGroupTests, TileCopyTest) {
 	tuple1->SetValue(0, ValueFactory::GetIntegerValue(1));
 	tuple1->SetValue(1, ValueFactory::GetIntegerValue(1));
 	tuple1->SetValue(2, ValueFactory::GetTinyIntValue(1));
-	tuple1->SetValue(3, ValueFactory::GetStringValue("vivek sengupta", tile->GetPool()));
-	tuple1->SetValue(4, ValueFactory::GetStringValue("vivek sengupta again", tile->GetPool()));
+	tuple1->SetValue(3, ValueFactory::GetStringValue(
+							"vivek sengupta", tile->GetPool()));
+	tuple1->SetValue(4, ValueFactory::GetStringValue(
+							"vivek sengupta again",	tile->GetPool()));
 
 	tuple2->SetValue(0, ValueFactory::GetIntegerValue(2));
 	tuple2->SetValue(1, ValueFactory::GetIntegerValue(2));
 	tuple2->SetValue(2, ValueFactory::GetTinyIntValue(2));
-	tuple2->SetValue(3, ValueFactory::GetStringValue("ming fang", tile->GetPool()));
-	tuple2->SetValue(4, ValueFactory::GetStringValue("ming fang again", tile->GetPool()));
+	tuple2->SetValue(3, ValueFactory::GetStringValue(
+							"ming fang", tile->GetPool()));
+	tuple2->SetValue(4, ValueFactory::GetStringValue(
+							"ming fang again", tile->GetPool()));
 
 	tuple3->SetValue(0, ValueFactory::GetIntegerValue(3));
 	tuple3->SetValue(1, ValueFactory::GetIntegerValue(3));
 	tuple3->SetValue(2, ValueFactory::GetTinyIntValue(3));
-	tuple3->SetValue(3, ValueFactory::GetStringValue("jinwoong kim", tile->GetPool()));
-	tuple3->SetValue(4, ValueFactory::GetStringValue("jinwoong kim again", tile->GetPool()));
+	tuple3->SetValue(3, ValueFactory::GetStringValue(
+							"jinwoong kim", tile->GetPool()));
+	tuple3->SetValue(4, ValueFactory::GetStringValue(
+							"jinwoong kim again", tile->GetPool()));
 
 	tile->InsertTuple(0, tuple1);
 	tile->InsertTuple(1, tuple2);
@@ -472,19 +483,26 @@ TEST(TileGroupTests, TileCopyTest) {
 
 			uninlined_col_value = tile->GetValue(tup_itr,uninlined_col_index);
 			uninlined_col_object_len = ValuePeeker::PeekObjectLength(uninlined_col_value);
-			uninlined_col_object_ptr = static_cast<unsigned char *>(ValuePeeker::PeekObjectValue(uninlined_col_value));
-			std::string uninlined_varchar_str(reinterpret_cast<char const*>(uninlined_col_object_ptr), uninlined_col_object_len);
+			uninlined_col_object_ptr = static_cast<unsigned char *>(
+					ValuePeeker::PeekObjectValue(uninlined_col_value));
+			std::string uninlined_varchar_str(
+					reinterpret_cast<char const*>(uninlined_col_object_ptr),
+					uninlined_col_object_len);
 
 			new_uninlined_col_value = new_tile->GetValue(tup_itr,uninlined_col_index);
 			new_uninlined_col_object_len = ValuePeeker::PeekObjectLength(new_uninlined_col_value);
-			new_uninlined_col_object_ptr = static_cast<unsigned char *>(ValuePeeker::PeekObjectValue(new_uninlined_col_value));
-			std::string new_uninlined_varchar_str(reinterpret_cast<char const*>(new_uninlined_col_object_ptr), new_uninlined_col_object_len);
+			new_uninlined_col_object_ptr = static_cast<unsigned char *>(
+					ValuePeeker::PeekObjectValue(new_uninlined_col_value));
+			std::string new_uninlined_varchar_str(
+					reinterpret_cast<char const*>(new_uninlined_col_object_ptr),
+					new_uninlined_col_object_len);
 
 			// Compare original and copied tile details for current tuple
 			int is_value_same = uninlined_col_value.Compare(new_uninlined_col_value);
 			int is_length_same = uninlined_col_object_len == uninlined_col_object_len;
 			int is_pointer_same = uninlined_col_object_ptr == new_uninlined_col_object_ptr;
-			int is_data_same = std::strcmp(uninlined_varchar_str.c_str(), new_uninlined_varchar_str.c_str());
+			int is_data_same = std::strcmp(uninlined_varchar_str.c_str(),
+											new_uninlined_varchar_str.c_str());
 
 			// Break if there is any mismatch
 			if(is_value_same || !is_length_same || is_pointer_same || is_data_same) {
