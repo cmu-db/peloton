@@ -45,6 +45,13 @@ class Bridge {
 
   static void GetTableList(bool catalog_only);
 
+  static HeapTuple GetPGTypeTupleForTypeName(const char* type_name);
+
+  static bool GetTypeInformation(const char *type_name,
+                                 Oid *type_oid,
+                                 int *type_len,
+                                 int32 *type_mod);
+
   //===--------------------------------------------------------------------===//
   // Setters
   //===--------------------------------------------------------------------===//

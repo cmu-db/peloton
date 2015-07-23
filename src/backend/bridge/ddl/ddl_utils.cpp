@@ -46,42 +46,6 @@ void DDLUtils::ParsingCreateStmt(CreateStmt* Cstmt,
   assert(Cstmt);
 
   //===--------------------------------------------------------------------===//
-  // Table Constraint
-  //===--------------------------------------------------------------------===//
-  /*
-//TODO
-  if(Cstmt->constraints != NULL){
-    ListCell* constraint;
-
-    foreach(constraint, Cstmt->constraints){
-      //printf("\nPrint Multi column constraint\n");
-      Constraint* ConstraintNode = lfirst(constraint);
-      ConstraintType contype;
-      std::string conname;
-      std::string reference_table_name;
-
-      // Get constraint type
-      contype = PostgresConstraintTypeToPelotonConstraintType((PostgresConstraintType) ConstraintNode->contype);
-      printf("Constraint type %s \n", ConstraintTypeToString(contype).c_str());
-
-      // Get constraint name
-      if(ConstraintNode->conname != NULL){
-        conname = ConstraintNode->conname;
-        printf("Constraint name %s \n", conname.c_str());
-      }
-
-      // Get reference table name
-      if(ConstraintNode->pktable != NULL){
-        reference_table_name = ConstraintNode->pktable->relname;
-        printf("Constraint name %s \n", reference_table_name.c_str());
-      }
-
-      printf("\n");
-    }
-  }
-   */
-
-  //===--------------------------------------------------------------------===//
   // Column Infomation
   //===--------------------------------------------------------------------===//
 
@@ -93,33 +57,22 @@ void DDLUtils::ParsingCreateStmt(CreateStmt* Cstmt,
   foreach(entry, ColumnList){
 
     ColumnDef  *coldef = static_cast<ColumnDef *>(lfirst(entry));
+    
+    char* type_name = TypeNameToString(coldef->typeName);
+    Oid type_oid;
+    int type_len;
+    int32 type_mod;
 
-    // Get the type oid and type mod with given typeName
-    Oid typeoid = typenameTypeId(NULL, coldef->typeName);
-    int32 typemod;
-    typenameTypeIdAndMod(NULL, coldef->typeName, &typeoid, &typemod);
-
-    // Get type length
-    Type tup = typeidType(typeoid);
-    int typelen = typeLen(tup);
-    ReleaseSysCache(tup);
-
-    /* TODO :: Simple version, but need to check it is correct
-    // Get the type oid
-    typeoid = typenameTypeId(NULL, coldef->typeName);
-    // type mod
-    typemod = get_typmodin(typeoid);
-    // Get type length
-    typelen = get_typlen(typeoid);
-     */
+    Bridge::GetTypeInformation(type_name, &type_oid, &type_len, &type_mod);
 
     // For a fixed-size type, typlen is the number of bytes in the internal
     // representation of the type. But for a variable-length type, typlen is negative.
-    if(typelen == - 1)
-      typelen = typemod;
 
-    ValueType column_valueType = PostgresValueTypeToPelotonValueType((PostgresValueType) typeoid);
-    int column_length = typelen;
+    if(type_len == - 1)
+      type_len = type_mod;
+
+    ValueType column_valueType = PostgresValueTypeToPelotonValueType((PostgresValueType) type_oid);
+    int column_length = type_len;
     std::string column_name = coldef->colname;
 
     //===--------------------------------------------------------------------===//
