@@ -53,6 +53,7 @@ bool DDLDatabase::ExecDropdbStmt(Node* parsetree){
  * @return true if we handled it correctly, false otherwise
  */
 bool DDLDatabase::ExecVacuumStmt(Node* parsetree){
+/*
   VacuumStmt* vacuum = (VacuumStmt*) parsetree;
   std::string relation_name;
 
@@ -77,6 +78,7 @@ bool DDLDatabase::ExecVacuumStmt(Node* parsetree){
     printf("Update table(%u) Stats\n",relation_oid );
     db->UpdateStatsWithOid(relation_oid);
   }
+  */
 
   return true;
 }
