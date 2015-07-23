@@ -40,7 +40,7 @@ namespace bridge {
  * @param index info to store index information
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLTable::ExecCreateStmt(Node* parsetree, const char* queryString, std::vector<IndexInfo> index_infos){
+bool DDLTable::ExecCreateStmt(Node* parsetree, const char* queryString, std::vector<IndexInfo>& index_infos){
 
   /* Run parse analysis ... */
   List     *stmts = transformCreateStmt((CreateStmt *) parsetree,
@@ -58,6 +58,8 @@ bool DDLTable::ExecCreateStmt(Node* parsetree, const char* queryString, std::vec
       // Relation name and oid
       char* relation_name = Cstmt->relation->relname;
       Oid relation_oid = ((CreateStmt *)parsetree)->relation_id;
+
+      assert(relation_oid);
 
       std::vector<catalog::Column> column_infos;
       std::vector<catalog::ForeignKey> foreign_keys;

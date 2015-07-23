@@ -89,6 +89,12 @@ void DDL::ProcessUtility(Node *parsetree,
       break;
     }
 
+    case T_VacuumStmt:
+    {
+      DDLDatabase::ExecVacuumStmt(parsetree);
+      break;
+    }
+
     case T_TransactionStmt: {
       TransactionStmt *stmt = (TransactionStmt *) parsetree;
 
