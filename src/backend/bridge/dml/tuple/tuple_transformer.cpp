@@ -169,11 +169,16 @@ Datum TupleTransformer::GetDatum(Value value) {
       auto data_len = ValuePeeker::PeekObjectLength(value);
       auto data = ValuePeeker::PeekObjectValue(value);
       auto va_len = data_len + VARHDRSZ;
+
+      if(va_len > 200) {
+        LOG_INFO("VARLENA :: %d data_len : %d ", va_len, data_len);
+      }
+
       struct varlena* vaptr = (struct varlena*)palloc(va_len);
       SET_VARSIZE(vaptr, va_len);
       ::memcpy(VARDATA(vaptr), data, data_len);
 
-      LOG_INFO("len = %d , str = \"%s\" \n", data_len, std::string((char*)data, data_len).c_str());
+      LOG_TRACE("len = %d , str = \"%s\" \n", data_len, std::string((char*)data, data_len).c_str());
 
       datum = (Datum)vaptr;
 
@@ -249,7 +254,11 @@ TupleTableSlot *TupleTransformer::GetPostgresTuple(storage::Tuple *tuple,
   Datum *datums;
   bool *nulls;
 
-  assert(tuple->GetColumnCount() == natts);
+  if(tuple->GetColumnCount() != natts) {
+    LOG_WARN("tuple attr count : %u tuple desc attr count : %d \n",
+             tuple->GetColumnCount(), natts);
+    return nullptr;
+  }
 
   // Allocate space for datums
   datums = (Datum *) palloc(natts * sizeof(Datum));

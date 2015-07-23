@@ -28,7 +28,8 @@ const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
       params[i] = TupleTransformer::GetValue(postgres_param->value, postgres_param->ptype);
     }
   }
-  LOG_INFO("Built param list of size %d", params.GetSize());
+
+  LOG_TRACE("Built param list of size %d", params.GetSize());
   return params;
 }
 

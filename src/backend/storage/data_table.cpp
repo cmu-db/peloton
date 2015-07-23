@@ -116,7 +116,7 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
     return location;
   }
 
-  return location;
+ return location;
 }
 
 void DataTable::InsertInIndexes(const storage::Tuple *tuple, ItemPointer location) {
@@ -216,6 +216,37 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
   return true;
 }
 
+/**
+ * @brief Increase the number of tuples in this table
+ * @param amount amount to increase
+ */
+void DataTable::IncreaseNumberOfTuplesBy(const float amount){
+  number_of_tuples += amount;
+}
+
+/**
+ * @brief Decrease the number of tuples in this table
+ * @param amount amount to decrease
+ */
+void DataTable::DecreaseNumberOfTuplesBy(const float amount){
+  number_of_tuples -= amount;
+}
+
+/**
+ * @brief Set the number of tuples in this table
+ * @param num_tuples number of tuples
+ */
+void DataTable::SetNumberOfTuples(const float num_tuples){
+  number_of_tuples = num_tuples;
+}
+
+/**
+ * @brief Get the number of tuples in this table
+ * @return number of tuples
+ */
+float DataTable::GetNumberOfTuples() const{
+  return number_of_tuples;
+}
 
 //===--------------------------------------------------------------------===//
 // TILE GROUP

@@ -55,6 +55,38 @@ void Index::GetInfo() const {
 
 }
 
+/**
+ * @brief Increase the number of tuples in this table
+ * @param amount amount to increase
+ */
+void Index::IncreaseNumberOfTuplesBy(const float amount){
+  number_of_tuples += amount;
+}
+
+/**
+ * @brief Decrease the number of tuples in this table
+ * @param amount amount to decrease
+ */
+void Index::DecreaseNumberOfTuplesBy(const float amount){
+  number_of_tuples -= amount;
+}
+
+/**
+ * @brief Set the number of tuples in this table
+ * @param num_tuples number of tuples
+ */
+void Index::SetNumberOfTuples(const float num_tuples){
+  number_of_tuples = num_tuples;
+}
+
+/**
+ * @brief Get the number of tuples in this table
+ * @return number of tuples
+ */
+float Index::GetNumberOfTuples() const{
+  return number_of_tuples;
+}
+
 } // End index namespace
 } // End peloton namespace
 
