@@ -82,7 +82,7 @@ bool InsertExecutor::DExecute() {
       if (location.block == INVALID_OID) {
         auto& txn_manager = concurrency::TransactionManager::GetInstance();
         txn_manager.AbortTransaction(transaction_);
-        transaction_->SetStatus(ResultType::RESULT_TYPE_FAILURE);
+        transaction_->SetResult(Result::RESULT_FAILURE);
         return false;
       }
       transaction_->RecordInsert(location);
@@ -111,7 +111,7 @@ bool InsertExecutor::DExecute() {
     if (location.block == INVALID_OID) {
       auto& txn_manager = concurrency::TransactionManager::GetInstance();
       txn_manager.AbortTransaction(transaction_);
-      transaction_->SetStatus(ResultType::RESULT_TYPE_FAILURE);
+      transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }
     transaction_->RecordInsert(location);

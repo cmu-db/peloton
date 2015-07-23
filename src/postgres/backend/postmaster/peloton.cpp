@@ -906,7 +906,7 @@ peloton_process_dml(Peloton_MsgDML *msg)
   /* Ignore invalid plans */
   if(planstate == NULL || nodeTag(planstate) == T_Invalid)
   {
-    msg->m_status->m_code =  peloton::ResultType::RESULT_TYPE_FAILURE;
+    msg->m_status->m_result =  peloton::RESULT_FAILURE;
     return;
   }
 
@@ -929,7 +929,7 @@ peloton_process_dml(Peloton_MsgDML *msg)
   }
   else {
     /* Could not get the plan */
-    msg->m_status->m_code = peloton::ResultType::RESULT_TYPE_FAILURE;
+    msg->m_status->m_result = peloton::RESULT_FAILURE;
   }
 
 }
@@ -953,7 +953,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg)
   /* Ignore invalid parsetrees */
   if(parsetree == NULL || nodeTag(parsetree) == T_Invalid)
   {
-    msg->m_status->m_code =  peloton::ResultType::RESULT_TYPE_FAILURE;
+    msg->m_status->m_result =  peloton::RESULT_FAILURE;
     return;
   }
 
@@ -972,7 +972,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg)
 
 
   // Set Status
-  msg->m_status->m_code = peloton::ResultType::RESULT_TYPE_SUCCESS;
+  msg->m_status->m_result = peloton::RESULT_SUCCESS;
 }
 
 /* ----------
@@ -986,8 +986,9 @@ peloton_create_status()
 {
   Peloton_Status *status = static_cast<Peloton_Status *>(palloc(sizeof(Peloton_Status)));
 
-  status->m_code = peloton::ResultType::RESULT_TYPE_INVALID;
+  status->m_result = peloton::RESULT_INVALID;
   status->m_result_slots = NULL;
+  status->m_status = -1;
 
   return status;
 }
@@ -1008,7 +1009,7 @@ peloton_process_status(Peloton_Status *status)
   assert(status);
 
   // Busy wait till we get a valid result
-  while(status->m_code == peloton::ResultType::RESULT_TYPE_INVALID)
+  while(status->m_result == peloton::RESULT_INVALID)
   {
     rc = nanosleep(&duration, NULL);
     if(rc < 0)
@@ -1022,22 +1023,21 @@ peloton_process_status(Peloton_Status *status)
   }
 
   // Process the status code
-  code = status->m_code;
+  code = status->m_result;
   switch(code)
   {
-    case peloton::ResultType::RESULT_TYPE_SUCCESS:
+    case peloton::RESULT_SUCCESS:
     {
       // Nothing to do here.
     }
     break;
 
-    case peloton::ResultType::RESULT_TYPE_INVALID:
-    case peloton::ResultType::RESULT_TYPE_FAILURE:
+    case peloton::RESULT_INVALID:
+    case peloton::RESULT_FAILURE:
     default:
     {
-      ereport(ERROR,
-              (errcode(ERRCODE_INTEGRITY_CONSTRAINT_VIOLATION),
-                  errmsg("transaction failed")));
+      ereport(ERROR, (errcode(status->m_status),
+          errmsg("transaction failed")));
     }
     break;
   }
