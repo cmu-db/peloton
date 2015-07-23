@@ -58,21 +58,24 @@ void DDLUtils::ParsingCreateStmt(CreateStmt* Cstmt,
 
     ColumnDef  *coldef = static_cast<ColumnDef *>(lfirst(entry));
     
-    char* type_name = TypeNameToString(coldef->typeName);
-    Oid type_oid;
-    int type_len;
-    int32 type_mod;
+    // Get the type oid and type mod with given typeName
+    Oid typeoid = typenameTypeId(NULL, coldef->typeName);
+    int32 typemod;
+    typenameTypeIdAndMod(NULL, coldef->typeName, &typeoid, &typemod);
 
-    Bridge::GetTypeInformation(type_name, &type_oid, &type_len, &type_mod);
+    // Get type length
+    Type tup = typeidType(typeoid);
+    int typelen = typeLen(tup);
+    ReleaseSysCache(tup);
+
 
     // For a fixed-size type, typlen is the number of bytes in the internal
     // representation of the type. But for a variable-length type, typlen is negative.
+    if(typelen == - 1)
+      typelen = typemod;
 
-    if(type_len == - 1)
-      type_len = type_mod;
-
-    ValueType column_valueType = PostgresValueTypeToPelotonValueType((PostgresValueType) type_oid);
-    int column_length = type_len;
+    ValueType column_valueType = PostgresValueTypeToPelotonValueType((PostgresValueType) typeoid);
+    int column_length = typelen;
     std::string column_name = coldef->colname;
 
     //===--------------------------------------------------------------------===//
