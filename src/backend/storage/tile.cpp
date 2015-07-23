@@ -179,8 +179,10 @@ Tile *Tile::CopyTile(storage::AbstractBackend *new_backend) {
 	 */
 	const catalog::Schema *new_schema = schema;
 	TileGroupHeader *new_header = GetHeader();
-	Tile *new_tile = TileFactory::GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
-											  new_header, new_backend, *new_schema, tile_group, allocated_tuple_count);
+	Tile *new_tile = TileFactory::GetTile(
+						INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+						new_header, new_backend, *new_schema, tile_group, allocated_tuple_count);
+
 	Pool *new_pool = new_tile->GetPool();
 
 	::memcpy(static_cast<void *>(new_tile->data), static_cast<void *>(data), tile_size);
@@ -214,10 +216,13 @@ Tile *Tile::CopyTile(storage::AbstractBackend *new_backend) {
 				size_t uninlined_col_object_len = ValuePeeker::PeekObjectLength(uninlined_col_value);
 
 				// Get a pointer to the uninlined string
-				unsigned char* uninlined_col_object_ptr = static_cast<unsigned char *>(ValuePeeker::PeekObjectValue(uninlined_col_value));
+				unsigned char* uninlined_col_object_ptr =
+						static_cast<unsigned char *>(ValuePeeker::PeekObjectValue(uninlined_col_value));
 
 				// Get the uninlined string itself
-				std::string uninlined_varchar_str(reinterpret_cast<char const*>(uninlined_col_object_ptr), uninlined_col_object_len);
+				std::string uninlined_varchar_str(
+						reinterpret_cast<char const*>(uninlined_col_object_ptr),
+						uninlined_col_object_len);
 
 				// Create a new Value object with the uninlined string residing in the new pool
 				Value new_val = ValueFactory::GetStringValue(uninlined_varchar_str, new_pool);
