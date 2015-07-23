@@ -261,7 +261,7 @@ bool PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
 
     // Go over tile and get result slots
     while (tile_itr.Next(tuple)) {
-      //std::cout << tuple;
+      std::cout << tuple;
       auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
       if(slot != nullptr)
         slots = lappend(slots, slot);
