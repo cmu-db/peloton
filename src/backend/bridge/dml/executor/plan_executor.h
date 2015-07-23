@@ -38,7 +38,7 @@ class PlanExecutor {
 
   static void PrintPlan(const planner::AbstractPlanNode *plan, std::string prefix = "");
 
-  static bool ExecutePlan(planner::AbstractPlanNode *plan,
+  static void ExecutePlan(planner::AbstractPlanNode *plan,
                           PlanState *planstate,
                           TupleDesc tuple_desc,
                           Peloton_Status *pstatus,
