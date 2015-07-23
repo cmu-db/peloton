@@ -193,7 +193,6 @@ Tile *Tile::CopyTile(storage::AbstractBackend *new_backend) {
 
 		int uninlined_col_cnt = new_schema->GetUninlinedColumnCount();
 
-
 		int uninlined_col_index;
 		Value uninlined_col_value, new_uninlined_col_value;
 
