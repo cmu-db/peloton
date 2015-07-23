@@ -1707,13 +1707,12 @@ peloton_ExecutePlan(EState *estate,
       /*
        * Free the underlying heap_tuple
        * and the TupleTableSlot itself.
-       * (Hopefully the related tuple_desc is not refcounted and thus not released)
        */
       ExecDropSingleTupleTableSlot(slot);
     }
 
     // Clean up list
-    pfree(status->m_result_slots);
+    list_free(status->m_result_slots);
   }
 
   peloton_destroy_status(status);
