@@ -69,10 +69,6 @@ public:
     return (tile_itr < tile->GetActiveTupleCount());
   }
 
-	void IncrementIterator() {
-		tile_itr++;
-	}
-
 
   oid_t GetLocation() const {
     return tile_itr;
