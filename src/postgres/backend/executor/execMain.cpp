@@ -1705,14 +1705,14 @@ peloton_ExecutePlan(EState *estate,
         (*dest->receiveSlot) (slot, dest);
 
       /*
-       * Free the underlying heap_tuple as long as
-       * the TupleTableSlot itself.
+       * Free the underlying heap_tuple
+       * and the TupleTableSlot itself.
        */
       ExecDropSingleTupleTableSlot(slot);
     }
 
     // Clean up list
-    pfree(status->m_result_slots);
+    list_free(status->m_result_slots);
   }
 
   peloton_destroy_status(status);

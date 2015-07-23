@@ -71,10 +71,10 @@ libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS) -msse4.2 \
 						 -Wno-unused-parameter -Wno-missing-field-initializers
 
 if BUILD_OS_IS_DARWIN
-libpeloton_la_LDFLAGS = -lm
+libpeloton_la_LDFLAGS = -lm -ldw
 ## if build os is not darwin
 else
-libpeloton_la_LDFLAGS = -lm
+libpeloton_la_LDFLAGS = -lm -ldw
 endif
 
 ######################################################################
