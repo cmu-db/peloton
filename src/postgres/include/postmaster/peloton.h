@@ -153,7 +153,9 @@ extern void peloton_send_ddl(Peloton_Status  *status,
                              const char *queryString);
 
 extern Peloton_Status *peloton_create_status();
+
 extern int peloton_get_status(Peloton_Status *status);
+
 extern void peloton_destroy_status(Peloton_Status *status);
 
 

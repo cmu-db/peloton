@@ -998,9 +998,9 @@ peloton_create_status()
 int
 peloton_get_status(Peloton_Status *status)
 {
-  struct timespec duration = {0, 1000 * 100}; // 100 us
+  struct timespec duration = {0, 100}; // 100 us
   int code;
-  int retry = 10 * 100; // upto 1 s
+  int rc;
 
   if(status == NULL)
     return PELOTON_STYPE_INVALID;
@@ -1008,21 +1008,15 @@ peloton_get_status(Peloton_Status *status)
   // Busy wait till we get a valid result
   while(status->m_code == PELOTON_STYPE_INVALID)
   {
-    int rc;
-    retry--;
-
     rc = nanosleep(&duration, NULL);
     if(rc < 0)
     {
       return PELOTON_STYPE_INVALID;
     }
 
-    // Max retries over
-    if(retry < 0)
-    {
-      ereport(LOG, (errmsg("peloton_get_status() has waited too long and decided to quit. \n")));
-      return PELOTON_STYPE_INVALID;
-    }
+    /* additive increase */
+    duration.tv_nsec += 100;
+    elog(DEBUG2, "Busy waiting");
   }
 
   code = status->m_code;
