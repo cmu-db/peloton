@@ -436,12 +436,13 @@ TEST(TileGroupTests, TileCopyTest) {
 
 	/*
 	 * Test for equality of old and new tile data
+	 * 1. Check whether old and new pool are different
+	 * 2. Check whether old and new information are same for all the uninlined columns
+	 * 	  expect the pointers to the Varlen objects, which should be different
+	 * 	  since the actual data should reside in different pools for the two tiles
 	 */
-	int uninlined_col_index;
-	Value uninlined_col_value, new_uninlined_col_value;
-	size_t uninlined_col_object_len, new_uninlined_col_object_len;
-	unsigned char *uninlined_col_object_ptr, *new_uninlined_col_object_ptr;
 
+	// 1. Pools
 	bool intended_behavior = true;
 
 	peloton::Pool *old_pool = tile->GetPool();
@@ -451,11 +452,22 @@ TEST(TileGroupTests, TileCopyTest) {
 	if(is_pool_same)
 		intended_behavior = false;
 
-	for(int col_itr=0; col_itr<2; col_itr++) {
+	// 2. Information (Value objects, lengths, pointers to Varlen objects, stored data)
+	int uninlined_col_index;
+	Value uninlined_col_value, new_uninlined_col_value;
+	size_t uninlined_col_object_len, new_uninlined_col_object_len;
+	unsigned char *uninlined_col_object_ptr, *new_uninlined_col_object_ptr;
+
+
+	int new_tile_uninlined_col_cnt = new_schema->GetUninlinedColumnCount();
+
+	// Iterate over all the uninlined columns in the tile
+	for(int col_itr=0; col_itr<new_tile_uninlined_col_cnt; col_itr++) {
 
 		uninlined_col_index = new_schema->GetUninlinedColumnIndex(col_itr);
 		uint16_t new_tile_active_tuple_count = new_tile->GetActiveTupleCount();
 
+		// Iterate over all the tuples for the current uninlined column in the tile
 		for(int tup_itr=0; tup_itr<new_tile_active_tuple_count; tup_itr++) {
 
 			uninlined_col_value = tile->GetValue(tup_itr,uninlined_col_index);
@@ -463,27 +475,30 @@ TEST(TileGroupTests, TileCopyTest) {
 			uninlined_col_object_ptr = static_cast<unsigned char *>(ValuePeeker::PeekObjectValue(uninlined_col_value));
 			std::string uninlined_varchar_str(reinterpret_cast<char const*>(uninlined_col_object_ptr), uninlined_col_object_len);
 
-
 			new_uninlined_col_value = new_tile->GetValue(tup_itr,uninlined_col_index);
 			new_uninlined_col_object_len = ValuePeeker::PeekObjectLength(new_uninlined_col_value);
 			new_uninlined_col_object_ptr = static_cast<unsigned char *>(ValuePeeker::PeekObjectValue(new_uninlined_col_value));
 			std::string new_uninlined_varchar_str(reinterpret_cast<char const*>(new_uninlined_col_object_ptr), new_uninlined_col_object_len);
 
-
-			/*
-			 * Check whether old and new information are same
-			 */
+			// Compare original and copied tile details for current tuple
 			int is_value_same = uninlined_col_value.Compare(new_uninlined_col_value);
 			int is_length_same = uninlined_col_object_len == uninlined_col_object_len;
 			int is_pointer_same = uninlined_col_object_ptr == new_uninlined_col_object_ptr;
 			int is_data_same = std::strcmp(uninlined_varchar_str.c_str(), new_uninlined_varchar_str.c_str());
 
+			// Break if there is any mismatch
 			if(is_value_same || !is_length_same || is_pointer_same || is_data_same) {
 				intended_behavior = false;
+				break;
 			}
 		}
+
+		// Break if intended_behavior flag has changed to false in the inner loop
+		if(!intended_behavior)
+			break;
 	}
 
+	// At the end of all the checks, intended_behavior is expected to be true
 	EXPECT_EQ(true, intended_behavior);
 
 
