@@ -74,6 +74,10 @@ class ProjectInfo {
     return direct_map_list_;
   }
 
+  bool Evaluate(storage::Tuple* dest,
+                const AbstractTuple* tuple1, const AbstractTuple* tuple2,
+                executor::ExecutorContext* econtext) const;
+
   ~ProjectInfo();
 
 
