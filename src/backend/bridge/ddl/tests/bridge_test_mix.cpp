@@ -29,6 +29,8 @@ void BridgeTest::DDL_MIX_TEST() {
 
   DDL_MIX_TEST_1();
 
+  DDL_MIX_TEST_2();
+
 }
 
 /**
@@ -99,6 +101,71 @@ void BridgeTest::DDL_MIX_TEST_1() {
 
   std::cout << ":::::: " << __func__ << " DONE\n";
 }
+
+/**
+ * @brief Create a table and drop it. Create a table again and insert tuple
+ *  into the table. 
+ */
+void BridgeTest::DDL_MIX_TEST_2() {
+
+  auto& manager = catalog::Manager::GetInstance();
+  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+
+  // Get the simple columns
+  std::vector<catalog::Column> columns = CreateSimpleColumns();
+
+  // Table name and oid
+  std::string table_name = "ddl_dml_mix_test_table";
+  oid_t table_oid = 60001;
+
+  // Create a table
+  bool status = DDLTable::CreateTable(table_oid, table_name, columns);
+  assert(status);
+
+  // Drop the table
+  status = DDLTable::DropTable(table_oid);
+  assert(status);
+
+  // Create a table again
+  status = DDLTable::CreateTable(table_oid, table_name, columns);
+  assert(status);
+
+  // Get the table pointer and schema
+  storage::DataTable* table = db->GetTableWithOid(table_oid);
+  catalog::Schema *schema = table->GetSchema();
+
+  // Ensure that the tile group is as expected.
+  assert(schema->GetColumnCount() == 4);
+
+  // Insert tuples into tile_group.
+  const bool allocate = true;
+
+  for (int col_itr = 0; col_itr < 5; col_itr++) {
+
+    storage::Tuple tuple(schema, allocate);
+
+    // Setting values
+    Value integerValue = ValueFactory::GetIntegerValue(243432);
+    Value stringValue = ValueFactory::GetStringValue("dude");
+    Value timestampValue = ValueFactory::GetTimestampValue(10.22);
+    Value doubleValue = ValueFactory::GetDoubleValue(244643.1236);
+ 
+    tuple.SetValue(0, integerValue);
+    tuple.SetValue(1, stringValue);
+    tuple.SetValue(2, timestampValue);
+    tuple.SetValue(3, doubleValue);
+
+    table->InsertTuple((txn_id_t)col_itr, &tuple, false);
+
+    assert(tuple.GetValue(0) == integerValue);
+    assert(tuple.GetValue(1) == stringValue);
+    assert(tuple.GetValue(2) == timestampValue);
+    assert(tuple.GetValue(3) == doubleValue);
+  }
+
+  std::cout << ":::::: " << __func__ << " DONE\n";
+}
+
 
 } // End bridge namespace
 } // End peloton namespace
