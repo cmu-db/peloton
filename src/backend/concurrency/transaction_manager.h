@@ -57,14 +57,11 @@ public:
     // Begin a new transaction
     Transaction *BeginTransaction();
 
-    // End the transaction
-    void EndTransaction(Transaction *txn, bool sync = true);
-
-    // Build a transaction
-    Transaction *BuildTransaction();
-
     // Get entry in transaction table
     Transaction *GetTransaction(txn_id_t txn_id);
+
+    // End the transaction
+    void EndTransaction(Transaction *txn, bool sync = true);
 
     // Get the list of current transactions
     std::vector<Transaction *> GetCurrentTransactions();
@@ -88,8 +85,6 @@ public:
 
     void AbortTransaction(Transaction *txn);
 
-    void WaitForCurrentTransactions();
-
     // Store PG Transaction
     Transaction *StartPGTransaction(TransactionId txn_id);
 
@@ -108,7 +103,7 @@ private:
 
     cid_t last_cid __attribute__((aligned(16)));
 
-    Transaction *last_txn __attribute__((aligned(16)));
+    Transaction *last_txn;
 
     // Table tracking all active transactions
     // Our transaction id -> our transaction
@@ -122,7 +117,6 @@ private:
     std::map<TransactionId, Transaction *> pg_txn_table;
 
     std::mutex pg_txn_table_mutex;
-
 };
 
 } // End concurrency namespace

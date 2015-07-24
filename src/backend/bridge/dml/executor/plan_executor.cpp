@@ -224,7 +224,6 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   // Abort and cleanup
   if(status == false) {
     txn_manager.AbortTransaction(txn);
-    txn_manager.EndTransaction(txn);
 
     CleanExecutorTree(executor_tree);
     pstatus->m_result = txn->GetResult();
@@ -261,7 +260,6 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
 
     // Go over tile and get result slots
     while (tile_itr.Next(tuple)) {
-//      std::cout << tuple;
       auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
       if(slot != nullptr)
         slots = lappend(slots, slot);
@@ -277,7 +275,6 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     // Commit
     try {
       txn_manager.CommitTransaction(txn);
-      txn_manager.EndTransaction(txn);
     }
     catch(...){
       LOG_WARN("Could not commit transaction \n");

@@ -49,10 +49,6 @@ void TransactionTest(concurrency::TransactionManager *txn_manager){
       txn_manager->AbortTransaction(txn3);
       txn_manager->AbortTransaction(txn2);
     }
-
-    txn_manager->EndTransaction(txn3);
-    txn_manager->EndTransaction(txn2);
-    txn_manager->EndTransaction(txn1);
   }
 
 }
@@ -62,7 +58,7 @@ TEST(TransactionTests, TransactionTest) {
 
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
 
-  LaunchParallelTest(4, TransactionTest, &txn_manager);
+  LaunchParallelTest(8, TransactionTest, &txn_manager);
 
   std::cout << "Last Commit Id :: " << txn_manager.GetLastCommitId() << "\n";
 
