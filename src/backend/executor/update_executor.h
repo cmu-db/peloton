@@ -7,6 +7,7 @@
 #pragma once
 
 #include "backend/executor/abstract_executor.h"
+#include "backend/expression/abstract_expression.h"
 
 #include <vector>
 
@@ -27,7 +28,8 @@ class UpdateExecutor : public AbstractExecutor {
   bool DExecute();
 
  private:
-
+  storage::DataTable *target_table_ = nullptr;
+  std::vector<std::pair<oid_t, expression::AbstractExpression*>> updated_col_exprs_;
 };
 
 } // namespace executor
