@@ -101,12 +101,8 @@ public:
     // Set result and status
     void SetResult(Result result);
 
-    void SetStatus(int status);
-
     // Get result and status
     Result GetResult() const;
-
-    int GetStatus() const;
 
 protected:
 
@@ -143,9 +139,6 @@ protected:
 
     // result of the transaction
     Result result_ = peloton::RESULT_SUCCESS;
-
-    // status code
-    int status_ = -1;
 };
 
 } // End concurrency namespace
