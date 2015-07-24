@@ -42,6 +42,8 @@ const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
  * @return  An ProjectInfo object built from the PG ProjectionInfo.
  */
 const planner::ProjectInfo* PlanTransformer::BuildProjectInfo(const ProjectionInfo *pg_pi, oid_t column_count) {
+  if(pg_pi == nullptr)
+    return nullptr;
 
   /*
    * (A) Transform non-trivial target list
