@@ -24,7 +24,7 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 extern std::vector<std::pair<oid_t, expression::AbstractExpression*>>
-TransformProjInfo(ProjectionInfo* proj_info, oid_t column_count);
+TransformProjInfo(const ProjectionInfo* proj_info, oid_t column_count);
 
 extern std::vector<std::pair<oid_t, expression::AbstractExpression*>>
 TransformTargetList(List* target_list, oid_t column_count);
@@ -109,10 +109,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     assert(outerPlanState(result_ps) == nullptr); /* We only handle single-constant-tuple for now,
      i.e., ResultState should have no children/sub plans */
 
-    auto projs = TransformTargetList(
-        result_ps->ps.ps_ProjInfo->pi_targetlist, schema->GetColumnCount());
+    auto project_info = BuildProjectInfo(result_ps->ps.ps_ProjInfo, schema->GetColumnCount());
 
-    plan_node = new planner::InsertNode(target_table, projs);
+    plan_node = new planner::InsertNode(target_table, project_info);
 
   } else {
     LOG_ERROR("Unsupported child type of Insert: %u",
