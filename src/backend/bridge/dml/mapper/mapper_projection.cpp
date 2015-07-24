@@ -33,7 +33,7 @@ TransformTargetList(List* target_list, oid_t column_count);
  * @return A vector of <column_id, expression> pairs.
  */
 std::vector<std::pair<oid_t, expression::AbstractExpression*>>
-TransformProjInfo(ProjectionInfo* proj_info, oid_t column_count) {
+TransformProjInfo(const ProjectionInfo* proj_info, oid_t column_count) {
   std::vector<std::pair<oid_t, expression::AbstractExpression*>> proj_list;
 
   // 1. Extract the non-trivial projections (expression-based in Postgres)
