@@ -87,6 +87,8 @@ doc/
 GTAGS
 GRTAGS
 GPATH
+cscope.out
+cscope.files
 tags
 
 ## -------------------------------
