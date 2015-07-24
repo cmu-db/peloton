@@ -52,45 +52,6 @@ Transaction *TransactionManager::GetTransaction(txn_id_t txn_id) {
   return nullptr;
 }
 
-// Store an entry in PG Transaction table
-Transaction *TransactionManager::StartPGTransaction(TransactionId txn_id) {
-
-  {
-    std::lock_guard<std::mutex> lock(pg_txn_table_mutex);
-
-    // If entry already exists
-    if(pg_txn_table.count(txn_id) != 0)
-      return pg_txn_table.at(txn_id);
-
-    // Else, create one for this new pg txn id
-    auto txn = BeginTransaction();
-    auto status = pg_txn_table.insert(std::make_pair(txn_id, txn));
-    if(status.second == true) {
-      return txn;
-    }
-  }
-
-  return nullptr;
-}
-
-
-// Get entry in PG Transaction table
-Transaction *TransactionManager::GetPGTransaction(TransactionId txn_id) {
-
-  {
-    std::lock_guard<std::mutex> lock(pg_txn_table_mutex);
-
-    // If entry already exists
-    if(pg_txn_table.count(txn_id) != 0) {
-      auto txn = pg_txn_table.at(txn_id);
-      return txn;
-    }
-  }
-
-  return nullptr;
-}
-
-
 txn_id_t TransactionManager::GetNextTransactionId(){
   if (next_txn_id == MAX_TXN_ID) {
     throw TransactionException("Txn id equals MAX_TXN_ID");
@@ -102,12 +63,21 @@ txn_id_t TransactionManager::GetNextTransactionId(){
 
 // Begin a new transaction
 Transaction *TransactionManager::BeginTransaction() {
-  Transaction *next_txn = BuildTransaction();
-  return next_txn;
-}
 
-Transaction *TransactionManager::BuildTransaction() {
-  return new Transaction(GetNextTransactionId(), GetLastCommitId());
+  Transaction *next_txn =  new Transaction(GetNextTransactionId(),
+                                           GetLastCommitId());
+
+  {
+    std::lock_guard<std::mutex> lock(txn_table_mutex);
+    auto txn_id = next_txn->txn_id;
+
+    // erase entry in transaction table
+    if(txn_table.count(txn_id) != 0) {
+      txn_table.insert(std::make_pair(txn_id, next_txn));
+    }
+  }
+
+  return next_txn;
 }
 
 std::vector<Transaction *> TransactionManager::GetCurrentTransactions() {
@@ -137,6 +107,43 @@ void TransactionManager::EndTransaction(Transaction *txn, bool sync __attribute_
 
 }
 
+// Store an entry in PG Transaction table
+Transaction *TransactionManager::StartPGTransaction(TransactionId txn_id) {
+
+  {
+    std::lock_guard<std::mutex> lock(pg_txn_table_mutex);
+
+    // If entry already exists
+    if(pg_txn_table.count(txn_id) != 0)
+      return pg_txn_table.at(txn_id);
+
+    // Else, create one for this new pg txn id
+    auto txn = BeginTransaction();
+    auto status = pg_txn_table.insert(std::make_pair(txn_id, txn));
+    if(status.second == true) {
+      return txn;
+    }
+  }
+
+  return nullptr;
+}
+
+// Get entry in PG Transaction table
+Transaction *TransactionManager::GetPGTransaction(TransactionId txn_id) {
+
+  {
+    std::lock_guard<std::mutex> lock(pg_txn_table_mutex);
+
+    // If entry already exists
+    if(pg_txn_table.count(txn_id) != 0) {
+      auto txn = pg_txn_table.at(txn_id);
+      return txn;
+    }
+  }
+
+  return nullptr;
+}
+
 //===--------------------------------------------------------------------===//
 // Commit Processing
 //===--------------------------------------------------------------------===//
@@ -146,44 +153,28 @@ TransactionManager& TransactionManager::GetInstance() {
   return txn_manager;
 }
 
-bool TransactionManager::BeginCommitPhase(Transaction *txn) {
+void TransactionManager::BeginCommitPhase(Transaction *txn) {
 
   // successor in the transaction list will point to us
   txn->IncrementRefCount();
 
-  while (true) {
+  {
+    std::lock_guard<std::mutex> lock(txn_table_mutex);
 
-    // try to append to the pending transaction list
-    if (atomic_cas<Transaction *>(&last_txn->next, nullptr, txn)) {
-      // the last transaction pointer also points to us
-      txn->IncrementRefCount();
+    // append to the pending transaction list
+    last_txn->next = txn;
 
-      // assign cid to the txn
-      txn->cid = last_txn->cid + 1;
+    // the last transaction pointer also points to us
+    txn->IncrementRefCount();
 
-      auto tmp = last_txn;
-      last_txn = txn;
-      auto txn_itr = last_txn;
-      auto prev_itr = txn_itr;
-      auto cnt = 0;
+    // assign cid to the txn
+    txn->cid = last_txn->cid + 1;
 
-      while(txn_itr->next != nullptr){
-        cnt++;
-        prev_itr = txn_itr;
-        txn_itr = txn_itr->next;
+    auto tmp = last_txn;
+    last_txn = txn;
 
-        if(txn_itr->txn_id == txn->txn_id || cnt > max_pending_txns) {
-          prev_itr->next = nullptr;
-          last_txn = prev_itr;
-          return false;
-        }
-      }
-
-      // drop a reference to previous last transaction pointer
-      tmp->DecrementRefCount();
-
-      return true;
-    }
+    // drop a reference to previous last transaction pointer
+    tmp->DecrementRefCount();
   }
 
 }
@@ -274,14 +265,11 @@ std::vector<Transaction*> TransactionManager::EndCommitPhase(Transaction * txn, 
     }
   }
 
-  // clear txn entry in txn table
-  EndTransaction(txn, sync);
-
   return std::move(txn_list);
 }
 
 
-bool TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
+void TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
   assert(txn != nullptr);
 
   // validate txn id
@@ -290,9 +278,7 @@ bool TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
   }
 
   // begin commit phase : get cid and add to transaction list
-  auto status = BeginCommitPhase(txn);
-  if(status == false)
-    return false;
+  BeginCommitPhase(txn);
 
   // commit all modifications
   CommitModifications(txn, sync);
@@ -300,13 +286,15 @@ bool TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
   // end commit phase : increment last_cid and process pending txns if needed
   std::vector<Transaction *> committed_txns = EndCommitPhase(txn, sync);
 
-  // XXX LOG : group commit entry
-
   // process all committed txns
   for (auto committed_txn : committed_txns)
     committed_txn->DecrementRefCount();
 
-  return true;
+  // clear txn entry in txn table
+  EndTransaction(txn, sync);
+
+  // XXX LOG : group commit entry
+
 }
 
 //===--------------------------------------------------------------------===//
@@ -332,6 +320,9 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
     for(auto tuple_slot : entry.second)
       tile_group->AbortDeletedTuple(tuple_slot);
   }
+
+  // drop a reference
+  txn->DecrementRefCount();
 
   EndTransaction(txn, false);
 

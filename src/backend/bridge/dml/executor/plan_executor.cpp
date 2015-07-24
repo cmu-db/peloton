@@ -224,7 +224,6 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   // Abort and cleanup
   if(status == false) {
     txn_manager.AbortTransaction(txn);
-    txn_manager.EndTransaction(txn);
 
     CleanExecutorTree(executor_tree);
     pstatus->m_result = txn->GetResult();
@@ -275,10 +274,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   if(single_statement_txn == true) {
     // Commit
     try {
-      auto status = txn_manager.CommitTransaction(txn);
-      if(status == false)
-        txn_manager.EndTransaction(txn);
-      txn_manager.EndTransaction(txn);
+      txn_manager.CommitTransaction(txn);
     }
     catch(...){
       LOG_WARN("Could not commit transaction \n");
