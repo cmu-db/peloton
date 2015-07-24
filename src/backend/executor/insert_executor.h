@@ -30,6 +30,7 @@ class InsertExecutor : public AbstractExecutor {
   bool DExecute();
 
  private:
+  bool done_ = false;
 
 };
 
