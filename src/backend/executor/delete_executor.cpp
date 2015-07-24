@@ -34,11 +34,18 @@ DeleteExecutor::DeleteExecutor(planner::AbstractPlanNode *node,
  * @return true on success, false otherwise.
  */
 bool DeleteExecutor::DInit() {
-  assert(children_.size() <= 1);
+  assert(children_.size() == 1);
   assert(executor_context_);
+
+  assert(target_table_ == nullptr);
 
   // Delete tuples in logical tile
   LOG_TRACE("Delete executor :: 1 child \n");
+
+  // Grab data from plan node.
+  const planner::DeleteNode &node = GetPlanNode<planner::DeleteNode>();
+
+  target_table_ = node.GetTable();
 
   return true;
 }
@@ -50,6 +57,8 @@ bool DeleteExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool DeleteExecutor::DExecute() {
+
+  assert(target_table_);
 
   // Retrieve next tile.
   const bool success = children_[0]->Execute();
@@ -69,25 +78,28 @@ bool DeleteExecutor::DExecute() {
 
   LOG_TRACE("Source tile : %p Tuples : %lu \n", source_tile.get(), source_tile->NumTuples());
 
-  LOG_INFO("Transaction ID: %lu\n", txn_id);
+  LOG_TRACE("Transaction ID: %lu\n", txn_id);
 
   // Delete each tuple
   for (oid_t visible_tuple_id : *source_tile) {
 
     oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
-    LOG_INFO("Visible Tuple id : %d, Physical Tuple id : %d \n", visible_tuple_id, physical_tuple_id);
 
+    LOG_TRACE("Visible Tuple id : %d, Physical Tuple id : %d \n", visible_tuple_id, physical_tuple_id);
+
+    ItemPointer delete_location(tile_group_id, physical_tuple_id);
 
     // try to delete the tuple
     // this might fail due to a concurrent operation that has latched the tuple
-    bool status = tile_group->DeleteTuple(txn_id, physical_tuple_id);
+    bool status = target_table_->DeleteTuple(txn_id, delete_location);
+
     if(status == false) {
       auto& txn_manager = concurrency::TransactionManager::GetInstance();
       txn_manager.AbortTransaction(transaction_);
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }
-    transaction_->RecordDelete(ItemPointer(tile_group_id, physical_tuple_id));
+    transaction_->RecordDelete(delete_location);
   }
 
   return true;
