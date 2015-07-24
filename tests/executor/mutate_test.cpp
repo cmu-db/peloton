@@ -317,7 +317,6 @@ TEST(MutateTests, InsertTest) {
   EXPECT_FALSE(executor.Execute());
 
   txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 
   // We have inserted all the tuples in this logical tile
   EXPECT_EQ(dest_data_table->GetTileGroupCount(), 1);

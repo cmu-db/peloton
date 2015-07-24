@@ -224,10 +224,9 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   // Abort and cleanup
   if(status == false) {
     txn_manager.AbortTransaction(txn);
-    txn_manager.EndTransaction(txn);
 
     CleanExecutorTree(executor_tree);
-    pstatus->m_code = txn->GetStatus();
+    pstatus->m_result = txn->GetResult();
     return;
   }
 
@@ -247,7 +246,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     // FIXME Some executor just doesn't return tiles (e.g., Update).
     // Should we continue instead of break here?
     if(tile.get() == nullptr) {
-      break;
+      continue;
     }
 
     // Get result base tile and iterate over it
@@ -261,7 +260,6 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
 
     // Go over tile and get result slots
     while (tile_itr.Next(tuple)) {
-      std::cout << tuple;
       auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
       if(slot != nullptr)
         slots = lappend(slots, slot);
@@ -277,7 +275,6 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     // Commit
     try {
       txn_manager.CommitTransaction(txn);
-      txn_manager.EndTransaction(txn);
     }
     catch(...){
       LOG_WARN("Could not commit transaction \n");
@@ -287,7 +284,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   // clean up
   CleanExecutorTree(executor_tree);
 
-  pstatus->m_code = txn->GetStatus();
+  pstatus->m_result = txn->GetResult();
   return;
 }
 

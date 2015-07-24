@@ -203,7 +203,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
  *
  * Just like Peloton,
  * the delete plan state in Postgres simply deletes tuples
- *  returned by a subplan (mostly Scan).
+ * returned by a subplan (mostly Scan).
  * So we don't need to handle predicates locally .
  */
 planner::AbstractPlanNode* PlanTransformer::TransformDelete(
@@ -222,7 +222,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformDelete(
   .GetTableWithOid(database_oid, table_oid));
 
   assert(target_table);
-  LOG_TRACE("Delete from: database oid %u table oid %u", database_oid, table_oid);
+  LOG_INFO("Delete from: database oid %u table oid %u", database_oid, table_oid);
 
   /* Grab the subplan -> child plan node */
   assert(mt_plan_state->mt_nplans == 1);

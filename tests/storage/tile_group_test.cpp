@@ -114,7 +114,6 @@ TEST(TileGroupTests, BasicTest) {
     header->SetPrevItemPointer(2, item);
 
     txn_manager.CommitTransaction(txn);
-    txn_manager.EndTransaction(txn);
 
     delete tuple1;
     delete tuple2;
@@ -146,7 +145,6 @@ void TileGroupInsert(storage::TileGroup *tile_group, catalog::Schema *schema) {
     }
 
     txn_manager.CommitTransaction(txn);
-    txn_manager.EndTransaction(txn);
 
     delete tuple;
 }
@@ -301,7 +299,6 @@ TEST(TileGroupTests, MVCCInsert) {
     delete result;
 
     txn_manager.CommitTransaction(txn);
-    txn_manager.EndTransaction(txn);
 
     // DELETE
     auto txn2 = txn_manager.BeginTransaction();
@@ -310,7 +307,6 @@ TEST(TileGroupTests, MVCCInsert) {
     tile_group->DeleteTuple(cid2, 2);
 
     txn_manager.CommitTransaction(txn2);
-    txn_manager.EndTransaction(txn2);
 
     delete tuple;
     delete schema;

@@ -47,10 +47,6 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
 
   /*
    * Grab and transform the predicate.
-   *
-   * TODO:
-   * The qualifying predicate should be extracted from:
-   * ss_plan_state->ps.qual (null if no predicate)
    * And remember to free it at some point
    */
   expression::AbstractExpression* predicate = nullptr;
@@ -74,7 +70,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
    * The output columns should be extracted from:
    * ss_plan_state->ps.ps_ProjInfo  (null if no projection)
    *
-   * Let's just select all columns for now
+   * Let's simply select all columns for now
    */
   auto schema = target_table->GetSchema();
   std::vector<oid_t> column_ids(schema->GetColumnCount());

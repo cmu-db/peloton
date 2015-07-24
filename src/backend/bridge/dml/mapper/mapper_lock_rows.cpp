@@ -33,6 +33,8 @@ planner::AbstractPlanNode* PlanTransformer::TransformLockRows(
 
   assert(nodeTag(lr_plan_state) == T_LockRowsState);
 
+  LOG_INFO("Handle LockRows");
+
   /* get the underlying plan */
   PlanState *outer_plan_state = outerPlanState(lr_plan_state);
 
