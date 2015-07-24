@@ -14,6 +14,8 @@ namespace peloton {
 namespace executor {
 
 class DeleteExecutor : public AbstractExecutor {
+
+
  public:
   DeleteExecutor(const DeleteExecutor &) = delete;
   DeleteExecutor& operator=(const DeleteExecutor &) = delete;
@@ -30,6 +32,8 @@ class DeleteExecutor : public AbstractExecutor {
 
   bool DExecute();
 
+ private:
+  storage::DataTable* target_table_ = nullptr;
 };
 
 } // namespace executor

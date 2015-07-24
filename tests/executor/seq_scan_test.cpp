@@ -241,7 +241,6 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
   RunTest(executor, table->GetTileGroupCount(), column_ids.size());
 
   txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 }
 
 // Sequential scan of logical tile with predicate.
@@ -297,7 +296,6 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
   RunTest(executor, 2, expected_column_count);
 
   txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 }
 
 } // namespace test
