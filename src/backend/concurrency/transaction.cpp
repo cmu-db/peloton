@@ -61,8 +61,6 @@ void Transaction::IncrementRefCount() {
 }
 
 void Transaction::DecrementRefCount() {
-    assert(ref_count > 0);
-
     // DROP transaction when ref count reaches 1
     if (ref_count.fetch_sub(1) == 1) {
         delete this;
