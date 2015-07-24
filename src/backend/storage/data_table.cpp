@@ -194,6 +194,7 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer loca
 
 /**
  * @brief Try to delete a tuple from the table.
+ * It may fail because the tuple has been latched.
  *
  * @param transaction_id  The current transaction Id.
  * @param location        ItemPointer of the tuple to delete.
