@@ -134,7 +134,7 @@ public:
         return tiles[tile_id]->GetTileId();
     }
 
-    Pool *GetTilePool(const oid_t tile_id) const {
+    peloton::Pool *GetTilePool(const oid_t tile_id) const {
         Tile *tile = GetTile(tile_id);
 
         if(tile != nullptr)

@@ -52,7 +52,7 @@ bool SeqScanExecutor::DInit() {
   predicate_ = node.GetPredicate();
   column_ids_ = node.GetColumnIds();
 
-  current_tile_group_id_ = START_OID;
+  current_tile_group_offset_ = START_OID;
 
   if(table_ != nullptr) {
     table_tile_group_count_ = table_->GetTileGroupCount();
@@ -101,11 +101,11 @@ bool SeqScanExecutor::DExecute() {
     assert(column_ids_.size() > 0);
 
     // Retrieve next tile group.
-    if (current_tile_group_id_ == table_tile_group_count_) {
+    if (current_tile_group_offset_ == table_tile_group_count_) {
       return false;
     }
 
-    storage::TileGroup *tile_group = table_->GetTileGroup(current_tile_group_id_++);
+    storage::TileGroup *tile_group = table_->GetTileGroup(current_tile_group_offset_++);
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
     auto transaction_ = executor_context_->GetTransaction();
     txn_id_t txn_id = transaction_->GetTransactionId();

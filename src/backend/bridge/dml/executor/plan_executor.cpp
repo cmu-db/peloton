@@ -246,7 +246,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     // FIXME Some executor just doesn't return tiles (e.g., Update).
     // Should we continue instead of break here?
     if(tile.get() == nullptr) {
-      break;
+      continue;
     }
 
     // Get result base tile and iterate over it
