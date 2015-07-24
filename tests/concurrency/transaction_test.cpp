@@ -49,7 +49,6 @@ void TransactionTest(concurrency::TransactionManager *txn_manager){
       txn_manager->AbortTransaction(txn3);
       txn_manager->AbortTransaction(txn2);
     }
-
   }
 
 }
