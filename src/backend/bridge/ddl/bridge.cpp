@@ -102,38 +102,6 @@ HeapTuple Bridge::GetPGClassTupleForRelationName(const char *relation_name){
 }
 
 /**
- * @brief Get the pg type tuple
- * @param tuple relevant tuple if it exists, NULL otherwise
- */
-HeapTuple Bridge::GetPGTypeTupleForTypeName(const char* type_name){
-  Relation pg_type_rel;
-  HeapTuple tuple = NULL;
-  HeapScanDesc scan;
-
-  // Open pg_type table
-  pg_type_rel = heap_open(TypeRelationId, AccessShareLock);
-
-  // Search the pg_type table with given relation name
-  scan = heap_beginscan_catalog(pg_type_rel, 0, NULL);
-
-  while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
-    Form_pg_type pgtype = (Form_pg_type) GETSTRUCT(tuple);
-
-    if( strcmp( NameStr(pgtype->typname), type_name) == 0){
-        // We need to end scan and close heap
-        break;
-    }
-  }
-
-  heap_endscan(scan);
-  heap_close(pg_type_rel, AccessShareLock);
-
-  return tuple;
-}
-
-
-
-/**
  * @brief Getting the relation name
  * @param relation_id relation id
  * @return Tuple if valid relation_id, otherwise null
@@ -248,31 +216,6 @@ bool Bridge::RelationExists(const char* relation_name) {
 
   return true;
 }
-
-/**
- * @Get type oid, len, and mod
- * @param table_name type name
- * @return true or false depending on whether tuple exists or not.
- */
-bool Bridge::GetTypeInformation(const char *type_name,
-                                Oid *type_oid,
-                                int *type_len,
-                                int32 *type_mod){
-  HeapTuple tuple;
-
-  tuple = GetPGTypeTupleForTypeName(type_name);
-  if (!HeapTupleIsValid(tuple)) {
-    return false;
-  }
-
-  *type_oid = HeapTupleHeaderGetOid(tuple->t_data);
-  *type_len = HeapTupleHeaderGetDatumLength(tuple->t_data);
-  *type_mod = HeapTupleHeaderGetTypMod(tuple->t_data);
-  
-  return true;
-}
-
-
 
 //===--------------------------------------------------------------------===//
 // Table lists
