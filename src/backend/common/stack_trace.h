@@ -38,6 +38,6 @@ class StackTracer {
 
 };
 
-void GetStackTrace(int signum);
+void GetStackTrace(int signum = 0);
 
 } // namespace peloton
