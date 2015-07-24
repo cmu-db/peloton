@@ -58,11 +58,7 @@ bool DDLTransaction::ExecTransactionStmt(TransactionStmt* stmt,
       }
       assert(txn);
       LOG_INFO("Committing peloton txn : %lu \n", txn->GetTransactionId());
-
-      auto status = txn_manager.CommitTransaction(txn);
-      if(status == false)
-        txn_manager.AbortTransaction(txn);
-
+      txn_manager.CommitTransaction(txn);
     }
     break;
 

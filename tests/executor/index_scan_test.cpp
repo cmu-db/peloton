@@ -83,7 +83,6 @@ TEST(IndexScanTests, IndexPredicateTest) {
   std::cout << *(result_tiles[0].get());
 
   txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 
   //===--------------------------------------------------------------------===//
   // Start <= Tuple <= End
@@ -123,7 +122,6 @@ TEST(IndexScanTests, IndexPredicateTest) {
   std::cout << *(result_tiles[0].get());
 
   txn_manager.CommitTransaction(txn2);
-  txn_manager.EndTransaction(txn2);
 
 }
 

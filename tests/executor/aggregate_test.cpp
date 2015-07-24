@@ -107,7 +107,6 @@ TEST(AggregateTests, DistinctTest){
   EXPECT_TRUE(executor.Execute());
 
   txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 }
 
 TEST(AggregateTests, GroupByTest){
@@ -185,7 +184,6 @@ TEST(AggregateTests, GroupByTest){
   EXPECT_TRUE(executor.Execute());
 
   txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 }
 
 TEST(AggregateTests, AggregateTest){
@@ -277,7 +275,6 @@ TEST(AggregateTests, AggregateTest){
   EXPECT_TRUE(logical_tile.get()->GetValue(1, 3) == ValueFactory::GetDoubleValue(72));
 
   txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 }
 
 
