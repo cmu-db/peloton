@@ -56,6 +56,10 @@ class Bridge {
   // Setters
   //===--------------------------------------------------------------------===//
 
+  static void PelotonStartTransactionCommand();
+
+  static void PelotonCommitTransactionCommand();
+
   static void SetNumberOfTuples(Oid relation_id, float num_of_tuples);
 
 };
