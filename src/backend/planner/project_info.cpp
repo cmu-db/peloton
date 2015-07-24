@@ -1,22 +1,22 @@
 /*
- * projection.cpp
+ * project_info.cpp
  *
  */
 
-#include "projection_info.h"
+#include "../planner/project_info.h"
 
 namespace peloton {
-namespace executor {
+namespace planner {
 
 /**
  * @brief Mainly release the expression in target list.
  */
-ProjectionInfo::~ProjectionInfo(){
+ProjectInfo::~ProjectInfo(){
   for(auto target : target_list_){
     delete target.second;
   }
 }
 
 
-} /* namespace expression */
+} /* namespace planner */
 } /* namespace peloton */
