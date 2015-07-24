@@ -164,7 +164,7 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer loca
 
     // Check if key already exists
     if (index->Exists(key) == true) {
-      LOG_ERROR("Failed to insert into index %s.%s [%s]",
+      LOG_ERROR("Failed to insert into index %s.%s [%s] because key already exists.",
                 GetName().c_str(), index->GetName().c_str(),
                 index->GetTypeName().c_str());
     }
@@ -174,6 +174,9 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer loca
         delete key;
         continue;
       }
+      LOG_ERROR("Failed to insert into index %s.%s [%s] for other reasons.",
+                GetName().c_str(), index->GetName().c_str(),
+                index->GetTypeName().c_str());
     }
 
     // Undo insert in other indexes as well
@@ -186,6 +189,36 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer loca
     return false;
   }
 
+  return true;
+}
+
+/**
+ * @brief Try to delete a tuple from the table.
+ * It may fail because the tuple has been latched.
+ *
+ * @param transaction_id  The current transaction Id.
+ * @param location        ItemPointer of the tuple to delete.
+ * NB: location.block should be the tile_group's \b ID, not \b offset.
+ * @return True on success, false on failure.
+ */
+bool DataTable::DeleteTuple(txn_id_t transaction_id, ItemPointer location) {
+  oid_t tile_group_id = location.block;
+  oid_t tuple_id = location.offset;
+
+  auto tile_group = this->GetTileGroupById(tile_group_id);
+
+  auto status = tile_group->DeleteTuple(transaction_id, tuple_id);
+
+  if(status == false){
+    LOG_WARN("Failed to delete tuple from the tile group : %u , Txn_id : %lu ",
+             tile_group_id ,(long unsigned)transaction_id);
+    return false;
+  }
+
+  LOG_TRACE("Deleted tuple from tile group : %u , Txn_id : %lu ", tile_group, (long unsigned)transaction_id);
+
+  // Decrease the table's number of tuples by 1
+  DecreaseNumberOfTuplesBy(1);
   return true;
 }
 
@@ -209,8 +242,7 @@ void DataTable::DeleteInIndexes(const storage::Tuple *tuple) {
     for(auto index : indexes)
       index->DecreaseNumberOfTuplesBy(1);
   }
-  // Decrease the table's number of tuples by 1 as well
-  DecreaseNumberOfTuplesBy(1);
+
 }
 
 bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
@@ -330,19 +362,22 @@ void DataTable::AddTileGroup(TileGroup *tile_group) {
 
 }
 
-
 size_t DataTable::GetTileGroupCount() const {
   size_t size = tile_groups.size();
   return size;
 }
 
-TileGroup *DataTable::GetTileGroup(oid_t tile_group_id) const {
-  assert(tile_group_id < GetTileGroupCount());
+TileGroup* DataTable::GetTileGroup(oid_t tile_group_offset) const {
+  assert(tile_group_offset < GetTileGroupCount());
+  auto tile_group_id = tile_groups[tile_group_offset];
+  return GetTileGroupById(tile_group_id);
+}
 
+TileGroup* DataTable::GetTileGroupById(oid_t tile_group_id) const {
   auto& manager = catalog::Manager::GetInstance();
-  storage::TileGroup *tile_group = static_cast<storage::TileGroup *>(manager.GetLocation(tile_groups[tile_group_id]));
+  storage::TileGroup* tile_group = static_cast<storage::TileGroup*>(manager
+      .GetLocation(tile_group_id));
   assert(tile_group);
-
   return tile_group;
 }
 
