@@ -38,6 +38,7 @@ bool InsertExecutor::DInit() {
   assert(children_.size() == 0 || children_.size() == 1);
   assert(executor_context_);
 
+  done_ = false;
   return true;
 }
 
@@ -46,6 +47,11 @@ bool InsertExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool InsertExecutor::DExecute() {
+
+  if(done_)
+    return false;
+
+  assert(!done_);
 
   const planner::InsertNode &node = GetPlanNode<planner::InsertNode>();
   storage::DataTable *target_table = node.GetTable();
@@ -116,6 +122,7 @@ bool InsertExecutor::DExecute() {
     }
     transaction_->RecordInsert(location);
 
+    done_ = true;
     return true;
   }
 

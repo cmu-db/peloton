@@ -67,6 +67,8 @@ class DataTable : public AbstractTable {
 
   bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
+  bool DeleteTuple(txn_id_t transaction_id, ItemPointer location);
+
   void DeleteInIndexes(const storage::Tuple *tuple);
 
   bool CheckNulls(const storage::Tuple *tuple) const;
@@ -83,7 +85,10 @@ class DataTable : public AbstractTable {
 
   // NOTE: This must go through the manager's locator
   // This allows us to "TRANSFORM" tile groups atomically
-  TileGroup *GetTileGroup(oid_t tile_group_id) const;
+  // WARNING: We should distinguish OFFSET and ID of a tile group
+  TileGroup* GetTileGroup(oid_t tile_group_offset) const;
+
+  TileGroup* GetTileGroupById(oid_t tile_group_id) const;
 
   size_t GetTileGroupCount() const;
 
@@ -183,7 +188,6 @@ class DataTable : public AbstractTable {
   float number_of_tuples = 0.0;
 
 };
-
 
 } // End storage namespace
 } // End peloton namespace
