@@ -216,13 +216,13 @@ TEST(MutateTests, StressTests) {
 
   std::cout << "Start tests \n";
 
-  LaunchParallelTest(1, InsertTuple, table);
+  LaunchParallelTest(4, InsertTuple, table);
   //std::cout << (*table);
 
-  LaunchParallelTest(1, UpdateTuple, table);
+  LaunchParallelTest(4, UpdateTuple, table);
   //std::cout << (*table);
 
-  LaunchParallelTest(1, DeleteTuple, table);
+  LaunchParallelTest(4, DeleteTuple, table);
   //std::cout << (*table);
 
   // PRIMARY KEY

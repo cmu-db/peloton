@@ -84,6 +84,8 @@ static void peloton_sighup_handler(SIGNAL_ARGS);
 static void peloton_sigusr2_handler(SIGNAL_ARGS);
 static void peloton_sigterm_handler(SIGNAL_ARGS);
 static void peloton_sighup_handler(SIGNAL_ARGS);
+static void peloton_sigsegv_handler(SIGNAL_ARGS);
+static void peloton_sigabrt_handler(SIGNAL_ARGS);
 
 static void peloton_setheader(Peloton_MsgHdr *hdr,
                               PelotonMsgType mtype,
@@ -96,19 +98,17 @@ static void peloton_process_dml(Peloton_MsgDML *msg);
 static void peloton_process_ddl(Peloton_MsgDDL *msg);
 
 bool
-IsPelotonProcess(void)
-{
+IsPelotonProcess(void) {
   return am_peloton;
 }
 
 /**
  * @brief Initialize peloton
  */
-int peloton_start(void){
+int peloton_start(void) {
   pid_t   pelotonPid;
 
-  switch ((pelotonPid = fork_process()))
-  {
+  switch ((pelotonPid = fork_process())) {
     case -1:
       ereport(LOG,
               (errmsg("could not fork peloton process: %m")));
@@ -151,8 +151,7 @@ int peloton_start(void){
  *  since we don't use 'em, it hardly matters...
  */
 NON_EXEC_STATIC void
-PelotonMain(int argc, char *argv[])
-{
+PelotonMain(int argc, char *argv[]) {
   sigjmp_buf  local_sigjmp_buf;
 
   am_peloton = true;
@@ -177,6 +176,8 @@ PelotonMain(int argc, char *argv[])
    */
   pqsignal(SIGINT, StatementCancelHandler);
   pqsignal(SIGTERM, peloton_sigterm_handler);
+  pqsignal(SIGSEGV, peloton_sigsegv_handler);
+  pqsignal(SIGABRT, peloton_sigabrt_handler);
   pqsignal(SIGQUIT, quickdie);
   InitializeTimeouts();   /* establishes SIGALRM handler */
 
@@ -204,8 +205,7 @@ PelotonMain(int argc, char *argv[])
    *
    * See notes in postgres.c about the design of this coding.
    */
-  if (sigsetjmp(local_sigjmp_buf, 1) != 0)
-  {
+  if (sigsetjmp(local_sigjmp_buf, 1) != 0) {
     /* Prevents interrupts while cleaning up */
     HOLD_INTERRUPTS();
 
@@ -240,8 +240,7 @@ PelotonMain(int argc, char *argv[])
    * ... else we'd need to copy the Port data first.  Also, subsidiary data
    * such as the username isn't lost either; see ProcessStartupPacket().
    */
-  if (PostmasterContext)
-  {
+  if (PostmasterContext) {
     MemoryContextDelete(PostmasterContext);
     PostmasterContext = NULL;
   }
@@ -297,8 +296,7 @@ PelotonMain(int argc, char *argv[])
 
 /* SIGHUP: set flag to re-read config file at next convenient time */
 static void
-peloton_sighup_handler(SIGNAL_ARGS)
-{
+peloton_sighup_handler(SIGNAL_ARGS) {
   int     save_errno = errno;
 
   got_SIGHUP = true;
@@ -309,8 +307,7 @@ peloton_sighup_handler(SIGNAL_ARGS)
 
 /* SIGUSR2: a worker is up and running, or just finished, or failed to fork */
 static void
-peloton_sigusr2_handler(SIGNAL_ARGS)
-{
+peloton_sigusr2_handler(SIGNAL_ARGS) {
   int     save_errno = errno;
 
   need_exit = true;
@@ -321,8 +318,7 @@ peloton_sigusr2_handler(SIGNAL_ARGS)
 
 /* SIGTERM: time to die */
 static void
-peloton_sigterm_handler(SIGNAL_ARGS)
-{
+peloton_sigterm_handler(SIGNAL_ARGS) {
   int     save_errno = errno;
 
   need_exit = true;
@@ -331,6 +327,39 @@ peloton_sigterm_handler(SIGNAL_ARGS)
   errno = save_errno;
 }
 
+/* SIGSEGV: time to die */
+static void
+peloton_sigsegv_handler(SIGNAL_ARGS) {
+  int     save_errno = errno;
+
+  need_exit = true;
+  SetLatch(MyLatch);
+
+  // Get stack trace
+  peloton::GetStackTrace();
+
+  errno = save_errno;
+
+  // We can now go away.
+  proc_exit(0);
+}
+
+/* SIGABRT: time to die */
+static void
+peloton_sigabrt_handler(SIGNAL_ARGS) {
+  int     save_errno = errno;
+
+  need_exit = true;
+  SetLatch(MyLatch);
+
+  // Get stack trace
+  peloton::GetStackTrace();
+
+  errno = save_errno;
+
+  // We can now go away.
+  proc_exit(0);
+}
 
 /*
  * peloton_MainLoop
@@ -338,16 +367,14 @@ peloton_sigterm_handler(SIGNAL_ARGS)
  * Main loop for peloton
  */
 static void
-peloton_MainLoop(void)
-{
+peloton_MainLoop(void) {
   int     len;
   Peloton_Msg  msg;
   int     wr;
 
   /* Start our scheduler */
   std::unique_ptr<peloton::scheduler::TBBScheduler> scheduler(new peloton::scheduler::TBBScheduler());
-  if(scheduler.get() == NULL)
-  {
+  if(scheduler.get() == NULL) {
     elog(ERROR, "Could not create peloton scheduler \n");
     return;
   }
@@ -366,8 +393,7 @@ peloton_MainLoop(void)
    * the latch won't get cleared until next time there is a break in the
    * action.
    */
-  for (;;)
-  {
+  for (;;) {
     /* Clear any already-pending wakeups */
     ResetLatch(MyLatch);
 
@@ -381,13 +407,11 @@ peloton_MainLoop(void)
      * Inner loop iterates as long as we keep getting messages, or until
      * need_exit becomes set.
      */
-    while (!need_exit)
-    {
+    while (!need_exit) {
       /*
        * Reload configuration if we got SIGHUP from the postmaster.
        */
-      if (got_SIGHUP)
-      {
+      if (got_SIGHUP) {
         got_SIGHUP = false;
         ProcessConfigFile(PGC_SIGHUP);
       }
@@ -400,8 +424,7 @@ peloton_MainLoop(void)
       len = recv(pelotonSock, (char *) &msg,
                  sizeof(Peloton_Msg), 0);
 
-      if (len < 0)
-      {
+      if (len < 0) {
         if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
           break;    /* out of inner loop */
         ereport(ERROR,
@@ -424,20 +447,17 @@ peloton_MainLoop(void)
       /*
        * O.K. - we accept this message.  Process it.
        */
-      switch (msg.msg_hdr.m_type)
-      {
+      switch (msg.msg_hdr.m_type) {
         case PELOTON_MTYPE_DUMMY:
           break;
 
-        case PELOTON_MTYPE_DDL:
-        {
+        case PELOTON_MTYPE_DDL: {
           scheduler.get()->Run(reinterpret_cast<peloton::scheduler::handler>(peloton_process_ddl),
                                reinterpret_cast<Peloton_MsgDDL*>(&msg));
         }
         break;
 
-        case PELOTON_MTYPE_DML:
-        {
+        case PELOTON_MTYPE_DML: {
           scheduler.get()->Run(reinterpret_cast<peloton::scheduler::handler>(peloton_process_dml),
                                reinterpret_cast<Peloton_MsgDML*>(&msg));
         }
@@ -446,7 +466,7 @@ peloton_MainLoop(void)
         default:
           break;
       }
-    }           /* end of inner message-processing loop */
+    }  /* end of inner message-processing loop */
 
     /* Sleep until there's something to do */
     wr = WaitLatchOrSocket(MyLatch,
@@ -480,8 +500,7 @@ peloton_MainLoop(void)
  * ----------
  */
 void
-peloton_init(void)
-{
+peloton_init(void) {
   ACCEPT_TYPE_ARG3 alen;
   struct addrinfo *addrs = NULL,
       *addr,
@@ -517,8 +536,7 @@ peloton_init(void)
   hints.ai_canonname = NULL;
   hints.ai_next = NULL;
   ret = pg_getaddrinfo_all("localhost", NULL, &hints, &addrs);
-  if (ret || !addrs)
-  {
+  if (ret || !addrs) {
     ereport(LOG,
             (errmsg("could not resolve \"localhost\": %s",
                     gai_strerror(ret))));
@@ -533,8 +551,7 @@ peloton_init(void)
    * results till we find a working combination. We will generate LOG
    * messages, but no error, for bogus combinations.
    */
-  for (addr = addrs; addr; addr = addr->ai_next)
-  {
+  for (addr = addrs; addr; addr = addr->ai_next) {
 #ifdef HAVE_UNIX_SOCKETS
     /* Ignore AF_UNIX sockets, if any are returned. */
     if (addr->ai_family == AF_UNIX)
@@ -548,8 +565,7 @@ peloton_init(void)
     /*
      * Create the socket.
      */
-    if ((pelotonSock = socket(addr->ai_family, SOCK_DGRAM, 0)) == PGINVALID_SOCKET)
-    {
+    if ((pelotonSock = socket(addr->ai_family, SOCK_DGRAM, 0)) == PGINVALID_SOCKET) {
       ereport(LOG,
               (errcode_for_socket_access(),
                   errmsg("could not create socket for peloton: %m")));
@@ -560,8 +576,7 @@ peloton_init(void)
      * Bind it to a kernel assigned port on localhost and get the assigned
      * port via getsockname().
      */
-    if (bind(pelotonSock, addr->ai_addr, addr->ai_addrlen) < 0)
-    {
+    if (bind(pelotonSock, addr->ai_addr, addr->ai_addrlen) < 0) {
       ereport(LOG,
               (errcode_for_socket_access(),
                   errmsg("could not bind socket for peloton: %m")));
@@ -571,8 +586,7 @@ peloton_init(void)
     }
 
     alen = sizeof(pelotonAddr);
-    if (getsockname(pelotonSock, (struct sockaddr *) & pelotonAddr, &alen) < 0)
-    {
+    if (getsockname(pelotonSock, (struct sockaddr *) & pelotonAddr, &alen) < 0) {
       ereport(LOG,
               (errcode_for_socket_access(),
                   errmsg("could not get address of socket for peloton: %m")));
@@ -587,8 +601,7 @@ peloton_init(void)
      * provides a kernel-level check that only packets from this same
      * address will be received.
      */
-    if (connect(pelotonSock, (struct sockaddr *) & pelotonAddr, alen) < 0)
-    {
+    if (connect(pelotonSock, (struct sockaddr *) & pelotonAddr, alen) < 0) {
       ereport(LOG,
               (errcode_for_socket_access(),
                   errmsg("could not connect socket for peloton: %m")));
@@ -606,8 +619,7 @@ peloton_init(void)
     test_byte = TESTBYTEVAL;
 
     retry1:
-    if (send(pelotonSock, &test_byte, 1, 0) != 1)
-    {
+    if (send(pelotonSock, &test_byte, 1, 0) != 1) {
       if (errno == EINTR)
         goto retry1;  /* if interrupted, just retry */
       ereport(LOG,
@@ -623,8 +635,7 @@ peloton_init(void)
      * received.  We arbitrarily allow up to half a second before deciding
      * it's broken.
      */
-    for (;;)        /* need a loop to handle EINTR */
-    {
+    for (;;) {       /* need a loop to handle EINTR */
       FD_ZERO(&rset);
       FD_SET(pelotonSock, &rset);
 
@@ -634,8 +645,7 @@ peloton_init(void)
       if (sel_res >= 0 || errno != EINTR)
         break;
     }
-    if (sel_res < 0)
-    {
+    if (sel_res < 0) {
       ereport(LOG,
               (errcode_for_socket_access(),
                   errmsg("select() failed in peloton: %m")));
@@ -643,8 +653,7 @@ peloton_init(void)
       pelotonSock = PGINVALID_SOCKET;
       continue;
     }
-    if (sel_res == 0 || !FD_ISSET(pelotonSock, &rset))
-    {
+    if (sel_res == 0 || !FD_ISSET(pelotonSock, &rset)) {
       /*
        * This is the case we actually think is likely, so take pains to
        * give a specific message for it.
@@ -662,8 +671,7 @@ peloton_init(void)
     test_byte++;      /* just make sure variable is changed */
 
     retry2:
-    if (recv(pelotonSock, &test_byte, 1, 0) != 1)
-    {
+    if (recv(pelotonSock, &test_byte, 1, 0) != 1) {
       if (errno == EINTR)
         goto retry2;  /* if interrupted, just retry */
       ereport(LOG,
@@ -674,8 +682,7 @@ peloton_init(void)
       continue;
     }
 
-    if (test_byte != TESTBYTEVAL) /* strictly paranoia ... */
-    {
+    if (test_byte != TESTBYTEVAL) { /* strictly paranoia ... */
       ereport(LOG,
               (errcode(ERRCODE_INTERNAL_ERROR),
                   errmsg("incorrect test message transmission on socket for peloton")));
@@ -697,8 +704,7 @@ peloton_init(void)
    * falls behind, statistics messages will be discarded; backends won't
    * block waiting to send messages to the collector.
    */
-  if (!pg_set_noblock(pelotonSock))
-  {
+  if (!pg_set_noblock(pelotonSock)) {
     ereport(LOG,
             (errcode_for_socket_access(),
                 errmsg("could not set peloton socket to nonblocking mode: %m")));
@@ -746,8 +752,7 @@ peloton_setheader(Peloton_MsgHdr *hdr,
                   PelotonMsgType mtype,
                   TransactionId txn_id,
                   MemoryContext top_transaction_context,
-                  MemoryContext cur_transaction_context)
-{
+                  MemoryContext cur_transaction_context) {
   hdr->m_type = mtype;
   hdr->m_top_transaction_context = top_transaction_context;
   hdr->m_cur_transaction_context = cur_transaction_context;
@@ -762,8 +767,7 @@ peloton_setheader(Peloton_MsgHdr *hdr,
  * ----------
  */
 static void
-peloton_send(void *msg, int len)
-{
+peloton_send(void *msg, int len) {
   int     rc;
 
   if (pelotonSock == PGINVALID_SOCKET)
@@ -772,8 +776,7 @@ peloton_send(void *msg, int len)
   ((Peloton_MsgHdr *) msg)->m_size = len;
 
   /* We'll retry after EINTR, but ignore all other failures */
-  do
-  {
+  do {
     rc = send(pelotonSock, msg, len, 0);
   } while (rc < 0 && errno == EINTR);
 
@@ -791,8 +794,7 @@ peloton_send(void *msg, int len)
  * ----------
  */
 void
-peloton_send_ping(void)
-{
+peloton_send_ping(void) {
   Peloton_MsgDummy msg;
 
   if (pelotonSock == PGINVALID_SOCKET)
@@ -814,8 +816,7 @@ peloton_send_ping(void)
  * ----------
  */
 void
-peloton_send_reply(int status)
-{
+peloton_send_reply(int status) {
 }
 
 /* ----------
@@ -827,8 +828,7 @@ peloton_send_reply(int status)
 void
 peloton_send_dml(Peloton_Status  *status,
                  PlanState *node,
-                 TupleDesc tuple_desc)
-{
+                 TupleDesc tuple_desc) {
   Peloton_MsgDML msg;
 
   if (pelotonSock == PGINVALID_SOCKET)
@@ -862,8 +862,7 @@ peloton_send_dml(Peloton_Status  *status,
 void
 peloton_send_ddl(Peloton_Status  *status,
                  Node *parsetree,
-                 const char *queryString)
-{
+                 const char *queryString) {
   Peloton_MsgDDL msg;
 
   if (pelotonSock == PGINVALID_SOCKET)
@@ -895,8 +894,7 @@ peloton_send_ddl(Peloton_Status  *status,
  * ----------
  */
 static void
-peloton_process_dml(Peloton_MsgDML *msg)
-{
+peloton_process_dml(Peloton_MsgDML *msg) {
   PlanState *planstate;
   assert(msg);
 
@@ -904,8 +902,7 @@ peloton_process_dml(Peloton_MsgDML *msg)
   planstate = msg->m_planstate;
 
   /* Ignore invalid plans */
-  if(planstate == NULL || nodeTag(planstate) == T_Invalid)
-  {
+  if(planstate == NULL || nodeTag(planstate) == T_Invalid) {
     msg->m_status->m_result =  peloton::RESULT_FAILURE;
     return;
   }
@@ -917,15 +914,24 @@ peloton_process_dml(Peloton_MsgDML *msg)
   auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
 
   if(plan){
-    /* Execute the plantree */
-    peloton::bridge::PlanExecutor::ExecutePlan(plan,
-                                               planstate,
-                                               msg->m_tuple_desc,
-                                               msg->m_status,
-                                               txn_id);
 
-    /* Clean up the plantree */
-    peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
+    try {
+      /* Execute the plantree */
+      peloton::bridge::PlanExecutor::ExecutePlan(plan,
+                                                 planstate,
+                                                 msg->m_tuple_desc,
+                                                 msg->m_status,
+                                                 txn_id);
+
+      /* Clean up the plantree */
+      peloton::bridge::PlanTransformer::CleanPlanNodeTree(plan);
+
+    }
+    catch(const std::exception &exception) {
+      elog(ERROR, "Peloton exception :: %s", exception.what());
+      msg->m_status->m_result = peloton::RESULT_FAILURE;
+    }
+
   }
   else {
     /* Could not get the plan */
@@ -941,8 +947,7 @@ peloton_process_dml(Peloton_MsgDML *msg)
  * ----------
  */
 static void
-peloton_process_ddl(Peloton_MsgDDL *msg)
-{
+peloton_process_ddl(Peloton_MsgDDL *msg) {
   Node* parsetree;
   const char *queryString;
   assert(msg);
@@ -951,8 +956,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg)
   parsetree = msg->m_parsetree;
 
   /* Ignore invalid parsetrees */
-  if(parsetree == NULL || nodeTag(parsetree) == T_Invalid)
-  {
+  if(parsetree == NULL || nodeTag(parsetree) == T_Invalid) {
     msg->m_status->m_result =  peloton::RESULT_FAILURE;
     return;
   }
@@ -963,11 +967,17 @@ peloton_process_ddl(Peloton_MsgDDL *msg)
 
   queryString = msg->m_queryString;
 
-  if(queryString != NULL)
-  {
-    peloton::bridge::DDL::ProcessUtility(parsetree,
-                                         queryString,
-                                         txn_id);
+  if(queryString != NULL) {
+    try {
+      /* Process the utility statement */
+      peloton::bridge::DDL::ProcessUtility(parsetree,
+                                           queryString,
+                                           txn_id);
+    }
+    catch(const std::exception &exception) {
+      elog(ERROR, "Peloton exception :: %s", exception.what());
+      // Nothing to do here !
+    }
   }
 
 
@@ -982,8 +992,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg)
  * ----------
  */
 Peloton_Status *
-peloton_create_status()
-{
+peloton_create_status() {
   Peloton_Status *status = static_cast<Peloton_Status *>(palloc(sizeof(Peloton_Status)));
 
   status->m_result = peloton::RESULT_INVALID;
@@ -1000,8 +1009,7 @@ peloton_create_status()
  * ----------
  */
 void
-peloton_process_status(Peloton_Status *status)
-{
+peloton_process_status(Peloton_Status *status) {
   struct timespec duration = {0, 100}; // 100 us
   int code;
   int rc;
@@ -1009,11 +1017,9 @@ peloton_process_status(Peloton_Status *status)
   assert(status);
 
   // Busy wait till we get a valid result
-  while(status->m_result == peloton::RESULT_INVALID)
-  {
+  while(status->m_result == peloton::RESULT_INVALID) {
     rc = nanosleep(&duration, NULL);
-    if(rc < 0)
-    {
+    if(rc < 0) {
       break;
     }
 
@@ -1024,18 +1030,15 @@ peloton_process_status(Peloton_Status *status)
 
   // Process the status code
   code = status->m_result;
-  switch(code)
-  {
-    case peloton::RESULT_SUCCESS:
-    {
+  switch(code) {
+    case peloton::RESULT_SUCCESS: {
       // Nothing to do here.
     }
     break;
 
     case peloton::RESULT_INVALID:
     case peloton::RESULT_FAILURE:
-    default:
-    {
+    default: {
       ereport(ERROR, (errcode(status->m_status),
           errmsg("transaction failed")));
     }
@@ -1051,8 +1054,7 @@ peloton_process_status(Peloton_Status *status)
  * ----------
  */
 void
-peloton_destroy_status(Peloton_Status *status)
-{
+peloton_destroy_status(Peloton_Status *status) {
   pfree(status);
 }
 
@@ -1073,12 +1075,10 @@ bool IsPelotonQuery(List *relationOids) {
     ListCell   *lc;
 
     // Go over each relation on which the plan depends
-    foreach(lc, relationOids)
-    {
+    foreach(lc, relationOids) {
       Oid relationOid = lfirst_oid(lc);
       // Fast check to determine if the relation is a peloton relation
-      if(relationOid >= FirstNormalObjectId)
-      {
+      if(relationOid >= FirstNormalObjectId) {
         peloton_query = true;
         break;
       }
