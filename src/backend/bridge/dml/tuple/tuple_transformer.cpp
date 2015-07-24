@@ -165,20 +165,11 @@ Datum TupleTransformer::GetDatum(Value value) {
 
     case VALUE_TYPE_VARCHAR:
     {
-      auto data_ptr = ValuePeeker::PeekObjectValue(value);
+      char *data_ptr = static_cast<char*>(ValuePeeker::PeekObjectValue(value));
       auto data_len = ValuePeeker::PeekObjectLength(value);
-
-      // Create a new varlena text with PG utility
       // NB: Peloton object don't have terminating-null's, so
       // we should use PG functions that take explicit length.
-      datum = PointerGetDatum(cstring_to_text_with_len((char*)data_ptr, data_len));
-
-      auto cstr = text_to_cstring((text*)datum);
-      LOG_TRACE("\"%s\" \n", cstr);
-      pfree(cstr);
-
-//      datum = CStringGetTextDatum(static_cast<const char*>(data));
-//      LOG_TRACE("%s\n", DatumGetCString(datum));
+      datum = PointerGetDatum(cstring_to_text_with_len(data_ptr, data_len + 1));
     }
     break;
 
