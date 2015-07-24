@@ -74,7 +74,7 @@ public:
 
     // COMMIT
 
-    void BeginCommitPhase(Transaction *txn);
+    bool BeginCommitPhase(Transaction *txn);
 
     void CommitModifications(Transaction *txn, bool sync = true);
 
@@ -82,13 +82,11 @@ public:
 
     std::vector<Transaction*> EndCommitPhase(Transaction* txn, bool sync = true);
 
-    void CommitTransaction(Transaction *txn, bool sync = true);
+    bool CommitTransaction(Transaction *txn, bool sync = true);
 
     // ABORT
 
     void AbortTransaction(Transaction *txn);
-
-    void WaitForCurrentTransactions();
 
     // Store PG Transaction
     Transaction *StartPGTransaction(TransactionId txn_id);
@@ -122,6 +120,8 @@ private:
     std::map<TransactionId, Transaction *> pg_txn_table;
 
     std::mutex pg_txn_table_mutex;
+
+    static constexpr oid_t max_pending_txns = 1000;
 
 };
 
