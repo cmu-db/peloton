@@ -341,6 +341,16 @@ void Bridge::GetDatabaseList(void) {
 // Setters
 //===--------------------------------------------------------------------===//
 
+void Bridge::PelotonStartTransactionCommand(){
+  StartTransactionCommand();
+}
+
+void Bridge::PelotonCommitTransactionCommand(){
+  CommitTransactionCommand();
+  // Set the resource owner
+  CurrentResourceOwner = ResourceOwnerCreate(NULL, "Peloton");
+}
+
 /**
  * @brief Setting the number of tuples.
  * @param relation_id relation id
@@ -354,7 +364,7 @@ void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
   HeapTuple tuple;
   Form_pg_class pgclass;
 
-  StartTransactionCommand();
+  PelotonStartTransactionCommand();
 
   // Open target table in exclusive mode
   pg_class_rel = heap_open(RelationRelationId,RowExclusiveLock);
@@ -376,7 +386,7 @@ void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
   heap_freetuple(tuple);
   heap_close(pg_class_rel, RowExclusiveLock);
 
-  CommitTransactionCommand();
+  PelotonCommitTransactionCommand();
 }
 
 } // namespace bridge
