@@ -7,8 +7,7 @@
 #pragma once
 
 #include "backend/planner/abstract_plan_node.h"
-#include "backend/expression/abstract_expression.h"
-#include "backend/common/types.h"
+#include "backend/planner/project_info.h"
 #include "backend/storage/data_table.h"
 
 
@@ -25,9 +24,9 @@ public:
     InsertNode& operator=(InsertNode &&) = delete;
 
     explicit InsertNode(storage::DataTable* table,
-                        const expression::ProjExprVector &projs)
+                        const planner::ProjectInfo* project_info)
         : target_table_(table),
-          projs_(projs) {
+          project_info_(project_info) {
     }
 
     inline PlanNodeType GetPlanNodeType() const {
@@ -38,20 +37,21 @@ public:
         return target_table_;
     }
 
+    const planner::ProjectInfo* GetProjectInfo() const {
+      return project_info_.get();
+    }
+
     std::string GetInfo() const {
         return target_table_->GetName();
     }
 
-    const expression::ProjExprVector& GetProjs() const {
-        return projs_;
-    }
 
 private:
     /** @brief Target table. */
     storage::DataTable *target_table_;
 
-    // proj list
-    expression::ProjExprVector projs_;
+    /** @brief Projection Info */
+    std::unique_ptr<const planner::ProjectInfo> project_info_;
 };
 
 } // namespace planner
