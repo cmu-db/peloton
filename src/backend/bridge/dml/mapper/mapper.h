@@ -14,6 +14,7 @@
 #include "backend/common/value_vector.h"
 #include "backend/common/logger.h"
 #include "backend/planner/abstract_plan_node.h"
+#include "backend/planner/project_info.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -63,6 +64,12 @@ class PlanTransformer {
 
   static planner::AbstractPlanNode *TransformLimit(const LimitState *plan_state);
   static planner::AbstractPlanNode *TransformResult(const ResultState *plan_state);
+
+  /* ==========================
+   * Utility functions
+   * ==========================
+   */
+  static const planner::ProjectInfo* BuildProjectInfo(const ProjectionInfo* pg_proj_info, oid_t column_count);
 
 };
 
