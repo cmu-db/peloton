@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
-*
-* tuple_schema_test.cpp
-* file description
-*
-* Copyright(c) 2015, CMU
-*
-* /n-store/test/tuple_schema_test.cpp
-*
-*-------------------------------------------------------------------------
-*/
+ *
+ * tuple_schema_test.cpp
+ * file description
+ *
+ * Copyright(c) 2015, CMU
+ *
+ * /n-store/test/tuple_schema_test.cpp
+ *
+ *-------------------------------------------------------------------------
+ */
 
 #include "gtest/gtest.h"
 
@@ -29,19 +29,26 @@ void TransactionTest(concurrency::TransactionManager *txn_manager){
 
   uint64_t thread_id = GetThreadId();
 
-  for(oid_t txn_itr = 1 ; txn_itr <= 100 ; txn_itr++) {
+  for(oid_t txn_itr = 1 ; txn_itr <= 1000 ; txn_itr++) {
     txn1 = txn_manager->BeginTransaction();
     txn2 = txn_manager->BeginTransaction();
     txn3 = txn_manager->BeginTransaction();
 
-    if(thread_id % 3 == 0) {
+    if(thread_id % 2 == 0) {
       std::chrono::microseconds sleep_time(1);
       std::this_thread::sleep_for(sleep_time);
     }
 
-    txn_manager->CommitTransaction(txn3);
-    txn_manager->CommitTransaction(txn2);
-    txn_manager->CommitTransaction(txn1);
+    if(txn_itr % 50 != 0) {
+      txn_manager->CommitTransaction(txn3);
+      txn_manager->CommitTransaction(txn2);
+      txn_manager->CommitTransaction(txn1);
+    }
+    else {
+      txn_manager->AbortTransaction(txn1);
+      txn_manager->AbortTransaction(txn3);
+      txn_manager->AbortTransaction(txn2);
+    }
 
     txn_manager->EndTransaction(txn3);
     txn_manager->EndTransaction(txn2);
