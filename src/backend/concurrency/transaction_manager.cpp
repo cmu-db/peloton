@@ -52,6 +52,61 @@ Transaction *TransactionManager::GetTransaction(txn_id_t txn_id) {
   return nullptr;
 }
 
+txn_id_t TransactionManager::GetNextTransactionId(){
+  if (next_txn_id == MAX_TXN_ID) {
+    throw TransactionException("Txn id equals MAX_TXN_ID");
+  }
+
+  return next_txn_id++;
+}
+
+
+// Begin a new transaction
+Transaction *TransactionManager::BeginTransaction() {
+
+  Transaction *next_txn =  new Transaction(GetNextTransactionId(),
+                                           GetLastCommitId());
+
+  {
+    std::lock_guard<std::mutex> lock(txn_table_mutex);
+    auto txn_id = next_txn->txn_id;
+
+    // erase entry in transaction table
+    if(txn_table.count(txn_id) != 0) {
+      txn_table.insert(std::make_pair(txn_id, next_txn));
+    }
+  }
+
+  return next_txn;
+}
+
+std::vector<Transaction *> TransactionManager::GetCurrentTransactions() {
+  std::vector<Transaction *> txns;
+
+  {
+    std::lock_guard<std::mutex> lock(txn_table_mutex);
+    for(auto entry : txn_table)
+      txns.push_back(entry.second);
+  }
+
+  return txns;
+}
+
+bool TransactionManager::IsValid(txn_id_t txn_id) {
+  return (txn_id < next_txn_id);
+}
+
+void TransactionManager::EndTransaction(Transaction *txn, bool sync __attribute__((unused))) {
+
+  // XXX LOG :: record commit entry
+  {
+    std::lock_guard<std::mutex> lock(txn_table_mutex);
+    // erase entry in transaction table
+    txn_table.erase(txn->txn_id);
+  }
+
+}
+
 // Store an entry in PG Transaction table
 Transaction *TransactionManager::StartPGTransaction(TransactionId txn_id) {
 
@@ -63,7 +118,7 @@ Transaction *TransactionManager::StartPGTransaction(TransactionId txn_id) {
       return pg_txn_table.at(txn_id);
 
     // Else, create one for this new pg txn id
-    auto txn = GetInstance().BeginTransaction();
+    auto txn = BeginTransaction();
     auto status = pg_txn_table.insert(std::make_pair(txn_id, txn));
     if(status.second == true) {
       return txn;
@@ -72,7 +127,6 @@ Transaction *TransactionManager::StartPGTransaction(TransactionId txn_id) {
 
   return nullptr;
 }
-
 
 // Get entry in PG Transaction table
 Transaction *TransactionManager::GetPGTransaction(TransactionId txn_id) {
@@ -90,53 +144,6 @@ Transaction *TransactionManager::GetPGTransaction(TransactionId txn_id) {
   return nullptr;
 }
 
-
-txn_id_t TransactionManager::GetNextTransactionId(){
-  if (next_txn_id == MAX_TXN_ID) {
-    throw TransactionException("Txn id equals MAX_TXN_ID");
-  }
-
-  return next_txn_id++;
-}
-
-
-// Begin a new transaction
-Transaction *TransactionManager::BeginTransaction() {
-  Transaction *next_txn = GetInstance().BuildTransaction();
-  return next_txn;
-}
-
-Transaction *TransactionManager::BuildTransaction() {
-  return new Transaction(GetNextTransactionId(), GetLastCommitId());
-}
-
-std::vector<Transaction *> TransactionManager::GetCurrentTransactions() {
-  std::vector<Transaction *> txns;
-
-  {
-    std::lock_guard<std::mutex> lock(txn_table_mutex);
-    for(auto entry : GetInstance().txn_table)
-      txns.push_back(entry.second);
-  }
-
-  return txns;
-}
-
-bool TransactionManager::IsValid(txn_id_t txn_id) {
-  return (txn_id < GetInstance().next_txn_id);
-}
-
-void TransactionManager::EndTransaction(Transaction *txn, bool sync __attribute__((unused))) {
-
-  // XXX LOG :: record commit entry
-  {
-    std::lock_guard<std::mutex> lock(txn_table_mutex);
-    // erase entry in transaction table
-    txn_table.erase(txn->txn_id);
-  }
-
-}
-
 //===--------------------------------------------------------------------===//
 // Commit Processing
 //===--------------------------------------------------------------------===//
@@ -151,25 +158,23 @@ void TransactionManager::BeginCommitPhase(Transaction *txn) {
   // successor in the transaction list will point to us
   txn->IncrementRefCount();
 
-  while (true) {
+  {
+    std::lock_guard<std::mutex> lock(txn_table_mutex);
 
-    // try to append to the pending transaction list
-    if (atomic_cas<Transaction *>(&last_txn->next, nullptr, txn)) {
+    // append to the pending transaction list
+    last_txn->next = txn;
 
-      // the last transaction pointer also points to us
-      txn->IncrementRefCount();
+    // the last transaction pointer also points to us
+    txn->IncrementRefCount();
 
-      // assign cid to the txn
-      txn->cid = last_txn->cid + 1;
+    // assign cid to the txn
+    txn->cid = last_txn->cid + 1;
 
-      auto tmp = last_txn;
-      last_txn = txn;
+    auto tmp = last_txn;
+    last_txn = txn;
 
-      // drop a reference to previous last transaction pointer
-      tmp->DecrementRefCount();
-
-      return;
-    }
+    // drop a reference to previous last transaction pointer
+    tmp->DecrementRefCount();
   }
 
 }
@@ -229,7 +234,6 @@ void TransactionManager::CommitPendingTransactions(std::vector<Transaction *>& p
 
 std::vector<Transaction*> TransactionManager::EndCommitPhase(Transaction * txn, bool sync) {
   std::vector<Transaction *> txn_list;
-  auto& txn_mgr = GetInstance();
 
   // try to increment last commit id
   if (atomic_cas(&last_cid, txn->cid - 1, txn->cid)) {
@@ -238,7 +242,7 @@ std::vector<Transaction*> TransactionManager::EndCommitPhase(Transaction * txn, 
 
     // everything went fine and the txn was committed
     // if that worked, commit all pending transactions
-    txn_mgr.CommitPendingTransactions(txn_list, txn);
+    CommitPendingTransactions(txn_list, txn);
 
   }
   // it did not work, so add to waiting list
@@ -257,12 +261,9 @@ std::vector<Transaction*> TransactionManager::EndCommitPhase(Transaction * txn, 
       // it worked on the second try
       txn->waiting_to_commit = false;
 
-      txn_mgr.CommitPendingTransactions(txn_list, txn);
+      CommitPendingTransactions(txn_list, txn);
     }
   }
-
-  // clear txn entry in txn table
-  txn_mgr.EndTransaction(txn, sync);
 
   return std::move(txn_list);
 }
@@ -276,65 +277,29 @@ void TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
     throw TransactionException("Transaction not found in transaction table : " + std::to_string(txn->txn_id));
   }
 
-  auto& txn_mgr = GetInstance();
-
   // begin commit phase : get cid and add to transaction list
-  txn_mgr.BeginCommitPhase(txn);
+  BeginCommitPhase(txn);
 
   // commit all modifications
-  txn_mgr.CommitModifications(txn, sync);
+  CommitModifications(txn, sync);
 
   // end commit phase : increment last_cid and process pending txns if needed
-  std::vector<Transaction *> committed_txns = txn_mgr.EndCommitPhase(txn, sync);
-
-  // XXX LOG : group commit entry
+  std::vector<Transaction *> committed_txns = EndCommitPhase(txn, sync);
 
   // process all committed txns
   for (auto committed_txn : committed_txns)
     committed_txn->DecrementRefCount();
+
+  // clear txn entry in txn table
+  EndTransaction(txn, sync);
+
+  // XXX LOG : group commit entry
 
 }
 
 //===--------------------------------------------------------------------===//
 // Abort Processing
 //===--------------------------------------------------------------------===//
-
-void TransactionManager::WaitForCurrentTransactions() {
-
-  std::vector<txn_id_t> current_txns;
-
-  {
-    std::lock_guard<std::mutex> lock(txn_table_mutex);
-
-    // record all currently running transactions
-    for(auto entry : txn_table)
-      current_txns.push_back(entry.first);
-
-
-    // block until all current txns are finished
-    while (true) {
-
-      // remove all finished txns from list
-      for(auto txn_id : current_txns) {
-        if(txn_table.count(txn_id) == 0) {
-          auto location = std::find(current_txns.begin(), current_txns.end(), txn_id);
-          if (location != current_txns.end())
-            current_txns.erase(location);
-        }
-      }
-
-      // all transactions in waiting list finished ?
-      if(current_txns.empty())
-        break;
-
-      // sleep for some time
-      std::chrono::milliseconds sleep_time(10); // 10 ms
-      std::this_thread::sleep_for(sleep_time);
-    }
-
-  }
-
-}
 
 void TransactionManager::AbortTransaction(Transaction *txn) {
 
@@ -356,7 +321,10 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
       tile_group->AbortDeletedTuple(tuple_slot);
   }
 
-  GetInstance().EndTransaction(txn, false);
+  // drop a reference
+  txn->DecrementRefCount();
+
+  EndTransaction(txn, false);
 
   // XXX LOG :: record abort entry
 }

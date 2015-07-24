@@ -227,11 +227,12 @@ planner::AbstractPlanNode* PlanTransformer::TransformBitmapScan(const BitmapHeap
   .GetTableWithOid(database_oid, table_oid));
 
   assert(table);
+  LOG_INFO("Scan from: database oid %u table oid %u", database_oid, table_oid);
 
 
   /* Resolve index  */
   index_scan_desc.index = table->GetIndexWithOid(biss_plan->indexid);
-  LOG_INFO("BitmapIdxmap scan on oid %u, index name: %s", biss_plan->indexid,
+  LOG_INFO("BitmapIdxmap scan on Index oid %u, index name: %s", biss_plan->indexid,
            index_scan_desc.index->GetName().c_str());
 
   /* Resolve index order */
