@@ -107,7 +107,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     auto result_ps = reinterpret_cast<ResultState*>(sub_planstate);
 
     assert(outerPlanState(result_ps) == nullptr); /* We only handle single-constant-tuple for now,
-     i.e., ResultState should have no children/sub plans */
+                                              i.e., ResultState should have no children/sub plans */
 
     auto project_info = BuildProjectInfo(result_ps->ps.ps_ProjInfo, schema->GetColumnCount());
 
@@ -168,7 +168,6 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
   /* Get the tuple schema */
   auto schema = target_table->GetSchema();
 
-  planner::UpdateNode::ColumnExprs update_column_exprs;
   planner::AbstractPlanNode* plan_node = nullptr;
 
   auto child_tag = nodeTag(sub_planstate->plan);
@@ -179,13 +178,12 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
       || child_tag == T_BitmapHeapScan) {  // Sub plan is a Scan of any type
 
     LOG_TRACE("Child of Update is %u \n", child_tag);
-    // Extract the non-trivial projection info from the underlying scan
+    // Extract the projection info from the underlying scan
     // and put it in our update node
     auto scan_state = reinterpret_cast<ScanState*>(sub_planstate);
+    auto project_info = BuildProjectInfo(scan_state->ps.ps_ProjInfo, schema->GetColumnCount());
 
-    update_column_exprs = TransformProjInfo(scan_state->ps.ps_ProjInfo, schema->GetColumnCount());
-
-    plan_node = new planner::UpdateNode(target_table, update_column_exprs);
+    plan_node = new planner::UpdateNode(target_table, project_info);
     plan_node->AddChild(TransformPlan(sub_planstate));
   } else {
 
