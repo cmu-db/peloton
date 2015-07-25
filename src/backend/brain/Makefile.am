@@ -5,6 +5,7 @@
 ######################################################################
 
 brain_FILES = \
+			   backend/brain/sample.cpp \
 			   backend/brain/clusterer.cpp
 
 brain_INCLUDES = \

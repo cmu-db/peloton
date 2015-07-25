@@ -14,6 +14,7 @@
 
 #include <vector>
 
+#include "backend/brain/sample.h"
 #include "backend/common/types.h"
 
 namespace peloton {
@@ -28,25 +29,25 @@ namespace brain {
 // Sequential k-Means Clustering
 class Clusterer {
  public:
-  Clusterer(oid_t cluster_count, double param = DEFAULT_WEIGHT)
-      : cluster_count_(cluster_count), new_sample_weight_(param) {
-    // initialize the means vector
-    means.assign(cluster_count_, 0);
+  Clusterer(oid_t cluster_count,
+            oid_t sample_column_count,
+            double param = DEFAULT_WEIGHT)
+      : cluster_count_(cluster_count),
+        means(std::vector<Sample>(cluster_count_, Sample(sample_column_count))),
+        new_sample_weight_(param) {
+
   }
 
   oid_t GetClusterCount() const { return cluster_count_; }
 
   // process the sample and update the means
-  void ProcessSample(double sample);
+  void ProcessSample(const Sample& sample);
 
   // find closest cluster for the given sample
-  oid_t GetClosestCluster(double sample) const;
+  oid_t GetClosestCluster(const Sample& sample) const;
 
-  // get cluster mean
-  double GetCluster(oid_t cluster_offset) const;
-
-  // get the distance between two samples
-  double GetDistance(double sample1, double sample2) const;
+  // get cluster mean sample
+  Sample GetCluster(oid_t cluster_offset) const;
 
   // Get a string representation of clusterer
   friend std::ostream& operator<<(std::ostream& os, const Clusterer& clusterer);
@@ -60,7 +61,7 @@ class Clusterer {
   oid_t cluster_count_;
 
   // means
-  std::vector<double> means;
+  std::vector<Sample> means;
 
   // weight for new sample
   double new_sample_weight_;

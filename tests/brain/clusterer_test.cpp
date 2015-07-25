@@ -26,10 +26,20 @@ namespace test {
 
 TEST(ClustererTests, BasicTest) {
 
-  brain::Clusterer clusterer(5);
+  oid_t column_count = 5;
+  oid_t cluster_count = 2;
+  oid_t column_itr;
 
-  for(int sample_itr = 0 ; sample_itr < 100000; sample_itr ++) {
-    double sample = rand() % 1000;
+  brain::Clusterer clusterer(cluster_count, column_count);
+  std::vector<double> columns_accessed(column_count, 0);
+
+  double sample_weight = 1;
+  for(int sample_itr = 0 ; sample_itr < 10; sample_itr ++) {
+
+    for(column_itr = 0 ; column_itr < column_count ; column_itr++)
+      columns_accessed[column_itr] = rand() % 1;
+
+    brain::Sample sample(columns_accessed, sample_weight);
     clusterer.ProcessSample(sample);
   }
 
