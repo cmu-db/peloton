@@ -19,9 +19,11 @@ LT_INIT([disable-static])
 # Check for pthreads 
 ACX_PTHREAD([], [AC_MSG_ERROR([Please install pthread library : libpthread-stubs0-dev])])
 
+# Do not allow AC_PROG_CXX set a default CXXFLAGS
+: ${CXXFLAGS=""}
+
 AC_LANG([C++])
 AC_PROG_CXX([g++])
-AC_SUBST([AM_CXXFLAGS], '-std=c++11 -stdlib=libc++')
 
 AC_PROG_YACC
 AC_PROG_LEX
@@ -125,6 +127,32 @@ AC_CONFIG_FILES([Makefile
                  ])
 
 AC_CONFIG_LINKS([tests/valgrind.supp:third_party/valgrind/valgrind.supp])
+
+######################################################################
+# Debug Compliation Support
+######################################################################
+AC_MSG_CHECKING([whether to build with debug information])
+AC_ARG_ENABLE([debug],
+    [AS_HELP_STRING([--enable-debug],
+        [enable debug data generation (def=no)])],
+    [debugit="$enableval"],
+    [debugit=no])
+AC_MSG_RESULT([$debugit])
+
+if test x"$debugit" = x"yes"; then
+    AC_DEFINE([DEBUG],[],[Debug Mode])
+    AM_CXXFLAGS="$AM_CXXFLAGS -g -Wno-uninitialized -O0"
+else
+    AC_DEFINE([NDEBUG],[],[No-debug Mode])
+    AM_CXXFLAGS="$AM_CXXFLAGS -O2"
+    AM_CPPFLAGS="$AM_CPPFLAGS -DNDEBUG"
+fi
+
+AC_SUBST([AM_CXXFLAGS])
+AC_SUBST([AM_CPPFLAGS])
+
+
+
 #####################################################################
 # Workaround for Code Coverage
 #####################################################################
@@ -155,9 +183,8 @@ Version        : ${PACKAGE_VERSION}
 OS             : ${build_os}
 Prefix         : ${prefix}
 Compiler       : ${CC}
-C Flags        : ${CFLAGS}
-CPP Flags      : ${CPPFLAGS}
-C++ Flags      : ${CXXFLAGS}
+CPP Flags      : ${CPPFLAGS} ${AM_CPPFLAGS}
+C++ Flags      : ${CXXFLAGS} ${AM_CXXFLAGS}
 Make Flags     : ${MAKEFLAGS}
 Libraries      : ${LIBS} $TBB_LIBS
 
