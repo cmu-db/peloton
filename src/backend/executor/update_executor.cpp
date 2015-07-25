@@ -36,13 +36,15 @@ UpdateExecutor::UpdateExecutor(planner::AbstractPlanNode *node,
 bool UpdateExecutor::DInit() {
     assert(children_.size() == 1);
     assert(target_table_ == nullptr);
+    assert(project_info_ == nullptr);
 
     // Grab settings from node
     const planner::UpdateNode &node = GetPlanNode<planner::UpdateNode>();
     target_table_ = node.GetTable();
-    updated_col_exprs_ = node.GetUpdatedColumnExprs();
+    project_info_ = node.GetProjectInfo();
 
     assert(target_table_);
+    assert(project_info_);
 
     return true;
 }
@@ -91,36 +93,34 @@ bool UpdateExecutor::DExecute() {
       }
       transaction_->RecordDelete(delete_location);
 
-      // (B.1) now, make a copy of the original tuple
-      storage::Tuple *tuple = tile_group->SelectTuple(physical_tuple_id);
+      // (B.1) now, make a copy of the original tuple and allocate a new tuple
+      // TODO: Is there a safe way to access the old (deleted) tuple
+      // without creating a new copy of it? That may save us one copy.
+      // Allocating the new tuple, however, is inevitable.
+      storage::Tuple *old_tuple = tile_group->SelectTuple(physical_tuple_id);
+      storage::Tuple *new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
 
-      // (B.2) and update with expressions
-      // WARNING: updated values should be calculated based on OLD attribute values
-      // So we need a buffer to hold the new values and update the original tuple in a second step.
-      std::vector<peloton::Value> updated_expr_values;
-      for(auto entry : updated_col_exprs_) {
-        updated_expr_values.push_back(entry.second->Evaluate(tuple, nullptr, executor_context_));
-      }
+      // (B.2) and execute the projections
+      project_info_->Evaluate(new_tuple, old_tuple, nullptr, executor_context_);
 
-      for(size_t i = 0; i < updated_col_exprs_.size(); i++){
-        tuple->SetValue(updated_col_exprs_[i].first,
-                        updated_expr_values[i]);
-      }
+      old_tuple->FreeUninlinedData();
+      delete old_tuple;
+
 
       // and finally insert into the table in update mode
       bool update_mode = true;
-      ItemPointer location = target_table_->InsertTuple(txn_id, tuple, update_mode);
+      ItemPointer location = target_table_->InsertTuple(txn_id, new_tuple, update_mode);
       if(location.block == INVALID_OID) {
           auto& txn_manager = concurrency::TransactionManager::GetInstance();
           txn_manager.AbortTransaction(transaction_);
 
-          tuple->FreeUninlinedData();
-          delete tuple;
+          new_tuple->FreeUninlinedData();
+          delete new_tuple;
           return false;
       }
       transaction_->RecordInsert(location);
-      tuple->FreeUninlinedData();
-      delete tuple;
+      new_tuple->FreeUninlinedData();
+      delete new_tuple;
 
       // (C) set back pointer in tile group header of updated tuple
       auto updated_tile_group = static_cast<storage::TileGroup*>(manager.locator[location.block]);
