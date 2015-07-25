@@ -5,7 +5,7 @@
 ######################################################################
 
 brain_FILES = \
-			   backend/brain/clustering.cpp
+			   backend/brain/clusterer.cpp
 
 brain_INCLUDES = \
                   -I$(srcdir)/backend/brain

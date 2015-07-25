@@ -26,7 +26,14 @@ namespace test {
 
 TEST(ClustererTests, BasicTest) {
 
-  EXPECT_EQ(1, 1);
+  brain::Clusterer clusterer(5);
+
+  for(int sample_itr = 0 ; sample_itr < 100000; sample_itr ++) {
+    double sample = rand() % 1000;
+    clusterer.ProcessSample(sample);
+  }
+
+  std::cout << clusterer;
 
 }
 
