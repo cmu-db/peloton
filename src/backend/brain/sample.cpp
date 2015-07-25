@@ -56,9 +56,9 @@ std::ostream &operator<<(std::ostream &os, const Sample &sample) {
   os << "Sample :: ";
 
   for (auto column : sample.columns_accessed_)
-    os << (int) column << " ";
+    os << column << " ";
 
-  os << " :: " << sample.weight_ << "\n";
+  os << " :: " << sample.weight_;
 
   return os;
 }
