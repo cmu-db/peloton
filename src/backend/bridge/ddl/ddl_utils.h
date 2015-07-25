@@ -28,20 +28,17 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class DDLUtils {
-
  public:
-  DDLUtils(const DDLUtils &) = delete;
-  DDLUtils& operator=(const DDLUtils &) = delete;
-  DDLUtils(DDLUtils &&) = delete;
-  DDLUtils& operator=(DDLUtils &&) = delete;
+  DDLUtils(const DDLUtils&) = delete;
+  DDLUtils& operator=(const DDLUtils&) = delete;
+  DDLUtils(DDLUtils&&) = delete;
+  DDLUtils& operator=(DDLUtils&&) = delete;
 
   // Parse IndexStmt and construct ColumnInfo and ReferenceTableInfos
-  static void ParsingCreateStmt(CreateStmt* Cstmt,
-                                std::vector<catalog::Column>& column_infos,
-                                std::vector<catalog::ForeignKey>& reference_table_infos
-  );
-
+  static void ParsingCreateStmt(
+      CreateStmt* Cstmt, std::vector<catalog::Column>& column_infos,
+      std::vector<catalog::ForeignKey>& reference_table_infos);
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

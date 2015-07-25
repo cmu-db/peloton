@@ -31,7 +31,7 @@ const Value Tuple::GetValue(const oid_t column_id) const {
 
   const ValueType column_type = tuple_schema->GetType(column_id);
 
-  const char* data_ptr = GetDataPtr(column_id);
+  const char *data_ptr = GetDataPtr(column_id);
   const bool is_inlined = tuple_schema->IsInlined(column_id);
 
   return Value::Deserialize(data_ptr, column_type, is_inlined);
@@ -49,15 +49,15 @@ void Tuple::SetValue(const oid_t column_id, Value value) {
   char *dataPtr = GetDataPtr(column_id);
   int32_t column_length = tuple_schema->GetLength(column_id);
 
-  if(is_inlined == false)
+  if (is_inlined == false)
     column_length = tuple_schema->GetVariableLength(column_id);
 
   value.Serialize(dataPtr, is_inlined, column_length);
 }
 
 // Set all columns by value into this tuple.
-void Tuple::SetValueAllocate(const oid_t column_id,
-                             Value value, Pool *dataPool) {
+void Tuple::SetValueAllocate(const oid_t column_id, Value value,
+                             Pool *dataPool) {
   assert(tuple_schema);
   assert(tuple_data);
 
@@ -68,25 +68,22 @@ void Tuple::SetValueAllocate(const oid_t column_id,
   char *dataPtr = GetDataPtr(column_id);
   int32_t column_length = tuple_schema->GetLength(column_id);
 
-  if(is_inlined == false)
+  if (is_inlined == false)
     column_length = tuple_schema->GetVariableLength(column_id);
 
   value.SerializeWithAllocation(dataPtr, is_inlined, column_length, dataPool);
 }
 
 void Tuple::SetFromTuple(const storage::Tuple *tuple,
-                         const std::vector<oid_t>& columns) {
-
+                         const std::vector<oid_t> &columns) {
   // We don't do any checks here about the source tuple and
   // this tuple's schema
   oid_t this_col_itr = 0;
-  for(auto col : columns) {
+  for (auto col : columns) {
     SetValue(this_col_itr, tuple->GetValue(col));
     this_col_itr++;
   }
-
 }
-
 
 // For an insert, the copy should do an allocation for all uninlinable columns
 // This does not do any schema checks. They must match.
@@ -95,7 +92,8 @@ void Tuple::Copy(const void *source, Pool *pool) {
   assert(tuple_data);
 
   const bool is_inlined = tuple_schema->IsInlined();
-  const oid_t uninlineable_column_count = tuple_schema->GetUninlinedColumnCount();
+  const oid_t uninlineable_column_count =
+      tuple_schema->GetUninlinedColumnCount();
 
   if (is_inlined) {
     // copy the data
@@ -105,7 +103,8 @@ void Tuple::Copy(const void *source, Pool *pool) {
     ::memcpy(tuple_data, source, tuple_schema->GetLength());
 
     // Copy each uninlined column doing an allocation for copies.
-    for (oid_t column_itr = 0; column_itr < uninlineable_column_count; column_itr++) {
+    for (oid_t column_itr = 0; column_itr < uninlineable_column_count;
+         column_itr++) {
       const oid_t unlineable_column_id =
           tuple_schema->GetUninlinedColumn(column_itr);
 
@@ -115,9 +114,7 @@ void Tuple::Copy(const void *source, Pool *pool) {
       // Make a copy of the value at a new location in uninlined pool
       SetValueAllocate(unlineable_column_id, value, pool);
     }
-
   }
-
 }
 
 /**
@@ -151,21 +148,20 @@ size_t Tuple::ExportSerializationSize() const {
         // 32 bit length preceding value and
         // actual character data without null string terminator.
         if (!GetValue(column_itr).IsNull()) {
-          bytes += (sizeof(int32_t)
-              + ValuePeeker::PeekObjectLength(
-                  GetValue(column_itr)));
+          bytes += (sizeof(int32_t) +
+                    ValuePeeker::PeekObjectLength(GetValue(column_itr)));
         }
         break;
 
       default:
-        throw UnknownTypeException(GetType(column_itr),
-                                   "Unknown ValueType found during Export serialization.");
-        return (size_t) 0;
+        throw UnknownTypeException(
+            GetType(column_itr),
+            "Unknown ValueType found during Export serialization.");
+        return (size_t)0;
     }
   }
   return bytes;
 }
-
 
 // Return the amount of memory allocated for non-inlined objects
 size_t Tuple::GetUninlinedMemorySize() const {
@@ -176,13 +172,12 @@ size_t Tuple::GetUninlinedMemorySize() const {
   if (tuple_schema->IsInlined() == false) {
     for (int column_itr = 0; column_itr < column_count; ++column_itr) {
       // peekObjectLength is unhappy with non-varchar
-      if ((GetType(column_itr) == VALUE_TYPE_VARCHAR
-          || (GetType(column_itr) == VALUE_TYPE_VARBINARY))
-          && !tuple_schema->IsInlined(column_itr)) {
+      if ((GetType(column_itr) == VALUE_TYPE_VARCHAR ||
+           (GetType(column_itr) == VALUE_TYPE_VARBINARY)) &&
+          !tuple_schema->IsInlined(column_itr)) {
         if (!GetValue(column_itr).IsNull()) {
-          bytes += (sizeof(int32_t)
-              + ValuePeeker::PeekObjectLength(
-                  GetValue(column_itr)));
+          bytes += (sizeof(int32_t) +
+                    ValuePeeker::PeekObjectLength(GetValue(column_itr)));
         }
       }
     }
@@ -190,7 +185,6 @@ size_t Tuple::GetUninlinedMemorySize() const {
 
   return bytes;
 }
-
 
 void Tuple::DeserializeFrom(SerializeInput &input, Pool *dataPool) {
   assert(tuple_schema);
@@ -216,12 +210,12 @@ void Tuple::DeserializeFrom(SerializeInput &input, Pool *dataPool) {
     char *data_ptr = GetDataPtr(column_itr);
     const int32_t column_length = tuple_schema->GetLength(column_itr);
 
-    Value::DeserializeFrom(input, type, data_ptr, is_inlined, column_length, dataPool);
+    Value::DeserializeFrom(input, type, data_ptr, is_inlined, column_length,
+                           dataPool);
   }
 }
 
 int64_t Tuple::DeserializeWithHeaderFrom(SerializeInput &input) {
-
   int64_t total_bytes_deserialized = 0;
 
   assert(tuple_schema);
@@ -238,8 +232,8 @@ int64_t Tuple::DeserializeWithHeaderFrom(SerializeInput &input) {
     const bool is_inlined = tuple_schema->IsInlined(column_itr);
     char *data_ptr = GetDataPtr(column_itr);
     const int32_t column_length = tuple_schema->GetLength(column_itr);
-    total_bytes_deserialized +=
-        Value::DeserializeFrom(input, type, data_ptr, is_inlined, column_length, NULL);
+    total_bytes_deserialized += Value::DeserializeFrom(
+        input, type, data_ptr, is_inlined, column_length, NULL);
   }
 
   return total_bytes_deserialized;
@@ -259,7 +253,8 @@ void Tuple::SerializeWithHeaderTo(SerializeOutput &output) {
     value.SerializeTo(output);
   }
 
-  int32_t serialized_size = static_cast<int32_t>(output.Position() - start - sizeof(int32_t));
+  int32_t serialized_size =
+      static_cast<int32_t>(output.Position() - start - sizeof(int32_t));
 
   // write out the length of the tuple at start
   output.WriteIntAt(start, serialized_size);
@@ -274,10 +269,12 @@ void Tuple::SerializeTo(SerializeOutput &output) {
     value.SerializeTo(output);
   }
 
-  output.WriteIntAt(start, static_cast<int32_t>(output.Position() - start - sizeof(int32_t)));
+  output.WriteIntAt(
+      start, static_cast<int32_t>(output.Position() - start - sizeof(int32_t)));
 }
 
-void Tuple::SerializeToExport(ExportSerializeOutput &output, int colOffset, uint8_t *null_array) {
+void Tuple::SerializeToExport(ExportSerializeOutput &output, int colOffset,
+                              uint8_t *null_array) {
   const int column_count = GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
@@ -288,7 +285,7 @@ void Tuple::SerializeToExport(ExportSerializeOutput &output, int colOffset, uint
       int byte = (colOffset + column_itr) >> 3;
       int bit = (colOffset + column_itr) % 8;
       int mask = 0x80 >> bit;
-      null_array[byte] = (uint8_t) (null_array[byte] | mask);
+      null_array[byte] = (uint8_t)(null_array[byte] | mask);
       continue;
     }
 
@@ -304,9 +301,7 @@ bool Tuple::operator==(const Tuple &other) const {
   return EqualsNoSchemaCheck(other);
 }
 
-bool Tuple::operator!=(const Tuple &other) const {
-  return !(*this == other);
-}
+bool Tuple::operator!=(const Tuple &other) const { return !(*this == other); }
 
 bool Tuple::EqualsNoSchemaCheck(const Tuple &other) const {
   const int column_count = tuple_schema->GetColumnCount();
@@ -352,10 +347,10 @@ int Tuple::Compare(const Tuple &other) const {
 
 // Release to the heap any memory allocated for any uninlined columns.
 void Tuple::FreeUninlinedData() {
-  if(tuple_data == nullptr)
-    return;
+  if (tuple_data == nullptr) return;
 
-  const uint16_t unlinlined_column_count = tuple_schema->GetUninlinedColumnCount();
+  const uint16_t unlinlined_column_count =
+      tuple_schema->GetUninlinedColumnCount();
 
   for (int column_itr = 0; column_itr < unlinlined_column_count; column_itr++) {
     GetValue(tuple_schema->GetUninlinedColumn(column_itr)).FreeUninlinedData();
@@ -378,13 +373,13 @@ size_t Tuple::HashCode() const {
   return HashCode(seed);
 }
 
-char* Tuple::GetDataPtr(const oid_t column_id) {
+char *Tuple::GetDataPtr(const oid_t column_id) {
   assert(tuple_schema);
   assert(tuple_data);
   return &tuple_data[tuple_schema->GetOffset(column_id)];
 }
 
-const char* Tuple::GetDataPtr(const oid_t column_id) const {
+const char *Tuple::GetDataPtr(const oid_t column_id) const {
   assert(tuple_schema);
   assert(tuple_data);
   return &tuple_data[tuple_schema->GetOffset(column_id)];
@@ -398,8 +393,7 @@ std::string Tuple::GetInfo() const {
     os << "(";
     if (IsNull(column_itr)) {
       os << "<NULL>";
-    }
-    else {
+    } else {
       os << GetValue(column_itr);
     }
     os << ")\n";
@@ -409,13 +403,10 @@ std::string Tuple::GetInfo() const {
   return os.str();
 }
 
-std::ostream& operator<< (std::ostream& os, const Tuple& tuple){
+std::ostream &operator<<(std::ostream &os, const Tuple &tuple) {
   os << tuple.GetInfo();
   return os;
 }
 
-} // End storage namespace
-} // End peloton namespace
-
-
-
+}  // End storage namespace
+}  // End peloton namespace

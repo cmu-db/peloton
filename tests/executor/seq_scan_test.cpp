@@ -41,7 +41,7 @@ namespace {
 /**
  * @brief Set of tuple_ids that will satisfy the predicate in our test cases.
  */
-const std::set<oid_t> g_tuple_ids( { 0, 3 });
+const std::set<oid_t> g_tuple_ids({0, 3});
 
 /**
  * @brief Convenience method to create table for test.
@@ -53,37 +53,29 @@ storage::DataTable *CreateTable() {
   std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable());
 
   // Schema for first tile group. Vertical partition is 2, 2.
-  std::vector<catalog::Schema> schemas1({
-    catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(0), ExecutorTestsUtil::GetColumnInfo(1) }),
-        catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(2), ExecutorTestsUtil::GetColumnInfo(3) })
-  });
+  std::vector<catalog::Schema> schemas1(
+      {catalog::Schema({ExecutorTestsUtil::GetColumnInfo(0),
+                        ExecutorTestsUtil::GetColumnInfo(1)}),
+       catalog::Schema({ExecutorTestsUtil::GetColumnInfo(2),
+                        ExecutorTestsUtil::GetColumnInfo(3)})});
 
   // Schema for second tile group. Vertical partition is 1, 3.
-  std::vector<catalog::Schema> schemas2({
-    catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(0) }),
-        catalog::Schema({ ExecutorTestsUtil::GetColumnInfo(1), ExecutorTestsUtil::GetColumnInfo(2), ExecutorTestsUtil::GetColumnInfo(3) })
-  });
+  std::vector<catalog::Schema> schemas2(
+      {catalog::Schema({ExecutorTestsUtil::GetColumnInfo(0)}),
+       catalog::Schema({ExecutorTestsUtil::GetColumnInfo(1),
+                        ExecutorTestsUtil::GetColumnInfo(2),
+                        ExecutorTestsUtil::GetColumnInfo(3)})});
 
   GetNextTileGroupId();
 
   // Create tile groups.
   table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID,
-      INVALID_OID,
-      GetNextTileGroupId(),
-      table.get(),
-      table->GetBackend(),
-      schemas1,
-      tuple_count));
+      INVALID_OID, INVALID_OID, GetNextTileGroupId(), table.get(),
+      table->GetBackend(), schemas1, tuple_count));
 
   table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID,
-      INVALID_OID,
-      GetNextTileGroupId(),
-      table.get(),
-      table->GetBackend(),
-      schemas2,
-      tuple_count));
+      INVALID_OID, INVALID_OID, GetNextTileGroupId(), table.get(),
+      table->GetBackend(), schemas2, tuple_count));
 
   ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(0), tuple_count);
   ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(1), tuple_count);
@@ -106,11 +98,12 @@ storage::DataTable *CreateTable() {
  * In each equality node, we either use (arbitrarily taking reference from the
  * parity of the loop iteration) the first field or last field of the tuple.
  */
-expression::AbstractExpression *CreatePredicate(const std::set<oid_t> &tuple_ids) {
-
+expression::AbstractExpression *CreatePredicate(
+    const std::set<oid_t> &tuple_ids) {
   assert(tuple_ids.size() >= 1);
 
-  expression::AbstractExpression *predicate = expression::ConstantValueFactory(Value::GetFalse());
+  expression::AbstractExpression *predicate =
+      expression::ConstantValueFactory(Value::GetFalse());
 
   bool even = false;
   for (oid_t tuple_id : tuple_ids) {
@@ -120,24 +113,27 @@ expression::AbstractExpression *CreatePredicate(const std::set<oid_t> &tuple_ids
     // First, create tuple value expression.
     expression::AbstractExpression *tuple_value_expr = nullptr;
 
-    tuple_value_expr = even ? expression::TupleValueFactory(0, 0) : expression::TupleValueFactory(0, 3);
+    tuple_value_expr = even ? expression::TupleValueFactory(0, 0)
+                            : expression::TupleValueFactory(0, 3);
 
     // Second, create constant value expression.
-    Value constant_value = even
-        ? ValueFactory::GetIntegerValue(ExecutorTestsUtil::PopulatedValue(tuple_id, 0)) :
-            ValueFactory::GetStringValue(std::to_string(ExecutorTestsUtil::PopulatedValue(tuple_id, 3)));
+    Value constant_value =
+        even ? ValueFactory::GetIntegerValue(
+                   ExecutorTestsUtil::PopulatedValue(tuple_id, 0))
+             : ValueFactory::GetStringValue(std::to_string(
+                   ExecutorTestsUtil::PopulatedValue(tuple_id, 3)));
 
-    expression::AbstractExpression *constant_value_expr = expression::ConstantValueFactory(constant_value);
+    expression::AbstractExpression *constant_value_expr =
+        expression::ConstantValueFactory(constant_value);
 
     // Finally, link them together using an equality expression.
-    expression::AbstractExpression *equality_expr = expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQ,
-                                                                                  tuple_value_expr,
-                                                                                  constant_value_expr);
+    expression::AbstractExpression *equality_expr =
+        expression::ComparisonFactory(EXPRESSION_TYPE_COMPARE_EQ,
+                                      tuple_value_expr, constant_value_expr);
 
     // Join equality expression to other equality expression using ORs.
     predicate = expression::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_OR,
-                                               predicate,
-                                               equality_expr);
+                                               predicate, equality_expr);
   }
 
   return predicate;
@@ -167,10 +163,8 @@ executor::LogicalTile *GetNextTile(executor::AbstractExecutor &executor) {
  * that use it (especially the part that verifies values). Please be mindful
  * if you're making changes.
  */
-void RunTest(
-    executor::SeqScanExecutor &executor,
-    int expected_num_tiles,
-    int expected_num_cols) {
+void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
+             int expected_num_cols) {
   EXPECT_TRUE(executor.Init());
   std::vector<std::unique_ptr<executor::LogicalTile> > result_tiles;
   for (int i = 0; i < expected_num_tiles; i++) {
@@ -179,7 +173,7 @@ void RunTest(
   EXPECT_FALSE(executor.Execute());
 
   // Check correctness of result tiles.
-  for (int i = 0 ; i < expected_num_tiles; i++) {
+  for (int i = 0; i < expected_num_tiles; i++) {
     EXPECT_EQ(expected_num_cols, result_tiles[i]->GetColumnCount());
 
     // Only two tuples per tile satisfy our predicate.
@@ -188,17 +182,19 @@ void RunTest(
     // Verify values.
     std::set<oid_t> expected_tuples_left(g_tuple_ids);
     for (oid_t new_tuple_id : *(result_tiles[i])) {
-
       // We divide by 10 because we know how PopulatedValue() computes.
       // Bad style. Being a bit lazy here...
 
-      int old_tuple_id = result_tiles[i]->GetValue(new_tuple_id, 0)
-                                       .GetIntegerForTestsOnly() / 10;
+      int old_tuple_id =
+          result_tiles[i]->GetValue(new_tuple_id, 0).GetIntegerForTestsOnly() /
+          10;
 
       EXPECT_EQ(1, expected_tuples_left.erase(old_tuple_id));
 
       int val1 = ExecutorTestsUtil::PopulatedValue(old_tuple_id, 1);
-      EXPECT_EQ(val1, result_tiles[i]->GetValue(new_tuple_id, 1).GetIntegerForTestsOnly());
+      EXPECT_EQ(
+          val1,
+          result_tiles[i]->GetValue(new_tuple_id, 1).GetIntegerForTestsOnly());
       int val2 = ExecutorTestsUtil::PopulatedValue(old_tuple_id, 3);
 
       // expected_num_cols - 1 is a hacky way to ensure that
@@ -207,14 +203,15 @@ void RunTest(
       // during the scan as part of the test case).
       // For the logical tile test case, it'll be 3.
       Value string_value(ValueFactory::GetStringValue(std::to_string(val2)));
-      EXPECT_EQ(string_value, result_tiles[i]->GetValue(new_tuple_id, expected_num_cols - 1));
+      EXPECT_EQ(string_value,
+                result_tiles[i]->GetValue(new_tuple_id, expected_num_cols - 1));
       string_value.FreeUninlinedData();
     }
     EXPECT_EQ(0, expected_tuples_left.size());
   }
 }
 
-} // namespace
+}  // namespace
 
 // Sequential scan of table with predicate.
 // The table being scanned has more than one tile group. i.e. the vertical
@@ -224,15 +221,13 @@ TEST(SeqScanTests, TwoTileGroupsWithPredicateTest) {
   std::unique_ptr<storage::DataTable> table(CreateTable());
 
   // Column ids to be added to logical tile after scan.
-  std::vector<oid_t> column_ids( { 0, 1, 3 });
+  std::vector<oid_t> column_ids({0, 1, 3});
 
   // Create plan node.
-  planner::SeqScanNode node(
-      table.get(),
-      CreatePredicate(g_tuple_ids),
-      column_ids);
+  planner::SeqScanNode node(table.get(), CreatePredicate(g_tuple_ids),
+                            column_ids);
 
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -252,13 +247,10 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
   std::vector<oid_t> column_ids;
 
   // Create plan node.
-  planner::SeqScanNode node(
-      table,
-      CreatePredicate(g_tuple_ids),
-      column_ids);
+  planner::SeqScanNode node(table, CreatePredicate(g_tuple_ids), column_ids);
 
   // Set up executor and its child.
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -268,14 +260,13 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
   executor.AddChild(&child_executor);
 
   // Uneventful init...
-  EXPECT_CALL(child_executor, DInit())
-  .WillOnce(Return(true));
+  EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
   // Will return one tile.
   EXPECT_CALL(child_executor, DExecute())
-  .WillOnce(Return(true))
-  .WillOnce(Return(true))
-  .WillOnce(Return(false));
+      .WillOnce(Return(true))
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
   // This table is generated so we can reuse the test data of the test case
   // where seq scan is a leaf node. We only need the data in the tiles.
@@ -288,8 +279,8 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(2)));
 
   EXPECT_CALL(child_executor, GetOutput())
-  .WillOnce(Return(source_logical_tile1.release()))
-  .WillOnce(Return(source_logical_tile2.release()));
+      .WillOnce(Return(source_logical_tile1.release()))
+      .WillOnce(Return(source_logical_tile2.release()));
 
   int expected_column_count = data_table->GetSchema()->GetColumnCount();
 
@@ -298,5 +289,5 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

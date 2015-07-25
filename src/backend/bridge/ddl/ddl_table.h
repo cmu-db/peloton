@@ -28,28 +28,24 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class DDLTable {
-
  public:
-  DDLTable(const DDLTable &) = delete;
-  DDLTable& operator=(const DDLTable &) = delete;
-  DDLTable(DDLTable &&) = delete;
-  DDLTable& operator=(DDLTable &&) = delete;
+  DDLTable(const DDLTable&) = delete;
+  DDLTable& operator=(const DDLTable&) = delete;
+  DDLTable(DDLTable&&) = delete;
+  DDLTable& operator=(DDLTable&&) = delete;
 
-  static bool ExecCreateStmt(Node* parsetree, const char* queryString, std::vector<IndexInfo>& index_infos);
+  static bool ExecCreateStmt(Node* parsetree, const char* queryString,
+                             std::vector<IndexInfo>& index_infos);
 
   static bool ExecAlterTableStmt(Node* parsetree, const char* queryString);
 
   static bool ExecDropStmt(Node* parsertree);
 
-  static bool CreateTable(Oid relation_oid,
-                          std::string table_name,
+  static bool CreateTable(Oid relation_oid, std::string table_name,
                           std::vector<catalog::Column> column_infos,
-                          catalog::Schema *schema = NULL);
+                          catalog::Schema* schema = NULL);
 
-
-  static bool AlterTable(Oid relation_oid,
-                         AlterTableStmt* Astmt);
-
+  static bool AlterTable(Oid relation_oid, AlterTableStmt* Astmt);
 
   static bool DropTable(Oid table_oid);
 
@@ -58,10 +54,8 @@ class DDLTable {
                                  oid_t relation_oid);
 
  private:
-
   static bool AddConstraint(Oid relation_oid, Constraint* constraint);
-
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

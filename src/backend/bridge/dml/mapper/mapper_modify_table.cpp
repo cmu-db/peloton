@@ -23,11 +23,11 @@ namespace bridge {
 // ModifyTable
 //===--------------------------------------------------------------------===//
 
-extern std::vector<std::pair<oid_t, expression::AbstractExpression*>>
-TransformProjInfo(const ProjectionInfo* proj_info, oid_t column_count);
+extern std::vector<std::pair<oid_t, expression::AbstractExpression *>>
+TransformProjInfo(const ProjectionInfo *proj_info, oid_t column_count);
 
-extern std::vector<std::pair<oid_t, expression::AbstractExpression*>>
-TransformTargetList(List* target_list, oid_t column_count);
+extern std::vector<std::pair<oid_t, expression::AbstractExpression *>>
+TransformTargetList(List *target_list, oid_t column_count);
 
 /**
  * @brief Convert ModifyTableState into AbstractPlanNode.
@@ -37,8 +37,7 @@ TransformTargetList(List* target_list, oid_t column_count);
  */
 planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
     const ModifyTableState *mt_plan_state) {
-
-  ModifyTable *plan = (ModifyTable *) mt_plan_state->ps.plan;
+  ModifyTable *plan = (ModifyTable *)mt_plan_state->ps.plan;
 
   switch (plan->operation) {
     case CMD_INSERT:
@@ -70,7 +69,6 @@ planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
  */
 planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     const ModifyTableState *mt_plan_state) {
-
   planner::AbstractPlanNode *plan_node = nullptr;
 
   /* Resolve result table */
@@ -81,9 +79,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
   Oid table_oid = result_relation_desc->rd_id;
 
   /* Get the target table */
-  storage::DataTable *target_table =
-      static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
-  .GetTableWithOid(database_oid, table_oid));
+  storage::DataTable *target_table = static_cast<storage::DataTable *>(
+      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
   if (target_table == nullptr) {
     LOG_ERROR("Target table is not found : database oid %u table oid %u",
@@ -91,7 +88,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
     return nullptr;
   }
 
-  LOG_TRACE("Insert into: database oid %u table oid %u", database_oid, table_oid);
+  LOG_TRACE("Insert into: database oid %u table oid %u", database_oid,
+            table_oid);
 
   /* Get the tuple schema */
   auto schema = target_table->GetSchema();
@@ -104,12 +102,14 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
 
   if (nodeTag(sub_planstate->plan) == T_Result) {  // Child is a result node
     LOG_TRACE("Child of Insert is Result");
-    auto result_ps = reinterpret_cast<ResultState*>(sub_planstate);
+    auto result_ps = reinterpret_cast<ResultState *>(sub_planstate);
 
-    assert(outerPlanState(result_ps) == nullptr); /* We only handle single-constant-tuple for now,
-                                              i.e., ResultState should have no children/sub plans */
+    assert(outerPlanState(result_ps) ==
+           nullptr); /* We only handle single-constant-tuple for now,
+                 i.e., ResultState should have no children/sub plans */
 
-    auto project_info = BuildProjectInfo(result_ps->ps.ps_ProjInfo, schema->GetColumnCount());
+    auto project_info =
+        BuildProjectInfo(result_ps->ps.ps_ProjInfo, schema->GetColumnCount());
 
     plan_node = new planner::InsertNode(target_table, project_info);
 
@@ -118,18 +118,17 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
               nodeTag(sub_planstate->plan));
   }
 
-
   return plan_node;
 }
 
-planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
-    const ModifyTableState* mt_plan_state) {
-
+planner::AbstractPlanNode *PlanTransformer::TransformUpdate(
+    const ModifyTableState *mt_plan_state) {
   /*
    * NOTE:
    * In Postgres, the new tuple is returned by an underlying Scan node
    * (by means of non-trivial projections),
-   * and the Postgres Update (ModifyTable) node merely replace the old tuple with it.
+   * and the Postgres Update (ModifyTable) node merely replace the old tuple
+   * with it.
    * In Peloton, we want to shift the responsibility of constructing the
    * new tuple to the Update node.
    * So, we peek and steal the projection info from our child,
@@ -148,9 +147,8 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
   Oid table_oid = result_relation_desc->rd_id;
 
   /* Get the target table */
-  storage::DataTable *target_table =
-      static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
-  .GetTableWithOid(database_oid, table_oid));
+  storage::DataTable *target_table = static_cast<storage::DataTable *>(
+      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
   if (target_table == nullptr) {
     LOG_ERROR("Target table is not found : database oid %u table oid %u",
@@ -159,7 +157,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
   }
 
   LOG_TRACE("Update table : database oid %u table oid %u", database_oid,
-           table_oid);
+            table_oid);
 
   /* Get the first sub plan state */
   PlanState *sub_planstate = mt_plan_state->mt_plans[0];
@@ -168,25 +166,24 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
   /* Get the tuple schema */
   auto schema = target_table->GetSchema();
 
-  planner::AbstractPlanNode* plan_node = nullptr;
+  planner::AbstractPlanNode *plan_node = nullptr;
 
   auto child_tag = nodeTag(sub_planstate->plan);
 
-  if (child_tag == T_SeqScan
-      || child_tag == T_IndexScan
-      || child_tag == T_IndexOnlyScan
-      || child_tag == T_BitmapHeapScan) {  // Sub plan is a Scan of any type
+  if (child_tag == T_SeqScan || child_tag == T_IndexScan ||
+      child_tag == T_IndexOnlyScan ||
+      child_tag == T_BitmapHeapScan) {  // Sub plan is a Scan of any type
 
     LOG_TRACE("Child of Update is %u \n", child_tag);
     // Extract the projection info from the underlying scan
     // and put it in our update node
-    auto scan_state = reinterpret_cast<ScanState*>(sub_planstate);
-    auto project_info = BuildProjectInfo(scan_state->ps.ps_ProjInfo, schema->GetColumnCount());
+    auto scan_state = reinterpret_cast<ScanState *>(sub_planstate);
+    auto project_info =
+        BuildProjectInfo(scan_state->ps.ps_ProjInfo, schema->GetColumnCount());
 
     plan_node = new planner::UpdateNode(target_table, project_info);
     plan_node->AddChild(TransformPlan(sub_planstate));
   } else {
-
     LOG_ERROR("Unsupported sub plan type of Update : %u \n", child_tag);
   }
 
@@ -203,23 +200,23 @@ planner::AbstractPlanNode* PlanTransformer::TransformUpdate(
  * returned by a subplan (mostly Scan).
  * So we don't need to handle predicates locally .
  */
-planner::AbstractPlanNode* PlanTransformer::TransformDelete(
-    const ModifyTableState* mt_plan_state) {
-
+planner::AbstractPlanNode *PlanTransformer::TransformDelete(
+    const ModifyTableState *mt_plan_state) {
   // Grab Database ID and Table ID
   assert(mt_plan_state->resultRelInfo);  // Input must come from a subplan
-  assert(mt_plan_state->mt_nplans == 1);  // Maybe relax later. I don't know when they can have >1 subplans.
+  assert(mt_plan_state->mt_nplans ==
+         1);  // Maybe relax later. I don't know when they can have >1 subplans.
 
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
   Oid table_oid = mt_plan_state->resultRelInfo[0].ri_RelationDesc->rd_id;
 
   /* Grab the target table */
-  storage::DataTable *target_table =
-      static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
-  .GetTableWithOid(database_oid, table_oid));
+  storage::DataTable *target_table = static_cast<storage::DataTable *>(
+      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
   assert(target_table);
-  LOG_INFO("Delete from: database oid %u table oid %u", database_oid, table_oid);
+  LOG_INFO("Delete from: database oid %u table oid %u", database_oid,
+           table_oid);
 
   /* Grab the subplan -> child plan node */
   assert(mt_plan_state->mt_nplans == 1);
@@ -236,6 +233,5 @@ planner::AbstractPlanNode* PlanTransformer::TransformDelete(
   return plan_node;
 }
 
-} // namespace bridge
-} // namespace peloton
-
+}  // namespace bridge
+}  // namespace peloton

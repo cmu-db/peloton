@@ -27,38 +27,31 @@ class TBBSchedulerState {
   tbb::task *root;
 
  public:
-
   TBBSchedulerState() {
     // Start root task
-    root = new(tbb::task::allocate_root()) tbb::empty_task;
+    root = new (tbb::task::allocate_root()) tbb::empty_task;
     root->increment_ref_count();
   }
 
   ~TBBSchedulerState() {
-
     LOG_TRACE("Destroying root task \n");
     root->set_ref_count(0);
     root->destroy(*root);
     LOG_TRACE("Destroyed root task \n");
   }
-
 };
-
 
 //===--------------------------------------------------------------------===//
 // Scheduler
 //===--------------------------------------------------------------------===//
 
 class TBBScheduler : public AbstractScheduler {
-
  public:
-
   TBBScheduler();
   ~TBBScheduler();
 
   // add task to queue
-  void Run(handler function_pointer,
-           void *args,
+  void Run(handler function_pointer, void *args,
            TaskPriorityType priority = TASK_PRIORTY_TYPE_NORMAL);
 
   // wait for all tasks
@@ -70,5 +63,5 @@ class TBBScheduler : public AbstractScheduler {
   TBBSchedulerState *state = nullptr;
 };
 
-} // namespace scheduler
-} // namespace peloton
+}  // namespace scheduler
+}  // namespace peloton

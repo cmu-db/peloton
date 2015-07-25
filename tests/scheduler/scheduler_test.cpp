@@ -28,16 +28,15 @@ namespace test {
 TEST(SchedulerTests, KernelTest) {
   auto kernel_func = &backend::Kernel::Handler;
 
-  std::unique_ptr<scheduler::TBBScheduler> tbb_scheduler(new scheduler::TBBScheduler());
+  std::unique_ptr<scheduler::TBBScheduler> tbb_scheduler(
+      new scheduler::TBBScheduler());
 
   tbb_scheduler->Run(reinterpret_cast<scheduler::handler>(kernel_func),
                      const_cast<char*>("CREATE DATABASE TESTDB;"));
 
   // final wait
   tbb_scheduler->Wait();
-
 }
 
-} // End test namespace
-} // End peloton namespace
-
+}  // End test namespace
+}  // End peloton namespace

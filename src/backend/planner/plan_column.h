@@ -59,7 +59,5 @@ class PlanColumn {
   std::string m_inputColumnName;
 };
 
-} // namespace planner
-} // namespace peloton
-
-
+}  // namespace planner
+}  // namespace peloton
