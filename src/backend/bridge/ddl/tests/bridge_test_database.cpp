@@ -54,6 +54,9 @@ void BridgeTest::DDL_CreateDatabase_TEST_WITH_VALID_OID() {
   // CHECK :: status must be true
   assert(status);
 
+  status = DDLDatabase::DropDatabase(12345);
+  assert(status);
+
   std::cout << ":::::: " << __func__ << " DONE\n";
 }
 
