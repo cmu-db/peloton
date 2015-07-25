@@ -128,6 +128,10 @@ void BridgeTest::DDL_CreateIndex_TEST_WITH_TABLE() {
   // CHECK :: status must be false
   assert(status);
 
+  // Drop the table
+  status = DDLTable::DropTable(table_oid);
+  assert(status);
+
   std::cout << ":::::: " << __func__ << " DONE\n";
 
 }
