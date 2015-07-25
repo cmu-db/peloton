@@ -12,7 +12,6 @@
 
 #include <limits>
 #include <sstream>
-#include <cmath>
 #include <iostream>
 
 #include "backend/brain/clusterer.h"
@@ -21,23 +20,26 @@ namespace peloton {
 namespace brain {
 
 // http://www.cs.princeton.edu/courses/archive/fall08/cos436/Duda/C/sk_means.htm
-void Clusterer::ProcessSample(double sample) {
+void Clusterer::ProcessSample(const Sample& sample) {
   // Figure out closest cluster
   oid_t closest_cluster = GetClosestCluster(sample);
 
+  double distance = sample.GetDistance(means[closest_cluster], false);
+  double mean_drift = new_sample_weight_ * distance;
+
   // Update the cluster's mean
-  means[closest_cluster] +=
-      new_sample_weight_ * (sample - means[closest_cluster]);
+  means[closest_cluster] =  means[closest_cluster] + mean_drift;
+
 }
 
-oid_t Clusterer::GetClosestCluster(double sample) const {
+oid_t Clusterer::GetClosestCluster(const Sample& sample) const {
   double min_dist = std::numeric_limits<double>::max();
   oid_t closest_cluster = START_OID;
   oid_t cluster_itr = START_OID;
 
   // Go over all the means and find closest cluster
   for (auto mean : means) {
-    auto dist = GetDistance(sample, mean);
+    auto dist = sample.GetDistance(mean, true);
     if (dist < min_dist) {
       closest_cluster = cluster_itr;
       min_dist = dist;
@@ -48,12 +50,8 @@ oid_t Clusterer::GetClosestCluster(double sample) const {
   return closest_cluster;
 }
 
-double Clusterer::GetCluster(oid_t cluster_offset) const {
+Sample Clusterer::GetCluster(oid_t cluster_offset) const {
   return means[cluster_offset];
-}
-
-double Clusterer::GetDistance(double sample1, double sample2) const {
-  return std::abs(sample1 - sample2);
 }
 
 std::ostream &operator<<(std::ostream &os, const Clusterer &clusterer) {
