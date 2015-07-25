@@ -29,9 +29,9 @@ namespace planner {
 class IndexScanNode : public AbstractPlanNode {
  public:
   IndexScanNode(const IndexScanNode &) = delete;
-  IndexScanNode& operator=(const IndexScanNode &) = delete;
+  IndexScanNode &operator=(const IndexScanNode &) = delete;
   IndexScanNode(IndexScanNode &&) = delete;
-  IndexScanNode& operator=(IndexScanNode &&) = delete;
+  IndexScanNode &operator=(IndexScanNode &&) = delete;
 
   struct IndexScanDesc {
     index::Index *index;
@@ -45,8 +45,7 @@ class IndexScanNode : public AbstractPlanNode {
           start_key(nullptr),
           end_key(nullptr),
           start_inclusive(false),
-          end_inclusive(false) {
-    }
+          end_inclusive(false) {}
   };
 
   IndexScanNode(storage::AbstractTable *table, index::Index *index,
@@ -59,8 +58,7 @@ class IndexScanNode : public AbstractPlanNode {
         end_key_(end_key),
         start_inclusive_(start_inclusive),
         end_inclusive_(end_inclusive),
-        column_ids_(column_ids) {
-  }
+        column_ids_(column_ids) {}
 
   IndexScanNode(storage::AbstractTable *table, IndexScanDesc &index_scan_desc)
       : table_(table),
@@ -69,47 +67,29 @@ class IndexScanNode : public AbstractPlanNode {
         end_key_(index_scan_desc.end_key),
         start_inclusive_(index_scan_desc.start_inclusive),
         end_inclusive_(index_scan_desc.end_inclusive),
-        column_ids_(index_scan_desc.column_ids) {
-  }
+        column_ids_(index_scan_desc.column_ids) {}
 
-  const storage::AbstractTable *GetTable() const {
-    return table_;
-  }
+  const storage::AbstractTable *GetTable() const { return table_; }
 
-  const index::Index* GetIndex() const {
-    return index_;
-  }
+  const index::Index *GetIndex() const { return index_; }
 
-  const storage::Tuple* GetStartKey() const {
-    return start_key_;
-  }
+  const storage::Tuple *GetStartKey() const { return start_key_; }
 
-  const storage::Tuple* GetEndKey() const {
-    return end_key_;
-  }
+  const storage::Tuple *GetEndKey() const { return end_key_; }
 
-  bool IsStartInclusive() const {
-    return start_inclusive_;
-  }
+  bool IsStartInclusive() const { return start_inclusive_; }
 
-  bool IsEndInclusive() const {
-    return end_inclusive_;
-  }
+  bool IsEndInclusive() const { return end_inclusive_; }
 
-  const std::vector<oid_t> GetColumnIds() const {
-    return column_ids_;
-  }
+  const std::vector<oid_t> GetColumnIds() const { return column_ids_; }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_INDEXSCAN;
   }
 
-  inline std::string GetInfo() const {
-    return "IndexScan";
-  }
+  inline std::string GetInfo() const { return "IndexScan"; }
 
  private:
-
   /** @brief Pointer to table to scan from. */
   const storage::AbstractTable *table_;
 

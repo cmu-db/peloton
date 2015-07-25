@@ -30,18 +30,15 @@ namespace bridge {
  */
 planner::AbstractPlanNode* PlanTransformer::TransformLockRows(
     const LockRowsState* lr_plan_state) {
-
   assert(nodeTag(lr_plan_state) == T_LockRowsState);
 
   LOG_INFO("Handle LockRows");
 
   /* get the underlying plan */
-  PlanState *outer_plan_state = outerPlanState(lr_plan_state);
+  PlanState* outer_plan_state = outerPlanState(lr_plan_state);
 
   return PlanTransformer::TransformPlan(outer_plan_state);
-
 }
 
-
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

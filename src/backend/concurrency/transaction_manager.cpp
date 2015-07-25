@@ -41,10 +41,9 @@ TransactionManager::~TransactionManager() {
 
 // Get entry in table
 Transaction *TransactionManager::GetTransaction(txn_id_t txn_id) {
-
   {
     std::lock_guard<std::mutex> lock(txn_table_mutex);
-    if(txn_table.count(txn_id) != 0) {
+    if (txn_table.count(txn_id) != 0) {
       return txn_table.at(txn_id);
     }
   }
@@ -52,7 +51,7 @@ Transaction *TransactionManager::GetTransaction(txn_id_t txn_id) {
   return nullptr;
 }
 
-txn_id_t TransactionManager::GetNextTransactionId(){
+txn_id_t TransactionManager::GetNextTransactionId() {
   if (next_txn_id == MAX_TXN_ID) {
     throw TransactionException("Txn id equals MAX_TXN_ID");
   }
@@ -60,19 +59,17 @@ txn_id_t TransactionManager::GetNextTransactionId(){
   return next_txn_id++;
 }
 
-
 // Begin a new transaction
 Transaction *TransactionManager::BeginTransaction() {
-
-  Transaction *next_txn =  new Transaction(GetNextTransactionId(),
-                                           GetLastCommitId());
+  Transaction *next_txn =
+      new Transaction(GetNextTransactionId(), GetLastCommitId());
 
   {
     std::lock_guard<std::mutex> lock(txn_table_mutex);
     auto txn_id = next_txn->txn_id;
 
     // erase entry in transaction table
-    if(txn_table.count(txn_id) != 0) {
+    if (txn_table.count(txn_id) != 0) {
       txn_table.insert(std::make_pair(txn_id, next_txn));
     }
   }
@@ -85,8 +82,7 @@ std::vector<Transaction *> TransactionManager::GetCurrentTransactions() {
 
   {
     std::lock_guard<std::mutex> lock(txn_table_mutex);
-    for(auto entry : txn_table)
-      txns.push_back(entry.second);
+    for (auto entry : txn_table) txns.push_back(entry.second);
   }
 
   return txns;
@@ -96,31 +92,28 @@ bool TransactionManager::IsValid(txn_id_t txn_id) {
   return (txn_id < next_txn_id);
 }
 
-void TransactionManager::EndTransaction(Transaction *txn, bool sync __attribute__((unused))) {
-
+void TransactionManager::EndTransaction(Transaction *txn,
+                                        bool sync __attribute__((unused))) {
   // XXX LOG :: record commit entry
   {
     std::lock_guard<std::mutex> lock(txn_table_mutex);
     // erase entry in transaction table
     txn_table.erase(txn->txn_id);
   }
-
 }
 
 // Store an entry in PG Transaction table
 Transaction *TransactionManager::StartPGTransaction(TransactionId txn_id) {
-
   {
     std::lock_guard<std::mutex> lock(pg_txn_table_mutex);
 
     // If entry already exists
-    if(pg_txn_table.count(txn_id) != 0)
-      return pg_txn_table.at(txn_id);
+    if (pg_txn_table.count(txn_id) != 0) return pg_txn_table.at(txn_id);
 
     // Else, create one for this new pg txn id
     auto txn = BeginTransaction();
     auto status = pg_txn_table.insert(std::make_pair(txn_id, txn));
-    if(status.second == true) {
+    if (status.second == true) {
       return txn;
     }
   }
@@ -130,12 +123,11 @@ Transaction *TransactionManager::StartPGTransaction(TransactionId txn_id) {
 
 // Get entry in PG Transaction table
 Transaction *TransactionManager::GetPGTransaction(TransactionId txn_id) {
-
   {
     std::lock_guard<std::mutex> lock(pg_txn_table_mutex);
 
     // If entry already exists
-    if(pg_txn_table.count(txn_id) != 0) {
+    if (pg_txn_table.count(txn_id) != 0) {
       auto txn = pg_txn_table.at(txn_id);
       return txn;
     }
@@ -148,13 +140,12 @@ Transaction *TransactionManager::GetPGTransaction(TransactionId txn_id) {
 // Commit Processing
 //===--------------------------------------------------------------------===//
 
-TransactionManager& TransactionManager::GetInstance() {
+TransactionManager &TransactionManager::GetInstance() {
   static TransactionManager txn_manager;
   return txn_manager;
 }
 
 void TransactionManager::BeginCommitPhase(Transaction *txn) {
-
   // successor in the transaction list will point to us
   txn->IncrementRefCount();
 
@@ -176,34 +167,32 @@ void TransactionManager::BeginCommitPhase(Transaction *txn) {
     // drop a reference to previous last transaction pointer
     tmp->DecrementRefCount();
   }
-
 }
 
-void TransactionManager::CommitModifications(Transaction *txn, bool sync __attribute__((unused))) {
-
+void TransactionManager::CommitModifications(Transaction *txn, bool sync
+                                             __attribute__((unused))) {
   // (A) commit inserts
   auto inserted_tuples = txn->GetInsertedTuples();
-  for(auto entry : inserted_tuples) {
+  for (auto entry : inserted_tuples) {
     storage::TileGroup *tile_group = entry.first;
 
-    for(auto tuple_slot : entry.second)
+    for (auto tuple_slot : entry.second)
       tile_group->CommitInsertedTuple(tuple_slot, txn->cid);
   }
 
   // (B) commit deletes
   auto deleted_tuples = txn->GetDeletedTuples();
-  for(auto entry : deleted_tuples) {
+  for (auto entry : deleted_tuples) {
     storage::TileGroup *tile_group = entry.first;
-    for(auto tuple_slot : entry.second)
+    for (auto tuple_slot : entry.second)
       tile_group->CommitDeletedTuple(tuple_slot, txn->txn_id, txn->cid);
   }
 
   // XXX LOG :: record commit entry
-
 }
 
-void TransactionManager::CommitPendingTransactions(std::vector<Transaction *>& pending_txns, Transaction *txn) {
-
+void TransactionManager::CommitPendingTransactions(
+    std::vector<Transaction *> &pending_txns, Transaction *txn) {
   // add ourself to the list
   pending_txns.push_back(txn);
 
@@ -211,10 +200,8 @@ void TransactionManager::CommitPendingTransactions(std::vector<Transaction *>& p
   auto current_txn = txn->next;
 
   while (current_txn != nullptr && current_txn->waiting_to_commit == true) {
-
     // try to increment last finished cid
     if (atomic_cas(&last_cid, current_txn->cid - 1, current_txn->cid)) {
-
       // if that worked, add transaction to list
       pending_txns.push_back(current_txn);
       LOG_TRACE("Pending Txn  : %lu \n", current_txn->txn_id);
@@ -227,17 +214,15 @@ void TransactionManager::CommitPendingTransactions(std::vector<Transaction *>& p
     else {
       break;
     }
-
   }
-
 }
 
-std::vector<Transaction*> TransactionManager::EndCommitPhase(Transaction * txn, bool sync) {
+std::vector<Transaction *> TransactionManager::EndCommitPhase(Transaction *txn,
+                                                              bool sync) {
   std::vector<Transaction *> txn_list;
 
   // try to increment last commit id
   if (atomic_cas(&last_cid, txn->cid - 1, txn->cid)) {
-
     LOG_TRACE("update lcid worked : %lu \n", txn->txn_id);
 
     // everything went fine and the txn was committed
@@ -248,7 +233,6 @@ std::vector<Transaction*> TransactionManager::EndCommitPhase(Transaction * txn, 
   // it did not work, so add to waiting list
   // some other transaction with lower commit id will commit us later
   else {
-
     LOG_TRACE("add to wait list : %lu \n", txn->txn_id);
 
     txn->waiting_to_commit = true;
@@ -257,7 +241,6 @@ std::vector<Transaction*> TransactionManager::EndCommitPhase(Transaction * txn, 
     // before we could add ourselves to the list of pending transactions
     // we try incrementing the last finished cid again
     if (atomic_cas(&last_cid, txn->cid - 1, txn->cid)) {
-
       // it worked on the second try
       txn->waiting_to_commit = false;
 
@@ -271,13 +254,13 @@ std::vector<Transaction*> TransactionManager::EndCommitPhase(Transaction * txn, 
   return std::move(txn_list);
 }
 
-
 void TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
   assert(txn != nullptr);
 
   // validate txn id
   if (!IsValid(txn->txn_id)) {
-    throw TransactionException("Transaction not found in transaction table : " + std::to_string(txn->txn_id));
+    throw TransactionException("Transaction not found in transaction table : " +
+                               std::to_string(txn->txn_id));
   }
 
   // begin commit phase : get cid and add to transaction list
@@ -290,11 +273,9 @@ void TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
   std::vector<Transaction *> committed_txns = EndCommitPhase(txn, sync);
 
   // process all committed txns
-  for (auto committed_txn : committed_txns)
-    committed_txn->DecrementRefCount();
+  for (auto committed_txn : committed_txns) committed_txn->DecrementRefCount();
 
   // XXX LOG : group commit entry
-
 }
 
 //===--------------------------------------------------------------------===//
@@ -302,22 +283,21 @@ void TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
 //===--------------------------------------------------------------------===//
 
 void TransactionManager::AbortTransaction(Transaction *txn) {
-
   // (A) rollback inserts
   auto inserted_tuples = txn->GetInsertedTuples();
-  for(auto entry : inserted_tuples) {
+  for (auto entry : inserted_tuples) {
     storage::TileGroup *tile_group = entry.first;
 
-    for(auto tuple_slot : entry.second)
+    for (auto tuple_slot : entry.second)
       tile_group->AbortInsertedTuple(tuple_slot);
   }
 
   // (B) rollback deletes
   auto deleted_tuples = txn->GetDeletedTuples();
-  for(auto entry : txn->GetDeletedTuples()) {
+  for (auto entry : txn->GetDeletedTuples()) {
     storage::TileGroup *tile_group = entry.first;
 
-    for(auto tuple_slot : entry.second)
+    for (auto tuple_slot : entry.second)
       tile_group->AbortDeletedTuple(tuple_slot);
   }
 
@@ -329,5 +309,5 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
   // XXX LOG :: record abort entry
 }
 
-} // End concurrency namespace
-} // End peloton namespace
+}  // End concurrency namespace
+}  // End peloton namespace

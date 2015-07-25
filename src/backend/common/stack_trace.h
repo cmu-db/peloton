@@ -32,12 +32,11 @@ class StackTracer {
 
  private:
   backward::details::handle<char*> _stack_content;
-  bool                   _loaded;
+  bool _loaded;
 
   static void sig_handler(int, siginfo_t* info, void* _ctx);
-
 };
 
 void GetStackTrace(int signum = 0);
 
-} // namespace peloton
+}  // namespace peloton

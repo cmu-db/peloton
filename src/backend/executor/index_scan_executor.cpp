@@ -29,8 +29,7 @@ namespace executor {
  */
 IndexScanExecutor::IndexScanExecutor(planner::AbstractPlanNode *node,
                                      ExecutorContext *executor_context)
-: AbstractExecutor(node, executor_context) {
-}
+    : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -66,13 +65,11 @@ bool IndexScanExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool IndexScanExecutor::DExecute() {
-
   // Already performed the index lookup
-  if(done) {
-    if(result_itr == result.size()) {
+  if (done) {
+    if (result_itr == result.size()) {
       return false;
-    }
-    else {
+    } else {
       // Return appropriate tile and go to next tile
       SetOutput(result[result_itr]);
       result_itr++;
@@ -83,38 +80,34 @@ bool IndexScanExecutor::DExecute() {
   // Else, need to do the index lookup
   std::vector<ItemPointer> tuple_locations;
 
-  if(start_key_ == nullptr && end_key_ == nullptr) {
+  if (start_key_ == nullptr && end_key_ == nullptr) {
     return false;
-  }
-  else if(start_key_ == nullptr) {
+  } else if (start_key_ == nullptr) {
     // < END_KEY
-    if(end_inclusive_ == false) {
+    if (end_inclusive_ == false) {
       tuple_locations = index_->GetLocationsForKeyLT(end_key_);
     }
     // <= END_KEY
     else {
       tuple_locations = index_->GetLocationsForKeyLTE(end_key_);
     }
-  }
-  else if(end_key_ == nullptr) {
+  } else if (end_key_ == nullptr) {
     // > START_KEY
-    if(start_inclusive_ == false) {
+    if (start_inclusive_ == false) {
       tuple_locations = index_->GetLocationsForKeyGT(start_key_);
     }
     // >= START_KEY
     else {
       tuple_locations = index_->GetLocationsForKeyGTE(start_key_);
     }
-  }
-  else {
+  } else {
     // START_KEY < .. < END_KEY
     tuple_locations = index_->GetLocationsForKeyBetween(start_key_, end_key_);
   }
 
   LOG_TRACE("Tuple locations : %lu \n", tuple_locations.size());
 
-  if(tuple_locations.size() == 0)
-    return false;
+  if (tuple_locations.size() == 0) return false;
 
   auto transaction_ = executor_context_->GetTransaction();
   txn_id_t txn_id = transaction_->GetTransactionId();
@@ -122,7 +115,7 @@ bool IndexScanExecutor::DExecute() {
 
   // Get the logical tiles corresponding to the given tuple locations
   result = LogicalTileFactory::WrapTileGroups(tuple_locations, column_ids_,
-                                                  txn_id, commit_id);
+                                              txn_id, commit_id);
   done = true;
 
   LOG_TRACE("Result tiles : %lu \n", result.size());
@@ -133,5 +126,5 @@ bool IndexScanExecutor::DExecute() {
   return true;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

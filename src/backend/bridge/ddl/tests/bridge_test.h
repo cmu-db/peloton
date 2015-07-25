@@ -36,18 +36,16 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class BridgeTest {
-
  public:
-  BridgeTest(const BridgeTest &) = delete;
-  BridgeTest& operator=(const BridgeTest &) = delete;
-  BridgeTest(BridgeTest &&) = delete;
-  BridgeTest& operator=(BridgeTest &&) = delete;
+  BridgeTest(const BridgeTest&) = delete;
+  BridgeTest& operator=(const BridgeTest&) = delete;
+  BridgeTest(BridgeTest&&) = delete;
+  BridgeTest& operator=(BridgeTest&&) = delete;
 
   // Bridge Test Main Function
   static void RunTests();
 
  private:
-
   //===--------------------------------------------------------------------===//
   // Database Test
   //===--------------------------------------------------------------------===//
@@ -83,7 +81,7 @@ class BridgeTest {
   //===--------------------------------------------------------------------===//
   // Mix Test
   //===--------------------------------------------------------------------===//
-  
+
   static void DDL_MIX_TEST();
 
   static void DDL_MIX_TEST_1();
@@ -94,37 +92,29 @@ class BridgeTest {
 
   static std::vector<catalog::Column> CreateSimpleColumns();
 
-  static bool CheckColumn(catalog::Column& column,
-                          std::string column_name, 
-                          int length, 
-                          ValueType type);
+  static bool CheckColumn(catalog::Column& column, std::string column_name,
+                          int length, ValueType type);
 
   static bool CheckColumnWithConstraint(catalog::Column& column,
                                         ConstraintType constraint_type,
                                         std::string constraint_name,
-                                        int constraint_count, 
+                                        int constraint_count,
                                         int foreign_key_offset = -1);
 
-  static bool CheckIndex(index::Index* index,
-                         std::string index_name,
-                         oid_t column_count,
-                         IndexType method_type,
-                         IndexConstraintType constraint_type,
-                         bool unique);
+  static bool CheckIndex(index::Index* index, std::string index_name,
+                         oid_t column_count, IndexType method_type,
+                         IndexConstraintType constraint_type, bool unique);
 
   static bool CheckForeignKey(catalog::ForeignKey* foreign_key,
-                         oid_t pktable_oid,
-                         std::string constraint_name,
-                         int pk_column_names_count,
-                         int fk_column_names_count,
-                         char fk_update_action,
-                         char fk_delete_action);
+                              oid_t pktable_oid, std::string constraint_name,
+                              int pk_column_names_count,
+                              int fk_column_names_count, char fk_update_action,
+                              char fk_delete_action);
 
   static void CreateSamplePrimaryKeyIndex(std::string table_name,
                                           oid_t index_oid);
 
-  static void CreateSampleUniqueIndex(std::string table_name,
-                                      oid_t index_oid);
+  static void CreateSampleUniqueIndex(std::string table_name, oid_t index_oid);
 
   static void CreateSampleForeignKey(oid_t pktable_oid,
                                      std::string pktable_name,
@@ -132,5 +122,5 @@ class BridgeTest {
                                      oid_t table_oid);
 };
 
-} // End bridge namespace
-} // End peloton namespace
+}  // End bridge namespace
+}  // End peloton namespace

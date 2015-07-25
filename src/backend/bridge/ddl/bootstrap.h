@@ -33,31 +33,27 @@ namespace bridge {
 
 //  Boostrap the peloton system based on Postgres Catalog
 class Bootstrap {
-
  public:
-
   /**
-   * @brief This function constructs all the user-defined tables and indices in all databases
+   * @brief This function constructs all the user-defined tables and indices in
+   * all databases
    * @return true or false, depending on whether we could bootstrap.
    */
   static bool BootstrapPeloton(void);
 
  private:
-
   // Transform a pg class tuple to a list of columns
-  static std::vector<peloton::catalog::Column>
-  GetRelationColumns(Oid tuple_oid, Relation pg_attribute_rel);
+  static std::vector<peloton::catalog::Column> GetRelationColumns(
+      Oid tuple_oid, Relation pg_attribute_rel);
 
   // Create a peloton table or index
-  static void CreatePelotonStructure(char relation_kind,
-                              char *relation_name,
-                              Oid tuple_oid,
-                              const std::vector<catalog::Column>& columns,
-                              std::vector<IndexInfo>& index_infos);
+  static void CreatePelotonStructure(
+      char relation_kind, char* relation_name, Oid tuple_oid,
+      const std::vector<catalog::Column>& columns,
+      std::vector<IndexInfo>& index_infos);
 
   // Set up the foreign keys constraints
-  static void CreateIndexInfos(oid_t tuple_oid, 
-                               char* relation_name,
+  static void CreateIndexInfos(oid_t tuple_oid, char* relation_name,
                                const std::vector<catalog::Column>& columns,
                                std::vector<IndexInfo>& index_infos);
 
@@ -66,8 +62,7 @@ class Bootstrap {
 
   // Create databases
   static void CreateDatabases();
-
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

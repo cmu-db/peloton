@@ -21,12 +21,11 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class TupleTransformer {
-
  public:
   TupleTransformer(const TupleTransformer &) = delete;
-  TupleTransformer& operator=(const TupleTransformer &) = delete;
+  TupleTransformer &operator=(const TupleTransformer &) = delete;
   TupleTransformer(TupleTransformer &&) = delete;
-  TupleTransformer& operator=(TupleTransformer &&) = delete;
+  TupleTransformer &operator=(TupleTransformer &&) = delete;
 
   TupleTransformer(){};
 
@@ -35,11 +34,10 @@ class TupleTransformer {
   static Datum GetDatum(peloton::Value value);
 
   static storage::Tuple *GetPelotonTuple(TupleTableSlot *slot,
-                                        const catalog::Schema *schema);
+                                         const catalog::Schema *schema);
 
   static TupleTableSlot *GetPostgresTuple(storage::Tuple *tuple,
                                           TupleDesc tuple_desc);
-
 };
 
 }  // namespace bridge

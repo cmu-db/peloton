@@ -19,29 +19,25 @@ namespace bridge {
 // Target List
 //===--------------------------------------------------------------------===//
 
-
 /**
  * @brief Transforms a non-trivial projection target list
  * (ProjectionInfo.pi_targetList) in Postgres
  * to a Peloton one.
  */
-expression::ProjExprVector
-TransformTargetList(List* target_list, oid_t column_count) {
-
+expression::ProjExprVector TransformTargetList(List *target_list,
+                                               oid_t column_count) {
   expression::ProjExprVector proj_list;
   ListCell *tl;
 
-  foreach(tl, target_list)
-  {
-    GenericExprState *gstate = (GenericExprState *) lfirst(tl);
-    TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
+  foreach (tl, target_list) {
+    GenericExprState *gstate = (GenericExprState *)lfirst(tl);
+    TargetEntry *tle = (TargetEntry *)gstate->xprstate.expr;
     AttrNumber resind = tle->resno - 1;
 
-    if (!(resind < column_count))
-      continue;  // skip junk attributes
+    if (!(resind < column_count)) continue;  // skip junk attributes
 
     LOG_TRACE("Target list : column id : %u , Top-level (pg) expr tag : %u \n",
-             resind, nodeTag(gstate->arg->expr));
+              resind, nodeTag(gstate->arg->expr));
 
     oid_t col_id = static_cast<oid_t>(resind);
 
@@ -54,6 +50,5 @@ TransformTargetList(List* target_list, oid_t column_count) {
   return proj_list;
 }
 
-} // namespace bridge
-} // namespace peloton
-
+}  // namespace bridge
+}  // namespace peloton
