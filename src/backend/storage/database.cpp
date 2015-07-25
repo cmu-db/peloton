@@ -12,6 +12,7 @@
 
 #include "backend/storage/database.h"
 #include "backend/storage/table_factory.h"
+#include "backend/common/logger.h"
 
 #include <sstream>
 
@@ -83,7 +84,7 @@ oid_t Database::GetTableCount() const {
 //===--------------------------------------------------------------------===//
 
 void Database::UpdateStats(){
-
+  LOG_INFO("Update All Stats in Database(%u)", database_oid);
   for( int table_offset=0; table_offset<GetTableCount(); table_offset++){
     auto table = GetTable(table_offset);
     bridge::Bridge::SetNumberOfTuples(table->GetOid(), table->GetNumberOfTuples());
@@ -93,10 +94,10 @@ void Database::UpdateStats(){
       bridge::Bridge::SetNumberOfTuples(index->GetOid(), index->GetNumberOfTuples());
     }
   }
-
 }
 
 void Database::UpdateStatsWithOid(const oid_t table_oid){
+  LOG_INFO("Update table(%u)'s stats in Database(%u)", table_oid, database_oid);
 
   auto table = GetTableWithOid(table_oid);
   bridge::Bridge::SetNumberOfTuples(table_oid, table->GetNumberOfTuples());
