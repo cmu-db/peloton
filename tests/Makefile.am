@@ -45,6 +45,7 @@ endif
 # SUBDIRS
 ######################################################################
 
+include $(srcdir)/brain/Makefile.am
 include $(srcdir)/catalog/Makefile.am
 include $(srcdir)/common/Makefile.am
 include $(srcdir)/concurrency/Makefile.am

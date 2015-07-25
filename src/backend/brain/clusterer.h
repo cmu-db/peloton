@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "backend/common/types.h"
 
 namespace peloton {
@@ -26,13 +28,10 @@ namespace brain {
 // Sequential k-Means Clustering
 class Clusterer {
  public:
-  Clusterer(oid_t class_count, double param = DEFAULT_WEIGHT)
-      : cluster_count_(class_count), new_sample_weight_(param) {}
-
-  void SetClusterCount(oid_t cluster_count) {
-    cluster_count_ = cluster_count;
-    // resize the size of means
-    means.resize(cluster_count);
+  Clusterer(oid_t cluster_count, double param = DEFAULT_WEIGHT)
+      : cluster_count_(cluster_count), new_sample_weight_(param) {
+    // initialize the means vector
+    means.assign(cluster_count_, 0);
   }
 
   oid_t GetClusterCount() const { return cluster_count_; }
