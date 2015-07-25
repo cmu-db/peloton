@@ -24,40 +24,35 @@ namespace planner {
 //===--------------------------------------------------------------------===//
 
 class AbstractJoinPlanNode : public AbstractPlanNode {
-public:
-    AbstractJoinPlanNode(const AbstractJoinPlanNode &) = delete;
-    AbstractJoinPlanNode& operator=(const AbstractJoinPlanNode &) = delete;
-    AbstractJoinPlanNode(AbstractJoinPlanNode &&) = delete;
-    AbstractJoinPlanNode& operator=(AbstractJoinPlanNode &&) = delete;
+ public:
+  AbstractJoinPlanNode(const AbstractJoinPlanNode &) = delete;
+  AbstractJoinPlanNode &operator=(const AbstractJoinPlanNode &) = delete;
+  AbstractJoinPlanNode(AbstractJoinPlanNode &&) = delete;
+  AbstractJoinPlanNode &operator=(AbstractJoinPlanNode &&) = delete;
 
-    AbstractJoinPlanNode(JoinType joinType, expression::AbstractExpression *predicate) :
-        AbstractPlanNode(), 
-        joinType_(joinType), predicate_(predicate) {
-            // Fuck off!
-    }
+  AbstractJoinPlanNode(JoinType joinType,
+                       expression::AbstractExpression *predicate)
+      : AbstractPlanNode(), joinType_(joinType), predicate_(predicate) {
+    // Fuck off!
+  }
 
-    //===--------------------------------------------------------------------===//
-    // Accessors
-    //===--------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
+  // Accessors
+  //===--------------------------------------------------------------------===//
 
-    JoinType GetJoinType() const {
-        return joinType_;
-    }
+  JoinType GetJoinType() const { return joinType_; }
 
-    const expression::AbstractExpression *GetPredicate() const {
-        return predicate_.get();
-    }
-    
+  const expression::AbstractExpression *GetPredicate() const {
+    return predicate_.get();
+  }
 
-private:
+ private:
+  /** @brief The type of join that we're going to perform */
+  JoinType joinType_;
 
-    /** @brief The type of join that we're going to perform */
-    JoinType joinType_;
-
-    /** @brief Join predicate. */
-    const std::unique_ptr<expression::AbstractExpression> predicate_;
-
+  /** @brief Join predicate. */
+  const std::unique_ptr<expression::AbstractExpression> predicate_;
 };
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

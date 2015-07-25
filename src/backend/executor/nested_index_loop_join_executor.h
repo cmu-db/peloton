@@ -22,37 +22,36 @@ namespace peloton {
 namespace executor {
 
 class NestedIndexLoopJoinExecutor : public AbstractExecutor {
-    NestedIndexLoopJoinExecutor(const NestedIndexLoopJoinExecutor &) = delete;
-    NestedIndexLoopJoinExecutor& operator=(const NestedIndexLoopJoinExecutor &) = delete;
+  NestedIndexLoopJoinExecutor(const NestedIndexLoopJoinExecutor &) = delete;
+  NestedIndexLoopJoinExecutor &operator=(const NestedIndexLoopJoinExecutor &) =
+      delete;
 
-public:
-    explicit NestedIndexLoopJoinExecutor(planner::AbstractPlanNode *node);
+ public:
+  explicit NestedIndexLoopJoinExecutor(planner::AbstractPlanNode *node);
 
-protected:
-    bool DInit();
+ protected:
+  bool DInit();
 
-    bool DExecute();
+  bool DExecute();
 
-private:
+ private:
+  //===--------------------------------------------------------------------===//
+  // Executor State
+  //===--------------------------------------------------------------------===//
 
-    //===--------------------------------------------------------------------===//
-    // Executor State
-    //===--------------------------------------------------------------------===//
+  /** @brief Result of nested loop join. */
+  std::vector<LogicalTile *> result;
 
-    /** @brief Result of nested loop join. */
-    std::vector<LogicalTile *> result;
+  /** @brief Starting left table scan. */
+  bool left_scan_start = false;
 
-    /** @brief Starting left table scan. */
-    bool left_scan_start = false;
+  //===--------------------------------------------------------------------===//
+  // Plan Info
+  //===--------------------------------------------------------------------===//
 
-    //===--------------------------------------------------------------------===//
-    // Plan Info
-    //===--------------------------------------------------------------------===//
-
-    /** @brief Join predicate. */
-    const expression::AbstractExpression *predicate_ = nullptr;
-
+  /** @brief Join predicate. */
+  const expression::AbstractExpression *predicate_ = nullptr;
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

@@ -50,9 +50,9 @@ namespace test {
  * Cook a ProjectInfo object from a tuple.
  * Simply use a ConstantValueExpression for each attribute.
  */
-planner::ProjectInfo* MakeProjectInfoFromTuple(const storage::Tuple* tuple){
+planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
   planner::ProjectInfo::TargetList target_list;
-  for(oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
+  for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
     auto value = tuple->GetValue(col_id);
     auto expression = expression::ConstantValueFactory(value);
     target_list.emplace_back(col_id, expression);
@@ -69,9 +69,8 @@ planner::ProjectInfo* MakeProjectInfoFromTuple(const storage::Tuple* tuple){
 std::atomic<int> tuple_id;
 std::atomic<int> delete_tuple_id;
 
-void InsertTuple(storage::DataTable *table){
-
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
+void InsertTuple(storage::DataTable *table) {
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -90,9 +89,8 @@ void InsertTuple(storage::DataTable *table){
   txn_manager.CommitTransaction(txn);
 }
 
-void UpdateTuple(storage::DataTable *table){
-
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
+void UpdateTuple(storage::DataTable *table) {
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -101,7 +99,7 @@ void UpdateTuple(storage::DataTable *table){
 
   // Update
 
-  std::vector<oid_t> update_column_ids = { 2 };
+  std::vector<oid_t> update_column_ids = {2};
   std::vector<Value> values;
   Value update_val = ValueFactory::GetDoubleValue(23.5);
   values.push_back(update_val);
@@ -113,18 +111,17 @@ void UpdateTuple(storage::DataTable *table){
 
   // WHERE ATTR_0 < 60
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, 0, std::string("tablename"), std::string("colname"));
+      new expression::TupleValueExpression(0, 0, std::string("tablename"),
+                                           std::string("colname"));
   expression::ConstantValueExpression *const_val_exp =
-      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(60));
-  auto predicate =
-      new expression::ComparisonExpression<expression::CmpLt>(EXPRESSION_TYPE_COMPARE_LT, tup_val_exp, const_val_exp);
+      new expression::ConstantValueExpression(
+          ValueFactory::GetIntegerValue(60));
+  auto predicate = new expression::ComparisonExpression<expression::CmpLt>(
+      EXPRESSION_TYPE_COMPARE_LT, tup_val_exp, const_val_exp);
 
   // Seq scan
-  std::vector<oid_t> column_ids = { 0 };
-  planner::SeqScanNode seq_scan_node(
-      table,
-      predicate,
-      column_ids);
+  std::vector<oid_t> column_ids = {0};
+  planner::SeqScanNode seq_scan_node(table, predicate, column_ids);
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
   // Parent-Child relationship
@@ -137,9 +134,8 @@ void UpdateTuple(storage::DataTable *table){
   txn_manager.CommitTransaction(txn);
 }
 
-void DeleteTuple(storage::DataTable *table){
-
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
+void DeleteTuple(storage::DataTable *table) {
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -154,18 +150,17 @@ void DeleteTuple(storage::DataTable *table){
 
   // WHERE ATTR_0 < 90
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, 0, std::string("tablename"), std::string("colname"));
+      new expression::TupleValueExpression(0, 0, std::string("tablename"),
+                                           std::string("colname"));
   expression::ConstantValueExpression *const_val_exp =
-      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(90));
-  auto predicate =
-      new expression::ComparisonExpression<expression::CmpLt>(EXPRESSION_TYPE_COMPARE_LT, tup_val_exp, const_val_exp);
+      new expression::ConstantValueExpression(
+          ValueFactory::GetIntegerValue(90));
+  auto predicate = new expression::ComparisonExpression<expression::CmpLt>(
+      EXPRESSION_TYPE_COMPARE_LT, tup_val_exp, const_val_exp);
 
   // Seq scan
-  std::vector<oid_t> column_ids = { 0 };
-  planner::SeqScanNode seq_scan_node(
-      table,
-      predicate,
-      column_ids);
+  std::vector<oid_t> column_ids = {0};
+  planner::SeqScanNode seq_scan_node(table, predicate, column_ids);
   executor::SeqScanExecutor seq_scan_executor(&seq_scan_node, context.get());
 
   // Parent-Child relationship
@@ -179,8 +174,7 @@ void DeleteTuple(storage::DataTable *table){
 }
 
 TEST(MutateTests, StressTests) {
-
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
   std::unique_ptr<executor::ExecutorContext> context(
@@ -198,10 +192,9 @@ TEST(MutateTests, StressTests) {
   planner::InsertNode node(table, project_info);
   executor::InsertExecutor executor(&node, context.get());
 
-  try{
+  try {
     executor.Execute();
-  }
-  catch(ConstraintException& ce){
+  } catch (ConstraintException &ce) {
     std::cout << ce.what();
   }
 
@@ -214,10 +207,9 @@ TEST(MutateTests, StressTests) {
   executor::InsertExecutor executor2(&node2, context.get());
   executor2.Execute();
 
-  try{
+  try {
     executor2.Execute();
-  }
-  catch(ConstraintException& ce){
+  } catch (ConstraintException &ce) {
     std::cout << ce.what();
   }
 
@@ -229,13 +221,13 @@ TEST(MutateTests, StressTests) {
   std::cout << "Start tests \n";
 
   LaunchParallelTest(4, InsertTuple, table);
-  //std::cout << (*table);
+  // std::cout << (*table);
 
   LaunchParallelTest(4, UpdateTuple, table);
-  //std::cout << (*table);
+  // std::cout << (*table);
 
   LaunchParallelTest(4, DeleteTuple, table);
-  //std::cout << (*table);
+  // std::cout << (*table);
 
   // PRIMARY KEY
   auto pkey_index = table->GetIndex(0);
@@ -284,15 +276,16 @@ TEST(MutateTests, StressTests) {
 
 // Insert a logical tile into a table
 TEST(MutateTests, InsertTest) {
-
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
   // We are going to insert a tile group into a table in this test
-  std::unique_ptr<storage::DataTable> source_data_table(ExecutorTestsUtil::CreateAndPopulateTable());
-  std::unique_ptr<storage::DataTable> dest_data_table(ExecutorTestsUtil::CreateTable());
+  std::unique_ptr<storage::DataTable> source_data_table(
+      ExecutorTestsUtil::CreateAndPopulateTable());
+  std::unique_ptr<storage::DataTable> dest_data_table(
+      ExecutorTestsUtil::CreateTable());
   const std::vector<storage::Tuple *> tuples;
 
   EXPECT_EQ(source_data_table->GetTileGroupCount(), 3);
@@ -305,13 +298,12 @@ TEST(MutateTests, InsertTest) {
   executor.AddChild(&child_executor);
 
   // Uneventful init...
-  EXPECT_CALL(child_executor, DInit())
-  .WillOnce(Return(true));
+  EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
   // Will return one tile.
   EXPECT_CALL(child_executor, DExecute())
-  .WillOnce(Return(true))
-  .WillOnce(Return(false));
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
   auto physical_tile = source_data_table->GetTileGroup(0)->GetTile(0);
   std::vector<storage::Tile *> physical_tiles;
@@ -321,7 +313,7 @@ TEST(MutateTests, InsertTest) {
       executor::LogicalTileFactory::WrapTiles(physical_tiles, false));
 
   EXPECT_CALL(child_executor, GetOutput())
-  .WillOnce(Return(source_logical_tile1.release()));
+      .WillOnce(Return(source_logical_tile1.release()));
 
   EXPECT_TRUE(executor.Init());
 
@@ -334,5 +326,5 @@ TEST(MutateTests, InsertTest) {
   EXPECT_EQ(dest_data_table->GetTileGroupCount(), 1);
 }
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

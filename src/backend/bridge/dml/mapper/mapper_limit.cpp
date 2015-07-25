@@ -13,12 +13,9 @@
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/planner/limit_node.h"
 
-
-extern Datum
-ExecEvalExprSwitchContext(ExprState *expression,
-              ExprContext *econtext,
-              bool *isNull,
-              ExprDoneCond *isDone);
+extern Datum ExecEvalExprSwitchContext(ExprState *expression,
+                                       ExprContext *econtext, bool *isNull,
+                                       ExprDoneCond *isDone);
 
 namespace peloton {
 namespace bridge {
@@ -45,8 +42,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformLimit(
 
   /* Resolve limit and offset */
   if (node->limitOffset) {
-    val = ExecEvalExprSwitchContext(node->limitOffset, econtext, &isNull,
-                                    NULL);
+    val = ExecEvalExprSwitchContext(node->limitOffset, econtext, &isNull, NULL);
     /* Interpret NULL offset as no offset */
     if (isNull)
       offset = 0;
@@ -63,8 +59,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformLimit(
   }
 
   if (node->limitCount) {
-    val = ExecEvalExprSwitchContext(node->limitCount, econtext, &isNull,
-                                    NULL);
+    val = ExecEvalExprSwitchContext(node->limitCount, econtext, &isNull, NULL);
     /* Interpret NULL count as no limit (LIMIT ALL) */
     if (isNull) {
       limit = 0;
@@ -85,7 +80,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformLimit(
   /* TODO: does not do pass down bound to child node
    * In Peloton, they are both unsigned. But both of them cannot be negative,
    * The is safe */
-  /* TODO: handle no limit and no offset cases, in which the corresponding value is 0 */
+  /* TODO: handle no limit and no offset cases, in which the corresponding value
+   * is 0 */
   LOG_INFO("Flags :: Limit: %d, Offset: %d", noLimit, noOffset);
   LOG_INFO("Limit: %ld, Offset: %ld", limit, offset);
   auto plan_node = new planner::LimitNode(limit, offset);
@@ -97,6 +93,5 @@ planner::AbstractPlanNode *PlanTransformer::TransformLimit(
   return plan_node;
 }
 
-
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

@@ -10,7 +10,6 @@
  *-------------------------------------------------------------------------
  */
 
-
 #include "backend/expression/abstract_expression.h"
 
 #include "backend/common/types.h"
@@ -26,26 +25,20 @@ namespace peloton {
 namespace expression {
 
 AbstractExpression::AbstractExpression()
-: expr_type(EXPRESSION_TYPE_INVALID),
-  has_parameter(true){
-}
+    : expr_type(EXPRESSION_TYPE_INVALID), has_parameter(true) {}
 
 AbstractExpression::AbstractExpression(ExpressionType type)
-: expr_type(type),
-  has_parameter(true) {
-}
+    : expr_type(type), has_parameter(true) {}
 
 AbstractExpression::AbstractExpression(ExpressionType type,
                                        AbstractExpression* left,
                                        AbstractExpression* right)
-: left_expr(left),
-  right_expr(right),
-  expr_type(type),
-  has_parameter(true) {
-}
+    : left_expr(left),
+      right_expr(right),
+      expr_type(type),
+      has_parameter(true) {}
 
 AbstractExpression::~AbstractExpression() {
-
   // clean up children
   delete left_expr;
   delete right_expr;
@@ -59,11 +52,9 @@ AbstractExpression::~AbstractExpression() {
   delete expr;
 }
 
-void AbstractExpression::Substitute(const ValueArray &params) {
-
+void AbstractExpression::Substitute(const ValueArray& params) {
   // check if we need to substitue
-  if (!has_parameter)
-    return;
+  if (!has_parameter) return;
 
   // descend. nodes with parameters overload substitute()
   LOG_TRACE("Substituting parameters for expression \n" << params.Debug());
@@ -79,34 +70,30 @@ void AbstractExpression::Substitute(const ValueArray &params) {
 }
 
 bool AbstractExpression::HasParameter() const {
-  if (left_expr && left_expr->HasParameter())
-    return true;
+  if (left_expr && left_expr->HasParameter()) return true;
 
   return (right_expr && right_expr->HasParameter());
 }
 
 // Helper to initialize has_parameter
-bool AbstractExpression::InitParamShortCircuits(){
+bool AbstractExpression::InitParamShortCircuits() {
+  if (left_expr && left_expr->HasParameter()) return true;
 
-  if (left_expr && left_expr->HasParameter())
-    return true;
-
-  if (right_expr && right_expr->HasParameter())
-    return true;
+  if (right_expr && right_expr->HasParameter()) return true;
 
   has_parameter = false;
   return false;
 }
 
-std::ostream& operator<< (std::ostream& os, const AbstractExpression& expr) {
+std::ostream& operator<<(std::ostream& os, const AbstractExpression& expr) {
   os << expr.Debug();
   return os;
 }
 
 std::string AbstractExpression::Debug() const {
   std::ostringstream os;
-  os << "\tExpression [" << ExpressionTypeToString(GetExpressionType())
-          << ", " << GetExpressionType() << " ]\n";
+  os << "\tExpression [" << ExpressionTypeToString(GetExpressionType()) << ", "
+     << GetExpressionType() << " ]\n";
   os << DebugInfo(" ");
   return (os.str());
 }
@@ -115,7 +102,7 @@ std::string AbstractExpression::Debug(bool traverse) const {
   return (traverse ? Debug(std::string("")) : Debug());
 }
 
-std::string AbstractExpression::Debug(const std::string &spacer) const {
+std::string AbstractExpression::Debug(const std::string& spacer) const {
   std::ostringstream buffer;
   buffer << spacer << "+ " << Debug() << "\n";
 
@@ -124,10 +111,12 @@ std::string AbstractExpression::Debug(const std::string &spacer) const {
 
   // process children
   if (left_expr != nullptr || right_expr != nullptr) {
-    buffer << info_spacer << "left:  " <<
-        (left_expr != nullptr  ? "\n" + left_expr->Debug(info_spacer)  : "<NULL>\n");
-    buffer << info_spacer << "right: " <<
-        (right_expr != nullptr ? "\n" + right_expr->Debug(info_spacer) : "<NULL>\n");
+    buffer << info_spacer << "left:  "
+           << (left_expr != nullptr ? "\n" + left_expr->Debug(info_spacer)
+                                    : "<NULL>\n");
+    buffer << info_spacer << "right: "
+           << (right_expr != nullptr ? "\n" + right_expr->Debug(info_spacer)
+                                     : "<NULL>\n");
   }
 
   return (buffer.str());
@@ -137,42 +126,47 @@ std::string AbstractExpression::Debug(const std::string &spacer) const {
 // Actual Constructors
 //===--------------------------------------------------------------------===//
 
-AbstractExpression* AbstractExpression::CreateExpressionTree(json_spirit::Object &obj) {
-  AbstractExpression * expr =   AbstractExpression::CreateExpressionTreeRecurse(obj);
+AbstractExpression* AbstractExpression::CreateExpressionTree(
+    json_spirit::Object& obj) {
+  AbstractExpression* expr =
+      AbstractExpression::CreateExpressionTreeRecurse(obj);
 
-  if (expr)
-    expr->InitParamShortCircuits();
+  if (expr) expr->InitParamShortCircuits();
 
   return expr;
 }
 
-AbstractExpression* AbstractExpression::CreateExpressionTreeRecurse(json_spirit::Object &obj) {
-
+AbstractExpression* AbstractExpression::CreateExpressionTreeRecurse(
+    json_spirit::Object& obj) {
   // build a tree recursively from the bottom upwards.
   // when the expression node is instantiated, its type,
   // value and child types will have been discovered.
 
   ExpressionType peek_type = EXPRESSION_TYPE_INVALID;
   ValueType value_type = VALUE_TYPE_INVALID;
-  AbstractExpression *left_child = nullptr;
-  AbstractExpression *right_child = nullptr;
+  AbstractExpression* left_child = nullptr;
+  AbstractExpression* right_child = nullptr;
 
   // read the expression type
-  json_spirit::Value expression_type_value = json_spirit::find_value(obj, "TYPE");
+  json_spirit::Value expression_type_value =
+      json_spirit::find_value(obj, "TYPE");
 
   if (expression_type_value == json_spirit::Value::null) {
-    throw ExpressionException("AbstractExpression:: buildExpressionTree_recurse:"
+    throw ExpressionException(
+        "AbstractExpression:: buildExpressionTree_recurse:"
         "Couldn't find TYPE value");
   }
 
-  assert(StringToExpressionType(expression_type_value.get_str()) != EXPRESSION_TYPE_INVALID);
+  assert(StringToExpressionType(expression_type_value.get_str()) !=
+         EXPRESSION_TYPE_INVALID);
   peek_type = StringToExpressionType(expression_type_value.get_str());
 
   // and the value type
-  json_spirit::Value valueTypeValue = json_spirit::find_value(obj,
-                                                              "VALUE_TYPE");
+  json_spirit::Value valueTypeValue =
+      json_spirit::find_value(obj, "VALUE_TYPE");
   if (valueTypeValue == json_spirit::Value::null) {
-    throw ExpressionException("AbstractExpression:: buildExpressionTree_recurse:"
+    throw ExpressionException(
+        "AbstractExpression:: buildExpressionTree_recurse:"
         " Couldn't find VALUE_TYPE value");
   }
 
@@ -180,19 +174,21 @@ AbstractExpression* AbstractExpression::CreateExpressionTreeRecurse(json_spirit:
   value_type = StringToValueType(value_type_string);
 
   // this should be relatively safe, though it ignores overflow.
-  if ((value_type == VALUE_TYPE_TINYINT)  ||
+  if ((value_type == VALUE_TYPE_TINYINT) ||
       (value_type == VALUE_TYPE_SMALLINT) ||
-      (value_type == VALUE_TYPE_INTEGER))  {
+      (value_type == VALUE_TYPE_INTEGER)) {
     value_type = VALUE_TYPE_BIGINT;
   }
 
   assert(value_type != VALUE_TYPE_INVALID);
 
   // add the value size
-  json_spirit::Value value_size_value = json_spirit::find_value(obj, "VALUE_SIZE");
+  json_spirit::Value value_size_value =
+      json_spirit::find_value(obj, "VALUE_SIZE");
 
   if (value_size_value == json_spirit::Value::null) {
-    throw ExpressionException("AbstractExpression:: buildExpressionTree_recurse:"
+    throw ExpressionException(
+        "AbstractExpression:: buildExpressionTree_recurse:"
         " Couldn't find VALUE_SIZE value");
   }
 
@@ -203,15 +199,17 @@ AbstractExpression* AbstractExpression::CreateExpressionTreeRecurse(json_spirit:
     json_spirit::Value leftValue = json_spirit::find_value(obj, "LEFT");
 
     if (!(leftValue == json_spirit::Value::null)) {
-      left_child = AbstractExpression::CreateExpressionTreeRecurse(leftValue.get_obj());
+      left_child =
+          AbstractExpression::CreateExpressionTreeRecurse(leftValue.get_obj());
     } else {
       left_child = nullptr;
     }
 
-    json_spirit::Value rightValue = json_spirit::find_value( obj, "RIGHT");
+    json_spirit::Value rightValue = json_spirit::find_value(obj, "RIGHT");
 
     if (!(rightValue == json_spirit::Value::null)) {
-      right_child = AbstractExpression::CreateExpressionTreeRecurse(rightValue.get_obj());
+      right_child =
+          AbstractExpression::CreateExpressionTreeRecurse(rightValue.get_obj());
     } else {
       right_child = nullptr;
     }
@@ -221,10 +219,9 @@ AbstractExpression* AbstractExpression::CreateExpressionTreeRecurse(json_spirit:
     // to read. yes, the per-class data really does follow the
     // child serializations.
 
-    return ExpressionFactory(obj, peek_type, value_type, value_size,
-                             left_child, right_child);
-  }
-  catch (ExpressionException &ex) {
+    return ExpressionFactory(obj, peek_type, value_type, value_size, left_child,
+                             right_child);
+  } catch (ExpressionException& ex) {
     // clean up children
     delete left_child;
     delete right_child;
@@ -232,5 +229,5 @@ AbstractExpression* AbstractExpression::CreateExpressionTreeRecurse(json_spirit:
   }
 }
 
-} // End expression namespace
-} // End peloton namespace
+}  // End expression namespace
+}  // End peloton namespace

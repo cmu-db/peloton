@@ -35,8 +35,7 @@ namespace executor {
  */
 SeqScanExecutor::SeqScanExecutor(planner::AbstractPlanNode *node,
                                  ExecutorContext *executor_context)
-: AbstractExecutor(node, executor_context) {
-}
+    : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -54,7 +53,7 @@ bool SeqScanExecutor::DInit() {
 
   current_tile_group_offset_ = START_OID;
 
-  if(table_ != nullptr) {
+  if (table_ != nullptr) {
     table_tile_group_count_ = table_->GetTileGroupCount();
   }
 
@@ -66,10 +65,8 @@ bool SeqScanExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool SeqScanExecutor::DExecute() {
-
   // Scanning over a logical tile.
   if (children_.size() == 1) {
-
     LOG_TRACE("Seq Scan executor :: 1 child \n");
 
     assert(table_ == nullptr);
@@ -84,7 +81,8 @@ bool SeqScanExecutor::DExecute() {
       // Invalidate tuples that don't satisfy the predicate.
       for (oid_t tuple_id : *tile) {
         expression::ContainerTuple<LogicalTile> tuple(tile.get(), tuple_id);
-        if (predicate_->Evaluate(&tuple, nullptr, executor_context_).IsFalse()) {
+        if (predicate_->Evaluate(&tuple, nullptr, executor_context_)
+                .IsFalse()) {
           tile->RemoveVisibility(tuple_id);
         }
       }
@@ -94,7 +92,6 @@ bool SeqScanExecutor::DExecute() {
   }
   // Scanning a table
   else if (children_.size() == 0) {
-
     LOG_TRACE("Seq Scan executor :: 0 child \n");
 
     assert(table_ != nullptr);
@@ -105,7 +102,8 @@ bool SeqScanExecutor::DExecute() {
       return false;
     }
 
-    storage::TileGroup *tile_group = table_->GetTileGroup(current_tile_group_offset_++);
+    storage::TileGroup *tile_group =
+        table_->GetTileGroup(current_tile_group_offset_++);
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
     auto transaction_ = executor_context_->GetTransaction();
     txn_id_t txn_id = transaction_->GetTransactionId();
@@ -113,18 +111,20 @@ bool SeqScanExecutor::DExecute() {
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
     // Print tile group visibility
-    //tile_group_header->PrintVisibility(txn_id, commit_id);
+    // tile_group_header->PrintVisibility(txn_id, commit_id);
 
     // Construct position list by looping through tile group
     // and applying the predicate.
     std::vector<oid_t> position_list;
-    for (oid_t tuple_id = 0; tuple_id < active_tuple_count ; tuple_id++) {
-      if(tile_group_header->IsVisible(tuple_id, txn_id, commit_id) == false){
+    for (oid_t tuple_id = 0; tuple_id < active_tuple_count; tuple_id++) {
+      if (tile_group_header->IsVisible(tuple_id, txn_id, commit_id) == false) {
         continue;
       }
 
-      expression::ContainerTuple<storage::TileGroup> tuple(tile_group, tuple_id);
-      if (predicate_ == nullptr || predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue()) {
+      expression::ContainerTuple<storage::TileGroup> tuple(tile_group,
+                                                           tuple_id);
+      if (predicate_ == nullptr ||
+          predicate_->Evaluate(&tuple, nullptr, executor_context_).IsTrue()) {
         position_list.push_back(tuple_id);
       }
     }
@@ -138,16 +138,11 @@ bool SeqScanExecutor::DExecute() {
     for (oid_t origin_column_id : column_ids_) {
       oid_t base_tile_offset, tile_column_id;
 
-      tile_group->LocateTileAndColumn(
-          origin_column_id,
-          base_tile_offset,
-          tile_column_id);
+      tile_group->LocateTileAndColumn(origin_column_id, base_tile_offset,
+                                      tile_column_id);
 
-      logical_tile->AddColumn(
-          tile_group->GetTile(base_tile_offset),
-          own_base_tile,
-          tile_column_id,
-          position_list_idx);
+      logical_tile->AddColumn(tile_group->GetTile(base_tile_offset),
+                              own_base_tile, tile_column_id, position_list_idx);
     }
 
     SetOutput(logical_tile.release());
@@ -156,5 +151,5 @@ bool SeqScanExecutor::DExecute() {
   return true;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

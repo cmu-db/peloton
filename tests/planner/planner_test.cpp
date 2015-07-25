@@ -22,11 +22,7 @@ namespace test {
 // Planner Tests
 //===--------------------------------------------------------------------===//
 
-TEST(PlannerTests, BasicTest) {
+TEST(PlannerTests, BasicTest) {}
 
-
-}
-
-} // End test namespace
-} // End peloton namespace
-
+}  // End test namespace
+}  // End peloton namespace

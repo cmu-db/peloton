@@ -19,7 +19,6 @@ namespace peloton {
 namespace executor {
 
 LogicalTile::~LogicalTile() {
-
   // Frees owned base tiles.
   for (storage::Tile *base_tile : owned_base_tiles_) {
     delete base_tile;
@@ -32,35 +31,32 @@ LogicalTile::~LogicalTile() {
  * @param own_base_tile True if the logical tile should assume ownership of
  *                      the base tile passed in.
  */
-void LogicalTile::AddColumn(const ColumnInfo& cp,
-                            bool own_base_tile){
-
+void LogicalTile::AddColumn(const ColumnInfo &cp, bool own_base_tile) {
   schema_.push_back(cp);
 
   if (own_base_tile) {
     owned_base_tiles_.insert(cp.base_tile);
   }
-
 }
 
 /**
  * @brief Get the schema of the tile.
  * @return ColumnInfo-based schema of the tile.
  */
-const std::vector<LogicalTile::ColumnInfo>& LogicalTile::GetSchema() const{
+const std::vector<LogicalTile::ColumnInfo> &LogicalTile::GetSchema() const {
   return schema_;
 }
 
 /**
- * @brief Construct the underlying physical schema of all the columns in the logical tile.
+ * @brief Construct the underlying physical schema of all the columns in the
+ *logical tile.
  *
  * @return New schema object.
  */
-catalog::Schema* LogicalTile::GetPhysicalSchema() const {
-
+catalog::Schema *LogicalTile::GetPhysicalSchema() const {
   std::vector<catalog::Column> physical_columns;
 
-  for(ColumnInfo column : schema_) {
+  for (ColumnInfo column : schema_) {
     auto schema = column.base_tile->GetSchema();
     auto physical_column = schema->GetColumn(column.origin_column_id);
     physical_columns.push_back(physical_column);
@@ -75,7 +71,7 @@ catalog::Schema* LogicalTile::GetPhysicalSchema() const {
  * @brief Get the position lists of the tile.
  * @return Position lists of the tile.
  */
-const std::vector<std::vector<oid_t> >& LogicalTile::GetPositionLists() const{
+const std::vector<std::vector<oid_t> > &LogicalTile::GetPositionLists() const {
   return position_lists_;
 }
 
@@ -83,7 +79,7 @@ const std::vector<std::vector<oid_t> >& LogicalTile::GetPositionLists() const{
  * @brief Set the schema of the tile.
  * @param ColumnInfo-based schema of the tile.
  */
-void LogicalTile::SetSchema(std::vector<LogicalTile::ColumnInfo>&& schema){
+void LogicalTile::SetSchema(std::vector<LogicalTile::ColumnInfo> &&schema) {
   schema_ = schema;
 }
 
@@ -91,7 +87,8 @@ void LogicalTile::SetSchema(std::vector<LogicalTile::ColumnInfo>&& schema){
  * @brief Set the position lists of the tile.
  * @param Position lists.
  */
-void LogicalTile::SetPositionLists(std::vector<std::vector<oid_t> >&& position_lists){
+void LogicalTile::SetPositionLists(
+    std::vector<std::vector<oid_t> > &&position_lists) {
   position_lists_ = position_lists;
 }
 
@@ -107,11 +104,8 @@ void LogicalTile::SetPositionLists(std::vector<std::vector<oid_t> >&& position_l
  * The position list corresponding to this column should be added
  * before the metadata.
  */
-void LogicalTile::AddColumn(
-    storage::Tile *base_tile,
-    bool own_base_tile,
-    oid_t origin_column_id,
-    oid_t position_list_idx) {
+void LogicalTile::AddColumn(storage::Tile *base_tile, bool own_base_tile,
+                            oid_t origin_column_id, oid_t position_list_idx) {
   assert(position_list_idx < position_lists_.size());
 
   ColumnInfo cp;
@@ -135,8 +129,8 @@ void LogicalTile::AddColumn(
  * @return Position list index of newly added list.
  */
 int LogicalTile::AddPositionList(std::vector<oid_t> &&position_list) {
-
-  assert(position_lists_.size() == 0 || position_lists_[0].size() == position_list.size());
+  assert(position_lists_.size() == 0 ||
+         position_lists_[0].size() == position_list.size());
 
   if (position_lists_.size() == 0) {
     num_tuples_ = position_list.size();
@@ -169,7 +163,6 @@ storage::Tile *LogicalTile::GetBaseTile(oid_t column_id) {
   return schema_[column_id].base_tile;
 }
 
-
 /**
  * @brief Get the value at the specified field.
  * @param tuple_id Tuple id of the specified field (row/position).
@@ -198,18 +191,14 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
  *
  * @return Number of tuples.
  */
-size_t LogicalTile::GetTupleCount() {
-  return num_tuples_;
-}
+size_t LogicalTile::GetTupleCount() { return num_tuples_; }
 
 /**
  * @brief Returns the number of columns.
  *
  * @return Number of columns.
  */
-size_t LogicalTile::GetColumnCount() {
-  return schema_.size();
-}
+size_t LogicalTile::GetColumnCount() { return schema_.size(); }
 
 /**
  * @brief Returns iterator pointing to first tuple.
@@ -237,8 +226,7 @@ LogicalTile::iterator LogicalTile::end() {
  * @param begin Specifies whether we want the iterator initialized to point
  *              to the first tuple id, or to past-the-last tuple.
  */
-LogicalTile::iterator::iterator(LogicalTile *tile, bool begin)
-  : tile_(tile) {
+LogicalTile::iterator::iterator(LogicalTile *tile, bool begin) : tile_(tile) {
   if (!begin) {
     pos_ = INVALID_OID;
     return;
@@ -246,7 +234,7 @@ LogicalTile::iterator::iterator(LogicalTile *tile, bool begin)
 
   // Find first visible tuple.
   pos_ = 0;
-  while(pos_ < tile_->visible_rows_.size() && !tile_->visible_rows_[pos_]) {
+  while (pos_ < tile_->visible_rows_.size() && !tile_->visible_rows_[pos_]) {
     pos_++;
   }
 
@@ -263,11 +251,11 @@ LogicalTile::iterator::iterator(LogicalTile *tile, bool begin)
  *
  * @return iterator after the increment.
  */
-LogicalTile::iterator& LogicalTile::iterator::operator++() {
+LogicalTile::iterator &LogicalTile::iterator::operator++() {
   // Find next visible tuple.
   do {
     pos_++;
-  } while(pos_ < tile_->visible_rows_.size() && !tile_->visible_rows_[pos_]);
+  } while (pos_ < tile_->visible_rows_.size() && !tile_->visible_rows_[pos_]);
 
   if (pos_ == tile_->visible_rows_.size()) {
     pos_ = INVALID_OID;
@@ -314,14 +302,10 @@ bool LogicalTile::iterator::operator!=(const iterator &rhs) {
  *
  * @return Id of tuple that iterator is pointing at.
  */
-oid_t LogicalTile::iterator::operator*() {
-  return pos_;
-}
-
+oid_t LogicalTile::iterator::operator*() { return pos_; }
 
 /** @brief Returns a string representation of this tile. */
-std::ostream& operator<<(std::ostream& os, const LogicalTile& lt) {
-
+std::ostream &operator<<(std::ostream &os, const LogicalTile &lt) {
   os << "\t-----------------------------------------------------------\n";
 
   os << "\tLOGICAL TILE\n";
@@ -348,12 +332,12 @@ std::ostream& operator<<(std::ostream& os, const LogicalTile& lt) {
   os << "\t POSITION LISTS : \n";
 
   int pos_list_id = 0;
-  for(auto position_list : lt.position_lists_){
+  for (auto position_list : lt.position_lists_) {
     os << "\t " << pos_list_id++ << " : ";
-    for(auto pos : position_list) {
+    for (auto pos : position_list) {
       os << pos << " ";
     }
-    os << "\n" ;
+    os << "\n";
   }
 
   os << "\t-----------------------------------------------------------\n";
@@ -361,5 +345,5 @@ std::ostream& operator<<(std::ostream& os, const LogicalTile& lt) {
   return os;
 }
 
-} // End executor namespace
-} // End peloton namespace
+}  // End executor namespace
+}  // End peloton namespace

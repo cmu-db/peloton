@@ -25,38 +25,26 @@ namespace planner {
 class SeqScanNode : public AbstractPlanNode {
  public:
   SeqScanNode(const SeqScanNode &) = delete;
-  SeqScanNode& operator=(const SeqScanNode &) = delete;
+  SeqScanNode &operator=(const SeqScanNode &) = delete;
   SeqScanNode(SeqScanNode &&) = delete;
-  SeqScanNode& operator=(SeqScanNode &&) = delete;
+  SeqScanNode &operator=(SeqScanNode &&) = delete;
 
-  SeqScanNode(
-      storage::DataTable *table,
-      expression::AbstractExpression *predicate,
-      const std::vector<oid_t> &column_ids)
-  : table_(table),
-    predicate_(predicate),
-    column_ids_(column_ids) {
-  }
+  SeqScanNode(storage::DataTable *table,
+              expression::AbstractExpression *predicate,
+              const std::vector<oid_t> &column_ids)
+      : table_(table), predicate_(predicate), column_ids_(column_ids) {}
 
-  const storage::DataTable *GetTable() const {
-    return table_;
-  }
+  const storage::DataTable *GetTable() const { return table_; }
 
   const expression::AbstractExpression *GetPredicate() const {
     return predicate_.get();
   }
 
-  const std::vector<oid_t>& GetColumnIds() const {
-    return column_ids_;
-  }
+  const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
-  inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_SEQSCAN;
-  }
+  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SEQSCAN; }
 
-  inline std::string GetInfo() const {
-    return "SeqScan";
-  }
+  inline std::string GetInfo() const { return "SeqScan"; }
 
  private:
   /** @brief Pointer to table to scan from. */
@@ -69,5 +57,5 @@ class SeqScanNode : public AbstractPlanNode {
   const std::vector<oid_t> column_ids_;
 };
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

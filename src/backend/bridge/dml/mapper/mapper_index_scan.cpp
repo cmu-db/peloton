@@ -23,13 +23,15 @@ namespace bridge {
 /*
  * @brief transform a expr tree into info that a index scan node needs
  * */
-static void BuildScanKey(const ScanKey scan_keys, int num_keys,
-                         planner::IndexScanNode::IndexScanDesc &index_scan_desc);
+static void BuildScanKey(
+    const ScanKey scan_keys, int num_keys,
+    planner::IndexScanNode::IndexScanDesc &index_scan_desc);
 
 /**
  * @brief Convert a Postgres IndexScanState into a Peloton IndexScanNode.
  *        able to handle:
- *          1. simple operator with constant comparison value: indexkey op constant)
+ *          1. simple operator with constant comparison value: indexkey op
+ * constant)
  *        unable to handle:
  *          2. redundant simple qualifier: WHERE id > 4 and id > 3
  *          3. simple operator with non-constant value
@@ -40,19 +42,18 @@ static void BuildScanKey(const ScanKey scan_keys, int num_keys,
  *          8. unary op
  * @return Pointer to the constructed AbstractPlanNode.
  */
-planner::AbstractPlanNode* PlanTransformer::TransformIndexScan(
-    const IndexScanState* iss_plan_state) {
+planner::AbstractPlanNode *PlanTransformer::TransformIndexScan(
+    const IndexScanState *iss_plan_state) {
   /* info needed to initialize plan node */
   planner::IndexScanNode::IndexScanDesc index_scan_desc;
   /* Resolve target relation */
   Oid table_oid = iss_plan_state->ss.ss_currentRelation->rd_id;
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  const IndexScan* iss_plan = reinterpret_cast<IndexScan*>(iss_plan_state->ss.ps
-      .plan);
+  const IndexScan *iss_plan =
+      reinterpret_cast<IndexScan *>(iss_plan_state->ss.ps.plan);
 
-  storage::DataTable *table =
-      static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
-  .GetTableWithOid(database_oid, table_oid));
+  storage::DataTable *table = static_cast<storage::DataTable *>(
+      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
   assert(table);
 
@@ -67,18 +68,20 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexScan(
 
   /* index qualifier and scan keys */
   LOG_INFO("num of scan keys = %d", iss_plan_state->iss_NumScanKeys);
-  BuildScanKey(iss_plan_state->iss_ScanKeys, iss_plan_state->iss_NumScanKeys, index_scan_desc);
+  BuildScanKey(iss_plan_state->iss_ScanKeys, iss_plan_state->iss_NumScanKeys,
+               index_scan_desc);
 
   /* handle simple cases */
   /* target list */
-  //ioss_plan_state->ss.ps.targetlist;
+  // ioss_plan_state->ss.ps.targetlist;
   /* ORDER BY, not support */
 
   /* Plan qual, not support */
-  //ioss_plan_state->ss.ps.qual;
+  // ioss_plan_state->ss.ps.qual;
   auto schema = table->GetSchema();
   index_scan_desc.column_ids.resize(schema->GetColumnCount());
-  std::iota(index_scan_desc.column_ids.begin(), index_scan_desc.column_ids.end(), 0);
+  std::iota(index_scan_desc.column_ids.begin(),
+            index_scan_desc.column_ids.end(), 0);
 
   return new planner::IndexScanNode(table, index_scan_desc);
 }
@@ -92,23 +95,34 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexScan(
  * @param index_scan_desc the index scan node descriptor in Peloton
  * @return Void
  */
-static void BuildScanKey(const ScanKey scan_keys, int num_keys, planner::IndexScanNode::IndexScanDesc &index_scan_desc) {
+static void BuildScanKey(
+    const ScanKey scan_keys, int num_keys,
+    planner::IndexScanNode::IndexScanDesc &index_scan_desc) {
   const catalog::Schema *schema = index_scan_desc.index->GetKeySchema();
 
   ScanKey scan_key = scan_keys;
   assert(num_keys > 0);
 
   for (int i = 0; i < num_keys; i++, scan_key++) {
-    assert(!(scan_key->sk_flags & SK_ISNULL)); // currently, only support simple case
-    assert(!(scan_key->sk_flags & SK_ORDER_BY)); // currently, only support simple case
-    assert(!(scan_key->sk_flags & SK_UNARY)); // currently, only support simple case
-    assert(!(scan_key->sk_flags & SK_ROW_HEADER)); // currently, only support simple case
-    assert(!(scan_key->sk_flags & SK_ROW_MEMBER)); // currently, only support simple case
-    assert(!(scan_key->sk_flags & SK_ROW_END)); // currently, only support simple case
-    assert(!(scan_key->sk_flags & SK_SEARCHNULL)); // currently, only support simple case
-    assert(!(scan_key->sk_flags & SK_SEARCHNOTNULL)); // currently, only support simple case
-    Value value = TupleTransformer::GetValue(scan_key->sk_argument, scan_key->sk_subtype);
-    switch(scan_key->sk_strategy) {
+    assert(!(scan_key->sk_flags &
+             SK_ISNULL));  // currently, only support simple case
+    assert(!(scan_key->sk_flags &
+             SK_ORDER_BY));  // currently, only support simple case
+    assert(!(scan_key->sk_flags &
+             SK_UNARY));  // currently, only support simple case
+    assert(!(scan_key->sk_flags &
+             SK_ROW_HEADER));  // currently, only support simple case
+    assert(!(scan_key->sk_flags &
+             SK_ROW_MEMBER));  // currently, only support simple case
+    assert(!(scan_key->sk_flags &
+             SK_ROW_END));  // currently, only support simple case
+    assert(!(scan_key->sk_flags &
+             SK_SEARCHNULL));  // currently, only support simple case
+    assert(!(scan_key->sk_flags &
+             SK_SEARCHNOTNULL));  // currently, only support simple case
+    Value value =
+        TupleTransformer::GetValue(scan_key->sk_argument, scan_key->sk_subtype);
+    switch (scan_key->sk_strategy) {
       case BTLessStrategyNumber:
         LOG_INFO("<");
         index_scan_desc.end_key = new storage::Tuple(schema, true);
@@ -150,7 +164,8 @@ static void BuildScanKey(const ScanKey scan_keys, int num_keys, planner::IndexSc
 /**
  * @brief Convert a Postgres IndexOnlyScanState into a Peloton IndexScanNode.
  *        able to handle:
- *          1. simple operator with constant comparison value: indexkey op constant)
+ *          1. simple operator with constant comparison value: indexkey op
+ * constant)
  *        unable to handle:
  *          2. redundant simple qualifier: WHERE id > 4 and id > 3
  *          3. simple operator with non-constant value
@@ -161,20 +176,19 @@ static void BuildScanKey(const ScanKey scan_keys, int num_keys, planner::IndexSc
  *          8. unary op
  * @return Pointer to the constructed AbstractPlanNode.
  */
-planner::AbstractPlanNode* PlanTransformer::TransformIndexOnlyScan(
-    const IndexOnlyScanState* ioss_plan_state) {
+planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
+    const IndexOnlyScanState *ioss_plan_state) {
   /* info needed to initialize plan node */
   planner::IndexScanNode::IndexScanDesc index_scan_desc;
 
   /* Resolve target relation */
   Oid table_oid = ioss_plan_state->ss.ss_currentRelation->rd_id;
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  const IndexScan* iss_plan = reinterpret_cast<IndexScan*>(ioss_plan_state->ss.ps
-      .plan);
+  const IndexScan *iss_plan =
+      reinterpret_cast<IndexScan *>(ioss_plan_state->ss.ps.plan);
 
-  storage::DataTable *table =
-      static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
-  .GetTableWithOid(database_oid, table_oid));
+  storage::DataTable *table = static_cast<storage::DataTable *>(
+      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
   assert(table);
 
@@ -189,58 +203,66 @@ planner::AbstractPlanNode* PlanTransformer::TransformIndexOnlyScan(
 
   /* index qualifier and scan keys */
   LOG_INFO("num of scan keys = %d", ioss_plan_state->ioss_NumScanKeys);
-  BuildScanKey(ioss_plan_state->ioss_ScanKeys, ioss_plan_state->ioss_NumScanKeys, index_scan_desc);
+  BuildScanKey(ioss_plan_state->ioss_ScanKeys,
+               ioss_plan_state->ioss_NumScanKeys, index_scan_desc);
 
   /* handle simple cases */
   /* target list */
-  //ioss_plan_state->ss.ps.targetlist;
+  // ioss_plan_state->ss.ps.targetlist;
   /* ORDER BY, not support */
 
   /* Plan qual, not support */
-  //ioss_plan_state->ss.ps.qual;
+  // ioss_plan_state->ss.ps.qual;
   auto schema = table->GetSchema();
   index_scan_desc.column_ids.resize(schema->GetColumnCount());
-  std::iota(index_scan_desc.column_ids.begin(), index_scan_desc.column_ids.end(), 0);
+  std::iota(index_scan_desc.column_ids.begin(),
+            index_scan_desc.column_ids.end(), 0);
   return new planner::IndexScanNode(table, index_scan_desc);
 }
 
 /**
  * @brief Convert a Postgres BitmapScan into a Peloton IndexScanNode
- *        We currently only handle the case where the lower plan is a BitmapIndexScan
+ *        We currently only handle the case where the lower plan is a
+ *BitmapIndexScan
  *
  * @return Pointer to the constructed AbstractPlanNode
  */
-planner::AbstractPlanNode* PlanTransformer::TransformBitmapScan(const BitmapHeapScanState* bhss_plan_state) {
+planner::AbstractPlanNode *PlanTransformer::TransformBitmapScan(
+    const BitmapHeapScanState *bhss_plan_state) {
   planner::IndexScanNode::IndexScanDesc index_scan_desc;
 
   /* resolve target relation */
   Oid table_oid = bhss_plan_state->ss.ss_currentRelation->rd_id;
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
 
-  assert(nodeTag(outerPlanState(bhss_plan_state)) == T_BitmapIndexScanState); // only support a bitmap index scan at lower level
+  assert(nodeTag(outerPlanState(bhss_plan_state)) ==
+         T_BitmapIndexScanState);  // only support a bitmap index scan at lower
+                                   // level
 
-  const BitmapIndexScanState *biss_state = reinterpret_cast<const BitmapIndexScanState*>(outerPlanState(bhss_plan_state));
-  const BitmapIndexScan *biss_plan = reinterpret_cast<const BitmapIndexScan *>(biss_state->ss.ps.plan);
+  const BitmapIndexScanState *biss_state =
+      reinterpret_cast<const BitmapIndexScanState *>(
+          outerPlanState(bhss_plan_state));
+  const BitmapIndexScan *biss_plan =
+      reinterpret_cast<const BitmapIndexScan *>(biss_state->ss.ps.plan);
 
-  storage::DataTable *table =
-      static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
-  .GetTableWithOid(database_oid, table_oid));
+  storage::DataTable *table = static_cast<storage::DataTable *>(
+      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
   assert(table);
   LOG_INFO("Scan from: database oid %u table oid %u", database_oid, table_oid);
 
-
   /* Resolve index  */
   index_scan_desc.index = table->GetIndexWithOid(biss_plan->indexid);
-  LOG_INFO("BitmapIdxmap scan on Index oid %u, index name: %s", biss_plan->indexid,
-           index_scan_desc.index->GetName().c_str());
+  LOG_INFO("BitmapIdxmap scan on Index oid %u, index name: %s",
+           biss_plan->indexid, index_scan_desc.index->GetName().c_str());
 
   /* Resolve index order */
   /* Only support forward scan direction */
 
   /* index qualifier and scan keys */
   LOG_INFO("num of scan keys = %d", biss_state->biss_NumScanKeys);
-  BuildScanKey(biss_state->biss_ScanKeys, biss_state->biss_NumScanKeys, index_scan_desc);
+  BuildScanKey(biss_state->biss_ScanKeys, biss_state->biss_NumScanKeys,
+               index_scan_desc);
 
   /* handle simple cases */
   /* target list */
@@ -250,10 +272,10 @@ planner::AbstractPlanNode* PlanTransformer::TransformBitmapScan(const BitmapHeap
 
   auto schema = table->GetSchema();
   index_scan_desc.column_ids.resize(schema->GetColumnCount());
-  std::iota(index_scan_desc.column_ids.begin(), index_scan_desc.column_ids.end(), 0);
+  std::iota(index_scan_desc.column_ids.begin(),
+            index_scan_desc.column_ids.end(), 0);
   return new planner::IndexScanNode(table, index_scan_desc);
 }
 
-
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

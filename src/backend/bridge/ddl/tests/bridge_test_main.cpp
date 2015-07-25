@@ -20,9 +20,9 @@ namespace bridge {
 
 void BridgeTest::RunTests() {
   // Create the new storage database and add it to the manager
-  DDLDatabase::CreateDatabase( Bridge::GetCurrentDatabaseOid() );
+  DDLDatabase::CreateDatabase(Bridge::GetCurrentDatabaseOid());
 
-  std::cout<< ":::::::::::::  TEST CASES START :::::::::::::\n";
+  std::cout << ":::::::::::::  TEST CASES START :::::::::::::\n";
 
   DDL_Database_TEST();
 
@@ -32,9 +32,8 @@ void BridgeTest::RunTests() {
 
   DDL_MIX_TEST();
 
-  std::cout<< ":::::::::::::  TEST CASES END   :::::::::::::\n";
+  std::cout << ":::::::::::::  TEST CASES END   :::::::::::::\n";
 }
 
-} // End bridge namespace
-} // End peloton namespace
-
+}  // End bridge namespace
+}  // End peloton namespace

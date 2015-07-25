@@ -19,7 +19,7 @@
 namespace peloton {
 namespace catalog {
 
-Manager& Manager::GetInstance() {
+Manager &Manager::GetInstance() {
   static Manager manager;
   return manager;
 }
@@ -29,15 +29,14 @@ Manager& Manager::GetInstance() {
 //===--------------------------------------------------------------------===//
 
 void Manager::SetLocation(const oid_t oid, void *location) {
-  locator.insert(std::pair<oid_t, void*>(oid, location));
+  locator.insert(std::pair<oid_t, void *>(oid, location));
 }
 
 void *Manager::GetLocation(const oid_t oid) const {
   void *location = nullptr;
   try {
     location = locator.at(oid);
-  }
-  catch(std::exception& e) {
+  } catch (std::exception &e) {
     // FIXME
   }
   return location;
@@ -47,8 +46,7 @@ void *Manager::GetLocation(const oid_t oid) const {
 // DATABASE
 //===--------------------------------------------------------------------===//
 
-
-void Manager::AddDatabase(storage::Database *database){
+void Manager::AddDatabase(storage::Database *database) {
   {
     std::lock_guard<std::mutex> lock(catalog_mutex);
     databases.push_back(database);
@@ -56,9 +54,8 @@ void Manager::AddDatabase(storage::Database *database){
 }
 
 storage::Database *Manager::GetDatabaseWithOid(const oid_t database_oid) const {
-  for(auto database : databases)
-    if(database->GetOid() == database_oid)
-      return database;
+  for (auto database : databases)
+    if (database->GetOid() == database_oid) return database;
 
   return nullptr;
 }
@@ -68,8 +65,8 @@ void Manager::DropDatabaseWithOid(const oid_t database_oid) {
     std::lock_guard<std::mutex> lock(catalog_mutex);
 
     oid_t database_offset = 0;
-    for(auto database : databases) {
-      if(database->GetOid() == database_oid){
+    for (auto database : databases) {
+      if (database->GetOid() == database_oid) {
         break;
       }
       database_offset++;
@@ -87,9 +84,7 @@ storage::Database *Manager::GetDatabase(const oid_t database_offset) const {
   return database;
 }
 
-oid_t Manager::GetDatabaseCount() const {
-  return databases.size();
-}
+oid_t Manager::GetDatabaseCount() const { return databases.size(); }
 
 //===--------------------------------------------------------------------===//
 // CONVENIENCE WRAPPERS
@@ -97,12 +92,11 @@ oid_t Manager::GetDatabaseCount() const {
 
 storage::DataTable *Manager::GetTableWithOid(const oid_t database_oid,
                                              const oid_t table_oid) const {
-
   // Lookup DB
   auto database = GetDatabaseWithOid(database_oid);
 
   // Lookup table
-  if(database != nullptr) {
+  if (database != nullptr) {
     auto table = database->GetTableWithOid(table_oid);
     return table;
   }
@@ -110,14 +104,13 @@ storage::DataTable *Manager::GetTableWithOid(const oid_t database_oid,
   return nullptr;
 }
 
-storage::DataTable *Manager::GetTableWithName(const oid_t database_oid,
-                                              const std::string table_name) const {
-
+storage::DataTable *Manager::GetTableWithName(
+    const oid_t database_oid, const std::string table_name) const {
   // Lookup DB
   auto database = GetDatabaseWithOid(database_oid);
 
   // Lookup table
-  if(database != nullptr) {
+  if (database != nullptr) {
     auto table = database->GetTableWithName(table_name);
     return table;
   }
@@ -128,12 +121,11 @@ storage::DataTable *Manager::GetTableWithName(const oid_t database_oid,
 index::Index *Manager::GetIndexWithOid(const oid_t database_oid,
                                        const oid_t table_oid,
                                        const oid_t index_oid) const {
-
   // Lookup table
   auto table = GetTableWithOid(database_oid, table_oid);
 
   // Lookup index
-  if(table != nullptr) {
+  if (table != nullptr) {
     auto index = table->GetIndexWithOid(index_oid);
     return index;
   }
@@ -141,9 +133,5 @@ index::Index *Manager::GetIndexWithOid(const oid_t database_oid,
   return nullptr;
 }
 
-
-} // End catalog namespace
-} // End peloton namespace
-
-
-
+}  // End catalog namespace
+}  // End peloton namespace
