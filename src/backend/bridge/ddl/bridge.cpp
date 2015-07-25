@@ -40,6 +40,21 @@ namespace peloton {
 namespace bridge {
 
 //===--------------------------------------------------------------------===//
+// Transaction Wrapper
+//===--------------------------------------------------------------------===//
+
+//TODO :: Maybe stupid idea..
+void Bridge::PelotonStartTransactionCommand(){
+  StartTransactionCommand();
+}
+
+void Bridge::PelotonCommitTransactionCommand(){
+  CommitTransactionCommand();
+  // Set the resource owner
+  CurrentResourceOwner = ResourceOwnerCreate(NULL, "Peloton");
+}
+
+//===--------------------------------------------------------------------===//
 // Getters
 //===--------------------------------------------------------------------===//
 
@@ -51,7 +66,7 @@ HeapTuple Bridge::GetPGClassTupleForRelationOid(Oid relation_id){
   Relation pg_class_rel;
   HeapTuple tuple = NULL;
 
-  //StartTransactionCommand();
+  PelotonStartTransactionCommand();
 
   // Open pg_class table
   pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
@@ -64,7 +79,8 @@ HeapTuple Bridge::GetPGClassTupleForRelationOid(Oid relation_id){
   }
 
   heap_close(pg_class_rel, AccessShareLock);
-  //CommitTransactionCommand();
+
+  PelotonCommitTransactionCommand();
 
   return tuple;
 }
@@ -77,6 +93,8 @@ HeapTuple Bridge::GetPGClassTupleForRelationName(const char *relation_name){
   Relation pg_class_rel;
   HeapTuple tuple = NULL;
   HeapScanDesc scan;
+
+  PelotonStartTransactionCommand();
 
   // Open pg_class table
   pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
@@ -97,6 +115,8 @@ HeapTuple Bridge::GetPGClassTupleForRelationName(const char *relation_name){
 
   heap_endscan(scan);
   heap_close(pg_class_rel, AccessShareLock);
+
+  PelotonCommitTransactionCommand();
 
   return tuple;
 }
@@ -158,6 +178,7 @@ int Bridge::GetNumberOfAttributes(Oid relation_id) {
   int num_atts = -1;
 
   tuple = GetPGClassTupleForRelationOid(relation_id);
+
   if (!HeapTupleIsValid(tuple)) {
     return num_atts;
   }
@@ -184,7 +205,6 @@ float Bridge::GetNumberOfTuples(Oid relation_id){
   if (!HeapTupleIsValid(tuple)) {
     return -1;
   }
-
   pg_class = (Form_pg_class) GETSTRUCT(tuple);
 
   // Get number of tuples
@@ -229,7 +249,7 @@ void Bridge::GetTableList(bool catalog_only) {
   HeapScanDesc scan;
   HeapTuple tuple;
 
-  //StartTransactionCommand();
+  PelotonStartTransactionCommand();
 
   // Scan pg class table
   pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
@@ -251,7 +271,7 @@ void Bridge::GetTableList(bool catalog_only) {
   heap_endscan(scan);
   heap_close(pg_class_rel, AccessShareLock);
 
-  //CommitTransactionCommand();
+  PelotonCommitTransactionCommand();
 }
 
 /**
@@ -262,7 +282,7 @@ void Bridge::GetDatabaseList(void) {
   HeapScanDesc scan;
   HeapTuple tup;
 
-  StartTransactionCommand();
+  PelotonStartTransactionCommand();
 
   // Scan pg database table
   pg_database_rel = heap_open(DatabaseRelationId, AccessShareLock);
@@ -277,22 +297,12 @@ void Bridge::GetDatabaseList(void) {
   heap_endscan(scan);
   heap_close(pg_database_rel, AccessShareLock);
 
-  CommitTransactionCommand();
+  PelotonCommitTransactionCommand();
 }
 
 //===--------------------------------------------------------------------===//
 // Setters
 //===--------------------------------------------------------------------===//
-
-void Bridge::PelotonStartTransactionCommand(){
-  StartTransactionCommand();
-}
-
-void Bridge::PelotonCommitTransactionCommand(){
-  CommitTransactionCommand();
-  // Set the resource owner
-  CurrentResourceOwner = ResourceOwnerCreate(NULL, "Peloton");
-}
 
 /**
  * @brief Setting the number of tuples.
@@ -314,21 +324,21 @@ void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
   tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relation_id));
   if (!HeapTupleIsValid(tuple)) {
     elog(DEBUG2, "cache lookup failed for relation %u", relation_id);
-    return;
+  }else{
+    pgclass = (Form_pg_class) GETSTRUCT(tuple);
+    pgclass->reltuples = (float4) num_tuples;
+    pgclass->relpages = (int32) 1;
+
+    // update tuple
+    simple_heap_update(pg_class_rel, &tuple->t_self, tuple);
+
+    /* keep the catalog indexes up to date */
+    CatalogUpdateIndexes(pg_class_rel, tuple);
+
+    heap_freetuple(tuple);
   }
-  pgclass = (Form_pg_class) GETSTRUCT(tuple);
-  pgclass->reltuples = (float4) num_tuples;
-  pgclass->relpages = (int32) 1;
 
-  // update tuple
-  simple_heap_update(pg_class_rel, &tuple->t_self, tuple);
-
-  /* keep the catalog indexes up to date */
-  CatalogUpdateIndexes(pg_class_rel, tuple);
-
-  heap_freetuple(tuple);
   heap_close(pg_class_rel, RowExclusiveLock);
-
   PelotonCommitTransactionCommand();
 }
 
