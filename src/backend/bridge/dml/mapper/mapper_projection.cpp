@@ -25,15 +25,16 @@ TransformTargetList(List* target_list, oid_t column_count);
 /**
  * @brief Transforms a PG ProjInfo into Peloton.
  * It includes both trivial and non-trivial projections.
- * @param proj_info Postgres ProjectionInfo
  *
+ * @param proj_info Postgres ProjectionInfo
  * @param column_count Max column column in the output schema.
  *  This is used to help discard junk attributes, as
  *  we don't need them in Peloton.
+ *
  * @return A vector of <column_id, expression> pairs.
  */
 std::vector<std::pair<oid_t, expression::AbstractExpression*>>
-TransformProjInfo(ProjectionInfo* proj_info, oid_t column_count) {
+TransformProjInfo(const ProjectionInfo* proj_info, oid_t column_count) {
   std::vector<std::pair<oid_t, expression::AbstractExpression*>> proj_list;
 
   // 1. Extract the non-trivial projections (expression-based in Postgres)

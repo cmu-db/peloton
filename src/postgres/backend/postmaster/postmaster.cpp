@@ -2889,7 +2889,7 @@ processCancelRequest(Port *port, void *pkt)
         if (!EXIT_STATUS_0(exitstatus))
           LogChildExit(LOG, _("peloton process"),
                        pid, exitstatus);
-        // TODO: Disable automatic restart ?
+        // TODO: Disable automatic restart
         //if (pmState == PM_RUN)
         //  PelotonPID = peloton_start();
         continue;
@@ -4922,8 +4922,9 @@ processCancelRequest(Port *port, void *pkt)
       Assert(PgStatPID == 0);
       PgStatPID = pgstat_start();
 
-      Assert(PelotonPID == 0);
-      PelotonPID = peloton_start();
+      // TODO: Disable auto restart
+      //Assert(PelotonPID == 0);
+      //PelotonPID = peloton_start();
 
       ereport(LOG,
               (errmsg("database system is ready to accept read only connections")));

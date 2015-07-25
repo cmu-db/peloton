@@ -105,11 +105,13 @@ bool InsertExecutor::DExecute() {
     // For now we just handle a single tuple
     auto schema = target_table->GetSchema();
     std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
-    auto projs = node.GetProjs();
+    auto project_info = node.GetProjectInfo();
 
-    for(auto proj : projs) {
-      peloton::Value value = proj.second->Evaluate(nullptr, nullptr, executor_context_);
-      tuple->SetValue(proj.first, value);
+    assert(project_info->GetDirectMapList().size() == 0); // There should be no direct maps
+
+    for(auto target : project_info->GetTargetList()) {
+      peloton::Value value = target.second->Evaluate(nullptr, nullptr, executor_context_);
+      tuple->SetValue(target.first, value);
     }
 
     // Carry out insertion
