@@ -20,6 +20,13 @@
 #include "backend/catalog/foreign_key.h"
 #include "backend/storage/database.h"
 
+#include "tcop/tcopprot.h"
+#include "parser/parse_utilcmd.h"
+#include "catalog/pg_class.h"
+#include "commands/tablecmds.h"
+
+
+
 namespace peloton {
 namespace bridge {
 
@@ -234,6 +241,76 @@ void BridgeTest::CreateSampleForeignKey(oid_t pktable_oid,
   status = DDLTable::SetReferenceTables(foreign_keys, table_oid);
   assert(status);
 }
+
+/**
+ * @brief Create a table in Postgres
+ * @params table_name table name 
+ * @return table_oid
+ */
+oid_t BridgeTest::CreateTableInPostgres(std::string table_name){
+
+  std::string queryString = "create table " + table_name +"(id int, name char(64), time timestamp, salary double precision);";
+
+  ObjectAddress address;
+  List	   *parsetree_list;
+  ListCell*  parsetree_item;
+
+  Bridge::PelotonStartTransactionCommand();
+
+  parsetree_list = pg_parse_query(queryString.c_str());
+  foreach(parsetree_item, parsetree_list)
+  {
+    Node	   *parsetree = (Node *) lfirst(parsetree_item);
+
+    List     *stmts;
+    /* Run parse analysis ... */
+    stmts = transformCreateStmt((CreateStmt *) parsetree,
+        queryString.c_str());
+
+    /* ... and do it */
+    ListCell   *l;
+    foreach(l, stmts){
+      Node     *stmt = (Node *) lfirst(l);
+
+      if (IsA(stmt, CreateStmt)){
+        /* Create the table itself */
+        address = DefineRelation((CreateStmt *) stmt,
+            RELKIND_RELATION,
+            InvalidOid, NULL);
+      }
+    }
+  }
+
+  Bridge::PelotonCommitTransactionCommand();
+
+  return address.objectId;
+}
+
+bool BridgeTest::DropTableInPostgres(std::string table_name){
+
+  Bridge::PelotonStartTransactionCommand();
+ 
+  std::string queryString = "drop table " + table_name +";";
+
+  List	   *parsetree_list;
+  ListCell*  parsetree_item;
+
+
+  parsetree_list = pg_parse_query(queryString.c_str());
+  foreach(parsetree_item, parsetree_list)
+  {
+    Node	   *parsetree = (Node *) lfirst(parsetree_item);
+
+    DropStmt   *stmt = (DropStmt *) parsetree;
+
+    RemoveRelations(stmt);
+  }
+
+  Bridge::PelotonCommitTransactionCommand();
+
+  return true;
+}
+
 
 } // End test namespace
 } // End peloton namespace
