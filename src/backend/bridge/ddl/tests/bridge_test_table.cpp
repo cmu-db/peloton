@@ -102,6 +102,10 @@ void BridgeTest::DDL_CreateTable_TEST_WITH_COLUMNS() {
   column = schema->GetColumn(3);
   assert( CheckColumn( column, "salary", 8, VALUE_TYPE_DOUBLE ));
 
+  // Drop the table
+  status = DDLTable::DropTable(table_oid);
+  assert(status);
+
   std::cout << ":::::: " << __func__ << " DONE\n";
 }
 
