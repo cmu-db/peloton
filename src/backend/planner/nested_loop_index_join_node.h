@@ -18,30 +18,26 @@ namespace peloton {
 namespace planner {
 
 class NestedLoopIndexJoinNode : public AbstractJoinPlanNode {
-public:
-    NestedLoopIndexJoinNode(const NestedLoopIndexJoinNode &) = delete;
-    NestedLoopIndexJoinNode& operator=(const NestedLoopIndexJoinNode &) = delete;
-    NestedLoopIndexJoinNode(NestedLoopIndexJoinNode &&) = delete;
-    NestedLoopIndexJoinNode& operator=(NestedLoopIndexJoinNode &&) = delete;
+ public:
+  NestedLoopIndexJoinNode(const NestedLoopIndexJoinNode &) = delete;
+  NestedLoopIndexJoinNode &operator=(const NestedLoopIndexJoinNode &) = delete;
+  NestedLoopIndexJoinNode(NestedLoopIndexJoinNode &&) = delete;
+  NestedLoopIndexJoinNode &operator=(NestedLoopIndexJoinNode &&) = delete;
 
-    NestedLoopIndexJoinNode(expression::AbstractExpression *predicate) :
-        AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate) { // FIXME
-            // Nothing to see here...
-    }
+  NestedLoopIndexJoinNode(expression::AbstractExpression *predicate)
+      : AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate) {  // FIXME
+    // Nothing to see here...
+  }
 
-    inline PlanNodeType GetPlanNodeType() const {
-        return PLAN_NODE_TYPE_NESTLOOPINDEX;
-    }
+  inline PlanNodeType GetPlanNodeType() const {
+    return PLAN_NODE_TYPE_NESTLOOPINDEX;
+  }
 
-    inline std::string GetInfo() const {
-        return "NestedLoopIndexJoin";
-    }
+  inline std::string GetInfo() const { return "NestedLoopIndexJoin"; }
 
-private:
-
-    // There is nothing special that we need here
-
+ private:
+  // There is nothing special that we need here
 };
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

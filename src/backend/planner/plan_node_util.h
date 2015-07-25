@@ -14,5 +14,5 @@ namespace planner {
 
 AbstractPlanNode* GetEmptyPlanNode(PlanNodeType type);
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

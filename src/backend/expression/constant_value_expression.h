@@ -20,9 +20,8 @@ class SerializeOutput;
 class ConstantValueExpression : public AbstractExpression {
  public:
   ConstantValueExpression(const Value &value)
- : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT) {
+      : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT) {
     this->value = value;
-
   }
 
   virtual ~ConstantValueExpression() {
@@ -32,7 +31,7 @@ class ConstantValueExpression : public AbstractExpression {
 
   Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
                  __attribute__((unused)) const AbstractTuple *tuple2,
-                 __attribute__((unused)) executor::ExecutorContext*) const {
+                 __attribute__((unused)) executor::ExecutorContext *) const {
     return this->value;
   }
 
@@ -42,14 +41,11 @@ class ConstantValueExpression : public AbstractExpression {
     return os.str();
   }
 
-  Value GetValue(){
-    return value;
-  }
+  Value GetValue() { return value; }
 
  protected:
   Value value;
 };
 
-} // End expression namespace
-} // End peloton namespace
-
+}  // End expression namespace
+}  // End peloton namespace

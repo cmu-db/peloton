@@ -22,8 +22,7 @@ namespace test {
 
 class MockExecutor : public executor::AbstractExecutor {
  public:
-  MockExecutor() : executor::AbstractExecutor(nullptr) {
-  }
+  MockExecutor() : executor::AbstractExecutor(nullptr) {}
 
   MOCK_METHOD0(DInit, bool());
 
@@ -32,5 +31,5 @@ class MockExecutor : public executor::AbstractExecutor {
   MOCK_METHOD0(GetOutput, executor::LogicalTile*());
 };
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

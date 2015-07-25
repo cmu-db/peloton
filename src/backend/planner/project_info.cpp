@@ -11,8 +11,8 @@ namespace planner {
 /**
  * @brief Mainly release the expression in target list.
  */
-ProjectInfo::~ProjectInfo(){
-  for(auto target : target_list_){
+ProjectInfo::~ProjectInfo() {
+  for (auto target : target_list_) {
     delete target.second;
   }
 }
@@ -30,14 +30,11 @@ ProjectInfo::~ProjectInfo(){
  * @param tuple2  Source tuple 2.
  * @param econtext  ExecutorContext for expression evaluation.
  */
-bool ProjectInfo::Evaluate(
-    storage::Tuple* dest,
-    const AbstractTuple* tuple1,
-    const AbstractTuple* tuple2,
-    executor::ExecutorContext* econtext) const {
-
+bool ProjectInfo::Evaluate(storage::Tuple* dest, const AbstractTuple* tuple1,
+                           const AbstractTuple* tuple2,
+                           executor::ExecutorContext* econtext) const {
   // (A) Execute target list
-  for(auto target : target_list_){
+  for (auto target : target_list_) {
     auto col_id = target.first;
     auto expr = target.second;
     auto value = expr->Evaluate(tuple1, tuple2, econtext);
@@ -46,7 +43,7 @@ bool ProjectInfo::Evaluate(
   }
 
   // (B) Execute direct map
-  for(auto dm : direct_map_list_){
+  for (auto dm : direct_map_list_) {
     auto dest_col_id = dm.first;
     auto tuple_idx = dm.second.first;
     auto src_col_id = dm.second.second;
@@ -62,5 +59,3 @@ bool ProjectInfo::Evaluate(
 
 } /* namespace planner */
 } /* namespace peloton */
-
-

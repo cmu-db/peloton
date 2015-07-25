@@ -14,14 +14,11 @@ namespace executor {
  * @brief Constructor for AbstractExecutor.
  * @param node Abstract plan node corresponding to this executor.
  */
-AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node,
-                                   ExecutorContext *executor_context)
-: node_(node), executor_context_(executor_context) {
-}
+AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode* node,
+                                   ExecutorContext* executor_context)
+    : node_(node), executor_context_(executor_context) {}
 
-void AbstractExecutor::SetOutput(LogicalTile* table) {
-  output.reset(table);
-}
+void AbstractExecutor::SetOutput(LogicalTile* table) { output.reset(table); }
 
 // Transfers ownership
 LogicalTile* AbstractExecutor::GetOutput() {
@@ -33,7 +30,7 @@ LogicalTile* AbstractExecutor::GetOutput() {
  * @brief Add child executor to this executor node.
  * @param child Child executor to add.
  */
-void AbstractExecutor::AddChild(AbstractExecutor *child) {
+void AbstractExecutor::AddChild(AbstractExecutor* child) {
   children_.push_back(child);
 }
 
@@ -55,15 +52,17 @@ bool AbstractExecutor::Init() {
 
   for (auto child : children_) {
     status = child->Init();
-    if(status == false) {
-      LOG_ERROR("Initialization failed in child executor with plan id : %d\n", child->node_->GetPlanNodeId());
+    if (status == false) {
+      LOG_ERROR("Initialization failed in child executor with plan id : %d\n",
+                child->node_->GetPlanNodeId());
       return false;
     }
   }
 
   status = DInit();
-  if(status == false) {
-    LOG_ERROR("Initialization failed in executor with plan id : %d\n", node_->GetPlanNodeId());
+  if (status == false) {
+    LOG_ERROR("Initialization failed in executor with plan id : %d\n",
+              node_->GetPlanNodeId());
     return false;
   }
 
@@ -79,7 +78,7 @@ bool AbstractExecutor::Init() {
  * @return Pointer to the logical tile processed by this executor.
  */
 bool AbstractExecutor::Execute() {
-  //TODO In the future, we might want to pass some kind of executor state to
+  // TODO In the future, we might want to pass some kind of executor state to
   // GetNextTile. e.g. params for prepared plans.
 
   bool status = DExecute();
@@ -87,5 +86,5 @@ bool AbstractExecutor::Execute() {
   return status;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

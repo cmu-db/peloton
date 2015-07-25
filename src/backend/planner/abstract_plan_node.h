@@ -22,68 +22,64 @@ class LogicalTile;
 
 namespace planner {
 
-
 //===--------------------------------------------------------------------===//
 // Abstract Plan Node
 //===--------------------------------------------------------------------===//
 
 class AbstractPlanNode {
-public:
+ public:
+  AbstractPlanNode(const AbstractPlanNode&) = delete;
+  AbstractPlanNode& operator=(const AbstractPlanNode&) = delete;
+  AbstractPlanNode(AbstractPlanNode&&) = delete;
+  AbstractPlanNode& operator=(AbstractPlanNode&&) = delete;
 
-    AbstractPlanNode(const AbstractPlanNode &) = delete;
-    AbstractPlanNode& operator=(const AbstractPlanNode &) = delete;
-    AbstractPlanNode(AbstractPlanNode &&) = delete;
-    AbstractPlanNode& operator=(AbstractPlanNode &&) = delete;
+  explicit AbstractPlanNode(oid_t plan_node_id);
+  AbstractPlanNode();
+  virtual ~AbstractPlanNode();
 
-    explicit AbstractPlanNode(oid_t plan_node_id);
-    AbstractPlanNode();
-    virtual ~AbstractPlanNode();
+  //===--------------------------------------------------------------------===//
+  // Children + Parent Helpers
+  //===--------------------------------------------------------------------===//
 
+  void AddChild(AbstractPlanNode* child);
 
-    //===--------------------------------------------------------------------===//
-    // Children + Parent Helpers
-    //===--------------------------------------------------------------------===//
+  const std::vector<AbstractPlanNode*>& GetChildren() const;
 
-    void AddChild(AbstractPlanNode* child);
+  AbstractPlanNode* GetParent();
 
-    const std::vector<AbstractPlanNode*>& GetChildren() const;
+  //===--------------------------------------------------------------------===//
+  // Accessors
+  //===--------------------------------------------------------------------===//
 
-    AbstractPlanNode* GetParent();
+  oid_t GetPlanNodeId() const;
 
-    //===--------------------------------------------------------------------===//
-    // Accessors
-    //===--------------------------------------------------------------------===//
+  void SetPlanNodeId(oid_t plan_node_id);
 
-    oid_t GetPlanNodeId() const;
+  // Each sub-class will have to implement this function to return their type
+  // This is better than having to store redundant types in all the objects
+  virtual PlanNodeType GetPlanNodeType() const = 0;
 
-    void SetPlanNodeId(oid_t plan_node_id);
+  //===--------------------------------------------------------------------===//
+  // Utilities
+  //===--------------------------------------------------------------------===//
 
-    // Each sub-class will have to implement this function to return their type
-    // This is better than having to store redundant types in all the objects
-    virtual PlanNodeType GetPlanNodeType() const = 0;
+  // Debugging convenience methods
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const AbstractPlanNode& node);
+  std::string GetInfo(std::string spacer) const;
 
-    //===--------------------------------------------------------------------===//
-    // Utilities
-    //===--------------------------------------------------------------------===//
+  // Override in derived plan nodes
+  virtual std::string GetInfo() const;
 
-    // Debugging convenience methods
-    friend std::ostream& operator<<(std::ostream& os, const AbstractPlanNode& node);
-    std::string GetInfo(std::string spacer) const;
+ private:
+  // Every plan node will have a unique id assigned to it at compile time
+  oid_t plan_node_id_;
 
-    // Override in derived plan nodes
-    virtual std::string GetInfo() const;
+  // A node can have multiple children and parents
+  std::vector<AbstractPlanNode*> children_;
 
-private:
-
-    // Every plan node will have a unique id assigned to it at compile time
-    oid_t plan_node_id_;
-
-    // A node can have multiple children and parents
-    std::vector<AbstractPlanNode*> children_;
-
-    AbstractPlanNode* parent_ = nullptr;
-
+  AbstractPlanNode* parent_ = nullptr;
 };
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton
