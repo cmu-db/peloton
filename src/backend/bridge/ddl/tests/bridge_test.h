@@ -90,6 +90,8 @@ class BridgeTest {
 
   static void DDL_MIX_TEST_2();
 
+  static void DDL_MIX_TEST_3();
+
   //===--------------------------------------------------------------------===//
   // Helper Functions
   //===--------------------------------------------------------------------===//
@@ -132,6 +134,10 @@ class BridgeTest {
                                      std::string pktable_name,
                                      std::vector<catalog::Column>& columns,
                                      oid_t table_oid);
+
+  static oid_t CreateTableInPostgres(std::string table_name);
+
+  static bool DropTableInPostgres(std::string table_name);
 };
 
 } // End bridge namespace
