@@ -185,16 +185,16 @@ void BridgeTest::DDL_MIX_TEST_2() {
  */
 void BridgeTest::DDL_MIX_TEST_3() {
   bool status;
+
+  // Get db
   auto& manager = catalog::Manager::GetInstance();
   storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
 
   // Get the simple columns
   std::vector<catalog::Column> columns = CreateSimpleColumns();
-
-  // Table name and oid
   std::string table_name = "DDL_MIX_TEST_3";
 
-  // Create a table in Postgres 
+  // Create a table in Postgres
   oid_t table_oid = CreateTableInPostgres(table_name);
   assert(table_oid);
 
@@ -261,6 +261,8 @@ void BridgeTest::DDL_MIX_TEST_3() {
   // Drop the table
   status = DDLTable::DropTable(table_oid+1);
   assert(status);
+
+  std::cout << ":::::: " << __func__ << " DONE\n";
 }
 
 } // End bridge namespace
