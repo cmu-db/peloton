@@ -265,6 +265,9 @@ std::vector<Transaction*> TransactionManager::EndCommitPhase(Transaction * txn, 
     }
   }
 
+  // clear txn entry in txn table
+  EndTransaction(txn, sync);
+
   return std::move(txn_list);
 }
 
@@ -289,9 +292,6 @@ void TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
   // process all committed txns
   for (auto committed_txn : committed_txns)
     committed_txn->DecrementRefCount();
-
-  // clear txn entry in txn table
-  EndTransaction(txn, sync);
 
   // XXX LOG : group commit entry
 

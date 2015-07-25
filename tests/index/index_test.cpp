@@ -140,7 +140,6 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   delete index;
 }
 
-
 } // End test namespace
 } // End peloton namespace
 

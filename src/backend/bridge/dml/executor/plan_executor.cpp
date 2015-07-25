@@ -273,12 +273,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
 
   if(single_statement_txn == true) {
     // Commit
-    try {
-      txn_manager.CommitTransaction(txn);
-    }
-    catch(...){
-      LOG_WARN("Could not commit transaction \n");
-    }
+    txn_manager.CommitTransaction(txn);
   }
 
   // clean up
