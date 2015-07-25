@@ -8,6 +8,7 @@
 
 #include "backend/executor/abstract_executor.h"
 #include "backend/expression/abstract_expression.h"
+#include "backend/planner/update_node.h"
 
 #include <vector>
 
@@ -29,7 +30,8 @@ class UpdateExecutor : public AbstractExecutor {
 
  private:
   storage::DataTable *target_table_ = nullptr;
-  std::vector<std::pair<oid_t, expression::AbstractExpression*>> updated_col_exprs_;
+  const planner::ProjectInfo *project_info_ = nullptr;
+
 };
 
 } // namespace executor
