@@ -30,7 +30,16 @@ DBMS designed for next-generation storage technologies, like non-volatile memory
     ./bootstrap
     
     cd build
-    ../configure 
+    ../configure
+    make -j4
+    sudo make -j4 install
+
+### Build Peloton with Debug Enabled
+
+    ./bootstrap
+
+    cd build
+    ../configure --enable-debug
     make -j4
     sudo make -j4 install
 
