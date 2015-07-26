@@ -241,24 +241,6 @@ deleteObjectsInList(ObjectAddresses *targetObjects, Relation *depRel,
 	}
 }
 
-// TODO :: Peloton Changes
-// to avoid trackDroppedObjectsNeeded()
-static void
-peloton_deleteObjectsInList(ObjectAddresses *targetObjects, Relation *depRel,
-					int flags)
-{
-	int			i;
-
-	/*
-	 * Delete all the objects in the proper order.
-	 */
-	for (i = 0; i < targetObjects->numrefs; i++)
-	{
-		ObjectAddress *thisobj = targetObjects->refs + i;
-
-		deleteOneObject(thisobj, depRel, flags);
-	}
-}
 
 /*
  * performDeletion: attempt to drop the specified object.  If CASCADE
@@ -461,8 +443,16 @@ peloton_performMultipleDeletions(const ObjectAddresses *objects,
 						   NOTICE,
 						   (objects->numrefs == 1 ? objects->refs : NULL));
 
-	/* do the deed */
-	peloton_deleteObjectsInList(targetObjects, &depRel, flags);
+	/*
+	 * Delete all the objects in the proper order.
+	 */
+	for (i = 0; i < targetObjects->numrefs; i++)
+	{
+		ObjectAddress *thisobj = targetObjects->refs + i;
+
+		deleteOneObject(thisobj, &depRel, flags);
+	}
+
 
 	/* And clean up */
 	free_object_addresses(targetObjects);
