@@ -13,7 +13,7 @@ CODE_COVERAGE_IGNORE_PATTERN="/usr/*" "*/third_party/*" "*/test/*" "*/postgres/*
 AM_CPPFLAGS = $(peloton_INCLUDES) @TBB_CPPFLAGS@ @TBB_LIBS@ 
 
 AM_CXXFLAGS = -std=c++11 \
-              -Wall -Wextra -Werror \
+              -Wall -Wextra -Werror -Wno-array-bounds -Wno-clobbered -Wno-strict-overflow \
               -fPIC -fpermissive -fno-strict-aliasing \
               $(CODE_COVERAGE_CFLAGS) 
 
