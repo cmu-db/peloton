@@ -52,14 +52,14 @@ namespace test {
  */
 planner::ProjectInfo* MakeProjectInfoFromTuple(const storage::Tuple* tuple){
   planner::ProjectInfo::TargetList target_list;
+  planner::ProjectInfo::DirectMapList direct_map_list;
   for(oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
     auto value = tuple->GetValue(col_id);
     auto expression = expression::ConstantValueFactory(value);
     target_list.emplace_back(col_id, expression);
   }
 
-  return new planner::ProjectInfo(std::move(target_list),
-                                  planner::ProjectInfo::DirectMapList());
+  return new planner::ProjectInfo(target_list, direct_map_list);
 }
 
 //===--------------------------------------------------------------------===//
@@ -84,7 +84,7 @@ void InsertTuple(storage::DataTable *table){
   executor::InsertExecutor executor(&node, context.get());
   executor.Execute();
 
-  tuple->FreeUninlinedData();
+  //tuple->FreeUninlinedData();  // double freeed
   delete tuple;
 
   txn_manager.CommitTransaction(txn);
@@ -97,16 +97,15 @@ void UpdateTuple(storage::DataTable *table){
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  std::vector<storage::Tuple *> tuples;
-
   // Update
-
-  std::vector<oid_t> update_column_ids = { 2 };
-  std::vector<Value> values;
   Value update_val = ValueFactory::GetDoubleValue(23.5);
-  values.push_back(update_val);
 
-  planner::UpdateNode update_node(table, update_column_ids, values);
+  planner::ProjectInfo::TargetList target_list;
+  planner::ProjectInfo::DirectMapList direct_map_list;
+  target_list.emplace_back(2, expression::ConstantValueFactory(update_val));
+  std::cout << target_list.at(0).first << std::endl;
+
+  planner::UpdateNode update_node(table, new planner::ProjectInfo(target_list, direct_map_list));
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
   // Predicate
@@ -221,7 +220,7 @@ TEST(MutateTests, StressTests) {
     std::cout << ce.what();
   }
 
-  tuple->FreeUninlinedData();
+  //tuple->FreeUninlinedData(); // Double freed
   delete tuple;
 
   txn_manager.CommitTransaction(txn);
