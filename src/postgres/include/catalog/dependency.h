@@ -164,6 +164,10 @@ extern void performDeletion(const ObjectAddress *object,
 extern void performMultipleDeletions(const ObjectAddresses *objects,
 						 DropBehavior behavior, int flags);
 
+//TODO :: Peloton Changes
+extern void peloton_performMultipleDeletions(const ObjectAddresses *objects,
+		 				 DropBehavior behavior, int flags);
+
 extern void deleteWhatDependsOn(const ObjectAddress *object,
 					bool showNotices);
 
