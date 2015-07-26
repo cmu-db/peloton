@@ -71,6 +71,20 @@ Sample& Sample::operator+(const Sample& rhs) {
   return *this;
 }
 
+std::vector<oid_t> Sample::GetEnabledColumns() const {
+  std::vector<oid_t> enabled_columns;
+
+  oid_t column_itr = 0;
+  for(auto column : columns_accessed_) {
+    if(std::round(column) == 1.0)
+      enabled_columns.push_back(column_itr);
+    column_itr++;
+  }
+
+  return enabled_columns;
+}
+
+
 std::ostream &operator<<(std::ostream &os, const Sample &sample) {
 
   os << "Sample :: ";
