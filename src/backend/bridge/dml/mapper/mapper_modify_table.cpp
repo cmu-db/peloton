@@ -23,12 +23,6 @@ namespace bridge {
 // ModifyTable
 //===--------------------------------------------------------------------===//
 
-extern std::vector<std::pair<oid_t, expression::AbstractExpression*>>
-TransformProjInfo(const ProjectionInfo* proj_info, oid_t column_count);
-
-extern std::vector<std::pair<oid_t, expression::AbstractExpression*>>
-TransformTargetList(List* target_list, oid_t column_count);
-
 /**
  * @brief Convert ModifyTableState into AbstractPlanNode.
  * @return Pointer to the constructed AbstractPlanNode.
