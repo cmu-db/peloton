@@ -36,8 +36,8 @@ class Clusterer {
         means_(std::vector<Sample>(cluster_count_, Sample(sample_column_count))),
         closest_(std::vector<int>(cluster_count_, 0)),
         new_sample_weight_(param),
-        sample_count_(0) {
-
+        sample_count_(0),
+        sample_column_count_(sample_column_count){
   }
 
   oid_t GetClusterCount() const { return cluster_count_; }
@@ -53,6 +53,9 @@ class Clusterer {
 
   // get history
   double GetFraction(oid_t cluster_offset) const;
+
+  // get partitioning
+  std::map<oid_t, oid_t> GetPartitioning(oid_t tile_count) const;
 
   // Get a string representation of clusterer
   friend std::ostream& operator<<(std::ostream& os, const Clusterer& clusterer);
@@ -76,6 +79,9 @@ class Clusterer {
 
   // sample count
   int sample_count_;
+
+  // sample column count
+  oid_t sample_column_count_;
 
 };
 
