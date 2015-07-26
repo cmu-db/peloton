@@ -28,27 +28,42 @@ namespace test {
 
 TEST(ClustererTests, BasicTest) {
 
-  oid_t column_count = 5;
-  oid_t cluster_count = 2;
-  oid_t column_itr;
+  oid_t column_count = 7;
+  oid_t cluster_count = 3;
 
   brain::Clusterer clusterer(cluster_count, column_count);
   std::vector<double> columns_accessed(column_count, 0);
-
-  double sample_weight = 1;
+  double sample_weight;
 
   // initialize a uniform distribution between 0 and 1
   std::mt19937_64 rng;
   std::uniform_real_distribution<double> uniform(0, 1);
 
-  for(int sample_itr = 0 ; sample_itr < 10; sample_itr ++) {
-    for(column_itr = 0 ; column_itr < column_count ; column_itr++) {
-      columns_accessed[column_itr] = uniform(rng);
+  for(int sample_itr = 0 ; sample_itr < 10000; sample_itr ++) {
+    auto rng_val = uniform(rng);
+
+    if(rng_val < 0.3) {
+      columns_accessed = {1, 1, 0, 0, 0, 1, 1};
+      sample_weight = 10000;
+    }
+    else if(rng_val < 0.6) {
+      columns_accessed = {0, 0, 0, 1, 1, 0, 0};
+      sample_weight = 1000;
+    }
+    else if(rng_val < 0.7) {
+      columns_accessed = {0, 0, 1, 1, 1, 0, 0};
+      sample_weight = 100;
+    }
+    else if(rng_val < 0.8) {
+      columns_accessed = {0, 0, 1, 1, 0, 0, 0};
+      sample_weight = 100;
+    }
+    else {
+      columns_accessed = {0, 0, 0, 0, 0, 1, 1};
+      sample_weight = 1000;
     }
 
     brain::Sample sample(columns_accessed, sample_weight);
-    std::cout << sample;
-
     clusterer.ProcessSample(sample);
   }
 

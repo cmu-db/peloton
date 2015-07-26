@@ -20,7 +20,7 @@
 namespace peloton {
 namespace brain {
 
-#define DEFAULT_WEIGHT 0.01
+#define NEW_SAMPLE_WEIGHT 0.01
 
 //===--------------------------------------------------------------------===//
 // Clusterer
@@ -31,10 +31,12 @@ class Clusterer {
  public:
   Clusterer(oid_t cluster_count,
             oid_t sample_column_count,
-            double param = DEFAULT_WEIGHT)
+            double param = NEW_SAMPLE_WEIGHT)
       : cluster_count_(cluster_count),
-        means(std::vector<Sample>(cluster_count_, Sample(sample_column_count))),
-        new_sample_weight_(param) {
+        means_(std::vector<Sample>(cluster_count_, Sample(sample_column_count))),
+        closest_(std::vector<int>(cluster_count_, 0)),
+        new_sample_weight_(param),
+        sample_count_(0) {
 
   }
 
@@ -44,10 +46,13 @@ class Clusterer {
   void ProcessSample(const Sample& sample);
 
   // find closest cluster for the given sample
-  oid_t GetClosestCluster(const Sample& sample) const;
+  oid_t GetClosestCluster(const Sample& sample);
 
   // get cluster mean sample
   Sample GetCluster(oid_t cluster_offset) const;
+
+  // get history
+  double GetFraction(oid_t cluster_offset) const;
 
   // Get a string representation of clusterer
   friend std::ostream& operator<<(std::ostream& os, const Clusterer& clusterer);
@@ -60,11 +65,18 @@ class Clusterer {
   // # of clusters
   oid_t cluster_count_;
 
-  // means
-  std::vector<Sample> means;
+  // means_
+  std::vector<Sample> means_;
+
+  // history
+  std::vector<int> closest_;
 
   // weight for new sample
   double new_sample_weight_;
+
+  // sample count
+  int sample_count_;
+
 };
 
 }  // End brain namespace
