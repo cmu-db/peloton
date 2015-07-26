@@ -303,7 +303,7 @@ bool BridgeTest::DropTableInPostgres(std::string table_name){
 
     DropStmt   *stmt = (DropStmt *) parsetree;
 
-    RemoveRelations(stmt);
+    PelotonRemoveRelations(stmt);
   }
 
   Bridge::PelotonCommitTransactionCommand();
