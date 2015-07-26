@@ -52,6 +52,9 @@ class Sample {
   // addition operator with a sample
   Sample& operator+(const Sample& rhs);
 
+  // get enabled columns
+  std::vector<oid_t> GetEnabledColumns() const;
+
   // Get a string representation of sample
   friend std::ostream& operator<<(std::ostream& os, const Sample& sample);
 

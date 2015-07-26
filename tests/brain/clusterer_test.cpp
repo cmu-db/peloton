@@ -47,7 +47,7 @@ TEST(ClustererTests, BasicTest) {
       sample_weight = 10000;
     }
     else if(rng_val < 0.6) {
-      columns_accessed = {0, 0, 0, 1, 1, 0, 0};
+      columns_accessed = {1, 1, 0, 1, 1, 0, 0};
       sample_weight = 1000;
     }
     else if(rng_val < 0.7) {
@@ -68,6 +68,17 @@ TEST(ClustererTests, BasicTest) {
   }
 
   std::cout << clusterer;
+
+  auto partitioning1 = clusterer.GetPartitioning(2);
+
+  std::cout << "COLUMN "<< "\t" << " TILE" << "\n";
+  for(auto entry : partitioning1)
+    std::cout << entry.first << "\t" << entry.second << "\n";
+
+  auto partitioning2 = clusterer.GetPartitioning(4);
+  std::cout << "COLUMN "<< "\t" << " TILE" << "\n";
+  for(auto entry : partitioning2)
+    std::cout << entry.first << "\t" << entry.second << "\n";
 
 }
 
