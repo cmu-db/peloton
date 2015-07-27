@@ -35,21 +35,23 @@ namespace executor {
  */
 SeqScanExecutor::SeqScanExecutor(planner::AbstractPlanNode *node,
                                  ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {}
+    : AbstractScanExecutor(node, executor_context) {}
 
 /**
- * @brief Nothing to init at the moment.
+ * @brief Let base class DInit() first, then do mine.
  * @return true on success, false otherwise.
  */
 bool SeqScanExecutor::DInit() {
-  assert(children_.size() == 0 || children_.size() == 1);
+
+  auto status = AbstractScanExecutor::DInit();
+
+  if(!status)
+    return false;
 
   // Grab data from plan node.
   const planner::SeqScanNode &node = GetPlanNode<planner::SeqScanNode>();
 
   table_ = node.GetTable();
-  predicate_ = node.GetPredicate();
-  column_ids_ = node.GetColumnIds();
 
   current_tile_group_offset_ = START_OID;
 
@@ -61,7 +63,7 @@ bool SeqScanExecutor::DInit() {
 }
 
 /**
- * @brief Creates logical tile from tile group and applys scan predicate.
+ * @brief Creates logical tile from tile group and applies scan predicate.
  * @return true on success, false otherwise.
  */
 bool SeqScanExecutor::DExecute() {
@@ -87,6 +89,8 @@ bool SeqScanExecutor::DExecute() {
         }
       }
     }
+
+    /* Hopefully we needn't do projections here */
 
     SetOutput(tile.release());
   }

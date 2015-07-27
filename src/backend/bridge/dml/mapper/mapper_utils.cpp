@@ -144,5 +144,31 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
                                   std::move(direct_map_list));
 }
 
+/**
+ * @brief Transform a DirectMapList to a one-dimensional column list.
+ * This is intended to incorporate a pure-direct-map projection into a scan.
+ * The caller should make sure the direct map list has output columns positions.
+ * from 0 ~ N-1
+ */
+const std::vector<oid_t>
+PlanTransformer::BuildColumnListFromDirectMap(planner::ProjectInfo::DirectMapList dmlist){
+  std::sort(dmlist.begin(), dmlist.end(),
+            [](const planner::ProjectInfo::DirectMap &a,
+               const planner::ProjectInfo::DirectMap &b){
+                return a.first < b.first; }
+            );
+
+  assert(dmlist.front().first == 0);
+  assert(dmlist.back().first == dmlist.size()-1 );
+
+  std::vector<oid_t> rv;
+
+  for(auto map : dmlist) {
+    rv.emplace_back(map.second.second);
+  }
+
+  return rv;
+}
+
 }  // namespace bridge
 }  // namespace peloton
