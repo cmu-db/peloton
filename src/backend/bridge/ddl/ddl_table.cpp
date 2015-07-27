@@ -287,7 +287,6 @@ bool DDLTable::AddConstraint(Oid relation_oid, Constraint* constraint)
   // Create a new constraint
   //catalog::Constraint* new_constraint;
 
-
   switch(contype){
     std::cout << "const type : " << ConstraintTypeToString(contype) << std::endl;
 
@@ -297,7 +296,7 @@ bool DDLTable::AddConstraint(Oid relation_oid, Constraint* constraint)
       assert(database_oid);
 
       auto& manager = catalog::Manager::GetInstance();
-      storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+      storage::Database* db = manager.GetDatabaseWithOid(database_oid);
 
       // PrimaryKey Table
       oid_t PrimaryKeyTableId = db->GetTableWithName(constraint->pktable->relname)->GetOid();
