@@ -130,7 +130,7 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
   }
 
   LOG_TRACE("Const : ");
-  std::cout << value << std::endl;
+  //std::cout << value << std::endl;
 
   // A Const Expr has no children.
   auto rv = expression::ConstantValueFactory(value);
