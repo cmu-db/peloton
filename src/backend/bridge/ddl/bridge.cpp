@@ -40,21 +40,6 @@ namespace peloton {
 namespace bridge {
 
 //===--------------------------------------------------------------------===//
-// Transaction Wrapper
-//===--------------------------------------------------------------------===//
-
-//TODO :: Maybe stupid idea..
-void Bridge::PelotonStartTransactionCommand(){
-  StartTransactionCommand();
-}
-
-void Bridge::PelotonCommitTransactionCommand(){
-  CommitTransactionCommand();
-  // Set the resource owner
-  CurrentResourceOwner = ResourceOwnerCreate(NULL, "Peloton");
-}
-
-//===--------------------------------------------------------------------===//
 // Getters
 //===--------------------------------------------------------------------===//
 
@@ -340,6 +325,24 @@ void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
 
   heap_close(pg_class_rel, RowExclusiveLock);
   PelotonCommitTransactionCommand();
+}
+
+//===--------------------------------------------------------------------===//
+// Wrapper
+//===--------------------------------------------------------------------===//
+
+void Bridge::PelotonStartTransactionCommand(){
+  StartTransactionCommand();
+}
+
+void Bridge::PelotonCommitTransactionCommand(){
+  CommitTransactionCommand();
+  SetCurrentResourceOwner();
+}
+
+void Bridge::SetCurrentResourceOwner(){
+  // Set the resource owner
+  CurrentResourceOwner = ResourceOwnerCreate(NULL, "Peloton");
 }
 
 } // namespace bridge
