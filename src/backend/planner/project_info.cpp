@@ -18,7 +18,7 @@ ProjectInfo::~ProjectInfo(){
 }
 
 /**
- * @brief Fill in the destination tuple according to projectin info.
+ * @brief Fill in the destination tuple according to projection info.
  * The destination should be pre-allocated by the caller.
  *
  * @warning Destination should not be the same as any source.
