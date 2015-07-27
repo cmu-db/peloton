@@ -12,7 +12,6 @@
 
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
-#include "backend/planner/abstract_plan_node.h"
 #include "backend/planner/abstract_scan_node.h"
 
 namespace peloton {
@@ -23,7 +22,7 @@ class DataTable;
 
 namespace planner {
 
-class SeqScanNode : public AbstractPlanNode, AbstractScanNode {
+class SeqScanNode : public AbstractScanNode {
  public:
   SeqScanNode(const SeqScanNode &) = delete;
   SeqScanNode &operator=(const SeqScanNode &) = delete;

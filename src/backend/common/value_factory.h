@@ -35,10 +35,6 @@ public:
 		return Value::GetTinyIntValue(value);
 	}
 
-  static inline Value GetTinyIntValue(int8_t value) {
-    return Value::GetTinyIntValue(value);
-  }
-
   static inline Value GetSmallIntValue(int16_t value) {
     return Value::GetSmallIntValue(value);
   }
