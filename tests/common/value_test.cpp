@@ -38,6 +38,25 @@ void deserDecHelper(Value nv, ValueType &vt,
     str   = ValuePeeker::PeekDecimalString(nv);
 }
 
+TEST(ValueTest, CloneInt){
+  Value v1 = ValueFactory::GetIntegerValue(1234);
+  Value v2 = ValueFactory::Clone(v1);
+
+  ASSERT_TRUE(v1 == v2);
+}
+
+TEST(ValueTest, CloneString){
+  Value v1 = ValueFactory::GetStringValue("This string has 30 chars long.");
+  Value v2 = ValueFactory::Clone(v1);
+
+  ASSERT_TRUE(v1 == v2);
+  ASSERT_TRUE(ValuePeeker::PeekObjectLength(v1) == ValuePeeker::PeekObjectLength(v2));
+  ASSERT_FALSE(ValuePeeker::PeekObjectValue(v1) == ValuePeeker::PeekObjectValue(v2));
+
+  v1.FreeUninlinedData();
+  v2.FreeUninlinedData();
+}
+
 TEST(ValueTest, DeserializeDecimal)
 {
     int64_t scale = 1000000000000;

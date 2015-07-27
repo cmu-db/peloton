@@ -19,9 +19,15 @@ class SerializeOutput;
 
 class ConstantValueExpression : public AbstractExpression {
  public:
-  ConstantValueExpression(const Value &value)
+  ConstantValueExpression(const Value &cvalue)
  : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT) {
-    this->value = value;
+    /**
+     * A deep copy is desired here because we don't know
+     * if the expression will live longer than the passed value
+     * or if uninlined value will be freed somewhere else
+     * (and probably yes in production).
+     */
+    this->value = ValueFactory::Clone(cvalue);
 
   }
 

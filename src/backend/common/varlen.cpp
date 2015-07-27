@@ -32,6 +32,16 @@ void Varlen::Destroy(Varlen* varlen){
 	delete varlen;
 }
 
+Varlen* Varlen::Clone(const Varlen& src, Pool* dataPool) {
+  // Create a new instance, back pointer is set inside
+  Varlen* rv = Create(src.varlen_size - sizeof(Varlen*), dataPool);
+
+  // copy the meat (excluding back pointer)
+  ::memcpy(rv->Get(), src.Get(), (rv->varlen_size - sizeof(Varlen*)));
+
+  return rv;
+}
+
 Varlen::Varlen(size_t size){
 	varlen_size = size + sizeof(Varlen*);
 	varlen_temp_pool = false;
