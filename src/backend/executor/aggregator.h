@@ -41,27 +41,24 @@ class Agg {
 
 class SumAgg : public Agg {
  public:
-  SumAgg() :
-    have_advanced(false) {
+  SumAgg() : have_advanced(false) {
     // aggregate initialized on first advance
   }
 
-  void Advance(const Value val){
+  void Advance(const Value val) {
     if (val.IsNull()) {
       return;
     }
     if (!have_advanced) {
       aggregate = val;
       have_advanced = true;
-    }
-    else {
+    } else {
       aggregate = aggregate.OpAdd(val);
     }
   }
 
   Value Finalize() {
-    if (!have_advanced)
-    {
+    if (!have_advanced) {
       return ValueFactory::GetNullValue();
     }
     return aggregate;
@@ -75,15 +72,11 @@ class SumAgg : public Agg {
 
 class AvgAgg : public Agg {
  public:
-  AvgAgg(bool is_weighted) :
-    is_weighted(is_weighted),
-    count(0) {
+  AvgAgg(bool is_weighted) : is_weighted(is_weighted), count(0) {
     default_delta = ValueFactory::GetIntegerValue(1);
   }
 
-  void Advance(const Value val) {
-    this->Advance(val, default_delta);
-  }
+  void Advance(const Value val) { this->Advance(val, default_delta); }
 
   void Advance(const Value val, const Value delta) {
     if (val.IsNull()) {
@@ -98,9 +91,8 @@ class AvgAgg : public Agg {
       } else {
         aggregate = aggregate.OpAdd(weighted_val);
       }
-      count +=  ValuePeeker::PeekAsInteger(delta);
-    }
-    else {
+      count += ValuePeeker::PeekAsInteger(delta);
+    } else {
       if (count == 0) {
         aggregate = val;
       } else {
@@ -108,16 +100,14 @@ class AvgAgg : public Agg {
       }
       count += 1;
     }
-
   }
 
   Value Finalize() {
-    if (count == 0)
-    {
+    if (count == 0) {
       return ValueFactory::GetNullValue();
     }
-    const Value final_result =
-        aggregate.OpDivide(ValueFactory::GetDoubleValue(static_cast<double>(count)));
+    const Value final_result = aggregate.OpDivide(
+        ValueFactory::GetDoubleValue(static_cast<double>(count)));
     return final_result;
   }
 
@@ -134,12 +124,10 @@ class AvgAgg : public Agg {
   int64_t count;
 };
 
-//count always holds integer
+// count always holds integer
 class CountAgg : public Agg {
  public:
-  CountAgg() :
-    count(0){
-  }
+  CountAgg() : count(0) {}
 
   void Advance(const Value val) {
     if (val.IsNull()) {
@@ -148,9 +136,7 @@ class CountAgg : public Agg {
     count++;
   }
 
-  Value Finalize() {
-    return ValueFactory::GetBigIntValue(count);
-  }
+  Value Finalize() { return ValueFactory::GetBigIntValue(count); }
 
  private:
   int64_t count;
@@ -158,17 +144,11 @@ class CountAgg : public Agg {
 
 class CountStarAgg : public Agg {
  public:
-  CountStarAgg() :
-    count(0) {
-  }
+  CountStarAgg() : count(0) {}
 
-  void Advance(const Value val __attribute__((unused))) {
-    ++count;
-  }
+  void Advance(const Value val __attribute__((unused))) { ++count; }
 
-  Value Finalize() {
-    return ValueFactory::GetBigIntValue(count);
-  }
+  Value Finalize() { return ValueFactory::GetBigIntValue(count); }
 
  private:
   int64_t count;
@@ -176,10 +156,7 @@ class CountStarAgg : public Agg {
 
 class MaxAgg : public Agg {
  public:
-  MaxAgg() :
-    have_advanced(false) {
-    aggregate.SetNull();
-  }
+  MaxAgg() : have_advanced(false) { aggregate.SetNull(); }
 
   void Advance(const Value val) {
     if (val.IsNull()) {
@@ -188,8 +165,7 @@ class MaxAgg : public Agg {
     if (!have_advanced) {
       aggregate = val;
       have_advanced = true;
-    }
-    else {
+    } else {
       aggregate = aggregate.OpMax(val);
     }
   }
@@ -209,21 +185,17 @@ class MaxAgg : public Agg {
 
 class MinAgg : public Agg {
  public:
-  MinAgg() :
-    have_advanced(false) {
-    aggregate.SetNull();
-  }
+  MinAgg() : have_advanced(false) { aggregate.SetNull(); }
 
   void Advance(const Value val) {
     if (val.IsNull()) {
       return;
     }
 
-    if (!have_advanced){
+    if (!have_advanced) {
       aggregate = val;
       have_advanced = true;
-    }
-    else {
+    } else {
       aggregate = aggregate.OpMin(val);
     }
   }
@@ -242,27 +214,26 @@ class MinAgg : public Agg {
 };
 
 /** brief Create an instance of an aggregator for the specified aggregate */
-Agg* GetAggInstance(ExpressionType agg_type);
+Agg *GetAggInstance(ExpressionType agg_type);
 
 /**
  * List of aggregates for a specific group.
  */
 struct AggregateList {
-
   // A tuple from the group of tuples being aggregated.
   // Source of pass through columns.
   AbstractTuple *group_tuple;
 
   // The aggregates for each column for this group
   Agg **aggregates;
-
 };
 
 /*
  * Type of the hash table used to store aggregates for each group.
  */
-typedef std::unordered_map<storage::Tuple, AggregateList*,
-    storage::TupleHasher, storage::TupleComparator> HashAggregateMapType;
+typedef std::unordered_map<storage::Tuple, AggregateList *,
+                           storage::TupleHasher,
+                           storage::TupleComparator> HashAggregateMapType;
 
 /*
  * Interface for an aggregator (not an an individual aggregate)
@@ -270,23 +241,19 @@ typedef std::unordered_map<storage::Tuple, AggregateList*,
  * This will aggregate some number of tuples and produce the results in the
  * provided output .
  */
-template<PlanNodeType aggregate_type>
+template <PlanNodeType aggregate_type>
 class Aggregator {
-public:
+ public:
+  Aggregator(const planner::AggregateNode *node,
+             storage::DataTable *output_table, txn_id_t transaction_id);
 
-    Aggregator(const planner::AggregateNode *node,
-               storage::DataTable *output_table,
-               txn_id_t transaction_id);
+  bool Advance(AbstractTuple *next_tuple, AbstractTuple *prev_tuple);
 
-    bool Advance(AbstractTuple *next_tuple,
-                 AbstractTuple *prev_tuple);
+  bool Finalize(AbstractTuple *prev_tuple);
 
-    bool Finalize(AbstractTuple *prev_tuple);
+  ~Aggregator();
 
-    ~Aggregator();
-
-private:
-
+ private:
   /** @brief Plan node */
   const planner::AggregateNode *node;
 
@@ -322,5 +289,5 @@ private:
   const catalog::Schema *group_by_key_schema = nullptr;
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

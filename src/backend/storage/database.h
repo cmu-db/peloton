@@ -21,13 +21,11 @@ namespace storage {
 // DATABASE
 //===--------------------------------------------------------------------===//
 
-class Database{
-
+class Database {
  public:
-  Database(Database const&) = delete;
+  Database(Database const &) = delete;
 
-  Database(oid_t database_oid)
-  : database_oid(database_oid) { }
+  Database(oid_t database_oid) : database_oid(database_oid) {}
 
   ~Database();
 
@@ -35,9 +33,7 @@ class Database{
   // OPERATIONS
   //===--------------------------------------------------------------------===//
 
-  oid_t GetOid() const {
-    return database_oid;
-  }
+  oid_t GetOid() const { return database_oid; }
 
   //===--------------------------------------------------------------------===//
   // TABLE
@@ -68,10 +64,9 @@ class Database{
   //===--------------------------------------------------------------------===//
 
   // Get a string representation of this database
-  friend std::ostream& operator<<(std::ostream& os, const Database& database);
+  friend std::ostream &operator<<(std::ostream &os, const Database &database);
 
  protected:
-
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
@@ -81,14 +76,10 @@ class Database{
 
   // TABLES
 
-  std::vector<storage::DataTable*> tables;
+  std::vector<storage::DataTable *> tables;
 
   std::mutex database_mutex;
-
 };
 
-
-} // End storage namespace
-} // End peloton namespace
-
-
+}  // End storage namespace
+}  // End peloton namespace

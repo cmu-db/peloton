@@ -18,26 +18,18 @@ namespace planner {
 class AppendNode : public AbstractPlanNode {
  public:
   AppendNode(const AppendNode &) = delete;
-  AppendNode& operator=(const AppendNode &) = delete;
+  AppendNode &operator=(const AppendNode &) = delete;
   AppendNode(const AppendNode &&) = delete;
-  AppendNode& operator=(const AppendNode &&) = delete;
+  AppendNode &operator=(const AppendNode &&) = delete;
 
-  AppendNode() {
+  AppendNode() {}
 
-  }
+  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_APPEND; }
 
-  inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_APPEND;
-  }
-
-  inline std::string GetInfo() const {
-    return "Append";
-  }
+  inline std::string GetInfo() const { return "Append"; }
 
  private:
   // nothing
-
 };
-
 }
 }
