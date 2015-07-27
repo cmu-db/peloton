@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <cassert>
 
+#include "backend/bridge/ddl/bridge.h"
 #include "backend/bridge/ddl/bootstrap.h"
 #include "backend/bridge/ddl/ddl_database.h"
 #include "backend/bridge/ddl/ddl_table.h"
@@ -308,7 +309,7 @@ void Bootstrap::CreateDatabases() {
   HeapScanDesc scan;
   HeapTuple tup;
 
-  StartTransactionCommand();
+  Bridge::PelotonStartTransactionCommand();
 
   // Scan pg database table
   pg_database_rel = heap_open(DatabaseRelationId, AccessShareLock);
@@ -322,7 +323,7 @@ void Bootstrap::CreateDatabases() {
   heap_endscan(scan);
   heap_close(pg_database_rel, AccessShareLock);
 
-  CommitTransactionCommand();
+  Bridge::PelotonCommitTransactionCommand();
 }
 
 bool Bootstrap::BootstrapPeloton(void) {
