@@ -25,21 +25,17 @@ namespace bridge {
 /**
  * @brief Test many DDL functions together
  */
-void BridgeTest::DDL_MIX_TEST() {
-
-  DDL_MIX_TEST_1();
-
-}
+void BridgeTest::DDL_MIX_TEST() { DDL_MIX_TEST_1(); }
 
 /**
  * @brief Create a table with simple columns that contain
- *        column-level constraints such as single column 
- *        primary key, unique, and reference table 
+ *        column-level constraints such as single column
+ *        primary key, unique, and reference table
  */
 void BridgeTest::DDL_MIX_TEST_1() {
-
   auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+  storage::Database* db =
+      manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
 
   // Get the simple columns
   std::vector<catalog::Column> columns = CreateSimpleColumns();
@@ -54,7 +50,7 @@ void BridgeTest::DDL_MIX_TEST_1() {
 
   // Get the table pointer and schema
   storage::DataTable* table = db->GetTableWithOid(table_oid);
-  catalog::Schema *schema = table->GetSchema();
+  catalog::Schema* schema = table->GetSchema();
 
   // Create the constrains
   catalog::Constraint notnull_constraint(CONSTRAINT_TYPE_NOTNULL);
@@ -62,7 +58,8 @@ void BridgeTest::DDL_MIX_TEST_1() {
   // Add one constraint to the one column
   schema->AddConstraint("id", notnull_constraint);
 
-  // Create a primary key index and added primary key constraint to the 'name' column
+  // Create a primary key index and added primary key constraint to the 'name'
+  // column
   oid_t primary_key_index_oid = 50002;
   CreateSamplePrimaryKeyIndex(table_name, primary_key_index_oid);
 
@@ -70,36 +67,42 @@ void BridgeTest::DDL_MIX_TEST_1() {
   oid_t unique_index_oid = 50003;
   CreateSampleUniqueIndex(table_name, unique_index_oid);
 
-  // Create a reference table and foreign key constraint and added unique constraint to the 'salary' column
+  // Create a reference table and foreign key constraint and added unique
+  // constraint to the 'salary' column
   std::string pktable_name = "pktable";
   oid_t pktable_oid = 50004;
   CreateSampleForeignKey(pktable_oid, pktable_name, columns, table_oid);
 
-  // Check the first column's constraint 
+  // Check the first column's constraint
   catalog::Column column = schema->GetColumn(0);
-  CheckColumnWithConstraint( column, CONSTRAINT_TYPE_NOTNULL, "", 1);
+  CheckColumnWithConstraint(column, CONSTRAINT_TYPE_NOTNULL, "", 1);
 
   // Check the second column's constraint and index
   column = schema->GetColumn(1);
-  CheckColumnWithConstraint( column, CONSTRAINT_TYPE_PRIMARY, table_name+"_pkey", 1);
-  index::Index *index = table->GetIndexWithOid(primary_key_index_oid);
-  CheckIndex(index, table_name+"_pkey", 1, INDEX_TYPE_BTREE_MULTIMAP, INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, true);
+  CheckColumnWithConstraint(column, CONSTRAINT_TYPE_PRIMARY,
+                            table_name + "_pkey", 1);
+  index::Index* index = table->GetIndexWithOid(primary_key_index_oid);
+  CheckIndex(index, table_name + "_pkey", 1, INDEX_TYPE_BTREE_MULTIMAP,
+             INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, true);
 
   // Check the third column's constraint and index
   column = schema->GetColumn(2);
-  CheckColumnWithConstraint( column, CONSTRAINT_TYPE_UNIQUE, table_name+"_key", 1);
+  CheckColumnWithConstraint(column, CONSTRAINT_TYPE_UNIQUE, table_name + "_key",
+                            1);
   index = table->GetIndexWithOid(unique_index_oid);
-  CheckIndex(index, table_name+"_key", 1, INDEX_TYPE_BTREE_MULTIMAP, INDEX_CONSTRAINT_TYPE_UNIQUE, true);
+  CheckIndex(index, table_name + "_key", 1, INDEX_TYPE_BTREE_MULTIMAP,
+             INDEX_CONSTRAINT_TYPE_UNIQUE, true);
 
   // Check the fourth column's constraint and foreign key
   column = schema->GetColumn(3);
-  CheckColumnWithConstraint( column, CONSTRAINT_TYPE_FOREIGN, "THIS_IS_FOREIGN_CONSTRAINT", 1, 0);
-  catalog::ForeignKey *pktable = table->GetForeignKey(0);
-  CheckForeignKey( pktable, pktable_oid, "THIS_IS_FOREIGN_CONSTRAINT", 1, 1, 'r', 'c' );
+  CheckColumnWithConstraint(column, CONSTRAINT_TYPE_FOREIGN,
+                            "THIS_IS_FOREIGN_CONSTRAINT", 1, 0);
+  catalog::ForeignKey* pktable = table->GetForeignKey(0);
+  CheckForeignKey(pktable, pktable_oid, "THIS_IS_FOREIGN_CONSTRAINT", 1, 1, 'r',
+                  'c');
 
   std::cout << ":::::: " << __func__ << " DONE\n";
 }
 
-} // End bridge namespace
-} // End peloton namespace
-
+}  // End bridge namespace
+}  // End peloton namespace

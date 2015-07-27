@@ -23,16 +23,10 @@
 namespace peloton {
 
 class configuration {
-
-public:
-
-	std::string filesystem_path;
-
+ public:
+  std::string filesystem_path;
 };
 
 // sample test helper
-int SampleFunc(int a, int b) {
-	return a+b;
-}
-
+int SampleFunc(int a, int b) { return a + b; }
 }

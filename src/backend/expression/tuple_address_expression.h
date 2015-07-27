@@ -17,14 +17,13 @@ namespace expression {
 
 class TupleAddressExpression : public AbstractExpression {
  public:
-
   TupleAddressExpression()
- : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS) {
-  }
+      : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS) {}
 
   inline Value Evaluate(const AbstractTuple *tuple1,
                         __attribute__((unused)) const AbstractTuple *tuple2,
-                        __attribute__((unused)) executor::ExecutorContext*)  const {
+                        __attribute__((unused))
+                        executor::ExecutorContext *) const {
     return ValueFactory::GetAddressValue(tuple1->GetData());
   }
 
@@ -33,6 +32,5 @@ class TupleAddressExpression : public AbstractExpression {
   }
 };
 
-} // End expression namespace
-} // End peloton namespace
-
+}  // End expression namespace
+}  // End peloton namespace

@@ -16,9 +16,9 @@ namespace executor {
 class SeqScanExecutor : public AbstractExecutor {
  public:
   SeqScanExecutor(const SeqScanExecutor &) = delete;
-  SeqScanExecutor& operator=(const SeqScanExecutor &) = delete;
+  SeqScanExecutor &operator=(const SeqScanExecutor &) = delete;
   SeqScanExecutor(SeqScanExecutor &&) = delete;
-  SeqScanExecutor& operator=(SeqScanExecutor &&) = delete;
+  SeqScanExecutor &operator=(SeqScanExecutor &&) = delete;
 
   explicit SeqScanExecutor(planner::AbstractPlanNode *node,
                            ExecutorContext *executor_context);
@@ -29,7 +29,6 @@ class SeqScanExecutor : public AbstractExecutor {
   bool DExecute();
 
  private:
-
   //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//
@@ -52,8 +51,7 @@ class SeqScanExecutor : public AbstractExecutor {
 
   /** @brief Columns from tile group to be added to logical tile output. */
   std::vector<oid_t> column_ids_;
-
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

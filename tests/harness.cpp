@@ -22,5 +22,5 @@ uint64_t GetThreadId() {
   return id;
 }
 
-} // End test namespace
-} // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace

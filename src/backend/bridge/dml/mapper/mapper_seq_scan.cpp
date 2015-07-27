@@ -29,7 +29,6 @@ namespace bridge {
  */
 planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
     const SeqScanState* ss_plan_state) {
-
   assert(nodeTag(ss_plan_state) == T_SeqScanState);
 
   // Grab Database ID and Table ID
@@ -38,9 +37,8 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   Oid table_oid = ss_plan_state->ss_currentRelation->rd_id;
 
   /* Grab the target table */
-  storage::DataTable *target_table =
-      static_cast<storage::DataTable*>(catalog::Manager::GetInstance()
-          .GetTableWithOid(database_oid, table_oid));
+  storage::DataTable* target_table = static_cast<storage::DataTable*>(
+      catalog::Manager::GetInstance().GetTableWithOid(database_oid, table_oid));
 
   assert(target_table);
   LOG_INFO("SeqScan: database oid %u table oid %u", database_oid, table_oid);
@@ -52,9 +50,8 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   expression::AbstractExpression* predicate = nullptr;
 
   if (ss_plan_state->ps.qual) {
-
-    const ExprState* expr_state = reinterpret_cast<ExprState *>(ss_plan_state
-        ->ps.qual);
+    const ExprState* expr_state =
+        reinterpret_cast<ExprState*>(ss_plan_state->ps.qual);
     predicate = ExprTransformer::TransformExpr(expr_state);
   }
 
@@ -78,11 +75,10 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   assert(column_ids.size() > 0);
 
   /* Construct and return the Peloton plan node */
-  auto plan_node = new planner::SeqScanNode(target_table, predicate,
-                                            column_ids);
+  auto plan_node =
+      new planner::SeqScanNode(target_table, predicate, column_ids);
   return plan_node;
 }
 
-
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

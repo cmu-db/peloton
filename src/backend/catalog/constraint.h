@@ -27,57 +27,39 @@ namespace catalog {
 //===--------------------------------------------------------------------===//
 
 class Constraint {
-
  public:
-
-  Constraint(ConstraintType type,
-             std::string constraint_name = "",
+  Constraint(ConstraintType type, std::string constraint_name = "",
              Node* raw_expr = nullptr)
- : constraint_type(type),
-   constraint_name(constraint_name) {
-
+      : constraint_type(type), constraint_name(constraint_name) {
     // Copy the raw expression
-    raw_expr = (Node*) copyObject((void*) raw_expr );
-
+    raw_expr = (Node*)copyObject((void*)raw_expr);
   }
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
   //===--------------------------------------------------------------------===//
 
-  ConstraintType GetType() const {
-    return constraint_type;
-  }
+  ConstraintType GetType() const { return constraint_type; }
 
   // Offset into the list of "reference tables" in the Table.
-  void SetForeignKeyListOffset(oid_t offset) {
-    fk_list_offset = offset;
-  }
+  void SetForeignKeyListOffset(oid_t offset) { fk_list_offset = offset; }
 
   // Offset into the list of "unique indices" in the Table.
-  void SetUniqueIndexOffset(oid_t offset ) {
-    unique_index_list_offset = offset;
-  }
+  void SetUniqueIndexOffset(oid_t offset) { unique_index_list_offset = offset; }
 
   // Get the offset
-  oid_t GetForeignKeyListOffset() const {
-    return fk_list_offset;
-  }
+  oid_t GetForeignKeyListOffset() const { return fk_list_offset; }
 
   // Get the offset
-  oid_t GetUniqueIndexOffset() const {
-    return unique_index_list_offset;
-  }
+  oid_t GetUniqueIndexOffset() const { return unique_index_list_offset; }
 
-  std::string GetName() const {
-    return constraint_name;
-  }
+  std::string GetName() const { return constraint_name; }
 
   // Get a string representation of this constraint
-  friend std::ostream& operator<<(std::ostream& os, const Constraint& constraint);
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const Constraint& constraint);
 
  private:
-
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
@@ -95,9 +77,7 @@ class Constraint {
   oid_t unique_index_list_offset = INVALID_OID;
 
   std::string constraint_name;
-
 };
 
-
-} // End catalog namespace
-} // End peloton namespace
+}  // End catalog namespace
+}  // End peloton namespace

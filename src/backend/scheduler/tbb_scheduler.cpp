@@ -19,17 +19,14 @@
 namespace peloton {
 namespace scheduler {
 
-TBBScheduler::TBBScheduler() :
-            init(tbb::task_scheduler_init::default_num_threads()) {
-
+TBBScheduler::TBBScheduler()
+    : init(tbb::task_scheduler_init::default_num_threads()) {
   // set up state
   state = new TBBSchedulerState();
   LOG_TRACE("STATE : %p \n", state);
-
 }
 
 TBBScheduler::~TBBScheduler() {
-
   // stop scheduler
   init.terminate();
 
@@ -37,17 +34,16 @@ TBBScheduler::~TBBScheduler() {
   delete state;
 }
 
-void TBBScheduler::Run(handler function_pointer,
-                    void *args,
-                    TaskPriorityType priority) {
-
-  AbstractTask *task = new(state->root->allocate_child()) AbstractTask(function_pointer, args, priority);
+void TBBScheduler::Run(handler function_pointer, void *args,
+                       TaskPriorityType priority) {
+  AbstractTask *task = new (state->root->allocate_child())
+      AbstractTask(function_pointer, args, priority);
   assert(task);
 
   state->root->increment_ref_count();
 
   // Enqueue task with appropriate priority
-  switch(priority) {
+  switch (priority) {
     case TaskPriorityType::TASK_PRIORTY_TYPE_NORMAL:
       state->root->enqueue(*task);
       break;
@@ -62,7 +58,8 @@ void TBBScheduler::Run(handler function_pointer,
 
     case TaskPriorityType::TASK_PRIORTY_TYPE_INVALID:
     default:
-      throw SchedulerException("Invalid priority type : " + std::to_string(priority));
+      throw SchedulerException("Invalid priority type : " +
+                               std::to_string(priority));
       break;
   }
 
@@ -70,14 +67,11 @@ void TBBScheduler::Run(handler function_pointer,
 }
 
 void TBBScheduler::Wait() {
-
   LOG_TRACE("WAITING for tasks \n");
   state->root->wait_for_all();
   state->root->increment_ref_count();
   LOG_TRACE("End of WAIT \n");
-
 }
 
-} // namespace scheduler
-} // namespace peloton
-
+}  // namespace scheduler
+}  // namespace peloton

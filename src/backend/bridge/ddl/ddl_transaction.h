@@ -26,19 +26,16 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class DDLTransaction {
-
  public:
   DDLTransaction(const DDLTransaction &) = delete;
-  DDLTransaction& operator=(const DDLTransaction &) = delete;
+  DDLTransaction &operator=(const DDLTransaction &) = delete;
   DDLTransaction(DDLTransaction &&) = delete;
-  DDLTransaction& operator=(DDLTransaction &&) = delete;
+  DDLTransaction &operator=(DDLTransaction &&) = delete;
 
-  static bool ExecTransactionStmt(TransactionStmt* stmt,
-                                  TransactionId txn_id);
+  static bool ExecTransactionStmt(TransactionStmt *stmt, TransactionId txn_id);
 
  private:
-
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton
