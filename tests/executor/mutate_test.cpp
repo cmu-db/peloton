@@ -84,7 +84,7 @@ void InsertTuple(storage::DataTable *table) {
   executor::InsertExecutor executor(&node, context.get());
   executor.Execute();
 
-  //tuple->FreeUninlinedData();  // double freeed
+  tuple->FreeUninlinedData();
   delete tuple;
 
   txn_manager.CommitTransaction(txn);
