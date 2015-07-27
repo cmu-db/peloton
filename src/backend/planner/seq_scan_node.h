@@ -13,6 +13,7 @@
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/planner/abstract_plan_node.h"
+#include "backend/planner/abstract_scan_node.h"
 
 namespace peloton {
 
@@ -22,7 +23,7 @@ class DataTable;
 
 namespace planner {
 
-class SeqScanNode : public AbstractPlanNode {
+class SeqScanNode : public AbstractPlanNode, AbstractScanNode {
  public:
   SeqScanNode(const SeqScanNode &) = delete;
   SeqScanNode &operator=(const SeqScanNode &) = delete;
@@ -32,15 +33,10 @@ class SeqScanNode : public AbstractPlanNode {
   SeqScanNode(storage::DataTable *table,
               expression::AbstractExpression *predicate,
               const std::vector<oid_t> &column_ids)
-      : table_(table), predicate_(predicate), column_ids_(column_ids) {}
+      : AbstractScanNode(predicate, column_ids),
+        table_(table) {}
 
   const storage::DataTable *GetTable() const { return table_; }
-
-  const expression::AbstractExpression *GetPredicate() const {
-    return predicate_.get();
-  }
-
-  const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SEQSCAN; }
 
@@ -50,11 +46,6 @@ class SeqScanNode : public AbstractPlanNode {
   /** @brief Pointer to table to scan from. */
   const storage::DataTable *table_;
 
-  /** @brief Selection predicate. */
-  const std::unique_ptr<expression::AbstractExpression> predicate_;
-
-  /** @brief Columns from tile group to be added to logical tile output. */
-  const std::vector<oid_t> column_ids_;
 };
 
 }  // namespace planner
