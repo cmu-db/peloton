@@ -104,38 +104,32 @@ static void BuildScanKey(
   assert(num_keys > 0);
 
   for (int i = 0; i < num_keys; i++, scan_key++) {
-    assert(!(scan_key->sk_flags &
-             SK_ISNULL));  // currently, only support simple case
-    assert(!(scan_key->sk_flags &
-             SK_ORDER_BY));  // currently, only support simple case
-    assert(!(scan_key->sk_flags &
-             SK_UNARY));  // currently, only support simple case
-    assert(!(scan_key->sk_flags &
-             SK_ROW_HEADER));  // currently, only support simple case
-    assert(!(scan_key->sk_flags &
-             SK_ROW_MEMBER));  // currently, only support simple case
-    assert(!(scan_key->sk_flags &
-             SK_ROW_END));  // currently, only support simple case
-    assert(!(scan_key->sk_flags &
-             SK_SEARCHNULL));  // currently, only support simple case
-    assert(!(scan_key->sk_flags &
-             SK_SEARCHNOTNULL));  // currently, only support simple case
-    Value value =
-        TupleTransformer::GetValue(scan_key->sk_argument, scan_key->sk_subtype);
-    switch (scan_key->sk_strategy) {
+    assert(!(scan_key->sk_flags & SK_ISNULL)); // currently, only support simple case
+    assert(!(scan_key->sk_flags & SK_ORDER_BY)); // currently, only support simple case
+    assert(!(scan_key->sk_flags & SK_UNARY)); // currently, only support simple case
+    assert(!(scan_key->sk_flags & SK_ROW_HEADER)); // currently, only support simple case
+    assert(!(scan_key->sk_flags & SK_ROW_MEMBER)); // currently, only support simple case
+    assert(!(scan_key->sk_flags & SK_ROW_END)); // currently, only support simple case
+    assert(!(scan_key->sk_flags & SK_SEARCHNULL)); // currently, only support simple case
+    assert(!(scan_key->sk_flags & SK_SEARCHNOTNULL)); // currently, only support simple case
+    Value value = TupleTransformer::GetValue(scan_key->sk_argument, scan_key->sk_subtype);
+    // TODO: Do we need this here ?
+    std::ostringstream oss;
+    oss << value;
+    switch(scan_key->sk_strategy) {
       case BTLessStrategyNumber:
-        LOG_INFO("<");
+        LOG_INFO("key < %s", oss.str().c_str());
         index_scan_desc.end_key = new storage::Tuple(schema, true);
         index_scan_desc.end_key->SetValue(0, value);
         break;
       case BTLessEqualStrategyNumber:
-        LOG_INFO("<=");
+        LOG_INFO("key <= %s", oss.str().c_str());
         index_scan_desc.end_key = new storage::Tuple(schema, true);
         index_scan_desc.end_key->SetValue(0, value);
         index_scan_desc.end_inclusive = true;
         break;
       case BTEqualStrategyNumber:
-        LOG_INFO("=");
+        LOG_INFO("key = %s", oss.str().c_str());
         index_scan_desc.start_key = new storage::Tuple(schema, true);
         index_scan_desc.end_key = new storage::Tuple(schema, true);
         index_scan_desc.start_key->SetValue(0, value);
@@ -144,13 +138,13 @@ static void BuildScanKey(
         index_scan_desc.start_inclusive = true;
         break;
       case BTGreaterEqualStrategyNumber:
-        LOG_INFO(">=");
+        LOG_INFO("key >= %s", oss.str().c_str());
         index_scan_desc.start_key = new storage::Tuple(schema, true);
         index_scan_desc.start_key->SetValue(0, value);
         index_scan_desc.start_inclusive = true;
         break;
       case BTGreaterStrategyNumber:
-        LOG_INFO(">");
+        LOG_INFO("key > %s", oss.str().c_str());
         index_scan_desc.start_key = new storage::Tuple(schema, true);
         index_scan_desc.start_key->SetValue(0, value);
         break;
