@@ -133,7 +133,9 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
   std::cout << value << std::endl;
 
   // A Const Expr has no children.
-  return expression::ConstantValueFactory(value);
+  auto rv = expression::ConstantValueFactory(value);
+  value.FreeUninlinedData();
+  return rv;
 }
 
 expression::AbstractExpression* ExprTransformer::TransformOp(
