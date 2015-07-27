@@ -286,6 +286,11 @@ oid_t BridgeTest::CreateTableInPostgres(std::string table_name){
   return address.objectId;
 }
 
+/**
+ * @brief Drop the table in Postgres
+ * @params table_name table name 
+ * @return true if we drop the table 
+ */
 bool BridgeTest::DropTableInPostgres(std::string table_name){
 
   Bridge::PelotonStartTransactionCommand();
@@ -303,6 +308,9 @@ bool BridgeTest::DropTableInPostgres(std::string table_name){
 
     DropStmt   *stmt = (DropStmt *) parsetree;
 
+    // Since Postgres requires many functions to remove the relation, sometimes
+    // it incurs event cache look up problems. This wrapper function simply
+    // drop the table from Postgres.
     PelotonRemoveRelations(stmt);
   }
 
