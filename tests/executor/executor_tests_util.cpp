@@ -52,34 +52,54 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
 
   switch (index) {
     case 0:
-      return catalog::Column(VALUE_TYPE_INTEGER,
-                             GetTypeSize(VALUE_TYPE_INTEGER), "COL_A",
-                             is_inlined);
-      break;
+    {
+      auto column = catalog::Column(VALUE_TYPE_INTEGER,
+                               GetTypeSize(VALUE_TYPE_INTEGER), "COL_A",
+                               is_inlined);
+
+      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
+      return column;
+    }
+    break;
 
     case 1:
-      return catalog::Column(VALUE_TYPE_INTEGER,
-                             GetTypeSize(VALUE_TYPE_INTEGER), "COL_B",
-                             is_inlined);
-      break;
+    {
+      auto column = catalog::Column(VALUE_TYPE_INTEGER,
+                               GetTypeSize(VALUE_TYPE_INTEGER), "COL_B",
+                               is_inlined);
+
+      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
+      return column;
+    }
+    break;
 
     case 2:
-      return catalog::Column(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE),
-                             "COL_C", is_inlined);
-      break;
+    {
+      auto column = catalog::Column(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE),
+                               "COL_C", is_inlined);
+
+      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
+      return column;
+    }
+    break;
 
     case 3:
-      return catalog::Column(VALUE_TYPE_VARCHAR,
-                             25,  // Column length.
-                             "COL_D",
-                             !is_inlined);  // inlined.
-      break;
+    {
+      auto column = catalog::Column(VALUE_TYPE_VARCHAR,
+                               25,  // Column length.
+                               "COL_D",
+                               !is_inlined);  // inlined.
+
+      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
+      return column;
+    }
+    break;
 
     default:
-      throw ExecutorException("Invalid column index : " +
-                              std::to_string(index));
+      throw ExecutorException("Invalid column index : " + std::to_string(index));
       break;
   }
+
 }
 
 /**
@@ -162,11 +182,11 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
       // In case of random, make sure this column has duplicated values
       tuple.SetValue(
           1, ValueFactory::GetIntegerValue(PopulatedValue(
-                 random ? std::rand() % (num_rows / 2) : populate_value, 1)));
+              random ? std::rand() % (num_rows / 2) : populate_value, 1)));
     }
 
     tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(
-                          random ? std::rand() : populate_value, 2)));
+        random ? std::rand() : populate_value, 2)));
 
     // In case of random, make sure this column has duplicated values
     Value string_value =
@@ -250,11 +270,11 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
 
   // Where the main work takes place...
   EXPECT_CALL(child_executor, DExecute())
-      .WillOnce(Return(true))
-      .WillOnce(Return(false));
+  .WillOnce(Return(true))
+  .WillOnce(Return(false));
 
   EXPECT_CALL(child_executor, GetOutput())
-      .WillOnce(Return(source_logical_tile));
+  .WillOnce(Return(source_logical_tile));
 
   EXPECT_TRUE(executor->Execute());
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
