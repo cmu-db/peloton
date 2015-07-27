@@ -56,6 +56,7 @@ namespace peloton {
 
 // Disable logging if requested
 #ifdef NDEBUG
+#undef LOG_LEVEL
 #define LOG_LEVEL LOG_LEVEL_OFF
 #endif
 
