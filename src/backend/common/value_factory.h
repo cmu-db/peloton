@@ -21,8 +21,19 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 class ValueFactory {
- public:
-  static inline Value GetInvalidValue() { return Value::GetInvalidValue(); }
+public:
+
+  static inline Value Clone(const Value& src, Pool* dataPool = nullptr) {
+    return Value::Clone(src, dataPool);
+  }
+
+  static inline Value GetInvalidValue() {
+    return Value::GetInvalidValue();
+  }
+
+	static inline Value GetTinyIntValue(int8_t value) {
+		return Value::GetTinyIntValue(value);
+	}
 
   static inline Value GetTinyIntValue(int8_t value) {
     return Value::GetTinyIntValue(value);
