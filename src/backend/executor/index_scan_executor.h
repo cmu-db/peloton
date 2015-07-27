@@ -16,7 +16,7 @@ namespace executor {
 
 class IndexScanExecutor : public AbstractExecutor {
   IndexScanExecutor(const IndexScanExecutor &) = delete;
-  IndexScanExecutor& operator=(const IndexScanExecutor &) = delete;
+  IndexScanExecutor &operator=(const IndexScanExecutor &) = delete;
 
  public:
   explicit IndexScanExecutor(planner::AbstractPlanNode *node,
@@ -28,7 +28,6 @@ class IndexScanExecutor : public AbstractExecutor {
   bool DExecute();
 
  private:
-
   //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//
@@ -66,5 +65,5 @@ class IndexScanExecutor : public AbstractExecutor {
   std::vector<oid_t> column_ids_;
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

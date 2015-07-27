@@ -23,22 +23,15 @@ class Column {
   friend class Constraint;
 
  public:
-
-  Column(ValueType value_type,
-         oid_t column_length,
-         std::string column_name,
-         bool is_inlined = false,
-         oid_t column_offset = INVALID_OID)
- :
-   column_type(value_type),
-   column_name(column_name),
-   is_inlined(is_inlined),
-   column_offset(column_offset){
-
+  Column(ValueType value_type, oid_t column_length, std::string column_name,
+         bool is_inlined = false, oid_t column_offset = INVALID_OID)
+      : column_type(value_type),
+        column_name(column_name),
+        is_inlined(is_inlined),
+        column_offset(column_offset) {
     SetInlined();
 
     SetLength(column_length);
-
   }
 
   //===--------------------------------------------------------------------===//
@@ -51,60 +44,44 @@ class Column {
   // Set the appropriate column length
   void SetLength(oid_t column_length);
 
-  oid_t GetOffset() const {
-    return column_offset;
-  }
+  oid_t GetOffset() const { return column_offset; }
 
-  std::string GetName() const {
-    return column_name;
-  }
+  std::string GetName() const { return column_name; }
 
   oid_t GetLength() const {
-    if(is_inlined)
+    if (is_inlined)
       return fixed_length;
     else
       return variable_length;
   }
 
-  oid_t GetFixedLength() const {
-    return fixed_length;
-  }
+  oid_t GetFixedLength() const { return fixed_length; }
 
-  oid_t GetVariableLength() const {
-    return variable_length;
-  }
+  oid_t GetVariableLength() const { return variable_length; }
 
-  ValueType GetType() const {
-    return column_type;
-  }
+  ValueType GetType() const { return column_type; }
 
-  bool IsInlined() const {
-    return is_inlined;
-  }
+  bool IsInlined() const { return is_inlined; }
 
   // Add a constraint to the column
-  void AddConstraint(const catalog::Constraint& constraint){
+  void AddConstraint(const catalog::Constraint& constraint) {
     constraints.push_back(constraint);
   }
 
-  const std::vector<Constraint>& GetConstraints() const{
-    return constraints;
-  }
+  const std::vector<Constraint>& GetConstraints() const { return constraints; }
 
   // Compare two column objects
-  bool operator== (const Column &other) const {
-    if ( other.column_type != column_type || other.is_inlined != is_inlined){
+  bool operator==(const Column& other) const {
+    if (other.column_type != column_type || other.is_inlined != is_inlined) {
       return false;
     }
     return true;
   }
 
-  bool operator!= (const Column &other) const {
-    return !(*this == other);
-  }
+  bool operator!=(const Column& other) const { return !(*this == other); }
 
   // Get a string representation for debugging
-  friend std::ostream& operator<< (std::ostream& os, const Column& column);
+  friend std::ostream& operator<<(std::ostream& os, const Column& column);
 
   //===--------------------------------------------------------------------===//
   // MEMBERS
@@ -132,8 +109,7 @@ class Column {
 
   // Constraints
   std::vector<Constraint> constraints;
-
 };
 
-} // End catalog namespace
-} // End peloton namespace
+}  // End catalog namespace
+}  // End peloton namespace

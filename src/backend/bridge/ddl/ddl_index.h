@@ -28,29 +28,28 @@ namespace bridge {
 class IndexInfo;
 
 class DDLIndex {
-
  public:
-  DDLIndex(const DDLIndex &) = delete;
-  DDLIndex& operator=(const DDLIndex &) = delete;
-  DDLIndex(DDLIndex &&) = delete;
-  DDLIndex& operator=(DDLIndex &&) = delete;
+  DDLIndex(const DDLIndex&) = delete;
+  DDLIndex& operator=(const DDLIndex&) = delete;
+  DDLIndex(DDLIndex&&) = delete;
+  DDLIndex& operator=(DDLIndex&&) = delete;
 
-  static bool ExecIndexStmt(Node* parsetree, std::vector<IndexInfo>& index_infos);
+  static bool ExecIndexStmt(Node* parsetree,
+                            std::vector<IndexInfo>& index_infos);
 
   static bool CreateIndex(IndexInfo index_info);
 
   // TODO
-  //static bool AlterIndex( );
+  // static bool AlterIndex( );
 
   // TODO : DropIndex
-  //static bool DropIndex(Oid index_oid);
+  // static bool DropIndex(Oid index_oid);
 
   // Create the indexes using indexinfos and add to the table
   static bool CreateIndexes(std::vector<IndexInfo>& index_infos);
 
   // Parse IndexStmt and return IndexInfo
   static IndexInfo* ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt);
-
 };
 
 //===--------------------------------------------------------------------===//
@@ -63,52 +62,34 @@ class DDLIndex {
 
 class IndexInfo {
  public:
-  IndexInfo(std::string index_name,
-            oid_t index_oid,
-            std::string table_name,
-            IndexType method_type,
-            IndexConstraintType type,
-            bool unique_keys,
+  IndexInfo(std::string index_name, oid_t index_oid, std::string table_name,
+            IndexType method_type, IndexConstraintType type, bool unique_keys,
             std::vector<std::string> key_column_names)
- : index_name(index_name),
-   index_oid(index_oid),
-   table_name(table_name),
-   method_type(method_type),
-   constraint_type(type),
-   unique_keys(unique_keys),
-   key_column_names(key_column_names) { }
+      : index_name(index_name),
+        index_oid(index_oid),
+        table_name(table_name),
+        method_type(method_type),
+        constraint_type(type),
+        unique_keys(unique_keys),
+        key_column_names(key_column_names) {}
 
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//
 
-  std::string GetIndexName(){
-    return index_name;
-  }
+  std::string GetIndexName() { return index_name; }
 
-  oid_t GetOid(){
-    return index_oid;
-  }
+  oid_t GetOid() { return index_oid; }
 
-  std::string GetTableName(){
-    return table_name;
-  }
+  std::string GetTableName() { return table_name; }
 
-  IndexType GetMethodType(){
-    return method_type;
-  }
+  IndexType GetMethodType() { return method_type; }
 
-  IndexConstraintType GetType(){
-    return constraint_type;
-  }
+  IndexConstraintType GetType() { return constraint_type; }
 
-  bool IsUnique(){
-    return unique_keys;
-  }
+  bool IsUnique() { return unique_keys; }
 
-  std::vector<std::string> GetKeyColumnNames(){
-    return key_column_names;
-  }
+  std::vector<std::string> GetKeyColumnNames() { return key_column_names; }
 
  private:
   std::string index_name;
@@ -127,5 +108,5 @@ class IndexInfo {
   std::vector<std::string> key_column_names;
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

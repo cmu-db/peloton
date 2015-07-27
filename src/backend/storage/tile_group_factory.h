@@ -23,21 +23,16 @@ namespace storage {
  * Super Awesome TileGroupFactory!!
  */
 class TileGroupFactory {
-public:
-    TileGroupFactory();
-    virtual ~TileGroupFactory();
+ public:
+  TileGroupFactory();
+  virtual ~TileGroupFactory();
 
-    static TileGroup *GetTileGroup(oid_t database_id, oid_t table_id, oid_t tile_group_id,
-                                   AbstractTable* table,
-                                   AbstractBackend* backend,
-                                   const std::vector<catalog::Schema>& schemas,
-                                   int tuple_count);
-
-
-
+  static TileGroup* GetTileGroup(oid_t database_id, oid_t table_id,
+                                 oid_t tile_group_id, AbstractTable* table,
+                                 AbstractBackend* backend,
+                                 const std::vector<catalog::Schema>& schemas,
+                                 int tuple_count);
 };
 
-} // End storage namespace
-} // End peloton namespace
-
-
+}  // End storage namespace
+}  // End peloton namespace

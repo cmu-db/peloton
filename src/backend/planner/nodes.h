@@ -5,7 +5,6 @@
  *
  */
 
-
 #pragma once
 
 namespace peloton {
@@ -32,6 +31,5 @@ namespace planner {
 #include "backend/planner/update_node.h"
 */
 
-} // namespace planner
-} // namespace peloton
-
+}  // namespace planner
+}  // namespace peloton

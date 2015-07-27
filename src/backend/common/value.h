@@ -38,7 +38,7 @@ namespace peloton {
 // Type system
 //===--------------------------------------------------------------------===//
 
-#define CHECK_FPE( x ) ( std::isinf(x) || std::isnan(x) )
+#define CHECK_FPE(x) (std::isinf(x) || std::isnan(x))
 
 /**
  * Objects are length preceded with a short length value or a long length value
@@ -54,7 +54,8 @@ namespace peloton {
 /// The int used for storage and return values
 typedef ttmath::Int<2> TTInt;
 
-/// Long integer with space for multiplication and division without carry/overflow
+/// Long integer with space for multiplication and division without
+/// carry/overflow
 typedef ttmath::Int<4> TTLInt;
 
 class ValuePeeker;
@@ -77,12 +78,18 @@ class Value {
   friend class ValueFactory;
 
  public:
+
+  /**
+   * Copy assignment operator
+   * @warning It performs a shallow copy. Use Clone() if a deep copy is requested.
+   */
+  Value& operator= (const Value&) = default;
+
   /// Create a default Value
   Value();
 
   /// Release memory associated to object type Values
   void FreeUninlinedData() const;
-
 
   //===--------------------------------------------------------------------===//
   // Core Functions
@@ -133,11 +140,11 @@ class Value {
    *  pointer to the object will be copied into the storage area.
    *  No allocations are performed.
    *  */
-  void Serialize(void *storage, const bool is_inlined,
+  void Serialize(void* storage, const bool is_inlined,
                  const int32_t max_length) const;
 
   /// Serialize this Value to a SerializeOutput
-  void SerializeTo(SerializeOutput &output) const;
+  void SerializeTo(SerializeOutput& output) const;
 
   /// Serialize this Value to an Export stream
   void SerializeToExport(ExportSerializeOutput&) const;
@@ -148,16 +155,16 @@ class Value {
    * inlined then the provided data pool or the heap will be used to
    * allocated storage for a copy of the object.
    * */
-  void SerializeWithAllocation(void *storage, const bool is_inlined,
-                               const int32_t max_length, Pool *data_pool) const;
+  void SerializeWithAllocation(void* storage, const bool is_inlined,
+                               const int32_t max_length, Pool* data_pool) const;
 
   /**
    * Deserialize a scalar of the specified type from the tuple
    * storage area provided. If this is an Object type then the third
    * argument indicates whether the object is stored in the tuple inlined
    * */
-  static const Value Deserialize(const void *storage,
-                                 const ValueType type, const bool is_inlined);
+  static const Value Deserialize(const void* storage, const ValueType type,
+                                 const bool is_inlined);
 
   /**
    * Deserialize a scalar value of the specified type from the
@@ -166,17 +173,17 @@ class Value {
    * Object types as necessary using the provided data pool or the
    * heap. This is used to deserialize tables.
    * */
-  static int64_t DeserializeFrom(SerializeInput &input,
-                                 const ValueType type, char *storage,
-                                 bool is_inlined, const int32_t max_length, Pool *data_pool);
+  static int64_t DeserializeFrom(SerializeInput& input, const ValueType type,
+                                 char* storage, bool is_inlined,
+                                 const int32_t max_length, Pool* data_pool);
 
   /**
    * Read a ValueType from the SerializeInput stream and deserialize
    * a scalar value of the specified type from the provided
    * SerializeInput and perform allocations as necessary.
    * */
-  static const Value DeserializeWithAllocation(SerializeInput &input,
-                                               Pool *data_pool);
+  static const Value DeserializeWithAllocation(SerializeInput& input,
+                                               Pool* data_pool);
 
   //===--------------------------------------------------------------------===//
   // Operators
@@ -189,7 +196,7 @@ class Value {
    *  */
   int Compare(const Value rhs) const;
 
-  inline bool operator==(const Value &other) const {
+  inline bool operator==(const Value& other) const {
     if (this->Compare(other) == 0) {
       return true;
     }
@@ -197,9 +204,7 @@ class Value {
     return false;
   }
 
-  inline bool operator!=(const Value &other) const {
-    return !(*this == other);
-  }
+  inline bool operator!=(const Value& other) const { return !(*this == other); }
 
   /// Return a boolean Value with the comparison result
   Value OpEquals(const Value rhs) const;
@@ -236,7 +241,7 @@ class Value {
   static uint16_t GetTupleStorageSize(const ValueType type);
 
   /// For boost hashing
-  void HashCombine(std::size_t &seed) const;
+  void HashCombine(std::size_t& seed) const;
 
   // Get a string representation of this value
   /// Return a string full of arcane and wonder.
@@ -251,17 +256,14 @@ class Value {
 
   /// Functor equality predicate for use with boost unordered
   struct equal_to : std::binary_function<Value, Value, bool> {
-    bool operator()(Value const& x,
-                    Value const& y) const
-    {
+    bool operator()(Value const& x, Value const& y) const {
       return x.Compare(y) == 0;
     }
   };
 
   /// Functor hash predicate for use with boost unordered
   struct hash : std::unary_function<Value, std::size_t> {
-    std::size_t operator()(Value const& x) const
-    {
+    std::size_t operator()(Value const& x) const {
       std::size_t seed = 0;
       x.HashCombine(seed);
       return seed;
@@ -274,26 +276,22 @@ class Value {
   static const uint16_t max_decimal_scale = 12;
   static const int64_t max_decimal_scale_factor = 1000000000000;
 
-  int GetIntegerForTestsOnly() {
-    return GetInteger();
-  }
+  int GetIntegerForTestsOnly() { return GetInteger(); }
 
   /**
    * Get the type of the value. This information is private
-   * to prevent code outside of Value from branching based on the type of a value.
+   * to prevent code outside of Value from branching based on the type of a
+   * value.
    */
-  ValueType GetValueType() const {
-    return value_type;
-  }
+  ValueType GetValueType() const { return value_type; }
 
  private:
-
   //===--------------------------------------------------------------------===//
   // Function declarations for value.cpp
   //===--------------------------------------------------------------------===//
 
   static std::string GetTypeName(ValueType type);
-  void CreateDecimalFromString(const std::string &txt);
+  void CreateDecimalFromString(const std::string& txt);
   std::string CreateStringFromDecimal() const;
 
   /// Promotion Rules.
@@ -322,7 +320,7 @@ class Value {
         rt = DoublePromotionTable[vtb];
         break;
 
-        // no valid promotion (currently) for these types
+      // no valid promotion (currently) for these types
       case VALUE_TYPE_ADDRESS:
       case VALUE_TYPE_VARCHAR:
       case VALUE_TYPE_VARBINARY:
@@ -349,11 +347,12 @@ class Value {
   bool is_inlined;
 
   /**
-   * Private constructor that initializes storage and the specifies the type of value
+   * Private constructor that initializes storage and the specifies the type of
+   * value
    * that will be stored in this instance
    */
   Value(const ValueType type) {
-    ::memset( value_data, 0, 16);
+    ::memset(value_data, 0, 16);
     SetValueType(type);
     is_inlined = false;
   }
@@ -363,13 +362,9 @@ class Value {
    * The last of the 16 bytes of storage allocated in an Value
    * is used to store the type
    */
-  void SetValueType(ValueType type) {
-    value_type = type;
-  }
+  void SetValueType(ValueType type) { value_type = type; }
 
-  void IsInlined(bool sourceInlined){
-    is_inlined = sourceInlined;
-  }
+  void IsInlined(bool sourceInlined) { is_inlined = sourceInlined; }
 
   /**
    * An Object is something like a String that has a variable length
@@ -382,7 +377,6 @@ class Value {
    * calling correctness.
    */
   int32_t GetObjectLength() const {
-
     if (IsNull()) {
       // Conceptually, I think a NULL object should just have
       // length 0. In practice, this code path is often a defect
@@ -391,18 +385,19 @@ class Value {
       throw Exception("Must not ask  for object length on sql null object.");
     }
 
-    if ((GetValueType() != VALUE_TYPE_VARCHAR) && (GetValueType() != VALUE_TYPE_VARBINARY)) {
+    if ((GetValueType() != VALUE_TYPE_VARCHAR) &&
+        (GetValueType() != VALUE_TYPE_VARBINARY)) {
       // probably want GetTupleStorageSize() for non-object types.
       // at the moment, only varchars are using GetObjectLength().
       throw Exception("Must not ask for object length for non-object types");
     }
 
     // now safe to read and return the length preceding value.
-    return *reinterpret_cast<const int32_t *>(&value_data[8]);
+    return *reinterpret_cast<const int32_t*>(&value_data[8]);
   }
 
   void SetObjectLength(int32_t length) {
-    *reinterpret_cast<int32_t *>(&value_data[8]) = length;
+    *reinterpret_cast<int32_t*>(&value_data[8]) = length;
   }
 
   /**
@@ -420,7 +415,7 @@ class Value {
    * The value is converted to network byte order so that the code
    * will always know which byte contains the most signficant digits.
    */
-  static int32_t GetObjectLengthFromLocation(const char *location) {
+  static int32_t GetObjectLengthFromLocation(const char* location) {
     /*
      * Location will be NULL if the Value is operating on storage that is not
      * inlined and thus can contain a NULL pointer
@@ -429,7 +424,8 @@ class Value {
       return -1;
     }
     char firstByte = location[0];
-    const char premask = static_cast<char>(OBJECT_NULL_BIT | OBJECT_CONTINUATION_BIT);
+    const char premask =
+        static_cast<char>(OBJECT_NULL_BIT | OBJECT_CONTINUATION_BIT);
 
     /*
      * Generated mask that removes the null and continuation bits
@@ -457,17 +453,13 @@ class Value {
    * in the object's storage area. This value
    * is cached in the Value's 13th byte.
    */
-  int8_t GetObjectLengthLength() const {
-    return value_data[12];
-  }
+  int8_t GetObjectLengthLength() const { return value_data[12]; }
 
   /**
    * Set the objects length preceding values length to
    * the specified value
    */
-  void SetObjectLengthLength(int8_t length) {
-    value_data[12] = length;
-  }
+  void SetObjectLengthLength(int8_t length) { value_data[12] = length; }
 
   /**
    * Based on the objects actual length value Get the length of the
@@ -482,19 +474,21 @@ class Value {
   }
 
   /**
-   * Set the length preceding value using the short or long representation depending
+   * Set the length preceding value using the short or long representation
+   * depending
    * on what is necessary to represent the length.
    */
-  static void SetObjectLengthToLocation(int32_t length, char *location) {
+  static void SetObjectLengthToLocation(int32_t length, char* location) {
     int32_t beNumber = htonl(length);
     if (length < -1) {
       throw Exception("Object length cannot be < -1");
     } else if (length == -1) {
       location[0] = OBJECT_NULL_BIT;
-    } if (length <= OBJECT_MAX_LENGTH_SHORT_LENGTH) {
+    }
+    if (length <= OBJECT_MAX_LENGTH_SHORT_LENGTH) {
       location[0] = reinterpret_cast<char*>(&beNumber)[3];
     } else {
-      char *pointer = reinterpret_cast<char*>(&beNumber);
+      char* pointer = reinterpret_cast<char*>(&beNumber);
       location[0] = pointer[0];
       location[0] |= OBJECT_CONTINUATION_BIT;
       location[1] = pointer[1];
@@ -504,7 +498,8 @@ class Value {
   }
 
   /**
-   * Not truly symmetrical with GetObjectValue which returns the actual object past
+   * Not truly symmetrical with GetObjectValue which returns the actual object
+   * past
    * the length preceding value
    */
   void SetObjectValue(void* object) {
@@ -512,21 +507,21 @@ class Value {
   }
 
   /**
-   * Get a pointer to the value of an Object that lies beyond the storage of the length information
+   * Get a pointer to the value of an Object that lies beyond the storage of the
+   * length information
    */
   void* GetObjectValue() const {
     if (*reinterpret_cast<void* const*>(value_data) == NULL) {
       return NULL;
-    } else if(*reinterpret_cast<const int32_t*>(&value_data[8]) == OBJECTLENGTH_NULL) {
+    } else if (*reinterpret_cast<const int32_t*>(&value_data[8]) ==
+               OBJECTLENGTH_NULL) {
       return NULL;
     } else {
       void* value;
-      if (is_inlined)
-      {
-        value = *reinterpret_cast<char* const*>(value_data) + GetObjectLengthLength();
-      }
-      else
-      {
+      if (is_inlined) {
+        value = *reinterpret_cast<char* const*>(value_data) +
+                GetObjectLengthLength();
+      } else {
         Varlen* sref = *reinterpret_cast<Varlen* const*>(value_data);
         value = sref->Get() + GetObjectLengthLength();
       }
@@ -650,10 +645,10 @@ class Value {
   // Type Comparison
   //===--------------------------------------------------------------------===//
 
-  int CompareAnyIntegerValue (const Value rhs) const;
-  int CompareDoubleValue (const Value rhs) const;
-  int CompareStringValue (const Value rhs) const;
-  int CompareBinaryValue (const Value rhs) const;
+  int CompareAnyIntegerValue(const Value rhs) const;
+  int CompareDoubleValue(const Value rhs) const;
+  int CompareStringValue(const Value rhs) const;
+  int CompareBinaryValue(const Value rhs) const;
   int CompareDecimalValue(const Value rhs) const;
 
   //===--------------------------------------------------------------------===//
@@ -673,7 +668,7 @@ class Value {
   Value OpAddDecimals(const Value lhs, const Value rhs) const;
   Value OpSubtractDecimals(const Value lhs, const Value rhs) const;
   Value OpDivideDecimals(const Value lhs, const Value rhs) const;
-  Value OpMultiplyDecimals(const Value &lhs, const Value &rhs) const;
+  Value OpMultiplyDecimals(const Value& lhs, const Value& rhs) const;
 
   //===--------------------------------------------------------------------===//
   // Static Type Getters
@@ -720,13 +715,13 @@ class Value {
     return retval;
   }
 
-  static Value GetDecimalValueFromString(const std::string &value) {
+  static Value GetDecimalValueFromString(const std::string& value) {
     Value retval(VALUE_TYPE_DECIMAL);
     retval.CreateDecimalFromString(value);
     return retval;
   }
 
-  static Value GetStringValue(std::string value, Pool *data_pool) {
+  static Value GetStringValue(std::string value, Pool* data_pool) {
     Value retval(VALUE_TYPE_VARCHAR);
     const int32_t length = static_cast<int32_t>(value.length());
     const int8_t lengthLength = GetAppropriateObjectLengthLength(length);
@@ -734,7 +729,7 @@ class Value {
     Varlen* sref = Varlen::Create(minLength, data_pool);
     char* storage = sref->Get();
     SetObjectLengthToLocation(length, storage);
-    ::memcpy( storage + lengthLength, value.c_str(), length);
+    ::memcpy(storage + lengthLength, value.c_str(), length);
     retval.SetObjectValue(sref);
     retval.SetObjectLength(length);
     retval.SetObjectLengthLength(lengthLength);
@@ -742,7 +737,7 @@ class Value {
   }
 
   /// Assumes binary value in hex
-  static Value GetBinaryValue(const std::string value, Pool *data_pool) {
+  static Value GetBinaryValue(const std::string value, Pool* data_pool) {
     Value retval(VALUE_TYPE_VARBINARY);
     const int32_t length = static_cast<int32_t>(value.length() / 2);
 
@@ -754,21 +749,22 @@ class Value {
     Varlen* sref = Varlen::Create(minLength, data_pool);
     char* storage = sref->Get();
     SetObjectLengthToLocation(length, storage);
-    ::memcpy( storage + lengthLength, buf.get(), length);
+    ::memcpy(storage + lengthLength, buf.get(), length);
     retval.SetObjectValue(sref);
     retval.SetObjectLength(length);
     retval.SetObjectLengthLength(lengthLength);
     return retval;
   }
 
-  static Value GetBinaryValue(const unsigned char *value, const int32_t length, Pool *data_pool) {
+  static Value GetBinaryValue(const unsigned char* value, const int32_t length,
+                              Pool* data_pool) {
     Value retval(VALUE_TYPE_VARBINARY);
     const int8_t lengthLength = GetAppropriateObjectLengthLength(length);
     const int32_t minLength = length + lengthLength;
     Varlen* sref = Varlen::Create(minLength, data_pool);
     char* storage = sref->Get();
     SetObjectLengthToLocation(length, storage);
-    ::memcpy( storage + lengthLength, value, length);
+    ::memcpy(storage + lengthLength, value, length);
     retval.SetObjectValue(sref);
     retval.SetObjectLength(length);
     retval.SetObjectLengthLength(lengthLength);
@@ -798,46 +794,69 @@ class Value {
     return retval;
   }
 
-  static Value GetAddressValue(void *address) {
+  static Value GetAddressValue(void* address) {
     Value retval(VALUE_TYPE_ADDRESS);
     *reinterpret_cast<void**>(retval.value_data) = address;
     return retval;
   }
 
   /**
+   * @brief Do a deep copy of the given value.
+   * Un-inlined data will be allocated in the provided memory pool.
+   */
+  static Value Clone(const Value& src, Pool* dataPool = nullptr) {
+    Value rv = src; // Shallow copy first
+    auto value_type = src.GetValueType();
+
+    switch(value_type){
+      case VALUE_TYPE_VARBINARY:
+      case VALUE_TYPE_VARCHAR:
+        break;  // "real" deep copy is needed only for these types
+
+      default:
+        return rv;
+    }
+
+    if(src.is_inlined || src.IsNull()){
+      return rv;  // also, shallow copy for inlined or null data
+    }
+
+    Varlen* src_sref = *reinterpret_cast<Varlen* const*>(src.value_data);
+    Varlen* new_sref = Varlen::Clone(*src_sref , dataPool);
+
+    rv.SetObjectValue(new_sref);
+    return rv;
+  }
+
+  /**
    * Copy the arbitrary size object that this value points to as an
    * inline object in the provided storage area
    */
-  void InlineCopyObject(void *storage, int32_t max_length) const {
+  void InlineCopyObject(void* storage, int32_t max_length) const {
     if (IsNull()) {
       /*
        * The 7th bit of the length preceding value
        * is used to indicate that the object is null.
        */
       *reinterpret_cast<char*>(storage) = OBJECT_NULL_BIT;
-    }
-    else {
+    } else {
       const int32_t objectLength = GetObjectLength();
       if (objectLength > max_length) {
         char msg[1024];
-        ::snprintf(msg, 1024, "Object exceeds specified size. Size is %d and max is %d", objectLength, max_length);
+        ::snprintf(msg, 1024,
+                   "Object exceeds specified size. Size is %d and max is %d",
+                   objectLength, max_length);
         throw ObjectSizeException(msg);
       }
-      if (is_inlined)
-      {
-        ::memcpy( storage, *reinterpret_cast<char *const *>(value_data), GetObjectLengthLength() + objectLength);
-      }
-      else
-      {
-        const Varlen* sref =
-            *reinterpret_cast<Varlen* const*>(value_data);
-        ::memcpy(storage, sref->Get(),
+      if (is_inlined) {
+        ::memcpy(storage, *reinterpret_cast<char* const*>(value_data),
                  GetObjectLengthLength() + objectLength);
+      } else {
+        const Varlen* sref = *reinterpret_cast<Varlen* const*>(value_data);
+        ::memcpy(storage, sref->Get(), GetObjectLengthLength() + objectLength);
       }
     }
-
   }
-
 };
 
 //===--------------------------------------------------------------------===//
@@ -858,18 +877,15 @@ inline Value::Value() {
  * return the storage allocated for the object to the heap
  */
 inline void Value::FreeUninlinedData() const {
-  switch (GetValueType()){
+  switch (GetValueType()) {
     case VALUE_TYPE_VARCHAR:
-    case VALUE_TYPE_VARBINARY:
-    {
+    case VALUE_TYPE_VARBINARY: {
       assert(!is_inlined);
       Varlen* sref = *reinterpret_cast<Varlen* const*>(value_data);
-      if (sref != NULL)
-      {
+      if (sref != NULL) {
         Varlen::Destroy(sref);
       }
-    }
-    break;
+    } break;
     default:
       return;
   }
@@ -882,10 +898,10 @@ inline void* Value::CastAsAddress() const {
     case VALUE_TYPE_ADDRESS:
       return *reinterpret_cast<void* const*>(value_data);
     default:
-      throw UnknownTypeException((int) type, "Type %d not a recognized type for casting as an address");
+      throw UnknownTypeException(
+          (int)type, "Type %d not a recognized type for casting as an address");
   }
 }
-
 
 //===--------------------------------------------------------------------===//
 // NULLs and BOOLs
@@ -954,7 +970,8 @@ inline bool Value::IsNegative() const {
     case VALUE_TYPE_DECIMAL:
       return GetDecimal().IsSign();
     default: {
-      throw UnknownTypeException(type, "Invalid value type for checking negativity");
+      throw UnknownTypeException(type,
+                                 "Invalid value type for checking negativity");
     }
   }
 }
@@ -973,7 +990,7 @@ inline Value Value::OpAnd(const Value rhs) const {
  * Logical or Operation for Values
  */
 inline Value Value::OpOr(const Value rhs) const {
-  if(GetBoolean() || rhs.GetBoolean()) {
+  if (GetBoolean() || rhs.GetBoolean()) {
     return GetTrue();
   }
   return GetFalse();
@@ -1000,14 +1017,16 @@ inline bool Value::IsNull() const {
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
       return (*reinterpret_cast<void* const*>(value_data) == nullptr ||
-          *reinterpret_cast<const int32_t*>(&value_data[8]) == OBJECTLENGTH_NULL);
+              *reinterpret_cast<const int32_t*>(&value_data[8]) ==
+                  OBJECTLENGTH_NULL);
     case VALUE_TYPE_DECIMAL: {
       TTInt min;
       min.SetMin();
       return GetDecimal() == min;
     }
     default:
-      throw IncompatibleTypeException(GetValueType(), "Value::isNull() called with ValueType '%d'");
+      throw IncompatibleTypeException(
+          GetValueType(), "Value::isNull() called with ValueType '%d'");
   }
   return false;
 }
@@ -1111,7 +1130,8 @@ inline int Value::Compare(const Value rhs) const {
     case VALUE_TYPE_DECIMAL:
       return CompareDecimalValue(rhs);
     default: {
-      throw IncompatibleTypeException(rhs.GetValueType(), "non comparable type '%d'");
+      throw IncompatibleTypeException(rhs.GetValueType(),
+                                      "non comparable type '%d'");
     }
   }
 }
@@ -1127,7 +1147,8 @@ inline int Value::Compare(const Value rhs) const {
  * pointer to the object will be copied into the storage area. No
  * allocations are performed.
  */
-inline void Value::Serialize(void *storage, const bool is_inlined, const int32_t max_length) const{
+inline void Value::Serialize(void* storage, const bool is_inlined,
+                             const int32_t max_length) const {
   const ValueType type = GetValueType();
   switch (type) {
     case VALUE_TYPE_TIMESTAMP:
@@ -1149,35 +1170,38 @@ inline void Value::Serialize(void *storage, const bool is_inlined, const int32_t
       *reinterpret_cast<double*>(storage) = GetDouble();
       break;
     case VALUE_TYPE_DECIMAL:
-      ::memcpy( storage, value_data, Value::GetTupleStorageSize(type));
+      ::memcpy(storage, value_data, Value::GetTupleStorageSize(type));
       break;
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
-      //Potentially non-inlined type requires special handling
+      // Potentially non-inlined type requires special handling
       if (is_inlined) {
         InlineCopyObject(storage, max_length);
-      }
-      else {
+      } else {
         if (IsNull() || GetObjectLength() <= max_length) {
-          if (is_inlined && !is_inlined)
-          {
-            throw Exception("Cannot serialize an inlined string to non-inlined tuple storage in serializeToTupleStorage()");
+          if (is_inlined && !is_inlined) {
+            throw Exception(
+                "Cannot serialize an inlined string to non-inlined tuple "
+                "storage in serializeToTupleStorage()");
           }
           // copy the StringRef pointers
           *reinterpret_cast<Varlen**>(storage) =
               *reinterpret_cast<Varlen* const*>(value_data);
-        }
-        else {
+        } else {
           const int32_t length = GetObjectLength();
           char msg[1024];
-          ::snprintf(msg, 1024, "Object exceeds specified size. Size is %d and max is %d", length, max_length);
+          ::snprintf(msg, 1024,
+                     "Object exceeds specified size. Size is %d and max is %d",
+                     length, max_length);
           throw ObjectSizeException(msg);
         }
       }
       break;
     default:
       char message[128];
-      ::snprintf(message, 128, "Value::serializeToTupleStorage() unrecognized type '%d'", type);
+      ::snprintf(message, 128,
+                 "Value::serializeToTupleStorage() unrecognized type '%d'",
+                 type);
       throw ObjectSizeException(message);
   }
 }
@@ -1185,25 +1209,26 @@ inline void Value::Serialize(void *storage, const bool is_inlined, const int32_t
 /**
  * Serialize this Value to the provided SerializeOutput
  */
-inline void Value::SerializeTo(SerializeOutput &output) const {
+inline void Value::SerializeTo(SerializeOutput& output) const {
   const ValueType type = GetValueType();
   switch (type) {
     case VALUE_TYPE_VARCHAR:
-    case VALUE_TYPE_VARBINARY:
-    {
+    case VALUE_TYPE_VARBINARY: {
       if (IsNull()) {
         output.WriteInt(OBJECTLENGTH_NULL);
         break;
       }
       const int32_t length = GetObjectLength();
       if (length < OBJECTLENGTH_NULL) {
-        throw Exception("Attempted to serialize an Value with a negative length");
+        throw Exception(
+            "Attempted to serialize an Value with a negative length");
       }
       output.WriteInt(static_cast<int32_t>(length));
       if (length != OBJECTLENGTH_NULL) {
         // Not a null string: write it out
-        const char * str = reinterpret_cast<const char*>(GetObjectValue());
-        if (str == NULL) {}
+        const char* str = reinterpret_cast<const char*>(GetObjectValue());
+        if (str == NULL) {
+        }
         output.WriteBytes(GetObjectValue(), length);
       } else {
         assert(GetObjectValue() == NULL || length == OBJECTLENGTH_NULL);
@@ -1241,39 +1266,35 @@ inline void Value::SerializeTo(SerializeOutput &output) const {
       break;
     }
     default:
-      throw UnknownTypeException(type, "Value::serializeTo() found a column "
+      throw UnknownTypeException(type,
+                                 "Value::serializeTo() found a column "
                                  "with ValueType '%d' that is not handled");
   }
 }
 
-inline void Value::SerializeToExport(ExportSerializeOutput &io) const
-{
+inline void Value::SerializeToExport(ExportSerializeOutput& io) const {
   switch (GetValueType()) {
     case VALUE_TYPE_TINYINT:
     case VALUE_TYPE_SMALLINT:
     case VALUE_TYPE_INTEGER:
     case VALUE_TYPE_BIGINT:
-    case VALUE_TYPE_TIMESTAMP:
-    {
+    case VALUE_TYPE_TIMESTAMP: {
       int64_t val = CastAsBigIntAndGetValue();
       io.WriteLong(val);
       return;
     }
-    case VALUE_TYPE_DOUBLE:
-    {
+    case VALUE_TYPE_DOUBLE: {
       double value = GetDouble();
       io.WriteDouble(value);
       return;
     }
     case VALUE_TYPE_VARCHAR:
-    case VALUE_TYPE_VARBINARY:
-    {
+    case VALUE_TYPE_VARBINARY: {
       // requires (and uses) bytecount not character count
       io.WriteBinaryString(GetObjectValue(), GetObjectLength());
       return;
     }
-    case VALUE_TYPE_DECIMAL:
-    {
+    case VALUE_TYPE_DECIMAL: {
       std::string decstr = CreateStringFromDecimal();
       int32_t objectLength = (int32_t)decstr.length();
       io.WriteBinaryString(decstr.data(), objectLength);
@@ -1284,13 +1305,13 @@ inline void Value::SerializeToExport(ExportSerializeOutput &io) const
     case VALUE_TYPE_BOOLEAN:
     case VALUE_TYPE_ADDRESS:
       char message[128];
-      ::snprintf(message, 128, "Invalid type in serializeToExport: %d", GetValueType());
+      ::snprintf(message, 128, "Invalid type in serializeToExport: %d",
+                 GetValueType());
       throw UnknownTypeException(GetValueType(), message);
   }
 
   throw UnknownTypeException(GetValueType(), "");
 }
-
 
 /**
  * Serialize the scalar this Value represents to the provided
@@ -1298,8 +1319,9 @@ inline void Value::SerializeToExport(ExportSerializeOutput &io) const
  * inlined then the provided data pool or the heap will be used to
  * allocated storage for a copy of the object.
  */
-inline void Value::SerializeWithAllocation(void *storage, const bool is_inlined,
-                                           const int32_t max_length, Pool *data_pool) const{
+inline void Value::SerializeWithAllocation(void* storage, const bool is_inlined,
+                                           const int32_t max_length,
+                                           Pool* data_pool) const {
   const ValueType type = GetValueType();
   int32_t length = 0;
 
@@ -1323,43 +1345,40 @@ inline void Value::SerializeWithAllocation(void *storage, const bool is_inlined,
       *reinterpret_cast<double*>(storage) = GetDouble();
       break;
     case VALUE_TYPE_DECIMAL:
-      ::memcpy( storage, value_data, Value::GetTupleStorageSize(type));
+      ::memcpy(storage, value_data, Value::GetTupleStorageSize(type));
       break;
     case VALUE_TYPE_VARCHAR:
     case VALUE_TYPE_VARBINARY:
-      //Potentially non-inlined type requires special handling
+      // Potentially non-inlined type requires special handling
       if (is_inlined) {
         InlineCopyObject(storage, max_length);
-      }
-      else {
+      } else {
         if (IsNull()) {
           *reinterpret_cast<void**>(storage) = NULL;
-        }
-        else {
+        } else {
           length = GetObjectLength();
           const int8_t lengthLength = GetObjectLengthLength();
           const int32_t minlength = lengthLength + length;
           if (length > max_length) {
             char msg[1024];
-            ::snprintf(msg, 1024, "Object exceeds specified size. Size is %d"
-                       " and max is %d", length, max_length);
+            ::snprintf(msg, 1024,
+                       "Object exceeds specified size. Size is %d"
+                       " and max is %d",
+                       length, max_length);
             throw ObjectSizeException(msg);
           }
 
           Varlen* sref = Varlen::Create(minlength, data_pool);
-          char *copy = sref->Get();
+          char* copy = sref->Get();
           SetObjectLengthToLocation(length, copy);
           ::memcpy(copy + lengthLength, GetObjectValue(), length);
           *reinterpret_cast<Varlen**>(storage) = sref;
         }
       }
       break;
-    default: {
-      throw UnknownTypeException(type, "unrecognized type '%d'");
-    }
+    default: { throw UnknownTypeException(type, "unrecognized type '%d'"); }
   }
 }
-
 
 /**
  * Deserialize a scalar of the specified type from the tuple
@@ -1370,12 +1389,10 @@ inline void Value::SerializeWithAllocation(void *storage, const bool is_inlined,
  * TODO: Could the is_inlined argument be removed by have the
  * caller dereference the pointer?
  */
-inline const Value Value::Deserialize(const void *storage,
-                                      const ValueType type,
-                                      const bool is_inlined){
+inline const Value Value::Deserialize(const void* storage, const ValueType type,
+                                      const bool is_inlined) {
   Value retval(type);
-  switch (type)
-  {
+  switch (type) {
     case VALUE_TYPE_TIMESTAMP:
       retval.GetTimestamp() = *reinterpret_cast<const int64_t*>(storage);
       break;
@@ -1395,24 +1412,25 @@ inline const Value Value::Deserialize(const void *storage,
       retval.GetDouble() = *reinterpret_cast<const double*>(storage);
       break;
     case VALUE_TYPE_DECIMAL:
-      ::memcpy( retval.value_data, storage, Value::GetTupleStorageSize(type));
+      ::memcpy(retval.value_data, storage, Value::GetTupleStorageSize(type));
       break;
     case VALUE_TYPE_VARCHAR:
-    case VALUE_TYPE_VARBINARY:
-    {
-      //Potentially non-inlined type requires special handling
+    case VALUE_TYPE_VARBINARY: {
+      // Potentially non-inlined type requires special handling
       char* data = NULL;
 
       if (is_inlined) {
-        //If it is inlined the storage area contains the actual data so copy a reference
-        //to the storage area
-        *reinterpret_cast<void**>(retval.value_data) = const_cast<void*>(storage);
+        // If it is inlined the storage area contains the actual data so copy a
+        // reference
+        // to the storage area
+        *reinterpret_cast<void**>(retval.value_data) =
+            const_cast<void*>(storage);
         data = *reinterpret_cast<char**>(retval.value_data);
         retval.IsInlined(true);
       } else {
-        //If it isn't inlined the storage area contains a pointer to the
+        // If it isn't inlined the storage area contains a pointer to the
         // StringRef object containing the string's memory
-        memcpy( retval.value_data, storage, sizeof(void*));
+        memcpy(retval.value_data, storage, sizeof(void*));
         Varlen* sref = nullptr;
         sref = *reinterpret_cast<Varlen**>(retval.value_data);
 
@@ -1420,14 +1438,14 @@ inline const Value Value::Deserialize(const void *storage,
         // was a null value; leave the data pointer as NULL so
         // that GetObjectLengthFromLocation will figure this out
         // correctly, otherwise Get the right char* from the StringRef
-        if (sref != NULL)
-        {
+        if (sref != NULL) {
           data = sref->Get();
         }
       }
 
       const int32_t length = GetObjectLengthFromLocation(data);
-      //std::cout << "Value::deserializeFromTupleStorage: length: " << length << std::endl;
+      // std::cout << "Value::deserializeFromTupleStorage: length: " << length
+      // << std::endl;
       retval.SetObjectLength(length);
       retval.SetObjectLengthLength(GetAppropriateObjectLengthLength(length));
       break;
@@ -1445,8 +1463,10 @@ inline const Value Value::Deserialize(const void *storage,
  * Object types as necessary using the provided data pool or the
  * heap. This is used to deserialize tables.
  */
-inline int64_t Value::DeserializeFrom(SerializeInput &input, const ValueType type,
-                                      char *storage, bool is_inlined, const int32_t max_length, Pool *data_pool) {
+inline int64_t Value::DeserializeFrom(SerializeInput& input,
+                                      const ValueType type, char* storage,
+                                      bool is_inlined, const int32_t max_length,
+                                      Pool* data_pool) {
   switch (type) {
     case VALUE_TYPE_BIGINT:
     case VALUE_TYPE_TIMESTAMP:
@@ -1462,17 +1482,18 @@ inline int64_t Value::DeserializeFrom(SerializeInput &input, const ValueType typ
       *reinterpret_cast<int32_t*>(storage) = input.ReadInt();
       return sizeof(int32_t);
     case VALUE_TYPE_DOUBLE:
-      *reinterpret_cast<double* >(storage) = input.ReadDouble();
+      *reinterpret_cast<double*>(storage) = input.ReadDouble();
       return sizeof(double);
     case VALUE_TYPE_VARCHAR:
-    case VALUE_TYPE_VARBINARY:
-    {
+    case VALUE_TYPE_VARBINARY: {
       int64_t bytesRead = 0;
       const int32_t length = input.ReadInt();
-      bytesRead+= sizeof(int32_t);
+      bytesRead += sizeof(int32_t);
       if (length > max_length) {
         char msg[1024];
-        ::snprintf(msg, 1024, "String exceeds specified size. Size is %d and max is %d", length, max_length);
+        ::snprintf(msg, 1024,
+                   "String exceeds specified size. Size is %d and max is %d",
+                   length, max_length);
         throw ObjectSizeException(msg);
       }
 
@@ -1483,35 +1504,37 @@ inline int64_t Value::DeserializeFrom(SerializeInput &input, const ValueType typ
         if (length == OBJECTLENGTH_NULL) {
           return 0;
         }
-        const char *data = reinterpret_cast<const char*>(input.GetRawPointer(length));
-        ::memcpy( storage + lengthLength, data, length);
+        const char* data =
+            reinterpret_cast<const char*>(input.GetRawPointer(length));
+        ::memcpy(storage + lengthLength, data, length);
       } else {
         if (length == OBJECTLENGTH_NULL) {
           *reinterpret_cast<void**>(storage) = NULL;
           return 0;
         }
-        const char *data = reinterpret_cast<const char*>(input.GetRawPointer(length));
+        const char* data =
+            reinterpret_cast<const char*>(input.GetRawPointer(length));
         const int32_t minlength = lengthLength + length;
         Varlen* sref = Varlen::Create(minlength, data_pool);
         char* copy = sref->Get();
-        SetObjectLengthToLocation( length, copy);
+        SetObjectLengthToLocation(length, copy);
         ::memcpy(copy + lengthLength, data, length);
         *reinterpret_cast<Varlen**>(storage) = sref;
       }
-      bytesRead+=length;
+      bytesRead += length;
       return bytesRead;
     }
     case VALUE_TYPE_DECIMAL: {
-      int64_t *longStorage = reinterpret_cast<int64_t*>(storage);
-      //Reverse order for Java BigDecimal BigEndian
+      int64_t* longStorage = reinterpret_cast<int64_t*>(storage);
+      // Reverse order for Java BigDecimal BigEndian
       longStorage[1] = input.ReadLong();
       longStorage[0] = input.ReadLong();
-      return 2*sizeof(long);
+      return 2 * sizeof(long);
     }
     default:
       char message[128];
-      ::snprintf(message, 128, "Value::deserializeFrom() unrecognized type '%d'",
-                 type);
+      ::snprintf(message, 128,
+                 "Value::deserializeFrom() unrecognized type '%d'", type);
       throw UnknownTypeException(type, message);
   }
 }
@@ -1521,7 +1544,8 @@ inline int64_t Value::DeserializeFrom(SerializeInput &input, const ValueType typ
  * provided SerializeInput and perform allocations as necessary.
  * This is used to deserialize parameter sets.
  */
-inline const Value Value::DeserializeWithAllocation(SerializeInput &input, Pool *data_pool) {
+inline const Value Value::DeserializeWithAllocation(SerializeInput& input,
+                                                    Pool* data_pool) {
   const ValueType type = static_cast<ValueType>(input.ReadByte());
   Value retval(type);
   switch (type) {
@@ -1544,8 +1568,7 @@ inline const Value Value::DeserializeWithAllocation(SerializeInput &input, Pool 
       retval.GetDouble() = input.ReadDouble();
       break;
     case VALUE_TYPE_VARCHAR:
-    case VALUE_TYPE_VARBINARY:
-    {
+    case VALUE_TYPE_VARBINARY: {
       const int32_t length = input.ReadInt();
       const int8_t lengthLength = GetAppropriateObjectLengthLength(length);
       // the NULL SQL string is a NULL C pointer
@@ -1553,11 +1576,11 @@ inline const Value Value::DeserializeWithAllocation(SerializeInput &input, Pool 
         retval.SetNull();
         break;
       }
-      const void *str = input.GetRawPointer(length);
+      const void* str = input.GetRawPointer(length);
       const int32_t minlength = lengthLength + length;
       Varlen* sref = Varlen::Create(minlength, data_pool);
       char* copy = sref->Get();
-      retval.SetObjectLengthToLocation( length, copy);
+      retval.SetObjectLengthToLocation(length, copy);
       ::memcpy(copy + lengthLength, str, length);
       retval.SetObjectValue(sref);
       retval.SetObjectLength(length);
@@ -1568,19 +1591,17 @@ inline const Value Value::DeserializeWithAllocation(SerializeInput &input, Pool 
       retval.GetDecimal().table[1] = input.ReadLong();
       retval.GetDecimal().table[0] = input.ReadLong();
       break;
-
     }
     case VALUE_TYPE_NULL: {
       retval.SetNull();
       break;
     }
     default:
-      throw UnknownTypeException(type, "Value::deserializeFromAllocateForStorage() unrecognized type '%d'");
+      throw UnknownTypeException(
+          type,
+          "Value::deserializeFromAllocateForStorage() unrecognized type '%d'");
   }
   return retval;
 }
 
-
-} // End peloton namespace
-
-
+}  // End peloton namespace

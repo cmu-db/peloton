@@ -21,15 +21,14 @@ namespace peloton {
 namespace index {
 
 Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
-
-  //catalog::Schema *key_schema = metadata->key_schema;
-  //std::cout << "Creating index : "<< metadata->identifier << " " << (*key_schema);
+  // catalog::Schema *key_schema = metadata->key_schema;
+  // std::cout << "Creating index : "<< metadata->identifier << " " <<
+  // (*key_schema);
 
   BtreeMultimapIndex *index = new BtreeMultimapIndex(metadata);
 
   return index;
 }
 
-} // End index namespace
-} // End peloton namespace
-
+}  // End index namespace
+}  // End peloton namespace

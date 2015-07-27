@@ -6,8 +6,8 @@
 
 check_PROGRAMS += \
 				  logical_tile_test \
-				  materialization_test \
 				  mutate_test \
+				  materialization_test \
 				  seq_scan_test \
 				  index_scan_test \
 				  limit_test \

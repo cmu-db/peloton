@@ -23,17 +23,19 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 TEST(IndexTests, BtreeMultimapIndexTest) {
-
   std::vector<std::vector<std::string> > column_names;
   std::vector<catalog::Column> columns;
-  std::vector<catalog::Schema*> schemas;
+  std::vector<catalog::Schema *> schemas;
 
   // SCHEMA
 
-  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
+  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "A", true);
   catalog::Column column2(VALUE_TYPE_VARCHAR, 25, "B", true);
-  catalog::Column column3(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "C", true);
-  catalog::Column column4(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "D", true);
+  catalog::Column column3(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "C", true);
+  catalog::Column column4(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "D", true);
 
   columns.push_back(column1);
   columns.push_back(column2);
@@ -46,17 +48,11 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
 
   catalog::Schema *tuple_schema = new catalog::Schema(columns);
 
-
   // BTREE INDEX
 
-  index::IndexMetadata *index_metadata = new index::IndexMetadata("btree_index",
-                                                                  125,
-                                                                  INDEX_TYPE_BTREE_MULTIMAP,
-                                                                  INDEX_CONSTRAINT_TYPE_DEFAULT,
-                                                                  tuple_schema,
-                                                                  key_schema,
-                                                                  true);
-
+  index::IndexMetadata *index_metadata = new index::IndexMetadata(
+      "btree_index", 125, INDEX_TYPE_BTREE_MULTIMAP,
+      INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema, true);
 
   storage::VMBackend *backend = new storage::VMBackend();
   Pool *pool = new Pool(backend);
@@ -140,9 +136,5 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   delete index;
 }
 
-
-} // End test namespace
-} // End peloton namespace
-
-
-
+}  // End test namespace
+}  // End peloton namespace

@@ -25,38 +25,30 @@ namespace planner {
 class MaterializationNode : public AbstractPlanNode {
  public:
   MaterializationNode(const MaterializationNode &) = delete;
-  MaterializationNode& operator=(const MaterializationNode &) = delete;
+  MaterializationNode &operator=(const MaterializationNode &) = delete;
   MaterializationNode(MaterializationNode &&) = delete;
-  MaterializationNode& operator=(MaterializationNode &&) = delete;
+  MaterializationNode &operator=(MaterializationNode &&) = delete;
 
-
-  MaterializationNode(
-      const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-      catalog::Schema *schema)
-  : old_to_new_cols_(old_to_new_cols),
-    schema_(schema) {
-  }
+  MaterializationNode(const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
+                      catalog::Schema *schema)
+      : old_to_new_cols_(old_to_new_cols), schema_(schema) {}
 
   ~MaterializationNode() {
     // Clean up schema
     delete schema_;
   }
 
-  inline const std::unordered_map<oid_t, oid_t>& old_to_new_cols() const {
+  inline const std::unordered_map<oid_t, oid_t> &old_to_new_cols() const {
     return old_to_new_cols_;
   }
 
-  inline const catalog::Schema *GetSchema() const {
-    return schema_;
-  }
+  inline const catalog::Schema *GetSchema() const { return schema_; }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_MATERIALIZE;
   }
 
-  inline std::string GetInfo() const {
-    return "Materialize";
-  }
+  inline std::string GetInfo() const { return "Materialize"; }
 
  private:
   /**
@@ -68,5 +60,5 @@ class MaterializationNode : public AbstractPlanNode {
   catalog::Schema *schema_;
 };
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

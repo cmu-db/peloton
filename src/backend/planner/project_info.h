@@ -13,7 +13,6 @@
 #include "backend/expression/abstract_expression.h"
 #include "backend/storage/tuple.h"
 
-
 namespace peloton {
 namespace planner {
 
@@ -21,24 +20,26 @@ namespace planner {
  * @brief A class for representing projection information.
  *
  * The information is stored in two parts.
- * 1) A target_list stores non-trivial projections that can be calculated from expressions.
- * 2) A direct_map_list stores projections that is simply reorder of attributes in the input.
+ * 1) A target_list stores non-trivial projections that can be calculated from
+ *expressions.
+ * 2) A direct_map_list stores projections that is simply reorder of attributes
+ *in the input.
  *
  * We separate it in this way for two reasons:
  * i) Postgres does the same thing;
- * ii) It makes it possible to use a more efficient executor to handle pure direct map projections.
+ * ii) It makes it possible to use a more efficient executor to handle pure
+ *direct map projections.
  *
- * NB: in case of a constant-valued projection, it is still under the umbrella of \b target_list,
+ * NB: in case of a constant-valued projection, it is still under the umbrella
+ *of \b target_list,
  * though sounds simple enough.
  */
 class ProjectInfo {
-
  public:
-
-  ProjectInfo(ProjectInfo &) = delete;
-  ProjectInfo operator= (ProjectInfo &) = delete;
-  ProjectInfo(ProjectInfo &&) = delete;
-  ProjectInfo operator= (ProjectInfo &&) = delete;
+  ProjectInfo(ProjectInfo&) = delete;
+  ProjectInfo operator=(ProjectInfo&) = delete;
+  ProjectInfo(ProjectInfo&&) = delete;
+  ProjectInfo operator=(ProjectInfo&&) = delete;
 
   /**
    * @brief Generic specification of a projection target:
@@ -57,32 +58,25 @@ class ProjectInfo {
   typedef std::vector<DirectMap> DirectMapList;
 
   ProjectInfo(TargetList& tl, DirectMapList& dml)
-    : target_list_(tl), direct_map_list_(dml){
-
-  }
+      : target_list_(tl), direct_map_list_(dml) {}
 
   ProjectInfo(TargetList&& tl, DirectMapList&& dml)
-    : target_list_(tl), direct_map_list_(dml){
+      : target_list_(tl), direct_map_list_(dml) {}
 
-  }
+  const TargetList& GetTargetList() const { return target_list_; }
 
-  const TargetList& GetTargetList() const {
-    return target_list_;
-  }
+  const DirectMapList& GetDirectMapList() const { return direct_map_list_; }
 
-  const DirectMapList& GetDirectMapList() const {
-    return direct_map_list_;
-  }
+  bool Evaluate(storage::Tuple* dest, const AbstractTuple* tuple1,
+                const AbstractTuple* tuple2,
+                executor::ExecutorContext* econtext) const;
 
   ~ProjectInfo();
-
 
  private:
   TargetList target_list_;
   DirectMapList direct_map_list_;
-
 };
 
 } /* namespace planner */
 } /* namespace peloton */
-
