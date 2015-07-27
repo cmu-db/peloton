@@ -80,6 +80,8 @@ class PlanTransformer {
    */
   static const planner::ProjectInfo *BuildProjectInfo(
       const ProjectionInfo *pg_proj_info, oid_t column_count);
+
+  static const std::vector<oid_t> BuildColumnListFromDirectMap(planner::ProjectInfo::DirectMapList dmlist);
 };
 
 }  // namespace bridge
