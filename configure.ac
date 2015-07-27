@@ -141,15 +141,16 @@ AC_MSG_RESULT([$debugit])
 
 if test x"$debugit" = x"yes"; then
     AC_DEFINE([DEBUG],[],[Debug Mode])
-    AM_CXXFLAGS="$AM_CXXFLAGS -g -Wno-uninitialized -O0"
+    DEBUG_CXXFLAGS="-g -Wno-uninitialized -O0"
+    DEBUG_CPPFLAGS=""
 else
     AC_DEFINE([NDEBUG],[],[No-debug Mode])
-    AM_CXXFLAGS="$AM_CXXFLAGS -O2"
-    AM_CPPFLAGS="$AM_CPPFLAGS -DNDEBUG"
+    DEBUG_CXXFLAGS="-O2 -Wno-unused-variable -Wno-unused-but-set-variable"
+    DEBUG_CPPFLAGS="-DNDEBUG"
 fi
 
-AC_SUBST([AM_CXXFLAGS])
-AC_SUBST([AM_CPPFLAGS])
+AC_SUBST([DEBUG_CXXFLAGS])
+AC_SUBST([DEBUG_CPPFLAGS])
 
 
 
@@ -183,8 +184,8 @@ Version        : ${PACKAGE_VERSION}
 OS             : ${build_os}
 Prefix         : ${prefix}
 Compiler       : ${CC}
-CPP Flags      : ${CPPFLAGS} ${AM_CPPFLAGS}
-C++ Flags      : ${CXXFLAGS} ${AM_CXXFLAGS}
+CPP Flags      : ${CPPFLAGS} ${DEBUG_CPPFLAGS} 
+C++ Flags      : ${CXXFLAGS} ${DEBUG_CXXFLAGS}
 Make Flags     : ${MAKEFLAGS}
 Libraries      : ${LIBS} $TBB_LIBS
 
