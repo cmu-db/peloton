@@ -30,8 +30,6 @@ class SerializeInput;
 class SerializeOutput;
 class AbstractExpression;
 
-typedef std::vector<std::pair<oid_t, AbstractExpression *>> ProjExprVector;
-
 //===--------------------------------------------------------------------===//
 // AbstractExpression
 //===--------------------------------------------------------------------===//
