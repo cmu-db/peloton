@@ -135,7 +135,7 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
   }
 
   LOG_TRACE("Const : ");
-  std::cout << value << std::endl;
+  //std::cout << value << std::endl;
 
   // A Const Expr has no children.
   return expression::ConstantValueFactory(value);
