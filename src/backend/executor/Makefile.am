@@ -10,6 +10,7 @@ executor_FILES = \
 		 backend/executor/logical_tile.cpp \
 		 backend/executor/logical_tile_factory.cpp \
 		 backend/executor/materialization_executor.cpp \
+		 backend/executor/abstract_scan_executor.cpp \
 		 backend/executor/seq_scan_executor.cpp \
 		 backend/executor/index_scan_executor.cpp \
 		 backend/executor/insert_executor.cpp \

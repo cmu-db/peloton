@@ -36,8 +36,10 @@ class AbstractScanNode : public AbstractPlanNode {
   AbstractScanNode &operator=(AbstractScanNode &&) = delete;
 
   AbstractScanNode(expression::AbstractExpression *predicate,
-              const std::vector<oid_t> &column_ids)
-      : predicate_(predicate), column_ids_(column_ids) {}
+                   const std::vector<oid_t> &column_ids)
+      : predicate_(predicate),
+        column_ids_(column_ids) {
+  }
 
   const expression::AbstractExpression *GetPredicate() const {
     return predicate_.get();
@@ -47,7 +49,7 @@ class AbstractScanNode : public AbstractPlanNode {
 
   inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_ABSTRACT_SCAN; }
 
-  inline std::string GetInfo() const { return "SeqScan"; }
+  inline std::string GetInfo() const { return "AbstractScan"; }
 
  private:
 

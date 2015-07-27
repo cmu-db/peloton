@@ -145,7 +145,7 @@ Datum TupleTransformer::GetDatum(Value value) {
       auto data_len = ValuePeeker::PeekObjectLength(value);
       // NB: Peloton object don't have terminating-null's, so
       // we should use PG functions that take explicit length.
-      datum = PointerGetDatum(cstring_to_text_with_len(data_ptr, data_len + 1));
+      datum = PointerGetDatum(cstring_to_text_with_len(data_ptr, data_len));
     } break;
 
     case VALUE_TYPE_TIMESTAMP: {
