@@ -23,62 +23,49 @@ namespace planner {
 
 class OrderByNode : public AbstractPlanNode {
  public:
-  OrderByNode(const OrderByNode &) = delete;
-  OrderByNode& operator=(const OrderByNode &) = delete;
-  OrderByNode(const OrderByNode &&) = delete;
-  OrderByNode& operator=(const OrderByNode &&) = delete;
+  OrderByNode(const OrderByNode&) = delete;
+  OrderByNode& operator=(const OrderByNode&) = delete;
+  OrderByNode(const OrderByNode&&) = delete;
+  OrderByNode& operator=(const OrderByNode&&) = delete;
 
-  OrderByNode(
-      const std::vector<oid_t>  &sort_keys,
-      const std::vector<bool>   &descend_flags,
-      const std::vector<oid_t>  &output_column_ids,
-      storage::AbstractBackend*  backend)
-  : sort_keys_(sort_keys),
-    descend_flags_(descend_flags),
-    output_column_ids_(output_column_ids),
-    backend_(backend){
-  }
+  OrderByNode(const std::vector<oid_t>& sort_keys,
+              const std::vector<bool>& descend_flags,
+              const std::vector<oid_t>& output_column_ids,
+              storage::AbstractBackend* backend)
+      : sort_keys_(sort_keys),
+        descend_flags_(descend_flags),
+        output_column_ids_(output_column_ids),
+        backend_(backend) {}
 
-//  OrderByNode(
-//        const std::vector<oid_t>  &sort_keys,
-//        const std::vector<bool>   &descend_flags,
-//        const std::vector<oid_t>  &output_column_ids)
-//    : sort_keys_(sort_keys),
-//      descend_flags_(descend_flags),
-//      output_column_ids_(output_column_ids) {
-//    backend_ = new storage::VMBackend();
-//  }
+  //  OrderByNode(
+  //        const std::vector<oid_t>  &sort_keys,
+  //        const std::vector<bool>   &descend_flags,
+  //        const std::vector<oid_t>  &output_column_ids)
+  //    : sort_keys_(sort_keys),
+  //      descend_flags_(descend_flags),
+  //      output_column_ids_(output_column_ids) {
+  //    backend_ = new storage::VMBackend();
+  //  }
 
-  storage::AbstractBackend* GetBackend() const {
-    return backend_;
-  }
+  storage::AbstractBackend* GetBackend() const { return backend_; }
 
-  const std::vector<oid_t>& GetSortKeys() const {
-    return sort_keys_;
-  }
+  const std::vector<oid_t>& GetSortKeys() const { return sort_keys_; }
 
-  const std::vector<bool>& GetDescendFlags() const {
-    return descend_flags_;
-  }
+  const std::vector<bool>& GetDescendFlags() const { return descend_flags_; }
 
   const std::vector<oid_t>& GetOutputColumnIds() const {
     return output_column_ids_;
   }
 
-  inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_ORDERBY;
-  }
+  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_ORDERBY; }
 
-  inline std::string GetInfo() const {
-    return "OrderBy";
-  }
+  inline std::string GetInfo() const { return "OrderBy"; }
 
-private:
+ private:
   /** @brief Column Ids to sort keys w.r.t input tiles.
    *  Primary sort key comes first, secondary comes next, etc.
    */
   const std::vector<oid_t> sort_keys_;
-
 
   /** @brief Sort order flags. */
   const std::vector<bool> descend_flags_;
@@ -91,9 +78,6 @@ private:
 
   /** @brief Backend used to allocate intermediate physical tiles. */
   storage::AbstractBackend* backend_;
-
 };
-
-
 }
 }

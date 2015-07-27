@@ -11,6 +11,7 @@ include $(top_srcdir)/common.am
 # SUBDIRS
 ######################################################################
 
+include $(srcdir)/backend/brain/Makefile.am
 include $(srcdir)/backend/bridge/Makefile.am
 include $(srcdir)/backend/catalog/Makefile.am
 include $(srcdir)/backend/common/Makefile.am
@@ -42,6 +43,7 @@ DEFAULT_INCLUDES =
 ######################################################################
 
 libpeloton_la_SOURCES = \
+			$(brain_FILES) \
 			$(catalog_FILES) \
 			$(backend_FILES) \
 			$(bridge_FILES) \

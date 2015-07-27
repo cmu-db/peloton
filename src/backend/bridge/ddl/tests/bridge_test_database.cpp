@@ -23,19 +23,16 @@ namespace bridge {
  * @brief Test "DDLDatabase" function
  */
 void BridgeTest::DDL_Database_TEST() {
-
   DDL_CreateDatabase_TEST_WITH_INVALID_OID();
 
   DDL_CreateDatabase_TEST_WITH_VALID_OID();
-
 }
 
 /**
  * @brief CreateDatabase with INVALID OID
- *        It MUST return false 
+ *        It MUST return false
  */
 void BridgeTest::DDL_CreateDatabase_TEST_WITH_INVALID_OID() {
-
   bool status = DDLDatabase::CreateDatabase(INVALID_OID);
   // CHECK :: status must be false
   assert(status == false);
@@ -45,10 +42,9 @@ void BridgeTest::DDL_CreateDatabase_TEST_WITH_INVALID_OID() {
 
 /**
  * @brief CreateDatabase with VALID OID
- *        It MUST return true 
+ *        It MUST return true
  */
 void BridgeTest::DDL_CreateDatabase_TEST_WITH_VALID_OID() {
-
   bool status = DDLDatabase::CreateDatabase(12345);
 
   // CHECK :: status must be true
@@ -57,6 +53,5 @@ void BridgeTest::DDL_CreateDatabase_TEST_WITH_VALID_OID() {
   std::cout << ":::::: " << __func__ << " DONE\n";
 }
 
-} // End bridge namespace
-} // End peloton namespace
-
+}  // End bridge namespace
+}  // End peloton namespace

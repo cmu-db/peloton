@@ -28,34 +28,30 @@ namespace storage {
  *
  **/
 class TileIterator : public Iterator<Tuple> {
-	TileIterator() = delete;
+  TileIterator() = delete;
 
-public:
-	TileIterator(const Tile* tile) :
-		data(tile->data),
-		tile(tile),
-		tile_itr(0),
-		tuple_length(tile->tuple_length) {
+ public:
+  TileIterator(const Tile* tile)
+      : data(tile->data),
+        tile(tile),
+        tile_itr(0),
+        tuple_length(tile->tuple_length) {
+    tile_group_header = tile->tile_group_header;
+  }
 
-		tile_group_header = tile->tile_group_header;
+  TileIterator(const TileIterator& other)
+      : data(other.data),
+        tile(other.tile),
+        tile_group_header(other.tile_group_header),
+        tile_itr(other.tile_itr),
+        tuple_length(other.tuple_length) {}
 
-	}
-
-	TileIterator(const TileIterator& other) :
-		data(other.data),
-		tile(other.tile),
-		tile_group_header(other.tile_group_header),
-		tile_itr(other.tile_itr),
-		tuple_length(other.tuple_length) {
-	}
-
-	/**
-	 * Updates the given tuple so that it points to the next tuple in the table.
-	 * @return true if succeeded. false if no more tuples are there.
-	 */
-	bool Next(Tuple &out) {
-    if(HasNext()) {
-
+  /**
+   * Updates the given tuple so that it points to the next tuple in the table.
+   * @return true if succeeded. false if no more tuples are there.
+   */
+  bool Next(Tuple& out) {
+    if (HasNext()) {
       out.Move(data + (tile_itr * tuple_length));
       tile_itr++;
 
@@ -65,29 +61,23 @@ public:
     return false;
   }
 
-	bool HasNext() {
-    return (tile_itr < tile->GetActiveTupleCount());
-  }
+  bool HasNext() { return (tile_itr < tile->GetActiveTupleCount()); }
 
+  oid_t GetLocation() const { return tile_itr; }
 
-  oid_t GetLocation() const {
-    return tile_itr;
-  }
+ private:
+  // Base tile data
+  char* data;
 
+  const Tile* tile;
 
-private:
-	// Base tile data
-	char* data;
+  const TileGroupHeader* tile_group_header;
 
-	const Tile * tile;
+  // Iterator over tile data
+  oid_t tile_itr;
 
-	const TileGroupHeader *tile_group_header;
-
-	// Iterator over tile data
-	oid_t tile_itr;
-
-	oid_t tuple_length;
+  oid_t tuple_length;
 };
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

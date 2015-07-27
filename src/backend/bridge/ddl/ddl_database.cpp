@@ -29,8 +29,8 @@ namespace bridge {
  * @param the parse tree
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLDatabase::ExecCreatedbStmt(Node* parsetree){
-  CreatedbStmt* stmt = (CreatedbStmt*) parsetree;
+bool DDLDatabase::ExecCreatedbStmt(Node* parsetree) {
+  CreatedbStmt* stmt = (CreatedbStmt*)parsetree;
   DDLDatabase::CreateDatabase(stmt->database_id);
   return true;
 }
@@ -40,8 +40,8 @@ bool DDLDatabase::ExecCreatedbStmt(Node* parsetree){
  * @param the parse tree
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLDatabase::ExecDropdbStmt(Node* parsetree){
-  DropdbStmt *stmt = (DropdbStmt *) parsetree;
+bool DDLDatabase::ExecDropdbStmt(Node* parsetree) {
+  DropdbStmt* stmt = (DropdbStmt*)parsetree;
   Oid database_oid = get_database_oid(stmt->dbname, stmt->missing_ok);
   DDLDatabase::DropDatabase(database_oid);
   return true;
@@ -52,29 +52,29 @@ bool DDLDatabase::ExecDropdbStmt(Node* parsetree){
  * @param the parse tree
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLDatabase::ExecVacuumStmt(Node* parsetree){
-  VacuumStmt* vacuum = (VacuumStmt*) parsetree;
+bool DDLDatabase::ExecVacuumStmt(Node* parsetree) {
+  VacuumStmt* vacuum = (VacuumStmt*)parsetree;
   std::string relation_name;
 
-  if( vacuum->relation != NULL )
-    relation_name = vacuum->relation->relname;
+  if (vacuum->relation != NULL) relation_name = vacuum->relation->relname;
 
   // Get database oid
-  oid_t database_oid = Bridge::GetCurrentDatabaseOid(); 
+  oid_t database_oid = Bridge::GetCurrentDatabaseOid();
 
   // Get data table based on dabase oid and table name
   auto& manager = catalog::Manager::GetInstance();
   auto db = manager.GetDatabaseWithOid(database_oid);
 
   // Update every table and index
-  if(relation_name.empty()){
+  if (relation_name.empty()) {
     LOG_INFO("Update All Stats in Database(%u)", database_oid);
     db->UpdateStats();
   }
   // Otherwise, update the specific table
-  else{
+  else {
     oid_t relation_oid = (db->GetTableWithName(relation_name))->GetOid();
-    LOG_INFO("Update table %s(%u)'s stats in Database(%u)", relation_name.c_str(), relation_oid, database_oid);
+    LOG_INFO("Update table %s(%u)'s stats in Database(%u)",
+             relation_name.c_str(), relation_oid, database_oid);
     db->UpdateStatsWithOid(relation_oid);
   }
 
@@ -86,15 +86,14 @@ bool DDLDatabase::ExecVacuumStmt(Node* parsetree){
  * @param database_oid database id
  * @return true if we created a database, false otherwise
  */
-bool DDLDatabase::CreateDatabase(Oid database_oid){
-  if(database_oid == INVALID_OID)
-    return false;
+bool DDLDatabase::CreateDatabase(Oid database_oid) {
+  if (database_oid == INVALID_OID) return false;
 
   auto& manager = catalog::Manager::GetInstance();
   storage::Database* db = new storage::Database(database_oid);
   manager.AddDatabase(db);
 
-  if(db == nullptr){
+  if (db == nullptr) {
     LOG_WARN("Failed to create a database (%u)", database_oid);
     return false;
   }
@@ -103,13 +102,12 @@ bool DDLDatabase::CreateDatabase(Oid database_oid){
   return true;
 }
 
-
 /**
  * @brief Drop database.
  * @param database_oid database id.
  * @return true if we dropped the database, false otherwise
  */
-bool DDLDatabase::DropDatabase(Oid database_oid){
+bool DDLDatabase::DropDatabase(Oid database_oid) {
   auto& manager = catalog::Manager::GetInstance();
   manager.DropDatabaseWithOid(database_oid);
 
@@ -117,7 +115,5 @@ bool DDLDatabase::DropDatabase(Oid database_oid){
   return true;
 }
 
-
-} // namespace bridge
-} // namespace peloton
-
+}  // namespace bridge
+}  // namespace peloton

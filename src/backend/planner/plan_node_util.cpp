@@ -17,9 +17,9 @@ namespace peloton {
 namespace planner {
 
 AbstractPlanNode* GetEmptyPlanNode(PlanNodeType type) {
-
-  //TODO Uncomment after fixing compilation error.
-  //LOG4CXX_TRACE(logger, "Creating an empty PlanNode of type : " << PlanNodeTypeToString(type));
+  // TODO Uncomment after fixing compilation error.
+  // LOG4CXX_TRACE(logger, "Creating an empty PlanNode of type : " <<
+  // PlanNodeTypeToString(type));
   AbstractPlanNode* ret = NULL;
 
   switch (type) {
@@ -76,15 +76,15 @@ AbstractPlanNode* GetEmptyPlanNode(PlanNodeType type) {
      */
 
     default: {
-      throw PlannerException("Invalid PlanNode type : " + PlanNodeTypeToString(type));
+      throw PlannerException("Invalid PlanNode type : " +
+                             PlanNodeTypeToString(type));
     }
   }
-  //TODO Uncomment after fixing compilation error.
-  //LOG4CXX_TRACE(logger, "created plannode : " << typeid(*ret).name());
+  // TODO Uncomment after fixing compilation error.
+  // LOG4CXX_TRACE(logger, "created plannode : " << typeid(*ret).name());
 
   return (ret);
 }
 
-} // namespace planner
-} // namespace peloton
-
+}  // namespace planner
+}  // namespace peloton
