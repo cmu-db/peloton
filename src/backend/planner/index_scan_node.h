@@ -13,6 +13,7 @@
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/planner/abstract_plan_node.h"
+#include "backend/planner/abstract_scan_node.h"
 
 namespace peloton {
 
@@ -26,7 +27,7 @@ class Tuple;
 
 namespace planner {
 
-class IndexScanNode : public AbstractPlanNode {
+class IndexScanNode : public AbstractPlanNode, AbstractScanNode {
  public:
   IndexScanNode(const IndexScanNode &) = delete;
   IndexScanNode &operator=(const IndexScanNode &) = delete;
@@ -52,13 +53,13 @@ class IndexScanNode : public AbstractPlanNode {
                 storage::Tuple *start_key, storage::Tuple *end_key,
                 bool start_inclusive, bool end_inclusive,
                 const std::vector<oid_t> &column_ids)
-      : table_(table),
+      : AbstractScanNode(nullptr, column_ids),
+        table_(table),
         index_(index),
         start_key_(start_key),
         end_key_(end_key),
         start_inclusive_(start_inclusive),
-        end_inclusive_(end_inclusive),
-        column_ids_(column_ids) {}
+        end_inclusive_(end_inclusive) {}
 
   IndexScanNode(storage::AbstractTable *table, IndexScanDesc &index_scan_desc)
       : table_(table),
@@ -66,8 +67,7 @@ class IndexScanNode : public AbstractPlanNode {
         start_key_(index_scan_desc.start_key),
         end_key_(index_scan_desc.end_key),
         start_inclusive_(index_scan_desc.start_inclusive),
-        end_inclusive_(index_scan_desc.end_inclusive),
-        column_ids_(index_scan_desc.column_ids) {}
+        end_inclusive_(index_scan_desc.end_inclusive) {}
 
   const storage::AbstractTable *GetTable() const { return table_; }
 
@@ -80,8 +80,6 @@ class IndexScanNode : public AbstractPlanNode {
   bool IsStartInclusive() const { return start_inclusive_; }
 
   bool IsEndInclusive() const { return end_inclusive_; }
-
-  const std::vector<oid_t> GetColumnIds() const { return column_ids_; }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_INDEXSCAN;
@@ -109,8 +107,6 @@ class IndexScanNode : public AbstractPlanNode {
 
   bool end_inclusive_;
 
-  /** @brief Columns from tile group to be added to logical tile output. */
-  const std::vector<oid_t> column_ids_;
 };
 
 }  // namespace planner
