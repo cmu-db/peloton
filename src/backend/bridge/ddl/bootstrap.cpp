@@ -343,7 +343,7 @@ bool Bootstrap::BootstrapPeloton(void) {
 
   elog(LOG, "Initializing Peloton");
 
-  StartTransactionCommand();
+  Bridge::PelotonStartTransactionCommand();
 
   // Open the pg_class and pg_attribute catalog tables
   pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
@@ -413,7 +413,7 @@ bool Bootstrap::BootstrapPeloton(void) {
   heap_close(pg_attribute_rel, AccessShareLock);
   heap_close(pg_class_rel, AccessShareLock);
 
-  CommitTransactionCommand();
+  Bridge::PelotonCommitTransactionCommand();
 
   elog(LOG, "Finished initializing Peloton");
 
