@@ -473,6 +473,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PLAN_NODE_TYPE_INVALID: {
       return "INVALID";
     }
+    case PLAN_NODE_TYPE_ABSTRACT_SCAN: {
+      return "ABSTRACT_SCAN";
+    }
     case PLAN_NODE_TYPE_SEQSCAN: {
       return "SEQSCAN";
     }
@@ -543,6 +546,8 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
 PlanNodeType StringToPlanNodeType(std::string str) {
   if (str == "INVALID") {
     return PLAN_NODE_TYPE_INVALID;
+  } else if(str == "ABSTRACT_SCAN") {
+    return PLAN_NODE_TYPE_ABSTRACT_SCAN;
   } else if (str == "SEQSCAN") {
     return PLAN_NODE_TYPE_SEQSCAN;
   } else if (str == "INDEXSCAN") {

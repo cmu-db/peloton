@@ -12,7 +12,6 @@
 
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
-#include "backend/planner/abstract_plan_node.h"
 #include "backend/planner/abstract_scan_node.h"
 
 namespace peloton {
@@ -27,7 +26,7 @@ class Tuple;
 
 namespace planner {
 
-class IndexScanNode : public AbstractPlanNode, AbstractScanNode {
+class IndexScanNode : public AbstractScanNode {
  public:
   IndexScanNode(const IndexScanNode &) = delete;
   IndexScanNode &operator=(const IndexScanNode &) = delete;
@@ -62,7 +61,8 @@ class IndexScanNode : public AbstractPlanNode, AbstractScanNode {
         end_inclusive_(end_inclusive) {}
 
   IndexScanNode(storage::AbstractTable *table, IndexScanDesc &index_scan_desc)
-      : table_(table),
+      : AbstractScanNode(nullptr, index_scan_desc.column_ids),
+        table_(table),
         index_(index_scan_desc.index),
         start_key_(index_scan_desc.start_key),
         end_key_(index_scan_desc.end_key),
