@@ -10,9 +10,9 @@
 #include <string>
 #include <vector>
 
+#include "abstract_join_node.h"
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
-#include "backend/planner/abstract_join_plan_node.h"
 
 namespace peloton {
 namespace planner {
