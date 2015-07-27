@@ -134,7 +134,9 @@ expression::AbstractExpression *CreatePredicate(
     // Join equality expression to other equality expression using ORs.
     predicate = expression::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_OR,
                                                predicate, equality_expr);
+    constant_value.FreeUninlinedData();
   }
+
 
   return predicate;
 }
