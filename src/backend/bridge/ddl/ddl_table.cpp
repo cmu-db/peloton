@@ -196,7 +196,7 @@ bool DDLTable::CreateTable(Oid relation_oid,
   db->AddTable(table);
 
   if(table != nullptr) {
-    LOG_INFO("Created table(%u) : %s", relation_oid, table_name.c_str());
+    LOG_INFO("Created table(%u)%s in database(%u) ", relation_oid, table_name.c_str(), database_oid);
     return true;
   }
 
