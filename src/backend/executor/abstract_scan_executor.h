@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * abstract_scan.h
+ * abstract_scan_executor.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/executor/abstract_scan.h
+ * /peloton/src/backend/executor/abstract_scan_executor.h
  *
  *-------------------------------------------------------------------------
  */
@@ -19,38 +19,31 @@
 namespace peloton {
 namespace executor {
 
-class SeqScanExecutor : public AbstractExecutor {
+/**
+ * Super class for different kinds of scan executor.
+ * It provides common codes for all kinds of scan:
+ * evaluate generic predicates and simple projections.
+ */
+class AbstractScanExecutor : public AbstractExecutor {
  public:
-  SeqScanExecutor(const SeqScanExecutor &) = delete;
-  SeqScanExecutor &operator=(const SeqScanExecutor &) = delete;
-  SeqScanExecutor(SeqScanExecutor &&) = delete;
-  SeqScanExecutor &operator=(SeqScanExecutor &&) = delete;
+  AbstractScanExecutor(const AbstractScanExecutor &) = delete;
+  AbstractScanExecutor &operator=(const AbstractScanExecutor &) = delete;
+  AbstractScanExecutor(AbstractScanExecutor &&) = delete;
+  AbstractScanExecutor &operator=(AbstractScanExecutor &&) = delete;
 
-  explicit SeqScanExecutor(planner::AbstractPlanNode *node,
-                           ExecutorContext *executor_context);
+  explicit AbstractScanExecutor(planner::AbstractPlanNode *node,
+                                ExecutorContext *executor_context);
 
  protected:
   bool DInit();
 
-  bool DExecute();
+  bool DExecute() = 0;
 
- private:
-  //===--------------------------------------------------------------------===//
-  // Executor State
-  //===--------------------------------------------------------------------===//
-
-  /** @brief Keeps track of current tile group id being scanned. */
-  oid_t current_tile_group_offset_ = INVALID_OID;
-
-  /** @brief Keeps track of the number of tile groups to scan. */
-  oid_t table_tile_group_count_ = INVALID_OID;
+ protected:
 
   //===--------------------------------------------------------------------===//
   // Plan Info
   //===--------------------------------------------------------------------===//
-
-  /** @brief Pointer to table to scan from. */
-  const storage::DataTable *table_ = nullptr;
 
   /** @brief Selection predicate. */
   const expression::AbstractExpression *predicate_ = nullptr;

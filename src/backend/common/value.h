@@ -802,7 +802,7 @@ class Value {
 
   /**
    * @brief Do a deep copy of the given value.
-   * Un-inlined data will be allocated in the provided memory pool.
+   * Uninlined data will be allocated in the provided memory pool.
    */
   static Value Clone(const Value& src, Pool* dataPool = nullptr) {
     Value rv = src; // Shallow copy first
