@@ -77,6 +77,13 @@ class Value {
   friend class ValueFactory;
 
  public:
+
+  /**
+   * Copy assignment operator
+   * @warning It performs a shallow copy. Use Clone() if a deep copy is requested.
+   */
+  Value& operator= (const Value&) = default;
+
   /// Create a default Value
   Value();
 
@@ -802,6 +809,34 @@ class Value {
     Value retval(VALUE_TYPE_ADDRESS);
     *reinterpret_cast<void**>(retval.value_data) = address;
     return retval;
+  }
+
+  /**
+   * @brief Do a deep copy of the given value.
+   * Un-inlined data will be allocated in the provided memory pool.
+   */
+  static Value Clone(const Value& src, Pool* dataPool = nullptr) {
+    Value rv = src; // Shallow copy first
+    auto value_type = src.GetValueType();
+
+    switch(value_type){
+      case VALUE_TYPE_VARBINARY:
+      case VALUE_TYPE_VARCHAR:
+        break;  // "real" deep copy is needed only for these types
+
+      default:
+        return rv;
+    }
+
+    if(src.is_inlined || src.IsNull()){
+      return rv;  // also, shallow copy for inlined or null data
+    }
+
+    Varlen* src_sref = *reinterpret_cast<Varlen* const*>(src.value_data);
+    Varlen* new_sref = Varlen::Clone(*src_sref , dataPool);
+
+    rv.SetObjectValue(new_sref);
+    return rv;
   }
 
   /**

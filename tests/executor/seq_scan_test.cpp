@@ -138,7 +138,9 @@ expression::AbstractExpression *CreatePredicate(const std::set<oid_t> &tuple_ids
     predicate = expression::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_OR,
                                                predicate,
                                                equality_expr);
+    constant_value.FreeUninlinedData();
   }
+
 
   return predicate;
 }
