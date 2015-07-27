@@ -386,6 +386,7 @@ performMultipleDeletions(const ObjectAddresses *objects,
 }
 
 //TODO :: Peloton Changes
+//This wrapper functions is for avoiding calling trackDroppedObjectsNeeded() 
 void
 peloton_performMultipleDeletions(const ObjectAddresses *objects,
 				 DropBehavior behavior, int flags)
