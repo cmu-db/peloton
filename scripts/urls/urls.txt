@@ -1,0 +1,1 @@
+http://linuxscripter.blogspot.com/2013/09/using-tmpfs-to-improve-postgresql.html
