@@ -92,10 +92,7 @@ class PlanTransformer {
   static void TransformGenericScanInfo(planner::AbstractPlanNode*& parent,
                                    expression::AbstractExpression*& predicate,
                                    std::vector<oid_t>& out_col_list,
-                                   List* qual,
-                                   const ProjectionInfo *pg_proj_info,
-                                   oid_t out_column_count
-                                   );
+                                   const ScanState* sstate);
 
   static const planner::ProjectInfo *BuildProjectInfo(
       const ProjectionInfo *pg_proj_info, oid_t column_count);

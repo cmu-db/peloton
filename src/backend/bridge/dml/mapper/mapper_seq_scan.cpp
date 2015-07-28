@@ -52,9 +52,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   TransformGenericScanInfo(parent,
                        predicate,
                        column_ids,
-                       ss_plan_state->ps.qual,
-                       ss_plan_state->ps.ps_ProjInfo,
-                       static_cast<oid_t>(ss_plan_state->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts));
+                       reinterpret_cast<const ScanState*>(ss_plan_state));
 
   /* TODO: test whether parent is presented, connect with the scan node */
 
