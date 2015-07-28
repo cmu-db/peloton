@@ -28,8 +28,8 @@ planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
     const NestLoopState* nl_plan_state) {
 
   const JoinState *js = &(nl_plan_state->js);
-  PelotonJoinType jointype = PlanTransformer::TransformJoinType(js->jointype);
-  if (jointype == JOIN_TYPE_INVALID) {
+  PelotonJoinType join_type = PlanTransformer::TransformJoinType(js->jointype);
+  if (join_type == JOIN_TYPE_INVALID) {
     LOG_ERROR("unsupported join type: %d", js->jointype);
     return nullptr;
   }
@@ -40,18 +40,27 @@ planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
   expression::AbstractExpression *plan_filter = ExprTransformer::TransformExpr(
       reinterpret_cast<ExprState *>(js->ps.qual));
 
+  expression::AbstractExpression *predicate = nullptr;
+  if (join_filter && plan_filter) {
+    predicate = expression::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
+                                     join_filter, plan_filter);
+  } else if (join_filter) {
+    predicate = join_filter;
+  } else {
+    predicate = plan_filter;
+  }
+
   /* TODO: do we need to consider target list here? */
 
   planner::AbstractPlanNode *outer = PlanTransformer::TransformPlan(outerPlanState(nl_plan_state));
   planner::AbstractPlanNode *inner = PlanTransformer::TransformPlan(innerPlanState(nl_plan_state));
 
   /* Construct and return the Peloton plan node */
-  auto plan_node = new planner::NestedLoopJoinNode(
-      expression::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
-                                     join_filter, plan_filter));
-  plan_node->SetJoinType(jointype);
+  auto plan_node = new planner::NestedLoopJoinNode(predicate);
+  plan_node->SetJoinType(join_type);
   plan_node->AddChild(outer);
   plan_node->AddChild(inner);
+  LOG_INFO("Handle Nested loop join, JoinType: %d", join_type);
   return plan_node;
 }
 
