@@ -46,13 +46,10 @@ const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
  *
  * @param[out]  predicate   Set to the transformed Expression based on qual.
  *
- * @param[out]  out_col_list  Set to the output column list if pg_proj_info contains only
+ * @param[out]  out_col_list  Set to the output column list if ps_ProjInfo contains only
  *              direct mapping of attributes. Otherwise set to straightforward pass-thru list.
  *
- * @param[in]   pg_proj_info  Postgres ProjectionInfo in PlanState
- * @param[in]   qual    Postgres predicates.
- * @param[in]   out_column_count    The column count of expected output schema. It is used to
- *              skip junk attributes in Postgres.
+ * @param[in]   sstate  The ScanState from which generic things are extracted.
  *
  * @return      Nothing.
  */
@@ -60,9 +57,11 @@ void PlanTransformer::TransformGenericScanInfo(
     planner::AbstractPlanNode*& parent,
     expression::AbstractExpression*& predicate,
     std::vector<oid_t>& out_col_list,
-    List* qual,
-    const ProjectionInfo *pg_proj_info,
-    oid_t out_column_count) {
+    const ScanState* sstate) {
+
+  List* qual = sstate->ps.qual;
+  const ProjectionInfo *pg_proj_info = sstate->ps.ps_ProjInfo;
+  oid_t out_column_count = static_cast<oid_t>(sstate->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts);
 
   parent = nullptr;
   predicate = nullptr;
