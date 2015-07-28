@@ -58,9 +58,10 @@ class BtreeUniqueIndex : public Index {
   }
 
   bool DeleteEntry(const storage::Tuple *key) {
-    index_key1.SetFromKey(key);
     {
       std::lock_guard<std::mutex> lock(index_mutex);
+
+      index_key1.SetFromKey(key);
 
       // delete the key, val pair
       auto status = container.erase(index_key1);
@@ -69,9 +70,10 @@ class BtreeUniqueIndex : public Index {
   }
 
   bool Exists(const storage::Tuple *key) {
-    index_key1.SetFromKey(key);
     {
       std::lock_guard<std::mutex> lock(index_mutex);
+
+      index_key1.SetFromKey(key);
 
       // find the key, val pair
       auto found = (container.find(index_key1) != container.end());
@@ -101,10 +103,11 @@ class BtreeUniqueIndex : public Index {
   std::vector<ItemPointer> GetLocationsForKey(
       const storage::Tuple *key) {
     std::vector<ItemPointer> result;
-    index_key1.SetFromKey(key);
 
     {
       std::lock_guard<std::mutex> lock(index_mutex);
+
+      index_key1.SetFromKey(key);
 
       // scan all
       auto itr = container.find(index_key1);
@@ -124,11 +127,11 @@ class BtreeUniqueIndex : public Index {
       const storage::Tuple *start, const storage::Tuple *end) {
     std::vector<ItemPointer> result;
 
-    index_key1.SetFromKey(start);
-    index_key2.SetFromKey(end);
-
     {
       std::lock_guard<std::mutex> lock(index_mutex);
+
+      index_key1.SetFromKey(start);
+      index_key2.SetFromKey(end);
 
       // scan all between start and end
       auto start_itr = container.upper_bound(index_key1);
@@ -146,10 +149,10 @@ class BtreeUniqueIndex : public Index {
       const storage::Tuple *key) {
     std::vector<ItemPointer> result;
 
-    index_key1.SetFromKey(key);
-
     {
       std::lock_guard<std::mutex> lock(index_mutex);
+
+      index_key1.SetFromKey(key);
 
       // scan all lt
       auto itr = container.begin();
@@ -168,10 +171,10 @@ class BtreeUniqueIndex : public Index {
       const storage::Tuple *key) {
     std::vector<ItemPointer> result;
 
-    index_key1.SetFromKey(key);
-
     {
       std::lock_guard<std::mutex> lock(index_mutex);
+
+      index_key1.SetFromKey(key);
 
       // scan all lt
       auto itr = container.begin();
@@ -198,10 +201,10 @@ class BtreeUniqueIndex : public Index {
       const storage::Tuple *key) {
     std::vector<ItemPointer> result;
 
-    index_key1.SetFromKey(key);
-
     {
       std::lock_guard<std::mutex> lock(index_mutex);
+
+      index_key1.SetFromKey(key);
 
       // scan all gt
       auto itr = container.upper_bound(index_key1);
@@ -220,10 +223,10 @@ class BtreeUniqueIndex : public Index {
       const storage::Tuple *key) {
     std::vector<ItemPointer> result;
 
-    index_key1.SetFromKey(key);
-
     {
       std::lock_guard<std::mutex> lock(index_mutex);
+
+      index_key1.SetFromKey(key);
 
       // scan all gte
       auto itr = container.find(index_key1);
