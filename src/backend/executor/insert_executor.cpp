@@ -86,8 +86,6 @@ bool InsertExecutor::DExecute() {
       ItemPointer location =
           target_table->InsertTuple(transaction_->GetTransactionId(), &tuple);
       if (location.block == INVALID_OID) {
-        auto &txn_manager = concurrency::TransactionManager::GetInstance();
-        txn_manager.AbortTransaction(transaction_);
         transaction_->SetResult(Result::RESULT_FAILURE);
         return false;
       }
@@ -119,8 +117,6 @@ bool InsertExecutor::DExecute() {
     ItemPointer location = target_table->InsertTuple(
         transaction_->GetTransactionId(), tuple.get());
     if (location.block == INVALID_OID) {
-      auto &txn_manager = concurrency::TransactionManager::GetInstance();
-      txn_manager.AbortTransaction(transaction_);
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }
