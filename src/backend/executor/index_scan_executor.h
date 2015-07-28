@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "backend/executor/abstract_executor.h"
+#include "backend/executor/abstract_scan_executor.h"
 #include "backend/planner/index_scan_node.h"
 
 #include <vector>
@@ -14,7 +14,7 @@
 namespace peloton {
 namespace executor {
 
-class IndexScanExecutor : public AbstractExecutor {
+class IndexScanExecutor : public AbstractScanExecutor {
   IndexScanExecutor(const IndexScanExecutor &) = delete;
   IndexScanExecutor &operator=(const IndexScanExecutor &) = delete;
 
@@ -29,6 +29,11 @@ class IndexScanExecutor : public AbstractExecutor {
 
  private:
   //===--------------------------------------------------------------------===//
+  // Helper
+  //===--------------------------------------------------------------------===//
+  bool ExecIndexLookup();
+
+  //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//
 
@@ -39,7 +44,7 @@ class IndexScanExecutor : public AbstractExecutor {
   oid_t result_itr = INVALID_OID;
 
   /** @brief Computed the result */
-  bool done = false;
+  bool done_ = false;
 
   //===--------------------------------------------------------------------===//
   // Plan Info
@@ -61,8 +66,6 @@ class IndexScanExecutor : public AbstractExecutor {
 
   bool end_inclusive_ = false;
 
-  /** @brief Columns from tile group to be added to logical tile output. */
-  std::vector<oid_t> column_ids_;
 };
 
 }  // namespace executor
