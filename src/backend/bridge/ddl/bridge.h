@@ -39,6 +39,8 @@ class Bridge {
 
   static Oid GetCurrentDatabaseOid(void);
 
+  static Oid GetDbInfo(void);
+
   static void GetDatabaseList(void);
 
   static void GetTableList(bool catalog_only);
