@@ -370,7 +370,6 @@ size_t Tuple::HashCode(size_t seed) const {
 
 void Tuple::MoveToTuple(const void *tuple_data_) {
   assert(tuple_schema);
-  assert(tuple_data);
   tuple_data = reinterpret_cast<char*>(const_cast<void*>(tuple_data_));
 }
 

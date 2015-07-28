@@ -39,47 +39,63 @@ class BtreeMultiIndex : public Index {
 
   BtreeMultiIndex(IndexMetadata *metadata)
  : Index(metadata),
-   container(KeyComparator(metadata)){
+   container(KeyComparator(metadata)),
+   equals(metadata){
   }
 
   ~BtreeMultiIndex() {
-
   }
 
   bool InsertEntry(const storage::Tuple *key,
                    const ItemPointer location) {
     index_key1.setFromKey(key);
-    container.insert(std::pair<KeyType, ValueType>(index_key1, location));
+    {
+      std::lock_guard<std::mutex> lock(index_mutex);
 
-    std::cout << " Key : " << *key;
-    std::cout << " Value : " << location.block << " " << location.offset << "\n";
-    std::cout << " Container : " << container.size() << "\n";
-    return true;
+      // insert the key, val pair
+      container.insert(std::pair<KeyType, ValueType>(index_key1, location));
+      return true;
+    }
   }
 
   bool DeleteEntry(const storage::Tuple *key) {
     index_key1.setFromKey(key);
-    auto status = container.erase(index_key1);
-    return status;
+    {
+      std::lock_guard<std::mutex> lock(index_mutex);
+
+      // delete the key, val pair
+      auto status = container.erase(index_key1);
+      return status;
+    }
   }
 
   bool Exists(const storage::Tuple *key) {
     index_key1.setFromKey(key);
-    auto found = (container.find(index_key1) != container.end());
-    return found;
+    {
+      std::lock_guard<std::mutex> lock(index_mutex);
+
+      // find the key, val pair
+      auto found = (container.find(index_key1) != container.end());
+      return found;
+    }
   }
 
   std::vector<ItemPointer> Scan() {
     std::vector<ItemPointer> result;
 
-    auto itr = container.begin();
-    while (itr != container.end()) {
-      ItemPointer location = itr->second;
-      result.push_back(location);
-      itr++;
+    {
+      std::lock_guard<std::mutex> lock(index_mutex);
+
+      // scan all entries
+      auto itr = container.begin();
+      while (itr != container.end()) {
+        ItemPointer location = itr->second;
+        result.push_back(location);
+        itr++;
+      }
+
     }
 
-    std::cout << "Total keys read " << result.size() << "\n";
     return result;
   }
 
@@ -88,10 +104,18 @@ class BtreeMultiIndex : public Index {
     std::vector<ItemPointer> result;
     index_key1.setFromKey(key);
 
-    auto itr = container.find(index_key1);
-    while (itr != container.end()) {
-      result.push_back(itr->second);
-      itr++;
+    {
+      std::lock_guard<std::mutex> lock(index_mutex);
+
+      // scan all
+      auto itr = container.find(index_key1);
+      while (itr != container.end()) {
+        result.push_back(itr->second);
+        itr++;
+        if(equals(itr->first, index_key1) == false)
+          break;
+      }
+
     }
 
     return result;
@@ -104,11 +128,16 @@ class BtreeMultiIndex : public Index {
     index_key1.setFromKey(start);
     index_key2.setFromKey(end);
 
-    auto start_itr = container.upper_bound(index_key1);
-    auto end_itr = container.lower_bound(index_key2);
-    while (start_itr != end_itr) {
-      result.push_back(start_itr->second);
-      start_itr++;
+    {
+      std::lock_guard<std::mutex> lock(index_mutex);
+
+      // scan all between start and end
+      auto start_itr = container.upper_bound(index_key1);
+      auto end_itr = container.lower_bound(index_key2);
+      while (start_itr != end_itr) {
+        result.push_back(start_itr->second);
+        start_itr++;
+      }
     }
 
     return result;
@@ -120,11 +149,17 @@ class BtreeMultiIndex : public Index {
 
     index_key1.setFromKey(key);
 
-    auto itr = container.begin();
-    auto end_itr = container.upper_bound(index_key1);
-    while (itr != end_itr) {
-      result.push_back(itr->second);
-      itr++;
+    {
+      std::lock_guard<std::mutex> lock(index_mutex);
+
+      // scan all lt
+      auto itr = container.begin();
+      auto end_itr = container.lower_bound(index_key1);
+      while (itr != end_itr) {
+        result.push_back(itr->second);
+        itr++;
+      }
+
     }
 
     return result;
@@ -136,11 +171,25 @@ class BtreeMultiIndex : public Index {
 
     index_key1.setFromKey(key);
 
-    auto itr = container.begin();
-    auto end_itr = container.find(index_key1);
-    while (itr != end_itr) {
-      result.push_back(itr->second);
-      itr++;
+    {
+      std::lock_guard<std::mutex> lock(index_mutex);
+
+      // scan all lt
+      auto itr = container.begin();
+      auto end_itr = container.lower_bound(index_key1);
+      while (itr != end_itr) {
+        result.push_back(itr->second);
+        itr++;
+      }
+
+      // scan all equal
+      while (itr != container.end()) {
+        result.push_back(itr->second);
+        itr++;
+        if(equals(itr->first, index_key1) == false)
+          break;
+      }
+
     }
 
     return result;
@@ -152,11 +201,17 @@ class BtreeMultiIndex : public Index {
 
     index_key1.setFromKey(key);
 
-    auto itr = container.upper_bound(index_key1);
-    auto end_itr = container.end();
-    while (itr != end_itr) {
-      result.push_back(itr->second);
-      itr++;
+    {
+      std::lock_guard<std::mutex> lock(index_mutex);
+
+      // scan all gt
+      auto itr = container.upper_bound(index_key1);
+      auto end_itr = container.end();
+      while (itr != end_itr) {
+        result.push_back(itr->second);
+        itr++;
+      }
+
     }
 
     return result;
@@ -168,16 +223,21 @@ class BtreeMultiIndex : public Index {
 
     index_key1.setFromKey(key);
 
-    auto itr = container.find(index_key1);
-    auto end_itr = container.end();
-    while (itr != end_itr) {
-      result.push_back(itr->second);
-      itr++;
+    {
+      std::lock_guard<std::mutex> lock(index_mutex);
+
+      // scan all gte
+      auto itr = container.find(index_key1);
+      auto end_itr = container.end();
+      while (itr != end_itr) {
+        result.push_back(itr->second);
+        itr++;
+      }
+
     }
 
     return result;
   }
-
 
   std::string GetTypeName() const { return "BtreeMulti"; }
 
@@ -186,6 +246,12 @@ class BtreeMultiIndex : public Index {
   MapType container;
   KeyType index_key1;
   KeyType index_key2;
+
+  // comparison stuff
+  KeyEqualityChecker equals;
+
+  // synch helper
+  std::mutex index_mutex;
 
 };
 

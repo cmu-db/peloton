@@ -225,8 +225,7 @@ enum BackendType {
 enum IndexType {
   INDEX_TYPE_INVALID = 0,  // invalid index type
 
-  INDEX_TYPE_BTREE_MULTI = 1,    // multi map
-  INDEX_TYPE_BTREE_UNIQUE = 2,   // unique
+  INDEX_TYPE_BTREE = 1     // btree
 };
 
 enum IndexConstraintType {
