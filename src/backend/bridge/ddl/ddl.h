@@ -18,23 +18,19 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class DDL {
-
  public:
   DDL(const DDL &) = delete;
-  DDL& operator=(const DDL &) = delete;
+  DDL &operator=(const DDL &) = delete;
   DDL(DDL &&) = delete;
-  DDL& operator=(DDL &&) = delete;
+  DDL &operator=(DDL &&) = delete;
 
   //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//
 
-  static void ProcessUtility(Node *parsetree,
-                             const char *queryString,
+  static void ProcessUtility(Node *parsetree, const char *queryString,
                              TransactionId txn_id);
-
 };
 
-} // namespace bridge
-} // namespace peloton
-
+}  // namespace bridge
+}  // namespace peloton

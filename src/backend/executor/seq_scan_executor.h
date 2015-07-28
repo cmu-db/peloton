@@ -7,18 +7,18 @@
 #pragma once
 
 #include "backend/common/types.h"
-#include "backend/executor/abstract_executor.h"
+#include "backend/executor/abstract_scan_executor.h"
 #include "backend/planner/seq_scan_node.h"
 
 namespace peloton {
 namespace executor {
 
-class SeqScanExecutor : public AbstractExecutor {
+class SeqScanExecutor : public AbstractScanExecutor {
  public:
   SeqScanExecutor(const SeqScanExecutor &) = delete;
-  SeqScanExecutor& operator=(const SeqScanExecutor &) = delete;
+  SeqScanExecutor &operator=(const SeqScanExecutor &) = delete;
   SeqScanExecutor(SeqScanExecutor &&) = delete;
-  SeqScanExecutor& operator=(SeqScanExecutor &&) = delete;
+  SeqScanExecutor &operator=(SeqScanExecutor &&) = delete;
 
   explicit SeqScanExecutor(planner::AbstractPlanNode *node,
                            ExecutorContext *executor_context);
@@ -29,7 +29,6 @@ class SeqScanExecutor : public AbstractExecutor {
   bool DExecute();
 
  private:
-
   //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//
@@ -47,13 +46,7 @@ class SeqScanExecutor : public AbstractExecutor {
   /** @brief Pointer to table to scan from. */
   const storage::DataTable *table_ = nullptr;
 
-  /** @brief Selection predicate. */
-  const expression::AbstractExpression *predicate_ = nullptr;
-
-  /** @brief Columns from tile group to be added to logical tile output. */
-  std::vector<oid_t> column_ids_;
-
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

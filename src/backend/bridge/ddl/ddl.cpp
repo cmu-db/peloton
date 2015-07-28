@@ -36,9 +36,8 @@ namespace bridge {
  * @brief Process utility statement.
  * @param parsetree Parse tree
  */
-void DDL::ProcessUtility(Node *parsetree,
-                         const char *queryString,
-                         TransactionId txn_id){
+void DDL::ProcessUtility(Node *parsetree, const char *queryString,
+                         TransactionId txn_id) {
   assert(parsetree != nullptr);
   assert(queryString != nullptr);
 
@@ -51,66 +50,54 @@ void DDL::ProcessUtility(Node *parsetree,
   set_stack_base();
 
   // Process depending on type of utility statement
-  switch (nodeTag(parsetree))
-  {
-    case T_CreatedbStmt:
-    {
+  switch (nodeTag(parsetree)) {
+    case T_CreatedbStmt: {
       DDLDatabase::ExecCreatedbStmt(parsetree);
       break;
     }
 
-    case T_DropdbStmt:
-    {
+    case T_DropdbStmt: {
       DDLDatabase::ExecDropdbStmt(parsetree);
       break;
     }
 
     case T_CreateStmt:
-    case T_CreateForeignTableStmt:
-    {
+    case T_CreateForeignTableStmt: {
       DDLTable::ExecCreateStmt(parsetree, queryString, index_infos);
       break;
     }
 
-    case T_AlterTableStmt:
-    {
+    case T_AlterTableStmt: {
       DDLTable::ExecAlterTableStmt(parsetree, queryString);
       break;
     }
 
-    case T_DropStmt:
-    {
+    case T_DropStmt: {
       DDLTable::ExecDropStmt(parsetree);
       break;
     }
 
-    case T_IndexStmt: 
-    {
+    case T_IndexStmt: {
       DDLIndex::ExecIndexStmt(parsetree, index_infos);
       break;
     }
 
-    case T_VacuumStmt:
-    {
+    case T_VacuumStmt: {
       DDLDatabase::ExecVacuumStmt(parsetree);
       break;
     }
 
     case T_TransactionStmt: {
-      TransactionStmt *stmt = (TransactionStmt *) parsetree;
+      TransactionStmt *stmt = (TransactionStmt *)parsetree;
 
       DDLTransaction::ExecTransactionStmt(stmt, txn_id);
-    }
-    break;
+    } break;
 
     default: {
-      LOG_WARN("unrecognized node type: %d", (int) nodeTag(parsetree));
-    }
-    break;
+      LOG_WARN("unrecognized node type: %d", (int)nodeTag(parsetree));
+    } break;
   }
-
 }
 
-} // namespace bridge
-} // namespace peloton
-
+}  // namespace bridge
+}  // namespace peloton

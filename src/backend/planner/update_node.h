@@ -17,45 +17,34 @@ namespace peloton {
 namespace planner {
 
 class UpdateNode : public AbstractPlanNode {
-public:
-    UpdateNode() = delete;
-    UpdateNode(const UpdateNode &) = delete;
-    UpdateNode& operator=(const UpdateNode &) = delete;
-    UpdateNode(UpdateNode &&) = delete;
-    UpdateNode& operator=(UpdateNode &&) = delete;
+ public:
+  UpdateNode() = delete;
+  UpdateNode(const UpdateNode &) = delete;
+  UpdateNode &operator=(const UpdateNode &) = delete;
+  UpdateNode(UpdateNode &&) = delete;
+  UpdateNode &operator=(UpdateNode &&) = delete;
 
-    explicit UpdateNode(storage::DataTable* table,
-                        const planner::ProjectInfo* project_info)
-            : target_table_(table),
-              project_info_(project_info){
-    }
+  explicit UpdateNode(storage::DataTable *table,
+                      const planner::ProjectInfo *project_info)
+      : target_table_(table), project_info_(project_info) {}
 
-    const planner::ProjectInfo* GetProjectInfo() const {
-      return project_info_.get();
-    }
+  const planner::ProjectInfo *GetProjectInfo() const {
+    return project_info_.get();
+  }
 
-    inline PlanNodeType GetPlanNodeType() const {
-        return PLAN_NODE_TYPE_UPDATE;
-    }
+  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_UPDATE; }
 
-    storage::DataTable *GetTable() const {
-        return target_table_;
-    }
+  storage::DataTable *GetTable() const { return target_table_; }
 
-    std::string GetInfo() const {
-        return target_table_->GetName();
-    }
+  std::string GetInfo() const { return target_table_->GetName(); }
 
-private:
+ private:
+  /** @brief Target table. */
+  storage::DataTable *target_table_;
 
-    /** @brief Target table. */
-    storage::DataTable *target_table_;
-
-    /** @brief Projection info */
-    std::unique_ptr<const planner::ProjectInfo> project_info_;
-
-
+  /** @brief Projection info */
+  std::unique_ptr<const planner::ProjectInfo> project_info_;
 };
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

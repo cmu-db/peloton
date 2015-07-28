@@ -23,7 +23,7 @@
 namespace peloton {
 namespace storage {
 
-typedef tbb::concurrent_unordered_map<oid_t, index::Index*> oid_t_to_index_ptr;
+typedef tbb::concurrent_unordered_map<oid_t, index::Index *> oid_t_to_index_ptr;
 
 //===--------------------------------------------------------------------===//
 // DataTable
@@ -44,14 +44,12 @@ class DataTable : public AbstractTable {
   friend class TableFactory;
 
   DataTable() = delete;
-  DataTable(DataTable const&) = delete;
+  DataTable(DataTable const &) = delete;
 
  public:
   // Table constructor
-  DataTable(catalog::Schema *schema,
-            AbstractBackend *backend,
-            std::string table_name,
-            oid_t table_oid,
+  DataTable(catalog::Schema *schema, AbstractBackend *backend,
+            std::string table_name, oid_t table_oid,
             size_t tuples_per_tilegroup);
 
   ~DataTable();
@@ -61,7 +59,8 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   // insert tuple in table
-  ItemPointer InsertTuple( txn_id_t transaction_id, const Tuple *tuple, bool update = false );
+  ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple,
+                          bool update = false);
 
   void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
@@ -86,9 +85,9 @@ class DataTable : public AbstractTable {
   // NOTE: This must go through the manager's locator
   // This allows us to "TRANSFORM" tile groups atomically
   // WARNING: We should distinguish OFFSET and ID of a tile group
-  TileGroup* GetTileGroup(oid_t tile_group_offset) const;
+  TileGroup *GetTileGroup(oid_t tile_group_offset) const;
 
-  TileGroup* GetTileGroupById(oid_t tile_group_id) const;
+  TileGroup *GetTileGroupById(oid_t tile_group_id) const;
 
   size_t GetTileGroupCount() const;
 
@@ -98,7 +97,7 @@ class DataTable : public AbstractTable {
 
   void AddIndex(index::Index *index);
 
-  index::Index* GetIndexWithOid(const oid_t index_oid) const;
+  index::Index *GetIndexWithOid(const oid_t index_oid) const;
 
   void DropIndexWithOid(const oid_t index_oid);
 
@@ -119,7 +118,7 @@ class DataTable : public AbstractTable {
   oid_t GetForeignKeyCount() const;
 
   //===--------------------------------------------------------------------===//
-  // STATS 
+  // STATS
   //===--------------------------------------------------------------------===//
 
   void IncreaseNumberOfTuplesBy(const float amount);
@@ -134,27 +133,18 @@ class DataTable : public AbstractTable {
   // UTILITIES
   //===--------------------------------------------------------------------===//
 
-  bool HasPrimaryKey(){
-    return has_primary_key;
-  }
+  bool HasPrimaryKey() { return has_primary_key; }
 
-  bool HasUniqueConstraints(){
-    return (unique_constraint_count > 0);
-  }
+  bool HasUniqueConstraints() { return (unique_constraint_count > 0); }
 
-  bool HasForeignKeys(){
-    return (GetForeignKeyCount() > 0);
-  }
+  bool HasForeignKeys() { return (GetForeignKeyCount() > 0); }
 
-  AbstractBackend *GetBackend() const {
-    return backend;
-  }
+  AbstractBackend *GetBackend() const { return backend; }
 
   // Get a string representation of this table
-  friend std::ostream& operator<<(std::ostream& os, const DataTable& table);
+  friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
 
  private:
-
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
@@ -170,10 +160,10 @@ class DataTable : public AbstractTable {
   std::vector<oid_t> tile_groups;
 
   // INDEXES
-  std::vector<index::Index*> indexes;
+  std::vector<index::Index *> indexes;
 
   // CONSTRAINTS
-  std::vector<catalog::ForeignKey*> foreign_keys;
+  std::vector<catalog::ForeignKey *> foreign_keys;
 
   // table mutex
   std::mutex table_mutex;
@@ -186,10 +176,7 @@ class DataTable : public AbstractTable {
 
   // # of tuples
   float number_of_tuples = 0.0;
-
 };
 
-} // End storage namespace
-} // End peloton namespace
-
-
+}  // End storage namespace
+}  // End peloton namespace

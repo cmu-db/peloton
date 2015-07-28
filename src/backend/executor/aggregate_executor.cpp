@@ -30,14 +30,11 @@ namespace executor {
  */
 AggregateExecutor::AggregateExecutor(planner::AbstractPlanNode *node,
                                      ExecutorContext *executor_context)
-: AbstractExecutor(node, executor_context) {
-}
+    : AbstractExecutor(node, executor_context) {}
 
 AggregateExecutor::~AggregateExecutor() {
-
   // clean up temporary aggregation table
   delete output_table;
-
 }
 
 /**
@@ -59,10 +56,8 @@ bool AggregateExecutor::DInit() {
 
   result_itr = START_OID;
 
-  output_table = storage::TableFactory::GetDataTable(INVALID_OID,
-                                                     INVALID_OID,
-                                                     output_table_schema,
-                                                     "temp_table");
+  output_table = storage::TableFactory::GetDataTable(
+      INVALID_OID, INVALID_OID, output_table_schema, "temp_table");
 
   return true;
 }
@@ -72,13 +67,11 @@ bool AggregateExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool AggregateExecutor::DExecute() {
-
   // Already performed the aggregation
-  if(done) {
-    if(result_itr == result.size()) {
+  if (done) {
+    if (result_itr == result.size()) {
       return false;
-    }
-    else {
+    } else {
       // Return appropriate tile and go to next tile
       SetOutput(result[result_itr]);
       result_itr++;
@@ -92,17 +85,19 @@ bool AggregateExecutor::DExecute() {
   txn_id_t txn_id = transaction_->GetTransactionId();
 
   // Get an aggregator
-  Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE> aggregator(&node, output_table, txn_id);
+  Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE> aggregator(
+      &node, output_table, txn_id);
 
   // Get input tiles and aggregate them
-  while(children_[0]->Execute() == true) {
+  while (children_[0]->Execute() == true) {
     std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
 
     LOG_TRACE("Looping over tile..");
     expression::ContainerTuple<LogicalTile> *prev_tuple = nullptr;
 
     for (oid_t tuple_id : *tile) {
-      auto cur_tuple = new expression::ContainerTuple<LogicalTile>(tile.get(), tuple_id);
+      auto cur_tuple =
+          new expression::ContainerTuple<LogicalTile>(tile.get(), tuple_id);
 
       if (aggregator.Advance(cur_tuple, prev_tuple) == false) {
         return false;
@@ -113,8 +108,7 @@ bool AggregateExecutor::DExecute() {
     }
 
     LOG_TRACE("Finalizing..");
-    if (!aggregator.Finalize(prev_tuple))
-      return false;
+    if (!aggregator.Finalize(prev_tuple)) return false;
 
     delete prev_tuple;
     LOG_TRACE("Finished processing logical tile");
@@ -123,10 +117,10 @@ bool AggregateExecutor::DExecute() {
   // Transform output table into result
   auto tile_group_count = output_table->GetTileGroupCount();
 
-  if(tile_group_count == 0)
-    return false;
+  if (tile_group_count == 0) return false;
 
-  for(oid_t tile_group_itr = 0; tile_group_itr < tile_group_count ; tile_group_itr++) {
+  for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
+       tile_group_itr++) {
     auto tile_group = output_table->GetTileGroup(tile_group_itr);
 
     // Get the logical tiles corresponding to the given tile group
@@ -144,7 +138,5 @@ bool AggregateExecutor::DExecute() {
   return true;
 }
 
-
-} // namespace executor
-} // namespace peloton
-
+}  // namespace executor
+}  // namespace peloton

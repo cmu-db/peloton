@@ -27,49 +27,30 @@ namespace catalog {
 
 // Stores info about foreign key constraints, like the sink table id etc.
 class ForeignKey {
-
  public:
-  ForeignKey(oid_t sink_table_id,
-             std::vector<std::string> pk_column_names,
-             std::vector<std::string> fk_column_names,
-             char fk_update_action,
-             char fk_delete_action,
-             std::string constraint_name)
+  ForeignKey(oid_t sink_table_id, std::vector<std::string> pk_column_names,
+             std::vector<std::string> fk_column_names, char fk_update_action,
+             char fk_delete_action, std::string constraint_name)
 
- : sink_table_id(sink_table_id),
-   pk_column_names(pk_column_names),
-   fk_column_names(fk_column_names),
-   fk_update_action(fk_update_action),
-   fk_delete_action(fk_delete_action),
-   fk_name(constraint_name) {
-  }
+      : sink_table_id(sink_table_id),
+        pk_column_names(pk_column_names),
+        fk_column_names(fk_column_names),
+        fk_update_action(fk_update_action),
+        fk_delete_action(fk_delete_action),
+        fk_name(constraint_name) {}
 
+  oid_t GetSinkTableOid() const { return sink_table_id; }
 
-  oid_t GetSinkTableOid() const {
-    return sink_table_id;
-  }
+  std::vector<std::string> GetPKColumnNames() const { return pk_column_names; }
+  std::vector<std::string> GetFKColumnNames() const { return fk_column_names; }
 
-  std::vector<std::string> GetPKColumnNames() const {
-    return pk_column_names;
-  }
-  std::vector<std::string> GetFKColumnNames() const {
-    return fk_column_names;
-  }
+  char GetUpdateAction() const { return fk_update_action; }
 
-  char GetUpdateAction()const {
-    return fk_update_action;
-  }
+  char GetDeleteAction() const { return fk_delete_action; }
 
-  char GetDeleteAction()const {
-    return fk_delete_action;
-  }
-
-  std::string& GetConstraintName() {
-    return fk_name;
-  }
+  std::string& GetConstraintName() { return fk_name; }
 
  private:
-
   oid_t sink_table_id = INVALID_OID;
 
   // Columns in the reference table (sink)
@@ -85,9 +66,7 @@ class ForeignKey {
   char fk_delete_action;
 
   std::string fk_name;
-
 };
 
-
-} // End catalog namespace
-} // End peloton namespace
+}  // End catalog namespace
+}  // End peloton namespace

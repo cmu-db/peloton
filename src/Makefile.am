@@ -11,6 +11,7 @@ include $(top_srcdir)/common.am
 # SUBDIRS
 ######################################################################
 
+include $(srcdir)/backend/brain/Makefile.am
 include $(srcdir)/backend/bridge/Makefile.am
 include $(srcdir)/backend/catalog/Makefile.am
 include $(srcdir)/backend/common/Makefile.am
@@ -42,6 +43,7 @@ DEFAULT_INCLUDES =
 ######################################################################
 
 libpeloton_la_SOURCES = \
+			$(brain_FILES) \
 			$(catalog_FILES) \
 			$(backend_FILES) \
 			$(bridge_FILES) \
@@ -60,7 +62,8 @@ libpeloton_la_SOURCES = \
 
 ## HACK: To make use of different include flags for peloton and postgres.
 
-libpeloton_la_CPPFLAGS = -I$(srcdir)/postgres/include \
+libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
+						 -I$(srcdir)/postgres/include \
 						 -I$(srcdir)/postgres/backend \
 						 -I$(srcdir)/ \
 						 -I. -I$(top_srcdir)/src -I.. \
@@ -83,7 +86,7 @@ endif
 
 peloton_SOURCES = backend/main/main.cpp
 peloton_LDFLAGS =
-peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES)
+peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS) 
 peloton_LDADD = libpeloton.la $(TBB_LIBS)
 
 ######################################################################
