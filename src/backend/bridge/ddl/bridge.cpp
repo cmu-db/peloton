@@ -47,7 +47,7 @@ namespace bridge {
  * @brief Get the pg class tuple
  * @param tuple relevant tuple if it exists, NULL otherwise
  */
-HeapTuple Bridge::GetPGClassTupleForRelationOid(Oid relation_id){
+HeapTuple Bridge::GetPGClassTupleForRelationOid(Oid relation_id) {
   Relation pg_class_rel;
   HeapTuple tuple = NULL;
 
@@ -74,7 +74,7 @@ HeapTuple Bridge::GetPGClassTupleForRelationOid(Oid relation_id){
  * @brief Get the pg class tuple
  * @param tuple relevant tuple if it exists, NULL otherwise
  */
-HeapTuple Bridge::GetPGClassTupleForRelationName(const char *relation_name){
+HeapTuple Bridge::GetPGClassTupleForRelationName(const char *relation_name) {
   Relation pg_class_rel;
   HeapTuple tuple = NULL;
   HeapScanDesc scan;
@@ -88,10 +88,10 @@ HeapTuple Bridge::GetPGClassTupleForRelationName(const char *relation_name){
   scan = heap_beginscan_catalog(pg_class_rel, 0, NULL);
 
   while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
-    Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
+    Form_pg_class pgclass = (Form_pg_class)GETSTRUCT(tuple);
 
-    if( pgclass->relnamespace==PG_PUBLIC_NAMESPACE){
-      if(strcmp(NameStr(pgclass->relname), relation_name) == 0) {
+    if (pgclass->relnamespace == PG_PUBLIC_NAMESPACE) {
+      if (strcmp(NameStr(pgclass->relname), relation_name) == 0) {
         // We need to end scan and close heap
         break;
       }
@@ -111,10 +111,10 @@ HeapTuple Bridge::GetPGClassTupleForRelationName(const char *relation_name){
  * @param relation_id relation id
  * @return Tuple if valid relation_id, otherwise null
  */
-char* Bridge::GetRelationName(Oid relation_id){
+char *Bridge::GetRelationName(Oid relation_id) {
   HeapTuple tuple;
   Form_pg_class pg_class;
-  char* relation_name;
+  char *relation_name;
 
   tuple = GetPGClassTupleForRelationOid(relation_id);
   if (!HeapTupleIsValid(tuple)) {
@@ -122,7 +122,7 @@ char* Bridge::GetRelationName(Oid relation_id){
   }
 
   // Get relation name
-  pg_class = (Form_pg_class) GETSTRUCT(tuple);
+  pg_class = (Form_pg_class)GETSTRUCT(tuple);
   relation_name = NameStr(pg_class->relname);
 
   return relation_name;
@@ -133,7 +133,7 @@ char* Bridge::GetRelationName(Oid relation_id){
  * @param table_name table name
  * @return relation id, if relation is valid, 0 otherewise
  */
-Oid Bridge::GetRelationOid(const char *relation_name){
+Oid Bridge::GetRelationOid(const char *relation_name) {
   Oid relation_oid = InvalidOid;
   HeapTuple tuple;
 
@@ -168,7 +168,7 @@ int Bridge::GetNumberOfAttributes(Oid relation_id) {
     return num_atts;
   }
 
-  pg_class = (Form_pg_class) GETSTRUCT(tuple);
+  pg_class = (Form_pg_class)GETSTRUCT(tuple);
 
   // Get number of attributes
   num_atts = pg_class->relnatts;
@@ -181,7 +181,7 @@ int Bridge::GetNumberOfAttributes(Oid relation_id) {
  * @param relation_id relation id
  * @return num_tuples if valid relation_id, otherwise -1
  */
-float Bridge::GetNumberOfTuples(Oid relation_id){
+float Bridge::GetNumberOfTuples(Oid relation_id) {
   HeapTuple tuple;
   Form_pg_class pg_class;
   float num_tuples;
@@ -190,7 +190,7 @@ float Bridge::GetNumberOfTuples(Oid relation_id){
   if (!HeapTupleIsValid(tuple)) {
     return -1;
   }
-  pg_class = (Form_pg_class) GETSTRUCT(tuple);
+  pg_class = (Form_pg_class)GETSTRUCT(tuple);
 
   // Get number of tuples
   num_tuples = pg_class->reltuples;
@@ -202,16 +202,14 @@ float Bridge::GetNumberOfTuples(Oid relation_id){
  * @brief Getting the current database Oid
  * @return MyDatabaseId
  */
-Oid Bridge::GetCurrentDatabaseOid(void){
-  return MyDatabaseId;
-}
+Oid Bridge::GetCurrentDatabaseOid(void) { return MyDatabaseId; }
 
 /**
  * @Determine whether table exists in the *current* database or not
  * @param table_name table name
  * @return true or false depending on whether table exists or not.
  */
-bool Bridge::RelationExists(const char* relation_name) {
+bool Bridge::RelationExists(const char *relation_name) {
   HeapTuple tuple;
 
   tuple = GetPGClassTupleForRelationName(relation_name);
@@ -241,16 +239,14 @@ void Bridge::GetTableList(bool catalog_only) {
   scan = heap_beginscan_catalog(pg_class_rel, 0, NULL);
 
   while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection))) {
-    Form_pg_class pgclass = (Form_pg_class) GETSTRUCT(tuple);
+    Form_pg_class pgclass = (Form_pg_class)GETSTRUCT(tuple);
 
     // Check if we only need catalog tables or not ?
-    if(catalog_only == false) {
-      elog(LOG, "pgclass->relname :: %s ", NameStr(pgclass->relname ) );
+    if (catalog_only == false) {
+      elog(LOG, "pgclass->relname :: %s ", NameStr(pgclass->relname));
+    } else if (pgclass->relnamespace == PG_PUBLIC_NAMESPACE) {
+      elog(LOG, "pgclass->relname :: %s ", NameStr(pgclass->relname));
     }
-    else if(pgclass->relnamespace==PG_PUBLIC_NAMESPACE) {
-      elog(LOG, "pgclass->relname :: %s ", NameStr(pgclass->relname ) );
-    }
-
   }
 
   heap_endscan(scan);
@@ -273,10 +269,11 @@ void Bridge::GetDatabaseList(void) {
   pg_database_rel = heap_open(DatabaseRelationId, AccessShareLock);
   scan = heap_beginscan_catalog(pg_database_rel, 0, NULL);
 
-  while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection)))  {
-    Form_pg_database pg_database = (Form_pg_database) GETSTRUCT(tup);
+  while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection))) {
+    Form_pg_database pg_database = (Form_pg_database)GETSTRUCT(tup);
     Oid database_oid = HeapTupleHeaderGetOid(tup->t_data);
-    elog(LOG, "pgdatabase->datname  :: %s oid %d ", NameStr(pg_database->datname), (int) database_oid );
+    elog(LOG, "pgdatabase->datname  :: %s oid %d ",
+         NameStr(pg_database->datname), (int)database_oid);
   }
 
   heap_endscan(scan);
@@ -295,7 +292,6 @@ void Bridge::GetDatabaseList(void) {
  * @param num_tuples number of tuples
  */
 void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
-
   assert(relation_id);
 
   Relation pg_class_rel;
@@ -305,7 +301,7 @@ void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
   PelotonStartTransactionCommand();
 
   // Open target table in exclusive mode
-  pg_class_rel = heap_open(RelationRelationId,RowExclusiveLock);
+  pg_class_rel = heap_open(RelationRelationId, RowExclusiveLock);
   tuple = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relation_id));
   if (!HeapTupleIsValid(tuple)) {
     elog(DEBUG2, "cache lookup failed for relation %u", relation_id);
@@ -345,8 +341,5 @@ void Bridge::SetCurrentResourceOwner(){
   CurrentResourceOwner = ResourceOwnerCreate(NULL, "Peloton");
 }
 
-} // namespace bridge
-} // namespace peloton
-
-
-
+}  // namespace bridge
+}  // namespace peloton

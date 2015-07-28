@@ -25,12 +25,11 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class DDLDatabase {
-
  public:
-  DDLDatabase(const DDLDatabase &) = delete;
-  DDLDatabase& operator=(const DDLDatabase &) = delete;
-  DDLDatabase(DDLDatabase &&) = delete;
-  DDLDatabase& operator=(DDLDatabase &&) = delete;
+  DDLDatabase(const DDLDatabase&) = delete;
+  DDLDatabase& operator=(const DDLDatabase&) = delete;
+  DDLDatabase(DDLDatabase&&) = delete;
+  DDLDatabase& operator=(DDLDatabase&&) = delete;
 
   static bool ExecCreatedbStmt(Node* parsetree);
 
@@ -40,14 +39,12 @@ class DDLDatabase {
 
   static bool CreateDatabase(Oid database_oid);
 
-
   // TODO
-  //static bool AlterDatabase( );
+  // static bool AlterDatabase( );
 
   // TODO
   static bool DropDatabase(Oid database_oid);
-
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

@@ -34,7 +34,6 @@ class BtreeMultimapIndex : public Index {
   friend class IndexFactory;
 
  public:
-
   BtreeMultimapIndex(IndexMetadata *metadata);
 
   ~BtreeMultimapIndex();
@@ -49,22 +48,24 @@ class BtreeMultimapIndex : public Index {
 
   std::vector<ItemPointer> GetLocationsForKey(const storage::Tuple *key) const;
 
-  std::vector<ItemPointer> GetLocationsForKeyBetween(const storage::Tuple *start, const storage::Tuple *end) const;
+  std::vector<ItemPointer> GetLocationsForKeyBetween(
+      const storage::Tuple *start, const storage::Tuple *end) const;
 
-  std::vector<ItemPointer> GetLocationsForKeyLT(const storage::Tuple *key) const;
+  std::vector<ItemPointer> GetLocationsForKeyLT(
+      const storage::Tuple *key) const;
 
-  std::vector<ItemPointer> GetLocationsForKeyLTE(const storage::Tuple *key) const;
+  std::vector<ItemPointer> GetLocationsForKeyLTE(
+      const storage::Tuple *key) const;
 
-  std::vector<ItemPointer> GetLocationsForKeyGT(const storage::Tuple *key) const;
+  std::vector<ItemPointer> GetLocationsForKeyGT(
+      const storage::Tuple *key) const;
 
-  std::vector<ItemPointer> GetLocationsForKeyGTE(const storage::Tuple *key)  const;
+  std::vector<ItemPointer> GetLocationsForKeyGTE(
+      const storage::Tuple *key) const;
 
-  std::string GetTypeName() const {
-    return "BtreeMultimap";
-  }
+  std::string GetTypeName() const { return "BtreeMultimap"; }
 
  protected:
-
   // Btree manager
   BtMgr *btree_manager;
 
@@ -76,6 +77,5 @@ class BtreeMultimapIndex : public Index {
   std::atomic<size_t> num_keys;
 };
 
-} // End index namespace
-} // End peloton namespace
-
+}  // End index namespace
+}  // End peloton namespace

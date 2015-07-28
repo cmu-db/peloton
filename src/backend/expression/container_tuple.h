@@ -29,23 +29,17 @@ template <class T>
 class ContainerTuple : public AbstractTuple {
  public:
   ContainerTuple(const ContainerTuple &) = default;
-  ContainerTuple& operator=(const ContainerTuple &) = default;
+  ContainerTuple &operator=(const ContainerTuple &) = default;
   ContainerTuple(ContainerTuple &&) = default;
-  ContainerTuple& operator=(ContainerTuple &&) = default;
+  ContainerTuple &operator=(ContainerTuple &&) = default;
 
   ContainerTuple(T *container, oid_t tuple_id)
-  : container_(container),
-    tuple_id_(tuple_id) {
-  }
+      : container_(container), tuple_id_(tuple_id) {}
 
   /* Accessors */
-  T* GetContainer() const {
-    return container_;
-  }
+  T *GetContainer() const { return container_; }
 
-  oid_t GetTupleId() const {
-    return tuple_id_;
-  }
+  oid_t GetTupleId() const { return tuple_id_; }
 
   /** @brief Get the value at the given column id. */
   const Value GetValue(oid_t column_id) const override {
@@ -55,14 +49,16 @@ class ContainerTuple : public AbstractTuple {
   }
 
   /** @brief Get the raw location of the tuple's contents. */
-  inline char *GetData() const override{
+  inline char *GetData() const override {
     // NOTE: We can't get a table tuple from a tilegroup or logical tile
     // without materializing it. So, this must not be used.
-    throw NotImplementedException("GetData() not supported for container tuples.");
+    throw NotImplementedException(
+        "GetData() not supported for container tuples.");
     return nullptr;
   }
 
-  /** @brief Compute the hash value based on all valid columns and a given seed. */
+  /** @brief Compute the hash value based on all valid columns and a given seed.
+   */
   size_t HashCode(size_t seed = 0) const {
     const int column_count = container_->GetColumnCount();
 
@@ -98,16 +94,16 @@ class ContainerTuple : public AbstractTuple {
    *        to be.
    */
   const oid_t tuple_id_;
-
 };
 
 //===--------------------------------------------------------------------===//
 // ContainerTuple Hasher
 //===--------------------------------------------------------------------===//
 template <class T>
-struct ContainerTupleHasher: std::unary_function<ContainerTuple<T>, std::size_t> {
+struct ContainerTupleHasher
+    : std::unary_function<ContainerTuple<T>, std::size_t> {
   // Generate a 64-bit number for the key value
-  size_t operator()(const ContainerTuple<T>& tuple) const {
+  size_t operator()(const ContainerTuple<T> &tuple) const {
     return tuple.HashCode();
   }
 };
@@ -118,10 +114,11 @@ struct ContainerTupleHasher: std::unary_function<ContainerTuple<T>, std::size_t>
 template <class T>
 class ContainerTupleComparator {
  public:
-  bool operator()(const ContainerTuple<T>& lhs, const ContainerTuple<T>& rhs) const {
+  bool operator()(const ContainerTuple<T> &lhs,
+                  const ContainerTuple<T> &rhs) const {
     return lhs.EqualsNoSchemaCheck(rhs);
   }
 };
 
-} // namespace expression
-} // namespace peloton
+}  // namespace expression
+}  // namespace peloton

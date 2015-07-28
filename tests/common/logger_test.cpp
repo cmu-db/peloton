@@ -22,12 +22,10 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 TEST(LoggerTests, BasicTest) {
-
   LOG_TRACE("trace message");
   LOG_WARN("warning message");
   LOG_ERROR("error message");
-
 }
 
-} // End test namespace
-} // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace

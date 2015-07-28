@@ -19,10 +19,15 @@ class SerializeOutput;
 
 class ConstantValueExpression : public AbstractExpression {
  public:
-  ConstantValueExpression(const Value &value)
+  ConstantValueExpression(const Value &cvalue)
  : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT) {
-    this->value = value;
-
+    /**
+     * A deep copy is desired here because we don't know
+     * if the expression will live longer than the passed value
+     * or if uninlined value will be freed somewhere else
+     * (and probably yes in production).
+     */
+    this->value = ValueFactory::Clone(cvalue);
   }
 
   virtual ~ConstantValueExpression() {
@@ -32,7 +37,7 @@ class ConstantValueExpression : public AbstractExpression {
 
   Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
                  __attribute__((unused)) const AbstractTuple *tuple2,
-                 __attribute__((unused)) executor::ExecutorContext*) const {
+                 __attribute__((unused)) executor::ExecutorContext *) const {
     return this->value;
   }
 
@@ -42,14 +47,11 @@ class ConstantValueExpression : public AbstractExpression {
     return os.str();
   }
 
-  Value GetValue(){
-    return value;
-  }
+  Value GetValue() { return value; }
 
  protected:
   Value value;
 };
 
-} // End expression namespace
-} // End peloton namespace
-
+}  // End expression namespace
+}  // End peloton namespace

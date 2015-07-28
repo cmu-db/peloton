@@ -27,28 +27,26 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class PlanExecutor {
-
  public:
   PlanExecutor(const PlanExecutor &) = delete;
-  PlanExecutor& operator=(const PlanExecutor &) = delete;
+  PlanExecutor &operator=(const PlanExecutor &) = delete;
   PlanExecutor(PlanExecutor &&) = delete;
-  PlanExecutor& operator=(PlanExecutor &&) = delete;
+  PlanExecutor &operator=(PlanExecutor &&) = delete;
 
   PlanExecutor(){};
 
-  static void PrintPlan(const planner::AbstractPlanNode *plan, std::string prefix = "");
+  static void PrintPlan(const planner::AbstractPlanNode *plan,
+                        std::string prefix = "");
 
-  static void ExecutePlan(planner::AbstractPlanNode *plan,
-                          PlanState *planstate,
-                          TupleDesc tuple_desc,
-                          Peloton_Status *pstatus,
+  static void ExecutePlan(planner::AbstractPlanNode *plan, PlanState *planstate,
+                          TupleDesc tuple_desc, Peloton_Status *pstatus,
                           TransactionId txn_id);
 
-  static executor::AbstractExecutor *AddMaterialization(executor::AbstractExecutor *root);
+  static executor::AbstractExecutor *AddMaterialization(
+      executor::AbstractExecutor *root);
 
  private:
-
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

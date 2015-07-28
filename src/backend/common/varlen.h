@@ -47,6 +47,11 @@ public:
 	/// temporary Pool
 	static void Destroy(Varlen* varlen);
 
+	/**
+	 * @brief Clone (deep copy) the source Varlen in the provided data pool.
+	 */
+	static Varlen* Clone(const Varlen& src, Pool* dataPool = NULL);
+
 	char* Get();
 	const char* Get() const;
 
@@ -68,5 +73,4 @@ private:
 	char* varlen_string_ptr;
 };
 
-} // End peloton namespace
-
+}  // End peloton namespace
