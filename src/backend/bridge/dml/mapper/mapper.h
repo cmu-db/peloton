@@ -66,6 +66,10 @@ class PlanTransformer {
   static planner::AbstractPlanNode *TransformBitmapScan(
       const BitmapHeapScanState *plan_state);
 
+  static planner::AbstractPlanNode *TransformNestLoop(
+      const NestLoopState *plan_state);
+
+
   static planner::AbstractPlanNode *TransformLockRows(
       const LockRowsState *plan_state);
 
@@ -82,6 +86,7 @@ class PlanTransformer {
       const ProjectionInfo *pg_proj_info, oid_t column_count);
 
   static const std::vector<oid_t> BuildColumnListFromDirectMap(planner::ProjectInfo::DirectMapList dmlist);
+  static PelotonJoinType TransformJoinType(const JoinType type);
 };
 
 }  // namespace bridge
