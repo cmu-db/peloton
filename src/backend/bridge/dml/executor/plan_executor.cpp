@@ -165,7 +165,7 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(
   switch (type) {
     case PLAN_NODE_TYPE_SEQSCAN:
     case PLAN_NODE_TYPE_INDEXSCAN:
-    /* FALL THRU */
+      /* FALL THRU */
     case PLAN_NODE_TYPE_LIMIT:
       new_root = new executor::MaterializationExecutor(nullptr);
       new_root->AddChild(root);
@@ -189,6 +189,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   assert(plan);
 
   bool status;
+  bool init_failure = false;
   bool single_statement_txn = false;
   MemoryContext oldContext;
   List *slots = NULL;
@@ -217,11 +218,9 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
 
   // Abort and cleanup
   if (status == false) {
-    txn_manager.AbortTransaction(txn);
-
-    CleanExecutorTree(executor_tree);
-    pstatus->m_result = txn->GetResult();
-    return;
+    init_failure = true;
+    txn->SetResult(Result::RESULT_FAILURE);
+    goto cleanup;
   }
 
   LOG_TRACE("Running the executor tree");
@@ -262,16 +261,30 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     MemoryContextSwitchTo(oldContext);
   }
 
+  // Set the result
   pstatus->m_result_slots = slots;
 
-  if (single_statement_txn == true) {
-    // Commit
-    txn_manager.CommitTransaction(txn);
+  // final cleanup
+  cleanup:
+
+  // should we commit or abort ?
+  if (single_statement_txn == true || init_failure == true) {
+    auto status = txn->GetResult();
+    switch(status) {
+      case Result::RESULT_SUCCESS:
+        // Commit
+        txn_manager.CommitTransaction(txn);
+        break;
+
+      case Result::RESULT_FAILURE:
+      default:
+        //Abort
+        txn_manager.AbortTransaction(txn);
+    }
   }
 
   // clean up
   CleanExecutorTree(executor_tree);
-
   pstatus->m_result = txn->GetResult();
   return;
 }

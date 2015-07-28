@@ -247,8 +247,6 @@ PelotonMain(int argc, char *argv[]) {
 
   SetProcessingMode(NormalProcessing);
 
-  peloton::StackTracer st;
-
   /*
    * Create the memory context we will use in the main loop.
    *
