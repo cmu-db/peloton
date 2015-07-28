@@ -49,10 +49,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   expression::AbstractExpression* predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  TransformGenericScanInfo(parent,
-                       predicate,
-                       column_ids,
-                       reinterpret_cast<const ScanState*>(ss_plan_state));
+  TransformGenericScanInfo(parent, predicate, column_ids, ss_plan_state);
 
   /* TODO: test whether parent is presented, connect with the scan node */
 

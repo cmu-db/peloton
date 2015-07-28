@@ -72,18 +72,16 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexScan(
                index_scan_desc);
 
   /* handle simple cases */
-  /* target list */
-  // ioss_plan_state->ss.ps.targetlist;
   /* ORDER BY, not support */
 
-  /* Plan qual, not support */
-  // ioss_plan_state->ss.ps.qual;
-  auto schema = table->GetSchema();
-  index_scan_desc.column_ids.resize(schema->GetColumnCount());
-  std::iota(index_scan_desc.column_ids.begin(),
-            index_scan_desc.column_ids.end(), 0);
+  /* Extract the generic scan info (including qual and projInfo) */
+  planner::AbstractPlanNode* parent = nullptr;
+  expression::AbstractExpression* predicate = nullptr;
+  std::vector<oid_t> column_ids;
 
-  return new planner::IndexScanNode(table, index_scan_desc);
+  TransformGenericScanInfo(parent, predicate, column_ids, &(iss_plan_state->ss));
+
+  return new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
 }
 /**
  * @brief Helper function to build index scan descriptor.
@@ -201,17 +199,16 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
                ioss_plan_state->ioss_NumScanKeys, index_scan_desc);
 
   /* handle simple cases */
-  /* target list */
-  // ioss_plan_state->ss.ps.targetlist;
   /* ORDER BY, not support */
 
-  /* Plan qual, not support */
-  // ioss_plan_state->ss.ps.qual;
-  auto schema = table->GetSchema();
-  index_scan_desc.column_ids.resize(schema->GetColumnCount());
-  std::iota(index_scan_desc.column_ids.begin(),
-            index_scan_desc.column_ids.end(), 0);
-  return new planner::IndexScanNode(table, index_scan_desc);
+  /* Extract the generic scan info (including qual and projInfo) */
+  planner::AbstractPlanNode* parent = nullptr;
+  expression::AbstractExpression* predicate = nullptr;
+  std::vector<oid_t> column_ids;
+
+  TransformGenericScanInfo(parent, predicate, column_ids, &(ioss_plan_state->ss));
+
+  return new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
 }
 
 /**
@@ -259,16 +256,18 @@ planner::AbstractPlanNode *PlanTransformer::TransformBitmapScan(
                index_scan_desc);
 
   /* handle simple cases */
-  /* target list */
+
   /* ORDER BY, not support */
 
-  /* Plan qual, not support */
 
-  auto schema = table->GetSchema();
-  index_scan_desc.column_ids.resize(schema->GetColumnCount());
-  std::iota(index_scan_desc.column_ids.begin(),
-            index_scan_desc.column_ids.end(), 0);
-  return new planner::IndexScanNode(table, index_scan_desc);
+  /* Extract the generic scan info (including qual and projInfo) */
+  planner::AbstractPlanNode* parent = nullptr;
+  expression::AbstractExpression* predicate = nullptr;
+  std::vector<oid_t> column_ids;
+
+  TransformGenericScanInfo(parent, predicate, column_ids, &(bhss_plan_state->ss));
+
+  return new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
 }
 
 }  // namespace bridge
