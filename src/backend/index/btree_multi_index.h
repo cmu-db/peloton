@@ -48,7 +48,7 @@ class BtreeMultiIndex : public Index {
 
   bool InsertEntry(const storage::Tuple *key,
                    const ItemPointer location) {
-    index_key1.setFromKey(key);
+    index_key1.SetFromKey(key);
     {
       std::lock_guard<std::mutex> lock(index_mutex);
 
@@ -59,7 +59,7 @@ class BtreeMultiIndex : public Index {
   }
 
   bool DeleteEntry(const storage::Tuple *key) {
-    index_key1.setFromKey(key);
+    index_key1.SetFromKey(key);
     {
       std::lock_guard<std::mutex> lock(index_mutex);
 
@@ -70,7 +70,7 @@ class BtreeMultiIndex : public Index {
   }
 
   bool Exists(const storage::Tuple *key) {
-    index_key1.setFromKey(key);
+    index_key1.SetFromKey(key);
     {
       std::lock_guard<std::mutex> lock(index_mutex);
 
@@ -102,7 +102,7 @@ class BtreeMultiIndex : public Index {
   std::vector<ItemPointer> GetLocationsForKey(
       const storage::Tuple *key) {
     std::vector<ItemPointer> result;
-    index_key1.setFromKey(key);
+    index_key1.SetFromKey(key);
 
     {
       std::lock_guard<std::mutex> lock(index_mutex);
@@ -125,8 +125,8 @@ class BtreeMultiIndex : public Index {
       const storage::Tuple *start, const storage::Tuple *end) {
     std::vector<ItemPointer> result;
 
-    index_key1.setFromKey(start);
-    index_key2.setFromKey(end);
+    index_key1.SetFromKey(start);
+    index_key2.SetFromKey(end);
 
     {
       std::lock_guard<std::mutex> lock(index_mutex);
@@ -147,7 +147,7 @@ class BtreeMultiIndex : public Index {
       const storage::Tuple *key) {
     std::vector<ItemPointer> result;
 
-    index_key1.setFromKey(key);
+    index_key1.SetFromKey(key);
 
     {
       std::lock_guard<std::mutex> lock(index_mutex);
@@ -169,7 +169,7 @@ class BtreeMultiIndex : public Index {
       const storage::Tuple *key) {
     std::vector<ItemPointer> result;
 
-    index_key1.setFromKey(key);
+    index_key1.SetFromKey(key);
 
     {
       std::lock_guard<std::mutex> lock(index_mutex);
@@ -199,7 +199,7 @@ class BtreeMultiIndex : public Index {
       const storage::Tuple *key) {
     std::vector<ItemPointer> result;
 
-    index_key1.setFromKey(key);
+    index_key1.SetFromKey(key);
 
     {
       std::lock_guard<std::mutex> lock(index_mutex);
@@ -221,7 +221,7 @@ class BtreeMultiIndex : public Index {
       const storage::Tuple *key) {
     std::vector<ItemPointer> result;
 
-    index_key1.setFromKey(key);
+    index_key1.SetFromKey(key);
 
     {
       std::lock_guard<std::mutex> lock(index_mutex);
