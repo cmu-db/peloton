@@ -27,7 +27,7 @@ namespace bridge {
 planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
     const NestLoopState* nl_plan_state) {
 
-  JoinState *js = &(nl_plan_state->js);
+  const JoinState *js = &(nl_plan_state->js);
   PelotonJoinType jointype = PlanTransformer::TransformJoinType(js->jointype);
   if (jointype == JOIN_TYPE_INVALID) {
     LOG_ERROR("unsupported join type: %d", js->jointype);

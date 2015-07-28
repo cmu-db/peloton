@@ -86,7 +86,7 @@ class PlanTransformer {
       const ProjectionInfo *pg_proj_info, oid_t column_count);
 
   static const std::vector<oid_t> BuildColumnListFromDirectMap(planner::ProjectInfo::DirectMapList dmlist);
-  static const PelotonJoinType TransformJoinType(const JoinType type);
+  static PelotonJoinType TransformJoinType(const JoinType type);
 };
 
 }  // namespace bridge
