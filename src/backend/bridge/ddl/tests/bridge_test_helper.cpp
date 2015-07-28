@@ -57,13 +57,10 @@ std::vector<catalog::Column> BridgeTest::CreateSimpleColumns() {
  * @param column_name column_name to be compared with column's name
  * @param length length to be compared with column's length
  * @param type valueType to be compared with column's valueType
- * @return the true if we pass all 
+ * @return the true if we pass all
  */
-bool BridgeTest::CheckColumn(catalog::Column& column,
-                             std::string column_name, 
-                             int length, 
-                             ValueType type){
-
+bool BridgeTest::CheckColumn(catalog::Column& column, std::string column_name,
+                             int length, ValueType type) {
   assert(strcmp(column.GetName().c_str(), column_name.c_str()) == 0);
   assert(column.GetLength() == length);
   assert(column.GetType() == type);
@@ -74,25 +71,28 @@ bool BridgeTest::CheckColumn(catalog::Column& column,
 /**
  * @brief Compare the given column with given information
  * @param column column what to check
- * @param constraint_type ConstraintType to be compared with column's constraint type
- * @param constraint_name constraint_name to be compared with columns's constraint name
- * @param constraint_count constraint_count to be compared with columns's constraint count
- * @return the true if we pass all 
+ * @param constraint_type ConstraintType to be compared with column's constraint
+ * type
+ * @param constraint_name constraint_name to be compared with columns's
+ * constraint name
+ * @param constraint_count constraint_count to be compared with columns's
+ * constraint count
+ * @return the true if we pass all
  */
 bool BridgeTest::CheckColumnWithConstraint(catalog::Column& column,
                                            ConstraintType constraint_type,
                                            std::string constraint_name,
                                            int constraint_count,
-                                           int foreign_key_offset){
-
+                                           int foreign_key_offset) {
   std::vector<catalog::Constraint> constraint_infos = column.GetConstraints();
   assert(constraint_infos[0].GetType() == constraint_type);
 
-  if(constraint_infos[0].GetName().size() >0 && constraint_name.size() > 0)
-    assert(strcmp(constraint_infos[0].GetName().c_str(), constraint_name.c_str()) == 0);
+  if (constraint_infos[0].GetName().size() > 0 && constraint_name.size() > 0)
+    assert(strcmp(constraint_infos[0].GetName().c_str(),
+                  constraint_name.c_str()) == 0);
 
   assert(constraint_infos.size() == constraint_count);
-  if(constraint_type == CONSTRAINT_TYPE_FOREIGN)
+  if (constraint_type == CONSTRAINT_TYPE_FOREIGN)
     assert(constraint_infos[0].GetForeignKeyListOffset() == foreign_key_offset);
 
   return true;
@@ -101,25 +101,22 @@ bool BridgeTest::CheckColumnWithConstraint(catalog::Column& column,
 /**
  * @brief Compare the given index with given information
  * @param index index what to check
- * @param index_name index_name to be compared with index's name 
- * @param column_count column count to be compared with index's column count 
+ * @param index_name index_name to be compared with index's name
+ * @param column_count column count to be compared with index's column count
  * @param method_type method type to be compared with index's method type
- * @param constraint_type constraint type to be compared with index's constraint type
- * @param unique unique key to be compared with index's unique 
- * @return the true if we pass all 
+ * @param constraint_type constraint type to be compared with index's constraint
+ * type
+ * @param unique unique key to be compared with index's unique
+ * @return the true if we pass all
  */
-bool BridgeTest::CheckIndex(index::Index* index,
-                            std::string index_name,
-                            oid_t column_count,
-                            IndexType method_type,
-                            IndexConstraintType constraint_type,
-                            bool unique){
-
+bool BridgeTest::CheckIndex(index::Index* index, std::string index_name,
+                            oid_t column_count, IndexType method_type,
+                            IndexConstraintType constraint_type, bool unique) {
   assert(strcmp(index->GetName().c_str(), index_name.c_str()) == 0);
   assert(index->GetColumnCount() == column_count);
   assert(index->GetIndexMethodType() == method_type);
   assert(index->GetIndexType() == constraint_type);
-  assert(index->HasUniqueKeys()  == unique);
+  assert(index->HasUniqueKeys() == unique);
 
   return true;
 }
@@ -127,28 +124,28 @@ bool BridgeTest::CheckIndex(index::Index* index,
 /**
  * @brief Compare the given foreign key with given information
  * @param foreign_key foreign key what to check
- * @param pktable_oid pktable oid to be compared with foreign key's oid 
- * @param constraint_name constraint name to be compared with foreign key's constraint name
+ * @param pktable_oid pktable oid to be compared with foreign key's oid
+ * @param constraint_name constraint name to be compared with foreign key's
+ * constraint name
  * @param _pk_column_names to be compared with foreign key's pk_column_names
  * @param _fk_column_names to be compared with foreign key's fk_column_names
- * @param fk_update_action foreign key update action to be compared with foreign key's update action 
- * @param fk_delete_action foreign key delete action to be compared with foreign key's delete action 
- * @return the true if we pass all 
+ * @param fk_update_action foreign key update action to be compared with foreign
+ * key's update action
+ * @param fk_delete_action foreign key delete action to be compared with foreign
+ * key's delete action
+ * @return the true if we pass all
  */
 bool BridgeTest::CheckForeignKey(catalog::ForeignKey* foreign_key,
-                                 oid_t pktable_oid,
-                                 std::string constraint_name,
+                                 oid_t pktable_oid, std::string constraint_name,
                                  int pk_column_names_count,
                                  int fk_column_names_count,
-                                 char fk_update_action,
-                                 char fk_delete_action){
-
-
+                                 char fk_update_action, char fk_delete_action) {
   assert(foreign_key->GetSinkTableOid() == pktable_oid);
-  assert(strcmp((foreign_key->GetConstraintName()).c_str(), constraint_name.c_str()) == 0);
+  assert(strcmp((foreign_key->GetConstraintName()).c_str(),
+                constraint_name.c_str()) == 0);
 
-  std::vector<std::string> pk_column_names  = foreign_key->GetPKColumnNames();
-  std::vector<std::string> fk_column_names  = foreign_key->GetFKColumnNames();
+  std::vector<std::string> pk_column_names = foreign_key->GetPKColumnNames();
+  std::vector<std::string> fk_column_names = foreign_key->GetFKColumnNames();
 
   assert(pk_column_names.size() == pk_column_names_count);
   assert(fk_column_names.size() == fk_column_names_count);
@@ -165,20 +162,15 @@ bool BridgeTest::CheckForeignKey(catalog::ForeignKey* foreign_key,
  * @params index_oid index oid
  */
 void BridgeTest::CreateSamplePrimaryKeyIndex(std::string table_name,
-                                             oid_t index_oid){
-
+                                             oid_t index_oid) {
   bool status;
   std::vector<std::string> key_column_names;
   key_column_names.push_back("name");
   IndexInfo* index_info;
 
-  index_info = new IndexInfo(table_name+"_pkey",
-                             index_oid,
-                             table_name,
-                             INDEX_TYPE_BTREE_MULTIMAP,
-                             INDEX_CONSTRAINT_TYPE_PRIMARY_KEY,
-                             true,
-                             key_column_names);
+  index_info = new IndexInfo(
+      table_name + "_pkey", index_oid, table_name, INDEX_TYPE_BTREE_MULTIMAP,
+      INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, true, key_column_names);
 
   status = DDLIndex::CreateIndex(*index_info);
   assert(status);
@@ -190,35 +182,31 @@ void BridgeTest::CreateSamplePrimaryKeyIndex(std::string table_name,
  * @params index_oid index oid
  */
 void BridgeTest::CreateSampleUniqueIndex(std::string table_name,
-                                         oid_t index_oid){
+                                         oid_t index_oid) {
   bool status;
   std::vector<std::string> key_column_names;
   key_column_names.push_back("time");
   IndexInfo* index_info;
 
-  index_info = new IndexInfo(table_name+"_key",
-                             index_oid,
-                             table_name,
-                             INDEX_TYPE_BTREE_MULTIMAP,
-                             INDEX_CONSTRAINT_TYPE_UNIQUE,
-                             true,
-                             key_column_names);
+  index_info = new IndexInfo(
+      table_name + "_key", index_oid, table_name, INDEX_TYPE_BTREE_MULTIMAP,
+      INDEX_CONSTRAINT_TYPE_UNIQUE, true, key_column_names);
 
   status = DDLIndex::CreateIndex(*index_info);
   assert(status);
 }
 
 /**
- * @brief Create a sample foreign key 
+ * @brief Create a sample foreign key
  * @params pktable_oid pktable oid
- * @params pktable_name pktable name 
+ * @params pktable_name pktable name
  * @params column column
  * @params table_oid table oid that foreign key will belong to
  */
 void BridgeTest::CreateSampleForeignKey(oid_t pktable_oid,
                                         std::string pktable_name,
                                         std::vector<catalog::Column>& columns,
-                                        oid_t table_oid){
+                                        oid_t table_oid) {
   bool status;
   // Create a sample table that has primary key index
   status = DDLTable::CreateTable(pktable_oid, pktable_name, columns);
@@ -229,12 +217,9 @@ void BridgeTest::CreateSampleForeignKey(oid_t pktable_oid,
   pk_column_names.push_back("name");
   fk_column_names.push_back("salary");
   std::vector<catalog::ForeignKey> foreign_keys;
-  catalog::ForeignKey *foreign_key = new catalog::ForeignKey(pktable_oid,
-                                                             pk_column_names,
-                                                             fk_column_names,
-                                                             'r',
-                                                             'c',
-                                                             "THIS_IS_FOREIGN_CONSTRAINT");
+  catalog::ForeignKey* foreign_key =
+      new catalog::ForeignKey(pktable_oid, pk_column_names, fk_column_names,
+                              'r', 'c', "THIS_IS_FOREIGN_CONSTRAINT");
   foreign_keys.push_back(*foreign_key);
 
   // Current table ----> reference table
@@ -322,4 +307,3 @@ bool BridgeTest::DropTableInPostgres(std::string table_name){
 
 } // End test namespace
 } // End peloton namespace
-

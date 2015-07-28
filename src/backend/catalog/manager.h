@@ -22,11 +22,11 @@
 
 namespace peloton {
 
-namespace storage{
+namespace storage {
 class DataTable;
 class Database;
 }
-namespace index{
+namespace index {
 class Index;
 }
 
@@ -36,27 +36,22 @@ namespace catalog {
 // Manager
 //===--------------------------------------------------------------------===//
 
-typedef tbb::concurrent_unordered_map<oid_t, void*> lookup_dir;
+typedef tbb::concurrent_unordered_map<oid_t, void *> lookup_dir;
 
 class Manager {
-
  public:
   Manager() {}
 
   // Singleton
-  static Manager& GetInstance();
+  static Manager &GetInstance();
 
   //===--------------------------------------------------------------------===//
   // OBJECT MAP
   //===--------------------------------------------------------------------===//
 
-  oid_t GetNextOid() {
-    return ++oid;
-  }
+  oid_t GetNextOid() { return ++oid; }
 
-  oid_t GetCurrentOid() {
-    return oid;
-  }
+  oid_t GetCurrentOid() { return oid; }
 
   void SetLocation(const oid_t oid, void *location);
 
@@ -82,17 +77,16 @@ class Manager {
 
   // Look up the table
   storage::DataTable *GetTableWithOid(const oid_t database_oid,
-                                     const oid_t table_oid) const;
+                                      const oid_t table_oid) const;
 
   storage::DataTable *GetTableWithName(const oid_t database_oid,
                                        const std::string table_name) const;
 
   // Look up the index
-  index::Index *GetIndexWithOid(const oid_t database_oid,
-                                const oid_t table_oid,
+  index::Index *GetIndexWithOid(const oid_t database_oid, const oid_t table_oid,
                                 const oid_t index_oid) const;
 
-  Manager(Manager const&) = delete;
+  Manager(Manager const &) = delete;
 
   //===--------------------------------------------------------------------===//
   // Data members
@@ -104,11 +98,10 @@ class Manager {
 
   // DATABASES
 
-  std::vector<storage::Database*> databases;
+  std::vector<storage::Database *> databases;
 
   std::mutex catalog_mutex;
-
 };
 
-} // End catalog namespace
-} // End peloton namespace
+}  // End catalog namespace
+}  // End peloton namespace

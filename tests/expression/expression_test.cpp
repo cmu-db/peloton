@@ -41,8 +41,12 @@ namespace test {
  */
 class AE {
  public:
-  AE(ExpressionType et, ValueType vt, int vs) :
-    m_type(et), m_valueType(vt), m_valueSize(vs) , left(nullptr), right(nullptr) {}
+  AE(ExpressionType et, ValueType vt, int vs)
+      : m_type(et),
+        m_valueType(vt),
+        m_valueSize(vs),
+        left(nullptr),
+        right(nullptr) {}
 
   virtual ~AE() {
     delete left;
@@ -58,12 +62,14 @@ class AE {
   // this is how java serializes..
   // note derived class data follows the serialization of children
   virtual void Serialize(json_spirit::Object &json) {
-    json.push_back(json_spirit::Pair("TYPE", json_spirit::Value(ExpressionTypeToString(m_type))));
-    json.push_back(json_spirit::Pair("VALUE_TYPE", json_spirit::Value(ValueTypeToString(m_valueType))));
-    json.push_back(json_spirit::Pair("VALUE_SIZE", json_spirit::Value(m_valueSize)));
+    json.push_back(json_spirit::Pair(
+        "TYPE", json_spirit::Value(ExpressionTypeToString(m_type))));
+    json.push_back(json_spirit::Pair(
+        "VALUE_TYPE", json_spirit::Value(ValueTypeToString(m_valueType))));
+    json.push_back(
+        json_spirit::Pair("VALUE_SIZE", json_spirit::Value(m_valueSize)));
 
-    if (left)
-      json.push_back(json_spirit::Pair("LEFT", left->SerializeValue()));
+    if (left) json.push_back(json_spirit::Pair("LEFT", left->SerializeValue()));
     if (right)
       json.push_back(json_spirit::Pair("RIGHT", right->SerializeValue()));
   }
@@ -82,45 +88,44 @@ class AE {
  */
 class CV : public AE {
  public:
-  CV(ExpressionType et, ValueType vt, int vs, int64_t v) :
-    AE(et, vt, vs), m_jsontype (1), m_intValue(v)
- {
+  CV(ExpressionType et, ValueType vt, int vs, int64_t v)
+      : AE(et, vt, vs), m_jsontype(1), m_intValue(v) {
     m_stringValue = nullptr;
     m_doubleValue = 0.0;
- }
+  }
 
-  CV(ExpressionType et, ValueType vt, int vs, char * v) :
-    AE(et, vt, vs), m_jsontype (1), m_stringValue(strdup(v))
-  {
+  CV(ExpressionType et, ValueType vt, int vs, char *v)
+      : AE(et, vt, vs), m_jsontype(1), m_stringValue(strdup(v)) {
     m_intValue = 0;
     m_doubleValue = 0.0;
   }
 
-  CV(ExpressionType et, ValueType vt, int vs, double v) :
-    AE(et, vt, vs), m_jsontype (1), m_doubleValue(v)
-  {
+  CV(ExpressionType et, ValueType vt, int vs, double v)
+      : AE(et, vt, vs), m_jsontype(1), m_doubleValue(v) {
     m_stringValue = nullptr;
     m_intValue = 0;
   }
 
-  ~CV() {
-  }
+  ~CV() {}
 
   virtual void Serialize(json_spirit::Object &json) {
     AE::Serialize(json);
     if (m_jsontype == 0)
-      json.push_back(json_spirit::Pair("VALUE", json_spirit::Value(m_stringValue)));
+      json.push_back(
+          json_spirit::Pair("VALUE", json_spirit::Value(m_stringValue)));
     else if (m_jsontype == 1)
-      json.push_back(json_spirit::Pair("VALUE", json_spirit::Value(m_intValue)));
+      json.push_back(
+          json_spirit::Pair("VALUE", json_spirit::Value(m_intValue)));
     else if (m_jsontype == 2)
-      json.push_back(json_spirit::Pair("VALUE", json_spirit::Value(m_doubleValue)));
+      json.push_back(
+          json_spirit::Pair("VALUE", json_spirit::Value(m_doubleValue)));
   }
 
   int m_jsontype;  // 0 = string, 1 = int64_t, 2 = double
 
-  int64_t  m_intValue;     // VALUE
-  char    *m_stringValue;  // VALUE
-  double   m_doubleValue;  // VALUE
+  int64_t m_intValue;    // VALUE
+  char *m_stringValue;   // VALUE
+  double m_doubleValue;  // VALUE
 };
 
 /*
@@ -128,12 +133,13 @@ class CV : public AE {
  */
 class PV : public AE {
  public:
-  PV(ExpressionType et, ValueType vt, int vs, int pi) :
-    AE(et, vt, vs), m_paramIdx(pi) {}
+  PV(ExpressionType et, ValueType vt, int vs, int pi)
+      : AE(et, vt, vs), m_paramIdx(pi) {}
 
   virtual void Serialize(json_spirit::Object &json) {
     AE::Serialize(json);
-    json.push_back(json_spirit::Pair("PARAM_IDX", json_spirit::Value(m_paramIdx)));
+    json.push_back(
+        json_spirit::Pair("PARAM_IDX", json_spirit::Value(m_paramIdx)));
   }
 
   int m_paramIdx;  // PARAM_IDX
@@ -142,12 +148,15 @@ class PV : public AE {
 /*
  * tuple value expression mock object
  */
-class TV  : public AE {
+class TV : public AE {
  public:
-  TV(ExpressionType et, ValueType vt, int vs, int ci,
-     const char *tn, const char *cn, const char *ca) :
-       AE(et, vt, vs), m_columnIdx(ci), m_tableName(strdup(tn)),
-       m_colName(strdup(cn)), m_colAlias(strdup(ca)) {}
+  TV(ExpressionType et, ValueType vt, int vs, int ci, const char *tn,
+     const char *cn, const char *ca)
+      : AE(et, vt, vs),
+        m_columnIdx(ci),
+        m_tableName(strdup(tn)),
+        m_colName(strdup(cn)),
+        m_colAlias(strdup(ca)) {}
 
   ~TV() {
     delete m_tableName;
@@ -157,16 +166,20 @@ class TV  : public AE {
 
   virtual void Serialize(json_spirit::Object &json) {
     AE::Serialize(json);
-    json.push_back(json_spirit::Pair("COLUMN_IDX", json_spirit::Value(m_columnIdx)));
-    json.push_back(json_spirit::Pair("TABLE_NAME", json_spirit::Value(m_tableName)));
-    json.push_back(json_spirit::Pair("COLUMN_NAME", json_spirit::Value(m_colName)));
-    json.push_back(json_spirit::Pair("COLUMN_ALIAS", json_spirit::Value(m_colAlias)));
+    json.push_back(
+        json_spirit::Pair("COLUMN_IDX", json_spirit::Value(m_columnIdx)));
+    json.push_back(
+        json_spirit::Pair("TABLE_NAME", json_spirit::Value(m_tableName)));
+    json.push_back(
+        json_spirit::Pair("COLUMN_NAME", json_spirit::Value(m_colName)));
+    json.push_back(
+        json_spirit::Pair("COLUMN_ALIAS", json_spirit::Value(m_colAlias)));
   }
 
-  int m_columnIdx;      // COLUMN_IDX
-  char * m_tableName;   // TABLE_NAME
-  char * m_colName;     // COLUMN_NAME
-  char * m_colAlias;    // COLUMN_ALIAS
+  int m_columnIdx;    // COLUMN_IDX
+  char *m_tableName;  // TABLE_NAME
+  char *m_colName;    // COLUMN_NAME
+  char *m_colAlias;   // COLUMN_ALIAS
 };
 
 /*
@@ -175,19 +188,18 @@ class TV  : public AE {
    and (a, +, b, * c) returns (a + b) * c
  */
 
-AE * Join(AE *op, AE *left, AE *right) {
+AE *Join(AE *op, AE *left, AE *right) {
   op->left = left;
   op->right = right;
   return op;
 }
 
-AE * MakeTree(AE *tree, std::queue<AE*> &q) {
+AE *MakeTree(AE *tree, std::queue<AE *> &q) {
   if (!q.empty()) {
     AE *left, *right, *op;
     if (tree) {
       left = tree;
-    }
-    else {
+    } else {
       left = q.front();
       q.pop();
     }
@@ -205,29 +217,32 @@ AE * MakeTree(AE *tree, std::queue<AE*> &q) {
 // boilerplate to turn the queue into a real AbstractExpression tree;
 //   return the generated AE tree by reference to allow deletion (the queue
 //   is emptied by the tree building process)
-expression::AbstractExpression * ConvertToExpression(std::queue<AE*> &e) {
+expression::AbstractExpression *ConvertToExpression(std::queue<AE *> &e) {
   AE *tree = MakeTree(nullptr, e);
   json_spirit::Object json = tree->SerializeValue();
-  expression::AbstractExpression * exp = expression::AbstractExpression::CreateExpressionTree(json);
+  expression::AbstractExpression *exp =
+      expression::AbstractExpression::CreateExpressionTree(json);
   delete tree;
   return exp;
 }
-
 
 /*
  * Show that simple addition works with the framework
  */
 TEST(ExpressionTest, SimpleAddition) {
-  std::queue<AE*> e;
+  std::queue<AE *> e;
   storage::Tuple junk;
 
   // 1 + 4
-  e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1, (int64_t)1));
+  e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1,
+                (int64_t)1));
   e.push(new AE(EXPRESSION_TYPE_OPERATOR_PLUS, VALUE_TYPE_TINYINT, 1));
-  e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1, (int64_t)4));
-  std::unique_ptr<expression::AbstractExpression> testexp(ConvertToExpression(e));
+  e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1,
+                (int64_t)4));
+  std::unique_ptr<expression::AbstractExpression> testexp(
+      ConvertToExpression(e));
 
-  Value result = testexp->Evaluate(&junk,nullptr,nullptr);
+  Value result = testexp->Evaluate(&junk, nullptr, nullptr);
   std::cout << (*testexp);
 
   EXPECT_EQ(ValuePeeker::PeekAsBigInt(result), 5LL);
@@ -237,30 +252,36 @@ TEST(ExpressionTest, SimpleAddition) {
  * Show that the associative property is as expected
  */
 TEST(ExpressionTest, SimpleMultiplication) {
-  std::queue<AE*> e;
+  std::queue<AE *> e;
   storage::Tuple junk;
 
   // (1 + 4) * 5
-  e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1, (int64_t)1));
+  e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1,
+                (int64_t)1));
   e.push(new AE(EXPRESSION_TYPE_OPERATOR_PLUS, VALUE_TYPE_TINYINT, 1));
-  e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1, (int64_t)4));
+  e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1,
+                (int64_t)4));
   e.push(new AE(EXPRESSION_TYPE_OPERATOR_MULTIPLY, VALUE_TYPE_TINYINT, 1));
-  e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1, (int64_t)5));
+  e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1,
+                (int64_t)5));
 
   std::unique_ptr<expression::AbstractExpression> e1(ConvertToExpression(e));
-  Value r1 = e1->Evaluate(&junk, nullptr,nullptr);
+  Value r1 = e1->Evaluate(&junk, nullptr, nullptr);
   std::cout << (*e1);
   EXPECT_EQ(ValuePeeker::PeekAsBigInt(r1), 25LL);
 
   // (2 * 5) + 3
-  e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1, (int64_t)2));
+  e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1,
+                (int64_t)2));
   e.push(new AE(EXPRESSION_TYPE_OPERATOR_MULTIPLY, VALUE_TYPE_TINYINT, 1));
-  e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1, (int64_t)5));
+  e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1,
+                (int64_t)5));
   e.push(new AE(EXPRESSION_TYPE_OPERATOR_PLUS, VALUE_TYPE_TINYINT, 1));
-  e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1, (int64_t)3));
+  e.push(new CV(EXPRESSION_TYPE_VALUE_CONSTANT, VALUE_TYPE_TINYINT, 1,
+                (int64_t)3));
 
   std::unique_ptr<expression::AbstractExpression> e2(ConvertToExpression(e));
-  Value r2 = e2->Evaluate(&junk,nullptr,nullptr);
+  Value r2 = e2->Evaluate(&junk, nullptr, nullptr);
   std::cout << (*e2);
   EXPECT_EQ(ValuePeeker::PeekAsBigInt(r2), 13LL);
 }
@@ -271,18 +292,23 @@ TEST(ExpressionTest, SimpleFilter) {
   // EXPRESSION
 
   expression::TupleValueExpression *tup_val_exp =
-      new expression::TupleValueExpression(0, 0, std::string("tablename"), std::string("colname"));
+      new expression::TupleValueExpression(0, 0, std::string("tablename"),
+                                           std::string("colname"));
   expression::ConstantValueExpression *const_val_exp =
-      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(20));
+      new expression::ConstantValueExpression(
+          ValueFactory::GetIntegerValue(20));
   expression::ComparisonExpression<expression::CmpEq> *equal =
-      new expression::ComparisonExpression<expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQ, tup_val_exp, const_val_exp);
+      new expression::ComparisonExpression<expression::CmpEq>(
+          EXPRESSION_TYPE_COMPARE_EQ, tup_val_exp, const_val_exp);
 
   // TUPLE
 
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
-  catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
+  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "A", true);
+  catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "B", true);
   columns.push_back(column1);
   columns.push_back(column2);
   catalog::Schema *schema(new catalog::Schema(columns));
@@ -309,21 +335,28 @@ TEST(ExpressionTest, OrFilter) {
   // WHERE id = 20 OR id=30
 
   expression::TupleValueExpression *tup_val_a =
-      new expression::TupleValueExpression(0, 1, std::string("tablename"), std::string("colname"));
+      new expression::TupleValueExpression(0, 1, std::string("tablename"),
+                                           std::string("colname"));
   expression::ConstantValueExpression *const_val_a =
-      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(20));
+      new expression::ConstantValueExpression(
+          ValueFactory::GetIntegerValue(20));
   expression::ComparisonExpression<expression::CmpEq> *comp_a =
-      new expression::ComparisonExpression<expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQ, tup_val_a, const_val_a);
+      new expression::ComparisonExpression<expression::CmpEq>(
+          EXPRESSION_TYPE_COMPARE_EQ, tup_val_a, const_val_a);
 
   expression::TupleValueExpression *tup_val_b =
-      new expression::TupleValueExpression(0, 1, std::string("tablename"), std::string("colname"));
+      new expression::TupleValueExpression(0, 1, std::string("tablename"),
+                                           std::string("colname"));
   expression::ConstantValueExpression *const_val_b =
-      new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(30));
+      new expression::ConstantValueExpression(
+          ValueFactory::GetIntegerValue(30));
   expression::ComparisonExpression<expression::CmpEq> *comp_b =
-      new expression::ComparisonExpression<expression::CmpEq>(EXPRESSION_TYPE_COMPARE_EQ, tup_val_b, const_val_b);
+      new expression::ComparisonExpression<expression::CmpEq>(
+          EXPRESSION_TYPE_COMPARE_EQ, tup_val_b, const_val_b);
 
   expression::ConjunctionExpression<expression::ConjunctionOr> *predicate =
-      new expression::ConjunctionExpression<expression::ConjunctionOr>(EXPRESSION_TYPE_CONJUNCTION_OR, comp_a, comp_b);
+      new expression::ConjunctionExpression<expression::ConjunctionOr>(
+          EXPRESSION_TYPE_CONJUNCTION_OR, comp_a, comp_b);
 
   std::cout << (*predicate);
 
@@ -331,8 +364,10 @@ TEST(ExpressionTest, OrFilter) {
 
   std::vector<catalog::Column> columns;
 
-  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
-  catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
+  catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "A", true);
+  catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "B", true);
   columns.push_back(column1);
   columns.push_back(column2);
   catalog::Schema *schema(new catalog::Schema(columns));
@@ -354,6 +389,5 @@ TEST(ExpressionTest, OrFilter) {
   delete tuple;
 }
 
-} // End test namespace
-} // End peloton namespace
-
+}  // End test namespace
+}  // End peloton namespace

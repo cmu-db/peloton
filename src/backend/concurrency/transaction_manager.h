@@ -27,97 +27,93 @@ namespace concurrency {
 #define BASE_REF_COUNT 1
 
 class Transaction;
-    
+
 //===--------------------------------------------------------------------===//
 // Transaction Manager
 //===--------------------------------------------------------------------===//
-    
+
 class TransactionManager {
-    
-public:
+ public:
+  TransactionManager();
 
-    TransactionManager();
+  ~TransactionManager();
 
-    ~TransactionManager();
+  // Get next transaction id
+  txn_id_t GetNextTransactionId();
 
-    // Get next transaction id
-    txn_id_t GetNextTransactionId();
+  // Get last commit id for visibility checks
+  cid_t GetLastCommitId() { return last_cid; }
 
-    // Get last commit id for visibility checks
-    cid_t GetLastCommitId() {
-        return last_cid;
-    }
+  //===--------------------------------------------------------------------===//
+  // Transaction processing
+  //===--------------------------------------------------------------------===//
 
-    //===--------------------------------------------------------------------===//
-    // Transaction processing
-    //===--------------------------------------------------------------------===//
+  static TransactionManager &GetInstance();
 
-    static TransactionManager& GetInstance();
+  // Begin a new transaction
+  Transaction *BeginTransaction();
 
-    // Begin a new transaction
-    Transaction *BeginTransaction();
+  // Get entry in transaction table
+  Transaction *GetTransaction(txn_id_t txn_id);
 
-    // Get entry in transaction table
-    Transaction *GetTransaction(txn_id_t txn_id);
+  // End the transaction
+  void EndTransaction(Transaction *txn, bool sync = true);
 
-    // End the transaction
-    void EndTransaction(Transaction *txn, bool sync = true);
+  // Get the list of current transactions
+  std::vector<Transaction *> GetCurrentTransactions();
 
-    // Get the list of current transactions
-    std::vector<Transaction *> GetCurrentTransactions();
+  // validity checks
+  bool IsValid(txn_id_t txn_id);
 
-    // validity checks
-    bool IsValid(txn_id_t txn_id);
+  // COMMIT
 
-    // COMMIT
+  void BeginCommitPhase(Transaction *txn);
 
-    void BeginCommitPhase(Transaction *txn);
+  void CommitModifications(Transaction *txn, bool sync = true);
 
-    void CommitModifications(Transaction *txn, bool sync = true);
+  void CommitPendingTransactions(std::vector<Transaction *> &txns,
+                                 Transaction *txn);
 
-    void CommitPendingTransactions(std::vector<Transaction*>& txns, Transaction *txn);
+  std::vector<Transaction *> EndCommitPhase(Transaction *txn, bool sync = true);
 
-    std::vector<Transaction*> EndCommitPhase(Transaction* txn, bool sync = true);
+  void CommitTransaction(Transaction *txn, bool sync = true);
 
-    void CommitTransaction(Transaction *txn, bool sync = true);
+  // ABORT
 
-    // ABORT
+  void AbortTransaction(Transaction *txn);
 
-    void AbortTransaction(Transaction *txn);
+  // Store PG Transaction
+  Transaction *StartPGTransaction(TransactionId txn_id);
 
-    // Store PG Transaction
-    Transaction *StartPGTransaction(TransactionId txn_id);
+  // Get PG Transaction
+  Transaction *GetPGTransaction(TransactionId txn_id);
 
-    // Get PG Transaction
-    Transaction *GetPGTransaction(TransactionId txn_id);
+ private:
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
 
-private:
+  std::atomic<txn_id_t> next_txn_id;
 
-    //===--------------------------------------------------------------------===//
-    // MEMBERS
-    //===--------------------------------------------------------------------===//
+  std::atomic<cid_t> next_cid;
 
-    std::atomic<txn_id_t> next_txn_id;
+  cid_t last_cid __attribute__((aligned(16)));
 
-    std::atomic<cid_t> next_cid;
+  Transaction *last_txn;
 
-    cid_t last_cid __attribute__((aligned(16)));
+  // Table tracking all active transactions
+  // Our transaction id -> our transaction
+  // Sync access with txn_table_mutex
+  std::map<txn_id_t, Transaction *> txn_table;
 
-    Transaction *last_txn;
+  std::mutex txn_table_mutex;
 
-    // Table tracking all active transactions
-    // Our transaction id -> our transaction
-    // Sync access with txn_table_mutex
-    std::map<txn_id_t, Transaction *> txn_table;
+  // Postgres transaction id -> our transaction
+  // Sync access with pg_txn_table_mutex
+  std::map<TransactionId, Transaction *> pg_txn_table;
 
-    std::mutex txn_table_mutex;
-
-    // Postgres transaction id -> our transaction
-    // Sync access with pg_txn_table_mutex
-    std::map<TransactionId, Transaction *> pg_txn_table;
-
-    std::mutex pg_txn_table_mutex;
+  std::mutex pg_txn_table_mutex;
 };
 
-} // End concurrency namespace
-} // End peloton namespace
+}  // End concurrency namespace
+}  // End peloton namespace
