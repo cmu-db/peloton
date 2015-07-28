@@ -43,12 +43,11 @@ bool BtreeMultimapIndex::InsertEntry(const storage::Tuple *key,
   BTERR status = bt_insertkey(btree_db, key->GetData(), key->GetLength(), 0,
                               &location, sizeof(ItemPointer), unique_keys);
 
-  std::cout << "Key :: " << (*key) << " Status :: " << status << "\n";
-
   if (status == BTERR_ok) {
     return true;
   }
 
+  std::cout << "Key :: " << (*key);
   return false;
 }
 
