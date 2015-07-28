@@ -22,7 +22,7 @@ namespace test {
 // Index Tests
 //===--------------------------------------------------------------------===//
 
-TEST(IndexTests, BtreeMultimapIndexTest) {
+TEST(IndexTests, BtreeUniqueIndexTest) {
   std::vector<std::vector<std::string> > column_names;
   std::vector<catalog::Column> columns;
   std::vector<catalog::Schema *> schemas;
@@ -51,7 +51,7 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   // BTREE INDEX
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-      "btree_index", 125, INDEX_TYPE_BTREE_MULTIMAP,
+      "btree_index", 125, INDEX_TYPE_BTREE_MULTI,
       INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema, true);
 
   storage::VMBackend *backend = new storage::VMBackend();
@@ -94,6 +94,11 @@ TEST(IndexTests, BtreeMultimapIndexTest) {
   index->InsertEntry(key2, item1);
   index->InsertEntry(key3, item1);
   index->InsertEntry(key4, item1);
+
+  auto slots = index->Scan();
+
+  for(auto item : slots)
+    std::cout << item.block << " " << item.offset << "\n";
 
   EXPECT_EQ(false, index->Exists(keynonce));
   EXPECT_EQ(true, index->Exists(key0));

@@ -104,7 +104,7 @@ void Tuple::Copy(const void *source, Pool *pool) {
 
     // Copy each uninlined column doing an allocation for copies.
     for (oid_t column_itr = 0; column_itr < uninlineable_column_count;
-         column_itr++) {
+        column_itr++) {
       const oid_t unlineable_column_id =
           tuple_schema->GetUninlinedColumn(column_itr);
 
@@ -149,7 +149,7 @@ size_t Tuple::ExportSerializationSize() const {
         // actual character data without null string terminator.
         if (!GetValue(column_itr).IsNull()) {
           bytes += (sizeof(int32_t) +
-                    ValuePeeker::PeekObjectLength(GetValue(column_itr)));
+              ValuePeeker::PeekObjectLength(GetValue(column_itr)));
         }
         break;
 
@@ -173,11 +173,11 @@ size_t Tuple::GetUninlinedMemorySize() const {
     for (int column_itr = 0; column_itr < column_count; ++column_itr) {
       // peekObjectLength is unhappy with non-varchar
       if ((GetType(column_itr) == VALUE_TYPE_VARCHAR ||
-           (GetType(column_itr) == VALUE_TYPE_VARBINARY)) &&
+          (GetType(column_itr) == VALUE_TYPE_VARBINARY)) &&
           !tuple_schema->IsInlined(column_itr)) {
         if (!GetValue(column_itr).IsNull()) {
           bytes += (sizeof(int32_t) +
-                    ValuePeeker::PeekObjectLength(GetValue(column_itr)));
+              ValuePeeker::PeekObjectLength(GetValue(column_itr)));
         }
       }
     }
@@ -366,6 +366,12 @@ size_t Tuple::HashCode(size_t seed) const {
   }
 
   return seed;
+}
+
+void Tuple::MoveToTuple(const void *tuple_data_) {
+  assert(tuple_schema);
+  assert(tuple_data);
+  tuple_data = reinterpret_cast<char*>(const_cast<void*>(tuple_data_));
 }
 
 size_t Tuple::HashCode() const {
