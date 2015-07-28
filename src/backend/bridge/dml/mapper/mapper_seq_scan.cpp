@@ -44,18 +44,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   LOG_INFO("SeqScan: database oid %u table oid %u", database_oid, table_oid);
 
   /* Grab and transform the predicate. */
-  expression::AbstractExpression* predicate = nullptr;
-
-  if (ss_plan_state->ps.qual) {
-    const ExprState* expr_state =
-        reinterpret_cast<ExprState*>(ss_plan_state->ps.qual);
-    predicate = ExprTransformer::TransformExpr(expr_state);
-  }
-
-  if (predicate) {
-    LOG_INFO("Predicate :");
-    std::cout << predicate->DebugInfo(" ");
-  }
+  expression::AbstractExpression* predicate = BuildPredicateFromQual(ss_plan_state->ps.qual);
 
   /*
    * Grab and transform the projection information.
@@ -65,8 +54,8 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
 
   auto schema = target_table->GetSchema();
 
-  // We must relax the column count according to from tuple_desc
-  // because user may type 'SELECT a, b, a, a'.
+  // User may type 'SELECT a, b, a, a',
+  // so the output column count may > the schema's column count
   std::unique_ptr<const planner::ProjectInfo> project_info(
       BuildProjectInfo(ss_plan_state->ps.ps_ProjInfo,
                         ss_plan_state->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts));

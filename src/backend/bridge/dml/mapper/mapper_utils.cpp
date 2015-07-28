@@ -144,6 +144,27 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
                                   std::move(direct_map_list));
 }
 
+
+
+/**
+ * @brief Transform a PG qual list to an expression tree.
+ *
+ * This is intended for all Scan types.
+ * In PG, PlanState.qual
+ * is used as the only predicate by SeqScan
+ * and used for non-key predicate by IndexScan
+ */
+expression::AbstractExpression*
+PlanTransformer::BuildPredicateFromQual(List* qual){
+
+  expression::AbstractExpression* predicate =
+      ExprTransformer::TransformExpr(
+          reinterpret_cast<ExprState*>(qual) );
+  LOG_INFO("Predicate:\n %s \n", predicate->DebugInfo("- ").c_str());
+
+  return predicate;
+}
+
 /**
  * @brief Transform a DirectMapList to a one-dimensional column list.
  * This is intended to incorporate a pure-direct-map projection into a scan.

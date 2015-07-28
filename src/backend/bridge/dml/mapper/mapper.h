@@ -85,8 +85,15 @@ class PlanTransformer {
   static const planner::ProjectInfo *BuildProjectInfo(
       const ProjectionInfo *pg_proj_info, oid_t column_count);
 
+  static expression::AbstractExpression* BuildPredicateFromQual(List* qual);
+
   static const std::vector<oid_t> BuildColumnListFromDirectMap(planner::ProjectInfo::DirectMapList dmlist);
+
   static PelotonJoinType TransformJoinType(const JoinType type);
+
+
+
+
 };
 
 }  // namespace bridge
