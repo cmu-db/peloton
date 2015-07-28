@@ -176,7 +176,7 @@ PlanTransformer::BuildColumnListFromDirectMap(planner::ProjectInfo::DirectMapLis
  *
  * We may want to have a uniform JoinType enum, instead of a transformation
  */
-const PelotonJoinType PlanTransformer::TransformJoinType(const JoinType type) {
+PelotonJoinType PlanTransformer::TransformJoinType(const JoinType type) {
   switch (type) {
     case JOIN_INNER:
       return JOIN_TYPE_INNER;
