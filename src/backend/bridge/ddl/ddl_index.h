@@ -99,7 +99,7 @@ class IndexInfo {
   std::string table_name;
 
   // Implementation type
-  IndexType method_type = INDEX_TYPE_BTREE_MULTIMAP;
+  IndexType method_type = INDEX_TYPE_BTREE_MULTI;
 
   IndexConstraintType constraint_type = INDEX_CONSTRAINT_TYPE_DEFAULT;
 

@@ -166,6 +166,9 @@ class Tuple : public AbstractTuple {
   void SetFromTuple(const storage::Tuple *tuple,
                     const std::vector<oid_t> &columns);
 
+  // Used to wrap read only tuples in indexing code.
+  void MoveToTuple(const void *address);
+
   //===--------------------------------------------------------------------===//
   // Serialization utilities
   //===--------------------------------------------------------------------===//
