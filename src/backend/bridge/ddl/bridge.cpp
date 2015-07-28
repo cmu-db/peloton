@@ -205,6 +205,15 @@ float Bridge::GetNumberOfTuples(Oid relation_id) {
 Oid Bridge::GetCurrentDatabaseOid(void) { return MyDatabaseId; }
 
 /**
+ * @brief Printing the current database information out
+ */
+Oid Bridge::GetDbInfo(void) {
+  printf("Mydatabase Id %u \n", MyDatabaseId);
+  printf("MydatabaseTableSpace Id %u \n", MyDatabaseTableSpace);
+  printf("Mydatabase path %s \n", DatabasePath);
+}
+
+/**
  * @Determine whether table exists in the *current* database or not
  * @param table_name table name
  * @return true or false depending on whether table exists or not.
