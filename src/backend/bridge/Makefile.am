@@ -21,6 +21,7 @@ bridge_FILES = \
 			   backend/bridge/ddl/tests/bridge_test_mix.cpp \
 			   backend/bridge/dml/mapper/mapper.cpp \
 			   backend/bridge/dml/mapper/mapper_modify_table.cpp \
+			   backend/bridge/dml/mapper/mapper_nested_loop_join.cpp \
 			   backend/bridge/dml/mapper/mapper_seq_scan.cpp \
 			   backend/bridge/dml/mapper/mapper_index_scan.cpp \
 			   backend/bridge/dml/mapper/mapper_limit.cpp \
