@@ -89,6 +89,7 @@ static void __attribute__((unused)) peloton_sigabrt_handler(SIGNAL_ARGS);
 
 static void peloton_setheader(Peloton_MsgHdr *hdr,
                               PelotonMsgType mtype,
+                              Oid MyDatabaseId,
                               TransactionId txn_id,
                               MemoryContext top_transaction_context,
                               MemoryContext cur_transaction_context);
@@ -750,10 +751,12 @@ peloton_init(void) {
 static void
 peloton_setheader(Peloton_MsgHdr *hdr,
                   PelotonMsgType mtype,
+                  Oid MyDatabaseId,
                   TransactionId txn_id,
                   MemoryContext top_transaction_context,
                   MemoryContext cur_transaction_context) {
   hdr->m_type = mtype;
+  hdr->m_dbid = MyDatabaseId;
   hdr->m_top_transaction_context = top_transaction_context;
   hdr->m_cur_transaction_context = cur_transaction_context;
   hdr->m_txn_id = txn_id;
@@ -803,6 +806,7 @@ peloton_send_ping(void) {
   peloton_setheader(&msg.m_hdr,
                     PELOTON_MTYPE_DUMMY,
                     InvalidOid,
+                    InvalidOid,
                     NULL,
                     NULL);
 
@@ -841,6 +845,7 @@ peloton_send_dml(Peloton_Status  *status,
 
   peloton_setheader(&msg.m_hdr,
                     PELOTON_MTYPE_DML,
+                    MyDatabaseId,
                     transaction_id,
                     top_transaction_context,
                     cur_transaction_context);
@@ -875,6 +880,7 @@ peloton_send_ddl(Peloton_Status  *status,
 
   peloton_setheader(&msg.m_hdr,
                     PELOTON_MTYPE_DDL,
+                    MyDatabaseId,
                     transaction_id,
                     top_transaction_context,
                     cur_transaction_context);
@@ -907,6 +913,7 @@ peloton_process_dml(Peloton_MsgDML *msg) {
     return;
   }
 
+  MyDatabaseId = msg->m_hdr.m_dbid;
   TopTransactionContext = msg->m_hdr.m_top_transaction_context;
   CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
   TransactionId txn_id = msg->m_hdr.m_txn_id;
@@ -934,8 +941,8 @@ peloton_process_dml(Peloton_MsgDML *msg) {
 
   }
   else {
-    /* Could not get the plan */
-    msg->m_status->m_result = peloton::RESULT_FAILURE;
+      /* Could not get the plan */
+      msg->m_status->m_result = peloton::RESULT_FAILURE;
   }
 
 }
@@ -961,6 +968,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
     return;
   }
 
+  MyDatabaseId = msg->m_hdr.m_dbid;
   TopTransactionContext = msg->m_hdr.m_top_transaction_context;
   CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
   TransactionId txn_id = msg->m_hdr.m_txn_id;
