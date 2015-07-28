@@ -396,7 +396,7 @@ std::string Tuple::GetInfo() const {
     } else {
       os << GetValue(column_itr);
     }
-    os << ")\n";
+    os << ")";
   }
 
   os << std::endl;
