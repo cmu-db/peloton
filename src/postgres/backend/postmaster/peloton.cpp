@@ -941,8 +941,17 @@ peloton_process_dml(Peloton_MsgDML *msg) {
 
   }
   else {
+    // TODO :: Special case for AlterTable
+    // Whenever AlterTable command is executed, it needs scans/rewrites tables
+    // at the end. At this moment, 'MergeJoin'/'HashJoin' is required. However, HashJoin
+    // has not been implemented yet in TransformPlan, so we set this special case 
+    // NOTE :: Remove this special case with 'T_MergeJoin/T_HashJoin' case in TransformPlan
+    if (nodeTag(planstate->plan) == T_MergeJoin || nodeTag(planstate->plan) == T_HashJoin ) {
+      msg->m_status->m_result = peloton::RESULT_SUCCESS;
+    }else{
       /* Could not get the plan */
       msg->m_status->m_result = peloton::RESULT_FAILURE;
+    }
   }
 
 }
