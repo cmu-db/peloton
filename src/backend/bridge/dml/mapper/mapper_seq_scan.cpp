@@ -43,10 +43,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   assert(target_table);
   LOG_INFO("SeqScan: database oid %u table oid %u", database_oid, table_oid);
 
-  /*
-   * Grab and transform the predicate.
-   * And remember to free it at some point
-   */
+  /* Grab and transform the predicate. */
   expression::AbstractExpression* predicate = nullptr;
 
   if (ss_plan_state->ps.qual) {

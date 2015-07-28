@@ -164,6 +164,7 @@ PlanTransformer::BuildColumnListFromDirectMap(planner::ProjectInfo::DirectMapLis
   std::vector<oid_t> rv;
 
   for(auto map : dmlist) {
+    assert(map.second.first == 0);
     rv.emplace_back(map.second.second);
   }
 
