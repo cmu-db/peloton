@@ -29,7 +29,7 @@ namespace index {
  * the TypeMaxValue template parameter.
  */
 template<typename SignedType, int64_t TypeMaxValue>
-inline static SignedType convertUnsignedValueToSignedValue(uint64_t value) {
+inline static SignedType ConvertUnsignedValueToSignedValue(uint64_t value) {
   int64_t retval = static_cast<int64_t>(value);
   retval -= TypeMaxValue + 1;
   return static_cast<SignedType>(retval);
@@ -40,7 +40,7 @@ inline static SignedType convertUnsignedValueToSignedValue(uint64_t value) {
  * to prevent overflow.
  */
 template<>
-inline int64_t convertUnsignedValueToSignedValue< int64_t, INT64_MAX>(uint64_t value) {
+inline int64_t ConvertUnsignedValueToSignedValue< int64_t, INT64_MAX>(uint64_t value) {
   if (value > static_cast<uint64_t>(INT64_MAX) + 1) {
     value -= INT64_MAX;
     value--;
@@ -58,9 +58,9 @@ inline int64_t convertUnsignedValueToSignedValue< int64_t, INT64_MAX>(uint64_t v
  * Convert from a signed value to an unsigned value. The max value for the type is supplied as a template
  * parameter. int64_t is used for all types to prevent overflow.
  */
-template<int64_t TypeMaxValue, typename signedValueType, typename unsignedValueType>
-inline static unsignedValueType ConvertSignedValueToUnsignedValue(signedValueType value) {
-  return static_cast<unsignedValueType>(value + TypeMaxValue + 1);
+template<int64_t TypeMaxValue, typename SignedValueType, typename UnsignedValueType>
+inline static UnsignedValueType ConvertSignedValueToUnsignedValue(SignedValueType value) {
+  return static_cast<UnsignedValueType>(value + TypeMaxValue + 1);
 }
 
 /*
@@ -147,31 +147,31 @@ class IntsKey {
     return retval;
   }
 
-  std::string Debug( const catalog::Schema *keySchema) const {
+  std::string Debug( const catalog::Schema *key_schema) const {
     std::ostringstream buffer;
     int key_offset = 0;
     int intra_key_offset = sizeof(uint64_t) - 1;
-    const int GetColumnCount = keySchema->GetColumnCount();
+    const int GetColumnCount = key_schema->GetColumnCount();
     for (int ii = 0; ii < GetColumnCount; ii++) {
-      switch(keySchema->GetColumn(ii).column_type) {
+      switch(key_schema->GetColumn(ii).column_type) {
         case VALUE_TYPE_BIGINT: {
           const uint64_t key_value = ExtractKeyValue<uint64_t>(key_offset, intra_key_offset);
-          buffer << convertUnsignedValueToSignedValue< int64_t, INT64_MAX>(key_value) << ",";
+          buffer << ConvertUnsignedValueToSignedValue< int64_t, INT64_MAX>(key_value) << ",";
           break;
         }
         case VALUE_TYPE_INTEGER: {
           const uint64_t key_value = ExtractKeyValue<uint32_t>(key_offset, intra_key_offset);
-          buffer << convertUnsignedValueToSignedValue< int32_t, INT32_MAX>(key_value) << ",";
+          buffer << ConvertUnsignedValueToSignedValue< int32_t, INT32_MAX>(key_value) << ",";
           break;
         }
         case VALUE_TYPE_SMALLINT: {
           const uint64_t key_value = ExtractKeyValue<uint16_t>(key_offset, intra_key_offset);
-          buffer << convertUnsignedValueToSignedValue< int16_t, INT16_MAX>(key_value) << ",";
+          buffer << ConvertUnsignedValueToSignedValue< int16_t, INT16_MAX>(key_value) << ",";
           break;
         }
         case VALUE_TYPE_TINYINT: {
           const uint64_t key_value = ExtractKeyValue<uint8_t>(key_offset, intra_key_offset);
-          buffer << static_cast<int64_t>(convertUnsignedValueToSignedValue< int8_t, INT8_MAX>(key_value)) << ",";
+          buffer << static_cast<int64_t>(ConvertUnsignedValueToSignedValue< int8_t, INT8_MAX>(key_value)) << ",";
           break;
         }
         default:
@@ -185,12 +185,12 @@ class IntsKey {
   inline void SetFromKey(const storage::Tuple *tuple) {
     ::memset(data, 0, KeySize * sizeof(uint64_t));
     assert(tuple);
-    const catalog::Schema *keySchema = tuple->GetSchema();
-    const int GetColumnCount = keySchema->GetColumnCount();
+    const catalog::Schema *key_schema = tuple->GetSchema();
+    const int GetColumnCount = key_schema->GetColumnCount();
     int key_offset = 0;
     int intra_key_offset = sizeof(uint64_t) - 1;
     for (int ii = 0; ii < GetColumnCount; ii++) {
-      switch(keySchema->GetColumn(ii).column_type) {
+      switch(key_schema->GetColumn(ii).column_type) {
         case VALUE_TYPE_BIGINT: {
           const int64_t value = ValuePeeker::PeekBigInt(tuple->GetValue(ii));
           const uint64_t key_value = ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(value);
@@ -222,13 +222,14 @@ class IntsKey {
     }
   }
 
-  inline void SetFromTuple(const storage::Tuple *tuple, const int *indices, const catalog::Schema *keySchema) {
+  inline void SetFromTuple(const storage::Tuple *tuple, const int *indices,
+                           const catalog::Schema *key_schema) {
     ::memset(data, 0, KeySize * sizeof(uint64_t));
-    const int GetColumnCount = keySchema->GetColumnCount();
+    const int GetColumnCount = key_schema->GetColumnCount();
     int key_offset = 0;
     int intra_key_offset = sizeof(uint64_t) - 1;
     for (int ii = 0; ii < GetColumnCount; ii++) {
-      switch(keySchema->GetColumn(ii).column_type) {
+      switch(key_schema->GetColumn(ii).column_type) {
         case VALUE_TYPE_BIGINT: {
           const int64_t value = ValuePeeker::PeekBigInt(tuple->GetValue(indices[ii]));
           const uint64_t key_value = ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(value);
@@ -271,7 +272,8 @@ class IntsKey {
 template <std::size_t KeySize>
 class IntsComparator {
  public:
-  IntsComparator(index::IndexMetadata *metadata) : key_schema(metadata->GetKeySchema()) {}
+  IntsComparator(index::IndexMetadata *metadata) :
+    key_schema(metadata->GetKeySchema()) {}
 
   inline bool operator()(const IntsKey<KeySize> &lhs, const IntsKey<KeySize> &rhs) const {
     // lexicographical compare could be faster for fixed N
@@ -301,7 +303,8 @@ template <std::size_t KeySize>
 class IntsEqualityChecker {
  public:
 
-  IntsEqualityChecker(index::IndexMetadata *metadata) : key_schema(metadata->GetKeySchema()) {}
+  IntsEqualityChecker(index::IndexMetadata *metadata) :
+    key_schema(metadata->GetKeySchema()) {}
 
   inline bool operator()(const IntsKey<KeySize> &lhs, const IntsKey<KeySize> &rhs) const {
     for (unsigned int ii = 0; ii < KeySize; ii++) {
@@ -325,7 +328,7 @@ class IntsEqualityChecker {
 template <std::size_t KeySize>
 struct IntsHasher : std::unary_function<IntsKey<KeySize>, std::size_t>
 {
-  IntsHasher(catalog::Schema *keySchema) {}
+  IntsHasher(catalog::Schema *key_schema) {}
 
   inline size_t operator()(IntsKey<KeySize> const& p) const
   {
@@ -349,10 +352,11 @@ class GenericKey {
     ::memcpy(data, tuple->GetData(), tuple->GetSchema()->GetLength());
   }
 
-  inline void SetFromTuple(const storage::Tuple *tuple, const int *indices, const catalog::Schema *keySchema) {
-    storage::Tuple key_tuple(keySchema);
+  inline void SetFromTuple(const storage::Tuple *tuple, const int *indices,
+                           const catalog::Schema *key_schema) {
+    storage::Tuple key_tuple(key_schema);
     key_tuple.MoveToTuple(reinterpret_cast<void*>(data));
-    for (int col_itr = 0; col_itr < keySchema->GetColumnCount(); col_itr++) {
+    for (int col_itr = 0; col_itr < key_schema->GetColumnCount(); col_itr++) {
       key_tuple.SetValue(col_itr, tuple->GetValue(indices[col_itr]));
     }
   }
@@ -374,8 +378,10 @@ class GenericComparator {
   GenericComparator(index::IndexMetadata *metadata) : schema(metadata->GetKeySchema()) {}
 
   inline bool operator()(const GenericKey<KeySize> &lhs, const GenericKey<KeySize> &rhs) const {
-    storage::Tuple lhTuple(schema); lhTuple.MoveToTuple(reinterpret_cast<const void*>(&lhs));
-    storage::Tuple rhTuple(schema); rhTuple.MoveToTuple(reinterpret_cast<const void*>(&rhs));
+    storage::Tuple lhTuple(schema);
+    lhTuple.MoveToTuple(reinterpret_cast<const void*>(&lhs));
+    storage::Tuple rhTuple(schema);
+    rhTuple.MoveToTuple(reinterpret_cast<const void*>(&rhs));
     // lexicographical compare could be faster for fixed N
     int diff = lhTuple.Compare(rhTuple);
     return diff < 0;
@@ -394,8 +400,10 @@ class GenericEqualityChecker {
   GenericEqualityChecker(index::IndexMetadata *metadata) : schema(metadata->GetKeySchema()) {}
 
   inline bool operator()(const GenericKey<KeySize> &lhs, const GenericKey<KeySize> &rhs) const {
-    storage::Tuple lhTuple(schema); lhTuple.MoveToTuple(reinterpret_cast<const void*>(&lhs));
-    storage::Tuple rhTuple(schema); rhTuple.MoveToTuple(reinterpret_cast<const void*>(&rhs));
+    storage::Tuple lhTuple(schema);
+    lhTuple.MoveToTuple(reinterpret_cast<const void*>(&lhs));
+    storage::Tuple rhTuple(schema);
+    rhTuple.MoveToTuple(reinterpret_cast<const void*>(&rhs));
     return lhTuple.EqualsNoSchemaCheck(rhTuple);
   }
 
@@ -461,7 +469,8 @@ class TupleKey {
   }
 
   // Set a key from a table-schema tuple.
-  inline void SetFromTuple(const storage::Tuple *tuple, const int *indices, const catalog::Schema *keySchema) {
+  inline void SetFromTuple(const storage::Tuple *tuple, const int *indices,
+                           const catalog::Schema *key_schema) {
     assert(tuple);
     assert(indices);
     column_indices = indices;
@@ -498,7 +507,8 @@ class TupleKey {
 
 class TupleKeyComparator {
  public:
-  TupleKeyComparator(index::IndexMetadata *metadata) : schema(metadata->GetKeySchema()) {
+  TupleKeyComparator(index::IndexMetadata *metadata) :
+    schema(metadata->GetKeySchema()) {
   }
 
   // return true if lhs < rhs
@@ -527,7 +537,8 @@ class TupleKeyComparator {
 
 class TupleKeyEqualityChecker {
  public:
-  TupleKeyEqualityChecker(index::IndexMetadata *metadata) : schema(metadata->GetKeySchema()) {
+  TupleKeyEqualityChecker(index::IndexMetadata *metadata) :
+    schema(metadata->GetKeySchema()) {
   }
 
   // return true if lhs == rhs

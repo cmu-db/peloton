@@ -927,6 +927,9 @@ peloton_process_dml(Peloton_MsgDML *msg) {
     }
     catch(const std::exception &exception) {
       elog(ERROR, "Peloton exception :: %s", exception.what());
+
+      peloton::GetStackTrace();
+
       msg->m_status->m_result = peloton::RESULT_FAILURE;
     }
 
