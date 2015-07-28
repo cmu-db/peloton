@@ -170,5 +170,26 @@ PlanTransformer::BuildColumnListFromDirectMap(planner::ProjectInfo::DirectMapLis
   return rv;
 }
 
+
+/**
+ * Convet a Postgres JoinType into a Peloton JoinType
+ *
+ * We may want to have a uniform JoinType enum, instead of a transformation
+ */
+const PelotonJoinType PlanTransformer::TransformJoinType(const JoinType type) {
+  switch (type) {
+    case JOIN_INNER:
+      return JOIN_TYPE_INNER;
+    case JOIN_FULL:
+      return JOIN_TYPE_OUTER;
+    case JOIN_LEFT:
+      return JOIN_TYPE_LEFT;
+    case JOIN_RIGHT:
+      return JOIN_TYPE_RIGHT;
+    default:
+      return JOIN_TYPE_INVALID;
+  }
+}
+
 }  // namespace bridge
 }  // namespace peloton

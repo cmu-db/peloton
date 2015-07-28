@@ -1,0 +1,59 @@
+/*-------------------------------------------------------------------------
+ *
+ * mapper_seq_scan.cpp
+ * file description
+ *
+ * Copyright(c) 2015, CMU
+ *
+ * /peloton/src/backend/bridge/dml/mapper/mapper_seq_scan.cpp
+ *
+ *-------------------------------------------------------------------------
+ */
+
+#include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/planner/nested_loop_join_node.h"
+
+namespace peloton {
+namespace bridge {
+
+//===--------------------------------------------------------------------===//
+// Nested Loop Join
+//===--------------------------------------------------------------------===//
+
+/**
+ * @brief Convert a Postgres NestLoop into a Peloton SeqScanNode.
+ * @return Pointer to the constructed AbstractPlanNode.
+ */
+planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
+    const NestLoopState* nl_plan_state) {
+
+  JoinState *js = &(nl_plan_state->js);
+  PelotonJoinType jointype = PlanTransformer::TransformJoinType(js->jointype);
+  if (jointype == JOIN_TYPE_INVALID) {
+    LOG_ERROR("unsupported join type: %d", js->jointype);
+    return nullptr;
+  }
+
+  expression::AbstractExpression *join_filter = ExprTransformer::TransformExpr(
+      reinterpret_cast<ExprState *>(js->joinqual));
+
+  expression::AbstractExpression *plan_filter = ExprTransformer::TransformExpr(
+      reinterpret_cast<ExprState *>(js->ps.qual));
+
+  /* TODO: do we need to consider target list here? */
+
+  planner::AbstractPlanNode *outer = PlanTransformer::TransformPlan(outerPlanState(nl_plan_state));
+  planner::AbstractPlanNode *inner = PlanTransformer::TransformPlan(innerPlanState(nl_plan_state));
+
+  /* Construct and return the Peloton plan node */
+  auto plan_node = new planner::NestedLoopJoinNode(
+      expression::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
+                                     join_filter, plan_filter));
+  plan_node->SetJoinType(jointype);
+  plan_node->AddChild(outer);
+  plan_node->AddChild(inner);
+  return plan_node;
+}
+
+}  // namespace bridge
+}  // namespace peloton
