@@ -107,8 +107,8 @@ class InlinedComparisonExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OptimizedInlinedComparisonExpression:" +
             GetTypeName(this->expr_type) + "\n" +
-            left_expr->DebugInfo(spacer + " ") +
-            right_expr->DebugInfo(spacer + " "));
+            left_expr->DebugInfo(" " + spacer) +
+            right_expr->DebugInfo(" " + spacer));
   }
 
  private:
