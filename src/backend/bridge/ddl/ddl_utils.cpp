@@ -108,24 +108,27 @@ void DDLUtils::ParsingCreateStmt(CreateStmt* Cstmt,
           conname = "";
         }
 
-        catalog::Constraint* constraint;
-
         switch(contype){
-
-          case CONSTRAINT_TYPE_NULL:
-            constraint = new catalog::Constraint(contype, conname);
-            break;
-          case CONSTRAINT_TYPE_NOTNULL:
-            constraint = new catalog::Constraint(contype, conname);
-            break;
-          case CONSTRAINT_TYPE_CHECK:
-            constraint = new catalog::Constraint(contype, conname, ConstraintNode->raw_expr);
-            break;
-          case CONSTRAINT_TYPE_PRIMARY:
-            constraint = new catalog::Constraint(contype, conname);
-            break;
           case CONSTRAINT_TYPE_UNIQUE:
             continue;
+
+          case CONSTRAINT_TYPE_NULL:
+          case CONSTRAINT_TYPE_NOTNULL:
+          case CONSTRAINT_TYPE_PRIMARY:{
+            catalog::Constraint constraint(contype, conname);
+            column_constraints.push_back(constraint);
+            break;
+          }
+          case CONSTRAINT_TYPE_CHECK:{
+            catalog::Constraint constraint(contype, conname, ConstraintNode->raw_expr);
+            column_constraints.push_back(constraint);
+            break;
+          }
+          case CONSTRAINT_TYPE_DEFAULT:{
+            catalog::Constraint constraint(contype, conname, coldef->raw_default);
+            column_constraints.push_back(constraint);
+            break;
+          }
           case CONSTRAINT_TYPE_FOREIGN:
           {
             // REFERENCE TABLE NAME AND ACTION OPTION
@@ -168,14 +171,10 @@ void DDLUtils::ParsingCreateStmt(CreateStmt* Cstmt,
           }
           default:
           {
-            constraint = new catalog::Constraint(contype, conname);
             LOG_WARN("Unrecognized constraint type %d\n", (int) contype);
             break;
           }
         }
-
-
-        column_constraints.push_back(*constraint);
       }
     }// end of parsing constraint
 
