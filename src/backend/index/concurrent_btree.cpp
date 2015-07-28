@@ -10,12 +10,12 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/index/concurrent_btree.h"
-
 #include <sstream>
 #include <iostream>
 
+#include "backend/index/concurrent_btree.h"
 #include "backend/storage/tuple.h"
+#include "backend/common/logger.h"
 
 namespace peloton {
 namespace index {
@@ -718,23 +718,27 @@ int bt_loadpage(BtDb *bt, BtPageSet *set, char *key, uint lvl, BtLock lock) {
 
     if (!set->page->kill)
       if ((slot = bt_findslot(set->page, key, bt->key_schema))) {
-        if (drill == lvl) return slot;
+        if (drill == lvl) {
+          return slot;
+        }
 
         // find next non-dead slot -- the fence key if nothing else
 
         while (slotptr(set->page, slot)->dead)
-          if (slot++ < set->page->cnt)
+          if (slot++ < set->page->cnt) {
             continue;
-          else
+          }
+          else {
             return bt->err = BTERR_struct, 0;
+          }
 
         page_no = bt_getid(valptr(set->page, slot)->value);
         drill--;
+        LOG_TRACE("page_no %llu slot %u", page_no, slot);
         continue;
       }
 
     //  or slide right into next page
-
     page_no = bt_getid(set->page->right);
   } while (page_no);
 
