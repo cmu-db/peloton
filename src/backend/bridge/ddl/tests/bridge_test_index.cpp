@@ -45,7 +45,7 @@ void BridgeTest::DDL_CreateIndex_TEST_WITH_INVALID_OID() {
   IndexInfo* index_info;
   index_info =
       new IndexInfo("test_index_with_invalid_oid", INVALID_OID, table_name,
-                    INDEX_TYPE_BTREE_MULTI, INDEX_CONSTRAINT_TYPE_DEFAULT,
+                    INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_DEFAULT,
                     true, key_column_names);
 
   bool status = DDLIndex::CreateIndex(*index_info);
@@ -70,7 +70,7 @@ void BridgeTest::DDL_CreateIndex_TEST_WITH_NO_TABLE_NAME() {
   IndexInfo* index_info;
   index_info =
       new IndexInfo("test_index_with_no_table_name", 30001, table_name,
-                    INDEX_TYPE_BTREE_MULTI, INDEX_CONSTRAINT_TYPE_DEFAULT,
+                    INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_DEFAULT,
                     true, key_column_names);
 
   bool status = DDLIndex::CreateIndex(*index_info);
@@ -104,7 +104,7 @@ void BridgeTest::DDL_CreateIndex_TEST_WITH_TABLE() {
 
   IndexInfo* index_info;
   index_info = new IndexInfo(
-      "simple_index", 30003, table_name, INDEX_TYPE_BTREE_MULTI,
+      "simple_index", 30003, table_name, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_DEFAULT, true, key_column_names);
 
   // Create an index
