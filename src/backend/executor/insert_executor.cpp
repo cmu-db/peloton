@@ -27,8 +27,7 @@ namespace executor {
  */
 InsertExecutor::InsertExecutor(planner::AbstractPlanNode *node,
                                ExecutorContext *executor_context)
-: AbstractExecutor(node, executor_context) {
-}
+    : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -47,9 +46,7 @@ bool InsertExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool InsertExecutor::DExecute() {
-
-  if(done_)
-    return false;
+  if (done_) return false;
 
   assert(!done_);
 
@@ -75,8 +72,10 @@ bool InsertExecutor::DExecute() {
     auto schema = target_table->GetSchema();
     const catalog::Schema *tile_schema = physical_tile->GetSchema();
 
-    if(*schema != *tile_schema) {
-      LOG_ERROR("Insert executor :: table schema and logical tile schema don't match \n");
+    if (*schema != *tile_schema) {
+      LOG_ERROR(
+          "Insert executor :: table schema and logical tile schema don't match "
+          "\n");
       return false;
     }
 
@@ -84,9 +83,10 @@ bool InsertExecutor::DExecute() {
     storage::Tuple tuple(physical_tile->GetSchema());
 
     while (tile_iterator.Next(tuple)) {
-      ItemPointer location = target_table->InsertTuple(transaction_->GetTransactionId(), &tuple);
+      ItemPointer location =
+          target_table->InsertTuple(transaction_->GetTransactionId(), &tuple);
       if (location.block == INVALID_OID) {
-        auto& txn_manager = concurrency::TransactionManager::GetInstance();
+        auto &txn_manager = concurrency::TransactionManager::GetInstance();
         txn_manager.AbortTransaction(transaction_);
         transaction_->SetResult(Result::RESULT_FAILURE);
         return false;
@@ -98,7 +98,6 @@ bool InsertExecutor::DExecute() {
   }
   // Inserting a collection of tuples from plan node
   else if (children_.size() == 0) {
-
     LOG_TRACE("Insert executor :: 0 child \n");
 
     // Extract expressions from plan node and construct the tuple.
@@ -107,17 +106,20 @@ bool InsertExecutor::DExecute() {
     std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
     auto project_info = node.GetProjectInfo();
 
-    assert(project_info->GetDirectMapList().size() == 0); // There should be no direct maps
+    assert(project_info->GetDirectMapList().size() ==
+           0);  // There should be no direct maps
 
-    for(auto target : project_info->GetTargetList()) {
-      peloton::Value value = target.second->Evaluate(nullptr, nullptr, executor_context_);
+    for (auto target : project_info->GetTargetList()) {
+      peloton::Value value =
+          target.second->Evaluate(nullptr, nullptr, executor_context_);
       tuple->SetValue(target.first, value);
     }
 
     // Carry out insertion
-    ItemPointer location = target_table->InsertTuple(transaction_->GetTransactionId(), tuple.get());
+    ItemPointer location = target_table->InsertTuple(
+        transaction_->GetTransactionId(), tuple.get());
     if (location.block == INVALID_OID) {
-      auto& txn_manager = concurrency::TransactionManager::GetInstance();
+      auto &txn_manager = concurrency::TransactionManager::GetInstance();
       txn_manager.AbortTransaction(transaction_);
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
@@ -131,5 +133,5 @@ bool InsertExecutor::DExecute() {
   return true;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

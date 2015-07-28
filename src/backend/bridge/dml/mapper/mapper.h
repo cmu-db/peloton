@@ -29,12 +29,11 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class PlanTransformer {
-
  public:
   PlanTransformer(const PlanTransformer &) = delete;
-  PlanTransformer& operator=(const PlanTransformer &) = delete;
+  PlanTransformer &operator=(const PlanTransformer &) = delete;
   PlanTransformer(PlanTransformer &&) = delete;
-  PlanTransformer& operator=(PlanTransformer &&) = delete;
+  PlanTransformer &operator=(PlanTransformer &&) = delete;
 
   PlanTransformer(){};
 
@@ -48,30 +47,42 @@ class PlanTransformer {
   static const ValueArray BuildParams(const ParamListInfo param_list);
 
  private:
+  static planner::AbstractPlanNode *TransformModifyTable(
+      const ModifyTableState *plan_state);
 
-  static planner::AbstractPlanNode *TransformModifyTable(const ModifyTableState *plan_state);
+  static planner::AbstractPlanNode *TransformInsert(
+      const ModifyTableState *plan_state);
+  static planner::AbstractPlanNode *TransformUpdate(
+      const ModifyTableState *plan_state);
+  static planner::AbstractPlanNode *TransformDelete(
+      const ModifyTableState *plan_state);
 
-  static planner::AbstractPlanNode *TransformInsert(const ModifyTableState *plan_state);
-  static planner::AbstractPlanNode *TransformUpdate(const ModifyTableState *plan_state);
-  static planner::AbstractPlanNode *TransformDelete(const ModifyTableState *plan_state);
+  static planner::AbstractPlanNode *TransformSeqScan(
+      const SeqScanState *plan_state);
+  static planner::AbstractPlanNode *TransformIndexScan(
+      const IndexScanState *plan_state);
+  static planner::AbstractPlanNode *TransformIndexOnlyScan(
+      const IndexOnlyScanState *plan_state);
+  static planner::AbstractPlanNode *TransformBitmapScan(
+      const BitmapHeapScanState *plan_state);
 
-  static planner::AbstractPlanNode *TransformSeqScan(const SeqScanState *plan_state);
-  static planner::AbstractPlanNode *TransformIndexScan(const IndexScanState *plan_state);
-  static planner::AbstractPlanNode *TransformIndexOnlyScan(const IndexOnlyScanState *plan_state);
-  static planner::AbstractPlanNode *TransformBitmapScan(const BitmapHeapScanState *plan_state);
+  static planner::AbstractPlanNode *TransformLockRows(
+      const LockRowsState *plan_state);
 
-  static planner::AbstractPlanNode *TransformLockRows(const LockRowsState *plan_state);
-
-  static planner::AbstractPlanNode *TransformLimit(const LimitState *plan_state);
-  static planner::AbstractPlanNode *TransformResult(const ResultState *plan_state);
+  static planner::AbstractPlanNode *TransformLimit(
+      const LimitState *plan_state);
+  static planner::AbstractPlanNode *TransformResult(
+      const ResultState *plan_state);
 
   /* ==========================
    * Utility functions
    * ==========================
    */
-  static const planner::ProjectInfo* BuildProjectInfo(const ProjectionInfo* pg_proj_info, oid_t column_count);
+  static const planner::ProjectInfo *BuildProjectInfo(
+      const ProjectionInfo *pg_proj_info, oid_t column_count);
 
+  static const std::vector<oid_t> BuildColumnListFromDirectMap(planner::ProjectInfo::DirectMapList dmlist);
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

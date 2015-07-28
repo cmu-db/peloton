@@ -22,21 +22,17 @@ namespace scheduler {
 //===--------------------------------------------------------------------===//
 
 class AbstractScheduler {
-
  public:
-
   AbstractScheduler() {}
-  virtual ~AbstractScheduler() {};
+  virtual ~AbstractScheduler(){};
 
   // run task
-  virtual void Run(handler function_pointer,
-                   void *args,
+  virtual void Run(handler function_pointer, void *args,
                    TaskPriorityType priority = TASK_PRIORTY_TYPE_NORMAL) = 0;
 
   // wait for execution of all tasks
   virtual void Wait() = 0;
-
 };
 
-} // namespace scheduler
-} // namespace peloton
+}  // namespace scheduler
+}  // namespace peloton

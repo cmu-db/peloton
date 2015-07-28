@@ -18,9 +18,7 @@ namespace bridge {
 
 //  Bridge for accessing Postgres Catalog
 class Bridge {
-
  public:
-
   //===--------------------------------------------------------------------===//
   // Getters
   //===--------------------------------------------------------------------===//
@@ -29,7 +27,7 @@ class Bridge {
 
   static HeapTuple GetPGClassTupleForRelationName(const char *relation_name);
 
-  static char* GetRelationName(Oid relation_id);
+  static char *GetRelationName(Oid relation_id);
 
   static Oid GetRelationOid(const char *relation_name);
 
@@ -37,7 +35,7 @@ class Bridge {
 
   static float GetNumberOfTuples(Oid relation_id);
 
-  static bool RelationExists(const char* relation_name);
+  static bool RelationExists(const char *relation_name);
 
   static Oid GetCurrentDatabaseOid(void);
 
@@ -63,5 +61,5 @@ class Bridge {
 
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

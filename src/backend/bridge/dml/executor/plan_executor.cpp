@@ -39,9 +39,9 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  * @param The plan tree
  * @return none.
  */
-void PlanExecutor::PrintPlan(const planner::AbstractPlanNode *plan, std::string prefix) {
-  if(plan == nullptr)
-    return;
+void PlanExecutor::PrintPlan(const planner::AbstractPlanNode *plan,
+                             std::string prefix) {
+  if (plan == nullptr) return;
 
   prefix += "  ";
 
@@ -49,10 +49,9 @@ void PlanExecutor::PrintPlan(const planner::AbstractPlanNode *plan, std::string 
 
   auto children = plan->GetChildren();
 
-  for(auto child : children) {
+  for (auto child : children) {
     PrintPlan(child, prefix);
   }
-
 }
 
 /**
@@ -67,8 +66,7 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               PlanState *planstate,
                                               concurrency::Transaction *txn) {
   // Base case
-  if(plan == nullptr)
-    return root;
+  if (plan == nullptr) return root;
 
   executor::AbstractExecutor *child_executor = nullptr;
 
@@ -79,11 +77,11 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
   const ParamListInfo param_list = planstate->state->es_param_list_info;
   ValueArray params = PlanTransformer::BuildParams(param_list);
 
-  executor::ExecutorContext *executor_context = new executor::ExecutorContext(txn,
-                                                                              params);
+  executor::ExecutorContext *executor_context =
+      new executor::ExecutorContext(txn, params);
 
   auto plan_node_type = plan->GetPlanNodeType();
-  switch(plan_node_type) {
+  switch (plan_node_type) {
     case PLAN_NODE_TYPE_INVALID:
       LOG_ERROR("Invalid plan node type ");
       break;
@@ -118,8 +116,8 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
   }
 
   // Base case
-  if(child_executor != nullptr) {
-    if(root != nullptr)
+  if (child_executor != nullptr) {
+    if (root != nullptr)
       root->AddChild(child_executor);
     else
       root = child_executor;
@@ -127,7 +125,7 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
 
   // Recurse
   auto children = plan->GetChildren();
-  for(auto child : children) {
+  for (auto child : children) {
     child_executor = BuildExecutorTree(child_executor, child, planstate, txn);
   }
 
@@ -139,13 +137,12 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
  * @param The current executor tree
  * @return none.
  */
-void CleanExecutorTree(executor::AbstractExecutor *root){
-  if(root == nullptr)
-    return;
+void CleanExecutorTree(executor::AbstractExecutor *root) {
+  if (root == nullptr) return;
 
   // Recurse
   auto children = root->GetChildren();
-  for(auto child : children) {
+  for (auto child : children) {
     CleanExecutorTree(child);
   }
 
@@ -154,11 +151,13 @@ void CleanExecutorTree(executor::AbstractExecutor *root){
 }
 
 /**
- * @brief Add a Materialization node if the root of the exector tree is seqscan or limit
+ * @brief Add a Materialization node if the root of the exector tree is seqscan
+ * or limit
  * @param the current executor tree
  * @return new root of the executor tree
  */
-executor::AbstractExecutor *PlanExecutor::AddMaterialization(executor::AbstractExecutor *root) {
+executor::AbstractExecutor *PlanExecutor::AddMaterialization(
+    executor::AbstractExecutor *root) {
   if (root == nullptr) return root;
   auto type = root->GetRawNode()->GetPlanNodeType();
   executor::AbstractExecutor *new_root = root;
@@ -166,11 +165,12 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(executor::AbstractE
   switch (type) {
     case PLAN_NODE_TYPE_SEQSCAN:
     case PLAN_NODE_TYPE_INDEXSCAN:
-      /* FALL THRU */
+    /* FALL THRU */
     case PLAN_NODE_TYPE_LIMIT:
       new_root = new executor::MaterializationExecutor(nullptr);
       new_root->AddChild(root);
-      LOG_INFO("Added materialization, the original root executor type is %d", type);
+      LOG_INFO("Added materialization, the original root executor type is %d",
+               type);
       break;
     default:
       break;
@@ -179,17 +179,13 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(executor::AbstractE
   return new_root;
 }
 
-
 /**
  * @brief Build a executor tree and execute it.
  * @return status of execution.
  */
 void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
-                               PlanState *planstate,
-                               TupleDesc tuple_desc,
-                               Peloton_Status *pstatus,
-                               TransactionId txn_id) {
-
+                               PlanState *planstate, TupleDesc tuple_desc,
+                               Peloton_Status *pstatus, TransactionId txn_id) {
   assert(plan);
 
   bool status;
@@ -197,10 +193,10 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   MemoryContext oldContext;
   List *slots = NULL;
 
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.GetPGTransaction(txn_id);
   // This happens for single statement queries in PG
-  if(txn == nullptr) {
+  if (txn == nullptr) {
     single_statement_txn = true;
     txn = txn_manager.StartPGTransaction(txn_id);
   }
@@ -209,10 +205,8 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   LOG_TRACE("Building the executor tree");
 
   // Build the executor tree
-  executor::AbstractExecutor *executor_tree = BuildExecutorTree(nullptr,
-                                                                plan,
-                                                                planstate,
-                                                                txn);
+  executor::AbstractExecutor *executor_tree =
+      BuildExecutorTree(nullptr, plan, planstate, txn);
   // Add materialization if the root if seqscan or limit
   executor_tree = AddMaterialization(executor_tree);
 
@@ -222,7 +216,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   status = executor_tree->Init();
 
   // Abort and cleanup
-  if(status == false) {
+  if (status == false) {
     txn_manager.AbortTransaction(txn);
 
     CleanExecutorTree(executor_tree);
@@ -233,11 +227,11 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   LOG_TRACE("Running the executor tree");
 
   // Execute the tree until we get result tiles from root node
-  for(;;) {
+  for (;;) {
     status = executor_tree->Execute();
 
     // Stop
-    if(status == false) {
+    if (status == false) {
       break;
     }
 
@@ -245,7 +239,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
 
     // FIXME Some executor just doesn't return tiles (e.g., Update).
     // Should we continue instead of break here?
-    if(tile.get() == nullptr) {
+    if (tile.get() == nullptr) {
       continue;
     }
 
@@ -261,8 +255,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     // Go over tile and get result slots
     while (tile_itr.Next(tuple)) {
       auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
-      if(slot != nullptr)
-        slots = lappend(slots, slot);
+      if (slot != nullptr) slots = lappend(slots, slot);
     }
 
     // Go back to previous context
@@ -271,7 +264,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
 
   pstatus->m_result_slots = slots;
 
-  if(single_statement_txn == true) {
+  if (single_statement_txn == true) {
     // Commit
     txn_manager.CommitTransaction(txn);
   }
@@ -283,8 +276,5 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   return;
 }
 
-
 }  // namespace bridge
 }  // namespace peloton
-
-

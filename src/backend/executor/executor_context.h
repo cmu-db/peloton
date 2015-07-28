@@ -23,33 +23,24 @@ namespace executor {
 //===--------------------------------------------------------------------===//
 
 class ExecutorContext {
-
  public:
   ExecutorContext(const ExecutorContext &) = delete;
-  ExecutorContext& operator=(const ExecutorContext &) = delete;
+  ExecutorContext &operator=(const ExecutorContext &) = delete;
   ExecutorContext(ExecutorContext &&) = delete;
-  ExecutorContext& operator=(ExecutorContext &&) = delete;
+  ExecutorContext &operator=(ExecutorContext &&) = delete;
 
-  ExecutorContext(concurrency::Transaction * transaction)
-  : transaction_(transaction) {
-  }
+  ExecutorContext(concurrency::Transaction *transaction)
+      : transaction_(transaction) {}
 
-  ExecutorContext(concurrency::Transaction * transaction,
-                  const ValueArray& params)
-  : transaction_(transaction),
-    params_(params) {
-  }
+  ExecutorContext(concurrency::Transaction *transaction,
+                  const ValueArray &params)
+      : transaction_(transaction), params_(params) {}
 
-  concurrency::Transaction * GetTransaction() const {
-    return transaction_;
-  }
+  concurrency::Transaction *GetTransaction() const { return transaction_; }
 
-  const ValueArray& GetParams() const {
-    return params_;
-  }
+  const ValueArray &GetParams() const { return params_; }
 
  private:
-
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
@@ -59,8 +50,7 @@ class ExecutorContext {
 
   // params
   ValueArray params_;
-
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton
