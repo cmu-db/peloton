@@ -47,6 +47,7 @@ void ExprTransformer::PrintPostgressExprTree(const ExprState* expr_state,
 /**
  * @brief Transform a ExprState tree (Postgres) to a AbstractExpression tree
  * (Peloton) recursively.
+ * @return  The transformed expression tree. NULL if input is empty.
  */
 expression::AbstractExpression* ExprTransformer::TransformExpr(
     const ExprState* expr_state) {

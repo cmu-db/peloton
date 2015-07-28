@@ -34,6 +34,80 @@ const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
   return params;
 }
 
+
+
+
+/**
+ * @brief Transform the common things shared by all Scan types:
+ * generic predicates and projections.
+ *
+ * @param[out]  parent  Set to a functional projection plan node if one is needed,
+ *              or NULL otherwise.
+ *
+ * @param[out]  predicate   Set to the transformed Expression based on qual.
+ *
+ * @param[out]  out_col_list  Set to the output column list if pg_proj_info contains only
+ *              direct mapping of attributes. Otherwise set to straightforward pass-thru list.
+ *
+ * @param[in]   pg_proj_info  Postgres ProjectionInfo in PlanState
+ * @param[in]   qual    Postgres predicates.
+ * @param[in]   out_column_count    The column count of expected output schema. It is used to
+ *              skip junk attributes in Postgres.
+ *
+ * @return      Nothing.
+ */
+void PlanTransformer::TransformGenericScanInfo(
+    planner::AbstractPlanNode*& parent,
+    expression::AbstractExpression*& predicate,
+    std::vector<oid_t>& out_col_list,
+    List* qual,
+    const ProjectionInfo *pg_proj_info,
+    oid_t out_column_count) {
+
+  parent = nullptr;
+  predicate = nullptr;
+  out_col_list.clear();
+
+  /* Transform predicate */
+  predicate = BuildPredicateFromQual(qual);
+
+  /* Transform project info */
+  std::unique_ptr<const planner::ProjectInfo> project_info(BuildProjectInfo(pg_proj_info, out_column_count));
+
+  /*
+   * Based on project_info, see whether we should create a functional projection node
+   * on top, or simply pushed in an output column list.
+   */
+  if(nullptr == project_info.get()){  // empty predicate, pass thru
+    LOG_INFO("No projections (all pass through).");
+
+    std::vector<oid_t> column_ids;
+    column_ids.resize(out_column_count);
+    std::iota(column_ids.begin(), column_ids.end(), 0);
+    out_col_list = std::move(column_ids);
+
+    assert(out_col_list.size() == out_column_count);
+  }
+  else if(project_info->GetTargetList().size() > 0){  // Have non-trivial projection, add a plan node
+    LOG_ERROR("Sorry we don't handle non-trivial projections for now. So I just output one column.\n");
+
+    std::vector<oid_t> column_ids;
+    column_ids.emplace_back(0);
+    out_col_list = std::move(column_ids);
+  }
+  else {  // Pure direct map
+    assert(project_info->GetTargetList().size() == 0);
+
+    LOG_INFO("Pure direct map projection.\n");
+
+    std::vector<oid_t> column_ids;
+    column_ids = BuildColumnListFromDirectMap(project_info->GetDirectMapList());
+    out_col_list = std::move(column_ids);
+
+    assert(out_col_list.size() == out_column_count);
+  }
+}
+
 /**
  * @brief Transform a PG ProjectionInfo structure to a Peloton ProjectInfo
  *object.
@@ -44,7 +118,9 @@ const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
  * @return  An ProjectInfo object built from the PG ProjectionInfo.
  */
 const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
-    const ProjectionInfo *pg_pi, oid_t column_count) {
+    const ProjectionInfo *pg_pi,
+    oid_t column_count) {
+
   if (pg_pi == nullptr) return nullptr;
 
   /*
@@ -61,13 +137,11 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
 
     if (!(resind < column_count)) continue;  // skip junk attributes
 
-    LOG_TRACE("Target list : column id : %u , Top-level (pg) expr tag : %u \n",
-              resind, nodeTag(gstate->arg->expr));
-
     oid_t col_id = static_cast<oid_t>(resind);
 
-    // TODO: Somebody should be responsible for freeing the expression tree.
     auto peloton_expr = ExprTransformer::TransformExpr(gstate->arg);
+
+    LOG_INFO("Target list : column id %u, Expression : \n%s\n", col_id, peloton_expr->DebugInfo().c_str());
 
     target_list.emplace_back(col_id, peloton_expr);
   }
@@ -149,10 +223,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
 /**
  * @brief Transform a PG qual list to an expression tree.
  *
- * This is intended for all Scan types.
- * In PG, PlanState.qual
- * is used as the only predicate by SeqScan
- * and used for non-key predicate by IndexScan
+ * @return Expression tree, null if empty.
  */
 expression::AbstractExpression*
 PlanTransformer::BuildPredicateFromQual(List* qual){
@@ -160,7 +231,7 @@ PlanTransformer::BuildPredicateFromQual(List* qual){
   expression::AbstractExpression* predicate =
       ExprTransformer::TransformExpr(
           reinterpret_cast<ExprState*>(qual) );
-  LOG_INFO("Predicate:\n %s \n", predicate->DebugInfo("- ").c_str());
+  LOG_INFO("Predicate:\n%s \n", (nullptr==predicate)? "NULL" : predicate->DebugInfo().c_str());
 
   return predicate;
 }

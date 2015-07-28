@@ -25,7 +25,6 @@ namespace bridge {
  * @return Pointer to the constructed AbstractPlanNode.
  *
  * TODO: Can we also scan result from a child operator? (Non-base-table scan?)
- * We can't for now, but Postgres can.
  */
 planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
     const SeqScanState* ss_plan_state) {
@@ -43,46 +42,21 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   assert(target_table);
   LOG_INFO("SeqScan: database oid %u table oid %u", database_oid, table_oid);
 
-  /* Grab and transform the predicate. */
-  expression::AbstractExpression* predicate = BuildPredicateFromQual(ss_plan_state->ps.qual);
-
-  /*
-   * Grab and transform the projection information.
-   * IMPORTANT: Projection may change the schema of the tile!
+  /**
+   * SeqScan only needs the "generic" settings, so grab it.
    */
+  planner::AbstractPlanNode* parent = nullptr;
+  expression::AbstractExpression* predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  auto schema = target_table->GetSchema();
+  TransformGenericScanInfo(parent,
+                       predicate,
+                       column_ids,
+                       ss_plan_state->ps.qual,
+                       ss_plan_state->ps.ps_ProjInfo,
+                       static_cast<oid_t>(ss_plan_state->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts));
 
-  // User may type 'SELECT a, b, a, a',
-  // so the output column count may > the schema's column count
-  std::unique_ptr<const planner::ProjectInfo> project_info(
-      BuildProjectInfo(ss_plan_state->ps.ps_ProjInfo,
-                        ss_plan_state->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts));
-
-  if(ss_plan_state->ps.ps_ProjInfo == nullptr){
-    LOG_INFO("No projections (all pass through).");
-
-    column_ids.resize(schema->GetColumnCount());
-    std::iota(column_ids.begin(), column_ids.end(), 0);
-  }
-  else if(project_info->GetTargetList().size() > 0){
-    LOG_WARN("Sorry we don't handle non-trivial projections for now.\n");
-
-    column_ids.resize(schema->GetColumnCount());
-    std::iota(column_ids.begin(), column_ids.end(), 0);
-  }
-  else {  // Pure direct map
-    assert(project_info->GetTargetList().size() == 0);
-
-    LOG_INFO("Pure direct map projection.\n");
-
-    column_ids = BuildColumnListFromDirectMap(project_info->GetDirectMapList());
-
-    assert(column_ids.size() == ss_plan_state->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts);
-  }
-
-  assert(column_ids.size() > 0);
+  /* TODO: test whether parent is presented, connect with the scan node */
 
   /* Construct and return the Peloton plan node */
   auto plan_node =

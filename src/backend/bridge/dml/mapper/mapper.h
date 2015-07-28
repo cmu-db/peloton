@@ -78,21 +78,31 @@ class PlanTransformer {
   static planner::AbstractPlanNode *TransformResult(
       const ResultState *plan_state);
 
-  /* ==========================
-   * Utility functions
-   * ==========================
+
+
+  static PelotonJoinType TransformJoinType(const JoinType type);
+
+
+  /*
+   * ======================================================================
+   * Common utility functions for Scan's
+   * ======================================================================
    */
+
+  static void TransformGenericScanInfo(planner::AbstractPlanNode*& parent,
+                                   expression::AbstractExpression*& predicate,
+                                   std::vector<oid_t>& out_col_list,
+                                   List* qual,
+                                   const ProjectionInfo *pg_proj_info,
+                                   oid_t out_column_count
+                                   );
+
   static const planner::ProjectInfo *BuildProjectInfo(
       const ProjectionInfo *pg_proj_info, oid_t column_count);
 
   static expression::AbstractExpression* BuildPredicateFromQual(List* qual);
 
   static const std::vector<oid_t> BuildColumnListFromDirectMap(planner::ProjectInfo::DirectMapList dmlist);
-
-  static PelotonJoinType TransformJoinType(const JoinType type);
-
-
-
 
 };
 
