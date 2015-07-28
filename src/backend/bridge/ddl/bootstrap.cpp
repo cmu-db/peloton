@@ -134,7 +134,7 @@ void Bootstrap::CreateIndexInfos(oid_t tuple_oid, char *relation_name,
         key_column_names.push_back(column_info.column_name);
       }
 
-      IndexType method_type = INDEX_TYPE_BTREE_MULTIMAP;
+      IndexType method_type = INDEX_TYPE_BTREE_MULTI;
       IndexConstraintType type;
 
       if (pg_index->indisprimary) {

@@ -71,7 +71,7 @@ class IndexScanNode : public AbstractScanNode {
 
   const storage::AbstractTable *GetTable() const { return table_; }
 
-  const index::Index *GetIndex() const { return index_; }
+  index::Index *GetIndex() const { return index_; }
 
   const storage::Tuple *GetStartKey() const { return start_key_; }
 
