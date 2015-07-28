@@ -110,6 +110,10 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       child_executor = new executor::LimitExecutor(plan);
       break;
 
+    case PLAN_NODE_TYPE_NESTLOOP:
+      child_executor = new executor::NestedLoopJoinExecutor(plan, executor_context);
+      break;
+
     default:
       LOG_INFO("Unsupported plan node type : %d ", plan_node_type);
       break;
@@ -163,6 +167,7 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(
   executor::AbstractExecutor *new_root = root;
 
   switch (type) {
+    case PLAN_NODE_TYPE_NESTLOOP:
     case PLAN_NODE_TYPE_SEQSCAN:
     case PLAN_NODE_TYPE_INDEXSCAN:
     /* FALL THRU */
