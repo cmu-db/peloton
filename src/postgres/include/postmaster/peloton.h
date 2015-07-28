@@ -45,6 +45,7 @@ typedef struct Peloton_MsgHdr
 {
   PelotonMsgType m_type;
   int     m_size;
+  Oid   m_dbid;
   TransactionId m_txn_id;
   MemoryContext m_top_transaction_context;
   MemoryContext m_cur_transaction_context;
