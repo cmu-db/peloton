@@ -409,11 +409,8 @@ std::string IndexTypeToString(IndexType type) {
     case INDEX_TYPE_INVALID: {
       return "INVALID";
     }
-    case INDEX_TYPE_BTREE_MULTI: {
-      return "BTREE_MULTI";
-    }
-    case INDEX_TYPE_BTREE_UNIQUE: {
-      return "BTREE_UNIQUE";
+    case INDEX_TYPE_BTREE: {
+      return "BTREE";
     }
   }
   return "INVALID";
@@ -422,10 +419,8 @@ std::string IndexTypeToString(IndexType type) {
 IndexType StringToIndexType(std::string str) {
   if (str == "INVALID") {
     return INDEX_TYPE_INVALID;
-  } else if (str == "BTREE_MULTI") {
-    return INDEX_TYPE_BTREE_MULTI;
-  } else if (str == "BTREE_UNIQUE") {
-    return INDEX_TYPE_BTREE_UNIQUE;
+  } else if (str == "BTREE") {
+    return INDEX_TYPE_BTREE;
   }
   return INDEX_TYPE_INVALID;
 }
