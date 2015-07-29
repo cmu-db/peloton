@@ -115,6 +115,9 @@ bool NestedLoopJoinExecutor::DExecute() {
   auto left_tile_position_lists = left_tile.get()->GetPositionLists();
   auto right_tile_position_lists = right_tile.get()->GetPositionLists();
 
+  std::cout << *(left_tile.get());
+  std::cout << *(right_tile.get());
+
   // Compute output tile column count
   size_t left_tile_column_count = left_tile_position_lists.size();
   size_t right_tile_column_count = right_tile_position_lists.size();
@@ -133,6 +136,10 @@ bool NestedLoopJoinExecutor::DExecute() {
   for (size_t column_itr = 0; column_itr < output_tile_column_count;
        column_itr++)
     position_lists.push_back(std::vector<oid_t>());
+
+  LOG_INFO("left col count: %lu, right col count: %lu", left_tile_column_count, right_tile_column_count);
+  LOG_INFO("left col count: %lu, right col count: %lu", left_tile.get()->GetColumnCount(), right_tile.get()->GetColumnCount());
+  LOG_INFO("left row count: %lu, right row count: %lu", left_tile_row_count, right_tile_row_count);
 
   // Go over every pair of tuples in left and right logical tiles
   for (size_t left_tile_row_itr = 0; left_tile_row_itr < left_tile_row_count;
@@ -179,9 +186,17 @@ bool NestedLoopJoinExecutor::DExecute() {
     }
   }
 
+  for (auto col : position_lists) {
+    LOG_INFO("col");
+    for (auto elm : col) {
+      LOG_INFO("elm: %u", elm);
+    }
+  }
+
+
   // Check if we have any matching tuples.
   if (position_lists[0].size() > 0) {
-    output_tile.get()->SetPositionLists(std::move(position_lists));
+    output_tile.get()->SetPositionListsAndVisibility(std::move(position_lists));
     std::cout << *(output_tile.get());
     SetOutput(output_tile.release());
     return true;
