@@ -48,7 +48,9 @@ class TileGroup {
   // Tile group constructor
   TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
             AbstractBackend *backend,
-            const std::vector<catalog::Schema> &schemas, int tuple_count);
+            const std::vector<catalog::Schema> &schemas,
+            const std::map<oid_t, std::pair<oid_t, oid_t> >& column_map,
+            int tuple_count);
 
   ~TileGroup() {
     // clean up tiles
@@ -144,8 +146,8 @@ class TileGroup {
 
   size_t GetTileCount() const { return tile_count; }
 
-  void LocateTileAndColumn(oid_t column_id, oid_t &tile_offset,
-                           oid_t &tile_column_id);
+  void LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
+                           oid_t &tile_column_offset);
 
   oid_t GetTileIdFromColumnId(oid_t column_id);
 
@@ -185,6 +187,11 @@ class TileGroup {
   oid_t tile_count;
 
   std::mutex tile_group_mutex;
+
+  // column to tile mapping :
+  // <column offset> to <tile offset, tile column offset>
+  std::map<oid_t, std::pair<oid_t, oid_t> > column_map;
+
 };
 
 }  // End storage namespace

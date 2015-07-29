@@ -121,34 +121,34 @@ class Index {
   //===--------------------------------------------------------------------===//
 
   // return whether the entry is already stored in the index
-  virtual bool Exists(const storage::Tuple *key) const = 0;
+  virtual bool Exists(const storage::Tuple *key)= 0;
 
   // scan all keys in the index
-  virtual std::vector<ItemPointer> Scan() const = 0;
+  virtual std::vector<ItemPointer> Scan() = 0;
 
   // get the locations of tuples matching given key
   virtual std::vector<ItemPointer> GetLocationsForKey(
-      const storage::Tuple *key) const = 0;
+      const storage::Tuple *key) = 0;
 
   // get the locations of tuples whose key is between given start and end keys
   virtual std::vector<ItemPointer> GetLocationsForKeyBetween(
-      const storage::Tuple *start, const storage::Tuple *end) const = 0;
+      const storage::Tuple *start, const storage::Tuple *end) = 0;
 
   // get the locations of tuples whose key is less than given key
   virtual std::vector<ItemPointer> GetLocationsForKeyLT(
-      const storage::Tuple *key) const = 0;
+      const storage::Tuple *key) = 0;
 
   // get the locations of tuples whose key is less than or equal to given key
   virtual std::vector<ItemPointer> GetLocationsForKeyLTE(
-      const storage::Tuple *key) const = 0;
+      const storage::Tuple *key) = 0;
 
   // get the locations of tuples whose key is greater than given key
   virtual std::vector<ItemPointer> GetLocationsForKeyGT(
-      const storage::Tuple *key) const = 0;
+      const storage::Tuple *key) = 0;
 
   // get the locations of tuples whose key is greater than or equal to given key
   virtual std::vector<ItemPointer> GetLocationsForKeyGTE(
-      const storage::Tuple *key) const = 0;
+      const storage::Tuple *key) = 0;
 
   //===--------------------------------------------------------------------===//
   // STATS

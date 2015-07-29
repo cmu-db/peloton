@@ -25,12 +25,14 @@ namespace storage {
 TileGroup::TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
                      AbstractBackend *backend,
                      const std::vector<catalog::Schema> &schemas,
+                     const std::map<oid_t, std::pair<oid_t, oid_t> >& column_map,
                      int tuple_count)
     : database_id(INVALID_OID),
       table_id(INVALID_OID),
       tile_group_id(INVALID_OID),
       backend(backend),
       tile_schemas(schemas),
+      column_map(column_map),
       tile_group_header(tile_group_header),
       table(table),
       num_tuple_slots(tuple_count) {
@@ -180,18 +182,14 @@ void TileGroup::AbortDeletedTuple(oid_t tuple_slot_id) {
 
 // Sets the tile id and column id w.r.t that tile corresponding to
 // the specified tile group column id.
-void TileGroup::LocateTileAndColumn(oid_t column_id, oid_t &tile_offset,
-                                    oid_t &tile_column_id) {
-  tile_column_id = column_id;
-  tile_offset = 0;
+void TileGroup::LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
+                                    oid_t &tile_column_offset) {
+  assert(column_map.count(column_offset) != 0);
 
-  assert(tile_schemas.size() > 0);
-  while (tile_column_id >= tile_schemas[tile_offset].GetColumnCount()) {
-    tile_column_id -= tile_schemas[tile_offset].GetColumnCount();
-    tile_offset++;
-  }
-
-  assert(tile_offset < tiles.size());
+  // get the entry in the column map
+  auto entry = column_map.at(column_offset);
+  tile_offset = entry.first;
+  tile_column_offset = entry.second;
 }
 
 oid_t TileGroup::GetTileIdFromColumnId(oid_t column_id) {

@@ -82,7 +82,7 @@ void BridgeTest::DDL_MIX_TEST_1() {
   CheckColumnWithConstraint(column, CONSTRAINT_TYPE_PRIMARY,
                             table_name + "_pkey", 1);
   index::Index* index = table->GetIndexWithOid(primary_key_index_oid);
-  CheckIndex(index, table_name + "_pkey", 1, INDEX_TYPE_BTREE_MULTIMAP,
+  CheckIndex(index, table_name + "_pkey", 1, INDEX_TYPE_BTREE,
              INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, true);
 
   // Check the third column's constraint and index
@@ -90,7 +90,7 @@ void BridgeTest::DDL_MIX_TEST_1() {
   CheckColumnWithConstraint(column, CONSTRAINT_TYPE_UNIQUE, table_name + "_key",
                             1);
   index = table->GetIndexWithOid(unique_index_oid);
-  CheckIndex(index, table_name + "_key", 1, INDEX_TYPE_BTREE_MULTIMAP,
+  CheckIndex(index, table_name + "_key", 1, INDEX_TYPE_BTREE,
              INDEX_CONSTRAINT_TYPE_UNIQUE, true);
 
   // Check the fourth column's constraint and foreign key

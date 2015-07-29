@@ -51,7 +51,8 @@ enum ExceptionType {
   EXCEPTION_TYPE_PLANNER = 15,           // planner related
   EXCEPTION_TYPE_SCHEDULER = 16,         // scheduler related
   EXCEPTION_TYPE_EXECUTOR = 17,          // executor related
-  EXCEPTION_TYPE_CONSTRAINT = 18         // constraint related
+  EXCEPTION_TYPE_CONSTRAINT = 18,        // constraint related
+  EXCEPTION_TYPE_INDEX = 19              // index related
 };
 
 class Exception : public std::runtime_error {
@@ -110,7 +111,8 @@ class Exception : public std::runtime_error {
         return "Executor";
       case EXCEPTION_TYPE_CONSTRAINT:
         return "Constraint";
-
+      case EXCEPTION_TYPE_INDEX:
+        return "Index";
       default:
         return "Unknown";
     }
@@ -375,6 +377,14 @@ class ConstraintException : public Exception {
  public:
   ConstraintException(std::string msg)
       : Exception(EXCEPTION_TYPE_CONSTRAINT, msg) {}
+};
+
+class IndexException : public Exception {
+  IndexException() = delete;
+
+ public:
+  IndexException(std::string msg)
+      : Exception(EXCEPTION_TYPE_INDEX, msg) {}
 };
 
 }  // End peloton namespace
