@@ -21,7 +21,8 @@ executor_FILES = \
 		 backend/executor/hash_set_op_executor.cpp \
 		 backend/executor/aggregator.cpp \
 		 backend/executor/aggregate_executor.cpp \
-		 backend/executor/append_executor.cpp		 
+		 backend/executor/append_executor.cpp	\
+		 backend/executor/projection_executor.cpp
 
 
 executor_INCLUDES = \
