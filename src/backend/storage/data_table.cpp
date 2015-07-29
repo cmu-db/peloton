@@ -10,14 +10,15 @@
  *-------------------------------------------------------------------------
  */
 
+#include <mutex>
+#include <utility>
+
 #include "backend/storage/data_table.h"
 #include "backend/storage/database.h"
 
 #include "backend/common/exception.h"
 #include "backend/index/index.h"
 #include "backend/common/logger.h"
-
-#include <mutex>
 
 namespace peloton {
 namespace storage {
@@ -292,13 +293,20 @@ oid_t DataTable::AddDefaultTileGroup() {
   oid_t tile_group_id = INVALID_OID;
 
   std::vector<catalog::Schema> schemas;
-  std::vector<std::vector<std::string> > column_names;
+  std::map<oid_t, std::pair<oid_t, oid_t> > column_map;
 
   tile_group_id = catalog::Manager::GetInstance().GetNextOid();
   schemas.push_back(*schema);
 
+  // default column map
+  auto col_count = schema->GetColumnCount();
+  for(oid_t col_itr = 0 ; col_itr < col_count ; col_itr++) {
+    column_map[col_itr]= std::make_pair(0, col_itr);
+  }
+
   TileGroup *tile_group = TileGroupFactory::GetTileGroup(
       database_oid, table_oid, tile_group_id, this, backend, schemas,
+      column_map,
       tuples_per_tilegroup);
 
   LOG_TRACE("Trying to add a tile group \n");
