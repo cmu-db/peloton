@@ -111,7 +111,7 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       break;
 
     case PLAN_NODE_TYPE_NESTLOOP:
-      child_executor = new executor::NestedLoopJoinExecutor(plan, executor_context);
+      child_executor = new executor::NestedLoopJoinExecutor(plan);
       break;
 
     default:
@@ -155,7 +155,7 @@ void CleanExecutorTree(executor::AbstractExecutor *root) {
 }
 
 /**
- * @brief Add a Materialization node if the root of the exector tree is seqscan
+ * @brief Add a Materialization node if the root of the executor tree is seqscan
  * or limit
  * @param the current executor tree
  * @return new root of the executor tree
@@ -170,7 +170,7 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(
     case PLAN_NODE_TYPE_NESTLOOP:
     case PLAN_NODE_TYPE_SEQSCAN:
     case PLAN_NODE_TYPE_INDEXSCAN:
-    /* FALL THRU */
+      /* FALL THRU */
     case PLAN_NODE_TYPE_LIMIT:
       new_root = new executor::MaterializationExecutor(nullptr);
       new_root->AddChild(root);
@@ -194,6 +194,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   assert(plan);
 
   bool status;
+  bool init_failure = false;
   bool single_statement_txn = false;
   MemoryContext oldContext;
   List *slots = NULL;
@@ -222,11 +223,9 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
 
   // Abort and cleanup
   if (status == false) {
-    txn_manager.AbortTransaction(txn);
-
-    CleanExecutorTree(executor_tree);
-    pstatus->m_result = txn->GetResult();
-    return;
+    init_failure = true;
+    txn->SetResult(Result::RESULT_FAILURE);
+    goto cleanup;
   }
 
   LOG_TRACE("Running the executor tree");
@@ -242,8 +241,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
 
     std::unique_ptr<executor::LogicalTile> tile(executor_tree->GetOutput());
 
-    // FIXME Some executor just doesn't return tiles (e.g., Update).
-    // Should we continue instead of break here?
+    // Some executor just doesn't return tiles (e.g., Update).
     if (tile.get() == nullptr) {
       continue;
     }
@@ -260,23 +258,40 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     // Go over tile and get result slots
     while (tile_itr.Next(tuple)) {
       auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
-      if (slot != nullptr) slots = lappend(slots, slot);
+      if (slot != nullptr) {
+        slots = lappend(slots, slot);
+        //print_slot(slot);
+      }
     }
 
     // Go back to previous context
     MemoryContextSwitchTo(oldContext);
   }
 
+  // Set the result
   pstatus->m_result_slots = slots;
 
-  if (single_statement_txn == true) {
-    // Commit
-    txn_manager.CommitTransaction(txn);
+  // final cleanup
+  cleanup:
+
+  // should we commit or abort ?
+  if (single_statement_txn == true || init_failure == true) {
+    auto status = txn->GetResult();
+    switch(status) {
+      case Result::RESULT_SUCCESS:
+        // Commit
+        txn_manager.CommitTransaction(txn);
+        break;
+
+      case Result::RESULT_FAILURE:
+      default:
+        //Abort
+        txn_manager.AbortTransaction(txn);
+    }
   }
 
   // clean up
   CleanExecutorTree(executor_tree);
-
   pstatus->m_result = txn->GetResult();
   return;
 }

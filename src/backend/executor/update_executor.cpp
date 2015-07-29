@@ -85,8 +85,6 @@ bool UpdateExecutor::DExecute() {
     auto delete_location = ItemPointer(tile_group_id, physical_tuple_id);
     bool status = target_table_->DeleteTuple(txn_id, delete_location);
     if (status == false) {
-      auto &txn_manager = concurrency::TransactionManager::GetInstance();
-      txn_manager.AbortTransaction(transaction_);
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }
@@ -111,9 +109,6 @@ bool UpdateExecutor::DExecute() {
     ItemPointer location =
         target_table_->InsertTuple(txn_id, new_tuple, update_mode);
     if (location.block == INVALID_OID) {
-      auto &txn_manager = concurrency::TransactionManager::GetInstance();
-      txn_manager.AbortTransaction(transaction_);
-
       new_tuple->FreeUninlinedData();
       delete new_tuple;
       return false;
