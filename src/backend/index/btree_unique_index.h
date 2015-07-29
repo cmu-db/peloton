@@ -12,6 +12,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 
 #include "backend/catalog/manager.h"
 #include "backend/common/types.h"
@@ -39,7 +40,8 @@ class BtreeUniqueIndex : public Index {
   BtreeUniqueIndex(IndexMetadata *metadata)
  : Index(metadata),
    container(KeyComparator(metadata)),
-   equals(metadata){
+   equals(metadata),
+   comparator(metadata){
   }
 
   ~BtreeUniqueIndex() {
@@ -135,10 +137,12 @@ class BtreeUniqueIndex : public Index {
 
       // scan all between start and end
       auto start_itr = container.upper_bound(index_key1);
-      auto end_itr = container.lower_bound(index_key2);
+      auto end_itr = container.end();
       while (start_itr != end_itr) {
         result.push_back(start_itr->second);
         start_itr++;
+        if(comparator(start_itr->first, index_key2) == false)
+          break;
       }
     }
 
@@ -251,6 +255,7 @@ class BtreeUniqueIndex : public Index {
 
   // comparison stuff
   KeyEqualityChecker equals;
+  KeyComparator comparator;
 
   // synch helper
   std::mutex index_mutex;
