@@ -78,7 +78,7 @@ class AbstractExpression {
   std::string Debug() const;
   std::string Debug(bool traverse) const;
   std::string Debug(const std::string &spacer) const;
-  virtual std::string DebugInfo(const std::string &spacer) const = 0;
+  virtual std::string DebugInfo(const std::string &spacer = "->") const = 0;
 
   // create an expression tree. call this once with the input
   // stream positioned at the root expression node
