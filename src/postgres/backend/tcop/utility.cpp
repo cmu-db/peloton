@@ -995,6 +995,9 @@ ProcessUtilitySlow(Node *parsetree,
           /* Run parse analysis ... */
           stmts = transformCreateStmt((CreateStmt *) parsetree,
                         queryString);
+          // TODO: Peloton Changes
+          // Store transformedCreateStmt because we don't want to do this again in Peloton
+          ((CreateStmt *)parsetree)->stmts = stmts;
 
           /* ... and do it */
           foreach(l, stmts)

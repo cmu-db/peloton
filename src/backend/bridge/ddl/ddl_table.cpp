@@ -44,7 +44,7 @@ namespace bridge {
 bool DDLTable::ExecCreateStmt(Node* parsetree, const char* queryString,
                               std::vector<IndexInfo>& index_infos) {
   /* Run parse analysis ... */
-  List* stmts = transformCreateStmt((CreateStmt*)parsetree, queryString);
+  List* stmts = ((CreateStmt*)parsetree)->stmts;
 
   /* ... and do it */
   ListCell* l;
@@ -184,7 +184,6 @@ bool DDLTable::CreateTable(Oid relation_oid, std::string table_name,
     LOG_INFO("Created table(%u)%s in database(%u) ", relation_oid, table_name.c_str(), database_oid);
     return true;
   }
-
   return false;
 }
 
