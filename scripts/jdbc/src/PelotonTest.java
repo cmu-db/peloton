@@ -14,8 +14,15 @@ public class PelotonTest {
           "DROP TABLE IF EXISTS B;";
   private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);" +
           "CREATE TABLE B (id INT PRIMARY KEY, data TEXT);";
-  private final String INSERT = "INSERT INTO A VALUES (?,?);" +
-          "INSERT INTO B VALUES (?,?);";
+
+  private final String INSERT_A = "INSERT INTO A VALUES (?,?)";
+  private final String INSERT_B = "INSERT INTO B VALUES (?,?)";
+
+  private final String INSERT = "BEGIN;" +
+          "INSERT INTO A VALUES (?,?);" +
+          "INSERT INTO B VALUES (?,?);" +
+          "COMMIT;";
+
   private final String SEQSCAN = "SELECT * FROM A";
   private final String INDEXSCAN = "SELECT * FROM A WHERE id = ?";
   private final String BITMAPSCAN = "SELECT * FROM A WHERE id > ? and id < ?";
@@ -25,6 +32,8 @@ public class PelotonTest {
   private final String SELECT_FOR_UPDATE = "SELECT * FROM A WHERE id = ? FOR UPDATE";
 
   private final Connection conn;
+
+  private enum TABLE { A, B, AB };
 
   public PelotonTest() throws SQLException {
     try {
@@ -62,10 +71,37 @@ public class PelotonTest {
    * @param n the id of the record
    * @throws SQLException
    */
+  public void Insert(int n, TABLE table) throws SQLException {
+    PreparedStatement stmt = null;
+    switch (table) {
+      case A:
+        stmt = conn.prepareStatement(INSERT_A);
+        break;
+      case B:
+        stmt = conn.prepareStatement(INSERT_B);
+        break;
+    }
+    org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement)stmt;
+    for (int i = 0; i < n; i++) {
+      String data = table.name() + " says hello world and id = " + i;
+      stmt.setInt(1, i);
+      stmt.setString(2, data);
+      boolean usingServerPrepare = pgstmt.isUseServerPrepare();
+      int ret = stmt.executeUpdate();
+      System.out.println("Used server side prepare " + usingServerPrepare + ", Inserted: " + ret);
+    }
+    return;
+  }
+
+  /**
+   * Insert a record
+   * @param n the id of the record
+   * @throws SQLException
+   */
   public void Insert(int n) throws SQLException {
     PreparedStatement stmt = conn.prepareStatement(INSERT);
     org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement)stmt;
-    for (int i = 1; i < n; i++) {
+    for (int i = 0; i < n; i++) {
       String data1 = "Ming says hello world and id = " + i;
       String data2 = "Joy says hello world and id = " + i;
       stmt.setInt(1, i);
@@ -73,8 +109,8 @@ public class PelotonTest {
       stmt.setString(2, data1);
       stmt.setString(4, data2);
       boolean usingServerPrepare = pgstmt.isUseServerPrepare();
-      stmt.executeUpdate();
-      System.out.println("Used server side prepare " + usingServerPrepare + ", Inserted: id: " + i + ", data: " + data1);
+      int ret = stmt.executeUpdate();
+      System.out.println("Used server side prepare " + usingServerPrepare + ", Inserted: " + ret);
     }
     return;
   }
@@ -182,7 +218,7 @@ public class PelotonTest {
   static public void main(String[] args) throws Exception {
     PelotonTest pt = new PelotonTest();
     pt.Init();
-    pt.Insert(20);
+    pt.Insert(10);
 
     //pt.ReadModifyWrite(3);
     //pt.BitmapScan(2, 5);
