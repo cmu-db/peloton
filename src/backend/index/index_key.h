@@ -349,6 +349,7 @@ class GenericKey {
  public:
   inline void SetFromKey(const storage::Tuple *tuple) {
     assert(tuple);
+    assert(tuple->GetSchema()->GetLength() <= KeySize);
     ::memcpy(data, tuple->GetData(), tuple->GetSchema()->GetLength());
   }
 
@@ -422,7 +423,8 @@ struct GenericHasher : std::unary_function<GenericKey<KeySize>, std::size_t>
   /** Generate a 64-bit number for the key value */
   inline size_t operator()(GenericKey<KeySize> const &p) const
   {
-    storage::Tuple pTuple(schema); pTuple.MoveToTuple(reinterpret_cast<const void*>(&p));
+    storage::Tuple pTuple(schema);
+    pTuple.MoveToTuple(reinterpret_cast<const void*>(&p));
     return pTuple.HashCode();
   }
 
