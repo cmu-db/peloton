@@ -70,9 +70,9 @@ class ComparisonExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     std::string retval;
-    if (m_left != nullptr) retval = m_left->DebugInfo(spacer);
-    retval += spacer + "ComparisonExpression\n" + spacer;
-    if (m_right != nullptr) retval = m_right->DebugInfo(spacer);
+    retval += spacer + "ComparisonExpression :" + ExpressionTypeToString(this->expr_type) + "\n";
+    if (m_left != nullptr) retval += m_left->DebugInfo(" " + spacer);
+    if (m_right != nullptr) retval += m_right->DebugInfo(" " + spacer);
     return retval;
   }
 
@@ -107,8 +107,8 @@ class InlinedComparisonExpression : public AbstractExpression {
   std::string DebugInfo(const std::string &spacer) const {
     return (spacer + "OptimizedInlinedComparisonExpression:" +
             GetTypeName(this->expr_type) + "\n" +
-            left_expr->DebugInfo(spacer + " ") +
-            right_expr->DebugInfo(spacer + " "));
+            left_expr->DebugInfo(" " + spacer) +
+            right_expr->DebugInfo(" " + spacer));
   }
 
  private:
