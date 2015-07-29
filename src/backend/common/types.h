@@ -320,7 +320,7 @@ enum StatementType {
 // Join Types
 //===--------------------------------------------------------------------===//
 
-enum JoinType {
+enum PelotonJoinType {
   JOIN_TYPE_INVALID = 0,  // invalid join type
 
   JOIN_TYPE_LEFT = 1,   // left
