@@ -72,8 +72,14 @@ TEST(TileGroupTests, BasicTest) {
   // TILE GROUP
   storage::AbstractBackend *backend = new storage::VMBackend();
 
+  std::map<oid_t, std::pair<oid_t, oid_t> > column_map;
+  column_map[0] = std::make_pair(0, 0);
+  column_map[1] = std::make_pair(0, 1);
+  column_map[2] = std::make_pair(1, 0);
+  column_map[3] = std::make_pair(1, 1);
+
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, backend, schemas, 4);
+      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, backend, schemas, column_map, 4);
 
   // TUPLES
 
@@ -198,8 +204,14 @@ TEST(TileGroupTests, StressTest) {
 
   storage::AbstractBackend *backend = new storage::VMBackend();
 
+  std::map<oid_t, std::pair<oid_t, oid_t> > column_map;
+  column_map[0] = std::make_pair(0, 0);
+  column_map[1] = std::make_pair(0, 1);
+  column_map[2] = std::make_pair(1, 0);
+  column_map[3] = std::make_pair(1, 1);
+
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, backend, schemas, 10000);
+      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, backend, schemas, column_map, 10000);
 
   LaunchParallelTest(6, TileGroupInsert, tile_group, schema);
 
@@ -255,8 +267,14 @@ TEST(TileGroupTests, MVCCInsert) {
   // TILE GROUP
   storage::AbstractBackend *backend = new storage::VMBackend();
 
+  std::map<oid_t, std::pair<oid_t, oid_t> > column_map;
+  column_map[0] = std::make_pair(0, 0);
+  column_map[1] = std::make_pair(0, 1);
+  column_map[2] = std::make_pair(1, 0);
+  column_map[3] = std::make_pair(1, 1);
+
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
-      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, backend, schemas, 3);
+      INVALID_OID, INVALID_OID, INVALID_OID, nullptr, backend, schemas, column_map, 3);
 
   storage::Tuple *tuple = new storage::Tuple(schema, true);
 
