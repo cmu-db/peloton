@@ -27,7 +27,9 @@
 #include <signal.h>
 
 #include "backend/common/stack_trace.h"
-#include "backend/common/logger.h"
+
+#include "postgres.h"
+#include "utils/elog.h"
 
 namespace peloton {
 
@@ -106,14 +108,14 @@ void GetStackTrace(int signum) {
   internal_info << "process : " << getpid()
                 << " thread : " << std::this_thread::get_id();
 
-  LOG_INFO("signal : %s", strsignal(signum));
-  LOG_INFO("%s", internal_info.str().c_str());
-  LOG_INFO("stack trace :\n");
-  LOG_INFO(
+  elog(LOG, "signal : %s", strsignal(signum));
+  elog(LOG, "%s", internal_info.str().c_str());
+  elog(LOG, "stack trace :\n");
+  elog(LOG,
       "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
       "+\n");
-  LOG_INFO("\n%s", stack_trace.str().c_str());
-  LOG_INFO(
+  elog(LOG, "\n%s", stack_trace.str().c_str());
+  elog(LOG,
       "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
       "+\n");
 

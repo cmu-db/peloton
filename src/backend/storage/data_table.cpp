@@ -105,7 +105,7 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
   if (update == false) {
     if (TryInsertInIndexes(tuple, location) == false) {
       tile_group->ReclaimTuple(tuple_slot);
-      LOG_WARN("Index constraint violated : %s\n", tuple->GetInfo().c_str());
+      LOG_WARN("Index constraint violated\n");
       return INVALID_ITEMPOINTER;
     }
   } else {
@@ -124,11 +124,9 @@ void DataTable::InsertInIndexes(const storage::Tuple *tuple,
     auto indexed_columns = index_schema->GetIndexedColumns();
     storage::Tuple *key = new storage::Tuple(index_schema, true);
     key->SetFromTuple(tuple, indexed_columns);
-
     if (index->InsertEntry(key, location) == false) {
       location = INVALID_ITEMPOINTER;
-      LOG_ERROR("Failed to insert key into index : %s \n",
-                key->GetInfo().c_str());
+      LOG_ERROR("Index constraint violated\n");
       delete key;
       break;
     }
