@@ -84,8 +84,8 @@ static void peloton_sighup_handler(SIGNAL_ARGS);
 static void peloton_sigusr2_handler(SIGNAL_ARGS);
 static void peloton_sigterm_handler(SIGNAL_ARGS);
 static void peloton_sighup_handler(SIGNAL_ARGS);
-static void __attribute__((unused)) peloton_sigsegv_handler(SIGNAL_ARGS);
-static void __attribute__((unused)) peloton_sigabrt_handler(SIGNAL_ARGS);
+static void peloton_sigsegv_handler(SIGNAL_ARGS);
+static void peloton_sigabrt_handler(SIGNAL_ARGS);
 
 static void peloton_setheader(Peloton_MsgHdr *hdr,
                               PelotonMsgType mtype,
@@ -176,8 +176,8 @@ PelotonMain(int argc, char *argv[]) {
    */
   pqsignal(SIGINT, StatementCancelHandler);
   pqsignal(SIGTERM, peloton_sigterm_handler);
-  //pqsignal(SIGSEGV, peloton_sigsegv_handler);
-  //pqsignal(SIGABRT, peloton_sigabrt_handler);
+  pqsignal(SIGSEGV, peloton_sigsegv_handler);
+  pqsignal(SIGABRT, peloton_sigabrt_handler);
   pqsignal(SIGQUIT, quickdie);
   InitializeTimeouts();   /* establishes SIGALRM handler */
 
@@ -246,6 +246,9 @@ PelotonMain(int argc, char *argv[]) {
   }
 
   SetProcessingMode(NormalProcessing);
+
+  // Disable stacktracer for now
+  //peloton::StackTracer st;
 
   /*
    * Create the memory context we will use in the main loop.
