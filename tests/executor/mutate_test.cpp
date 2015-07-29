@@ -76,16 +76,18 @@ void InsertTuple(storage::DataTable *table) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  auto tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
+  for(oid_t tuple_itr = 0 ; tuple_itr < 10 ; tuple_itr++) {
+    auto tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
 
-  auto project_info = MakeProjectInfoFromTuple(tuple);
+    auto project_info = MakeProjectInfoFromTuple(tuple);
 
-  planner::InsertNode node(table, project_info);
-  executor::InsertExecutor executor(&node, context.get());
-  executor.Execute();
+    planner::InsertNode node(table, project_info);
+    executor::InsertExecutor executor(&node, context.get());
+    executor.Execute();
 
-  tuple->FreeUninlinedData();
-  delete tuple;
+    tuple->FreeUninlinedData();
+    delete tuple;
+  }
 
   txn_manager.CommitTransaction(txn);
 }
@@ -105,6 +107,9 @@ void UpdateTuple(storage::DataTable *table) {
   planner::ProjectInfo::DirectMapList direct_map_list;
   target_list.emplace_back(2, expression::ConstantValueFactory(update_val));
   std::cout << target_list.at(0).first << std::endl;
+  direct_map_list.emplace_back(0, std::pair<oid_t, oid_t>(0, 0));
+  direct_map_list.emplace_back(1, std::pair<oid_t, oid_t>(0, 1));
+  direct_map_list.emplace_back(3, std::pair<oid_t, oid_t>(0, 3));
 
   planner::UpdateNode update_node(table, new planner::ProjectInfo(target_list, direct_map_list));
   executor::UpdateExecutor update_executor(&update_node, context.get());
@@ -150,15 +155,15 @@ void DeleteTuple(storage::DataTable *table) {
 
   // Predicate
 
-  // WHERE ATTR_0 < 90
+  // WHERE ATTR_0 > 60
   expression::TupleValueExpression *tup_val_exp =
       new expression::TupleValueExpression(0, 0, std::string("tablename"),
                                            std::string("colname"));
   expression::ConstantValueExpression *const_val_exp =
       new expression::ConstantValueExpression(
-          ValueFactory::GetIntegerValue(90));
-  auto predicate = new expression::ComparisonExpression<expression::CmpLt>(
-      EXPRESSION_TYPE_COMPARE_LT, tup_val_exp, const_val_exp);
+          ValueFactory::GetIntegerValue(60));
+  auto predicate = new expression::ComparisonExpression<expression::CmpGt>(
+      EXPRESSION_TYPE_COMPARE_GT, tup_val_exp, const_val_exp);
 
   // Seq scan
   std::vector<oid_t> column_ids = {0};
@@ -170,6 +175,7 @@ void DeleteTuple(storage::DataTable *table) {
   delete_executor.AddChild(&seq_scan_executor);
 
   EXPECT_TRUE(delete_executor.Init());
+  EXPECT_TRUE(delete_executor.Execute());
   EXPECT_TRUE(delete_executor.Execute());
 
   txn_manager.CommitTransaction(txn);
@@ -222,14 +228,18 @@ TEST(MutateTests, StressTests) {
 
   std::cout << "Start tests \n";
 
-  LaunchParallelTest(4, InsertTuple, table);
-  // std::cout << (*table);
+  LaunchParallelTest(1, InsertTuple, table);
+  //std::cout << (*table);
 
-  LaunchParallelTest(4, UpdateTuple, table);
-  // std::cout << (*table);
+  std::cout << "---------------------------------------------\n";
 
-  LaunchParallelTest(4, DeleteTuple, table);
-  // std::cout << (*table);
+  //LaunchParallelTest(1, UpdateTuple, table);
+  //std::cout << (*table);
+
+  std::cout << "---------------------------------------------\n";
+
+  LaunchParallelTest(1, DeleteTuple, table);
+  //std::cout << (*table);
 
   // PRIMARY KEY
   auto pkey_index = table->GetIndex(0);

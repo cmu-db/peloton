@@ -51,7 +51,7 @@ class IndexScanExecutor : public AbstractScanExecutor {
   //===--------------------------------------------------------------------===//
 
   /** @brief index associated with index scan. */
-  const index::Index *index_ = nullptr;
+  index::Index *index_ = nullptr;
 
   /** @brief starting key for index scan. */
   const storage::Tuple *start_key_ = nullptr;
