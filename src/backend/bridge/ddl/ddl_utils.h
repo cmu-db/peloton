@@ -34,6 +34,8 @@ class DDLUtils {
   DDLUtils(DDLUtils&&) = delete;
   DDLUtils& operator=(DDLUtils&&) = delete;
 
+  static void peloton_prepare_data(Node* parsetree);
+
   // Parse IndexStmt and construct ColumnInfo and ReferenceTableInfos
   static void ParsingCreateStmt(
       CreateStmt* Cstmt, std::vector<catalog::Column>& column_infos,
