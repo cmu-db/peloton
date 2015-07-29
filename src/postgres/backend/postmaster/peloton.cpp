@@ -27,6 +27,7 @@
 #include "backend/scheduler/tbb_scheduler.h"
 #include "backend/bridge/ddl/bootstrap.h"
 #include "backend/bridge/ddl/ddl.h"
+#include "backend/bridge/ddl/ddl_utils.h"
 #include "backend/bridge/ddl/tests/bridge_test.h"
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
@@ -873,6 +874,11 @@ peloton_send_ddl(Peloton_Status  *status,
 
   if (pelotonSock == PGINVALID_SOCKET)
     return;
+
+  // Prepare data for DDL
+  MemoryContext oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+  peloton::bridge::DDLUtils::peloton_prepare_data(parsetree);
+  MemoryContextSwitchTo(oldcxt);
 
   // Set header
   auto transaction_id = GetTopTransactionId();
