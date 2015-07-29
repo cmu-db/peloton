@@ -93,8 +93,6 @@ bool DeleteExecutor::DExecute() {
     bool status = target_table_->DeleteTuple(txn_id, delete_location);
 
     if (status == false) {
-      auto &txn_manager = concurrency::TransactionManager::GetInstance();
-      txn_manager.AbortTransaction(transaction_);
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }

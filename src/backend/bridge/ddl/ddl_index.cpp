@@ -77,7 +77,7 @@ bool DDLIndex::CreateIndex(IndexInfo index_info) {
 
   // TODO: We currently only support btree as our index implementation
   // TODO : Support other types based on "type" argument
-  IndexType our_index_type = INDEX_TYPE_BTREE_MULTIMAP;
+  IndexType our_index_type = INDEX_TYPE_BTREE;
 
   // Get the database oid and table oid
   oid_t database_oid = Bridge::GetCurrentDatabaseOid();
@@ -189,7 +189,7 @@ IndexInfo* DDLIndex::ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt) {
 
   // Index method type
   // TODO :: More access method types need
-  method_type = INDEX_TYPE_BTREE_MULTIMAP;
+  method_type = INDEX_TYPE_BTREE;
 
   IndexInfo* index_info =
       new IndexInfo(index_name, index_oid, table_name, method_type, type,
