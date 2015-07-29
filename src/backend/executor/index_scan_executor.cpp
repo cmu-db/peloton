@@ -76,11 +76,7 @@ bool IndexScanExecutor::DExecute() {
   // Already performed the index lookup
   assert(done_);
 
-  if (result_itr == result.size()) {
-    return false;
-  }
-  else {
-    // Return a tile
+  while(result_itr < result.size()){  // Avoid returning empty tiles
     // In order to be as lazy as possible, t
     // the generic predicate is checked here (instead of upfront)
     if(nullptr != predicate_){
@@ -92,11 +88,19 @@ bool IndexScanExecutor::DExecute() {
       }
     }
 
-    SetOutput(result[result_itr]);
-    result_itr++;
-    return true;
-  }
+    if(result[result_itr]->GetTupleCount() == 0){
+      result_itr++;
+      continue;
+    }
+    else{
+      SetOutput(result[result_itr]);
+      result_itr++;
+      return true;
+    }
 
+  } // end while
+
+  return false;
 }
 
 bool IndexScanExecutor::ExecIndexLookup(){
