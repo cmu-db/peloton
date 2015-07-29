@@ -41,7 +41,7 @@ void DDL::ProcessUtility(Node *parsetree, const char *queryString,
   assert(parsetree != nullptr);
   assert(queryString != nullptr);
 
-  static std::vector<IndexInfo> index_infos;
+  static std::vector<Node*> parsetree_stack;
 
   /* When we call a backend function from different thread, the thread's stack
    * is at a different location than the main thread's stack. so it sets up
@@ -63,12 +63,12 @@ void DDL::ProcessUtility(Node *parsetree, const char *queryString,
 
     case T_CreateStmt:
     case T_CreateForeignTableStmt: {
-      DDLTable::ExecCreateStmt(parsetree, queryString, index_infos);
+      DDLTable::ExecCreateStmt(parsetree, parsetree_stack, txn_id);
       break;
     }
 
     case T_AlterTableStmt: {
-      DDLTable::ExecAlterTableStmt(parsetree, queryString);
+      DDLTable::ExecAlterTableStmt(parsetree, parsetree_stack);
       break;
     }
 
@@ -78,7 +78,7 @@ void DDL::ProcessUtility(Node *parsetree, const char *queryString,
     }
 
     case T_IndexStmt: {
-      DDLIndex::ExecIndexStmt(parsetree, index_infos);
+      DDLIndex::ExecIndexStmt(parsetree, parsetree_stack);
       break;
     }
 
