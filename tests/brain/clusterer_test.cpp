@@ -39,7 +39,7 @@ TEST(ClustererTests, BasicTest) {
   std::mt19937_64 rng;
   std::uniform_real_distribution<double> uniform(0, 1);
 
-  for(int sample_itr = 0 ; sample_itr < 10000; sample_itr ++) {
+  for(int sample_itr = 0 ; sample_itr < 100; sample_itr ++) {
     auto rng_val = uniform(rng);
 
     if(rng_val < 0.3) {

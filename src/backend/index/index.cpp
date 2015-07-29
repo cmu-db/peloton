@@ -12,6 +12,7 @@
 
 #include "backend/index/index.h"
 #include "backend/common/exception.h"
+#include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
 
 #include <iostream>
@@ -41,12 +42,16 @@ std::ostream& operator<<(std::ostream& os, const Index& index) {
 }
 
 void Index::GetInfo() const {
-  std::cout << this->GetName() << ",";
-  std::cout << GetTypeName() << ",";
-  std::cout << lookup_counter << ",";
-  std::cout << insert_counter << ",";
-  std::cout << delete_counter << ",";
-  std::cout << update_counter << std::endl;
+  std::stringstream os;
+
+  os << this->GetName() << ",";
+  os << GetTypeName() << ",";
+  os << lookup_counter << ",";
+  os << insert_counter << ",";
+  os << delete_counter << ",";
+  os << update_counter << std::endl;
+
+  LOG_INFO("Info :: %s", os.str().c_str());
 }
 
 /**
