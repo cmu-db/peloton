@@ -136,9 +136,6 @@ expression::AbstractExpression* ExprTransformer::TransformConst(
         (long unsigned)const_expr->constvalue);
   }
 
-  LOG_TRACE("Const : ");
-  //std::cout << value << std::endl;
-
   // A Const Expr has no children.
   auto rv = expression::ConstantValueFactory(value);
   value.FreeUninlinedData();

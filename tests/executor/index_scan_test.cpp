@@ -89,7 +89,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
 
   // Set end key
   end_key.reset(new storage::Tuple(index_key_schema, true));
-  end_key->SetValue(0, ValueFactory::GetIntegerValue(20));
+  end_key->SetValue(0, ValueFactory::GetIntegerValue(40));
 
   // Create another plan node.
   planner::IndexScanNode node2(data_table.get(), data_table->GetIndex(0),
