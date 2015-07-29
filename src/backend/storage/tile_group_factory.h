@@ -31,6 +31,7 @@ class TileGroupFactory {
                                  oid_t tile_group_id, AbstractTable* table,
                                  AbstractBackend* backend,
                                  const std::vector<catalog::Schema>& schemas,
+                                 const std::map<oid_t, std::pair<oid_t, oid_t> >& column_map,
                                  int tuple_count);
 };
 
