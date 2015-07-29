@@ -39,7 +39,6 @@ class IndexScanNode : public AbstractScanNode {
     storage::Tuple *end_key;
     bool start_inclusive;
     bool end_inclusive;
-    std::vector<oid_t> column_ids;
     IndexScanDesc()
         : index(nullptr),
           start_key(nullptr),
@@ -48,6 +47,7 @@ class IndexScanNode : public AbstractScanNode {
           end_inclusive(false) {}
   };
 
+  /* FIXME We should keep only one c'tor. Please remove this one someday. (I keep them for unit test) */
   IndexScanNode(storage::AbstractTable *table, index::Index *index,
                 storage::Tuple *start_key, storage::Tuple *end_key,
                 bool start_inclusive, bool end_inclusive,
@@ -60,8 +60,11 @@ class IndexScanNode : public AbstractScanNode {
         start_inclusive_(start_inclusive),
         end_inclusive_(end_inclusive) {}
 
-  IndexScanNode(storage::AbstractTable *table, IndexScanDesc &index_scan_desc)
-      : AbstractScanNode(nullptr, index_scan_desc.column_ids),
+  IndexScanNode(expression::AbstractExpression *predicate,
+                const std::vector<oid_t> &column_ids,
+                storage::AbstractTable *table,
+                IndexScanDesc &index_scan_desc)
+      : AbstractScanNode(predicate, column_ids),
         table_(table),
         index_(index_scan_desc.index),
         start_key_(index_scan_desc.start_key),

@@ -30,7 +30,7 @@ class AbstractJoinPlanNode : public AbstractPlanNode {
   AbstractJoinPlanNode(AbstractJoinPlanNode &&) = delete;
   AbstractJoinPlanNode &operator=(AbstractJoinPlanNode &&) = delete;
 
-  AbstractJoinPlanNode(JoinType joinType,
+  AbstractJoinPlanNode(PelotonJoinType joinType,
                        expression::AbstractExpression *predicate)
       : AbstractPlanNode(), joinType_(joinType), predicate_(predicate) {
     // Fuck off!
@@ -40,7 +40,11 @@ class AbstractJoinPlanNode : public AbstractPlanNode {
   // Accessors
   //===--------------------------------------------------------------------===//
 
-  JoinType GetJoinType() const { return joinType_; }
+  PelotonJoinType GetJoinType() const { return joinType_; }
+
+  void SetJoinType(const PelotonJoinType jointype) {
+    this->joinType_ = jointype;
+  }
 
   const expression::AbstractExpression *GetPredicate() const {
     return predicate_.get();
@@ -48,7 +52,7 @@ class AbstractJoinPlanNode : public AbstractPlanNode {
 
  private:
   /** @brief The type of join that we're going to perform */
-  JoinType joinType_;
+  PelotonJoinType joinType_;
 
   /** @brief Join predicate. */
   const std::unique_ptr<expression::AbstractExpression> predicate_;

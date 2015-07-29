@@ -47,20 +47,27 @@ void ExprTransformer::PrintPostgressExprTree(const ExprState* expr_state,
 /**
  * @brief Transform a ExprState tree (Postgres) to a AbstractExpression tree
  * (Peloton) recursively.
+ * @return  The transformed expression tree. NULL if input is empty.
  */
 expression::AbstractExpression* ExprTransformer::TransformExpr(
     const ExprState* expr_state) {
-  if (!expr_state) return nullptr;
+  if (nullptr == expr_state) {
+    LOG_TRACE("Null expression");
+    return nullptr;
+  }
+
+  expression::AbstractExpression* peloton_expr = nullptr;
 
   /* Special case:
    * Input is a list of expressions.
    * Transform it to a conjunction tree.
    */
   if (expr_state->type == T_List) {
-    return TransformList(expr_state);
+    peloton_expr = TransformList(expr_state);
+    return peloton_expr;
   }
 
-  expression::AbstractExpression* peloton_expr = nullptr;
+
 
   switch (nodeTag(expr_state->expr)) {
     case T_Const:

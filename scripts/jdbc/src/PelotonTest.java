@@ -10,16 +10,18 @@ public class PelotonTest {
   private final String username = "postgres";
   private final String pass = "postgres";
 
-  private final String DROP = "DROP TABLE IF EXISTS peloton_test";
-  private final String DDL = "CREATE TABLE peloton_test (id INT PRIMARY KEY, data TEXT)";
-  private final String INSERT = "INSERT INTO peloton_test VALUES (?,?)";
-  private final String SEQSCAN = "SELECT * FROM peloton_test";
-  private final String INDEXSCAN = "SELECT * FROM peloton_test WHERE id = ?";
-  private final String BITMAPSCAN = "SELECT * FROM peloton_test WHERE id > ? and id < ?";
-  private final String UPDATE_BY_INDEXSCAN = "UPDATE peloton_test SET data=? WHERE id=?";
-  private final String UPDATE_BY_SCANSCAN = "UPDATE peloton_test SET data=?";
-  private final String DELETE_BY_INDEXSCAN = "DELETE FROM peloton_test WHERE id = ?";
-  private final String SELECT_FOR_UPDATE = "SELECT * FROM peloton_test WHERE id = ? FOR UPDATE";
+  private final String DROP = "DROP TABLE IF EXISTS A;" +
+          "DROP TABLE IF EXISTS B;";
+  private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);" +
+          "CREATE TABLE B (id INT PRIMARY KEY, data TEXT);";
+  private final String INSERT = "INSERT INTO A VALUES (?,?)";
+  private final String SEQSCAN = "SELECT * FROM A";
+  private final String INDEXSCAN = "SELECT * FROM A WHERE id = ?";
+  private final String BITMAPSCAN = "SELECT * FROM A WHERE id > ? and id < ?";
+  private final String UPDATE_BY_INDEXSCAN = "UPDATE A SET data=? WHERE id=?";
+  private final String UPDATE_BY_SCANSCAN = "UPDATE A SET data=?";
+  private final String DELETE_BY_INDEXSCAN = "DELETE FROM A WHERE id = ?";
+  private final String SELECT_FOR_UPDATE = "SELECT * FROM A WHERE id = ? FOR UPDATE";
 
   private final Connection conn;
 
@@ -177,11 +179,11 @@ public class PelotonTest {
       pt.Insert(i);
     }
 
-    pt.ReadModifyWrite(3);
+    //pt.ReadModifyWrite(3);
     //pt.BitmapScan(2, 5);
     //pt.SeqScan();
     //pt.DeleteByIndexScan(3);
-    pt.SeqScan();
+    //pt.SeqScan();
     //pt.UpdateBySeqScan();
     //pt.IndexScan(3);
     pt.Close();

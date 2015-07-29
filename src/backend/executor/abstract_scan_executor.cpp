@@ -44,12 +44,15 @@ AbstractScanExecutor::AbstractScanExecutor(planner::AbstractPlanNode *node,
  */
 bool AbstractScanExecutor::DInit() {
   assert(children_.size() == 0 || children_.size() == 1);
+  assert(executor_context_);
 
   // Grab data from plan node.
   const planner::AbstractScanNode &node = GetPlanNode<planner::AbstractScanNode>();
 
   predicate_ = node.GetPredicate();
   column_ids_ = node.GetColumnIds();
+
+  assert(column_ids_.size() > 0);
 
   return true;
 }

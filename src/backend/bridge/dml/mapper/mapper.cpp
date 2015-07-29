@@ -82,6 +82,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
       // TODO :: 'MergeJoin'/'HashJoin' have not been implemented yet, however, we need this
       // case to operate AlterTable 
       // Also - Added special case in peloton_process_dml
+    case T_NestLoop:
+      plan_node = PlanTransformer::TransformNestLoop(
+          reinterpret_cast<const NestLoopState*>(plan_state));
       break;
     default: {
       LOG_ERROR("Unsupported Postgres Plan State Tag: %u Plan Tag: %u ",

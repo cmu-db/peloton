@@ -29,16 +29,20 @@ namespace executor {
  */
 IndexScanExecutor::IndexScanExecutor(planner::AbstractPlanNode *node,
                                      ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {}
+    : AbstractScanExecutor(node, executor_context) {}
 
 /**
- * @brief Nothing to init at the moment.
+ * @brief Let base calss Dinit() first, then do my job.
  * @return true on success, false otherwise.
  */
 bool IndexScanExecutor::DInit() {
-  assert(children_.size() == 0);
-  assert(executor_context_);
 
+  auto status = AbstractScanExecutor::DInit();
+
+  if(!status)
+    return false;
+
+  assert(children_.size() == 0);
   LOG_TRACE("Index Scan executor :: 0 child \n");
 
   // Grab info from plan node and check it
@@ -46,9 +50,6 @@ bool IndexScanExecutor::DInit() {
 
   index_ = node.GetIndex();
   assert(index_ != nullptr);
-
-  column_ids_ = node.GetColumnIds();
-  assert(column_ids_.size() > 0);
 
   start_key_ = node.GetStartKey();
   end_key_ = node.GetEndKey();
@@ -65,19 +66,46 @@ bool IndexScanExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool IndexScanExecutor::DExecute() {
-  // Already performed the index lookup
-  if (done) {
-    if (result_itr == result.size()) {
+
+  if(!done_){
+    auto status = ExecIndexLookup();
+    if(status == false)
       return false;
-    } else {
-      // Return appropriate tile and go to next tile
+  }
+
+  // Already performed the index lookup
+  assert(done_);
+
+  while(result_itr < result.size()){  // Avoid returning empty tiles
+    // In order to be as lazy as possible, t
+    // the generic predicate is checked here (instead of upfront)
+    if(nullptr != predicate_){
+      for (oid_t tuple_id : *result[result_itr]) {
+        expression::ContainerTuple<LogicalTile> tuple(result[result_itr], tuple_id);
+        if (predicate_->Evaluate(&tuple, nullptr, executor_context_).IsFalse()) {
+          result[result_itr]->RemoveVisibility(tuple_id);
+        }
+      }
+    }
+
+    if(result[result_itr]->GetTupleCount() == 0){
+      result_itr++;
+      continue;
+    }
+    else{
       SetOutput(result[result_itr]);
       result_itr++;
       return true;
     }
-  }
 
-  // Else, need to do the index lookup
+  } // end while
+
+  return false;
+}
+
+bool IndexScanExecutor::ExecIndexLookup(){
+  assert(!done_);
+
   std::vector<ItemPointer> tuple_locations;
 
   if (start_key_ == nullptr && end_key_ == nullptr) {
@@ -116,12 +144,9 @@ bool IndexScanExecutor::DExecute() {
   // Get the logical tiles corresponding to the given tuple locations
   result = LogicalTileFactory::WrapTileGroups(tuple_locations, column_ids_,
                                               txn_id, commit_id);
-  done = true;
+  done_ = true;
 
   LOG_TRACE("Result tiles : %lu \n", result.size());
-
-  SetOutput(result[result_itr]);
-  result_itr++;
 
   return true;
 }
