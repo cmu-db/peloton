@@ -56,17 +56,17 @@ bool NestedLoopJoinExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool NestedLoopJoinExecutor::DExecute() {
-  LOG_TRACE("********** Nested Loop Join executor :: 2 children \n");
+  LOG_INFO("********** Nested Loop Join executor :: 2 children \n");
 
   bool right_scan_end = false;
   // Try to get next tile from RIGHT child
   if (children_[1]->Execute() == false) {
-    LOG_TRACE("Did not get right tile \n");
+    LOG_INFO("Did not get right tile \n");
     right_scan_end = true;
   }
 
   if (right_scan_end == true) {
-    LOG_TRACE("Resetting scan for right tile \n");
+    LOG_INFO("Resetting scan for right tile \n");
     children_[1]->Init();
     if (children_[1]->Execute() == false) {
       LOG_ERROR("Did not get right tile on second try\n");
@@ -74,18 +74,18 @@ bool NestedLoopJoinExecutor::DExecute() {
     }
   }
 
-  LOG_TRACE("Got right tile \n");
+  LOG_INFO("Got right tile \n");
 
   if (left_scan_start == true || right_scan_end == true) {
     left_scan_start = false;
     // Try to get next tile from LEFT child
     if (children_[0]->Execute() == false) {
-      LOG_TRACE("Did not get left tile \n");
+      LOG_INFO("Did not get left tile \n");
       return false;
     }
-    LOG_TRACE("Got left tile \n");
+    LOG_INFO("Got left tile \n");
   } else {
-    LOG_TRACE("Already have left tile \n");
+    LOG_INFO("Already have left tile \n");
   }
 
   std::unique_ptr<LogicalTile> left_tile(children_[0]->GetOutput());
