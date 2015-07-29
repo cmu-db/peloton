@@ -27,9 +27,8 @@ namespace executor {
  * @brief Constructor for nested loop join executor.
  * @param node Nested loop join node corresponding to this executor.
  */
-NestedLoopJoinExecutor::NestedLoopJoinExecutor(planner::AbstractPlanNode *node,
-                                               ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {}
+NestedLoopJoinExecutor::NestedLoopJoinExecutor(planner::AbstractPlanNode *node)
+    : AbstractExecutor(node) {}
 
 /**
  * @brief Do some basic checks and create the schema for the output logical

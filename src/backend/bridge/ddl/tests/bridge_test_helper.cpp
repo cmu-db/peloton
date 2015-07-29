@@ -169,7 +169,7 @@ void BridgeTest::CreateSamplePrimaryKeyIndex(std::string table_name,
   IndexInfo* index_info;
 
   index_info = new IndexInfo(
-      table_name + "_pkey", index_oid, table_name, INDEX_TYPE_BTREE_MULTIMAP,
+      table_name + "_pkey", index_oid, table_name, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_PRIMARY_KEY, true, key_column_names);
 
   status = DDLIndex::CreateIndex(*index_info);
@@ -189,7 +189,7 @@ void BridgeTest::CreateSampleUniqueIndex(std::string table_name,
   IndexInfo* index_info;
 
   index_info = new IndexInfo(
-      table_name + "_key", index_oid, table_name, INDEX_TYPE_BTREE_MULTIMAP,
+      table_name + "_key", index_oid, table_name, INDEX_TYPE_BTREE,
       INDEX_CONSTRAINT_TYPE_UNIQUE, true, key_column_names);
 
   status = DDLIndex::CreateIndex(*index_info);
