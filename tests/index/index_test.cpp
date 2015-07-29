@@ -65,7 +65,7 @@ TEST(IndexTests, BtreeUniqueIndexTest) {
       INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema, unique_keys);
 
   storage::VMBackend *backend = new storage::VMBackend();
-  Pool *pool = new Pool(backend);
+  peloton::Pool *pool = new peloton::Pool(backend);
 
   index::Index *index = index::IndexFactory::GetInstance(index_metadata);
 
@@ -204,7 +204,7 @@ TEST(IndexTests, BtreeMultiIndexTest) {
       INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema, unique_keys);
 
   storage::VMBackend *backend = new storage::VMBackend();
-  Pool *pool = new Pool(backend);
+  peloton::Pool *pool = new peloton::Pool(backend);
 
   index::Index *index = index::IndexFactory::GetInstance(index_metadata);
 

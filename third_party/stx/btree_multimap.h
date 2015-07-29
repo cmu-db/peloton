@@ -543,7 +543,7 @@ public:
     /// Erase the key/data pair referenced by the iterator.
     void erase(iterator iter)
     {
-        return tree.erase(iter);
+        tree.erase(iter);
     }
 
 #ifdef BTREE_TODO
