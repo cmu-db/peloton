@@ -155,7 +155,7 @@ void CleanExecutorTree(executor::AbstractExecutor *root) {
 }
 
 /**
- * @brief Add a Materialization node if the root of the exector tree is seqscan
+ * @brief Add a Materialization node if the root of the executor tree is seqscan
  * or limit
  * @param the current executor tree
  * @return new root of the executor tree
@@ -242,8 +242,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
 
     std::unique_ptr<executor::LogicalTile> tile(executor_tree->GetOutput());
 
-    // FIXME Some executor just doesn't return tiles (e.g., Update).
-    // Should we continue instead of break here?
+    // Some executor just doesn't return tiles (e.g., Update).
     if (tile.get() == nullptr) {
       continue;
     }
