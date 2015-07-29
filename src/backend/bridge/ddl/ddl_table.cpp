@@ -45,7 +45,6 @@ bool DDLTable::ExecCreateStmt(Node* parsetree,
                               std::vector<Node*>& parsetree_stack,
                               TransactionId txn_id) {
                            
-  /* Run parse analysis ... */
   List* stmts = ((CreateStmt*)parsetree)->stmts;
 
   /* ... and do it */
@@ -150,8 +149,15 @@ bool DDLTable::ExecDropStmt(Node* parsetree) {
 
       case OBJECT_TABLE: {
         char* table_name = strVal(linitial(names));
-        Oid table_oid = Bridge::GetRelationOid(table_name);
 
+        auto& manager = catalog::Manager::GetInstance();
+        storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+        auto table = db->GetTableWithName(table_name);
+
+        // skip if no table
+        if( table == nullptr) break;
+       
+        Oid table_oid = table->GetOid();
         DDLTable::DropTable(table_oid);
       } break;
 

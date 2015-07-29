@@ -17,12 +17,12 @@
 #include "backend/common/logger.h"
 #include "backend/storage/database.h"
 
+#include "parser/parse_type.h"
+#include "utils/syscache.h"
 #include "miscadmin.h"
 #include "parser/parse_utilcmd.h"
-#include "parser/parse_type.h"
 #include "access/htup_details.h"
 #include "utils/resowner.h"
-#include "utils/syscache.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 
@@ -32,6 +32,55 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 // DDL Utils
 //===--------------------------------------------------------------------===//
+
+/**
+ * @brief preparing data 
+ * @param parsetree
+ */
+void DDLUtils::peloton_prepare_data(Node* parsetree){
+  switch(nodeTag(parsetree)){
+      case T_CreateStmt:
+      case T_CreateForeignTableStmt:{
+        List* stmts = ((CreateStmt*)parsetree)->stmts;
+        ListCell* l;
+
+        foreach (l, stmts) {
+          Node* stmt = (Node*)lfirst(l);
+          if (IsA(stmt, CreateStmt)) {
+            CreateStmt* Cstmt = (CreateStmt*)stmt;
+
+            // Get the column list from the create statement
+            List* ColumnList = (List*)(Cstmt->tableElts);
+
+            // Parse the CreateStmt and construct ColumnInfo
+            ListCell* entry;
+            foreach (entry, ColumnList) {
+              ColumnDef* coldef = static_cast<ColumnDef*>(lfirst(entry));
+
+              Oid typeoid = typenameTypeId(NULL, coldef->typeName);
+              int32 typemod;
+              typenameTypeIdAndMod(NULL, coldef->typeName, &typeoid, &typemod);
+        
+              // Get type length
+              Type tup = typeidType(typeoid);
+              int typelen = typeLen(tup);
+              ReleaseSysCache(tup);
+        
+              // For a fixed-size type, typlen is the number of bytes in the internal
+              // representation of the type. But for a variable-length type, typlen is
+              // negative.
+              if (typelen == -1) typelen = typemod;
+
+              // Use existing TypeName structure
+              coldef->typeName->typeOid = typeoid;
+              coldef->typeName->typemod = typelen;
+            }
+          }
+        }
+      break;
+    }
+  }
+}
 
 /**
  * @brief parsing create statement
@@ -57,19 +106,8 @@ void DDLUtils::ParsingCreateStmt(
     ColumnDef* coldef = static_cast<ColumnDef*>(lfirst(entry));
 
     // Get the type oid and type mod with given typeName
-    Oid typeoid = typenameTypeId(NULL, coldef->typeName);
-    int32 typemod;
-    typenameTypeIdAndMod(NULL, coldef->typeName, &typeoid, &typemod);
-
-    // Get type length
-    Type tup = typeidType(typeoid);
-    int typelen = typeLen(tup);
-    ReleaseSysCache(tup);
-
-    // For a fixed-size type, typlen is the number of bytes in the internal
-    // representation of the type. But for a variable-length type, typlen is
-    // negative.
-    if (typelen == -1) typelen = typemod;
+    Oid typeoid = coldef->typeName->typeOid;
+    int typelen = coldef->typeName->typemod;
 
     ValueType column_valueType =
         PostgresValueTypeToPelotonValueType((PostgresValueType)typeoid);
