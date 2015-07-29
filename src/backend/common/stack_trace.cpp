@@ -108,14 +108,14 @@ void GetStackTrace(int signum) {
   internal_info << "process : " << getpid()
                 << " thread : " << std::this_thread::get_id();
 
-  elog(ERROR, "signal : %s", strsignal(signum));
-  elog(ERROR, "%s", internal_info.str().c_str());
-  elog(ERROR, "stack trace :\n");
-  elog(ERROR,
+  elog(LOG, "signal : %s", strsignal(signum));
+  elog(LOG, "%s", internal_info.str().c_str());
+  elog(LOG, "stack trace :\n");
+  elog(LOG,
       "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
       "+\n");
-  elog(ERROR, "\n%s", stack_trace.str().c_str());
-  elog(ERROR,
+  elog(LOG, "\n%s", stack_trace.str().c_str());
+  elog(LOG,
       "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
       "+\n");
 
