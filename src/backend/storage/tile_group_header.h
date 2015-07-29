@@ -19,6 +19,7 @@
 #include <iostream>
 #include <cassert>
 #include <queue>
+#include <cstring>
 
 namespace peloton {
 namespace storage {
@@ -43,7 +44,6 @@ namespace storage {
 
 class TileGroupHeader {
   TileGroupHeader() = delete;
-  TileGroupHeader(const TileGroupHeader &other) = delete;
 
  public:
   TileGroupHeader(AbstractBackend *_backend, int tuple_count)
@@ -58,6 +58,23 @@ class TileGroupHeader {
     data = (char *)backend->Allocate(header_size);
     assert(data != nullptr);
   }
+
+  TileGroupHeader(const TileGroupHeader &other) {
+
+    backend = other.backend;
+    header_size = other.header_size;
+
+    data = (char *)backend->Allocate(header_size);
+    memcpy(data, other.data, header_size);
+
+    num_tuple_slots = other.num_tuple_slots;
+    next_tuple_slot = other.next_tuple_slot;
+    empty_slots = other.empty_slots;
+
+    oid_t val = other.active_tuple_slots;
+    active_tuple_slots = val;
+  }
+
 
   ~TileGroupHeader() {
     // reclaim the space
@@ -203,13 +220,13 @@ class TileGroupHeader {
   // storage backend
   AbstractBackend *backend;
 
+  size_t header_size;
+
   // set of fixed-length tuple slots
   char *data;
 
   // number of tuple slots allocated
   oid_t num_tuple_slots;
-
-  size_t header_size;
 
   // next free tuple slot
   oid_t next_tuple_slot;
