@@ -14,7 +14,8 @@ public class PelotonTest {
           "DROP TABLE IF EXISTS B;";
   private final String DDL = "CREATE TABLE A (id INT PRIMARY KEY, data TEXT);" +
           "CREATE TABLE B (id INT PRIMARY KEY, data TEXT);";
-  private final String INSERT = "INSERT INTO A VALUES (?,?)";
+  private final String INSERT = "INSERT INTO A VALUES (?,?);" +
+          "INSERT INTO B VALUES (?,?);";
   private final String SEQSCAN = "SELECT * FROM A";
   private final String INDEXSCAN = "SELECT * FROM A WHERE id = ?";
   private final String BITMAPSCAN = "SELECT * FROM A WHERE id > ? and id < ?";
@@ -58,18 +59,24 @@ public class PelotonTest {
 
   /**
    * Insert a record
-   * @param i the id of the record
+   * @param n the id of the record
    * @throws SQLException
    */
-  public void Insert(int i) throws SQLException {
+  public void Insert(int n) throws SQLException {
     PreparedStatement stmt = conn.prepareStatement(INSERT);
-    String data = "Ming says hello world and id = " + i;
-    stmt.setInt(1, i);
-    stmt.setString(2, data);
-    stmt.executeUpdate();
-    System.out.println("Inserted: id: " + i + ", data: " + data);
+    org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement)stmt;
+    for (int i = 1; i < n; i++) {
+      String data1 = "Ming says hello world and id = " + i;
+      String data2 = "Joy says hello world and id = " + i;
+      stmt.setInt(1, i);
+      stmt.setInt(3, i);
+      stmt.setString(2, data1);
+      stmt.setString(4, data2);
+      boolean usingServerPrepare = pgstmt.isUseServerPrepare();
+      stmt.executeUpdate();
+      System.out.println("Used server side prepare " + usingServerPrepare + ", Inserted: id: " + i + ", data: " + data1);
+    }
     return;
-
   }
 
   public void SeqScan() throws SQLException {
@@ -175,9 +182,7 @@ public class PelotonTest {
   static public void main(String[] args) throws Exception {
     PelotonTest pt = new PelotonTest();
     pt.Init();
-    for (int i = 0; i < 10; i++) {
-      pt.Insert(i);
-    }
+    pt.Insert(20);
 
     //pt.ReadModifyWrite(3);
     //pt.BitmapScan(2, 5);
