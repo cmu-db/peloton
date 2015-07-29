@@ -118,6 +118,8 @@ class TileGroup {
 
   TileGroupHeader *GetHeader() const { return tile_group_header; }
 
+  void SetHeader(TileGroupHeader *header) { tile_group_header = header; }
+
   unsigned int NumTiles() const { return tiles.size(); }
 
   // Get the tile at given offset in the tile group
@@ -136,7 +138,17 @@ class TileGroup {
     return nullptr;
   }
 
+  const std::map<oid_t, std::pair<oid_t, oid_t> >& GetColumnMap() const {
+    return column_map;
+  }
+
   oid_t GetTileGroupId() const { return tile_group_id; }
+
+  oid_t GetDatabaseId() const { return database_id; }
+
+  oid_t GetTableId() const { return table_id; }
+
+  AbstractTable *GetAbstractTable() const { return table; }
 
   void SetTileGroupId(oid_t tile_group_id_) { tile_group_id = tile_group_id_; }
 
@@ -161,8 +173,8 @@ class TileGroup {
   //===--------------------------------------------------------------------===//
 
   // Catalog information
-  oid_t database_id;  // TODO REMOVE
-  oid_t table_id;     // TODO REMOVE
+  oid_t database_id;
+  oid_t table_id;
   oid_t tile_group_id;
 
   // backend
