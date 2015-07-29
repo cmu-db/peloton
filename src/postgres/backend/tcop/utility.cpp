@@ -1100,14 +1100,15 @@ ProcessUtilitySlow(Node *parsetree,
           lockmode = AlterTableGetLockLevel(atstmt->cmds);
           relid = AlterTableLookupRelation(atstmt, lockmode);
 
-          // TODO: Peloton Changes
-          ((AlterTableStmt *)parsetree)->relation_id = relid;
-
           if (OidIsValid(relid))
           {
             /* Run parse analysis ... */
             stmts = transformAlterTableStmt(relid, atstmt,
                             queryString);
+
+            // TODO: Peloton Changes
+            ((AlterTableStmt *)parsetree)->relation_id = relid;
+            ((AlterTableStmt *)parsetree)->stmts = stmts;
 
             /* ... ensure we have an event trigger context ... */
             EventTriggerAlterTableStart(parsetree);
