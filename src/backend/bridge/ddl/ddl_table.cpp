@@ -102,10 +102,10 @@ bool DDLTable::ExecCreateStmt(Node* parsetree, const char* queryString,
  */
 bool DDLTable::ExecAlterTableStmt(Node* parsetree, const char* queryString) {
   AlterTableStmt* atstmt = (AlterTableStmt*)parsetree;
-  Oid relation_oid = atstmt->relation_id;
-  List* stmts = transformAlterTableStmt(relation_oid, atstmt, queryString);
 
-  /* ... and do it */
+  Oid relation_oid = atstmt->relation_id;
+  List* stmts = atstmt->stmts;
+
   ListCell* l;
   foreach (l, stmts) {
     Node* stmt = (Node*)lfirst(l);

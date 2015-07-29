@@ -1651,6 +1651,7 @@ typedef struct AlterTableStmt {
 
 	// TODO: Peloton Changes
 	Oid      relation_id;   /* cache the relation id for DDL */
+	List     *stmts;        /* cache the transformed list for DDL */
 } AlterTableStmt;
 
 typedef enum AlterTableType
@@ -1995,7 +1996,7 @@ typedef struct CreateStmt {
 
 	// TODO: Peloton Changes
 	Oid      relation_id;   /* cache the relation id for DDL */
-	List     *stmts;   /* cache the relation id for DDL */
+	List     *stmts;        /* cache the transformed list for DDL */
 } CreateStmt;
 
 /* ----------
