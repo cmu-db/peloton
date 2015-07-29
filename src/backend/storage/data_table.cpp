@@ -26,9 +26,9 @@ namespace storage {
 DataTable::DataTable(catalog::Schema *schema, AbstractBackend *backend,
                      std::string table_name, oid_t table_oid,
                      size_t tuples_per_tilegroup)
-    : AbstractTable(table_oid, table_name, schema),
-      backend(backend),
-      tuples_per_tilegroup(tuples_per_tilegroup) {
+: AbstractTable(table_oid, table_name, schema),
+  backend(backend),
+  tuples_per_tilegroup(tuples_per_tilegroup) {
   // Create a tile group.
   AddDefaultTileGroup();
 }
@@ -37,7 +37,7 @@ DataTable::~DataTable() {
   // clean up tile groups
   oid_t tile_group_count = GetTileGroupCount();
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-       tile_group_itr++) {
+      tile_group_itr++) {
     auto tile_group = GetTileGroup(tile_group_itr);
     delete tile_group;
   }
@@ -174,7 +174,7 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple,
 
     // Undo insert in other indexes as well
     for (int prev_index_itr = index_itr + 1; prev_index_itr < index_count;
-         ++prev_index_itr) {
+        ++prev_index_itr) {
       auto prev_index = GetIndex(prev_index_itr);
       prev_index->DeleteEntry(key);
     }
@@ -390,12 +390,12 @@ std::ostream &operator<<(std::ostream &os, const DataTable &table) {
 
   oid_t tuple_count = 0;
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
-       tile_group_itr++) {
+      tile_group_itr++) {
     auto tile_group = table.GetTileGroup(tile_group_itr);
     auto tile_tuple_count = tile_group->GetNextTupleSlot();
 
     os << "Tile Group Id  : " << tile_group_itr
-       << " Tuple Count : " << tile_tuple_count << "\n";
+        << " Tuple Count : " << tile_tuple_count << "\n";
     os << (*tile_group);
 
     tuple_count += tile_tuple_count;
@@ -493,6 +493,84 @@ void DataTable::DropForeignKey(const oid_t key_offset) {
 }
 
 oid_t DataTable::GetForeignKeyCount() const { return foreign_keys.size(); }
+
+void DataTable::TransformTileGroup(oid_t tile_group_id,
+                                   const std::map<oid_t, std::pair<oid_t, oid_t> >& column_map) {
+
+  // First, check if the tile group is in this table
+  storage::TileGroup *orig_tile_group = nullptr;
+  {
+    std::lock_guard<std::mutex> lock(table_mutex);
+
+    auto found_itr = std::find(tile_groups.begin(), tile_groups.end(), tile_group_id);
+    if(found_itr == tile_groups.end()) {
+      LOG_ERROR("Tile group not found in table : %u \n", tile_group_id);
+      return;
+    }
+  }
+
+  // Get tile group
+  auto& catalog_manager = catalog::Manager::GetInstance();
+  auto tile_group_entry = catalog_manager.GetLocation(tile_group_id);
+  orig_tile_group = static_cast<storage::TileGroup*>(tile_group_entry);
+
+  // Allocate the transformed tile group
+  assert(orig_tile_group);
+  auto orig_column_map = orig_tile_group->GetColumnMap();
+  storage::TileGroup *new_tile_group;
+
+  new_tile_group = TileGroupFactory::GetTileGroup(
+      orig_tile_group->GetDatabaseId(),
+      orig_tile_group->GetTableId(),
+      orig_tile_group->GetTileGroupId(),
+      orig_tile_group->GetAbstractTable(),
+      orig_tile_group->GetBackend(),
+      orig_tile_group->GetTileSchemas(),
+      column_map,
+      orig_tile_group->GetAllocatedTupleCount());
+
+
+  // Set the transformed tile group
+  // One column at a tile
+  auto col_count = schema->GetColumnCount();
+  auto tuple_count = orig_tile_group->GetAllocatedTupleCount();
+  oid_t orig_base_tile_offset, orig_tile_column_offset;
+  oid_t new_base_tile_offset, new_tile_column_offset;
+  for(oid_t col_itr = 0 ; col_itr < col_count ; col_itr++) {
+
+    // Locate the original base tile and tile column offset
+    orig_tile_group->LocateTileAndColumn(col_itr,
+                                         orig_base_tile_offset,
+                                         orig_tile_column_offset);
+
+    new_tile_group->LocateTileAndColumn(col_itr,
+                                        new_base_tile_offset,
+                                        new_tile_column_offset);
+
+    auto orig_tile = orig_tile_group->GetTile(orig_base_tile_offset);
+    auto new_tile = new_tile_group->GetTile(new_base_tile_offset);
+
+    // Copy the column over to the new tile group
+    for(oid_t tuple_itr = 0 ; tuple_itr < tuple_count ; tuple_itr++) {
+      auto val = orig_tile->GetValue(tuple_itr, orig_tile_column_offset);
+      new_tile->SetValue(val, tuple_itr, new_tile_column_offset);
+    }
+  }
+
+  // Copy over the tile header
+  auto header = orig_tile_group->GetHeader();
+  auto new_header = header;
+  new_tile_group->SetHeader(header);
+
+  std::cout << (*new_tile_group);
+
+  // Set the location of the new tile group
+  catalog_manager.SetLocation(tile_group_id, new_tile_group);
+
+  // Clean up the old tile group
+  delete orig_tile_group;
+
+}
 
 }  // End storage namespace
 }  // End peloton namespace

@@ -105,6 +105,8 @@ class DataTable : public AbstractTable {
 
   oid_t GetIndexCount() const;
 
+
+
   //===--------------------------------------------------------------------===//
   // FOREIGN KEYS
   //===--------------------------------------------------------------------===//
@@ -116,6 +118,13 @@ class DataTable : public AbstractTable {
   void DropForeignKey(const oid_t key_offset);
 
   oid_t GetForeignKeyCount() const;
+
+  //===--------------------------------------------------------------------===//
+  // TRANSFORMERS
+  //===--------------------------------------------------------------------===//
+
+  void TransformTileGroup(oid_t tile_group_id,
+                          const std::map<oid_t, std::pair<oid_t, oid_t> >& column_map);
 
   //===--------------------------------------------------------------------===//
   // STATS
