@@ -110,6 +110,7 @@ void DDLUtils::ParsingCreateStmt(
 
         switch(contype){
           case CONSTRAINT_TYPE_UNIQUE:
+          case CONSTRAINT_TYPE_FOREIGN:
             continue;
 
           case CONSTRAINT_TYPE_NULL:
@@ -128,48 +129,6 @@ void DDLUtils::ParsingCreateStmt(
             catalog::Constraint constraint(contype, conname, coldef->raw_default);
             column_constraints.push_back(constraint);
             break;
-          }
-          case CONSTRAINT_TYPE_FOREIGN:
-          {
-            // REFERENCE TABLE NAME AND ACTION OPTION
-            if (ConstraintNode->pktable != NULL) {
-              auto& manager = catalog::Manager::GetInstance();
-              storage::Database* db =
-                  manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
-
-              // PrimaryKey Table
-              oid_t PrimaryKeyTableId =
-                  db->GetTableWithName(ConstraintNode->pktable->relname)
-                      ->GetOid();
-
-              // Each table column names
-              std::vector<std::string> pk_column_names;
-              std::vector<std::string> fk_column_names;
-
-              ListCell* column;
-              if (ConstraintNode->pk_attrs != NULL &&
-                  ConstraintNode->pk_attrs->length > 0) {
-                foreach (column, ConstraintNode->pk_attrs) {
-                  char* attname = strVal(lfirst(column));
-                  pk_column_names.push_back(attname);
-                }
-              }
-              if (ConstraintNode->fk_attrs != NULL &&
-                  ConstraintNode->fk_attrs->length > 0) {
-                foreach (column, ConstraintNode->fk_attrs) {
-                  char* attname = strVal(lfirst(column));
-                  fk_column_names.push_back(attname);
-                }
-              }
-
-              catalog::ForeignKey* foreign_key = new catalog::ForeignKey(
-                  PrimaryKeyTableId, pk_column_names, fk_column_names,
-                  ConstraintNode->fk_upd_action, ConstraintNode->fk_del_action,
-                  conname);
-
-              foreign_keys.push_back(*foreign_key);
-            }
-            continue;
           }
           default:
           {
