@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * tuple_schema.h
+ * schema.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/catalog/tuple_schema.h
+ * /peloton/src/backend/catalog/schema.h
  *
  *-------------------------------------------------------------------------
  */

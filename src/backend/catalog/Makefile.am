@@ -7,6 +7,7 @@
 catalog_FILES = \
 				backend/catalog/column.cpp \
 				backend/catalog/schema.cpp \
+				backend/catalog/schema_transformer.cpp \
 				backend/catalog/constraint.cpp \
 				backend/catalog/manager.cpp
 
