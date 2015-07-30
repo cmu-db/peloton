@@ -47,9 +47,12 @@ const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
  * @param[out]  predicate   Set to the transformed Expression based on qual.
  *
  * @param[out]  out_col_list  Set to the output column list if ps_ProjInfo contains only
- *              direct mapping of attributes. Otherwise set to straightforward pass-thru list.
+ *              direct mapping of attributes. Empty if no direct map is presented.
  *
  * @param[in]   sstate  The ScanState from which generic things are extracted.
+ *
+ * @param[in]   use_projInfo  Parse projInfo or not. Sometimes the projInfo of a Scan may have been
+ *              stolen by its parent.
  *
  * @return      Nothing.
  */
@@ -57,7 +60,8 @@ void PlanTransformer::TransformGenericScanInfo(
     planner::AbstractPlanNode*& parent,
     expression::AbstractExpression*& predicate,
     std::vector<oid_t>& out_col_list,
-    const ScanState* sstate) {
+    const ScanState* sstate,
+    bool use_projInfo) {
 
   List* qual = sstate->ps.qual;
   const ProjectionInfo *pg_proj_info = sstate->ps.ps_ProjInfo;
@@ -71,28 +75,29 @@ void PlanTransformer::TransformGenericScanInfo(
   predicate = BuildPredicateFromQual(qual);
 
   /* Transform project info */
-  std::unique_ptr<const planner::ProjectInfo> project_info(BuildProjectInfo(pg_proj_info, out_column_count));
+  std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
+  if(use_projInfo){
+    project_info.reset(BuildProjectInfo(pg_proj_info, out_column_count));
+  }
 
   /*
    * Based on project_info, see whether we should create a functional projection node
    * on top, or simply pushed in an output column list.
    */
-  if(nullptr == project_info.get()){  // empty predicate, pass thru
-    LOG_INFO("No projections (all pass through).");
+  if(nullptr == project_info.get()){  // empty predicate, or ignore projInfo, pass thru
+    LOG_INFO("No projections (all pass through)");
 
-    std::vector<oid_t> column_ids;
-    column_ids.resize(out_column_count);
-    std::iota(column_ids.begin(), column_ids.end(), 0);
-    out_col_list = std::move(column_ids);
+    out_col_list.clear();
 
-    assert(out_col_list.size() == out_column_count);
+    assert(out_col_list.size() == 0);
   }
   else if(project_info->GetTargetList().size() > 0){  // Have non-trivial projection, add a plan node
-    LOG_ERROR("Sorry we don't handle non-trivial projections for now. So I just output one column.\n");
+    LOG_ERROR("Sorry we don't handle non-trivial projections for now. \n");
 
-    std::vector<oid_t> column_ids;
-    column_ids.emplace_back(0);
-    out_col_list = std::move(column_ids);
+    out_col_list.clear();
+
+    assert(out_col_list.size() == 0);
+
   }
   else {  // Pure direct map
     assert(project_info->GetTargetList().size() == 0);
@@ -115,6 +120,10 @@ void PlanTransformer::TransformGenericScanInfo(
  * @param column_count  The valid column count of output. This is used to
  * skip junk attributes in PG.
  * @return  An ProjectInfo object built from the PG ProjectionInfo.
+ *          NULL if no valid project info is found.
+ *
+ * @warning Some projections in PG may be ignored.
+ * For example, the "row" projection
  */
 const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
     const ProjectionInfo *pg_pi,
@@ -136,15 +145,20 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
 
     if (!(resind < column_count
           && AttributeNumberIsValid(tle->resno)
-          && AttrNumberIsForUserDefinedAttr(tle->resno)))
+          && AttrNumberIsForUserDefinedAttr(tle->resno)
+          && !tle->resjunk)){
+      LOG_INFO("Invalid / Junk attribute. Skipped. \n");
       continue;  // skip junk attributes
+    }
 
     oid_t col_id = static_cast<oid_t>(resind);
 
     auto peloton_expr = ExprTransformer::TransformExpr(gstate->arg);
 
-    if(peloton_expr == nullptr)
+    if(peloton_expr == nullptr){
+      LOG_INFO("Seems to be a row value expression. Skipped.\n");
       continue;
+    }
 
     LOG_INFO("Target : column id %u, Expression : \n%s\n", col_id, peloton_expr->DebugInfo().c_str());
 

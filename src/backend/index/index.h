@@ -113,6 +113,10 @@ class Index {
   // insert an index entry linked to given tuple
   virtual bool InsertEntry(const storage::Tuple *key, ItemPointer location) = 0;
 
+  // do a blind insert into the index. this must succeed
+  virtual bool BlindInsertEntry(const storage::Tuple *key,
+                        const ItemPointer location) = 0;
+
   // delete the index entry linked to given tuple
   virtual bool DeleteEntry(const storage::Tuple *key) = 0;
 

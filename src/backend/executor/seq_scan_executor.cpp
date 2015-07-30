@@ -59,6 +59,11 @@ bool SeqScanExecutor::DInit() {
     table_tile_group_count_ = table_->GetTileGroupCount();
   }
 
+  if(column_ids_.empty()){
+    column_ids_.resize(table_->GetSchema()->GetColumnCount());
+    std::iota(column_ids_.begin(), column_ids_.end(), 0);
+  }
+
   return true;
 }
 

@@ -125,7 +125,7 @@ void DataTable::InsertInIndexes(const storage::Tuple *tuple,
     auto indexed_columns = index_schema->GetIndexedColumns();
     storage::Tuple *key = new storage::Tuple(index_schema, true);
     key->SetFromTuple(tuple, indexed_columns);
-    if (index->InsertEntry(key, location) == false) {
+    if (index->BlindInsertEntry(key, location) == false) {
       location = INVALID_ITEMPOINTER;
       LOG_ERROR("Index constraint violated\n");
       delete key;
