@@ -110,15 +110,15 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
       return INVALID_ITEMPOINTER;
     }
   } else {
-    // just do a blind insert
-    InsertInIndexes(tuple, location);
+    // just do a blind insert into the indexes
+    BlindInsertInIndexes(tuple, location);
     return location;
   }
 
   return location;
 }
 
-void DataTable::InsertInIndexes(const storage::Tuple *tuple,
+void DataTable::BlindInsertInIndexes(const storage::Tuple *tuple,
                                 ItemPointer location) {
   for (auto index : indexes) {
     auto index_schema = index->GetKeySchema();
