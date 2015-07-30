@@ -68,12 +68,8 @@ class BtreeMultiIndex : public Index {
 
       index_key1.SetFromKey(key);
 
-      // remove if key exists already
-      container.erase(index_key1);
-
       // insert the key, val pair -- this must succeed
-      auto status = container.insert(std::pair<KeyType, ValueType>(index_key1, location));
-      assert(status.second == true);
+      container.insert(std::pair<KeyType, ValueType>(index_key1, location));
       return true;
     }
   }
