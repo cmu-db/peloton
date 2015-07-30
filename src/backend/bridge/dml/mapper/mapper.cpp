@@ -38,7 +38,7 @@ void PlanTransformer::PrintPlanState(const PlanState *plan_state) {
 
 /**
  * @brief Convert Postgres PlanState (tree) into AbstractPlanNode (tree).
- * @return Pointer to the constructed AbstractPlan`Node.
+ * @return Pointer to the constructed AbstractPlan Node.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformPlan(
     const PlanState *plan_state,
@@ -55,7 +55,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
   switch (nodeTag(plan)) {
     case T_ModifyTable:
       plan_node = PlanTransformer::TransformModifyTable(
-          reinterpret_cast<const ModifyTableState *>(plan_state));
+          reinterpret_cast<const ModifyTableState *>(plan_state), options);
       break;
     case T_SeqScan:
       plan_node = PlanTransformer::TransformSeqScan(
