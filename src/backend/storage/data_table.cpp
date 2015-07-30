@@ -494,8 +494,8 @@ void DataTable::DropForeignKey(const oid_t key_offset) {
 
 oid_t DataTable::GetForeignKeyCount() const { return foreign_keys.size(); }
 
-void DataTable::TransformTileGroup(oid_t tile_group_id,
-                                   const std::map<oid_t, std::pair<oid_t, oid_t> >& column_map) {
+storage::TileGroup *DataTable::TransformTileGroup(oid_t tile_group_id,
+                                                  const column_name_type& column_map) {
 
   // First, check if the tile group is in this table
   storage::TileGroup *orig_tile_group = nullptr;
@@ -505,7 +505,7 @@ void DataTable::TransformTileGroup(oid_t tile_group_id,
     auto found_itr = std::find(tile_groups.begin(), tile_groups.end(), tile_group_id);
     if(found_itr == tile_groups.end()) {
       LOG_ERROR("Tile group not found in table : %u \n", tile_group_id);
-      return;
+      return nullptr;
     }
   }
 
@@ -516,16 +516,50 @@ void DataTable::TransformTileGroup(oid_t tile_group_id,
 
   // Allocate the transformed tile group
   assert(orig_tile_group);
-  auto orig_column_map = orig_tile_group->GetColumnMap();
   storage::TileGroup *new_tile_group;
+
+  oid_t orig_tile_offset, orig_tile_column_offset;
+  oid_t new_tile_offset, new_tile_column_offset;
+
+  // Construct new tile group schema
+  std::map<oid_t, std::map<oid_t, catalog::Column> > schemas;
+  auto orig_schemas = orig_tile_group->GetTileSchemas();
+  for(auto column_map_entry : column_map) {
+    new_tile_offset = column_map_entry.second.first;
+    new_tile_column_offset =  column_map_entry.second.second;
+    oid_t column_offset = column_map_entry.first;
+
+    orig_tile_group->LocateTileAndColumn(column_offset,
+                                         orig_tile_offset,
+                                         orig_tile_column_offset);
+
+    // Get the column info from original schema
+    auto column_info = orig_schemas[orig_tile_offset].GetColumn(orig_tile_column_offset);
+    schemas[new_tile_offset][new_tile_column_offset] = column_info;
+  }
+
+  std::vector<catalog::Schema> new_schema;
+  for(auto schemas_tile_entry : schemas) {
+    std::vector<catalog::Column> columns;
+    for(auto schemas_column_entry : schemas_tile_entry.second)
+      columns.push_back(schemas_column_entry.second);
+
+    catalog::Schema tile_schema(columns);
+    std::cout << "TILE SCHEMA :: " << tile_schema;
+
+    new_schema.push_back(tile_schema);
+  }
+
+  auto backend =  orig_tile_group->GetBackend();
+  std::cout << "BACKEND  :: " << backend << "\n";
 
   new_tile_group = TileGroupFactory::GetTileGroup(
       orig_tile_group->GetDatabaseId(),
       orig_tile_group->GetTableId(),
       orig_tile_group->GetTileGroupId(),
       orig_tile_group->GetAbstractTable(),
-      orig_tile_group->GetBackend(),
-      orig_tile_group->GetTileSchemas(),
+      backend,
+      new_schema,
       column_map,
       orig_tile_group->GetAllocatedTupleCount());
 
@@ -534,21 +568,19 @@ void DataTable::TransformTileGroup(oid_t tile_group_id,
   // One column at a tile
   auto col_count = schema->GetColumnCount();
   auto tuple_count = orig_tile_group->GetAllocatedTupleCount();
-  oid_t orig_base_tile_offset, orig_tile_column_offset;
-  oid_t new_base_tile_offset, new_tile_column_offset;
   for(oid_t col_itr = 0 ; col_itr < col_count ; col_itr++) {
 
     // Locate the original base tile and tile column offset
     orig_tile_group->LocateTileAndColumn(col_itr,
-                                         orig_base_tile_offset,
+                                         orig_tile_offset,
                                          orig_tile_column_offset);
 
     new_tile_group->LocateTileAndColumn(col_itr,
-                                        new_base_tile_offset,
+                                        new_tile_offset,
                                         new_tile_column_offset);
 
-    auto orig_tile = orig_tile_group->GetTile(orig_base_tile_offset);
-    auto new_tile = new_tile_group->GetTile(new_base_tile_offset);
+    auto orig_tile = orig_tile_group->GetTile(orig_tile_offset);
+    auto new_tile = new_tile_group->GetTile(new_tile_offset);
 
     // Copy the column over to the new tile group
     for(oid_t tuple_itr = 0 ; tuple_itr < tuple_count ; tuple_itr++) {
@@ -559,10 +591,8 @@ void DataTable::TransformTileGroup(oid_t tile_group_id,
 
   // Copy over the tile header
   auto header = orig_tile_group->GetHeader();
-  auto new_header = header;
-  new_tile_group->SetHeader(header);
-
-  std::cout << (*new_tile_group);
+  auto new_header = new_tile_group->GetHeader();
+  *new_header = *header;
 
   // Set the location of the new tile group
   catalog_manager.SetLocation(tile_group_id, new_tile_group);
@@ -570,6 +600,7 @@ void DataTable::TransformTileGroup(oid_t tile_group_id,
   // Clean up the old tile group
   delete orig_tile_group;
 
+  return new_tile_group;
 }
 
 }  // End storage namespace

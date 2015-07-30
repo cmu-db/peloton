@@ -59,12 +59,15 @@ class TileGroupHeader {
     assert(data != nullptr);
   }
 
-  TileGroupHeader(const TileGroupHeader &other) {
+  TileGroupHeader& operator=(const peloton::storage::TileGroupHeader &other) {
+    // check for self-assignment
+    if(&other == this)
+      return *this;
 
     backend = other.backend;
     header_size = other.header_size;
 
-    data = (char *)backend->Allocate(header_size);
+    // copy over all the data
     memcpy(data, other.data, header_size);
 
     num_tuple_slots = other.num_tuple_slots;
@@ -73,6 +76,8 @@ class TileGroupHeader {
 
     oid_t val = other.active_tuple_slots;
     active_tuple_slots = val;
+
+    return *this;
   }
 
 
