@@ -48,7 +48,9 @@ class TileGroup {
   // Tile group constructor
   TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
             AbstractBackend *backend,
-            const std::vector<catalog::Schema> &schemas, int tuple_count);
+            const std::vector<catalog::Schema> &schemas,
+            const std::map<oid_t, std::pair<oid_t, oid_t> >& column_map,
+            int tuple_count);
 
   ~TileGroup() {
     // clean up tiles
@@ -116,6 +118,8 @@ class TileGroup {
 
   TileGroupHeader *GetHeader() const { return tile_group_header; }
 
+  void SetHeader(TileGroupHeader *header) { tile_group_header = header; }
+
   unsigned int NumTiles() const { return tiles.size(); }
 
   // Get the tile at given offset in the tile group
@@ -134,7 +138,17 @@ class TileGroup {
     return nullptr;
   }
 
+  const std::map<oid_t, std::pair<oid_t, oid_t> >& GetColumnMap() const {
+    return column_map;
+  }
+
   oid_t GetTileGroupId() const { return tile_group_id; }
+
+  oid_t GetDatabaseId() const { return database_id; }
+
+  oid_t GetTableId() const { return table_id; }
+
+  AbstractTable *GetAbstractTable() const { return table; }
 
   void SetTileGroupId(oid_t tile_group_id_) { tile_group_id = tile_group_id_; }
 
@@ -144,8 +158,8 @@ class TileGroup {
 
   size_t GetTileCount() const { return tile_count; }
 
-  void LocateTileAndColumn(oid_t column_id, oid_t &tile_offset,
-                           oid_t &tile_column_id);
+  void LocateTileAndColumn(oid_t column_offset, oid_t &tile_offset,
+                           oid_t &tile_column_offset);
 
   oid_t GetTileIdFromColumnId(oid_t column_id);
 
@@ -159,8 +173,8 @@ class TileGroup {
   //===--------------------------------------------------------------------===//
 
   // Catalog information
-  oid_t database_id;  // TODO REMOVE
-  oid_t table_id;     // TODO REMOVE
+  oid_t database_id;
+  oid_t table_id;
   oid_t tile_group_id;
 
   // backend
@@ -185,6 +199,11 @@ class TileGroup {
   oid_t tile_count;
 
   std::mutex tile_group_mutex;
+
+  // column to tile mapping :
+  // <column offset> to <tile offset, tile column offset>
+  std::map<oid_t, std::pair<oid_t, oid_t> > column_map;
+
 };
 
 }  // End storage namespace
