@@ -30,7 +30,7 @@ const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
     }
   }
 
-  LOG_TRACE("Built %d params: \n%s", params.GetSize(), params.Debug());
+  LOG_INFO("Built %d params: \n%s", params.GetSize(), params.Debug().c_str());
   return params;
 }
 
