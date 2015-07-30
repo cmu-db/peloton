@@ -28,6 +28,8 @@ namespace storage {
 class AbstractTable;
 class TileGroupIterator;
 
+typedef std::map<oid_t, std::pair<oid_t, oid_t> > column_name_type;
+
 /**
  * Represents a group of tiles logically horizontally contiguous.
  *
@@ -49,7 +51,7 @@ class TileGroup {
   TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
             AbstractBackend *backend,
             const std::vector<catalog::Schema> &schemas,
-            const std::map<oid_t, std::pair<oid_t, oid_t> >& column_map,
+            const column_name_type& column_map,
             int tuple_count);
 
   ~TileGroup() {
@@ -202,7 +204,7 @@ class TileGroup {
 
   // column to tile mapping :
   // <column offset> to <tile offset, tile column offset>
-  std::map<oid_t, std::pair<oid_t, oid_t> > column_map;
+  column_name_type column_map;
 
 };
 

@@ -23,6 +23,8 @@ class Column {
   friend class Constraint;
 
  public:
+  Column() {};
+
   Column(ValueType value_type, oid_t column_length, std::string column_name,
          bool is_inlined = false, oid_t column_offset = INVALID_OID)
       : column_type(value_type),
@@ -88,7 +90,7 @@ class Column {
   //===--------------------------------------------------------------------===//
 
   // value type of column
-  ValueType column_type;
+  ValueType column_type = VALUE_TYPE_INVALID;
 
   // if the column is not inlined, this is set to pointer size
   // else, it is set to length of the fixed length column

@@ -23,8 +23,6 @@
 namespace peloton {
 namespace storage {
 
-typedef tbb::concurrent_unordered_map<oid_t, index::Index *> oid_t_to_index_ptr;
-
 //===--------------------------------------------------------------------===//
 // DataTable
 //===--------------------------------------------------------------------===//
@@ -123,8 +121,8 @@ class DataTable : public AbstractTable {
   // TRANSFORMERS
   //===--------------------------------------------------------------------===//
 
-  void TransformTileGroup(oid_t tile_group_id,
-                          const std::map<oid_t, std::pair<oid_t, oid_t> >& column_map);
+  storage::TileGroup *TransformTileGroup(oid_t tile_group_id,
+                                         const column_name_type& column_map);
 
   //===--------------------------------------------------------------------===//
   // STATS
