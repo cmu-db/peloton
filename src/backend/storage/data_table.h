@@ -10,19 +10,18 @@
 
 #pragma once
 
-#include "backend/bridge/bridge.h"
+#include "backend/bridge/ddl/bridge.h"
+#include "backend/catalog/foreign_key.h"
+#include "backend/index/index.h"
 #include "backend/storage/abstract_table.h"
 #include "backend/storage/backend_vm.h"
-#include "backend/index/index.h"
-
-#include "nodes/nodes.h" // TODO :: REMOVE, just for raw expr
+#include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_factory.h"
 
 #include <string>
 
 namespace peloton {
 namespace storage {
-
-typedef tbb::concurrent_unordered_map<oid_t, index::Index*> oid_t_to_index_ptr;
 
 //===--------------------------------------------------------------------===//
 // DataTable
@@ -38,131 +37,154 @@ typedef tbb::concurrent_unordered_map<oid_t, index::Index*> oid_t_to_index_ptr;
  *
  */
 class DataTable : public AbstractTable {
-    friend class TileGroup;
-    friend class TableFactory;
+  friend class TileGroup;
+  friend class TileGroupFactory;
+  friend class TableFactory;
 
-    DataTable() = delete;
-    DataTable(DataTable const&) = delete;
+  DataTable() = delete;
+  DataTable(DataTable const &) = delete;
 
-public:
-    // Table constructor
-    DataTable(catalog::Schema *schema,
-              AbstractBackend *backend,
-              std::string table_name,
-              oid_t table_oid,
-              size_t tuples_per_tilegroup);
+ public:
+  // Table constructor
+  DataTable(catalog::Schema *schema, AbstractBackend *backend,
+            std::string table_name, oid_t table_oid,
+            size_t tuples_per_tilegroup);
 
-    ~DataTable();
+  ~DataTable();
 
-    std::string GetName() const {
-        return table_name;
-    }
-    oid_t  GetId() const {
-        return table_oid;
-    }
-    
-    //===--------------------------------------------------------------------===//
-    // OPERATIONS
-    //===--------------------------------------------------------------------===//
-    
-    // insert tuple in table
-    ItemPointer InsertTuple( txn_id_t transaction_id, const Tuple *tuple, bool update = false );
-    
-    //===--------------------------------------------------------------------===//
-    // INDEXES
-    //===--------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
+  // TUPLE OPERATIONS
+  //===--------------------------------------------------------------------===//
 
-    // Add an index to the table
-    bool AddIndex( index::Index *index , oid_t index_oid);
-    void AddReferenceTable( catalog::ReferenceTableInfo *referenceTableInfo );
+  // insert tuple in table
+  ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple,
+                          bool update = false);
 
+  void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
-    inline index::Index *GetIndex(oid_t index_id) const {
-        assert(index_id < indexes.size());
-        return indexes[index_id];
-    }
+  bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
-    index::Index* GetIndexByOid(oid_t index_oid );
+  bool DeleteTuple(txn_id_t transaction_id, ItemPointer location);
 
-    inline bool ishasPrimaryKey(){
-      if( primary_key_count > 0 )
-        return true;
-      else
-        return false;
-    }
+  void DeleteInIndexes(const storage::Tuple *tuple);
 
-    inline bool ishasUnique(){
-      if( unique_count > 0 )
-        return true;
-      else
-        return false;
-    }
+  bool CheckNulls(const storage::Tuple *tuple) const;
 
-    inline bool ishasReferenceTable(){
-      if( reference_table_infos.size() > 0 )
-        return true;
-      else
-        return false;
-    }
+  //===--------------------------------------------------------------------===//
+  // TILE GROUP
+  //===--------------------------------------------------------------------===//
 
+  // add a default unpartitioned tile group to table
+  oid_t AddDefaultTileGroup();
 
-    inline size_t GetIndexCount() const {
-      return indexes.size();
-    }
+  // add a customized tile group to table
+  void AddTileGroup(TileGroup *tile_group);
 
-    inline size_t GetUniqueIndexCount() const {
-      return unique_count;
-    }
+  // NOTE: This must go through the manager's locator
+  // This allows us to "TRANSFORM" tile groups atomically
+  // WARNING: We should distinguish OFFSET and ID of a tile group
+  TileGroup *GetTileGroup(oid_t tile_group_offset) const;
 
-    inline size_t GetReferenceTableCount() const {
-        return reference_table_infos.size();
-    }
+  TileGroup *GetTileGroupById(oid_t tile_group_id) const;
 
-    storage::DataTable *GetReferenceTable(int position) ;
+  size_t GetTileGroupCount() const;
 
-    void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+  //===--------------------------------------------------------------------===//
+  // INDEX
+  //===--------------------------------------------------------------------===//
 
-    bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+  void AddIndex(index::Index *index);
 
-    void DeleteInIndexes(const storage::Tuple *tuple);
+  index::Index *GetIndexWithOid(const oid_t index_oid) const;
 
-    bool CheckNulls(const storage::Tuple *tuple) const;
+  void DropIndexWithOid(const oid_t index_oid);
+
+  index::Index *GetIndex(const oid_t index_offset) const;
+
+  oid_t GetIndexCount() const;
 
 
-    //===--------------------------------------------------------------------===//
-    // UTILITIES
-    //===--------------------------------------------------------------------===//
 
-    // Get a string representation of this table
-    friend std::ostream& operator<<(std::ostream& os, const DataTable& table);
+  //===--------------------------------------------------------------------===//
+  // FOREIGN KEYS
+  //===--------------------------------------------------------------------===//
 
-protected:
+  void AddForeignKey(catalog::ForeignKey *key);
 
-    //===--------------------------------------------------------------------===//
-    // MEMBERS
-    //===--------------------------------------------------------------------===//
+  catalog::ForeignKey *GetForeignKey(const oid_t key_offset) const;
 
-    // table name and oid
-    std::string table_name;
-    oid_t table_oid;
-    
-    // INDEXES
-    std::vector<index::Index*> indexes;
+  void DropForeignKey(const oid_t key_offset);
 
-    // Primary key and unique key count
-    unsigned int primary_key_count = 0;
-    unsigned int unique_count = 0;
+  oid_t GetForeignKeyCount() const;
 
-    // Reference tables
-    std::vector<catalog::ReferenceTableInfo*> reference_table_infos;
+  //===--------------------------------------------------------------------===//
+  // TRANSFORMERS
+  //===--------------------------------------------------------------------===//
 
-    // Convert index oid to index address
-    oid_t_to_index_ptr index_oid_to_address;
+  storage::TileGroup *TransformTileGroup(oid_t tile_group_id,
+                                         const column_map_type& column_map,
+                                         bool cleanup = true);
 
+  //===--------------------------------------------------------------------===//
+  // STATS
+  //===--------------------------------------------------------------------===//
+
+  void IncreaseNumberOfTuplesBy(const float amount);
+
+  void DecreaseNumberOfTuplesBy(const float amount);
+
+  void SetNumberOfTuples(const float num_tuples);
+
+  float GetNumberOfTuples() const;
+
+  //===--------------------------------------------------------------------===//
+  // UTILITIES
+  //===--------------------------------------------------------------------===//
+
+  bool HasPrimaryKey() { return has_primary_key; }
+
+  bool HasUniqueConstraints() { return (unique_constraint_count > 0); }
+
+  bool HasForeignKeys() { return (GetForeignKeyCount() > 0); }
+
+  AbstractBackend *GetBackend() const { return backend; }
+
+  // Get a string representation of this table
+  friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
+
+ private:
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
+
+  // backend
+  AbstractBackend *backend;
+
+  // TODO need some policy ?
+  // number of tuples allocated per tilegroup
+  size_t tuples_per_tilegroup;
+
+  // set of tile groups
+  std::vector<oid_t> tile_groups;
+
+  // INDEXES
+  std::vector<index::Index *> indexes;
+
+  // CONSTRAINTS
+  std::vector<catalog::ForeignKey *> foreign_keys;
+
+  // table mutex
+  std::mutex table_mutex;
+
+  // has a primary key ?
+  std::atomic<bool> has_primary_key = ATOMIC_VAR_INIT(false);
+
+  // # of unique constraints
+  std::atomic<oid_t> unique_constraint_count = ATOMIC_VAR_INIT(START_OID);
+
+  // # of tuples
+  float number_of_tuples = 0.0;
 };
 
-
-} // End storage namespace
-} // End peloton namespace
-
-
+}  // End storage namespace
+}  // End peloton namespace

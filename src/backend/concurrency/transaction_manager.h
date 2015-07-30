@@ -10,14 +10,16 @@
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/common/exception.h"
-#include "backend/storage/tile_group.h"
-
 #include <atomic>
 #include <cassert>
 #include <vector>
 #include <map>
+#include <mutex>
+
+#include "backend/common/types.h"
+
+#include "postgres.h"
+#include "c.h"
 
 namespace peloton {
 namespace concurrency {
@@ -25,95 +27,93 @@ namespace concurrency {
 #define BASE_REF_COUNT 1
 
 class Transaction;
-    
+
 //===--------------------------------------------------------------------===//
 // Transaction Manager
 //===--------------------------------------------------------------------===//
-    
+
 class TransactionManager {
-    
-public:
+ public:
+  TransactionManager();
 
-    TransactionManager();
+  ~TransactionManager();
 
-    ~TransactionManager();
+  // Get next transaction id
+  txn_id_t GetNextTransactionId();
 
-    // Get next transaction id
-    txn_id_t GetNextTransactionId() {
-        if (next_txn_id == MAX_TXN_ID) {
-            throw TransactionException("Txn id equals MAX_TXN_ID");
-        }
+  // Get last commit id for visibility checks
+  cid_t GetLastCommitId() { return last_cid; }
 
-        return next_txn_id++;
-    }
+  //===--------------------------------------------------------------------===//
+  // Transaction processing
+  //===--------------------------------------------------------------------===//
 
-    // Get last commit id for visibility checks
-    cid_t GetLastCommitId() {
-        return last_cid;
-    }
+  static TransactionManager &GetInstance();
 
-    //===--------------------------------------------------------------------===//
-    // Transaction processing
-    //===--------------------------------------------------------------------===//
+  // Begin a new transaction
+  Transaction *BeginTransaction();
 
-    static TransactionManager& GetInstance();
+  // Get entry in transaction table
+  Transaction *GetTransaction(txn_id_t txn_id);
 
-    // Begin a new transaction
-    Transaction *BeginTransaction();
+  // End the transaction
+  void EndTransaction(Transaction *txn, bool sync = true);
 
-    // End the transaction
-    void EndTransaction(Transaction *txn, bool sync = true);
+  // Get the list of current transactions
+  std::vector<Transaction *> GetCurrentTransactions();
 
-    // Build a transaction
-    Transaction *BuildTransaction();
+  // validity checks
+  bool IsValid(txn_id_t txn_id);
 
-    // Get entry in transaction table
-    Transaction *GetTransaction(txn_id_t txn_id);
+  // COMMIT
 
-    // Get the list of current transactions
-    std::vector<Transaction *> GetCurrentTransactions();
+  void BeginCommitPhase(Transaction *txn);
 
-    // validity checks
-    bool IsValid(txn_id_t txn_id);
+  void CommitModifications(Transaction *txn, bool sync = true);
 
-    // COMMIT
+  void CommitPendingTransactions(std::vector<Transaction *> &txns,
+                                 Transaction *txn);
 
-    void BeginCommitPhase(Transaction *txn);
+  std::vector<Transaction *> EndCommitPhase(Transaction *txn, bool sync = true);
 
-    void CommitModifications(Transaction *txn, bool sync = true);
+  void CommitTransaction(Transaction *txn, bool sync = true);
 
-    void CommitPendingTransactions(std::vector<Transaction*>& txns, Transaction *txn);
+  // ABORT
 
-    std::vector<Transaction*> EndCommitPhase(Transaction* txn, bool sync = true);
+  void AbortTransaction(Transaction *txn);
 
-    void CommitTransaction(Transaction *txn, bool sync = true);
+  // Store PG Transaction
+  Transaction *StartPGTransaction(TransactionId txn_id);
 
-    // ABORT
+  // Get PG Transaction
+  Transaction *GetPGTransaction(TransactionId txn_id);
 
-    void AbortTransaction(Transaction *txn);
+ private:
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
 
-    void WaitForCurrentTransactions() const;
+  std::atomic<txn_id_t> next_txn_id;
 
-private:
+  std::atomic<cid_t> next_cid;
 
-    //===--------------------------------------------------------------------===//
-    // MEMBERS
-    //===--------------------------------------------------------------------===//
+  cid_t last_cid __attribute__((aligned(16)));
 
-    std::atomic<txn_id_t> next_txn_id;
+  Transaction *last_txn;
 
-    std::atomic<cid_t> next_cid;
+  // Table tracking all active transactions
+  // Our transaction id -> our transaction
+  // Sync access with txn_table_mutex
+  std::map<txn_id_t, Transaction *> txn_table;
 
-    cid_t last_cid __attribute__((aligned(16)));
+  std::mutex txn_table_mutex;
 
-    Transaction *last_txn __attribute__((aligned(16)));
+  // Postgres transaction id -> our transaction
+  // Sync access with pg_txn_table_mutex
+  std::map<TransactionId, Transaction *> pg_txn_table;
 
-    // Table tracking all active transactions
-    std::map<txn_id_t, Transaction *> txn_table;
-
-    // synch helpers
-    std::mutex txn_manager_mutex;
+  std::mutex pg_txn_table_mutex;
 };
 
-} // End concurrency namespace
-} // End peloton namespace
+}  // End concurrency namespace
+}  // End peloton namespace

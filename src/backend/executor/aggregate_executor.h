@@ -35,12 +35,12 @@ namespace executor {
 class AggregateExecutor : public AbstractExecutor {
  public:
   AggregateExecutor(const AggregateExecutor &) = delete;
-  AggregateExecutor& operator=(const AggregateExecutor &) = delete;
+  AggregateExecutor &operator=(const AggregateExecutor &) = delete;
   AggregateExecutor(AggregateExecutor &&) = delete;
-  AggregateExecutor& operator=(AggregateExecutor &&) = delete;
+  AggregateExecutor &operator=(AggregateExecutor &&) = delete;
 
   AggregateExecutor(planner::AbstractPlanNode *node,
-                    concurrency::Transaction *transaction);
+                    ExecutorContext *executor_context);
 
   ~AggregateExecutor();
 
@@ -66,5 +66,5 @@ class AggregateExecutor : public AbstractExecutor {
   storage::DataTable *output_table = nullptr;
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

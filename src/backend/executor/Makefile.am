@@ -6,12 +6,11 @@
 
 executor_FILES = \
 		 backend/executor/abstract_executor.cpp \
-		 backend/executor/create_executor.cpp \
-		 backend/executor/drop_executor.cpp \
 		 backend/executor/limit_executor.cpp \
 		 backend/executor/logical_tile.cpp \
 		 backend/executor/logical_tile_factory.cpp \
 		 backend/executor/materialization_executor.cpp \
+		 backend/executor/abstract_scan_executor.cpp \
 		 backend/executor/seq_scan_executor.cpp \
 		 backend/executor/index_scan_executor.cpp \
 		 backend/executor/insert_executor.cpp \
@@ -22,7 +21,8 @@ executor_FILES = \
 		 backend/executor/hash_set_op_executor.cpp \
 		 backend/executor/aggregator.cpp \
 		 backend/executor/aggregate_executor.cpp \
-		 backend/executor/append_executor.cpp		 
+		 backend/executor/append_executor.cpp	\
+		 backend/executor/projection_executor.cpp
 
 
 executor_INCLUDES = \

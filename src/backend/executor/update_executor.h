@@ -7,6 +7,8 @@
 #pragma once
 
 #include "backend/executor/abstract_executor.h"
+#include "backend/expression/abstract_expression.h"
+#include "backend/planner/update_node.h"
 
 #include <vector>
 
@@ -15,11 +17,11 @@ namespace executor {
 
 class UpdateExecutor : public AbstractExecutor {
   UpdateExecutor(const UpdateExecutor &) = delete;
-  UpdateExecutor& operator=(const UpdateExecutor &) = delete;
+  UpdateExecutor &operator=(const UpdateExecutor &) = delete;
 
  public:
   explicit UpdateExecutor(planner::AbstractPlanNode *node,
-                          concurrency::Transaction *context);
+                          ExecutorContext *executor_context);
 
  protected:
   bool DInit();
@@ -27,8 +29,9 @@ class UpdateExecutor : public AbstractExecutor {
   bool DExecute();
 
  private:
-
+  storage::DataTable *target_table_ = nullptr;
+  const planner::ProjectInfo *project_info_ = nullptr;
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

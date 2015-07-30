@@ -39,7 +39,6 @@
 #include "access/parallel.h"
 #include "access/printtup.h"
 #include "access/xact.h"
-#include "bridge/bridge.h"
 #include "catalog/pg_type.h"
 #include "commands/async.h"
 #include "commands/prepare.h"
@@ -814,7 +813,7 @@ pg_plan_query(Query *querytree, int cursorOptions, ParamListInfo boundParams)
   // TODO: Peloton Changes
   /* figure out if catalog query or user query */
   plan->pelotonQuery = IsPelotonQuery(plan->relationOids);
-  fprintf(stdout, "IsPelotonQuery : %d \n", plan->pelotonQuery);
+  elog(DEBUG2, "Peloton query : %d \n", plan->pelotonQuery);
 
   if (log_planner_stats)
     ShowUsage("PLANNER STATISTICS");
@@ -3941,6 +3940,7 @@ PostgresMain(int argc, char *argv[],
     MemoryContextSwitchTo(MessageContext);
     MemoryContextResetAndDeleteChildren(MessageContext);
     //MemoryContextStats(TopSharedMemoryContext);
+    //MemoryContextStats(TopMemoryContext);
 
     initStringInfo(&input_message);
 

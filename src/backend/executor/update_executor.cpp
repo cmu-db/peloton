@@ -25,17 +25,27 @@ namespace executor {
  * @param node Update node corresponding to this executor.
  */
 UpdateExecutor::UpdateExecutor(planner::AbstractPlanNode *node,
-                               concurrency::Transaction *context)
-    : AbstractExecutor(node, context) {
-}
+                               ExecutorContext *executor_context)
+    : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
  * @return true on success, false otherwise.
  */
 bool UpdateExecutor::DInit() {
-    assert(children_.size() <= 1);
-    return true;
+  assert(children_.size() == 1);
+  assert(target_table_ == nullptr);
+  assert(project_info_ == nullptr);
+
+  // Grab settings from node
+  const planner::UpdateNode &node = GetPlanNode<planner::UpdateNode>();
+  target_table_ = node.GetTable();
+  project_info_ = node.GetProjectInfo();
+
+  assert(target_table_);
+  assert(project_info_);
+
+  return true;
 }
 
 /**
@@ -43,90 +53,82 @@ bool UpdateExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool UpdateExecutor::DExecute() {
-    assert(children_.size() == 1);
-    assert(transaction_);
+  assert(children_.size() == 1);
+  assert(executor_context_);
 
-    // We are scanning over a logical tile.
-    LOG_TRACE("Update executor :: 1 child \n");
+  // We are scanning over a logical tile.
+  LOG_TRACE("Update executor :: 1 child \n");
 
-    if (!children_[0]->Execute()) {
-        return false;
+  if (!children_[0]->Execute()) {
+    return false;
+  }
+
+  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
+
+  auto &pos_lists = source_tile.get()->GetPositionLists();
+  storage::Tile *tile = source_tile->GetBaseTile(0);
+  storage::TileGroup *tile_group = tile->GetTileGroup();
+  auto transaction_ = executor_context_->GetTransaction();
+
+  auto tile_group_id = tile_group->GetTileGroupId();
+  auto txn_id = transaction_->GetTransactionId();
+  auto &manager = catalog::Manager::GetInstance();
+
+  // Update tuples in given table
+  for (oid_t visible_tuple_id : *source_tile) {
+    oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
+    LOG_TRACE("Visible Tuple id : %d, Physical Tuple id : %d \n",
+              visible_tuple_id, physical_tuple_id);
+
+    // (A) try to delete the tuple first
+    // this might fail due to a concurrent operation that has latched the tuple
+    auto delete_location = ItemPointer(tile_group_id, physical_tuple_id);
+    bool status = target_table_->DeleteTuple(txn_id, delete_location);
+    if (status == false) {
+      transaction_->SetResult(Result::RESULT_FAILURE);
+      return false;
     }
+    transaction_->RecordDelete(delete_location);
 
-    std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
+    // (B.1) now, make a copy of the original tuple and allocate a new tuple
+    // TODO: Is there a safe way to access the old (deleted) tuple
+    // without creating a new copy of it? That may save us one copy.
+    // Allocating the new tuple, however, is inevitable.
+    storage::Tuple *old_tuple = tile_group->SelectTuple(physical_tuple_id);
+    storage::Tuple *new_tuple =
+        new storage::Tuple(target_table_->GetSchema(), true);
 
-    auto& pos_lists = source_tile.get()->GetPositionLists();
-    storage::Tile *tile = source_tile->GetBaseTile(0);
-    storage::TileGroup *tile_group = tile->GetTileGroup();
+    // (B.2) and execute the projections
+    project_info_->Evaluate(new_tuple, old_tuple, nullptr, executor_context_);
 
-    auto tile_group_id = tile_group->GetTileGroupId();
-    auto txn_id = transaction_->GetTransactionId();
-    auto& manager = catalog::Manager::GetInstance();
+    old_tuple->FreeUninlinedData();
+    delete old_tuple;
 
-    const planner::UpdateNode &node = GetPlanNode<planner::UpdateNode>();
-    storage::DataTable *target_table = node.GetTable();
-    auto updated_cols = node.GetUpdatedColumns();
-    auto updated_col_vals = node.GetUpdatedColumnValues();
-
-    auto updated_col_exprs = node.GetUpdatedColumnExprs();
-
-    // Update tuples in given table
-    for (oid_t visible_tuple_id : *source_tile) {
-
-      oid_t physical_tuple_id = pos_lists[0][visible_tuple_id];
-      LOG_INFO("Visible Tuple id : %d, Physical Tuple id : %d \n", visible_tuple_id, physical_tuple_id);
-
-        // (A) try to delete the tuple first
-        // this might fail due to a concurrent operation that has latched the tuple
-        bool status = tile_group->DeleteTuple(txn_id, physical_tuple_id);
-        if(status == false) {
-            auto& txn_manager = concurrency::TransactionManager::GetInstance();
-            txn_manager.AbortTransaction(transaction_);
-            return false;
-        }
-        transaction_->RecordDelete(ItemPointer(tile_group_id, physical_tuple_id));
-
-        // (B) now, make a copy of the original tuple
-        storage::Tuple *tuple = tile_group->SelectTuple(physical_tuple_id);
-
-        // and (B.1) update the relevant values
-        oid_t col_itr = 0;
-        for(auto col : updated_cols) {
-            Value val = updated_col_vals[col_itr++];
-            tuple->SetValue(col, val);
-        }
-
-        // and (B.2) update with expressions
-        for(auto entry : updated_col_exprs) {
-          Value val = entry.second->Evaluate(tuple, nullptr);
-          tuple->SetValue(entry.first, val);
-        }
-
-        // and finally insert into the table in update mode
-        bool update_mode = true;
-        ItemPointer location = target_table->InsertTuple(txn_id, tuple, update_mode);
-        if(location.block == INVALID_OID) {
-            auto& txn_manager = concurrency::TransactionManager::GetInstance();
-            txn_manager.AbortTransaction(transaction_);
-
-            tuple->FreeUninlinedData();
-            delete tuple;
-            return false;
-        }
-        transaction_->RecordInsert(location);
-        tuple->FreeUninlinedData();
-        delete tuple;
-
-        // (C) set back pointer in tile group header of updated tuple
-        auto updated_tile_group = static_cast<storage::TileGroup*>(manager.locator[location.block]);
-        auto updated_tile_group_header = updated_tile_group->GetHeader();
-        updated_tile_group_header->SetPrevItemPointer(location.offset, ItemPointer(tile_group_id, physical_tuple_id));
+    // and finally insert into the table in update mode
+    bool update_mode = true;
+    ItemPointer location =
+        target_table_->InsertTuple(txn_id, new_tuple, update_mode);
+    if (location.block == INVALID_OID) {
+      new_tuple->FreeUninlinedData();
+      delete new_tuple;
+      return false;
     }
+    transaction_->RecordInsert(location);
+    new_tuple->FreeUninlinedData();
+    delete new_tuple;
 
-    // By default, update should return nothing?
-    // SetOutput(source_tile.release());
-    return true;
+    // (C) set back pointer in tile group header of updated tuple
+    auto updated_tile_group =
+        static_cast<storage::TileGroup *>(manager.locator[location.block]);
+    auto updated_tile_group_header = updated_tile_group->GetHeader();
+    updated_tile_group_header->SetPrevItemPointer(
+        location.offset, ItemPointer(tile_group_id, physical_tuple_id));
+  }
+
+  // By default, update should return nothing?
+  // SetOutput(source_tile.release());
+  return true;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

@@ -69,6 +69,10 @@
 // TODO: Peloton Changes
 #include "postmaster/peloton.h"
 
+void peloton_ProcessUtility(Node *parsetree, const char *queryString,
+                            ProcessUtilityContext context, ParamListInfo params,
+                            DestReceiver *dest, char *completionTag);
+
 /* Hook for plugins to get control in ProcessUtility() */
 ProcessUtility_hook_type ProcessUtility_hook = NULL;
 
@@ -334,9 +338,19 @@ ProcessUtility(Node *parsetree,
                 context, params,
                 dest, completionTag);
   else
+  {
     standard_ProcessUtility(parsetree, queryString,
                 context, params,
                 dest, completionTag);
+
+    if(IsPostmasterEnvironment == true)
+    {
+      // TODO: Peloton Changes
+      peloton_ProcessUtility(parsetree, queryString,
+                             context, params,
+                             dest, completionTag);
+    }
+  }
 }
 
 /*
@@ -359,7 +373,6 @@ standard_ProcessUtility(Node *parsetree,
             char *completionTag)
 {
   bool    isTopLevel = (context == PROCESS_UTILITY_TOPLEVEL);
-  Peloton_Status *status;
 
   check_xact_readonly(parsetree);
 
@@ -574,12 +587,11 @@ standard_ProcessUtility(Node *parsetree,
       {
       /* no event triggers for global objects */
       PreventTransactionChain(isTopLevel, "CREATE DATABASE");
-      createdb((CreatedbStmt *) parsetree);
+      Oid db_oid = createdb((CreatedbStmt *) parsetree);
 
       // TODO: Peloton Changes
       CreatedbStmt* CdbStmt = (CreatedbStmt*) parsetree;
-      CdbStmt->database_id = get_database_oid( CdbStmt->dbname, true );
-
+      CdbStmt->database_id = db_oid;
       }
       break;
 
@@ -908,15 +920,24 @@ standard_ProcessUtility(Node *parsetree,
       break;
   }
 
+}
+
+void
+peloton_ProcessUtility(Node *parsetree,
+            const char *queryString,
+            ProcessUtilityContext context,
+            ParamListInfo params,
+            DestReceiver *dest,
+            char *completionTag)
+{
+  Peloton_Status *status;
   status = peloton_create_status();
 
   // TODO: Peloton Changes
-  
-  peloton_send_ddl(status, parsetree, queryString,
-                 TopTransactionContext,
-                 CurTransactionContext);
+  peloton_send_ddl(status, parsetree, queryString);
 
-  peloton_get_status(status);
+  peloton_process_status(status);
+
   peloton_destroy_status(status);
 }
 
@@ -1306,6 +1327,7 @@ ProcessUtilitySlow(Node *parsetree,
 
           // TODO: Peloton Changes
           ((IndexStmt *)parsetree)->index_id =  address.objectId;
+
         }
         break;
 

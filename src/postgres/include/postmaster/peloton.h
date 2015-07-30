@@ -13,6 +13,8 @@
 #ifndef PELOTON_H
 #define PELOTON_H
 
+#include "backend/common/types.h"
+
 #include "libpq/libpq-be.h"
 #include "nodes/execnodes.h"
 #include "utils/memutils.h"
@@ -30,17 +32,6 @@ typedef enum PelotonMsgType
   PELOTON_MTYPE_REPLY       // Reply message from Peloton to Backend
 } PelotonMsgType;
 
-/* ----------
- * The types of peloton status
- * ----------
- */
-typedef enum PelotonStatusType
-{
-  PELOTON_STYPE_INVALID,    // Invalid status type
-  PELOTON_STYPE_SUCCESS,    // Success
-  PELOTON_STYPE_FAILURE     // Failure
-} PelotonStatusType;
-
 /* ------------------------------------------------------------
  * Message formats follow
  * ------------------------------------------------------------
@@ -54,6 +45,9 @@ typedef struct Peloton_MsgHdr
 {
   PelotonMsgType m_type;
   int     m_size;
+  TransactionId m_txn_id;
+  MemoryContext m_top_transaction_context;
+  MemoryContext m_cur_transaction_context;
 } Peloton_MsgHdr;
 
 /* ----------
@@ -62,8 +56,9 @@ typedef struct Peloton_MsgHdr
  */
 typedef struct Peloton_Status
 {
-  PelotonStatusType  m_code;
+  peloton::Result m_result;
   List *m_result_slots;
+  int m_status;
 } Peloton_Status;
 
 /* ----------
@@ -95,8 +90,6 @@ typedef struct Peloton_MsgDML
   Peloton_Status  *m_status;
   PlanState *m_planstate;
   TupleDesc m_tuple_desc;
-  MemoryContext m_top_transaction_context;
-  MemoryContext m_cur_transaction_context;
 } Peloton_MsgDML;
 
 /* ----------
@@ -109,8 +102,6 @@ typedef struct Peloton_MsgDDL
   Peloton_Status  *m_status;
   Node *m_parsetree;
   const char *m_queryString;
-  MemoryContext m_top_transaction_context;
-  MemoryContext m_cur_transaction_context;
 } Peloton_MsgDDL;
 
 /* ----------
@@ -147,18 +138,16 @@ extern void peloton_send_ping(void);
 
 extern void peloton_send_dml(Peloton_Status  *status,
                              PlanState *node,
-                             TupleDesc tuple_desc,
-                             MemoryContext top_transaction_context,
-                             MemoryContext cur_transaction_context);
+                             TupleDesc tuple_desc);
 
 extern void peloton_send_ddl(Peloton_Status  *status,
                              Node *parsetree,
-                             const char *queryString,
-                             MemoryContext top_transaction_context,
-                             MemoryContext cur_transaction_context);
+                             const char *queryString);
 
 extern Peloton_Status *peloton_create_status();
-extern int peloton_get_status(Peloton_Status *status);
+
+extern void peloton_process_status(Peloton_Status *status);
+
 extern void peloton_destroy_status(Peloton_Status *status);
 
 

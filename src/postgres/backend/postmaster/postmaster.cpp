@@ -364,6 +364,7 @@ static DNSServiceRef bonjour_sdref = NULL;
 
 // Peloton Test Mode
 bool PelotonTestMode = false;
+bool PelotonDualMode = false;
 
 /*
  * postmaster.c - function prototypes
@@ -616,7 +617,7 @@ PostmasterMain(int argc, char *argv[])
    * tcop/postgres.c (the option sets should not conflict) and with the
    * common help() function in main/main.c.
    */
-  while ((opt = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:Z-:")) != -1)
+  while ((opt = getopt(argc, argv, "B:bc:C:D:d:EeFf:h:ijk:lN:nOo:Pp:r:S:sTt:W:YZ-:")) != -1)
   {
     switch (opt)
     {
@@ -781,9 +782,18 @@ PostmasterMain(int argc, char *argv[])
         break;
       }
 
+      // TODO: Peloton Changes
+      case 'Y':
+      {
+        // Run DML queries using both Peloton and PG executors
+        PelotonDualMode = true;
+        elog(LOG, "Enabled dual mode\n");
+        break;
+      }
+
       case 'Z':
       {
-        // TODO: Peloton Changes
+        // Runs the Peloton bridge tests, if set to true
         PelotonTestMode = true;
         break;
       }
@@ -2879,7 +2889,7 @@ processCancelRequest(Port *port, void *pkt)
         if (!EXIT_STATUS_0(exitstatus))
           LogChildExit(LOG, _("peloton process"),
                        pid, exitstatus);
-        // TODO: Disable automatic restart ?
+        // TODO: Disable automatic restart
         //if (pmState == PM_RUN)
         //  PelotonPID = peloton_start();
         continue;
@@ -4912,8 +4922,9 @@ processCancelRequest(Port *port, void *pkt)
       Assert(PgStatPID == 0);
       PgStatPID = pgstat_start();
 
-      Assert(PelotonPID == 0);
-      PelotonPID = peloton_start();
+      // TODO: Disable auto restart
+      //Assert(PelotonPID == 0);
+      //PelotonPID = peloton_start();
 
       ereport(LOG,
               (errmsg("database system is ready to accept read only connections")));

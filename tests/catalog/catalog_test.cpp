@@ -24,11 +24,7 @@ namespace test {
 // Catalog Tests
 //===--------------------------------------------------------------------===//
 
-TEST(CatalogTests, BasicTest) {
+TEST(CatalogTests, BasicTest) { EXPECT_EQ(1, 1); }
 
-  EXPECT_EQ(1, 1);
-
-}
-
-} // End test namespace
-} // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace
