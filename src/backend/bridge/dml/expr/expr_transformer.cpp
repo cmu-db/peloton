@@ -181,14 +181,23 @@ expression::AbstractExpression* ExprTransformer::TransformVar(
   // Var expr only needs default ES
   auto var_expr = reinterpret_cast<const Var*>(es->expr);
 
-  assert(var_expr->varattno != InvalidAttrNumber);
-
   oid_t tuple_idx =
       (var_expr->varno == INNER_VAR
            ? 1
            : 0);  // Seems reasonable, c.f. ExecEvalScalarVarFast()
+
+  /*
+   * Special case: an varattno of zero in PG
+   * means return the whole row.
+   * We don't want that, just return null.
+   */
+  if(!AttributeNumberIsValid(var_expr->varattno)
+      || !AttrNumberIsForUserDefinedAttr(var_expr->varattno)){
+    return nullptr;
+  }
+
   oid_t value_idx =
-      static_cast<oid_t>(var_expr->varattno - 1);  // Damnit attno is 1-index
+      static_cast<oid_t>(AttrNumberGetAttrOffset(var_expr->varattno));
 
   LOG_TRACE("tuple_idx = %u , value_idx = %u \n", tuple_idx, value_idx);
 
