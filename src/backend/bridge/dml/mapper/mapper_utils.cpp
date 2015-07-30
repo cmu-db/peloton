@@ -134,13 +134,19 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
     TargetEntry *tle = (TargetEntry *)gstate->xprstate.expr;
     AttrNumber resind = tle->resno - 1;
 
-    if (!(resind < column_count)) continue;  // skip junk attributes
+    if (!(resind < column_count
+          && AttributeNumberIsValid(tle->resno)
+          && AttrNumberIsForUserDefinedAttr(tle->resno)))
+      continue;  // skip junk attributes
 
     oid_t col_id = static_cast<oid_t>(resind);
 
     auto peloton_expr = ExprTransformer::TransformExpr(gstate->arg);
 
-    LOG_INFO("Target list : column id %u, Expression : \n%s\n", col_id, peloton_expr->DebugInfo().c_str());
+    if(peloton_expr == nullptr)
+      continue;
+
+    LOG_INFO("Target : column id %u, Expression : \n%s\n", col_id, peloton_expr->DebugInfo().c_str());
 
     target_list.emplace_back(col_id, peloton_expr);
   }
@@ -212,6 +218,9 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
       }
     }
   }
+
+  if(target_list.empty() && direct_map_list.empty())
+    return nullptr;
 
   return new planner::ProjectInfo(std::move(target_list),
                                   std::move(direct_map_list));
