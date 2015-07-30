@@ -146,7 +146,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
     if(peloton_expr == nullptr)
       continue;
 
-    LOG_INFO("Target list : column id %u, Expression : \n%s\n", col_id, peloton_expr->DebugInfo().c_str());
+    LOG_INFO("Target : column id %u, Expression : \n%s\n", col_id, peloton_expr->DebugInfo().c_str());
 
     target_list.emplace_back(col_id, peloton_expr);
   }
