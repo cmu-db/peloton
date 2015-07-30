@@ -39,7 +39,7 @@ class Bridge {
 
   static Oid GetCurrentDatabaseOid(void);
 
-  static Oid GetDbInfo(void);
+  static void GetDbInfo(void);
 
   static void GetDatabaseList(void);
 
