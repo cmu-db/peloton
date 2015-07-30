@@ -102,9 +102,8 @@ class Tile {
   static Tuple *GetTuple(catalog::Manager *catalog,
                          const ItemPointer *tuple_location);
 
-  // TODO: Peloton Changes
-  // Copy current tile to given Backend and return a reference to the new tile
-  Tile *CopyTile(AbstractBackend *);
+  // Copy current tile in given backend and return new tile
+  Tile *CopyTile(AbstractBackend *backend);
 
   //===--------------------------------------------------------------------===//
   // Size Stats
