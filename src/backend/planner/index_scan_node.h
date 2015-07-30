@@ -72,6 +72,20 @@ class IndexScanNode : public AbstractScanNode {
         start_inclusive_(index_scan_desc.start_inclusive),
         end_inclusive_(index_scan_desc.end_inclusive) {}
 
+  ~IndexScanNode() {
+    /* Clean up things */
+    if (start_key_ == end_key_) {
+      // do not double free
+      if (start_key_)
+        delete start_key_;
+      return;
+    }
+    if (start_key_)
+      delete start_key_;
+    if (end_key_)
+      delete end_key_;
+  }
+
   const storage::AbstractTable *GetTable() const { return table_; }
 
   index::Index *GetIndex() const { return index_; }
