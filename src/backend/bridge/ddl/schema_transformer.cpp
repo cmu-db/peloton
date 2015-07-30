@@ -10,26 +10,27 @@
  *-------------------------------------------------------------------------
  */
 
+#include "backend/bridge/ddl/schema_transformer.h"
+
 #include <vector>
 #include <iostream>
 
-#include "schema_transformer.h"
 #include "backend/common/types.h"
 #include "backend/catalog/constraint.h"
 #include "backend/catalog/column.h"
 
 namespace peloton {
-namespace catalog {
+namespace bridge {
 
 //===--------------------------------------------------------------------===//
 // Schema Transformer
 //===--------------------------------------------------------------------===//
 
 
-Schema* SchemaTransformer::GetSchemaFromTupleDesc(TupleDesc tupleDesc){
-  Schema* schema = nullptr;
+catalog::Schema* SchemaTransformer::GetSchemaFromTupleDesc(TupleDesc tupleDesc){
+  catalog::Schema* schema = nullptr;
 
-  std::vector<Column> columns;
+  std::vector<catalog::Column> columns;
   int natts = tupleDesc->natts;
 
   // construct column
@@ -52,28 +53,28 @@ Schema* SchemaTransformer::GetSchemaFromTupleDesc(TupleDesc tupleDesc){
 
     // NOT NULL constraint
     if (tupleDesc->attrs[column_itr]->attnotnull) {
-      Constraint constraint(CONSTRAINT_TYPE_NOTNULL);
+      catalog::Constraint constraint(CONSTRAINT_TYPE_NOTNULL);
       constraint_infos.push_back(constraint);
     }
 
     // DEFAULT value constraint
     if (tupleDesc->attrs[column_itr]->atthasdef) {
-      Constraint constraint(CONSTRAINT_TYPE_DEFAULT);
+      catalog::Constraint constraint(CONSTRAINT_TYPE_DEFAULT);
       constraint_infos.push_back(constraint);
     }
 
-    Column column(value_type, column_length, NameStr(tupleDesc->attrs[column_itr]->attname), 
+    catalog::Column column(value_type, column_length, NameStr(tupleDesc->attrs[column_itr]->attname),
         is_inlined);
     columns.push_back(column);
   }
 
-  schema = new Schema(columns);
+  schema = new catalog::Schema(columns);
 
   std::cout << *schema << std::endl;
 
   return schema;
 }
 
-}  // End catalog namespace
+}  // End bridge namespace
 }  // End peloton namespace
 
