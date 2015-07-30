@@ -112,6 +112,11 @@ bool IndexScanExecutor::ExecIndexLookup(){
 
   if (start_key_ == nullptr && end_key_ == nullptr) {
     return false;
+  } else if (start_key_ == end_key_) {
+    // = KEY
+    assert(start_inclusive_);
+    assert(end_inclusive_);
+    tuple_locations = index_->GetLocationsForKey(start_key_);
   } else if (start_key_ == nullptr) {
     // < END_KEY
     if (end_inclusive_ == false) {
