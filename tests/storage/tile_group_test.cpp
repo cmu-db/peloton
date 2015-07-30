@@ -451,28 +451,16 @@ TEST(TileGroupTests, TileCopyTest) {
   txn_manager.CommitTransaction(txn);
   txn_manager.EndTransaction(txn);
 
-
-
-  /*
-   * Print original tile, make a copy, print copied tile
-   */
-  /*
-	std::cout << std::endl;
-	std::cout << "\t Original Tile Details ..." << std::endl << std::endl;
-	std::cout << (*tile);
-   */
+  std::cout << "\t Original Tile Details ..." << std::endl << std::endl;
+  std::cout << (*tile);
 
   const catalog::Schema *old_schema = tile->GetSchema();
   const catalog::Schema *new_schema = old_schema;
   storage::AbstractBackend *new_backend = new storage::VMBackend();
   storage::Tile *new_tile = tile->CopyTile(new_backend);
 
-  /*
-	std::cout << std::endl;
-	std::cout << "\t Copied Tile Details ..." << std::endl << std::endl;
-	std::cout << (*new_tile);
-   */
-
+  std::cout << "\t Copied Tile Details ..." << std::endl << std::endl;
+  std::cout << (*new_tile);
 
   /*
    * Test for equality of old and new tile data
@@ -484,7 +472,6 @@ TEST(TileGroupTests, TileCopyTest) {
 
   // 1. Pools
   bool intended_behavior = true;
-
   peloton::Pool *old_pool = tile->GetPool();
   peloton::Pool *new_pool = new_tile->GetPool();
 
@@ -498,7 +485,6 @@ TEST(TileGroupTests, TileCopyTest) {
   size_t uninlined_col_object_len, new_uninlined_col_object_len;
   unsigned char *uninlined_col_object_ptr, *new_uninlined_col_object_ptr;
 
-
   int new_tile_uninlined_col_cnt = new_schema->GetUninlinedColumnCount();
 
   // Iterate over all the uninlined columns in the tile
@@ -510,7 +496,7 @@ TEST(TileGroupTests, TileCopyTest) {
     // Iterate over all the tuples for the current uninlined column in the tile
     for(int tup_itr=0; tup_itr<new_tile_active_tuple_count; tup_itr++) {
 
-      uninlined_col_value = tile->GetValue(tup_itr,uninlined_col_index);
+      uninlined_col_value = tile->GetValue(tup_itr, uninlined_col_index);
       uninlined_col_object_len = ValuePeeker::PeekObjectLength(uninlined_col_value);
       uninlined_col_object_ptr = static_cast<unsigned char *>(
           ValuePeeker::PeekObjectValue(uninlined_col_value));
@@ -518,7 +504,7 @@ TEST(TileGroupTests, TileCopyTest) {
           reinterpret_cast<char const*>(uninlined_col_object_ptr),
           uninlined_col_object_len);
 
-      new_uninlined_col_value = new_tile->GetValue(tup_itr,uninlined_col_index);
+      new_uninlined_col_value = new_tile->GetValue(tup_itr, uninlined_col_index);
       new_uninlined_col_object_len = ValuePeeker::PeekObjectLength(new_uninlined_col_value);
       new_uninlined_col_object_ptr = static_cast<unsigned char *>(
           ValuePeeker::PeekObjectValue(new_uninlined_col_value));
@@ -547,7 +533,6 @@ TEST(TileGroupTests, TileCopyTest) {
 
   // At the end of all the checks, intended_behavior is expected to be true
   EXPECT_EQ(true, intended_behavior);
-
 
   delete tuple1;
   delete tuple2;
