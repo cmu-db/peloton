@@ -30,7 +30,7 @@ namespace storage {
 
 class TileGroup;
 class TileIterator;
-//class TileStats;
+// class TileStats;
 
 /**
  * Represents a Tile.
@@ -44,17 +44,13 @@ class Tile {
   friend class TileIterator;
   friend class TileGroupHeader;
 
-
   Tile() = delete;
-  Tile(Tile const&) = delete;
+  Tile(Tile const &) = delete;
 
  public:
-
   // Tile creator
-  Tile(TileGroupHeader* tile_header,
-       AbstractBackend* backend,
-       const catalog::Schema& tuple_schema,
-       TileGroup* tile_group,
+  Tile(TileGroupHeader *tile_header, AbstractBackend *backend,
+       const catalog::Schema &tuple_schema, TileGroup *tile_group,
        int tuple_count);
 
   virtual ~Tile();
@@ -70,14 +66,12 @@ class Tile {
   void InsertTuple(const oid_t tuple_slot_id, Tuple *tuple);
 
   // allocated tuple slots
-  oid_t GetAllocatedTupleCount() const {
-    return num_tuple_slots;
-  }
+  oid_t GetAllocatedTupleCount() const { return num_tuple_slots; }
 
   // active tuple slots
   inline virtual oid_t GetActiveTupleCount() const {
     // For normal tiles
-    if(tile_group_header != nullptr) {
+    if (tile_group_header != nullptr) {
       return tile_group_header->GetNextTupleSlot();
     }
     // For temp tiles
@@ -105,7 +99,8 @@ class Tile {
   void SetValue(Value value, const oid_t tuple_slot_id, const oid_t column_id);
 
   // Get tuple at location
-  static Tuple *GetTuple(catalog::Manager* catalog, const ItemPointer* tuple_location);
+  static Tuple *GetTuple(catalog::Manager *catalog,
+                         const ItemPointer *tuple_location);
 
   // TODO: Peloton Changes
   // Copy current tile to given Backend and return a reference to the new tile
@@ -116,59 +111,41 @@ class Tile {
   //===--------------------------------------------------------------------===//
 
   // Only inlined data
-  uint32_t GetInlinedSize() const {
-    return tile_size ;
-  }
+  uint32_t GetInlinedSize() const { return tile_size; }
 
-  int64_t GetUninlinedDataSize() const {
-    return uninlined_data_size;
-  }
+  int64_t GetUninlinedDataSize() const { return uninlined_data_size; }
 
   // Both inlined and uninlined data
-  uint32_t GetSize() const {
-    return tile_size + uninlined_data_size ;
-  }
+  uint32_t GetSize() const { return tile_size + uninlined_data_size; }
 
   //===--------------------------------------------------------------------===//
   // Columns
   //===--------------------------------------------------------------------===//
 
-  const catalog::Schema *GetSchema() const {
-    return &schema;
-  };
+  const catalog::Schema *GetSchema() const { return &schema; };
 
   const std::string GetColumnName(const oid_t column_index) const {
-    return schema.GetColumnInfo(column_index).name;
+    return schema.GetColumn(column_index).column_name;
   }
 
-  int GetColumnCount() const {
-    return column_count;
-  };
+  int GetColumnCount() const { return column_count; };
 
-  AbstractBackend *GetBackend() const {
-    return backend;
-  }
+  AbstractBackend *GetBackend() const { return backend; }
 
-  TileGroupHeader *GetHeader() const{
-    return tile_group_header;
-  }
+  TileGroupHeader *GetHeader() const { return tile_group_header; }
 
-  TileGroup *GetTileGroup() const{
-    return tile_group;
-  }
+  TileGroup *GetTileGroup() const { return tile_group; }
 
-  oid_t GetTileId() const {
-    return tile_id;
-  }
+  oid_t GetTileId() const { return tile_id; }
 
   // Compare two tiles
-  bool operator== (const Tile &other) const;
-  bool operator!= (const Tile &other) const;
+  bool operator==(const Tile &other) const;
+  bool operator!=(const Tile &other) const;
 
   TileIterator GetIterator();
 
   // Get a string representation of this tile
-  friend std::ostream& operator<<(std::ostream& os, const Tile& tile);
+  friend std::ostream &operator<<(std::ostream &os, const Tile &tile);
 
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization
@@ -176,19 +153,19 @@ class Tile {
 
   bool SerializeTo(SerializeOutput &output, oid_t num_tuples);
   bool SerializeHeaderTo(SerializeOutput &output);
-  bool SerializeTuplesTo(SerializeOutput &output, Tuple *tuples, int num_tuples);
+  bool SerializeTuplesTo(SerializeOutput &output, Tuple *tuples,
+                         int num_tuples);
 
-  void DeserializeTuplesFrom(SerializeInput &serialize_in, Pool *pool = nullptr);
-  void DeserializeTuplesFromWithoutHeader(SerializeInput &input, Pool *pool = nullptr);
+  void DeserializeTuplesFrom(SerializeInput &serialize_in,
+                             Pool *pool = nullptr);
+  void DeserializeTuplesFromWithoutHeader(SerializeInput &input,
+                                          Pool *pool = nullptr);
 
-  Pool *GetPool(){
-    return (pool);
-  }
+  Pool *GetPool() { return (pool); }
 
   char *GetTupleLocation(const oid_t tuple_slot_id) const;
 
  protected:
-
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
@@ -244,7 +221,8 @@ class Tile {
   bool own_tile = false;
 };
 
-// Returns a pointer to the tuple requested. No checks are done that the index is valid.
+// Returns a pointer to the tuple requested. No checks are done that the index
+// is valid.
 inline char *Tile::GetTupleLocation(const oid_t tuple_slot_id) const {
   char *tuple_location = data + (tuple_slot_id * tuple_length);
 
@@ -253,34 +231,33 @@ inline char *Tile::GetTupleLocation(const oid_t tuple_slot_id) const {
 
 // Finds index of tuple for a given tuple address.
 // Returns -1 if no matching tuple was found
-inline int Tile::GetTupleOffset(const char* tuple_address) const{
-
+inline int Tile::GetTupleOffset(const char *tuple_address) const {
   // check if address within tile bounds
-  if((tuple_address < data) || (tuple_address >= (data + tile_size)))
+  if ((tuple_address < data) || (tuple_address >= (data + tile_size)))
     return -1;
 
   int tuple_id = 0;
 
-  // check if address is at an offset that is an integral multiple of tuple length
-  tuple_id = (tuple_address - data)/tuple_length;
+  // check if address is at an offset that is an integral multiple of tuple
+  // length
+  tuple_id = (tuple_address - data) / tuple_length;
 
-  if(tuple_id * tuple_length + data == tuple_address)
-    return tuple_id;
+  if (tuple_id * tuple_length + data == tuple_address) return tuple_id;
 
   return -1;
 }
 
-inline Tuple *Tile::GetTuple(catalog::Manager* catalog, const ItemPointer* tuple_location) {
-
+inline Tuple *Tile::GetTuple(catalog::Manager *catalog,
+                             const ItemPointer *tuple_location) {
   // Figure out tile location
-  storage::Tile *tile = (storage::Tile *) catalog->locator[tuple_location->block];
+  storage::Tile *tile =
+      (storage::Tile *)catalog->locator[tuple_location->block];
   assert(tile);
 
   // Look up tuple at tile
   storage::Tuple *tile_tuple = tile->GetTuple(tuple_location->offset);
   return tile_tuple;
 }
-
 
 //===--------------------------------------------------------------------===//
 // Tile factory
@@ -294,28 +271,24 @@ class TileFactory {
   // Creates tile that is not attached to a tile group.
   // For use in the executor.
   static Tile *GetTempTile(const catalog::Schema &schema, int tuple_count) {
-
     // These temporary tiles don't belong to any tile group.
     TileGroupHeader *header = nullptr;
     TileGroup *tile_group = nullptr;
     AbstractBackend *backend = new VMBackend();
 
-    Tile *tile = GetTile(
-        INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
-        header, backend, schema, tile_group, tuple_count);
+    Tile *tile = GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+                         header, backend, schema, tile_group, tuple_count);
     tile->own_tile = true;
 
     return tile;
   }
 
-  static Tile *GetTile(oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t tile_id,
-                       TileGroupHeader *tile_header,
-                       AbstractBackend *backend,
-                       const catalog::Schema& schema,
-                       TileGroup *tile_group,
-                       int tuple_count) {
-
-    Tile *tile = new Tile(tile_header, backend, schema, tile_group, tuple_count);
+  static Tile *GetTile(oid_t database_id, oid_t table_id, oid_t tile_group_id,
+                       oid_t tile_id, TileGroupHeader *tile_header,
+                       AbstractBackend *backend, const catalog::Schema &schema,
+                       TileGroup *tile_group, int tuple_count) {
+    Tile *tile =
+        new Tile(tile_header, backend, schema, tile_group, tuple_count);
 
     TileFactory::InitCommon(tile, database_id, table_id, tile_group_id, tile_id,
                             backend, schema);
@@ -324,12 +297,10 @@ class TileFactory {
   }
 
  private:
-
-  static void InitCommon(Tile *tile,
-                         oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t tile_id,
-                         AbstractBackend* backend,
-                         const catalog::Schema& schema) {
-
+  static void InitCommon(Tile *tile, oid_t database_id, oid_t table_id,
+                         oid_t tile_group_id, oid_t tile_id,
+                         AbstractBackend *backend,
+                         const catalog::Schema &schema) {
     tile->database_id = database_id;
     tile->table_id = table_id;
     tile->tile_group_id = tile_group_id;
@@ -337,9 +308,7 @@ class TileFactory {
     tile->backend = backend;
     tile->schema = schema;
   }
-
 };
 
-
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

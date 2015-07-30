@@ -27,61 +27,59 @@ namespace planner {
 //===--------------------------------------------------------------------===//
 
 class AbstractPlanNode {
-public:
-    AbstractPlanNode(const AbstractPlanNode &) = delete;
-    AbstractPlanNode& operator=(const AbstractPlanNode &) = delete;
-    AbstractPlanNode(AbstractPlanNode &&) = delete;
-    AbstractPlanNode& operator=(AbstractPlanNode &&) = delete;
+ public:
+  AbstractPlanNode(const AbstractPlanNode&) = delete;
+  AbstractPlanNode& operator=(const AbstractPlanNode&) = delete;
+  AbstractPlanNode(AbstractPlanNode&&) = delete;
+  AbstractPlanNode& operator=(AbstractPlanNode&&) = delete;
 
-    explicit AbstractPlanNode(oid_t plan_node_id);
-    AbstractPlanNode();
-    virtual ~AbstractPlanNode();
+  explicit AbstractPlanNode(oid_t plan_node_id);
+  AbstractPlanNode();
+  virtual ~AbstractPlanNode();
 
+  //===--------------------------------------------------------------------===//
+  // Children + Parent Helpers
+  //===--------------------------------------------------------------------===//
 
-    //===--------------------------------------------------------------------===//
-    // Children + Parent Helpers
-    //===--------------------------------------------------------------------===//
+  void AddChild(AbstractPlanNode* child);
 
-    void AddChild(AbstractPlanNode* child);
+  const std::vector<AbstractPlanNode*>& GetChildren() const;
 
-    const std::vector<AbstractPlanNode*>& GetChildren() const;
+  AbstractPlanNode* GetParent();
 
-    AbstractPlanNode* GetParent();
+  //===--------------------------------------------------------------------===//
+  // Accessors
+  //===--------------------------------------------------------------------===//
 
-    //===--------------------------------------------------------------------===//
-    // Accessors
-    //===--------------------------------------------------------------------===//
+  oid_t GetPlanNodeId() const;
 
-    oid_t GetPlanNodeId() const;
+  void SetPlanNodeId(oid_t plan_node_id);
 
-    void SetPlanNodeId(oid_t plan_node_id);
+  // Each sub-class will have to implement this function to return their type
+  // This is better than having to store redundant types in all the objects
+  virtual PlanNodeType GetPlanNodeType() const = 0;
 
-    // Each sub-class will have to implement this function to return their type
-    // This is better than having to store redundant types in all the objects
-    virtual PlanNodeType GetPlanNodeType() const = 0;
+  //===--------------------------------------------------------------------===//
+  // Utilities
+  //===--------------------------------------------------------------------===//
 
-    //===--------------------------------------------------------------------===//
-    // Utilities
-    //===--------------------------------------------------------------------===//
+  // Debugging convenience methods
+  friend std::ostream& operator<<(std::ostream& os,
+                                  const AbstractPlanNode& node);
+  std::string GetInfo(std::string spacer) const;
 
-    // Debugging convenience methods
-    friend std::ostream& operator<<(std::ostream& os, const AbstractPlanNode& node);
-    std::string GetInfo(std::string spacer) const;
+  // Override in derived plan nodes
+  virtual std::string GetInfo() const;
 
-    // Override in derived plan nodes
-    virtual std::string GetInfo() const;
+ private:
+  // Every plan node will have a unique id assigned to it at compile time
+  oid_t plan_node_id_;
 
-private:
+  // A node can have multiple children and parents
+  std::vector<AbstractPlanNode*> children_;
 
-    // Every plan node will have a unique id assigned to it at compile time
-    oid_t plan_node_id_;
-
-    // A node can have multiple children and parents
-    std::vector<AbstractPlanNode*> children_;
-
-    AbstractPlanNode* parent_ = nullptr;
-
+  AbstractPlanNode* parent_ = nullptr;
 };
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

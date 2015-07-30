@@ -26,13 +26,13 @@ namespace test {
 TEST(TileTests, BasicTest) {
 
 	// Columns
-	std::vector<catalog::ColumnInfo> columns;
+	std::vector<catalog::Column> columns;
 
-	catalog::ColumnInfo column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
-	catalog::ColumnInfo column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
-	catalog::ColumnInfo column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", true);
-	catalog::ColumnInfo column4(VALUE_TYPE_VARCHAR, 25, "D", false);
-	catalog::ColumnInfo column5(VALUE_TYPE_VARCHAR, 25, "E", false);
+	catalog::Column column1(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
+	catalog::Column column2(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "B", true);
+	catalog::Column column3(VALUE_TYPE_TINYINT, GetTypeSize(VALUE_TYPE_TINYINT), "C", true);
+	catalog::Column column4(VALUE_TYPE_VARCHAR, 25, "D", false);
+	catalog::Column column5(VALUE_TYPE_VARCHAR, 25, "E", false);
 
 	columns.push_back(column1);
 	columns.push_back(column2);
@@ -55,11 +55,13 @@ TEST(TileTests, BasicTest) {
 	// Allocated Tuple Count
 	const int tuple_count = 6;
 
-	storage::AbstractBackend *backend = new storage::VMBackend();
-	storage::TileGroupHeader *header = new storage::TileGroupHeader(backend, tuple_count);
+  storage::AbstractBackend *backend = new storage::VMBackend();
+  storage::TileGroupHeader *header =
+      new storage::TileGroupHeader(backend, tuple_count);
 
-	storage::Tile *tile = storage::TileFactory::GetTile(INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
-													  	  header, backend, *schema, nullptr, tuple_count);
+  storage::Tile *tile = storage::TileFactory::GetTile(
+      INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, header, backend,
+      *schema, nullptr, tuple_count);
 
 
 	storage::Tuple *tuple1 = new storage::Tuple(schema, true);
@@ -88,12 +90,7 @@ TEST(TileTests, BasicTest) {
 	tile->InsertTuple(1, tuple2);
 	tile->InsertTuple(2, tuple3);
 
-	std::cout << (*tile);
-
-	//tile->InsertTuple(2, tuple1);
-
-	//std::cout << (*tile);
-
+  std::cout << (*tile);
 
 	/*
 	 * Print details of old tile
@@ -276,7 +273,7 @@ TEST(TileTests, BasicTest) {
 
 	for(int col_itr=0; col_itr<2; col_itr++) {
 
-		uninlined_col_index = new_schema->GetUninlinedColumnIndex(col_itr);
+		uninlined_col_index = new_schema->GetUninlinedColumn(col_itr);
 
 		for(int tup_itr=0; tup_itr<new_tile_active_tuple_count; tup_itr++) {
 
@@ -324,7 +321,5 @@ TEST(TileTests, BasicTest) {
 	delete new_backend;
 }
 
-} // End test namespace
-} // End peloton namespace
-
-
+}  // End test namespace
+}  // End peloton namespace

@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include "backend/catalog/manager.h"
@@ -51,15 +52,13 @@ TEST(MaterializationTests, SingleBaseTileTest) {
   storage::Tile *source_base_tile = tile_group->GetTile(0);
   const bool own_base_tiles = false;
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
-      executor::LogicalTileFactory::WrapTiles(
-        { source_base_tile },
-        own_base_tiles));
+      executor::LogicalTileFactory::WrapTiles({source_base_tile},
+                                              own_base_tiles));
 
   // Pass through materialization executor.
   executor::MaterializationExecutor executor(nullptr);
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
       ExecutorTestsUtil::ExecuteTile(&executor, source_logical_tile.release()));
-
 
   // Verify that logical tile is only made up of a single base tile.
   int num_cols = result_logical_tile->GetColumnCount();
@@ -98,21 +97,20 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   ExecutorTestsUtil::PopulateTiles(tile_group.get(), tuple_count);
 
   // Create logical tile from two base tiles.
-  const std::vector<storage::Tile *> source_base_tiles =
-    { tile_group->GetTile(0), tile_group->GetTile(1) };
+  const std::vector<storage::Tile *> source_base_tiles = {
+      tile_group->GetTile(0), tile_group->GetTile(1)};
   const bool own_base_tiles = false;
   std::unique_ptr<executor::LogicalTile> source_logical_tile(
-      executor::LogicalTileFactory::WrapTiles(
-          source_base_tiles,
-          own_base_tiles));
+      executor::LogicalTileFactory::WrapTiles(source_base_tiles,
+                                              own_base_tiles));
 
   // Create materialization node for this test.
   // Construct output schema. We drop column 3 and reorder the others to 3,1,0.
-  std::vector<catalog::ColumnInfo> output_columns;
+  std::vector<catalog::Column> output_columns;
   // Note that Column 3 in the tile group is column 1 in the second tile.
-  output_columns.push_back(source_base_tiles[1]->GetSchema()->GetColumnInfo(1));
-  output_columns.push_back(source_base_tiles[0]->GetSchema()->GetColumnInfo(1));
-  output_columns.push_back(source_base_tiles[0]->GetSchema()->GetColumnInfo(0));
+  output_columns.push_back(source_base_tiles[1]->GetSchema()->GetColumn(1));
+  output_columns.push_back(source_base_tiles[0]->GetSchema()->GetColumn(1));
+  output_columns.push_back(source_base_tiles[0]->GetSchema()->GetColumn(0));
   std::unique_ptr<catalog::Schema> output_schema(
       new catalog::Schema(output_columns));
 
@@ -121,16 +119,12 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   old_to_new_cols[3] = 0;
   old_to_new_cols[1] = 1;
   old_to_new_cols[0] = 2;
-  planner::MaterializationNode node(
-      old_to_new_cols,
-      output_schema.release());
+  planner::MaterializationNode node(old_to_new_cols, output_schema.release());
 
   // Pass through materialization executor.
   executor::MaterializationExecutor executor(&node);
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
-      ExecutorTestsUtil::ExecuteTile(
-        &executor,
-        source_logical_tile.release()));
+      ExecutorTestsUtil::ExecuteTile(&executor, source_logical_tile.release()));
 
   // Verify that logical tile is only made up of a single base tile.
   int num_cols = result_logical_tile->GetColumnCount();
@@ -152,7 +146,7 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
         result_base_tile->GetValue(i, 1));
     // Output column 0.
     Value string_value(ValueFactory::GetStringValue(
-          std::to_string(ExecutorTestsUtil::PopulatedValue(i, 3))));
+        std::to_string(ExecutorTestsUtil::PopulatedValue(i, 3))));
     EXPECT_EQ(string_value, result_base_tile->GetValue(i, 0));
     string_value.FreeUninlinedData();
 
@@ -166,5 +160,5 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   }
 }
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

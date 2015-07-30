@@ -10,15 +10,14 @@
  *-------------------------------------------------------------------------
  */
 
+#include <iostream>
+#include <cstdio>
 
 #include "backend/main/kernel.h"
 #include "backend/common/logger.h"
-#include "backend/executor/executors.h"
 
 #include "tbb/tbb.h"
 #include "tbb/flow_graph.h"
-
-#include <stdio.h>
 
 namespace peloton {
 namespace backend {
@@ -31,22 +30,17 @@ using namespace tbb::flow;
 
 int size = 10000000;
 int chunk_size = 100000;
-int *data;
+int* data;
 
 class table_iterator_task {
  public:
+  table_iterator_task(int l) : num_tilegroups(l), next_tilegroup(0) {}
 
-  table_iterator_task(int l) :
-    num_tilegroups(l),
-    next_tilegroup(0) {
-  }
-
-  bool operator()( int &v ) {
-    if ( next_tilegroup < num_tilegroups ) {
+  bool operator()(int& v) {
+    if (next_tilegroup < num_tilegroups) {
       v = next_tilegroup++;
       return true;
-    }
-    else {
+    } else {
       return false;
     }
   }
@@ -58,22 +52,20 @@ class table_iterator_task {
 
 int predicate() {
   int sum = 0;
-  for(auto ii = 0 ; ii < 1000 ; ii++)
-    sum += ii;
+  for (auto ii = 0; ii < 1000; ii++) sum += ii;
   return sum;
 }
 
 class seq_scanner_task {
  public:
-  std::vector<int> operator()(const int &v) const {
+  std::vector<int> operator()(const int& v) const {
     std::vector<int> matching;
 
     int offset = v * chunk_size;
     int end = offset + chunk_size;
 
-    for(auto ii = offset; ii < end ; ii++)
-      if(data[ii] % 5 == 0 && predicate())
-        matching.push_back(ii);
+    for (auto ii = offset; ii < end; ii++)
+      if (data[ii] % 5 == 0 && predicate()) matching.push_back(ii);
 
     return matching;
   }
@@ -82,10 +74,8 @@ class seq_scanner_task {
 class summer_task {
  public:
   int operator()(const std::vector<int>& matching) const {
-
     long local_sum = 0;
-    for(auto ii : matching)
-      local_sum += data[ii];
+    for (auto ii : matching) local_sum += data[ii];
 
     return local_sum;
   }
@@ -101,8 +91,8 @@ class aggregator_task {
   }
 };
 
-ResultType Kernel::Handler(const char* query) {
-  ResultType status = RESULT_TYPE_INVALID;
+Result Kernel::Handler(const char* query) {
+  Result status = RESULT_INVALID;
 
   std::cout << query << "\n";
 
@@ -114,9 +104,12 @@ ResultType Kernel::Handler(const char* query) {
 
   graph g;
   function_node< int, int > aggregator( g, 1, aggregator_task() );
-  function_node< std::vector<int>, int > summer( g, tbb::flow::unlimited, summer_task());
-  function_node< int, std::vector<int> > seq_scanner( g, tbb::flow::unlimited, seq_scanner_task());
-  source_node< int > table_iterator( g, table_iterator_task(num_chunks), false );
+  function_node< std::vector<int>, int > summer( g, tbb::flow::unlimited,
+  summer_task());
+  function_node< int, std::vector<int> > seq_scanner( g, tbb::flow::unlimited,
+  seq_scanner_task());
+  source_node< int > table_iterator( g, table_iterator_task(num_chunks), false
+  );
 
   make_edge(table_iterator, seq_scanner);
   make_edge(seq_scanner, summer);
@@ -127,9 +120,9 @@ ResultType Kernel::Handler(const char* query) {
   std::cout << "Parallel Sum is    : " << sum << "\n";
   */
 
-  status = RESULT_TYPE_SUCCESS;
+  status = RESULT_SUCCESS;
   return status;
 }
 
-} // namespace backend
-} // namespace peloton
+}  // namespace backend
+}  // namespace peloton

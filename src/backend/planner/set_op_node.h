@@ -22,31 +22,21 @@ namespace planner {
 class SetOpNode : public AbstractPlanNode {
  public:
   SetOpNode(const SetOpNode &) = delete;
-  SetOpNode& operator=(const SetOpNode &) = delete;
+  SetOpNode &operator=(const SetOpNode &) = delete;
   SetOpNode(const SetOpNode &&) = delete;
-  SetOpNode& operator=(const SetOpNode &&) = delete;
+  SetOpNode &operator=(const SetOpNode &&) = delete;
 
-  SetOpNode(SetOpType set_op)
-  : set_op_(set_op) {
+  SetOpNode(SetOpType set_op) : set_op_(set_op) {}
 
-  }
+  SetOpType GetSetOp() const { return set_op_; }
 
-  SetOpType GetSetOp() const {
-    return set_op_;
-  }
+  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_SETOP; }
 
-  inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_SETOP;
-  }
-
-  inline std::string GetInfo() const {
-    return "SetOp";
-  }
+  inline std::string GetInfo() const { return "SetOp"; }
 
  private:
   /** @brief Set Operation of this node */
   SetOpType set_op_;
 };
-
 }
 }

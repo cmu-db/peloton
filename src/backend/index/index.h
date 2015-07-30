@@ -33,39 +33,46 @@ class IndexMetadata {
   IndexMetadata() = delete;
 
  public:
-
-  IndexMetadata(std::string identifier,
-                IndexMethodType method_type,
-                IndexType type,
+  IndexMetadata(std::string index_name, oid_t index_oid, IndexType method_type,
+                IndexConstraintType index_type,
                 const catalog::Schema *tuple_schema,
-                const catalog::Schema *key_schema,
-                bool unique_keys)
+                const catalog::Schema *key_schema, bool unique_keys)
 
- : identifier(identifier),
-   method_type(method_type),
-   type(type),
-   tuple_schema(tuple_schema),
-   key_schema(key_schema),
-   unique_keys(unique_keys) {
+      : index_name(index_name),
+        index_oid(index_oid),
+        method_type(method_type),
+        index_type(index_type),
+        tuple_schema(tuple_schema),
+        key_schema(key_schema),
+        unique_keys(unique_keys) {}
 
-  }
-
-  ~IndexMetadata(){
+  ~IndexMetadata() {
     // clean up key schema
     delete key_schema;
-
     // no need to clean the tuple schema
   }
 
-  IndexType GetIndexType() {
-    return type;
-  }
+  const std::string &GetName() const { return index_name; }
 
-  std::string identifier;
+  oid_t GetOid() { return index_oid; }
 
-  IndexMethodType method_type;
+  IndexType GetIndexMethodType() { return method_type; }
 
-  IndexType type;
+  IndexConstraintType GetIndexType() { return index_type; }
+
+  const catalog::Schema *GetKeySchema() const { return key_schema; }
+
+  int GetColumnCount() const { return GetKeySchema()->GetColumnCount(); }
+
+  bool HasUniqueKeys() const { return unique_keys; }
+
+  std::string index_name;
+
+  oid_t index_oid;
+
+  IndexType method_type;
+
+  IndexConstraintType index_type;
 
   // schema of tuple values
   const catalog::Schema *tuple_schema;
@@ -73,14 +80,8 @@ class IndexMetadata {
   // schema of keys
   const catalog::Schema *key_schema;
 
-  // table columns in key schema
-  // if column "i" of table schema is present in key schema
-  // then the value "i" will be present in this vector
-  std::vector<oid_t> table_columns_in_key;
-
   // unique keys ?
   bool unique_keys;
-
 };
 
 //===--------------------------------------------------------------------===//
@@ -92,14 +93,15 @@ class IndexMetadata {
  *
  * @see IndexFactory
  */
-class Index
-{
+class Index {
   friend class IndexFactory;
 
  public:
+  oid_t GetOid() const { return index_oid; }
 
-  virtual ~Index(){
+  IndexMetadata *GetMetadata() const { return metadata; }
 
+  virtual ~Index() {
     // clean up metadata
     delete metadata;
   }
@@ -119,28 +121,46 @@ class Index
   //===--------------------------------------------------------------------===//
 
   // return whether the entry is already stored in the index
-  virtual bool Exists(const storage::Tuple *key) const = 0;
+  virtual bool Exists(const storage::Tuple *key)= 0;
 
   // scan all keys in the index
-  virtual std::vector<ItemPointer> Scan() const = 0;
+  virtual std::vector<ItemPointer> Scan() = 0;
 
   // get the locations of tuples matching given key
-  virtual std::vector<ItemPointer> GetLocationsForKey(const storage::Tuple *key) const = 0;
+  virtual std::vector<ItemPointer> GetLocationsForKey(
+      const storage::Tuple *key) = 0;
 
   // get the locations of tuples whose key is between given start and end keys
-  virtual std::vector<ItemPointer> GetLocationsForKeyBetween(const storage::Tuple *start, const storage::Tuple *end) const = 0;
+  virtual std::vector<ItemPointer> GetLocationsForKeyBetween(
+      const storage::Tuple *start, const storage::Tuple *end) = 0;
 
   // get the locations of tuples whose key is less than given key
-  virtual std::vector<ItemPointer> GetLocationsForKeyLT(const storage::Tuple *key) const = 0;
+  virtual std::vector<ItemPointer> GetLocationsForKeyLT(
+      const storage::Tuple *key) = 0;
 
   // get the locations of tuples whose key is less than or equal to given key
-  virtual std::vector<ItemPointer> GetLocationsForKeyLTE(const storage::Tuple *key) const = 0;
+  virtual std::vector<ItemPointer> GetLocationsForKeyLTE(
+      const storage::Tuple *key) = 0;
 
   // get the locations of tuples whose key is greater than given key
-  virtual std::vector<ItemPointer> GetLocationsForKeyGT(const storage::Tuple *key) const = 0;
+  virtual std::vector<ItemPointer> GetLocationsForKeyGT(
+      const storage::Tuple *key) = 0;
 
   // get the locations of tuples whose key is greater than or equal to given key
-  virtual std::vector<ItemPointer> GetLocationsForKeyGTE(const storage::Tuple *key)  const = 0;
+  virtual std::vector<ItemPointer> GetLocationsForKeyGTE(
+      const storage::Tuple *key) = 0;
+
+  //===--------------------------------------------------------------------===//
+  // STATS
+  //===--------------------------------------------------------------------===//
+
+  void IncreaseNumberOfTuplesBy(const float amount);
+
+  void DecreaseNumberOfTuplesBy(const float amount);
+
+  void SetNumberOfTuples(const float num_tuples);
+
+  float GetNumberOfTuples() const;
 
   //===--------------------------------------------------------------------===//
   // Utilities
@@ -153,37 +173,26 @@ class Index
    * We might have to make a different class in future for maximizing
    * performance of UniqueIndex.
    */
-  bool HasUniqueKeys() const {
-    return unique_keys;
-  }
+  bool HasUniqueKeys() const { return metadata->HasUniqueKeys(); }
 
-  int GetColumnCount() const {
-    return column_count;
-  }
+  int GetColumnCount() const { return metadata->GetColumnCount(); }
 
-  const std::string& GetName() const {
-    return identifier;
-  }
+  const std::string &GetName() const { return metadata->GetName(); }
 
   const catalog::Schema *GetKeySchema() const {
-    return key_schema;
+    return metadata->GetKeySchema();
   }
 
-  IndexType GetIndexType() const {
-    return metadata->GetIndexType();
-  }
+  IndexType GetIndexMethodType() { return metadata->GetIndexMethodType(); }
 
-  // Get a string representation of this index
-  friend std::ostream& operator<<(std::ostream& os, const Index& index);
+  IndexConstraintType GetIndexType() const { return metadata->GetIndexType(); }
 
   void GetInfo() const;
 
-  IndexMetadata *GetMetadata() const {
-    return metadata;
-  }
+  // Get a string representation of this index
+  friend std::ostream &operator<<(std::ostream &os, const Index &index);
 
  protected:
-
   Index(IndexMetadata *schema);
 
   //===--------------------------------------------------------------------===//
@@ -192,15 +201,7 @@ class Index
 
   IndexMetadata *metadata;
 
-  std::string identifier;
-
-  const catalog::Schema *key_schema;
-
-  const catalog::Schema *tuple_schema;
-
-  int column_count;
-
-  bool unique_keys;
+  oid_t index_oid = INVALID_OID;
 
   // access counters
   int lookup_counter;
@@ -208,8 +209,9 @@ class Index
   int delete_counter;
   int update_counter;
 
+  // number of tuples
+  float number_of_tuples = 0.0;
 };
 
-} // End index namespace
-} // End peloton namespace
-
+}  // End index namespace
+}  // End peloton namespace

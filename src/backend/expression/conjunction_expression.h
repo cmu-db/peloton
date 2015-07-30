@@ -18,26 +18,23 @@ class ConjunctionOr;
 //===--------------------------------------------------------------------===//
 
 template <typename C>
-class ConjunctionExpression : public AbstractExpression
-{
+class ConjunctionExpression : public AbstractExpression {
  public:
-  ConjunctionExpression(ExpressionType type,
-                        AbstractExpression *left,
+  ConjunctionExpression(ExpressionType type, AbstractExpression *left,
                         AbstractExpression *right)
- : AbstractExpression(type, left, right) {
+      : AbstractExpression(type, left, right) {
     this->m_left = left;
     this->m_right = right;
   }
 
-  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const;
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                 executor::ExecutorContext *ec) const;
 
   std::string DebugInfo(const std::string &spacer) const {
     std::string retval;
-    if(m_left != nullptr)
-      retval = m_left->DebugInfo(spacer);
-    retval += spacer + "ConjunctionExpression\n" + spacer;
-    if(m_right != nullptr)
-      retval = m_right->DebugInfo(spacer);
+    retval = spacer + "ConjunctionExpression : " + ExpressionTypeToString(expr_type) + "\n";
+    if (m_left != nullptr) retval += m_left->DebugInfo(" " + spacer);
+    if (m_right != nullptr) retval += m_right->DebugInfo(" " + spacer);
     return retval;
   }
 
@@ -45,17 +42,21 @@ class ConjunctionExpression : public AbstractExpression
   AbstractExpression *m_right;
 };
 
-template<> inline Value
-ConjunctionExpression<ConjunctionAnd>::Evaluate(const AbstractTuple *tuple1,
-                                                const AbstractTuple *tuple2) const {
-  return m_left->Evaluate(tuple1, tuple2).OpAnd(m_right->Evaluate(tuple1, tuple2));
+template <>
+inline Value ConjunctionExpression<ConjunctionAnd>::Evaluate(
+    const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+    executor::ExecutorContext *ec) const {
+  return m_left->Evaluate(tuple1, tuple2, ec)
+      .OpAnd(m_right->Evaluate(tuple1, tuple2, ec));
 }
 
-template<> inline Value
-ConjunctionExpression<ConjunctionOr>::Evaluate(const AbstractTuple *tuple1,
-                                               const AbstractTuple *tuple2) const {
-  return m_left->Evaluate(tuple1, tuple2).OpOr(m_right->Evaluate(tuple1, tuple2));
+template <>
+inline Value ConjunctionExpression<ConjunctionOr>::Evaluate(
+    const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+    executor::ExecutorContext *ec) const {
+  return m_left->Evaluate(tuple1, tuple2, ec)
+      .OpOr(m_right->Evaluate(tuple1, tuple2, ec));
 }
 
-} // End expression namespace
-} // End peloton namespace
+}  // End expression namespace
+}  // End peloton namespace

@@ -16,15 +16,12 @@
 #include "backend/catalog/manager.h"
 #include "backend/storage/data_table.h"
 
-#include "bridge/bridge.h"
-
 #include <mutex>
 
 namespace peloton {
 namespace storage {
 
-DataTable* TableFactory::GetDataTable(oid_t database_id,
-                                      oid_t relation_id,
+DataTable* TableFactory::GetDataTable(oid_t database_id, oid_t relation_id,
                                       catalog::Schema* schema,
                                       std::string table_name,
                                       size_t tuples_per_tilegroup_count) {
@@ -33,30 +30,23 @@ DataTable* TableFactory::GetDataTable(oid_t database_id,
   //        directly inside of the table object?
   AbstractBackend* backend = new VMBackend();
 
-  DataTable *table =  new DataTable(schema, backend, table_name, relation_id,
-                                    tuples_per_tilegroup_count);
-  table->database_id = database_id;
-
-  // Check if we need this table in the catalog
-  if(database_id != INVALID_OID){
-    catalog::Manager::GetInstance().SetLocation(database_id, relation_id, table);
-  }
+  DataTable* table = new DataTable(schema, backend, table_name, relation_id,
+                                   tuples_per_tilegroup_count);
+  table->database_oid = database_id;
 
   return table;
 }
 
-bool TableFactory::DropDataTable(oid_t database_oid, oid_t table_oid)
-{
-  DataTable* table = (DataTable*) catalog::Manager::GetInstance().GetLocation(database_oid, table_oid);
+bool TableFactory::DropDataTable(oid_t database_oid, oid_t table_oid) {
+  auto& manager = catalog::Manager::GetInstance();
+  DataTable* table =
+      (DataTable*)manager.GetTableWithOid(database_oid, table_oid);
 
-  if(table == nullptr)
-    return false;
+  if (table == nullptr) return false;
 
   delete table;
   return true;
 }
 
-
-} // End storage namespace
-} // End peloton namespace
-
+}  // End storage namespace
+}  // End peloton namespace

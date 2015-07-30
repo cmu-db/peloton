@@ -23,12 +23,9 @@ namespace backend {
 
 // Main handler for query
 class Kernel {
-
  public:
-
-  static ResultType Handler(const char* query);
-
+  static Result Handler(const char* query);
 };
 
-} // namespace backend
-} // namespace peloton
+}  // namespace backend
+}  // namespace peloton

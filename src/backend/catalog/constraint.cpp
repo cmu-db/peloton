@@ -9,24 +9,23 @@
  */
 
 #include "backend/catalog/constraint.h"
+#include "backend/common/types.h"
+
+#include <sstream>
 
 namespace peloton {
 namespace catalog {
 
 std::ostream& operator<<(std::ostream& os, const Constraint& constraint) {
+  os << "\tCONSTRAINT ";
 
-    // TODO :: Print every members..
-    os << "\tCONSTRAINT ";
+  os << constraint.GetName() << " "
+     << ConstraintTypeToString(constraint.constraint_type) << "\n";
 
-    os << constraint.GetName() << " " << ConstraintTypeToString(constraint.type) << "\n";
+  os << "\n";
 
-    os << "\n";
-
-    return os;
+  return os;
 }
 
-
-} // End catalog namespace
-} // End peloton namespace
-
-
+}  // End catalog namespace
+}  // End peloton namespace
