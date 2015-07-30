@@ -50,19 +50,29 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   expression::AbstractExpression* predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  TransformGenericScanInfo(parent, predicate, column_ids, ss_plan_state, options.use_projInfo);
+  GetGenericInfoFromScanState(parent, predicate, column_ids, ss_plan_state, options.use_projInfo);
 
   if(column_ids.empty()){
     column_ids.resize(target_table->GetSchema()->GetColumnCount());
     std::iota(column_ids.begin(), column_ids.end(), 0);
   }
-
-  /* TODO: test whether a parent is presented, connect with the scan node */
-
+  
   /* Construct and return the Peloton plan node */
-  auto plan_node =
+  auto scan_node =
       new planner::SeqScanNode(target_table, predicate, column_ids);
-  return plan_node;
+  
+  planner::AbstractPlanNode* rv = nullptr;
+
+  /* Check whether a parent is presented, connect with the scan node if yes */
+  if(parent){
+    parent->AddChild(scan_node);
+    rv = parent;
+  }
+  else{
+    rv = scan_node;
+  }
+  
+  return rv;
 }
 
 }  // namespace bridge

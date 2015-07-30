@@ -11,6 +11,8 @@
  */
 
 #include "backend/bridge/dml/mapper/mapper.h"
+#include "backend/bridge/ddl/schema_transformer.h"
+#include "backend/planner/projection_node.h"
 
 namespace peloton {
 namespace bridge {
@@ -38,16 +40,16 @@ const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
 
 
 /**
- * @brief Transform the common things shared by all Scan types:
+ * @brief Extract the common things shared by all Scan types:
  * generic predicates and projections.
  *
- * @param[out]  parent  Set to a functional projection plan node if one is needed,
+ * @param[out]  parent  Set to a created projection plan node if one is needed,
  *              or NULL otherwise.
  *
  * @param[out]  predicate   Set to the transformed Expression based on qual.
  *
  * @param[out]  out_col_list  Set to the output column list if ps_ProjInfo contains only
- *              direct mapping of attributes. Empty if no direct map is presented.
+ *              direct mapping of attributes. \b Empty if no direct map is presented.
  *
  * @param[in]   sstate  The ScanState from which generic things are extracted.
  *
@@ -56,7 +58,7 @@ const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
  *
  * @return      Nothing.
  */
-void PlanTransformer::TransformGenericScanInfo(
+void PlanTransformer::GetGenericInfoFromScanState(
     planner::AbstractPlanNode*& parent,
     expression::AbstractExpression*& predicate,
     std::vector<oid_t>& out_col_list,
@@ -92,13 +94,15 @@ void PlanTransformer::TransformGenericScanInfo(
     assert(out_col_list.size() == 0);
   }
   else if(project_info->GetTargetList().size() > 0){  // Have non-trivial projection, add a plan node
-    LOG_ERROR("Sorry we don't handle non-trivial projections for now. \n");
+    LOG_INFO("Non-trivial projections are found. \n");
 
-    out_col_list.clear();
+    auto project_schema =
+        SchemaTransformer::GetSchemaFromTupleDesc(sstate->ps.ps_ResultTupleSlot->tts_tupleDescriptor);
 
-    assert(out_col_list.size() == 0);
+    parent = new planner::ProjectionNode(project_info.release(), project_schema);
 
   }
+
   else {  // Pure direct map
     assert(project_info->GetTargetList().size() == 0);
 
