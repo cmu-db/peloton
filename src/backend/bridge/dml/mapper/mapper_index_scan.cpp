@@ -43,7 +43,8 @@ static void BuildScanKey(
  * @return Pointer to the constructed AbstractPlanNode.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformIndexScan(
-    const IndexScanState *iss_plan_state) {
+    const IndexScanState *iss_plan_state,
+    const TransformOptions options) {
   /* info needed to initialize plan node */
   planner::IndexScanNode::IndexScanDesc index_scan_desc;
   /* Resolve target relation */
@@ -168,7 +169,8 @@ static void BuildScanKey(
  * @return Pointer to the constructed AbstractPlanNode.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
-    const IndexOnlyScanState *ioss_plan_state) {
+    const IndexOnlyScanState *ioss_plan_state,
+    const TransformOptions options) {
   /* info needed to initialize plan node */
   planner::IndexScanNode::IndexScanDesc index_scan_desc;
 
@@ -218,7 +220,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
  * @return Pointer to the constructed AbstractPlanNode
  */
 planner::AbstractPlanNode *PlanTransformer::TransformBitmapScan(
-    const BitmapHeapScanState *bhss_plan_state) {
+    const BitmapHeapScanState *bhss_plan_state,
+    const TransformOptions options) {
   planner::IndexScanNode::IndexScanDesc index_scan_desc;
 
   /* resolve target relation */

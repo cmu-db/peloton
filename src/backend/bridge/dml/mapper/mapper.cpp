@@ -26,6 +26,8 @@ void printPlanStateTree(const PlanState *planstate);
 namespace peloton {
 namespace bridge {
 
+const PlanTransformer::TransformOptions PlanTransformer::kDefaultOptions;
+
 /**
  * @brief Pretty print the plan state tree.
  * @return none.
@@ -39,7 +41,9 @@ void PlanTransformer::PrintPlanState(const PlanState *plan_state) {
  * @return Pointer to the constructed AbstractPlan`Node.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformPlan(
-    const PlanState *plan_state) {
+    const PlanState *plan_state,
+    const TransformOptions options) {
+
   assert(plan_state);
 
   Plan *plan = plan_state->plan;
@@ -55,19 +59,19 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
       break;
     case T_SeqScan:
       plan_node = PlanTransformer::TransformSeqScan(
-          reinterpret_cast<const SeqScanState *>(plan_state));
+          reinterpret_cast<const SeqScanState *>(plan_state), options);
       break;
     case T_IndexScan:
       plan_node = PlanTransformer::TransformIndexScan(
-          reinterpret_cast<const IndexScanState *>(plan_state));
+          reinterpret_cast<const IndexScanState *>(plan_state), options);
       break;
     case T_IndexOnlyScan:
       plan_node = PlanTransformer::TransformIndexOnlyScan(
-          reinterpret_cast<const IndexOnlyScanState *>(plan_state));
+          reinterpret_cast<const IndexOnlyScanState *>(plan_state), options);
       break;
     case T_BitmapHeapScan:
       plan_node = PlanTransformer::TransformBitmapScan(
-          reinterpret_cast<const BitmapHeapScanState *>(plan_state));
+          reinterpret_cast<const BitmapHeapScanState *>(plan_state), options);
       break;
     case T_LockRows:
       plan_node = PlanTransformer::TransformLockRows(

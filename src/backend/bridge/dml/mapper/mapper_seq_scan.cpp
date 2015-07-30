@@ -27,7 +27,8 @@ namespace bridge {
  * TODO: Can we also scan result from a child operator? (Non-base-table scan?)
  */
 planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
-    const SeqScanState* ss_plan_state) {
+    const SeqScanState* ss_plan_state,
+    const TransformOptions options) {
   assert(nodeTag(ss_plan_state) == T_SeqScanState);
 
   // Grab Database ID and Table ID
@@ -49,9 +50,14 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   expression::AbstractExpression* predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  TransformGenericScanInfo(parent, predicate, column_ids, ss_plan_state);
+  TransformGenericScanInfo(parent, predicate, column_ids, ss_plan_state, options.use_projInfo);
 
-  /* TODO: test whether parent is presented, connect with the scan node */
+  if(column_ids.empty()){
+    column_ids.resize(target_table->GetSchema()->GetColumnCount());
+    std::iota(column_ids.begin(), column_ids.end(), 0);
+  }
+
+  /* TODO: test whether a parent is presented, connect with the scan node */
 
   /* Construct and return the Peloton plan node */
   auto plan_node =
