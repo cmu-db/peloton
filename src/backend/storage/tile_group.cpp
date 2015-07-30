@@ -25,7 +25,7 @@ namespace storage {
 TileGroup::TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
                      AbstractBackend *backend,
                      const std::vector<catalog::Schema> &schemas,
-                     const std::map<oid_t, std::pair<oid_t, oid_t> >& column_map,
+                     const column_name_type& column_map,
                      int tuple_count)
     : database_id(INVALID_OID),
       table_id(INVALID_OID),
@@ -229,6 +229,8 @@ std::ostream &operator<<(std::ostream &os, const TileGroup &tile_group) {
   os << "\tCatalog ::"
      << " DB: " << tile_group.database_id << " Table: " << tile_group.table_id
      << " Tile Group:  " << tile_group.tile_group_id << "\n";
+
+  os << " TILE GROUP HEADER :: " << tile_group.tile_group_header;
 
   os << "\tActive Tuples:  "
      << tile_group.tile_group_header->GetActiveTupleCount() << " out of "
