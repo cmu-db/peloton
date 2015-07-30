@@ -27,12 +27,12 @@ namespace test {
 
 // Index scan of table with index predicate.
 TEST(IndexScanTests, IndexPredicateTest) {
-
   // First, generate the table with index
-  std::unique_ptr<storage::DataTable> data_table(ExecutorTestsUtil::CreateAndPopulateTable());
+  std::unique_ptr<storage::DataTable> data_table(
+      ExecutorTestsUtil::CreateAndPopulateTable());
 
   // Column ids to be added to logical tile after scan.
-  std::vector<oid_t> column_ids( { 0, 1, 3 });
+  std::vector<oid_t> column_ids({0, 1, 3});
 
   //===--------------------------------------------------------------------===//
   // Start <= Tuple
@@ -40,8 +40,9 @@ TEST(IndexScanTests, IndexPredicateTest) {
 
   // Set start key
   auto index = data_table->GetIndex(0);
-  const catalog::Schema *index_key_schema = index->GetKeySchema();
-  std::unique_ptr<storage::Tuple> start_key(new storage::Tuple(index_key_schema, true));
+  const catalog::Schema* index_key_schema = index->GetKeySchema();
+  std::unique_ptr<storage::Tuple> start_key(
+      new storage::Tuple(index_key_schema, true));
 
   start_key->SetValue(0, ValueFactory::GetIntegerValue(0));
 
@@ -50,17 +51,17 @@ TEST(IndexScanTests, IndexPredicateTest) {
   bool end_inclusive = true;
 
   // Create plan node.
-  planner::IndexScanNode node(
-      data_table.get(),
-      data_table->GetIndex(0),
-      start_key.get(), end_key.get(), start_inclusive, end_inclusive,
-      column_ids);
+  planner::IndexScanNode node(data_table.get(), data_table->GetIndex(0),
+                              start_key.get(), end_key.get(), start_inclusive,
+                              end_inclusive, column_ids);
 
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
 
   // Run the executor
-  executor::IndexScanExecutor executor(&node, txn);
+  executor::IndexScanExecutor executor(&node, context.get());
   int expected_num_tiles = 3;
 
   EXPECT_TRUE(executor.Init());
@@ -81,7 +82,6 @@ TEST(IndexScanTests, IndexPredicateTest) {
   std::cout << *(result_tiles[0].get());
 
   txn_manager.CommitTransaction(txn);
-  txn_manager.EndTransaction(txn);
 
   //===--------------------------------------------------------------------===//
   // Start <= Tuple <= End
@@ -89,19 +89,17 @@ TEST(IndexScanTests, IndexPredicateTest) {
 
   // Set end key
   end_key.reset(new storage::Tuple(index_key_schema, true));
-  end_key->SetValue(0, ValueFactory::GetIntegerValue(20));
+  end_key->SetValue(0, ValueFactory::GetIntegerValue(40));
 
   // Create another plan node.
-  planner::IndexScanNode node2(
-      data_table.get(),
-      data_table->GetIndex(0),
-      start_key.get(), end_key.get(), start_inclusive, end_inclusive,
-      column_ids);
+  planner::IndexScanNode node2(data_table.get(), data_table->GetIndex(0),
+                               start_key.get(), end_key.get(), start_inclusive,
+                               end_inclusive, column_ids);
 
   auto txn2 = txn_manager.BeginTransaction();
 
   // Run the executor
-  executor::IndexScanExecutor executor2(&node2, txn2);
+  executor::IndexScanExecutor executor2(&node2, context.get());
   expected_num_tiles = 1;
 
   result_tiles.clear();
@@ -121,9 +119,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
   std::cout << *(result_tiles[0].get());
 
   txn_manager.CommitTransaction(txn2);
-  txn_manager.EndTransaction(txn2);
-
 }
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

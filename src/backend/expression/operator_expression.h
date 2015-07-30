@@ -21,14 +21,15 @@ namespace expression {
 class OperatorUnaryNotExpression : public AbstractExpression {
  public:
   OperatorUnaryNotExpression(AbstractExpression *left)
- : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NOT) {
+      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NOT) {
     m_left = left;
     left_expr = left;
   };
 
-  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const {
-    assert (m_left);
-    return m_left->Evaluate(tuple1, tuple2).OpNegate();
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                 executor::ExecutorContext *ec) const {
+    assert(m_left);
+    return m_left->Evaluate(tuple1, tuple2, ec).OpNegate();
   }
 
   std::string DebugInfo(const std::string &spacer) const {
@@ -44,14 +45,16 @@ class OperatorUnaryNotExpression : public AbstractExpression {
 class OperatorUnaryMinusExpression : public AbstractExpression {
  public:
   OperatorUnaryMinusExpression(AbstractExpression *left)
- : AbstractExpression(EXPRESSION_TYPE_OPERATOR_UNARY_MINUS) {
+      : AbstractExpression(EXPRESSION_TYPE_OPERATOR_UNARY_MINUS) {
     m_left = left;
     left_expr = left;
   };
 
-  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const {
-    assert (m_left);
-    return m_left->Evaluate(tuple1, tuple2).OpMultiply(ValueFactory::GetTinyIntValue(-1));
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                 executor::ExecutorContext *ec) const {
+    assert(m_left);
+    return m_left->Evaluate(tuple1, tuple2, ec)
+        .OpMultiply(ValueFactory::GetTinyIntValue(-1));
   }
 
   std::string DebugInfo(const std::string &spacer) const {
@@ -70,17 +73,23 @@ class OpPlus {
 
 class OpMinus {
  public:
-  inline Value op(Value left, Value right) const { return left.OpSubtract(right); }
+  inline Value op(Value left, Value right) const {
+    return left.OpSubtract(right);
+  }
 };
 
 class OpMultiply {
  public:
-  inline Value op(Value left, Value right) const { return left.OpMultiply(right); }
+  inline Value op(Value left, Value right) const {
+    return left.OpMultiply(right);
+  }
 };
 
 class OpDivide {
  public:
-  inline Value op(Value left, Value right) const { return left.OpDivide(right); }
+  inline Value op(Value left, Value right) const {
+    return left.OpDivide(right);
+  }
 };
 
 // Expressions templated on binary operator types
@@ -88,16 +97,16 @@ class OpDivide {
 template <typename OPER>
 class OperatorExpression : public AbstractExpression {
  public:
-  OperatorExpression(ExpressionType type,
-                     AbstractExpression *left,
+  OperatorExpression(ExpressionType type, AbstractExpression *left,
                      AbstractExpression *right)
- : AbstractExpression(type, left, right) {
-  }
+      : AbstractExpression(type, left, right) {}
 
-  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2) const {
+  Value Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+                 executor::ExecutorContext *ec) const {
     assert(left_expr);
     assert(right_expr);
-    return oper.op(left_expr->Evaluate(tuple1, tuple2), right_expr->Evaluate(tuple1, tuple2));
+    return oper.op(left_expr->Evaluate(tuple1, tuple2, ec),
+                   right_expr->Evaluate(tuple1, tuple2, ec));
   }
 
   std::string DebugInfo(const std::string &spacer) const {
@@ -108,8 +117,5 @@ class OperatorExpression : public AbstractExpression {
   OPER oper;
 };
 
-} // End expression namespace
-} // End peloton namespace
-
-
-
+}  // End expression namespace
+}  // End peloton namespace

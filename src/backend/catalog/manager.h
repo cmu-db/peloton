@@ -14,59 +14,94 @@
 
 #include <atomic>
 #include <utility>
+#include <mutex>
+#include <vector>
 
 #include "tbb/concurrent_unordered_map.h"
 #include "backend/common/types.h"
 
 namespace peloton {
+
+namespace storage {
+class DataTable;
+class Database;
+}
+namespace index {
+class Index;
+}
+
 namespace catalog {
 
 //===--------------------------------------------------------------------===//
 // Manager
 //===--------------------------------------------------------------------===//
 
-typedef tbb::concurrent_unordered_map<oid_t, void*> lookup_dir;
-typedef tbb::concurrent_unordered_map<std::pair<oid_t, oid_t>, void*> global_lookup_dir; 
+typedef tbb::concurrent_unordered_map<oid_t, void *> lookup_dir;
 
 class Manager {
+ public:
+  Manager() {}
 
-public:
+  // Singleton
+  static Manager &GetInstance();
 
-    // Singleton
-    static Manager& GetInstance();
+  //===--------------------------------------------------------------------===//
+  // OBJECT MAP
+  //===--------------------------------------------------------------------===//
 
-    oid_t GetNextOid() {
-        return ++oid;
-    }
+  oid_t GetNextOid() { return ++oid; }
 
-    oid_t GetOid() {
-        return oid;
-    }
+  oid_t GetCurrentOid() { return oid; }
 
-    void SetLocation(const oid_t oid, void *location);
+  void SetLocation(const oid_t oid, void *location);
 
-    // Store table location with two keys
-    void SetLocation(const oid_t oid1, const oid_t oid2, void *location);
+  void *GetLocation(const oid_t oid) const;
 
-    void *GetLocation(const oid_t oid) const;
+  //===--------------------------------------------------------------------===//
+  // DATABASE
+  //===--------------------------------------------------------------------===//
 
-    // Look up the address with two keys
-    void *GetLocation(const oid_t database_oid, const oid_t table_oid) const;
+  void AddDatabase(storage::Database *database);
 
-    Manager() {}
+  storage::Database *GetDatabase(const oid_t database_offset) const;
 
-    Manager(Manager const&) = delete;
+  storage::Database *GetDatabaseWithOid(const oid_t database_oid) const;
 
-    //===--------------------------------------------------------------------===//
-    // Data members
-    //===--------------------------------------------------------------------===//
+  oid_t GetDatabaseCount() const;
 
-    std::atomic<oid_t> oid = ATOMIC_VAR_INIT(START_OID);
+  void DropDatabaseWithOid(const oid_t database_oid);
 
-    lookup_dir locator;
-    global_lookup_dir global_locator;
+  //===--------------------------------------------------------------------===//
+  // CONVENIENCE WRAPPERS
+  //===--------------------------------------------------------------------===//
 
+  // Look up the table
+  storage::DataTable *GetTableWithOid(const oid_t database_oid,
+                                      const oid_t table_oid) const;
+
+  storage::DataTable *GetTableWithName(const oid_t database_oid,
+                                       const std::string table_name) const;
+
+  // Look up the index
+  index::Index *GetIndexWithOid(const oid_t database_oid, const oid_t table_oid,
+                                const oid_t index_oid) const;
+
+  Manager(Manager const &) = delete;
+
+  //===--------------------------------------------------------------------===//
+  // Data members
+  //===--------------------------------------------------------------------===//
+
+  std::atomic<oid_t> oid = ATOMIC_VAR_INIT(START_OID);
+
+  lookup_dir locator;
+
+  // DATABASES
+
+  std::vector<storage::Database *> databases;
+
+  std::mutex catalog_mutex;
 };
 
-} // End catalog namespace
-} // End peloton namespace
+}  // End catalog namespace
+}  // End peloton namespace

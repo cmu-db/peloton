@@ -22,47 +22,33 @@ namespace planner {
  * The counter-part of Postgres Result plan
  * that returns a single constant tuple.
  */
-class ResultNode: public AbstractPlanNode {
-public:
-  ResultNode(const ResultNode &) = delete;
-  ResultNode& operator=(const ResultNode &) = delete;
-  ResultNode(ResultNode &&) = delete;
-  ResultNode& operator=(ResultNode &&) = delete;
+class ResultNode : public AbstractPlanNode {
+ public:
+  ResultNode(const ResultNode&) = delete;
+  ResultNode& operator=(const ResultNode&) = delete;
+  ResultNode(ResultNode&&) = delete;
+  ResultNode& operator=(ResultNode&&) = delete;
 
   ResultNode(storage::Tuple* tuple, storage::AbstractBackend* backend)
-  : tuple_(tuple),
-    backend_(backend){
-  }
+      : tuple_(tuple), backend_(backend) {}
 
   // Accessors
-  const storage::Tuple* GetTuple() const {
-    return tuple_.get();
-  }
+  const storage::Tuple* GetTuple() const { return tuple_.get(); }
 
-  storage::AbstractBackend* GetBackend() const {
-    return backend_;
-  }
+  storage::AbstractBackend* GetBackend() const { return backend_; }
 
-  inline PlanNodeType GetPlanNodeType() const{
-    return PLAN_NODE_TYPE_RESULT;
-  }
+  inline PlanNodeType GetPlanNodeType() const { return PLAN_NODE_TYPE_RESULT; }
 
-  inline std::string GetInfo() const{
-    return "Result";
-  }
+  inline std::string GetInfo() const { return "Result"; }
 
-
-private:
+ private:
   /**
    * @brief A backend is needed to create physical tuple
    * TODO: Can we move backend out of the plan?
    */
   storage::AbstractBackend* backend_;
   std::unique_ptr<storage::Tuple> tuple_;
-
-
 };
 
 } /* namespace planner */
 } /* namespace peloton */
-

@@ -67,11 +67,18 @@ doc/
 .classpath
 .project
 .cproject
+.pydevproject
 .settings
 .autotools
 
 /Debug/
 /misc/
+
+## -------------------------------
+## Intellij files
+## -------------------------------
+.idea
+*.iml
 
 ## -------------------------------
 ## Tag files
@@ -88,3 +95,10 @@ tags
 *.gcno
 *.gcda
 
+## -------------------------------
+## Scripts
+## -------------------------------
+*.py
+*.jar
+scripts/PelotonTest/out
+scripts/PelotonTest/lib

@@ -29,8 +29,7 @@ namespace executor {
  */
 MaterializationExecutor::MaterializationExecutor(
     planner::AbstractPlanNode *node)
-: AbstractExecutor(node) {
-}
+    : AbstractExecutor(node) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -56,8 +55,8 @@ bool MaterializationExecutor::DInit() {
 void MaterializationExecutor::GenerateTileToColMap(
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
     LogicalTile *source_tile,
-    std::unordered_map<storage::Tile *, std::vector<oid_t> > &cols_in_physical_tile) {
-
+    std::unordered_map<storage::Tile *, std::vector<oid_t> > &
+        cols_in_physical_tile) {
   for (const auto &kv : old_to_new_cols) {
     oid_t col = kv.first;
 
@@ -67,7 +66,6 @@ void MaterializationExecutor::GenerateTileToColMap(
     std::vector<oid_t> &cols_from_tile = cols_in_physical_tile[base_tile];
     cols_from_tile.push_back(col);
   }
-
 }
 
 /**
@@ -80,12 +78,11 @@ void MaterializationExecutor::GenerateTileToColMap(
 void MaterializationExecutor::MaterializeByTiles(
     LogicalTile *source_tile,
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-    const std::unordered_map<storage::Tile *, std::vector<oid_t> > &tile_to_cols,
+    const std::unordered_map<storage::Tile *, std::vector<oid_t> > &
+        tile_to_cols,
     storage::Tile *dest_tile) {
-
   // Copy over all data from each base tile.
   for (const auto &kv : tile_to_cols) {
-
     const std::vector<oid_t> &old_column_ids = kv.second;
 
     // Go over each column in given base physical tile
@@ -98,12 +95,11 @@ void MaterializationExecutor::MaterializeByTiles(
 
       // Copy all values in the column to the physical tile
       for (oid_t old_tuple_id : *source_tile) {
-        Value value = source_tile->GetValue(old_tuple_id, old_col_id);
+        peloton::Value value = source_tile->GetValue(old_tuple_id, old_col_id);
         dest_tile->SetValue(value, new_tuple_id++, new_col_id);
       }
     }
   }
-
 }
 
 /**
@@ -113,7 +109,6 @@ void MaterializationExecutor::MaterializeByTiles(
  * @return true on success, false otherwise.
  */
 bool MaterializationExecutor::DExecute() {
-
   // Retrieve child tile.
   const bool success = children_[0]->Execute();
   if (!success) {
@@ -121,12 +116,13 @@ bool MaterializationExecutor::DExecute() {
   }
 
   std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
-  std::unique_ptr<catalog::Schema> source_tile_schema(source_tile.get()->GetPhysicalSchema());
+  std::unique_ptr<catalog::Schema> source_tile_schema(
+      source_tile.get()->GetPhysicalSchema());
 
   // Check the number of tuples in input logical tile
   // If none, then just return false
   const int num_tuples = source_tile->GetTupleCount();
-  if(num_tuples == 0){
+  if (num_tuples == 0) {
     return false;
   }
 
@@ -135,7 +131,7 @@ bool MaterializationExecutor::DExecute() {
   auto node = GetRawNode();
 
   // Create a default identity mapping node if we did not get one
-  if(node == nullptr) {
+  if (node == nullptr) {
     assert(source_tile_schema.get());
     output_schema = source_tile_schema.get();
     oid_t column_count = output_schema->GetColumnCount();
@@ -145,7 +141,8 @@ bool MaterializationExecutor::DExecute() {
   }
   // Else use the mapping in the given plan node
   else {
-    const planner::MaterializationNode &node = GetPlanNode<planner::MaterializationNode>();
+    const planner::MaterializationNode &node =
+        GetPlanNode<planner::MaterializationNode>();
     old_to_new_cols = node.old_to_new_cols();
     output_schema = node.GetSchema();
   }
@@ -155,18 +152,20 @@ bool MaterializationExecutor::DExecute() {
   GenerateTileToColMap(old_to_new_cols, source_tile.get(), tile_to_cols);
 
   // Create new physical tile.
-  std::unique_ptr<storage::Tile> dest_tile(storage::TileFactory::GetTempTile(*output_schema, num_tuples));
+  std::unique_ptr<storage::Tile> dest_tile(
+      storage::TileFactory::GetTempTile(*output_schema, num_tuples));
 
   // Proceed to materialize logical tile by physical tile at a time.
-  MaterializeByTiles( source_tile.get(), old_to_new_cols, tile_to_cols, dest_tile.get());
+  MaterializeByTiles(source_tile.get(), old_to_new_cols, tile_to_cols,
+                     dest_tile.get());
 
   // Wrap physical tile in logical tile.
   bool own_base_tile = true;
-  SetOutput(LogicalTileFactory::WrapTiles({ dest_tile.release() }, own_base_tile));
+  SetOutput(
+      LogicalTileFactory::WrapTiles({dest_tile.release()}, own_base_tile));
 
   return true;
 }
 
-
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

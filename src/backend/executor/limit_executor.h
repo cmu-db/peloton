@@ -17,23 +17,21 @@ namespace executor {
  * Postgres also allows stand-alone LIMIT and stand-alone OFFSET.
  * Need further change to accommodate it.
  */
-class LimitExecutor: public AbstractExecutor {
-public:
+class LimitExecutor : public AbstractExecutor {
+ public:
   LimitExecutor(const LimitExecutor &) = delete;
-  LimitExecutor& operator=(const LimitExecutor &) = delete;
+  LimitExecutor &operator=(const LimitExecutor &) = delete;
   LimitExecutor(const LimitExecutor &&) = delete;
-  LimitExecutor& operator=(const LimitExecutor &&) = delete;
+  LimitExecutor &operator=(const LimitExecutor &&) = delete;
 
-  explicit LimitExecutor(planner::AbstractPlanNode *node,
-                         concurrency::Transaction *transaction);
+  explicit LimitExecutor(planner::AbstractPlanNode *node);
 
-protected:
+ protected:
   bool DInit();
 
   bool DExecute();
 
-private:
-
+ private:
   //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//
@@ -43,7 +41,6 @@ private:
 
   /** @brief Number of tuples returned. */
   size_t num_returned_ = 0;
-
 };
 
 } /* namespace executor */

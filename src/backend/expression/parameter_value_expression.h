@@ -18,20 +18,25 @@ namespace expression {
 
 class ParameterValueExpressionMarker {
  public:
-  virtual ~ParameterValueExpressionMarker(){}
+  virtual ~ParameterValueExpressionMarker() {}
   virtual int GetParameterId() const = 0;
 };
 
-class ParameterValueExpression : public AbstractExpression, public ParameterValueExpressionMarker {
+class ParameterValueExpression : public AbstractExpression,
+                                 public ParameterValueExpressionMarker {
  public:
-
   ParameterValueExpression(int value_idx)
- : AbstractExpression(EXPRESSION_TYPE_VALUE_PARAMETER) {
+      : AbstractExpression(EXPRESSION_TYPE_VALUE_PARAMETER) {
     this->m_valueIdx = value_idx;
- };
+  };
 
-  Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1, __attribute__((unused)) const AbstractTuple *tuple2) const {
-    return this->m_paramValue;
+  Value Evaluate(__attribute__((unused)) const AbstractTuple *tuple1,
+                 __attribute__((unused)) const AbstractTuple *tuple2,
+                 executor::ExecutorContext *econtext) const {
+    assert(econtext);
+
+    auto &params = econtext->GetParams();
+    return params[this->m_valueIdx];
   }
 
   bool HasParameter() const {
@@ -40,7 +45,7 @@ class ParameterValueExpression : public AbstractExpression, public ParameterValu
   }
 
   void Substitute(const ValueArray &params) {
-    assert (this->m_valueIdx < params.GetSize());
+    assert(this->m_valueIdx < params.GetSize());
     m_paramValue = params[this->m_valueIdx];
   }
 
@@ -50,15 +55,12 @@ class ParameterValueExpression : public AbstractExpression, public ParameterValu
     return (buffer.str());
   }
 
-  int GetParameterId() const {
-    return this->m_valueIdx;
-  }
+  int GetParameterId() const { return this->m_valueIdx; }
 
  private:
   int m_valueIdx;
   Value m_paramValue;
 };
 
-} // End expression namespace
-} // End peloton namespace
-
+}  // End expression namespace
+}  // End peloton namespace
