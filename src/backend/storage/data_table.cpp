@@ -104,6 +104,10 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
 
   // Index checks and updates
   if (update == false) {
+    // This might fail because of two reasons :
+    // a) another concurrent insert, in which case we should abort
+    // b) another tuple with same key already exists, and is invisible for this
+    // transaction, in which case we should actually succeed
     if (TryInsertInIndexes(tuple, location) == false) {
       tile_group->ReclaimTuple(tuple_slot);
       LOG_WARN("Index constraint violated\n");
