@@ -30,22 +30,22 @@ namespace storage {
 Tile::Tile(TileGroupHeader *tile_header, AbstractBackend *backend,
            const catalog::Schema &tuple_schema, TileGroup *tile_group,
            int tuple_count)
-    : database_id(INVALID_OID),
-      table_id(INVALID_OID),
-      tile_group_id(INVALID_OID),
-      tile_id(INVALID_OID),
-      backend(backend),
-      schema(tuple_schema),
-      data(NULL),
-      tile_group(tile_group),
-      pool(NULL),
-      num_tuple_slots(tuple_count),
-      column_count(tuple_schema.GetColumnCount()),
-      tuple_length(tuple_schema.GetLength()),
-      uninlined_data_size(0),
-      column_header(NULL),
-      column_header_size(INVALID_OID),
-      tile_group_header(tile_header) {
+: database_id(INVALID_OID),
+  table_id(INVALID_OID),
+  tile_group_id(INVALID_OID),
+  tile_id(INVALID_OID),
+  backend(backend),
+  schema(tuple_schema),
+  data(NULL),
+  tile_group(tile_group),
+  pool(NULL),
+  num_tuple_slots(tuple_count),
+  column_count(tuple_schema.GetColumnCount()),
+  tuple_length(tuple_schema.GetLength()),
+  uninlined_data_size(0),
+  column_header(NULL),
+  column_header_size(INVALID_OID),
+  tile_group_header(tile_header) {
   assert(tuple_count > 0);
 
   tile_size = tuple_count * tuple_length;
@@ -151,79 +151,42 @@ void Tile::SetValue(Value value, const oid_t tuple_slot_id,
                                 pool);
 }
 
-// TODO: Peloton Changes
-Tile *Tile::CopyTile(storage::AbstractBackend *new_backend) {
+Tile *Tile::CopyTile(storage::AbstractBackend *backend) {
+  auto schema = GetSchema();
+  bool tile_columns_inlined =  schema->IsInlined();
+  auto allocated_tuple_count = GetAllocatedTupleCount();
 
-	const catalog::Schema *schema;
-	bool tile_is_inlined;
-	uint16_t allocated_tuple_count;
-	schema = GetSchema();
-	allocated_tuple_count = GetAllocatedTupleCount();
-	tile_is_inlined = schema->IsInlined();
+  // Create a shallow copy of the old tile
+  TileGroupHeader *new_header = GetHeader();
+  Tile *new_tile = TileFactory::GetTile(
+      INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
+      new_header, backend, *schema, tile_group,
+      allocated_tuple_count);
 
+  Pool *new_pool = new_tile->GetPool();
 
-	/*
-	 * Create a new tile from the old tile
-	 */
-	const catalog::Schema *new_schema = schema;
-	TileGroupHeader *new_header = GetHeader();
-	Tile *new_tile = TileFactory::GetTile(
-						INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID,
-						new_header, new_backend, *new_schema, tile_group, allocated_tuple_count);
+  ::memcpy(static_cast<void *>(new_tile->data),
+           static_cast<void *>(data),
+           tile_size);
 
-	Pool *new_pool = new_tile->GetPool();
+  // Do a deep copy if some column is uninlined, so that
+  // the values in that column point to the new pool
+  if(!tile_columns_inlined) {
+    auto uninlined_col_cnt = schema->GetUninlinedColumnCount();
 
-	::memcpy(static_cast<void *>(new_tile->data), static_cast<void *>(data), tile_size);
+    // Go over each uninlined column, making a deep copy
+    for(int col_itr=0; col_itr < uninlined_col_cnt; col_itr++) {
+      auto uninlined_col_offset = schema->GetUninlinedColumn(col_itr);
 
+      // Copy the column over to the new tile group
+      for(oid_t tuple_itr = 0 ; tuple_itr < allocated_tuple_count ; tuple_itr++) {
+        auto val = new_tile->GetValue(tuple_itr, uninlined_col_offset);
+        new_tile->SetValue(val, tuple_itr, uninlined_col_offset);
+      }
+    }
+  }
 
-	/*
-	 * If some of the columns are uninlined, change those entries to point to the new pool
-	 */
-	if(!tile_is_inlined) {
-
-		int uninlined_col_cnt = new_schema->GetUninlinedColumnCount();
-
-		int uninlined_col_index;
-		Value uninlined_col_value, new_uninlined_col_value;
-
-		for(int col_itr=0; col_itr<uninlined_col_cnt; col_itr++) {
-
-			uninlined_col_index = new_schema->GetUninlinedColumn(col_itr);
-
-			int tup_itr=0;
-			TileIterator tile_itr = GetIterator();
-
-			Tuple tuple(schema);
-
-			while (tile_itr.Next(tuple)) {
-
-				// Get the Value object for the uninlined column of the current tuple
-				uninlined_col_value = new_tile->GetValue(tup_itr,uninlined_col_index);
-
-				// Get the length of the uninlined string
-				size_t uninlined_col_object_len = ValuePeeker::PeekObjectLength(uninlined_col_value);
-
-				// Get a pointer to the uninlined string
-				unsigned char* uninlined_col_object_ptr =
-						static_cast<unsigned char *>(ValuePeeker::PeekObjectValue(uninlined_col_value));
-
-				// Get the uninlined string itself
-				std::string uninlined_varchar_str(
-						reinterpret_cast<char const*>(uninlined_col_object_ptr),
-						uninlined_col_object_len);
-
-				// Create a new Value object with the uninlined string residing in the new pool
-				Value new_val = ValueFactory::GetStringValue(uninlined_varchar_str, new_pool);
-
-				// Set the newly created value object to the new tile
-				new_tile->SetValue(new_val, tup_itr, uninlined_col_index);
-
-				tup_itr++;
-			}
-		}
-	}
-
-	return new_tile;
+  return new_tile;
 }
 
 //===--------------------------------------------------------------------===//
@@ -236,10 +199,10 @@ std::ostream &operator<<(std::ostream &os, const Tile &tile) {
 
   os << "\tTILE\n";
   os << "\tCatalog ::"
-     << " Backend: " << tile.backend->GetBackendType()
-     << " DB: " << tile.database_id << " Table: " << tile.table_id
-     << " Tile Group:  " << tile.tile_group_id << " Tile:  " << tile.tile_id
-     << "\n";
+      << " Backend: " << tile.backend->GetBackendType()
+      << " DB: " << tile.database_id << " Table: " << tile.table_id
+      << " Tile Group:  " << tile.tile_group_id << " Tile:  " << tile.tile_id
+      << "\n";
 
   // Columns
   // os << "\t-----------------------------------------------------------\n";
@@ -441,14 +404,14 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
     std::stringstream message(std::stringstream::in | std::stringstream::out);
 
     message << "Column count mismatch. Expecting " << schema.GetColumnCount()
-            << ", but " << column_count << " given" << std::endl;
+                        << ", but " << column_count << " given" << std::endl;
     message << "Expecting the following columns:" << std::endl;
     message << schema.GetColumnCount() << std::endl;
     message << "The following columns are given:" << std::endl;
 
     for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
       message << "column " << column_itr << ": " << names[column_itr]
-              << ", type = " << GetTypeName(types[column_itr]) << std::endl;
+                                                          << ", type = " << GetTypeName(types[column_itr]) << std::endl;
     }
 
     throw SerializationException(message.str());
