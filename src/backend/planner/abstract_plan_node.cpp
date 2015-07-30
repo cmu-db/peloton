@@ -19,43 +19,35 @@ namespace peloton {
 namespace planner {
 
 AbstractPlanNode::AbstractPlanNode(oid_t plan_node_id)
-    : plan_node_id_(plan_node_id) {
-}
+    : plan_node_id_(plan_node_id) {}
 
-AbstractPlanNode::AbstractPlanNode()
-    : plan_node_id_(-1) {
-}
+AbstractPlanNode::AbstractPlanNode() : plan_node_id_(-1) {}
 
-AbstractPlanNode::~AbstractPlanNode() {
-}
+AbstractPlanNode::~AbstractPlanNode() {}
 
 //===--------------------------------------------------------------------===//
 // Children + Parent Helpers
 //===--------------------------------------------------------------------===//
 
 void AbstractPlanNode::AddChild(AbstractPlanNode* child) {
-    children_.push_back(child);
+  children_.push_back(child);
 }
 
-const std::vector<AbstractPlanNode*>& AbstractPlanNode::GetChildren() const{
-    return children_;
+const std::vector<AbstractPlanNode*>& AbstractPlanNode::GetChildren() const {
+  return children_;
 }
 
-AbstractPlanNode* AbstractPlanNode::GetParent() {
-    return parent_;
-}
+AbstractPlanNode* AbstractPlanNode::GetParent() { return parent_; }
 
 //===--------------------------------------------------------------------===//
 // Accessors
 //===--------------------------------------------------------------------===//
 
 void AbstractPlanNode::SetPlanNodeId(oid_t plan_node_id) {
-    plan_node_id_ = plan_node_id;
+  plan_node_id_ = plan_node_id;
 }
 
-oid_t AbstractPlanNode::GetPlanNodeId() const {
-    return plan_node_id_;
-}
+oid_t AbstractPlanNode::GetPlanNodeId() const { return plan_node_id_; }
 
 //===--------------------------------------------------------------------===//
 // Utilities
@@ -63,31 +55,29 @@ oid_t AbstractPlanNode::GetPlanNodeId() const {
 
 // Get a string representation of this plan node
 std::ostream& operator<<(std::ostream& os, const AbstractPlanNode& node) {
+  os << PlanNodeTypeToString(node.GetPlanNodeType());
+  os << "[" << node.GetPlanNodeId() << "]";
 
-    os << PlanNodeTypeToString(node.GetPlanNodeType());
-    os << "[" << node.GetPlanNodeId() << "]";
-
-    return os;
+  return os;
 }
 
 std::string AbstractPlanNode::GetInfo(std::string spacer) const {
-    std::ostringstream buffer;
-    buffer << spacer << "* " << this->GetInfo() << "\n";
-    std::string info_spacer = spacer + "  |";
-    buffer << this->GetInfo(info_spacer);
+  std::ostringstream buffer;
+  buffer << spacer << "* " << this->GetInfo() << "\n";
+  std::string info_spacer = spacer + "  |";
+  buffer << this->GetInfo(info_spacer);
 
-    // Traverse the tree
-    std::string child_spacer = spacer + "  ";
-    for (int ctr = 0, cnt = static_cast<int>(children_.size()); ctr < cnt; ctr++) {
-        buffer << child_spacer << children_[ctr]->GetPlanNodeType() << "\n";
-        buffer << children_[ctr]->GetInfo(child_spacer);
-    }
-    return (buffer.str());
+  // Traverse the tree
+  std::string child_spacer = spacer + "  ";
+  for (int ctr = 0, cnt = static_cast<int>(children_.size()); ctr < cnt;
+       ctr++) {
+    buffer << child_spacer << children_[ctr]->GetPlanNodeType() << "\n";
+    buffer << children_[ctr]->GetInfo(child_spacer);
+  }
+  return (buffer.str());
 }
 
-std::string AbstractPlanNode::GetInfo() const {
-    return "";
-}
+std::string AbstractPlanNode::GetInfo() const { return ""; }
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

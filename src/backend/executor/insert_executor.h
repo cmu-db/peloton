@@ -14,15 +14,14 @@ namespace peloton {
 namespace executor {
 
 class InsertExecutor : public AbstractExecutor {
-
  public:
   InsertExecutor(const InsertExecutor &) = delete;
-  InsertExecutor& operator=(const InsertExecutor &) = delete;
+  InsertExecutor &operator=(const InsertExecutor &) = delete;
   InsertExecutor(InsertExecutor &&) = delete;
-  InsertExecutor& operator=(InsertExecutor &&) = delete;
+  InsertExecutor &operator=(InsertExecutor &&) = delete;
 
   explicit InsertExecutor(planner::AbstractPlanNode *node,
-                          concurrency::Transaction *transaction);
+                          ExecutorContext *executor_context);
 
  protected:
   bool DInit();
@@ -30,8 +29,8 @@ class InsertExecutor : public AbstractExecutor {
   bool DExecute();
 
  private:
-
+  bool done_ = false;
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

@@ -18,16 +18,14 @@ namespace executor {
  * @brief Constructor
  * @param node  LimitNode plan node corresponding to this executor
  */
-LimitExecutor::LimitExecutor(planner::AbstractPlanNode *node,
-                             concurrency::Transaction *transaction)
-  : AbstractExecutor(node, transaction){
-}
+LimitExecutor::LimitExecutor(planner::AbstractPlanNode *node)
+    : AbstractExecutor(node) {}
 
 /**
  * @brief Do some basic checks and initialize executor state.
  * @return true on success, false otherwise.
  */
-bool LimitExecutor::DInit(){
+bool LimitExecutor::DInit() {
   assert(children_.size() == 1);
 
   num_skipped_ = 0;
@@ -37,11 +35,11 @@ bool LimitExecutor::DInit(){
 }
 
 /**
- * @brief Creates logical tiles from the input logical tiles after applying limit.
+ * @brief Creates logical tiles from the input logical tiles after applying
+ * limit.
  * @return true on success, false otherwise.
  */
-bool LimitExecutor::DExecute(){
-
+bool LimitExecutor::DExecute() {
   // Grab data from plan node
   const planner::LimitNode &node = GetPlanNode<planner::LimitNode>();
   const size_t limit = node.GetLimit();
@@ -49,39 +47,34 @@ bool LimitExecutor::DExecute(){
 
   LOG_TRACE("Limit executor \n");
 
-  while(num_returned_ < limit && children_[0]->Execute()){
-
+  while (num_returned_ < limit && children_[0]->Execute()) {
     std::unique_ptr<LogicalTile> tile(children_[0]->GetOutput());
 
-    for(oid_t tuple_id : *tile){
-
+    for (oid_t tuple_id : *tile) {
       // "below" tuples
-      if(num_skipped_ < offset){
+      if (num_skipped_ < offset) {
         tile->RemoveVisibility(tuple_id);
         num_skipped_++;
       }
       // good tuples
-      else if(num_returned_ < limit){
+      else if (num_returned_ < limit) {
         num_returned_++;
       }
       // "above" tuples
-      else{
+      else {
         tile->RemoveVisibility(tuple_id);
       }
-
     }
 
     // Avoid returning empty tiles
-    if(tile->GetTupleCount() > 0) {
+    if (tile->GetTupleCount() > 0) {
       SetOutput(tile.release());
       return true;
     }
-
   }
 
   return false;
 }
-
 
 } /* namespace executor */
 } /* namespace peloton */

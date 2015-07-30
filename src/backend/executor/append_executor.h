@@ -9,7 +9,6 @@
 #include "backend/executor/abstract_executor.h"
 #include "backend/executor/logical_tile.h"
 
-
 namespace peloton {
 namespace executor {
 
@@ -21,12 +20,11 @@ namespace executor {
 class AppendExecutor : public AbstractExecutor {
  public:
   AppendExecutor(const AppendExecutor &) = delete;
-  AppendExecutor& operator=(const AppendExecutor &) = delete;
+  AppendExecutor &operator=(const AppendExecutor &) = delete;
   AppendExecutor(const AppendExecutor &&) = delete;
-  AppendExecutor& operator=(const AppendExecutor &&) = delete;
+  AppendExecutor &operator=(const AppendExecutor &&) = delete;
 
-  explicit AppendExecutor(planner::AbstractPlanNode *node,
-                          concurrency::Transaction *transaction);
+  explicit AppendExecutor(planner::AbstractPlanNode *node);
 
  protected:
   bool DInit();
@@ -35,7 +33,5 @@ class AppendExecutor : public AbstractExecutor {
  private:
   size_t cur_child_id_ = 0;
 };
-
-
 }
 }

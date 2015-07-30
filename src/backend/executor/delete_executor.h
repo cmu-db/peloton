@@ -16,21 +16,23 @@ namespace executor {
 class DeleteExecutor : public AbstractExecutor {
  public:
   DeleteExecutor(const DeleteExecutor &) = delete;
-  DeleteExecutor& operator=(const DeleteExecutor &) = delete;
+  DeleteExecutor &operator=(const DeleteExecutor &) = delete;
   DeleteExecutor(DeleteExecutor &&) = delete;
-  DeleteExecutor& operator=(DeleteExecutor &&) = delete;
+  DeleteExecutor &operator=(DeleteExecutor &&) = delete;
 
   DeleteExecutor(planner::AbstractPlanNode *node,
-                 concurrency::Transaction *transaction);
+                 ExecutorContext *executor_context);
 
-  ~DeleteExecutor(){}
+  ~DeleteExecutor() {}
 
  protected:
   bool DInit();
 
   bool DExecute();
 
+ private:
+  storage::DataTable *target_table_ = nullptr;
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

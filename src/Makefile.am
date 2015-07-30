@@ -11,6 +11,7 @@ include $(top_srcdir)/common.am
 # SUBDIRS
 ######################################################################
 
+include $(srcdir)/backend/brain/Makefile.am
 include $(srcdir)/backend/bridge/Makefile.am
 include $(srcdir)/backend/catalog/Makefile.am
 include $(srcdir)/backend/common/Makefile.am
@@ -24,7 +25,6 @@ include $(srcdir)/backend/scheduler/Makefile.am
 include $(srcdir)/backend/storage/Makefile.am
 
 include $(srcdir)/postgres/backend/Makefile.am
-include $(srcdir)/postgres/bridge/Makefile.am
 include $(srcdir)/postgres/common/Makefile.am
 include $(srcdir)/postgres/interfaces/Makefile.am
 include $(srcdir)/postgres/port/Makefile.am
@@ -43,9 +43,10 @@ DEFAULT_INCLUDES =
 ######################################################################
 
 libpeloton_la_SOURCES = \
+			$(brain_FILES) \
+			$(catalog_FILES) \
 			$(backend_FILES) \
 			$(bridge_FILES) \
-			$(catalog_FILES) \
 			$(common_FILES) \
 			$(concurrency_FILES) \
 			$(executor_FILES) \
@@ -55,14 +56,14 @@ libpeloton_la_SOURCES = \
 			$(scheduler_FILES) \
 			$(storage_FILES) \
 			$(postgres_backend_FILES) \
-			$(postgres_bridge_FILES) \
 			$(postgres_common_FILES) \
 			$(postgres_port_FILES) \
 			$(postgres_timezone_FILES)
 
 ## HACK: To make use of different include flags for peloton and postgres.
 
-libpeloton_la_CPPFLAGS = -I$(srcdir)/postgres/include \
+libpeloton_la_CPPFLAGS = $(AM_CPPFLAGS) \
+						 -I$(srcdir)/postgres/include \
 						 -I$(srcdir)/postgres/backend \
 						 -I$(srcdir)/ \
 						 -I. -I$(top_srcdir)/src -I.. \
@@ -73,10 +74,10 @@ libpeloton_la_CXXFLAGS = $(AM_CXXFLAGS) -msse4.2 \
 						 -Wno-unused-parameter -Wno-missing-field-initializers
 
 if BUILD_OS_IS_DARWIN
-libpeloton_la_LDFLAGS = -lm
+libpeloton_la_LDFLAGS = -lm -ldw
 ## if build os is not darwin
 else
-libpeloton_la_LDFLAGS = -lm
+libpeloton_la_LDFLAGS = -lm -ldw
 endif
 
 ######################################################################
@@ -85,7 +86,7 @@ endif
 
 peloton_SOURCES = backend/main/main.cpp
 peloton_LDFLAGS =
-peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES)
+peloton_CPPFLAGS = -I. -I$(top_srcdir)/src -I.. $(postgres_common_INCLUDES) $(AM_CPPFLAGS) 
 peloton_LDADD = libpeloton.la $(TBB_LIBS)
 
 ######################################################################

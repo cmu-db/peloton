@@ -15,8 +15,6 @@
 // This is just for convenience
 
 #include "backend/executor/aggregate_executor.h"
-#include "backend/executor/create_executor.h"
-#include "backend/executor/drop_executor.h"
 #include "backend/executor/limit_executor.h"
 #include "backend/executor/materialization_executor.h"
 #include "backend/executor/seq_scan_executor.h"
