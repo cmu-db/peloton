@@ -495,7 +495,8 @@ void DataTable::DropForeignKey(const oid_t key_offset) {
 oid_t DataTable::GetForeignKeyCount() const { return foreign_keys.size(); }
 
 storage::TileGroup *DataTable::TransformTileGroup(oid_t tile_group_id,
-                                                  const column_name_type& column_map) {
+                                                  const column_name_type& column_map,
+                                                  bool cleanup) {
 
   // First, check if the tile group is in this table
   storage::TileGroup *orig_tile_group = nullptr;
@@ -598,7 +599,8 @@ storage::TileGroup *DataTable::TransformTileGroup(oid_t tile_group_id,
   catalog_manager.SetLocation(tile_group_id, new_tile_group);
 
   // Clean up the old tile group
-  delete orig_tile_group;
+  if(cleanup)
+    delete orig_tile_group;
 
   return new_tile_group;
 }
