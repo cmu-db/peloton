@@ -129,9 +129,8 @@ static void BuildScanKey(
       case BTEqualStrategyNumber:
         LOG_INFO("key = %s", oss.str().c_str());
         index_scan_desc.start_key = new storage::Tuple(schema, true);
-        index_scan_desc.end_key = new storage::Tuple(schema, true);
+        index_scan_desc.end_key = index_scan_desc.start_key;
         index_scan_desc.start_key->SetValue(0, value);
-        index_scan_desc.end_key->SetValue(0, value);
         index_scan_desc.end_inclusive = true;
         index_scan_desc.start_inclusive = true;
         break;
