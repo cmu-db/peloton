@@ -72,13 +72,14 @@ void DDLUtils::peloton_prepare_data(Node* parsetree){
               if (typelen == -1) typelen = typemod;
 
               // Use existing TypeName structure
-              coldef->typeName->typeOid = typeoid;
-              coldef->typeName->typemod = typelen;
+              coldef->typeName->type_oid = typeoid;
+              coldef->typeName->type_len = typelen;
             }
           }
         }
       break;
     }
+    break;
   }
 }
 
@@ -106,8 +107,8 @@ void DDLUtils::ParsingCreateStmt(
     ColumnDef* coldef = static_cast<ColumnDef*>(lfirst(entry));
 
     // Get the type oid and type mod with given typeName
-    Oid typeoid = coldef->typeName->typeOid;
-    int typelen = coldef->typeName->typemod;
+    Oid typeoid = coldef->typeName->type_oid;
+    int typelen = coldef->typeName->type_len;
 
     ValueType column_valueType =
         PostgresValueTypeToPelotonValueType((PostgresValueType)typeoid);
