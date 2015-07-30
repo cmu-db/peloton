@@ -18,9 +18,7 @@
 #include "access/tupdesc.h"
 
 namespace peloton {
-namespace catalog {
-
-class Schema;
+namespace bridge {
 
 //===--------------------------------------------------------------------===//
 // Schema Transformer
@@ -33,9 +31,9 @@ public:
   SchemaTransformer(SchemaTransformer &&) = delete;
   SchemaTransformer &operator=(SchemaTransformer &&) = delete;
 
-  static Schema* GetSchemaFromTupleDesc(TupleDesc tupleDesc);
+  static catalog::Schema* GetSchemaFromTupleDesc(TupleDesc tupleDesc);
 };
 
-}  // End catalog namespace
+}  // End bridge namespace
 }  // End peloton namespace
 
