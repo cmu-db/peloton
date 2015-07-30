@@ -67,27 +67,26 @@ class PlanTransformer {
 
 
   static planner::AbstractPlanNode *TransformModifyTable(
-      const ModifyTableState *plan_state, const TransformOptions options = kDefaultOptions);
+      const ModifyTableState *plan_state, const TransformOptions options);
 
   static planner::AbstractPlanNode *TransformInsert(
-      const ModifyTableState *plan_state, const TransformOptions options = kDefaultOptions);
+      const ModifyTableState *plan_state, const TransformOptions options);
   static planner::AbstractPlanNode *TransformUpdate(
-      const ModifyTableState *plan_state, const TransformOptions options = kDefaultOptions);
+      const ModifyTableState *plan_state, const TransformOptions options);
   static planner::AbstractPlanNode *TransformDelete(
-      const ModifyTableState *plan_state, const TransformOptions options = kDefaultOptions);
+      const ModifyTableState *plan_state, const TransformOptions options);
 
   static planner::AbstractPlanNode *TransformSeqScan(
-      const SeqScanState *plan_state, const TransformOptions options = kDefaultOptions);
+      const SeqScanState *plan_state, const TransformOptions options);
   static planner::AbstractPlanNode *TransformIndexScan(
-      const IndexScanState *plan_state, const TransformOptions options = kDefaultOptions);
+      const IndexScanState *plan_state, const TransformOptions options);
   static planner::AbstractPlanNode *TransformIndexOnlyScan(
-      const IndexOnlyScanState *plan_state, const TransformOptions options = kDefaultOptions);
+      const IndexOnlyScanState *plan_state, const TransformOptions options);
   static planner::AbstractPlanNode *TransformBitmapScan(
-      const BitmapHeapScanState *plan_state, const TransformOptions options = kDefaultOptions);
+      const BitmapHeapScanState *plan_state, const TransformOptions options);
 
   static planner::AbstractPlanNode *TransformNestLoop(
       const NestLoopState *plan_state);
-
 
   static planner::AbstractPlanNode *TransformLockRows(
       const LockRowsState *plan_state);
@@ -108,7 +107,7 @@ class PlanTransformer {
    * ======================================================================
    */
 
-  static void TransformGenericScanInfo(planner::AbstractPlanNode*& parent,
+  static void GetGenericInfoFromScanState(planner::AbstractPlanNode*& parent,
                                    expression::AbstractExpression*& predicate,
                                    std::vector<oid_t>& out_col_list,
                                    const ScanState* sstate,
