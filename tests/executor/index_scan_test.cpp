@@ -52,7 +52,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
 
   // Create plan node.
   planner::IndexScanNode node(data_table.get(), data_table->GetIndex(0),
-                              start_key.get(), end_key.get(), start_inclusive,
+                              start_key.release(), end_key.release(), start_inclusive,
                               end_inclusive, column_ids);
 
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
@@ -87,13 +87,16 @@ TEST(IndexScanTests, IndexPredicateTest) {
   // Start <= Tuple <= End
   //===--------------------------------------------------------------------===//
 
+  start_key.reset(new storage::Tuple(index_key_schema, true));
+  start_key->SetValue(0, ValueFactory::GetIntegerValue(0));
+
   // Set end key
   end_key.reset(new storage::Tuple(index_key_schema, true));
   end_key->SetValue(0, ValueFactory::GetIntegerValue(40));
 
   // Create another plan node.
   planner::IndexScanNode node2(data_table.get(), data_table->GetIndex(0),
-                               start_key.get(), end_key.get(), start_inclusive,
+                               start_key.release(), end_key.release(), start_inclusive,
                                end_inclusive, column_ids);
 
   auto txn2 = txn_manager.BeginTransaction();
