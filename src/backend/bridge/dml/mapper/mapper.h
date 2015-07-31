@@ -39,7 +39,9 @@ class PlanTransformer {
 
   static void PrintPlanState(const PlanState *plan_state);
 
-  static planner::AbstractPlanNode *TransformPlan(const PlanState *plan_state);
+  static planner::AbstractPlanNode *TransformPlan(const PlanState *plan_state){
+    return TransformPlan(plan_state, kDefaultOptions);
+  }
 
   /* TODO: Is this a good place to have the function? */
   static bool CleanPlanNodeTree(planner::AbstractPlanNode *root);
@@ -47,28 +49,44 @@ class PlanTransformer {
   static const ValueArray BuildParams(const ParamListInfo param_list);
 
  private:
+  //======-----------------------------------
+  // Options controlling some transform operations
+  //======-----------------------------------
+  class TransformOptions {
+   public:
+    bool use_projInfo = true; // Use PlanState.projInfo or not
+    TransformOptions() = default;
+    TransformOptions(bool pi)
+      :use_projInfo(pi){}
+  };
+
+  static const TransformOptions kDefaultOptions;
+
+  static planner::AbstractPlanNode *TransformPlan(
+      const PlanState *plan_state, const TransformOptions options );
+
+
   static planner::AbstractPlanNode *TransformModifyTable(
-      const ModifyTableState *plan_state);
+      const ModifyTableState *plan_state, const TransformOptions options);
 
   static planner::AbstractPlanNode *TransformInsert(
-      const ModifyTableState *plan_state);
+      const ModifyTableState *plan_state, const TransformOptions options);
   static planner::AbstractPlanNode *TransformUpdate(
-      const ModifyTableState *plan_state);
+      const ModifyTableState *plan_state, const TransformOptions options);
   static planner::AbstractPlanNode *TransformDelete(
-      const ModifyTableState *plan_state);
+      const ModifyTableState *plan_state, const TransformOptions options);
 
   static planner::AbstractPlanNode *TransformSeqScan(
-      const SeqScanState *plan_state);
+      const SeqScanState *plan_state, const TransformOptions options);
   static planner::AbstractPlanNode *TransformIndexScan(
-      const IndexScanState *plan_state);
+      const IndexScanState *plan_state, const TransformOptions options);
   static planner::AbstractPlanNode *TransformIndexOnlyScan(
-      const IndexOnlyScanState *plan_state);
+      const IndexOnlyScanState *plan_state, const TransformOptions options);
   static planner::AbstractPlanNode *TransformBitmapScan(
-      const BitmapHeapScanState *plan_state);
+      const BitmapHeapScanState *plan_state, const TransformOptions options);
 
   static planner::AbstractPlanNode *TransformNestLoop(
       const NestLoopState *plan_state);
-
 
   static planner::AbstractPlanNode *TransformLockRows(
       const LockRowsState *plan_state);
@@ -89,10 +107,11 @@ class PlanTransformer {
    * ======================================================================
    */
 
-  static void TransformGenericScanInfo(planner::AbstractPlanNode*& parent,
+  static void GetGenericInfoFromScanState(planner::AbstractPlanNode*& parent,
                                    expression::AbstractExpression*& predicate,
                                    std::vector<oid_t>& out_col_list,
-                                   const ScanState* sstate);
+                                   const ScanState* sstate,
+                                   bool use_projInfo = true);
 
   static const planner::ProjectInfo *BuildProjectInfo(
       const ProjectionInfo *pg_proj_info, oid_t column_count);
