@@ -160,6 +160,11 @@ class DataTable : public AbstractTable {
 
   bool CheckConstraints(const storage::Tuple *tuple) const;
 
+  // Claim a tuple slot in a tile group
+  ItemPointer GetTupleSlot(const concurrency::Transaction *transaction,
+                           const storage::Tuple *tuple,
+                           const ItemPointer old_location);
+
   //===--------------------------------------------------------------------===//
   // INDEX HELPERS
   //===--------------------------------------------------------------------===//
@@ -169,19 +174,15 @@ class DataTable : public AbstractTable {
                        const storage::Tuple *tuple,
                        ItemPointer location);
 
-  // this must succeed
-  void BlindInsertInIndexes(const storage::Tuple *tuple,
-                            ItemPointer location);
-
   // drop the entry in the indice
   // NOTE: not used currently due to our MVCC design
   void DeleteInIndexes(const storage::Tuple *tuple,
                        const ItemPointer location);
 
-  // Claim a tuple slot in a tile group
-  ItemPointer GetTupleSlot(const concurrency::Transaction *transaction,
-                           const storage::Tuple *tuple,
-                           const ItemPointer old_location);
+  // this must succeed
+  void UpdateInIndexes(const storage::Tuple *tuple,
+                            ItemPointer location,
+                            const ItemPointer old_location);
 
  private:
   //===--------------------------------------------------------------------===//
