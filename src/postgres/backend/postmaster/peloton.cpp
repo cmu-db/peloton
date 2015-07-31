@@ -881,7 +881,7 @@ peloton_send_ddl(Peloton_Status  *status,
   if (pelotonSock == PGINVALID_SOCKET)
     return;
 
-  // Prepare data for DDL
+  // Prepare data depends on query for DDL
   MemoryContext oldcxt = MemoryContextSwitchTo(TopMemoryContext);
   peloton::bridge::DDLUtils::peloton_prepare_data(parsetree);
   MemoryContextSwitchTo(oldcxt);
@@ -919,13 +919,10 @@ peloton_send_bootstrap(Peloton_Status  *status){
   if (pelotonSock == PGINVALID_SOCKET)
     return;
 
-  //MemoryContext oldcxt = MemoryContextSwitchTo(TopMemoryContext);
-
+  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   // construct raw database for bootstrap
-  peloton::bridge::raw_database_info* raw_database = 
-     peloton::bridge::Bootstrap::GetRawDatabase();
-
-  //MemoryContextSwitchTo(oldcxt);
+  peloton::bridge::raw_database_info* raw_database = peloton::bridge::Bootstrap::GetRawDatabase();
+  MemoryContextSwitchTo(oldcxt);
 
   // Set header
   auto transaction_id = GetTopTransactionId();
@@ -1066,6 +1063,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
 static void
 peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
   assert(msg);
+
   /* Get the raw databases */
   peloton::bridge::raw_database_info* raw_database = msg->m_raw_database;
 
@@ -1083,13 +1081,16 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
   if(raw_database != NULL) {
     try {
       /* Process the utility statement */
+      MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
       peloton::bridge::Bootstrap::NewBootstrapPeloton(raw_database);
+      MemoryContextSwitchTo(oldcxt);
     }
     catch(const std::exception &exception) {
       elog(ERROR, "Peloton exception :: %s", exception.what());
       // Nothing to do here !
     }
   }
+
 
   // Set Status
   msg->m_status->m_result = peloton::RESULT_SUCCESS;
