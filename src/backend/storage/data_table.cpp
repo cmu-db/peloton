@@ -150,12 +150,23 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
 
 ItemPointer DataTable::UpdateTuple(const concurrency::Transaction *transaction,
                                    const storage::Tuple *tuple) {
-  // First, do integrity checks and claim a slot
+  // Do integrity checks and claim a slot
   ItemPointer location = GetTupleSlot(transaction, tuple);
   if(location.block == INVALID_OID)
     return INVALID_ITEMPOINTER;
 
-  // Then, do a blind insert into the indexes
+  auto &manager = catalog::Manager::GetInstance();
+
+  /*
+  // Set back pointer in tile group header of updated tuple
+  auto updated_tile_group = manager.GetTileGroup(location.block);
+      static_cast<storage::TileGroup *>(manager.locator[location.block]);
+  auto updated_tile_group_header = updated_tile_group->GetHeader();
+  updated_tile_group_header->SetPrevItemPointer(
+      location.offset, ItemPointer(tile_group_id, physical_tuple_id));
+   */
+
+  // Do a blind insert into the indexes
   BlindInsertInIndexes(tuple, location);
 
   return location;
@@ -164,24 +175,6 @@ ItemPointer DataTable::UpdateTuple(const concurrency::Transaction *transaction,
 //===--------------------------------------------------------------------===//
 // INDEX HELPERS
 //===--------------------------------------------------------------------===//
-
-void DataTable::BlindInsertInIndexes(const storage::Tuple *tuple,
-                                     ItemPointer location) {
-  for (auto index : indexes) {
-    auto index_schema = index->GetKeySchema();
-    auto indexed_columns = index_schema->GetIndexedColumns();
-    storage::Tuple *key = new storage::Tuple(index_schema, true);
-    key->SetFromTuple(tuple, indexed_columns);
-    if (index->BlindInsertEntry(key, location) == false) {
-      location = INVALID_ITEMPOINTER;
-      LOG_ERROR("Index constraint violated\n");
-      delete key;
-      break;
-    }
-
-    delete key;
-  }
-}
 
 bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
                                 const storage::Tuple *tuple,
@@ -206,7 +199,8 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
       if (status == true) {
         LOG_ERROR(
             "Failed to insert into non-unique index %s.%s [%s].",
-            GetName().c_str(), index->GetName().c_str(),
+            GetName().c_str(),
+            index->GetName().c_str(),
             index->GetTypeName().c_str());
         delete key;
         continue;
@@ -224,7 +218,7 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
 
       auto &manager = catalog::Manager::GetInstance();
       storage::TileGroup *tile_group =
-          static_cast<storage::TileGroup *>(manager.GetLocation(tile_group_id));
+          static_cast<storage::TileGroup *>(manager.GetTileGroup(tile_group_id));
 
       auto header = tile_group->GetHeader();
       auto transaction_id = transaction->GetTransactionId();
@@ -233,7 +227,8 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
 
       if(visible == true) {
         LOG_ERROR("Failed to insert into index %s.%s [%s] as visible tuple already exists.",
-                  GetName().c_str(), index->GetName().c_str(),
+                  GetName().c_str(),
+                  index->GetName().c_str(),
                   index->GetTypeName().c_str());
       } else {
         // In this case, the previous tuple pointed to by the index is not visible
@@ -249,7 +244,8 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
         }
         else {
           LOG_ERROR("Failed to insert into index %s.%s [%s] due to concurrent insert.",
-                    GetName().c_str(), index->GetName().c_str(),
+                    GetName().c_str(),
+                    index->GetName().c_str(),
                     index->GetTypeName().c_str());
         }
       }
@@ -262,7 +258,8 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
         continue;
       }
       LOG_ERROR("Failed to insert into index %s.%s [%s] due to concurrent insert.",
-                GetName().c_str(), index->GetName().c_str(),
+                GetName().c_str(),
+                index->GetName().c_str(),
                 index->GetTypeName().c_str());
     }
 
@@ -278,6 +275,26 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
   }
 
   return true;
+}
+
+void DataTable::BlindInsertInIndexes(const storage::Tuple *tuple,
+                                     ItemPointer location) {
+  for (auto index : indexes) {
+    auto index_schema = index->GetKeySchema();
+    auto indexed_columns = index_schema->GetIndexedColumns();
+
+    storage::Tuple *key = new storage::Tuple(index_schema, true);
+    key->SetFromTuple(tuple, indexed_columns);
+
+    if (index->BlindInsertEntry(key, location) == false) {
+      location = INVALID_ITEMPOINTER;
+      LOG_ERROR("Index constraint violated\n");
+      delete key;
+      break;
+    }
+
+    delete key;
+  }
 }
 
 /**
@@ -325,7 +342,8 @@ void DataTable::DeleteInIndexes(const storage::Tuple *tuple,
     if (index->DeleteEntry(key, location) == false) {
       delete key;
       LOG_WARN("Failed to delete tuple from index %s . %s %s",
-               GetName().c_str(), index->GetName().c_str(),
+               GetName().c_str(),
+               index->GetName().c_str(),
                index->GetTypeName().c_str());
     }
 
@@ -398,7 +416,7 @@ oid_t DataTable::AddDefaultTileGroup() {
       LOG_TRACE("Added first tile group \n");
       tile_groups.push_back(tile_group->GetTileGroupId());
       // add tile group metadata in locator
-      catalog::Manager::GetInstance().SetLocation(tile_group_id, tile_group);
+      catalog::Manager::GetInstance().SetTileGroup(tile_group_id, tile_group);
       LOG_TRACE("Recording tile group : %d \n", tile_group_id);
       return tile_group_id;
     }
@@ -420,7 +438,7 @@ oid_t DataTable::AddDefaultTileGroup() {
     tile_groups.push_back(tile_group->GetTileGroupId());
 
     // add tile group metadata in locator
-    catalog::Manager::GetInstance().SetLocation(tile_group_id, tile_group);
+    catalog::Manager::GetInstance().SetTileGroup(tile_group_id, tile_group);
     LOG_TRACE("Recording tile group : %d \n", tile_group_id);
   }
 
@@ -435,7 +453,7 @@ void DataTable::AddTileGroup(TileGroup *tile_group) {
     oid_t tile_group_id = tile_group->GetTileGroupId();
 
     // add tile group metadata in locator
-    catalog::Manager::GetInstance().SetLocation(tile_group_id, tile_group);
+    catalog::Manager::GetInstance().SetTileGroup(tile_group_id, tile_group);
     LOG_TRACE("Recording tile group : %d \n", tile_group_id);
   }
 }
@@ -454,7 +472,7 @@ TileGroup *DataTable::GetTileGroup(oid_t tile_group_offset) const {
 TileGroup *DataTable::GetTileGroupById(oid_t tile_group_id) const {
   auto &manager = catalog::Manager::GetInstance();
   storage::TileGroup *tile_group =
-      static_cast<storage::TileGroup *>(manager.GetLocation(tile_group_id));
+      static_cast<storage::TileGroup *>(manager.GetTileGroup(tile_group_id));
   assert(tile_group);
   return tile_group;
 }
@@ -673,7 +691,7 @@ storage::TileGroup *DataTable::TransformTileGroup(oid_t tile_group_id,
 
   // Get orig tile group from catalog
   auto& catalog_manager = catalog::Manager::GetInstance();
-  auto tile_group_entry = catalog_manager.GetLocation(tile_group_id);
+  auto tile_group_entry = catalog_manager.GetTileGroup(tile_group_id);
   orig_tile_group = static_cast<storage::TileGroup*>(tile_group_entry);
   assert(orig_tile_group);
 
@@ -695,7 +713,7 @@ storage::TileGroup *DataTable::TransformTileGroup(oid_t tile_group_id,
   SetTransformedTileGroup(orig_tile_group, new_tile_group);
 
   // Set the location of the new tile group
-  catalog_manager.SetLocation(tile_group_id, new_tile_group);
+  catalog_manager.SetTileGroup(tile_group_id, new_tile_group);
 
   // Clean up the orig tile group, if needed which is normally the case
   if(cleanup)

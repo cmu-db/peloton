@@ -70,9 +70,7 @@ bool UpdateExecutor::DExecute() {
   storage::Tile *tile = source_tile->GetBaseTile(0);
   storage::TileGroup *tile_group = tile->GetTileGroup();
   auto transaction_ = executor_context_->GetTransaction();
-
   auto tile_group_id = tile_group->GetTileGroupId();
-  auto &manager = catalog::Manager::GetInstance();
 
   // Update tuples in given table
   for (oid_t visible_tuple_id : *source_tile) {
@@ -80,7 +78,7 @@ bool UpdateExecutor::DExecute() {
     LOG_TRACE("Visible Tuple id : %d, Physical Tuple id : %d \n",
               visible_tuple_id, physical_tuple_id);
 
-    // (A) try to delete the tuple first
+    // (A) Try to delete the tuple first
     // this might fail due to a concurrent operation that has latched the tuple
     auto delete_location = ItemPointer(tile_group_id, physical_tuple_id);
     bool status = target_table_->DeleteTuple(transaction_, delete_location);
@@ -90,16 +88,15 @@ bool UpdateExecutor::DExecute() {
     }
     transaction_->RecordDelete(delete_location);
 
-    // (B.1) now, make a copy of the original tuple and allocate a new tuple
+    // (B.1) Make a copy of the original tuple and allocate a new tuple
     expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group, physical_tuple_id);
     storage::Tuple *new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
 
-    // (B.2) and execute the projections
+    // (B.2) Execute the projections
     project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
 
-    // and finally insert into the table in update mode
-    ItemPointer location =
-        target_table_->UpdateTuple(transaction_, new_tuple);
+    // (C) finally insert updated tuple into the table
+    ItemPointer location = target_table_->UpdateTuple(transaction_, new_tuple);
     if (location.block == INVALID_OID) {
       new_tuple->FreeUninlinedData();
       delete new_tuple;
@@ -109,12 +106,6 @@ bool UpdateExecutor::DExecute() {
     new_tuple->FreeUninlinedData();
     delete new_tuple;
 
-    // (C) set back pointer in tile group header of updated tuple
-    auto updated_tile_group =
-        static_cast<storage::TileGroup *>(manager.locator[location.block]);
-    auto updated_tile_group_header = updated_tile_group->GetHeader();
-    updated_tile_group_header->SetPrevItemPointer(
-        location.offset, ItemPointer(tile_group_id, physical_tuple_id));
   }
 
   // By default, update should return nothing?
