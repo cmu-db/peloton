@@ -94,7 +94,8 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 
 
 ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
-                                    const storage::Tuple *tuple) {
+                                    const storage::Tuple *tuple,
+                                    const ItemPointer old_location) {
   assert(tuple);
 
   if(CheckConstraints(tuple) == false)
@@ -123,6 +124,13 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
 
   // Set tuple location
   ItemPointer location(tile_group->GetTileGroupId(), tuple_slot);
+
+  // Set back pointer in tile group header in case of updated tuple
+  if(old_location.block != INVALID_OID) {
+    auto header = tile_group->GetHeader();
+    header->SetPrevItemPointer(location.offset, old_location);
+  }
+
   return location;
 }
 
@@ -130,7 +138,8 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
 ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
                                    const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
-  ItemPointer location = GetTupleSlot(transaction, tuple);
+  ItemPointer location = GetTupleSlot(transaction, tuple,
+                                      INVALID_ITEMPOINTER);
   if(location.block == INVALID_OID)
     return INVALID_ITEMPOINTER;
 
@@ -149,22 +158,13 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
 }
 
 ItemPointer DataTable::UpdateTuple(const concurrency::Transaction *transaction,
-                                   const storage::Tuple *tuple) {
+                                   const storage::Tuple *tuple,
+                                   const ItemPointer old_location) {
   // Do integrity checks and claim a slot
-  ItemPointer location = GetTupleSlot(transaction, tuple);
+  ItemPointer location = GetTupleSlot(transaction, tuple,
+                                      old_location);
   if(location.block == INVALID_OID)
     return INVALID_ITEMPOINTER;
-
-  auto &manager = catalog::Manager::GetInstance();
-
-  /*
-  // Set back pointer in tile group header of updated tuple
-  auto updated_tile_group = manager.GetTileGroup(location.block);
-      static_cast<storage::TileGroup *>(manager.locator[location.block]);
-  auto updated_tile_group_header = updated_tile_group->GetHeader();
-  updated_tile_group_header->SetPrevItemPointer(
-      location.offset, ItemPointer(tile_group_id, physical_tuple_id));
-   */
 
   // Do a blind insert into the indexes
   BlindInsertInIndexes(tuple, location);

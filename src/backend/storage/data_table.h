@@ -63,7 +63,8 @@ class DataTable : public AbstractTable {
 
   // insert the updated tuple in table
   ItemPointer UpdateTuple(const concurrency::Transaction *transaction,
-                          const Tuple *tuple);
+                          const Tuple *tuple,
+                          const ItemPointer old_location);
 
   // delete the tuple at given location
   bool DeleteTuple(const concurrency::Transaction *transaction,
@@ -179,7 +180,8 @@ class DataTable : public AbstractTable {
 
   // Claim a tuple slot in a tile group
   ItemPointer GetTupleSlot(const concurrency::Transaction *transaction,
-                           const storage::Tuple *tuple);
+                           const storage::Tuple *tuple,
+                           const ItemPointer old_location);
 
  private:
   //===--------------------------------------------------------------------===//
