@@ -52,7 +52,6 @@ bool AbstractScanExecutor::DInit() {
   predicate_ = node.GetPredicate();
   column_ids_ = node.GetColumnIds();
 
-  assert(column_ids_.size() > 0);
 
   return true;
 }
