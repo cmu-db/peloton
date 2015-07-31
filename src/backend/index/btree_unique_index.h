@@ -54,7 +54,7 @@ class BtreeUniqueIndex : public Index {
 
       index_key1.SetFromKey(key);
 
-      // insert the key, val pair
+      // Insert the key, val pair
       auto status = container.insert(std::pair<KeyType, ValueType>(index_key1, location));
       return status.second;
     }
@@ -67,7 +67,7 @@ class BtreeUniqueIndex : public Index {
 
       index_key1.SetFromKey(key);
 
-      // delete the key, val pair
+      // Delete the < key, location > pair
       auto status = container.erase(index_key1);
       return status;
     }
@@ -82,12 +82,11 @@ class BtreeUniqueIndex : public Index {
 
       index_key1.SetFromKey(key);
 
-      // Check old location first
+      // Check for <key, old location> first
       if(container.count(index_key1) != 0) {
         ItemPointer old_loc = container[index_key1];
         if((old_loc.block == old_location.block) &&
             (old_loc.offset == old_location.offset))  {
-
           container[index_key1] = location;
           return true;
         }

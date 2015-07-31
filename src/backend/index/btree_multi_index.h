@@ -55,7 +55,7 @@ class BtreeMultiIndex : public Index {
 
       index_key1.SetFromKey(key);
 
-      // insert the key, val pair
+      // Insert the key, val pair
       container.insert(std::pair<KeyType, ValueType>(index_key1, location));
       return true;
     }
@@ -68,9 +68,18 @@ class BtreeMultiIndex : public Index {
 
       index_key1.SetFromKey(key);
 
-      // delete the key, val pair
-      auto status = container.erase(index_key1);
-      return status;
+      // Delete the < key, location > pair
+      auto entries = container.equal_range(index_key1);
+      for (auto entry = entries.first ; entry != entries.second; ++entry) {
+        ItemPointer value = entry->second;
+        if((value.block == location.block) &&
+            (value.offset == location.offset)) {
+          // remove matching (key, value) entry
+          container.erase(entry);
+        }
+      }
+
+      return true;
     }
   }
 
@@ -83,8 +92,19 @@ class BtreeMultiIndex : public Index {
 
       index_key1.SetFromKey(key);
 
-      // Does not make sense
-      exit(0);
+      // Check for <key, old location> first
+      auto entries = container.equal_range(index_key1);
+      for (auto entry = entries.first ; entry != entries.second; ++entry) {
+        ItemPointer value = entry->second;
+        if((value.block == old_location.block) &&
+            (value.offset == old_location.offset)) {
+          // remove matching (key, value) entry
+          container.erase(entry);
+        }
+      }
+
+      // insert the key, val pair
+      container.insert(std::pair<KeyType, ValueType>(index_key1, location));
 
       return false;
     }
