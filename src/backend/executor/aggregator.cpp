@@ -103,7 +103,7 @@ bool Helper(const planner::AggregateNode *node, Agg **aggregates,
 
   std::cout << "GROUP TUPLE :: " << *(tuple.get());
 
-  auto location = output_table->InsertTuple(transaction, tuple.get(), false);
+  auto location = output_table->InsertTuple(transaction, tuple.get());
   if (location.block == INVALID_OID) {
     LOG_ERROR("Failed to insert tuple \n");
     return false;
