@@ -115,7 +115,7 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       break;
 
     case PLAN_NODE_TYPE_PROJECTION:
-      child_executor = new executor::ProjectionExecutor(plan, executor_context);
+      child_executor = new executor::ProjectionExecutor(plan);
       break;
 
     default:
