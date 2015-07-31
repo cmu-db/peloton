@@ -444,7 +444,9 @@ raw_database_info* Bootstrap::GetRawDatabase(void){
 bool Bootstrap::BootstrapPeloton(raw_database_info* raw_database){
   // create the database with current database id
   elog(LOG, "Initializing database %s(%u) in Peloton", raw_database->database_name, raw_database->database_oid);
-  DDLDatabase::CreateDatabase(raw_database->database_oid);
+  bool status = DDLDatabase::CreateDatabase(raw_database->database_oid);
+
+  if(status == false) return false; 
 
   // Create objects in Peloton
   CreateTables(raw_database->raw_tables, raw_database->table_count);
