@@ -60,6 +60,13 @@ bool IndexScanExecutor::DInit() {
 
   done_ = false;
 
+  auto table = node.GetTable();
+
+  if(column_ids_.empty()){
+    column_ids_.resize(table->GetSchema()->GetColumnCount());
+    std::iota(column_ids_.begin(), column_ids_.end(), 0);
+  }
+
   return true;
 }
 
@@ -79,7 +86,7 @@ bool IndexScanExecutor::DExecute() {
   assert(done_);
 
   while(result_itr < result.size()){  // Avoid returning empty tiles
-    // In order to be as lazy as possible, t
+    // In order to be as lazy as possible,
     // the generic predicate is checked here (instead of upfront)
     if(nullptr != predicate_){
       for (oid_t tuple_id : *result[result_itr]) {
