@@ -43,7 +43,6 @@ class PlanTransformer {
     return TransformPlan(plan_state, kDefaultOptions);
   }
 
-  /* TODO: Is this a good place to have the function? */
   static bool CleanPlanNodeTree(planner::AbstractPlanNode *root);
 
   static const ValueArray BuildParams(const ParamListInfo param_list);
@@ -65,7 +64,9 @@ class PlanTransformer {
   static planner::AbstractPlanNode *TransformPlan(
       const PlanState *plan_state, const TransformOptions options );
 
-
+  //======---------------------------------------
+  // MODIFY TABLE FAMILY
+  //======---------------------------------------
   static planner::AbstractPlanNode *TransformModifyTable(
       const ModifyTableState *plan_state, const TransformOptions options);
 
@@ -76,6 +77,17 @@ class PlanTransformer {
   static planner::AbstractPlanNode *TransformDelete(
       const ModifyTableState *plan_state, const TransformOptions options);
 
+  //======---------------------------------------
+  // SCAN FAMILY
+  //======---------------------------------------
+  /*
+   * The ScanState.projInfo in ScanState may be processed in three possible ways:
+   * 1. It is stolen by the scan's parent. Then, options.use_projInfo should be false
+   * and the transform methods will skip processing projInfo.
+   * 2. It is a pure direct map, which will be converted to a column list for AbstractScanNode.
+   * 3. It contains non-trivial projections. In this case, the transform methods will
+   * generate a projection plan node and put it on top of the scan node.
+   */
   static planner::AbstractPlanNode *TransformSeqScan(
       const SeqScanState *plan_state, const TransformOptions options);
   static planner::AbstractPlanNode *TransformIndexScan(
@@ -85,9 +97,15 @@ class PlanTransformer {
   static planner::AbstractPlanNode *TransformBitmapScan(
       const BitmapHeapScanState *plan_state, const TransformOptions options);
 
+  //======---------------------------------------
+  // JOIN FAMILY
+  //======---------------------------------------
   static planner::AbstractPlanNode *TransformNestLoop(
       const NestLoopState *plan_state);
 
+  //======---------------------------------------
+  // OTHERS
+  //======---------------------------------------
   static planner::AbstractPlanNode *TransformLockRows(
       const LockRowsState *plan_state);
 
@@ -101,17 +119,15 @@ class PlanTransformer {
   static PelotonJoinType TransformJoinType(const JoinType type);
 
 
-  /*
-   * ======================================================================
-   * Common utility functions for Scan's
-   * ======================================================================
-   */
 
+  //========-----------------------------------------
+  // Common utility functions for Scan's
+  //========-----------------------------------------
   static void GetGenericInfoFromScanState(planner::AbstractPlanNode*& parent,
-                                   expression::AbstractExpression*& predicate,
-                                   std::vector<oid_t>& out_col_list,
-                                   const ScanState* sstate,
-                                   bool use_projInfo = true);
+                                          expression::AbstractExpression*& predicate,
+                                          std::vector<oid_t>& out_col_list,
+                                          const ScanState* sstate,
+                                          bool use_projInfo = true);
 
   static const planner::ProjectInfo *BuildProjectInfo(
       const ProjectionInfo *pg_proj_info, oid_t column_count);
