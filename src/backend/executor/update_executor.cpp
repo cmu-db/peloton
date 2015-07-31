@@ -104,9 +104,8 @@ bool UpdateExecutor::DExecute() {
     delete old_tuple;
 
     // and finally insert into the table in update mode
-    bool update_mode = true;
     ItemPointer location =
-        target_table_->InsertTuple(transaction_, new_tuple, update_mode);
+        target_table_->UpdateTuple(transaction_, new_tuple);
     if (location.block == INVALID_OID) {
       new_tuple->FreeUninlinedData();
       delete new_tuple;

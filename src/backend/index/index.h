@@ -117,8 +117,11 @@ class Index {
   virtual bool BlindInsertEntry(const storage::Tuple *key,
                         const ItemPointer location) = 0;
 
-  // delete the index entry linked to given tuple
-  virtual bool DeleteEntry(const storage::Tuple *key) = 0;
+  // delete the index entry linked to given tuple and location
+  // the location is used only in multimap indices to remove a subset of entries
+  // associated with the key
+  virtual bool DeleteEntry(const storage::Tuple *key,
+                           const ItemPointer location) = 0;
 
   // update a index entry if the old location is same as the one given
   virtual bool UpdateEntry(const storage::Tuple *key,

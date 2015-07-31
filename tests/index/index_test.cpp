@@ -142,11 +142,11 @@ TEST(IndexTests, BtreeUniqueIndexTest) {
 
   LOG_TRACE("Delete \n");
 
-  index->DeleteEntry(key0);
-  index->DeleteEntry(key1);
-  index->DeleteEntry(key2);
-  index->DeleteEntry(key3);
-  index->DeleteEntry(key4);
+  index->DeleteEntry(key0, INVALID_ITEMPOINTER);
+  index->DeleteEntry(key1, INVALID_ITEMPOINTER);
+  index->DeleteEntry(key2, INVALID_ITEMPOINTER);
+  index->DeleteEntry(key3, INVALID_ITEMPOINTER);
+  index->DeleteEntry(key4, INVALID_ITEMPOINTER);
 
   EXPECT_EQ(false, index->Exists(key0));
 
@@ -281,11 +281,11 @@ TEST(IndexTests, BtreeMultiIndexTest) {
 
   LOG_TRACE("Delete \n");
 
-  index->DeleteEntry(key0);
-  index->DeleteEntry(key1);
-  index->DeleteEntry(key2);
-  index->DeleteEntry(key3);
-  index->DeleteEntry(key4);
+  index->DeleteEntry(key0, INVALID_ITEMPOINTER);
+  index->DeleteEntry(key1, INVALID_ITEMPOINTER);
+  index->DeleteEntry(key2, INVALID_ITEMPOINTER);
+  index->DeleteEntry(key3, INVALID_ITEMPOINTER);
+  index->DeleteEntry(key4, INVALID_ITEMPOINTER);
 
   EXPECT_EQ(false, index->Exists(key0));
 

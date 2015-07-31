@@ -74,7 +74,8 @@ class BtreeMultiIndex : public Index {
     }
   }
 
-  bool DeleteEntry(const storage::Tuple *key) {
+  bool DeleteEntry(const storage::Tuple *key,
+                   const ItemPointer location) {
     {
       std::lock_guard<std::mutex> lock(index_mutex);
 
