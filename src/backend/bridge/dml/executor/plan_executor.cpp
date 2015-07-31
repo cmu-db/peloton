@@ -107,15 +107,15 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       break;
 
     case PLAN_NODE_TYPE_LIMIT:
-      child_executor = new executor::LimitExecutor(plan);
+      child_executor = new executor::LimitExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_NESTLOOP:
-      child_executor = new executor::NestedLoopJoinExecutor(plan);
+      child_executor = new executor::NestedLoopJoinExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_PROJECTION:
-      child_executor = new executor::ProjectionExecutor(plan);
+      child_executor = new executor::ProjectionExecutor(plan, executor_context);
       break;
 
     default:
@@ -176,7 +176,7 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(
     case PLAN_NODE_TYPE_INDEXSCAN:
       /* FALL THRU */
     case PLAN_NODE_TYPE_LIMIT:
-      new_root = new executor::MaterializationExecutor(nullptr);
+      new_root = new executor::MaterializationExecutor(nullptr, nullptr);
       new_root->AddChild(root);
       LOG_INFO("Added materialization, the original root executor type is %d",
                type);

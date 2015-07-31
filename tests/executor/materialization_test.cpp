@@ -56,7 +56,7 @@ TEST(MaterializationTests, SingleBaseTileTest) {
                                               own_base_tiles));
 
   // Pass through materialization executor.
-  executor::MaterializationExecutor executor(nullptr);
+  executor::MaterializationExecutor executor(nullptr, nullptr);
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
       ExecutorTestsUtil::ExecuteTile(&executor, source_logical_tile.release()));
 
@@ -122,7 +122,7 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   planner::MaterializationNode node(old_to_new_cols, output_schema.release());
 
   // Pass through materialization executor.
-  executor::MaterializationExecutor executor(&node);
+  executor::MaterializationExecutor executor(&node, nullptr);
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
       ExecutorTestsUtil::ExecuteTile(&executor, source_logical_tile.release()));
 

@@ -49,7 +49,7 @@ TEST(AppendTests, AppendTwoTest) {
   planner::AppendNode node;
 
   // Create and set up executor
-  executor::AppendExecutor executor(&node);
+  executor::AppendExecutor executor(&node, nullptr);
 
   MockExecutor child_executor1;
   MockExecutor child_executor2;
