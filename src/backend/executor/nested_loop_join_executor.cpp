@@ -190,6 +190,7 @@ bool NestedLoopJoinExecutor::DExecute() {
   for (auto col : position_lists) {
     LOG_TRACE("col");
     for (auto elm : col) {
+      (void)elm;  // silent compiler
       LOG_TRACE("elm: %u", elm);
     }
   }
