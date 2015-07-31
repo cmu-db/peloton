@@ -386,10 +386,10 @@ bool Bootstrap::BootstrapPeloton(void) {
   // Link foreign keys
   LinkForeignKeys();
 
-   printf("Print all relation's schema information\n");
+  /*printf("Print all relation's schema information\n");
   auto& manager = catalog::Manager::GetInstance();
   storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
-   std::cout << *db << std::endl;
+  std::cout << *db << std::endl;*/
 
   heap_endscan(pg_class_scan);
   heap_close(pg_attribute_rel, AccessShareLock);
@@ -442,17 +442,25 @@ raw_database_info* Bootstrap::GetRawDatabase(void){
  * @return true or false, depending on whether we could bootstrap.
  */
 bool Bootstrap::NewBootstrapPeloton(raw_database_info* raw_database){
-
   // create the database with current database id
   elog(LOG, "Initializing database %s(%u) in Peloton", raw_database->database_name, raw_database->database_oid);
+  DDLDatabase::CreateDatabase(raw_database->database_oid);
 
   BootstrapUtils::PrintRawDatabase(raw_database);
 
+  StartTransactionCommand();
+
   // Create table
   CreateTables(raw_database->raw_tables, raw_database->table_count);
-  CreateIndexes(raw_database->raw_indexes, raw_database->index_count);
 
   // build indexes
+  CreateIndexes(raw_database->raw_indexes, raw_database->index_count);
+
+  auto& manager = catalog::Manager::GetInstance();
+  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+  std::cout << *db << std::endl;
+
+  CommitTransactionCommand();
 
   // link foreign keys
   elog(LOG, "Finished initializing Peloton");
@@ -749,6 +757,31 @@ void Bootstrap::CreateTables(raw_table_info** raw_tables,
   }
 }
 
+void Bootstrap::CreateIndexes(raw_index_info** raw_indexes, 
+                             oid_t index_count){
+
+  for(int index_itr=0; index_itr<index_count; index_itr++){
+    auto raw_index = raw_indexes[index_itr];
+    auto key_column_names = CreateKeyColumnNames(raw_index->key_column_names, raw_index->key_column_count);
+
+    IndexInfo index_info(raw_index->index_name,
+                         raw_index->index_oid,
+                         raw_index->table_name,
+                         raw_index->method_type,
+                         raw_index->constraint_type,
+                         raw_index->unique_keys,
+                         key_column_names);
+
+    bool status = DDLIndex::CreateIndex(index_info);
+
+    if (status == true) {
+      elog(LOG, "Create Index \"%s\" in Peloton", raw_index->index_name);
+    } else {
+      elog(ERROR, "Create Index \"%s\" in Peloton", raw_index->index_name);
+    }
+  }
+}
+
 std::vector<catalog::Column>
 Bootstrap::CreateColumns(raw_column_info** raw_columns, 
                          oid_t column_count){
@@ -772,6 +805,19 @@ Bootstrap::CreateColumns(raw_column_info** raw_columns,
 
   }
   return columns;
+}
+
+std::vector<std::string>
+Bootstrap::CreateKeyColumnNames(char** raw_column_names, 
+                                oid_t raw_column_count){
+  std::vector<std::string> key_column_names;
+
+  for(int column_itr=0; column_itr<raw_column_count; column_itr++){
+    auto raw_column_name = raw_column_names[column_itr];
+
+    key_column_names.push_back(raw_column_name);
+  }
+  return key_column_names;
 }
 
 std::vector<catalog::Constraint>
