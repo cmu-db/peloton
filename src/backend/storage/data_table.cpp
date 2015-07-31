@@ -104,21 +104,25 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
 
   // Index checks and updates
   if (update == false) {
+    // This might fail because of two reasons :
+    // a) another concurrent insert, in which case we should abort
+    // b) another tuple with same key already exists, and is invisible for this
+    // transaction, in which case we should actually succeed
     if (TryInsertInIndexes(tuple, location) == false) {
       tile_group->ReclaimTuple(tuple_slot);
       LOG_WARN("Index constraint violated\n");
       return INVALID_ITEMPOINTER;
     }
   } else {
-    // just do a blind insert
-    InsertInIndexes(tuple, location);
+    // just do a blind insert into the indexes
+    BlindInsertInIndexes(tuple, location);
     return location;
   }
 
   return location;
 }
 
-void DataTable::InsertInIndexes(const storage::Tuple *tuple,
+void DataTable::BlindInsertInIndexes(const storage::Tuple *tuple,
                                 ItemPointer location) {
   for (auto index : indexes) {
     auto index_schema = index->GetKeySchema();
