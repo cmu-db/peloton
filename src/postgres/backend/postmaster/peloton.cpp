@@ -233,7 +233,7 @@ PelotonMain(int argc, char *argv[]) {
    * Note: if we have selected a just-deleted database (due to using
    * stale stats info), we'll fail and exit here.
    */
-  InitPostgres("postgres", InvalidOid, NULL, InvalidOid, NULL);
+  //InitPostgres("postgres", InvalidOid, NULL, InvalidOid, NULL);
 
   /*
    * If the PostmasterContext is still around, recycle the space; we don't
@@ -267,7 +267,7 @@ PelotonMain(int argc, char *argv[]) {
   ereport(LOG, (errmsg("peloton: processing database \"%s\"", "postgres")));
 
   /* Init Peloton */
-  peloton::bridge::Bootstrap::BootstrapPeloton();
+  //peloton::bridge::Bootstrap::BootstrapPeloton();
 
   /*
    * Create a resource owner to keep track of our resources (not clear that
