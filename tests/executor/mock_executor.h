@@ -22,7 +22,7 @@ namespace test {
 
 class MockExecutor : public executor::AbstractExecutor {
  public:
-  MockExecutor() : executor::AbstractExecutor(nullptr) {}
+  MockExecutor() : executor::AbstractExecutor(nullptr, nullptr) {}
 
   MOCK_METHOD0(DInit, bool());
 

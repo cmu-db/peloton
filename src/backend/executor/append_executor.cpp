@@ -15,8 +15,9 @@ namespace executor {
 /**
  * @brief Constructor
  */
-AppendExecutor::AppendExecutor(planner::AbstractPlanNode *node)
-    : AbstractExecutor(node) {}
+AppendExecutor::AppendExecutor(planner::AbstractPlanNode *node,
+                               ExecutorContext *executor_context)
+    : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Basic checks.

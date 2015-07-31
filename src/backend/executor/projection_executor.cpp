@@ -21,8 +21,9 @@ namespace executor {
  * @brief Constructor
  * @param node  ProjectionNode plan node corresponding to this executor
  */
-ProjectionExecutor::ProjectionExecutor(planner::AbstractPlanNode *node)
-    : AbstractExecutor(node) {}
+ProjectionExecutor::ProjectionExecutor(planner::AbstractPlanNode *node,
+                                       ExecutorContext *executor_context)
+    : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Do some basic checks and initialize executor state.

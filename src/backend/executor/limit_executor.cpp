@@ -18,8 +18,9 @@ namespace executor {
  * @brief Constructor
  * @param node  LimitNode plan node corresponding to this executor
  */
-LimitExecutor::LimitExecutor(planner::AbstractPlanNode *node)
-    : AbstractExecutor(node) {}
+LimitExecutor::LimitExecutor(planner::AbstractPlanNode *node,
+                             ExecutorContext *executor_context)
+    : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Do some basic checks and initialize executor state.

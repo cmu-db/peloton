@@ -28,8 +28,9 @@ namespace executor {
  * @param node Materialization node corresponding to this executor.
  */
 MaterializationExecutor::MaterializationExecutor(
-    planner::AbstractPlanNode *node)
-    : AbstractExecutor(node) {}
+    planner::AbstractPlanNode *node,
+    ExecutorContext *executor_context)
+: AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -56,7 +57,7 @@ void MaterializationExecutor::GenerateTileToColMap(
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
     LogicalTile *source_tile,
     std::unordered_map<storage::Tile *, std::vector<oid_t> > &
-        cols_in_physical_tile) {
+    cols_in_physical_tile) {
   for (const auto &kv : old_to_new_cols) {
     oid_t col = kv.first;
 
@@ -79,7 +80,7 @@ void MaterializationExecutor::MaterializeByTiles(
     LogicalTile *source_tile,
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
     const std::unordered_map<storage::Tile *, std::vector<oid_t> > &
-        tile_to_cols,
+    tile_to_cols,
     storage::Tile *dest_tile) {
   // Copy over all data from each base tile.
   for (const auto &kv : tile_to_cols) {
