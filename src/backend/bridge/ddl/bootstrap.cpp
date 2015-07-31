@@ -429,8 +429,9 @@ raw_database_info* Bootstrap::GetRawDatabase(void){
 
   BootstrapUtils::CopyRawTables(raw_database, raw_tables);
   BootstrapUtils::CopyRawIndexes(raw_database, raw_indexes);
+  BootstrapUtils::CopyRawForeignkeys(raw_database, raw_foreignkeys);
 
-  //BootstrapUtils::PrintRawDatabase(raw_database);
+  BootstrapUtils::PrintRawDatabase(raw_database);
 
   return raw_database;
 }
@@ -454,9 +455,9 @@ bool Bootstrap::NewBootstrapPeloton(raw_database_info* raw_database){
   // build indexes
   CreateIndexes(raw_database->raw_indexes, raw_database->index_count);
 
-  auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
-  std::cout << *db << std::endl;
+  //auto& manager = catalog::Manager::GetInstance();
+  //storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+  //std::cout << *db << std::endl;
 
   // link foreign keys
   elog(LOG, "Finished initializing Peloton");
@@ -821,6 +822,7 @@ void Bootstrap::GetRawForeignKeys(std::vector<raw_foreignkey_info*>& raw_foreign
     std::string constraint_name = NameStr(pg_constraint->conname);
 
     raw_foreignkey->fk_name = BootstrapUtils::CopyString(constraint_name.c_str());
+    raw_foreignkeys.push_back(raw_foreignkey);
   }
 
   heap_endscan(pg_constraint_scan);
