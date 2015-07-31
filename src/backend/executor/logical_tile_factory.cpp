@@ -130,7 +130,7 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
     const int position_list_idx = 0;
 
     storage::TileGroup *tile_group =
-        (storage::TileGroup *)catalog::Manager::GetInstance().GetLocation(
+        (storage::TileGroup *)catalog::Manager::GetInstance().GetTileGroup(
             block.first);
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
