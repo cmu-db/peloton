@@ -1082,7 +1082,7 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
     try {
       /* Process the utility statement */
       MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
-      peloton::bridge::Bootstrap::NewBootstrapPeloton(raw_database);
+      peloton::bridge::Bootstrap::BootstrapPeloton(raw_database);
       MemoryContextSwitchTo(oldcxt);
     }
     catch(const std::exception &exception) {
