@@ -62,9 +62,11 @@ bool IndexScanExecutor::DInit() {
 
   auto table = node.GetTable();
 
-  if(column_ids_.empty()){
-    column_ids_.resize(table->GetSchema()->GetColumnCount());
-    std::iota(column_ids_.begin(), column_ids_.end(), 0);
+  if(nullptr != table){
+    if(column_ids_.empty()){
+      column_ids_.resize(table->GetSchema()->GetColumnCount());
+      std::iota(column_ids_.begin(), column_ids_.end(), 0);
+    }
   }
 
   return true;
