@@ -22,15 +22,13 @@ namespace concurrency {
 
 void Transaction::RecordInsert(ItemPointer location) {
   auto& manager = catalog::Manager::GetInstance();
-  storage::TileGroup* tile_group =
-      static_cast<storage::TileGroup*>(manager.locator[location.block]);
+  storage::TileGroup* tile_group = manager.GetTileGroup(location.block);
   inserted_tuples[tile_group].push_back(location.offset);
 }
 
 void Transaction::RecordDelete(ItemPointer location) {
   auto& manager = catalog::Manager::GetInstance();
-  storage::TileGroup* tile_group =
-      static_cast<storage::TileGroup*>(manager.locator[location.block]);
+  storage::TileGroup* tile_group = manager.GetTileGroup(location.block);
   deleted_tuples[tile_group].push_back(location.offset);
 }
 
