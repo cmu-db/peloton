@@ -30,8 +30,9 @@ class MaterializationNode : public AbstractPlanNode {
   MaterializationNode &operator=(MaterializationNode &&) = delete;
 
   MaterializationNode(const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-                      catalog::Schema *schema)
-      : old_to_new_cols_(old_to_new_cols), schema_(schema) {}
+                      catalog::Schema *schema,
+                      bool physify_flag)
+      : old_to_new_cols_(old_to_new_cols), schema_(schema), physify_flag_(physify_flag) {}
 
   ~MaterializationNode() {
     // Clean up schema
@@ -43,6 +44,8 @@ class MaterializationNode : public AbstractPlanNode {
   }
 
   inline const catalog::Schema *GetSchema() const { return schema_; }
+
+  inline bool GetPhysifyFlag() const { return physify_flag_; }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_MATERIALIZE;
@@ -58,6 +61,11 @@ class MaterializationNode : public AbstractPlanNode {
 
   /** @brief Schema of newly materialized tile. */
   catalog::Schema *schema_;
+
+  /**
+   * @brief whether to create a physical tile or just pass thru underlying logical tile
+   */
+  bool physify_flag_;
 };
 
 }  // namespace planner
