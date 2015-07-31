@@ -46,7 +46,7 @@ const ValueArray PlanTransformer::BuildParams(const ParamListInfo param_list) {
  * @param[out]  parent  Set to a created projection plan node if one is needed,
  *              or NULL otherwise.
  *
- * @param[out]  predicate   Set to the transformed Expression based on qual.
+ * @param[out]  predicate   Set to the transformed Expression based on qual. Or NULL if so is qual.
  *
  * @param[out]  out_col_list  Set to the output column list if ps_ProjInfo contains only
  *              direct mapping of attributes. \b Empty if no direct map is presented.
@@ -89,8 +89,6 @@ void PlanTransformer::GetGenericInfoFromScanState(
   if(nullptr == project_info.get()){  // empty predicate, or ignore projInfo, pass thru
     LOG_INFO("No projections (all pass through)");
 
-    out_col_list.clear();
-
     assert(out_col_list.size() == 0);
   }
   else if(project_info->GetTargetList().size() > 0){  // Have non-trivial projection, add a plan node
@@ -105,6 +103,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
 
   else {  // Pure direct map
     assert(project_info->GetTargetList().size() == 0);
+    assert(project_info->GetDirectMapList().size() > 0);
 
     LOG_INFO("Pure direct map projection.\n");
 

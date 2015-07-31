@@ -82,7 +82,19 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexScan(
 
   GetGenericInfoFromScanState(parent, predicate, column_ids, &(iss_plan_state->ss));
 
-  return new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
+  auto scan_node = new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
+
+  planner::AbstractPlanNode* rv = nullptr;
+  /* Check whether a parent is presented, connect with the scan node if yes */
+  if(parent){
+    parent->AddChild(scan_node);
+    rv = parent;
+  }
+  else{
+    rv = scan_node;
+  }
+
+  return rv;
 }
 /**
  * @brief Helper function to build index scan descriptor.
@@ -209,7 +221,19 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
 
   GetGenericInfoFromScanState(parent, predicate, column_ids, &(ioss_plan_state->ss));
 
-  return new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
+  auto scan_node = new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
+
+  planner::AbstractPlanNode* rv = nullptr;
+  /* Check whether a parent is presented, connect with the scan node if yes */
+  if(parent){
+    parent->AddChild(scan_node);
+    rv = parent;
+  }
+  else{
+    rv = scan_node;
+  }
+
+  return rv;
 }
 
 /**
@@ -269,7 +293,20 @@ planner::AbstractPlanNode *PlanTransformer::TransformBitmapScan(
 
   GetGenericInfoFromScanState(parent, predicate, column_ids, &(bhss_plan_state->ss));
 
-  return new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
+  auto scan_node = new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
+
+  planner::AbstractPlanNode* rv = nullptr;
+  /* Check whether a parent is presented, connect with the scan node if yes */
+  if(parent){
+    parent->AddChild(scan_node);
+    rv = parent;
+  }
+  else{
+    rv = scan_node;
+  }
+
+  return rv;
+
 }
 
 }  // namespace bridge
