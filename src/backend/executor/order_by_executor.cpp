@@ -18,8 +18,9 @@ namespace executor {
  * @brief Constructor
  * @param node  OrderByNode plan node corresponding to this executor
  */
-OrderByExecutor::OrderByExecutor(planner::AbstractPlanNode *node)
-    : AbstractExecutor(node) {}
+OrderByExecutor::OrderByExecutor(planner::AbstractPlanNode *node,
+                                 ExecutorContext *executor_context)
+    : AbstractExecutor(node, executor_context) {}
 
 bool OrderByExecutor::DInit() {
   assert(children_.size() == 1);

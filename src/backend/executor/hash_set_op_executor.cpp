@@ -19,8 +19,9 @@ namespace executor {
 /**
  * @brief Constructor
  */
-HashSetOpExecutor::HashSetOpExecutor(planner::AbstractPlanNode *node)
-    : AbstractExecutor(node) {}
+HashSetOpExecutor::HashSetOpExecutor(planner::AbstractPlanNode *node,
+                                     ExecutorContext *executor_context)
+    : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Do some basic checks and initialize executor state.
