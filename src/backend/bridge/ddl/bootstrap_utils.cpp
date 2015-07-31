@@ -102,6 +102,7 @@ void BootstrapUtils::PrintRawDatabase(raw_database_info* raw_database){
   printf("\n\nPrint Dataase %s(%u)\n\n", raw_database->database_name, raw_database->database_oid);
   PrintRawTables(raw_database->raw_tables, raw_database->table_count);
   PrintRawIndexes(raw_database->raw_indexes, raw_database->index_count);
+  PrintRawForeignkeys(raw_database->raw_foreignkeys, raw_database->foreignkey_count);
   printf("\n\n");
 }
 
@@ -123,6 +124,24 @@ void BootstrapUtils::PrintRawIndexes(raw_index_info** raw_indexes,
   }
 }
 
+void BootstrapUtils::PrintRawForeignkeys(raw_foreignkey_info** raw_foreignkeys, 
+                                         oid_t foreignkey_count){
+  for(int foreignkey_itr=0; foreignkey_itr<foreignkey_count; foreignkey_itr++){
+    auto raw_foreignkey = raw_foreignkeys[foreignkey_itr];
+
+    printf("  Print Foreignkey #%u\n", foreignkey_itr);
+    printf("    source table id %u\n", raw_foreignkey->source_table_id);
+    printf("    sink   table id %u\n", raw_foreignkey->sink_table_id);
+    PrintColumnNums(raw_foreignkey->source_column_offsets,
+                    raw_foreignkey->source_column_count);
+    PrintColumnNums(raw_foreignkey->sink_column_offsets,
+                    raw_foreignkey->sink_column_count);
+    printf("    update action %c\n", raw_foreignkey->update_action);
+    printf("    delete action %c\n", raw_foreignkey->delete_action);
+    printf("    fk name %s\n", raw_foreignkey->fk_name);
+  }
+}
+
 void BootstrapUtils::PrintRawTable(raw_table_info* raw_table){
   printf("  table name %s \n", raw_table->table_name);
   printf("  table oid %u \n", raw_table->table_oid);
@@ -136,7 +155,7 @@ void BootstrapUtils::PrintRawIndex(raw_index_info* raw_index){
   printf("  method type %d \n", (int)raw_index->method_type);
   printf("  constraint type %d \n", (int)raw_index->constraint_type);
   printf("  unique keys %d \n", (int)raw_index->unique_keys);
-  PrintKeyColumnNames(raw_index->key_column_names, raw_index->key_column_count);
+  PrintColumnNames(raw_index->key_column_names, raw_index->key_column_count);
 }
 
 void BootstrapUtils::PrintRawColumn(raw_column_info* raw_column){
@@ -150,7 +169,7 @@ void BootstrapUtils::PrintRawColumn(raw_column_info* raw_column){
 void BootstrapUtils::PrintRawColumns(raw_column_info** raw_columns,
                      oid_t column_count){
   for(int column_itr=0; column_itr<column_count; column_itr++){
-    printf("    Print Column #%u\n", column_itr);
+    printf("      Print Column #%u\n", column_itr);
     PrintRawColumn(raw_columns[column_itr]);
     printf("\n");
   }
@@ -170,10 +189,17 @@ void BootstrapUtils::PrintRawConstraint(raw_constraint_info* raw_constraint){
   printf("      constraint name %s \n", raw_constraint->constraint_name);
 }
 
-void BootstrapUtils::PrintKeyColumnNames(char** key_column_names,
+void BootstrapUtils::PrintColumnNames(char** key_column_names,
                                          oid_t key_column_count){
   for(int key_column_itr=0; key_column_itr<key_column_count; key_column_itr++){
     printf("    Print KeyColumnName %s\n\n", key_column_names[key_column_itr]);
+  }
+}
+
+void BootstrapUtils::PrintColumnNums(int* column_nums,
+                                        oid_t column_count){
+  for(int column_itr=0; column_itr<column_count; column_itr++){
+    printf("    Print Column Offset %d\n\n", column_nums[column_itr]);
   }
 }
 
