@@ -58,8 +58,8 @@ planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
   /* Construct and return the Peloton plan node */
   auto plan_node = new planner::NestedLoopJoinNode(predicate);
   plan_node->SetJoinType(join_type);
-  plan_node->AddChild(outer);
   plan_node->AddChild(inner);
+  plan_node->AddChild(outer);
   LOG_INFO("Handle Nested loop join, JoinType: %d", join_type);
   return plan_node;
 }
