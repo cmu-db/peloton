@@ -87,15 +87,17 @@ bool DDLDatabase::CreateDatabase(Oid database_oid) {
   if (database_oid == INVALID_OID) return false;
 
   auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = new storage::Database(database_oid);
-  manager.AddDatabase(db);
+  auto database = manager.GetDatabaseWithOid(database_oid);
 
-  if (db == nullptr) {
-    LOG_WARN("Failed to create a database (%u)", database_oid);
+  if( database == nullptr ){
+    storage::Database* db = new storage::Database(database_oid);
+    manager.AddDatabase(db);
+  }else {
+    elog(LOG,"Database(%u) is already existed!!", database_oid);
     return false;
   }
 
-  LOG_INFO("Create database (%u)", database_oid);
+  elog(LOG,"Create database (%u)", database_oid);
   return true;
 }
 
