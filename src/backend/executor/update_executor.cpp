@@ -96,7 +96,8 @@ bool UpdateExecutor::DExecute() {
     project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
 
     // (C) finally insert updated tuple into the table
-    ItemPointer location = target_table_->UpdateTuple(transaction_, new_tuple);
+    ItemPointer location = target_table_->UpdateTuple(transaction_, new_tuple,
+                                                      delete_location);
     if (location.block == INVALID_OID) {
       new_tuple->FreeUninlinedData();
       delete new_tuple;
