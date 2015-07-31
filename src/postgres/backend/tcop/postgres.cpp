@@ -887,6 +887,7 @@ pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams)
  *
  * Execute a "simple Query" protocol message.
  */
+#include "postmaster/peloton.h"
 static void
 exec_simple_query(const char *query_string)
 {
@@ -3719,6 +3720,14 @@ PostgresMain(int argc, char *argv[],
    * involves database access should be there, not here.
    */
   InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
+
+  // Peloton Changes
+  StartTransactionCommand();
+  Peloton_Status *status = peloton_create_status();
+  peloton_send_bootstrap(status);
+  peloton_process_status(status);
+  peloton_destroy_status(status);
+  CommitTransactionCommand();
 
   /*
    * If the PostmasterContext is still around, recycle the space; we don't
