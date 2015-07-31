@@ -63,7 +63,7 @@ Agg *GetAggInstance(ExpressionType agg_type) {
  */
 bool Helper(const planner::AggregateNode *node, Agg **aggregates,
             storage::DataTable *output_table, AbstractTuple *prev_tuple,
-            txn_id_t transaction_id) {
+            const concurrency::Transaction *transaction) {
   // Ignore null tuples
   if (prev_tuple == nullptr) return true;
 
@@ -103,7 +103,7 @@ bool Helper(const planner::AggregateNode *node, Agg **aggregates,
 
   std::cout << "GROUP TUPLE :: " << *(tuple.get());
 
-  auto location = output_table->InsertTuple(transaction_id, tuple.get(), false);
+  auto location = output_table->InsertTuple(transaction, tuple.get(), false);
   if (location.block == INVALID_OID) {
     LOG_ERROR("Failed to insert tuple \n");
     return false;
@@ -121,8 +121,8 @@ bool Helper(const planner::AggregateNode *node, Agg **aggregates,
 template <>
 Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Aggregator(
     const planner::AggregateNode *node, storage::DataTable *output_table,
-    txn_id_t transaction_id)
-    : node(node), output_table(output_table), transaction_id(transaction_id) {
+    const concurrency::Transaction *transaction)
+    : node(node), output_table(output_table), transaction(transaction) {
   group_by_columns = node->GetGroupByColumns();
   group_by_key_schema = node->GetGroupByKeySchema();
   assert(group_by_key_schema != nullptr);
@@ -193,7 +193,7 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Finalize(
     AbstractTuple *prev_tuple __attribute__((unused))) {
   for (auto entry : aggregates_map) {
     if (Helper(node, entry.second->aggregates, output_table,
-               entry.second->group_tuple, transaction_id) == false) {
+               entry.second->group_tuple, transaction) == false) {
       return false;
     }
 
@@ -218,8 +218,8 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_HASHAGGREGATE>::Finalize(
 template <>
 Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Aggregator(
     const planner::AggregateNode *node, storage::DataTable *output_table,
-    txn_id_t transaction_id)
-    : node(node), output_table(output_table), transaction_id(transaction_id) {
+    const concurrency::Transaction *transaction)
+    : node(node), output_table(output_table), transaction(transaction) {
   group_by_columns = node->GetGroupByColumns();
 
   // Create aggregators and initialize
@@ -267,7 +267,7 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Advance(
   if (start_new_agg) {
     LOG_TRACE("Started a new group!");
 
-    if (Helper(node, aggregates, output_table, prev_tuple, transaction_id) ==
+    if (Helper(node, aggregates, output_table, prev_tuple, transaction) ==
         false) {
       return false;
     }
@@ -295,7 +295,7 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Advance(
 template <>
 bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Finalize(
     AbstractTuple *prev_tuple) {
-  if (Helper(node, aggregates, output_table, prev_tuple, transaction_id) ==
+  if (Helper(node, aggregates, output_table, prev_tuple, transaction) ==
       false) {
     return false;
   }

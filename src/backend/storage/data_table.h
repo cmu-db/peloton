@@ -17,6 +17,7 @@
 #include "backend/storage/backend_vm.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_factory.h"
+#include "backend/concurrency/transaction.h"
 
 #include <string>
 
@@ -57,14 +58,18 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   // insert tuple in table
-  ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple,
+  ItemPointer InsertTuple(const concurrency::Transaction *transaction,
+                          const Tuple *tuple,
                           bool update = false);
 
   void BlindInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
-  bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+  bool TryInsertInIndexes(const concurrency::Transaction *transaction,
+                          const storage::Tuple *tuple,
+                          ItemPointer location);
 
-  bool DeleteTuple(txn_id_t transaction_id, ItemPointer location);
+  bool DeleteTuple(const concurrency::Transaction *transaction,
+                   ItemPointer location);
 
   void DeleteInIndexes(const storage::Tuple *tuple);
 
