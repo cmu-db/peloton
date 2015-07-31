@@ -122,13 +122,13 @@ std::ostream& operator<<(std::ostream& os, const Database& database) {
   for (auto table : database.tables) {
     if (table != nullptr) {
       std::cout << "(" << ++table_itr << "/" << table_count << ") "
-                << "Table Name : " << table->GetName() << "\n"
+                << "Table Name(" << table->GetOid() << ") : " << table->GetName() << "\n"
                 << *(table->GetSchema()) << std::endl;
 
       oid_t index_count = table->GetIndexCount();
-      std::cout << "Index Count : " << index_count << std::endl;
 
       if (index_count > 0) {
+        std::cout << "Index Count : " << index_count << std::endl;
         for (int index_itr = 0; index_itr < index_count; index_itr++) {
           index::Index* index = table->GetIndex(index_itr);
 
