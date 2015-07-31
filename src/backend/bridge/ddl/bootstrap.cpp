@@ -309,7 +309,7 @@ void Bootstrap::CreateDatabases() {
   CommitTransactionCommand();
 }
 
-bool Bootstrap::BootstrapPeloton(void) {
+bool Bootstrap::OldBootstrapPeloton(void) {
   // Create the new storage database and add it to the manager
   CreateDatabases();
 
@@ -441,7 +441,7 @@ raw_database_info* Bootstrap::GetRawDatabase(void){
  * indexes, foreign key to create in Peloton
  * @return true or false, depending on whether we could bootstrap.
  */
-bool Bootstrap::NewBootstrapPeloton(raw_database_info* raw_database){
+bool Bootstrap::BootstrapPeloton(raw_database_info* raw_database){
   // create the database with current database id
   elog(LOG, "Initializing database %s(%u) in Peloton", raw_database->database_name, raw_database->database_oid);
   DDLDatabase::CreateDatabase(raw_database->database_oid);

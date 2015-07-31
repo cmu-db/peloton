@@ -37,10 +37,10 @@ class Bootstrap {
  public:
   static raw_database_info* GetRawDatabase(void);
 
-  static bool NewBootstrapPeloton(raw_database_info* raw_database);
+  static bool BootstrapPeloton(raw_database_info* raw_database);
 
   // TODO :: Remove 
-  static bool BootstrapPeloton(void);
+  static bool OldBootstrapPeloton(void);
 
 
  private:
