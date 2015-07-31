@@ -60,20 +60,6 @@ class BtreeUniqueIndex : public Index {
     }
   }
 
-  bool BlindInsertEntry(const storage::Tuple *key,
-                        const ItemPointer location) {
-    {
-      std::lock_guard<std::mutex> lock(index_mutex);
-
-      index_key1.SetFromKey(key);
-
-      // overwrite key if it exists already
-      container[index_key1] = location;
-
-      return true;
-    }
-  }
-
   bool DeleteEntry(const storage::Tuple *key,
                    const ItemPointer location) {
     {
