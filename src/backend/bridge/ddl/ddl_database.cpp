@@ -93,7 +93,7 @@ bool DDLDatabase::CreateDatabase(Oid database_oid) {
     storage::Database* db = new storage::Database(database_oid);
     manager.AddDatabase(db);
   }else {
-    elog(LOG,"Database(%u) is already existed!!", database_oid);
+    LOG_WARN("Database(%u) is already existed!!", database_oid);
     return false;
   }
 
