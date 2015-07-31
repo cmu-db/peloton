@@ -88,6 +88,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
     default: {
       LOG_ERROR("Unsupported Postgres Plan State Tag: %u Plan Tag: %u ",
                 nodeTag(plan_state), nodeTag(plan));
+      elog(INFO, "Query: ");
       break;
     }
   }
