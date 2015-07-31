@@ -60,7 +60,7 @@ class DataTable : public AbstractTable {
   ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple,
                           bool update = false);
 
-  void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+  void BlindInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
   bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 

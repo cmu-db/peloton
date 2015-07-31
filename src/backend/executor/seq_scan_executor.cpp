@@ -42,11 +42,9 @@ SeqScanExecutor::SeqScanExecutor(planner::AbstractPlanNode *node,
  * @return true on success, false otherwise.
  */
 bool SeqScanExecutor::DInit() {
-
   auto status = AbstractScanExecutor::DInit();
 
-  if(!status)
-    return false;
+  if (!status) return false;
 
   // Grab data from plan node.
   const planner::SeqScanNode &node = GetPlanNode<planner::SeqScanNode>();
@@ -62,6 +60,7 @@ bool SeqScanExecutor::DInit() {
       column_ids_.resize(table_->GetSchema()->GetColumnCount());
       std::iota(column_ids_.begin(), column_ids_.end(), 0);
     }
+
   }
 
 
