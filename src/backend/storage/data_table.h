@@ -59,21 +59,15 @@ class DataTable : public AbstractTable {
 
   // insert tuple in table
   ItemPointer InsertTuple(const concurrency::Transaction *transaction,
-                          const Tuple *tuple,
-                          bool update = false);
+                          const Tuple *tuple);
 
-  void BlindInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+  // insert the updated tuple in table
+  ItemPointer UpdateTuple(const concurrency::Transaction *transaction,
+                          const Tuple *tuple);
 
-  bool TryInsertInIndexes(const concurrency::Transaction *transaction,
-                          const storage::Tuple *tuple,
-                          ItemPointer location);
-
+  // delete the tuple at given location
   bool DeleteTuple(const concurrency::Transaction *transaction,
                    ItemPointer location);
-
-  void DeleteInIndexes(const storage::Tuple *tuple);
-
-  bool CheckNulls(const storage::Tuple *tuple) const;
 
   //===--------------------------------------------------------------------===//
   // TILE GROUP
@@ -107,8 +101,6 @@ class DataTable : public AbstractTable {
   index::Index *GetIndex(const oid_t index_offset) const;
 
   oid_t GetIndexCount() const;
-
-
 
   //===--------------------------------------------------------------------===//
   // FOREIGN KEYS
@@ -156,6 +148,38 @@ class DataTable : public AbstractTable {
 
   // Get a string representation of this table
   friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
+
+ protected:
+
+  //===--------------------------------------------------------------------===//
+  // INTEGRITY CHECKS
+  //===--------------------------------------------------------------------===//
+
+  bool CheckNulls(const storage::Tuple *tuple) const;
+
+  bool CheckConstraints(const storage::Tuple *tuple) const;
+
+  //===--------------------------------------------------------------------===//
+  // INDEX HELPERS
+  //===--------------------------------------------------------------------===//
+
+  // try to insert into the indices
+  bool InsertInIndexes(const concurrency::Transaction *transaction,
+                       const storage::Tuple *tuple,
+                       ItemPointer location);
+
+  // this must succeed
+  void BlindInsertInIndexes(const storage::Tuple *tuple,
+                            ItemPointer location);
+
+  // drop the entry in the indice
+  // NOTE: not used currently due to our MVCC design
+  void DeleteInIndexes(const storage::Tuple *tuple,
+                       const ItemPointer location);
+
+  // Claim a tuple slot in a tile group
+  ItemPointer GetTupleSlot(const concurrency::Transaction *transaction,
+                           const storage::Tuple *tuple);
 
  private:
   //===--------------------------------------------------------------------===//

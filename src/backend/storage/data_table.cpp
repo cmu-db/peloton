@@ -63,21 +63,42 @@ DataTable::~DataTable() {
 // TUPLE OPERATIONS
 //===--------------------------------------------------------------------===//
 
-ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
-                                   const storage::Tuple *tuple, bool update) {
-  assert(tuple);
+bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
+  assert(schema->GetColumnCount() == tuple->GetColumnCount());
 
-  // Increase the table's number of tuples by 1
-  IncreaseNumberOfTuplesBy(1);
-  // Increase the indexes' number of tuples by 1 as well
-  for (auto index : indexes) index->IncreaseNumberOfTuplesBy(1);
+  oid_t column_count = schema->GetColumnCount();
+  for (int column_itr = column_count - 1; column_itr >= 0; --column_itr) {
+    if (tuple->IsNull(column_itr) && schema->AllowNull(column_itr) == false) {
+      LOG_TRACE(
+          "%d th attribute in the tuple was NULL. It is non-nullable "
+          "attribute.",
+          column_itr);
+      return false;
+    }
+  }
 
-  // (A) Not NULL checks
+  return true;
+}
+
+bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
+
+  // First, check NULL constraints
   if (CheckNulls(tuple) == false) {
     throw ConstraintException("Not NULL constraint violated : " +
                               tuple->GetInfo());
-    return ItemPointer();
+    return false;
   }
+
+  return true;
+}
+
+
+ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
+                                    const storage::Tuple *tuple) {
+  assert(tuple);
+
+  if(CheckConstraints(tuple) == false)
+    return INVALID_ITEMPOINTER;
 
   TileGroup *tile_group = nullptr;
   oid_t tuple_slot = INVALID_OID;
@@ -85,14 +106,14 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
   auto transaction_id = transaction->GetTransactionId();
 
   while (tuple_slot == INVALID_OID) {
-    // (B) Figure out last tile group
+    // First, figure out last tile group
     {
       std::lock_guard<std::mutex> lock(table_mutex);
       tile_group_offset = GetTileGroupCount() - 1;
       LOG_TRACE("Tile group offset :: %d \n", tile_group_offset);
     }
 
-    // (C) Try to insert
+    // Then, try to grab a slot in the tile group header
     tile_group = GetTileGroup(tile_group_offset);
     tuple_slot = tile_group->InsertTuple(transaction_id, tuple);
     if (tuple_slot == INVALID_OID) {
@@ -100,31 +121,52 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
     }
   }
 
-  // Return Location
-  ItemPointer location = ItemPointer(tile_group->GetTileGroupId(), tuple_slot);
+  // Set tuple location
+  ItemPointer location(tile_group->GetTileGroupId(), tuple_slot);
+  return location;
+}
+
+
+ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
+                                   const storage::Tuple *tuple) {
+  // First, do integrity checks and claim a slot
+  ItemPointer location = GetTupleSlot(transaction, tuple);
+  if(location.block == INVALID_OID)
+    return INVALID_ITEMPOINTER;
 
   // Index checks and updates
-  if (update == false) {
-    // This might fail because of two reasons :
-    // a) another concurrent insert, in which case we should abort
-    // b) another tuple with same key already exists, and is invisible for this
-    // transaction, in which case we should actually succeed
-    if (TryInsertInIndexes(transaction, tuple, location) == false) {
-      tile_group->ReclaimTuple(tuple_slot);
-      LOG_WARN("Index constraint violated\n");
-      return INVALID_ITEMPOINTER;
-    }
-  } else {
-    // just do a blind insert into the indexes
-    BlindInsertInIndexes(tuple, location);
-    return location;
+  if (InsertInIndexes(transaction, tuple, location) == false) {
+    // Reclaim slot if we fail
+    oid_t tile_group_offset = location.block;
+    oid_t tuple_slot = location.offset;
+    TileGroup *tile_group = GetTileGroup(tile_group_offset);;
+    tile_group->ReclaimTuple(tuple_slot);
+    LOG_WARN("Index constraint violated\n");
+    return INVALID_ITEMPOINTER;
   }
 
   return location;
 }
 
+ItemPointer DataTable::UpdateTuple(const concurrency::Transaction *transaction,
+                                   const storage::Tuple *tuple) {
+  // First, do integrity checks and claim a slot
+  ItemPointer location = GetTupleSlot(transaction, tuple);
+  if(location.block == INVALID_OID)
+    return INVALID_ITEMPOINTER;
+
+  // Then, do a blind insert into the indexes
+  BlindInsertInIndexes(tuple, location);
+
+  return location;
+}
+
+//===--------------------------------------------------------------------===//
+// INDEX HELPERS
+//===--------------------------------------------------------------------===//
+
 void DataTable::BlindInsertInIndexes(const storage::Tuple *tuple,
-                                ItemPointer location) {
+                                     ItemPointer location) {
   for (auto index : indexes) {
     auto index_schema = index->GetKeySchema();
     auto indexed_columns = index_schema->GetIndexedColumns();
@@ -141,9 +183,15 @@ void DataTable::BlindInsertInIndexes(const storage::Tuple *tuple,
   }
 }
 
-bool DataTable::TryInsertInIndexes(const concurrency::Transaction *transaction,
-                                   const storage::Tuple *tuple,
-                                   ItemPointer location) {
+bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
+                                const storage::Tuple *tuple,
+                                ItemPointer location) {
+
+  // This might fail because of two reasons :
+  // a) another concurrent insert, in which case we should abort
+  // b) another tuple with same key already exists, and is invisible for this
+  // transaction, in which case we should actually succeed
+
   int index_count = GetIndexCount();
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
     auto index = GetIndex(index_itr);
@@ -222,7 +270,7 @@ bool DataTable::TryInsertInIndexes(const concurrency::Transaction *transaction,
     for (int prev_index_itr = index_itr + 1; prev_index_itr < index_count;
         ++prev_index_itr) {
       auto prev_index = GetIndex(prev_index_itr);
-      prev_index->DeleteEntry(key);
+      prev_index->DeleteEntry(key, location);
     }
 
     delete key;
@@ -241,37 +289,40 @@ bool DataTable::TryInsertInIndexes(const concurrency::Transaction *transaction,
  * NB: location.block should be the tile_group's \b ID, not \b offset.
  * @return True on success, false on failure.
  */
-bool DataTable::DeleteTuple(const concurrency::Transaction *transaction, ItemPointer location) {
+bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
+                            ItemPointer location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
-  auto tile_group = this->GetTileGroupById(tile_group_id);
-  auto transaction_id = transaction->GetTransactionId();
+  auto tile_group = GetTileGroupById(tile_group_id);
+  txn_id_t transaction_id = transaction->GetTransactionId();
 
+  // Delete slot in underlying tile group
   auto status = tile_group->DeleteTuple(transaction_id, tuple_id);
-
   if (status == false) {
     LOG_WARN("Failed to delete tuple from the tile group : %u , Txn_id : %lu ",
-             tile_group_id, (long unsigned)transaction_id);
+             tile_group_id, transaction_id);
     return false;
   }
 
   LOG_TRACE("Deleted tuple from tile group : %u , Txn_id : %lu ", tile_group,
             (long unsigned)transaction_id);
 
-  // Decrease the table's number of tuples by 1
-  DecreaseNumberOfTuplesBy(1);
   return true;
 }
 
-void DataTable::DeleteInIndexes(const storage::Tuple *tuple) {
+void DataTable::DeleteInIndexes(const storage::Tuple *tuple,
+                                const ItemPointer location) {
+  // Go over every index
   for (auto index : indexes) {
     auto index_schema = index->GetKeySchema();
     auto indexed_columns = index_schema->GetIndexedColumns();
+
     storage::Tuple *key = new storage::Tuple(index_schema, true);
     key->SetFromTuple(tuple, indexed_columns);
 
-    if (index->DeleteEntry(key) == false) {
+    // Delete the entry in the index
+    if (index->DeleteEntry(key, location) == false) {
       delete key;
       LOG_WARN("Failed to delete tuple from index %s . %s %s",
                GetName().c_str(), index->GetName().c_str(),
@@ -279,27 +330,7 @@ void DataTable::DeleteInIndexes(const storage::Tuple *tuple) {
     }
 
     delete key;
-
-    // Decrease the indexes' number of tuples by 1
-    for (auto index : indexes) index->DecreaseNumberOfTuplesBy(1);
   }
-}
-
-bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
-  assert(schema->GetColumnCount() == tuple->GetColumnCount());
-
-  oid_t column_count = schema->GetColumnCount();
-  for (int column_itr = column_count - 1; column_itr >= 0; --column_itr) {
-    if (tuple->IsNull(column_itr) && schema->AllowNull(column_itr) == false) {
-      LOG_TRACE(
-          "%d th attribute in the tuple was NULL. It is non-nullable "
-          "attribute.",
-          column_itr);
-      return false;
-    }
-  }
-
-  return true;
 }
 
 /**
