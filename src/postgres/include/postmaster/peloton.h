@@ -14,6 +14,7 @@
 #define PELOTON_H
 
 #include "backend/common/types.h"
+#include "backend/bridge/ddl/bootstrap.h"
 
 #include "libpq/libpq-be.h"
 #include "nodes/execnodes.h"
@@ -29,6 +30,7 @@ typedef enum PelotonMsgType
   PELOTON_MTYPE_DUMMY,      // Dummy message type
   PELOTON_MTYPE_DDL,        // DDL information to Peloton
   PELOTON_MTYPE_DML,        // DML information to Peloton
+  PELOTON_MTYPE_BOOTSTRAP,  // BOOTSTRAP information to Peloton
   PELOTON_MTYPE_REPLY       // Reply message from Peloton to Backend
 } PelotonMsgType;
 
@@ -106,6 +108,17 @@ typedef struct Peloton_MsgDDL
 } Peloton_MsgDDL;
 
 /* ----------
+ * Peloton_MsgBootstrap  Sent by the backend to share the raw database to peloton.
+ * ----------
+ */
+typedef struct Peloton_MsgBootstrap
+{
+  Peloton_MsgHdr m_hdr;
+  Peloton_Status  *m_status;
+  peloton::bridge::raw_database_info *m_raw_database;
+} Peloton_MsgBootstrap;
+
+/* ----------
  * Peloton_Msg         Union over all possible messages.
  * ----------
  */
@@ -145,12 +158,13 @@ extern void peloton_send_ddl(Peloton_Status  *status,
                              Node *parsetree,
                              const char *queryString);
 
+extern void peloton_send_bootstrap(Peloton_Status *status);
+
 extern Peloton_Status *peloton_create_status();
 
 extern void peloton_process_status(Peloton_Status *status);
 
 extern void peloton_destroy_status(Peloton_Status *status);
-
 
 #endif   /* PELOTON_H */
 
