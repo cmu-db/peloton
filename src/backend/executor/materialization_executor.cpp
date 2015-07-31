@@ -29,7 +29,8 @@ namespace executor {
  */
 MaterializationExecutor::MaterializationExecutor(
     planner::AbstractPlanNode *node)
-    : AbstractExecutor(node) {}
+    : AbstractExecutor(node) {
+}
 
 /**
  * @brief Nothing to init at the moment.
@@ -55,8 +56,7 @@ bool MaterializationExecutor::DInit() {
 void MaterializationExecutor::GenerateTileToColMap(
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
     LogicalTile *source_tile,
-    std::unordered_map<storage::Tile *, std::vector<oid_t> > &
-        cols_in_physical_tile) {
+    std::unordered_map<storage::Tile *, std::vector<oid_t> > & cols_in_physical_tile) {
   for (const auto &kv : old_to_new_cols) {
     oid_t col = kv.first;
 
@@ -78,8 +78,7 @@ void MaterializationExecutor::GenerateTileToColMap(
 void MaterializationExecutor::MaterializeByTiles(
     LogicalTile *source_tile,
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-    const std::unordered_map<storage::Tile *, std::vector<oid_t> > &
-        tile_to_cols,
+    const std::unordered_map<storage::Tile *, std::vector<oid_t> > & tile_to_cols,
     storage::Tile *dest_tile) {
   // Copy over all data from each base tile.
   for (const auto &kv : tile_to_cols) {
@@ -101,31 +100,15 @@ void MaterializationExecutor::MaterializeByTiles(
     }
   }
 }
-
 /**
- * @brief Creates materialized physical tile from logical tile and wraps it
- *        in a new logical tile.
- *
- * @return true on success, false otherwise.
+ * @brief Create a physical tile for the given logical tile
+ * @param source_tile Source tile from which the physical tile is created
+ * @return a logical tile wrapper for the created physicial tile
  */
-bool MaterializationExecutor::DExecute() {
-  // Retrieve child tile.
-  const bool success = children_[0]->Execute();
-  if (!success) {
-    return false;
-  }
-
-  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
+LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
   std::unique_ptr<catalog::Schema> source_tile_schema(
-      source_tile.get()->GetPhysicalSchema());
-
-  // Check the number of tuples in input logical tile
-  // If none, then just return false
+      source_tile->GetPhysicalSchema());
   const int num_tuples = source_tile->GetTupleCount();
-  if (num_tuples == 0) {
-    return false;
-  }
-
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
   const catalog::Schema *output_schema;
   auto node = GetRawNode();
@@ -141,28 +124,71 @@ bool MaterializationExecutor::DExecute() {
   }
   // Else use the mapping in the given plan node
   else {
-    const planner::MaterializationNode &node =
-        GetPlanNode<planner::MaterializationNode>();
+    const planner::MaterializationNode &node = GetPlanNode<
+        planner::MaterializationNode>();
     old_to_new_cols = node.old_to_new_cols();
     output_schema = node.GetSchema();
   }
 
   // Generate mappings.
   std::unordered_map<storage::Tile *, std::vector<oid_t> > tile_to_cols;
-  GenerateTileToColMap(old_to_new_cols, source_tile.get(), tile_to_cols);
+  GenerateTileToColMap(old_to_new_cols, source_tile, tile_to_cols);
 
   // Create new physical tile.
   std::unique_ptr<storage::Tile> dest_tile(
       storage::TileFactory::GetTempTile(*output_schema, num_tuples));
 
   // Proceed to materialize logical tile by physical tile at a time.
-  MaterializeByTiles(source_tile.get(), old_to_new_cols, tile_to_cols,
+  MaterializeByTiles(source_tile, old_to_new_cols, tile_to_cols,
                      dest_tile.get());
 
-  // Wrap physical tile in logical tile.
   bool own_base_tile = true;
-  SetOutput(
-      LogicalTileFactory::WrapTiles({dest_tile.release()}, own_base_tile));
+
+  // Wrap physical tile in logical tile.
+  return LogicalTileFactory::WrapTiles( { dest_tile.release() }, own_base_tile);
+}
+
+/**
+ * @brief Creates materialized physical tile from logical tile and wraps it
+ *        in a new logical tile.
+ *
+ * @return true on success, false otherwise.
+ */
+bool MaterializationExecutor::DExecute() {
+  // Retrieve child tile.
+  const bool success = children_[0]->Execute();
+  if (!success) {
+    return false;
+  }
+
+  std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
+  LogicalTile *output_tile = nullptr;
+
+  // Check the number of tuples in input logical tile
+  // If none, then just return false
+  const int num_tuples = source_tile->GetTupleCount();
+  if (num_tuples == 0) {
+    return false;
+  }
+
+  auto node = GetRawNode();
+  bool physify_flag = true; // by default, we create a physical tile
+
+  if (node != nullptr) {
+    const planner::MaterializationNode &node = GetPlanNode<
+        planner::MaterializationNode>();
+    physify_flag = node.GetPhysifyFlag();
+  }
+
+  if (physify_flag) {
+    /* create a physical tile and a logical tile wrapper to be the output */
+    output_tile = Physify(source_tile.get());
+  } else {
+    /* just pass thru the underlying logical tile */
+    output_tile = source_tile.release();
+  }
+
+  SetOutput(output_tile);
 
   return true;
 }
