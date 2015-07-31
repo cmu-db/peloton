@@ -62,7 +62,7 @@ TEST(LimitTests, NonLeafLimitOffsetTest) {
   planner::LimitNode node(limit, offset);
 
   // Create and set up executor
-  executor::LimitExecutor executor(&node);
+  executor::LimitExecutor executor(&node, nullptr);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -99,7 +99,7 @@ TEST(LimitTests, NonLeafSkipAllTest) {
   planner::LimitNode node(limit, offset);
 
   // Create and set up executor
-  executor::LimitExecutor executor(&node);
+  executor::LimitExecutor executor(&node, nullptr);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -137,7 +137,7 @@ TEST(LimitTests, NonLeafReturnAllTest) {
   planner::LimitNode node(limit, offset);
 
   // Create and set up executor
-  executor::LimitExecutor executor(&node);
+  executor::LimitExecutor executor(&node, nullptr);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -175,7 +175,7 @@ TEST(LimitTests, NonLeafHugeLimitTest) {
   planner::LimitNode node(limit, offset);
 
   // Create and set up executor
-  executor::LimitExecutor executor(&node);
+  executor::LimitExecutor executor(&node, nullptr);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
