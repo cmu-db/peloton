@@ -30,23 +30,24 @@ namespace bridge {
  * Basically, it multiplexes into helper methods based on operation type.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
-    const ModifyTableState *mt_plan_state) {
+    const ModifyTableState *mt_plan_state,
+    const TransformOptions options) {
   ModifyTable *plan = (ModifyTable *)mt_plan_state->ps.plan;
 
   switch (plan->operation) {
     case CMD_INSERT:
       LOG_INFO("CMD_INSERT");
-      return PlanTransformer::TransformInsert(mt_plan_state);
+      return PlanTransformer::TransformInsert(mt_plan_state, options);
       break;
 
     case CMD_UPDATE:
       LOG_INFO("CMD_UPDATE");
-      return PlanTransformer::TransformUpdate(mt_plan_state);
+      return PlanTransformer::TransformUpdate(mt_plan_state, options);
       break;
 
     case CMD_DELETE:
       LOG_INFO("CMD_DELETE");
-      return PlanTransformer::TransformDelete(mt_plan_state);
+      return PlanTransformer::TransformDelete(mt_plan_state, options);
       break;
 
     default:
@@ -62,7 +63,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
  * @return Pointer to the constructed AbstractPlanNode.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformInsert(
-    const ModifyTableState *mt_plan_state) {
+    const ModifyTableState *mt_plan_state,
+    const TransformOptions options) {
   planner::AbstractPlanNode *plan_node = nullptr;
 
   /* Resolve result table */
@@ -116,7 +118,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
 }
 
 planner::AbstractPlanNode *PlanTransformer::TransformUpdate(
-    const ModifyTableState *mt_plan_state) {
+    const ModifyTableState *mt_plan_state,
+    const TransformOptions options) {
   /*
    * NOTE:
    * In Postgres, the new tuple is returned by an underlying Scan node
@@ -176,7 +179,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformUpdate(
         BuildProjectInfo(scan_state->ps.ps_ProjInfo, schema->GetColumnCount());
 
     plan_node = new planner::UpdateNode(target_table, project_info);
-    plan_node->AddChild(TransformPlan(sub_planstate));
+    TransformOptions new_options = options;
+    new_options.use_projInfo = false;
+    plan_node->AddChild(TransformPlan(sub_planstate, new_options));
   } else {
     LOG_ERROR("Unsupported sub plan type of Update : %u \n", child_tag);
   }
@@ -195,7 +200,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformUpdate(
  * So we don't need to handle predicates locally .
  */
 planner::AbstractPlanNode *PlanTransformer::TransformDelete(
-    const ModifyTableState *mt_plan_state) {
+    const ModifyTableState *mt_plan_state,
+    const TransformOptions options) {
   // Grab Database ID and Table ID
   assert(mt_plan_state->resultRelInfo);  // Input must come from a subplan
   assert(mt_plan_state->mt_nplans ==
@@ -222,7 +228,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformDelete(
   auto plan_node = new planner::DeleteNode(target_table, truncate);
 
   // Add child plan node(s)
-  plan_node->AddChild(TransformPlan(sub_planstate));
+  TransformOptions new_options = options;
+  new_options.use_projInfo = false;
+  plan_node->AddChild(TransformPlan(sub_planstate, new_options));
 
   return plan_node;
 }
