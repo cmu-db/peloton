@@ -32,9 +32,14 @@ class BootstrapUtils {
   // Copy operator
   //===--------------------------------------------------------------------===//
 
-  static void CopyRawTables(raw_database_info* raw_database, std::vector<raw_table_info*> raw_tables);
+  static void CopyRawTables(raw_database_info* raw_database, 
+                            std::vector<raw_table_info*> raw_tables);
 
-  static void CopyRawIndexes(raw_database_info* raw_database, std::vector<raw_index_info*> raw_indexes);
+  static void CopyRawIndexes(raw_database_info* raw_database, 
+                             std::vector<raw_index_info*> raw_indexes);
+
+  static void CopyRawForeignkeys(raw_database_info* raw_database,
+                                 std::vector<raw_foreignkey_info*> raw_foreignkeys);
 
   static char* CopyString(const char* string);
 
