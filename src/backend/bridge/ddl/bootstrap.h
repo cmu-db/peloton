@@ -63,9 +63,15 @@ class Bootstrap {
 
   static void CreateTables(raw_table_info** raw_tables, oid_t table_count);
 
+  static void CreateIndexes(raw_index_info** raw_indexes, 
+                            oid_t index_count);
+
   static std::vector<catalog::Column>
          CreateColumns(raw_column_info** raw_columns, 
                        oid_t column_count);
+
+  static std::vector<std::string> CreateKeyColumnNames(char** raw_column_names, oid_t raw_column_count);
+ 
 
   static std::vector<catalog::Constraint>
          CreateConstraints(raw_constraint_info** raw_constraints, 
