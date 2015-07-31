@@ -421,17 +421,16 @@ raw_database_info* Bootstrap::GetRawDatabase(void){
   std::vector<raw_index_info*> raw_indexes;
   std::vector<raw_foreignkey_info*> raw_foreignkeys;
 
-  // Get Raw Tables and Indexes
+  // Get objects from Postgres
   GetRawTableAndIndex(raw_tables, raw_indexes);
-
-  // Get Raw Foreignkeys
   GetRawForeignKeys(raw_foreignkeys);
 
+  // Copy collected objects to raw_database (simple pointer copy)
   BootstrapUtils::CopyRawTables(raw_database, raw_tables);
   BootstrapUtils::CopyRawIndexes(raw_database, raw_indexes);
   BootstrapUtils::CopyRawForeignkeys(raw_database, raw_foreignkeys);
 
-  BootstrapUtils::PrintRawDatabase(raw_database);
+  //BootstrapUtils::PrintRawDatabase(raw_database);
 
   return raw_database;
 }
@@ -449,19 +448,18 @@ bool Bootstrap::NewBootstrapPeloton(raw_database_info* raw_database){
 
   BootstrapUtils::PrintRawDatabase(raw_database);
 
-  // Create table
+  // Create objects in Peloton
   CreateTables(raw_database->raw_tables, raw_database->table_count);
-
-  // build indexes
   CreateIndexes(raw_database->raw_indexes, raw_database->index_count);
+  CreateForeignkeys(raw_database->raw_foreignkeys, raw_database->foreignkey_count);
 
-  //auto& manager = catalog::Manager::GetInstance();
-  //storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
-  //std::cout << *db << std::endl;
+  if(0){
+    auto& manager = catalog::Manager::GetInstance();
+    storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+    std::cout << *db << std::endl;
+  }
 
-  // link foreign keys
   elog(LOG, "Finished initializing Peloton");
-
 
   return true;
 }
@@ -873,10 +871,65 @@ void Bootstrap::CreateIndexes(raw_index_info** raw_indexes,
   }
 }
 
+void Bootstrap::CreateForeignkeys(raw_foreignkey_info** raw_foreignkeys, 
+                                  oid_t foreignkey_count){
+  for(int foreignkey_itr=0; foreignkey_itr<foreignkey_count; foreignkey_itr++){
+    auto raw_foreignkey = raw_foreignkeys[foreignkey_itr];
+
+    // Get source table, sink table, and database oid
+    oid_t source_table_oid = raw_foreignkey->source_table_id;
+    assert(source_table_oid);
+    oid_t sink_table_oid = raw_foreignkey->sink_table_id;
+    assert(sink_table_oid);
+    oid_t database_oid = Bridge::GetCurrentDatabaseOid();
+
+    // get source, sink tables
+    auto &manager = catalog::Manager::GetInstance();
+    auto source_table = manager.GetTableWithOid( database_oid, source_table_oid);
+    assert(source_table);
+    auto sink_table = manager.GetTableWithOid(database_oid, sink_table_oid);
+    assert(sink_table);
+
+    // extract column_names
+    std::vector<std::string> sink_column_names;
+    std::vector<std::string> source_column_names;
+
+    auto source_table_schema = source_table->GetSchema();
+    auto sink_table_schema = sink_table->GetSchema();
+
+    int source_column_count = raw_foreignkey->source_column_count;
+    int sink_column_count = raw_foreignkey->sink_column_count;
+
+    // Populate primary key column names
+    for (int sink_key_itr=0; sink_key_itr<sink_column_count; sink_key_itr++) {
+      auto sink_column_offset = raw_foreignkey->sink_column_offsets[sink_key_itr];
+      catalog::Column column = sink_table_schema->GetColumn(sink_column_offset - 1);
+      sink_column_names.push_back(column.GetName());
+    }
+
+    // Populate source key column names
+    for (int source_key_itr=0; source_key_itr<source_column_count; source_key_itr++) {
+
+      auto source_column_offset = raw_foreignkey->source_column_offsets[source_key_itr];
+      catalog::Column column = source_table_schema->GetColumn(source_column_offset - 1);
+      source_column_names.push_back(column.GetName());
+    }
+
+    auto foreign_key = new catalog::ForeignKey(sink_table_oid,
+        sink_column_names,
+        source_column_names, 
+        raw_foreignkey->update_action,
+        raw_foreignkey->delete_action,
+        raw_foreignkey->fk_name);
+
+    source_table->AddForeignKey(foreign_key);
+  }
+}
+
 std::vector<catalog::Column>
 Bootstrap::CreateColumns(raw_column_info** raw_columns, 
                          oid_t column_count){
-  std::vector<catalog::Column> columns;
+                         std::vector<catalog::Column> columns;
 
   for(int column_itr=0; column_itr<column_count; column_itr++){
     auto raw_column = raw_columns[column_itr];
@@ -885,15 +938,14 @@ Bootstrap::CreateColumns(raw_column_info** raw_columns,
                             raw_column->column_length,
                             raw_column->column_name,
                             raw_column->is_inlined);
-                            
+
     auto constraints = CreateConstraints(raw_column->raw_constraints,
                                          raw_column->constraint_count);
-  
+
     for(auto constraint : constraints){
       column.AddConstraint(constraint);
     }
     columns.push_back(column);
-
   }
   return columns;
 }
