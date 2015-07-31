@@ -50,6 +50,8 @@ class Bootstrap {
   static void GetRawTableAndIndex(std::vector<raw_table_info*>& raw_tables,
                                   std::vector<raw_index_info*>& raw_indexes);
 
+  static void GetRawForeignKeys(std::vector<raw_foreignkey_info*>& raw_foreignkeys);
+
   static raw_table_info* GetRawTable(oid_t table_oid, 
                                      std::string table_name, 
                                      std::vector<raw_column_info*> raw_columns);

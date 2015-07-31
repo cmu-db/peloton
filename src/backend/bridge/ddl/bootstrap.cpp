@@ -417,15 +417,15 @@ raw_database_info* Bootstrap::GetRawDatabase(void){
   // Create and initialize raw database
   raw_database_info* raw_database = Bootstrap::InitRawDatabase();
 
-  // Get Raw Tables and Indexes
   std::vector<raw_table_info*> raw_tables;
   std::vector<raw_index_info*> raw_indexes;
   std::vector<raw_foreignkey_info*> raw_foreignkeys;
 
-  Bootstrap::GetRawTableAndIndex(raw_tables, raw_indexes);
+  // Get Raw Tables and Indexes
+  GetRawTableAndIndex(raw_tables, raw_indexes);
 
   // Get Raw Foreignkeys
-  //GetRawForeignKeys(raw_database->raw_foreignkeys);
+  GetRawForeignKeys(raw_foreignkeys);
 
   BootstrapUtils::CopyRawTables(raw_database, raw_tables);
   BootstrapUtils::CopyRawIndexes(raw_database, raw_indexes);
@@ -732,6 +732,105 @@ Bootstrap::GetRawColumn(Oid tuple_oid, Relation pg_attribute_rel) {
   heap_endscan(pg_attribute_scan);
 
   return raw_columns;
+}
+
+void Bootstrap::GetRawForeignKeys(std::vector<raw_foreignkey_info*>& raw_foreignkeys) {
+  Relation pg_constraint_rel;
+  HeapScanDesc pg_constraint_scan;
+  HeapTuple pg_constraint_tuple;
+
+  oid_t database_oid = Bridge::GetCurrentDatabaseOid();
+  assert(database_oid);
+
+  pg_constraint_rel = heap_open(ConstraintRelationId, AccessShareLock);
+  pg_constraint_scan = heap_beginscan_catalog(pg_constraint_rel, 0, NULL);
+
+  // Go over the pg_constraint catalog table looking for foreign key constraints
+  while (1) {
+    Form_pg_constraint pg_constraint;
+
+    pg_constraint_tuple =
+        heap_getnext(pg_constraint_scan, ForwardScanDirection);
+    if (!HeapTupleIsValid(pg_constraint_tuple)) break;
+
+    pg_constraint = (Form_pg_constraint)GETSTRUCT(pg_constraint_tuple);
+
+    // We only handle foreign key constraints here
+    if (pg_constraint->contype != 'f') continue;
+
+    raw_foreignkey_info* raw_foreignkey = (raw_foreignkey_info*) palloc(sizeof(raw_foreignkey_info));   
+
+    // Extract oid
+    Oid source_table_oid = pg_constraint->conrelid;
+    assert(source_table_oid);
+    Oid sink_table_oid = pg_constraint->confrelid;
+    assert(sink_table_oid);
+
+    raw_foreignkey->source_table_id = source_table_oid;
+    raw_foreignkey->sink_table_id = sink_table_oid;
+    raw_foreignkey->fk_update_action = pg_constraint->confupdtype;
+    raw_foreignkey->fk_delete_action = pg_constraint->confdeltype;
+
+//    char**pk_column_names;
+//    oid_t pk_column_count;
+//    char**fk_column_names;
+//    oid_t fk_column_count;
+
+//    auto &manager = catalog::Manager::GetInstance();
+//    auto source_table = manager.GetTableWithOid(database_oid, source_table_oid);
+//    assert(source_table);
+//    auto sink_table = manager.GetTableWithOid(database_oid, sink_table_oid);
+//    assert(sink_table);
+//
+//    // TODO :: Find better way..
+//    bool isNull;
+//    Datum curr_datum =
+//        heap_getattr(pg_constraint_tuple, Anum_pg_constraint_conkey,
+//                     RelationGetDescr(pg_constraint_rel), &isNull);
+//    Datum ref_datum =
+//        heap_getattr(pg_constraint_tuple, Anum_pg_constraint_confkey,
+//                     RelationGetDescr(pg_constraint_rel), &isNull);
+//
+//    ArrayType *curr_arr = DatumGetArrayTypeP(curr_datum);
+//    ArrayType *ref_arr = DatumGetArrayTypeP(ref_datum);
+//    int16 *curr_attnums = (int16 *)ARR_DATA_PTR(curr_arr);
+//    int16 *ref_attnums = (int16 *)ARR_DATA_PTR(ref_arr);
+//    int source_numkeys = ARR_DIMS(curr_arr)[0];
+//    int ref_numkeys = ARR_DIMS(ref_arr)[0];
+//
+//    std::vector<std::string> pk_column_names;
+//    std::vector<std::string> fk_column_names;
+//
+//    auto source_table_schema = source_table->GetSchema();
+//    auto sink_table_schema = sink_table->GetSchema();
+//
+//    // Populate foreign key column names
+//    for (int source_key_itr = 0; source_key_itr < source_numkeys;
+//         source_key_itr++) {
+//      AttrNumber attnum = curr_attnums[source_key_itr];
+//      catalog::Column column = source_table_schema->GetColumn(attnum - 1);
+//      fk_column_names.push_back(column.GetName());
+//    }
+//
+//    // Populate primary key column names
+//    for (int sink_key_itr = 0; sink_key_itr < ref_numkeys; sink_key_itr++) {
+//      AttrNumber attnum = ref_attnums[sink_key_itr];
+//      catalog::Column column = sink_table_schema->GetColumn(attnum - 1);
+//      pk_column_names.push_back(column.GetName());
+//    }
+
+    std::string constraint_name = NameStr(pg_constraint->conname);
+
+    raw_foreignkey->fk_name = BootstrapUtils::CopyString(constraint_name.c_str());
+    
+//    auto foreign_key = new catalog::ForeignKey(sink_table_oid, pk_column_names,
+//                                               fk_column_names, pg_constraint->confupdtype,
+//                                               pg_constraint->confdeltype, constraint_name);
+//    source_table->AddForeignKey(foreign_key);
+  }
+
+  heap_endscan(pg_constraint_scan);
+  heap_close(pg_constraint_rel, AccessShareLock);
 }
 
 void Bootstrap::CreateTables(raw_table_info** raw_tables, 
