@@ -18,7 +18,8 @@ ProjectInfo::~ProjectInfo() {
 }
 
 /**
- * @brief Fill in the destination tuple according to projection info.
+ * @brief Evaluate projections from one or two source tuples and
+ * put result in destination.
  * The destination should be pre-allocated by the caller.
  *
  * @warning Destination should not be the same as any source.
@@ -30,7 +31,8 @@ ProjectInfo::~ProjectInfo() {
  * @param tuple2  Source tuple 2.
  * @param econtext  ExecutorContext for expression evaluation.
  */
-bool ProjectInfo::Evaluate(storage::Tuple* dest, const AbstractTuple* tuple1,
+bool ProjectInfo::Evaluate(storage::Tuple* dest,
+                           const AbstractTuple* tuple1,
                            const AbstractTuple* tuple2,
                            executor::ExecutorContext* econtext) const {
   // (A) Execute target list
@@ -39,16 +41,18 @@ bool ProjectInfo::Evaluate(storage::Tuple* dest, const AbstractTuple* tuple1,
     auto expr = target.second;
     auto value = expr->Evaluate(tuple1, tuple2, econtext);
 
+    // FIXME: Shall we use SetValueAllocate() here and below?
     dest->SetValue(col_id, value);
   }
 
   // (B) Execute direct map
   for (auto dm : direct_map_list_) {
     auto dest_col_id = dm.first;
-    auto tuple_idx = dm.second.first;
+    // whether left tuple or right tuple ?
+    auto tuple_index = dm.second.first;
     auto src_col_id = dm.second.second;
 
-    Value value = (tuple_idx == 0) ? tuple1->GetValue(src_col_id)
+    Value value = (tuple_index == 0) ? tuple1->GetValue(src_col_id)
                                    : tuple2->GetValue(src_col_id);
 
     dest->SetValue(dest_col_id, value);
