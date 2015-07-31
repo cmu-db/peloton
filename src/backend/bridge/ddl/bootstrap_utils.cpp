@@ -67,6 +67,21 @@ void BootstrapUtils::CopyRawIndexes(raw_database_info* raw_database,
 }
 
 /**
+ * @brief copy raw foreignkeys from vector to raw_database->raw_foreignkeys
+ * @param raw database
+ * @param raw foreignkey vector
+ */
+void BootstrapUtils::CopyRawForeignkeys(raw_database_info* raw_database,
+                                        std::vector<raw_foreignkey_info*> raw_foreignkeys){
+  raw_database->raw_foreignkeys = (raw_foreignkey_info**)palloc(sizeof(raw_foreignkey_info*)*raw_foreignkeys.size());
+  oid_t foreignkey_itr=0;
+  for( auto raw_foreignkey : raw_foreignkeys){
+    raw_database->raw_foreignkeys[foreignkey_itr++] = raw_foreignkey;
+  }
+  raw_database->foreignkey_count = foreignkey_itr;
+}
+
+/**
  * @brief copy given string
  * @param string
  * @return string allocated using palloc
@@ -139,6 +154,7 @@ void BootstrapUtils::PrintRawForeignkeys(raw_foreignkey_info** raw_foreignkeys,
     printf("    update action %c\n", raw_foreignkey->update_action);
     printf("    delete action %c\n", raw_foreignkey->delete_action);
     printf("    fk name %s\n", raw_foreignkey->fk_name);
+    printf("\n");
   }
 }
 
@@ -192,14 +208,14 @@ void BootstrapUtils::PrintRawConstraint(raw_constraint_info* raw_constraint){
 void BootstrapUtils::PrintColumnNames(char** key_column_names,
                                          oid_t key_column_count){
   for(int key_column_itr=0; key_column_itr<key_column_count; key_column_itr++){
-    printf("    Print KeyColumnName %s\n\n", key_column_names[key_column_itr]);
+    printf("      Print KeyColumnName %s\n", key_column_names[key_column_itr]);
   }
 }
 
 void BootstrapUtils::PrintColumnNums(int* column_nums,
                                         oid_t column_count){
   for(int column_itr=0; column_itr<column_count; column_itr++){
-    printf("    Print Column Offset %d\n\n", column_nums[column_itr]);
+    printf("      Print Column Offset %d\n", column_nums[column_itr]);
   }
 }
 
