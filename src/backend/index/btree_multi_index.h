@@ -86,6 +86,23 @@ class BtreeMultiIndex : public Index {
     }
   }
 
+  bool UpdateEntry(const storage::Tuple *key,
+                   const ItemPointer location,
+                   const ItemPointer old_location) {
+
+    {
+      std::lock_guard<std::mutex> lock(index_mutex);
+
+      index_key1.SetFromKey(key);
+
+      // Does not make sense
+      exit(0);
+
+      return false;
+    }
+
+  }
+
   bool Exists(const storage::Tuple *key) {
     {
       std::lock_guard<std::mutex> lock(index_mutex);
