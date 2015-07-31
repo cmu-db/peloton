@@ -51,6 +51,9 @@ class BootstrapUtils {
   static void PrintRawIndexes(raw_index_info** raw_indexes,
                               oid_t index_count);
 
+  static void PrintRawForeignkeys(raw_foreignkey_info** raw_foreignkeys, 
+                                  oid_t foreignkey_count);
+
   static void PrintRawTable(raw_table_info* raw_table);
 
   static void PrintRawIndex(raw_index_info* raw_index);
@@ -65,8 +68,11 @@ class BootstrapUtils {
   static void PrintRawColumns(raw_column_info** raw_columns,
                               oid_t column_count);
 
-  static void PrintKeyColumnNames(char** key_column_names,
-                                  oid_t key_column_count);
+  static void PrintColumnNames(char** column_names,
+                               oid_t column_count);
+
+  static void PrintColumnNums(int* column_nums,
+                              oid_t column_count);
 
 };
 
