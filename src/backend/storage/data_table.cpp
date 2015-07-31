@@ -163,11 +163,6 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
                                 const storage::Tuple *tuple,
                                 ItemPointer location) {
 
-  // This might fail because of two reasons :
-  // a) another concurrent insert, in which case we should abort
-  // b) another tuple with same key already exists, and is invisible for this
-  // transaction, in which case we should actually succeed
-
   int index_count = GetIndexCount();
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
     auto index = GetIndex(index_itr);
@@ -176,7 +171,12 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
     storage::Tuple *key = new storage::Tuple(index_schema, true);
     key->SetFromTuple(tuple, indexed_columns);
 
-    // No need to check if it does not have unique keys
+    // There are two possibilities :
+    // a) already key inserted in unique index, in which case we should abort
+    // b) another tuple with same key already exists, and is invisible for this
+    // transaction, in which case we should actually succeed
+
+    // If index does not have unique keys, we don't care about conflicts
     if (index->HasUniqueKeys() == false) {
       bool status = index->InsertEntry(key, location);
       if (status == true) {
