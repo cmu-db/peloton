@@ -69,7 +69,6 @@ std::vector<catalog::Column> Bootstrap::GetRelationColumns(
           strcmp(NameStr(pg_attribute->attname), "xmax") &&
           strcmp(NameStr(pg_attribute->attname), "xmin") &&
           strcmp(NameStr(pg_attribute->attname), "tableoid")) {
-        std::vector<catalog::Constraint> constraint_infos;
 
         PostgresValueType postgresValueType =
             (PostgresValueType)pg_attribute->atttypid;
@@ -82,20 +81,21 @@ std::vector<catalog::Column> Bootstrap::GetRelationColumns(
           is_inlined = false;
         }
 
+        catalog::Column column(value_type, column_length,
+                               NameStr(pg_attribute->attname), is_inlined);
+
         // NOT NULL constraint
         if (pg_attribute->attnotnull) {
           catalog::Constraint constraint(CONSTRAINT_TYPE_NOTNULL);
-          constraint_infos.push_back(constraint);
+          column.AddConstraint(constraint);
         }
 
         // DEFAULT value constraint
         if (pg_attribute->atthasdef) {
           catalog::Constraint constraint(CONSTRAINT_TYPE_DEFAULT);
-          constraint_infos.push_back(constraint);
+          column.AddConstraint(constraint);
         }
 
-        catalog::Column column(value_type, column_length,
-                               NameStr(pg_attribute->attname), is_inlined);
         columns.push_back(column);
       }
     }
@@ -154,7 +154,7 @@ void Bootstrap::CreateIndexInfos(oid_t tuple_oid, char *relation_name,
                           pg_index->indisunique, key_column_names);
 
       index_infos.push_back(indexinfo);
-      LOG_INFO("Create index %s on %s", indexinfo.GetIndexName().c_str(),
+      elog(LOG,"Create index %s on %s", indexinfo.GetIndexName().c_str(),
                indexinfo.GetTableName().c_str());
       break;
     }
@@ -382,11 +382,6 @@ bool Bootstrap::BootstrapPeloton(void) {
 
   // Link foreign keys
   LinkForeignKeys();
-
-  // printf("Print all relation's schema information\n");
-  // storage::Database* db = storage::Database::GetDatabaseById(
-  // GetCurrentDatabaseOid() );
-  // std::cout << *db << std::endl;
 
   heap_endscan(pg_class_scan);
   heap_close(pg_attribute_rel, AccessShareLock);
