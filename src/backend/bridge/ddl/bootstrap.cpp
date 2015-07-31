@@ -448,8 +448,6 @@ bool Bootstrap::NewBootstrapPeloton(raw_database_info* raw_database){
 
   BootstrapUtils::PrintRawDatabase(raw_database);
 
-  StartTransactionCommand();
-
   // Create table
   CreateTables(raw_database->raw_tables, raw_database->table_count);
 
@@ -459,8 +457,6 @@ bool Bootstrap::NewBootstrapPeloton(raw_database_info* raw_database){
   auto& manager = catalog::Manager::GetInstance();
   storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
   std::cout << *db << std::endl;
-
-  CommitTransactionCommand();
 
   // link foreign keys
   elog(LOG, "Finished initializing Peloton");
