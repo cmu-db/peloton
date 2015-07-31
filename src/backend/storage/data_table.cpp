@@ -60,7 +60,7 @@ DataTable::~DataTable() {
 }
 
 //===--------------------------------------------------------------------===//
-// TUPLE OPERATIONS
+// TUPLE HELPER OPERATIONS
 //===--------------------------------------------------------------------===//
 
 bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
@@ -91,7 +91,6 @@ bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
 
   return true;
 }
-
 
 ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
                                     const storage::Tuple *tuple,
@@ -134,6 +133,9 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
   return location;
 }
 
+//===--------------------------------------------------------------------===//
+// INSERT
+//===--------------------------------------------------------------------===//
 
 ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
                                    const storage::Tuple *tuple) {
@@ -156,25 +158,6 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
 
   return location;
 }
-
-ItemPointer DataTable::UpdateTuple(const concurrency::Transaction *transaction,
-                                   const storage::Tuple *tuple,
-                                   const ItemPointer old_location) {
-  // Do integrity checks and claim a slot
-  ItemPointer location = GetTupleSlot(transaction, tuple,
-                                      old_location);
-  if(location.block == INVALID_OID)
-    return INVALID_ITEMPOINTER;
-
-  // Do a blind insert into the indexes
-  BlindInsertInIndexes(tuple, location);
-
-  return location;
-}
-
-//===--------------------------------------------------------------------===//
-// INDEX HELPERS
-//===--------------------------------------------------------------------===//
 
 bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
                                 const storage::Tuple *tuple,
@@ -277,25 +260,9 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
   return true;
 }
 
-void DataTable::BlindInsertInIndexes(const storage::Tuple *tuple,
-                                     ItemPointer location) {
-  for (auto index : indexes) {
-    auto index_schema = index->GetKeySchema();
-    auto indexed_columns = index_schema->GetIndexedColumns();
-
-    storage::Tuple *key = new storage::Tuple(index_schema, true);
-    key->SetFromTuple(tuple, indexed_columns);
-
-    if (index->BlindInsertEntry(key, location) == false) {
-      location = INVALID_ITEMPOINTER;
-      LOG_ERROR("Index constraint violated\n");
-      delete key;
-      break;
-    }
-
-    delete key;
-  }
-}
+//===--------------------------------------------------------------------===//
+// DELETE
+//===--------------------------------------------------------------------===//
 
 /**
  * @brief Try to delete a tuple from the table.
@@ -350,6 +317,49 @@ void DataTable::DeleteInIndexes(const storage::Tuple *tuple,
     delete key;
   }
 }
+
+//===--------------------------------------------------------------------===//
+// UPDATE
+//===--------------------------------------------------------------------===//
+
+ItemPointer DataTable::UpdateTuple(const concurrency::Transaction *transaction,
+                                   const storage::Tuple *tuple,
+                                   const ItemPointer old_location) {
+  // Do integrity checks and claim a slot
+  ItemPointer location = GetTupleSlot(transaction, tuple,
+                                      old_location);
+  if(location.block == INVALID_OID)
+    return INVALID_ITEMPOINTER;
+
+  // Update the indexes
+  UpdateInIndexes(tuple, location, old_location);
+
+  return location;
+}
+
+void DataTable::UpdateInIndexes(const storage::Tuple *tuple,
+                                const ItemPointer location,
+                                const ItemPointer old_location) {
+  for (auto index : indexes) {
+    auto index_schema = index->GetKeySchema();
+    auto indexed_columns = index_schema->GetIndexedColumns();
+
+    storage::Tuple *key = new storage::Tuple(index_schema, true);
+    key->SetFromTuple(tuple, indexed_columns);
+
+    if (index->UpdateEntry(key, location, old_location) == false) {
+      LOG_ERROR("Index constraint violated\n");
+      delete key;
+      break;
+    }
+
+    delete key;
+  }
+}
+
+//===--------------------------------------------------------------------===//
+// STATS
+//===--------------------------------------------------------------------===//
 
 /**
  * @brief Increase the number of tuples in this table
