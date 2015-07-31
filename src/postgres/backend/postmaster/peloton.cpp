@@ -25,7 +25,6 @@
 
 #include "backend/common/logger.h"
 #include "backend/scheduler/tbb_scheduler.h"
-#include "backend/bridge/ddl/bootstrap.h"
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_utils.h"
 #include "backend/bridge/ddl/tests/bridge_test.h"
@@ -98,6 +97,7 @@ static void peloton_send(void *msg, int len);
 
 static void peloton_process_dml(Peloton_MsgDML *msg);
 static void peloton_process_ddl(Peloton_MsgDDL *msg);
+static void peloton_process_bootstrap(Peloton_MsgBootstrap *msg);
 
 bool
 IsPelotonProcess(void) {
@@ -463,6 +463,12 @@ peloton_MainLoop(void) {
         case PELOTON_MTYPE_DML: {
           scheduler.get()->Run(reinterpret_cast<peloton::scheduler::handler>(peloton_process_dml),
                                reinterpret_cast<Peloton_MsgDML*>(&msg));
+        }
+        break;
+
+        case PELOTON_MTYPE_BOOTSTRAP: {
+          scheduler.get()->Run(reinterpret_cast<peloton::scheduler::handler>(peloton_process_bootstrap),
+                               reinterpret_cast<Peloton_MsgBootstrap*>(&msg));
         }
         break;
 
@@ -901,6 +907,46 @@ peloton_send_ddl(Peloton_Status  *status,
 }
 
 /* ----------
+ * peloton_send_bootstrap -
+ *
+ *  Send bootstrap requests to Peloton.
+ * ----------
+ */
+void
+peloton_send_bootstrap(Peloton_Status  *status){
+  Peloton_MsgBootstrap msg;
+
+  if (pelotonSock == PGINVALID_SOCKET)
+    return;
+
+  //MemoryContext oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+
+  // construct raw database for bootstrap
+  peloton::bridge::raw_database_info* raw_database = 
+     peloton::bridge::Bootstrap::GetRawDatabase();
+
+  //MemoryContextSwitchTo(oldcxt);
+
+  // Set header
+  auto transaction_id = GetTopTransactionId();
+  auto top_transaction_context = TopTransactionContext;
+  auto cur_transaction_context = CurTransactionContext;
+
+  peloton_setheader(&msg.m_hdr,
+                    PELOTON_MTYPE_BOOTSTRAP,
+                    MyDatabaseId,
+                    transaction_id,
+                    top_transaction_context,
+                    cur_transaction_context);
+
+  // Set msg-specific information
+  msg.m_status = status;
+  msg.m_raw_database = raw_database;
+
+  peloton_send(&msg, sizeof(msg));
+}
+
+/* ----------
  * peloton_process_dml -
  *
  *  Process DML requests in Peloton.
@@ -1007,6 +1053,43 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
     }
   }
 
+  // Set Status
+  msg->m_status->m_result = peloton::RESULT_SUCCESS;
+}
+
+/* ----------
+ * peloton_process_bootstrap() -
+ *
+ *  Process Bootstrap requests in Peloton.
+ * ----------
+ */
+static void
+peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
+  assert(msg);
+  /* Get the raw databases */
+  peloton::bridge::raw_database_info* raw_database = msg->m_raw_database;
+
+  /* Ignore invalid parsetrees */
+  if(raw_database == NULL) {
+    msg->m_status->m_result =  peloton::RESULT_FAILURE;
+    return;
+  }
+
+  MyDatabaseId = msg->m_hdr.m_dbid;
+  TopTransactionContext = msg->m_hdr.m_top_transaction_context;
+  CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
+  TransactionId txn_id = msg->m_hdr.m_txn_id;
+
+  if(raw_database != NULL) {
+    try {
+      /* Process the utility statement */
+      peloton::bridge::Bootstrap::NewBootstrapPeloton(raw_database);
+    }
+    catch(const std::exception &exception) {
+      elog(ERROR, "Peloton exception :: %s", exception.what());
+      // Nothing to do here !
+    }
+  }
 
   // Set Status
   msg->m_status->m_result = peloton::RESULT_SUCCESS;
