@@ -57,12 +57,12 @@ struct raw_index_info{
 struct raw_foreignkey_info{
   oid_t source_table_id;
   oid_t sink_table_id;
-  char**pk_column_names;
-  oid_t pk_column_count;
-  char**fk_column_names;
-  oid_t fk_column_count;
-  char fk_update_action;
-  char fk_delete_action;
+  int*source_column_offsets;
+  oid_t source_column_count;
+  int*sink_column_offsets;
+  oid_t sink_column_count;
+  char update_action;
+  char delete_action;
   char* fk_name;
 };
 
