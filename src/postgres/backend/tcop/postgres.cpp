@@ -75,7 +75,6 @@
 #include "utils/timestamp.h"
 #include "mb/pg_wchar.h"
 
-
 #include "postmaster/peloton.h"
 #include "utils/memutils.h"
 
@@ -887,7 +886,6 @@ pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams)
  *
  * Execute a "simple Query" protocol message.
  */
-#include "postmaster/peloton.h"
 static void
 exec_simple_query(const char *query_string)
 {
@@ -3721,7 +3719,7 @@ PostgresMain(int argc, char *argv[],
    */
   InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
 
-  // Peloton Changes
+  // TODO :: Peloton Changes
   StartTransactionCommand();
   Peloton_Status *status = peloton_create_status();
   peloton_send_bootstrap(status);
