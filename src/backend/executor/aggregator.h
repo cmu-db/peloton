@@ -245,7 +245,8 @@ template <PlanNodeType aggregate_type>
 class Aggregator {
  public:
   Aggregator(const planner::AggregateNode *node,
-             storage::DataTable *output_table, txn_id_t transaction_id);
+             storage::DataTable *output_table,
+             const concurrency::Transaction *transaction_id);
 
   bool Advance(AbstractTuple *next_tuple, AbstractTuple *prev_tuple);
 
@@ -261,7 +262,7 @@ class Aggregator {
   storage::DataTable *output_table;
 
   /** @brief Transaction id for mutating table */
-  const txn_id_t transaction_id;
+  const concurrency::Transaction *transaction;
 
   /** @brief Aggregates */
   Agg **aggregates = nullptr;

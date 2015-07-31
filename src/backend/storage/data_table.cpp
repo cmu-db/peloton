@@ -63,7 +63,7 @@ DataTable::~DataTable() {
 // TUPLE OPERATIONS
 //===--------------------------------------------------------------------===//
 
-ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
+ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
                                    const storage::Tuple *tuple, bool update) {
   assert(tuple);
 
@@ -82,6 +82,7 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
   TileGroup *tile_group = nullptr;
   oid_t tuple_slot = INVALID_OID;
   oid_t tile_group_offset = INVALID_OID;
+  auto transaction_id = transaction->GetTransactionId();
 
   while (tuple_slot == INVALID_OID) {
     // (B) Figure out last tile group
@@ -108,7 +109,7 @@ ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
     // a) another concurrent insert, in which case we should abort
     // b) another tuple with same key already exists, and is invisible for this
     // transaction, in which case we should actually succeed
-    if (TryInsertInIndexes(tuple, location) == false) {
+    if (TryInsertInIndexes(transaction, tuple, location) == false) {
       tile_group->ReclaimTuple(tuple_slot);
       LOG_WARN("Index constraint violated\n");
       return INVALID_ITEMPOINTER;
@@ -140,7 +141,8 @@ void DataTable::BlindInsertInIndexes(const storage::Tuple *tuple,
   }
 }
 
-bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple,
+bool DataTable::TryInsertInIndexes(const concurrency::Transaction *transaction,
+                                   const storage::Tuple *tuple,
                                    ItemPointer location) {
   int index_count = GetIndexCount();
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
@@ -154,6 +156,10 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple,
     if (index->HasUniqueKeys() == false) {
       bool status = index->InsertEntry(key, location);
       if (status == true) {
+        LOG_ERROR(
+            "Failed to insert into non-unique index %s.%s [%s].",
+            GetName().c_str(), index->GetName().c_str(),
+            index->GetTypeName().c_str());
         delete key;
         continue;
       }
@@ -161,17 +167,53 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple,
 
     // Check if key already exists
     if (index->Exists(key) == true) {
-      LOG_ERROR(
-          "Failed to insert into index %s.%s [%s] because key already exists.",
-          GetName().c_str(), index->GetName().c_str(),
-          index->GetTypeName().c_str());
+
+      // Is this key visible or not ?
+      auto old_locations = index->GetLocationsForKey(key);
+      auto old_location = old_locations.back();
+      oid_t tile_group_id = old_location.block;
+      oid_t tuple_offset = old_location.offset;
+
+      auto &manager = catalog::Manager::GetInstance();
+      storage::TileGroup *tile_group =
+          static_cast<storage::TileGroup *>(manager.GetLocation(tile_group_id));
+
+      auto header = tile_group->GetHeader();
+      auto transaction_id = transaction->GetTransactionId();
+      auto commit_id = transaction->GetCommitId();
+      bool visible = header->IsVisible(tuple_offset, transaction_id, commit_id);
+
+      if(visible == true) {
+        LOG_ERROR("Failed to insert into index %s.%s [%s] as visible tuple already exists.",
+                  GetName().c_str(), index->GetName().c_str(),
+                  index->GetTypeName().c_str());
+      } else {
+        // In this case, the previous tuple pointed to by the index is not visible
+        // to us. So, we can try to update the index to point to our updated tuple within
+        // an atomic update
+
+        bool status = index->UpdateEntry(key, location, old_location);
+
+        // The update worked
+        if(status == true) {
+          delete key;
+          continue;
+        }
+        else {
+          LOG_ERROR("Failed to insert into index %s.%s [%s] due to concurrent insert.",
+                    GetName().c_str(), index->GetName().c_str(),
+                    index->GetTypeName().c_str());
+        }
+      }
+
     } else {
+      // Try to insert
       bool status = index->InsertEntry(key, location);
       if (status == true) {
         delete key;
         continue;
       }
-      LOG_ERROR("Failed to insert into index %s.%s [%s] for other reasons.",
+      LOG_ERROR("Failed to insert into index %s.%s [%s] due to concurrent insert.",
                 GetName().c_str(), index->GetName().c_str(),
                 index->GetTypeName().c_str());
     }
@@ -199,11 +241,12 @@ bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple,
  * NB: location.block should be the tile_group's \b ID, not \b offset.
  * @return True on success, false on failure.
  */
-bool DataTable::DeleteTuple(txn_id_t transaction_id, ItemPointer location) {
+bool DataTable::DeleteTuple(const concurrency::Transaction *transaction, ItemPointer location) {
   oid_t tile_group_id = location.block;
   oid_t tuple_id = location.offset;
 
   auto tile_group = this->GetTileGroupById(tile_group_id);
+  auto transaction_id = transaction->GetTransactionId();
 
   auto status = tile_group->DeleteTuple(transaction_id, tuple_id);
 

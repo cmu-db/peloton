@@ -71,7 +71,6 @@ bool UpdateExecutor::DExecute() {
   auto transaction_ = executor_context_->GetTransaction();
 
   auto tile_group_id = tile_group->GetTileGroupId();
-  auto txn_id = transaction_->GetTransactionId();
   auto &manager = catalog::Manager::GetInstance();
 
   // Update tuples in given table
@@ -83,7 +82,7 @@ bool UpdateExecutor::DExecute() {
     // (A) try to delete the tuple first
     // this might fail due to a concurrent operation that has latched the tuple
     auto delete_location = ItemPointer(tile_group_id, physical_tuple_id);
-    bool status = target_table_->DeleteTuple(txn_id, delete_location);
+    bool status = target_table_->DeleteTuple(transaction_, delete_location);
     if (status == false) {
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
@@ -107,7 +106,7 @@ bool UpdateExecutor::DExecute() {
     // and finally insert into the table in update mode
     bool update_mode = true;
     ItemPointer location =
-        target_table_->InsertTuple(txn_id, new_tuple, update_mode);
+        target_table_->InsertTuple(transaction_, new_tuple, update_mode);
     if (location.block == INVALID_OID) {
       new_tuple->FreeUninlinedData();
       delete new_tuple;

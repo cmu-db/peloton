@@ -28,7 +28,7 @@ std::ostream& operator<<(std::ostream& os,
   os << "\tTILE GROUP HEADER \n";
 
   oid_t active_tuple_slots = tile_group_header.GetNextTupleSlot();
-  ItemPointer item;
+  peloton::ItemPointer item;
 
   for (oid_t header_itr = 0; header_itr < active_tuple_slots; header_itr++) {
     txn_id_t txn_id = tile_group_header.GetTransactionId(header_itr);
@@ -54,7 +54,7 @@ std::ostream& operator<<(std::ostream& os,
     else
       os << std::setw(width) << end_commit_id;
 
-    ItemPointer location = tile_group_header.GetPrevItemPointer(header_itr);
+    peloton::ItemPointer location = tile_group_header.GetPrevItemPointer(header_itr);
     os << " prev : "
        << "[ " << location.block << " , " << location.offset << " ]\n";
   }
@@ -101,7 +101,7 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
     else
       std::cout << std::setw(width) << end_commit_id;
 
-    ItemPointer location = GetPrevItemPointer(header_itr);
+    peloton::ItemPointer location = GetPrevItemPointer(header_itr);
     std::cout << " prev : "
               << "[ " << location.block << " , " << location.offset
               << " ]";  //<<
