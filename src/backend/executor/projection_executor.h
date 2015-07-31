@@ -19,8 +19,7 @@ class ProjectionExecutor : public AbstractExecutor {
   ProjectionExecutor(const ProjectionExecutor &&) = delete;
   ProjectionExecutor &operator=(const ProjectionExecutor &&) = delete;
 
-  explicit ProjectionExecutor(planner::AbstractPlanNode *node,
-                              ExecutorContext *executor_context);
+  explicit ProjectionExecutor(planner::AbstractPlanNode *node);
 
  protected:
   bool DInit();
