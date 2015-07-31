@@ -18,7 +18,8 @@ ProjectInfo::~ProjectInfo() {
 }
 
 /**
- * @brief Fill in the destination tuple according to projection info.
+ * @brief Evaluate projections from one or two source tuples and
+ * put result in destination.
  * The destination should be pre-allocated by the caller.
  *
  * @warning Destination should not be the same as any source.
@@ -40,6 +41,7 @@ bool ProjectInfo::Evaluate(storage::Tuple* dest,
     auto expr = target.second;
     auto value = expr->Evaluate(tuple1, tuple2, econtext);
 
+    // FIXME: Shall we use SetValueAllocate() here and below?
     dest->SetValue(col_id, value);
   }
 

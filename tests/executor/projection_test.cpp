@@ -96,7 +96,7 @@ TEST(ProjectionTests, BasicTest) {
   planner::ProjectionNode node(project_info, schema);
 
   // Create and set up executor
-  executor::ProjectionExecutor executor(&node);
+  executor::ProjectionExecutor executor(&node, nullptr);
   executor.AddChild(&child_executor);
 
   RunTest(executor, 1);
@@ -156,7 +156,7 @@ TEST(ProjectionTests, TwoColumnTest) {
   planner::ProjectionNode node(project_info, schema);
 
   // Create and set up executor
-  executor::ProjectionExecutor executor(&node);
+  executor::ProjectionExecutor executor(&node, nullptr);
   executor.AddChild(&child_executor);
 
   RunTest(executor, 1);
@@ -219,7 +219,7 @@ TEST(ProjectionTests, BasicTargetTest) {
   planner::ProjectionNode node(project_info, schema);
 
   // Create and set up executor
-  executor::ProjectionExecutor executor(&node);
+  executor::ProjectionExecutor executor(&node, nullptr);
   executor.AddChild(&child_executor);
 
   RunTest(executor, 1);
