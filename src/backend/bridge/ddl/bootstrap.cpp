@@ -446,8 +446,6 @@ bool Bootstrap::NewBootstrapPeloton(raw_database_info* raw_database){
   elog(LOG, "Initializing database %s(%u) in Peloton", raw_database->database_name, raw_database->database_oid);
   DDLDatabase::CreateDatabase(raw_database->database_oid);
 
-  BootstrapUtils::PrintRawDatabase(raw_database);
-
   // Create objects in Peloton
   CreateTables(raw_database->raw_tables, raw_database->table_count);
   CreateIndexes(raw_database->raw_indexes, raw_database->index_count);
@@ -459,7 +457,6 @@ bool Bootstrap::NewBootstrapPeloton(raw_database_info* raw_database){
   std::cout << *db << std::endl;
 
   elog(LOG, "Finished initializing Peloton");
-
   return true;
 }
 
