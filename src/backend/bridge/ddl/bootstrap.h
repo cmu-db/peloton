@@ -68,6 +68,9 @@ class Bootstrap {
   static void CreateIndexes(raw_index_info** raw_indexes, 
                             oid_t index_count);
 
+  static void CreateForeignkeys(raw_foreignkey_info** raw_foreignkeys, 
+                                oid_t foreignkey_count);
+
   static std::vector<catalog::Column>
          CreateColumns(raw_column_info** raw_columns, 
                        oid_t column_count);
