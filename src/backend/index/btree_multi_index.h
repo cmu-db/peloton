@@ -61,19 +61,6 @@ class BtreeMultiIndex : public Index {
     }
   }
 
-  bool BlindInsertEntry(const storage::Tuple *key,
-                        const ItemPointer location) {
-    {
-      std::lock_guard<std::mutex> lock(index_mutex);
-
-      index_key1.SetFromKey(key);
-
-      // insert the key, val pair -- this must succeed
-      container.insert(std::pair<KeyType, ValueType>(index_key1, location));
-      return true;
-    }
-  }
-
   bool DeleteEntry(const storage::Tuple *key,
                    const ItemPointer location) {
     {
