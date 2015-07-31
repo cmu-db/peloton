@@ -13,6 +13,7 @@
 #include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
 #include "backend/executor/logical_tile.h"
+#include "backend/expression/container_tuple.h"
 #include "backend/planner/update_node.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager.h"
@@ -90,18 +91,11 @@ bool UpdateExecutor::DExecute() {
     transaction_->RecordDelete(delete_location);
 
     // (B.1) now, make a copy of the original tuple and allocate a new tuple
-    // TODO: Is there a safe way to access the old (deleted) tuple
-    // without creating a new copy of it? That may save us one copy.
-    // Allocating the new tuple, however, is inevitable.
-    storage::Tuple *old_tuple = tile_group->SelectTuple(physical_tuple_id);
-    storage::Tuple *new_tuple =
-        new storage::Tuple(target_table_->GetSchema(), true);
+    expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group, physical_tuple_id);
+    storage::Tuple *new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
 
     // (B.2) and execute the projections
-    project_info_->Evaluate(new_tuple, old_tuple, nullptr, executor_context_);
-
-    old_tuple->FreeUninlinedData();
-    delete old_tuple;
+    project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
 
     // and finally insert into the table in update mode
     ItemPointer location =
