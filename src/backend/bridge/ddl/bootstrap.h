@@ -21,8 +21,10 @@
 #include "utils/rel.h"
 
 #include "backend/catalog/schema.h"
+#include "backend/catalog/schema.h"
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_index.h"
+#include "backend/bridge/ddl/raw_structure.h"
 
 namespace peloton {
 namespace bridge {
@@ -31,37 +33,70 @@ namespace bridge {
 // Bootstrap
 //===--------------------------------------------------------------------===//
 
-//  Boostrap the peloton system based on Postgres Catalog
 class Bootstrap {
  public:
-  /**
-   * @brief This function constructs all the user-defined tables and indices in
-   * all databases
-   * @return true or false, depending on whether we could bootstrap.
-   */
+  static raw_database_info* GetRawDatabase(void);
+
+  static bool NewBootstrapPeloton(raw_database_info* raw_database);
+
+  // TODO :: Remove 
   static bool BootstrapPeloton(void);
 
+
  private:
+
+  static raw_database_info* InitRawDatabase();
+
+  static void GetRawTableAndIndex(std::vector<raw_table_info*>& raw_tables,
+                                  std::vector<raw_index_info*>& raw_indexes);
+
+  static raw_table_info* GetRawTable(oid_t table_oid, 
+                                     std::string table_name, 
+                                     std::vector<raw_column_info*> raw_columns);
+
+  static raw_index_info* GetRawIndex(oid_t index_oid, 
+                                     std::string index_name,
+                                     std::vector<raw_column_info*> raw_columns);
+
+  static std::vector<raw_column_info*> GetRawColumn(Oid tuple_oid, 
+                                                    Relation pg_attribute_rel);
+
+  static void CreateTables(raw_table_info** raw_tables, oid_t table_count);
+
+  static std::vector<catalog::Column>
+         CreateColumns(raw_column_info** raw_columns, 
+                       oid_t column_count);
+
+  static std::vector<catalog::Constraint>
+         CreateConstraints(raw_constraint_info** raw_constraints, 
+                           oid_t constraint_count);
+
   // Transform a pg class tuple to a list of columns
+  // TODO REMOVE
   static std::vector<peloton::catalog::Column> GetRelationColumns(
       Oid tuple_oid, Relation pg_attribute_rel);
 
   // Create a peloton table or index
+  // TODO REMOVE
   static void CreatePelotonStructure(
       char relation_kind, char* relation_name, Oid tuple_oid,
       const std::vector<catalog::Column>& columns,
       std::vector<IndexInfo>& index_infos);
 
   // Set up the foreign keys constraints
+  // TODO REMOVE
   static void CreateIndexInfos(oid_t tuple_oid, char* relation_name,
                                const std::vector<catalog::Column>& columns,
                                std::vector<IndexInfo>& index_infos);
 
   // Set up the foreign keys constraints
+  // TODO REMOVE
   static void LinkForeignKeys();
 
+  // TODO REMOVE
   // Create databases
   static void CreateDatabases();
+
 };
 
 }  // namespace bridge
