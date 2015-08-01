@@ -66,7 +66,7 @@ typedef struct dirty_table_info{
   Oid table_oid;
   float number_of_tuples;
   dirty_index_info** dirty_indexes;
-  Oid index_count;
+  Oid dirty_index_count;
 }dirty_table_info;
 
 /* ----------
