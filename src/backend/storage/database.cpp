@@ -81,7 +81,6 @@ oid_t Database::GetTableCount() const { return tables.size(); }
 void Database::UpdateStats(Peloton_Status* status){
   LOG_INFO("Update All Stats in Database(%u)", database_oid);
 
-  // TODO :: need to check whether ... table... is changed or not
   std::vector<dirty_table_info*> dirty_tables;
 
   for( int table_itr=0; table_itr<GetTableCount(); table_itr++){
@@ -110,17 +109,31 @@ void Database::UpdateStats(Peloton_Status* status){
   status->m_dirty_count = dirty_tables.size();
 }
 
-void Database::UpdateStatsWithOid(const oid_t table_oid){
+void Database::UpdateStatsWithOid(Peloton_Status* status, const oid_t table_oid){
   LOG_INFO("Update table(%u)'s stats in Database(%u)", table_oid, database_oid);
-  auto table = GetTableWithOid(table_oid);
-  bridge::Bridge::SetNumberOfTuples(table_oid, table->GetNumberOfTuples());
 
-  for (int index_offset = 0; index_offset < table->GetIndexCount();
-       index_offset++) {
-    auto index = table->GetIndex(index_offset);
-    bridge::Bridge::SetNumberOfTuples(index->GetOid(),
-                                      index->GetNumberOfTuples());
+  std::vector<dirty_table_info*> dirty_tables;
+  auto table = GetTableWithOid(table_oid);
+  if(table->IsDirty()){
+    std::vector<dirty_index_info*> dirty_indexes;
+    for (int index_itr = 0; index_itr < table->GetIndexCount(); index_itr++) {
+      auto index = table->GetIndex(index_itr);
+      if( !index->IsDirty()) continue;
+
+      auto dirty_index = CreateDirtyIndex(index->GetOid(), index->GetNumberOfTuples());
+      index->ResetDirty();
+      dirty_indexes.push_back(dirty_index);
+    }
+    auto dirty_table = CreateDirtyTable(table->GetOid(),
+        table->GetNumberOfTuples(),
+        CreateDirtyIndexes(dirty_indexes),
+        dirty_indexes.size());
+    table->ResetDirty();
+    dirty_tables.push_back(dirty_table);
   }
+
+  status->m_dirty_tables = CreateDirtyTables(dirty_tables);
+  status->m_dirty_count = dirty_tables.size();
 }
 
 //===--------------------------------------------------------------------===//
