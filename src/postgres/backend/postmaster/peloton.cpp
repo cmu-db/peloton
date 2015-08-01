@@ -1042,6 +1042,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
       /* Process the utility statement */
       peloton::bridge::DDL::ProcessUtility(parsetree,
                                            queryString,
+                                           msg->m_status,
                                            txn_id);
     }
     catch(const std::exception &exception) {
@@ -1081,16 +1082,13 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
   if(raw_database != NULL) {
     try {
       /* Process the utility statement */
-      MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
       peloton::bridge::Bootstrap::BootstrapPeloton(raw_database);
-      MemoryContextSwitchTo(oldcxt);
     }
     catch(const std::exception &exception) {
       elog(ERROR, "Peloton exception :: %s", exception.what());
       // Nothing to do here !
     }
   }
-
 
   // Set Status
   msg->m_status->m_result = peloton::RESULT_SUCCESS;
@@ -1109,6 +1107,7 @@ peloton_create_status() {
   status->m_result = peloton::RESULT_INVALID;
   status->m_result_slots = NULL;
   status->m_status = -1;
+  status->m_dirty_count = 0; 
 
   return status;
 }
@@ -1143,7 +1142,14 @@ peloton_process_status(Peloton_Status *status) {
   code = status->m_result;
   switch(code) {
     case peloton::RESULT_SUCCESS: {
-      // Nothing to do here.
+      // check dirty bit
+      if( status->m_dirty_count ){
+          printf("dirty table size %d\n", status->m_dirty_count); 
+      //TODO::Update the postgres catalog
+//      std::vector<dirty_table_info> dirty_tables = status->m_dirty_tables;
+//      for(auto dirty_table : dirty_tables)
+//        printf("dirty table oid %u\n", dirty_table.table_oid);
+      }
     }
     break;
 

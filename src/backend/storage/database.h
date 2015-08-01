@@ -56,13 +56,21 @@ class Database {
   // STATS
   //===--------------------------------------------------------------------===//
 
-  std::vector<dirty_table_info> UpdateStats();
+  void UpdateStats(Peloton_Status* status);
 
   void UpdateStatsWithOid(const oid_t table_oid);
 
   //===--------------------------------------------------------------------===//
   // UTILITIES
   //===--------------------------------------------------------------------===//
+
+  static dirty_table_info** CreateDirtyTables(std::vector< dirty_table_info*> dirty_tables_vec);
+
+  static dirty_index_info** CreateDirtyIndexes(std::vector< dirty_index_info*> dirty_indexes_vec);
+
+  static dirty_table_info* CreateDirtyTable(oid_t table_oid, float number_of_tuples,  dirty_index_info** dirty_indexes, oid_t index_count);
+
+  static dirty_index_info* CreateDirtyIndex(oid_t index_oid, float number_of_tuples);
 
   // Get a string representation of this database
   friend std::ostream &operator<<(std::ostream &os, const Database &database);
@@ -76,7 +84,6 @@ class Database {
   oid_t database_oid;
 
   // TABLES
-
   std::vector<storage::DataTable *> tables;
 
   std::mutex database_mutex;

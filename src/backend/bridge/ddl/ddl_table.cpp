@@ -89,7 +89,7 @@ bool DDLTable::ExecCreateStmt(Node* parsetree,
   // Rerun query
   //===--------------------------------------------------------------------===//
   for( auto parsetree : parsetree_stack ){
-    DDL::ProcessUtility(parsetree,"rerun", txn_id);
+    DDL::ProcessUtility(parsetree,"rerun", nullptr/*TODO :: we don't need this one? */, txn_id);
   }
   parsetree_stack.clear();
 
