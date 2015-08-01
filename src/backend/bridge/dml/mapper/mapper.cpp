@@ -85,6 +85,10 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
       plan_node = PlanTransformer::TransformNestLoop(
           reinterpret_cast<const NestLoopState*>(plan_state));
       break;
+    case T_Material:
+      plan_node = PlanTransformer::TransformMaterialization(
+          reinterpret_cast<const MaterialState*>(plan_state));
+      break;
     default: {
       LOG_ERROR("Unsupported Postgres Plan State Tag: %u Plan Tag: %u ",
                 nodeTag(plan_state), nodeTag(plan));
