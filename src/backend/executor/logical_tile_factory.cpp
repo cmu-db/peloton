@@ -129,9 +129,8 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
     const bool own_base_tile = false;
     const int position_list_idx = 0;
 
-    storage::TileGroup *tile_group =
-        (storage::TileGroup *)catalog::Manager::GetInstance().GetTileGroup(
-            block.first);
+    auto& manager = catalog::Manager::GetInstance();
+    storage::TileGroup* tile_group = manager.GetTileGroup(block.first);
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
     // Add visible tuples to logical tile
