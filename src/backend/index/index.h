@@ -127,8 +127,9 @@ class Index {
   // Accessors
   //===--------------------------------------------------------------------===//
 
-  // return whether the entry is already stored in the index
-  virtual bool Exists(const storage::Tuple *key)= 0;
+  // return where the entry is already stored in the index
+  virtual ItemPointer Exists(const storage::Tuple *key,
+                             const ItemPointer location)= 0;
 
   // scan all keys in the index
   virtual std::vector<ItemPointer> Scan() = 0;
