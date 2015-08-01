@@ -97,15 +97,20 @@ class BtreeUniqueIndex : public Index {
 
   }
 
-  bool Exists(const storage::Tuple *key) {
+  ItemPointer Exists(const storage::Tuple *key,
+                     const ItemPointer location) {
     {
       std::lock_guard<std::mutex> lock(index_mutex);
 
       index_key1.SetFromKey(key);
 
-      // find the key, val pair
-      auto found = (container.find(index_key1) != container.end());
-      return found;
+      // find the key, location pair
+      auto container_itr = container.find(index_key1);
+      if(container_itr != container.end()) {
+        return container_itr->second;
+      }
+
+      return INVALID_ITEMPOINTER;
     }
   }
 
