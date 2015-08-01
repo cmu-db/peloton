@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include "backend/common/types.h"
+
 namespace peloton {
 namespace bridge {
 
