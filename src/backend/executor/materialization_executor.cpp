@@ -100,34 +100,49 @@ void MaterializationExecutor::MaterializeByTiles(
     }
   }
 }
+
+std::unordered_map<oid_t, oid_t> MaterializationExecutor::BuildIdentityMapping(
+    const catalog::Schema *schema) {
+  std::unordered_map<oid_t, oid_t> old_to_new_cols;
+  oid_t column_count = schema->GetColumnCount();
+  for (oid_t col = 0; col < column_count; col++) {
+    old_to_new_cols[col] = col;
+  }
+
+  return old_to_new_cols;
+}
+
 /**
  * @brief Create a physical tile for the given logical tile
  * @param source_tile Source tile from which the physical tile is created
- * @return a logical tile wrapper for the created physicial tile
+ * @return a logical tile wrapper for the created physical tile
  */
 LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
   std::unique_ptr<catalog::Schema> source_tile_schema(
       source_tile->GetPhysicalSchema());
   const int num_tuples = source_tile->GetTupleCount();
-  std::unordered_map<oid_t, oid_t> old_to_new_cols;
   const catalog::Schema *output_schema;
+  std::unordered_map<oid_t, oid_t> old_to_new_cols;
   auto node = GetRawNode();
 
   // Create a default identity mapping node if we did not get one
   if (node == nullptr) {
     assert(source_tile_schema.get());
     output_schema = source_tile_schema.get();
-    oid_t column_count = output_schema->GetColumnCount();
-    for (oid_t col = 0; col < column_count; col++) {
-      old_to_new_cols[col] = col;
-    }
+
+    old_to_new_cols = BuildIdentityMapping(output_schema);
   }
   // Else use the mapping in the given plan node
   else {
     const planner::MaterializationNode &node = GetPlanNode<
         planner::MaterializationNode>();
-    old_to_new_cols = node.old_to_new_cols();
-    output_schema = node.GetSchema();
+    if (node.GetSchema()) {
+      output_schema = node.GetSchema();
+      old_to_new_cols = node.old_to_new_cols();
+    } else {
+      output_schema = source_tile_schema.get();
+      old_to_new_cols = BuildIdentityMapping(output_schema);
+    }
   }
 
   // Generate mappings.
@@ -172,7 +187,7 @@ bool MaterializationExecutor::DExecute() {
   }
 
   auto node = GetRawNode();
-  bool physify_flag = true; // by default, we create a physical tile
+  bool physify_flag = true;  // by default, we create a physical tile
 
   if (node != nullptr) {
     const planner::MaterializationNode &node = GetPlanNode<

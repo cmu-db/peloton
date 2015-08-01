@@ -34,9 +34,13 @@ class MaterializationNode : public AbstractPlanNode {
                       bool physify_flag)
       : old_to_new_cols_(old_to_new_cols), schema_(schema), physify_flag_(physify_flag) {}
 
+  MaterializationNode(bool physify_flag)
+  : schema_(nullptr), physify_flag_(physify_flag) {}
+
   ~MaterializationNode() {
     // Clean up schema
-    delete schema_;
+    if (schema_)
+      delete schema_;
   }
 
   inline const std::unordered_map<oid_t, oid_t> &old_to_new_cols() const {
