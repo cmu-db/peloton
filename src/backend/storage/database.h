@@ -11,6 +11,7 @@ l* database.h
 #pragma once
 
 #include "backend/storage/data_table.h"
+#include "postmaster/peloton.h"
 
 #include <iostream>
 
@@ -55,7 +56,7 @@ class Database {
   // STATS
   //===--------------------------------------------------------------------===//
 
-  void UpdateStats();
+  std::vector<dirty_table_info> UpdateStats();
 
   void UpdateStatsWithOid(const oid_t table_oid);
 
