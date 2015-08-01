@@ -109,6 +109,9 @@ class PlanTransformer {
   static planner::AbstractPlanNode *TransformLockRows(
       const LockRowsState *plan_state);
 
+  static planner::AbstractPlanNode *TransformMaterialization(
+      const MaterialState *plan_state);
+
   static planner::AbstractPlanNode *TransformLimit(
       const LimitState *plan_state);
   static planner::AbstractPlanNode *TransformResult(
