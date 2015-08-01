@@ -260,6 +260,7 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
  */
 void DataTable::IncreaseNumberOfTuplesBy(const float amount) {
   number_of_tuples += amount;
+  dirty = true;
 }
 
 /**
@@ -268,6 +269,7 @@ void DataTable::IncreaseNumberOfTuplesBy(const float amount) {
  */
 void DataTable::DecreaseNumberOfTuplesBy(const float amount) {
   number_of_tuples -= amount;
+  dirty = true;
 }
 
 /**
@@ -276,6 +278,7 @@ void DataTable::DecreaseNumberOfTuplesBy(const float amount) {
  */
 void DataTable::SetNumberOfTuples(const float num_tuples) {
   number_of_tuples = num_tuples;
+  dirty = true;
 }
 
 /**
@@ -283,6 +286,21 @@ void DataTable::SetNumberOfTuples(const float num_tuples) {
  * @return number of tuples
  */
 float DataTable::GetNumberOfTuples() const { return number_of_tuples; }
+
+/**
+ * @brief return dirty flag
+ * @return dirty flag
+ */
+bool DataTable::IsDirty() const {
+  return dirty;
+}
+
+/**
+ * @brief Reset dirty flag
+ */
+void DataTable::ResetDirty() {
+  dirty = false;
+}
 
 //===--------------------------------------------------------------------===//
 // TILE GROUP
