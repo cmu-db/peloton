@@ -119,7 +119,8 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   old_to_new_cols[3] = 0;
   old_to_new_cols[1] = 1;
   old_to_new_cols[0] = 2;
-  planner::MaterializationNode node(old_to_new_cols, output_schema.release());
+  bool physify_flag = true; // is going to create a physical tile
+  planner::MaterializationNode node(old_to_new_cols, output_schema.release(), physify_flag);
 
   // Pass through materialization executor.
   executor::MaterializationExecutor executor(&node);
