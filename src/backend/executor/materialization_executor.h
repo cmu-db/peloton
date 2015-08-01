@@ -55,6 +55,7 @@ class MaterializationExecutor : public AbstractExecutor {
       storage::Tile *dest_tile);
 
   LogicalTile *Physify(LogicalTile *source_tile);
+  std::unordered_map<oid_t, oid_t> BuildIdentityMapping(const catalog::Schema *schema);
 
 
 };
