@@ -193,84 +193,84 @@ void BridgeTest::DDL_MIX_TEST_2() {
  */
 void BridgeTest::DDL_MIX_TEST_3() {
   bool status;
-
-  // Get db
-  auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
-
-  // Get the simple columns
-  std::vector<catalog::Column> columns = CreateSimpleColumns();
-  std::string table_name = "DDL_MIX_TEST_3";
-
-  // Create a table in Postgres
-  oid_t table_oid = CreateTableInPostgres(table_name);
-  assert(table_oid);
-
-  // Create a table in Peloton as well
-  status = DDLTable::CreateTable(table_oid, table_name, columns);
-  assert(status);
-
-  // insert tuple
-   // Get the table pointer and schema
-  storage::DataTable* table = db->GetTableWithOid(table_oid);
-  catalog::Schema *schema = table->GetSchema();
-
-  // Ensure that the tile group is as expected.
-  assert(schema->GetColumnCount() == 4);
-
-  // Insert tuples
-  const bool allocate = true;
-
-  for (int col_itr = 0; col_itr < 5; col_itr++) {
-
-    storage::Tuple tuple(schema, allocate);
-
-    // Setting values
-    Value integerValue = ValueFactory::GetIntegerValue(243432);
-    Value stringValue = ValueFactory::GetStringValue("dude");
-    Value timestampValue = ValueFactory::GetTimestampValue(10.22);
-    Value doubleValue = ValueFactory::GetDoubleValue(244643.1236);
- 
-    tuple.SetValue(0, integerValue);
-    tuple.SetValue(1, stringValue);
-    tuple.SetValue(2, timestampValue);
-    tuple.SetValue(3, doubleValue);
-
-    table->InsertTuple((txn_id_t)col_itr, &tuple, false);
-
-    assert(tuple.GetValue(0) == integerValue);
-    assert(tuple.GetValue(1) == stringValue);
-    assert(tuple.GetValue(2) == timestampValue);
-    assert(tuple.GetValue(3) == doubleValue);
-  }
-
-  // get the number of tuples
-  assert( Bridge::GetNumberOfTuples(table_oid) == 0 );
-
-  // analyze
-  db->UpdateStats();
-
-  // get the number of tuples
-  assert( Bridge::GetNumberOfTuples(table_oid) == 5 );
-
-  // create table
-  // Create a table in Peloton as well
-  status = DDLTable::CreateTable(table_oid+1, table_name+"second", columns);
-  assert(status);
-
-  // Drop the table in Postgres
-  status = DropTableInPostgres(table_name);
-  assert(status);
-
-  // Drop the table
-  status = DDLTable::DropTable(table_oid);
-  assert(status);
-
-  // Drop the table
-  status = DDLTable::DropTable(table_oid+1);
-  assert(status);
-
-  std::cout << ":::::: " << __func__ << " DONE\n";
+//
+//  // Get db
+//  auto& manager = catalog::Manager::GetInstance();
+//  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+//
+//  // Get the simple columns
+//  std::vector<catalog::Column> columns = CreateSimpleColumns();
+//  std::string table_name = "DDL_MIX_TEST_3";
+//
+//  // Create a table in Postgres
+//  oid_t table_oid = CreateTableInPostgres(table_name);
+//  assert(table_oid);
+//
+//  // Create a table in Peloton as well
+//  status = DDLTable::CreateTable(table_oid, table_name, columns);
+//  assert(status);
+//
+//  // insert tuple
+//   // Get the table pointer and schema
+//  storage::DataTable* table = db->GetTableWithOid(table_oid);
+//  catalog::Schema *schema = table->GetSchema();
+//
+//  // Ensure that the tile group is as expected.
+//  assert(schema->GetColumnCount() == 4);
+//
+//  // Insert tuples
+//  const bool allocate = true;
+//
+//  for (int col_itr = 0; col_itr < 5; col_itr++) {
+//
+//    storage::Tuple tuple(schema, allocate);
+//
+//    // Setting values
+//    Value integerValue = ValueFactory::GetIntegerValue(243432);
+//    Value stringValue = ValueFactory::GetStringValue("dude");
+//    Value timestampValue = ValueFactory::GetTimestampValue(10.22);
+//    Value doubleValue = ValueFactory::GetDoubleValue(244643.1236);
+// 
+//    tuple.SetValue(0, integerValue);
+//    tuple.SetValue(1, stringValue);
+//    tuple.SetValue(2, timestampValue);
+//    tuple.SetValue(3, doubleValue);
+//
+//    table->InsertTuple((txn_id_t)col_itr, &tuple, false);
+//
+//    assert(tuple.GetValue(0) == integerValue);
+//    assert(tuple.GetValue(1) == stringValue);
+//    assert(tuple.GetValue(2) == timestampValue);
+//    assert(tuple.GetValue(3) == doubleValue);
+//  }
+//
+//  // get the number of tuples
+//  assert( Bridge::GetNumberOfTuples(table_oid) == 0 );
+//
+//  // analyze
+//  db->UpdateStats();
+//
+//  // get the number of tuples
+//  assert( Bridge::GetNumberOfTuples(table_oid) == 5 );
+//
+//  // create table
+//  // Create a table in Peloton as well
+//  status = DDLTable::CreateTable(table_oid+1, table_name+"second", columns);
+//  assert(status);
+//
+//  // Drop the table in Postgres
+//  status = DropTableInPostgres(table_name);
+//  assert(status);
+//
+//  // Drop the table
+//  status = DDLTable::DropTable(table_oid);
+//  assert(status);
+//
+//  // Drop the table
+//  status = DDLTable::DropTable(table_oid+1);
+//  assert(status);
+//
+//  std::cout << ":::::: " << __func__ << " DONE\n";
 }
 
 }  // End bridge namespace
