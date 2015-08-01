@@ -668,13 +668,17 @@ standard_ProcessUtility(Node *parsetree,
 
     case T_VacuumStmt:
       {
-        VacuumStmt *stmt = (VacuumStmt *) parsetree;
+        // TODO :: Peloton Changes
+        // Disabled Vacuumming in Postgres
+        if(false){
+          VacuumStmt *stmt = (VacuumStmt *) parsetree;
 
-        /* we choose to allow this during "read only" transactions */
-        PreventCommandDuringRecovery((stmt->options & VACOPT_VACUUM) ?
-                       "VACUUM" : "ANALYZE");
-        /* forbidden in parallel mode due to CommandIsReadOnly */
-        ExecVacuum(stmt, isTopLevel);
+          /* we choose to allow this during "read only" transactions */
+          PreventCommandDuringRecovery((stmt->options & VACOPT_VACUUM) ?
+              "VACUUM" : "ANALYZE");
+          /* forbidden in parallel mode due to CommandIsReadOnly */
+          ExecVacuum(stmt, isTopLevel);
+        }
       }
       break;
 

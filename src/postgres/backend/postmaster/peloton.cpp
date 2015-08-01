@@ -1152,6 +1152,7 @@ peloton_process_status(Peloton_Status *status) {
             auto dirty_table = status->m_dirty_tables[table_itr];
             printf("dirty table oid %u\n", dirty_table->table_oid);
             printf("dirty table tuples %f\n", dirty_table->number_of_tuples);
+            peloton::bridge::Bridge::SetNumberOfTuples(dirty_table->table_oid, dirty_table->number_of_tuples);
 
             int dirty_index_count = dirty_table->dirty_index_count;
             printf("dirty index size %d\n", dirty_index_count); 
@@ -1160,6 +1161,7 @@ peloton_process_status(Peloton_Status *status) {
               auto dirty_index = dirty_table->dirty_indexes[index_itr];
               printf("dirty index oid %u\n", dirty_index->index_oid);
               printf("dirty index tuples %f\n", dirty_index->number_of_tuples);
+              peloton::bridge::Bridge::SetNumberOfTuples(dirty_index->index_oid, dirty_index->number_of_tuples);
             }
           }
       }
