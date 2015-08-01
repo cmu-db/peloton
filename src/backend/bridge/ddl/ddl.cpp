@@ -36,7 +36,9 @@ namespace bridge {
  * @brief Process utility statement.
  * @param parsetree Parse tree
  */
-void DDL::ProcessUtility(Node *parsetree, const char *queryString,
+void DDL::ProcessUtility(Node *parsetree, 
+                         const char *queryString,
+                         Peloton_Status* status,
                          TransactionId txn_id) {
   assert(parsetree != nullptr);
   assert(queryString != nullptr);
@@ -83,7 +85,7 @@ void DDL::ProcessUtility(Node *parsetree, const char *queryString,
     }
 
     case T_VacuumStmt: {
-      DDLDatabase::ExecVacuumStmt(parsetree);
+      DDLDatabase::ExecVacuumStmt(parsetree, status);
       break;
     }
 

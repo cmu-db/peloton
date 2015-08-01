@@ -52,7 +52,7 @@ bool DDLDatabase::ExecDropdbStmt(Node* parsetree) {
  * @param the parse tree
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLDatabase::ExecVacuumStmt(Node* parsetree) {
+bool DDLDatabase::ExecVacuumStmt(Node* parsetree, Peloton_Status* status) {
   VacuumStmt* vacuum = (VacuumStmt*)parsetree;
   std::string relation_name;
 
@@ -67,7 +67,7 @@ bool DDLDatabase::ExecVacuumStmt(Node* parsetree) {
 
   // Update every table and index
   if(relation_name.empty()){
-    db->UpdateStats();
+    db->UpdateStats(status);
   }
   // Otherwise, update the specific table
   else {

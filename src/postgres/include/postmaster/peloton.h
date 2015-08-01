@@ -54,18 +54,7 @@ typedef struct Peloton_MsgHdr
 } Peloton_MsgHdr;
 
 /* ----------
- * Peloton_Status     Sent by the peloton to share the status with backend.
- * ----------
- */
-typedef struct Peloton_Status
-{
-  peloton::Result m_result;
-  List *m_result_slots;
-  int m_status;
-} Peloton_Status;
-
-/* ----------
- * Dirty Object     Sent by the peloton to share the status with backend.
+ * Stats Sent by the peloton to share the status with backend.
  * ----------
  */
 typedef struct dirty_index_info{
@@ -76,8 +65,22 @@ typedef struct dirty_index_info{
 typedef struct dirty_table_info{
   Oid table_oid;
   float number_of_tuples;
-  std::vector<dirty_index_info> dirty_indexes;
+  dirty_index_info** dirty_indexes;
+  Oid index_count;
 }dirty_table_info;
+
+/* ----------
+ * Peloton_Status     Sent by the peloton to share the status with backend.
+ * ----------
+ */
+typedef struct Peloton_Status
+{
+  peloton::Result m_result;
+  List *m_result_slots;
+  int m_status;
+  dirty_table_info** m_dirty_tables;
+  int m_dirty_count;
+} Peloton_Status;
 
 /* ----------
  * Space available in a message.  This will keep the UDP packets below 1K,
