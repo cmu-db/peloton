@@ -82,7 +82,6 @@ void Database::UpdateStats(Peloton_Status* status){
   LOG_INFO("Update All Stats in Database(%u)", database_oid);
 
   // TODO :: need to check whether ... table... is changed or not
-
   std::vector<dirty_table_info*> dirty_tables;
 
   for( int table_offset=0; table_offset<GetTableCount(); table_offset++){
@@ -92,7 +91,6 @@ void Database::UpdateStats(Peloton_Status* status){
     for (int index_offset = 0; index_offset < table->GetIndexCount(); index_offset++) {
       auto index = table->GetIndex(index_offset);
       auto dirty_index = CreateDirtyIndex(index->GetOid(), index->GetNumberOfTuples());
-
       dirty_indexes.push_back(dirty_index);
     }
     auto dirty_table = CreateDirtyTable(table->GetOid(),
@@ -125,7 +123,6 @@ void Database::UpdateStatsWithOid(const oid_t table_oid){
 //===--------------------------------------------------------------------===//
 
 dirty_table_info** Database::CreateDirtyTables(std::vector< dirty_table_info*> dirty_tables_vec){
-  //XXX:: TopSharedMem???
 
   MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   dirty_table_info** dirty_tables =  (dirty_table_info**)palloc(sizeof(dirty_table_info*)*dirty_tables_vec.size());
@@ -133,7 +130,7 @@ dirty_table_info** Database::CreateDirtyTables(std::vector< dirty_table_info*> d
 
   oid_t table_itr=0;
   for(auto dirty_table : dirty_tables_vec)
-    dirty_tables[table_itr] = dirty_table;
+    dirty_tables[table_itr++]=dirty_table;
     
   return dirty_tables;
 }
@@ -141,17 +138,20 @@ dirty_table_info** Database::CreateDirtyTables(std::vector< dirty_table_info*> d
 dirty_index_info** Database::CreateDirtyIndexes(std::vector< dirty_index_info*> dirty_indexes_vec){
 
   MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
-  dirty_index_info** dirty_indexes =  (dirty_index_info**)palloc(sizeof(dirty_index_info*)*dirty_indexes_vec.size());
+  dirty_index_info** dirty_indexes = (dirty_index_info**)palloc(sizeof(dirty_index_info*)*dirty_indexes_vec.size());
   MemoryContextSwitchTo(oldcxt);
 
   oid_t index_itr=0;
   for(auto dirty_index : dirty_indexes_vec)
-    dirty_indexes[index_itr] = dirty_index;
+    dirty_indexes[index_itr++]=dirty_index;
     
   return dirty_indexes;
 }
 
-dirty_table_info* Database::CreateDirtyTable(oid_t table_oid, float number_of_tuples,  dirty_index_info** dirty_indexes, oid_t index_count){
+dirty_table_info* Database::CreateDirtyTable(oid_t table_oid, 
+                                             float number_of_tuples,  
+                                             dirty_index_info** dirty_indexes, 
+                                             oid_t index_count){
 
   MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   dirty_table_info* dirty_table = (dirty_table_info*)palloc(sizeof(dirty_table_info));
@@ -160,12 +160,13 @@ dirty_table_info* Database::CreateDirtyTable(oid_t table_oid, float number_of_tu
   dirty_table->table_oid = table_oid;
   dirty_table->number_of_tuples = number_of_tuples;
   dirty_table->dirty_indexes = dirty_indexes;
-  dirty_table->index_count = index_count;
+  dirty_table->dirty_index_count = index_count;
 
   return dirty_table;
 }
 
-dirty_index_info* Database::CreateDirtyIndex(oid_t index_oid, float number_of_tuples){
+dirty_index_info* Database::CreateDirtyIndex(oid_t index_oid, 
+                                             float number_of_tuples){
 
   MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   dirty_index_info* dirty_index = (dirty_index_info*)palloc(sizeof(dirty_index_info));
