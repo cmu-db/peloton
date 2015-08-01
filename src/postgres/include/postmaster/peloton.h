@@ -65,6 +65,21 @@ typedef struct Peloton_Status
 } Peloton_Status;
 
 /* ----------
+ * Dirty Object     Sent by the peloton to share the status with backend.
+ * ----------
+ */
+typedef struct dirty_index_info{
+  Oid index_oid;
+  float number_of_tuples;
+}dirty_index_info;
+
+typedef struct dirty_table_info{
+  Oid table_oid;
+  float number_of_tuples;
+  std::vector<dirty_index_info> dirty_indexes;
+}dirty_table_info;
+
+/* ----------
  * Space available in a message.  This will keep the UDP packets below 1K,
  * which should fit unfragmented into the MTU of the loopback interface.
  * (Larger values of PELOTON_MAX_MSG_SIZE would work for that on most
