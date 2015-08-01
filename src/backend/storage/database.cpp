@@ -78,34 +78,33 @@ oid_t Database::GetTableCount() const { return tables.size(); }
 // STATS
 //===--------------------------------------------------------------------===//
 
-std::vector<dirty_table_info> 
-Database::UpdateStats(){
+void Database::UpdateStats(Peloton_Status* status){
   LOG_INFO("Update All Stats in Database(%u)", database_oid);
 
-  std::vector<dirty_table_info> dirty_tables;
+  // TODO :: need to check whether ... table... is changed or not
+
+  std::vector<dirty_table_info*> dirty_tables;
 
   for( int table_offset=0; table_offset<GetTableCount(); table_offset++){
     auto table = GetTable(table_offset);
 
-    dirty_table_info dirty_table;
-
-    dirty_table.table_oid = table->GetOid();
-    dirty_table.number_of_tuples = table->GetNumberOfTuples();
-
-    std::vector<dirty_index_info> dirty_indexes;
-    for (int index_offset = 0; index_offset < table->GetIndexCount();
-        index_offset++) {
+    std::vector<dirty_index_info*> dirty_indexes;
+    for (int index_offset = 0; index_offset < table->GetIndexCount(); index_offset++) {
       auto index = table->GetIndex(index_offset);
+      auto dirty_index = CreateDirtyIndex(index->GetOid(), index->GetNumberOfTuples());
 
-      dirty_index_info dirty_index;
-      dirty_index.index_oid = index->GetOid();
-      dirty_index.number_of_tuples = index->GetNumberOfTuples();
       dirty_indexes.push_back(dirty_index);
     }
+    auto dirty_table = CreateDirtyTable(table->GetOid(),
+                                        table->GetNumberOfTuples(),
+                                        CreateDirtyIndexes(dirty_indexes),
+                                        dirty_indexes.size());
 
-    dirty_table.dirty_indexes = dirty_indexes;
+    dirty_tables.push_back(dirty_table);
   }
-  return dirty_tables;
+
+  status->m_dirty_tables = CreateDirtyTables(dirty_tables);
+  status->m_dirty_count = dirty_tables.size();
 }
 
 void Database::UpdateStatsWithOid(const oid_t table_oid){
@@ -124,6 +123,49 @@ void Database::UpdateStatsWithOid(const oid_t table_oid){
 //===--------------------------------------------------------------------===//
 // UTILITIES
 //===--------------------------------------------------------------------===//
+
+dirty_table_info** Database::CreateDirtyTables(std::vector< dirty_table_info*> dirty_tables_vec){
+  //XXX:: TopSharedMem???
+  dirty_table_info** dirty_tables =  (dirty_table_info**)palloc(sizeof(dirty_table_info*)*dirty_tables_vec.size());
+
+  oid_t table_itr=0;
+  for(auto dirty_table : dirty_tables_vec)
+    dirty_tables[table_itr] = dirty_table;
+    
+  return dirty_tables;
+}
+
+dirty_index_info** Database::CreateDirtyIndexes(std::vector< dirty_index_info*> dirty_indexes_vec){
+  dirty_index_info** dirty_indexes =  (dirty_index_info**)palloc(sizeof(dirty_index_info*)*dirty_indexes_vec.size());
+
+  oid_t index_itr=0;
+  for(auto dirty_index : dirty_indexes_vec)
+    dirty_indexes[index_itr] = dirty_index;
+    
+  return dirty_indexes;
+}
+
+dirty_table_info* Database::CreateDirtyTable(oid_t table_oid, float number_of_tuples,  dirty_index_info** dirty_indexes, oid_t index_count){
+
+  dirty_table_info* dirty_table = (dirty_table_info*)palloc(sizeof(dirty_table_info));
+
+  dirty_table->table_oid = table_oid;
+  dirty_table->number_of_tuples = number_of_tuples;
+  dirty_table->dirty_indexes = dirty_indexes;
+  dirty_table->index_count = index_count;
+
+  return dirty_table;
+}
+
+dirty_index_info* Database::CreateDirtyIndex(oid_t index_oid, float number_of_tuples){
+
+  dirty_index_info* dirty_index = (dirty_index_info*)palloc(sizeof(dirty_index_info));
+
+  dirty_index->index_oid = index_oid;
+  dirty_index->number_of_tuples = number_of_tuples;
+
+  return dirty_index;
+}
 
 std::ostream& operator<<(std::ostream& os, const Database& database) {
   os << "=====================================================\n";
