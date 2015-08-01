@@ -148,9 +148,10 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
   // Index checks and updates
   if (InsertInIndexes(transaction, tuple, location) == false) {
     // Reclaim slot if we fail
-    oid_t tile_group_offset = location.block;
+    oid_t tile_group_id = location.block;
     oid_t tuple_slot = location.offset;
-    TileGroup *tile_group = GetTileGroup(tile_group_offset);;
+    auto &manager = catalog::Manager::GetInstance();
+    auto tile_group = manager.GetTileGroup(tile_group_id);
     tile_group->ReclaimTuple(tuple_slot);
     LOG_WARN("Index constraint violated\n");
     return INVALID_ITEMPOINTER;
@@ -187,7 +188,7 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
       oid_t tuple_offset = location.offset;
 
       auto &manager = catalog::Manager::GetInstance();
-      storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
+      auto tile_group = manager.GetTileGroup(tile_group_id);
       auto header = tile_group->GetHeader();
 
       auto transaction_id = transaction->GetTransactionId();
