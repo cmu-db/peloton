@@ -150,9 +150,10 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
     // Reclaim slot if we fail
     oid_t tile_group_id = location.block;
     oid_t tuple_slot = location.offset;
-    auto &manager = catalog::Manager::GetInstance();
-    auto tile_group = manager.GetTileGroup(tile_group_id);
+
+    auto tile_group = GetTileGroupById(tile_group_id);
     tile_group->ReclaimTuple(tuple_slot);
+
     LOG_WARN("Index constraint violated\n");
     return INVALID_ITEMPOINTER;
   }
