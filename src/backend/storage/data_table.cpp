@@ -171,81 +171,47 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
     storage::Tuple *key = new storage::Tuple(index_schema, true);
     key->SetFromTuple(tuple, indexed_columns);
 
-    // There are two possibilities :
-    // a) already key inserted in unique index, in which case we should abort
-    // b) another tuple with same key already exists, and is invisible for this
-    // transaction, in which case we should actually succeed
-
-    // If index does not have unique keys, we don't care about conflicts
-    if (index->HasUniqueKeys() == false) {
-      bool status = index->InsertEntry(key, location);
-      if (status == true) {
-        LOG_ERROR(
-            "Failed to insert into non-unique index %s.%s [%s].",
-            GetName().c_str(),
-            index->GetName().c_str(),
-            index->GetTypeName().c_str());
-        delete key;
-        continue;
-      }
+    // First, try to insert into the index
+    bool status = index->InsertEntry(key, location);
+    if (status == true) {
+      delete key;
+      continue;
     }
 
-    // Check if key already exists
-    if (index->Exists(key) == true) {
+    // Key already exists
+    auto old_location = index->Exists(key, location);
+    if (old_location.block != INVALID_OID) {
 
       // Is this key visible or not ?
-      auto old_locations = index->GetLocationsForKey(key);
-      auto old_location = old_locations.back();
-      oid_t tile_group_id = old_location.block;
-      oid_t tuple_offset = old_location.offset;
+      oid_t tile_group_id = location.block;
+      oid_t tuple_offset = location.offset;
 
       auto &manager = catalog::Manager::GetInstance();
-      storage::TileGroup *tile_group =
-          static_cast<storage::TileGroup *>(manager.GetTileGroup(tile_group_id));
-
+      storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
       auto header = tile_group->GetHeader();
+
       auto transaction_id = transaction->GetTransactionId();
       auto commit_id = transaction->GetCommitId();
       bool visible = header->IsVisible(tuple_offset, transaction_id, commit_id);
 
-      if(visible == true) {
-        LOG_ERROR("Failed to insert into index %s.%s [%s] as visible tuple already exists.",
-                  GetName().c_str(),
-                  index->GetName().c_str(),
-                  index->GetTypeName().c_str());
-      } else {
-        // In this case, the previous tuple pointed to by the index is not visible
-        // to us. So, we can try to update the index to point to our updated tuple within
-        // an atomic update
-
+      // The previous tuple is not visible,
+      // so let's update it atomically
+      if(visible == false) {
         bool status = index->UpdateEntry(key, location, old_location);
-
-        // The update worked
         if(status == true) {
           delete key;
           continue;
         }
-        else {
-          LOG_ERROR("Failed to insert into index %s.%s [%s] due to concurrent insert.",
-                    GetName().c_str(),
-                    index->GetName().c_str(),
-                    index->GetTypeName().c_str());
-        }
       }
 
-    } else {
-      // Try to insert
-      bool status = index->InsertEntry(key, location);
-      if (status == true) {
-        delete key;
-        continue;
-      }
-      LOG_ERROR("Failed to insert into index %s.%s [%s] due to concurrent insert.",
-                GetName().c_str(),
-                index->GetName().c_str(),
-                index->GetTypeName().c_str());
     }
 
+    LOG_ERROR("Failed to insert into index %s.%s [%s].",
+              GetName().c_str(),
+              index->GetName().c_str(),
+              index->GetTypeName().c_str());
+
+    // Time to clean up !
     // Undo insert in other indexes as well
     for (int prev_index_itr = index_itr + 1; prev_index_itr < index_count;
         ++prev_index_itr) {
@@ -481,8 +447,7 @@ TileGroup *DataTable::GetTileGroup(oid_t tile_group_offset) const {
 
 TileGroup *DataTable::GetTileGroupById(oid_t tile_group_id) const {
   auto &manager = catalog::Manager::GetInstance();
-  storage::TileGroup *tile_group =
-      static_cast<storage::TileGroup *>(manager.GetTileGroup(tile_group_id));
+  storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
   assert(tile_group);
   return tile_group;
 }
@@ -685,7 +650,6 @@ storage::TileGroup *DataTable::TransformTileGroup(oid_t tile_group_id,
                                                   bool cleanup) {
 
   // First, check if the tile group is in this table
-  storage::TileGroup *orig_tile_group = nullptr;
   {
     std::lock_guard<std::mutex> lock(table_mutex);
 
@@ -701,33 +665,31 @@ storage::TileGroup *DataTable::TransformTileGroup(oid_t tile_group_id,
 
   // Get orig tile group from catalog
   auto& catalog_manager = catalog::Manager::GetInstance();
-  auto tile_group_entry = catalog_manager.GetTileGroup(tile_group_id);
-  orig_tile_group = static_cast<storage::TileGroup*>(tile_group_entry);
-  assert(orig_tile_group);
+  auto tile_group = catalog_manager.GetTileGroup(tile_group_id);
 
   // Get the schema for the new transformed tile group
-  auto new_schema = TransformTileGroupSchema(orig_tile_group, column_map);
+  auto new_schema = TransformTileGroupSchema(tile_group, column_map);
 
   // Allocate space for the transformed tile group
   auto new_tile_group = TileGroupFactory::GetTileGroup(
-      orig_tile_group->GetDatabaseId(),
-      orig_tile_group->GetTableId(),
-      orig_tile_group->GetTileGroupId(),
-      orig_tile_group->GetAbstractTable(),
-      orig_tile_group->GetBackend(),
+      tile_group->GetDatabaseId(),
+      tile_group->GetTableId(),
+      tile_group->GetTileGroupId(),
+      tile_group->GetAbstractTable(),
+      tile_group->GetBackend(),
       new_schema,
       column_map,
-      orig_tile_group->GetAllocatedTupleCount());
+      tile_group->GetAllocatedTupleCount());
 
   // Set the transformed tile group column-at-a-time
-  SetTransformedTileGroup(orig_tile_group, new_tile_group);
+  SetTransformedTileGroup(tile_group, new_tile_group);
 
   // Set the location of the new tile group
   catalog_manager.SetTileGroup(tile_group_id, new_tile_group);
 
   // Clean up the orig tile group, if needed which is normally the case
   if(cleanup)
-    delete orig_tile_group;
+    delete tile_group;
 
   return new_tile_group;
 }
