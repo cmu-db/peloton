@@ -78,20 +78,34 @@ oid_t Database::GetTableCount() const { return tables.size(); }
 // STATS
 //===--------------------------------------------------------------------===//
 
-void Database::UpdateStats(){
+std::vector<dirty_table_info> 
+Database::UpdateStats(){
   LOG_INFO("Update All Stats in Database(%u)", database_oid);
+
+  std::vector<dirty_table_info> dirty_tables;
+
   for( int table_offset=0; table_offset<GetTableCount(); table_offset++){
     auto table = GetTable(table_offset);
-    bridge::Bridge::SetNumberOfTuples(table->GetOid(),
-                                      table->GetNumberOfTuples());
 
+    dirty_table_info dirty_table;
+
+    dirty_table.table_oid = table->GetOid();
+    dirty_table.number_of_tuples = table->GetNumberOfTuples();
+
+    std::vector<dirty_index_info> dirty_indexes;
     for (int index_offset = 0; index_offset < table->GetIndexCount();
-         index_offset++) {
+        index_offset++) {
       auto index = table->GetIndex(index_offset);
-      bridge::Bridge::SetNumberOfTuples(index->GetOid(),
-                                        index->GetNumberOfTuples());
+
+      dirty_index_info dirty_index;
+      dirty_index.index_oid = index->GetOid();
+      dirty_index.number_of_tuples = index->GetNumberOfTuples();
+      dirty_indexes.push_back(dirty_index);
     }
+
+    dirty_table.dirty_indexes = dirty_indexes;
   }
+  return dirty_tables;
 }
 
 void Database::UpdateStatsWithOid(const oid_t table_oid){

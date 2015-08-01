@@ -79,6 +79,7 @@ bool Bootstrap::BootstrapPeloton(raw_database_info* raw_database){
   elog(LOG, "Initializing database %s(%u) in Peloton", raw_database->database_name, raw_database->database_oid);
   bool status = DDLDatabase::CreateDatabase(raw_database->database_oid);
 
+  // skip if we already initialize current database
   if(status == false) return false; 
 
   // Create objects in Peloton
