@@ -72,7 +72,7 @@ bool DDLDatabase::ExecVacuumStmt(Node* parsetree, Peloton_Status* status) {
   // Otherwise, update the specific table
   else {
     oid_t relation_oid = (db->GetTableWithName(relation_name))->GetOid();
-    db->UpdateStatsWithOid(relation_oid);
+    db->UpdateStatsWithOid(status, relation_oid);
   }
 
   return true;

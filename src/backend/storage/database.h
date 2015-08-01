@@ -58,7 +58,7 @@ class Database {
 
   void UpdateStats(Peloton_Status* status);
 
-  void UpdateStatsWithOid(const oid_t table_oid);
+  void UpdateStatsWithOid(Peloton_Status* status, const oid_t table_oid);
 
   //===--------------------------------------------------------------------===//
   // UTILITIES
