@@ -162,6 +162,7 @@ Oid Bridge::GetRelationOid(const char *relation_name) {
  * @return num_atts if valid relation_id, otherwise -1
  */
 int Bridge::GetNumberOfAttributes(Oid relation_id) {
+  LOG_WARN("Do not use bridge function(%s) in Peloton !!! ",__func__);
   HeapTuple tuple;
   Form_pg_class pg_class;
   int num_atts = -1;
@@ -310,14 +311,11 @@ void Bridge::GetDatabaseList(void) {
  * @param num_tuples number of tuples
  */
 void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
-  LOG_WARN("Do not use bridge function(%s) in Peloton !!! ",__func__);
   assert(relation_id);
 
   Relation pg_class_rel;
   HeapTuple tuple;
   Form_pg_class pgclass;
-
-  PelotonStartTransactionCommand();
 
   // Open target table in exclusive mode
   pg_class_rel = heap_open(RelationRelationId, RowExclusiveLock);
@@ -339,7 +337,6 @@ void Bridge::SetNumberOfTuples(Oid relation_id, float num_tuples) {
   }
 
   heap_close(pg_class_rel, RowExclusiveLock);
-  PelotonCommitTransactionCommand();
 }
 
 //===--------------------------------------------------------------------===//
