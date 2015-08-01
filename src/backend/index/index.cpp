@@ -60,6 +60,7 @@ void Index::GetInfo() const {
  */
 void Index::IncreaseNumberOfTuplesBy(const float amount) {
   number_of_tuples += amount;
+  dirty = true;
 }
 
 /**
@@ -68,6 +69,7 @@ void Index::IncreaseNumberOfTuplesBy(const float amount) {
  */
 void Index::DecreaseNumberOfTuplesBy(const float amount) {
   number_of_tuples -= amount;
+  dirty = true;
 }
 
 /**
@@ -76,6 +78,7 @@ void Index::DecreaseNumberOfTuplesBy(const float amount) {
  */
 void Index::SetNumberOfTuples(const float num_tuples) {
   number_of_tuples = num_tuples;
+  dirty = true;
 }
 
 /**
@@ -83,6 +86,21 @@ void Index::SetNumberOfTuples(const float num_tuples) {
  * @return number of tuples
  */
 float Index::GetNumberOfTuples() const { return number_of_tuples; }
+
+/**
+ * @brief return dirty flag
+ * @return dirty flag
+ */
+bool Index::IsDirty() const{
+  return dirty;
+}
+
+/**
+ * @brief Reset dirty flag
+ */
+void Index::ResetDirty() {
+  dirty = false;
+}
 
 }  // End index namespace
 }  // End peloton namespace
