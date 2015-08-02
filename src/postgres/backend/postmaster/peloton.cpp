@@ -228,12 +228,11 @@ PelotonMain(int argc, char *argv[]) {
   PG_SETMASK(&UnBlockSig);
 
   /*
-   * Connect to the selected database
-   *
-   * Note: if we have selected a just-deleted database (due to using
-   * stale stats info), we'll fail and exit here.
+   * Connect to the test database for Peloton Test Mode
    */
-  //InitPostgres("postgres", InvalidOid, NULL, InvalidOid, NULL);
+  if(PelotonTestMode == true) {
+    InitPostgres("postgres", InvalidOid, NULL, InvalidOid, NULL);
+  }
 
   /*
    * If the PostmasterContext is still around, recycle the space; we don't
