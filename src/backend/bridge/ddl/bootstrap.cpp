@@ -148,16 +148,16 @@ void Bootstrap::GetRawTableAndIndex(std::vector<raw_table_info*>& raw_tables,
 
     // Get the tuple oid
     // This can be a relation oid or index oid etc.
-    Oid tuple_oid = HeapTupleHeaderGetOid(pg_class_tuple->t_data);
-    std::vector<raw_column_info*> raw_columns = GetRawColumn(tuple_oid, pg_attribute_rel);
+    Oid relation_oid = HeapTupleHeaderGetOid(pg_class_tuple->t_data);
+    std::vector<raw_column_info*> raw_columns = GetRawColumn(relation_oid, pg_attribute_rel);
 
     switch (relation_kind) {
       case 'r':{
-        raw_table_info* raw_table = GetRawTable(tuple_oid, relation_name, raw_columns);
+        raw_table_info* raw_table = GetRawTable(relation_oid, relation_name, raw_columns);
         raw_tables.push_back(raw_table);
         }break;
       case 'i':{
-        raw_index_info* raw_index = GetRawIndex(tuple_oid, relation_name, raw_columns);
+        raw_index_info* raw_index = GetRawIndex(relation_oid, relation_name, raw_columns);
         raw_indexes.push_back(raw_index);
         }break;
     }
@@ -273,7 +273,7 @@ Bootstrap::GetRawIndex(oid_t index_oid,
  * @return raw columns
  */
 std::vector<raw_column_info*> 
-Bootstrap::GetRawColumn(Oid tuple_oid, Relation pg_attribute_rel) {
+Bootstrap::GetRawColumn(Oid relation_oid, Relation pg_attribute_rel) {
 
   HeapScanDesc pg_attribute_scan;
   HeapTuple pg_attribute_tuple;
@@ -297,7 +297,7 @@ Bootstrap::GetRawColumn(Oid tuple_oid, Relation pg_attribute_rel) {
 
     // Check the relation oid
     pg_attribute = (Form_pg_attribute)GETSTRUCT(pg_attribute_tuple);
-    if (pg_attribute->attrelid == tuple_oid) {
+    if (pg_attribute->attrelid == relation_oid) {
       // Skip system columns in the attribute list
       if (strcmp(NameStr(pg_attribute->attname), "cmax") &&
           strcmp(NameStr(pg_attribute->attname), "cmin") &&
