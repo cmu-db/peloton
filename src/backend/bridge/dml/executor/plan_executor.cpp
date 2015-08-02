@@ -118,6 +118,10 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       child_executor = new executor::ProjectionExecutor(plan, executor_context);
       break;
 
+    case PLAN_NODE_TYPE_MATERIALIZE:
+      child_executor = new executor::MaterializationExecutor(plan, executor_context);
+      break;
+
     default:
       LOG_INFO("Unsupported plan node type : %d ", plan_node_type);
       break;
