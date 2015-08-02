@@ -912,8 +912,6 @@ peloton_process_dml(Peloton_MsgDML *msg) {
   CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
   TransactionId txn_id = msg->m_hdr.m_txn_id;
 
-  elog(LOG, "===========================peloton_process_dml=========================");
-
   auto plan = peloton::bridge::PlanTransformer::TransformPlan(planstate);
 
   if(plan){
