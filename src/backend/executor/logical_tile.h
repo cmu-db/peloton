@@ -75,6 +75,8 @@ class LogicalTile {
 
   void SetPositionLists(std::vector<std::vector<oid_t> > &&position_lists);
 
+  void SetPositionListsAndVisibility(std::vector<std::vector<oid_t> > &&position_lists);
+
   friend std::ostream &operator<<(std::ostream &os,
                                   const LogicalTile &logical_tile);
 

@@ -34,7 +34,8 @@ class MaterializationExecutor : public AbstractExecutor {
 
   // If node is null, then we will create a default node in DExecute()
   // Else, we will apply the column mapping on the logical tile based on node.
-  explicit MaterializationExecutor(planner::AbstractPlanNode *node = nullptr);
+  explicit MaterializationExecutor(planner::AbstractPlanNode *node,
+                                   ExecutorContext *executor_context);
 
  protected:
   bool DInit();
@@ -53,6 +54,11 @@ class MaterializationExecutor : public AbstractExecutor {
       const std::unordered_map<storage::Tile *, std::vector<oid_t> > &
           tile_to_cols,
       storage::Tile *dest_tile);
+
+  LogicalTile *Physify(LogicalTile *source_tile);
+  std::unordered_map<oid_t, oid_t> BuildIdentityMapping(const catalog::Schema *schema);
+
+
 };
 
 }  // namespace executor

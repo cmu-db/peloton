@@ -25,6 +25,7 @@ namespace peloton {
 namespace storage {
 class DataTable;
 class Database;
+class TileGroup;
 }
 namespace index {
 class Index;
@@ -36,7 +37,7 @@ namespace catalog {
 // Manager
 //===--------------------------------------------------------------------===//
 
-typedef tbb::concurrent_unordered_map<oid_t, void *> lookup_dir;
+typedef tbb::concurrent_unordered_map<oid_t, storage::TileGroup *> lookup_dir;
 
 class Manager {
  public:
@@ -53,9 +54,9 @@ class Manager {
 
   oid_t GetCurrentOid() { return oid; }
 
-  void SetLocation(const oid_t oid, void *location);
+  void SetTileGroup(const oid_t oid, storage::TileGroup *location);
 
-  void *GetLocation(const oid_t oid) const;
+  storage::TileGroup *GetTileGroup(const oid_t oid) const;
 
   //===--------------------------------------------------------------------===//
   // DATABASE
@@ -87,6 +88,8 @@ class Manager {
                                 const oid_t index_oid) const;
 
   Manager(Manager const &) = delete;
+
+ private:
 
   //===--------------------------------------------------------------------===//
   // Data members
