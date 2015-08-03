@@ -52,7 +52,7 @@ bool DDLDatabase::ExecDropdbStmt(Node* parsetree) {
  * @param the parse tree
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLDatabase::ExecVacuumStmt(Node* parsetree) {
+bool DDLDatabase::ExecVacuumStmt(Node* parsetree, Peloton_Status* status) {
   VacuumStmt* vacuum = (VacuumStmt*)parsetree;
   std::string relation_name;
 
@@ -66,16 +66,13 @@ bool DDLDatabase::ExecVacuumStmt(Node* parsetree) {
   auto db = manager.GetDatabaseWithOid(database_oid);
 
   // Update every table and index
-  if (relation_name.empty()) {
-    LOG_INFO("Update All Stats in Database(%u)", database_oid);
-    db->UpdateStats();
+  if(relation_name.empty()){
+    db->UpdateStats(status);
   }
   // Otherwise, update the specific table
   else {
     oid_t relation_oid = (db->GetTableWithName(relation_name))->GetOid();
-    LOG_INFO("Update table %s(%u)'s stats in Database(%u)",
-             relation_name.c_str(), relation_oid, database_oid);
-    db->UpdateStatsWithOid(relation_oid);
+    db->UpdateStatsWithOid(status, relation_oid);
   }
 
   return true;
@@ -90,15 +87,17 @@ bool DDLDatabase::CreateDatabase(Oid database_oid) {
   if (database_oid == INVALID_OID) return false;
 
   auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = new storage::Database(database_oid);
-  manager.AddDatabase(db);
+  auto database = manager.GetDatabaseWithOid(database_oid);
 
-  if (db == nullptr) {
-    LOG_WARN("Failed to create a database (%u)", database_oid);
+  if( database == nullptr ){
+    storage::Database* db = new storage::Database(database_oid);
+    manager.AddDatabase(db);
+  }else {
+    LOG_WARN("Database(%u) is already existed!!", database_oid);
     return false;
   }
 
-  LOG_INFO("Create database (%u)", database_oid);
+  elog(LOG,"Create database (%u)", database_oid);
   return true;
 }
 
