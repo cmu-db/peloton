@@ -158,6 +158,11 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
     return INVALID_ITEMPOINTER;
   }
 
+  // Increase the table's number of tuples by 1
+  IncreaseNumberOfTuplesBy(1);
+  // Increase the indexes' number of tuples by 1 as well
+  for (auto index : indexes) index->IncreaseNumberOfTuplesBy(1);
+
   return location;
 }
 
@@ -260,6 +265,9 @@ bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
   LOG_TRACE("Deleted tuple from tile group : %u , Txn_id : %lu ", tile_group,
             (long unsigned)transaction_id);
 
+  // Decrease the table's number of tuples by 1
+  DecreaseNumberOfTuplesBy(1);
+
   return true;
 }
 
@@ -281,9 +289,12 @@ void DataTable::DeleteInIndexes(const storage::Tuple *tuple,
                index->GetName().c_str(),
                index->GetTypeName().c_str());
     }
+    // Decrease the indexes' number of tuples by 1
+    index->DecreaseNumberOfTuplesBy(1);
 
     delete key;
   }
+
 }
 
 //===--------------------------------------------------------------------===//
@@ -335,6 +346,7 @@ void DataTable::UpdateInIndexes(const storage::Tuple *tuple,
  */
 void DataTable::IncreaseNumberOfTuplesBy(const float amount) {
   number_of_tuples += amount;
+  dirty = true;
 }
 
 /**
@@ -343,6 +355,7 @@ void DataTable::IncreaseNumberOfTuplesBy(const float amount) {
  */
 void DataTable::DecreaseNumberOfTuplesBy(const float amount) {
   number_of_tuples -= amount;
+  dirty = true;
 }
 
 /**
@@ -351,13 +364,31 @@ void DataTable::DecreaseNumberOfTuplesBy(const float amount) {
  */
 void DataTable::SetNumberOfTuples(const float num_tuples) {
   number_of_tuples = num_tuples;
+  dirty = true;
 }
 
 /**
  * @brief Get the number of tuples in this table
  * @return number of tuples
  */
-float DataTable::GetNumberOfTuples() const { return number_of_tuples; }
+float DataTable::GetNumberOfTuples() const {
+  return number_of_tuples;
+}
+
+/**
+ * @brief return dirty flag
+ * @return dirty flag
+ */
+bool DataTable::IsDirty() const {
+  return dirty;
+}
+
+/**
+ * @brief Reset dirty flag
+ */
+void DataTable::ResetDirty() {
+  dirty = false;
+}
 
 //===--------------------------------------------------------------------===//
 // TILE GROUP

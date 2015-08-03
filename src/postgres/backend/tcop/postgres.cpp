@@ -75,7 +75,6 @@
 #include "utils/timestamp.h"
 #include "mb/pg_wchar.h"
 
-
 #include "postmaster/peloton.h"
 #include "utils/memutils.h"
 
@@ -3719,6 +3718,16 @@ PostgresMain(int argc, char *argv[],
    * involves database access should be there, not here.
    */
   InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
+
+  if(IsPostmasterEnvironment == true){
+    // TODO :: Peloton Changes
+    StartTransactionCommand();
+    Peloton_Status *status = peloton_create_status();
+    peloton_send_bootstrap(status);
+    peloton_process_status(status);
+    peloton_destroy_status(status);
+    CommitTransactionCommand();
+  }
 
   /*
    * If the PostmasterContext is still around, recycle the space; we don't

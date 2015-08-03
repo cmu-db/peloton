@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "postmaster/peloton.h"
+
 #include "postgres.h"
 #include "c.h"
 #include "nodes/nodes.h"
@@ -28,7 +30,9 @@ class DDL {
   // Utilities
   //===--------------------------------------------------------------------===//
 
-  static void ProcessUtility(Node *parsetree, const char *queryString,
+  static void ProcessUtility(Node *parsetree, 
+                             const char *queryString,
+                             Peloton_Status* status,
                              TransactionId txn_id);
 };
 
