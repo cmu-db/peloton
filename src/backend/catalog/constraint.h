@@ -30,9 +30,7 @@ class Constraint {
  public:
   Constraint(ConstraintType type, std::string constraint_name = "",
              Node* raw_expr = nullptr)
-      : constraint_type(type), constraint_name(constraint_name) {
-    // Copy the raw expression
-    raw_expr = (Node*)copyObject((void*)raw_expr);
+      : constraint_type(type), constraint_name(constraint_name), raw_expr(raw_expr) {
   }
 
   //===--------------------------------------------------------------------===//
