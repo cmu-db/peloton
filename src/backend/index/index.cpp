@@ -20,17 +20,18 @@
 namespace peloton {
 namespace index {
 
-bool Index::IndexKeyComparator(const storage::Tuple *index_key,
-                               const storage::Tuple *key,
+bool Index::IndexKeyComparator(const storage::Tuple& index_key,
+                               const std::vector<Value>& values,
                                const std::vector<oid_t>& index_key_columns,
-                               const ExpressionType expr_type) {
+                               const std::vector<ExpressionType>& exprs) {
   int diff;
-  oid_t key_column_itr = 0;
 
   // Go over each attribute in the list of comparison columns
   for(auto column_itr : index_key_columns) {
-    const Value lhs = index_key->GetValue(column_itr);
-    const Value rhs = key->GetValue(key_column_itr);
+    const Value& lhs = index_key.GetValue(column_itr);
+    const Value& rhs = values[column_itr];
+    const ExpressionType expr_type = exprs[column_itr];
+
     diff = lhs.Compare(rhs);
 
     if(diff == VALUE_COMPARE_EQUAL) {
@@ -82,7 +83,6 @@ bool Index::IndexKeyComparator(const storage::Tuple *index_key,
       }
     }
 
-    key_column_itr++;
   }
 
   return true;
