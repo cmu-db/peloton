@@ -2,8 +2,7 @@
  * project_info.cpp
  *
  */
-
-#include "../planner/project_info.h"
+#include "backend/planner/project_info.h"
 
 namespace peloton {
 namespace planner {
@@ -31,8 +30,7 @@ ProjectInfo::~ProjectInfo() {
  * @param tuple2  Source tuple 2.
  * @param econtext  ExecutorContext for expression evaluation.
  */
-bool ProjectInfo::Evaluate(storage::Tuple* dest,
-                           const AbstractTuple* tuple1,
+bool ProjectInfo::Evaluate(storage::Tuple* dest, const AbstractTuple* tuple1,
                            const AbstractTuple* tuple2,
                            executor::ExecutorContext* econtext) const {
   // (A) Execute target list
@@ -52,13 +50,32 @@ bool ProjectInfo::Evaluate(storage::Tuple* dest,
     auto tuple_index = dm.second.first;
     auto src_col_id = dm.second.second;
 
-    Value value = (tuple_index == 0) ? tuple1->GetValue(src_col_id)
-                                   : tuple2->GetValue(src_col_id);
+    Value value =
+        (tuple_index == 0) ?
+            tuple1->GetValue(src_col_id) : tuple2->GetValue(src_col_id);
 
     dest->SetValue(dest_col_id, value);
   }
 
   return true;
+}
+
+std::string ProjectInfo::Debug() const {
+  std::ostringstream buffer;
+  buffer << "Target List: < DEST_column_id , expression >\n";
+  for (auto& target : target_list_) {
+    buffer << "Dest Col id: " << target.first << std::endl;
+    buffer << "Expr: \n" << target.second->Debug(" ");
+    buffer << std::endl;
+  }
+  buffer << "DirectMap List: < NEW_col_id , <tuple_idx , OLD_col_id>  > \n";
+  for (auto& dmap : direct_map_list_) {
+    buffer << "<" << dmap.first << ", <" << dmap.second.first << ", "
+           << dmap.second.second << "> >\n\n";
+  }
+
+  return (buffer.str());
+
 }
 
 } /* namespace planner */
