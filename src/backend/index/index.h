@@ -176,6 +176,10 @@ class Index {
 
   float GetNumberOfTuples() const;
 
+  bool IsDirty() const;
+
+  void ResetDirty();
+
   //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//
@@ -231,6 +235,9 @@ class Index {
 
   // number of tuples
   float number_of_tuples = 0.0;
+
+  // dirty flag
+  bool dirty = false;
 };
 
 }  // End index namespace

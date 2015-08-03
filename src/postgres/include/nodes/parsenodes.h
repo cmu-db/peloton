@@ -202,6 +202,10 @@ typedef struct TypeName {
 	int32		typemod;		/* prespecified type modifier */
 	List	   *arrayBounds;	/* array bounds */
 	int			location;		/* token location, or -1 if unknown */
+
+        //TODO :: Peloton Changes
+        Oid type_oid;
+        int type_len;
 } TypeName;
 
 /*
@@ -1651,6 +1655,7 @@ typedef struct AlterTableStmt {
 
 	// TODO: Peloton Changes
 	Oid      relation_id;   /* cache the relation id for DDL */
+	List     *stmts;        /* cache the transformed list for DDL */
 } AlterTableStmt;
 
 typedef enum AlterTableType
@@ -1995,6 +2000,7 @@ typedef struct CreateStmt {
 
 	// TODO: Peloton Changes
 	Oid      relation_id;   /* cache the relation id for DDL */
+	List     *stmts;        /* cache the transformed list for DDL */
 } CreateStmt;
 
 /* ----------

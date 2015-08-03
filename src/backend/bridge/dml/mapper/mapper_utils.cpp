@@ -87,12 +87,12 @@ void PlanTransformer::GetGenericInfoFromScanState(
    * on top, or simply pushed in an output column list.
    */
   if(nullptr == project_info.get()){  // empty predicate, or ignore projInfo, pass thru
-    LOG_TRACE("No projections (all pass through)");
+    LOG_INFO("No projections (all pass through)");
 
     assert(out_col_list.size() == 0);
   }
   else if(project_info->GetTargetList().size() > 0){  // Have non-trivial projection, add a plan node
-    LOG_TRACE("Non-trivial projections are found. \n");
+    LOG_INFO("Non-trivial projections are found. Projection node will be created. \n");
 
     auto project_schema =
         SchemaTransformer::GetSchemaFromTupleDesc(sstate->ps.ps_ResultTupleSlot->tts_tupleDescriptor);
@@ -105,7 +105,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
     assert(project_info->GetTargetList().size() == 0);
     assert(project_info->GetDirectMapList().size() > 0);
 
-    LOG_TRACE("Pure direct map projection.\n");
+    LOG_INFO("Pure direct map projection.\n");
 
     std::vector<oid_t> column_ids;
     column_ids = BuildColumnListFromDirectMap(project_info->GetDirectMapList());
