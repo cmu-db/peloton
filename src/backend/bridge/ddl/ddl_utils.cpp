@@ -41,8 +41,8 @@ void DDLUtils::peloton_prepare_data(Node* parsetree){
   switch(nodeTag(parsetree)){
       case T_CreateStmt:
       case T_CreateForeignTableStmt:{
-        Relation relation = heap_open( ((CreateStmt*)parsetree)->relation_id , AccessShareLock);
         List* stmts = ((CreateStmt*)parsetree)->stmts;
+        oid_t relation_oid = ((CreateStmt*)parsetree)->relation_id;
         ListCell* l;
 
         foreach (l, stmts) {
@@ -77,11 +77,11 @@ void DDLUtils::peloton_prepare_data(Node* parsetree){
               coldef->typeName->type_oid = typeoid;
               coldef->typeName->type_len = typelen;
 
-              SetDefaultConstraint(coldef, column_itr++, relation);
+              if(coldef->raw_default != NULL || coldef->cooked_default != NULL)
+                SetDefaultConstraint(coldef, column_itr++, relation_oid);
             }
           }
         }
-        heap_close(relation, AccessShareLock);
         break;
       }
     break;
@@ -91,7 +91,8 @@ void DDLUtils::peloton_prepare_data(Node* parsetree){
 /**
  * @brief setting default constraint
  */
-void DDLUtils::SetDefaultConstraint(ColumnDef* coldef, int column_itr, Relation relation){
+void DDLUtils::SetDefaultConstraint(ColumnDef* coldef, int column_itr, oid_t relation_oid){
+  Relation relation = heap_open(relation_oid , AccessShareLock);
   int num_defva = relation->rd_att->constr->num_defval;
   for(int def_itr=0; def_itr<num_defva; def_itr++){
     if( column_itr == relation->rd_att->constr->defval[def_itr].adnum){
@@ -99,6 +100,7 @@ void DDLUtils::SetDefaultConstraint(ColumnDef* coldef, int column_itr, Relation 
       coldef->cooked_default = static_cast<Node*>(stringToNode(default_expression));
     }
   }
+  heap_close(relation, AccessShareLock);
 }
 
 /**

@@ -19,6 +19,7 @@
 #include "postgres.h"
 #include "c.h"
 #include "nodes/parsenodes.h"
+#include "postmaster/peloton.h"
 
 namespace peloton {
 namespace bridge {
@@ -34,7 +35,10 @@ class DDLTable {
   DDLTable(DDLTable&&) = delete;
   DDLTable& operator=(DDLTable&&) = delete;
 
-  static bool ExecCreateStmt(Node* parsetree, std::vector<Node*>& parsetree_stack, TransactionId txn_id);
+  static bool ExecCreateStmt(Node* parsetree, 
+                             std::vector<Node*>& parsetree_stack, 
+                             Peloton_Status* status,
+                             TransactionId txn_id);
 
   static bool ExecAlterTableStmt(Node* parsetree, std::vector<Node*>& parsetree_stack);
 
