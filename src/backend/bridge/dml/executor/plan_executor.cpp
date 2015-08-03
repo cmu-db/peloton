@@ -268,7 +268,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
       auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
       if (slot != nullptr) {
         slots = lappend(slots, slot);
-        //print_slot(slot);
+//        print_slot(slot);
       }
     }
 
