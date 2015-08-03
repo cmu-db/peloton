@@ -24,9 +24,7 @@ namespace bridge {
 struct raw_constraint_info{
   ConstraintType constraint_type;
   char* constraint_name;
-  Node* raw_expr;
-  // read default expr here
-  // read tupleDesc ..
+  Node* expr;
 };
 
 struct raw_column_info{
