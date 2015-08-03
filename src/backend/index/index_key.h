@@ -350,10 +350,6 @@ class GenericKey {
  public:
   inline void SetFromKey(const storage::Tuple *tuple) {
     assert(tuple);
-    auto schema = tuple->GetSchema();
-    std::cout << *schema;
-    std::cout << *tuple;
-    LOG_INFO("schema len = %d, keySize = %lu", tuple->GetSchema()->GetLength(), KeySize);
     assert(tuple->GetSchema()->GetLength() <= KeySize);
     ::memcpy(data, tuple->GetData(), tuple->GetSchema()->GetLength());
   }

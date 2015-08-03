@@ -35,68 +35,36 @@ class IndexScanNode : public AbstractScanNode {
 
   struct IndexScanDesc {
     index::Index *index;
-    storage::Tuple *start_key;
-    storage::Tuple *end_key;
-    bool start_inclusive;
-    bool end_inclusive;
-    IndexScanDesc()
-        : index(nullptr),
-          start_key(nullptr),
-          end_key(nullptr),
-          start_inclusive(false),
-          end_inclusive(false) {}
-  };
+    std::vector<oid_t> key_ids;
+    std::vector<ExpressionType> compare_types;
+    std::vector<Value> keys;
 
-  /* FIXME We should keep only one c'tor. Please remove this one someday. (I keep them for unit test) */
-  IndexScanNode(storage::AbstractTable *table, index::Index *index,
-                storage::Tuple *start_key, storage::Tuple *end_key,
-                bool start_inclusive, bool end_inclusive,
-                const std::vector<oid_t> &column_ids)
-      : AbstractScanNode(nullptr, column_ids),
-        table_(table),
-        index_(index),
-        start_key_(start_key),
-        end_key_(end_key),
-        start_inclusive_(start_inclusive),
-        end_inclusive_(end_inclusive) {}
+    IndexScanDesc()
+        : index(nullptr) {}
+  };
 
   IndexScanNode(expression::AbstractExpression *predicate,
                 const std::vector<oid_t> &column_ids,
                 storage::AbstractTable *table,
-                IndexScanDesc &index_scan_desc)
+                const IndexScanDesc &index_scan_desc)
       : AbstractScanNode(predicate, column_ids),
         table_(table),
         index_(index_scan_desc.index),
-        start_key_(index_scan_desc.start_key),
-        end_key_(index_scan_desc.end_key),
-        start_inclusive_(index_scan_desc.start_inclusive),
-        end_inclusive_(index_scan_desc.end_inclusive) {}
+        key_ids_(std::move(index_scan_desc.key_ids)),
+        compare_types_(std::move(index_scan_desc.compare_types)),
+        keys_(std::move(index_scan_desc.keys)) {}
 
-  ~IndexScanNode() {
-    /* Clean up things */
-    if (start_key_ == end_key_) {
-      // do not double free
-      if (start_key_)
-        delete start_key_;
-      return;
-    }
-    if (start_key_)
-      delete start_key_;
-    if (end_key_)
-      delete end_key_;
-  }
+  ~IndexScanNode() {}
 
   const storage::AbstractTable *GetTable() const { return table_; }
 
   index::Index *GetIndex() const { return index_; }
 
-  const storage::Tuple *GetStartKey() const { return start_key_; }
+  const std::vector<oid_t> &GetKeyIds() const { return key_ids_; }
 
-  const storage::Tuple *GetEndKey() const { return end_key_; }
+  const std::vector<ExpressionType> &GetCompareTypes() const { return compare_types_; }
 
-  bool IsStartInclusive() const { return start_inclusive_; }
-
-  bool IsEndInclusive() const { return end_inclusive_; }
+  const std::vector<Value> &GetKeys() const { return keys_; }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_INDEXSCAN;
@@ -111,18 +79,12 @@ class IndexScanNode : public AbstractScanNode {
   /** @brief index associated with index scan. */
   index::Index *index_;
 
-  /** @brief starting key for index scan. */
-  storage::Tuple *start_key_;
+  const std::vector<oid_t> key_ids_;
+  const std::vector<ExpressionType> compare_types_;
+  const std::vector<Value> keys_;
 
-  /** @brief ending key for index scan. */
-  storage::Tuple *end_key_;
 
-  /** @brief whether we also need to include the terminal values ?
-   *  Like ID > 50 (not inclusive) or ID >= 50 (inclusive)
-   * */
-  bool start_inclusive_;
 
-  bool end_inclusive_;
 
 };
 
