@@ -21,6 +21,7 @@
 #include "backend/common/logger.h"
 
 #include "backend/storage/database.h"
+#include "postmaster/peloton.h"
 
 #include "postgres.h"
 #include "miscadmin.h"
@@ -67,7 +68,7 @@ void DDL::ProcessUtility(Node *parsetree,
 
     case T_CreateStmt:
     case T_CreateForeignTableStmt: {
-      DDLTable::ExecCreateStmt(parsetree, parsetree_stack, txn_id);
+      DDLTable::ExecCreateStmt(parsetree, parsetree_stack, status, txn_id);
       break;
     }
 
