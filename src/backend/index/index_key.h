@@ -148,6 +148,10 @@ class IntsKey {
     return retval;
   }
 
+  const storage::Tuple GetTupleForComparison(const catalog::Schema *key_schema) {
+    throw IndexException("Tuple conversion not supported");
+  }
+
   std::string Debug( const catalog::Schema *key_schema) const {
     std::ostringstream buffer;
     int key_offset = 0;
@@ -363,6 +367,10 @@ class GenericKey {
     }
   }
 
+  const storage::Tuple GetTupleForComparison(const catalog::Schema *key_schema) {
+    return storage::Tuple(key_schema, data);
+  }
+
   // actual location of data, extends past the end.
   char data[KeySize];
 
@@ -487,7 +495,7 @@ class TupleKey {
   }
 
   // Return a table tuple that is valid for comparison
-  storage::Tuple GetTupleForComparison() const {
+  const storage::Tuple GetTupleForComparison(const catalog::Schema *key_tuple_schema) const {
     return storage::Tuple(key_tuple_schema, key_tuple);
   }
 
@@ -499,7 +507,6 @@ class TupleKey {
       return column_indices[indexColumn];
   }
 
- private:
   // TableIndex owns this array - NULL if an ephemeral key
   const int* column_indices;
 
@@ -516,8 +523,8 @@ class TupleKeyComparator {
 
   // return true if lhs < rhs
   inline bool operator()(const TupleKey &lhs, const TupleKey &rhs) const {
-    storage::Tuple lhTuple = lhs.GetTupleForComparison();
-    storage::Tuple rhTuple = rhs.GetTupleForComparison();
+    storage::Tuple lhTuple = lhs.GetTupleForComparison(lhs.key_tuple_schema);
+    storage::Tuple rhTuple = rhs.GetTupleForComparison(rhs.key_tuple_schema);
     Value lhValue, rhValue;
 
     for (int col_itr=0; col_itr < schema->GetColumnCount(); ++col_itr) {
@@ -546,8 +553,8 @@ class TupleKeyEqualityChecker {
 
   // return true if lhs == rhs
   inline bool operator()(const TupleKey &lhs, const TupleKey &rhs) const {
-    storage::Tuple lhTuple = lhs.GetTupleForComparison();
-    storage::Tuple rhTuple = rhs.GetTupleForComparison();
+    storage::Tuple lhTuple = lhs.GetTupleForComparison(lhs.key_tuple_schema);
+    storage::Tuple rhTuple = rhs.GetTupleForComparison(rhs.key_tuple_schema);
     Value lhValue, rhValue;
 
     for (int col_itr=0; col_itr < schema->GetColumnCount(); ++col_itr) {
