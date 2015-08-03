@@ -473,6 +473,5 @@ boost::shared_array<int> ConvertIfAllParameterValues(
   return ret;
 }
 
-
 }  // End expression namespace
 }  // End peloton namespace
