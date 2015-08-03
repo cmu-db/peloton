@@ -734,7 +734,7 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(
       break;
 
     default:
-      printf("INVALID CONSTRAINT TYPE : %d \n", PostgresConstrType);
+      fprintf(stderr, "INVALID CONSTRAINT TYPE : %d \n", PostgresConstrType);
       break;
   }
   return constraintType;

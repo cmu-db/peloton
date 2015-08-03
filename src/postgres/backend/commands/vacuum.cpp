@@ -148,6 +148,9 @@ void
 vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 	   List *va_cols, BufferAccessStrategy bstrategy, bool isTopLevel)
 {
+  // TODO :: Peloton Changes
+  // Disabled vacuumming in Postgres
+  if(false){
 	const char *stmttype;
 	volatile bool in_outer_xact,
 				use_own_xacts;
@@ -359,6 +362,7 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 	 */
 	MemoryContextDelete(vac_context);
 	vac_context = NULL;
+  }
 }
 
 /*

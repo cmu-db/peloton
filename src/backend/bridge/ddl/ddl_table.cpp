@@ -14,6 +14,7 @@
 #include <iostream>
 #include <vector>
 
+#include "backend/bridge/ddl/ddl.h"
 #include "backend/bridge/ddl/ddl_table.h"
 #include "backend/bridge/ddl/ddl_database.h"
 #include "backend/bridge/ddl/ddl_utils.h"
@@ -37,14 +38,15 @@ namespace bridge {
  * @brief Execute the create stmt.
  * @param the parse tree
  * @param query string
- * @param index info to store index information
  * @return true if we handled it correctly, false otherwise
  */
 
-bool DDLTable::ExecCreateStmt(Node* parsetree, const char* queryString,
-                              std::vector<IndexInfo>& index_infos) {
-  /* Run parse analysis ... */
-  List* stmts = transformCreateStmt((CreateStmt*)parsetree, queryString);
+bool DDLTable::ExecCreateStmt(Node* parsetree,
+                              std::vector<Node*>& parsetree_stack,
+                              Peloton_Status* status,
+                              TransactionId txn_id) {
+                           
+  List* stmts = ((CreateStmt*)parsetree)->stmts;
 
   /* ... and do it */
   ListCell* l;
@@ -81,31 +83,40 @@ bool DDLTable::ExecCreateStmt(Node* parsetree, const char* queryString,
       if (status == false) {
         LOG_WARN("Failed to set reference tables");
       }
-
-      //===--------------------------------------------------------------------===//
-      // Add Primary Key and Unique Indexes to the table
-      //===--------------------------------------------------------------------===//
-      status = DDLIndex::CreateIndexes(index_infos);
-      if (status == false) {
-        LOG_WARN("Failed to create primary key and unique index");
-      }
     }
   }
-  return true;
-}
 
+  //===--------------------------------------------------------------------===//
+  // Rerun query
+  //===--------------------------------------------------------------------===//
+  for( auto parsetree : parsetree_stack ){
+    DDL::ProcessUtility(parsetree,"rerun", status, txn_id);
+  }
+  parsetree_stack.clear();
+
+  return true;
+} 
 /**
  * @brief Execute the alter stmt.
- * @param the parse tree
- * @param query string
+ * @param the parsetree
+ * @param the parsetree_stack store parsetree if the table is not created yet
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLTable::ExecAlterTableStmt(Node* parsetree, const char* queryString) {
+bool DDLTable::ExecAlterTableStmt(Node* parsetree, 
+                                  std::vector<Node*>& parsetree_stack) {
   AlterTableStmt* atstmt = (AlterTableStmt*)parsetree;
-  Oid relation_oid = atstmt->relation_id;
-  List* stmts = transformAlterTableStmt(relation_oid, atstmt, queryString);
 
-  /* ... and do it */
+  Oid relation_oid = atstmt->relation_id;
+  List* stmts = atstmt->stmts;
+
+  // If table has not been created yet, store it into the parsetree stack
+  auto& manager = catalog::Manager::GetInstance();
+  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+  if (nullptr == db->GetTableWithOid(relation_oid)){
+    parsetree_stack.push_back(parsetree);
+    return true;
+  }
+
   ListCell* l;
   foreach (l, stmts) {
     Node* stmt = (Node*)lfirst(l);
@@ -139,8 +150,15 @@ bool DDLTable::ExecDropStmt(Node* parsetree) {
 
       case OBJECT_TABLE: {
         char* table_name = strVal(linitial(names));
-        Oid table_oid = Bridge::GetRelationOid(table_name);
 
+        auto& manager = catalog::Manager::GetInstance();
+        storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+        auto table = db->GetTableWithName(table_name);
+
+        // skip if no table
+        if( table == nullptr) break;
+       
+        Oid table_oid = table->GetOid();
         DDLTable::DropTable(table_oid);
       } break;
 
@@ -180,11 +198,10 @@ bool DDLTable::CreateTable(Oid relation_oid, std::string table_name,
 
   db->AddTable(table);
 
-  if (table != nullptr) {
-    LOG_INFO("Created table(%u) : %s", relation_oid, table_name.c_str());
+  if(table != nullptr) {
+    LOG_INFO("Created table(%u)%s in database(%u) ", relation_oid, table_name.c_str(), database_oid);
     return true;
   }
-
   return false;
 }
 
@@ -197,21 +214,21 @@ bool DDLTable::CreateTable(Oid relation_oid, std::string table_name,
 bool DDLTable::AlterTable(Oid relation_oid, AlterTableStmt* Astmt) {
   ListCell* lcmd;
   foreach (lcmd, Astmt->cmds) {
-    AlterTableCmd* cmd = (AlterTableCmd*)lfirst(lcmd);
+  AlterTableCmd* cmd = (AlterTableCmd*)lfirst(lcmd);
 
     switch (cmd->subtype) {
       // case AT_AddColumn:  /* add column */
       // case AT_DropColumn:  /* drop column */
 
       case AT_AddConstraint: /* ADD CONSTRAINT */
-      {
-        bool status = AddConstraint(relation_oid, (Constraint*)cmd->def);
+        {
+          bool status = AddConstraint(relation_oid, (Constraint*)cmd->def);
 
-        if (status == false) {
-          LOG_WARN("Failed to add constraint");
+          if (status == false) {
+            LOG_WARN("Failed to add constraint");
+          }
+          break;
         }
-        break;
-      }
       default:
         break;
     }
@@ -257,29 +274,21 @@ bool DDLTable::AddConstraint(Oid relation_oid, Constraint* constraint) {
   ConstraintType contype = PostgresConstraintTypeToPelotonConstraintType(
       (PostgresConstraintType)constraint->contype);
   std::vector<catalog::ForeignKey> foreign_keys;
-
   std::string conname;
+
   if (constraint->conname != NULL) {
     conname = constraint->conname;
   } else {
     conname = "";
   }
 
-  // FIXME
-  // Create a new constraint
-  // catalog::Constraint* new_constraint;
-
-  switch (contype) {
-    std::cout << "const type : " << ConstraintTypeToString(contype)
-              << std::endl;
-
+  switch(contype){
     case CONSTRAINT_TYPE_FOREIGN: {
       oid_t database_oid = Bridge::GetCurrentDatabaseOid();
       assert(database_oid);
 
       auto& manager = catalog::Manager::GetInstance();
-      storage::Database* db =
-          manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+      storage::Database* db = manager.GetDatabaseWithOid(database_oid);
 
       // PrimaryKey Table
       oid_t PrimaryKeyTableId =
@@ -306,7 +315,6 @@ bool DDLTable::AddConstraint(Oid relation_oid, Constraint* constraint) {
       catalog::ForeignKey* foreign_key = new catalog::ForeignKey(
           PrimaryKeyTableId, pk_column_names, fk_column_names,
           constraint->fk_upd_action, constraint->fk_del_action, conname);
-      // new_constraint  = new catalog::Constraint(contype, conname);
       foreign_keys.push_back(*foreign_key);
 
     } break;

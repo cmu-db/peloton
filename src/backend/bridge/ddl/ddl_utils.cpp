@@ -17,12 +17,12 @@
 #include "backend/common/logger.h"
 #include "backend/storage/database.h"
 
+#include "parser/parse_type.h"
+#include "utils/syscache.h"
 #include "miscadmin.h"
 #include "parser/parse_utilcmd.h"
-#include "parser/parse_type.h"
 #include "access/htup_details.h"
 #include "utils/resowner.h"
-#include "utils/syscache.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 
@@ -32,6 +32,79 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 // DDL Utils
 //===--------------------------------------------------------------------===//
+
+/**
+ * @brief preparing data 
+ * @param parsetree
+ */
+void DDLUtils::peloton_prepare_data(Node* parsetree){
+  switch(nodeTag(parsetree)){
+      case T_CreateStmt:
+      case T_CreateForeignTableStmt:{
+        List* stmts = ((CreateStmt*)parsetree)->stmts;
+        oid_t relation_oid = ((CreateStmt*)parsetree)->relation_id;
+        ListCell* l;
+
+        foreach (l, stmts) {
+          Node* stmt = (Node*)lfirst(l);
+          if (IsA(stmt, CreateStmt)) {
+            CreateStmt* Cstmt = (CreateStmt*)stmt;
+
+            // Get the column list from the create statement
+            List* ColumnList = (List*)(Cstmt->tableElts);
+
+            // Parse the CreateStmt and construct ColumnInfo
+            ListCell* entry;
+            int column_itr=1;
+            foreach (entry, ColumnList) {
+              ColumnDef* coldef = static_cast<ColumnDef*>(lfirst(entry));
+
+              Oid typeoid = typenameTypeId(NULL, coldef->typeName);
+              int32 typemod;
+              typenameTypeIdAndMod(NULL, coldef->typeName, &typeoid, &typemod);
+        
+              // Get type length
+              Type tup = typeidType(typeoid);
+              int typelen = typeLen(tup);
+              ReleaseSysCache(tup);
+        
+              // For a fixed-size type, typlen is the number of bytes in the internal
+              // representation of the type. But for a variable-length type, typlen is
+              // negative.
+              if (typelen == -1) typelen = typemod;
+
+              // Use existing TypeName structure
+              coldef->typeName->type_oid = typeoid;
+              coldef->typeName->type_len = typelen;
+
+              if(coldef->raw_default != NULL || coldef->cooked_default != NULL)
+                SetDefaultConstraint(coldef, column_itr++, relation_oid);
+            }
+          }
+        }
+        break;
+      }
+      default:
+      // Don't need to prepare for other cases
+      break;
+    break;
+  }
+}
+
+/**
+ * @brief setting default constraint
+ */
+void DDLUtils::SetDefaultConstraint(ColumnDef* coldef, int column_itr, oid_t relation_oid){
+  Relation relation = heap_open(relation_oid , AccessShareLock);
+  int num_defva = relation->rd_att->constr->num_defval;
+  for(int def_itr=0; def_itr<num_defva; def_itr++){
+    if( column_itr == relation->rd_att->constr->defval[def_itr].adnum){
+      char* default_expression = relation->rd_att->constr->defval[def_itr].adbin;
+      coldef->cooked_default = static_cast<Node*>(stringToNode(default_expression));
+    }
+  }
+  heap_close(relation, AccessShareLock);
+}
 
 /**
  * @brief parsing create statement
@@ -57,19 +130,8 @@ void DDLUtils::ParsingCreateStmt(
     ColumnDef* coldef = static_cast<ColumnDef*>(lfirst(entry));
 
     // Get the type oid and type mod with given typeName
-    Oid typeoid = typenameTypeId(NULL, coldef->typeName);
-    int32 typemod;
-    typenameTypeIdAndMod(NULL, coldef->typeName, &typeoid, &typemod);
-
-    // Get type length
-    Type tup = typeidType(typeoid);
-    int typelen = typeLen(tup);
-    ReleaseSysCache(tup);
-
-    // For a fixed-size type, typlen is the number of bytes in the internal
-    // representation of the type. But for a variable-length type, typlen is
-    // negative.
-    if (typelen == -1) typelen = typemod;
+    Oid typeoid = coldef->typeName->type_oid;
+    int typelen = coldef->typeName->type_len;
 
     ValueType column_valueType =
         PostgresValueTypeToPelotonValueType((PostgresValueType)typeoid);
@@ -82,18 +144,11 @@ void DDLUtils::ParsingCreateStmt(
 
     std::vector<catalog::Constraint> column_constraints;
 
-    if (coldef->raw_default != NULL) {
-      catalog::Constraint constraint(CONSTRAINT_TYPE_DEFAULT, "",
-                                     coldef->raw_default);
-      column_constraints.push_back(constraint);
-    };
-
     if (coldef->constraints != NULL) {
       ListCell* constNodeEntry;
 
       foreach (constNodeEntry, coldef->constraints) {
-        Constraint* ConstraintNode =
-            static_cast<Constraint*>(lfirst(constNodeEntry));
+        Constraint* ConstraintNode = static_cast<Constraint*>(lfirst(constNodeEntry));
         ConstraintType contype;
         std::string conname;
 
@@ -108,78 +163,42 @@ void DDLUtils::ParsingCreateStmt(
           conname = "";
         }
 
-        catalog::Constraint* constraint;
-
-        switch (contype) {
-          case CONSTRAINT_TYPE_NULL:
-            constraint = new catalog::Constraint(contype, conname);
-            break;
-          case CONSTRAINT_TYPE_NOTNULL:
-            constraint = new catalog::Constraint(contype, conname);
-            break;
-          case CONSTRAINT_TYPE_CHECK:
-            constraint = new catalog::Constraint(contype, conname,
-                                                 ConstraintNode->raw_expr);
-            break;
-          case CONSTRAINT_TYPE_PRIMARY:
-            constraint = new catalog::Constraint(contype, conname);
-            break;
+        switch(contype){
           case CONSTRAINT_TYPE_UNIQUE:
+          case CONSTRAINT_TYPE_FOREIGN:
             continue;
-          case CONSTRAINT_TYPE_FOREIGN: {
-            // REFERENCE TABLE NAME AND ACTION OPTION
-            if (ConstraintNode->pktable != NULL) {
-              auto& manager = catalog::Manager::GetInstance();
-              storage::Database* db =
-                  manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
 
-              // PrimaryKey Table
-              oid_t PrimaryKeyTableId =
-                  db->GetTableWithName(ConstraintNode->pktable->relname)
-                      ->GetOid();
-
-              // Each table column names
-              std::vector<std::string> pk_column_names;
-              std::vector<std::string> fk_column_names;
-
-              ListCell* column;
-              if (ConstraintNode->pk_attrs != NULL &&
-                  ConstraintNode->pk_attrs->length > 0) {
-                foreach (column, ConstraintNode->pk_attrs) {
-                  char* attname = strVal(lfirst(column));
-                  pk_column_names.push_back(attname);
-                }
-              }
-              if (ConstraintNode->fk_attrs != NULL &&
-                  ConstraintNode->fk_attrs->length > 0) {
-                foreach (column, ConstraintNode->fk_attrs) {
-                  char* attname = strVal(lfirst(column));
-                  fk_column_names.push_back(attname);
-                }
-              }
-
-              catalog::ForeignKey* foreign_key = new catalog::ForeignKey(
-                  PrimaryKeyTableId, pk_column_names, fk_column_names,
-                  ConstraintNode->fk_upd_action, ConstraintNode->fk_del_action,
-                  conname);
-
-              foreign_keys.push_back(*foreign_key);
-            }
-            continue;
+          case CONSTRAINT_TYPE_NULL:
+          case CONSTRAINT_TYPE_NOTNULL:
+          case CONSTRAINT_TYPE_PRIMARY:{
+            catalog::Constraint constraint(contype, conname);
+            column_constraints.push_back(constraint);
+            break;
           }
-          default: {
-            constraint = new catalog::Constraint(contype, conname);
-            LOG_WARN("Unrecognized constraint type %d\n", (int)contype);
+          case CONSTRAINT_TYPE_CHECK:{
+            catalog::Constraint constraint(contype, conname, ConstraintNode->raw_expr);
+            column_constraints.push_back(constraint);
+            break;
+          }
+          case CONSTRAINT_TYPE_DEFAULT:{
+            catalog::Constraint constraint(contype, conname, coldef->cooked_default);
+            column_constraints.push_back(constraint);
+            break;
+          }
+          default:
+          {
+            LOG_WARN("Unrecognized constraint type %d\n", (int) contype);
             break;
           }
         }
-
-        column_constraints.push_back(*constraint);
       }
     }  // end of parsing constraint
 
     catalog::Column column_info(column_valueType, column_length, column_name,
                                 false);
+
+    for(auto constraint : column_constraints )
+      column_info.AddConstraint(constraint);
 
     // Insert column_info into ColumnInfos
     column_infos.push_back(column_info);

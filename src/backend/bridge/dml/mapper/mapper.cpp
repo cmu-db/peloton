@@ -81,6 +81,11 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
       plan_node = PlanTransformer::TransformLimit(
           reinterpret_cast<const LimitState *>(plan_state));
       break;
+    case T_MergeJoin:
+    case T_HashJoin:
+      // TODO :: 'MergeJoin'/'HashJoin' have not been implemented yet, however, we need this
+      // case to operate AlterTable 
+      // Also - Added special case in peloton_process_dml
     case T_NestLoop:
       plan_node = PlanTransformer::TransformNestLoop(
           reinterpret_cast<const NestLoopState*>(plan_state));
