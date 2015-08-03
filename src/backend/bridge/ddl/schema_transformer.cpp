@@ -15,9 +15,11 @@
 #include <vector>
 #include <iostream>
 
-#include "backend/common/types.h"
+
 #include "backend/catalog/constraint.h"
 #include "backend/catalog/column.h"
+#include "backend/common/types.h"
+#include "backend/common/logger.h"
 
 namespace peloton {
 namespace bridge {
@@ -40,6 +42,11 @@ catalog::Schema* SchemaTransformer::GetSchemaFromTupleDesc(TupleDesc tupleDesc){
     // value
     PostgresValueType postgresValueType = (PostgresValueType)tupleDesc->attrs[column_itr]->atttypid;
     ValueType value_type = PostgresValueTypeToPelotonValueType(postgresValueType);
+
+    // Skip invalid attributes (e.g., ctid)
+    if(VALUE_TYPE_INVALID == value_type){
+      continue;
+    }
 
     // length
     int column_length = tupleDesc->attrs[column_itr]->attlen;
@@ -70,6 +77,7 @@ catalog::Schema* SchemaTransformer::GetSchemaFromTupleDesc(TupleDesc tupleDesc){
 
   schema = new catalog::Schema(columns);
 
+  LOG_INFO("Schema converted to Peloton: \n ");
   std::cout << *schema << std::endl;
 
   return schema;
