@@ -31,6 +31,7 @@
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/common/stack_trace.h"
+#include "backend/logging/logger.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -380,6 +381,9 @@ peloton_MainLoop(void) {
     elog(ERROR, "Could not create peloton scheduler \n");
     return;
   }
+
+  // Launching logging thread
+  std::thread logger (peloton::logging::Logger::logging_MainLoop);
 
   /*
    * Loop to process messages until we get SIGQUIT or detect ungraceful
