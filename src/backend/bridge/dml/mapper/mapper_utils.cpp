@@ -92,7 +92,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
     assert(out_col_list.size() == 0);
   }
   else if(project_info->GetTargetList().size() > 0){  // Have non-trivial projection, add a plan node
-    LOG_INFO("Non-trivial projections are found. \n");
+    LOG_INFO("Non-trivial projections are found. Projection node will be created. \n");
 
     auto project_schema =
         SchemaTransformer::GetSchemaFromTupleDesc(sstate->ps.ps_ResultTupleSlot->tts_tupleDescriptor);
