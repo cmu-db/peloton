@@ -80,7 +80,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexScan(
   expression::AbstractExpression* predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  GetGenericInfoFromScanState(parent, predicate, column_ids, &(iss_plan_state->ss));
+  GetGenericInfoFromScanState(parent, predicate, column_ids, &(iss_plan_state->ss), options.use_projInfo);
 
   auto scan_node = new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
 
@@ -219,7 +219,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
   expression::AbstractExpression* predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  GetGenericInfoFromScanState(parent, predicate, column_ids, &(ioss_plan_state->ss));
+  GetGenericInfoFromScanState(parent, predicate, column_ids, &(ioss_plan_state->ss), options.use_projInfo);
 
   auto scan_node = new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
 
@@ -291,7 +291,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformBitmapScan(
   expression::AbstractExpression* predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  GetGenericInfoFromScanState(parent, predicate, column_ids, &(bhss_plan_state->ss));
+  GetGenericInfoFromScanState(parent, predicate, column_ids, &(bhss_plan_state->ss), options.use_projInfo);
 
   auto scan_node = new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
 
