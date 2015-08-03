@@ -20,6 +20,9 @@
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/common/logger.h"
 
+#include "backend/storage/database.h"
+#include "postmaster/peloton.h"
+
 #include "postgres.h"
 #include "miscadmin.h"
 #include "c.h"
@@ -36,12 +39,14 @@ namespace bridge {
  * @brief Process utility statement.
  * @param parsetree Parse tree
  */
-void DDL::ProcessUtility(Node *parsetree, const char *queryString,
+void DDL::ProcessUtility(Node *parsetree, 
+                         const char *queryString,
+                         Peloton_Status* status,
                          TransactionId txn_id) {
   assert(parsetree != nullptr);
   assert(queryString != nullptr);
 
-  static std::vector<IndexInfo> index_infos;
+  static std::vector<Node*> parsetree_stack;
 
   /* When we call a backend function from different thread, the thread's stack
    * is at a different location than the main thread's stack. so it sets up
@@ -63,12 +68,12 @@ void DDL::ProcessUtility(Node *parsetree, const char *queryString,
 
     case T_CreateStmt:
     case T_CreateForeignTableStmt: {
-      DDLTable::ExecCreateStmt(parsetree, queryString, index_infos);
+      DDLTable::ExecCreateStmt(parsetree, parsetree_stack, status, txn_id);
       break;
     }
 
     case T_AlterTableStmt: {
-      DDLTable::ExecAlterTableStmt(parsetree, queryString);
+      DDLTable::ExecAlterTableStmt(parsetree, parsetree_stack);
       break;
     }
 
@@ -78,12 +83,12 @@ void DDL::ProcessUtility(Node *parsetree, const char *queryString,
     }
 
     case T_IndexStmt: {
-      DDLIndex::ExecIndexStmt(parsetree, index_infos);
+      DDLIndex::ExecIndexStmt(parsetree, parsetree_stack);
       break;
     }
 
     case T_VacuumStmt: {
-      DDLDatabase::ExecVacuumStmt(parsetree);
+      DDLDatabase::ExecVacuumStmt(parsetree, status);
       break;
     }
 
@@ -97,6 +102,13 @@ void DDL::ProcessUtility(Node *parsetree, const char *queryString,
       LOG_WARN("unrecognized node type: %d", (int)nodeTag(parsetree));
     } break;
   }
+
+/*
+  auto& manager = catalog::Manager::GetInstance();
+  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+  std::cout << "Print db :: \n"<<*db << std::endl;
+  */
+
 }
 
 }  // namespace bridge
