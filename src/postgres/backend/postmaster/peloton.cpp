@@ -881,7 +881,7 @@ peloton_send_ddl(Peloton_Status  *status,
     return;
 
   // Prepare data depends on query for DDL
-  MemoryContext oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   peloton::bridge::DDLUtils::peloton_prepare_data(parsetree);
   MemoryContextSwitchTo(oldcxt);
 

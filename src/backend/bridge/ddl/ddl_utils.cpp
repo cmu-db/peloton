@@ -96,7 +96,7 @@ void DDLUtils::SetDefaultConstraint(ColumnDef* coldef, int column_itr, Relation 
   for(int def_itr=0; def_itr<num_defva; def_itr++){
     if( column_itr == relation->rd_att->constr->defval[def_itr].adnum){
       char* default_expression = relation->rd_att->constr->defval[def_itr].adbin;
-      coldef->raw_default = (Node*)stringToNode(default_expression);
+      coldef->raw_default = static_cast<Node*>(stringToNode(default_expression));
     }
   }
 }
@@ -139,19 +139,11 @@ void DDLUtils::ParsingCreateStmt(
 
     std::vector<catalog::Constraint> column_constraints;
 
-    if (coldef->raw_default != NULL) {
-      catalog::Constraint constraint(CONSTRAINT_TYPE_DEFAULT, "",
-                                     coldef->raw_default);
-      //printf("def2 %s\n", nodeToString(coldef->raw_default));
-      column_constraints.push_back(constraint);
-    };
-
     if (coldef->constraints != NULL) {
       ListCell* constNodeEntry;
 
       foreach (constNodeEntry, coldef->constraints) {
-        Constraint* ConstraintNode =
-            static_cast<Constraint*>(lfirst(constNodeEntry));
+        Constraint* ConstraintNode = static_cast<Constraint*>(lfirst(constNodeEntry));
         ConstraintType contype;
         std::string conname;
 
@@ -199,6 +191,9 @@ void DDLUtils::ParsingCreateStmt(
 
     catalog::Column column_info(column_valueType, column_length, column_name,
                                 false);
+
+    for(auto constraint : column_constraints )
+      column_info.AddConstraint(constraint);
 
     // Insert column_info into ColumnInfos
     column_infos.push_back(column_info);
