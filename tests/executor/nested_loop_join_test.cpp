@@ -34,7 +34,7 @@ TEST(NestedLoopJoinTests, CartesianProductTest) {
   planner::NestedLoopJoinNode node(nullptr);
 
   // Run the executor
-  executor::NestedLoopJoinExecutor executor(&node);
+  executor::NestedLoopJoinExecutor executor(&node, nullptr);
 
   MockExecutor left_executor, right_executor;
   executor.AddChild(&left_executor);
@@ -170,7 +170,7 @@ TEST(NestedLoopJoinTests, JoinPredicateTest) {
   planner::NestedLoopJoinNode node(predicate);
 
   // Run the executor
-  executor::NestedLoopJoinExecutor executor(&node);
+  executor::NestedLoopJoinExecutor executor(&node, nullptr);
 
   MockExecutor left_executor, right_executor;
   executor.AddChild(&left_executor);

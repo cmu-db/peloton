@@ -3948,7 +3948,7 @@ PostgresMain(int argc, char *argv[],
      */
     MemoryContextSwitchTo(MessageContext);
     MemoryContextResetAndDeleteChildren(MessageContext);
-    MemoryContextStats(TopSharedMemoryContext);
+    //MemoryContextStats(TopSharedMemoryContext);
     //MemoryContextStats(TopMemoryContext);
 
     initStringInfo(&input_message);

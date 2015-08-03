@@ -111,17 +111,25 @@ class Index {
   //===--------------------------------------------------------------------===//
 
   // insert an index entry linked to given tuple
-  virtual bool InsertEntry(const storage::Tuple *key, ItemPointer location) = 0;
+  virtual bool InsertEntry(const storage::Tuple *key,
+                           const ItemPointer location) = 0;
 
-  // delete the index entry linked to given tuple
-  virtual bool DeleteEntry(const storage::Tuple *key) = 0;
+  // delete the index entry linked to given tuple and location
+  virtual bool DeleteEntry(const storage::Tuple *key,
+                           const ItemPointer location) = 0;
+
+  // update a index entry if the old location is same as the one given
+  virtual bool UpdateEntry(const storage::Tuple *key,
+                        const ItemPointer location,
+                        const ItemPointer old_location) = 0;
 
   //===--------------------------------------------------------------------===//
   // Accessors
   //===--------------------------------------------------------------------===//
 
-  // return whether the entry is already stored in the index
-  virtual bool Exists(const storage::Tuple *key)= 0;
+  // return where the entry is already stored in the index
+  virtual ItemPointer Exists(const storage::Tuple *key,
+                             const ItemPointer location)= 0;
 
   // scan all keys in the index
   virtual std::vector<ItemPointer> Scan() = 0;

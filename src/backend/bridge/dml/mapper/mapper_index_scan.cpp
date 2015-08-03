@@ -43,7 +43,8 @@ static void BuildScanKey(
  * @return Pointer to the constructed AbstractPlanNode.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformIndexScan(
-    const IndexScanState *iss_plan_state) {
+    const IndexScanState *iss_plan_state,
+    const TransformOptions options) {
   /* info needed to initialize plan node */
   planner::IndexScanNode::IndexScanDesc index_scan_desc;
   /* Resolve target relation */
@@ -79,9 +80,21 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexScan(
   expression::AbstractExpression* predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  TransformGenericScanInfo(parent, predicate, column_ids, &(iss_plan_state->ss));
+  GetGenericInfoFromScanState(parent, predicate, column_ids, &(iss_plan_state->ss), options.use_projInfo);
 
-  return new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
+  auto scan_node = new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
+
+  planner::AbstractPlanNode* rv = nullptr;
+  /* Check whether a parent is presented, connect with the scan node if yes */
+  if(parent){
+    parent->AddChild(scan_node);
+    rv = parent;
+  }
+  else{
+    rv = scan_node;
+  }
+
+  return rv;
 }
 /**
  * @brief Helper function to build index scan descriptor.
@@ -129,9 +142,8 @@ static void BuildScanKey(
       case BTEqualStrategyNumber:
         LOG_INFO("key = %s", oss.str().c_str());
         index_scan_desc.start_key = new storage::Tuple(schema, true);
-        index_scan_desc.end_key = new storage::Tuple(schema, true);
+        index_scan_desc.end_key = index_scan_desc.start_key;
         index_scan_desc.start_key->SetValue(0, value);
-        index_scan_desc.end_key->SetValue(0, value);
         index_scan_desc.end_inclusive = true;
         index_scan_desc.start_inclusive = true;
         break;
@@ -169,7 +181,8 @@ static void BuildScanKey(
  * @return Pointer to the constructed AbstractPlanNode.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
-    const IndexOnlyScanState *ioss_plan_state) {
+    const IndexOnlyScanState *ioss_plan_state,
+    const TransformOptions options) {
   /* info needed to initialize plan node */
   planner::IndexScanNode::IndexScanDesc index_scan_desc;
 
@@ -206,9 +219,21 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
   expression::AbstractExpression* predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  TransformGenericScanInfo(parent, predicate, column_ids, &(ioss_plan_state->ss));
+  GetGenericInfoFromScanState(parent, predicate, column_ids, &(ioss_plan_state->ss), options.use_projInfo);
 
-  return new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
+  auto scan_node = new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
+
+  planner::AbstractPlanNode* rv = nullptr;
+  /* Check whether a parent is presented, connect with the scan node if yes */
+  if(parent){
+    parent->AddChild(scan_node);
+    rv = parent;
+  }
+  else{
+    rv = scan_node;
+  }
+
+  return rv;
 }
 
 /**
@@ -219,7 +244,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
  * @return Pointer to the constructed AbstractPlanNode
  */
 planner::AbstractPlanNode *PlanTransformer::TransformBitmapScan(
-    const BitmapHeapScanState *bhss_plan_state) {
+    const BitmapHeapScanState *bhss_plan_state,
+    const TransformOptions options) {
   planner::IndexScanNode::IndexScanDesc index_scan_desc;
 
   /* resolve target relation */
@@ -265,9 +291,22 @@ planner::AbstractPlanNode *PlanTransformer::TransformBitmapScan(
   expression::AbstractExpression* predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  TransformGenericScanInfo(parent, predicate, column_ids, &(bhss_plan_state->ss));
+  GetGenericInfoFromScanState(parent, predicate, column_ids, &(bhss_plan_state->ss), options.use_projInfo);
 
-  return new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
+  auto scan_node = new planner::IndexScanNode(predicate, column_ids, table, index_scan_desc);
+
+  planner::AbstractPlanNode* rv = nullptr;
+  /* Check whether a parent is presented, connect with the scan node if yes */
+  if(parent){
+    parent->AddChild(scan_node);
+    rv = parent;
+  }
+  else{
+    rv = scan_node;
+  }
+
+  return rv;
+
 }
 
 }  // namespace bridge

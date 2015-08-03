@@ -27,8 +27,9 @@ namespace executor {
  * @brief Constructor for nested loop join executor.
  * @param node Nested loop join node corresponding to this executor.
  */
-NestedLoopJoinExecutor::NestedLoopJoinExecutor(planner::AbstractPlanNode *node)
-    : AbstractExecutor(node) {}
+NestedLoopJoinExecutor::NestedLoopJoinExecutor(planner::AbstractPlanNode *node,
+                                               ExecutorContext *executor_context)
+            : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Do some basic checks and create the schema for the output logical
@@ -100,6 +101,10 @@ bool NestedLoopJoinExecutor::DExecute() {
   auto output_tile_schema = left_tile.get()->GetSchema();
   auto right_tile_schema = right_tile.get()->GetSchema();
 
+  for (auto &col : right_tile_schema) {
+    col.position_list_idx += left_tile.get()->GetPositionLists().size();
+  }
+
   output_tile_schema.insert(output_tile_schema.end(), right_tile_schema.begin(),
                             right_tile_schema.end());
 
@@ -113,6 +118,7 @@ bool NestedLoopJoinExecutor::DExecute() {
   // Add everything from two logical tiles
   auto left_tile_position_lists = left_tile.get()->GetPositionLists();
   auto right_tile_position_lists = right_tile.get()->GetPositionLists();
+
 
   // Compute output tile column count
   size_t left_tile_column_count = left_tile_position_lists.size();
@@ -132,6 +138,10 @@ bool NestedLoopJoinExecutor::DExecute() {
   for (size_t column_itr = 0; column_itr < output_tile_column_count;
        column_itr++)
     position_lists.push_back(std::vector<oid_t>());
+
+  LOG_TRACE("left col count: %lu, right col count: %lu", left_tile_column_count, right_tile_column_count);
+  LOG_TRACE("left col count: %lu, right col count: %lu", left_tile.get()->GetColumnCount(), right_tile.get()->GetColumnCount());
+  LOG_TRACE("left row count: %lu, right row count: %lu", left_tile_row_count, right_tile_row_count);
 
   // Go over every pair of tuples in left and right logical tiles
   for (size_t left_tile_row_itr = 0; left_tile_row_itr < left_tile_row_count;
@@ -178,10 +188,18 @@ bool NestedLoopJoinExecutor::DExecute() {
     }
   }
 
+  for (auto col : position_lists) {
+    LOG_TRACE("col");
+    for (auto elm : col) {
+      (void)elm;  // silent compiler
+      LOG_TRACE("elm: %u", elm);
+    }
+  }
+
+
   // Check if we have any matching tuples.
   if (position_lists[0].size() > 0) {
-    output_tile.get()->SetPositionLists(std::move(position_lists));
-    std::cout << *(output_tile.get());
+    output_tile.get()->SetPositionListsAndVisibility(std::move(position_lists));
     SetOutput(output_tile.release());
     return true;
   }

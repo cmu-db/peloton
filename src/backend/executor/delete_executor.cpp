@@ -72,7 +72,6 @@ bool DeleteExecutor::DExecute() {
   auto &pos_lists = source_tile.get()->GetPositionLists();
   auto tile_group_id = tile_group->GetTileGroupId();
   auto transaction_ = executor_context_->GetTransaction();
-  auto txn_id = transaction_->GetTransactionId();
 
   LOG_TRACE("Source tile : %p Tuples : %lu \n", source_tile.get(),
             source_tile->NumTuples());
@@ -90,7 +89,7 @@ bool DeleteExecutor::DExecute() {
 
     // try to delete the tuple
     // this might fail due to a concurrent operation that has latched the tuple
-    bool status = target_table_->DeleteTuple(txn_id, delete_location);
+    bool status = target_table_->DeleteTuple(transaction_, delete_location);
 
     if (status == false) {
       transaction_->SetResult(Result::RESULT_FAILURE);

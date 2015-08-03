@@ -84,6 +84,9 @@ void DDLUtils::peloton_prepare_data(Node* parsetree){
         }
         break;
       }
+      default:
+      // Don't need to prepare for other cases
+      break;
     break;
   }
 }

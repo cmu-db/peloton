@@ -92,6 +92,14 @@ void LogicalTile::SetPositionLists(
   position_lists_ = position_lists;
 }
 
+void LogicalTile::SetPositionListsAndVisibility(std::vector<std::vector<oid_t> > &&position_lists) {
+  position_lists_ = position_lists;
+  if (position_lists.size() > 0) {
+    visible_rows_.resize(position_lists_[0].size(), true);
+    num_tuples_ = position_lists_[0].size();
+  }
+}
+
 /**
  * @brief Adds column metadata to the logical tile.
  * @param base_tile Base tile that this column is from.
