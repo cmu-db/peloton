@@ -51,7 +51,7 @@ AbstractExpression *GetGeneral(ExpressionType c, AbstractExpression *l,
       sprintf(message,
               "Invalid ExpressionType '%s' called"
               " for ComparisonExpression",
-              GetTypeName(c).c_str());
+              ExpressionTypeToString(c).c_str());
       throw ExpressionException(message);
   }
 }
@@ -78,7 +78,7 @@ AbstractExpression *GetMoreSpecialized(ExpressionType c, L *l, R *r) {
       sprintf(message,
               "Invalid ExpressionType '%s' called for"
               " ComparisonExpression",
-              GetTypeName(c).c_str());
+              ExpressionTypeToString(c).c_str());
       throw ExpressionException(message);
   }
 }
@@ -375,7 +375,7 @@ AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
                                       AbstractExpression *lc,
                                       AbstractExpression *rc) {
   LOG_TRACE("expressionFactory request: "
-            << GetTypeName(et) << " " << et << GetTypeName(vt) << " " << vt
+            << ExpressionTypeToString(et) << " " << et << ExpressionTypeToString(vt) << " " << vt
             << " " << vs << " "
             << "left : " << lc << "right : " << rc);
 
@@ -432,12 +432,12 @@ AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
     default:
       char message[256];
       sprintf(message, "Invalid ExpressionType '%s' requested from factory",
-              GetTypeName(et).c_str());
+              ExpressionTypeToString(et).c_str());
       throw ExpressionException(message);
   }
 
   // written thusly to ease testing/inspecting return content.
-  LOG_TRACE("Created " << GetTypeName(et) << " expression  : " << ret);
+  LOG_TRACE("Created " << ExpressionTypeToString(et) << " expression  : " << ret);
   return ret;
 }
 
@@ -473,106 +473,6 @@ boost::shared_array<int> ConvertIfAllParameterValues(
   return ret;
 }
 
-// return a descriptive string for each typename. could just
-//    as easily be a lookup table
-std::string GetTypeName(ExpressionType type) {
-  std::string ret;
-  switch (type) {
-    case (EXPRESSION_TYPE_OPERATOR_PLUS):
-      ret = "OPERATOR_PLUS";
-      break;
-    case (EXPRESSION_TYPE_OPERATOR_MINUS):
-      ret = "OPERATOR_MINUS";
-      break;
-    case (EXPRESSION_TYPE_OPERATOR_MULTIPLY):
-      ret = "OPERATOR_MULTIPLY";
-      break;
-    case (EXPRESSION_TYPE_OPERATOR_DIVIDE):
-      ret = "OPERATOR_DIVIDE";
-      break;
-    case (EXPRESSION_TYPE_OPERATOR_CONCAT):
-      ret = "OPERATOR_CONCAT";
-      break;
-    case (EXPRESSION_TYPE_OPERATOR_MOD):
-      ret = "OPERATOR_MOD";
-      break;
-    case (EXPRESSION_TYPE_OPERATOR_CAST):
-      ret = "OPERATOR_CAST";
-      break;
-    case (EXPRESSION_TYPE_OPERATOR_NOT):
-      ret = "OPERATOR_NOT";
-      break;
-    case (EXPRESSION_TYPE_COMPARE_EQ):
-      ret = "COMPARE_EQUAL";
-      break;
-    case (EXPRESSION_TYPE_COMPARE_NE):
-      ret = "COMPARE_NOTEQUAL";
-      break;
-    case (EXPRESSION_TYPE_COMPARE_LT):
-      ret = "COMPARE_LESSTHAN";
-      break;
-    case (EXPRESSION_TYPE_COMPARE_GT):
-      ret = "COMPARE_GREATERTHAN";
-      break;
-    case (EXPRESSION_TYPE_COMPARE_LTE):
-      ret = "COMPARE_LESSTHANOREQUALTO";
-      break;
-    case (EXPRESSION_TYPE_COMPARE_GTE):
-      ret = "COMPARE_GREATERTHANOREQUALTO";
-      break;
-    case (EXPRESSION_TYPE_COMPARE_LIKE):
-      ret = "COMPARE_LIKE";
-      break;
-    case (EXPRESSION_TYPE_CONJUNCTION_AND):
-      ret = "CONJUNCTION_AND";
-      break;
-    case (EXPRESSION_TYPE_CONJUNCTION_OR):
-      ret = "CONJUNCTION_OR";
-      break;
-    case (EXPRESSION_TYPE_VALUE_CONSTANT):
-      ret = "VALUE_CONSTANT";
-      break;
-    case (EXPRESSION_TYPE_VALUE_PARAMETER):
-      ret = "VALUE_PARAMETER";
-      break;
-    case (EXPRESSION_TYPE_VALUE_TUPLE):
-      ret = "VALUE_TUPLE";
-      break;
-    case (EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS):
-      ret = "VALUE_TUPLE_ADDRESS";
-      break;
-    case (EXPRESSION_TYPE_VALUE_NULL):
-      ret = "VALUE_NULL";
-      break;
-    case (EXPRESSION_TYPE_AGGREGATE_COUNT):
-      ret = "AGGREGATE_COUNT";
-      break;
-    case (EXPRESSION_TYPE_AGGREGATE_COUNT_STAR):
-      ret = "AGGREGATE_COUNT_STAR";
-      break;
-    case (EXPRESSION_TYPE_AGGREGATE_SUM):
-      ret = "AGGREGATE_SUM";
-      break;
-    case (EXPRESSION_TYPE_AGGREGATE_MIN):
-      ret = "AGGREGATE_MIN";
-      break;
-    case (EXPRESSION_TYPE_AGGREGATE_MAX):
-      ret = "AGGREGATE_MAX";
-      break;
-    case (EXPRESSION_TYPE_AGGREGATE_AVG):
-      ret = "AGGREGATE_AVG";
-      break;
-    case (EXPRESSION_TYPE_INVALID):
-      ret = "INVALID";
-      break;
-    default: {
-      char buffer[32];
-      sprintf(buffer, "UNKNOWN[%d]", type);
-      ret = buffer;
-    }
-  }
-  return (ret);
-}
 
 }  // End expression namespace
 }  // End peloton namespace
