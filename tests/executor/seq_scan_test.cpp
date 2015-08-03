@@ -68,14 +68,26 @@ storage::DataTable *CreateTable() {
 
   GetNextTileGroupId();
 
+  std::map<oid_t, std::pair<oid_t, oid_t> > column_map1;
+  column_map1[0] = std::make_pair(0, 0);
+  column_map1[1] = std::make_pair(0, 1);
+  column_map1[2] = std::make_pair(1, 0);
+  column_map1[3] = std::make_pair(1, 1);
+
+  std::map<oid_t, std::pair<oid_t, oid_t> > column_map2;
+  column_map2[0] = std::make_pair(0, 0);
+  column_map2[1] = std::make_pair(1, 0);
+  column_map2[2] = std::make_pair(1, 1);
+  column_map2[3] = std::make_pair(1, 2);
+
   // Create tile groups.
   table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
       INVALID_OID, INVALID_OID, GetNextTileGroupId(), table.get(),
-      table->GetBackend(), schemas1, tuple_count));
+      table->GetBackend(), schemas1, column_map1, tuple_count));
 
   table->AddTileGroup(storage::TileGroupFactory::GetTileGroup(
       INVALID_OID, INVALID_OID, GetNextTileGroupId(), table.get(),
-      table->GetBackend(), schemas2, tuple_count));
+      table->GetBackend(), schemas2, column_map2, tuple_count));
 
   ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(0), tuple_count);
   ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(1), tuple_count);

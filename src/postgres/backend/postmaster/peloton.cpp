@@ -1076,7 +1076,6 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
   MyDatabaseId = msg->m_hdr.m_dbid;
   TopTransactionContext = msg->m_hdr.m_top_transaction_context;
   CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
-  TransactionId txn_id = msg->m_hdr.m_txn_id;
 
   if(raw_database != NULL) {
     try {

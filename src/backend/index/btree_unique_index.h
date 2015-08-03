@@ -49,37 +49,68 @@ class BtreeUniqueIndex : public Index {
 
   bool InsertEntry(const storage::Tuple *key,
                    const ItemPointer location) {
-    index_key1.SetFromKey(key);
     {
       std::lock_guard<std::mutex> lock(index_mutex);
 
-      // insert the key, val pair
+      index_key1.SetFromKey(key);
+
+      // Insert the key, val pair
       auto status = container.insert(std::pair<KeyType, ValueType>(index_key1, location));
       return status.second;
     }
   }
 
-  bool DeleteEntry(const storage::Tuple *key) {
+  bool DeleteEntry(const storage::Tuple *key,
+                   const ItemPointer location) {
     {
       std::lock_guard<std::mutex> lock(index_mutex);
 
       index_key1.SetFromKey(key);
 
-      // delete the key, val pair
+      // Delete the < key, location > pair
       auto status = container.erase(index_key1);
       return status;
     }
   }
 
-  bool Exists(const storage::Tuple *key) {
+  bool UpdateEntry(const storage::Tuple *key,
+                   const ItemPointer location,
+                   const ItemPointer old_location) {
+
     {
       std::lock_guard<std::mutex> lock(index_mutex);
 
       index_key1.SetFromKey(key);
 
-      // find the key, val pair
-      auto found = (container.find(index_key1) != container.end());
-      return found;
+      // Check for <key, old location> first
+      if(container.count(index_key1) != 0) {
+        ItemPointer old_loc = container[index_key1];
+        if((old_loc.block == old_location.block) &&
+            (old_loc.offset == old_location.offset))  {
+          container[index_key1] = location;
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+  }
+
+  ItemPointer Exists(const storage::Tuple *key,
+                     const ItemPointer location) {
+    {
+      std::lock_guard<std::mutex> lock(index_mutex);
+
+      index_key1.SetFromKey(key);
+
+      // find the key, location pair
+      auto container_itr = container.find(index_key1);
+      if(container_itr != container.end()) {
+        return container_itr->second;
+      }
+
+      return INVALID_ITEMPOINTER;
     }
   }
 

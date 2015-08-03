@@ -15,7 +15,8 @@ check_PROGRAMS += \
 				  order_by_test \
 				  hash_set_op_test \
 				  aggregate_test \
-				  append_test
+				  append_test \
+				  projection_test
 
 executor_tests_common= 	executor/executor_tests_util.cpp \
 						harness.cpp
@@ -63,3 +64,8 @@ aggregate_test_SOURCES = \
 append_test_SOURCES = \
 					$(executor_tests_common) \
 					executor/append_test.cpp					
+
+projection_test_SOURCES = \
+					$(executor_tests_common) \
+					executor/projection_test.cpp					
+					

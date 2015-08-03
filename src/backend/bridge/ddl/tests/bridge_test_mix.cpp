@@ -156,6 +156,9 @@ void BridgeTest::DDL_MIX_TEST_2() {
   // Insert tuples
   const bool allocate = true;
 
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
   for (int col_itr = 0; col_itr < 5; col_itr++) {
 
     storage::Tuple tuple(schema, allocate);
@@ -171,13 +174,15 @@ void BridgeTest::DDL_MIX_TEST_2() {
     tuple.SetValue(2, timestampValue);
     tuple.SetValue(3, doubleValue);
 
-    table->InsertTuple((txn_id_t)col_itr, &tuple, false);
+    table->InsertTuple(txn, &tuple);
 
     assert(tuple.GetValue(0) == integerValue);
     assert(tuple.GetValue(1) == stringValue);
     assert(tuple.GetValue(2) == timestampValue);
     assert(tuple.GetValue(3) == doubleValue);
   }
+
+  txn_manager.CommitTransaction(txn);
 
   // Drop the table
   status = DDLTable::DropTable(table_oid);
