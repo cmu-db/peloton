@@ -65,7 +65,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexScan(
 
   /* Resolve index order */
   /* Only support forward scan direction */
-  assert(iss_plan->indexorderdir == ForwardScanDirection);
+  LOG_INFO("Scan order: %d", iss_plan->indexorderdir);
+  //assert(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier and scan keys */
   LOG_INFO("num of scan keys = %d", iss_plan_state->iss_NumScanKeys);
@@ -104,15 +105,22 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexScan(
  * @param scan_keys an array of scankey struct from Postgres
  * @param num_keys the number of scan keys
  * @param index_scan_desc the index scan node descriptor in Peloton
- * @return Void
+ * @return True if succeed
+ *         False if fail
  */
-static void BuildScanKey(
+static bool BuildScanKey(
     const ScanKey scan_keys, int num_keys,
     planner::IndexScanNode::IndexScanDesc &index_scan_desc) {
   const catalog::Schema *schema = index_scan_desc.index->GetKeySchema();
+  int attrs_in_index = schema->GetColumnCount();
 
   ScanKey scan_key = scan_keys;
   assert(num_keys > 0);
+
+  if (num_keys < attrs_in_index) {
+    LOG_INFO("Does not provide enough keys for index scan, use seq scan");
+    return false;
+  }
 
   for (int i = 0; i < num_keys; i++, scan_key++) {
     assert(!(scan_key->sk_flags & SK_ISNULL)); // currently, only support simple case
@@ -204,7 +212,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
 
   /* Resolve index order */
   /* Only support forward scan direction */
-  assert(iss_plan->indexorderdir == ForwardScanDirection);
+  LOG_INFO("Scan order: %d", iss_plan->indexorderdir);
+  //assert(iss_plan->indexorderdir == ForwardScanDirection);
 
   /* index qualifier and scan keys */
   LOG_INFO("num of scan keys = %d", ioss_plan_state->ioss_NumScanKeys);
@@ -270,8 +279,8 @@ planner::AbstractPlanNode *PlanTransformer::TransformBitmapScan(
 
   /* Resolve index  */
   index_scan_desc.index = table->GetIndexWithOid(biss_plan->indexid);
-  LOG_INFO("BitmapIdxmap scan on Index oid %u, index name: %s",
-           biss_plan->indexid, index_scan_desc.index->GetName().c_str());
+  //LOG_INFO("BitmapIdxmap scan on Index oid %u, index name: %s",
+  //         biss_plan->indexid, index_scan_desc.index->GetName().c_str());
 
   /* Resolve index order */
   /* Only support forward scan direction */
