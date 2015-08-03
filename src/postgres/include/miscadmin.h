@@ -177,7 +177,7 @@ extern char postgres_exec_path[];
  *
  * extern BackendId    MyBackendId;
  */
-extern PGDLLIMPORT Oid MyDatabaseId;
+extern PGDLLIMPORT thread_local Oid MyDatabaseId;
 
 extern PGDLLIMPORT Oid MyDatabaseTableSpace;
 
