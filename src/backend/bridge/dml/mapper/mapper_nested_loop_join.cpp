@@ -51,6 +51,14 @@ planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
   }
 
   /* TODO: do we need to consider target list here? */
+  /* Transform project info */
+  std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
+  project_info.reset(BuildProjectInfo(js->ps.ps_ProjInfo,
+                                      js->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts));
+
+  LOG_INFO("\n%s", project_info.get()->Debug().c_str());
+
+
 
   planner::AbstractPlanNode *outer = PlanTransformer::TransformPlan(outerPlanState(nl_plan_state));
   planner::AbstractPlanNode *inner = PlanTransformer::TransformPlan(innerPlanState(nl_plan_state));
@@ -58,8 +66,8 @@ planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
   /* Construct and return the Peloton plan node */
   auto plan_node = new planner::NestedLoopJoinNode(predicate);
   plan_node->SetJoinType(join_type);
-  plan_node->AddChild(inner);
   plan_node->AddChild(outer);
+  plan_node->AddChild(inner);
   LOG_INFO("Handle Nested loop join, JoinType: %d", join_type);
   return plan_node;
 }

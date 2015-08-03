@@ -71,6 +71,8 @@ class ProjectInfo {
                 const AbstractTuple* tuple2,
                 executor::ExecutorContext* econtext) const;
 
+  std::string Debug() const;
+
   ~ProjectInfo();
 
  private:
