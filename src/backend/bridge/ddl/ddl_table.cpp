@@ -274,20 +274,15 @@ bool DDLTable::AddConstraint(Oid relation_oid, Constraint* constraint) {
   ConstraintType contype = PostgresConstraintTypeToPelotonConstraintType(
       (PostgresConstraintType)constraint->contype);
   std::vector<catalog::ForeignKey> foreign_keys;
-
   std::string conname;
+
   if (constraint->conname != NULL) {
     conname = constraint->conname;
   } else {
     conname = "";
   }
 
-  // FIXME
-  // Create a new constraint
-
   switch(contype){
-    std::cout << "const type : " << ConstraintTypeToString(contype) << std::endl;
-
     case CONSTRAINT_TYPE_FOREIGN: {
       oid_t database_oid = Bridge::GetCurrentDatabaseOid();
       assert(database_oid);
@@ -320,7 +315,6 @@ bool DDLTable::AddConstraint(Oid relation_oid, Constraint* constraint) {
       catalog::ForeignKey* foreign_key = new catalog::ForeignKey(
           PrimaryKeyTableId, pk_column_names, fk_column_names,
           constraint->fk_upd_action, constraint->fk_del_action, conname);
-      // new_constraint  = new catalog::Constraint(contype, conname);
       foreign_keys.push_back(*foreign_key);
 
     } break;
