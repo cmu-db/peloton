@@ -99,12 +99,10 @@ bool UpdateExecutor::DExecute() {
     ItemPointer location = target_table_->UpdateTuple(transaction_, new_tuple,
                                                       delete_location);
     if (location.block == INVALID_OID) {
-      new_tuple->FreeUninlinedData();
       delete new_tuple;
       return false;
     }
     transaction_->RecordInsert(location);
-    new_tuple->FreeUninlinedData();
     delete new_tuple;
 
   }

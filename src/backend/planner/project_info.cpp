@@ -22,8 +22,11 @@ ProjectInfo::~ProjectInfo() {
  * The destination should be pre-allocated by the caller.
  *
  * @warning Destination should not be the same as any source.
+ *
  * @warning If target list and direct map list have overlapping
  * destination columns, the behavior is undefined.
+ *
+ * @warning If projected value is not inlined, only a shallow copy is written.
  *
  * @param dest    Destination tuple.
  * @param tuple1  Source tuple 1.
