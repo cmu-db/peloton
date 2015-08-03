@@ -116,6 +116,10 @@ bool IndexScanExecutor::ExecIndexLookup(){
 
     LOG_INFO("Tuple locations : %lu \n", tuple_locations.size());
 
+  // TODO: Use the generic scan here
+
+  LOG_INFO("Tuple locations : %lu \n", tuple_locations.size());
+
   if (tuple_locations.size() == 0) return false;
 
   auto transaction_ = executor_context_->GetTransaction();
