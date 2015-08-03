@@ -41,6 +41,7 @@ void DDLUtils::peloton_prepare_data(Node* parsetree){
   switch(nodeTag(parsetree)){
       case T_CreateStmt:
       case T_CreateForeignTableStmt:{
+        Relation relation = heap_open( ((CreateStmt*)parsetree)->relation_id , AccessShareLock);
         List* stmts = ((CreateStmt*)parsetree)->stmts;
         ListCell* l;
 
@@ -54,6 +55,7 @@ void DDLUtils::peloton_prepare_data(Node* parsetree){
 
             // Parse the CreateStmt and construct ColumnInfo
             ListCell* entry;
+            int column_itr=1;
             foreach (entry, ColumnList) {
               ColumnDef* coldef = static_cast<ColumnDef*>(lfirst(entry));
 
@@ -74,12 +76,28 @@ void DDLUtils::peloton_prepare_data(Node* parsetree){
               // Use existing TypeName structure
               coldef->typeName->type_oid = typeoid;
               coldef->typeName->type_len = typelen;
+
+              SetDefaultConstraint(coldef, column_itr++, relation);
             }
           }
         }
-      break;
-    }
+        heap_close(relation, AccessShareLock);
+        break;
+      }
     break;
+  }
+}
+
+/**
+ * @brief setting default constraint
+ */
+void DDLUtils::SetDefaultConstraint(ColumnDef* coldef, int column_itr, Relation relation){
+  int num_defva = relation->rd_att->constr->num_defval;
+  for(int def_itr=0; def_itr<num_defva; def_itr++){
+    if( column_itr == relation->rd_att->constr->defval[def_itr].adnum){
+      char* default_expression = relation->rd_att->constr->defval[def_itr].adbin;
+      coldef->raw_default = (Node*)stringToNode(default_expression);
+    }
   }
 }
 
@@ -124,6 +142,7 @@ void DDLUtils::ParsingCreateStmt(
     if (coldef->raw_default != NULL) {
       catalog::Constraint constraint(CONSTRAINT_TYPE_DEFAULT, "",
                                      coldef->raw_default);
+      //printf("def2 %s\n", nodeToString(coldef->raw_default));
       column_constraints.push_back(constraint);
     };
 
