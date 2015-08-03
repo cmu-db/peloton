@@ -26,7 +26,8 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
   NestedLoopJoinExecutor &operator=(const NestedLoopJoinExecutor &) = delete;
 
  public:
-  explicit NestedLoopJoinExecutor(planner::AbstractPlanNode *node);
+  explicit NestedLoopJoinExecutor(planner::AbstractPlanNode *node,
+                                  ExecutorContext *executor_context);
 
  protected:
   bool DInit();

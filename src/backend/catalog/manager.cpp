@@ -28,12 +28,12 @@ Manager &Manager::GetInstance() {
 // OBJECT MAP
 //===--------------------------------------------------------------------===//
 
-void Manager::SetLocation(const oid_t oid, void *location) {
-  locator.insert(std::pair<oid_t, void *>(oid, location));
+void Manager::SetTileGroup(const oid_t oid, storage::TileGroup *location) {
+  locator.insert(std::pair<oid_t, storage::TileGroup *>(oid, location));
 }
 
-void *Manager::GetLocation(const oid_t oid) const {
-  void *location = nullptr;
+storage::TileGroup *Manager::GetTileGroup(const oid_t oid) const {
+  storage::TileGroup *location = nullptr;
   try {
     location = locator.at(oid);
   } catch (std::exception &e) {

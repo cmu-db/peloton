@@ -134,9 +134,15 @@ storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(
   catalog::Schema schema2(columns);
   schemas.push_back(schema2);
 
+  std::map<oid_t, std::pair<oid_t, oid_t> > column_map;
+  column_map[0] = std::make_pair(0, 0);
+  column_map[1] = std::make_pair(0, 1);
+  column_map[2] = std::make_pair(1, 0);
+  column_map[3] = std::make_pair(1, 1);
+
   storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
       INVALID_OID, INVALID_OID, GetNextTileGroupId(), nullptr, backend, schemas,
-      tuple_count);
+      column_map, tuple_count);
 
   return tile_group;
 }
@@ -160,7 +166,6 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
-  const txn_id_t txn_id = txn->GetTransactionId();
 
   for (int col_itr = 0; col_itr < num_rows; col_itr++) {
     int populate_value = col_itr;
@@ -196,7 +201,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
 
     if (group_by) std::cout << "INSERT TUPLE :: " << tuple;
 
-    ItemPointer tuple_slot_id = table->InsertTuple(txn_id, &tuple, false);
+    ItemPointer tuple_slot_id = table->InsertTuple(txn, &tuple);
     EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
     EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
     txn->RecordInsert(tuple_slot_id);

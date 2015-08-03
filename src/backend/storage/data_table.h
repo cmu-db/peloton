@@ -17,13 +17,12 @@
 #include "backend/storage/backend_vm.h"
 #include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_factory.h"
+#include "backend/concurrency/transaction.h"
 
 #include <string>
 
 namespace peloton {
 namespace storage {
-
-typedef tbb::concurrent_unordered_map<oid_t, index::Index *> oid_t_to_index_ptr;
 
 //===--------------------------------------------------------------------===//
 // DataTable
@@ -59,18 +58,17 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   // insert tuple in table
-  ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple,
-                          bool update = false);
+  ItemPointer InsertTuple(const concurrency::Transaction *transaction,
+                          const Tuple *tuple);
 
-  void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+  // insert the updated tuple in table
+  ItemPointer UpdateTuple(const concurrency::Transaction *transaction,
+                          const Tuple *tuple,
+                          const ItemPointer old_location);
 
-  bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
-
-  bool DeleteTuple(txn_id_t transaction_id, ItemPointer location);
-
-  void DeleteInIndexes(const storage::Tuple *tuple);
-
-  bool CheckNulls(const storage::Tuple *tuple) const;
+  // delete the tuple at given location
+  bool DeleteTuple(const concurrency::Transaction *transaction,
+                   ItemPointer location);
 
   //===--------------------------------------------------------------------===//
   // TILE GROUP
@@ -118,6 +116,14 @@ class DataTable : public AbstractTable {
   oid_t GetForeignKeyCount() const;
 
   //===--------------------------------------------------------------------===//
+  // TRANSFORMERS
+  //===--------------------------------------------------------------------===//
+
+  storage::TileGroup *TransformTileGroup(oid_t tile_group_id,
+                                         const column_map_type& column_map,
+                                         bool cleanup = true);
+
+  //===--------------------------------------------------------------------===//
   // STATS
   //===--------------------------------------------------------------------===//
 
@@ -148,6 +154,40 @@ class DataTable : public AbstractTable {
 
   // Get a string representation of this table
   friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
+
+ protected:
+
+  //===--------------------------------------------------------------------===//
+  // INTEGRITY CHECKS
+  //===--------------------------------------------------------------------===//
+
+  bool CheckNulls(const storage::Tuple *tuple) const;
+
+  bool CheckConstraints(const storage::Tuple *tuple) const;
+
+  // Claim a tuple slot in a tile group
+  ItemPointer GetTupleSlot(const concurrency::Transaction *transaction,
+                           const storage::Tuple *tuple,
+                           const ItemPointer old_location);
+
+  //===--------------------------------------------------------------------===//
+  // INDEX HELPERS
+  //===--------------------------------------------------------------------===//
+
+  // try to insert into the indices
+  bool InsertInIndexes(const concurrency::Transaction *transaction,
+                       const storage::Tuple *tuple,
+                       ItemPointer location);
+
+  // drop the entry in the indice
+  // NOTE: not used currently due to our MVCC design
+  void DeleteInIndexes(const storage::Tuple *tuple,
+                       const ItemPointer location);
+
+  // this must succeed
+  void UpdateInIndexes(const storage::Tuple *tuple,
+                            ItemPointer location,
+                            const ItemPointer old_location);
 
  private:
   //===--------------------------------------------------------------------===//

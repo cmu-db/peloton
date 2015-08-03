@@ -13,6 +13,7 @@
 #include "backend/common/logger.h"
 #include "backend/catalog/manager.h"
 #include "backend/executor/logical_tile.h"
+#include "backend/expression/container_tuple.h"
 #include "backend/planner/update_node.h"
 #include "backend/concurrency/transaction.h"
 #include "backend/concurrency/transaction_manager.h"
@@ -69,10 +70,7 @@ bool UpdateExecutor::DExecute() {
   storage::Tile *tile = source_tile->GetBaseTile(0);
   storage::TileGroup *tile_group = tile->GetTileGroup();
   auto transaction_ = executor_context_->GetTransaction();
-
   auto tile_group_id = tile_group->GetTileGroupId();
-  auto txn_id = transaction_->GetTransactionId();
-  auto &manager = catalog::Manager::GetInstance();
 
   // Update tuples in given table
   for (oid_t visible_tuple_id : *source_tile) {
@@ -80,49 +78,33 @@ bool UpdateExecutor::DExecute() {
     LOG_TRACE("Visible Tuple id : %d, Physical Tuple id : %d \n",
               visible_tuple_id, physical_tuple_id);
 
-    // (A) try to delete the tuple first
+    // (A) Try to delete the tuple first
     // this might fail due to a concurrent operation that has latched the tuple
     auto delete_location = ItemPointer(tile_group_id, physical_tuple_id);
-    bool status = target_table_->DeleteTuple(txn_id, delete_location);
+    bool status = target_table_->DeleteTuple(transaction_, delete_location);
     if (status == false) {
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }
     transaction_->RecordDelete(delete_location);
 
-    // (B.1) now, make a copy of the original tuple and allocate a new tuple
-    // TODO: Is there a safe way to access the old (deleted) tuple
-    // without creating a new copy of it? That may save us one copy.
-    // Allocating the new tuple, however, is inevitable.
-    storage::Tuple *old_tuple = tile_group->SelectTuple(physical_tuple_id);
-    storage::Tuple *new_tuple =
-        new storage::Tuple(target_table_->GetSchema(), true);
+    // (B.1) Make a copy of the original tuple and allocate a new tuple
+    expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group, physical_tuple_id);
+    storage::Tuple *new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
 
-    // (B.2) and execute the projections
-    project_info_->Evaluate(new_tuple, old_tuple, nullptr, executor_context_);
+    // (B.2) Execute the projections
+    project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
 
-    old_tuple->FreeUninlinedData();
-    delete old_tuple;
-
-    // and finally insert into the table in update mode
-    bool update_mode = true;
-    ItemPointer location =
-        target_table_->InsertTuple(txn_id, new_tuple, update_mode);
+    // (C) finally insert updated tuple into the table
+    ItemPointer location = target_table_->UpdateTuple(transaction_, new_tuple,
+                                                      delete_location);
     if (location.block == INVALID_OID) {
-      new_tuple->FreeUninlinedData();
       delete new_tuple;
       return false;
     }
     transaction_->RecordInsert(location);
-    new_tuple->FreeUninlinedData();
     delete new_tuple;
 
-    // (C) set back pointer in tile group header of updated tuple
-    auto updated_tile_group =
-        static_cast<storage::TileGroup *>(manager.locator[location.block]);
-    auto updated_tile_group_header = updated_tile_group->GetHeader();
-    updated_tile_group_header->SetPrevItemPointer(
-        location.offset, ItemPointer(tile_group_id, physical_tuple_id));
   }
 
   // By default, update should return nothing?

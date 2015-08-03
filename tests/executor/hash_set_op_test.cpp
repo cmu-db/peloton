@@ -53,7 +53,7 @@ TEST(HashSetOptTests, ExceptTest) {
   planner::SetOpNode node(SETOP_TYPE_EXCEPT);
 
   // Create and set up executor
-  executor::HashSetOpExecutor executor(&node);
+  executor::HashSetOpExecutor executor(&node, nullptr);
 
   MockExecutor child_executor1;
   MockExecutor child_executor2;
@@ -117,7 +117,7 @@ TEST(HashSetOptTests, ExceptAllTest) {
   planner::SetOpNode node(SETOP_TYPE_EXCEPT_ALL);
 
   // Create and set up executor
-  executor::HashSetOpExecutor executor(&node);
+  executor::HashSetOpExecutor executor(&node, nullptr);
 
   MockExecutor child_executor1;
   MockExecutor child_executor2;
@@ -204,7 +204,7 @@ TEST(HashSetOptTests, IntersectTest) {
   planner::SetOpNode node(SETOP_TYPE_INTERSECT);
 
   // Create and set up executor
-  executor::HashSetOpExecutor executor(&node);
+  executor::HashSetOpExecutor executor(&node, nullptr);
 
   MockExecutor child_executor1;
   MockExecutor child_executor2;
@@ -268,7 +268,7 @@ TEST(HashSetOptTests, IntersectAllTest) {
   planner::SetOpNode node(SETOP_TYPE_INTERSECT_ALL);
 
   // Create and set up executor
-  executor::HashSetOpExecutor executor(&node);
+  executor::HashSetOpExecutor executor(&node, nullptr);
 
   MockExecutor child_executor1;
   MockExecutor child_executor2;

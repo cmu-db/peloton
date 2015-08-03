@@ -65,15 +65,15 @@ class Constraint {
   // The type of constraint
   ConstraintType constraint_type = CONSTRAINT_TYPE_INVALID;
 
-  // Default_expr
-  Node* expr = nullptr;
-
   // Offsets into the Unique index and reference table lists in Table
   oid_t fk_list_offset = INVALID_OID;
 
   oid_t unique_index_list_offset = INVALID_OID;
 
-  std::string constraint_name;
+  std::string constraint_name = "";
+
+  // Default_expr
+  Node* expr = nullptr;
 };
 
 }  // End catalog namespace
