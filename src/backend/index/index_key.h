@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/common/value_peeker.h"
+#include "backend/common/logger.h"
 #include "backend/storage/tuple.h"
 #include "backend/index/index.h"
 
@@ -349,6 +350,10 @@ class GenericKey {
  public:
   inline void SetFromKey(const storage::Tuple *tuple) {
     assert(tuple);
+    auto schema = tuple->GetSchema();
+    std::cout << *schema;
+    std::cout << *tuple;
+    LOG_INFO("schema len = %d, keySize = %lu", tuple->GetSchema()->GetLength(), KeySize);
     assert(tuple->GetSchema()->GetLength() <= KeySize);
     ::memcpy(data, tuple->GetData(), tuple->GetSchema()->GetLength());
   }
