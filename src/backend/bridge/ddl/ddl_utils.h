@@ -19,6 +19,7 @@
 #include "postgres.h"
 #include "c.h"
 #include "nodes/parsenodes.h"
+#include "utils/relcache.h"
 
 namespace peloton {
 namespace bridge {
@@ -33,6 +34,12 @@ class DDLUtils {
   DDLUtils& operator=(const DDLUtils&) = delete;
   DDLUtils(DDLUtils&&) = delete;
   DDLUtils& operator=(DDLUtils&&) = delete;
+
+  static void peloton_prepare_data(Node* parsetree);
+
+  static void SetDefaultConstraint(ColumnDef* coldef, 
+                                   int column_itr, 
+                                   oid_t relation_oid);
 
   // Parse IndexStmt and construct ColumnInfo and ReferenceTableInfos
   static void ParsingCreateStmt(
