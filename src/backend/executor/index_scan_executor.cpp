@@ -32,7 +32,7 @@ IndexScanExecutor::IndexScanExecutor(planner::AbstractPlanNode *node,
     : AbstractScanExecutor(node, executor_context) {}
 
 /**
- * @brief Let base calss Dinit() first, then do my job.
+ * @brief Let base class Dinit() first, then do my job.
  * @return true on success, false otherwise.
  */
 bool IndexScanExecutor::DInit() {
@@ -56,13 +56,19 @@ bool IndexScanExecutor::DInit() {
   start_inclusive_ = node.IsStartInclusive();
   end_inclusive_ = node.IsEndInclusive();
 
-  result_itr = START_OID;
+  if(start_key_) {
+    std::cout << "START :: " << *start_key_;
+  }
+  if(end_key_) {
+    std::cout << "END :: " << *end_key_;
+  }
 
+  result_itr = START_OID;
   done_ = false;
 
   auto table = node.GetTable();
 
-  if(nullptr != table){
+  if(table != nullptr){
     if(column_ids_.empty()){
       column_ids_.resize(table->GetSchema()->GetColumnCount());
       std::iota(column_ids_.begin(), column_ids_.end(), 0);
