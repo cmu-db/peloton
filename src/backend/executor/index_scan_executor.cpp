@@ -127,33 +127,9 @@ bool IndexScanExecutor::ExecIndexLookup(){
 
   if (start_key_ == nullptr && end_key_ == nullptr) {
     return false;
-  } else if (start_key_ == end_key_) {
-    // = KEY
-    assert(start_inclusive_);
-    assert(end_inclusive_);
-    tuple_locations = index_->GetLocationsForKey(start_key_);
-  } else if (start_key_ == nullptr) {
-    // < END_KEY
-    if (end_inclusive_ == false) {
-      tuple_locations = index_->GetLocationsForKeyLT(end_key_);
-    }
-    // <= END_KEY
-    else {
-      tuple_locations = index_->GetLocationsForKeyLTE(end_key_);
-    }
-  } else if (end_key_ == nullptr) {
-    // > START_KEY
-    if (start_inclusive_ == false) {
-      tuple_locations = index_->GetLocationsForKeyGT(start_key_);
-    }
-    // >= START_KEY
-    else {
-      tuple_locations = index_->GetLocationsForKeyGTE(start_key_);
-    }
-  } else {
-    // START_KEY < .. < END_KEY
-    tuple_locations = index_->GetLocationsForKeyBetween(start_key_, end_key_);
   }
+
+  // TODO: Use the generic scan here
 
   LOG_INFO("Tuple locations : %lu \n", tuple_locations.size());
 
