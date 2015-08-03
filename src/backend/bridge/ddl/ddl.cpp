@@ -20,6 +20,8 @@
 #include "backend/bridge/ddl/ddl.h"
 #include "backend/common/logger.h"
 
+#include "backend/storage/database.h"
+
 #include "postgres.h"
 #include "miscadmin.h"
 #include "c.h"
@@ -99,6 +101,13 @@ void DDL::ProcessUtility(Node *parsetree,
       LOG_WARN("unrecognized node type: %d", (int)nodeTag(parsetree));
     } break;
   }
+
+/*
+  auto& manager = catalog::Manager::GetInstance();
+  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+  std::cout << "Print db :: \n"<<*db << std::endl;
+  */
+
 }
 
 }  // namespace bridge

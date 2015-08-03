@@ -30,7 +30,7 @@ class Constraint {
  public:
   Constraint(ConstraintType type, std::string constraint_name = "",
              Node* raw_expr = nullptr)
-      : constraint_type(type), constraint_name(constraint_name), raw_expr(raw_expr) {
+      : constraint_type(type), constraint_name(constraint_name), expr(raw_expr) {
   }
 
   //===--------------------------------------------------------------------===//
@@ -65,9 +65,8 @@ class Constraint {
   // The type of constraint
   ConstraintType constraint_type = CONSTRAINT_TYPE_INVALID;
 
-  // Raw_default_expr
-  // FIXME :: Cooked expr
-  Node* raw_expr = nullptr;
+  // Default_expr
+  Node* expr = nullptr;
 
   // Offsets into the Unique index and reference table lists in Table
   oid_t fk_list_offset = INVALID_OID;
