@@ -299,7 +299,7 @@ class IncompatibleTypeException : public Exception {
  public:
   IncompatibleTypeException(int type, std::string msg)
       : Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-                  "Incompatible type " + GetTypeName((ValueType)type) + msg) {}
+                  "Incompatible type " + ValueTypeToString((ValueType)type) + msg) {}
 };
 
 class SerializationException : public Exception {
