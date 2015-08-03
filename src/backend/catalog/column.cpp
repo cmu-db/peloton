@@ -45,7 +45,7 @@ void Column::SetInlined() {
 // Get a string representation
 std::ostream& operator<<(std::ostream& os, const Column& column_info) {
   os << " name = " << column_info.column_name << ","
-     << " type = " << GetTypeName(column_info.column_type) << ","
+     << " type = " << ValueTypeToString(column_info.column_type) << ","
      << " offset = " << column_info.column_offset << ","
      << " fixed length = " << column_info.fixed_length << ","
      << " variable length = " << column_info.variable_length << ","
