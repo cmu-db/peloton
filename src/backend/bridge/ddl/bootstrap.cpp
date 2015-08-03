@@ -87,6 +87,10 @@ bool Bootstrap::BootstrapPeloton(raw_database_info* raw_database){
   CreateIndexes(raw_database->raw_indexes, raw_database->index_count);
   CreateForeignkeys(raw_database->raw_foreignkeys, raw_database->foreignkey_count);
 
+  auto& manager = catalog::Manager::GetInstance();
+  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+  std::cout << "Print db :: \n"<<*db << std::endl;
+
   elog(LOG, "Finished initializing Peloton");
   return true;
 }
@@ -149,7 +153,7 @@ void Bootstrap::GetRawTableAndIndex(std::vector<raw_table_info*>& raw_tables,
     // Get the tuple oid
     // This can be a relation oid or index oid etc.
     Oid relation_oid = HeapTupleHeaderGetOid(pg_class_tuple->t_data);
-    std::vector<raw_column_info*> raw_columns = GetRawColumn(relation_oid, pg_attribute_rel);
+    std::vector<raw_column_info*> raw_columns = GetRawColumn(relation_oid, relation_kind, pg_attribute_rel);
 
     switch (relation_kind) {
       case 'r':{
@@ -268,13 +272,12 @@ Bootstrap::GetRawIndex(oid_t index_oid,
 
 /**
  * @brief construct raw column
- * @param tuple oid
+ * @param relation oid
  * @param pg_attribute_rel pg_attribute catalog relation 
  * @return raw columns
  */
 std::vector<raw_column_info*> 
-Bootstrap::GetRawColumn(Oid relation_oid, Relation pg_attribute_rel) {
-
+Bootstrap::GetRawColumn(Oid relation_oid, char relation_kind, Relation pg_attribute_rel) {
   HeapScanDesc pg_attribute_scan;
   HeapTuple pg_attribute_tuple;
 
@@ -286,7 +289,6 @@ Bootstrap::GetRawColumn(Oid relation_oid, Relation pg_attribute_rel) {
   // Go over all attributes in "pg_attribute" looking for any entries
   // matching the given tuple oid.
   // For instance, this means the columns associated with a given relation oid.
-
   while (1) {
     Form_pg_attribute pg_attribute;
 
@@ -297,6 +299,7 @@ Bootstrap::GetRawColumn(Oid relation_oid, Relation pg_attribute_rel) {
 
     // Check the relation oid
     pg_attribute = (Form_pg_attribute)GETSTRUCT(pg_attribute_tuple);
+
     if (pg_attribute->attrelid == relation_oid) {
       // Skip system columns in the attribute list
       if (strcmp(NameStr(pg_attribute->attname), "cmax") &&
@@ -322,19 +325,32 @@ Bootstrap::GetRawColumn(Oid relation_oid, Relation pg_attribute_rel) {
           raw_constraint_info* raw_constraint = (raw_constraint_info*)palloc(sizeof(raw_constraint_info));
           raw_constraint->constraint_type = CONSTRAINT_TYPE_NOTNULL;
           raw_constraint->constraint_name = ""; // TODO :: where is name?
+          raw_constraint->raw_expr = nullptr;
 
           raw_constraints.push_back(raw_constraint);
         }
 
         // DEFAULT value constraint
-        // TODO :: where is expression?
         if (pg_attribute->atthasdef) {
+
+          // Setting default constraint expression
+          Relation relation = heap_open(relation_oid, AccessShareLock);
+
           raw_constraint_info* raw_constraint = (raw_constraint_info*)palloc(sizeof(raw_constraint_info));
           raw_constraint->constraint_type = CONSTRAINT_TYPE_DEFAULT;
-          raw_constraint->constraint_name = ""; // TODO :: where is name?
 
+          set_stack_base();
+          int num_defva = relation->rd_att->constr->num_defval;
+          for(int def_itr=0; def_itr<num_defva; def_itr++){
+            if( pg_attribute->attnum == relation->rd_att->constr->defval[def_itr].adnum){
+              char* default_expression = relation->rd_att->constr->defval[def_itr].adbin;
+              raw_constraint->raw_expr = (Node*)stringToNode(default_expression);
+            }
+          }
+          raw_constraint->constraint_name = "";
           raw_constraints.push_back(raw_constraint);
- 
+
+          heap_close(relation, AccessShareLock);
         }
 
         raw_column_info* raw_column = (raw_column_info*)palloc(sizeof(raw_column_info));
@@ -349,7 +365,6 @@ Bootstrap::GetRawColumn(Oid relation_oid, Relation pg_attribute_rel) {
         }
         raw_column->constraint_count = constraint_itr;
         raw_constraints.clear();
-
         raw_columns.push_back(raw_column);
       }
     }
@@ -598,10 +613,10 @@ Bootstrap::CreateConstraints(raw_constraint_info** raw_constraints,
   for(int constraint_itr=0; constraint_itr<constraint_count; constraint_itr++){
     auto raw_constraint = raw_constraints[constraint_itr];
 
-    catalog::Constraint constraint(raw_constraint->constraint_type,
-                                   raw_constraint->constraint_name);
-
-    constraints.push_back(constraint);
+      catalog::Constraint constraint(raw_constraint->constraint_type,
+                                     raw_constraint->constraint_name,
+                                     raw_constraint->raw_expr);
+      constraints.push_back(constraint);
   }
   return constraints;
 }

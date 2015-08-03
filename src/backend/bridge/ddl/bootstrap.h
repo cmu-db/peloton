@@ -53,6 +53,7 @@ class Bootstrap {
                                      std::vector<raw_column_info*> raw_columns);
 
   static std::vector<raw_column_info*> GetRawColumn(Oid tuple_oid, 
+                                                    char relation_kind,
                                                     Relation pg_attribute_rel);
 
   static void CreateTables(raw_table_info** raw_tables, 
