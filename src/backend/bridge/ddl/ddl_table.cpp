@@ -43,6 +43,7 @@ namespace bridge {
 
 bool DDLTable::ExecCreateStmt(Node* parsetree,
                               std::vector<Node*>& parsetree_stack,
+                              Peloton_Status* status,
                               TransactionId txn_id) {
                            
   List* stmts = ((CreateStmt*)parsetree)->stmts;
@@ -89,7 +90,7 @@ bool DDLTable::ExecCreateStmt(Node* parsetree,
   // Rerun query
   //===--------------------------------------------------------------------===//
   for( auto parsetree : parsetree_stack ){
-    DDL::ProcessUtility(parsetree,"rerun", nullptr/*TODO :: we don't need this one? */, txn_id);
+    DDL::ProcessUtility(parsetree,"rerun", status, txn_id);
   }
   parsetree_stack.clear();
 

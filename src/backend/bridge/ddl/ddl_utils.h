@@ -39,7 +39,7 @@ class DDLUtils {
 
   static void SetDefaultConstraint(ColumnDef* coldef, 
                                    int column_itr, 
-                                   Relation relation);
+                                   oid_t relation_oid);
 
   // Parse IndexStmt and construct ColumnInfo and ReferenceTableInfos
   static void ParsingCreateStmt(
