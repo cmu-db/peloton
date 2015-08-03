@@ -96,7 +96,7 @@ void DDLUtils::SetDefaultConstraint(ColumnDef* coldef, int column_itr, Relation 
   for(int def_itr=0; def_itr<num_defva; def_itr++){
     if( column_itr == relation->rd_att->constr->defval[def_itr].adnum){
       char* default_expression = relation->rd_att->constr->defval[def_itr].adbin;
-      coldef->raw_default = static_cast<Node*>(stringToNode(default_expression));
+      coldef->cooked_default = static_cast<Node*>(stringToNode(default_expression));
     }
   }
 }
@@ -176,7 +176,7 @@ void DDLUtils::ParsingCreateStmt(
             break;
           }
           case CONSTRAINT_TYPE_DEFAULT:{
-            catalog::Constraint constraint(contype, conname, coldef->raw_default);
+            catalog::Constraint constraint(contype, conname, coldef->cooked_default);
             column_constraints.push_back(constraint);
             break;
           }
