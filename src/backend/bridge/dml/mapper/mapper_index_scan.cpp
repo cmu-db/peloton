@@ -270,8 +270,15 @@ planner::AbstractPlanNode *PlanTransformer::TransformBitmapScan(
 
   /* Resolve index  */
   index_scan_desc.index = table->GetIndexWithOid(biss_plan->indexid);
+
+  if(nullptr == index_scan_desc.index){
+    LOG_ERROR("Can't find Index oid %u \n", biss_plan->indexid);
+  }
+
   LOG_INFO("BitmapIdxmap scan on Index oid %u, index name: %s",
            biss_plan->indexid, index_scan_desc.index->GetName().c_str());
+
+  assert(index_scan_desc.index);
 
   /* Resolve index order */
   /* Only support forward scan direction */
