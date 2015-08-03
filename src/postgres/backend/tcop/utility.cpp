@@ -668,13 +668,17 @@ standard_ProcessUtility(Node *parsetree,
 
     case T_VacuumStmt:
       {
-        VacuumStmt *stmt = (VacuumStmt *) parsetree;
+        // TODO :: Peloton Changes
+        // Disabled Vacuumming in Postgres
+        if(false){
+          VacuumStmt *stmt = (VacuumStmt *) parsetree;
 
-        /* we choose to allow this during "read only" transactions */
-        PreventCommandDuringRecovery((stmt->options & VACOPT_VACUUM) ?
-                       "VACUUM" : "ANALYZE");
-        /* forbidden in parallel mode due to CommandIsReadOnly */
-        ExecVacuum(stmt, isTopLevel);
+          /* we choose to allow this during "read only" transactions */
+          PreventCommandDuringRecovery((stmt->options & VACOPT_VACUUM) ?
+              "VACUUM" : "ANALYZE");
+          /* forbidden in parallel mode due to CommandIsReadOnly */
+          ExecVacuum(stmt, isTopLevel);
+        }
       }
       break;
 
@@ -995,6 +999,9 @@ ProcessUtilitySlow(Node *parsetree,
           /* Run parse analysis ... */
           stmts = transformCreateStmt((CreateStmt *) parsetree,
                         queryString);
+          // TODO: Peloton Changes
+          // Store transformedCreateStmt because we don't want to do this again in Peloton
+          ((CreateStmt *)parsetree)->stmts = stmts;
 
           /* ... and do it */
           foreach(l, stmts)
@@ -1097,14 +1104,15 @@ ProcessUtilitySlow(Node *parsetree,
           lockmode = AlterTableGetLockLevel(atstmt->cmds);
           relid = AlterTableLookupRelation(atstmt, lockmode);
 
-          // TODO: Peloton Changes
-          ((AlterTableStmt *)parsetree)->relation_id = relid;
-
           if (OidIsValid(relid))
           {
             /* Run parse analysis ... */
             stmts = transformAlterTableStmt(relid, atstmt,
                             queryString);
+
+            // TODO: Peloton Changes
+            ((AlterTableStmt *)parsetree)->relation_id = relid;
+            ((AlterTableStmt *)parsetree)->stmts = stmts;
 
             /* ... ensure we have an event trigger context ... */
             EventTriggerAlterTableStart(parsetree);

@@ -39,20 +39,28 @@ class Bridge {
 
   static Oid GetCurrentDatabaseOid(void);
 
+  static void GetDbInfo(void);
+
   static void GetDatabaseList(void);
 
   static void GetTableList(bool catalog_only);
-
-  static HeapTuple GetPGTypeTupleForTypeName(const char *type_name);
-
-  static bool GetTypeInformation(const char *type_name, Oid *type_oid,
-                                 int *type_len, int32 *type_mod);
 
   //===--------------------------------------------------------------------===//
   // Setters
   //===--------------------------------------------------------------------===//
 
   static void SetNumberOfTuples(Oid relation_id, float num_of_tuples);
+
+  //===--------------------------------------------------------------------===//
+  // Wrapper
+  //===--------------------------------------------------------------------===//
+
+  static void PelotonStartTransactionCommand();
+
+  static void PelotonCommitTransactionCommand();
+
+  static void SetCurrentResourceOwner();
+
 };
 
 }  // namespace bridge

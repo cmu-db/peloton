@@ -12,9 +12,10 @@
 
 #pragma once
 
+#include "postmaster/peloton.h"
+
 #include "postgres.h"
 #include "c.h"
-
 #include "nodes/nodes.h"
 
 namespace peloton {
@@ -35,7 +36,7 @@ class DDLDatabase {
 
   static bool ExecDropdbStmt(Node* parsetree);
 
-  static bool ExecVacuumStmt(Node* parsetree);
+  static bool ExecVacuumStmt(Node* parsetree, Peloton_Status* status);
 
   static bool CreateDatabase(Oid database_oid);
 
