@@ -87,9 +87,11 @@ bool Bootstrap::BootstrapPeloton(raw_database_info* raw_database){
   CreateIndexes(raw_database->raw_indexes, raw_database->index_count);
   CreateForeignkeys(raw_database->raw_foreignkeys, raw_database->foreignkey_count);
 
+/*
   auto& manager = catalog::Manager::GetInstance();
   storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
   std::cout << "Print db :: \n"<<*db << std::endl;
+*/
 
   elog(LOG, "Finished initializing Peloton");
   return true;
@@ -324,7 +326,7 @@ Bootstrap::GetRawColumn(Oid relation_oid, char relation_kind, Relation pg_attrib
         if (pg_attribute->attnotnull) {
           raw_constraint_info* raw_constraint = (raw_constraint_info*)palloc(sizeof(raw_constraint_info));
           raw_constraint->constraint_type = CONSTRAINT_TYPE_NOTNULL;
-          raw_constraint->constraint_name = ""; // TODO :: where is name?
+          raw_constraint->constraint_name = ""; 
           raw_constraint->raw_expr = nullptr;
 
           raw_constraints.push_back(raw_constraint);
@@ -339,12 +341,11 @@ Bootstrap::GetRawColumn(Oid relation_oid, char relation_kind, Relation pg_attrib
           raw_constraint_info* raw_constraint = (raw_constraint_info*)palloc(sizeof(raw_constraint_info));
           raw_constraint->constraint_type = CONSTRAINT_TYPE_DEFAULT;
 
-          set_stack_base();
           int num_defva = relation->rd_att->constr->num_defval;
           for(int def_itr=0; def_itr<num_defva; def_itr++){
             if( pg_attribute->attnum == relation->rd_att->constr->defval[def_itr].adnum){
               char* default_expression = relation->rd_att->constr->defval[def_itr].adbin;
-              raw_constraint->raw_expr = (Node*)stringToNode(default_expression);
+              raw_constraint->raw_expr = static_cast<Node*>(stringToNode(default_expression));
             }
           }
           raw_constraint->constraint_name = "";
