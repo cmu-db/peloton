@@ -147,7 +147,7 @@ class IntsKey {
     return retval;
   }
 
-  storage::Tuple GetTupleForComparison(const catalog::Schema *key_schema) {
+  const storage::Tuple GetTupleForComparison(const catalog::Schema *key_schema) {
     throw IndexException("Tuple conversion not supported");
   }
 
@@ -366,7 +366,7 @@ class GenericKey {
     }
   }
 
-  storage::Tuple GetTupleForComparison(const catalog::Schema *key_schema) {
+  const storage::Tuple GetTupleForComparison(const catalog::Schema *key_schema) {
     return storage::Tuple(key_schema, data);
   }
 
@@ -494,7 +494,7 @@ class TupleKey {
   }
 
   // Return a table tuple that is valid for comparison
-  storage::Tuple GetTupleForComparison(const catalog::Schema *key_tuple_schema) const {
+  const storage::Tuple GetTupleForComparison(const catalog::Schema *key_tuple_schema) const {
     return storage::Tuple(key_tuple_schema, key_tuple);
   }
 
