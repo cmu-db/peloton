@@ -131,38 +131,11 @@ class Index {
   virtual ItemPointer Exists(const storage::Tuple *key,
                              const ItemPointer location)= 0;
 
-  // scan all keys in the index
-  virtual std::vector<ItemPointer> Scan() = 0;
-
-  // get the locations of tuples matching given key
-  virtual std::vector<ItemPointer> GetLocationsForKey(
-      const storage::Tuple *key) = 0;
-
-  // get the locations of tuples whose key is between given start and end keys
-  virtual std::vector<ItemPointer> GetLocationsForKeyBetween(
-      const storage::Tuple *start, const storage::Tuple *end) = 0;
-
-  // get the locations of tuples whose key is less than given key
-  virtual std::vector<ItemPointer> GetLocationsForKeyLT(
-      const storage::Tuple *key) = 0;
-
-  // get the locations of tuples whose key is less than or equal to given key
-  virtual std::vector<ItemPointer> GetLocationsForKeyLTE(
-      const storage::Tuple *key) = 0;
-
-  // get the locations of tuples whose key is greater than given key
-  virtual std::vector<ItemPointer> GetLocationsForKeyGT(
-      const storage::Tuple *key) = 0;
-
-  // get the locations of tuples whose key is greater than or equal to given key
-  virtual std::vector<ItemPointer> GetLocationsForKeyGTE(
-      const storage::Tuple *key) = 0;
-
   // scan all keys in the index comparing with an arbitrary key
   virtual std::vector<ItemPointer> Scan(
-      const storage::Tuple *key,
+      const std::vector<Value>& values,
       const std::vector<oid_t>& index_key_columns,
-      const ExpressionType expr_type) = 0;
+      const std::vector<ExpressionType>& exprs) = 0;
 
   //===--------------------------------------------------------------------===//
   // STATS
@@ -211,10 +184,10 @@ class Index {
   friend std::ostream &operator<<(std::ostream &os, const Index &index);
 
   // Generic key comparator between index key and given arbitrary key
-  bool IndexKeyComparator(const storage::Tuple *index_key,
-                          const storage::Tuple *key,
+  bool IndexKeyComparator(const storage::Tuple& index_key,
+                          const std::vector<Value>& values,
                           const std::vector<oid_t>& index_key_columns,
-                          const ExpressionType expr_type);
+                          const std::vector<ExpressionType>& exprs);
 
  protected:
   Index(IndexMetadata *schema);
