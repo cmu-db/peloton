@@ -158,6 +158,12 @@ class Index {
   virtual std::vector<ItemPointer> GetLocationsForKeyGTE(
       const storage::Tuple *key) = 0;
 
+  // scan all keys in the index comparing with an arbitrary key
+  virtual std::vector<ItemPointer> Scan(
+      const storage::Tuple *key,
+      const std::vector<oid_t>& index_key_columns,
+      const ExpressionType expr_type) = 0;
+
   //===--------------------------------------------------------------------===//
   // STATS
   //===--------------------------------------------------------------------===//
@@ -199,6 +205,12 @@ class Index {
 
   // Get a string representation of this index
   friend std::ostream &operator<<(std::ostream &os, const Index &index);
+
+  // Generic key comparator between index key and given arbitrary key
+  bool IndexKeyComparator(const storage::Tuple *index_key,
+                          const storage::Tuple *key,
+                          const std::vector<oid_t>& index_key_columns,
+                          const ExpressionType expr_type);
 
  protected:
   Index(IndexMetadata *schema);

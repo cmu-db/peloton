@@ -291,6 +291,7 @@ TEST(IndexTests, BtreeMultiIndexTest) {
   index->DeleteEntry(key1, item2);
   index->DeleteEntry(key2, item1);
   index->DeleteEntry(key3, item1);
+  index->DeleteEntry(key4, item1);
 
   location = index->Exists(key0, INVALID_ITEMPOINTER);
   EXPECT_EQ(location.block, INVALID_OID);
