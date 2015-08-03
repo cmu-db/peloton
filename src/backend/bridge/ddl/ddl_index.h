@@ -34,8 +34,7 @@ class DDLIndex {
   DDLIndex(DDLIndex&&) = delete;
   DDLIndex& operator=(DDLIndex&&) = delete;
 
-  static bool ExecIndexStmt(Node* parsetree,
-                            std::vector<IndexInfo>& index_infos);
+  static bool ExecIndexStmt(Node* parsetree, std::vector<Node*>& parsetree_stack);
 
   static bool CreateIndex(IndexInfo index_info);
 
