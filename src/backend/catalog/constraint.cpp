@@ -23,7 +23,7 @@ std::ostream& operator<<(std::ostream& os, const Constraint& constraint) {
   os << ConstraintTypeToString(constraint.constraint_type);
   
   if( constraint.GetType() == CONSTRAINT_TYPE_DEFAULT){
-    os << " Default expression : " << nodeToString(constraint.raw_expr);
+    os << " Default expression : " << nodeToString(constraint.expr);
   }
 
   os << "\n\n";
