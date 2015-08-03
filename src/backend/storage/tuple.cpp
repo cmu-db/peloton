@@ -317,6 +317,20 @@ bool Tuple::EqualsNoSchemaCheck(const Tuple &other) const {
   return true;
 }
 
+bool Tuple::EqualsNoSchemaCheck(const Tuple &other,
+                                const std::vector<oid_t>& columns) const {
+
+  for (auto column_itr : columns) {
+    const Value lhs = GetValue(column_itr);
+    const Value rhs = other.GetValue(column_itr);
+    if (lhs.OpNotEquals(rhs).IsTrue()) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 void Tuple::SetAllNulls() {
   assert(tuple_schema);
   assert(tuple_data);
@@ -333,6 +347,23 @@ int Tuple::Compare(const Tuple &other) const {
   const int column_count = tuple_schema->GetColumnCount();
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
+    const Value lhs = GetValue(column_itr);
+    const Value rhs = other.GetValue(column_itr);
+    diff = lhs.Compare(rhs);
+
+    if (diff) {
+      return diff;
+    }
+  }
+
+  return 0;
+}
+
+int Tuple::Compare(const Tuple &other,
+                   const std::vector<oid_t>& columns) const {
+  int diff;
+
+  for(auto column_itr : columns) {
     const Value lhs = GetValue(column_itr);
     const Value rhs = other.GetValue(column_itr);
     diff = lhs.Compare(rhs);
