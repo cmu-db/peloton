@@ -25,8 +25,8 @@
 
 #include "backend/common/logger.h"
 #include "backend/scheduler/tbb_scheduler.h"
-#include "backend/bridge/ddl/bootstrap.h"
 #include "backend/bridge/ddl/ddl.h"
+#include "backend/bridge/ddl/ddl_utils.h"
 #include "backend/bridge/ddl/tests/bridge_test.h"
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
@@ -89,6 +89,7 @@ static void peloton_sigabrt_handler(SIGNAL_ARGS);
 
 static void peloton_setheader(Peloton_MsgHdr *hdr,
                               PelotonMsgType mtype,
+                              Oid MyDatabaseId,
                               TransactionId txn_id,
                               MemoryContext top_transaction_context,
                               MemoryContext cur_transaction_context);
@@ -96,6 +97,7 @@ static void peloton_send(void *msg, int len);
 
 static void peloton_process_dml(Peloton_MsgDML *msg);
 static void peloton_process_ddl(Peloton_MsgDDL *msg);
+static void peloton_process_bootstrap(Peloton_MsgBootstrap *msg);
 
 bool
 IsPelotonProcess(void) {
@@ -226,12 +228,11 @@ PelotonMain(int argc, char *argv[]) {
   PG_SETMASK(&UnBlockSig);
 
   /*
-   * Connect to the selected database
-   *
-   * Note: if we have selected a just-deleted database (due to using
-   * stale stats info), we'll fail and exit here.
+   * Connect to the test database for Peloton Test Mode
    */
-  InitPostgres("postgres", InvalidOid, NULL, InvalidOid, NULL);
+  if(PelotonTestMode == true) {
+    InitPostgres("postgres", InvalidOid, NULL, InvalidOid, NULL);
+  }
 
   /*
    * If the PostmasterContext is still around, recycle the space; we don't
@@ -265,7 +266,7 @@ PelotonMain(int argc, char *argv[]) {
   ereport(LOG, (errmsg("peloton: processing database \"%s\"", "postgres")));
 
   /* Init Peloton */
-  peloton::bridge::Bootstrap::BootstrapPeloton();
+  //peloton::bridge::Bootstrap::BootstrapPeloton();
 
   /*
    * Create a resource owner to keep track of our resources (not clear that
@@ -461,6 +462,12 @@ peloton_MainLoop(void) {
         case PELOTON_MTYPE_DML: {
           scheduler.get()->Run(reinterpret_cast<peloton::scheduler::handler>(peloton_process_dml),
                                reinterpret_cast<Peloton_MsgDML*>(&msg));
+        }
+        break;
+
+        case PELOTON_MTYPE_BOOTSTRAP: {
+          scheduler.get()->Run(reinterpret_cast<peloton::scheduler::handler>(peloton_process_bootstrap),
+                               reinterpret_cast<Peloton_MsgBootstrap*>(&msg));
         }
         break;
 
@@ -751,10 +758,12 @@ peloton_init(void) {
 static void
 peloton_setheader(Peloton_MsgHdr *hdr,
                   PelotonMsgType mtype,
+                  Oid MyDatabaseId,
                   TransactionId txn_id,
                   MemoryContext top_transaction_context,
                   MemoryContext cur_transaction_context) {
   hdr->m_type = mtype;
+  hdr->m_dbid = MyDatabaseId;
   hdr->m_top_transaction_context = top_transaction_context;
   hdr->m_cur_transaction_context = cur_transaction_context;
   hdr->m_txn_id = txn_id;
@@ -804,6 +813,7 @@ peloton_send_ping(void) {
   peloton_setheader(&msg.m_hdr,
                     PELOTON_MTYPE_DUMMY,
                     InvalidOid,
+                    InvalidOid,
                     NULL,
                     NULL);
 
@@ -842,6 +852,7 @@ peloton_send_dml(Peloton_Status  *status,
 
   peloton_setheader(&msg.m_hdr,
                     PELOTON_MTYPE_DML,
+                    MyDatabaseId,
                     transaction_id,
                     top_transaction_context,
                     cur_transaction_context);
@@ -869,6 +880,11 @@ peloton_send_ddl(Peloton_Status  *status,
   if (pelotonSock == PGINVALID_SOCKET)
     return;
 
+  // Prepare data depends on query for DDL
+  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
+  peloton::bridge::DDLUtils::peloton_prepare_data(parsetree);
+  MemoryContextSwitchTo(oldcxt);
+
   // Set header
   auto transaction_id = GetTopTransactionId();
   auto top_transaction_context = TopTransactionContext;
@@ -876,6 +892,7 @@ peloton_send_ddl(Peloton_Status  *status,
 
   peloton_setheader(&msg.m_hdr,
                     PELOTON_MTYPE_DDL,
+                    MyDatabaseId,
                     transaction_id,
                     top_transaction_context,
                     cur_transaction_context);
@@ -884,6 +901,43 @@ peloton_send_ddl(Peloton_Status  *status,
   msg.m_status = status;
   msg.m_parsetree = parsetree;
   msg.m_queryString = queryString;
+
+  peloton_send(&msg, sizeof(msg));
+}
+
+/* ----------
+ * peloton_send_bootstrap -
+ *
+ *  Send bootstrap requests to Peloton.
+ * ----------
+ */
+void
+peloton_send_bootstrap(Peloton_Status  *status){
+  Peloton_MsgBootstrap msg;
+
+  if (pelotonSock == PGINVALID_SOCKET)
+    return;
+
+  MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
+  // construct raw database for bootstrap
+  peloton::bridge::raw_database_info* raw_database = peloton::bridge::Bootstrap::GetRawDatabase();
+  MemoryContextSwitchTo(oldcxt);
+
+  // Set header
+  auto transaction_id = GetTopTransactionId();
+  auto top_transaction_context = TopTransactionContext;
+  auto cur_transaction_context = CurTransactionContext;
+
+  peloton_setheader(&msg.m_hdr,
+                    PELOTON_MTYPE_BOOTSTRAP,
+                    MyDatabaseId,
+                    transaction_id,
+                    top_transaction_context,
+                    cur_transaction_context);
+
+  // Set msg-specific information
+  msg.m_status = status;
+  msg.m_raw_database = raw_database;
 
   peloton_send(&msg, sizeof(msg));
 }
@@ -908,6 +962,7 @@ peloton_process_dml(Peloton_MsgDML *msg) {
     return;
   }
 
+  MyDatabaseId = msg->m_hdr.m_dbid;
   TopTransactionContext = msg->m_hdr.m_top_transaction_context;
   CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
   TransactionId txn_id = msg->m_hdr.m_txn_id;
@@ -938,8 +993,17 @@ peloton_process_dml(Peloton_MsgDML *msg) {
 
   }
   else {
-    /* Could not get the plan */
-    msg->m_status->m_result = peloton::RESULT_FAILURE;
+    // TODO :: Special case for AlterTable
+    // Whenever AlterTable command is executed, it needs scans/rewrites tables
+    // at the end. At this moment, 'MergeJoin'/'HashJoin' is required. However, HashJoin
+    // has not been implemented yet in TransformPlan, so we set this special case 
+    // NOTE :: Remove this special case with 'T_MergeJoin/T_HashJoin' case in TransformPlan
+    if (nodeTag(planstate->plan) == T_MergeJoin || nodeTag(planstate->plan) == T_HashJoin ) {
+      msg->m_status->m_result = peloton::RESULT_SUCCESS;
+    }else{
+      /* Could not get the plan */
+      msg->m_status->m_result = peloton::RESULT_FAILURE;
+    }
   }
 
 }
@@ -965,6 +1029,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
     return;
   }
 
+  MyDatabaseId = msg->m_hdr.m_dbid;
   TopTransactionContext = msg->m_hdr.m_top_transaction_context;
   CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
   TransactionId txn_id = msg->m_hdr.m_txn_id;
@@ -976,6 +1041,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
       /* Process the utility statement */
       peloton::bridge::DDL::ProcessUtility(parsetree,
                                            queryString,
+                                           msg->m_status,
                                            txn_id);
     }
     catch(const std::exception &exception) {
@@ -984,6 +1050,43 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
     }
   }
 
+  // Set Status
+  msg->m_status->m_result = peloton::RESULT_SUCCESS;
+}
+
+/* ----------
+ * peloton_process_bootstrap() -
+ *
+ *  Process Bootstrap requests in Peloton.
+ * ----------
+ */
+static void
+peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
+  assert(msg);
+
+  /* Get the raw databases */
+  peloton::bridge::raw_database_info* raw_database = msg->m_raw_database;
+
+  /* Ignore invalid parsetrees */
+  if(raw_database == NULL) {
+    msg->m_status->m_result =  peloton::RESULT_FAILURE;
+    return;
+  }
+
+  MyDatabaseId = msg->m_hdr.m_dbid;
+  TopTransactionContext = msg->m_hdr.m_top_transaction_context;
+  CurTransactionContext = msg->m_hdr.m_cur_transaction_context;
+
+  if(raw_database != NULL) {
+    try {
+      /* Process the utility statement */
+      peloton::bridge::Bootstrap::BootstrapPeloton(raw_database);
+    }
+    catch(const std::exception &exception) {
+      elog(ERROR, "Peloton exception :: %s", exception.what());
+      // Nothing to do here !
+    }
+  }
 
   // Set Status
   msg->m_status->m_result = peloton::RESULT_SUCCESS;
@@ -1002,6 +1105,7 @@ peloton_create_status() {
   status->m_result = peloton::RESULT_INVALID;
   status->m_result_slots = NULL;
   status->m_status = -1;
+  status->m_dirty_count = 0; 
 
   return status;
 }
@@ -1036,7 +1140,19 @@ peloton_process_status(Peloton_Status *status) {
   code = status->m_result;
   switch(code) {
     case peloton::RESULT_SUCCESS: {
-      // Nothing to do here.
+      // check dirty bit
+      if( status->m_dirty_count ){
+        int dirty_table_count = status->m_dirty_count;
+        for(int table_itr=0; table_itr<dirty_table_count; table_itr++){
+          auto dirty_table = status->m_dirty_tables[table_itr];
+          peloton::bridge::Bridge::SetNumberOfTuples(dirty_table->table_oid, dirty_table->number_of_tuples);
+          int dirty_index_count = dirty_table->dirty_index_count;
+          for(int index_itr=0; index_itr<dirty_index_count; index_itr++){
+            auto dirty_index = dirty_table->dirty_indexes[index_itr];
+            peloton::bridge::Bridge::SetNumberOfTuples(dirty_index->index_oid, dirty_index->number_of_tuples);
+          }
+        }
+      }
     }
     break;
 
