@@ -276,6 +276,36 @@ class BtreeUniqueIndex : public Index {
     return result;
   }
 
+  std::vector<ItemPointer> Scan(
+      const storage::Tuple *key,
+      const std::vector<oid_t>& index_key_columns,
+      const ExpressionType expr_type) {
+    std::vector<ItemPointer> result;
+
+    {
+      std::lock_guard<std::mutex> lock(index_mutex);
+
+      // scan all entries comparing against arbitrary key
+      auto itr = container.begin();
+      while (itr != container.end()) {
+        auto index_key = itr->first;
+        auto index_key_tuple = index_key.GetTupleForComparison(metadata->GetKeySchema());
+        if(IndexKeyComparator(&index_key_tuple,
+                              key,
+                              index_key_columns,
+                              expr_type) == true) {
+          ItemPointer location = itr->second;
+          result.push_back(location);
+        }
+        itr++;
+      }
+
+    }
+
+    return result;
+  }
+
+
   std::string GetTypeName() const { return "BtreeMap"; }
 
  protected:
