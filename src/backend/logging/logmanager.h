@@ -1,45 +1,49 @@
 /*-------------------------------------------------------------------------
  *
- * logger.h
+ * logmanager.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/logger.h
+ * /peloton/src/backend/logging/logmanager.h
  *
  *-------------------------------------------------------------------------
  */
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/logging/logdefs.h"
-#include "backend/logging/logproxy.h"
-#include "backend/logging/logrecord.h"
+#include "backend/logging/logger.h"
 
 namespace peloton {
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Logger 
+// Log Manager
 //===--------------------------------------------------------------------===//
 
-class Logger{
+class LogManager{
 
   public:
-    Logger() = delete;
+    static LogManager& GetInstance(void);
 
-    Logger(LoggerId logger_id, LogProxy *proxy) 
-    : logger_id(logger_id), proxy(proxy) {};
-    
-    void logging_MainLoop(void);
+    static void StartAriesLogging(void);
 
-    void log(LogRecord record);
+    static void StartPelotonLogging(void);
+
+    Logger* GetAriesLogger(void) ;
+
+    Logger* GetPelotonLogger(void) ;
 
   private:
-    LoggerId logger_id = INVALID_LOGGER_ID;
+    LogManager() {}
 
-    LogProxy *proxy;
+    void InitAriesLogger();
+
+    void InitPelotonLogger();
+
+    Logger* aries_logger;
+
+    Logger* peloton_logger;
 };
 
 }  // namespace logging
