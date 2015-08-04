@@ -51,6 +51,9 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
 
   /** @brief Join predicate. */
   const expression::AbstractExpression *predicate_ = nullptr;
+
+  /** @brief Projection info */
+  const planner::ProjectInfo *proj_info_ = nullptr;
 };
 
 }  // namespace executor
