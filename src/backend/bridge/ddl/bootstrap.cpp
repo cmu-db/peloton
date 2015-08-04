@@ -74,7 +74,8 @@ raw_database_info* Bootstrap::GetRawDatabase(void){
  * indexes, foreign key to create in Peloton
  * @return true or false, depending on whether we could bootstrap.
  */
-bool Bootstrap::BootstrapPeloton(raw_database_info* raw_database){
+bool Bootstrap::BootstrapPeloton(raw_database_info* raw_database,
+                                 Peloton_Status* peloton_status){
   // create the database with current database id
   elog(LOG, "Initializing database %s(%u) in Peloton", raw_database->database_name, raw_database->database_oid);
   bool status = DDLDatabase::CreateDatabase(raw_database->database_oid);
@@ -87,9 +88,11 @@ bool Bootstrap::BootstrapPeloton(raw_database_info* raw_database){
   CreateIndexes(raw_database->raw_indexes, raw_database->index_count);
   CreateForeignkeys(raw_database->raw_foreignkeys, raw_database->foreignkey_count);
 
-/*
   auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+  auto db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+  db->UpdateAllStats(peloton_status);
+
+/*
   std::cout << "Print db :: \n"<<*db << std::endl;
   */
 
