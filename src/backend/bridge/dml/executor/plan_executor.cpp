@@ -216,6 +216,8 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   }
   assert(txn);
 
+  LOG_INFO("Peloton txn_id = %lu . \n", txn->GetTransactionId());
+
   LOG_TRACE("Building the executor tree");
 
   // Build the executor tree
@@ -289,12 +291,15 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     auto status = txn->GetResult();
     switch(status) {
       case Result::RESULT_SUCCESS:
+        LOG_TRACE("Committing txn : %lu \n", txn->GetTransactionId());
         // Commit
         txn_manager.CommitTransaction(txn);
+
         break;
 
       case Result::RESULT_FAILURE:
       default:
+        LOG_TRACE("Aborting txn : %lu \n", txn->GetTransactionId());
         //Abort
         txn_manager.AbortTransaction(txn);
     }
