@@ -13,6 +13,7 @@
 #pragma once
 
 #include "backend/storage/abstract_backend.h"
+#include "backend/common/logger.h"
 
 #include <atomic>
 #include <mutex>
@@ -191,9 +192,20 @@ class TileGroupHeader {
   // Visibility check
 
   bool IsVisible(const oid_t tuple_slot_id, txn_id_t txn_id, cid_t at_cid) {
-    bool own = (txn_id == GetTransactionId(tuple_slot_id));
-    bool activated = (at_cid >= GetBeginCommitId(tuple_slot_id));
-    bool invalidated = (at_cid >= GetEndCommitId(tuple_slot_id));
+    txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
+    cid_t     tuple_begin_cid = GetBeginCommitId(tuple_slot_id);
+    cid_t     tuple_end_cid  = GetEndCommitId(tuple_slot_id);
+
+    bool own = (txn_id == tuple_txn_id);
+    bool activated = (at_cid >= tuple_begin_cid);
+    bool invalidated = (at_cid >= tuple_end_cid);
+
+    LOG_TRACE("Own :: %d txn id : %lu tuple txn id : %lu", own, txn_id,
+             tuple_txn_id);
+    LOG_TRACE("Activated :: %d cid : %lu tuple begin cid : %lu", activated, at_cid,
+             tuple_begin_cid);
+    LOG_TRACE("Invalidated:: %d cid : %lu tuple end cid : %lu", invalidated, at_cid,
+             tuple_end_cid);
 
     // Visible iff past Insert || Own Insert
     if ((!own && activated && !invalidated) ||
