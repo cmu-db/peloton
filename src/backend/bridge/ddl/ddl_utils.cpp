@@ -37,8 +37,13 @@ namespace bridge {
  * @brief preparing data 
  * @param parsetree
  */
-void DDLUtils::peloton_prepare_data(Node* parsetree){
-  switch(nodeTag(parsetree)){
+  void DDLUtils::peloton_prepare_data(Node* parsetree){
+    switch(nodeTag(parsetree)){
+      case T_DropdbStmt: {
+        DropdbStmt* stmt = (DropdbStmt*)parsetree;
+        stmt->database_id = get_database_oid(stmt->dbname, stmt->missing_ok);
+        break;
+      }
       case T_CreateStmt:
       case T_CreateForeignTableStmt:{
         List* stmts = ((CreateStmt*)parsetree)->stmts;
