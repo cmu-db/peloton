@@ -181,18 +181,18 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
     // First, try to insert into the index
     bool status = index->InsertEntry(key, location);
     if (status == true) {
-      LOG_TRACE("Index : %u. Key not exists yet. Simple Insert. \n", index->GetOid());
+      LOG_INFO("Index : %u. Key not exists yet. Simple Insert. \n", index->GetOid());
       delete key;
       continue;
     }
 
-    LOG_TRACE("Index : %u . Key exists. Checking visibility. \n", index->GetOid());
+    LOG_INFO("Index : %u . Key exists. Checking visibility. \n", index->GetOid());
     // Key already exists
     auto old_location = index->Exists(key, location);
 
-    LOG_TRACE("location.block = %u , location.offset = %u \n", location.block, location.offset);
+    LOG_INFO("location.block = %u , location.offset = %u \n", location.block, location.offset);
 
-    LOG_TRACE("old_location.block = %u , old_location.offset = %u \n", old_location.block, old_location.offset);
+    LOG_INFO("old_location.block = %u , old_location.offset = %u \n", old_location.block, old_location.offset);
 
     if (old_location.block != INVALID_OID) {
 
@@ -205,20 +205,20 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
       auto header = tile_group->GetHeader();
 
       auto transaction_id = transaction->GetTransactionId();
-      auto commit_id = transaction->GetCommitId();
+      auto commit_id = transaction->GetLastCommitId();
       bool visible = header->IsVisible(tuple_offset, transaction_id, commit_id);
 
       // The previous tuple is not visible,
       // so let's update it atomically
       if(visible == false) {
-        LOG_TRACE("Index : %u. Existing tuple is not visible.\n", index->GetOid());
+        LOG_INFO("Index : %u. Existing tuple is not visible.\n", index->GetOid());
         bool status = index->UpdateEntry(key, location, old_location);
         if(status == true) {
           delete key;
           continue;
         }
       }
-      LOG_TRACE("Existing tuple is still visible.\n");
+      LOG_INFO("Existing tuple is still visible.\n");
 
     }
 
@@ -325,7 +325,7 @@ ItemPointer DataTable::UpdateTuple(const concurrency::Transaction *transaction,
 
   // 2) If 1) fails, try again as an Insert
   if(false == status){
-    InsertInIndexes(transaction, tuple, location);
+    status = InsertInIndexes(transaction, tuple, location);
   }
 
   // 3) If still fails, then it is a real failure
