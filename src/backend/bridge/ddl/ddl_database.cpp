@@ -67,7 +67,7 @@ bool DDLDatabase::ExecVacuumStmt(Node* parsetree, Peloton_Status* status) {
 
   // Update every table and index
   if(relation_name.empty()){
-    db->UpdateStats(status);
+    db->UpdateStats(status, true);
   }
   // Otherwise, update the specific table
   else {
