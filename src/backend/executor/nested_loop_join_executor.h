@@ -35,6 +35,13 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
   bool DExecute();
 
  private:
+
+  //===--------------------------------------------------------------------===//
+  // Helper
+  //===--------------------------------------------------------------------===//
+  std::vector<LogicalTile::ColumnInfo> BuildSchema(std::vector<LogicalTile::ColumnInfo> left,
+                                                   std::vector<LogicalTile::ColumnInfo> right);
+
   //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//
@@ -51,6 +58,9 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
 
   /** @brief Join predicate. */
   const expression::AbstractExpression *predicate_ = nullptr;
+
+  /** @brief Projection info */
+  const planner::ProjectInfo *proj_info_ = nullptr;
 };
 
 }  // namespace executor
