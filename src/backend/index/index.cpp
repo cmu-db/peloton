@@ -20,6 +20,78 @@
 namespace peloton {
 namespace index {
 
+bool Index::Compare(const storage::Tuple& index_key,
+                    const std::vector<oid_t>& key_column_ids,
+                    const std::vector<ExpressionType>& expr_types,
+                    const std::vector<Value>& values) {
+  int diff;
+
+  oid_t key_column_itr = -1;
+  // Go over each attribute in the list of comparison columns
+  for(auto column_itr : key_column_ids) {
+    key_column_itr++;
+
+    const Value& lhs = index_key.GetValue(column_itr);
+    const Value& rhs = values[key_column_itr];
+    const ExpressionType expr_type = expr_types[key_column_itr];
+
+    diff = lhs.Compare(rhs);
+
+    if(diff == VALUE_COMPARE_EQUAL) {
+      switch(expr_type) {
+        case EXPRESSION_TYPE_COMPARE_EQ:
+        case EXPRESSION_TYPE_COMPARE_LTE:
+        case EXPRESSION_TYPE_COMPARE_GTE:
+          continue;
+
+        case EXPRESSION_TYPE_COMPARE_NE:
+        case EXPRESSION_TYPE_COMPARE_LT:
+        case EXPRESSION_TYPE_COMPARE_GT:
+          return false;
+
+        default:
+          throw IndexException("Unsupported expression type : " + std::to_string(expr_type));
+      }
+    }
+    else if(diff == VALUE_COMPARE_LESSTHAN) {
+      switch(expr_type) {
+        case EXPRESSION_TYPE_COMPARE_NE:
+        case EXPRESSION_TYPE_COMPARE_LT:
+        case EXPRESSION_TYPE_COMPARE_LTE:
+          continue;
+
+        case EXPRESSION_TYPE_COMPARE_EQ:
+        case EXPRESSION_TYPE_COMPARE_GT:
+        case EXPRESSION_TYPE_COMPARE_GTE:
+          return false;
+
+        default:
+          throw IndexException("Unsupported expression type : " + std::to_string(expr_type));
+      }
+    }
+    else if(diff == VALUE_COMPARE_GREATERTHAN) {
+      switch(expr_type) {
+        case EXPRESSION_TYPE_COMPARE_NE:
+        case EXPRESSION_TYPE_COMPARE_GT:
+        case EXPRESSION_TYPE_COMPARE_GTE:
+          continue;
+
+        case EXPRESSION_TYPE_COMPARE_EQ:
+        case EXPRESSION_TYPE_COMPARE_LT:
+        case EXPRESSION_TYPE_COMPARE_LTE:
+          return false;
+
+        default:
+          throw IndexException("Unsupported expression type : " + std::to_string(expr_type));
+      }
+    }
+
+  }
+
+  return true;
+}
+
+
 Index::Index(IndexMetadata* metadata) : metadata(metadata) {
   index_oid = metadata->GetOid();
   // initialize counters
