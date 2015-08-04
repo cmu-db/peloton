@@ -127,13 +127,13 @@ class Tile {
     return schema.GetColumn(column_index).column_name;
   }
 
-  int GetColumnCount() const { return column_count; };
+  inline int GetColumnCount() const { return column_count; };
 
-  AbstractBackend *GetBackend() const { return backend; }
+  inline AbstractBackend *GetBackend() const { return backend; }
 
-  TileGroupHeader *GetHeader() const { return tile_group_header; }
+  inline TileGroupHeader *GetHeader() const { return tile_group_header; }
 
-  TileGroup *GetTileGroup() const { return tile_group; }
+  inline TileGroup *GetTileGroup() const { return tile_group; }
 
   oid_t GetTileId() const { return tile_id; }
 

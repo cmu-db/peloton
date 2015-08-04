@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * table_iterator.h
+ * tuple_iterator.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/storage/table_iterator.h
+ * /n-store/src/storage/tuple_iterator.h
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@ namespace peloton {
 namespace storage {
 
 //===--------------------------------------------------------------------===//
-// Tile Iterator
+// Tuple Iterator
 //===--------------------------------------------------------------------===//
 
 /**
@@ -34,7 +34,7 @@ public:
     TupleIterator(const Tile* tile)
         : data(tile->data),
           tile(tile),
-          tile_itr(0),
+          tuple_itr(0),
           tuple_length(tile->tuple_length) {
         tile_group_header = tile->tile_group_header;
     }
@@ -43,7 +43,7 @@ public:
         : data(other.data),
           tile(other.tile),
           tile_group_header(other.tile_group_header),
-          tile_itr(other.tile_itr),
+          tuple_itr(other.tuple_itr),
           tuple_length(other.tuple_length) {}
 
     /**
@@ -52,8 +52,8 @@ public:
      */
     bool Next(Tuple& out) {
         if (HasNext()) {
-            out.Move(data + (tile_itr * tuple_length));
-            tile_itr++;
+            out.Move(data + (tuple_itr * tuple_length));
+            tuple_itr++;
 
             return true;
         }
@@ -62,11 +62,11 @@ public:
     }
 
     bool HasNext() {
-        return (tile_itr < tile->GetActiveTupleCount());
+        return (tuple_itr < tile->GetActiveTupleCount());
     }
 
     oid_t GetLocation() const {
-        return tile_itr;
+        return tuple_itr;
     }
 
 private:
@@ -78,7 +78,7 @@ private:
     const TileGroupHeader* tile_group_header;
 
     // Iterator over tile data
-    oid_t tile_itr;
+    oid_t tuple_itr;
 
     oid_t tuple_length;
 };
