@@ -91,13 +91,14 @@ bool Index::Compare(const storage::Tuple& index_key,
   return true;
 }
 
-void Index::SetLowerBoundTuple(storage::Tuple *index_key,
+bool Index::SetLowerBoundTuple(storage::Tuple *index_key,
                                const std::vector<peloton::Value>& values,
                                const std::vector<oid_t>& key_column_ids,
                                const std::vector<ExpressionType>& expr_types) {
 
   auto schema = index_key->GetSchema();
   auto col_count = schema->GetColumnCount();
+  bool all_equal = true;
 
   // Go over each column in the key tuple
   // Setting either the placeholder or the min value
@@ -114,6 +115,10 @@ void Index::SetLowerBoundTuple(storage::Tuple *index_key,
         placeholder = true;
         value = values[offset];
       }
+      else {
+        // not all expressions are equal
+        all_equal = false;
+      }
     }
 
     // fill in the placeholders
@@ -129,7 +134,10 @@ void Index::SetLowerBoundTuple(storage::Tuple *index_key,
   }
 
   std::cout << "LOWER BOUND :: " << (*index_key);
+  if(col_count > values.size())
+    all_equal = false;
 
+  return all_equal;
 }
 
 Index::Index(IndexMetadata* metadata) : metadata(metadata) {

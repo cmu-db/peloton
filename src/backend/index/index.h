@@ -193,7 +193,7 @@ class Index {
                const std::vector<Value>& values);
 
   // Set the lower bound tuple for index iteration
-  void SetLowerBoundTuple(storage::Tuple *index_key,
+  bool SetLowerBoundTuple(storage::Tuple *index_key,
                           const std::vector<Value>& values,
                           const std::vector<oid_t>& key_column_ids,
                           const std::vector<ExpressionType>& expr_types);
