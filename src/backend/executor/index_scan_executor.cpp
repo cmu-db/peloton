@@ -51,9 +51,13 @@ bool IndexScanExecutor::DInit() {
   index_ = node.GetIndex();
   assert(index_ != nullptr);
 
-
   result_itr = START_OID;
   done_ = false;
+
+  column_ids_ = node.GetColumnIds();
+  key_column_ids_ = node.GetKeyColumnIds();
+  expr_types_ = node.GetExprTypes();
+  values_ = node.GetValues();
 
   auto table = node.GetTable();
 
@@ -114,9 +118,11 @@ bool IndexScanExecutor::ExecIndexLookup(){
 
   std::vector<ItemPointer> tuple_locations;
 
-    LOG_INFO("Tuple locations : %lu \n", tuple_locations.size());
+  LOG_INFO("Tuple locations : %lu \n", tuple_locations.size());
 
-  // TODO: Use the generic scan here
+  tuple_locations = index_->Scan(values_,
+                                 key_column_ids_,
+                                 expr_types_);
 
   LOG_INFO("Tuple locations : %lu \n", tuple_locations.size());
 

@@ -53,18 +53,13 @@ class IndexScanExecutor : public AbstractScanExecutor {
   /** @brief index associated with index scan. */
   index::Index *index_ = nullptr;
 
-  /** @brief starting key for index scan. */
-  //const storage::Tuple *start_key_ = nullptr;
+  std::vector<oid_t> column_ids_;
 
-  /** @brief ending key for index scan. */
-  //const storage::Tuple *end_key_ = nullptr;
+  std::vector<oid_t> key_column_ids_;
 
-  /** @brief whether we also need to include the terminal values ?
-   *  Like ID > 50 (not inclusive) or ID >= 50 (inclusive)
-   * */
-  //bool start_inclusive_ = false;
+  std::vector<ExpressionType> expr_types_;
 
-  //bool end_inclusive_ = false;
+  std::vector<Value> values_;
 
 };
 
