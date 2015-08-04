@@ -10,13 +10,12 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/executor/nested_loop_join_executor.h"
-
 #include <vector>
 
 #include "backend/common/types.h"
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile_factory.h"
+#include "backend/executor/nested_loop_join_executor.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/expression/container_tuple.h"
 
@@ -29,27 +28,7 @@ namespace executor {
  */
 NestedLoopJoinExecutor::NestedLoopJoinExecutor(
     planner::AbstractPlanNode *node, ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {
-}
-
-/**
- * @brief Do some basic checks and create the schema for the output logical
- * tiles.
- * @return true on success, false otherwise.
- */
-bool NestedLoopJoinExecutor::DInit() {
-  assert(children_.size() == 2);
-
-  // Grab data from plan node.
-  const planner::NestedLoopJoinNode &node = GetPlanNode<
-      planner::NestedLoopJoinNode>();
-
-  // NOTE: predicate can be null for cartesian product
-  predicate_ = node.GetPredicate();
-  left_scan_start = true;
-  proj_info_ = node.GetProjInfo();
-
-  return true;
+    : AbstractJoinExecutor(node, executor_context) {
 }
 
 /**
@@ -216,25 +195,6 @@ bool NestedLoopJoinExecutor::DExecute() {
   }
 
   return true;
-}
-
-std::vector<LogicalTile::ColumnInfo> NestedLoopJoinExecutor::BuildSchema(
-    std::vector<LogicalTile::ColumnInfo> left,
-    std::vector<LogicalTile::ColumnInfo> right) {
-
-  assert(!proj_info_->isNonTrivial());
-  auto &direct_map_list = proj_info_->GetDirectMapList();
-  std::vector<LogicalTile::ColumnInfo> schema(direct_map_list.size());
-  for (auto &entry : direct_map_list) {
-    if (entry.second.first == 0) {
-      assert(entry.second.second < left.size());
-      schema[entry.first] = left[entry.second.second];
-    } else {
-      assert(entry.second.second < right.size());
-      schema[entry.first] = right[entry.second.second];
-    }
-  }
-  return schema;
 }
 
 }  // namespace executor
