@@ -26,9 +26,11 @@ bool Index::Compare(const storage::Tuple& index_key,
                     const std::vector<Value>& values) {
   int diff;
 
-  oid_t key_column_itr = 0;
+  oid_t key_column_itr = -1;
   // Go over each attribute in the list of comparison columns
   for(auto column_itr : key_column_ids) {
+    key_column_itr++;
+
     const Value& lhs = index_key.GetValue(column_itr);
     const Value& rhs = values[key_column_itr];
     const ExpressionType expr_type = expr_types[key_column_itr];
@@ -84,7 +86,6 @@ bool Index::Compare(const storage::Tuple& index_key,
       }
     }
 
-    key_column_itr++;
   }
 
   return true;

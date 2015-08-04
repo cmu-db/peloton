@@ -127,6 +127,7 @@ static void BuildScanKey(
     Value value = TupleTransformer::GetValue(scan_key->sk_argument,
                                              scan_key->sk_subtype);
     index_scan_desc.key_column_ids.push_back(scan_key->sk_attno - 1);  // 1 indexed
+
     index_scan_desc.values.push_back(value);
     std::ostringstream oss;
     oss << value;
