@@ -43,7 +43,7 @@ bool IndexScanExecutor::DInit() {
     return false;
 
   assert(children_.size() == 0);
-  LOG_INFO("Index Scan executor :: 0 child \n");
+  LOG_TRACE("Index Scan executor :: 0 child");
 
   // Grab info from plan node and check it
   const planner::IndexScanNode &node = GetPlanNode<planner::IndexScanNode>();
@@ -118,13 +118,11 @@ bool IndexScanExecutor::ExecIndexLookup(){
 
   std::vector<ItemPointer> tuple_locations;
 
-  LOG_INFO("Tuple locations : %lu \n", tuple_locations.size());
-
   tuple_locations = index_->Scan(values_,
                                  key_column_ids_,
                                  expr_types_);
 
-  LOG_INFO("Tuple locations : %lu \n", tuple_locations.size());
+  LOG_INFO("Tuple locations : %lu", tuple_locations.size());
 
   if (tuple_locations.size() == 0) return false;
 
@@ -137,7 +135,7 @@ bool IndexScanExecutor::ExecIndexLookup(){
                                               txn_id, commit_id);
   done_ = true;
 
-  LOG_INFO("Result tiles : %lu \n", result.size());
+  LOG_TRACE("Result tiles : %lu", result.size());
 
   return true;
 }
