@@ -13,16 +13,17 @@
 namespace peloton {
 namespace storage {
 
-bool TileIterator::Next(Tile& out) {
+bool TileIterator::Next(std::shared_ptr<Tile> &tile) {
     if (HasNext()) {
-        auto nextTile = table_->GetTileGroup(tile_itr);
+        auto nextTile = table_->GetTileGroup(tileItr_);
+        tile.reset(nextTile);
         return (true);
     }
     return (false);
 }
 
 bool TileIterator::HasNext() {
-    return (tile_itr < table_->GetTileGroupCount());
+    return (tileItr_ < table_->GetTileGroupCount());
 }
     
     
