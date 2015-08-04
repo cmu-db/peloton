@@ -99,15 +99,14 @@ bool NestedLoopJoinExecutor::DExecute() {
   // Construct output logical tile.
   std::unique_ptr<LogicalTile> output_tile(LogicalTileFactory::GetTile());
 
-  auto output_tile_schema = left_tile.get()->GetSchema();
+  auto left_tile_schema = left_tile.get()->GetSchema();
   auto right_tile_schema = right_tile.get()->GetSchema();
 
   for (auto &col : right_tile_schema) {
     col.position_list_idx += left_tile.get()->GetPositionLists().size();
   }
 
-  output_tile_schema.insert(output_tile_schema.end(), right_tile_schema.begin(),
-                            right_tile_schema.end());
+  auto output_tile_schema = BuildSchema(left_tile_schema, right_tile_schema);
 
   // Set the output logical tile schema
   output_tile.get()->SetSchema(std::move(output_tile_schema));
@@ -144,6 +143,8 @@ bool NestedLoopJoinExecutor::DExecute() {
   LOG_TRACE("left col count: %lu, right col count: %lu", left_tile.get()->GetColumnCount(), right_tile.get()->GetColumnCount());
   LOG_TRACE("left row count: %lu, right row count: %lu", left_tile_row_count, right_tile_row_count);
 
+  auto &direct_map_list = proj_info_->GetDirectMapList();
+
   // Go over every pair of tuples in left and right logical tiles
   for (size_t left_tile_row_itr = 0; left_tile_row_itr < left_tile_row_count;
        left_tile_row_itr++) {
@@ -167,25 +168,22 @@ bool NestedLoopJoinExecutor::DExecute() {
         }
       }
 
+
       // Insert a tuple into the output logical tile
+      for (auto &entry : direct_map_list) {
+        if (entry.second.first == 0) {
+         position_lists[entry.first].push_back(
+            left_tile_position_lists[entry.second.second]
+                                    [left_tile_row_itr]);
+        } else {
+          position_lists[entry.first]
+            .push_back(right_tile_position_lists[entry.second.second]
+                                                [right_tile_row_itr]);
+        }
+      }
+
 
       // First, copy the elements in left logical tile's tuple
-      for (size_t output_tile_column_itr = 0;
-           output_tile_column_itr < left_tile_column_count;
-           output_tile_column_itr++) {
-        position_lists[output_tile_column_itr].push_back(
-            left_tile_position_lists[output_tile_column_itr]
-                                    [left_tile_row_itr]);
-      }
-
-      // Then, copy the elements in left logical tile's tuple
-      for (size_t output_tile_column_itr = 0;
-           output_tile_column_itr < right_tile_column_count;
-           output_tile_column_itr++) {
-        position_lists[left_tile_column_count + output_tile_column_itr]
-            .push_back(right_tile_position_lists[output_tile_column_itr]
-                                                [right_tile_row_itr]);
-      }
     }
   }
 
@@ -213,6 +211,24 @@ bool NestedLoopJoinExecutor::DExecute() {
   }
 
   return true;
+}
+
+std::vector<LogicalTile::ColumnInfo> NestedLoopJoinExecutor::BuildSchema(std::vector<LogicalTile::ColumnInfo> left,
+                                                  std::vector<LogicalTile::ColumnInfo> right) {
+
+  assert(proj_info_->GetTargetList().size() == 0);
+  auto &direct_map_list = proj_info_->GetDirectMapList();
+  std::vector<LogicalTile::ColumnInfo> schema(direct_map_list.size());
+  for (auto &entry : direct_map_list) {
+    if (entry.second.first == 0) {
+      assert(entry.second.second < left.size());
+      schema[entry.first] = left[entry.second.second];
+    } else {
+      assert(entry.second.second < right.size());
+      schema[entry.first] = right[entry.second.second];
+    }
+  }
+  return schema;
 }
 
 }  // namespace executor
