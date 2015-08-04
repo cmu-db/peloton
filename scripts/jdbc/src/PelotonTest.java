@@ -33,12 +33,14 @@ public class PelotonTest {
 
   private final Connection conn;
 
-  private enum TABLE { A, B, AB };
+  private enum TABLE {A, B, AB}
+
+  ;
 
   public PelotonTest() throws SQLException {
     try {
       Class.forName("org.postgresql.Driver");
-    } catch(ClassNotFoundException e) {
+    } catch (ClassNotFoundException e) {
       e.printStackTrace();
     }
     conn = this.makeConnection();
@@ -56,6 +58,7 @@ public class PelotonTest {
 
   /**
    * Drop if exists and create testing database
+   *
    * @throws SQLException
    */
   public void Init() throws SQLException {
@@ -68,6 +71,7 @@ public class PelotonTest {
 
   /**
    * Insert a record
+   *
    * @param n the id of the record
    * @throws SQLException
    */
@@ -81,7 +85,7 @@ public class PelotonTest {
         stmt = conn.prepareStatement(INSERT_B);
         break;
     }
-    org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement)stmt;
+    org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement) stmt;
     for (int i = 0; i < n; i++) {
       String data = table.name() + " says hello world and id = " + i;
       stmt.setInt(1, i);
@@ -95,12 +99,13 @@ public class PelotonTest {
 
   /**
    * Insert a record
+   *
    * @param n the id of the record
    * @throws SQLException
    */
   public void Insert(int n) throws SQLException {
     PreparedStatement stmt = conn.prepareStatement(INSERT);
-    org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement)stmt;
+    org.postgresql.PGStatement pgstmt = (org.postgresql.PGStatement) stmt;
     for (int i = 0; i < n; i++) {
       String data1 = "Ming says hello world and id = " + i;
       String data2 = "Joy says hello world and id = " + i;
@@ -115,6 +120,7 @@ public class PelotonTest {
     return;
   }
 
+
   public void SeqScan() throws SQLException {
     System.out.println("\nSeqScan Test:");
     System.out.println("Query: " + SEQSCAN);
@@ -128,6 +134,7 @@ public class PelotonTest {
 
   /**
    * Perform Index Scan with a simple equal qualifier
+   *
    * @param i the param for the equal qualifier
    * @throws SQLException
    */
@@ -145,6 +152,7 @@ public class PelotonTest {
 
   /**
    * Perform Index Scan with a simple equal qualifier
+   *
    * @param i the param for the equal qualifier
    * @throws SQLException
    */
@@ -218,7 +226,8 @@ public class PelotonTest {
   static public void main(String[] args) throws Exception {
     PelotonTest pt = new PelotonTest();
     pt.Init();
-    pt.Insert(10);
+    pt.Insert(3, TABLE.A);
+    pt.Insert(10, TABLE.B);
 
     //pt.ReadModifyWrite(3);
     //pt.BitmapScan(2, 5);
