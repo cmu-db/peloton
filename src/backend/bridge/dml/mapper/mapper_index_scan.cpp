@@ -126,35 +126,35 @@ static void BuildScanKey(
     assert(!(scan_key->sk_flags & SK_SEARCHNOTNULL));  // currently, only support simple case
     Value value = TupleTransformer::GetValue(scan_key->sk_argument,
                                              scan_key->sk_subtype);
-    index_scan_desc.key_ids.push_back(scan_key->sk_attno - 1);  // 1 indexed
-    index_scan_desc.keys.push_back(value);
+    index_scan_desc.key_column_ids.push_back(scan_key->sk_attno - 1);  // 1 indexed
+    index_scan_desc.values.push_back(value);
     std::ostringstream oss;
     oss << value;
     LOG_INFO("key no: %d", scan_key->sk_attno);
     switch (scan_key->sk_strategy) {
       case BTLessStrategyNumber:
         LOG_INFO("key < %s", oss.str().c_str());
-        index_scan_desc.compare_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LT);
+        index_scan_desc.expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LT);
         break;
       case BTLessEqualStrategyNumber:
         LOG_INFO("key <= %s", oss.str().c_str());
-        index_scan_desc.compare_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LTE);
+        index_scan_desc.expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LTE);
         break;
       case BTEqualStrategyNumber:
         LOG_INFO("key = %s", oss.str().c_str());
-        index_scan_desc.compare_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQ);
+        index_scan_desc.expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_EQ);
         break;
       case BTGreaterEqualStrategyNumber:
         LOG_INFO("key >= %s", oss.str().c_str());
-        index_scan_desc.compare_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GTE);
+        index_scan_desc.expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GTE);
         break;
       case BTGreaterStrategyNumber:
         LOG_INFO("key > %s", oss.str().c_str());
-        index_scan_desc.compare_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GT);
+        index_scan_desc.expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_GT);
         break;
       default:
         LOG_ERROR("Invalid strategy num %d", scan_key->sk_strategy);
-        index_scan_desc.compare_types.push_back(ExpressionType::EXPRESSION_TYPE_INVALID);
+        index_scan_desc.expr_types.push_back(ExpressionType::EXPRESSION_TYPE_INVALID);
         break;
     }
   }

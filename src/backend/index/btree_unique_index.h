@@ -116,8 +116,8 @@ class BtreeUniqueIndex : public Index {
 
   std::vector<ItemPointer> Scan(
       const std::vector<Value>& values,
-      const std::vector<oid_t>& index_key_columns,
-      const std::vector<ExpressionType>& exprs) {
+      const std::vector<oid_t>& key_column_ids,
+      const std::vector<ExpressionType>& expr_types) {
     std::vector<ItemPointer> result;
 
     {
@@ -129,10 +129,10 @@ class BtreeUniqueIndex : public Index {
         auto index_key = itr->first;
         auto tuple = index_key.GetTupleForComparison(metadata->GetKeySchema());
 
-        if(IndexKeyComparator(tuple,
-                              values,
-                              index_key_columns,
-                              exprs) == true) {
+        if(Compare(tuple,
+                   key_column_ids,
+                   expr_types,
+                   values) == true) {
           ItemPointer location = itr->second;
           result.push_back(location);
         }
