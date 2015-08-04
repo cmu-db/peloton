@@ -16,6 +16,7 @@
 
 #include "backend/catalog/manager.h"
 #include "backend/common/types.h"
+#include "backend/common/synch.h"
 #include "backend/storage/tuple.h"
 #include "backend/index/index.h"
 
@@ -48,11 +49,13 @@ class BtreeUniqueIndex : public Index {
   bool InsertEntry(const storage::Tuple *key,
                    const ItemPointer location) {
     {
-      std::lock_guard<std::mutex> lock(index_mutex);
+      index_lock.WriteLock();
       index_key1.SetFromKey(key);
 
       // Insert the key, val pair
       auto status = container.insert(std::pair<KeyType, ValueType>(index_key1, location));
+
+      index_lock.Unlock();
       return status.second;
     }
   }
@@ -60,11 +63,13 @@ class BtreeUniqueIndex : public Index {
   bool DeleteEntry(const storage::Tuple *key,
                    const ItemPointer location) {
     {
-      std::lock_guard<std::mutex> lock(index_mutex);
+      index_lock.WriteLock();
       index_key1.SetFromKey(key);
 
       // Delete the < key, location > pair
       auto status = container.erase(index_key1);
+
+      index_lock.Unlock();
       return status;
     }
   }
@@ -74,7 +79,7 @@ class BtreeUniqueIndex : public Index {
                    const ItemPointer old_location) {
 
     {
-      std::lock_guard<std::mutex> lock(index_mutex);
+      index_lock.WriteLock();
       index_key1.SetFromKey(key);
 
       // Check for <key, old location> first
@@ -83,10 +88,12 @@ class BtreeUniqueIndex : public Index {
         if((old_loc.block == old_location.block) &&
             (old_loc.offset == old_location.offset))  {
           container[index_key1] = location;
+          index_lock.Unlock();
           return true;
         }
       }
 
+      index_lock.Unlock();
       return false;
     }
 
@@ -95,15 +102,17 @@ class BtreeUniqueIndex : public Index {
   ItemPointer Exists(const storage::Tuple *key,
                      const ItemPointer location) {
     {
-      std::lock_guard<std::mutex> lock(index_mutex);
+      index_lock.ReadLock();
       index_key1.SetFromKey(key);
 
       // find the key, location pair
       auto container_itr = container.find(index_key1);
       if(container_itr != container.end()) {
+        index_lock.Unlock();
         return container_itr->second;
       }
 
+      index_lock.Unlock();
       return INVALID_ITEMPOINTER;
     }
   }
@@ -115,7 +124,7 @@ class BtreeUniqueIndex : public Index {
     std::vector<ItemPointer> result;
 
     {
-      std::lock_guard<std::mutex> lock(index_mutex);
+      index_lock.ReadLock();
 
       // check if we have leading column equality
       oid_t leading_column_id = 0;
@@ -132,14 +141,20 @@ class BtreeUniqueIndex : public Index {
 
       auto itr = container.begin();
       storage::Tuple *start_key = nullptr;
-
       // start scanning from upper bound if possible
       if(special_case == true) {
         start_key = new storage::Tuple(metadata->GetKeySchema(), true);
         // set the lower bound tuple
-        SetLowerBoundTuple(start_key, values, key_column_ids, expr_types);
+        auto all_equal = SetLowerBoundTuple(start_key, values, key_column_ids, expr_types);
         index_key1.SetFromKey(start_key);
-        itr = container.upper_bound(index_key1);
+
+        // all equal case
+        if(all_equal){
+          itr = container.find(index_key1);
+        }
+        else {
+          itr = container.upper_bound(index_key1);
+        }
       }
 
       // scan all entries comparing against arbitrary key
@@ -158,6 +173,7 @@ class BtreeUniqueIndex : public Index {
       }
 
       delete start_key;
+      index_lock.Unlock();
     }
 
     return result;
@@ -177,7 +193,7 @@ class BtreeUniqueIndex : public Index {
   KeyComparator comparator;
 
   // synch helper
-  std::mutex index_mutex;
+  RWLock index_lock;
 
 };
 

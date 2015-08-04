@@ -216,6 +216,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   }
   assert(txn);
 
+  LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");
 
   // Build the executor tree
@@ -260,8 +261,6 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     storage::TileIterator tile_itr(base_tile);
     storage::Tuple tuple(base_tile->GetSchema());
 
-    std::cout << *(base_tile->GetSchema());
-
     // Switch to TopSharedMemoryContext to construct list and slots
     oldContext = MemoryContextSwitchTo(TopSharedMemoryContext);
 
@@ -289,12 +288,15 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     auto status = txn->GetResult();
     switch(status) {
       case Result::RESULT_SUCCESS:
+        LOG_INFO("Committing txn_id : %lu , cid : %lu\n", txn->GetTransactionId(), txn->GetCommitId());
         // Commit
         txn_manager.CommitTransaction(txn);
+
         break;
 
       case Result::RESULT_FAILURE:
       default:
+        LOG_INFO("Aborting txn : %lu , cid : %lu \n", txn->GetTransactionId(), txn->GetCommitId());
         //Abort
         txn_manager.AbortTransaction(txn);
     }
