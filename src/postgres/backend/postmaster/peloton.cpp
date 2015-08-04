@@ -364,6 +364,11 @@ peloton_sigabrt_handler(SIGNAL_ARGS) {
   proc_exit(0);
 }
 
+void wrapper(){
+    auto& logger = peloton::logging::Logger::GetInstance();
+    logger.logging_MainLoop();
+}
+
 /*
  * peloton_MainLoop
  *
@@ -383,7 +388,8 @@ peloton_MainLoop(void) {
   }
 
   // Launching logging thread
-  std::thread logger (peloton::logging::Logger::logging_MainLoop);
+  //std::thread logger (&peloton::logging::Logger::logging_MainLoop, peloton::logging::Logger::GetInstance() );
+  std::thread logger (&wrapper);
 
   /*
    * Loop to process messages until we get SIGQUIT or detect ungraceful
@@ -402,6 +408,8 @@ peloton_MainLoop(void) {
   for (;;) {
     /* Clear any already-pending wakeups */
     ResetLatch(MyLatch);
+    auto& logger = peloton::logging::Logger::GetInstance();
+    logger.AddQueue(1);
 
     /*
      * Quit if we get SIGQUIT from the postmaster.
