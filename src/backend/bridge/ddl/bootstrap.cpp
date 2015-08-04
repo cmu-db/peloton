@@ -90,7 +90,7 @@ bool Bootstrap::BootstrapPeloton(raw_database_info* raw_database,
 
   auto& manager = catalog::Manager::GetInstance();
   auto db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
-  db->UpdateAllStats(peloton_status);
+  db->UpdateStats(peloton_status, false);
 
 /*
   std::cout << "Print db :: \n"<<*db << std::endl;
