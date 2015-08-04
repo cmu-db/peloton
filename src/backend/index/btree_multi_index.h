@@ -19,8 +19,6 @@
 #include "backend/storage/tuple.h"
 #include "backend/index/index.h"
 
-#include "stx/btree_multimap.h"
-
 namespace peloton {
 namespace index {
 
@@ -34,7 +32,7 @@ class BtreeMultiIndex : public Index {
   friend class IndexFactory;
 
   typedef ItemPointer ValueType;
-  typedef stx::btree_multimap<KeyType, ValueType, KeyComparator> MapType;
+  typedef std::multimap<KeyType, ValueType, KeyComparator> MapType;
 
  public:
 
@@ -70,13 +68,18 @@ class BtreeMultiIndex : public Index {
 
       // Delete the < key, location > pair
       auto entries = container.equal_range(index_key1);
-      for (auto entry = entries.first ; entry != entries.second; ++entry) {
-        ItemPointer value = entry->second;
+      for (auto iterator = entries.first ; iterator != entries.second; ) {
+        ItemPointer value = iterator->second;
+
         if((value.block == location.block) &&
             (value.offset == location.offset)) {
           // remove matching (key, value) entry
-          container.erase(entry);
+          iterator = container.erase(iterator);
         }
+        else {
+          ++iterator;
+        }
+
       }
 
       return true;
@@ -94,13 +97,18 @@ class BtreeMultiIndex : public Index {
 
       // Check for <key, old location> first
       auto entries = container.equal_range(index_key1);
-      for (auto entry = entries.first ; entry != entries.second; ++entry) {
-        ItemPointer value = entry->second;
+      for (auto iterator = entries.first ; iterator != entries.second; ) {
+        ItemPointer value = iterator->second;
+
         if((value.block == old_location.block) &&
             (value.offset == old_location.offset)) {
           // remove matching (key, value) entry
-          container.erase(entry);
+          iterator = container.erase(iterator);
         }
+        else {
+          ++iterator;
+        }
+
       }
 
       // insert the key, val pair

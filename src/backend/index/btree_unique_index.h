@@ -19,8 +19,6 @@
 #include "backend/storage/tuple.h"
 #include "backend/index/index.h"
 
-#include "stx/btree_map.h"
-
 namespace peloton {
 namespace index {
 
@@ -34,7 +32,7 @@ class BtreeUniqueIndex : public Index {
   friend class IndexFactory;
 
   typedef ItemPointer ValueType;
-  typedef stx::btree_map<KeyType, ValueType, KeyComparator> MapType;
+  typedef std::map<KeyType, ValueType, KeyComparator> MapType;
 
  public:
   BtreeUniqueIndex(IndexMetadata *metadata)
@@ -51,7 +49,6 @@ class BtreeUniqueIndex : public Index {
                    const ItemPointer location) {
     {
       std::lock_guard<std::mutex> lock(index_mutex);
-
       index_key1.SetFromKey(key);
 
       // Insert the key, val pair
@@ -64,7 +61,6 @@ class BtreeUniqueIndex : public Index {
                    const ItemPointer location) {
     {
       std::lock_guard<std::mutex> lock(index_mutex);
-
       index_key1.SetFromKey(key);
 
       // Delete the < key, location > pair
@@ -79,7 +75,6 @@ class BtreeUniqueIndex : public Index {
 
     {
       std::lock_guard<std::mutex> lock(index_mutex);
-
       index_key1.SetFromKey(key);
 
       // Check for <key, old location> first
@@ -101,7 +96,6 @@ class BtreeUniqueIndex : public Index {
                      const ItemPointer location) {
     {
       std::lock_guard<std::mutex> lock(index_mutex);
-
       index_key1.SetFromKey(key);
 
       // find the key, location pair
@@ -135,7 +129,6 @@ class BtreeUniqueIndex : public Index {
                    values) == true) {
           ItemPointer location = itr->second;
           result.push_back(location);
-          std::cout << "\nTuple :: " << tuple;
         }
         itr++;
       }
