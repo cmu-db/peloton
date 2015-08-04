@@ -16,6 +16,7 @@
 
 #include "backend/catalog/manager.h"
 #include "backend/common/types.h"
+#include "backend/common/synch.h"
 #include "backend/storage/tuple.h"
 #include "backend/index/index.h"
 
@@ -49,12 +50,13 @@ class BtreeMultiIndex : public Index {
   bool InsertEntry(const storage::Tuple *key,
                    const ItemPointer location) {
     {
-      std::lock_guard<std::mutex> lock(index_mutex);
-
+      index_lock.WriteLock();
       index_key1.SetFromKey(key);
 
       // Insert the key, val pair
       container.insert(std::pair<KeyType, ValueType>(index_key1, location));
+
+      index_lock.Unlock();
       return true;
     }
   }
@@ -62,8 +64,7 @@ class BtreeMultiIndex : public Index {
   bool DeleteEntry(const storage::Tuple *key,
                    const ItemPointer location) {
     {
-      std::lock_guard<std::mutex> lock(index_mutex);
-
+      index_lock.WriteLock();
       index_key1.SetFromKey(key);
 
       // Delete the < key, location > pair
@@ -82,6 +83,7 @@ class BtreeMultiIndex : public Index {
 
       }
 
+      index_lock.Unlock();
       return true;
     }
   }
@@ -91,8 +93,7 @@ class BtreeMultiIndex : public Index {
                    const ItemPointer old_location) {
 
     {
-      std::lock_guard<std::mutex> lock(index_mutex);
-
+      index_lock.WriteLock();
       index_key1.SetFromKey(key);
 
       // Check for <key, old location> first
@@ -114,6 +115,7 @@ class BtreeMultiIndex : public Index {
       // insert the key, val pair
       container.insert(std::pair<KeyType, ValueType>(index_key1, location));
 
+      index_lock.Unlock();
       return false;
     }
 
@@ -122,8 +124,7 @@ class BtreeMultiIndex : public Index {
   ItemPointer Exists(const storage::Tuple *key,
                      const ItemPointer location) {
     {
-      std::lock_guard<std::mutex> lock(index_mutex);
-
+      index_lock.ReadLock();
       index_key1.SetFromKey(key);
 
       // find the <key, location> pair
@@ -132,10 +133,12 @@ class BtreeMultiIndex : public Index {
         ItemPointer value = entry->second;
         if((value.block == location.block) &&
             (value.offset == location.offset)) {
+          index_lock.Unlock();
           return value;
         }
       }
 
+      index_lock.Unlock();
       return INVALID_ITEMPOINTER;
     }
   }
@@ -147,7 +150,7 @@ class BtreeMultiIndex : public Index {
     std::vector<ItemPointer> result;
 
     {
-      std::lock_guard<std::mutex> lock(index_mutex);
+      index_lock.ReadLock();
 
       // check if we have leading column equality
       oid_t leading_column_id = 0;
@@ -196,6 +199,8 @@ class BtreeMultiIndex : public Index {
       }
 
       delete start_key;
+
+      index_lock.Unlock();
     }
 
     return result;
@@ -214,8 +219,7 @@ class BtreeMultiIndex : public Index {
   KeyComparator comparator;
 
   // synch helper
-  std::mutex index_mutex;
-
+  RWLock index_lock;
 };
 
 }  // End index namespace
