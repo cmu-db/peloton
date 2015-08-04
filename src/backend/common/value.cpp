@@ -1124,9 +1124,9 @@ Value Value::OpAddBigInts(const int64_t lhs, const int64_t rhs) const {
   if (lhs == INT64_NULL || rhs == INT64_NULL) return GetBigIntValue(INT64_NULL);
   // Scary overflow check
   if (((lhs ^ rhs) |
-       (((lhs ^ (~(lhs ^ rhs) & (1L << (sizeof(int64_t) * CHAR_BIT - 1)))) +
-         rhs) ^
-        rhs)) >= 0) {
+      (((lhs ^ (~(lhs ^ rhs) & (1L << (sizeof(int64_t) * CHAR_BIT - 1)))) +
+          rhs) ^
+          rhs)) >= 0) {
     char message[4096];
     ::snprintf(message, 4096, "Adding %jd and %jd will overflow BigInt storage",
                (intmax_t)lhs, (intmax_t)rhs);
@@ -1139,9 +1139,9 @@ Value Value::OpSubtractBigInts(const int64_t lhs, const int64_t rhs) const {
   if (lhs == INT64_NULL || rhs == INT64_NULL) return GetBigIntValue(INT64_NULL);
   // Scary overflow check
   if (((lhs ^ rhs) &
-       (((lhs ^ ((lhs ^ rhs) & (1L << (sizeof(int64_t) * CHAR_BIT - 1)))) -
-         rhs) ^
-        rhs)) < 0) {
+      (((lhs ^ ((lhs ^ rhs) & (1L << (sizeof(int64_t) * CHAR_BIT - 1)))) -
+          rhs) ^
+          rhs)) < 0) {
     char message[4096];
     ::snprintf(message, 4096,
                "Subtracting %jd from %jd will overflow BigInt storage",
@@ -1357,7 +1357,7 @@ std::string Value::CreateStringFromDecimal() const {
   }
   std::string fractionalString = fractional.ToString(10);
   for (int ii = static_cast<int>(fractionalString.size());
-       ii < Value::max_decimal_scale; ii++) {
+      ii < Value::max_decimal_scale; ii++) {
     buffer << '0';
   }
   buffer << fractionalString;
@@ -1563,6 +1563,52 @@ Value Value::OpDivideDecimals(const Value lhs, const Value rhs) const {
   return GetDecimalValue(retval);
 }
 
+Value Value::GetMinValue(ValueType type) {
+
+  switch (type) {
+    case (VALUE_TYPE_TINYINT):
+        return GetTinyIntValue(PELOTON_INT8_MIN);
+    break;
+    case (VALUE_TYPE_SMALLINT):
+        return GetSmallIntValue(PELOTON_INT16_MIN);
+    break;
+    case (VALUE_TYPE_INTEGER):
+        return GetIntegerValue(PELOTON_INT32_MIN);
+        break;
+    break;
+    case (VALUE_TYPE_BIGINT):
+        return GetBigIntValue(PELOTON_INT64_MIN);
+    break;
+    case (VALUE_TYPE_DOUBLE):
+        return GetDoubleValue(-DBL_MAX);
+    break;
+    case (VALUE_TYPE_VARCHAR):
+        return GetStringValue("", nullptr);
+    break;
+    break;
+    case (VALUE_TYPE_VARBINARY):
+        return  GetBinaryValue("", nullptr);
+    break;
+    case (VALUE_TYPE_TIMESTAMP):
+        return GetTimestampValue(PELOTON_INT64_MIN);
+    break;
+    case (VALUE_TYPE_DECIMAL):
+        return GetDecimalValue(DECIMAL_MIN);
+    break;
+    case (VALUE_TYPE_BOOLEAN):
+        return GetFalse();
+    break;
+
+    case (VALUE_TYPE_INVALID):
+    case (VALUE_TYPE_NULL):
+    case (VALUE_TYPE_ADDRESS):
+    default: {
+      throw UnknownTypeException((int)type, "Can't get min value for type");
+    }
+  }
+
+}
+
 //===--------------------------------------------------------------------===//
 // Misc functions
 //===--------------------------------------------------------------------===//
@@ -1629,44 +1675,44 @@ std::string Value::GetTypeName(ValueType type) {
   std::string ret;
   switch (type) {
     case (VALUE_TYPE_TINYINT):
-      ret = "tinyint";
-      break;
+          ret = "tinyint";
+    break;
     case (VALUE_TYPE_SMALLINT):
-      ret = "smallint";
-      break;
+          ret = "smallint";
+    break;
     case (VALUE_TYPE_INTEGER):
-      ret = "integer";
-      break;
+          ret = "integer";
+    break;
     case (VALUE_TYPE_BIGINT):
-      ret = "bigint";
-      break;
+          ret = "bigint";
+    break;
     case (VALUE_TYPE_DOUBLE):
-      ret = "double";
-      break;
+          ret = "double";
+    break;
     case (VALUE_TYPE_VARCHAR):
-      ret = "varchar";
-      break;
+          ret = "varchar";
+    break;
     case (VALUE_TYPE_VARBINARY):
-      ret = "varbinary";
-      break;
+          ret = "varbinary";
+    break;
     case (VALUE_TYPE_TIMESTAMP):
-      ret = "timestamp";
-      break;
+          ret = "timestamp";
+    break;
     case (VALUE_TYPE_DECIMAL):
-      ret = "decimal";
-      break;
+          ret = "decimal";
+    break;
     case (VALUE_TYPE_INVALID):
-      ret = "INVALID";
-      break;
+          ret = "INVALID";
+    break;
     case (VALUE_TYPE_NULL):
-      ret = "NULL";
-      break;
+          ret = "NULL";
+    break;
     case (VALUE_TYPE_BOOLEAN):
-      ret = "boolean";
-      break;
+          ret = "boolean";
+    break;
     case (VALUE_TYPE_ADDRESS):
-      ret = "address";
-      break;
+          ret = "address";
+    break;
     default: {
       char buffer[32];
       snprintf(buffer, 32, "UNKNOWN[%d]", type);
