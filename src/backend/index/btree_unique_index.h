@@ -135,6 +135,7 @@ class BtreeUniqueIndex : public Index {
                    values) == true) {
           ItemPointer location = itr->second;
           result.push_back(location);
+          std::cout << "\nTuple :: " << tuple;
         }
         itr++;
       }
