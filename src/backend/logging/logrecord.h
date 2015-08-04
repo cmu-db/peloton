@@ -1,18 +1,18 @@
 /*-------------------------------------------------------------------------
  *
- * logger.h
+ * logrecord.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/logger.h
+ * /peloton/src/backend/logging/logrecord.h
  *
  *-------------------------------------------------------------------------
  */
 
 #pragma once
 
-#include "backend/logging/logrecord.h"
+#include "backend/common/types.h"
 
 #include <mutex>
 #include <vector>
@@ -21,30 +21,26 @@ namespace peloton {
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Logger 
+// LogRecord
 //===--------------------------------------------------------------------===//
 
-// log queue
-static std::vector<LogRecord> queue;
+class LogRecord{
 
-static std::mutex queue_mutex;
+public:
+  LogRecord() = delete;
+  LogRecord(LogType log_type, oid_t database_oid) 
+  : log_type(log_type), database_oid(database_oid) {} ;
 
-class Logger{
+  oid_t GetDbOid() const;
 
-  public:
+  LogType GetType() const;
 
-    Logger() {}
+  friend std::ostream &operator<<(std::ostream &os, const LogRecord& record);
 
-    static Logger& GetInstance();
+private:
+  LogType log_type = LOG_TYPE_INVALID;
+  oid_t database_oid = INVALID_OID;
 
-    void logging_MainLoop(void);
-
-    void Record(LogRecord queue);
-
-    size_t GetBufferSize() const;
-
-    void Flush();
- 
 };
 
 }  // namespace logging

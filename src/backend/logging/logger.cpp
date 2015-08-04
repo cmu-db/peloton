@@ -10,7 +10,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "logger.h"
+#include "backend/logging/logger.h"
 
 #include <iostream> // cout
 #include <unistd.h> // sleep
@@ -28,21 +28,27 @@ void Logger::logging_MainLoop(){
 
   // TODO :: performance optimization
   for(int i=0; ;i+=2){
-    sleep(3);
-    AddQueue(i);
-    if( i == 20 ) Flush();
+    sleep(1);
+    LogRecord record(LOG_TYPE_DEFAULT, i);
+    Record(record);
+    if( GetBufferSize() > 10 ) Flush();
   }
 }
 
-void Logger::AddQueue(int element){
+void Logger::Record(LogRecord record){
   std::lock_guard<std::mutex> lock(queue_mutex);
-  queue.push_back(element);
+  queue.push_back(record);
+}
+
+size_t Logger::GetBufferSize() const {
+  std::lock_guard<std::mutex> lock(queue_mutex);
+  return queue.size();
 }
 
 void Logger::Flush(){
   std::lock_guard<std::mutex> lock(queue_mutex);
-  for( auto element : queue )
-    std::cout << "element : " << element << std::endl;
+  for( auto record : queue )
+    std::cout << "element : " << record << std::endl;
   queue.clear();
 }
 
