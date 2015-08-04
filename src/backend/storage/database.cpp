@@ -78,47 +78,23 @@ oid_t Database::GetTableCount() const { return tables.size(); }
 // STATS
 //===--------------------------------------------------------------------===//
 
-void Database::UpdateAllStats(Peloton_Status* status){
-  LOG_INFO("Update All Stats in Database(%u)", database_oid);
-
-  std::vector<dirty_table_info*> dirty_tables;
-
-  for( int table_itr=0; table_itr<GetTableCount(); table_itr++){
-    auto table = GetTable(table_itr);
-    std::vector<dirty_index_info*> dirty_indexes;
-    for (int index_itr = 0; index_itr < table->GetIndexCount(); index_itr++) {
-      auto index = table->GetIndex(index_itr);
-
-      auto dirty_index = CreateDirtyIndex(index->GetOid(), index->GetNumberOfTuples());
-      index->ResetDirty();
-      dirty_indexes.push_back(dirty_index);
-    }
-    auto dirty_table = CreateDirtyTable(table->GetOid(),
-                                        table->GetNumberOfTuples(),
-                                        CreateDirtyIndexes(dirty_indexes),
-                                        dirty_indexes.size());
-    table->ResetDirty();
-
-    dirty_tables.push_back(dirty_table);
+void Database::UpdateStats(Peloton_Status* status, bool dirty_care){
+  if( dirty_care ){
+    LOG_INFO("Update only dirty tables in Database(%u)", database_oid);
+  }else{
+    LOG_INFO("Update All Stats in Database(%u)", database_oid);
   }
 
-  status->m_dirty_tables = CreateDirtyTables(dirty_tables);
-  status->m_dirty_count = dirty_tables.size();
-}
-
-void Database::UpdateDirtyStats(Peloton_Status* status){
-  LOG_INFO("Update only dirty tables in Database(%u)", database_oid);
-
   std::vector<dirty_table_info*> dirty_tables;
 
   for( int table_itr=0; table_itr<GetTableCount(); table_itr++){
     auto table = GetTable(table_itr);
-    if( !table->IsDirty()) continue;
+    if( dirty_care &&  !table->IsDirty()) continue;
 
     std::vector<dirty_index_info*> dirty_indexes;
     for (int index_itr = 0; index_itr < table->GetIndexCount(); index_itr++) {
       auto index = table->GetIndex(index_itr);
-      if( !index->IsDirty()) continue;
+      if(  dirty_care && !index->IsDirty()) continue;
 
       auto dirty_index = CreateDirtyIndex(index->GetOid(), index->GetNumberOfTuples());
       index->ResetDirty();
