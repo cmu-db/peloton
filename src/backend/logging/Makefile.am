@@ -5,7 +5,8 @@
 ######################################################################
 
 logging_FILES = \
-			   backend/logging/logger.cpp 
+			   backend/logging/logger.cpp \
+			   backend/logging/logrecord.cpp 
 
 logging_INCLUDES = \
                   -I$(srcdir)/logging
