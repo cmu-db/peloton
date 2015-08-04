@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * nested_loop_join.h
+ * merge_join.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/executor/nested_loop_join_executor.h
+ * /peloton/src/executor/merge_join_executor.h
  *
  *-------------------------------------------------------------------------
  */

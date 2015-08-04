@@ -13,7 +13,6 @@
 #pragma once
 
 #include "backend/executor/abstract_join_executor.h"
-#include "backend/planner/nested_loop_join_node.h"
 
 #include <vector>
 
