@@ -181,10 +181,12 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
     // First, try to insert into the index
     bool status = index->InsertEntry(key, location);
     if (status == true) {
+      LOG_INFO("Index : %u. Key not exists yet. Simple Insert. \n", index->GetOid());
       delete key;
       continue;
     }
 
+    LOG_INFO("Index : %u . Key exists. Checking visibility. \n", index->GetOid());
     // Key already exists
     auto old_location = index->Exists(key, location);
     if (old_location.block != INVALID_OID) {
@@ -204,12 +206,14 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
       // The previous tuple is not visible,
       // so let's update it atomically
       if(visible == false) {
+        LOG_INFO("Index : %u. Existing tuple is not visible.\n", index->GetOid());
         bool status = index->UpdateEntry(key, location, old_location);
         if(status == true) {
           delete key;
           continue;
         }
       }
+      LOG_INFO("Existing tuple is still visible.\n");
 
     }
 
@@ -271,31 +275,29 @@ bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
   return true;
 }
 
-void DataTable::DeleteInIndexes(const storage::Tuple *tuple,
-                                const ItemPointer location) {
-  // Go over every index
-  for (auto index : indexes) {
-    auto index_schema = index->GetKeySchema();
-    auto indexed_columns = index_schema->GetIndexedColumns();
+//void DataTable::DeleteInIndexes(const storage::Tuple *tuple,
+//                                const ItemPointer location) {
+//  // Go over every index
+//  for (auto index : indexes) {
+//    auto index_schema = index->GetKeySchema();
+//    auto indexed_columns = index_schema->GetIndexedColumns();
+//
+//    storage::Tuple *key = new storage::Tuple(index_schema, true);
+//    key->SetFromTuple(tuple, indexed_columns);
+//
+//    // Delete the entry in the index
+//    if (index->DeleteEntry(key, location) == false) {
+//      delete key;
+//      LOG_WARN("Failed to delete tuple from index %s . %s %s",
+//               GetName().c_str(),
+//               index->GetName().c_str(),
+//               index->GetTypeName().c_str());
+//    }
+//
+//    delete key;
+//  }
+//}
 
-    storage::Tuple *key = new storage::Tuple(index_schema, true);
-    key->SetFromTuple(tuple, indexed_columns);
-
-    // Delete the entry in the index
-    if (index->DeleteEntry(key, location) == false) {
-      delete key;
-      LOG_WARN("Failed to delete tuple from index %s . %s %s",
-               GetName().c_str(),
-               index->GetName().c_str(),
-               index->GetTypeName().c_str());
-    }
-    // Decrease the indexes' number of tuples by 1
-    index->DecreaseNumberOfTuplesBy(1);
-
-    delete key;
-  }
-
-}
 
 //===--------------------------------------------------------------------===//
 // UPDATE
@@ -310,13 +312,24 @@ ItemPointer DataTable::UpdateTuple(const concurrency::Transaction *transaction,
   if(location.block == INVALID_OID)
     return INVALID_ITEMPOINTER;
 
-  // Update the indexes
-  UpdateInIndexes(tuple, location, old_location);
+  bool status = false;
+  // 1) Try as if it's a same-key update
+  status = UpdateInIndexes(tuple, location, old_location);
+
+  // 2) If 1) fails, try again as an Insert
+  if(false == status){
+    InsertInIndexes(transaction, tuple, location);
+  }
+
+  // 3) If still fails, then it is a real failure
+  if(false == status){
+    location = INVALID_ITEMPOINTER;
+  }
 
   return location;
 }
 
-void DataTable::UpdateInIndexes(const storage::Tuple *tuple,
+bool DataTable::UpdateInIndexes(const storage::Tuple *tuple,
                                 const ItemPointer location,
                                 const ItemPointer old_location) {
   for (auto index : indexes) {
@@ -327,13 +340,15 @@ void DataTable::UpdateInIndexes(const storage::Tuple *tuple,
     key->SetFromTuple(tuple, indexed_columns);
 
     if (index->UpdateEntry(key, location, old_location) == false) {
-      LOG_ERROR("Index constraint violated\n");
+      LOG_INFO("Same-key update index failed \n");
       delete key;
-      break;
+      return false;
     }
 
     delete key;
   }
+
+  return true;
 }
 
 //===--------------------------------------------------------------------===//

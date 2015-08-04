@@ -129,6 +129,9 @@ class Value {
   Value OpAnd(const Value rhs) const;
   Value OpOr(const Value rhs) const;
 
+  /// Get min value
+  static Value GetMinValue(ValueType);
+
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization utilities
   //===--------------------------------------------------------------------===//

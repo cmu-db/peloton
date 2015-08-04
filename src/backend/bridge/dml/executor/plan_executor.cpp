@@ -260,6 +260,8 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     storage::TileIterator tile_itr(base_tile);
     storage::Tuple tuple(base_tile->GetSchema());
 
+    std::cout << *(base_tile->GetSchema());
+
     // Switch to TopSharedMemoryContext to construct list and slots
     oldContext = MemoryContextSwitchTo(TopSharedMemoryContext);
 
@@ -268,7 +270,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
       auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
       if (slot != nullptr) {
         slots = lappend(slots, slot);
-        //print_slot(slot);
+//        print_slot(slot);
       }
     }
 
