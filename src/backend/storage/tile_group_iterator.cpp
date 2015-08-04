@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * tile_iterator.cpp
+ * tile_group_iterator.cpp
  * file description
  *
  * Copyright(c) 2015, CMU
@@ -8,22 +8,22 @@
  *-------------------------------------------------------------------------
  */
 
-#include "backend/storage/tile_iterator.h"
+#include "backend/storage/tile_group_iterator.h"
 
 namespace peloton {
 namespace storage {
 
-bool TileIterator::Next(std::shared_ptr<Tile> &tile) {
+bool TileGroupIterator::Next(std::shared_ptr<TileGroup> &tileGroup) {
     if (HasNext()) {
-        auto nextTile = table_->GetTileGroup(tileItr_);
-        tile.reset(nextTile);
+        std::shared_ptr<TileGroup> next(table_->GetTileGroup(tileGroupItr_));
+        tileGroup.swap(next);
         return (true);
     }
     return (false);
 }
 
-bool TileIterator::HasNext() {
-    return (tileItr_ < table_->GetTileGroupCount());
+bool TileGroupIterator::HasNext() {
+    return (tileGroupItr_ < table_->GetTileGroupCount());
 }
     
     
