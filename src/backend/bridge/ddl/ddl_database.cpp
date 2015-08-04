@@ -42,8 +42,7 @@ bool DDLDatabase::ExecCreatedbStmt(Node* parsetree) {
  */
 bool DDLDatabase::ExecDropdbStmt(Node* parsetree) {
   DropdbStmt* stmt = (DropdbStmt*)parsetree;
-  Oid database_oid = get_database_oid(stmt->dbname, stmt->missing_ok);
-  DDLDatabase::DropDatabase(database_oid);
+  DDLDatabase::DropDatabase(stmt->database_id);
   return true;
 }
 
@@ -67,7 +66,7 @@ bool DDLDatabase::ExecVacuumStmt(Node* parsetree, Peloton_Status* status) {
 
   // Update every table and index
   if(relation_name.empty()){
-    db->UpdateStats(status);
+    db->UpdateStats(status, true);
   }
   // Otherwise, update the specific table
   else {
