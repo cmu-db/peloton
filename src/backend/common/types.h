@@ -253,6 +253,7 @@ enum PlanNodeType {
   // Join Nodes
   PLAN_NODE_TYPE_NESTLOOP = 20,
   PLAN_NODE_TYPE_NESTLOOPINDEX = 21,
+  PLAN_NODE_TYPE_MERGEJOIN = 22,
 
   // Mutator Nodes
   PLAN_NODE_TYPE_UPDATE = 30,
