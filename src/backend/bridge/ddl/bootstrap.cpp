@@ -87,11 +87,10 @@ bool Bootstrap::BootstrapPeloton(raw_database_info* raw_database){
   CreateIndexes(raw_database->raw_indexes, raw_database->index_count);
   CreateForeignkeys(raw_database->raw_foreignkeys, raw_database->foreignkey_count);
 
-/*
-  auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
-  std::cout << "Print db :: \n"<<*db << std::endl;
-  */
+  // Verbose mode
+  //auto& manager = catalog::Manager::GetInstance();
+  //storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+  //std::cout << "Print db :: \n"<<*db << std::endl;
 
   elog(LOG, "Finished initializing Peloton");
   return true;

@@ -94,8 +94,6 @@ class aggregator_task {
 Result Kernel::Handler(const char* query) {
   Result status = RESULT_INVALID;
 
-  std::cout << query << "\n";
-
   /*
   int num_chunks = size/chunk_size;
   data = new int[size]
@@ -116,8 +114,6 @@ Result Kernel::Handler(const char* query) {
   make_edge(summer, aggregator);
   table_iterator.activate();
   g.wait_for_all();
-
-  std::cout << "Parallel Sum is    : " << sum << "\n";
   */
 
   status = RESULT_SUCCESS;
