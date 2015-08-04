@@ -132,7 +132,10 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
     const ProjectionInfo *pg_pi,
     oid_t column_count) {
 
-  if (pg_pi == nullptr) return nullptr;
+  if (pg_pi == nullptr) {
+    LOG_INFO("pg proj info is null, no projection");
+    return nullptr;
+  }
 
   /*
    * (A) Transform non-trivial target list
