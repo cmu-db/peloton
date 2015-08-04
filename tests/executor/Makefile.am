@@ -19,6 +19,7 @@ check_PROGRAMS += \
 
 executor_tests_common= \
 			executor/executor_tests_util.cpp \
+			executor/join_tests_util.cpp \
 			harness.cpp
 
 logical_tile_test_SOURCES = \
