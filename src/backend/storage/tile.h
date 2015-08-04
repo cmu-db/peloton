@@ -29,7 +29,7 @@ namespace storage {
 //===--------------------------------------------------------------------===//
 
 class TileGroup;
-class TileIterator;
+class TupleIterator;
 // class TileStats;
 
 /**
@@ -41,7 +41,7 @@ class TileIterator;
  */
 class Tile {
   friend class TileFactory;
-  friend class TileIterator;
+  friend class TupleIterator;
   friend class TileGroupHeader;
 
   Tile() = delete;
@@ -141,7 +141,7 @@ class Tile {
   bool operator==(const Tile &other) const;
   bool operator!=(const Tile &other) const;
 
-  TileIterator GetIterator();
+  TupleIterator GetIterator();
 
   // Get a string representation of this tile
   friend std::ostream &operator<<(std::ostream &os, const Tile &tile);
