@@ -12,6 +12,9 @@
 
 #pragma once
 
+#include <mutex>
+#include <vector>
+
 namespace peloton {
 namespace logging {
 
@@ -19,43 +22,25 @@ namespace logging {
 // Logger 
 //===--------------------------------------------------------------------===//
 
+// queue
+static std::vector<int> queue;
+
+static std::mutex queue_mutex;
+
 class Logger{
+
   public:
-    static void logging_MainLoop(void);
-//    Logger(oid_t database_oid,
-//           oid_t buffer_size,
-//           void* nvram_ptr);
-//
-//    /* db oid */
-//    /* buffer size(# of logs) to commit (default : 1) */
-//    /* nvm */
-//
-//    //Make tuple template 
-//    // Pointer? deep copy needed ,, isn't it?
-//    bool Record(const concurrency::Transaction *transaction, 
-//                const storage::Tuple *tuple)
-//    {
-//      {
-//        std::lock_guard<std::mutex> lock(table_mutex);
-//
-//        txn_buffer.push_back(transaction);
-//
-//        // flush when buffer is full
-//        if( txn_buffer.size() == buffer_size ){
-//          //allocate memory in NVRAM
-//        }
-//      }
-//    }
-  private:
-    // txn vector
-    //std::vector<concurrency::Transaction*> txn_buffer;
 
-    // nvram pointer
+    Logger() {}
 
-    // buffer size
+    static Logger& GetInstance();
 
-    // logger mutex
-    //std::mutex logger_mutex;
+    void logging_MainLoop(void);
+
+    void AddQueue(int queue);
+
+    void Flush();
+ 
 };
 
 }  // namespace logging
