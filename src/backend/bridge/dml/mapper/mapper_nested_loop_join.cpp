@@ -26,7 +26,6 @@ namespace bridge {
  */
 planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
     const NestLoopState* nl_plan_state) {
-
   const JoinState *js = &(nl_plan_state->js);
   PelotonJoinType join_type = PlanTransformer::TransformJoinType(js->jointype);
   if (join_type == JOIN_TYPE_INVALID) {
@@ -57,7 +56,6 @@ planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
                                       js->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts));
 
   LOG_INFO("\n%s", project_info.get()->Debug().c_str());
-
 
 
   planner::AbstractPlanNode *outer = PlanTransformer::TransformPlan(outerPlanState(nl_plan_state));
