@@ -134,7 +134,7 @@ class Index {
   // scan all keys in the index comparing with an arbitrary key
   virtual std::vector<ItemPointer> Scan(
       const std::vector<Value>& values,
-      const std::vector<oid_t>& index_key_columns,
+      const std::vector<oid_t>& key_column_ids,
       const std::vector<ExpressionType>& exprs) = 0;
 
   //===--------------------------------------------------------------------===//
@@ -183,14 +183,14 @@ class Index {
   // Get a string representation of this index
   friend std::ostream &operator<<(std::ostream &os, const Index &index);
 
-  // Generic key comparator between index key and given arbitrary key
-  bool IndexKeyComparator(const storage::Tuple& index_key,
-                          const std::vector<Value>& values,
-                          const std::vector<oid_t>& index_key_columns,
-                          const std::vector<ExpressionType>& exprs);
-
  protected:
   Index(IndexMetadata *schema);
+
+  // Generic key comparator between index key and given arbitrary key
+  bool Compare(const storage::Tuple& index_key,
+               const std::vector<oid_t>& column_ids,
+               const std::vector<ExpressionType>& expr_types,
+               const std::vector<Value>& values);
 
   //===--------------------------------------------------------------------===//
   //  Data members

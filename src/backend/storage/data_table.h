@@ -179,13 +179,13 @@ class DataTable : public AbstractTable {
                        const storage::Tuple *tuple,
                        ItemPointer location);
 
-  // drop the entry in the indice
-  // NOTE: not used currently due to our MVCC design
-  void DeleteInIndexes(const storage::Tuple *tuple,
-                       const ItemPointer location);
+//  // drop the entry in the indice
+//  // NOTE: not used currently due to our MVCC design
+//  void DeleteInIndexes(const storage::Tuple *tuple,
+//                       const ItemPointer location);
 
-  // this must succeed
-  void UpdateInIndexes(const storage::Tuple *tuple,
+  /** @return True if it's a same-key update and it's successful */
+  bool UpdateInIndexes(const storage::Tuple *tuple,
                             ItemPointer location,
                             const ItemPointer old_location);
 

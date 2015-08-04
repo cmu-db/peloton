@@ -19,8 +19,6 @@
 #include "backend/storage/tuple.h"
 #include "backend/index/index.h"
 
-#include "stx/btree_multimap.h"
-
 namespace peloton {
 namespace index {
 
@@ -34,7 +32,7 @@ class BtreeMultiIndex : public Index {
   friend class IndexFactory;
 
   typedef ItemPointer ValueType;
-  typedef stx::btree_multimap<KeyType, ValueType, KeyComparator> MapType;
+  typedef std::multimap<KeyType, ValueType, KeyComparator> MapType;
 
  public:
 
@@ -70,13 +68,18 @@ class BtreeMultiIndex : public Index {
 
       // Delete the < key, location > pair
       auto entries = container.equal_range(index_key1);
-      for (auto entry = entries.first ; entry != entries.second; ++entry) {
-        ItemPointer value = entry->second;
+      for (auto iterator = entries.first ; iterator != entries.second; ) {
+        ItemPointer value = iterator->second;
+
         if((value.block == location.block) &&
             (value.offset == location.offset)) {
           // remove matching (key, value) entry
-          container.erase(entry);
+          iterator = container.erase(iterator);
         }
+        else {
+          ++iterator;
+        }
+
       }
 
       return true;
@@ -94,13 +97,18 @@ class BtreeMultiIndex : public Index {
 
       // Check for <key, old location> first
       auto entries = container.equal_range(index_key1);
-      for (auto entry = entries.first ; entry != entries.second; ++entry) {
-        ItemPointer value = entry->second;
+      for (auto iterator = entries.first ; iterator != entries.second; ) {
+        ItemPointer value = iterator->second;
+
         if((value.block == old_location.block) &&
             (value.offset == old_location.offset)) {
           // remove matching (key, value) entry
-          container.erase(entry);
+          iterator = container.erase(iterator);
         }
+        else {
+          ++iterator;
+        }
+
       }
 
       // insert the key, val pair
@@ -134,8 +142,8 @@ class BtreeMultiIndex : public Index {
 
   std::vector<ItemPointer> Scan(
       const std::vector<Value>& values,
-      const std::vector<oid_t>& index_key_columns,
-      const std::vector<ExpressionType>& exprs) {
+      const std::vector<oid_t>& key_column_ids,
+      const std::vector<ExpressionType>& expr_types) {
     std::vector<ItemPointer> result;
 
     {
@@ -147,10 +155,10 @@ class BtreeMultiIndex : public Index {
         auto index_key = itr->first;
         auto tuple = index_key.GetTupleForComparison(metadata->GetKeySchema());
 
-        if(IndexKeyComparator(tuple,
-                              values,
-                              index_key_columns,
-                              exprs) == true) {
+        if(Compare(tuple,
+                   key_column_ids,
+                   expr_types,
+                   values) == true) {
           ItemPointer location = itr->second;
           result.push_back(location);
         }
