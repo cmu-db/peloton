@@ -216,8 +216,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   }
   assert(txn);
 
-  LOG_INFO("Peloton txn_id = %lu . \n", txn->GetTransactionId());
-
+  LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");
 
   // Build the executor tree
@@ -261,8 +260,6 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     assert(base_tile);
     storage::TileIterator tile_itr(base_tile);
     storage::Tuple tuple(base_tile->GetSchema());
-
-    std::cout << *(base_tile->GetSchema());
 
     // Switch to TopSharedMemoryContext to construct list and slots
     oldContext = MemoryContextSwitchTo(TopSharedMemoryContext);
