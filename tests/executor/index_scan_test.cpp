@@ -47,13 +47,29 @@ TEST(IndexScanTests, IndexPredicateTest) {
   start_key->SetValue(0, ValueFactory::GetIntegerValue(0));
 
   std::unique_ptr<storage::Tuple> end_key(nullptr);
-  bool start_inclusive = true;
-  bool end_inclusive = true;
+
+  std::vector<oid_t> key_column_ids;
+  std::vector<ExpressionType> expr_types;
+  std::vector<Value> values;
+
+  key_column_ids.push_back(0);
+  expr_types.push_back(ExpressionType::EXPRESSION_TYPE_COMPARE_LTE);
+  values.push_back(start_key->GetValue(0));
+
+  // Create index scan desc
+  planner::IndexScanNode::IndexScanDesc index_scan_desc(
+      index,
+      key_column_ids,
+      expr_types,
+      values);
+
+  expression::AbstractExpression *predicate = nullptr;
 
   // Create plan node.
-  planner::IndexScanNode node(data_table.get(), data_table->GetIndex(0),
-                              start_key.release(), end_key.release(), start_inclusive,
-                              end_inclusive, column_ids);
+  planner::IndexScanNode node(predicate,
+                              column_ids,
+                              data_table.get(),
+                              index_scan_desc);
 
   auto& txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -83,45 +99,6 @@ TEST(IndexScanTests, IndexPredicateTest) {
 
   txn_manager.CommitTransaction(txn);
 
-  //===--------------------------------------------------------------------===//
-  // Start <= Tuple <= End
-  //===--------------------------------------------------------------------===//
-
-  start_key.reset(new storage::Tuple(index_key_schema, true));
-  start_key->SetValue(0, ValueFactory::GetIntegerValue(0));
-
-  // Set end key
-  end_key.reset(new storage::Tuple(index_key_schema, true));
-  end_key->SetValue(0, ValueFactory::GetIntegerValue(40));
-
-  // Create another plan node.
-  planner::IndexScanNode node2(data_table.get(), data_table->GetIndex(0),
-                               start_key.release(), end_key.release(), start_inclusive,
-                               end_inclusive, column_ids);
-
-  auto txn2 = txn_manager.BeginTransaction();
-
-  // Run the executor
-  executor::IndexScanExecutor executor2(&node2, context.get());
-  expected_num_tiles = 1;
-
-  result_tiles.clear();
-  EXPECT_TRUE(executor2.Init());
-
-  for (int i = 0; i < expected_num_tiles; i++) {
-    EXPECT_TRUE(executor2.Execute());
-    std::unique_ptr<executor::LogicalTile> result_tile(executor2.GetOutput());
-    EXPECT_THAT(result_tile, NotNull());
-    result_tiles.emplace_back(result_tile.release());
-  }
-
-  EXPECT_FALSE(executor2.Execute());
-  EXPECT_EQ(result_tiles.size(), expected_num_tiles);
-  EXPECT_EQ(result_tiles[0].get()->GetTupleCount(), 3);
-
-  std::cout << *(result_tiles[0].get());
-
-  txn_manager.CommitTransaction(txn2);
 }
 
 }  // namespace test
