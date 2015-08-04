@@ -31,7 +31,7 @@
 #include "backend/bridge/dml/executor/plan_executor.h"
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/common/stack_trace.h"
-#include "backend/logging/logger.h"
+#include "backend/logging/logmanager.h"
 
 #include "postgres.h"
 #include "c.h"
@@ -383,7 +383,7 @@ peloton_MainLoop(void) {
   }
 
   // Launching logging thread
-  std::thread logger (&peloton::logging::Logger::logging_MainLoop, peloton::logging::Logger::GetInstance() );
+  std::thread logger(peloton::logging::LogManager::StartAriesLogging);
 
   /*
    * Loop to process messages until we get SIGQUIT or detect ungraceful
@@ -399,12 +399,16 @@ peloton_MainLoop(void) {
    * the latch won't get cleared until next time there is a break in the
    * action.
    */
+  int i=2;
   for (;;) {
     /* Clear any already-pending wakeups */
     ResetLatch(MyLatch);
-    auto& logger = peloton::logging::Logger::GetInstance();
-    peloton::logging::LogRecord record(peloton::LOG_TYPE_DEFAULT, 1000);
-    logger.Record(record);
+    auto& logManager = peloton::logging::LogManager::GetInstance();
+    auto logger = logManager.GetAriesLogger();
+
+    peloton::logging::LogRecord record(peloton::LOG_TYPE_DEFAULT, i);
+    i+=2;
+    logger->log(record);
 
     /*
      * Quit if we get SIGQUIT from the postmaster.

@@ -1,45 +1,37 @@
 /*-------------------------------------------------------------------------
  *
- * logger.h
+ * logproxy.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/logger.h
+ * /peloton/src/backend/logging/logproxy.h
  *
  *-------------------------------------------------------------------------
  */
 
 #pragma once
 
-#include "backend/common/types.h"
-#include "backend/logging/logdefs.h"
-#include "backend/logging/logproxy.h"
 #include "backend/logging/logrecord.h"
 
 namespace peloton {
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Logger 
+// Log Proxy
 //===--------------------------------------------------------------------===//
 
-class Logger{
+
+class LogProxy{
 
   public:
-    Logger() = delete;
 
-    Logger(LoggerId logger_id, LogProxy *proxy) 
-    : logger_id(logger_id), proxy(proxy) {};
-    
-    void logging_MainLoop(void);
+    virtual void log(LogRecord record) const = 0;
 
-    void log(LogRecord record);
+    virtual void logging_MainLoop(void) const = 0;
 
-  private:
-    LoggerId logger_id = INVALID_LOGGER_ID;
-
-    LogProxy *proxy;
+    virtual ~LogProxy() {}
+ 
 };
 
 }  // namespace logging
