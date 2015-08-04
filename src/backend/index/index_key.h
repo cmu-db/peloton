@@ -354,8 +354,7 @@ class GenericKey {
  public:
   inline void SetFromKey(const storage::Tuple *tuple) {
     assert(tuple);
-    assert(tuple->GetSchema()->GetLength() <= KeySize);
-    ::memcpy(data, tuple->GetData(), tuple->GetSchema()->GetLength());
+    ::memcpy(data, tuple->GetData(), KeySize);
   }
 
   inline void SetFromTuple(const storage::Tuple *tuple, const int *indices,
