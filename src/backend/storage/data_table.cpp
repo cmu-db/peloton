@@ -181,10 +181,12 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
     // First, try to insert into the index
     bool status = index->InsertEntry(key, location);
     if (status == true) {
+      LOG_INFO("Index : %u. Key not exists yet. Simple Insert. \n", index->GetOid());
       delete key;
       continue;
     }
 
+    LOG_INFO("Index : %u . Key exists. Checking visibility. \n", index->GetOid());
     // Key already exists
     auto old_location = index->Exists(key, location);
     if (old_location.block != INVALID_OID) {
@@ -204,12 +206,14 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
       // The previous tuple is not visible,
       // so let's update it atomically
       if(visible == false) {
+        LOG_INFO("Index : %u. Existing tuple is not visible.\n", index->GetOid());
         bool status = index->UpdateEntry(key, location, old_location);
         if(status == true) {
           delete key;
           continue;
         }
       }
+      LOG_INFO("Existing tuple is still visible.\n");
 
     }
 
