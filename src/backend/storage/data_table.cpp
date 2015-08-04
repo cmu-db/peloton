@@ -189,18 +189,23 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
     LOG_INFO("Index : %u . Key exists. Checking visibility. \n", index->GetOid());
     // Key already exists
     auto old_location = index->Exists(key, location);
+
+    LOG_INFO("location.block = %u , location.offset = %u \n", location.block, location.offset);
+
+    LOG_INFO("old_location.block = %u , old_location.offset = %u \n", old_location.block, old_location.offset);
+
     if (old_location.block != INVALID_OID) {
 
       // Is this key visible or not ?
-      oid_t tile_group_id = location.block;
-      oid_t tuple_offset = location.offset;
+      oid_t tile_group_id = old_location.block;
+      oid_t tuple_offset = old_location.offset;
 
       auto &manager = catalog::Manager::GetInstance();
       auto tile_group = manager.GetTileGroup(tile_group_id);
       auto header = tile_group->GetHeader();
 
       auto transaction_id = transaction->GetTransactionId();
-      auto commit_id = transaction->GetCommitId();
+      auto commit_id = transaction->GetLastCommitId();
       bool visible = header->IsVisible(tuple_offset, transaction_id, commit_id);
 
       // The previous tuple is not visible,
@@ -266,8 +271,10 @@ bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
     return false;
   }
 
-  LOG_TRACE("Deleted tuple from tile group : %u , Txn_id : %lu ", tile_group,
+  LOG_INFO("Deleted tuple from tile group : %u , Txn_id : %lu ", tile_group_id,
             (long unsigned)transaction_id);
+
+  LOG_INFO("Deleted location.block = %u , location.offset = %u \n", location.block, location.offset);
 
   // Decrease the table's number of tuples by 1
   DecreaseNumberOfTuplesBy(1);
@@ -318,7 +325,7 @@ ItemPointer DataTable::UpdateTuple(const concurrency::Transaction *transaction,
 
   // 2) If 1) fails, try again as an Insert
   if(false == status){
-    InsertInIndexes(transaction, tuple, location);
+    status = InsertInIndexes(transaction, tuple, location);
   }
 
   // 3) If still fails, then it is a real failure

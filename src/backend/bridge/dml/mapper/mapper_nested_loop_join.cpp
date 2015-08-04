@@ -12,6 +12,8 @@
 
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/planner/nested_loop_join_node.h"
+#include "backend/planner/projection_node.h"
+#include "backend/bridge/ddl/schema_transformer.h"
 
 namespace peloton {
 namespace bridge {
@@ -27,6 +29,8 @@ namespace bridge {
 planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
     const NestLoopState* nl_plan_state) {
   const JoinState *js = &(nl_plan_state->js);
+  planner::AbstractPlanNode *parent = nullptr;
+  planner::AbstractPlanNode *result = nullptr;
   PelotonJoinType join_type = PlanTransformer::TransformJoinType(js->jointype);
   if (join_type == JOIN_TYPE_INVALID) {
     LOG_ERROR("unsupported join type: %d", js->jointype);
@@ -57,6 +61,12 @@ planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
 
   LOG_INFO("\n%s", project_info.get()->Debug().c_str());
 
+  if (project_info.get()->isNonTrivial()) {
+    // we have non-trivial projection
+    auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(nl_plan_state->js.ps.ps_ResultTupleSlot->tts_tupleDescriptor);
+    parent = new planner::ProjectionNode(project_info.release(), project_schema);
+  }
+
 
   planner::AbstractPlanNode *outer = PlanTransformer::TransformPlan(outerPlanState(nl_plan_state));
   planner::AbstractPlanNode *inner = PlanTransformer::TransformPlan(innerPlanState(nl_plan_state));
@@ -66,8 +76,17 @@ planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
   plan_node->SetJoinType(join_type);
   plan_node->AddChild(outer);
   plan_node->AddChild(inner);
+
+
+
+  if (parent) {
+    parent->AddChild(plan_node);
+    result = parent;
+  } else {
+    result = plan_node;
+  }
   LOG_INFO("Handle Nested loop join, JoinType: %d", join_type);
-  return plan_node;
+  return result;
 }
 
 }  // namespace bridge
