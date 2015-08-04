@@ -10,7 +10,6 @@
  *-------------------------------------------------------------------------
  */
 
-
 #include <vector>
 
 #include "backend/common/types.h"
@@ -28,8 +27,8 @@ namespace executor {
  * @brief Constructor for nested loop join executor.
  * @param node Nested loop join node corresponding to this executor.
  */
-AbstractJoinExecutor::AbstractJoinExecutor(
-    planner::AbstractPlanNode *node, ExecutorContext *executor_context)
+AbstractJoinExecutor::AbstractJoinExecutor(planner::AbstractPlanNode *node,
+                                           ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {
 }
 
@@ -53,20 +52,29 @@ bool AbstractJoinExecutor::DInit() {
   return true;
 }
 
+/**
+ * @ brief Build the schema of the joined tile based on the projection info
+ */
 std::vector<LogicalTile::ColumnInfo> AbstractJoinExecutor::BuildSchema(
     std::vector<LogicalTile::ColumnInfo> left,
     std::vector<LogicalTile::ColumnInfo> right) {
-
-  assert(!proj_info_->isNonTrivial());
-  auto &direct_map_list = proj_info_->GetDirectMapList();
-  std::vector<LogicalTile::ColumnInfo> schema(direct_map_list.size());
-  for (auto &entry : direct_map_list) {
-    if (entry.second.first == 0) {
-      assert(entry.second.second < left.size());
-      schema[entry.first] = left[entry.second.second];
-    } else {
-      assert(entry.second.second < right.size());
-      schema[entry.first] = right[entry.second.second];
+  std::vector<LogicalTile::ColumnInfo> schema;
+  if (proj_info_ == nullptr) {
+    // no projection
+    schema.assign(left.begin(), left.end());
+    schema.insert(schema.end(), right.begin(), right.end());
+  } else {
+    assert(!proj_info_->isNonTrivial());
+    auto &direct_map_list = proj_info_->GetDirectMapList();
+    schema.resize(direct_map_list.size());
+    for (auto &entry : direct_map_list) {
+      if (entry.second.first == 0) {
+        assert(entry.second.second < left.size());
+        schema[entry.first] = left[entry.second.second];
+      } else {
+        assert(entry.second.second < right.size());
+        schema[entry.first] = right[entry.second.second];
+      }
     }
   }
   return schema;
