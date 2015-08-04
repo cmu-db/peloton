@@ -10,9 +10,10 @@
 #include <string>
 #include <vector>
 
-#include "abstract_join_node.h"
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
+#include "backend/planner/project_info.h"
+#include "backend/planner/abstract_join_node.h"
 
 namespace peloton {
 namespace planner {
@@ -24,8 +25,9 @@ class NestedLoopJoinNode : public AbstractJoinPlanNode {
   NestedLoopJoinNode(NestedLoopJoinNode &&) = delete;
   NestedLoopJoinNode &operator=(NestedLoopJoinNode &&) = delete;
 
-  NestedLoopJoinNode(expression::AbstractExpression *predicate)
-      : AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate) {  // FIXME
+  NestedLoopJoinNode(expression::AbstractExpression *predicate,
+                     const ProjectInfo *proj_info)
+      : AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate, proj_info) {  // FIXME
     // Nothing to see here...
   }
 
