@@ -132,14 +132,20 @@ class BtreeUniqueIndex : public Index {
 
       auto itr = container.begin();
       storage::Tuple *start_key = nullptr;
-
       // start scanning from upper bound if possible
       if(special_case == true) {
         start_key = new storage::Tuple(metadata->GetKeySchema(), true);
         // set the lower bound tuple
-        SetLowerBoundTuple(start_key, values, key_column_ids, expr_types);
+        auto all_equal = SetLowerBoundTuple(start_key, values, key_column_ids, expr_types);
         index_key1.SetFromKey(start_key);
-        itr = container.upper_bound(index_key1);
+
+        // all equal case
+        if(all_equal){
+          itr = container.find(index_key1);
+        }
+        else {
+          itr = container.upper_bound(index_key1);
+        }
       }
 
       // scan all entries comparing against arbitrary key
