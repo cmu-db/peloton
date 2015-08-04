@@ -53,7 +53,7 @@ bool ProjectionExecutor::DExecute() {
 
   // NOTE: We only handle 1 child for now
   if(children_.size() == 1){
-    LOG_TRACE("Projection : child 1 \n");
+    LOG_INFO("Projection : child 1 \n");
 
     // Execute child
     auto status = children_[0]->Execute();
