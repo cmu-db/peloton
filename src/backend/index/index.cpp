@@ -133,7 +133,7 @@ bool Index::SetLowerBoundTuple(storage::Tuple *index_key,
 
   }
 
-  std::cout << "LOWER BOUND :: " << (*index_key);
+  LOG_TRACE("Lower Bound Tuple :: %s", index_key->GetInfo().c_str());
   if(col_count > values.size())
     all_equal = false;
 

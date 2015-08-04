@@ -84,7 +84,6 @@ void MaterializationExecutor::MaterializeByTiles(
     storage::Tile *dest_tile) {
   // Copy over all data from each base tile.
 
-  //std::cout << *source_tile;
   for (const auto &kv : tile_to_cols) {
     const std::vector<oid_t> &old_column_ids = kv.second;
 
@@ -99,8 +98,6 @@ void MaterializationExecutor::MaterializeByTiles(
       // Copy all values in the column to the physical tile
       for (oid_t old_tuple_id : *source_tile) {
         peloton::Value value = source_tile->GetValue(old_tuple_id, old_col_id);
-        //std::cout << "old row: " << old_tuple_id << ", col: " << old_col_id;
-        //std::cout << ", new row: " << new_tuple_id << ", col: " << new_col_id << " : " << value << std::endl;
         LOG_TRACE("Old Tuple : %u Column : %u \n", old_tuple_id, old_col_id);
         LOG_TRACE("New Tuple : %u Column : %u \n", new_tuple_id, new_col_id);
         dest_tile->SetValue(value, new_tuple_id++, new_col_id);
