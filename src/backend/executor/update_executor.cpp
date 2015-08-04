@@ -100,6 +100,7 @@ bool UpdateExecutor::DExecute() {
                                                       delete_location);
     if (location.block == INVALID_OID) {
       delete new_tuple;
+      transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
     }
     transaction_->RecordInsert(location);
