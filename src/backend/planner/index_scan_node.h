@@ -34,13 +34,26 @@ class IndexScanNode : public AbstractScanNode {
   IndexScanNode &operator=(IndexScanNode &&) = delete;
 
   struct IndexScanDesc {
-    index::Index *index;
-    std::vector<oid_t> key_ids;
-    std::vector<ExpressionType> compare_types;
-    std::vector<Value> keys;
 
     IndexScanDesc()
-        : index(nullptr) {}
+    : index(nullptr) {}
+
+    IndexScanDesc(index::Index *index,
+                  const std::vector<oid_t>& column_ids,
+                  const std::vector<ExpressionType>& expr_types,
+                  const std::vector<Value>& values)
+    : index(index),
+      key_column_ids(column_ids),
+      expr_types(expr_types),
+      values(values){}
+
+    index::Index *index = nullptr;
+
+    std::vector<oid_t> key_column_ids;
+
+    std::vector<ExpressionType> expr_types;
+
+    std::vector<Value> values;
   };
 
   IndexScanNode(expression::AbstractExpression *predicate,
@@ -50,9 +63,10 @@ class IndexScanNode : public AbstractScanNode {
       : AbstractScanNode(predicate, column_ids),
         table_(table),
         index_(index_scan_desc.index),
-        key_ids_(std::move(index_scan_desc.key_ids)),
-        compare_types_(std::move(index_scan_desc.compare_types)),
-        keys_(std::move(index_scan_desc.keys)) {}
+        column_ids_(column_ids),
+        key_column_ids_(std::move(index_scan_desc.key_column_ids)),
+        expr_types_(std::move(index_scan_desc.expr_types)),
+        values_(std::move(index_scan_desc.values)) {}
 
   ~IndexScanNode() {}
 
@@ -60,11 +74,13 @@ class IndexScanNode : public AbstractScanNode {
 
   index::Index *GetIndex() const { return index_; }
 
-  const std::vector<oid_t> &GetKeyIds() const { return key_ids_; }
+  const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
-  const std::vector<ExpressionType> &GetCompareTypes() const { return compare_types_; }
+  const std::vector<oid_t> &GetKeyColumnIds() const { return key_column_ids_; }
 
-  const std::vector<Value> &GetKeys() const { return keys_; }
+  const std::vector<ExpressionType> &GetExprTypes() const { return expr_types_; }
+
+  const std::vector<Value> &GetValues() const { return values_; }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_INDEXSCAN;
@@ -79,12 +95,13 @@ class IndexScanNode : public AbstractScanNode {
   /** @brief index associated with index scan. */
   index::Index *index_;
 
-  const std::vector<oid_t> key_ids_;
-  const std::vector<ExpressionType> compare_types_;
-  const std::vector<Value> keys_;
+  const std::vector<oid_t> column_ids_;
 
+  const std::vector<oid_t> key_column_ids_;
 
+  const std::vector<ExpressionType> expr_types_;
 
+  const std::vector<Value> values_;
 
 };
 
