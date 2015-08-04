@@ -149,8 +149,38 @@ class BtreeMultiIndex : public Index {
     {
       std::lock_guard<std::mutex> lock(index_mutex);
 
-      // scan all entries comparing against arbitrary key
+      // check if we have leading column equality
+      oid_t leading_column_id = 0;
+      auto key_column_ids_itr = std::find(key_column_ids.begin(), key_column_ids.end(),
+                                          leading_column_id);
+      bool special_case = false;
+      if(key_column_ids_itr != key_column_ids.end()) {
+        auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
+        if(expr_types[offset] == EXPRESSION_TYPE_COMPARE_EQ){
+          special_case = true;
+          LOG_INFO("Special case");
+        }
+      }
+
       auto itr = container.begin();
+      storage::Tuple *start_key = nullptr;
+      // start scanning from upper bound if possible
+      if(special_case == true) {
+        start_key = new storage::Tuple(metadata->GetKeySchema(), true);
+        // set the lower bound tuple
+        auto all_equal = SetLowerBoundTuple(start_key, values, key_column_ids, expr_types);
+        index_key1.SetFromKey(start_key);
+
+        // all equal case
+        if(all_equal){
+          itr = container.find(index_key1);
+        }
+        else {
+          itr = container.upper_bound(index_key1);
+        }
+      }
+
+      // scan all entries comparing against arbitrary key
       while (itr != container.end()) {
         auto index_key = itr->first;
         auto tuple = index_key.GetTupleForComparison(metadata->GetKeySchema());
@@ -165,6 +195,7 @@ class BtreeMultiIndex : public Index {
         itr++;
       }
 
+      delete start_key;
     }
 
     return result;
