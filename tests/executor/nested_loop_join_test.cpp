@@ -31,7 +31,7 @@ namespace test {
 // Cartesian Product Test
 TEST(NestedLoopJoinTests, CartesianProductTest) {
   // Create plan node.
-  planner::NestedLoopJoinNode node(nullptr);
+  planner::NestedLoopJoinNode node(nullptr, nullptr);
 
   // Run the executor
   executor::NestedLoopJoinExecutor executor(&node, nullptr);
@@ -167,7 +167,7 @@ TEST(NestedLoopJoinTests, JoinPredicateTest) {
   auto predicate = CreateJoinPredicate();
 
   // Create plan node.
-  planner::NestedLoopJoinNode node(predicate);
+  planner::NestedLoopJoinNode node(predicate, nullptr);
 
   // Run the executor
   executor::NestedLoopJoinExecutor executor(&node, nullptr);

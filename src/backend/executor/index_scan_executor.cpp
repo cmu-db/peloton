@@ -43,7 +43,7 @@ bool IndexScanExecutor::DInit() {
     return false;
 
   assert(children_.size() == 0);
-  LOG_INFO("Index Scan executor :: 0 child \n");
+  LOG_TRACE("Index Scan executor :: 0 child");
 
   // Grab info from plan node and check it
   const planner::IndexScanNode &node = GetPlanNode<planner::IndexScanNode>();
@@ -51,20 +51,13 @@ bool IndexScanExecutor::DInit() {
   index_ = node.GetIndex();
   assert(index_ != nullptr);
 
-  start_key_ = node.GetStartKey();
-  end_key_ = node.GetEndKey();
-  start_inclusive_ = node.IsStartInclusive();
-  end_inclusive_ = node.IsEndInclusive();
-
-  if(start_key_) {
-    std::cout << "START :: " << *start_key_;
-  }
-  if(end_key_) {
-    std::cout << "END :: " << *end_key_;
-  }
-
   result_itr = START_OID;
   done_ = false;
+
+  column_ids_ = node.GetColumnIds();
+  key_column_ids_ = node.GetKeyColumnIds();
+  expr_types_ = node.GetExprTypes();
+  values_ = node.GetValues();
 
   auto table = node.GetTable();
 
@@ -125,37 +118,11 @@ bool IndexScanExecutor::ExecIndexLookup(){
 
   std::vector<ItemPointer> tuple_locations;
 
-  if (start_key_ == nullptr && end_key_ == nullptr) {
-    return false;
-  } else if (start_key_ == end_key_) {
-    // = KEY
-    assert(start_inclusive_);
-    assert(end_inclusive_);
-    tuple_locations = index_->GetLocationsForKey(start_key_);
-  } else if (start_key_ == nullptr) {
-    // < END_KEY
-    if (end_inclusive_ == false) {
-      tuple_locations = index_->GetLocationsForKeyLT(end_key_);
-    }
-    // <= END_KEY
-    else {
-      tuple_locations = index_->GetLocationsForKeyLTE(end_key_);
-    }
-  } else if (end_key_ == nullptr) {
-    // > START_KEY
-    if (start_inclusive_ == false) {
-      tuple_locations = index_->GetLocationsForKeyGT(start_key_);
-    }
-    // >= START_KEY
-    else {
-      tuple_locations = index_->GetLocationsForKeyGTE(start_key_);
-    }
-  } else {
-    // START_KEY < .. < END_KEY
-    tuple_locations = index_->GetLocationsForKeyBetween(start_key_, end_key_);
-  }
+  tuple_locations = index_->Scan(values_,
+                                 key_column_ids_,
+                                 expr_types_);
 
-  LOG_INFO("Tuple locations : %lu \n", tuple_locations.size());
+  LOG_INFO("Tuple locations : %lu", tuple_locations.size());
 
   if (tuple_locations.size() == 0) return false;
 
@@ -168,7 +135,7 @@ bool IndexScanExecutor::ExecIndexLookup(){
                                               txn_id, commit_id);
   done_ = true;
 
-  LOG_INFO("Result tiles : %lu \n", result.size());
+  LOG_TRACE("Result tiles : %lu", result.size());
 
   return true;
 }
