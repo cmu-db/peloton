@@ -68,8 +68,6 @@ bool ProjectionExecutor::DExecute() {
     std::unique_ptr<storage::Tile> dest_tile(
         storage::TileFactory::GetTempTile(*schema_, num_tuples));
 
-    std::cout << "SOURCE :: " << (*source_tile);
-
     // Create projections tuple-at-a-time from original tile
     oid_t new_tuple_id = 0;
     for (oid_t old_tuple_id : *source_tile) {
@@ -83,8 +81,6 @@ bool ProjectionExecutor::DExecute() {
       delete buffer;
       new_tuple_id++;
     }
-
-    std::cout << "DEST :: " << (*dest_tile);
 
     // Wrap physical tile in logical tile and return it
     bool own_base_tile = true;
