@@ -16,7 +16,7 @@
 #include "backend/storage/abstract_table.h"
 #include "backend/storage/backend_vm.h"
 #include "backend/storage/tile_group.h"
-#include "backend/storage/tile_iterator.h"
+#include "backend/storage/tile_group_iterator.h"
 #include "backend/storage/tile_group_factory.h"
 
 #include <string>
