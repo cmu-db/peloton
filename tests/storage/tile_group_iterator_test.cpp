@@ -14,16 +14,16 @@
 
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
-#include "backend/storage/tile_iterator.h"
+#include "backend/storage/tile_group_iterator.h"
 
 namespace peloton {
 namespace test {
 
 //===--------------------------------------------------------------------===//
-// TileIterator Tests
+// TileGroupIterator Tests
 //===--------------------------------------------------------------------===//
 
-TEST(TileIteratorTests, BasicTest) {
+TEST(TileGroupIteratorTests, BasicTest) {
 
     // Columns
     std::vector<catalog::Column> columns;
@@ -54,7 +54,7 @@ TEST(TileIteratorTests, BasicTest) {
     } // FOR
 
     
-    delete tuple;
+//     delete tuple;
     delete tile;
     delete header;
     delete schema;

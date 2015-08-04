@@ -21,7 +21,7 @@ namespace peloton {
 namespace storage {
 
 //===--------------------------------------------------------------------===//
-// Tile Iterator
+// TileGroup Iterator
 //===--------------------------------------------------------------------===//
     
 class DataTable;
@@ -30,18 +30,18 @@ class DataTable;
  * Iterator for table which goes over all active tiles.
  * FIXME: This is not thread-safe or transactional!
  **/
-class TileIterator : public Iterator<std::shared_ptr<Tile>> {
-    TileIterator() = delete;
+class TileGroupIterator : public Iterator<std::shared_ptr<Tile>> {
+    TileGroupIterator() = delete;
 
 public:
-    TileIterator(const DataTable* table)
-        : table_(table), tileItr_(0) {
+    TileGroupIterator(const DataTable* table)
+        : table_(table), tileGroupItr_(0) {
         // More Wu Tang!
     }
 
-    TileIterator(const TileIterator& other)
+    TileGroupIterator(const TileGroupIterator& other)
         : table_(other.table_),
-          tileItr_(other.tileItr_) {
+          tileGroupItr_(other.tileGroupItr_) {
         // More Wu Tang!
     }
 
@@ -49,13 +49,13 @@ public:
      * Updates the given tile so that it points to the next tile in the table.
      * @return true if succeeded. false if no more tuples are there.
      */
-    bool Next(std::shared_ptr<Tile> &tile);
+    bool Next(std::shared_ptr<TileGroup> &tileGroup);
 
     bool HasNext();
 
 private:
     const DataTable* table_;
-    oid_t tileItr_;
+    oid_t tileGroupItr_;
 };
 
 }  // End storage namespace
