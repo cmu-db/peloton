@@ -12,8 +12,7 @@
 
 #pragma once
 
-#include "backend/catalog/schema.h"
-#include "backend/executor/abstract_executor.h"
+#include "backend/executor/abstract_join_executor.h"
 #include "backend/planner/nested_loop_join_node.h"
 
 #include <vector>
@@ -21,7 +20,7 @@
 namespace peloton {
 namespace executor {
 
-class NestedLoopJoinExecutor : public AbstractExecutor {
+class NestedLoopJoinExecutor : public AbstractJoinExecutor {
   NestedLoopJoinExecutor(const NestedLoopJoinExecutor &) = delete;
   NestedLoopJoinExecutor &operator=(const NestedLoopJoinExecutor &) = delete;
 
@@ -30,37 +29,12 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
                                   ExecutorContext *executor_context);
 
  protected:
-  bool DInit();
 
   bool DExecute();
 
  private:
+  // nothing special here
 
-  //===--------------------------------------------------------------------===//
-  // Helper
-  //===--------------------------------------------------------------------===//
-  std::vector<LogicalTile::ColumnInfo> BuildSchema(std::vector<LogicalTile::ColumnInfo> left,
-                                                   std::vector<LogicalTile::ColumnInfo> right);
-
-  //===--------------------------------------------------------------------===//
-  // Executor State
-  //===--------------------------------------------------------------------===//
-
-  /** @brief Result of nested loop join. */
-  std::vector<LogicalTile *> result;
-
-  /** @brief Starting left table scan. */
-  bool left_scan_start = false;
-
-  //===--------------------------------------------------------------------===//
-  // Plan Info
-  //===--------------------------------------------------------------------===//
-
-  /** @brief Join predicate. */
-  const expression::AbstractExpression *predicate_ = nullptr;
-
-  /** @brief Projection info */
-  const planner::ProjectInfo *proj_info_ = nullptr;
 };
 
 }  // namespace executor
