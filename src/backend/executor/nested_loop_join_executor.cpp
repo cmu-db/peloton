@@ -27,9 +27,10 @@ namespace executor {
  * @brief Constructor for nested loop join executor.
  * @param node Nested loop join node corresponding to this executor.
  */
-NestedLoopJoinExecutor::NestedLoopJoinExecutor(planner::AbstractPlanNode *node,
-                                               ExecutorContext *executor_context)
-            : AbstractExecutor(node, executor_context) {}
+NestedLoopJoinExecutor::NestedLoopJoinExecutor(
+    planner::AbstractPlanNode *node, ExecutorContext *executor_context)
+    : AbstractExecutor(node, executor_context) {
+}
 
 /**
  * @brief Do some basic checks and create the schema for the output logical
@@ -40,8 +41,8 @@ bool NestedLoopJoinExecutor::DInit() {
   assert(children_.size() == 2);
 
   // Grab data from plan node.
-  const planner::NestedLoopJoinNode &node =
-      GetPlanNode<planner::NestedLoopJoinNode>();
+  const planner::NestedLoopJoinNode &node = GetPlanNode<
+      planner::NestedLoopJoinNode>();
 
   // NOTE: predicate can be null for cartesian product
   predicate_ = node.GetPredicate();
@@ -106,6 +107,7 @@ bool NestedLoopJoinExecutor::DExecute() {
     col.position_list_idx += left_tile.get()->GetPositionLists().size();
   }
 
+  /* build the schema given the projection */
   auto output_tile_schema = BuildSchema(left_tile_schema, right_tile_schema);
 
   // Set the output logical tile schema
@@ -119,12 +121,11 @@ bool NestedLoopJoinExecutor::DExecute() {
   auto left_tile_position_lists = left_tile.get()->GetPositionLists();
   auto right_tile_position_lists = right_tile.get()->GetPositionLists();
 
-
   // Compute output tile column count
   size_t left_tile_column_count = left_tile_position_lists.size();
   size_t right_tile_column_count = right_tile_position_lists.size();
-  size_t output_tile_column_count =
-      left_tile_column_count + right_tile_column_count;
+  size_t output_tile_column_count = left_tile_column_count
+      + right_tile_column_count;
 
   assert(left_tile_column_count > 0);
   assert(right_tile_column_count > 0);
@@ -136,18 +137,22 @@ bool NestedLoopJoinExecutor::DExecute() {
   // Construct position lists for output tile
   std::vector<std::vector<oid_t> > position_lists;
   for (size_t column_itr = 0; column_itr < output_tile_column_count;
-       column_itr++)
+      column_itr++)
     position_lists.push_back(std::vector<oid_t>());
 
-  LOG_INFO("left col count: %lu, right col count: %lu", left_tile_column_count, right_tile_column_count);
-  LOG_INFO("left col count: %lu, right col count: %lu", left_tile.get()->GetColumnCount(), right_tile.get()->GetColumnCount());
-  LOG_INFO("left row count: %lu, right row count: %lu", left_tile_row_count, right_tile_row_count);
+  LOG_INFO("left col count: %lu, right col count: %lu", left_tile_column_count,
+           right_tile_column_count);
+  LOG_INFO("left col count: %lu, right col count: %lu",
+           left_tile.get()->GetColumnCount(),
+           right_tile.get()->GetColumnCount());
+  LOG_INFO("left row count: %lu, right row count: %lu", left_tile_row_count,
+           right_tile_row_count);
 
   // Go over every pair of tuples in left and right logical tiles
   for (size_t left_tile_row_itr = 0; left_tile_row_itr < left_tile_row_count;
-       left_tile_row_itr++) {
+      left_tile_row_itr++) {
     for (size_t right_tile_row_itr = 0;
-         right_tile_row_itr < right_tile_row_count; right_tile_row_itr++) {
+        right_tile_row_itr < right_tile_row_count; right_tile_row_itr++) {
       // TODO: OPTIMIZATION : Can split the control flow into two paths -
       // one for cartesian product and one for join
       // Then, we can skip this branch atleast for the cartesian product path.
@@ -161,31 +166,28 @@ bool NestedLoopJoinExecutor::DExecute() {
 
         // Join predicate is false. Skip pair and continue.
         if (predicate_->Evaluate(&left_tuple, &right_tuple, executor_context_)
-                .IsFalse()) {
+            .IsFalse()) {
           continue;
         }
       }
 
-
       // Insert a tuple into the output logical tile
       // First, copy the elements in left logical tile's tuple
-           for (size_t output_tile_column_itr = 0;
-                output_tile_column_itr < left_tile_column_count;
-                output_tile_column_itr++) {
-             position_lists[output_tile_column_itr].push_back(
-                 left_tile_position_lists[output_tile_column_itr]
-                                         [left_tile_row_itr]);
-           }
+      for (size_t output_tile_column_itr = 0;
+          output_tile_column_itr < left_tile_column_count;
+          output_tile_column_itr++) {
+        position_lists[output_tile_column_itr].push_back(
+            left_tile_position_lists[output_tile_column_itr][left_tile_row_itr]);
+      }
 
-           // Then, copy the elements in left logical tile's tuple
-           for (size_t output_tile_column_itr = 0;
-                output_tile_column_itr < right_tile_column_count;
-                output_tile_column_itr++) {
-             position_lists[left_tile_column_count + output_tile_column_itr]
-                 .push_back(right_tile_position_lists[output_tile_column_itr]
-                                                     [right_tile_row_itr]);
-           }
-
+      // Then, copy the elements in left logical tile's tuple
+      for (size_t output_tile_column_itr = 0;
+          output_tile_column_itr < right_tile_column_count;
+          output_tile_column_itr++) {
+        position_lists[left_tile_column_count + output_tile_column_itr]
+            .push_back(
+            right_tile_position_lists[output_tile_column_itr][right_tile_row_itr]);
+      }
 
       // First, copy the elements in left logical tile's tuple
     }
@@ -194,11 +196,10 @@ bool NestedLoopJoinExecutor::DExecute() {
   for (auto col : position_lists) {
     LOG_INFO("col");
     for (auto elm : col) {
-      (void)elm;  // silent compiler
+      (void) elm;  // silent compiler
       LOG_INFO("elm: %u", elm);
     }
   }
-
 
   // Check if we have any matching tuples.
   if (position_lists[0].size() > 0) {
@@ -217,8 +218,9 @@ bool NestedLoopJoinExecutor::DExecute() {
   return true;
 }
 
-std::vector<LogicalTile::ColumnInfo> NestedLoopJoinExecutor::BuildSchema(std::vector<LogicalTile::ColumnInfo> left,
-                                                  std::vector<LogicalTile::ColumnInfo> right) {
+std::vector<LogicalTile::ColumnInfo> NestedLoopJoinExecutor::BuildSchema(
+    std::vector<LogicalTile::ColumnInfo> left,
+    std::vector<LogicalTile::ColumnInfo> right) {
 
   assert(proj_info_->GetTargetList().size() == 0);
   auto &direct_map_list = proj_info_->GetDirectMapList();
