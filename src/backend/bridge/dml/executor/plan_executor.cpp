@@ -291,7 +291,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     auto status = txn->GetResult();
     switch(status) {
       case Result::RESULT_SUCCESS:
-        LOG_TRACE("Committing txn : %lu \n", txn->GetTransactionId());
+        LOG_INFO("Committing txn_id : %lu , cid : %lu\n", txn->GetTransactionId(), txn->GetCommitId());
         // Commit
         txn_manager.CommitTransaction(txn);
 
@@ -299,7 +299,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
 
       case Result::RESULT_FAILURE:
       default:
-        LOG_TRACE("Aborting txn : %lu \n", txn->GetTransactionId());
+        LOG_INFO("Aborting txn : %lu , cid : %lu \n", txn->GetTransactionId(), txn->GetCommitId());
         //Abort
         txn_manager.AbortTransaction(txn);
     }
