@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * scheduler_test.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/tests/scheduler/scheduler_test.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// scheduler_test.cpp
+//
+// Identification: tests/scheduler/scheduler_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
 
@@ -32,7 +32,7 @@ TEST(SchedulerTests, KernelTest) {
       new scheduler::TBBScheduler());
 
   tbb_scheduler->Run(reinterpret_cast<scheduler::handler>(kernel_func),
-                     const_cast<char*>("CREATE DATABASE TESTDB;"));
+                     const_cast<char *>("CREATE DATABASE TESTDB;"));
 
   // final wait
   tbb_scheduler->Wait();

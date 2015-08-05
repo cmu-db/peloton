@@ -1,8 +1,14 @@
-/**
- * @brief Header file for abstract executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// abstract_executor.h
+//
+// Identification: src/backend/executor/abstract_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -50,7 +56,6 @@ class AbstractExecutor {
   const planner::AbstractPlanNode *GetRawNode() const { return node_; }
 
  protected:
-
   // NOTE: The reason why we keep the plan node separate from the executor
   // context is because we might want to reuse the plan multiple times
   // with different executor contexts

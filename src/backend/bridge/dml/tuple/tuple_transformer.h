@@ -1,8 +1,14 @@
-/**
- * @brief Header for tuple transformer.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// tuple_transformer.h
+//
+// Identification: src/backend/bridge/dml/tuple/tuple_transformer.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * index_test.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/tests/index/index_test.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// index_test.cpp
+//
+// Identification: tests/index/index_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "gtest/gtest.h"
 #include "harness.h"
@@ -23,16 +23,13 @@ namespace test {
 // Index Tests
 //===--------------------------------------------------------------------===//
 
-void PrintSlots(const std::vector<ItemPointer>& slots) {
-
+void PrintSlots(const std::vector<ItemPointer> &slots) {
   std::cout << "SLOTS :: " << slots.size() << "\n";
-  for(auto item : slots)
-    std::cout << item.block << " " << item.offset << "\n";
-
+  for (auto item : slots) std::cout << item.block << " " << item.offset << "\n";
 }
 
 TEST(IndexTests, BtreeUniqueIndexTest) {
-  std::vector<std::vector<std::string> > column_names;
+  std::vector<std::vector<std::string>> column_names;
   std::vector<catalog::Column> columns;
   std::vector<catalog::Schema *> schemas;
 
@@ -61,8 +58,8 @@ TEST(IndexTests, BtreeUniqueIndexTest) {
   bool unique_keys = true;
 
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-      "btree_index", 125, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema, unique_keys);
+      "btree_index", 125, INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_DEFAULT,
+      tuple_schema, key_schema, unique_keys);
 
   storage::VMBackend *backend = new storage::VMBackend();
   peloton::Pool *pool = new peloton::Pool(backend);
@@ -137,7 +134,7 @@ TEST(IndexTests, BtreeUniqueIndexTest) {
 }
 
 TEST(IndexTests, BtreeMultiIndexTest) {
-  std::vector<std::vector<std::string> > column_names;
+  std::vector<std::vector<std::string>> column_names;
   std::vector<catalog::Column> columns;
   std::vector<catalog::Schema *> schemas;
 
@@ -166,8 +163,8 @@ TEST(IndexTests, BtreeMultiIndexTest) {
 
   bool unique_keys = false;
   index::IndexMetadata *index_metadata = new index::IndexMetadata(
-      "btree_index", 125, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_DEFAULT, tuple_schema, key_schema, unique_keys);
+      "btree_index", 125, INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_DEFAULT,
+      tuple_schema, key_schema, unique_keys);
 
   storage::VMBackend *backend = new storage::VMBackend();
   peloton::Pool *pool = new peloton::Pool(backend);
@@ -222,7 +219,7 @@ TEST(IndexTests, BtreeMultiIndexTest) {
   index->DeleteEntry(key1, item2);
   index->DeleteEntry(key2, item1);
   index->DeleteEntry(key3, item1);
-  //index->DeleteEntry(key4, item1);
+  // index->DeleteEntry(key4, item1);
 
   location = index->Exists(key0, INVALID_ITEMPOINTER);
   EXPECT_EQ(location.block, INVALID_OID);
