@@ -143,6 +143,16 @@ void DDLUtils::ParsingCreateStmt(
     int column_length = typelen;
     std::string column_name = coldef->colname;
 
+    // TODO: Special case for DECIMAL. May move it somewhere else?
+    // DECIMAL in PG is variable length but in Peloton is inlined (16 bytes)
+    // This code is duplicated in schema_transformer.cpp
+    bool is_inlined = false;  // didn't set this before?
+    if(VALUE_TYPE_DECIMAL == column_valueType){
+      LOG_INFO("Detect a DECIMAL attribute. \n");
+      column_length = 16;
+      is_inlined = true;
+    }
+
     //===--------------------------------------------------------------------===//
     // Column Constraint
     //===--------------------------------------------------------------------===//
@@ -200,7 +210,7 @@ void DDLUtils::ParsingCreateStmt(
     }  // end of parsing constraint
 
     catalog::Column column_info(column_valueType, column_length, column_name,
-                                false);
+                                is_inlined);
 
     for(auto constraint : column_constraints )
       column_info.AddConstraint(constraint);
