@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * aries_proxy.h
+ * peloton_proxy.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /peloton/src/backend/logging/aries_proxy.h
+ * /peloton/src/backend/logging/peloton_proxy.h
  *
  *-------------------------------------------------------------------------
  */
@@ -22,19 +22,19 @@ namespace peloton {
 namespace logging {
 
 //===--------------------------------------------------------------------===//
-// Aries Proxy
+// Peloton Proxy
 //===--------------------------------------------------------------------===//
 
 // log queue
-static std::vector<LogRecord> aries_buffer;
+static std::vector<LogRecord> peloton_buffer;
 
-static std::mutex aries_buffer_mutex;
+static std::mutex peloton_buffer_mutex;
 
-class AriesProxy : public LogProxy{
+class PelotonProxy : public LogProxy{
 
   public:
 
-    AriesProxy() {}
+    PelotonProxy() {}
 
     void logging_MainLoop(void) const;
 
