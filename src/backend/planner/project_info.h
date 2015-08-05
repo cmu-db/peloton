@@ -67,6 +67,8 @@ class ProjectInfo {
 
   const DirectMapList& GetDirectMapList() const { return direct_map_list_; }
 
+  bool isNonTrivial() const { return target_list_.size() > 0; };
+
   bool Evaluate(storage::Tuple* dest, const AbstractTuple* tuple1,
                 const AbstractTuple* tuple2,
                 executor::ExecutorContext* econtext) const;

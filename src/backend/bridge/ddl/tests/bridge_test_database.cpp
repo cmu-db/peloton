@@ -37,7 +37,7 @@ void BridgeTest::DDL_CreateDatabase_TEST_WITH_INVALID_OID() {
   // CHECK :: status must be false
   assert(status == false);
 
-  std::cout << ":::::: " << __func__ << " DONE\n";
+  LOG_INFO(":::::: %s DONE\n", __func__);
 }
 
 /**
@@ -53,7 +53,7 @@ void BridgeTest::DDL_CreateDatabase_TEST_WITH_VALID_OID() {
   status = DDLDatabase::DropDatabase(12345);
   assert(status);
 
-  std::cout << ":::::: " << __func__ << " DONE\n";
+  LOG_INFO(":::::: %s DONE\n", __func__);
 }
 
 }  // End bridge namespace
