@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/types.h"
@@ -21,7 +20,7 @@ namespace peloton {
 namespace executor {
 
 class SeqScanExecutor : public AbstractScanExecutor {
-public:
+ public:
   SeqScanExecutor(const SeqScanExecutor &) = delete;
   SeqScanExecutor &operator=(const SeqScanExecutor &) = delete;
   SeqScanExecutor(SeqScanExecutor &&) = delete;
@@ -30,12 +29,12 @@ public:
   explicit SeqScanExecutor(planner::AbstractPlanNode *node,
                            ExecutorContext *executor_context);
 
-protected:
+ protected:
   bool DInit();
 
   bool DExecute();
 
-private:
+ private:
   //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//
@@ -54,5 +53,5 @@ private:
   const storage::DataTable *table_ = nullptr;
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

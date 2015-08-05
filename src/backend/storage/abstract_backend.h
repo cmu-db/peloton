@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
@@ -26,7 +25,7 @@ namespace storage {
 
 /// Represents a storage backend. Can reside on MM or NVM.
 class AbstractBackend {
-public:
+ public:
   virtual ~AbstractBackend(){};
 
   //===--------------------------------------------------------------------===//
@@ -42,5 +41,5 @@ public:
   virtual std::string GetBackendType() const = 0;
 };
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

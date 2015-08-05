@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/storage/database.h"
 #include "backend/storage/table_factory.h"
 #include "backend/common/logger.h"
@@ -22,8 +21,7 @@ namespace storage {
 
 Database::~Database() {
   // Clean up all the tables
-  for (auto table : tables)
-    delete table;
+  for (auto table : tables) delete table;
 }
 
 //===--------------------------------------------------------------------===//
@@ -39,17 +37,15 @@ void Database::AddTable(storage::DataTable *table) {
 
 storage::DataTable *Database::GetTableWithOid(const oid_t table_oid) const {
   for (auto table : tables)
-    if (table->GetOid() == table_oid)
-      return table;
+    if (table->GetOid() == table_oid) return table;
 
   return nullptr;
 }
 
-storage::DataTable *
-Database::GetTableWithName(const std::string table_name) const {
+storage::DataTable *Database::GetTableWithName(
+    const std::string table_name) const {
   for (auto table : tables)
-    if (table->GetName() == table_name)
-      return table;
+    if (table->GetName() == table_name) return table;
 
   return nullptr;
 }
@@ -60,8 +56,7 @@ void Database::DropTableWithOid(const oid_t table_oid) {
 
     oid_t table_offset = 0;
     for (auto table : tables) {
-      if (table->GetOid() == table_oid)
-        break;
+      if (table->GetOid() == table_oid) break;
       table_offset++;
     }
     assert(table_offset < tables.size());
@@ -94,14 +89,12 @@ void Database::UpdateStats(Peloton_Status *status, bool dirty_care) {
 
   for (int table_itr = 0; table_itr < GetTableCount(); table_itr++) {
     auto table = GetTable(table_itr);
-    if (dirty_care && !table->IsDirty())
-      continue;
+    if (dirty_care && !table->IsDirty()) continue;
 
     std::vector<dirty_index_info *> dirty_indexes;
     for (int index_itr = 0; index_itr < table->GetIndexCount(); index_itr++) {
       auto index = table->GetIndex(index_itr);
-      if (dirty_care && !index->IsDirty())
-        continue;
+      if (dirty_care && !index->IsDirty()) continue;
 
       auto dirty_index =
           CreateDirtyIndex(index->GetOid(), index->GetNumberOfTuples());
@@ -130,8 +123,7 @@ void Database::UpdateStatsWithOid(Peloton_Status *status,
   std::vector<dirty_index_info *> dirty_indexes;
   for (int index_itr = 0; index_itr < table->GetIndexCount(); index_itr++) {
     auto index = table->GetIndex(index_itr);
-    if (!index->IsDirty())
-      continue;
+    if (!index->IsDirty()) continue;
 
     auto dirty_index =
         CreateDirtyIndex(index->GetOid(), index->GetNumberOfTuples());
@@ -152,9 +144,8 @@ void Database::UpdateStatsWithOid(Peloton_Status *status,
 // UTILITIES
 //===--------------------------------------------------------------------===//
 
-dirty_table_info **
-Database::CreateDirtyTables(std::vector<dirty_table_info *> dirty_tables_vec) {
-
+dirty_table_info **Database::CreateDirtyTables(
+    std::vector<dirty_table_info *> dirty_tables_vec) {
   MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   dirty_table_info **dirty_tables = (dirty_table_info **)palloc(
       sizeof(dirty_table_info *) * dirty_tables_vec.size());
@@ -169,7 +160,6 @@ Database::CreateDirtyTables(std::vector<dirty_table_info *> dirty_tables_vec) {
 
 dirty_index_info **Database::CreateDirtyIndexes(
     std::vector<dirty_index_info *> dirty_indexes_vec) {
-
   MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   dirty_index_info **dirty_indexes = (dirty_index_info **)palloc(
       sizeof(dirty_index_info *) * dirty_indexes_vec.size());
@@ -186,7 +176,6 @@ dirty_table_info *Database::CreateDirtyTable(oid_t table_oid,
                                              float number_of_tuples,
                                              dirty_index_info **dirty_indexes,
                                              oid_t index_count) {
-
   MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   dirty_table_info *dirty_table =
       (dirty_table_info *)palloc(sizeof(dirty_table_info));
@@ -202,7 +191,6 @@ dirty_table_info *Database::CreateDirtyTable(oid_t table_oid,
 
 dirty_index_info *Database::CreateDirtyIndex(oid_t index_oid,
                                              float number_of_tuples) {
-
   MemoryContext oldcxt = MemoryContextSwitchTo(TopSharedMemoryContext);
   dirty_index_info *dirty_index =
       (dirty_index_info *)palloc(sizeof(dirty_index_info));
@@ -237,15 +225,15 @@ std::ostream &operator<<(std::ostream &os, const Database &database) {
           index::Index *index = table->GetIndex(index_itr);
 
           switch (index->GetIndexType()) {
-          case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
-            std::cout << "primary key index \n";
-            break;
-          case INDEX_CONSTRAINT_TYPE_UNIQUE:
-            std::cout << "unique index \n";
-            break;
-          default:
-            std::cout << "default index \n";
-            break;
+            case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
+              std::cout << "primary key index \n";
+              break;
+            case INDEX_CONSTRAINT_TYPE_UNIQUE:
+              std::cout << "unique index \n";
+              break;
+            default:
+              std::cout << "default index \n";
+              break;
           }
           std::cout << *index << std::endl;
         }
@@ -275,5 +263,5 @@ std::ostream &operator<<(std::ostream &os, const Database &database) {
   return os;
 }
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

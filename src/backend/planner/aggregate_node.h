@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/planner/abstract_plan_node.h"
@@ -24,7 +23,7 @@ namespace planner {
 // IMPORTANT:: Need own copy of output table schema.
 // TODO: Can we relax this constraint ?
 class AggregateNode : public AbstractPlanNode {
-public:
+ public:
   AggregateNode() = delete;
   AggregateNode(const AggregateNode &) = delete;
   AggregateNode &operator=(const AggregateNode &) = delete;
@@ -76,7 +75,7 @@ public:
 
   catalog::Schema *GetOutputTableSchema() const { return output_table_schema_; }
 
-private:
+ private:
   /** @brief Aggregate columns */
   const std::vector<oid_t> aggregate_columns_;
 
@@ -99,5 +98,5 @@ private:
   catalog::Schema *output_table_schema_;
 };
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

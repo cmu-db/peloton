@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <vector>
 
 #include "backend/common/types.h"
@@ -55,9 +54,9 @@ bool AbstractJoinExecutor::DInit() {
 /**
  * @ brief Build the schema of the joined tile based on the projection info
  */
-std::vector<LogicalTile::ColumnInfo>
-AbstractJoinExecutor::BuildSchema(std::vector<LogicalTile::ColumnInfo> left,
-                                  std::vector<LogicalTile::ColumnInfo> right) {
+std::vector<LogicalTile::ColumnInfo> AbstractJoinExecutor::BuildSchema(
+    std::vector<LogicalTile::ColumnInfo> left,
+    std::vector<LogicalTile::ColumnInfo> right) {
   std::vector<LogicalTile::ColumnInfo> schema;
   if (proj_info_ == nullptr) {
     // no projection
@@ -80,5 +79,5 @@ AbstractJoinExecutor::BuildSchema(std::vector<LogicalTile::ColumnInfo> left,
   return schema;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

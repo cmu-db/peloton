@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/bridge/dml/mapper/mapper.h"
 
 namespace peloton {
@@ -29,8 +28,8 @@ namespace bridge {
  * @return Pointer to the constructed AbstractPlanNode.
  *
  */
-planner::AbstractPlanNode *
-PlanTransformer::TransformLockRows(const LockRowsState *lr_plan_state) {
+planner::AbstractPlanNode *PlanTransformer::TransformLockRows(
+    const LockRowsState *lr_plan_state) {
   assert(nodeTag(lr_plan_state) == T_LockRowsState);
 
   LOG_INFO("Handle LockRows");
@@ -44,5 +43,5 @@ PlanTransformer::TransformLockRows(const LockRowsState *lr_plan_state) {
   return PlanTransformer::TransformPlan(outer_plan_state, options);
 }
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

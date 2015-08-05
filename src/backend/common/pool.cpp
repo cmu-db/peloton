@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/common/pool.h"
 
 namespace peloton {
@@ -115,4 +114,4 @@ int64_t Pool::GetAllocatedMemory() {
   return total;
 }
 
-} // End peloton namespace
+}  // End peloton namespace

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <string>
 
 #include "backend/planner/abstract_plan_node.h"
@@ -20,5 +19,5 @@ namespace planner {
 
 AbstractPlanNode *GetEmptyPlanNode(PlanNodeType type);
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

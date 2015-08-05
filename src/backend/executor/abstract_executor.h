@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <cassert>
@@ -26,7 +25,7 @@ namespace peloton {
 namespace executor {
 
 class AbstractExecutor {
-public:
+ public:
   AbstractExecutor(const AbstractExecutor &) = delete;
   AbstractExecutor &operator=(const AbstractExecutor &) = delete;
   AbstractExecutor(AbstractExecutor &&) = delete;
@@ -56,7 +55,7 @@ public:
 
   const planner::AbstractPlanNode *GetRawNode() const { return node_; }
 
-protected:
+ protected:
   // NOTE: The reason why we keep the plan node separate from the executor
   // context is because we might want to reuse the plan multiple times
   // with different executor contexts
@@ -77,7 +76,8 @@ protected:
    *
    * @return Reference to plan node.
    */
-  template <class T> inline const T &GetPlanNode() {
+  template <class T>
+  inline const T &GetPlanNode() {
     const T *node = dynamic_cast<const T *>(node_);
     assert(node);
     return *node;
@@ -86,7 +86,7 @@ protected:
   /** @brief Children nodes of this executor in the executor tree. */
   std::vector<AbstractExecutor *> children_;
 
-private:
+ private:
   // Output logical tile
   // This is where we will write the results of the plan node's execution
   std::unique_ptr<LogicalTile> output;
@@ -94,10 +94,10 @@ private:
   /** @brief Plan node corresponding to this executor. */
   const planner::AbstractPlanNode *node_ = nullptr;
 
-protected:
+ protected:
   // Executor context
   ExecutorContext *executor_context_ = nullptr;
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

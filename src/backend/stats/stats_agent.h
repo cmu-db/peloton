@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #ifndef STATSAGENT_H_
 #define STATSAGENT_H_
 
@@ -32,7 +31,7 @@ class Table;
  * connecting them.
  */
 class StatsAgent {
-public:
+ public:
   /**
    * Do nothing constructor
    */
@@ -69,7 +68,7 @@ public:
 
   ~StatsAgent();
 
-private:
+ private:
   /**
    * Map from a statistics selector to a map of CatalogIds to StatsSources.
    */

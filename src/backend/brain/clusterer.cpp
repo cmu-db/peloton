@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <limits>
 #include <sstream>
 #include <iostream>
@@ -115,8 +114,7 @@ std::map<oid_t, oid_t> Clusterer::GetPartitioning(oid_t tile_count) const {
 
     // check tile itr
     tile_itr++;
-    if (tile_itr >= tile_count)
-      tile_itr--;
+    if (tile_itr >= tile_count) tile_itr--;
   }
 
   // check if all columns are present in partitioning
@@ -137,5 +135,5 @@ std::ostream &operator<<(std::ostream &os, const Clusterer &clusterer) {
   return os;
 }
 
-} // End brain namespace
-} // End peloton namespace
+}  // End brain namespace
+}  // End peloton namespace

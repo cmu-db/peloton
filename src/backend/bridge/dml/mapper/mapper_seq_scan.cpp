@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/planner/seq_scan_node.h"
 
@@ -27,13 +26,12 @@ namespace bridge {
  *
  * TODO: Can we also scan result from a child operator? (Non-base-table scan?)
  */
-planner::AbstractPlanNode *
-PlanTransformer::TransformSeqScan(const SeqScanState *ss_plan_state,
-                                  const TransformOptions options) {
+planner::AbstractPlanNode *PlanTransformer::TransformSeqScan(
+    const SeqScanState *ss_plan_state, const TransformOptions options) {
   assert(nodeTag(ss_plan_state) == T_SeqScanState);
 
   // Grab Database ID and Table ID
-  assert(ss_plan_state->ss_currentRelation); // Null if not a base table scan
+  assert(ss_plan_state->ss_currentRelation);  // Null if not a base table scan
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
   Oid table_oid = ss_plan_state->ss_currentRelation->rd_id;
 
@@ -76,5 +74,5 @@ PlanTransformer::TransformSeqScan(const SeqScanState *ss_plan_state,
   return rv;
 }
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

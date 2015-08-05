@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <cassert>
 #include <iostream>
 
@@ -40,63 +39,63 @@ namespace bridge {
  */
 void DDLUtils::peloton_prepare_data(Node *parsetree) {
   switch (nodeTag(parsetree)) {
-  case T_DropdbStmt: {
-    DropdbStmt *stmt = (DropdbStmt *)parsetree;
-    stmt->database_id = get_database_oid(stmt->dbname, stmt->missing_ok);
-    break;
-  }
-  case T_CreateStmt:
-  case T_CreateForeignTableStmt: {
-    List *stmts = ((CreateStmt *)parsetree)->stmts;
-    oid_t relation_oid = ((CreateStmt *)parsetree)->relation_id;
-    ListCell *l;
+    case T_DropdbStmt: {
+      DropdbStmt *stmt = (DropdbStmt *)parsetree;
+      stmt->database_id = get_database_oid(stmt->dbname, stmt->missing_ok);
+      break;
+    }
+    case T_CreateStmt:
+    case T_CreateForeignTableStmt: {
+      List *stmts = ((CreateStmt *)parsetree)->stmts;
+      oid_t relation_oid = ((CreateStmt *)parsetree)->relation_id;
+      ListCell *l;
 
-    foreach (l, stmts) {
-      Node *stmt = (Node *)lfirst(l);
-      if (IsA(stmt, CreateStmt)) {
-        CreateStmt *Cstmt = (CreateStmt *)stmt;
+      foreach (l, stmts) {
+        Node *stmt = (Node *)lfirst(l);
+        if (IsA(stmt, CreateStmt)) {
+          CreateStmt *Cstmt = (CreateStmt *)stmt;
 
-        // Get the column list from the create statement
-        List *ColumnList = (List *)(Cstmt->tableElts);
+          // Get the column list from the create statement
+          List *ColumnList = (List *)(Cstmt->tableElts);
 
-        // Parse the CreateStmt and construct ColumnInfo
-        ListCell *entry;
-        int column_itr = 1;
-        foreach (entry, ColumnList) {
-          ColumnDef *coldef = static_cast<ColumnDef *>(lfirst(entry));
+          // Parse the CreateStmt and construct ColumnInfo
+          ListCell *entry;
+          int column_itr = 1;
+          foreach (entry, ColumnList) {
+            ColumnDef *coldef = static_cast<ColumnDef *>(lfirst(entry));
 
-          Oid typeoid = typenameTypeId(NULL, coldef->typeName);
-          int32 typemod;
-          typenameTypeIdAndMod(NULL, coldef->typeName, &typeoid, &typemod);
+            Oid typeoid = typenameTypeId(NULL, coldef->typeName);
+            int32 typemod;
+            typenameTypeIdAndMod(NULL, coldef->typeName, &typeoid, &typemod);
 
-          // Get type length
-          Type tup = typeidType(typeoid);
-          int typelen = typeLen(tup);
-          ReleaseSysCache(tup);
+            // Get type length
+            Type tup = typeidType(typeoid);
+            int typelen = typeLen(tup);
+            ReleaseSysCache(tup);
 
-          // For a fixed-size type, typlen is the number of bytes in the
-          // internal
-          // representation of the type. But for a variable-length type, typlen
-          // is
-          // negative.
-          if (typelen == -1)
-            typelen = typemod;
+            // For a fixed-size type, typlen is the number of bytes in the
+            // internal
+            // representation of the type. But for a variable-length type,
+            // typlen
+            // is
+            // negative.
+            if (typelen == -1) typelen = typemod;
 
-          // Use existing TypeName structure
-          coldef->typeName->type_oid = typeoid;
-          coldef->typeName->type_len = typelen;
+            // Use existing TypeName structure
+            coldef->typeName->type_oid = typeoid;
+            coldef->typeName->type_len = typelen;
 
-          if (coldef->raw_default != NULL || coldef->cooked_default != NULL)
-            SetDefaultConstraint(coldef, column_itr++, relation_oid);
+            if (coldef->raw_default != NULL || coldef->cooked_default != NULL)
+              SetDefaultConstraint(coldef, column_itr++, relation_oid);
+          }
         }
       }
+      break;
     }
-    break;
-  }
-  default:
-    // Don't need to prepare for other cases
-    break;
-    break;
+    default:
+      // Don't need to prepare for other cases
+      break;
+      break;
   }
 }
 
@@ -177,36 +176,36 @@ void DDLUtils::ParsingCreateStmt(
         }
 
         switch (contype) {
-        case CONSTRAINT_TYPE_UNIQUE:
-        case CONSTRAINT_TYPE_FOREIGN:
-          continue;
+          case CONSTRAINT_TYPE_UNIQUE:
+          case CONSTRAINT_TYPE_FOREIGN:
+            continue;
 
-        case CONSTRAINT_TYPE_NULL:
-        case CONSTRAINT_TYPE_NOTNULL:
-        case CONSTRAINT_TYPE_PRIMARY: {
-          catalog::Constraint constraint(contype, conname);
-          column_constraints.push_back(constraint);
-          break;
-        }
-        case CONSTRAINT_TYPE_CHECK: {
-          catalog::Constraint constraint(contype, conname,
-                                         ConstraintNode->raw_expr);
-          column_constraints.push_back(constraint);
-          break;
-        }
-        case CONSTRAINT_TYPE_DEFAULT: {
-          catalog::Constraint constraint(contype, conname,
-                                         coldef->cooked_default);
-          column_constraints.push_back(constraint);
-          break;
-        }
-        default: {
-          LOG_WARN("Unrecognized constraint type %d\n", (int)contype);
-          break;
-        }
+          case CONSTRAINT_TYPE_NULL:
+          case CONSTRAINT_TYPE_NOTNULL:
+          case CONSTRAINT_TYPE_PRIMARY: {
+            catalog::Constraint constraint(contype, conname);
+            column_constraints.push_back(constraint);
+            break;
+          }
+          case CONSTRAINT_TYPE_CHECK: {
+            catalog::Constraint constraint(contype, conname,
+                                           ConstraintNode->raw_expr);
+            column_constraints.push_back(constraint);
+            break;
+          }
+          case CONSTRAINT_TYPE_DEFAULT: {
+            catalog::Constraint constraint(contype, conname,
+                                           coldef->cooked_default);
+            column_constraints.push_back(constraint);
+            break;
+          }
+          default: {
+            LOG_WARN("Unrecognized constraint type %d\n", (int)contype);
+            break;
+          }
         }
       }
-    } // end of parsing constraint
+    }  // end of parsing constraint
 
     catalog::Column column_info(column_valueType, column_length, column_name,
                                 false);
@@ -216,8 +215,8 @@ void DDLUtils::ParsingCreateStmt(
 
     // Insert column_info into ColumnInfos
     column_infos.push_back(column_info);
-  } // end of parsing column list
+  }  // end of parsing column list
 }
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

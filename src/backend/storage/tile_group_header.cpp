@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/storage/tile_group_header.h"
 
 #include <iostream>
@@ -106,7 +105,7 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 
     peloton::ItemPointer location = GetPrevItemPointer(header_itr);
     os << " prev : "
-       << "[ " << location.block << " , " << location.offset << " ]"; //<<
+       << "[ " << location.block << " , " << location.offset << " ]";  //<<
 
     os << " own : " << own;
     os << " activated : " << activated;
@@ -125,5 +124,5 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
   LOG_INFO("%s", os.str().c_str());
 }
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

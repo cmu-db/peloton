@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "gtest/gtest.h"
 
 #include "backend/storage/tile.h"
@@ -25,7 +24,6 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 TEST(TileTests, BasicTest) {
-
   // Columns
   std::vector<catalog::Column> columns;
 
@@ -108,5 +106,5 @@ TEST(TileTests, BasicTest) {
   delete backend;
 }
 
-} // End test namespace
-} // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace

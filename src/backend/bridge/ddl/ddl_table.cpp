@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <cassert>
 #include <iostream>
 #include <vector>
@@ -45,7 +44,6 @@ namespace bridge {
 bool DDLTable::ExecCreateStmt(Node *parsetree,
                               std::vector<Node *> &parsetree_stack,
                               Peloton_Status *status, TransactionId txn_id) {
-
   List *stmts = ((CreateStmt *)parsetree)->stmts;
 
   /* ... and do it */
@@ -142,25 +140,24 @@ bool DDLTable::ExecDropStmt(Node *parsetree) {
     List *names = ((List *)lfirst(cell));
 
     switch (drop->removeType) {
-    case OBJECT_TABLE: {
-      char *table_name = strVal(linitial(names));
+      case OBJECT_TABLE: {
+        char *table_name = strVal(linitial(names));
 
-      auto &manager = catalog::Manager::GetInstance();
-      storage::Database *db =
-          manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
-      auto table = db->GetTableWithName(table_name);
+        auto &manager = catalog::Manager::GetInstance();
+        storage::Database *db =
+            manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+        auto table = db->GetTableWithName(table_name);
 
-      // skip if no table
-      if (table == nullptr)
-        break;
+        // skip if no table
+        if (table == nullptr) break;
 
-      Oid table_oid = table->GetOid();
-      DDLTable::DropTable(table_oid);
-    } break;
+        Oid table_oid = table->GetOid();
+        DDLTable::DropTable(table_oid);
+      } break;
 
-    default: {
-      LOG_WARN("Unsupported drop object %d ", drop->removeType);
-    } break;
+      default: {
+        LOG_WARN("Unsupported drop object %d ", drop->removeType);
+      } break;
     }
   }
   return true;
@@ -179,16 +176,14 @@ bool DDLTable::CreateTable(Oid relation_oid, std::string table_name,
   assert(!table_name.empty());
 
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
-  if (database_oid == INVALID_OID || relation_oid == INVALID_OID)
-    return false;
+  if (database_oid == INVALID_OID || relation_oid == INVALID_OID) return false;
 
   // Get db oid
   auto &manager = catalog::Manager::GetInstance();
   storage::Database *db = manager.GetDatabaseWithOid(database_oid);
 
   // Construct our schema from vector of ColumnInfo
-  if (schema == NULL)
-    schema = new catalog::Schema(column_infos);
+  if (schema == NULL) schema = new catalog::Schema(column_infos);
 
   // Build a table from schema
   storage::DataTable *table = storage::TableFactory::GetDataTable(
@@ -216,20 +211,20 @@ bool DDLTable::AlterTable(Oid relation_oid, AlterTableStmt *Astmt) {
     AlterTableCmd *cmd = (AlterTableCmd *)lfirst(lcmd);
 
     switch (cmd->subtype) {
-    // case AT_AddColumn:  /* add column */
-    // case AT_DropColumn:  /* drop column */
+      // case AT_AddColumn:  /* add column */
+      // case AT_DropColumn:  /* drop column */
 
-    case AT_AddConstraint: /* ADD CONSTRAINT */
-    {
-      bool status = AddConstraint(relation_oid, (Constraint *)cmd->def);
+      case AT_AddConstraint: /* ADD CONSTRAINT */
+      {
+        bool status = AddConstraint(relation_oid, (Constraint *)cmd->def);
 
-      if (status == false) {
-        LOG_WARN("Failed to add constraint");
+        if (status == false) {
+          LOG_WARN("Failed to add constraint");
+        }
+        break;
       }
-      break;
-    }
-    default:
-      break;
+      default:
+        break;
     }
   }
 
@@ -282,44 +277,44 @@ bool DDLTable::AddConstraint(Oid relation_oid, Constraint *constraint) {
   }
 
   switch (contype) {
-  case CONSTRAINT_TYPE_FOREIGN: {
-    oid_t database_oid = Bridge::GetCurrentDatabaseOid();
-    assert(database_oid);
+    case CONSTRAINT_TYPE_FOREIGN: {
+      oid_t database_oid = Bridge::GetCurrentDatabaseOid();
+      assert(database_oid);
 
-    auto &manager = catalog::Manager::GetInstance();
-    storage::Database *db = manager.GetDatabaseWithOid(database_oid);
+      auto &manager = catalog::Manager::GetInstance();
+      storage::Database *db = manager.GetDatabaseWithOid(database_oid);
 
-    // PrimaryKey Table
-    oid_t PrimaryKeyTableId =
-        db->GetTableWithName(constraint->pktable->relname)->GetOid();
+      // PrimaryKey Table
+      oid_t PrimaryKeyTableId =
+          db->GetTableWithName(constraint->pktable->relname)->GetOid();
 
-    // Each table column names
-    std::vector<std::string> pk_column_names;
-    std::vector<std::string> fk_column_names;
+      // Each table column names
+      std::vector<std::string> pk_column_names;
+      std::vector<std::string> fk_column_names;
 
-    ListCell *column;
-    if (constraint->pk_attrs != NULL && constraint->pk_attrs->length > 0) {
-      foreach (column, constraint->pk_attrs) {
-        char *attname = strVal(lfirst(column));
-        pk_column_names.push_back(attname);
+      ListCell *column;
+      if (constraint->pk_attrs != NULL && constraint->pk_attrs->length > 0) {
+        foreach (column, constraint->pk_attrs) {
+          char *attname = strVal(lfirst(column));
+          pk_column_names.push_back(attname);
+        }
       }
-    }
-    if (constraint->fk_attrs != NULL && constraint->fk_attrs->length > 0) {
-      foreach (column, constraint->fk_attrs) {
-        char *attname = strVal(lfirst(column));
-        fk_column_names.push_back(attname);
+      if (constraint->fk_attrs != NULL && constraint->fk_attrs->length > 0) {
+        foreach (column, constraint->fk_attrs) {
+          char *attname = strVal(lfirst(column));
+          fk_column_names.push_back(attname);
+        }
       }
-    }
 
-    catalog::ForeignKey *foreign_key = new catalog::ForeignKey(
-        PrimaryKeyTableId, pk_column_names, fk_column_names,
-        constraint->fk_upd_action, constraint->fk_del_action, conname);
-    foreign_keys.push_back(*foreign_key);
+      catalog::ForeignKey *foreign_key = new catalog::ForeignKey(
+          PrimaryKeyTableId, pk_column_names, fk_column_names,
+          constraint->fk_upd_action, constraint->fk_del_action, conname);
+      foreign_keys.push_back(*foreign_key);
 
-  } break;
-  default:
-    LOG_WARN("Unrecognized constraint type %d\n", (int)contype);
-    break;
+    } break;
+    default:
+      LOG_WARN("Unrecognized constraint type %d\n", (int)contype);
+      break;
   }
 
   // FIXME :
@@ -354,5 +349,5 @@ bool DDLTable::SetReferenceTables(
   return true;
 }
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

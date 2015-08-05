@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/logical_tile_factory.h"
@@ -42,8 +41,7 @@ bool OrderByExecutor::DInit() {
 bool OrderByExecutor::DExecute() {
   LOG_TRACE("Order By executor \n");
 
-  if (!sort_done_)
-    DoSort();
+  if (!sort_done_) DoSort();
 
   if (!(num_tuples_returned_ < sort_buffer_.size())) {
     return false;
@@ -110,8 +108,7 @@ bool OrderByExecutor::DoSort() {
     count += tile->GetTupleCount();
   }
 
-  if (count == 0)
-    return true;
+  if (count == 0) return true;
 
   // Grab data from plan node
   const planner::OrderByNode &node = GetPlanNode<planner::OrderByNode>();
@@ -170,7 +167,7 @@ bool OrderByExecutor::DoSort() {
           }
         }
       }
-      return false; // Will return false if all keys equal
+      return false;  // Will return false if all keys equal
     }
 
     std::vector<bool> descend_flags;

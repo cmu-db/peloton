@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/types.h"
@@ -24,9 +23,9 @@ namespace backend {
 
 // Main handler for query
 class Kernel {
-public:
+ public:
   static Result Handler(const char *query);
 };
 
-} // namespace backend
-} // namespace peloton
+}  // namespace backend
+}  // namespace peloton

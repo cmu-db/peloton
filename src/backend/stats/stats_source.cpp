@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/stats/stats_source.h"
 
 #include "backend/common/value_factory.h"
@@ -163,5 +162,5 @@ std::vector<catalog::Column> StatsSource::CreateStatsTableSchema() {
   return StatsSource::CreateBaseStatsTableSchema();
 }
 
-} // End stats namespace
-} // End peloton namespace
+}  // End stats namespace
+}  // End peloton namespace

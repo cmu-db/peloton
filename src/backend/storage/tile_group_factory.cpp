@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/storage/tile_group_factory.h"
 
 namespace peloton {
@@ -34,5 +33,5 @@ TileGroup *TileGroupFactory::GetTileGroup(
   return tile_group;
 }
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

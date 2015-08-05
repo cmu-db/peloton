@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <cassert>
 #include <iostream>
 
@@ -55,51 +54,51 @@ void DDL::ProcessUtility(Node *parsetree, const char *queryString,
 
   // Process depending on type of utility statement
   switch (nodeTag(parsetree)) {
-  case T_CreatedbStmt: {
-    DDLDatabase::ExecCreatedbStmt(parsetree);
-    break;
-  }
+    case T_CreatedbStmt: {
+      DDLDatabase::ExecCreatedbStmt(parsetree);
+      break;
+    }
 
-  case T_DropdbStmt: {
-    DDLDatabase::ExecDropdbStmt(parsetree);
-    break;
-  }
+    case T_DropdbStmt: {
+      DDLDatabase::ExecDropdbStmt(parsetree);
+      break;
+    }
 
-  case T_CreateStmt:
-  case T_CreateForeignTableStmt: {
-    DDLTable::ExecCreateStmt(parsetree, parsetree_stack, status, txn_id);
-    break;
-  }
+    case T_CreateStmt:
+    case T_CreateForeignTableStmt: {
+      DDLTable::ExecCreateStmt(parsetree, parsetree_stack, status, txn_id);
+      break;
+    }
 
-  case T_AlterTableStmt: {
-    DDLTable::ExecAlterTableStmt(parsetree, parsetree_stack);
-    break;
-  }
+    case T_AlterTableStmt: {
+      DDLTable::ExecAlterTableStmt(parsetree, parsetree_stack);
+      break;
+    }
 
-  case T_DropStmt: {
-    DDLTable::ExecDropStmt(parsetree);
-    break;
-  }
+    case T_DropStmt: {
+      DDLTable::ExecDropStmt(parsetree);
+      break;
+    }
 
-  case T_IndexStmt: {
-    DDLIndex::ExecIndexStmt(parsetree, parsetree_stack);
-    break;
-  }
+    case T_IndexStmt: {
+      DDLIndex::ExecIndexStmt(parsetree, parsetree_stack);
+      break;
+    }
 
-  case T_VacuumStmt: {
-    DDLDatabase::ExecVacuumStmt(parsetree, status);
-    break;
-  }
+    case T_VacuumStmt: {
+      DDLDatabase::ExecVacuumStmt(parsetree, status);
+      break;
+    }
 
-  case T_TransactionStmt: {
-    TransactionStmt *stmt = (TransactionStmt *)parsetree;
+    case T_TransactionStmt: {
+      TransactionStmt *stmt = (TransactionStmt *)parsetree;
 
-    DDLTransaction::ExecTransactionStmt(stmt, txn_id);
-  } break;
+      DDLTransaction::ExecTransactionStmt(stmt, txn_id);
+    } break;
 
-  default: {
-    LOG_WARN("unrecognized node type: %d", (int)nodeTag(parsetree));
-  } break;
+    default: {
+      LOG_WARN("unrecognized node type: %d", (int)nodeTag(parsetree));
+    } break;
   }
 
   /*
@@ -110,5 +109,5 @@ void DDL::ProcessUtility(Node *parsetree, const char *queryString,
     */
 }
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

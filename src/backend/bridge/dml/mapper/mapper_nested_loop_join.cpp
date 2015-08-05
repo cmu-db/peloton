@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/planner/nested_loop_join_node.h"
 #include "backend/planner/projection_node.h"
@@ -27,8 +26,8 @@ namespace bridge {
  * @brief Convert a Postgres NestLoop into a Peloton SeqScanNode.
  * @return Pointer to the constructed AbstractPlanNode.
  */
-planner::AbstractPlanNode *
-PlanTransformer::TransformNestLoop(const NestLoopState *nl_plan_state) {
+planner::AbstractPlanNode *PlanTransformer::TransformNestLoop(
+    const NestLoopState *nl_plan_state) {
   const JoinState *js = &(nl_plan_state->js);
   planner::AbstractPlanNode *result = nullptr;
   planner::NestedLoopJoinNode *plan_node = nullptr;
@@ -93,5 +92,5 @@ PlanTransformer::TransformNestLoop(const NestLoopState *nl_plan_state) {
   return result;
 }
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/planner/abstract_plan_node.h"
@@ -21,7 +20,7 @@ namespace peloton {
 namespace planner {
 
 class InsertNode : public AbstractPlanNode {
-public:
+ public:
   InsertNode() = delete;
   InsertNode(const InsertNode &) = delete;
   InsertNode &operator=(const InsertNode &) = delete;
@@ -42,7 +41,7 @@ public:
 
   std::string GetInfo() const { return target_table_->GetName(); }
 
-private:
+ private:
   /** @brief Target table. */
   storage::DataTable *target_table_;
 
@@ -50,5 +49,5 @@ private:
   std::unique_ptr<const planner::ProjectInfo> project_info_;
 };
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

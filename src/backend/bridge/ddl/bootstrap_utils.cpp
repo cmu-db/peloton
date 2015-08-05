@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <iostream>
 #include <sys/types.h>
 #include <unistd.h>
@@ -232,5 +231,5 @@ void BootstrapUtils::PrintColumnNums(int *column_nums, oid_t column_count) {
   }
 }
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

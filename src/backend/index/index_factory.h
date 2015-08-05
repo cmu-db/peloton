@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/index/index.h"
@@ -23,10 +22,10 @@ namespace index {
 //===--------------------------------------------------------------------===//
 
 class IndexFactory {
-public:
+ public:
   // Get an index with required attributes
   static Index *GetInstance(IndexMetadata *metadata);
 };
 
-} // End index namespace
-} // End peloton namespace
+}  // End index namespace
+}  // End peloton namespace

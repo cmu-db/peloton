@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/catalog/manager.h"
@@ -27,7 +26,7 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class DDLTransaction {
-public:
+ public:
   DDLTransaction(const DDLTransaction &) = delete;
   DDLTransaction &operator=(const DDLTransaction &) = delete;
   DDLTransaction(DDLTransaction &&) = delete;
@@ -35,8 +34,8 @@ public:
 
   static bool ExecTransactionStmt(TransactionStmt *stmt, TransactionId txn_id);
 
-private:
+ private:
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

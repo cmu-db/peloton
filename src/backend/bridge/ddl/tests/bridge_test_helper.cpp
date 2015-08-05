@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "bridge_test.h"
 
 #include "backend/bridge/ddl/bridge.h"
@@ -232,7 +231,6 @@ void BridgeTest::CreateSampleForeignKey(oid_t pktable_oid,
  * @return table_oid
  */
 oid_t BridgeTest::CreateTableInPostgres(std::string table_name) {
-
   std::string queryString =
       "create table " + table_name +
       "(id int, name char(64), time timestamp, salary double precision);";
@@ -275,7 +273,6 @@ oid_t BridgeTest::CreateTableInPostgres(std::string table_name) {
  * @return true if we drop the table
  */
 bool BridgeTest::DropTableInPostgres(std::string table_name) {
-
   Bridge::PelotonStartTransactionCommand();
 
   std::string queryString = "drop table " + table_name + ";";
@@ -300,5 +297,5 @@ bool BridgeTest::DropTableInPostgres(std::string table_name) {
   return true;
 }
 
-} // End test namespace
-} // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace

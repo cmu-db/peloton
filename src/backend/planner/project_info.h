@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <utility>
@@ -40,7 +39,7 @@ namespace planner {
  *of \b target_list, though it sounds simple enough.
  */
 class ProjectInfo {
-public:
+ public:
   ProjectInfo(ProjectInfo &) = delete;
   ProjectInfo operator=(ProjectInfo &) = delete;
   ProjectInfo(ProjectInfo &&) = delete;
@@ -84,7 +83,7 @@ public:
 
   ~ProjectInfo();
 
-private:
+ private:
   TargetList target_list_;
   DirectMapList direct_map_list_;
 };

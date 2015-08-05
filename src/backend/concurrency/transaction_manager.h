@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <atomic>
@@ -36,7 +35,7 @@ class Transaction;
 //===--------------------------------------------------------------------===//
 
 class TransactionManager {
-public:
+ public:
   TransactionManager();
 
   ~TransactionManager();
@@ -91,7 +90,7 @@ public:
   // Get PG Transaction
   Transaction *GetPGTransaction(TransactionId txn_id);
 
-private:
+ private:
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
@@ -118,5 +117,5 @@ private:
   std::mutex pg_txn_table_mutex;
 };
 
-} // End concurrency namespace
-} // End peloton namespace
+}  // End concurrency namespace
+}  // End peloton namespace

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
@@ -40,8 +39,9 @@ namespace peloton {
  *destructor.
  */
 
-template <typename V> class GenericValueArray {
-public:
+template <typename V>
+class GenericValueArray {
+ public:
   inline GenericValueArray()
       : size(0), data_(reinterpret_cast<V *>(new char[sizeof(V) * size])) {
     ::memset(data_, 0, sizeof(V) * size);
@@ -89,8 +89,7 @@ public:
     assert(size == rhs.size);
     for (int i = 0; i < size; ++i) {
       int ret = data_[i].Compare(rhs.data_[i]);
-      if (ret != 0)
-        return ret;
+      if (ret != 0) return ret;
     }
     return 0;
   }
@@ -99,7 +98,7 @@ public:
   std::string Debug() const;
   std::string Debug(int columnCount) const;
 
-private:
+ private:
   int size;
 
   V *data_;
@@ -141,13 +140,14 @@ inline bool operator>=(const GenericValueArray<V> &lhs,
   return !(lhs < rhs);
 }
 
-template <> inline GenericValueArray<Value>::~GenericValueArray() {
+template <>
+inline GenericValueArray<Value>::~GenericValueArray() {
   delete[] reinterpret_cast<char *>(data_);
 }
 
 template <>
-inline GenericValueArray<Value> &GenericValueArray<Value>::
-operator=(const GenericValueArray<Value> &rhs) {
+inline GenericValueArray<Value> &GenericValueArray<Value>::operator=(
+    const GenericValueArray<Value> &rhs) {
   delete[] data_;
   size = rhs.size;
   data_ = reinterpret_cast<Value *>(new char[sizeof(Value) * size]);
@@ -155,7 +155,8 @@ operator=(const GenericValueArray<Value> &rhs) {
   return *this;
 }
 
-template <> inline std::string GenericValueArray<Value>::Debug() const {
+template <>
+inline std::string GenericValueArray<Value>::Debug() const {
   std::stringstream os;
 
   os << "\t[ ";
@@ -188,7 +189,7 @@ typedef GenericValueArray<Value> ValueArray;
 
 // Comparator for ValueArray.
 class ValueArrayComparator {
-public:
+ public:
   // copy constructor is needed as std::map takes instance of comparator, not a
   // pointer.
   ValueArrayComparator(const ValueArrayComparator &rhs)
@@ -216,14 +217,15 @@ public:
     return lhs.CompareValue(rhs) < 0;
   }
 
-private:
+ private:
   size_t colCount_;
   ValueType *column_types_;
 };
 
 // Comparator for ValueArray.
-template <std::size_t N> class ValueArrayComparator2 {
-public:
+template <std::size_t N>
+class ValueArrayComparator2 {
+ public:
   // copy constructor is needed as std::map takes instance of comparator, not a
   // pointer.
   ValueArrayComparator2(const ValueArrayComparator2 &rhs)
@@ -253,13 +255,12 @@ public:
     int cmp = 0;
     for (int i = 0; i < N; ++i) {
       cmp = lhs[i].compareValue(rhs[i], column_types_[i]);
-      if (cmp != 0)
-        return (cmp < 0);
+      if (cmp != 0) return (cmp < 0);
     }
     return (cmp < 0);
   }
 
-private:
+ private:
   size_t column_count;
 
   ValueType *column_types_;
@@ -268,7 +269,7 @@ private:
 /// Comparator for ValueArray.
 
 class ValueArrayEqualityTester {
-public:
+ public:
   /// copy constructor is needed as std::map takes instance of comparator, not a
   /// pointer.
 
@@ -300,10 +301,10 @@ public:
     return lhs.CompareValue(rhs) == 0;
   }
 
-private:
+ private:
   size_t column_count;
 
   ValueType *column_types_;
 };
 
-} // End peloton namespace
+}  // End peloton namespace

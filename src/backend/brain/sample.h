@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -28,7 +27,7 @@ namespace brain {
 //===--------------------------------------------------------------------===//
 
 class Sample {
-public:
+ public:
   Sample(const size_t column_count)
       : columns_accessed_(
             std::vector<double>(column_count, DEFAULT_COLUMN_VALUE)),
@@ -67,5 +66,5 @@ public:
   double weight_;
 };
 
-} // End brain namespace
-} // End peloton namespace
+}  // End brain namespace
+}  // End peloton namespace

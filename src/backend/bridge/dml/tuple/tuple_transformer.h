@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "postgres.h"
@@ -28,7 +27,7 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class TupleTransformer {
-public:
+ public:
   TupleTransformer(const TupleTransformer &) = delete;
   TupleTransformer &operator=(const TupleTransformer &) = delete;
   TupleTransformer(TupleTransformer &&) = delete;
@@ -47,5 +46,5 @@ public:
                                           TupleDesc tuple_desc);
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton
