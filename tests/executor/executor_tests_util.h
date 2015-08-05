@@ -1,8 +1,14 @@
-/**
- * @brief Header file for utility functions for executor tests.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// executor_tests_util.h
+//
+// Identification: tests/executor/executor_tests_util.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

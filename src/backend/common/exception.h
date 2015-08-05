@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * exception.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/exception.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// exception.h
+//
+// Identification: src/backend/common/exception.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -298,8 +298,9 @@ class IncompatibleTypeException : public Exception {
 
  public:
   IncompatibleTypeException(int type, std::string msg)
-      : Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-                  "Incompatible type " + ValueTypeToString((ValueType)type) + msg) {}
+      : Exception(
+            EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+            "Incompatible type " + ValueTypeToString((ValueType)type) + msg) {}
 };
 
 class SerializationException : public Exception {
@@ -383,8 +384,7 @@ class IndexException : public Exception {
   IndexException() = delete;
 
  public:
-  IndexException(std::string msg)
-      : Exception(EXCEPTION_TYPE_INDEX, msg) {}
+  IndexException(std::string msg) : Exception(EXCEPTION_TYPE_INDEX, msg) {}
 };
 
 }  // End peloton namespace

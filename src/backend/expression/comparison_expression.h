@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// comparison_expression.h
+//
+// Identification: src/backend/expression/comparison_expression.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include "backend/common/value.h"
@@ -70,7 +82,8 @@ class ComparisonExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     std::string retval;
-    retval += spacer + "ComparisonExpression :" + ExpressionTypeToString(this->expr_type) + "\n";
+    retval += spacer + "ComparisonExpression :" +
+              ExpressionTypeToString(this->expr_type) + "\n";
     if (m_left != nullptr) retval += m_left->DebugInfo(" " + spacer);
     if (m_right != nullptr) retval += m_right->DebugInfo(" " + spacer);
     return retval;

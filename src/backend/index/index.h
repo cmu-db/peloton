@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * index.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/index/index.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// index.h
+//
+// Identification: src/backend/index/index.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -120,8 +120,8 @@ class Index {
 
   // update a index entry if the old location is same as the one given
   virtual bool UpdateEntry(const storage::Tuple *key,
-                        const ItemPointer location,
-                        const ItemPointer old_location) = 0;
+                           const ItemPointer location,
+                           const ItemPointer old_location) = 0;
 
   //===--------------------------------------------------------------------===//
   // Accessors
@@ -129,13 +129,13 @@ class Index {
 
   // return where the entry is already stored in the index
   virtual ItemPointer Exists(const storage::Tuple *key,
-                             const ItemPointer location)= 0;
+                             const ItemPointer location) = 0;
 
   // scan all keys in the index comparing with an arbitrary key
   virtual std::vector<ItemPointer> Scan(
-      const std::vector<Value>& values,
-      const std::vector<oid_t>& key_column_ids,
-      const std::vector<ExpressionType>& exprs) = 0;
+      const std::vector<Value> &values,
+      const std::vector<oid_t> &key_column_ids,
+      const std::vector<ExpressionType> &exprs) = 0;
 
   //===--------------------------------------------------------------------===//
   // STATS
@@ -187,16 +187,16 @@ class Index {
   Index(IndexMetadata *schema);
 
   // Generic key comparator between index key and given arbitrary key
-  bool Compare(const storage::Tuple& index_key,
-               const std::vector<oid_t>& column_ids,
-               const std::vector<ExpressionType>& expr_types,
-               const std::vector<Value>& values);
+  bool Compare(const storage::Tuple &index_key,
+               const std::vector<oid_t> &column_ids,
+               const std::vector<ExpressionType> &expr_types,
+               const std::vector<Value> &values);
 
   // Set the lower bound tuple for index iteration
   bool SetLowerBoundTuple(storage::Tuple *index_key,
-                          const std::vector<Value>& values,
-                          const std::vector<oid_t>& key_column_ids,
-                          const std::vector<ExpressionType>& expr_types);
+                          const std::vector<Value> &values,
+                          const std::vector<oid_t> &key_column_ids,
+                          const std::vector<ExpressionType> &expr_types);
 
   //===--------------------------------------------------------------------===//
   //  Data members

@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * value_vector.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/value_vector.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// value_vector.h
+//
+// Identification: src/backend/common/value_vector.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
