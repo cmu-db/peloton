@@ -26,6 +26,7 @@ enum LoggerId{
   PELOTON_LOGGER_ID = 2
 };
 
+
 }  // namespace logging
 }  // namespace peloton
 

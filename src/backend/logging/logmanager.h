@@ -21,14 +21,17 @@ namespace logging {
 // Log Manager
 //===--------------------------------------------------------------------===//
 
+/**
+ * A LogManager contains a hard coded set of loggers that have counterpart loggers elsewhere.
+ */
 class LogManager{
 
   public:
     static LogManager& GetInstance(void);
 
-    static void StartAriesLogging(void);
+    static void StartAriesLogging(oid_t buffer_size);
 
-    static void StartPelotonLogging(void);
+    static void StartPelotonLogging(oid_t buffer_size);
 
     Logger* GetAriesLogger(void) ;
 
@@ -37,9 +40,10 @@ class LogManager{
   private:
     LogManager() {}
 
-    void InitAriesLogger();
-
-    void InitPelotonLogger();
+    // Default buffer size is 0, which means logger is 'LOG ONLY'
+    // not for running main loop
+    void InitAriesLogger(oid_t buffer_size = 0 /* LOG ONLY */);
+    void InitPelotonLogger(oid_t buffer_size = 0 /*LOG ONLY*/);
 
     Logger* aries_logger;
 

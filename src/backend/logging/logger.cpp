@@ -15,10 +15,16 @@
 namespace peloton {
 namespace logging {
 
+/**
+ * @brief Run logging_MainLoop to receive log record and flush
+ */
 void Logger::logging_MainLoop(void){
   proxy->logging_MainLoop();
 }
 
+/**
+ * @brief Run logging_MainLoop to receive log record and flush
+ */
 void Logger::log(LogRecord record){
   proxy->log(record);
 }

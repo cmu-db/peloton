@@ -382,8 +382,8 @@ peloton_MainLoop(void) {
     return;
   }
 
-  // Launching logging thread
-  std::thread logger(peloton::logging::LogManager::StartAriesLogging);
+  // Launching a thread for logging
+  std::thread logger(peloton::logging::LogManager::StartAriesLogging, 10);
 
   /*
    * Loop to process messages until we get SIGQUIT or detect ungraceful
@@ -399,16 +399,9 @@ peloton_MainLoop(void) {
    * the latch won't get cleared until next time there is a break in the
    * action.
    */
-  int i=2;
   for (;;) {
     /* Clear any already-pending wakeups */
     ResetLatch(MyLatch);
-    auto& logManager = peloton::logging::LogManager::GetInstance();
-    auto logger = logManager.GetAriesLogger();
-
-    peloton::logging::LogRecord record(peloton::LOG_TYPE_DEFAULT, i);
-    i+=2;
-    logger->log(record);
 
     /*
      * Quit if we get SIGQUIT from the postmaster.
