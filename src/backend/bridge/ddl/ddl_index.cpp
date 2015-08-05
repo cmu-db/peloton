@@ -29,25 +29,23 @@ namespace bridge {
 /**
  * @brief Execute the index stmt.
  * @param the parse tree
- * @param index info to store index information
+ * @param the parsetree_stack store parsetree if the table is not created yet
  * @return true if we handled it correctly, false otherwise
  */
 bool DDLIndex::ExecIndexStmt(Node* parsetree,
-                             std::vector<IndexInfo>& index_infos) {
+                             std::vector<Node*>& parsetree_stack) {
   IndexStmt* Istmt = (IndexStmt*)parsetree;
 
-  // Construct IndexInfo
-  IndexInfo* index_info = DDLIndex::ConstructIndexInfoByParsingIndexStmt(Istmt);
 
-  // If table has not been created yet, skip the rest part of this function
+  // If table has not been created yet, store it into the parsetree stack
   auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db =
-      manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
-
+  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
   if (nullptr == db->GetTableWithName(Istmt->relation->relname)) {
-    index_infos.push_back(*index_info);
+    parsetree_stack.push_back(parsetree);
     return true;
   }
+
+  IndexInfo* index_info = DDLIndex::ConstructIndexInfoByParsingIndexStmt(Istmt);
 
   DDLIndex::CreateIndex(*index_info);
   return true;
@@ -181,7 +179,11 @@ IndexInfo* DDLIndex::ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt) {
         type = INDEX_CONSTRAINT_TYPE_UNIQUE;
       }
     } else {
-      LOG_WARN("No index name");
+      index_name = table_name;
+      for (auto column_name : key_column_names) {
+        index_name += "_" + column_name + "_";
+      }
+      index_name += "idx";
     }
   } else {
     index_name = Istmt->idxname;

@@ -60,183 +60,8 @@ DataTable::~DataTable() {
 }
 
 //===--------------------------------------------------------------------===//
-// TUPLE OPERATIONS
+// TUPLE HELPER OPERATIONS
 //===--------------------------------------------------------------------===//
-
-ItemPointer DataTable::InsertTuple(txn_id_t transaction_id,
-                                   const storage::Tuple *tuple, bool update) {
-  assert(tuple);
-
-  // Increase the table's number of tuples by 1
-  IncreaseNumberOfTuplesBy(1);
-  // Increase the indexes' number of tuples by 1 as well
-  for (auto index : indexes) index->IncreaseNumberOfTuplesBy(1);
-
-  // (A) Not NULL checks
-  if (CheckNulls(tuple) == false) {
-    throw ConstraintException("Not NULL constraint violated : " +
-                              tuple->GetInfo());
-    return ItemPointer();
-  }
-
-  TileGroup *tile_group = nullptr;
-  oid_t tuple_slot = INVALID_OID;
-  oid_t tile_group_offset = INVALID_OID;
-
-  while (tuple_slot == INVALID_OID) {
-    // (B) Figure out last tile group
-    {
-      std::lock_guard<std::mutex> lock(table_mutex);
-      tile_group_offset = GetTileGroupCount() - 1;
-      LOG_TRACE("Tile group offset :: %d \n", tile_group_offset);
-    }
-
-    // (C) Try to insert
-    tile_group = GetTileGroup(tile_group_offset);
-    tuple_slot = tile_group->InsertTuple(transaction_id, tuple);
-    if (tuple_slot == INVALID_OID) {
-      AddDefaultTileGroup();
-    }
-  }
-
-  // Return Location
-  ItemPointer location = ItemPointer(tile_group->GetTileGroupId(), tuple_slot);
-
-  // Index checks and updates
-  if (update == false) {
-    if (TryInsertInIndexes(tuple, location) == false) {
-      tile_group->ReclaimTuple(tuple_slot);
-      LOG_WARN("Index constraint violated\n");
-      return INVALID_ITEMPOINTER;
-    }
-  } else {
-    // just do a blind insert
-    InsertInIndexes(tuple, location);
-    return location;
-  }
-
-  return location;
-}
-
-void DataTable::InsertInIndexes(const storage::Tuple *tuple,
-                                ItemPointer location) {
-  for (auto index : indexes) {
-    auto index_schema = index->GetKeySchema();
-    auto indexed_columns = index_schema->GetIndexedColumns();
-    storage::Tuple *key = new storage::Tuple(index_schema, true);
-    key->SetFromTuple(tuple, indexed_columns);
-    if (index->InsertEntry(key, location) == false) {
-      location = INVALID_ITEMPOINTER;
-      LOG_ERROR("Index constraint violated\n");
-      delete key;
-      break;
-    }
-
-    delete key;
-  }
-}
-
-bool DataTable::TryInsertInIndexes(const storage::Tuple *tuple,
-                                   ItemPointer location) {
-  int index_count = GetIndexCount();
-  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
-    auto index = GetIndex(index_itr);
-    auto index_schema = index->GetKeySchema();
-    auto indexed_columns = index_schema->GetIndexedColumns();
-    storage::Tuple *key = new storage::Tuple(index_schema, true);
-    key->SetFromTuple(tuple, indexed_columns);
-
-    // No need to check if it does not have unique keys
-    if (index->HasUniqueKeys() == false) {
-      bool status = index->InsertEntry(key, location);
-      if (status == true) {
-        delete key;
-        continue;
-      }
-    }
-
-    // Check if key already exists
-    if (index->Exists(key) == true) {
-      LOG_ERROR(
-          "Failed to insert into index %s.%s [%s] because key already exists.",
-          GetName().c_str(), index->GetName().c_str(),
-          index->GetTypeName().c_str());
-    } else {
-      bool status = index->InsertEntry(key, location);
-      if (status == true) {
-        delete key;
-        continue;
-      }
-      LOG_ERROR("Failed to insert into index %s.%s [%s] for other reasons.",
-                GetName().c_str(), index->GetName().c_str(),
-                index->GetTypeName().c_str());
-    }
-
-    // Undo insert in other indexes as well
-    for (int prev_index_itr = index_itr + 1; prev_index_itr < index_count;
-        ++prev_index_itr) {
-      auto prev_index = GetIndex(prev_index_itr);
-      prev_index->DeleteEntry(key);
-    }
-
-    delete key;
-    return false;
-  }
-
-  return true;
-}
-
-/**
- * @brief Try to delete a tuple from the table.
- * It may fail because the tuple has been latched.
- *
- * @param transaction_id  The current transaction Id.
- * @param location        ItemPointer of the tuple to delete.
- * NB: location.block should be the tile_group's \b ID, not \b offset.
- * @return True on success, false on failure.
- */
-bool DataTable::DeleteTuple(txn_id_t transaction_id, ItemPointer location) {
-  oid_t tile_group_id = location.block;
-  oid_t tuple_id = location.offset;
-
-  auto tile_group = this->GetTileGroupById(tile_group_id);
-
-  auto status = tile_group->DeleteTuple(transaction_id, tuple_id);
-
-  if (status == false) {
-    LOG_WARN("Failed to delete tuple from the tile group : %u , Txn_id : %lu ",
-             tile_group_id, (long unsigned)transaction_id);
-    return false;
-  }
-
-  LOG_TRACE("Deleted tuple from tile group : %u , Txn_id : %lu ", tile_group,
-            (long unsigned)transaction_id);
-
-  // Decrease the table's number of tuples by 1
-  DecreaseNumberOfTuplesBy(1);
-  return true;
-}
-
-void DataTable::DeleteInIndexes(const storage::Tuple *tuple) {
-  for (auto index : indexes) {
-    auto index_schema = index->GetKeySchema();
-    auto indexed_columns = index_schema->GetIndexedColumns();
-    storage::Tuple *key = new storage::Tuple(index_schema, true);
-    key->SetFromTuple(tuple, indexed_columns);
-
-    if (index->DeleteEntry(key) == false) {
-      delete key;
-      LOG_WARN("Failed to delete tuple from index %s . %s %s",
-               GetName().c_str(), index->GetName().c_str(),
-               index->GetTypeName().c_str());
-    }
-
-    delete key;
-
-    // Decrease the indexes' number of tuples by 1
-    for (auto index : indexes) index->DecreaseNumberOfTuplesBy(1);
-  }
-}
 
 bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
   assert(schema->GetColumnCount() == tuple->GetColumnCount());
@@ -255,12 +80,288 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
   return true;
 }
 
+bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
+
+  // First, check NULL constraints
+  if (CheckNulls(tuple) == false) {
+    throw ConstraintException("Not NULL constraint violated : " +
+                              tuple->GetInfo());
+    return false;
+  }
+
+  return true;
+}
+
+ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
+                                    const storage::Tuple *tuple,
+                                    const ItemPointer old_location) {
+  assert(tuple);
+
+  if(CheckConstraints(tuple) == false)
+    return INVALID_ITEMPOINTER;
+
+  TileGroup *tile_group = nullptr;
+  oid_t tuple_slot = INVALID_OID;
+  oid_t tile_group_offset = INVALID_OID;
+  auto transaction_id = transaction->GetTransactionId();
+
+  while (tuple_slot == INVALID_OID) {
+    // First, figure out last tile group
+    {
+      std::lock_guard<std::mutex> lock(table_mutex);
+      tile_group_offset = GetTileGroupCount() - 1;
+      LOG_TRACE("Tile group offset :: %d \n", tile_group_offset);
+    }
+
+    // Then, try to grab a slot in the tile group header
+    tile_group = GetTileGroup(tile_group_offset);
+    tuple_slot = tile_group->InsertTuple(transaction_id, tuple);
+    if (tuple_slot == INVALID_OID) {
+      AddDefaultTileGroup();
+    }
+  }
+
+  // Set tuple location
+  ItemPointer location(tile_group->GetTileGroupId(), tuple_slot);
+
+  // Set back pointer in tile group header in case of updated tuple
+  if(old_location.block != INVALID_OID) {
+    auto header = tile_group->GetHeader();
+    header->SetPrevItemPointer(location.offset, old_location);
+  }
+
+  return location;
+}
+
+//===--------------------------------------------------------------------===//
+// INSERT
+//===--------------------------------------------------------------------===//
+
+ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
+                                   const storage::Tuple *tuple) {
+  // First, do integrity checks and claim a slot
+  ItemPointer location = GetTupleSlot(transaction, tuple,
+                                      INVALID_ITEMPOINTER);
+  if(location.block == INVALID_OID)
+    return INVALID_ITEMPOINTER;
+
+  // Index checks and updates
+  if (InsertInIndexes(transaction, tuple, location) == false) {
+    // Reclaim slot if we fail
+    oid_t tile_group_id = location.block;
+    oid_t tuple_slot = location.offset;
+
+    auto tile_group = GetTileGroupById(tile_group_id);
+    tile_group->ReclaimTuple(tuple_slot);
+
+    LOG_WARN("Index constraint violated\n");
+    return INVALID_ITEMPOINTER;
+  }
+
+  // Increase the table's number of tuples by 1
+  IncreaseNumberOfTuplesBy(1);
+  // Increase the indexes' number of tuples by 1 as well
+  for (auto index : indexes) index->IncreaseNumberOfTuplesBy(1);
+
+  return location;
+}
+
+bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
+                                const storage::Tuple *tuple,
+                                ItemPointer location) {
+
+  int index_count = GetIndexCount();
+  for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
+    auto index = GetIndex(index_itr);
+    auto index_schema = index->GetKeySchema();
+    auto indexed_columns = index_schema->GetIndexedColumns();
+    storage::Tuple *key = new storage::Tuple(index_schema, true);
+    key->SetFromTuple(tuple, indexed_columns);
+
+    // First, try to insert into the index
+    bool status = index->InsertEntry(key, location);
+    if (status == true) {
+      LOG_TRACE("Index : %u. Key not exists yet. Simple Insert. \n", index->GetOid());
+      delete key;
+      continue;
+    }
+
+    LOG_TRACE("Index : %u . Key exists. Checking visibility. \n", index->GetOid());
+    // Key already exists
+    auto old_location = index->Exists(key, location);
+    LOG_TRACE("location      :: block = %u offset = %u \n", location.block, location.offset);
+    LOG_TRACE("old location  :: block = %u offset = %u \n", old_location.block, old_location.offset);
+    if (old_location.block != INVALID_OID) {
+
+      // Is this key visible or not ?
+      oid_t tile_group_id = old_location.block;
+      oid_t tuple_offset = old_location.offset;
+
+      auto &manager = catalog::Manager::GetInstance();
+      auto tile_group = manager.GetTileGroup(tile_group_id);
+      auto header = tile_group->GetHeader();
+
+      auto transaction_id = transaction->GetTransactionId();
+      auto commit_id = transaction->GetLastCommitId();
+      bool visible = header->IsVisible(tuple_offset, transaction_id, commit_id);
+
+      // The previous tuple is not visible,
+      // so let's update it atomically
+      if(visible == false) {
+        LOG_TRACE("Index : %u. Existing tuple is not visible.\n", index->GetOid());
+        bool status = index->UpdateEntry(key, location, old_location);
+        if(status == true) {
+          delete key;
+          continue;
+        }
+      }
+      LOG_TRACE("Existing tuple is still visible.\n");
+
+    }
+
+    LOG_ERROR("Failed to insert into index %s.%s [%s].",
+              GetName().c_str(),
+              index->GetName().c_str(),
+              index->GetTypeName().c_str());
+
+    // Time to clean up !
+    // Undo insert in other indexes as well
+    for (int prev_index_itr = index_itr + 1; prev_index_itr < index_count;
+        ++prev_index_itr) {
+      auto prev_index = GetIndex(prev_index_itr);
+      prev_index->DeleteEntry(key, location);
+    }
+
+    delete key;
+    return false;
+  }
+
+  return true;
+}
+
+//===--------------------------------------------------------------------===//
+// DELETE
+//===--------------------------------------------------------------------===//
+
+/**
+ * @brief Try to delete a tuple from the table.
+ * It may fail because the tuple has been latched.
+ *
+ * @param transaction_id  The current transaction Id.
+ * @param location        ItemPointer of the tuple to delete.
+ * NB: location.block should be the tile_group's \b ID, not \b offset.
+ * @return True on success, false on failure.
+ */
+bool DataTable::DeleteTuple(const concurrency::Transaction *transaction,
+                            ItemPointer location) {
+  oid_t tile_group_id = location.block;
+  oid_t tuple_id = location.offset;
+
+  auto tile_group = GetTileGroupById(tile_group_id);
+  txn_id_t transaction_id = transaction->GetTransactionId();
+
+  // Delete slot in underlying tile group
+  auto status = tile_group->DeleteTuple(transaction_id, tuple_id);
+  if (status == false) {
+    LOG_WARN("Failed to delete tuple from the tile group : %u , Txn_id : %lu ",
+             tile_group_id, transaction_id);
+    return false;
+  }
+
+  LOG_TRACE("Deleted location :: block = %u offset = %u \n", location.block, location.offset);
+  // Decrease the table's number of tuples by 1
+  DecreaseNumberOfTuplesBy(1);
+
+  return true;
+}
+
+//void DataTable::DeleteInIndexes(const storage::Tuple *tuple,
+//                                const ItemPointer location) {
+//  // Go over every index
+//  for (auto index : indexes) {
+//    auto index_schema = index->GetKeySchema();
+//    auto indexed_columns = index_schema->GetIndexedColumns();
+//
+//    storage::Tuple *key = new storage::Tuple(index_schema, true);
+//    key->SetFromTuple(tuple, indexed_columns);
+//
+//    // Delete the entry in the index
+//    if (index->DeleteEntry(key, location) == false) {
+//      delete key;
+//      LOG_WARN("Failed to delete tuple from index %s . %s %s",
+//               GetName().c_str(),
+//               index->GetName().c_str(),
+//               index->GetTypeName().c_str());
+//    }
+//
+//    delete key;
+//  }
+//}
+
+
+//===--------------------------------------------------------------------===//
+// UPDATE
+//===--------------------------------------------------------------------===//
+
+ItemPointer DataTable::UpdateTuple(const concurrency::Transaction *transaction,
+                                   const storage::Tuple *tuple,
+                                   const ItemPointer old_location) {
+  // Do integrity checks and claim a slot
+  ItemPointer location = GetTupleSlot(transaction, tuple,
+                                      old_location);
+  if(location.block == INVALID_OID)
+    return INVALID_ITEMPOINTER;
+
+  bool status = false;
+  // 1) Try as if it's a same-key update
+  status = UpdateInIndexes(tuple, location, old_location);
+
+  // 2) If 1) fails, try again as an Insert
+  if(false == status){
+    status = InsertInIndexes(transaction, tuple, location);
+  }
+
+  // 3) If still fails, then it is a real failure
+  if(false == status){
+    location = INVALID_ITEMPOINTER;
+  }
+
+  return location;
+}
+
+bool DataTable::UpdateInIndexes(const storage::Tuple *tuple,
+                                const ItemPointer location,
+                                const ItemPointer old_location) {
+  for (auto index : indexes) {
+    auto index_schema = index->GetKeySchema();
+    auto indexed_columns = index_schema->GetIndexedColumns();
+
+    storage::Tuple *key = new storage::Tuple(index_schema, true);
+    key->SetFromTuple(tuple, indexed_columns);
+
+    if (index->UpdateEntry(key, location, old_location) == false) {
+      LOG_INFO("Same-key update index failed \n");
+      delete key;
+      return false;
+    }
+
+    delete key;
+  }
+
+  return true;
+}
+
+//===--------------------------------------------------------------------===//
+// STATS
+//===--------------------------------------------------------------------===//
+
 /**
  * @brief Increase the number of tuples in this table
  * @param amount amount to increase
  */
 void DataTable::IncreaseNumberOfTuplesBy(const float amount) {
   number_of_tuples += amount;
+  dirty = true;
 }
 
 /**
@@ -269,6 +370,7 @@ void DataTable::IncreaseNumberOfTuplesBy(const float amount) {
  */
 void DataTable::DecreaseNumberOfTuplesBy(const float amount) {
   number_of_tuples -= amount;
+  dirty = true;
 }
 
 /**
@@ -277,13 +379,31 @@ void DataTable::DecreaseNumberOfTuplesBy(const float amount) {
  */
 void DataTable::SetNumberOfTuples(const float num_tuples) {
   number_of_tuples = num_tuples;
+  dirty = true;
 }
 
 /**
  * @brief Get the number of tuples in this table
  * @return number of tuples
  */
-float DataTable::GetNumberOfTuples() const { return number_of_tuples; }
+float DataTable::GetNumberOfTuples() const {
+  return number_of_tuples;
+}
+
+/**
+ * @brief return dirty flag
+ * @return dirty flag
+ */
+bool DataTable::IsDirty() const {
+  return dirty;
+}
+
+/**
+ * @brief Reset dirty flag
+ */
+void DataTable::ResetDirty() {
+  dirty = false;
+}
 
 //===--------------------------------------------------------------------===//
 // TILE GROUP
@@ -320,7 +440,7 @@ oid_t DataTable::AddDefaultTileGroup() {
       LOG_TRACE("Added first tile group \n");
       tile_groups.push_back(tile_group->GetTileGroupId());
       // add tile group metadata in locator
-      catalog::Manager::GetInstance().SetLocation(tile_group_id, tile_group);
+      catalog::Manager::GetInstance().SetTileGroup(tile_group_id, tile_group);
       LOG_TRACE("Recording tile group : %d \n", tile_group_id);
       return tile_group_id;
     }
@@ -342,7 +462,7 @@ oid_t DataTable::AddDefaultTileGroup() {
     tile_groups.push_back(tile_group->GetTileGroupId());
 
     // add tile group metadata in locator
-    catalog::Manager::GetInstance().SetLocation(tile_group_id, tile_group);
+    catalog::Manager::GetInstance().SetTileGroup(tile_group_id, tile_group);
     LOG_TRACE("Recording tile group : %d \n", tile_group_id);
   }
 
@@ -357,7 +477,7 @@ void DataTable::AddTileGroup(TileGroup *tile_group) {
     oid_t tile_group_id = tile_group->GetTileGroupId();
 
     // add tile group metadata in locator
-    catalog::Manager::GetInstance().SetLocation(tile_group_id, tile_group);
+    catalog::Manager::GetInstance().SetTileGroup(tile_group_id, tile_group);
     LOG_TRACE("Recording tile group : %d \n", tile_group_id);
   }
 }
@@ -375,8 +495,7 @@ TileGroup *DataTable::GetTileGroup(oid_t tile_group_offset) const {
 
 TileGroup *DataTable::GetTileGroupById(oid_t tile_group_id) const {
   auto &manager = catalog::Manager::GetInstance();
-  storage::TileGroup *tile_group =
-      static_cast<storage::TileGroup *>(manager.GetLocation(tile_group_id));
+  storage::TileGroup *tile_group = manager.GetTileGroup(tile_group_id);
   assert(tile_group);
   return tile_group;
 }
@@ -579,7 +698,6 @@ storage::TileGroup *DataTable::TransformTileGroup(oid_t tile_group_id,
                                                   bool cleanup) {
 
   // First, check if the tile group is in this table
-  storage::TileGroup *orig_tile_group = nullptr;
   {
     std::lock_guard<std::mutex> lock(table_mutex);
 
@@ -595,33 +713,31 @@ storage::TileGroup *DataTable::TransformTileGroup(oid_t tile_group_id,
 
   // Get orig tile group from catalog
   auto& catalog_manager = catalog::Manager::GetInstance();
-  auto tile_group_entry = catalog_manager.GetLocation(tile_group_id);
-  orig_tile_group = static_cast<storage::TileGroup*>(tile_group_entry);
-  assert(orig_tile_group);
+  auto tile_group = catalog_manager.GetTileGroup(tile_group_id);
 
   // Get the schema for the new transformed tile group
-  auto new_schema = TransformTileGroupSchema(orig_tile_group, column_map);
+  auto new_schema = TransformTileGroupSchema(tile_group, column_map);
 
   // Allocate space for the transformed tile group
   auto new_tile_group = TileGroupFactory::GetTileGroup(
-      orig_tile_group->GetDatabaseId(),
-      orig_tile_group->GetTableId(),
-      orig_tile_group->GetTileGroupId(),
-      orig_tile_group->GetAbstractTable(),
-      orig_tile_group->GetBackend(),
+      tile_group->GetDatabaseId(),
+      tile_group->GetTableId(),
+      tile_group->GetTileGroupId(),
+      tile_group->GetAbstractTable(),
+      tile_group->GetBackend(),
       new_schema,
       column_map,
-      orig_tile_group->GetAllocatedTupleCount());
+      tile_group->GetAllocatedTupleCount());
 
   // Set the transformed tile group column-at-a-time
-  SetTransformedTileGroup(orig_tile_group, new_tile_group);
+  SetTransformedTileGroup(tile_group, new_tile_group);
 
   // Set the location of the new tile group
-  catalog_manager.SetLocation(tile_group_id, new_tile_group);
+  catalog_manager.SetTileGroup(tile_group_id, new_tile_group);
 
   // Clean up the orig tile group, if needed which is normally the case
   if(cleanup)
-    delete orig_tile_group;
+    delete tile_group;
 
   return new_tile_group;
 }

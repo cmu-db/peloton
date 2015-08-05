@@ -38,9 +38,10 @@ namespace executor {
  */
 class LogicalTile {
   friend class LogicalTileFactory;
-  struct ColumnInfo;
 
  public:
+  struct ColumnInfo;
+
   LogicalTile(const LogicalTile &) = delete;
   LogicalTile &operator=(const LogicalTile &) = delete;
   LogicalTile(LogicalTile &&) = delete;
@@ -118,7 +119,6 @@ class LogicalTile {
 
   iterator end();
 
- private:
   //===--------------------------------------------------------------------===//
   // Column Info
   //===--------------------------------------------------------------------===//
@@ -141,6 +141,7 @@ class LogicalTile {
     oid_t origin_column_id;
   };
 
+ private:
   // Dummy default constructor
   LogicalTile(){};
 

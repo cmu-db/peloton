@@ -26,3 +26,4 @@
 #include "backend/executor/order_by_executor.h"
 #include "backend/executor/hash_set_op_executor.h"
 #include "backend/executor/append_executor.h"
+#include "backend/executor/projection_executor.h"

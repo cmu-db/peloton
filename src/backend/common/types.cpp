@@ -450,6 +450,9 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
     case PLAN_NODE_TYPE_NESTLOOPINDEX: {
       return "NESTLOOPINDEX";
     }
+    case PLAN_NODE_TYPE_MERGEJOIN: {
+      return "MERGEJOIN";
+    }
     case PLAN_NODE_TYPE_UPDATE: {
       return "UPDATE";
     }
@@ -701,7 +704,7 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(
       break;
 
     default:
-      printf("INVALID CONSTRAINT TYPE : %d \n", PostgresConstrType);
+      fprintf(stderr, "INVALID CONSTRAINT TYPE : %d \n", PostgresConstrType);
       break;
   }
   return constraintType;

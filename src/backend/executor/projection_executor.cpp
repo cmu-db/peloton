@@ -49,10 +49,11 @@ bool ProjectionExecutor::DInit() {
 bool ProjectionExecutor::DExecute() {
   assert(project_info_);
   assert(schema_);
+  assert(children_.size() == 1);
 
-  assert(children_.size() == 1);    // only handle 1 child for now
+  // NOTE: We only handle 1 child for now
   if(children_.size() == 1){
-    LOG_TRACE("Projection : child 0 \n");
+    LOG_INFO("Projection : child 1 \n");
 
     // Execute child
     auto status = children_[0]->Execute();
@@ -63,18 +64,18 @@ bool ProjectionExecutor::DExecute() {
     std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
     auto num_tuples = source_tile->GetTupleCount();
 
-    // Create new physical tile.
+    // Create new physical tile where we store projected tuples
     std::unique_ptr<storage::Tile> dest_tile(
         storage::TileFactory::GetTempTile(*schema_, num_tuples));
 
-    // Create projections tuple-by-tuple
+    // Create projections tuple-at-a-time from original tile
     oid_t new_tuple_id = 0;
     for (oid_t old_tuple_id : *source_tile) {
-
       storage::Tuple* buffer = new storage::Tuple(schema_, true);
       expression::ContainerTuple<LogicalTile> tuple(source_tile.get(), old_tuple_id);
       project_info_->Evaluate(buffer, &tuple, nullptr, executor_context_);
 
+      // Insert projected tuple into the new tile
       dest_tile->InsertTuple(new_tuple_id, buffer);
 
       delete buffer;
@@ -83,8 +84,8 @@ bool ProjectionExecutor::DExecute() {
 
     // Wrap physical tile in logical tile and return it
     bool own_base_tile = true;
-    SetOutput(
-        LogicalTileFactory::WrapTiles({dest_tile.release()}, own_base_tile));
+    SetOutput(LogicalTileFactory::WrapTiles({dest_tile.release()},
+                                            own_base_tile));
 
     return true;
   }

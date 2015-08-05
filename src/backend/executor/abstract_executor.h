@@ -50,8 +50,12 @@ class AbstractExecutor {
   const planner::AbstractPlanNode *GetRawNode() const { return node_; }
 
  protected:
+
+  // NOTE: The reason why we keep the plan node separate from the executor
+  // context is because we might want to reuse the plan multiple times
+  // with different executor contexts
   explicit AbstractExecutor(planner::AbstractPlanNode *node,
-                            ExecutorContext *executor_context = nullptr);
+                            ExecutorContext *executor_context);
 
   /** @brief Init function to be overriden by derived class. */
   virtual bool DInit() = 0;

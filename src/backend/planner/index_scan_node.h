@@ -34,55 +34,53 @@ class IndexScanNode : public AbstractScanNode {
   IndexScanNode &operator=(IndexScanNode &&) = delete;
 
   struct IndexScanDesc {
-    index::Index *index;
-    storage::Tuple *start_key;
-    storage::Tuple *end_key;
-    bool start_inclusive;
-    bool end_inclusive;
-    IndexScanDesc()
-        : index(nullptr),
-          start_key(nullptr),
-          end_key(nullptr),
-          start_inclusive(false),
-          end_inclusive(false) {}
-  };
 
-  /* FIXME We should keep only one c'tor. Please remove this one someday. (I keep them for unit test) */
-  IndexScanNode(storage::AbstractTable *table, index::Index *index,
-                storage::Tuple *start_key, storage::Tuple *end_key,
-                bool start_inclusive, bool end_inclusive,
-                const std::vector<oid_t> &column_ids)
-      : AbstractScanNode(nullptr, column_ids),
-        table_(table),
-        index_(index),
-        start_key_(start_key),
-        end_key_(end_key),
-        start_inclusive_(start_inclusive),
-        end_inclusive_(end_inclusive) {}
+    IndexScanDesc()
+    : index(nullptr) {}
+
+    IndexScanDesc(index::Index *index,
+                  const std::vector<oid_t>& column_ids,
+                  const std::vector<ExpressionType>& expr_types,
+                  const std::vector<Value>& values)
+    : index(index),
+      key_column_ids(column_ids),
+      expr_types(expr_types),
+      values(values){}
+
+    index::Index *index = nullptr;
+
+    std::vector<oid_t> key_column_ids;
+
+    std::vector<ExpressionType> expr_types;
+
+    std::vector<Value> values;
+  };
 
   IndexScanNode(expression::AbstractExpression *predicate,
                 const std::vector<oid_t> &column_ids,
                 storage::AbstractTable *table,
-                IndexScanDesc &index_scan_desc)
+                const IndexScanDesc &index_scan_desc)
       : AbstractScanNode(predicate, column_ids),
         table_(table),
         index_(index_scan_desc.index),
-        start_key_(index_scan_desc.start_key),
-        end_key_(index_scan_desc.end_key),
-        start_inclusive_(index_scan_desc.start_inclusive),
-        end_inclusive_(index_scan_desc.end_inclusive) {}
+        column_ids_(column_ids),
+        key_column_ids_(std::move(index_scan_desc.key_column_ids)),
+        expr_types_(std::move(index_scan_desc.expr_types)),
+        values_(std::move(index_scan_desc.values)) {}
+
+  ~IndexScanNode() {}
 
   const storage::AbstractTable *GetTable() const { return table_; }
 
   index::Index *GetIndex() const { return index_; }
 
-  const storage::Tuple *GetStartKey() const { return start_key_; }
+  const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
-  const storage::Tuple *GetEndKey() const { return end_key_; }
+  const std::vector<oid_t> &GetKeyColumnIds() const { return key_column_ids_; }
 
-  bool IsStartInclusive() const { return start_inclusive_; }
+  const std::vector<ExpressionType> &GetExprTypes() const { return expr_types_; }
 
-  bool IsEndInclusive() const { return end_inclusive_; }
+  const std::vector<Value> &GetValues() const { return values_; }
 
   inline PlanNodeType GetPlanNodeType() const {
     return PLAN_NODE_TYPE_INDEXSCAN;
@@ -97,18 +95,13 @@ class IndexScanNode : public AbstractScanNode {
   /** @brief index associated with index scan. */
   index::Index *index_;
 
-  /** @brief starting key for index scan. */
-  storage::Tuple *start_key_;
+  const std::vector<oid_t> column_ids_;
 
-  /** @brief ending key for index scan. */
-  storage::Tuple *end_key_;
+  const std::vector<oid_t> key_column_ids_;
 
-  /** @brief whether we also need to include the terminal values ?
-   *  Like ID > 50 (not inclusive) or ID >= 50 (inclusive)
-   * */
-  bool start_inclusive_;
+  const std::vector<ExpressionType> expr_types_;
 
-  bool end_inclusive_;
+  const std::vector<Value> values_;
 
 };
 

@@ -107,11 +107,19 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
       break;
 
     case PLAN_NODE_TYPE_LIMIT:
-      child_executor = new executor::LimitExecutor(plan);
+      child_executor = new executor::LimitExecutor(plan, executor_context);
       break;
 
     case PLAN_NODE_TYPE_NESTLOOP:
-      child_executor = new executor::NestedLoopJoinExecutor(plan);
+      child_executor = new executor::NestedLoopJoinExecutor(plan, executor_context);
+      break;
+
+    case PLAN_NODE_TYPE_PROJECTION:
+      child_executor = new executor::ProjectionExecutor(plan, executor_context);
+      break;
+
+    case PLAN_NODE_TYPE_MATERIALIZE:
+      child_executor = new executor::MaterializationExecutor(plan, executor_context);
       break;
 
     default:
@@ -172,7 +180,7 @@ executor::AbstractExecutor *PlanExecutor::AddMaterialization(
     case PLAN_NODE_TYPE_INDEXSCAN:
       /* FALL THRU */
     case PLAN_NODE_TYPE_LIMIT:
-      new_root = new executor::MaterializationExecutor(nullptr);
+      new_root = new executor::MaterializationExecutor(nullptr, nullptr);
       new_root->AddChild(root);
       LOG_INFO("Added materialization, the original root executor type is %d",
                type);
@@ -208,6 +216,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   }
   assert(txn);
 
+  LOG_TRACE("Txn ID = %lu ", txn->GetTransactionId());
   LOG_TRACE("Building the executor tree");
 
   // Build the executor tree
@@ -260,7 +269,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
       auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
       if (slot != nullptr) {
         slots = lappend(slots, slot);
-        //print_slot(slot);
+//        print_slot(slot);
       }
     }
 
@@ -279,12 +288,15 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     auto status = txn->GetResult();
     switch(status) {
       case Result::RESULT_SUCCESS:
+        LOG_INFO("Committing txn_id : %lu , cid : %lu\n", txn->GetTransactionId(), txn->GetCommitId());
         // Commit
         txn_manager.CommitTransaction(txn);
+
         break;
 
       case Result::RESULT_FAILURE:
       default:
+        LOG_INFO("Aborting txn : %lu , cid : %lu \n", txn->GetTransactionId(), txn->GetCommitId());
         //Abort
         txn_manager.AbortTransaction(txn);
     }
