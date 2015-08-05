@@ -48,7 +48,7 @@ void BridgeTest::DDL_CreateTable_TEST_WITH_INVALID_OID() {
   // CHECK :: status must be false
   assert(status == false);
 
-  std::cout << ":::::: " << __func__ << " DONE\n";
+  LOG_INFO(":::::: %s DONE\n", __func__);
 }
 
 /**
@@ -103,7 +103,7 @@ void BridgeTest::DDL_CreateTable_TEST_WITH_COLUMNS() {
   status = DDLTable::DropTable(table_oid);
   assert(status);
 
-  std::cout << ":::::: " << __func__ << " DONE\n";
+  LOG_INFO(":::::: %s DONE\n", __func__);
 }
 
 }  // End bridge namespace
