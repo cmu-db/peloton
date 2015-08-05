@@ -14,13 +14,15 @@
 
 #include <vector>
 
+#include "backend/catalog/schema.h"
+#include "backend/bridge/ddl/raw_structure.h"
+
 #include "postgres.h"
 #include "c.h"
 #include "miscadmin.h"
 #include "utils/rel.h"
 
-#include "backend/catalog/schema.h"
-#include "backend/bridge/ddl/raw_structure.h"
+struct Peloton_Status;
 
 namespace peloton {
 namespace bridge {
@@ -33,7 +35,8 @@ class Bootstrap {
  public:
   static raw_database_info* GetRawDatabase(void);
 
-  static bool BootstrapPeloton(raw_database_info* raw_database);
+  static bool BootstrapPeloton(raw_database_info* raw_database,
+                               Peloton_Status* status);
 
  private:
 

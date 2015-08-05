@@ -1,5 +1,5 @@
 /**
- * @brief Header for nested loop join plan node.
+ * @brief Header for merge join plan node.
  *
  * Copyright(c) 2015, CMU
  */
@@ -18,24 +18,24 @@
 namespace peloton {
 namespace planner {
 
-class NestedLoopJoinNode : public AbstractJoinPlanNode {
+class MergeJoinNode : public AbstractJoinPlanNode {
  public:
-  NestedLoopJoinNode(const NestedLoopJoinNode &) = delete;
-  NestedLoopJoinNode &operator=(const NestedLoopJoinNode &) = delete;
-  NestedLoopJoinNode(NestedLoopJoinNode &&) = delete;
-  NestedLoopJoinNode &operator=(NestedLoopJoinNode &&) = delete;
+  MergeJoinNode(const MergeJoinNode &) = delete;
+  MergeJoinNode &operator=(const MergeJoinNode &) = delete;
+  MergeJoinNode(MergeJoinNode &&) = delete;
+  MergeJoinNode &operator=(MergeJoinNode &&) = delete;
 
-  NestedLoopJoinNode(expression::AbstractExpression *predicate,
+  MergeJoinNode(expression::AbstractExpression *predicate,
                      const ProjectInfo *proj_info)
       : AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate, proj_info) {  // FIXME
     // Nothing to see here...
   }
 
   inline PlanNodeType GetPlanNodeType() const {
-    return PLAN_NODE_TYPE_NESTLOOP;
+    return PLAN_NODE_TYPE_MERGEJOIN;
   }
 
-  inline std::string GetInfo() const { return "NestedLoopJoin"; }
+  inline std::string GetInfo() const { return "MergeJoin"; }
 
  private:
   // There is nothing special that we need here

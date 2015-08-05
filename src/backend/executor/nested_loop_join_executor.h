@@ -12,16 +12,14 @@
 
 #pragma once
 
-#include "backend/catalog/schema.h"
-#include "backend/executor/abstract_executor.h"
-#include "backend/planner/nested_loop_join_node.h"
+#include "backend/executor/abstract_join_executor.h"
 
 #include <vector>
 
 namespace peloton {
 namespace executor {
 
-class NestedLoopJoinExecutor : public AbstractExecutor {
+class NestedLoopJoinExecutor : public AbstractJoinExecutor {
   NestedLoopJoinExecutor(const NestedLoopJoinExecutor &) = delete;
   NestedLoopJoinExecutor &operator=(const NestedLoopJoinExecutor &) = delete;
 
@@ -30,27 +28,12 @@ class NestedLoopJoinExecutor : public AbstractExecutor {
                                   ExecutorContext *executor_context);
 
  protected:
-  bool DInit();
 
   bool DExecute();
 
  private:
-  //===--------------------------------------------------------------------===//
-  // Executor State
-  //===--------------------------------------------------------------------===//
+  // nothing special here
 
-  /** @brief Result of nested loop join. */
-  std::vector<LogicalTile *> result;
-
-  /** @brief Starting left table scan. */
-  bool left_scan_start = false;
-
-  //===--------------------------------------------------------------------===//
-  // Plan Info
-  //===--------------------------------------------------------------------===//
-
-  /** @brief Join predicate. */
-  const expression::AbstractExpression *predicate_ = nullptr;
 };
 
 }  // namespace executor

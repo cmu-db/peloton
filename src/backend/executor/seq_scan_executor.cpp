@@ -121,7 +121,7 @@ bool SeqScanExecutor::DExecute() {
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
     // Print tile group visibility
-    // tile_group_header->PrintVisibility(txn_id, commit_id);
+    //tile_group_header->PrintVisibility(txn_id, commit_id);
 
     // Construct position list by looping through tile group
     // and applying the predicate.
