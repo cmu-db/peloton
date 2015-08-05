@@ -9,7 +9,6 @@
 #include <utility>
 #include <vector>
 
-//#include "backend/common/value.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/storage/tuple.h"
 
@@ -31,8 +30,7 @@ namespace planner {
  *direct map projections.
  *
  * NB: in case of a constant-valued projection, it is still under the umbrella
- *of \b target_list,
- * though sounds simple enough.
+ *of \b target_list, though it sounds simple enough.
  */
 class ProjectInfo {
  public:
@@ -51,7 +49,9 @@ class ProjectInfo {
 
   /**
    * @brief Generic specification of a direct map:
-   *        < NEW_col_id , <tuple_idx , OLD_col_id>  >
+   *        < NEW_col_id ,
+   *        <tuple_index (left or right tuple), OLD_col_id>
+   *        >
    */
   typedef std::pair<oid_t, std::pair<oid_t, oid_t> > DirectMap;
 
@@ -67,9 +67,13 @@ class ProjectInfo {
 
   const DirectMapList& GetDirectMapList() const { return direct_map_list_; }
 
+  bool isNonTrivial() const { return target_list_.size() > 0; };
+
   bool Evaluate(storage::Tuple* dest, const AbstractTuple* tuple1,
                 const AbstractTuple* tuple2,
                 executor::ExecutorContext* econtext) const;
+
+  std::string Debug() const;
 
   ~ProjectInfo();
 

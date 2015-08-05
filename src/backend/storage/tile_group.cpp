@@ -32,10 +32,10 @@ TileGroup::TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
       tile_group_id(INVALID_OID),
       backend(backend),
       tile_schemas(schemas),
-      column_map(column_map),
       tile_group_header(tile_group_header),
       table(table),
-      num_tuple_slots(tuple_count) {
+      num_tuple_slots(tuple_count),
+      column_map(column_map) {
   tile_count = tile_schemas.size();
 
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {

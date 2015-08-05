@@ -27,7 +27,8 @@ namespace bridge {
  * TODO: Can we also scan result from a child operator? (Non-base-table scan?)
  */
 planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
-    const SeqScanState* ss_plan_state) {
+    const SeqScanState* ss_plan_state,
+    const TransformOptions options) {
   assert(nodeTag(ss_plan_state) == T_SeqScanState);
 
   // Grab Database ID and Table ID
@@ -49,14 +50,29 @@ planner::AbstractPlanNode* PlanTransformer::TransformSeqScan(
   expression::AbstractExpression* predicate = nullptr;
   std::vector<oid_t> column_ids;
 
-  TransformGenericScanInfo(parent, predicate, column_ids, ss_plan_state);
+  GetGenericInfoFromScanState(parent, predicate, column_ids, ss_plan_state, options.use_projInfo);
 
-  /* TODO: test whether parent is presented, connect with the scan node */
-
+  if(column_ids.empty()){
+    column_ids.resize(target_table->GetSchema()->GetColumnCount());
+    std::iota(column_ids.begin(), column_ids.end(), 0);
+  }
+  
   /* Construct and return the Peloton plan node */
-  auto plan_node =
+  auto scan_node =
       new planner::SeqScanNode(target_table, predicate, column_ids);
-  return plan_node;
+  
+  planner::AbstractPlanNode* rv = nullptr;
+
+  /* Check whether a parent is presented, connect with the scan node if yes */
+  if(parent){
+    parent->AddChild(scan_node);
+    rv = parent;
+  }
+  else{
+    rv = scan_node;
+  }
+  
+  return rv;
 }
 
 }  // namespace bridge

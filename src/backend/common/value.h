@@ -51,11 +51,11 @@ namespace peloton {
 #define OBJECT_CONTINUATION_BIT static_cast<char>(1 << 7)
 #define OBJECT_MAX_LENGTH_SHORT_LENGTH 63
 
-/// The int used for storage and return values
+// The int used for storage and return values
 typedef ttmath::Int<2> TTInt;
 
-/// Long integer with space for multiplication and division without
-/// carry/overflow
+// Long integer with space for multiplication and division without
+// carry/overflow
 typedef ttmath::Int<4> TTLInt;
 
 class ValuePeeker;
@@ -85,49 +85,52 @@ class Value {
    */
   Value& operator= (const Value&) = default;
 
-  /// Create a default Value
+  // Create a default Value
   Value();
 
-  /// Release memory associated to object type Values
+  // Release memory associated to object type Values
   void FreeUninlinedData() const;
 
   //===--------------------------------------------------------------------===//
   // Core Functions
   //===--------------------------------------------------------------------===//
 
-  /// Create an Value promoted/demoted to type
+  // Create an Value promoted/demoted to type
   Value CastAs(ValueType type) const;
 
-  /// Reveal the contained pointer for type values
+  // Reveal the contained pointer for type values
   void* CastAsAddress() const;
 
   //===--------------------------------------------------------------------===//
   // NULLs and BOOLs
   //===--------------------------------------------------------------------===//
 
-  /// Set value to the correct SQL NULL representation.
+  // Set value to the correct SQL NULL representation.
   void SetNull();
 
-  /// Create a boolean true Value
+  // Create a boolean true Value
   static Value GetTrue();
 
-  /// Create a boolean false Value
+  // Create a boolean false Value
   static Value GetFalse();
 
-  /// Create an Value with the null representation for valueType
+  // Create an Value with the null representation for valueType
   static Value GetNullValue(ValueType);
 
-  /// Check if the value represents SQL NULL
+  // Check if the value represents SQL NULL
   bool IsNull() const;
 
-  /// For boolean Values, convert to bool
+  // For boolean Values, convert to bool
   bool IsTrue() const;
   bool IsFalse() const;
 
-  /// For boolean Values only, logical operators
+  // For boolean Values only, logical operators
   Value OpNegate() const;
   Value OpAnd(const Value rhs) const;
   Value OpOr(const Value rhs) const;
+
+  // Get min value
+  static Value GetMinValue(ValueType);
 
   //===--------------------------------------------------------------------===//
   // Serialization/Deserialization utilities
@@ -143,10 +146,10 @@ class Value {
   void Serialize(void* storage, const bool is_inlined,
                  const int32_t max_length) const;
 
-  /// Serialize this Value to a SerializeOutput
+  // Serialize this Value to a SerializeOutput
   void SerializeTo(SerializeOutput& output) const;
 
-  /// Serialize this Value to an Export stream
+  // Serialize this Value to an Export stream
   void SerializeToExport(ExportSerializeOutput&) const;
 
   /**
@@ -206,7 +209,7 @@ class Value {
 
   inline bool operator!=(const Value& other) const { return !(*this == other); }
 
-  /// Return a boolean Value with the comparison result
+  // Return a boolean Value with the comparison result
   Value OpEquals(const Value rhs) const;
   Value OpNotEquals(const Value rhs) const;
   Value OpLessThan(const Value rhs) const;
@@ -214,13 +217,13 @@ class Value {
   Value OpGreaterThan(const Value rhs) const;
   Value OpGreaterThanOrEqual(const Value rhs) const;
 
-  /// Return a copy of MAX(this, rhs)
+  // Return a copy of MAX(this, rhs)
   Value OpMax(const Value rhs) const;
 
-  /// Return a copy of MIN(this, rhs)
+  // Return a copy of MIN(this, rhs)
   Value OpMin(const Value rhs) const;
 
-  /// For number Values, compute new Values for arithmetic operators
+  // For number Values, compute new Values for arithmetic operators
   Value OpIncrement() const;
   Value OpDecrement() const;
   Value OpSubtract(const Value rhs) const;
@@ -228,7 +231,7 @@ class Value {
   Value OpMultiply(const Value rhs) const;
   Value OpDivide(const Value rhs) const;
 
-  /// For number values, check the number line.
+  // For number values, check the number line.
   bool IsNegative() const;
   bool IsZero() const;
 
@@ -236,32 +239,34 @@ class Value {
   // Misc functions
   //===--------------------------------------------------------------------===//
 
-  /// Calculate the tuple storage size for an Value type.
-  /// VARCHARs assume out-of-band tuple storage
+  // Calculate the tuple storage size for an Value type.
+  // VARCHARs assume out-of-band tuple storage
   static uint16_t GetTupleStorageSize(const ValueType type);
 
-  /// For boost hashing
+  // For boost hashing
   void HashCombine(std::size_t& seed) const;
 
   // Get a string representation of this value
-  /// Return a string full of arcane and wonder.
   friend std::ostream& operator<<(std::ostream& os, const Value& value);
 
-  /// Functor comparator for use with std::set
+  // Return a string full of arcane and wonder
+  std::string GetInfo() const;
+
+  // Functor comparator for use with std::set
   struct ltValue {
     bool operator()(const Value v1, const Value v2) const {
       return v1.Compare(v2) < 0;
     }
   };
 
-  /// Functor equality predicate for use with boost unordered
+  // Functor equality predicate for use with boost unordered
   struct equal_to : std::binary_function<Value, Value, bool> {
     bool operator()(Value const& x, Value const& y) const {
       return x.Compare(y) == 0;
     }
   };
 
-  /// Functor hash predicate for use with boost unordered
+  // Functor hash predicate for use with boost unordered
   struct hash : std::unary_function<Value, std::size_t> {
     std::size_t operator()(Value const& x) const {
       std::size_t seed = 0;
@@ -295,7 +300,7 @@ class Value {
   void CreateDecimalFromString(const std::string& txt);
   std::string CreateStringFromDecimal() const;
 
-  /// Promotion Rules.
+  // Promotion Rules.
   static ValueType IntPromotionTable[];
   static ValueType DecimalPromotionTable[];
   static ValueType DoublePromotionTable[];
@@ -739,7 +744,7 @@ class Value {
     return retval;
   }
 
-  /// Assumes binary value in hex
+  // Assumes binary value in hex
   static Value GetBinaryValue(const std::string value, Pool* data_pool) {
     Value retval(VALUE_TYPE_VARBINARY);
     const int32_t length = static_cast<int32_t>(value.length() / 2);

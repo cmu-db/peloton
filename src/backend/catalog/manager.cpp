@@ -28,12 +28,12 @@ Manager &Manager::GetInstance() {
 // OBJECT MAP
 //===--------------------------------------------------------------------===//
 
-void Manager::SetLocation(const oid_t oid, void *location) {
-  locator.insert(std::pair<oid_t, void *>(oid, location));
+void Manager::SetTileGroup(const oid_t oid, storage::TileGroup *location) {
+  locator.insert(std::pair<oid_t, storage::TileGroup *>(oid, location));
 }
 
-void *Manager::GetLocation(const oid_t oid) const {
-  void *location = nullptr;
+storage::TileGroup *Manager::GetTileGroup(const oid_t oid) const {
+  storage::TileGroup *location = nullptr;
   try {
     location = locator.at(oid);
   } catch (std::exception &e) {
@@ -48,6 +48,7 @@ void *Manager::GetLocation(const oid_t oid) const {
 
 void Manager::AddDatabase(storage::Database *database) {
   {
+    printf("in %s db oid %u \n", __func__, database->GetOid());
     std::lock_guard<std::mutex> lock(catalog_mutex);
     databases.push_back(database);
   }
@@ -66,6 +67,7 @@ void Manager::DropDatabaseWithOid(const oid_t database_oid) {
 
     oid_t database_offset = 0;
     for (auto database : databases) {
+       printf("in %s dboid %u cur dboid %u \n", __func__, database_oid, database->GetOid() );
       if (database->GetOid() == database_oid) {
         break;
       }

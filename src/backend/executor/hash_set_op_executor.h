@@ -38,7 +38,8 @@ class HashSetOpExecutor : public AbstractExecutor {
   HashSetOpExecutor(const HashSetOpExecutor &&) = delete;
   HashSetOpExecutor &operator=(const HashSetOpExecutor &&) = delete;
 
-  explicit HashSetOpExecutor(planner::AbstractPlanNode *node);
+  explicit HashSetOpExecutor(planner::AbstractPlanNode *node,
+                             ExecutorContext *executor_context);
 
  protected:
   bool DInit();

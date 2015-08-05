@@ -84,7 +84,7 @@ bool InsertExecutor::DExecute() {
 
     while (tile_iterator.Next(tuple)) {
       ItemPointer location =
-          target_table->InsertTuple(transaction_->GetTransactionId(), &tuple);
+          target_table->InsertTuple(transaction_, &tuple);
       if (location.block == INVALID_OID) {
         transaction_->SetResult(Result::RESULT_FAILURE);
         return false;
@@ -114,8 +114,7 @@ bool InsertExecutor::DExecute() {
     }
 
     // Carry out insertion
-    ItemPointer location = target_table->InsertTuple(
-        transaction_->GetTransactionId(), tuple.get());
+    ItemPointer location = target_table->InsertTuple(transaction_, tuple.get());
     if (location.block == INVALID_OID) {
       transaction_->SetResult(Result::RESULT_FAILURE);
       return false;
