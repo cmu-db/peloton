@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "executor/executor_tests_util.h"
 
 #include <cstdlib>
@@ -49,45 +48,47 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
   const bool is_inlined = true;
 
   switch (index) {
-  case 0: {
-    auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                        "COL_A", is_inlined);
+    case 0: {
+      auto column =
+          catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "COL_A", is_inlined);
 
-    column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
-    return column;
-  } break;
+      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
+      return column;
+    } break;
 
-  case 1: {
-    auto column =
-        catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
-                        "COL_B", is_inlined);
+    case 1: {
+      auto column =
+          catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "COL_B", is_inlined);
 
-    column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
-    return column;
-  } break;
+      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
+      return column;
+    } break;
 
-  case 2: {
-    auto column = catalog::Column(
-        VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE), "COL_C", is_inlined);
+    case 2: {
+      auto column =
+          catalog::Column(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE),
+                          "COL_C", is_inlined);
 
-    column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
-    return column;
-  } break;
+      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
+      return column;
+    } break;
 
-  case 3: {
-    auto column = catalog::Column(VALUE_TYPE_VARCHAR,
-                                  25, // Column length.
-                                  "COL_D",
-                                  !is_inlined); // inlined.
+    case 3: {
+      auto column = catalog::Column(VALUE_TYPE_VARCHAR,
+                                    25,  // Column length.
+                                    "COL_D",
+                                    !is_inlined);  // inlined.
 
-    column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
-    return column;
-  } break;
+      column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
+      return column;
+    } break;
 
-  default:
-    throw ExecutorException("Invalid column index : " + std::to_string(index));
-    break;
+    default:
+      throw ExecutorException("Invalid column index : " +
+                              std::to_string(index));
+      break;
   }
 }
 
@@ -106,9 +107,8 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
  *
  * @return Pointer to tile group.
  */
-storage::TileGroup *
-ExecutorTestsUtil::CreateTileGroup(storage::AbstractBackend *backend,
-                                   int tuple_count) {
+storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(
+    storage::AbstractBackend *backend, int tuple_count) {
   std::vector<catalog::Column> columns;
   std::vector<catalog::Schema> schemas;
 
@@ -145,8 +145,7 @@ ExecutorTestsUtil::CreateTileGroup(storage::AbstractBackend *backend,
 void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
                                       bool mutate, bool random, bool group_by) {
   // Random values
-  if (random)
-    std::srand(std::time(nullptr));
+  if (random) std::srand(std::time(nullptr));
 
   const catalog::Schema *schema = table->GetSchema();
 
@@ -160,8 +159,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
 
   for (int col_itr = 0; col_itr < num_rows; col_itr++) {
     int populate_value = col_itr;
-    if (mutate)
-      populate_value *= 3;
+    if (mutate) populate_value *= 3;
 
     storage::Tuple tuple(schema, allocate);
 
@@ -191,8 +189,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
             random ? std::rand() % (num_rows / 2) : populate_value, 3)));
     tuple.SetValue(3, string_value);
 
-    if (group_by)
-      std::cout << "INSERT TUPLE :: " << tuple;
+    if (group_by) std::cout << "INSERT TUPLE :: " << tuple;
 
     ItemPointer tuple_slot_id = table->InsertTuple(txn, &tuple);
     EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
@@ -256,9 +253,9 @@ void ExecutorTestsUtil::PopulateTiles(storage::TileGroup *tile_group,
  *
  * @return Pointer to processed logical tile.
  */
-executor::LogicalTile *
-ExecutorTestsUtil::ExecuteTile(executor::AbstractExecutor *executor,
-                               executor::LogicalTile *source_logical_tile) {
+executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
+    executor::AbstractExecutor *executor,
+    executor::LogicalTile *source_logical_tile) {
   MockExecutor child_executor;
   executor->AddChild(&child_executor);
 
@@ -283,8 +280,8 @@ ExecutorTestsUtil::ExecuteTile(executor::AbstractExecutor *executor,
   return result_logical_tile.release();
 }
 
-storage::DataTable *
-ExecutorTestsUtil::CreateTable(int tuples_per_tilegroup_count, bool indexes) {
+storage::DataTable *ExecutorTestsUtil::CreateTable(
+    int tuples_per_tilegroup_count, bool indexes) {
   catalog::Schema *table_schema = new catalog::Schema(
       {GetColumnInfo(0), GetColumnInfo(1), GetColumnInfo(2), GetColumnInfo(3)});
   std::string table_name("TEST_TABLE");
@@ -385,5 +382,5 @@ void ExecutorTestsUtil::PrintTileVector(
   std::cout << std::endl;
 }
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

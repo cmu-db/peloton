@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/types.h"
@@ -35,14 +34,22 @@ class Transaction {
 
   Transaction(Transaction const &) = delete;
 
-public:
+ public:
   Transaction()
-      : txn_id(INVALID_TXN_ID), cid(INVALID_CID), last_cid(INVALID_CID),
-        ref_count(BASE_REF_COUNT), waiting_to_commit(false), next(nullptr) {}
+      : txn_id(INVALID_TXN_ID),
+        cid(INVALID_CID),
+        last_cid(INVALID_CID),
+        ref_count(BASE_REF_COUNT),
+        waiting_to_commit(false),
+        next(nullptr) {}
 
   Transaction(txn_id_t txn_id, cid_t last_cid)
-      : txn_id(txn_id), cid(INVALID_CID), last_cid(last_cid),
-        ref_count(BASE_REF_COUNT), waiting_to_commit(false), next(nullptr) {}
+      : txn_id(txn_id),
+        cid(INVALID_CID),
+        last_cid(last_cid),
+        ref_count(BASE_REF_COUNT),
+        waiting_to_commit(false),
+        next(nullptr) {}
 
   ~Transaction() {
     if (next != nullptr) {
@@ -90,7 +97,7 @@ public:
   // Get result and status
   Result GetResult() const;
 
-protected:
+ protected:
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
@@ -126,5 +133,5 @@ protected:
   Result result_ = peloton::RESULT_SUCCESS;
 };
 
-} // End concurrency namespace
-} // End peloton namespace
+}  // End concurrency namespace
+}  // End peloton namespace

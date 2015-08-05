@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <iostream>
 #include <cstdio>
 
@@ -34,7 +33,7 @@ int chunk_size = 100000;
 int *data;
 
 class table_iterator_task {
-public:
+ public:
   table_iterator_task(int l) : num_tilegroups(l), next_tilegroup(0) {}
 
   bool operator()(int &v) {
@@ -46,20 +45,19 @@ public:
     }
   }
 
-private:
+ private:
   const int num_tilegroups;
   int next_tilegroup;
 };
 
 int predicate() {
   int sum = 0;
-  for (auto ii = 0; ii < 1000; ii++)
-    sum += ii;
+  for (auto ii = 0; ii < 1000; ii++) sum += ii;
   return sum;
 }
 
 class seq_scanner_task {
-public:
+ public:
   std::vector<int> operator()(const int &v) const {
     std::vector<int> matching;
 
@@ -67,19 +65,17 @@ public:
     int end = offset + chunk_size;
 
     for (auto ii = offset; ii < end; ii++)
-      if (data[ii] % 5 == 0 && predicate())
-        matching.push_back(ii);
+      if (data[ii] % 5 == 0 && predicate()) matching.push_back(ii);
 
     return matching;
   }
 };
 
 class summer_task {
-public:
+ public:
   int operator()(const std::vector<int> &matching) const {
     long local_sum = 0;
-    for (auto ii : matching)
-      local_sum += data[ii];
+    for (auto ii : matching) local_sum += data[ii];
 
     return local_sum;
   }
@@ -88,7 +84,7 @@ public:
 long long sum = 0;
 
 class aggregator_task {
-public:
+ public:
   int operator()(const int &local_sum) const {
     sum += local_sum;
     return sum;
@@ -124,5 +120,5 @@ Result Kernel::Handler(const char *query) {
   return status;
 }
 
-} // namespace backend
-} // namespace peloton
+}  // namespace backend
+}  // namespace peloton

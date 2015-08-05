@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -126,7 +125,7 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   old_to_new_cols[3] = 0;
   old_to_new_cols[1] = 1;
   old_to_new_cols[0] = 2;
-  bool physify_flag = true; // is going to create a physical tile
+  bool physify_flag = true;  // is going to create a physical tile
   planner::MaterializationNode node(old_to_new_cols, output_schema.release(),
                                     physify_flag);
 
@@ -169,5 +168,5 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   }
 }
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/iterator.h"
@@ -31,16 +30,20 @@ namespace storage {
 class TupleIterator : public Iterator<Tuple> {
   TupleIterator() = delete;
 
-public:
+ public:
   TupleIterator(const Tile *tile)
-      : data(tile->data), tile(tile), tuple_itr(0),
+      : data(tile->data),
+        tile(tile),
+        tuple_itr(0),
         tuple_length(tile->tuple_length) {
     tile_group_header = tile->tile_group_header;
   }
 
   TupleIterator(const TupleIterator &other)
-      : data(other.data), tile(other.tile),
-        tile_group_header(other.tile_group_header), tuple_itr(other.tuple_itr),
+      : data(other.data),
+        tile(other.tile),
+        tile_group_header(other.tile_group_header),
+        tuple_itr(other.tuple_itr),
         tuple_length(other.tuple_length) {}
 
   /**
@@ -62,7 +65,7 @@ public:
 
   oid_t GetLocation() const { return tuple_itr; }
 
-private:
+ private:
   // Base tile data
   char *data;
 
@@ -76,5 +79,5 @@ private:
   oid_t tuple_length;
 };
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

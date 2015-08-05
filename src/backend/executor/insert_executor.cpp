@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/insert_executor.h"
 
 #include "backend/catalog/manager.h"
@@ -47,8 +46,7 @@ bool InsertExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool InsertExecutor::DExecute() {
-  if (done_)
-    return false;
+  if (done_) return false;
 
   assert(!done_);
 
@@ -106,7 +104,7 @@ bool InsertExecutor::DExecute() {
     auto project_info = node.GetProjectInfo();
 
     assert(project_info->GetDirectMapList().size() ==
-           0); // There should be no direct maps
+           0);  // There should be no direct maps
 
     for (auto target : project_info->GetTargetList()) {
       peloton::Value value =
@@ -129,5 +127,5 @@ bool InsertExecutor::DExecute() {
   return true;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

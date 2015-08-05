@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <set>
 #include <string>
@@ -293,5 +292,5 @@ TEST(OrderByTests, StringDescIntAscTest) {
 }
 }
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

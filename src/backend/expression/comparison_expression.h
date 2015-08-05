@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/value.h"
@@ -32,37 +31,38 @@ namespace expression {
 //===--------------------------------------------------------------------===//
 
 class CmpEq {
-public:
+ public:
   inline Value cmp(Value l, Value r) const { return l.OpEquals(r); }
 };
 
 class CmpNe {
-public:
+ public:
   inline Value cmp(Value l, Value r) const { return l.OpNotEquals(r); }
 };
 
 class CmpLt {
-public:
+ public:
   inline Value cmp(Value l, Value r) const { return l.OpLessThan(r); }
 };
 
 class CmpGt {
-public:
+ public:
   inline Value cmp(Value l, Value r) const { return l.OpGreaterThan(r); }
 };
 
 class CmpLte {
-public:
+ public:
   inline Value cmp(Value l, Value r) const { return l.OpLessThanOrEqual(r); }
 };
 
 class CmpGte {
-public:
+ public:
   inline Value cmp(Value l, Value r) const { return l.OpGreaterThanOrEqual(r); }
 };
 
-template <typename C> class ComparisonExpression : public AbstractExpression {
-public:
+template <typename C>
+class ComparisonExpression : public AbstractExpression {
+ public:
   ComparisonExpression(ExpressionType type, AbstractExpression *left,
                        AbstractExpression *right)
       : AbstractExpression(type, left, right) {
@@ -84,14 +84,12 @@ public:
     std::string retval;
     retval += spacer + "ComparisonExpression :" +
               ExpressionTypeToString(this->expr_type) + "\n";
-    if (m_left != nullptr)
-      retval += m_left->DebugInfo(" " + spacer);
-    if (m_right != nullptr)
-      retval += m_right->DebugInfo(" " + spacer);
+    if (m_left != nullptr) retval += m_left->DebugInfo(" " + spacer);
+    if (m_right != nullptr) retval += m_right->DebugInfo(" " + spacer);
     return retval;
   }
 
-private:
+ private:
   AbstractExpression *m_left;
   AbstractExpression *m_right;
   C compare;
@@ -99,7 +97,7 @@ private:
 
 template <typename C, typename L, typename R>
 class InlinedComparisonExpression : public AbstractExpression {
-public:
+ public:
   InlinedComparisonExpression(ExpressionType type, AbstractExpression *left,
                               AbstractExpression *right)
       : AbstractExpression(type, left, right) {
@@ -126,11 +124,11 @@ public:
             right_expr->DebugInfo(" " + spacer));
   }
 
-private:
+ private:
   L *m_leftTyped;
   R *m_rightTyped;
   C compare;
 };
 
-} // End expression namespace
-} // End peloton namespace
+}  // End expression namespace
+}  // End peloton namespace

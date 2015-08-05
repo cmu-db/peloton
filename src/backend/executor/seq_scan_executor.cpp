@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/seq_scan_executor.h"
 
 #include <memory>
@@ -46,8 +45,7 @@ SeqScanExecutor::SeqScanExecutor(planner::AbstractPlanNode *node,
 bool SeqScanExecutor::DInit() {
   auto status = AbstractScanExecutor::DInit();
 
-  if (!status)
-    return false;
+  if (!status) return false;
 
   // Grab data from plan node.
   const planner::SeqScanNode &node = GetPlanNode<planner::SeqScanNode>();
@@ -161,5 +159,5 @@ bool SeqScanExecutor::DExecute() {
   return true;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

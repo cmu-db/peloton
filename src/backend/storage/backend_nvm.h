@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/storage/abstract_backend.h"
@@ -23,7 +22,7 @@ namespace storage {
 //===--------------------------------------------------------------------===//
 
 class NVMBackend : public AbstractBackend {
-public:
+ public:
   virtual ~NVMBackend(){};
 
   void *Allocate(size_t size) { return ::operator new(size); }
@@ -39,5 +38,5 @@ public:
   }
 };
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

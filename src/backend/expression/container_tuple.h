@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <cassert>
@@ -29,8 +28,9 @@ namespace expression {
 // Container Tuple wrapping a tile group or logical tile.
 //===--------------------------------------------------------------------===//
 
-template <class T> class ContainerTuple : public AbstractTuple {
-public:
+template <class T>
+class ContainerTuple : public AbstractTuple {
+ public:
   ContainerTuple(const ContainerTuple &) = default;
   ContainerTuple &operator=(const ContainerTuple &) = default;
   ContainerTuple(ContainerTuple &&) = default;
@@ -88,7 +88,7 @@ public:
     return true;
   }
 
-private:
+ private:
   /** @brief Underlying container behind this tuple interface. */
   T *container_;
 
@@ -114,13 +114,14 @@ struct ContainerTupleHasher
 //===--------------------------------------------------------------------===//
 // ContainerTuple Comparator
 //===--------------------------------------------------------------------===//
-template <class T> class ContainerTupleComparator {
-public:
+template <class T>
+class ContainerTupleComparator {
+ public:
   bool operator()(const ContainerTuple<T> &lhs,
                   const ContainerTuple<T> &rhs) const {
     return lhs.EqualsNoSchemaCheck(rhs);
   }
 };
 
-} // namespace expression
-} // namespace peloton
+}  // namespace expression
+}  // namespace peloton

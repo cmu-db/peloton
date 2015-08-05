@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/expression/abstract_expression.h"
@@ -25,7 +24,7 @@ namespace expression {
 //===--------------------------------------------------------------------===//
 
 class ParserExpression : public AbstractExpression {
-public:
+ public:
   ParserExpression(ExpressionType type, char *name_)
       : AbstractExpression(type) {
     name = name_;
@@ -66,5 +65,5 @@ public:
   }
 };
 
-} // End expression namespace
-} // End peloton namespace
+}  // End expression namespace
+}  // End peloton namespace

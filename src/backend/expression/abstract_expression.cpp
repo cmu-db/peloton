@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/expression/abstract_expression.h"
 
 #include "backend/common/types.h"
@@ -34,8 +33,10 @@ AbstractExpression::AbstractExpression(ExpressionType type)
 AbstractExpression::AbstractExpression(ExpressionType type,
                                        AbstractExpression *left,
                                        AbstractExpression *right)
-    : left_expr(left), right_expr(right), expr_type(type), has_parameter(true) {
-}
+    : left_expr(left),
+      right_expr(right),
+      expr_type(type),
+      has_parameter(true) {}
 
 AbstractExpression::~AbstractExpression() {
   // clean up children
@@ -53,8 +54,7 @@ AbstractExpression::~AbstractExpression() {
 
 void AbstractExpression::Substitute(const ValueArray &params) {
   // check if we need to substitue
-  if (!has_parameter)
-    return;
+  if (!has_parameter) return;
 
   // descend. nodes with parameters overload substitute()
   LOG_TRACE("Substituting parameters for expression \n" << params.Debug());
@@ -70,19 +70,16 @@ void AbstractExpression::Substitute(const ValueArray &params) {
 }
 
 bool AbstractExpression::HasParameter() const {
-  if (left_expr && left_expr->HasParameter())
-    return true;
+  if (left_expr && left_expr->HasParameter()) return true;
 
   return (right_expr && right_expr->HasParameter());
 }
 
 // Helper to initialize has_parameter
 bool AbstractExpression::InitParamShortCircuits() {
-  if (left_expr && left_expr->HasParameter())
-    return true;
+  if (left_expr && left_expr->HasParameter()) return true;
 
-  if (right_expr && right_expr->HasParameter())
-    return true;
+  if (right_expr && right_expr->HasParameter()) return true;
 
   has_parameter = false;
   return false;
@@ -129,19 +126,18 @@ std::string AbstractExpression::Debug(const std::string &spacer) const {
 // Actual Constructors
 //===--------------------------------------------------------------------===//
 
-AbstractExpression *
-AbstractExpression::CreateExpressionTree(json_spirit::Object &obj) {
+AbstractExpression *AbstractExpression::CreateExpressionTree(
+    json_spirit::Object &obj) {
   AbstractExpression *expr =
       AbstractExpression::CreateExpressionTreeRecurse(obj);
 
-  if (expr)
-    expr->InitParamShortCircuits();
+  if (expr) expr->InitParamShortCircuits();
 
   return expr;
 }
 
-AbstractExpression *
-AbstractExpression::CreateExpressionTreeRecurse(json_spirit::Object &obj) {
+AbstractExpression *AbstractExpression::CreateExpressionTreeRecurse(
+    json_spirit::Object &obj) {
   // build a tree recursively from the bottom upwards.
   // when the expression node is instantiated, its type,
   // value and child types will have been discovered.
@@ -233,5 +229,5 @@ AbstractExpression::CreateExpressionTreeRecurse(json_spirit::Object &obj) {
   }
 }
 
-} // End expression namespace
-} // End peloton namespace
+}  // End expression namespace
+}  // End peloton namespace

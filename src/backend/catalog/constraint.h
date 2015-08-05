@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
@@ -28,10 +27,11 @@ namespace catalog {
 //===--------------------------------------------------------------------===//
 
 class Constraint {
-public:
+ public:
   Constraint(ConstraintType type, std::string constraint_name = "",
              Node *raw_expr = nullptr)
-      : constraint_type(type), constraint_name(constraint_name),
+      : constraint_type(type),
+        constraint_name(constraint_name),
         expr(raw_expr) {}
 
   //===--------------------------------------------------------------------===//
@@ -58,7 +58,7 @@ public:
   friend std::ostream &operator<<(std::ostream &os,
                                   const Constraint &constraint);
 
-private:
+ private:
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
@@ -77,5 +77,5 @@ private:
   Node *expr = nullptr;
 };
 
-} // End catalog namespace
-} // End peloton namespace
+}  // End catalog namespace
+}  // End peloton namespace

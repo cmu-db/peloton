@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/aggregator.h"
 #include "backend/common/logger.h"
 
@@ -26,31 +25,32 @@ Agg *GetAggInstance(ExpressionType agg_type) {
   Agg *aggregator;
 
   switch (agg_type) {
-  case EXPRESSION_TYPE_AGGREGATE_COUNT:
-    aggregator = new CountAgg();
-    break;
-  case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR:
-    aggregator = new CountStarAgg();
-    break;
-  case EXPRESSION_TYPE_AGGREGATE_SUM:
-    aggregator = new SumAgg();
-    break;
-  case EXPRESSION_TYPE_AGGREGATE_AVG:
-    aggregator = new AvgAgg(false);
-    break;
-  case EXPRESSION_TYPE_AGGREGATE_WEIGHTED_AVG:
-    aggregator = new AvgAgg(true);
-    break;
-  case EXPRESSION_TYPE_AGGREGATE_MIN:
-    aggregator = new MinAgg();
-    break;
-  case EXPRESSION_TYPE_AGGREGATE_MAX:
-    aggregator = new MaxAgg();
-    break;
-  default: {
-    std::string message = "Unknown aggregate type " + std::to_string(agg_type);
-    throw UnknownTypeException(agg_type, message);
-  }
+    case EXPRESSION_TYPE_AGGREGATE_COUNT:
+      aggregator = new CountAgg();
+      break;
+    case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR:
+      aggregator = new CountStarAgg();
+      break;
+    case EXPRESSION_TYPE_AGGREGATE_SUM:
+      aggregator = new SumAgg();
+      break;
+    case EXPRESSION_TYPE_AGGREGATE_AVG:
+      aggregator = new AvgAgg(false);
+      break;
+    case EXPRESSION_TYPE_AGGREGATE_WEIGHTED_AVG:
+      aggregator = new AvgAgg(true);
+      break;
+    case EXPRESSION_TYPE_AGGREGATE_MIN:
+      aggregator = new MinAgg();
+      break;
+    case EXPRESSION_TYPE_AGGREGATE_MAX:
+      aggregator = new MaxAgg();
+      break;
+    default: {
+      std::string message =
+          "Unknown aggregate type " + std::to_string(agg_type);
+      throw UnknownTypeException(agg_type, message);
+    }
   }
 
   return aggregator;
@@ -65,8 +65,7 @@ bool Helper(const planner::AggregateNode *node, Agg **aggregates,
             storage::DataTable *output_table, AbstractTuple *prev_tuple,
             const concurrency::Transaction *transaction) {
   // Ignore null tuples
-  if (prev_tuple == nullptr)
-    return true;
+  if (prev_tuple == nullptr) return true;
 
   auto schema = output_table->GetSchema();
   std::unique_ptr<storage::Tuple> tuple(new storage::Tuple(schema, true));
@@ -230,7 +229,8 @@ Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Aggregator(
   ::memset(aggregates, 0, sizeof(void *) * aggregate_columns.size());
 }
 
-template <> Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::~Aggregator() {
+template <>
+Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::~Aggregator() {
   // Clean up aggregators
   for (oid_t column_itr = 0; column_itr < aggregate_columns.size();
        column_itr++) {
@@ -308,5 +308,5 @@ bool Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE>::Finalize(
   return true;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

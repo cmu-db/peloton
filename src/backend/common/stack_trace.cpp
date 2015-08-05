@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <cstdio>
 #include <cstdlib>
 #include <cassert>
@@ -88,7 +87,7 @@ void GetStackTrace(int signum) {
       char *ret =
           abi::__cxa_demangle(begin_name, func_name, &func_name_size, &status);
       if (status == 0) {
-        func_name = ret; // use possibly realloc()-ed string
+        func_name = ret;  // use possibly realloc()-ed string
         stack_trace << std::left << std::setw(15) << addrlist[i]
                     << " :: " << symbol_list[i] << " [ " << func_name << " "
                     << begin_offset << " ]\n";
@@ -162,8 +161,7 @@ StackTracer::StackTracer(const std::vector<int> &signals) : _loaded(false) {
     action.sa_sigaction = &sig_handler;
 
     int r = sigaction(signals[i], &action, 0);
-    if (r < 0)
-      success = false;
+    if (r < 0) success = false;
   }
 
   _loaded = success;
@@ -174,9 +172,9 @@ void StackTracer::sig_handler(int, siginfo_t *info, void *_ctx) {
 
   backward::StackTrace st;
   void *error_addr = 0;
-#ifdef REG_RIP // x86_64
+#ifdef REG_RIP  // x86_64
   error_addr = reinterpret_cast<void *>(uctx->uc_mcontext.gregs[REG_RIP]);
-#elif defined(REG_EIP) // x86_32
+#elif defined(REG_EIP)  // x86_32
   error_addr = reinterpret_cast<void *>(uctx->uc_mcontext.gregs[REG_EIP]);
 #else
 #warning ":/ sorry, ain't know no nothing none not of your architecture!"
@@ -201,4 +199,4 @@ void StackTracer::sig_handler(int, siginfo_t *info, void *_ctx) {
   _exit(EXIT_FAILURE);
 }
 
-} // namespace peloton
+}  // namespace peloton

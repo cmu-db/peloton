@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <sstream>
 
 #include "backend/catalog/column.h"
@@ -32,14 +31,14 @@ void Column::SetLength(oid_t column_length) {
 
 void Column::SetInlined() {
   switch (column_type) {
-  case VALUE_TYPE_VARCHAR:
-  case VALUE_TYPE_VARBINARY:
-    is_inlined = false;
-    break;
+    case VALUE_TYPE_VARCHAR:
+    case VALUE_TYPE_VARBINARY:
+      is_inlined = false;
+      break;
 
-  default:
-    is_inlined = true;
-    break;
+    default:
+      is_inlined = true;
+      break;
   }
 }
 
@@ -59,5 +58,5 @@ std::ostream &operator<<(std::ostream &os, const Column &column_info) {
   return os;
 }
 
-} // End catalog namespace
-} // End peloton namespace
+}  // End catalog namespace
+}  // End peloton namespace

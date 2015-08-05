@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -38,9 +37,11 @@ class BtreeUniqueIndex : public Index {
   typedef ItemPointer ValueType;
   typedef std::map<KeyType, ValueType, KeyComparator> MapType;
 
-public:
+ public:
   BtreeUniqueIndex(IndexMetadata *metadata)
-      : Index(metadata), container(KeyComparator(metadata)), equals(metadata),
+      : Index(metadata),
+        container(KeyComparator(metadata)),
+        equals(metadata),
         comparator(metadata) {}
 
   ~BtreeUniqueIndex() {}
@@ -74,7 +75,6 @@ public:
 
   bool UpdateEntry(const storage::Tuple *key, const ItemPointer location,
                    const ItemPointer old_location) {
-
     {
       index_lock.WriteLock();
       index_key1.SetFromKey(key);
@@ -172,7 +172,7 @@ public:
 
   std::string GetTypeName() const { return "BtreeMap"; }
 
-protected:
+ protected:
   MapType container;
   KeyType index_key1;
   KeyType index_key2;
@@ -185,5 +185,5 @@ protected:
   RWLock index_lock;
 };
 
-} // End index namespace
-} // End peloton namespace
+}  // End index namespace
+}  // End peloton namespace

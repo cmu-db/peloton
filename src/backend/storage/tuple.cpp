@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/storage/tuple.h"
 
 #include <cstdlib>
@@ -129,36 +128,36 @@ size_t Tuple::ExportSerializationSize() const {
 
   for (int column_itr = 0; column_itr < column_count; ++column_itr) {
     switch (GetType(column_itr)) {
-    case VALUE_TYPE_TINYINT:
-    case VALUE_TYPE_SMALLINT:
-    case VALUE_TYPE_INTEGER:
-    case VALUE_TYPE_BIGINT:
-    case VALUE_TYPE_TIMESTAMP:
-    case VALUE_TYPE_DOUBLE:
-      bytes += sizeof(int64_t);
-      break;
+      case VALUE_TYPE_TINYINT:
+      case VALUE_TYPE_SMALLINT:
+      case VALUE_TYPE_INTEGER:
+      case VALUE_TYPE_BIGINT:
+      case VALUE_TYPE_TIMESTAMP:
+      case VALUE_TYPE_DOUBLE:
+        bytes += sizeof(int64_t);
+        break;
 
-    case VALUE_TYPE_DECIMAL:
-      // Decimals serialized in ascii as
-      // 32 bits of length + max prec digits + radix pt + sign
-      bytes += sizeof(int32_t) + Value::max_decimal_precision + 1 + 1;
-      break;
+      case VALUE_TYPE_DECIMAL:
+        // Decimals serialized in ascii as
+        // 32 bits of length + max prec digits + radix pt + sign
+        bytes += sizeof(int32_t) + Value::max_decimal_precision + 1 + 1;
+        break;
 
-    case VALUE_TYPE_VARCHAR:
-    case VALUE_TYPE_VARBINARY:
-      // 32 bit length preceding value and
-      // actual character data without null string terminator.
-      if (!GetValue(column_itr).IsNull()) {
-        bytes += (sizeof(int32_t) +
-                  ValuePeeker::PeekObjectLength(GetValue(column_itr)));
-      }
-      break;
+      case VALUE_TYPE_VARCHAR:
+      case VALUE_TYPE_VARBINARY:
+        // 32 bit length preceding value and
+        // actual character data without null string terminator.
+        if (!GetValue(column_itr).IsNull()) {
+          bytes += (sizeof(int32_t) +
+                    ValuePeeker::PeekObjectLength(GetValue(column_itr)));
+        }
+        break;
 
-    default:
-      throw UnknownTypeException(
-          GetType(column_itr),
-          "Unknown ValueType found during Export serialization.");
-      return (size_t)0;
+      default:
+        throw UnknownTypeException(
+            GetType(column_itr),
+            "Unknown ValueType found during Export serialization.");
+        return (size_t)0;
     }
   }
   return bytes;
@@ -222,7 +221,7 @@ int64_t Tuple::DeserializeWithHeaderFrom(SerializeInput &input) {
   assert(tuple_schema);
   assert(tuple_data);
 
-  input.ReadInt(); // Read in the tuple size, discard
+  input.ReadInt();  // Read in the tuple size, discard
   total_bytes_deserialized += sizeof(int);
 
   const int column_count = tuple_schema->GetColumnCount();
@@ -245,7 +244,7 @@ void Tuple::SerializeWithHeaderTo(SerializeOutput &output) {
   assert(tuple_data);
 
   size_t start = output.Position();
-  output.WriteInt(0); // reserve first 4 bytes for the total tuple size
+  output.WriteInt(0);  // reserve first 4 bytes for the total tuple size
 
   const int column_count = tuple_schema->GetColumnCount();
 
@@ -320,7 +319,6 @@ bool Tuple::EqualsNoSchemaCheck(const Tuple &other) const {
 
 bool Tuple::EqualsNoSchemaCheck(const Tuple &other,
                                 const std::vector<oid_t> &columns) const {
-
   for (auto column_itr : columns) {
     const Value lhs = GetValue(column_itr);
     const Value rhs = other.GetValue(column_itr);
@@ -379,8 +377,7 @@ int Tuple::Compare(const Tuple &other,
 
 // Release to the heap any memory allocated for any uninlined columns.
 void Tuple::FreeUninlinedData() {
-  if (tuple_data == nullptr)
-    return;
+  if (tuple_data == nullptr) return;
 
   const uint16_t unlinlined_column_count =
       tuple_schema->GetUninlinedColumnCount();
@@ -446,5 +443,5 @@ std::ostream &operator<<(std::ostream &os, const Tuple &tuple) {
   return os;
 }
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

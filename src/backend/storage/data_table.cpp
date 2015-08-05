@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <mutex>
 #include <utility>
 
@@ -27,7 +26,8 @@ namespace storage {
 DataTable::DataTable(catalog::Schema *schema, AbstractBackend *backend,
                      std::string table_name, oid_t table_oid,
                      size_t tuples_per_tilegroup)
-    : AbstractTable(table_oid, table_name, schema), backend(backend),
+    : AbstractTable(table_oid, table_name, schema),
+      backend(backend),
       tuples_per_tilegroup(tuples_per_tilegroup) {
   // Create a tile group.
   AddDefaultTileGroup();
@@ -69,9 +69,10 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
   oid_t column_count = schema->GetColumnCount();
   for (int column_itr = column_count - 1; column_itr >= 0; --column_itr) {
     if (tuple->IsNull(column_itr) && schema->AllowNull(column_itr) == false) {
-      LOG_TRACE("%d th attribute in the tuple was NULL. It is non-nullable "
-                "attribute.",
-                column_itr);
+      LOG_TRACE(
+          "%d th attribute in the tuple was NULL. It is non-nullable "
+          "attribute.",
+          column_itr);
       return false;
     }
   }
@@ -80,7 +81,6 @@ bool DataTable::CheckNulls(const storage::Tuple *tuple) const {
 }
 
 bool DataTable::CheckConstraints(const storage::Tuple *tuple) const {
-
   // First, check NULL constraints
   if (CheckNulls(tuple) == false) {
     throw ConstraintException("Not NULL constraint violated : " +
@@ -96,8 +96,7 @@ ItemPointer DataTable::GetTupleSlot(const concurrency::Transaction *transaction,
                                     const ItemPointer old_location) {
   assert(tuple);
 
-  if (CheckConstraints(tuple) == false)
-    return INVALID_ITEMPOINTER;
+  if (CheckConstraints(tuple) == false) return INVALID_ITEMPOINTER;
 
   TileGroup *tile_group = nullptr;
   oid_t tuple_slot = INVALID_OID;
@@ -140,8 +139,7 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
                                    const storage::Tuple *tuple) {
   // First, do integrity checks and claim a slot
   ItemPointer location = GetTupleSlot(transaction, tuple, INVALID_ITEMPOINTER);
-  if (location.block == INVALID_OID)
-    return INVALID_ITEMPOINTER;
+  if (location.block == INVALID_OID) return INVALID_ITEMPOINTER;
 
   // Index checks and updates
   if (InsertInIndexes(transaction, tuple, location) == false) {
@@ -159,8 +157,7 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
   // Increase the table's number of tuples by 1
   IncreaseNumberOfTuplesBy(1);
   // Increase the indexes' number of tuples by 1 as well
-  for (auto index : indexes)
-    index->IncreaseNumberOfTuplesBy(1);
+  for (auto index : indexes) index->IncreaseNumberOfTuplesBy(1);
 
   return location;
 }
@@ -168,7 +165,6 @@ ItemPointer DataTable::InsertTuple(const concurrency::Transaction *transaction,
 bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
                                 const storage::Tuple *tuple,
                                 ItemPointer location) {
-
   int index_count = GetIndexCount();
   for (int index_itr = index_count - 1; index_itr >= 0; --index_itr) {
     auto index = GetIndex(index_itr);
@@ -195,7 +191,6 @@ bool DataTable::InsertInIndexes(const concurrency::Transaction *transaction,
     LOG_TRACE("old location  :: block = %u offset = %u \n", old_location.block,
               old_location.offset);
     if (old_location.block != INVALID_OID) {
-
       // Is this key visible or not ?
       oid_t tile_group_id = old_location.block;
       oid_t tuple_offset = old_location.offset;
@@ -309,8 +304,7 @@ ItemPointer DataTable::UpdateTuple(const concurrency::Transaction *transaction,
                                    const ItemPointer old_location) {
   // Do integrity checks and claim a slot
   ItemPointer location = GetTupleSlot(transaction, tuple, old_location);
-  if (location.block == INVALID_OID)
-    return INVALID_ITEMPOINTER;
+  if (location.block == INVALID_OID) return INVALID_ITEMPOINTER;
 
   bool status = false;
   // 1) Try as if it's a same-key update
@@ -541,8 +535,7 @@ void DataTable::AddIndex(index::Index *index) {
 
 index::Index *DataTable::GetIndexWithOid(const oid_t index_oid) const {
   for (auto index : indexes)
-    if (index->GetOid() == index_oid)
-      return index;
+    if (index->GetOid() == index_oid) return index;
 
   return nullptr;
 }
@@ -553,8 +546,7 @@ void DataTable::DropIndexWithOid(const oid_t index_id) {
 
     oid_t index_offset = 0;
     for (auto index : indexes) {
-      if (index->GetOid() == index_id)
-        break;
+      if (index->GetOid() == index_id) break;
       index_offset++;
     }
     assert(index_offset < indexes.size());
@@ -609,9 +601,8 @@ void DataTable::DropForeignKey(const oid_t key_offset) {
 oid_t DataTable::GetForeignKeyCount() const { return foreign_keys.size(); }
 
 // Get the schema for the new transformed tile group
-std::vector<catalog::Schema>
-TransformTileGroupSchema(storage::TileGroup *tile_group,
-                         const column_map_type &column_map) {
+std::vector<catalog::Schema> TransformTileGroupSchema(
+    storage::TileGroup *tile_group, const column_map_type &column_map) {
   std::vector<catalog::Schema> new_schema;
   oid_t orig_tile_offset, orig_tile_column_offset;
   oid_t new_tile_offset, new_tile_column_offset;
@@ -661,7 +652,6 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
   auto tuple_count = orig_tile_group->GetAllocatedTupleCount();
   // Go over each column copying onto the new tile group
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-
     // Locate the original base tile and tile column offset
     orig_tile_group->LocateTileAndColumn(column_itr, orig_tile_offset,
                                          orig_tile_column_offset);
@@ -685,10 +675,8 @@ void SetTransformedTileGroup(storage::TileGroup *orig_tile_group,
   *new_header = *header;
 }
 
-storage::TileGroup *
-DataTable::TransformTileGroup(oid_t tile_group_id,
-                              const column_map_type &column_map, bool cleanup) {
-
+storage::TileGroup *DataTable::TransformTileGroup(
+    oid_t tile_group_id, const column_map_type &column_map, bool cleanup) {
   // First, check if the tile group is in this table
   {
     std::lock_guard<std::mutex> lock(table_mutex);
@@ -723,11 +711,10 @@ DataTable::TransformTileGroup(oid_t tile_group_id,
   catalog_manager.SetTileGroup(tile_group_id, new_tile_group);
 
   // Clean up the orig tile group, if needed which is normally the case
-  if (cleanup)
-    delete tile_group;
+  if (cleanup) delete tile_group;
 
   return new_tile_group;
 }
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/planner/index_scan_node.h"
 
@@ -24,9 +23,9 @@ namespace bridge {
 /*
  * @brief transform a expr tree into info that a index scan node needs
  * */
-static void
-BuildScanKey(const ScanKey scan_keys, int num_keys,
-             planner::IndexScanNode::IndexScanDesc &index_scan_desc);
+static void BuildScanKey(
+    const ScanKey scan_keys, int num_keys,
+    planner::IndexScanNode::IndexScanDesc &index_scan_desc);
 
 /**
  * @brief Convert a Postgres IndexScanState into a Peloton IndexScanNode.
@@ -43,9 +42,8 @@ BuildScanKey(const ScanKey scan_keys, int num_keys,
  *          8. unary op
  * @return Pointer to the constructed AbstractPlanNode.
  */
-planner::AbstractPlanNode *
-PlanTransformer::TransformIndexScan(const IndexScanState *iss_plan_state,
-                                    const TransformOptions options) {
+planner::AbstractPlanNode *PlanTransformer::TransformIndexScan(
+    const IndexScanState *iss_plan_state, const TransformOptions options) {
   /* info needed to initialize plan node */
   planner::IndexScanNode::IndexScanDesc index_scan_desc;
   /* Resolve target relation */
@@ -110,69 +108,69 @@ PlanTransformer::TransformIndexScan(const IndexScanState *iss_plan_state,
  * @return True if succeed
  *         False if fail
  */
-static void
-BuildScanKey(const ScanKey scan_keys, int num_keys,
-             planner::IndexScanNode::IndexScanDesc &index_scan_desc) {
+static void BuildScanKey(
+    const ScanKey scan_keys, int num_keys,
+    planner::IndexScanNode::IndexScanDesc &index_scan_desc) {
   ScanKey scan_key = scan_keys;
   assert(num_keys > 0);
 
   for (int i = 0; i < num_keys; i++, scan_key++) {
     assert(!(scan_key->sk_flags &
-             SK_ISNULL)); // currently, only support simple case
+             SK_ISNULL));  // currently, only support simple case
     assert(!(scan_key->sk_flags &
-             SK_ORDER_BY)); // currently, only support simple case
+             SK_ORDER_BY));  // currently, only support simple case
     assert(!(scan_key->sk_flags &
-             SK_UNARY)); // currently, only support simple case
+             SK_UNARY));  // currently, only support simple case
     assert(!(scan_key->sk_flags &
-             SK_ROW_HEADER)); // currently, only support simple case
+             SK_ROW_HEADER));  // currently, only support simple case
     assert(!(scan_key->sk_flags &
-             SK_ROW_MEMBER)); // currently, only support simple case
+             SK_ROW_MEMBER));  // currently, only support simple case
     assert(!(scan_key->sk_flags &
-             SK_ROW_END)); // currently, only support simple case
+             SK_ROW_END));  // currently, only support simple case
     assert(!(scan_key->sk_flags &
-             SK_SEARCHNULL)); // currently, only support simple case
+             SK_SEARCHNULL));  // currently, only support simple case
     assert(!(scan_key->sk_flags &
-             SK_SEARCHNOTNULL)); // currently, only support simple case
+             SK_SEARCHNOTNULL));  // currently, only support simple case
     Value value =
         TupleTransformer::GetValue(scan_key->sk_argument, scan_key->sk_subtype);
     index_scan_desc.key_column_ids.push_back(scan_key->sk_attno -
-                                             1); // 1 indexed
+                                             1);  // 1 indexed
 
     index_scan_desc.values.push_back(value);
     std::ostringstream oss;
     oss << value;
     LOG_INFO("key no: %d", scan_key->sk_attno);
     switch (scan_key->sk_strategy) {
-    case BTLessStrategyNumber:
-      LOG_INFO("key < %s", oss.str().c_str());
-      index_scan_desc.expr_types.push_back(
-          ExpressionType::EXPRESSION_TYPE_COMPARE_LT);
-      break;
-    case BTLessEqualStrategyNumber:
-      LOG_INFO("key <= %s", oss.str().c_str());
-      index_scan_desc.expr_types.push_back(
-          ExpressionType::EXPRESSION_TYPE_COMPARE_LTE);
-      break;
-    case BTEqualStrategyNumber:
-      LOG_INFO("key = %s", oss.str().c_str());
-      index_scan_desc.expr_types.push_back(
-          ExpressionType::EXPRESSION_TYPE_COMPARE_EQ);
-      break;
-    case BTGreaterEqualStrategyNumber:
-      LOG_INFO("key >= %s", oss.str().c_str());
-      index_scan_desc.expr_types.push_back(
-          ExpressionType::EXPRESSION_TYPE_COMPARE_GTE);
-      break;
-    case BTGreaterStrategyNumber:
-      LOG_INFO("key > %s", oss.str().c_str());
-      index_scan_desc.expr_types.push_back(
-          ExpressionType::EXPRESSION_TYPE_COMPARE_GT);
-      break;
-    default:
-      LOG_ERROR("Invalid strategy num %d", scan_key->sk_strategy);
-      index_scan_desc.expr_types.push_back(
-          ExpressionType::EXPRESSION_TYPE_INVALID);
-      break;
+      case BTLessStrategyNumber:
+        LOG_INFO("key < %s", oss.str().c_str());
+        index_scan_desc.expr_types.push_back(
+            ExpressionType::EXPRESSION_TYPE_COMPARE_LT);
+        break;
+      case BTLessEqualStrategyNumber:
+        LOG_INFO("key <= %s", oss.str().c_str());
+        index_scan_desc.expr_types.push_back(
+            ExpressionType::EXPRESSION_TYPE_COMPARE_LTE);
+        break;
+      case BTEqualStrategyNumber:
+        LOG_INFO("key = %s", oss.str().c_str());
+        index_scan_desc.expr_types.push_back(
+            ExpressionType::EXPRESSION_TYPE_COMPARE_EQ);
+        break;
+      case BTGreaterEqualStrategyNumber:
+        LOG_INFO("key >= %s", oss.str().c_str());
+        index_scan_desc.expr_types.push_back(
+            ExpressionType::EXPRESSION_TYPE_COMPARE_GTE);
+        break;
+      case BTGreaterStrategyNumber:
+        LOG_INFO("key > %s", oss.str().c_str());
+        index_scan_desc.expr_types.push_back(
+            ExpressionType::EXPRESSION_TYPE_COMPARE_GT);
+        break;
+      default:
+        LOG_ERROR("Invalid strategy num %d", scan_key->sk_strategy);
+        index_scan_desc.expr_types.push_back(
+            ExpressionType::EXPRESSION_TYPE_INVALID);
+        break;
     }
   }
 }
@@ -256,9 +254,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformIndexOnlyScan(
  *
  * @return Pointer to the constructed AbstractPlanNode
  */
-planner::AbstractPlanNode *
-PlanTransformer::TransformBitmapScan(const BitmapHeapScanState *bhss_plan_state,
-                                     const TransformOptions options) {
+planner::AbstractPlanNode *PlanTransformer::TransformBitmapScan(
+    const BitmapHeapScanState *bhss_plan_state,
+    const TransformOptions options) {
   planner::IndexScanNode::IndexScanDesc index_scan_desc;
 
   /* resolve target relation */
@@ -266,8 +264,8 @@ PlanTransformer::TransformBitmapScan(const BitmapHeapScanState *bhss_plan_state,
   Oid database_oid = Bridge::GetCurrentDatabaseOid();
 
   assert(nodeTag(outerPlanState(bhss_plan_state)) ==
-         T_BitmapIndexScanState); // only support a bitmap index scan at lower
-                                  // level
+         T_BitmapIndexScanState);  // only support a bitmap index scan at lower
+                                   // level
 
   const BitmapIndexScanState *biss_state =
       reinterpret_cast<const BitmapIndexScanState *>(
@@ -327,5 +325,5 @@ PlanTransformer::TransformBitmapScan(const BitmapHeapScanState *bhss_plan_state,
   return rv;
 }
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

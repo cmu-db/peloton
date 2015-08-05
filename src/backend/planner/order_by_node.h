@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -29,7 +28,7 @@ namespace planner {
  */
 
 class OrderByNode : public AbstractPlanNode {
-public:
+ public:
   OrderByNode(const OrderByNode &) = delete;
   OrderByNode &operator=(const OrderByNode &) = delete;
   OrderByNode(const OrderByNode &&) = delete;
@@ -39,8 +38,10 @@ public:
               const std::vector<bool> &descend_flags,
               const std::vector<oid_t> &output_column_ids,
               storage::AbstractBackend *backend)
-      : sort_keys_(sort_keys), descend_flags_(descend_flags),
-        output_column_ids_(output_column_ids), backend_(backend) {}
+      : sort_keys_(sort_keys),
+        descend_flags_(descend_flags),
+        output_column_ids_(output_column_ids),
+        backend_(backend) {}
 
   //  OrderByNode(
   //        const std::vector<oid_t>  &sort_keys,
@@ -66,7 +67,7 @@ public:
 
   inline std::string GetInfo() const { return "OrderBy"; }
 
-private:
+ private:
   /** @brief Column Ids to sort keys w.r.t input tiles.
    *  Primary sort key comes first, secondary comes next, etc.
    */

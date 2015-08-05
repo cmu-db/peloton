@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/executor/append_executor.h"

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <sstream>
 #include <cmath>
 #include <iostream>
@@ -21,7 +20,6 @@ namespace peloton {
 namespace brain {
 
 double Sample::GetDistance(const Sample &other) const {
-
   double dist = 0;
 
   // Absolute difference
@@ -35,7 +33,6 @@ double Sample::GetDistance(const Sample &other) const {
 }
 
 Sample Sample::GetDifference(const Sample &other) const {
-
   std::vector<double> columns_accessed;
 
   size_t column_itr = 0;
@@ -77,8 +74,7 @@ std::vector<oid_t> Sample::GetEnabledColumns() const {
 
   oid_t column_itr = 0;
   for (auto column : columns_accessed_) {
-    if (std::round(column) == 1.0)
-      enabled_columns.push_back(column_itr);
+    if (std::round(column) == 1.0) enabled_columns.push_back(column_itr);
     column_itr++;
   }
 
@@ -86,15 +82,13 @@ std::vector<oid_t> Sample::GetEnabledColumns() const {
 }
 
 std::ostream &operator<<(std::ostream &os, const Sample &sample) {
-
   os << "Sample :: ";
 
-  for (auto column : sample.columns_accessed_)
-    os << std::round(column) << " ";
+  for (auto column : sample.columns_accessed_) os << std::round(column) << " ";
   os << "\n";
 
   return os;
 }
 
-} // End brain namespace
-} // End peloton namespace
+}  // End brain namespace
+}  // End peloton namespace

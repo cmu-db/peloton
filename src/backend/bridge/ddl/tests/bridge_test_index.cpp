@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "bridge_test.h"
 
 #include "backend/bridge/ddl/bridge.h"
@@ -119,5 +118,5 @@ void BridgeTest::DDL_CreateIndex_TEST_WITH_TABLE() {
   std::cout << ":::::: " << __func__ << " DONE\n";
 }
 
-} // End bridge namespace
-} // End peloton namespace
+}  // End bridge namespace
+}  // End peloton namespace

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <cassert>
 #include <iostream>
 
@@ -25,7 +24,6 @@ namespace peloton {
 namespace index {
 
 Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
-
   bool unique_keys = metadata->unique_keys;
   bool ints_only = false;
   LOG_INFO("Creating index %s", metadata->GetName().c_str());
@@ -53,8 +51,9 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
       return new BtreeUniqueIndex<IntsKey<4>, IntsComparator<4>,
                                   IntsEqualityChecker<4>>(metadata);
     } else {
-      throw IndexException("We currently only support tree index on unique "
-                           "integer keys of size 32 bytes or smaller...");
+      throw IndexException(
+          "We currently only support tree index on unique "
+          "integer keys of size 32 bytes or smaller...");
     }
   }
 
@@ -72,13 +71,13 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
       return new BtreeMultiIndex<IntsKey<4>, IntsComparator<4>,
                                  IntsEqualityChecker<4>>(metadata);
     } else {
-      throw IndexException("We currently only support tree index on non-unique "
-                           "integer keys of size 32 bytes or smaller...");
+      throw IndexException(
+          "We currently only support tree index on non-unique "
+          "integer keys of size 32 bytes or smaller...");
     }
   }
 
   if ((index_type == INDEX_TYPE_BTREE) && (unique_keys)) {
-
     if (key_size <= 4) {
       return new BtreeUniqueIndex<GenericKey<4>, GenericComparator<4>,
                                   GenericEqualityChecker<4>>(metadata);
@@ -122,7 +121,6 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
   }
 
   if ((index_type == INDEX_TYPE_BTREE) && (!unique_keys)) {
-
     if (key_size <= 4) {
       return new BtreeMultiIndex<GenericKey<4>, GenericComparator<4>,
                                  GenericEqualityChecker<4>>(metadata);
@@ -169,5 +167,5 @@ Index *IndexFactory::GetInstance(IndexMetadata *metadata) {
   return NULL;
 }
 
-} // End index namespace
-} // End peloton namespace
+}  // End index namespace
+}  // End peloton namespace

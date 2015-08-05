@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -38,7 +37,7 @@ class TileGroup;
 class TileGroupIterator : public Iterator<std::shared_ptr<TileGroup>> {
   TileGroupIterator() = delete;
 
-public:
+ public:
   TileGroupIterator(const DataTable *table) : table_(table), tileGroupItr_(0) {
     // More Wu Tang!
   }
@@ -56,10 +55,10 @@ public:
 
   bool HasNext();
 
-private:
+ private:
   const DataTable *table_;
   oid_t tileGroupItr_;
 };
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

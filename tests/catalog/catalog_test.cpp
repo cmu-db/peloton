@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <cstdio>
 
 #include "gtest/gtest.h"
@@ -27,5 +26,5 @@ namespace test {
 
 TEST(CatalogTests, BasicTest) { EXPECT_EQ(1, 1); }
 
-} // End test namespace
-} // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace

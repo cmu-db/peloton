@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "gtest/gtest.h"
 
 #include "harness.h"
@@ -105,38 +104,44 @@ TEST(ValueTest, DeserializeDecimal) {
   ASSERT_EQ(str, "-1.000000000000");
 
   // min value
-  nv = ValueFactory::GetDecimalValueFromString("-9999999999" // 10 digits
-                                               "9999999999" // 20 digits
-                                               "999999.9999" // 30 digits
-                                               "99999999"); // 38 digits
+  nv = ValueFactory::GetDecimalValueFromString(
+      "-9999999999"  // 10 digits
+      "9999999999"   // 20 digits
+      "999999.9999"  // 30 digits
+      "99999999");   // 38 digits
   deserDecHelper(nv, vt, value, str);
   ASSERT_FALSE(nv.IsNull());
   ASSERT_EQ(vt, VALUE_TYPE_DECIMAL);
-  ASSERT_EQ(value, TTInt("-9999999999" // 10 digits
-                         "9999999999" // 20 digits
-                         "9999999999" // 30 digits
-                         "99999999"));
-  ASSERT_FALSE(strcmp(str.c_str(), "-9999999999" // 10 digits
-                                   "9999999999" // 20 digits
-                                   "999999.9999" // 30 digits
-                                   "99999999"));
+  ASSERT_EQ(value, TTInt(
+                       "-9999999999"  // 10 digits
+                       "9999999999"   // 20 digits
+                       "9999999999"   // 30 digits
+                       "99999999"));
+  ASSERT_FALSE(strcmp(str.c_str(),
+                      "-9999999999"  // 10 digits
+                      "9999999999"   // 20 digits
+                      "999999.9999"  // 30 digits
+                      "99999999"));
 
   // max value
-  nv = ValueFactory::GetDecimalValueFromString("9999999999" // 10 digits
-                                               "9999999999" // 20 digits
-                                               "999999.9999" // 30 digits
-                                               "99999999");
+  nv = ValueFactory::GetDecimalValueFromString(
+      "9999999999"   // 10 digits
+      "9999999999"   // 20 digits
+      "999999.9999"  // 30 digits
+      "99999999");
   deserDecHelper(nv, vt, value, str);
   ASSERT_FALSE(nv.IsNull());
   ASSERT_EQ(vt, VALUE_TYPE_DECIMAL);
-  ASSERT_EQ(value, TTInt("9999999999" // 10 digits
-                         "9999999999" // 20 digits
-                         "9999999999" // 30 digits
-                         "99999999"));
-  ASSERT_FALSE(strcmp(str.c_str(), "9999999999" // 10 digits
-                                   "9999999999" // 20 digits
-                                   "999999.9999" // 30 digits
-                                   "99999999"));
+  ASSERT_EQ(value, TTInt(
+                       "9999999999"  // 10 digits
+                       "9999999999"  // 20 digits
+                       "9999999999"  // 30 digits
+                       "99999999"));
+  ASSERT_FALSE(strcmp(str.c_str(),
+                      "9999999999"   // 10 digits
+                      "9999999999"   // 20 digits
+                      "999999.9999"  // 30 digits
+                      "99999999"));
 
   nv = ValueFactory::GetDecimalValueFromString("1234");
   deserDecHelper(nv, vt, value, str);
@@ -1399,14 +1404,16 @@ TEST(ValueTest, AddDecimal) {
   ASSERT_EQ(0, ans.Compare(sum));
 
   // Overflow
-  rhs = ValueFactory::GetDecimalValueFromString("9999999999"  // 10 digits
-                                                "9999999999"  // 20 digits
-                                                "999999.9999" // 30 digits
-                                                "99999999");
-  lhs = ValueFactory::GetDecimalValueFromString("111111111"   // 10 digits
-                                                "1111111111"  // 20 digits
-                                                "111111.1111" // 30 digits
-                                                "11111111");
+  rhs = ValueFactory::GetDecimalValueFromString(
+      "9999999999"   // 10 digits
+      "9999999999"   // 20 digits
+      "999999.9999"  // 30 digits
+      "99999999");
+  lhs = ValueFactory::GetDecimalValueFromString(
+      "111111111"    // 10 digits
+      "1111111111"   // 20 digits
+      "111111.1111"  // 30 digits
+      "11111111");
 
   bool caughtException = false;
   try {
@@ -1417,14 +1424,16 @@ TEST(ValueTest, AddDecimal) {
   ASSERT_TRUE(caughtException);
 
   // Underflow
-  rhs = ValueFactory::GetDecimalValueFromString("-9999999999" // 10 digits
-                                                "9999999999"  // 20 digits
-                                                "999999.9999" // 30 digits
-                                                "99999999");
-  lhs = ValueFactory::GetDecimalValueFromString("-111111111"  // 10 digits
-                                                "1111111111"  // 20 digits
-                                                "111111.1111" // 30 digits
-                                                "11111111");
+  rhs = ValueFactory::GetDecimalValueFromString(
+      "-9999999999"  // 10 digits
+      "9999999999"   // 20 digits
+      "999999.9999"  // 30 digits
+      "99999999");
+  lhs = ValueFactory::GetDecimalValueFromString(
+      "-111111111"   // 10 digits
+      "1111111111"   // 20 digits
+      "111111.1111"  // 30 digits
+      "11111111");
 
   caughtException = false;
   try {
@@ -1461,14 +1470,16 @@ TEST(ValueTest, SubtractDecimal) {
   ASSERT_EQ(0, ans.Compare(sum));
 
   // Overflow
-  rhs = ValueFactory::GetDecimalValueFromString("-9999999999" // 10 digits
-                                                "9999999999"  // 20 digits
-                                                "999999.9999" // 30 digits
-                                                "99999999");
-  lhs = ValueFactory::GetDecimalValueFromString("111111111"   // 10 digits
-                                                "1111111111"  // 20 digits
-                                                "111111.1111" // 30 digits
-                                                "11111111");
+  rhs = ValueFactory::GetDecimalValueFromString(
+      "-9999999999"  // 10 digits
+      "9999999999"   // 20 digits
+      "999999.9999"  // 30 digits
+      "99999999");
+  lhs = ValueFactory::GetDecimalValueFromString(
+      "111111111"    // 10 digits
+      "1111111111"   // 20 digits
+      "111111.1111"  // 30 digits
+      "11111111");
 
   bool caughtException = false;
   try {
@@ -1479,14 +1490,16 @@ TEST(ValueTest, SubtractDecimal) {
   ASSERT_TRUE(caughtException);
 
   // Underflow
-  rhs = ValueFactory::GetDecimalValueFromString("9999999999"  // 10 digits
-                                                "9999999999"  // 20 digits
-                                                "999999.9999" // 30 digits
-                                                "99999999");
-  lhs = ValueFactory::GetDecimalValueFromString("-111111111"  // 10 digits
-                                                "1111111111"  // 20 digits
-                                                "111111.1111" // 30 digits
-                                                "11111111");
+  rhs = ValueFactory::GetDecimalValueFromString(
+      "9999999999"   // 10 digits
+      "9999999999"   // 20 digits
+      "999999.9999"  // 30 digits
+      "99999999");
+  lhs = ValueFactory::GetDecimalValueFromString(
+      "-111111111"   // 10 digits
+      "1111111111"   // 20 digits
+      "111111.1111"  // 30 digits
+      "11111111");
 
   caughtException = false;
   try {
@@ -1545,10 +1558,11 @@ TEST(ValueTest, DecimalProducts) {
   ASSERT_EQ(ValuePeeker::PeekDecimal(product), ValuePeeker::PeekDecimal(ans));
 
   // Overflow
-  rhs = ValueFactory::GetDecimalValueFromString("9999999999"  // 10 digits
-                                                "9999999999"  // 20 digits
-                                                "999999.9999" // 30 digits
-                                                "99999999");
+  rhs = ValueFactory::GetDecimalValueFromString(
+      "9999999999"   // 10 digits
+      "9999999999"   // 20 digits
+      "999999.9999"  // 30 digits
+      "99999999");
   lhs = ValueFactory::GetDecimalValueFromString("2");
 
   bool caughtException = false;
@@ -1560,10 +1574,11 @@ TEST(ValueTest, DecimalProducts) {
   ASSERT_FALSE(caughtException);
 
   // Underflow
-  rhs = ValueFactory::GetDecimalValueFromString("9999999999"  // 10 digits
-                                                "9999999999"  // 20 digits
-                                                "999999.9999" // 30 digits
-                                                "99999999");
+  rhs = ValueFactory::GetDecimalValueFromString(
+      "9999999999"   // 10 digits
+      "9999999999"   // 20 digits
+      "999999.9999"  // 30 digits
+      "99999999");
   lhs = ValueFactory::GetDecimalValueFromString("-2");
 
   caughtException = false;
@@ -1810,8 +1825,8 @@ TEST(ValueTest, SerializeToExport) {
   nv = ValueFactory::GetStringValue("ABCDEFabcdef");
   nv.SerializeToExport(out);
   nv.FreeUninlinedData();
-  EXPECT_EQ(12 + 4, out.Position()); // chardata plus prefix
-  EXPECT_EQ(12, sin.ReadInt());      // 32 bit length prefix
+  EXPECT_EQ(12 + 4, out.Position());  // chardata plus prefix
+  EXPECT_EQ(12, sin.ReadInt());       // 32 bit length prefix
   EXPECT_EQ('A', sin.ReadChar());
   EXPECT_EQ('B', sin.ReadChar());
   EXPECT_EQ('C', sin.ReadChar());
@@ -1831,7 +1846,7 @@ TEST(ValueTest, SerializeToExport) {
   nv = ValueFactory::GetDecimalValueFromString("-1234567890.456123000000");
   nv.SerializeToExport(out);
   EXPECT_EQ(24 + 4, out.Position());
-  EXPECT_EQ(24, sin.ReadInt()); // 32 bit length prefix
+  EXPECT_EQ(24, sin.ReadInt());  // 32 bit length prefix
   EXPECT_EQ('-', sin.ReadChar());
   EXPECT_EQ('1', sin.ReadChar());
   EXPECT_EQ('2', sin.ReadChar());
@@ -1860,5 +1875,5 @@ TEST(ValueTest, SerializeToExport) {
   out.Position(0);
 }
 
-} // End test namespace
-} // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace

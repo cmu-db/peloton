@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/index/index.h"
 #include "backend/common/exception.h"
 #include "backend/common/logger.h"
@@ -40,51 +39,51 @@ bool Index::Compare(const storage::Tuple &index_key,
 
     if (diff == VALUE_COMPARE_EQUAL) {
       switch (expr_type) {
-      case EXPRESSION_TYPE_COMPARE_EQ:
-      case EXPRESSION_TYPE_COMPARE_LTE:
-      case EXPRESSION_TYPE_COMPARE_GTE:
-        continue;
+        case EXPRESSION_TYPE_COMPARE_EQ:
+        case EXPRESSION_TYPE_COMPARE_LTE:
+        case EXPRESSION_TYPE_COMPARE_GTE:
+          continue;
 
-      case EXPRESSION_TYPE_COMPARE_NE:
-      case EXPRESSION_TYPE_COMPARE_LT:
-      case EXPRESSION_TYPE_COMPARE_GT:
-        return false;
+        case EXPRESSION_TYPE_COMPARE_NE:
+        case EXPRESSION_TYPE_COMPARE_LT:
+        case EXPRESSION_TYPE_COMPARE_GT:
+          return false;
 
-      default:
-        throw IndexException("Unsupported expression type : " +
-                             std::to_string(expr_type));
+        default:
+          throw IndexException("Unsupported expression type : " +
+                               std::to_string(expr_type));
       }
     } else if (diff == VALUE_COMPARE_LESSTHAN) {
       switch (expr_type) {
-      case EXPRESSION_TYPE_COMPARE_NE:
-      case EXPRESSION_TYPE_COMPARE_LT:
-      case EXPRESSION_TYPE_COMPARE_LTE:
-        continue;
+        case EXPRESSION_TYPE_COMPARE_NE:
+        case EXPRESSION_TYPE_COMPARE_LT:
+        case EXPRESSION_TYPE_COMPARE_LTE:
+          continue;
 
-      case EXPRESSION_TYPE_COMPARE_EQ:
-      case EXPRESSION_TYPE_COMPARE_GT:
-      case EXPRESSION_TYPE_COMPARE_GTE:
-        return false;
+        case EXPRESSION_TYPE_COMPARE_EQ:
+        case EXPRESSION_TYPE_COMPARE_GT:
+        case EXPRESSION_TYPE_COMPARE_GTE:
+          return false;
 
-      default:
-        throw IndexException("Unsupported expression type : " +
-                             std::to_string(expr_type));
+        default:
+          throw IndexException("Unsupported expression type : " +
+                               std::to_string(expr_type));
       }
     } else if (diff == VALUE_COMPARE_GREATERTHAN) {
       switch (expr_type) {
-      case EXPRESSION_TYPE_COMPARE_NE:
-      case EXPRESSION_TYPE_COMPARE_GT:
-      case EXPRESSION_TYPE_COMPARE_GTE:
-        continue;
+        case EXPRESSION_TYPE_COMPARE_NE:
+        case EXPRESSION_TYPE_COMPARE_GT:
+        case EXPRESSION_TYPE_COMPARE_GTE:
+          continue;
 
-      case EXPRESSION_TYPE_COMPARE_EQ:
-      case EXPRESSION_TYPE_COMPARE_LT:
-      case EXPRESSION_TYPE_COMPARE_LTE:
-        return false;
+        case EXPRESSION_TYPE_COMPARE_EQ:
+        case EXPRESSION_TYPE_COMPARE_LT:
+        case EXPRESSION_TYPE_COMPARE_LTE:
+          return false;
 
-      default:
-        throw IndexException("Unsupported expression type : " +
-                             std::to_string(expr_type));
+        default:
+          throw IndexException("Unsupported expression type : " +
+                               std::to_string(expr_type));
       }
     }
   }
@@ -96,7 +95,6 @@ bool Index::SetLowerBoundTuple(storage::Tuple *index_key,
                                const std::vector<peloton::Value> &values,
                                const std::vector<oid_t> &key_column_ids,
                                const std::vector<ExpressionType> &expr_types) {
-
   auto schema = index_key->GetSchema();
   auto col_count = schema->GetColumnCount();
   bool all_equal = true;
@@ -104,7 +102,6 @@ bool Index::SetLowerBoundTuple(storage::Tuple *index_key,
   // Go over each column in the key tuple
   // Setting either the placeholder or the min value
   for (oid_t column_itr = 0; column_itr < col_count; column_itr++) {
-
     auto key_column_itr =
         std::find(key_column_ids.begin(), key_column_ids.end(), column_itr);
     bool placeholder = false;
@@ -133,8 +130,7 @@ bool Index::SetLowerBoundTuple(storage::Tuple *index_key,
   }
 
   LOG_TRACE("Lower Bound Tuple :: %s", index_key->GetInfo().c_str());
-  if (col_count > values.size())
-    all_equal = false;
+  if (col_count > values.size()) all_equal = false;
 
   return all_equal;
 }
@@ -217,5 +213,5 @@ bool Index::IsDirty() const { return dirty; }
  */
 void Index::ResetDirty() { dirty = false; }
 
-} // End index namespace
-} // End peloton namespace
+}  // End index namespace
+}  // End peloton namespace

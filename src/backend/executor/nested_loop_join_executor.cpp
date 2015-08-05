@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <vector>
 
 #include "backend/common/types.h"
@@ -176,7 +175,7 @@ bool NestedLoopJoinExecutor::DExecute() {
   for (auto col : position_lists) {
     LOG_TRACE("col");
     for (auto elm : col) {
-      (void)elm; // silent compiler
+      (void)elm;  // silent compiler
       LOG_TRACE("elm: %u", elm);
     }
   }
@@ -198,5 +197,5 @@ bool NestedLoopJoinExecutor::DExecute() {
   return true;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

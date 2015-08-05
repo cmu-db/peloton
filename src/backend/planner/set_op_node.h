@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/types.h"
@@ -27,7 +26,7 @@ namespace planner {
  * IMPORTANT: Both children must have the same physical schema.
  */
 class SetOpNode : public AbstractPlanNode {
-public:
+ public:
   SetOpNode(const SetOpNode &) = delete;
   SetOpNode &operator=(const SetOpNode &) = delete;
   SetOpNode(const SetOpNode &&) = delete;
@@ -41,7 +40,7 @@ public:
 
   inline std::string GetInfo() const { return "SetOp"; }
 
-private:
+ private:
   /** @brief Set Operation of this node */
   SetOpType set_op_;
 };

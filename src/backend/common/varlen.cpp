@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/common/varlen.h"
 #include "backend/common/pool.h"
 
@@ -73,4 +72,4 @@ void Varlen::SetBackPtr() {
   *backptr = this;
 }
 
-} // End peloton namespace
+}  // End peloton namespace

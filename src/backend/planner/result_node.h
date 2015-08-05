@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -30,7 +29,7 @@ namespace planner {
  * that returns a single constant tuple.
  */
 class ResultNode : public AbstractPlanNode {
-public:
+ public:
   ResultNode(const ResultNode &) = delete;
   ResultNode &operator=(const ResultNode &) = delete;
   ResultNode(ResultNode &&) = delete;
@@ -48,7 +47,7 @@ public:
 
   inline std::string GetInfo() const { return "Result"; }
 
-private:
+ private:
   /**
    * @brief A backend is needed to create physical tuple
    * TODO: Can we move backend out of the plan?

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <getopt.h>
@@ -24,7 +23,7 @@
 namespace peloton {
 
 class configuration {
-public:
+ public:
   std::string filesystem_path;
 };
 

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <unordered_map>
@@ -40,7 +39,7 @@ namespace executor {
  * This avoids materialization.
  */
 class HashSetOpExecutor : public AbstractExecutor {
-public:
+ public:
   HashSetOpExecutor(const HashSetOpExecutor &) = delete;
   HashSetOpExecutor &operator=(const HashSetOpExecutor &) = delete;
   HashSetOpExecutor(const HashSetOpExecutor &&) = delete;
@@ -49,11 +48,11 @@ public:
   explicit HashSetOpExecutor(planner::AbstractPlanNode *node,
                              ExecutorContext *executor_context);
 
-protected:
+ protected:
   bool DInit();
   bool DExecute();
 
-private:
+ private:
   /** @brief Counter-pair type for binary set-op */
   typedef struct {
     size_t left = 0;
@@ -70,7 +69,8 @@ private:
 
   bool ExecuteHelper();
 
-  template <SetOpType SETOP> bool CalculateCopies(HashSetOpMapType &htable);
+  template <SetOpType SETOP>
+  bool CalculateCopies(HashSetOpMapType &htable);
 
   /** @brief Hash table */
   HashSetOpMapType htable_;

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/planner/project_info.h"
 
 namespace peloton {

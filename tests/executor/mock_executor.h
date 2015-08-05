@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "gmock/gmock.h"
@@ -26,7 +25,7 @@ class LogicalTile;
 namespace test {
 
 class MockExecutor : public executor::AbstractExecutor {
-public:
+ public:
   MockExecutor() : executor::AbstractExecutor(nullptr, nullptr) {}
 
   MOCK_METHOD0(DInit, bool());
@@ -36,5 +35,5 @@ public:
   MOCK_METHOD0(GetOutput, executor::LogicalTile *());
 };
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

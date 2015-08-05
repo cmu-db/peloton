@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 
 #include "gtest/gtest.h"
@@ -29,7 +28,6 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 TEST(TileGroupIteratorTests, BasicTest) {
-
   int num_cols = 10;
 
   std::vector<catalog::Column> columns;
@@ -43,7 +41,7 @@ TEST(TileGroupIteratorTests, BasicTest) {
                         "A", true);
     columns.push_back(col);
     column_names.push_back(name.str());
-  } // FOR
+  }  // FOR
 
   // Schema
   catalog::Schema *schema = new catalog::Schema(columns);
@@ -71,17 +69,17 @@ TEST(TileGroupIteratorTests, BasicTest) {
     tuple->SetValue(0, ValueFactory::GetIntegerValue(i));
     tile->InsertTuple(0, tuple);
     delete tuple;
-  } // FOR
+  }  // FOR
 
   //     storage::TileGroupIterator itr(table);
   //     std::shared_ptr<storage::TileGroup> itrPtr;
   int found = 0;
-  int expected = 0; // 1;
-                    //     while (itr.Next(itrPtr)) {
-                    //         if (itrPtr.get() != nullptr) {
-                    //             found += 1;
-                    //         }
-                    //     } // WHILE
+  int expected = 0;  // 1;
+                     //     while (itr.Next(itrPtr)) {
+                     //         if (itrPtr.get() != nullptr) {
+                     //             found += 1;
+                     //         }
+                     //     } // WHILE
 
   EXPECT_EQ(expected, found);
 
@@ -92,5 +90,5 @@ TEST(TileGroupIteratorTests, BasicTest) {
   delete backend;
 }
 
-} // End test namespace
-} // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace
