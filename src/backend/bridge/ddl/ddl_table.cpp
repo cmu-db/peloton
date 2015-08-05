@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * ddl_table.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/ddl_table.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// ddl_table.cpp
+//
+// Identification: src/backend/bridge/ddl/ddl_table.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <cassert>
 #include <iostream>

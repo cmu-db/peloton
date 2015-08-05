@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * schema.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/catalog/schema.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// schema.h
+//
+// Identification: src/backend/catalog/schema.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

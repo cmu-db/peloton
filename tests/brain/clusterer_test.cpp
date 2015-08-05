@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * clusterer_test.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/tests/brain/clusterer_test.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// clusterer_test.cpp
+//
+// Identification: tests/brain/clusterer_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <cstdio>
 #include <random>

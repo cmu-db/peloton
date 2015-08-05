@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * clusterer.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/brain/clusterer.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// clusterer.h
+//
+// Identification: src/backend/brain/clusterer.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

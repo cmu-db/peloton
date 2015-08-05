@@ -1,12 +1,15 @@
-/**
- * @brief Implementation of logical tile.
- *
- * This abstraction is used to implement late materialization of tiles in the
- * execution engine.
- * Tiles are only instantiated via LogicalTileFactory.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// logical_tile.cpp
+//
+// Identification: src/backend/executor/logical_tile.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/executor/logical_tile.h"
 

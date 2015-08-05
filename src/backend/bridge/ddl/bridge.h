@@ -1,8 +1,15 @@
-/**
- * @brief Header for postgres bridge.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// bridge.h
+//
+// Identification: src/backend/bridge/ddl/bridge.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

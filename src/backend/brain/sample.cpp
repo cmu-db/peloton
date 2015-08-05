@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * sample.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/brain/sample.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// sample.cpp
+//
+// Identification: src/backend/brain/sample.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <sstream>
 #include <cmath>

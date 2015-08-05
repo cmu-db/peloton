@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * mapper_seq_scan.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/dml/mapper/mapper_seq_scan.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// mapper_lock_rows.cpp
+//
+// Identification: src/backend/bridge/dml/mapper/mapper_lock_rows.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/bridge/dml/mapper/mapper.h"
 

@@ -1,8 +1,15 @@
-/**
- * @brief Base class for all plan nodes.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// abstract_plan_node.cpp
+//
+// Identification: src/backend/planner/abstract_plan_node.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <sstream>
 #include <stdexcept>

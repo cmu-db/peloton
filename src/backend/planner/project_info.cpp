@@ -1,7 +1,16 @@
-/*
- * project_info.cpp
- *
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// project_info.cpp
+//
+// Identification: src/backend/planner/project_info.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #include "backend/planner/project_info.h"
 
 namespace peloton {

@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * abstract_tuple.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/storage/abstract_tuple.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// tuple.h
+//
+// Identification: src/backend/storage/tuple.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

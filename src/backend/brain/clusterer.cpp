@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * clusterer.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/brain/clusterer.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// clusterer.cpp
+//
+// Identification: src/backend/brain/clusterer.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <limits>
 #include <sstream>

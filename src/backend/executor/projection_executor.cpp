@@ -1,8 +1,15 @@
-/**
- * @brief Executor for Projection node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// projection_executor.cpp
+//
+// Identification: src/backend/executor/projection_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/executor/projection_executor.h"
 

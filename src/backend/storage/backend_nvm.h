@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
-*
-* persistent_backend.h
-* file description
-*
-* Copyright(c) 2015, CMU
-*
-* /n-store/src/storage/persistent_backend.h
-*
-*-------------------------------------------------------------------------
-*/
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// backend_nvm.h
+//
+// Identification: src/backend/storage/backend_nvm.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * exception.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/exception.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// exception.h
+//
+// Identification: src/backend/common/exception.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

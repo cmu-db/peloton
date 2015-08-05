@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
-*
-* byte_array.h
-* file description
-*
-* Copyright(c) 2015, CMU
-*
-* /n-store/src/common/byte_array.h
-*
-*-------------------------------------------------------------------------
-*/
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// byte_array.h
+//
+// Identification: src/backend/common/byte_array.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

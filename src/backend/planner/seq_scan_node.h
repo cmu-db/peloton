@@ -1,8 +1,15 @@
-/**
- * @brief Header for sequential scan plan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// seq_scan_node.h
+//
+// Identification: src/backend/planner/seq_scan_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

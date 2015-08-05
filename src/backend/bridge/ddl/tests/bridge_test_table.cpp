@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * bridge_test_table.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/tests/bridge/bridge_test_table.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// bridge_test_table.cpp
+//
+// Identification: src/backend/bridge/ddl/tests/bridge_test_table.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "bridge_test.h"
 

@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * catalog.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/catalog/catalog.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// manager.h
+//
+// Identification: src/backend/catalog/manager.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

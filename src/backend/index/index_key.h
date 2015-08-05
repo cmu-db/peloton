@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * index_key.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/index/index_key.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// index_key.h
+//
+// Identification: src/backend/index/index_key.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

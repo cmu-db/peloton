@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * catalog_test.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/tests/catalog/catalog_test.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// manager_test.cpp
+//
+// Identification: tests/catalog/manager_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/catalog/manager.h"
 #include "gtest/gtest.h"

@@ -1,8 +1,15 @@
-/**
-* @brief Implementation of utility functions for join tests.
-*
-* Copyright(c) 2015, CMU
-*/
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// join_tests_util.cpp
+//
+// Identification: tests/executor/join_tests_util.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "executor/join_tests_util.h"
 

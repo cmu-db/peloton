@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * constraint.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/catalog/constraint.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// constraint.h
+//
+// Identification: src/backend/catalog/constraint.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

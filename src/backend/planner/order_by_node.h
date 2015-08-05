@@ -1,8 +1,15 @@
-/**
- * @brief Header for order by plan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// order_by_node.h
+//
+// Identification: src/backend/planner/order_by_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

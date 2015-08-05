@@ -1,12 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * transaction.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// transaction.cpp
+//
+// Identification: src/backend/concurrency/transaction.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/concurrency/transaction.h"
 

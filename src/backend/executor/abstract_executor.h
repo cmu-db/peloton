@@ -1,8 +1,15 @@
-/**
- * @brief Header file for abstract executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// abstract_executor.h
+//
+// Identification: src/backend/executor/abstract_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

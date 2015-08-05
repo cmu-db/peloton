@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * synch.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/synch.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// synch.h
+//
+// Identification: src/backend/common/synch.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <thread>
 #include <atomic>

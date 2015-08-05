@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * abstract_expression.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/expression/abstract_expression.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// abstract_expression.cpp
+//
+// Identification: src/backend/expression/abstract_expression.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/expression/abstract_expression.h"
 

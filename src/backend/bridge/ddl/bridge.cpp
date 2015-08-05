@@ -1,10 +1,15 @@
-/**
- * @brief Implementation of bridge.
- *
- * These utilities allow us to manage Postgres metadata.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// bridge.cpp
+//
+// Identification: src/backend/bridge/ddl/bridge.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <iostream>
 #include <assert.h>

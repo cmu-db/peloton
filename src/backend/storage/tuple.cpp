@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * tuple.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/storage/abstract_tuple.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// tuple.cpp
+//
+// Identification: src/backend/storage/tuple.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/storage/tuple.h"
 

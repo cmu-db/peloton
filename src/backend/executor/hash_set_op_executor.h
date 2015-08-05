@@ -1,8 +1,16 @@
-/**
- * @brief Header file for hash-based set operation executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// hash_set_op_executor.h
+//
+// Identification: src/backend/executor/hash_set_op_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #pragma once
 
 #include <unordered_map>
