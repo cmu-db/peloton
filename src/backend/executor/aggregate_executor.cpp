@@ -82,11 +82,10 @@ bool AggregateExecutor::DExecute() {
   // Grab info from plan node
   const planner::AggregateNode &node = GetPlanNode<planner::AggregateNode>();
   auto transaction_ = executor_context_->GetTransaction();
-  txn_id_t txn_id = transaction_->GetTransactionId();
 
   // Get an aggregator
   Aggregator<PlanNodeType::PLAN_NODE_TYPE_AGGREGATE> aggregator(
-      &node, output_table, txn_id);
+      &node, output_table, transaction_);
 
   // Get input tiles and aggregate them
   while (children_[0]->Execute() == true) {

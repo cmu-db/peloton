@@ -97,6 +97,9 @@ class Tuple : public AbstractTuple {
 
   int Compare(const Tuple &other) const;
 
+  int Compare(const Tuple &other,
+              const std::vector<oid_t>& columns) const;
+
   //===--------------------------------------------------------------------===//
   // Getters and Setters
   //===--------------------------------------------------------------------===//
@@ -146,6 +149,9 @@ class Tuple : public AbstractTuple {
   void FreeUninlinedData();
 
   bool EqualsNoSchemaCheck(const Tuple &other) const;
+
+  bool EqualsNoSchemaCheck(const Tuple &other,
+                           const std::vector<oid_t>& columns) const;
 
   // this does set NULL in addition to clear string count.
   void SetAllNulls();

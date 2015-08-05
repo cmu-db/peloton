@@ -16,8 +16,8 @@
 #include "backend/storage/abstract_table.h"
 #include "backend/storage/backend_vm.h"
 #include "backend/storage/tile_group.h"
-#include "backend/storage/tile_group_iterator.h"
 #include "backend/storage/tile_group_factory.h"
+#include "backend/concurrency/transaction.h"
 
 #include <string>
 
@@ -38,160 +38,192 @@ namespace storage {
  *
  */
 class DataTable : public AbstractTable {
-    friend class TileGroup;
-    friend class TileGroupFactory;
-    friend class TableFactory;
-    friend class TileIterator;
+  friend class TileGroup;
+  friend class TileGroupFactory;
+  friend class TableFactory;
 
-    DataTable() = delete;
-    DataTable(DataTable const &) = delete;
+  DataTable() = delete;
+  DataTable(DataTable const &) = delete;
 
-public:
-    // Table constructor
-    DataTable(catalog::Schema *schema, AbstractBackend *backend,
-              std::string table_name, oid_t table_oid,
-              size_t tuples_per_tilegroup);
+ public:
+  // Table constructor
+  DataTable(catalog::Schema *schema, AbstractBackend *backend,
+            std::string table_name, oid_t table_oid,
+            size_t tuples_per_tilegroup);
 
-    ~DataTable();
+  ~DataTable();
 
-    //===--------------------------------------------------------------------===//
-    // TUPLE OPERATIONS
-    //===--------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
+  // TUPLE OPERATIONS
+  //===--------------------------------------------------------------------===//
 
-    // insert tuple in table
-    ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple,
-                            bool update = false);
+  // insert tuple in table
+  ItemPointer InsertTuple(const concurrency::Transaction *transaction,
+                          const Tuple *tuple);
 
-    void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+  // insert the updated tuple in table
+  ItemPointer UpdateTuple(const concurrency::Transaction *transaction,
+                          const Tuple *tuple,
+                          const ItemPointer old_location);
 
-    bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+  // delete the tuple at given location
+  bool DeleteTuple(const concurrency::Transaction *transaction,
+                   ItemPointer location);
 
-    bool DeleteTuple(txn_id_t transaction_id, ItemPointer location);
+  //===--------------------------------------------------------------------===//
+  // TILE GROUP
+  //===--------------------------------------------------------------------===//
 
-    void DeleteInIndexes(const storage::Tuple *tuple);
+  // add a default unpartitioned tile group to table
+  oid_t AddDefaultTileGroup();
 
-    bool CheckNulls(const storage::Tuple *tuple) const;
+  // add a customized tile group to table
+  void AddTileGroup(TileGroup *tile_group);
 
-    //===--------------------------------------------------------------------===//
-    // TILE GROUP
-    //===--------------------------------------------------------------------===//
+  // NOTE: This must go through the manager's locator
+  // This allows us to "TRANSFORM" tile groups atomically
+  // WARNING: We should distinguish OFFSET and ID of a tile group
+  TileGroup *GetTileGroup(oid_t tile_group_offset) const;
 
-    // add a default unpartitioned tile group to table
-    oid_t AddDefaultTileGroup();
+  TileGroup *GetTileGroupById(oid_t tile_group_id) const;
 
-    // add a customized tile group to table
-    void AddTileGroup(TileGroup *tile_group);
+  size_t GetTileGroupCount() const;
 
-    // NOTE: This must go through the manager's locator
-    // This allows us to "TRANSFORM" tile groups atomically
-    // WARNING: We should distinguish OFFSET and ID of a tile group
-    TileGroup *GetTileGroup(oid_t tile_group_offset) const;
+  //===--------------------------------------------------------------------===//
+  // INDEX
+  //===--------------------------------------------------------------------===//
 
-    TileGroup *GetTileGroupById(oid_t tile_group_id) const;
+  void AddIndex(index::Index *index);
 
-    size_t GetTileGroupCount() const;
+  index::Index *GetIndexWithOid(const oid_t index_oid) const;
 
-    //===--------------------------------------------------------------------===//
-    // INDEX
-    //===--------------------------------------------------------------------===//
+  void DropIndexWithOid(const oid_t index_oid);
 
-    void AddIndex(index::Index *index);
+  index::Index *GetIndex(const oid_t index_offset) const;
 
-    index::Index *GetIndexWithOid(const oid_t index_oid) const;
+  oid_t GetIndexCount() const;
 
-    void DropIndexWithOid(const oid_t index_oid);
+  //===--------------------------------------------------------------------===//
+  // FOREIGN KEYS
+  //===--------------------------------------------------------------------===//
 
-    index::Index *GetIndex(const oid_t index_offset) const;
+  void AddForeignKey(catalog::ForeignKey *key);
 
-    oid_t GetIndexCount() const;
+  catalog::ForeignKey *GetForeignKey(const oid_t key_offset) const;
 
-    //===--------------------------------------------------------------------===//
-    // FOREIGN KEYS
-    //===--------------------------------------------------------------------===//
+  void DropForeignKey(const oid_t key_offset);
 
-    void AddForeignKey(catalog::ForeignKey *key);
+  oid_t GetForeignKeyCount() const;
 
-    catalog::ForeignKey *GetForeignKey(const oid_t key_offset) const;
+  //===--------------------------------------------------------------------===//
+  // TRANSFORMERS
+  //===--------------------------------------------------------------------===//
 
-    void DropForeignKey(const oid_t key_offset);
+  storage::TileGroup *TransformTileGroup(oid_t tile_group_id,
+                                         const column_map_type& column_map,
+                                         bool cleanup = true);
 
-    oid_t GetForeignKeyCount() const;
+  //===--------------------------------------------------------------------===//
+  // STATS
+  //===--------------------------------------------------------------------===//
 
-    //===--------------------------------------------------------------------===//
-    // TRANSFORMERS
-    //===--------------------------------------------------------------------===//
+  void IncreaseNumberOfTuplesBy(const float amount);
 
-    storage::TileGroup *TransformTileGroup(oid_t tile_group_id,
-                                           const column_map_type& column_map,
-                                           bool cleanup = true);
+  void DecreaseNumberOfTuplesBy(const float amount);
 
-    //===--------------------------------------------------------------------===//
-    // STATS
-    //===--------------------------------------------------------------------===//
+  void SetNumberOfTuples(const float num_tuples);
 
-    void IncreaseNumberOfTuplesBy(const float amount);
+  float GetNumberOfTuples() const;
 
-    void DecreaseNumberOfTuplesBy(const float amount);
+  bool IsDirty() const;
 
-    void SetNumberOfTuples(const float num_tuples);
+  void ResetDirty();
 
-    float GetNumberOfTuples() const;
 
-    //===--------------------------------------------------------------------===//
-    // UTILITIES
-    //===--------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
+  // UTILITIES
+  //===--------------------------------------------------------------------===//
 
-    inline bool HasPrimaryKey() {
-        return has_primary_key;
-    }
+  bool HasPrimaryKey() { return has_primary_key; }
 
-    inline bool HasUniqueConstraints() {
-        return (unique_constraint_count > 0);
-    }
+  bool HasUniqueConstraints() { return (unique_constraint_count > 0); }
 
-    inline bool HasForeignKeys() {
-        return (GetForeignKeyCount() > 0);
-    }
+  bool HasForeignKeys() { return (GetForeignKeyCount() > 0); }
 
-    inline AbstractBackend *GetBackend() const {
-        return backend;
-    }
+  AbstractBackend *GetBackend() const { return backend; }
 
-    // Get a string representation of this table
-    friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
+  // Get a string representation of this table
+  friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
 
-private:
-    //===--------------------------------------------------------------------===//
-    // MEMBERS
-    //===--------------------------------------------------------------------===//
+ protected:
 
-    // backend
-    AbstractBackend *backend;
+  //===--------------------------------------------------------------------===//
+  // INTEGRITY CHECKS
+  //===--------------------------------------------------------------------===//
 
-    // TODO need some policy ?
-    // number of tuples allocated per tilegroup
-    size_t tuples_per_tilegroup;
+  bool CheckNulls(const storage::Tuple *tuple) const;
 
-    // set of tile groups
-    std::vector<oid_t> tile_groups;
+  bool CheckConstraints(const storage::Tuple *tuple) const;
 
-    // INDEXES
-    std::vector<index::Index *> indexes;
+  // Claim a tuple slot in a tile group
+  ItemPointer GetTupleSlot(const concurrency::Transaction *transaction,
+                           const storage::Tuple *tuple,
+                           const ItemPointer old_location);
 
-    // CONSTRAINTS
-    std::vector<catalog::ForeignKey *> foreign_keys;
+  //===--------------------------------------------------------------------===//
+  // INDEX HELPERS
+  //===--------------------------------------------------------------------===//
 
-    // table mutex
-    std::mutex table_mutex;
+  // try to insert into the indices
+  bool InsertInIndexes(const concurrency::Transaction *transaction,
+                       const storage::Tuple *tuple,
+                       ItemPointer location);
 
-    // has a primary key ?
-    std::atomic<bool> has_primary_key = ATOMIC_VAR_INIT(false);
+//  // drop the entry in the indice
+//  // NOTE: not used currently due to our MVCC design
+//  void DeleteInIndexes(const storage::Tuple *tuple,
+//                       const ItemPointer location);
 
-    // # of unique constraints
-    std::atomic<oid_t> unique_constraint_count = ATOMIC_VAR_INIT(START_OID);
+  /** @return True if it's a same-key update and it's successful */
+  bool UpdateInIndexes(const storage::Tuple *tuple,
+                            ItemPointer location,
+                            const ItemPointer old_location);
 
-    // # of tuples
-    float number_of_tuples = 0.0;
+ private:
+  //===--------------------------------------------------------------------===//
+  // MEMBERS
+  //===--------------------------------------------------------------------===//
+
+  // backend
+  AbstractBackend *backend;
+
+  // TODO need some policy ?
+  // number of tuples allocated per tilegroup
+  size_t tuples_per_tilegroup;
+
+  // set of tile groups
+  std::vector<oid_t> tile_groups;
+
+  // INDEXES
+  std::vector<index::Index *> indexes;
+
+  // CONSTRAINTS
+  std::vector<catalog::ForeignKey *> foreign_keys;
+
+  // table mutex
+  std::mutex table_mutex;
+
+  // has a primary key ?
+  std::atomic<bool> has_primary_key = ATOMIC_VAR_INIT(false);
+
+  // # of unique constraints
+  std::atomic<oid_t> unique_constraint_count = ATOMIC_VAR_INIT(START_OID);
+
+  // # of tuples
+  float number_of_tuples = 0.0;
+
+  // dirty flag
+  bool dirty = false;
 };
 
 }  // End storage namespace

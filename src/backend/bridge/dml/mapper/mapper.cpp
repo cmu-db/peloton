@@ -26,6 +26,8 @@ void printPlanStateTree(const PlanState *planstate);
 namespace peloton {
 namespace bridge {
 
+const PlanTransformer::TransformOptions PlanTransformer::kDefaultOptions;
+
 /**
  * @brief Pretty print the plan state tree.
  * @return none.
@@ -36,10 +38,12 @@ void PlanTransformer::PrintPlanState(const PlanState *plan_state) {
 
 /**
  * @brief Convert Postgres PlanState (tree) into AbstractPlanNode (tree).
- * @return Pointer to the constructed AbstractPlan`Node.
+ * @return Pointer to the constructed AbstractPlan Node.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformPlan(
-    const PlanState *plan_state) {
+    const PlanState *plan_state,
+    const TransformOptions options) {
+
   assert(plan_state);
 
   Plan *plan = plan_state->plan;
@@ -51,23 +55,23 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
   switch (nodeTag(plan)) {
     case T_ModifyTable:
       plan_node = PlanTransformer::TransformModifyTable(
-          reinterpret_cast<const ModifyTableState *>(plan_state));
+          reinterpret_cast<const ModifyTableState *>(plan_state), options);
       break;
     case T_SeqScan:
       plan_node = PlanTransformer::TransformSeqScan(
-          reinterpret_cast<const SeqScanState *>(plan_state));
+          reinterpret_cast<const SeqScanState *>(plan_state), options);
       break;
     case T_IndexScan:
       plan_node = PlanTransformer::TransformIndexScan(
-          reinterpret_cast<const IndexScanState *>(plan_state));
+          reinterpret_cast<const IndexScanState *>(plan_state), options);
       break;
     case T_IndexOnlyScan:
       plan_node = PlanTransformer::TransformIndexOnlyScan(
-          reinterpret_cast<const IndexOnlyScanState *>(plan_state));
+          reinterpret_cast<const IndexOnlyScanState *>(plan_state), options);
       break;
     case T_BitmapHeapScan:
       plan_node = PlanTransformer::TransformBitmapScan(
-          reinterpret_cast<const BitmapHeapScanState *>(plan_state));
+          reinterpret_cast<const BitmapHeapScanState *>(plan_state), options);
       break;
     case T_LockRows:
       plan_node = PlanTransformer::TransformLockRows(
@@ -77,13 +81,23 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
       plan_node = PlanTransformer::TransformLimit(
           reinterpret_cast<const LimitState *>(plan_state));
       break;
+    case T_MergeJoin:
+    case T_HashJoin:
+      // TODO :: 'MergeJoin'/'HashJoin' have not been implemented yet, however, we need this
+      // case to operate AlterTable 
+      // Also - Added special case in peloton_process_dml
     case T_NestLoop:
       plan_node = PlanTransformer::TransformNestLoop(
           reinterpret_cast<const NestLoopState*>(plan_state));
       break;
+    case T_Material:
+      plan_node = PlanTransformer::TransformMaterialization(
+          reinterpret_cast<const MaterialState*>(plan_state));
+      break;
     default: {
       LOG_ERROR("Unsupported Postgres Plan State Tag: %u Plan Tag: %u ",
                 nodeTag(plan_state), nodeTag(plan));
+      elog(INFO, "Query: ");
       break;
     }
   }

@@ -105,55 +105,21 @@ TEST(IndexTests, BtreeUniqueIndexTest) {
   index->InsertEntry(key3, item1);
   index->InsertEntry(key4, item1);
 
-  LOG_TRACE("Scan \n");
-  auto slots = index->Scan();
-  EXPECT_EQ(slots.size(), 5);
-
-  EXPECT_EQ(false, index->Exists(keynonce));
-  EXPECT_EQ(true, index->Exists(key0));
-
-  LOG_TRACE("Key \n");
-  slots = index->GetLocationsForKey(key1);
-  EXPECT_EQ(slots.size(), 1);
-
-  LOG_TRACE("Key \n");
-  slots = index->GetLocationsForKey(key0);
-  EXPECT_EQ(slots.size(), 1);
-
-  LOG_TRACE("Key Between \n");
-  slots = index->GetLocationsForKeyBetween(key1, key4);
-  EXPECT_EQ(slots.size(), 2);
-
-  LOG_TRACE("Key LT \n");
-  slots = index->GetLocationsForKeyLT(key3);
-  EXPECT_EQ(slots.size(), 3);
-
-  LOG_TRACE("Key LTE \n");
-  slots = index->GetLocationsForKeyLTE(key3);
-  EXPECT_EQ(slots.size(), 4);
-
-  LOG_TRACE("Key GT \n");
-  slots = index->GetLocationsForKeyGT(key1);
-  EXPECT_EQ(slots.size(), 3);
-
-  LOG_TRACE("Key GTE \n");
-  slots = index->GetLocationsForKeyGTE(key1);
-  EXPECT_EQ(slots.size(), 4);
+  auto location = index->Exists(keynonce, INVALID_ITEMPOINTER);
+  EXPECT_EQ(location.block, INVALID_OID);
+  location = index->Exists(key0, INVALID_ITEMPOINTER);
+  EXPECT_EQ(location.block, item0.block);
 
   LOG_TRACE("Delete \n");
 
-  index->DeleteEntry(key0);
-  index->DeleteEntry(key1);
-  index->DeleteEntry(key2);
-  index->DeleteEntry(key3);
-  index->DeleteEntry(key4);
+  index->DeleteEntry(key0, INVALID_ITEMPOINTER);
+  index->DeleteEntry(key1, INVALID_ITEMPOINTER);
+  index->DeleteEntry(key2, INVALID_ITEMPOINTER);
+  index->DeleteEntry(key3, INVALID_ITEMPOINTER);
+  index->DeleteEntry(key4, INVALID_ITEMPOINTER);
 
-  EXPECT_EQ(false, index->Exists(key0));
-
-  LOG_TRACE("Scan \n");
-  index->Scan();
-  slots = index->Scan();
-  EXPECT_EQ(slots.size(), 0);
+  location = index->Exists(key0, INVALID_ITEMPOINTER);
+  EXPECT_EQ(location.block, INVALID_OID);
 
   delete key0;
   delete key1;
@@ -244,55 +210,22 @@ TEST(IndexTests, BtreeMultiIndexTest) {
   index->InsertEntry(key3, item1);
   index->InsertEntry(key4, item1);
 
-  LOG_TRACE("Scan \n");
-  auto slots = index->Scan();
-  EXPECT_EQ(slots.size(), 6);
-
-  EXPECT_EQ(false, index->Exists(keynonce));
-  EXPECT_EQ(true, index->Exists(key0));
-
-  LOG_TRACE("Key \n");
-  slots = index->GetLocationsForKey(key1);
-  EXPECT_EQ(slots.size(), 2);
-
-  LOG_TRACE("Key \n");
-  slots = index->GetLocationsForKey(key0);
-  EXPECT_EQ(slots.size(), 1);
-
-  LOG_TRACE("Key Between \n");
-  slots = index->GetLocationsForKeyBetween(key1, key4);
-  EXPECT_EQ(slots.size(), 2);
-
-  LOG_TRACE("Key LT \n");
-  slots = index->GetLocationsForKeyLT(key3);
-  EXPECT_EQ(slots.size(), 4);
-
-  LOG_TRACE("Key LTE \n");
-  slots = index->GetLocationsForKeyLTE(key3);
-  EXPECT_EQ(slots.size(), 5);
-
-  LOG_TRACE("Key GT \n");
-  slots = index->GetLocationsForKeyGT(key1);
-  EXPECT_EQ(slots.size(), 3);
-
-  LOG_TRACE("Key GTE \n");
-  slots = index->GetLocationsForKeyGTE(key1);
-  EXPECT_EQ(slots.size(), 5);
+  auto location = index->Exists(keynonce, INVALID_ITEMPOINTER);
+  EXPECT_EQ(location.block, INVALID_OID);
+  location = index->Exists(key0, item0);
+  EXPECT_EQ(location.block, item0.block);
 
   LOG_TRACE("Delete \n");
 
-  index->DeleteEntry(key0);
-  index->DeleteEntry(key1);
-  index->DeleteEntry(key2);
-  index->DeleteEntry(key3);
-  index->DeleteEntry(key4);
+  index->DeleteEntry(key0, item0);
+  index->DeleteEntry(key1, item1);
+  index->DeleteEntry(key1, item2);
+  index->DeleteEntry(key2, item1);
+  index->DeleteEntry(key3, item1);
+  //index->DeleteEntry(key4, item1);
 
-  EXPECT_EQ(false, index->Exists(key0));
-
-  LOG_TRACE("Scan \n");
-  index->Scan();
-  slots = index->Scan();
-  EXPECT_EQ(slots.size(), 0);
+  location = index->Exists(key0, INVALID_ITEMPOINTER);
+  EXPECT_EQ(location.block, INVALID_OID);
 
   delete key0;
   delete key1;

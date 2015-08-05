@@ -76,7 +76,7 @@ TEST(OrderByTests, IntAscTest) {
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  executor::OrderByExecutor executor(&node);
+  executor::OrderByExecutor executor(&node, nullptr);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -119,7 +119,7 @@ TEST(OrderByTests, IntDescTest) {
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  executor::OrderByExecutor executor(&node);
+  executor::OrderByExecutor executor(&node, nullptr);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -162,7 +162,7 @@ TEST(OrderByTests, StringDescTest) {
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  executor::OrderByExecutor executor(&node);
+  executor::OrderByExecutor executor(&node, nullptr);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -205,7 +205,7 @@ TEST(OrderByTests, IntAscStringDescTest) {
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  executor::OrderByExecutor executor(&node);
+  executor::OrderByExecutor executor(&node, nullptr);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 
@@ -251,7 +251,7 @@ TEST(OrderByTests, StringDescIntAscTest) {
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
-  executor::OrderByExecutor executor(&node);
+  executor::OrderByExecutor executor(&node, nullptr);
   MockExecutor child_executor;
   executor.AddChild(&child_executor);
 

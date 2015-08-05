@@ -163,7 +163,6 @@ Tile *Tile::CopyTile(storage::AbstractBackend *backend) {
       new_header, backend, *schema, tile_group,
       allocated_tuple_count);
 
-  Pool *new_pool = new_tile->GetPool();
 
   ::memcpy(static_cast<void *>(new_tile->data),
            static_cast<void *>(data),

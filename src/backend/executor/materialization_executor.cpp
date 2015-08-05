@@ -28,8 +28,9 @@ namespace executor {
  * @param node Materialization node corresponding to this executor.
  */
 MaterializationExecutor::MaterializationExecutor(
-    planner::AbstractPlanNode *node)
-    : AbstractExecutor(node) {}
+    planner::AbstractPlanNode *node,
+    ExecutorContext *executor_context)
+: AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -56,7 +57,7 @@ void MaterializationExecutor::GenerateTileToColMap(
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
     LogicalTile *source_tile,
     std::unordered_map<storage::Tile *, std::vector<oid_t> > &
-        cols_in_physical_tile) {
+    cols_in_physical_tile) {
   for (const auto &kv : old_to_new_cols) {
     oid_t col = kv.first;
 
@@ -79,9 +80,10 @@ void MaterializationExecutor::MaterializeByTiles(
     LogicalTile *source_tile,
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
     const std::unordered_map<storage::Tile *, std::vector<oid_t> > &
-        tile_to_cols,
+    tile_to_cols,
     storage::Tile *dest_tile) {
   // Copy over all data from each base tile.
+
   for (const auto &kv : tile_to_cols) {
     const std::vector<oid_t> &old_column_ids = kv.second;
 
@@ -96,10 +98,76 @@ void MaterializationExecutor::MaterializeByTiles(
       // Copy all values in the column to the physical tile
       for (oid_t old_tuple_id : *source_tile) {
         peloton::Value value = source_tile->GetValue(old_tuple_id, old_col_id);
+        LOG_TRACE("Old Tuple : %u Column : %u \n", old_tuple_id, old_col_id);
+        LOG_TRACE("New Tuple : %u Column : %u \n", new_tuple_id, new_col_id);
         dest_tile->SetValue(value, new_tuple_id++, new_col_id);
       }
+
     }
   }
+
+}
+
+std::unordered_map<oid_t, oid_t> MaterializationExecutor::BuildIdentityMapping(
+    const catalog::Schema *schema) {
+  std::unordered_map<oid_t, oid_t> old_to_new_cols;
+  oid_t column_count = schema->GetColumnCount();
+  for (oid_t col = 0; col < column_count; col++) {
+    old_to_new_cols[col] = col;
+  }
+
+  return old_to_new_cols;
+}
+
+/**
+ * @brief Create a physical tile for the given logical tile
+ * @param source_tile Source tile from which the physical tile is created
+ * @return a logical tile wrapper for the created physical tile
+ */
+LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
+  std::unique_ptr<catalog::Schema> source_tile_schema(
+      source_tile->GetPhysicalSchema());
+  const int num_tuples = source_tile->GetTupleCount();
+  const catalog::Schema *output_schema;
+  std::unordered_map<oid_t, oid_t> old_to_new_cols;
+  auto node = GetRawNode();
+
+  // Create a default identity mapping node if we did not get one
+  if (node == nullptr) {
+    assert(source_tile_schema.get());
+    output_schema = source_tile_schema.get();
+
+    old_to_new_cols = BuildIdentityMapping(output_schema);
+  }
+  // Else use the mapping in the given plan node
+  else {
+    const planner::MaterializationNode &node = GetPlanNode<
+        planner::MaterializationNode>();
+    if (node.GetSchema()) {
+      output_schema = node.GetSchema();
+      old_to_new_cols = node.old_to_new_cols();
+    } else {
+      output_schema = source_tile_schema.get();
+      old_to_new_cols = BuildIdentityMapping(output_schema);
+    }
+  }
+
+  // Generate mappings.
+  std::unordered_map<storage::Tile *, std::vector<oid_t> > tile_to_cols;
+  GenerateTileToColMap(old_to_new_cols, source_tile, tile_to_cols);
+
+  // Create new physical tile.
+  std::unique_ptr<storage::Tile> dest_tile(
+      storage::TileFactory::GetTempTile(*output_schema, num_tuples));
+
+  // Proceed to materialize logical tile by physical tile at a time.
+  MaterializeByTiles(source_tile, old_to_new_cols, tile_to_cols,
+                     dest_tile.get());
+
+  bool own_base_tile = true;
+
+  // Wrap physical tile in logical tile.
+  return LogicalTileFactory::WrapTiles( { dest_tile.release() }, own_base_tile);
 }
 
 /**
@@ -116,8 +184,7 @@ bool MaterializationExecutor::DExecute() {
   }
 
   std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
-  std::unique_ptr<catalog::Schema> source_tile_schema(
-      source_tile.get()->GetPhysicalSchema());
+  LogicalTile *output_tile = nullptr;
 
   // Check the number of tuples in input logical tile
   // If none, then just return false
@@ -126,43 +193,24 @@ bool MaterializationExecutor::DExecute() {
     return false;
   }
 
-  std::unordered_map<oid_t, oid_t> old_to_new_cols;
-  const catalog::Schema *output_schema;
   auto node = GetRawNode();
+  bool physify_flag = true;  // by default, we create a physical tile
 
-  // Create a default identity mapping node if we did not get one
-  if (node == nullptr) {
-    assert(source_tile_schema.get());
-    output_schema = source_tile_schema.get();
-    oid_t column_count = output_schema->GetColumnCount();
-    for (oid_t col = 0; col < column_count; col++) {
-      old_to_new_cols[col] = col;
-    }
-  }
-  // Else use the mapping in the given plan node
-  else {
-    const planner::MaterializationNode &node =
-        GetPlanNode<planner::MaterializationNode>();
-    old_to_new_cols = node.old_to_new_cols();
-    output_schema = node.GetSchema();
+  if (node != nullptr) {
+    const planner::MaterializationNode &node = GetPlanNode<
+        planner::MaterializationNode>();
+    physify_flag = node.GetPhysifyFlag();
   }
 
-  // Generate mappings.
-  std::unordered_map<storage::Tile *, std::vector<oid_t> > tile_to_cols;
-  GenerateTileToColMap(old_to_new_cols, source_tile.get(), tile_to_cols);
+  if (physify_flag) {
+    /* create a physical tile and a logical tile wrapper to be the output */
+    output_tile = Physify(source_tile.get());
+  } else {
+    /* just pass thru the underlying logical tile */
+    output_tile = source_tile.release();
+  }
 
-  // Create new physical tile.
-  std::unique_ptr<storage::Tile> dest_tile(
-      storage::TileFactory::GetTempTile(*output_schema, num_tuples));
-
-  // Proceed to materialize logical tile by physical tile at a time.
-  MaterializeByTiles(source_tile.get(), old_to_new_cols, tile_to_cols,
-                     dest_tile.get());
-
-  // Wrap physical tile in logical tile.
-  bool own_base_tile = true;
-  SetOutput(
-      LogicalTileFactory::WrapTiles({dest_tile.release()}, own_base_tile));
+  SetOutput(output_tile);
 
   return true;
 }

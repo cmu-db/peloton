@@ -908,6 +908,123 @@ RemoveRelations(DropStmt *drop)
 	free_object_addresses(objects);
 }
 
+//TODO :: Peloton Changes
+void
+PelotonRemoveRelations(DropStmt *drop)
+{
+	ObjectAddresses *objects;
+	char		relkind;
+	ListCell   *cell;
+	int			flags = 0;
+	LOCKMODE	lockmode = AccessExclusiveLock;
+
+	/* DROP CONCURRENTLY uses a weaker lock, and has some restrictions */
+	if (drop->concurrent)
+	{
+		flags |= PERFORM_DELETION_CONCURRENTLY;
+		lockmode = ShareUpdateExclusiveLock;
+		Assert(drop->removeType == OBJECT_INDEX);
+		if (list_length(drop->objects) != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("DROP INDEX CONCURRENTLY does not support dropping multiple objects")));
+		if (drop->behavior == DROP_CASCADE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("DROP INDEX CONCURRENTLY does not support CASCADE")));
+	}
+
+	/*
+	 * First we identify all the relations, then we delete them in a single
+	 * performMultipleDeletions() call.  This is to avoid unwanted DROP
+	 * RESTRICT errors if one of the relations depends on another.
+	 */
+
+	/* Determine required relkind */
+	switch (drop->removeType)
+	{
+		case OBJECT_TABLE:
+			relkind = RELKIND_RELATION;
+			break;
+
+		case OBJECT_INDEX:
+			relkind = RELKIND_INDEX;
+			break;
+
+		case OBJECT_SEQUENCE:
+			relkind = RELKIND_SEQUENCE;
+			break;
+
+		case OBJECT_VIEW:
+			relkind = RELKIND_VIEW;
+			break;
+
+		case OBJECT_MATVIEW:
+			relkind = RELKIND_MATVIEW;
+			break;
+
+		case OBJECT_FOREIGN_TABLE:
+			relkind = RELKIND_FOREIGN_TABLE;
+			break;
+
+		default:
+			elog(ERROR, "unrecognized drop object type: %d",
+				 (int) drop->removeType);
+			relkind = 0;		/* keep compiler quiet */
+			break;
+	}
+
+	/* Lock and validate each relation; build a list of object addresses */
+	objects = new_object_addresses();
+
+	foreach(cell, drop->objects)
+	{
+		RangeVar   *rel = makeRangeVarFromNameList((List *) lfirst(cell));
+		Oid			relOid;
+		ObjectAddress obj;
+		struct DropRelationCallbackState state;
+
+		/*
+		 * These next few steps are a great deal like relation_openrv, but we
+		 * don't bother building a relcache entry since we don't need it.
+		 *
+		 * Check for shared-cache-inval messages before trying to access the
+		 * relation.  This is needed to cover the case where the name
+		 * identifies a rel that has been dropped and recreated since the
+		 * start of our transaction: if we don't flush the old syscache entry,
+		 * then we'll latch onto that entry and suffer an error later.
+		 */
+		AcceptInvalidationMessages();
+
+		/* Look up the appropriate relation using namescpace___ search. */
+		state.relkind = relkind;
+		state.heapOid = InvalidOid;
+		state.concurrent = drop->concurrent;
+		relOid = RangeVarGetRelidExtended(rel, lockmode, true,
+										  false,
+										  RangeVarCallbackForDropRelation,
+										  (void *) &state);
+
+		/* Not there? */
+		if (!OidIsValid(relOid))
+		{
+			DropErrorMsgNonExistent(rel, relkind, drop->missing_ok);
+			continue;
+		}
+
+		/* OK, we're ready to delete this one */
+		obj.classId = RelationRelationId;
+		obj.objectId = relOid;
+		obj.objectSubId = 0;
+
+		add_exact_object_address(&obj, objects);
+	}
+
+	peloton_performMultipleDeletions(objects, drop->behavior, flags);
+
+	free_object_addresses(objects);
+}
+
 /*
  * Before acquiring a table lock, check whether we have sufficient rights.
  * In the case of DROP INDEX, also try to lock the table before the index.

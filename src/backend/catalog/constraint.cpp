@@ -19,10 +19,14 @@ namespace catalog {
 std::ostream& operator<<(std::ostream& os, const Constraint& constraint) {
   os << "\tCONSTRAINT ";
 
-  os << constraint.GetName() << " "
-     << ConstraintTypeToString(constraint.constraint_type) << "\n";
+  os << constraint.GetName() << " ";
+  os << ConstraintTypeToString(constraint.constraint_type);
+  
+  if( constraint.GetType() == CONSTRAINT_TYPE_DEFAULT){
+    os << " Default expression : " << nodeToString(constraint.expr);
+  }
 
-  os << "\n";
+  os << "\n\n";
 
   return os;
 }
