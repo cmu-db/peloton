@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * bridge_test_helper.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/tests/bridge/bridge_test_helper.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// bridge_test_helper.cpp
+//
+// Identification: src/backend/bridge/ddl/tests/bridge_test_helper.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "bridge_test.h"
 
@@ -24,8 +24,6 @@
 #include "parser/parse_utilcmd.h"
 #include "catalog/pg_class.h"
 #include "commands/tablecmds.h"
-
-
 
 namespace peloton {
 namespace bridge {
@@ -59,7 +57,7 @@ std::vector<catalog::Column> BridgeTest::CreateSimpleColumns() {
  * @param type valueType to be compared with column's valueType
  * @return the true if we pass all
  */
-bool BridgeTest::CheckColumn(catalog::Column& column, std::string column_name,
+bool BridgeTest::CheckColumn(catalog::Column &column, std::string column_name,
                              int length, ValueType type) {
   assert(strcmp(column.GetName().c_str(), column_name.c_str()) == 0);
   assert(column.GetLength() == length);
@@ -79,7 +77,7 @@ bool BridgeTest::CheckColumn(catalog::Column& column, std::string column_name,
  * constraint count
  * @return the true if we pass all
  */
-bool BridgeTest::CheckColumnWithConstraint(catalog::Column& column,
+bool BridgeTest::CheckColumnWithConstraint(catalog::Column &column,
                                            ConstraintType constraint_type,
                                            std::string constraint_name,
                                            int constraint_count,
@@ -109,7 +107,7 @@ bool BridgeTest::CheckColumnWithConstraint(catalog::Column& column,
  * @param unique unique key to be compared with index's unique
  * @return the true if we pass all
  */
-bool BridgeTest::CheckIndex(index::Index* index, std::string index_name,
+bool BridgeTest::CheckIndex(index::Index *index, std::string index_name,
                             oid_t column_count, IndexType method_type,
                             IndexConstraintType constraint_type, bool unique) {
   assert(strcmp(index->GetName().c_str(), index_name.c_str()) == 0);
@@ -135,7 +133,7 @@ bool BridgeTest::CheckIndex(index::Index* index, std::string index_name,
  * key's delete action
  * @return the true if we pass all
  */
-bool BridgeTest::CheckForeignKey(catalog::ForeignKey* foreign_key,
+bool BridgeTest::CheckForeignKey(catalog::ForeignKey *foreign_key,
                                  oid_t pktable_oid, std::string constraint_name,
                                  int pk_column_names_count,
                                  int fk_column_names_count,
@@ -166,7 +164,7 @@ void BridgeTest::CreateSamplePrimaryKeyIndex(std::string table_name,
   bool status;
   std::vector<std::string> key_column_names;
   key_column_names.push_back("name");
-  IndexInfo* index_info;
+  IndexInfo *index_info;
 
   index_info = new IndexInfo(
       table_name + "_pkey", index_oid, table_name, INDEX_TYPE_BTREE,
@@ -186,11 +184,11 @@ void BridgeTest::CreateSampleUniqueIndex(std::string table_name,
   bool status;
   std::vector<std::string> key_column_names;
   key_column_names.push_back("time");
-  IndexInfo* index_info;
+  IndexInfo *index_info;
 
-  index_info = new IndexInfo(
-      table_name + "_key", index_oid, table_name, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_UNIQUE, true, key_column_names);
+  index_info = new IndexInfo(table_name + "_key", index_oid, table_name,
+                             INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_UNIQUE,
+                             true, key_column_names);
 
   status = DDLIndex::CreateIndex(*index_info);
   assert(status);
@@ -205,7 +203,7 @@ void BridgeTest::CreateSampleUniqueIndex(std::string table_name,
  */
 void BridgeTest::CreateSampleForeignKey(oid_t pktable_oid,
                                         std::string pktable_name,
-                                        std::vector<catalog::Column>& columns,
+                                        std::vector<catalog::Column> &columns,
                                         oid_t table_oid) {
   bool status;
   // Create a sample table that has primary key index
@@ -217,7 +215,7 @@ void BridgeTest::CreateSampleForeignKey(oid_t pktable_oid,
   pk_column_names.push_back("name");
   fk_column_names.push_back("salary");
   std::vector<catalog::ForeignKey> foreign_keys;
-  catalog::ForeignKey* foreign_key =
+  catalog::ForeignKey *foreign_key =
       new catalog::ForeignKey(pktable_oid, pk_column_names, fk_column_names,
                               'r', 'c', "THIS_IS_FOREIGN_CONSTRAINT");
   foreign_keys.push_back(*foreign_key);
@@ -229,39 +227,37 @@ void BridgeTest::CreateSampleForeignKey(oid_t pktable_oid,
 
 /**
  * @brief Create a table in Postgres
- * @params table_name table name 
+ * @params table_name table name
  * @return table_oid
  */
-oid_t BridgeTest::CreateTableInPostgres(std::string table_name){
-
-  std::string queryString = "create table " + table_name +"(id int, name char(64), time timestamp, salary double precision);";
+oid_t BridgeTest::CreateTableInPostgres(std::string table_name) {
+  std::string queryString =
+      "create table " + table_name +
+      "(id int, name char(64), time timestamp, salary double precision);";
 
   ObjectAddress address;
-  List	   *parsetree_list;
-  ListCell*  parsetree_item;
+  List *parsetree_list;
+  ListCell *parsetree_item;
 
   Bridge::PelotonStartTransactionCommand();
 
   parsetree_list = pg_parse_query(queryString.c_str());
-  foreach(parsetree_item, parsetree_list)
-  {
-    Node	   *parsetree = (Node *) lfirst(parsetree_item);
+  foreach (parsetree_item, parsetree_list) {
+    Node *parsetree = (Node *)lfirst(parsetree_item);
 
-    List     *stmts;
+    List *stmts;
     /* Run parse analysis ... */
-    stmts = transformCreateStmt((CreateStmt *) parsetree,
-        queryString.c_str());
+    stmts = transformCreateStmt((CreateStmt *)parsetree, queryString.c_str());
 
     /* ... and do it */
-    ListCell   *l;
-    foreach(l, stmts){
-      Node     *stmt = (Node *) lfirst(l);
+    ListCell *l;
+    foreach (l, stmts) {
+      Node *stmt = (Node *)lfirst(l);
 
-      if (IsA(stmt, CreateStmt)){
+      if (IsA(stmt, CreateStmt)) {
         /* Create the table itself */
-        address = DefineRelation((CreateStmt *) stmt,
-            RELKIND_RELATION,
-            InvalidOid, NULL);
+        address = DefineRelation((CreateStmt *)stmt, RELKIND_RELATION,
+                                 InvalidOid, NULL);
       }
     }
   }
@@ -273,25 +269,22 @@ oid_t BridgeTest::CreateTableInPostgres(std::string table_name){
 
 /**
  * @brief Drop the table in Postgres
- * @params table_name table name 
- * @return true if we drop the table 
+ * @params table_name table name
+ * @return true if we drop the table
  */
-bool BridgeTest::DropTableInPostgres(std::string table_name){
-
+bool BridgeTest::DropTableInPostgres(std::string table_name) {
   Bridge::PelotonStartTransactionCommand();
- 
-  std::string queryString = "drop table " + table_name +";";
 
-  List	   *parsetree_list;
-  ListCell*  parsetree_item;
+  std::string queryString = "drop table " + table_name + ";";
 
+  List *parsetree_list;
+  ListCell *parsetree_item;
 
   parsetree_list = pg_parse_query(queryString.c_str());
-  foreach(parsetree_item, parsetree_list)
-  {
-    Node	   *parsetree = (Node *) lfirst(parsetree_item);
+  foreach (parsetree_item, parsetree_list) {
+    Node *parsetree = (Node *)lfirst(parsetree_item);
 
-    DropStmt   *stmt = (DropStmt *) parsetree;
+    DropStmt *stmt = (DropStmt *)parsetree;
 
     // Since Postgres requires many functions to remove the relation, sometimes
     // it incurs event cache look up problems. This wrapper function simply
@@ -304,6 +297,5 @@ bool BridgeTest::DropTableInPostgres(std::string table_name){
   return true;
 }
 
-
-} // End test namespace
-} // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace

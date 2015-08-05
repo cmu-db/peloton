@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// tuple_value_expression.h
+//
+// Identification: src/backend/expression/tuple_value_expression.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include "backend/expression/abstract_expression.h"
@@ -45,7 +57,8 @@ class TupleValueExpression : public AbstractExpression,
 
   std::string DebugInfo(const std::string &spacer) const {
     std::ostringstream buffer;
-    buffer << spacer + "TupleValueReference[" << this->tuple_idx << " , " << this->value_idx << "]\n";
+    buffer << spacer + "TupleValueReference[" << this->tuple_idx << " , "
+           << this->value_idx << "]\n";
     return (buffer.str());
   }
 

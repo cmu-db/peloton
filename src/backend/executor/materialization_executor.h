@@ -1,8 +1,14 @@
-/**
- * @brief Header file for materialization executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// materialization_executor.h
+//
+// Identification: src/backend/executor/materialization_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -46,19 +52,18 @@ class MaterializationExecutor : public AbstractExecutor {
   void GenerateTileToColMap(
       const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
       LogicalTile *source_tile,
-      std::unordered_map<storage::Tile *, std::vector<oid_t> > &tile_to_cols);
+      std::unordered_map<storage::Tile *, std::vector<oid_t>> &tile_to_cols);
 
   void MaterializeByTiles(
       LogicalTile *source_tile,
       const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-      const std::unordered_map<storage::Tile *, std::vector<oid_t> > &
+      const std::unordered_map<storage::Tile *, std::vector<oid_t>> &
           tile_to_cols,
       storage::Tile *dest_tile);
 
   LogicalTile *Physify(LogicalTile *source_tile);
-  std::unordered_map<oid_t, oid_t> BuildIdentityMapping(const catalog::Schema *schema);
-
-
+  std::unordered_map<oid_t, oid_t> BuildIdentityMapping(
+      const catalog::Schema *schema);
 };
 
 }  // namespace executor
