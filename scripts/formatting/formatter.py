@@ -84,11 +84,11 @@ def format_file(file_path, add_header, strip_header, clang_format_code):
 		file_data = fd.read()
 		
 		if add_header:
-			header_comment_2 = line_3 + file_name + "\n"
-			header_comment_4 = line_5 + rel_path_from_peloton_dir + "\n"
+			header_comment_2 = header_comment_line_3 + file_name + "\n"
+			header_comment_4 = header_comment_line_5 + rel_path_from_peloton_dir + "\n"
 			header_comment = header_comment_1 + header_comment_2 + header_comment_3 \
 						+ header_comment_4 + header_comment_5
-			print header_comment
+			#print header_comment
 
 			new_file_data = header_comment + file_data
 		
@@ -110,8 +110,7 @@ def format_file(file_path, add_header, strip_header, clang_format_code):
 			fd.truncate()
 			fd.write(new_file_data)
 				
-
-		elif format_code:
+		elif clang_format_code:
 			formatting_command = "clang-format-3.6 -i " + file_path
 			LOG.info(formatting_command)
 			os.system(formatting_command)
