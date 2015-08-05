@@ -131,32 +131,11 @@ class Index {
   virtual ItemPointer Exists(const storage::Tuple *key,
                              const ItemPointer location)= 0;
 
-  // scan all keys in the index
-  virtual std::vector<ItemPointer> Scan() = 0;
-
-  // get the locations of tuples matching given key
-  virtual std::vector<ItemPointer> GetLocationsForKey(
-      const storage::Tuple *key) = 0;
-
-  // get the locations of tuples whose key is between given start and end keys
-  virtual std::vector<ItemPointer> GetLocationsForKeyBetween(
-      const storage::Tuple *start, const storage::Tuple *end) = 0;
-
-  // get the locations of tuples whose key is less than given key
-  virtual std::vector<ItemPointer> GetLocationsForKeyLT(
-      const storage::Tuple *key) = 0;
-
-  // get the locations of tuples whose key is less than or equal to given key
-  virtual std::vector<ItemPointer> GetLocationsForKeyLTE(
-      const storage::Tuple *key) = 0;
-
-  // get the locations of tuples whose key is greater than given key
-  virtual std::vector<ItemPointer> GetLocationsForKeyGT(
-      const storage::Tuple *key) = 0;
-
-  // get the locations of tuples whose key is greater than or equal to given key
-  virtual std::vector<ItemPointer> GetLocationsForKeyGTE(
-      const storage::Tuple *key) = 0;
+  // scan all keys in the index comparing with an arbitrary key
+  virtual std::vector<ItemPointer> Scan(
+      const std::vector<Value>& values,
+      const std::vector<oid_t>& key_column_ids,
+      const std::vector<ExpressionType>& exprs) = 0;
 
   //===--------------------------------------------------------------------===//
   // STATS
@@ -206,6 +185,18 @@ class Index {
 
  protected:
   Index(IndexMetadata *schema);
+
+  // Generic key comparator between index key and given arbitrary key
+  bool Compare(const storage::Tuple& index_key,
+               const std::vector<oid_t>& column_ids,
+               const std::vector<ExpressionType>& expr_types,
+               const std::vector<Value>& values);
+
+  // Set the lower bound tuple for index iteration
+  bool SetLowerBoundTuple(storage::Tuple *index_key,
+                          const std::vector<Value>& values,
+                          const std::vector<oid_t>& key_column_ids,
+                          const std::vector<ExpressionType>& expr_types);
 
   //===--------------------------------------------------------------------===//
   //  Data members

@@ -141,13 +141,6 @@ bool DDLTable::ExecDropStmt(Node* parsetree) {
     List* names = ((List*)lfirst(cell));
 
     switch (drop->removeType) {
-      case OBJECT_DATABASE: {
-        char* database_name = strVal(linitial(names));
-        Oid database_oid = get_database_oid(database_name, true);
-
-        DDLDatabase::DropDatabase(database_oid);
-      } break;
-
       case OBJECT_TABLE: {
         char* table_name = strVal(linitial(names));
 

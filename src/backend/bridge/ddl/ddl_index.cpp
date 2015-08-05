@@ -179,7 +179,11 @@ IndexInfo* DDLIndex::ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt) {
         type = INDEX_CONSTRAINT_TYPE_UNIQUE;
       }
     } else {
-      LOG_WARN("No index name");
+      index_name = table_name;
+      for (auto column_name : key_column_names) {
+        index_name += "_" + column_name + "_";
+      }
+      index_name += "idx";
     }
   } else {
     index_name = Istmt->idxname;

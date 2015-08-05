@@ -1091,7 +1091,8 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
   if(raw_database != NULL) {
     try {
       /* Process the utility statement */
-      peloton::bridge::Bootstrap::BootstrapPeloton(raw_database);
+      peloton::bridge::Bootstrap::BootstrapPeloton(raw_database,
+                                                   msg->m_status);
     }
     catch(const std::exception &exception) {
       elog(ERROR, "Peloton exception :: %s", exception.what());

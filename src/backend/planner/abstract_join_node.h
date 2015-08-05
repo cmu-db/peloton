@@ -14,9 +14,9 @@
 #include "backend/common/types.h"
 #include "backend/expression/abstract_expression.h"
 #include "backend/planner/abstract_plan_node.h"
+#include "backend/planner/project_info.h"
 
 namespace peloton {
-
 namespace planner {
 
 //===--------------------------------------------------------------------===//
@@ -31,8 +31,10 @@ class AbstractJoinPlanNode : public AbstractPlanNode {
   AbstractJoinPlanNode &operator=(AbstractJoinPlanNode &&) = delete;
 
   AbstractJoinPlanNode(PelotonJoinType joinType,
-                       expression::AbstractExpression *predicate)
-      : AbstractPlanNode(), joinType_(joinType), predicate_(predicate) {
+                       expression::AbstractExpression *predicate,
+                       const ProjectInfo *proj_info)
+      : AbstractPlanNode(), joinType_(joinType), predicate_(predicate),
+        proj_info_(proj_info) {
     // Fuck off!
   }
 
@@ -50,12 +52,19 @@ class AbstractJoinPlanNode : public AbstractPlanNode {
     return predicate_.get();
   }
 
+  const ProjectInfo *GetProjInfo() const {
+    return proj_info_.get();
+  }
+
  private:
   /** @brief The type of join that we're going to perform */
   PelotonJoinType joinType_;
 
   /** @brief Join predicate. */
   const std::unique_ptr<expression::AbstractExpression> predicate_;
+
+  /** @brief Projection info */
+  std::unique_ptr<const ProjectInfo> proj_info_;
 };
 
 }  // namespace planner
