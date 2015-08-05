@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/catalog/manager.h"
@@ -26,7 +25,7 @@ namespace storage {
  * Super Awesome TileGroupFactory!!
  */
 class TileGroupFactory {
-public:
+ public:
   TileGroupFactory();
   virtual ~TileGroupFactory();
 
@@ -38,5 +37,5 @@ public:
                                  int tuple_count);
 };
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

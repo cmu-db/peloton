@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <iterator>
@@ -46,7 +45,7 @@ namespace executor {
 class LogicalTile {
   friend class LogicalTileFactory;
 
-public:
+ public:
   struct ColumnInfo;
 
   LogicalTile(const LogicalTile &) = delete;
@@ -102,7 +101,7 @@ public:
     // It's a friend so it can call this iterator's private constructor.
     friend class LogicalTile;
 
-  public:
+   public:
     iterator &operator++();
 
     iterator operator++(int);
@@ -113,7 +112,7 @@ public:
 
     oid_t operator*();
 
-  private:
+   private:
     iterator(LogicalTile *tile, bool begin);
 
     /** @brief Keeps track of position of iterator. */
@@ -149,7 +148,7 @@ public:
     oid_t origin_column_id;
   };
 
-private:
+ private:
   // Dummy default constructor
   LogicalTile(){};
 
@@ -178,5 +177,5 @@ private:
   std::unordered_set<storage::Tile *> owned_base_tiles_;
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

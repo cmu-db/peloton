@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -30,7 +29,7 @@ class Schema;
 namespace planner {
 
 class MaterializationNode : public AbstractPlanNode {
-public:
+ public:
   MaterializationNode(const MaterializationNode &) = delete;
   MaterializationNode &operator=(const MaterializationNode &) = delete;
   MaterializationNode(MaterializationNode &&) = delete;
@@ -38,7 +37,8 @@ public:
 
   MaterializationNode(const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
                       catalog::Schema *schema, bool physify_flag)
-      : old_to_new_cols_(old_to_new_cols), schema_(schema),
+      : old_to_new_cols_(old_to_new_cols),
+        schema_(schema),
         physify_flag_(physify_flag) {}
 
   MaterializationNode(bool physify_flag)
@@ -46,8 +46,7 @@ public:
 
   ~MaterializationNode() {
     // Clean up schema
-    if (schema_)
-      delete schema_;
+    if (schema_) delete schema_;
   }
 
   inline const std::unordered_map<oid_t, oid_t> &old_to_new_cols() const {
@@ -64,7 +63,7 @@ public:
 
   inline std::string GetInfo() const { return "Materialize"; }
 
-private:
+ private:
   /**
    * @brief Mapping of old column ids to new column ids after materialization.
    */
@@ -80,5 +79,5 @@ private:
   bool physify_flag_;
 };
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

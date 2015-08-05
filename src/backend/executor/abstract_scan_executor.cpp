@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/abstract_scan_executor.h"
 
 #include <memory>
@@ -57,5 +56,5 @@ bool AbstractScanExecutor::DInit() {
   return true;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/planner/materialization_node.h"
 
@@ -25,13 +24,12 @@ namespace bridge {
  * @brief Convert a Postgres Material into a Peloton Materialization node
  * @return Pointer to the constructed AbstractPlanNode.
  */
-planner::AbstractPlanNode *
-PlanTransformer::TransformMaterialization(const MaterialState *plan_state) {
-
+planner::AbstractPlanNode *PlanTransformer::TransformMaterialization(
+    const MaterialState *plan_state) {
   PlanState *outer_plan_state = outerPlanState(plan_state);
   planner::AbstractPlanNode *child = TransformPlan(outer_plan_state);
   bool physify_flag =
-      false; // current, we just pass the underlying plan node for this case
+      false;  // current, we just pass the underlying plan node for this case
 
   planner::AbstractPlanNode *plan_node =
       new planner::MaterializationNode(physify_flag);
@@ -40,5 +38,5 @@ PlanTransformer::TransformMaterialization(const MaterialState *plan_state) {
   return plan_node;
 }
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

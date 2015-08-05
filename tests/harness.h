@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -54,5 +53,5 @@ void LaunchParallelTest(uint64_t num_threads, Args &&... args) {
 
 inline oid_t GetNextTileGroupId() { return ++tile_group_id_counter; }
 
-} // End test namespace
-} // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace

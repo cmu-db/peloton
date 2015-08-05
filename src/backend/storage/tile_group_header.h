@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/storage/abstract_backend.h"
@@ -47,10 +46,13 @@ namespace storage {
 class TileGroupHeader {
   TileGroupHeader() = delete;
 
-public:
+ public:
   TileGroupHeader(AbstractBackend *_backend, int tuple_count)
-      : backend(_backend), data(nullptr), num_tuple_slots(tuple_count),
-        next_tuple_slot(0), active_tuple_slots(0) {
+      : backend(_backend),
+        data(nullptr),
+        num_tuple_slots(tuple_count),
+        next_tuple_slot(0),
+        active_tuple_slots(0) {
     header_size = num_tuple_slots * header_entry_size;
 
     // allocate storage space for header
@@ -60,8 +62,7 @@ public:
 
   TileGroupHeader &operator=(const peloton::storage::TileGroupHeader &other) {
     // check for self-assignment
-    if (&other == this)
-      return *this;
+    if (&other == this) return *this;
 
     backend = other.backend;
     header_size = other.header_size;
@@ -222,7 +223,7 @@ public:
   friend std::ostream &operator<<(std::ostream &os,
                                   const TileGroupHeader &tile_group_header);
 
-private:
+ private:
   // header entry size is the size of the layout described above
   static const size_t header_entry_size =
       sizeof(txn_id_t) + 2 * sizeof(cid_t) + sizeof(ItemPointer);
@@ -255,5 +256,5 @@ private:
   std::mutex tile_header_mutex;
 };
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

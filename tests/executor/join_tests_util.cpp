@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "executor/join_tests_util.h"
 
 #include "backend/common/types.h"
@@ -25,8 +24,7 @@ bool JoinTestsUtil::ExecuteJoinTest(storage::DataTable *leftTable,
                                     storage::DataTable *expected,
                                     PelotonJoinType joinType,
                                     expression::AbstractExpression *predicate) {
-
-  storage::DataTable *result; // FIXME
+  storage::DataTable *result;  // FIXME
 
   // Do a tuple-by-tuple comparison
   //     TupleIterator leftItr(&tile);
@@ -40,5 +38,5 @@ bool JoinTestsUtil::ExecuteJoinTest(storage::DataTable *leftTable,
   return (true);
 }
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

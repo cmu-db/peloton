@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <unordered_map>
@@ -86,5 +85,5 @@ std::unordered_map<Oid, ExpressionType> pg_func_map({
 
 });
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/catalog/manager.h"
 #include "gtest/gtest.h"
 
@@ -70,5 +69,5 @@ TEST(ManagerTests, TransactionTest) {
   EXPECT_EQ(catalog::Manager::GetInstance().GetCurrentOid(), 800);
 }
 
-} // End test namespace
-} // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace

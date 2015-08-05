@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 namespace peloton {
@@ -19,8 +18,9 @@ namespace peloton {
 // Iterator Interface
 //===--------------------------------------------------------------------===//
 
-template <class T> class Iterator {
-public:
+template <class T>
+class Iterator {
+ public:
   virtual bool Next(T &out) = 0;
 
   virtual bool HasNext() = 0;
@@ -28,4 +28,4 @@ public:
   virtual ~Iterator() {}
 };
 
-} // End peloton namespace
+}  // End peloton namespace

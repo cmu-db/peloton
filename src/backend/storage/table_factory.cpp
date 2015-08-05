@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/storage/table_factory.h"
 
 #include "backend/common/exception.h"
@@ -45,12 +44,11 @@ bool TableFactory::DropDataTable(oid_t database_oid, oid_t table_oid) {
   DataTable *table =
       (DataTable *)manager.GetTableWithOid(database_oid, table_oid);
 
-  if (table == nullptr)
-    return false;
+  if (table == nullptr) return false;
 
   delete table;
   return true;
 }
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

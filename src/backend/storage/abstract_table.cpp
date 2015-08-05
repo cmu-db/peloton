@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/storage/abstract_table.h"
 
 #include "backend/common/exception.h"
@@ -26,7 +25,9 @@ namespace storage {
 
 AbstractTable::AbstractTable(oid_t table_oid, std::string table_name,
                              catalog::Schema *schema)
-    : table_oid(table_oid), database_oid(INVALID_OID), table_name(table_name),
+    : table_oid(table_oid),
+      database_oid(INVALID_OID),
+      table_name(table_name),
       schema(schema) {}
 
 AbstractTable::~AbstractTable() {
@@ -34,5 +35,5 @@ AbstractTable::~AbstractTable() {
   delete schema;
 }
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

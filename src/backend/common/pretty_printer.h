@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/storage/tuple.h"
@@ -27,7 +26,7 @@ class PrettyPrinter {
   PrettyPrinter(const PrettyPrinter &) = delete;
   PrettyPrinter &operator=(const PrettyPrinter &) = delete;
 
-public:
+ public:
   // pretty print tuple pointers
   static void PrintTuple(storage::Tuple *source) {
     if (source != nullptr)
@@ -53,4 +52,4 @@ public:
   }
 };
 
-} // End peloton namespace
+}  // End peloton namespace

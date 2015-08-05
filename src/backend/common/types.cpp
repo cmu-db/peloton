@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/common/types.h"
 #include "backend/common/exception.h"
 
@@ -28,29 +27,29 @@ ItemPointer INVALID_ITEMPOINTER;
 /// Works only for fixed-length types
 std::size_t GetTypeSize(ValueType type) {
   switch (type) {
-  case (VALUE_TYPE_TINYINT):
-    return 1;
-  case (VALUE_TYPE_SMALLINT):
-    return 2;
-  case (VALUE_TYPE_INTEGER):
-    return 4;
-  case (VALUE_TYPE_BIGINT):
-    return 8;
-  case (VALUE_TYPE_DOUBLE):
-    return 8;
-  case (VALUE_TYPE_VARCHAR):
-    return 0;
-  case (VALUE_TYPE_VARBINARY):
-    return 0;
-  case (VALUE_TYPE_TIMESTAMP):
-    return 8;
-  case (VALUE_TYPE_DECIMAL):
-    return 0;
-  case (VALUE_TYPE_INVALID):
-    return 0;
-  case (VALUE_TYPE_NULL):
-    return 0;
-  default: { return 0; }
+    case (VALUE_TYPE_TINYINT):
+      return 1;
+    case (VALUE_TYPE_SMALLINT):
+      return 2;
+    case (VALUE_TYPE_INTEGER):
+      return 4;
+    case (VALUE_TYPE_BIGINT):
+      return 8;
+    case (VALUE_TYPE_DOUBLE):
+      return 8;
+    case (VALUE_TYPE_VARCHAR):
+      return 0;
+    case (VALUE_TYPE_VARBINARY):
+      return 0;
+    case (VALUE_TYPE_TIMESTAMP):
+      return 8;
+    case (VALUE_TYPE_DECIMAL):
+      return 0;
+    case (VALUE_TYPE_INVALID):
+      return 0;
+    case (VALUE_TYPE_NULL):
+      return 0;
+    default: { return 0; }
   }
 }
 
@@ -61,17 +60,17 @@ std::string BackendTypeToString(BackendType type) {
   std::string ret;
 
   switch (type) {
-  case (BACKEND_TYPE_VM):
-    return "VOLATILE";
-  case (BACKEND_TYPE_NVM):
-    return "NON-VOLATILE";
-  case (BACKEND_TYPE_INVALID):
-    return "INVALID";
-  default: {
-    char buffer[32];
-    ::snprintf(buffer, 32, "UNKNOWN[%d] ", type);
-    ret = buffer;
-  }
+    case (BACKEND_TYPE_VM):
+      return "VOLATILE";
+    case (BACKEND_TYPE_NVM):
+      return "NON-VOLATILE";
+    case (BACKEND_TYPE_INVALID):
+      return "INVALID";
+    default: {
+      char buffer[32];
+      ::snprintf(buffer, 32, "UNKNOWN[%d] ", type);
+      ret = buffer;
+    }
   }
   return (ret);
 }
@@ -93,30 +92,30 @@ BackendType StringToBackendType(std::string str) {
 
 std::string ValueTypeToString(ValueType type) {
   switch (type) {
-  case VALUE_TYPE_INVALID:
-    return "INVALID";
-  case VALUE_TYPE_NULL:
-    return "NULL";
-  case VALUE_TYPE_TINYINT:
-    return "TINYINT";
-  case VALUE_TYPE_SMALLINT:
-    return "SMALLINT";
-  case VALUE_TYPE_INTEGER:
-    return "INTEGER";
-  case VALUE_TYPE_BIGINT:
-    return "BIGINT";
-  case VALUE_TYPE_DOUBLE:
-    return "FLOAT";
-  case VALUE_TYPE_VARCHAR:
-    return "VARCHAR";
-  case VALUE_TYPE_VARBINARY:
-    return "VARBINARY";
-  case VALUE_TYPE_TIMESTAMP:
-    return "TIMESTAMP";
-  case VALUE_TYPE_DECIMAL:
-    return "DECIMAL";
-  default:
-    return "INVALID";
+    case VALUE_TYPE_INVALID:
+      return "INVALID";
+    case VALUE_TYPE_NULL:
+      return "NULL";
+    case VALUE_TYPE_TINYINT:
+      return "TINYINT";
+    case VALUE_TYPE_SMALLINT:
+      return "SMALLINT";
+    case VALUE_TYPE_INTEGER:
+      return "INTEGER";
+    case VALUE_TYPE_BIGINT:
+      return "BIGINT";
+    case VALUE_TYPE_DOUBLE:
+      return "FLOAT";
+    case VALUE_TYPE_VARCHAR:
+      return "VARCHAR";
+    case VALUE_TYPE_VARBINARY:
+      return "VARBINARY";
+    case VALUE_TYPE_TIMESTAMP:
+      return "TIMESTAMP";
+    case VALUE_TYPE_DECIMAL:
+      return "DECIMAL";
+    default:
+      return "INVALID";
   }
 }
 
@@ -168,14 +167,12 @@ int32_t HexCharToInt(char c) {
 bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString) {
   assert(hexString);
   size_t len = strlen(hexString);
-  if ((len % 2) != 0)
-    return false;
+  if ((len % 2) != 0) return false;
   uint32_t i;
   for (i = 0; i < len / 2; i++) {
     int32_t high = HexCharToInt(hexString[i * 2]);
     int32_t low = HexCharToInt(hexString[i * 2 + 1]);
-    if ((high == -1) || (low == -1))
-      return false;
+    if ((high == -1) || (low == -1)) return false;
     int32_t result = high * 16 + low;
 
     assert(result >= 0 && result < 256);
@@ -190,114 +187,114 @@ bool HexDecodeToBinary(unsigned char *bufferdst, const char *hexString) {
 
 std::string ExpressionTypeToString(ExpressionType type) {
   switch (type) {
-  case EXPRESSION_TYPE_INVALID: {
-    return "INVALID";
-  }
-  case EXPRESSION_TYPE_OPERATOR_PLUS: {
-    return "OPERATOR_PLUS";
-  }
-  case EXPRESSION_TYPE_OPERATOR_MINUS: {
-    return "OPERATOR_MINUS";
-  }
-  case EXPRESSION_TYPE_OPERATOR_MULTIPLY: {
-    return "OPERATOR_MULTIPLY";
-  }
-  case EXPRESSION_TYPE_OPERATOR_DIVIDE: {
-    return "OPERATOR_DIVIDE";
-  }
-  case EXPRESSION_TYPE_OPERATOR_CONCAT: {
-    return "OPERATOR_CONCAT";
-  }
-  case EXPRESSION_TYPE_OPERATOR_MOD: {
-    return "OPERATOR_MOD";
-  }
-  case EXPRESSION_TYPE_OPERATOR_CAST: {
-    return "OPERATOR_CAST";
-  }
-  case EXPRESSION_TYPE_OPERATOR_NOT: {
-    return "OPERATOR_NOT";
-  }
-  case EXPRESSION_TYPE_OPERATOR_UNARY_MINUS: {
-    return "OPERATOR_UNARY_MINUS";
-  }
-  case EXPRESSION_TYPE_COMPARE_EQ: {
-    return "COMPARE_EQUAL";
-  }
-  case EXPRESSION_TYPE_COMPARE_NE: {
-    return "COMPARE_NOT_EQUAL";
-  }
-  case EXPRESSION_TYPE_COMPARE_LT: {
-    return "COMPARE_LESSTHAN";
-  }
-  case EXPRESSION_TYPE_COMPARE_GT: {
-    return "COMPARE_GREATERTHAN";
-  }
-  case EXPRESSION_TYPE_COMPARE_LTE: {
-    return "COMPARE_LESSTHANOREQUALTO";
-  }
-  case EXPRESSION_TYPE_COMPARE_GTE: {
-    return "COMPARE_GREATERTHANOREQUALTO";
-  }
-  case EXPRESSION_TYPE_COMPARE_LIKE: {
-    return "COMPARE_LIKE";
-  }
-  case EXPRESSION_TYPE_CONJUNCTION_AND: {
-    return "CONJUNCTION_AND";
-  }
-  case EXPRESSION_TYPE_CONJUNCTION_OR: {
-    return "CONJUNCTION_OR";
-  }
-  case EXPRESSION_TYPE_VALUE_CONSTANT: {
-    return "VALUE_CONSTANT";
-  }
-  case EXPRESSION_TYPE_VALUE_PARAMETER: {
-    return "VALUE_PARAMETER";
-  }
-  case EXPRESSION_TYPE_VALUE_TUPLE: {
-    return "VALUE_TUPLE";
-  }
-  case EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS: {
-    return "VALUE_TUPLE_ADDRESS";
-  }
-  case EXPRESSION_TYPE_VALUE_NULL: {
-    return "VALUE_NULL";
-  }
-  case EXPRESSION_TYPE_AGGREGATE_COUNT: {
-    return "AGGREGATE_COUNT";
-  }
-  case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR: {
-    return "AGGREGATE_COUNT_STAR";
-  }
-  case EXPRESSION_TYPE_AGGREGATE_SUM: {
-    return "AGGREGATE_SUM";
-  }
-  case EXPRESSION_TYPE_AGGREGATE_MIN: {
-    return "AGGREGATE_MIN";
-  }
-  case EXPRESSION_TYPE_AGGREGATE_MAX: {
-    return "AGGREGATE_MAX";
-  }
-  case EXPRESSION_TYPE_AGGREGATE_AVG: {
-    return "AGGREGATE_AVG";
-  }
-  case EXPRESSION_TYPE_AGGREGATE_WEIGHTED_AVG: {
-    return "AGGREGATE_WEIGHTED_AVG";
-  }
-  case EXPRESSION_TYPE_STAR: {
-    return "STAR";
-  }
-  case EXPRESSION_TYPE_PLACEHOLDER: {
-    return "PLACEHOLDER";
-  }
-  case EXPRESSION_TYPE_COLUMN_REF: {
-    return "COLUMN_REF";
-  }
-  case EXPRESSION_TYPE_FUNCTION_REF: {
-    return "FUNCTION_REF";
-  }
-  case EXPRESSION_TYPE_CAST: {
-    return "CAST";
-  }
+    case EXPRESSION_TYPE_INVALID: {
+      return "INVALID";
+    }
+    case EXPRESSION_TYPE_OPERATOR_PLUS: {
+      return "OPERATOR_PLUS";
+    }
+    case EXPRESSION_TYPE_OPERATOR_MINUS: {
+      return "OPERATOR_MINUS";
+    }
+    case EXPRESSION_TYPE_OPERATOR_MULTIPLY: {
+      return "OPERATOR_MULTIPLY";
+    }
+    case EXPRESSION_TYPE_OPERATOR_DIVIDE: {
+      return "OPERATOR_DIVIDE";
+    }
+    case EXPRESSION_TYPE_OPERATOR_CONCAT: {
+      return "OPERATOR_CONCAT";
+    }
+    case EXPRESSION_TYPE_OPERATOR_MOD: {
+      return "OPERATOR_MOD";
+    }
+    case EXPRESSION_TYPE_OPERATOR_CAST: {
+      return "OPERATOR_CAST";
+    }
+    case EXPRESSION_TYPE_OPERATOR_NOT: {
+      return "OPERATOR_NOT";
+    }
+    case EXPRESSION_TYPE_OPERATOR_UNARY_MINUS: {
+      return "OPERATOR_UNARY_MINUS";
+    }
+    case EXPRESSION_TYPE_COMPARE_EQ: {
+      return "COMPARE_EQUAL";
+    }
+    case EXPRESSION_TYPE_COMPARE_NE: {
+      return "COMPARE_NOT_EQUAL";
+    }
+    case EXPRESSION_TYPE_COMPARE_LT: {
+      return "COMPARE_LESSTHAN";
+    }
+    case EXPRESSION_TYPE_COMPARE_GT: {
+      return "COMPARE_GREATERTHAN";
+    }
+    case EXPRESSION_TYPE_COMPARE_LTE: {
+      return "COMPARE_LESSTHANOREQUALTO";
+    }
+    case EXPRESSION_TYPE_COMPARE_GTE: {
+      return "COMPARE_GREATERTHANOREQUALTO";
+    }
+    case EXPRESSION_TYPE_COMPARE_LIKE: {
+      return "COMPARE_LIKE";
+    }
+    case EXPRESSION_TYPE_CONJUNCTION_AND: {
+      return "CONJUNCTION_AND";
+    }
+    case EXPRESSION_TYPE_CONJUNCTION_OR: {
+      return "CONJUNCTION_OR";
+    }
+    case EXPRESSION_TYPE_VALUE_CONSTANT: {
+      return "VALUE_CONSTANT";
+    }
+    case EXPRESSION_TYPE_VALUE_PARAMETER: {
+      return "VALUE_PARAMETER";
+    }
+    case EXPRESSION_TYPE_VALUE_TUPLE: {
+      return "VALUE_TUPLE";
+    }
+    case EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS: {
+      return "VALUE_TUPLE_ADDRESS";
+    }
+    case EXPRESSION_TYPE_VALUE_NULL: {
+      return "VALUE_NULL";
+    }
+    case EXPRESSION_TYPE_AGGREGATE_COUNT: {
+      return "AGGREGATE_COUNT";
+    }
+    case EXPRESSION_TYPE_AGGREGATE_COUNT_STAR: {
+      return "AGGREGATE_COUNT_STAR";
+    }
+    case EXPRESSION_TYPE_AGGREGATE_SUM: {
+      return "AGGREGATE_SUM";
+    }
+    case EXPRESSION_TYPE_AGGREGATE_MIN: {
+      return "AGGREGATE_MIN";
+    }
+    case EXPRESSION_TYPE_AGGREGATE_MAX: {
+      return "AGGREGATE_MAX";
+    }
+    case EXPRESSION_TYPE_AGGREGATE_AVG: {
+      return "AGGREGATE_AVG";
+    }
+    case EXPRESSION_TYPE_AGGREGATE_WEIGHTED_AVG: {
+      return "AGGREGATE_WEIGHTED_AVG";
+    }
+    case EXPRESSION_TYPE_STAR: {
+      return "STAR";
+    }
+    case EXPRESSION_TYPE_PLACEHOLDER: {
+      return "PLACEHOLDER";
+    }
+    case EXPRESSION_TYPE_COLUMN_REF: {
+      return "COLUMN_REF";
+    }
+    case EXPRESSION_TYPE_FUNCTION_REF: {
+      return "FUNCTION_REF";
+    }
+    case EXPRESSION_TYPE_CAST: {
+      return "CAST";
+    }
   }
   return "INVALID";
 }
@@ -374,12 +371,12 @@ ExpressionType StringToExpressionType(std::string str) {
 
 std::string IndexTypeToString(IndexType type) {
   switch (type) {
-  case INDEX_TYPE_INVALID: {
-    return "INVALID";
-  }
-  case INDEX_TYPE_BTREE: {
-    return "BTREE";
-  }
+    case INDEX_TYPE_INVALID: {
+      return "INVALID";
+    }
+    case INDEX_TYPE_BTREE: {
+      return "BTREE";
+    }
   }
   return "INVALID";
 }
@@ -399,18 +396,18 @@ IndexType StringToIndexType(std::string str) {
 
 std::string IndexConstraintTypeToString(IndexConstraintType type) {
   switch (type) {
-  case INDEX_CONSTRAINT_TYPE_INVALID: {
-    return "INVALID";
-  }
-  case INDEX_CONSTRAINT_TYPE_DEFAULT: {
-    return "NORMAL";
-  }
-  case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY: {
-    return "PRIMARY_KEY";
-  }
-  case INDEX_CONSTRAINT_TYPE_UNIQUE: {
-    return "UNIQUE";
-  }
+    case INDEX_CONSTRAINT_TYPE_INVALID: {
+      return "INVALID";
+    }
+    case INDEX_CONSTRAINT_TYPE_DEFAULT: {
+      return "NORMAL";
+    }
+    case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY: {
+      return "PRIMARY_KEY";
+    }
+    case INDEX_CONSTRAINT_TYPE_UNIQUE: {
+      return "UNIQUE";
+    }
   }
   return "INVALID";
 }
@@ -433,78 +430,78 @@ IndexConstraintType StringToIndexConstraintType(std::string str) {
 
 std::string PlanNodeTypeToString(PlanNodeType type) {
   switch (type) {
-  case PLAN_NODE_TYPE_INVALID: {
-    return "INVALID";
-  }
-  case PLAN_NODE_TYPE_ABSTRACT_SCAN: {
-    return "ABSTRACT_SCAN";
-  }
-  case PLAN_NODE_TYPE_SEQSCAN: {
-    return "SEQSCAN";
-  }
-  case PLAN_NODE_TYPE_INDEXSCAN: {
-    return "INDEXSCAN";
-  }
-  case PLAN_NODE_TYPE_NESTLOOP: {
-    return "NESTLOOP";
-  }
-  case PLAN_NODE_TYPE_NESTLOOPINDEX: {
-    return "NESTLOOPINDEX";
-  }
-  case PLAN_NODE_TYPE_MERGEJOIN: {
-    return "MERGEJOIN";
-  }
-  case PLAN_NODE_TYPE_UPDATE: {
-    return "UPDATE";
-  }
-  case PLAN_NODE_TYPE_INSERT: {
-    return "DELETE";
-  }
-  case PLAN_NODE_TYPE_DELETE: {
-    return "DELETE";
-  }
-  case PLAN_NODE_TYPE_SEND: {
-    return "SEND";
-  }
-  case PLAN_NODE_TYPE_RECEIVE: {
-    return "RECEIVE";
-  }
-  case PLAN_NODE_TYPE_PRINT: {
-    return "PRINT";
-  }
-  case PLAN_NODE_TYPE_AGGREGATE: {
-    return "AGGREGATE";
-  }
-  case PLAN_NODE_TYPE_HASHAGGREGATE: {
-    return "HASHAGGREGATE";
-  }
-  case PLAN_NODE_TYPE_UNION: {
-    return "UNION";
-  }
-  case PLAN_NODE_TYPE_ORDERBY: {
-    return "RECEIVE";
-  }
-  case PLAN_NODE_TYPE_PROJECTION: {
-    return "PROJECTION";
-  }
-  case PLAN_NODE_TYPE_MATERIALIZE: {
-    return "MATERIALIZE";
-  }
-  case PLAN_NODE_TYPE_LIMIT: {
-    return "LIMIT";
-  }
-  case PLAN_NODE_TYPE_DISTINCT: {
-    return "DISTINCT";
-  }
-  case PLAN_NODE_TYPE_SETOP: {
-    return "SETOP";
-  }
-  case PLAN_NODE_TYPE_APPEND: {
-    return "APPEND";
-  }
-  case PLAN_NODE_TYPE_RESULT: {
-    return "RESULT";
-  }
+    case PLAN_NODE_TYPE_INVALID: {
+      return "INVALID";
+    }
+    case PLAN_NODE_TYPE_ABSTRACT_SCAN: {
+      return "ABSTRACT_SCAN";
+    }
+    case PLAN_NODE_TYPE_SEQSCAN: {
+      return "SEQSCAN";
+    }
+    case PLAN_NODE_TYPE_INDEXSCAN: {
+      return "INDEXSCAN";
+    }
+    case PLAN_NODE_TYPE_NESTLOOP: {
+      return "NESTLOOP";
+    }
+    case PLAN_NODE_TYPE_NESTLOOPINDEX: {
+      return "NESTLOOPINDEX";
+    }
+    case PLAN_NODE_TYPE_MERGEJOIN: {
+      return "MERGEJOIN";
+    }
+    case PLAN_NODE_TYPE_UPDATE: {
+      return "UPDATE";
+    }
+    case PLAN_NODE_TYPE_INSERT: {
+      return "DELETE";
+    }
+    case PLAN_NODE_TYPE_DELETE: {
+      return "DELETE";
+    }
+    case PLAN_NODE_TYPE_SEND: {
+      return "SEND";
+    }
+    case PLAN_NODE_TYPE_RECEIVE: {
+      return "RECEIVE";
+    }
+    case PLAN_NODE_TYPE_PRINT: {
+      return "PRINT";
+    }
+    case PLAN_NODE_TYPE_AGGREGATE: {
+      return "AGGREGATE";
+    }
+    case PLAN_NODE_TYPE_HASHAGGREGATE: {
+      return "HASHAGGREGATE";
+    }
+    case PLAN_NODE_TYPE_UNION: {
+      return "UNION";
+    }
+    case PLAN_NODE_TYPE_ORDERBY: {
+      return "RECEIVE";
+    }
+    case PLAN_NODE_TYPE_PROJECTION: {
+      return "PROJECTION";
+    }
+    case PLAN_NODE_TYPE_MATERIALIZE: {
+      return "MATERIALIZE";
+    }
+    case PLAN_NODE_TYPE_LIMIT: {
+      return "LIMIT";
+    }
+    case PLAN_NODE_TYPE_DISTINCT: {
+      return "DISTINCT";
+    }
+    case PLAN_NODE_TYPE_SETOP: {
+      return "SETOP";
+    }
+    case PLAN_NODE_TYPE_APPEND: {
+      return "APPEND";
+    }
+    case PLAN_NODE_TYPE_RESULT: {
+      return "RESULT";
+    }
   }
   return "INVALID";
 }
@@ -559,33 +556,33 @@ PlanNodeType StringToPlanNodeType(std::string str) {
 
 std::string ConstraintTypeToString(ConstraintType type) {
   switch (type) {
-  case CONSTRAINT_TYPE_INVALID: {
-    return "INVALID";
-  }
-  case CONSTRAINT_TYPE_NULL: {
-    return "NULL";
-  }
-  case CONSTRAINT_TYPE_NOTNULL: {
-    return "NOTNULL";
-  }
-  case CONSTRAINT_TYPE_DEFAULT: {
-    return "DEFAULT";
-  }
-  case CONSTRAINT_TYPE_CHECK: {
-    return "CHECK";
-  }
-  case CONSTRAINT_TYPE_PRIMARY: {
-    return "PRIMARY_KEY";
-  }
-  case CONSTRAINT_TYPE_UNIQUE: {
-    return "UNIQUE";
-  }
-  case CONSTRAINT_TYPE_FOREIGN: {
-    return "FOREIGN_KEY";
-  }
-  case CONSTRAINT_TYPE_EXCLUSION: {
-    return "EXCLUSION";
-  }
+    case CONSTRAINT_TYPE_INVALID: {
+      return "INVALID";
+    }
+    case CONSTRAINT_TYPE_NULL: {
+      return "NULL";
+    }
+    case CONSTRAINT_TYPE_NOTNULL: {
+      return "NOTNULL";
+    }
+    case CONSTRAINT_TYPE_DEFAULT: {
+      return "DEFAULT";
+    }
+    case CONSTRAINT_TYPE_CHECK: {
+      return "CHECK";
+    }
+    case CONSTRAINT_TYPE_PRIMARY: {
+      return "PRIMARY_KEY";
+    }
+    case CONSTRAINT_TYPE_UNIQUE: {
+      return "UNIQUE";
+    }
+    case CONSTRAINT_TYPE_FOREIGN: {
+      return "FOREIGN_KEY";
+    }
+    case CONSTRAINT_TYPE_EXCLUSION: {
+      return "EXCLUSION";
+    }
   }
   return "INVALID";
 }
@@ -613,56 +610,56 @@ ConstraintType StringToConstraintType(std::string str) {
   return CONSTRAINT_TYPE_INVALID;
 }
 
-ValueType
-PostgresValueTypeToPelotonValueType(PostgresValueType PostgresValType) {
+ValueType PostgresValueTypeToPelotonValueType(
+    PostgresValueType PostgresValType) {
   ValueType valueType = VALUE_TYPE_INVALID;
 
   switch (PostgresValType) {
-  case POSTGRES_VALUE_TYPE_BOOLEAN:
-    valueType = VALUE_TYPE_BOOLEAN;
-    break;
+    case POSTGRES_VALUE_TYPE_BOOLEAN:
+      valueType = VALUE_TYPE_BOOLEAN;
+      break;
 
-  /* INTEGER */
-  case POSTGRES_VALUE_TYPE_SMALLINT:
-    valueType = VALUE_TYPE_SMALLINT;
-    break;
-  case POSTGRES_VALUE_TYPE_INTEGER:
-    valueType = VALUE_TYPE_INTEGER;
-    break;
-  case POSTGRES_VALUE_TYPE_BIGINT:
-    valueType = VALUE_TYPE_BIGINT;
-    break;
+    /* INTEGER */
+    case POSTGRES_VALUE_TYPE_SMALLINT:
+      valueType = VALUE_TYPE_SMALLINT;
+      break;
+    case POSTGRES_VALUE_TYPE_INTEGER:
+      valueType = VALUE_TYPE_INTEGER;
+      break;
+    case POSTGRES_VALUE_TYPE_BIGINT:
+      valueType = VALUE_TYPE_BIGINT;
+      break;
 
-  /* DOUBLE */
-  case POSTGRES_VALUE_TYPE_DOUBLE:
-    valueType = VALUE_TYPE_DOUBLE;
-    break;
+    /* DOUBLE */
+    case POSTGRES_VALUE_TYPE_DOUBLE:
+      valueType = VALUE_TYPE_DOUBLE;
+      break;
 
-  /* CHAR */
-  case POSTGRES_VALUE_TYPE_BPCHAR:
-  case POSTGRES_VALUE_TYPE_BPCHAR2:
-  case POSTGRES_VALUE_TYPE_VARCHAR:
-  case POSTGRES_VALUE_TYPE_VARCHAR2:
-  case POSTGRES_VALUE_TYPE_TEXT:
-    valueType = VALUE_TYPE_VARCHAR;
-    break;
+    /* CHAR */
+    case POSTGRES_VALUE_TYPE_BPCHAR:
+    case POSTGRES_VALUE_TYPE_BPCHAR2:
+    case POSTGRES_VALUE_TYPE_VARCHAR:
+    case POSTGRES_VALUE_TYPE_VARCHAR2:
+    case POSTGRES_VALUE_TYPE_TEXT:
+      valueType = VALUE_TYPE_VARCHAR;
+      break;
 
-  /* TIMESTAMPS */
-  case POSTGRES_VALUE_TYPE_TIMESTAMPS:
-  case POSTGRES_VALUE_TYPE_TIMESTAMPS2:
-    valueType = VALUE_TYPE_TIMESTAMP;
-    break;
+    /* TIMESTAMPS */
+    case POSTGRES_VALUE_TYPE_TIMESTAMPS:
+    case POSTGRES_VALUE_TYPE_TIMESTAMPS2:
+      valueType = VALUE_TYPE_TIMESTAMP;
+      break;
 
-  /* DECIMAL */
-  case POSTGRES_VALUE_TYPE_DECIMAL:
-    valueType = VALUE_TYPE_DECIMAL;
-    break;
+    /* DECIMAL */
+    case POSTGRES_VALUE_TYPE_DECIMAL:
+      valueType = VALUE_TYPE_DECIMAL;
+      break;
 
-  /* INVALID VALUE TYPE */
-  default:
-    printf("INVALID VALUE TYPE : %d \n", PostgresValType);
-    valueType = VALUE_TYPE_INVALID;
-    break;
+    /* INVALID VALUE TYPE */
+    default:
+      printf("INVALID VALUE TYPE : %d \n", PostgresValType);
+      valueType = VALUE_TYPE_INVALID;
+      break;
   }
   return valueType;
 }
@@ -672,43 +669,43 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(
   ConstraintType constraintType = CONSTRAINT_TYPE_INVALID;
 
   switch (PostgresConstrType) {
-  case POSTGRES_CONSTRAINT_NULL:
-    constraintType = CONSTRAINT_TYPE_NULL;
-    break;
+    case POSTGRES_CONSTRAINT_NULL:
+      constraintType = CONSTRAINT_TYPE_NULL;
+      break;
 
-  case POSTGRES_CONSTRAINT_NOTNULL:
-    constraintType = CONSTRAINT_TYPE_NOTNULL;
-    break;
+    case POSTGRES_CONSTRAINT_NOTNULL:
+      constraintType = CONSTRAINT_TYPE_NOTNULL;
+      break;
 
-  case POSTGRES_CONSTRAINT_DEFAULT:
-    constraintType = CONSTRAINT_TYPE_DEFAULT;
-    break;
+    case POSTGRES_CONSTRAINT_DEFAULT:
+      constraintType = CONSTRAINT_TYPE_DEFAULT;
+      break;
 
-  case POSTGRES_CONSTRAINT_CHECK:
-    constraintType = CONSTRAINT_TYPE_CHECK;
-    break;
+    case POSTGRES_CONSTRAINT_CHECK:
+      constraintType = CONSTRAINT_TYPE_CHECK;
+      break;
 
-  case POSTGRES_CONSTRAINT_PRIMARY:
-    constraintType = CONSTRAINT_TYPE_PRIMARY;
-    break;
+    case POSTGRES_CONSTRAINT_PRIMARY:
+      constraintType = CONSTRAINT_TYPE_PRIMARY;
+      break;
 
-  case POSTGRES_CONSTRAINT_UNIQUE:
-    constraintType = CONSTRAINT_TYPE_UNIQUE;
-    break;
+    case POSTGRES_CONSTRAINT_UNIQUE:
+      constraintType = CONSTRAINT_TYPE_UNIQUE;
+      break;
 
-  case POSTGRES_CONSTRAINT_FOREIGN:
-    constraintType = CONSTRAINT_TYPE_FOREIGN;
-    break;
+    case POSTGRES_CONSTRAINT_FOREIGN:
+      constraintType = CONSTRAINT_TYPE_FOREIGN;
+      break;
 
-  case POSTGRES_CONSTRAINT_EXCLUSION:
-    constraintType = CONSTRAINT_TYPE_EXCLUSION;
-    break;
+    case POSTGRES_CONSTRAINT_EXCLUSION:
+      constraintType = CONSTRAINT_TYPE_EXCLUSION;
+      break;
 
-  default:
-    fprintf(stderr, "INVALID CONSTRAINT TYPE : %d \n", PostgresConstrType);
-    break;
+    default:
+      fprintf(stderr, "INVALID CONSTRAINT TYPE : %d \n", PostgresConstrType);
+      break;
   }
   return constraintType;
 }
 
-} // End peloton namespace
+}  // End peloton namespace

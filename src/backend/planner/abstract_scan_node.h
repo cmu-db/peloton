@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -30,7 +29,7 @@ class DataTable;
 namespace planner {
 
 class AbstractScanNode : public AbstractPlanNode {
-public:
+ public:
   AbstractScanNode(const AbstractScanNode &) = delete;
   AbstractScanNode &operator=(const AbstractScanNode &) = delete;
   AbstractScanNode(AbstractScanNode &&) = delete;
@@ -52,7 +51,7 @@ public:
 
   inline std::string GetInfo() const { return "AbstractScan"; }
 
-private:
+ private:
   /** @brief Selection predicate. */
   const std::unique_ptr<expression::AbstractExpression> predicate_;
 
@@ -60,5 +59,5 @@ private:
   const std::vector<oid_t> column_ids_;
 };
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

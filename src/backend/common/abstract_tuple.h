@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/types.h"
@@ -23,7 +22,7 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 class AbstractTuple {
-public:
+ public:
   virtual ~AbstractTuple(){};
 
   /** @brief Get the value at the given column id. */
@@ -34,4 +33,4 @@ public:
   virtual char *GetData() const = 0;
 };
 
-} // namespace peloton
+}  // namespace peloton

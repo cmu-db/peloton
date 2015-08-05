@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
@@ -105,20 +104,20 @@ enum PostgresValueType {
 };
 
 enum ValueType {
-  VALUE_TYPE_INVALID = 0, // invalid value type
-  VALUE_TYPE_NULL = 1,    // NULL type
+  VALUE_TYPE_INVALID = 0,  // invalid value type
+  VALUE_TYPE_NULL = 1,     // NULL type
 
-  VALUE_TYPE_TINYINT = 3,    // 1 byte integer
-  VALUE_TYPE_SMALLINT = 4,   // 2 bytes integer
-  VALUE_TYPE_INTEGER = 5,    // 4 bytes integer
-  VALUE_TYPE_BIGINT = 6,     // 8 bytes integer
-  VALUE_TYPE_DOUBLE = 8,     // 8 bytes floating number
-  VALUE_TYPE_VARCHAR = 9,    // variable length chars
-  VALUE_TYPE_TIMESTAMP = 11, // 8 bytes integer
-  VALUE_TYPE_DECIMAL = 22,   // decimal(p,s)
+  VALUE_TYPE_TINYINT = 3,     // 1 byte integer
+  VALUE_TYPE_SMALLINT = 4,    // 2 bytes integer
+  VALUE_TYPE_INTEGER = 5,     // 4 bytes integer
+  VALUE_TYPE_BIGINT = 6,      // 8 bytes integer
+  VALUE_TYPE_DOUBLE = 8,      // 8 bytes floating number
+  VALUE_TYPE_VARCHAR = 9,     // variable length chars
+  VALUE_TYPE_TIMESTAMP = 11,  // 8 bytes integer
+  VALUE_TYPE_DECIMAL = 22,    // decimal(p,s)
   VALUE_TYPE_BOOLEAN = 23,
   VALUE_TYPE_ADDRESS = 24,
-  VALUE_TYPE_VARBINARY = 25, // variable length bytes
+  VALUE_TYPE_VARBINARY = 25,  // variable length bytes
 };
 
 //===--------------------------------------------------------------------===//
@@ -133,36 +132,36 @@ enum ExpressionType {
   //===--------------------------------------------------------------------===//
 
   EXPRESSION_TYPE_OPERATOR_PLUS =
-      1, // left + right (both must be number. implicitly casted)
+      1,  // left + right (both must be number. implicitly casted)
   EXPRESSION_TYPE_OPERATOR_MINUS =
-      2, // left - right (both must be number. implicitly casted)
+      2,  // left - right (both must be number. implicitly casted)
   EXPRESSION_TYPE_OPERATOR_MULTIPLY =
-      3, // left * right (both must be number. implicitly casted)
+      3,  // left * right (both must be number. implicitly casted)
   EXPRESSION_TYPE_OPERATOR_DIVIDE =
-      4, // left / right (both must be number. implicitly casted)
+      4,  // left / right (both must be number. implicitly casted)
   EXPRESSION_TYPE_OPERATOR_CONCAT =
-      5,                            // left || right (both must be char/varchar)
-  EXPRESSION_TYPE_OPERATOR_MOD = 6, // left % right (both must be integer)
+      5,  // left || right (both must be char/varchar)
+  EXPRESSION_TYPE_OPERATOR_MOD = 6,  // left % right (both must be integer)
   EXPRESSION_TYPE_OPERATOR_CAST =
-      7, // explicitly cast left as right (right is integer in ValueType enum)
-  EXPRESSION_TYPE_OPERATOR_NOT = 8,         // logical not operator
-  EXPRESSION_TYPE_OPERATOR_UNARY_MINUS = 9, // unary minus operator
+      7,  // explicitly cast left as right (right is integer in ValueType enum)
+  EXPRESSION_TYPE_OPERATOR_NOT = 8,          // logical not operator
+  EXPRESSION_TYPE_OPERATOR_UNARY_MINUS = 9,  // unary minus operator
 
   //===--------------------------------------------------------------------===//
   // Comparison Operators
   //===--------------------------------------------------------------------===//
 
-  EXPRESSION_TYPE_COMPARE_EQ = 10, // equal operator between left and right
-  EXPRESSION_TYPE_COMPARE_NE = 11, // inequal operator between left and right
-  EXPRESSION_TYPE_COMPARE_LT = 12, // less than operator between left and right
+  EXPRESSION_TYPE_COMPARE_EQ = 10,  // equal operator between left and right
+  EXPRESSION_TYPE_COMPARE_NE = 11,  // inequal operator between left and right
+  EXPRESSION_TYPE_COMPARE_LT = 12,  // less than operator between left and right
   EXPRESSION_TYPE_COMPARE_GT =
-      13, // greater than operator between left and right
+      13,  // greater than operator between left and right
   EXPRESSION_TYPE_COMPARE_LTE =
-      14, // less than equal operator between left and right
+      14,  // less than equal operator between left and right
   EXPRESSION_TYPE_COMPARE_GTE =
-      15, // greater than equal operator between left and right
+      15,  // greater than equal operator between left and right
   EXPRESSION_TYPE_COMPARE_LIKE =
-      16, // LIKE operator (left LIKE right). both children must be string.
+      16,  // LIKE operator (left LIKE right). both children must be string.
 
   //===--------------------------------------------------------------------===//
   // Conjunction Operators
@@ -213,10 +212,10 @@ enum ExpressionType {
 //===--------------------------------------------------------------------===//
 
 enum BackendType {
-  BACKEND_TYPE_INVALID = 0, // invalid backend type
+  BACKEND_TYPE_INVALID = 0,  // invalid backend type
 
-  BACKEND_TYPE_VM = 1, // on volatile memory
-  BACKEND_TYPE_NVM = 2 // on non-volatile memory
+  BACKEND_TYPE_VM = 1,  // on volatile memory
+  BACKEND_TYPE_NVM = 2  // on non-volatile memory
 };
 
 //===--------------------------------------------------------------------===//
@@ -224,19 +223,19 @@ enum BackendType {
 //===--------------------------------------------------------------------===//
 
 enum IndexType {
-  INDEX_TYPE_INVALID = 0, // invalid index type
+  INDEX_TYPE_INVALID = 0,  // invalid index type
 
-  INDEX_TYPE_BTREE = 1 // btree
+  INDEX_TYPE_BTREE = 1  // btree
 };
 
 enum IndexConstraintType {
-  INDEX_CONSTRAINT_TYPE_INVALID = 0, // invalid index constraint type
+  INDEX_CONSTRAINT_TYPE_INVALID = 0,  // invalid index constraint type
 
   INDEX_CONSTRAINT_TYPE_DEFAULT =
-      1, // default type - not used to enforce constraints
+      1,  // default type - not used to enforce constraints
   INDEX_CONSTRAINT_TYPE_PRIMARY_KEY =
-      2,                           // used to enforce primary key constraint
-  INDEX_CONSTRAINT_TYPE_UNIQUE = 3 // used for unique constraint
+      2,                            // used to enforce primary key constraint
+  INDEX_CONSTRAINT_TYPE_UNIQUE = 3  // used for unique constraint
 };
 
 //===--------------------------------------------------------------------===//
@@ -244,7 +243,7 @@ enum IndexConstraintType {
 //===--------------------------------------------------------------------===//
 
 enum PlanNodeType {
-  PLAN_NODE_TYPE_INVALID = 0, // invalid plan node type
+  PLAN_NODE_TYPE_INVALID = 0,  // invalid plan node type
 
   // Scan Nodes
   PLAN_NODE_TYPE_ABSTRACT_SCAN = 10,
@@ -275,8 +274,8 @@ enum PlanNodeType {
   PLAN_NODE_TYPE_MATERIALIZE = 55,
   PLAN_NODE_TYPE_LIMIT = 56,
   PLAN_NODE_TYPE_DISTINCT = 57,
-  PLAN_NODE_TYPE_SETOP = 58,  // set operation
-  PLAN_NODE_TYPE_APPEND = 59, // append
+  PLAN_NODE_TYPE_SETOP = 58,   // set operation
+  PLAN_NODE_TYPE_APPEND = 59,  // append
 
   // Utility
   PLAN_NODE_TYPE_RESULT = 70
@@ -287,12 +286,12 @@ enum PlanNodeType {
 //===--------------------------------------------------------------------===//
 
 enum CreateType {
-  CREATE_TYPE_INVALID = 0, // invalid create type
+  CREATE_TYPE_INVALID = 0,  // invalid create type
 
-  CREATE_TYPE_DB = 1,        // db create type
-  CREATE_TYPE_TABLE = 2,     // table create type
-  CREATE_TYPE_INDEX = 3,     // index create type
-  CREATE_TYPE_CONSTRAINT = 4 // constraint create type
+  CREATE_TYPE_DB = 1,         // db create type
+  CREATE_TYPE_TABLE = 2,      // table create type
+  CREATE_TYPE_INDEX = 3,      // index create type
+  CREATE_TYPE_CONSTRAINT = 4  // constraint create type
 
 };
 
@@ -301,20 +300,20 @@ enum CreateType {
 //===--------------------------------------------------------------------===//
 
 enum StatementType {
-  STATEMENT_TYPE_INVALID = 0, // invalid statement type
+  STATEMENT_TYPE_INVALID = 0,  // invalid statement type
 
-  STATEMENT_TYPE_SELECT = 1,       // select statement type
-  STATEMENT_TYPE_INSERT = 3,       // insert statement type
-  STATEMENT_TYPE_UPDATE = 4,       // update statement type
-  STATEMENT_TYPE_DELETE = 5,       // delete statement type
-  STATEMENT_TYPE_CREATE = 6,       // create statement type
-  STATEMENT_TYPE_DROP = 7,         // drop statement type
-  STATEMENT_TYPE_PREPARE = 8,      // prepare statement type
-  STATEMENT_TYPE_EXECUTE = 9,      // execute statement type
-  STATEMENT_TYPE_EXPORT = 10,      // export statement type
-  STATEMENT_TYPE_RENAME = 11,      // rename statement type
-  STATEMENT_TYPE_ALTER = 12,       // alter statement type
-  STATEMENT_TYPE_TRANSACTION = 13, // transaction statement type
+  STATEMENT_TYPE_SELECT = 1,        // select statement type
+  STATEMENT_TYPE_INSERT = 3,        // insert statement type
+  STATEMENT_TYPE_UPDATE = 4,        // update statement type
+  STATEMENT_TYPE_DELETE = 5,        // delete statement type
+  STATEMENT_TYPE_CREATE = 6,        // create statement type
+  STATEMENT_TYPE_DROP = 7,          // drop statement type
+  STATEMENT_TYPE_PREPARE = 8,       // prepare statement type
+  STATEMENT_TYPE_EXECUTE = 9,       // execute statement type
+  STATEMENT_TYPE_EXPORT = 10,       // export statement type
+  STATEMENT_TYPE_RENAME = 11,       // rename statement type
+  STATEMENT_TYPE_ALTER = 12,        // alter statement type
+  STATEMENT_TYPE_TRANSACTION = 13,  // transaction statement type
 };
 
 //===--------------------------------------------------------------------===//
@@ -322,12 +321,12 @@ enum StatementType {
 //===--------------------------------------------------------------------===//
 
 enum PelotonJoinType {
-  JOIN_TYPE_INVALID = 0, // invalid join type
+  JOIN_TYPE_INVALID = 0,  // invalid join type
 
-  JOIN_TYPE_LEFT = 1,  // left
-  JOIN_TYPE_RIGHT = 2, // right
-  JOIN_TYPE_INNER = 3, // inner
-  JOIN_TYPE_OUTER = 4  // outer
+  JOIN_TYPE_LEFT = 1,   // left
+  JOIN_TYPE_RIGHT = 2,  // right
+  JOIN_TYPE_INNER = 3,  // inner
+  JOIN_TYPE_OUTER = 4   // outer
 };
 
 //===--------------------------------------------------------------------===//
@@ -335,12 +334,12 @@ enum PelotonJoinType {
 //===--------------------------------------------------------------------===//
 
 enum TableReferenceType {
-  TABLE_REFERENCE_TYPE_INVALID = 0, // invalid table reference type
+  TABLE_REFERENCE_TYPE_INVALID = 0,  // invalid table reference type
 
-  TABLE_REFERENCE_TYPE_NAME = 1,         // table name
-  TABLE_REFERENCE_TYPE_SELECT = 2,       // output of select
-  TABLE_REFERENCE_TYPE_JOIN = 3,         // output of join
-  TABLE_REFERENCE_TYPE_CROSS_PRODUCT = 4 // out of cartesian product
+  TABLE_REFERENCE_TYPE_NAME = 1,          // table name
+  TABLE_REFERENCE_TYPE_SELECT = 2,        // output of select
+  TABLE_REFERENCE_TYPE_JOIN = 3,          // output of join
+  TABLE_REFERENCE_TYPE_CROSS_PRODUCT = 4  // out of cartesian product
 };
 
 //===--------------------------------------------------------------------===//
@@ -348,10 +347,10 @@ enum TableReferenceType {
 //===--------------------------------------------------------------------===//
 
 enum InsertType {
-  INSERT_TYPE_INVALID = 0, // invalid insert type
+  INSERT_TYPE_INVALID = 0,  // invalid insert type
 
-  INSERT_TYPE_VALUES = 1, // values
-  INSERT_TYPE_SELECT = 2  // select
+  INSERT_TYPE_VALUES = 1,  // values
+  INSERT_TYPE_SELECT = 2   // select
 };
 
 //===--------------------------------------------------------------------===//
@@ -359,11 +358,11 @@ enum InsertType {
 //===--------------------------------------------------------------------===//
 
 enum PayloadType {
-  PAYLOAD_TYPE_INVALID = 0, // invalid message type
+  PAYLOAD_TYPE_INVALID = 0,  // invalid message type
 
-  PAYLOAD_TYPE_CLIENT_REQUEST = 1,  // request
-  PAYLOAD_TYPE_CLIENT_RESPONSE = 2, // response
-  PAYLOAD_TYPE_STOP = 3             // stop loop
+  PAYLOAD_TYPE_CLIENT_REQUEST = 1,   // request
+  PAYLOAD_TYPE_CLIENT_RESPONSE = 2,  // response
+  PAYLOAD_TYPE_STOP = 3              // stop loop
 };
 
 //===--------------------------------------------------------------------===//
@@ -371,7 +370,7 @@ enum PayloadType {
 //===--------------------------------------------------------------------===//
 
 enum TaskPriorityType {
-  TASK_PRIORTY_TYPE_INVALID = 0, // invalid priority
+  TASK_PRIORTY_TYPE_INVALID = 0,  // invalid priority
 
   TASK_PRIORTY_TYPE_LOW = 10,
   TASK_PRIORTY_TYPE_NORMAL = 11,
@@ -383,12 +382,12 @@ enum TaskPriorityType {
 //===--------------------------------------------------------------------===//
 
 enum Result {
-  RESULT_INVALID = 0, // invalid result type
+  RESULT_INVALID = 0,  // invalid result type
 
   RESULT_SUCCESS = 1,
   RESULT_FAILURE = 2,
-  RESULT_ABORTED = 3, // aborted
-  RESULT_NOOP = 4,    // no op
+  RESULT_ABORTED = 3,  // aborted
+  RESULT_NOOP = 4,     // no op
   RESULT_UNKNOWN = 5
 };
 
@@ -415,16 +414,16 @@ enum PostgresConstraintType {
 };
 
 enum ConstraintType {
-  CONSTRAINT_TYPE_INVALID = 0, // invalid
+  CONSTRAINT_TYPE_INVALID = 0,  // invalid
 
-  CONSTRAINT_TYPE_NULL = 1,     // notnull
-  CONSTRAINT_TYPE_NOTNULL = 2,  // notnull
-  CONSTRAINT_TYPE_DEFAULT = 3,  // default
-  CONSTRAINT_TYPE_CHECK = 4,    // check
-  CONSTRAINT_TYPE_PRIMARY = 5,  // primary key
-  CONSTRAINT_TYPE_UNIQUE = 6,   // unique
-  CONSTRAINT_TYPE_FOREIGN = 7,  // foreign key
-  CONSTRAINT_TYPE_EXCLUSION = 8 // foreign key
+  CONSTRAINT_TYPE_NULL = 1,      // notnull
+  CONSTRAINT_TYPE_NOTNULL = 2,   // notnull
+  CONSTRAINT_TYPE_DEFAULT = 3,   // default
+  CONSTRAINT_TYPE_CHECK = 4,     // check
+  CONSTRAINT_TYPE_PRIMARY = 5,   // primary key
+  CONSTRAINT_TYPE_UNIQUE = 6,    // unique
+  CONSTRAINT_TYPE_FOREIGN = 7,   // foreign key
+  CONSTRAINT_TYPE_EXCLUSION = 8  // foreign key
 };
 
 //===--------------------------------------------------------------------===//
@@ -523,8 +522,8 @@ PlanNodeType StringToPlanNodeType(std::string str);
 std::string ConstraintTypeToString(ConstraintType type);
 ConstraintType StringToConstraintType(std::string str);
 
-ValueType
-PostgresValueTypeToPelotonValueType(PostgresValueType PostgresValType);
+ValueType PostgresValueTypeToPelotonValueType(
+    PostgresValueType PostgresValType);
 ConstraintType PostgresConstraintTypeToPelotonConstraintType(
     PostgresConstraintType PostgresConstrType);
 
@@ -534,21 +533,21 @@ ConstraintType PostgresConstraintTypeToPelotonConstraintType(
 
 #ifndef NDEBUG
 
-#define AssertMsg(condition, message)                                          \
-  do {                                                                         \
-    if (!(condition)) {                                                        \
-      std::cerr << "Assertion `" #condition "` failed in " << __FILE__         \
-                << " line " << __LINE__ << ": " << message << std::endl;       \
-      std::exit(EXIT_FAILURE);                                                 \
-    }                                                                          \
+#define AssertMsg(condition, message)                                    \
+  do {                                                                   \
+    if (!(condition)) {                                                  \
+      std::cerr << "Assertion `" #condition "` failed in " << __FILE__   \
+                << " line " << __LINE__ << ": " << message << std::endl; \
+      std::exit(EXIT_FAILURE);                                           \
+    }                                                                    \
   } while (false)
 
 #else
 
-#define AssertMsg(condition, message)                                          \
-  do {                                                                         \
+#define AssertMsg(condition, message) \
+  do {                                \
   } while (false)
 
 #endif
 
-} // End peloton namespace
+}  // End peloton namespace

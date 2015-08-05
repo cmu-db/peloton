@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "bridge_test.h"
 
 #include "backend/bridge/ddl/bridge.h"
@@ -57,5 +56,5 @@ void BridgeTest::DDL_CreateDatabase_TEST_WITH_VALID_OID() {
   std::cout << ":::::: " << __func__ << " DONE\n";
 }
 
-} // End bridge namespace
-} // End peloton namespace
+}  // End bridge namespace
+}  // End peloton namespace

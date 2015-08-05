@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 
 #include "gmock/gmock.h"
@@ -154,5 +153,5 @@ TEST(IndexScanTests, MultiColumnPredicateTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

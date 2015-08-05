@@ -1,3 +1,8 @@
-# We'll use defaults from the LLVM style, but with 4 columns tab indentation.
-BasedOnStyle: LLVM
+# Options for Clang Formatter
+
+# We'll use defaults from the Google style,
+BasedOnStyle: Google
+
+# 4 columns tab indentation.
 TabWidth: 4
+

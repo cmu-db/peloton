@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <iostream>
@@ -33,31 +32,31 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 enum ExceptionType {
-  EXCEPTION_TYPE_INVALID = 0, // invalid type
+  EXCEPTION_TYPE_INVALID = 0,  // invalid type
 
-  EXCEPTION_TYPE_OUT_OF_RANGE = 1,      // value out of range error
-  EXCEPTION_TYPE_CONVERSION = 2,        // conversion/casting error
-  EXCEPTION_TYPE_UNKNOWN_TYPE = 3,      // unknown type
-  EXCEPTION_TYPE_DECIMAL = 4,           // decimal related
-  EXCEPTION_TYPE_MISMATCH_TYPE = 5,     // type mismatch
-  EXCEPTION_TYPE_DIVIDE_BY_ZERO = 6,    // divide by 0
-  EXCEPTION_TYPE_OBJECT_SIZE = 7,       // object size exceeded
-  EXCEPTION_TYPE_INCOMPATIBLE_TYPE = 8, // incompatible for operation
-  EXCEPTION_TYPE_SERIALIZATION = 9,     // serialization
-  EXCEPTION_TYPE_TRANSACTION = 10,      // transaction management
-  EXCEPTION_TYPE_NOT_IMPLEMENTED = 11,  // method not implemented
-  EXCEPTION_TYPE_EXPRESSION = 12,       // expression parsing
-  EXCEPTION_TYPE_CATALOG = 13,          // catalog related
-  EXCEPTION_TYPE_PARSER = 14,           // parser related
-  EXCEPTION_TYPE_PLANNER = 15,          // planner related
-  EXCEPTION_TYPE_SCHEDULER = 16,        // scheduler related
-  EXCEPTION_TYPE_EXECUTOR = 17,         // executor related
-  EXCEPTION_TYPE_CONSTRAINT = 18,       // constraint related
-  EXCEPTION_TYPE_INDEX = 19             // index related
+  EXCEPTION_TYPE_OUT_OF_RANGE = 1,       // value out of range error
+  EXCEPTION_TYPE_CONVERSION = 2,         // conversion/casting error
+  EXCEPTION_TYPE_UNKNOWN_TYPE = 3,       // unknown type
+  EXCEPTION_TYPE_DECIMAL = 4,            // decimal related
+  EXCEPTION_TYPE_MISMATCH_TYPE = 5,      // type mismatch
+  EXCEPTION_TYPE_DIVIDE_BY_ZERO = 6,     // divide by 0
+  EXCEPTION_TYPE_OBJECT_SIZE = 7,        // object size exceeded
+  EXCEPTION_TYPE_INCOMPATIBLE_TYPE = 8,  // incompatible for operation
+  EXCEPTION_TYPE_SERIALIZATION = 9,      // serialization
+  EXCEPTION_TYPE_TRANSACTION = 10,       // transaction management
+  EXCEPTION_TYPE_NOT_IMPLEMENTED = 11,   // method not implemented
+  EXCEPTION_TYPE_EXPRESSION = 12,        // expression parsing
+  EXCEPTION_TYPE_CATALOG = 13,           // catalog related
+  EXCEPTION_TYPE_PARSER = 14,            // parser related
+  EXCEPTION_TYPE_PLANNER = 15,           // planner related
+  EXCEPTION_TYPE_SCHEDULER = 16,         // scheduler related
+  EXCEPTION_TYPE_EXECUTOR = 17,          // executor related
+  EXCEPTION_TYPE_CONSTRAINT = 18,        // constraint related
+  EXCEPTION_TYPE_INDEX = 19              // index related
 };
 
 class Exception : public std::runtime_error {
-public:
+ public:
   Exception(std::string message)
       : std::runtime_error(message), type(EXCEPTION_TYPE_INVALID) {
     std::string exception_message = "Message :: " + message + "\n";
@@ -74,48 +73,48 @@ public:
 
   std::string ExpectionTypeToString(ExceptionType type) {
     switch (type) {
-    case EXCEPTION_TYPE_INVALID:
-      return "Invalid";
-    case EXCEPTION_TYPE_OUT_OF_RANGE:
-      return "Out of Range";
-    case EXCEPTION_TYPE_CONVERSION:
-      return "Conversion";
-    case EXCEPTION_TYPE_UNKNOWN_TYPE:
-      return "Unknown Type";
-    case EXCEPTION_TYPE_DECIMAL:
-      return "Decimal";
-    case EXCEPTION_TYPE_MISMATCH_TYPE:
-      return "Mismatch Type";
-    case EXCEPTION_TYPE_DIVIDE_BY_ZERO:
-      return "Divede by Zero";
-    case EXCEPTION_TYPE_OBJECT_SIZE:
-      return "Object Size";
-    case EXCEPTION_TYPE_INCOMPATIBLE_TYPE:
-      return "Incompatible type";
-    case EXCEPTION_TYPE_SERIALIZATION:
-      return "Serialization";
-    case EXCEPTION_TYPE_TRANSACTION:
-      return "Transaction";
-    case EXCEPTION_TYPE_NOT_IMPLEMENTED:
-      return "Not implemented";
-    case EXCEPTION_TYPE_EXPRESSION:
-      return "Expression";
-    case EXCEPTION_TYPE_CATALOG:
-      return "Catalog";
-    case EXCEPTION_TYPE_PARSER:
-      return "Parser";
-    case EXCEPTION_TYPE_PLANNER:
-      return "Planner";
-    case EXCEPTION_TYPE_SCHEDULER:
-      return "Scheduler";
-    case EXCEPTION_TYPE_EXECUTOR:
-      return "Executor";
-    case EXCEPTION_TYPE_CONSTRAINT:
-      return "Constraint";
-    case EXCEPTION_TYPE_INDEX:
-      return "Index";
-    default:
-      return "Unknown";
+      case EXCEPTION_TYPE_INVALID:
+        return "Invalid";
+      case EXCEPTION_TYPE_OUT_OF_RANGE:
+        return "Out of Range";
+      case EXCEPTION_TYPE_CONVERSION:
+        return "Conversion";
+      case EXCEPTION_TYPE_UNKNOWN_TYPE:
+        return "Unknown Type";
+      case EXCEPTION_TYPE_DECIMAL:
+        return "Decimal";
+      case EXCEPTION_TYPE_MISMATCH_TYPE:
+        return "Mismatch Type";
+      case EXCEPTION_TYPE_DIVIDE_BY_ZERO:
+        return "Divede by Zero";
+      case EXCEPTION_TYPE_OBJECT_SIZE:
+        return "Object Size";
+      case EXCEPTION_TYPE_INCOMPATIBLE_TYPE:
+        return "Incompatible type";
+      case EXCEPTION_TYPE_SERIALIZATION:
+        return "Serialization";
+      case EXCEPTION_TYPE_TRANSACTION:
+        return "Transaction";
+      case EXCEPTION_TYPE_NOT_IMPLEMENTED:
+        return "Not implemented";
+      case EXCEPTION_TYPE_EXPRESSION:
+        return "Expression";
+      case EXCEPTION_TYPE_CATALOG:
+        return "Catalog";
+      case EXCEPTION_TYPE_PARSER:
+        return "Parser";
+      case EXCEPTION_TYPE_PLANNER:
+        return "Planner";
+      case EXCEPTION_TYPE_SCHEDULER:
+        return "Scheduler";
+      case EXCEPTION_TYPE_EXECUTOR:
+        return "Executor";
+      case EXCEPTION_TYPE_CONSTRAINT:
+        return "Constraint";
+      case EXCEPTION_TYPE_INDEX:
+        return "Index";
+      default:
+        return "Unknown";
     }
   }
 
@@ -173,7 +172,7 @@ public:
         char *ret = abi::__cxa_demangle(begin_name, func_name, &func_name_size,
                                         &status);
         if (status == 0) {
-          func_name = ret; // use possibly realloc()-ed string
+          func_name = ret;  // use possibly realloc()-ed string
           ::fprintf(out, "  %s : %s+%s\n", symbol_list[i], func_name,
                     begin_offset);
         } else {
@@ -192,7 +191,7 @@ public:
     free(symbol_list);
   }
 
-private:
+ private:
   // type
   ExceptionType type;
 };
@@ -204,7 +203,7 @@ private:
 class CastException : public Exception {
   CastException() = delete;
 
-public:
+ public:
   CastException(const ValueType origType, const ValueType newType)
       : Exception(EXCEPTION_TYPE_CONVERSION,
                   "Type " + ValueTypeToString(origType) + " can't be cast as " +
@@ -214,7 +213,7 @@ public:
 class ValueOutOfRangeException : public Exception {
   ValueOutOfRangeException() = delete;
 
-public:
+ public:
   ValueOutOfRangeException(const int64_t value, const ValueType origType,
                            const ValueType newType)
       : Exception(EXCEPTION_TYPE_CONVERSION,
@@ -237,7 +236,7 @@ public:
 class ConversionException : public Exception {
   ConversionException() = delete;
 
-public:
+ public:
   ConversionException(std::string msg)
       : Exception(EXCEPTION_TYPE_CONVERSION, msg) {}
 };
@@ -245,7 +244,7 @@ public:
 class UnknownTypeException : public Exception {
   UnknownTypeException() = delete;
 
-public:
+ public:
   UnknownTypeException(int type, std::string msg)
       : Exception(EXCEPTION_TYPE_UNKNOWN_TYPE,
                   "unknown type " + std::to_string(type) + msg) {}
@@ -254,14 +253,14 @@ public:
 class DecimalException : public Exception {
   DecimalException() = delete;
 
-public:
+ public:
   DecimalException(std::string msg) : Exception(EXCEPTION_TYPE_DECIMAL, msg) {}
 };
 
 class TypeMismatchException : public Exception {
   TypeMismatchException() = delete;
 
-public:
+ public:
   TypeMismatchException(std::string msg, const ValueType type_1,
                         const ValueType type_2)
       : Exception(EXCEPTION_TYPE_MISMATCH_TYPE,
@@ -273,7 +272,7 @@ public:
 class NumericValueOutOfRangeException : public Exception {
   NumericValueOutOfRangeException() = delete;
 
-public:
+ public:
   NumericValueOutOfRangeException(std::string msg)
       : Exception(EXCEPTION_TYPE_OUT_OF_RANGE, msg) {}
 };
@@ -281,7 +280,7 @@ public:
 class DivideByZeroException : public Exception {
   DivideByZeroException() = delete;
 
-public:
+ public:
   DivideByZeroException(std::string msg)
       : Exception(EXCEPTION_TYPE_DIVIDE_BY_ZERO, msg) {}
 };
@@ -289,7 +288,7 @@ public:
 class ObjectSizeException : public Exception {
   ObjectSizeException() = delete;
 
-public:
+ public:
   ObjectSizeException(std::string msg)
       : Exception(EXCEPTION_TYPE_OBJECT_SIZE, msg) {}
 };
@@ -297,17 +296,17 @@ public:
 class IncompatibleTypeException : public Exception {
   IncompatibleTypeException() = delete;
 
-public:
+ public:
   IncompatibleTypeException(int type, std::string msg)
-      : Exception(EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
-                  "Incompatible type " + ValueTypeToString((ValueType)type) +
-                      msg) {}
+      : Exception(
+            EXCEPTION_TYPE_INCOMPATIBLE_TYPE,
+            "Incompatible type " + ValueTypeToString((ValueType)type) + msg) {}
 };
 
 class SerializationException : public Exception {
   SerializationException() = delete;
 
-public:
+ public:
   SerializationException(std::string msg)
       : Exception(EXCEPTION_TYPE_SERIALIZATION, msg) {}
 };
@@ -315,7 +314,7 @@ public:
 class TransactionException : public Exception {
   TransactionException() = delete;
 
-public:
+ public:
   TransactionException(std::string msg)
       : Exception(EXCEPTION_TYPE_TRANSACTION, msg) {}
 };
@@ -323,7 +322,7 @@ public:
 class NotImplementedException : public Exception {
   NotImplementedException() = delete;
 
-public:
+ public:
   NotImplementedException(std::string msg)
       : Exception(EXCEPTION_TYPE_NOT_IMPLEMENTED, msg) {}
 };
@@ -331,7 +330,7 @@ public:
 class ExpressionException : public Exception {
   ExpressionException() = delete;
 
-public:
+ public:
   ExpressionException(std::string msg)
       : Exception(EXCEPTION_TYPE_EXPRESSION, msg) {}
 };
@@ -339,28 +338,28 @@ public:
 class CatalogException : public Exception {
   CatalogException() = delete;
 
-public:
+ public:
   CatalogException(std::string msg) : Exception(EXCEPTION_TYPE_CATALOG, msg) {}
 };
 
 class ParserException : public Exception {
   ParserException() = delete;
 
-public:
+ public:
   ParserException(std::string msg) : Exception(EXCEPTION_TYPE_PARSER, msg) {}
 };
 
 class PlannerException : public Exception {
   PlannerException() = delete;
 
-public:
+ public:
   PlannerException(std::string msg) : Exception(EXCEPTION_TYPE_PLANNER, msg) {}
 };
 
 class SchedulerException : public Exception {
   SchedulerException() = delete;
 
-public:
+ public:
   SchedulerException(std::string msg)
       : Exception(EXCEPTION_TYPE_SCHEDULER, msg) {}
 };
@@ -368,7 +367,7 @@ public:
 class ExecutorException : public Exception {
   ExecutorException() = delete;
 
-public:
+ public:
   ExecutorException(std::string msg)
       : Exception(EXCEPTION_TYPE_EXECUTOR, msg) {}
 };
@@ -376,7 +375,7 @@ public:
 class ConstraintException : public Exception {
   ConstraintException() = delete;
 
-public:
+ public:
   ConstraintException(std::string msg)
       : Exception(EXCEPTION_TYPE_CONSTRAINT, msg) {}
 };
@@ -384,8 +383,8 @@ public:
 class IndexException : public Exception {
   IndexException() = delete;
 
-public:
+ public:
   IndexException(std::string msg) : Exception(EXCEPTION_TYPE_INDEX, msg) {}
 };
 
-} // End peloton namespace
+}  // End peloton namespace

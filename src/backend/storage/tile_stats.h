@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -25,7 +24,7 @@ namespace storage {
 
 /// Stats for tiles
 class TableStats : public stats::StatsSource {
-public:
+ public:
   /**
    * Static method to generate the column names for the tables which
    * contain persistent table stats.
@@ -65,7 +64,7 @@ public:
   virtual void configure(std::string name, Oid hostId, std::string hostname,
                          Oid siteId, Oid partitionId, Oid databaseId);
 
-protected:
+ protected:
   /**
    * Update the stats tuple with the latest statistics available to this
    * StatsSource.
@@ -92,7 +91,7 @@ protected:
 
   ~TableStats();
 
-private:
+ private:
   /**
    * Table whose stats are being collected.
    */
@@ -109,5 +108,5 @@ private:
   int64_t m_lastStringDataMemory;
 };
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

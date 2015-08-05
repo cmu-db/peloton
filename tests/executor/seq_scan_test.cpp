@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <set>
 #include <string>
@@ -117,8 +116,8 @@ storage::DataTable *CreateTable() {
  * In each equality node, we either use (arbitrarily taking reference from the
  * parity of the loop iteration) the first field or last field of the tuple.
  */
-expression::AbstractExpression *
-CreatePredicate(const std::set<oid_t> &tuple_ids) {
+expression::AbstractExpression *CreatePredicate(
+    const std::set<oid_t> &tuple_ids) {
   assert(tuple_ids.size() >= 1);
 
   expression::AbstractExpression *predicate =
@@ -231,7 +230,7 @@ void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
   }
 }
 
-} // namespace
+}  // namespace
 
 // Sequential scan of table with predicate.
 // The table being scanned has more than one tile group. i.e. the vertical
@@ -309,5 +308,5 @@ TEST(SeqScanTests, NonLeafNodePredicateTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

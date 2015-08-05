@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <cstddef>
@@ -31,7 +30,7 @@ class Pool;
  * compaction.
  */
 class Varlen {
-public:
+ public:
   /// Create and return a new Varlen object which points to an
   /// allocated memory block of the requested size. The caller
   /// may provide an optional Pool from which the memory (and
@@ -56,7 +55,7 @@ public:
   char *Get();
   const char *Get() const;
 
-private:
+ private:
   Varlen(std::size_t size);
   Varlen(std::size_t size, Pool *dataPool);
   ~Varlen();
@@ -74,4 +73,4 @@ private:
   char *varlen_string_ptr;
 };
 
-} // End peloton namespace
+}  // End peloton namespace

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/value_peeker.h"
@@ -43,8 +42,8 @@ inline static SignedType ConvertUnsignedValueToSignedValue(uint64_t value) {
  * to prevent overflow.
  */
 template <>
-inline int64_t
-ConvertUnsignedValueToSignedValue<int64_t, INT64_MAX>(uint64_t value) {
+inline int64_t ConvertUnsignedValueToSignedValue<int64_t, INT64_MAX>(
+    uint64_t value) {
   if (value > static_cast<uint64_t>(INT64_MAX) + 1) {
     value -= INT64_MAX;
     value--;
@@ -64,8 +63,8 @@ ConvertUnsignedValueToSignedValue<int64_t, INT64_MAX>(uint64_t value) {
  */
 template <int64_t TypeMaxValue, typename SignedValueType,
           typename UnsignedValueType>
-inline static UnsignedValueType
-ConvertSignedValueToUnsignedValue(SignedValueType value) {
+inline static UnsignedValueType ConvertSignedValueToUnsignedValue(
+    SignedValueType value) {
   return static_cast<UnsignedValueType>(value + TypeMaxValue + 1);
 }
 
@@ -73,8 +72,8 @@ ConvertSignedValueToUnsignedValue(SignedValueType value) {
  * Specialization for int64_ts necessary to prevent overflow.
  */
 template <>
-inline uint64_t
-ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(int64_t value) {
+inline uint64_t ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(
+    int64_t value) {
   uint64_t retval = 0;
   if (value < 0) {
     value += INT64_MAX;
@@ -92,8 +91,9 @@ ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(int64_t value) {
  *  Integer key that will pack all key data into KeySize number of uint64_t.
  *  The minimum number of uint64_ts necessary to pack all the integers is used.
  */
-template <std::size_t KeySize> class IntsKey {
-public:
+template <std::size_t KeySize>
+class IntsKey {
+ public:
   /*
    * Take a value that is part of the key (already converted to a uint64_t) and
    *inserts it into the
@@ -119,7 +119,6 @@ public:
   inline void InsertKeyValue(int &key_offset, int &intra_key_offset,
                              uint64_t key_value) {
     for (int ii = static_cast<int>(sizeof(KeyValueType)) - 1; ii >= 0; ii--) {
-
       /*
        * Extract the most significant byte from key_value by shifting it all the
        * way to the right.
@@ -128,15 +127,15 @@ public:
        * in the key and OR it in.
        */
       data[key_offset] |= (0xFF & (key_value >> (ii * 8)))
-                          << (intra_key_offset * 8); //
-      intra_key_offset--; // Move the offset inside the uint64 key back one.
-      /*
-       * If there are no more bytes available in the uint64_t indexed by
-       * key_offset then increment key_offset
-       * to point to the next uint64_t and set intra_key_offset to index to the
-       * most significant byte
-       * in this next uint64_t.
-       */
+                          << (intra_key_offset * 8);  //
+      intra_key_offset--;  // Move the offset inside the uint64 key back one.
+                           /*
+                            * If there are no more bytes available in the uint64_t indexed by
+                            * key_offset then increment key_offset
+                            * to point to the next uint64_t and set intra_key_offset to index to the
+                            * most significant byte
+                            * in this next uint64_t.
+                            */
       if (intra_key_offset < 0) {
         intra_key_offset = sizeof(uint64_t) - 1;
         key_offset++;
@@ -163,8 +162,8 @@ public:
     return retval;
   }
 
-  const storage::Tuple
-  GetTupleForComparison(const catalog::Schema *key_schema) {
+  const storage::Tuple GetTupleForComparison(
+      const catalog::Schema *key_schema) {
     throw IndexException("Tuple conversion not supported");
   }
 
@@ -175,39 +174,40 @@ public:
     const int GetColumnCount = key_schema->GetColumnCount();
     for (int ii = 0; ii < GetColumnCount; ii++) {
       switch (key_schema->GetColumn(ii).column_type) {
-      case VALUE_TYPE_BIGINT: {
-        const uint64_t key_value =
-            ExtractKeyValue<uint64_t>(key_offset, intra_key_offset);
-        buffer << ConvertUnsignedValueToSignedValue<int64_t, INT64_MAX>(
-                      key_value) << ",";
-        break;
-      }
-      case VALUE_TYPE_INTEGER: {
-        const uint64_t key_value =
-            ExtractKeyValue<uint32_t>(key_offset, intra_key_offset);
-        buffer << ConvertUnsignedValueToSignedValue<int32_t, INT32_MAX>(
-                      key_value) << ",";
-        break;
-      }
-      case VALUE_TYPE_SMALLINT: {
-        const uint64_t key_value =
-            ExtractKeyValue<uint16_t>(key_offset, intra_key_offset);
-        buffer << ConvertUnsignedValueToSignedValue<int16_t, INT16_MAX>(
-                      key_value) << ",";
-        break;
-      }
-      case VALUE_TYPE_TINYINT: {
-        const uint64_t key_value =
-            ExtractKeyValue<uint8_t>(key_offset, intra_key_offset);
-        buffer << static_cast<int64_t>(
-                      ConvertUnsignedValueToSignedValue<int8_t, INT8_MAX>(
-                          key_value)) << ",";
-        break;
-      }
-      default:
-        throw IndexException("We currently only support a specific set of "
-                             "column index sizes...");
-        break;
+        case VALUE_TYPE_BIGINT: {
+          const uint64_t key_value =
+              ExtractKeyValue<uint64_t>(key_offset, intra_key_offset);
+          buffer << ConvertUnsignedValueToSignedValue<int64_t, INT64_MAX>(
+                        key_value) << ",";
+          break;
+        }
+        case VALUE_TYPE_INTEGER: {
+          const uint64_t key_value =
+              ExtractKeyValue<uint32_t>(key_offset, intra_key_offset);
+          buffer << ConvertUnsignedValueToSignedValue<int32_t, INT32_MAX>(
+                        key_value) << ",";
+          break;
+        }
+        case VALUE_TYPE_SMALLINT: {
+          const uint64_t key_value =
+              ExtractKeyValue<uint16_t>(key_offset, intra_key_offset);
+          buffer << ConvertUnsignedValueToSignedValue<int16_t, INT16_MAX>(
+                        key_value) << ",";
+          break;
+        }
+        case VALUE_TYPE_TINYINT: {
+          const uint64_t key_value =
+              ExtractKeyValue<uint8_t>(key_offset, intra_key_offset);
+          buffer << static_cast<int64_t>(
+                        ConvertUnsignedValueToSignedValue<int8_t, INT8_MAX>(
+                            key_value)) << ",";
+          break;
+        }
+        default:
+          throw IndexException(
+              "We currently only support a specific set of "
+              "column index sizes...");
+          break;
       }
     }
     return std::string(buffer.str());
@@ -222,41 +222,43 @@ public:
     int intra_key_offset = sizeof(uint64_t) - 1;
     for (int ii = 0; ii < GetColumnCount; ii++) {
       switch (key_schema->GetColumn(ii).column_type) {
-      case VALUE_TYPE_BIGINT: {
-        const int64_t value = ValuePeeker::PeekBigInt(tuple->GetValue(ii));
-        const uint64_t key_value =
-            ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(
-                value);
-        InsertKeyValue<uint64_t>(key_offset, intra_key_offset, key_value);
-        break;
-      }
-      case VALUE_TYPE_INTEGER: {
-        const int32_t value = ValuePeeker::PeekInteger(tuple->GetValue(ii));
-        const uint32_t key_value =
-            ConvertSignedValueToUnsignedValue<INT32_MAX, int32_t, uint32_t>(
-                value);
-        InsertKeyValue<uint32_t>(key_offset, intra_key_offset, key_value);
-        break;
-      }
-      case VALUE_TYPE_SMALLINT: {
-        const int16_t value = ValuePeeker::PeekSmallInt(tuple->GetValue(ii));
-        const uint16_t key_value =
-            ConvertSignedValueToUnsignedValue<INT16_MAX, int16_t, uint16_t>(
-                value);
-        InsertKeyValue<uint16_t>(key_offset, intra_key_offset, key_value);
-        break;
-      }
-      case VALUE_TYPE_TINYINT: {
-        const int8_t value = ValuePeeker::PeekTinyInt(tuple->GetValue(ii));
-        const uint8_t key_value =
-            ConvertSignedValueToUnsignedValue<INT8_MAX, int8_t, uint8_t>(value);
-        InsertKeyValue<uint8_t>(key_offset, intra_key_offset, key_value);
-        break;
-      }
-      default:
-        throw IndexException("We currently only support a specific set of "
-                             "column index sizes...");
-        break;
+        case VALUE_TYPE_BIGINT: {
+          const int64_t value = ValuePeeker::PeekBigInt(tuple->GetValue(ii));
+          const uint64_t key_value =
+              ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(
+                  value);
+          InsertKeyValue<uint64_t>(key_offset, intra_key_offset, key_value);
+          break;
+        }
+        case VALUE_TYPE_INTEGER: {
+          const int32_t value = ValuePeeker::PeekInteger(tuple->GetValue(ii));
+          const uint32_t key_value =
+              ConvertSignedValueToUnsignedValue<INT32_MAX, int32_t, uint32_t>(
+                  value);
+          InsertKeyValue<uint32_t>(key_offset, intra_key_offset, key_value);
+          break;
+        }
+        case VALUE_TYPE_SMALLINT: {
+          const int16_t value = ValuePeeker::PeekSmallInt(tuple->GetValue(ii));
+          const uint16_t key_value =
+              ConvertSignedValueToUnsignedValue<INT16_MAX, int16_t, uint16_t>(
+                  value);
+          InsertKeyValue<uint16_t>(key_offset, intra_key_offset, key_value);
+          break;
+        }
+        case VALUE_TYPE_TINYINT: {
+          const int8_t value = ValuePeeker::PeekTinyInt(tuple->GetValue(ii));
+          const uint8_t key_value =
+              ConvertSignedValueToUnsignedValue<INT8_MAX, int8_t, uint8_t>(
+                  value);
+          InsertKeyValue<uint8_t>(key_offset, intra_key_offset, key_value);
+          break;
+        }
+        default:
+          throw IndexException(
+              "We currently only support a specific set of "
+              "column index sizes...");
+          break;
       }
     }
   }
@@ -269,45 +271,47 @@ public:
     int intra_key_offset = sizeof(uint64_t) - 1;
     for (int ii = 0; ii < GetColumnCount; ii++) {
       switch (key_schema->GetColumn(ii).column_type) {
-      case VALUE_TYPE_BIGINT: {
-        const int64_t value =
-            ValuePeeker::PeekBigInt(tuple->GetValue(indices[ii]));
-        const uint64_t key_value =
-            ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(
-                value);
-        InsertKeyValue<uint64_t>(key_offset, intra_key_offset, key_value);
-        break;
-      }
-      case VALUE_TYPE_INTEGER: {
-        const int32_t value =
-            ValuePeeker::PeekInteger(tuple->GetValue(indices[ii]));
-        const uint32_t key_value =
-            ConvertSignedValueToUnsignedValue<INT32_MAX, int32_t, uint32_t>(
-                value);
-        InsertKeyValue<uint32_t>(key_offset, intra_key_offset, key_value);
-        break;
-      }
-      case VALUE_TYPE_SMALLINT: {
-        const int16_t value =
-            ValuePeeker::PeekSmallInt(tuple->GetValue(indices[ii]));
-        const uint16_t key_value =
-            ConvertSignedValueToUnsignedValue<INT16_MAX, int16_t, uint16_t>(
-                value);
-        InsertKeyValue<uint16_t>(key_offset, intra_key_offset, key_value);
-        break;
-      }
-      case VALUE_TYPE_TINYINT: {
-        const int8_t value =
-            ValuePeeker::PeekTinyInt(tuple->GetValue(indices[ii]));
-        const uint8_t key_value =
-            ConvertSignedValueToUnsignedValue<INT8_MAX, int8_t, uint8_t>(value);
-        InsertKeyValue<uint8_t>(key_offset, intra_key_offset, key_value);
-        break;
-      }
-      default:
-        throw IndexException("We currently only support a specific set of "
-                             "column index sizes...");
-        break;
+        case VALUE_TYPE_BIGINT: {
+          const int64_t value =
+              ValuePeeker::PeekBigInt(tuple->GetValue(indices[ii]));
+          const uint64_t key_value =
+              ConvertSignedValueToUnsignedValue<INT64_MAX, int64_t, uint64_t>(
+                  value);
+          InsertKeyValue<uint64_t>(key_offset, intra_key_offset, key_value);
+          break;
+        }
+        case VALUE_TYPE_INTEGER: {
+          const int32_t value =
+              ValuePeeker::PeekInteger(tuple->GetValue(indices[ii]));
+          const uint32_t key_value =
+              ConvertSignedValueToUnsignedValue<INT32_MAX, int32_t, uint32_t>(
+                  value);
+          InsertKeyValue<uint32_t>(key_offset, intra_key_offset, key_value);
+          break;
+        }
+        case VALUE_TYPE_SMALLINT: {
+          const int16_t value =
+              ValuePeeker::PeekSmallInt(tuple->GetValue(indices[ii]));
+          const uint16_t key_value =
+              ConvertSignedValueToUnsignedValue<INT16_MAX, int16_t, uint16_t>(
+                  value);
+          InsertKeyValue<uint16_t>(key_offset, intra_key_offset, key_value);
+          break;
+        }
+        case VALUE_TYPE_TINYINT: {
+          const int8_t value =
+              ValuePeeker::PeekTinyInt(tuple->GetValue(indices[ii]));
+          const uint8_t key_value =
+              ConvertSignedValueToUnsignedValue<INT8_MAX, int8_t, uint8_t>(
+                  value);
+          InsertKeyValue<uint8_t>(key_offset, intra_key_offset, key_value);
+          break;
+        }
+        default:
+          throw IndexException(
+              "We currently only support a specific set of "
+              "column index sizes...");
+          break;
       }
     }
   }
@@ -315,12 +319,13 @@ public:
   // actual location of data
   uint64_t data[KeySize];
 
-private:
+ private:
 };
 
 /** comparator for Int specialized indexes. */
-template <std::size_t KeySize> class IntsComparator {
-public:
+template <std::size_t KeySize>
+class IntsComparator {
+ public:
   IntsComparator(index::IndexMetadata *metadata)
       : key_schema(metadata->GetKeySchema()) {}
 
@@ -348,8 +353,9 @@ public:
 /**
  *
  */
-template <std::size_t KeySize> class IntsEqualityChecker {
-public:
+template <std::size_t KeySize>
+class IntsEqualityChecker {
+ public:
   IntsEqualityChecker(index::IndexMetadata *metadata)
       : key_schema(metadata->GetKeySchema()) {}
 
@@ -389,8 +395,9 @@ struct IntsHasher : std::unary_function<IntsKey<KeySize>, std::size_t> {
  * Key object for indexes of mixed types.
  * Using storage::Tuple to store columns.
  */
-template <std::size_t KeySize> class GenericKey {
-public:
+template <std::size_t KeySize>
+class GenericKey {
+ public:
   inline void SetFromKey(const storage::Tuple *tuple) {
     assert(tuple);
     ::memcpy(data, tuple->GetData(), KeySize);
@@ -405,22 +412,23 @@ public:
     }
   }
 
-  const storage::Tuple
-  GetTupleForComparison(const catalog::Schema *key_schema) {
+  const storage::Tuple GetTupleForComparison(
+      const catalog::Schema *key_schema) {
     return storage::Tuple(key_schema, data);
   }
 
   // actual location of data, extends past the end.
   char data[KeySize];
 
-private:
+ private:
 };
 
 /**
  * Function object returns true if lhs < rhs, used for trees
  */
-template <std::size_t KeySize> class GenericComparator {
-public:
+template <std::size_t KeySize>
+class GenericComparator {
+ public:
   /** Type information passed to the constuctor as it's not in the key itself */
   GenericComparator(index::IndexMetadata *metadata)
       : schema(metadata->GetKeySchema()) {}
@@ -442,8 +450,9 @@ public:
 /**
  * Equality-checking function object
  */
-template <std::size_t KeySize> class GenericEqualityChecker {
-public:
+template <std::size_t KeySize>
+class GenericEqualityChecker {
+ public:
   /** Type information passed to the constuctor as it's not in the key itself */
   GenericEqualityChecker(index::IndexMetadata *metadata)
       : schema(metadata->GetKeySchema()) {}
@@ -502,7 +511,7 @@ struct GenericHasher : std::unary_function<GenericKey<KeySize>, std::size_t> {
  * comparing Values.
  */
 class TupleKey {
-public:
+ public:
   inline TupleKey() {
     column_indices = NULL;
     key_tuple = NULL;
@@ -531,8 +540,8 @@ public:
   bool IsKeySchema() const { return column_indices == NULL; }
 
   // Return a table tuple that is valid for comparison
-  const storage::Tuple
-  GetTupleForComparison(const catalog::Schema *key_tuple_schema) const {
+  const storage::Tuple GetTupleForComparison(
+      const catalog::Schema *key_tuple_schema) const {
     return storage::Tuple(key_tuple_schema, key_tuple);
   }
 
@@ -553,7 +562,7 @@ public:
 };
 
 class TupleKeyComparator {
-public:
+ public:
   TupleKeyComparator(index::IndexMetadata *metadata)
       : schema(metadata->GetKeySchema()) {}
 
@@ -581,7 +590,7 @@ public:
 };
 
 class TupleKeyEqualityChecker {
-public:
+ public:
   TupleKeyEqualityChecker(index::IndexMetadata *metadata)
       : schema(metadata->GetKeySchema()) {}
 
@@ -605,5 +614,5 @@ public:
   const catalog::Schema *schema;
 };
 
-} // End index namespace
-} // End peloton namespace
+}  // End index namespace
+}  // End peloton namespace

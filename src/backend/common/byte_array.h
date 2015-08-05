@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <cstring>
@@ -51,8 +50,9 @@ namespace peloton {
  * if Outofmemory happens.
  */
 
-template <typename T> class GenericArray {
-public:
+template <typename T>
+class GenericArray {
+ public:
   /// corresponds to "byte[] bar = null;" in Java
   GenericArray() { reset(); };
 
@@ -106,7 +106,8 @@ public:
     assert(newLength >= 0);
     assert(newLength > array_length);
     boost::shared_array<T> newData(new T[newLength]);
-    ::memset(newData.get(), 0, newLength * sizeof(T)); /// makes valgrind happy.
+    ::memset(newData.get(), 0,
+             newLength * sizeof(T));  /// makes valgrind happy.
     ::memcpy(newData.get(), array_data.get(), array_length * sizeof(T));
     array_data = newData;
     array_length = newLength;
@@ -148,11 +149,11 @@ public:
     return array_data.get()[index];
   };
 
-private:
+ private:
   boost::shared_array<T> array_data;
   int array_length;
 };
 
 typedef GenericArray<char> ByteArray;
 
-} /// End peloton namespace
+}  /// End peloton namespace

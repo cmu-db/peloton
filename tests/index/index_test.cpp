@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "gtest/gtest.h"
 #include "harness.h"
 
@@ -25,10 +24,8 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 void PrintSlots(const std::vector<ItemPointer> &slots) {
-
   std::cout << "SLOTS :: " << slots.size() << "\n";
-  for (auto item : slots)
-    std::cout << item.block << " " << item.offset << "\n";
+  for (auto item : slots) std::cout << item.block << " " << item.offset << "\n";
 }
 
 TEST(IndexTests, BtreeUniqueIndexTest) {
@@ -242,5 +239,5 @@ TEST(IndexTests, BtreeMultiIndexTest) {
   delete index;
 }
 
-} // End test namespace
-} // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace

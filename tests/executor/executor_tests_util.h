@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -47,19 +46,19 @@ class Tuple;
 namespace test {
 
 class ExecutorTestsUtil {
-public:
+ public:
   /**
    * @brief Creates a basic tile group with allocated but not populated
    *        tuples.
    */
-  static storage::TileGroup *
-  CreateTileGroup(storage::AbstractBackend *backend,
-                  int allocate_tuple_count = TESTS_TUPLES_PER_TILEGROUP);
+  static storage::TileGroup *CreateTileGroup(
+      storage::AbstractBackend *backend,
+      int allocate_tuple_count = TESTS_TUPLES_PER_TILEGROUP);
 
   /** @brief Creates a basic table with allocated but not populated tuples */
-  static storage::DataTable *
-  CreateTable(int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP,
-              bool indexes = true);
+  static storage::DataTable *CreateTable(
+      int tuples_per_tilegroup_count = TESTS_TUPLES_PER_TILEGROUP,
+      bool indexes = true);
 
   /** @brief Creates a basic table with allocated and populated tuples */
   static storage::DataTable *CreateAndPopulateTable();
@@ -71,9 +70,9 @@ public:
 
   static catalog::Column GetColumnInfo(int index);
 
-  static executor::LogicalTile *
-  ExecuteTile(executor::AbstractExecutor *executor,
-              executor::LogicalTile *source_logical_tile);
+  static executor::LogicalTile *ExecuteTile(
+      executor::AbstractExecutor *executor,
+      executor::LogicalTile *source_logical_tile);
 
   /**
    * @brief Returns the value populated at the specified field.
@@ -97,5 +96,5 @@ public:
       std::vector<std::unique_ptr<executor::LogicalTile>> &tile_vec);
 };
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

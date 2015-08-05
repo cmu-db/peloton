@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/types.h"
@@ -29,7 +28,7 @@ namespace bridge {
 class IndexInfo;
 
 class DDLIndex {
-public:
+ public:
   DDLIndex(const DDLIndex &) = delete;
   DDLIndex &operator=(const DDLIndex &) = delete;
   DDLIndex(DDLIndex &&) = delete;
@@ -62,13 +61,17 @@ public:
 // Used only internally.
 
 class IndexInfo {
-public:
+ public:
   IndexInfo(std::string index_name, oid_t index_oid, std::string table_name,
             IndexType method_type, IndexConstraintType type, bool unique_keys,
             std::vector<std::string> key_column_names)
-      : index_name(index_name), index_oid(index_oid), table_name(table_name),
-        method_type(method_type), constraint_type(type),
-        unique_keys(unique_keys), key_column_names(key_column_names) {}
+      : index_name(index_name),
+        index_oid(index_oid),
+        table_name(table_name),
+        method_type(method_type),
+        constraint_type(type),
+        unique_keys(unique_keys),
+        key_column_names(key_column_names) {}
 
   //===--------------------------------------------------------------------===//
   // Accessors
@@ -88,7 +91,7 @@ public:
 
   std::vector<std::string> GetKeyColumnNames() { return key_column_names; }
 
-private:
+ private:
   std::string index_name;
 
   oid_t index_oid;
@@ -105,5 +108,5 @@ private:
   std::vector<std::string> key_column_names;
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

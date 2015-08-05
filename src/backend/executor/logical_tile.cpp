@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/logical_tile.h"
 
 #include <cassert>
@@ -358,5 +357,5 @@ std::ostream &operator<<(std::ostream &os, const LogicalTile &lt) {
   return os;
 }
 
-} // End executor namespace
-} // End peloton namespace
+}  // End executor namespace
+}  // End peloton namespace

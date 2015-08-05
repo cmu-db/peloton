@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/update_executor.h"
 
 #include "backend/common/logger.h"
@@ -117,5 +116,5 @@ bool UpdateExecutor::DExecute() {
   return true;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

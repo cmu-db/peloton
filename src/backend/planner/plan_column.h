@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/types.h"
@@ -30,7 +29,7 @@ namespace planner {
  * valid outside the scope of the initial JSON deserialization.
  */
 class PlanColumn {
-public:
+ public:
   PlanColumn(json_spirit::Object &col_object);
 
   int GetGuid() const;
@@ -51,7 +50,7 @@ public:
   // produce a string describing pnf's content
   friend std::ostream &operator<<(std::ostream &os, const PlanColumn &column);
 
-private:
+ private:
   const json_spirit::Object &m_col_object;
 
   oid_t m_guid;
@@ -65,5 +64,5 @@ private:
   std::string m_inputColumnName;
 };
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

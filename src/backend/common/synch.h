@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <thread>
 #include <atomic>
 
@@ -37,7 +36,7 @@ inline bool atomic_cas(T *object, T old_value, T new_value) {
 // Wrapper around pthread_rwlock_t
 
 struct RWLock {
-public:
+ public:
   RWLock(RWLock const &) = delete;
   RWLock &operator=(RWLock const &) = delete;
 
@@ -51,13 +50,13 @@ public:
 
   void Unlock() const { pthread_rwlock_unlock(&rw_lock); }
 
-private:
+ private:
   // can only be moved, not copied
   mutable pthread_rwlock_t rw_lock;
 };
 
 struct RecursiveLock {
-public:
+ public:
   RecursiveLock(RecursiveLock const &) = delete;
   RecursiveLock &operator=(RecursiveLock const &) = delete;
 
@@ -73,7 +72,7 @@ public:
 
   void Unlock() const { pthread_mutex_unlock(&recursive_mutex); }
 
-private:
+ private:
   // can only be moved, not copied
   pthread_mutexattr_t attr;
   mutable pthread_mutex_t recursive_mutex;
@@ -100,12 +99,12 @@ struct ExclusiveLock {
 //===--------------------------------------------------------------------===//
 
 class Spinlock {
-public:
+ public:
   Spinlock() : spin_lock_state(Unlocked) {}
 
   inline void Lock() {
     while (!TryLock()) {
-      _mm_pause(); // helps the cpu to detect busy-wait loop
+      _mm_pause();  // helps the cpu to detect busy-wait loop
     }
   }
 
@@ -122,7 +121,7 @@ public:
     spin_lock_state.store(Unlocked, std::memory_order_release);
   }
 
-private:
+ private:
   typedef enum { Locked, Unlocked } LockState;
 
   /*the exchange method on this atomic is compiled to a lockfree xchgl
@@ -130,4 +129,4 @@ private:
   std::atomic<LockState> spin_lock_state;
 };
 
-} // End peloton namespace
+}  // End peloton namespace

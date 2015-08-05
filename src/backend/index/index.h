@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -33,15 +32,19 @@ namespace index {
 class IndexMetadata {
   IndexMetadata() = delete;
 
-public:
+ public:
   IndexMetadata(std::string index_name, oid_t index_oid, IndexType method_type,
                 IndexConstraintType index_type,
                 const catalog::Schema *tuple_schema,
                 const catalog::Schema *key_schema, bool unique_keys)
 
-      : index_name(index_name), index_oid(index_oid), method_type(method_type),
-        index_type(index_type), tuple_schema(tuple_schema),
-        key_schema(key_schema), unique_keys(unique_keys) {}
+      : index_name(index_name),
+        index_oid(index_oid),
+        method_type(method_type),
+        index_type(index_type),
+        tuple_schema(tuple_schema),
+        key_schema(key_schema),
+        unique_keys(unique_keys) {}
 
   ~IndexMetadata() {
     // clean up key schema
@@ -93,7 +96,7 @@ public:
 class Index {
   friend class IndexFactory;
 
-public:
+ public:
   oid_t GetOid() const { return index_oid; }
 
   IndexMetadata *GetMetadata() const { return metadata; }
@@ -129,10 +132,10 @@ public:
                              const ItemPointer location) = 0;
 
   // scan all keys in the index comparing with an arbitrary key
-  virtual std::vector<ItemPointer>
-  Scan(const std::vector<Value> &values,
-       const std::vector<oid_t> &key_column_ids,
-       const std::vector<ExpressionType> &exprs) = 0;
+  virtual std::vector<ItemPointer> Scan(
+      const std::vector<Value> &values,
+      const std::vector<oid_t> &key_column_ids,
+      const std::vector<ExpressionType> &exprs) = 0;
 
   //===--------------------------------------------------------------------===//
   // STATS
@@ -180,7 +183,7 @@ public:
   // Get a string representation of this index
   friend std::ostream &operator<<(std::ostream &os, const Index &index);
 
-protected:
+ protected:
   Index(IndexMetadata *schema);
 
   // Generic key comparator between index key and given arbitrary key
@@ -216,5 +219,5 @@ protected:
   bool dirty = false;
 };
 
-} // End index namespace
-} // End peloton namespace
+}  // End index namespace
+}  // End peloton namespace

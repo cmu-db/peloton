@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <cstdio>
 #include <random>
 #include <chrono>
@@ -28,7 +27,6 @@ namespace test {
 //===--------------------------------------------------------------------===//
 
 TEST(ClustererTests, BasicTest) {
-
   oid_t column_count = 7;
   oid_t cluster_count = 3;
 
@@ -84,5 +82,5 @@ TEST(ClustererTests, BasicTest) {
     std::cout << entry.first << "\t" << entry.second << "\n";
 }
 
-} // End test namespace
-} // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace

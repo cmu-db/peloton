@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <utility>
 #include <vector>
@@ -150,5 +149,5 @@ TEST(LogicalTileTests, TileMaterializationTest) {
   std::cout << "Value : " << logical_tile->GetValue(1, 3) << "\n";
 }
 
-} // End test namespace
-} // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace

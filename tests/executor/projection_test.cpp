@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <set>
 #include <string>
@@ -49,7 +48,6 @@ void RunTest(executor::ProjectionExecutor &executor,
 }
 
 TEST(ProjectionTests, BasicTest) {
-
   MockExecutor child_executor;
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
@@ -103,7 +101,6 @@ TEST(ProjectionTests, BasicTest) {
 }
 
 TEST(ProjectionTests, TwoColumnTest) {
-
   MockExecutor child_executor;
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
@@ -165,7 +162,6 @@ TEST(ProjectionTests, TwoColumnTest) {
 }
 
 TEST(ProjectionTests, BasicTargetTest) {
-
   MockExecutor child_executor;
   EXPECT_CALL(child_executor, DInit()).WillOnce(Return(true));
 
@@ -228,5 +224,5 @@ TEST(ProjectionTests, BasicTargetTest) {
   RunTest(executor, 1);
 }
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

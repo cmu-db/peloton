@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/index_scan_executor.h"
 
 #include <memory>
@@ -43,11 +42,9 @@ IndexScanExecutor::IndexScanExecutor(planner::AbstractPlanNode *node,
  * @return true on success, false otherwise.
  */
 bool IndexScanExecutor::DInit() {
-
   auto status = AbstractScanExecutor::DInit();
 
-  if (!status)
-    return false;
+  if (!status) return false;
 
   assert(children_.size() == 0);
   LOG_TRACE("Index Scan executor :: 0 child");
@@ -83,17 +80,15 @@ bool IndexScanExecutor::DInit() {
  * @return true on success, false otherwise.
  */
 bool IndexScanExecutor::DExecute() {
-
   if (!done_) {
     auto status = ExecIndexLookup();
-    if (status == false)
-      return false;
+    if (status == false) return false;
   }
 
   // Already performed the index lookup
   assert(done_);
 
-  while (result_itr < result.size()) { // Avoid returning empty tiles
+  while (result_itr < result.size()) {  // Avoid returning empty tiles
     // In order to be as lazy as possible,
     // the generic predicate is checked here (instead of upfront)
     if (nullptr != predicate_) {
@@ -116,7 +111,7 @@ bool IndexScanExecutor::DExecute() {
       return true;
     }
 
-  } // end while
+  }  // end while
 
   return false;
 }
@@ -130,8 +125,7 @@ bool IndexScanExecutor::ExecIndexLookup() {
 
   LOG_INFO("Tuple locations : %lu", tuple_locations.size());
 
-  if (tuple_locations.size() == 0)
-    return false;
+  if (tuple_locations.size() == 0) return false;
 
   auto transaction_ = executor_context_->GetTransaction();
   txn_id_t txn_id = transaction_->GetTransactionId();
@@ -147,5 +141,5 @@ bool IndexScanExecutor::ExecIndexLookup() {
   return true;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

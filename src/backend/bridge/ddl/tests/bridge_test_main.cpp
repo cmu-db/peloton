@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "bridge_test.h"
 
 #include "backend/bridge/ddl/bridge.h"
@@ -36,5 +35,5 @@ void BridgeTest::RunTests() {
   std::cout << ":::::::::::::  TEST CASES END   :::::::::::::\n";
 }
 
-} // End bridge namespace
-} // End peloton namespace
+}  // End bridge namespace
+}  // End peloton namespace

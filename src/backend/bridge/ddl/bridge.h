@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "c.h"
@@ -25,7 +24,7 @@ namespace bridge {
 
 //  Bridge for accessing Postgres Catalog
 class Bridge {
-public:
+ public:
   //===--------------------------------------------------------------------===//
   // Getters
   //===--------------------------------------------------------------------===//
@@ -69,5 +68,5 @@ public:
   static void SetCurrentResourceOwner();
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

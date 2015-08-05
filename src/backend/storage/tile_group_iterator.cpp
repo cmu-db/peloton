@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/storage/tile_group_iterator.h"
 
 namespace peloton {
@@ -29,5 +28,5 @@ bool TileGroupIterator::HasNext() {
   return (tileGroupItr_ < table_->GetTileGroupCount());
 }
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

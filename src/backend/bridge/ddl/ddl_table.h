@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/catalog/schema.h"
@@ -30,7 +29,7 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class DDLTable {
-public:
+ public:
   DDLTable(const DDLTable &) = delete;
   DDLTable &operator=(const DDLTable &) = delete;
   DDLTable(DDLTable &&) = delete;
@@ -57,9 +56,9 @@ public:
   static bool SetReferenceTables(std::vector<catalog::ForeignKey> &foreign_keys,
                                  oid_t relation_oid);
 
-private:
+ private:
   static bool AddConstraint(Oid relation_oid, Constraint *constraint);
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

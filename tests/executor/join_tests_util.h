@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -34,15 +33,14 @@ class Tuple;
 namespace test {
 
 class JoinTestsUtil {
-public:
+ public:
   /** @brief Helper method for performing join tests */
-  static bool
-  ExecuteJoinTest(peloton::storage::DataTable *leftTable,
-                  peloton::storage::DataTable *rightTable,
-                  peloton::storage::DataTable *expected,
-                  peloton::PelotonJoinType joinType,
-                  peloton::expression::AbstractExpression *predicate);
+  static bool ExecuteJoinTest(
+      peloton::storage::DataTable *leftTable,
+      peloton::storage::DataTable *rightTable,
+      peloton::storage::DataTable *expected, peloton::PelotonJoinType joinType,
+      peloton::expression::AbstractExpression *predicate);
 };
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

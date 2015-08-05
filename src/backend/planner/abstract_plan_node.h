@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <cstdint>
@@ -34,7 +33,7 @@ namespace planner {
 //===--------------------------------------------------------------------===//
 
 class AbstractPlanNode {
-public:
+ public:
   AbstractPlanNode(const AbstractPlanNode &) = delete;
   AbstractPlanNode &operator=(const AbstractPlanNode &) = delete;
   AbstractPlanNode(AbstractPlanNode &&) = delete;
@@ -78,7 +77,7 @@ public:
   // Override in derived plan nodes
   virtual std::string GetInfo() const;
 
-private:
+ private:
   // Every plan node will have a unique id assigned to it at compile time
   oid_t plan_node_id_;
 
@@ -88,5 +87,5 @@ private:
   AbstractPlanNode *parent_ = nullptr;
 };
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

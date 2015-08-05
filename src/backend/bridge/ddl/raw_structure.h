@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/types.h"
@@ -58,8 +57,8 @@ struct raw_index_info {
 };
 
 struct raw_foreignkey_info {
-  oid_t source_table_id; // a table that has a reference key
-  oid_t sink_table_id;   // a table that has a primary key
+  oid_t source_table_id;  // a table that has a reference key
+  oid_t sink_table_id;    // a table that has a primary key
   int *source_column_offsets;
   oid_t source_column_count;
   int *sink_column_offsets;
@@ -82,5 +81,5 @@ struct raw_database_info {
   oid_t foreignkey_count;
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

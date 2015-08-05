@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/value.h"
@@ -35,7 +34,7 @@ namespace peloton {
 class ValuePeeker {
   friend class Value;
 
-public:
+ public:
   static inline ValueType PeekValueType(const Value value) {
     return value.GetValueType();
   }
@@ -107,4 +106,4 @@ public:
   }
 };
 
-} // End peloton namespace
+}  // End peloton namespace

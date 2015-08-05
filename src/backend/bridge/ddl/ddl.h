@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "postmaster/peloton.h"
@@ -27,7 +26,7 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class DDL {
-public:
+ public:
   DDL(const DDL &) = delete;
   DDL &operator=(const DDL &) = delete;
   DDL(DDL &&) = delete;
@@ -41,5 +40,5 @@ public:
                              Peloton_Status *status, TransactionId txn_id);
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton
