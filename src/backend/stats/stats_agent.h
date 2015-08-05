@@ -1,6 +1,6 @@
 //===----------------------------------------------------------------------===//
 //
-//							PelotonDB
+//                         PelotonDB
 //
 // stats_agent.h
 //
@@ -9,6 +9,7 @@
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #ifndef STATSAGENT_H_
 #define STATSAGENT_H_

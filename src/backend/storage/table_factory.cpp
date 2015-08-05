@@ -1,6 +1,6 @@
 //===----------------------------------------------------------------------===//
 //
-//							PelotonDB
+//                         PelotonDB
 //
 // table_factory.cpp
 //
@@ -9,6 +9,7 @@
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "backend/storage/table_factory.h"
 

@@ -1,6 +1,6 @@
 //===----------------------------------------------------------------------===//
 //
-//							PelotonDB
+//                         PelotonDB
 //
 // mapper_utils.cpp
 //
@@ -9,6 +9,7 @@
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/ddl/schema_transformer.h"

@@ -1,6 +1,6 @@
 //===----------------------------------------------------------------------===//
 //
-//							PelotonDB
+//                         PelotonDB
 //
 // tbb_scheduler.cpp
 //
@@ -9,6 +9,7 @@
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include <string>
 #include <cassert>

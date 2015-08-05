@@ -1,6 +1,6 @@
 //===----------------------------------------------------------------------===//
 //
-//							PelotonDB
+//                         PelotonDB
 //
 // insert_executor.cpp
 //
@@ -9,6 +9,7 @@
 // Copyright (c) 2015, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
+
 
 #include "backend/executor/insert_executor.h"
 
