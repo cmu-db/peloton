@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -29,25 +28,23 @@ namespace brain {
 
 // Sequential k-Means Clustering
 class Clusterer {
- public:
-  Clusterer(oid_t cluster_count,
-            oid_t sample_column_count,
+public:
+  Clusterer(oid_t cluster_count, oid_t sample_column_count,
             double param = NEW_SAMPLE_WEIGHT)
       : cluster_count_(cluster_count),
-        means_(std::vector<Sample>(cluster_count_, Sample(sample_column_count))),
+        means_(
+            std::vector<Sample>(cluster_count_, Sample(sample_column_count))),
         closest_(std::vector<int>(cluster_count_, 0)),
-        new_sample_weight_(param),
-        sample_count_(0),
-        sample_column_count_(sample_column_count){
-  }
+        new_sample_weight_(param), sample_count_(0),
+        sample_column_count_(sample_column_count) {}
 
   oid_t GetClusterCount() const { return cluster_count_; }
 
   // process the sample and update the means
-  void ProcessSample(const Sample& sample);
+  void ProcessSample(const Sample &sample);
 
   // find closest cluster for the given sample
-  oid_t GetClosestCluster(const Sample& sample);
+  oid_t GetClosestCluster(const Sample &sample);
 
   // get cluster mean sample
   Sample GetCluster(oid_t cluster_offset) const;
@@ -59,9 +56,9 @@ class Clusterer {
   std::map<oid_t, oid_t> GetPartitioning(oid_t tile_count) const;
 
   // Get a string representation of clusterer
-  friend std::ostream& operator<<(std::ostream& os, const Clusterer& clusterer);
+  friend std::ostream &operator<<(std::ostream &os, const Clusterer &clusterer);
 
- private:
+private:
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
@@ -83,8 +80,7 @@ class Clusterer {
 
   // sample column count
   oid_t sample_column_count_;
-
 };
 
-}  // End brain namespace
-}  // End peloton namespace
+} // End brain namespace
+} // End peloton namespace

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/catalog/schema.h"
@@ -26,22 +25,22 @@ class AbstractJoinExecutor : public AbstractExecutor {
   AbstractJoinExecutor(const AbstractJoinExecutor &) = delete;
   AbstractJoinExecutor &operator=(const AbstractJoinExecutor &) = delete;
 
- public:
+public:
   explicit AbstractJoinExecutor(planner::AbstractPlanNode *node,
-                                  ExecutorContext *executor_context);
+                                ExecutorContext *executor_context);
 
- protected:
+protected:
   bool DInit();
 
   bool DExecute() = 0;
 
- protected:
-
+protected:
   //===--------------------------------------------------------------------===//
   // Helper
   //===--------------------------------------------------------------------===//
-  std::vector<LogicalTile::ColumnInfo> BuildSchema(std::vector<LogicalTile::ColumnInfo> left,
-                                                   std::vector<LogicalTile::ColumnInfo> right);
+  std::vector<LogicalTile::ColumnInfo>
+  BuildSchema(std::vector<LogicalTile::ColumnInfo> left,
+              std::vector<LogicalTile::ColumnInfo> right);
 
   //===--------------------------------------------------------------------===//
   // Executor State
@@ -64,5 +63,5 @@ class AbstractJoinExecutor : public AbstractExecutor {
   const planner::ProjectInfo *proj_info_ = nullptr;
 };
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

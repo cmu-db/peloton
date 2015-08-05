@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/storage/tile_group.h"
 
 #include <numeric>
@@ -26,17 +25,11 @@ namespace storage {
 TileGroup::TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
                      AbstractBackend *backend,
                      const std::vector<catalog::Schema> &schemas,
-                     const column_map_type& column_map,
-                     int tuple_count)
-    : database_id(INVALID_OID),
-      table_id(INVALID_OID),
-      tile_group_id(INVALID_OID),
-      backend(backend),
-      tile_schemas(schemas),
-      tile_group_header(tile_group_header),
-      table(table),
-      num_tuple_slots(tuple_count),
-      column_map(column_map) {
+                     const column_map_type &column_map, int tuple_count)
+    : database_id(INVALID_OID), table_id(INVALID_OID),
+      tile_group_id(INVALID_OID), backend(backend), tile_schemas(schemas),
+      tile_group_header(tile_group_header), table(table),
+      num_tuple_slots(tuple_count), column_map(column_map) {
   tile_count = tile_schemas.size();
 
   for (oid_t tile_itr = 0; tile_itr < tile_count; tile_itr++) {
@@ -67,7 +60,8 @@ oid_t TileGroup::InsertTuple(txn_id_t transaction_id, const Tuple *tuple) {
             tile_group_id, tuple_slot_id, num_tuple_slots);
 
   // No more slots
-  if (tuple_slot_id == INVALID_OID) return INVALID_OID;
+  if (tuple_slot_id == INVALID_OID)
+    return INVALID_OID;
 
   oid_t tile_column_count;
   oid_t column_itr = 0;
@@ -111,7 +105,8 @@ Tuple *TileGroup::SelectTuple(oid_t tile_offset, oid_t tuple_slot_id) {
   assert(tuple_slot_id < num_tuple_slots);
 
   // is it within bounds ?
-  if (tuple_slot_id >= GetNextTupleSlot()) return nullptr;
+  if (tuple_slot_id >= GetNextTupleSlot())
+    return nullptr;
 
   Tile *tile = GetTile(tile_offset);
   assert(tile);
@@ -121,7 +116,8 @@ Tuple *TileGroup::SelectTuple(oid_t tile_offset, oid_t tuple_slot_id) {
 
 Tuple *TileGroup::SelectTuple(oid_t tuple_slot_id) {
   // is it within bounds ?
-  if (tuple_slot_id >= GetNextTupleSlot()) return nullptr;
+  if (tuple_slot_id >= GetNextTupleSlot())
+    return nullptr;
 
   // allocate a new copy of the original tuple
   Tuple *tuple = new Tuple(table->GetSchema(), true);
@@ -239,16 +235,18 @@ std::ostream &operator<<(std::ostream &os, const TileGroup &tile_group) {
 
   for (oid_t tile_itr = 0; tile_itr < tile_group.tile_count; tile_itr++) {
     Tile *tile = tile_group.GetTile(tile_itr);
-    if (tile != nullptr) os << (*tile);
+    if (tile != nullptr)
+      os << (*tile);
   }
 
   auto header = tile_group.GetHeader();
-  if (header != nullptr) os << (*header);
+  if (header != nullptr)
+    os << (*header);
 
   os << "=============================================================\n";
 
   return os;
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+} // End storage namespace
+} // End peloton namespace

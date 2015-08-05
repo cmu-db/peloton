@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/limit_executor.h"
 
 #include "backend/common/logger.h"

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/catalog/manager.h"
@@ -48,7 +47,7 @@ class Tile {
   Tile() = delete;
   Tile(Tile const &) = delete;
 
- public:
+public:
   // Tile creator
   Tile(TileGroupHeader *tile_header, AbstractBackend *backend,
        const catalog::Schema &tuple_schema, TileGroup *tile_group,
@@ -165,7 +164,7 @@ class Tile {
 
   char *GetTupleLocation(const oid_t tuple_slot_id) const;
 
- protected:
+protected:
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
@@ -242,7 +241,8 @@ inline int Tile::GetTupleOffset(const char *tuple_address) const {
   // length
   tuple_id = (tuple_address - data) / tuple_length;
 
-  if (tuple_id * tuple_length + data == tuple_address) return tuple_id;
+  if (tuple_id * tuple_length + data == tuple_address)
+    return tuple_id;
 
   return -1;
 }
@@ -252,7 +252,7 @@ inline int Tile::GetTupleOffset(const char *tuple_address) const {
 //===--------------------------------------------------------------------===//
 
 class TileFactory {
- public:
+public:
   TileFactory();
   virtual ~TileFactory();
 
@@ -284,7 +284,7 @@ class TileFactory {
     return tile;
   }
 
- private:
+private:
   static void InitCommon(Tile *tile, oid_t database_id, oid_t table_id,
                          oid_t tile_group_id, oid_t tile_id,
                          AbstractBackend *backend,
@@ -298,5 +298,5 @@ class TileFactory {
   }
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+} // End storage namespace
+} // End peloton namespace

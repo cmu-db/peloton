@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -34,15 +33,14 @@ class Tuple : public AbstractTuple {
   friend class ValuePeeker;
   friend class Tile;
 
- public:
+public:
   // Default constructor (don't use this)
   inline Tuple()
       : tuple_schema(nullptr), tuple_data(nullptr), allocated(false) {}
 
   // Setup the tuple given a table
   inline Tuple(const Tuple &rhs)
-      : tuple_schema(rhs.tuple_schema),
-        tuple_data(rhs.tuple_data),
+      : tuple_schema(rhs.tuple_schema), tuple_data(rhs.tuple_data),
         allocated(false) {}
 
   // Setup the tuple given a schema
@@ -74,7 +72,8 @@ class Tuple : public AbstractTuple {
   // Tile or larger entities must take care of this
   ~Tuple() {
     // delete the tuple data
-    if (allocated) delete[] tuple_data;
+    if (allocated)
+      delete[] tuple_data;
   }
 
   // Setup the tuple given the specified data location and schema
@@ -98,8 +97,7 @@ class Tuple : public AbstractTuple {
 
   int Compare(const Tuple &other) const;
 
-  int Compare(const Tuple &other,
-              const std::vector<oid_t>& columns) const;
+  int Compare(const Tuple &other, const std::vector<oid_t> &columns) const;
 
   //===--------------------------------------------------------------------===//
   // Getters and Setters
@@ -152,7 +150,7 @@ class Tuple : public AbstractTuple {
   bool EqualsNoSchemaCheck(const Tuple &other) const;
 
   bool EqualsNoSchemaCheck(const Tuple &other,
-                           const std::vector<oid_t>& columns) const;
+                           const std::vector<oid_t> &columns) const;
 
   // this does set NULL in addition to clear string count.
   void SetAllNulls();
@@ -196,7 +194,7 @@ class Tuple : public AbstractTuple {
 
   std::string GetInfo() const;
 
- private:
+private:
   char *GetDataPtr(const oid_t column_id);
 
   const char *GetDataPtr(const oid_t column_id) const;
@@ -248,11 +246,11 @@ struct TupleHasher : std::unary_function<Tuple, std::size_t> {
 //===--------------------------------------------------------------------===//
 
 class TupleComparator {
- public:
+public:
   bool operator()(const Tuple lhs, const Tuple rhs) const {
     return lhs.EqualsNoSchemaCheck(rhs);
   }
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+} // End storage namespace
+} // End peloton namespace

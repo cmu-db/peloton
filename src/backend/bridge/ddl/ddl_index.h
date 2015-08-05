@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/types.h"
@@ -29,13 +28,14 @@ namespace bridge {
 class IndexInfo;
 
 class DDLIndex {
- public:
-  DDLIndex(const DDLIndex&) = delete;
-  DDLIndex& operator=(const DDLIndex&) = delete;
-  DDLIndex(DDLIndex&&) = delete;
-  DDLIndex& operator=(DDLIndex&&) = delete;
+public:
+  DDLIndex(const DDLIndex &) = delete;
+  DDLIndex &operator=(const DDLIndex &) = delete;
+  DDLIndex(DDLIndex &&) = delete;
+  DDLIndex &operator=(DDLIndex &&) = delete;
 
-  static bool ExecIndexStmt(Node* parsetree, std::vector<Node*>& parsetree_stack);
+  static bool ExecIndexStmt(Node *parsetree,
+                            std::vector<Node *> &parsetree_stack);
 
   static bool CreateIndex(IndexInfo index_info);
 
@@ -46,10 +46,10 @@ class DDLIndex {
   // static bool DropIndex(Oid index_oid);
 
   // Create the indexes using indexinfos and add to the table
-  static bool CreateIndexes(std::vector<IndexInfo>& index_infos);
+  static bool CreateIndexes(std::vector<IndexInfo> &index_infos);
 
   // Parse IndexStmt and return IndexInfo
-  static IndexInfo* ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt);
+  static IndexInfo *ConstructIndexInfoByParsingIndexStmt(IndexStmt *Istmt);
 };
 
 //===--------------------------------------------------------------------===//
@@ -61,17 +61,13 @@ class DDLIndex {
 // Used only internally.
 
 class IndexInfo {
- public:
+public:
   IndexInfo(std::string index_name, oid_t index_oid, std::string table_name,
             IndexType method_type, IndexConstraintType type, bool unique_keys,
             std::vector<std::string> key_column_names)
-      : index_name(index_name),
-        index_oid(index_oid),
-        table_name(table_name),
-        method_type(method_type),
-        constraint_type(type),
-        unique_keys(unique_keys),
-        key_column_names(key_column_names) {}
+      : index_name(index_name), index_oid(index_oid), table_name(table_name),
+        method_type(method_type), constraint_type(type),
+        unique_keys(unique_keys), key_column_names(key_column_names) {}
 
   //===--------------------------------------------------------------------===//
   // Accessors
@@ -91,7 +87,7 @@ class IndexInfo {
 
   std::vector<std::string> GetKeyColumnNames() { return key_column_names; }
 
- private:
+private:
   std::string index_name;
 
   oid_t index_oid;
@@ -108,5 +104,5 @@ class IndexInfo {
   std::vector<std::string> key_column_names;
 };
 
-}  // namespace bridge
-}  // namespace peloton
+} // namespace bridge
+} // namespace peloton

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/expression/abstract_expression.h"
@@ -29,14 +28,14 @@ class SerializeOutput;
 //===--------------------------------------------------------------------===//
 
 class TupleValueExpressionMarker {
- public:
+public:
   virtual ~TupleValueExpressionMarker() {}
   virtual int GetColumnId() const = 0;
 };
 
 class TupleValueExpression : public AbstractExpression,
                              public TupleValueExpressionMarker {
- public:
+public:
   TupleValueExpression(int tuple_idx, int value_idx, std::string table_name,
                        std::string col_name)
       : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE) {
@@ -58,7 +57,8 @@ class TupleValueExpression : public AbstractExpression,
 
   std::string DebugInfo(const std::string &spacer) const {
     std::ostringstream buffer;
-    buffer << spacer + "TupleValueReference[" << this->tuple_idx << " , " << this->value_idx << "]\n";
+    buffer << spacer + "TupleValueReference[" << this->tuple_idx << " , "
+           << this->value_idx << "]\n";
     return (buffer.str());
   }
 
@@ -69,7 +69,7 @@ class TupleValueExpression : public AbstractExpression,
   // Don't know this index until the executor examines the expression.
   void SetTupleIndex(int idx) { tuple_idx = idx; }
 
- protected:
+protected:
   // which tuple. defaults to tuple1
   int tuple_idx;
 
@@ -80,5 +80,5 @@ class TupleValueExpression : public AbstractExpression,
   std::string column_name;
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+} // End expression namespace
+} // End peloton namespace

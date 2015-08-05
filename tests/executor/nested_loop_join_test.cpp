@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 
 #include "gmock/gmock.h"
@@ -35,7 +34,6 @@ using ::testing::Return;
 
 namespace peloton {
 namespace test {
-
 
 // Create join predicate
 expression::AbstractExpression *CreateJoinPredicate() {
@@ -70,7 +68,7 @@ expression::AbstractExpression *CreateJoinPredicate() {
 }
 
 planner::ProjectInfo *CreateProjection() {
-   // Create the plan node
+  // Create the plan node
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
 
@@ -78,18 +76,22 @@ planner::ProjectInfo *CreateProjection() {
   // PROJECTION 0
   /////////////////////////////////////////////////////////
 
-
   // direct map
-  planner::ProjectInfo::DirectMap direct_map1 = std::make_pair(0, std::make_pair(0, 1));
-  planner::ProjectInfo::DirectMap direct_map2 = std::make_pair(1, std::make_pair(1, 1));
-  planner::ProjectInfo::DirectMap direct_map3 = std::make_pair(2, std::make_pair(1, 0));
-  planner::ProjectInfo::DirectMap direct_map4 = std::make_pair(3, std::make_pair(0, 0));
+  planner::ProjectInfo::DirectMap direct_map1 =
+      std::make_pair(0, std::make_pair(0, 1));
+  planner::ProjectInfo::DirectMap direct_map2 =
+      std::make_pair(1, std::make_pair(1, 1));
+  planner::ProjectInfo::DirectMap direct_map3 =
+      std::make_pair(2, std::make_pair(1, 0));
+  planner::ProjectInfo::DirectMap direct_map4 =
+      std::make_pair(3, std::make_pair(0, 0));
   direct_map_list.push_back(direct_map1);
   direct_map_list.push_back(direct_map2);
   direct_map_list.push_back(direct_map3);
   direct_map_list.push_back(direct_map4);
 
-  return new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
+  return new planner::ProjectInfo(std::move(target_list),
+                                  std::move(direct_map_list));
 }
 
 // Cartesian Product Test
@@ -115,16 +117,16 @@ TEST(NestedLoopJoinTests, CartesianProductTest) {
       .WillOnce(Return(false));
 
   EXPECT_CALL(right_executor, DExecute())
-      .WillOnce(Return(true))  // Itr 1
+      .WillOnce(Return(true)) // Itr 1
       .WillOnce(Return(true))
       .WillOnce(Return(false))
-      .WillOnce(Return(true))  // Itr 2
+      .WillOnce(Return(true)) // Itr 2
       .WillOnce(Return(true))
       .WillOnce(Return(false))
-      .WillOnce(Return(true))  // Itr 3
+      .WillOnce(Return(true)) // Itr 3
       .WillOnce(Return(true))
       .WillOnce(Return(false))
-      .WillOnce(Return(true));  // Itr 4
+      .WillOnce(Return(true)); // Itr 4
 
   // Create a table and wrap it in logical tile
   size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
@@ -220,16 +222,16 @@ TEST(NestedLoopJoinTests, JoinPredicateTest) {
       .WillOnce(Return(false));
 
   EXPECT_CALL(right_executor, DExecute())
-      .WillOnce(Return(true))  // Itr 1
+      .WillOnce(Return(true)) // Itr 1
       .WillOnce(Return(true))
       .WillOnce(Return(false))
-      .WillOnce(Return(true))  // Itr 2
+      .WillOnce(Return(true)) // Itr 2
       .WillOnce(Return(true))
       .WillOnce(Return(false))
-      .WillOnce(Return(true))  // Itr 3
+      .WillOnce(Return(true)) // Itr 3
       .WillOnce(Return(true))
       .WillOnce(Return(false))
-      .WillOnce(Return(true));  // Itr 4
+      .WillOnce(Return(true)); // Itr 4
 
   // Create a table and wrap it in logical tile
   size_t tile_group_size = TESTS_TUPLES_PER_TILEGROUP;
@@ -304,6 +306,5 @@ TEST(NestedLoopJoinTests, JoinPredicateTest) {
   EXPECT_TRUE(executor.Execute());
 }
 
-}  // namespace test
-}  // namespace peloton
-
+} // namespace test
+} // namespace peloton

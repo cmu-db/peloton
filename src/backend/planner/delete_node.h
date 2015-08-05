@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/planner/abstract_plan_node.h"
@@ -21,7 +20,7 @@ namespace peloton {
 namespace planner {
 
 class DeleteNode : public AbstractPlanNode {
- public:
+public:
   DeleteNode() = delete;
   DeleteNode(const DeleteNode &) = delete;
   DeleteNode &operator=(const DeleteNode &) = delete;
@@ -39,7 +38,7 @@ class DeleteNode : public AbstractPlanNode {
 
   bool GetTruncate() const { return truncate; }
 
- private:
+private:
   /** @brief Target table. */
   storage::DataTable *target_table_;
 
@@ -47,5 +46,5 @@ class DeleteNode : public AbstractPlanNode {
   bool truncate = false;
 };
 
-}  // namespace planner
-}  // namespace peloton
+} // namespace planner
+} // namespace peloton

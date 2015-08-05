@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -30,19 +29,19 @@ class Schema;
 namespace planner {
 
 class MaterializationNode : public AbstractPlanNode {
- public:
+public:
   MaterializationNode(const MaterializationNode &) = delete;
   MaterializationNode &operator=(const MaterializationNode &) = delete;
   MaterializationNode(MaterializationNode &&) = delete;
   MaterializationNode &operator=(MaterializationNode &&) = delete;
 
   MaterializationNode(const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-                      catalog::Schema *schema,
-                      bool physify_flag)
-      : old_to_new_cols_(old_to_new_cols), schema_(schema), physify_flag_(physify_flag) {}
+                      catalog::Schema *schema, bool physify_flag)
+      : old_to_new_cols_(old_to_new_cols), schema_(schema),
+        physify_flag_(physify_flag) {}
 
   MaterializationNode(bool physify_flag)
-  : schema_(nullptr), physify_flag_(physify_flag) {}
+      : schema_(nullptr), physify_flag_(physify_flag) {}
 
   ~MaterializationNode() {
     // Clean up schema
@@ -64,7 +63,7 @@ class MaterializationNode : public AbstractPlanNode {
 
   inline std::string GetInfo() const { return "Materialize"; }
 
- private:
+private:
   /**
    * @brief Mapping of old column ids to new column ids after materialization.
    */
@@ -74,10 +73,11 @@ class MaterializationNode : public AbstractPlanNode {
   catalog::Schema *schema_;
 
   /**
-   * @brief whether to create a physical tile or just pass thru underlying logical tile
+   * @brief whether to create a physical tile or just pass thru underlying
+   * logical tile
    */
   bool physify_flag_;
 };
 
-}  // namespace planner
-}  // namespace peloton
+} // namespace planner
+} // namespace peloton

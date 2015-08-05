@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <vector>
 
 #include "backend/common/types.h"
@@ -29,8 +28,7 @@ namespace executor {
  */
 NestedLoopJoinExecutor::NestedLoopJoinExecutor(
     planner::AbstractPlanNode *node, ExecutorContext *executor_context)
-    : AbstractJoinExecutor(node, executor_context) {
-}
+    : AbstractJoinExecutor(node, executor_context) {}
 
 /**
  * @brief Creates logical tiles from the two input logical tiles after applying
@@ -104,8 +102,8 @@ bool NestedLoopJoinExecutor::DExecute() {
   // Compute output tile column count
   size_t left_tile_column_count = left_tile_position_lists.size();
   size_t right_tile_column_count = right_tile_position_lists.size();
-  size_t output_tile_column_count = left_tile_column_count
-      + right_tile_column_count;
+  size_t output_tile_column_count =
+      left_tile_column_count + right_tile_column_count;
 
   assert(left_tile_column_count > 0);
   assert(right_tile_column_count > 0);
@@ -115,24 +113,24 @@ bool NestedLoopJoinExecutor::DExecute() {
   size_t right_tile_row_count = right_tile_position_lists[0].size();
 
   // Construct position lists for output tile
-  std::vector<std::vector<oid_t> > position_lists;
+  std::vector<std::vector<oid_t>> position_lists;
   for (size_t column_itr = 0; column_itr < output_tile_column_count;
-      column_itr++)
+       column_itr++)
     position_lists.push_back(std::vector<oid_t>());
 
   LOG_TRACE("left col count: %lu, right col count: %lu", left_tile_column_count,
-           right_tile_column_count);
+            right_tile_column_count);
   LOG_TRACE("left col count: %lu, right col count: %lu",
-           left_tile.get()->GetColumnCount(),
-           right_tile.get()->GetColumnCount());
+            left_tile.get()->GetColumnCount(),
+            right_tile.get()->GetColumnCount());
   LOG_TRACE("left row count: %lu, right row count: %lu", left_tile_row_count,
-           right_tile_row_count);
+            right_tile_row_count);
 
   // Go over every pair of tuples in left and right logical tiles
   for (size_t left_tile_row_itr = 0; left_tile_row_itr < left_tile_row_count;
-      left_tile_row_itr++) {
+       left_tile_row_itr++) {
     for (size_t right_tile_row_itr = 0;
-        right_tile_row_itr < right_tile_row_count; right_tile_row_itr++) {
+         right_tile_row_itr < right_tile_row_count; right_tile_row_itr++) {
       // TODO: OPTIMIZATION : Can split the control flow into two paths -
       // one for cartesian product and one for join
       // Then, we can skip this branch atleast for the cartesian product path.
@@ -146,7 +144,7 @@ bool NestedLoopJoinExecutor::DExecute() {
 
         // Join predicate is false. Skip pair and continue.
         if (predicate_->Evaluate(&left_tuple, &right_tuple, executor_context_)
-            .IsFalse()) {
+                .IsFalse()) {
           continue;
         }
       }
@@ -154,19 +152,20 @@ bool NestedLoopJoinExecutor::DExecute() {
       // Insert a tuple into the output logical tile
       // First, copy the elements in left logical tile's tuple
       for (size_t output_tile_column_itr = 0;
-          output_tile_column_itr < left_tile_column_count;
-          output_tile_column_itr++) {
+           output_tile_column_itr < left_tile_column_count;
+           output_tile_column_itr++) {
         position_lists[output_tile_column_itr].push_back(
-            left_tile_position_lists[output_tile_column_itr][left_tile_row_itr]);
+            left_tile_position_lists[output_tile_column_itr]
+                                    [left_tile_row_itr]);
       }
 
       // Then, copy the elements in left logical tile's tuple
       for (size_t output_tile_column_itr = 0;
-          output_tile_column_itr < right_tile_column_count;
-          output_tile_column_itr++) {
+           output_tile_column_itr < right_tile_column_count;
+           output_tile_column_itr++) {
         position_lists[left_tile_column_count + output_tile_column_itr]
-            .push_back(
-            right_tile_position_lists[output_tile_column_itr][right_tile_row_itr]);
+            .push_back(right_tile_position_lists[output_tile_column_itr]
+                                                [right_tile_row_itr]);
       }
 
       // First, copy the elements in left logical tile's tuple
@@ -176,7 +175,7 @@ bool NestedLoopJoinExecutor::DExecute() {
   for (auto col : position_lists) {
     LOG_TRACE("col");
     for (auto elm : col) {
-      (void) elm;  // silent compiler
+      (void)elm; // silent compiler
       LOG_TRACE("elm: %u", elm);
     }
   }
@@ -198,5 +197,5 @@ bool NestedLoopJoinExecutor::DExecute() {
   return true;
 }
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

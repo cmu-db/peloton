@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/executor/abstract_join_executor.h"
@@ -24,18 +23,16 @@ class NestedLoopJoinExecutor : public AbstractJoinExecutor {
   NestedLoopJoinExecutor(const NestedLoopJoinExecutor &) = delete;
   NestedLoopJoinExecutor &operator=(const NestedLoopJoinExecutor &) = delete;
 
- public:
+public:
   explicit NestedLoopJoinExecutor(planner::AbstractPlanNode *node,
                                   ExecutorContext *executor_context);
 
- protected:
-
+protected:
   bool DExecute();
 
- private:
+private:
   // nothing special here
-
 };
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

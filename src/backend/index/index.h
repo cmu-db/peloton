@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -33,19 +32,15 @@ namespace index {
 class IndexMetadata {
   IndexMetadata() = delete;
 
- public:
+public:
   IndexMetadata(std::string index_name, oid_t index_oid, IndexType method_type,
                 IndexConstraintType index_type,
                 const catalog::Schema *tuple_schema,
                 const catalog::Schema *key_schema, bool unique_keys)
 
-      : index_name(index_name),
-        index_oid(index_oid),
-        method_type(method_type),
-        index_type(index_type),
-        tuple_schema(tuple_schema),
-        key_schema(key_schema),
-        unique_keys(unique_keys) {}
+      : index_name(index_name), index_oid(index_oid), method_type(method_type),
+        index_type(index_type), tuple_schema(tuple_schema),
+        key_schema(key_schema), unique_keys(unique_keys) {}
 
   ~IndexMetadata() {
     // clean up key schema
@@ -97,7 +92,7 @@ class IndexMetadata {
 class Index {
   friend class IndexFactory;
 
- public:
+public:
   oid_t GetOid() const { return index_oid; }
 
   IndexMetadata *GetMetadata() const { return metadata; }
@@ -121,8 +116,8 @@ class Index {
 
   // update a index entry if the old location is same as the one given
   virtual bool UpdateEntry(const storage::Tuple *key,
-                        const ItemPointer location,
-                        const ItemPointer old_location) = 0;
+                           const ItemPointer location,
+                           const ItemPointer old_location) = 0;
 
   //===--------------------------------------------------------------------===//
   // Accessors
@@ -130,13 +125,13 @@ class Index {
 
   // return where the entry is already stored in the index
   virtual ItemPointer Exists(const storage::Tuple *key,
-                             const ItemPointer location)= 0;
+                             const ItemPointer location) = 0;
 
   // scan all keys in the index comparing with an arbitrary key
-  virtual std::vector<ItemPointer> Scan(
-      const std::vector<Value>& values,
-      const std::vector<oid_t>& key_column_ids,
-      const std::vector<ExpressionType>& exprs) = 0;
+  virtual std::vector<ItemPointer>
+  Scan(const std::vector<Value> &values,
+       const std::vector<oid_t> &key_column_ids,
+       const std::vector<ExpressionType> &exprs) = 0;
 
   //===--------------------------------------------------------------------===//
   // STATS
@@ -184,20 +179,20 @@ class Index {
   // Get a string representation of this index
   friend std::ostream &operator<<(std::ostream &os, const Index &index);
 
- protected:
+protected:
   Index(IndexMetadata *schema);
 
   // Generic key comparator between index key and given arbitrary key
-  bool Compare(const storage::Tuple& index_key,
-               const std::vector<oid_t>& column_ids,
-               const std::vector<ExpressionType>& expr_types,
-               const std::vector<Value>& values);
+  bool Compare(const storage::Tuple &index_key,
+               const std::vector<oid_t> &column_ids,
+               const std::vector<ExpressionType> &expr_types,
+               const std::vector<Value> &values);
 
   // Set the lower bound tuple for index iteration
   bool SetLowerBoundTuple(storage::Tuple *index_key,
-                          const std::vector<Value>& values,
-                          const std::vector<oid_t>& key_column_ids,
-                          const std::vector<ExpressionType>& expr_types);
+                          const std::vector<Value> &values,
+                          const std::vector<oid_t> &key_column_ids,
+                          const std::vector<ExpressionType> &expr_types);
 
   //===--------------------------------------------------------------------===//
   //  Data members
@@ -220,5 +215,5 @@ class Index {
   bool dirty = false;
 };
 
-}  // End index namespace
-}  // End peloton namespace
+} // End index namespace
+} // End peloton namespace

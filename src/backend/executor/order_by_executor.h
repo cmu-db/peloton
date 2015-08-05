@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/types.h"
@@ -29,7 +28,7 @@ namespace executor {
  * is not needed any more (e.g., with a LIMIT sitting on top)?
  */
 class OrderByExecutor : public AbstractExecutor {
- public:
+public:
   OrderByExecutor(const OrderByExecutor &) = delete;
   OrderByExecutor &operator=(const OrderByExecutor &) = delete;
   OrderByExecutor(const OrderByExecutor &&) = delete;
@@ -38,12 +37,12 @@ class OrderByExecutor : public AbstractExecutor {
   explicit OrderByExecutor(planner::AbstractPlanNode *node,
                            ExecutorContext *executor_context);
 
- protected:
+protected:
   bool DInit();
 
   bool DExecute();
 
- private:
+private:
   bool DoSort();
 
   bool sort_done_ = false;

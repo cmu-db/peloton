@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "postmaster/peloton.h"
@@ -27,17 +26,17 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class DDLDatabase {
- public:
-  DDLDatabase(const DDLDatabase&) = delete;
-  DDLDatabase& operator=(const DDLDatabase&) = delete;
-  DDLDatabase(DDLDatabase&&) = delete;
-  DDLDatabase& operator=(DDLDatabase&&) = delete;
+public:
+  DDLDatabase(const DDLDatabase &) = delete;
+  DDLDatabase &operator=(const DDLDatabase &) = delete;
+  DDLDatabase(DDLDatabase &&) = delete;
+  DDLDatabase &operator=(DDLDatabase &&) = delete;
 
-  static bool ExecCreatedbStmt(Node* parsetree);
+  static bool ExecCreatedbStmt(Node *parsetree);
 
-  static bool ExecDropdbStmt(Node* parsetree);
+  static bool ExecDropdbStmt(Node *parsetree);
 
-  static bool ExecVacuumStmt(Node* parsetree, Peloton_Status* status);
+  static bool ExecVacuumStmt(Node *parsetree, Peloton_Status *status);
 
   static bool CreateDatabase(Oid database_oid);
 
@@ -48,5 +47,5 @@ class DDLDatabase {
   static bool DropDatabase(Oid database_oid);
 };
 
-}  // namespace bridge
-}  // namespace peloton
+} // namespace bridge
+} // namespace peloton

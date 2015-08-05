@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
@@ -29,7 +28,7 @@ namespace expression {
 //===--------------------------------------------------------------------===//
 
 class TupleAddressExpression : public AbstractExpression {
- public:
+public:
   TupleAddressExpression()
       : AbstractExpression(EXPRESSION_TYPE_VALUE_TUPLE_ADDRESS) {}
 
@@ -45,5 +44,5 @@ class TupleAddressExpression : public AbstractExpression {
   }
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+} // End expression namespace
+} // End peloton namespace

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/logical_tile.h"
 
 #include <cassert>
@@ -74,7 +73,7 @@ catalog::Schema *LogicalTile::GetPhysicalSchema() const {
  * @brief Get the position lists of the tile.
  * @return Position lists of the tile.
  */
-const std::vector<std::vector<oid_t> > &LogicalTile::GetPositionLists() const {
+const std::vector<std::vector<oid_t>> &LogicalTile::GetPositionLists() const {
   return position_lists_;
 }
 
@@ -91,11 +90,12 @@ void LogicalTile::SetSchema(std::vector<LogicalTile::ColumnInfo> &&schema) {
  * @param Position lists.
  */
 void LogicalTile::SetPositionLists(
-    std::vector<std::vector<oid_t> > &&position_lists) {
+    std::vector<std::vector<oid_t>> &&position_lists) {
   position_lists_ = position_lists;
 }
 
-void LogicalTile::SetPositionListsAndVisibility(std::vector<std::vector<oid_t> > &&position_lists) {
+void LogicalTile::SetPositionListsAndVisibility(
+    std::vector<std::vector<oid_t>> &&position_lists) {
   position_lists_ = position_lists;
   if (position_lists.size() > 0) {
     visible_rows_.resize(position_lists_[0].size(), true);
@@ -191,7 +191,6 @@ Value LogicalTile::GetValue(oid_t tuple_id, oid_t column_id) {
   ColumnInfo &cp = schema_[column_id];
   oid_t base_tuple_id = position_lists_[cp.position_list_idx][tuple_id];
   storage::Tile *base_tile = cp.base_tile;
-
 
   LOG_TRACE("Tuple : %u Column : %u", base_tuple_id, cp.origin_column_id);
   Value value = base_tile->GetValue(base_tuple_id, cp.origin_column_id);
@@ -358,5 +357,5 @@ std::ostream &operator<<(std::ostream &os, const LogicalTile &lt) {
   return os;
 }
 
-}  // End executor namespace
-}  // End peloton namespace
+} // End executor namespace
+} // End peloton namespace
