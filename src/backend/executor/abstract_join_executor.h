@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * merge_join.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/executor/merge_join_executor.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// abstract_join_executor.h
+//
+// Identification: src/backend/executor/abstract_join_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -27,7 +27,7 @@ class AbstractJoinExecutor : public AbstractExecutor {
 
  public:
   explicit AbstractJoinExecutor(planner::AbstractPlanNode *node,
-                                  ExecutorContext *executor_context);
+                                ExecutorContext *executor_context);
 
  protected:
   bool DInit();
@@ -35,12 +35,12 @@ class AbstractJoinExecutor : public AbstractExecutor {
   bool DExecute() = 0;
 
  protected:
-
   //===--------------------------------------------------------------------===//
   // Helper
   //===--------------------------------------------------------------------===//
-  std::vector<LogicalTile::ColumnInfo> BuildSchema(std::vector<LogicalTile::ColumnInfo> left,
-                                                   std::vector<LogicalTile::ColumnInfo> right);
+  std::vector<LogicalTile::ColumnInfo> BuildSchema(
+      std::vector<LogicalTile::ColumnInfo> left,
+      std::vector<LogicalTile::ColumnInfo> right);
 
   //===--------------------------------------------------------------------===//
   // Executor State
