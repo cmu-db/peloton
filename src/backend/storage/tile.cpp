@@ -21,7 +21,7 @@
 #include "backend/common/exception.h"
 #include "backend/common/pool.h"
 #include "backend/common/serializer.h"
-#include "backend/storage/tile_iterator.h"
+#include "backend/storage/tuple_iterator.h"
 #include "backend/storage/tuple.h"
 
 namespace peloton {
@@ -213,7 +213,7 @@ std::ostream &operator<<(std::ostream &os, const Tile &tile) {
   os << "\t-----------------------------------------------------------\n";
   os << "\tDATA\n";
 
-  TileIterator tile_itr(&tile);
+  TupleIterator tile_itr(&tile);
   Tuple tuple(&tile.schema);
 
   std::string last_tuple = "";
@@ -254,7 +254,7 @@ bool Tile::SerializeTo(SerializeOutput &output, oid_t num_tuples) {
   output.WriteInt(static_cast<int>(num_tuples));
 
   oid_t written_count = 0;
-  TileIterator tile_itr(this);
+  TupleIterator tile_itr(this);
   Tuple tuple(&schema);
 
   while (tile_itr.Next(tuple) && written_count < num_tuples) {
@@ -456,8 +456,8 @@ bool Tile::operator==(const Tile &other) const {
   catalog::Schema other_schema = other.schema;
   if (schema != other_schema) return false;
 
-  TileIterator tile_itr(this);
-  TileIterator other_tile_itr(&other);
+  TupleIterator tile_itr(this);
+  TupleIterator other_tile_itr(&other);
 
   Tuple tuple(&schema);
   Tuple other_tuple(&other_schema);
@@ -476,7 +476,7 @@ bool Tile::operator==(const Tile &other) const {
 
 bool Tile::operator!=(const Tile &other) const { return !(*this == other); }
 
-TileIterator Tile::GetIterator() { return TileIterator(this); }
+TupleIterator Tile::GetIterator() { return TupleIterator(this); }
 
 // TileStats* Tile::GetTileStats() {
 //	return NULL;
