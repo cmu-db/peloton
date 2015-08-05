@@ -56,7 +56,7 @@ class Database {
   // STATS
   //===--------------------------------------------------------------------===//
 
-  void UpdateStats(Peloton_Status* status);
+  void UpdateStats(Peloton_Status* status, bool dirty_care);
 
   void UpdateStatsWithOid(Peloton_Status* status, const oid_t table_oid);
 

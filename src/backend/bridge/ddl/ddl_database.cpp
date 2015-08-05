@@ -42,8 +42,7 @@ bool DDLDatabase::ExecCreatedbStmt(Node* parsetree) {
  */
 bool DDLDatabase::ExecDropdbStmt(Node* parsetree) {
   DropdbStmt* stmt = (DropdbStmt*)parsetree;
-  Oid database_oid = get_database_oid(stmt->dbname, stmt->missing_ok);
-  DDLDatabase::DropDatabase(database_oid);
+  DDLDatabase::DropDatabase(stmt->database_id);
   return true;
 }
 
@@ -67,7 +66,7 @@ bool DDLDatabase::ExecVacuumStmt(Node* parsetree, Peloton_Status* status) {
 
   // Update every table and index
   if(relation_name.empty()){
-    db->UpdateStats(status);
+    db->UpdateStats(status, true);
   }
   // Otherwise, update the specific table
   else {
@@ -93,7 +92,7 @@ bool DDLDatabase::CreateDatabase(Oid database_oid) {
     storage::Database* db = new storage::Database(database_oid);
     manager.AddDatabase(db);
   }else {
-    LOG_WARN("Database(%u) is already existed!!", database_oid);
+    LOG_TRACE("Database(%u) already exists!!", database_oid);
     return false;
   }
 

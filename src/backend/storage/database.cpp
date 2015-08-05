@@ -78,19 +78,23 @@ oid_t Database::GetTableCount() const { return tables.size(); }
 // STATS
 //===--------------------------------------------------------------------===//
 
-void Database::UpdateStats(Peloton_Status* status){
-  LOG_INFO("Update All Stats in Database(%u)", database_oid);
+void Database::UpdateStats(Peloton_Status* status, bool dirty_care){
+  if( dirty_care ){
+    LOG_INFO("Update only dirty tables in Database(%u)", database_oid);
+  }else{
+    LOG_INFO("Update All Stats in Database(%u)", database_oid);
+  }
 
   std::vector<dirty_table_info*> dirty_tables;
 
   for( int table_itr=0; table_itr<GetTableCount(); table_itr++){
     auto table = GetTable(table_itr);
-    if( !table->IsDirty()) continue;
+    if( dirty_care &&  !table->IsDirty()) continue;
 
     std::vector<dirty_index_info*> dirty_indexes;
     for (int index_itr = 0; index_itr < table->GetIndexCount(); index_itr++) {
       auto index = table->GetIndex(index_itr);
-      if( !index->IsDirty()) continue;
+      if(  dirty_care && !index->IsDirty()) continue;
 
       auto dirty_index = CreateDirtyIndex(index->GetOid(), index->GetNumberOfTuples());
       index->ResetDirty();
@@ -114,23 +118,22 @@ void Database::UpdateStatsWithOid(Peloton_Status* status, const oid_t table_oid)
 
   std::vector<dirty_table_info*> dirty_tables;
   auto table = GetTableWithOid(table_oid);
-  if(table->IsDirty()){
-    std::vector<dirty_index_info*> dirty_indexes;
-    for (int index_itr = 0; index_itr < table->GetIndexCount(); index_itr++) {
-      auto index = table->GetIndex(index_itr);
-      if( !index->IsDirty()) continue;
 
-      auto dirty_index = CreateDirtyIndex(index->GetOid(), index->GetNumberOfTuples());
-      index->ResetDirty();
-      dirty_indexes.push_back(dirty_index);
-    }
-    auto dirty_table = CreateDirtyTable(table->GetOid(),
-        table->GetNumberOfTuples(),
-        CreateDirtyIndexes(dirty_indexes),
-        dirty_indexes.size());
-    table->ResetDirty();
-    dirty_tables.push_back(dirty_table);
+  std::vector<dirty_index_info*> dirty_indexes;
+  for (int index_itr = 0; index_itr < table->GetIndexCount(); index_itr++) {
+    auto index = table->GetIndex(index_itr);
+    if( !index->IsDirty()) continue;
+
+    auto dirty_index = CreateDirtyIndex(index->GetOid(), index->GetNumberOfTuples());
+    index->ResetDirty();
+    dirty_indexes.push_back(dirty_index);
   }
+  auto dirty_table = CreateDirtyTable(table->GetOid(),
+      table->GetNumberOfTuples(),
+      CreateDirtyIndexes(dirty_indexes),
+      dirty_indexes.size());
+  table->ResetDirty();
+  dirty_tables.push_back(dirty_table);
 
   status->m_dirty_tables = CreateDirtyTables(dirty_tables);
   status->m_dirty_count = dirty_tables.size();
@@ -201,39 +204,39 @@ std::ostream& operator<<(std::ostream& os, const Database& database) {
   os << "DATABASE(" << database.GetOid() << ") : \n";
 
   oid_t table_count = database.GetTableCount();
-  std::cout << "Table Count : " << table_count << "\n";
+  os << "Table Count : " << table_count << "\n";
 
   oid_t table_itr = 0;
   for (auto table : database.tables) {
     if (table != nullptr) {
-      std::cout << "(" << ++table_itr << "/" << table_count << ") "
+      os << "(" << ++table_itr << "/" << table_count << ") "
                 << "Table Name(" << table->GetOid() << ") : " << table->GetName() << "\n"
                 << *(table->GetSchema()) << std::endl;
 
       oid_t index_count = table->GetIndexCount();
 
       if (index_count > 0) {
-        std::cout << "Index Count : " << index_count << std::endl;
+        os << "Index Count : " << index_count << std::endl;
         for (int index_itr = 0; index_itr < index_count; index_itr++) {
           index::Index* index = table->GetIndex(index_itr);
 
           switch (index->GetIndexType()) {
             case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
-              std::cout << "primary key index \n";
+              os << "primary key index \n";
               break;
             case INDEX_CONSTRAINT_TYPE_UNIQUE:
-              std::cout << "unique index \n";
+              os << "unique index \n";
               break;
             default:
-              std::cout << "default index \n";
+              os << "default index \n";
               break;
           }
-          std::cout << *index << std::endl;
+          os << *index << std::endl;
         }
       }
 
       if (table->HasForeignKeys()) {
-        std::cout << "foreign tables \n";
+        os << "foreign tables \n";
 
         oid_t foreign_key_count = table->GetForeignKeyCount();
         for (int foreign_key_itr = 0; foreign_key_itr < foreign_key_count;
@@ -244,7 +247,7 @@ std::ostream& operator<<(std::ostream& os, const Database& database) {
           auto sink_table = database.GetTableWithOid(sink_table_oid);
 
           auto sink_table_schema = sink_table->GetSchema();
-          std::cout << "table name : " << sink_table->GetName() << " "
+          os << "table name : " << sink_table->GetName() << " "
                     << *sink_table_schema << std::endl;
         }
       }

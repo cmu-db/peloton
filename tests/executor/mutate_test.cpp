@@ -231,18 +231,17 @@ TEST(MutateTests, StressTests) {
   LaunchParallelTest(1, InsertTuple, table);
   //std::cout << (*table);
 
-  std::cout << "---------------------------------------------\n";
+  LOG_INFO("---------------------------------------------\n");
 
   //LaunchParallelTest(1, UpdateTuple, table);
   //std::cout << (*table);
 
-  std::cout << "---------------------------------------------\n";
+  LOG_INFO("---------------------------------------------\n");
 
   LaunchParallelTest(1, DeleteTuple, table);
   //std::cout << (*table);
 
   // PRIMARY KEY
-  auto pkey_index = table->GetIndex(0);
   std::vector<catalog::Column> columns;
 
   columns.push_back(ExecutorTestsUtil::GetColumnInfo(0));
@@ -253,16 +252,11 @@ TEST(MutateTests, StressTests) {
   key1->SetValue(0, ValueFactory::GetIntegerValue(10));
   key2->SetValue(0, ValueFactory::GetIntegerValue(100));
 
-  auto pkey_list = pkey_index->GetLocationsForKeyBetween(key1, key2);
-  std::cout << "PKEY INDEX :: Entries : " << pkey_list.size() << "\n";
-
   delete key1;
   delete key2;
   delete key_schema;
 
   // SEC KEY
-  auto sec_index = table->GetIndex(1);
-
   columns.clear();
   columns.push_back(ExecutorTestsUtil::GetColumnInfo(0));
   columns.push_back(ExecutorTestsUtil::GetColumnInfo(1));
@@ -275,9 +269,6 @@ TEST(MutateTests, StressTests) {
   key3->SetValue(1, ValueFactory::GetIntegerValue(11));
   key4->SetValue(0, ValueFactory::GetIntegerValue(100));
   key4->SetValue(1, ValueFactory::GetIntegerValue(101));
-
-  auto sec_list = sec_index->GetLocationsForKeyBetween(key3, key4);
-  std::cout << "SEC INDEX :: Entries : " << sec_list.size() << "\n";
 
   delete key3;
   delete key4;

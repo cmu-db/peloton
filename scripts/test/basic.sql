@@ -2,7 +2,7 @@
 
 drop table if exists foo;
 create table foo(id1 integer, id2 integer, CONSTRAINT pk_foo PRIMARY KEY (id1, id2));
-create index on foo (id1);
+create index sk_foo on foo (id1);
 
 -- load in the data
 
