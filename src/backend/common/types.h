@@ -493,8 +493,6 @@ extern ItemPointer INVALID_ITEMPOINTER;
 // Utilities
 //===--------------------------------------------------------------------===//
 
-std::string GetTypeName(ValueType type);
-
 /// Works only for fixed-length types
 std::size_t GetTypeSize(ValueType type);
 

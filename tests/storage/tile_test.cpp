@@ -14,7 +14,7 @@
 
 #include "backend/storage/tile.h"
 #include "backend/storage/tile_group.h"
-#include "backend/storage/tile_iterator.h"
+#include "backend/storage/tuple_iterator.h"
 
 namespace peloton {
 namespace test {
