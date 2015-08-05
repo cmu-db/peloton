@@ -87,12 +87,12 @@ void PlanTransformer::GetGenericInfoFromScanState(
    * on top, or simply pushed in an output column list.
    */
   if(nullptr == project_info.get()){  // empty predicate, or ignore projInfo, pass thru
-    LOG_INFO("No projections (all pass through)");
+    LOG_TRACE("No projections (all pass through)");
 
     assert(out_col_list.size() == 0);
   }
   else if(project_info->GetTargetList().size() > 0){  // Have non-trivial projection, add a plan node
-    LOG_INFO("Non-trivial projections are found. Projection node will be created. \n");
+    LOG_TRACE("Non-trivial projections are found. Projection node will be created. \n");
 
     auto project_schema =
         SchemaTransformer::GetSchemaFromTupleDesc(sstate->ps.ps_ResultTupleSlot->tts_tupleDescriptor);
@@ -105,7 +105,7 @@ void PlanTransformer::GetGenericInfoFromScanState(
     assert(project_info->GetTargetList().size() == 0);
     assert(project_info->GetDirectMapList().size() > 0);
 
-    LOG_INFO("Pure direct map projection.\n");
+    LOG_TRACE("Pure direct map projection.\n");
 
     std::vector<oid_t> column_ids;
     column_ids = BuildColumnListFromDirectMap(project_info->GetDirectMapList());
@@ -133,7 +133,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
     oid_t column_count) {
 
   if (pg_pi == nullptr) {
-    LOG_INFO("pg proj info is null, no projection");
+    LOG_TRACE("pg proj info is null, no projection");
     return nullptr;
   }
 
@@ -153,7 +153,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
           && AttributeNumberIsValid(tle->resno)
           && AttrNumberIsForUserDefinedAttr(tle->resno)
           && !tle->resjunk)){
-      LOG_TRACE("Invalid / Junk attribute. Skipped. \n");
+      LOG_TRACE("Invalid / Junk attribute. Skipped.");
       continue;  // skip junk attributes
     }
 
@@ -162,11 +162,11 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
     auto peloton_expr = ExprTransformer::TransformExpr(gstate->arg);
 
     if(peloton_expr == nullptr){
-      LOG_TRACE("Seems to be a row value expression. Skipped.\n");
+      LOG_TRACE("Seems to be a row value expression. Skipped.");
       continue;
     }
 
-    LOG_TRACE("Target : column id %u, Expression : \n%s\n", col_id, peloton_expr->DebugInfo().c_str());
+    LOG_TRACE("Target : column id %u, Expression : \n%s", col_id, peloton_expr->DebugInfo().c_str());
 
     target_list.emplace_back(col_id, peloton_expr);
   }
@@ -181,7 +181,6 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
 
   if (pg_pi->pi_numSimpleVars > 0) {
     int numSimpleVars = pg_pi->pi_numSimpleVars;
-    bool *isnull = pg_pi->pi_slot->tts_isnull;
     int *varSlotOffsets = pg_pi->pi_varSlotOffsets;
     int *varNumbers = pg_pi->pi_varNumbers;
 
@@ -196,17 +195,9 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
         oid_t in_col_id = static_cast<oid_t>(varNumber);
         oid_t out_col_id = static_cast<oid_t>(i);
 
-        if (!(isnull[i])) {  // Non null, direct map
-          direct_map_list.emplace_back(
-              out_col_id, planner::ProjectInfo::DirectMap::second_type(
-                              tuple_idx, in_col_id));
-        } else {  // NUll, constant, added to target_list
-          Value null = ValueFactory::GetNullValue();
-          target_list.emplace_back(out_col_id,
-                                   expression::ConstantValueFactory(null));
-        }
+        direct_map_list.emplace_back(out_col_id, std::make_pair(tuple_idx, in_col_id));
 
-        LOG_TRACE("Input column : %u , Output column : %u \n", in_col_id,
+        LOG_TRACE("Input column : %u , Output column : %u", in_col_id,
                  out_col_id);
       }
     } else  // Non-sequential direct map
@@ -223,15 +214,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
         oid_t in_col_id = static_cast<oid_t>(varNumber);
         oid_t out_col_id = static_cast<oid_t>(varOutputCol);
 
-        if (!(isnull[out_col_id])) {  // Non null, direct map
-          direct_map_list.emplace_back(
-              out_col_id, planner::ProjectInfo::DirectMap::second_type(
-                              tuple_idx, in_col_id));
-        } else {  // NUll, constant
-          Value null = ValueFactory::GetNullValue();
-          target_list.emplace_back(out_col_id,
-                                   expression::ConstantValueFactory(null));
-        }
+        direct_map_list.emplace_back(out_col_id, std::make_pair(tuple_idx, in_col_id));
 
         LOG_TRACE("Input column : %u , Output column : %u \n", in_col_id,
                  out_col_id);
