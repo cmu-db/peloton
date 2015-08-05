@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/catalog/constraint.h"
 #include "backend/common/types.h"
 
@@ -34,5 +33,5 @@ std::ostream &operator<<(std::ostream &os, const Constraint &constraint) {
   return os;
 }
 
-} // End catalog namespace
-} // End peloton namespace
+}  // End catalog namespace
+}  // End peloton namespace

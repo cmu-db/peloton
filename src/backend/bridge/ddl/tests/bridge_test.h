@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -37,7 +36,7 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class BridgeTest {
-public:
+ public:
   BridgeTest(const BridgeTest &) = delete;
   BridgeTest &operator=(const BridgeTest &) = delete;
   BridgeTest(BridgeTest &&) = delete;
@@ -46,7 +45,7 @@ public:
   // Bridge Test Main Function
   static void RunTests();
 
-private:
+ private:
   //===--------------------------------------------------------------------===//
   // Database Test
   //===--------------------------------------------------------------------===//
@@ -129,5 +128,5 @@ private:
   static bool DropTableInPostgres(std::string table_name);
 };
 
-} // End bridge namespace
-} // End peloton namespace
+}  // End bridge namespace
+}  // End peloton namespace

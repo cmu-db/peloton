@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "gtest/gtest.h"
 
 #include "harness.h"
@@ -28,5 +27,5 @@ TEST(LoggerTests, BasicTest) {
   LOG_ERROR("error message");
 }
 
-} // End test namespace
-} // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace

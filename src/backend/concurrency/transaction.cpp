@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/concurrency/transaction.h"
 
 #include "backend/common/synch.h"
@@ -91,5 +90,5 @@ std::ostream &operator<<(std::ostream &os, const Transaction &txn) {
   return os;
 }
 
-} // End concurrency namespace
-} // End peloton namespace
+}  // End concurrency namespace
+}  // End peloton namespace

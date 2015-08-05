@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/projection_executor.h"
 
 #include "backend/common/logger.h"
@@ -64,8 +63,7 @@ bool ProjectionExecutor::DExecute() {
 
     // Execute child
     auto status = children_[0]->Execute();
-    if (false == status)
-      return false;
+    if (false == status) return false;
 
     // Get input from child
     std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <iostream>
 #include <sys/types.h>
 #include <unistd.h>
@@ -49,7 +48,6 @@ namespace bridge {
  * @return raw structure
  */
 raw_database_info *Bootstrap::GetRawDatabase(void) {
-
   // Create and initialize raw database
   raw_database_info *raw_database = Bootstrap::InitRawDatabase();
 
@@ -84,8 +82,7 @@ bool Bootstrap::BootstrapPeloton(raw_database_info *raw_database,
   bool status = DDLDatabase::CreateDatabase(raw_database->database_oid);
 
   // skip if we already initialize current database
-  if (status == false)
-    return false;
+  if (status == false) return false;
 
   // Create objects in Peloton
   CreateTables(raw_database->raw_tables, raw_database->table_count);
@@ -111,7 +108,6 @@ bool Bootstrap::BootstrapPeloton(raw_database_info *raw_database,
  * @return raw database
  */
 raw_database_info *Bootstrap::InitRawDatabase() {
-
   // Set databse oid and name
   raw_database_info *raw_database =
       (raw_database_info *)palloc(sizeof(raw_database_info));
@@ -129,7 +125,6 @@ raw_database_info *Bootstrap::InitRawDatabase() {
 void Bootstrap::GetRawTableAndIndex(
     std::vector<raw_table_info *> &raw_tables,
     std::vector<raw_index_info *> &raw_indexes) {
-
   // Open the pg_class and pg_attribute catalog tables
   Relation pg_class_rel = heap_open(RelationRelationId, AccessShareLock);
   Relation pg_attribute_rel = heap_open(AttributeRelationId, AccessShareLock);
@@ -147,16 +142,14 @@ void Bootstrap::GetRawTableAndIndex(
     HeapTuple pg_class_tuple =
         heap_getnext(pg_class_scan, ForwardScanDirection);
 
-    if (!HeapTupleIsValid(pg_class_tuple))
-      break;
+    if (!HeapTupleIsValid(pg_class_tuple)) break;
 
     Form_pg_class pg_class = (Form_pg_class)GETSTRUCT(pg_class_tuple);
     std::string relation_name = NameStr(pg_class->relname);
     char relation_kind = pg_class->relkind;
 
     // Handle only user-defined structures, not pg-catalog structures
-    if (pg_class->relnamespace != PG_PUBLIC_NAMESPACE)
-      continue;
+    if (pg_class->relnamespace != PG_PUBLIC_NAMESPACE) continue;
 
     // TODO: Currently, we only handle relations and indexes
     if (pg_class->relkind != 'r' && pg_class->relkind != 'i') {
@@ -174,16 +167,16 @@ void Bootstrap::GetRawTableAndIndex(
         GetRawColumn(relation_oid, relation_kind, pg_attribute_rel);
 
     switch (relation_kind) {
-    case 'r': {
-      raw_table_info *raw_table =
-          GetRawTable(relation_oid, relation_name, raw_columns);
-      raw_tables.push_back(raw_table);
-    } break;
-    case 'i': {
-      raw_index_info *raw_index =
-          GetRawIndex(relation_oid, relation_name, raw_columns);
-      raw_indexes.push_back(raw_index);
-    } break;
+      case 'r': {
+        raw_table_info *raw_table =
+            GetRawTable(relation_oid, relation_name, raw_columns);
+        raw_tables.push_back(raw_table);
+      } break;
+      case 'i': {
+        raw_index_info *raw_index =
+            GetRawIndex(relation_oid, relation_name, raw_columns);
+        raw_indexes.push_back(raw_index);
+      } break;
     }
     raw_columns.clear();
   }
@@ -199,10 +192,9 @@ void Bootstrap::GetRawTableAndIndex(
  * @param raw columns
  * @return raw table
  */
-raw_table_info *
-Bootstrap::GetRawTable(oid_t table_oid, std::string table_name,
-                       std::vector<raw_column_info *> raw_columns) {
-
+raw_table_info *Bootstrap::GetRawTable(
+    oid_t table_oid, std::string table_name,
+    std::vector<raw_column_info *> raw_columns) {
   raw_table_info *raw_table = (raw_table_info *)palloc(sizeof(raw_table_info));
   raw_table->table_oid = table_oid;
   raw_table->table_name = BootstrapUtils::CopyString(table_name.c_str());
@@ -224,10 +216,9 @@ Bootstrap::GetRawTable(oid_t table_oid, std::string table_name,
  * @param raw columns
  * @return raw index
  */
-raw_index_info *
-Bootstrap::GetRawIndex(oid_t index_oid, std::string index_name,
-                       std::vector<raw_column_info *> raw_columns) {
-
+raw_index_info *Bootstrap::GetRawIndex(
+    oid_t index_oid, std::string index_name,
+    std::vector<raw_column_info *> raw_columns) {
   raw_index_info *raw_index = (raw_index_info *)palloc(sizeof(raw_index_info));
 
   Relation pg_index_rel;
@@ -243,8 +234,7 @@ Bootstrap::GetRawIndex(oid_t index_oid, std::string index_name,
     Form_pg_index pg_index;
 
     pg_index_tuple = heap_getnext(pg_index_scan, ForwardScanDirection);
-    if (!HeapTupleIsValid(pg_index_tuple))
-      break;
+    if (!HeapTupleIsValid(pg_index_tuple)) break;
 
     pg_index = (Form_pg_index)GETSTRUCT(pg_index_tuple);
 
@@ -299,9 +289,8 @@ Bootstrap::GetRawIndex(oid_t index_oid, std::string index_name,
  * @param pg_attribute_rel pg_attribute catalog relation
  * @return raw columns
  */
-std::vector<raw_column_info *>
-Bootstrap::GetRawColumn(Oid relation_oid, char relation_kind,
-                        Relation pg_attribute_rel) {
+std::vector<raw_column_info *> Bootstrap::GetRawColumn(
+    Oid relation_oid, char relation_kind, Relation pg_attribute_rel) {
   HeapScanDesc pg_attribute_scan;
   HeapTuple pg_attribute_tuple;
 
@@ -319,8 +308,7 @@ Bootstrap::GetRawColumn(Oid relation_oid, char relation_kind,
     // Get next <relation, attribute> tuple from pg_attribute table
     pg_attribute_tuple = heap_getnext(pg_attribute_scan, ForwardScanDirection);
 
-    if (!HeapTupleIsValid(pg_attribute_tuple))
-      break;
+    if (!HeapTupleIsValid(pg_attribute_tuple)) break;
 
     // Check the relation oid
     pg_attribute = (Form_pg_attribute)GETSTRUCT(pg_attribute_tuple);
@@ -333,7 +321,6 @@ Bootstrap::GetRawColumn(Oid relation_oid, char relation_kind,
           strcmp(NameStr(pg_attribute->attname), "xmax") &&
           strcmp(NameStr(pg_attribute->attname), "xmin") &&
           strcmp(NameStr(pg_attribute->attname), "tableoid")) {
-
         std::vector<raw_constraint_info *> raw_constraints;
 
         PostgresValueType postgresValueType =
@@ -360,7 +347,6 @@ Bootstrap::GetRawColumn(Oid relation_oid, char relation_kind,
 
         // DEFAULT value constraint
         if (pg_attribute->atthasdef) {
-
           // Setting default constraint expression
           Relation relation = heap_open(relation_oid, AccessShareLock);
 
@@ -428,14 +414,12 @@ void Bootstrap::GetRawForeignKeys(
 
     pg_constraint_tuple =
         heap_getnext(pg_constraint_scan, ForwardScanDirection);
-    if (!HeapTupleIsValid(pg_constraint_tuple))
-      break;
+    if (!HeapTupleIsValid(pg_constraint_tuple)) break;
 
     pg_constraint = (Form_pg_constraint)GETSTRUCT(pg_constraint_tuple);
 
     // We only handle foreign key constraints here
-    if (pg_constraint->contype != 'f')
-      continue;
+    if (pg_constraint->contype != 'f') continue;
 
     // store raw information from here..
 
@@ -513,7 +497,6 @@ void Bootstrap::GetRawForeignKeys(
 }
 
 void Bootstrap::CreateTables(raw_table_info **raw_tables, oid_t table_count) {
-
   for (int table_itr = 0; table_itr < table_count; table_itr++) {
     auto raw_table = raw_tables[table_itr];
     auto columns =
@@ -530,7 +513,6 @@ void Bootstrap::CreateTables(raw_table_info **raw_tables, oid_t table_count) {
 }
 
 void Bootstrap::CreateIndexes(raw_index_info **raw_indexes, oid_t index_count) {
-
   for (int index_itr = 0; index_itr < index_count; index_itr++) {
     auto raw_index = raw_indexes[index_itr];
     auto key_column_names = CreateKeyColumnNames(raw_index->key_column_names,
@@ -594,7 +576,6 @@ void Bootstrap::CreateForeignkeys(raw_foreignkey_info **raw_foreignkeys,
     // Populate source key column names
     for (int source_key_itr = 0; source_key_itr < source_column_count;
          source_key_itr++) {
-
       auto source_column_offset =
           raw_foreignkey->source_column_offsets[source_key_itr];
       catalog::Column column =
@@ -611,8 +592,8 @@ void Bootstrap::CreateForeignkeys(raw_foreignkey_info **raw_foreignkeys,
   }
 }
 
-std::vector<catalog::Column>
-Bootstrap::CreateColumns(raw_column_info **raw_columns, oid_t column_count) {
+std::vector<catalog::Column> Bootstrap::CreateColumns(
+    raw_column_info **raw_columns, oid_t column_count) {
   std::vector<catalog::Column> columns;
 
   for (int column_itr = 0; column_itr < column_count; column_itr++) {
@@ -632,9 +613,8 @@ Bootstrap::CreateColumns(raw_column_info **raw_columns, oid_t column_count) {
   return columns;
 }
 
-std::vector<std::string>
-Bootstrap::CreateKeyColumnNames(char **raw_column_names,
-                                oid_t raw_column_count) {
+std::vector<std::string> Bootstrap::CreateKeyColumnNames(
+    char **raw_column_names, oid_t raw_column_count) {
   std::vector<std::string> key_column_names;
 
   for (int column_itr = 0; column_itr < raw_column_count; column_itr++) {
@@ -645,9 +625,8 @@ Bootstrap::CreateKeyColumnNames(char **raw_column_names,
   return key_column_names;
 }
 
-std::vector<catalog::Constraint>
-Bootstrap::CreateConstraints(raw_constraint_info **raw_constraints,
-                             oid_t constraint_count) {
+std::vector<catalog::Constraint> Bootstrap::CreateConstraints(
+    raw_constraint_info **raw_constraints, oid_t constraint_count) {
   std::vector<catalog::Constraint> constraints;
 
   for (int constraint_itr = 0; constraint_itr < constraint_count;
@@ -662,5 +641,5 @@ Bootstrap::CreateConstraints(raw_constraint_info **raw_constraints,
   return constraints;
 }
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

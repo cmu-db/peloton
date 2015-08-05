@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/bridge/ddl/schema_transformer.h"
 
 #include <vector>
@@ -28,8 +27,8 @@ namespace bridge {
 // Schema Transformer
 //===--------------------------------------------------------------------===//
 
-catalog::Schema *
-SchemaTransformer::GetSchemaFromTupleDesc(TupleDesc tupleDesc) {
+catalog::Schema *SchemaTransformer::GetSchemaFromTupleDesc(
+    TupleDesc tupleDesc) {
   catalog::Schema *schema = nullptr;
 
   std::vector<catalog::Column> columns;
@@ -86,5 +85,5 @@ SchemaTransformer::GetSchemaFromTupleDesc(TupleDesc tupleDesc) {
   return schema;
 }
 
-} // End bridge namespace
-} // End peloton namespace
+}  // End bridge namespace
+}  // End peloton namespace

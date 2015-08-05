@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "gtest/gtest.h"
 
 #include "backend/concurrency/transaction.h"
@@ -350,7 +349,6 @@ TEST(TileGroupTests, MVCCInsert) {
 }
 
 TEST(TileGroupTests, TileCopyTest) {
-
   std::vector<catalog::Column> columns;
   std::vector<std::string> tile_column_names;
   std::vector<std::vector<std::string>> column_names;
@@ -478,8 +476,7 @@ TEST(TileGroupTests, TileCopyTest) {
   peloton::Pool *new_pool = new_tile->GetPool();
 
   int is_pool_same = old_pool == new_pool;
-  if (is_pool_same)
-    intended_behavior = false;
+  if (is_pool_same) intended_behavior = false;
 
   // 2. Information (Value objects, lengths, pointers to Varlen objects, stored
   // data)
@@ -492,13 +489,11 @@ TEST(TileGroupTests, TileCopyTest) {
 
   // Iterate over all the uninlined columns in the tile
   for (int col_itr = 0; col_itr < new_tile_uninlined_col_cnt; col_itr++) {
-
     uninlined_col_index = new_schema->GetUninlinedColumn(col_itr);
     uint16_t new_tile_active_tuple_count = new_tile->GetActiveTupleCount();
 
     // Iterate over all the tuples for the current uninlined column in the tile
     for (int tup_itr = 0; tup_itr < new_tile_active_tuple_count; tup_itr++) {
-
       uninlined_col_value = tile->GetValue(tup_itr, uninlined_col_index);
       uninlined_col_object_len =
           ValuePeeker::PeekObjectLength(uninlined_col_value);
@@ -534,8 +529,7 @@ TEST(TileGroupTests, TileCopyTest) {
     }
 
     // Break if intended_behavior flag has changed to false in the inner loop
-    if (!intended_behavior)
-      break;
+    if (!intended_behavior) break;
   }
 
   // At the end of all the checks, intended_behavior is expected to be true
@@ -552,5 +546,5 @@ TEST(TileGroupTests, TileCopyTest) {
   delete schema;
 }
 
-} // End test namespace
-} // End peloton namespace
+}  // End test namespace
+}  // End peloton namespace

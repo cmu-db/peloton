@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/catalog/constraint.h"
@@ -25,13 +24,15 @@ namespace catalog {
 class Column {
   friend class Constraint;
 
-public:
+ public:
   Column(){};
 
   Column(ValueType value_type, oid_t column_length, std::string column_name,
          bool is_inlined = false, oid_t column_offset = INVALID_OID)
-      : column_type(value_type), column_name(column_name),
-        is_inlined(is_inlined), column_offset(column_offset) {
+      : column_type(value_type),
+        column_name(column_name),
+        is_inlined(is_inlined),
+        column_offset(column_offset) {
     SetInlined();
 
     SetLength(column_length);
@@ -114,5 +115,5 @@ public:
   std::vector<Constraint> constraints;
 };
 
-} // End catalog namespace
-} // End peloton namespace
+}  // End catalog namespace
+}  // End peloton namespace

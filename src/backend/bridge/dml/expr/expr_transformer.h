@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/expression/abstract_expression.h"
@@ -25,7 +24,7 @@ namespace bridge {
  * @brief Helper class to transform a Postgres Expr tree to Peloton Expr tree
  */
 class ExprTransformer {
-public:
+ public:
   ExprTransformer(const ExprTransformer &) = delete;
   ExprTransformer &operator=(const ExprTransformer &) = delete;
   ExprTransformer(const ExprTransformer &&) = delete;
@@ -34,12 +33,12 @@ public:
   static void PrintPostgressExprTree(const ExprState *expr_state,
                                      std::string prefix = "");
 
-  static expression::AbstractExpression *
-  TransformExpr(const ExprState *expr_state);
+  static expression::AbstractExpression *TransformExpr(
+      const ExprState *expr_state);
 
   static bool CleanExprTree(expression::AbstractExpression *root);
 
-private:
+ private:
   /*
    * This set of TransformXXX methods should transform an PG ExprState tree
    * rooted at a ExprState pointing to a XXX Expr node.
@@ -51,14 +50,13 @@ private:
   static expression::AbstractExpression *TransformVar(const ExprState *es);
   static expression::AbstractExpression *TransformBool(const ExprState *es);
   static expression::AbstractExpression *TransformParam(const ExprState *es);
-  static expression::AbstractExpression *
-  TransformRelabelType(const ExprState *es);
+  static expression::AbstractExpression *TransformRelabelType(
+      const ExprState *es);
   static expression::AbstractExpression *TransformFunc(const ExprState *es);
 
-  static expression::AbstractExpression *
-  TransformList(const ExprState *es,
-                ExpressionType et = EXPRESSION_TYPE_CONJUNCTION_AND);
+  static expression::AbstractExpression *TransformList(
+      const ExprState *es, ExpressionType et = EXPRESSION_TYPE_CONJUNCTION_AND);
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

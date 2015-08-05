@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #ifndef H_6B9572DA_A64B_49E6_B234_051480991C89
 #define H_6B9572DA_A64B_49E6_B234_051480991C89
 
@@ -194,36 +193,44 @@ extern "C" uintptr_t _Unwind_GetIPInfo(_Unwind_Context *, int *);
 #include <execinfo.h>
 #endif
 
-#endif // defined(BACKWARD_SYSTEM_LINUX)
+#endif  // defined(BACKWARD_SYSTEM_LINUX)
 
 #ifdef BACKWARD_ATLEAST_CXX11
 #include <unordered_map>
-#include <utility> // for std::swap
+#include <utility>  // for std::swap
 namespace backward {
 namespace details {
-template <typename K, typename V> struct hashtable {
+template <typename K, typename V>
+struct hashtable {
   typedef std::unordered_map<K, V> type;
 };
 using std::move;
-} // namespace details
-} // namespace backward
-#else // NOT BACKWARD_ATLEAST_CXX11
+}  // namespace details
+}  // namespace backward
+#else  // NOT BACKWARD_ATLEAST_CXX11
 #include <map>
 namespace backward {
 namespace details {
-template <typename K, typename V> struct hashtable {
+template <typename K, typename V>
+struct hashtable {
   typedef std::map<K, V> type;
 };
-template <typename T> const T &move(const T &v) { return v; }
-template <typename T> T &move(T &v) { return v; }
-} // namespace details
-} // namespace backward
-#endif // BACKWARD_ATLEAST_CXX11
+template <typename T>
+const T &move(const T &v) {
+  return v;
+}
+template <typename T>
+T &move(T &v) {
+  return v;
+}
+}  // namespace details
+}  // namespace backward
+#endif  // BACKWARD_ATLEAST_CXX11
 
 namespace backward {
 
 namespace system_tag {
-struct linux_tag; // seems that I cannot call that "linux" because the name
+struct linux_tag;  // seems that I cannot call that "linux" because the name
 // is already defined... so I am adding _tag everywhere.
 struct unknown_tag;
 
@@ -234,7 +241,7 @@ typedef unknown_tag current_tag;
 #else
 #error "May I please get my system defines?"
 #endif
-} // namespace system_tag
+}  // namespace system_tag
 
 namespace trace_resolver_tag {
 #ifdef BACKWARD_SYSTEM_LINUX
@@ -251,22 +258,36 @@ typedef backtrace_symbol current;
 #else
 #error "You shall not pass, until you know what you want."
 #endif
-#endif // BACKWARD_SYSTEM_LINUX
-} // namespace trace_resolver_tag
+#endif  // BACKWARD_SYSTEM_LINUX
+}  // namespace trace_resolver_tag
 
 namespace details {
 
-template <typename T> struct rm_ptr { typedef T type; };
-
-template <typename T> struct rm_ptr<T *> { typedef T type; };
-
-template <typename T> struct rm_ptr<const T *> { typedef const T type; };
-
-template <typename R, typename T, R (*F)(T)> struct deleter {
-  template <typename U> void operator()(U &ptr) const { (*F)(ptr); }
+template <typename T>
+struct rm_ptr {
+  typedef T type;
 };
 
-template <typename T> struct default_delete {
+template <typename T>
+struct rm_ptr<T *> {
+  typedef T type;
+};
+
+template <typename T>
+struct rm_ptr<const T *> {
+  typedef const T type;
+};
+
+template <typename R, typename T, R (*F)(T)>
+struct deleter {
+  template <typename U>
+  void operator()(U &ptr) const {
+    (*F)(ptr);
+  }
+};
+
+template <typename T>
+struct default_delete {
   void operator()(T &ptr) const { delete ptr; }
 };
 
@@ -281,7 +302,7 @@ class handle {
   handle &operator=(const handle &) = delete;
 #endif
 
-public:
+ public:
   ~handle() {
     if (not _empty) {
       Deleter()(_val);
@@ -326,8 +347,8 @@ public:
   }
   void swap(handle &b) {
     using std::swap;
-    swap(b._val, _val);     // can throw, we are safe here.
-    swap(b._empty, _empty); // should not throw: if you cannot swap two
+    swap(b._val, _val);      // can throw, we are safe here.
+    swap(b._empty, _empty);  // should not throw: if you cannot swap two
     // bools without throwing... It's a lost cause anyway!
   }
 
@@ -348,13 +369,15 @@ public:
 };
 
 // Default demangler implementation (do nothing).
-template <typename TAG> struct demangler_impl {
+template <typename TAG>
+struct demangler_impl {
   static std::string demangle(const char *funcname) { return funcname; }
 };
 
 #ifdef BACKWARD_SYSTEM_LINUX
 
-template <> struct demangler_impl<system_tag::current_tag> {
+template <>
+struct demangler_impl<system_tag::current_tag> {
   demangler_impl() : _demangle_buffer_length(0) {}
 
   std::string demangle(const char *funcname) {
@@ -367,16 +390,16 @@ template <> struct demangler_impl<system_tag::current_tag> {
     return funcname;
   }
 
-private:
+ private:
   details::handle<char *> _demangle_buffer;
   size_t _demangle_buffer_length;
 };
 
-#endif // BACKWARD_SYSTEM_LINUX
+#endif  // BACKWARD_SYSTEM_LINUX
 
 struct demangler : public demangler_impl<system_tag::current_tag> {};
 
-} // namespace details
+}  // namespace details
 
 /*************** A TRACE ***************/
 
@@ -432,8 +455,9 @@ struct ResolvedTrace : public Trace {
 /*************** STACK TRACE ***************/
 
 // default implemention.
-template <typename TAG> class StackTraceImpl {
-public:
+template <typename TAG>
+class StackTraceImpl {
+ public:
   size_t size() const { return 0; }
   Trace operator[](size_t) { return Trace(); }
   size_t load_here(size_t = 0) { return 0; }
@@ -444,12 +468,12 @@ public:
 #ifdef BACKWARD_SYSTEM_LINUX
 
 class StackTraceLinuxImplBase {
-public:
+ public:
   StackTraceLinuxImplBase() : _thread_id(0), _skip(0) {}
 
   unsigned thread_id() const { return _thread_id; }
 
-protected:
+ protected:
   void load_thread_info() {
     _thread_id = syscall(SYS_gettid);
     if (_thread_id == (size_t)getpid()) {
@@ -462,13 +486,13 @@ protected:
   void skip_n_firsts(size_t n) { _skip = n; }
   size_t skip_n_firsts() const { return _skip; }
 
-private:
+ private:
   size_t _thread_id;
   size_t _skip;
 };
 
 class StackTraceLinuxImplHolder : public StackTraceLinuxImplBase {
-public:
+ public:
   size_t size() const {
     return _stacktrace.size() ? _stacktrace.size() - skip_n_firsts() : 0;
   }
@@ -485,7 +509,7 @@ public:
     return 0;
   }
 
-protected:
+ protected:
   std::vector<void *> _stacktrace;
 };
 
@@ -493,8 +517,9 @@ protected:
 
 namespace details {
 
-template <typename F> class Unwinder {
-public:
+template <typename F>
+class Unwinder {
+ public:
   size_t operator()(F &f, size_t depth) {
     _f = &f;
     _index = -1;
@@ -503,7 +528,7 @@ public:
     return _index;
   }
 
-private:
+ private:
   F *_f;
   ssize_t _index;
   size_t _depth;
@@ -524,7 +549,7 @@ private:
       ip -= 1;
     }
 
-    if (_index >= 0) { // ignore first frame.
+    if (_index >= 0) {  // ignore first frame.
       (*_f)(_index, (void *)ip);
     }
     _index += 1;
@@ -532,17 +557,18 @@ private:
   }
 };
 
-template <typename F> size_t unwind(F f, size_t depth) {
+template <typename F>
+size_t unwind(F f, size_t depth) {
   Unwinder<F> unwinder;
   return unwinder(f, depth);
 }
 
-} // namespace details
+}  // namespace details
 
 template <>
 class StackTraceImpl<system_tag::linux_tag> : public StackTraceLinuxImplHolder {
-public:
-  __attribute__((noinline)) // TODO use some macro
+ public:
+  __attribute__((noinline))  // TODO use some macro
   size_t load_here(size_t depth = 32) {
     load_thread_info();
     if (depth == 0) {
@@ -568,7 +594,7 @@ public:
     return size();
   }
 
-private:
+ private:
   struct callback {
     StackTraceImpl &self;
     callback(StackTraceImpl &self) : self(self) {}
@@ -577,12 +603,12 @@ private:
   };
 };
 
-#else // BACKWARD_HAS_UNWIND == 0
+#else  // BACKWARD_HAS_UNWIND == 0
 
 template <>
 class StackTraceImpl<system_tag::linux_tag> : public StackTraceLinuxImplHolder {
-public:
-  __attribute__((noinline)) // TODO use some macro
+ public:
+  __attribute__((noinline))  // TODO use some macro
   size_t load_here(size_t depth = 32) {
     load_thread_info();
     if (depth == 0) {
@@ -611,20 +637,23 @@ public:
   }
 };
 
-#endif // BACKWARD_HAS_UNWIND
-#endif // BACKWARD_SYSTEM_LINUX
+#endif  // BACKWARD_HAS_UNWIND
+#endif  // BACKWARD_SYSTEM_LINUX
 
 class StackTrace : public StackTraceImpl<system_tag::current_tag> {};
 
 /*************** TRACE RESOLVER ***************/
 
-template <typename TAG> class TraceResolverImpl;
+template <typename TAG>
+class TraceResolverImpl;
 
 #ifdef BACKWARD_SYSTEM_UNKNOWN
 
-template <> class TraceResolverImpl<system_tag::unknown_tag> {
-public:
-  template <class ST> void load_stacktrace(ST &) {}
+template <>
+class TraceResolverImpl<system_tag::unknown_tag> {
+ public:
+  template <class ST>
+  void load_stacktrace(ST &) {}
   ResolvedTrace resolve(ResolvedTrace t) { return t; }
 };
 
@@ -633,24 +662,26 @@ public:
 #ifdef BACKWARD_SYSTEM_LINUX
 
 class TraceResolverLinuxImplBase {
-protected:
+ protected:
   std::string demangle(const char *funcname) {
     return _demangler.demangle(funcname);
   }
 
-private:
+ private:
   details::demangler _demangler;
 };
 
-template <typename STACKTRACE_TAG> class TraceResolverLinuxImpl;
+template <typename STACKTRACE_TAG>
+class TraceResolverLinuxImpl;
 
 #if BACKWARD_HAS_BACKTRACE_SYMBOL == 1
 
 template <>
 class TraceResolverLinuxImpl<trace_resolver_tag::backtrace_symbol>
     : public TraceResolverLinuxImplBase {
-public:
-  template <class ST> void load_stacktrace(ST &st) {
+ public:
+  template <class ST>
+  void load_stacktrace(ST &st) {
     using namespace details;
     if (st.size() == 0) {
       return;
@@ -671,25 +702,26 @@ public:
     }
     *funcname_end = '\0';
     trace.object_function = this->demangle(funcname);
-    trace.source.function = trace.object_function; // we cannot do better.
+    trace.source.function = trace.object_function;  // we cannot do better.
     return trace;
   }
 
-private:
+ private:
   details::handle<char **> _symbols;
 };
 
-#endif // BACKWARD_HAS_BACKTRACE_SYMBOL == 1
+#endif  // BACKWARD_HAS_BACKTRACE_SYMBOL == 1
 
 #if BACKWARD_HAS_BFD == 1
 
 template <>
 class TraceResolverLinuxImpl<trace_resolver_tag::libbfd>
     : public TraceResolverLinuxImplBase {
-public:
+ public:
   TraceResolverLinuxImpl() : _bfd_loaded(false) {}
 
-  template <class ST> void load_stacktrace(ST &) {}
+  template <class ST>
+  void load_stacktrace(ST &) {}
 
   ResolvedTrace resolve(ResolvedTrace trace) {
     Dl_info symbol_info;
@@ -698,7 +730,7 @@ public:
     // Let's try to find from which loaded object it comes from.
     // The loaded object can be yourself btw.
     if (not dladdr(trace.addr, &symbol_info)) {
-      return trace; // dat broken trace...
+      return trace;  // dat broken trace...
     }
 
     // Now we get in symbol_info:
@@ -723,10 +755,10 @@ public:
     trace.object_filename = symbol_info.dli_fname;
     bfd_fileobject &fobj = load_object_with_bfd(symbol_info.dli_fname);
     if (not fobj.handle) {
-      return trace; // sad, we couldn't load the object :(
+      return trace;  // sad, we couldn't load the object :(
     }
 
-    find_sym_result *details_selected; // to be filled.
+    find_sym_result *details_selected;  // to be filled.
 
     // trace.addr is the next instruction to be executed after returning
     // from the nested stack frame. In C++ this usually relate to the next
@@ -762,7 +794,7 @@ public:
       details_call_site =
           find_symbol_details(fobj, trace.addr, symbol_info.dli_fbase);
     }
-#endif // BACKWARD_HAS_UNWIND
+#endif  // BACKWARD_HAS_UNWIND
 
     if (details_selected->found) {
       if (details_selected->filename) {
@@ -839,7 +871,7 @@ public:
     return trace;
   }
 
-private:
+ private:
   bool _bfd_loaded;
 
   typedef details::handle<
@@ -885,11 +917,11 @@ private:
     }
 
     if (not bfd_check_format(bfd_handle.get(), bfd_object)) {
-      return r; // not an object? You lose.
+      return r;  // not an object? You lose.
     }
 
     if ((bfd_get_file_flags(bfd_handle.get()) & HAS_SYMS) == 0) {
-      return r; // that's what happen when you forget to compile in debug.
+      return r;  // that's what happen when you forget to compile in debug.
     }
 
     ssize_t symtab_storage_size = bfd_get_symtab_upper_bound(bfd_handle.get());
@@ -898,7 +930,7 @@ private:
         bfd_get_dynamic_symtab_upper_bound(bfd_handle.get());
 
     if (symtab_storage_size <= 0 and dyn_symtab_storage_size <= 0) {
-      return r; // weird, is the file is corrupted?
+      return r;  // weird, is the file is corrupted?
     }
 
     bfd_symtab_t symtab, dynamic_symtab;
@@ -916,7 +948,7 @@ private:
     }
 
     if (symcount <= 0 and dyn_symcount <= 0) {
-      return r; // damned, that's a stripped file that you got there!
+      return r;  // damned, that's a stripped file that you got there!
     }
 
     r.handle = move(bfd_handle);
@@ -963,18 +995,17 @@ private:
 
   void find_in_section(bfd_vma addr, bfd_vma base_addr, bfd_fileobject &fobj,
                        asection *section, find_sym_result &result) {
-    if (result.found)
-      return;
+    if (result.found) return;
 
     if ((bfd_get_section_flags(fobj.handle.get(), section) & SEC_ALLOC) == 0)
-      return; // a debug section is never loaded automatically.
+      return;  // a debug section is never loaded automatically.
 
     bfd_vma sec_addr = bfd_get_section_vma(fobj.handle.get(), section);
     bfd_size_type size = bfd_get_section_size(section);
 
     // are we in the boundaries of the section?
     if (addr < sec_addr or addr >= sec_addr + size) {
-      addr -= base_addr; // oups, a relocated object, lets try again...
+      addr -= base_addr;  // oups, a relocated object, lets try again...
       if (addr < sec_addr or addr >= sec_addr + size) {
         return;
       }
@@ -993,8 +1024,8 @@ private:
     }
   }
 
-  ResolvedTrace::source_locs_t
-  backtrace_inliners(bfd_fileobject &fobj, find_sym_result previous_result) {
+  ResolvedTrace::source_locs_t backtrace_inliners(
+      bfd_fileobject &fobj, find_sym_result previous_result) {
     // This function can be called ONLY after a SUCCESSFUL call to
     // find_symbol_details. The state is global to the bfd_handle.
     ResolvedTrace::source_locs_t results;
@@ -1030,17 +1061,18 @@ private:
     return strcmp(a, b) == 0;
   }
 };
-#endif // BACKWARD_HAS_BFD == 1
+#endif  // BACKWARD_HAS_BFD == 1
 
 #if BACKWARD_HAS_DW == 1
 
 template <>
 class TraceResolverLinuxImpl<trace_resolver_tag::libdw>
     : public TraceResolverLinuxImplBase {
-public:
+ public:
   TraceResolverLinuxImpl() : _dwfl_handle_initialized(false) {}
 
-  template <class ST> void load_stacktrace(ST &) {}
+  template <class ST>
+  void load_stacktrace(ST &) {}
 
   ResolvedTrace resolve(ResolvedTrace trace) {
     using namespace details;
@@ -1159,7 +1191,7 @@ public:
 #endif
 
     if (not cudie) {
-      return trace; // this time we lost the game :/
+      return trace;  // this time we lost the game :/
     }
 
     // Now that we have a compilation unit DIE, this function will be able
@@ -1190,7 +1222,7 @@ public:
     return trace;
   }
 
-private:
+ private:
   typedef details::handle<Dwfl *, details::deleter<void, Dwfl *, &dwfl_end>>
       dwfl_handle_t;
   details::handle<Dwfl_Callbacks *, details::default_delete<Dwfl_Callbacks *>>
@@ -1204,31 +1236,31 @@ private:
     void operator()(Dwarf_Die *die) {
       switch (dwarf_tag(die)) {
         const char *name;
-      case DW_TAG_subprogram:
-        if ((name = dwarf_diename(die))) {
-          trace.source.function = name;
-        }
-        break;
+        case DW_TAG_subprogram:
+          if ((name = dwarf_diename(die))) {
+            trace.source.function = name;
+          }
+          break;
 
-      case DW_TAG_inlined_subroutine:
-        ResolvedTrace::SourceLoc sloc;
-        Dwarf_Attribute attr_mem;
+        case DW_TAG_inlined_subroutine:
+          ResolvedTrace::SourceLoc sloc;
+          Dwarf_Attribute attr_mem;
 
-        if ((name = dwarf_diename(die))) {
-          sloc.function = name;
-        }
-        if ((name = die_call_file(die))) {
-          sloc.filename = name;
-        }
+          if ((name = dwarf_diename(die))) {
+            sloc.function = name;
+          }
+          if ((name = die_call_file(die))) {
+            sloc.filename = name;
+          }
 
-        Dwarf_Word line = 0, col = 0;
-        dwarf_formudata(dwarf_attr(die, DW_AT_call_line, &attr_mem), &line);
-        dwarf_formudata(dwarf_attr(die, DW_AT_call_column, &attr_mem), &col);
-        sloc.line = line;
-        sloc.col = col;
+          Dwarf_Word line = 0, col = 0;
+          dwarf_formudata(dwarf_attr(die, DW_AT_call_line, &attr_mem), &line);
+          dwarf_formudata(dwarf_attr(die, DW_AT_call_column, &attr_mem), &col);
+          sloc.line = line;
+          sloc.col = col;
 
-        trace.inliners.push_back(sloc);
-        break;
+          trace.inliners.push_back(sloc);
+          break;
       };
     }
     ResolvedTrace &trace;
@@ -1276,27 +1308,27 @@ private:
     Dwarf_Die *die = result;
     do {
       switch (dwarf_tag(die)) {
-      case DW_TAG_subprogram:
-      case DW_TAG_inlined_subroutine:
-        if (die_has_pc(die, pc)) {
-          return result;
-        }
-      default:
-        bool declaration = false;
-        Dwarf_Attribute attr_mem;
-        dwarf_formflag(dwarf_attr(die, DW_AT_declaration, &attr_mem),
-                       &declaration);
-        if (not declaration) {
-          // let's be curious and look deeper in the tree,
-          // function are not necessarily at the first level, but
-          // might be nested inside a namespace, structure etc.
-          Dwarf_Die die_mem;
-          Dwarf_Die *indie = find_fundie_by_pc(die, pc, &die_mem);
-          if (indie) {
-            *result = die_mem;
+        case DW_TAG_subprogram:
+        case DW_TAG_inlined_subroutine:
+          if (die_has_pc(die, pc)) {
             return result;
           }
-        }
+        default:
+          bool declaration = false;
+          Dwarf_Attribute attr_mem;
+          dwarf_formflag(dwarf_attr(die, DW_AT_declaration, &attr_mem),
+                         &declaration);
+          if (not declaration) {
+            // let's be curious and look deeper in the tree,
+            // function are not necessarily at the first level, but
+            // might be nested inside a namespace, structure etc.
+            Dwarf_Die die_mem;
+            Dwarf_Die *indie = find_fundie_by_pc(die, pc, &die_mem);
+            if (indie) {
+              *result = die_mem;
+              return result;
+            }
+          }
       };
     } while (dwarf_siblingof(die, result) == 0);
     return 0;
@@ -1360,20 +1392,20 @@ private:
     return dwarf_filesrc(files, file_idx, 0, 0);
   }
 };
-#endif // BACKWARD_HAS_DW == 1
+#endif  // BACKWARD_HAS_DW == 1
 
 template <>
 class TraceResolverImpl<system_tag::linux_tag>
     : public TraceResolverLinuxImpl<trace_resolver_tag::current> {};
 
-#endif // BACKWARD_SYSTEM_LINUX
+#endif  // BACKWARD_SYSTEM_LINUX
 
 class TraceResolver : public TraceResolverImpl<system_tag::current_tag> {};
 
 /*************** CODE SNIPPET ***************/
 
 class SourceFile {
-public:
+ public:
   typedef std::vector<std::pair<unsigned, std::string>> lines_t;
 
   SourceFile() {}
@@ -1470,7 +1502,7 @@ public:
   }
 #endif
 
-private:
+ private:
   details::handle<std::ifstream *, details::default_delete<std::ifstream *>>
       _file;
 
@@ -1481,7 +1513,7 @@ private:
 };
 
 class SnippetFactory {
-public:
+ public:
   typedef SourceFile::lines_t lines_t;
 
   lines_t get_snippet(const std::string &filename, unsigned line_start,
@@ -1521,7 +1553,7 @@ public:
     return lines;
   }
 
-private:
+ private:
   typedef details::hashtable<std::string, SourceFile>::type src_files_t;
   src_files_t _src_files;
 
@@ -1542,17 +1574,16 @@ private:
 
 namespace Color {
 enum type { yellow = 33, purple = 35, reset = 39 };
-} // namespace Color
+}  // namespace Color
 
 class Colorize {
-public:
+ public:
   Colorize(std::FILE *os) : _os(os), _reset(false), _istty(false) {}
 
   void init() { _istty = isatty(fileno(_os)); }
 
   void set_color(Color::type ccode) {
-    if (not _istty)
-      return;
+    if (not _istty) return;
 
     // I assume that the terminal can handle basic colors. Seriously I
     // don't want to deal with all the termcap shit.
@@ -1566,29 +1597,29 @@ public:
     }
   }
 
-private:
+ private:
   std::FILE *_os;
   bool _reset;
   bool _istty;
 };
 
-#else // ndef BACKWARD_SYSTEM_LINUX
+#else  // ndef BACKWARD_SYSTEM_LINUX
 
 namespace Color {
 enum type { yellow = 0, purple = 0, reset = 0 };
-} // namespace Color
+}  // namespace Color
 
 class Colorize {
-public:
+ public:
   Colorize(std::FILE *) {}
   void init() {}
   void set_color(Color::type) {}
 };
 
-#endif // BACKWARD_SYSTEM_LINUX
+#endif  // BACKWARD_SYSTEM_LINUX
 
 class Printer {
-public:
+ public:
   bool snippet;
   bool color;
   bool address;
@@ -1596,7 +1627,8 @@ public:
 
   Printer() : snippet(true), color(true), address(false), object(false) {}
 
-  template <typename ST> FILE *print(ST &st, FILE *os = stderr) {
+  template <typename ST>
+  FILE *print(ST &st, FILE *os = stderr) {
     Colorize colorize(os);
     if (color) {
       colorize.init();
@@ -1622,7 +1654,7 @@ public:
     return os;
   }
 
-private:
+ private:
   TraceResolver _resolver;
   SnippetFactory _snippets;
 
@@ -1715,7 +1747,7 @@ private:
 #ifdef BACKWARD_SYSTEM_LINUX
 
 class SignalHandling {
-public:
+ public:
   static std::vector<int> make_default_signals() {
     const int signals[] = {
         // default action: Core
@@ -1758,8 +1790,7 @@ public:
       action.sa_sigaction = &sig_handler;
 
       int r = sigaction(signals[i], &action, 0);
-      if (r < 0)
-        success = false;
+      if (r < 0) success = false;
     }
 
     _loaded = success;
@@ -1767,7 +1798,7 @@ public:
 
   bool loaded() const { return _loaded; }
 
-private:
+ private:
   details::handle<char *> _stack_content;
   bool _loaded;
 
@@ -1776,9 +1807,9 @@ private:
 
     StackTrace st;
     void *error_addr = 0;
-#ifdef REG_RIP // x86_64
+#ifdef REG_RIP  // x86_64
     error_addr = reinterpret_cast<void *>(uctx->uc_mcontext.gregs[REG_RIP]);
-#elif defined(REG_EIP) // x86_32
+#elif defined(REG_EIP)  // x86_32
     error_addr = reinterpret_cast<void *>(uctx->uc_mcontext.gregs[REG_EIP]);
 #else
 #warning ":/ sorry, ain't know no nothing none not of your architecture!"
@@ -1804,18 +1835,18 @@ private:
   }
 };
 
-#endif // BACKWARD_SYSTEM_LINUX
+#endif  // BACKWARD_SYSTEM_LINUX
 
 #ifdef BACKWARD_SYSTEM_UNKNOWN
 
 class SignalHandling {
-public:
+ public:
   SignalHandling(const std::vector<int> & = std::vector<int>()) {}
   bool init() { return false; }
 };
 
-#endif // BACKWARD_SYSTEM_UNKNOWN
+#endif  // BACKWARD_SYSTEM_UNKNOWN
 
-} // namespace backward
+}  // namespace backward
 
 #endif /* H_GUARD */

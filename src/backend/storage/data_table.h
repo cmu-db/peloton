@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/bridge/ddl/bridge.h"
@@ -48,7 +47,7 @@ class DataTable : public AbstractTable {
   DataTable() = delete;
   DataTable(DataTable const &) = delete;
 
-public:
+ public:
   // Table constructor
   DataTable(catalog::Schema *schema, AbstractBackend *backend,
             std::string table_name, oid_t table_oid,
@@ -156,7 +155,7 @@ public:
   // Get a string representation of this table
   friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
 
-protected:
+ protected:
   //===--------------------------------------------------------------------===//
   // INTEGRITY CHECKS
   //===--------------------------------------------------------------------===//
@@ -187,7 +186,7 @@ protected:
   bool UpdateInIndexes(const storage::Tuple *tuple, ItemPointer location,
                        const ItemPointer old_location);
 
-private:
+ private:
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
@@ -224,5 +223,5 @@ private:
   bool dirty = false;
 };
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

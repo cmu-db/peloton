@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -86,5 +85,5 @@ std::string AbstractPlanNode::GetInfo(std::string spacer) const {
 
 std::string AbstractPlanNode::GetInfo() const { return ""; }
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

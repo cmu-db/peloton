@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <unordered_map>
@@ -33,7 +32,7 @@ namespace executor {
 class LogicalTile;
 
 class MaterializationExecutor : public AbstractExecutor {
-public:
+ public:
   MaterializationExecutor(const MaterializationExecutor &) = delete;
   MaterializationExecutor &operator=(const MaterializationExecutor &) = delete;
   MaterializationExecutor(MaterializationExecutor &&) = delete;
@@ -44,28 +43,28 @@ public:
   explicit MaterializationExecutor(planner::AbstractPlanNode *node,
                                    ExecutorContext *executor_context);
 
-protected:
+ protected:
   bool DInit();
 
   bool DExecute();
 
-private:
+ private:
   void GenerateTileToColMap(
       const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
       LogicalTile *source_tile,
       std::unordered_map<storage::Tile *, std::vector<oid_t>> &tile_to_cols);
 
-  void
-  MaterializeByTiles(LogicalTile *source_tile,
-                     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-                     const std::unordered_map<storage::Tile *,
-                                              std::vector<oid_t>> &tile_to_cols,
-                     storage::Tile *dest_tile);
+  void MaterializeByTiles(
+      LogicalTile *source_tile,
+      const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
+      const std::unordered_map<storage::Tile *, std::vector<oid_t>> &
+          tile_to_cols,
+      storage::Tile *dest_tile);
 
   LogicalTile *Physify(LogicalTile *source_tile);
-  std::unordered_map<oid_t, oid_t>
-  BuildIdentityMapping(const catalog::Schema *schema);
+  std::unordered_map<oid_t, oid_t> BuildIdentityMapping(
+      const catalog::Schema *schema);
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

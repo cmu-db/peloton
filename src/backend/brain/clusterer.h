@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -29,14 +28,15 @@ namespace brain {
 
 // Sequential k-Means Clustering
 class Clusterer {
-public:
+ public:
   Clusterer(oid_t cluster_count, oid_t sample_column_count,
             double param = NEW_SAMPLE_WEIGHT)
       : cluster_count_(cluster_count),
         means_(
             std::vector<Sample>(cluster_count_, Sample(sample_column_count))),
         closest_(std::vector<int>(cluster_count_, 0)),
-        new_sample_weight_(param), sample_count_(0),
+        new_sample_weight_(param),
+        sample_count_(0),
         sample_column_count_(sample_column_count) {}
 
   oid_t GetClusterCount() const { return cluster_count_; }
@@ -59,7 +59,7 @@ public:
   // Get a string representation of clusterer
   friend std::ostream &operator<<(std::ostream &os, const Clusterer &clusterer);
 
-private:
+ private:
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
@@ -83,5 +83,5 @@ private:
   oid_t sample_column_count_;
 };
 
-} // End brain namespace
-} // End peloton namespace
+}  // End brain namespace
+}  // End peloton namespace

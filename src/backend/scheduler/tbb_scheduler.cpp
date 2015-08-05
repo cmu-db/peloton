@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <string>
 #include <cassert>
 
@@ -45,23 +44,23 @@ void TBBScheduler::Run(handler function_pointer, void *args,
 
   // Enqueue task with appropriate priority
   switch (priority) {
-  case TaskPriorityType::TASK_PRIORTY_TYPE_NORMAL:
-    state->root->enqueue(*task);
-    break;
+    case TaskPriorityType::TASK_PRIORTY_TYPE_NORMAL:
+      state->root->enqueue(*task);
+      break;
 
-  case TaskPriorityType::TASK_PRIORTY_TYPE_LOW:
-    state->root->enqueue(*task, tbb::priority_low);
-    break;
+    case TaskPriorityType::TASK_PRIORTY_TYPE_LOW:
+      state->root->enqueue(*task, tbb::priority_low);
+      break;
 
-  case TaskPriorityType::TASK_PRIORTY_TYPE_HIGH:
-    state->root->enqueue(*task, tbb::priority_high);
-    break;
+    case TaskPriorityType::TASK_PRIORTY_TYPE_HIGH:
+      state->root->enqueue(*task, tbb::priority_high);
+      break;
 
-  case TaskPriorityType::TASK_PRIORTY_TYPE_INVALID:
-  default:
-    throw SchedulerException("Invalid priority type : " +
-                             std::to_string(priority));
-    break;
+    case TaskPriorityType::TASK_PRIORTY_TYPE_INVALID:
+    default:
+      throw SchedulerException("Invalid priority type : " +
+                               std::to_string(priority));
+      break;
   }
 
   LOG_TRACE("Enqueued task \n");
@@ -74,5 +73,5 @@ void TBBScheduler::Wait() {
   LOG_TRACE("End of WAIT \n");
 }
 
-} // namespace scheduler
-} // namespace peloton
+}  // namespace scheduler
+}  // namespace peloton

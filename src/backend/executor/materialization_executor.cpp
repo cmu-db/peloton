@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/materialization_executor.h"
 
 #include <cassert>
@@ -106,8 +105,8 @@ void MaterializationExecutor::MaterializeByTiles(
   }
 }
 
-std::unordered_map<oid_t, oid_t>
-MaterializationExecutor::BuildIdentityMapping(const catalog::Schema *schema) {
+std::unordered_map<oid_t, oid_t> MaterializationExecutor::BuildIdentityMapping(
+    const catalog::Schema *schema) {
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
   oid_t column_count = schema->GetColumnCount();
   for (oid_t col = 0; col < column_count; col++) {
@@ -192,7 +191,7 @@ bool MaterializationExecutor::DExecute() {
   }
 
   auto node = GetRawNode();
-  bool physify_flag = true; // by default, we create a physical tile
+  bool physify_flag = true;  // by default, we create a physical tile
 
   if (node != nullptr) {
     const planner::MaterializationNode &node =
@@ -213,5 +212,5 @@ bool MaterializationExecutor::DExecute() {
   return true;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

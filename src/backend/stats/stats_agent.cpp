@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/stats_agent.h"
 
 #include "backend/common/ids.h"

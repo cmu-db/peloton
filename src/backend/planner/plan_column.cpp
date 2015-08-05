@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/planner/plan_column.h"
 
 #include <sstream>
@@ -93,5 +92,5 @@ std::ostream &operator<<(std::ostream &os, const PlanColumn &column) {
   return os;
 }
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

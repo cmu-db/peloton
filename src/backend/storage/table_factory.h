@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/catalog/manager.h"
@@ -29,7 +28,7 @@ namespace storage {
  * Magic Table Factory!!
  */
 class TableFactory {
-public:
+ public:
   /**
    * For a given Schema, instantiate a DataTable object and return it
    */
@@ -44,5 +43,5 @@ public:
   static bool DropDataTable(oid_t database_oid, oid_t table_oid);
 };
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -29,7 +28,7 @@ namespace planner {
  * the input.
  */
 class LimitNode : public AbstractPlanNode {
-public:
+ public:
   LimitNode(const LimitNode &) = delete;
   LimitNode &operator=(const LimitNode &) = delete;
   LimitNode(LimitNode &&) = delete;
@@ -46,9 +45,9 @@ public:
 
   inline std::string GetInfo() const { return "Limit"; }
 
-private:
-  const size_t limit_;  // as LIMIT in SQL standard
-  const size_t offset_; // as OFFSET in SQL standard
+ private:
+  const size_t limit_;   // as LIMIT in SQL standard
+  const size_t offset_;  // as OFFSET in SQL standard
 };
 
 } /* namespace planner */

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/types.h"
@@ -26,7 +25,7 @@ namespace executor {
  * evaluate generic predicates and simple projections.
  */
 class AbstractScanExecutor : public AbstractExecutor {
-public:
+ public:
   AbstractScanExecutor(const AbstractScanExecutor &) = delete;
   AbstractScanExecutor &operator=(const AbstractScanExecutor &) = delete;
   AbstractScanExecutor(AbstractScanExecutor &&) = delete;
@@ -35,12 +34,12 @@ public:
   explicit AbstractScanExecutor(planner::AbstractPlanNode *node,
                                 ExecutorContext *executor_context);
 
-protected:
+ protected:
   bool DInit();
 
   bool DExecute() = 0;
 
-protected:
+ protected:
   //===--------------------------------------------------------------------===//
   // Plan Info
   //===--------------------------------------------------------------------===//
@@ -52,5 +51,5 @@ protected:
   std::vector<oid_t> column_ids_;
 };
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

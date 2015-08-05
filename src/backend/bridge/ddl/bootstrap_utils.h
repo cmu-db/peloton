@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/bridge/ddl/bootstrap.h"
@@ -26,8 +25,7 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class BootstrapUtils {
-
-public:
+ public:
   //===--------------------------------------------------------------------===//
   // Copy operator
   //===--------------------------------------------------------------------===//
@@ -38,9 +36,9 @@ public:
   static void CopyRawIndexes(raw_database_info *raw_database,
                              std::vector<raw_index_info *> raw_indexes);
 
-  static void
-  CopyRawForeignkeys(raw_database_info *raw_database,
-                     std::vector<raw_foreignkey_info *> raw_foreignkeys);
+  static void CopyRawForeignkeys(
+      raw_database_info *raw_database,
+      std::vector<raw_foreignkey_info *> raw_foreignkeys);
 
   static char *CopyString(const char *string);
 
@@ -77,5 +75,5 @@ public:
   static void PrintColumnNums(int *column_nums, oid_t column_count);
 };
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

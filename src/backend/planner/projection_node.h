@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -28,7 +27,7 @@ class Schema;
 namespace planner {
 
 class ProjectionNode : public AbstractPlanNode {
-public:
+ public:
   ProjectionNode(const ProjectionNode &) = delete;
   ProjectionNode &operator=(const ProjectionNode &) = delete;
   ProjectionNode(ProjectionNode &&) = delete;
@@ -50,7 +49,7 @@ public:
 
   inline std::string GetInfo() const { return "Projection"; }
 
-private:
+ private:
   /** @brief Projection Info.            */
   std::unique_ptr<const planner::ProjectInfo> project_info_;
 
@@ -58,5 +57,5 @@ private:
   std::unique_ptr<const catalog::Schema> schema_;
 };
 
-} // namespace planner
-} // namespace peloton
+}  // namespace planner
+}  // namespace peloton

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #define BACKWARD_HAS_DW 1
@@ -24,14 +23,14 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 class StackTracer {
-public:
+ public:
   static std::vector<int> make_default_signals();
 
   StackTracer(const std::vector<int> &signals = make_default_signals());
 
   bool loaded() const { return _loaded; }
 
-private:
+ private:
   backward::details::handle<char *> _stack_content;
   bool _loaded;
 
@@ -40,4 +39,4 @@ private:
 
 void GetStackTrace(int signum = 0);
 
-} // namespace peloton
+}  // namespace peloton

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <utility>
 #include <vector>
 
@@ -45,8 +44,7 @@ bool HashSetOpExecutor::DInit() {
 bool HashSetOpExecutor::DExecute() {
   LOG_TRACE("Set Op executor \n");
 
-  if (!hash_done_)
-    ExecuteHelper();
+  if (!hash_done_) ExecuteHelper();
 
   assert(hash_done_);
 
@@ -76,8 +74,7 @@ bool HashSetOpExecutor::ExecuteHelper() {
     left_tiles_.emplace_back(children_[0]->GetOutput());
   }
 
-  if (left_tiles_.size() == 0)
-    return false;
+  if (left_tiles_.size() == 0) return false;
 
   // Scan the left child's input and update the counters
   for (auto &tile : left_tiles_) {
@@ -103,20 +100,20 @@ bool HashSetOpExecutor::ExecuteHelper() {
 
   // Calculate the output number for each key
   switch (set_op_) {
-  case SETOP_TYPE_INTERSECT:
-    CalculateCopies<SETOP_TYPE_INTERSECT>(htable_);
-    break;
-  case SETOP_TYPE_INTERSECT_ALL:
-    CalculateCopies<SETOP_TYPE_INTERSECT_ALL>(htable_);
-    break;
-  case SETOP_TYPE_EXCEPT:
-    CalculateCopies<SETOP_TYPE_EXCEPT>(htable_);
-    break;
-  case SETOP_TYPE_EXCEPT_ALL:
-    CalculateCopies<SETOP_TYPE_EXCEPT_ALL>(htable_);
-    break;
-  case SETOP_TYPE_INVALID:
-    return false;
+    case SETOP_TYPE_INTERSECT:
+      CalculateCopies<SETOP_TYPE_INTERSECT>(htable_);
+      break;
+    case SETOP_TYPE_INTERSECT_ALL:
+      CalculateCopies<SETOP_TYPE_INTERSECT_ALL>(htable_);
+      break;
+    case SETOP_TYPE_EXCEPT:
+      CalculateCopies<SETOP_TYPE_EXCEPT>(htable_);
+      break;
+    case SETOP_TYPE_EXCEPT_ALL:
+      CalculateCopies<SETOP_TYPE_EXCEPT_ALL>(htable_);
+      break;
+    case SETOP_TYPE_INVALID:
+      return false;
   }
 
   /*
@@ -168,22 +165,22 @@ template <SetOpType SETOP>
 bool HashSetOpExecutor::CalculateCopies(HashSetOpMapType &htable) {
   for (auto &item : htable) {
     switch (SETOP) {
-    case SETOP_TYPE_INTERSECT:
-      item.second.left = (item.second.right > 0) ? 1 : 0;
-      break;
-    case SETOP_TYPE_INTERSECT_ALL:
-      item.second.left = std::min(item.second.left, item.second.right);
-      break;
-    case SETOP_TYPE_EXCEPT:
-      item.second.left = (item.second.right > 0) ? 0 : 1;
-      break;
-    case SETOP_TYPE_EXCEPT_ALL:
-      item.second.left = (item.second.left > item.second.right)
-                             ? (item.second.left - item.second.right)
-                             : 0;
-      break;
-    default:
-      return false;
+      case SETOP_TYPE_INTERSECT:
+        item.second.left = (item.second.right > 0) ? 1 : 0;
+        break;
+      case SETOP_TYPE_INTERSECT_ALL:
+        item.second.left = std::min(item.second.left, item.second.right);
+        break;
+      case SETOP_TYPE_EXCEPT:
+        item.second.left = (item.second.right > 0) ? 0 : 1;
+        break;
+      case SETOP_TYPE_EXCEPT_ALL:
+        item.second.left = (item.second.left > item.second.right)
+                               ? (item.second.left - item.second.right)
+                               : 0;
+        break;
+      default:
+        return false;
     }
   }
   return true;

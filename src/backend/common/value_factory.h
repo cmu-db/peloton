@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/value.h"
@@ -22,7 +21,7 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 class ValueFactory {
-public:
+ public:
   static inline Value Clone(const Value &src, Pool *dataPool = nullptr) {
     return Value::Clone(src, dataPool);
   }
@@ -119,4 +118,4 @@ public:
   static inline Value CastAsString(Value value) { return value.CastAsString(); }
 };
 
-} // End peloton namespace
+}  // End peloton namespace

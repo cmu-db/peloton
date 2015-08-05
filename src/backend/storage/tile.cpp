@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/storage/tile.h"
 
 #include <cassert>
@@ -31,12 +30,21 @@ namespace storage {
 Tile::Tile(TileGroupHeader *tile_header, AbstractBackend *backend,
            const catalog::Schema &tuple_schema, TileGroup *tile_group,
            int tuple_count)
-    : database_id(INVALID_OID), table_id(INVALID_OID),
-      tile_group_id(INVALID_OID), tile_id(INVALID_OID), backend(backend),
-      schema(tuple_schema), data(NULL), tile_group(tile_group), pool(NULL),
-      num_tuple_slots(tuple_count), column_count(tuple_schema.GetColumnCount()),
-      tuple_length(tuple_schema.GetLength()), uninlined_data_size(0),
-      column_header(NULL), column_header_size(INVALID_OID),
+    : database_id(INVALID_OID),
+      table_id(INVALID_OID),
+      tile_group_id(INVALID_OID),
+      tile_id(INVALID_OID),
+      backend(backend),
+      schema(tuple_schema),
+      data(NULL),
+      tile_group(tile_group),
+      pool(NULL),
+      num_tuple_slots(tuple_count),
+      column_count(tuple_schema.GetColumnCount()),
+      tuple_length(tuple_schema.GetLength()),
+      uninlined_data_size(0),
+      column_header(NULL),
+      column_header_size(INVALID_OID),
       tile_group_header(tile_header) {
   assert(tuple_count > 0);
 
@@ -50,8 +58,7 @@ Tile::Tile(TileGroupHeader *tile_header, AbstractBackend *backend,
   std::memset(data, 0, tile_size);
 
   // allocate pool for blob storage if schema not inlined
-  if (schema.IsInlined() == false)
-    pool = new Pool(backend);
+  if (schema.IsInlined() == false) pool = new Pool(backend);
 }
 
 Tile::~Tile() {
@@ -60,13 +67,11 @@ Tile::~Tile() {
   data = NULL;
 
   // reclaim the tile memory (UNINLINED data)
-  if (schema.IsInlined() == false)
-    delete pool;
+  if (schema.IsInlined() == false) delete pool;
   pool = NULL;
 
   // clear any cached column headers
-  if (column_header)
-    delete column_header;
+  if (column_header) delete column_header;
   column_header = NULL;
 
   // Look in the tile factory class to figure out how we use own_tile.
@@ -240,8 +245,7 @@ bool Tile::SerializeTo(SerializeOutput &output, oid_t num_tuples) {
   output.WriteInt(-1);
 
   // Serialize the header
-  if (!SerializeHeaderTo(output))
-    return false;
+  if (!SerializeHeaderTo(output)) return false;
 
   // Active tuple count
   output.WriteInt(static_cast<int>(num_tuples));
@@ -336,8 +340,7 @@ bool Tile::SerializeTuplesTo(SerializeOutput &output, Tuple *tuples,
   assert(!tuples[0].IsNull());
 
   // Serialize the header
-  if (!SerializeHeaderTo(output))
-    return false;
+  if (!SerializeHeaderTo(output)) return false;
 
   output.WriteInt(static_cast<int32_t>(num_tuples));
   for (int tuple_itr = 0; tuple_itr < num_tuples; tuple_itr++) {
@@ -372,7 +375,7 @@ void Tile::DeserializeTuplesFrom(SerializeInput &input, Pool *pool) {
    * rowdata
    */
 
-  input.ReadInt(); // rowstart
+  input.ReadInt();  // rowstart
   input.ReadByte();
 
   oid_t column_count = input.ReadShort();
@@ -444,15 +447,12 @@ void Tile::DeserializeTuplesFromWithoutHeader(SerializeInput &input,
 
 // Compare two tiles (expensive !)
 bool Tile::operator==(const Tile &other) const {
-  if (!(GetColumnCount() == other.GetColumnCount()))
-    return false;
+  if (!(GetColumnCount() == other.GetColumnCount())) return false;
 
-  if (!(database_id == other.database_id))
-    return false;
+  if (!(database_id == other.database_id)) return false;
 
   catalog::Schema other_schema = other.schema;
-  if (schema != other_schema)
-    return false;
+  if (schema != other_schema) return false;
 
   TupleIterator tile_itr(this);
   TupleIterator other_tile_itr(&other);
@@ -461,11 +461,9 @@ bool Tile::operator==(const Tile &other) const {
   Tuple other_tuple(&other_schema);
 
   while (tile_itr.Next(tuple)) {
-    if (!(other_tile_itr.Next(other_tuple)))
-      return false;
+    if (!(other_tile_itr.Next(other_tuple))) return false;
 
-    if (!(tuple == other_tuple))
-      return false;
+    if (!(tuple == other_tuple)) return false;
   }
 
   tuple.SetNull();
@@ -482,5 +480,5 @@ TupleIterator Tile::GetIterator() { return TupleIterator(this); }
 //	return NULL;
 //}
 
-} // End storage namespace
-} // End peloton namespace
+}  // End storage namespace
+}  // End peloton namespace

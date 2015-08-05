@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <vector>
 
 #include "gmock/gmock.h"
@@ -358,5 +357,5 @@ TEST(HashSetOptTests, IntersectAllTest) {
 }
 }
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

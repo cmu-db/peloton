@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/scheduler/abstract_scheduler.h"
@@ -24,10 +23,10 @@ namespace scheduler {
 class TBBSchedulerState {
   friend class TBBScheduler;
 
-private:
+ private:
   tbb::task *root;
 
-public:
+ public:
   TBBSchedulerState() {
     // Start root task
     root = new (tbb::task::allocate_root()) tbb::empty_task;
@@ -47,7 +46,7 @@ public:
 //===--------------------------------------------------------------------===//
 
 class TBBScheduler : public AbstractScheduler {
-public:
+ public:
   TBBScheduler();
   ~TBBScheduler();
 
@@ -58,11 +57,11 @@ public:
   // wait for all tasks
   void Wait();
 
-private:
+ private:
   tbb::task_scheduler_init init;
 
   TBBSchedulerState *state = nullptr;
 };
 
-} // namespace scheduler
-} // namespace peloton
+}  // namespace scheduler
+}  // namespace peloton

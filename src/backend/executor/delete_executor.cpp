@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/delete_executor.h"
 
 #include "backend/catalog/manager.h"
@@ -102,5 +101,5 @@ bool DeleteExecutor::DExecute() {
   return true;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

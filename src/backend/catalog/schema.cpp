@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <cassert>
 #include <algorithm>
 #include <sstream>
@@ -151,9 +150,9 @@ Schema *Schema::AppendSchemaPtrList(const std::vector<Schema *> &schema_list) {
 }
 
 // Append subsets of columns in the given schemas.
-Schema *
-Schema::AppendSchemaPtrList(const std::vector<Schema *> &schema_list,
-                            const std::vector<std::vector<oid_t>> &subsets) {
+Schema *Schema::AppendSchemaPtrList(
+    const std::vector<Schema *> &schema_list,
+    const std::vector<std::vector<oid_t>> &subsets) {
   assert(schema_list.size() == subsets.size());
 
   std::vector<Column> columns;
@@ -214,5 +213,5 @@ bool Schema::operator==(const Schema &other) const {
 
 bool Schema::operator!=(const Schema &other) const { return !(*this == other); }
 
-} // End catalog namespace
-} // End peloton namespace
+}  // End catalog namespace
+}  // End peloton namespace

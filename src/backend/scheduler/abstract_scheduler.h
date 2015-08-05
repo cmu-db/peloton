@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/scheduler/abstract_task.h"
@@ -23,7 +22,7 @@ namespace scheduler {
 //===--------------------------------------------------------------------===//
 
 class AbstractScheduler {
-public:
+ public:
   AbstractScheduler() {}
   virtual ~AbstractScheduler(){};
 
@@ -35,5 +34,5 @@ public:
   virtual void Wait() = 0;
 };
 
-} // namespace scheduler
-} // namespace peloton
+}  // namespace scheduler
+}  // namespace peloton

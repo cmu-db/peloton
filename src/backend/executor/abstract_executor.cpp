@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/abstract_executor.h"
 #include "backend/common/logger.h"
 
@@ -93,5 +92,5 @@ bool AbstractExecutor::Execute() {
   return status;
 }
 
-} // namespace executor
-} // namespace peloton
+}  // namespace executor
+}  // namespace peloton

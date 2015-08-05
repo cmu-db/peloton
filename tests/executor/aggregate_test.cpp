@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <set>
 #include <string>
@@ -276,5 +275,5 @@ TEST(AggregateTests, AggregateTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

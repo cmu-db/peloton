@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -26,14 +25,14 @@
 
 namespace peloton {
 
-static const size_t TEMP_POOL_CHUNK_SIZE = 1024 * 1024; // 1 MB
+static const size_t TEMP_POOL_CHUNK_SIZE = 1024 * 1024;  // 1 MB
 
 //===--------------------------------------------------------------------===//
 // Chunk of memory allocated on the heap
 //===--------------------------------------------------------------------===//
 
 class Chunk {
-public:
+ public:
   Chunk() : offset(0), size(0), chunk_data(NULL) {}
 
   inline Chunk(uint64_t size, void *chunkData)
@@ -47,12 +46,11 @@ public:
 };
 
 /// Find next higher power of two
-template <class T> inline T nexthigher(T k) {
-  if (k == 0)
-    return 1;
+template <class T>
+inline T nexthigher(T k) {
+  if (k == 0) return 1;
   k--;
-  for (uint i = 1; i < sizeof(T) * CHAR_BIT; i <<= 1)
-    k = k | k >> i;
+  for (uint i = 1; i < sizeof(T) * CHAR_BIT; i <<= 1) k = k | k >> i;
   return k + 1;
 }
 
@@ -70,16 +68,19 @@ class Pool {
   Pool(const Pool &) = delete;
   Pool &operator=(const Pool &) = delete;
 
-public:
+ public:
   Pool(storage::AbstractBackend *_backend)
-      : backend(_backend), allocation_size(TEMP_POOL_CHUNK_SIZE),
-        max_chunk_count(1), current_chunk_index(0) {
+      : backend(_backend),
+        allocation_size(TEMP_POOL_CHUNK_SIZE),
+        max_chunk_count(1),
+        current_chunk_index(0) {
     Init();
   }
 
   Pool(storage::AbstractBackend *_backend, uint64_t allocation_size,
        uint64_t max_chunk_count)
-      : backend(_backend), allocation_size(allocation_size),
+      : backend(_backend),
+        allocation_size(allocation_size),
         max_chunk_count(static_cast<std::size_t>(max_chunk_count)),
         current_chunk_index(0) {
     Init();
@@ -110,7 +111,7 @@ public:
 
   int64_t GetAllocatedMemory();
 
-private:
+ private:
   /// Location of pool on storage
   storage::AbstractBackend *backend;
 
@@ -125,4 +126,4 @@ private:
   std::mutex pool_mutex;
 };
 
-} // End peloton namespace
+}  // End peloton namespace

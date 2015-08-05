@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <iostream>
 #include <assert.h>
 #include <sys/types.h>
@@ -365,5 +364,5 @@ void Bridge::SetCurrentResourceOwner() {
   CurrentResourceOwner = ResourceOwnerCreate(NULL, "Peloton");
 }
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton

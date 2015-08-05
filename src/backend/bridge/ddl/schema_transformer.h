@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/catalog/schema.h"
@@ -26,7 +25,7 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class SchemaTransformer {
-public:
+ public:
   SchemaTransformer(const SchemaTransformer &) = delete;
   SchemaTransformer &operator=(const SchemaTransformer &) = delete;
   SchemaTransformer(SchemaTransformer &&) = delete;
@@ -35,5 +34,5 @@ public:
   static catalog::Schema *GetSchemaFromTupleDesc(TupleDesc tupleDesc);
 };
 
-} // End bridge namespace
-} // End peloton namespace
+}  // End bridge namespace
+}  // End peloton namespace

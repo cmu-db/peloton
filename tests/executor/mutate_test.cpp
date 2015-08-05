@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <string>
 #include <utility>
@@ -337,5 +336,5 @@ TEST(MutateTests, InsertTest) {
   EXPECT_EQ(dest_data_table->GetTileGroupCount(), 1);
 }
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

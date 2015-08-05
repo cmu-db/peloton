@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/bridge/ddl/ddl_database.h"
 #include "backend/common/logger.h"
 #include "backend/storage/database.h"
@@ -56,8 +55,7 @@ bool DDLDatabase::ExecVacuumStmt(Node *parsetree, Peloton_Status *status) {
   VacuumStmt *vacuum = (VacuumStmt *)parsetree;
   std::string relation_name;
 
-  if (vacuum->relation != NULL)
-    relation_name = vacuum->relation->relname;
+  if (vacuum->relation != NULL) relation_name = vacuum->relation->relname;
 
   // Get database oid
   oid_t database_oid = Bridge::GetCurrentDatabaseOid();
@@ -85,8 +83,7 @@ bool DDLDatabase::ExecVacuumStmt(Node *parsetree, Peloton_Status *status) {
  * @return true if we created a database, false otherwise
  */
 bool DDLDatabase::CreateDatabase(Oid database_oid) {
-  if (database_oid == INVALID_OID)
-    return false;
+  if (database_oid == INVALID_OID) return false;
 
   auto &manager = catalog::Manager::GetInstance();
   auto database = manager.GetDatabaseWithOid(database_oid);
@@ -116,5 +113,5 @@ bool DDLDatabase::DropDatabase(Oid database_oid) {
   return true;
 }
 
-} // namespace bridge
-} // namespace peloton
+}  // namespace bridge
+}  // namespace peloton
