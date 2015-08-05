@@ -34,13 +34,17 @@ class PelotonProxy : public LogProxy{
 
   public:
 
-    PelotonProxy() {}
+    // Default buffer size is 0, which means logger is 'LOG ONLY'
+    // not for running main loop
+    PelotonProxy(oid_t buffer_size = 0 /*LOG ONLY*/) 
+    : buffer_size(buffer_size){}
 
     void logging_MainLoop(void) const;
 
     void log(LogRecord records) const;
 
   private:
+    oid_t buffer_size;
 
     size_t GetBufferSize() const;
 
