@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * tile_group_header.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/storage/tile_group_header.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// tile_group_header.cpp
+//
+// Identification: src/backend/storage/tile_group_header.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/storage/tile_group_header.h"
 
@@ -23,8 +23,8 @@ namespace storage {
 // Tile Group Header
 //===--------------------------------------------------------------------===//
 
-std::ostream& operator<<(std::ostream& os,
-                         const TileGroupHeader& tile_group_header) {
+std::ostream &operator<<(std::ostream &os,
+                         const TileGroupHeader &tile_group_header) {
   os << "\t-----------------------------------------------------------\n";
   os << "\tTILE GROUP HEADER \n";
 
@@ -55,9 +55,10 @@ std::ostream& operator<<(std::ostream& os,
     else
       os << std::setw(width) << end_commit_id;
 
-    peloton::ItemPointer location = tile_group_header.GetPrevItemPointer(header_itr);
+    peloton::ItemPointer location =
+        tile_group_header.GetPrevItemPointer(header_itr);
     os << " prev : "
-        << "[ " << location.block << " , " << location.offset << " ]\n";
+       << "[ " << location.block << " , " << location.offset << " ]\n";
   }
 
   os << "\t-----------------------------------------------------------\n";
@@ -104,8 +105,7 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 
     peloton::ItemPointer location = GetPrevItemPointer(header_itr);
     os << " prev : "
-        << "[ " << location.block << " , " << location.offset
-        << " ]";  //<<
+       << "[ " << location.block << " , " << location.offset << " ]";  //<<
 
     os << " own : " << own;
     os << " activated : " << activated;

@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * value_Peeker.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/value_Peeker.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// value_peeker.h
+//
+// Identification: src/backend/common/value_peeker.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -90,7 +90,7 @@ class ValuePeeker {
     return value.CreateStringFromDecimal();
   }
 
-  static inline void* PeekObjectValue(const Value value) {
+  static inline void *PeekObjectValue(const Value value) {
     assert(value.GetValueType() == VALUE_TYPE_VARCHAR);
     return value.GetObjectValue();
   }

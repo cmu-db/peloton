@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * abstract_expression.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/expression/abstract_expression.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// abstract_expression.cpp
+//
+// Identification: src/backend/expression/abstract_expression.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/expression/abstract_expression.h"
 
@@ -31,8 +31,8 @@ AbstractExpression::AbstractExpression(ExpressionType type)
     : expr_type(type), has_parameter(true) {}
 
 AbstractExpression::AbstractExpression(ExpressionType type,
-                                       AbstractExpression* left,
-                                       AbstractExpression* right)
+                                       AbstractExpression *left,
+                                       AbstractExpression *right)
     : left_expr(left),
       right_expr(right),
       expr_type(type),
@@ -52,7 +52,7 @@ AbstractExpression::~AbstractExpression() {
   delete expr;
 }
 
-void AbstractExpression::Substitute(const ValueArray& params) {
+void AbstractExpression::Substitute(const ValueArray &params) {
   // check if we need to substitue
   if (!has_parameter) return;
 
@@ -85,7 +85,7 @@ bool AbstractExpression::InitParamShortCircuits() {
   return false;
 }
 
-std::ostream& operator<<(std::ostream& os, const AbstractExpression& expr) {
+std::ostream &operator<<(std::ostream &os, const AbstractExpression &expr) {
   os << expr.Debug();
   return os;
 }
@@ -102,7 +102,7 @@ std::string AbstractExpression::Debug(bool traverse) const {
   return (traverse ? Debug(std::string("")) : Debug());
 }
 
-std::string AbstractExpression::Debug(const std::string& spacer) const {
+std::string AbstractExpression::Debug(const std::string &spacer) const {
   std::ostringstream buffer;
   buffer << spacer << "+ " << Debug() << "\n";
 
@@ -126,9 +126,9 @@ std::string AbstractExpression::Debug(const std::string& spacer) const {
 // Actual Constructors
 //===--------------------------------------------------------------------===//
 
-AbstractExpression* AbstractExpression::CreateExpressionTree(
-    json_spirit::Object& obj) {
-  AbstractExpression* expr =
+AbstractExpression *AbstractExpression::CreateExpressionTree(
+    json_spirit::Object &obj) {
+  AbstractExpression *expr =
       AbstractExpression::CreateExpressionTreeRecurse(obj);
 
   if (expr) expr->InitParamShortCircuits();
@@ -136,16 +136,16 @@ AbstractExpression* AbstractExpression::CreateExpressionTree(
   return expr;
 }
 
-AbstractExpression* AbstractExpression::CreateExpressionTreeRecurse(
-    json_spirit::Object& obj) {
+AbstractExpression *AbstractExpression::CreateExpressionTreeRecurse(
+    json_spirit::Object &obj) {
   // build a tree recursively from the bottom upwards.
   // when the expression node is instantiated, its type,
   // value and child types will have been discovered.
 
   ExpressionType peek_type = EXPRESSION_TYPE_INVALID;
   ValueType value_type = VALUE_TYPE_INVALID;
-  AbstractExpression* left_child = nullptr;
-  AbstractExpression* right_child = nullptr;
+  AbstractExpression *left_child = nullptr;
+  AbstractExpression *right_child = nullptr;
 
   // read the expression type
   json_spirit::Value expression_type_value =
@@ -221,7 +221,7 @@ AbstractExpression* AbstractExpression::CreateExpressionTreeRecurse(
 
     return ExpressionFactory(obj, peek_type, value_type, value_size, left_child,
                              right_child);
-  } catch (ExpressionException& ex) {
+  } catch (ExpressionException &ex) {
     // clean up children
     delete left_child;
     delete right_child;

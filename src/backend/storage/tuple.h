@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * abstract_tuple.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/storage/abstract_tuple.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// tuple.h
+//
+// Identification: src/backend/storage/tuple.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -97,8 +97,7 @@ class Tuple : public AbstractTuple {
 
   int Compare(const Tuple &other) const;
 
-  int Compare(const Tuple &other,
-              const std::vector<oid_t>& columns) const;
+  int Compare(const Tuple &other, const std::vector<oid_t> &columns) const;
 
   //===--------------------------------------------------------------------===//
   // Getters and Setters
@@ -151,7 +150,7 @@ class Tuple : public AbstractTuple {
   bool EqualsNoSchemaCheck(const Tuple &other) const;
 
   bool EqualsNoSchemaCheck(const Tuple &other,
-                           const std::vector<oid_t>& columns) const;
+                           const std::vector<oid_t> &columns) const;
 
   // this does set NULL in addition to clear string count.
   void SetAllNulls();
