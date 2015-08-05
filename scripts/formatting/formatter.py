@@ -40,7 +40,7 @@ CLANG_FORMAT = "clang-format-3.6"
 #header framework, dynamic information will be added inside function
 header_comment_line_1 = "//===----------------------------------------------------------------------===//\n"
 header_comment_line_1 += "//\n"
-header_comment_line_1 += "//							PelotonDB\n"
+header_comment_line_1 += "//                         PelotonDB\n"
 header_comment_line_2  = "//\n"
 header_comment_line_3  = "// "
 header_comment_line_4  = "//\n"
