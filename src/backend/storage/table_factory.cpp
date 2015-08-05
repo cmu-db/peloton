@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/storage/table_factory.h"
 
 #include "backend/common/exception.h"
@@ -24,16 +23,16 @@
 namespace peloton {
 namespace storage {
 
-DataTable* TableFactory::GetDataTable(oid_t database_id, oid_t relation_id,
-                                      catalog::Schema* schema,
+DataTable *TableFactory::GetDataTable(oid_t database_id, oid_t relation_id,
+                                      catalog::Schema *schema,
                                       std::string table_name,
                                       size_t tuples_per_tilegroup_count) {
   // create a new backend
   // FIXME: We need a better way of managing these. Why not just embed it in
   //        directly inside of the table object?
-  AbstractBackend* backend = new VMBackend();
+  AbstractBackend *backend = new VMBackend();
 
-  DataTable* table = new DataTable(schema, backend, table_name, relation_id,
+  DataTable *table = new DataTable(schema, backend, table_name, relation_id,
                                    tuples_per_tilegroup_count);
   table->database_oid = database_id;
 
@@ -41,15 +40,16 @@ DataTable* TableFactory::GetDataTable(oid_t database_id, oid_t relation_id,
 }
 
 bool TableFactory::DropDataTable(oid_t database_oid, oid_t table_oid) {
-  auto& manager = catalog::Manager::GetInstance();
-  DataTable* table =
-      (DataTable*)manager.GetTableWithOid(database_oid, table_oid);
+  auto &manager = catalog::Manager::GetInstance();
+  DataTable *table =
+      (DataTable *)manager.GetTableWithOid(database_oid, table_oid);
 
-  if (table == nullptr) return false;
+  if (table == nullptr)
+    return false;
 
   delete table;
   return true;
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+} // End storage namespace
+} // End peloton namespace

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/storage/tile_group_header.h"
 
 #include <iostream>
@@ -24,8 +23,8 @@ namespace storage {
 // Tile Group Header
 //===--------------------------------------------------------------------===//
 
-std::ostream& operator<<(std::ostream& os,
-                         const TileGroupHeader& tile_group_header) {
+std::ostream &operator<<(std::ostream &os,
+                         const TileGroupHeader &tile_group_header) {
   os << "\t-----------------------------------------------------------\n";
   os << "\tTILE GROUP HEADER \n";
 
@@ -56,9 +55,10 @@ std::ostream& operator<<(std::ostream& os,
     else
       os << std::setw(width) << end_commit_id;
 
-    peloton::ItemPointer location = tile_group_header.GetPrevItemPointer(header_itr);
+    peloton::ItemPointer location =
+        tile_group_header.GetPrevItemPointer(header_itr);
     os << " prev : "
-        << "[ " << location.block << " , " << location.offset << " ]\n";
+       << "[ " << location.block << " , " << location.offset << " ]\n";
   }
 
   os << "\t-----------------------------------------------------------\n";
@@ -105,8 +105,7 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
 
     peloton::ItemPointer location = GetPrevItemPointer(header_itr);
     os << " prev : "
-        << "[ " << location.block << " , " << location.offset
-        << " ]";  //<<
+       << "[ " << location.block << " , " << location.offset << " ]"; //<<
 
     os << " own : " << own;
     os << " activated : " << activated;
@@ -125,5 +124,5 @@ void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {
   LOG_INFO("%s", os.str().c_str());
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+} // End storage namespace
+} // End peloton namespace

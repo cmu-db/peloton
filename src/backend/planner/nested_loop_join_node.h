@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -26,7 +25,7 @@ namespace peloton {
 namespace planner {
 
 class NestedLoopJoinNode : public AbstractJoinPlanNode {
- public:
+public:
   NestedLoopJoinNode(const NestedLoopJoinNode &) = delete;
   NestedLoopJoinNode &operator=(const NestedLoopJoinNode &) = delete;
   NestedLoopJoinNode(NestedLoopJoinNode &&) = delete;
@@ -34,7 +33,7 @@ class NestedLoopJoinNode : public AbstractJoinPlanNode {
 
   NestedLoopJoinNode(expression::AbstractExpression *predicate,
                      const ProjectInfo *proj_info)
-      : AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate, proj_info) {  // FIXME
+      : AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate, proj_info) { // FIXME
     // Nothing to see here...
   }
 
@@ -44,9 +43,9 @@ class NestedLoopJoinNode : public AbstractJoinPlanNode {
 
   inline std::string GetInfo() const { return "NestedLoopJoin"; }
 
- private:
+private:
   // There is nothing special that we need here
 };
 
-}  // namespace planner
-}  // namespace peloton
+} // namespace planner
+} // namespace peloton

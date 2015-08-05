@@ -31,6 +31,8 @@ DEFAULT_DIRS = []
 DEFAULT_DIRS.append(PELOTON_SRC_BACKEND_DIR)
 DEFAULT_DIRS.append(PELOTON_TESTS_DIR)
 
+CLANG_FORMAT = "clang-format-3.6"
+
 ## ==============================================
 ## 			HEADER CONFIGURATION
 ## ==============================================
@@ -112,7 +114,7 @@ def format_file(file_path, add_header, strip_header, clang_format_code):
 			fd.write(new_file_data)
 				
 		elif clang_format_code:
-			formatting_command = "clang-format-3.6 -i " + file_path
+			formatting_command = CLANG_FORMAT + " -style=file " + " -i " + file_path
 			LOG.info(formatting_command)
 			os.system(formatting_command)
 			

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/catalog/constraint.h"
 #include "backend/common/types.h"
 
@@ -19,13 +18,13 @@
 namespace peloton {
 namespace catalog {
 
-std::ostream& operator<<(std::ostream& os, const Constraint& constraint) {
+std::ostream &operator<<(std::ostream &os, const Constraint &constraint) {
   os << "\tCONSTRAINT ";
 
   os << constraint.GetName() << " ";
   os << ConstraintTypeToString(constraint.constraint_type);
-  
-  if( constraint.GetType() == CONSTRAINT_TYPE_DEFAULT){
+
+  if (constraint.GetType() == CONSTRAINT_TYPE_DEFAULT) {
     os << " Default expression : " << nodeToString(constraint.expr);
   }
 
@@ -34,5 +33,5 @@ std::ostream& operator<<(std::ostream& os, const Constraint& constraint) {
   return os;
 }
 
-}  // End catalog namespace
-}  // End peloton namespace
+} // End catalog namespace
+} // End peloton namespace

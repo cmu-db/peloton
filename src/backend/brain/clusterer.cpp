@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <limits>
 #include <sstream>
 #include <iostream>
@@ -24,21 +23,20 @@ namespace peloton {
 namespace brain {
 
 // http://www.cs.princeton.edu/courses/archive/fall08/cos436/Duda/C/sk_means.htm
-void Clusterer::ProcessSample(const Sample& sample) {
+void Clusterer::ProcessSample(const Sample &sample) {
   // Figure out closest cluster
   oid_t closest_cluster = GetClosestCluster(sample);
 
   Sample distance = sample.GetDifference(means_[closest_cluster]);
   Sample mean_drift = distance * new_sample_weight_;
 
-  //std::cout << "mean drift : " << mean_drift << "\n";
+  // std::cout << "mean drift : " << mean_drift << "\n";
 
   // Update the cluster's mean
-  means_[closest_cluster] =  means_[closest_cluster] + mean_drift;
-
+  means_[closest_cluster] = means_[closest_cluster] + mean_drift;
 }
 
-oid_t Clusterer::GetClosestCluster(const Sample& sample) {
+oid_t Clusterer::GetClosestCluster(const Sample &sample) {
   double min_dist = std::numeric_limits<double>::max();
   oid_t closest_cluster = START_OID;
   oid_t cluster_itr = START_OID;
@@ -64,10 +62,10 @@ Sample Clusterer::GetCluster(oid_t cluster_offset) const {
 }
 
 double Clusterer::GetFraction(oid_t cluster_offset) const {
-  return ((double) closest_[cluster_offset])/sample_count_;
+  return ((double)closest_[cluster_offset]) / sample_count_;
 }
 
-std::map<oid_t, oid_t> Clusterer::GetPartitioning(oid_t tile_count) const{
+std::map<oid_t, oid_t> Clusterer::GetPartitioning(oid_t tile_count) const {
   assert(tile_count >= 1);
   assert(tile_count <= sample_column_count_);
 
@@ -88,14 +86,15 @@ std::map<oid_t, oid_t> Clusterer::GetPartitioning(oid_t tile_count) const{
   oid_t remaining_column_count = sample_column_count_;
 
   // look for most significant cluster
-  for (auto entry = frequencies.rbegin(); entry != frequencies.rend(); ++entry) {
+  for (auto entry = frequencies.rbegin(); entry != frequencies.rend();
+       ++entry) {
     LOG_TRACE(" %u :: %.3lf", entry->second, entry->first);
 
     // first, check if remaining columns less than tile count
-    if(remaining_column_count <= tile_count) {
+    if (remaining_column_count <= tile_count) {
       oid_t column_itr;
       for (column_itr = 0; column_itr < sample_column_count_; column_itr++) {
-        if(column_to_tile_map.count(column_itr) == 0) {
+        if (column_to_tile_map.count(column_itr) == 0) {
           column_to_tile_map[column_itr] = tile_itr;
           tile_itr++;
         }
@@ -106,8 +105,8 @@ std::map<oid_t, oid_t> Clusterer::GetPartitioning(oid_t tile_count) const{
     auto config = means_[entry->second];
     auto config_tile = config.GetEnabledColumns();
 
-    for(auto column : config_tile) {
-      if(column_to_tile_map.count(column) == 0) {
+    for (auto column : config_tile) {
+      if (column_to_tile_map.count(column) == 0) {
         column_to_tile_map[column] = tile_itr;
         remaining_column_count--;
       }
@@ -115,7 +114,7 @@ std::map<oid_t, oid_t> Clusterer::GetPartitioning(oid_t tile_count) const{
 
     // check tile itr
     tile_itr++;
-    if(tile_itr >= tile_count)
+    if (tile_itr >= tile_count)
       tile_itr--;
   }
 
@@ -132,10 +131,10 @@ std::ostream &operator<<(std::ostream &os, const Clusterer &clusterer) {
   cluster_count = clusterer.GetClusterCount();
   for (cluster_itr = 0; cluster_itr < cluster_count; cluster_itr++)
     os << cluster_itr << " : " << clusterer.GetFraction(cluster_itr)
-    << " :: " << clusterer.GetCluster(cluster_itr);
+       << " :: " << clusterer.GetCluster(cluster_itr);
 
   return os;
 }
 
-}  // End brain namespace
-}  // End peloton namespace
+} // End brain namespace
+} // End peloton namespace

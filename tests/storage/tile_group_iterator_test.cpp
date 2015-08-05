@@ -10,11 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 
 #include "gtest/gtest.h"
-
 
 #include "backend/storage/data_table.h"
 #include "backend/storage/table_factory.h"
@@ -24,79 +22,74 @@
 
 namespace peloton {
 namespace test {
-    
+
 //===--------------------------------------------------------------------===//
 // TileGroupIterator Tests
 //===--------------------------------------------------------------------===//
 
 TEST(TileGroupIteratorTests, BasicTest) {
-       
-    int num_cols = 10;
 
-    std::vector<catalog::Column> columns;
-    std::vector<std::string> column_names;
+  int num_cols = 10;
 
-    for (int i = 0; i < num_cols; i++) {
-        std::stringstream name;
-        name << "COL_" << i;
-        
-        catalog::Column col(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER), "A", true);
-        columns.push_back(col);
-        column_names.push_back(name.str());
-    } // FOR
+  std::vector<catalog::Column> columns;
+  std::vector<std::string> column_names;
 
-    // Schema
-    catalog::Schema *schema = new catalog::Schema(columns);
+  for (int i = 0; i < num_cols; i++) {
+    std::stringstream name;
+    name << "COL_" << i;
 
-//     storage::DataTable *table = storage::TableFactory::GetDataTable(
-//         INVALID_OID,
-//         INVALID_OID,
-//         schema,
-//         "XYZ",
-//         1);
+    catalog::Column col(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                        "A", true);
+    columns.push_back(col);
+    column_names.push_back(name.str());
+  } // FOR
 
-    // Allocated Tuple Count
-    const int tuple_count = 6;
+  // Schema
+  catalog::Schema *schema = new catalog::Schema(columns);
 
-    storage::AbstractBackend *backend = new storage::VMBackend();
-    storage::TileGroupHeader *header = new storage::TileGroupHeader(backend, tuple_count);
+  //     storage::DataTable *table = storage::TableFactory::GetDataTable(
+  //         INVALID_OID,
+  //         INVALID_OID,
+  //         schema,
+  //         "XYZ",
+  //         1);
 
-    storage::Tile *tile = storage::TileFactory::GetTile(
-        INVALID_OID,
-        INVALID_OID,
-        INVALID_OID,
-        INVALID_OID,
-        header,
-        backend,
-        *schema,
-        nullptr,
-        tuple_count);
+  // Allocated Tuple Count
+  const int tuple_count = 6;
 
-    for (int i = 0; i < tuple_count; i++) {
-        storage::Tuple *tuple = new storage::Tuple(schema, true);
-        tuple->SetValue(0, ValueFactory::GetIntegerValue(i));
-        tile->InsertTuple(0, tuple);
-        delete tuple;
-    } // FOR
-    
-//     storage::TileGroupIterator itr(table);
-//     std::shared_ptr<storage::TileGroup> itrPtr;
-    int found = 0;
-    int expected = 0; // 1;
-//     while (itr.Next(itrPtr)) {
-//         if (itrPtr.get() != nullptr) {
-//             found += 1;
-//         }
-//     } // WHILE
-    
-    EXPECT_EQ(expected, found);
+  storage::AbstractBackend *backend = new storage::VMBackend();
+  storage::TileGroupHeader *header =
+      new storage::TileGroupHeader(backend, tuple_count);
 
-    delete tile;
-    delete header;
-    delete schema;
-//     delete table;
-    delete backend;
+  storage::Tile *tile = storage::TileFactory::GetTile(
+      INVALID_OID, INVALID_OID, INVALID_OID, INVALID_OID, header, backend,
+      *schema, nullptr, tuple_count);
+
+  for (int i = 0; i < tuple_count; i++) {
+    storage::Tuple *tuple = new storage::Tuple(schema, true);
+    tuple->SetValue(0, ValueFactory::GetIntegerValue(i));
+    tile->InsertTuple(0, tuple);
+    delete tuple;
+  } // FOR
+
+  //     storage::TileGroupIterator itr(table);
+  //     std::shared_ptr<storage::TileGroup> itrPtr;
+  int found = 0;
+  int expected = 0; // 1;
+                    //     while (itr.Next(itrPtr)) {
+                    //         if (itrPtr.get() != nullptr) {
+                    //             found += 1;
+                    //         }
+                    //     } // WHILE
+
+  EXPECT_EQ(expected, found);
+
+  delete tile;
+  delete header;
+  delete schema;
+  //     delete table;
+  delete backend;
 }
 
-}  // End test namespace
-}  // End peloton namespace
+} // End test namespace
+} // End peloton namespace

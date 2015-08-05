@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/types.h"
@@ -33,24 +32,16 @@ namespace concurrency {
 class Transaction {
   friend class TransactionManager;
 
-  Transaction(Transaction const&) = delete;
+  Transaction(Transaction const &) = delete;
 
- public:
+public:
   Transaction()
-      : txn_id(INVALID_TXN_ID),
-        cid(INVALID_CID),
-        last_cid(INVALID_CID),
-        ref_count(BASE_REF_COUNT),
-        waiting_to_commit(false),
-        next(nullptr) {}
+      : txn_id(INVALID_TXN_ID), cid(INVALID_CID), last_cid(INVALID_CID),
+        ref_count(BASE_REF_COUNT), waiting_to_commit(false), next(nullptr) {}
 
   Transaction(txn_id_t txn_id, cid_t last_cid)
-      : txn_id(txn_id),
-        cid(INVALID_CID),
-        last_cid(last_cid),
-        ref_count(BASE_REF_COUNT),
-        waiting_to_commit(false),
-        next(nullptr) {}
+      : txn_id(txn_id), cid(INVALID_CID), last_cid(last_cid),
+        ref_count(BASE_REF_COUNT), waiting_to_commit(false), next(nullptr) {}
 
   ~Transaction() {
     if (next != nullptr) {
@@ -75,14 +66,14 @@ class Transaction {
   void RecordDelete(ItemPointer location);
 
   // check if it has inserted any tuples in given tile group
-  bool HasInsertedTuples(storage::TileGroup* tile_group) const;
+  bool HasInsertedTuples(storage::TileGroup *tile_group) const;
 
   // check if it has deleted any tuples in given tile group
-  bool HasDeletedTuples(storage::TileGroup* tile_group) const;
+  bool HasDeletedTuples(storage::TileGroup *tile_group) const;
 
-  const std::map<storage::TileGroup*, std::vector<oid_t> >& GetInsertedTuples();
+  const std::map<storage::TileGroup *, std::vector<oid_t>> &GetInsertedTuples();
 
-  const std::map<storage::TileGroup*, std::vector<oid_t> >& GetDeletedTuples();
+  const std::map<storage::TileGroup *, std::vector<oid_t>> &GetDeletedTuples();
 
   // maintain reference counts for transactions
   void IncrementRefCount();
@@ -90,7 +81,7 @@ class Transaction {
   void DecrementRefCount();
 
   // Get a string representation of this txn
-  friend std::ostream& operator<<(std::ostream& os, const Transaction& txn);
+  friend std::ostream &operator<<(std::ostream &os, const Transaction &txn);
 
   // Set result and status
   void SetResult(Result result);
@@ -98,7 +89,7 @@ class Transaction {
   // Get result and status
   Result GetResult() const;
 
- protected:
+protected:
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
@@ -119,13 +110,13 @@ class Transaction {
   std::atomic<bool> waiting_to_commit;
 
   // cid context
-  Transaction* next __attribute__((aligned(16)));
+  Transaction *next __attribute__((aligned(16)));
 
   // inserted tuples
-  std::map<storage::TileGroup*, std::vector<oid_t> > inserted_tuples;
+  std::map<storage::TileGroup *, std::vector<oid_t>> inserted_tuples;
 
   // deleted tuples
-  std::map<storage::TileGroup*, std::vector<oid_t> > deleted_tuples;
+  std::map<storage::TileGroup *, std::vector<oid_t>> deleted_tuples;
 
   // synch helpers
   std::mutex txn_mutex;
@@ -134,5 +125,5 @@ class Transaction {
   Result result_ = peloton::RESULT_SUCCESS;
 };
 
-}  // End concurrency namespace
-}  // End peloton namespace
+} // End concurrency namespace
+} // End peloton namespace

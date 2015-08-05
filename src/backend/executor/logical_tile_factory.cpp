@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/logical_tile_factory.h"
 
 #include <memory>
@@ -43,7 +42,7 @@ std::vector<oid_t> CreateIdentityPositionList(unsigned int size) {
   return position_list;
 }
 
-}  // namespace
+} // namespace
 
 /**
  * @brief Returns an empty logical tile.
@@ -59,8 +58,9 @@ LogicalTile *LogicalTileFactory::GetTile() { return new LogicalTile(); }
  *
  * @return Pointer to newly created logical tile.
  */
-LogicalTile *LogicalTileFactory::WrapTiles(
-    const std::vector<storage::Tile *> &base_tiles, bool own_base_tile) {
+LogicalTile *
+LogicalTileFactory::WrapTiles(const std::vector<storage::Tile *> &base_tiles,
+                              bool own_base_tile) {
   assert(base_tiles.size() > 0);
 
   // TODO ASSERT all base tiles have the same height.
@@ -124,7 +124,7 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
   std::vector<LogicalTile *> result;
 
   // Get the list of blocks
-  std::map<oid_t, std::vector<oid_t> > blocks;
+  std::map<oid_t, std::vector<oid_t>> blocks;
 
   for (auto tuple_location : tuple_locations) {
     blocks[tuple_location.block].push_back(tuple_location.offset);
@@ -136,8 +136,8 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
     const bool own_base_tile = false;
     const int position_list_idx = 0;
 
-    auto& manager = catalog::Manager::GetInstance();
-    storage::TileGroup* tile_group = manager.GetTileGroup(block.first);
+    auto &manager = catalog::Manager::GetInstance();
+    storage::TileGroup *tile_group = manager.GetTileGroup(block.first);
     storage::TileGroupHeader *tile_group_header = tile_group->GetHeader();
 
     // Add visible tuples to logical tile
@@ -169,5 +169,5 @@ std::vector<LogicalTile *> LogicalTileFactory::WrapTileGroups(
   return result;
 }
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/expression/abstract_expression.h"
@@ -30,9 +29,9 @@ class SerializeOutput;
 //===--------------------------------------------------------------------===//
 
 class ConstantValueExpression : public AbstractExpression {
- public:
+public:
   ConstantValueExpression(const Value &cvalue)
- : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT) {
+      : AbstractExpression(EXPRESSION_TYPE_VALUE_CONSTANT) {
     /**
      * A deep copy is desired here because we don't know
      * if the expression will live longer than the passed value
@@ -61,9 +60,9 @@ class ConstantValueExpression : public AbstractExpression {
 
   Value GetValue() { return value; }
 
- protected:
+protected:
   Value value;
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+} // End expression namespace
+} // End peloton namespace

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/storage/abstract_backend.h"
@@ -23,14 +22,14 @@ namespace storage {
 //===--------------------------------------------------------------------===//
 
 class VMBackend : public AbstractBackend {
- public:
+public:
   virtual ~VMBackend(){};
 
-  void* Allocate(size_t size) { return ::operator new(size); }
+  void *Allocate(size_t size) { return ::operator new(size); }
 
-  void Free(void* ptr) { ::operator delete(ptr); }
+  void Free(void *ptr) { ::operator delete(ptr); }
 
-  void Sync(void* ptr __attribute__((unused))) {
+  void Sync(void *ptr __attribute__((unused))) {
     // does nothing
   }
 
@@ -39,5 +38,5 @@ class VMBackend : public AbstractBackend {
   }
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+} // End storage namespace
+} // End peloton namespace

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <iostream>
@@ -32,11 +31,9 @@ namespace scheduler {
 typedef Result (*handler)(void *);
 
 class AbstractTask : public tbb::task {
- public:
+public:
   AbstractTask(handler function_pointer, void *args, TaskPriorityType priority)
-      : function_pointer(function_pointer),
-        args(args),
-        output(RESULT_INVALID),
+      : function_pointer(function_pointer), args(args), output(RESULT_INVALID),
         priority(priority) {
     // Get a task id
     task_id = catalog::Manager::GetInstance().GetNextOid();
@@ -60,7 +57,7 @@ class AbstractTask : public tbb::task {
 
   TaskPriorityType GetPriority() { return priority; }
 
- protected:
+protected:
   oid_t task_id;
 
   handler function_pointer;
@@ -72,5 +69,5 @@ class AbstractTask : public tbb::task {
   TaskPriorityType priority = TaskPriorityType::TASK_PRIORTY_TYPE_NORMAL;
 };
 
-}  // namespace scheduler
-}  // namespace peloton
+} // namespace scheduler
+} // namespace peloton

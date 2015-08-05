@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "bridge_test.h"
 
 #include "backend/bridge/ddl/bridge.h"
@@ -43,11 +42,10 @@ void BridgeTest::DDL_CreateIndex_TEST_WITH_INVALID_OID() {
 
   std::string table_name = "test_table";
 
-  IndexInfo* index_info;
-  index_info =
-      new IndexInfo("test_index_with_invalid_oid", INVALID_OID, table_name,
-                    INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_DEFAULT,
-                    true, key_column_names);
+  IndexInfo *index_info;
+  index_info = new IndexInfo(
+      "test_index_with_invalid_oid", INVALID_OID, table_name, INDEX_TYPE_BTREE,
+      INDEX_CONSTRAINT_TYPE_DEFAULT, true, key_column_names);
 
   bool status = DDLIndex::CreateIndex(*index_info);
 
@@ -68,11 +66,10 @@ void BridgeTest::DDL_CreateIndex_TEST_WITH_NO_TABLE_NAME() {
 
   std::string table_name = "";
 
-  IndexInfo* index_info;
-  index_info =
-      new IndexInfo("test_index_with_no_table_name", 30001, table_name,
-                    INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_DEFAULT,
-                    true, key_column_names);
+  IndexInfo *index_info;
+  index_info = new IndexInfo("test_index_with_no_table_name", 30001, table_name,
+                             INDEX_TYPE_BTREE, INDEX_CONSTRAINT_TYPE_DEFAULT,
+                             true, key_column_names);
 
   bool status = DDLIndex::CreateIndex(*index_info);
 
@@ -103,10 +100,10 @@ void BridgeTest::DDL_CreateIndex_TEST_WITH_TABLE() {
   key_column_names.push_back("id");
   key_column_names.push_back("name");
 
-  IndexInfo* index_info;
-  index_info = new IndexInfo(
-      "simple_index", 30003, table_name, INDEX_TYPE_BTREE,
-      INDEX_CONSTRAINT_TYPE_DEFAULT, true, key_column_names);
+  IndexInfo *index_info;
+  index_info =
+      new IndexInfo("simple_index", 30003, table_name, INDEX_TYPE_BTREE,
+                    INDEX_CONSTRAINT_TYPE_DEFAULT, true, key_column_names);
 
   // Create an index
   status = DDLIndex::CreateIndex(*index_info);
@@ -121,5 +118,5 @@ void BridgeTest::DDL_CreateIndex_TEST_WITH_TABLE() {
   std::cout << ":::::: " << __func__ << " DONE\n";
 }
 
-}  // End bridge namespace
-}  // End peloton namespace
+} // End bridge namespace
+} // End peloton namespace

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <thread>
 #include <atomic>
 
@@ -26,7 +25,7 @@
 namespace peloton {
 
 template <typename T>
-inline bool atomic_cas(T* object, T old_value, T new_value) {
+inline bool atomic_cas(T *object, T old_value, T new_value) {
   return __sync_bool_compare_and_swap(object, old_value, new_value);
 }
 
@@ -37,9 +36,9 @@ inline bool atomic_cas(T* object, T old_value, T new_value) {
 // Wrapper around pthread_rwlock_t
 
 struct RWLock {
- public:
-  RWLock(RWLock const&) = delete;
-  RWLock& operator=(RWLock const&) = delete;
+public:
+  RWLock(RWLock const &) = delete;
+  RWLock &operator=(RWLock const &) = delete;
 
   RWLock() { pthread_rwlock_init(&rw_lock, nullptr); }
 
@@ -51,15 +50,15 @@ struct RWLock {
 
   void Unlock() const { pthread_rwlock_unlock(&rw_lock); }
 
- private:
+private:
   // can only be moved, not copied
   mutable pthread_rwlock_t rw_lock;
 };
 
 struct RecursiveLock {
- public:
-  RecursiveLock(RecursiveLock const&) = delete;
-  RecursiveLock& operator=(RecursiveLock const&) = delete;
+public:
+  RecursiveLock(RecursiveLock const &) = delete;
+  RecursiveLock &operator=(RecursiveLock const &) = delete;
 
   RecursiveLock() {
     pthread_mutexattr_init(&attr);
@@ -73,24 +72,24 @@ struct RecursiveLock {
 
   void Unlock() const { pthread_mutex_unlock(&recursive_mutex); }
 
- private:
+private:
   // can only be moved, not copied
   pthread_mutexattr_t attr;
   mutable pthread_mutex_t recursive_mutex;
 };
 
 struct SharedLock {
-  const RWLock& shared_lock;
+  const RWLock &shared_lock;
 
-  SharedLock(const RWLock& mtx) : shared_lock(mtx) { mtx.ReadLock(); }
+  SharedLock(const RWLock &mtx) : shared_lock(mtx) { mtx.ReadLock(); }
 
   ~SharedLock() { shared_lock.Unlock(); }
 };
 
 struct ExclusiveLock {
-  const RWLock& exclusive_lock;
+  const RWLock &exclusive_lock;
 
-  ExclusiveLock(const RWLock& mtx) : exclusive_lock(mtx) { mtx.WriteLock(); }
+  ExclusiveLock(const RWLock &mtx) : exclusive_lock(mtx) { mtx.WriteLock(); }
 
   ~ExclusiveLock() { exclusive_lock.Unlock(); }
 };
@@ -100,12 +99,12 @@ struct ExclusiveLock {
 //===--------------------------------------------------------------------===//
 
 class Spinlock {
- public:
+public:
   Spinlock() : spin_lock_state(Unlocked) {}
 
   inline void Lock() {
     while (!TryLock()) {
-      _mm_pause();  // helps the cpu to detect busy-wait loop
+      _mm_pause(); // helps the cpu to detect busy-wait loop
     }
   }
 
@@ -122,7 +121,7 @@ class Spinlock {
     spin_lock_state.store(Unlocked, std::memory_order_release);
   }
 
- private:
+private:
   typedef enum { Locked, Unlocked } LockState;
 
   /*the exchange method on this atomic is compiled to a lockfree xchgl
@@ -130,4 +129,4 @@ class Spinlock {
   std::atomic<LockState> spin_lock_state;
 };
 
-}  // End peloton namespace
+} // End peloton namespace

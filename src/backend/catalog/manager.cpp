@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <cassert>
 
 #include "backend/catalog/manager.h"
@@ -57,7 +56,8 @@ void Manager::AddDatabase(storage::Database *database) {
 
 storage::Database *Manager::GetDatabaseWithOid(const oid_t database_oid) const {
   for (auto database : databases)
-    if (database->GetOid() == database_oid) return database;
+    if (database->GetOid() == database_oid)
+      return database;
 
   return nullptr;
 }
@@ -68,7 +68,8 @@ void Manager::DropDatabaseWithOid(const oid_t database_oid) {
 
     oid_t database_offset = 0;
     for (auto database : databases) {
-       printf("in %s dboid %u cur dboid %u \n", __func__, database_oid, database->GetOid() );
+      printf("in %s dboid %u cur dboid %u \n", __func__, database_oid,
+             database->GetOid());
       if (database->GetOid() == database_oid) {
         break;
       }
@@ -107,8 +108,9 @@ storage::DataTable *Manager::GetTableWithOid(const oid_t database_oid,
   return nullptr;
 }
 
-storage::DataTable *Manager::GetTableWithName(
-    const oid_t database_oid, const std::string table_name) const {
+storage::DataTable *
+Manager::GetTableWithName(const oid_t database_oid,
+                          const std::string table_name) const {
   // Lookup DB
   auto database = GetDatabaseWithOid(database_oid);
 
@@ -136,5 +138,5 @@ index::Index *Manager::GetIndexWithOid(const oid_t database_oid,
   return nullptr;
 }
 
-}  // End catalog namespace
-}  // End peloton namespace
+} // End catalog namespace
+} // End peloton namespace

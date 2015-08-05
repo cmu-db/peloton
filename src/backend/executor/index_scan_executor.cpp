@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/index_scan_executor.h"
 
 #include <memory>
@@ -46,7 +45,7 @@ bool IndexScanExecutor::DInit() {
 
   auto status = AbstractScanExecutor::DInit();
 
-  if(!status)
+  if (!status)
     return false;
 
   assert(children_.size() == 0);
@@ -68,8 +67,8 @@ bool IndexScanExecutor::DInit() {
 
   auto table = node.GetTable();
 
-  if(table != nullptr){
-    if(column_ids_.empty()){
+  if (table != nullptr) {
+    if (column_ids_.empty()) {
       column_ids_.resize(table->GetSchema()->GetColumnCount());
       std::iota(column_ids_.begin(), column_ids_.end(), 0);
     }
@@ -84,32 +83,33 @@ bool IndexScanExecutor::DInit() {
  */
 bool IndexScanExecutor::DExecute() {
 
-  if(!done_){
+  if (!done_) {
     auto status = ExecIndexLookup();
-    if(status == false)
+    if (status == false)
       return false;
   }
 
   // Already performed the index lookup
   assert(done_);
 
-  while(result_itr < result.size()){  // Avoid returning empty tiles
+  while (result_itr < result.size()) { // Avoid returning empty tiles
     // In order to be as lazy as possible,
     // the generic predicate is checked here (instead of upfront)
-    if(nullptr != predicate_){
+    if (nullptr != predicate_) {
       for (oid_t tuple_id : *result[result_itr]) {
-        expression::ContainerTuple<LogicalTile> tuple(result[result_itr], tuple_id);
-        if (predicate_->Evaluate(&tuple, nullptr, executor_context_).IsFalse()) {
+        expression::ContainerTuple<LogicalTile> tuple(result[result_itr],
+                                                      tuple_id);
+        if (predicate_->Evaluate(&tuple, nullptr, executor_context_)
+                .IsFalse()) {
           result[result_itr]->RemoveVisibility(tuple_id);
         }
       }
     }
 
-    if(result[result_itr]->GetTupleCount() == 0){
+    if (result[result_itr]->GetTupleCount() == 0) {
       result_itr++;
       continue;
-    }
-    else{
+    } else {
       SetOutput(result[result_itr]);
       result_itr++;
       return true;
@@ -120,18 +120,17 @@ bool IndexScanExecutor::DExecute() {
   return false;
 }
 
-bool IndexScanExecutor::ExecIndexLookup(){
+bool IndexScanExecutor::ExecIndexLookup() {
   assert(!done_);
 
   std::vector<ItemPointer> tuple_locations;
 
-  tuple_locations = index_->Scan(values_,
-                                 key_column_ids_,
-                                 expr_types_);
+  tuple_locations = index_->Scan(values_, key_column_ids_, expr_types_);
 
   LOG_INFO("Tuple locations : %lu", tuple_locations.size());
 
-  if (tuple_locations.size() == 0) return false;
+  if (tuple_locations.size() == 0)
+    return false;
 
   auto transaction_ = executor_context_->GetTransaction();
   txn_id_t txn_id = transaction_->GetTransactionId();
@@ -147,5 +146,5 @@ bool IndexScanExecutor::ExecIndexLookup(){
   return true;
 }
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

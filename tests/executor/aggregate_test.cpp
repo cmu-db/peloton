@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <set>
 #include <string>
@@ -85,7 +84,7 @@ TEST(AggregateTests, DistinctTest) {
       pass_through_columns_map, aggregate_types, output_table_schema);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -158,7 +157,7 @@ TEST(AggregateTests, GroupByTest) {
       pass_through_columns_map, aggregate_types, output_table_schema);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -237,7 +236,7 @@ TEST(AggregateTests, AggregateTest) {
       pass_through_columns_map, aggregate_types, output_table_schema);
 
   // Create and set up executor
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -276,5 +275,5 @@ TEST(AggregateTests, AggregateTest) {
   txn_manager.CommitTransaction(txn);
 }
 
-}  // namespace test
-}  // namespace peloton
+} // namespace test
+} // namespace peloton

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <iostream>
 #include <sstream>
 #include <queue>
@@ -53,12 +52,9 @@ namespace test {
  *  Abstract expression mock object
  */
 class AE {
- public:
+public:
   AE(ExpressionType et, ValueType vt, int vs)
-      : m_type(et),
-        m_valueType(vt),
-        m_valueSize(vs),
-        left(nullptr),
+      : m_type(et), m_valueType(vt), m_valueSize(vs), left(nullptr),
         right(nullptr) {}
 
   virtual ~AE() {
@@ -82,14 +78,15 @@ class AE {
     json.push_back(
         json_spirit::Pair("VALUE_SIZE", json_spirit::Value(m_valueSize)));
 
-    if (left) json.push_back(json_spirit::Pair("LEFT", left->SerializeValue()));
+    if (left)
+      json.push_back(json_spirit::Pair("LEFT", left->SerializeValue()));
     if (right)
       json.push_back(json_spirit::Pair("RIGHT", right->SerializeValue()));
   }
 
-  ExpressionType m_type;  // TYPE
-  ValueType m_valueType;  // VALUE_TYPE
-  int m_valueSize;        // VALUE_SIZE
+  ExpressionType m_type; // TYPE
+  ValueType m_valueType; // VALUE_TYPE
+  int m_valueSize;       // VALUE_SIZE
 
   // to build a tree
   AE *left;
@@ -100,7 +97,7 @@ class AE {
  * constant value expression mock object
  */
 class CV : public AE {
- public:
+public:
   CV(ExpressionType et, ValueType vt, int vs, int64_t v)
       : AE(et, vt, vs), m_jsontype(1), m_intValue(v) {
     m_stringValue = nullptr;
@@ -134,18 +131,18 @@ class CV : public AE {
           json_spirit::Pair("VALUE", json_spirit::Value(m_doubleValue)));
   }
 
-  int m_jsontype;  // 0 = string, 1 = int64_t, 2 = double
+  int m_jsontype; // 0 = string, 1 = int64_t, 2 = double
 
-  int64_t m_intValue;    // VALUE
-  char *m_stringValue;   // VALUE
-  double m_doubleValue;  // VALUE
+  int64_t m_intValue;   // VALUE
+  char *m_stringValue;  // VALUE
+  double m_doubleValue; // VALUE
 };
 
 /*
  * parameter value expression mock object
  */
 class PV : public AE {
- public:
+public:
   PV(ExpressionType et, ValueType vt, int vs, int pi)
       : AE(et, vt, vs), m_paramIdx(pi) {}
 
@@ -155,21 +152,18 @@ class PV : public AE {
         json_spirit::Pair("PARAM_IDX", json_spirit::Value(m_paramIdx)));
   }
 
-  int m_paramIdx;  // PARAM_IDX
+  int m_paramIdx; // PARAM_IDX
 };
 
 /*
  * tuple value expression mock object
  */
 class TV : public AE {
- public:
+public:
   TV(ExpressionType et, ValueType vt, int vs, int ci, const char *tn,
      const char *cn, const char *ca)
-      : AE(et, vt, vs),
-        m_columnIdx(ci),
-        m_tableName(strdup(tn)),
-        m_colName(strdup(cn)),
-        m_colAlias(strdup(ca)) {}
+      : AE(et, vt, vs), m_columnIdx(ci), m_tableName(strdup(tn)),
+        m_colName(strdup(cn)), m_colAlias(strdup(ca)) {}
 
   ~TV() {
     delete m_tableName;
@@ -189,10 +183,10 @@ class TV : public AE {
         json_spirit::Pair("COLUMN_ALIAS", json_spirit::Value(m_colAlias)));
   }
 
-  int m_columnIdx;    // COLUMN_IDX
-  char *m_tableName;  // TABLE_NAME
-  char *m_colName;    // COLUMN_NAME
-  char *m_colAlias;   // COLUMN_ALIAS
+  int m_columnIdx;   // COLUMN_IDX
+  char *m_tableName; // TABLE_NAME
+  char *m_colName;   // COLUMN_NAME
+  char *m_colAlias;  // COLUMN_ALIAS
 };
 
 /*
@@ -402,5 +396,5 @@ TEST(ExpressionTest, OrFilter) {
   delete tuple;
 }
 
-}  // End test namespace
-}  // End peloton namespace
+} // End test namespace
+} // End peloton namespace

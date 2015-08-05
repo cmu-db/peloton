@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -25,7 +24,7 @@ namespace catalog {
 //===--------------------------------------------------------------------===//
 
 class Schema {
- public:
+public:
   //===--------------------------------------------------------------------===//
   // Static factory methods to construct schema objects
   //===--------------------------------------------------------------------===//
@@ -60,9 +59,9 @@ class Schema {
   static Schema *AppendSchemaPtrList(const std::vector<Schema *> &schema_list);
 
   // Append subsets of columns in the given schemas.
-  static Schema *AppendSchemaPtrList(
-      const std::vector<Schema *> &schema_list,
-      const std::vector<std::vector<oid_t> > &subsets);
+  static Schema *
+  AppendSchemaPtrList(const std::vector<Schema *> &schema_list,
+                      const std::vector<std::vector<oid_t>> &subsets);
 
   // Compare two schemas
   bool operator==(const Schema &other) const;
@@ -123,7 +122,8 @@ class Schema {
   // Get the nullability of the column at a given index.
   bool AllowNull(const oid_t column_id) const {
     for (auto constraint : columns[column_id].constraints) {
-      if (constraint.GetType() == CONSTRAINT_TYPE_NOTNULL) return false;
+      if (constraint.GetType() == CONSTRAINT_TYPE_NOTNULL)
+        return false;
     }
     return true;
   }
@@ -146,7 +146,7 @@ class Schema {
   // Get a string representation of this schema
   friend std::ostream &operator<<(std::ostream &os, const Schema &schema);
 
- private:
+private:
   // size of fixed length columns
   size_t length;
 
@@ -168,5 +168,5 @@ class Schema {
   std::vector<oid_t> indexed_columns_;
 };
 
-}  // End catalog namespace
-}  // End peloton namespace
+} // End catalog namespace
+} // End peloton namespace

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/abstract_executor.h"
 #include "backend/common/logger.h"
 
@@ -21,14 +20,14 @@ namespace executor {
  * @brief Constructor for AbstractExecutor.
  * @param node Abstract plan node corresponding to this executor.
  */
-AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode* node,
-                                   ExecutorContext* executor_context)
+AbstractExecutor::AbstractExecutor(planner::AbstractPlanNode *node,
+                                   ExecutorContext *executor_context)
     : node_(node), executor_context_(executor_context) {}
 
-void AbstractExecutor::SetOutput(LogicalTile* table) { output.reset(table); }
+void AbstractExecutor::SetOutput(LogicalTile *table) { output.reset(table); }
 
 // Transfers ownership
-LogicalTile* AbstractExecutor::GetOutput() {
+LogicalTile *AbstractExecutor::GetOutput() {
   // assert(output.get() != nullptr);
   return output.release();
 }
@@ -37,11 +36,11 @@ LogicalTile* AbstractExecutor::GetOutput() {
  * @brief Add child executor to this executor node.
  * @param child Child executor to add.
  */
-void AbstractExecutor::AddChild(AbstractExecutor* child) {
+void AbstractExecutor::AddChild(AbstractExecutor *child) {
   children_.push_back(child);
 }
 
-const std::vector<AbstractExecutor*>& AbstractExecutor::GetChildren() const {
+const std::vector<AbstractExecutor *> &AbstractExecutor::GetChildren() const {
   return children_;
 }
 
@@ -93,5 +92,5 @@ bool AbstractExecutor::Execute() {
   return status;
 }
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

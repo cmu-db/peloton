@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -30,7 +29,7 @@ class DataTable;
 namespace planner {
 
 class SeqScanNode : public AbstractScanNode {
- public:
+public:
   SeqScanNode(const SeqScanNode &) = delete;
   SeqScanNode &operator=(const SeqScanNode &) = delete;
   SeqScanNode(SeqScanNode &&) = delete;
@@ -39,8 +38,7 @@ class SeqScanNode : public AbstractScanNode {
   SeqScanNode(storage::DataTable *table,
               expression::AbstractExpression *predicate,
               const std::vector<oid_t> &column_ids)
-      : AbstractScanNode(predicate, column_ids),
-        table_(table) {}
+      : AbstractScanNode(predicate, column_ids), table_(table) {}
 
   const storage::DataTable *GetTable() const { return table_; }
 
@@ -48,11 +46,10 @@ class SeqScanNode : public AbstractScanNode {
 
   inline std::string GetInfo() const { return "SeqScan"; }
 
- private:
+private:
   /** @brief Pointer to table to scan from. */
   const storage::DataTable *table_;
-
 };
 
-}  // namespace planner
-}  // namespace peloton
+} // namespace planner
+} // namespace peloton
