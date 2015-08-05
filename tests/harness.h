@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * multithreaded_tester.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/test/multithreaded_tester.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// harness.h
+//
+// Identification: tests/harness.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

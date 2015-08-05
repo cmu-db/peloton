@@ -1,12 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * tile_group_factory.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// tile_group_factory.h
+//
+// Identification: src/backend/storage/tile_group_factory.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

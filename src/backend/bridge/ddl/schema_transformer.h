@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * schema_transformaer.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/catalog/tuple_schema.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// schema_transformer.h
+//
+// Identification: src/backend/bridge/ddl/schema_transformer.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

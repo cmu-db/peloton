@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * stack_trace.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/stack_trace.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// stack_trace.h
+//
+// Identification: src/backend/common/stack_trace.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

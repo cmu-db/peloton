@@ -1,8 +1,15 @@
-/**
- * @brief Header file for utility functions for join executor tests.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// join_tests_util.h
+//
+// Identification: tests/executor/join_tests_util.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

@@ -1,12 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * table_factory.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// table_factory.cpp
+//
+// Identification: src/backend/storage/table_factory.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/storage/table_factory.h"
 

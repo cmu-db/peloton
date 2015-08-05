@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * value_factory.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/value_factory.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// value_factory.h
+//
+// Identification: src/backend/common/value_factory.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

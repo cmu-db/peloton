@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * ddl_database.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/ddl_database.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// ddl_database.h
+//
+// Identification: src/backend/bridge/ddl/ddl_database.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

@@ -1,8 +1,15 @@
-/**
- * @brief Test cases for logical tile.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// logical_tile_test.cpp
+//
+// Identification: tests/executor/logical_tile_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <memory>
 #include <utility>

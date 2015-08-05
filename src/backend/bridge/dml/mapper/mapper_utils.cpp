@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * mapper_utils.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/dml/mapper/mapper_utils.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// mapper_utils.cpp
+//
+// Identification: src/backend/bridge/dml/mapper/mapper_utils.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/bridge/ddl/schema_transformer.h"

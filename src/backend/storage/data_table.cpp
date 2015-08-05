@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * table.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/storage/table.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// data_table.cpp
+//
+// Identification: src/backend/storage/data_table.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <mutex>
 #include <utility>

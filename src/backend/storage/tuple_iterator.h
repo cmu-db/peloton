@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * tuple_iterator.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/storage/tuple_iterator.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// tuple_iterator.h
+//
+// Identification: src/backend/storage/tuple_iterator.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

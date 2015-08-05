@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * abstract_scan_plan_node.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/planner/abstract_scan_plan_node.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// abstract_scan_node.h
+//
+// Identification: src/backend/planner/abstract_scan_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

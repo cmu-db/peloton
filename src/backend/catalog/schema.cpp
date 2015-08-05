@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * tuple_schema.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/catalog/tuple_schema.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// schema.cpp
+//
+// Identification: src/backend/catalog/schema.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <cassert>
 #include <algorithm>

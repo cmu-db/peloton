@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * pool.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/pool.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// pool.cpp
+//
+// Identification: src/backend/common/pool.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/common/pool.h"
 

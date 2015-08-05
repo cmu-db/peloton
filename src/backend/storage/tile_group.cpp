@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * tile_group.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/storage/tile_group.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// tile_group.cpp
+//
+// Identification: src/backend/storage/tile_group.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/storage/tile_group.h"
 

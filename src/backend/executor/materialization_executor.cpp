@@ -1,13 +1,15 @@
-/**
- * @brief Executor for materialization node.
- *
- * This executor also performs all functions of a projection node, in order
- * to support late materialization).
- *
- * TODO Integrate expression system into materialization.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// materialization_executor.cpp
+//
+// Identification: src/backend/executor/materialization_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/executor/materialization_executor.h"
 

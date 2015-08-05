@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * insert_executor.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/executor/insert_executor.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// insert_executor.cpp
+//
+// Identification: src/backend/executor/insert_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/executor/insert_executor.h"
 

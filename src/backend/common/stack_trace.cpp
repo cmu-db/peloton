@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * stack_trace.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/stack_trace.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// stack_trace.cpp
+//
+// Identification: src/backend/common/stack_trace.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <cstdio>
 #include <cstdlib>

@@ -1,12 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * constraint.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// constraint.cpp
+//
+// Identification: src/backend/catalog/constraint.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/catalog/constraint.h"
 #include "backend/common/types.h"

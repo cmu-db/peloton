@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// conjunction_expression.h
+//
+// Identification: src/backend/expression/conjunction_expression.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #pragma once
 
 #include "backend/common/serializer.h"

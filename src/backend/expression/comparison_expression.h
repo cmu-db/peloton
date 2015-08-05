@@ -1,3 +1,16 @@
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// comparison_expression.h
+//
+// Identification: src/backend/expression/comparison_expression.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #pragma once
 
 #include "backend/common/value.h"

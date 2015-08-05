@@ -1,8 +1,15 @@
-/**
- * @brief Header for result plan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// result_node.h
+//
+// Identification: src/backend/planner/result_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

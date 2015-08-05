@@ -1,12 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * expr_transformer.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// expr_transformer.h
+//
+// Identification: src/backend/bridge/dml/expr/expr_transformer.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

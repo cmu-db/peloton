@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * value_test.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/tests/common/value_test.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// value_test.cpp
+//
+// Identification: tests/common/value_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "gtest/gtest.h"
 

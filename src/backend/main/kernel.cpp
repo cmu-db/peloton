@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * kernel.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/kernel.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// kernel.cpp
+//
+// Identification: src/backend/main/kernel.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <iostream>
 #include <cstdio>
