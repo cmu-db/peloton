@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * expression_util.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/expression/expression_util.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// expression_util.cpp
+//
+// Identification: src/backend/expression/expression_util.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/expression/expression_util.h"
 
@@ -375,8 +375,8 @@ AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
                                       AbstractExpression *lc,
                                       AbstractExpression *rc) {
   LOG_TRACE("expressionFactory request: "
-            << ExpressionTypeToString(et) << " " << et << ExpressionTypeToString(vt) << " " << vt
-            << " " << vs << " "
+            << ExpressionTypeToString(et) << " " << et
+            << ExpressionTypeToString(vt) << " " << vt << " " << vs << " "
             << "left : " << lc << "right : " << rc);
 
   AbstractExpression *ret = nullptr;
@@ -437,7 +437,8 @@ AbstractExpression *ExpressionFactory(json_spirit::Object &obj,
   }
 
   // written thusly to ease testing/inspecting return content.
-  LOG_TRACE("Created " << ExpressionTypeToString(et) << " expression  : " << ret);
+  LOG_TRACE("Created " << ExpressionTypeToString(et)
+                       << " expression  : " << ret);
   return ret;
 }
 

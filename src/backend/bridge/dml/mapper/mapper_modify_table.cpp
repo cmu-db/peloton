@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * mapper_modify_table.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/dml/plan/mapper_modify_table.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// mapper_modify_table.cpp
+//
+// Identification: src/backend/bridge/dml/mapper/mapper_modify_table.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/storage/data_table.h"
@@ -30,8 +30,7 @@ namespace bridge {
  * Basically, it multiplexes into helper methods based on operation type.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
-    const ModifyTableState *mt_plan_state,
-    const TransformOptions options) {
+    const ModifyTableState *mt_plan_state, const TransformOptions options) {
   ModifyTable *plan = (ModifyTable *)mt_plan_state->ps.plan;
 
   switch (plan->operation) {
@@ -63,8 +62,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformModifyTable(
  * @return Pointer to the constructed AbstractPlanNode.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformInsert(
-    const ModifyTableState *mt_plan_state,
-    const TransformOptions options) {
+    const ModifyTableState *mt_plan_state, const TransformOptions options) {
   planner::AbstractPlanNode *plan_node = nullptr;
 
   /* Resolve result table */
@@ -118,8 +116,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformInsert(
 }
 
 planner::AbstractPlanNode *PlanTransformer::TransformUpdate(
-    const ModifyTableState *mt_plan_state,
-    const TransformOptions options) {
+    const ModifyTableState *mt_plan_state, const TransformOptions options) {
   /*
    * NOTE:
    * In Postgres, the new tuple is returned by an underlying Scan node
@@ -200,8 +197,7 @@ planner::AbstractPlanNode *PlanTransformer::TransformUpdate(
  * So we don't need to handle predicates locally .
  */
 planner::AbstractPlanNode *PlanTransformer::TransformDelete(
-    const ModifyTableState *mt_plan_state,
-    const TransformOptions options) {
+    const ModifyTableState *mt_plan_state, const TransformOptions options) {
   // Grab Database ID and Table ID
   assert(mt_plan_state->resultRelInfo);  // Input must come from a subplan
   assert(mt_plan_state->mt_nplans ==

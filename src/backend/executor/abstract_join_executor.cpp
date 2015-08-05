@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * merge_join.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/executor/merge_join_executor.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// abstract_join_executor.cpp
+//
+// Identification: src/backend/executor/abstract_join_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <vector>
 
@@ -29,8 +29,7 @@ namespace executor {
  */
 AbstractJoinExecutor::AbstractJoinExecutor(planner::AbstractPlanNode *node,
                                            ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {
-}
+    : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Do some basic checks and create the schema for the output logical
@@ -41,8 +40,8 @@ bool AbstractJoinExecutor::DInit() {
   assert(children_.size() == 2);
 
   // Grab data from plan node.
-  const planner::AbstractJoinPlanNode &node = GetPlanNode<
-      planner::AbstractJoinPlanNode>();
+  const planner::AbstractJoinPlanNode &node =
+      GetPlanNode<planner::AbstractJoinPlanNode>();
 
   // NOTE: predicate can be null for cartesian product
   predicate_ = node.GetPredicate();
