@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * mapper_seq_scan.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/dml/mapper/mapper_seq_scan.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// mapper_lock_rows.cpp
+//
+// Identification: src/backend/bridge/dml/mapper/mapper_lock_rows.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
 
@@ -28,14 +28,14 @@ namespace bridge {
  * @return Pointer to the constructed AbstractPlanNode.
  *
  */
-planner::AbstractPlanNode* PlanTransformer::TransformLockRows(
-    const LockRowsState* lr_plan_state) {
+planner::AbstractPlanNode *PlanTransformer::TransformLockRows(
+    const LockRowsState *lr_plan_state) {
   assert(nodeTag(lr_plan_state) == T_LockRowsState);
 
   LOG_INFO("Handle LockRows");
 
   /* get the underlying plan */
-  PlanState* outer_plan_state = outerPlanState(lr_plan_state);
+  PlanState *outer_plan_state = outerPlanState(lr_plan_state);
 
   TransformOptions options = kDefaultOptions;
   options.use_projInfo = false;

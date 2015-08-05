@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
-*
-* byte_array.h
-* file description
-*
-* Copyright(c) 2015, CMU
-*
-* /n-store/src/common/byte_array.h
-*
-*-------------------------------------------------------------------------
-*/
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// byte_array.h
+//
+// Identification: src/backend/common/byte_array.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -62,7 +62,7 @@ class GenericArray {
 
   /// corresponds to "byte[] bar = new byte[] {1,2,...,10};" in Java
   /// this constructor is safe because it explicitly receives length.
-  GenericArray(const T* data, int length) {
+  GenericArray(const T *data, int length) {
     resetAndExpand(length);
     assign(data, 0, length);
   };
@@ -71,11 +71,11 @@ class GenericArray {
   /// demolishes all the significance of this class.
 
   /// corresponds to "byte[] bar = bar2;" in Java. Note that this has no cost.
-  GenericArray(const GenericArray<T>& rhs) {
+  GenericArray(const GenericArray<T> &rhs) {
     array_data = rhs.array_data;
     array_length = rhs.array_length;
   };
-  inline GenericArray<T>& operator=(const GenericArray<T>& rhs) {
+  inline GenericArray<T> &operator=(const GenericArray<T> &rhs) {
     array_data = rhs.array_data;
     array_length = rhs.array_length;
     return *this;
@@ -115,11 +115,11 @@ class GenericArray {
 
   /// corresponds to "(bar.length)" in Java
   int length() const { return array_length; };
-  const T* data() const { return array_data.get(); };
-  T* data() { return array_data.get(); };
+  const T *data() const { return array_data.get(); };
+  T *data() { return array_data.get(); };
 
   /// helper functions for convenience.
-  void assign(const T* assignedData, int offset, int assignedLength) {
+  void assign(const T *assignedData, int offset, int assignedLength) {
     assert(!isNull());
     assert(array_length >= offset + assignedLength);
     assert(offset >= 0);
@@ -127,7 +127,7 @@ class GenericArray {
              assignedLength * sizeof(T));
   };
 
-  GenericArray<T> operator+(const GenericArray<T>& tail) const {
+  GenericArray<T> operator+(const GenericArray<T> &tail) const {
     assert(!isNull());
     assert(!tail.isNull());
     GenericArray<T> concated(this->array_length + tail.array_length);
@@ -137,13 +137,13 @@ class GenericArray {
     return concated;
   };
 
-  const T& operator[](int index) const {
+  const T &operator[](int index) const {
     assert(!isNull());
     assert(array_length > index);
     return array_data.get()[index];
   };
 
-  T& operator[](int index) {
+  T &operator[](int index) {
     assert(!isNull());
     assert(array_length > index);
     return array_data.get()[index];

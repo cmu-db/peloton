@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * plan_transformer.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/bridge/plan_transformer.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// mapper.cpp
+//
+// Identification: src/backend/bridge/dml/mapper/mapper.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <cstring>
 #include <cassert>
@@ -41,9 +41,7 @@ void PlanTransformer::PrintPlanState(const PlanState *plan_state) {
  * @return Pointer to the constructed AbstractPlan Node.
  */
 planner::AbstractPlanNode *PlanTransformer::TransformPlan(
-    const PlanState *plan_state,
-    const TransformOptions options) {
-
+    const PlanState *plan_state, const TransformOptions options) {
   assert(plan_state);
 
   Plan *plan = plan_state->plan;
@@ -83,16 +81,17 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
       break;
     case T_MergeJoin:
     case T_HashJoin:
-      // TODO :: 'MergeJoin'/'HashJoin' have not been implemented yet, however, we need this
-      // case to operate AlterTable 
-      // Also - Added special case in peloton_process_dml
+    // TODO :: 'MergeJoin'/'HashJoin' have not been implemented yet, however, we
+    // need this
+    // case to operate AlterTable
+    // Also - Added special case in peloton_process_dml
     case T_NestLoop:
       plan_node = PlanTransformer::TransformNestLoop(
-          reinterpret_cast<const NestLoopState*>(plan_state));
+          reinterpret_cast<const NestLoopState *>(plan_state));
       break;
     case T_Material:
       plan_node = PlanTransformer::TransformMaterialization(
-          reinterpret_cast<const MaterialState*>(plan_state));
+          reinterpret_cast<const MaterialState *>(plan_state));
       break;
     default: {
       LOG_ERROR("Unsupported Postgres Plan State Tag: %u Plan Tag: %u ",
