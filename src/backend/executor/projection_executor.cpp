@@ -1,8 +1,14 @@
-/**
- * @brief Executor for Projection node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// projection_executor.cpp
+//
+// Identification: src/backend/executor/projection_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/executor/projection_executor.h"
 
@@ -52,13 +58,12 @@ bool ProjectionExecutor::DExecute() {
   assert(children_.size() == 1);
 
   // NOTE: We only handle 1 child for now
-  if(children_.size() == 1){
+  if (children_.size() == 1) {
     LOG_INFO("Projection : child 1 \n");
 
     // Execute child
     auto status = children_[0]->Execute();
-    if(false == status)
-      return false;
+    if (false == status) return false;
 
     // Get input from child
     std::unique_ptr<LogicalTile> source_tile(children_[0]->GetOutput());
@@ -71,8 +76,9 @@ bool ProjectionExecutor::DExecute() {
     // Create projections tuple-at-a-time from original tile
     oid_t new_tuple_id = 0;
     for (oid_t old_tuple_id : *source_tile) {
-      storage::Tuple* buffer = new storage::Tuple(schema_, true);
-      expression::ContainerTuple<LogicalTile> tuple(source_tile.get(), old_tuple_id);
+      storage::Tuple *buffer = new storage::Tuple(schema_, true);
+      expression::ContainerTuple<LogicalTile> tuple(source_tile.get(),
+                                                    old_tuple_id);
       project_info_->Evaluate(buffer, &tuple, nullptr, executor_context_);
 
       // Insert projected tuple into the new tile
@@ -84,14 +90,13 @@ bool ProjectionExecutor::DExecute() {
 
     // Wrap physical tile in logical tile and return it
     bool own_base_tile = true;
-    SetOutput(LogicalTileFactory::WrapTiles({dest_tile.release()},
-                                            own_base_tile));
+    SetOutput(
+        LogicalTileFactory::WrapTiles({dest_tile.release()}, own_base_tile));
 
     return true;
   }
 
   return false;
-
 }
 
 } /* namespace executor */

@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
-*
-* includes.h
-* file description
-*
-* Copyright(c) 2015, CMU
-*
-* /n-store/src/common/includes.h
-*
-*-------------------------------------------------------------------------
-*/
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// includes.h
+//
+// Identification: src/backend/common/includes.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

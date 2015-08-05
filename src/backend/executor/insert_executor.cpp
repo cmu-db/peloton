@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * insert_executor.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/executor/insert_executor.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// insert_executor.cpp
+//
+// Identification: src/backend/executor/insert_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/executor/insert_executor.h"
 
@@ -83,8 +83,7 @@ bool InsertExecutor::DExecute() {
     storage::Tuple tuple(physical_tile->GetSchema());
 
     while (tile_iterator.Next(tuple)) {
-      ItemPointer location =
-          target_table->InsertTuple(transaction_, &tuple);
+      ItemPointer location = target_table->InsertTuple(transaction_, &tuple);
       if (location.block == INVALID_OID) {
         transaction_->SetResult(Result::RESULT_FAILURE);
         return false;

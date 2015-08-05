@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * column.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/catalog/column.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// column.cpp
+//
+// Identification: src/backend/catalog/column.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <sstream>
 
@@ -43,7 +43,7 @@ void Column::SetInlined() {
 }
 
 // Get a string representation
-std::ostream& operator<<(std::ostream& os, const Column& column_info) {
+std::ostream &operator<<(std::ostream &os, const Column &column_info) {
   os << " name = " << column_info.column_name << ","
      << " type = " << ValueTypeToString(column_info.column_type) << ","
      << " offset = " << column_info.column_offset << ","

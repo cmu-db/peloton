@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * nested_loop_join.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/executor/nested_loop_join_executor.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// nested_loop_join_executor.h
+//
+// Identification: src/backend/executor/nested_loop_join_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -28,12 +28,10 @@ class NestedLoopJoinExecutor : public AbstractJoinExecutor {
                                   ExecutorContext *executor_context);
 
  protected:
-
   bool DExecute();
 
  private:
   // nothing special here
-
 };
 
 }  // namespace executor

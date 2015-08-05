@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * constraint.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/catalog/constraint.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// constraint.h
+//
+// Identification: src/backend/catalog/constraint.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -29,9 +29,10 @@ namespace catalog {
 class Constraint {
  public:
   Constraint(ConstraintType type, std::string constraint_name = "",
-             Node* raw_expr = nullptr)
-      : constraint_type(type), constraint_name(constraint_name), expr(raw_expr) {
-  }
+             Node *raw_expr = nullptr)
+      : constraint_type(type),
+        constraint_name(constraint_name),
+        expr(raw_expr) {}
 
   //===--------------------------------------------------------------------===//
   // ACCESSORS
@@ -54,8 +55,8 @@ class Constraint {
   std::string GetName() const { return constraint_name; }
 
   // Get a string representation of this constraint
-  friend std::ostream& operator<<(std::ostream& os,
-                                  const Constraint& constraint);
+  friend std::ostream &operator<<(std::ostream &os,
+                                  const Constraint &constraint);
 
  private:
   //===--------------------------------------------------------------------===//
@@ -73,7 +74,7 @@ class Constraint {
   std::string constraint_name = "";
 
   // Default_expr
-  Node* expr = nullptr;
+  Node *expr = nullptr;
 };
 
 }  // End catalog namespace

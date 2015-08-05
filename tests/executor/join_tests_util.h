@@ -1,8 +1,14 @@
-/**
- * @brief Header file for utility functions for join executor tests.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// join_tests_util.h
+//
+// Identification: tests/executor/join_tests_util.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -15,31 +21,26 @@
 
 namespace peloton {
 
-
 namespace expression {
-    class AbstractExpression;
+class AbstractExpression;
 }
 
 namespace storage {
-    class DataTable;
-    class Tuple;
+class DataTable;
+class Tuple;
 }
 
 namespace test {
 
 class JoinTestsUtil {
-public:
-
-    /** @brief Helper method for performing join tests */
-    static bool ExecuteJoinTest(
-        peloton::storage::DataTable* leftTable,
-        peloton::storage::DataTable* rightTable,
-        peloton::storage::DataTable* expected,
-        peloton::PelotonJoinType joinType,
-        peloton::expression::AbstractExpression* predicate
-    );
-
+ public:
+  /** @brief Helper method for performing join tests */
+  static bool ExecuteJoinTest(
+      peloton::storage::DataTable *leftTable,
+      peloton::storage::DataTable *rightTable,
+      peloton::storage::DataTable *expected, peloton::PelotonJoinType joinType,
+      peloton::expression::AbstractExpression *predicate);
 };
 
-} // namespace test
-} // namespace peloton
+}  // namespace test
+}  // namespace peloton

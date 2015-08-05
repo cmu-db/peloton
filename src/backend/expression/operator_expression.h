@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// operator_expression.h
+//
+// Identification: src/backend/expression/operator_expression.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include "backend/common/serializer.h"

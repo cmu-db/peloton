@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * tuple_transformer.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/bridge/tuple_transformer.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// tuple_transformer.cpp
+//
+// Identification: src/backend/bridge/dml/tuple/tuple_transformer.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <iostream>
 
