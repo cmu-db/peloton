@@ -1,12 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * table_iterator.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// tile_group_iterator.h
+//
+// Identification: src/backend/storage/tile_group_iterator.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -24,7 +26,7 @@ namespace storage {
 //===--------------------------------------------------------------------===//
 // TileGroup Iterator
 //===--------------------------------------------------------------------===//
-    
+
 class DataTable;
 class TileGroup;
 
@@ -33,31 +35,29 @@ class TileGroup;
  * FIXME: This is not thread-safe or transactional!
  **/
 class TileGroupIterator : public Iterator<std::shared_ptr<TileGroup>> {
-    TileGroupIterator() = delete;
+  TileGroupIterator() = delete;
 
-public:
-    TileGroupIterator(const DataTable* table)
-        : table_(table), tileGroupItr_(0) {
-        // More Wu Tang!
-    }
+ public:
+  TileGroupIterator(const DataTable *table) : table_(table), tileGroupItr_(0) {
+    // More Wu Tang!
+  }
 
-    TileGroupIterator(const TileGroupIterator& other)
-        : table_(other.table_),
-          tileGroupItr_(other.tileGroupItr_) {
-        // More Wu Tang!
-    }
+  TileGroupIterator(const TileGroupIterator &other)
+      : table_(other.table_), tileGroupItr_(other.tileGroupItr_) {
+    // More Wu Tang!
+  }
 
-    /**
-     * Updates the given tile so that it points to the next tile in the table.
-     * @return true if succeeded. false if no more tuples are there.
-     */
-    bool Next(std::shared_ptr<TileGroup> &tileGroup);
+  /**
+   * Updates the given tile so that it points to the next tile in the table.
+   * @return true if succeeded. false if no more tuples are there.
+   */
+  bool Next(std::shared_ptr<TileGroup> &tileGroup);
 
-    bool HasNext();
+  bool HasNext();
 
-private:
-    const DataTable* table_;
-    oid_t tileGroupItr_;
+ private:
+  const DataTable *table_;
+  oid_t tileGroupItr_;
 };
 
 }  // End storage namespace

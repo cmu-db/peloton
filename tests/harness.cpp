@@ -1,8 +1,14 @@
-/**
- * @brief Utility functions for tests.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// harness.cpp
+//
+// Identification: tests/harness.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "harness.h"
 

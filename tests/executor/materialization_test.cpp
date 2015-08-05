@@ -1,8 +1,14 @@
-/**
- * @brief Test cases for materialization node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// materialization_test.cpp
+//
+// Identification: tests/executor/materialization_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <memory>
 #include <string>
@@ -119,8 +125,9 @@ TEST(MaterializationTests, TwoBaseTilesWithReorderTest) {
   old_to_new_cols[3] = 0;
   old_to_new_cols[1] = 1;
   old_to_new_cols[0] = 2;
-  bool physify_flag = true; // is going to create a physical tile
-  planner::MaterializationNode node(old_to_new_cols, output_schema.release(), physify_flag);
+  bool physify_flag = true;  // is going to create a physical tile
+  planner::MaterializationNode node(old_to_new_cols, output_schema.release(),
+                                    physify_flag);
 
   // Pass through materialization executor.
   executor::MaterializationExecutor executor(&node, nullptr);

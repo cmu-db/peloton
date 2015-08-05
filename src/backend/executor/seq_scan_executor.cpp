@@ -1,13 +1,14 @@
-/**
- * @brief Executor for sequential scan node.
- *
- * Possible optimization: Right now we loop through the tile group in the
- * scan and apply the predicate tuple at a time. Instead, we might want to
- * refactor the expression system so we can apply predicates to fields in
- * different tiles separately, and then combine the results.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// seq_scan_executor.cpp
+//
+// Identification: src/backend/executor/seq_scan_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/executor/seq_scan_executor.h"
 
@@ -56,14 +57,11 @@ bool SeqScanExecutor::DInit() {
   if (table_ != nullptr) {
     table_tile_group_count_ = table_->GetTileGroupCount();
 
-    if(column_ids_.empty()){
+    if (column_ids_.empty()) {
       column_ids_.resize(table_->GetSchema()->GetColumnCount());
       std::iota(column_ids_.begin(), column_ids_.end(), 0);
     }
-
   }
-
-
 
   return true;
 }
@@ -121,7 +119,7 @@ bool SeqScanExecutor::DExecute() {
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
     // Print tile group visibility
-    //tile_group_header->PrintVisibility(txn_id, commit_id);
+    // tile_group_header->PrintVisibility(txn_id, commit_id);
 
     // Construct position list by looping through tile group
     // and applying the predicate.

@@ -1,8 +1,14 @@
-/**
- * @brief Header for projection plan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// projection_node.h
+//
+// Identification: src/backend/planner/projection_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -27,13 +33,11 @@ class ProjectionNode : public AbstractPlanNode {
   ProjectionNode(ProjectionNode &&) = delete;
   ProjectionNode &operator=(ProjectionNode &&) = delete;
 
-  ProjectionNode(const planner::ProjectInfo*  project_info,
-                 const catalog::Schema*       schema)
-    : project_info_(project_info),
-      schema_(schema) {}
+  ProjectionNode(const planner::ProjectInfo *project_info,
+                 const catalog::Schema *schema)
+      : project_info_(project_info), schema_(schema) {}
 
-
-  inline const planner::ProjectInfo* GetProjectInfo() const {
+  inline const planner::ProjectInfo *GetProjectInfo() const {
     return project_info_.get();
   }
 
@@ -46,7 +50,6 @@ class ProjectionNode : public AbstractPlanNode {
   inline std::string GetInfo() const { return "Projection"; }
 
  private:
-
   /** @brief Projection Info.            */
   std::unique_ptr<const planner::ProjectInfo> project_info_;
 

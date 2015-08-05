@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * abstract_scheduler.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/abstract_scheduler/abstract_scheduler.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// abstract_scheduler.h
+//
+// Identification: src/backend/scheduler/abstract_scheduler.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

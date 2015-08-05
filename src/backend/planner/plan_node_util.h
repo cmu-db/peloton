@@ -1,9 +1,14 @@
-/**
- * @brief Header for plan node utilities.
- *
- * Copyright(c) 2015, CMU
- *
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// plan_node_util.h
+//
+// Identification: src/backend/planner/plan_node_util.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <string>
 
@@ -12,7 +17,7 @@
 namespace peloton {
 namespace planner {
 
-AbstractPlanNode* GetEmptyPlanNode(PlanNodeType type);
+AbstractPlanNode *GetEmptyPlanNode(PlanNodeType type);
 
 }  // namespace planner
 }  // namespace peloton
