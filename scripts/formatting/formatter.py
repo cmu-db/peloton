@@ -53,7 +53,7 @@ header_comment_5 = header_comment_line_6 + header_comment_line_7 + header_commen
 						+ header_comment_line_9 + header_comment_line_10
 
 #regular expresseion used to track header
-header_regex = re.compile("(\/\*-*([^-]*[0-9|a-z|A-Z]+[\s]*-[\s]*[0-9|a-z|A-Z]+)*[^-]*-*\n[\s]*\*\/[\n]*)(#include|#pragma|#ifndef)")
+header_regex = re.compile("(\/\*-{20}-*([^-]+[-])*-{20}-*\n[\s]*\*\/[\n|\s]*)(#include|#pragma|#ifndef)")
 
 ## ==============================================
 ## 			LOGGING CONFIGURATION
