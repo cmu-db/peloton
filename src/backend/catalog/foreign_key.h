@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * constraint_info.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/catalog/constraint_info.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// foreign_key.h
+//
+// Identification: src/backend/catalog/foreign_key.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

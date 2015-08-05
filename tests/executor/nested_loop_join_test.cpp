@@ -1,8 +1,15 @@
-/**
- * @brief Test cases for nested loop join node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// nested_loop_join_test.cpp
+//
+// Identification: tests/executor/nested_loop_join_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <memory>
 

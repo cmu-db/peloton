@@ -1,9 +1,15 @@
-/**
- * @brief Header for plan column
- *
- * Copyright(c) 2015, CMU
- *
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// plan_column.h
+//
+// Identification: src/backend/planner/plan_column.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

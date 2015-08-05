@@ -36,24 +36,25 @@ DEFAULT_DIRS.append(PELOTON_TESTS_DIR)
 ## ==============================================
 
 #header framework, dynamic information will be added inside function
-header_comment_line_1 = "/*-----------------------------------------------------------------\n"
-header_comment_line_2 = " *\n"
-header_comment_line_3 = " * Filename: "
-header_comment_line_4 = " *\n"
-header_comment_line_5 = " * Identification: "
-header_comment_line_6 = " *\n"
-header_comment_line_7 = " * Copyright (c) 2015: Carnegie Mellon University Database Group\n"
-header_comment_line_8 = " *\n"
-header_comment_line_9 = " *-----------------------------------------------------------------\n"
-header_comment_line_10 = " */\n\n"
+header_comment_line_1 = "//===----------------------------------------------------------------------===//\n"
+header_comment_line_1 += "//\n"
+header_comment_line_1 += "//							PelotonDB\n"
+header_comment_line_2  = "//\n"
+header_comment_line_3  = "// "
+header_comment_line_4  = "//\n"
+header_comment_line_5  = "// Identification: "
+header_comment_line_6  = "//\n"
+header_comment_line_7  = "// Copyright (c) 2015, Carnegie Mellon University Database Group\n"
+header_comment_line_8  = "//\n"
+header_comment_line_9  = "//===----------------------------------------------------------------------===//\n\n\n"
 
 header_comment_1 = header_comment_line_1 + header_comment_line_2
 header_comment_3 = header_comment_line_4
 header_comment_5 = header_comment_line_6 + header_comment_line_7 + header_comment_line_8 \
-						+ header_comment_line_9 + header_comment_line_10
+						+ header_comment_line_9 
 
 #regular expresseion used to track header
-header_regex = re.compile("(\/\*-*([^-]*[0-9|a-z|A-Z]+[\s]*-[\s]*[0-9|a-z|A-Z]+)*[^-]*-*\n[\s]*\*\/[\n]*)(#include|#pragma|#ifndef)")
+header_regex = re.compile("(\/\/===-*===\/\/\n(\/\/.*\n)*\/\/===-*===\/\/[\n]*)(#include|#pragma|#ifndef)")
 
 ## ==============================================
 ## 			LOGGING CONFIGURATION

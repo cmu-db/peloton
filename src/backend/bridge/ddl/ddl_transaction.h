@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * ddl_transaction.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/ddl_transaction.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// ddl_transaction.h
+//
+// Identification: src/backend/bridge/ddl/ddl_transaction.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

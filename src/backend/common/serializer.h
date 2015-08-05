@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * serializer.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/serializer.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// serializer.h
+//
+// Identification: src/backend/common/serializer.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

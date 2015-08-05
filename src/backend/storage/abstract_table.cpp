@@ -1,12 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * abstract_table.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// abstract_table.cpp
+//
+// Identification: src/backend/storage/abstract_table.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/storage/abstract_table.h"
 

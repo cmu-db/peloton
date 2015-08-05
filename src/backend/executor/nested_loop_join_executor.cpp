@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * nested_loop_join.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/executor/nested_loop_join_executor.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// nested_loop_join_executor.cpp
+//
+// Identification: src/backend/executor/nested_loop_join_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <vector>
 

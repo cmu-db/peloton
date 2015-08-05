@@ -1,12 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * btree_multimap_index.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// btree_multi_index.h
+//
+// Identification: src/backend/index/btree_multi_index.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

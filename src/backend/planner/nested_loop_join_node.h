@@ -1,8 +1,15 @@
-/**
- * @brief Header for nested loop join plan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// nested_loop_join_node.h
+//
+// Identification: src/backend/planner/nested_loop_join_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * database.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/storage/table.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// database.cpp
+//
+// Identification: src/backend/storage/database.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/storage/database.h"
 #include "backend/storage/table_factory.h"

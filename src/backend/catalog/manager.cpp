@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * manager.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/catalog/manager.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// manager.cpp
+//
+// Identification: src/backend/catalog/manager.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <cassert>
 

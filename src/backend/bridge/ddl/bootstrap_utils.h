@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * bootstrap_utils.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/bootstrap_utils.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// bootstrap_utils.h
+//
+// Identification: src/backend/bridge/ddl/bootstrap_utils.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

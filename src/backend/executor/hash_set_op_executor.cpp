@@ -1,8 +1,15 @@
-/**
- * @brief hash-based set operation executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// hash_set_op_executor.cpp
+//
+// Identification: src/backend/executor/hash_set_op_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <utility>
 #include <vector>

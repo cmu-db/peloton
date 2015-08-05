@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * parser_expression.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/expression/parser_expression.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// parser_expression.h
+//
+// Identification: src/backend/expression/parser_expression.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

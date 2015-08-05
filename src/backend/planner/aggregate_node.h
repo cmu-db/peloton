@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * aggregate_node.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/planner/aggregate_node.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// aggregate_node.h
+//
+// Identification: src/backend/planner/aggregate_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

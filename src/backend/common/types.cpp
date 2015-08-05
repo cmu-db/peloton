@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * types.cc
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/types.cc
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// types.cpp
+//
+// Identification: src/backend/common/types.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/common/types.h"
 #include "backend/common/exception.h"

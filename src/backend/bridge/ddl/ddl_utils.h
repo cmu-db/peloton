@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * ddl_utils.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/ddl_utils.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// ddl_utils.h
+//
+// Identification: src/backend/bridge/ddl/ddl_utils.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

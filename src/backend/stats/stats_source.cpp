@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * stats_source.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/stats/stats_source.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// stats_source.cpp
+//
+// Identification: src/backend/stats/stats_source.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/stats/stats_source.h"
 

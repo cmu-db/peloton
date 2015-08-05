@@ -1,8 +1,15 @@
-/**
- * @brief Base class for all executors.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// abstract_executor.cpp
+//
+// Identification: src/backend/executor/abstract_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/executor/abstract_executor.h"
 #include "backend/common/logger.h"

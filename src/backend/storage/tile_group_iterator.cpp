@@ -1,12 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * tile_group_iterator.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// tile_group_iterator.cpp
+//
+// Identification: src/backend/storage/tile_group_iterator.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/storage/tile_group_iterator.h"
 

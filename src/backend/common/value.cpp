@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * value.cc
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/value.cc
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// value.cpp
+//
+// Identification: src/backend/common/value.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/common/value.h"
 

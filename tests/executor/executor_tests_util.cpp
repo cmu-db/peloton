@@ -1,17 +1,15 @@
-/**
- * @brief Implementation of utility functions for executor tests.
- *
- * Repeated code in many of the executor tests are factored out and placed
- * in this util class.
- *
- * Note that some of the test cases are aware of implementation details
- * of the utility functions i.e. there are implicit contracts between
- * many of the functions here and the test cases. For example, some of the
- * test cases make assumptions about the layout of the tile group returned by
- * CreateSimpleTileGroup().
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// executor_tests_util.cpp
+//
+// Identification: tests/executor/executor_tests_util.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "executor/executor_tests_util.h"
 

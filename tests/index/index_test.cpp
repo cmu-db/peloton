@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * index_test.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/tests/index/index_test.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// index_test.cpp
+//
+// Identification: tests/index/index_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "gtest/gtest.h"
 #include "harness.h"

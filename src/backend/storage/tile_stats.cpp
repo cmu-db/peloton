@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * tilestats.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/storage/tilestats.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// tile_stats.cpp
+//
+// Identification: src/backend/storage/tile_stats.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/tile_stats.h"
 #include "backend/storage/TableStats.h"

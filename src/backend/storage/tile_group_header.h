@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * tile_header.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/storage/tile_header.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// tile_group_header.h
+//
+// Identification: src/backend/storage/tile_group_header.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

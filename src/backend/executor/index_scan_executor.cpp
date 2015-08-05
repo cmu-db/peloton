@@ -1,8 +1,15 @@
-/**
- * @brief Executor for index scan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// index_scan_executor.cpp
+//
+// Identification: src/backend/executor/index_scan_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/executor/index_scan_executor.h"
 

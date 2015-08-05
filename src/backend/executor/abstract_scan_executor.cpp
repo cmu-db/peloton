@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * abstract_scan_executor.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/executor/abstract_scan_executor.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// abstract_scan_executor.cpp
+//
+// Identification: src/backend/executor/abstract_scan_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/executor/abstract_scan_executor.h"
 

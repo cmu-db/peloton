@@ -1,8 +1,15 @@
-/**
- * @brief Test cases for sequential scan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// seq_scan_test.cpp
+//
+// Identification: tests/executor/seq_scan_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <memory>
 #include <set>
