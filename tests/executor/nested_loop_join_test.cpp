@@ -20,6 +20,7 @@
 
 #include "mock_executor.h"
 #include "executor/executor_tests_util.h"
+#include "executor/join_tests_util.h"
 #include "harness.h"
 
 using ::testing::NotNull;
@@ -27,6 +28,7 @@ using ::testing::Return;
 
 namespace peloton {
 namespace test {
+
 
 // Create join predicate
 expression::AbstractExpression *CreateJoinPredicate() {
@@ -297,3 +299,4 @@ TEST(NestedLoopJoinTests, JoinPredicateTest) {
 
 }  // namespace test
 }  // namespace peloton
+
