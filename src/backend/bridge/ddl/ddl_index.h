@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * ddl_index.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/ddl_index.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// ddl_index.h
+//
+// Identification: src/backend/bridge/ddl/ddl_index.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -29,12 +29,13 @@ class IndexInfo;
 
 class DDLIndex {
  public:
-  DDLIndex(const DDLIndex&) = delete;
-  DDLIndex& operator=(const DDLIndex&) = delete;
-  DDLIndex(DDLIndex&&) = delete;
-  DDLIndex& operator=(DDLIndex&&) = delete;
+  DDLIndex(const DDLIndex &) = delete;
+  DDLIndex &operator=(const DDLIndex &) = delete;
+  DDLIndex(DDLIndex &&) = delete;
+  DDLIndex &operator=(DDLIndex &&) = delete;
 
-  static bool ExecIndexStmt(Node* parsetree, std::vector<Node*>& parsetree_stack);
+  static bool ExecIndexStmt(Node *parsetree,
+                            std::vector<Node *> &parsetree_stack);
 
   static bool CreateIndex(IndexInfo index_info);
 
@@ -45,10 +46,10 @@ class DDLIndex {
   // static bool DropIndex(Oid index_oid);
 
   // Create the indexes using indexinfos and add to the table
-  static bool CreateIndexes(std::vector<IndexInfo>& index_infos);
+  static bool CreateIndexes(std::vector<IndexInfo> &index_infos);
 
   // Parse IndexStmt and return IndexInfo
-  static IndexInfo* ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt);
+  static IndexInfo *ConstructIndexInfoByParsingIndexStmt(IndexStmt *Istmt);
 };
 
 //===--------------------------------------------------------------------===//

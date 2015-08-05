@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * value_factory.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/value_factory.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// value_factory.h
+//
+// Identification: src/backend/common/value_factory.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -21,19 +21,16 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 class ValueFactory {
-public:
-
-  static inline Value Clone(const Value& src, Pool* dataPool = nullptr) {
+ public:
+  static inline Value Clone(const Value &src, Pool *dataPool = nullptr) {
     return Value::Clone(src, dataPool);
   }
 
-  static inline Value GetInvalidValue() {
-    return Value::GetInvalidValue();
-  }
+  static inline Value GetInvalidValue() { return Value::GetInvalidValue(); }
 
-	static inline Value GetTinyIntValue(int8_t value) {
-		return Value::GetTinyIntValue(value);
-	}
+  static inline Value GetTinyIntValue(int8_t value) {
+    return Value::GetTinyIntValue(value);
+  }
 
   static inline Value GetSmallIntValue(int16_t value) {
     return Value::GetSmallIntValue(value);

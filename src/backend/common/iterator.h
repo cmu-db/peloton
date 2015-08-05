@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * iterator.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/iterator.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// iterator.h
+//
+// Identification: src/backend/common/iterator.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

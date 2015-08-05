@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * ddl_utils.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/ddl_utils.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// ddl_utils.h
+//
+// Identification: src/backend/bridge/ddl/ddl_utils.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -30,22 +30,20 @@ namespace bridge {
 
 class DDLUtils {
  public:
-  DDLUtils(const DDLUtils&) = delete;
-  DDLUtils& operator=(const DDLUtils&) = delete;
-  DDLUtils(DDLUtils&&) = delete;
-  DDLUtils& operator=(DDLUtils&&) = delete;
+  DDLUtils(const DDLUtils &) = delete;
+  DDLUtils &operator=(const DDLUtils &) = delete;
+  DDLUtils(DDLUtils &&) = delete;
+  DDLUtils &operator=(DDLUtils &&) = delete;
 
-  static void peloton_prepare_data(Node* parsetree);
+  static void peloton_prepare_data(Node *parsetree);
 
-  static void SetDefaultConstraint(ColumnDef* coldef, 
-                                   int column_itr, 
+  static void SetDefaultConstraint(ColumnDef *coldef, int column_itr,
                                    oid_t relation_oid);
 
   // Parse IndexStmt and construct ColumnInfo and ReferenceTableInfos
   static void ParsingCreateStmt(
-      CreateStmt* Cstmt, std::vector<catalog::Column>& column_infos,
-      std::vector<catalog::ForeignKey>& reference_table_infos);
-
+      CreateStmt *Cstmt, std::vector<catalog::Column> &column_infos,
+      std::vector<catalog::ForeignKey> &reference_table_infos);
 };
 
 }  // namespace bridge

@@ -1,12 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * data_table.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// data_table.h
+//
+// Identification: src/backend/storage/data_table.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -63,8 +65,7 @@ class DataTable : public AbstractTable {
 
   // insert the updated tuple in table
   ItemPointer UpdateTuple(const concurrency::Transaction *transaction,
-                          const Tuple *tuple,
-                          const ItemPointer old_location);
+                          const Tuple *tuple, const ItemPointer old_location);
 
   // delete the tuple at given location
   bool DeleteTuple(const concurrency::Transaction *transaction,
@@ -120,7 +121,7 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   storage::TileGroup *TransformTileGroup(oid_t tile_group_id,
-                                         const column_map_type& column_map,
+                                         const column_map_type &column_map,
                                          bool cleanup = true);
 
   //===--------------------------------------------------------------------===//
@@ -139,7 +140,6 @@ class DataTable : public AbstractTable {
 
   void ResetDirty();
 
-
   //===--------------------------------------------------------------------===//
   // UTILITIES
   //===--------------------------------------------------------------------===//
@@ -156,7 +156,6 @@ class DataTable : public AbstractTable {
   friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
 
  protected:
-
   //===--------------------------------------------------------------------===//
   // INTEGRITY CHECKS
   //===--------------------------------------------------------------------===//
@@ -176,18 +175,16 @@ class DataTable : public AbstractTable {
 
   // try to insert into the indices
   bool InsertInIndexes(const concurrency::Transaction *transaction,
-                       const storage::Tuple *tuple,
-                       ItemPointer location);
+                       const storage::Tuple *tuple, ItemPointer location);
 
-//  // drop the entry in the indice
-//  // NOTE: not used currently due to our MVCC design
-//  void DeleteInIndexes(const storage::Tuple *tuple,
-//                       const ItemPointer location);
+  //  // drop the entry in the indice
+  //  // NOTE: not used currently due to our MVCC design
+  //  void DeleteInIndexes(const storage::Tuple *tuple,
+  //                       const ItemPointer location);
 
   /** @return True if it's a same-key update and it's successful */
-  bool UpdateInIndexes(const storage::Tuple *tuple,
-                            ItemPointer location,
-                            const ItemPointer old_location);
+  bool UpdateInIndexes(const storage::Tuple *tuple, ItemPointer location,
+                       const ItemPointer old_location);
 
  private:
   //===--------------------------------------------------------------------===//

@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * expression_util.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/expression/expression_util.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// expression_util.h
+//
+// Identification: src/backend/expression/expression_util.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -55,8 +55,6 @@ AbstractExpression *ConjunctionFactory(ExpressionType,
                                        std::list<AbstractExpression *>);
 
 AbstractExpression *CastFactory(PostgresValueType, AbstractExpression *);
-
-std::string GetTypeName(ExpressionType type);
 
 // If the passed vector contains only TupleValueExpression, it
 // returns ColumnIds of them, otherwise NULL.

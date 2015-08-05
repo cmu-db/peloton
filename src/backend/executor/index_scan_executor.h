@@ -1,8 +1,14 @@
-/**
- * @brief Header file for index scan executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// index_scan_executor.h
+//
+// Identification: src/backend/executor/index_scan_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -60,7 +66,6 @@ class IndexScanExecutor : public AbstractScanExecutor {
   std::vector<ExpressionType> expr_types_;
 
   std::vector<Value> values_;
-
 };
 
 }  // namespace executor

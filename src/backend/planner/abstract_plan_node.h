@@ -1,8 +1,14 @@
-/**
- * @brief Header for abstract plan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// abstract_plan_node.h
+//
+// Identification: src/backend/planner/abstract_plan_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -28,10 +34,10 @@ namespace planner {
 
 class AbstractPlanNode {
  public:
-  AbstractPlanNode(const AbstractPlanNode&) = delete;
-  AbstractPlanNode& operator=(const AbstractPlanNode&) = delete;
-  AbstractPlanNode(AbstractPlanNode&&) = delete;
-  AbstractPlanNode& operator=(AbstractPlanNode&&) = delete;
+  AbstractPlanNode(const AbstractPlanNode &) = delete;
+  AbstractPlanNode &operator=(const AbstractPlanNode &) = delete;
+  AbstractPlanNode(AbstractPlanNode &&) = delete;
+  AbstractPlanNode &operator=(AbstractPlanNode &&) = delete;
 
   explicit AbstractPlanNode(oid_t plan_node_id);
   AbstractPlanNode();
@@ -41,11 +47,11 @@ class AbstractPlanNode {
   // Children + Parent Helpers
   //===--------------------------------------------------------------------===//
 
-  void AddChild(AbstractPlanNode* child);
+  void AddChild(AbstractPlanNode *child);
 
-  const std::vector<AbstractPlanNode*>& GetChildren() const;
+  const std::vector<AbstractPlanNode *> &GetChildren() const;
 
-  AbstractPlanNode* GetParent();
+  AbstractPlanNode *GetParent();
 
   //===--------------------------------------------------------------------===//
   // Accessors
@@ -64,8 +70,8 @@ class AbstractPlanNode {
   //===--------------------------------------------------------------------===//
 
   // Debugging convenience methods
-  friend std::ostream& operator<<(std::ostream& os,
-                                  const AbstractPlanNode& node);
+  friend std::ostream &operator<<(std::ostream &os,
+                                  const AbstractPlanNode &node);
   std::string GetInfo(std::string spacer) const;
 
   // Override in derived plan nodes
@@ -76,9 +82,9 @@ class AbstractPlanNode {
   oid_t plan_node_id_;
 
   // A node can have multiple children and parents
-  std::vector<AbstractPlanNode*> children_;
+  std::vector<AbstractPlanNode *> children_;
 
-  AbstractPlanNode* parent_ = nullptr;
+  AbstractPlanNode *parent_ = nullptr;
 };
 
 }  // namespace planner
