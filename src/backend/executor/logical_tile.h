@@ -1,8 +1,14 @@
-/**
- * @brief Header for logical tile.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// logical_tile.h
+//
+// Identification: src/backend/executor/logical_tile.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -72,11 +78,12 @@ class LogicalTile {
 
   void SetSchema(std::vector<LogicalTile::ColumnInfo> &&schema);
 
-  const std::vector<std::vector<oid_t> > &GetPositionLists() const;
+  const std::vector<std::vector<oid_t>> &GetPositionLists() const;
 
-  void SetPositionLists(std::vector<std::vector<oid_t> > &&position_lists);
+  void SetPositionLists(std::vector<std::vector<oid_t>> &&position_lists);
 
-  void SetPositionListsAndVisibility(std::vector<std::vector<oid_t> > &&position_lists);
+  void SetPositionListsAndVisibility(
+      std::vector<std::vector<oid_t>> &&position_lists);
 
   friend std::ostream &operator<<(std::ostream &os,
                                   const LogicalTile &logical_tile);
@@ -155,7 +162,7 @@ class LogicalTile {
    * @brief Lists of position lists.
    * Each list contains positions corresponding to particular tiles/columns.
    */
-  std::vector<std::vector<oid_t> > position_lists_;
+  std::vector<std::vector<oid_t>> position_lists_;
 
   /**
    * @brief Bit-vector storing visibility of each row in the position lists.

@@ -1,8 +1,14 @@
-/**
- * @brief Header file for order by executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// order_by_executor.h
+//
+// Identification: src/backend/executor/order_by_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

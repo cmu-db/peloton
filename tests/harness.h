@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * multithreaded_tester.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/test/multithreaded_tester.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// harness.h
+//
+// Identification: tests/harness.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -37,7 +37,7 @@ extern std::atomic<oid_t> tile_group_id_counter;
 uint64_t GetThreadId();
 
 template <typename... Args>
-void LaunchParallelTest(uint64_t num_threads, Args&&... args) {
+void LaunchParallelTest(uint64_t num_threads, Args &&... args) {
   std::vector<std::thread> thread_group;
 
   // Launch a group of threads

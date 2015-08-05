@@ -1,8 +1,14 @@
-/**
- * @brief Header for insert plan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// insert_node.h
+//
+// Identification: src/backend/planner/insert_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
