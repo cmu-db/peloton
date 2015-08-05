@@ -241,6 +241,7 @@ deleteObjectsInList(ObjectAddresses *targetObjects, Relation *depRel,
 	}
 }
 
+
 /*
  * performDeletion: attempt to drop the specified object.  If CASCADE
  * behavior is specified, also drop any dependent objects (recursively).
@@ -377,6 +378,82 @@ performMultipleDeletions(const ObjectAddresses *objects,
 
 	/* do the deed */
 	deleteObjectsInList(targetObjects, &depRel, flags);
+
+	/* And clean up */
+	free_object_addresses(targetObjects);
+
+	heap_close(depRel, RowExclusiveLock);
+}
+
+//TODO :: Peloton Changes
+//This wrapper functions is for avoiding calling trackDroppedObjectsNeeded() 
+void
+peloton_performMultipleDeletions(const ObjectAddresses *objects,
+				 DropBehavior behavior, int flags)
+{
+	Relation	depRel;
+	ObjectAddresses *targetObjects;
+	int			i;
+
+	/* No work if no objects... */
+	if (objects->numrefs <= 0)
+		return;
+
+	/*
+	 * We save some cycles by opening pg_depend just once and passing the
+	 * Relation pointer down to all the recursive deletion steps.
+	 */
+	depRel = heap_open(DependRelationId, RowExclusiveLock);
+
+	/*
+	 * Construct a list of objects to delete (ie, the given objects plus
+	 * everything directly or indirectly dependent on them).  Note that
+	 * because we pass the whole objects list as pendingObjects context, we
+	 * won't get a failure from trying to delete an object that is internally
+	 * dependent on another one in the list; we'll just skip that object and
+	 * delete it when we reach its owner.
+	 */
+	targetObjects = new_object_addresses();
+
+	for (i = 0; i < objects->numrefs; i++)
+	{
+		const ObjectAddress *thisobj = objects->refs + i;
+
+		/*
+		 * Acquire deletion lock on each target object.  (Ideally the caller
+		 * has done this already, but many places are sloppy about it.)
+		 */
+		AcquireDeletionLock(thisobj, flags);
+
+		findDependentObjects(thisobj,
+							 DEPFLAG_ORIGINAL,
+							 NULL,		/* empty stack */
+							 targetObjects,
+							 objects,
+							 &depRel);
+	}
+
+	/*
+	 * Check if deletion is allowed, and report about cascaded deletes.
+	 *
+	 * If there's exactly one object being deleted, report it the same way as
+	 * in performDeletion(), else we have to be vaguer.
+	 */
+	reportDependentObjects(targetObjects,
+						   behavior,
+						   NOTICE,
+						   (objects->numrefs == 1 ? objects->refs : NULL));
+
+	/*
+	 * Delete all the objects in the proper order.
+	 */
+	for (i = 0; i < targetObjects->numrefs; i++)
+	{
+		ObjectAddress *thisobj = targetObjects->refs + i;
+
+		deleteOneObject(thisobj, &depRel, flags);
+	}
+
 
 	/* And clean up */
 	free_object_addresses(targetObjects);

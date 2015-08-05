@@ -166,7 +166,6 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
   auto &txn_manager = concurrency::TransactionManager::GetInstance();
   const bool allocate = true;
   auto txn = txn_manager.BeginTransaction();
-  const txn_id_t txn_id = txn->GetTransactionId();
 
   for (int col_itr = 0; col_itr < num_rows; col_itr++) {
     int populate_value = col_itr;
@@ -202,7 +201,7 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
 
     if (group_by) std::cout << "INSERT TUPLE :: " << tuple;
 
-    ItemPointer tuple_slot_id = table->InsertTuple(txn_id, &tuple, false);
+    ItemPointer tuple_slot_id = table->InsertTuple(txn, &tuple);
     EXPECT_TRUE(tuple_slot_id.block != INVALID_OID);
     EXPECT_TRUE(tuple_slot_id.offset != INVALID_OID);
     txn->RecordInsert(tuple_slot_id);
