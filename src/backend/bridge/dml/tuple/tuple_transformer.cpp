@@ -22,6 +22,10 @@
 #include "access/htup_details.h"
 #include "nodes/print.h"
 #include "utils/builtins.h"
+#include "utils/numeric.h"
+
+
+extern struct NumericVar;
 
 namespace peloton {
 namespace bridge {
@@ -96,6 +100,17 @@ Value TupleTransformer::GetValue(Datum datum, Oid atttypid) {
     case POSTGRES_VALUE_TYPE_TIMESTAMPS: {
       long int timestamp = DatumGetInt64(datum);
       value = ValueFactory::GetTimestampValue(timestamp);
+    } break;
+
+    case POSTGRES_VALUE_TYPE_DECIMAL:{
+
+      // 1. Get string representation of the PG numeric (this is tricky)
+      char* cstr = DatumGetCString(DirectFunctionCall1(numeric_out, datum));
+
+      // 2. Construct Peloton Decimal from a string
+      value = ValueFactory::GetDecimalValueFromString(std::string(cstr));
+
+      pfree(cstr);
     } break;
 
     default:
