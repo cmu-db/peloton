@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/catalog/constraint.h"
@@ -25,15 +24,13 @@ namespace catalog {
 class Column {
   friend class Constraint;
 
- public:
-  Column() {};
+public:
+  Column(){};
 
   Column(ValueType value_type, oid_t column_length, std::string column_name,
          bool is_inlined = false, oid_t column_offset = INVALID_OID)
-      : column_type(value_type),
-        column_name(column_name),
-        is_inlined(is_inlined),
-        column_offset(column_offset) {
+      : column_type(value_type), column_name(column_name),
+        is_inlined(is_inlined), column_offset(column_offset) {
     SetInlined();
 
     SetLength(column_length);
@@ -69,24 +66,24 @@ class Column {
   bool IsInlined() const { return is_inlined; }
 
   // Add a constraint to the column
-  void AddConstraint(const catalog::Constraint& constraint) {
+  void AddConstraint(const catalog::Constraint &constraint) {
     constraints.push_back(constraint);
   }
 
-  const std::vector<Constraint>& GetConstraints() const { return constraints; }
+  const std::vector<Constraint> &GetConstraints() const { return constraints; }
 
   // Compare two column objects
-  bool operator==(const Column& other) const {
+  bool operator==(const Column &other) const {
     if (other.column_type != column_type || other.is_inlined != is_inlined) {
       return false;
     }
     return true;
   }
 
-  bool operator!=(const Column& other) const { return !(*this == other); }
+  bool operator!=(const Column &other) const { return !(*this == other); }
 
   // Get a string representation for debugging
-  friend std::ostream& operator<<(std::ostream& os, const Column& column);
+  friend std::ostream &operator<<(std::ostream &os, const Column &column);
 
   //===--------------------------------------------------------------------===//
   // MEMBERS
@@ -116,5 +113,5 @@ class Column {
   std::vector<Constraint> constraints;
 };
 
-}  // End catalog namespace
-}  // End peloton namespace
+} // End catalog namespace
+} // End peloton namespace

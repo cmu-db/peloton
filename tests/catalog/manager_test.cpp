@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/catalog/manager.h"
 #include "gtest/gtest.h"
 
@@ -28,7 +27,7 @@ namespace test {
 void AddTileGroup() {
   // TILES
   std::vector<std::string> tile_column_names;
-  std::vector<std::vector<std::string> > column_names;
+  std::vector<std::vector<std::string>> column_names;
 
   tile_column_names.push_back("INTEGER COL");
   column_names.push_back(tile_column_names);
@@ -46,12 +45,13 @@ void AddTileGroup() {
 
   storage::AbstractBackend *backend = new storage::VMBackend();
 
-  std::map<oid_t, std::pair<oid_t, oid_t> > column_map;
+  std::map<oid_t, std::pair<oid_t, oid_t>> column_map;
   column_map[0] = std::make_pair(0, 0);
 
   for (oid_t txn_itr = 0; txn_itr < 100; txn_itr++) {
     storage::TileGroup *tile_group = storage::TileGroupFactory::GetTileGroup(
-        INVALID_OID, INVALID_OID, INVALID_OID, nullptr, backend, schemas, column_map, 3);
+        INVALID_OID, INVALID_OID, INVALID_OID, nullptr, backend, schemas,
+        column_map, 3);
 
     delete tile_group;
   }
@@ -69,5 +69,5 @@ TEST(ManagerTests, TransactionTest) {
   EXPECT_EQ(catalog::Manager::GetInstance().GetCurrentOid(), 800);
 }
 
-}  // End test namespace
-}  // End peloton namespace
+} // End test namespace
+} // End peloton namespace

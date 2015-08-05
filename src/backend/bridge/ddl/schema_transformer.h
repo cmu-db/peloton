@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/catalog/schema.h"
@@ -32,9 +31,8 @@ public:
   SchemaTransformer(SchemaTransformer &&) = delete;
   SchemaTransformer &operator=(SchemaTransformer &&) = delete;
 
-  static catalog::Schema* GetSchemaFromTupleDesc(TupleDesc tupleDesc);
+  static catalog::Schema *GetSchemaFromTupleDesc(TupleDesc tupleDesc);
 };
 
-}  // End bridge namespace
-}  // End peloton namespace
-
+} // End bridge namespace
+} // End peloton namespace

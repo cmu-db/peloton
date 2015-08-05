@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/stats_agent.h"
 
 #include "backend/common/ids.h"
@@ -45,7 +44,7 @@ void StatsAgent::registerStatsSource(voltdb::StatisticsSelectorType sst,
 void StatsAgent::unregisterStatsSource(voltdb::StatisticsSelectorType sst) {
   // get the map of id-to-source
   std::map<voltdb::StatisticsSelectorType,
-           std::map<voltdb::CatalogId, voltdb::StatsSource *> >::iterator it1 =
+           std::map<voltdb::CatalogId, voltdb::StatsSource *>>::iterator it1 =
       m_statsCategoryByStatsSelector.find(sst);
 
   if (it1 == m_statsCategoryByStatsSelector.end()) {

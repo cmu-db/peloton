@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/types.h"
@@ -26,7 +25,7 @@ namespace executor {
  * No check on the schemas of children.
  */
 class AppendExecutor : public AbstractExecutor {
- public:
+public:
   AppendExecutor(const AppendExecutor &) = delete;
   AppendExecutor &operator=(const AppendExecutor &) = delete;
   AppendExecutor(const AppendExecutor &&) = delete;
@@ -35,11 +34,11 @@ class AppendExecutor : public AbstractExecutor {
   explicit AppendExecutor(planner::AbstractPlanNode *node,
                           ExecutorContext *executor_context);
 
- protected:
+protected:
   bool DInit();
   bool DExecute();
 
- private:
+private:
   size_t cur_child_id_ = 0;
 };
 }

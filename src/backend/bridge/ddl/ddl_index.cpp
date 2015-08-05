@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <vector>
 
 #include "backend/bridge/ddl/ddl_index.h"
@@ -33,20 +32,20 @@ namespace bridge {
  * @param the parsetree_stack store parsetree if the table is not created yet
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLIndex::ExecIndexStmt(Node* parsetree,
-                             std::vector<Node*>& parsetree_stack) {
-  IndexStmt* Istmt = (IndexStmt*)parsetree;
-
+bool DDLIndex::ExecIndexStmt(Node *parsetree,
+                             std::vector<Node *> &parsetree_stack) {
+  IndexStmt *Istmt = (IndexStmt *)parsetree;
 
   // If table has not been created yet, store it into the parsetree stack
-  auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+  auto &manager = catalog::Manager::GetInstance();
+  storage::Database *db =
+      manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
   if (nullptr == db->GetTableWithName(Istmt->relation->relname)) {
     parsetree_stack.push_back(parsetree);
     return true;
   }
 
-  IndexInfo* index_info = DDLIndex::ConstructIndexInfoByParsingIndexStmt(Istmt);
+  IndexInfo *index_info = DDLIndex::ConstructIndexInfoByParsingIndexStmt(Istmt);
 
   DDLIndex::CreateIndex(*index_info);
   return true;
@@ -69,10 +68,14 @@ bool DDLIndex::CreateIndex(IndexInfo index_info) {
   bool unique_keys = index_info.IsUnique();
   std::vector<std::string> key_column_names = index_info.GetKeyColumnNames();
 
-  if (index_oid == INVALID_OID) return false;
-  if (index_name.empty()) return false;
-  if (table_name.empty()) return false;
-  if (key_column_names.size() <= 0) return false;
+  if (index_oid == INVALID_OID)
+    return false;
+  if (index_name.empty())
+    return false;
+  if (table_name.empty())
+    return false;
+  if (key_column_names.size() <= 0)
+    return false;
 
   // TODO: We currently only support btree as our index implementation
   // TODO : Support other types based on "type" argument
@@ -83,11 +86,11 @@ bool DDLIndex::CreateIndex(IndexInfo index_info) {
   assert(database_oid);
 
   // Get the table location from db
-  auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(database_oid);
-  storage::DataTable* data_table = db->GetTableWithName(table_name);
+  auto &manager = catalog::Manager::GetInstance();
+  storage::Database *db = manager.GetDatabaseWithOid(database_oid);
+  storage::DataTable *data_table = db->GetTableWithName(table_name);
 
-  catalog::Schema* tuple_schema = data_table->GetSchema();
+  catalog::Schema *tuple_schema = data_table->GetSchema();
 
   // Construct key schema
   std::vector<oid_t> key_columns;
@@ -126,10 +129,10 @@ bool DDLIndex::CreateIndex(IndexInfo index_info) {
   key_schema->SetIndexedColumns(key_columns);
 
   // Create index metadata and physical index
-  index::IndexMetadata* metadata = new index::IndexMetadata(
+  index::IndexMetadata *metadata = new index::IndexMetadata(
       index_name, index_oid, our_index_type, index_type, tuple_schema,
       key_schema, unique_keys);
-  index::Index* index = index::IndexFactory::GetInstance(metadata);
+  index::Index *index = index::IndexFactory::GetInstance(metadata);
 
   // Record the built index in the table
   data_table->AddIndex(index);
@@ -145,7 +148,7 @@ bool DDLIndex::CreateIndex(IndexInfo index_info) {
  * @param Istmt an index statement
  * @return IndexInfo
  */
-IndexInfo* DDLIndex::ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt) {
+IndexInfo *DDLIndex::ConstructIndexInfoByParsingIndexStmt(IndexStmt *Istmt) {
   std::string index_name;
   oid_t index_oid = Istmt->index_id;
   std::string table_name;
@@ -157,9 +160,9 @@ IndexInfo* DDLIndex::ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt) {
   table_name = Istmt->relation->relname;
 
   // Key column names
-  ListCell* entry;
+  ListCell *entry;
   foreach (entry, Istmt->indexParams) {
-    IndexElem* indexElem = static_cast<IndexElem*>(lfirst(entry));
+    IndexElem *indexElem = static_cast<IndexElem *>(lfirst(entry));
     if (indexElem->name != NULL) {
       key_column_names.push_back(indexElem->name);
     }
@@ -194,7 +197,7 @@ IndexInfo* DDLIndex::ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt) {
   // TODO :: More access method types need
   method_type = INDEX_TYPE_BTREE;
 
-  IndexInfo* index_info =
+  IndexInfo *index_info =
       new IndexInfo(index_name, index_oid, table_name, method_type, type,
                     Istmt->unique, key_column_names);
   return index_info;
@@ -205,7 +208,7 @@ IndexInfo* DDLIndex::ConstructIndexInfoByParsingIndexStmt(IndexStmt* Istmt) {
  * @param relation_oid relation oid
  * @return true if we create all the indexes, false otherwise
  */
-bool DDLIndex::CreateIndexes(std::vector<IndexInfo>& index_infos) {
+bool DDLIndex::CreateIndexes(std::vector<IndexInfo> &index_infos) {
   for (auto index_info : index_infos) {
     CreateIndex(index_info);
   }
@@ -213,5 +216,5 @@ bool DDLIndex::CreateIndexes(std::vector<IndexInfo>& index_infos) {
   return true;
 }
 
-}  // namespace bridge
-}  // namespace peloton
+} // namespace bridge
+} // namespace peloton

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/catalog/manager.h"
@@ -26,15 +25,15 @@ namespace storage {
  * Base class for all tables
  */
 class AbstractTable {
- public:
+public:
   virtual ~AbstractTable();
 
- protected:
+protected:
   // Table constructor
   AbstractTable(oid_t table_oid, std::string table_name,
-                catalog::Schema* schema);
+                catalog::Schema *schema);
 
- public:
+public:
   //===--------------------------------------------------------------------===//
   // ACCESSORS
   //===--------------------------------------------------------------------===//
@@ -43,16 +42,16 @@ class AbstractTable {
 
   oid_t GetOid() const { return table_oid; }
 
-  void SetSchema(catalog::Schema* given_schema) { schema = given_schema; }
+  void SetSchema(catalog::Schema *given_schema) { schema = given_schema; }
 
-  const catalog::Schema* GetSchema() const { return schema; }
+  const catalog::Schema *GetSchema() const { return schema; }
 
-  catalog::Schema* GetSchema() { return schema; }
+  catalog::Schema *GetSchema() { return schema; }
 
   // Get a string representation of this table
-  friend std::ostream& operator<<(std::ostream& os, const AbstractTable& table);
+  friend std::ostream &operator<<(std::ostream &os, const AbstractTable &table);
 
- protected:
+protected:
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
@@ -65,8 +64,8 @@ class AbstractTable {
   std::string table_name;
 
   // table schema
-  catalog::Schema* schema;
+  catalog::Schema *schema;
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+} // End storage namespace
+} // End peloton namespace

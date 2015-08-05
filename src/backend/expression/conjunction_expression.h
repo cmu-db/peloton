@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/serializer.h"
@@ -30,9 +29,8 @@ class ConjunctionOr;
 // Conjunction Expression
 //===--------------------------------------------------------------------===//
 
-template <typename C>
-class ConjunctionExpression : public AbstractExpression {
- public:
+template <typename C> class ConjunctionExpression : public AbstractExpression {
+public:
   ConjunctionExpression(ExpressionType type, AbstractExpression *left,
                         AbstractExpression *right)
       : AbstractExpression(type, left, right) {
@@ -45,9 +43,12 @@ class ConjunctionExpression : public AbstractExpression {
 
   std::string DebugInfo(const std::string &spacer) const {
     std::string retval;
-    retval = spacer + "ConjunctionExpression : " + ExpressionTypeToString(expr_type) + "\n";
-    if (m_left != nullptr) retval += m_left->DebugInfo(" " + spacer);
-    if (m_right != nullptr) retval += m_right->DebugInfo(" " + spacer);
+    retval = spacer + "ConjunctionExpression : " +
+             ExpressionTypeToString(expr_type) + "\n";
+    if (m_left != nullptr)
+      retval += m_left->DebugInfo(" " + spacer);
+    if (m_right != nullptr)
+      retval += m_right->DebugInfo(" " + spacer);
     return retval;
   }
 
@@ -71,5 +72,5 @@ inline Value ConjunctionExpression<ConjunctionOr>::Evaluate(
       .OpOr(m_right->Evaluate(tuple1, tuple2, ec));
 }
 
-}  // End expression namespace
-}  // End peloton namespace
+} // End expression namespace
+} // End peloton namespace

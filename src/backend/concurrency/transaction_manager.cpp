@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <chrono>
 #include <thread>
 #include <iomanip>
@@ -85,7 +84,8 @@ std::vector<Transaction *> TransactionManager::GetCurrentTransactions() {
 
   {
     std::lock_guard<std::mutex> lock(txn_table_mutex);
-    for (auto entry : txn_table) txns.push_back(entry.second);
+    for (auto entry : txn_table)
+      txns.push_back(entry.second);
   }
 
   return txns;
@@ -111,7 +111,8 @@ Transaction *TransactionManager::StartPGTransaction(TransactionId txn_id) {
     std::lock_guard<std::mutex> lock(pg_txn_table_mutex);
 
     // If entry already exists
-    if (pg_txn_table.count(txn_id) != 0) return pg_txn_table.at(txn_id);
+    if (pg_txn_table.count(txn_id) != 0)
+      return pg_txn_table.at(txn_id);
 
     // Else, create one for this new pg txn id
     auto txn = BeginTransaction();
@@ -276,7 +277,8 @@ void TransactionManager::CommitTransaction(Transaction *txn, bool sync) {
   std::vector<Transaction *> committed_txns = EndCommitPhase(txn, sync);
 
   // process all committed txns
-  for (auto committed_txn : committed_txns) committed_txn->DecrementRefCount();
+  for (auto committed_txn : committed_txns)
+    committed_txn->DecrementRefCount();
 
   // XXX LOG : group commit entry
 }
@@ -312,5 +314,5 @@ void TransactionManager::AbortTransaction(Transaction *txn) {
   // XXX LOG :: record abort entry
 }
 
-}  // End concurrency namespace
-}  // End peloton namespace
+} // End concurrency namespace
+} // End peloton namespace

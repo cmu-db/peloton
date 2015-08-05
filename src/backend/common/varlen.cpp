@@ -10,14 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/common/varlen.h"
 #include "backend/common/pool.h"
 
 namespace peloton {
 
-Varlen* Varlen::Create(size_t size, Pool* dataPool) {
-  Varlen* retval;
+Varlen *Varlen::Create(size_t size, Pool *dataPool) {
+  Varlen *retval;
 
   if (dataPool != NULL) {
     retval = new (dataPool->Allocate(sizeof(Varlen))) Varlen(size, dataPool);
@@ -28,29 +27,29 @@ Varlen* Varlen::Create(size_t size, Pool* dataPool) {
   return retval;
 }
 
-void Varlen::Destroy(Varlen* varlen) { delete varlen; }
+void Varlen::Destroy(Varlen *varlen) { delete varlen; }
 
-Varlen* Varlen::Clone(const Varlen& src, Pool* dataPool) {
+Varlen *Varlen::Clone(const Varlen &src, Pool *dataPool) {
   // Create a new instance, back pointer is set inside
-  Varlen* rv = Create(src.varlen_size - sizeof(Varlen*), dataPool);
+  Varlen *rv = Create(src.varlen_size - sizeof(Varlen *), dataPool);
 
   // copy the meat (excluding back pointer)
-  ::memcpy(rv->Get(), src.Get(), (rv->varlen_size - sizeof(Varlen*)));
+  ::memcpy(rv->Get(), src.Get(), (rv->varlen_size - sizeof(Varlen *)));
 
   return rv;
 }
 
-Varlen::Varlen(size_t size){
-	varlen_size = size + sizeof(Varlen*);
-	varlen_temp_pool = false;
-	varlen_string_ptr = new char[varlen_size];
-	SetBackPtr();
+Varlen::Varlen(size_t size) {
+  varlen_size = size + sizeof(Varlen *);
+  varlen_temp_pool = false;
+  varlen_string_ptr = new char[varlen_size];
+  SetBackPtr();
 }
 
-Varlen::Varlen(std::size_t size, Pool* dataPool) {
+Varlen::Varlen(std::size_t size, Pool *dataPool) {
   varlen_temp_pool = true;
   varlen_string_ptr =
-      reinterpret_cast<char*>(dataPool->Allocate(size + sizeof(Varlen*)));
+      reinterpret_cast<char *>(dataPool->Allocate(size + sizeof(Varlen *)));
   SetBackPtr();
 }
 
@@ -60,17 +59,17 @@ Varlen::~Varlen() {
   }
 }
 
-char* Varlen::Get() { return varlen_string_ptr + sizeof(Varlen*); }
+char *Varlen::Get() { return varlen_string_ptr + sizeof(Varlen *); }
 
-const char* Varlen::Get() const { return varlen_string_ptr + sizeof(Varlen*); }
+const char *Varlen::Get() const { return varlen_string_ptr + sizeof(Varlen *); }
 
-void Varlen::UpdateStringLocation(void* location) {
-  varlen_string_ptr = reinterpret_cast<char*>(location);
+void Varlen::UpdateStringLocation(void *location) {
+  varlen_string_ptr = reinterpret_cast<char *>(location);
 }
 
 void Varlen::SetBackPtr() {
-  Varlen** backptr = reinterpret_cast<Varlen**>(varlen_string_ptr);
+  Varlen **backptr = reinterpret_cast<Varlen **>(varlen_string_ptr);
   *backptr = this;
 }
 
-}  // End peloton namespace
+} // End peloton namespace

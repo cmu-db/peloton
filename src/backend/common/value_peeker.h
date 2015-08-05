@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/value.h"
@@ -35,7 +34,7 @@ namespace peloton {
 class ValuePeeker {
   friend class Value;
 
- public:
+public:
   static inline ValueType PeekValueType(const Value value) {
     return value.GetValueType();
   }
@@ -91,7 +90,7 @@ class ValuePeeker {
     return value.CreateStringFromDecimal();
   }
 
-  static inline void* PeekObjectValue(const Value value) {
+  static inline void *PeekObjectValue(const Value value) {
     assert(value.GetValueType() == VALUE_TYPE_VARCHAR);
     return value.GetObjectValue();
   }
@@ -107,4 +106,4 @@ class ValuePeeker {
   }
 };
 
-}  // End peloton namespace
+} // End peloton namespace

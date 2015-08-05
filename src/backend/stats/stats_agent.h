@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #ifndef STATSAGENT_H_
 #define STATSAGENT_H_
 
@@ -32,7 +31,7 @@ class Table;
  * connecting them.
  */
 class StatsAgent {
- public:
+public:
   /**
    * Do nothing constructor
    */
@@ -47,7 +46,7 @@ class StatsAgent {
    */
   void registerStatsSource(voltdb::StatisticsSelectorType sst,
                            voltdb::CatalogId catalogId,
-                           voltdb::StatsSource* statsSource);
+                           voltdb::StatsSource *statsSource);
 
   /**
    * Unassociate all instances of this selector type
@@ -63,25 +62,25 @@ class StatsAgent {
    * was last invoked
    * @param now Timestamp to return with each row
    */
-  Table* getStats(voltdb::StatisticsSelectorType sst,
+  Table *getStats(voltdb::StatisticsSelectorType sst,
                   std::vector<voltdb::CatalogId> catalogIds, bool interval,
                   int64_t now);
 
   ~StatsAgent();
 
- private:
+private:
   /**
    * Map from a statistics selector to a map of CatalogIds to StatsSources.
    */
   std::map<voltdb::StatisticsSelectorType,
-           std::map<voltdb::CatalogId, voltdb::StatsSource*> >
+           std::map<voltdb::CatalogId, voltdb::StatsSource *>>
       m_statsCategoryByStatsSelector;
 
   /**
    * Temporary tables for aggregating the results of table statistics keyed by
    * type of statistic
    */
-  std::map<voltdb::StatisticsSelectorType, voltdb::Table*>
+  std::map<voltdb::StatisticsSelectorType, voltdb::Table *>
       m_statsTablesByStatsSelector;
 };
 }

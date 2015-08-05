@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/planner/plan_column.h"
 
 #include <sstream>
@@ -18,7 +17,7 @@
 namespace peloton {
 namespace planner {
 
-PlanColumn::PlanColumn(json_spirit::Object& col_object)
+PlanColumn::PlanColumn(json_spirit::Object &col_object)
     : m_col_object(col_object) {
   bool contains_name = false;
   bool contains_type = false;
@@ -62,8 +61,8 @@ size_t PlanColumn::GetSize() const { return m_size; }
 
 std::string PlanColumn::GetInputColumnName() const { return m_inputColumnName; }
 
-expression::AbstractExpression* PlanColumn::GetExpression() {
-  expression::AbstractExpression* expression = nullptr;
+expression::AbstractExpression *PlanColumn::GetExpression() {
+  expression::AbstractExpression *expression = nullptr;
   // lazy vector search
 
   json_spirit::Value column_expression_value =
@@ -83,7 +82,7 @@ expression::AbstractExpression* PlanColumn::GetExpression() {
   return expression;
 }
 
-std::ostream& operator<<(std::ostream& os, const PlanColumn& column) {
+std::ostream &operator<<(std::ostream &os, const PlanColumn &column) {
   os << "PlanColumn(";
   os << "guid=" << column.m_guid << ", ";
   os << "name=" << column.m_name << ", ";
@@ -93,5 +92,5 @@ std::ostream& operator<<(std::ostream& os, const PlanColumn& column) {
   return os;
 }
 
-}  // namespace planner
-}  // namespace peloton
+} // namespace planner
+} // namespace peloton

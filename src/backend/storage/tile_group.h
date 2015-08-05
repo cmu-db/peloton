@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/catalog/manager.h"
@@ -29,7 +28,7 @@ namespace storage {
 class AbstractTable;
 class TileGroupIterator;
 
-typedef std::map<oid_t, std::pair<oid_t, oid_t> > column_map_type;
+typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 
 /**
  * Represents a group of tiles logically horizontally contiguous.
@@ -47,13 +46,12 @@ class TileGroup {
   TileGroup() = delete;
   TileGroup(TileGroup const &) = delete;
 
- public:
+public:
   // Tile group constructor
   TileGroup(TileGroupHeader *tile_group_header, AbstractTable *table,
             AbstractBackend *backend,
             const std::vector<catalog::Schema> &schemas,
-            const column_map_type& column_map,
-            int tuple_count);
+            const column_map_type &column_map, int tuple_count);
 
   ~TileGroup() {
     // clean up tiles
@@ -136,12 +134,13 @@ class TileGroup {
   peloton::Pool *GetTilePool(const oid_t tile_id) const {
     Tile *tile = GetTile(tile_id);
 
-    if (tile != nullptr) return tile->GetPool();
+    if (tile != nullptr)
+      return tile->GetPool();
 
     return nullptr;
   }
 
-  const std::map<oid_t, std::pair<oid_t, oid_t> >& GetColumnMap() const {
+  const std::map<oid_t, std::pair<oid_t, oid_t>> &GetColumnMap() const {
     return column_map;
   }
 
@@ -170,7 +169,7 @@ class TileGroup {
 
   Value GetValue(oid_t tuple_id, oid_t column_id);
 
- protected:
+protected:
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
@@ -181,7 +180,7 @@ class TileGroup {
   oid_t tile_group_id;
 
   // backend
-  AbstractBackend *backend;  // TODO REMOVE(?)
+  AbstractBackend *backend; // TODO REMOVE(?)
 
   // mapping to tile schemas
   std::vector<catalog::Schema> tile_schemas;
@@ -193,7 +192,7 @@ class TileGroup {
   TileGroupHeader *tile_group_header;
 
   // associated table
-  AbstractTable *table;  // TODO: Remove this! It is a waste of space!!
+  AbstractTable *table; // TODO: Remove this! It is a waste of space!!
 
   // number of tuple slots allocated
   oid_t num_tuple_slots;
@@ -206,8 +205,7 @@ class TileGroup {
   // column to tile mapping :
   // <column offset> to <tile offset, tile column offset>
   column_map_type column_map;
-
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+} // End storage namespace
+} // End peloton namespace

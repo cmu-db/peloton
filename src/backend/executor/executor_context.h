@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/concurrency/transaction.h"
@@ -24,7 +23,7 @@ namespace executor {
 //===--------------------------------------------------------------------===//
 
 class ExecutorContext {
- public:
+public:
   ExecutorContext(const ExecutorContext &) = delete;
   ExecutorContext &operator=(const ExecutorContext &) = delete;
   ExecutorContext(ExecutorContext &&) = delete;
@@ -41,7 +40,7 @@ class ExecutorContext {
 
   const ValueArray &GetParams() const { return params_; }
 
- private:
+private:
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
@@ -53,5 +52,5 @@ class ExecutorContext {
   ValueArray params_;
 };
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

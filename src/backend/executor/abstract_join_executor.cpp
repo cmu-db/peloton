@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <vector>
 
 #include "backend/common/types.h"
@@ -30,8 +29,7 @@ namespace executor {
  */
 AbstractJoinExecutor::AbstractJoinExecutor(planner::AbstractPlanNode *node,
                                            ExecutorContext *executor_context)
-    : AbstractExecutor(node, executor_context) {
-}
+    : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Do some basic checks and create the schema for the output logical
@@ -42,8 +40,8 @@ bool AbstractJoinExecutor::DInit() {
   assert(children_.size() == 2);
 
   // Grab data from plan node.
-  const planner::AbstractJoinPlanNode &node = GetPlanNode<
-      planner::AbstractJoinPlanNode>();
+  const planner::AbstractJoinPlanNode &node =
+      GetPlanNode<planner::AbstractJoinPlanNode>();
 
   // NOTE: predicate can be null for cartesian product
   predicate_ = node.GetPredicate();
@@ -56,9 +54,9 @@ bool AbstractJoinExecutor::DInit() {
 /**
  * @ brief Build the schema of the joined tile based on the projection info
  */
-std::vector<LogicalTile::ColumnInfo> AbstractJoinExecutor::BuildSchema(
-    std::vector<LogicalTile::ColumnInfo> left,
-    std::vector<LogicalTile::ColumnInfo> right) {
+std::vector<LogicalTile::ColumnInfo>
+AbstractJoinExecutor::BuildSchema(std::vector<LogicalTile::ColumnInfo> left,
+                                  std::vector<LogicalTile::ColumnInfo> right) {
   std::vector<LogicalTile::ColumnInfo> schema;
   if (proj_info_ == nullptr) {
     // no projection
@@ -81,5 +79,5 @@ std::vector<LogicalTile::ColumnInfo> AbstractJoinExecutor::BuildSchema(
   return schema;
 }
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

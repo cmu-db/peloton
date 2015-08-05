@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/executor/abstract_executor.h"
@@ -21,7 +20,7 @@ namespace peloton {
 namespace executor {
 
 class InsertExecutor : public AbstractExecutor {
- public:
+public:
   InsertExecutor(const InsertExecutor &) = delete;
   InsertExecutor &operator=(const InsertExecutor &) = delete;
   InsertExecutor(InsertExecutor &&) = delete;
@@ -30,14 +29,14 @@ class InsertExecutor : public AbstractExecutor {
   explicit InsertExecutor(planner::AbstractPlanNode *node,
                           ExecutorContext *executor_context);
 
- protected:
+protected:
   bool DInit();
 
   bool DExecute();
 
- private:
+private:
   bool done_ = false;
 };
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

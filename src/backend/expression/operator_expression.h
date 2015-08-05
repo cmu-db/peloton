@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/serializer.h"
@@ -32,7 +31,7 @@ namespace expression {
 // NOT
 
 class OperatorUnaryNotExpression : public AbstractExpression {
- public:
+public:
   OperatorUnaryNotExpression(AbstractExpression *left)
       : AbstractExpression(EXPRESSION_TYPE_OPERATOR_NOT) {
     m_left = left;
@@ -49,14 +48,14 @@ class OperatorUnaryNotExpression : public AbstractExpression {
     return (spacer + "OperatorNotExpression");
   }
 
- private:
+private:
   AbstractExpression *m_left;
 };
 
 // MINUS
 
 class OperatorUnaryMinusExpression : public AbstractExpression {
- public:
+public:
   OperatorUnaryMinusExpression(AbstractExpression *left)
       : AbstractExpression(EXPRESSION_TYPE_OPERATOR_UNARY_MINUS) {
     m_left = left;
@@ -74,32 +73,32 @@ class OperatorUnaryMinusExpression : public AbstractExpression {
     return (spacer + "OperatorMinusExpression");
   }
 
- private:
+private:
   AbstractExpression *m_left;
 };
 // Binary operators.
 
 class OpPlus {
- public:
+public:
   inline Value op(Value left, Value right) const { return left.OpAdd(right); }
 };
 
 class OpMinus {
- public:
+public:
   inline Value op(Value left, Value right) const {
     return left.OpSubtract(right);
   }
 };
 
 class OpMultiply {
- public:
+public:
   inline Value op(Value left, Value right) const {
     return left.OpMultiply(right);
   }
 };
 
 class OpDivide {
- public:
+public:
   inline Value op(Value left, Value right) const {
     return left.OpDivide(right);
   }
@@ -107,9 +106,8 @@ class OpDivide {
 
 // Expressions templated on binary operator types
 
-template <typename OPER>
-class OperatorExpression : public AbstractExpression {
- public:
+template <typename OPER> class OperatorExpression : public AbstractExpression {
+public:
   OperatorExpression(ExpressionType type, AbstractExpression *left,
                      AbstractExpression *right)
       : AbstractExpression(type, left, right) {}
@@ -126,9 +124,9 @@ class OperatorExpression : public AbstractExpression {
     return (spacer + "OptimizedOperatorExpression");
   }
 
- private:
+private:
   OPER oper;
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+} // End expression namespace
+} // End peloton namespace

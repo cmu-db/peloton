@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/types.h"
@@ -25,7 +24,7 @@ namespace executor {
  * Need further change to accommodate it.
  */
 class LimitExecutor : public AbstractExecutor {
- public:
+public:
   LimitExecutor(const LimitExecutor &) = delete;
   LimitExecutor &operator=(const LimitExecutor &) = delete;
   LimitExecutor(const LimitExecutor &&) = delete;
@@ -34,12 +33,12 @@ class LimitExecutor : public AbstractExecutor {
   explicit LimitExecutor(planner::AbstractPlanNode *node,
                          ExecutorContext *executor_context);
 
- protected:
+protected:
   bool DInit();
 
   bool DExecute();
 
- private:
+private:
   //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//

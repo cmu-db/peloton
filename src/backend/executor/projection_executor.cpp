@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/projection_executor.h"
 
 #include "backend/common/logger.h"
@@ -59,12 +58,12 @@ bool ProjectionExecutor::DExecute() {
   assert(children_.size() == 1);
 
   // NOTE: We only handle 1 child for now
-  if(children_.size() == 1){
+  if (children_.size() == 1) {
     LOG_INFO("Projection : child 1 \n");
 
     // Execute child
     auto status = children_[0]->Execute();
-    if(false == status)
+    if (false == status)
       return false;
 
     // Get input from child
@@ -78,8 +77,9 @@ bool ProjectionExecutor::DExecute() {
     // Create projections tuple-at-a-time from original tile
     oid_t new_tuple_id = 0;
     for (oid_t old_tuple_id : *source_tile) {
-      storage::Tuple* buffer = new storage::Tuple(schema_, true);
-      expression::ContainerTuple<LogicalTile> tuple(source_tile.get(), old_tuple_id);
+      storage::Tuple *buffer = new storage::Tuple(schema_, true);
+      expression::ContainerTuple<LogicalTile> tuple(source_tile.get(),
+                                                    old_tuple_id);
       project_info_->Evaluate(buffer, &tuple, nullptr, executor_context_);
 
       // Insert projected tuple into the new tile
@@ -91,14 +91,13 @@ bool ProjectionExecutor::DExecute() {
 
     // Wrap physical tile in logical tile and return it
     bool own_base_tile = true;
-    SetOutput(LogicalTileFactory::WrapTiles({dest_tile.release()},
-                                            own_base_tile));
+    SetOutput(
+        LogicalTileFactory::WrapTiles({dest_tile.release()}, own_base_tile));
 
     return true;
   }
 
   return false;
-
 }
 
 } /* namespace executor */

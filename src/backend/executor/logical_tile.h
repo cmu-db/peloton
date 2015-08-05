@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <iterator>
@@ -46,7 +45,7 @@ namespace executor {
 class LogicalTile {
   friend class LogicalTileFactory;
 
- public:
+public:
   struct ColumnInfo;
 
   LogicalTile(const LogicalTile &) = delete;
@@ -79,11 +78,12 @@ class LogicalTile {
 
   void SetSchema(std::vector<LogicalTile::ColumnInfo> &&schema);
 
-  const std::vector<std::vector<oid_t> > &GetPositionLists() const;
+  const std::vector<std::vector<oid_t>> &GetPositionLists() const;
 
-  void SetPositionLists(std::vector<std::vector<oid_t> > &&position_lists);
+  void SetPositionLists(std::vector<std::vector<oid_t>> &&position_lists);
 
-  void SetPositionListsAndVisibility(std::vector<std::vector<oid_t> > &&position_lists);
+  void SetPositionListsAndVisibility(
+      std::vector<std::vector<oid_t>> &&position_lists);
 
   friend std::ostream &operator<<(std::ostream &os,
                                   const LogicalTile &logical_tile);
@@ -101,7 +101,7 @@ class LogicalTile {
     // It's a friend so it can call this iterator's private constructor.
     friend class LogicalTile;
 
-   public:
+  public:
     iterator &operator++();
 
     iterator operator++(int);
@@ -112,7 +112,7 @@ class LogicalTile {
 
     oid_t operator*();
 
-   private:
+  private:
     iterator(LogicalTile *tile, bool begin);
 
     /** @brief Keeps track of position of iterator. */
@@ -148,7 +148,7 @@ class LogicalTile {
     oid_t origin_column_id;
   };
 
- private:
+private:
   // Dummy default constructor
   LogicalTile(){};
 
@@ -162,7 +162,7 @@ class LogicalTile {
    * @brief Lists of position lists.
    * Each list contains positions corresponding to particular tiles/columns.
    */
-  std::vector<std::vector<oid_t> > position_lists_;
+  std::vector<std::vector<oid_t>> position_lists_;
 
   /**
    * @brief Bit-vector storing visibility of each row in the position lists.
@@ -177,5 +177,5 @@ class LogicalTile {
   std::unordered_set<storage::Tile *> owned_base_tiles_;
 };
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

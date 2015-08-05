@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <atomic>
@@ -41,7 +40,7 @@ namespace catalog {
 typedef tbb::concurrent_unordered_map<oid_t, storage::TileGroup *> lookup_dir;
 
 class Manager {
- public:
+public:
   Manager() {}
 
   // Singleton
@@ -90,8 +89,7 @@ class Manager {
 
   Manager(Manager const &) = delete;
 
- private:
-
+private:
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
@@ -107,5 +105,5 @@ class Manager {
   std::mutex catalog_mutex;
 };
 
-}  // End catalog namespace
-}  // End peloton namespace
+} // End catalog namespace
+} // End peloton namespace

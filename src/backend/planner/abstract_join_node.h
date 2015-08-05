@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <cstdint>
@@ -31,7 +30,7 @@ namespace planner {
 //===--------------------------------------------------------------------===//
 
 class AbstractJoinPlanNode : public AbstractPlanNode {
- public:
+public:
   AbstractJoinPlanNode(const AbstractJoinPlanNode &) = delete;
   AbstractJoinPlanNode &operator=(const AbstractJoinPlanNode &) = delete;
   AbstractJoinPlanNode(AbstractJoinPlanNode &&) = delete;
@@ -59,11 +58,9 @@ class AbstractJoinPlanNode : public AbstractPlanNode {
     return predicate_.get();
   }
 
-  const ProjectInfo *GetProjInfo() const {
-    return proj_info_.get();
-  }
+  const ProjectInfo *GetProjInfo() const { return proj_info_.get(); }
 
- private:
+private:
   /** @brief The type of join that we're going to perform */
   PelotonJoinType joinType_;
 
@@ -74,5 +71,5 @@ class AbstractJoinPlanNode : public AbstractPlanNode {
   std::unique_ptr<const ProjectInfo> proj_info_;
 };
 
-}  // namespace planner
-}  // namespace peloton
+} // namespace planner
+} // namespace peloton

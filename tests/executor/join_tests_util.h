@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -22,30 +21,26 @@
 
 namespace peloton {
 
-
 namespace expression {
-    class AbstractExpression;
+class AbstractExpression;
 }
 
 namespace storage {
-    class DataTable;
-    class Tuple;
+class DataTable;
+class Tuple;
 }
 
 namespace test {
 
 class JoinTestsUtil {
 public:
-
-    /** @brief Helper method for performing join tests */
-    static bool ExecuteJoinTest(
-        peloton::storage::DataTable* leftTable,
-        peloton::storage::DataTable* rightTable,
-        peloton::storage::DataTable* expected,
-        peloton::PelotonJoinType joinType,
-        peloton::expression::AbstractExpression* predicate
-    );
-
+  /** @brief Helper method for performing join tests */
+  static bool
+  ExecuteJoinTest(peloton::storage::DataTable *leftTable,
+                  peloton::storage::DataTable *rightTable,
+                  peloton::storage::DataTable *expected,
+                  peloton::PelotonJoinType joinType,
+                  peloton::expression::AbstractExpression *predicate);
 };
 
 } // namespace test

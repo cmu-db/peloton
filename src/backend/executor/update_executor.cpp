@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/update_executor.h"
 
 #include "backend/common/logger.h"
@@ -92,15 +91,17 @@ bool UpdateExecutor::DExecute() {
     transaction_->RecordDelete(delete_location);
 
     // (B.1) Make a copy of the original tuple and allocate a new tuple
-    expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group, physical_tuple_id);
-    storage::Tuple *new_tuple = new storage::Tuple(target_table_->GetSchema(), true);
+    expression::ContainerTuple<storage::TileGroup> old_tuple(tile_group,
+                                                             physical_tuple_id);
+    storage::Tuple *new_tuple =
+        new storage::Tuple(target_table_->GetSchema(), true);
 
     // (B.2) Execute the projections
     project_info_->Evaluate(new_tuple, &old_tuple, nullptr, executor_context_);
 
     // (C) finally insert updated tuple into the table
-    ItemPointer location = target_table_->UpdateTuple(transaction_, new_tuple,
-                                                      delete_location);
+    ItemPointer location =
+        target_table_->UpdateTuple(transaction_, new_tuple, delete_location);
     if (location.block == INVALID_OID) {
       delete new_tuple;
       transaction_->SetResult(Result::RESULT_FAILURE);
@@ -108,7 +109,6 @@ bool UpdateExecutor::DExecute() {
     }
     transaction_->RecordInsert(location);
     delete new_tuple;
-
   }
 
   // By default, update should return nothing?
@@ -116,5 +116,5 @@ bool UpdateExecutor::DExecute() {
   return true;
 }
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

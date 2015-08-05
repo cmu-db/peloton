@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
@@ -51,7 +50,7 @@ class AbstractExpression;
  * - Qiang, 7/17/15
  */
 class AbstractExpression {
- public:
+public:
   // destroy this node and all children
   virtual ~AbstractExpression();
 
@@ -62,9 +61,9 @@ class AbstractExpression {
    * @param exprcontex  The expression context that is passed through the tree.
    * It is used when needed and no cost otherwise.
    */
-  virtual Value Evaluate(
-      const AbstractTuple *tuple1, const AbstractTuple *tuple2,
-      executor::ExecutorContext *context /* = nullptr */) const = 0;
+  virtual Value
+  Evaluate(const AbstractTuple *tuple1, const AbstractTuple *tuple2,
+           executor::ExecutorContext *context /* = nullptr */) const = 0;
 
   // set parameter values for this node and its descendants
   virtual void Substitute(const ValueArray &params);
@@ -112,7 +111,7 @@ class AbstractExpression {
 
   bool distinct = false;
 
- protected:
+protected:
   AbstractExpression();
 
   AbstractExpression(ExpressionType type);
@@ -132,12 +131,12 @@ class AbstractExpression {
   // true if we need to substitute ?
   bool has_parameter;
 
- private:
-  static AbstractExpression *CreateExpressionTreeRecurse(
-      json_spirit::Object &obj);
+private:
+  static AbstractExpression *
+  CreateExpressionTreeRecurse(json_spirit::Object &obj);
 
   bool InitParamShortCircuits();
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+} // End expression namespace
+} // End peloton namespace
