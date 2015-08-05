@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * task.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/scheduler/task.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// abstract_task.h
+//
+// Identification: src/backend/scheduler/abstract_task.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

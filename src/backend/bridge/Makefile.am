@@ -15,6 +15,7 @@ bridge_FILES = \
 			   backend/bridge/ddl/bootstrap.cpp \
 			   backend/bridge/ddl/bootstrap_utils.cpp \
 			   backend/bridge/ddl/schema_transformer.cpp \
+			   backend/bridge/ddl/format_transformer.cpp \
 			   backend/bridge/ddl/tests/bridge_test_main.cpp \
 			   backend/bridge/ddl/tests/bridge_test_helper.cpp \
 			   backend/bridge/ddl/tests/bridge_test_database.cpp \

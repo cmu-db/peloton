@@ -1,8 +1,14 @@
-/**
- * @brief Test cases for Append node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// append_test.cpp
+//
+// Identification: tests/executor/append_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <vector>
 

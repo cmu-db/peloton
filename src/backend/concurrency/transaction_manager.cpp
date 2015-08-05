@@ -1,12 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * transaction_manager.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// transaction_manager.cpp
+//
+// Identification: src/backend/concurrency/transaction_manager.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <chrono>
 #include <thread>

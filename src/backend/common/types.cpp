@@ -1,17 +1,18 @@
-/*-------------------------------------------------------------------------
- *
- * types.cc
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/types.cc
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// types.cpp
+//
+// Identification: src/backend/common/types.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/common/types.h"
 #include "backend/common/exception.h"
+#include "backend/common/logger.h"
 
 #include <sstream>
 #include <cstring>
@@ -23,41 +24,6 @@ ItemPointer INVALID_ITEMPOINTER;
 //===--------------------------------------------------------------------===//
 // Type utilities
 //===--------------------------------------------------------------------===//
-
-std::string GetTypeName(ValueType type) {
-  std::string ret;
-
-  switch (type) {
-    case (VALUE_TYPE_TINYINT):
-      return "tinyint";
-    case (VALUE_TYPE_SMALLINT):
-      return "smallint";
-    case (VALUE_TYPE_INTEGER):
-      return "integer";
-    case (VALUE_TYPE_BIGINT):
-      return "bigint";
-    case (VALUE_TYPE_DOUBLE):
-      return "double";
-    case (VALUE_TYPE_VARCHAR):
-      return "varchar";
-    case (VALUE_TYPE_VARBINARY):
-      return "varbinary";
-    case (VALUE_TYPE_TIMESTAMP):
-      return "timestamp";
-    case (VALUE_TYPE_DECIMAL):
-      return "decimal";
-    case (VALUE_TYPE_INVALID):
-      return "INVALID";
-    case (VALUE_TYPE_NULL):
-      return "NULL";
-    default: {
-      char buffer[32];
-      ::snprintf(buffer, 32, "UNKNOWN[%d] ", type);
-      ret = buffer;
-    }
-  }
-  return (ret);
-}
 
 /// Works only for fixed-length types
 std::size_t GetTypeSize(ValueType type) {
@@ -544,7 +510,7 @@ std::string PlanNodeTypeToString(PlanNodeType type) {
 PlanNodeType StringToPlanNodeType(std::string str) {
   if (str == "INVALID") {
     return PLAN_NODE_TYPE_INVALID;
-  } else if(str == "ABSTRACT_SCAN") {
+  } else if (str == "ABSTRACT_SCAN") {
     return PLAN_NODE_TYPE_ABSTRACT_SCAN;
   } else if (str == "SEQSCAN") {
     return PLAN_NODE_TYPE_SEQSCAN;
@@ -692,7 +658,7 @@ ValueType PostgresValueTypeToPelotonValueType(
 
     /* INVALID VALUE TYPE */
     default:
-      printf("INVALID VALUE TYPE : %d \n", PostgresValType);
+      LOG_WARN("INVALID VALUE TYPE : %d \n", PostgresValType);
       valueType = VALUE_TYPE_INVALID;
       break;
   }

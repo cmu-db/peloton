@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * table_iterator.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/storage/table_iterator.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// tuple_iterator.h
+//
+// Identification: src/backend/storage/tuple_iterator.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -20,40 +20,40 @@ namespace peloton {
 namespace storage {
 
 //===--------------------------------------------------------------------===//
-// Tile Iterator
+// Tuple Iterator
 //===--------------------------------------------------------------------===//
 
 /**
- * Iterator for tile which goes over all active tuples.
- *
+ * Iterator for tile which goes over all active tuples within
+ * a single tile.
  **/
-class TileIterator : public Iterator<Tuple> {
-  TileIterator() = delete;
+class TupleIterator : public Iterator<Tuple> {
+  TupleIterator() = delete;
 
  public:
-  TileIterator(const Tile* tile)
+  TupleIterator(const Tile *tile)
       : data(tile->data),
         tile(tile),
-        tile_itr(0),
+        tuple_itr(0),
         tuple_length(tile->tuple_length) {
     tile_group_header = tile->tile_group_header;
   }
 
-  TileIterator(const TileIterator& other)
+  TupleIterator(const TupleIterator &other)
       : data(other.data),
         tile(other.tile),
         tile_group_header(other.tile_group_header),
-        tile_itr(other.tile_itr),
+        tuple_itr(other.tuple_itr),
         tuple_length(other.tuple_length) {}
 
   /**
    * Updates the given tuple so that it points to the next tuple in the table.
    * @return true if succeeded. false if no more tuples are there.
    */
-  bool Next(Tuple& out) {
+  bool Next(Tuple &out) {
     if (HasNext()) {
-      out.Move(data + (tile_itr * tuple_length));
-      tile_itr++;
+      out.Move(data + (tuple_itr * tuple_length));
+      tuple_itr++;
 
       return true;
     }
@@ -61,20 +61,20 @@ class TileIterator : public Iterator<Tuple> {
     return false;
   }
 
-  bool HasNext() { return (tile_itr < tile->GetActiveTupleCount()); }
+  bool HasNext() { return (tuple_itr < tile->GetActiveTupleCount()); }
 
-  oid_t GetLocation() const { return tile_itr; }
+  oid_t GetLocation() const { return tuple_itr; }
 
  private:
   // Base tile data
-  char* data;
+  char *data;
 
-  const Tile* tile;
+  const Tile *tile;
 
-  const TileGroupHeader* tile_group_header;
+  const TileGroupHeader *tile_group_header;
 
   // Iterator over tile data
-  oid_t tile_itr;
+  oid_t tuple_itr;
 
   oid_t tuple_length;
 };

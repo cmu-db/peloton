@@ -1,17 +1,14 @@
-/**
- * @brief Implementation of utility functions for executor tests.
- *
- * Repeated code in many of the executor tests are factored out and placed
- * in this util class.
- *
- * Note that some of the test cases are aware of implementation details
- * of the utility functions i.e. there are implicit contracts between
- * many of the functions here and the test cases. For example, some of the
- * test cases make assumptions about the layout of the tile group returned by
- * CreateSimpleTileGroup().
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// executor_tests_util.cpp
+//
+// Identification: tests/executor/executor_tests_util.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "executor/executor_tests_util.h"
 
@@ -51,55 +48,48 @@ catalog::Column ExecutorTestsUtil::GetColumnInfo(int index) {
   const bool is_inlined = true;
 
   switch (index) {
-    case 0:
-    {
-      auto column = catalog::Column(VALUE_TYPE_INTEGER,
-                               GetTypeSize(VALUE_TYPE_INTEGER), "COL_A",
-                               is_inlined);
+    case 0: {
+      auto column =
+          catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "COL_A", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
       return column;
-    }
-    break;
+    } break;
 
-    case 1:
-    {
-      auto column = catalog::Column(VALUE_TYPE_INTEGER,
-                               GetTypeSize(VALUE_TYPE_INTEGER), "COL_B",
-                               is_inlined);
+    case 1: {
+      auto column =
+          catalog::Column(VALUE_TYPE_INTEGER, GetTypeSize(VALUE_TYPE_INTEGER),
+                          "COL_B", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
       return column;
-    }
-    break;
+    } break;
 
-    case 2:
-    {
-      auto column = catalog::Column(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE),
-                               "COL_C", is_inlined);
+    case 2: {
+      auto column =
+          catalog::Column(VALUE_TYPE_DOUBLE, GetTypeSize(VALUE_TYPE_DOUBLE),
+                          "COL_C", is_inlined);
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
       return column;
-    }
-    break;
+    } break;
 
-    case 3:
-    {
+    case 3: {
       auto column = catalog::Column(VALUE_TYPE_VARCHAR,
-                               25,  // Column length.
-                               "COL_D",
-                               !is_inlined);  // inlined.
+                                    25,  // Column length.
+                                    "COL_D",
+                                    !is_inlined);  // inlined.
 
       column.AddConstraint(catalog::Constraint(CONSTRAINT_TYPE_NOTNULL));
       return column;
-    }
-    break;
+    } break;
 
     default:
-      throw ExecutorException("Invalid column index : " + std::to_string(index));
+      throw ExecutorException("Invalid column index : " +
+                              std::to_string(index));
       break;
   }
-
 }
 
 /**
@@ -134,7 +124,7 @@ storage::TileGroup *ExecutorTestsUtil::CreateTileGroup(
   catalog::Schema schema2(columns);
   schemas.push_back(schema2);
 
-  std::map<oid_t, std::pair<oid_t, oid_t> > column_map;
+  std::map<oid_t, std::pair<oid_t, oid_t>> column_map;
   column_map[0] = std::make_pair(0, 0);
   column_map[1] = std::make_pair(0, 1);
   column_map[2] = std::make_pair(1, 0);
@@ -187,11 +177,11 @@ void ExecutorTestsUtil::PopulateTable(storage::DataTable *table, int num_rows,
       // In case of random, make sure this column has duplicated values
       tuple.SetValue(
           1, ValueFactory::GetIntegerValue(PopulatedValue(
-              random ? std::rand() % (num_rows / 2) : populate_value, 1)));
+                 random ? std::rand() % (num_rows / 2) : populate_value, 1)));
     }
 
     tuple.SetValue(2, ValueFactory::GetDoubleValue(PopulatedValue(
-        random ? std::rand() : populate_value, 2)));
+                          random ? std::rand() : populate_value, 2)));
 
     // In case of random, make sure this column has duplicated values
     Value string_value =
@@ -275,11 +265,11 @@ executor::LogicalTile *ExecutorTestsUtil::ExecuteTile(
 
   // Where the main work takes place...
   EXPECT_CALL(child_executor, DExecute())
-  .WillOnce(Return(true))
-  .WillOnce(Return(false));
+      .WillOnce(Return(true))
+      .WillOnce(Return(false));
 
   EXPECT_CALL(child_executor, GetOutput())
-  .WillOnce(Return(source_logical_tile));
+      .WillOnce(Return(source_logical_tile));
 
   EXPECT_TRUE(executor->Execute());
   std::unique_ptr<executor::LogicalTile> result_logical_tile(
