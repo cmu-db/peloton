@@ -1,16 +1,17 @@
 /*-------------------------------------------------------------------------
  *
- * schema_transformaer.cpp
+ * schema_transformer.cpp
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/catalog/tuple_schema.cpp
+ * /peloton/src/backend/bridge/ddl/schema_transformer.cpp
  *
  *-------------------------------------------------------------------------
  */
 
 #include "backend/bridge/ddl/schema_transformer.h"
+#include "backend/bridge/ddl/format_transformer.h"
 
 #include <vector>
 #include <iostream>
@@ -39,31 +40,20 @@ catalog::Schema* SchemaTransformer::GetSchemaFromTupleDesc(TupleDesc tupleDesc){
   for(int column_itr=0; column_itr<natts; column_itr++){
     std::vector<catalog::Constraint> constraint_infos;
 
-    // value
-    PostgresValueType postgresValueType = (PostgresValueType)tupleDesc->attrs[column_itr]->atttypid;
-    ValueType value_type = PostgresValueTypeToPelotonValueType(postgresValueType);
+
+    PostgresValueFormat postgresValueFormat( tupleDesc->attrs[column_itr]->atttypid, 
+                                             tupleDesc->attrs[column_itr]->atttypmod,
+                                             tupleDesc->attrs[column_itr]->attlen ); 
+
+    PelotonValueFormat pelotonValueFormat = FormatTransformer::TransformValueFormat(postgresValueFormat);
+
+    ValueType value_type = pelotonValueFormat.GetType();
+    int column_length = pelotonValueFormat.GetLength();
+    bool is_inlined = pelotonValueFormat.IsInlined();
 
     // Skip invalid attributes (e.g., ctid)
     if(VALUE_TYPE_INVALID == value_type){
       continue;
-    }
-
-    // length
-    int column_length = tupleDesc->attrs[column_itr]->attlen;
-
-    // inlined
-    bool is_inlined = true;
-    if (tupleDesc->attrs[column_itr]->attlen == -1) {
-      column_length = tupleDesc->attrs[column_itr]->atttypmod;
-      is_inlined = false;
-    }
-
-    // TODO: Special case for DECIMAL. May move it somewhere else?
-    // DECIMAL in PG is variable length but in Peloton is inlined (16 bytes)
-    if(VALUE_TYPE_DECIMAL == value_type){
-      LOG_INFO("Detect a DECIMAL attribute. \n");
-      column_length = 16;
-      is_inlined = true;
     }
 
     // NOT NULL constraint
