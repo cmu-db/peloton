@@ -326,6 +326,15 @@ Bootstrap::GetRawColumn(Oid relation_oid, char relation_kind, Relation pg_attrib
           is_inlined = false;
         }
 
+        // TODO: Special case for DECIMAL. May move it somewhere else?
+        // DECIMAL in PG is variable length but in Peloton is inlined (16 bytes)
+        // This code is duplicated in schema_transformer.cpp
+        if(VALUE_TYPE_DECIMAL == value_type){
+          LOG_INFO("Detect a DECIMAL attribute. \n");
+          column_length = 16;
+          is_inlined = true;
+        }
+
         // NOT NULL constraint
         if (pg_attribute->attnotnull) {
           raw_constraint_info* raw_constraint = (raw_constraint_info*)palloc(sizeof(raw_constraint_info));
