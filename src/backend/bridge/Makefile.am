@@ -29,6 +29,7 @@ bridge_FILES = \
 			   backend/bridge/dml/mapper/mapper_limit.cpp \
 			   backend/bridge/dml/mapper/mapper_lock_rows.cpp \
 			   backend/bridge/dml/mapper/mapper_materialization.cpp \
+			   backend/bridge/dml/mapper/mapper_agg.cpp \
 			   backend/bridge/dml/mapper/mapper_utils.cpp \
 			   backend/bridge/dml/tuple/tuple_transformer.cpp \
 			   backend/bridge/dml/executor/plan_executor.cpp \
