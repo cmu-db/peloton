@@ -1,7 +1,15 @@
-/*
- * project_info.cpp
- *
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// project_info.cpp
+//
+// Identification: src/backend/planner/project_info.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #include "backend/planner/project_info.h"
 
 namespace peloton {
@@ -33,9 +41,9 @@ ProjectInfo::~ProjectInfo() {
  * @param tuple2  Source tuple 2.
  * @param econtext  ExecutorContext for expression evaluation.
  */
-bool ProjectInfo::Evaluate(storage::Tuple* dest, const AbstractTuple* tuple1,
-                           const AbstractTuple* tuple2,
-                           executor::ExecutorContext* econtext) const {
+bool ProjectInfo::Evaluate(storage::Tuple *dest, const AbstractTuple *tuple1,
+                           const AbstractTuple *tuple2,
+                           executor::ExecutorContext *econtext) const {
   // (A) Execute target list
   for (auto target : target_list_) {
     auto col_id = target.first;
@@ -53,9 +61,8 @@ bool ProjectInfo::Evaluate(storage::Tuple* dest, const AbstractTuple* tuple1,
     auto tuple_index = dm.second.first;
     auto src_col_id = dm.second.second;
 
-    Value value =
-        (tuple_index == 0) ?
-            tuple1->GetValue(src_col_id) : tuple2->GetValue(src_col_id);
+    Value value = (tuple_index == 0) ? tuple1->GetValue(src_col_id)
+                                     : tuple2->GetValue(src_col_id);
 
     dest->SetValue(dest_col_id, value);
   }
@@ -66,19 +73,18 @@ bool ProjectInfo::Evaluate(storage::Tuple* dest, const AbstractTuple* tuple1,
 std::string ProjectInfo::Debug() const {
   std::ostringstream buffer;
   buffer << "Target List: < DEST_column_id , expression >\n";
-  for (auto& target : target_list_) {
+  for (auto &target : target_list_) {
     buffer << "Dest Col id: " << target.first << std::endl;
     buffer << "Expr: \n" << target.second->Debug(" ");
     buffer << std::endl;
   }
   buffer << "DirectMap List: < NEW_col_id , <tuple_idx , OLD_col_id>  > \n";
-  for (auto& dmap : direct_map_list_) {
+  for (auto &dmap : direct_map_list_) {
     buffer << "<" << dmap.first << ", <" << dmap.second.first << ", "
            << dmap.second.second << "> >\n\n";
   }
 
   return (buffer.str());
-
 }
 
 } /* namespace planner */

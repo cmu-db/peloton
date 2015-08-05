@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * aggregate_executor.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/executor/aggregate_executor.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// aggregate_executor.h
+//
+// Identification: src/backend/executor/aggregate_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

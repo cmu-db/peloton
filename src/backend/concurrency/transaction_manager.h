@@ -1,12 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * transaction_manager.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// transaction_manager.h
+//
+// Identification: src/backend/concurrency/transaction_manager.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

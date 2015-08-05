@@ -1,8 +1,14 @@
-/**
- * @brief Test cases for sequential scan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// index_scan_test.cpp
+//
+// Identification: tests/executor/index_scan_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <memory>
 
@@ -48,21 +54,16 @@ TEST(IndexScanTests, IndexPredicateTest) {
   values.push_back(ValueFactory::GetIntegerValue(110));
 
   // Create index scan desc
-  planner::IndexScanNode::IndexScanDesc index_scan_desc(
-      index,
-      key_column_ids,
-      expr_types,
-      values);
+  planner::IndexScanNode::IndexScanDesc index_scan_desc(index, key_column_ids,
+                                                        expr_types, values);
 
   expression::AbstractExpression *predicate = nullptr;
 
   // Create plan node.
-  planner::IndexScanNode node(predicate,
-                              column_ids,
-                              data_table.get(),
+  planner::IndexScanNode node(predicate, column_ids, data_table.get(),
                               index_scan_desc);
 
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -73,7 +74,7 @@ TEST(IndexScanTests, IndexPredicateTest) {
 
   EXPECT_TRUE(executor.Init());
 
-  std::vector<std::unique_ptr<executor::LogicalTile> > result_tiles;
+  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
 
   for (int i = 0; i < expected_num_tiles; i++) {
     EXPECT_TRUE(executor.Execute());
@@ -116,21 +117,16 @@ TEST(IndexScanTests, MultiColumnPredicateTest) {
   values.push_back(ValueFactory::GetIntegerValue(70));
 
   // Create index scan desc
-  planner::IndexScanNode::IndexScanDesc index_scan_desc(
-      index,
-      key_column_ids,
-      expr_types,
-      values);
+  planner::IndexScanNode::IndexScanDesc index_scan_desc(index, key_column_ids,
+                                                        expr_types, values);
 
   expression::AbstractExpression *predicate = nullptr;
 
   // Create plan node.
-  planner::IndexScanNode node(predicate,
-                              column_ids,
-                              data_table.get(),
+  planner::IndexScanNode node(predicate, column_ids, data_table.get(),
                               index_scan_desc);
 
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
@@ -141,7 +137,7 @@ TEST(IndexScanTests, MultiColumnPredicateTest) {
 
   EXPECT_TRUE(executor.Init());
 
-  std::vector<std::unique_ptr<executor::LogicalTile> > result_tiles;
+  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
 
   for (int i = 0; i < expected_num_tiles; i++) {
     EXPECT_TRUE(executor.Execute());

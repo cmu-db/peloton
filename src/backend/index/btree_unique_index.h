@@ -1,12 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * btree_multimap_index.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// btree_unique_index.h
+//
+// Identification: src/backend/index/btree_unique_index.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -28,7 +30,7 @@ namespace index {
  *
  * @see Index
  */
-template<typename KeyType, class KeyComparator, class KeyEqualityChecker>
+template <typename KeyType, class KeyComparator, class KeyEqualityChecker>
 class BtreeUniqueIndex : public Index {
   friend class IndexFactory;
 
@@ -37,31 +39,28 @@ class BtreeUniqueIndex : public Index {
 
  public:
   BtreeUniqueIndex(IndexMetadata *metadata)
- : Index(metadata),
-   container(KeyComparator(metadata)),
-   equals(metadata),
-   comparator(metadata){
-  }
+      : Index(metadata),
+        container(KeyComparator(metadata)),
+        equals(metadata),
+        comparator(metadata) {}
 
-  ~BtreeUniqueIndex() {
-  }
+  ~BtreeUniqueIndex() {}
 
-  bool InsertEntry(const storage::Tuple *key,
-                   const ItemPointer location) {
+  bool InsertEntry(const storage::Tuple *key, const ItemPointer location) {
     {
       index_lock.WriteLock();
       index_key1.SetFromKey(key);
 
       // Insert the key, val pair
-      auto status = container.insert(std::pair<KeyType, ValueType>(index_key1, location));
+      auto status =
+          container.insert(std::pair<KeyType, ValueType>(index_key1, location));
 
       index_lock.Unlock();
       return status.second;
     }
   }
 
-  bool DeleteEntry(const storage::Tuple *key,
-                   const ItemPointer location) {
+  bool DeleteEntry(const storage::Tuple *key, const ItemPointer location) {
     {
       index_lock.WriteLock();
       index_key1.SetFromKey(key);
@@ -74,19 +73,17 @@ class BtreeUniqueIndex : public Index {
     }
   }
 
-  bool UpdateEntry(const storage::Tuple *key,
-                   const ItemPointer location,
+  bool UpdateEntry(const storage::Tuple *key, const ItemPointer location,
                    const ItemPointer old_location) {
-
     {
       index_lock.WriteLock();
       index_key1.SetFromKey(key);
 
       // Check for <key, old location> first
-      if(container.count(index_key1) != 0) {
+      if (container.count(index_key1) != 0) {
         ItemPointer old_loc = container[index_key1];
-        if((old_loc.block == old_location.block) &&
-            (old_loc.offset == old_location.offset))  {
+        if ((old_loc.block == old_location.block) &&
+            (old_loc.offset == old_location.offset)) {
           container[index_key1] = location;
           index_lock.Unlock();
           return true;
@@ -96,18 +93,16 @@ class BtreeUniqueIndex : public Index {
       index_lock.Unlock();
       return false;
     }
-
   }
 
-  ItemPointer Exists(const storage::Tuple *key,
-                     const ItemPointer location) {
+  ItemPointer Exists(const storage::Tuple *key, const ItemPointer location) {
     {
       index_lock.ReadLock();
       index_key1.SetFromKey(key);
 
       // find the key, location pair
       auto container_itr = container.find(index_key1);
-      if(container_itr != container.end()) {
+      if (container_itr != container.end()) {
         index_lock.Unlock();
         return container_itr->second;
       }
@@ -117,10 +112,9 @@ class BtreeUniqueIndex : public Index {
     }
   }
 
-  std::vector<ItemPointer> Scan(
-      const std::vector<Value>& values,
-      const std::vector<oid_t>& key_column_ids,
-      const std::vector<ExpressionType>& expr_types) {
+  std::vector<ItemPointer> Scan(const std::vector<Value> &values,
+                                const std::vector<oid_t> &key_column_ids,
+                                const std::vector<ExpressionType> &expr_types) {
     std::vector<ItemPointer> result;
 
     {
@@ -128,12 +122,12 @@ class BtreeUniqueIndex : public Index {
 
       // check if we have leading column equality
       oid_t leading_column_id = 0;
-      auto key_column_ids_itr = std::find(key_column_ids.begin(), key_column_ids.end(),
-                                          leading_column_id);
+      auto key_column_ids_itr = std::find(
+          key_column_ids.begin(), key_column_ids.end(), leading_column_id);
       bool special_case = false;
-      if(key_column_ids_itr != key_column_ids.end()) {
+      if (key_column_ids_itr != key_column_ids.end()) {
         auto offset = std::distance(key_column_ids.begin(), key_column_ids_itr);
-        if(expr_types[offset] == EXPRESSION_TYPE_COMPARE_EQ){
+        if (expr_types[offset] == EXPRESSION_TYPE_COMPARE_EQ) {
           special_case = true;
           LOG_INFO("Special case");
         }
@@ -142,17 +136,17 @@ class BtreeUniqueIndex : public Index {
       auto itr = container.begin();
       storage::Tuple *start_key = nullptr;
       // start scanning from upper bound if possible
-      if(special_case == true) {
+      if (special_case == true) {
         start_key = new storage::Tuple(metadata->GetKeySchema(), true);
         // set the lower bound tuple
-        auto all_equal = SetLowerBoundTuple(start_key, values, key_column_ids, expr_types);
+        auto all_equal =
+            SetLowerBoundTuple(start_key, values, key_column_ids, expr_types);
         index_key1.SetFromKey(start_key);
 
         // all equal case
-        if(all_equal){
+        if (all_equal) {
           itr = container.find(index_key1);
-        }
-        else {
+        } else {
           itr = container.upper_bound(index_key1);
         }
       }
@@ -162,10 +156,7 @@ class BtreeUniqueIndex : public Index {
         auto index_key = itr->first;
         auto tuple = index_key.GetTupleForComparison(metadata->GetKeySchema());
 
-        if(Compare(tuple,
-                   key_column_ids,
-                   expr_types,
-                   values) == true) {
+        if (Compare(tuple, key_column_ids, expr_types, values) == true) {
           ItemPointer location = itr->second;
           result.push_back(location);
         }
@@ -179,11 +170,9 @@ class BtreeUniqueIndex : public Index {
     return result;
   }
 
-
   std::string GetTypeName() const { return "BtreeMap"; }
 
  protected:
-
   MapType container;
   KeyType index_key1;
   KeyType index_key2;
@@ -194,7 +183,6 @@ class BtreeUniqueIndex : public Index {
 
   // synch helper
   RWLock index_lock;
-
 };
 
 }  // End index namespace
