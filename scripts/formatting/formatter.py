@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+## ==============================================
+## GOAL : Format code, Add/Strip headers
+## ==============================================
+
 import argparse
 import logging
 import os
@@ -6,19 +13,24 @@ import sys
 
 
 ## ==============================================
-## 			MISCELLANEOUS CONFIGURATION
+## CONFIGURATION
 ## ==============================================
-
-CODE_SOURCE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 #absolute path to peloton directory is calculated from current directory
 #directory structure: peloton/scripts/formatting/<this_file>
 #PELOTON_DIR needs to be redefined if the directory structure is changed
+CODE_SOURCE_DIR = os.path.abspath(os.path.dirname(__file__))
 PELOTON_DIR = reduce(os.path.join, [CODE_SOURCE_DIR, os.path.pardir, os.path.pardir])
 
 #other directory paths used are relative to peloton_dir
 PELOTON_SRC_DIR = os.path.join(PELOTON_DIR, "src")
 PELOTON_SRC_BACKEND_DIR = os.path.join(PELOTON_SRC_DIR, "backend")
+PELOTON_TESTS_DIR = os.path.join(PELOTON_DIR, "tests")
+
+# DEFAULT DIRS
+DEFAULT_DIRS = []
+DEFAULT_DIRS.append(PELOTON_SRC_BACKEND_DIR)
+DEFAULT_DIRS.append(PELOTON_TESTS_DIR)
 
 #header framework, dynamic information will be added inside function
 header_comment_line_1 = "/*-----------------------------------------------------------------\n"
@@ -54,7 +66,6 @@ LOG_formatter = logging.Formatter(
 LOG_handler.setFormatter(LOG_formatter)
 LOG.addHandler(LOG_handler)
 LOG.setLevel(logging.INFO)
-
 
 ## ==============================================
 ## 		  UTILITY FUNCTION DEFINITIONS
@@ -229,7 +240,8 @@ if __name__ == '__main__':
 			print (''.join(args.dir_name))
 			add_headers_dir(''.join(args.dir_name))
 		else:
-			add_headers_dir(PELOTON_SRC_BACKEND_DIR)
+			for dir in DEFAULT_DIRS:
+				add_headers_dir(dir)
 	#END IF ADD_HEADER
 	
 	
@@ -241,7 +253,8 @@ if __name__ == '__main__':
 		elif args.dir_name:
 			strip_headers_dir(''.join(args.dir_name))
 		else:
-			strip_headers_dir(PELOTON_SRC_BACKEND_DIR)
+			for dir in DEFAULT_DIRS:
+				strip_headers_dir(dir)			
 	#END IF STRIP_HEADER
 	
 	
@@ -253,7 +266,8 @@ if __name__ == '__main__':
 		elif args.dir_name:
 			clang_format_dir(''.join(args.dir_name))
 		else:
-			clang_format_dir(PELOTON_SRC_BACKEND_DIR)
+			for dir in DEFAULT_DIRS:
+				clang_format_dir(dir)			
 	#END IF CLANG_FORMAT
 	
 	
