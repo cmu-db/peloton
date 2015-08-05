@@ -58,6 +58,14 @@ catalog::Schema* SchemaTransformer::GetSchemaFromTupleDesc(TupleDesc tupleDesc){
       is_inlined = false;
     }
 
+    // TODO: Special case for DECIMAL. May move it somewhere else?
+    // DECIMAL in PG is variable length but in Peloton is inlined (16 bytes)
+    if(VALUE_TYPE_DECIMAL == value_type){
+      LOG_INFO("Detect a DECIMAL attribute. \n");
+      column_length = 16;
+      is_inlined = true;
+    }
+
     // NOT NULL constraint
     if (tupleDesc->attrs[column_itr]->attnotnull) {
       catalog::Constraint constraint(CONSTRAINT_TYPE_NOTNULL);

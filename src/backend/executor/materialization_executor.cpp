@@ -166,8 +166,11 @@ LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
 
   bool own_base_tile = true;
 
+  std::vector<storage::Tile *> singleton({dest_tile.release()});
+  return LogicalTileFactory::WrapTiles( singleton, own_base_tile);
+
   // Wrap physical tile in logical tile.
-  return LogicalTileFactory::WrapTiles( { dest_tile.release() }, own_base_tile);
+//  return LogicalTileFactory::WrapTiles( { dest_tile.release() }, own_base_tile);
 }
 
 /**
