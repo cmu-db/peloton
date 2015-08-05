@@ -1,12 +1,14 @@
-/*-------------------------------------------------------------------------
- *
-l* database.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// database.h
+//
+// Identification: src/backend/storage/database.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -56,21 +58,27 @@ class Database {
   // STATS
   //===--------------------------------------------------------------------===//
 
-  void UpdateStats(Peloton_Status* status, bool dirty_care);
+  void UpdateStats(Peloton_Status *status, bool dirty_care);
 
-  void UpdateStatsWithOid(Peloton_Status* status, const oid_t table_oid);
+  void UpdateStatsWithOid(Peloton_Status *status, const oid_t table_oid);
 
   //===--------------------------------------------------------------------===//
   // UTILITIES
   //===--------------------------------------------------------------------===//
 
-  static dirty_table_info** CreateDirtyTables(std::vector< dirty_table_info*> dirty_tables_vec);
+  static dirty_table_info **CreateDirtyTables(
+      std::vector<dirty_table_info *> dirty_tables_vec);
 
-  static dirty_index_info** CreateDirtyIndexes(std::vector< dirty_index_info*> dirty_indexes_vec);
+  static dirty_index_info **CreateDirtyIndexes(
+      std::vector<dirty_index_info *> dirty_indexes_vec);
 
-  static dirty_table_info* CreateDirtyTable(oid_t table_oid, float number_of_tuples,  dirty_index_info** dirty_indexes, oid_t index_count);
+  static dirty_table_info *CreateDirtyTable(oid_t table_oid,
+                                            float number_of_tuples,
+                                            dirty_index_info **dirty_indexes,
+                                            oid_t index_count);
 
-  static dirty_index_info* CreateDirtyIndex(oid_t index_oid, float number_of_tuples);
+  static dirty_index_info *CreateDirtyIndex(oid_t index_oid,
+                                            float number_of_tuples);
 
   // Get a string representation of this database
   friend std::ostream &operator<<(std::ostream &os, const Database &database);

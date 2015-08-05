@@ -1,18 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * peloton.cpp
- *  Stub main() routine for the peloton executable.
- *
- * This does some essential startup tasks.
- *
- * Copyright(c) 2015, CMU
- * Portions Copyright (c) 1996-2015, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * src/backend/peloton.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// main.cpp
+//
+// Identification: src/backend/main/main.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <unistd.h>
 

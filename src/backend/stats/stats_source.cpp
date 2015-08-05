@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * stats_source.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/stats/stats_source.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// stats_source.cpp
+//
+// Identification: src/backend/stats/stats_source.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/stats/stats_source.h"
 
@@ -69,7 +69,7 @@ void StatsSource::Configure(std::string _identifier, Oid _host_id, Oid _site_id,
 
   columns = CreateBaseStatsTableSchema();
 
-  Schema* schema = Schema::Schema(columns);
+  Schema *schema = Schema::Schema(columns);
 
   for (int column_itr = 0; column_itr < column_names.size(); column_itr++) {
     column_name_to_index[column_names[column_itr]] = column_itr;
@@ -91,7 +91,7 @@ void StatsSource::Configure(std::string _identifier, Oid _host_id, Oid _site_id,
  * @param now Timestamp to return with each row
  * @return Pointer to a table containing the statistics.
  */
-Table* StatsSource::GetTable(bool interval, int64_t timestamp) {
+Table *StatsSource::GetTable(bool interval, int64_t timestamp) {
   GetTuple(interval, timestamp);
 
   return table->Get();
@@ -108,7 +108,7 @@ Table* StatsSource::GetTable(bool interval, int64_t timestamp) {
  * @return Pointer to a table tuple containing the latest version of the
  *statistics.
  */
-storage::Tuple* StatsSource::GetTuple(bool _interval, int64_t timestamp) {
+storage::Tuple *StatsSource::GetTuple(bool _interval, int64_t timestamp) {
   interval = _interval;
   assert(table != NULL);
 
@@ -138,7 +138,7 @@ std::vector<std::string> StatsSource::GetStatsTableColumnNames() {
 
 /// String representation of the statistics. Default implementation is to print
 /// the stats table.
-std::ostream& operator<<(std::ostream& os, const StatsSource& stats_source) {
+std::ostream &operator<<(std::ostream &os, const StatsSource &stats_source) {
   uint32_t column_count;
 
   column_count = stats_source.table->GetColumnCount();

@@ -1,21 +1,20 @@
-/*-------------------------------------------------------------------------
- *
- * schema_transformer.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/ddl/schema_transformer.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// schema_transformer.cpp
+//
+// Identification: src/backend/bridge/ddl/schema_transformer.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/bridge/ddl/schema_transformer.h"
 #include "backend/bridge/ddl/format_transformer.h"
 
 #include <vector>
 #include <iostream>
-
 
 #include "backend/catalog/constraint.h"
 #include "backend/catalog/column.h"
@@ -29,17 +28,16 @@ namespace bridge {
 // Schema Transformer
 //===--------------------------------------------------------------------===//
 
-
-catalog::Schema* SchemaTransformer::GetSchemaFromTupleDesc(TupleDesc tupleDesc){
-  catalog::Schema* schema = nullptr;
+catalog::Schema *SchemaTransformer::GetSchemaFromTupleDesc(
+    TupleDesc tupleDesc) {
+  catalog::Schema *schema = nullptr;
 
   std::vector<catalog::Column> columns;
   int natts = tupleDesc->natts;
 
   // construct column
-  for(int column_itr=0; column_itr<natts; column_itr++){
+  for (int column_itr = 0; column_itr < natts; column_itr++) {
     std::vector<catalog::Constraint> constraint_infos;
-
 
     PostgresValueFormat postgresValueFormat( tupleDesc->attrs[column_itr]->atttypid, 
                                              tupleDesc->attrs[column_itr]->atttypmod,
@@ -68,8 +66,9 @@ catalog::Schema* SchemaTransformer::GetSchemaFromTupleDesc(TupleDesc tupleDesc){
       constraint_infos.push_back(constraint);
     }
 
-    catalog::Column column(value_type, column_length, NameStr(tupleDesc->attrs[column_itr]->attname),
-        is_inlined);
+    catalog::Column column(value_type, column_length,
+                           NameStr(tupleDesc->attrs[column_itr]->attname),
+                           is_inlined);
     columns.push_back(column);
   }
 
@@ -83,4 +82,3 @@ catalog::Schema* SchemaTransformer::GetSchemaFromTupleDesc(TupleDesc tupleDesc){
 
 }  // End bridge namespace
 }  // End peloton namespace
-

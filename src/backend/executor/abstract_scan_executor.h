@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * abstract_scan_executor.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/executor/abstract_scan_executor.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// abstract_scan_executor.h
+//
+// Identification: src/backend/executor/abstract_scan_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -40,7 +40,6 @@ class AbstractScanExecutor : public AbstractExecutor {
   bool DExecute() = 0;
 
  protected:
-
   //===--------------------------------------------------------------------===//
   // Plan Info
   //===--------------------------------------------------------------------===//

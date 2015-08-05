@@ -1,8 +1,14 @@
-/**
- * @brief Tuple interface used by the expression system.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// abstract_tuple.h
+//
+// Identification: src/backend/common/abstract_tuple.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

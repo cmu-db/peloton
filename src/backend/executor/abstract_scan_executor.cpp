@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * abstract_scan_executor.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/executor/abstract_scan_executor.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// abstract_scan_executor.cpp
+//
+// Identification: src/backend/executor/abstract_scan_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/executor/abstract_scan_executor.h"
 
@@ -35,7 +35,7 @@ namespace executor {
  * @param node AbstractScanNode node corresponding to this executor.
  */
 AbstractScanExecutor::AbstractScanExecutor(planner::AbstractPlanNode *node,
-                                 ExecutorContext *executor_context)
+                                           ExecutorContext *executor_context)
     : AbstractExecutor(node, executor_context) {}
 
 /**
@@ -47,16 +47,14 @@ bool AbstractScanExecutor::DInit() {
   assert(executor_context_);
 
   // Grab data from plan node.
-  const planner::AbstractScanNode &node = GetPlanNode<planner::AbstractScanNode>();
+  const planner::AbstractScanNode &node =
+      GetPlanNode<planner::AbstractScanNode>();
 
   predicate_ = node.GetPredicate();
   column_ids_ = node.GetColumnIds();
-
 
   return true;
 }
 
 }  // namespace executor
 }  // namespace peloton
-
-

@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * index_factory.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/index/index_factory.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// index_factory.h
+//
+// Identification: src/backend/index/index_factory.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

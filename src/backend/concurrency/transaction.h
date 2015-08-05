@@ -1,12 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * transaction.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// transaction.h
+//
+// Identification: src/backend/concurrency/transaction.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -30,7 +32,7 @@ namespace concurrency {
 class Transaction {
   friend class TransactionManager;
 
-  Transaction(Transaction const&) = delete;
+  Transaction(Transaction const &) = delete;
 
  public:
   Transaction()
@@ -72,14 +74,14 @@ class Transaction {
   void RecordDelete(ItemPointer location);
 
   // check if it has inserted any tuples in given tile group
-  bool HasInsertedTuples(storage::TileGroup* tile_group) const;
+  bool HasInsertedTuples(storage::TileGroup *tile_group) const;
 
   // check if it has deleted any tuples in given tile group
-  bool HasDeletedTuples(storage::TileGroup* tile_group) const;
+  bool HasDeletedTuples(storage::TileGroup *tile_group) const;
 
-  const std::map<storage::TileGroup*, std::vector<oid_t> >& GetInsertedTuples();
+  const std::map<storage::TileGroup *, std::vector<oid_t>> &GetInsertedTuples();
 
-  const std::map<storage::TileGroup*, std::vector<oid_t> >& GetDeletedTuples();
+  const std::map<storage::TileGroup *, std::vector<oid_t>> &GetDeletedTuples();
 
   // maintain reference counts for transactions
   void IncrementRefCount();
@@ -87,7 +89,7 @@ class Transaction {
   void DecrementRefCount();
 
   // Get a string representation of this txn
-  friend std::ostream& operator<<(std::ostream& os, const Transaction& txn);
+  friend std::ostream &operator<<(std::ostream &os, const Transaction &txn);
 
   // Set result and status
   void SetResult(Result result);
@@ -116,13 +118,13 @@ class Transaction {
   std::atomic<bool> waiting_to_commit;
 
   // cid context
-  Transaction* next __attribute__((aligned(16)));
+  Transaction *next __attribute__((aligned(16)));
 
   // inserted tuples
-  std::map<storage::TileGroup*, std::vector<oid_t> > inserted_tuples;
+  std::map<storage::TileGroup *, std::vector<oid_t>> inserted_tuples;
 
   // deleted tuples
-  std::map<storage::TileGroup*, std::vector<oid_t> > deleted_tuples;
+  std::map<storage::TileGroup *, std::vector<oid_t>> deleted_tuples;
 
   // synch helpers
   std::mutex txn_mutex;

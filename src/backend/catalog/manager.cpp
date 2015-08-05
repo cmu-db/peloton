@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * manager.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/catalog/manager.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// manager.cpp
+//
+// Identification: src/backend/catalog/manager.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <cassert>
 
@@ -67,7 +67,8 @@ void Manager::DropDatabaseWithOid(const oid_t database_oid) {
 
     oid_t database_offset = 0;
     for (auto database : databases) {
-       printf("in %s dboid %u cur dboid %u \n", __func__, database_oid, database->GetOid() );
+      printf("in %s dboid %u cur dboid %u \n", __func__, database_oid,
+             database->GetOid());
       if (database->GetOid() == database_oid) {
         break;
       }
