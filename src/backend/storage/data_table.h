@@ -16,6 +16,7 @@
 #include "backend/storage/abstract_table.h"
 #include "backend/storage/backend_vm.h"
 #include "backend/storage/tile_group.h"
+#include "backend/storage/tile_group_iterator.h"
 #include "backend/storage/tile_group_factory.h"
 
 #include <string>
@@ -37,153 +38,160 @@ namespace storage {
  *
  */
 class DataTable : public AbstractTable {
-  friend class TileGroup;
-  friend class TileGroupFactory;
-  friend class TableFactory;
+    friend class TileGroup;
+    friend class TileGroupFactory;
+    friend class TableFactory;
+    friend class TileIterator;
 
-  DataTable() = delete;
-  DataTable(DataTable const &) = delete;
+    DataTable() = delete;
+    DataTable(DataTable const &) = delete;
 
- public:
-  // Table constructor
-  DataTable(catalog::Schema *schema, AbstractBackend *backend,
-            std::string table_name, oid_t table_oid,
-            size_t tuples_per_tilegroup);
+public:
+    // Table constructor
+    DataTable(catalog::Schema *schema, AbstractBackend *backend,
+              std::string table_name, oid_t table_oid,
+              size_t tuples_per_tilegroup);
 
-  ~DataTable();
+    ~DataTable();
 
-  //===--------------------------------------------------------------------===//
-  // TUPLE OPERATIONS
-  //===--------------------------------------------------------------------===//
+    //===--------------------------------------------------------------------===//
+    // TUPLE OPERATIONS
+    //===--------------------------------------------------------------------===//
 
-  // insert tuple in table
-  ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple,
-                          bool update = false);
+    // insert tuple in table
+    ItemPointer InsertTuple(txn_id_t transaction_id, const Tuple *tuple,
+                            bool update = false);
 
-  void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+    void InsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
-  bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
+    bool TryInsertInIndexes(const storage::Tuple *tuple, ItemPointer location);
 
-  bool DeleteTuple(txn_id_t transaction_id, ItemPointer location);
+    bool DeleteTuple(txn_id_t transaction_id, ItemPointer location);
 
-  void DeleteInIndexes(const storage::Tuple *tuple);
+    void DeleteInIndexes(const storage::Tuple *tuple);
 
-  bool CheckNulls(const storage::Tuple *tuple) const;
+    bool CheckNulls(const storage::Tuple *tuple) const;
 
-  //===--------------------------------------------------------------------===//
-  // TILE GROUP
-  //===--------------------------------------------------------------------===//
+    //===--------------------------------------------------------------------===//
+    // TILE GROUP
+    //===--------------------------------------------------------------------===//
 
-  // add a default unpartitioned tile group to table
-  oid_t AddDefaultTileGroup();
+    // add a default unpartitioned tile group to table
+    oid_t AddDefaultTileGroup();
 
-  // add a customized tile group to table
-  void AddTileGroup(TileGroup *tile_group);
+    // add a customized tile group to table
+    void AddTileGroup(TileGroup *tile_group);
 
-  // NOTE: This must go through the manager's locator
-  // This allows us to "TRANSFORM" tile groups atomically
-  // WARNING: We should distinguish OFFSET and ID of a tile group
-  TileGroup *GetTileGroup(oid_t tile_group_offset) const;
+    // NOTE: This must go through the manager's locator
+    // This allows us to "TRANSFORM" tile groups atomically
+    // WARNING: We should distinguish OFFSET and ID of a tile group
+    TileGroup *GetTileGroup(oid_t tile_group_offset) const;
 
-  TileGroup *GetTileGroupById(oid_t tile_group_id) const;
+    TileGroup *GetTileGroupById(oid_t tile_group_id) const;
 
-  size_t GetTileGroupCount() const;
+    size_t GetTileGroupCount() const;
 
-  //===--------------------------------------------------------------------===//
-  // INDEX
-  //===--------------------------------------------------------------------===//
+    //===--------------------------------------------------------------------===//
+    // INDEX
+    //===--------------------------------------------------------------------===//
 
-  void AddIndex(index::Index *index);
+    void AddIndex(index::Index *index);
 
-  index::Index *GetIndexWithOid(const oid_t index_oid) const;
+    index::Index *GetIndexWithOid(const oid_t index_oid) const;
 
-  void DropIndexWithOid(const oid_t index_oid);
+    void DropIndexWithOid(const oid_t index_oid);
 
-  index::Index *GetIndex(const oid_t index_offset) const;
+    index::Index *GetIndex(const oid_t index_offset) const;
 
-  oid_t GetIndexCount() const;
+    oid_t GetIndexCount() const;
 
+    //===--------------------------------------------------------------------===//
+    // FOREIGN KEYS
+    //===--------------------------------------------------------------------===//
 
+    void AddForeignKey(catalog::ForeignKey *key);
 
-  //===--------------------------------------------------------------------===//
-  // FOREIGN KEYS
-  //===--------------------------------------------------------------------===//
+    catalog::ForeignKey *GetForeignKey(const oid_t key_offset) const;
 
-  void AddForeignKey(catalog::ForeignKey *key);
+    void DropForeignKey(const oid_t key_offset);
 
-  catalog::ForeignKey *GetForeignKey(const oid_t key_offset) const;
+    oid_t GetForeignKeyCount() const;
 
-  void DropForeignKey(const oid_t key_offset);
+    //===--------------------------------------------------------------------===//
+    // TRANSFORMERS
+    //===--------------------------------------------------------------------===//
 
-  oid_t GetForeignKeyCount() const;
+    storage::TileGroup *TransformTileGroup(oid_t tile_group_id,
+                                           const column_map_type& column_map,
+                                           bool cleanup = true);
 
-  //===--------------------------------------------------------------------===//
-  // TRANSFORMERS
-  //===--------------------------------------------------------------------===//
+    //===--------------------------------------------------------------------===//
+    // STATS
+    //===--------------------------------------------------------------------===//
 
-  storage::TileGroup *TransformTileGroup(oid_t tile_group_id,
-                                         const column_map_type& column_map,
-                                         bool cleanup = true);
+    void IncreaseNumberOfTuplesBy(const float amount);
 
-  //===--------------------------------------------------------------------===//
-  // STATS
-  //===--------------------------------------------------------------------===//
+    void DecreaseNumberOfTuplesBy(const float amount);
 
-  void IncreaseNumberOfTuplesBy(const float amount);
+    void SetNumberOfTuples(const float num_tuples);
 
-  void DecreaseNumberOfTuplesBy(const float amount);
+    float GetNumberOfTuples() const;
 
-  void SetNumberOfTuples(const float num_tuples);
+    //===--------------------------------------------------------------------===//
+    // UTILITIES
+    //===--------------------------------------------------------------------===//
 
-  float GetNumberOfTuples() const;
+    inline bool HasPrimaryKey() {
+        return has_primary_key;
+    }
 
-  //===--------------------------------------------------------------------===//
-  // UTILITIES
-  //===--------------------------------------------------------------------===//
+    inline bool HasUniqueConstraints() {
+        return (unique_constraint_count > 0);
+    }
 
-  bool HasPrimaryKey() { return has_primary_key; }
+    inline bool HasForeignKeys() {
+        return (GetForeignKeyCount() > 0);
+    }
 
-  bool HasUniqueConstraints() { return (unique_constraint_count > 0); }
+    inline AbstractBackend *GetBackend() const {
+        return backend;
+    }
 
-  bool HasForeignKeys() { return (GetForeignKeyCount() > 0); }
+    // Get a string representation of this table
+    friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
 
-  AbstractBackend *GetBackend() const { return backend; }
+private:
+    //===--------------------------------------------------------------------===//
+    // MEMBERS
+    //===--------------------------------------------------------------------===//
 
-  // Get a string representation of this table
-  friend std::ostream &operator<<(std::ostream &os, const DataTable &table);
+    // backend
+    AbstractBackend *backend;
 
- private:
-  //===--------------------------------------------------------------------===//
-  // MEMBERS
-  //===--------------------------------------------------------------------===//
+    // TODO need some policy ?
+    // number of tuples allocated per tilegroup
+    size_t tuples_per_tilegroup;
 
-  // backend
-  AbstractBackend *backend;
+    // set of tile groups
+    std::vector<oid_t> tile_groups;
 
-  // TODO need some policy ?
-  // number of tuples allocated per tilegroup
-  size_t tuples_per_tilegroup;
+    // INDEXES
+    std::vector<index::Index *> indexes;
 
-  // set of tile groups
-  std::vector<oid_t> tile_groups;
+    // CONSTRAINTS
+    std::vector<catalog::ForeignKey *> foreign_keys;
 
-  // INDEXES
-  std::vector<index::Index *> indexes;
+    // table mutex
+    std::mutex table_mutex;
 
-  // CONSTRAINTS
-  std::vector<catalog::ForeignKey *> foreign_keys;
+    // has a primary key ?
+    std::atomic<bool> has_primary_key = ATOMIC_VAR_INIT(false);
 
-  // table mutex
-  std::mutex table_mutex;
+    // # of unique constraints
+    std::atomic<oid_t> unique_constraint_count = ATOMIC_VAR_INIT(START_OID);
 
-  // has a primary key ?
-  std::atomic<bool> has_primary_key = ATOMIC_VAR_INIT(false);
-
-  // # of unique constraints
-  std::atomic<oid_t> unique_constraint_count = ATOMIC_VAR_INIT(START_OID);
-
-  // # of tuples
-  float number_of_tuples = 0.0;
+    // # of tuples
+    float number_of_tuples = 0.0;
 };
 
 }  // End storage namespace
