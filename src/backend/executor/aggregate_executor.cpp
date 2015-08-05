@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * aggregate_executor.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/executor/aggregate_executor.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// aggregate_executor.cpp
+//
+// Identification: src/backend/executor/aggregate_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/common/logger.h"
 #include "backend/executor/aggregator.h"

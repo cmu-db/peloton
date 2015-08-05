@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * ddl_database.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/ddl_database.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// ddl_database.h
+//
+// Identification: src/backend/bridge/ddl/ddl_database.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -27,16 +27,16 @@ namespace bridge {
 
 class DDLDatabase {
  public:
-  DDLDatabase(const DDLDatabase&) = delete;
-  DDLDatabase& operator=(const DDLDatabase&) = delete;
-  DDLDatabase(DDLDatabase&&) = delete;
-  DDLDatabase& operator=(DDLDatabase&&) = delete;
+  DDLDatabase(const DDLDatabase &) = delete;
+  DDLDatabase &operator=(const DDLDatabase &) = delete;
+  DDLDatabase(DDLDatabase &&) = delete;
+  DDLDatabase &operator=(DDLDatabase &&) = delete;
 
-  static bool ExecCreatedbStmt(Node* parsetree);
+  static bool ExecCreatedbStmt(Node *parsetree);
 
-  static bool ExecDropdbStmt(Node* parsetree);
+  static bool ExecDropdbStmt(Node *parsetree);
 
-  static bool ExecVacuumStmt(Node* parsetree, Peloton_Status* status);
+  static bool ExecVacuumStmt(Node *parsetree, Peloton_Status *status);
 
   static bool CreateDatabase(Oid database_oid);
 

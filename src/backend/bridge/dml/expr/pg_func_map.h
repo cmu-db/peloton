@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * expr_func_table.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/dml/expr/expr_func_table.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// pg_func_map.h
+//
+// Identification: src/backend/bridge/dml/expr/pg_func_map.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
