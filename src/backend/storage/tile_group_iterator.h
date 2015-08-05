@@ -15,6 +15,7 @@
 #include "backend/common/iterator.h"
 #include "backend/storage/data_table.h"
 #include "backend/storage/tile.h"
+#include "backend/storage/tile_group.h"
 #include "backend/storage/tile_group_header.h"
 
 namespace peloton {
@@ -25,12 +26,13 @@ namespace storage {
 //===--------------------------------------------------------------------===//
     
 class DataTable;
+class TileGroup;
 
 /**
  * Iterator for table which goes over all active tiles.
  * FIXME: This is not thread-safe or transactional!
  **/
-class TileGroupIterator : public Iterator<std::shared_ptr<Tile>> {
+class TileGroupIterator : public Iterator<std::shared_ptr<TileGroup>> {
     TileGroupIterator() = delete;
 
 public:
