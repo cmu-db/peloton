@@ -11,7 +11,6 @@ import os
 import re
 import sys
 
-
 ## ==============================================
 ## CONFIGURATION
 ## ==============================================
@@ -32,6 +31,10 @@ DEFAULT_DIRS = []
 DEFAULT_DIRS.append(PELOTON_SRC_BACKEND_DIR)
 DEFAULT_DIRS.append(PELOTON_TESTS_DIR)
 
+## ==============================================
+## 			HEADER CONFIGURATION
+## ==============================================
+
 #header framework, dynamic information will be added inside function
 header_comment_line_1 = "/*-----------------------------------------------------------------\n"
 header_comment_line_2 = " *\n"
@@ -50,8 +53,7 @@ header_comment_5 = header_comment_line_6 + header_comment_line_7 + header_commen
 						+ header_comment_line_9 + header_comment_line_10
 
 #regular expresseion used to track header
-header_regex = re.compile("(\/\*-*[^-]*-*\n[\s]*\*\/[\n]*)(#include|#pragma)")
-
+header_regex = re.compile("(\/\*-*([^-]*[0-9|a-z|A-Z]+[\s]*-[\s]*[0-9|a-z|A-Z]+)*[^-]*-*\n[\s]*\*\/[\n]*)(#include|#pragma|#ifndef)")
 
 ## ==============================================
 ## 			LOGGING CONFIGURATION
@@ -71,34 +73,57 @@ LOG.setLevel(logging.INFO)
 ## 		  UTILITY FUNCTION DEFINITIONS
 ## ==============================================
 
-#add suitable header to the file passed as argument
-def add_header_file(file_path):
+#format the file passed as argument
+def format_file(file_path, add_header, strip_header, clang_format_code):
 	
 	file_name = os.path.basename(file_path)
 	abs_path = os.path.abspath(file_path)
 	rel_path_from_peloton_dir = os.path.relpath(abs_path,PELOTON_DIR)
-	
-	header_comment_2 = line_3 + file_name + "\n"
-	header_comment_4 = line_5 + rel_path_from_peloton_dir + "\n"
-	header_comment = header_comment_1 + header_comment_2 + header_comment_3 \
-						+ header_comment_4 + header_comment_5
-	print header_comment
-	
+				
 	with open(file_path, "r+") as fd:
 		file_data = fd.read()
-		new_file_data = header_comment + file_data
 		
-		fd.seek(0,0)
-		fd.truncate()
-		fd.write(new_file_data)
+		if add_header:
+			header_comment_2 = line_3 + file_name + "\n"
+			header_comment_4 = line_5 + rel_path_from_peloton_dir + "\n"
+			header_comment = header_comment_1 + header_comment_2 + header_comment_3 \
+						+ header_comment_4 + header_comment_5
+			print header_comment
+
+			new_file_data = header_comment + file_data
+		
+			fd.seek(0,0)
+			fd.truncate()
+			fd.write(new_file_data)
+			
+		elif strip_header:
+			
+			header_match = header_regex.match(file_data)
+			if header_match is None: 
+				return
+			
+			header_comment = header_match.group(1)
+			
+			new_file_data = file_data.replace(header_comment,"")
+			
+			fd.seek(0,0)
+			fd.truncate()
+			fd.write(new_file_data)
+				
+
+		elif format_code:
+			formatting_command = "clang-format-3.6 -i " + file_path
+			LOG.info(formatting_command)
+			os.system(formatting_command)
+			
 	#END WITH
 	
 	fd.close()
-#END ADD_HEADER_FILE(FILE_NAME)
+#END FORMAT__FILE(FILE_NAME)
 
 
-#add suitable headers to all the files in the directory passed as argument
-def add_headers_dir(dir_path):
+#format all the files in the dir passed as argument
+def format_dir(dir_path, add_header, strip_header, clang_format_code):
 	
 	for subdir, dirs, files in os.walk(dir_path):
 		for file in files:
@@ -106,106 +131,11 @@ def add_headers_dir(dir_path):
 			file_path = subdir + os.path.sep + file
 			
 			if file_path.endswith(".h") or file_path.endswith(".cpp"):
-				abs_path = os.path.abspath(file_path)
-				rel_path_from_peloton_dir = os.path.relpath(abs_path,PELOTON_DIR)
-				
-				header_comment_2 = header_comment_line_3 + file + "\n"
-				header_comment_4 = header_comment_line_5 + rel_path_from_peloton_dir + "\n"
-				
-				header_comment = header_comment_1 + header_comment_2 + header_comment_3 \
-									+ header_comment_4 + header_comment_5
-				
-				with open(file_path, "r+") as fd:
-					file_data = fd.read()
-					new_file_data = header_comment + file_data
-					
-					fd.seek(0,0)
-					fd.truncate()
-					fd.write(new_file_data)
-				#END WITH
-				
-				fd.close()
+				format_file(file_path, add_header, strip_header, clang_format_code)
 			#END IF
 		#END FOR [file]
 	#END FOR [os.walk]
 #END ADD_HEADERS_DIR(DIR_PATH)
-
-
-def strip_header_file(file_path):
-	
-	with open(file_path, "r+") as fd:
-		
-		file_data = fd.read()
-		
-		header_match = header_regex.match(file_data)
-		if header_match is None: 
-			return
-		
-		header_comment = header_match.group(1)
-		
-		new_file_data = file_data.replace(header_comment,"")
-		
-		fd.seek(0,0)
-		fd.truncate()
-		fd.write(new_file_data)
-	#END WITH
-	
-	fd.close()
-#END STRIP_HEADER_FILE(FILE_PATH)
-
-
-def strip_headers_dir(dir_path):
-	
-	for subdir, dirs, files in os.walk(dir_path):
-		for file in files:
-			file_path = subdir + os.path.sep + file
-			
-			if file_path.endswith(".h") or file_path.endswith(".cpp"):
-				with open(file_path, "r+") as fd:
-					file_data = fd.read()
-					
-					header_match = header_regex.match(file_data)
-					if header_match is None:
-						LOG.info("regex didn't match for file: " + file)
-						continue
-					
-					header_comment = header_match.group(1)
-					
-					new_file_data = file_data.replace(header_comment,"")
-					
-					fd.seek(0,0)
-					fd.truncate()
-					fd.write(new_file_data)
-				#END WITH
-				
-				fd.close()
-			#END IF
-		#END FOR [file]
-	#END FOR [os.walk]
-#END STRIP_HEADERS_DIR(DIR_PATH)
-
-
-def clang_format_file(file_path):
-	formatting_command = "clang-format-3.6 -i " + file_path
-	LOG.info(formatting_command)
-	os.system(formatting_command)
-#END CLANG_FORMAT_FILE(FILE_PATH)
-
-
-def clang_format_dir(dir_path):
-	for subdir, dirs, files in os.walk(dir_path):
-		for file in files:
-			file_path = subdir + os.path.sep + file
-			
-			if file_path.endswith(".h") or file_path.endswith(".cpp"):
-				formatting_command = "clang-format-3.6 -i " + file_path
-				LOG.info(formatting_command)
-				os.system(formatting_command)
-			#END IF
-		#END FOR [file]
-	#END FOR [os.walk]
-#END CLANG_FORMAT_DIR(DIR_PATH)
-
 
 ## ==============================================
 ## 				Main Function
@@ -223,55 +153,21 @@ if __name__ == '__main__':
 	
 	args = parser.parse_args()
 	
+	# SOME SANITY CHECKS
 	if args.add_header and args.strip_header:
 		LOG.error("adding and stripping headers cannot be done together -- exiting")
 		sys.exit("adding and stripping headers cannot be done together")
 	if args.file_name and args.dir_name:
 		LOG.error("file_name and dir_name cannot be specified together -- exiting")
 		sys.exit("file_name and dir_name cannot be specified together")
-	
-	
-	if args.add_header:
-		LOG.info("You want to add headers")
-		
-		if args.file_name:
-			add_header_file(''.join(args.file_name))
-		elif args.dir_name:
-			print (''.join(args.dir_name))
-			add_headers_dir(''.join(args.dir_name))
-		else:
-			for dir in DEFAULT_DIRS:
-				add_headers_dir(dir)
-	#END IF ADD_HEADER
-	
-	
-	if args.strip_header:
-		LOG.info("You want to strip headers")
-		
-		if args.file_name:
-			strip_header_file(''.join(args.file_name))
-		elif args.dir_name:
-			strip_headers_dir(''.join(args.dir_name))
-		else:
-			for dir in DEFAULT_DIRS:
-				strip_headers_dir(dir)			
-	#END IF STRIP_HEADER
-	
-	
-	if args.clang_format_code:
-		LOG.info("You want to clang-format source code")
-		
-		if args.file_name:
-			clang_format_file(''.join(args.file_name))
-		elif args.dir_name:
-			clang_format_dir(''.join(args.dir_name))
-		else:
-			for dir in DEFAULT_DIRS:
-				clang_format_dir(dir)			
-	#END IF CLANG_FORMAT
-	
-	
+
 	if args.file_name:
-		LOG.info("You want to work on the file: " + ''.join(args.file_name))
-	if args.dir_name:
-		LOG.info("You want to work on the files in the directory " + ''.join(args.dir_name))	
+		LOG.info("Scanning file: " + ''.join(args.file_name))
+		format_file(args.file_name, args.add_header, args.strip_header, args.clang_format_code)
+	elif args.dir_name:
+		LOG.info("Scanning directory " + ''.join(args.dir_name))
+		format_dir(args.dir_name, args.add_header, args.strip_header, args.clang_format_code)			
+	# BY DEFAULT, WE SCAN THE DEFAULT DIRS
+	else:
+		for dir in DEFAULT_DIRS:
+			format_dir(dir, args.add_header, args.strip_header, args.clang_format_code)			
