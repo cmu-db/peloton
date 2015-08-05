@@ -29,8 +29,8 @@ namespace bridge {
 planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
     const NestLoopState* nl_plan_state) {
   const JoinState *js = &(nl_plan_state->js);
-  planner::AbstractPlanNode *parent = nullptr;
   planner::AbstractPlanNode *result = nullptr;
+  planner::NestedLoopJoinNode *plan_node = nullptr;
   PelotonJoinType join_type = PlanTransformer::TransformJoinType(js->jointype);
   if (join_type == JOIN_TYPE_INVALID) {
     LOG_ERROR("unsupported join type: %d", js->jointype);
@@ -63,29 +63,26 @@ planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
 
   if (project_info.get()->isNonTrivial()) {
     // we have non-trivial projection
+    LOG_INFO("We have non-trivial projection");
     auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(nl_plan_state->js.ps.ps_ResultTupleSlot->tts_tupleDescriptor);
-    parent = new planner::ProjectionNode(project_info.release(), project_schema);
+    result = new planner::ProjectionNode(project_info.release(), project_schema);
+    plan_node = new planner::NestedLoopJoinNode(predicate, nullptr);
+    result->AddChild(plan_node);
+  } else {
+    LOG_INFO("We have direct mapping projection");
+    plan_node = new planner::NestedLoopJoinNode(predicate, project_info.release());
+    result = plan_node;
   }
-
 
   planner::AbstractPlanNode *outer = PlanTransformer::TransformPlan(outerPlanState(nl_plan_state));
   planner::AbstractPlanNode *inner = PlanTransformer::TransformPlan(innerPlanState(nl_plan_state));
 
-  /* Construct and return the Peloton plan node */
-  auto plan_node = new planner::NestedLoopJoinNode(predicate, project_info.release());
+  /* Add the children nodes */
   plan_node->SetJoinType(join_type);
   plan_node->AddChild(outer);
   plan_node->AddChild(inner);
 
-
-
-  if (parent) {
-    parent->AddChild(plan_node);
-    result = parent;
-  } else {
-    result = plan_node;
-  }
-  LOG_INFO("Handle Nested loop join, JoinType: %d", join_type);
+  LOG_INFO("Finishing mapping Nested loop join, JoinType: %d", join_type);
   return result;
 }
 
