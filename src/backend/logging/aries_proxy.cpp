@@ -28,20 +28,20 @@ void AriesProxy::logging_MainLoop() const{
 }
 
 void AriesProxy::log(LogRecord record) const{
-  std::lock_guard<std::mutex> lock(buffer_mutex);
-  buffer.push_back(record);
+  std::lock_guard<std::mutex> lock(aries_buffer_mutex);
+  aries_buffer.push_back(record);
 }
 
 size_t AriesProxy::GetBufferSize() const{
-  std::lock_guard<std::mutex> lock(buffer_mutex);
-  return buffer.size();
+  std::lock_guard<std::mutex> lock(aries_buffer_mutex);
+  return aries_buffer.size();
 }
 
 void AriesProxy::Flush() const{
-  std::lock_guard<std::mutex> lock(buffer_mutex);
-  for( auto record : buffer )
+  std::lock_guard<std::mutex> lock(aries_buffer_mutex);
+  for( auto record : aries_buffer )
     std::cout << "record : " << record << std::endl;
-  buffer.clear();
+  aries_buffer.clear();
 }
 
 }  // namespace logging

@@ -14,7 +14,7 @@
 #include "backend/logging/logmanager.h"
 #include "backend/logging/logproxy.h"
 #include "backend/logging/aries_proxy.h"
-//#include "backend/logging/peloton_proxy.h"
+#include "backend/logging/peloton_proxy.h"
 
 namespace peloton {
 namespace logging {
@@ -38,13 +38,13 @@ void LogManager::StartPelotonLogging(void){
 }
 
 void LogManager::InitAriesLogger(void) {
-  AriesProxy* ariesProxy = new AriesProxy();
-  aries_logger = new Logger(ARIES_LOGGER_ID, ariesProxy);
+  AriesProxy* aries_proxy = new AriesProxy();
+  aries_logger = new Logger(ARIES_LOGGER_ID, aries_proxy);
 }
 
 void LogManager::InitPelotonLogger(void) {
-  // create a proxy here 
-  peloton_logger = new Logger(PELOTON_LOGGER_ID, nullptr);
+  PelotonProxy* peloton_proxy = new PelotonProxy();
+  peloton_logger = new Logger(PELOTON_LOGGER_ID, peloton_proxy);
 }
 
 Logger* LogManager::GetAriesLogger(void) {
