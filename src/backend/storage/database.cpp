@@ -204,39 +204,39 @@ std::ostream& operator<<(std::ostream& os, const Database& database) {
   os << "DATABASE(" << database.GetOid() << ") : \n";
 
   oid_t table_count = database.GetTableCount();
-  std::cout << "Table Count : " << table_count << "\n";
+  os << "Table Count : " << table_count << "\n";
 
   oid_t table_itr = 0;
   for (auto table : database.tables) {
     if (table != nullptr) {
-      std::cout << "(" << ++table_itr << "/" << table_count << ") "
+      os << "(" << ++table_itr << "/" << table_count << ") "
                 << "Table Name(" << table->GetOid() << ") : " << table->GetName() << "\n"
                 << *(table->GetSchema()) << std::endl;
 
       oid_t index_count = table->GetIndexCount();
 
       if (index_count > 0) {
-        std::cout << "Index Count : " << index_count << std::endl;
+        os << "Index Count : " << index_count << std::endl;
         for (int index_itr = 0; index_itr < index_count; index_itr++) {
           index::Index* index = table->GetIndex(index_itr);
 
           switch (index->GetIndexType()) {
             case INDEX_CONSTRAINT_TYPE_PRIMARY_KEY:
-              std::cout << "primary key index \n";
+              os << "primary key index \n";
               break;
             case INDEX_CONSTRAINT_TYPE_UNIQUE:
-              std::cout << "unique index \n";
+              os << "unique index \n";
               break;
             default:
-              std::cout << "default index \n";
+              os << "default index \n";
               break;
           }
-          std::cout << *index << std::endl;
+          os << *index << std::endl;
         }
       }
 
       if (table->HasForeignKeys()) {
-        std::cout << "foreign tables \n";
+        os << "foreign tables \n";
 
         oid_t foreign_key_count = table->GetForeignKeyCount();
         for (int foreign_key_itr = 0; foreign_key_itr < foreign_key_count;
@@ -247,7 +247,7 @@ std::ostream& operator<<(std::ostream& os, const Database& database) {
           auto sink_table = database.GetTableWithOid(sink_table_oid);
 
           auto sink_table_schema = sink_table->GetSchema();
-          std::cout << "table name : " << sink_table->GetName() << " "
+          os << "table name : " << sink_table->GetName() << " "
                     << *sink_table_schema << std::endl;
         }
       }
