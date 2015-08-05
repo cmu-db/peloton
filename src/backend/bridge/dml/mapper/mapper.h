@@ -114,10 +114,11 @@ class PlanTransformer {
 
   static planner::AbstractPlanNode *TransformLimit(
       const LimitState *plan_state);
+
   static planner::AbstractPlanNode *TransformResult(
       const ResultState *plan_state);
 
-
+  static planner::AbstractPlanNode *TransformAgg(const AggState *plan_state);
 
   static PelotonJoinType TransformJoinType(const JoinType type);
 
