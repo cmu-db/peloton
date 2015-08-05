@@ -14,6 +14,7 @@
 #include <iostream>
 
 #include "backend/bridge/ddl/ddl_utils.h"
+#include "backend/bridge/ddl/format_transformer.h"
 #include "backend/common/logger.h"
 #include "backend/storage/database.h"
 
@@ -138,20 +139,15 @@ void DDLUtils::ParsingCreateStmt(
     Oid typeoid = coldef->typeName->type_oid;
     int typelen = coldef->typeName->type_len;
 
-    ValueType column_valueType =
-        PostgresValueTypeToPelotonValueType((PostgresValueType)typeoid);
-    int column_length = typelen;
-    std::string column_name = coldef->colname;
 
-    // TODO: Special case for DECIMAL. May move it somewhere else?
-    // DECIMAL in PG is variable length but in Peloton is inlined (16 bytes)
-    // This code is duplicated in schema_transformer.cpp
-    bool is_inlined = false;  // didn't set this before?
-    if(VALUE_TYPE_DECIMAL == column_valueType){
-      LOG_INFO("Detect a DECIMAL attribute. \n");
-      column_length = 16;
-      is_inlined = true;
-    }
+    PostgresValueFormat postgresValueFormat( typeoid, typelen, typelen);
+    PelotonValueFormat pelotonValueFormat = FormatTransformer::TransformValueFormat(postgresValueFormat);
+
+    ValueType column_valueType = pelotonValueFormat.GetType();
+    int column_length = pelotonValueFormat.GetLength();
+    bool is_inlined = pelotonValueFormat.IsInlined();
+
+    std::string column_name = coldef->colname;
 
     //===--------------------------------------------------------------------===//
     // Column Constraint
