@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * schema_transformaer.h
+ * schema_transformer.h
  * file description
  *
  * Copyright(c) 2015, CMU
  *
- * /n-store/src/catalog/tuple_schema.h
+ * /peloton/src/backend/bridge/ddl/schema_transformer.h
  *
  *-------------------------------------------------------------------------
  */

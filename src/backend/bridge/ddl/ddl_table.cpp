@@ -191,6 +191,8 @@ bool DDLTable::CreateTable(Oid relation_oid, std::string table_name,
 
   db->AddTable(table);
 
+  std::cout << *schema << std::endl;
+
   if(table != nullptr) {
     LOG_INFO("Created table(%u)%s in database(%u) ", relation_oid, table_name.c_str(), database_oid);
     return true;

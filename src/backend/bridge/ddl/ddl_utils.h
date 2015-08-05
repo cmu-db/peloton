@@ -45,6 +45,7 @@ class DDLUtils {
   static void ParsingCreateStmt(
       CreateStmt* Cstmt, std::vector<catalog::Column>& column_infos,
       std::vector<catalog::ForeignKey>& reference_table_infos);
+
 };
 
 }  // namespace bridge
