@@ -181,7 +181,6 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
 
   if (pg_pi->pi_numSimpleVars > 0) {
     int numSimpleVars = pg_pi->pi_numSimpleVars;
-    //bool *isnull = pg_pi->pi_slot->tts_isnull;
     int *varSlotOffsets = pg_pi->pi_varSlotOffsets;
     int *varNumbers = pg_pi->pi_varNumbers;
 
@@ -196,15 +195,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
         oid_t in_col_id = static_cast<oid_t>(varNumber);
         oid_t out_col_id = static_cast<oid_t>(i);
 
-        if (true) {  // Non null, direct map
-          direct_map_list.emplace_back(
-              out_col_id, planner::ProjectInfo::DirectMap::second_type(
-                              tuple_idx, in_col_id));
-        } else {  // NUll, constant, added to target_list
-          Value null = ValueFactory::GetNullValue();
-          target_list.emplace_back(out_col_id,
-                                   expression::ConstantValueFactory(null));
-        }
+        direct_map_list.emplace_back(out_col_id, std::make_pair(tuple_idx, in_col_id));
 
         LOG_INFO("Input column : %u , Output column : %u \n", in_col_id,
                  out_col_id);
@@ -223,15 +214,7 @@ const planner::ProjectInfo *PlanTransformer::BuildProjectInfo(
         oid_t in_col_id = static_cast<oid_t>(varNumber);
         oid_t out_col_id = static_cast<oid_t>(varOutputCol);
 
-        if (true) {  // Non null, direct map
-          direct_map_list.emplace_back(
-              out_col_id, planner::ProjectInfo::DirectMap::second_type(
-                              tuple_idx, in_col_id));
-        } else {  // NUll, constant
-          Value null = ValueFactory::GetNullValue();
-          target_list.emplace_back(out_col_id,
-                                   expression::ConstantValueFactory(null));
-        }
+        direct_map_list.emplace_back(out_col_id, std::make_pair(tuple_idx, in_col_id));
 
         LOG_INFO("Input column : %u , Output column : %u \n", in_col_id,
                  out_col_id);
