@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * tile.cpp
- * the base class for all tiles
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/storage/tile.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// tile.cpp
+//
+// Identification: src/backend/storage/tile.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/storage/tile.h"
 

@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * plan_transformer.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/bridge/plan_transformer.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// mapper.cpp
+//
+// Identification: src/backend/bridge/dml/mapper/mapper.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <cstring>
 #include <cassert>

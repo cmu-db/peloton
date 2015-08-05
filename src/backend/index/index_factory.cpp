@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * index_factory.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/index/index_factory.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// index_factory.cpp
+//
+// Identification: src/backend/index/index_factory.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <cassert>
 #include <iostream>

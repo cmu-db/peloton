@@ -1,8 +1,15 @@
-/**
- * @brief Header file for materialization executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// materialization_executor.h
+//
+// Identification: src/backend/executor/materialization_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

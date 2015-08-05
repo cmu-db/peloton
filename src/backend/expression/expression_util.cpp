@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * expression_util.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/expression/expression_util.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// expression_util.cpp
+//
+// Identification: src/backend/expression/expression_util.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/expression/expression_util.h"
 

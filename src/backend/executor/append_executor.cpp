@@ -1,8 +1,15 @@
-/**
- * @brief append executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// append_executor.cpp
+//
+// Identification: src/backend/executor/append_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"

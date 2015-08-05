@@ -1,9 +1,15 @@
-/**
- * @brief plan node utilities.
- *
- * Copyright(c) 2015, CMU
- *
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// plan_node_util.cpp
+//
+// Identification: src/backend/planner/plan_node_util.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <sstream>
 

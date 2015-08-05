@@ -1,8 +1,15 @@
-/**
- * @brief Header for postgres plan transformer.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// mapper.h
+//
+// Identification: src/backend/bridge/dml/mapper/mapper.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

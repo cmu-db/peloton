@@ -1,12 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * table_iterator.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// tile_group_iterator.h
+//
+// Identification: src/backend/storage/tile_group_iterator.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

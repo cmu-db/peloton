@@ -1,8 +1,15 @@
-/**
- * @brief Test cases for ORDER BY node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// order_by_test.cpp
+//
+// Identification: tests/executor/order_by_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <memory>
 #include <set>

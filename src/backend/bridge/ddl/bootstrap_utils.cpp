@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * bootstrap_utils.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/bootstrap_utils.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// bootstrap_utils.cpp
+//
+// Identification: src/backend/bridge/ddl/bootstrap_utils.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <iostream>
 #include <sys/types.h>

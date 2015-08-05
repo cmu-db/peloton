@@ -1,12 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * update_executor.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// update_executor.cpp
+//
+// Identification: src/backend/executor/update_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/executor/update_executor.h"
 

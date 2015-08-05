@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * raw_structure.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/raw_structure.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// raw_structure.h
+//
+// Identification: src/backend/bridge/ddl/raw_structure.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

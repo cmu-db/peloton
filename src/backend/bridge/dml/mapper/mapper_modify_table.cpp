@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * mapper_modify_table.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/dml/plan/mapper_modify_table.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// mapper_modify_table.cpp
+//
+// Identification: src/backend/bridge/dml/mapper/mapper_modify_table.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/storage/data_table.h"

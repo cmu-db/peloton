@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
-*
-* backend.h
-* file description
-*
-* Copyright(c) 2015, CMU
-*
-* /n-store/src/storage/backend.h
-*
-*-------------------------------------------------------------------------
-*/
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// abstract_backend.h
+//
+// Identification: src/backend/storage/abstract_backend.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

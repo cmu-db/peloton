@@ -1,8 +1,15 @@
-/**
- * @brief Header for merge join plan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// merge_join_node.h
+//
+// Identification: src/backend/planner/merge_join_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

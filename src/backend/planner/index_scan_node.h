@@ -1,8 +1,15 @@
-/**
- * @brief Header for index scan plan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// index_scan_node.h
+//
+// Identification: src/backend/planner/index_scan_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

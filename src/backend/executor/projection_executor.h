@@ -1,8 +1,15 @@
-/**
- * @brief Header file for Project executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// projection_executor.h
+//
+// Identification: src/backend/executor/projection_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

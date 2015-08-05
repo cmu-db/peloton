@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * scheduler.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/scheduler/scheduler.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// tbb_scheduler.h
+//
+// Identification: src/backend/scheduler/tbb_scheduler.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

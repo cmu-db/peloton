@@ -1,8 +1,16 @@
-/**
- * @brief Header file for append executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// append_executor.h
+//
+// Identification: src/backend/executor/append_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
+
 #pragma once
 
 #include "backend/common/types.h"

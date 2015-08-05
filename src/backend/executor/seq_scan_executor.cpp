@@ -1,13 +1,15 @@
-/**
- * @brief Executor for sequential scan node.
- *
- * Possible optimization: Right now we loop through the tile group in the
- * scan and apply the predicate tuple at a time. Instead, we might want to
- * refactor the expression system so we can apply predicates to fields in
- * different tiles separately, and then combine the results.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// seq_scan_executor.cpp
+//
+// Identification: src/backend/executor/seq_scan_executor.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/executor/seq_scan_executor.h"
 

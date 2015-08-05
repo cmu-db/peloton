@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
-*
-* tile_test.cpp
-* file description
-*
-* Copyright(c) 2015, CMU
-*
-* /n-store/test/tile_test.cpp
-*
-*-------------------------------------------------------------------------
-*/
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// tile_test.cpp
+//
+// Identification: tests/storage/tile_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "gtest/gtest.h"
 

@@ -1,8 +1,15 @@
-/**
- * @brief Header for logical tile.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// logical_tile.h
+//
+// Identification: src/backend/executor/logical_tile.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

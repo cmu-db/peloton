@@ -1,8 +1,15 @@
-/**
- * @brief Implementation of logical tile factory.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// logical_tile_factory.cpp
+//
+// Identification: src/backend/executor/logical_tile_factory.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/executor/logical_tile_factory.h"
 

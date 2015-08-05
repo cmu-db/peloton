@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * merge_join.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/executor/merge_join_executor.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// abstract_join_executor.h
+//
+// Identification: src/backend/executor/abstract_join_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

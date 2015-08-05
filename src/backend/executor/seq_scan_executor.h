@@ -1,8 +1,15 @@
-/**
- * @brief Header file for sequential scan executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// seq_scan_executor.h
+//
+// Identification: src/backend/executor/seq_scan_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 

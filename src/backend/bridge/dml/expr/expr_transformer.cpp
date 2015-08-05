@@ -1,12 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * expr_transformer.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// expr_transformer.cpp
+//
+// Identification: src/backend/bridge/dml/expr/expr_transformer.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include <unordered_map>
 

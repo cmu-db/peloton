@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * varlen.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/varlen.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// varlen.cpp
+//
+// Identification: src/backend/common/varlen.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/common/varlen.h"
 #include "backend/common/pool.h"

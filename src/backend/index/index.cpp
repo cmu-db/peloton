@@ -1,14 +1,15 @@
-/*-------------------------------------------------------------------------
- *
- * index.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/index/index.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// index.cpp
+//
+// Identification: src/backend/index/index.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "backend/index/index.h"
 #include "backend/common/exception.h"

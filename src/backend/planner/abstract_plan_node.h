@@ -1,8 +1,15 @@
-/**
- * @brief Header for abstract plan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//							PelotonDB
+//
+// abstract_plan_node.h
+//
+// Identification: src/backend/planner/abstract_plan_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #pragma once
 
