@@ -18,7 +18,7 @@
 #include "backend/common/logger.h"
 #include "backend/concurrency/transaction_manager.h"
 #include "backend/executor/executors.h"
-#include "backend/storage/tile_iterator.h"
+#include "backend/storage/tuple_iterator.h"
 
 #include "access/tupdesc.h"
 #include "nodes/print.h"
@@ -258,7 +258,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
     // Get result base tile and iterate over it
     auto base_tile = tile.get()->GetBaseTile(0);
     assert(base_tile);
-    storage::TileIterator tile_itr(base_tile);
+    storage::TupleIterator tile_itr(base_tile);
     storage::Tuple tuple(base_tile->GetSchema());
 
     // Switch to TopSharedMemoryContext to construct list and slots

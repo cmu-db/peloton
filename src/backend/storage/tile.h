@@ -29,7 +29,7 @@ namespace storage {
 //===--------------------------------------------------------------------===//
 
 class TileGroup;
-class TileIterator;
+class TupleIterator;
 // class TileStats;
 
 /**
@@ -41,7 +41,7 @@ class TileIterator;
  */
 class Tile {
   friend class TileFactory;
-  friend class TileIterator;
+  friend class TupleIterator;
   friend class TileGroupHeader;
 
   Tile() = delete;
@@ -127,13 +127,13 @@ class Tile {
     return schema.GetColumn(column_index).column_name;
   }
 
-  int GetColumnCount() const { return column_count; };
+  inline int GetColumnCount() const { return column_count; };
 
-  AbstractBackend *GetBackend() const { return backend; }
+  inline AbstractBackend *GetBackend() const { return backend; }
 
-  TileGroupHeader *GetHeader() const { return tile_group_header; }
+  inline TileGroupHeader *GetHeader() const { return tile_group_header; }
 
-  TileGroup *GetTileGroup() const { return tile_group; }
+  inline TileGroup *GetTileGroup() const { return tile_group; }
 
   oid_t GetTileId() const { return tile_id; }
 
@@ -141,7 +141,7 @@ class Tile {
   bool operator==(const Tile &other) const;
   bool operator!=(const Tile &other) const;
 
-  TileIterator GetIterator();
+  TupleIterator GetIterator();
 
   // Get a string representation of this tile
   friend std::ostream &operator<<(std::ostream &os, const Tile &tile);

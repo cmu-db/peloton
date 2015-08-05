@@ -16,7 +16,7 @@
 #include "backend/common/logger.h"
 #include "backend/executor/logical_tile.h"
 #include "backend/planner/insert_node.h"
-#include "backend/storage/tile_iterator.h"
+#include "backend/storage/tuple_iterator.h"
 
 namespace peloton {
 namespace executor {
@@ -79,7 +79,7 @@ bool InsertExecutor::DExecute() {
       return false;
     }
 
-    storage::TileIterator tile_iterator = physical_tile->GetIterator();
+    storage::TupleIterator tile_iterator = physical_tile->GetIterator();
     storage::Tuple tuple(physical_tile->GetSchema());
 
     while (tile_iterator.Next(tuple)) {

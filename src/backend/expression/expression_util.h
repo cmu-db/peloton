@@ -56,8 +56,6 @@ AbstractExpression *ConjunctionFactory(ExpressionType,
 
 AbstractExpression *CastFactory(PostgresValueType, AbstractExpression *);
 
-std::string GetTypeName(ExpressionType type);
-
 // If the passed vector contains only TupleValueExpression, it
 // returns ColumnIds of them, otherwise NULL.
 boost::shared_array<int> ConvertIfAllTupleValues(
