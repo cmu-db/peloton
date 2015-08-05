@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
@@ -28,17 +27,14 @@ namespace catalog {
 
 // Stores info about foreign key constraints, like the sink table id etc.
 class ForeignKey {
- public:
+public:
   ForeignKey(oid_t sink_table_id, std::vector<std::string> pk_column_names,
              std::vector<std::string> fk_column_names, char fk_update_action,
              char fk_delete_action, std::string constraint_name)
 
-      : sink_table_id(sink_table_id),
-        pk_column_names(pk_column_names),
-        fk_column_names(fk_column_names),
-        fk_update_action(fk_update_action),
-        fk_delete_action(fk_delete_action),
-        fk_name(constraint_name) {}
+      : sink_table_id(sink_table_id), pk_column_names(pk_column_names),
+        fk_column_names(fk_column_names), fk_update_action(fk_update_action),
+        fk_delete_action(fk_delete_action), fk_name(constraint_name) {}
 
   oid_t GetSinkTableOid() const { return sink_table_id; }
 
@@ -49,9 +45,9 @@ class ForeignKey {
 
   char GetDeleteAction() const { return fk_delete_action; }
 
-  std::string& GetConstraintName() { return fk_name; }
+  std::string &GetConstraintName() { return fk_name; }
 
- private:
+private:
   oid_t sink_table_id = INVALID_OID;
 
   // Columns in the reference table (sink)
@@ -69,5 +65,5 @@ class ForeignKey {
   std::string fk_name;
 };
 
-}  // End catalog namespace
-}  // End peloton namespace
+} // End catalog namespace
+} // End peloton namespace

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/value.h"
@@ -42,7 +41,7 @@ class StatsSource {
   StatsSource() = delete;
   StatsSource(StatsSource const &) = delete;
 
- public:
+public:
   /**
    * Generates the list of column names that are present for every
    * stats table.
@@ -98,7 +97,7 @@ class StatsSource {
   friend std::ostream &operator<<(std::ostream &os,
                                   const StatsSource &stats_source);
 
- protected:
+protected:
   /**
    * Update the stats tuple with the latest statistics available to this
    * StatsSource.
@@ -135,7 +134,7 @@ class StatsSource {
 
   bool GetInterval() { return interval; }
 
- private:
+private:
   /// Table containing the stats
   storage::Table *table;
 
@@ -155,5 +154,5 @@ class StatsSource {
   bool interval;
 };
 
-}  // End stats namespace
-}  // End peloton namespace
+} // End stats namespace
+} // End peloton namespace

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/planner/limit_node.h"
 
@@ -31,8 +30,8 @@ namespace bridge {
  *        does not support cases where there is only OFFSET
  * @return Pointer to the constructed AbstractPlanNode
  */
-planner::AbstractPlanNode *PlanTransformer::TransformLimit(
-    const LimitState *node) {
+planner::AbstractPlanNode *
+PlanTransformer::TransformLimit(const LimitState *node) {
   ExprContext *econtext = node->ps.ps_ExprContext;
   Datum val;
   bool isNull;
@@ -94,5 +93,5 @@ planner::AbstractPlanNode *PlanTransformer::TransformLimit(
   return plan_node;
 }
 
-}  // namespace bridge
-}  // namespace peloton
+} // namespace bridge
+} // namespace peloton

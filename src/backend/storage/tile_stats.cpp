@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/tile_stats.h"
 #include "backend/storage/TableStats.h"
 #include "backend/common/TupleSchema.h"
@@ -156,13 +155,9 @@ Table *TableStats::generateEmptyTableStatsTable() {
  * statistics
  */
 TableStats::TableStats(Table *table)
-    : StatsSource(),
-      m_table(table),
-      m_lastTupleCount(0),
-      m_lastTupleAccessCount(0),
-      m_lastAllocatedTupleMemory(0),
-      m_lastOccupiedTupleMemory(0),
-      m_lastStringDataMemory(0) {
+    : StatsSource(), m_table(table), m_lastTupleCount(0),
+      m_lastTupleAccessCount(0), m_lastAllocatedTupleMemory(0),
+      m_lastOccupiedTupleMemory(0), m_lastStringDataMemory(0) {
 #ifdef ANTICACHE
   m_lastTuplesEvicted = 0;
   m_lastBlocksEvicted = 0;
@@ -329,5 +324,5 @@ TableStats::~TableStats() {
   m_tableType.free();
 }
 
-}  // End storage namespace
-}  // End peloton namespace
+} // End storage namespace
+} // End peloton namespace

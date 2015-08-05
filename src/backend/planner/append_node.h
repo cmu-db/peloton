@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/types.h"
@@ -23,7 +22,7 @@ namespace planner {
  * @brief Plan node for append.
  */
 class AppendNode : public AbstractPlanNode {
- public:
+public:
   AppendNode(const AppendNode &) = delete;
   AppendNode &operator=(const AppendNode &) = delete;
   AppendNode(const AppendNode &&) = delete;
@@ -35,7 +34,7 @@ class AppendNode : public AbstractPlanNode {
 
   inline std::string GetInfo() const { return "Append"; }
 
- private:
+private:
   // nothing
 };
 }

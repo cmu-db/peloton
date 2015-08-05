@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/catalog/constraint.h"
@@ -30,23 +29,23 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class DDLUtils {
- public:
-  DDLUtils(const DDLUtils&) = delete;
-  DDLUtils& operator=(const DDLUtils&) = delete;
-  DDLUtils(DDLUtils&&) = delete;
-  DDLUtils& operator=(DDLUtils&&) = delete;
+public:
+  DDLUtils(const DDLUtils &) = delete;
+  DDLUtils &operator=(const DDLUtils &) = delete;
+  DDLUtils(DDLUtils &&) = delete;
+  DDLUtils &operator=(DDLUtils &&) = delete;
 
-  static void peloton_prepare_data(Node* parsetree);
+  static void peloton_prepare_data(Node *parsetree);
 
-  static void SetDefaultConstraint(ColumnDef* coldef, 
-                                   int column_itr, 
+  static void SetDefaultConstraint(ColumnDef *coldef, int column_itr,
                                    oid_t relation_oid);
 
   // Parse IndexStmt and construct ColumnInfo and ReferenceTableInfos
-  static void ParsingCreateStmt(
-      CreateStmt* Cstmt, std::vector<catalog::Column>& column_infos,
-      std::vector<catalog::ForeignKey>& reference_table_infos);
+  static void
+  ParsingCreateStmt(CreateStmt *Cstmt,
+                    std::vector<catalog::Column> &column_infos,
+                    std::vector<catalog::ForeignKey> &reference_table_infos);
 };
 
-}  // namespace bridge
-}  // namespace peloton
+} // namespace bridge
+} // namespace peloton

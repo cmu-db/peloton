@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/value_factory.h"
@@ -34,14 +33,14 @@ namespace executor {
  * column for a group
  */
 class Agg {
- public:
+public:
   virtual ~Agg() {}
   virtual void Advance(const Value val) = 0;
   virtual Value Finalize() = 0;
 };
 
 class SumAgg : public Agg {
- public:
+public:
   SumAgg() : have_advanced(false) {
     // aggregate initialized on first advance
   }
@@ -65,14 +64,14 @@ class SumAgg : public Agg {
     return aggregate;
   }
 
- private:
+private:
   Value aggregate;
 
   bool have_advanced;
 };
 
 class AvgAgg : public Agg {
- public:
+public:
   AvgAgg(bool is_weighted) : is_weighted(is_weighted), count(0) {
     default_delta = ValueFactory::GetIntegerValue(1);
   }
@@ -112,7 +111,7 @@ class AvgAgg : public Agg {
     return final_result;
   }
 
- private:
+private:
   /** @brief aggregate initialized on first advance. */
   Value aggregate;
 
@@ -127,7 +126,7 @@ class AvgAgg : public Agg {
 
 // count always holds integer
 class CountAgg : public Agg {
- public:
+public:
   CountAgg() : count(0) {}
 
   void Advance(const Value val) {
@@ -139,24 +138,24 @@ class CountAgg : public Agg {
 
   Value Finalize() { return ValueFactory::GetBigIntValue(count); }
 
- private:
+private:
   int64_t count;
 };
 
 class CountStarAgg : public Agg {
- public:
+public:
   CountStarAgg() : count(0) {}
 
   void Advance(const Value val __attribute__((unused))) { ++count; }
 
   Value Finalize() { return ValueFactory::GetBigIntValue(count); }
 
- private:
+private:
   int64_t count;
 };
 
 class MaxAgg : public Agg {
- public:
+public:
   MaxAgg() : have_advanced(false) { aggregate.SetNull(); }
 
   void Advance(const Value val) {
@@ -178,14 +177,14 @@ class MaxAgg : public Agg {
     return aggregate;
   }
 
- private:
+private:
   Value aggregate;
 
   bool have_advanced;
 };
 
 class MinAgg : public Agg {
- public:
+public:
   MinAgg() : have_advanced(false) { aggregate.SetNull(); }
 
   void Advance(const Value val) {
@@ -208,7 +207,7 @@ class MinAgg : public Agg {
     return aggregate;
   }
 
- private:
+private:
   Value aggregate;
 
   bool have_advanced;
@@ -242,9 +241,8 @@ typedef std::unordered_map<storage::Tuple, AggregateList *,
  * This will aggregate some number of tuples and produce the results in the
  * provided output .
  */
-template <PlanNodeType aggregate_type>
-class Aggregator {
- public:
+template <PlanNodeType aggregate_type> class Aggregator {
+public:
   Aggregator(const planner::AggregateNode *node,
              storage::DataTable *output_table,
              const concurrency::Transaction *transaction_id);
@@ -255,7 +253,7 @@ class Aggregator {
 
   ~Aggregator();
 
- private:
+private:
   /** @brief Plan node */
   const planner::AggregateNode *node;
 
@@ -291,5 +289,5 @@ class Aggregator {
   const catalog::Schema *group_by_key_schema = nullptr;
 };
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

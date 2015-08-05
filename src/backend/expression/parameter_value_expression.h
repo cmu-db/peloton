@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -29,14 +28,14 @@ namespace expression {
 //===--------------------------------------------------------------------===//
 
 class ParameterValueExpressionMarker {
- public:
+public:
   virtual ~ParameterValueExpressionMarker() {}
   virtual int GetParameterId() const = 0;
 };
 
 class ParameterValueExpression : public AbstractExpression,
                                  public ParameterValueExpressionMarker {
- public:
+public:
   ParameterValueExpression(int value_idx)
       : AbstractExpression(EXPRESSION_TYPE_VALUE_PARAMETER) {
     this->m_valueIdx = value_idx;
@@ -69,10 +68,10 @@ class ParameterValueExpression : public AbstractExpression,
 
   int GetParameterId() const { return this->m_valueIdx; }
 
- private:
+private:
   int m_valueIdx;
   Value m_paramValue;
 };
 
-}  // End expression namespace
-}  // End peloton namespace
+} // End expression namespace
+} // End peloton namespace

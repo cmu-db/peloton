@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "gtest/gtest.h"
 
 #include "backend/storage/data_table.h"
@@ -73,5 +72,5 @@ TEST(DataTableTests, TransformTileGroupTest) {
   std::cout << *(tile_group3.get());
 }
 
-}  // End test namespace
-}  // End peloton namespace
+} // End test namespace
+} // End peloton namespace

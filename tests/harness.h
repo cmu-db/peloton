@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -38,7 +37,7 @@ extern std::atomic<oid_t> tile_group_id_counter;
 uint64_t GetThreadId();
 
 template <typename... Args>
-void LaunchParallelTest(uint64_t num_threads, Args&&... args) {
+void LaunchParallelTest(uint64_t num_threads, Args &&... args) {
   std::vector<std::thread> thread_group;
 
   // Launch a group of threads
@@ -54,5 +53,5 @@ void LaunchParallelTest(uint64_t num_threads, Args&&... args) {
 
 inline oid_t GetNextTileGroupId() { return ++tile_group_id_counter; }
 
-}  // End test namespace
-}  // End peloton namespace
+} // End test namespace
+} // End peloton namespace

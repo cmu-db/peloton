@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/storage/abstract_backend.h"
@@ -47,13 +46,10 @@ namespace storage {
 class TileGroupHeader {
   TileGroupHeader() = delete;
 
- public:
+public:
   TileGroupHeader(AbstractBackend *_backend, int tuple_count)
- : backend(_backend),
-   data(nullptr),
-   num_tuple_slots(tuple_count),
-   next_tuple_slot(0),
-   active_tuple_slots(0) {
+      : backend(_backend), data(nullptr), num_tuple_slots(tuple_count),
+        next_tuple_slot(0), active_tuple_slots(0) {
     header_size = num_tuple_slots * header_entry_size;
 
     // allocate storage space for header
@@ -61,9 +57,9 @@ class TileGroupHeader {
     assert(data != nullptr);
   }
 
-  TileGroupHeader& operator=(const peloton::storage::TileGroupHeader &other) {
+  TileGroupHeader &operator=(const peloton::storage::TileGroupHeader &other) {
     // check for self-assignment
-    if(&other == this)
+    if (&other == this)
       return *this;
 
     backend = other.backend;
@@ -81,7 +77,6 @@ class TileGroupHeader {
 
     return *this;
   }
-
 
   ~TileGroupHeader() {
     // reclaim the space
@@ -137,17 +132,17 @@ class TileGroupHeader {
 
   inline cid_t GetBeginCommitId(const oid_t tuple_slot_id) const {
     return *((cid_t *)(data + (tuple_slot_id * header_entry_size) +
-        sizeof(txn_id_t)));
+                       sizeof(txn_id_t)));
   }
 
   inline cid_t GetEndCommitId(const oid_t tuple_slot_id) const {
     return *((cid_t *)(data + (tuple_slot_id * header_entry_size) +
-        sizeof(txn_id_t) + sizeof(cid_t)));
+                       sizeof(txn_id_t) + sizeof(cid_t)));
   }
 
   inline ItemPointer GetPrevItemPointer(const oid_t tuple_slot_id) const {
     return *((ItemPointer *)(data + (tuple_slot_id * header_entry_size) +
-        sizeof(txn_id_t) + 2 * sizeof(cid_t)));
+                             sizeof(txn_id_t) + 2 * sizeof(cid_t)));
   }
 
   // Getters for addresses
@@ -158,12 +153,12 @@ class TileGroupHeader {
 
   inline cid_t *GetBeginCommitIdLocation(const oid_t tuple_slot_id) const {
     return ((cid_t *)(data + (tuple_slot_id * header_entry_size) +
-        sizeof(txn_id_t)));
+                      sizeof(txn_id_t)));
   }
 
   inline cid_t *GetEndCommitIdLocation(const oid_t tuple_slot_id) const {
     return ((cid_t *)(data + (tuple_slot_id * header_entry_size) +
-        sizeof(txn_id_t) + sizeof(cid_t)));
+                      sizeof(txn_id_t) + sizeof(cid_t)));
   }
 
   // Setters
@@ -176,18 +171,18 @@ class TileGroupHeader {
 
   inline void SetBeginCommitId(const oid_t tuple_slot_id, cid_t begin_cid) {
     *((cid_t *)(data + (tuple_slot_id * header_entry_size) +
-        sizeof(txn_id_t))) = begin_cid;
+                sizeof(txn_id_t))) = begin_cid;
   }
 
   inline void SetEndCommitId(const oid_t tuple_slot_id, cid_t end_cid) const {
     *((cid_t *)(data + (tuple_slot_id * header_entry_size) + sizeof(txn_id_t) +
-        sizeof(cid_t))) = end_cid;
+                sizeof(cid_t))) = end_cid;
   }
 
   inline void SetPrevItemPointer(const oid_t tuple_slot_id,
                                  ItemPointer item) const {
     *((ItemPointer *)(data + (tuple_slot_id * header_entry_size) +
-        sizeof(txn_id_t) + 2 * sizeof(cid_t))) = item;
+                      sizeof(txn_id_t) + 2 * sizeof(cid_t))) = item;
   }
 
   // Visibility check
@@ -195,15 +190,18 @@ class TileGroupHeader {
   bool IsVisible(const oid_t tuple_slot_id, txn_id_t txn_id, cid_t at_cid) {
     txn_id_t tuple_txn_id = GetTransactionId(tuple_slot_id);
     cid_t tuple_begin_cid = GetBeginCommitId(tuple_slot_id);
-    cid_t tuple_end_cid  = GetEndCommitId(tuple_slot_id);
+    cid_t tuple_end_cid = GetEndCommitId(tuple_slot_id);
 
     bool own = (txn_id == tuple_txn_id);
     bool activated = (at_cid >= tuple_begin_cid);
     bool invalidated = (at_cid >= tuple_end_cid);
 
-    LOG_TRACE("Own :: %d txn id : %lu tuple txn id : %lu", own, txn_id, tuple_txn_id);
-    LOG_TRACE("Activated :: %d cid : %lu tuple begin cid : %lu", activated, at_cid, tuple_begin_cid);
-    LOG_TRACE("Invalidated:: %d cid : %lu tuple end cid : %lu", invalidated, at_cid, tuple_end_cid);
+    LOG_TRACE("Own :: %d txn id : %lu tuple txn id : %lu", own, txn_id,
+              tuple_txn_id);
+    LOG_TRACE("Activated :: %d cid : %lu tuple begin cid : %lu", activated,
+              at_cid, tuple_begin_cid);
+    LOG_TRACE("Invalidated:: %d cid : %lu tuple end cid : %lu", invalidated,
+              at_cid, tuple_end_cid);
 
     // Visible iff past Insert || Own Insert
     if ((!own && activated && !invalidated) ||
@@ -223,7 +221,7 @@ class TileGroupHeader {
   friend std::ostream &operator<<(std::ostream &os,
                                   const TileGroupHeader &tile_group_header);
 
- private:
+private:
   // header entry size is the size of the layout described above
   static const size_t header_entry_size =
       sizeof(txn_id_t) + 2 * sizeof(cid_t) + sizeof(ItemPointer);
@@ -256,5 +254,5 @@ class TileGroupHeader {
   std::mutex tile_header_mutex;
 };
 
-}  // End storage namespace
-}  // End peloton namespace
+} // End storage namespace
+} // End peloton namespace

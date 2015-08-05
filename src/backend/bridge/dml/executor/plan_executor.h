@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/common/types.h"
@@ -28,7 +27,7 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 class PlanExecutor {
- public:
+public:
   PlanExecutor(const PlanExecutor &) = delete;
   PlanExecutor &operator=(const PlanExecutor &) = delete;
   PlanExecutor(PlanExecutor &&) = delete;
@@ -43,11 +42,11 @@ class PlanExecutor {
                           TupleDesc tuple_desc, Peloton_Status *pstatus,
                           TransactionId txn_id);
 
-  static executor::AbstractExecutor *AddMaterialization(
-      executor::AbstractExecutor *root);
+  static executor::AbstractExecutor *
+  AddMaterialization(executor::AbstractExecutor *root);
 
- private:
+private:
 };
 
-}  // namespace bridge
-}  // namespace peloton
+} // namespace bridge
+} // namespace peloton

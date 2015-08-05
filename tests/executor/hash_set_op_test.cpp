@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <vector>
 
 #include "gmock/gmock.h"
@@ -35,7 +34,7 @@ namespace test {
 
 namespace {
 
-void RunTest(executor::HashSetOpExecutor& executor,
+void RunTest(executor::HashSetOpExecutor &executor,
              size_t expected_num_tuples) {
   EXPECT_TRUE(executor.Init());
 
@@ -45,7 +44,7 @@ void RunTest(executor::HashSetOpExecutor& executor,
   }
 
   size_t actual_num_tuples_returned = 0;
-  for (auto& tile : result_tiles) {
+  for (auto &tile : result_tiles) {
     actual_num_tuples_returned += tile->GetTupleCount();
   }
 
@@ -358,5 +357,5 @@ TEST(HashSetOptTests, IntersectAllTest) {
 }
 }
 
-}  // namespace test
-}  // namespace peloton
+} // namespace test
+} // namespace peloton

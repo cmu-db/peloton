@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <set>
 #include <string>
@@ -46,7 +45,6 @@ void RunTest(executor::ProjectionExecutor &executor,
   }
 
   EXPECT_EQ(expected_num_tiles, result_tiles.size());
-
 }
 
 TEST(ProjectionTests, BasicTest) {
@@ -63,8 +61,8 @@ TEST(ProjectionTests, BasicTest) {
   // Create a table and wrap it in logical tile
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false,
-                                   false, false);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false, false,
+                                   false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -88,11 +86,11 @@ TEST(ProjectionTests, BasicTest) {
   auto schema = new catalog::Schema(columns);
 
   // direct map
-  planner::ProjectInfo::DirectMap direct_map = std::make_pair(0, std::make_pair(0, 0));
+  planner::ProjectInfo::DirectMap direct_map =
+      std::make_pair(0, std::make_pair(0, 0));
   direct_map_list.push_back(direct_map);
 
-  auto project_info = new planner::ProjectInfo(target_list,
-                                               direct_map_list);
+  auto project_info = new planner::ProjectInfo(target_list, direct_map_list);
 
   planner::ProjectionNode node(project_info, schema);
 
@@ -117,8 +115,8 @@ TEST(ProjectionTests, TwoColumnTest) {
   // Create a table and wrap it in logical tile
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false,
-                                   false, false);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false, false,
+                                   false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -144,15 +142,17 @@ TEST(ProjectionTests, TwoColumnTest) {
   auto schema = new catalog::Schema(columns);
 
   // direct map
-  planner::ProjectInfo::DirectMap map0 = std::make_pair(0, std::make_pair(0, 3));
-  planner::ProjectInfo::DirectMap map1 = std::make_pair(1, std::make_pair(0, 1));
-  planner::ProjectInfo::DirectMap map2 = std::make_pair(2, std::make_pair(0, 3));
+  planner::ProjectInfo::DirectMap map0 =
+      std::make_pair(0, std::make_pair(0, 3));
+  planner::ProjectInfo::DirectMap map1 =
+      std::make_pair(1, std::make_pair(0, 1));
+  planner::ProjectInfo::DirectMap map2 =
+      std::make_pair(2, std::make_pair(0, 3));
   direct_map_list.push_back(map0);
   direct_map_list.push_back(map1);
   direct_map_list.push_back(map2);
 
-  auto project_info = new planner::ProjectInfo(target_list,
-                                               direct_map_list);
+  auto project_info = new planner::ProjectInfo(target_list, direct_map_list);
 
   planner::ProjectionNode node(project_info, schema);
 
@@ -177,8 +177,8 @@ TEST(ProjectionTests, BasicTargetTest) {
   // Create a table and wrap it in logical tile
   std::unique_ptr<storage::DataTable> data_table(
       ExecutorTestsUtil::CreateTable(tile_size));
-  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false,
-                                   false, false);
+  ExecutorTestsUtil::PopulateTable(data_table.get(), tile_size, false, false,
+                                   false);
 
   std::unique_ptr<executor::LogicalTile> source_logical_tile1(
       executor::LogicalTileFactory::WrapTileGroup(data_table->GetTileGroup(0)));
@@ -202,20 +202,21 @@ TEST(ProjectionTests, BasicTargetTest) {
   auto schema = new catalog::Schema(columns);
 
   // direct map
-  planner::ProjectInfo::DirectMap direct_map = std::make_pair(0, std::make_pair(0, 0));
+  planner::ProjectInfo::DirectMap direct_map =
+      std::make_pair(0, std::make_pair(0, 0));
   direct_map_list.push_back(direct_map);
 
   // target list
-  auto const_val = new expression::ConstantValueExpression(ValueFactory::GetIntegerValue(20));
+  auto const_val = new expression::ConstantValueExpression(
+      ValueFactory::GetIntegerValue(20));
   auto tuple_value_expr = expression::TupleValueFactory(0, 0);
-  expression::AbstractExpression *expr =
-      expression::OperatorFactory(EXPRESSION_TYPE_OPERATOR_PLUS, tuple_value_expr, const_val);
+  expression::AbstractExpression *expr = expression::OperatorFactory(
+      EXPRESSION_TYPE_OPERATOR_PLUS, tuple_value_expr, const_val);
 
   planner::ProjectInfo::Target target = std::make_pair(1, expr);
   target_list.push_back(target);
 
-  auto project_info = new planner::ProjectInfo(target_list,
-                                               direct_map_list);
+  auto project_info = new planner::ProjectInfo(target_list, direct_map_list);
 
   planner::ProjectionNode node(project_info, schema);
 
@@ -226,5 +227,5 @@ TEST(ProjectionTests, BasicTargetTest) {
   RunTest(executor, 1);
 }
 
-}  // namespace test
-}  // namespace peloton
+} // namespace test
+} // namespace peloton

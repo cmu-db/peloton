@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "gtest/gtest.h"
 
 #include "harness.h"
@@ -62,5 +61,5 @@ TEST(TransactionTests, TransactionTest) {
             << txn_manager.GetCurrentTransactions().size() << "\n";
 }
 
-}  // End test namespace
-}  // End peloton namespace
+} // End test namespace
+} // End peloton namespace

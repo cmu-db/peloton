@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/executor/abstract_executor.h"
@@ -26,19 +25,19 @@ class UpdateExecutor : public AbstractExecutor {
   UpdateExecutor(const UpdateExecutor &) = delete;
   UpdateExecutor &operator=(const UpdateExecutor &) = delete;
 
- public:
+public:
   explicit UpdateExecutor(planner::AbstractPlanNode *node,
                           ExecutorContext *executor_context);
 
- protected:
+protected:
   bool DInit();
 
   bool DExecute();
 
- private:
+private:
   storage::DataTable *target_table_ = nullptr;
   const planner::ProjectInfo *project_info_ = nullptr;
 };
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

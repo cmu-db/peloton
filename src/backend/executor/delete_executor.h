@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/executor/abstract_executor.h"
@@ -21,7 +20,7 @@ namespace peloton {
 namespace executor {
 
 class DeleteExecutor : public AbstractExecutor {
- public:
+public:
   DeleteExecutor(const DeleteExecutor &) = delete;
   DeleteExecutor &operator=(const DeleteExecutor &) = delete;
   DeleteExecutor(DeleteExecutor &&) = delete;
@@ -32,14 +31,14 @@ class DeleteExecutor : public AbstractExecutor {
 
   ~DeleteExecutor() {}
 
- protected:
+protected:
   bool DInit();
 
   bool DExecute();
 
- private:
+private:
   storage::DataTable *target_table_ = nullptr;
 };
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

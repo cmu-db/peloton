@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/materialization_executor.h"
 
 #include <cassert>
@@ -30,9 +29,8 @@ namespace executor {
  * @param node Materialization node corresponding to this executor.
  */
 MaterializationExecutor::MaterializationExecutor(
-    planner::AbstractPlanNode *node,
-    ExecutorContext *executor_context)
-: AbstractExecutor(node, executor_context) {}
+    planner::AbstractPlanNode *node, ExecutorContext *executor_context)
+    : AbstractExecutor(node, executor_context) {}
 
 /**
  * @brief Nothing to init at the moment.
@@ -58,8 +56,8 @@ bool MaterializationExecutor::DInit() {
 void MaterializationExecutor::GenerateTileToColMap(
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
     LogicalTile *source_tile,
-    std::unordered_map<storage::Tile *, std::vector<oid_t> > &
-    cols_in_physical_tile) {
+    std::unordered_map<storage::Tile *, std::vector<oid_t>> &
+        cols_in_physical_tile) {
   for (const auto &kv : old_to_new_cols) {
     oid_t col = kv.first;
 
@@ -81,8 +79,7 @@ void MaterializationExecutor::GenerateTileToColMap(
 void MaterializationExecutor::MaterializeByTiles(
     LogicalTile *source_tile,
     const std::unordered_map<oid_t, oid_t> &old_to_new_cols,
-    const std::unordered_map<storage::Tile *, std::vector<oid_t> > &
-    tile_to_cols,
+    const std::unordered_map<storage::Tile *, std::vector<oid_t>> &tile_to_cols,
     storage::Tile *dest_tile) {
   // Copy over all data from each base tile.
 
@@ -104,14 +101,12 @@ void MaterializationExecutor::MaterializeByTiles(
         LOG_TRACE("New Tuple : %u Column : %u \n", new_tuple_id, new_col_id);
         dest_tile->SetValue(value, new_tuple_id++, new_col_id);
       }
-
     }
   }
-
 }
 
-std::unordered_map<oid_t, oid_t> MaterializationExecutor::BuildIdentityMapping(
-    const catalog::Schema *schema) {
+std::unordered_map<oid_t, oid_t>
+MaterializationExecutor::BuildIdentityMapping(const catalog::Schema *schema) {
   std::unordered_map<oid_t, oid_t> old_to_new_cols;
   oid_t column_count = schema->GetColumnCount();
   for (oid_t col = 0; col < column_count; col++) {
@@ -143,8 +138,8 @@ LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
   }
   // Else use the mapping in the given plan node
   else {
-    const planner::MaterializationNode &node = GetPlanNode<
-        planner::MaterializationNode>();
+    const planner::MaterializationNode &node =
+        GetPlanNode<planner::MaterializationNode>();
     if (node.GetSchema()) {
       output_schema = node.GetSchema();
       old_to_new_cols = node.old_to_new_cols();
@@ -155,7 +150,7 @@ LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
   }
 
   // Generate mappings.
-  std::unordered_map<storage::Tile *, std::vector<oid_t> > tile_to_cols;
+  std::unordered_map<storage::Tile *, std::vector<oid_t>> tile_to_cols;
   GenerateTileToColMap(old_to_new_cols, source_tile, tile_to_cols);
 
   // Create new physical tile.
@@ -169,7 +164,7 @@ LogicalTile *MaterializationExecutor::Physify(LogicalTile *source_tile) {
   bool own_base_tile = true;
 
   // Wrap physical tile in logical tile.
-  return LogicalTileFactory::WrapTiles( { dest_tile.release() }, own_base_tile);
+  return LogicalTileFactory::WrapTiles({dest_tile.release()}, own_base_tile);
 }
 
 /**
@@ -196,11 +191,11 @@ bool MaterializationExecutor::DExecute() {
   }
 
   auto node = GetRawNode();
-  bool physify_flag = true;  // by default, we create a physical tile
+  bool physify_flag = true; // by default, we create a physical tile
 
   if (node != nullptr) {
-    const planner::MaterializationNode &node = GetPlanNode<
-        planner::MaterializationNode>();
+    const planner::MaterializationNode &node =
+        GetPlanNode<planner::MaterializationNode>();
     physify_flag = node.GetPhysifyFlag();
   }
 
@@ -217,5 +212,5 @@ bool MaterializationExecutor::DExecute() {
   return true;
 }
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

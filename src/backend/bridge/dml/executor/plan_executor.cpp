@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "plan_executor.h"
 #include <cassert>
 
@@ -42,7 +41,8 @@ void CleanExecutorTree(executor::AbstractExecutor *root);
  */
 void PlanExecutor::PrintPlan(const planner::AbstractPlanNode *plan,
                              std::string prefix) {
-  if (plan == nullptr) return;
+  if (plan == nullptr)
+    return;
 
   prefix += "  ";
 
@@ -67,7 +67,8 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
                                               PlanState *planstate,
                                               concurrency::Transaction *txn) {
   // Base case
-  if (plan == nullptr) return root;
+  if (plan == nullptr)
+    return root;
 
   executor::AbstractExecutor *child_executor = nullptr;
 
@@ -83,49 +84,51 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
 
   auto plan_node_type = plan->GetPlanNodeType();
   switch (plan_node_type) {
-    case PLAN_NODE_TYPE_INVALID:
-      LOG_ERROR("Invalid plan node type ");
-      break;
+  case PLAN_NODE_TYPE_INVALID:
+    LOG_ERROR("Invalid plan node type ");
+    break;
 
-    case PLAN_NODE_TYPE_SEQSCAN:
-      child_executor = new executor::SeqScanExecutor(plan, executor_context);
-      break;
+  case PLAN_NODE_TYPE_SEQSCAN:
+    child_executor = new executor::SeqScanExecutor(plan, executor_context);
+    break;
 
-    case PLAN_NODE_TYPE_INDEXSCAN:
-      child_executor = new executor::IndexScanExecutor(plan, executor_context);
-      break;
+  case PLAN_NODE_TYPE_INDEXSCAN:
+    child_executor = new executor::IndexScanExecutor(plan, executor_context);
+    break;
 
-    case PLAN_NODE_TYPE_INSERT:
-      child_executor = new executor::InsertExecutor(plan, executor_context);
-      break;
+  case PLAN_NODE_TYPE_INSERT:
+    child_executor = new executor::InsertExecutor(plan, executor_context);
+    break;
 
-    case PLAN_NODE_TYPE_DELETE:
-      child_executor = new executor::DeleteExecutor(plan, executor_context);
-      break;
+  case PLAN_NODE_TYPE_DELETE:
+    child_executor = new executor::DeleteExecutor(plan, executor_context);
+    break;
 
-    case PLAN_NODE_TYPE_UPDATE:
-      child_executor = new executor::UpdateExecutor(plan, executor_context);
-      break;
+  case PLAN_NODE_TYPE_UPDATE:
+    child_executor = new executor::UpdateExecutor(plan, executor_context);
+    break;
 
-    case PLAN_NODE_TYPE_LIMIT:
-      child_executor = new executor::LimitExecutor(plan, executor_context);
-      break;
+  case PLAN_NODE_TYPE_LIMIT:
+    child_executor = new executor::LimitExecutor(plan, executor_context);
+    break;
 
-    case PLAN_NODE_TYPE_NESTLOOP:
-      child_executor = new executor::NestedLoopJoinExecutor(plan, executor_context);
-      break;
+  case PLAN_NODE_TYPE_NESTLOOP:
+    child_executor =
+        new executor::NestedLoopJoinExecutor(plan, executor_context);
+    break;
 
-    case PLAN_NODE_TYPE_PROJECTION:
-      child_executor = new executor::ProjectionExecutor(plan, executor_context);
-      break;
+  case PLAN_NODE_TYPE_PROJECTION:
+    child_executor = new executor::ProjectionExecutor(plan, executor_context);
+    break;
 
-    case PLAN_NODE_TYPE_MATERIALIZE:
-      child_executor = new executor::MaterializationExecutor(plan, executor_context);
-      break;
+  case PLAN_NODE_TYPE_MATERIALIZE:
+    child_executor =
+        new executor::MaterializationExecutor(plan, executor_context);
+    break;
 
-    default:
-      LOG_INFO("Unsupported plan node type : %d ", plan_node_type);
-      break;
+  default:
+    LOG_INFO("Unsupported plan node type : %d ", plan_node_type);
+    break;
   }
 
   // Base case
@@ -151,7 +154,8 @@ executor::AbstractExecutor *BuildExecutorTree(executor::AbstractExecutor *root,
  * @return none.
  */
 void CleanExecutorTree(executor::AbstractExecutor *root) {
-  if (root == nullptr) return;
+  if (root == nullptr)
+    return;
 
   // Recurse
   auto children = root->GetChildren();
@@ -169,25 +173,26 @@ void CleanExecutorTree(executor::AbstractExecutor *root) {
  * @param the current executor tree
  * @return new root of the executor tree
  */
-executor::AbstractExecutor *PlanExecutor::AddMaterialization(
-    executor::AbstractExecutor *root) {
-  if (root == nullptr) return root;
+executor::AbstractExecutor *
+PlanExecutor::AddMaterialization(executor::AbstractExecutor *root) {
+  if (root == nullptr)
+    return root;
   auto type = root->GetRawNode()->GetPlanNodeType();
   executor::AbstractExecutor *new_root = root;
 
   switch (type) {
-    case PLAN_NODE_TYPE_NESTLOOP:
-    case PLAN_NODE_TYPE_SEQSCAN:
-    case PLAN_NODE_TYPE_INDEXSCAN:
-      /* FALL THRU */
-    case PLAN_NODE_TYPE_LIMIT:
-      new_root = new executor::MaterializationExecutor(nullptr, nullptr);
-      new_root->AddChild(root);
-      LOG_INFO("Added materialization, the original root executor type is %d",
-               type);
-      break;
-    default:
-      break;
+  case PLAN_NODE_TYPE_NESTLOOP:
+  case PLAN_NODE_TYPE_SEQSCAN:
+  case PLAN_NODE_TYPE_INDEXSCAN:
+  /* FALL THRU */
+  case PLAN_NODE_TYPE_LIMIT:
+    new_root = new executor::MaterializationExecutor(nullptr, nullptr);
+    new_root->AddChild(root);
+    LOG_INFO("Added materialization, the original root executor type is %d",
+             type);
+    break;
+  default:
+    break;
   }
 
   return new_root;
@@ -270,7 +275,7 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
       auto slot = TupleTransformer::GetPostgresTuple(&tuple, tuple_desc);
       if (slot != nullptr) {
         slots = lappend(slots, slot);
-//        print_slot(slot);
+        //        print_slot(slot);
       }
     }
 
@@ -281,25 +286,27 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   // Set the result
   pstatus->m_result_slots = slots;
 
-  // final cleanup
-  cleanup:
+// final cleanup
+cleanup:
 
   // should we commit or abort ?
   if (single_statement_txn == true || init_failure == true) {
     auto status = txn->GetResult();
-    switch(status) {
-      case Result::RESULT_SUCCESS:
-        LOG_INFO("Committing txn_id : %lu , cid : %lu\n", txn->GetTransactionId(), txn->GetCommitId());
-        // Commit
-        txn_manager.CommitTransaction(txn);
+    switch (status) {
+    case Result::RESULT_SUCCESS:
+      LOG_INFO("Committing txn_id : %lu , cid : %lu\n", txn->GetTransactionId(),
+               txn->GetCommitId());
+      // Commit
+      txn_manager.CommitTransaction(txn);
 
-        break;
+      break;
 
-      case Result::RESULT_FAILURE:
-      default:
-        LOG_INFO("Aborting txn : %lu , cid : %lu \n", txn->GetTransactionId(), txn->GetCommitId());
-        //Abort
-        txn_manager.AbortTransaction(txn);
+    case Result::RESULT_FAILURE:
+    default:
+      LOG_INFO("Aborting txn : %lu , cid : %lu \n", txn->GetTransactionId(),
+               txn->GetCommitId());
+      // Abort
+      txn_manager.AbortTransaction(txn);
     }
   }
 
@@ -309,5 +316,5 @@ void PlanExecutor::ExecutePlan(planner::AbstractPlanNode *plan,
   return;
 }
 
-}  // namespace bridge
-}  // namespace peloton
+} // namespace bridge
+} // namespace peloton

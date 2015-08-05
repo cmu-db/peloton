@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "gtest/gtest.h"
 
 #include "harness.h"
@@ -25,5 +24,5 @@ namespace test {
 
 TEST(PlannerTests, BasicTest) {}
 
-}  // End test namespace
-}  // End peloton namespace
+} // End test namespace
+} // End peloton namespace

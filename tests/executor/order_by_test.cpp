@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <set>
 #include <string>
@@ -39,9 +38,9 @@ namespace test {
 
 namespace {
 
-void RunTest(executor::OrderByExecutor& executor, size_t expected_num_tuples,
-             const std::vector<oid_t>& sort_keys,
-             const std::vector<bool>& descend_flags) {
+void RunTest(executor::OrderByExecutor &executor, size_t expected_num_tuples,
+             const std::vector<oid_t> &sort_keys,
+             const std::vector<bool> &descend_flags) {
   EXPECT_TRUE(executor.Init());
 
   std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
@@ -50,7 +49,7 @@ void RunTest(executor::OrderByExecutor& executor, size_t expected_num_tuples,
   }
 
   size_t actual_num_tuples_returned = 0;
-  for (auto& tile : result_tiles) {
+  for (auto &tile : result_tiles) {
     actual_num_tuples_returned += tile->GetTupleCount();
   }
 
@@ -61,7 +60,7 @@ void RunTest(executor::OrderByExecutor& executor, size_t expected_num_tuples,
 
   // Verify:
   // Lazy here: just print it out and see it by yourself.
-  for (auto& tile : result_tiles) {
+  for (auto &tile : result_tiles) {
     for (oid_t tuple_id : *tile) {
       std::cout << "<";
       for (size_t sk = 0; sk < sort_keys.size(); sk++) {
@@ -79,7 +78,7 @@ TEST(OrderByTests, IntAscTest) {
   std::vector<oid_t> sort_keys({1});
   std::vector<bool> descend_flags({false});
   std::vector<oid_t> output_columns({0, 1, 2, 3});
-  storage::AbstractBackend* backend = new storage::VMBackend();
+  storage::AbstractBackend *backend = new storage::VMBackend();
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
@@ -122,7 +121,7 @@ TEST(OrderByTests, IntDescTest) {
   std::vector<oid_t> sort_keys({1});
   std::vector<bool> descend_flags({true});
   std::vector<oid_t> output_columns({0, 1, 2, 3});
-  storage::AbstractBackend* backend = new storage::VMBackend();
+  storage::AbstractBackend *backend = new storage::VMBackend();
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
@@ -165,7 +164,7 @@ TEST(OrderByTests, StringDescTest) {
   std::vector<oid_t> sort_keys({3});
   std::vector<bool> descend_flags({true});
   std::vector<oid_t> output_columns({0, 1, 2, 3});
-  storage::AbstractBackend* backend = new storage::VMBackend();
+  storage::AbstractBackend *backend = new storage::VMBackend();
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
@@ -208,7 +207,7 @@ TEST(OrderByTests, IntAscStringDescTest) {
   std::vector<oid_t> sort_keys({1, 3});
   std::vector<bool> descend_flags({false, true});
   std::vector<oid_t> output_columns({0, 1, 2, 3});
-  storage::AbstractBackend* backend = new storage::VMBackend();
+  storage::AbstractBackend *backend = new storage::VMBackend();
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
@@ -254,7 +253,7 @@ TEST(OrderByTests, StringDescIntAscTest) {
   std::vector<oid_t> sort_keys({3, 1});
   std::vector<bool> descend_flags({true, false});
   std::vector<oid_t> output_columns({0, 1, 2, 3});
-  storage::AbstractBackend* backend = new storage::VMBackend();
+  storage::AbstractBackend *backend = new storage::VMBackend();
   planner::OrderByNode node(sort_keys, descend_flags, output_columns, backend);
 
   // Create and set up executor
@@ -293,5 +292,5 @@ TEST(OrderByTests, StringDescIntAscTest) {
 }
 }
 
-}  // namespace test
-}  // namespace peloton
+} // namespace test
+} // namespace peloton

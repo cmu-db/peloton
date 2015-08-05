@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <cassert>
 #include <iostream>
 
@@ -35,64 +34,67 @@ namespace bridge {
 //===--------------------------------------------------------------------===//
 
 /**
- * @brief preparing data 
+ * @brief preparing data
  * @param parsetree
  */
-  void DDLUtils::peloton_prepare_data(Node* parsetree){
-    switch(nodeTag(parsetree)){
-      case T_DropdbStmt: {
-        DropdbStmt* stmt = (DropdbStmt*)parsetree;
-        stmt->database_id = get_database_oid(stmt->dbname, stmt->missing_ok);
-        break;
-      }
-      case T_CreateStmt:
-      case T_CreateForeignTableStmt:{
-        List* stmts = ((CreateStmt*)parsetree)->stmts;
-        oid_t relation_oid = ((CreateStmt*)parsetree)->relation_id;
-        ListCell* l;
+void DDLUtils::peloton_prepare_data(Node *parsetree) {
+  switch (nodeTag(parsetree)) {
+  case T_DropdbStmt: {
+    DropdbStmt *stmt = (DropdbStmt *)parsetree;
+    stmt->database_id = get_database_oid(stmt->dbname, stmt->missing_ok);
+    break;
+  }
+  case T_CreateStmt:
+  case T_CreateForeignTableStmt: {
+    List *stmts = ((CreateStmt *)parsetree)->stmts;
+    oid_t relation_oid = ((CreateStmt *)parsetree)->relation_id;
+    ListCell *l;
 
-        foreach (l, stmts) {
-          Node* stmt = (Node*)lfirst(l);
-          if (IsA(stmt, CreateStmt)) {
-            CreateStmt* Cstmt = (CreateStmt*)stmt;
+    foreach (l, stmts) {
+      Node *stmt = (Node *)lfirst(l);
+      if (IsA(stmt, CreateStmt)) {
+        CreateStmt *Cstmt = (CreateStmt *)stmt;
 
-            // Get the column list from the create statement
-            List* ColumnList = (List*)(Cstmt->tableElts);
+        // Get the column list from the create statement
+        List *ColumnList = (List *)(Cstmt->tableElts);
 
-            // Parse the CreateStmt and construct ColumnInfo
-            ListCell* entry;
-            int column_itr=1;
-            foreach (entry, ColumnList) {
-              ColumnDef* coldef = static_cast<ColumnDef*>(lfirst(entry));
+        // Parse the CreateStmt and construct ColumnInfo
+        ListCell *entry;
+        int column_itr = 1;
+        foreach (entry, ColumnList) {
+          ColumnDef *coldef = static_cast<ColumnDef *>(lfirst(entry));
 
-              Oid typeoid = typenameTypeId(NULL, coldef->typeName);
-              int32 typemod;
-              typenameTypeIdAndMod(NULL, coldef->typeName, &typeoid, &typemod);
-        
-              // Get type length
-              Type tup = typeidType(typeoid);
-              int typelen = typeLen(tup);
-              ReleaseSysCache(tup);
-        
-              // For a fixed-size type, typlen is the number of bytes in the internal
-              // representation of the type. But for a variable-length type, typlen is
-              // negative.
-              if (typelen == -1) typelen = typemod;
+          Oid typeoid = typenameTypeId(NULL, coldef->typeName);
+          int32 typemod;
+          typenameTypeIdAndMod(NULL, coldef->typeName, &typeoid, &typemod);
 
-              // Use existing TypeName structure
-              coldef->typeName->type_oid = typeoid;
-              coldef->typeName->type_len = typelen;
+          // Get type length
+          Type tup = typeidType(typeoid);
+          int typelen = typeLen(tup);
+          ReleaseSysCache(tup);
 
-              if(coldef->raw_default != NULL || coldef->cooked_default != NULL)
-                SetDefaultConstraint(coldef, column_itr++, relation_oid);
-            }
-          }
+          // For a fixed-size type, typlen is the number of bytes in the
+          // internal
+          // representation of the type. But for a variable-length type, typlen
+          // is
+          // negative.
+          if (typelen == -1)
+            typelen = typemod;
+
+          // Use existing TypeName structure
+          coldef->typeName->type_oid = typeoid;
+          coldef->typeName->type_len = typelen;
+
+          if (coldef->raw_default != NULL || coldef->cooked_default != NULL)
+            SetDefaultConstraint(coldef, column_itr++, relation_oid);
         }
-        break;
       }
-      default:
-      // Don't need to prepare for other cases
-      break;
+    }
+    break;
+  }
+  default:
+    // Don't need to prepare for other cases
+    break;
     break;
   }
 }
@@ -100,13 +102,16 @@ namespace bridge {
 /**
  * @brief setting default constraint
  */
-void DDLUtils::SetDefaultConstraint(ColumnDef* coldef, int column_itr, oid_t relation_oid){
-  Relation relation = heap_open(relation_oid , AccessShareLock);
+void DDLUtils::SetDefaultConstraint(ColumnDef *coldef, int column_itr,
+                                    oid_t relation_oid) {
+  Relation relation = heap_open(relation_oid, AccessShareLock);
   int num_defva = relation->rd_att->constr->num_defval;
-  for(int def_itr=0; def_itr<num_defva; def_itr++){
-    if( column_itr == relation->rd_att->constr->defval[def_itr].adnum){
-      char* default_expression = relation->rd_att->constr->defval[def_itr].adbin;
-      coldef->cooked_default = static_cast<Node*>(stringToNode(default_expression));
+  for (int def_itr = 0; def_itr < num_defva; def_itr++) {
+    if (column_itr == relation->rd_att->constr->defval[def_itr].adnum) {
+      char *default_expression =
+          relation->rd_att->constr->defval[def_itr].adbin;
+      coldef->cooked_default =
+          static_cast<Node *>(stringToNode(default_expression));
     }
   }
   heap_close(relation, AccessShareLock);
@@ -119,8 +124,8 @@ void DDLUtils::SetDefaultConstraint(ColumnDef* coldef, int column_itr, oid_t rel
  * @param refernce_table_infos to store reference table to the table
  */
 void DDLUtils::ParsingCreateStmt(
-    CreateStmt* Cstmt, std::vector<catalog::Column>& column_infos,
-    std::vector<catalog::ForeignKey>& foreign_keys) {
+    CreateStmt *Cstmt, std::vector<catalog::Column> &column_infos,
+    std::vector<catalog::ForeignKey> &foreign_keys) {
   assert(Cstmt);
 
   //===--------------------------------------------------------------------===//
@@ -128,12 +133,12 @@ void DDLUtils::ParsingCreateStmt(
   //===--------------------------------------------------------------------===//
 
   // Get the column list from the create statement
-  List* ColumnList = (List*)(Cstmt->tableElts);
+  List *ColumnList = (List *)(Cstmt->tableElts);
 
   // Parse the CreateStmt and construct ColumnInfo
-  ListCell* entry;
+  ListCell *entry;
   foreach (entry, ColumnList) {
-    ColumnDef* coldef = static_cast<ColumnDef*>(lfirst(entry));
+    ColumnDef *coldef = static_cast<ColumnDef *>(lfirst(entry));
 
     // Get the type oid and type mod with given typeName
     Oid typeoid = coldef->typeName->type_oid;
@@ -151,10 +156,11 @@ void DDLUtils::ParsingCreateStmt(
     std::vector<catalog::Constraint> column_constraints;
 
     if (coldef->constraints != NULL) {
-      ListCell* constNodeEntry;
+      ListCell *constNodeEntry;
 
       foreach (constNodeEntry, coldef->constraints) {
-        Constraint* ConstraintNode = static_cast<Constraint*>(lfirst(constNodeEntry));
+        Constraint *ConstraintNode =
+            static_cast<Constraint *>(lfirst(constNodeEntry));
         ConstraintType contype;
         std::string conname;
 
@@ -169,47 +175,48 @@ void DDLUtils::ParsingCreateStmt(
           conname = "";
         }
 
-        switch(contype){
-          case CONSTRAINT_TYPE_UNIQUE:
-          case CONSTRAINT_TYPE_FOREIGN:
-            continue;
+        switch (contype) {
+        case CONSTRAINT_TYPE_UNIQUE:
+        case CONSTRAINT_TYPE_FOREIGN:
+          continue;
 
-          case CONSTRAINT_TYPE_NULL:
-          case CONSTRAINT_TYPE_NOTNULL:
-          case CONSTRAINT_TYPE_PRIMARY:{
-            catalog::Constraint constraint(contype, conname);
-            column_constraints.push_back(constraint);
-            break;
-          }
-          case CONSTRAINT_TYPE_CHECK:{
-            catalog::Constraint constraint(contype, conname, ConstraintNode->raw_expr);
-            column_constraints.push_back(constraint);
-            break;
-          }
-          case CONSTRAINT_TYPE_DEFAULT:{
-            catalog::Constraint constraint(contype, conname, coldef->cooked_default);
-            column_constraints.push_back(constraint);
-            break;
-          }
-          default:
-          {
-            LOG_WARN("Unrecognized constraint type %d\n", (int) contype);
-            break;
-          }
+        case CONSTRAINT_TYPE_NULL:
+        case CONSTRAINT_TYPE_NOTNULL:
+        case CONSTRAINT_TYPE_PRIMARY: {
+          catalog::Constraint constraint(contype, conname);
+          column_constraints.push_back(constraint);
+          break;
+        }
+        case CONSTRAINT_TYPE_CHECK: {
+          catalog::Constraint constraint(contype, conname,
+                                         ConstraintNode->raw_expr);
+          column_constraints.push_back(constraint);
+          break;
+        }
+        case CONSTRAINT_TYPE_DEFAULT: {
+          catalog::Constraint constraint(contype, conname,
+                                         coldef->cooked_default);
+          column_constraints.push_back(constraint);
+          break;
+        }
+        default: {
+          LOG_WARN("Unrecognized constraint type %d\n", (int)contype);
+          break;
+        }
         }
       }
-    }  // end of parsing constraint
+    } // end of parsing constraint
 
     catalog::Column column_info(column_valueType, column_length, column_name,
                                 false);
 
-    for(auto constraint : column_constraints )
+    for (auto constraint : column_constraints)
       column_info.AddConstraint(constraint);
 
     // Insert column_info into ColumnInfos
     column_infos.push_back(column_info);
-  }  // end of parsing column list
+  } // end of parsing column list
 }
 
-}  // namespace bridge
-}  // namespace peloton
+} // namespace bridge
+} // namespace peloton

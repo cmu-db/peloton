@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <memory>
@@ -26,15 +25,15 @@ namespace peloton {
 namespace planner {
 
 class MergeJoinNode : public AbstractJoinPlanNode {
- public:
+public:
   MergeJoinNode(const MergeJoinNode &) = delete;
   MergeJoinNode &operator=(const MergeJoinNode &) = delete;
   MergeJoinNode(MergeJoinNode &&) = delete;
   MergeJoinNode &operator=(MergeJoinNode &&) = delete;
 
   MergeJoinNode(expression::AbstractExpression *predicate,
-                     const ProjectInfo *proj_info)
-      : AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate, proj_info) {  // FIXME
+                const ProjectInfo *proj_info)
+      : AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate, proj_info) { // FIXME
     // Nothing to see here...
   }
 
@@ -44,9 +43,9 @@ class MergeJoinNode : public AbstractJoinPlanNode {
 
   inline std::string GetInfo() const { return "MergeJoin"; }
 
- private:
+private:
   // There is nothing special that we need here
 };
 
-}  // namespace planner
-}  // namespace peloton
+} // namespace planner
+} // namespace peloton

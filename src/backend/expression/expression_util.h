@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <string>
@@ -59,13 +58,13 @@ AbstractExpression *CastFactory(PostgresValueType, AbstractExpression *);
 
 // If the passed vector contains only TupleValueExpression, it
 // returns ColumnIds of them, otherwise NULL.
-boost::shared_array<int> ConvertIfAllTupleValues(
-    const std::vector<AbstractExpression *> &expressions);
+boost::shared_array<int>
+ConvertIfAllTupleValues(const std::vector<AbstractExpression *> &expressions);
 
 // If the passed vector contains only ParameterValueExpression, it
 // returns ParamIds of them, otherwise NULL.
 boost::shared_array<int> ConvertIfAllParameterValues(
     const std::vector<AbstractExpression *> &expressions);
 
-}  // End expression namespace
-}  // End peloton namespace
+} // End expression namespace
+} // End peloton namespace

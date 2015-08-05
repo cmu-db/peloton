@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/executor/seq_scan_executor.h"
 
 #include <memory>
@@ -46,7 +45,8 @@ SeqScanExecutor::SeqScanExecutor(planner::AbstractPlanNode *node,
 bool SeqScanExecutor::DInit() {
   auto status = AbstractScanExecutor::DInit();
 
-  if (!status) return false;
+  if (!status)
+    return false;
 
   // Grab data from plan node.
   const planner::SeqScanNode &node = GetPlanNode<planner::SeqScanNode>();
@@ -58,14 +58,11 @@ bool SeqScanExecutor::DInit() {
   if (table_ != nullptr) {
     table_tile_group_count_ = table_->GetTileGroupCount();
 
-    if(column_ids_.empty()){
+    if (column_ids_.empty()) {
       column_ids_.resize(table_->GetSchema()->GetColumnCount());
       std::iota(column_ids_.begin(), column_ids_.end(), 0);
     }
-
   }
-
-
 
   return true;
 }
@@ -123,7 +120,7 @@ bool SeqScanExecutor::DExecute() {
     oid_t active_tuple_count = tile_group->GetNextTupleSlot();
 
     // Print tile group visibility
-    //tile_group_header->PrintVisibility(txn_id, commit_id);
+    // tile_group_header->PrintVisibility(txn_id, commit_id);
 
     // Construct position list by looping through tile group
     // and applying the predicate.
@@ -163,5 +160,5 @@ bool SeqScanExecutor::DExecute() {
   return true;
 }
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

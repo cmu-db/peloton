@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <limits>
@@ -24,12 +23,12 @@
 
 namespace peloton {
 
-#ifndef __APPLE__  // Ming: OS X has definition of these functions
-#define htonll(x)                                         \
-  (((int64_t)(ntohl((int32_t)((x << 32) >> 32))) << 32) | \
+#ifndef __APPLE__ // Ming: OS X has definition of these functions
+#define htonll(x)                                                              \
+  (((int64_t)(ntohl((int32_t)((x << 32) >> 32))) << 32) |                      \
    (uint32_t)ntohl(((int32_t)(x >> 32))))
-#define ntohll(x)                                         \
-  (((int64_t)(ntohl((int32_t)((x << 32) >> 32))) << 32) | \
+#define ntohll(x)                                                              \
+  (((int64_t)(ntohl((int32_t)((x << 32) >> 32))) << 32) |                      \
    (uint32_t)ntohl(((int32_t)(x >> 32))))
 #endif
 
@@ -38,19 +37,19 @@ namespace peloton {
 //===--------------------------------------------------------------------===//
 
 class SerializeInput {
-  SerializeInput(const SerializeInput&) = delete;
-  SerializeInput& operator=(const SerializeInput&) = delete;
+  SerializeInput(const SerializeInput &) = delete;
+  SerializeInput &operator=(const SerializeInput &) = delete;
 
- protected:
+protected:
   // Does no initialization. Subclasses must call initialize.
   SerializeInput() : current_(NULL), end_(NULL) {}
 
-  void Initialize(const void* data, size_t length) {
-    current_ = reinterpret_cast<const char*>(data);
+  void Initialize(const void *data, size_t length) {
+    current_ = reinterpret_cast<const char *>(data);
     end_ = current_ + length;
   }
 
- public:
+public:
   virtual ~SerializeInput(){};
 
   //===--------------------------------------------------------------------===//
@@ -98,8 +97,8 @@ class SerializeInput {
 
   /// Returns a pointer to the internal data buffer, advancing the read position
   /// by length.
-  const void* GetRawPointer(size_t length) {
-    const void* result = current_;
+  const void *GetRawPointer(size_t length) {
+    const void *result = current_;
     current_ += length;
 
     assert(current_ <= end_);
@@ -111,7 +110,7 @@ class SerializeInput {
     int32_t string_length = ReadInt();
     assert(string_length >= 0);
     return std::string(
-        reinterpret_cast<const char*>(GetRawPointer(string_length)),
+        reinterpret_cast<const char *>(GetRawPointer(string_length)),
         string_length);
   };
 
@@ -120,20 +119,19 @@ class SerializeInput {
     int32_t string_length = ReadInt();
     assert(string_length >= 0);
     return ByteArray(
-        reinterpret_cast<const char*>(GetRawPointer(string_length)),
+        reinterpret_cast<const char *>(GetRawPointer(string_length)),
         string_length);
   };
 
   /// Copy the next length bytes from the buffer to destination.
-  inline void ReadBytes(void* destination, size_t length) {
+  inline void ReadBytes(void *destination, size_t length) {
     ::memcpy(destination, GetRawPointer(length), length);
   };
 
   size_t NumBytesNotYetRead() { return (end_ - current_); }
 
- private:
-  template <typename T>
-  T ReadPrimitive() {
+private:
+  template <typename T> T ReadPrimitive() {
     T value;
     ::memcpy(&value, current_, sizeof(value));
     current_ += sizeof(value);
@@ -141,10 +139,10 @@ class SerializeInput {
   }
 
   /// Current read position.
-  const char* current_;
+  const char *current_;
 
   /// End of the buffer. Valid byte range: current_ <= validPointer < end_.
-  const char* end_;
+  const char *end_;
 };
 
 //===--------------------------------------------------------------------===//
@@ -153,28 +151,28 @@ class SerializeInput {
 //===--------------------------------------------------------------------===//
 
 class SerializeOutput {
-  SerializeOutput(const SerializeOutput&) = delete;
-  SerializeOutput& operator=(const SerializeOutput&) = delete;
+  SerializeOutput(const SerializeOutput &) = delete;
+  SerializeOutput &operator=(const SerializeOutput &) = delete;
 
- protected:
+protected:
   SerializeOutput() : buffer_(NULL), position_(0), capacity_(0) {}
 
   /// Set the buffer to buffer with capacity. Note this does not change the
   /// position.
-  void Initialize(void* buffer, size_t capacity) {
-    buffer_ = reinterpret_cast<char*>(buffer);
+  void Initialize(void *buffer, size_t capacity) {
+    buffer_ = reinterpret_cast<char *>(buffer);
     assert(position_ <= capacity);
     capacity_ = capacity;
   }
 
   void SetPosition(size_t position) { this->position_ = position; }
 
- public:
+public:
   virtual ~SerializeOutput(){};
 
   /// Returns a pointer to the beginning of the buffer, for reading the
   /// serialized data.
-  const char* Data() const { return buffer_; }
+  const char *Data() const { return buffer_; }
 
   /// Returns the number of bytes written in to the buffer.
   size_t Size() const { return position_; }
@@ -255,27 +253,27 @@ class SerializeOutput {
 
   /// this explicitly accepts char* and length (or ByteArray)
   /// as std::string's implicit construction is unsafe!
-  inline void WriteBinaryString(const void* value, size_t length) {
+  inline void WriteBinaryString(const void *value, size_t length) {
     int32_t string_length = static_cast<int32_t>(length);
     AssureExpand(length + sizeof(string_length));
     int32_t networkOrderLen = htonl(string_length);
 
-    char* current = buffer_ + position_;
+    char *current = buffer_ + position_;
     memcpy(current, &networkOrderLen, sizeof(networkOrderLen));
     current += sizeof(string_length);
     memcpy(current, value, length);
     position_ += sizeof(string_length) + length;
   }
 
-  inline void WriteBinaryString(const ByteArray& value) {
+  inline void WriteBinaryString(const ByteArray &value) {
     WriteBinaryString(value.data(), value.length());
   }
 
-  inline void WriteTextString(const std::string& value) {
+  inline void WriteTextString(const std::string &value) {
     WriteBinaryString(value.data(), value.size());
   }
 
-  inline void WriteBytes(const void* value, size_t length) {
+  inline void WriteBytes(const void *value, size_t length) {
     AssureExpand(length);
     memcpy(buffer_ + position_, value, length);
     position_ += length;
@@ -300,7 +298,7 @@ class SerializeOutput {
    * offset. Offset should have been obtained from reserveBytes. This
    * does not affect the current write position.
    * @return offset + length */
-  inline size_t WriteBytesAt(size_t offset, const void* value, size_t length) {
+  inline size_t WriteBytesAt(size_t offset, const void *value, size_t length) {
     assert(offset + length <= position_);
     memcpy(buffer_ + offset, value, length);
     return offset + length;
@@ -315,7 +313,7 @@ class SerializeOutput {
 
   std::size_t Position() { return position_; }
 
- protected:
+protected:
   /** Called when trying to write past the end of the buffer.
    * Subclasses can optionally resize the buffer by calling
    *  initialize. If this function returns and size() < minimum_desired,
@@ -323,16 +321,14 @@ class SerializeOutput {
    *  the resized buffer needs to have. */
   virtual void Expand(size_t minimum_desired) = 0;
 
- private:
-  template <typename T>
-  void WritePrimitive(T value) {
+private:
+  template <typename T> void WritePrimitive(T value) {
     AssureExpand(sizeof(value));
     memcpy(buffer_ + position_, &value, sizeof(value));
     position_ += sizeof(value);
   }
 
-  template <typename T>
-  size_t WritePrimitiveAt(size_t position, T value) {
+  template <typename T> size_t WritePrimitiveAt(size_t position, T value) {
     return WriteBytesAt(position, &value, sizeof(value));
   }
 
@@ -345,9 +341,9 @@ class SerializeOutput {
   }
 
   /// Beginning of the buffer.
-  char* buffer_;
+  char *buffer_;
 
- protected:
+protected:
   /// Current write position in the buffer.
   size_t position_;
   /// Total bytes this buffer can contain.
@@ -360,8 +356,8 @@ class SerializeOutput {
 
 /// Implementation of SerializeInput that references an existing buffer.
 class ReferenceSerializeInput : public SerializeInput {
- public:
-  ReferenceSerializeInput(const void* data, size_t length) {
+public:
+  ReferenceSerializeInput(const void *data, size_t length) {
     Initialize(data, length);
   }
 
@@ -371,29 +367,29 @@ class ReferenceSerializeInput : public SerializeInput {
 
 /// Implementation of SerializeInput that makes a copy of the buffer.
 class CopySerializeInput : public SerializeInput {
- public:
-  CopySerializeInput(const void* data, size_t length)
-      : bytes_(reinterpret_cast<const char*>(data), static_cast<int>(length)) {
+public:
+  CopySerializeInput(const void *data, size_t length)
+      : bytes_(reinterpret_cast<const char *>(data), static_cast<int>(length)) {
     Initialize(bytes_.data(), static_cast<int>(length));
   }
 
   // Destructor frees the ByteArray.
   virtual ~CopySerializeInput() {}
 
- private:
+private:
   ByteArray bytes_;
 };
 
 /// Implementation of SerializeOutput that references an existing buffer. */
 class ReferenceSerializeOutput : public SerializeOutput {
- public:
+public:
   ReferenceSerializeOutput() : SerializeOutput() {}
-  ReferenceSerializeOutput(void* data, size_t length) : SerializeOutput() {
+  ReferenceSerializeOutput(void *data, size_t length) : SerializeOutput() {
     Initialize(data, length);
   }
 
   /// Set the buffer to buffer with capacity and sets the position.
-  void InitializeWithPosition(void* buffer, size_t capacity, size_t position) {
+  void InitializeWithPosition(void *buffer, size_t capacity, size_t position) {
     SetPosition(position);
     Initialize(buffer, capacity);
   }
@@ -403,7 +399,7 @@ class ReferenceSerializeOutput : public SerializeOutput {
   // Destructor does nothing: nothing to clean up!
   virtual ~ReferenceSerializeOutput() {}
 
- protected:
+protected:
   /// Reference output can't resize the buffer
   virtual void Expand(__attribute__((unused)) size_t minimum_desired) {
     throw ObjectSizeException(
@@ -414,9 +410,9 @@ class ReferenceSerializeOutput : public SerializeOutput {
 
 /// Implementation of SerializeOutput that makes a copy of the buffer.
 class CopySerializeOutput : public SerializeOutput {
- public:
+public:
   // Start with something sizeable so we avoid a ton of initial allocations.
-  static const int INITIAL_SIZE = 8 * 1024 * 1024;  // 8 MB
+  static const int INITIAL_SIZE = 8 * 1024 * 1024; // 8 MB
 
   CopySerializeOutput() : bytes_(INITIAL_SIZE) {
     Initialize(bytes_.data(), INITIAL_SIZE);
@@ -429,7 +425,7 @@ class CopySerializeOutput : public SerializeOutput {
 
   int Remaining() { return bytes_.length() - static_cast<int>(Position()); }
 
- protected:
+protected:
   /// Resize this buffer to contain twice the amount desired.
   virtual void Expand(size_t minimum_desired) {
     size_t next_capacity = (bytes_.length() + minimum_desired) * 2;
@@ -439,7 +435,7 @@ class CopySerializeOutput : public SerializeOutput {
     Initialize(bytes_.data(), next_capacity);
   }
 
- private:
+private:
   ByteArray bytes_;
 };
 
@@ -449,14 +445,14 @@ class CopySerializeOutput : public SerializeOutput {
  * occurs.
  */
 class FallbackSerializeOutput : public ReferenceSerializeOutput {
- public:
+public:
   FallbackSerializeOutput()
       : ReferenceSerializeOutput(), fallbackBuffer_(NULL) {}
 
   /// Set the buffer to buffer with capacity and sets the position.
-  void InitializeWithPosition(void* buffer, size_t capacity, size_t position) {
+  void InitializeWithPosition(void *buffer, size_t capacity, size_t position) {
     if (fallbackBuffer_ != NULL) {
-      char* temp = fallbackBuffer_;
+      char *temp = fallbackBuffer_;
       fallbackBuffer_ = NULL;
       delete[] temp;
     }
@@ -473,7 +469,7 @@ class FallbackSerializeOutput : public ReferenceSerializeOutput {
     size_t maxAllocationSize = ((1024 * 1024 * 50) - (1024 * 32));
     if (fallbackBuffer_ != NULL || minimum_desired > maxAllocationSize) {
       if (fallbackBuffer_ != NULL) {
-        char* temp = fallbackBuffer_;
+        char *temp = fallbackBuffer_;
         fallbackBuffer_ = NULL;
         delete[] temp;
       }
@@ -488,8 +484,8 @@ class FallbackSerializeOutput : public ReferenceSerializeOutput {
     Initialize(fallbackBuffer_, maxAllocationSize);
   }
 
- private:
-  char* fallbackBuffer_;
+private:
+  char *fallbackBuffer_;
 };
 
 //===--------------------------------------------------------------------===//
@@ -507,9 +503,9 @@ class FallbackSerializeOutput : public ReferenceSerializeOutput {
  */
 
 class ExportSerializeInput {
- public:
-  ExportSerializeInput(const void* data, size_t length) {
-    current_ = reinterpret_cast<const char*>(data);
+public:
+  ExportSerializeInput(const void *data, size_t length) {
+    current_ = reinterpret_cast<const char *>(data);
     end_ = current_ + length;
   }
 
@@ -545,8 +541,8 @@ class ExportSerializeInput {
 
   /// Returns a pointer to the internal data buffer, advancing the Read position
   /// by length.
-  const void* getRawPointer(size_t length) {
-    const void* result = current_;
+  const void *getRawPointer(size_t length) {
+    const void *result = current_;
     current_ += length;
     assert(current_ <= end_);
     return result;
@@ -557,12 +553,12 @@ class ExportSerializeInput {
     int32_t string_length = ReadInt();
     assert(string_length >= 0);
     return std::string(
-        reinterpret_cast<const char*>(getRawPointer(string_length)),
+        reinterpret_cast<const char *>(getRawPointer(string_length)),
         string_length);
   };
 
   /// Copy the next length bytes from the buffer to destination.
-  inline void ReadBytes(void* destination, size_t length) {
+  inline void ReadBytes(void *destination, size_t length) {
     ::memcpy(destination, getRawPointer(length), length);
   };
 
@@ -571,9 +567,8 @@ class ExportSerializeInput {
         beginning of the buffer. */
   void Unread(size_t bytes) { current_ -= bytes; }
 
- private:
-  template <typename T>
-  T ReadPrimitive() {
+private:
+  template <typename T> T ReadPrimitive() {
     T value;
     ::memcpy(&value, current_, sizeof(value));
     current_ += sizeof(value);
@@ -581,21 +576,21 @@ class ExportSerializeInput {
   }
 
   // Current Read position.
-  const char* current_;
+  const char *current_;
 
   // End of the buffer. Valid byte range: current_ <= validPointer < end_.
-  const char* end_;
+  const char *end_;
 
   // No implicit copies
-  ExportSerializeInput(const ExportSerializeInput&);
-  ExportSerializeInput& operator=(const ExportSerializeInput&);
+  ExportSerializeInput(const ExportSerializeInput &);
+  ExportSerializeInput &operator=(const ExportSerializeInput &);
 };
 
 class ExportSerializeOutput {
- public:
-  ExportSerializeOutput(void* buffer, size_t capacity)
+public:
+  ExportSerializeOutput(void *buffer, size_t capacity)
       : buffer_(NULL), position_(0), capacity_(0) {
-    buffer_ = reinterpret_cast<char*>(buffer);
+    buffer_ = reinterpret_cast<char *>(buffer);
     assert(position_ <= capacity);
     capacity_ = capacity;
   }
@@ -606,7 +601,7 @@ class ExportSerializeOutput {
 
   /// Returns a pointer to the beginning of the buffer, for reading the
   /// serialized data.
-  const char* data() const { return buffer_; }
+  const char *data() const { return buffer_; }
 
   /// Returns the number of bytes written in to the buffer.
   size_t size() const { return position_; }
@@ -648,11 +643,11 @@ class ExportSerializeOutput {
 
   // This explicitly accepts char* and length (or ByteArray)
   // as std::string's implicit construction is unsafe!
-  inline void WriteBinaryString(const void* value, size_t length) {
+  inline void WriteBinaryString(const void *value, size_t length) {
     int32_t string_length = static_cast<int32_t>(length);
     AssureExpand(length + sizeof(string_length));
 
-    char* current = buffer_ + position_;
+    char *current = buffer_ + position_;
     memcpy(current, &string_length, sizeof(string_length));
     current += sizeof(string_length);
     memcpy(current, value, length);
@@ -663,7 +658,7 @@ class ExportSerializeOutput {
   //	WriteBinaryString(value.data(), value.size());
   //}
 
-  inline void WriteBytes(const void* value, size_t length) {
+  inline void WriteBytes(const void *value, size_t length) {
     AssureExpand(length);
     memcpy(buffer_ + position_, value, length);
     position_ += length;
@@ -688,16 +683,14 @@ class ExportSerializeOutput {
 
   void Position(std::size_t pos) { position_ = pos; }
 
- private:
-  template <typename T>
-  void WritePrimitive(T value) {
+private:
+  template <typename T> void WritePrimitive(T value) {
     AssureExpand(sizeof(value));
     memcpy(buffer_ + position_, &value, sizeof(value));
     position_ += sizeof(value);
   }
 
-  template <typename T>
-  size_t WritePrimitiveAt(size_t position, T value) {
+  template <typename T> size_t WritePrimitiveAt(size_t position, T value) {
     return WriteBytesAt(position, &value, sizeof(value));
   }
 
@@ -710,13 +703,13 @@ class ExportSerializeOutput {
   }
 
   // Beginning of the buffer.
-  char* buffer_;
+  char *buffer_;
 
   // No implicit copies
-  ExportSerializeOutput(const ExportSerializeOutput&);
-  ExportSerializeOutput& operator=(const ExportSerializeOutput&);
+  ExportSerializeOutput(const ExportSerializeOutput &);
+  ExportSerializeOutput &operator=(const ExportSerializeOutput &);
 
- protected:
+protected:
   // Current Write position in the buffer.
   size_t position_;
 
@@ -724,4 +717,4 @@ class ExportSerializeOutput {
   size_t capacity_;
 };
 
-}  // End peloton namespace
+} // End peloton namespace

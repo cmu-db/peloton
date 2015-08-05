@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <cstdio>
 #include <random>
 #include <chrono>
@@ -40,26 +39,22 @@ TEST(ClustererTests, BasicTest) {
   std::mt19937_64 rng;
   std::uniform_real_distribution<double> uniform(0, 1);
 
-  for(int sample_itr = 0 ; sample_itr < 100; sample_itr ++) {
+  for (int sample_itr = 0; sample_itr < 100; sample_itr++) {
     auto rng_val = uniform(rng);
 
-    if(rng_val < 0.3) {
+    if (rng_val < 0.3) {
       columns_accessed = {1, 1, 0, 0, 0, 1, 1};
       sample_weight = 10000;
-    }
-    else if(rng_val < 0.6) {
+    } else if (rng_val < 0.6) {
       columns_accessed = {1, 1, 0, 1, 1, 0, 0};
       sample_weight = 1000;
-    }
-    else if(rng_val < 0.7) {
+    } else if (rng_val < 0.7) {
       columns_accessed = {0, 0, 1, 1, 1, 0, 0};
       sample_weight = 100;
-    }
-    else if(rng_val < 0.8) {
+    } else if (rng_val < 0.8) {
       columns_accessed = {0, 0, 1, 1, 0, 0, 0};
       sample_weight = 100;
-    }
-    else {
+    } else {
       columns_accessed = {0, 0, 0, 0, 0, 1, 1};
       sample_weight = 1000;
     }
@@ -72,16 +67,21 @@ TEST(ClustererTests, BasicTest) {
 
   auto partitioning1 = clusterer.GetPartitioning(2);
 
-  std::cout << "COLUMN "<< "\t" << " TILE" << "\n";
-  for(auto entry : partitioning1)
+  std::cout << "COLUMN "
+            << "\t"
+            << " TILE"
+            << "\n";
+  for (auto entry : partitioning1)
     std::cout << entry.first << "\t" << entry.second << "\n";
 
   auto partitioning2 = clusterer.GetPartitioning(4);
-  std::cout << "COLUMN "<< "\t" << " TILE" << "\n";
-  for(auto entry : partitioning2)
+  std::cout << "COLUMN "
+            << "\t"
+            << " TILE"
+            << "\n";
+  for (auto entry : partitioning2)
     std::cout << entry.first << "\t" << entry.second << "\n";
-
 }
 
-}  // End test namespace
-}  // End peloton namespace
+} // End test namespace
+} // End peloton namespace

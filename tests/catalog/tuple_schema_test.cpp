@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "gtest/gtest.h"
 
 #include "backend/catalog/schema.h"
@@ -71,5 +70,5 @@ TEST(TupleSchemaTests, TupleSchemaTest) {
   delete schema3;
 }
 
-}  // End test namespace
-}  // End peloton namespace
+} // End test namespace
+} // End peloton namespace

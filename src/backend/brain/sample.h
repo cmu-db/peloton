@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <vector>
@@ -28,36 +27,33 @@ namespace brain {
 //===--------------------------------------------------------------------===//
 
 class Sample {
- public:
+public:
+  Sample(const size_t column_count)
+      : columns_accessed_(
+            std::vector<double>(column_count, DEFAULT_COLUMN_VALUE)),
+        weight_(DEFAULT_SAMPLE_WEIGHT) {}
 
-  Sample(const size_t column_count) :
-    columns_accessed_(std::vector<double>(column_count, DEFAULT_COLUMN_VALUE)),
-    weight_(DEFAULT_SAMPLE_WEIGHT){
-  }
-
-  Sample(const std::vector<double>& columns_accessed,
+  Sample(const std::vector<double> &columns_accessed,
          double weight = DEFAULT_SAMPLE_WEIGHT)
-  : columns_accessed_(columns_accessed),
-    weight_(weight) {
-  }
+      : columns_accessed_(columns_accessed), weight_(weight) {}
 
   // get the distance from other sample
-  double GetDistance(const Sample& other) const;
+  double GetDistance(const Sample &other) const;
 
   // get difference after removing other sample
-  Sample GetDifference(const Sample& other) const;
+  Sample GetDifference(const Sample &other) const;
 
   // multiplication operator with a scalar
-  Sample& operator*(const double& rhs);
+  Sample &operator*(const double &rhs);
 
   // addition operator with a sample
-  Sample& operator+(const Sample& rhs);
+  Sample &operator+(const Sample &rhs);
 
   // get enabled columns
   std::vector<oid_t> GetEnabledColumns() const;
 
   // Get a string representation of sample
-  friend std::ostream& operator<<(std::ostream& os, const Sample& sample);
+  friend std::ostream &operator<<(std::ostream &os, const Sample &sample);
 
   //===--------------------------------------------------------------------===//
   // MEMBERS
@@ -70,5 +66,5 @@ class Sample {
   double weight_;
 };
 
-}  // End brain namespace
-}  // End peloton namespace
+} // End brain namespace
+} // End peloton namespace

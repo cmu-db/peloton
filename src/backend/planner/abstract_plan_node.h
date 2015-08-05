@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <cstdint>
@@ -34,11 +33,11 @@ namespace planner {
 //===--------------------------------------------------------------------===//
 
 class AbstractPlanNode {
- public:
-  AbstractPlanNode(const AbstractPlanNode&) = delete;
-  AbstractPlanNode& operator=(const AbstractPlanNode&) = delete;
-  AbstractPlanNode(AbstractPlanNode&&) = delete;
-  AbstractPlanNode& operator=(AbstractPlanNode&&) = delete;
+public:
+  AbstractPlanNode(const AbstractPlanNode &) = delete;
+  AbstractPlanNode &operator=(const AbstractPlanNode &) = delete;
+  AbstractPlanNode(AbstractPlanNode &&) = delete;
+  AbstractPlanNode &operator=(AbstractPlanNode &&) = delete;
 
   explicit AbstractPlanNode(oid_t plan_node_id);
   AbstractPlanNode();
@@ -48,11 +47,11 @@ class AbstractPlanNode {
   // Children + Parent Helpers
   //===--------------------------------------------------------------------===//
 
-  void AddChild(AbstractPlanNode* child);
+  void AddChild(AbstractPlanNode *child);
 
-  const std::vector<AbstractPlanNode*>& GetChildren() const;
+  const std::vector<AbstractPlanNode *> &GetChildren() const;
 
-  AbstractPlanNode* GetParent();
+  AbstractPlanNode *GetParent();
 
   //===--------------------------------------------------------------------===//
   // Accessors
@@ -71,22 +70,22 @@ class AbstractPlanNode {
   //===--------------------------------------------------------------------===//
 
   // Debugging convenience methods
-  friend std::ostream& operator<<(std::ostream& os,
-                                  const AbstractPlanNode& node);
+  friend std::ostream &operator<<(std::ostream &os,
+                                  const AbstractPlanNode &node);
   std::string GetInfo(std::string spacer) const;
 
   // Override in derived plan nodes
   virtual std::string GetInfo() const;
 
- private:
+private:
   // Every plan node will have a unique id assigned to it at compile time
   oid_t plan_node_id_;
 
   // A node can have multiple children and parents
-  std::vector<AbstractPlanNode*> children_;
+  std::vector<AbstractPlanNode *> children_;
 
-  AbstractPlanNode* parent_ = nullptr;
+  AbstractPlanNode *parent_ = nullptr;
 };
 
-}  // namespace planner
-}  // namespace peloton
+} // namespace planner
+} // namespace peloton

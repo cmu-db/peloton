@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <string>
 #include <utility>
@@ -61,7 +60,7 @@ planner::ProjectInfo *MakeProjectInfoFromTuple(const storage::Tuple *tuple) {
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
 
-  for(oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
+  for (oid_t col_id = START_OID; col_id < tuple->GetColumnCount(); col_id++) {
     auto value = tuple->GetValue(col_id);
     auto expression = expression::ConstantValueFactory(value);
     target_list.emplace_back(col_id, expression);
@@ -83,7 +82,7 @@ void InsertTuple(storage::DataTable *table) {
   std::unique_ptr<executor::ExecutorContext> context(
       new executor::ExecutorContext(txn));
 
-  for(oid_t tuple_itr = 0 ; tuple_itr < 10 ; tuple_itr++) {
+  for (oid_t tuple_itr = 0; tuple_itr < 10; tuple_itr++) {
     auto tuple = ExecutorTestsUtil::GetTuple(table, ++tuple_id);
 
     auto project_info = MakeProjectInfoFromTuple(tuple);
@@ -118,7 +117,8 @@ void UpdateTuple(storage::DataTable *table) {
   direct_map_list.emplace_back(1, std::pair<oid_t, oid_t>(0, 1));
   direct_map_list.emplace_back(3, std::pair<oid_t, oid_t>(0, 3));
 
-  planner::UpdateNode update_node(table, new planner::ProjectInfo(target_list, direct_map_list));
+  planner::UpdateNode update_node(
+      table, new planner::ProjectInfo(target_list, direct_map_list));
   executor::UpdateExecutor update_executor(&update_node, context.get());
 
   // Predicate
@@ -236,17 +236,17 @@ TEST(MutateTests, StressTests) {
   std::cout << "Start tests \n";
 
   LaunchParallelTest(1, InsertTuple, table);
-  //std::cout << (*table);
+  // std::cout << (*table);
 
   std::cout << "---------------------------------------------\n";
 
-  //LaunchParallelTest(1, UpdateTuple, table);
-  //std::cout << (*table);
+  // LaunchParallelTest(1, UpdateTuple, table);
+  // std::cout << (*table);
 
   std::cout << "---------------------------------------------\n";
 
   LaunchParallelTest(1, DeleteTuple, table);
-  //std::cout << (*table);
+  // std::cout << (*table);
 
   // PRIMARY KEY
   std::vector<catalog::Column> columns;
@@ -336,5 +336,5 @@ TEST(MutateTests, InsertTest) {
   EXPECT_EQ(dest_data_table->GetTileGroupCount(), 1);
 }
 
-}  // namespace test
-}  // namespace peloton
+} // namespace test
+} // namespace peloton

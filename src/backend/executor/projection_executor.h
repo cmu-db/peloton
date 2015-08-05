@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/executor/abstract_executor.h"
@@ -20,7 +19,7 @@ namespace peloton {
 namespace executor {
 
 class ProjectionExecutor : public AbstractExecutor {
- public:
+public:
   ProjectionExecutor(const ProjectionExecutor &) = delete;
   ProjectionExecutor &operator=(const ProjectionExecutor &) = delete;
   ProjectionExecutor(const ProjectionExecutor &&) = delete;
@@ -29,21 +28,21 @@ class ProjectionExecutor : public AbstractExecutor {
   explicit ProjectionExecutor(planner::AbstractPlanNode *node,
                               ExecutorContext *executor_context);
 
- protected:
+protected:
   bool DInit();
 
   bool DExecute();
 
- private:
+private:
   //===--------------------------------------------------------------------===//
   // Executor State
   //===--------------------------------------------------------------------===//
 
   /** @brief Projection Info.            */
-  const planner::ProjectInfo* project_info_ = nullptr;
+  const planner::ProjectInfo *project_info_ = nullptr;
 
   /** @brief Schema of projected tuples. */
-  const catalog::Schema* schema_ = nullptr;
+  const catalog::Schema *schema_ = nullptr;
 };
 
 } /* namespace executor */

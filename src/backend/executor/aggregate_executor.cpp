@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "backend/common/logger.h"
 #include "backend/executor/aggregator.h"
 #include "backend/executor/aggregate_executor.h"
@@ -108,7 +107,8 @@ bool AggregateExecutor::DExecute() {
     }
 
     LOG_TRACE("Finalizing..");
-    if (!aggregator.Finalize(prev_tuple)) return false;
+    if (!aggregator.Finalize(prev_tuple))
+      return false;
 
     delete prev_tuple;
     LOG_TRACE("Finished processing logical tile");
@@ -117,7 +117,8 @@ bool AggregateExecutor::DExecute() {
   // Transform output table into result
   auto tile_group_count = output_table->GetTileGroupCount();
 
-  if (tile_group_count == 0) return false;
+  if (tile_group_count == 0)
+    return false;
 
   for (oid_t tile_group_itr = 0; tile_group_itr < tile_group_count;
        tile_group_itr++) {
@@ -138,5 +139,5 @@ bool AggregateExecutor::DExecute() {
   return true;
 }
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

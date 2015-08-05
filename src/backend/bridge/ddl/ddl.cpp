@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <cassert>
 #include <iostream>
 
@@ -40,14 +39,12 @@ namespace bridge {
  * @brief Process utility statement.
  * @param parsetree Parse tree
  */
-void DDL::ProcessUtility(Node *parsetree, 
-                         const char *queryString,
-                         Peloton_Status* status,
-                         TransactionId txn_id) {
+void DDL::ProcessUtility(Node *parsetree, const char *queryString,
+                         Peloton_Status *status, TransactionId txn_id) {
   assert(parsetree != nullptr);
   assert(queryString != nullptr);
 
-  static std::vector<Node*> parsetree_stack;
+  static std::vector<Node *> parsetree_stack;
 
   /* When we call a backend function from different thread, the thread's stack
    * is at a different location than the main thread's stack. so it sets up
@@ -57,60 +54,60 @@ void DDL::ProcessUtility(Node *parsetree,
 
   // Process depending on type of utility statement
   switch (nodeTag(parsetree)) {
-    case T_CreatedbStmt: {
-      DDLDatabase::ExecCreatedbStmt(parsetree);
-      break;
-    }
-
-    case T_DropdbStmt: {
-      DDLDatabase::ExecDropdbStmt(parsetree);
-      break;
-    }
-
-    case T_CreateStmt:
-    case T_CreateForeignTableStmt: {
-      DDLTable::ExecCreateStmt(parsetree, parsetree_stack, status, txn_id);
-      break;
-    }
-
-    case T_AlterTableStmt: {
-      DDLTable::ExecAlterTableStmt(parsetree, parsetree_stack);
-      break;
-    }
-
-    case T_DropStmt: {
-      DDLTable::ExecDropStmt(parsetree);
-      break;
-    }
-
-    case T_IndexStmt: {
-      DDLIndex::ExecIndexStmt(parsetree, parsetree_stack);
-      break;
-    }
-
-    case T_VacuumStmt: {
-      DDLDatabase::ExecVacuumStmt(parsetree, status);
-      break;
-    }
-
-    case T_TransactionStmt: {
-      TransactionStmt *stmt = (TransactionStmt *)parsetree;
-
-      DDLTransaction::ExecTransactionStmt(stmt, txn_id);
-    } break;
-
-    default: {
-      LOG_WARN("unrecognized node type: %d", (int)nodeTag(parsetree));
-    } break;
+  case T_CreatedbStmt: {
+    DDLDatabase::ExecCreatedbStmt(parsetree);
+    break;
   }
 
-/*
-  auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db = manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
-  std::cout << "Print db :: \n"<<*db << std::endl;
-  */
+  case T_DropdbStmt: {
+    DDLDatabase::ExecDropdbStmt(parsetree);
+    break;
+  }
 
+  case T_CreateStmt:
+  case T_CreateForeignTableStmt: {
+    DDLTable::ExecCreateStmt(parsetree, parsetree_stack, status, txn_id);
+    break;
+  }
+
+  case T_AlterTableStmt: {
+    DDLTable::ExecAlterTableStmt(parsetree, parsetree_stack);
+    break;
+  }
+
+  case T_DropStmt: {
+    DDLTable::ExecDropStmt(parsetree);
+    break;
+  }
+
+  case T_IndexStmt: {
+    DDLIndex::ExecIndexStmt(parsetree, parsetree_stack);
+    break;
+  }
+
+  case T_VacuumStmt: {
+    DDLDatabase::ExecVacuumStmt(parsetree, status);
+    break;
+  }
+
+  case T_TransactionStmt: {
+    TransactionStmt *stmt = (TransactionStmt *)parsetree;
+
+    DDLTransaction::ExecTransactionStmt(stmt, txn_id);
+  } break;
+
+  default: {
+    LOG_WARN("unrecognized node type: %d", (int)nodeTag(parsetree));
+  } break;
+  }
+
+  /*
+    auto& manager = catalog::Manager::GetInstance();
+    storage::Database* db =
+    manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
+    std::cout << "Print db :: \n"<<*db << std::endl;
+    */
 }
 
-}  // namespace bridge
-}  // namespace peloton
+} // namespace bridge
+} // namespace peloton

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include "backend/executor/abstract_executor.h"
@@ -34,7 +33,7 @@ namespace executor {
  * to aggregate the tuples.
  */
 class AggregateExecutor : public AbstractExecutor {
- public:
+public:
   AggregateExecutor(const AggregateExecutor &) = delete;
   AggregateExecutor &operator=(const AggregateExecutor &) = delete;
   AggregateExecutor(AggregateExecutor &&) = delete;
@@ -45,7 +44,7 @@ class AggregateExecutor : public AbstractExecutor {
 
   ~AggregateExecutor();
 
- protected:
+protected:
   bool DInit();
 
   bool DExecute();
@@ -67,5 +66,5 @@ class AggregateExecutor : public AbstractExecutor {
   storage::DataTable *output_table = nullptr;
 };
 
-}  // namespace executor
-}  // namespace peloton
+} // namespace executor
+} // namespace peloton

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include <memory>
 #include <set>
 #include <string>
@@ -77,7 +76,7 @@ TEST(LimitTests, NonLeafLimitOffsetTest) {
 
   EXPECT_CALL(child_executor, DExecute())
       .WillOnce(Return(true))
-      .WillOnce(Return(true));  // even no need to call the child for 3rd time
+      .WillOnce(Return(true)); // even no need to call the child for 3rd time
 
   // Create a table and wrap it in logical tile
   std::unique_ptr<storage::DataTable> data_table(
@@ -213,5 +212,5 @@ TEST(LimitTests, NonLeafHugeLimitTest) {
 }
 }
 
-}  // namespace test
-}  // namespace peloton
+} // namespace test
+} // namespace peloton

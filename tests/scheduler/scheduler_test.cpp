@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "gtest/gtest.h"
 
 #include "harness.h"
@@ -33,11 +32,11 @@ TEST(SchedulerTests, KernelTest) {
       new scheduler::TBBScheduler());
 
   tbb_scheduler->Run(reinterpret_cast<scheduler::handler>(kernel_func),
-                     const_cast<char*>("CREATE DATABASE TESTDB;"));
+                     const_cast<char *>("CREATE DATABASE TESTDB;"));
 
   // final wait
   tbb_scheduler->Wait();
 }
 
-}  // End test namespace
-}  // End peloton namespace
+} // End test namespace
+} // End peloton namespace

@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #pragma once
 
 #include <cstddef>
@@ -30,48 +29,48 @@ class Pool;
  * containing the actual string to be moved around as the result of
  * compaction.
  */
-class Varlen{
+class Varlen {
 public:
-	/// Create and return a new Varlen object which points to an
-	/// allocated memory block of the requested size. The caller
-	/// may provide an optional Pool from which the memory (and
-	/// the memory for the Varlen object itself) will be
-	/// allocated, intended for temporary strings. If no Pool
-	/// object is provided, the Varlen and the string memory will be
-	/// allocated out of the ThreadLocalPool.
-	static Varlen* Create(std::size_t size, Pool* dataPool = NULL);
+  /// Create and return a new Varlen object which points to an
+  /// allocated memory block of the requested size. The caller
+  /// may provide an optional Pool from which the memory (and
+  /// the memory for the Varlen object itself) will be
+  /// allocated, intended for temporary strings. If no Pool
+  /// object is provided, the Varlen and the string memory will be
+  /// allocated out of the ThreadLocalPool.
+  static Varlen *Create(std::size_t size, Pool *dataPool = NULL);
 
-	/// Destroy the given Varlen object and free any memory, if
-	/// any, allocated from pools to store the object.
-	/// varlen must have been allocated and returned by a call to
-	/// Varlen::create() and must not have been created in a
-	/// temporary Pool
-	static void Destroy(Varlen* varlen);
+  /// Destroy the given Varlen object and free any memory, if
+  /// any, allocated from pools to store the object.
+  /// varlen must have been allocated and returned by a call to
+  /// Varlen::create() and must not have been created in a
+  /// temporary Pool
+  static void Destroy(Varlen *varlen);
 
-	/**
-	 * @brief Clone (deep copy) the source Varlen in the provided data pool.
-	 */
-	static Varlen* Clone(const Varlen& src, Pool* dataPool = NULL);
+  /**
+   * @brief Clone (deep copy) the source Varlen in the provided data pool.
+   */
+  static Varlen *Clone(const Varlen &src, Pool *dataPool = NULL);
 
-	char* Get();
-	const char* Get() const;
+  char *Get();
+  const char *Get() const;
 
 private:
-	Varlen(std::size_t size);
-	Varlen(std::size_t size, Pool* dataPool);
-	~Varlen();
+  Varlen(std::size_t size);
+  Varlen(std::size_t size, Pool *dataPool);
+  ~Varlen();
 
-	/// Callback used via the back-pointer in order to update the
-	/// pointer to the memory backing this string reference
-	void UpdateStringLocation(void* location);
+  /// Callback used via the back-pointer in order to update the
+  /// pointer to the memory backing this string reference
+  void UpdateStringLocation(void *location);
 
-	void SetBackPtr();
+  void SetBackPtr();
 
-	std::size_t varlen_size;
+  std::size_t varlen_size;
 
-	bool varlen_temp_pool;
+  bool varlen_temp_pool;
 
-	char* varlen_string_ptr;
+  char *varlen_string_ptr;
 };
 
-}  // End peloton namespace
+} // End peloton namespace
