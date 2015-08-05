@@ -1,0 +1,8 @@
+# Options for Clang Formatter
+
+# We'll use defaults from the Google style,
+BasedOnStyle: Google
+
+# 4 columns tab indentation.
+TabWidth: 4
+

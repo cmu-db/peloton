@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// tuple_address_expression.h
+//
+// Identification: src/backend/expression/tuple_address_expression.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
 #include <string>

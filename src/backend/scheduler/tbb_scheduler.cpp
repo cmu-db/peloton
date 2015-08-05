@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * scheduler.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/scheduler/scheduler.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// tbb_scheduler.cpp
+//
+// Identification: src/backend/scheduler/tbb_scheduler.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <string>
 #include <cassert>
