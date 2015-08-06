@@ -3719,12 +3719,16 @@ PostgresMain(int argc, char *argv[],
    */
   InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL);
 
+  // TODO :: Peloton Changes
+
+
   if(IsPostmasterEnvironment == true){
-    // TODO :: Peloton Changes
     StartTransactionCommand();
     Peloton_Status *status = peloton_create_status();
+
     peloton_send_bootstrap(status);
     peloton_process_status(status);
+
     peloton_destroy_status(status);
     CommitTransactionCommand();
   }
