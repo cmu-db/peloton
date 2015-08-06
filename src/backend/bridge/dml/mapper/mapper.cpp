@@ -82,6 +82,9 @@ planner::AbstractPlanNode *PlanTransformer::TransformPlan(
           reinterpret_cast<const LimitState *>(plan_state));
       break;
     case T_MergeJoin:
+      plan_node = PlanTransformer::TransformMergeJoin(
+          reinterpret_cast<const MergeJoinState *>(plan_state));
+      break;
     case T_HashJoin:
       // TODO :: 'MergeJoin'/'HashJoin' have not been implemented yet, however, we need this
       // case to operate AlterTable 

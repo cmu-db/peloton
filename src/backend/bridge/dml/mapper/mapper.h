@@ -102,6 +102,9 @@ class PlanTransformer {
   //======---------------------------------------
   static planner::AbstractPlanNode *TransformNestLoop(
       const NestLoopState *plan_state);
+  static planner::AbstractPlanNode *TransformMergeJoin(
+      const MergeJoinState *plan_state);
+
 
   //======---------------------------------------
   // OTHERS
