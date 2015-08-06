@@ -645,6 +645,32 @@ ConstraintType StringToConstraintType(std::string str) {
   return CONSTRAINT_TYPE_INVALID;
 }
 
+//===--------------------------------------------------------------------===//
+// LogRecord Type - String Utilities
+//===--------------------------------------------------------------------===//
+
+std::string LogRecordTypeToString(LogRecordType type) {
+  switch (type) {
+    case LOGRECORD_TYPE_INVALID: {
+      return "INVALID";
+    }
+    case LOGRECORD_TYPE_INSERT_TUPLE: {
+      return "LOGRECORD_TYPE_INSERT_TUPLE";
+    }
+  }
+  return "INVALID";
+}
+
+LogRecordType StringToLogRecordType(std::string str) {
+  if (str == "INVALID") {
+    return LOGRECORD_TYPE_INVALID;
+  } else if (str == "LOGRECORD_TYPE_INSERT_TUPLE") {
+    return LOGRECORD_TYPE_INSERT_TUPLE;
+  }
+
+  return LOGRECORD_TYPE_INVALID;
+}
+
 ValueType PostgresValueTypeToPelotonValueType(
     PostgresValueType PostgresValType) {
   ValueType valueType = VALUE_TYPE_INVALID;
