@@ -1,8 +1,14 @@
-/**
- * @brief Header for index scan plan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// index_scan_node.h
+//
+// Identification: src/backend/planner/index_scan_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -34,18 +40,15 @@ class IndexScanNode : public AbstractScanNode {
   IndexScanNode &operator=(IndexScanNode &&) = delete;
 
   struct IndexScanDesc {
+    IndexScanDesc() : index(nullptr) {}
 
-    IndexScanDesc()
-    : index(nullptr) {}
-
-    IndexScanDesc(index::Index *index,
-                  const std::vector<oid_t>& column_ids,
-                  const std::vector<ExpressionType>& expr_types,
-                  const std::vector<Value>& values)
-    : index(index),
-      key_column_ids(column_ids),
-      expr_types(expr_types),
-      values(values){}
+    IndexScanDesc(index::Index *index, const std::vector<oid_t> &column_ids,
+                  const std::vector<ExpressionType> &expr_types,
+                  const std::vector<Value> &values)
+        : index(index),
+          key_column_ids(column_ids),
+          expr_types(expr_types),
+          values(values) {}
 
     index::Index *index = nullptr;
 
@@ -78,7 +81,9 @@ class IndexScanNode : public AbstractScanNode {
 
   const std::vector<oid_t> &GetKeyColumnIds() const { return key_column_ids_; }
 
-  const std::vector<ExpressionType> &GetExprTypes() const { return expr_types_; }
+  const std::vector<ExpressionType> &GetExprTypes() const {
+    return expr_types_;
+  }
 
   const std::vector<Value> &GetValues() const { return values_; }
 
@@ -102,7 +107,6 @@ class IndexScanNode : public AbstractScanNode {
   const std::vector<ExpressionType> expr_types_;
 
   const std::vector<Value> values_;
-
 };
 
 }  // namespace planner
