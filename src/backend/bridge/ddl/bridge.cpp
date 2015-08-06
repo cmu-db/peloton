@@ -215,16 +215,6 @@ float Bridge::GetNumberOfTuples(Oid relation_id) {
 Oid Bridge::GetCurrentDatabaseOid(void) { return MyDatabaseId; }
 
 /**
- * @brief Printing the current database information out
- */
-void Bridge::GetDbInfo(void) {
-  LOG_WARN("Do not use bridge function(%s) in Peloton !!! ", __func__);
-  printf("Mydatabase Id %u ", MyDatabaseId);
-  printf("MydatabaseTableSpace Id %u ", MyDatabaseTableSpace);
-  printf("Mydatabase path %s ", DatabasePath);
-}
-
-/**
  * @Determine whether table exists in the *current* database or not
  * @param table_name table name
  * @return true or false depending on whether table exists or not.
