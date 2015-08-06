@@ -18,7 +18,7 @@ PlanTransformer::TransformAgg(const AggState *plan_state){
   LOG_INFO("Number of Agg nodes: %d \n", agg_state->numaggs);
   LOG_INFO("Number of Agg phases: %d \n", agg_state->numphases);
 
-  int aggno = 0;
+//  int aggno = 0;
 
 //  ListCell   *l;
 //  foreach(l, agg_state->aggs)
