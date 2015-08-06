@@ -1,8 +1,14 @@
-/**
- * @brief Test cases for sequential scan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// seq_scan_test.cpp
+//
+// Identification: tests/executor/seq_scan_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <memory>
 #include <set>
@@ -68,13 +74,13 @@ storage::DataTable *CreateTable() {
 
   GetNextTileGroupId();
 
-  std::map<oid_t, std::pair<oid_t, oid_t> > column_map1;
+  std::map<oid_t, std::pair<oid_t, oid_t>> column_map1;
   column_map1[0] = std::make_pair(0, 0);
   column_map1[1] = std::make_pair(0, 1);
   column_map1[2] = std::make_pair(1, 0);
   column_map1[3] = std::make_pair(1, 1);
 
-  std::map<oid_t, std::pair<oid_t, oid_t> > column_map2;
+  std::map<oid_t, std::pair<oid_t, oid_t>> column_map2;
   column_map2[0] = std::make_pair(0, 0);
   column_map2[1] = std::make_pair(1, 0);
   column_map2[2] = std::make_pair(1, 1);
@@ -149,7 +155,6 @@ expression::AbstractExpression *CreatePredicate(
     constant_value.FreeUninlinedData();
   }
 
-
   return predicate;
 }
 
@@ -180,7 +185,7 @@ executor::LogicalTile *GetNextTile(executor::AbstractExecutor &executor) {
 void RunTest(executor::SeqScanExecutor &executor, int expected_num_tiles,
              int expected_num_cols) {
   EXPECT_TRUE(executor.Init());
-  std::vector<std::unique_ptr<executor::LogicalTile> > result_tiles;
+  std::vector<std::unique_ptr<executor::LogicalTile>> result_tiles;
   for (int i = 0; i < expected_num_tiles; i++) {
     result_tiles.emplace_back(GetNextTile(executor));
   }

@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * pretty_printer.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /n-store/src/common/pretty_printer.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// pretty_printer.h
+//
+// Identification: src/backend/common/pretty_printer.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

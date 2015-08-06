@@ -1,8 +1,14 @@
-/**
- * @brief Header for limit plan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// limit_node.h
+//
+// Identification: src/backend/planner/limit_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

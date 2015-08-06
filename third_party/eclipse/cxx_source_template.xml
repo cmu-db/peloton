@@ -1,15 +1,16 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><templates><template autoinsert="false" context="org.eclipse.cdt.core.cxxSource.contenttype_context" deleted="false" description="Default template for newly created C++ source files" enabled="true" id="org.eclipse.cdt.ui.text.codetemplates.cppsourcefile" name="Default C++ source template">/*-------------------------------------------------------------------------
- *
- * ${file_name}
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * ${file_path}
- *
- *-------------------------------------------------------------------------
- */
-
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><templates><template autoinsert="false" context="org.eclipse.cdt.core.cxxSource.contenttype_context" deleted="false" description="Default template for newly created C++ source files" enabled="true" id="org.eclipse.cdt.ui.text.codetemplates.cppsourcefile" name="Default C++ source template">
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// ${file_name}
+//
+// Identification: ${file_path}
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+ 
 ${includes}
 
 ${namespace_begin}

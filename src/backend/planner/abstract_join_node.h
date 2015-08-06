@@ -1,8 +1,14 @@
-/**
- * @brief Header for abstract join plan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// abstract_join_node.h
+//
+// Identification: src/backend/planner/abstract_join_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -33,7 +39,9 @@ class AbstractJoinPlanNode : public AbstractPlanNode {
   AbstractJoinPlanNode(PelotonJoinType joinType,
                        const expression::AbstractExpression *predicate,
                        const ProjectInfo *proj_info)
-      : AbstractPlanNode(), joinType_(joinType), predicate_(predicate),
+      : AbstractPlanNode(),
+        joinType_(joinType),
+        predicate_(predicate),
         proj_info_(proj_info) {
     // Fuck off!
   }
@@ -52,9 +60,7 @@ class AbstractJoinPlanNode : public AbstractPlanNode {
     return predicate_.get();
   }
 
-  const ProjectInfo *GetProjInfo() const {
-    return proj_info_.get();
-  }
+  const ProjectInfo *GetProjInfo() const { return proj_info_.get(); }
 
  private:
   /** @brief The type of join that we're going to perform */

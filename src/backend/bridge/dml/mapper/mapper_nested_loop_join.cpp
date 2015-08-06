@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * mapper_nested_loop_join.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/dml/mapper/mapper_nested_loop_join.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// mapper_nested_loop_join.cpp
+//
+// Identification: src/backend/bridge/dml/mapper/mapper_nested_loop_join.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "backend/bridge/dml/mapper/mapper.h"
 #include "backend/planner/nested_loop_join_node.h"
@@ -26,8 +26,8 @@ namespace bridge {
  * @brief Convert a Postgres NestLoop into a Peloton SeqScanNode.
  * @return Pointer to the constructed AbstractPlanNode.
  */
-planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
-    const NestLoopState* nl_plan_state) {
+planner::AbstractPlanNode *PlanTransformer::TransformNestLoop(
+    const NestLoopState *nl_plan_state) {
   const JoinState *js = &(nl_plan_state->js);
   planner::AbstractPlanNode *result = nullptr;
   planner::NestedLoopJoinNode *plan_node = nullptr;
@@ -46,7 +46,7 @@ planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
   expression::AbstractExpression *predicate = nullptr;
   if (join_filter && plan_filter) {
     predicate = expression::ConjunctionFactory(EXPRESSION_TYPE_CONJUNCTION_AND,
-                                     join_filter, plan_filter);
+                                               join_filter, plan_filter);
   } else if (join_filter) {
     predicate = join_filter;
   } else {
@@ -56,26 +56,32 @@ planner::AbstractPlanNode* PlanTransformer::TransformNestLoop(
   /* TODO: do we need to consider target list here? */
   /* Transform project info */
   std::unique_ptr<const planner::ProjectInfo> project_info(nullptr);
-  project_info.reset(BuildProjectInfo(js->ps.ps_ProjInfo,
-                                      js->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts));
+  project_info.reset(
+      BuildProjectInfo(js->ps.ps_ProjInfo,
+                       js->ps.ps_ResultTupleSlot->tts_tupleDescriptor->natts));
 
   LOG_INFO("\n%s", project_info.get()->Debug().c_str());
 
   if (project_info.get()->isNonTrivial()) {
     // we have non-trivial projection
     LOG_INFO("We have non-trivial projection");
-    auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(nl_plan_state->js.ps.ps_ResultTupleSlot->tts_tupleDescriptor);
-    result = new planner::ProjectionNode(project_info.release(), project_schema);
+    auto project_schema = SchemaTransformer::GetSchemaFromTupleDesc(
+        nl_plan_state->js.ps.ps_ResultTupleSlot->tts_tupleDescriptor);
+    result =
+        new planner::ProjectionNode(project_info.release(), project_schema);
     plan_node = new planner::NestedLoopJoinNode(predicate, nullptr);
     result->AddChild(plan_node);
   } else {
     LOG_INFO("We have direct mapping projection");
-    plan_node = new planner::NestedLoopJoinNode(predicate, project_info.release());
+    plan_node =
+        new planner::NestedLoopJoinNode(predicate, project_info.release());
     result = plan_node;
   }
 
-  planner::AbstractPlanNode *outer = PlanTransformer::TransformPlan(outerPlanState(nl_plan_state));
-  planner::AbstractPlanNode *inner = PlanTransformer::TransformPlan(innerPlanState(nl_plan_state));
+  planner::AbstractPlanNode *outer =
+      PlanTransformer::TransformPlan(outerPlanState(nl_plan_state));
+  planner::AbstractPlanNode *inner =
+      PlanTransformer::TransformPlan(innerPlanState(nl_plan_state));
 
   /* Add the children nodes */
   plan_node->SetJoinType(join_type);

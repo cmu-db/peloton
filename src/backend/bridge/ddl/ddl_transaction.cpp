@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * ddl_transaction.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/bridge/ddl_transaction.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// ddl_transaction.cpp
+//
+// Identification: src/backend/bridge/ddl/ddl_transaction.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <iostream>
 #include <cassert>
@@ -30,9 +30,9 @@ namespace bridge {
  * @param the statement
  * @return true if we handled it correctly, false otherwise
  */
-bool DDLTransaction::ExecTransactionStmt(TransactionStmt* stmt,
+bool DDLTransaction::ExecTransactionStmt(TransactionStmt *stmt,
                                          TransactionId txn_id) {
-  auto& txn_manager = concurrency::TransactionManager::GetInstance();
+  auto &txn_manager = concurrency::TransactionManager::GetInstance();
   LOG_TRACE("Transaction ID :: %u \n", txn_id);
 
   switch (stmt->kind) {
