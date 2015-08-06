@@ -35,7 +35,6 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "../../../backend/bridge/dml/mapper/mapper.h"
 #include "postgres.h"
 
 #include "access/htup_details.h"
@@ -65,6 +64,8 @@
 #include "nodes/pprint.h"
 #include "nodes/pg_list.h"
 #include "postmaster/peloton.h"
+
+#include "backend/bridge/dml/mapper/mapper.h"
 
 extern bool PelotonDualMode;
 
@@ -349,52 +350,27 @@ standard_ExecutorRun(QueryDesc *queryDesc,
 	 */
 	if (!ScanDirectionIsNoMovement(direction))
 	{
-	  // Single Mode
-	  if(PelotonDualMode == false)
+	  // PG Query
+	  if(true)
 	  {
-	    // PG Query
-	    if(queryDesc->plannedstmt->pelotonQuery == false)
-	    {
-	      ExecutePlan(estate,
-	                  queryDesc->planstate,
-	                  operation,
-	                  sendTuples,
-	                  count,
-	                  direction,
-	                  dest);
-	    }
-	    // Peloton Query
-	    else
-	    {
-	      peloton_ExecutePlan(estate,
-	                          queryDesc->planstate,
-	                          operation,
-	                          sendTuples,
-	                          count,
-	                          direction,
-	                          dest);
-	    }
+	    ExecutePlan(estate,
+	                queryDesc->planstate,
+	                operation,
+	                sendTuples,
+	                count,
+	                direction,
+	                dest);
 	  }
-	  // Dual Mode
+	  // Peloton Query
 	  else
 	  {
-
-      ExecutePlan(estate,
-                  queryDesc->planstate,
-                  operation,
-                  sendTuples,
-                  count,
-                  direction,
-                  dest);
-
-      peloton_ExecutePlan(estate,
-                          queryDesc->planstate,
-                          operation,
-                          sendTuples,
-                          count,
-                          direction,
-                          dest);
-
+	    peloton_ExecutePlan(estate,
+	                        queryDesc->planstate,
+	                        operation,
+	                        sendTuples,
+	                        count,
+	                        direction,
+	                        dest);
 	  }
 
 	}
