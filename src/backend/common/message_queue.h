@@ -18,15 +18,13 @@ extern mqd_t MyBackendQueue;
 
 namespace peloton {
 
-std::string get_message_queue_name(oid_t id);
+std::string get_mq_name(oid_t id);
 
-mqd_t create_message_queue(const std::string queue_name);
+mqd_t create_mq(const std::string queue_name);
 
-mqd_t open_message_queue(const std::string queue_name);
+mqd_t open_mq(const std::string queue_name);
 
 void send_message(mqd_t mqd, const std::string message);
-
-void notify_message(mqd_t *mqdp);
 
 void wait_for_message(mqd_t *mqdp);
 
