@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * constraint_info.h
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/src/backend/catalog/constraint_info.h
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// foreign_key.h
+//
+// Identification: src/backend/catalog/foreign_key.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -48,7 +48,7 @@ class ForeignKey {
 
   char GetDeleteAction() const { return fk_delete_action; }
 
-  std::string& GetConstraintName() { return fk_name; }
+  std::string &GetConstraintName() { return fk_name; }
 
  private:
   oid_t sink_table_id = INVALID_OID;

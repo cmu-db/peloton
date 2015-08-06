@@ -1,8 +1,14 @@
-/**
- * @brief Header file for insert executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// update_executor.h
+//
+// Identification: src/backend/executor/update_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

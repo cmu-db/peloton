@@ -1,8 +1,14 @@
-/**
- * @brief Header for merge join plan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// merge_join_node.h
+//
+// Identification: src/backend/planner/merge_join_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -26,8 +32,9 @@ class MergeJoinNode : public AbstractJoinPlanNode {
   MergeJoinNode &operator=(MergeJoinNode &&) = delete;
 
   MergeJoinNode(expression::AbstractExpression *predicate,
-                     const ProjectInfo *proj_info)
-      : AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate, proj_info) {  // FIXME
+                const ProjectInfo *proj_info)
+      : AbstractJoinPlanNode(JOIN_TYPE_INVALID, predicate,
+                             proj_info) {  // FIXME
     // Nothing to see here...
   }
 

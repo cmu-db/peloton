@@ -1,8 +1,14 @@
-/**
- * @brief Header for set operation plan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// set_op_node.h
+//
+// Identification: src/backend/planner/set_op_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

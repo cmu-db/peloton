@@ -1,8 +1,14 @@
-/**
- * @brief Test cases for Hash Set Op node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// hash_set_op_test.cpp
+//
+// Identification: tests/executor/hash_set_op_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <vector>
 
@@ -28,7 +34,7 @@ namespace test {
 
 namespace {
 
-void RunTest(executor::HashSetOpExecutor& executor,
+void RunTest(executor::HashSetOpExecutor &executor,
              size_t expected_num_tuples) {
   EXPECT_TRUE(executor.Init());
 
@@ -38,7 +44,7 @@ void RunTest(executor::HashSetOpExecutor& executor,
   }
 
   size_t actual_num_tuples_returned = 0;
-  for (auto& tile : result_tiles) {
+  for (auto &tile : result_tiles) {
     actual_num_tuples_returned += tile->GetTupleCount();
   }
 

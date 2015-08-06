@@ -1,8 +1,14 @@
-/**
- * @brief Header for order by plan node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// order_by_node.h
+//
+// Identification: src/backend/planner/order_by_node.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -23,15 +29,15 @@ namespace planner {
 
 class OrderByNode : public AbstractPlanNode {
  public:
-  OrderByNode(const OrderByNode&) = delete;
-  OrderByNode& operator=(const OrderByNode&) = delete;
-  OrderByNode(const OrderByNode&&) = delete;
-  OrderByNode& operator=(const OrderByNode&&) = delete;
+  OrderByNode(const OrderByNode &) = delete;
+  OrderByNode &operator=(const OrderByNode &) = delete;
+  OrderByNode(const OrderByNode &&) = delete;
+  OrderByNode &operator=(const OrderByNode &&) = delete;
 
-  OrderByNode(const std::vector<oid_t>& sort_keys,
-              const std::vector<bool>& descend_flags,
-              const std::vector<oid_t>& output_column_ids,
-              storage::AbstractBackend* backend)
+  OrderByNode(const std::vector<oid_t> &sort_keys,
+              const std::vector<bool> &descend_flags,
+              const std::vector<oid_t> &output_column_ids,
+              storage::AbstractBackend *backend)
       : sort_keys_(sort_keys),
         descend_flags_(descend_flags),
         output_column_ids_(output_column_ids),
@@ -47,13 +53,13 @@ class OrderByNode : public AbstractPlanNode {
   //    backend_ = new storage::VMBackend();
   //  }
 
-  storage::AbstractBackend* GetBackend() const { return backend_; }
+  storage::AbstractBackend *GetBackend() const { return backend_; }
 
-  const std::vector<oid_t>& GetSortKeys() const { return sort_keys_; }
+  const std::vector<oid_t> &GetSortKeys() const { return sort_keys_; }
 
-  const std::vector<bool>& GetDescendFlags() const { return descend_flags_; }
+  const std::vector<bool> &GetDescendFlags() const { return descend_flags_; }
 
-  const std::vector<oid_t>& GetOutputColumnIds() const {
+  const std::vector<oid_t> &GetOutputColumnIds() const {
     return output_column_ids_;
   }
 
@@ -77,7 +83,7 @@ class OrderByNode : public AbstractPlanNode {
   const std::vector<oid_t> output_column_ids_;
 
   /** @brief Backend used to allocate intermediate physical tiles. */
-  storage::AbstractBackend* backend_;
+  storage::AbstractBackend *backend_;
 };
 }
 }

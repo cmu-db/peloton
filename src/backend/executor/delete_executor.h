@@ -1,8 +1,14 @@
-/**
- * @brief Header file for delete executor.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// delete_executor.h
+//
+// Identification: src/backend/executor/delete_executor.h
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #pragma once
 

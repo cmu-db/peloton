@@ -1,8 +1,14 @@
-/**
- * @brief Test cases for nested loop join node.
- *
- * Copyright(c) 2015, CMU
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// nested_loop_join_test.cpp
+//
+// Identification: tests/executor/nested_loop_join_test.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include <memory>
 
@@ -20,6 +26,7 @@
 
 #include "mock_executor.h"
 #include "executor/executor_tests_util.h"
+#include "executor/join_tests_util.h"
 #include "harness.h"
 
 using ::testing::NotNull;
@@ -61,7 +68,7 @@ expression::AbstractExpression *CreateJoinPredicate() {
 }
 
 planner::ProjectInfo *CreateProjection() {
-   // Create the plan node
+  // Create the plan node
   planner::ProjectInfo::TargetList target_list;
   planner::ProjectInfo::DirectMapList direct_map_list;
 
@@ -69,18 +76,22 @@ planner::ProjectInfo *CreateProjection() {
   // PROJECTION 0
   /////////////////////////////////////////////////////////
 
-
   // direct map
-  planner::ProjectInfo::DirectMap direct_map1 = std::make_pair(0, std::make_pair(0, 1));
-  planner::ProjectInfo::DirectMap direct_map2 = std::make_pair(1, std::make_pair(1, 1));
-  planner::ProjectInfo::DirectMap direct_map3 = std::make_pair(2, std::make_pair(1, 0));
-  planner::ProjectInfo::DirectMap direct_map4 = std::make_pair(3, std::make_pair(0, 0));
+  planner::ProjectInfo::DirectMap direct_map1 =
+      std::make_pair(0, std::make_pair(0, 1));
+  planner::ProjectInfo::DirectMap direct_map2 =
+      std::make_pair(1, std::make_pair(1, 1));
+  planner::ProjectInfo::DirectMap direct_map3 =
+      std::make_pair(2, std::make_pair(1, 0));
+  planner::ProjectInfo::DirectMap direct_map4 =
+      std::make_pair(3, std::make_pair(0, 0));
   direct_map_list.push_back(direct_map1);
   direct_map_list.push_back(direct_map2);
   direct_map_list.push_back(direct_map3);
   direct_map_list.push_back(direct_map4);
 
-  return new planner::ProjectInfo(std::move(target_list), std::move(direct_map_list));
+  return new planner::ProjectInfo(std::move(target_list),
+                                  std::move(direct_map_list));
 }
 
 // Cartesian Product Test

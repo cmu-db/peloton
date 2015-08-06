@@ -1,14 +1,14 @@
-/*-------------------------------------------------------------------------
- *
- * bridge_test_table.cpp
- * file description
- *
- * Copyright(c) 2015, CMU
- *
- * /peloton/tests/bridge/bridge_test_table.cpp
- *
- *-------------------------------------------------------------------------
- */
+//===----------------------------------------------------------------------===//
+//
+//                         PelotonDB
+//
+// bridge_test_table.cpp
+//
+// Identification: src/backend/bridge/ddl/tests/bridge_test_table.cpp
+//
+// Copyright (c) 2015, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
 
 #include "bridge_test.h"
 
@@ -55,8 +55,8 @@ void BridgeTest::DDL_CreateTable_TEST_WITH_INVALID_OID() {
  * @brief Create a table with simple Columns
  */
 void BridgeTest::DDL_CreateTable_TEST_WITH_COLUMNS() {
-  auto& manager = catalog::Manager::GetInstance();
-  storage::Database* db =
+  auto &manager = catalog::Manager::GetInstance();
+  storage::Database *db =
       manager.GetDatabaseWithOid(Bridge::GetCurrentDatabaseOid());
   assert(db);
 
@@ -73,14 +73,14 @@ void BridgeTest::DDL_CreateTable_TEST_WITH_COLUMNS() {
   assert(status);
 
   // Get the table pointer
-  storage::DataTable* table = db->GetTableWithOid(table_oid);
+  storage::DataTable *table = db->GetTableWithOid(table_oid);
 
   // Check the table name and oid
   assert(strcmp((table->GetName()).c_str(), table_name.c_str()) == 0);
   assert(table->GetOid() == table_oid);
 
   // Get the table's schema to get a column
-  catalog::Schema* schema = table->GetSchema();
+  catalog::Schema *schema = table->GetSchema();
   std::cout << (*schema);
 
   // Check the first column' name, length and value type
