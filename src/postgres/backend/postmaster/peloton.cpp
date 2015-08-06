@@ -102,6 +102,7 @@ static void peloton_process_ddl(Peloton_MsgDDL *msg);
 static void peloton_process_bootstrap(Peloton_MsgBootstrap *msg);
 
 static void peloton_update_stats(Peloton_Status *status);
+static void peloton_reply_to_backend(mqd_t backend_id);
 
 
 bool
@@ -920,6 +921,21 @@ peloton_send_bootstrap(Peloton_Status  *status){
 }
 
 /* ----------
+ * peloton_reply_to_backend -
+ *
+ *  Send reply back to backend
+ * ----------
+ */
+static void
+peloton_reply_to_backend(mqd_t backend_id) {
+  auto queue_name = peloton::get_message_queue_name(backend_id);
+  auto mqd = peloton::open_message_queue(queue_name);
+
+  // Send some message
+  peloton::send_message(mqd, "test_msg");
+}
+
+/* ----------
  * peloton_process_dml -
  *
  *  Process DML requests in Peloton.
@@ -936,7 +952,7 @@ peloton_process_dml(Peloton_MsgDML *msg) {
   /* Ignore invalid plans */
   if(planstate == NULL || nodeTag(planstate) == T_Invalid) {
     msg->m_status->m_result =  peloton::RESULT_FAILURE;
-    return;
+    peloton_reply_to_backend(msg->m_hdr.m_backend_id);
   }
 
   MyDatabaseId = msg->m_hdr.m_dbid;
@@ -983,6 +999,8 @@ peloton_process_dml(Peloton_MsgDML *msg) {
     }
   }
 
+  // Send reply
+  peloton_reply_to_backend(msg->m_hdr.m_backend_id);
 }
 
 /* ----------
@@ -1003,7 +1021,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
   /* Ignore invalid parsetrees */
   if(parsetree == NULL || nodeTag(parsetree) == T_Invalid) {
     msg->m_status->m_result =  peloton::RESULT_FAILURE;
-    return;
+    peloton_reply_to_backend(msg->m_hdr.m_backend_id);
   }
 
   MyDatabaseId = msg->m_hdr.m_dbid;
@@ -1029,14 +1047,7 @@ peloton_process_ddl(Peloton_MsgDDL *msg) {
 
   // Set Status
   msg->m_status->m_result = peloton::RESULT_SUCCESS;
-
-  auto backend_id = msg->m_hdr.m_backend_id;
-  auto queue_name = peloton::get_message_queue_name(backend_id);
-  auto mqd = peloton::open_message_queue(queue_name);
-
-  // Send some message
-  peloton::send_message(mqd, "test_msg");
-
+  peloton_reply_to_backend(msg->m_hdr.m_backend_id);
 }
 
 /* ----------
@@ -1057,7 +1068,7 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
   /* Ignore invalid parsetrees */
   if(raw_database == NULL) {
     msg->m_status->m_result =  peloton::RESULT_FAILURE;
-    return;
+    peloton_reply_to_backend(msg->m_hdr.m_backend_id);
   }
 
   MyDatabaseId = msg->m_hdr.m_dbid;
@@ -1082,15 +1093,7 @@ peloton_process_bootstrap(Peloton_MsgBootstrap *msg) {
 
   // Set Status
   msg->m_status->m_result = peloton::RESULT_SUCCESS;
-
-  printf("SEND MESSAGE \n");
-
-  auto backend_id = msg->m_hdr.m_backend_id;
-  auto queue_name = peloton::get_message_queue_name(backend_id);
-  auto mqd = peloton::open_message_queue(queue_name);
-
-  // Send some message
-  peloton::send_message(mqd, "test_msg");
+  peloton_reply_to_backend(msg->m_hdr.m_backend_id);
 }
 
 /* ----------
